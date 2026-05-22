@@ -1,10 +1,10 @@
 {
-  "version": "1.A1.15",
+  "version": "1.A2.01",
 "buildDate": "260523",
   "enabled": true,
   "passwordHash": "c47986dd8ce4828fe097cf915e94fc9d859bb19d56e2157d86ff11b63f0a9e53",
   "webAppUrl": "https://script.google.com/macros/s/AKfycbxJ9XM1r3eAgSbYxBbdbwVxeKblT_hF2VJx2wPYp2aCzmk6eMdWIwSfeEspzEcVX54L/exec",
-  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.A1.15/Kinojo_1_A1_15.zip",
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.A2.01/Kinojo_1_A2_01.zip",
   "notice": "현재 버전은 테스트 버전입니다. 오류 발생시 하단의 <문제 제보> 통해 제보 부탁드립니다.",
   "news": "업데이트/PVP 전투력 로그 추가"
 }
