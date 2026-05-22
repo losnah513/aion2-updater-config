@@ -7,4 +7,6 @@
   "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.A2.01/Kinojo_1_A2_01.zip",
   "notice": "현재 버전은 테스트 버전입니다. 오류 발생시 하단의 <문제 제보> 통해 제보 부탁드립니다.",
   "news": "업데이트/패널 이동 및 F키로 창 최소화 기능 추가"
+  "patchTitle": "A2 업데이트",
+"patchBody": "패널 이동 및 F 창 최소화 기능 추가"
 }
