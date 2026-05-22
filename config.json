@@ -3,6 +3,6 @@
   "enabled": true,
   "passwordHash": "c47986dd8ce4828fe097cf915e94fc9d859bb19d56e2157d86ff11b63f0a9e53",
   "webAppUrl": "https://script.google.com/macros/s/AKfycbxJ9XM1r3eAgSbYxBbdbwVxeKblT_hF2VJx2wPYp2aCzmk6eMdWIwSfeEspzEcVX54L/exec",
-  "downloadUrl": "sha256:76bf982c1c9ed0efb682a06eeca9bf7a8e80ef515614c67cf9c8c26d2cbb40f8",
-  "notice": "테스트 빌드입니다."
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.2.260522.07/Kinojo_v1_2_260522_07.zip",
+  "notice": "화이트 HUD UI 적용"
 }
