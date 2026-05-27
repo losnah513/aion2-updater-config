@@ -1,20 +1,20 @@
 {
-"version": "1.b1.01b",
-"buildDate": "260523",
+  "version": "1.b1.01c",
+  "buildDate": "260527",
 
-"enabled": true,
+  "enabled": true,
 
-"passwordHash": "c47986dd8ce4828fe097cf915e94fc9d859bb19d56e2157d86ff11b63f0a9e53",
+  "passwordHash": "c47986dd8ce4828fe097cf915e94fc9d859bb19d56e2157d86ff11b63f0a9e53",
 
-"webAppUrl": "https://script.google.com/macros/s/AKfycbwfagv2k5VGrT189vl0SZJJOgHQbNpDR-BzyLKC5MmBXWojkIiAvWAs2r8oT6d2omqS/exec",
+  "webAppUrl": "https://script.google.com/macros/s/AKfycbwfagv2k5VGrT189vl0SZJJOgHQbNpDR-BzyLKC5MmBXWojkIiAvWAs2r8oT6d2omqS/exec",
 
-"downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b1.01b/Kinojo_1_b1_01b.zip",
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b1.01c/Kinojo_1_b1_01c.zip",
 
-"notice": "Kinojo 공개 베타 버전이 배포되었습니다. 오류 발생 시 하단의 <문제 신고> 기능을 이용해주세요.",
+  "notice": "Kinojo 1.b1.01c 버그픽스가 배포되었습니다. list 시트 조회 및 오류 진단 기능이 개선되었습니다.",
 
-"news": "Beta Launch/핵심 로직 서버화 및 UI 구조 개선",
+  "news": "Bugfix/list 시트 고정 조회 및 오류 원인 표시 개선",
 
-"patchTitle": "1.b1.01 Beta Release",
+  "patchTitle": "1.b1.01c Bugfix Release",
 
-"patchBody": "핵심 로직 서버화, UI 구조 정리, 공지 및 업데이트 시스템 개선"
+  "patchBody": "list 시트 고정 조회, A6 이후 캐릭터명 확인, 시트 없음/권한 없음/데이터 없음 오류 진단 개선, 목록 조회 실패 시 서버락 정리 보강"
 }
