@@ -1,5 +1,5 @@
 {
-  "version": "1.b2.01",
+  "version": "1.b2.01a",
   "buildDate": "260527",
 
   "enabled": true,
@@ -13,13 +13,13 @@
 
   "webAppUrl": "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec",
 
-  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b2.01/Kinojo_1_b2_01_realtime_pvepvp_review.zip",
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b2.01a/Kinojo_1_b2_01a_realtime_log_cleanup.zip",
 
-  "notice": "Kinojo 1.b2.01 업데이트가 배포되었습니다. 실시간 작업 상태, PVE/PVP 성장 히스토리, AI 리뷰 문구 다양화가 개선되었습니다.",
+  "notice": "Kinojo 1.b2.01a 버그픽스가 배포되었습니다. 실시간 작업 로그 중복 표시 및 역할 로그 유지 문제가 수정되었습니다.",
 
-  "news": "AI Growth/실시간 작업 로그, 장비구분 히스토리, 리뷰 반복 방지 개선",
+  "news": "Bugfix/상세 확인 로그 중복 제거 및 admin/tester 세션 역할 유지",
 
-  "patchTitle": "1.b2.01 Realtime Status & PVE/PVP Growth Review",
+  "patchTitle": "1.b2.01a Realtime Log & Session Role Bugfix",
 
-  "patchBody": "상세 확인 영역을 실시간 작업 상태 로그로 대체, 완료/오류/중단 알림창 및 소리 추가, growth_history에 PVE/PVP 장비구분 추가, 캐릭터+장비구분 기준 비교 적용, AI 리뷰 문구 풀 확장 및 최근 문구 반복 회피 로직 개선"
+  "patchBody": "기존 상세 확인 로그가 실시간 작업 상태 로그와 중복 표시되던 문제 수정, Apps Script doGet 방어코드 추가, 세션 시작 시 clientRole을 저장하여 오류/중단/완료 로그에서도 admin/tester 역할이 유지되도록 개선"
 }
