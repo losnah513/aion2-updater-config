@@ -1,5 +1,5 @@
 {
-  "version": "1.b2.01a",
+  "version": "1.b2.01b",
   "buildDate": "260527",
 
   "enabled": true,
@@ -13,13 +13,13 @@
 
   "webAppUrl": "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec",
 
-  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b2.01a/Kinojo_1_b2_01a_realtime_log_cleanup.zip",
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b2.01b/Kinojo_1_b2_01b_task_checklist_ui.zip",
 
-  "notice": "Kinojo 1.b2.01a 버그픽스가 배포되었습니다. 실시간 작업 로그 중복 표시 및 역할 로그 유지 문제가 수정되었습니다.",
+  "notice": "Kinojo 1.b2.01b UI 버그픽스가 배포되었습니다. 상세정보창이 6단계 체크리스트형 작업 상태창으로 개선되었습니다.",
 
-  "news": "Bugfix/상세 확인 로그 중복 제거 및 admin/tester 세션 역할 유지",
+  "news": "UI Bugfix/상세정보창 체크리스트형 작업 상태 UI 적용",
 
-  "patchTitle": "1.b2.01a Realtime Log & Session Role Bugfix",
+  "patchTitle": "1.b2.01b Task Checklist UI Bugfix",
 
-  "patchBody": "기존 상세 확인 로그가 실시간 작업 상태 로그와 중복 표시되던 문제 수정, Apps Script doGet 방어코드 추가, 세션 시작 시 clientRole을 저장하여 오류/중단/완료 로그에서도 admin/tester 역할이 유지되도록 개선"
+  "patchBody": "상세정보창 오른쪽 시간 표시 제거, 최상단 [캐릭터명] 조회중 고정, 아래 6줄 작업 단계 표시 및 완료 체크 UI 적용"
 }
