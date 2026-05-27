@@ -1,5 +1,5 @@
 {
-  "version": "1.b2.00",
+  "version": "1.b2.01",
   "buildDate": "260527",
 
   "enabled": true,
@@ -7,19 +7,19 @@
   "passwordHash": "c47986dd8ce4828fe097cf915e94fc9d859bb19d56e2157d86ff11b63f0a9e53",
 
   "adminPasswordHashes": [
-  "de9fe7e1e91bc7448ff39abf12a58e25c8ef6680864650c6bf2bf8e24c26e15e",
-  "9516658a61cf564d2001e1dc6b3f3fca526848dc65e4ac38faec05317e2dfedc"
-],
+    "de9fe7e1e91bc7448ff39abf12a58e25c8ef6680864650c6bf2bf8e24c26e15e",
+    "9516658a61cf564d2001e1dc6b3f3fca526848dc65e4ac38faec05317e2dfedc"
+  ],
 
   "webAppUrl": "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec",
 
-  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b2.00/Kinojo_1_b2_00_ai_growth_analysis.zip",
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b2.01/Kinojo_1_b2_01_realtime_pvepvp_review.zip",
 
-  "notice": "Kinojo 1.b1.01e 업데이트가 배포되었습니다. 관리자/테스터 역할 구분 및 로그 시스템이 개선되었습니다.",
+  "notice": "Kinojo 1.b2.01 업데이트가 배포되었습니다. 실시간 작업 상태, PVE/PVP 성장 히스토리, AI 리뷰 문구 다양화가 개선되었습니다.",
 
-  "news": "Role System/데이터 시트와 로그 시트 분리 및 관리자 권한 추가",
+  "news": "AI Growth/실시간 작업 로그, 장비구분 히스토리, 리뷰 반복 방지 개선",
 
-  "patchTitle": "1.b1.01e Role & Log System Update",
+  "patchTitle": "1.b2.01 Realtime Status & PVE/PVP Growth Review",
 
-  "patchBody": "관리자 비밀번호 및 역할 시스템 추가, tester/admin 로그 구분 지원, 데이터 시트와 로그 저장 시트 분리, 운영 로그 구조 개선"
+  "patchBody": "상세 확인 영역을 실시간 작업 상태 로그로 대체, 완료/오류/중단 알림창 및 소리 추가, growth_history에 PVE/PVP 장비구분 추가, 캐릭터+장비구분 기준 비교 적용, AI 리뷰 문구 풀 확장 및 최근 문구 반복 회피 로직 개선"
 }
