@@ -6,7 +6,10 @@
 
   "passwordHash": "c47986dd8ce4828fe097cf915e94fc9d859bb19d56e2157d86ff11b63f0a9e53",
 
-  "adminPasswordHash": "1ca59cf572de55df1e59dbb7e0d93ecf628bc6c9b809d513d5bbf98e7ceafcc9",
+  "adminPasswordHashes": [
+  "de9fe7e1e91bc7448ff39abf12a58e25c8ef6680864650c6bf2bf8e24c26e15e",
+  "9516658a61cf564d2001e1dc6b3f3fca526848dc65e4ac38faec05317e2dfedc"
+],
 
   "webAppUrl": "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec",
 
