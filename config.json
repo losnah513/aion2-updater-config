@@ -1,5 +1,5 @@
 {
-  "version": "1.b1.01c",
+  "version": "1.b1.01d",
   "buildDate": "260527",
 
   "enabled": true,
@@ -8,13 +8,13 @@
 
   "webAppUrl": "https://script.google.com/macros/s/AKfycbwfagv2k5VGrT189vl0SZJJOgHQbNpDR-BzyLKC5MmBXWojkIiAvWAs2r8oT6d2omqS/exec",
 
-  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b1.01c/Kinojo_1_b1_01c.zip",
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b1.01d/Kinojo_1_b1_01d_resume_debuglog_fix.zip",
 
-  "notice": "Kinojo 1.b1.01c 버그픽스가 배포되었습니다. list 시트 조회 및 오류 진단 기능이 개선되었습니다.",
+  "notice": "Kinojo 1.b1.01d 버그픽스가 배포되었습니다. 이어서 시작 및 관리자 디버그 로그 기능이 개선되었습니다.",
 
-  "news": "Bugfix/list 시트 고정 조회 및 오류 원인 표시 개선",
+  "news": "Bugfix/이어시작 복구 및 Google Drive 디버그 로그 시스템 추가",
 
-  "patchTitle": "1.b1.01c Bugfix Release",
+  "patchTitle": "1.b1.01d Bugfix Release",
 
-  "patchBody": "list 시트 고정 조회, A6 이후 캐릭터명 확인, 시트 없음/권한 없음/데이터 없음 오류 진단 개선, 목록 조회 실패 시 서버락 정리 보강"
+  "patchBody": "이어서 시작 시 1번부터 재시작되던 문제 수정, 중단 사유 저장 및 표시 추가, heartbeat timeout/서버 처리 실패 상세 디버그 로그 추가, Google Drive TXT 로그 저장 기능 추가"
 }
