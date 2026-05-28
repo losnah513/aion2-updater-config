@@ -1,25 +1,16 @@
 {
-  "version": "1.b2.01b",
+  "version": "1.b3.00",
   "buildDate": "260527",
-
   "enabled": true,
-
   "passwordHash": "c47986dd8ce4828fe097cf915e94fc9d859bb19d56e2157d86ff11b63f0a9e53",
-
   "adminPasswordHashes": [
     "de9fe7e1e91bc7448ff39abf12a58e25c8ef6680864650c6bf2bf8e24c26e15e",
     "9516658a61cf564d2001e1dc6b3f3fca526848dc65e4ac38faec05317e2dfedc"
   ],
-
   "webAppUrl": "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec",
-
-  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b2.01b/Kinojo_1_b2_01b_task_checklist_ui.zip",
-
-  "notice": "Kinojo 1.b2.01b UI 버그픽스가 배포되었습니다. 상세정보창이 6단계 체크리스트형 작업 상태창으로 개선되었습니다.",
-
-  "news": "UI Bugfix/상세정보창 체크리스트형 작업 상태 UI 적용",
-
-  "patchTitle": "1.b2.01b Task Checklist UI Bugfix",
-
-  "patchBody": "상세정보창 오른쪽 시간 표시 제거, 최상단 [캐릭터명] 조회중 고정, 아래 6줄 작업 단계 표시 및 완료 체크 UI 적용"
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b3.00/AppsScript_1_b3_00_modular_structure.zip",
+  "notice": "Kinojo 1.b3.00 구조개편 버전이 배포되었습니다. Apps Script가 기능별 gs 파일로 분리되었습니다.",
+  "news": "Refactor/Apps Script 모듈 구조 개편",
+  "patchTitle": "1.b3.00 Apps Script Modular Refactor",
+  "patchBody": "Apps Script를 config/update/sheet/history/review_pool/review_logic/parser/log gs 파일로 분리하여 유지보수성을 개선했습니다."
 }
