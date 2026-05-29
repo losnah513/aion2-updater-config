@@ -1,6 +1,6 @@
 {
-  "version": "1.b3.01d",
-  "buildDate": "260527",
+  "version": "1.b3.03",
+  "buildDate": "260528",
   "enabled": true,
   "passwordHash": "c47986dd8ce4828fe097cf915e94fc9d859bb19d56e2157d86ff11b63f0a9e53",
   "adminPasswordHashes": [
@@ -8,9 +8,9 @@
     "9516658a61cf564d2001e1dc6b3f3fca526848dc65e4ac38faec05317e2dfedc"
   ],
   "webAppUrl": "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec",
-  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b3.01d/Kinojo_1_b3_01d_fixed_final2.zip",
-  "notice": "Kinojo 1.b3.01d 업데이트가 배포되었습니다. 캐릭터 조회 실패 리뷰, K열 상태표시, 리뷰 우선순위, same 리뷰 300개 확장이 반영되었습니다.",
-  "news": "Integrated Patch/characterMissing 리뷰, K6 상태표시, same 리뷰 300개, 리뷰 우선순위 정리",
-  "patchTitle": "1.b3.01d Character Missing & Review Priority Patch",
-  "patchBody": "캐릭터 조회 실패 시 L열 리뷰 작성, G열 주인 정보 없음 리뷰 우선 처리, K6부터 상태 배지 표시, same 리뷰풀 300개 확장, funnySame 통합, same 전용 최근 120개 문구 회피가 반영되었습니다."
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b3.03/Kinojo_1_b3_03.zip",
+  "notice": "🚀 Kinojo 1.b3.03 업데이트\n• 우하단 FAB + 왼쪽 확장 패널\n• 드래그 이동바\n• ETA/진행률 카드 개선\n• 패치노트/명예의 전당 버튼",
+  "news": "UI/FAB 확장 패널, 드래그 이동바, ETA 카드",
+  "patchTitle": "1.b3.03 FAB Panel UI Rebuild",
+  "patchBody": "우하단 플로팅 버튼을 기준으로 왼쪽에 정보 패널이 펼쳐지는 UI로 개편했습니다. 드래그 이동바, ETA 카드, 패치노트/명예의 전당 버튼, 작은 화면 세로 대응이 포함됩니다."
 }
