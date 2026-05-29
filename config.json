@@ -1,6 +1,6 @@
 {
-  "version": "1.b3.03",
-  "buildDate": "260528",
+  "version": "1.b3.03a",
+  "buildDate": "260530",
   "enabled": true,
   "passwordHash": "c47986dd8ce4828fe097cf915e94fc9d859bb19d56e2157d86ff11b63f0a9e53",
   "adminPasswordHashes": [
@@ -8,9 +8,9 @@
     "9516658a61cf564d2001e1dc6b3f3fca526848dc65e4ac38faec05317e2dfedc"
   ],
   "webAppUrl": "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec",
-  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b3.03/Kinojo_1_b3_03.zip",
-  "notice": "🚀 Kinojo 1.b3.03 업데이트\n• 우하단 FAB + 왼쪽 확장 패널\n• 드래그 이동바\n• ETA/진행률 카드 개선\n• 패치노트/명예의 전당 버튼",
-  "news": "UI/FAB 확장 패널, 드래그 이동바, ETA 카드",
-  "patchTitle": "1.b3.03 FAB Panel UI Rebuild",
-  "patchBody": "우하단 플로팅 버튼을 기준으로 왼쪽에 정보 패널이 펼쳐지는 UI로 개편했습니다. 드래그 이동바, ETA 카드, 패치노트/명예의 전당 버튼, 작은 화면 세로 대응이 포함됩니다."
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b3.03a/Kinojo_1_b3_03a.zip",
+  "notice": "🔧 Kinojo 1.b3.03a UI 핫픽스\n• 실제 패널 탐지 방식 보강\n• FAB + 왼쪽 확장 패널 적용 보정",
+  "news": "FAB UI hotfix / 실제 패널 탐지 보정",
+  "patchTitle": "1.b3.03a FAB UI Hotfix",
+  "patchBody": "기존 세로형 UI가 그대로 보이던 문제를 수정했습니다. 실제 패널 DOM을 탐지해 FAB 버튼과 왼쪽 확장 패널 구조로 래핑합니다."
 }
