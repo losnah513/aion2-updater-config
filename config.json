@@ -1,25 +1,16 @@
 {
-  "version": "1.b3.01c",
+  "version": "1.b3.01",
   "buildDate": "260527",
-
   "enabled": true,
-
   "passwordHash": "c47986dd8ce4828fe097cf915e94fc9d859bb19d56e2157d86ff11b63f0a9e53",
-
   "adminPasswordHashes": [
     "de9fe7e1e91bc7448ff39abf12a58e25c8ef6680864650c6bf2bf8e24c26e15e",
     "9516658a61cf564d2001e1dc6b3f3fca526848dc65e4ac38faec05317e2dfedc"
   ],
-
   "webAppUrl": "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec",
-
-  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b3.01c/Kinojo_1_b3_01c_integrated_release.zip",
-
-  "notice": "Kinojo 1.b3.01c 통합 업데이트가 배포되었습니다. 확장프로그램 최신 UI와 모듈형 Apps Script, K열 MVP 표시, 확장 리뷰 풀이 포함되었습니다.",
-
-  "news": "Integrated Release/확장프로그램 UI + Apps Script 모듈 구조 + K열 MVP + 리뷰 풀 확장 통합",
-
-  "patchTitle": "1.b3.01c Integrated Release",
-
-  "patchBody": "1.b2.01b 확장프로그램 UI 개선본과 1.b3.01 Apps Script 모듈 구조를 통합했습니다. K열 MVP 표시, 리뷰 문구 풀 확장, 태그 기반 리뷰 저장, B열 직업 보정, 성장 히스토리 분리 구조가 포함됩니다."
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b3.01/AppsScript_1_b3_01_review_pool_mvp_kcol.zip",
+  "notice": "Kinojo 1.b3.01 업데이트가 배포되었습니다. MVP 표시가 K열로 이동하고 리뷰 문구 풀이 대폭 확장되었습니다.",
+  "news": "AI Review/MVP K열 표시 및 리뷰 풀 확장",
+  "patchTitle": "1.b3.01 Review Pool & MVP K Column Update",
+  "patchBody": "MVP 왕관 표시를 L열 리뷰에서 K열 전용 표시칸으로 이동, 리뷰 문구 풀 확장, 태그 기반 리뷰 저장, 최근 40개 문구 회피로 반복 체감 완화"
 }
