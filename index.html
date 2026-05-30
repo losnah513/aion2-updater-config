@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Kinojo 명예의 전당</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070b12;
+      --panel: rgba(13, 18, 28, .92);
+      --card: rgba(30, 41, 59, .76);
+      --line: rgba(125, 211, 252, .20);
+      --text: #eaf6ff;
+      --muted: #94a3b8;
+      --cyan: #67e8f9;
+      --blue: #60a5fa;
+      --violet: #a78bfa;
+      --pink: #f472b6;
+      --gold: #facc15;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(34,211,238,.18), transparent 32%),
+        radial-gradient(circle at 80% 10%, rgba(167,139,250,.18), transparent 34%),
+        linear-gradient(180deg, #0f172a, var(--bg));
+      color: var(--text);
+      font-family: Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    }
+
+    .wrap {
+      width: min(1120px, 100%);
+      margin: 0 auto;
+      padding: 20px 14px 36px;
+    }
+
+    .hero {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      padding: 18px 0 12px;
+      backdrop-filter: blur(14px);
+      background: linear-gradient(180deg, rgba(7,11,18,.94), rgba(7,11,18,.70));
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(24px, 6vw, 44px);
+      letter-spacing: -1px;
+      line-height: 1.04;
+    }
+
+    .badge {
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(103,232,249,.35);
+      background: rgba(15,23,42,.72);
+      color: #dffbff;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .sub {
+      margin: 0;
+      color: #cbd5e1;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .search, .refresh {
+      border: 1px solid rgba(125,211,252,.25);
+      background: rgba(15,23,42,.78);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 11px 12px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .refresh {
+      cursor: pointer;
+      font-weight: 900;
+      background: linear-gradient(135deg, rgba(20,115,255,.80), rgba(124,58,237,.78));
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .section {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 12px 28px rgba(0,0,0,.28);
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 13px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      background: linear-gradient(90deg, rgba(38,119,173,.32), rgba(93,44,151,.18));
+    }
+
+    .section h2 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: -.2px;
+    }
+
+    .section-note {
+      color: #cbd5e1;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .list {
+      padding: 8px;
+      display: grid;
+      gap: 7px;
+    }
+
+    .rank-card {
+      display: grid;
+      grid-template-columns: 42px 1fr auto;
+      align-items: center;
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid rgba(148,163,184,.14);
+      border-radius: 14px;
+      background: var(--card);
+      min-height: 58px;
+    }
+
+    .rank {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 11px;
+      background: rgba(255,255,255,.08);
+      font-weight: 1000;
+      color: var(--cyan);
+    }
+
+    .rank.gold { color: #111827; background: linear-gradient(135deg, #fde68a, #facc15); }
+    .rank.silver { color: #111827; background: linear-gradient(135deg, #e5e7eb, #94a3b8); }
+    .rank.bronze { color: #111827; background: linear-gradient(135deg, #fdba74, #c2410c); }
+
+    .name {
+      font-size: 15px;
+      font-weight: 1000;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .meta {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .score {
+      color: #e0f2fe;
+      font-size: 13px;
+      font-weight: 900;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .empty {
+      color: var(--muted);
+      padding: 18px 12px;
+      text-align: center;
+      font-size: 13px;
+    }
+
+    .full { grid-column: 1 / -1; }
+
+    .footer {
+      margin-top: 16px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .loading {
+      display: grid;
+      place-items: center;
+      min-height: 260px;
+      color: #dbeafe;
+      font-weight: 900;
+    }
+
+    .error {
+      border: 1px solid rgba(248,113,113,.35);
+      background: rgba(127,29,29,.22);
+      color: #fecaca;
+      border-radius: 14px;
+      padding: 14px;
+      margin-top: 14px;
+      line-height: 1.5;
+      font-size: 13px;
+    }
+
+    @media (max-width: 760px) {
+      .wrap { padding: 12px 10px 28px; }
+      .hero { padding-top: 12px; }
+      .grid { grid-template-columns: 1fr; gap: 10px; }
+      .toolbar { grid-template-columns: 1fr; }
+      .refresh { width: 100%; }
+      .rank-card { grid-template-columns: 36px 1fr; }
+      .score { grid-column: 2; text-align: left; margin-top: -2px; }
+      .section-note { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="hero">
+      <div class="title-row">
+        <h1>🏆 Kinojo 명예의 전당</h1>
+        <div class="badge" id="updatedBadge">불러오는 중</div>
+      </div>
+      <p class="sub">전투력, 성장 기록, 서버 분류를 기준으로 자동 집계되는 키노조 전용 랭킹 페이지입니다.</p>
+      <div class="toolbar">
+        <input class="search" id="searchInput" placeholder="캐릭터명 / 서버 / 부문 검색" />
+        <button class="refresh" id="refreshBtn">새로고침</button>
+      </div>
+    </header>
+
+    <div id="app" class="loading">명예의 전당 데이터를 불러오는 중...</div>
+
+    <footer class="footer">
+      Kinojo Hall of Fame · 모바일 최적화 페이지
+    </footer>
+  </main>
+
+  <script>
+    const WEB_APP_URL = new URLSearchParams(location.search).get("api")
+      || "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec";
+
+    const SECTION_ORDER = [
+      ["pveTop", "🛡 PVE 전투력 TOP 3", "PVE 기준 상위 3명"],
+      ["pvpTop", "⚔ PVP 전투력 TOP 3", "PVP 기준 상위 3명"],
+      ["amexBlack", "💳 아맥스 블랙회원", "하루 20K 이상 성장"],
+      ["demonFamily", "😈 같은 마족이면 가족이지", "다른 서버 캐릭터"],
+      ["partyFriend", "🤝 같은 파티면 친구지", "천족 서버 캐릭터"],
+      ["attendance", "📅 개근상", "지속 조회/기록 대상"]
+    ];
+
+    let hallData = null;
+    let keyword = "";
+
+    const app = document.getElementById("app");
+    const updatedBadge = document.getElementById("updatedBadge");
+    const searchInput = document.getElementById("searchInput");
+    const refreshBtn = document.getElementById("refreshBtn");
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function formatNumber(value) {
+      const n = Number(value || 0);
+      if (!Number.isFinite(n)) return escapeHtml(value || "");
+      return n.toLocaleString("ko-KR");
+    }
+
+    function rankClass(index) {
+      if (index === 0) return "gold";
+      if (index === 1) return "silver";
+      if (index === 2) return "bronze";
+      return "";
+    }
+
+    function matchItem(item) {
+      if (!keyword) return true;
+      const target = [
+        item.name,
+        item.server,
+        item.faction,
+        item.memo,
+        item.category,
+        item.value
+      ].join(" ").toLowerCase();
+      return target.includes(keyword.toLowerCase());
+    }
+
+    function card(item, index) {
+      return `
+        <article class="rank-card">
+          <div class="rank ${rankClass(index)}">${index + 1}</div>
+          <div>
+            <div class="name">${escapeHtml(item.name || "-")}</div>
+            <div class="meta">${escapeHtml([item.server, item.faction, item.memo].filter(Boolean).join(" · ") || item.category || "")}</div>
+          </div>
+          <div class="score">${escapeHtml(item.label || formatNumber(item.value))}</div>
+        </article>
+      `;
+    }
+
+    function section(key, title, note) {
+      const list = (hallData && hallData[key] ? hallData[key] : []).filter(matchItem);
+      return `
+        <section class="section">
+          <div class="section-head">
+            <h2>${title}</h2>
+            <span class="section-note">${note}</span>
+          </div>
+          <div class="list">
+            ${list.length ? list.map(card).join("") : `<div class="empty">표시할 대상이 없습니다.</div>`}
+          </div>
+        </section>
+      `;
+    }
+
+    function render() {
+      if (!hallData) return;
+      updatedBadge.textContent = hallData.updatedAt ? `업데이트 ${hallData.updatedAt}` : "업데이트 정보 없음";
+      app.className = "grid";
+      app.innerHTML = SECTION_ORDER.map(([key, title, note]) => section(key, title, note)).join("");
+    }
+
+    async function load() {
+      app.className = "loading";
+      app.textContent = "명예의 전당 데이터를 불러오는 중...";
+      try {
+        const url = `${WEB_APP_URL}${WEB_APP_URL.includes("?") ? "&" : "?"}action=hallOfFame&t=${Date.now()}`;
+        const res = await fetch(url, { cache: "no-store" });
+        const text = await res.text();
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${text.slice(0, 120)}`);
+        hallData = JSON.parse(text);
+        render();
+      } catch (err) {
+        app.className = "";
+        app.innerHTML = `
+          <div class="error">
+            <strong>명예의 전당 데이터를 불러오지 못했습니다.</strong><br />
+            Apps Script 배포 URL 또는 CORS 설정을 확인해 주세요.<br />
+            <small>${escapeHtml(err.message || err)}</small>
+          </div>
+        `;
+      }
+    }
+
+    searchInput.addEventListener("input", e => {
+      keyword = e.target.value.trim();
+      render();
+    });
+
+    refreshBtn.addEventListener("click", load);
+
+    load();
+  </script>
+</body>
+</html>
