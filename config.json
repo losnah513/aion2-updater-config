@@ -1,5 +1,5 @@
 {
-  "version": "1.b3.03d",
+  "version": "1.b3.03e",
   "buildDate": "260530",
   "enabled": true,
   "passwordHash": "c47986dd8ce4828fe097cf915e94fc9d859bb19d56e2157d86ff11b63f0a9e53",
@@ -8,9 +8,9 @@
     "9516658a61cf564d2001e1dc6b3f3fca526848dc65e4ac38faec05317e2dfedc"
   ],
   "webAppUrl": "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec",
-  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b3.03d/Kinojo_1_b3_03d.zip",
-  "notice": "🔧 Kinojo 1.b3.03d 핫픽스\n• 검색 로딩 오류 원인 제거\n• 종료 버튼 저장 플래그 제거\n• 조회 실패 리뷰 서버 처리 보강\n• 실제 변경 파일만 기록",
-  "news": "search loop hotfix / characterMissing server route",
-  "patchTitle": "1.b3.03d Search Loop Hotfix",
-  "patchBody": "캐릭터 검색 중 로딩 오류를 유발할 수 있는 조회 루프 삽입 코드를 제거했습니다. characterMissing은 안전 헬퍼와 서버 처리만 보강하고, 종료 버튼의 영구 저장 플래그를 제거했습니다."
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b3.03e/Kinojo_1_b3_03e.zip",
+  "notice": "🔧 Kinojo 1.b3.03e 안정화\n• 페이지 멈춤 원인 제거\n• 외부 FAB/자동 DOM 감시 제거\n• 종료 버튼은 패널 내부 상단 오른쪽으로 이동",
+  "news": "stability hotfix / internal close button",
+  "patchTitle": "1.b3.03e Stability Hotfix",
+  "patchBody": "AION2 캐릭터 페이지가 응답 없음 상태가 되던 원인인 자동 DOM 감시/외부 FAB 래핑을 제거했습니다. 종료 버튼은 Kinojo 패널 내부 상단 오른쪽으로 이동했습니다."
 }
