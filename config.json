@@ -1,5 +1,5 @@
 {
-  "version": "1.b3.05d",
+  "version": "1.b3.05e",
   "buildDate": "260530",
   "enabled": true,
   "passwordHash": "c47986dd8ce4828fe097cf915e94fc9d859bb19d56e2157d86ff11b63f0a9e53",
@@ -8,9 +8,9 @@
     "9516658a61cf564d2001e1dc6b3f3fca526848dc65e4ac38faec05317e2dfedc"
   ],
   "webAppUrl": "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec",
-  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b3.05d/Kinojo_1_b3_05d.zip",
-  "notice": "✨ Kinojo 1.b3.05d 업데이트\n• 오로라 버튼 효과\n• 신입 기준 5/29\n• 조회 실패 리뷰/중복 리뷰 보강",
-  "news": "aurora button / newbie cutoff / missing review / duplicate review guard",
-  "patchTitle": "1.b3.05d Aurora UI & Review Logic Patch",
-  "patchBody": "메인 버튼 아이콘을 중앙 확대하고 텍스트를 하단에 배치했습니다. 조회중 버튼은 오로라 테두리 효과로 변경했습니다. 신입 칭호 기준을 2026-05-29 이후 최초 발견 캐릭터로 수정하고, 캐릭터 조회 실패 시 리뷰 공란 문제와 리뷰 반복 문제를 보강했습니다."
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b3.05e/Kinojo_1_b3_05e.zip",
+  "notice": "✅ Kinojo 1.b3.05e 최종 마감\n• MVP 칭호 임시 제거\n• L열 600 고정\n• 버튼 아이콘/오로라 효과 개선",
+  "news": "final polish / MVP disabled / review column format",
+  "patchTitle": "1.b3.05e Final Polish Before Hall of Fame",
+  "patchBody": "명예의 전당 구현 전까지 MVP 칭호를 임시 제거했습니다. L열 리뷰 폭을 600으로 고정하고 행 높이를 리뷰 길이에 맞게 보정합니다. 메인 버튼 아이콘 정렬과 오로라 테두리 가시성을 개선했습니다."
 }
