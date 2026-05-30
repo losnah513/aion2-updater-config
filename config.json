@@ -1,5 +1,5 @@
 {
-  "version": "1.b3.03a",
+  "version": "1.b3.03c",
   "buildDate": "260530",
   "enabled": true,
   "passwordHash": "c47986dd8ce4828fe097cf915e94fc9d859bb19d56e2157d86ff11b63f0a9e53",
@@ -8,9 +8,9 @@
     "9516658a61cf564d2001e1dc6b3f3fca526848dc65e4ac38faec05317e2dfedc"
   ],
   "webAppUrl": "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec",
-  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b3.03a/Kinojo_1_b3_03a.zip",
-  "notice": "🔧 Kinojo 1.b3.03a UI 핫픽스\n• 실제 패널 탐지 방식 보강\n• FAB + 왼쪽 확장 패널 적용 보정",
-  "news": "FAB UI hotfix / 실제 패널 탐지 보정",
-  "patchTitle": "1.b3.03a FAB UI Hotfix",
-  "patchBody": "기존 세로형 UI가 그대로 보이던 문제를 수정했습니다. 실제 패널 DOM을 탐지해 FAB 버튼과 왼쪽 확장 패널 구조로 래핑합니다."
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b3.03c/Kinojo_1_b3_03c.zip",
+  "notice": "🔧 Kinojo 1.b3.03c 업데이트\n• 조회 실패 리뷰 보강\n• 신입 칭호 기준 수정\n• Logs 단일 시트 재정리\n• 크리스탈 토글/종료 버튼 적용",
+  "news": "characterMissing, newbie 기준, Logs 통합, crystal buttons",
+  "patchTitle": "1.b3.03c Character Missing & Crystal Control Patch",
+  "patchBody": "캐릭터 검색 실패 시 리뷰가 공란으로 남던 문제를 보강했습니다. 2026-05-28 이후 최초 발견 캐릭터만 신입 칭호를 받도록 수정하고, Logs 단일 시트와 크리스탈형 종료/최소화 버튼을 적용했습니다."
 }
