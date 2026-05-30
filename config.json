@@ -1,5 +1,5 @@
 {
-  "version": "1.b3.03c",
+  "version": "1.b3.03d",
   "buildDate": "260530",
   "enabled": true,
   "passwordHash": "c47986dd8ce4828fe097cf915e94fc9d859bb19d56e2157d86ff11b63f0a9e53",
@@ -8,9 +8,9 @@
     "9516658a61cf564d2001e1dc6b3f3fca526848dc65e4ac38faec05317e2dfedc"
   ],
   "webAppUrl": "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec",
-  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b3.03c/Kinojo_1_b3_03c.zip",
-  "notice": "🔧 Kinojo 1.b3.03c 업데이트\n• 조회 실패 리뷰 보강\n• 신입 칭호 기준 수정\n• Logs 단일 시트 재정리\n• 크리스탈 토글/종료 버튼 적용",
-  "news": "characterMissing, newbie 기준, Logs 통합, crystal buttons",
-  "patchTitle": "1.b3.03c Character Missing & Crystal Control Patch",
-  "patchBody": "캐릭터 검색 실패 시 리뷰가 공란으로 남던 문제를 보강했습니다. 2026-05-28 이후 최초 발견 캐릭터만 신입 칭호를 받도록 수정하고, Logs 단일 시트와 크리스탈형 종료/최소화 버튼을 적용했습니다."
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b3.03d/Kinojo_1_b3_03d.zip",
+  "notice": "🔧 Kinojo 1.b3.03d 핫픽스\n• 검색 로딩 오류 원인 제거\n• 종료 버튼 저장 플래그 제거\n• 조회 실패 리뷰 서버 처리 보강\n• 실제 변경 파일만 기록",
+  "news": "search loop hotfix / characterMissing server route",
+  "patchTitle": "1.b3.03d Search Loop Hotfix",
+  "patchBody": "캐릭터 검색 중 로딩 오류를 유발할 수 있는 조회 루프 삽입 코드를 제거했습니다. characterMissing은 안전 헬퍼와 서버 처리만 보강하고, 종료 버튼의 영구 저장 플래그를 제거했습니다."
 }
