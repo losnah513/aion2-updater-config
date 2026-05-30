@@ -244,6 +244,89 @@
       .score { grid-column: 2; text-align: left; margin-top: -2px; }
       .section-note { display: none; }
     }
+  
+    .loading {
+      display: grid;
+      place-items: center;
+      min-height: 300px;
+      color: #dbeafe;
+      font-weight: 900;
+    }
+
+    .kinojo-loader {
+      display: grid;
+      place-items: center;
+      gap: 14px;
+      text-align: center;
+      padding: 30px 14px;
+    }
+
+    .kinojo-loader-ring {
+      width: 74px;
+      height: 74px;
+      border-radius: 50%;
+      position: relative;
+      background:
+        conic-gradient(from 0deg, #67e8f9, #3b82f6, #a78bfa, #ec4899, #67e8f9);
+      animation: kinojoHallSpin 1.05s linear infinite;
+      box-shadow:
+        0 0 18px rgba(34, 211, 238, .45),
+        0 0 28px rgba(168, 85, 247, .32);
+    }
+
+    .kinojo-loader-ring::before {
+      content: "";
+      position: absolute;
+      inset: 7px;
+      border-radius: 50%;
+      background: #070b12;
+      box-shadow: inset 0 0 18px rgba(15, 23, 42, .9);
+    }
+
+    .kinojo-loader-ring::after {
+      content: "🏆";
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: 26px;
+      animation: kinojoHallCounterSpin 1.05s linear infinite;
+    }
+
+    .kinojo-loader-title {
+      font-size: 15px;
+      color: #eaf6ff;
+      font-weight: 1000;
+    }
+
+    .kinojo-loader-sub {
+      margin-top: 4px;
+      font-size: 12px;
+      color: #94a3b8;
+      font-weight: 700;
+    }
+
+    .kinojo-loader-dots::after {
+      content: "";
+      animation: kinojoDots 1.25s steps(4, end) infinite;
+    }
+
+    @keyframes kinojoHallSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes kinojoHallCounterSpin {
+      to { transform: rotate(-360deg); }
+    }
+
+    @keyframes kinojoDots {
+      0% { content: ""; }
+      25% { content: "."; }
+      50% { content: ".."; }
+      75% { content: "..."; }
+      100% { content: ""; }
+    }
+
   </style>
 </head>
 <body>
@@ -257,10 +340,32 @@
       <div class="toolbar">
         <input class="search" id="searchInput" placeholder="캐릭터명 / 서버 / 부문 검색" />
         <button class="refresh" id="refreshBtn">새로고침</button>
+        <button class="refresh" id="suggestBtn" type="button">새 항목 제안</button>
       </div>
     </header>
 
-    <div id="app" class="loading">명예의 전당 데이터를 불러오는 중...</div>
+    <section class="section full" id="suggestionBox" style="display:none; margin-top:14px;">
+      <div class="section-head">
+        <h2>➕ 새로운 항목 제안하기</h2>
+        <span class="section-note">운영자 검토 후 반영</span>
+      </div>
+      <div class="list">
+        <input class="search" id="suggestTitle" placeholder="항목 이름 예: 성장왕, 결투왕" />
+        <input class="search" id="suggestProposer" placeholder="제안자 이름 또는 캐릭터명" />
+        <textarea class="search" id="suggestMemo" rows="3" placeholder="어떤 기준으로 뽑으면 좋을지 적어주세요."></textarea>
+        <button class="refresh" id="submitSuggestBtn" type="button">제안 보내기</button>
+      </div>
+    </section>
+
+    <div id="app" class="loading">
+      <div class="kinojo-loader">
+        <div class="kinojo-loader-ring"></div>
+        <div>
+          <div class="kinojo-loader-title">명예의 전당 데이터를 불러오는 중<span class="kinojo-loader-dots"></span></div>
+          <div class="kinojo-loader-sub">전투력 · 성장 기록 · 서버 정보를 정리하고 있어요</div>
+        </div>
+      </div>
+    </div>
 
     <footer class="footer">
       Kinojo Hall of Fame · 모바일 최적화 페이지
@@ -274,10 +379,10 @@
     const SECTION_ORDER = [
       ["pveTop", "🛡 PVE 전투력 TOP 3", "PVE 기준 상위 3명"],
       ["pvpTop", "⚔ PVP 전투력 TOP 3", "PVP 기준 상위 3명"],
-      ["amexBlack", "💳 아맥스 블랙회원", "하루 20K 이상 성장"],
-      ["demonFamily", "😈 같은 마족이면 가족이지", "다른 서버 캐릭터"],
-      ["partyFriend", "🤝 같은 파티면 친구지", "천족 서버 캐릭터"],
-      ["attendance", "📅 개근상", "지속 조회/기록 대상"]
+      ["attendance", "📅 개근상", "1주일 이상 꾸준히 성장"],
+      ["amexBlack", "💳 아맥스 블랙회원", "단기간 급상승 캐릭터"],
+      ["demonFamily", "😈 같은 마족이면 가족이지", "타서버 마족 캐릭터"],
+      ["partyFriend", "🤝 같은 파티면 친구지", "천족 서버 캐릭터"]
     ];
 
     let hallData = null;
@@ -345,7 +450,7 @@
             <span class="section-note">${note}</span>
           </div>
           <div class="list">
-            ${list.length ? list.map(card).join("") : `<div class="empty">표시할 대상이 없습니다.</div>`}
+            ${list.length ? list.map(card).join("") : `<div class="empty">아직 데이터가 부족해요.</div>`}
           </div>
         </section>
       `;
@@ -355,12 +460,41 @@
       if (!hallData) return;
       updatedBadge.textContent = hallData.updatedAt ? `업데이트 ${hallData.updatedAt}` : "업데이트 정보 없음";
       app.className = "grid";
-      app.innerHTML = SECTION_ORDER.map(([key, title, note]) => section(key, title, note)).join("");
+      const recentSuggestions = (hallData.suggestions || []).length
+        ? `<section class="section full">
+            <div class="section-head">
+              <h2>📋 최근 제안</h2>
+              <span class="section-note">운영자 검토중</span>
+            </div>
+            <div class="list">
+              ${(hallData.suggestions || []).map((item, index) => `
+                <article class="rank-card">
+                  <div class="rank">${index + 1}</div>
+                  <div>
+                    <div class="name">${escapeHtml(item.title || "-")}</div>
+                    <div class="meta">${escapeHtml([item.proposer, item.memo, item.status].filter(Boolean).join(" · "))}</div>
+                  </div>
+                  <div class="score">${escapeHtml(item.createdAt || "")}</div>
+                </article>
+              `).join("")}
+            </div>
+          </section>`
+        : "";
+
+      app.innerHTML = SECTION_ORDER.map(([key, title, note]) => section(key, title, note)).join("") + recentSuggestions;
     }
 
     async function load() {
       app.className = "loading";
-      app.textContent = "명예의 전당 데이터를 불러오는 중...";
+      app.innerHTML = `
+        <div class="kinojo-loader">
+          <div class="kinojo-loader-ring"></div>
+          <div>
+            <div class="kinojo-loader-title">명예의 전당 데이터를 불러오는 중<span class="kinojo-loader-dots"></span></div>
+            <div class="kinojo-loader-sub">전투력 · 성장 기록 · 서버 정보를 정리하고 있어요</div>
+          </div>
+        </div>
+      `;
       try {
         const url = `${WEB_APP_URL}${WEB_APP_URL.includes("?") ? "&" : "?"}action=hallOfFame&t=${Date.now()}`;
         const res = await fetch(url, { cache: "no-store" });
@@ -386,6 +520,55 @@
     });
 
     refreshBtn.addEventListener("click", load);
+
+    const suggestBtn = document.getElementById("suggestBtn");
+    const suggestionBox = document.getElementById("suggestionBox");
+    const submitSuggestBtn = document.getElementById("submitSuggestBtn");
+
+    if (suggestBtn && suggestionBox) {
+      suggestBtn.addEventListener("click", () => {
+        suggestionBox.style.display = suggestionBox.style.display === "none" ? "block" : "none";
+      });
+    }
+
+    if (submitSuggestBtn) {
+      submitSuggestBtn.addEventListener("click", async () => {
+        const title = document.getElementById("suggestTitle").value.trim();
+        const proposer = document.getElementById("suggestProposer").value.trim();
+        const memo = document.getElementById("suggestMemo").value.trim();
+
+        if (!title) {
+          alert("항목 이름을 입력해 주세요.");
+          return;
+        }
+
+        submitSuggestBtn.disabled = true;
+        submitSuggestBtn.textContent = "전송 중...";
+
+        try {
+          const res = await fetch(WEB_APP_URL, {
+            method: "POST",
+            body: JSON.stringify({
+              action: "hallSuggestion",
+              title,
+              proposer,
+              memo
+            })
+          });
+          const data = await res.json();
+          if (!data.ok) throw new Error(data.message || "전송 실패");
+          alert("제안이 접수되었습니다.");
+          document.getElementById("suggestTitle").value = "";
+          document.getElementById("suggestMemo").value = "";
+          await load();
+        } catch (err) {
+          alert("제안 전송에 실패했습니다: " + (err.message || err));
+        } finally {
+          submitSuggestBtn.disabled = false;
+          submitSuggestBtn.textContent = "제안 보내기";
+        }
+      });
+    }
 
     load();
   </script>
