@@ -1,5 +1,5 @@
 {
-  "version": "1.b3.05a",
+  "version": "1.b3.05b",
   "buildDate": "260530",
   "enabled": true,
   "passwordHash": "c47986dd8ce4828fe097cf915e94fc9d859bb19d56e2157d86ff11b63f0a9e53",
@@ -8,9 +8,9 @@
     "9516658a61cf564d2001e1dc6b3f3fca526848dc65e4ac38faec05317e2dfedc"
   ],
   "webAppUrl": "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec",
-  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b3.05a/Kinojo_1_b3_05a.zip",
-  "notice": "✨ Kinojo 1.b3.05a 업데이트\n• 9가지 UI 수정\n• 화면 밖 잘림 방지\n• 버튼 hover/조회중 활성 이펙트 추가",
-  "news": "UI polish / safe position / hover effects",
-  "patchTitle": "1.b3.05a UI Polish & Safe Position",
-  "patchBody": "스크린샷 기준 9가지 UI 개선을 반영했습니다. 패널이 화면 밖으로 나가지 않도록 위치 저장/복구를 보정하고, 버튼 롤오버 효과와 조회중 메인 버튼 회전 테두리 효과를 추가했습니다."
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b3.05b/Kinojo_1_b3_05b.zip",
+  "notice": "🛠 Kinojo 1.b3.05b 업데이트\n• 웹 미리보기 레이아웃 반영\n• 닫기 버튼 센터 고정\n• 패널 Safe Area 보정",
+  "news": "safe layout preview implementation",
+  "patchTitle": "1.b3.05b Safe Layout Preview Implementation",
+  "patchBody": "웹 미리보기와 동일한 레이아웃을 실제 UI에 반영했습니다. 닫기 버튼 hover 위치 튐, 드래그 시 하단 고정 문제, 우측/하단 잘림 문제를 보정했습니다."
 }
