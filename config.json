@@ -1,5 +1,5 @@
 {
-  "version": "1.b3.05b",
+  "version": "1.b3.05c",
   "buildDate": "260530",
   "enabled": true,
   "passwordHash": "c47986dd8ce4828fe097cf915e94fc9d859bb19d56e2157d86ff11b63f0a9e53",
@@ -8,9 +8,9 @@
     "9516658a61cf564d2001e1dc6b3f3fca526848dc65e4ac38faec05317e2dfedc"
   ],
   "webAppUrl": "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec",
-  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b3.05b/Kinojo_1_b3_05b.zip",
-  "notice": "🛠 Kinojo 1.b3.05b 업데이트\n• 웹 미리보기 레이아웃 반영\n• 닫기 버튼 센터 고정\n• 패널 Safe Area 보정",
-  "news": "safe layout preview implementation",
-  "patchTitle": "1.b3.05b Safe Layout Preview Implementation",
-  "patchBody": "웹 미리보기와 동일한 레이아웃을 실제 UI에 반영했습니다. 닫기 버튼 hover 위치 튐, 드래그 시 하단 고정 문제, 우측/하단 잘림 문제를 보정했습니다."
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b3.05c/Kinojo_1_b3_05c.zip",
+  "notice": "🔧 Kinojo 1.b3.05c 최종 UI 수정\n• 드래그 상하 이동 문제 수정\n• 조회중 버튼 네모 이펙트 제거",
+  "news": "final drag and running button effect fix",
+  "patchTitle": "1.b3.05c Final Drag & Button Effect Fix",
+  "patchBody": "드래그 시 하단 고정 상태로 창이 늘어나던 문제를 수정했습니다. 조회중 버튼의 파란 사각형 회전 이펙트를 제거하고 버튼 내부에서만 보이는 은은한 활성화 효과로 변경했습니다."
 }
