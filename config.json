@@ -1,5 +1,5 @@
 {
-  "version": "1.b7.03",
+  "version": "1.b7.04",
   "buildDate": "260531",
   "enabled": true,
   "passwordHash": "c47986dd8ce4828fe097cf915e94fc9d859bb19d56e2157d86ff11b63f0a9e53",
@@ -8,7 +8,7 @@
     "9516658a61cf564d2001e1dc6b3f3fca526848dc65e4ac38faec05317e2dfedc"
   ],
   "webAppUrl": "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec",
-  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b7.03/Kinojo_1_b7_03.zip",
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.b7.04/Kinojo_1_b7_04.zip",
   "notice": "✅ Kinojo 1.b3.05e 최종 마감\n• MVP 칭호 임시 제거\n• L열 600 고정\n• 버튼 아이콘/오로라 효과 개선",
   "hallOfFameUrl": "https://bit.ly/kinojo-hof",
   "news": "final polish / MVP disabled / review column format",
