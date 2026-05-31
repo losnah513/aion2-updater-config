@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="520" viewBox="0 0 1600 520">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#07111f"/>
+      <stop offset="48%" stop-color="#101b33"/>
+      <stop offset="100%" stop-color="#2b1558"/>
+    </linearGradient>
+    <radialGradient id="glow1" cx="25%" cy="20%" r="60%">
+      <stop offset="0%" stop-color="#67e8f9" stop-opacity=".34"/>
+      <stop offset="100%" stop-color="#67e8f9" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="78%" cy="15%" r="60%">
+      <stop offset="0%" stop-color="#ffd76a" stop-opacity=".26"/>
+      <stop offset="100%" stop-color="#ffd76a" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="64" height="64" patternUnits="userSpaceOnUse">
+      <path d="M64 0H0V64" fill="none" stroke="#8bdcff" stroke-opacity=".08" stroke-width="1"/>
+      <circle cx="0" cy="0" r="1.5" fill="#fff" fill-opacity=".14"/>
+    </pattern>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000" flood-opacity=".45"/>
+    </filter>
+    <filter id="goldGlow">
+      <feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#ffd76a" flood-opacity=".45"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="520" rx="36" fill="url(#bg)"/>
+  <rect width="1600" height="520" rx="36" fill="url(#glow1)"/>
+  <rect width="1600" height="520" rx="36" fill="url(#glow2)"/>
+  <rect width="1600" height="520" rx="36" fill="url(#grid)"/>
+  <g opacity=".22">
+    <path d="M1260 64 C1360 118 1438 208 1485 320" stroke="#ffd76a" stroke-width="3" fill="none"/>
+    <path d="M1202 82 C1312 160 1392 260 1428 394" stroke="#67e8f9" stroke-width="2" fill="none"/>
+    <path d="M1100 442 C1240 386 1388 388 1540 450" stroke="#a78bfa" stroke-width="2" fill="none"/>
+  </g>
+  <g transform="translate(110,88)" filter="shadow">
+    <circle cx="160" cy="160" r="136" fill="rgba(255,215,106,.08)" stroke="#ffd76a" stroke-opacity=".42" stroke-width="3"/>
+    <path d="M94 118h132v40c0 58-31 99-66 116-35-17-66-58-66-116v-40z" fill="#ffd76a" opacity=".92" filter="url(#goldGlow)"/>
+    <path d="M116 90h88l18 32H98l18-32z" fill="#fff0b8"/>
+    <path d="M90 120H48c2 58 30 90 66 94" fill="none" stroke="#ffd76a" stroke-width="20" stroke-linecap="round"/>
+    <path d="M230 120h42c-2 58-30 90-66 94" fill="none" stroke="#ffd76a" stroke-width="20" stroke-linecap="round"/>
+    <rect x="132" y="275" width="56" height="52" rx="10" fill="#fff0b8"/>
+    <rect x="96" y="320" width="128" height="30" rx="12" fill="#ffd76a"/>
+  </g>
+  <g transform="translate(430,128)" filter="shadow">
+    <text x="0" y="0" fill="#eaf6ff" font-size="34" font-family="Arial, sans-serif" font-weight="800" letter-spacing="6">KINOJO ANALYTICS</text>
+    <text x="0" y="92" fill="#ffd76a" font-size="88" font-family="Arial Black, Arial, sans-serif" font-weight="900" letter-spacing="-3" filter="url(#goldGlow)">HALL OF FAME</text>
+    <text x="4" y="150" fill="#cbd5e1" font-size="28" font-family="Arial, sans-serif" font-weight="700">전투력과 성장 기록으로 선정된 최고의 모험가들</text>
+    <g transform="translate(6,196)">
+      <rect x="0" y="0" width="230" height="46" rx="23" fill="rgba(103,232,249,.14)" stroke="#67e8f9" stroke-opacity=".35"/>
+      <text x="24" y="31" fill="#dffbff" font-size="20" font-family="Arial, sans-serif" font-weight="800">PVE · PVP · CLASS</text>
+    </g>
+  </g>
+</svg>
