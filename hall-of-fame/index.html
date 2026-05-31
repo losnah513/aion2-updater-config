@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
   <meta name="description" content="전투력과 성장 기록으로 선정된 최고의 모험가들">
 
   <meta property="og:title" content="Kinojo 명예의 전당">
@@ -26,340 +27,217 @@
       color-scheme: dark;
       --bg: #070b12;
       --panel: rgba(13, 18, 28, .92);
-      --card: rgba(30, 41, 59, .76);
-      --line: rgba(125, 211, 252, .20);
+      --card: rgba(30, 41, 59, .78);
+      --line: rgba(125, 211, 252, .22);
       --text: #eaf6ff;
       --muted: #94a3b8;
       --cyan: #67e8f9;
-      --blue: #60a5fa;
       --violet: #a78bfa;
-      --pink: #f472b6;
       --gold: #facc15;
     }
-
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
       min-height: 100vh;
       background:
-        radial-gradient(circle at 20% 0%, rgba(34,211,238,.18), transparent 32%),
-        radial-gradient(circle at 80% 10%, rgba(167,139,250,.18), transparent 34%),
+        radial-gradient(circle at 12% 0%, rgba(34,211,238,.18), transparent 34%),
+        radial-gradient(circle at 92% 4%, rgba(167,139,250,.20), transparent 34%),
         linear-gradient(180deg, #0f172a, var(--bg));
       color: var(--text);
       font-family: Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
     }
-
-    .wrap {
-      width: min(1120px, 100%);
-      margin: 0 auto;
-      padding: 20px 14px 36px;
-    }
-
+    .wrap { width: min(1180px, 100%); margin: 0 auto; padding: 16px 14px 38px; }
     .hero {
-      position: sticky;
-      top: 0;
-      z-index: 5;
-      padding: 18px 0 12px;
-      backdrop-filter: blur(14px);
-      background: linear-gradient(180deg, rgba(7,11,18,.94), rgba(7,11,18,.70));
-    }
-
-    .title-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 10px;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: clamp(24px, 6vw, 44px);
-      letter-spacing: -1px;
-      line-height: 1.04;
-    }
-
-    .badge {
-      padding: 7px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(103,232,249,.35);
-      background: rgba(15,23,42,.72);
-      color: #dffbff;
-      font-size: 12px;
-      font-weight: 900;
-      white-space: nowrap;
-    }
-
-    .sub {
-      margin: 0;
-      color: #cbd5e1;
-      font-size: 13px;
-      line-height: 1.45;
-    }
-
-    .toolbar {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
-      margin-top: 14px;
-    }
-
-    .search, .refresh {
-      border: 1px solid rgba(125,211,252,.25);
-      background: rgba(15,23,42,.78);
-      color: var(--text);
-      border-radius: 12px;
-      padding: 11px 12px;
-      font-size: 14px;
-      outline: none;
-    }
-
-    .refresh {
-      cursor: pointer;
-      font-weight: 900;
-      background: linear-gradient(135deg, rgba(20,115,255,.80), rgba(124,58,237,.78));
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-      margin-top: 14px;
-    }
-
-    .section {
-      border: 1px solid var(--line);
-      background: var(--panel);
-      border-radius: 18px;
+      border: 1px solid rgba(250,204,21,.22);
+      background:
+        linear-gradient(180deg, rgba(7,11,18,.20), rgba(7,11,18,.90)),
+        url("https://losnah513.github.io/aion2-updater-config/hall-of-fame/assets/hall-preview.jpg") center/cover no-repeat;
+      min-height: 280px;
+      border-radius: 24px;
       overflow: hidden;
-      box-shadow: 0 12px 28px rgba(0,0,0,.28);
+      position: relative;
+      box-shadow: 0 18px 46px rgba(0,0,0,.36), 0 0 30px rgba(34,211,238,.10);
+      display: grid;
+      align-items: end;
+      padding: 22px;
     }
-
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% 25%, rgba(250,204,21,.14), transparent 30%),
+        linear-gradient(90deg, rgba(7,11,18,.70), rgba(7,11,18,.20), rgba(7,11,18,.78));
+      pointer-events: none;
+    }
+    .hero-content { position: relative; z-index: 1; width: min(760px, 100%); }
+    .hero-kicker {
+      display: inline-flex; align-items: center; gap: 6px; padding: 7px 11px;
+      border: 1px solid rgba(103,232,249,.32); border-radius: 999px;
+      background: rgba(15,23,42,.72); color: #dffbff; font-size: 12px; font-weight: 900; margin-bottom: 10px;
+    }
+    h1 {
+      margin: 0; font-size: clamp(28px, 7vw, 58px); letter-spacing: -1.4px; line-height: .98;
+      text-shadow: 0 2px 18px rgba(0,0,0,.55);
+    }
+    .gold { color: var(--gold); }
+    .sub { margin: 10px 0 0; color: #e2e8f0; font-size: 14px; line-height: 1.5; text-shadow: 0 1px 10px rgba(0,0,0,.65); }
+    .toolbar { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; margin-top: 14px; }
+    .search, .refresh {
+      border: 1px solid rgba(125,211,252,.25); background: rgba(15,23,42,.78); color: var(--text);
+      border-radius: 12px; padding: 11px 12px; font-size: 14px; outline: none;
+    }
+    .refresh { cursor: pointer; font-weight: 900; background: linear-gradient(135deg, rgba(20,115,255,.82), rgba(124,58,237,.80)); }
+    .status-strip { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .strip-chip {
+      padding: 8px 10px; border-radius: 999px; background: rgba(15,23,42,.76);
+      border: 1px solid rgba(148,163,184,.18); color: #cbd5e1; font-size: 12px; font-weight: 800;
+    }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+    .section {
+      border: 1px solid var(--line); background: var(--panel); border-radius: 20px; overflow: hidden;
+      box-shadow: 0 12px 30px rgba(0,0,0,.30);
+    }
     .section-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 13px 14px;
-      border-bottom: 1px solid rgba(255,255,255,.07);
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 13px 14px; border-bottom: 1px solid rgba(255,255,255,.07);
       background: linear-gradient(90deg, rgba(38,119,173,.32), rgba(93,44,151,.18));
     }
-
-    .section h2 {
-      margin: 0;
-      font-size: 16px;
-      letter-spacing: -.2px;
+    .section h2 { margin: 0; font-size: 16px; letter-spacing: -.2px; }
+    .section-note { color: #cbd5e1; font-size: 11px; white-space: nowrap; }
+    .list { padding: 10px; display: grid; gap: 8px; }
+    .medal-list { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: stretch; }
+    .medal-card {
+      min-height: 176px; border-radius: 20px; border: 1px solid rgba(250,204,21,.22);
+      background: radial-gradient(circle at 50% 18%, rgba(250,204,21,.18), transparent 32%),
+        linear-gradient(180deg, rgba(30,41,59,.86), rgba(15,23,42,.92));
+      display: grid; place-items: center; text-align: center; padding: 14px 10px; position: relative; overflow: hidden;
     }
-
-    .section-note {
-      color: #cbd5e1;
-      font-size: 11px;
-      white-space: nowrap;
+    .medal-card::before {
+      content: ""; position: absolute; inset: -60px;
+      background: conic-gradient(from 0deg, transparent, rgba(103,232,249,.16), transparent, rgba(167,139,250,.16), transparent);
+      animation: spin 6s linear infinite; opacity: .8;
     }
-
-    .list {
-      padding: 8px;
-      display: grid;
-      gap: 7px;
+    .medal-card > * { position: relative; z-index: 1; }
+    .medal-ring {
+      width: 72px; height: 72px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 10px;
+      font-size: 26px; font-weight: 1000; color: #111827; box-shadow: 0 0 24px rgba(250,204,21,.28);
     }
-
+    .rank-1 .medal-ring { background: linear-gradient(135deg, #fde68a, #facc15); }
+    .rank-2 .medal-ring { background: linear-gradient(135deg, #f8fafc, #94a3b8); }
+    .rank-3 .medal-ring { background: linear-gradient(135deg, #fdba74, #c2410c); }
+    .medal-name { font-size: 15px; font-weight: 1000; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .medal-score { margin-top: 6px; color: #e0f2fe; font-size: 17px; font-weight: 1000; }
+    .medal-meta { margin-top: 5px; color: var(--muted); font-size: 11px; line-height: 1.35; }
     .rank-card {
-      display: grid;
-      grid-template-columns: 42px 1fr auto;
-      align-items: center;
-      gap: 8px;
-      padding: 10px;
-      border: 1px solid rgba(148,163,184,.14);
-      border-radius: 14px;
-      background: var(--card);
-      min-height: 58px;
+      display: grid; grid-template-columns: 42px 1fr auto; align-items: center; gap: 8px; padding: 10px;
+      border: 1px solid rgba(148,163,184,.14); border-radius: 14px; background: var(--card); min-height: 58px;
     }
-
-    .rank {
-      width: 34px;
-      height: 34px;
-      display: grid;
-      place-items: center;
-      border-radius: 11px;
-      background: rgba(255,255,255,.08);
-      font-weight: 1000;
-      color: var(--cyan);
+    .rank { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 11px; background: rgba(255,255,255,.08); font-weight: 1000; color: var(--cyan); }
+    .name { font-size: 15px; font-weight: 1000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .meta { margin-top: 3px; color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .score { color: #e0f2fe; font-size: 13px; font-weight: 900; text-align: right; white-space: nowrap; }
+    .tag-list { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px; }
+    .name-tag {
+      display: inline-flex; align-items: center; gap: 7px; padding: 8px 10px; border-radius: 999px;
+      background: rgba(15,23,42,.78); border: 1px solid rgba(125,211,252,.24);
+      box-shadow: 0 0 12px rgba(34,211,238,.08); font-size: 12px; font-weight: 900; max-width: 100%;
     }
-
-    .rank.gold { color: #111827; background: linear-gradient(135deg, #fde68a, #facc15); }
-    .rank.silver { color: #111827; background: linear-gradient(135deg, #e5e7eb, #94a3b8); }
-    .rank.bronze { color: #111827; background: linear-gradient(135deg, #fdba74, #c2410c); }
-
-    .name {
-      font-size: 15px;
-      font-weight: 1000;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .meta {
-      margin-top: 3px;
-      color: var(--muted);
-      font-size: 12px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .score {
-      color: #e0f2fe;
-      font-size: 13px;
-      font-weight: 900;
-      text-align: right;
-      white-space: nowrap;
-    }
-
-    .empty {
-      color: var(--muted);
-      padding: 18px 12px;
-      text-align: center;
-      font-size: 13px;
-    }
-
+    .name-tag small { color: #93c5fd; font-size: 11px; font-weight: 800; }
+    .empty { color: var(--muted); padding: 18px 12px; text-align: center; font-size: 13px; }
     .full { grid-column: 1 / -1; }
-
-    .footer {
-      margin-top: 16px;
-      text-align: center;
-      color: var(--muted);
-      font-size: 12px;
+    .footer { margin-top: 16px; text-align: center; color: var(--muted); font-size: 12px; }
+    .loading { display: grid; place-items: center; min-height: 300px; color: #dbeafe; font-weight: 900; }
+    .kinojo-loader { display: grid; place-items: center; gap: 14px; text-align: center; padding: 30px 14px; }
+    .kinojo-loader-ring {
+      width: 74px; height: 74px; border-radius: 50%; position: relative;
+      background: conic-gradient(from 0deg, #67e8f9, #3b82f6, #a78bfa, #ec4899, #67e8f9);
+      animation: spin 1.05s linear infinite; box-shadow: 0 0 18px rgba(34,211,238,.45), 0 0 28px rgba(168,85,247,.32);
     }
-
-    .loading {
-      display: grid;
-      place-items: center;
-      min-height: 260px;
-      color: #dbeafe;
-      font-weight: 900;
-    }
-
-    .error {
-      border: 1px solid rgba(248,113,113,.35);
-      background: rgba(127,29,29,.22);
-      color: #fecaca;
-      border-radius: 14px;
-      padding: 14px;
-      margin-top: 14px;
-      line-height: 1.5;
-      font-size: 13px;
-    }
-
+    .kinojo-loader-ring::before { content: ""; position: absolute; inset: 7px; border-radius: 50%; background: #070b12; }
+    .kinojo-loader-ring::after { content: "🏆"; position: absolute; inset: 0; display: grid; place-items: center; font-size: 26px; animation: counterSpin 1.05s linear infinite; }
+    .error { border: 1px solid rgba(248,113,113,.35); background: rgba(127,29,29,.22); color: #fecaca; border-radius: 14px; padding: 14px; margin-top: 14px; line-height: 1.5; font-size: 13px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes counterSpin { to { transform: rotate(-360deg); } }
     @media (max-width: 760px) {
-      .wrap { padding: 12px 10px 28px; }
-      .hero { padding-top: 12px; }
-      .grid { grid-template-columns: 1fr; gap: 10px; }
+      .wrap { padding: 10px 9px 28px; }
+      .hero { min-height: 240px; padding: 18px; border-radius: 20px; }
       .toolbar { grid-template-columns: 1fr; }
-      .refresh { width: 100%; }
+      .grid { grid-template-columns: 1fr; gap: 10px; }
+      .medal-list { grid-template-columns: 1fr; }
+      .medal-card { min-height: 140px; }
       .rank-card { grid-template-columns: 36px 1fr; }
       .score { grid-column: 2; text-align: left; margin-top: -2px; }
       .section-note { display: none; }
     }
   
-    .loading {
-      display: grid;
-      place-items: center;
-      min-height: 300px;
-      color: #dbeafe;
-      font-weight: 900;
+    /* main-only compact layout patch */
+    .refresh { min-height: 34px; padding: 8px 10px; font-size: 12px; border-radius: 10px; }
+    .search { min-height: 34px; padding: 8px 10px; font-size: 13px; }
+    .hero { min-height: 210px; }
+    .hero-kicker { padding: 5px 9px; font-size: 11px; margin-bottom: 7px; }
+    h1 { font-size: clamp(25px, 6vw, 48px); }
+    .sub { margin-top: 7px; font-size: 13px; }
+    .status-strip { gap: 6px; margin-top: 9px; }
+    .strip-chip { padding: 6px 8px; font-size: 11px; }
+    .section-head { padding: 10px 12px; }
+    .section h2 { font-size: 15px; }
+    .medal-list { gap: 7px; }
+    .medal-card {
+      min-height: 86px; display: grid; grid-template-columns: 40px 1fr auto;
+      align-items: center; text-align: left; padding: 9px 10px; border-radius: 15px;
     }
-
-    .kinojo-loader {
-      display: grid;
-      place-items: center;
-      gap: 14px;
-      text-align: center;
-      padding: 30px 14px;
+    .medal-ring { width: 34px; height: 34px; margin: 0; font-size: 18px; }
+    .medal-name { font-size: 14px; padding: 0 8px; }
+    .medal-score { margin: 0; font-size: 14px; text-align: right; }
+    .medal-meta { grid-column: 2 / 4; margin: -8px 0 0; padding-left: 8px; font-size: 10.5px; }
+    .rank-card { min-height: 44px; grid-template-columns: 30px 1fr auto; padding: 8px; }
+    .rank { width: 26px; height: 26px; border-radius: 9px; font-size: 12px; }
+    .name { font-size: 14px; }
+    .meta { font-size: 10.5px; }
+    .score { font-size: 12px; }
+    .tag-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; padding: 10px; }
+    .name-tag {
+      justify-content: center; padding: 8px 6px; border-radius: 12px; font-size: 12px;
+      text-align: center; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
-
-    .kinojo-loader-ring {
-      width: 74px;
-      height: 74px;
-      border-radius: 50%;
-      position: relative;
-      background:
-        conic-gradient(from 0deg, #67e8f9, #3b82f6, #a78bfa, #ec4899, #67e8f9);
-      animation: kinojoHallSpin 1.05s linear infinite;
-      box-shadow:
-        0 0 18px rgba(34, 211, 238, .45),
-        0 0 28px rgba(168, 85, 247, .32);
-    }
-
-    .kinojo-loader-ring::before {
-      content: "";
-      position: absolute;
-      inset: 7px;
-      border-radius: 50%;
-      background: #070b12;
-      box-shadow: inset 0 0 18px rgba(15, 23, 42, .9);
-    }
-
-    .kinojo-loader-ring::after {
-      content: "🏆";
-      position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      font-size: 26px;
-      animation: kinojoHallCounterSpin 1.05s linear infinite;
-    }
-
-    .kinojo-loader-title {
-      font-size: 15px;
-      color: #eaf6ff;
-      font-weight: 1000;
-    }
-
-    .kinojo-loader-sub {
-      margin-top: 4px;
-      font-size: 12px;
-      color: #94a3b8;
-      font-weight: 700;
-    }
-
-    .kinojo-loader-dots::after {
-      content: "";
-      animation: kinojoDots 1.25s steps(4, end) infinite;
-    }
-
-    @keyframes kinojoHallSpin {
-      to { transform: rotate(360deg); }
-    }
-
-    @keyframes kinojoHallCounterSpin {
-      to { transform: rotate(-360deg); }
-    }
-
-    @keyframes kinojoDots {
-      0% { content: ""; }
-      25% { content: "."; }
-      50% { content: ".."; }
-      75% { content: "..."; }
-      100% { content: ""; }
+    .name-tag small { display: none; }
+    .empty { padding: 12px 10px; font-size: 12px; }
+    @media (max-width: 760px) {
+      .hero { min-height: 170px; padding: 14px; }
+      .toolbar { grid-template-columns: 1fr auto auto; gap: 6px; }
+      .refresh { font-size: 0; width: 38px; padding: 8px 0; }
+      #refreshBtn::before { content: "🔄"; font-size: 16px; }
+      #suggestBtn::before { content: "➕"; font-size: 16px; }
+      .medal-list { grid-template-columns: 1fr; }
+      .medal-card { min-height: 58px; }
+      .medal-meta { margin-top: -4px; }
+      .grid { gap: 8px; }
+      .section-head { padding: 9px 10px; }
+      .tag-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 
   </style>
 </head>
 <body>
   <main class="wrap">
-    <header class="hero">
-      <div class="title-row">
-        <h1>🏆 Kinojo 명예의 전당</h1>
-        <div class="badge" id="updatedBadge">불러오는 중</div>
+    <section class="hero">
+      <div class="hero-content">
+        <div class="hero-kicker">마족-지켈 2002 기준 · Kinojo Analytics</div>
+        <h1>KINOJO<br><span class="gold">HALL OF FAME</span></h1>
+        <p class="sub">전투력과 성장 기록으로 선정된 최고의 모험가들이 기록되는 곳.</p>
+        <div class="status-strip">
+          <span class="strip-chip" id="updatedBadge">불러오는 중</span>
+          <span class="strip-chip">기준 서버: 마족-지켈 2002</span>
+          <span class="strip-chip">1xxx 천족 · 2xxx 마족</span>
+        </div>
+        <div class="toolbar">
+          <input class="search" id="searchInput" placeholder="캐릭터명 / 서버 / 부문 검색" />
+          <button class="refresh" id="refreshBtn">새로고침</button>
+          <button class="refresh" id="suggestBtn" type="button">새 항목 제안</button>
+        </div>
       </div>
-      <p class="sub">전투력, 성장 기록, 서버 분류를 기준으로 자동 집계되는 키노조 전용 랭킹 페이지입니다.</p>
-      <div class="toolbar">
-        <input class="search" id="searchInput" placeholder="캐릭터명 / 서버 / 부문 검색" />
-        <button class="refresh" id="refreshBtn">새로고침</button>
-        <button class="refresh" id="suggestBtn" type="button">새 항목 제안</button>
-      </div>
-    </header>
+    </section>
 
     <section class="section full" id="suggestionBox" style="display:none; margin-top:14px;">
       <div class="section-head">
@@ -378,15 +256,13 @@
       <div class="kinojo-loader">
         <div class="kinojo-loader-ring"></div>
         <div>
-          <div class="kinojo-loader-title">명예의 전당 데이터를 불러오는 중<span class="kinojo-loader-dots"></span></div>
-          <div class="kinojo-loader-sub">전투력 · 성장 기록 · 서버 정보를 정리하고 있어요</div>
+          <div>명예의 전당 데이터를 불러오는 중...</div>
+          <div style="margin-top:4px;color:#94a3b8;font-size:12px;">전투력 · 성장 기록 · 서버 정보를 정리하고 있어요</div>
         </div>
       </div>
     </div>
 
-    <footer class="footer">
-      Kinojo Hall of Fame · 모바일 최적화 페이지
-    </footer>
+    <footer class="footer">Kinojo Hall of Fame · 기준 서버: 마족-지켈 2002</footer>
   </main>
 
   <script>
@@ -394,12 +270,12 @@
       || "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec";
 
     const SECTION_ORDER = [
-      ["pveTop", "🛡 PVE 전투력 TOP 3", "PVE 기준 상위 3명"],
-      ["pvpTop", "⚔ PVP 전투력 TOP 3", "PVP 기준 상위 3명"],
-      ["attendance", "📅 개근상", "1주일 이상 꾸준히 성장"],
-      ["amexBlack", "💳 아맥스 블랙회원", "단기간 급상승 캐릭터"],
-      ["demonFamily", "😈 같은 마족이면 가족이지", "타서버 마족 캐릭터"],
-      ["partyFriend", "🤝 같은 파티면 친구지", "천족 서버 캐릭터"]
+      ["pveTop", "🛡 PVE 전투력 TOP 3", "PVE 기준 상위 3명", "medal"],
+      ["pvpTop", "⚔ PVP 전투력 TOP 3", "PVP 기준 상위 3명", "medal"],
+      ["attendance", "📅 개근상", "1주일 이상 꾸준히 성장", "card"],
+      ["amexBlack", "💳 아맥스 블랙회원", "단기간 급상승 캐릭터", "card"],
+      ["demonFamily", "😈 같은 마족이면 가족이지", "타서버 마족 캐릭터", "tag"],
+      ["partyFriend", "🤝 같은 파티면 친구지", "천족 서버 캐릭터", "tag"]
     ];
 
     let hallData = null;
@@ -425,50 +301,65 @@
       return n.toLocaleString("ko-KR");
     }
 
-    function rankClass(index) {
-      if (index === 0) return "gold";
-      if (index === 1) return "silver";
-      if (index === 2) return "bronze";
-      return "";
-    }
-
     function matchItem(item) {
       if (!keyword) return true;
-      const target = [
-        item.name,
-        item.server,
-        item.faction,
-        item.memo,
-        item.category,
-        item.value
-      ].join(" ").toLowerCase();
+      const target = [item.name, item.serverId, item.faction, item.memo, item.category, item.value].join(" ").toLowerCase();
       return target.includes(keyword.toLowerCase());
+    }
+
+    function rankIcon(index) {
+      return index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : index + 1;
+    }
+
+    function medalCard(item, index) {
+      return `
+        <article class="medal-card rank-${index + 1}">
+          <div class="medal-ring">${rankIcon(index)}</div>
+          <div class="medal-name">${escapeHtml(item.name || "-")}</div>
+          <div class="medal-score">${escapeHtml(item.label || formatNumber(item.value))}</div>
+          <div class="medal-meta">${escapeHtml(item.meta || "")}</div>
+        </article>
+      `;
     }
 
     function card(item, index) {
       return `
         <article class="rank-card">
-          <div class="rank ${rankClass(index)}">${index + 1}</div>
+          <div class="rank">${index + 1}</div>
           <div>
             <div class="name">${escapeHtml(item.name || "-")}</div>
-            <div class="meta">${escapeHtml([item.server, item.faction, item.memo].filter(Boolean).join(" · ") || item.category || "")}</div>
+            <div class="meta">${escapeHtml(item.meta || "")}</div>
           </div>
           <div class="score">${escapeHtml(item.label || formatNumber(item.value))}</div>
         </article>
       `;
     }
 
-    function section(key, title, note) {
-      const list = (hallData && hallData[key] ? hallData[key] : []).filter(matchItem);
+    function tag(item) {
       return `
-        <section class="section">
+        <span class="name-tag">
+          ${escapeHtml(item.name || "-")}
+        </span>
+      `;
+    }
+
+    function section(key, title, note, type) {
+      const list = (hallData && hallData[key] ? hallData[key] : []).filter(matchItem);
+      const body = !list.length
+        ? `<div class="empty">아직 데이터가 부족해요.</div>`
+        : type === "medal"
+          ? `<div class="list medal-list">${list.map(medalCard).join("")}</div>`
+          : type === "tag"
+            ? `<div class="tag-list">${list.map(tag).join("")}</div>`
+            : `<div class="list">${list.map(card).join("")}</div>`;
+
+      return `
+        <section class="section ${type === "medal" ? "full" : ""}">
           <div class="section-head">
             <h2>${title}</h2>
             <span class="section-note">${note}</span>
           </div>
-          <div class="list">
-            ${list.length ? list.map(card).join("") : `<div class="empty">아직 데이터가 부족해요.</div>`}
-          </div>
+          ${body}
         </section>
       `;
     }
@@ -477,6 +368,7 @@
       if (!hallData) return;
       updatedBadge.textContent = hallData.updatedAt ? `업데이트 ${hallData.updatedAt}` : "업데이트 정보 없음";
       app.className = "grid";
+
       const recentSuggestions = (hallData.suggestions || []).length
         ? `<section class="section full">
             <div class="section-head">
@@ -498,20 +390,24 @@
           </section>`
         : "";
 
-      app.innerHTML = SECTION_ORDER.map(([key, title, note]) => section(key, title, note)).join("") + recentSuggestions;
+      app.innerHTML = SECTION_ORDER.map(([key, title, note, type]) => section(key, title, note, type)).join("") + recentSuggestions;
+    }
+
+    function loadingHtml() {
+      return `
+        <div class="kinojo-loader">
+          <div class="kinojo-loader-ring"></div>
+          <div>
+            <div>명예의 전당 데이터를 불러오는 중...</div>
+            <div style="margin-top:4px;color:#94a3b8;font-size:12px;">전투력 · 성장 기록 · 서버 정보를 정리하고 있어요</div>
+          </div>
+        </div>
+      `;
     }
 
     async function load() {
       app.className = "loading";
-      app.innerHTML = `
-        <div class="kinojo-loader">
-          <div class="kinojo-loader-ring"></div>
-          <div>
-            <div class="kinojo-loader-title">명예의 전당 데이터를 불러오는 중<span class="kinojo-loader-dots"></span></div>
-            <div class="kinojo-loader-sub">전투력 · 성장 기록 · 서버 정보를 정리하고 있어요</div>
-          </div>
-        </div>
-      `;
+      app.innerHTML = loadingHtml();
       try {
         const url = `${WEB_APP_URL}${WEB_APP_URL.includes("?") ? "&" : "?"}action=hallOfFame&t=${Date.now()}`;
         const res = await fetch(url, { cache: "no-store" });
@@ -542,50 +438,46 @@
     const suggestionBox = document.getElementById("suggestionBox");
     const submitSuggestBtn = document.getElementById("submitSuggestBtn");
 
-    if (suggestBtn && suggestionBox) {
-      suggestBtn.addEventListener("click", () => {
-        suggestionBox.style.display = suggestionBox.style.display === "none" ? "block" : "none";
-      });
-    }
+    suggestBtn.addEventListener("click", () => {
+      suggestionBox.style.display = suggestionBox.style.display === "none" ? "block" : "none";
+    });
 
-    if (submitSuggestBtn) {
-      submitSuggestBtn.addEventListener("click", async () => {
-        const title = document.getElementById("suggestTitle").value.trim();
-        const proposer = document.getElementById("suggestProposer").value.trim();
-        const memo = document.getElementById("suggestMemo").value.trim();
+    submitSuggestBtn.addEventListener("click", async () => {
+      const title = document.getElementById("suggestTitle").value.trim();
+      const proposer = document.getElementById("suggestProposer").value.trim();
+      const memo = document.getElementById("suggestMemo").value.trim();
 
-        if (!title) {
-          alert("항목 이름을 입력해 주세요.");
-          return;
-        }
+      if (!title) {
+        alert("항목 이름을 입력해 주세요.");
+        return;
+      }
 
-        submitSuggestBtn.disabled = true;
-        submitSuggestBtn.textContent = "전송 중...";
+      submitSuggestBtn.disabled = true;
+      submitSuggestBtn.textContent = "전송 중...";
 
-        try {
-          const res = await fetch(WEB_APP_URL, {
-            method: "POST",
-            body: JSON.stringify({
-              action: "hallSuggestion",
-              title,
-              proposer,
-              memo
-            })
-          });
-          const data = await res.json();
-          if (!data.ok) throw new Error(data.message || "전송 실패");
-          alert("제안이 접수되었습니다.");
-          document.getElementById("suggestTitle").value = "";
-          document.getElementById("suggestMemo").value = "";
-          await load();
-        } catch (err) {
-          alert("제안 전송에 실패했습니다: " + (err.message || err));
-        } finally {
-          submitSuggestBtn.disabled = false;
-          submitSuggestBtn.textContent = "제안 보내기";
-        }
-      });
-    }
+      try {
+        const res = await fetch(WEB_APP_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "hallSuggestion",
+            title,
+            proposer,
+            memo
+          })
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.message || "전송 실패");
+        alert("제안이 접수되었습니다.");
+        document.getElementById("suggestTitle").value = "";
+        document.getElementById("suggestMemo").value = "";
+        await load();
+      } catch (err) {
+        alert("제안 전송에 실패했습니다: " + (err.message || err));
+      } finally {
+        submitSuggestBtn.disabled = false;
+        submitSuggestBtn.textContent = "제안 보내기";
+      }
+    });
 
     load();
   </script>
