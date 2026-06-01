@@ -1,5 +1,5 @@
 {
-  "version": "1.c0.00",
+  "version": "1.c1.01a",
   "buildDate": "260601",
   "enabled": true,
   "passwordHash": "c47986dd8ce4828fe097cf915e94fc9d859bb19d56e2157d86ff11b63f0a9e53",
@@ -8,10 +8,10 @@
     "9516658a61cf564d2001e1dc6b3f3fca526848dc65e4ac38faec05317e2dfedc"
   ],
   "webAppUrl": "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec",
-  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.c0.00/Kinojo_1_c0_00.zip",
-  "notice": "✅ Kinojo 1.c0.00 업데이트\n• 명예의 전당 순위 엠블럼 추가\n• MVP 챌린저 대기 연출 추가\n• 클래스 상태 리뷰/10줄 고정 개선",
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.c1.01a/Kinojo_1_c1_01a.zip",
+  "notice": "✅ Kinojo 1.c1.01a 핫픽스\n• 조회 시작 시 기존 AI 리뷰 전체 삭제 제거\n• 조회 성공 캐릭터만 리뷰 개별 갱신\n• 실패/중단 캐릭터의 기존 리뷰 유지",
   "hallOfFameUrl": "https://bit.ly/kinojo-hof",
-  "news": "hall emblem / class review / fixed 10-row class ranking",
-  "patchTitle": "1.c0.00 Hall Emblem & Class Review Update",
-  "patchBody": "명예의 전당에 순위 엠블럼과 MVP 챌린저 대기 연출을 추가했습니다. 클래스별 순위는 10줄 높이를 유지하고, 총 인원 수 기준의 클래스 상태 리뷰를 표시합니다."
+  "news": "AI review preservation hotfix",
+  "patchTitle": "1.c1.01a AI Review Preservation Hotfix",
+  "patchBody": "조회 시작 시 L/M열 AI 리뷰를 전체 삭제하지 않고, 조회 성공한 캐릭터 행만 개별 갱신하도록 수정했습니다."
 }
