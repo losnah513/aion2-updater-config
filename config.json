@@ -1,9 +1,15 @@
 {
-  "version": "1.c1.01c",
+  "version": "1.c1.01d",
+  "buildDate": "260601",
   "enabled": true,
   "testMode": false,
+  "passwordHash": "c47986dd8ce4828fe097cf915e94fc9d859bb19d56e2157d86ff11b63f0a9e53",
+  "adminPasswordHashes": [
+    "de9fe7e1e91bc7448ff39abf12a58e25c8ef6680864650c6bf2bf8e24c26e15e",
+    "9516658a61cf564d2001e1dc6b3f3fca526848dc65e4ac38faec05317e2dfedc"
+  ],
   "webAppUrl": "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec",
-  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.c1.01c/Kinojo_1_c1_01c.zip",
-  "notice": "✅ Kinojo 1.c1.01c 업데이트\n• KINOJO INFO 메인 페이지 추가\n• 시스템 시트 생성 위치 보호 강화\n• 명예의 전당 로딩 오류 보강",
-  "patchTitle": "1.c1.01c KINOJO INFO Portal Hotfix"
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.c1.01d/Kinojo_1_c1_01d.zip",
+  "notice": "✅ Kinojo 1.c1.01d 핫픽스\n• config.json passwordHash 누락 방지\n• 시스템 시트 생성 위치 강제 보강\n• 명예의 전당 배너 v2 파일 교체\n• 캐릭터 버튼 긴 이름 표시 개선",
+  "patchTitle": "1.c1.01d Safety Hotfix"
 }
