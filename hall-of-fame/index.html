@@ -7,22 +7,62 @@
 <meta property="og:description" content="전투력과 성장 기록으로 선정된 최고의 모험가들">
 <meta property="og:image" content="https://losnah513.github.io/aion2-updater-config/hall-of-fame/assets/hall-banner-v2.png?v=1c101e">
 <title>Kinojo 명예의 전당</title>
-<link rel="stylesheet" href="css/hall.css?v=webpatch-20260602-2">
+<link rel="stylesheet" href="css/hall.css?v=ui-phase1-20260603">
 </head>
 <body>
 <main class="wrap">
 <a class="home-link" href="../">← KINOJO INFO</a>
 <section class="banner"><img src="assets/hall-banner-v2.png?v=1c101e" alt="Kinojo Hall of Fame"></section>
-<section class="topbar"><div class="brand"><h1>KINOJO 명예의 전당</h1><div class="subtitle">전투력과 성장 기록으로 선정된 최고의 모험가들</div></div><button class="sub-toggle" id="subToggle"><span class="toggle-knob"></span><span class="toggle-text">부캐 포함 OFF</span></button><section class="visit-mini" id="visitCard">👀 방문자 통계를 불러오는 중...</section><button class="btn top-suggest-btn" id="topSuggestBtn" type="button">아이디어 제안 및 건의</button></section>
+<section class="topbar">
+  <div class="brand compact-brand" id="adminTrigger" title="관리자 메뉴">
+    <div class="subtitle">전투력과 성장 기록으로 선정된 최고의 모험가들</div>
+  </div>
+  <div class="top-actions">
+    <button class="sub-toggle" id="subToggle" type="button"><span class="toggle-knob"></span><span class="toggle-text">부캐 포함 OFF</span></button>
+    <section class="visit-mini" id="visitCard">👀 방문자 통계를 불러오는 중...</section>
+    <button class="btn top-suggest-btn" id="topSuggestBtn" type="button">아이디어 제안 및 건의</button>
+    <button class="theme-toggle-btn" id="themeToggleBtn" type="button" title="야간모드 전환" aria-label="야간모드 전환">
+      <img src="assets/icons/theme-toggle.svg" alt="">
+    </button>
+  </div>
+</section>
 <section class="chick-card" id="chickCard"><div class="chick-line"><div class="chick-head"><div class="chick-icon">🐥</div><div><div class="chick-title" id="chickTitle">신입 병아리</div><div class="chick-sub" id="chickSub">새로운 모험가들을 환영합니다!</div></div></div><div class="chick-tags" id="chickTags"></div></div></section>
 <section class="section" id="suggestionBox" style="display:none;margin-bottom:12px"><div class="section-head"><h2>💡 아이디어 제안 및 건의</h2><span class="section-note">운영자 검토 후 반영</span></div><div class="list"><input class="search" id="suggestTitle" placeholder="항목 이름"><input class="search" id="suggestProposer" placeholder="제안자"><textarea class="search" id="suggestMemo" rows="3" placeholder="기준 설명"></textarea><div class="suggest-actions"><button class="btn" id="submitSuggestBtn">제안 보내기</button><button class="btn" id="cancelSuggestBtn" type="button">취소</button></div></div></section>
 <div id="app" class="loading"><div><div class="loader-ring"></div><div>명예의 전당 데이터를 불러오는 중...</div></div></div>
 
-<section class="reaction-modal-backdrop" id="reactionModal"><div class="reaction-modal"><div class="reaction-modal-head"><span id="reactionModalTitle">캐릭터님께 한마디</span><button class="reaction-close" id="reactionCloseBtn" type="button" aria-label="닫기">×</button></div><div class="reaction-modal-body"><div class="reaction-choice"><button id="reactionLikeBtn" type="button">👍 좋아요</button><button id="reactionDislikeBtn" type="button">👎 싫어요</button></div><div class="reaction-input-row"><input class="reaction-comment" id="reactionComment" maxlength="20" placeholder="전하고 싶은 말을 남겨주세요 (20자 이내)"><button id="reactionSubmitBtn" class="send-btn" type="button" title="보내기" aria-label="보내기">✈</button></div><div class="reaction-status" id="reactionStatus" aria-live="polite"></div></div></div></section>
+<section class="reaction-modal-backdrop reaction-drawer-backdrop" id="reactionModal">
+  <aside class="reaction-modal reaction-drawer" role="dialog" aria-modal="true" aria-labelledby="reactionModalTitle">
+    <div class="reaction-modal-head">
+      <span id="reactionModalTitle">캐릭터님께 한마디</span>
+      <button class="reaction-close" id="reactionCloseBtn" type="button" aria-label="닫기">×</button>
+    </div>
+    <div class="reaction-modal-body">
+      <div class="reaction-choice">
+        <button id="reactionLikeBtn" type="button"><img src="assets/icons/reaction-like.svg" alt=""> 좋아요</button>
+        <button id="reactionDislikeBtn" type="button"><img src="assets/icons/reaction-dislike.svg" alt=""> 싫어요</button>
+      </div>
+      <div class="reaction-input-row">
+        <input class="reaction-comment" id="reactionComment" maxlength="20" placeholder="전하고 싶은 말을 남겨주세요 (20자 이내)">
+        <button id="reactionSubmitBtn" class="send-btn" type="button" title="보내기" aria-label="보내기">
+          <img src="assets/icons/paper-plane-send.svg" alt="">
+        </button>
+      </div>
+      <div class="reaction-status" id="reactionStatus" aria-live="polite"></div>
+    </div>
+  </aside>
+</section>
 
 <section class="admin-modal-backdrop" id="adminModal"><div class="admin-modal"><div class="admin-modal-head">🔧 키노조 관리자 메뉴</div><div class="admin-modal-body"><button class="btn" id="adminMvpBtn" type="button">MVP 후보 확인</button><button class="btn" id="adminVisitBtn" type="button">방문수 +1</button><button class="btn" id="adminBoostBtn" type="button">방문수 부스트 +31</button><button class="btn" id="adminSnapshotBtn" type="button">성장왕 스냅샷 생성</button><button class="btn admin-close" id="adminCloseBtn" type="button">닫기</button></div></div></section>
-<footer class="footer">Powered by AION2 × KINOJO</footer>
+<footer class="site-footer">
+  <div class="footer-links">
+    <a href="../pages/about.html">사이트 소개</a>
+    <a href="../pages/terms.html">이용약관</a>
+    <a href="../pages/privacy.html">개인정보처리방침</a>
+    <a href="../pages/contact.html">문의하기</a>
+  </div>
+  <div class="footer-copy">Powered by AION2 × KINOJO</div>
+</footer>
 </main>
-<script src="js/app.js?v=webpatch-20260602-2"></script>
+<script src="js/app.js?v=ui-phase1-20260603"></script>
 </body>
 </html>

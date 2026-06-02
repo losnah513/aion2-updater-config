@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" aria-label="theme-toggle">
+  <!-- KINOJO INFO theme-toggle: black / white only -->
+  <rect x="21" y="77" width="214" height="102" rx="51" fill="#fff" stroke="#000" stroke-width="10"/>
+
+  <!-- left sun -->
+  <circle cx="75" cy="128" r="17" fill="#fff" stroke="#000" stroke-width="8"/>
+  <path d="M75 88v16M75 152v16M35 128h16M99 128h16M47 100l11 11M92 145l11 11M103 100l-11 11M58 145l-11 11" stroke="#000" stroke-width="7" stroke-linecap="round"/>
+
+  <!-- right night button -->
+  <rect x="124" y="90" width="98" height="76" rx="38" fill="#000"/>
+
+  <!-- crescent moon, built with black/white only -->
+  <circle cx="170" cy="128" r="27" fill="#fff"/>
+  <circle cx="181" cy="119" r="27" fill="#000"/>
+
+  <!-- star -->
+  <path d="M205 106l5 12 12 5-12 5-5 12-5-12-12-5 12-5z" fill="#fff"/>
+</svg>
