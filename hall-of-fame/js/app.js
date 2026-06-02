@@ -2,7 +2,7 @@ const WEB_APP_URL=new URLSearchParams(location.search).get("api")||"https://scri
 const CLASS_ORDER=["검성","수호성","살성","궁성","정령성","마도성","치유성","호법성"];
 const CLASS_ICONS={"검성":"assets/class_icon_gladiator.png","수호성":"assets/class_icon_templar.png","살성":"assets/class_icon_assassin.png","궁성":"assets/class_icon_ranger.png","정령성":"assets/class_icon_elementalist.png","마도성":"assets/class_icon_sorcerer.png","치유성":"assets/class_icon_cleric.png","호법성":"assets/class_icon_chanter.png"};
 const RANK_EMBLEMS={mvp:"assets/emblem_mvp_challenger.png",diamond:"assets/emblem_rank_diamond.png",crystal:"assets/emblem_rank_crystal.png",gold:"assets/emblem_rank_gold.png",silver:"assets/emblem_rank_silver.png",bronze:"assets/emblem_rank_bronze.png"};
-let hallData=null,keyword="",includeSubs=false,page=1,activeRankClass="전체",chicksExpanded=false,longPressTimer=null,longPressFired=false,loadingTimer=null,loadingStep=0,currentReactionItem=null,currentReactionType="like",reactionCarouselIndex=0,reactionCarouselPausedUntil=0,reactionSubmitting=false,searchComposing=false,searchDebounceTimer=null,searchDraft="";
+let hallData=null,keyword="",includeSubs=false,page=1,activeRankClass="전체",chicksExpanded=false,longPressTimer=null,longPressFired=false,loadingTimer=null,loadingStep=0,currentReactionItem=null,currentReactionType="like",reactionCarouselIndex=0,reactionCarouselPausedUntil=0,reactionSubmitting=false,searchComposing=false,searchDebounceTimer=null;
 const PAGE_SIZE=10,app=document.getElementById("app");
 function escapeHtml(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;")}
 function rankIcon(i){return i===0?"🥇":i===1?"🥈":i===2?"🥉":i+1}
@@ -113,7 +113,7 @@ function emptyRankRowHtml(rank){
 function searchToolsHtml(){
   const resultCount=currentRankList().length;
   const info=keyword?'<div class="search-info">검색 결과 '+resultCount+'명 · 원래 순위 기준으로 표시됩니다.</div>':'';
-  return '<section class="tools rank-tools"><input class="search" id="rankSearchInput" value="'+escapeHtml(searchDraft||keyword)+'" placeholder="캐릭터명 / 서버 / 직업 검색"><button class="btn" id="rankRefreshBtn">새로고침</button><button class="btn" id="rankClearBtn" type="button">초기화</button></section>'+info;
+  return '<section class="tools rank-tools"><input class="search" id="rankSearchInput" value="'+escapeHtml(keyword)+'" placeholder="캐릭터명 / 서버 / 직업 검색"><button class="btn" id="rankRefreshBtn">새로고침</button><button class="btn" id="rankClearBtn" type="button">초기화</button></section>'+info;
 }
 
 function overallTable(){
@@ -150,77 +150,11 @@ function overallTable(){
 
   return '<section class="overall"><div class="overall-head"><h2>'+title+'</h2><div class="page-tools"><span>'+page+' / '+totalPages+'</span><button class="page-btn" data-page="prev">‹</button><button class="page-btn" data-page="next">›</button></div></div>'+searchToolsHtml()+rankTabs()+classReviewBoxHtml(activeRankClass)+'<div class="table-scroll"><table class="rank-table"><colgroup><col class="num"><col class="char-col"><col class="class-col"><col class="power-col"><col class="power-col"><col class="review-col"></colgroup><thead><tr><th class="num">순위</th><th>캐릭터명</th><th>클래스</th><th>PVE</th><th>PVP</th><th>AI 리뷰</th></tr></thead><tbody>'+rows.join("")+'</tbody></table></div></section>';
 }
-function render(){
-  if(!hallData)return;
-
-  const active=document.activeElement;
-  const shouldRestoreSearch=active&&active.id==="rankSearchInput";
-  const restoreValue=shouldRestoreSearch?active.value:null;
-  const restoreStart=shouldRestoreSearch?active.selectionStart:null;
-  const restoreEnd=shouldRestoreSearch?active.selectionEnd:null;
-
-  renderChicks();
-  app.className="";
-  app.innerHTML=mvpSection()+reactionBoard()+awardsBoard()+'<div class="dashboard"><div><div class="top-grid">'+rankBox("⚔ PVE TOP 5","",hallData.pveTop)+rankBox("⚔ PVP TOP 5","",hallData.pvpTop)+'</div></div><div class="side-stack">'+tagBox("😈 같은 마족이면 가족이지","타서버 마족",currentDemon())+tagBox("🤝 같은 파티면 친구지","천족 서버",currentParty())+'</div></div>'+overallTable();
-  bindDynamic();
-  bindCharacterButtons();
-
-  if(shouldRestoreSearch){
-    const next=document.getElementById("rankSearchInput");
-    if(next){
-      next.value=restoreValue;
-      searchDraft=restoreValue;
-      requestAnimationFrame(()=>{
-        next.focus();
-        try{next.setSelectionRange(restoreStart??next.value.length, restoreEnd??next.value.length)}catch(e){}
-      });
-    }
-  }
-
-  requestAnimationFrame(applyOverflowMarquee);
-}
-
-function scheduleSearchCommit(){
-  clearTimeout(searchDebounceTimer);
-  searchDebounceTimer=setTimeout(()=>{
-    if(searchComposing)return;
-    keyword=(searchDraft||"").trim();
-    page=1;
-    render();
-  },700);
-}
-
-function bindDynamic(){
-  document.querySelectorAll("[data-page]").forEach(btn=>btn.onclick=()=>{const total=Math.max(1,Math.ceil(currentRankList().length/PAGE_SIZE));page+=btn.dataset.page==="next"?1:-1;if(page<1)page=1;if(page>total)page=total;render()});
-  document.querySelectorAll("[data-rank-class]").forEach(btn=>btn.onclick=()=>{activeRankClass=btn.dataset.rankClass;page=1;render()});
-
-  const search=document.getElementById("rankSearchInput");
-  if(search){
-    searchDraft=search.value;
-    search.oncompositionstart=()=>{searchComposing=true};
-    search.oncompositionend=e=>{searchComposing=false;searchDraft=e.target.value;scheduleSearchCommit()};
-    search.oninput=e=>{searchDraft=e.target.value;if(searchComposing)return;scheduleSearchCommit()};
-    search.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();clearTimeout(searchDebounceTimer);keyword=(searchDraft||"").trim();page=1;render()}};
-  }
-
-  const refresh=document.getElementById("rankRefreshBtn");
-  if(refresh)refresh.onclick=load;
-  const clear=document.getElementById("rankClearBtn");
-  if(clear)clear.onclick=()=>{keyword="";searchDraft="";page=1;render()};
-}
-
-function applyOverflowMarquee(){
-  document.querySelectorAll(".flow-candidate").forEach(el=>{
-    el.classList.remove("marquee");
-    el.style.removeProperty("--marquee-shift");
-    const mover=el.querySelector(".character-button")||el;
-    const overflow=mover.scrollWidth-el.clientWidth;
-    if(overflow>2){
-      el.style.setProperty("--marquee-shift","-"+(overflow+18)+"px");
-      el.classList.add("marquee");
-    }
-  });
-}
+function render(){if(!hallData)return;renderChicks();app.className="";app.innerHTML=mvpSection()+reactionBoard()+awardsBoard()+'<div class="dashboard"><div><div class="top-grid">'+rankBox("⚔ PVE TOP 5","",hallData.pveTop)+rankBox("⚔ PVP TOP 5","",hallData.pvpTop)+'</div></div><div class="side-stack">'+tagBox("😈 같은 마족이면 가족이지","타서버 마족",currentDemon())+tagBox("🤝 같은 파티면 친구지","천족 서버",currentParty())+'</div></div>'+overallTable();bindDynamic();bindCharacterButtons();requestAnimationFrame(applyOverflowMarquee)}
+function renderPreserveSearchFocus(){const active=document.activeElement;const focused=active&&active.id==="rankSearchInput";const sel=focused?active.selectionStart:null;render();if(focused){requestAnimationFrame(()=>{const next=document.getElementById("rankSearchInput");if(!next)return;next.focus({preventScroll:true});const pos=Math.min(sel??next.value.length,next.value.length);try{next.setSelectionRange(pos,pos)}catch(e){}})}}
+function scheduleSearchRender(value){keyword=String(value||"").trim();clearTimeout(searchDebounceTimer);searchDebounceTimer=setTimeout(()=>{page=1;renderPreserveSearchFocus()},650)}
+function bindDynamic(){document.querySelectorAll("[data-page]").forEach(btn=>btn.onclick=()=>{const total=Math.max(1,Math.ceil(currentRankList().length/PAGE_SIZE));page+=btn.dataset.page==="next"?1:-1;if(page<1)page=1;if(page>total)page=total;render()});document.querySelectorAll("[data-rank-class]").forEach(btn=>btn.onclick=()=>{activeRankClass=btn.dataset.rankClass;page=1;render()});const search=document.getElementById("rankSearchInput");if(search){search.oncompositionstart=()=>{searchComposing=true;clearTimeout(searchDebounceTimer)};search.oncompositionend=e=>{searchComposing=false;scheduleSearchRender(e.target.value)};search.oninput=e=>{if(searchComposing)return;scheduleSearchRender(e.target.value)}}const refresh=document.getElementById("rankRefreshBtn");if(refresh)refresh.onclick=load;const clear=document.getElementById("rankClearBtn");if(clear)clear.onclick=()=>{keyword="";page=1;render()}}
+function applyOverflowMarquee(){document.querySelectorAll(".flow-candidate").forEach(el=>{el.classList.remove("marquee");el.style.removeProperty("--marquee-shift");const parent=el.parentElement;if(!parent)return;const overflow=el.scrollWidth-parent.clientWidth;if(overflow>2){el.style.setProperty("--marquee-shift","-"+(overflow+12)+"px");el.classList.add("marquee")}})}
 function startLoadingText(){stopLoadingText();const messages=["명예의 전당 데이터를 불러오는 중","엠블럼을 준비하는 중","레기온 기록을 확인하는 중","순위표를 정리하는 중"];loadingStep=0;const target=()=>{const el=document.getElementById("loaderText");if(!el)return;const msg=messages[Math.floor(loadingStep/4)%messages.length];const dots=".".repeat(loadingStep%4);el.textContent=msg+dots;loadingStep++};target();loadingTimer=setInterval(target,360)}
 function stopLoadingText(){if(loadingTimer){clearInterval(loadingTimer);loadingTimer=null}}
 function preloadImages(paths){return Promise.all(paths.map(src=>new Promise(resolve=>{const img=new Image();img.onload=()=>resolve(true);img.onerror=()=>resolve(false);img.src=src+"?v=1c101e"}))) }
@@ -250,21 +184,83 @@ function setReactionLimitLoading_(){
     if(likeBtn) likeBtn.classList.remove("checking");
     if(dislikeBtn) dislikeBtn.classList.remove("checking");
     const c=document.getElementById("reactionComment");
-    if(c) c.placeholder="20자 이내 한줄 코멘트";
+    if(c) c.placeholder="전하고 싶은 말을 남겨주세요 (20자 이내)";
   },450);
 }
 
-function openReactionModal(item){reactionSubmitting=false;currentReactionItem=item;currentReactionType="like";document.getElementById("reactionModalTitle").textContent=item.name+" 반응 남기기";document.getElementById("reactionComment").value="";const submitBtn=document.getElementById("reactionSubmitBtn");if(submitBtn){submitBtn.disabled=false;submitBtn.textContent="확인"}document.getElementById("reactionLikeBtn").classList.add("active");document.getElementById("reactionDislikeBtn").classList.remove("active");setReactionLimitLoading_();document.getElementById("reactionModal").style.display="flex"}
+function openReactionModal(item){reactionSubmitting=false;currentReactionItem=item;currentReactionType="like";document.getElementById("reactionModalTitle").textContent=item.name+"님께 한마디";document.getElementById("reactionComment").value="";const status=document.getElementById("reactionStatus");if(status)status.textContent="";const submitBtn=document.getElementById("reactionSubmitBtn");if(submitBtn){submitBtn.disabled=false;submitBtn.textContent="✈"}document.getElementById("reactionLikeBtn").classList.add("active");document.getElementById("reactionDislikeBtn").classList.remove("active");setReactionLimitLoading_();document.getElementById("reactionModal").style.display="flex"}
 function closeReactionModal(){document.getElementById("reactionModal").style.display="none";currentReactionItem=null}
 function getVisitorId(){let id=localStorage.getItem("kinojoVisitorId");if(!id){id="v_"+Date.now()+"_"+Math.random().toString(36).slice(2);localStorage.setItem("kinojoVisitorId",id)}return id}
 function todayKey(){return new Date().toLocaleDateString("ko-KR",{timeZone:"Asia/Seoul"})}
 function checkLocalReactionLimit(name,type){const day=todayKey();const sameKey="kinojo_react_"+day+"_"+name+"_"+type;const countKey="kinojo_react_count_"+day+"_"+type;if(localStorage.getItem(sameKey)==="1")return "같은 캐릭터에게 같은 반응은 하루 1번만 남길 수 있습니다.";const count=Number(localStorage.getItem(countKey)||"0");if(count>=3)return (type==="like"?"좋아요":"싫어요")+"는 하루 3번까지만 남길 수 있습니다.";return ""}
 function markLocalReaction(name,type){const day=todayKey();const sameKey="kinojo_react_"+day+"_"+name+"_"+type;const countKey="kinojo_react_count_"+day+"_"+type;localStorage.setItem(sameKey,"1");localStorage.setItem(countKey,String(Number(localStorage.getItem(countKey)||"0")+1))}
-async function submitReaction(){if(!currentReactionItem||reactionSubmitting)return;const submitBtn=document.getElementById("reactionSubmitBtn");const prevText=submitBtn?submitBtn.textContent:"";const comment=document.getElementById("reactionComment").value.trim().slice(0,20);const limitMessage=checkLocalReactionLimit(currentReactionItem.name,currentReactionType);if(limitMessage)return alert(limitMessage);try{reactionSubmitting=true;if(submitBtn){submitBtn.disabled=true;submitBtn.textContent="저장 중..."}const res=await fetch(WEB_APP_URL,{method:"POST",body:JSON.stringify({action:"hallReaction",characterName:currentReactionItem.name,owner:currentReactionItem.owner||"",className:currentReactionItem.className||"",reaction:currentReactionType,comment:comment,clientKey:getVisitorId()})});const data=await res.json();if(!data.ok){alert(data.message||"저장 실패");return}markLocalReaction(currentReactionItem.name,currentReactionType);if(data.summary&&hallData){hallData.reactionSummary=data.summary}alert("정상 반영되었습니다.");closeReactionModal();render()}catch(e){alert("반응 저장 실패: "+(e.message||e))}finally{reactionSubmitting=false;if(submitBtn){submitBtn.disabled=false;submitBtn.textContent=prevText||"확인"}}}
+async function submitReaction(){
+  if(!currentReactionItem||reactionSubmitting)return;
+
+  const submitBtn=document.getElementById("reactionSubmitBtn");
+  const status=document.getElementById("reactionStatus");
+  const prevText=submitBtn?submitBtn.textContent:"";
+  const comment=document.getElementById("reactionComment").value.trim().slice(0,20);
+  const limitMessage=checkLocalReactionLimit(currentReactionItem.name,currentReactionType);
+
+  if(limitMessage){
+    if(status)status.textContent=limitMessage;
+    else alert(limitMessage);
+    return;
+  }
+
+  try{
+    reactionSubmitting=true;
+    if(submitBtn){
+      submitBtn.disabled=true;
+      submitBtn.textContent="…";
+    }
+    if(status)status.textContent="전송 중...";
+
+    const res=await fetch(WEB_APP_URL,{
+      method:"POST",
+      body:JSON.stringify({
+        action:"hallReaction",
+        characterName:currentReactionItem.name,
+        owner:currentReactionItem.owner||"",
+        className:currentReactionItem.className||"",
+        reaction:currentReactionType,
+        comment:comment,
+        clientKey:getVisitorId()
+      })
+    });
+
+    const data=await res.json();
+
+    if(!data.ok){
+      if(status)status.textContent=data.message||"저장 실패";
+      else alert(data.message||"저장 실패");
+      return;
+    }
+
+    markLocalReaction(currentReactionItem.name,currentReactionType);
+    if(data.summary&&hallData)hallData.reactionSummary=data.summary;
+    if(status)status.textContent="한마디가 전달되었어요 😊";
+
+    setTimeout(()=>{
+      closeReactionModal();
+      render();
+    },450);
+  }catch(e){
+    if(status)status.textContent="반응 저장 실패: "+(e.message||e);
+    else alert("반응 저장 실패: "+(e.message||e));
+  }finally{
+    reactionSubmitting=false;
+    if(submitBtn){
+      submitBtn.disabled=false;
+      submitBtn.textContent=prevText||"✈";
+    }
+  }
+}
 function bindCharacterButtons(){document.querySelectorAll("[data-character]").forEach(btn=>{btn.onclick=ev=>{ev.stopPropagation();const name=btn.dataset.character;const all=[...(hallData?.overallAll||[]),...(hallData?.overallMain||[])];const found=all.find(x=>x.name===name)||{name};openReactionModal(found)}});document.querySelectorAll("[data-reaction-card]").forEach(card=>{card.onclick=()=>{reactionCarouselPausedUntil=Date.now()+10000}})}
 
 const toggle=document.getElementById("subToggle");toggle.onclick=()=>{includeSubs=!includeSubs;page=1;toggle.classList.toggle("on",includeSubs);toggle.querySelector(".toggle-text").textContent=includeSubs?"부캐 포함 ON":"부캐 포함 OFF";render()};
 window.addEventListener("resize",()=>requestAnimationFrame(applyOverflowMarquee));
 document.getElementById("cancelSuggestBtn").onclick=()=>{document.getElementById("suggestionBox").style.display="none";document.getElementById("suggestTitle").value="";document.getElementById("suggestProposer").value="";document.getElementById("suggestMemo").value=""};const topSuggestBtn=document.getElementById("topSuggestBtn");if(topSuggestBtn)topSuggestBtn.onclick=()=>{const box=document.getElementById("suggestionBox");box.style.display=box.style.display==="none"?"block":"none"};
 document.getElementById("submitSuggestBtn").onclick=async()=>{const title=document.getElementById("suggestTitle").value.trim(),proposer=document.getElementById("suggestProposer").value.trim(),memo=document.getElementById("suggestMemo").value.trim();if(!title)return alert("항목 이름을 입력해 주세요.");const res=await fetch(WEB_APP_URL,{method:"POST",body:JSON.stringify({action:"hallSuggestion",title,proposer,memo})});const data=await res.json();if(!data.ok)return alert(data.message||"전송 실패");alert("제안이 접수되었습니다.");document.getElementById("suggestionBox").style.display="none";load()};
-bindLongPress(document.querySelector(".brand h1"),()=>{},openAdminPassword);document.getElementById("adminCloseBtn").onclick=closeAdminMenu;document.getElementById("adminMvpBtn").onclick=showMvpAdminPrompt;document.getElementById("adminVisitBtn").onclick=()=>adminVisit(1,"visit");document.getElementById("adminBoostBtn").onclick=()=>adminVisit(31,"boost");document.getElementById("adminSnapshotBtn").onclick=adminSnapshot;document.getElementById("reactionLikeBtn").onclick=()=>{currentReactionType="like";document.getElementById("reactionLikeBtn").classList.add("active");document.getElementById("reactionDislikeBtn").classList.remove("active")};document.getElementById("reactionDislikeBtn").onclick=()=>{currentReactionType="dislike";document.getElementById("reactionDislikeBtn").classList.add("active");document.getElementById("reactionLikeBtn").classList.remove("active")};document.getElementById("reactionCancelBtn").onclick=closeReactionModal;document.getElementById("reactionSubmitBtn").onclick=submitReaction;setInterval(()=>{if(Date.now()<reactionCarouselPausedUntil)return;if(searchComposing||document.activeElement?.id==="rankSearchInput")return;reactionCarouselIndex++;if(hallData)render()},6500);recordDailyVisitOnce();load();
+bindLongPress(document.querySelector(".brand h1"),()=>{},openAdminPassword);document.getElementById("adminCloseBtn").onclick=closeAdminMenu;document.getElementById("adminMvpBtn").onclick=showMvpAdminPrompt;document.getElementById("adminVisitBtn").onclick=()=>adminVisit(1,"visit");document.getElementById("adminBoostBtn").onclick=()=>adminVisit(31,"boost");document.getElementById("adminSnapshotBtn").onclick=adminSnapshot;document.getElementById("reactionLikeBtn").onclick=()=>{currentReactionType="like";document.getElementById("reactionLikeBtn").classList.add("active");document.getElementById("reactionDislikeBtn").classList.remove("active")};document.getElementById("reactionDislikeBtn").onclick=()=>{currentReactionType="dislike";document.getElementById("reactionDislikeBtn").classList.add("active");document.getElementById("reactionLikeBtn").classList.remove("active")};document.getElementById("reactionCloseBtn").onclick=closeReactionModal;document.getElementById("reactionSubmitBtn").onclick=submitReaction;setInterval(()=>{if(Date.now()<reactionCarouselPausedUntil)return;reactionCarouselIndex++;if(hallData)render()},6500);recordDailyVisitOnce();load();

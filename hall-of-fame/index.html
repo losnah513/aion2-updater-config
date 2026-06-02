@@ -7,7 +7,7 @@
 <meta property="og:description" content="전투력과 성장 기록으로 선정된 최고의 모험가들">
 <meta property="og:image" content="https://losnah513.github.io/aion2-updater-config/hall-of-fame/assets/hall-banner-v2.png?v=1c101e">
 <title>Kinojo 명예의 전당</title>
-<link rel="stylesheet" href="css/hall.css?v=1c101e">
+<link rel="stylesheet" href="css/hall.css?v=webpatch-20260602-2">
 </head>
 <body>
 <main class="wrap">
@@ -18,11 +18,11 @@
 <section class="section" id="suggestionBox" style="display:none;margin-bottom:12px"><div class="section-head"><h2>💡 아이디어 제안 및 건의</h2><span class="section-note">운영자 검토 후 반영</span></div><div class="list"><input class="search" id="suggestTitle" placeholder="항목 이름"><input class="search" id="suggestProposer" placeholder="제안자"><textarea class="search" id="suggestMemo" rows="3" placeholder="기준 설명"></textarea><div class="suggest-actions"><button class="btn" id="submitSuggestBtn">제안 보내기</button><button class="btn" id="cancelSuggestBtn" type="button">취소</button></div></div></section>
 <div id="app" class="loading"><div><div class="loader-ring"></div><div>명예의 전당 데이터를 불러오는 중...</div></div></div>
 
-<section class="reaction-modal-backdrop" id="reactionModal"><div class="reaction-modal"><div class="reaction-modal-head" id="reactionModalTitle">캐릭터 반응 남기기</div><div class="reaction-modal-body"><div class="reaction-choice"><button id="reactionLikeBtn" type="button">👍 좋아요</button><button id="reactionDislikeBtn" type="button">👎 싫어요</button></div><input class="reaction-comment" id="reactionComment" maxlength="20" placeholder="20자 이내 한줄 코멘트"><div class="reaction-modal-actions"><button id="reactionSubmitBtn" class="primary" type="button">확인</button><button id="reactionCancelBtn" type="button">취소</button></div></div></div></section>
+<section class="reaction-modal-backdrop" id="reactionModal"><div class="reaction-modal"><div class="reaction-modal-head"><span id="reactionModalTitle">캐릭터님께 한마디</span><button class="reaction-close" id="reactionCloseBtn" type="button" aria-label="닫기">×</button></div><div class="reaction-modal-body"><div class="reaction-choice"><button id="reactionLikeBtn" type="button">👍 좋아요</button><button id="reactionDislikeBtn" type="button">👎 싫어요</button></div><div class="reaction-input-row"><input class="reaction-comment" id="reactionComment" maxlength="20" placeholder="전하고 싶은 말을 남겨주세요 (20자 이내)"><button id="reactionSubmitBtn" class="send-btn" type="button" title="보내기" aria-label="보내기">✈</button></div><div class="reaction-status" id="reactionStatus" aria-live="polite"></div></div></div></section>
 
 <section class="admin-modal-backdrop" id="adminModal"><div class="admin-modal"><div class="admin-modal-head">🔧 키노조 관리자 메뉴</div><div class="admin-modal-body"><button class="btn" id="adminMvpBtn" type="button">MVP 후보 확인</button><button class="btn" id="adminVisitBtn" type="button">방문수 +1</button><button class="btn" id="adminBoostBtn" type="button">방문수 부스트 +31</button><button class="btn" id="adminSnapshotBtn" type="button">성장왕 스냅샷 생성</button><button class="btn admin-close" id="adminCloseBtn" type="button">닫기</button></div></div></section>
 <footer class="footer">Powered by AION2 × KINOJO</footer>
 </main>
-<script src="js/app.js?v=1c101e"></script>
+<script src="js/app.js?v=webpatch-20260602-2"></script>
 </body>
 </html>
