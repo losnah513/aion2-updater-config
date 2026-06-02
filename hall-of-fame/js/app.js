@@ -155,7 +155,7 @@ function bindDynamic(){document.querySelectorAll("[data-page]").forEach(btn=>btn
 function applyOverflowMarquee(){document.querySelectorAll(".flow-candidate").forEach(el=>{el.classList.remove("marquee");el.style.removeProperty("--marquee-shift");const parent=el.parentElement;if(!parent)return;const overflow=el.scrollWidth-parent.clientWidth;if(overflow>2){el.style.setProperty("--marquee-shift","-"+(overflow+12)+"px");el.classList.add("marquee")}})}
 function startLoadingText(){stopLoadingText();const messages=["명예의 전당 데이터를 불러오는 중","엠블럼을 준비하는 중","레기온 기록을 확인하는 중","순위표를 정리하는 중"];loadingStep=0;const target=()=>{const el=document.getElementById("loaderText");if(!el)return;const msg=messages[Math.floor(loadingStep/4)%messages.length];const dots=".".repeat(loadingStep%4);el.textContent=msg+dots;loadingStep++};target();loadingTimer=setInterval(target,360)}
 function stopLoadingText(){if(loadingTimer){clearInterval(loadingTimer);loadingTimer=null}}
-function preloadImages(paths){return Promise.all(paths.map(src=>new Promise(resolve=>{const img=new Image();img.onload=()=>resolve(true);img.onerror=()=>resolve(false);img.src=src+"?v=1c101c"}))) }
+function preloadImages(paths){return Promise.all(paths.map(src=>new Promise(resolve=>{const img=new Image();img.onload=()=>resolve(true);img.onerror=()=>resolve(false);img.src=src+"?v=1c101d"}))) }
 async function load(){app.className="loading";app.innerHTML='<div><div class="loader-ring"></div><div class="loader-text" id="loaderText">명예의 전당 데이터를 불러오는 중</div></div>';startLoadingText();try{await preloadImages(Object.values(RANK_EMBLEMS).concat(Object.values(CLASS_ICONS)));const url=WEB_APP_URL+(WEB_APP_URL.includes("?")?"&":"?")+"action=hallOfFame&t="+Date.now();const res=await fetch(url,{cache:"no-store"});const text=await res.text();if(!res.ok)throw new Error("HTTP "+res.status+": "+text.slice(0,180));try{hallData=JSON.parse(text)}catch(parseErr){throw new Error("Apps Script 응답이 JSON이 아닙니다: "+text.slice(0,180))}if(!hallData || hallData.ok===false)throw new Error(hallData?.message||hallData?.error||"명예의 전당 응답이 실패했습니다.");if(hallData.visitStats){renderVisits(hallData.visitStats)}else{fetchVisitStats()}stopLoadingText();render()}catch(err){stopLoadingText();app.className="";app.innerHTML='<div class="empty">명예의 전당 데이터를 불러오지 못했습니다.<br>'+escapeHtml(err.message||err)+'</div>'}}
 function boostPrompt(){const code=prompt("관리자 암호를 입력하세요.");if(!code)return;const m=String(code).trim().match(/^키노조화이팅(\d+)$/);if(!m)return alert("암호가 올바르지 않습니다.");const amount=Math.max(1,Math.min(9999,Number(m[1]||0)));fetchVisitStats("boost",amount);alert("방문자수 +"+amount+" 반영 완료!")}
 
@@ -166,7 +166,27 @@ async function adminSnapshot(){try{const url=WEB_APP_URL+(WEB_APP_URL.includes("
 
 async function showMvpAdminPrompt(){const code=prompt("MVP 관리자 암호를 입력하세요.");if(!code)return;try{const url=WEB_APP_URL+(WEB_APP_URL.includes("?")?"&":"?")+"action=mvpAdmin&password="+encodeURIComponent(code)+"&t="+Date.now();const res=await fetch(url,{cache:"no-store"});const data=await res.json();if(!data.ok)return alert(data.message||"확인 실패");const season=data.season||{};const rows=(data.candidates||[]).map((item,i)=>(i+1)+"위 "+item.name+"\n시즌 "+Number(item.seasonScore||0)+" · 반응 "+Number(item.reactionScore||0)+" · 예상 "+Number(item.finalScorePreview||0)+"\n👍 "+Number(item.like||0)+" / 👎 "+Number(item.dislike||0)+" · "+item.excludeReason).join("\n\n");alert("MVP 시즌 후보 TOP5\n"+(season.seasonName||"")+" ("+(season.startDate||"")+" ~ "+(season.endDate||"")+")\n\n"+(rows||"아직 집계 데이터가 없습니다.")+"\n\n※ 전투력 보정 20%는 MVP 선정 시점에만 반영됩니다.")}catch(e){alert("MVP 정보를 불러오지 못했습니다: "+(e.message||e))}}
 function bindLongPress(el,shortAction,longAction){let timer=null,fired=false;const start=ev=>{fired=false;clearTimeout(timer);timer=setTimeout(()=>{fired=true;longAction()},900)};const end=ev=>{clearTimeout(timer)};el.addEventListener("mousedown",start);el.addEventListener("touchstart",start,{passive:true});el.addEventListener("mouseup",end);el.addEventListener("mouseleave",end);el.addEventListener("touchend",end);el.addEventListener("click",ev=>{if(fired){ev.preventDefault();return}shortAction()})}
-function openReactionModal(item){currentReactionItem=item;currentReactionType="like";document.getElementById("reactionModalTitle").textContent=item.name+" 반응 남기기";document.getElementById("reactionComment").value="";document.getElementById("reactionLikeBtn").classList.add("active");document.getElementById("reactionDislikeBtn").classList.remove("active");document.getElementById("reactionModal").style.display="flex"}
+function setReactionLimitLoading_(){
+  const comment=document.getElementById("reactionComment");
+  if(comment){
+    comment.value="";
+    comment.placeholder="남은 좋아요/싫어요 횟수 계산 중...";
+  }
+  ["reactionLikeBtn","reactionDislikeBtn"].forEach(id=>{
+    const btn=document.getElementById(id);
+    if(btn) btn.classList.add("checking");
+  });
+  setTimeout(()=>{
+    const likeBtn=document.getElementById("reactionLikeBtn");
+    const dislikeBtn=document.getElementById("reactionDislikeBtn");
+    if(likeBtn) likeBtn.classList.remove("checking");
+    if(dislikeBtn) dislikeBtn.classList.remove("checking");
+    const c=document.getElementById("reactionComment");
+    if(c) c.placeholder="20자 이내 한줄 코멘트";
+  },450);
+}
+
+function openReactionModal(item){currentReactionItem=item;currentReactionType="like";document.getElementById("reactionModalTitle").textContent=item.name+" 반응 남기기";document.getElementById("reactionComment").value="";document.getElementById("reactionLikeBtn").classList.add("active");document.getElementById("reactionDislikeBtn").classList.remove("active");setReactionLimitLoading_();document.getElementById("reactionModal").style.display="flex"}
 function closeReactionModal(){document.getElementById("reactionModal").style.display="none";currentReactionItem=null}
 function getVisitorId(){let id=localStorage.getItem("kinojoVisitorId");if(!id){id="v_"+Date.now()+"_"+Math.random().toString(36).slice(2);localStorage.setItem("kinojoVisitorId",id)}return id}
 function todayKey(){return new Date().toLocaleDateString("ko-KR",{timeZone:"Asia/Seoul"})}

@@ -37,7 +37,7 @@
 @media(max-width:520px){.rank-tools{grid-template-columns:1fr 1fr!important}.rank-tools .search{grid-column:1/-1}.rank-name-flex{gap:6px}.character-button{padding:5px 8px!important;max-width:100%}.rank-reactions-inline{font-size:9px}}
 
 
-/* 1.c1.01c portal/system-sheet correction */
+/* 1.c1.01d portal/system-sheet correction */
 .rank-table .char-col{width:190px}
 .rank-name-flex-table{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:8px;min-width:0}
 .rank-reactions-before{align-items:center;min-width:38px;text-align:center}
@@ -58,7 +58,7 @@
 }
 
 
-/* 1.c1.01c portal and layout correction */
+/* 1.c1.01d portal and layout correction */
 .home-link{display:inline-flex;align-items:center;gap:6px;margin:0 0 10px;padding:7px 11px;border:1px solid rgba(117,140,177,.22);border-radius:999px;background:rgba(255,255,255,.76);color:#3865b0;text-decoration:none;font-size:12px;font-weight:1000;box-shadow:0 6px 16px rgba(38,57,88,.06)}
 .home-link:hover{background:#fff;transform:translateY(-1px)}
 .section-head,.overall-head,.mvp-head,.award-card .section-head,.reaction-card-head{min-height:52px!important;height:52px!important;box-sizing:border-box!important}
@@ -66,3 +66,41 @@
 .character-button{max-width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rank-name-main,.rank-name-cell,.name-wrap,.tag-name-wrap{min-width:0;max-width:100%}
 @media(max-width:520px){.home-link{margin-left:2px}.section-head,.overall-head,.mvp-head,.award-card .section-head,.reaction-card-head{min-height:50px!important;height:50px!important}.award-card .section-head h2{font-size:15px!important}}
+
+
+/* 1.c1.01d hotfix: 긴 캐릭터명 버튼 잘림 완화 */
+.rank-name-main,
+.name-wrap,
+.award-name {
+  min-width: 0;
+  overflow: visible;
+}
+
+.character-button {
+  max-width: min(100%, 260px) !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  line-height: 1.18 !important;
+  word-break: keep-all;
+}
+
+.flow-candidate {
+  max-width: 100%;
+}
+
+.rank-reactions-before {
+  order: -1;
+  margin-right: 2px;
+}
+
+@media (max-width: 520px) {
+  .character-button {
+    max-width: min(100%, 190px) !important;
+    padding: 5px 8px !important;
+  }
+
+  .rank-name-flex {
+    align-items: center;
+  }
+}
