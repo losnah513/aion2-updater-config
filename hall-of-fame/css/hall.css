@@ -2520,3 +2520,169 @@ body{background:#fff!important;}
   }
   .relation-name{max-width:48%!important}
 }
+
+
+/* ============================================================
+   KINOJO v_260603_13 — sub toggle restore + relation fixed height
+   기준: 업로드된 정상 index의 부캐 스위치 동작값
+   ============================================================ */
+
+/* 부캐 ON/OFF: 위치는 현재 자리 유지, 동작/크기는 정상 샘플 기준 */
+.overall-title-tools{
+  position:static!important;
+  transform:none!important;
+  margin:0!important;
+  justify-self:start!important;
+  align-self:center!important;
+}
+.sub-toggle.compact,
+#subToggle.sub-toggle{
+  width:168px!important;
+  height:48px!important;
+  border-radius:999px!important;
+  border:1px solid var(--line)!important;
+  background:rgba(255,255,255,.9)!important;
+  color:#6b7280!important;
+  position:relative!important;
+  cursor:pointer!important;
+  overflow:hidden!important;
+  box-shadow:var(--shadow)!important;
+  padding:0!important;
+  flex:0 0 168px!important;
+}
+.sub-toggle.compact.on,
+#subToggle.sub-toggle.on{
+  background:linear-gradient(135deg,#5d87da,#8b72df)!important;
+  color:#fff!important;
+}
+.sub-toggle.compact .toggle-knob,
+#subToggle.sub-toggle .toggle-knob{
+  position:absolute!important;
+  top:5px!important;
+  left:5px!important;
+  width:36px!important;
+  height:36px!important;
+  border-radius:50%!important;
+  background:#fff!important;
+  transition:left .28s ease, background .28s ease, transform .28s ease!important;
+  box-shadow:0 3px 10px rgba(0,0,0,.2)!important;
+  transform:none!important;
+  will-change:left!important;
+}
+.sub-toggle.compact.on .toggle-knob,
+#subToggle.sub-toggle.on .toggle-knob{
+  left:125px!important;
+}
+.sub-toggle.compact .toggle-text,
+#subToggle.sub-toggle .toggle-text{
+  position:absolute!important;
+  inset:0!important;
+  display:grid!important;
+  place-items:center!important;
+  font-weight:1000!important;
+  font-size:13px!important;
+  padding-left:28px!important;
+  padding-right:0!important;
+  transition:padding .28s ease, color .28s ease!important;
+  line-height:1!important;
+}
+.sub-toggle.compact.on .toggle-text,
+#subToggle.sub-toggle.on .toggle-text{
+  padding-left:0!important;
+  padding-right:28px!important;
+}
+
+/* 관계 카드: 인원 수와 무관하게 카드 자체 높이 고정 */
+.dashboard{
+  align-items:stretch!important;
+}
+.dashboard > div:first-child{
+  min-height:0!important;
+}
+.top-grid{
+  height:100%!important;
+  align-items:stretch!important;
+}
+.top-grid .section{
+  height:100%!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow:hidden!important;
+}
+.side-stack{
+  height:100%!important;
+  min-height:0!important;
+  max-height:100%!important;
+  overflow:hidden!important;
+  display:block!important;
+}
+.relation-combined-card{
+  height:100%!important;
+  min-height:0!important;
+  max-height:100%!important;
+  overflow:hidden!important;
+  display:grid!important;
+  grid-template-rows:auto minmax(0,1fr) auto minmax(0,1fr)!important;
+}
+.relation-combined-card .section-head{
+  flex:0 0 auto!important;
+}
+.relation-viewport{
+  min-height:0!important;
+  max-height:100%!important;
+  overflow:hidden!important;
+  position:relative!important;
+  padding:7px 8px!important;
+}
+.relation-track{
+  min-height:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  gap:6px!important;
+}
+.relation-track.is-scroll{
+  animation:kinojoRelationTrackScroll 22s linear infinite!important;
+}
+.relation-row{
+  flex:0 0 30px!important;
+  height:30px!important;
+  min-height:30px!important;
+  max-height:30px!important;
+  overflow:hidden!important;
+}
+
+/* 모바일: 스위치 동작값은 정상 샘플 기준, 관계 카드는 고정 높이 */
+@media(max-width:760px){
+  .sub-toggle.compact,
+  #subToggle.sub-toggle{
+    width:120px!important;
+    height:40px!important;
+    flex-basis:120px!important;
+  }
+  .sub-toggle.compact .toggle-knob,
+  #subToggle.sub-toggle .toggle-knob{
+    top:5px!important;
+    left:5px!important;
+    width:30px!important;
+    height:30px!important;
+  }
+  .sub-toggle.compact.on .toggle-knob,
+  #subToggle.sub-toggle.on .toggle-knob{
+    left:83px!important;
+  }
+  .sub-toggle.compact .toggle-text,
+  #subToggle.sub-toggle .toggle-text{
+    font-size:11px!important;
+    padding-left:20px!important;
+  }
+  .sub-toggle.compact.on .toggle-text,
+  #subToggle.sub-toggle.on .toggle-text{
+    padding-left:0!important;
+    padding-right:20px!important;
+  }
+  .relation-combined-card{
+    height:260px!important;
+    min-height:260px!important;
+    max-height:260px!important;
+  }
+}
