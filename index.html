@@ -555,6 +555,17 @@ body,.card,.eyebrow,.hall-banner,.info-logo-placeholder,.info-drawer,.constructi
   clip-path:inset(0 0 0 0 round 2px)!important;
 }
 
+/* 260603 sanctuary motion correction: bottom aligned, Rudra escapes only upward/rightward */
+.sanctuary-row{align-items:end!important;overflow:visible!important;padding-top:96px!important;}
+.sanctuary-row .card{align-self:end!important;overflow:hidden;}
+.rudra-card{overflow:visible!important;clip-path:none!important;z-index:3!important;}
+.rudra-card::before,.rudra-card::after,.rudra-bg{clip-path:inset(0 0 0 0 round 2px)!important;}
+.rudra-card .rudra-boss{background-position:46% 42%!important;background-size:94% auto!important;transform-origin:left bottom!important;transform:translate(0,0) scale(1)!important;clip-path:none!important;}
+.rudra-card:hover .rudra-boss,.rudra-card:focus-visible .rudra-boss,.rudra-card:active .rudra-boss{background-size:94% auto!important;background-position:46% 42%!important;transform:translate(52px,-86px) scale(1.72)!important;opacity:1!important;}
+.rudra-card:hover + .card,.rudra-card:focus-visible + .card,.rudra-card:active + .card{transform:translateX(44px) scale(.94)!important;transform-origin:center bottom!important;}
+.rudra-card:hover + .card + .card,.rudra-card:focus-visible + .card + .card,.rudra-card:active + .card + .card{transform:translateX(62px) scale(.91)!important;transform-origin:center bottom!important;}
+@media(max-width:900px){.sanctuary-row{padding-top:42px!important}.rudra-card:hover .rudra-boss,.rudra-card:focus-visible .rudra-boss,.rudra-card:active .rudra-boss{transform:translate(28px,-46px) scale(1.38)!important}.rudra-card:hover + .card,.rudra-card:hover + .card + .card{transform:none!important}}
+
 </style>
 </head>
 <body>
