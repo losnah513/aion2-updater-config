@@ -25,7 +25,8 @@ function reactionPairHtml(like,dislike,extraClass){
 function nameClass(item){return item?.isAdminMain?"admin-main":(item?.isAdminAlt?"admin-alt":"")}
 function itemClass(item){return ""}
 function nameSpan(item,text){
-  return '<span class="character-name-text '+nameClass(item)+'" data-character="'+escapeHtml(item?.name||"")+'">'
+  const name=String(item?.name||"");
+  return '<span class="character-name-text '+nameClass(item)+'" data-character="'+escapeHtml(name)+'" data-tooltip="이름을 눌러서 '+escapeHtml(name)+'님께 한마디 남겨주세요">'
     + '<span class="character-text">'+text+'</span>'
     + '</span>';
 }
@@ -34,37 +35,36 @@ function flowText(text,item){return '<span class="flow-candidate">'+nameSpan(ite
 function classIconHtml(cls,withText=false){const path=CLASS_ICONS[cls];if(!path)return withText?'<span class="class-icon-cell">'+escapeHtml(cls||"-")+'</span>':'-';return '<span class="class-icon-cell"><img class="class-icon" src="'+path+'" alt="'+escapeHtml(cls)+'">'+(withText?'<span>'+escapeHtml(cls)+'</span>':'')+'</span>'}
 function classTabIcon(cls){const path=CLASS_ICONS[cls];return path?'<img class="tab-icon" src="'+path+'" alt="">':''}
 function miniRow(item,i,total){const rank=i+1;return '<div class="mini-row '+itemClass(item)+'"><div class="medal rank-medal">'+rankEmblemHtml(rank,total)+'</div><div class="name-wrap"><div class="name">'+flowText(item.name,item)+'</div>'+ownerLine(item)+(item.meta?'<div class="meta">'+escapeHtml(item.meta)+'</div>':'')+'</div>'+reactionCountsHtml(item)+'<div class="score">'+escapeHtml(item.label||"")+'</div></div>'}
-function rankBox(title,note,list){const items=(list||[]).filter(match);return '<section class="section"><div class="section-head"><h2>'+title+'</h2><span class="section-note">'+(note||'')+'</span></div><div class="list">'+(items.length?items.map((item,i)=>miniRow(item,i,items.length)).join(""):'<div class="empty">아직 데이터가 부족해요.</div>')+'</div></section>'}
+function rankBox(title,note,list){const items=(list||[]);return '<section class="section"><div class="section-head"><h2>'+title+'</h2><span class="section-note">'+(note||'')+'</span></div><div class="list">'+(items.length?items.map((item,i)=>miniRow(item,i,items.length)).join(""):'<div class="empty">아직 데이터가 부족해요.</div>')+'</div></section>'}
 function tagBox(title,note,list){const items=(list||[]).filter(match);return '<section class="section"><div class="section-head"><h2>'+title+'</h2><span class="section-note">'+(note||'')+'</span></div><div class="tag-list swipe-list">'+(items.length?items.map(item=>'<div class="name-tag '+itemClass(item)+'"><div class="tag-name-wrap"><div class="tag-name">'+flowText(item.name,item)+'</div></div>'+ownerLine(item)+(item.meta?'<div class="tag-meta">'+escapeHtml(item.meta)+'</div>':'')+'</div>').join(""):'<div class="empty">아직 데이터가 부족해요.</div>')+'</div></section>'}
 function combinedRelationBox(){
-  const demonItems=(currentDemon()||[]).filter(match);
-  const partyItems=(currentParty()||[]).filter(match);
+  const demonItems=(currentDemon()||[]);
+  const partyItems=(currentParty()||[]);
 
-  const renderColumn=function(items,type){
+  const renderBlock=function(title,note,items,type){
     const base=(items||[]).length?items:[];
     const html=base.length
       ? base.map(item=>{
           const reaction=reactionDataFor(item);
           const serverText=item.meta||item.serverName||item.server||"";
           return '<div class="relation-row '+itemClass(item)+'" data-character="'+escapeHtml(item.name)+'">'
-            + '<span class="relation-name">'+escapeHtml(item.name)+'</span>'
+            + '<span class="relation-name character-name-text" data-character="'+escapeHtml(item.name)+'" data-tooltip="이름을 눌러서 '+escapeHtml(item.name)+'님께 한마디 남겨주세요">'+escapeHtml(item.name)+'</span>'
             + (serverText?'<span class="relation-server">'+escapeHtml(serverText)+'</span>':'<span class="relation-server"></span>')
             + reactionPairHtml(reaction.like,reaction.dislike,'relation-reactions')
             + '</div>';
         }).join("")
       : '<div class="empty relation-empty">아직 데이터가 부족해요.</div>';
-    return '<div class="relation-column '+type+'"><div class="relation-track">'+html+'</div></div>';
+    const scrollClass=base.length>4?' is-scroll':'';
+    const trackHtml=base.length>4?html+html:html;
+    return '<div class="relation-block '+type+'">'
+      + '<div class="section-head relation-block-head"><h2>'+title+'</h2><span class="section-note">'+note+'</span></div>'
+      + '<div class="relation-column"><div class="relation-track'+scrollClass+'">'+trackHtml+'</div></div>'
+      + '</div>';
   };
 
   return '<section class="section relation-combined-card">'
-    + '<div class="relation-combined-head">'
-    + '<div class="section-head relation-main-head"><h2>😈 같은 마족이면 가족이지</h2><span class="section-note">타서버 마족</span></div>'
-    + '<div class="section-head relation-sub-head"><h2>🤝 같은 파티면 친구지</h2><span class="section-note">천족 서버</span></div>'
-    + '</div>'
-    + '<div class="relation-viewport">'
-    + renderColumn(demonItems,"demon")
-    + renderColumn(partyItems,"party")
-    + '</div>'
+    + renderBlock('😈 같은 마족이면 가족이지','타서버 마족',demonItems,'demon')
+    + renderBlock('🤝 같은 파티면 친구지','천족 서버',partyItems,'party')
     + '</section>';
 }
 function chickLabel(item){const server=item.meta?'['+item.meta.replace("천족 · ","")+']':'';const cls=item.className?' ('+item.className+')':'';const owner=item.owner&&item.owner!==item.name?' / 본캐 '+item.owner:'';return item.name+server+cls+owner}
@@ -90,8 +90,7 @@ function reactionCard(type){
   const list=(type==="like"?summary.likeTop:summary.dislikeTop)||[];
   const title=type==="like"?"좋아요 TOP 3":"싫어요 TOP 3";
   const titleIcon=reactionIcon(type==="like"?"like":"dislike");
-  const note=type==="like"?"모두에게 사랑받는 모험가":"이분은 어쩌다 이렇게 미움을 샀을까요?";
-  if(!list.length)return '<section class="reaction-card '+type+'-top-card"><div class="reaction-card-head"><div class="reaction-card-title">'+titleIcon+'<span>'+title+'</span></div><div class="reaction-card-note">'+note+'</div></div><div class="reaction-empty">아직 반응 데이터가 부족합니다.</div></section>';
+  if(!list.length)return '<section class="reaction-card '+type+'-top-card"><div class="reaction-card-head"><div class="reaction-card-title">'+titleIcon+'<span>'+title+'</span></div></div><div class="reaction-empty reaction-top-empty">아직 반응 데이터가 부족합니다.</div></section>';
   const now=Date.now();
   const idx=(now<reactionCarouselPausedUntil)?reactionCarouselIndex:reactionCarouselIndex%list.length;
   const item=list[idx%list.length];
@@ -99,12 +98,12 @@ function reactionCard(type){
   const comments=(item.comments||[]).filter(Boolean);
   const meta=item.serverName?'<div class="reaction-server">'+escapeHtml(item.serverName)+'</div>':'';
   const commentItems=comments.length?comments.map(c=>'<div class="comment-item">“'+escapeHtml(c)+'”</div>').join(''):'<div class="comment-item">아직 코멘트가 없습니다.</div>';
-  const track=comments.length>5?commentItems+commentItems:commentItems;
-  const overflowClass=comments.length>5?' is-scrollable':'';
+  const track=comments.length>4?commentItems+commentItems:commentItems;
+  const overflowClass=comments.length>4?' is-scrollable':'';
   return '<section class="reaction-card '+type+'-top-card" data-reaction-card="'+type+'">'
-    + '<div class="reaction-card-head"><div class="reaction-card-title">'+titleIcon+'<span>'+title+'</span></div><div class="reaction-card-note">'+note+'</div></div>'
+    + '<div class="reaction-card-head"><div class="reaction-card-title">'+titleIcon+'<span>'+title+'</span></div></div>'
     + '<div class="reaction-top-body"><div class="reaction-top-left"><div class="reaction-rank">'+displayRank+'위</div>'
-    + '<span class="reaction-name" data-character="'+escapeHtml(item.name)+'">'+escapeHtml(item.name)+'</span>'+meta
+    + '<span class="reaction-name character-name-text" data-character="'+escapeHtml(item.name)+'" data-tooltip="이름을 눌러서 '+escapeHtml(item.name)+'님께 한마디 남겨주세요">'+escapeHtml(item.name)+'</span>'+meta
     + '<div class="reaction-score-line icon-row">'+reactionPairHtml(item.like,item.dislike,'top-reaction-pair')+'</div></div>'
     + '<div class="reaction-top-divider" aria-hidden="true"></div><div class="reaction-comments comment-list'+overflowClass+'"><div class="comment-track">'+track+'</div></div></div></section>';
 }
@@ -116,7 +115,7 @@ function recentCommentCard(){
   });
   const list=rows.slice(0,10);
   const overflowClass=list.length>5?' is-scrollable':'';
-  const items=list.length?list.map(x=>'<div class="comment-item recent-comment-item"><strong>'+escapeHtml(x.name)+'</strong><span>“'+escapeHtml(x.comment)+'”</span></div>').join(''):'<div class="comment-item">아직 남겨진 한마디가 없습니다.</div>';
+  const items=list.length?list.map(x=>'<div class="comment-item recent-comment-item"><strong class="character-name-text" data-character="'+escapeHtml(x.name)+'" data-tooltip="이름을 눌러서 '+escapeHtml(x.name)+'님께 한마디 남겨주세요">'+escapeHtml(x.name)+'</strong><span>“'+escapeHtml(x.comment)+'”</span></div>').join(''):'<div class="comment-item">아직 남겨진 한마디가 없습니다.</div>';
   const track=list.length>5?items+items:items;
   return '<section class="reaction-card recent-comment-card"><div class="reaction-card-head"><div class="reaction-card-title"><span class="comment-title-icon" aria-hidden="true"></span><span>최근 한마디</span></div><div class="reaction-card-note">따뜻한 말은 오래 남아요</div></div><div class="reaction-comments recent comment-list'+overflowClass+'"><div class="comment-track">'+track+'</div></div></section>';
 }
@@ -229,9 +228,7 @@ function overallTable(){
       continue;
     }
 
-    if(isClassMode){
-      rows.push(emptyRankRowHtml(rank));
-    }
+    rows.push(emptyRankRowHtml(rank));
   }
 
   if(!rows.length){
@@ -240,7 +237,7 @@ function overallTable(){
 
   return '<section class="overall"><div class="overall-head"><h2>'+title+'</h2><div class="overall-title-tools"><button class="sub-toggle compact '+(includeSubs?'on':'')+'" id="subToggle" type="button"><span class="toggle-knob"></span><span class="toggle-text">'+(includeSubs?'부캐 ON':'부캐 OFF')+'</span></button></div><div class="page-tools"><span>'+page+' / '+totalPages+'</span><button class="page-btn" data-page="prev">‹</button><button class="page-btn" data-page="next">›</button></div></div>'+searchToolsHtml()+rankTabs()+classReviewBoxHtml(activeRankClass)+'<div class="table-scroll"><table class="rank-table"><colgroup><col class="num"><col class="char-col"><col class="reaction-col"><col class="class-col"><col class="power-col"><col class="power-col"><col class="review-col"></colgroup><thead><tr><th class="num">순위</th><th>캐릭터명</th><th aria-label="좋아요 싫어요"></th><th>클래스</th><th>PVE</th><th>PVP</th><th>AI 리뷰</th></tr></thead><tbody>'+rows.join("")+'</tbody></table></div></section>';
 }
-function render(){if(!hallData)return;renderChicks();app.className="";app.innerHTML=mvpSection()+reactionBoard()+awardsBoard()+'<div class="dashboard"><div><div class="top-grid">'+rankBox("⚔ PVE TOP 5","",hallData.pveTop)+rankBox("⚔ PVP TOP 5","",hallData.pvpTop)+'</div></div><div class="side-stack">'+combinedRelationBox()+'</div></div>'+overallTable();bindDynamic();bindCharacterButtons();requestAnimationFrame(applyOverflowMarquee)}
+function render(){if(!hallData)return;renderChicks();app.className="";app.innerHTML=mvpSection()+reactionBoard()+awardsBoard()+'<div class="rank-relation-row">'+rankBox("⚔ PVE TOP 5","",hallData.pveTop)+rankBox("⚔ PVP TOP 5","",hallData.pvpTop)+combinedRelationBox()+'</div>'+overallTable();bindDynamic();bindCharacterButtons();requestAnimationFrame(applyOverflowMarquee)}
 function bindDynamic(){document.querySelectorAll("[data-page]").forEach(btn=>btn.onclick=()=>{const total=Math.max(1,Math.ceil(currentRankList().length/PAGE_SIZE));page+=btn.dataset.page==="next"?1:-1;if(page<1)page=1;if(page>total)page=total;render()});document.querySelectorAll("[data-rank-class]").forEach(btn=>btn.onclick=()=>{activeRankClass=btn.dataset.rankClass;page=1;render()});const search=document.getElementById("rankSearchInput");if(search){search.oncompositionstart=()=>{searchComposing=true;clearTimeout(searchDebounceTimer)};search.oncompositionend=()=>{searchComposing=false};search.oninput=()=>{};search.onkeydown=e=>{if(e.key==="Enter"&&!searchComposing){keyword=search.value.trim();page=1;renderPreserveSearchFocus()}}}const refresh=document.getElementById("rankRefreshBtn");if(refresh)refresh.onclick=()=>{const input=document.getElementById("rankSearchInput");keyword=String(input?.value||"").trim();page=1;renderPreserveSearchFocus()};const clear=document.getElementById("rankClearBtn");if(clear)clear.onclick=()=>{keyword="";page=1;render()};const sub=document.getElementById("subToggle");if(sub)sub.onclick=()=>{const savedY=window.scrollY;includeSubs=!includeSubs;page=1;sub.classList.toggle("on",includeSubs);const t=sub.querySelector(".toggle-text");if(t)t.textContent=includeSubs?"부캐 ON":"부캐 OFF";setTimeout(()=>{render();requestAnimationFrame(()=>window.scrollTo(0,savedY))},260)}}
 function applyOverflowMarquee(){document.querySelectorAll(".flow-candidate").forEach(el=>{el.classList.remove("marquee");el.style.removeProperty("--marquee-shift");const parent=el.parentElement;if(!parent)return;const overflow=el.scrollWidth-parent.clientWidth;if(overflow>2){el.style.setProperty("--marquee-shift","-"+(overflow+12)+"px");el.classList.add("marquee")}})}
 function startLoadingText(){stopLoadingText();const messages=["명예의 전당 데이터를 불러오는 중","엠블럼을 준비하는 중","레기온 기록을 확인하는 중","순위표를 정리하는 중"];loadingStep=0;const target=()=>{const el=document.getElementById("loaderText");if(!el)return;const msg=messages[Math.floor(loadingStep/4)%messages.length];const dots=".".repeat(loadingStep%4);el.textContent=msg+dots;loadingStep++};target();loadingTimer=setInterval(target,360)}
@@ -465,8 +462,8 @@ function bindDrawerPagePanel_(){
 }
 
 /* KINOJO drawer navigation */
-function openSideDrawer(){const drawer=document.getElementById("sideDrawer");const btn=document.getElementById("drawerToggleBtn");if(!drawer)return;drawer.classList.add("open");document.body.classList.add("drawer-open");drawer.setAttribute("aria-hidden","false");if(btn)btn.setAttribute("aria-expanded","true")}
-function closeSideDrawer(){const drawer=document.getElementById("sideDrawer");const btn=document.getElementById("drawerToggleBtn");if(!drawer)return;drawer.classList.remove("open");document.body.classList.remove("drawer-open");drawer.setAttribute("aria-hidden","true");if(btn)btn.setAttribute("aria-expanded","false")}
+function openSideDrawer(){const drawer=document.getElementById("sideDrawer");const btn=document.getElementById("drawerToggleBtn");if(!drawer)return;drawer.classList.add("open");document.body.classList.add("drawer-open");drawer.setAttribute("aria-hidden","false");if(btn){btn.setAttribute("aria-expanded","true");btn.classList.add("is-open")}}
+function closeSideDrawer(){const drawer=document.getElementById("sideDrawer");const btn=document.getElementById("drawerToggleBtn");if(!drawer)return;drawer.classList.remove("open");document.body.classList.remove("drawer-open");drawer.setAttribute("aria-hidden","true");if(btn){btn.setAttribute("aria-expanded","false");btn.classList.remove("is-open")}}
 function openSuggestionPanel(){
   const panel=document.getElementById("drawerPagePanel");
   const title=document.getElementById("drawerPageTitle");
@@ -658,7 +655,7 @@ function bindKinojoDrawer_(){
   const drawerSuggestBtn=document.getElementById("drawerSuggestBtn");
   if(drawerToggleBtn&&!drawerToggleBtn.dataset.bound){
     drawerToggleBtn.dataset.bound="1";
-    drawerToggleBtn.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();openSideDrawer()});
+    drawerToggleBtn.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();const drawer=document.getElementById("sideDrawer");if(drawer&&drawer.classList.contains("open"))closeSideDrawer();else openSideDrawer()});
     drawerToggleBtn.addEventListener("pointerdown",e=>drawerToggleBtn.classList.add("is-pressed"));
     drawerToggleBtn.addEventListener("pointerup",e=>drawerToggleBtn.classList.remove("is-pressed"));
     drawerToggleBtn.addEventListener("pointerleave",e=>drawerToggleBtn.classList.remove("is-pressed"));
