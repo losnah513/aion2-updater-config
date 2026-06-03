@@ -24,22 +24,42 @@ function combinedRelationBox(){
   const demonItems=(currentDemon()||[]).filter(match);
   const partyItems=(currentParty()||[]).filter(match);
 
-  const renderMiniTags=function(items){
-    return items.length
-      ? items.map(item=>'<div class="name-tag '+itemClass(item)+'"><div class="tag-name-wrap"><div class="tag-name">'+flowText(item.name,item)+'</div></div>'+ownerLine(item)+(item.meta?'<div class="tag-meta">'+escapeHtml(item.meta)+'</div>':'')+'</div>').join("")
+  const renderTrack=function(items,type){
+    const base=(items||[]).length?items:[];
+    const loopItems=base.length>3?base.concat(base):base;
+    const trackClass=base.length>3?' relation-track is-scroll':' relation-track';
+    const html=loopItems.length
+      ? loopItems.map(item=>{
+          const reaction=reactionDataFor(item);
+          const serverText=item.meta||item.serverName||item.server||"";
+          const ownerText=item.owner?'<span class="relation-owner">'+escapeHtml(item.owner)+'</span>':'';
+          return '<div class="relation-row '+itemClass(item)+'" data-character="'+escapeHtml(item.name)+'">'
+            + '<span class="relation-name">'+escapeHtml(item.name)+'</span>'
+            + (serverText?'<span class="relation-server">'+escapeHtml(serverText)+'</span>':'')
+            + ownerText
+            + '<span class="relation-reactions">👍 '+Number(reaction.like||0)+' · 👎 '+Number(reaction.dislike||0)+'</span>'
+            + '</div>';
+        }).join("")
       : '<div class="empty relation-empty">아직 데이터가 부족해요.</div>';
+    return '<div class="relation-viewport '+type+'"><div class="'+trackClass+'">'+html+'</div></div>';
   };
 
   return '<section class="section relation-combined-card">'
     + '<div class="section-head relation-main-head"><h2>😈 같은 마족이면 가족이지</h2><span class="section-note">타서버 마족</span></div>'
-    + '<div class="tag-list swipe-list relation-list relation-list-demon">'+renderMiniTags(demonItems)+'</div>'
+    + renderTrack(demonItems,"demon")
     + '<div class="section-head relation-sub-head"><h2>🤝 같은 파티면 친구지</h2><span class="section-note">천족 서버</span></div>'
-    + '<div class="tag-list swipe-list relation-list relation-list-party">'+renderMiniTags(partyItems)+'</div>'
+    + renderTrack(partyItems,"party")
     + '</section>';
 }
 function chickLabel(item){const server=item.meta?'['+item.meta.replace("천족 · ","")+']':'';const cls=item.className?' ('+item.className+')':'';const owner=item.owner&&item.owner!==item.name?' / 본캐 '+item.owner:'';return item.name+server+cls+owner}
 function renderChicks(){const items=(hallData?.newChicks||[]).filter(match);const card=document.getElementById("chickCard");if(!items.length){card.style.display="none";return}card.style.display="block";document.getElementById("chickTitle").textContent="🐣 신입 병아리 "+items.length+"명 입장!";document.getElementById("chickSub").textContent=items.length>=5?"새로운 모험가들이 우르르 둥지에 들어왔어요!":"새로운 모험가들을 따뜻하게 환영합니다!";const shown=chicksExpanded?items:items.slice(0,5);document.getElementById("chickTags").innerHTML=shown.map(item=>'<span class="chick-tag">'+escapeHtml(chickLabel(item))+'</span>').join("")+(items.length>5?'<span class="chick-tag chick-more" id="chickMore">'+(chicksExpanded?"접기":"+"+(items.length-5)+"명 더 보기")+'</span>':'');const more=document.getElementById("chickMore");if(more)more.onclick=()=>{chicksExpanded=!chicksExpanded;renderChicks()}}
-function renderVisits(stats){const today=Number(stats?.todayVisits||0).toLocaleString("ko-KR");const total=Number(stats?.totalVisits||0).toLocaleString("ko-KR");document.getElementById("visitCard").innerHTML="👀 오늘 <strong>"+today+"명</strong>이 둘러봤어요.<br>🏛 누적 <strong>"+total+"번</strong>의 발걸음 <small>(26년 6월 1일부터 집계)</small>"}
+function renderVisits(stats){
+  const today=Number(stats?.todayVisits||0).toLocaleString("ko-KR");
+  const total=Number(stats?.totalVisits||0).toLocaleString("ko-KR");
+  const el=document.getElementById("visitCard");
+  if(!el)return;
+  el.innerHTML='<span class="visit-line">👀 오늘 <strong>'+today+'명</strong>이 둘러봤어요. <span class="visit-sep">·</span> 🏛 누적 <strong>'+total+'번</strong>의 발걸음 <small>(26년 6월 1일부터 집계)</small></span>';
+}
 async function fetchVisitStats(mode="stats",boost=0){try{const url=WEB_APP_URL+(WEB_APP_URL.includes("?")?"&":"?")+"action=hallVisit&mode="+encodeURIComponent(mode)+"&boost="+encodeURIComponent(boost)+"&t="+Date.now();const res=await fetch(url,{cache:"no-store"});const data=await res.json();if(data?.ok&&data.stats)renderVisits(data.stats)}catch(e){}}
 function recordDailyVisitOnce(){const key="kinojo_hof_visit_"+new Date().toLocaleDateString("ko-KR",{timeZone:"Asia/Seoul"});if(localStorage.getItem(key)==="1"){fetchVisitStats();return}localStorage.setItem(key,"1");fetchVisitStats("visit",1)}
 function mvpSection(){return '<section class="mvp-card"><div class="mvp-head"><h2>👑 시즌 MVP</h2><span class="section-note">챌린저</span></div><div class="mvp-body mvp-challenger-waiting"><div class="mvp-emblem-wrap"><img class="mvp-emblem-blur" src="'+RANK_EMBLEMS.mvp+'" alt="챌린저 엠블럼"><div class="mvp-emblem-question">?</div></div><div class="mvp-wait-title">첫 번째 챌린저를 기다리는 중</div><div class="mvp-wait-sub">아직 이 엠블럼의 주인은 정해지지 않았습니다.</div></div></section>'}
