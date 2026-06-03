@@ -496,222 +496,302 @@ body{background:#fff!important;}
   .top-grid .mini-row{min-height:42px!important;height:auto!important;grid-template-columns:44px minmax(0,1fr) 34px auto!important;}
 }
 
-
 /* ============================================================
-   knj-infoweb(v_260603_01)
-   ------------------------------------------------------------
-   Web polish based on latest full package:
-   - Unify card radius using Hall of Fame style
-   - Growth/Bulk award cards included in the same card rule
-   - Keep buttons slightly rounder than cards
-   - MVP card/body white background
-   - Mobile sub-character toggle no longer uses absolute position
-   - Send button disabled/enabled visual states
-============================================================ */
-
+   knj-infoweb(v_260603_01) UI integration patch
+   - 카드/버튼 라운드 통일
+   - MVP/성장왕/벌크업 배경 흰색 통일
+   - 모바일 부캐 토글 위치 보정
+   - 코멘트 전송 버튼 활성/비활성 색상 보정
+   ============================================================ */
 :root{
-  --kinojo-radius:3px!important;
-  --kinojo-button-radius:8px!important;
-  --kinojo-active-green:#86efac!important;
-  --kinojo-active-green-border:#22c55e!important;
-  --kinojo-active-green-text:#14532d!important;
+  --kinojo-card-radius:6px;
+  --kinojo-control-radius:9px;
+  --kinojo-active-green:#86efac;
+  --kinojo-active-green-border:#4ade80;
 }
-
-/* 카드류 전체 라운드/배경 통일 */
-.section,
-.overall,
-.classes,
-.mvp-card,
-.reaction-card,
-.award-card,
-.chick-card,
-.visit-mini,
-.admin-dropdown,
-.reaction-popover{
-  border-radius:var(--kinojo-radius)!important;
-  background:#fff!important;
-  border:1px solid var(--line)!important;
-  box-shadow:var(--shadow)!important;
-}
-
-.section-head,
-.overall-head,
-.mvp-head,
-.reaction-card-head{
-  background:#fff!important;
-  border-bottom:1px solid var(--line)!important;
-}
-
-/* 시즌 MVP에 남아 있던 컬러 배경 제거 */
-.mvp-card,
-.mvp-card *,
-.mvp-body{
-  background-color:#fff!important;
-}
-.mvp-body{
+.section,.overall,.classes,.mvp-card,.reaction-card,.award-card,.visit-mini,.chick-card,.banner{
+  border-radius:var(--kinojo-card-radius)!important;
   background:#fff!important;
 }
-
-/* 성장왕 / 벌크업도 카드 라운드와 헤더 기준 통일 */
-.award-card{
-  overflow:hidden!important;
+.mvp-card,.mvp-card .mvp-head,.mvp-card .mvp-body,
+.award-card,.award-card .section-head,.award-card .award-body{
+  background:#fff!important;
 }
-.award-card .section-head{
-  border-radius:0!important;
+.chick-tag,.chick-more,.class-tab,.rank-tab,.name-tag,.btn,.page-btn,.search,
+.reaction-choice button,.send-btn,.sub-toggle.compact,.admin-menu-btn,.admin-dropdown,
+.reaction-popover,.reaction-comment{
+  border-radius:var(--kinojo-control-radius)!important;
 }
-.award-row{
-  border-radius:var(--kinojo-radius)!important;
-}
-
-/* 버튼류는 카드보다 한 단계 더 둥글게 */
-.pill,
-.chick-tag,
-.btn,
-.page-btn,
-.search,
-.name-tag,
-.reaction-comment,
-.reaction-choice button,
-.send-btn,
-.sub-toggle.compact,
-.admin-menu-btn,
-.admin-dropdown-close,
-.reaction-close{
-  border-radius:var(--kinojo-button-radius)!important;
-}
-
-/* 신입 병아리 이름 버튼/클래스 버튼 느낌 */
-.chick-tag,
-.class-tabs .pill,
-.rank-tabs .pill{
-  border-radius:var(--kinojo-button-radius)!important;
-}
-
-/* 부캐 스와이프/토글 버튼: absolute 고정 제거 */
+/* 부캐 토글: absolute 고정 대신 헤더 흐름 안에 자연 배치 */
 .overall-head{
-  position:relative!important;
   display:flex!important;
   align-items:center!important;
-  flex-wrap:wrap!important;
-  gap:8px!important;
-  padding:12px 14px!important;
+  justify-content:space-between!important;
+  gap:10px!important;
+  padding:10px 14px!important;
 }
-.overall-head h2{
-  margin-right:auto!important;
-  min-width:0!important;
-}
+.overall-head h2{flex:0 0 auto!important;white-space:nowrap!important;}
 .overall-title-tools{
   position:static!important;
-  left:auto!important;
-  top:auto!important;
   transform:none!important;
-  z-index:auto!important;
-  order:2!important;
+  margin:0 auto 0 8px!important;
+  flex:0 0 auto!important;
 }
-.page-tools{
-  order:3!important;
-  margin-left:0!important;
-}
-.sub-toggle.compact{
-  width:98px!important;
-  height:32px!important;
-}
-
-/* 검색/초기화 모바일 안정화 */
-.rank-tools{
-  display:grid!important;
-  grid-template-columns:minmax(0,1fr) auto auto!important;
-  gap:8px!important;
-}
-.rank-tools .search{
-  min-width:0!important;
-}
-
-/* 좋아요/싫어요 TOP3: 이름 영역 안정화 */
-.reaction-top-left{
-  overflow:hidden!important;
-}
-.reaction-name{
-  display:block!important;
-  width:100%!important;
-  min-width:0!important;
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
-  white-space:nowrap!important;
-  text-align:left!important;
-}
-.reaction-comments.comment-list:not(.is-scrollable){
-  -webkit-mask-image:none!important;
-  mask-image:none!important;
-  animation:none!important;
-}
-
-/* 코멘트 보내기 버튼: 비활성은 기존 회색, 활성은 연두/초록 */
-.send-btn{
-  background:#f1f5f9!important;
-  border:1px solid #d8e0ea!important;
-  color:#334155!important;
-}
-.send-btn:disabled{
-  opacity:.62!important;
-  filter:saturate(.75)!important;
-  cursor:not-allowed!important;
-  background:#f1f5f9!important;
-  border-color:#d8e0ea!important;
-  color:#334155!important;
-  transform:none!important;
-  box-shadow:none!important;
-}
+.overall-head .page-tools{margin-left:auto!important;flex:0 0 auto!important;}
+.sub-toggle.compact{width:104px!important;height:32px!important;}
+.sub-toggle.compact.on .toggle-knob{left:74px!important;}
+/* 검색 영역 모바일 대응 */
+.rank-tools{display:grid!important;grid-template-columns:minmax(0,1fr) auto auto!important;gap:8px!important;}
+/* 코멘트 전송 버튼: 현재 색상은 비활성, 입력 시 연두/초록 활성 */
+.send-btn{background:#f1f5f9!important;border-color:#d8e0ea!important;color:#334155!important;}
 .send-btn:not(:disabled){
-  opacity:1!important;
-  background:var(--kinojo-active-green)!important;
+  background:linear-gradient(135deg,#bbf7d0,#86efac)!important;
   border-color:var(--kinojo-active-green-border)!important;
-  color:var(--kinojo-active-green-text)!important;
-  box-shadow:0 8px 18px rgba(34,197,94,.16)!important;
+  color:#14532d!important;
+  box-shadow:0 8px 18px rgba(34,197,94,.18)!important;
 }
-.send-btn:not(:disabled):hover{
-  background:#bbf7d0!important;
-  border-color:#16a34a!important;
-}
-
-/* 모바일 순위 헤더/토글/페이지 버튼 재배치 */
-@media(max-width:820px){
-  .overall-head{
-    align-items:flex-start!important;
-  }
-  .overall-head h2{
-    flex:1 1 100%!important;
-    margin-right:0!important;
-  }
-  .overall-title-tools{
-    order:2!important;
-  }
-  .page-tools{
-    order:3!important;
-    margin-left:auto!important;
-  }
-}
-
+.send-btn:disabled{opacity:.62!important;cursor:not-allowed!important;box-shadow:none!important;}
+.send-btn.is-sending{opacity:.72!important;cursor:wait!important;filter:saturate(.8)!important;}
+.reaction-comment:focus{border-color:#86efac!important;box-shadow:0 0 0 3px rgba(134,239,172,.28)!important;outline:none!important;}
+/* TOP3/최근 한마디 이름 영역 안전 표시 */
+.reaction-name,.reaction-server,.reaction-comments,.comment-list{min-width:0!important;}
+.reaction-name{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;}
 @media(max-width:680px){
-  .rank-tools{
-    grid-template-columns:1fr 1fr!important;
+  .overall-head{display:grid!important;grid-template-columns:1fr auto!important;align-items:center!important;gap:8px!important;}
+  .overall-title-tools{grid-column:1/2!important;grid-row:2!important;margin:0!important;justify-self:start!important;}
+  .overall-head .page-tools{grid-column:2/3!important;grid-row:1 / span 2!important;align-self:start!important;}
+  .rank-tools{grid-template-columns:1fr 1fr!important;}
+  .rank-tools .search{grid-column:1/-1!important;}
+  .rank-tools .btn{min-width:0!important;}
+  .reaction-board{grid-template-columns:1fr!important;}
+  .reaction-top-body{grid-template-columns:104px 1px minmax(0,1fr)!important;}
+}
+
+
+/* ============================================================
+   KINOJO INFO top utility + left drawer polish
+   ============================================================ */
+:root{
+  --kinojo-card-radius:18px;
+  --kinojo-button-radius:12px;
+  --kinojo-pill-radius:22px;
+}
+
+/* Header order: utility above banner */
+.top-utility{
+  position:relative;
+  z-index:30;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin:0 0 8px;
+  min-height:38px;
+}
+.top-right-tools{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  margin-left:auto;
+}
+.top-utility .visit-mini{
+  min-height:38px!important;
+  height:38px!important;
+  display:flex!important;
+  align-items:center!important;
+  padding:0 12px!important;
+  border-radius:var(--kinojo-button-radius)!important;
+  box-shadow:none!important;
+  background:#fff!important;
+}
+
+/* Left drawer open button */
+.drawer-toggle{
+  width:38px;
+  height:38px;
+  display:grid;
+  place-items:center;
+  border:1px solid var(--line);
+  background:#fff;
+  color:#334155;
+  border-radius:var(--kinojo-button-radius);
+  font-size:14px;
+  font-weight:1000;
+  cursor:pointer;
+  transition:transform var(--kinojo-motion),background var(--kinojo-motion),border-color var(--kinojo-motion),box-shadow var(--kinojo-motion);
+}
+.drawer-toggle:hover{
+  transform:translateY(-1px) scale(1.015);
+  background:#eef2f7;
+  border-color:#cbd5e1;
+  box-shadow:0 8px 20px rgba(15,23,42,.08);
+}
+
+/* Admin button: top-right, vertical dots, lower radius */
+.admin-menu-wrap{
+  position:relative!important;
+  z-index:35!important;
+}
+.admin-menu-btn{
+  width:38px!important;
+  height:38px!important;
+  min-width:38px!important;
+  display:grid!important;
+  place-items:center!important;
+  border-radius:var(--kinojo-button-radius)!important;
+  font-size:22px!important;
+  line-height:1!important;
+  padding:0!important;
+}
+.admin-dropdown{
+  top:46px!important;
+  right:0!important;
+}
+
+/* Remove old topbar influence if any remains */
+.topbar{display:none!important;}
+.home-link{display:none!important;}
+
+/* Left slide drawer */
+.side-drawer{
+  position:fixed;
+  inset:0;
+  z-index:10020;
+  pointer-events:none;
+  visibility:hidden;
+}
+.side-drawer::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:rgba(255,255,255,.12);
+  backdrop-filter:blur(7px);
+  -webkit-backdrop-filter:blur(7px);
+  opacity:0;
+  transition:opacity var(--kinojo-motion);
+}
+.side-drawer.open{
+  pointer-events:auto;
+  visibility:visible;
+}
+.side-drawer.open::before{
+  opacity:1;
+}
+.drawer-panel{
+  position:absolute;
+  left:0;
+  top:0;
+  bottom:0;
+  width:min(320px,86vw);
+  background:#fff;
+  border-right:1px solid var(--line);
+  box-shadow:20px 0 50px rgba(15,23,42,.12);
+  transform:translateX(-102%);
+  transition:transform var(--kinojo-motion);
+  display:flex;
+  flex-direction:column;
+}
+.side-drawer.open .drawer-panel{
+  transform:translateX(0);
+}
+.drawer-head{
+  min-height:58px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:0 16px;
+  border-bottom:1px solid var(--line);
+}
+.drawer-head strong{
+  font-size:18px;
+  letter-spacing:-.4px;
+  color:#263444;
+}
+.drawer-close{
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  border:1px solid var(--line);
+  background:#fff;
+  color:#64748b;
+  border-radius:var(--kinojo-button-radius);
+  font-size:19px;
+  font-weight:1000;
+  cursor:pointer;
+}
+.drawer-nav{
+  padding:12px;
+  display:grid;
+  gap:6px;
+}
+.drawer-nav a,
+.drawer-action{
+  min-height:40px;
+  display:flex;
+  align-items:center;
+  width:100%;
+  padding:0 12px;
+  border:1px solid transparent;
+  background:#fff;
+  color:#334155;
+  text-decoration:none;
+  font-size:14px;
+  font-weight:900;
+  border-radius:var(--kinojo-button-radius);
+  cursor:pointer;
+  text-align:left;
+  transition:background var(--kinojo-motion),border-color var(--kinojo-motion),transform var(--kinojo-motion);
+}
+.drawer-nav a:hover,
+.drawer-action:hover{
+  background:#f8fafc;
+  border-color:#e5e7eb;
+  transform:translateX(2px);
+}
+.drawer-divider{
+  height:1px;
+  background:var(--line);
+  margin:7px 0;
+}
+.drawer-action{
+  margin-top:4px;
+  justify-content:center;
+  background:#f1f8ed;
+  border-color:#d8ecd0;
+  color:#2f6f3a;
+}
+
+/* Restore newer radius rule: cards 18px, buttons lower than pill but not over-rounded */
+.section,.overall,.classes,.mvp-card,.reaction-card,.banner,.visit-mini,.chick-card{
+  border-radius:var(--kinojo-card-radius)!important;
+}
+.btn,.page-btn,.search,.admin-menu-btn,.drawer-toggle,.drawer-close,.admin-dropdown,
+.reaction-popover,.reaction-choice button,.send-btn,.reaction-comment{
+  border-radius:var(--kinojo-button-radius)!important;
+}
+.chick-tag,.class-tab,.sub-toggle.compact,.drawer-action{
+  border-radius:var(--kinojo-pill-radius)!important;
+}
+
+/* Mobile utility layout */
+@media(max-width:680px){
+  .top-utility{
+    align-items:flex-start;
   }
-  .rank-tools .search{
-    grid-column:1/-1!important;
+  .top-right-tools{
+    gap:6px;
   }
-  .rank-tools .btn{
-    width:100%!important;
+  .top-utility .visit-mini{
+    min-width:0!important;
+    max-width:calc(100vw - 112px)!important;
+    font-size:11px!important;
+    padding:0 8px!important;
   }
-  .reaction-board{
-    grid-template-columns:1fr!important;
-  }
-  .reaction-top-body{
-    grid-template-columns:minmax(96px,112px) 1px minmax(0,1fr)!important;
-  }
-  .reaction-popover{
-    left:12px!important;
-    right:12px!important;
-    width:auto!important;
-    max-width:none!important;
+  .admin-dropdown{
+    right:0!important;
+    width:min(280px,calc(100vw - 24px))!important;
   }
 }
