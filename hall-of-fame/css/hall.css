@@ -630,3 +630,239 @@ html,body{
   .drawer-page-panel.open .drawer-page-card{transform:translateY(0)!important}
   .rank-table{min-width:680px}
 }
+
+
+/* ============================================================
+   KINOJO v_260603_11 bugfix overrides
+   ============================================================ */
+
+/* Remove accidental colors/gradients from cards and section headers */
+.section,.overall,.classes,.mvp-card,.reaction-card,.chick-card,.relation-combined-card,.visit-mini,
+.section-head,.overall-head,.mvp-head,.reaction-card-head{
+  background:#fff!important;
+  background-image:none!important;
+  color:#263444!important;
+}
+.section-note,.reaction-card-note{color:#667085!important}
+.reaction-card-title,.section-head h2,.overall-head h2,.mvp-head h2{
+  color:#263444!important;
+}
+
+/* SVG reaction icons, no emoji/color dependency */
+.reaction-icon{
+  width:15px!important;
+  height:15px!important;
+  display:inline-block!important;
+  background:currentColor!important;
+  color:#263444!important;
+  -webkit-mask-size:contain!important;
+  mask-size:contain!important;
+  -webkit-mask-repeat:no-repeat!important;
+  mask-repeat:no-repeat!important;
+  -webkit-mask-position:center!important;
+  mask-position:center!important;
+  vertical-align:-2px!important;
+  flex:0 0 auto!important;
+}
+.like-icon{
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h4v12Zm2 0V9.4l4.7-6.2c.4-.6 1.3-.7 1.9-.3l.3.2c.6.4.9 1.1.7 1.8L17.8 9H21a2 2 0 0 1 2 2.3l-1.1 7A3.2 3.2 0 0 1 18.7 21H11Z'/%3E%3C/svg%3E")!important;
+  mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h4v12Zm2 0V9.4l4.7-6.2c.4-.6 1.3-.7 1.9-.3l.3.2c.6.4.9 1.1.7 1.8L17.8 9H21a2 2 0 0 1 2 2.3l-1.1 7A3.2 3.2 0 0 1 18.7 21H11Z'/%3E%3C/svg%3E")!important;
+}
+.dislike-icon{
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M15 3h4a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-4V3Zm-2 0v11.6l-4.7 6.2c-.4.6-1.3.7-1.9.3l-.3-.2c-.6-.4-.9-1.1-.7-1.8L6.2 15H3a2 2 0 0 1-2-2.3l1.1-7A3.2 3.2 0 0 1 5.3 3H13Z'/%3E%3C/svg%3E")!important;
+  mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M15 3h4a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-4V3Zm-2 0v11.6l-4.7 6.2c-.4.6-1.3.7-1.9.3l-.3-.2c-.6-.4-.9-1.1-.7-1.8L6.2 15H3a2 2 0 0 1-2-2.3l1.1-7A3.2 3.2 0 0 1 5.3 3H13Z'/%3E%3C/svg%3E")!important;
+}
+.comment-title-icon{
+  width:18px;height:18px;display:inline-block;background:#263444;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-5 4v-4H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm2 4v2h12V8H6Zm0 4v2h8v-2H6Z'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-5 4v-4H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm2 4v2h12V8H6Zm0 4v2h8v-2H6Z'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+.reaction-card-title{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:7px!important;
+}
+.reaction-pair{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:5px!important;
+  color:#263444!important;
+  white-space:nowrap!important;
+}
+.reaction-pair strong{font-weight:1000!important;color:#263444!important}
+
+/* Character names are no longer button-looking */
+.character-name-text,.reaction-name,.relation-row{
+  cursor:pointer!important;
+}
+.character-name-text{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:7px!important;
+  border:0!important;
+  background:transparent!important;
+  color:#0f172a!important;
+  box-shadow:none!important;
+}
+.character-reactions{font-size:10px!important}
+
+/* Reaction popover fixed near clicked name */
+.reaction-popover{
+  position:fixed!important;
+  z-index:10050!important;
+  background:#fff!important;
+  border:1px solid var(--line)!important;
+  box-shadow:none!important;
+}
+.reaction-choice button{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:6px!important;
+  background:#fff!important;
+  color:#263444!important;
+  border:1px solid var(--line)!important;
+}
+.reaction-choice button.active{
+  background:#f8fafc!important;
+  border-color:#cbd5e1!important;
+  color:#263444!important;
+}
+
+/* Comment scroll: entire track scrolls, not clipped after 5 */
+.comment-list.is-scrollable{
+  max-height:6.4em!important;
+  overflow:hidden!important;
+  position:relative!important;
+}
+.comment-track{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:5px!important;
+}
+.comment-list.is-scrollable .comment-track{
+  animation:kinojoCommentScroll 20s linear infinite!important;
+}
+.comment-list.is-scrollable:hover .comment-track{
+  animation-play-state:paused!important;
+}
+@keyframes kinojoCommentScroll{
+  0%{transform:translateY(0)}
+  100%{transform:translateY(-50%)}
+}
+.comment-item{
+  line-height:1.32!important;
+  color:#475569!important;
+}
+.recent-comment-card .recent{
+  padding:14px 18px!important;
+}
+.recent-comment-item{
+  display:grid!important;
+  grid-template-columns:auto minmax(0,1fr)!important;
+  gap:12px!important;
+  align-items:start!important;
+  padding-left:8px!important;
+}
+.recent-comment-item strong{
+  color:#263444!important;
+  min-width:42px!important;
+}
+
+/* Relation card must never grow; internal viewport handles overflow */
+.relation-combined-card{
+  height:100%!important;
+  min-height:0!important;
+  max-height:100%!important;
+  overflow:hidden!important;
+}
+.relation-viewport{
+  overflow:hidden!important;
+}
+.relation-row{
+  min-width:0!important;
+  height:30px!important;
+  min-height:30px!important;
+  border-color:#e5e7eb!important;
+  background:#fff!important;
+  color:#263444!important;
+}
+.relation-reactions{
+  color:#263444!important;
+}
+.relation-row .reaction-icon{
+  width:12px!important;
+  height:12px!important;
+}
+@media(max-width:680px){
+  .relation-track{
+    display:grid!important;
+    grid-template-columns:repeat(auto-fit,minmax(132px,1fr))!important;
+    gap:6px!important;
+  }
+  .relation-row{
+    justify-content:center!important;
+    gap:5px!important;
+    padding:0 5px!important;
+  }
+  .relation-name{max-width:48%!important}
+}
+
+/* Admin dropdown unified with reaction popover */
+.admin-dropdown{
+  background:#fff!important;
+  border:1px solid var(--line)!important;
+  box-shadow:none!important;
+}
+.admin-visit-control{
+  display:grid!important;
+  gap:8px!important;
+  padding:8px!important;
+  border:1px solid var(--line)!important;
+  background:#fff!important;
+  border-radius:3px!important;
+}
+.admin-visit-title{
+  font-size:12px!important;
+  font-weight:1000!important;
+  color:#263444!important;
+}
+.admin-visit-line{
+  display:flex!important;
+  align-items:center!important;
+  gap:7px!important;
+  flex-wrap:wrap!important;
+  font-size:12px!important;
+  color:#475569!important;
+}
+.admin-visit-amount{
+  width:76px!important;
+  height:32px!important;
+  padding:0 8px!important;
+}
+.admin-visit-actions .btn{
+  height:32px!important;
+  padding:0 12px!important;
+}
+
+/* no colored gradient buttons */
+.btn,.send-btn,.drawer-action,.construction-ok{
+  background:#fff!important;
+  color:#263444!important;
+  border-color:var(--line)!important;
+}
+.btn:hover,.send-btn:hover,.drawer-action:hover,.construction-ok:hover{
+  background:#f8fafc!important;
+}
+
+/* Mobile layout stabilization */
+@media(max-width:980px){
+  .top-grid .section,.side-stack,.relation-combined-card{
+    height:auto!important;
+  }
+  .relation-combined-card{
+    height:260px!important;
+    max-height:260px!important;
+  }
+}

@@ -10,9 +10,27 @@ function currentOverall(){return includeSubs?(hallData.overallAll||[]):(hallData
 function currentDemon(){return includeSubs?(hallData.demonFamilyAll||hallData.demonFamily||[]):(hallData.demonFamily||[])}
 function currentParty(){return includeSubs?(hallData.partyFriendAll||hallData.partyFriend||[]):(hallData.partyFriend||[])}
 function match(item){if(!keyword)return true;return [item.name,item.owner,item.serverName,item.meta,item.className,item.pveReview,item.pvpReview].join(" ").toLowerCase().includes(keyword.toLowerCase())}
+
+function reactionIcon(kind){
+  const cls=kind==="dislike"?"dislike-icon":"like-icon";
+  return '<span class="reaction-icon '+cls+'" aria-hidden="true"></span>';
+}
+function reactionPairHtml(like,dislike,extraClass){
+  return '<span class="reaction-pair '+(extraClass||'')+'">'
+    + reactionIcon("like")+'<strong>'+Number(like||0)+'</strong>'
+    + reactionIcon("dislike")+'<strong>'+Number(dislike||0)+'</strong>'
+    + '</span>';
+}
+
 function nameClass(item){return item?.isAdminMain?"admin-main":(item?.isAdminAlt?"admin-alt":"")}
 function itemClass(item){return ""}
-function nameSpan(item,text){const r=reactionDataFor(item);return '<button class="character-button '+nameClass(item)+'" data-character="'+escapeHtml(item?.name||"")+'"><span class="character-text">'+text+'</span><span class="character-reactions"><span>👍 '+Number(r.like||0)+'</span><span>👎 '+Number(r.dislike||0)+'</span></span></button>'}
+function nameSpan(item,text){
+  const r=reactionDataFor(item);
+  return '<span class="character-name-text '+nameClass(item)+'" data-character="'+escapeHtml(item?.name||"")+'">'
+    + '<span class="character-text">'+text+'</span>'
+    + reactionPairHtml(r.like,r.dislike,'character-reactions')
+    + '</span>';
+}
 function ownerLine(item){const owner=String(item?.owner||"").trim(),name=String(item?.name||"").trim();return owner&&owner!==name?'<div class="owner-line">본캐 '+escapeHtml(owner)+'</div>':''}
 function flowText(text,item){return '<span class="flow-candidate">'+nameSpan(item,escapeHtml(text))+'</span>'}
 function classIconHtml(cls,withText=false){const path=CLASS_ICONS[cls];if(!path)return withText?'<span class="class-icon-cell">'+escapeHtml(cls||"-")+'</span>':'-';return '<span class="class-icon-cell"><img class="class-icon" src="'+path+'" alt="'+escapeHtml(cls)+'">'+(withText?'<span>'+escapeHtml(cls)+'</span>':'')+'</span>'}
@@ -26,18 +44,16 @@ function combinedRelationBox(){
 
   const renderTrack=function(items,type){
     const base=(items||[]).length?items:[];
-    const loopItems=base.length>3?base.concat(base):base;
-    const trackClass=base.length>3?' relation-track is-scroll':' relation-track';
+    const loopItems=base.length>4?base.concat(base):base;
+    const trackClass=base.length>4?' relation-track is-scroll':' relation-track';
     const html=loopItems.length
       ? loopItems.map(item=>{
           const reaction=reactionDataFor(item);
           const serverText=item.meta||item.serverName||item.server||"";
-          const ownerText=item.owner?'<span class="relation-owner">'+escapeHtml(item.owner)+'</span>':'';
           return '<div class="relation-row '+itemClass(item)+'" data-character="'+escapeHtml(item.name)+'">'
             + '<span class="relation-name">'+escapeHtml(item.name)+'</span>'
             + (serverText?'<span class="relation-server">'+escapeHtml(serverText)+'</span>':'')
-            + ownerText
-            + '<span class="relation-reactions">👍 '+Number(reaction.like||0)+' · 👎 '+Number(reaction.dislike||0)+'</span>'
+            + reactionPairHtml(reaction.like,reaction.dislike,'relation-reactions')
             + '</div>';
         }).join("")
       : '<div class="empty relation-empty">아직 데이터가 부족해요.</div>';
@@ -45,9 +61,9 @@ function combinedRelationBox(){
   };
 
   return '<section class="section relation-combined-card">'
-    + '<div class="section-head relation-main-head"><h2>😈 같은 마족이면 가족이지</h2><span class="section-note">타서버 마족</span></div>'
+    + '<div class="section-head relation-main-head"><h2>같은 마족이면 가족이지</h2><span class="section-note">타서버 마족</span></div>'
     + renderTrack(demonItems,"demon")
-    + '<div class="section-head relation-sub-head"><h2>🤝 같은 파티면 친구지</h2><span class="section-note">천족 서버</span></div>'
+    + '<div class="section-head relation-sub-head"><h2>같은 파티면 친구지</h2><span class="section-note">천족 서버</span></div>'
     + renderTrack(partyItems,"party")
     + '</section>';
 }
@@ -65,9 +81,48 @@ function recordDailyVisitOnce(){const key="kinojo_hof_visit_"+new Date().toLocal
 function mvpSection(){return '<section class="mvp-card"><div class="mvp-head"><h2>👑 시즌 MVP</h2><span class="section-note">챌린저</span></div><div class="mvp-body mvp-challenger-waiting"><div class="mvp-emblem-wrap"><img class="mvp-emblem-blur" src="'+RANK_EMBLEMS.mvp+'" alt="챌린저 엠블럼"><div class="mvp-emblem-question">?</div></div><div class="mvp-wait-title">첫 번째 챌린저를 기다리는 중</div><div class="mvp-wait-sub">아직 이 엠블럼의 주인은 정해지지 않았습니다.</div></div></section>'}
 
 function reactionDataFor(item){const by=hallData?.reactionSummary?.byName||{};return by[item?.name]||{like:0,dislike:0,comments:[]}}
-function reactionCountsHtml(item){const r=reactionDataFor(item);return '<div class="reaction-counts"><span class="like">👍 '+Number(r.like||0)+'</span><span class="dislike">👎 '+Number(r.dislike||0)+'</span></div>'}
-function reactionCard(type){const summary=hallData?.reactionSummary||{};const list=(type==="like"?summary.likeTop:summary.dislikeTop)||[];const title=type==="like"?"👍 좋아요 TOP 3":"👎 싫어요 TOP 3";const note=type==="like"?"모두에게 사랑받는 모험가":"이분은 어쩌다 이렇게 미움을 샀을까요?";if(!list.length)return '<section class="reaction-card '+type+'-top-card"><div class="reaction-card-head"><div class="reaction-card-title">'+title+'</div><div class="reaction-card-note">'+note+'</div></div><div class="reaction-empty">아직 반응 데이터가 부족합니다.</div></section>';const now=Date.now();const idx=(now<reactionCarouselPausedUntil)?reactionCarouselIndex:reactionCarouselIndex%list.length;const ordered=list.slice();const item=ordered[idx%ordered.length];const displayRank=(idx%ordered.length)+1;const comments=(item.comments||[]).filter(Boolean);const overflowClass=comments.length>5?' is-scrollable':'';const meta=item.serverName?'<div class="reaction-server">'+escapeHtml(item.serverName)+'</div>':'';return '<section class="reaction-card '+type+'-top-card" data-reaction-card="'+type+'"><div class="reaction-card-head"><div class="reaction-card-title">'+title+'</div><div class="reaction-card-note">'+note+'</div></div><div class="reaction-top-body"><div class="reaction-top-left"><div class="reaction-rank">'+displayRank+'위</div><button class="character-button reaction-name" data-character="'+escapeHtml(item.name)+'">'+escapeHtml(item.name)+'</button>'+meta+'<div class="reaction-score-line icon-row"><span class="reaction-icon like-icon" aria-hidden="true"></span><strong>'+Number(item.like||0)+'</strong><span class="reaction-icon dislike-icon" aria-hidden="true"></span><strong>'+Number(item.dislike||0)+'</strong></div></div><div class="reaction-top-divider" aria-hidden="true"></div><div class="reaction-comments comment-list'+overflowClass+'">'+(comments.length?comments.map(c=>'<div>“'+escapeHtml(c)+'”</div>').join(''):'<div>아직 코멘트가 없습니다.</div>')+'</div></div></section>'}
-function recentCommentCard(){const by=hallData?.reactionSummary?.byName||{};const rows=[];Object.keys(by).forEach(name=>{(by[name].comments||[]).slice(0,2).forEach(c=>rows.push({name,comment:c}))});const list=rows.slice(0,5);const overflowClass=list.length>5?' is-scrollable':'';return '<section class="reaction-card recent-comment-card"><div class="reaction-card-head"><div class="reaction-card-title">💬 최근 한마디</div><div class="reaction-card-note">따뜻한 말은 오래 남아요</div></div><div class="reaction-comments recent comment-list'+overflowClass+'">'+(list.length?list.map(x=>'<div><strong>'+escapeHtml(x.name)+'</strong> · “'+escapeHtml(x.comment)+'”</div>').join(''):'<div>아직 남겨진 한마디가 없습니다.</div>')+'</div></section>'}
+function reactionCountsHtml(item){
+  const r=reactionDataFor(item);
+  return '<div class="reaction-counts">'+reactionPairHtml(r.like,r.dislike,'mini-reactions')+'</div>';
+}
+function reactionCard(type){
+  const summary=hallData?.reactionSummary||{};
+  const list=(type==="like"?summary.likeTop:summary.dislikeTop)||[];
+  const title=type==="like"?"좋아요 TOP 3":"싫어요 TOP 3";
+  const titleIcon=reactionIcon(type==="like"?"like":"dislike");
+  const note=type==="like"?"모두에게 사랑받는 모험가":"이분은 어쩌다 이렇게 미움을 샀을까요?";
+  if(!list.length){
+    return '<section class="reaction-card '+type+'-top-card"><div class="reaction-card-head"><div class="reaction-card-title">'+titleIcon+'<span>'+title+'</span></div><div class="reaction-card-note">'+note+'</div></div><div class="reaction-empty">아직 반응 데이터가 부족합니다.</div></section>';
+  }
+  const now=Date.now();
+  const idx=(now<reactionCarouselPausedUntil)?reactionCarouselIndex:reactionCarouselIndex%list.length;
+  const item=list[idx%list.length];
+  const displayRank=(idx%list.length)+1;
+  const comments=(item.comments||[]).filter(Boolean);
+  const meta=item.serverName?'<div class="reaction-server">'+escapeHtml(item.serverName)+'</div>':'';
+  const commentItems=comments.length?comments.map(c=>'<div class="comment-item">“'+escapeHtml(c)+'”</div>').join(''):'<div class="comment-item">아직 코멘트가 없습니다.</div>';
+  const track=comments.length>5?commentItems+commentItems:commentItems;
+  const overflowClass=comments.length>5?' is-scrollable':'';
+  return '<section class="reaction-card '+type+'-top-card" data-reaction-card="'+type+'">'
+    + '<div class="reaction-card-head"><div class="reaction-card-title">'+titleIcon+'<span>'+title+'</span></div><div class="reaction-card-note">'+note+'</div></div>'
+    + '<div class="reaction-top-body"><div class="reaction-top-left"><div class="reaction-rank">'+displayRank+'위</div>'
+    + '<span class="reaction-name" data-character="'+escapeHtml(item.name)+'">'+escapeHtml(item.name)+'</span>'+meta
+    + '<div class="reaction-score-line icon-row">'+reactionPairHtml(item.like,item.dislike,'top-reaction-pair')+'</div></div>'
+    + '<div class="reaction-top-divider" aria-hidden="true"></div>'
+    + '<div class="reaction-comments comment-list'+overflowClass+'"><div class="comment-track">'+track+'</div></div></div></section>';
+}
+function recentCommentCard(){
+  const by=hallData?.reactionSummary?.byName||{};
+  const rows=[];
+  Object.keys(by).forEach(name=>{
+    (by[name].comments||[]).filter(Boolean).forEach(c=>rows.push({name,comment:c}));
+  });
+  const list=rows.slice(0,10);
+  const overflowClass=list.length>5?' is-scrollable':'';
+  const items=list.length?list.map(x=>'<div class="comment-item recent-comment-item"><strong>'+escapeHtml(x.name)+'</strong><span>“'+escapeHtml(x.comment)+'”</span></div>').join(''):'<div class="comment-item">아직 남겨진 한마디가 없습니다.</div>';
+  const track=list.length>5?items+items:items;
+  return '<section class="reaction-card recent-comment-card"><div class="reaction-card-head"><div class="reaction-card-title"><span class="comment-title-icon" aria-hidden="true"></span><span>최근 한마디</span></div><div class="reaction-card-note">따뜻한 말은 오래 남아요</div></div><div class="reaction-comments recent comment-list'+overflowClass+'"><div class="comment-track">'+track+'</div></div></section>';
+}
 function reactionBoard(){return '<div class="reaction-board">'+reactionCard("like")+reactionCard("dislike")+recentCommentCard()+'</div>'}
 function awardsBoard(){const w=hallData?.weeklyAwards||{};return '<div class="award-grid">'+awardCard("🌱 성장왕","PVE+PVP 아이템레벨 주간 증가량",w.growthKing||[],"itemLabel")+awardCard("💪 벌크업","PVE+PVP 전투력 주간 증가량",w.bulkUp||[],"powerLabel")+'</div>'}
 function awardCard(title,note,list,labelKey){return '<section class="award-card"><div class="section-head"><h2>'+title+'</h2><span class="section-note">'+note+'</span></div><div class="award-body">'+(list.length?list.map((item,i)=>'<div class="award-row"><div class="award-rank">'+(i+1)+'위</div><div class="award-name"><div class="rank-name-flex"><div class="rank-name-main">'+flowText(item.name,item)+ownerLine(item)+'</div></div></div><div class="award-score">'+escapeHtml(item[labelKey]||'')+'</div></div>').join(''):'<div class="empty">비교 가능한 주간 데이터가 부족합니다.</div>')+'</div></section>'}
@@ -200,7 +255,20 @@ function boostPrompt(){const code=prompt("관리자 암호를 입력하세요.")
 function openAdminDropdown(){const box=document.getElementById("adminDropdown");const btn=document.getElementById("adminMenuBtn");if(!box)return;const willOpen=!box.classList.contains("open");box.classList.toggle("open",willOpen);box.setAttribute("aria-hidden",willOpen?"false":"true");if(btn)btn.setAttribute("aria-expanded",willOpen?"true":"false")}
 function closeAdminMenu(){const box=document.getElementById("adminDropdown");const btn=document.getElementById("adminMenuBtn");if(box){box.classList.remove("open");box.setAttribute("aria-hidden","true")}if(btn)btn.setAttribute("aria-expanded","false")}
 function adminLogin(){const input=document.getElementById("adminPasswordInput");const status=document.getElementById("adminStatus");if(String(input?.value||"")!=="zlshwhghkdlxld"){if(status)status.textContent="암호가 올바르지 않습니다.";return}adminAuthed=true;const login=document.getElementById("adminLoginPanel");const panel=document.getElementById("adminControlPanel");if(login)login.style.display="none";if(panel)panel.style.display="grid";if(status)status.textContent=""}
-async function adminVisit(amount,mode){await fetchVisitStats(mode,amount);alert((mode==="boost"?"방문수 부스트":"방문수")+" +"+amount+" 반영 완료")}
+async function adminVisitAdjust(){
+  const target=document.querySelector('input[name="visitTarget"]:checked')?.value||"daily";
+  const sign=document.querySelector('input[name="visitSign"]:checked')?.value||"plus";
+  const amount=Math.max(1,Math.min(9999,Number(document.getElementById("adminVisitAmount")?.value||0)));
+  const status=document.getElementById("adminVisitStatus");
+  const mode=target==="total"?(sign==="minus"?"totalMinus":"totalPlus"):(sign==="minus"?"dailyMinus":"dailyPlus");
+  try{
+    if(status)status.textContent="반영 중...";
+    await fetchVisitStats(mode,amount);
+    if(status)status.textContent="방문자수 반영 완료";
+  }catch(e){
+    if(status)status.textContent="방문자수 반영 실패: "+(e.message||e);
+  }
+}
 async function adminSnapshot(){try{const url=WEB_APP_URL+(WEB_APP_URL.includes("?")?"&":"?")+"action=weeklySnapshot&password="+encodeURIComponent("zlshwhghkdlxld")+"&t="+Date.now();const res=await fetch(url,{cache:"no-store"});const data=await res.json();if(!data.ok)return alert(data.message||"스냅샷 저장 실패");alert("성장왕 스냅샷 저장 완료: "+Number(data.result?.count||0)+"명")}catch(e){alert("스냅샷 저장 오류: "+(e.message||e))}}
 
 async function showMvpAdminPrompt(){const code=prompt("MVP 관리자 암호를 입력하세요.");if(!code)return;try{const url=WEB_APP_URL+(WEB_APP_URL.includes("?")?"&":"?")+"action=mvpAdmin&password="+encodeURIComponent(code)+"&t="+Date.now();const res=await fetch(url,{cache:"no-store"});const data=await res.json();if(!data.ok)return alert(data.message||"확인 실패");const season=data.season||{};const rows=(data.candidates||[]).map((item,i)=>(i+1)+"위 "+item.name+"\n시즌 "+Number(item.seasonScore||0)+" · 반응 "+Number(item.reactionScore||0)+" · 예상 "+Number(item.finalScorePreview||0)+"\n👍 "+Number(item.like||0)+" / 👎 "+Number(item.dislike||0)+" · "+item.excludeReason).join("\n\n");alert("MVP 시즌 후보 TOP5\n"+(season.seasonName||"")+" ("+(season.startDate||"")+" ~ "+(season.endDate||"")+")\n\n"+(rows||"아직 집계 데이터가 없습니다.")+"\n\n※ 전투력 보정 20%는 MVP 선정 시점에만 반영됩니다.")}catch(e){alert("MVP 정보를 불러오지 못했습니다: "+(e.message||e))}}
@@ -239,7 +307,20 @@ async function adminSnapshotTriggerInstall(){
 
 
 function openReactionModal(item,anchor){reactionSubmitting=false;currentReactionItem=item;currentReactionType="like";document.getElementById("reactionModalTitle").textContent=item.name+"님께 한마디";document.getElementById("reactionComment").value="";const status=document.getElementById("reactionStatus");if(status)status.textContent="";const submitBtn=document.getElementById("reactionSubmitBtn");if(submitBtn){submitBtn.disabled=false}document.getElementById("reactionLikeBtn").classList.add("active");document.getElementById("reactionDislikeBtn").classList.remove("active");setReactionLimitLoading_();const pop=document.getElementById("reactionPopover");pop.style.display="block";pop.setAttribute("aria-hidden","false");positionReactionPopover(anchor||document.body,pop)}
-function positionReactionPopover(anchor,pop){const rect=anchor.getBoundingClientRect();const w=Math.min(320,window.innerWidth-24);let left=Math.min(window.innerWidth-w-12,Math.max(12,rect.left));let top=Math.min(window.innerHeight-260,Math.max(12,rect.bottom+8));pop.style.width=w+"px";pop.style.left=left+"px";pop.style.top=top+"px";pop.dataset.fixedLeft=String(left);pop.dataset.fixedTop=String(top)}
+function positionReactionPopover(anchor,pop){
+  const rect=anchor.getBoundingClientRect();
+  const w=Math.min(320,Math.max(260,window.innerWidth-24));
+  let left=Math.min(window.innerWidth-w-12,Math.max(12,rect.left));
+  let top=rect.bottom+8;
+  const h=Math.min(260,pop.offsetHeight||240);
+  if(top+h>window.innerHeight-12) top=Math.max(12,rect.top-h-8);
+  pop.style.position="fixed";
+  pop.style.width=w+"px";
+  pop.style.left=left+"px";
+  pop.style.top=top+"px";
+  pop.dataset.fixedLeft=String(left);
+  pop.dataset.fixedTop=String(top);
+}
 function closeReactionModal(){const pop=document.getElementById("reactionPopover");if(pop){pop.style.display="none";pop.setAttribute("aria-hidden","true")}currentReactionItem=null}
 function getVisitorId(){let id=localStorage.getItem("kinojoVisitorId");if(!id){id="v_"+Date.now()+"_"+Math.random().toString(36).slice(2);localStorage.setItem("kinojoVisitorId",id)}return id}
 function todayKey(){return new Date().toLocaleDateString("ko-KR",{timeZone:"Asia/Seoul"})}
@@ -381,7 +462,7 @@ async function submitSideSuggestion_(){
 }
 
 
-bindDrawerPagePanel_();bindConstructionNotice_();bindKinojoDrawer_();const adminMenuBtn=document.getElementById("adminMenuBtn");if(adminMenuBtn)adminMenuBtn.onclick=openAdminDropdown;const adminDropdownClose=document.getElementById("adminDropdownClose");if(adminDropdownClose)adminDropdownClose.onclick=closeAdminMenu;const adminLoginBtn=document.getElementById("adminLoginBtn");if(adminLoginBtn)adminLoginBtn.onclick=adminLogin;const adminPasswordInput=document.getElementById("adminPasswordInput");if(adminPasswordInput)adminPasswordInput.onkeydown=e=>{if(e.key==="Enter")adminLogin()};document.getElementById("adminMvpBtn").onclick=showMvpAdminPrompt;document.getElementById("adminVisitBtn").onclick=()=>adminVisit(1,"visit");document.getElementById("adminBoostBtn").onclick=()=>adminVisit(31,"boost");document.getElementById("adminSnapshotBtn").onclick=adminSnapshot;const adminSnapshotTrigger=document.getElementById("adminSnapshotTriggerBtn");if(adminSnapshotTrigger)adminSnapshotTrigger.onclick=adminSnapshotTriggerInstall;document.getElementById("reactionLikeBtn").onclick=()=>{currentReactionType="like";document.getElementById("reactionLikeBtn").classList.add("active");document.getElementById("reactionDislikeBtn").classList.remove("active")};document.getElementById("reactionDislikeBtn").onclick=()=>{currentReactionType="dislike";document.getElementById("reactionDislikeBtn").classList.add("active");document.getElementById("reactionLikeBtn").classList.remove("active")};document.getElementById("reactionCloseBtn").onclick=closeReactionModal;document.getElementById("reactionSubmitBtn").onclick=submitReaction;document.addEventListener("click",e=>{const pop=document.getElementById("reactionPopover");if(pop&&pop.style.display==="block"&&!pop.contains(e.target)&&!e.target.closest("[data-character]"))closeReactionModal();const menu=document.getElementById("adminDropdown");if(menu&&menu.classList.contains("open")&&!menu.contains(e.target)&&!e.target.closest("#adminMenuBtn"))closeAdminMenu();const drawer=document.getElementById("sideDrawer");if(drawer&&drawer.classList.contains("open")&&e.target===drawer)closeSideDrawer();const pagePanel=document.getElementById("drawerPagePanel");if(pagePanel&&pagePanel.classList.contains("open")&&e.target===pagePanel)closeDrawerPagePanel();const notice=document.getElementById("constructionNotice");if(notice&&notice.classList.contains("open")&&e.target===notice)closeConstructionNotice()});document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeSideDrawer();closeDrawerPagePanel();closeAdminMenu();closeReactionModal();closeConstructionNotice()}});setInterval(()=>{if(Date.now()<reactionCarouselPausedUntil)return;if(document.activeElement&&document.activeElement.id==="rankSearchInput")return;reactionCarouselIndex++;if(hallData)render()},6500);recordDailyVisitOnce();load();
+bindDrawerPagePanel_();bindConstructionNotice_();bindKinojoDrawer_();const adminMenuBtn=document.getElementById("adminMenuBtn");if(adminMenuBtn)adminMenuBtn.onclick=openAdminDropdown;const adminDropdownClose=document.getElementById("adminDropdownClose");if(adminDropdownClose)adminDropdownClose.onclick=closeAdminMenu;const adminLoginBtn=document.getElementById("adminLoginBtn");if(adminLoginBtn)adminLoginBtn.onclick=adminLogin;const adminPasswordInput=document.getElementById("adminPasswordInput");if(adminPasswordInput)adminPasswordInput.onkeydown=e=>{if(e.key==="Enter")adminLogin()};document.getElementById("adminMvpBtn").onclick=showMvpAdminPrompt;const adminVisitApplyBtn=document.getElementById("adminVisitApplyBtn");if(adminVisitApplyBtn)adminVisitApplyBtn.onclick=adminVisitAdjust;document.getElementById("adminSnapshotBtn").onclick=adminSnapshot;const adminSnapshotTrigger=document.getElementById("adminSnapshotTriggerBtn");if(adminSnapshotTrigger)adminSnapshotTrigger.onclick=adminSnapshotTriggerInstall;document.getElementById("reactionLikeBtn").onclick=()=>{currentReactionType="like";document.getElementById("reactionLikeBtn").classList.add("active");document.getElementById("reactionDislikeBtn").classList.remove("active")};document.getElementById("reactionDislikeBtn").onclick=()=>{currentReactionType="dislike";document.getElementById("reactionDislikeBtn").classList.add("active");document.getElementById("reactionLikeBtn").classList.remove("active")};document.getElementById("reactionCloseBtn").onclick=closeReactionModal;document.getElementById("reactionSubmitBtn").onclick=submitReaction;document.addEventListener("click",e=>{const pop=document.getElementById("reactionPopover");if(pop&&pop.style.display==="block"&&!pop.contains(e.target)&&!e.target.closest("[data-character]"))closeReactionModal();const menu=document.getElementById("adminDropdown");if(menu&&menu.classList.contains("open")&&!menu.contains(e.target)&&!e.target.closest("#adminMenuBtn"))closeAdminMenu();const drawer=document.getElementById("sideDrawer");if(drawer&&drawer.classList.contains("open")&&e.target===drawer)closeSideDrawer();const pagePanel=document.getElementById("drawerPagePanel");if(pagePanel&&pagePanel.classList.contains("open")&&e.target===pagePanel)closeDrawerPagePanel();const notice=document.getElementById("constructionNotice");if(notice&&notice.classList.contains("open")&&e.target===notice)closeConstructionNotice()});document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeSideDrawer();closeDrawerPagePanel();closeAdminMenu();closeReactionModal();closeConstructionNotice()}});setInterval(()=>{if(Date.now()<reactionCarouselPausedUntil)return;if(document.activeElement&&document.activeElement.id==="rankSearchInput")return;reactionCarouselIndex++;if(hallData)render()},6500);recordDailyVisitOnce();load();
 
 /* knj-infoweb(v_260603_01) reaction submit guard patch */
 function updateReactionSubmitState_(){

@@ -29,8 +29,21 @@
         </div>
         <div class="admin-control-panel" id="adminControlPanel" style="display:none">
           <button class="btn" id="adminMvpBtn" type="button">MVP 후보 확인</button>
-          <button class="btn" id="adminVisitBtn" type="button">방문자 수 +1</button>
-          <button class="btn" id="adminBoostBtn" type="button">방문자 수 +31</button>
+          <div class="admin-visit-control" id="adminVisitControl">
+            <div class="admin-visit-title">방문자수 조정</div>
+            <div class="admin-visit-line">
+              <label><input type="radio" name="visitTarget" value="daily" checked> 일일</label>
+              <label><input type="radio" name="visitTarget" value="total"> 누적</label>
+              <input class="search admin-visit-amount" id="adminVisitAmount" type="number" min="1" max="9999" value="1" inputmode="numeric">
+              <span>명</span>
+            </div>
+            <div class="admin-visit-line admin-visit-actions">
+              <label><input type="radio" name="visitSign" value="plus" checked> +</label>
+              <label><input type="radio" name="visitSign" value="minus"> -</label>
+              <button class="btn" id="adminVisitApplyBtn" type="button">반영</button>
+            </div>
+            <div class="admin-status" id="adminVisitStatus"></div>
+          </div>
           <button class="btn" id="adminSnapshotBtn" type="button">성장왕 스냅샷 생성</button>
           <button class="btn" id="adminSnapshotTriggerBtn" type="button">자동 스냅샷 트리거 설치</button>
         </div>
@@ -84,8 +97,8 @@
   </div>
   <div class="reaction-popover-body">
     <div class="reaction-choice">
-      <button id="reactionLikeBtn" type="button">👍 좋아요</button>
-      <button id="reactionDislikeBtn" type="button">👎 싫어요</button>
+      <button id="reactionLikeBtn" type="button"><span class="reaction-icon like-icon" aria-hidden="true"></span><span>좋아요</span></button>
+      <button id="reactionDislikeBtn" type="button"><span class="reaction-icon dislike-icon" aria-hidden="true"></span><span>싫어요</span></button>
     </div>
     <div class="reaction-input-row">
       <input class="reaction-comment" id="reactionComment" maxlength="20" placeholder="전하고 싶은 말을 남겨주세요">
