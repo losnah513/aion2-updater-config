@@ -5,26 +5,343 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta property="og:title" content="KINOJO INFO">
 <meta property="og:description" content="키노조 정보 허브 - 성역 파티 확인과 명예의 전당">
-<meta property="og:image" content="https://losnah513.github.io/aion2-updater-config/hall-of-fame/assets/hall-banner-v2.png?v=uiux-phase1-final">
+<meta property="og:image" content="https://losnah513.github.io/aion2-updater-config/hall-of-fame/assets/hall-banner-v2.png?v=26060301">
 <title>KINOJO INFO</title>
 <style>
-:root{--text:#263444;--muted:#667085;--line:#e5e7eb;--blue:#2563eb}*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Arial,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;color:var(--text);background:#f6f7f9}.wrap{width:min(1080px,calc(100% - 24px));margin:0 auto;padding:18px 0 40px}.hero{text-align:center}.eyebrow{display:inline-flex;gap:7px;align-items:center;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;color:#475467;font-size:12px;font-weight:900}h1{margin:12px 0 5px;font-size:clamp(32px,7vw,56px);letter-spacing:-1.6px}.subtitle{margin:0 auto 14px;color:var(--muted);font-size:15px;line-height:1.55;max-width:560px}.hall-banner{display:block;border-radius:18px;overflow:hidden;border:1px solid var(--line);background:#fff;text-decoration:none;color:inherit;transition:.16s ease}.hall-banner:hover{transform:translateY(-1px);filter:brightness(1.03)}.hall-banner img{display:block;width:100%;height:auto}.sanctuary-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}.card{position:relative;display:block;min-height:128px;padding:17px;border:1px solid var(--line);border-radius:18px;background:#fff;overflow:hidden;text-decoration:none;color:inherit}.card.disabled{opacity:.78;cursor:not-allowed}.icon img{width:36px;height:36px}.card-title{font-size:22px;font-weight:1000;letter-spacing:-.5px}.card-sub{margin-top:6px;color:var(--muted);font-size:14px;line-height:1.45}.badge{position:absolute;right:14px;top:14px;border-radius:999px;padding:6px 10px;font-size:11px;font-weight:1000;background:#f2f4f7;color:#667085;border:1px solid var(--line)}.footer{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin-top:22px}.footer a{color:#667085;text-decoration:none;font-size:12px;font-weight:900}.footer a:hover{color:#2563eb}@media(max-width:720px){.wrap{width:min(100%,calc(100% - 16px));padding:12px 0 32px}.sanctuary-row{grid-template-columns:1fr;gap:10px}.card{min-height:112px;border-radius:16px;padding:16px}.card-title{font-size:21px}.hall-banner{border-radius:14px}}
+:root{
+  --text:#263444;
+  --muted:#667085;
+  --line:#e5e7eb;
+  --panel:#fff;
+  --blue:#2563eb;
+  --card-radius:3px;
+  --button-radius:8px;
+  --shadow:0 8px 18px rgba(15,23,42,.05);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:Arial,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  color:var(--text);
+  background:#fff;
+}
+body.drawer-open{overflow:hidden}
+.wrap{
+  width:min(1080px,100%);
+  margin:0 auto;
+  padding:18px 14px 40px;
+  background:#fff;
+}
+.hero{
+  padding:16px 8px 14px;
+  text-align:center;
+}
+.eyebrow{
+  display:inline-flex;
+  gap:7px;
+  align-items:center;
+  border:1px solid var(--line);
+  background:#fff;
+  border-radius:999px;
+  padding:7px 12px;
+  color:#475467;
+  font-size:12px;
+  font-weight:900;
+  box-shadow:var(--shadow);
+}
+.info-logo-slot{
+  width:100%;
+  min-height:86px;
+  margin:12px auto 5px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.info-logo-placeholder{
+  min-width:min(520px,92%);
+  height:86px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:1px dashed #cfd6df;
+  border-radius:var(--card-radius);
+  background:#fff;
+  color:#98a2b3;
+  font-size:14px;
+  font-weight:1000;
+  letter-spacing:.08em;
+}
+.info-logo-img{
+  display:block;
+  max-width:min(520px,92%);
+  max-height:86px;
+  object-fit:contain;
+}
+.subtitle{
+  margin:0 auto;
+  color:var(--muted);
+  font-size:15px;
+  line-height:1.55;
+  max-width:560px;
+}
+.hall-banner{
+  display:block;
+  margin-top:14px;
+  border-radius:var(--card-radius);
+  overflow:hidden;
+  border:1px solid var(--line);
+  box-shadow:var(--shadow);
+  background:#fff;
+  text-decoration:none;
+  color:inherit;
+  transition:.18s ease;
+}
+.hall-banner:hover{
+  transform:translateY(-1px);
+  filter:brightness(1.03);
+}
+.hall-banner img{
+  display:block;
+  width:100%;
+  height:auto;
+}
+.sanctuary-row{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:14px;
+  margin-top:16px;
+}
+.card{
+  position:relative;
+  display:block;
+  min-height:142px;
+  padding:18px;
+  border:1px solid var(--line);
+  border-radius:var(--card-radius);
+  background:#fff;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+  text-decoration:none;
+  color:inherit;
+}
+.card.disabled{
+  opacity:.78;
+  cursor:not-allowed;
+}
+.icon{
+  font-size:36px;
+  margin-bottom:9px;
+}
+.card-title{
+  font-size:23px;
+  font-weight:1000;
+  letter-spacing:-.6px;
+}
+.card-sub{
+  margin-top:6px;
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.45;
+}
+.badge{
+  position:absolute;
+  right:14px;
+  top:14px;
+  border-radius:999px;
+  padding:6px 10px;
+  font-size:11px;
+  font-weight:1000;
+  background:#f2f4f7;
+  color:#667085;
+  border:1px solid var(--line);
+}
+.footer{
+  display:flex;
+  justify-content:center;
+  gap:16px;
+  flex-wrap:wrap;
+  margin-top:24px;
+}
+.footer button{
+  appearance:none;
+  border:0;
+  background:transparent;
+  color:#667085;
+  text-decoration:none;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+  padding:4px 2px;
+  font-family:inherit;
+}
+.footer button:hover{color:var(--blue)}
+.info-drawer-overlay{
+  position:fixed;
+  inset:0;
+  z-index:1000;
+  display:none;
+  background:rgba(255,255,255,.10);
+  backdrop-filter:blur(5px);
+  -webkit-backdrop-filter:blur(5px);
+}
+.info-drawer-overlay.is-open{display:block}
+.info-drawer{
+  position:fixed;
+  z-index:1001;
+  left:0;
+  top:0;
+  width:min(460px,92vw);
+  height:100dvh;
+  background:#fff;
+  border-right:1px solid var(--line);
+  box-shadow:18px 0 45px rgba(16,24,40,.16);
+  transform:translateX(-104%);
+  transition:transform .28s ease;
+  display:flex;
+  flex-direction:column;
+}
+.info-drawer.is-open{transform:translateX(0)}
+.info-drawer-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:18px 18px 14px;
+  border-bottom:1px solid var(--line);
+}
+.info-drawer-title{
+  margin:0;
+  font-size:20px;
+  font-weight:1000;
+  letter-spacing:-.4px;
+}
+.info-drawer-close{
+  appearance:none;
+  border:1px solid var(--line);
+  background:#fff;
+  color:#475467;
+  width:38px;
+  height:38px;
+  border-radius:var(--button-radius);
+  cursor:pointer;
+  font-size:22px;
+  line-height:1;
+}
+.info-drawer-close:hover{background:#f9fafb}
+.info-drawer-body{
+  padding:18px;
+  overflow:auto;
+  line-height:1.7;
+  color:#344054;
+  font-size:14px;
+}
+.info-drawer-body h3{
+  margin:18px 0 8px;
+  font-size:16px;
+}
+.info-drawer-body h3:first-child{margin-top:0}
+.info-drawer-body p{margin:0 0 12px}
+.info-drawer-body ul{margin:0 0 12px;padding-left:19px}
+.info-drawer-body li{margin:4px 0}
+@media(max-width:720px){
+  .wrap{padding:12px 10px 32px}
+  .info-logo-slot{min-height:72px;margin-top:10px}
+  .info-logo-placeholder{height:72px;font-size:12px}
+  .info-logo-img{max-height:72px}
+  .sanctuary-row{grid-template-columns:1fr;gap:10px}
+  .card{min-height:120px;padding:16px}
+  .card-title{font-size:21px}
+  .info-drawer{width:min(420px,94vw)}
+}
 </style>
 </head>
 <body>
 <main class="wrap">
   <section class="hero">
     <div class="eyebrow">✨ AION2 · KINOJO PORTAL</div>
-    <h1>KINOJO INFO</h1>
+    <div class="info-logo-slot" aria-label="KINOJO INFO 로고 영역">
+      <!-- 실제 로고 이미지가 준비되면 아래 placeholder를 img로 교체하세요.
+      <img class="info-logo-img" src="assets/kinojo-info-logo.png" alt="KINOJO INFO">
+      -->
+      <div class="info-logo-placeholder">KINOJO INFO LOGO IMAGE</div>
+    </div>
     <p class="subtitle">성역 파티 확인, 레기온 기록, 명예의 전당으로 이어지는 키노조 정보 허브입니다.</p>
-    <a class="hall-banner" href="hall-of-fame/" aria-label="Hall of Fame 열기"><img src="hall-of-fame/assets/hall-banner-v2.png?v=uiux-phase1-final" alt="Kinojo Hall of Fame"></a>
+    <a class="hall-banner" href="hall-of-fame/" aria-label="Hall of Fame 열기">
+      <img src="hall-of-fame/assets/hall-banner-v2.png?v=26060301" alt="Kinojo Hall of Fame">
+    </a>
   </section>
+
   <section class="sanctuary-row" aria-label="성역 파티 확인">
-    <div class="card disabled" role="button" aria-disabled="true"><span class="badge">준비중</span><div class="icon"><img src="hall-of-fame/assets/icons/sanctuary.svg" alt=""></div><div class="card-title">성역 1</div><div class="card-sub">루드라팟 파티 확인</div></div>
-    <div class="card disabled" role="button" aria-disabled="true"><span class="badge">준비중</span><div class="icon"><img src="hall-of-fame/assets/icons/sanctuary.svg" alt=""></div><div class="card-title">성역 2</div><div class="card-sub">바고트팟 파티 확인</div></div>
-    <div class="card disabled" role="button" aria-disabled="true"><span class="badge">준비중</span><div class="icon"><img src="hall-of-fame/assets/icons/sanctuary.svg" alt=""></div><div class="card-title">성역 3</div><div class="card-sub">칼드릭스팟 파티 확인</div></div>
+    <div class="card disabled" role="button" aria-disabled="true">
+      <span class="badge">준비중</span><div class="icon">🛡️</div><div class="card-title">성역 1</div><div class="card-sub">루드라팟 파티 확인</div>
+    </div>
+    <div class="card disabled" role="button" aria-disabled="true">
+      <span class="badge">준비중</span><div class="icon">⚔️</div><div class="card-title">성역 2</div><div class="card-sub">바고트팟 파티 확인</div>
+    </div>
+    <div class="card disabled" role="button" aria-disabled="true">
+      <span class="badge">준비중</span><div class="icon">🔮</div><div class="card-title">성역 3</div><div class="card-sub">칼드릭스팟 파티 확인</div>
+    </div>
   </section>
-  <footer class="footer"><a href="pages/about.html">사이트 소개</a><a href="pages/terms.html">이용약관</a><a href="pages/privacy.html">개인정보처리방침</a><a href="pages/contact.html">문의하기</a></footer>
+
+  <footer class="footer">
+    <button type="button" data-drawer="about">사이트 소개</button>
+    <button type="button" data-drawer="terms">이용약관</button>
+    <button type="button" data-drawer="privacy">개인정보처리방침</button>
+    <button type="button" data-drawer="contact">문의하기</button>
+  </footer>
 </main>
+
+<div class="info-drawer-overlay" data-drawer-close></div>
+<aside class="info-drawer" aria-hidden="true" aria-labelledby="drawerTitle">
+  <div class="info-drawer-head">
+    <h2 class="info-drawer-title" id="drawerTitle">사이트 소개</h2>
+    <button type="button" class="info-drawer-close" data-drawer-close aria-label="닫기">×</button>
+  </div>
+  <div class="info-drawer-body" id="drawerBody"></div>
+</aside>
+
+<script>
+const drawerContents={
+  about:{
+    title:"사이트 소개",
+    html:`<h3>KINOJO INFO</h3><p>키노조 인포는 AION2 키노조 관련 정보를 한곳에서 확인하기 위한 정보 허브입니다.</p><p>성역 파티 확인, 레기온 기록, 명예의 전당 등 필요한 기능을 순차적으로 정리해 제공합니다.</p><h3>운영 방향</h3><ul><li>모바일에서도 보기 편한 정보 배치</li><li>복잡한 데이터보다 빠른 확인 중심</li><li>명예의 전당과 연동되는 통합 포털 구성</li></ul>`
+  },
+  terms:{
+    title:"이용약관",
+    html:`<h3>이용 안내</h3><p>본 사이트는 키노조 관련 정보를 편리하게 확인하기 위한 비공식 정보 페이지입니다.</p><p>사이트 내 정보는 운영 상황, 데이터 갱신 상태, 외부 서비스 변경에 따라 달라질 수 있습니다.</p><h3>주의사항</h3><ul><li>사이트 정보의 무단 변조 또는 악의적 사용을 금지합니다.</li><li>표시되는 데이터는 참고용이며, 최종 판단은 이용자 본인에게 있습니다.</li><li>서비스 구조는 사전 안내 없이 변경될 수 있습니다.</li></ul>`
+  },
+  privacy:{
+    title:"개인정보처리방침",
+    html:`<h3>개인정보 처리 안내</h3><p>본 사이트는 기본적인 정보 확인 기능을 중심으로 운영되며, 불필요한 개인정보 수집을 지양합니다.</p><p>문의 또는 의견 기능이 추가되는 경우, 이용자가 직접 입력한 내용만 처리될 수 있습니다.</p><h3>보관 및 사용</h3><ul><li>입력 정보는 사이트 운영 및 문의 확인 목적에 한해 사용됩니다.</li><li>불필요한 민감정보 입력은 권장하지 않습니다.</li><li>정책은 기능 추가에 따라 갱신될 수 있습니다.</li></ul>`
+  },
+  contact:{
+    title:"문의하기",
+    html:`<h3>문의 안내</h3><p>오류 제보, 기능 제안, 데이터 수정 요청이 있다면 운영자에게 전달해주세요.</p><p>문의 기능은 추후 사이트 내부 기능으로 정리될 예정입니다.</p>`
+  }
+};
+const drawer=document.querySelector(".info-drawer");
+const overlay=document.querySelector(".info-drawer-overlay");
+const drawerTitle=document.querySelector("#drawerTitle");
+const drawerBody=document.querySelector("#drawerBody");
+function openDrawer(type){
+  const content=drawerContents[type]||drawerContents.about;
+  drawerTitle.textContent=content.title;
+  drawerBody.innerHTML=content.html;
+  document.body.classList.add("drawer-open");
+  overlay.classList.add("is-open");
+  drawer.classList.add("is-open");
+  drawer.setAttribute("aria-hidden","false");
+}
+function closeDrawer(){
+  document.body.classList.remove("drawer-open");
+  overlay.classList.remove("is-open");
+  drawer.classList.remove("is-open");
+  drawer.setAttribute("aria-hidden","true");
+}
+document.querySelectorAll("[data-drawer]").forEach(btn=>btn.addEventListener("click",()=>openDrawer(btn.dataset.drawer)));
+document.querySelectorAll("[data-drawer-close]").forEach(btn=>btn.addEventListener("click",closeDrawer));
+document.addEventListener("keydown",event=>{if(event.key==="Escape")closeDrawer()});
+</script>
 </body>
 </html>
