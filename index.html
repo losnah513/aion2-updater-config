@@ -246,6 +246,102 @@ body.drawer-open{overflow:hidden}
   }
 }
 
+
+
+/* KINOJO 1.c1.02 — Rudra sealed/hover release refinement */
+.sanctuary-row{
+  padding-top:28px!important;
+}
+.rudra-card{
+  overflow:hidden!important;
+  isolation:isolate!important;
+  transition:border-color .2s ease, box-shadow .2s ease, overflow .01s linear!important;
+}
+.rudra-card:hover,.rudra-card:focus-visible,.rudra-card:active{
+  overflow:visible!important;
+}
+.rudra-card::before{
+  z-index:20!important;
+  background:linear-gradient(180deg,rgba(7,9,18,0) 18%,rgba(9,7,18,.34) 56%,rgba(3,3,8,.88) 100%)!important;
+}
+.rudra-card::after{
+  z-index:24!important;
+}
+.rudra-bg{
+  z-index:1!important;
+  opacity:1!important;
+  filter:brightness(.48) saturate(.78)!important;
+}
+.rudra-boss{
+  z-index:8!important;
+  inset:0!important;
+  background-size:96% auto!important;
+  background-position:center 22%!important;
+  opacity:.72!important;
+  transform:scale(.92) translateY(8px)!important;
+  filter:brightness(.72) saturate(.86) drop-shadow(0 14px 28px rgba(0,0,0,.5))!important;
+}
+.rudra-lightning-main{
+  z-index:12!important;
+  background-position:50% 18%!important;
+  background-size:76% auto!important;
+  opacity:0!important;
+  mix-blend-mode:screen!important;
+}
+.rudra-lightning-right{
+  z-index:13!important;
+  background-position:73% 17%!important;
+  background-size:30% auto!important;
+  opacity:0!important;
+  mix-blend-mode:screen!important;
+}
+.rudra-content{
+  z-index:30!important;
+}
+.rudra-card:hover .rudra-bg,.rudra-card:focus-visible .rudra-bg,.rudra-card:active .rudra-bg{
+  filter:brightness(1.25) saturate(1.15) blur(.4px)!important;
+}
+.rudra-card:hover .rudra-boss,.rudra-card:focus-visible .rudra-boss,.rudra-card:active .rudra-boss{
+  inset:-86px -70px -18px -70px!important;
+  background-size:124% auto!important;
+  background-position:center 4%!important;
+  opacity:1!important;
+  transform:scale(1.09) translateY(-20px)!important;
+  filter:brightness(1.08) saturate(1.1) drop-shadow(0 0 24px rgba(176,95,255,.7)) drop-shadow(0 22px 34px rgba(0,0,0,.72))!important;
+}
+.rudra-card:hover .rudra-lightning-main,.rudra-card:focus-visible .rudra-lightning-main,.rudra-card:active .rudra-lightning-main{
+  animation:rudraLightningStrike 1.08s steps(2,end) infinite!important;
+}
+.rudra-card:hover .rudra-lightning-right,.rudra-card:focus-visible .rudra-lightning-right,.rudra-card:active .rudra-lightning-right{
+  animation:rudraLightningStrikeRight 1.36s steps(2,end) infinite!important;
+}
+@keyframes rudraLightningStrike{
+  0%,16%,100%{opacity:0;filter:drop-shadow(0 0 4px rgba(220,190,255,.25))}
+  18%,23%{opacity:.95;filter:drop-shadow(0 0 20px rgba(226,201,255,.98)) drop-shadow(0 0 42px rgba(164,89,255,.82))}
+  28%,52%{opacity:.08}
+  56%,61%{opacity:.72;filter:drop-shadow(0 0 24px rgba(204,142,255,.92))}
+}
+@keyframes rudraLightningStrikeRight{
+  0%,42%,100%{opacity:0}
+  45%,49%{opacity:.36;filter:drop-shadow(0 0 16px rgba(215,180,255,.82))}
+  53%,76%{opacity:0}
+  78%,82%{opacity:.22}
+}
+@media(max-width:900px){
+  .sanctuary-row{padding-top:22px!important}
+  .rudra-card:hover .rudra-boss,.rudra-card:focus-visible .rudra-boss,.rudra-card:active .rudra-boss{
+    inset:-72px -56px -16px -56px!important;
+  }
+}
+@media(max-width:720px){
+  .sanctuary-row{padding-top:18px!important}
+  .rudra-boss{background-size:106% auto!important}
+  .rudra-card:hover .rudra-boss,.rudra-card:focus-visible .rudra-boss,.rudra-card:active .rudra-boss{
+    inset:-52px -44px -12px -44px!important;
+    background-size:124% auto!important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -263,7 +359,6 @@ body.drawer-open{overflow:hidden}
   </section>
   <section class="sanctuary-row" aria-label="성역 파티 확인">
     <div class="card rudra-card" role="button" tabindex="0" aria-label="성역 1 루드라팟 파티 확인" data-construction="1성역 루드라팟">
-      <span class="badge">준비중</span>
       <span class="rudra-layer rudra-bg" aria-hidden="true"></span>
       <span class="rudra-layer rudra-lightning-main" aria-hidden="true"></span>
       <span class="rudra-layer rudra-lightning-right" aria-hidden="true"></span>
