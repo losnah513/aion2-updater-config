@@ -2,7 +2,7 @@ const WEB_APP_URL=new URLSearchParams(location.search).get("api")||"https://scri
 const CLASS_ORDER=["검성","수호성","살성","궁성","정령성","마도성","치유성","호법성"];
 const CLASS_ICONS={"검성":"assets/class_icon_gladiator.png","수호성":"assets/class_icon_templar.png","살성":"assets/class_icon_assassin.png","궁성":"assets/class_icon_ranger.png","정령성":"assets/class_icon_elementalist.png","마도성":"assets/class_icon_sorcerer.png","치유성":"assets/class_icon_cleric.png","호법성":"assets/class_icon_chanter.png"};
 const RANK_EMBLEMS={mvp:"assets/emblem_mvp_challenger.png",diamond:"assets/emblem_rank_diamond.png",crystal:"assets/emblem_rank_crystal.png",gold:"assets/emblem_rank_gold.png",silver:"assets/emblem_rank_silver.png",bronze:"assets/emblem_rank_bronze.png"};
-let hallData=null,keyword="",includeSubs=false,page=1,activeRankClass="전체",chicksExpanded=false,longPressTimer=null,longPressFired=false,loadingTimer=null,loadingStep=0,currentReactionItem=null,currentReactionType="like",reactionCarouselIndex=0,reactionCarouselPausedUntil=0,reactionSubmitting=false,searchComposing=false,searchDebounceTimer=null;
+let hallData=null,keyword="",includeSubs=false,page=1,activeRankClass="전체",chicksExpanded=false,longPressTimer=null,longPressFired=false,loadingTimer=null,loadingStep=0,currentReactionItem=null,currentReactionType="like",reactionCarouselIndex=0,reactionCarouselPausedUntil=0,reactionSubmitting=false,searchComposing=false,searchDebounceTimer=null,adminAuthed=false;
 const PAGE_SIZE=10,app=document.getElementById("app");
 function escapeHtml(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;")}
 function rankIcon(i){return i===0?"🥇":i===1?"🥈":i===2?"🥉":i+1}
@@ -12,7 +12,7 @@ function currentParty(){return includeSubs?(hallData.partyFriendAll||hallData.pa
 function match(item){if(!keyword)return true;return [item.name,item.owner,item.serverName,item.meta,item.className,item.pveReview,item.pvpReview].join(" ").toLowerCase().includes(keyword.toLowerCase())}
 function nameClass(item){return item?.isAdminMain?"admin-main":(item?.isAdminAlt?"admin-alt":"")}
 function itemClass(item){return ""}
-function nameSpan(item,text){return '<button class="character-button '+nameClass(item)+'" data-character="'+escapeHtml(item?.name||"")+'"><span class="character-text">'+text+'</span></button>'}
+function nameSpan(item,text){const r=reactionDataFor(item);return '<button class="character-button '+nameClass(item)+'" data-character="'+escapeHtml(item?.name||"")+'"><span class="character-text">'+text+'</span><span class="character-reactions"><span>👍 '+Number(r.like||0)+'</span><span>👎 '+Number(r.dislike||0)+'</span></span></button>'}
 function ownerLine(item){const owner=String(item?.owner||"").trim(),name=String(item?.name||"").trim();return owner&&owner!==name?'<div class="owner-line">본캐 '+escapeHtml(owner)+'</div>':''}
 function flowText(text,item){return '<span class="flow-candidate">'+nameSpan(item,escapeHtml(text))+'</span>'}
 function classIconHtml(cls,withText=false){const path=CLASS_ICONS[cls];if(!path)return withText?'<span class="class-icon-cell">'+escapeHtml(cls||"-")+'</span>':'-';return '<span class="class-icon-cell"><img class="class-icon" src="'+path+'" alt="'+escapeHtml(cls)+'">'+(withText?'<span>'+escapeHtml(cls)+'</span>':'')+'</span>'}
@@ -29,11 +29,37 @@ function mvpSection(){return '<section class="mvp-card"><div class="mvp-head"><h
 
 function reactionDataFor(item){const by=hallData?.reactionSummary?.byName||{};return by[item?.name]||{like:0,dislike:0,comments:[]}}
 function reactionCountsHtml(item){const r=reactionDataFor(item);return '<div class="reaction-counts"><span class="like">👍 '+Number(r.like||0)+'</span><span class="dislike">👎 '+Number(r.dislike||0)+'</span></div>'}
-function reactionCard(type){const summary=hallData?.reactionSummary||{};const list=(summary.likeTop)||[];const title="👍 좋아요 TOP 3";const note="모두에게 사랑받는 모험가";if(!list.length)return '<section class="reaction-card like-top-card"><div class="reaction-card-head"><div class="reaction-card-title">'+title+'</div><div class="reaction-card-note">'+note+'</div></div><div class="reaction-empty">아직 반응 데이터가 부족합니다.</div></section>';const idx=(Date.now()<reactionCarouselPausedUntil)?reactionCarouselIndex:reactionCarouselIndex%list.length;const ordered=list.slice();const item=ordered[idx%ordered.length];const displayRank=(idx%ordered.length)+1;const comments=(item.comments||[]).filter(Boolean);const overflowClass=comments.length>5?' is-scrollable':'';const meta=item.serverName?'<div class="reaction-server">'+escapeHtml(item.serverName)+'</div>':'';return '<section class="reaction-card like-top-card" data-reaction-card="like"><div class="reaction-card-head"><div class="reaction-card-title">'+title+'</div><div class="reaction-card-note">'+note+'</div></div><div class="like-top-body"><div class="like-top-left"><div class="reaction-rank">'+displayRank+'위</div><button class="character-button reaction-name" data-character="'+escapeHtml(item.name)+'">'+escapeHtml(item.name)+'</button>'+meta+'<div class="reaction-score-line icon-row"><span class="reaction-icon like-icon" aria-hidden="true"></span><strong>'+Number(item.like||0)+'</strong><span class="reaction-icon dislike-icon" aria-hidden="true"></span><strong>'+Number(item.dislike||0)+'</strong></div></div><div class="like-top-divider" aria-hidden="true"></div><div class="reaction-comments comment-list'+overflowClass+'">'+(comments.length?comments.map(c=>'<div>“'+escapeHtml(c)+'”</div>').join(''):'<div>아직 코멘트가 없습니다.</div>')+'</div></div></section>'}
-function recentCommentCard(){const by=hallData?.reactionSummary?.byName||{};const rows=[];Object.keys(by).forEach(name=>{(by[name].comments||[]).slice(-2).forEach(c=>rows.push({name,comment:c}))});const list=rows.slice(-5).reverse();const overflowClass=list.length>5?' is-scrollable':'';return '<section class="reaction-card recent-comment-card"><div class="reaction-card-head"><div class="reaction-card-title">💬 최근 한마디</div><div class="reaction-card-note">따뜻한 말은 오래 남아요</div></div><div class="reaction-comments recent comment-list'+overflowClass+'">'+(list.length?list.map(x=>'<div><strong>'+escapeHtml(x.name)+'</strong> · “'+escapeHtml(x.comment)+'”</div>').join(''):'<div>아직 남겨진 한마디가 없습니다.</div>')+'</div></section>'}
-function reactionBoard(){return '<div class="reaction-board">'+reactionCard("like")+recentCommentCard()+'</div>'}
+
+function reactionDisplayName(item){
+  return String(item?.name||item?.characterName||item?.character||item?.nickname||item?.owner||"이름 없음").trim()||"이름 없음";
+}
+
+function reactionCard(type){
+  const summary=hallData?.reactionSummary||{};
+  const list=(type==="like"?summary.likeTop:summary.dislikeTop)||[];
+  const title=type==="like"?"👍 좋아요 TOP 3":"👎 싫어요 TOP 3";
+  const note=type==="like"?"모두에게 사랑받는 모험가":"이분은 어쩌다 이렇게 미움을 샀을까요?";
+  if(!list.length){
+    return '<section class="reaction-card '+type+'-top-card"><div class="reaction-card-head"><div class="reaction-card-title">'+title+'</div><div class="reaction-card-note">'+note+'</div></div><div class="reaction-empty">아직 반응 데이터가 부족합니다.</div></section>';
+  }
+
+  const now=Date.now();
+  const idx=(now<reactionCarouselPausedUntil)?reactionCarouselIndex:reactionCarouselIndex%list.length;
+  const ordered=list.slice();
+  const item=ordered[idx%ordered.length];
+  const displayRank=(idx%ordered.length)+1;
+  const displayName=reactionDisplayName(item);
+  const comments=(item.comments||[]).filter(Boolean);
+  const overflowClass=comments.length>5?' is-scrollable':'';
+  const meta=item.serverName?'<div class="reaction-server">'+escapeHtml(item.serverName)+'</div>':'';
+
+  return '<section class="reaction-card '+type+'-top-card" data-reaction-card="'+type+'"><div class="reaction-card-head"><div class="reaction-card-title">'+title+'</div><div class="reaction-card-note">'+note+'</div></div><div class="reaction-top-body"><div class="reaction-top-left"><div class="reaction-rank">'+displayRank+'위</div><button class="character-button reaction-name" data-character="'+escapeHtml(displayName)+'">'+escapeHtml(displayName)+'</button>'+meta+'<div class="reaction-score-line icon-row"><span class="reaction-icon like-icon" aria-hidden="true"></span><strong>'+Number(item.like||0)+'</strong><span class="reaction-icon dislike-icon" aria-hidden="true"></span><strong>'+Number(item.dislike||0)+'</strong></div></div><div class="reaction-top-divider" aria-hidden="true"></div><div class="reaction-comments comment-list'+overflowClass+'">'+(comments.length?comments.map(c=>'<div>“'+escapeHtml(c)+'”</div>').join(''):'<div>아직 코멘트가 없습니다.</div>')+'</div></div></section>';
+}
+
+function recentCommentCard(){const by=hallData?.reactionSummary?.byName||{};const rows=[];Object.keys(by).forEach(name=>{(by[name].comments||[]).slice(0,2).forEach(c=>rows.push({name,comment:c}))});const list=rows.slice(0,5);const overflowClass=list.length>5?' is-scrollable':'';return '<section class="reaction-card recent-comment-card"><div class="reaction-card-head"><div class="reaction-card-title">💬 최근 한마디</div><div class="reaction-card-note">따뜻한 말은 오래 남아요</div></div><div class="reaction-comments recent comment-list'+overflowClass+'">'+(list.length?list.map(x=>'<div><strong>'+escapeHtml(x.name)+'</strong> · “'+escapeHtml(x.comment)+'”</div>').join(''):'<div>아직 남겨진 한마디가 없습니다.</div>')+'</div></section>'}
+function reactionBoard(){return '<div class="reaction-board">'+reactionCard("like")+reactionCard("dislike")+recentCommentCard()+'</div>'}
 function awardsBoard(){const w=hallData?.weeklyAwards||{};return '<div class="award-grid">'+awardCard("🌱 성장왕","PVE+PVP 아이템레벨 주간 증가량",w.growthKing||[],"itemLabel")+awardCard("💪 벌크업","PVE+PVP 전투력 주간 증가량",w.bulkUp||[],"powerLabel")+'</div>'}
-function awardCard(title,note,list,labelKey){return '<section class="award-card"><div class="section-head"><h2>'+title+'</h2><span class="section-note">'+note+'</span></div><div class="award-body">'+(list.length?list.map((item,i)=>'<div class="award-row"><div class="award-rank">'+(i+1)+'위</div><div class="award-name"><div class="rank-name-flex"><div class="rank-name-main">'+flowText(item.name,item)+ownerLine(item)+'</div>'+reactionCountsHtml(item)+'</div></div><div class="award-score">'+escapeHtml(item[labelKey]||'')+'</div></div>').join(''):'<div class="empty">비교 가능한 주간 데이터가 부족합니다.</div>')+'</div></section>'}
+function awardCard(title,note,list,labelKey){return '<section class="award-card"><div class="section-head"><h2>'+title+'</h2><span class="section-note">'+note+'</span></div><div class="award-body">'+(list.length?list.map((item,i)=>'<div class="award-row"><div class="award-rank">'+(i+1)+'위</div><div class="award-name"><div class="rank-name-flex"><div class="rank-name-main">'+flowText(item.name,item)+ownerLine(item)+'</div></div></div><div class="award-score">'+escapeHtml(item[labelKey]||'')+'</div></div>').join(''):'<div class="empty">비교 가능한 주간 데이터가 부족합니다.</div>')+'</div></section>'}
 
 function rankTabs(){return '<div class="class-tabs rank-tabs"><button class="pill all-rank '+(activeRankClass==="전체"?"active":"")+'" data-rank-class="전체">전체</button>'+CLASS_ORDER.map(cls=>'<button class="pill '+(activeRankClass===cls?"active":"")+'" data-rank-class="'+cls+'">'+classTabIcon(cls)+cls+'</button>').join("")+'</div>'}
 function currentRankList(){
@@ -136,7 +162,7 @@ function overallTable(){
     const rank=start+i+1;
 
     if(item){
-      const displayRank=Number(item.rank||rank);rows.push('<tr><td class="num">'+rankEmblemHtml(displayRank,list.length)+'</td><td><div class="rank-name-flex rank-name-flex-table"><div class="rank-name-main"><span class="rank-name-cell">'+flowText(item.name,item)+'</span>'+ownerLine(item)+'</div>'+reactionCountsHtml(item)+'</div></td><td>'+classIconHtml(item.className,false)+'</td><td class="power">'+escapeHtml(item.pvePowerLabel||item.label||"")+'</td><td class="power">'+escapeHtml(item.pvpPowerLabel||"")+'</td><td class="reviews"><div>🐲 '+escapeHtml(item.pveReview||"")+'</div><div>⚔️ '+escapeHtml(item.pvpReview||"")+'</div></td></tr>');
+      const displayRank=Number(item.rank||rank);rows.push('<tr><td class="num">'+rankEmblemHtml(displayRank,list.length)+'</td><td><div class="rank-name-flex rank-name-flex-table"><div class="rank-name-main"><span class="rank-name-cell">'+flowText(item.name,item)+'</span>'+ownerLine(item)+'</div></div></td><td>'+classIconHtml(item.className,false)+'</td><td class="power">'+escapeHtml(item.pvePowerLabel||item.label||"")+'</td><td class="power">'+escapeHtml(item.pvpPowerLabel||"")+'</td><td class="reviews"><div>🐲 '+escapeHtml(item.pveReview||"")+'</div><div>⚔️ '+escapeHtml(item.pvpReview||"")+'</div></td></tr>');
       continue;
     }
 
@@ -152,9 +178,7 @@ function overallTable(){
   return '<section class="overall"><div class="overall-head"><h2>'+title+'</h2><div class="overall-title-tools"><button class="sub-toggle compact '+(includeSubs?'on':'')+'" id="subToggle" type="button"><span class="toggle-knob"></span><span class="toggle-text">'+(includeSubs?'부캐 ON':'부캐 OFF')+'</span></button></div><div class="page-tools"><span>'+page+' / '+totalPages+'</span><button class="page-btn" data-page="prev">‹</button><button class="page-btn" data-page="next">›</button></div></div>'+searchToolsHtml()+rankTabs()+classReviewBoxHtml(activeRankClass)+'<div class="table-scroll"><table class="rank-table"><colgroup><col class="num"><col class="char-col"><col class="class-col"><col class="power-col"><col class="power-col"><col class="review-col"></colgroup><thead><tr><th class="num">순위</th><th>캐릭터명</th><th>클래스</th><th>PVE</th><th>PVP</th><th>AI 리뷰</th></tr></thead><tbody>'+rows.join("")+'</tbody></table></div></section>';
 }
 function render(){if(!hallData)return;renderChicks();app.className="";app.innerHTML=mvpSection()+reactionBoard()+awardsBoard()+'<div class="dashboard"><div><div class="top-grid">'+rankBox("⚔ PVE TOP 5","",hallData.pveTop)+rankBox("⚔ PVP TOP 5","",hallData.pvpTop)+'</div></div><div class="side-stack">'+tagBox("😈 같은 마족이면 가족이지","타서버 마족",currentDemon())+tagBox("🤝 같은 파티면 친구지","천족 서버",currentParty())+'</div></div>'+overallTable();bindDynamic();bindCharacterButtons();requestAnimationFrame(applyOverflowMarquee)}
-function renderPreserveSearchFocus(){const active=document.activeElement;const focused=active&&active.id==="rankSearchInput";const sel=focused?active.selectionStart:null;render();if(focused){requestAnimationFrame(()=>{const next=document.getElementById("rankSearchInput");if(!next)return;next.focus({preventScroll:true});const pos=Math.min(sel??next.value.length,next.value.length);try{next.setSelectionRange(pos,pos)}catch(e){}})}}
-function scheduleSearchRender(value){keyword=String(value||"").trim();clearTimeout(searchDebounceTimer);searchDebounceTimer=setTimeout(()=>{page=1;renderPreserveSearchFocus()},650)}
-function bindDynamic(){document.querySelectorAll("[data-page]").forEach(btn=>btn.onclick=()=>{const total=Math.max(1,Math.ceil(currentRankList().length/PAGE_SIZE));page+=btn.dataset.page==="next"?1:-1;if(page<1)page=1;if(page>total)page=total;render()});document.querySelectorAll("[data-rank-class]").forEach(btn=>btn.onclick=()=>{activeRankClass=btn.dataset.rankClass;page=1;render()});const search=document.getElementById("rankSearchInput");if(search){search.oncompositionstart=()=>{searchComposing=true};search.oncompositionend=()=>{searchComposing=false};search.oninput=()=>{};search.onkeydown=e=>{if(e.key==="Enter"&&!searchComposing){keyword=search.value.trim();page=1;renderPreserveSearchFocus()}}}const refresh=document.getElementById("rankRefreshBtn");if(refresh)refresh.onclick=()=>{const input=document.getElementById("rankSearchInput");keyword=String(input?.value||"").trim();page=1;renderPreserveSearchFocus()};const clear=document.getElementById("rankClearBtn");if(clear)clear.onclick=()=>{keyword="";page=1;render()};const sub=document.getElementById("subToggle");if(sub)sub.onclick=()=>{includeSubs=!includeSubs;page=1;render()}}
+function bindDynamic(){document.querySelectorAll("[data-page]").forEach(btn=>btn.onclick=()=>{const total=Math.max(1,Math.ceil(currentRankList().length/PAGE_SIZE));page+=btn.dataset.page==="next"?1:-1;if(page<1)page=1;if(page>total)page=total;render()});document.querySelectorAll("[data-rank-class]").forEach(btn=>btn.onclick=()=>{activeRankClass=btn.dataset.rankClass;page=1;render()});const search=document.getElementById("rankSearchInput");if(search){search.oncompositionstart=()=>{searchComposing=true;clearTimeout(searchDebounceTimer)};search.oncompositionend=()=>{searchComposing=false};search.oninput=()=>{};search.onkeydown=e=>{if(e.key==="Enter"&&!searchComposing){keyword=search.value.trim();page=1;renderPreserveSearchFocus()}}}const refresh=document.getElementById("rankRefreshBtn");if(refresh)refresh.onclick=()=>{const input=document.getElementById("rankSearchInput");keyword=String(input?.value||"").trim();page=1;renderPreserveSearchFocus()};const clear=document.getElementById("rankClearBtn");if(clear)clear.onclick=()=>{keyword="";page=1;render()};const sub=document.getElementById("subToggle");if(sub)sub.onclick=()=>{includeSubs=!includeSubs;page=1;render()}}
 function applyOverflowMarquee(){document.querySelectorAll(".flow-candidate").forEach(el=>{el.classList.remove("marquee");el.style.removeProperty("--marquee-shift");const parent=el.parentElement;if(!parent)return;const overflow=el.scrollWidth-parent.clientWidth;if(overflow>2){el.style.setProperty("--marquee-shift","-"+(overflow+12)+"px");el.classList.add("marquee")}})}
 function startLoadingText(){stopLoadingText();const messages=["명예의 전당 데이터를 불러오는 중","엠블럼을 준비하는 중","레기온 기록을 확인하는 중","순위표를 정리하는 중"];loadingStep=0;const target=()=>{const el=document.getElementById("loaderText");if(!el)return;const msg=messages[Math.floor(loadingStep/4)%messages.length];const dots=".".repeat(loadingStep%4);el.textContent=msg+dots;loadingStep++};target();loadingTimer=setInterval(target,360)}
 function stopLoadingText(){if(loadingTimer){clearInterval(loadingTimer);loadingTimer=null}}
@@ -162,14 +186,11 @@ function preloadImages(paths){return Promise.all(paths.map(src=>new Promise(reso
 async function load(){app.className="loading";app.innerHTML='<div><div class="loader-ring"></div><div class="loader-text" id="loaderText">명예의 전당 데이터를 불러오는 중</div></div>';startLoadingText();try{await preloadImages(Object.values(RANK_EMBLEMS).concat(Object.values(CLASS_ICONS)));const url=WEB_APP_URL+(WEB_APP_URL.includes("?")?"&":"?")+"action=hallOfFame&t="+Date.now();const res=await fetch(url,{cache:"no-store"});const text=await res.text();if(!res.ok)throw new Error("HTTP "+res.status+": "+text.slice(0,180));try{hallData=JSON.parse(text)}catch(parseErr){throw new Error("Apps Script 응답이 JSON이 아닙니다: "+text.slice(0,180))}if(!hallData || hallData.ok===false)throw new Error(hallData?.message||hallData?.error||"명예의 전당 응답이 실패했습니다.");if(hallData.visitStats){renderVisits(hallData.visitStats)}else{fetchVisitStats()}stopLoadingText();render()}catch(err){stopLoadingText();app.className="";app.innerHTML='<div class="empty">명예의 전당 데이터를 불러오지 못했습니다.<br>'+escapeHtml(err.message||err)+'</div>'}}
 function boostPrompt(){const code=prompt("관리자 암호를 입력하세요.");if(!code)return;const m=String(code).trim().match(/^키노조화이팅(\d+)$/);if(!m)return alert("암호가 올바르지 않습니다.");const amount=Math.max(1,Math.min(9999,Number(m[1]||0)));fetchVisitStats("boost",amount);alert("방문자수 +"+amount+" 반영 완료!")}
 
-let adminAuthed=false,adminVisitTarget="daily";
-function setButtonBusy(btn,text){if(!btn)return()=>{};const old=btn.textContent;btn.disabled=true;btn.classList.add("is-busy");btn.textContent=text;return()=>{btn.disabled=false;btn.classList.remove("is-busy");btn.textContent=old}}
-function openAdminDropdown(){const box=document.getElementById("adminDropdown");if(!box)return;const willOpen=!box.classList.contains("open");box.classList.toggle("open",willOpen);box.setAttribute("aria-hidden",willOpen?"false":"true")}
-function closeAdminDropdown(){const box=document.getElementById("adminDropdown");if(box){box.classList.remove("open");box.setAttribute("aria-hidden","true")}}
-function adminLogin(){const input=document.getElementById("adminPasswordInput");const status=document.getElementById("adminStatus");if(String(input?.value||"")!=="zlshwhghkdlxld"){if(status)status.textContent="암호가 올바르지 않습니다.";return}adminAuthed=true;document.getElementById("adminLoginPanel").style.display="none";document.getElementById("adminControlPanel").style.display="block";if(status)status.textContent=""}
-function setAdminVisitTarget(target){adminVisitTarget=target;document.querySelectorAll(".segment[data-target]").forEach(btn=>btn.classList.toggle("active",btn.dataset.target===target))}
-async function applyAdminVisit(deltaSign){const amountEl=document.getElementById("adminVisitAmount");const status=document.getElementById("adminActionStatus");const apply=document.getElementById("adminVisitApply");const amount=Math.max(1,Math.min(9999,Number(amountEl?.value||1))) * deltaSign;const done=setButtonBusy(apply,"적용 중...");try{const url=WEB_APP_URL+(WEB_APP_URL.includes("?")?"&":"?")+"action=hallVisit&mode=adminAdjust&target="+encodeURIComponent(adminVisitTarget)+"&amount="+encodeURIComponent(amount)+"&password="+encodeURIComponent("zlshwhghkdlxld")+"&t="+Date.now();const res=await fetch(url,{cache:"no-store"});const data=await res.json();if(!data.ok)throw new Error(data.message||"반영 실패");if(data.stats)renderVisits(data.stats);if(status)status.textContent="✅ 정상 반영되었습니다."}catch(e){if(status)status.textContent="❌ 반영 실패: "+(e.message||e)}finally{done()}}
-async function showIdeasStub(){const status=document.getElementById("adminActionStatus");if(status)status.textContent="아이디어 제안 목록 기능은 준비 중입니다."}
+function openAdminDropdown(){const box=document.getElementById("adminDropdown");const btn=document.getElementById("adminMenuBtn");if(!box)return;const willOpen=!box.classList.contains("open");box.classList.toggle("open",willOpen);box.setAttribute("aria-hidden",willOpen?"false":"true");if(btn)btn.setAttribute("aria-expanded",willOpen?"true":"false")}
+function closeAdminMenu(){const box=document.getElementById("adminDropdown");const btn=document.getElementById("adminMenuBtn");if(box){box.classList.remove("open");box.setAttribute("aria-hidden","true")}if(btn)btn.setAttribute("aria-expanded","false")}
+function adminLogin(){const input=document.getElementById("adminPasswordInput");const status=document.getElementById("adminStatus");if(String(input?.value||"")!=="zlshwhghkdlxld"){if(status)status.textContent="암호가 올바르지 않습니다.";return}adminAuthed=true;const login=document.getElementById("adminLoginPanel");const panel=document.getElementById("adminControlPanel");if(login)login.style.display="none";if(panel)panel.style.display="grid";if(status)status.textContent=""}
+async function adminVisit(amount,mode){await fetchVisitStats(mode,amount);alert((mode==="boost"?"방문수 부스트":"방문수")+" +"+amount+" 반영 완료")}
+async function adminSnapshot(){try{const url=WEB_APP_URL+(WEB_APP_URL.includes("?")?"&":"?")+"action=weeklySnapshot&password="+encodeURIComponent("zlshwhghkdlxld")+"&t="+Date.now();const res=await fetch(url,{cache:"no-store"});const data=await res.json();if(!data.ok)return alert(data.message||"스냅샷 저장 실패");alert("성장왕 스냅샷 저장 완료: "+Number(data.result?.count||0)+"명")}catch(e){alert("스냅샷 저장 오류: "+(e.message||e))}}
 
 async function showMvpAdminPrompt(){const code=prompt("MVP 관리자 암호를 입력하세요.");if(!code)return;try{const url=WEB_APP_URL+(WEB_APP_URL.includes("?")?"&":"?")+"action=mvpAdmin&password="+encodeURIComponent(code)+"&t="+Date.now();const res=await fetch(url,{cache:"no-store"});const data=await res.json();if(!data.ok)return alert(data.message||"확인 실패");const season=data.season||{};const rows=(data.candidates||[]).map((item,i)=>(i+1)+"위 "+item.name+"\n시즌 "+Number(item.seasonScore||0)+" · 반응 "+Number(item.reactionScore||0)+" · 예상 "+Number(item.finalScorePreview||0)+"\n👍 "+Number(item.like||0)+" / 👎 "+Number(item.dislike||0)+" · "+item.excludeReason).join("\n\n");alert("MVP 시즌 후보 TOP5\n"+(season.seasonName||"")+" ("+(season.startDate||"")+" ~ "+(season.endDate||"")+")\n\n"+(rows||"아직 집계 데이터가 없습니다.")+"\n\n※ 전투력 보정 20%는 MVP 선정 시점에만 반영됩니다.")}catch(e){alert("MVP 정보를 불러오지 못했습니다: "+(e.message||e))}}
 function bindLongPress(el,shortAction,longAction){let timer=null,fired=false;const start=ev=>{fired=false;clearTimeout(timer);timer=setTimeout(()=>{fired=true;longAction()},900)};const end=ev=>{clearTimeout(timer)};el.addEventListener("mousedown",start);el.addEventListener("touchstart",start,{passive:true});el.addEventListener("mouseup",end);el.addEventListener("mouseleave",end);el.addEventListener("touchend",end);el.addEventListener("click",ev=>{if(fired){ev.preventDefault();return}shortAction()})}
@@ -189,11 +210,48 @@ function setReactionLimitLoading_(){
     if(likeBtn) likeBtn.classList.remove("checking");
     if(dislikeBtn) dislikeBtn.classList.remove("checking");
     const c=document.getElementById("reactionComment");
-    if(c) c.placeholder="전하고 싶은 말을 남겨주세요 (20자 이내)";
+    if(c) c.placeholder="전하고 싶은 말을 남겨주세요"; updateReactionSubmitState();
   },450);
 }
 
-function openReactionModal(item,anchor){reactionSubmitting=false;currentReactionItem=item;currentReactionType="like";document.getElementById("reactionModalTitle").textContent=item.name+"님께 한마디";document.getElementById("reactionComment").value="";const status=document.getElementById("reactionStatus");if(status)status.textContent="";const submitBtn=document.getElementById("reactionSubmitBtn");if(submitBtn){submitBtn.disabled=false;submitBtn.innerHTML='<img src="assets/icons/paper-plane-send.svg" alt="">'}document.getElementById("reactionLikeBtn").classList.add("active");document.getElementById("reactionDislikeBtn").classList.remove("active");setReactionLimitLoading_();const pop=document.getElementById("reactionPopover");pop.style.display="block";pop.setAttribute("aria-hidden","false");positionReactionPopover(anchor||document.body,pop)}
+
+function updateReactionSubmitState(){
+  const submitBtn=document.getElementById("reactionSubmitBtn");
+  const comment=document.getElementById("reactionComment");
+  if(!submitBtn||!comment)return;
+  const hasComment=comment.value.trim().length>0;
+  submitBtn.disabled=!hasComment||reactionSubmitting;
+  submitBtn.setAttribute("aria-disabled",submitBtn.disabled?"true":"false");
+}
+
+function openReactionModal(item,anchor){
+  reactionSubmitting=false;
+  currentReactionItem=item;
+  currentReactionType="like";
+
+  const displayName=String(item?.name||item?.characterName||item?.character||"").trim()||"캐릭터";
+  document.getElementById("reactionModalTitle").textContent=displayName+"님께 한마디";
+
+  const comment=document.getElementById("reactionComment");
+  if(comment){
+    comment.value="";
+    comment.oninput=updateReactionSubmitState;
+  }
+
+  const status=document.getElementById("reactionStatus");
+  if(status)status.textContent="";
+
+  document.getElementById("reactionLikeBtn").classList.add("active");
+  document.getElementById("reactionDislikeBtn").classList.remove("active");
+
+  updateReactionSubmitState();
+  setReactionLimitLoading_();
+
+  const pop=document.getElementById("reactionPopover");
+  pop.style.display="block";
+  pop.setAttribute("aria-hidden","false");
+  positionReactionPopover(anchor||document.body,pop);
+}
 function positionReactionPopover(anchor,pop){const rect=anchor.getBoundingClientRect();const w=Math.min(320,window.innerWidth-24);let left=Math.min(window.innerWidth-w-12,Math.max(12,rect.left));let top=Math.min(window.innerHeight-260,Math.max(12,rect.bottom+8));pop.style.width=w+"px";pop.style.left=left+"px";pop.style.top=top+"px";pop.dataset.fixedLeft=String(left);pop.dataset.fixedTop=String(top)}
 function closeReactionModal(){const pop=document.getElementById("reactionPopover");if(pop){pop.style.display="none";pop.setAttribute("aria-hidden","true")}currentReactionItem=null}
 function getVisitorId(){let id=localStorage.getItem("kinojoVisitorId");if(!id){id="v_"+Date.now()+"_"+Math.random().toString(36).slice(2);localStorage.setItem("kinojoVisitorId",id)}return id}
@@ -205,10 +263,17 @@ async function submitReaction(){
 
   const submitBtn=document.getElementById("reactionSubmitBtn");
   const status=document.getElementById("reactionStatus");
-  const prevText=submitBtn?submitBtn.textContent:"";
-  const comment=document.getElementById("reactionComment").value.trim().slice(0,20);
-  const limitMessage=checkLocalReactionLimit(currentReactionItem.name,currentReactionType);
+  const commentEl=document.getElementById("reactionComment");
+  const comment=String(commentEl?.value||"").trim().slice(0,20);
 
+  if(!comment){
+    updateReactionSubmitState();
+    if(status)status.textContent="한마디를 입력하면 보낼 수 있어요.";
+    return;
+  }
+
+  const reactionName=String(currentReactionItem.name||currentReactionItem.characterName||currentReactionItem.character||"").trim();
+  const limitMessage=checkLocalReactionLimit(reactionName,currentReactionType);
   if(limitMessage){
     if(status)status.textContent=limitMessage;
     else alert(limitMessage);
@@ -217,17 +282,14 @@ async function submitReaction(){
 
   try{
     reactionSubmitting=true;
-    if(submitBtn){
-      submitBtn.disabled=true;
-      submitBtn.innerHTML="…";
-    }
+    updateReactionSubmitState();
     if(status)status.textContent="전송 중...";
 
     const res=await fetch(WEB_APP_URL,{
       method:"POST",
       body:JSON.stringify({
         action:"hallReaction",
-        characterName:currentReactionItem.name,
+        characterName:reactionName,
         owner:currentReactionItem.owner||"",
         className:currentReactionItem.className||"",
         reaction:currentReactionType,
@@ -237,30 +299,22 @@ async function submitReaction(){
     });
 
     const data=await res.json();
-
     if(!data.ok){
       if(status)status.textContent=data.message||"저장 실패";
       else alert(data.message||"저장 실패");
       return;
     }
 
-    markLocalReaction(currentReactionItem.name,currentReactionType);
+    markLocalReaction(reactionName,currentReactionType);
     if(data.summary&&hallData)hallData.reactionSummary=data.summary;
-    if(status)status.textContent="한마디가 전달되었어요 😊";
-
-    setTimeout(()=>{
-      closeReactionModal();
-      render();
-    },450);
+    if(status)status.textContent="한마디가 전달되었어요.";
+    setTimeout(()=>{closeReactionModal();render()},380);
   }catch(e){
     if(status)status.textContent="반응 저장 실패: "+(e.message||e);
     else alert("반응 저장 실패: "+(e.message||e));
   }finally{
     reactionSubmitting=false;
-    if(submitBtn){
-      submitBtn.disabled=false;
-      submitBtn.innerHTML=prevText||'<img src="assets/icons/paper-plane-send.svg" alt="">';
-    }
+    updateReactionSubmitState();
   }
 }
 function bindCharacterButtons(){document.querySelectorAll("[data-character]").forEach(btn=>{btn.onclick=ev=>{ev.stopPropagation();const name=btn.dataset.character;const all=[...(hallData?.overallAll||[]),...(hallData?.overallMain||[])];const found=all.find(x=>x.name===name)||{name};openReactionModal(found,btn)}});document.querySelectorAll("[data-reaction-card]").forEach(card=>{card.onclick=()=>{reactionCarouselPausedUntil=Date.now()+10000}})}
@@ -269,4 +323,4 @@ function bindCharacterButtons(){document.querySelectorAll("[data-character]").fo
 window.addEventListener("resize",()=>requestAnimationFrame(applyOverflowMarquee));
 document.getElementById("cancelSuggestBtn").onclick=()=>{document.getElementById("suggestionBox").style.display="none";document.getElementById("suggestTitle").value="";document.getElementById("suggestProposer").value="";document.getElementById("suggestMemo").value=""};const topSuggestBtn=document.getElementById("topSuggestBtn");if(topSuggestBtn)topSuggestBtn.onclick=()=>{const box=document.getElementById("suggestionBox");box.style.display=box.style.display==="none"?"block":"none"};
 document.getElementById("submitSuggestBtn").onclick=async()=>{const title=document.getElementById("suggestTitle").value.trim(),proposer=document.getElementById("suggestProposer").value.trim(),memo=document.getElementById("suggestMemo").value.trim();if(!title)return alert("항목 이름을 입력해 주세요.");const res=await fetch(WEB_APP_URL,{method:"POST",body:JSON.stringify({action:"hallSuggestion",title,proposer,memo})});const data=await res.json();if(!data.ok)return alert(data.message||"전송 실패");alert("제안이 접수되었습니다.");document.getElementById("suggestionBox").style.display="none";load()};
-const adminMenuBtn=document.getElementById("adminMenuBtn");if(adminMenuBtn)adminMenuBtn.onclick=openAdminDropdown;const adminClose=document.getElementById("adminDropdownClose");if(adminClose)adminClose.onclick=closeAdminDropdown;const adminLoginBtn=document.getElementById("adminLoginBtn");if(adminLoginBtn)adminLoginBtn.onclick=adminLogin;const adminPasswordInput=document.getElementById("adminPasswordInput");if(adminPasswordInput)adminPasswordInput.onkeydown=e=>{if(e.key==="Enter")adminLogin()};document.querySelectorAll(".segment[data-target]").forEach(btn=>btn.onclick=()=>setAdminVisitTarget(btn.dataset.target));const adminVisitMinus=document.getElementById("adminVisitMinus");if(adminVisitMinus)adminVisitMinus.onclick=()=>applyAdminVisit(-1);const adminVisitPlus=document.getElementById("adminVisitPlus");if(adminVisitPlus)adminVisitPlus.onclick=()=>applyAdminVisit(1);const adminVisitApply=document.getElementById("adminVisitApply");if(adminVisitApply)adminVisitApply.onclick=()=>applyAdminVisit(1);const adminMvp=document.getElementById("adminMvpBtn");if(adminMvp)adminMvp.onclick=showMvpAdminPrompt;const adminIdea=document.getElementById("adminIdeaBtn");if(adminIdea)adminIdea.onclick=showIdeasStub;document.addEventListener("click",e=>{const pop=document.getElementById("reactionPopover");if(pop&&pop.style.display==="block"&&!pop.contains(e.target)&&!e.target.closest("[data-character]"))closeReactionModal();const menu=document.getElementById("adminDropdown");if(menu&&menu.classList.contains("open")&&!menu.contains(e.target)&&!e.target.closest("#adminMenuBtn"))closeAdminDropdown()});document.getElementById("reactionLikeBtn").onclick=()=>{currentReactionType="like";document.getElementById("reactionLikeBtn").classList.add("active");document.getElementById("reactionDislikeBtn").classList.remove("active")};document.getElementById("reactionDislikeBtn").onclick=()=>{currentReactionType="dislike";document.getElementById("reactionDislikeBtn").classList.add("active");document.getElementById("reactionLikeBtn").classList.remove("active")};document.getElementById("reactionCloseBtn").onclick=closeReactionModal;document.getElementById("reactionSubmitBtn").onclick=submitReaction;setInterval(()=>{if(Date.now()<reactionCarouselPausedUntil)return;if(document.activeElement&&document.activeElement.id==="rankSearchInput")return;reactionCarouselIndex++;if(hallData)render()},6500);recordDailyVisitOnce();load();
+const adminMenuBtn=document.getElementById("adminMenuBtn");if(adminMenuBtn)adminMenuBtn.onclick=openAdminDropdown;const adminDropdownClose=document.getElementById("adminDropdownClose");if(adminDropdownClose)adminDropdownClose.onclick=closeAdminMenu;const adminLoginBtn=document.getElementById("adminLoginBtn");if(adminLoginBtn)adminLoginBtn.onclick=adminLogin;const adminPasswordInput=document.getElementById("adminPasswordInput");if(adminPasswordInput)adminPasswordInput.onkeydown=e=>{if(e.key==="Enter")adminLogin()};document.getElementById("adminMvpBtn").onclick=showMvpAdminPrompt;document.getElementById("adminVisitBtn").onclick=()=>adminVisit(1,"visit");document.getElementById("adminBoostBtn").onclick=()=>adminVisit(31,"boost");document.getElementById("adminSnapshotBtn").onclick=adminSnapshot;document.getElementById("reactionLikeBtn").onclick=()=>{currentReactionType="like";document.getElementById("reactionLikeBtn").classList.add("active");document.getElementById("reactionDislikeBtn").classList.remove("active")};document.getElementById("reactionDislikeBtn").onclick=()=>{currentReactionType="dislike";document.getElementById("reactionDislikeBtn").classList.add("active");document.getElementById("reactionLikeBtn").classList.remove("active")};document.getElementById("reactionCloseBtn").onclick=closeReactionModal;document.getElementById("reactionSubmitBtn").onclick=submitReaction;document.addEventListener("click",e=>{const pop=document.getElementById("reactionPopover");if(pop&&pop.style.display==="block"&&!pop.contains(e.target)&&!e.target.closest("[data-character]"))closeReactionModal();const menu=document.getElementById("adminDropdown");if(menu&&menu.classList.contains("open")&&!menu.contains(e.target)&&!e.target.closest("#adminMenuBtn"))closeAdminMenu()});setInterval(()=>{if(Date.now()<reactionCarouselPausedUntil)return;if(document.activeElement&&document.activeElement.id==="rankSearchInput")return;reactionCarouselIndex++;if(hallData)render()},6500);recordDailyVisitOnce();load();
