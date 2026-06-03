@@ -55,11 +55,21 @@
       <button class="drawer-link drawer-under-construction" type="button" data-construction="2성역 바코트팟">2성역 바코트팟</button>
       <button class="drawer-link drawer-under-construction" type="button" data-construction="3성역 칼드릭스팟">3성역 칼드릭스팟</button>
       <div class="drawer-divider"></div>
-      <a href="../pages/about.html">사이트 소개</a>
-      <a href="../pages/terms.html">이용약관</a>
-      <a href="../pages/privacy.html">개인정보처리방침</a>
+      <button class="drawer-link drawer-page-link" type="button" data-page-panel="about">사이트 소개</button>
+      <button class="drawer-link drawer-page-link" type="button" data-page-panel="terms">이용약관</button>
+      <button class="drawer-link drawer-page-link" type="button" data-page-panel="privacy">개인정보처리방침</button>
       <button class="drawer-action" id="drawerSuggestBtn" type="button">아이디어 제안 및 건의</button>
     </nav>
+  </div>
+</section>
+
+<section class="drawer-page-panel" id="drawerPagePanel" aria-hidden="true">
+  <div class="drawer-page-card" role="dialog" aria-modal="false" aria-labelledby="drawerPageTitle">
+    <div class="drawer-page-head">
+      <strong id="drawerPageTitle">사이트 안내</strong>
+      <button class="drawer-page-close" id="drawerPageCloseBtn" type="button" aria-label="닫기">×</button>
+    </div>
+    <div class="drawer-page-body" id="drawerPageBody"></div>
   </div>
 </section>
 

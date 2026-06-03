@@ -1608,3 +1608,241 @@ body{background:#fff!important;}
     min-height:72px!important;
   }
 }
+
+
+/* ============================================================
+   knj-infoweb(v_260603_07) compact alignment hotfix
+   ============================================================ */
+
+/* 방문자 통계: 점3개 버튼 높이에 맞춘 1줄 고정 */
+.top-utility{
+  height:42px!important;
+  min-height:42px!important;
+  max-height:42px!important;
+  grid-template-columns:42px minmax(0,1fr) auto!important;
+}
+.top-right-tools{
+  height:42px!important;
+}
+.top-utility .visit-mini{
+  width:auto!important;
+  min-width:360px!important;
+  max-width:none!important;
+  height:42px!important;
+  min-height:42px!important;
+  max-height:42px!important;
+  padding:0 14px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  white-space:nowrap!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  word-break:keep-all!important;
+  line-height:1!important;
+  font-size:12px!important;
+}
+.drawer-toggle,.admin-menu-btn,.admin-menu-wrap{
+  width:42px!important;
+  height:42px!important;
+  min-width:42px!important;
+  max-width:42px!important;
+  min-height:42px!important;
+  max-height:42px!important;
+}
+
+/* 부캐 ON/OFF는 pill 형태와 knob 애니메이션 유지 */
+.sub-toggle.compact{
+  border-radius:999px!important;
+  overflow:hidden!important;
+  transition:background .28s ease,border-color .28s ease,color .28s ease!important;
+}
+.sub-toggle.compact .toggle-knob{
+  border-radius:50%!important;
+  transition:left .28s ease,background .28s ease,transform .28s ease!important;
+}
+.sub-toggle.compact .toggle-text{
+  transition:padding .28s ease,color .28s ease!important;
+}
+
+/* TOP5 세로 정렬/간격 균일화 */
+.top-grid .section .list{
+  padding:4px 10px!important;
+  gap:0!important;
+}
+.top-grid .mini-row{
+  height:38px!important;
+  min-height:38px!important;
+  max-height:38px!important;
+  padding:0 4px!important;
+  display:grid!important;
+  align-items:center!important;
+  grid-template-columns:42px minmax(0,1fr) 30px minmax(82px,auto)!important;
+  column-gap:5px!important;
+  border-bottom:1px solid rgba(117,140,177,.16)!important;
+}
+.top-grid .mini-row:last-child{
+  border-bottom:0!important;
+}
+.top-grid .rank-emblem,
+.top-grid .rank-emblem img{
+  width:30px!important;
+  height:30px!important;
+}
+.top-grid .medal{
+  width:34px!important;
+  height:34px!important;
+  display:grid!important;
+  place-items:center!important;
+}
+.top-grid .name-wrap{
+  display:flex!important;
+  align-items:center!important;
+  min-height:30px!important;
+}
+.top-grid .name{
+  line-height:1!important;
+  display:block!important;
+}
+.top-grid .reaction-counts{
+  align-self:center!important;
+  justify-self:end!important;
+  line-height:1!important;
+}
+.top-grid .score{
+  align-self:center!important;
+  justify-self:end!important;
+  line-height:1!important;
+  text-align:right!important;
+}
+
+/* Drawer 안 보조 페이지 패널: 현재 화면 옆으로 열림 */
+.drawer-page-panel{
+  position:fixed;
+  inset:0;
+  z-index:10025;
+  visibility:hidden;
+  pointer-events:none;
+}
+.drawer-page-panel.open{
+  visibility:visible;
+  pointer-events:auto;
+}
+.drawer-page-panel::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:rgba(255,255,255,.1);
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  opacity:0;
+  transition:opacity var(--kinojo-motion);
+}
+.drawer-page-panel.open::before{
+  opacity:1;
+}
+.drawer-page-card{
+  position:absolute;
+  top:0;
+  bottom:0;
+  left:min(320px,86vw);
+  width:min(380px,calc(100vw - min(320px,86vw)));
+  min-width:min(320px,100vw);
+  background:#fff;
+  border-left:1px solid var(--line);
+  border-right:1px solid var(--line);
+  box-shadow:18px 0 45px rgba(15,23,42,.12);
+  transform:translateX(-12px);
+  opacity:0;
+  transition:transform var(--kinojo-motion),opacity var(--kinojo-motion);
+}
+.drawer-page-panel.open .drawer-page-card{
+  transform:translateX(0);
+  opacity:1;
+}
+.drawer-page-head{
+  height:58px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:0 16px;
+  border-bottom:1px solid var(--line);
+}
+.drawer-page-head strong{
+  font-size:16px;
+  font-weight:1000;
+  color:#263444;
+}
+.drawer-page-close{
+  width:34px;
+  height:34px;
+  border:1px solid var(--line);
+  background:#fff;
+  color:#64748b;
+  border-radius:3px;
+  font-size:18px;
+  font-weight:1000;
+  cursor:pointer;
+}
+.drawer-page-body{
+  padding:16px;
+  color:#475569;
+  font-size:14px;
+  line-height:1.6;
+  white-space:pre-line;
+}
+
+/* 버튼 계열 radius 3 재확인, 스위치는 예외 */
+.btn,.page-btn,.search,.admin-menu-btn,.drawer-toggle,.drawer-close,.admin-dropdown,
+.reaction-popover,.reaction-choice button,.send-btn,.reaction-comment,.name-tag,
+.drawer-nav a,.drawer-link,.drawer-action,.construction-close,.construction-ok,
+.drawer-page-close{
+  border-radius:3px!important;
+}
+
+@media(max-width:680px){
+  .top-utility{
+    height:42px!important;
+    min-height:42px!important;
+    max-height:42px!important;
+    grid-template-columns:38px minmax(0,1fr) auto!important;
+  }
+  .top-right-tools{
+    height:42px!important;
+  }
+  .top-utility .visit-mini{
+    min-width:0!important;
+    max-width:calc(100vw - 108px)!important;
+    height:38px!important;
+    min-height:38px!important;
+    max-height:38px!important;
+    font-size:10.5px!important;
+    padding:0 7px!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+  .drawer-toggle,.admin-menu-btn,.admin-menu-wrap{
+    width:38px!important;
+    height:38px!important;
+    min-width:38px!important;
+    max-width:38px!important;
+    min-height:38px!important;
+    max-height:38px!important;
+  }
+  .drawer-page-card{
+    left:0;
+    top:auto;
+    bottom:0;
+    width:100%;
+    min-width:0;
+    height:48vh;
+    transform:translateY(16px);
+    border-left:0;
+    border-right:0;
+    border-top:1px solid var(--line);
+  }
+  .drawer-page-panel.open .drawer-page-card{
+    transform:translateY(0);
+  }
+}

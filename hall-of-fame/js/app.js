@@ -257,6 +257,58 @@ window.addEventListener("resize",()=>requestAnimationFrame(applyOverflowMarquee)
 document.getElementById("cancelSuggestBtn").onclick=()=>{document.getElementById("suggestionBox").style.display="none";document.getElementById("suggestTitle").value="";document.getElementById("suggestProposer").value="";document.getElementById("suggestMemo").value=""};
 document.getElementById("submitSuggestBtn").onclick=async()=>{const title=document.getElementById("suggestTitle").value.trim(),proposer=document.getElementById("suggestProposer").value.trim(),memo=document.getElementById("suggestMemo").value.trim();if(!title)return alert("항목 이름을 입력해 주세요.");const res=await fetch(WEB_APP_URL,{method:"POST",body:JSON.stringify({action:"hallSuggestion",title,proposer,memo})});const data=await res.json();if(!data.ok)return alert(data.message||"전송 실패");alert("제안이 접수되었습니다.");document.getElementById("suggestionBox").style.display="none";load()};
 
+
+/* KINOJO drawer side page panel */
+const DRAWER_PAGE_CONTENT={
+  about:{
+    title:"사이트 소개",
+    body:"KINOJO INFO는 아이온2 커뮤니티 기록을 보기 쉽게 정리하는 정보 페이지입니다. 명예의 전당, 성역팟, 성장 기록 등 커뮤니티 활동을 깔끔하게 확인할 수 있도록 구성하고 있습니다."
+  },
+  terms:{
+    title:"이용약관",
+    body:"본 사이트는 커뮤니티 편의 제공을 목적으로 운영됩니다. 제공되는 정보는 시트와 공개 기록을 기반으로 하며, 운영 상황에 따라 표시 방식과 기준이 변경될 수 있습니다."
+  },
+  privacy:{
+    title:"개인정보처리방침",
+    body:"KINOJO INFO는 서비스 운영에 필요한 최소한의 방문 기록과 반응 데이터를 사용할 수 있습니다. 캐릭터 반응 및 코멘트는 커뮤니티 표시 목적으로 저장될 수 있습니다."
+  }
+};
+function openDrawerPagePanel(type){
+  const data=DRAWER_PAGE_CONTENT[type]||DRAWER_PAGE_CONTENT.about;
+  const panel=document.getElementById("drawerPagePanel");
+  const title=document.getElementById("drawerPageTitle");
+  const body=document.getElementById("drawerPageBody");
+  if(title)title.textContent=data.title;
+  if(body)body.textContent=data.body;
+  if(panel){
+    panel.classList.add("open");
+    panel.setAttribute("aria-hidden","false");
+  }
+}
+function closeDrawerPagePanel(){
+  const panel=document.getElementById("drawerPagePanel");
+  if(panel){
+    panel.classList.remove("open");
+    panel.setAttribute("aria-hidden","true");
+  }
+}
+function bindDrawerPagePanel_(){
+  document.querySelectorAll("[data-page-panel]").forEach(btn=>{
+    if(btn.dataset.boundPagePanel)return;
+    btn.dataset.boundPagePanel="1";
+    btn.addEventListener("click",e=>{
+      e.preventDefault();
+      e.stopPropagation();
+      openDrawerPagePanel(btn.dataset.pagePanel||"about");
+    });
+  });
+  const close=document.getElementById("drawerPageCloseBtn");
+  if(close&&!close.dataset.boundPagePanel){
+    close.dataset.boundPagePanel="1";
+    close.addEventListener("click",closeDrawerPagePanel);
+  }
+}
+
 /* KINOJO drawer navigation */
 function openSideDrawer(){const drawer=document.getElementById("sideDrawer");const btn=document.getElementById("drawerToggleBtn");if(!drawer)return;drawer.classList.add("open");document.body.classList.add("drawer-open");drawer.setAttribute("aria-hidden","false");if(btn)btn.setAttribute("aria-expanded","true")}
 function closeSideDrawer(){const drawer=document.getElementById("sideDrawer");const btn=document.getElementById("drawerToggleBtn");if(!drawer)return;drawer.classList.remove("open");document.body.classList.remove("drawer-open");drawer.setAttribute("aria-hidden","true");if(btn)btn.setAttribute("aria-expanded","false")}
@@ -269,7 +321,7 @@ function openSuggestionPanel(){
   closeSideDrawer();
 }
 
-bindConstructionNotice_();bindKinojoDrawer_();const adminMenuBtn=document.getElementById("adminMenuBtn");if(adminMenuBtn)adminMenuBtn.onclick=openAdminDropdown;const adminDropdownClose=document.getElementById("adminDropdownClose");if(adminDropdownClose)adminDropdownClose.onclick=closeAdminMenu;const adminLoginBtn=document.getElementById("adminLoginBtn");if(adminLoginBtn)adminLoginBtn.onclick=adminLogin;const adminPasswordInput=document.getElementById("adminPasswordInput");if(adminPasswordInput)adminPasswordInput.onkeydown=e=>{if(e.key==="Enter")adminLogin()};document.getElementById("adminMvpBtn").onclick=showMvpAdminPrompt;document.getElementById("adminVisitBtn").onclick=()=>adminVisit(1,"visit");document.getElementById("adminBoostBtn").onclick=()=>adminVisit(31,"boost");document.getElementById("adminSnapshotBtn").onclick=adminSnapshot;const adminSnapshotTrigger=document.getElementById("adminSnapshotTriggerBtn");if(adminSnapshotTrigger)adminSnapshotTrigger.onclick=adminSnapshotTriggerInstall;document.getElementById("reactionLikeBtn").onclick=()=>{currentReactionType="like";document.getElementById("reactionLikeBtn").classList.add("active");document.getElementById("reactionDislikeBtn").classList.remove("active")};document.getElementById("reactionDislikeBtn").onclick=()=>{currentReactionType="dislike";document.getElementById("reactionDislikeBtn").classList.add("active");document.getElementById("reactionLikeBtn").classList.remove("active")};document.getElementById("reactionCloseBtn").onclick=closeReactionModal;document.getElementById("reactionSubmitBtn").onclick=submitReaction;document.addEventListener("click",e=>{const pop=document.getElementById("reactionPopover");if(pop&&pop.style.display==="block"&&!pop.contains(e.target)&&!e.target.closest("[data-character]"))closeReactionModal();const menu=document.getElementById("adminDropdown");if(menu&&menu.classList.contains("open")&&!menu.contains(e.target)&&!e.target.closest("#adminMenuBtn"))closeAdminMenu();const drawer=document.getElementById("sideDrawer");if(drawer&&drawer.classList.contains("open")&&e.target===drawer)closeSideDrawer();const notice=document.getElementById("constructionNotice");if(notice&&notice.classList.contains("open")&&e.target===notice)closeConstructionNotice()});document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeSideDrawer();closeAdminMenu();closeReactionModal();closeConstructionNotice()}});setInterval(()=>{if(Date.now()<reactionCarouselPausedUntil)return;if(document.activeElement&&document.activeElement.id==="rankSearchInput")return;reactionCarouselIndex++;if(hallData)render()},6500);recordDailyVisitOnce();load();
+bindDrawerPagePanel_();bindConstructionNotice_();bindKinojoDrawer_();const adminMenuBtn=document.getElementById("adminMenuBtn");if(adminMenuBtn)adminMenuBtn.onclick=openAdminDropdown;const adminDropdownClose=document.getElementById("adminDropdownClose");if(adminDropdownClose)adminDropdownClose.onclick=closeAdminMenu;const adminLoginBtn=document.getElementById("adminLoginBtn");if(adminLoginBtn)adminLoginBtn.onclick=adminLogin;const adminPasswordInput=document.getElementById("adminPasswordInput");if(adminPasswordInput)adminPasswordInput.onkeydown=e=>{if(e.key==="Enter")adminLogin()};document.getElementById("adminMvpBtn").onclick=showMvpAdminPrompt;document.getElementById("adminVisitBtn").onclick=()=>adminVisit(1,"visit");document.getElementById("adminBoostBtn").onclick=()=>adminVisit(31,"boost");document.getElementById("adminSnapshotBtn").onclick=adminSnapshot;const adminSnapshotTrigger=document.getElementById("adminSnapshotTriggerBtn");if(adminSnapshotTrigger)adminSnapshotTrigger.onclick=adminSnapshotTriggerInstall;document.getElementById("reactionLikeBtn").onclick=()=>{currentReactionType="like";document.getElementById("reactionLikeBtn").classList.add("active");document.getElementById("reactionDislikeBtn").classList.remove("active")};document.getElementById("reactionDislikeBtn").onclick=()=>{currentReactionType="dislike";document.getElementById("reactionDislikeBtn").classList.add("active");document.getElementById("reactionLikeBtn").classList.remove("active")};document.getElementById("reactionCloseBtn").onclick=closeReactionModal;document.getElementById("reactionSubmitBtn").onclick=submitReaction;document.addEventListener("click",e=>{const pop=document.getElementById("reactionPopover");if(pop&&pop.style.display==="block"&&!pop.contains(e.target)&&!e.target.closest("[data-character]"))closeReactionModal();const menu=document.getElementById("adminDropdown");if(menu&&menu.classList.contains("open")&&!menu.contains(e.target)&&!e.target.closest("#adminMenuBtn"))closeAdminMenu();const drawer=document.getElementById("sideDrawer");if(drawer&&drawer.classList.contains("open")&&e.target===drawer)closeSideDrawer();const pagePanel=document.getElementById("drawerPagePanel");if(pagePanel&&pagePanel.classList.contains("open")&&e.target===pagePanel)closeDrawerPagePanel();const notice=document.getElementById("constructionNotice");if(notice&&notice.classList.contains("open")&&e.target===notice)closeConstructionNotice()});document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeSideDrawer();closeDrawerPagePanel();closeAdminMenu();closeReactionModal();closeConstructionNotice()}});setInterval(()=>{if(Date.now()<reactionCarouselPausedUntil)return;if(document.activeElement&&document.activeElement.id==="rankSearchInput")return;reactionCarouselIndex++;if(hallData)render()},6500);recordDailyVisitOnce();load();
 
 /* knj-infoweb(v_260603_01) reaction submit guard patch */
 function updateReactionSubmitState_(){
