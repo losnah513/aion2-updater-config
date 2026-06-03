@@ -13,9 +13,32 @@
 <main class="wrap">
 <section class="top-utility" aria-label="KINOJO INFO 상단 메뉴">
   <button class="drawer-toggle" id="drawerToggleBtn" type="button" aria-label="메뉴 열기" aria-expanded="false"><span class="drawer-plus" aria-hidden="true"></span></button>
+  <a class="info-title-link" href="../" aria-label="KINOJO INFO 메인으로 이동">KINOJO INFO</a>
   <div class="top-right-tools">
     <section class="visit-mini" id="visitCard">👀 방문자 통계를 불러오는 중...</section>
-    <section class="banner"><img src="assets/hall-banner-v2.png?v=uiux-latest" alt="Kinojo Hall of Fame"></section>
+    <div class="admin-menu-wrap">
+      <button class="admin-menu-btn" id="adminMenuBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="관리자 메뉴">⋮</button>
+      <section class="admin-dropdown" id="adminDropdown" aria-hidden="true">
+        <div class="admin-dropdown-head">
+          <strong>관리자 전용 메뉴입니다.</strong>
+          <button class="admin-dropdown-close" id="adminDropdownClose" type="button" aria-label="닫기">×</button>
+        </div>
+        <div class="admin-login-panel" id="adminLoginPanel">
+          <input class="search admin-password" id="adminPasswordInput" type="password" placeholder="비밀번호 입력">
+          <button class="btn" id="adminLoginBtn" type="button">확인</button>
+          <div class="admin-status" id="adminStatus"></div>
+        </div>
+        <div class="admin-control-panel" id="adminControlPanel" style="display:none">
+          <button class="btn" id="adminMvpBtn" type="button">MVP 후보 확인</button>
+          <button class="btn" id="adminVisitBtn" type="button">방문자 수 +1</button>
+          <button class="btn" id="adminBoostBtn" type="button">방문자 수 +31</button>
+          <button class="btn" id="adminSnapshotBtn" type="button">성장왕 스냅샷 생성</button>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>
+<section class="banner"><img src="assets/hall-banner-v2.png?v=uiux-latest" alt="Kinojo Hall of Fame"></section>
 <div class="admin-menu-wrap">
       <button class="admin-menu-btn" id="adminMenuBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="관리자 메뉴">⋮</button>
       <section class="admin-dropdown" id="adminDropdown" aria-hidden="true">
@@ -48,9 +71,9 @@
     <nav class="drawer-nav" aria-label="KINOJO INFO 메뉴">
       <a href="index.html">명예의 전당</a>
       <div class="drawer-divider"></div>
-      <a href="../">1성역 루드라팟</a>
-      <a href="../">2성역 바코트팟</a>
-      <a href="../">3성역 칼드릭스팟</a>
+      <button class="drawer-link drawer-under-construction" type="button" data-construction="1성역 루드라팟">1성역 루드라팟</button>
+      <button class="drawer-link drawer-under-construction" type="button" data-construction="2성역 바코트팟">2성역 바코트팟</button>
+      <button class="drawer-link drawer-under-construction" type="button" data-construction="3성역 칼드릭스팟">3성역 칼드릭스팟</button>
       <div class="drawer-divider"></div>
       <a href="../pages/about.html">사이트 소개</a>
       <a href="../pages/terms.html">이용약관</a>
@@ -85,6 +108,17 @@
 </section>
 
 <footer class="footer">Powered by AION2 × KINOJO</footer>
+
+<section class="construction-notice" id="constructionNotice" aria-hidden="true">
+  <div class="construction-card" role="dialog" aria-modal="false" aria-labelledby="constructionTitle">
+    <button class="construction-close" id="constructionCloseBtn" type="button" aria-label="닫기">×</button>
+    <div class="construction-kicker">KINOJO INFO</div>
+    <h2 id="constructionTitle">페이지 인테리어 공사중입니다~</h2>
+    <p id="constructionMessage">조금만 기다려 주세요. 곧 더 깔끔한 성역팟 페이지로 열어둘게요.</p>
+    <button class="construction-ok" id="constructionOkBtn" type="button">확인</button>
+  </div>
+</section>
+
 </main>
 <script src="js/app.js?v=uiux-latest"></script>
 </body>

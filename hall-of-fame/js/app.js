@@ -239,7 +239,7 @@ function openSuggestionPanel(){
   closeSideDrawer();
 }
 
-bindKinojoDrawer_();const adminMenuBtn=document.getElementById("adminMenuBtn");if(adminMenuBtn)adminMenuBtn.onclick=openAdminDropdown;const adminDropdownClose=document.getElementById("adminDropdownClose");if(adminDropdownClose)adminDropdownClose.onclick=closeAdminMenu;const adminLoginBtn=document.getElementById("adminLoginBtn");if(adminLoginBtn)adminLoginBtn.onclick=adminLogin;const adminPasswordInput=document.getElementById("adminPasswordInput");if(adminPasswordInput)adminPasswordInput.onkeydown=e=>{if(e.key==="Enter")adminLogin()};document.getElementById("adminMvpBtn").onclick=showMvpAdminPrompt;document.getElementById("adminVisitBtn").onclick=()=>adminVisit(1,"visit");document.getElementById("adminBoostBtn").onclick=()=>adminVisit(31,"boost");document.getElementById("adminSnapshotBtn").onclick=adminSnapshot;document.getElementById("reactionLikeBtn").onclick=()=>{currentReactionType="like";document.getElementById("reactionLikeBtn").classList.add("active");document.getElementById("reactionDislikeBtn").classList.remove("active")};document.getElementById("reactionDislikeBtn").onclick=()=>{currentReactionType="dislike";document.getElementById("reactionDislikeBtn").classList.add("active");document.getElementById("reactionLikeBtn").classList.remove("active")};document.getElementById("reactionCloseBtn").onclick=closeReactionModal;document.getElementById("reactionSubmitBtn").onclick=submitReaction;document.addEventListener("click",e=>{const pop=document.getElementById("reactionPopover");if(pop&&pop.style.display==="block"&&!pop.contains(e.target)&&!e.target.closest("[data-character]"))closeReactionModal();const menu=document.getElementById("adminDropdown");if(menu&&menu.classList.contains("open")&&!menu.contains(e.target)&&!e.target.closest("#adminMenuBtn"))closeAdminMenu();const drawer=document.getElementById("sideDrawer");if(drawer&&drawer.classList.contains("open")&&e.target===drawer)closeSideDrawer()});document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeSideDrawer();closeAdminMenu();closeReactionModal()}});setInterval(()=>{if(Date.now()<reactionCarouselPausedUntil)return;if(document.activeElement&&document.activeElement.id==="rankSearchInput")return;reactionCarouselIndex++;if(hallData)render()},6500);recordDailyVisitOnce();load();
+bindConstructionNotice_();bindKinojoDrawer_();const adminMenuBtn=document.getElementById("adminMenuBtn");if(adminMenuBtn)adminMenuBtn.onclick=openAdminDropdown;const adminDropdownClose=document.getElementById("adminDropdownClose");if(adminDropdownClose)adminDropdownClose.onclick=closeAdminMenu;const adminLoginBtn=document.getElementById("adminLoginBtn");if(adminLoginBtn)adminLoginBtn.onclick=adminLogin;const adminPasswordInput=document.getElementById("adminPasswordInput");if(adminPasswordInput)adminPasswordInput.onkeydown=e=>{if(e.key==="Enter")adminLogin()};document.getElementById("adminMvpBtn").onclick=showMvpAdminPrompt;document.getElementById("adminVisitBtn").onclick=()=>adminVisit(1,"visit");document.getElementById("adminBoostBtn").onclick=()=>adminVisit(31,"boost");document.getElementById("adminSnapshotBtn").onclick=adminSnapshot;document.getElementById("reactionLikeBtn").onclick=()=>{currentReactionType="like";document.getElementById("reactionLikeBtn").classList.add("active");document.getElementById("reactionDislikeBtn").classList.remove("active")};document.getElementById("reactionDislikeBtn").onclick=()=>{currentReactionType="dislike";document.getElementById("reactionDislikeBtn").classList.add("active");document.getElementById("reactionLikeBtn").classList.remove("active")};document.getElementById("reactionCloseBtn").onclick=closeReactionModal;document.getElementById("reactionSubmitBtn").onclick=submitReaction;document.addEventListener("click",e=>{const pop=document.getElementById("reactionPopover");if(pop&&pop.style.display==="block"&&!pop.contains(e.target)&&!e.target.closest("[data-character]"))closeReactionModal();const menu=document.getElementById("adminDropdown");if(menu&&menu.classList.contains("open")&&!menu.contains(e.target)&&!e.target.closest("#adminMenuBtn"))closeAdminMenu();const drawer=document.getElementById("sideDrawer");if(drawer&&drawer.classList.contains("open")&&e.target===drawer)closeSideDrawer();const notice=document.getElementById("constructionNotice");if(notice&&notice.classList.contains("open")&&e.target===notice)closeConstructionNotice()});document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeSideDrawer();closeAdminMenu();closeReactionModal();closeConstructionNotice()}});setInterval(()=>{if(Date.now()<reactionCarouselPausedUntil)return;if(document.activeElement&&document.activeElement.id==="rankSearchInput")return;reactionCarouselIndex++;if(hallData)render()},6500);recordDailyVisitOnce();load();
 
 /* knj-infoweb(v_260603_01) reaction submit guard patch */
 function updateReactionSubmitState_(){
@@ -319,6 +319,47 @@ const reactionSubmitBtn_=document.getElementById("reactionSubmitBtn");
 if(reactionSubmitBtn_)reactionSubmitBtn_.onclick=submitReaction;
 updateReactionSubmitState_();
 
+
+
+/* KINOJO construction notice */
+function openConstructionNotice(label){
+  const notice=document.getElementById("constructionNotice");
+  const message=document.getElementById("constructionMessage");
+  if(message)message.textContent=(label?label+" 페이지는 ":"페이지는 ")+"인테리어 공사중입니다. 조금만 기다려 주세요.";
+  if(notice){
+    notice.classList.add("open");
+    notice.setAttribute("aria-hidden","false");
+  }
+  closeSideDrawer();
+}
+function closeConstructionNotice(){
+  const notice=document.getElementById("constructionNotice");
+  if(notice){
+    notice.classList.remove("open");
+    notice.setAttribute("aria-hidden","true");
+  }
+}
+function bindConstructionNotice_(){
+  document.querySelectorAll("[data-construction]").forEach(btn=>{
+    if(btn.dataset.boundConstruction)return;
+    btn.dataset.boundConstruction="1";
+    btn.addEventListener("click",e=>{
+      e.preventDefault();
+      e.stopPropagation();
+      openConstructionNotice(btn.dataset.construction||"");
+    });
+  });
+  const close=document.getElementById("constructionCloseBtn");
+  const ok=document.getElementById("constructionOkBtn");
+  if(close&&!close.dataset.boundConstruction){
+    close.dataset.boundConstruction="1";
+    close.addEventListener("click",closeConstructionNotice);
+  }
+  if(ok&&!ok.dataset.boundConstruction){
+    ok.dataset.boundConstruction="1";
+    ok.addEventListener("click",closeConstructionNotice);
+  }
+}
 
 /* KINOJO drawer robust binding */
 function bindKinojoDrawer_(){
