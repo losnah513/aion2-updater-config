@@ -1491,3 +1491,204 @@ button:disabled{
   .mini-row{grid-template-columns:46px minmax(0,1fr) 62px 82px!important;}
   .rank-table{min-width:980px!important;}
 }
+
+/* 260603 quick layout correction: top banner, reaction row, relation stack, admin and MVP */
+.top-utility{
+  position:sticky!important;
+  top:0!important;
+  z-index:900!important;
+  background:#fff!important;
+  padding:8px 0!important;
+  border-bottom:1px solid rgba(229,231,235,.92)!important;
+  align-items:center!important;
+}
+.top-right-tools{
+  flex-direction:row!important;
+  align-items:center!important;
+  gap:8px!important;
+}
+.drawer-toggle,.admin-menu-btn{
+  width:42px!important;
+  height:42px!important;
+  flex:0 0 42px!important;
+}
+.visit-mini{
+  width:360px!important;
+  min-height:42px!important;
+  padding:8px 14px 8px 18px!important;
+}
+.admin-dropdown{
+  top:50px!important;
+  width:min(440px,calc(100vw - 20px))!important;
+}
+.admin-result-box{
+  order:2!important;
+  margin:8px 0!important;
+  border:1px solid var(--line)!important;
+  background:#fff!important;
+}
+.admin-visit-control{
+  order:3!important;
+}
+#adminSnapshotBtn{order:4!important;}
+#adminSnapshotTriggerBtn{order:5!important;}
+.admin-control-panel{
+  display:grid;
+}
+.mvp-card,.mvp-body,.mvp-body.mvp-challenger-waiting{
+  background:#fff!important;
+}
+.reaction-board{
+  display:grid!important;
+  grid-template-columns:3fr 3fr 4fr!important;
+  gap:12px!important;
+  align-items:stretch!important;
+}
+.reaction-card-head,.section-head,.overall-head,.mvp-head,.relation-main-head,.relation-sub-head{
+  min-height:50px!important;
+  height:50px!important;
+  box-sizing:border-box!important;
+}
+.reaction-top-body{
+  display:grid!important;
+  grid-template-columns:minmax(92px,1fr) 1px minmax(0,1.25fr)!important;
+  align-items:stretch!important;
+  min-height:118px!important;
+  padding:12px 13px!important;
+  gap:10px!important;
+}
+.reaction-top-left{
+  display:grid!important;
+  grid-template-columns:34px minmax(0,1fr)!important;
+  grid-template-rows:auto auto auto!important;
+  column-gap:8px!important;
+  align-content:center!important;
+  min-width:0!important;
+}
+.reaction-rank{
+  grid-row:1/4!important;
+  align-self:center!important;
+  text-align:center!important;
+}
+.reaction-name,.reaction-server,.reaction-score-line{
+  min-width:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+.reaction-top-divider{
+  width:1px!important;
+  height:72%!important;
+  align-self:center!important;
+  background:rgba(117,140,177,.2)!important;
+}
+.reaction-comments.comment-list{
+  align-self:center!important;
+  max-height:94px!important;
+  padding:0 0 0 2px!important;
+  margin:0!important;
+}
+.recent-comment-card .reaction-top-body,
+.recent-comment-card .reaction-comments{
+  display:block!important;
+}
+.relation-combined-card{
+  height:auto!important;
+}
+.relation-combined-head{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+}
+.relation-combined-head .section-head + .section-head{
+  border-left:0!important;
+  border-top:1px solid rgba(117,140,177,.16)!important;
+}
+.relation-viewport{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  min-height:0!important;
+  max-height:none!important;
+}
+.relation-column + .relation-column{
+  border-left:0!important;
+  border-top:1px solid rgba(117,140,177,.16)!important;
+}
+.relation-track{
+  max-height:184px!important;
+  overflow-y:auto!important;
+}
+.dashboard{
+  grid-template-columns:1fr!important;
+}
+.dashboard > div:first-child{
+  min-width:0!important;
+}
+.dashboard .top-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+}
+.dashboard .side-stack{
+  min-width:0!important;
+}
+.mini-row{
+  grid-template-columns:54px minmax(8em,1fr) 48px 104px!important;
+}
+.mini-row .reaction-counts .reaction-pair{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  grid-template-rows:auto auto!important;
+  gap:3px!important;
+}
+.mini-row .reaction-counts .reaction-pair .reaction-icon,
+.mini-row .reaction-counts .reaction-pair strong{
+  display:inline-block!important;
+}
+.mini-row .reaction-counts .reaction-pair .reaction-icon:nth-of-type(1){grid-row:1;grid-column:1;justify-self:start;margin-left:8px;}
+.mini-row .reaction-counts .reaction-pair strong:nth-of-type(1){grid-row:1;grid-column:1;justify-self:end;margin-right:8px;}
+.mini-row .reaction-counts .reaction-pair .reaction-icon:nth-of-type(2){grid-row:2;grid-column:1;justify-self:start;margin-left:8px;}
+.mini-row .reaction-counts .reaction-pair strong:nth-of-type(2){grid-row:2;grid-column:1;justify-self:end;margin-right:8px;}
+.rank-table .reaction-col{width:112px!important;}
+.rank-reactions,.rank-reactions .reaction-counts{
+  min-width:106px!important;
+  width:106px!important;
+}
+.rank-reactions .reaction-pair{
+  gap:5px!important;
+}
+.rank-tabs .tab-icon,
+.rank-title-icon{
+  display:none!important;
+}
+.rank-title-wrap{
+  display:inline!important;
+}
+.sub-toggle.compact .toggle-knob,#subToggle.sub-toggle .toggle-knob{
+  display:block!important;
+  opacity:1!important;
+  left:4px!important;
+  top:4px!important;
+  width:26px!important;
+  height:26px!important;
+  background:#fff!important;
+  border:1px solid rgba(148,163,184,.45)!important;
+  z-index:2!important;
+}
+.sub-toggle.compact.on .toggle-knob,#subToggle.sub-toggle.on .toggle-knob{
+  left:84px!important;
+}
+@media(min-width:901px){
+  .reaction-board{grid-template-columns:3fr 3fr 4fr!important;}
+  .dashboard{grid-template-columns:2fr 1fr!important;}
+  .dashboard .top-grid{height:auto!important;}
+}
+@media(max-width:900px){
+  .reaction-board{grid-template-columns:1fr!important;}
+  .dashboard,.dashboard .top-grid{grid-template-columns:1fr!important;}
+  .top-utility{align-items:flex-start!important;}
+  .top-right-tools{flex-wrap:wrap!important;justify-content:flex-end!important;}
+}
+@media(max-width:560px){
+  .visit-mini{width:min(310px,calc(100vw - 66px))!important;}
+  .visit-line{font-size:11px!important;}
+  .drawer-toggle,.admin-menu-btn{width:38px!important;height:38px!important;flex-basis:38px!important;}
+  .mini-row{grid-template-columns:46px minmax(8em,1fr) 46px 88px!important;}
+}

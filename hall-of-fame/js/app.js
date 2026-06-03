@@ -124,7 +124,7 @@ function reactionBoard(){return '<div class="reaction-board">'+reactionCard("lik
 function awardsBoard(){const w=hallData?.weeklyAwards||{};return '<div class="award-grid">'+awardCard("🌱 성장왕","PVE+PVP 아이템레벨 주간 증가량",w.growthKing||[],"itemLabel")+awardCard("💪 벌크업","PVE+PVP 전투력 주간 증가량",w.bulkUp||[],"powerLabel")+'</div>'}
 function awardCard(title,note,list,labelKey){return '<section class="award-card"><div class="section-head"><h2>'+title+'</h2><span class="section-note">'+note+'</span></div><div class="award-body">'+(list.length?list.map((item,i)=>'<div class="award-row"><div class="award-rank">'+(i+1)+'위</div><div class="award-name"><div class="rank-name-flex"><div class="rank-name-main">'+flowText(item.name,item)+ownerLine(item)+'</div></div></div><div class="award-score">'+escapeHtml(item[labelKey]||'')+'</div></div>').join(''):'<div class="empty">비교 가능한 주간 데이터가 부족합니다.</div>')+'</div></section>'}
 
-function rankTabs(){return '<div class="class-tabs rank-tabs"><button class="pill all-rank '+(activeRankClass==="전체"?"active":"")+'" data-rank-class="전체">전체</button>'+CLASS_ORDER.map(cls=>'<button class="pill '+(activeRankClass===cls?"active":"")+'" data-rank-class="'+cls+'">'+classTabIcon(cls)+cls+'</button>').join("")+'</div>'}
+function rankTabs(){return '<div class="class-tabs rank-tabs"><button class="pill all-rank '+(activeRankClass==="전체"?"active":"")+'" data-rank-class="전체">전체</button>'+CLASS_ORDER.map(cls=>'<button class="pill '+(activeRankClass===cls?"active":"")+'" data-rank-class="'+cls+'">'+cls+'</button>').join("")+'</div>'}
 function currentRankList(){
   if(activeRankClass!=="전체"){
     const map=includeSubs?(hallData?.classAll||{}):(hallData?.classMain||{});
@@ -216,7 +216,7 @@ function overallTable(){
   const isClassMode=activeRankClass!=="전체";
   const title=activeRankClass==="전체"
     ? '🏅 키노조 전체 순위'
-    : '<span class="rank-title-wrap"><img class="rank-title-icon" src="'+CLASS_ICONS[activeRankClass]+'" alt=""><span class="rank-title-text">'+escapeHtml(activeRankClass)+' 순위</span></span>';
+    : '<span class="rank-title-wrap"><span class="rank-title-text">'+escapeHtml(activeRankClass)+' 순위</span></span>';
 
   const rows=[];
 
@@ -267,7 +267,12 @@ function showAdminResult_(title,html){
     box=document.createElement("div");
     box.id="adminResultBox";
     box.className="admin-result-box";
-    panel.appendChild(box);
+    const mvpBtn=document.getElementById("adminMvpBtn");
+    if(mvpBtn&&mvpBtn.parentNode===panel){
+      mvpBtn.insertAdjacentElement("afterend",box);
+    }else{
+      panel.insertBefore(box,panel.firstChild);
+    }
   }
   if(box){
     box.innerHTML='<div class="admin-result-head"><strong>'+escapeHtml(title||"결과")+'</strong><button type="button" aria-label="닫기">×</button></div><div class="admin-result-body">'+html+'</div>';
