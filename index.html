@@ -482,6 +482,49 @@ body.drawer-open{
   transition:none!important;
   animation:none!important}
 }
+/* KINOJO main visual-contract restore patch */
+body,.card,.eyebrow,.hall-banner,.info-logo-placeholder,.info-drawer,.construction-card{
+  background:#fff!important;
+  box-shadow:none!important;
+}
+.card,.hall-banner,.info-logo-placeholder,.construction-card,.info-drawer-close,.construction-close,.construction-ok{
+  border-radius:2px!important;
+}
+.card:hover:not(.disabled){
+  transform:translateY(-2px);
+  border-color:#cfd6df;
+}
+.rudra-card{
+  clip-path:inset(0 -72px -1px 0 round 2px);
+  overflow:visible!important;
+}
+.rudra-card::before,.rudra-card::after,.rudra-bg{
+  clip-path:inset(0 0 0 0 round 2px)!important;
+}
+.rudra-card:hover::after,.rudra-card:focus-visible::after,.rudra-card:active::after{
+  box-shadow:none!important;
+}
+.rudra-boss{
+  background-position:46% 42%!important;
+  background-size:92% auto!important;
+  transform-origin:20% 100%!important;
+  clip-path:inset(0 0 0 0 round 2px);
+}
+.rudra-card:hover .rudra-boss,.rudra-card:focus-visible .rudra-boss,.rudra-card:active .rudra-boss{
+  transform:translate(58px,-66px) scale(1.72)!important;
+  filter:brightness(1.16) saturate(1.18) drop-shadow(0 0 18px rgba(168,85,247,.42))!important;
+}
+.rudra-card:hover + .card,.rudra-card:focus-visible + .card,.rudra-card:active + .card{
+  transform:translateX(18px)!important;
+}
+.rudra-card:hover + .card + .card,.rudra-card:focus-visible + .card + .card,.rudra-card:active + .card + .card{
+  transform:translateX(10px)!important;
+}
+@media(max-width:900px){
+  .rudra-card:hover .rudra-boss,.rudra-card:focus-visible .rudra-boss,.rudra-card:active .rudra-boss{
+    transform:translate(34px,-42px) scale(1.36)!important;
+  }
+}
 </style>
 </head>
 <body>
