@@ -61,9 +61,9 @@ function combinedRelationBox(){
   };
 
   return '<section class="section relation-combined-card">'
-    + '<div class="section-head relation-main-head"><h2>같은 마족이면 가족이지</h2><span class="section-note">타서버 마족</span></div>'
+    + '<div class="section-head relation-main-head"><h2>😈 같은 마족이면 가족이지</h2><span class="section-note">타서버 마족</span></div>'
     + renderTrack(demonItems,"demon")
-    + '<div class="section-head relation-sub-head"><h2>같은 파티면 친구지</h2><span class="section-note">천족 서버</span></div>'
+    + '<div class="section-head relation-sub-head"><h2>🤝 같은 파티면 친구지</h2><span class="section-note">천족 서버</span></div>'
     + renderTrack(partyItems,"party")
     + '</section>';
 }
@@ -91,9 +91,7 @@ function reactionCard(type){
   const title=type==="like"?"좋아요 TOP 3":"싫어요 TOP 3";
   const titleIcon=reactionIcon(type==="like"?"like":"dislike");
   const note=type==="like"?"모두에게 사랑받는 모험가":"이분은 어쩌다 이렇게 미움을 샀을까요?";
-  if(!list.length){
-    return '<section class="reaction-card '+type+'-top-card"><div class="reaction-card-head"><div class="reaction-card-title">'+titleIcon+'<span>'+title+'</span></div><div class="reaction-card-note">'+note+'</div></div><div class="reaction-empty">아직 반응 데이터가 부족합니다.</div></section>';
-  }
+  if(!list.length)return '<section class="reaction-card '+type+'-top-card"><div class="reaction-card-head"><div class="reaction-card-title">'+titleIcon+'<span>'+title+'</span></div><div class="reaction-card-note">'+note+'</div></div><div class="reaction-empty">아직 반응 데이터가 부족합니다.</div></section>';
   const now=Date.now();
   const idx=(now<reactionCarouselPausedUntil)?reactionCarouselIndex:reactionCarouselIndex%list.length;
   const item=list[idx%list.length];
@@ -108,8 +106,7 @@ function reactionCard(type){
     + '<div class="reaction-top-body"><div class="reaction-top-left"><div class="reaction-rank">'+displayRank+'위</div>'
     + '<span class="reaction-name" data-character="'+escapeHtml(item.name)+'">'+escapeHtml(item.name)+'</span>'+meta
     + '<div class="reaction-score-line icon-row">'+reactionPairHtml(item.like,item.dislike,'top-reaction-pair')+'</div></div>'
-    + '<div class="reaction-top-divider" aria-hidden="true"></div>'
-    + '<div class="reaction-comments comment-list'+overflowClass+'"><div class="comment-track">'+track+'</div></div></div></section>';
+    + '<div class="reaction-top-divider" aria-hidden="true"></div><div class="reaction-comments comment-list'+overflowClass+'"><div class="comment-track">'+track+'</div></div></div></section>';
 }
 function recentCommentCard(){
   const by=hallData?.reactionSummary?.byName||{};
@@ -252,6 +249,37 @@ function preloadImages(paths){return Promise.all(paths.map(src=>new Promise(reso
 async function load(){app.className="loading";app.innerHTML='<div><div class="loader-ring"></div><div class="loader-text" id="loaderText">명예의 전당 데이터를 불러오는 중</div></div>';startLoadingText();try{await preloadImages(Object.values(RANK_EMBLEMS).concat(Object.values(CLASS_ICONS)));const url=WEB_APP_URL+(WEB_APP_URL.includes("?")?"&":"?")+"action=hallOfFame&t="+Date.now();const res=await fetch(url,{cache:"no-store"});const text=await res.text();if(!res.ok)throw new Error("HTTP "+res.status+": "+text.slice(0,180));try{hallData=JSON.parse(text)}catch(parseErr){throw new Error("Apps Script 응답이 JSON이 아닙니다: "+text.slice(0,180))}if(!hallData || hallData.ok===false)throw new Error(hallData?.message||hallData?.error||"명예의 전당 응답이 실패했습니다.");if(hallData.visitStats){renderVisits(hallData.visitStats)}else{fetchVisitStats()}stopLoadingText();render()}catch(err){stopLoadingText();app.className="";app.innerHTML='<div class="empty">명예의 전당 데이터를 불러오지 못했습니다.<br>'+escapeHtml(err.message||err)+'</div>'}}
 function boostPrompt(){const code=prompt("관리자 암호를 입력하세요.");if(!code)return;const m=String(code).trim().match(/^키노조화이팅(\d+)$/);if(!m)return alert("암호가 올바르지 않습니다.");const amount=Math.max(1,Math.min(9999,Number(m[1]||0)));fetchVisitStats("boost",amount);alert("방문자수 +"+amount+" 반영 완료!")}
 
+
+function setAdminButtonLoading_(id,text){
+  const btn=document.getElementById(id);
+  if(!btn)return;
+  btn.dataset.oldText=btn.textContent;
+  btn.disabled=true;
+  btn.textContent=text||"처리 중...";
+}
+function clearAdminButtonLoading_(id,text){
+  const btn=document.getElementById(id);
+  if(!btn)return;
+  btn.disabled=false;
+  btn.textContent=text||btn.dataset.oldText||btn.textContent;
+}
+function showAdminResult_(title,html){
+  let box=document.getElementById("adminResultBox");
+  const panel=document.getElementById("adminControlPanel");
+  if(!box&&panel){
+    box=document.createElement("div");
+    box.id="adminResultBox";
+    box.className="admin-result-box";
+    panel.appendChild(box);
+  }
+  if(box){
+    box.innerHTML='<div class="admin-result-head"><strong>'+escapeHtml(title||"결과")+'</strong><button type="button" aria-label="닫기">×</button></div><div class="admin-result-body">'+html+'</div>';
+    box.querySelector("button").onclick=()=>box.remove();
+  }else{
+    alert((title||"결과")+"\n"+String(html||"").replace(/<[^>]+>/g," "));
+  }
+}
+
 function openAdminDropdown(){const box=document.getElementById("adminDropdown");const btn=document.getElementById("adminMenuBtn");if(!box)return;const willOpen=!box.classList.contains("open");box.classList.toggle("open",willOpen);box.setAttribute("aria-hidden",willOpen?"false":"true");if(btn)btn.setAttribute("aria-expanded",willOpen?"true":"false")}
 function closeAdminMenu(){const box=document.getElementById("adminDropdown");const btn=document.getElementById("adminMenuBtn");if(box){box.classList.remove("open");box.setAttribute("aria-hidden","true")}if(btn)btn.setAttribute("aria-expanded","false")}
 function adminLogin(){const input=document.getElementById("adminPasswordInput");const status=document.getElementById("adminStatus");if(String(input?.value||"")!=="zlshwhghkdlxld"){if(status)status.textContent="암호가 올바르지 않습니다.";return}adminAuthed=true;const login=document.getElementById("adminLoginPanel");const panel=document.getElementById("adminControlPanel");if(login)login.style.display="none";if(panel)panel.style.display="grid";if(status)status.textContent=""}
@@ -262,16 +290,21 @@ async function adminVisitAdjust(){
   const status=document.getElementById("adminVisitStatus");
   const mode=target==="total"?(sign==="minus"?"totalMinus":"totalPlus"):(sign==="minus"?"dailyMinus":"dailyPlus");
   try{
+    setAdminButtonLoading_("adminVisitApplyBtn","반영 중...");
     if(status)status.textContent="반영 중...";
     await fetchVisitStats(mode,amount);
     if(status)status.textContent="방문자수 반영 완료";
   }catch(e){
     if(status)status.textContent="방문자수 반영 실패: "+(e.message||e);
+  }finally{
+    clearAdminButtonLoading_("adminVisitApplyBtn","반영");
   }
 }
 async function adminSnapshot(){try{const url=WEB_APP_URL+(WEB_APP_URL.includes("?")?"&":"?")+"action=weeklySnapshot&password="+encodeURIComponent("zlshwhghkdlxld")+"&t="+Date.now();const res=await fetch(url,{cache:"no-store"});const data=await res.json();if(!data.ok)return alert(data.message||"스냅샷 저장 실패");alert("성장왕 스냅샷 저장 완료: "+Number(data.result?.count||0)+"명")}catch(e){alert("스냅샷 저장 오류: "+(e.message||e))}}
 
-async function showMvpAdminPrompt(){const code=prompt("MVP 관리자 암호를 입력하세요.");if(!code)return;try{const url=WEB_APP_URL+(WEB_APP_URL.includes("?")?"&":"?")+"action=mvpAdmin&password="+encodeURIComponent(code)+"&t="+Date.now();const res=await fetch(url,{cache:"no-store"});const data=await res.json();if(!data.ok)return alert(data.message||"확인 실패");const season=data.season||{};const rows=(data.candidates||[]).map((item,i)=>(i+1)+"위 "+item.name+"\n시즌 "+Number(item.seasonScore||0)+" · 반응 "+Number(item.reactionScore||0)+" · 예상 "+Number(item.finalScorePreview||0)+"\n👍 "+Number(item.like||0)+" / 👎 "+Number(item.dislike||0)+" · "+item.excludeReason).join("\n\n");alert("MVP 시즌 후보 TOP5\n"+(season.seasonName||"")+" ("+(season.startDate||"")+" ~ "+(season.endDate||"")+")\n\n"+(rows||"아직 집계 데이터가 없습니다.")+"\n\n※ 전투력 보정 20%는 MVP 선정 시점에만 반영됩니다.")}catch(e){alert("MVP 정보를 불러오지 못했습니다: "+(e.message||e))}}
+async function showMvpAdminPrompt(){
+  return adminMvp();
+}
 function bindLongPress(el,shortAction,longAction){let timer=null,fired=false;const start=ev=>{fired=false;clearTimeout(timer);timer=setTimeout(()=>{fired=true;longAction()},900)};const end=ev=>{clearTimeout(timer)};el.addEventListener("mousedown",start);el.addEventListener("touchstart",start,{passive:true});el.addEventListener("mouseup",end);el.addEventListener("mouseleave",end);el.addEventListener("touchend",end);el.addEventListener("click",ev=>{if(fired){ev.preventDefault();return}shortAction()})}
 function setReactionLimitLoading_(){
   const comment=document.getElementById("reactionComment");
@@ -295,13 +328,22 @@ function setReactionLimitLoading_(){
 
 async function adminSnapshotTriggerInstall(){
   try{
-    const url=WEB_APP_URL+(WEB_APP_URL.includes("?")?"&":"?")+"action=weeklySnapshotTriggers&password="+encodeURIComponent("zlshwhghkdlxld")+"&t="+Date.now();
+    setAdminButtonLoading_("adminSnapshotTriggerBtn","설치 중...");
+    const code=adminPasswordValue||document.getElementById("adminPasswordInput")?.value||"";
+    const url=WEB_APP_URL+(WEB_APP_URL.includes("?")?"&":"?")+"action=weeklySnapshotTriggers&password="+encodeURIComponent(code)+"&t="+Date.now();
     const res=await fetch(url,{cache:"no-store"});
     const data=await res.json();
-    if(!data.ok)return alert(data.message||"자동 트리거 설치 실패");
-    alert("자동 스냅샷 트리거 설치 완료\n수요일 00:00 START / 화요일 00:00 END");
+    if(!data.ok){
+      const msg=data.needAuth
+        ? "자동 트리거 설치 권한 승인이 필요합니다. Apps Script 편집기에서 installWeeklyGrowthSnapshotTriggers_ 함수를 한 번 직접 실행해 권한 승인 후 다시 시도해 주세요."
+        : (data.message||"자동 트리거 설치 실패");
+      return showAdminResult_("자동 스냅샷 트리거 설치",msg);
+    }
+    showAdminResult_("자동 스냅샷 트리거 설치","설치 완료<br>수요일 00:00 START / 화요일 00:00 END");
   }catch(e){
-    alert("자동 트리거 설치 오류: "+(e.message||e));
+    showAdminResult_("자동 스냅샷 트리거 설치","설치 오류: "+(e.message||e));
+  }finally{
+    clearAdminButtonLoading_("adminSnapshotTriggerBtn","자동 스냅샷 트리거 설치");
   }
 }
 
@@ -312,7 +354,7 @@ function positionReactionPopover(anchor,pop){
   const w=Math.min(320,Math.max(260,window.innerWidth-24));
   let left=Math.min(window.innerWidth-w-12,Math.max(12,rect.left));
   let top=rect.bottom+8;
-  const h=Math.min(260,pop.offsetHeight||240);
+  const h=Math.min(270,pop.offsetHeight||250);
   if(top+h>window.innerHeight-12) top=Math.max(12,rect.top-h-8);
   pop.style.position="fixed";
   pop.style.width=w+"px";
@@ -462,7 +504,20 @@ async function submitSideSuggestion_(){
 }
 
 
-bindDrawerPagePanel_();bindConstructionNotice_();bindKinojoDrawer_();const adminMenuBtn=document.getElementById("adminMenuBtn");if(adminMenuBtn)adminMenuBtn.onclick=openAdminDropdown;const adminDropdownClose=document.getElementById("adminDropdownClose");if(adminDropdownClose)adminDropdownClose.onclick=closeAdminMenu;const adminLoginBtn=document.getElementById("adminLoginBtn");if(adminLoginBtn)adminLoginBtn.onclick=adminLogin;const adminPasswordInput=document.getElementById("adminPasswordInput");if(adminPasswordInput)adminPasswordInput.onkeydown=e=>{if(e.key==="Enter")adminLogin()};document.getElementById("adminMvpBtn").onclick=showMvpAdminPrompt;const adminVisitApplyBtn=document.getElementById("adminVisitApplyBtn");if(adminVisitApplyBtn)adminVisitApplyBtn.onclick=adminVisitAdjust;document.getElementById("adminSnapshotBtn").onclick=adminSnapshot;const adminSnapshotTrigger=document.getElementById("adminSnapshotTriggerBtn");if(adminSnapshotTrigger)adminSnapshotTrigger.onclick=adminSnapshotTriggerInstall;document.getElementById("reactionLikeBtn").onclick=()=>{currentReactionType="like";document.getElementById("reactionLikeBtn").classList.add("active");document.getElementById("reactionDislikeBtn").classList.remove("active")};document.getElementById("reactionDislikeBtn").onclick=()=>{currentReactionType="dislike";document.getElementById("reactionDislikeBtn").classList.add("active");document.getElementById("reactionLikeBtn").classList.remove("active")};document.getElementById("reactionCloseBtn").onclick=closeReactionModal;document.getElementById("reactionSubmitBtn").onclick=submitReaction;document.addEventListener("click",e=>{const pop=document.getElementById("reactionPopover");if(pop&&pop.style.display==="block"&&!pop.contains(e.target)&&!e.target.closest("[data-character]"))closeReactionModal();const menu=document.getElementById("adminDropdown");if(menu&&menu.classList.contains("open")&&!menu.contains(e.target)&&!e.target.closest("#adminMenuBtn"))closeAdminMenu();const drawer=document.getElementById("sideDrawer");if(drawer&&drawer.classList.contains("open")&&e.target===drawer)closeSideDrawer();const pagePanel=document.getElementById("drawerPagePanel");if(pagePanel&&pagePanel.classList.contains("open")&&e.target===pagePanel)closeDrawerPagePanel();const notice=document.getElementById("constructionNotice");if(notice&&notice.classList.contains("open")&&e.target===notice)closeConstructionNotice()});document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeSideDrawer();closeDrawerPagePanel();closeAdminMenu();closeReactionModal();closeConstructionNotice()}});setInterval(()=>{if(Date.now()<reactionCarouselPausedUntil)return;if(document.activeElement&&document.activeElement.id==="rankSearchInput")return;reactionCarouselIndex++;if(hallData)render()},6500);recordDailyVisitOnce();load();
+bindDrawerPagePanel_();bindConstructionNotice_();bindKinojoDrawer_();const adminMenuBtn=document.getElementById("adminMenuBtn");if(adminMenuBtn)adminMenuBtn.onclick=openAdminDropdown;const adminDropdownClose=document.getElementById("adminDropdownClose");if(adminDropdownClose)adminDropdownClose.onclick=closeAdminMenu;const adminLoginBtn=document.getElementById("adminLoginBtn");if(adminLoginBtn)adminLoginBtn.onclick=adminLogin;const adminPasswordInput=document.getElementById("adminPasswordInput");if(adminPasswordInput)adminPasswordInput.onkeydown=e=>{if(e.key==="Enter")adminLogin()};document.getElementById("adminMvpBtn").onclick=showMvpAdminPrompt;const adminVisitApplyBtn=document.getElementById("adminVisitApplyBtn");if(adminVisitApplyBtn)adminVisitApplyBtn.onclick=adminVisitAdjust;document.getElementById("adminSnapshotBtn").onclick=adminSnapshot;const adminSnapshotTrigger=document.getElementById("adminSnapshotTriggerBtn");if(adminSnapshotTrigger)adminSnapshotTrigger.onclick=adminSnapshotTriggerInstall;document.getElementById("reactionLikeBtn").onclick=()=>{currentReactionType="like";document.getElementById("reactionLikeBtn").classList.add("active");document.getElementById("reactionDislikeBtn").classList.remove("active")};document.getElementById("reactionDislikeBtn").onclick=()=>{currentReactionType="dislike";document.getElementById("reactionDislikeBtn").classList.add("active");document.getElementById("reactionLikeBtn").classList.remove("active")};document.getElementById("reactionCloseBtn").onclick=closeReactionModal;document.getElementById("reactionSubmitBtn").onclick=submitReaction;document.addEventListener("click",e=>{const pop=document.getElementById("reactionPopover");if(pop&&pop.style.display==="block"&&!pop.contains(e.target)&&!e.target.closest("[data-character]"))closeReactionModal();const menu=document.getElementById("adminDropdown");if(menu&&menu.classList.contains("open")&&!menu.contains(e.target)&&!e.target.closest("#adminMenuBtn"))closeAdminMenu();const drawer=document.getElementById("sideDrawer");if(drawer&&drawer.classList.contains("open")&&e.target===drawer)closeSideDrawer();const pagePanel=document.getElementById("drawerPagePanel");if(pagePanel&&pagePanel.classList.contains("open")&&e.target===pagePanel)closeDrawerPagePanel();const notice=document.getElementById("constructionNotice");if(notice&&notice.classList.contains("open")&&e.target===notice)closeConstructionNotice()});document.addEventListener("keydown",e=>{
+  if(e.key!=="Escape")return;
+  const notice=document.getElementById("constructionNotice");
+  const pagePanel=document.getElementById("drawerPagePanel");
+  const reaction=document.getElementById("reactionPopover");
+  const admin=document.getElementById("adminDropdown");
+  const drawer=document.getElementById("sideDrawer");
+
+  if(notice&&notice.classList.contains("open"))return closeConstructionNotice();
+  if(pagePanel&&pagePanel.classList.contains("open"))return closeDrawerPagePanel();
+  if(reaction&&reaction.getAttribute("aria-hidden")==="false")return closeReactionModal();
+  if(admin&&admin.classList.contains("open"))return closeAdminMenu();
+  if(drawer&&drawer.classList.contains("open"))return closeSideDrawer();
+});setInterval(()=>{if(Date.now()<reactionCarouselPausedUntil)return;if(document.activeElement&&document.activeElement.id==="rankSearchInput")return;reactionCarouselIndex++;if(hallData)render()},6500);recordDailyVisitOnce();load();
 
 /* knj-infoweb(v_260603_01) reaction submit guard patch */
 function updateReactionSubmitState_(){
