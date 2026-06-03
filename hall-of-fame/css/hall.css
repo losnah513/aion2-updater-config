@@ -2687,143 +2687,214 @@ body{background:#fff!important;}
   }
 }
 
-
 /* ============================================================
-   KINOJO 1.c1.02 — requested UI alignment fixes
+   KINOJO 1.c1.01e no-version hotfix — layout and admin repairs
    ============================================================ */
-
-/* 최근 한마디 헤더: 제목/우측 코멘트 침범 방지 */
-.reaction-card-head{
-  display:grid!important;
-  grid-template-columns:minmax(0,1fr) auto!important;
-  align-items:center!important;
-  gap:10px!important;
+:root{
+  --kinojo-card-radius:2px!important;
+  --kinojo-button-radius:3px!important;
+  --shadow:none!important;
 }
-.reaction-card-title{
+.section,.overall,.classes,.mvp-card,.reaction-card,.award-card,.visit-mini,.chick-card,
+.relation-combined-card,.construction-card,.drawer-page-card,.drawer-panel,.admin-dropdown,
+.reaction-popover,.admin-result-box,.admin-visit-control,.side-suggest-form{
+  box-shadow:none!important;
+}
+.btn:disabled,.page-btn:disabled,.send-btn:disabled,.admin-swap-btn:disabled{
+  filter:grayscale(.75) saturate(.35)!important;
+  opacity:.58!important;
+  cursor:wait!important;
+  pointer-events:none!important;
+}
+
+/* Top visitor card: two compact lines, same corner tone as buttons */
+.top-utility .visit-mini{
+  width:250px!important;
+  min-width:250px!important;
+  max-width:250px!important;
+  height:42px!important;
+  min-height:42px!important;
+  max-height:42px!important;
+  border-radius:3px!important;
+  padding:4px 10px!important;
+  display:grid!important;
+  align-content:center!important;
+  justify-items:center!important;
+  gap:1px!important;
+  line-height:1.12!important;
+  font-size:11px!important;
+  white-space:normal!important;
+  overflow:hidden!important;
+  text-align:center!important;
+}
+.visit-line{display:block!important;max-width:100%;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;line-height:1.15!important}
+.visit-line small{font-size:9px!important;color:#94a3b8!important}
+.visit-sep{display:none!important}
+@media(max-width:680px){
+  .top-utility .visit-mini{
+    width:auto!important;
+    min-width:0!important;
+    max-width:calc(100vw - 108px)!important;
+    height:42px!important;
+    min-height:42px!important;
+    max-height:42px!important;
+    font-size:10px!important;
+    padding:4px 6px!important;
+  }
+}
+
+/* iPhone-like compact sub-character toggle, no scroll layout jump */
+.sub-toggle.compact{
+  width:104px!important;
+  min-width:104px!important;
+  height:32px!important;
+  min-height:32px!important;
+  padding:0!important;
+  border-radius:999px!important;
+  overflow:hidden!important;
+  box-shadow:none!important;
+  vertical-align:middle!important;
+}
+.sub-toggle.compact .toggle-knob{
+  top:3px!important;
+  left:3px!important;
+  width:26px!important;
+  height:26px!important;
+  border-radius:50%!important;
+  box-shadow:none!important;
+  transition:left .28s cubic-bezier(.16,1,.3,1),background .28s ease!important;
+}
+.sub-toggle.compact.on .toggle-knob{left:75px!important}
+.sub-toggle.compact .toggle-text{
+  font-size:10.5px!important;
+  line-height:1!important;
+  padding-left:24px!important;
+  padding-right:5px!important;
+  white-space:nowrap!important;
+}
+.sub-toggle.compact.on .toggle-text{
+  padding-left:5px!important;
+  padding-right:24px!important;
+}
+
+/* PVE/PVP TOP5 fixed columns: name | reactions centered | score right */
+.top-grid .mini-row{
+  grid-template-columns:38px minmax(0,1fr) 48px 76px!important;
+  column-gap:6px!important;
+}
+.top-grid .name-wrap{min-width:0!important;overflow:hidden!important}
+.reaction-counts{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-width:0!important;
+  width:100%!important;
+  line-height:1!important;
+  overflow:hidden!important;
+}
+.top-grid .reaction-counts .reaction-pair,
+.rank-reactions .reaction-pair{
+  display:inline-grid!important;
+  grid-template-columns:12px auto 12px auto!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:2px!important;
+  font-size:9px!important;
+}
+.top-grid .reaction-counts .reaction-icon,
+.rank-reactions .reaction-icon{width:11px!important;height:11px!important}
+.top-grid .score{
+  justify-self:end!important;
+  text-align:right!important;
+  min-width:0!important;
+  width:100%!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+.character-reactions{display:none!important}
+
+/* Overall/class ranking: reactions are their own column */
+.rank-table{min-width:980px!important}
+.rank-table .char-col{width:150px!important}
+.rank-table .reaction-col{width:64px!important}
+.rank-table .class-col{width:78px!important}
+.rank-table .power-col{width:92px!important}
+.rank-table th:nth-child(3),.rank-table td.rank-reactions{text-align:center!important}
+.rank-reactions .reaction-counts{display:flex!important;justify-content:center!important;width:100%!important}
+.rank-name-main{min-width:0!important;overflow:hidden!important}
+.rank-name-cell{display:block!important;min-width:0!important;max-width:100%!important;overflow:hidden!important;white-space:nowrap!important}
+
+/* Recent comments: body can never enter title/header row */
+.recent-comment-card{
+  display:grid!important;
+  grid-template-rows:52px minmax(0,auto)!important;
+  overflow:hidden!important;
+}
+.recent-comment-card .reaction-card-head{
+  grid-row:1!important;
+  min-height:52px!important;
+  height:52px!important;
+  align-items:center!important;
+  overflow:hidden!important;
+}
+.recent-comment-card .reaction-card-title{
   min-width:0!important;
   overflow:hidden!important;
   white-space:nowrap!important;
 }
-.reaction-card-note{
+.recent-comment-card .reaction-card-note{
+  flex:0 1 auto!important;
   min-width:0!important;
-  max-width:42vw!important;
   overflow:hidden!important;
   text-overflow:ellipsis!important;
   white-space:nowrap!important;
   text-align:right!important;
 }
-
-/* 전체 순위: 이름 길이와 무관하게 반응 아이콘을 클래스 아이콘 앞 고정열처럼 정렬 */
-.rank-table .char-col{width:190px!important}
-.rank-name-flex-table,
-.rank-name-main,
-.rank-name-cell,
-.flow-candidate{
-  width:100%!important;
-  min-width:0!important;
+.recent-comment-card .reaction-comments.recent{
+  grid-row:2!important;
+  margin:0!important;
+  padding:10px 16px 12px!important;
+  min-height:0!important;
+  overflow:hidden!important;
 }
-.character-name-text{
+
+/* Relationship card: fixed card height, only internal track scrolls */
+.dashboard{grid-template-columns:2fr 1fr!important;align-items:stretch!important}
+.dashboard>div:first-child{min-width:0!important}
+.side-stack{display:grid!important;height:100%!important;min-height:0!important;overflow:hidden!important}
+.relation-combined-card{
+  height:100%!important;
+  min-height:0!important;
+  max-height:100%!important;
   display:grid!important;
-  grid-template-columns:minmax(0,1fr) 62px!important;
-  align-items:center!important;
-  gap:7px!important;
-  width:100%!important;
-  min-width:0!important;
-}
-.character-text-wrap{
-  display:block!important;
-  min-width:0!important;
-  max-width:100%!important;
-  overflow:hidden!important;
-  white-space:nowrap!important;
-}
-.character-text{
-  display:inline-block!important;
-  min-width:max-content!important;
-  white-space:nowrap!important;
-  overflow:visible!important;
-  text-overflow:clip!important;
-}
-.character-reactions{
-  justify-self:end!important;
-  width:62px!important;
-  min-width:62px!important;
-  display:inline-flex!important;
-  justify-content:flex-end!important;
-  align-items:center!important;
-  gap:4px!important;
-  transform:none!important;
-}
-.flow-candidate.marquee{
+  grid-template-rows:52px minmax(0,1fr) 52px minmax(0,1fr)!important;
   overflow:hidden!important;
 }
-.flow-candidate.marquee .character-name-text,
-.flow-candidate.marquee .character-reactions{
-  animation:none!important;
-  transform:none!important;
-}
-.flow-candidate.marquee .character-text{
-  animation:kinojoNameMarquee 7.5s linear infinite!important;
-  will-change:transform;
-}
-@keyframes kinojoNameMarquee{
-  0%,14%{transform:translateX(0)}
-  84%,100%{transform:translateX(var(--marquee-shift,-48px))}
+.relation-combined-card .section-head{height:52px!important;min-height:52px!important;overflow:hidden!important}
+.relation-viewport{min-height:0!important;overflow:hidden!important;padding:6px 8px!important}
+.relation-track{min-height:0!important;display:flex!important;flex-direction:column!important;gap:6px!important}
+.relation-row{height:30px!important;min-height:30px!important;max-height:30px!important;flex:0 0 30px!important}
+@media(max-width:980px){
+  .dashboard{grid-template-columns:1fr!important}
+  .relation-combined-card{height:300px!important;min-height:300px!important;max-height:300px!important}
 }
 
-/* 부캐 ON/OFF: 메뉴바에 맞는 슬림 슬라이드 스위치 */
-.overall-head{
-  grid-template-columns:minmax(0,1fr) auto auto!important;
-  align-items:center!important;
-}
-.sub-toggle.compact,
-#subToggle.sub-toggle{
-  width:118px!important;
-  height:32px!important;
-  flex:0 0 118px!important;
-  border-radius:999px!important;
-  padding:0!important;
+/* Admin controls: use popover-like flat result boxes and swap buttons */
+.admin-dropdown,.drawer-page-card,.side-suggest-form{box-shadow:none!important}
+.admin-result-box,.admin-visit-control{
   box-shadow:none!important;
+  border:1px solid var(--line)!important;
+  border-radius:3px!important;
+  background:#fff!important;
 }
-.sub-toggle.compact .toggle-knob,
-#subToggle.sub-toggle .toggle-knob{
-  top:4px!important;
-  left:4px!important;
-  width:24px!important;
-  height:24px!important;
-  border-radius:50%!important;
-  transition:left .24s cubic-bezier(.16,1,.3,1), transform .24s cubic-bezier(.16,1,.3,1)!important;
-}
-.sub-toggle.compact.on .toggle-knob,
-#subToggle.sub-toggle.on .toggle-knob{
-  left:90px!important;
-}
-.sub-toggle.compact .toggle-text,
-#subToggle.sub-toggle .toggle-text{
-  font-size:11px!important;
-  padding-left:20px!important;
-  letter-spacing:-.2px!important;
-}
-.sub-toggle.compact.on .toggle-text,
-#subToggle.sub-toggle.on .toggle-text{
-  padding-left:0!important;
-  padding-right:20px!important;
-}
-
-@media(max-width:760px){
-  .overall-head{grid-template-columns:minmax(0,1fr) auto!important}
-  .overall-title-tools{justify-self:end!important}
-  .page-tools{grid-column:1/-1;justify-content:flex-end!important}
-  .sub-toggle.compact,
-  #subToggle.sub-toggle{width:104px!important;height:30px!important;flex-basis:104px!important}
-  .sub-toggle.compact .toggle-knob,
-  #subToggle.sub-toggle .toggle-knob{width:22px!important;height:22px!important;top:4px!important;left:4px!important}
-  .sub-toggle.compact.on .toggle-knob,
-  #subToggle.sub-toggle.on .toggle-knob{left:78px!important}
-  .sub-toggle.compact .toggle-text,
-  #subToggle.sub-toggle .toggle-text{font-size:10px!important;padding-left:18px!important}
-  .sub-toggle.compact.on .toggle-text,
-  #subToggle.sub-toggle.on .toggle-text{padding-right:18px!important}
-  .reaction-card-note{max-width:38vw!important}
-  .rank-table .char-col{width:178px!important}
-}
+.admin-result-meta{font-size:11px!important;color:#64748b!important;line-height:1.4!important}
+.admin-visit-row-main{display:grid!important;grid-template-columns:72px auto 1fr!important;align-items:center!important;gap:7px!important}
+.admin-visit-amount{width:72px!important;height:32px!important;text-align:right!important}
+.admin-visit-unit{font-size:12px!important;font-weight:1000!important;color:#475569!important}
+.admin-swap{display:grid!important;grid-template-columns:1fr 1fr!important;gap:0!important;border:1px solid var(--line)!important;border-radius:3px!important;overflow:hidden!important;background:#f8fafc!important}
+.admin-swap-btn{height:32px!important;border:0!important;background:#fff!important;color:#64748b!important;font-size:12px!important;font-weight:1000!important;cursor:pointer!important}
+.admin-swap-btn+.admin-swap-btn{border-left:1px solid var(--line)!important}
+.admin-swap-btn.active{background:#eaf2ff!important;color:#1d4ed8!important}
+.admin-visit-actions{display:grid!important;grid-template-columns:74px 1fr 1fr!important;gap:7px!important;align-items:center!important}
+.admin-sign-swap{grid-template-columns:1fr 1fr!important}
+.admin-visit-actions .btn{height:32px!important;padding:0 10px!important}

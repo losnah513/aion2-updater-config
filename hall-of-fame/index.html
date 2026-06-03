@@ -31,16 +31,21 @@
           <button class="btn" id="adminMvpBtn" type="button">MVP 후보 확인</button>
           <div class="admin-visit-control" id="adminVisitControl">
             <div class="admin-visit-title">방문자수 조정</div>
-            <div class="admin-visit-line">
-              <label><input type="radio" name="visitTarget" value="daily" checked> 일일</label>
-              <label><input type="radio" name="visitTarget" value="total"> 누적</label>
-              <input class="search admin-visit-amount" id="adminVisitAmount" type="number" min="1" max="9999" value="1" inputmode="numeric">
-              <span>명</span>
+            <div class="admin-visit-line admin-visit-row-main">
+              <input class="search admin-visit-amount" id="adminVisitAmount" type="number" min="1" max="9999" value="1" inputmode="numeric" aria-label="조정 인원수">
+              <span class="admin-visit-unit">명</span>
+              <div class="admin-swap" aria-label="조정 대상">
+                <button class="admin-swap-btn active" type="button" data-visit-target="daily">일일</button>
+                <button class="admin-swap-btn" type="button" data-visit-target="total">누적</button>
+              </div>
             </div>
             <div class="admin-visit-line admin-visit-actions">
-              <label><input type="radio" name="visitSign" value="plus" checked> +</label>
-              <label><input type="radio" name="visitSign" value="minus"> -</label>
+              <div class="admin-swap admin-sign-swap" aria-label="증감 선택">
+                <button class="admin-swap-btn active" type="button" data-visit-sign="plus">+</button>
+                <button class="admin-swap-btn" type="button" data-visit-sign="minus">-</button>
+              </div>
               <button class="btn" id="adminVisitApplyBtn" type="button">반영</button>
+              <button class="btn admin-close" id="adminVisitCancelBtn" type="button">취소</button>
             </div>
             <div class="admin-status" id="adminVisitStatus"></div>
           </div>
@@ -52,8 +57,6 @@
   </div>
 </section>
 <section class="banner"><img src="assets/hall-banner-v2.png?v=uiux-latest" alt="Kinojo Hall of Fame"></section>
-  </div>
-</section>
 
 <section class="side-drawer" id="sideDrawer" aria-hidden="true">
   <div class="drawer-panel" role="dialog" aria-modal="false" aria-labelledby="drawerTitle">

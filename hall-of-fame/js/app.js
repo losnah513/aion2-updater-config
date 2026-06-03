@@ -25,10 +25,8 @@ function reactionPairHtml(like,dislike,extraClass){
 function nameClass(item){return item?.isAdminMain?"admin-main":(item?.isAdminAlt?"admin-alt":"")}
 function itemClass(item){return ""}
 function nameSpan(item,text){
-  const r=reactionDataFor(item);
   return '<span class="character-name-text '+nameClass(item)+'" data-character="'+escapeHtml(item?.name||"")+'">'
-    + '<span class="character-text-wrap"><span class="character-text">'+text+'</span></span>'
-    + reactionPairHtml(r.like,r.dislike,'character-reactions')
+    + '<span class="character-text">'+text+'</span>'
     + '</span>';
 }
 function ownerLine(item){const owner=String(item?.owner||"").trim(),name=String(item?.name||"").trim();return owner&&owner!==name?'<div class="owner-line">본캐 '+escapeHtml(owner)+'</div>':''}
@@ -74,7 +72,7 @@ function renderVisits(stats){
   const total=Number(stats?.totalVisits||0).toLocaleString("ko-KR");
   const el=document.getElementById("visitCard");
   if(!el)return;
-  el.innerHTML='<span class="visit-line">👀 오늘 <strong>'+today+'명</strong>이 둘러봤어요. <span class="visit-sep">·</span> 🏛 누적 <strong>'+total+'번</strong>의 발걸음 <small>(26년 6월 1일부터 집계)</small></span>';
+  el.innerHTML='<span class="visit-line visit-line-today">👀 오늘 <strong>'+today+'명</strong></span><span class="visit-line visit-line-total">🏛 누적 <strong>'+total+'번</strong> <small>26.06.01~</small></span>';
 }
 async function fetchVisitStats(mode="stats",boost=0){try{const url=WEB_APP_URL+(WEB_APP_URL.includes("?")?"&":"?")+"action=hallVisit&mode="+encodeURIComponent(mode)+"&boost="+encodeURIComponent(boost)+"&t="+Date.now();const res=await fetch(url,{cache:"no-store"});const data=await res.json();if(data?.ok&&data.stats)renderVisits(data.stats)}catch(e){}}
 function recordDailyVisitOnce(){const key="kinojo_hof_visit_"+new Date().toLocaleDateString("ko-KR",{timeZone:"Asia/Seoul"});if(localStorage.getItem(key)==="1"){fetchVisitStats();return}localStorage.setItem(key,"1");fetchVisitStats("visit",1)}
@@ -197,7 +195,7 @@ function classReviewBoxHtml(className){
 }
 
 function emptyRankRowHtml(rank){
-  return '<tr class="rank-empty-row"><td class="num">'+rankEmblemHtml(rank)+'</td><td><span class="rank-empty-mark">—</span></td><td>'+classIconHtml(activeRankClass,false)+'</td><td></td><td></td><td></td></tr>';
+  return '<tr class="rank-empty-row"><td class="num">'+rankEmblemHtml(rank)+'</td><td><span class="rank-empty-mark">—</span></td><td></td><td>'+classIconHtml(activeRankClass,false)+'</td><td></td><td></td><td></td></tr>';
 }
 
 function searchToolsHtml(){
@@ -225,7 +223,7 @@ function overallTable(){
     const rank=start+i+1;
 
     if(item){
-      const displayRank=Number(item.rank||rank);rows.push('<tr><td class="num">'+rankEmblemHtml(displayRank,list.length)+'</td><td><div class="rank-name-flex rank-name-flex-table"><div class="rank-name-main"><span class="rank-name-cell">'+flowText(item.name,item)+'</span>'+ownerLine(item)+'</div></div></td><td>'+classIconHtml(item.className,false)+'</td><td class="power">'+escapeHtml(item.pvePowerLabel||item.label||"")+'</td><td class="power">'+escapeHtml(item.pvpPowerLabel||"")+'</td><td class="reviews"><div>🐲 '+escapeHtml(item.pveReview||"")+'</div><div>⚔️ '+escapeHtml(item.pvpReview||"")+'</div></td></tr>');
+      const displayRank=Number(item.rank||rank);rows.push('<tr><td class="num">'+rankEmblemHtml(displayRank,list.length)+'</td><td><div class="rank-name-flex rank-name-flex-table"><div class="rank-name-main"><span class="rank-name-cell">'+flowText(item.name,item)+'</span>'+ownerLine(item)+'</div></div></td><td class="rank-reactions">'+reactionCountsHtml(item)+'</td><td>'+classIconHtml(item.className,false)+'</td><td class="power">'+escapeHtml(item.pvePowerLabel||item.label||"")+'</td><td class="power">'+escapeHtml(item.pvpPowerLabel||"")+'</td><td class="reviews"><div>🐲 '+escapeHtml(item.pveReview||"")+'</div><div>⚔️ '+escapeHtml(item.pvpReview||"")+'</div></td></tr>');
       continue;
     }
 
@@ -235,14 +233,14 @@ function overallTable(){
   }
 
   if(!rows.length){
-    rows.push('<tr><td colspan="6"><div class="empty">해당 조건의 순위 데이터가 없습니다.</div></td></tr>');
+    rows.push('<tr><td colspan="7"><div class="empty">해당 조건의 순위 데이터가 없습니다.</div></td></tr>');
   }
 
-  return '<section class="overall"><div class="overall-head"><h2>'+title+'</h2><div class="overall-title-tools"><button class="sub-toggle compact '+(includeSubs?'on':'')+'" id="subToggle" type="button"><span class="toggle-knob"></span><span class="toggle-text">'+(includeSubs?'부캐 ON':'부캐 OFF')+'</span></button></div><div class="page-tools"><span>'+page+' / '+totalPages+'</span><button class="page-btn" data-page="prev">‹</button><button class="page-btn" data-page="next">›</button></div></div>'+searchToolsHtml()+rankTabs()+classReviewBoxHtml(activeRankClass)+'<div class="table-scroll"><table class="rank-table"><colgroup><col class="num"><col class="char-col"><col class="class-col"><col class="power-col"><col class="power-col"><col class="review-col"></colgroup><thead><tr><th class="num">순위</th><th>캐릭터명</th><th>클래스</th><th>PVE</th><th>PVP</th><th>AI 리뷰</th></tr></thead><tbody>'+rows.join("")+'</tbody></table></div></section>';
+  return '<section class="overall"><div class="overall-head"><h2>'+title+'</h2><div class="overall-title-tools"><button class="sub-toggle compact '+(includeSubs?'on':'')+'" id="subToggle" type="button"><span class="toggle-knob"></span><span class="toggle-text">'+(includeSubs?'부캐 ON':'부캐 OFF')+'</span></button></div><div class="page-tools"><span>'+page+' / '+totalPages+'</span><button class="page-btn" data-page="prev">‹</button><button class="page-btn" data-page="next">›</button></div></div>'+searchToolsHtml()+rankTabs()+classReviewBoxHtml(activeRankClass)+'<div class="table-scroll"><table class="rank-table"><colgroup><col class="num"><col class="char-col"><col class="reaction-col"><col class="class-col"><col class="power-col"><col class="power-col"><col class="review-col"></colgroup><thead><tr><th class="num">순위</th><th>캐릭터명</th><th>반응</th><th>클래스</th><th>PVE</th><th>PVP</th><th>AI 리뷰</th></tr></thead><tbody>'+rows.join("")+'</tbody></table></div></section>';
 }
 function render(){if(!hallData)return;renderChicks();app.className="";app.innerHTML=mvpSection()+reactionBoard()+awardsBoard()+'<div class="dashboard"><div><div class="top-grid">'+rankBox("⚔ PVE TOP 5","",hallData.pveTop)+rankBox("⚔ PVP TOP 5","",hallData.pvpTop)+'</div></div><div class="side-stack">'+combinedRelationBox()+'</div></div>'+overallTable();bindDynamic();bindCharacterButtons();requestAnimationFrame(applyOverflowMarquee)}
 function bindDynamic(){document.querySelectorAll("[data-page]").forEach(btn=>btn.onclick=()=>{const total=Math.max(1,Math.ceil(currentRankList().length/PAGE_SIZE));page+=btn.dataset.page==="next"?1:-1;if(page<1)page=1;if(page>total)page=total;render()});document.querySelectorAll("[data-rank-class]").forEach(btn=>btn.onclick=()=>{activeRankClass=btn.dataset.rankClass;page=1;render()});const search=document.getElementById("rankSearchInput");if(search){search.oncompositionstart=()=>{searchComposing=true;clearTimeout(searchDebounceTimer)};search.oncompositionend=()=>{searchComposing=false};search.oninput=()=>{};search.onkeydown=e=>{if(e.key==="Enter"&&!searchComposing){keyword=search.value.trim();page=1;renderPreserveSearchFocus()}}}const refresh=document.getElementById("rankRefreshBtn");if(refresh)refresh.onclick=()=>{const input=document.getElementById("rankSearchInput");keyword=String(input?.value||"").trim();page=1;renderPreserveSearchFocus()};const clear=document.getElementById("rankClearBtn");if(clear)clear.onclick=()=>{keyword="";page=1;render()};const sub=document.getElementById("subToggle");if(sub)sub.onclick=()=>{const savedY=window.scrollY;includeSubs=!includeSubs;page=1;render();requestAnimationFrame(()=>window.scrollTo(0,savedY))}}
-function applyOverflowMarquee(){document.querySelectorAll(".flow-candidate").forEach(el=>{el.classList.remove("marquee");el.style.removeProperty("--marquee-shift");const wrap=el.querySelector(".character-text-wrap");const text=el.querySelector(".character-text");const parent=wrap||el.parentElement;if(!parent)return;const overflow=(text?text.scrollWidth:el.scrollWidth)-parent.clientWidth;if(overflow>2){el.style.setProperty("--marquee-shift","-"+(overflow+18)+"px");el.classList.add("marquee")}})}
+function applyOverflowMarquee(){document.querySelectorAll(".flow-candidate").forEach(el=>{el.classList.remove("marquee");el.style.removeProperty("--marquee-shift");const parent=el.parentElement;if(!parent)return;const overflow=el.scrollWidth-parent.clientWidth;if(overflow>2){el.style.setProperty("--marquee-shift","-"+(overflow+12)+"px");el.classList.add("marquee")}})}
 function startLoadingText(){stopLoadingText();const messages=["명예의 전당 데이터를 불러오는 중","엠블럼을 준비하는 중","레기온 기록을 확인하는 중","순위표를 정리하는 중"];loadingStep=0;const target=()=>{const el=document.getElementById("loaderText");if(!el)return;const msg=messages[Math.floor(loadingStep/4)%messages.length];const dots=".".repeat(loadingStep%4);el.textContent=msg+dots;loadingStep++};target();loadingTimer=setInterval(target,360)}
 function stopLoadingText(){if(loadingTimer){clearInterval(loadingTimer);loadingTimer=null}}
 function preloadImages(paths){return Promise.all(paths.map(src=>new Promise(resolve=>{const img=new Image();img.onload=()=>resolve(true);img.onerror=()=>resolve(false);img.src=src+"?v=1c101e"}))) }
@@ -284,8 +282,8 @@ function openAdminDropdown(){const box=document.getElementById("adminDropdown");
 function closeAdminMenu(){const box=document.getElementById("adminDropdown");const btn=document.getElementById("adminMenuBtn");if(box){box.classList.remove("open");box.setAttribute("aria-hidden","true")}if(btn)btn.setAttribute("aria-expanded","false")}
 function adminLogin(){const input=document.getElementById("adminPasswordInput");const status=document.getElementById("adminStatus");if(String(input?.value||"")!=="zlshwhghkdlxld"){if(status)status.textContent="암호가 올바르지 않습니다.";return}adminAuthed=true;const login=document.getElementById("adminLoginPanel");const panel=document.getElementById("adminControlPanel");if(login)login.style.display="none";if(panel)panel.style.display="grid";if(status)status.textContent=""}
 async function adminVisitAdjust(){
-  const target=document.querySelector('input[name="visitTarget"]:checked')?.value||"daily";
-  const sign=document.querySelector('input[name="visitSign"]:checked')?.value||"plus";
+  const target=document.querySelector('[data-visit-target].active')?.dataset.visitTarget||"daily";
+  const sign=document.querySelector('[data-visit-sign].active')?.dataset.visitSign||"plus";
   const amount=Math.max(1,Math.min(9999,Number(document.getElementById("adminVisitAmount")?.value||0)));
   const status=document.getElementById("adminVisitStatus");
   const mode=target==="total"?(sign==="minus"?"totalMinus":"totalPlus"):(sign==="minus"?"dailyMinus":"dailyPlus");
@@ -300,7 +298,43 @@ async function adminVisitAdjust(){
     clearAdminButtonLoading_("adminVisitApplyBtn","반영");
   }
 }
-async function adminSnapshot(){try{const url=WEB_APP_URL+(WEB_APP_URL.includes("?")?"&":"?")+"action=weeklySnapshot&password="+encodeURIComponent("zlshwhghkdlxld")+"&t="+Date.now();const res=await fetch(url,{cache:"no-store"});const data=await res.json();if(!data.ok)return alert(data.message||"스냅샷 저장 실패");alert("성장왕 스냅샷 저장 완료: "+Number(data.result?.count||0)+"명")}catch(e){alert("스냅샷 저장 오류: "+(e.message||e))}}
+async function adminSnapshot(){
+  try{
+    setAdminButtonLoading_("adminSnapshotBtn","생성 중...");
+    const code=document.getElementById("adminPasswordInput")?.value||"zlshwhghkdlxld";
+    const url=WEB_APP_URL+(WEB_APP_URL.includes("?")?"&":"?")+"action=weeklySnapshot&password="+encodeURIComponent(code)+"&t="+Date.now();
+    const res=await fetch(url,{cache:"no-store"});
+    const data=await res.json();
+    if(!data.ok)return showAdminResult_("성장왕 스냅샷 생성",escapeHtml(data.message||"스냅샷 저장 실패"));
+    showAdminResult_("성장왕 스냅샷 생성","저장 완료: "+Number(data.result?.count||0)+"명");
+  }catch(e){
+    showAdminResult_("성장왕 스냅샷 생성","저장 오류: "+escapeHtml(e.message||e));
+  }finally{
+    clearAdminButtonLoading_("adminSnapshotBtn","성장왕 스냅샷 생성");
+  }
+}
+
+async function adminMvp(){
+  try{
+    setAdminButtonLoading_("adminMvpBtn","확인 중...");
+    const code=document.getElementById("adminPasswordInput")?.value||"zlshwhghkdlxld";
+    const url=WEB_APP_URL+(WEB_APP_URL.includes("?")?"&":"?")+"action=mvpAdmin&password="+encodeURIComponent(code)+"&t="+Date.now();
+    const res=await fetch(url,{cache:"no-store"});
+    const data=await res.json();
+    if(!data.ok)return showAdminResult_("MVP 후보 확인",escapeHtml(data.message||"후보 확인 실패"));
+    const season=data.season||{};
+    const rows=(data.candidates||[]).slice(0,5).map((item,i)=>
+      '<div class="admin-result-row"><strong>'+(i+1)+'위 '+escapeHtml(item.name||'-')+'</strong>'
+      + '<span>시즌 '+Number(item.seasonScore||0)+' · 반응 '+Number(item.reactionScore||0)+' · 예상 '+Number(item.finalScorePreview||0)+'</span>'
+      + '<span>좋아요 '+Number(item.like||0)+' / 싫어요 '+Number(item.dislike||0)+' · '+escapeHtml(item.excludeReason||'')+'</span></div>'
+    ).join('')||'<div class="empty">아직 집계 데이터가 없습니다.</div>';
+    showAdminResult_("MVP 후보 확인",'<div class="admin-result-meta">'+escapeHtml(season.seasonName||'')+' '+escapeHtml(season.startDate||'')+' ~ '+escapeHtml(season.endDate||'')+'</div><div class="admin-result-list">'+rows+'</div><div class="admin-result-meta">전투력 보정 20%는 MVP 선정 시점에만 반영됩니다.</div>');
+  }catch(e){
+    showAdminResult_("MVP 후보 확인","확인 오류: "+escapeHtml(e.message||e));
+  }finally{
+    clearAdminButtonLoading_("adminMvpBtn","MVP 후보 확인");
+  }
+}
 
 async function showMvpAdminPrompt(){
   return adminMvp();
@@ -329,7 +363,7 @@ function setReactionLimitLoading_(){
 async function adminSnapshotTriggerInstall(){
   try{
     setAdminButtonLoading_("adminSnapshotTriggerBtn","설치 중...");
-    const code=adminPasswordValue||document.getElementById("adminPasswordInput")?.value||"";
+    const code=document.getElementById("adminPasswordInput")?.value||"zlshwhghkdlxld";
     const url=WEB_APP_URL+(WEB_APP_URL.includes("?")?"&":"?")+"action=weeklySnapshotTriggers&password="+encodeURIComponent(code)+"&t="+Date.now();
     const res=await fetch(url,{cache:"no-store"});
     const data=await res.json();
@@ -504,7 +538,7 @@ async function submitSideSuggestion_(){
 }
 
 
-bindDrawerPagePanel_();bindConstructionNotice_();bindKinojoDrawer_();const adminMenuBtn=document.getElementById("adminMenuBtn");if(adminMenuBtn)adminMenuBtn.onclick=openAdminDropdown;const adminDropdownClose=document.getElementById("adminDropdownClose");if(adminDropdownClose)adminDropdownClose.onclick=closeAdminMenu;const adminLoginBtn=document.getElementById("adminLoginBtn");if(adminLoginBtn)adminLoginBtn.onclick=adminLogin;const adminPasswordInput=document.getElementById("adminPasswordInput");if(adminPasswordInput)adminPasswordInput.onkeydown=e=>{if(e.key==="Enter")adminLogin()};document.getElementById("adminMvpBtn").onclick=showMvpAdminPrompt;const adminVisitApplyBtn=document.getElementById("adminVisitApplyBtn");if(adminVisitApplyBtn)adminVisitApplyBtn.onclick=adminVisitAdjust;document.getElementById("adminSnapshotBtn").onclick=adminSnapshot;const adminSnapshotTrigger=document.getElementById("adminSnapshotTriggerBtn");if(adminSnapshotTrigger)adminSnapshotTrigger.onclick=adminSnapshotTriggerInstall;document.getElementById("reactionLikeBtn").onclick=()=>{currentReactionType="like";document.getElementById("reactionLikeBtn").classList.add("active");document.getElementById("reactionDislikeBtn").classList.remove("active")};document.getElementById("reactionDislikeBtn").onclick=()=>{currentReactionType="dislike";document.getElementById("reactionDislikeBtn").classList.add("active");document.getElementById("reactionLikeBtn").classList.remove("active")};document.getElementById("reactionCloseBtn").onclick=closeReactionModal;document.getElementById("reactionSubmitBtn").onclick=submitReaction;document.addEventListener("click",e=>{const pop=document.getElementById("reactionPopover");if(pop&&pop.style.display==="block"&&!pop.contains(e.target)&&!e.target.closest("[data-character]"))closeReactionModal();const menu=document.getElementById("adminDropdown");if(menu&&menu.classList.contains("open")&&!menu.contains(e.target)&&!e.target.closest("#adminMenuBtn"))closeAdminMenu();const drawer=document.getElementById("sideDrawer");if(drawer&&drawer.classList.contains("open")&&e.target===drawer)closeSideDrawer();const pagePanel=document.getElementById("drawerPagePanel");if(pagePanel&&pagePanel.classList.contains("open")&&e.target===pagePanel)closeDrawerPagePanel();const notice=document.getElementById("constructionNotice");if(notice&&notice.classList.contains("open")&&e.target===notice)closeConstructionNotice()});document.addEventListener("keydown",e=>{
+bindDrawerPagePanel_();bindConstructionNotice_();bindKinojoDrawer_();const adminMenuBtn=document.getElementById("adminMenuBtn");if(adminMenuBtn)adminMenuBtn.onclick=openAdminDropdown;const adminDropdownClose=document.getElementById("adminDropdownClose");if(adminDropdownClose)adminDropdownClose.onclick=closeAdminMenu;const adminLoginBtn=document.getElementById("adminLoginBtn");if(adminLoginBtn)adminLoginBtn.onclick=adminLogin;const adminPasswordInput=document.getElementById("adminPasswordInput");if(adminPasswordInput)adminPasswordInput.onkeydown=e=>{if(e.key==="Enter")adminLogin()};document.getElementById("adminMvpBtn").onclick=showMvpAdminPrompt;document.querySelectorAll("[data-visit-target]").forEach(btn=>btn.onclick=()=>{document.querySelectorAll("[data-visit-target]").forEach(b=>b.classList.remove("active"));btn.classList.add("active")});document.querySelectorAll("[data-visit-sign]").forEach(btn=>btn.onclick=()=>{document.querySelectorAll("[data-visit-sign]").forEach(b=>b.classList.remove("active"));btn.classList.add("active")});const adminVisitCancelBtn=document.getElementById("adminVisitCancelBtn");if(adminVisitCancelBtn)adminVisitCancelBtn.onclick=()=>{const st=document.getElementById("adminVisitStatus");if(st)st.textContent="";document.getElementById("adminVisitAmount").value="1"};const adminVisitApplyBtn=document.getElementById("adminVisitApplyBtn");if(adminVisitApplyBtn)adminVisitApplyBtn.onclick=adminVisitAdjust;document.getElementById("adminSnapshotBtn").onclick=adminSnapshot;const adminSnapshotTrigger=document.getElementById("adminSnapshotTriggerBtn");if(adminSnapshotTrigger)adminSnapshotTrigger.onclick=adminSnapshotTriggerInstall;document.getElementById("reactionLikeBtn").onclick=()=>{currentReactionType="like";document.getElementById("reactionLikeBtn").classList.add("active");document.getElementById("reactionDislikeBtn").classList.remove("active")};document.getElementById("reactionDislikeBtn").onclick=()=>{currentReactionType="dislike";document.getElementById("reactionDislikeBtn").classList.add("active");document.getElementById("reactionLikeBtn").classList.remove("active")};document.getElementById("reactionCloseBtn").onclick=closeReactionModal;document.getElementById("reactionSubmitBtn").onclick=submitReaction;document.addEventListener("click",e=>{const pop=document.getElementById("reactionPopover");if(pop&&pop.style.display==="block"&&!pop.contains(e.target)&&!e.target.closest("[data-character]"))closeReactionModal();const menu=document.getElementById("adminDropdown");if(menu&&menu.classList.contains("open")&&!menu.contains(e.target)&&!e.target.closest("#adminMenuBtn"))closeAdminMenu();const drawer=document.getElementById("sideDrawer");if(drawer&&drawer.classList.contains("open")&&e.target===drawer)closeSideDrawer();const pagePanel=document.getElementById("drawerPagePanel");if(pagePanel&&pagePanel.classList.contains("open")&&e.target===pagePanel)closeDrawerPagePanel();const notice=document.getElementById("constructionNotice");if(notice&&notice.classList.contains("open")&&e.target===notice)closeConstructionNotice()});document.addEventListener("keydown",e=>{
   if(e.key!=="Escape")return;
   const notice=document.getElementById("constructionNotice");
   const pagePanel=document.getElementById("drawerPagePanel");
