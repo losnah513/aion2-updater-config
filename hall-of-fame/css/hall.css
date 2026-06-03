@@ -2686,3 +2686,144 @@ body{background:#fff!important;}
     max-height:260px!important;
   }
 }
+
+
+/* ============================================================
+   KINOJO 1.c1.02 — requested UI alignment fixes
+   ============================================================ */
+
+/* 최근 한마디 헤더: 제목/우측 코멘트 침범 방지 */
+.reaction-card-head{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:center!important;
+  gap:10px!important;
+}
+.reaction-card-title{
+  min-width:0!important;
+  overflow:hidden!important;
+  white-space:nowrap!important;
+}
+.reaction-card-note{
+  min-width:0!important;
+  max-width:42vw!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  text-align:right!important;
+}
+
+/* 전체 순위: 이름 길이와 무관하게 반응 아이콘을 클래스 아이콘 앞 고정열처럼 정렬 */
+.rank-table .char-col{width:190px!important}
+.rank-name-flex-table,
+.rank-name-main,
+.rank-name-cell,
+.flow-candidate{
+  width:100%!important;
+  min-width:0!important;
+}
+.character-name-text{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 62px!important;
+  align-items:center!important;
+  gap:7px!important;
+  width:100%!important;
+  min-width:0!important;
+}
+.character-text-wrap{
+  display:block!important;
+  min-width:0!important;
+  max-width:100%!important;
+  overflow:hidden!important;
+  white-space:nowrap!important;
+}
+.character-text{
+  display:inline-block!important;
+  min-width:max-content!important;
+  white-space:nowrap!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+}
+.character-reactions{
+  justify-self:end!important;
+  width:62px!important;
+  min-width:62px!important;
+  display:inline-flex!important;
+  justify-content:flex-end!important;
+  align-items:center!important;
+  gap:4px!important;
+  transform:none!important;
+}
+.flow-candidate.marquee{
+  overflow:hidden!important;
+}
+.flow-candidate.marquee .character-name-text,
+.flow-candidate.marquee .character-reactions{
+  animation:none!important;
+  transform:none!important;
+}
+.flow-candidate.marquee .character-text{
+  animation:kinojoNameMarquee 7.5s linear infinite!important;
+  will-change:transform;
+}
+@keyframes kinojoNameMarquee{
+  0%,14%{transform:translateX(0)}
+  84%,100%{transform:translateX(var(--marquee-shift,-48px))}
+}
+
+/* 부캐 ON/OFF: 메뉴바에 맞는 슬림 슬라이드 스위치 */
+.overall-head{
+  grid-template-columns:minmax(0,1fr) auto auto!important;
+  align-items:center!important;
+}
+.sub-toggle.compact,
+#subToggle.sub-toggle{
+  width:118px!important;
+  height:32px!important;
+  flex:0 0 118px!important;
+  border-radius:999px!important;
+  padding:0!important;
+  box-shadow:none!important;
+}
+.sub-toggle.compact .toggle-knob,
+#subToggle.sub-toggle .toggle-knob{
+  top:4px!important;
+  left:4px!important;
+  width:24px!important;
+  height:24px!important;
+  border-radius:50%!important;
+  transition:left .24s cubic-bezier(.16,1,.3,1), transform .24s cubic-bezier(.16,1,.3,1)!important;
+}
+.sub-toggle.compact.on .toggle-knob,
+#subToggle.sub-toggle.on .toggle-knob{
+  left:90px!important;
+}
+.sub-toggle.compact .toggle-text,
+#subToggle.sub-toggle .toggle-text{
+  font-size:11px!important;
+  padding-left:20px!important;
+  letter-spacing:-.2px!important;
+}
+.sub-toggle.compact.on .toggle-text,
+#subToggle.sub-toggle.on .toggle-text{
+  padding-left:0!important;
+  padding-right:20px!important;
+}
+
+@media(max-width:760px){
+  .overall-head{grid-template-columns:minmax(0,1fr) auto!important}
+  .overall-title-tools{justify-self:end!important}
+  .page-tools{grid-column:1/-1;justify-content:flex-end!important}
+  .sub-toggle.compact,
+  #subToggle.sub-toggle{width:104px!important;height:30px!important;flex-basis:104px!important}
+  .sub-toggle.compact .toggle-knob,
+  #subToggle.sub-toggle .toggle-knob{width:22px!important;height:22px!important;top:4px!important;left:4px!important}
+  .sub-toggle.compact.on .toggle-knob,
+  #subToggle.sub-toggle.on .toggle-knob{left:78px!important}
+  .sub-toggle.compact .toggle-text,
+  #subToggle.sub-toggle .toggle-text{font-size:10px!important;padding-left:18px!important}
+  .sub-toggle.compact.on .toggle-text,
+  #subToggle.sub-toggle.on .toggle-text{padding-right:18px!important}
+  .reaction-card-note{max-width:38vw!important}
+  .rank-table .char-col{width:178px!important}
+}
