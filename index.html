@@ -566,6 +566,50 @@ body,.card,.eyebrow,.hall-banner,.info-logo-placeholder,.info-drawer,.constructi
 .rudra-card:hover + .card + .card,.rudra-card:focus-visible + .card + .card,.rudra-card:active + .card + .card{transform:translateX(62px) scale(.91)!important;transform-origin:center bottom!important;}
 @media(max-width:900px){.sanctuary-row{padding-top:42px!important}.rudra-card:hover .rudra-boss,.rudra-card:focus-visible .rudra-boss,.rudra-card:active .rudra-boss{transform:translate(28px,-46px) scale(1.38)!important}.rudra-card:hover + .card,.rudra-card:hover + .card + .card{transform:none!important}}
 
+/* 260603 final Rudra tuning: larger inside card, less protrusion, sky-to-card lightning */
+.sanctuary-row{align-items:end!important;overflow:visible!important;padding-top:58px!important;}
+.sanctuary-row .card{align-self:end!important;}
+.rudra-card{overflow:visible!important;z-index:3!important;}
+.rudra-card .rudra-boss{
+  background-position:48% 40%!important;
+  background-size:116% auto!important;
+  transform-origin:42% 78%!important;
+  transform:translate(0,0) scale(1)!important;
+  opacity:.9!important;
+}
+.rudra-card:hover .rudra-boss,
+.rudra-card:focus-visible .rudra-boss,
+.rudra-card:active .rudra-boss{
+  background-size:126% auto!important;
+  background-position:52% 36%!important;
+  transform:translate(16px,-22px) scale(1.12)!important;
+  opacity:1!important;
+}
+.rudra-lightning-main{
+  inset:-92px -22px -6px -6px!important;
+  background:url("hall-of-fame/assets/sanctuary/rudra/rudra-lightning.png") 56% 0%/88% auto no-repeat!important;
+  transform:rotate(-8deg) scale(1)!important;
+}
+.rudra-lightning-right{
+  inset:-110px -42px -4px -10px!important;
+  background:url("hall-of-fame/assets/sanctuary/rudra/rudra-lightning-right.png") 70% 0%/92% auto no-repeat!important;
+  transform:rotate(8deg) scale(1)!important;
+}
+.rudra-card:hover + .card,.rudra-card:focus-visible + .card,.rudra-card:active + .card{
+  transform:translateX(42px) scale(.93)!important;
+}
+.rudra-card:hover + .card + .card,.rudra-card:focus-visible + .card + .card,.rudra-card:active + .card + .card{
+  transform:translateX(64px) scale(.90)!important;
+}
+@media(max-width:900px){
+  .sanctuary-row{padding-top:32px!important;}
+  .rudra-card:hover .rudra-boss,.rudra-card:focus-visible .rudra-boss,.rudra-card:active .rudra-boss{
+    transform:translate(8px,-12px) scale(1.06)!important;
+    background-size:120% auto!important;
+  }
+  .rudra-lightning-main,.rudra-lightning-right{inset:-54px -12px -4px -4px!important;}
+}
+
 </style>
 </head>
 <body>
