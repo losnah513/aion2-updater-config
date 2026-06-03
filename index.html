@@ -12,248 +12,78 @@
   --text:#263444;
   --muted:#667085;
   --line:#e5e7eb;
-  --panel:#fff;
   --blue:#2563eb;
-  --card-radius:3px;
-  --button-radius:8px;
+  --card-radius:6px;
+  --button-radius:9px;
   --shadow:0 8px 18px rgba(15,23,42,.05);
 }
 *{box-sizing:border-box}
+html,body{margin:0;min-height:100vh}
 body{
-  margin:0;
-  min-height:100vh;
   font-family:Arial,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
   color:var(--text);
   background:#fff;
 }
 body.drawer-open{overflow:hidden}
-.wrap{
-  width:min(1080px,100%);
-  margin:0 auto;
-  padding:18px 14px 40px;
-  background:#fff;
-}
-.hero{
-  padding:16px 8px 14px;
-  text-align:center;
-}
-.eyebrow{
-  display:inline-flex;
-  gap:7px;
-  align-items:center;
-  border:1px solid var(--line);
-  background:#fff;
-  border-radius:999px;
-  padding:7px 12px;
-  color:#475467;
-  font-size:12px;
-  font-weight:900;
-  box-shadow:var(--shadow);
-}
-.info-logo-slot{
-  width:100%;
-  min-height:86px;
-  margin:12px auto 5px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.info-logo-placeholder{
-  min-width:min(520px,92%);
-  height:86px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border:1px dashed #cfd6df;
-  border-radius:var(--card-radius);
-  background:#fff;
-  color:#98a2b3;
-  font-size:14px;
-  font-weight:1000;
-  letter-spacing:.08em;
-}
-.info-logo-img{
-  display:block;
-  max-width:min(520px,92%);
-  max-height:86px;
-  object-fit:contain;
-}
-.subtitle{
-  margin:0 auto;
-  color:var(--muted);
-  font-size:15px;
-  line-height:1.55;
-  max-width:560px;
-}
-.hall-banner{
-  display:block;
-  margin-top:14px;
-  border-radius:var(--card-radius);
-  overflow:hidden;
-  border:1px solid var(--line);
-  box-shadow:var(--shadow);
-  background:#fff;
-  text-decoration:none;
-  color:inherit;
-  transition:.18s ease;
-}
-.hall-banner:hover{
-  transform:translateY(-1px);
-  filter:brightness(1.03);
-}
-.hall-banner img{
-  display:block;
-  width:100%;
-  height:auto;
-}
-.sanctuary-row{
-  display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:14px;
-  margin-top:16px;
-}
-.card{
-  position:relative;
-  display:block;
-  min-height:142px;
-  padding:18px;
-  border:1px solid var(--line);
-  border-radius:var(--card-radius);
-  background:#fff;
-  box-shadow:var(--shadow);
-  overflow:hidden;
-  text-decoration:none;
-  color:inherit;
-}
-.card.disabled{
-  opacity:.78;
-  cursor:not-allowed;
-}
-.icon{
-  font-size:36px;
-  margin-bottom:9px;
-}
-.card-title{
-  font-size:23px;
-  font-weight:1000;
-  letter-spacing:-.6px;
-}
-.card-sub{
-  margin-top:6px;
-  color:var(--muted);
-  font-size:14px;
-  line-height:1.45;
-}
-.badge{
-  position:absolute;
-  right:14px;
-  top:14px;
-  border-radius:999px;
-  padding:6px 10px;
-  font-size:11px;
-  font-weight:1000;
-  background:#f2f4f7;
-  color:#667085;
-  border:1px solid var(--line);
-}
-.footer{
-  display:flex;
-  justify-content:center;
-  gap:16px;
-  flex-wrap:wrap;
-  margin-top:24px;
-}
-.footer button{
-  appearance:none;
-  border:0;
-  background:transparent;
-  color:#667085;
-  text-decoration:none;
-  font-size:12px;
-  font-weight:900;
+.wrap{width:min(1080px,100%);margin:0 auto;padding:18px 14px 40px}
+.hero{padding:16px 8px 14px;text-align:center}
+.eyebrow{display:inline-flex;gap:7px;align-items:center;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;color:#475467;font-size:12px;font-weight:900;box-shadow:var(--shadow)}
+.info-logo-slot{width:100%;min-height:86px;margin:12px auto 5px;display:flex;align-items:center;justify-content:center}
+.info-logo-placeholder{width:min(520px,92%);height:86px;display:flex;align-items:center;justify-content:center;border:1px dashed #cfd6df;border-radius:var(--card-radius);background:#fff;color:#98a2b3;font-size:14px;font-weight:1000;letter-spacing:.08em;box-shadow:var(--shadow)}
+.info-logo-img{display:block;max-width:min(520px,92%);max-height:86px;object-fit:contain}
+.subtitle{margin:0 auto;color:var(--muted);font-size:15px;line-height:1.55;max-width:560px}
+.hall-banner{display:block;margin-top:14px;border-radius:var(--card-radius);overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow);background:#fff;text-decoration:none;color:inherit;transition:.18s ease}.hall-banner:hover{transform:translateY(-2px) scale(1.005);filter:brightness(1.04)}.hall-banner img{display:block;width:100%;height:auto}
+.sanctuary-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:16px}.card{position:relative;display:block;min-height:142px;padding:18px;border:1px solid var(--line);border-radius:var(--card-radius);background:#fff;box-shadow:var(--shadow);overflow:hidden;text-decoration:none;color:inherit;transition:.18s ease}.card.disabled{opacity:.72;cursor:not-allowed}.icon{font-size:36px;margin-bottom:9px}.card-title{font-size:23px;font-weight:1000;letter-spacing:-.6px}.card-sub{margin-top:6px;color:var(--muted);font-size:14px;line-height:1.45}.badge{position:absolute;right:14px;top:14px;z-index:8;border-radius:999px;padding:6px 10px;font-size:11px;font-weight:1000;background:rgba(255,255,255,.74);color:#d7caff;border:1px solid rgba(215,190,255,.42);backdrop-filter:blur(6px)}
+
+/* 성역1 루드라팟 이미지형 버튼 */
+.rudra-card{
+  min-height:240px;
+  padding:0;
+  isolation:isolate;
   cursor:pointer;
-  padding:4px 2px;
-  font-family:inherit;
+  border-color:rgba(137,118,178,.35);
+  background:#070a12;
+  color:#fff;
+  box-shadow:0 16px 36px rgba(12,16,28,.22);
+  overflow:visible;
 }
-.footer button:hover{color:var(--blue)}
-.info-drawer-overlay{
-  position:fixed;
-  inset:0;
-  z-index:1000;
-  display:none;
-  background:rgba(255,255,255,.10);
-  backdrop-filter:blur(5px);
-  -webkit-backdrop-filter:blur(5px);
-}
-.info-drawer-overlay.is-open{display:block}
-.info-drawer{
-  position:fixed;
-  z-index:1001;
-  left:0;
-  top:0;
-  width:min(460px,92vw);
-  height:100dvh;
-  background:#fff;
-  border-right:1px solid var(--line);
-  box-shadow:18px 0 45px rgba(16,24,40,.16);
-  transform:translateX(-104%);
-  transition:transform .28s ease;
-  display:flex;
-  flex-direction:column;
-}
-.info-drawer.is-open{transform:translateX(0)}
-.info-drawer-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  padding:18px 18px 14px;
-  border-bottom:1px solid var(--line);
-}
-.info-drawer-title{
-  margin:0;
-  font-size:20px;
-  font-weight:1000;
-  letter-spacing:-.4px;
-}
-.info-drawer-close{
-  appearance:none;
-  border:1px solid var(--line);
-  background:#fff;
-  color:#475467;
-  width:38px;
-  height:38px;
-  border-radius:var(--button-radius);
-  cursor:pointer;
-  font-size:22px;
-  line-height:1;
-}
-.info-drawer-close:hover{background:#f9fafb}
-.info-drawer-body{
-  padding:18px;
-  overflow:auto;
-  line-height:1.7;
-  color:#344054;
-  font-size:14px;
-}
-.info-drawer-body h3{
-  margin:18px 0 8px;
-  font-size:16px;
-}
-.info-drawer-body h3:first-child{margin-top:0}
-.info-drawer-body p{margin:0 0 12px}
-.info-drawer-body ul{margin:0 0 12px;padding-left:19px}
-.info-drawer-body li{margin:4px 0}
-@media(max-width:720px){
-  .wrap{padding:12px 10px 32px}
-  .info-logo-slot{min-height:72px;margin-top:10px}
-  .info-logo-placeholder{height:72px;font-size:12px}
-  .info-logo-img{max-height:72px}
-  .sanctuary-row{grid-template-columns:1fr;gap:10px}
-  .card{min-height:120px;padding:16px}
-  .card-title{font-size:21px}
-  .info-drawer{width:min(420px,94vw)}
-}
+.rudra-card::before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(180deg,rgba(8,10,18,0) 34%,rgba(8,8,14,.78) 72%,rgba(4,4,8,.96) 100%);z-index:5;pointer-events:none}.rudra-card::after{content:"";position:absolute;inset:-1px;border-radius:inherit;border:1px solid rgba(255,255,255,.18);z-index:7;pointer-events:none;transition:.28s ease}.rudra-layer{position:absolute;inset:0;border-radius:inherit;pointer-events:none;transition:opacity .34s ease,transform .42s cubic-bezier(.16,1,.3,1),filter .42s cubic-bezier(.16,1,.3,1)}.rudra-bg{z-index:1;background:url("hall-of-fame/assets/sanctuary/rudra/rudra-bg.png") center/cover no-repeat;filter:brightness(.55) saturate(.8);opacity:.96}.rudra-lightning-main{z-index:2;background:url("hall-of-fame/assets/sanctuary/rudra/rudra-lightning.png") center 42%/46% auto no-repeat;opacity:0;mix-blend-mode:screen;filter:drop-shadow(0 0 18px rgba(184,110,255,.9)) drop-shadow(0 0 34px rgba(120,76,255,.72))}.rudra-lightning-right{z-index:3;background:url("hall-of-fame/assets/sanctuary/rudra/rudra-lightning-right.png") 72% 46%/48% auto no-repeat;opacity:0;mix-blend-mode:screen;filter:drop-shadow(0 0 14px rgba(180,98,255,.74))}.rudra-boss{z-index:4;inset:-30px -34px 28px -28px;background:url("hall-of-fame/assets/sanctuary/rudra/rudra-boss.png") center 25%/104% auto no-repeat;opacity:.8;filter:brightness(.82) saturate(.98) drop-shadow(0 16px 32px rgba(0,0,0,.55));transform:scale(1)}.rudra-content{position:absolute;left:18px;right:18px;bottom:16px;z-index:9;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:end;text-shadow:0 2px 12px rgba(0,0,0,.72)}.rudra-mark{width:42px;height:42px;border:1px solid rgba(226,214,255,.5);border-radius:var(--card-radius);display:grid;place-items:center;background:rgba(8,8,15,.38);font-size:24px;box-shadow:inset 0 0 18px rgba(151,87,255,.16)}.rudra-title{font-size:28px;font-weight:1000;letter-spacing:-.8px;line-height:1;color:#fff}.rudra-sub{margin-top:7px;font-size:15px;font-weight:900;color:#e6d7ff}.rudra-enter{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(230,214,255,.52);background:rgba(20,14,38,.42);font-size:26px;color:#f5eaff;transition:.28s ease}.rudra-card:hover,.rudra-card:focus-visible,.rudra-card:active{border-color:#a86cff;box-shadow:0 18px 44px rgba(101,45,190,.28),0 0 0 1px rgba(168,108,255,.32),0 0 32px rgba(168,108,255,.38)}.rudra-card:hover::after,.rudra-card:focus-visible::after,.rudra-card:active::after{box-shadow:0 0 26px rgba(176,95,255,.86),inset 0 0 24px rgba(176,95,255,.32);border-color:rgba(216,190,255,.78)}.rudra-card:hover .rudra-bg,.rudra-card:focus-visible .rudra-bg,.rudra-card:active .rudra-bg{filter:brightness(2.05) saturate(.22) blur(2.5px);opacity:.92;transform:scale(1.035)}.rudra-card:hover .rudra-boss,.rudra-card:focus-visible .rudra-boss,.rudra-card:active .rudra-boss{opacity:1;transform:translateY(-8px) scale(1.1);filter:brightness(1.14) saturate(1.2) drop-shadow(0 0 20px rgba(171,88,255,.78)) drop-shadow(0 22px 36px rgba(0,0,0,.68))}.rudra-card:hover .rudra-lightning-main,.rudra-card:focus-visible .rudra-lightning-main,.rudra-card:active .rudra-lightning-main{opacity:1}.rudra-card:hover .rudra-lightning-right,.rudra-card:focus-visible .rudra-lightning-right,.rudra-card:active .rudra-lightning-right{opacity:.76}.rudra-card:hover .rudra-enter,.rudra-card:focus-visible .rudra-enter,.rudra-card:active .rudra-enter{transform:translateX(3px);background:rgba(117,56,206,.6);box-shadow:0 0 18px rgba(180,100,255,.64)}
+
+.footer{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin-top:24px}.footer button{appearance:none;border:0;background:transparent;color:#667085;text-decoration:none;font-size:12px;font-weight:900;cursor:pointer;padding:4px 2px;font-family:inherit}.footer button:hover{color:var(--blue)}
+.info-drawer-overlay{position:fixed;inset:0;z-index:1000;display:none;background:rgba(255,255,255,.1);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}.info-drawer-overlay.is-open{display:block}.info-drawer{position:fixed;z-index:1001;left:0;top:0;width:min(460px,92vw);height:100dvh;background:#fff;border-right:1px solid var(--line);box-shadow:18px 0 45px rgba(16,24,40,.16);transform:translateX(-104%);transition:transform .28s ease;display:flex;flex-direction:column}.info-drawer.is-open{transform:translateX(0)}.info-drawer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 18px 14px;border-bottom:1px solid var(--line)}.info-drawer-title{margin:0;font-size:20px;font-weight:1000;letter-spacing:-.4px}.info-drawer-close{appearance:none;border:1px solid var(--line);background:#fff;color:#475467;width:38px;height:38px;border-radius:var(--button-radius);cursor:pointer;font-size:22px;line-height:1}.info-drawer-body{padding:18px;overflow:auto;line-height:1.7;color:#344054;font-size:14px}.info-drawer-body h3{margin:18px 0 8px;font-size:16px}.info-drawer-body h3:first-child{margin-top:0}.info-drawer-body p{margin:0 0 12px}.info-drawer-body ul{margin:0 0 12px;padding-left:19px}.info-drawer-body li{margin:4px 0}
+@media(max-width:900px){.sanctuary-row{grid-template-columns:1fr}.rudra-card{min-height:220px}.rudra-boss{background-size:92% auto;inset:-22px -28px 30px -28px}.rudra-lightning-main{background-size:38% auto}.rudra-lightning-right{background-size:42% auto}}
+@media(max-width:720px){.wrap{padding:12px 10px 32px}.info-logo-slot{min-height:72px;margin-top:10px}.info-logo-placeholder{height:72px;font-size:12px}.info-logo-img{max-height:72px}.card{min-height:120px;border-radius:var(--card-radius);padding:16px}.card-title{font-size:21px}.hall-banner{border-radius:var(--card-radius)}.rudra-card{min-height:188px;padding:0;overflow:hidden}.rudra-bg{filter:brightness(.62) saturate(.84)}.rudra-boss{inset:-18px -58px 34px -58px;background-size:112% auto;background-position:center 28%}.rudra-lightning-main{background-size:48% auto}.rudra-lightning-right{background-size:54% auto;background-position:78% 44%}.rudra-content{left:14px;right:14px;bottom:14px;gap:10px}.rudra-mark{width:36px;height:36px;font-size:20px}.rudra-title{font-size:24px}.rudra-sub{font-size:13px}.rudra-enter{width:34px;height:34px;font-size:23px}.rudra-card:hover .rudra-bg,.rudra-card:focus-visible .rudra-bg,.rudra-card:active .rudra-bg{filter:brightness(1.75) saturate(.26) blur(1.5px)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+
+/* v_260603_08 rudra portal finish + construction notice */
+:root{--card-radius:2px;--button-radius:3px;--shadow:none}
+.card,.hall-banner,.info-logo-placeholder{box-shadow:none!important;border-radius:2px!important}
+.footer button{border-radius:3px!important}
+.rudra-card{min-height:142px!important;height:142px!important;overflow:hidden!important;box-shadow:none!important;border-radius:2px!important}
+.rudra-card:hover,.rudra-card:focus-visible,.rudra-card:active{box-shadow:0 0 0 1px rgba(192,132,252,.55),0 0 24px rgba(168,85,247,.45)!important}
+.rudra-bg{filter:brightness(.55) saturate(.8)!important}
+.rudra-card:hover .rudra-bg,.rudra-card:focus-visible .rudra-bg,.rudra-card:active .rudra-bg{filter:brightness(2.05) saturate(1.05) blur(1.4px)!important}
+.rudra-boss{opacity:.8!important;inset:-22px -20px 18px -20px!important;background-size:96% auto!important}
+.rudra-card:hover .rudra-boss,.rudra-card:focus-visible .rudra-boss,.rudra-card:active .rudra-boss{transform:scale(1.1) translateY(-8px)!important;filter:brightness(1.12) saturate(1.08) drop-shadow(0 0 28px rgba(168,85,247,.72))!important}
+.rudra-lightning-main{background-size:42% auto!important}
+.rudra-lightning-right{background-size:43% auto!important}
+.rudra-content{left:14px!important;right:14px!important;bottom:12px!important}
+.rudra-title{font-size:23px!important}
+.rudra-sub{font-size:13px!important}
+.rudra-mark{width:34px!important;height:34px!important;border-radius:3px!important}
+.rudra-enter{width:32px!important;height:32px!important;border-radius:3px!important}
+
+.construction-notice{position:fixed;inset:0;z-index:10040;display:grid;place-items:center;padding:18px;opacity:0;visibility:hidden;pointer-events:none;background:rgba(255,255,255,.22);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:.28s ease}
+.construction-notice.open{opacity:1;visibility:visible;pointer-events:auto}
+.construction-card{position:relative;width:min(360px,100%);background:#fff;border:1px solid var(--line);border-radius:2px;box-shadow:none;padding:22px 20px 18px;text-align:center;transform:translateY(8px) scale(.98);transition:.28s ease}
+.construction-notice.open .construction-card{transform:translateY(0) scale(1)}
+.construction-kicker{color:#667085;font-size:12px;font-weight:1000;margin-bottom:8px}
+.construction-card h2{margin:0;color:#263444;font-size:20px;letter-spacing:-.5px}
+.construction-card p{margin:10px 0 16px;color:#667085;font-size:13px;line-height:1.45}
+.construction-close{position:absolute;top:10px;right:10px;width:30px;height:30px;border:1px solid var(--line);background:#fff;color:#64748b;border-radius:3px;cursor:pointer;font-size:18px;font-weight:1000}
+.construction-ok{height:38px;min-width:96px;border:1px solid #d8ecd0;background:#f1f8ed;color:#2f6f3a;border-radius:3px;font-weight:1000;cursor:pointer}
+@media(max-width:720px){.rudra-card{min-height:142px!important;height:142px!important}.rudra-boss{background-size:105% auto!important}.rudra-title{font-size:21px!important}}
+
 </style>
 </head>
 <body>
@@ -267,23 +97,27 @@ body.drawer-open{overflow:hidden}
       <div class="info-logo-placeholder">KINOJO INFO LOGO IMAGE</div>
     </div>
     <p class="subtitle">성역 파티 확인, 레기온 기록, 명예의 전당으로 이어지는 키노조 정보 허브입니다.</p>
-    <a class="hall-banner" href="hall-of-fame/" aria-label="Hall of Fame 열기">
-      <img src="hall-of-fame/assets/hall-banner-v2.png?v=26060301" alt="Kinojo Hall of Fame">
-    </a>
+    <a class="hall-banner" href="hall-of-fame/" aria-label="Hall of Fame 열기"><img src="hall-of-fame/assets/hall-banner-v2.png?v=26060301" alt="Kinojo Hall of Fame"></a>
   </section>
-
   <section class="sanctuary-row" aria-label="성역 파티 확인">
-    <div class="card disabled" role="button" aria-disabled="true">
-      <span class="badge">준비중</span><div class="icon">🛡️</div><div class="card-title">성역 1</div><div class="card-sub">루드라팟 파티 확인</div>
+    <div class="card rudra-card" role="button" tabindex="0" aria-label="성역 1 루드라팟 파티 확인" data-construction="1성역 루드라팟">
+      <span class="badge">준비중</span>
+      <span class="rudra-layer rudra-bg" aria-hidden="true"></span>
+      <span class="rudra-layer rudra-lightning-main" aria-hidden="true"></span>
+      <span class="rudra-layer rudra-lightning-right" aria-hidden="true"></span>
+      <span class="rudra-layer rudra-boss" aria-hidden="true"></span>
+      <div class="rudra-content">
+        <div class="rudra-mark">⛪</div>
+        <div>
+          <div class="rudra-title">성역 1</div>
+          <div class="rudra-sub">루드라팟 파티 확인</div>
+        </div>
+        <div class="rudra-enter">›</div>
+      </div>
     </div>
-    <div class="card disabled" role="button" aria-disabled="true">
-      <span class="badge">준비중</span><div class="icon">⚔️</div><div class="card-title">성역 2</div><div class="card-sub">바고트팟 파티 확인</div>
-    </div>
-    <div class="card disabled" role="button" aria-disabled="true">
-      <span class="badge">준비중</span><div class="icon">🔮</div><div class="card-title">성역 3</div><div class="card-sub">칼드릭스팟 파티 확인</div>
-    </div>
+    <div class="card disabled" role="button" aria-disabled="true"><span class="badge">준비중</span><div class="icon">⚔️</div><div class="card-title">성역 2</div><div class="card-sub">바고트팟 파티 확인</div></div>
+    <div class="card disabled" role="button" aria-disabled="true"><span class="badge">준비중</span><div class="icon">🔮</div><div class="card-title">성역 3</div><div class="card-sub">칼드릭스팟 파티 확인</div></div>
   </section>
-
   <footer class="footer">
     <button type="button" data-drawer="about">사이트 소개</button>
     <button type="button" data-drawer="terms">이용약관</button>
@@ -292,56 +126,39 @@ body.drawer-open{overflow:hidden}
   </footer>
 </main>
 
-<div class="info-drawer-overlay" data-drawer-close></div>
-<aside class="info-drawer" aria-hidden="true" aria-labelledby="drawerTitle">
-  <div class="info-drawer-head">
-    <h2 class="info-drawer-title" id="drawerTitle">사이트 소개</h2>
-    <button type="button" class="info-drawer-close" data-drawer-close aria-label="닫기">×</button>
+<div class="construction-notice" id="constructionNotice" aria-hidden="true">
+  <div class="construction-card" role="dialog" aria-modal="false" aria-labelledby="constructionTitle">
+    <button class="construction-close" id="constructionCloseBtn" type="button" aria-label="닫기">×</button>
+    <div class="construction-kicker">KINOJO INFO</div>
+    <h2 id="constructionTitle">페이지 인테리어 공사중입니다~</h2>
+    <p id="constructionMessage">1성역 루드라팟 페이지는 인테리어 공사중입니다. 조금만 기다려 주세요.</p>
+    <button class="construction-ok" id="constructionOkBtn" type="button">확인</button>
   </div>
-  <div class="info-drawer-body" id="drawerBody"></div>
-</aside>
+</div>
 
+<div class="info-drawer-overlay" data-drawer-close></div>
+<aside class="info-drawer" aria-hidden="true" aria-labelledby="drawerTitle"><div class="info-drawer-head"><h2 class="info-drawer-title" id="drawerTitle">사이트 소개</h2><button type="button" class="info-drawer-close" data-drawer-close aria-label="닫기">×</button></div><div class="info-drawer-body" id="drawerBody"></div></aside>
 <script>
-const drawerContents={
-  about:{
-    title:"사이트 소개",
-    html:`<h3>KINOJO INFO</h3><p>키노조 인포는 AION2 키노조 관련 정보를 한곳에서 확인하기 위한 정보 허브입니다.</p><p>성역 파티 확인, 레기온 기록, 명예의 전당 등 필요한 기능을 순차적으로 정리해 제공합니다.</p><h3>운영 방향</h3><ul><li>모바일에서도 보기 편한 정보 배치</li><li>복잡한 데이터보다 빠른 확인 중심</li><li>명예의 전당과 연동되는 통합 포털 구성</li></ul>`
-  },
-  terms:{
-    title:"이용약관",
-    html:`<h3>이용 안내</h3><p>본 사이트는 키노조 관련 정보를 편리하게 확인하기 위한 비공식 정보 페이지입니다.</p><p>사이트 내 정보는 운영 상황, 데이터 갱신 상태, 외부 서비스 변경에 따라 달라질 수 있습니다.</p><h3>주의사항</h3><ul><li>사이트 정보의 무단 변조 또는 악의적 사용을 금지합니다.</li><li>표시되는 데이터는 참고용이며, 최종 판단은 이용자 본인에게 있습니다.</li><li>서비스 구조는 사전 안내 없이 변경될 수 있습니다.</li></ul>`
-  },
-  privacy:{
-    title:"개인정보처리방침",
-    html:`<h3>개인정보 처리 안내</h3><p>본 사이트는 기본적인 정보 확인 기능을 중심으로 운영되며, 불필요한 개인정보 수집을 지양합니다.</p><p>문의 또는 의견 기능이 추가되는 경우, 이용자가 직접 입력한 내용만 처리될 수 있습니다.</p><h3>보관 및 사용</h3><ul><li>입력 정보는 사이트 운영 및 문의 확인 목적에 한해 사용됩니다.</li><li>불필요한 민감정보 입력은 권장하지 않습니다.</li><li>정책은 기능 추가에 따라 갱신될 수 있습니다.</li></ul>`
-  },
-  contact:{
-    title:"문의하기",
-    html:`<h3>문의 안내</h3><p>오류 제보, 기능 제안, 데이터 수정 요청이 있다면 운영자에게 전달해주세요.</p><p>문의 기능은 추후 사이트 내부 기능으로 정리될 예정입니다.</p>`
-  }
-};
-const drawer=document.querySelector(".info-drawer");
-const overlay=document.querySelector(".info-drawer-overlay");
-const drawerTitle=document.querySelector("#drawerTitle");
-const drawerBody=document.querySelector("#drawerBody");
-function openDrawer(type){
-  const content=drawerContents[type]||drawerContents.about;
-  drawerTitle.textContent=content.title;
-  drawerBody.innerHTML=content.html;
-  document.body.classList.add("drawer-open");
-  overlay.classList.add("is-open");
-  drawer.classList.add("is-open");
-  drawer.setAttribute("aria-hidden","false");
+const drawerContents={about:{title:"사이트 소개",html:`<h3>KINOJO INFO</h3><p>키노조 인포는 AION2 키노조 관련 정보를 한곳에서 확인하기 위한 정보 허브입니다.</p><p>성역 파티 확인, 레기온 기록, 명예의 전당 등 필요한 기능을 순차적으로 제공합니다.</p>`},terms:{title:"이용약관",html:`<h3>이용 안내</h3><p>본 사이트는 키노조 관련 정보를 편리하게 확인하기 위한 비공식 정보 페이지입니다.</p><ul><li>사이트 정보의 무단 변조 또는 악의적 사용을 금지합니다.</li><li>표시되는 데이터는 참고용이며 최종 판단은 이용자 본인에게 있습니다.</li><li>서비스 구조는 사전 안내 없이 변경될 수 있습니다.</li></ul>`},privacy:{title:"개인정보처리방침",html:`<h3>개인정보 처리 안내</h3><p>본 사이트는 기본적인 정보 확인 기능을 중심으로 운영되며, 불필요한 개인정보 수집을 지양합니다.</p><ul><li>입력 정보는 사이트 운영 및 문의 확인 목적에 한해 사용됩니다.</li><li>불필요한 민감정보 입력은 권장하지 않습니다.</li><li>정책은 기능 추가에 따라 갱신될 수 있습니다.</li></ul>`},contact:{title:"문의하기",html:`<h3>문의 안내</h3><p>오류 제보, 기능 제안, 데이터 수정 요청이 있다면 운영자에게 전달해주세요.</p><p>문의 기능은 추후 사이트 내부 기능으로 정리될 예정입니다.</p>`}};
+const drawer=document.querySelector('.info-drawer');const overlay=document.querySelector('.info-drawer-overlay');const drawerTitle=document.querySelector('#drawerTitle');const drawerBody=document.querySelector('#drawerBody');function openDrawer(type){const c=drawerContents[type]||drawerContents.about;drawerTitle.textContent=c.title;drawerBody.innerHTML=c.html;document.body.classList.add('drawer-open');overlay.classList.add('is-open');drawer.classList.add('is-open');drawer.setAttribute('aria-hidden','false')}function closeDrawer(){document.body.classList.remove('drawer-open');overlay.classList.remove('is-open');drawer.classList.remove('is-open');drawer.setAttribute('aria-hidden','true')}document.querySelectorAll('[data-drawer]').forEach(btn=>btn.addEventListener('click',()=>openDrawer(btn.dataset.drawer)));document.querySelectorAll('[data-drawer-close]').forEach(btn=>btn.addEventListener('click',closeDrawer));document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDrawer();closeConstructionNotice();}});
+function openConstructionNotice(label){
+  const notice=document.getElementById('constructionNotice');
+  const message=document.getElementById('constructionMessage');
+  if(message)message.textContent=(label?label+' 페이지는 ':'페이지는 ')+'인테리어 공사중입니다. 조금만 기다려 주세요.';
+  if(notice){notice.classList.add('open');notice.setAttribute('aria-hidden','false')}
 }
-function closeDrawer(){
-  document.body.classList.remove("drawer-open");
-  overlay.classList.remove("is-open");
-  drawer.classList.remove("is-open");
-  drawer.setAttribute("aria-hidden","true");
+function closeConstructionNotice(){
+  const notice=document.getElementById('constructionNotice');
+  if(notice){notice.classList.remove('open');notice.setAttribute('aria-hidden','true')}
 }
-document.querySelectorAll("[data-drawer]").forEach(btn=>btn.addEventListener("click",()=>openDrawer(btn.dataset.drawer)));
-document.querySelectorAll("[data-drawer-close]").forEach(btn=>btn.addEventListener("click",closeDrawer));
-document.addEventListener("keydown",event=>{if(event.key==="Escape")closeDrawer()});
+document.querySelectorAll('[data-construction]').forEach(el=>{
+  el.addEventListener('click',e=>{e.preventDefault();openConstructionNotice(el.dataset.construction||'')});
+  el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openConstructionNotice(el.dataset.construction||'')}});
+});
+document.getElementById('constructionCloseBtn')?.addEventListener('click',closeConstructionNotice);
+document.getElementById('constructionOkBtn')?.addEventListener('click',closeConstructionNotice);
+document.getElementById('constructionNotice')?.addEventListener('click',e=>{if(e.target.id==='constructionNotice')closeConstructionNotice()});
+
 </script>
 </body>
 </html>

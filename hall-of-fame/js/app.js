@@ -313,13 +313,53 @@ function bindDrawerPagePanel_(){
 function openSideDrawer(){const drawer=document.getElementById("sideDrawer");const btn=document.getElementById("drawerToggleBtn");if(!drawer)return;drawer.classList.add("open");document.body.classList.add("drawer-open");drawer.setAttribute("aria-hidden","false");if(btn)btn.setAttribute("aria-expanded","true")}
 function closeSideDrawer(){const drawer=document.getElementById("sideDrawer");const btn=document.getElementById("drawerToggleBtn");if(!drawer)return;drawer.classList.remove("open");document.body.classList.remove("drawer-open");drawer.setAttribute("aria-hidden","true");if(btn)btn.setAttribute("aria-expanded","false")}
 function openSuggestionPanel(){
-  const box=document.getElementById("suggestionBox");
-  if(box){
-    box.style.display="block";
-    box.scrollIntoView({behavior:"smooth",block:"start"});
+  const panel=document.getElementById("drawerPagePanel");
+  const title=document.getElementById("drawerPageTitle");
+  const body=document.getElementById("drawerPageBody");
+  if(title)title.textContent="아이디어 제안 및 건의";
+  if(body){
+    body.innerHTML='<div class="side-suggest-form">'
+      + '<label>항목 이름<input class="search" id="sideSuggestTitle" placeholder="항목 이름"></label>'
+      + '<label>제안자<input class="search" id="sideSuggestProposer" placeholder="제안자"></label>'
+      + '<label>기준 설명<textarea class="search" id="sideSuggestMemo" rows="4" placeholder="기준 설명"></textarea></label>'
+      + '<button class="btn side-suggest-submit" id="sideSubmitSuggestBtn" type="button">제안 보내기</button>'
+      + '<div class="side-suggest-status" id="sideSuggestStatus"></div>'
+      + '</div>';
+    const submit=document.getElementById("sideSubmitSuggestBtn");
+    if(submit)submit.onclick=submitSideSuggestion_;
   }
-  closeSideDrawer();
+  if(panel){
+    panel.classList.add("open");
+    panel.setAttribute("aria-hidden","false");
+  }
 }
+
+async function submitSideSuggestion_(){
+  const title=document.getElementById("sideSuggestTitle")?.value.trim()||"";
+  const proposer=document.getElementById("sideSuggestProposer")?.value.trim()||"";
+  const memo=document.getElementById("sideSuggestMemo")?.value.trim()||"";
+  const status=document.getElementById("sideSuggestStatus");
+  const submit=document.getElementById("sideSubmitSuggestBtn");
+  if(!title){
+    if(status)status.textContent="항목 이름을 입력해 주세요.";
+    return;
+  }
+  const old=submit?submit.textContent:"";
+  try{
+    if(submit){submit.disabled=true;submit.textContent="전송 중...";}
+    if(status)status.textContent="";
+    const res=await fetch(WEB_APP_URL,{method:"POST",body:JSON.stringify({action:"hallSuggestion",title,proposer,memo})});
+    const data=await res.json();
+    if(!data.ok)throw new Error(data.message||"전송 실패");
+    if(status)status.textContent="제안이 접수되었습니다.";
+    setTimeout(()=>{closeDrawerPagePanel();load()},520);
+  }catch(e){
+    if(status)status.textContent="전송 실패: "+(e.message||e);
+  }finally{
+    if(submit){submit.disabled=false;submit.textContent=old||"제안 보내기";}
+  }
+}
+
 
 bindDrawerPagePanel_();bindConstructionNotice_();bindKinojoDrawer_();const adminMenuBtn=document.getElementById("adminMenuBtn");if(adminMenuBtn)adminMenuBtn.onclick=openAdminDropdown;const adminDropdownClose=document.getElementById("adminDropdownClose");if(adminDropdownClose)adminDropdownClose.onclick=closeAdminMenu;const adminLoginBtn=document.getElementById("adminLoginBtn");if(adminLoginBtn)adminLoginBtn.onclick=adminLogin;const adminPasswordInput=document.getElementById("adminPasswordInput");if(adminPasswordInput)adminPasswordInput.onkeydown=e=>{if(e.key==="Enter")adminLogin()};document.getElementById("adminMvpBtn").onclick=showMvpAdminPrompt;document.getElementById("adminVisitBtn").onclick=()=>adminVisit(1,"visit");document.getElementById("adminBoostBtn").onclick=()=>adminVisit(31,"boost");document.getElementById("adminSnapshotBtn").onclick=adminSnapshot;const adminSnapshotTrigger=document.getElementById("adminSnapshotTriggerBtn");if(adminSnapshotTrigger)adminSnapshotTrigger.onclick=adminSnapshotTriggerInstall;document.getElementById("reactionLikeBtn").onclick=()=>{currentReactionType="like";document.getElementById("reactionLikeBtn").classList.add("active");document.getElementById("reactionDislikeBtn").classList.remove("active")};document.getElementById("reactionDislikeBtn").onclick=()=>{currentReactionType="dislike";document.getElementById("reactionDislikeBtn").classList.add("active");document.getElementById("reactionLikeBtn").classList.remove("active")};document.getElementById("reactionCloseBtn").onclick=closeReactionModal;document.getElementById("reactionSubmitBtn").onclick=submitReaction;document.addEventListener("click",e=>{const pop=document.getElementById("reactionPopover");if(pop&&pop.style.display==="block"&&!pop.contains(e.target)&&!e.target.closest("[data-character]"))closeReactionModal();const menu=document.getElementById("adminDropdown");if(menu&&menu.classList.contains("open")&&!menu.contains(e.target)&&!e.target.closest("#adminMenuBtn"))closeAdminMenu();const drawer=document.getElementById("sideDrawer");if(drawer&&drawer.classList.contains("open")&&e.target===drawer)closeSideDrawer();const pagePanel=document.getElementById("drawerPagePanel");if(pagePanel&&pagePanel.classList.contains("open")&&e.target===pagePanel)closeDrawerPagePanel();const notice=document.getElementById("constructionNotice");if(notice&&notice.classList.contains("open")&&e.target===notice)closeConstructionNotice()});document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeSideDrawer();closeDrawerPagePanel();closeAdminMenu();closeReactionModal();closeConstructionNotice()}});setInterval(()=>{if(Date.now()<reactionCarouselPausedUntil)return;if(document.activeElement&&document.activeElement.id==="rankSearchInput")return;reactionCarouselIndex++;if(hallData)render()},6500);recordDailyVisitOnce();load();
 
