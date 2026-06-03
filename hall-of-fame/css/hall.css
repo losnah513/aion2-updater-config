@@ -1285,3 +1285,139 @@ body{background:#fff!important;}
     margin-bottom:10px!important;
   }
 }
+
+
+/* ============================================================
+   knj-infoweb(v_260603_05) top row cleanup + compact ranking
+   ============================================================ */
+
+/* 상단은 [+] / 여백 / 방문자 2줄 / 관리자만 */
+.top-utility{
+  grid-template-columns:42px minmax(0,1fr) auto!important;
+  height:52px!important;
+  min-height:52px!important;
+  max-height:52px!important;
+  align-items:center!important;
+}
+.top-right-tools{
+  height:52px!important;
+}
+.top-utility .visit-mini{
+  width:330px!important;
+  min-width:330px!important;
+  max-width:330px!important;
+  height:52px!important;
+  min-height:52px!important;
+  max-height:52px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  white-space:normal!important;
+  overflow:hidden!important;
+  text-overflow:clip!important;
+  line-height:1.28!important;
+  padding:6px 12px!important;
+  font-size:12px!important;
+}
+.drawer-toggle,
+.admin-menu-btn,
+.admin-menu-wrap{
+  width:42px!important;
+  height:42px!important;
+  min-width:42px!important;
+  max-width:42px!important;
+  min-height:42px!important;
+  max-height:42px!important;
+}
+.drawer-title-link{
+  color:#263444!important;
+  text-decoration:none!important;
+  font-size:18px!important;
+  font-weight:1000!important;
+  letter-spacing:-.4px!important;
+}
+.drawer-title-link:hover{
+  color:#1d4ed8!important;
+}
+
+/* 배너 아래 남는 중복 관리자 버튼 방지 */
+.banner + .admin-menu-wrap{
+  display:none!important;
+}
+
+/* PVE/PVP TOP5 높이를 같은 마족/같은 파티에 맞춰 더 압축 */
+.dashboard{
+  align-items:stretch!important;
+}
+.top-grid .section .list{
+  padding:4px 8px!important;
+  gap:0!important;
+}
+.top-grid .mini-row{
+  min-height:38px!important;
+  height:38px!important;
+  padding:2px 5px!important;
+  grid-template-columns:42px minmax(0,1fr) 34px auto!important;
+}
+.top-grid .rank-emblem,
+.top-grid .rank-emblem img{
+  width:32px!important;
+  height:32px!important;
+}
+.top-grid .name{
+  font-size:12px!important;
+  line-height:1.1!important;
+}
+.top-grid .score{
+  font-size:11px!important;
+}
+.top-grid .reaction-counts{
+  font-size:9px!important;
+  min-width:24px!important;
+}
+.top-grid .section-head{
+  padding-top:10px!important;
+  padding-bottom:10px!important;
+}
+.side-stack .tag-list.swipe-list,
+.side-stack .tag-list{
+  min-height:126px!important;
+}
+
+/* 모바일 */
+@media(max-width:680px){
+  .top-utility{
+    grid-template-columns:38px minmax(0,1fr) auto!important;
+    height:50px!important;
+    min-height:50px!important;
+    max-height:50px!important;
+  }
+  .top-right-tools{
+    height:50px!important;
+  }
+  .top-utility .visit-mini{
+    width:auto!important;
+    min-width:0!important;
+    max-width:calc(100vw - 108px)!important;
+    height:50px!important;
+    min-height:50px!important;
+    max-height:50px!important;
+    font-size:10.5px!important;
+    padding:5px 7px!important;
+  }
+  .drawer-toggle,
+  .admin-menu-btn,
+  .admin-menu-wrap{
+    width:38px!important;
+    height:38px!important;
+    min-width:38px!important;
+    max-width:38px!important;
+    min-height:38px!important;
+    max-height:38px!important;
+  }
+  .top-grid .mini-row{
+    min-height:38px!important;
+    height:auto!important;
+  }
+}
