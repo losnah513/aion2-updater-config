@@ -1761,3 +1761,138 @@ button:disabled{
 
 @media(max-width:980px){.rank-relation-row{grid-template-columns:1fr!important}.rank-relation-row .list{min-height:auto!important}.relation-track{max-height:150px!important}.reaction-board{grid-template-columns:1fr!important}.reaction-top-body{height:auto!important;min-height:96px!important}.drawer-page-panel{left:12px!important;right:12px!important;top:72px!important;width:auto!important;min-width:0!important}.drawer-page-card{width:100%!important}}
 @media(max-width:560px){.mini-row{grid-template-columns:46px minmax(8em,1fr) 52px 88px!important}.relation-row{grid-template-columns:minmax(0,1fr) 52px 70px!important}.character-name-text:hover::after{max-width:240px;white-space:normal}}
+
+/* 260603 final correction: search scope, relation stack, top rows, drawer motion */
+.drawer-toggle{
+  transition:transform .28s cubic-bezier(.16,1,.3,1),background .18s ease,color .18s ease!important;
+}
+.drawer-toggle .drawer-plus,
+.drawer-toggle .drawer-plus:before{
+  transition:transform .28s cubic-bezier(.16,1,.3,1),opacity .2s ease!important;
+}
+.drawer-toggle.is-open{
+  transform:rotate(135deg)!important;
+}
+.admin-menu-btn{
+  transition:transform .18s ease,background .18s ease,color .18s ease!important;
+}
+.admin-menu-btn:hover{
+  transform:translateY(-1px) scale(1.04)!important;
+  background:#f8fafc!important;
+}
+.admin-menu-btn:active{
+  transform:scale(.96)!important;
+}
+.drawer-page-panel{
+  transform:translateX(-18px)!important;
+  opacity:0!important;
+  transition:transform .28s cubic-bezier(.16,1,.3,1),opacity .22s ease!important;
+}
+.drawer-page-panel.open{
+  transform:translateX(0)!important;
+  opacity:1!important;
+}
+.drawer-nav a,.drawer-link,.drawer-action{
+  display:block!important;
+  width:100%!important;
+  text-align:left!important;
+  transition:color .18s ease,transform .18s ease!important;
+}
+.drawer-nav a:hover,.drawer-link:hover,.drawer-action:hover{
+  transform:translateX(5px)!important;
+}
+
+/* TOP5: keep reaction away from icons and pull power inward */
+.rank-relation-row .section .list{
+  min-height:324px!important;
+}
+.mini-row{
+  grid-template-columns:54px minmax(8em,1fr) 72px 86px!important;
+  column-gap:8px!important;
+}
+.mini-row .reaction-counts{
+  width:72px!important;
+  min-width:72px!important;
+  justify-self:center!important;
+}
+.mini-row .reaction-counts .reaction-pair{
+  column-gap:9px!important;
+  row-gap:4px!important;
+}
+.mini-row .score{
+  justify-self:end!important;
+  text-align:right!important;
+  max-width:86px!important;
+  overflow:visible!important;
+  padding-right:0!important;
+  font-size:11px!important;
+}
+
+/* Combined relation: each title owns its own body, no mixed header/body row */
+.relation-combined-card{
+  display:grid!important;
+  grid-template-rows:1fr 1fr!important;
+  gap:0!important;
+  height:100%!important;
+  overflow:hidden!important;
+}
+.relation-block{
+  display:grid!important;
+  grid-template-rows:50px minmax(0,1fr)!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+.relation-block-head{
+  grid-row:1!important;
+}
+.relation-column{
+  grid-row:2!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+.relation-track{
+  max-height:118px!important;
+  overflow:hidden!important;
+  will-change:transform!important;
+}
+.relation-track.is-scroll{
+  animation:relationRoll 22s linear infinite!important;
+}
+.relation-track.is-scroll:hover{
+  animation-play-state:paused!important;
+}
+
+/* Overall rank: preserve 10 rows and keep alignment stable */
+.rank-empty-row td{
+  height:52px!important;
+}
+.rank-table .reaction-col{
+  width:112px!important;
+}
+.rank-reactions,.rank-reactions .reaction-counts{
+  width:112px!important;
+  min-width:112px!important;
+  white-space:nowrap!important;
+}
+.rank-reactions .reaction-pair{
+  display:inline-flex!important;
+  flex-wrap:nowrap!important;
+  gap:8px!important;
+  align-items:center!important;
+}
+.rank-table .power-col{
+  width:92px!important;
+}
+.rank-table .power{
+  text-align:right!important;
+  padding-right:10px!important;
+}
+@media(max-width:980px){
+  .rank-relation-row .section .list{min-height:auto!important;}
+  .relation-track{max-height:150px!important;}
+}
+@media(max-width:560px){
+  .mini-row{grid-template-columns:46px minmax(8em,1fr) 64px 82px!important;column-gap:6px!important;}
+  .mini-row .reaction-counts{width:64px!important;min-width:64px!important;}
+  .mini-row .score{max-width:82px!important;font-size:10px!important;}
+}
