@@ -40,29 +40,31 @@ function combinedRelationBox(){
   const demonItems=(currentDemon()||[]).filter(match);
   const partyItems=(currentParty()||[]).filter(match);
 
-  const renderTrack=function(items,type){
+  const renderColumn=function(items,type){
     const base=(items||[]).length?items:[];
-    const loopItems=base.length>4?base.concat(base):base;
-    const trackClass=base.length>4?' relation-track is-scroll':' relation-track';
-    const html=loopItems.length
-      ? loopItems.map(item=>{
+    const html=base.length
+      ? base.map(item=>{
           const reaction=reactionDataFor(item);
           const serverText=item.meta||item.serverName||item.server||"";
           return '<div class="relation-row '+itemClass(item)+'" data-character="'+escapeHtml(item.name)+'">'
             + '<span class="relation-name">'+escapeHtml(item.name)+'</span>'
-            + (serverText?'<span class="relation-server">'+escapeHtml(serverText)+'</span>':'')
+            + (serverText?'<span class="relation-server">'+escapeHtml(serverText)+'</span>':'<span class="relation-server"></span>')
             + reactionPairHtml(reaction.like,reaction.dislike,'relation-reactions')
             + '</div>';
         }).join("")
       : '<div class="empty relation-empty">아직 데이터가 부족해요.</div>';
-    return '<div class="relation-viewport '+type+'"><div class="'+trackClass+'">'+html+'</div></div>';
+    return '<div class="relation-column '+type+'"><div class="relation-track">'+html+'</div></div>';
   };
 
   return '<section class="section relation-combined-card">'
+    + '<div class="relation-combined-head">'
     + '<div class="section-head relation-main-head"><h2>😈 같은 마족이면 가족이지</h2><span class="section-note">타서버 마족</span></div>'
-    + renderTrack(demonItems,"demon")
     + '<div class="section-head relation-sub-head"><h2>🤝 같은 파티면 친구지</h2><span class="section-note">천족 서버</span></div>'
-    + renderTrack(partyItems,"party")
+    + '</div>'
+    + '<div class="relation-viewport">'
+    + renderColumn(demonItems,"demon")
+    + renderColumn(partyItems,"party")
+    + '</div>'
     + '</section>';
 }
 function chickLabel(item){const server=item.meta?'['+item.meta.replace("천족 · ","")+']':'';const cls=item.className?' ('+item.className+')':'';const owner=item.owner&&item.owner!==item.name?' / 본캐 '+item.owner:'';return item.name+server+cls+owner}
@@ -72,7 +74,7 @@ function renderVisits(stats){
   const total=Number(stats?.totalVisits||0).toLocaleString("ko-KR");
   const el=document.getElementById("visitCard");
   if(!el)return;
-  el.innerHTML='<span class="visit-line visit-line-today">👀 오늘 <strong>'+today+'명</strong></span><span class="visit-line visit-line-total">🏛 누적 <strong>'+total+'번</strong> <small>26.06.01~</small></span>';
+  el.innerHTML='<span class="visit-line visit-line-today">👀 오늘 '+today+'명의 모험가님이 다녀가셨어요.</span><span class="visit-line visit-line-total">🏛 누적 '+total+'회의 발걸음이 키노조에 남았습니다.</span>';
 }
 async function fetchVisitStats(mode="stats",boost=0){try{const url=WEB_APP_URL+(WEB_APP_URL.includes("?")?"&":"?")+"action=hallVisit&mode="+encodeURIComponent(mode)+"&boost="+encodeURIComponent(boost)+"&t="+Date.now();const res=await fetch(url,{cache:"no-store"});const data=await res.json();if(data?.ok&&data.stats)renderVisits(data.stats)}catch(e){}}
 function recordDailyVisitOnce(){const key="kinojo_hof_visit_"+new Date().toLocaleDateString("ko-KR",{timeZone:"Asia/Seoul"});if(localStorage.getItem(key)==="1"){fetchVisitStats();return}localStorage.setItem(key,"1");fetchVisitStats("visit",1)}
@@ -236,10 +238,10 @@ function overallTable(){
     rows.push('<tr><td colspan="7"><div class="empty">해당 조건의 순위 데이터가 없습니다.</div></td></tr>');
   }
 
-  return '<section class="overall"><div class="overall-head"><h2>'+title+'</h2><div class="overall-title-tools"><button class="sub-toggle compact '+(includeSubs?'on':'')+'" id="subToggle" type="button"><span class="toggle-knob"></span><span class="toggle-text">'+(includeSubs?'부캐 ON':'부캐 OFF')+'</span></button></div><div class="page-tools"><span>'+page+' / '+totalPages+'</span><button class="page-btn" data-page="prev">‹</button><button class="page-btn" data-page="next">›</button></div></div>'+searchToolsHtml()+rankTabs()+classReviewBoxHtml(activeRankClass)+'<div class="table-scroll"><table class="rank-table"><colgroup><col class="num"><col class="char-col"><col class="reaction-col"><col class="class-col"><col class="power-col"><col class="power-col"><col class="review-col"></colgroup><thead><tr><th class="num">순위</th><th>캐릭터명</th><th>반응</th><th>클래스</th><th>PVE</th><th>PVP</th><th>AI 리뷰</th></tr></thead><tbody>'+rows.join("")+'</tbody></table></div></section>';
+  return '<section class="overall"><div class="overall-head"><h2>'+title+'</h2><div class="overall-title-tools"><button class="sub-toggle compact '+(includeSubs?'on':'')+'" id="subToggle" type="button"><span class="toggle-knob"></span><span class="toggle-text">'+(includeSubs?'부캐 ON':'부캐 OFF')+'</span></button></div><div class="page-tools"><span>'+page+' / '+totalPages+'</span><button class="page-btn" data-page="prev">‹</button><button class="page-btn" data-page="next">›</button></div></div>'+searchToolsHtml()+rankTabs()+classReviewBoxHtml(activeRankClass)+'<div class="table-scroll"><table class="rank-table"><colgroup><col class="num"><col class="char-col"><col class="reaction-col"><col class="class-col"><col class="power-col"><col class="power-col"><col class="review-col"></colgroup><thead><tr><th class="num">순위</th><th>캐릭터명</th><th aria-label="좋아요 싫어요"></th><th>클래스</th><th>PVE</th><th>PVP</th><th>AI 리뷰</th></tr></thead><tbody>'+rows.join("")+'</tbody></table></div></section>';
 }
 function render(){if(!hallData)return;renderChicks();app.className="";app.innerHTML=mvpSection()+reactionBoard()+awardsBoard()+'<div class="dashboard"><div><div class="top-grid">'+rankBox("⚔ PVE TOP 5","",hallData.pveTop)+rankBox("⚔ PVP TOP 5","",hallData.pvpTop)+'</div></div><div class="side-stack">'+combinedRelationBox()+'</div></div>'+overallTable();bindDynamic();bindCharacterButtons();requestAnimationFrame(applyOverflowMarquee)}
-function bindDynamic(){document.querySelectorAll("[data-page]").forEach(btn=>btn.onclick=()=>{const total=Math.max(1,Math.ceil(currentRankList().length/PAGE_SIZE));page+=btn.dataset.page==="next"?1:-1;if(page<1)page=1;if(page>total)page=total;render()});document.querySelectorAll("[data-rank-class]").forEach(btn=>btn.onclick=()=>{activeRankClass=btn.dataset.rankClass;page=1;render()});const search=document.getElementById("rankSearchInput");if(search){search.oncompositionstart=()=>{searchComposing=true;clearTimeout(searchDebounceTimer)};search.oncompositionend=()=>{searchComposing=false};search.oninput=()=>{};search.onkeydown=e=>{if(e.key==="Enter"&&!searchComposing){keyword=search.value.trim();page=1;renderPreserveSearchFocus()}}}const refresh=document.getElementById("rankRefreshBtn");if(refresh)refresh.onclick=()=>{const input=document.getElementById("rankSearchInput");keyword=String(input?.value||"").trim();page=1;renderPreserveSearchFocus()};const clear=document.getElementById("rankClearBtn");if(clear)clear.onclick=()=>{keyword="";page=1;render()};const sub=document.getElementById("subToggle");if(sub)sub.onclick=()=>{const savedY=window.scrollY;includeSubs=!includeSubs;page=1;render();requestAnimationFrame(()=>window.scrollTo(0,savedY))}}
+function bindDynamic(){document.querySelectorAll("[data-page]").forEach(btn=>btn.onclick=()=>{const total=Math.max(1,Math.ceil(currentRankList().length/PAGE_SIZE));page+=btn.dataset.page==="next"?1:-1;if(page<1)page=1;if(page>total)page=total;render()});document.querySelectorAll("[data-rank-class]").forEach(btn=>btn.onclick=()=>{activeRankClass=btn.dataset.rankClass;page=1;render()});const search=document.getElementById("rankSearchInput");if(search){search.oncompositionstart=()=>{searchComposing=true;clearTimeout(searchDebounceTimer)};search.oncompositionend=()=>{searchComposing=false};search.oninput=()=>{};search.onkeydown=e=>{if(e.key==="Enter"&&!searchComposing){keyword=search.value.trim();page=1;renderPreserveSearchFocus()}}}const refresh=document.getElementById("rankRefreshBtn");if(refresh)refresh.onclick=()=>{const input=document.getElementById("rankSearchInput");keyword=String(input?.value||"").trim();page=1;renderPreserveSearchFocus()};const clear=document.getElementById("rankClearBtn");if(clear)clear.onclick=()=>{keyword="";page=1;render()};const sub=document.getElementById("subToggle");if(sub)sub.onclick=()=>{const savedY=window.scrollY;includeSubs=!includeSubs;page=1;sub.classList.toggle("on",includeSubs);const t=sub.querySelector(".toggle-text");if(t)t.textContent=includeSubs?"부캐 ON":"부캐 OFF";setTimeout(()=>{render();requestAnimationFrame(()=>window.scrollTo(0,savedY))},260)}}
 function applyOverflowMarquee(){document.querySelectorAll(".flow-candidate").forEach(el=>{el.classList.remove("marquee");el.style.removeProperty("--marquee-shift");const parent=el.parentElement;if(!parent)return;const overflow=el.scrollWidth-parent.clientWidth;if(overflow>2){el.style.setProperty("--marquee-shift","-"+(overflow+12)+"px");el.classList.add("marquee")}})}
 function startLoadingText(){stopLoadingText();const messages=["명예의 전당 데이터를 불러오는 중","엠블럼을 준비하는 중","레기온 기록을 확인하는 중","순위표를 정리하는 중"];loadingStep=0;const target=()=>{const el=document.getElementById("loaderText");if(!el)return;const msg=messages[Math.floor(loadingStep/4)%messages.length];const dots=".".repeat(loadingStep%4);el.textContent=msg+dots;loadingStep++};target();loadingTimer=setInterval(target,360)}
 function stopLoadingText(){if(loadingTimer){clearInterval(loadingTimer);loadingTimer=null}}
@@ -285,7 +287,7 @@ async function adminVisitAdjust(){
   const status=document.getElementById("adminVisitStatus");
   const mode=target==="total"?(sign==="minus"?"totalMinus":"totalPlus"):(sign==="minus"?"dailyMinus":"dailyPlus");
   try{
-    setAdminButtonLoading_("adminVisitApplyBtn","반영 중...");
+    setAdminButtonLoading_("adminVisitApplyBtn","반영중...");
     if(status)status.textContent="반영 중...";
     await fetchVisitStats(mode,amount);
     if(status)status.textContent="방문자수 반영 완료";
