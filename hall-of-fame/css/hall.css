@@ -1421,3 +1421,190 @@ body{background:#fff!important;}
     height:auto!important;
   }
 }
+
+
+/* ============================================================
+   knj-infoweb(v_260603_06) weekly snapshot + layout consolidation
+   ============================================================ */
+
+/* 최종 라운드 기준: 카드 2, 버튼 3 */
+:root{
+  --kinojo-card-radius:2px!important;
+  --kinojo-button-radius:3px!important;
+  --kinojo-pill-radius:3px!important;
+}
+.section,.overall,.classes,.mvp-card,.reaction-card,.banner,.visit-mini,.chick-card,
+.relation-combined-card,.construction-card{
+  border-radius:2px!important;
+}
+.btn,.page-btn,.search,.admin-menu-btn,.drawer-toggle,.drawer-close,.admin-dropdown,
+.reaction-popover,.reaction-choice button,.send-btn,.reaction-comment,.name-tag,
+.drawer-nav a,.drawer-link,.drawer-action,.construction-close,.construction-ok,
+.sub-toggle.compact,.chick-tag,.class-tab{
+  border-radius:3px!important;
+}
+
+/* Top bar: 방문자 통계 2줄이 섞이지 않도록 정리 */
+.top-utility{
+  height:54px!important;
+  min-height:54px!important;
+  max-height:54px!important;
+  grid-template-columns:42px minmax(0,1fr) auto!important;
+}
+.top-right-tools{
+  height:54px!important;
+}
+.top-utility .visit-mini{
+  height:54px!important;
+  min-height:54px!important;
+  max-height:54px!important;
+  width:360px!important;
+  min-width:360px!important;
+  max-width:360px!important;
+  padding:6px 14px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  white-space:normal!important;
+  line-height:1.32!important;
+  font-size:12px!important;
+  word-break:keep-all!important;
+}
+.drawer-toggle,.admin-menu-btn,.admin-menu-wrap{
+  width:42px!important;
+  height:42px!important;
+  min-width:42px!important;
+  max-width:42px!important;
+}
+
+/* PVE/PVP TOP5: 촘촘하게 압축 */
+.top-grid{
+  gap:12px!important;
+  height:100%!important;
+}
+.top-grid .section{
+  height:100%!important;
+}
+.top-grid .section .list{
+  padding:4px 8px!important;
+  gap:0!important;
+}
+.top-grid .mini-row{
+  min-height:34px!important;
+  height:34px!important;
+  padding:1px 5px!important;
+  border-radius:0!important;
+  grid-template-columns:38px minmax(0,1fr) 30px auto!important;
+}
+.top-grid .rank-emblem,
+.top-grid .rank-emblem img{
+  width:28px!important;
+  height:28px!important;
+}
+.top-grid .rank-number{
+  display:none!important;
+}
+.top-grid .name{
+  font-size:11.5px!important;
+  line-height:1.05!important;
+}
+.top-grid .meta{
+  display:none!important;
+}
+.top-grid .score{
+  font-size:11px!important;
+}
+.top-grid .reaction-counts{
+  font-size:8.5px!important;
+  min-width:22px!important;
+}
+
+/* 같은 마족 + 같은 파티 하나의 카드로 통합 */
+.side-stack{
+  display:block!important;
+  height:100%!important;
+}
+.relation-combined-card{
+  height:100%!important;
+  display:grid!important;
+  grid-template-rows:auto minmax(0,1fr) auto minmax(0,1fr)!important;
+  overflow:hidden!important;
+}
+.relation-combined-card .section-head{
+  padding:10px 12px!important;
+}
+.relation-sub-head{
+  border-top:1px solid var(--line)!important;
+}
+.relation-list{
+  padding:8px!important;
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:6px!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  scrollbar-gutter:stable!important;
+  align-content:start!important;
+  min-height:0!important;
+}
+.relation-list::-webkit-scrollbar{
+  height:8px;
+}
+.relation-list::-webkit-scrollbar-track{
+  background:#f1f5f9;
+}
+.relation-list::-webkit-scrollbar-thumb{
+  background:#d5dde8;
+}
+.relation-list .name-tag{
+  min-height:40px!important;
+  padding:5px 7px!important;
+  display:grid!important;
+  align-content:center!important;
+}
+.relation-list .tag-name{
+  font-size:11.5px!important;
+  line-height:1.15!important;
+}
+.relation-list .owner-line,
+.relation-list .tag-meta{
+  font-size:9px!important;
+  line-height:1.15!important;
+  margin-top:1px!important;
+}
+
+@media(max-width:680px){
+  .top-utility{
+    height:52px!important;
+    min-height:52px!important;
+    max-height:52px!important;
+    grid-template-columns:38px minmax(0,1fr) auto!important;
+  }
+  .top-right-tools{
+    height:52px!important;
+  }
+  .top-utility .visit-mini{
+    width:auto!important;
+    min-width:0!important;
+    max-width:calc(100vw - 108px)!important;
+    height:52px!important;
+    min-height:52px!important;
+    max-height:52px!important;
+    font-size:10.5px!important;
+    padding:5px 7px!important;
+  }
+  .drawer-toggle,.admin-menu-btn,.admin-menu-wrap{
+    width:38px!important;
+    height:38px!important;
+    min-width:38px!important;
+    max-width:38px!important;
+  }
+  .relation-combined-card{
+    height:auto!important;
+  }
+  .relation-list{
+    grid-template-columns:repeat(2,minmax(128px,1fr))!important;
+    min-height:72px!important;
+  }
+}
