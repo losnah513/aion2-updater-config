@@ -260,6 +260,92 @@ html,body{
   .rudra-sub{font-size:13px!important}
 }
 
+
+/* v_260603_11 root info scaling + rudra lightning refinement */
+.hall-banner{
+  width:60%!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+.sanctuary-row{
+  overflow:visible!important;
+  padding-top:72px!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+}
+.sanctuary-row .card{
+  aspect-ratio:4/3!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+}
+.rudra-card{
+  overflow:visible!important;
+}
+.rudra-card .rudra-bg,
+.rudra-card::before,
+.rudra-card::after{
+  overflow:hidden!important;
+}
+.rudra-boss{
+  z-index:8!important;
+  inset:-88px -54px -4px -54px!important;
+  background-size:122% auto!important;
+  background-position:center 6%!important;
+  opacity:.95!important;
+}
+.rudra-lightning-main{
+  z-index:7!important;
+  background-position:58% 28%!important;
+  background-size:50% auto!important;
+  opacity:0!important;
+}
+.rudra-lightning-right{
+  z-index:9!important;
+  background-position:78% 32%!important;
+  background-size:42% auto!important;
+  opacity:0!important;
+}
+.rudra-card:hover .rudra-boss,
+.rudra-card:focus-visible .rudra-boss,
+.rudra-card:active .rudra-boss{
+  transform:scale(1.28) translateY(-26px)!important;
+}
+.rudra-card:hover .rudra-lightning-main,
+.rudra-card:focus-visible .rudra-lightning-main,
+.rudra-card:active .rudra-lightning-main{
+  animation:rudraLightningStrike .9s steps(2,end) infinite!important;
+  opacity:.72!important;
+}
+.rudra-card:hover .rudra-lightning-right,
+.rudra-card:focus-visible .rudra-lightning-right,
+.rudra-card:active .rudra-lightning-right{
+  animation:rudraLightningStrikeRight 1.18s steps(2,end) infinite!important;
+  opacity:.58!important;
+}
+@keyframes rudraLightningStrike{
+  0%,18%,100%{opacity:0;filter:drop-shadow(0 0 8px rgba(204,142,255,.45))}
+  20%,26%{opacity:.92;filter:drop-shadow(0 0 20px rgba(204,142,255,.95))}
+  32%,55%{opacity:.18}
+  58%,64%{opacity:.72}
+}
+@keyframes rudraLightningStrikeRight{
+  0%,30%,100%{opacity:0}
+  34%,40%{opacity:.68}
+  46%,70%{opacity:.12}
+  74%,80%{opacity:.5}
+}
+@media(max-width:900px){
+  .hall-banner{width:100%!important}
+  .sanctuary-row{
+    grid-template-columns:1fr!important;
+    padding-top:56px!important;
+  }
+  .sanctuary-row .card{
+    width:100%!important;
+    aspect-ratio:4/3!important;
+  }
+}
+
 </style>
 </head>
 <body>
