@@ -228,22 +228,8 @@ document.getElementById("cancelSuggestBtn").onclick=()=>{document.getElementById
 document.getElementById("submitSuggestBtn").onclick=async()=>{const title=document.getElementById("suggestTitle").value.trim(),proposer=document.getElementById("suggestProposer").value.trim(),memo=document.getElementById("suggestMemo").value.trim();if(!title)return alert("항목 이름을 입력해 주세요.");const res=await fetch(WEB_APP_URL,{method:"POST",body:JSON.stringify({action:"hallSuggestion",title,proposer,memo})});const data=await res.json();if(!data.ok)return alert(data.message||"전송 실패");alert("제안이 접수되었습니다.");document.getElementById("suggestionBox").style.display="none";load()};
 
 /* KINOJO drawer navigation */
-function openSideDrawer(){
-  const drawer=document.getElementById("sideDrawer");
-  const btn=document.getElementById("drawerToggleBtn");
-  if(!drawer)return;
-  drawer.classList.add("open");
-  drawer.setAttribute("aria-hidden","false");
-  if(btn)btn.setAttribute("aria-expanded","true");
-}
-function closeSideDrawer(){
-  const drawer=document.getElementById("sideDrawer");
-  const btn=document.getElementById("drawerToggleBtn");
-  if(!drawer)return;
-  drawer.classList.remove("open");
-  drawer.setAttribute("aria-hidden","true");
-  if(btn)btn.setAttribute("aria-expanded","false");
-}
+function openSideDrawer(){const drawer=document.getElementById("sideDrawer");const btn=document.getElementById("drawerToggleBtn");if(!drawer)return;drawer.classList.add("open");document.body.classList.add("drawer-open");drawer.setAttribute("aria-hidden","false");if(btn)btn.setAttribute("aria-expanded","true")}
+function closeSideDrawer(){const drawer=document.getElementById("sideDrawer");const btn=document.getElementById("drawerToggleBtn");if(!drawer)return;drawer.classList.remove("open");document.body.classList.remove("drawer-open");drawer.setAttribute("aria-hidden","true");if(btn)btn.setAttribute("aria-expanded","false")}
 function openSuggestionPanel(){
   const box=document.getElementById("suggestionBox");
   if(box){
@@ -253,7 +239,7 @@ function openSuggestionPanel(){
   closeSideDrawer();
 }
 
-const adminMenuBtn=document.getElementById("adminMenuBtn");if(adminMenuBtn)adminMenuBtn.onclick=openAdminDropdown;const adminDropdownClose=document.getElementById("adminDropdownClose");if(adminDropdownClose)adminDropdownClose.onclick=closeAdminMenu;const adminLoginBtn=document.getElementById("adminLoginBtn");if(adminLoginBtn)adminLoginBtn.onclick=adminLogin;const adminPasswordInput=document.getElementById("adminPasswordInput");if(adminPasswordInput)adminPasswordInput.onkeydown=e=>{if(e.key==="Enter")adminLogin()};document.getElementById("adminMvpBtn").onclick=showMvpAdminPrompt;document.getElementById("adminVisitBtn").onclick=()=>adminVisit(1,"visit");document.getElementById("adminBoostBtn").onclick=()=>adminVisit(31,"boost");document.getElementById("adminSnapshotBtn").onclick=adminSnapshot;document.getElementById("reactionLikeBtn").onclick=()=>{currentReactionType="like";document.getElementById("reactionLikeBtn").classList.add("active");document.getElementById("reactionDislikeBtn").classList.remove("active")};document.getElementById("reactionDislikeBtn").onclick=()=>{currentReactionType="dislike";document.getElementById("reactionDislikeBtn").classList.add("active");document.getElementById("reactionLikeBtn").classList.remove("active")};document.getElementById("reactionCloseBtn").onclick=closeReactionModal;document.getElementById("reactionSubmitBtn").onclick=submitReaction;document.addEventListener("click",e=>{const pop=document.getElementById("reactionPopover");if(pop&&pop.style.display==="block"&&!pop.contains(e.target)&&!e.target.closest("[data-character]"))closeReactionModal();const menu=document.getElementById("adminDropdown");if(menu&&menu.classList.contains("open")&&!menu.contains(e.target)&&!e.target.closest("#adminMenuBtn"))closeAdminMenu();const drawer=document.getElementById("sideDrawer");if(drawer&&drawer.classList.contains("open")&&e.target===drawer)closeSideDrawer()});document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeSideDrawer();closeAdminMenu();closeReactionModal()}});setInterval(()=>{if(Date.now()<reactionCarouselPausedUntil)return;if(document.activeElement&&document.activeElement.id==="rankSearchInput")return;reactionCarouselIndex++;if(hallData)render()},6500);recordDailyVisitOnce();load();
+bindKinojoDrawer_();const adminMenuBtn=document.getElementById("adminMenuBtn");if(adminMenuBtn)adminMenuBtn.onclick=openAdminDropdown;const adminDropdownClose=document.getElementById("adminDropdownClose");if(adminDropdownClose)adminDropdownClose.onclick=closeAdminMenu;const adminLoginBtn=document.getElementById("adminLoginBtn");if(adminLoginBtn)adminLoginBtn.onclick=adminLogin;const adminPasswordInput=document.getElementById("adminPasswordInput");if(adminPasswordInput)adminPasswordInput.onkeydown=e=>{if(e.key==="Enter")adminLogin()};document.getElementById("adminMvpBtn").onclick=showMvpAdminPrompt;document.getElementById("adminVisitBtn").onclick=()=>adminVisit(1,"visit");document.getElementById("adminBoostBtn").onclick=()=>adminVisit(31,"boost");document.getElementById("adminSnapshotBtn").onclick=adminSnapshot;document.getElementById("reactionLikeBtn").onclick=()=>{currentReactionType="like";document.getElementById("reactionLikeBtn").classList.add("active");document.getElementById("reactionDislikeBtn").classList.remove("active")};document.getElementById("reactionDislikeBtn").onclick=()=>{currentReactionType="dislike";document.getElementById("reactionDislikeBtn").classList.add("active");document.getElementById("reactionLikeBtn").classList.remove("active")};document.getElementById("reactionCloseBtn").onclick=closeReactionModal;document.getElementById("reactionSubmitBtn").onclick=submitReaction;document.addEventListener("click",e=>{const pop=document.getElementById("reactionPopover");if(pop&&pop.style.display==="block"&&!pop.contains(e.target)&&!e.target.closest("[data-character]"))closeReactionModal();const menu=document.getElementById("adminDropdown");if(menu&&menu.classList.contains("open")&&!menu.contains(e.target)&&!e.target.closest("#adminMenuBtn"))closeAdminMenu();const drawer=document.getElementById("sideDrawer");if(drawer&&drawer.classList.contains("open")&&e.target===drawer)closeSideDrawer()});document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeSideDrawer();closeAdminMenu();closeReactionModal()}});setInterval(()=>{if(Date.now()<reactionCarouselPausedUntil)return;if(document.activeElement&&document.activeElement.id==="rankSearchInput")return;reactionCarouselIndex++;if(hallData)render()},6500);recordDailyVisitOnce();load();
 
 /* knj-infoweb(v_260603_01) reaction submit guard patch */
 function updateReactionSubmitState_(){
@@ -332,3 +318,26 @@ if(reactionCommentInput_)reactionCommentInput_.addEventListener("input",updateRe
 const reactionSubmitBtn_=document.getElementById("reactionSubmitBtn");
 if(reactionSubmitBtn_)reactionSubmitBtn_.onclick=submitReaction;
 updateReactionSubmitState_();
+
+
+/* KINOJO drawer robust binding */
+function bindKinojoDrawer_(){
+  const drawerToggleBtn=document.getElementById("drawerToggleBtn");
+  const drawerCloseBtn=document.getElementById("drawerCloseBtn");
+  const drawerSuggestBtn=document.getElementById("drawerSuggestBtn");
+  if(drawerToggleBtn&&!drawerToggleBtn.dataset.bound){
+    drawerToggleBtn.dataset.bound="1";
+    drawerToggleBtn.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();openSideDrawer()});
+    drawerToggleBtn.addEventListener("pointerdown",e=>drawerToggleBtn.classList.add("is-pressed"));
+    drawerToggleBtn.addEventListener("pointerup",e=>drawerToggleBtn.classList.remove("is-pressed"));
+    drawerToggleBtn.addEventListener("pointerleave",e=>drawerToggleBtn.classList.remove("is-pressed"));
+  }
+  if(drawerCloseBtn&&!drawerCloseBtn.dataset.bound){
+    drawerCloseBtn.dataset.bound="1";
+    drawerCloseBtn.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();closeSideDrawer()});
+  }
+  if(drawerSuggestBtn&&!drawerSuggestBtn.dataset.bound){
+    drawerSuggestBtn.dataset.bound="1";
+    drawerSuggestBtn.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();openSuggestionPanel()});
+  }
+}

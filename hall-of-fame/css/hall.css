@@ -795,3 +795,207 @@ body{background:#fff!important;}
     width:min(280px,calc(100vw - 24px))!important;
   }
 }
+
+
+/* ============================================================
+   knj-infoweb(v_260603_03) top layout hotfix
+   ============================================================ */
+
+/* 상단 유틸을 배너와 완전히 다른 줄로 분리 */
+.wrap{
+  display:block!important;
+}
+.top-utility{
+  width:100%!important;
+  display:flex!important;
+  flex-wrap:nowrap!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:10px!important;
+  clear:both!important;
+  float:none!important;
+  position:relative!important;
+  z-index:50!important;
+  margin:0 0 10px!important;
+  padding:0!important;
+  min-height:40px!important;
+}
+.top-utility + .banner,
+.banner{
+  display:block!important;
+  width:100%!important;
+  clear:both!important;
+  float:none!important;
+  margin-top:0!important;
+  position:relative!important;
+  z-index:1!important;
+}
+.top-right-tools{
+  display:flex!important;
+  flex:0 0 auto!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:8px!important;
+  margin-left:auto!important;
+  min-width:0!important;
+}
+.top-utility .visit-mini{
+  flex:0 1 auto!important;
+  height:40px!important;
+  min-height:40px!important;
+  max-height:40px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  margin:0!important;
+  padding:0 12px!important;
+  line-height:1!important;
+}
+
+/* Drawer 버튼: -> 텍스트 대신 메뉴형 + 아이콘 */
+.drawer-toggle{
+  flex:0 0 40px!important;
+  width:40px!important;
+  height:40px!important;
+  min-width:40px!important;
+  padding:0!important;
+  display:grid!important;
+  place-items:center!important;
+  border:1px solid var(--line)!important;
+  background:#fff!important;
+  color:#334155!important;
+  border-radius:12px!important;
+  cursor:pointer!important;
+  box-shadow:none!important;
+  position:relative!important;
+  z-index:60!important;
+  pointer-events:auto!important;
+  touch-action:manipulation!important;
+  user-select:none!important;
+}
+.drawer-plus{
+  width:18px;
+  height:18px;
+  position:relative;
+  display:block;
+}
+.drawer-plus::before,
+.drawer-plus::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:18px;
+  height:2px;
+  border-radius:999px;
+  background:#334155;
+  transform:translate(-50%,-50%);
+  transition:transform var(--kinojo-motion),background var(--kinojo-motion);
+}
+.drawer-plus::after{
+  transform:translate(-50%,-50%) rotate(90deg);
+}
+.drawer-toggle:hover,
+.drawer-toggle.is-pressed,
+.drawer-toggle[aria-expanded="true"]{
+  transform:translateY(-1px) scale(1.015)!important;
+  background:#eef2f7!important;
+  border-color:#cbd5e1!important;
+  box-shadow:0 8px 20px rgba(15,23,42,.08)!important;
+}
+.drawer-toggle[aria-expanded="true"] .drawer-plus::before{
+  transform:translate(-50%,-50%) rotate(45deg);
+}
+.drawer-toggle[aria-expanded="true"] .drawer-plus::after{
+  transform:translate(-50%,-50%) rotate(135deg);
+}
+
+/* 관리자 버튼은 방문자 집계 높이에 맞춤 */
+.admin-menu-btn{
+  width:40px!important;
+  height:40px!important;
+  min-width:40px!important;
+  max-height:40px!important;
+  border-radius:12px!important;
+  line-height:1!important;
+}
+
+/* 같은 마족/같은 파티: 스크롤바 자리 항상 고정 */
+.side-stack .tag-list.swipe-list,
+.side-stack .tag-list{
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  scrollbar-gutter:stable!important;
+  padding-bottom:12px!important;
+  min-height:126px!important;
+  align-content:start!important;
+}
+.side-stack .tag-list::-webkit-scrollbar{
+  height:8px;
+}
+.side-stack .tag-list::-webkit-scrollbar-track{
+  background:#f1f5f9;
+  border-radius:999px;
+}
+.side-stack .tag-list::-webkit-scrollbar-thumb{
+  background:#d5dde8;
+  border-radius:999px;
+}
+.side-stack .tag-list{
+  scrollbar-width:thin;
+  scrollbar-color:#d5dde8 #f1f5f9;
+}
+
+/* 정보 추가 대비: 캐릭터명 카드 높이 소폭 증가 */
+.side-stack .name-tag{
+  min-height:44px!important;
+  padding:7px 8px!important;
+  display:grid!important;
+  align-content:center!important;
+}
+.side-stack .tag-name{
+  line-height:1.2!important;
+}
+.side-stack .owner-line,
+.side-stack .tag-meta{
+  line-height:1.2!important;
+  margin-top:2px!important;
+}
+
+/* 모바일에서도 상단 줄과 배너 줄 분리 유지 */
+@media(max-width:680px){
+  .top-utility{
+    min-height:40px!important;
+    margin-bottom:8px!important;
+  }
+  .top-right-tools{
+    max-width:calc(100% - 50px)!important;
+  }
+  .top-utility .visit-mini{
+    max-width:calc(100vw - 116px)!important;
+    font-size:11px!important;
+    padding:0 8px!important;
+  }
+  .drawer-toggle,
+  .admin-menu-btn{
+    width:38px!important;
+    height:38px!important;
+    min-width:38px!important;
+  }
+  .top-utility + .banner,
+  .banner{
+    width:100%!important;
+    margin-top:0!important;
+  }
+  .side-stack .tag-list.swipe-list,
+  .side-stack .tag-list{
+    min-height:118px!important;
+    padding-bottom:12px!important;
+  }
+  .side-stack .name-tag{
+    min-height:42px!important;
+  }
+}
