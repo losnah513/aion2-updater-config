@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta property="og:title" content="KINOJO INFO 성역">
+<meta property="og:description" content="키노조 성역 파티 현황">
+<meta property="og:image" content="https://losnah513.github.io/aion2-updater-config/hall-of-fame/assets/hall-banner-v2.png?v=1c200">
+<title>KINOJO INFO · 성역</title>
+<link rel="stylesheet" href="css/sanctuary.css?v=1c200">
+</head>
+<body>
+<main class="wrap">
+  <section class="top-utility" aria-label="KINOJO INFO 상단 메뉴">
+    <button class="drawer-toggle" id="drawerToggleBtn" type="button" aria-label="메뉴 열기" aria-expanded="false"><span class="drawer-plus" aria-hidden="true"></span></button>
+    <a class="top-brand" href="../">KINOJO INFO</a>
+    <div class="top-right-tools"><span class="top-chip" id="syncChip">성역 데이터를 불러오는 중...</span></div>
+  </section>
+
+  <section class="side-drawer" id="sideDrawer" aria-hidden="true">
+    <div class="drawer-panel" role="dialog" aria-modal="false" aria-labelledby="drawerTitle">
+      <div class="drawer-head">
+        <a id="drawerTitle" class="drawer-title-link" href="../">KINOJO INFO</a>
+        <button class="drawer-close" id="drawerCloseBtn" type="button" aria-label="메뉴 닫기">×</button>
+      </div>
+      <nav class="drawer-nav" aria-label="KINOJO INFO 메뉴">
+        <a href="../">메인페이지</a>
+        <a href="../hall-of-fame/">명예의 전당</a>
+        <div class="drawer-divider"></div>
+        <a href="./?id=rudra" data-sanctuary-link="rudra">성역1 루드라팟</a>
+        <a href="./?id=bagod" data-sanctuary-link="bagod">성역2 바고트팟</a>
+        <a href="./?id=kaldrix" data-sanctuary-link="kaldrix">성역3 칼드릭스팟</a>
+      </nav>
+    </div>
+  </section>
+
+  <section class="sanctuary-hero" id="sanctuaryHero">
+    <div class="hero-bg" id="heroBg"></div>
+    <div class="hero-fade"></div>
+    <div class="hero-text">
+      <div class="hero-kicker" id="heroKicker">성역</div>
+      <h1 id="heroTitle">성역 데이터를 불러오는 중...</h1>
+      <p id="heroSub">KINOJO Sanctuary Framework</p>
+    </div>
+  </section>
+
+  <section class="sanctuary-tabs" aria-label="성역 선택">
+    <a class="sanctuary-tab" href="./?id=rudra" data-sanctuary-link="rudra">성역1 · 루드라</a>
+    <a class="sanctuary-tab" href="./?id=bagod" data-sanctuary-link="bagod">성역2 · 바고트</a>
+    <a class="sanctuary-tab" href="./?id=kaldrix" data-sanctuary-link="kaldrix">성역3 · 칼드릭스</a>
+  </section>
+
+  <section class="summary-grid" id="summaryGrid" aria-label="성역 요약"></section>
+
+  <section class="tip-panel" id="tipPanel" aria-hidden="true">
+    <div class="tip-card">
+      <button class="tip-close" id="tipCloseBtn" type="button" aria-label="공략 팁 닫기">×</button>
+      <div class="tip-kicker">공략 팁</div>
+      <h2 id="tipTitle">공략 팁</h2>
+      <div class="tip-body" id="tipBody"></div>
+    </div>
+  </section>
+
+  <section class="edit-shell" aria-label="수정 모드 준비">
+    <button class="edit-btn" id="editModeBtn" type="button">수정하기</button>
+    <span class="edit-note">관리자 코드 기반 편집 모드 준비 영역입니다.</span>
+  </section>
+
+  <section class="team-list" id="teamList"></section>
+  <section class="waiting-section" id="waitingSection"></section>
+
+  <footer class="footer">Powered by AION2 × KINOJO</footer>
+</main>
+
+<section class="admin-code-modal" id="adminCodeModal" aria-hidden="true">
+  <div class="admin-code-card" role="dialog" aria-modal="false" aria-labelledby="adminCodeTitle">
+    <button class="admin-code-close" id="adminCodeCloseBtn" type="button" aria-label="닫기">×</button>
+    <div class="tip-kicker">EDIT MODE</div>
+    <h2 id="adminCodeTitle">관리자 코드를 입력하세요</h2>
+    <input class="admin-code-input" type="password" placeholder="관리자 코드" disabled>
+    <p>드래그 앤 드랍 편집, 팀명 변경, 대표 캐릭터 설정은 다음 단계에서 연결됩니다.</p>
+    <button class="edit-btn" type="button" disabled>확인</button>
+  </div>
+</section>
+
+<script src="js/sanctuary.js?v=1c200"></script>
+</body>
+</html>
