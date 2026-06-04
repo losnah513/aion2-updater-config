@@ -291,6 +291,67 @@ body.drawer-open{
 76%,79%{
   opacity:.36}
 }
+.bagod-card,.kaldrix-card{
+  padding:0;
+  isolation:isolate;
+  cursor:pointer;
+  color:#fff;
+  overflow:hidden;
+  border-color:rgba(120,145,180,.32);
+  background:#101827;
+  transform-origin:center bottom;
+}
+.bagod-card::before,.kaldrix-card::before{
+  content:"";position:absolute;inset:0;z-index:1;transition:.38s ease;
+}
+.bagod-card::before{
+  background:radial-gradient(circle at 52% 26%,rgba(205,255,244,.82),rgba(65,144,131,.66) 38%,rgba(22,48,58,.96) 100%);
+}
+.kaldrix-card::before{
+  background:radial-gradient(circle at 67% 24%,rgba(255,229,178,.86),rgba(167,111,54,.72) 42%,rgba(54,36,42,.98) 100%);
+}
+.bagod-card::after,.kaldrix-card::after{
+  content:"";position:absolute;inset:0;z-index:3;
+  background:linear-gradient(180deg,rgba(8,10,18,0) 38%,rgba(4,9,18,.75) 76%,rgba(3,6,12,.95) 100%);
+}
+.sanctuary-symbol{
+  position:absolute;right:20px;top:24px;z-index:2;font-size:58px;line-height:1;
+  opacity:.62;filter:drop-shadow(0 10px 16px rgba(0,0,0,.32));
+  transition:.38s cubic-bezier(.16,1,.3,1);
+}
+.sanctuary-card-content{
+  position:absolute;left:16px;right:14px;bottom:13px;z-index:5;
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:end;
+  text-shadow:0 2px 12px rgba(0,0,0,.72);
+}
+.sanctuary-title{font-size:24px;font-weight:1000;letter-spacing:-.8px;line-height:1;color:#fff}
+.sanctuary-sub{margin-top:7px;font-size:14px;font-weight:900;color:rgba(255,255,255,.88)}
+.sanctuary-enter{width:32px;height:32px;border-radius:var(--button-radius);display:grid;place-items:center;border:1px solid rgba(255,255,255,.52);background:rgba(20,25,38,.38);font-size:24px;color:#fff;transition:.28s ease}
+.bagod-card:hover,.bagod-card:focus-visible,.kaldrix-card:hover,.kaldrix-card:focus-visible{
+  transform:translateY(-2px) scale(1.012);filter:brightness(1.04);
+}
+.bagod-card:hover::before,.bagod-card:focus-visible::before,.kaldrix-card:hover::before,.kaldrix-card:focus-visible::before{
+  transform:scale(1.06);filter:saturate(1.12) brightness(1.08);
+}
+.bagod-card:hover .sanctuary-symbol,.bagod-card:focus-visible .sanctuary-symbol{
+  transform:translate(-8px,-10px) scale(1.18) rotate(-6deg);opacity:.82;
+}
+.kaldrix-card:hover .sanctuary-symbol,.kaldrix-card:focus-visible .sanctuary-symbol{
+  transform:translate(8px,-12px) scale(1.18) rotate(7deg);opacity:.82;
+}
+.sanctuary-row:has(.bagod-card:hover) .rudra-card,.sanctuary-row:has(.bagod-card:focus-visible) .rudra-card{
+  transform:translateX(-10px);
+}
+.sanctuary-row:has(.bagod-card:hover) .kaldrix-card,.sanctuary-row:has(.bagod-card:focus-visible) .kaldrix-card{
+  transform:translateX(10px);
+}
+.sanctuary-row:has(.kaldrix-card:hover) .rudra-card,.sanctuary-row:has(.kaldrix-card:focus-visible) .rudra-card{
+  transform:translateX(-14px);
+}
+.sanctuary-row:has(.kaldrix-card:hover) .bagod-card,.sanctuary-row:has(.kaldrix-card:focus-visible) .bagod-card{
+  transform:translateX(-8px);
+}
+
 .footer{
   display:flex;
   justify-content:center;
@@ -525,91 +586,6 @@ body,.card,.eyebrow,.hall-banner,.info-logo-placeholder,.info-drawer,.constructi
     transform:translate(34px,-42px) scale(1.36)!important;
   }
 }
-
-
-/* 260603 Rudra visibility correction: bigger, but clipped on left/bottom */
-.rudra-card{
-  overflow:hidden!important;
-  clip-path:none!important;
-}
-.rudra-card .rudra-boss{
-  background-position:58% 32%!important;
-  background-size:92% auto!important;
-  transform-origin:22% 90%!important;
-  clip-path:inset(0 0 0 0 round 2px)!important;
-}
-.rudra-card:hover .rudra-boss,
-.rudra-card:focus-visible .rudra-boss,
-.rudra-card:active .rudra-boss{
-  opacity:1!important;
-  background-size:126% auto!important;
-  background-position:78% 12%!important;
-  transform:translate(20px,-34px) scale(1.08)!important;
-}
-.rudra-card:hover .rudra-lightning-main,
-.rudra-card:focus-visible .rudra-lightning-main,
-.rudra-card:active .rudra-lightning-main,
-.rudra-card:hover .rudra-lightning-right,
-.rudra-card:focus-visible .rudra-lightning-right,
-.rudra-card:active .rudra-lightning-right{
-  clip-path:inset(0 0 0 0 round 2px)!important;
-}
-
-/* 260603 sanctuary motion correction: bottom aligned, Rudra escapes only upward/rightward */
-.sanctuary-row{align-items:end!important;overflow:visible!important;padding-top:96px!important;}
-.sanctuary-row .card{align-self:end!important;overflow:hidden;}
-.rudra-card{overflow:visible!important;clip-path:none!important;z-index:3!important;}
-.rudra-card::before,.rudra-card::after,.rudra-bg{clip-path:inset(0 0 0 0 round 2px)!important;}
-.rudra-card .rudra-boss{background-position:46% 42%!important;background-size:94% auto!important;transform-origin:left bottom!important;transform:translate(0,0) scale(1)!important;clip-path:none!important;}
-.rudra-card:hover .rudra-boss,.rudra-card:focus-visible .rudra-boss,.rudra-card:active .rudra-boss{background-size:94% auto!important;background-position:46% 42%!important;transform:translate(52px,-86px) scale(1.72)!important;opacity:1!important;}
-.rudra-card:hover + .card,.rudra-card:focus-visible + .card,.rudra-card:active + .card{transform:translateX(44px) scale(.94)!important;transform-origin:center bottom!important;}
-.rudra-card:hover + .card + .card,.rudra-card:focus-visible + .card + .card,.rudra-card:active + .card + .card{transform:translateX(62px) scale(.91)!important;transform-origin:center bottom!important;}
-@media(max-width:900px){.sanctuary-row{padding-top:42px!important}.rudra-card:hover .rudra-boss,.rudra-card:focus-visible .rudra-boss,.rudra-card:active .rudra-boss{transform:translate(28px,-46px) scale(1.38)!important}.rudra-card:hover + .card,.rudra-card:hover + .card + .card{transform:none!important}}
-
-/* 260603 final Rudra tuning: larger inside card, less protrusion, sky-to-card lightning */
-.sanctuary-row{align-items:end!important;overflow:visible!important;padding-top:58px!important;}
-.sanctuary-row .card{align-self:end!important;}
-.rudra-card{overflow:visible!important;z-index:3!important;}
-.rudra-card .rudra-boss{
-  background-position:48% 40%!important;
-  background-size:116% auto!important;
-  transform-origin:42% 78%!important;
-  transform:translate(0,0) scale(1)!important;
-  opacity:.9!important;
-}
-.rudra-card:hover .rudra-boss,
-.rudra-card:focus-visible .rudra-boss,
-.rudra-card:active .rudra-boss{
-  background-size:126% auto!important;
-  background-position:52% 36%!important;
-  transform:translate(16px,-22px) scale(1.12)!important;
-  opacity:1!important;
-}
-.rudra-lightning-main{
-  inset:-92px -22px -6px -6px!important;
-  background:url("hall-of-fame/assets/sanctuary/rudra/rudra-lightning.png") 56% 0%/88% auto no-repeat!important;
-  transform:rotate(-8deg) scale(1)!important;
-}
-.rudra-lightning-right{
-  inset:-110px -42px -4px -10px!important;
-  background:url("hall-of-fame/assets/sanctuary/rudra/rudra-lightning-right.png") 70% 0%/92% auto no-repeat!important;
-  transform:rotate(8deg) scale(1)!important;
-}
-.rudra-card:hover + .card,.rudra-card:focus-visible + .card,.rudra-card:active + .card{
-  transform:translateX(42px) scale(.93)!important;
-}
-.rudra-card:hover + .card + .card,.rudra-card:focus-visible + .card + .card,.rudra-card:active + .card + .card{
-  transform:translateX(64px) scale(.90)!important;
-}
-@media(max-width:900px){
-  .sanctuary-row{padding-top:32px!important;}
-  .rudra-card:hover .rudra-boss,.rudra-card:focus-visible .rudra-boss,.rudra-card:active .rudra-boss{
-    transform:translate(8px,-12px) scale(1.06)!important;
-    background-size:120% auto!important;
-  }
-  .rudra-lightning-main,.rudra-lightning-right{inset:-54px -12px -4px -4px!important;}
-}
-
 </style>
 </head>
 <body>
@@ -626,8 +602,8 @@ body,.card,.eyebrow,.hall-banner,.info-logo-placeholder,.info-drawer,.constructi
     <a class="hall-banner" href="hall-of-fame/" aria-label="Hall of Fame 열기"><img src="hall-of-fame/assets/hall-banner-v2.png?v=26060301" alt="Kinojo Hall of Fame"></a>
   </section>
   <section class="sanctuary-row" aria-label="성역 파티 확인">
-    <div class="card rudra-card" role="button" tabindex="0" aria-label="성역 1 루드라팟 파티 확인" data-construction="1성역 루드라팟">
-      <span class="badge">준비중</span>
+    <a class="card rudra-card" href="sanctuary/?id=rudra" aria-label="성역 1 루드라팟 파티 확인">
+      <span class="badge">OPEN</span>
       <span class="rudra-layer rudra-bg" aria-hidden="true"></span>
       <span class="rudra-layer rudra-lightning-main" aria-hidden="true"></span>
       <span class="rudra-layer rudra-lightning-right" aria-hidden="true"></span>
@@ -635,13 +611,25 @@ body,.card,.eyebrow,.hall-banner,.info-logo-placeholder,.info-drawer,.constructi
       <div class="rudra-content">
         <div>
           <div class="rudra-title">성역 1</div>
-          <div class="rudra-sub">파티 확인</div>
+          <div class="rudra-sub">심연의 재련: 루드라</div>
         </div>
         <div class="rudra-enter">›</div>
       </div>
-    </div>
-    <div class="card disabled" role="button" aria-disabled="true"><span class="badge">준비중</span><div class="icon">⚔️</div><div class="card-title">성역 2</div><div class="card-sub">바고트팟 파티 확인</div></div>
-    <div class="card disabled" role="button" aria-disabled="true"><span class="badge">준비중</span><div class="icon">🔮</div><div class="card-title">성역 3</div><div class="card-sub">칼드릭스팟 파티 확인</div></div>
+    </a>
+    <a class="card bagod-card" href="sanctuary/?id=bagod" aria-label="성역 2 바고트팟 파티 확인">
+      <span class="sanctuary-symbol" aria-hidden="true">⚔️</span>
+      <div class="sanctuary-card-content">
+        <div><div class="sanctuary-title">성역 2</div><div class="sanctuary-sub">침식의 정화소 · 바고트</div></div>
+        <div class="sanctuary-enter">›</div>
+      </div>
+    </a>
+    <a class="card kaldrix-card" href="sanctuary/?id=kaldrix" aria-label="성역 3 칼드릭스팟 파티 확인">
+      <span class="sanctuary-symbol" aria-hidden="true">🔮</span>
+      <div class="sanctuary-card-content">
+        <div><div class="sanctuary-title">성역 3</div><div class="sanctuary-sub">무스펠의 성배 · 칼드릭스</div></div>
+        <div class="sanctuary-enter">›</div>
+      </div>
+    </a>
   </section>
   <footer class="footer">
     <button type="button" data-drawer="about">사이트 소개</button>
