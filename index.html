@@ -7,13 +7,14 @@
 <meta property="og:description" content="키노조 정보 허브 - 성역 파티 확인과 명예의 전당">
 <meta property="og:image" content="https://losnah513.github.io/aion2-updater-config/hall-of-fame/assets/hall-banner-v2.png?v=26060301">
 <title>KINOJO INFO</title>
-<link rel="stylesheet" href="ui/info-home.css?v=1.c2.01-ui-fix">
+<link rel="stylesheet" href="ui/info-home.css?v=1.c2.02-ui-fix">
 </head>
 <body>
 <section class="top-utility" aria-label="KINOJO INFO 상단 메뉴">
   <button class="drawer-toggle" id="drawerToggleBtn" type="button" aria-label="메뉴 열기" aria-expanded="false"><span class="drawer-plus" aria-hidden="true"></span></button>
   <a class="top-brand" href="./">KINOJO INFO</a>
   <div class="top-right-tools">
+    <a class="top-chip top-link" href="https://aion2.plaync.com/ko-kr/index?redirect=false" target="_blank" rel="noopener">공홈</a><a class="top-chip top-link" href="https://aion2.plaync.com/ko-kr/board/notice/list" target="_blank" rel="noopener">공지</a>
     <span class="top-chip">INFO HOME</span>
   </div>
 </section>
@@ -25,13 +26,12 @@
       <button class="drawer-close" id="drawerCloseBtn" type="button" aria-label="메뉴 닫기">×</button>
     </div>
     <nav class="drawer-nav" aria-label="KINOJO INFO 메뉴">
-      <div class="drawer-category">메인</div>
-      <a href="./">KINOJO INFO 홈</a>
+      <div class="drawer-category">바로가기</div>
       <a href="hall-of-fame/">명예의 전당</a>
       <div class="drawer-divider"></div>
       <div class="drawer-category">성역</div>
       <a href="sanctuary/?id=rudra">1. 심연의 재련: 루드라</a>
-      <a href="sanctuary/?id=bagod">2. 침식의 정화소</a>
+      <a href="sanctuary/?id=bagot">2. 침식의 정화소</a>
       <a href="sanctuary/?id=kaldrix">3. 무스펠의 성배</a>
       <div class="drawer-divider"></div>
       <div class="drawer-category">안내</div>
@@ -70,7 +70,7 @@
         <div class="rudra-enter">›</div>
       </div>
     </a>
-    <a class="card bagod-card" href="sanctuary/?id=bagod" aria-label="성역 2 바고트팟 파티 확인">
+    <a class="card bagot-card" href="sanctuary/?id=bagot" aria-label="성역 2 바고트팟 파티 확인">
       <span class="sanctuary-symbol" aria-hidden="true">⚔️</span>
       <div class="sanctuary-card-content">
         <div><div class="sanctuary-title">성역 2</div><div class="sanctuary-sub">침식의 정화소 · 바고트</div></div>
@@ -85,11 +85,14 @@
       </div>
     </a>
   </section>
-  <footer class="footer">
-    <button type="button" data-drawer="about">사이트 소개</button>
-    <button type="button" data-drawer="terms">이용약관</button>
-    <button type="button" data-drawer="privacy">개인정보처리방침</button>
-    <button type="button" data-drawer="contact">아이디어 제안 및 건의</button>
+  <footer class="footer common-footer">
+    <div class="footer-links">
+      <button type="button" data-drawer="about">사이트 소개</button>
+      <button type="button" data-drawer="terms">이용약관</button>
+      <button type="button" data-drawer="privacy">개인정보처리방침</button>
+      <button type="button" data-drawer="contact">아이디어 제안 및 건의</button>
+    </div>
+    <div class="footer-powered">Powered by AION2 · 깡 레기온 지원</div>
   </footer>
 </main>
 

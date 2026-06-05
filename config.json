@@ -1,5 +1,5 @@
 {
-  "version": "1.c2.01",
+  "version": "1.c2.02",
   "buildDate": "260605",
   "enabled": true,
   "testMode": false,
@@ -9,10 +9,10 @@
     "9516658a61cf564d2001e1dc6b3f3fca526848dc65e4ac38faec05317e2dfedc"
   ],
   "webAppUrl": "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec",
-  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.c2.01/KINOJO_1_c2_01.zip",
-  "notice": "✅ Kinojo 1.c2.01 UI Interaction Fix\n• 확장프로그램 캐릭터 조회를 백그라운드 탭 방식으로 변경하여 현재 창 새로고침을 줄였습니다.\n• KINOJO INFO 공통 탑바/메뉴/버튼 롤오버 애니메이션을 복구했습니다.\n• 명예의 전당 TOP5 3:3:4 PC 비율, 카드 제목 높이, 캐릭터 행 높이, 관계카드 높이 고정/슬라이드 처리를 보정했습니다.\n• 성역 메뉴명을 정식 성역명 기준으로 정리하고 공사중 안내 대신 실제 성역 페이지로 연결했습니다.",
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.c2.02/KINOJO_1_c2_02.zip",
+  "notice": "✅ KINOJO 1.c2.02 업데이트",
   "hallOfFameUrl": "https://losnah513.github.io/aion2-updater-config/",
-  "news": "KINOJO INFO / UI Interaction Fix / Background Character Lookup / Hall Layout Restore",
-  "patchTitle": "1.c2.01 UI Interaction Fix",
-  "patchBody": "확장프로그램 조회 시 현재 창이 캐릭터 상세 페이지로 이동하며 새로고침되는 문제를 줄이기 위해 백그라운드 조회 탭 방식을 추가했습니다. 웹페이지는 공통 탑바, +메뉴 슬라이드, 버튼 롤오버, X 닫기 회전 효과, 명예의 전당 TOP5/관계카드 레이아웃 및 모바일 반응형을 보정했습니다."
+  "news": "성역·명예의 전당 UI 보정",
+  "patchTitle": "1.c2.02 UI System Fix",
+  "patchBody": "공통 탑바와 메뉴, 로딩 표시, 명예의 전당 레이아웃, 성역 바고트 데이터 연결을 보정했습니다."
 }

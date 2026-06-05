@@ -1204,11 +1204,11 @@ to{
 }
 
 /* Visual contract, layout guards, component polish, and animation overrides
-   moved to ../ui/kinojo-*.css files in 1.c2.01 layout refactor. */
+   moved to ../ui/kinojo-*.css files in 1.c2.02 layout refactor. */
 
 
 /* ============================================================
-   1.c2.01 UI interaction and layout fix
+   1.c2.02 UI interaction and layout fix
 ============================================================ */
 .top-utility{position:sticky;top:0;z-index:90;align-items:center;padding:8px 0;background:linear-gradient(180deg,rgba(238,244,255,.96),rgba(238,244,255,.72));backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .top-right-tools{align-items:center;height:40px}.visit-mini{height:40px;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;text-align:right;padding:5px 10px}.admin-menu-btn,.drawer-toggle{height:40px;width:40px}.drawer-toggle .drawer-plus,.drawer-toggle .drawer-plus:before{transition:transform .38s cubic-bezier(.16,1,.3,1)}.drawer-toggle:hover .drawer-plus{transform:rotate(360deg)}.drawer-toggle:active .drawer-plus{transform:rotate(540deg) scale(.92)}
@@ -1223,3 +1223,46 @@ to{
 .rank-tools{align-items:center}.class-tabs.rank-tabs{padding-left:12px;padding-right:12px}.overall .class-tabs.rank-tabs,.overall .rank-tools{max-width:100%}
 @media(max-width:900px){.dashboard{grid-template-columns:1fr}.top-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.relation-viewport{max-height:310px}.side-stack{min-height:310px}}
 @media(max-width:620px){.top-grid{grid-template-columns:1fr}.dashboard{grid-template-columns:1fr}.mini-row{grid-template-columns:44px minmax(0,1fr) 42px 74px}.visit-mini{width:194px}.top-right-tools{gap:6px}}
+
+/* ============================================================
+   KINOJO 1.c2.02 UI System Fix
+   공통 탑바 / 로딩 / 명예의 전당 레이아웃 보정
+============================================================ */
+body{background:#fff!important;}
+.top-utility{position:sticky;top:0;z-index:90;background:transparent!important;backdrop-filter:none;-webkit-backdrop-filter:none;}
+.top-utility::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);opacity:.92;}
+.top-right-tools{align-items:center;}
+.top-chip.top-link{height:40px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;}
+.visit-mini{height:40px;min-height:40px;display:grid;align-content:center;text-align:right;line-height:1.16;padding:4px 10px;}
+.drawer-toggle,.admin-menu-btn{width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;aspect-ratio:1/1;}
+.drawer-close,.reaction-close,.construction-close,.drawer-page-close,.admin-dropdown-close{border-radius:999px!important;}
+.drawer-nav a.active,.drawer-nav a[aria-disabled="true"]{opacity:.45;pointer-events:none;cursor:default;}
+.drawer-nav a,.drawer-link,.drawer-action{border:0!important;background:transparent!important;}
+.loader-ring{width:34px;height:34px;margin:0 auto 10px;border-radius:999px;background:conic-gradient(#2563eb 0 12.5%,#dbeafe 12.5% 25%,#93c5fd 25% 37.5%,#dbeafe 37.5% 50%,#60a5fa 50% 62.5%,#dbeafe 62.5% 75%,#3b82f6 75% 87.5%,#dbeafe 87.5%);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 0);mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 0);animation:kinojoSpinner .9s steps(8) infinite;}
+@keyframes kinojoSpinner{to{transform:rotate(360deg)}}
+.loader-text,#loaderText{display:inline-block;animation:kinojoTextFloat 1.15s ease-in-out infinite;}
+@keyframes kinojoTextFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.common-footer{display:grid;gap:8px;justify-items:center;}
+.footer-links{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;}
+.footer-links a,.footer-links button{border:0;background:transparent;color:#667085;font-weight:900;text-decoration:none;cursor:pointer;font:inherit;transition:color .22s ease,transform .22s ease;}
+.footer-links a:hover,.footer-links button:hover{color:#2563eb;transform:scale(1.04)}
+.footer-powered{font-size:11px;color:#98a2b3;font-weight:900;}
+.dashboard{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;}
+.top-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+.section-head,.overall-head,.mvp-head,.reaction-card-head,.relation-main-head,.relation-sub-head{min-height:35px!important;padding:8px 12px!important;}
+.section h2,.overall h2,.mvp-card h2,.relation-main-head h2,.relation-sub-head h2,.reaction-card-title{font-size:16px!important;line-height:1.15!important;}
+.mini-row{position:relative;min-height:31px!important;padding:3px 7px!important;}
+.mini-row+.mini-row::before{content:"";position:absolute;top:-3px;left:16.5%;right:16.5%;height:1px;background:rgba(117,140,177,.22);}
+.relation-combined-head{display:grid!important;grid-template-columns:1fr!important;}
+.relation-viewport{display:grid!important;grid-template-columns:1fr!important;grid-template-rows:minmax(0,1fr) minmax(0,1fr);gap:8px!important;max-height:none!important;height:100%;overflow:hidden;}
+.relation-column{min-height:0;overflow:hidden;}
+.relation-combined-card{height:100%;min-height:0;}
+.relation-row{min-height:34px;}
+.character-button,.character-name-text,[data-character]{cursor:pointer!important;transition:color .22s ease,transform .22s ease;}
+.character-button:hover,.character-name-text:hover,[data-character]:hover{color:#2563eb!important;transform:scale(1.045);text-decoration:none!important;}
+.rank-table th:nth-child(4),.rank-table td:nth-child(4){text-align:center;}
+.rank-table th:nth-child(5),.rank-table td:nth-child(5),.rank-table th:nth-child(6),.rank-table td:nth-child(6){text-align:right;}
+.reaction-empty{display:grid;place-items:center;text-align:center;}
+.recent-comment-card .comment-list.is-scrollable .comment-track{animation:commentRoll 28s linear infinite;}
+@media(max-width:760px){.top-right-tools .top-link{display:none}.dashboard{grid-template-columns:1fr!important}.top-grid{grid-template-columns:1fr}.reaction-board,.award-grid{grid-template-columns:1fr}.visit-mini{width:210px;font-size:11px}.relation-viewport{height:320px}}
+@media(min-width:761px) and (max-width:1080px){.top-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard{grid-template-columns:1fr!important}.side-stack{min-height:330px}}
