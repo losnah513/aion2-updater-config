@@ -27,3 +27,15 @@ body{background:#fff!important;}
 .footer-links a:hover{color:#2563eb;transform:scale(1.04)}
 .footer-powered{font-size:11px;color:#98a2b3;font-weight:900;}
 @media(max-width:760px){.top-right-tools .top-link{display:none}.top-chip{font-size:11px;padding:0 8px}.summary-grid{grid-template-columns:1fr 1fr}.party-card{flex-basis:86vw}}
+
+
+/* 1.c2.02_260605_01 common topbar / party slide button repair */
+.wrap{padding-top:0!important;}
+.slide-btn{width:38px!important;height:38px!important;border:1px solid #111827!important;border-radius:999px!important;background:#111827!important;color:#fff!important;font-size:0!important;line-height:1!important;box-shadow:none!important;display:none;place-items:center;transition:background .22s ease,color .22s ease,transform .18s ease,filter .22s ease!important;}
+.slide-btn.show{display:grid!important;}
+.slide-btn::before{content:attr(data-arrow);font-size:24px;font-weight:1000;line-height:1;display:block;transform:translateY(-1px);}
+.slide-btn.left::before{content:"‹";}
+.slide-btn.right::before{content:"›";}
+.slide-btn:hover{background:#fff!important;color:#111827!important;filter:drop-shadow(0 0 10px rgba(37,99,235,.35));transform:translateY(-50%) scale(1.08)!important;}
+.slide-btn:active{background:#fff!important;color:#111827!important;filter:drop-shadow(0 0 14px rgba(37,99,235,.48));transform:translateY(-50%) scale(1.16)!important;}
+.common-footer a{cursor:pointer;}

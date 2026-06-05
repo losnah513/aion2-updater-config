@@ -1,5 +1,5 @@
 {
-  "version": "1.c2.02",
+  "version": "1.c2.02_260605_01",
   "buildDate": "260605",
   "enabled": true,
   "testMode": false,
@@ -10,9 +10,9 @@
   ],
   "webAppUrl": "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec",
   "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.c2.02/KINOJO_1_c2_02.zip",
-  "notice": "✅ KINOJO 1.c2.02 업데이트",
+  "notice": "✅ KINOJO 1.c2.02_260605_01 업데이트",
   "hallOfFameUrl": "https://losnah513.github.io/aion2-updater-config/",
-  "news": "성역·명예의 전당 UI 보정",
-  "patchTitle": "1.c2.02 UI System Fix",
-  "patchBody": "공통 탑바와 메뉴, 로딩 표시, 명예의 전당 레이아웃, 성역 바고트 데이터 연결을 보정했습니다."
+  "news": "공통 탑바·+메뉴 구조 통합 및 명예의 전당/성역 UI 보정",
+  "patchTitle": "1.c2.02_260605_01 UI Common Fix",
+  "patchBody": "GitHub_Pages 공통 UI 파일을 추가하고, 탑바와 +메뉴를 전 페이지에서 동일하게 불러오도록 정리했습니다."
 }

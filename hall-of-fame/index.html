@@ -1,141 +1,100 @@
 <!DOCTYPE html>
+
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta property="og:title" content="KINOJO INFO">
-<meta property="og:description" content="전투력과 성장 기록으로 선정된 최고의 모험가들">
-<meta property="og:image" content="https://losnah513.github.io/aion2-updater-config/hall-of-fame/assets/hall-banner-v2.png?v=1c202">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
+<meta content="KINOJO INFO" property="og:title"/>
+<meta content="전투력과 성장 기록으로 선정된 최고의 모험가들" property="og:description"/>
+<meta content="https://losnah513.github.io/aion2-updater-config/hall-of-fame/assets/hall-banner-v2.png?v=1c202" property="og:image"/>
 <title>KINOJO INFO</title>
-<link rel="stylesheet" href="css/hall.css?v=1c202">
-<link rel="stylesheet" href="../ui/kinojo-layout.css?v=1.c2.02-ui-fix">
-<link rel="stylesheet" href="../ui/kinojo-components.css?v=1.c2.02-ui-fix">
-<link rel="stylesheet" href="../ui/kinojo-card-guards.css?v=1.c2.02-ui-fix">
-<link rel="stylesheet" href="../ui/kinojo-animations.css?v=1.c2.02-ui-fix">
+<link href="css/hall.css?v=1c202" rel="stylesheet"/>
+<link href="../ui/kinojo-layout.css?v=1.c2.02-ui-fix" rel="stylesheet"/>
+<link href="../ui/kinojo-components.css?v=1.c2.02-ui-fix" rel="stylesheet"/>
+<link href="../ui/kinojo-common-ui.css?v=1.c2.02_260605_01" rel="stylesheet"/>
+<link href="../ui/kinojo-card-guards.css?v=1.c2.02-ui-fix" rel="stylesheet"/>
+<link href="../ui/kinojo-animations.css?v=1.c2.02-ui-fix" rel="stylesheet"/>
 </head>
 <body>
-<main class="wrap">
-<section class="top-utility" aria-label="KINOJO INFO 상단 메뉴">
-  <button class="drawer-toggle" id="drawerToggleBtn" type="button" aria-label="메뉴 열기" aria-expanded="false"><span class="drawer-plus" aria-hidden="true"></span></button>
-  <div class="top-right-tools">
-    <a class="top-chip top-link" href="https://aion2.plaync.com/ko-kr/index?redirect=false" target="_blank" rel="noopener">공홈</a><a class="top-chip top-link" href="https://aion2.plaync.com/ko-kr/board/notice/list" target="_blank" rel="noopener">공지</a>
-    <section class="visit-mini" id="visitCard">👀 방문자 통계를 불러오는 중...</section>
-    <div class="admin-menu-wrap">
-      <button class="admin-menu-btn" id="adminMenuBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="관리자 메뉴">⋮</button>
-      <section class="admin-dropdown" id="adminDropdown" aria-hidden="true">
-        <div class="admin-dropdown-head">
-          <strong>관리자 전용 메뉴입니다.</strong>
-          <button class="admin-dropdown-close" id="adminDropdownClose" type="button" aria-label="닫기">×</button>
-        </div>
-        <div class="admin-login-panel" id="adminLoginPanel">
-          <input class="search admin-password" id="adminPasswordInput" type="password" placeholder="비밀번호 입력">
-          <button class="btn" id="adminLoginBtn" type="button">확인</button>
-          <div class="admin-status" id="adminStatus"></div>
-        </div>
-        <div class="admin-control-panel" id="adminControlPanel" style="display:none">
-          <button class="btn" id="adminMvpBtn" type="button">MVP 후보 확인</button>
-          <div class="admin-visit-control" id="adminVisitControl">
-            <div class="admin-visit-title">방문자수 조정</div>
-            <div class="admin-visit-line admin-visit-row-main">
-              <input class="search admin-visit-amount" id="adminVisitAmount" type="number" min="1" max="9999" value="1" inputmode="numeric" aria-label="조정 인원수">
-              <span class="admin-visit-unit">명</span>
-              <div class="admin-swap" aria-label="조정 대상">
-                <button class="admin-swap-btn active" type="button" data-visit-target="daily">일일</button>
-                <button class="admin-swap-btn" type="button" data-visit-target="total">누적</button>
-              </div>
-            </div>
-            <div class="admin-visit-line admin-visit-row-sign">
-              <div class="admin-swap admin-sign-swap" aria-label="증감 선택">
-                <button class="admin-swap-btn active" type="button" data-visit-sign="plus">+</button>
-                <button class="admin-swap-btn" type="button" data-visit-sign="minus">-</button>
-              </div>
-            </div>
-            <div class="admin-visit-line admin-visit-actions">
-              <button class="btn" id="adminVisitApplyBtn" type="button">반영</button>
-              <button class="btn admin-close" id="adminVisitCancelBtn" type="button">취소</button>
-            </div>
-            <div class="admin-status" id="adminVisitStatus"></div>
-          </div>
-          <button class="btn" id="adminSnapshotBtn" type="button">성장왕 스냅샷 생성</button>
-          <button class="btn" id="adminSnapshotTriggerBtn" type="button">자동 스냅샷 트리거 설치</button>
-        </div>
-      </section>
-    </div>
-  </div>
+<main class="wrap"><div hidden="" id="kinojoCommonSlot"><section class="visit-mini" id="visitCard">👀 방문자 통계를 불러오는 중...</section><div class="admin-menu-wrap">
+<button aria-expanded="false" aria-haspopup="true" aria-label="관리자 메뉴" class="admin-menu-btn" id="adminMenuBtn" type="button">⋮</button>
+<section aria-hidden="true" class="admin-dropdown" id="adminDropdown">
+<div class="admin-dropdown-head">
+<strong>관리자 전용 메뉴입니다.</strong>
+<button aria-label="닫기" class="admin-dropdown-close" id="adminDropdownClose" type="button">×</button>
+</div>
+<div class="admin-login-panel" id="adminLoginPanel">
+<input class="search admin-password" id="adminPasswordInput" placeholder="비밀번호 입력" type="password"/>
+<button class="btn" id="adminLoginBtn" type="button">확인</button>
+<div class="admin-status" id="adminStatus"></div>
+</div>
+<div class="admin-control-panel" id="adminControlPanel" style="display:none">
+<button class="btn" id="adminMvpBtn" type="button">MVP 후보 확인</button>
+<div class="admin-visit-control" id="adminVisitControl">
+<div class="admin-visit-title">방문자수 조정</div>
+<div class="admin-visit-line admin-visit-row-main">
+<input aria-label="조정 인원수" class="search admin-visit-amount" id="adminVisitAmount" inputmode="numeric" max="9999" min="1" type="number" value="1"/>
+<span class="admin-visit-unit">명</span>
+<div aria-label="조정 대상" class="admin-swap">
+<button class="admin-swap-btn active" data-visit-target="daily" type="button">일일</button>
+<button class="admin-swap-btn" data-visit-target="total" type="button">누적</button>
+</div>
+</div>
+<div class="admin-visit-line admin-visit-row-sign">
+<div aria-label="증감 선택" class="admin-swap admin-sign-swap">
+<button class="admin-swap-btn active" data-visit-sign="plus" type="button">+</button>
+<button class="admin-swap-btn" data-visit-sign="minus" type="button">-</button>
+</div>
+</div>
+<div class="admin-visit-line admin-visit-actions">
+<button class="btn" id="adminVisitApplyBtn" type="button">반영</button>
+<button class="btn admin-close" id="adminVisitCancelBtn" type="button">취소</button>
+</div>
+<div class="admin-status" id="adminVisitStatus"></div>
+</div>
+<button class="btn" id="adminSnapshotBtn" type="button">성장왕 스냅샷 생성</button>
+<button class="btn" id="adminSnapshotTriggerBtn" type="button">자동 스냅샷 트리거 설치</button>
+</div>
 </section>
-<section class="banner"><img src="assets/hall-banner-v2.png?v=1c202" alt="Kinojo Hall of Fame"></section>
+</div></div>
 
-<section class="side-drawer" id="sideDrawer" aria-hidden="true">
-  <div class="drawer-panel" role="dialog" aria-modal="false" aria-labelledby="drawerTitle">
-    <div class="drawer-head">
-      <a id="drawerTitle" class="drawer-title-link" href="../">KINOJO INFO</a>
-      <button class="drawer-close" id="drawerCloseBtn" type="button" aria-label="메뉴 닫기">×</button>
-    </div>
-    <nav class="drawer-nav" aria-label="KINOJO INFO 메뉴">
-      <div class="drawer-category">바로가기</div>
-      <a href="index.html" class="active" aria-disabled="true">명예의 전당</a>
-      <div class="drawer-divider"></div>
-      <div class="drawer-category">성역</div>
-      <a href="../sanctuary/?id=rudra">1. 심연의 재련: 루드라</a>
-      <a href="../sanctuary/?id=bagot">2. 침식의 정화소</a>
-      <a href="../sanctuary/?id=kaldrix">3. 무스펠의 성배</a>
-      <div class="drawer-divider"></div>
-      <div class="drawer-category">안내</div>
-      <button class="drawer-link drawer-page-link" type="button" data-page-panel="about">사이트 소개</button>
-      <button class="drawer-link drawer-page-link" type="button" data-page-panel="terms">이용약관</button>
-      <button class="drawer-link drawer-page-link" type="button" data-page-panel="privacy">개인정보처리방침</button>
-      <button class="drawer-action" id="drawerSuggestBtn" type="button">아이디어 제안 및 건의</button>
-    </nav>
-  </div>
+<section class="banner"><img alt="Kinojo Hall of Fame" src="assets/hall-banner-v2.png?v=1c202"/></section>
+
+
+<section class="chick-card" id="chickCard"><button aria-label="신입 병아리 닫기" class="chick-close" id="chickCloseBtn" type="button">×</button><div class="chick-line"><div class="chick-head"><div class="chick-icon">🐥</div><div><div class="chick-title" id="chickTitle">신입 병아리</div><div class="chick-sub" id="chickSub">새로운 모험가들을 환영합니다!</div></div></div><div class="chick-tags" id="chickTags"></div></div></section>
+<section class="section" id="suggestionBox" style="display:none;margin-bottom:12px"><div class="section-head"><h2>💡 아이디어 제안 및 건의</h2><span class="section-note">운영자 검토 후 반영</span></div><div class="list"><input class="search" id="suggestTitle" placeholder="항목 이름"/><input class="search" id="suggestProposer" placeholder="제안자"/><textarea class="search" id="suggestMemo" placeholder="기준 설명" rows="3"></textarea><div class="suggest-actions"><button class="btn" id="submitSuggestBtn">제안 보내기</button><button class="btn" id="cancelSuggestBtn" type="button">취소</button></div></div></section>
+<div class="loading" id="app"><div><div class="loader-ring"></div><div id="loaderText">명예의 전당 데이터를 불러오는 중...</div></div></div>
+<section aria-hidden="true" class="reaction-popover" id="reactionPopover">
+<div class="reaction-popover-head">
+<span id="reactionModalTitle">캐릭터 반응 남기기</span>
+<button aria-label="닫기" class="reaction-close" id="reactionCloseBtn" type="button">×</button>
+</div>
+<div class="reaction-popover-body">
+<div class="reaction-choice">
+<button id="reactionLikeBtn" type="button"><span aria-hidden="true" class="reaction-icon like-icon"></span><span>좋아요</span></button>
+<button id="reactionDislikeBtn" type="button"><span aria-hidden="true" class="reaction-icon dislike-icon"></span><span>싫어요</span></button>
+</div>
+<div class="reaction-input-row">
+<input class="reaction-comment" id="reactionComment" maxlength="20" placeholder="전하고 싶은 말을 남겨주세요"/>
+<button aria-label="코멘트 전달" class="send-btn" id="reactionSubmitBtn" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M3.3 11.4 20.1 3.7c.8-.4 1.6.4 1.2 1.2l-7.7 16.8c-.3.7-1.3.6-1.5-.1l-1.7-6.4-6.4-1.7c-.7-.2-.8-1.2-.1-1.5Zm7.8 2.2 1.3 4.8 5.4-11.7-11.7 5.4 4.8 1.3 3.6-3.6 1.2 1.2-3.6 3.6Z"></path></svg>
+</button>
+</div>
+<div class="reaction-status" id="reactionStatus"></div>
+</div>
 </section>
-
-<section class="drawer-page-panel" id="drawerPagePanel" aria-hidden="true">
-  <div class="drawer-page-card" role="dialog" aria-modal="false" aria-labelledby="drawerPageTitle">
-    <div class="drawer-page-head">
-      <strong id="drawerPageTitle">사이트 안내</strong>
-      <button class="drawer-page-close" id="drawerPageCloseBtn" type="button" aria-label="닫기">×</button>
-    </div>
-    <div class="drawer-page-body" id="drawerPageBody"></div>
-  </div>
+<footer class="footer common-footer"><div class="footer-links"><a href="../pages/about.html">사이트 소개</a><a href="../pages/terms.html">이용약관</a><a href="../pages/privacy.html">개인정보처리방침</a><button id="footerSuggestBtn" type="button">아이디어 제안 및 건의</button></div><div class="footer-powered">Powered by AION2 · 깡 레기온 지원</div></footer>
+<section aria-hidden="true" class="construction-notice" id="constructionNotice">
+<div aria-labelledby="constructionTitle" aria-modal="false" class="construction-card" role="dialog">
+<button aria-label="닫기" class="construction-close" id="constructionCloseBtn" type="button">×</button>
+<div class="construction-kicker">KINOJO INFO</div>
+<h2 id="constructionTitle">페이지 인테리어 공사중입니다~</h2>
+<p id="constructionMessage">조금만 기다려 주세요. 곧 더 깔끔한 성역팟 페이지로 열어둘게요.</p>
+<button class="construction-ok" id="constructionOkBtn" type="button">확인</button>
+</div>
 </section>
-
-<section class="chick-card" id="chickCard"><div class="chick-line"><div class="chick-head"><div class="chick-icon">🐥</div><div><div class="chick-title" id="chickTitle">신입 병아리</div><div class="chick-sub" id="chickSub">새로운 모험가들을 환영합니다!</div></div></div><div class="chick-tags" id="chickTags"></div></div></section>
-<section class="section" id="suggestionBox" style="display:none;margin-bottom:12px"><div class="section-head"><h2>💡 아이디어 제안 및 건의</h2><span class="section-note">운영자 검토 후 반영</span></div><div class="list"><input class="search" id="suggestTitle" placeholder="항목 이름"><input class="search" id="suggestProposer" placeholder="제안자"><textarea class="search" id="suggestMemo" rows="3" placeholder="기준 설명"></textarea><div class="suggest-actions"><button class="btn" id="submitSuggestBtn">제안 보내기</button><button class="btn" id="cancelSuggestBtn" type="button">취소</button></div></div></section>
-<div id="app" class="loading"><div><div class="loader-ring"></div><div id="loaderText">명예의 전당 데이터를 불러오는 중...</div></div></div>
-
-<section class="reaction-popover" id="reactionPopover" aria-hidden="true">
-  <div class="reaction-popover-head">
-    <span id="reactionModalTitle">캐릭터 반응 남기기</span>
-    <button id="reactionCloseBtn" class="reaction-close" type="button" aria-label="닫기">×</button>
-  </div>
-  <div class="reaction-popover-body">
-    <div class="reaction-choice">
-      <button id="reactionLikeBtn" type="button"><span class="reaction-icon like-icon" aria-hidden="true"></span><span>좋아요</span></button>
-      <button id="reactionDislikeBtn" type="button"><span class="reaction-icon dislike-icon" aria-hidden="true"></span><span>싫어요</span></button>
-    </div>
-    <div class="reaction-input-row">
-      <input class="reaction-comment" id="reactionComment" maxlength="20" placeholder="전하고 싶은 말을 남겨주세요">
-      <button id="reactionSubmitBtn" class="send-btn" type="button" aria-label="코멘트 전달">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.3 11.4 20.1 3.7c.8-.4 1.6.4 1.2 1.2l-7.7 16.8c-.3.7-1.3.6-1.5-.1l-1.7-6.4-6.4-1.7c-.7-.2-.8-1.2-.1-1.5Zm7.8 2.2 1.3 4.8 5.4-11.7-11.7 5.4 4.8 1.3 3.6-3.6 1.2 1.2-3.6 3.6Z"/></svg>
-      </button>
-    </div>
-    <div class="reaction-status" id="reactionStatus"></div>
-  </div>
-</section>
-
-<footer class="footer common-footer"><div class="footer-links"><a href="../pages/about.html">사이트 소개</a><a href="../pages/terms.html">이용약관</a><a href="../pages/privacy.html">개인정보처리방침</a><button type="button" id="footerSuggestBtn">아이디어 제안 및 건의</button></div><div class="footer-powered">Powered by AION2 · 깡 레기온 지원</div></footer>
-
-<section class="construction-notice" id="constructionNotice" aria-hidden="true">
-  <div class="construction-card" role="dialog" aria-modal="false" aria-labelledby="constructionTitle">
-    <button class="construction-close" id="constructionCloseBtn" type="button" aria-label="닫기">×</button>
-    <div class="construction-kicker">KINOJO INFO</div>
-    <h2 id="constructionTitle">페이지 인테리어 공사중입니다~</h2>
-    <p id="constructionMessage">조금만 기다려 주세요. 곧 더 깔끔한 성역팟 페이지로 열어둘게요.</p>
-    <button class="construction-ok" id="constructionOkBtn" type="button">확인</button>
-  </div>
-</section>
-
 </main>
+<script src="../ui/kinojo-common-ui.js?v=1.c2.02_260605_01"></script>
 <script src="js/app.js?v=1c202"></script>
 </body>
 </html>

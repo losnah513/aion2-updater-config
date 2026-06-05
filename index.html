@@ -8,41 +8,9 @@
 <meta property="og:image" content="https://losnah513.github.io/aion2-updater-config/hall-of-fame/assets/hall-banner-v2.png?v=26060301">
 <title>KINOJO INFO</title>
 <link rel="stylesheet" href="ui/info-home.css?v=1.c2.02-ui-fix">
+<link rel="stylesheet" href="ui/kinojo-common-ui.css?v=1.c2.02_260605_01">
 </head>
 <body>
-<section class="top-utility" aria-label="KINOJO INFO 상단 메뉴">
-  <button class="drawer-toggle" id="drawerToggleBtn" type="button" aria-label="메뉴 열기" aria-expanded="false"><span class="drawer-plus" aria-hidden="true"></span></button>
-  <a class="top-brand" href="./">KINOJO INFO</a>
-  <div class="top-right-tools">
-    <a class="top-chip top-link" href="https://aion2.plaync.com/ko-kr/index?redirect=false" target="_blank" rel="noopener">공홈</a><a class="top-chip top-link" href="https://aion2.plaync.com/ko-kr/board/notice/list" target="_blank" rel="noopener">공지</a>
-    <span class="top-chip">INFO HOME</span>
-  </div>
-</section>
-
-<section class="side-drawer" id="sideDrawer" aria-hidden="true">
-  <div class="drawer-panel" role="dialog" aria-modal="false" aria-labelledby="drawerTitle">
-    <div class="drawer-head">
-      <a id="drawerTitle" class="drawer-title-link" href="./">KINOJO INFO</a>
-      <button class="drawer-close" id="drawerCloseBtn" type="button" aria-label="메뉴 닫기">×</button>
-    </div>
-    <nav class="drawer-nav" aria-label="KINOJO INFO 메뉴">
-      <div class="drawer-category">바로가기</div>
-      <a href="hall-of-fame/">명예의 전당</a>
-      <div class="drawer-divider"></div>
-      <div class="drawer-category">성역</div>
-      <a href="sanctuary/?id=rudra">1. 심연의 재련: 루드라</a>
-      <a href="sanctuary/?id=bagot">2. 침식의 정화소</a>
-      <a href="sanctuary/?id=kaldrix">3. 무스펠의 성배</a>
-      <div class="drawer-divider"></div>
-      <div class="drawer-category">안내</div>
-      <button class="drawer-link" type="button" data-drawer="about">사이트 소개</button>
-      <button class="drawer-link" type="button" data-drawer="terms">이용약관</button>
-      <button class="drawer-link" type="button" data-drawer="privacy">개인정보처리방침</button>
-      <button class="drawer-link" type="button" data-drawer="contact">아이디어 제안 및 건의</button>
-    </nav>
-  </div>
-</section>
-
 <main class="wrap">
   <section class="hero">
     <div class="eyebrow">✨ AION2 · KINOJO PORTAL</div>
@@ -106,30 +74,6 @@
   </div>
 </div>
 
-<div class="info-drawer-overlay" data-drawer-close></div>
-<aside class="info-drawer" aria-hidden="true" aria-labelledby="drawerTitle"><div class="info-drawer-head"><h2 class="info-drawer-title" id="drawerTitle">사이트 소개</h2><button type="button" class="info-drawer-close" data-drawer-close aria-label="닫기">×</button></div><div class="info-drawer-body" id="drawerBody"></div></aside>
-<script>
-const drawerContents={about:{title:"사이트 소개",html:`<h3>KINOJO INFO</h3><p>키노조 인포는 AION2 키노조 관련 정보를 한곳에서 확인하기 위한 정보 허브입니다.</p><p>성역 파티 확인, 레기온 기록, 명예의 전당 등 필요한 기능을 순차적으로 제공합니다.</p>`},terms:{title:"이용약관",html:`<h3>이용 안내</h3><p>본 사이트는 키노조 관련 정보를 편리하게 확인하기 위한 비공식 정보 페이지입니다.</p><ul><li>사이트 정보의 무단 변조 또는 악의적 사용을 금지합니다.</li><li>표시되는 데이터는 참고용이며 최종 판단은 이용자 본인에게 있습니다.</li><li>서비스 구조는 사전 안내 없이 변경될 수 있습니다.</li></ul>`},privacy:{title:"개인정보처리방침",html:`<h3>개인정보 처리 안내</h3><p>본 사이트는 기본적인 정보 확인 기능을 중심으로 운영되며, 불필요한 개인정보 수집을 지양합니다.</p><ul><li>입력 정보는 사이트 운영 및 문의 확인 목적에 한해 사용됩니다.</li><li>불필요한 민감정보 입력은 권장하지 않습니다.</li><li>정책은 기능 추가에 따라 갱신될 수 있습니다.</li></ul>`},contact:{title:"문의하기",html:`<h3>문의 안내</h3><p>오류 제보, 기능 제안, 데이터 수정 요청이 있다면 운영자에게 전달해주세요.</p><p>문의 기능은 추후 사이트 내부 기능으로 정리될 예정입니다.</p>`}};
-const drawer=document.querySelector('.info-drawer');const overlay=document.querySelector('.info-drawer-overlay');const drawerTitle=document.querySelector('#drawerTitle');const drawerBody=document.querySelector('#drawerBody');function openDrawer(type){const c=drawerContents[type]||drawerContents.about;drawerTitle.textContent=c.title;drawerBody.innerHTML=c.html;document.body.classList.add('drawer-open');overlay.classList.add('is-open');drawer.classList.add('is-open');drawer.setAttribute('aria-hidden','false')}function closeDrawer(){document.body.classList.remove('drawer-open');overlay.classList.remove('is-open');drawer.classList.remove('is-open');drawer.setAttribute('aria-hidden','true')}document.querySelectorAll('[data-drawer]').forEach(btn=>btn.addEventListener('click',()=>{openDrawer(btn.dataset.drawer);closeSideDrawer();}));
-const sideDrawer=document.getElementById('sideDrawer');const drawerToggleBtn=document.getElementById('drawerToggleBtn');const drawerCloseBtn=document.getElementById('drawerCloseBtn');function openSideDrawer(){sideDrawer?.classList.add('open');sideDrawer?.setAttribute('aria-hidden','false');document.body.classList.add('drawer-open');drawerToggleBtn?.setAttribute('aria-expanded','true')}function closeSideDrawer(){sideDrawer?.classList.remove('open');sideDrawer?.setAttribute('aria-hidden','true');document.body.classList.remove('drawer-open');drawerToggleBtn?.setAttribute('aria-expanded','false')}drawerToggleBtn?.addEventListener('click',e=>{e.preventDefault();openSideDrawer()});drawerCloseBtn?.addEventListener('click',closeSideDrawer);sideDrawer?.addEventListener('click',e=>{if(e.target===sideDrawer)closeSideDrawer()});document.querySelectorAll('[data-drawer-close]').forEach(btn=>btn.addEventListener('click',closeDrawer));document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDrawer();closeConstructionNotice();closeSideDrawer();}});
-function openConstructionNotice(label){
-  const notice=document.getElementById('constructionNotice');
-  const message=document.getElementById('constructionMessage');
-  if(message)message.textContent=(label?label+' 페이지는 ':'페이지는 ')+'인테리어 공사중입니다. 조금만 기다려 주세요.';
-  if(notice){notice.classList.add('open');notice.setAttribute('aria-hidden','false')}
-}
-function closeConstructionNotice(){
-  const notice=document.getElementById('constructionNotice');
-  if(notice){notice.classList.remove('open');notice.setAttribute('aria-hidden','true')}
-}
-document.querySelectorAll('[data-construction]').forEach(el=>{
-  el.addEventListener('click',e=>{e.preventDefault();openConstructionNotice(el.dataset.construction||'')});
-  el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openConstructionNotice(el.dataset.construction||'')}});
-});
-document.getElementById('constructionCloseBtn')?.addEventListener('click',closeConstructionNotice);
-document.getElementById('constructionOkBtn')?.addEventListener('click',closeConstructionNotice);
-document.getElementById('constructionNotice')?.addEventListener('click',e=>{if(e.target.id==='constructionNotice')closeConstructionNotice()});
-
-</script>
+<script src="ui/kinojo-common-ui.js?v=1.c2.02_260605_01"></script>
 </body>
 </html>
