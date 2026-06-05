@@ -1,0 +1,205 @@
+/* ============================================================
+   KINOJO Card Guards
+   ------------------------------------------------------------
+   - Prevent cards from growing when content increases
+   - Keep TOP5, relation cards, comments, and tables stable
+   - Overflow stays inside each card area
+============================================================ */
+
+/* Visitor card: friendly copy needs more room, left aligned */
+.visit-mini{
+  width:330px!important;
+  min-height:54px;
+  padding:8px 12px 8px 18px!important;
+  text-align:left!important;
+  line-height:1.42!important;
+}
+.visit-line{
+  display:block;
+  white-space:nowrap;
+  letter-spacing:-.15px;
+}
+.visit-line strong{
+  color:var(--blue);
+}
+.visit-line-total small{
+  color:#8492a6;
+}
+
+/* Admin visitor adjust: roomier two-line layout, button-only loading text */
+.admin-dropdown{
+  width:min(420px,calc(100vw - 24px))!important;
+}
+.admin-visit-control{
+  gap:10px!important;
+  padding:12px!important;
+}
+.admin-visit-row-main{
+  display:grid!important;
+  grid-template-columns:minmax(112px,1fr) auto auto!important;
+  align-items:center;
+  gap:8px;
+}
+.admin-visit-row-sign{
+  display:flex!important;
+  justify-content:flex-start;
+  gap:8px;
+}
+.admin-visit-actions{
+  display:grid!important;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.admin-visit-actions .btn,
+#adminVisitApplyBtn,
+#adminVisitCancelBtn{
+  min-width:0;
+  width:100%;
+  height:38px!important;
+  white-space:nowrap!important;
+}
+#adminVisitStatus{
+  display:none!important;
+}
+button.is-loading,
+button:disabled{
+  white-space:nowrap!important;
+}
+
+/* PVE/PVP top5: fixed name / reaction / score alignment */
+.mini-row{
+  grid-template-columns:54px minmax(0,1fr) 72px 104px!important;
+  gap:8px!important;
+}
+.reaction-counts,.rank-reactions{
+  min-width:72px!important;
+  text-align:center!important;
+  justify-self:center!important;
+}
+.reaction-pair{
+  display:inline-grid;
+  grid-template-columns:auto auto auto auto;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  white-space:nowrap!important;
+  line-height:1;
+}
+.reaction-pair strong{
+  white-space:nowrap!important;
+  font-size:10px;
+}
+.reaction-icon{
+  width:auto!important;
+  height:auto!important;
+  line-height:1;
+}
+.score{
+  justify-self:end!important;
+  text-align:right!important;
+  white-space:nowrap!important;
+}
+
+/* Overall table: reaction column must not wrap */
+.rank-table{
+  min-width:1040px!important;
+}
+.rank-table .char-col{width:190px!important;}
+.rank-table .reaction-col{width:88px!important;}
+.rank-table th:nth-child(3){font-size:0;}
+.rank-reactions .reaction-counts{min-width:88px!important;}
+.rank-reactions .reaction-pair{white-space:nowrap!important;}
+
+/* Combined relation card: two columns, fixed height, internal scroll only */
+.relation-combined-card{
+  display:grid!important;
+  grid-template-rows:auto 1fr!important;
+  min-height:0!important;
+  height:100%!important;
+}
+.relation-combined-head{
+  display:grid!important;
+  grid-template-columns:1fr 1fr;
+  border-bottom:1px solid rgba(117,140,177,.16);
+}
+.relation-combined-head .section-head{
+  border-bottom:0!important;
+}
+.relation-combined-head .section-head + .section-head{
+  border-left:1px solid rgba(117,140,177,.16)!important;
+}
+.relation-viewport{
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:0!important;
+  padding:0!important;
+  max-height:276px!important;
+  min-height:276px!important;
+  overflow:hidden!important;
+}
+.relation-column{
+  min-width:0;
+  min-height:0;
+  overflow:hidden;
+  padding:10px;
+}
+.relation-column + .relation-column{
+  border-left:1px solid rgba(117,140,177,.16);
+}
+.relation-track{
+  display:grid;
+  gap:6px;
+  max-height:256px;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding-right:2px;
+}
+.relation-track.is-scroll{
+  animation:none!important;
+}
+.relation-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(52px,auto) 72px;
+  align-items:center;
+  gap:6px;
+  padding:7px 7px;
+  border:1px solid rgba(117,140,177,.16);
+  border-radius:var(--radius-name-card)!important;
+  background:#fff;
+  cursor:pointer;
+}
+.relation-name,.relation-server{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.relation-name{
+  font-weight:1000;
+  color:#263852;
+}
+.relation-server{
+  font-size:10px;
+  color:#6d7f98;
+  text-align:right;
+}
+.relation-reactions{
+  justify-self:center;
+}
+
+/* Recent comments: header owns its own row; comments never climb into the title area */
+.recent-comment-card .reaction-card-head{
+  min-height:50px!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:center!important;
+}
+.recent-comment-card .reaction-comments{
+  padding:12px 14px!important;
+  margin:0!important;
+  overflow:hidden!important;
+}
+.comment-list{
+  max-height:118px!important;
+  overflow:hidden!important;
+}

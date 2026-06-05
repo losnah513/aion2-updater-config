@@ -1,0 +1,10 @@
+/* ============================================================
+   KINOJO Layout Engine
+   ------------------------------------------------------------
+   Purpose:
+   - Reserved for shared page grids, responsive frames, sticky bars,
+     and future layout-only rules.
+   - No page-specific content or feature logic should be placed here.
+
+   Current 1.c2.01 refactor keeps existing visual layout intact.
+============================================================ */
