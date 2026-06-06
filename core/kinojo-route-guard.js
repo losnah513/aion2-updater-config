@@ -4,5 +4,5 @@
  * Phase 1: 기존 기능과 연결하지 않는 안전한 스켈레톤입니다.
  */
 window.KinojoRouteGuard = window.KinojoRouteGuard || {
-  version: '1.c2.02'
+  version: '1.c2.03'
 };

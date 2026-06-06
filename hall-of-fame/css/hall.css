@@ -908,10 +908,23 @@ body.drawer-open{
   font-weight:900;
   color:#536782}
 .construction-notice{
+  position:fixed;
+  inset:0;
+  z-index:10040;
+  display:grid;
   place-items:center;
-  padding:18px}
+  padding:18px;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  background:rgba(255,255,255,.22);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  transition:.28s ease}
 .construction-notice.open{
-  display:grid}
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto}
 .construction-card{
   position:relative;
   width:min(360px,100%);
@@ -1088,7 +1101,7 @@ to{
 @media(max-width:620px){.top-grid{grid-template-columns:1fr}.dashboard{grid-template-columns:1fr}.mini-row{grid-template-columns:44px minmax(0,1fr) 42px 74px}.visit-mini{width:194px}}
 
 /* ============================================================
-   KINOJO 1.c2.02 UI System Fix
+   KINOJO 1.c2.03 UI System Fix
    공통 탑바 / 로딩 / 명예의 전당 레이아웃 보정
 ============================================================ */
 body{background:#fff!important;}
@@ -1123,7 +1136,7 @@ body{background:#fff!important;}
 @media(min-width:761px) and (max-width:1080px){.top-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard{grid-template-columns:1fr!important}.side-stack{min-height:330px}}
 
 
-/* 1.c2.02_260605_01 commonization / layout repair */
+/* 1.c2.03 commonization / layout repair */
 .wrap{padding-top:0!important;}
 .chick-card{position:sticky;top:62px;z-index:120;margin-bottom:12px;padding-right:46px;}
 .chick-close{position:absolute;right:10px;top:10px;width:30px;height:30px;border:1px solid var(--line);background:#fff;border-radius:999px;color:#64748b;font-size:18px;font-weight:1000;cursor:pointer;display:grid;place-items:center;}

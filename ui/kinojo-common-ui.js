@@ -1,4 +1,4 @@
-/* KINOJO common UI v1.c2.02 / work 260606_00 */
+/* KINOJO common UI v1.c2.03 / work 260606_01 */
 (function(){
   const DOCS={
     about:{title:"사이트 소개",html:`<h3>KINOJO INFO</h3><p>키노조 인포는 AION2 키노조 관련 정보를 한곳에서 확인하기 위한 정보 허브입니다.</p><p>성역 파티 확인, 레기온 기록, 명예의 전당 등 필요한 기능을 순차적으로 제공합니다.</p>`},
@@ -40,7 +40,7 @@
     const home=info.root;
     const hallHref=isHall?'./':'hall-of-fame/';
     const prefix=isHall||isSanctuary?'../':'';
-    const sanctuaryPrefix=isSanctuary?'./':'sanctuary/';
+    const sanctuaryPrefix=isSanctuary?'./index.html':info.root+'sanctuary/index.html';
     const drawer=document.createElement('section');
     drawer.className='kinojo-common-drawer';
     drawer.id='sideDrawer';
