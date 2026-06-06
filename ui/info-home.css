@@ -2,7 +2,7 @@
    KINOJO INFO Home Styles
    ------------------------------------------------------------
    Extracted from index.html without visual changes.
-   Version remains 1.c2.03.
+   Version remains 1.c2.04.
 ============================================================ */
 :root{
   --text:#263444;
@@ -587,7 +587,7 @@ body,.card,.eyebrow,.hall-banner,.info-logo-placeholder,.info-drawer,.constructi
 /* Common topbar/drawer rules moved to ui/kinojo-common-ui.css. */
 
 /* ============================================================
-   KINOJO 1.c2.03 UI System Fix - INFO HOME
+   KINOJO 1.c2.04 UI System Fix - INFO HOME
 ============================================================ */
 body{background:#fff!important;}
 .card:not(.rudra-card):not(.bagot-card):not(.kaldrix-card):hover .sanctuary-title,.card:not(.rudra-card):not(.bagot-card):not(.kaldrix-card):hover .sanctuary-sub{transform:scale(1.04);color:#2563eb;}

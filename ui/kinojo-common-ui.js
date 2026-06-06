@@ -1,4 +1,4 @@
-/* KINOJO common UI v1.c2.03 / work 260606_01 */
+/* KINOJO common UI v1.c2.04 / work 260606_00 */
 (function(){
   const DOCS={
     about:{title:"사이트 소개",html:`<h3>KINOJO INFO</h3><p>키노조 인포는 AION2 키노조 관련 정보를 한곳에서 확인하기 위한 정보 허브입니다.</p><p>성역 파티 확인, 레기온 기록, 명예의 전당 등 필요한 기능을 순차적으로 제공합니다.</p>`},
@@ -11,7 +11,7 @@
     const path=location.pathname;
     if(path.includes('/hall-of-fame/'))return {key:'hall',label:'명예의 전당',root:'../'};
     if(path.includes('/sanctuary/'))return {key:'sanctuary',label:'성역',root:'../'};
-    return {key:'home',label:'INFO HOME',root:'./'};
+    return {key:'home',label:'메인',root:'./'};
   }
   function q(s,root=document){return root.querySelector(s)}
   function detach(el){if(el&&el.parentNode)el.parentNode.removeChild(el);return el}
@@ -28,10 +28,15 @@
     const bar=document.createElement('section');
     bar.className='kinojo-topbar';
     bar.setAttribute('aria-label','KINOJO INFO 공통 상단 메뉴');
-    bar.innerHTML=`<button class="kinojo-menu-toggle" id="drawerToggleBtn" type="button" aria-label="메뉴 열기" aria-expanded="false"><span class="kinojo-plus" aria-hidden="true"></span></button><a class="kinojo-top-brand" href="${info.root}">KINOJO INFO</a><span class="kinojo-top-page" ${info.key==='sanctuary'?'id="syncChip"':''}>${info.key==='sanctuary'?'성역 데이터를 불러오는 중...':info.label}</span><div class="kinojo-top-tools" id="kinojoTopTools"></div>`;
+    const pageLabel=info.key==='sanctuary'?'성역':info.label;
+    bar.innerHTML=`<div class="kinojo-top-left"><button class="kinojo-menu-toggle" id="drawerToggleBtn" type="button" aria-label="메뉴 열기" aria-expanded="false"><span class="kinojo-menu-dots" aria-hidden="true"><i></i><i></i><i></i></span></button><span class="kinojo-top-page" ${info.key==='sanctuary'?'id="syncChip"':''}>${pageLabel}</span></div><div class="kinojo-top-center" id="kinojoUserStatus">레벨/등급/남은 좋아요·싫어요 자리 준비중</div><div class="kinojo-top-tools" id="kinojoTopTools"></div>`;
     const tools=q('#kinojoTopTools',bar);
+    if(rescued.admin){
+      const adminBtn=rescued.admin.querySelector('#adminMenuBtn');
+      if(adminBtn){adminBtn.textContent='+';adminBtn.setAttribute('aria-label','관리자 메뉴 열기');}
+      tools.appendChild(rescued.admin);
+    }
     if(rescued.visit)tools.appendChild(rescued.visit);
-    if(rescued.admin)tools.appendChild(rescued.admin);
     document.body.insertBefore(bar,document.body.firstChild);
   }
   function makeDrawer(info){
@@ -48,8 +53,8 @@
     drawer.innerHTML=`
       <div class="kinojo-drawer-panel" role="dialog" aria-modal="false" aria-labelledby="drawerTitle">
         <div class="kinojo-drawer-head">
-          <a id="drawerTitle" class="kinojo-drawer-title" href="${home}">KINOJO INFO</a>
-          <button class="kinojo-drawer-close" id="drawerCloseBtn" type="button" aria-label="메뉴 닫기">×</button>
+          <a id="drawerTitle" class="kinojo-drawer-title" href="https://bit.ly/kinojo-index">KINOJO INFO</a>
+          <button class="kinojo-common-close kinojo-drawer-close" id="drawerCloseBtn" type="button" aria-label="메뉴 닫기">×</button>
         </div>
         <nav class="kinojo-drawer-nav" aria-label="KINOJO INFO 메뉴">
           <div class="kinojo-drawer-category">바로가기</div>
@@ -73,7 +78,7 @@
       <aside class="kinojo-side-panel" id="drawerPagePanel" aria-hidden="true">
         <div class="kinojo-panel-head">
           <strong class="kinojo-panel-title" id="drawerPageTitle">사이트 안내</strong>
-          <button class="kinojo-panel-close" id="drawerPageCloseBtn" type="button" aria-label="닫기">×</button>
+          <button class="kinojo-common-close kinojo-panel-close" id="drawerPageCloseBtn" type="button" aria-label="닫기">×</button>
         </div>
         <div class="kinojo-panel-body" id="drawerPageBody"></div>
       </aside>`;
@@ -89,21 +94,47 @@
   function closeSideDrawer(){
     const drawer=q('#sideDrawer');const btn=q('#drawerToggleBtn');
     const panel=q('#drawerPagePanel');
-    if(drawer){drawer.classList.remove('open');drawer.setAttribute('aria-hidden','true');}
+    if(drawer){drawer.classList.remove('open','standalone-open');drawer.setAttribute('aria-hidden','true');}
     if(panel){panel.classList.remove('open');panel.setAttribute('aria-hidden','true');}
-    document.body.classList.remove('kinojo-drawer-open','drawer-open');
+    document.body.classList.remove('kinojo-drawer-open','drawer-open','kinojo-standalone-panel-open');
     if(btn)btn.setAttribute('aria-expanded','false');
   }
-  function openDrawerPagePanel(type){
+  function setGuideContent(type){
     const data=DOCS[type]||DOCS.about;
-    const drawer=q('#sideDrawer');const panel=q('#drawerPagePanel');const title=q('#drawerPageTitle');const body=q('#drawerPageBody');
-    if(!drawer||!panel)return;
-    if(!drawer.classList.contains('open'))openSideDrawer();
+    const title=q('#drawerPageTitle');const body=q('#drawerPageBody');
     if(title)title.textContent=data.title;
     if(body)body.innerHTML=data.html;
-    panel.classList.add('open');panel.setAttribute('aria-hidden','false');
   }
-  function closeDrawerPagePanel(){const panel=q('#drawerPagePanel');if(panel){panel.classList.remove('open');panel.setAttribute('aria-hidden','true');}}
+  function openDrawerPagePanel(type){
+    const drawer=q('#sideDrawer');const panel=q('#drawerPagePanel');
+    if(!drawer||!panel)return;
+    drawer.classList.remove('standalone-open');
+    setGuideContent(type);
+    if(!drawer.classList.contains('open'))openSideDrawer();
+    panel.classList.add('open','from-menu');
+    panel.classList.remove('standalone');
+    panel.setAttribute('aria-hidden','false');
+  }
+  function openStandalonePagePanel(type){
+    const drawer=q('#sideDrawer');const panel=q('#drawerPagePanel');const btn=q('#drawerToggleBtn');
+    if(!drawer||!panel)return;
+    setGuideContent(type);
+    drawer.classList.add('standalone-open');
+    drawer.classList.remove('open');
+    drawer.setAttribute('aria-hidden','false');
+    document.body.classList.remove('kinojo-drawer-open','drawer-open');
+    document.body.classList.add('kinojo-standalone-panel-open');
+    if(btn)btn.setAttribute('aria-expanded','false');
+    panel.classList.add('open','standalone');
+    panel.classList.remove('from-menu');
+    panel.setAttribute('aria-hidden','false');
+  }
+  function closeDrawerPagePanel(){
+    const drawer=q('#sideDrawer');const panel=q('#drawerPagePanel');
+    if(panel){panel.classList.remove('open','standalone','from-menu');panel.setAttribute('aria-hidden','true');}
+    if(drawer){drawer.classList.remove('standalone-open');if(!drawer.classList.contains('open'))drawer.setAttribute('aria-hidden','true');}
+    document.body.classList.remove('kinojo-standalone-panel-open');
+  }
   function bind(){
     q('#drawerToggleBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openSideDrawer();});
     q('#drawerCloseBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeSideDrawer();});
@@ -115,18 +146,20 @@
       const type=btn.dataset.pagePanel||btn.dataset.drawer;
       if(!type)return;
       e.preventDefault();e.stopPropagation();
-      if(type==='contact'&&typeof window.openSuggestionPanel==='function'){
+      const fromFooter=btn.dataset.guideMode==='standalone'||!!btn.closest('.common-footer');
+      if(type==='contact'&&typeof window.openSuggestionPanel==='function'&&!fromFooter){
         window.openSuggestionPanel();
         return;
       }
-      openDrawerPagePanel(type);
+      if(fromFooter)openStandalonePagePanel(type);
+      else openDrawerPagePanel(type);
     },true);
     document.querySelectorAll('.common-footer').forEach(footer=>{
       footer.classList.add('kinojo-common-footer-bound');
       footer.querySelectorAll('a[href*="about.html"],a[href*="terms.html"],a[href*="privacy.html"],a[href*="contact.html"]').forEach(a=>{
         const href=a.getAttribute('href')||'';
         let type=href.includes('terms')?'terms':href.includes('privacy')?'privacy':href.includes('contact')?'contact':'about';
-        a.setAttribute('href','#');a.dataset.pagePanel=type;
+        a.setAttribute('href','#');a.dataset.pagePanel=type;a.dataset.guideMode='standalone';
       });
     });
     document.addEventListener('keydown',e=>{if(e.key==='Escape'){const p=q('#drawerPagePanel');if(p?.classList.contains('open'))return closeDrawerPagePanel();const d=q('#sideDrawer');if(d?.classList.contains('open'))return closeSideDrawer();}});
@@ -136,9 +169,10 @@
   makeTopbar(rescued,info);
   makeDrawer(info);
   bind();
-  window.KinojoCommonUI={openSideDrawer,closeSideDrawer,openDrawerPagePanel,closeDrawerPagePanel};
+  window.KinojoCommonUI={openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel};
   window.openSideDrawer=openSideDrawer;
   window.closeSideDrawer=closeSideDrawer;
   window.openDrawerPagePanel=openDrawerPagePanel;
   window.closeDrawerPagePanel=closeDrawerPagePanel;
+  window.openStandalonePagePanel=openStandalonePagePanel;
 })();

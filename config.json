@@ -1,5 +1,5 @@
 {
-  "version": "1.c2.03",
+  "version": "1.c2.04",
   "buildDate": "260606",
   "enabled": true,
   "testMode": false,
@@ -9,10 +9,10 @@
     "9516658a61cf564d2001e1dc6b3f3fca526848dc65e4ac38faec05317e2dfedc"
   ],
   "webAppUrl": "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec",
-  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.c2.03/KINOJO_1_c2_03.zip",
-  "notice": "✅ KINOJO 1.c2.03 긴급 보강 업데이트 (260606_01)",
-  "hallOfFameUrl": "https://losnah513.github.io/aion2-updater-config/",
-  "news": "성역 링크 404 보정, 명예의 전당 공사중 팝업 숨김 처리, 확장프로그램 시작 안내 및 우측 하단 위치 안전장치 보강",
-  "patchTitle": "1.c2.03 Emergency Audit Fix (260606_01)",
-  "patchBody": "성역 페이지 연결 오류와 명예의 전당 하단 공사중 팝업 고정 문제를 수정했습니다. 확장프로그램 시작 안내 문구를 추가하고, 실행 패널은 새로고침/캐릭터 정보실 진입 시 우측 하단에서 시작하도록 보강했습니다."
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.c2.04/KINOJO_1_c2_04.zip",
+  "notice": "✅ KINOJO 1.c2.04 웹 UI 구조 개선 업데이트 (260606_00)",
+  "hallOfFameUrl": "https://bit.ly/kinojo-index",
+  "news": "공통 탑바/안내 패널 구조 정리, 명예의 전당 카드·순위·관계 UI 개선, KINOJO INFO 바로가기 주소 변경",
+  "patchTitle": "1.c2.04 Web UI Refactor (260606_00)",
+  "patchBody": "공통 탑바와 안내 패널 호출 구조를 정리하고, 명예의 전당 카드 제목/신입 병아리/TOP5/관계 카드/순위 카드 UI를 개선했습니다."
 }

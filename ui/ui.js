@@ -220,7 +220,7 @@ window.AION2_UI = {
     hallBtn.dataset.tip = "KINOJO INFO 열기";
     hallBtn.onclick = () => {
       const url = (window.AION2_CONFIG && window.AION2_CONFIG.HALL_OF_FAME_URL)
-        || "https://losnah513.github.io/aion2-updater-config/";
+        || "https://bit.ly/kinojo-index";
       window.open(url, "_blank");
     };
 
