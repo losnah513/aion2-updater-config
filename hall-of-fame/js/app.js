@@ -410,60 +410,7 @@ document.getElementById("cancelSuggestBtn").onclick=()=>{document.getElementById
 document.getElementById("submitSuggestBtn").onclick=async()=>{const title=document.getElementById("suggestTitle").value.trim(),proposer=document.getElementById("suggestProposer").value.trim(),memo=document.getElementById("suggestMemo").value.trim();if(!title)return alert("항목 이름을 입력해 주세요.");const res=await fetch(WEB_APP_URL,{method:"POST",body:JSON.stringify({action:"hallSuggestion",title,proposer,memo})});const data=await res.json();if(!data.ok)return alert(data.message||"전송 실패");alert("제안이 접수되었습니다.");document.getElementById("suggestionBox").style.display="none";load()};
 
 
-/* KINOJO drawer side page panel */
-const DRAWER_PAGE_CONTENT={
-  about:{
-    title:"사이트 소개",
-    body:"KINOJO INFO는 아이온2 커뮤니티 기록을 보기 쉽게 정리하는 정보 페이지입니다. 명예의 전당, 성역팟, 성장 기록 등 커뮤니티 활동을 깔끔하게 확인할 수 있도록 구성하고 있습니다."
-  },
-  terms:{
-    title:"이용약관",
-    body:"본 사이트는 커뮤니티 편의 제공을 목적으로 운영됩니다. 제공되는 정보는 시트와 공개 기록을 기반으로 하며, 운영 상황에 따라 표시 방식과 기준이 변경될 수 있습니다."
-  },
-  privacy:{
-    title:"개인정보처리방침",
-    body:"KINOJO INFO는 서비스 운영에 필요한 최소한의 방문 기록과 반응 데이터를 사용할 수 있습니다. 캐릭터 반응 및 코멘트는 커뮤니티 표시 목적으로 저장될 수 있습니다."
-  }
-};
-function openDrawerPagePanel(type){
-  const data=DRAWER_PAGE_CONTENT[type]||DRAWER_PAGE_CONTENT.about;
-  const panel=document.getElementById("drawerPagePanel");
-  const title=document.getElementById("drawerPageTitle");
-  const body=document.getElementById("drawerPageBody");
-  if(title)title.textContent=data.title;
-  if(body)body.textContent=data.body;
-  if(panel){
-    panel.classList.add("open");
-    panel.setAttribute("aria-hidden","false");
-  }
-}
-function closeDrawerPagePanel(){
-  const panel=document.getElementById("drawerPagePanel");
-  if(panel){
-    panel.classList.remove("open");
-    panel.setAttribute("aria-hidden","true");
-  }
-}
-function bindDrawerPagePanel_(){
-  document.querySelectorAll("[data-page-panel]").forEach(btn=>{
-    if(btn.dataset.boundPagePanel)return;
-    btn.dataset.boundPagePanel="1";
-    btn.addEventListener("click",e=>{
-      e.preventDefault();
-      e.stopPropagation();
-      openDrawerPagePanel(btn.dataset.pagePanel||"about");
-    });
-  });
-  const close=document.getElementById("drawerPageCloseBtn");
-  if(close&&!close.dataset.boundPagePanel){
-    close.dataset.boundPagePanel="1";
-    close.addEventListener("click",closeDrawerPagePanel);
-  }
-}
-
-/* KINOJO drawer navigation */
-function openSideDrawer(){const drawer=document.getElementById("sideDrawer");const btn=document.getElementById("drawerToggleBtn");if(!drawer)return;drawer.classList.add("open");document.body.classList.add("drawer-open","kinojo-drawer-open");drawer.setAttribute("aria-hidden","false");if(btn)btn.setAttribute("aria-expanded","true")}
-function closeSideDrawer(){const drawer=document.getElementById("sideDrawer");const btn=document.getElementById("drawerToggleBtn");if(!drawer)return;drawer.classList.remove("open");const pagePanel=document.getElementById("drawerPagePanel");if(pagePanel){pagePanel.classList.remove("open");pagePanel.setAttribute("aria-hidden","true")}document.body.classList.remove("drawer-open","kinojo-drawer-open");drawer.setAttribute("aria-hidden","true");if(btn)btn.setAttribute("aria-expanded","false")}
+/* KINOJO drawer side page panel is managed by GitHub_Pages/ui/kinojo-common-ui.js */
 function openSuggestionPanel(){
   const panel=document.getElementById("drawerPagePanel");
   const title=document.getElementById("drawerPageTitle");
@@ -513,20 +460,16 @@ async function submitSideSuggestion_(){
 }
 
 
-bindDrawerPagePanel_();bindConstructionNotice_();bindKinojoDrawer_();const footerSuggestBtn=document.getElementById("footerSuggestBtn");if(footerSuggestBtn)footerSuggestBtn.onclick=openSuggestionPanel;
-const adminMenuBtn=document.getElementById("adminMenuBtn");if(adminMenuBtn)adminMenuBtn.onclick=openAdminDropdown;const adminDropdownClose=document.getElementById("adminDropdownClose");if(adminDropdownClose)adminDropdownClose.onclick=closeAdminMenu;const adminLoginBtn=document.getElementById("adminLoginBtn");if(adminLoginBtn)adminLoginBtn.onclick=adminLogin;const adminPasswordInput=document.getElementById("adminPasswordInput");if(adminPasswordInput)adminPasswordInput.onkeydown=e=>{if(e.key==="Enter")adminLogin()};document.getElementById("adminMvpBtn").onclick=adminMvp;document.querySelectorAll("[data-visit-target]").forEach(btn=>btn.onclick=()=>{document.querySelectorAll("[data-visit-target]").forEach(b=>b.classList.remove("active"));btn.classList.add("active")});document.querySelectorAll("[data-visit-sign]").forEach(btn=>btn.onclick=()=>{document.querySelectorAll("[data-visit-sign]").forEach(b=>b.classList.remove("active"));btn.classList.add("active")});const adminVisitCancelBtn=document.getElementById("adminVisitCancelBtn");if(adminVisitCancelBtn)adminVisitCancelBtn.onclick=()=>{const st=document.getElementById("adminVisitStatus");if(st)st.textContent="";document.getElementById("adminVisitAmount").value="1"};const adminVisitApplyBtn=document.getElementById("adminVisitApplyBtn");if(adminVisitApplyBtn)adminVisitApplyBtn.onclick=adminVisitAdjust;document.getElementById("adminSnapshotBtn").onclick=adminSnapshot;const adminSnapshotTrigger=document.getElementById("adminSnapshotTriggerBtn");if(adminSnapshotTrigger)adminSnapshotTrigger.onclick=adminSnapshotTriggerInstall;document.getElementById("reactionLikeBtn").onclick=()=>{currentReactionType="like";document.getElementById("reactionLikeBtn").classList.add("active","like-active");document.getElementById("reactionDislikeBtn").classList.remove("active","dislike-active")};document.getElementById("reactionDislikeBtn").onclick=()=>{currentReactionType="dislike";document.getElementById("reactionDislikeBtn").classList.add("active","dislike-active");document.getElementById("reactionLikeBtn").classList.remove("active","like-active")};document.getElementById("reactionCloseBtn").onclick=closeReactionModal;document.addEventListener("click",e=>{const pop=document.getElementById("reactionPopover");if(pop&&pop.style.display==="block"&&!pop.contains(e.target)&&!e.target.closest("[data-character]"))closeReactionModal();const menu=document.getElementById("adminDropdown");if(menu&&menu.classList.contains("open")&&!menu.contains(e.target)&&!e.target.closest("#adminMenuBtn"))closeAdminMenu();const drawer=document.getElementById("sideDrawer");if(drawer&&drawer.classList.contains("open")&&e.target===drawer)closeSideDrawer();const pagePanel=document.getElementById("drawerPagePanel");if(pagePanel&&pagePanel.classList.contains("open")&&e.target===pagePanel)closeDrawerPagePanel();const notice=document.getElementById("constructionNotice");if(notice&&notice.classList.contains("open")&&e.target===notice)closeConstructionNotice()});document.addEventListener("keydown",e=>{
+bindConstructionNotice_();const footerSuggestBtn=document.getElementById("footerSuggestBtn");if(footerSuggestBtn)footerSuggestBtn.onclick=openSuggestionPanel;
+const adminMenuBtn=document.getElementById("adminMenuBtn");if(adminMenuBtn)adminMenuBtn.onclick=openAdminDropdown;const adminDropdownClose=document.getElementById("adminDropdownClose");if(adminDropdownClose)adminDropdownClose.onclick=closeAdminMenu;const adminLoginBtn=document.getElementById("adminLoginBtn");if(adminLoginBtn)adminLoginBtn.onclick=adminLogin;const adminPasswordInput=document.getElementById("adminPasswordInput");if(adminPasswordInput)adminPasswordInput.onkeydown=e=>{if(e.key==="Enter")adminLogin()};document.getElementById("adminMvpBtn").onclick=adminMvp;document.querySelectorAll("[data-visit-target]").forEach(btn=>btn.onclick=()=>{document.querySelectorAll("[data-visit-target]").forEach(b=>b.classList.remove("active"));btn.classList.add("active")});document.querySelectorAll("[data-visit-sign]").forEach(btn=>btn.onclick=()=>{document.querySelectorAll("[data-visit-sign]").forEach(b=>b.classList.remove("active"));btn.classList.add("active")});const adminVisitCancelBtn=document.getElementById("adminVisitCancelBtn");if(adminVisitCancelBtn)adminVisitCancelBtn.onclick=()=>{const st=document.getElementById("adminVisitStatus");if(st)st.textContent="";document.getElementById("adminVisitAmount").value="1"};const adminVisitApplyBtn=document.getElementById("adminVisitApplyBtn");if(adminVisitApplyBtn)adminVisitApplyBtn.onclick=adminVisitAdjust;document.getElementById("adminSnapshotBtn").onclick=adminSnapshot;const adminSnapshotTrigger=document.getElementById("adminSnapshotTriggerBtn");if(adminSnapshotTrigger)adminSnapshotTrigger.onclick=adminSnapshotTriggerInstall;document.getElementById("reactionLikeBtn").onclick=()=>{currentReactionType="like";document.getElementById("reactionLikeBtn").classList.add("active","like-active");document.getElementById("reactionDislikeBtn").classList.remove("active","dislike-active")};document.getElementById("reactionDislikeBtn").onclick=()=>{currentReactionType="dislike";document.getElementById("reactionDislikeBtn").classList.add("active","dislike-active");document.getElementById("reactionLikeBtn").classList.remove("active","like-active")};document.getElementById("reactionCloseBtn").onclick=closeReactionModal;document.addEventListener("click",e=>{const pop=document.getElementById("reactionPopover");if(pop&&pop.style.display==="block"&&!pop.contains(e.target)&&!e.target.closest("[data-character]"))closeReactionModal();const menu=document.getElementById("adminDropdown");if(menu&&menu.classList.contains("open")&&!menu.contains(e.target)&&!e.target.closest("#adminMenuBtn"))closeAdminMenu();const notice=document.getElementById("constructionNotice");if(notice&&notice.classList.contains("open")&&e.target===notice)closeConstructionNotice()});document.addEventListener("keydown",e=>{
   if(e.key!=="Escape")return;
   const notice=document.getElementById("constructionNotice");
-  const pagePanel=document.getElementById("drawerPagePanel");
   const reaction=document.getElementById("reactionPopover");
   const admin=document.getElementById("adminDropdown");
-  const drawer=document.getElementById("sideDrawer");
 
   if(notice&&notice.classList.contains("open"))return closeConstructionNotice();
-  if(pagePanel&&pagePanel.classList.contains("open"))return closeDrawerPagePanel();
   if(reaction&&reaction.getAttribute("aria-hidden")==="false")return closeReactionModal();
   if(admin&&admin.classList.contains("open"))return closeAdminMenu();
-  if(drawer&&drawer.classList.contains("open"))return closeSideDrawer();
 });setInterval(()=>{if(Date.now()<reactionCarouselPausedUntil)return;if(document.activeElement&&document.activeElement.id==="rankSearchInput")return;reactionCarouselIndex++;if(hallData)render()},60000);recordDailyVisitOnce();load();
 
 /* knj-infoweb(v_260603_01) reaction submit guard patch */
@@ -649,24 +592,4 @@ function bindConstructionNotice_(){
   }
 }
 
-/* KINOJO drawer robust binding */
-function bindKinojoDrawer_(){
-  const drawerToggleBtn=document.getElementById("drawerToggleBtn");
-  const drawerCloseBtn=document.getElementById("drawerCloseBtn");
-  const drawerSuggestBtn=document.getElementById("drawerSuggestBtn");
-  if(drawerToggleBtn&&!drawerToggleBtn.dataset.bound){
-    drawerToggleBtn.dataset.bound="1";
-    drawerToggleBtn.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();openSideDrawer()});
-    drawerToggleBtn.addEventListener("pointerdown",e=>drawerToggleBtn.classList.add("is-pressed"));
-    drawerToggleBtn.addEventListener("pointerup",e=>drawerToggleBtn.classList.remove("is-pressed"));
-    drawerToggleBtn.addEventListener("pointerleave",e=>drawerToggleBtn.classList.remove("is-pressed"));
-  }
-  if(drawerCloseBtn&&!drawerCloseBtn.dataset.bound){
-    drawerCloseBtn.dataset.bound="1";
-    drawerCloseBtn.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();closeSideDrawer()});
-  }
-  if(drawerSuggestBtn&&!drawerSuggestBtn.dataset.bound){
-    drawerSuggestBtn.dataset.bound="1";
-    drawerSuggestBtn.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();openSuggestionPanel()});
-  }
-}
+/* KINOJO drawer robust binding moved to GitHub_Pages/ui/kinojo-common-ui.js */

@@ -1,6 +1,6 @@
 {
-  "version": "1.c2.02_260605_01",
-  "buildDate": "260605",
+  "version": "1.c2.02",
+  "buildDate": "260606",
   "enabled": true,
   "testMode": false,
   "passwordHash": "c47986dd8ce4828fe097cf915e94fc9d859bb19d56e2157d86ff11b63f0a9e53",
@@ -10,9 +10,9 @@
   ],
   "webAppUrl": "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec",
   "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.c2.02/KINOJO_1_c2_02.zip",
-  "notice": "✅ KINOJO 1.c2.02_260605_01 업데이트",
+  "notice": "✅ KINOJO 1.c2.02 점검 보강 업데이트 (260606_00)",
   "hallOfFameUrl": "https://losnah513.github.io/aion2-updater-config/",
-  "news": "공통 탑바·+메뉴 구조 통합 및 명예의 전당/성역 UI 보정",
-  "patchTitle": "1.c2.02_260605_01 UI Common Fix",
-  "patchBody": "GitHub_Pages 공통 UI 파일을 추가하고, 탑바와 +메뉴를 전 페이지에서 동일하게 불러오도록 정리했습니다."
+  "news": "프로젝트 룰 보강, 문서 로그 정리, 공통 UI 중복 제어 제거, 버전/작업 식별자 분리",
+  "patchTitle": "1.c2.02 Project Audit Fix (260606_00)",
+  "patchBody": "실제 배포 버전은 1.c2.02로 유지하고, 260606_00은 작업 식별자로만 기록했습니다. 공통 UI/Core 규칙과 MODIFIED_FILES 운영 규칙을 보강했습니다."
 }

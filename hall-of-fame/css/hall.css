@@ -43,44 +43,6 @@ body.drawer-open{
   height:auto;
   display:block;
   object-fit:contain}
-.top-utility{
-  position:relative;
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap:10px;
-  margin-bottom:10px;
-  min-height:40px}
-.top-right-tools{
-  margin-left:auto;
-  display:flex;
-  align-items:flex-start;
-  gap:8px}
-.drawer-toggle,.admin-menu-btn,.drawer-close,.drawer-page-close,.admin-dropdown-close,.reaction-close{
-  appearance:none;
-  border:1px solid var(--line);
-  background:rgba(255,255,255,.92);
-  color:#475569;
-  border-radius:var(--radius-control);
-  cursor:pointer;
-  display:grid;
-  place-items:center;
-  box-shadow:none}
-.drawer-toggle{
-  width:40px;
-  height:40px;
-  position:relative}
-.drawer-toggle .drawer-plus,.drawer-toggle .drawer-plus:before{
-  display:block;
-  width:16px;
-  height:2px;
-  background:#334155;
-  border-radius:99px;
-  content:""}
-.drawer-toggle .drawer-plus:before{
-  transform:rotate(90deg)}
-.drawer-toggle.is-pressed{
-  transform:scale(.96)}
 .admin-menu-wrap{
   position:relative;
   z-index:30}
@@ -936,82 +898,6 @@ body.drawer-open{
   width:20px;
   height:20px;
   fill:currentColor}
-.side-drawer,.drawer-page-panel,.construction-notice{
-  position:fixed;
-  inset:0;
-  z-index:10040;
-  display:none;
-  background:rgba(255,255,255,.22);
-  backdrop-filter:blur(8px);
-  -webkit-backdrop-filter:blur(8px)}
-.side-drawer.open,.drawer-page-panel.open,.construction-notice.open{
-  display:block}
-.drawer-panel{
-  position:absolute;
-  left:0;
-  top:0;
-  width:min(360px,92vw);
-  height:100%;
-  background:#fff;
-  border-right:1px solid var(--line);
-  box-shadow:none;
-  padding:0;
-  display:flex;
-  flex-direction:column}
-.drawer-head,.drawer-page-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  padding:14px;
-  border-bottom:1px solid var(--line);
-  background:linear-gradient(135deg,#eef5ff,#f8f4ff)}
-.drawer-title-link{
-  font-size:18px;
-  font-weight:1000;
-  text-decoration:none;
-  color:#263852}
-.drawer-close,.drawer-page-close{
-  width:32px;
-  height:32px;
-  font-size:20px}
-.drawer-nav{
-  display:grid;
-  gap:7px;
-  padding:14px;
-  overflow:auto}
-.drawer-nav a,.drawer-link,.drawer-action{
-  appearance:none;
-  border:1px solid var(--line);
-  background:#fff;
-  border-radius:var(--radius-control);
-  padding:10px 12px;
-  text-align:left;
-  text-decoration:none;
-  color:#334155;
-  font-weight:900;
-  cursor:pointer}
-.drawer-divider{
-  height:1px;
-  background:var(--line);
-  margin:4px 0}
-.drawer-page-panel{
-  place-items:center;
-  padding:16px}
-.drawer-page-panel.open{
-  display:grid}
-.drawer-page-card{
-  width:min(420px,100%);
-  background:#fff;
-  border:1px solid var(--line);
-  border-radius:var(--radius-card);
-  box-shadow:none;
-  overflow:hidden}
-.drawer-page-body{
-  padding:16px;
-  color:#40526e;
-  line-height:1.6;
-  font-size:14px}
 .side-suggest-form{
   display:grid;
   gap:10px}
@@ -1125,11 +1011,6 @@ to{
 @media(max-width:760px){
 .wrap{
   padding:10px 8px 30px}
-.top-utility{
-  align-items:flex-start}
-.top-right-tools{
-  flex-direction:column;
-  align-items:flex-end}
 .visit-mini{
   width:205px}
 .visit-line{
@@ -1167,8 +1048,6 @@ to{
   grid-template-columns:1fr auto}
 .admin-visit-row-main .admin-swap{
   grid-column:1/-1}
-.drawer-panel{
-  width:min(320px,92vw)}
 }
 @media(max-width:520px){
 .reaction-board,.award-grid{
@@ -1201,43 +1080,19 @@ to{
 *,*::before,*::after{
   transition:none!important;
   animation:none!important}
-}
-
-/* Visual contract, layout guards, component polish, and animation overrides
-   moved to ../ui/kinojo-*.css files in 1.c2.02 layout refactor. */
-
-
-/* ============================================================
-   1.c2.02 UI interaction and layout fix
-============================================================ */
-.top-utility{position:sticky;top:0;z-index:90;align-items:center;padding:8px 0;background:linear-gradient(180deg,rgba(238,244,255,.96),rgba(238,244,255,.72));backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-.top-right-tools{align-items:center;height:40px}.visit-mini{height:40px;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;text-align:right;padding:5px 10px}.admin-menu-btn,.drawer-toggle{height:40px;width:40px}.drawer-toggle .drawer-plus,.drawer-toggle .drawer-plus:before{transition:transform .38s cubic-bezier(.16,1,.3,1)}.drawer-toggle:hover .drawer-plus{transform:rotate(360deg)}.drawer-toggle:active .drawer-plus{transform:rotate(540deg) scale(.92)}
-.drawer-toggle,.admin-menu-btn,.visit-mini{box-sizing:border-box}
-.drawer-close:hover,.drawer-page-close:hover,.admin-dropdown-close:hover,.reaction-close:hover,.construction-close:hover{animation:kinojoCloseSpin .48s cubic-bezier(.16,1,.3,1)}@keyframes kinojoCloseSpin{to{transform:rotate(360deg)}}
-.btn,.page-btn,.send-btn,.reaction-choice button,.construction-ok,.pill,.admin-swap-btn,.character-button,.drawer-nav a,.drawer-link,.drawer-action{transition:color .22s ease,transform .22s ease,filter .22s ease,background .22s ease,border-color .22s ease}.btn:hover,.page-btn:hover,.send-btn:hover,.reaction-choice button:hover,.construction-ok:hover,.pill:hover,.admin-swap-btn:hover{transform:scale(1.035)}
+}.visit-mini{height:40px;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;text-align:right;padding:5px 10px}@keyframes kinojoCloseSpin{to{transform:rotate(360deg)}}.btn:hover,.page-btn:hover,.send-btn:hover,.reaction-choice button:hover,.construction-ok:hover,.pill:hover,.admin-swap-btn:hover{transform:scale(1.035)}
 .character-button{cursor:pointer;transition:color .22s ease,transform .22s ease}.character-button:hover{color:#2563eb;text-decoration:none;transform:scale(1.06)}
-.side-drawer,.drawer-page-panel{display:block;visibility:hidden;pointer-events:none;background:rgba(255,255,255,.18);transition:visibility 0s linear .32s}.side-drawer.open,.drawer-page-panel.open{visibility:visible;pointer-events:auto;transition-delay:0s}.drawer-panel{transform:translateX(-104%);transition:transform .34s cubic-bezier(.16,1,.3,1)}.side-drawer.open .drawer-panel{transform:translateX(0)}
-.drawer-nav{gap:4px}.drawer-category{padding:8px 2px 3px;font-size:12px;font-weight:1000;color:#7b8ba2}.drawer-nav a,.drawer-link,.drawer-action{position:relative;border:0!important;background:transparent!important;border-radius:0!important;padding:9px 2px!important;overflow:hidden}.drawer-nav a::before,.drawer-link::before,.drawer-action::before{content:"";position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,rgba(219,234,254,.96),rgba(237,233,254,.58));z-index:-1;transition:width .28s ease}.drawer-nav a:hover::before,.drawer-link:hover::before,.drawer-action:hover::before,.drawer-nav a:active::before,.drawer-link:active::before,.drawer-action:active::before{width:100%}.drawer-nav a:hover,.drawer-link:hover,.drawer-action:hover{color:#1d4ed8;transform:none}
-.drawer-page-panel{background:rgba(255,255,255,.18);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:0}.drawer-page-panel.open{display:block}.drawer-page-card{position:absolute;left:0;top:0;height:100dvh;width:min(430px,92vw);border-radius:0;border-top:0;border-bottom:0;transform:translateX(-104%);transition:transform .34s cubic-bezier(.16,1,.3,1);display:flex;flex-direction:column}.drawer-page-panel.open .drawer-page-card{transform:translateX(0)}.drawer-page-body{overflow:auto;flex:1}
 .section-head,.overall-head,.mvp-head,.reaction-card-head,.relation-main-head{min-height:50px}.section h2,.overall h2,.mvp-card h2,.relation-main-head h2,.reaction-card-title{font-size:17px!important;line-height:1.2}.dashboard{grid-template-columns:minmax(0,6fr) minmax(0,4fr);align-items:stretch}.top-grid{grid-template-columns:repeat(2,minmax(0,1fr));height:100%}.top-grid .section{height:100%;display:grid;grid-template-rows:auto 1fr}.top-grid .list{align-content:start}.mini-row{min-height:31px;padding:3px 6px;gap:6px;grid-template-columns:46px minmax(0,1fr) 46px 82px}.rank-emblem{min-width:42px}.rank-emblem img{width:34px;height:34px}.rank-number{font-size:9px;margin-top:-2px}.name,.tag-name{font-size:12px}.meta,.owner-line{font-size:9px}.score{font-size:11px}.reaction-counts{font-size:9px;min-width:38px}.relation-combined-card{height:100%;min-height:0}.relation-viewport{max-height:none;height:100%;min-height:0;overflow:hidden}.relation-column{min-height:0;overflow:hidden}.relation-track{display:grid;gap:6px}.relation-column.is-scrollable .relation-track{animation:relationRoll 18s linear infinite}.relation-column.is-scrollable:hover .relation-track{animation-play-state:paused}.relation-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px;align-items:center;padding:7px;border:1px solid rgba(117,140,177,.16);border-radius:var(--radius-control);background:rgba(255,255,255,.58)}.relation-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:1000}.relation-server{font-size:10px;color:#7b8ba2;font-weight:900}.relation-reactions{grid-column:1/-1;justify-self:center}.relation-empty{height:100%;display:grid;place-items:center}.reaction-empty{min-height:118px;display:grid;place-items:center;text-align:center;color:var(--muted);font-weight:900}.recent-comment-card .comment-list.is-scrollable .comment-track{animation:commentRoll 28s linear infinite}@keyframes relationRoll{0%{transform:translateY(0)}100%{transform:translateY(-50%)}}
 .rank-tools{align-items:center}.class-tabs.rank-tabs{padding-left:12px;padding-right:12px}.overall .class-tabs.rank-tabs,.overall .rank-tools{max-width:100%}
 @media(max-width:900px){.dashboard{grid-template-columns:1fr}.top-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.relation-viewport{max-height:310px}.side-stack{min-height:310px}}
-@media(max-width:620px){.top-grid{grid-template-columns:1fr}.dashboard{grid-template-columns:1fr}.mini-row{grid-template-columns:44px minmax(0,1fr) 42px 74px}.visit-mini{width:194px}.top-right-tools{gap:6px}}
+@media(max-width:620px){.top-grid{grid-template-columns:1fr}.dashboard{grid-template-columns:1fr}.mini-row{grid-template-columns:44px minmax(0,1fr) 42px 74px}.visit-mini{width:194px}}
 
 /* ============================================================
    KINOJO 1.c2.02 UI System Fix
    공통 탑바 / 로딩 / 명예의 전당 레이아웃 보정
 ============================================================ */
 body{background:#fff!important;}
-.top-utility{position:sticky;top:0;z-index:90;background:transparent!important;backdrop-filter:none;-webkit-backdrop-filter:none;}
-.top-utility::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);opacity:.92;}
-.top-right-tools{align-items:center;}
-.top-chip.top-link{height:40px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;}
 .visit-mini{height:40px;min-height:40px;display:grid;align-content:center;text-align:right;line-height:1.16;padding:4px 10px;}
-.drawer-toggle,.admin-menu-btn{width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;aspect-ratio:1/1;}
-.drawer-close,.reaction-close,.construction-close,.drawer-page-close,.admin-dropdown-close{border-radius:999px!important;}
-.drawer-nav a.active,.drawer-nav a[aria-disabled="true"]{opacity:.45;pointer-events:none;cursor:default;}
-.drawer-nav a,.drawer-link,.drawer-action{border:0!important;background:transparent!important;}
 .loader-ring{width:34px;height:34px;margin:0 auto 10px;border-radius:999px;background:conic-gradient(#2563eb 0 12.5%,#dbeafe 12.5% 25%,#93c5fd 25% 37.5%,#dbeafe 37.5% 50%,#60a5fa 50% 62.5%,#dbeafe 62.5% 75%,#3b82f6 75% 87.5%,#dbeafe 87.5%);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 0);mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 0);animation:kinojoSpinner .9s steps(8) infinite;}
 @keyframes kinojoSpinner{to{transform:rotate(360deg)}}
 .loader-text,#loaderText{display:inline-block;animation:kinojoTextFloat 1.15s ease-in-out infinite;}
@@ -1264,7 +1119,7 @@ body{background:#fff!important;}
 .rank-table th:nth-child(5),.rank-table td:nth-child(5),.rank-table th:nth-child(6),.rank-table td:nth-child(6){text-align:right;}
 .reaction-empty{display:grid;place-items:center;text-align:center;}
 .recent-comment-card .comment-list.is-scrollable .comment-track{animation:commentRoll 28s linear infinite;}
-@media(max-width:760px){.top-right-tools .top-link{display:none}.dashboard{grid-template-columns:1fr!important}.top-grid{grid-template-columns:1fr}.reaction-board,.award-grid{grid-template-columns:1fr}.visit-mini{width:210px;font-size:11px}.relation-viewport{height:320px}}
+@media(max-width:760px){.dashboard{grid-template-columns:1fr!important}.top-grid{grid-template-columns:1fr}.reaction-board,.award-grid{grid-template-columns:1fr}.visit-mini{width:210px;font-size:11px}.relation-viewport{height:320px}}
 @media(min-width:761px) and (max-width:1080px){.top-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard{grid-template-columns:1fr!important}.side-stack{min-height:330px}}
 
 

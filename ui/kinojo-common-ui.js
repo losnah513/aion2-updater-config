@@ -1,4 +1,4 @@
-/* KINOJO common UI v1.c2.02_260605_01 */
+/* KINOJO common UI v1.c2.02 / work 260606_00 */
 (function(){
   const DOCS={
     about:{title:"사이트 소개",html:`<h3>KINOJO INFO</h3><p>키노조 인포는 AION2 키노조 관련 정보를 한곳에서 확인하기 위한 정보 허브입니다.</p><p>성역 파티 확인, 레기온 기록, 명예의 전당 등 필요한 기능을 순차적으로 제공합니다.</p>`},
@@ -21,14 +21,14 @@
     const admin=legacyTop?q('.admin-menu-wrap',legacyTop):q('.admin-menu-wrap');
     const rescued={visit:detach(visit),admin:detach(admin)};
     if(legacyTop)legacyTop.remove();
-    document.querySelectorAll('.side-drawer,.drawer-page-panel,.info-drawer,.info-drawer-overlay').forEach(el=>el.remove());
+    document.querySelectorAll('.side-drawer,.drawer-page-panel,.info-drawer,.info-drawer-overlay,.kinojo-common-drawer,.kinojo-side-panel').forEach(el=>el.remove());
     return rescued;
   }
   function makeTopbar(rescued,info){
     const bar=document.createElement('section');
     bar.className='kinojo-topbar';
     bar.setAttribute('aria-label','KINOJO INFO 공통 상단 메뉴');
-    bar.innerHTML=`<button class="kinojo-menu-toggle drawer-toggle" id="drawerToggleBtn" type="button" aria-label="메뉴 열기" aria-expanded="false"><span class="kinojo-plus drawer-plus" aria-hidden="true"></span></button><a class="kinojo-top-brand top-brand" href="${info.root}">KINOJO INFO</a><span class="kinojo-top-page top-chip" ${info.key==='sanctuary'?'id="syncChip"':''}>${info.key==='sanctuary'?'성역 데이터를 불러오는 중...':info.label}</span><div class="kinojo-top-tools top-right-tools" id="kinojoTopTools"></div>`;
+    bar.innerHTML=`<button class="kinojo-menu-toggle" id="drawerToggleBtn" type="button" aria-label="메뉴 열기" aria-expanded="false"><span class="kinojo-plus" aria-hidden="true"></span></button><a class="kinojo-top-brand" href="${info.root}">KINOJO INFO</a><span class="kinojo-top-page" ${info.key==='sanctuary'?'id="syncChip"':''}>${info.key==='sanctuary'?'성역 데이터를 불러오는 중...':info.label}</span><div class="kinojo-top-tools" id="kinojoTopTools"></div>`;
     const tools=q('#kinojoTopTools',bar);
     if(rescued.visit)tools.appendChild(rescued.visit);
     if(rescued.admin)tools.appendChild(rescued.admin);
@@ -42,40 +42,40 @@
     const prefix=isHall||isSanctuary?'../':'';
     const sanctuaryPrefix=isSanctuary?'./':'sanctuary/';
     const drawer=document.createElement('section');
-    drawer.className='kinojo-common-drawer side-drawer';
+    drawer.className='kinojo-common-drawer';
     drawer.id='sideDrawer';
     drawer.setAttribute('aria-hidden','true');
     drawer.innerHTML=`
-      <div class="kinojo-drawer-panel drawer-panel" role="dialog" aria-modal="false" aria-labelledby="drawerTitle">
-        <div class="kinojo-drawer-head drawer-head">
-          <a id="drawerTitle" class="kinojo-drawer-title drawer-title-link" href="${home}">KINOJO INFO</a>
-          <button class="kinojo-drawer-close drawer-close" id="drawerCloseBtn" type="button" aria-label="메뉴 닫기">×</button>
+      <div class="kinojo-drawer-panel" role="dialog" aria-modal="false" aria-labelledby="drawerTitle">
+        <div class="kinojo-drawer-head">
+          <a id="drawerTitle" class="kinojo-drawer-title" href="${home}">KINOJO INFO</a>
+          <button class="kinojo-drawer-close" id="drawerCloseBtn" type="button" aria-label="메뉴 닫기">×</button>
         </div>
-        <nav class="kinojo-drawer-nav drawer-nav" aria-label="KINOJO INFO 메뉴">
-          <div class="kinojo-drawer-category drawer-category">바로가기</div>
+        <nav class="kinojo-drawer-nav" aria-label="KINOJO INFO 메뉴">
+          <div class="kinojo-drawer-category">바로가기</div>
           <a href="${isHall?'./':prefix+hallHref}" ${isHall?'class="active" aria-disabled="true"':''}>명예의 전당</a>
           <a href="https://aion2.plaync.com/ko-kr/index?redirect=false" target="_blank" rel="noopener">아이온2 공식으로 이동</a>
           <a href="https://aion2.plaync.com/ko-kr/board/notice/list" target="_blank" rel="noopener">아이온2 공지로 이동</a>
-          <div class="kinojo-drawer-divider drawer-divider"></div>
-          <div class="kinojo-drawer-category drawer-category">성역</div>
+          <div class="kinojo-drawer-divider"></div>
+          <div class="kinojo-drawer-category">성역</div>
           <a href="${sanctuaryPrefix}?id=rudra" data-sanctuary-link="rudra">1. 심연의 재련: 루드라</a>
           <a href="${sanctuaryPrefix}?id=bagot" data-sanctuary-link="bagot">2. 침식의 정화소</a>
           <a href="${sanctuaryPrefix}?id=kaldrix" data-sanctuary-link="kaldrix">3. 무스펠의 성배</a>
-          <div class="kinojo-drawer-divider drawer-divider"></div>
-          <div class="kinojo-drawer-category drawer-category">안내</div>
-          <button class="kinojo-drawer-link drawer-link drawer-page-link" type="button" data-page-panel="about" data-drawer="about">사이트 소개</button>
-          <button class="kinojo-drawer-link drawer-link drawer-page-link" type="button" data-page-panel="terms" data-drawer="terms">이용약관</button>
-          <button class="kinojo-drawer-link drawer-link drawer-page-link" type="button" data-page-panel="privacy" data-drawer="privacy">개인정보처리방침</button>
-          <div class="kinojo-drawer-divider drawer-divider"></div>
-          <button class="kinojo-drawer-action drawer-action" id="drawerSuggestBtn" type="button" data-page-panel="contact" data-drawer="contact">아이디어 제안 및 건의</button>
+          <div class="kinojo-drawer-divider"></div>
+          <div class="kinojo-drawer-category">안내</div>
+          <button class="kinojo-drawer-link drawer-page-link" type="button" data-page-panel="about" data-drawer="about">사이트 소개</button>
+          <button class="kinojo-drawer-link drawer-page-link" type="button" data-page-panel="terms" data-drawer="terms">이용약관</button>
+          <button class="kinojo-drawer-link drawer-page-link" type="button" data-page-panel="privacy" data-drawer="privacy">개인정보처리방침</button>
+          <div class="kinojo-drawer-divider"></div>
+          <button class="kinojo-drawer-action" id="drawerSuggestBtn" type="button" data-page-panel="contact" data-drawer="contact">아이디어 제안 및 건의</button>
         </nav>
       </div>
-      <aside class="kinojo-side-panel drawer-page-panel" id="drawerPagePanel" aria-hidden="true">
-        <div class="kinojo-panel-head drawer-page-head">
+      <aside class="kinojo-side-panel" id="drawerPagePanel" aria-hidden="true">
+        <div class="kinojo-panel-head">
           <strong class="kinojo-panel-title" id="drawerPageTitle">사이트 안내</strong>
-          <button class="kinojo-panel-close drawer-page-close" id="drawerPageCloseBtn" type="button" aria-label="닫기">×</button>
+          <button class="kinojo-panel-close" id="drawerPageCloseBtn" type="button" aria-label="닫기">×</button>
         </div>
-        <div class="kinojo-panel-body drawer-page-body" id="drawerPageBody"></div>
+        <div class="kinojo-panel-body" id="drawerPageBody"></div>
       </aside>`;
     document.body.appendChild(drawer);
   }

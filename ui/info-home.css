@@ -584,31 +584,14 @@ body,.card,.eyebrow,.hall-banner,.info-logo-placeholder,.info-drawer,.constructi
 }
 
 
-/* ============================================================
-   1.c2.02 Common topbar, drawer, and interaction restore
-============================================================ */
-body{padding-top:58px}
-.top-utility{
-  position:fixed;top:0;left:0;right:0;z-index:900;
-  display:flex;align-items:center;gap:10px;height:54px;padding:8px max(12px,calc((100vw - 1080px)/2 + 12px));
-  background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(255,255,255,.78));
-  border-bottom:1px solid var(--line);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)
-}
-.top-right-tools{margin-left:auto;display:flex;align-items:center;gap:8px;height:38px}.top-brand{height:38px;display:inline-flex;align-items:center;text-decoration:none;color:#263444;font-weight:1000;letter-spacing:-.3px}.top-chip{height:38px;display:inline-flex;align-items:center;border:1px solid var(--line);background:#fff;border-radius:var(--button-radius);padding:0 12px;color:#667085;font-size:12px;font-weight:1000}.drawer-toggle,.drawer-close{appearance:none;width:38px;height:38px;border:1px solid var(--line);background:#fff;color:#475467;border-radius:var(--button-radius);cursor:pointer;display:grid;place-items:center}.drawer-toggle .drawer-plus,.drawer-toggle .drawer-plus:before{display:block;width:16px;height:2px;background:#334155;border-radius:99px;content:"";transition:transform .38s cubic-bezier(.16,1,.3,1)}.drawer-toggle .drawer-plus:before{transform:rotate(90deg)}.drawer-toggle:hover .drawer-plus{transform:rotate(360deg)}.drawer-toggle:active .drawer-plus{transform:rotate(540deg) scale(.92)}.side-drawer{position:fixed;inset:0;z-index:1000;visibility:hidden;pointer-events:none;background:rgba(255,255,255,.18);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);transition:visibility 0s linear .28s}.side-drawer.open{visibility:visible;pointer-events:auto;transition-delay:0s}.drawer-panel{position:absolute;left:0;top:0;width:min(360px,92vw);height:100dvh;background:#fff;border-right:1px solid var(--line);transform:translateX(-104%);transition:transform .32s cubic-bezier(.16,1,.3,1);display:flex;flex-direction:column}.side-drawer.open .drawer-panel{transform:translateX(0)}.drawer-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px;border-bottom:1px solid var(--line);background:linear-gradient(135deg,#eef5ff,#f8f4ff)}.drawer-title-link{font-size:18px;font-weight:1000;text-decoration:none;color:#263444}.drawer-nav{display:grid;gap:5px;padding:14px;overflow:auto}.drawer-category{padding:8px 2px 4px;font-size:12px;font-weight:1000;color:#7b8ba2}.drawer-divider{height:1px;background:var(--line);margin:5px 0}.drawer-nav a,.drawer-link{position:relative;appearance:none;border:0;background:transparent;border-radius:0;padding:9px 2px;text-align:left;text-decoration:none;color:#334155;font-weight:900;cursor:pointer;overflow:hidden}.drawer-nav a::before,.drawer-link::before{content:"";position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,rgba(219,234,254,.92),rgba(237,233,254,.56));z-index:-1;transition:width .28s ease}.drawer-nav a:hover::before,.drawer-link:hover::before,.drawer-nav a:active::before,.drawer-link:active::before{width:100%}.drawer-nav a:hover,.drawer-link:hover{color:#1d4ed8}.card:not(.rudra-card):not(.bagot-card):not(.kaldrix-card),.hall-banner,.footer button,.construction-ok,.info-drawer-close,.construction-close{transition:color .22s ease,transform .22s ease,filter .22s ease}.footer button:hover,.construction-ok:hover{transform:scale(1.06);color:var(--blue)}.info-drawer-close:hover,.construction-close:hover,.drawer-close:hover{animation:kinojoCloseSpin .48s cubic-bezier(.16,1,.3,1)}@keyframes kinojoCloseSpin{to{transform:rotate(360deg)}}
+/* Common topbar/drawer rules moved to ui/kinojo-common-ui.css. */
 
 /* ============================================================
    KINOJO 1.c2.02 UI System Fix - INFO HOME
 ============================================================ */
 body{background:#fff!important;}
-.top-utility{position:sticky;top:0;z-index:90;background:transparent!important;}
-.top-utility::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
-.top-chip.top-link{height:38px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;transition:color .22s ease,transform .22s ease;}
-.top-chip.top-link:hover{color:#2563eb;transform:scale(1.05)}
-.drawer-nav a.active,.drawer-nav a[aria-disabled="true"]{opacity:.45;pointer-events:none;cursor:default;}
-.drawer-close,.construction-close,.info-drawer-close{border-radius:999px!important;}
 .card:not(.rudra-card):not(.bagot-card):not(.kaldrix-card):hover .sanctuary-title,.card:not(.rudra-card):not(.bagot-card):not(.kaldrix-card):hover .sanctuary-sub{transform:scale(1.04);color:#2563eb;}
 .sanctuary-title,.sanctuary-sub{display:inline-block;transition:color .22s ease,transform .22s ease;}
 .common-footer{display:grid;gap:8px;justify-items:center;}
 .footer-links{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;}
 .footer-powered{font-size:11px;color:#98a2b3;font-weight:900;}
-@media(max-width:760px){.top-right-tools .top-link{display:none}.top-chip{font-size:11px;padding:0 8px}}
