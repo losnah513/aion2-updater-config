@@ -1,3 +1,9 @@
 ARC-0.2.00
 
 이번 버전의 자세한 수정 내역은 arcana/_docs 폴더를 확인하세요.
+
+
+ARC-0.2.00 skill icon UI patch
+- js/skillSelector.js: loads /data/skills/*.json and renders icon + skill name buttons.
+- css/cards.css: adds icon button layout and selected wave effect.
+- data/skills/*.json and assets/skill-icons/*.png are included.
