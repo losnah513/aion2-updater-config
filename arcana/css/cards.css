@@ -1,42 +1,43 @@
 .arcana-card-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
+  gap: 10px;
 }
 
 .arcana-card {
   border: 1px solid var(--arcana-line);
   border-radius: var(--arcana-radius-md);
-  padding: 14px;
+  padding: 10px;
   background: var(--arcana-surface-soft);
 }
 
 .arcana-card h3 {
-  margin: 0 0 12px;
+  margin: 0 0 9px;
   text-align: center;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .arcana-slot {
   display: grid;
-  grid-template-columns: 1fr 70px;
-  gap: 8px;
-  margin-bottom: 8px;
+  grid-template-columns: 1fr 54px;
+  gap: 6px;
+  margin-bottom: 6px;
 }
 
 .arcana-slot select,
 .arcana-slot input {
   width: 100%;
-  min-height: 36px;
+  min-height: 30px;
   border: 1px solid var(--arcana-line);
-  border-radius: 10px;
-  padding: 7px 9px;
+  border-radius: var(--arcana-radius-md);
+  padding: 5px 7px;
   background: #fff;
+  font-size: 12px;
 }
 
 .arcana-card-note {
-  margin-top: 10px;
-  font-size: 12px;
+  margin-top: 8px;
+  font-size: 11px;
   color: var(--arcana-muted);
   line-height: 1.4;
 }

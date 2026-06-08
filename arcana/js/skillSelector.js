@@ -2,13 +2,34 @@ window.ArcanaApp = window.ArcanaApp || {};
 
 ArcanaApp.skillSelector = {
   getAllSkills() {
-    const skillSet = new Set();
+    const state = ArcanaApp.state;
+    const classSkills = state.classSkills[state.currentClassKey] || {};
+    const source = classSkills.active || state.activeSkills || [];
 
-    Object.values(ArcanaApp.state.skillsByArcana).forEach(list => {
-      list.forEach(skill => skillSet.add(skill));
+    if (source.length > 0) {
+      return ArcanaApp.skillSelector.uniqueSkills(source);
+    }
+
+    const fallback = [];
+    Object.values(state.skillsByArcana).forEach(list => {
+      list.forEach(skill => fallback.push(skill));
     });
 
-    return Array.from(skillSet).sort((a, b) => a.localeCompare(b, 'ko'));
+    return ArcanaApp.skillSelector.uniqueSkills(fallback);
+  },
+
+  uniqueSkills(list) {
+    const seen = new Set();
+    const result = [];
+
+    (list || []).forEach(value => {
+      const skill = String(value || '').trim();
+      if (!skill || seen.has(skill)) return;
+      seen.add(skill);
+      result.push(skill);
+    });
+
+    return result;
   },
 
   render() {

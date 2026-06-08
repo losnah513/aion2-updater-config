@@ -1,18 +1,19 @@
 :root {
-  --arcana-bg: #f5f7fb;
+  --arcana-bg: #f4f6f9;
   --arcana-surface: #ffffff;
-  --arcana-surface-soft: #f9fafc;
-  --arcana-text: #20242c;
-  --arcana-muted: #6d7380;
-  --arcana-line: #dfe4ec;
-  --arcana-primary: #315cff;
-  --arcana-primary-soft: #edf1ff;
-  --arcana-danger: #d33a3a;
-  --arcana-success: #168a45;
-  --arcana-warning: #b7791f;
-  --arcana-radius-lg: 22px;
-  --arcana-radius-md: 14px;
-  --arcana-shadow: 0 14px 40px rgba(28, 39, 60, 0.08);
+  --arcana-surface-soft: #ffffff;
+  --arcana-text: #1f2329;
+  --arcana-muted: #727985;
+  --arcana-line: #d9dee7;
+  --arcana-line-soft: #edf0f5;
+  --arcana-primary: #2563eb;
+  --arcana-primary-soft: #f3f7ff;
+  --arcana-danger: #c93434;
+  --arcana-success: #15803d;
+  --arcana-warning: #a16207;
+  --arcana-radius-lg: 10px;
+  --arcana-radius-md: 6px;
+  --arcana-shadow: 0 1px 2px rgba(18, 24, 40, 0.06);
 }
 
 * { box-sizing: border-box; }
@@ -22,24 +23,26 @@ body {
   min-height: 100vh;
   font-family: Arial, 'Noto Sans KR', sans-serif;
   color: var(--arcana-text);
-  background: radial-gradient(circle at top, #eef3ff 0, var(--arcana-bg) 36%, #f7f8fb 100%);
+  background: var(--arcana-bg);
 }
 
 button, select, input { font: inherit; }
 
 .arcana-btn {
   border: 1px solid var(--arcana-line);
-  border-radius: 999px;
-  padding: 10px 16px;
+  border-radius: var(--arcana-radius-md);
+  padding: 7px 12px;
   cursor: pointer;
   background: var(--arcana-surface);
   color: var(--arcana-text);
-  transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+  font-size: 13px;
+  line-height: 1.2;
+  transition: background .14s ease, border-color .14s ease, color .14s ease;
 }
 
 .arcana-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(28, 39, 60, 0.09);
+  border-color: #b8c0ce;
+  background: #f8fafc;
 }
 
 .arcana-btn-primary {
@@ -48,11 +51,22 @@ button, select, input { font: inherit; }
   color: #fff;
 }
 
-.arcana-btn-ghost { background: transparent; }
+.arcana-btn-primary:hover {
+  border-color: #1d4ed8;
+  background: #1d4ed8;
+}
+
+.arcana-btn-ghost {
+  background: #fff;
+}
 
 .arcana-actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
-  margin-top: 16px;
+  margin-top: 12px;
+}
+
+.arcana-actions-right {
+  justify-content: flex-end;
 }

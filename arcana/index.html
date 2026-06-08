@@ -15,42 +15,52 @@
   <div class="arcana-page">
     <header class="arcana-header">
       <div>
-        <p class="arcana-eyebrow">ARCANA SKILL SIMULATOR</p>
-        <h1>아르카나 스킬 레벨 시뮬레이터</h1>
-        <p class="arcana-subtitle">보유 카드와 추천 카드를 조합해 20레벨 달성을 계산합니다.</p>
+        <p class="arcana-eyebrow">ARCANA SIMULATOR</p>
+        <h1>아르카나 스킬 시뮬레이터</h1>
+        <p class="arcana-subtitle">20레벨 목표 스킬과 보유 카드 레벨을 가볍게 확인합니다.</p>
       </div>
-      <div class="arcana-version">ARC-0.1.00</div>
+      <div class="arcana-header-tools">
+        <label class="arcana-class-select">
+          <span>직업</span>
+          <select id="arcanaClassSelect">
+            <option value="gladiator">검성</option>
+          </select>
+        </label>
+        <div class="arcana-version">ARC-0.1.00</div>
+      </div>
     </header>
 
     <main class="arcana-layout">
-      <section class="arcana-panel arcana-target-panel">
-        <div class="arcana-panel-title">
-          <h2>20레벨 목표 스킬 선택</h2>
-          <span>최대 7개</span>
-        </div>
-        <div id="arcanaTargetSkillList" class="arcana-skill-grid"></div>
-      </section>
+      <div class="arcana-top-grid">
+        <section class="arcana-panel arcana-target-panel">
+          <div class="arcana-panel-title">
+            <h2>20레벨 목표 스킬 선택</h2>
+            <span>액티브 스킬 / 최대 7개</span>
+          </div>
+          <div id="arcanaTargetSkillList" class="arcana-skill-grid"></div>
+        </section>
+
+        <section class="arcana-panel arcana-result-panel">
+          <div class="arcana-panel-title">
+            <h2>시뮬레이션 결과</h2>
+            <span>데바니온 +4 포함</span>
+          </div>
+          <div id="arcanaResultSummary" class="arcana-result-summary"></div>
+          <div class="arcana-actions arcana-actions-right">
+            <button id="arcanaRunSimulation" class="arcana-btn arcana-btn-primary">시뮬레이터 실행</button>
+          </div>
+        </section>
+      </div>
 
       <section class="arcana-panel arcana-editor-panel">
         <div class="arcana-panel-title">
           <h2>내 보유 카드 입력</h2>
-          <span>저장값이 없으면 전체 기준 추천</span>
+          <span>스킬 선택 후 레벨 입력</span>
         </div>
         <div id="arcanaOwnedCardEditor" class="arcana-card-grid"></div>
         <div class="arcana-actions">
           <button id="arcanaSaveOwnedCards" class="arcana-btn arcana-btn-primary">보유 카드 저장</button>
           <button id="arcanaClearOwnedCards" class="arcana-btn arcana-btn-ghost">저장값 초기화</button>
-        </div>
-      </section>
-
-      <section class="arcana-panel arcana-result-panel">
-        <div class="arcana-panel-title">
-          <h2>시뮬레이션 결과</h2>
-          <span>데바니온 +4 포함</span>
-        </div>
-        <div id="arcanaResultSummary" class="arcana-result-summary"></div>
-        <div class="arcana-actions">
-          <button id="arcanaRunSimulation" class="arcana-btn arcana-btn-primary">시뮬레이터 실행</button>
         </div>
       </section>
 

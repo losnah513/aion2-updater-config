@@ -12,13 +12,45 @@ ArcanaApp.app = {
     state.maxSlotLevel = data.maxSlotLevel || state.maxSlotLevel;
     state.arcanaTypes = data.arcanaTypes || state.arcanaTypes;
     state.skillsByArcana = data.skillsByArcana || {};
+    state.classList = data.classList || state.classList;
+    state.classSkills = data.classSkills || {};
+    state.activeSkills = data.activeSkills || [];
+    state.passiveSkills = data.passiveSkills || [];
     state.ownedCards = ArcanaApp.api.mergeOwnedCards(data.ownedCards);
 
+    ArcanaApp.app.renderClassOptions();
     ArcanaApp.ui.renderAll();
     ArcanaApp.app.bindEvents();
   },
 
+  renderClassOptions() {
+    const select = document.getElementById('arcanaClassSelect');
+    if (!select) return;
+
+    select.innerHTML = '';
+    ArcanaApp.state.classList.forEach(item => {
+      const option = document.createElement('option');
+      option.value = item.key;
+      option.textContent = item.name;
+      select.appendChild(option);
+    });
+
+    select.value = ArcanaApp.state.currentClassKey;
+  },
+
   bindEvents() {
+    const classSelect = document.getElementById('arcanaClassSelect');
+    if (classSelect) {
+      classSelect.addEventListener('change', event => {
+        ArcanaApp.state.currentClassKey = event.target.value;
+        ArcanaApp.state.selectedTargetSkills = [];
+        ArcanaApp.state.recommendationCards = {};
+        ArcanaApp.skillSelector.render();
+        ArcanaApp.ui.renderResults();
+        ArcanaApp.ui.renderRecommendationCards({});
+      });
+    }
+
     document.getElementById('arcanaSaveOwnedCards').addEventListener('click', async () => {
       try {
         const ownedCards = ArcanaApp.cardEditor.collect();
