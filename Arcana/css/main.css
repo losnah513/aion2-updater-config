@@ -1,0 +1,58 @@
+:root {
+  --arcana-bg: #f5f7fb;
+  --arcana-surface: #ffffff;
+  --arcana-surface-soft: #f9fafc;
+  --arcana-text: #20242c;
+  --arcana-muted: #6d7380;
+  --arcana-line: #dfe4ec;
+  --arcana-primary: #315cff;
+  --arcana-primary-soft: #edf1ff;
+  --arcana-danger: #d33a3a;
+  --arcana-success: #168a45;
+  --arcana-warning: #b7791f;
+  --arcana-radius-lg: 22px;
+  --arcana-radius-md: 14px;
+  --arcana-shadow: 0 14px 40px rgba(28, 39, 60, 0.08);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Arial, 'Noto Sans KR', sans-serif;
+  color: var(--arcana-text);
+  background: radial-gradient(circle at top, #eef3ff 0, var(--arcana-bg) 36%, #f7f8fb 100%);
+}
+
+button, select, input { font: inherit; }
+
+.arcana-btn {
+  border: 1px solid var(--arcana-line);
+  border-radius: 999px;
+  padding: 10px 16px;
+  cursor: pointer;
+  background: var(--arcana-surface);
+  color: var(--arcana-text);
+  transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.arcana-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(28, 39, 60, 0.09);
+}
+
+.arcana-btn-primary {
+  border-color: var(--arcana-primary);
+  background: var(--arcana-primary);
+  color: #fff;
+}
+
+.arcana-btn-ghost { background: transparent; }
+
+.arcana-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}

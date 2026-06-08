@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arcana Skill Simulator ARC-0.1.00</title>
+
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/cards.css" />
+  <link rel="stylesheet" href="css/simulator.css" />
+  <link rel="stylesheet" href="css/modal.css" />
+</head>
+<body>
+  <div class="arcana-page">
+    <header class="arcana-header">
+      <div>
+        <p class="arcana-eyebrow">ARCANA SKILL SIMULATOR</p>
+        <h1>아르카나 스킬 레벨 시뮬레이터</h1>
+        <p class="arcana-subtitle">보유 카드와 추천 카드를 조합해 20레벨 달성을 계산합니다.</p>
+      </div>
+      <div class="arcana-version">ARC-0.1.00</div>
+    </header>
+
+    <main class="arcana-layout">
+      <section class="arcana-panel arcana-target-panel">
+        <div class="arcana-panel-title">
+          <h2>20레벨 목표 스킬 선택</h2>
+          <span>최대 7개</span>
+        </div>
+        <div id="arcanaTargetSkillList" class="arcana-skill-grid"></div>
+      </section>
+
+      <section class="arcana-panel arcana-editor-panel">
+        <div class="arcana-panel-title">
+          <h2>내 보유 카드 입력</h2>
+          <span>저장값이 없으면 전체 기준 추천</span>
+        </div>
+        <div id="arcanaOwnedCardEditor" class="arcana-card-grid"></div>
+        <div class="arcana-actions">
+          <button id="arcanaSaveOwnedCards" class="arcana-btn arcana-btn-primary">보유 카드 저장</button>
+          <button id="arcanaClearOwnedCards" class="arcana-btn arcana-btn-ghost">저장값 초기화</button>
+        </div>
+      </section>
+
+      <section class="arcana-panel arcana-result-panel">
+        <div class="arcana-panel-title">
+          <h2>시뮬레이션 결과</h2>
+          <span>데바니온 +4 포함</span>
+        </div>
+        <div id="arcanaResultSummary" class="arcana-result-summary"></div>
+        <div class="arcana-actions">
+          <button id="arcanaRunSimulation" class="arcana-btn arcana-btn-primary">시뮬레이터 실행</button>
+        </div>
+      </section>
+
+      <section class="arcana-panel arcana-recommend-panel">
+        <div class="arcana-panel-title">
+          <h2>추천 카드 옵션</h2>
+          <span>가급적 3레벨 이하, 필요 시 4레벨 허용</span>
+        </div>
+        <div id="arcanaRecommendationCards" class="arcana-card-grid"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/state.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/simulator.js"></script>
+  <script src="js/recommendation.js"></script>
+  <script src="js/cardEditor.js"></script>
+  <script src="js/skillSelector.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

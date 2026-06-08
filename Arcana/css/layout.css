@@ -1,0 +1,79 @@
+.arcana-page {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 28px 0 48px;
+}
+
+.arcana-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 22px;
+}
+
+.arcana-eyebrow {
+  margin: 0 0 8px;
+  font-size: 12px;
+  letter-spacing: .12em;
+  color: var(--arcana-primary);
+  font-weight: 700;
+}
+
+.arcana-header h1 {
+  margin: 0;
+  font-size: clamp(26px, 4vw, 38px);
+  letter-spacing: -0.04em;
+}
+
+.arcana-subtitle {
+  margin: 10px 0 0;
+  color: var(--arcana-muted);
+}
+
+.arcana-version {
+  padding: 9px 13px;
+  border: 1px solid var(--arcana-line);
+  border-radius: 999px;
+  background: rgba(255,255,255,.78);
+  color: var(--arcana-muted);
+  white-space: nowrap;
+}
+
+.arcana-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+
+.arcana-panel {
+  border: 1px solid var(--arcana-line);
+  border-radius: var(--arcana-radius-lg);
+  padding: 20px;
+  background: rgba(255,255,255,.88);
+  box-shadow: var(--arcana-shadow);
+}
+
+.arcana-panel-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.arcana-panel-title h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.arcana-panel-title span {
+  color: var(--arcana-muted);
+  font-size: 13px;
+}
+
+@media (max-width: 720px) {
+  .arcana-header { flex-direction: column; }
+  .arcana-panel { padding: 16px; }
+  .arcana-panel-title { align-items: flex-start; flex-direction: column; }
+}
