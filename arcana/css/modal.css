@@ -1,2 +1,52 @@
-/* ARC-0.1.00: 조건 편집 모달 확장용 파일. 현재 버전은 카드 안에서 직접 입력합니다. */
-.arcana-modal-placeholder { display: none; }
+/* ARC-0.2.01: 페이지 내부 확인 모달. 브라우저 기본 알림창은 사용하지 않습니다. */
+.arcana-confirm-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(7, 16, 31, 0.18);
+  backdrop-filter: blur(2px);
+}
+
+.arcana-confirm-modal[hidden] {
+  display: none;
+}
+
+.arcana-confirm-card {
+  width: 320px;
+  max-width: calc(100vw - 24px);
+  border: 1px solid var(--arcana-line);
+  border-radius: var(--arcana-radius);
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
+  animation: arcana-confirm-pop 0.16s ease-out;
+}
+
+.arcana-confirm-card h2 {
+  margin: 0;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--arcana-line-soft);
+  font-size: 13px;
+}
+
+.arcana-confirm-card p {
+  margin: 0;
+  padding: 12px 10px 10px;
+  color: var(--arcana-text);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.arcana-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 5px;
+  padding: 0 10px 10px;
+}
+
+@keyframes arcana-confirm-pop {
+  from { opacity: 0; transform: translateY(-5px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}

@@ -5,7 +5,7 @@ ArcanaApp.app = {
     const data = await ArcanaApp.api.loadInitialData();
     const state = ArcanaApp.state;
 
-    state.version = ArcanaApp.config.version || 'ARC-0.2.00';
+    state.version = ArcanaApp.config.version || 'ARC-0.2.01';
     state.targetLevel = data.targetLevel || state.targetLevel;
     state.devanionBonus = data.devanionBonus || state.devanionBonus;
     state.maxCardLevel = data.maxCardLevel || state.maxCardLevel;
@@ -35,6 +35,7 @@ ArcanaApp.app = {
 
   bindEvents() {
     ArcanaApp.classSelector.bind();
+    ArcanaApp.confirmModal.bind();
     ArcanaApp.app.bindCharacterSave();
     ArcanaApp.app.bindEquipmentSave();
     ArcanaApp.app.bindArcanaCardSave();
@@ -59,9 +60,10 @@ ArcanaApp.app = {
     });
 
     clearButton.addEventListener('click', () => {
+      ArcanaApp.state.selectedTargetSkills = [];
       ArcanaApp.state.characterLevels = {};
       ArcanaApp.api.clearCharacterLevels();
-      ArcanaApp.characterEditor.render();
+      ArcanaApp.skillSelector.render();
       ArcanaApp.panelLock.unlock('characterLevels', saveButton);
       ArcanaApp.app.resetRecommendation();
     });

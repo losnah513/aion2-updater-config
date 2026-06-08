@@ -83,25 +83,64 @@ ArcanaApp.classSelector = {
     if (dropdown) dropdown.hidden = true;
   },
 
-  confirm() {
+  async confirm() {
     const state = ArcanaApp.state;
     const nextKey = state.pendingClassKey || state.currentClassKey || (state.classList[0] && state.classList[0].key);
 
     if (!nextKey) return;
 
+    const isChangingClass = state.hasSelectedClass && state.currentClassKey !== nextKey;
+
+    if (state.hasSelectedClass && !isChangingClass) {
+      state.pendingClassKey = state.currentClassKey;
+      ArcanaApp.classSelector.close();
+      ArcanaApp.classSelector.render();
+      return;
+    }
+
+    if (isChangingClass && ArcanaApp.classSelector.hasSavedData()) {
+      const confirmed = await ArcanaApp.confirmModal.open(
+        '클래스를 변경하면 기존 저장한 내용은 초기화됩니다. 변경하시겠습니까?'
+      );
+
+      if (!confirmed) {
+        state.pendingClassKey = state.currentClassKey;
+        ArcanaApp.classSelector.render();
+        ArcanaApp.classSelector.open();
+        return;
+      }
+    }
+
     state.currentClassKey = nextKey;
     state.pendingClassKey = nextKey;
     state.hasSelectedClass = true;
+
+    ArcanaApp.classSelector.resetClassDependentState();
+    ArcanaApp.classSelector.clearSavedPanels();
+    ArcanaApp.classSelector.close();
+    ArcanaApp.ui.renderAll();
+  },
+
+  hasSavedData() {
+    return Boolean(
+      document.querySelector('.arcana-panel.is-saved') ||
+      ArcanaApp.state.recommendationGenerated
+    );
+  },
+
+  resetClassDependentState() {
+    const state = ArcanaApp.state;
+
     state.selectedTargetSkills = [];
     state.characterLevels = {};
+    state.selectedEquipmentKeys = [];
     state.equipmentOptions = { weapon: [], guarder: [], ring1: [], ring2: [] };
     state.ringOptions = { ring1: [], ring2: [] };
     state.ownedCards = {};
     state.recommendationCards = {};
-
-    ArcanaApp.classSelector.clearSavedPanels();
-    ArcanaApp.classSelector.close();
-    ArcanaApp.ui.renderAll();
+    state.recommendationMeta = null;
+    state.recommendationGenerated = false;
+    state.recommendationTab = 'cards';
   },
 
   clearSavedPanels() {

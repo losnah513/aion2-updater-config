@@ -1,14 +1,13 @@
-ARC-0.2.00
+ARC-0.2.01
 
 [이번 작업 요약]
-- 추천 아르카나 탭 구조 추가
-- 추천 전 블러 안내 화면 추가
-- 추천 시작 / 다른 세팅 추천 흐름 추가
-- 카드 폭과 내부 여백 압축
-- 문서 버전 갱신
+- 액티브 스킬 선택과 캐릭터 스킬 레벨 입력을 통합했습니다.
+- 클래스 변경 확인창을 페이지 내부 모달로 추가했습니다.
+- 클래스 변경 시 이전 클래스의 장비/추천 상태가 남는 문제를 수정했습니다.
+- 상단 입력 영역을 액티브 스킬 선택 / 장비 스킬 옵션 / 기능 추가 예정 영역 구조로 정리했습니다.
 
 [신규 파일]
-arcana/js/tabs.js
+arcana/js/confirmModal.js
 
 [수정 파일]
 arcana/index.html
@@ -16,16 +15,15 @@ arcana/README.txt
 arcana/MODIFIED_FILES.txt
 arcana/css/cards.css
 arcana/css/layout.css
-arcana/css/main.css
+arcana/css/modal.css
 arcana/data/config.json
-arcana/js/api.js
 arcana/js/app.js
-arcana/js/cardEditor.js
+arcana/js/characterEditor.js
+arcana/js/classSelector.js
 arcana/js/config.js
-arcana/js/loadingOverlay.js
-arcana/js/recommendation.js
+arcana/js/equipmentEditor.js
+arcana/js/skillSelector.js
 arcana/js/state.js
-arcana/js/ui.js
 arcana/_docs/MODIFIED_FILES.txt
 arcana/_docs/UPDATE_HISTORY.txt
 

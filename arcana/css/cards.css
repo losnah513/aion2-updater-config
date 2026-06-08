@@ -430,7 +430,7 @@
   width: 1px;
 }
 
-/* ARC-0.2.00: 입력 영역 압축, 추천 탭, 블러 안내 */
+/* ARC-0.2.01: 입력 영역 압축, 추천 탭, 블러 안내 */
 .arcana-skill-grid {
   gap: 4px 5px;
 }
@@ -777,7 +777,7 @@
 }
 
 
-/* ARC-0.2.00 skill icon button UI */
+/* ARC-0.2.01: 스킬 아이콘 버튼 UI */
 .arcana-skill-btn.arcana-skill-icon-btn {
   display: flex;
   align-items: center;
@@ -869,4 +869,78 @@
     width: 31px;
     height: 31px;
   }
+}
+
+/* ARC-0.2.01: 액티브 스킬 버튼 내부 레벨 입력 통합 */
+.arcana-skill-btn.arcana-skill-icon-btn {
+  height: 42px;
+  min-height: 42px;
+  max-height: 42px;
+  gap: 6px;
+  padding: 5px 7px;
+}
+
+.arcana-skill-btn.arcana-skill-icon-btn.is-active {
+  padding-right: 5px;
+}
+
+.arcana-skill-icon {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+}
+
+.arcana-skill-name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.arcana-skill-level-inline {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+  color: var(--arcana-muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.arcana-skill-level-inline input {
+  width: 24px;
+  height: 22px;
+  padding: 0 2px;
+  border: 1px solid var(--arcana-line);
+  border-radius: var(--arcana-radius);
+  background: #fff;
+  color: var(--arcana-text);
+  text-align: center;
+  font-size: 11px;
+}
+
+.arcana-equipment-panel .arcana-equipment-toggle-row {
+  grid-template-columns: repeat(4, 58px);
+}
+
+.arcana-equipment-panel .arcana-equipment-list {
+  grid-template-columns: repeat(2, var(--arcana-card-width));
+  width: fit-content;
+}
+
+.arcana-equipment-panel .arcana-actions,
+.arcana-target-panel .arcana-actions {
+  margin-top: auto;
+}
+
+.arcana-target-panel,
+.arcana-equipment-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.arcana-target-panel .arcana-skill-grid,
+.arcana-equipment-panel .arcana-equipment-list {
+  flex: 0 0 auto;
 }

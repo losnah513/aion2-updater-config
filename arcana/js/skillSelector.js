@@ -66,6 +66,7 @@ ArcanaApp.skillSelector = {
 
       if (state.selectedTargetSkills.includes(skill)) {
         button.classList.add('is-active');
+        button.appendChild(ArcanaApp.skillSelector.createLevelInput(skill));
       }
 
       button.addEventListener('click', () => {
@@ -74,6 +75,41 @@ ArcanaApp.skillSelector = {
 
       wrapper.appendChild(button);
     });
+  },
+
+
+  createLevelInput(skill) {
+    const group = document.createElement('span');
+    group.className = 'arcana-skill-level-inline';
+
+    const label = document.createElement('span');
+    label.textContent = 'Lv';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.inputMode = 'numeric';
+    input.pattern = '[0-9]*';
+    input.value = ArcanaApp.state.characterLevels[skill] || '';
+    input.dataset.skillLevelInput = skill;
+    input.setAttribute('aria-label', `${skill} 스킬 레벨`);
+
+    input.addEventListener('click', event => event.stopPropagation());
+    input.addEventListener('mousedown', event => event.stopPropagation());
+    input.addEventListener('input', () => {
+      const raw = input.value.replace(/[^0-9]/g, '');
+      input.value = raw;
+      const value = Number(raw || 0);
+
+      if (value > 0) {
+        ArcanaApp.state.characterLevels[skill] = value;
+      } else {
+        delete ArcanaApp.state.characterLevels[skill];
+      }
+    });
+
+    group.appendChild(label);
+    group.appendChild(input);
+    return group;
   },
 
   getActiveSkills() {
@@ -148,11 +184,15 @@ ArcanaApp.skillSelector = {
   },
 
   toggle(skill) {
+    const panel = document.querySelector('[data-panel-key="characterLevels"]');
+    if (panel && panel.classList.contains('is-saved')) return;
+
     const state = ArcanaApp.state;
     const index = state.selectedTargetSkills.indexOf(skill);
 
     if (index >= 0) {
       state.selectedTargetSkills.splice(index, 1);
+      delete state.characterLevels[skill];
     } else {
       if (state.selectedTargetSkills.length >= state.maxTargetSkills) {
         ArcanaApp.skillSelector.updateCountText(true);
@@ -194,10 +234,10 @@ ArcanaApp.skillSelector = {
       .flatMap(item => item && item.active ? item.active : []);
     const source = allSkills.length > 0 ? allSkills : skills;
     const longest = source.reduce((max, skill) => Math.max(max, String(skill).length), 0);
-    const width = Math.min(198, Math.max(156, longest * 11 + 58));
+    const width = Math.min(144, Math.max(126, longest * 9 + 54));
 
     document.documentElement.style.setProperty('--arcana-skill-button-width', `${width}px`);
-    document.documentElement.style.setProperty('--arcana-compact-panel-width', `${width * 2 + 30}px`);
+    document.documentElement.style.setProperty('--arcana-compact-panel-width', `${width * 2 + 24}px`);
     wrapper.style.setProperty('--arcana-skill-button-width', `${width}px`);
   }
 };

@@ -1,9 +1,9 @@
-ARC-0.2.00
+ARC-0.2.01
 
 이번 버전의 자세한 수정 내역은 arcana/_docs 폴더를 확인하세요.
 
-
-ARC-0.2.00 skill icon UI patch
-- js/skillSelector.js: loads /data/skills/*.json and renders icon + skill name buttons.
-- css/cards.css: adds icon button layout and selected wave effect.
-- data/skills/*.json and assets/skill-icons/*.png are included.
+[핵심 변경]
+- 액티브 스킬 선택 버튼 내부에 스킬 레벨 입력칸을 통합했습니다.
+- 장비 스킬 옵션 창을 액티브 스킬 선택 창과 같은 높이와 폭 기준으로 배치했습니다.
+- 클래스 변경 시 저장된 내용이 있으면 페이지 내부 확인창을 표시합니다.
+- 클래스 변경 후 이전 클래스의 장비 선택과 추천 아르카나 상태가 남지 않도록 수정했습니다.

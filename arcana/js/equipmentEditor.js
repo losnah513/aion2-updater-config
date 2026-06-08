@@ -58,6 +58,9 @@ ArcanaApp.equipmentEditor = {
   },
 
   toggleEquipment(equipmentKey) {
+    const panel = document.querySelector('[data-panel-key="equipmentOptions"]');
+    if (panel && panel.classList.contains('is-saved')) return;
+
     const selected = ArcanaApp.state.selectedEquipmentKeys;
     const index = selected.indexOf(equipmentKey);
 

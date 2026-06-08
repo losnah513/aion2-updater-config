@@ -226,7 +226,7 @@ input[type='number'] {
   background: #fff;
 }
 
-/* ARC-0.2.00: 키노조형 폭 제한과 버튼 효과 재정리 */
+/* ARC-0.2.01: 키노조형 폭 제한과 버튼 효과 재정리 */
 :root {
   --arcana-page-max: 760px;
   --arcana-card-width: 145px;
