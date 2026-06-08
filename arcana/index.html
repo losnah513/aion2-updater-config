@@ -32,7 +32,7 @@
       <div class="arcana-top-grid">
         <section class="arcana-panel arcana-target-panel" data-panel-key="targetSkills">
           <div class="arcana-panel-title">
-            <h2>20레벨 목표 스킬 선택</h2>
+            <h2>액티브 스킬 선택</h2>
             <span id="arcanaTargetCountText">총 7개 선택 가능 / 선택 중 0개</span>
           </div>
           <div id="arcanaTargetSkillList" class="arcana-skill-grid arcana-skill-grid-two"></div>
@@ -71,12 +71,31 @@
           <h2>아르카나 카드 옵션</h2>
           <span>현재 아르카나 / 추천 아르카나 비교</span>
         </div>
-        <div id="arcanaCardCompare" class="arcana-arcana-columns"></div>
-        <div class="arcana-panel-message" data-message-for="arcanaCards"></div>
-        <div class="arcana-actions arcana-actions-right">
-          <button id="arcanaSaveOwnedCards" class="arcana-btn arcana-btn-primary">보유 아르카나 저장</button>
-          <button id="arcanaClearOwnedCards" class="arcana-btn arcana-btn-ghost">초기화</button>
-          <button id="arcanaRunSimulation" class="arcana-btn arcana-btn-primary">추천 계산</button>
+        <div class="arcana-arcana-columns">
+          <section class="arcana-panel arcana-arcana-section arcana-owned-section" data-panel-key="ownedArcanaCards">
+            <div class="arcana-panel-title arcana-panel-title-inner">
+              <h3>현재 아르카나</h3>
+              <span>직접 입력 후 저장</span>
+            </div>
+            <div id="arcanaOwnedCardGrid" class="arcana-card-grid"></div>
+            <div class="arcana-panel-message" data-message-for="ownedArcanaCards"></div>
+            <div class="arcana-actions arcana-actions-right">
+              <button id="arcanaSaveOwnedCards" class="arcana-btn arcana-btn-primary">보유 아르카나 저장</button>
+              <button id="arcanaClearOwnedCards" class="arcana-btn arcana-btn-ghost">초기화</button>
+            </div>
+          </section>
+
+          <section class="arcana-panel arcana-arcana-section arcana-recommend-section is-recommend-locked" data-panel-key="recommendArcanaCards">
+            <div class="arcana-panel-title arcana-panel-title-inner">
+              <h3>추천 아르카나</h3>
+              <span>현재 아르카나 저장 후 표시</span>
+            </div>
+            <div id="arcanaRecommendCardGrid" class="arcana-card-grid"></div>
+            <div class="arcana-panel-message" data-message-for="recommendArcanaCards"></div>
+            <div class="arcana-actions arcana-actions-right">
+              <button id="arcanaRunSimulation" class="arcana-btn arcana-btn-primary">추천 다시 계산</button>
+            </div>
+          </section>
         </div>
       </section>
     </main>
@@ -86,6 +105,7 @@
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
   <script src="js/panelLock.js"></script>
+  <script src="js/loadingOverlay.js"></script>
   <script src="js/simulator.js"></script>
   <script src="js/recommendation.js"></script>
   <script src="js/cardEditor.js"></script>

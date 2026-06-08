@@ -66,7 +66,7 @@ ArcanaApp.panelLock = {
     const map = {
       characterLevels: 'arcanaClearCharacterLevels',
       equipmentOptions: 'arcanaClearEquipment',
-      arcanaCards: 'arcanaClearOwnedCards'
+      ownedArcanaCards: 'arcanaClearOwnedCards'
     };
     return map[panelKey] ? document.getElementById(map[panelKey]) : null;
   },

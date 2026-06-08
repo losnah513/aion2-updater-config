@@ -130,13 +130,20 @@ ArcanaApp.app = {
     saveButton.addEventListener('click', async () => {
       try {
         const ownedCards = ArcanaApp.cardEditor.collect();
-        ArcanaApp.panelLock.setSaving('arcanaCards', saveButton);
+        ArcanaApp.panelLock.setSaving('ownedArcanaCards', saveButton);
         ArcanaApp.state.ownedCards = ownedCards;
         await ArcanaApp.api.saveOwnedCards(ownedCards);
-        ArcanaApp.panelLock.setSaved('arcanaCards', saveButton, '보유 아르카나 옵션을 저장했습니다. 수정하려면 초기화를 눌러주세요.');
+        ArcanaApp.panelLock.setSaved('ownedArcanaCards', saveButton, '보유 아르카나 옵션을 저장했습니다. 추천 아르카나를 계산합니다.');
+
+        await ArcanaApp.loadingOverlay.play('recommendArcanaCards', '추천 아르카나 계산중', () => {
+          const cards = ArcanaApp.recommendation.generate();
+          ArcanaApp.ui.renderRecommendationCards(cards);
+        });
+
+        ArcanaApp.panelLock.showMessage('recommendArcanaCards', '현재 보유 아르카나 기준으로 추천 옵션을 표시했습니다.');
       } catch (error) {
-        ArcanaApp.panelLock.unlock('arcanaCards', saveButton);
-        ArcanaApp.panelLock.showMessage('arcanaCards', error.message);
+        ArcanaApp.panelLock.unlock('ownedArcanaCards', saveButton);
+        ArcanaApp.panelLock.showMessage('ownedArcanaCards', error.message);
       }
     });
 
@@ -145,7 +152,8 @@ ArcanaApp.app = {
       ArcanaApp.state.recommendationCards = {};
       ArcanaApp.api.clearOwnedCards();
       ArcanaApp.cardEditor.render();
-      ArcanaApp.panelLock.unlock('arcanaCards', saveButton);
+      ArcanaApp.panelLock.unlock('ownedArcanaCards', saveButton);
+      ArcanaApp.panelLock.showMessage('recommendArcanaCards', '');
     });
   },
 
@@ -160,12 +168,14 @@ ArcanaApp.app = {
         };
         ArcanaApp.state.ownedCards = ArcanaApp.cardEditor.collect();
       } catch (error) {
-        ArcanaApp.panelLock.showMessage('arcanaCards', error.message);
+        ArcanaApp.panelLock.showMessage('recommendArcanaCards', error.message);
         return;
       }
 
-      const cards = ArcanaApp.recommendation.generate();
-      ArcanaApp.ui.renderRecommendationCards(cards);
+      ArcanaApp.loadingOverlay.play('recommendArcanaCards', '추천 아르카나 계산중', () => {
+        const cards = ArcanaApp.recommendation.generate();
+        ArcanaApp.ui.renderRecommendationCards(cards);
+      });
     });
   }
 };

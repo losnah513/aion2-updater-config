@@ -10,6 +10,7 @@ ArcanaApp.skillSelector = {
 
     const skills = ArcanaApp.skillSelector.getActiveSkills();
 
+    ArcanaApp.skillSelector.updateSkillButtonWidth(wrapper, skills);
     ArcanaApp.skillSelector.updateCountText();
 
     skills.forEach(skill => {
@@ -48,7 +49,7 @@ ArcanaApp.skillSelector = {
       state.selectedTargetSkills.splice(index, 1);
     } else {
       if (state.selectedTargetSkills.length >= state.maxTargetSkills) {
-        alert('20레벨 목표 스킬은 최대 7개까지 선택할 수 있습니다.');
+        ArcanaApp.skillSelector.updateCountText(true);
         return;
       }
       state.selectedTargetSkills.push(skill);
@@ -57,12 +58,26 @@ ArcanaApp.skillSelector = {
     ArcanaApp.skillSelector.render();
   },
 
-  updateCountText() {
+  updateCountText(isLimitNotice) {
     const text = document.getElementById('arcanaTargetCountText');
     if (!text) return;
 
     const current = ArcanaApp.state.selectedTargetSkills.length;
     const max = ArcanaApp.state.maxTargetSkills;
-    text.textContent = `총 ${max}개 선택 가능 / 선택 중 ${current}개`;
+
+    text.classList.toggle('is-limit', current >= max);
+
+    if (current >= max || isLimitNotice) {
+      text.textContent = `최대치인 ${max}개를 선택했습니다`;
+      return;
+    }
+
+    text.textContent = `최대 ${max}개 선택 가능 / 현재 ${current}개 선택`;
+  },
+
+  updateSkillButtonWidth(wrapper, skills) {
+    const longest = skills.reduce((max, skill) => Math.max(max, String(skill).length), 0);
+    const width = Math.min(170, Math.max(112, longest * 13 + 28));
+    wrapper.style.setProperty('--arcana-skill-button-width', `${width}px`);
   }
 };

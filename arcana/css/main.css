@@ -2,13 +2,13 @@
   --arcana-bg: #ffffff;
   --arcana-panel: #ffffff;
   --arcana-line: #d8dee8;
-  --arcana-line-soft: #edf1f6;
+  --arcana-line-soft: #eef2f7;
   --arcana-text: #07101f;
   --arcana-muted: #6c7582;
   --arcana-primary: #2563eb;
-  --arcana-primary-soft: #f5f8ff;
+  --arcana-primary-soft: #f6f9ff;
   --arcana-danger: #dc2626;
-  --arcana-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  --arcana-shadow: 0 1px 2px rgba(15, 23, 42, 0.045);
   --arcana-radius: 3px;
 }
 
@@ -16,10 +16,10 @@
 
 body {
   margin: 0;
-  background: var(--arcana-bg);
+  background: #ffffff;
   color: var(--arcana-text);
   font-family: Arial, 'Noto Sans KR', sans-serif;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 button, input, select {
@@ -28,22 +28,26 @@ button, input, select {
 
 .arcana-page {
   width: 100%;
+  max-width: 1040px;
   min-height: 100vh;
-  padding: 10px;
+  margin: 0 auto;
+  padding: 8px;
+  background: #ffffff;
 }
 
 .arcana-btn {
-  height: 30px;
-  padding: 0 12px;
+  height: 27px;
+  padding: 0 10px;
   border: 1px solid var(--arcana-line);
   border-radius: var(--arcana-radius);
   background: #fff;
   color: var(--arcana-text);
   cursor: pointer;
+  font-size: 12px;
 }
 
 .arcana-btn:disabled {
-  opacity: 0.75;
+  opacity: 0.72;
   cursor: not-allowed;
 }
 
@@ -57,23 +61,42 @@ button, input, select {
   background: #fff;
 }
 
-.arcana-btn-right {
-  margin-left: auto;
-}
-
 .arcana-btn:hover:not(:disabled) {
   filter: brightness(0.98);
 }
 
 .arcana-btn.is-ready-reset {
   position: relative;
-  border-color: var(--arcana-primary);
-  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.14);
-  animation: arcana-reset-glow 1.6s linear infinite;
+  overflow: hidden;
+  border-color: rgba(37, 99, 235, 0.55);
 }
 
-@keyframes arcana-reset-glow {
-  0% { box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.12), inset 0 0 0 0 rgba(37, 99, 235, 0.2); }
-  50% { box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3), inset 0 0 0 1px rgba(37, 99, 235, 0.12); }
-  100% { box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.12), inset 0 0 0 0 rgba(37, 99, 235, 0.2); }
+.arcana-btn.is-ready-reset::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(
+    from var(--arcana-glow-angle),
+    rgba(37, 99, 235, 0),
+    rgba(37, 99, 235, 0.18),
+    rgba(37, 99, 235, 0.95),
+    rgba(37, 99, 235, 0.18),
+    rgba(37, 99, 235, 0)
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: arcana-reset-border-spin 1.3s linear infinite;
+}
+
+@property --arcana-glow-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes arcana-reset-border-spin {
+  to { --arcana-glow-angle: 360deg; }
 }

@@ -2,41 +2,35 @@ window.ArcanaApp = window.ArcanaApp || {};
 
 ArcanaApp.cardEditor = {
   render() {
-    const wrapper = document.getElementById('arcanaCardCompare');
-    if (!wrapper) return;
+    const ownedGrid = document.getElementById('arcanaOwnedCardGrid');
+    const recommendGrid = document.getElementById('arcanaRecommendCardGrid');
 
-    wrapper.innerHTML = '';
+    if (ownedGrid) {
+      ownedGrid.innerHTML = '';
+      ArcanaApp.state.arcanaTypes.forEach(arcanaName => {
+        ownedGrid.appendChild(ArcanaApp.cardEditor.createOwnedCard(arcanaName));
+      });
+    }
 
-    const ownedSection = ArcanaApp.cardEditor.createSection('현재 아르카나', 'arcana-owned-section');
-    const recommendSection = ArcanaApp.cardEditor.createSection('추천 아르카나', 'arcana-recommend-section');
+    if (recommendGrid) {
+      recommendGrid.innerHTML = '';
+      ArcanaApp.state.arcanaTypes.forEach(arcanaName => {
+        recommendGrid.appendChild(ArcanaApp.cardEditor.createRecommendationCard(arcanaName));
+      });
+    }
 
-    ArcanaApp.state.arcanaTypes.forEach(arcanaName => {
-      ownedSection.querySelector('.arcana-card-grid').appendChild(
-        ArcanaApp.cardEditor.createOwnedCard(arcanaName)
-      );
-      recommendSection.querySelector('.arcana-card-grid').appendChild(
-        ArcanaApp.cardEditor.createRecommendationCard(arcanaName)
-      );
-    });
-
-    wrapper.appendChild(ownedSection);
-    wrapper.appendChild(recommendSection);
+    ArcanaApp.cardEditor.refreshRecommendState();
   },
 
-  createSection(titleText, className) {
-    const section = document.createElement('section');
-    section.className = `arcana-arcana-section ${className}`;
+  refreshRecommendState() {
+    const panel = document.querySelector('[data-panel-key="recommendArcanaCards"]');
+    if (!panel) return;
 
-    const title = document.createElement('h3');
-    title.className = 'arcana-section-title';
-    title.textContent = titleText;
+    const hasRecommendation = Object.values(ArcanaApp.state.recommendationCards || {})
+      .some(slots => Array.isArray(slots) && slots.some(slot => slot.skill));
 
-    const grid = document.createElement('div');
-    grid.className = 'arcana-card-grid';
-
-    section.appendChild(title);
-    section.appendChild(grid);
-    return section;
+    panel.classList.toggle('is-recommend-ready', hasRecommendation);
+    panel.classList.toggle('is-recommend-locked', !hasRecommendation);
   },
 
   createOwnedCard(arcanaName) {

@@ -2,13 +2,13 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
 .arcana-eyebrow {
-  margin: 0 0 3px;
-  font-size: 10px;
+  margin: 0 0 2px;
+  font-size: 9px;
   font-weight: 700;
   color: var(--arcana-primary);
   letter-spacing: 0.06em;
@@ -16,70 +16,80 @@
 
 .arcana-header h1 {
   margin: 0;
-  font-size: 19px;
+  font-size: 17px;
   line-height: 1.2;
 }
 
 .arcana-subtitle {
-  margin: 4px 0 0;
+  margin: 3px 0 0;
   color: var(--arcana-muted);
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .arcana-header-tools {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .arcana-class-select {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   color: var(--arcana-muted);
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .arcana-class-select select {
-  height: 28px;
-  min-width: 96px;
+  height: 26px;
+  min-width: 86px;
   border: 1px solid var(--arcana-line);
   border-radius: var(--arcana-radius);
   background: #fff;
-  padding: 0 7px;
+  padding: 0 6px;
 }
 
 .arcana-version {
-  height: 28px;
+  height: 26px;
   display: flex;
   align-items: center;
-  padding: 0 9px;
+  padding: 0 8px;
   border: 1px solid var(--arcana-line);
   border-radius: var(--arcana-radius);
   background: #fff;
   color: var(--arcana-muted);
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .arcana-layout {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .arcana-top-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 8px;
 }
 
 .arcana-panel {
   position: relative;
+  overflow: hidden;
   background: #fff;
   border: 1px solid var(--arcana-line);
   border-radius: var(--arcana-radius);
   box-shadow: var(--arcana-shadow);
-  padding: 12px;
+  padding: 0;
+}
+
+.arcana-panel > :not(.arcana-panel-title):not(.arcana-loading-overlay) {
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.arcana-panel > :last-child:not(.arcana-loading-overlay) {
+  margin-bottom: 10px;
 }
 
 .arcana-panel.is-saving,
@@ -90,15 +100,15 @@
 .arcana-panel.is-saved::after {
   content: '';
   position: absolute;
-  inset: 0;
+  inset: 31px 0 0;
   pointer-events: none;
-  border-radius: var(--arcana-radius);
+  border-radius: 0 0 var(--arcana-radius) var(--arcana-radius);
   background-image: repeating-linear-gradient(
     -45deg,
-    rgba(15, 23, 42, 0.035) 0,
-    rgba(15, 23, 42, 0.035) 6px,
-    rgba(255, 255, 255, 0) 6px,
-    rgba(255, 255, 255, 0) 12px
+    rgba(15, 23, 42, 0.045) 0,
+    rgba(15, 23, 42, 0.045) 5px,
+    rgba(255, 255, 255, 0) 5px,
+    rgba(255, 255, 255, 0) 10px
   );
 }
 
@@ -106,31 +116,43 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 8px;
+  min-height: 31px;
+  margin: 0 0 8px;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--arcana-line-soft);
+  background: #fff;
 }
 
-.arcana-panel-title-compact {
-  margin-bottom: 8px;
+.arcana-panel-title-inner {
+  min-height: 29px;
+  margin-bottom: 7px;
+  padding: 6px 8px;
 }
 
-.arcana-panel-title h2 {
+.arcana-panel-title h2,
+.arcana-panel-title h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1.2;
 }
 
 .arcana-panel-title span {
   color: var(--arcana-muted);
-  font-size: 12px;
+  font-size: 11px;
   white-space: nowrap;
+}
+
+.arcana-panel-title span.is-limit {
+  color: var(--arcana-primary);
+  font-weight: 700;
 }
 
 .arcana-actions {
   display: flex;
   align-items: center;
-  gap: 7px;
-  margin-top: 9px;
+  gap: 6px;
+  margin-top: 7px;
 }
 
 .arcana-actions-right {
@@ -139,17 +161,23 @@
 
 .arcana-panel-message {
   display: none;
-  margin-top: 8px;
-  padding: 7px 9px;
+  margin-top: 7px;
+  padding: 6px 8px;
   border: 1px solid var(--arcana-line-soft);
   border-radius: var(--arcana-radius);
   background: #fff;
   color: var(--arcana-muted);
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .arcana-panel-message.is-visible {
   display: block;
+  animation: arcana-message-drop 0.16s ease-out;
+}
+
+@keyframes arcana-message-drop {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @media (max-width: 900px) {

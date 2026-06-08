@@ -1,3 +1,3 @@
-ARC-0.1.00 UI 압축 테스트 3
+ARC-0.1.00 아르카나 수정사항 01
 
 자세한 내용은 arcana/_docs/MODIFIED_FILES.txt 파일을 확인하세요.
