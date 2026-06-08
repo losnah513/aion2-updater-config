@@ -7,7 +7,9 @@ ArcanaApp.state = {
   maxTargetSkills: 7,
   maxCardLevel: 5,
   maxSlotLevel: 4,
-  currentClassKey: 'gladiator',
+  currentClassKey: '',
+  pendingClassKey: '',
+  hasSelectedClass: false,
   classList: [
     { key: 'gladiator', name: '검성' }
   ],

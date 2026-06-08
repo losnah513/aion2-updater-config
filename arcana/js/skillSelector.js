@@ -64,20 +64,32 @@ ArcanaApp.skillSelector = {
 
     const current = ArcanaApp.state.selectedTargetSkills.length;
     const max = ArcanaApp.state.maxTargetSkills;
+    const isLimit = current >= max || isLimitNotice;
 
-    text.classList.toggle('is-limit', current >= max);
+    text.classList.toggle('is-limit', isLimit);
 
-    if (current >= max || isLimitNotice) {
+    if (isLimit) {
       text.textContent = `최대치인 ${max}개를 선택했습니다`;
+      text.style.animation = 'none';
+      text.offsetHeight;
+      text.style.animation = '';
       return;
     }
 
-    text.textContent = `최대 ${max}개 선택 가능 / 현재 ${current}개 선택`;
+    text.textContent = current === 0
+      ? `최대 ${max}개 선택 가능`
+      : `현재 ${current}개 선택`;
   },
 
   updateSkillButtonWidth(wrapper, skills) {
-    const longest = skills.reduce((max, skill) => Math.max(max, String(skill).length), 0);
-    const width = Math.min(170, Math.max(112, longest * 13 + 28));
+    const allSkills = Object.values(ArcanaApp.state.classSkills || {})
+      .flatMap(item => item && item.active ? item.active : []);
+    const source = allSkills.length > 0 ? allSkills : skills;
+    const longest = source.reduce((max, skill) => Math.max(max, String(skill).length), 0);
+    const width = Math.min(138, Math.max(126, longest * 12 + 18));
+
+    document.documentElement.style.setProperty('--arcana-skill-button-width', `${width}px`);
+    document.documentElement.style.setProperty('--arcana-compact-panel-width', `${width * 2 + 30}px`);
     wrapper.style.setProperty('--arcana-skill-button-width', `${width}px`);
   }
 };

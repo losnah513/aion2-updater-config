@@ -2,6 +2,7 @@ window.ArcanaApp = window.ArcanaApp || {};
 
 ArcanaApp.ui = {
   renderAll() {
+    ArcanaApp.classSelector.render();
     ArcanaApp.skillSelector.render();
     ArcanaApp.characterEditor.render();
     ArcanaApp.equipmentEditor.render();

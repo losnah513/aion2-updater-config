@@ -109,9 +109,9 @@ ArcanaApp.cardEditor = {
     select.value = savedSlot?.skill || '';
 
     const input = document.createElement('input');
-    input.type = 'number';
-    input.min = '0';
-    input.max = '4';
+    input.type = 'text';
+    input.inputMode = 'numeric';
+    input.pattern = '[0-9]*';
     input.placeholder = 'Lv';
     input.value = savedSlot?.level || '';
     input.dataset.arcana = arcanaName;

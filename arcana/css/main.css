@@ -6,10 +6,13 @@
   --arcana-text: #07101f;
   --arcana-muted: #6c7582;
   --arcana-primary: #2563eb;
-  --arcana-primary-soft: #f6f9ff;
+  --arcana-primary-soft: #f7faff;
   --arcana-danger: #dc2626;
-  --arcana-shadow: 0 1px 2px rgba(15, 23, 42, 0.045);
+  --arcana-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   --arcana-radius: 3px;
+  --arcana-skill-button-width: 126px;
+  --arcana-compact-panel-width: 305px;
+  --arcana-control-height: 26px;
 }
 
 * { box-sizing: border-box; }
@@ -22,21 +25,35 @@ body {
   font-size: 12px;
 }
 
-button, input, select {
+button,
+input,
+select {
   font: inherit;
+}
+
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+input[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
 }
 
 .arcana-page {
   width: 100%;
-  max-width: 1040px;
+  max-width: 1050px;
   min-height: 100vh;
   margin: 0 auto;
-  padding: 8px;
+  padding: 0 8px 8px;
   background: #ffffff;
 }
 
 .arcana-btn {
-  height: 27px;
+  height: var(--arcana-control-height);
   padding: 0 10px;
   border: 1px solid var(--arcana-line);
   border-radius: var(--arcana-radius);
@@ -44,6 +61,7 @@ button, input, select {
   color: var(--arcana-text);
   cursor: pointer;
   font-size: 12px;
+  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
 }
 
 .arcana-btn:disabled {
@@ -62,13 +80,16 @@ button, input, select {
 }
 
 .arcana-btn:hover:not(:disabled) {
-  filter: brightness(0.98);
+  transform: translateY(-1px);
+  border-color: var(--arcana-primary);
+  box-shadow: 0 3px 9px rgba(37, 99, 235, 0.12);
 }
 
 .arcana-btn.is-ready-reset {
   position: relative;
   overflow: hidden;
-  border-color: rgba(37, 99, 235, 0.55);
+  border-color: rgba(37, 99, 235, 0.72);
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.08);
 }
 
 .arcana-btn.is-ready-reset::before {
@@ -80,15 +101,27 @@ button, input, select {
   background: conic-gradient(
     from var(--arcana-glow-angle),
     rgba(37, 99, 235, 0),
-    rgba(37, 99, 235, 0.18),
-    rgba(37, 99, 235, 0.95),
-    rgba(37, 99, 235, 0.18),
+    rgba(37, 99, 235, 0.08),
+    rgba(37, 99, 235, 1),
+    rgba(147, 197, 253, 1),
+    rgba(37, 99, 235, 0.08),
     rgba(37, 99, 235, 0)
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  animation: arcana-reset-border-spin 1.3s linear infinite;
+  animation: arcana-reset-border-spin 0.85s linear infinite;
+  pointer-events: none;
+}
+
+.arcana-btn.is-ready-reset::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.08), transparent);
+  transform: translateX(-100%);
+  animation: arcana-reset-sheen 1.4s ease-in-out infinite;
+  pointer-events: none;
 }
 
 @property --arcana-glow-angle {
@@ -99,4 +132,9 @@ button, input, select {
 
 @keyframes arcana-reset-border-spin {
   to { --arcana-glow-angle: 360deg; }
+}
+
+@keyframes arcana-reset-sheen {
+  0% { transform: translateX(-120%); }
+  55%, 100% { transform: translateX(120%); }
 }

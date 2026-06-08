@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Arcana Skill Simulator ARC-0.1.00</title>
+  <title>아르카나 스킬 시뮬레이터 ARC-0.1.00</title>
 
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/layout.css" />
@@ -13,32 +13,47 @@
 </head>
 <body>
   <div class="arcana-page">
-    <header class="arcana-header">
-      <div>
-        <p class="arcana-eyebrow">ARCANA SIMULATOR</p>
+    <header class="arcana-topbar">
+      <button class="arcana-icon-btn" type="button" disabled title="관리자 메뉴는 아직 준비 중입니다.">관리자</button>
+
+      <div class="arcana-title-wrap">
         <h1>아르카나 스킬 시뮬레이터</h1>
-        <p class="arcana-subtitle">20레벨 목표 스킬과 보유 옵션을 한 화면에서 정리합니다.</p>
+        <span class="arcana-version">ARC-0.1.00</span>
       </div>
-      <div class="arcana-header-tools">
-        <label class="arcana-class-select">
-          <span>직업</span>
-          <select id="arcanaClassSelect"></select>
-        </label>
-        <div class="arcana-version">ARC-0.1.00</div>
+
+      <div class="arcana-topbar-actions">
+        <div class="arcana-class-picker" id="arcanaClassPicker">
+          <button id="arcanaClassPickerButton" class="arcana-class-picker-button" type="button">
+            &gt;클래스 선택&lt;
+          </button>
+          <div id="arcanaClassPickerDropdown" class="arcana-class-dropdown" hidden>
+            <div class="arcana-class-dropdown-title">클래스 선택</div>
+            <div id="arcanaClassCardList" class="arcana-class-card-list"></div>
+            <div class="arcana-class-actions">
+              <button id="arcanaConfirmClass" class="arcana-btn arcana-btn-primary" type="button">확인</button>
+              <button id="arcanaCloseClass" class="arcana-btn arcana-btn-ghost" type="button">닫기</button>
+            </div>
+          </div>
+        </div>
+        <a class="arcana-menu-link" href="../" title="키노조 페이지로 이동">키노조 메뉴</a>
       </div>
     </header>
 
-    <main class="arcana-layout">
-      <div class="arcana-top-grid">
-        <section class="arcana-panel arcana-target-panel" data-panel-key="targetSkills">
+    <div id="arcanaRefreshNotice" class="arcana-refresh-notice" role="status">
+      새로고침하면 현재 화면에 입력한 내용은 초기화됩니다. 필요한 항목은 저장 후 사용해주세요.
+    </div>
+
+    <main class="arcana-layout is-class-locked" id="arcanaMainLayout">
+      <div class="arcana-top-grid arcana-compact-pair">
+        <section class="arcana-panel arcana-target-panel arcana-compact-panel" data-panel-key="targetSkills">
           <div class="arcana-panel-title">
             <h2>액티브 스킬 선택</h2>
-            <span id="arcanaTargetCountText">총 7개 선택 가능 / 선택 중 0개</span>
+            <span id="arcanaTargetCountText">최대 7개 선택 가능</span>
           </div>
           <div id="arcanaTargetSkillList" class="arcana-skill-grid arcana-skill-grid-two"></div>
         </section>
 
-        <section class="arcana-panel arcana-character-panel" data-panel-key="characterLevels">
+        <section class="arcana-panel arcana-character-panel arcana-compact-panel" data-panel-key="characterLevels">
           <div class="arcana-panel-title">
             <h2>현재 캐릭터 스킬 레벨</h2>
             <span>직접 입력 후 저장</span>
@@ -55,7 +70,7 @@
       <section class="arcana-panel arcana-equipment-panel" data-panel-key="equipmentOptions">
         <div class="arcana-panel-title arcana-panel-title-compact">
           <h2>장비 스킬 옵션</h2>
-          <span>스킬레벨 1 고정 / 같은 장비 안 중복 불가</span>
+          <span>장비 선택 후 입력 / 스킬레벨 1 고정</span>
         </div>
         <div class="arcana-equipment-toggle-row" id="arcanaEquipmentToggleRow"></div>
         <div id="arcanaEquipmentEditor" class="arcana-equipment-list"></div>
@@ -69,7 +84,7 @@
       <section class="arcana-panel arcana-editor-panel" data-panel-key="arcanaCards">
         <div class="arcana-panel-title arcana-panel-title-compact">
           <h2>아르카나 카드 옵션</h2>
-          <span>현재 아르카나 / 추천 아르카나 비교</span>
+          <span>현재 아르카나 저장 후 추천 표시</span>
         </div>
         <div class="arcana-arcana-columns">
           <section class="arcana-panel arcana-arcana-section arcana-owned-section" data-panel-key="ownedArcanaCards">
@@ -108,6 +123,7 @@
   <script src="js/loadingOverlay.js"></script>
   <script src="js/simulator.js"></script>
   <script src="js/recommendation.js"></script>
+  <script src="js/classSelector.js"></script>
   <script src="js/cardEditor.js"></script>
   <script src="js/characterEditor.js"></script>
   <script src="js/equipmentEditor.js"></script>

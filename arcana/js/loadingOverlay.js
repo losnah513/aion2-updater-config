@@ -36,13 +36,13 @@ ArcanaApp.loadingOverlay = {
   async play(panelKey, message, callback) {
     ArcanaApp.loadingOverlay.show(panelKey, message);
 
-    await new Promise(resolve => window.setTimeout(resolve, 420));
+    await new Promise(resolve => window.setTimeout(resolve, 900));
 
     if (typeof callback === 'function') {
       callback();
     }
 
-    await new Promise(resolve => window.setTimeout(resolve, 180));
+    await new Promise(resolve => window.setTimeout(resolve, 260));
     ArcanaApp.loadingOverlay.hide(panelKey);
   }
 };

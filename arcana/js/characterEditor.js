@@ -17,9 +17,9 @@ ArcanaApp.characterEditor = {
       name.title = skill;
 
       const input = document.createElement('input');
-      input.type = 'number';
-      input.min = '0';
-      input.max = '20';
+      input.type = 'text';
+      input.inputMode = 'numeric';
+      input.pattern = '[0-9]*';
       input.placeholder = 'Lv';
       input.dataset.skill = skill;
       input.value = ArcanaApp.state.characterLevels[skill] || '';

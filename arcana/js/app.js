@@ -15,58 +15,36 @@ ArcanaApp.app = {
     state.classList = data.classList || state.classList;
     state.classSkills = data.classSkills || {};
 
-    if (!state.classList.some(item => item.key === state.currentClassKey)) {
-      state.currentClassKey = state.classList[0] ? state.classList[0].key : state.currentClassKey;
-    }
+    state.pendingClassKey = state.classList[0] ? state.classList[0].key : '';
+    state.currentClassKey = '';
+    state.hasSelectedClass = false;
     state.activeSkills = data.activeSkills || [];
     state.passiveSkills = data.passiveSkills || [];
-    state.ownedCards = ArcanaApp.api.mergeOwnedCards(data.ownedCards);
-    state.characterLevels = ArcanaApp.api.loadCharacterLevelsFromLocal();
-    state.equipmentOptions = ArcanaApp.api.loadEquipmentOptionsFromLocal();
+    state.ownedCards = {};
+    state.characterLevels = {};
+    state.equipmentOptions = { weapon: [], guarder: [], ring1: [], ring2: [] };
     state.ringOptions = {
       ring1: state.equipmentOptions.ring1 || [],
       ring2: state.equipmentOptions.ring2 || []
     };
 
-    ArcanaApp.app.renderClassOptions();
     ArcanaApp.ui.renderAll();
     ArcanaApp.app.bindEvents();
   },
 
   renderClassOptions() {
-    const select = document.getElementById('arcanaClassSelect');
-    if (!select) return;
-
-    select.innerHTML = '';
-    ArcanaApp.state.classList.forEach(item => {
-      const option = document.createElement('option');
-      option.value = item.key;
-      option.textContent = item.name;
-      select.appendChild(option);
-    });
-
-    select.value = ArcanaApp.state.currentClassKey;
+    ArcanaApp.classSelector.render();
   },
 
   bindEvents() {
-    ArcanaApp.app.bindClassChange();
+    ArcanaApp.classSelector.bind();
     ArcanaApp.app.bindCharacterSave();
     ArcanaApp.app.bindEquipmentSave();
     ArcanaApp.app.bindArcanaCardSave();
     ArcanaApp.app.bindSimulation();
   },
 
-  bindClassChange() {
-    const classSelect = document.getElementById('arcanaClassSelect');
-    if (!classSelect) return;
-
-    classSelect.addEventListener('change', event => {
-      ArcanaApp.state.currentClassKey = event.target.value;
-      ArcanaApp.state.selectedTargetSkills = [];
-      ArcanaApp.state.recommendationCards = {};
-      ArcanaApp.ui.renderAll();
-    });
-  },
+  bindClassChange() {},
 
   bindCharacterSave() {
     const saveButton = document.getElementById('arcanaSaveCharacterLevels');
