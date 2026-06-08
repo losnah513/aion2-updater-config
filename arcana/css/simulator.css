@@ -1,62 +1,9 @@
-.arcana-skill-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
-  gap: 7px;
-}
-
-.arcana-skill-btn {
-  min-height: 32px;
-  border: 1px solid var(--arcana-line);
-  border-radius: var(--arcana-radius-md);
-  background: #fff;
-  cursor: pointer;
-  font-size: 13px;
-  line-height: 1.2;
-  padding: 6px 8px;
-  transition: background .14s ease, border-color .14s ease, color .14s ease;
-}
-
-.arcana-skill-btn:hover {
-  border-color: #b8c0ce;
-  background: #f8fafc;
-}
-
-.arcana-skill-btn.is-active {
-  border-color: var(--arcana-primary);
-  background: var(--arcana-primary-soft);
-  color: var(--arcana-primary);
-  font-weight: 700;
-}
-
-.arcana-result-summary {
-  display: grid;
-  gap: 7px;
-  min-height: 104px;
-}
-
-.arcana-result-row {
-  display: grid;
-  grid-template-columns: 90px 1fr;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid var(--arcana-line-soft);
-  border-radius: var(--arcana-radius-md);
-  padding: 8px 9px;
-  background: #fff;
-  font-size: 13px;
-}
-
-.arcana-result-row strong {
-  font-size: 13px;
-  color: var(--arcana-text);
-}
-
-.arcana-result-row span {
+.arcana-status-line {
   color: var(--arcana-muted);
+  font-size: 12px;
+  margin-top: 8px;
 }
 
-.arcana-result-row.is-success { border-color: rgba(22,128,61,.35); }
-.arcana-result-row.is-success span { color: var(--arcana-success); }
-.arcana-result-row.is-fail { border-color: rgba(201,52,52,.25); }
-.arcana-result-row.is-fail span { color: var(--arcana-danger); }
-.arcana-result-empty { color: var(--arcana-muted); font-size: 13px; }
+.arcana-input-error {
+  border-color: var(--arcana-danger) !important;
+}

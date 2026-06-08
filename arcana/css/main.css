@@ -1,48 +1,45 @@
 :root {
-  --arcana-bg: #f4f6f9;
-  --arcana-surface: #ffffff;
-  --arcana-surface-soft: #ffffff;
-  --arcana-text: #1f2329;
-  --arcana-muted: #727985;
-  --arcana-line: #d9dee7;
-  --arcana-line-soft: #edf0f5;
+  --arcana-bg: #f6f8fb;
+  --arcana-panel: #ffffff;
+  --arcana-line: #d7dee8;
+  --arcana-line-soft: #e7ebf1;
+  --arcana-text: #07101f;
+  --arcana-muted: #6b7480;
   --arcana-primary: #2563eb;
-  --arcana-primary-soft: #f3f7ff;
-  --arcana-danger: #c93434;
-  --arcana-success: #15803d;
-  --arcana-warning: #a16207;
-  --arcana-radius-lg: 10px;
-  --arcana-radius-md: 6px;
-  --arcana-shadow: 0 1px 2px rgba(18, 24, 40, 0.06);
+  --arcana-primary-soft: #eef4ff;
+  --arcana-danger: #dc2626;
+  --arcana-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+  --arcana-radius: 6px;
 }
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  min-height: 100vh;
-  font-family: Arial, 'Noto Sans KR', sans-serif;
-  color: var(--arcana-text);
   background: var(--arcana-bg);
+  color: var(--arcana-text);
+  font-family: Arial, 'Noto Sans KR', sans-serif;
+  font-size: 14px;
 }
 
-button, select, input { font: inherit; }
+button, input, select {
+  font: inherit;
+}
+
+.arcana-page {
+  width: 100%;
+  min-height: 100vh;
+  padding: 16px;
+}
 
 .arcana-btn {
+  height: 34px;
+  padding: 0 14px;
   border: 1px solid var(--arcana-line);
-  border-radius: var(--arcana-radius-md);
-  padding: 7px 12px;
-  cursor: pointer;
-  background: var(--arcana-surface);
+  border-radius: var(--arcana-radius);
+  background: #fff;
   color: var(--arcana-text);
-  font-size: 13px;
-  line-height: 1.2;
-  transition: background .14s ease, border-color .14s ease, color .14s ease;
-}
-
-.arcana-btn:hover {
-  border-color: #b8c0ce;
-  background: #f8fafc;
+  cursor: pointer;
 }
 
 .arcana-btn-primary {
@@ -51,22 +48,14 @@ button, select, input { font: inherit; }
   color: #fff;
 }
 
-.arcana-btn-primary:hover {
-  border-color: #1d4ed8;
-  background: #1d4ed8;
-}
-
 .arcana-btn-ghost {
   background: #fff;
 }
 
-.arcana-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 12px;
+.arcana-btn-right {
+  margin-left: auto;
 }
 
-.arcana-actions-right {
-  justify-content: flex-end;
+.arcana-btn:hover {
+  filter: brightness(0.98);
 }

@@ -17,7 +17,7 @@
       <div>
         <p class="arcana-eyebrow">ARCANA SIMULATOR</p>
         <h1>아르카나 스킬 시뮬레이터</h1>
-        <p class="arcana-subtitle">20레벨 목표 스킬과 보유 카드 레벨을 가볍게 확인합니다.</p>
+        <p class="arcana-subtitle">20레벨 목표 스킬과 보유 스킬 정보를 정리합니다.</p>
       </div>
       <div class="arcana-header-tools">
         <label class="arcana-class-select">
@@ -37,39 +37,45 @@
             <h2>20레벨 목표 스킬 선택</h2>
             <span>액티브 스킬 / 최대 7개</span>
           </div>
-          <div id="arcanaTargetSkillList" class="arcana-skill-grid"></div>
+          <div id="arcanaTargetSkillList" class="arcana-skill-grid arcana-skill-grid-two"></div>
         </section>
 
-        <section class="arcana-panel arcana-result-panel">
+        <section class="arcana-panel arcana-character-panel">
           <div class="arcana-panel-title">
-            <h2>시뮬레이션 결과</h2>
-            <span>데바니온 +4 포함</span>
+            <h2>현재 캐릭터 스킬 레벨</h2>
+            <span>직접 입력 후 저장</span>
           </div>
-          <div id="arcanaResultSummary" class="arcana-result-summary"></div>
+          <div id="arcanaCharacterSkillEditor" class="arcana-level-grid"></div>
           <div class="arcana-actions arcana-actions-right">
-            <button id="arcanaRunSimulation" class="arcana-btn arcana-btn-primary">시뮬레이터 실행</button>
+            <button id="arcanaSaveCharacterLevels" class="arcana-btn arcana-btn-primary">스킬레벨 저장</button>
+            <button id="arcanaClearCharacterLevels" class="arcana-btn arcana-btn-ghost">초기화</button>
           </div>
         </section>
       </div>
 
-      <section class="arcana-panel arcana-editor-panel">
+      <section class="arcana-panel arcana-ring-panel">
         <div class="arcana-panel-title">
-          <h2>내 보유 카드 입력</h2>
-          <span>스킬 선택 후 레벨 입력</span>
+          <h2>장비 스킬 옵션</h2>
+          <span>반지별 같은 스킬 중복 불가 / 스킬레벨 1 고정</span>
         </div>
-        <div id="arcanaOwnedCardEditor" class="arcana-card-grid"></div>
+        <div id="arcanaRingEditor" class="arcana-ring-grid"></div>
         <div class="arcana-actions">
-          <button id="arcanaSaveOwnedCards" class="arcana-btn arcana-btn-primary">보유 카드 저장</button>
-          <button id="arcanaClearOwnedCards" class="arcana-btn arcana-btn-ghost">저장값 초기화</button>
+          <button id="arcanaSaveRings" class="arcana-btn arcana-btn-primary">반지 옵션 저장</button>
+          <button id="arcanaClearRings" class="arcana-btn arcana-btn-ghost">초기화</button>
         </div>
       </section>
 
-      <section class="arcana-panel arcana-recommend-panel">
+      <section class="arcana-panel arcana-editor-panel">
         <div class="arcana-panel-title">
-          <h2>추천 카드 옵션</h2>
-          <span>가급적 3레벨 이하, 필요 시 4레벨 허용</span>
+          <h2>아르카나 카드 옵션</h2>
+          <span>현재 내 아르카나와 추천 아르카나를 좌우로 비교</span>
         </div>
-        <div id="arcanaRecommendationCards" class="arcana-card-grid"></div>
+        <div id="arcanaCardCompare" class="arcana-compare-list"></div>
+        <div class="arcana-actions">
+          <button id="arcanaSaveOwnedCards" class="arcana-btn arcana-btn-primary">보유 아르카나 저장</button>
+          <button id="arcanaClearOwnedCards" class="arcana-btn arcana-btn-ghost">초기화</button>
+          <button id="arcanaRunSimulation" class="arcana-btn arcana-btn-primary arcana-btn-right">추천 계산</button>
+        </div>
       </section>
     </main>
   </div>
@@ -80,6 +86,8 @@
   <script src="js/simulator.js"></script>
   <script src="js/recommendation.js"></script>
   <script src="js/cardEditor.js"></script>
+  <script src="js/characterEditor.js"></script>
+  <script src="js/ringEditor.js"></script>
   <script src="js/skillSelector.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/app.js"></script>

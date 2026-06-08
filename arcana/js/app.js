@@ -17,6 +17,8 @@ ArcanaApp.app = {
     state.activeSkills = data.activeSkills || [];
     state.passiveSkills = data.passiveSkills || [];
     state.ownedCards = ArcanaApp.api.mergeOwnedCards(data.ownedCards);
+    state.characterLevels = ArcanaApp.api.loadCharacterLevelsFromLocal();
+    state.ringOptions = ArcanaApp.api.loadRingOptionsFromLocal();
 
     ArcanaApp.app.renderClassOptions();
     ArcanaApp.ui.renderAll();
@@ -45,19 +47,51 @@ ArcanaApp.app = {
         ArcanaApp.state.currentClassKey = event.target.value;
         ArcanaApp.state.selectedTargetSkills = [];
         ArcanaApp.state.recommendationCards = {};
-        ArcanaApp.skillSelector.render();
-        ArcanaApp.ui.renderResults();
-        ArcanaApp.ui.renderRecommendationCards({});
+        ArcanaApp.ui.renderAll();
       });
     }
+
+    document.getElementById('arcanaSaveCharacterLevels').addEventListener('click', async () => {
+      try {
+        const levels = ArcanaApp.characterEditor.collect();
+        ArcanaApp.state.characterLevels = levels;
+        await ArcanaApp.api.saveCharacterLevels(levels);
+        alert('캐릭터 스킬 레벨이 저장되었습니다.');
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+
+    document.getElementById('arcanaClearCharacterLevels').addEventListener('click', () => {
+      ArcanaApp.state.characterLevels = {};
+      ArcanaApp.api.clearCharacterLevels();
+      ArcanaApp.characterEditor.render();
+    });
+
+    document.getElementById('arcanaSaveRings').addEventListener('click', async () => {
+      try {
+        const rings = ArcanaApp.ringEditor.collect();
+        ArcanaApp.state.ringOptions = rings;
+        await ArcanaApp.api.saveRingOptions(rings);
+        ArcanaApp.ringEditor.render();
+        alert('반지 옵션이 저장되었습니다.');
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+
+    document.getElementById('arcanaClearRings').addEventListener('click', () => {
+      ArcanaApp.state.ringOptions = { ring1: [], ring2: [] };
+      ArcanaApp.api.clearRingOptions();
+      ArcanaApp.ringEditor.render();
+    });
 
     document.getElementById('arcanaSaveOwnedCards').addEventListener('click', async () => {
       try {
         const ownedCards = ArcanaApp.cardEditor.collect();
         ArcanaApp.state.ownedCards = ownedCards;
         await ArcanaApp.api.saveOwnedCards(ownedCards);
-        ArcanaApp.ui.renderResults();
-        alert('보유 카드가 저장되었습니다.');
+        alert('보유 아르카나가 저장되었습니다.');
       } catch (error) {
         alert(error.message);
       }
@@ -68,12 +102,12 @@ ArcanaApp.app = {
       ArcanaApp.state.recommendationCards = {};
       ArcanaApp.api.clearOwnedCards();
       ArcanaApp.cardEditor.render();
-      ArcanaApp.ui.renderResults();
-      ArcanaApp.ui.renderRecommendationCards({});
     });
 
     document.getElementById('arcanaRunSimulation').addEventListener('click', () => {
       try {
+        ArcanaApp.state.characterLevels = ArcanaApp.characterEditor.collect();
+        ArcanaApp.state.ringOptions = ArcanaApp.ringEditor.collect();
         ArcanaApp.state.ownedCards = ArcanaApp.cardEditor.collect();
       } catch (error) {
         alert(error.message);
@@ -82,7 +116,6 @@ ArcanaApp.app = {
 
       const cards = ArcanaApp.recommendation.generate();
       ArcanaApp.ui.renderRecommendationCards(cards);
-      ArcanaApp.ui.renderResults();
     });
   }
 };

@@ -30,11 +30,7 @@ ArcanaApp.api = {
       const callbackName = `ARC_JSONP_CALLBACK_${Date.now()}_${ArcanaApp.api.jsonpIndex++}`;
       const script = document.createElement('script');
       const timeoutMs = ArcanaApp.config.requestTimeoutMs || 12000;
-      const query = new URLSearchParams({
-        action,
-        callback: callbackName,
-        ...params
-      });
+      const query = new URLSearchParams({ action, callback: callbackName, ...params });
 
       let finished = false;
       const timer = window.setTimeout(() => {
@@ -47,9 +43,7 @@ ArcanaApp.api = {
       function cleanup() {
         window.clearTimeout(timer);
         delete window[callbackName];
-        if (script.parentNode) {
-          script.parentNode.removeChild(script);
-        }
+        if (script.parentNode) script.parentNode.removeChild(script);
       }
 
       window[callbackName] = payload => {
@@ -77,25 +71,59 @@ ArcanaApp.api = {
   },
 
   loadOwnedCardsFromLocal() {
-    try {
-      return JSON.parse(localStorage.getItem('ARCANA_OWNED_CARDS') || '{}');
-    } catch (error) {
-      return {};
-    }
+    return ArcanaApp.api.readLocalObject('ARCANA_OWNED_CARDS', {});
   },
 
   clearOwnedCards() {
     localStorage.removeItem('ARCANA_OWNED_CARDS');
   },
 
+  saveCharacterLevels(levels) {
+    localStorage.setItem('ARCANA_CHARACTER_LEVELS', JSON.stringify(levels || {}));
+    return Promise.resolve({ ok: true, local: true });
+  },
+
+  loadCharacterLevelsFromLocal() {
+    return ArcanaApp.api.readLocalObject('ARCANA_CHARACTER_LEVELS', {});
+  },
+
+  clearCharacterLevels() {
+    localStorage.removeItem('ARCANA_CHARACTER_LEVELS');
+  },
+
+  saveRingOptions(rings) {
+    localStorage.setItem('ARCANA_RING_OPTIONS', JSON.stringify(rings || {}));
+    return Promise.resolve({ ok: true, local: true });
+  },
+
+  loadRingOptionsFromLocal() {
+    return ArcanaApp.api.readLocalObject('ARCANA_RING_OPTIONS', { ring1: [], ring2: [] });
+  },
+
+  clearRingOptions() {
+    localStorage.removeItem('ARCANA_RING_OPTIONS');
+  },
+
+  readLocalObject(key, fallback) {
+    try {
+      return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
+    } catch (error) {
+      return fallback;
+    }
+  },
+
   mergeOwnedCards(serverOwnedCards) {
     const localOwnedCards = ArcanaApp.api.loadOwnedCardsFromLocal();
-    return Object.keys(localOwnedCards).length > 0
-      ? localOwnedCards
-      : (serverOwnedCards || {});
+    return Object.keys(localOwnedCards).length > 0 ? localOwnedCards : (serverOwnedCards || {});
   },
 
   getFallbackData() {
+    const active = [
+      '예리한 일격', '절단의 맹타', '도약 찍기', '유리의 검',
+      '내려찍기', '검기 난무', '발목 베기', '분쇄 파동',
+      '돌진 일격', '공중 결박', '파멸의 맹타', '충격 해제'
+    ];
+
     return {
       ok: true,
       version: 'ARC-0.1.00',
@@ -105,34 +133,20 @@ ArcanaApp.api = {
       maxSlotLevel: 4,
       arcanaTypes: ['성배', '양피지', '나침반', '천칭'],
       skillsByArcana: {
-        '성배': ['예리한 일격', '절단의 맹타', '도약 찍기', '유리의 검'],
-        '양피지': ['예리한 일격', '도약찍기', '내려찍기', '발목 베기'],
-        '나침반': ['절단의 맹타', '유리의 검', '돌진 일격', '분쇄 파동'],
-        '천칭': ['예리한 일격', '절단의 맹타', '도약 찍기', '유리의 검']
+        '성배': ['예리한 일격', '절단의 맹타', '도약 찍기', '유리의 검', '내려찍기', '검기 난무', '발목 베기', '분쇄 파동', '돌진 일격', '공중 결박', '파멸의 맹타', '충격 해제'],
+        '양피지': ['예리한 일격', '도약 찍기', '내려찍기', '발목 베기', '공중 결박', '파멸의 맹타'],
+        '나침반': ['절단의 맹타', '유리의 검', '돌진 일격', '분쇄 파동', '검기 난무', '충격 해제'],
+        '천칭': active
       },
-      classList: [
-        { key: 'gladiator', name: '검성' }
-      ],
+      classList: [{ key: 'gladiator', name: '검성' }],
       classSkills: {
         gladiator: {
-          active: [
-            '예리한 일격', '절단의 맹타', '도약 찍기', '유리의 검',
-            '내려찍기', '검기 난무', '발목 베기', '분쇄 파동',
-            '돌진 일격', '파멸의 맹타', '충격 해제'
-          ],
-          passive: [
-            '생존 자세', '보호의 갑옷', '피의 흡수', '약점 파악'
-          ]
+          active,
+          passive: ['생존 자세', '보호의 갑옷', '피의 흡수', '약점 파악']
         }
       },
-      activeSkills: [
-        '예리한 일격', '절단의 맹타', '도약 찍기', '유리의 검',
-        '내려찍기', '검기 난무', '발목 베기', '분쇄 파동',
-        '돌진 일격', '파멸의 맹타', '충격 해제'
-      ],
-      passiveSkills: [
-        '생존 자세', '보호의 갑옷', '피의 흡수', '약점 파악'
-      ],
+      activeSkills: active,
+      passiveSkills: ['생존 자세', '보호의 갑옷', '피의 흡수', '약점 파악'],
       ownedCards: ArcanaApp.api.loadOwnedCardsFromLocal(),
       source: 'fallback'
     };

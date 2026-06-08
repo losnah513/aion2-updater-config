@@ -1,8 +1,7 @@
 window.ArcanaApp = window.ArcanaApp || {};
 
 ArcanaApp.simulator = {
-  calculateLevels(cards) {
-    const state = ArcanaApp.state;
+  calculateCardLevels(cards) {
     const levels = {};
 
     Object.values(cards || {}).flat().forEach(slot => {
@@ -18,26 +17,31 @@ ArcanaApp.simulator = {
     return levels;
   },
 
-  calculateFinalResult(ownedCards, recommendationCards) {
-    const state = ArcanaApp.state;
-    const ownedLevels = ArcanaApp.simulator.calculateLevels(ownedCards);
-    const recommendationLevels = ArcanaApp.simulator.calculateLevels(recommendationCards);
+  calculateRingLevels(rings) {
+    const levels = {};
 
-    return state.selectedTargetSkills.map(skill => {
-      const owned = ownedLevels[skill] || 0;
-      const recommended = recommendationLevels[skill] || 0;
-      const finalLevel = owned + recommended + state.devanionBonus;
-
-      return {
-        skill,
-        owned,
-        recommended,
-        devanionBonus: state.devanionBonus,
-        finalLevel,
-        shortage: Math.max(0, state.targetLevel - finalLevel),
-        success: finalLevel >= state.targetLevel
-      };
+    Object.values(rings || {}).flat().forEach(slot => {
+      if (!slot || !slot.skill) return;
+      const skill = slot.skill.trim();
+      if (!skill) return;
+      levels[skill] = (levels[skill] || 0) + 1;
     });
+
+    return levels;
+  },
+
+  calculateBaseLevels() {
+    const levels = { ...ArcanaApp.state.characterLevels };
+    const ringLevels = ArcanaApp.simulator.calculateRingLevels(ArcanaApp.state.ringOptions);
+    const ownedCardLevels = ArcanaApp.simulator.calculateCardLevels(ArcanaApp.state.ownedCards);
+
+    [ringLevels, ownedCardLevels].forEach(source => {
+      Object.entries(source).forEach(([skill, level]) => {
+        levels[skill] = (levels[skill] || 0) + Number(level || 0);
+      });
+    });
+
+    return levels;
   },
 
   validateCardSlots(slots) {

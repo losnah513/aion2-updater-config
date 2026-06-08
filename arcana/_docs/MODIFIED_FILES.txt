@@ -1,19 +1,23 @@
-ARC-0.1.00 디자인/스킬 목록 정리 테스트
+ARC-0.1.00 design test 2
 
 ADDED
-arcana/_docs/MODIFIED_FILES.txt
-arcana/_docs/UPDATE_HISTORY.txt
+js/characterEditor.js
+js/ringEditor.js
 
 MODIFIED
-arcana/css/cards.css
-arcana/css/layout.css
-arcana/css/main.css
-arcana/css/simulator.css
-arcana/index.html
-arcana/js/api.js
-arcana/js/app.js
-arcana/js/skillSelector.js
-arcana/js/state.js
+css/cards.css
+css/layout.css
+css/main.css
+css/simulator.css
+index.html
+js/api.js
+js/app.js
+js/cardEditor.js
+js/recommendation.js
+js/simulator.js
+js/skillSelector.js
+js/state.js
+js/ui.js
 
 REMOVED
-없음
+none

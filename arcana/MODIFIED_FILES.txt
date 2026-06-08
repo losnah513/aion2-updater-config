@@ -1,38 +1,31 @@
-[ARC-0.1.00 디자인/스킬 목록 정리 테스트]
+ARC-0.1.00 design test 2
 
-GitHub 업로드 대상: arcana/
-- arcana/index.html
-  - 목표 스킬 선택 영역과 결과 영역을 좌우 배치 구조로 변경
-  - 직업 선택 UI 추가
-- arcana/css/main.css
-  - 올 화이트 KINOJO 톤으로 색상/배경 조정
-  - 모서리 반경 축소
-- arcana/css/layout.css
-  - 상단 레이아웃과 좌우 그리드 구성 수정
-- arcana/css/cards.css
-  - 카드/입력 UI 크기 축소
-- arcana/css/simulator.css
-  - 목표 스킬 버튼 크기 축소 및 중복 스킬 표시 대응
-- arcana/js/state.js
-  - 클래스별 스킬 상태 추가
-- arcana/js/app.js
-  - 직업 선택 렌더링/변경 이벤트 추가
-- arcana/js/skillSelector.js
-  - 클래스별 액티브 스킬 우선 사용
-  - 스킬명 중복 제거
-- arcana/js/api.js
-  - fallback 데이터에 클래스별 액티브/패시브 스킬 구조 추가
-- arcana/_docs/UPDATE_HISTORY.txt
-- arcana/_docs/MODIFIED_FILES.txt
+GitHub upload folder: arcana/
+Apps Script copy folder: AppsScript/
 
-Apps Script 복사 대상: AppsScript/
-- AppsScript/ARC_Constants.gs
-  - 클래스 목록 및 검성 스킬 DB 시트명 추가
-- AppsScript/ARC_DBService.gs
-  - 클래스별 액티브/패시브 스킬 읽기 함수 추가
-  - 중복 스킬 제거 처리 추가
-- AppsScript/ARC_WebApp.gs
-  - classList/classSkills/activeSkills/passiveSkills 응답 추가
-- AppsScript/_docs/UPDATE_HISTORY.txt
-- AppsScript/_docs/MODIFIED_FILES.txt
-- AppsScript/_docs/SCRIPT_IMPORT_ORDER.txt
+ADDED
+arcana/js/characterEditor.js
+arcana/js/ringEditor.js
+
+MODIFIED
+arcana/css/cards.css
+arcana/css/layout.css
+arcana/css/main.css
+arcana/css/simulator.css
+arcana/index.html
+arcana/js/api.js
+arcana/js/app.js
+arcana/js/cardEditor.js
+arcana/js/recommendation.js
+arcana/js/simulator.js
+arcana/js/skillSelector.js
+arcana/js/state.js
+arcana/js/ui.js
+arcana/_docs/MODIFIED_FILES.txt
+arcana/_docs/UPDATE_HISTORY.txt
+AppsScript/_docs/MODIFIED_FILES.txt
+AppsScript/_docs/SCRIPT_IMPORT_ORDER.txt
+AppsScript/_docs/UPDATE_HISTORY.txt
+
+REMOVED
+none
