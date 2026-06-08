@@ -1,28 +1,25 @@
-ARC-0.1.00 수정사항 2
+ARC-0.1.00 수정사항 3
 
 [이번 작업 요약]
-- 탑바와 클래스 선택 드롭다운 구조 추가
-- 초기 비활성화 상태와 클래스 선택 후 활성화 흐름 추가
-- 전체 폭과 항목별 폭 조정
-- 버튼 롤오버와 초기화 버튼 빛 효과 강화
-- 장비 옵션 영역 병렬 배치 조정
-- 추천 아르카나 로딩 연출 보강
+- 버튼 활성 효과와 롤오버 효과 분리
+- 클래스 변경 시 잠금 상태 초기화
+- 장비 카드 열림 효과 중복 재생 방지
+- 커스텀 드롭다운 추가
+- 화면 폭과 내부 여백 압축
 
 [신규 파일]
-js/classSelector.js
+arcana/js/customSelect.js
 
 [수정 파일]
-css/cards.css
-css/layout.css
-css/main.css
-index.html
-js/app.js
-js/cardEditor.js
-js/characterEditor.js
-js/loadingOverlay.js
-js/skillSelector.js
-js/state.js
-js/ui.js
+arcana/css/cards.css
+arcana/css/layout.css
+arcana/css/main.css
+arcana/index.html
+arcana/js/cardEditor.js
+arcana/js/classSelector.js
+arcana/js/equipmentEditor.js
+arcana/js/panelLock.js
+arcana/js/skillSelector.js
 
 [삭제 파일]
 없음

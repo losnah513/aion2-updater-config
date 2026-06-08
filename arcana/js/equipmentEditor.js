@@ -35,12 +35,25 @@ ArcanaApp.equipmentEditor = {
     const wrapper = document.getElementById('arcanaEquipmentEditor');
     if (!wrapper) return;
 
-    wrapper.innerHTML = '';
+    const selectedKeys = ArcanaApp.state.selectedEquipmentKeys;
+
+    Array.from(wrapper.querySelectorAll('.arcana-equipment-card[data-equipment]')).forEach(card => {
+      if (!selectedKeys.includes(card.dataset.equipment)) {
+        card.remove();
+      }
+    });
 
     ArcanaApp.state.equipmentTypes
-      .filter(equipment => ArcanaApp.state.selectedEquipmentKeys.includes(equipment.key))
+      .filter(equipment => selectedKeys.includes(equipment.key))
       .forEach(equipment => {
-        wrapper.appendChild(ArcanaApp.equipmentEditor.createEquipmentCard(equipment));
+        if (wrapper.querySelector(`.arcana-equipment-card[data-equipment="${equipment.key}"]`)) {
+          return;
+        }
+
+        const card = ArcanaApp.equipmentEditor.createEquipmentCard(equipment);
+        card.classList.add('is-opening');
+        wrapper.appendChild(card);
+        window.setTimeout(() => card.classList.remove('is-opening'), 240);
       });
   },
 
@@ -79,24 +92,16 @@ ArcanaApp.equipmentEditor = {
     const slot = document.createElement('div');
     slot.className = 'arcana-equipment-slot';
 
-    const select = document.createElement('select');
-    select.dataset.equipment = equipmentKey;
-    select.dataset.slotIndex = String(index);
-    select.dataset.maxVisible = '5';
-
-    const empty = document.createElement('option');
-    empty.value = '';
-    empty.textContent = '스킬 선택';
-    select.appendChild(empty);
-
-    ArcanaApp.skillSelector.getActiveSkills().forEach(skill => {
-      const option = document.createElement('option');
-      option.value = skill;
-      option.textContent = skill;
-      select.appendChild(option);
+    const select = ArcanaApp.customSelect.create({
+      placeholder: '스킬 선택',
+      options: ArcanaApp.skillSelector.getActiveSkills(),
+      value: savedSlot?.skill || '',
+      dataset: {
+        equipment: equipmentKey,
+        slotIndex: String(index),
+        maxVisible: '5'
+      }
     });
-
-    select.value = savedSlot?.skill || '';
 
     const level = document.createElement('span');
     level.className = 'arcana-fixed-level';

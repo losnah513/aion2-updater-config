@@ -272,3 +272,160 @@
     grid-template-columns: repeat(4, 64px);
   }
 }
+
+/* ARC-0.1.00 수정사항_3: 압축형 카드, 커스텀 드롭다운, 안내 영역 */
+.arcana-target-panel {
+  width: fit-content;
+  min-width: 0;
+  max-width: none;
+}
+
+.arcana-skill-grid-two {
+  width: fit-content;
+}
+
+.arcana-character-panel {
+  width: fit-content;
+  min-width: 0;
+  max-width: none;
+}
+
+.arcana-level-grid {
+  grid-template-columns: var(--arcana-skill-button-width) 32px var(--arcana-skill-button-width) 32px;
+  width: fit-content;
+}
+
+.arcana-level-name {
+  padding-right: 2px;
+}
+
+.arcana-panel-message {
+  min-height: 16px;
+  margin-top: 5px;
+  color: var(--arcana-muted);
+  font-size: 11px;
+  opacity: 0;
+  transition: opacity 0.16s ease, color 0.16s ease;
+}
+
+.arcana-panel-message.is-visible {
+  opacity: 1;
+}
+
+.arcana-equipment-list {
+  width: fit-content;
+  min-height: 0;
+}
+
+.arcana-equipment-card {
+  animation: none;
+}
+
+.arcana-equipment-card.is-opening {
+  animation: arcana-slide-open 0.2s ease-out;
+}
+
+.arcana-custom-select {
+  position: relative;
+  width: 104px;
+}
+
+.arcana-custom-select-button {
+  width: 104px;
+  height: 26px;
+  padding: 0 20px 0 6px;
+  border: 1px solid var(--arcana-line);
+  border-radius: var(--arcana-radius);
+  background: #fff;
+  color: var(--arcana-text);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.arcana-custom-select-button::after {
+  content: '⌄';
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-52%);
+  color: var(--arcana-muted);
+  font-size: 11px;
+}
+
+.arcana-native-select-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.arcana-custom-select-menu {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 3px);
+  left: 0;
+  width: 104px;
+  max-height: 162px;
+  overflow-y: auto;
+  border: 1px solid var(--arcana-line);
+  border-radius: var(--arcana-radius);
+  background: #fff;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+  padding: 3px;
+}
+
+.arcana-custom-select-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.arcana-custom-select-menu::-webkit-scrollbar-track {
+  background: #f5f7fb;
+}
+
+.arcana-custom-select-menu::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #b8c3d4;
+}
+
+.arcana-custom-select-item {
+  display: block;
+  width: 100%;
+  min-height: 24px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 2px;
+  background: #fff;
+  color: var(--arcana-text);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.arcana-custom-select-item:hover {
+  color: var(--arcana-primary);
+  background: #f7faff;
+}
+
+.arcana-custom-select-item.is-selected {
+  color: var(--arcana-primary);
+  font-weight: 700;
+  background: #eef4ff;
+}
+
+.arcana-custom-select.is-disabled .arcana-custom-select-button,
+.arcana-custom-select-button:disabled {
+  color: #aeb7c4;
+  background: #fff;
+  cursor: not-allowed;
+}
+
+.arcana-slot select,
+.arcana-equipment-slot select {
+  width: 1px;
+}

@@ -138,3 +138,90 @@ input[type='number'] {
   0% { transform: translateX(-120%); }
   55%, 100% { transform: translateX(120%); }
 }
+
+/* ARC-0.1.00 수정사항_3: 버튼 활성/롤오버 상태 분리 */
+.arcana-btn,
+.arcana-skill-btn,
+.arcana-equipment-toggle,
+.arcana-class-card,
+.arcana-custom-select-button,
+.arcana-menu-link,
+.arcana-class-picker-button,
+.arcana-kinojo-menu-btn,
+.arcana-admin-plus-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.arcana-btn:hover:not(:disabled),
+.arcana-skill-btn:hover:not(.is-active),
+.arcana-equipment-toggle:hover:not(.is-active),
+.arcana-class-card:hover:not(.is-selected),
+.arcana-custom-select-button:hover:not(:disabled),
+.arcana-menu-link:hover,
+.arcana-class-picker-button:hover {
+  transform: translateY(-1px);
+  border-color: #9bb7f5;
+  color: var(--arcana-primary);
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(37, 99, 235, 0.08);
+}
+
+.arcana-skill-btn.is-active,
+.arcana-equipment-toggle.is-active,
+.arcana-class-card.is-selected {
+  border-color: rgba(37, 99, 235, 0.9);
+  background: #fff;
+  color: var(--arcana-primary);
+  font-weight: 800;
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.18), inset 0 0 10px rgba(37, 99, 235, 0.055);
+}
+
+.arcana-skill-btn.is-active::before,
+.arcana-equipment-toggle.is-active::before,
+.arcana-class-card.is-selected::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(
+    from var(--arcana-glow-angle),
+    rgba(37, 99, 235, 0),
+    rgba(37, 99, 235, 0.1),
+    rgba(37, 99, 235, 0.95),
+    rgba(191, 219, 254, 0.9),
+    rgba(37, 99, 235, 0.1),
+    rgba(37, 99, 235, 0)
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: arcana-reset-border-spin 1.05s linear infinite;
+  pointer-events: none;
+}
+
+.arcana-skill-btn.is-active::after,
+.arcana-equipment-toggle.is-active::after,
+.arcana-class-card.is-selected::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(37, 99, 235, 0.12), transparent 54%);
+  animation: arcana-active-ripple 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes arcana-active-ripple {
+  0%, 100% { opacity: 0.22; transform: scale(0.82); }
+  50% { opacity: 0.42; transform: scale(1.12); }
+}
+
+
+.arcana-skill-btn.is-active:hover,
+.arcana-equipment-toggle.is-active:hover,
+.arcana-class-card.is-selected:hover {
+  transform: none;
+  color: var(--arcana-primary);
+  background: #fff;
+}

@@ -83,5 +83,9 @@ ArcanaApp.panelLock = {
     panel.querySelectorAll('input, select, textarea').forEach(input => {
       input.disabled = disabled;
     });
+
+    if (ArcanaApp.customSelect) {
+      ArcanaApp.customSelect.syncDisabledState(panel);
+    }
   }
 };

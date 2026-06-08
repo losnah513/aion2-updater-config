@@ -66,11 +66,12 @@ ArcanaApp.cardEditor = {
       const slotEl = document.createElement('div');
       slotEl.className = 'arcana-slot';
 
-      const select = document.createElement('select');
-      select.disabled = true;
-      const option = document.createElement('option');
-      option.textContent = slot.skill || '추천 없음';
-      select.appendChild(option);
+      const select = ArcanaApp.customSelect.create({
+        placeholder: '추천 없음',
+        options: slot.skill ? [slot.skill] : [],
+        value: slot.skill || '',
+        disabled: true
+      });
 
       const level = document.createElement('input');
       level.disabled = true;
@@ -89,24 +90,16 @@ ArcanaApp.cardEditor = {
     const slot = document.createElement('div');
     slot.className = 'arcana-slot';
 
-    const select = document.createElement('select');
-    select.dataset.arcana = arcanaName;
-    select.dataset.slotIndex = String(index);
-    select.dataset.maxVisible = '5';
-
-    const empty = document.createElement('option');
-    empty.value = '';
-    empty.textContent = '스킬 선택';
-    select.appendChild(empty);
-
-    (ArcanaApp.state.skillsByArcana[arcanaName] || []).forEach(skill => {
-      const option = document.createElement('option');
-      option.value = skill;
-      option.textContent = skill;
-      select.appendChild(option);
+    const select = ArcanaApp.customSelect.create({
+      placeholder: '스킬 선택',
+      options: ArcanaApp.state.skillsByArcana[arcanaName] || [],
+      value: savedSlot?.skill || '',
+      dataset: {
+        arcana: arcanaName,
+        slotIndex: String(index),
+        maxVisible: '6'
+      }
     });
-
-    select.value = savedSlot?.skill || '';
 
     const input = document.createElement('input');
     input.type = 'text';

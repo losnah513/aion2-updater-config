@@ -11,7 +11,7 @@ ArcanaApp.classSelector = {
 
     button.textContent = state.hasSelectedClass
       ? ArcanaApp.classSelector.getClassName(state.currentClassKey)
-      : '>클래스 선택<';
+      : '클래스 선택';
 
     layout.classList.toggle('is-class-locked', !state.hasSelectedClass);
 
@@ -99,12 +99,25 @@ ArcanaApp.classSelector = {
     state.ownedCards = {};
     state.recommendationCards = {};
 
+    ArcanaApp.classSelector.clearSavedPanels();
     ArcanaApp.classSelector.close();
     ArcanaApp.ui.renderAll();
   },
 
+  clearSavedPanels() {
+    const saveMap = {
+      characterLevels: 'arcanaSaveCharacterLevels',
+      equipmentOptions: 'arcanaSaveEquipment',
+      ownedArcanaCards: 'arcanaSaveOwnedCards'
+    };
+
+    Object.entries(saveMap).forEach(([panelKey, buttonId]) => {
+      ArcanaApp.panelLock.unlock(panelKey, document.getElementById(buttonId));
+    });
+  },
+
   getClassName(classKey) {
     const found = ArcanaApp.state.classList.find(item => item.key === classKey);
-    return found ? found.name : '>클래스 선택<';
+    return found ? found.name : '클래스 선택';
   }
 };

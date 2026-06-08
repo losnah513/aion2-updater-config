@@ -321,3 +321,84 @@
     max-width: none;
   }
 }
+
+/* ARC-0.1.00 수정사항_3: 키노조형 상단 버튼과 내용 기준 폭 */
+.arcana-page {
+  width: max-content;
+  max-width: 100%;
+}
+
+.arcana-layout {
+  align-items: flex-start;
+}
+
+.arcana-refresh-notice,
+.arcana-topbar {
+  width: 100%;
+}
+
+.arcana-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.arcana-kinojo-menu-btn,
+.arcana-admin-plus-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--arcana-line);
+  border-radius: var(--arcana-radius);
+  background: #fff;
+  color: var(--arcana-muted);
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.arcana-kinojo-menu-btn {
+  flex-direction: column;
+  gap: 3px;
+}
+
+.arcana-kinojo-menu-btn span {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.arcana-admin-plus-btn {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.arcana-class-picker-button::after {
+  content: '⌄';
+  margin-left: 6px;
+  font-size: 12px;
+  transform: translateY(-1px);
+}
+
+.arcana-panel-title {
+  align-items: flex-start;
+}
+
+.arcana-panel-title span {
+  min-height: 14px;
+  line-height: 1.25;
+  text-align: right;
+}
+
+.arcana-equipment-panel,
+.arcana-editor-panel {
+  width: fit-content;
+  max-width: 100%;
+}
+
+.arcana-arcana-columns {
+  width: fit-content;
+}
