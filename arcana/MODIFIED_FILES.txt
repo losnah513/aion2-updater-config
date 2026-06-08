@@ -1,0 +1,25 @@
+[ARC-0.1.00 신규 생성 파일]
+index.html
+css/main.css
+css/layout.css
+css/cards.css
+css/simulator.css
+css/modal.css
+js/app.js
+js/api.js
+js/state.js
+js/simulator.js
+js/recommendation.js
+js/cardEditor.js
+js/skillSelector.js
+js/ui.js
+AppsScript/ARC_Main.gs
+AppsScript/ARC_WebApp.gs
+AppsScript/ARC_DBService.gs
+AppsScript/ARC_CardService.gs
+AppsScript/ARC_RecommendationService.gs
+AppsScript/ARC_Constants.gs
+AppsScript/ARC_Utils.gs
+data/config.json
+README.txt
+MODIFIED_FILES.txt
