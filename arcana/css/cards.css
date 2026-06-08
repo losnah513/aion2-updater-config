@@ -429,3 +429,349 @@
 .arcana-equipment-slot select {
   width: 1px;
 }
+
+/* ARC-0.2.00: 입력 영역 압축, 추천 탭, 블러 안내 */
+.arcana-skill-grid {
+  gap: 4px 5px;
+}
+
+.arcana-skill-grid-two {
+  grid-template-columns: repeat(2, var(--arcana-skill-button-width));
+  width: fit-content;
+}
+
+.arcana-skill-btn {
+  width: var(--arcana-skill-button-width);
+  min-height: 24px;
+  padding: 2px 6px;
+  font-size: 11px;
+}
+
+.arcana-level-grid {
+  grid-template-columns: var(--arcana-skill-button-width) 30px var(--arcana-skill-button-width) 30px;
+  gap: 4px 4px;
+  width: fit-content;
+}
+
+.arcana-level-name {
+  min-height: 24px;
+  padding-right: 1px;
+  font-size: 11px;
+}
+
+.arcana-level-row input,
+.arcana-slot input,
+.arcana-equipment-slot select {
+  height: 24px;
+}
+
+.arcana-level-row input,
+.arcana-slot input {
+  width: 30px;
+  padding: 0 3px;
+}
+
+.arcana-equipment-toggle-row {
+  grid-template-columns: repeat(4, 58px);
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.arcana-equipment-toggle {
+  width: 58px;
+  height: 24px;
+  font-size: 11px;
+}
+
+.arcana-equipment-list {
+  grid-template-columns: repeat(2, var(--arcana-card-width));
+  gap: 6px;
+  width: fit-content;
+}
+
+.arcana-equipment-card,
+.arcana-card-box {
+  width: var(--arcana-card-width);
+  border-radius: var(--arcana-radius);
+  padding: 0 6px 6px;
+}
+
+.arcana-equipment-card h3,
+.arcana-card-box h4 {
+  margin: 0 -6px 5px;
+  padding: 4px 6px;
+  font-size: 11px;
+}
+
+.arcana-equipment-slot,
+.arcana-slot {
+  display: grid;
+  grid-template-columns: 100px 29px;
+  gap: 3px;
+  margin-bottom: 3px;
+}
+
+.arcana-equipment-slot select,
+.arcana-slot select {
+  width: 100px;
+}
+
+.arcana-custom-select {
+  width: 100px;
+}
+
+.arcana-custom-select-button {
+  width: 100px;
+  height: 24px;
+  padding: 0 18px 0 5px;
+  font-size: 11px;
+}
+
+.arcana-custom-select-menu {
+  width: 100px;
+  max-height: 150px;
+  border-radius: var(--arcana-radius);
+}
+
+.arcana-custom-select-item {
+  min-height: 23px;
+  padding: 3px 5px;
+  font-size: 11px;
+}
+
+.arcana-fixed-level {
+  height: 24px;
+  font-size: 10px;
+}
+
+.arcana-arcana-columns {
+  display: grid;
+  grid-template-columns: repeat(2, 464px);
+  gap: 7px;
+  width: fit-content;
+}
+
+.arcana-arcana-section {
+  width: 464px;
+  min-width: 464px;
+  max-width: 464px;
+}
+
+.arcana-card-grid {
+  grid-template-columns: repeat(3, var(--arcana-card-width));
+  gap: 6px;
+  width: fit-content;
+}
+
+.arcana-recommend-area {
+  position: relative;
+  width: calc((var(--arcana-card-width) * 3) + 12px);
+  min-height: 312px;
+  max-height: 312px;
+  overflow: hidden;
+}
+
+.arcana-recommend-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--arcana-line-soft);
+  border-radius: var(--arcana-radius);
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(4px);
+}
+
+.arcana-fog-writing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  color: rgba(7, 16, 31, 0.54);
+  text-align: center;
+  font-family: 'Comic Sans MS', 'Noto Sans KR', cursive, sans-serif;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.95), 0 0 8px rgba(148, 163, 184, 0.32);
+}
+
+.arcana-fog-writing strong {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.arcana-fog-writing span {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.arcana-fog-writing small {
+  font-size: 11px;
+  color: rgba(108, 117, 130, 0.72);
+}
+
+.arcana-recommend-tabs {
+  display: flex;
+  gap: 4px;
+  height: 27px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--arcana-line-soft);
+}
+
+.arcana-tab-btn {
+  position: relative;
+  overflow: hidden;
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid var(--arcana-line);
+  border-bottom: 0;
+  border-radius: var(--arcana-radius) var(--arcana-radius) 0 0;
+  background: #fff;
+  color: var(--arcana-muted);
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.arcana-tab-btn.is-active {
+  color: var(--arcana-primary);
+}
+
+.arcana-recommend-content {
+  height: 279px;
+  overflow: hidden;
+}
+
+.arcana-recommend-card-grid {
+  grid-template-columns: repeat(3, var(--arcana-card-width));
+}
+
+.arcana-analysis-list,
+.arcana-advice-list {
+  height: 100%;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.arcana-analysis-list::-webkit-scrollbar,
+.arcana-advice-list::-webkit-scrollbar,
+.arcana-custom-select-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.arcana-analysis-list::-webkit-scrollbar-track,
+.arcana-advice-list::-webkit-scrollbar-track,
+.arcana-custom-select-menu::-webkit-scrollbar-track {
+  background: #f5f7fb;
+}
+
+.arcana-analysis-list::-webkit-scrollbar-thumb,
+.arcana-advice-list::-webkit-scrollbar-thumb,
+.arcana-custom-select-menu::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #b8c3d4;
+}
+
+.arcana-analysis-row {
+  display: grid;
+  grid-template-columns: 1.1fr repeat(5, 46px) 54px;
+  gap: 3px;
+  align-items: center;
+  min-height: 25px;
+  margin-bottom: 4px;
+  padding: 4px 5px;
+  border: 1px solid var(--arcana-line-soft);
+  border-radius: var(--arcana-radius);
+  background: #fff;
+  font-size: 10px;
+}
+
+.arcana-analysis-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arcana-analysis-row b {
+  color: var(--arcana-primary);
+  text-align: right;
+}
+
+.arcana-analysis-row.is-short b {
+  color: var(--arcana-danger);
+}
+
+.arcana-analysis-row.is-important {
+  border-color: rgba(37, 99, 235, 0.35);
+}
+
+.arcana-advice-item {
+  margin-bottom: 6px;
+  padding: 7px 8px;
+  border: 1px solid var(--arcana-line-soft);
+  border-radius: var(--arcana-radius);
+  background: #fff;
+  color: var(--arcana-text);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.arcana-empty-line {
+  padding: 12px;
+  color: var(--arcana-muted);
+  font-size: 11px;
+  text-align: center;
+}
+
+.arcana-slot.is-important-slot .arcana-custom-select-button,
+.arcana-slot.is-important-slot input {
+  border-color: rgba(37, 99, 235, 0.65);
+  color: var(--arcana-primary);
+  font-weight: 700;
+}
+
+.arcana-loading-overlay {
+  inset: 40px 0 0;
+  border-radius: 0 0 var(--arcana-radius) var(--arcana-radius);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+.arcana-loading-box {
+  border: 1px solid var(--arcana-line-soft);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+}
+
+.arcana-loading-box small {
+  color: var(--arcana-muted);
+  font-size: 10px;
+}
+
+@media (max-width: 960px) {
+  .arcana-arcana-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .arcana-arcana-section {
+    width: fit-content;
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 720px) {
+  .arcana-skill-grid-two,
+  .arcana-level-grid,
+  .arcana-equipment-list,
+  .arcana-card-grid,
+  .arcana-recommend-card-grid {
+    grid-template-columns: repeat(2, var(--arcana-skill-button-width));
+  }
+
+  .arcana-equipment-toggle-row {
+    grid-template-columns: repeat(4, 58px);
+  }
+
+  .arcana-recommend-area {
+    width: 100%;
+  }
+}

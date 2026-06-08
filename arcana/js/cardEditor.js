@@ -2,35 +2,152 @@ window.ArcanaApp = window.ArcanaApp || {};
 
 ArcanaApp.cardEditor = {
   render() {
-    const ownedGrid = document.getElementById('arcanaOwnedCardGrid');
-    const recommendGrid = document.getElementById('arcanaRecommendCardGrid');
-
-    if (ownedGrid) {
-      ownedGrid.innerHTML = '';
-      ArcanaApp.state.arcanaTypes.forEach(arcanaName => {
-        ownedGrid.appendChild(ArcanaApp.cardEditor.createOwnedCard(arcanaName));
-      });
-    }
-
-    if (recommendGrid) {
-      recommendGrid.innerHTML = '';
-      ArcanaApp.state.arcanaTypes.forEach(arcanaName => {
-        recommendGrid.appendChild(ArcanaApp.cardEditor.createRecommendationCard(arcanaName));
-      });
-    }
-
-    ArcanaApp.cardEditor.refreshRecommendState();
+    ArcanaApp.cardEditor.renderOwnedCards();
+    ArcanaApp.cardEditor.renderRecommendationArea();
   },
 
-  refreshRecommendState() {
+  renderOwnedCards() {
+    const ownedGrid = document.getElementById('arcanaOwnedCardGrid');
+    if (!ownedGrid) return;
+
+    ownedGrid.innerHTML = '';
+    ArcanaApp.state.arcanaTypes.forEach(arcanaName => {
+      ownedGrid.appendChild(ArcanaApp.cardEditor.createOwnedCard(arcanaName));
+    });
+  },
+
+  renderRecommendationArea() {
+    const area = document.getElementById('arcanaRecommendArea');
     const panel = document.querySelector('[data-panel-key="recommendArcanaCards"]');
-    if (!panel) return;
+    if (!area || !panel) return;
 
-    const hasRecommendation = Object.values(ArcanaApp.state.recommendationCards || {})
-      .some(slots => Array.isArray(slots) && slots.some(slot => slot.skill));
-
+    const hasRecommendation = Boolean(ArcanaApp.state.recommendationGenerated);
     panel.classList.toggle('is-recommend-ready', hasRecommendation);
     panel.classList.toggle('is-recommend-locked', !hasRecommendation);
+
+    if (!hasRecommendation) {
+      area.innerHTML = ArcanaApp.cardEditor.createRecommendationPlaceholder();
+      return;
+    }
+
+    area.innerHTML = '';
+    area.appendChild(ArcanaApp.cardEditor.createRecommendationTabs());
+    area.appendChild(ArcanaApp.cardEditor.createRecommendationContent());
+  },
+
+  createRecommendationPlaceholder() {
+    return `
+      <div class="arcana-recommend-placeholder">
+        <div class="arcana-fog-writing">
+          <strong>키노조 AI가</strong>
+          <span>최적의 아르카나 세팅을 추천해드릴게요</span>
+          <small>정보를 저장한 뒤 추천 시작을 눌러주세요</small>
+        </div>
+      </div>
+    `;
+  },
+
+  createRecommendationTabs() {
+    const tabs = document.createElement('div');
+    tabs.className = 'arcana-recommend-tabs';
+
+    const items = [
+      { key: 'cards', label: '추천 카드' },
+      { key: 'analysis', label: '분석' },
+      { key: 'advice', label: '조언' }
+    ];
+
+    items.forEach(item => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'arcana-tab-btn';
+      button.textContent = item.label;
+
+      if (ArcanaApp.state.recommendationTab === item.key) {
+        button.classList.add('is-active');
+      }
+
+      button.addEventListener('click', () => {
+        ArcanaApp.tabs.setRecommendTab(item.key);
+      });
+
+      tabs.appendChild(button);
+    });
+
+    return tabs;
+  },
+
+  createRecommendationContent() {
+    const content = document.createElement('div');
+    content.className = 'arcana-recommend-content';
+
+    if (ArcanaApp.state.recommendationTab === 'analysis') {
+      content.appendChild(ArcanaApp.cardEditor.createAnalysisTable());
+      return content;
+    }
+
+    if (ArcanaApp.state.recommendationTab === 'advice') {
+      content.appendChild(ArcanaApp.cardEditor.createAdviceList());
+      return content;
+    }
+
+    const grid = document.createElement('div');
+    grid.className = 'arcana-card-grid arcana-recommend-card-grid';
+    ArcanaApp.state.arcanaTypes.forEach(arcanaName => {
+      grid.appendChild(ArcanaApp.cardEditor.createRecommendationCard(arcanaName));
+    });
+    content.appendChild(grid);
+    return content;
+  },
+
+  createAnalysisTable() {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'arcana-analysis-list';
+
+    const rows = (ArcanaApp.state.recommendationMeta && ArcanaApp.state.recommendationMeta.rows) || [];
+    if (rows.length === 0) {
+      wrapper.innerHTML = '<div class="arcana-empty-line">목표 스킬을 선택하면 분석이 표시됩니다.</div>';
+      return wrapper;
+    }
+
+    rows.forEach(row => {
+      const item = document.createElement('div');
+      item.className = 'arcana-analysis-row';
+      item.classList.toggle('is-short', row.shortage > 0);
+      item.classList.toggle('is-important', row.must && row.shortage === 0);
+      item.innerHTML = `
+        <strong>${row.skill}</strong>
+        <span>현재 ${row.current}</span>
+        <span>장비 ${row.equipment}</span>
+        <span>보유 ${row.owned}</span>
+        <span>추천 ${row.recommended}</span>
+        <span>데바 ${row.bonus}</span>
+        <b>${row.finalLevel}레벨</b>
+      `;
+      wrapper.appendChild(item);
+    });
+
+    return wrapper;
+  },
+
+  createAdviceList() {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'arcana-advice-list';
+
+    const advice = (ArcanaApp.state.recommendationMeta && ArcanaApp.state.recommendationMeta.advice) || [];
+    if (advice.length === 0) {
+      wrapper.innerHTML = '<div class="arcana-empty-line">추천 결과에 맞는 조언이 표시됩니다.</div>';
+      return wrapper;
+    }
+
+    advice.forEach(text => {
+      const item = document.createElement('div');
+      item.className = 'arcana-advice-item';
+      item.textContent = text;
+      wrapper.appendChild(item);
+    });
+
+    return wrapper;
   },
 
   createOwnedCard(arcanaName) {
@@ -65,6 +182,7 @@ ArcanaApp.cardEditor = {
       const slot = slots[index] || { skill: '', level: 0 };
       const slotEl = document.createElement('div');
       slotEl.className = 'arcana-slot';
+      slotEl.classList.toggle('is-important-slot', Number(slot.level || 0) >= 4);
 
       const select = ArcanaApp.customSelect.create({
         placeholder: '추천 없음',

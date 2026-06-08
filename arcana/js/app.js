@@ -5,7 +5,7 @@ ArcanaApp.app = {
     const data = await ArcanaApp.api.loadInitialData();
     const state = ArcanaApp.state;
 
-    state.version = data.version || state.version;
+    state.version = ArcanaApp.config.version || 'ARC-0.2.00';
     state.targetLevel = data.targetLevel || state.targetLevel;
     state.devanionBonus = data.devanionBonus || state.devanionBonus;
     state.maxCardLevel = data.maxCardLevel || state.maxCardLevel;
@@ -23,17 +23,14 @@ ArcanaApp.app = {
     state.ownedCards = {};
     state.characterLevels = {};
     state.equipmentOptions = { weapon: [], guarder: [], ring1: [], ring2: [] };
-    state.ringOptions = {
-      ring1: state.equipmentOptions.ring1 || [],
-      ring2: state.equipmentOptions.ring2 || []
-    };
+    state.ringOptions = { ring1: [], ring2: [] };
+    state.recommendationCards = {};
+    state.recommendationMeta = null;
+    state.recommendationGenerated = false;
+    state.recommendationTab = 'cards';
 
     ArcanaApp.ui.renderAll();
     ArcanaApp.app.bindEvents();
-  },
-
-  renderClassOptions() {
-    ArcanaApp.classSelector.render();
   },
 
   bindEvents() {
@@ -43,8 +40,6 @@ ArcanaApp.app = {
     ArcanaApp.app.bindArcanaCardSave();
     ArcanaApp.app.bindSimulation();
   },
-
-  bindClassChange() {},
 
   bindCharacterSave() {
     const saveButton = document.getElementById('arcanaSaveCharacterLevels');
@@ -68,6 +63,7 @@ ArcanaApp.app = {
       ArcanaApp.api.clearCharacterLevels();
       ArcanaApp.characterEditor.render();
       ArcanaApp.panelLock.unlock('characterLevels', saveButton);
+      ArcanaApp.app.resetRecommendation();
     });
   },
 
@@ -98,6 +94,7 @@ ArcanaApp.app = {
       ArcanaApp.api.clearEquipmentOptions();
       ArcanaApp.equipmentEditor.render();
       ArcanaApp.panelLock.unlock('equipmentOptions', saveButton);
+      ArcanaApp.app.resetRecommendation();
     });
   },
 
@@ -111,14 +108,8 @@ ArcanaApp.app = {
         ArcanaApp.panelLock.setSaving('ownedArcanaCards', saveButton);
         ArcanaApp.state.ownedCards = ownedCards;
         await ArcanaApp.api.saveOwnedCards(ownedCards);
-        ArcanaApp.panelLock.setSaved('ownedArcanaCards', saveButton, '보유 아르카나 옵션을 저장했습니다. 추천 아르카나를 계산합니다.');
-
-        await ArcanaApp.loadingOverlay.play('recommendArcanaCards', '추천 아르카나 계산중', () => {
-          const cards = ArcanaApp.recommendation.generate();
-          ArcanaApp.ui.renderRecommendationCards(cards);
-        });
-
-        ArcanaApp.panelLock.showMessage('recommendArcanaCards', '현재 보유 아르카나 기준으로 추천 옵션을 표시했습니다.');
+        ArcanaApp.panelLock.setSaved('ownedArcanaCards', saveButton, '보유 아르카나 옵션을 저장했습니다. 추천 시작을 눌러주세요.');
+        ArcanaApp.app.resetRecommendation();
       } catch (error) {
         ArcanaApp.panelLock.unlock('ownedArcanaCards', saveButton);
         ArcanaApp.panelLock.showMessage('ownedArcanaCards', error.message);
@@ -127,16 +118,16 @@ ArcanaApp.app = {
 
     clearButton.addEventListener('click', () => {
       ArcanaApp.state.ownedCards = {};
-      ArcanaApp.state.recommendationCards = {};
       ArcanaApp.api.clearOwnedCards();
-      ArcanaApp.cardEditor.render();
+      ArcanaApp.cardEditor.renderOwnedCards();
       ArcanaApp.panelLock.unlock('ownedArcanaCards', saveButton);
-      ArcanaApp.panelLock.showMessage('recommendArcanaCards', '');
+      ArcanaApp.app.resetRecommendation();
     });
   },
 
   bindSimulation() {
-    document.getElementById('arcanaRunSimulation').addEventListener('click', () => {
+    const button = document.getElementById('arcanaRunSimulation');
+    button.addEventListener('click', async () => {
       try {
         ArcanaApp.state.characterLevels = ArcanaApp.characterEditor.collect();
         ArcanaApp.state.equipmentOptions = ArcanaApp.equipmentEditor.collect();
@@ -150,11 +141,35 @@ ArcanaApp.app = {
         return;
       }
 
-      ArcanaApp.loadingOverlay.play('recommendArcanaCards', '추천 아르카나 계산중', () => {
-        const cards = ArcanaApp.recommendation.generate();
-        ArcanaApp.ui.renderRecommendationCards(cards);
+      button.disabled = true;
+      button.dataset.originalText = button.dataset.originalText || button.textContent;
+      button.textContent = '추천 분석중';
+
+      await ArcanaApp.loadingOverlay.play('recommendArcanaCards', '키노조 AI가 분석 중입니다', () => {
+        const result = ArcanaApp.recommendation.generate();
+        ArcanaApp.ui.renderRecommendationResult(result);
       });
+
+      button.disabled = false;
+      button.textContent = '다른 세팅 추천';
+      ArcanaApp.panelLock.showMessage('recommendArcanaCards', '추천 결과가 준비되었습니다. 탭을 눌러 분석과 조언을 확인하세요.');
     });
+  },
+
+  resetRecommendation() {
+    ArcanaApp.state.recommendationCards = {};
+    ArcanaApp.state.recommendationMeta = null;
+    ArcanaApp.state.recommendationGenerated = false;
+    ArcanaApp.state.recommendationTab = 'cards';
+    ArcanaApp.cardEditor.renderRecommendationArea();
+
+    const button = document.getElementById('arcanaRunSimulation');
+    if (button) {
+      button.disabled = false;
+      button.textContent = '추천 시작';
+    }
+
+    ArcanaApp.panelLock.showMessage('recommendArcanaCards', '');
   }
 };
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>아르카나 스킬 시뮬레이터 ARC-0.1.00</title>
+  <title>아르카나 스킬 시뮬레이터 ARC-0.2.00</title>
 
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/layout.css" />
@@ -23,7 +23,7 @@
 
       <div class="arcana-title-wrap">
         <h1>아르카나 스킬 시뮬레이터</h1>
-        <span class="arcana-version">ARC-0.1.00</span>
+        <span class="arcana-version">ARC-0.2.00</span>
       </div>
 
       <div class="arcana-topbar-actions">
@@ -52,16 +52,20 @@
       <div class="arcana-top-grid arcana-compact-pair">
         <section class="arcana-panel arcana-target-panel arcana-compact-panel" data-panel-key="targetSkills">
           <div class="arcana-panel-title">
-            <h2>액티브 스킬 선택</h2>
-            <span id="arcanaTargetCountText">최대 7개 선택 가능</span>
+            <div class="arcana-title-stack">
+              <h2>액티브 스킬 선택</h2>
+              <span id="arcanaTargetCountText">최대 7개 선택 가능</span>
+            </div>
           </div>
           <div id="arcanaTargetSkillList" class="arcana-skill-grid arcana-skill-grid-two"></div>
         </section>
 
         <section class="arcana-panel arcana-character-panel arcana-compact-panel" data-panel-key="characterLevels">
           <div class="arcana-panel-title">
-            <h2>현재 캐릭터 스킬 레벨</h2>
-            <span>직접 입력 후 저장</span>
+            <div class="arcana-title-stack">
+              <h2>현재 캐릭터 스킬 레벨</h2>
+              <span>직접 입력 후 저장</span>
+            </div>
           </div>
           <div id="arcanaCharacterSkillEditor" class="arcana-level-grid"></div>
           <div class="arcana-panel-message" data-message-for="characterLevels"></div>
@@ -74,8 +78,10 @@
 
       <section class="arcana-panel arcana-equipment-panel" data-panel-key="equipmentOptions">
         <div class="arcana-panel-title arcana-panel-title-compact">
-          <h2>장비 스킬 옵션</h2>
-          <span>장비 선택 후 입력 / 스킬레벨 1 고정</span>
+          <div class="arcana-title-stack">
+            <h2>장비 스킬 옵션</h2>
+            <span>장비 선택 후 입력 / 스킬레벨 1 고정</span>
+          </div>
         </div>
         <div class="arcana-equipment-toggle-row" id="arcanaEquipmentToggleRow"></div>
         <div id="arcanaEquipmentEditor" class="arcana-equipment-list"></div>
@@ -88,14 +94,18 @@
 
       <section class="arcana-panel arcana-editor-panel" data-panel-key="arcanaCards">
         <div class="arcana-panel-title arcana-panel-title-compact">
-          <h2>아르카나 카드 옵션</h2>
-          <span>현재 아르카나 저장 후 추천 표시</span>
+          <div class="arcana-title-stack">
+            <h2>아르카나 카드 옵션</h2>
+            <span>현재 정보 저장 후 추천 시작</span>
+          </div>
         </div>
         <div class="arcana-arcana-columns">
           <section class="arcana-panel arcana-arcana-section arcana-owned-section" data-panel-key="ownedArcanaCards">
             <div class="arcana-panel-title arcana-panel-title-inner">
-              <h3>현재 아르카나</h3>
-              <span>직접 입력 후 저장</span>
+              <div class="arcana-title-stack">
+                <h3>현재 아르카나</h3>
+                <span>직접 입력 후 저장</span>
+              </div>
             </div>
             <div id="arcanaOwnedCardGrid" class="arcana-card-grid"></div>
             <div class="arcana-panel-message" data-message-for="ownedArcanaCards"></div>
@@ -107,13 +117,15 @@
 
           <section class="arcana-panel arcana-arcana-section arcana-recommend-section is-recommend-locked" data-panel-key="recommendArcanaCards">
             <div class="arcana-panel-title arcana-panel-title-inner">
-              <h3>추천 아르카나</h3>
-              <span>현재 아르카나 저장 후 표시</span>
+              <div class="arcana-title-stack">
+                <h3>추천 아르카나</h3>
+                <span>추천 카드 / 분석 / 조언</span>
+              </div>
             </div>
-            <div id="arcanaRecommendCardGrid" class="arcana-card-grid"></div>
+            <div id="arcanaRecommendArea" class="arcana-recommend-area"></div>
             <div class="arcana-panel-message" data-message-for="recommendArcanaCards"></div>
             <div class="arcana-actions arcana-actions-right">
-              <button id="arcanaRunSimulation" class="arcana-btn arcana-btn-primary">추천 다시 계산</button>
+              <button id="arcanaRunSimulation" class="arcana-btn arcana-btn-primary">추천 시작</button>
             </div>
           </section>
         </div>
@@ -130,6 +142,7 @@
   <script src="js/recommendation.js"></script>
   <script src="js/classSelector.js"></script>
   <script src="js/customSelect.js"></script>
+  <script src="js/tabs.js"></script>
   <script src="js/cardEditor.js"></script>
   <script src="js/characterEditor.js"></script>
   <script src="js/equipmentEditor.js"></script>

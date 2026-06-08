@@ -15,6 +15,7 @@ ArcanaApp.loadingOverlay = {
         <div class="arcana-loading-box">
           <img src="assets/images/loading-spinner.png" alt="로딩" />
           <span></span>
+          <small>잠시만 기다려주세요</small>
         </div>
       `;
       panel.appendChild(overlay);
@@ -36,13 +37,13 @@ ArcanaApp.loadingOverlay = {
   async play(panelKey, message, callback) {
     ArcanaApp.loadingOverlay.show(panelKey, message);
 
-    await new Promise(resolve => window.setTimeout(resolve, 900));
+    await new Promise(resolve => window.setTimeout(resolve, 3200));
 
     if (typeof callback === 'function') {
       callback();
     }
 
-    await new Promise(resolve => window.setTimeout(resolve, 260));
+    await new Promise(resolve => window.setTimeout(resolve, 420));
     ArcanaApp.loadingOverlay.hide(panelKey);
   }
 };

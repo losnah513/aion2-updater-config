@@ -1,28 +1,33 @@
-ARC-0.1.00 수정사항 3
+ARC-0.2.00
 
 [이번 작업 요약]
-- 버튼 활성 효과와 롤오버 효과 분리
-- 클래스 변경 시 잠금 상태 초기화
-- 장비 카드 열림 효과 중복 재생 방지
-- 커스텀 드롭다운 추가
-- 화면 폭과 내부 여백 압축
+- 추천 아르카나 탭 구조 추가
+- 추천 전 블러 안내 화면 추가
+- 추천 시작 / 다른 세팅 추천 흐름 추가
+- 카드 폭과 내부 여백 압축
+- 문서 버전 갱신
 
 [신규 파일]
-arcana/js/customSelect.js
+arcana/js/tabs.js
 
 [수정 파일]
+arcana/index.html
+arcana/README.txt
+arcana/MODIFIED_FILES.txt
 arcana/css/cards.css
 arcana/css/layout.css
 arcana/css/main.css
-arcana/index.html
+arcana/data/config.json
+arcana/js/api.js
+arcana/js/app.js
 arcana/js/cardEditor.js
-arcana/js/classSelector.js
-arcana/js/equipmentEditor.js
-arcana/js/panelLock.js
-arcana/js/skillSelector.js
+arcana/js/config.js
+arcana/js/loadingOverlay.js
+arcana/js/recommendation.js
+arcana/js/state.js
+arcana/js/ui.js
+arcana/_docs/MODIFIED_FILES.txt
+arcana/_docs/UPDATE_HISTORY.txt
 
 [삭제 파일]
-없음
-
-[Apps Script 수정]
 없음

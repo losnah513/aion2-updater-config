@@ -1,7 +1,7 @@
 window.ArcanaApp = window.ArcanaApp || {};
 
 ArcanaApp.state = {
-  version: 'ARC-0.1.00',
+  version: 'ARC-0.2.00',
   targetLevel: 20,
   devanionBonus: 4,
   maxTargetSkills: 7,
@@ -38,5 +38,8 @@ ArcanaApp.state = {
     ring2: []
   },
   ownedCards: {},
-  recommendationCards: {}
+  recommendationCards: {},
+  recommendationMeta: null,
+  recommendationGenerated: false,
+  recommendationTab: 'cards'
 };

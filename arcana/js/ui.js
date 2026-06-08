@@ -9,8 +9,12 @@ ArcanaApp.ui = {
     ArcanaApp.cardEditor.render();
   },
 
-  renderRecommendationCards(cards) {
-    ArcanaApp.state.recommendationCards = cards || {};
-    ArcanaApp.cardEditor.render();
+  renderRecommendationResult(result) {
+    const payload = result || {};
+    ArcanaApp.state.recommendationCards = payload.cards || payload || {};
+    ArcanaApp.state.recommendationMeta = payload.meta || ArcanaApp.state.recommendationMeta;
+    ArcanaApp.state.recommendationGenerated = true;
+    ArcanaApp.state.recommendationTab = 'cards';
+    ArcanaApp.cardEditor.renderRecommendationArea();
   }
 };
