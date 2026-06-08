@@ -7,3 +7,7 @@
 .arcana-input-error {
   border-color: var(--arcana-danger) !important;
 }
+
+select[data-max-visible="5"] option {
+  line-height: 28px;
+}

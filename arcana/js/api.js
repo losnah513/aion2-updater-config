@@ -91,6 +91,26 @@ ArcanaApp.api = {
     localStorage.removeItem('ARCANA_CHARACTER_LEVELS');
   },
 
+  saveEquipmentOptions(options) {
+    localStorage.setItem('ARCANA_EQUIPMENT_OPTIONS', JSON.stringify(options || {}));
+    return Promise.resolve({ ok: true, local: true });
+  },
+
+  loadEquipmentOptionsFromLocal() {
+    const fallback = { weapon: [], guarder: [], ring1: [], ring2: [] };
+    const equipment = ArcanaApp.api.readLocalObject('ARCANA_EQUIPMENT_OPTIONS', null);
+
+    if (equipment) return equipment;
+
+    const oldRings = ArcanaApp.api.readLocalObject('ARCANA_RING_OPTIONS', { ring1: [], ring2: [] });
+    return { ...fallback, ring1: oldRings.ring1 || [], ring2: oldRings.ring2 || [] };
+  },
+
+  clearEquipmentOptions() {
+    localStorage.removeItem('ARCANA_EQUIPMENT_OPTIONS');
+    localStorage.removeItem('ARCANA_RING_OPTIONS');
+  },
+
   saveRingOptions(rings) {
     localStorage.setItem('ARCANA_RING_OPTIONS', JSON.stringify(rings || {}));
     return Promise.resolve({ ok: true, local: true });
@@ -106,7 +126,8 @@ ArcanaApp.api = {
 
   readLocalObject(key, fallback) {
     try {
-      return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
+      const value = localStorage.getItem(key);
+      return value ? JSON.parse(value) : fallback;
     } catch (error) {
       return fallback;
     }
@@ -131,11 +152,13 @@ ArcanaApp.api = {
       devanionBonus: 4,
       maxCardLevel: 5,
       maxSlotLevel: 4,
-      arcanaTypes: ['성배', '양피지', '나침반', '천칭'],
+      arcanaTypes: ['성배', '양피지', '나침반', '종', '겨울', '천칭'],
       skillsByArcana: {
-        '성배': ['예리한 일격', '절단의 맹타', '도약 찍기', '유리의 검', '내려찍기', '검기 난무', '발목 베기', '분쇄 파동', '돌진 일격', '공중 결박', '파멸의 맹타', '충격 해제'],
+        '성배': active,
         '양피지': ['예리한 일격', '도약 찍기', '내려찍기', '발목 베기', '공중 결박', '파멸의 맹타'],
         '나침반': ['절단의 맹타', '유리의 검', '돌진 일격', '분쇄 파동', '검기 난무', '충격 해제'],
+        '종': active,
+        '겨울': active,
         '천칭': active
       },
       classList: [{ key: 'gladiator', name: '검성' }],

@@ -1,23 +1,33 @@
-ARC-0.1.00 design test 2
+ARC-0.1.00 UI 압축 테스트 3
 
-ADDED
-js/characterEditor.js
-js/ringEditor.js
+[이번 작업 요약]
+- 화면 전체 디자인을 더 작고 깔끔하게 정리했습니다.
+- 장비 스킬 옵션 영역을 선택식 펼침 구조로 변경했습니다.
+- 저장 완료 후 해당 창만 잠기는 방식으로 변경했습니다.
+- 목표 스킬 선택 개수 표시를 추가했습니다.
 
-MODIFIED
+[신규 파일]
+js/equipmentEditor.js
+js/panelLock.js
+
+[수정 파일]
 css/cards.css
 css/layout.css
 css/main.css
+css/modal.css
 css/simulator.css
 index.html
 js/api.js
 js/app.js
 js/cardEditor.js
-js/recommendation.js
+js/ringEditor.js
 js/simulator.js
 js/skillSelector.js
 js/state.js
 js/ui.js
 
-REMOVED
-none
+[삭제 파일]
+없음
+
+[참고]
+- ringEditor.js는 기존 코드와의 연결을 위해 남겨두고, 실제 장비 옵션 처리는 equipmentEditor.js로 분리했습니다.

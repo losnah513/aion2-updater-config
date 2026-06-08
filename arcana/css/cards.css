@@ -1,15 +1,16 @@
 .arcana-skill-grid {
   display: grid;
-  gap: 8px;
+  gap: 7px 10px;
 }
 
 .arcana-skill-grid-two {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
 }
 
 .arcana-skill-btn {
-  min-height: 34px;
-  padding: 6px 10px;
+  width: 100%;
+  min-height: 30px;
+  padding: 5px 10px;
   border: 1px solid var(--arcana-line);
   border-radius: var(--arcana-radius);
   background: #fff;
@@ -17,6 +18,7 @@
   cursor: pointer;
   text-align: center;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .arcana-skill-btn.is-active {
@@ -29,15 +31,15 @@
 .arcana-level-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 7px 14px;
 }
 
 .arcana-level-row {
   display: grid;
-  grid-template-columns: 1fr 56px;
+  grid-template-columns: 1fr 52px;
   align-items: center;
-  gap: 8px;
-  min-height: 34px;
+  gap: 7px;
+  min-height: 30px;
 }
 
 .arcana-level-name {
@@ -49,9 +51,8 @@
 .arcana-level-row input,
 .arcana-slot input,
 .arcana-slot select,
-.arcana-ring-slot select,
-.arcana-ring-slot input {
-  height: 34px;
+.arcana-equipment-slot select {
+  height: 30px;
   border: 1px solid var(--arcana-line);
   border-radius: var(--arcana-radius);
   background: #fff;
@@ -59,76 +60,126 @@
 }
 
 .arcana-level-row input,
-.arcana-slot input,
-.arcana-ring-slot input {
+.arcana-slot input {
   text-align: center;
 }
 
-.arcana-ring-grid {
+.arcana-equipment-toggle-row {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.arcana-ring-card,
-.arcana-card-box {
-  border: 1px solid var(--arcana-line);
-  border-radius: var(--arcana-radius);
-  background: #fff;
-  padding: 12px;
-}
-
-.arcana-ring-card h3,
-.arcana-card-box h4 {
-  margin: 0 0 10px;
-  font-size: 15px;
-  text-align: center;
-}
-
-.arcana-ring-slot,
-.arcana-slot {
-  display: grid;
-  grid-template-columns: 1fr 54px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
   margin-bottom: 8px;
 }
 
-.arcana-compare-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.arcana-compare-row {
+.arcana-equipment-toggle {
+  height: 30px;
   border: 1px solid var(--arcana-line);
   border-radius: var(--arcana-radius);
   background: #fff;
-  padding: 12px;
+  cursor: pointer;
+  font-weight: 600;
 }
 
-.arcana-compare-title {
-  margin: 0 0 10px;
-  font-size: 16px;
-  font-weight: 700;
+.arcana-equipment-toggle.is-active {
+  border-color: var(--arcana-primary);
+  color: var(--arcana-primary);
+  background: var(--arcana-primary-soft);
 }
 
-.arcana-compare-inner {
+.arcana-equipment-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.arcana-equipment-card,
+.arcana-card-box {
+  border: 1px solid var(--arcana-line);
+  border-radius: var(--arcana-radius);
+  background: #fff;
+  padding: 9px;
+}
+
+.arcana-equipment-card {
+  animation: arcana-slide-open 0.18s ease-out;
+}
+
+@keyframes arcana-slide-open {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.arcana-equipment-card h3,
+.arcana-card-box h4 {
+  margin: 0 0 7px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.arcana-equipment-slot,
+.arcana-slot {
+  display: grid;
+  grid-template-columns: 1fr 48px;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.arcana-fixed-level {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  color: var(--arcana-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.arcana-arcana-columns {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
+}
+
+.arcana-arcana-section {
+  border: 1px solid var(--arcana-line);
+  border-radius: var(--arcana-radius);
+  padding: 9px;
+  background: #fff;
+}
+
+.arcana-section-title {
+  margin: 0 0 8px;
+  font-size: 15px;
+  text-align: center;
+}
+
+.arcana-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .arcana-card-note {
   color: var(--arcana-muted);
-  font-size: 12px;
-  margin-top: 6px;
+  font-size: 11px;
+  margin-top: 5px;
+}
+
+@media (max-width: 1200px) {
+  .arcana-arcana-columns,
+  .arcana-equipment-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 900px) {
   .arcana-skill-grid-two,
   .arcana-level-grid,
-  .arcana-ring-grid,
-  .arcana-compare-inner {
+  .arcana-card-grid {
     grid-template-columns: 1fr;
+  }
+
+  .arcana-equipment-toggle-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }

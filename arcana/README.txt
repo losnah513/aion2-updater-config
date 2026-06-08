@@ -1,20 +1,8 @@
-Arcana Skill Simulator
-Version: ARC-0.1.00
+아르카나 스킬 시뮬레이터
 
-Upload only the lowercase arcana/ folder to the GitHub repository.
-The AppsScript/ folder is provided separately for Google Apps Script source management.
+버전: ARC-0.1.00
 
-Main design direction:
-- KINOJO INFO inspired clean white dashboard style.
-- Lower border radius and compact spacing.
-- Target skill selector uses active skills from the class skill DB.
-- Current character skill level editor is included.
-- Ring 1 and Ring 2 skill option editors are included.
-- Owned arcana and recommended arcana are displayed side by side for each arcana type.
+GitHub에는 arcana 폴더만 업로드합니다.
+AppsScript 폴더는 구글 Apps Script 편집기에 파일별로 복사해서 적용합니다.
 
-Docs:
-- arcana/_docs/UPDATE_HISTORY.txt
-- arcana/_docs/MODIFIED_FILES.txt
-- AppsScript/_docs/UPDATE_HISTORY.txt
-- AppsScript/_docs/MODIFIED_FILES.txt
-- AppsScript/_docs/SCRIPT_IMPORT_ORDER.txt
+변경 내역은 각 폴더의 _docs 폴더 안 텍스트 파일을 확인하세요.

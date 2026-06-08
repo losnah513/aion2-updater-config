@@ -10,6 +10,8 @@ ArcanaApp.skillSelector = {
 
     const skills = ArcanaApp.skillSelector.getActiveSkills();
 
+    ArcanaApp.skillSelector.updateCountText();
+
     skills.forEach(skill => {
       const button = document.createElement('button');
       button.type = 'button';
@@ -53,5 +55,14 @@ ArcanaApp.skillSelector = {
     }
 
     ArcanaApp.skillSelector.render();
+  },
+
+  updateCountText() {
+    const text = document.getElementById('arcanaTargetCountText');
+    if (!text) return;
+
+    const current = ArcanaApp.state.selectedTargetSkills.length;
+    const max = ArcanaApp.state.maxTargetSkills;
+    text.textContent = `총 ${max}개 선택 가능 / 선택 중 ${current}개`;
   }
 };

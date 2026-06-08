@@ -14,11 +14,19 @@ ArcanaApp.app = {
     state.skillsByArcana = data.skillsByArcana || {};
     state.classList = data.classList || state.classList;
     state.classSkills = data.classSkills || {};
+
+    if (!state.classList.some(item => item.key === state.currentClassKey)) {
+      state.currentClassKey = state.classList[0] ? state.classList[0].key : state.currentClassKey;
+    }
     state.activeSkills = data.activeSkills || [];
     state.passiveSkills = data.passiveSkills || [];
     state.ownedCards = ArcanaApp.api.mergeOwnedCards(data.ownedCards);
     state.characterLevels = ArcanaApp.api.loadCharacterLevelsFromLocal();
-    state.ringOptions = ArcanaApp.api.loadRingOptionsFromLocal();
+    state.equipmentOptions = ArcanaApp.api.loadEquipmentOptionsFromLocal();
+    state.ringOptions = {
+      ring1: state.equipmentOptions.ring1 || [],
+      ring2: state.equipmentOptions.ring2 || []
+    };
 
     ArcanaApp.app.renderClassOptions();
     ArcanaApp.ui.renderAll();
@@ -41,76 +49,118 @@ ArcanaApp.app = {
   },
 
   bindEvents() {
-    const classSelect = document.getElementById('arcanaClassSelect');
-    if (classSelect) {
-      classSelect.addEventListener('change', event => {
-        ArcanaApp.state.currentClassKey = event.target.value;
-        ArcanaApp.state.selectedTargetSkills = [];
-        ArcanaApp.state.recommendationCards = {};
-        ArcanaApp.ui.renderAll();
-      });
-    }
+    ArcanaApp.app.bindClassChange();
+    ArcanaApp.app.bindCharacterSave();
+    ArcanaApp.app.bindEquipmentSave();
+    ArcanaApp.app.bindArcanaCardSave();
+    ArcanaApp.app.bindSimulation();
+  },
 
-    document.getElementById('arcanaSaveCharacterLevels').addEventListener('click', async () => {
+  bindClassChange() {
+    const classSelect = document.getElementById('arcanaClassSelect');
+    if (!classSelect) return;
+
+    classSelect.addEventListener('change', event => {
+      ArcanaApp.state.currentClassKey = event.target.value;
+      ArcanaApp.state.selectedTargetSkills = [];
+      ArcanaApp.state.recommendationCards = {};
+      ArcanaApp.ui.renderAll();
+    });
+  },
+
+  bindCharacterSave() {
+    const saveButton = document.getElementById('arcanaSaveCharacterLevels');
+    const clearButton = document.getElementById('arcanaClearCharacterLevels');
+
+    saveButton.addEventListener('click', async () => {
       try {
         const levels = ArcanaApp.characterEditor.collect();
+        ArcanaApp.panelLock.setSaving('characterLevels', saveButton);
         ArcanaApp.state.characterLevels = levels;
         await ArcanaApp.api.saveCharacterLevels(levels);
-        alert('캐릭터 스킬 레벨이 저장되었습니다.');
+        ArcanaApp.panelLock.setSaved('characterLevels', saveButton, '캐릭터 스킬 레벨을 저장했습니다. 수정하려면 초기화를 눌러주세요.');
       } catch (error) {
-        alert(error.message);
+        ArcanaApp.panelLock.unlock('characterLevels', saveButton);
+        ArcanaApp.panelLock.showMessage('characterLevels', error.message);
       }
     });
 
-    document.getElementById('arcanaClearCharacterLevels').addEventListener('click', () => {
+    clearButton.addEventListener('click', () => {
       ArcanaApp.state.characterLevels = {};
       ArcanaApp.api.clearCharacterLevels();
       ArcanaApp.characterEditor.render();
+      ArcanaApp.panelLock.unlock('characterLevels', saveButton);
     });
+  },
 
-    document.getElementById('arcanaSaveRings').addEventListener('click', async () => {
+  bindEquipmentSave() {
+    const saveButton = document.getElementById('arcanaSaveEquipment');
+    const clearButton = document.getElementById('arcanaClearEquipment');
+
+    saveButton.addEventListener('click', async () => {
       try {
-        const rings = ArcanaApp.ringEditor.collect();
-        ArcanaApp.state.ringOptions = rings;
-        await ArcanaApp.api.saveRingOptions(rings);
-        ArcanaApp.ringEditor.render();
-        alert('반지 옵션이 저장되었습니다.');
+        const equipment = ArcanaApp.equipmentEditor.collect();
+        ArcanaApp.panelLock.setSaving('equipmentOptions', saveButton);
+        ArcanaApp.state.equipmentOptions = equipment;
+        ArcanaApp.state.ringOptions = {
+          ring1: equipment.ring1 || [],
+          ring2: equipment.ring2 || []
+        };
+        await ArcanaApp.api.saveEquipmentOptions(equipment);
+        ArcanaApp.panelLock.setSaved('equipmentOptions', saveButton, '장비 스킬 옵션을 저장했습니다. 수정하려면 초기화를 눌러주세요.');
       } catch (error) {
-        alert(error.message);
+        ArcanaApp.panelLock.unlock('equipmentOptions', saveButton);
+        ArcanaApp.panelLock.showMessage('equipmentOptions', error.message);
       }
     });
 
-    document.getElementById('arcanaClearRings').addEventListener('click', () => {
+    clearButton.addEventListener('click', () => {
+      ArcanaApp.state.equipmentOptions = { weapon: [], guarder: [], ring1: [], ring2: [] };
       ArcanaApp.state.ringOptions = { ring1: [], ring2: [] };
-      ArcanaApp.api.clearRingOptions();
-      ArcanaApp.ringEditor.render();
+      ArcanaApp.api.clearEquipmentOptions();
+      ArcanaApp.equipmentEditor.render();
+      ArcanaApp.panelLock.unlock('equipmentOptions', saveButton);
     });
+  },
 
-    document.getElementById('arcanaSaveOwnedCards').addEventListener('click', async () => {
+  bindArcanaCardSave() {
+    const saveButton = document.getElementById('arcanaSaveOwnedCards');
+    const clearButton = document.getElementById('arcanaClearOwnedCards');
+
+    saveButton.addEventListener('click', async () => {
       try {
         const ownedCards = ArcanaApp.cardEditor.collect();
+        ArcanaApp.panelLock.setSaving('arcanaCards', saveButton);
         ArcanaApp.state.ownedCards = ownedCards;
         await ArcanaApp.api.saveOwnedCards(ownedCards);
-        alert('보유 아르카나가 저장되었습니다.');
+        ArcanaApp.panelLock.setSaved('arcanaCards', saveButton, '보유 아르카나 옵션을 저장했습니다. 수정하려면 초기화를 눌러주세요.');
       } catch (error) {
-        alert(error.message);
+        ArcanaApp.panelLock.unlock('arcanaCards', saveButton);
+        ArcanaApp.panelLock.showMessage('arcanaCards', error.message);
       }
     });
 
-    document.getElementById('arcanaClearOwnedCards').addEventListener('click', () => {
+    clearButton.addEventListener('click', () => {
       ArcanaApp.state.ownedCards = {};
       ArcanaApp.state.recommendationCards = {};
       ArcanaApp.api.clearOwnedCards();
       ArcanaApp.cardEditor.render();
+      ArcanaApp.panelLock.unlock('arcanaCards', saveButton);
     });
+  },
 
+  bindSimulation() {
     document.getElementById('arcanaRunSimulation').addEventListener('click', () => {
       try {
         ArcanaApp.state.characterLevels = ArcanaApp.characterEditor.collect();
-        ArcanaApp.state.ringOptions = ArcanaApp.ringEditor.collect();
+        ArcanaApp.state.equipmentOptions = ArcanaApp.equipmentEditor.collect();
+        ArcanaApp.state.ringOptions = {
+          ring1: ArcanaApp.state.equipmentOptions.ring1 || [],
+          ring2: ArcanaApp.state.equipmentOptions.ring2 || []
+        };
         ArcanaApp.state.ownedCards = ArcanaApp.cardEditor.collect();
       } catch (error) {
-        alert(error.message);
+        ArcanaApp.panelLock.showMessage('arcanaCards', error.message);
         return;
       }
 

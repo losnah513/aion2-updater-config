@@ -17,25 +17,29 @@ ArcanaApp.simulator = {
     return levels;
   },
 
-  calculateRingLevels(rings) {
+  calculateEquipmentLevels(equipmentOptions) {
     const levels = {};
 
-    Object.values(rings || {}).flat().forEach(slot => {
+    Object.values(equipmentOptions || {}).flat().forEach(slot => {
       if (!slot || !slot.skill) return;
       const skill = slot.skill.trim();
       if (!skill) return;
-      levels[skill] = (levels[skill] || 0) + 1;
+      levels[skill] = (levels[skill] || 0) + Number(slot.level || 1);
     });
 
     return levels;
   },
 
+  calculateRingLevels(rings) {
+    return ArcanaApp.simulator.calculateEquipmentLevels(rings);
+  },
+
   calculateBaseLevels() {
     const levels = { ...ArcanaApp.state.characterLevels };
-    const ringLevels = ArcanaApp.simulator.calculateRingLevels(ArcanaApp.state.ringOptions);
+    const equipmentLevels = ArcanaApp.simulator.calculateEquipmentLevels(ArcanaApp.state.equipmentOptions);
     const ownedCardLevels = ArcanaApp.simulator.calculateCardLevels(ArcanaApp.state.ownedCards);
 
-    [ringLevels, ownedCardLevels].forEach(source => {
+    [equipmentLevels, ownedCardLevels].forEach(source => {
       Object.entries(source).forEach(([skill, level]) => {
         levels[skill] = (levels[skill] || 0) + Number(level || 0);
       });

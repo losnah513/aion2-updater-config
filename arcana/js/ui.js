@@ -4,7 +4,7 @@ ArcanaApp.ui = {
   renderAll() {
     ArcanaApp.skillSelector.render();
     ArcanaApp.characterEditor.render();
-    ArcanaApp.ringEditor.render();
+    ArcanaApp.equipmentEditor.render();
     ArcanaApp.cardEditor.render();
   },
 

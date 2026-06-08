@@ -1,31 +1,3 @@
-ARC-0.1.00 design test 2
+ARC-0.1.00 UI 압축 테스트 3
 
-GitHub upload folder: arcana/
-Apps Script copy folder: AppsScript/
-
-ADDED
-arcana/js/characterEditor.js
-arcana/js/ringEditor.js
-
-MODIFIED
-arcana/css/cards.css
-arcana/css/layout.css
-arcana/css/main.css
-arcana/css/simulator.css
-arcana/index.html
-arcana/js/api.js
-arcana/js/app.js
-arcana/js/cardEditor.js
-arcana/js/recommendation.js
-arcana/js/simulator.js
-arcana/js/skillSelector.js
-arcana/js/state.js
-arcana/js/ui.js
-arcana/_docs/MODIFIED_FILES.txt
-arcana/_docs/UPDATE_HISTORY.txt
-AppsScript/_docs/MODIFIED_FILES.txt
-AppsScript/_docs/SCRIPT_IMPORT_ORDER.txt
-AppsScript/_docs/UPDATE_HISTORY.txt
-
-REMOVED
-none
+자세한 내용은 arcana/_docs/MODIFIED_FILES.txt 파일을 확인하세요.

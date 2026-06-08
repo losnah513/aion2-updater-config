@@ -7,25 +7,36 @@ ArcanaApp.cardEditor = {
 
     wrapper.innerHTML = '';
 
+    const ownedSection = ArcanaApp.cardEditor.createSection('현재 아르카나', 'arcana-owned-section');
+    const recommendSection = ArcanaApp.cardEditor.createSection('추천 아르카나', 'arcana-recommend-section');
+
     ArcanaApp.state.arcanaTypes.forEach(arcanaName => {
-      const row = document.createElement('section');
-      row.className = 'arcana-compare-row';
-      row.dataset.arcana = arcanaName;
-
-      const title = document.createElement('h3');
-      title.className = 'arcana-compare-title';
-      title.textContent = arcanaName;
-      row.appendChild(title);
-
-      const inner = document.createElement('div');
-      inner.className = 'arcana-compare-inner';
-
-      inner.appendChild(ArcanaApp.cardEditor.createOwnedCard(arcanaName));
-      inner.appendChild(ArcanaApp.cardEditor.createRecommendationCard(arcanaName));
-
-      row.appendChild(inner);
-      wrapper.appendChild(row);
+      ownedSection.querySelector('.arcana-card-grid').appendChild(
+        ArcanaApp.cardEditor.createOwnedCard(arcanaName)
+      );
+      recommendSection.querySelector('.arcana-card-grid').appendChild(
+        ArcanaApp.cardEditor.createRecommendationCard(arcanaName)
+      );
     });
+
+    wrapper.appendChild(ownedSection);
+    wrapper.appendChild(recommendSection);
+  },
+
+  createSection(titleText, className) {
+    const section = document.createElement('section');
+    section.className = `arcana-arcana-section ${className}`;
+
+    const title = document.createElement('h3');
+    title.className = 'arcana-section-title';
+    title.textContent = titleText;
+
+    const grid = document.createElement('div');
+    grid.className = 'arcana-card-grid';
+
+    section.appendChild(title);
+    section.appendChild(grid);
+    return section;
   },
 
   createOwnedCard(arcanaName) {
@@ -34,7 +45,7 @@ ArcanaApp.cardEditor = {
     card.dataset.arcana = arcanaName;
 
     const title = document.createElement('h4');
-    title.textContent = '현재 내 아르카나';
+    title.textContent = arcanaName;
     card.appendChild(title);
 
     const savedSlots = ArcanaApp.state.ownedCards[arcanaName] || [];
@@ -42,11 +53,6 @@ ArcanaApp.cardEditor = {
     for (let index = 0; index < 4; index++) {
       card.appendChild(ArcanaApp.cardEditor.createEditableSlot(arcanaName, index, savedSlots[index]));
     }
-
-    const note = document.createElement('div');
-    note.className = 'arcana-card-note';
-    note.textContent = '카드 총합 최대 5 / 슬롯당 최대 4 / 같은 카드 내 중복 불가';
-    card.appendChild(note);
 
     return card;
   },
@@ -56,7 +62,7 @@ ArcanaApp.cardEditor = {
     card.className = 'arcana-card-box arcana-recommend-card';
 
     const title = document.createElement('h4');
-    title.textContent = '추천 아르카나';
+    title.textContent = arcanaName;
     card.appendChild(title);
 
     const slots = ArcanaApp.state.recommendationCards[arcanaName] || [];
@@ -65,17 +71,22 @@ ArcanaApp.cardEditor = {
       const slot = slots[index] || { skill: '', level: 0 };
       const slotEl = document.createElement('div');
       slotEl.className = 'arcana-slot';
-      slotEl.innerHTML = `
-        <select disabled><option>${slot.skill || '추천 없음'}</option></select>
-        <input disabled value="${slot.level || ''}" placeholder="Lv" />
-      `;
+
+      const select = document.createElement('select');
+      select.disabled = true;
+      const option = document.createElement('option');
+      option.textContent = slot.skill || '추천 없음';
+      select.appendChild(option);
+
+      const level = document.createElement('input');
+      level.disabled = true;
+      level.value = slot.level || '';
+      level.placeholder = 'Lv';
+
+      slotEl.appendChild(select);
+      slotEl.appendChild(level);
       card.appendChild(slotEl);
     }
-
-    const note = document.createElement('div');
-    note.className = 'arcana-card-note';
-    note.textContent = '추천 계산 후 표시됩니다.';
-    card.appendChild(note);
 
     return card;
   },
@@ -87,6 +98,7 @@ ArcanaApp.cardEditor = {
     const select = document.createElement('select');
     select.dataset.arcana = arcanaName;
     select.dataset.slotIndex = String(index);
+    select.dataset.maxVisible = '5';
 
     const empty = document.createElement('option');
     empty.value = '';

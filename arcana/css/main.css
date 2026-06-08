@@ -1,15 +1,15 @@
 :root {
-  --arcana-bg: #f6f8fb;
+  --arcana-bg: #ffffff;
   --arcana-panel: #ffffff;
-  --arcana-line: #d7dee8;
-  --arcana-line-soft: #e7ebf1;
+  --arcana-line: #d8dee8;
+  --arcana-line-soft: #edf1f6;
   --arcana-text: #07101f;
-  --arcana-muted: #6b7480;
+  --arcana-muted: #6c7582;
   --arcana-primary: #2563eb;
-  --arcana-primary-soft: #eef4ff;
+  --arcana-primary-soft: #f5f8ff;
   --arcana-danger: #dc2626;
-  --arcana-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
-  --arcana-radius: 6px;
+  --arcana-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  --arcana-radius: 3px;
 }
 
 * { box-sizing: border-box; }
@@ -19,7 +19,7 @@ body {
   background: var(--arcana-bg);
   color: var(--arcana-text);
   font-family: Arial, 'Noto Sans KR', sans-serif;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 button, input, select {
@@ -29,17 +29,22 @@ button, input, select {
 .arcana-page {
   width: 100%;
   min-height: 100vh;
-  padding: 16px;
+  padding: 10px;
 }
 
 .arcana-btn {
-  height: 34px;
-  padding: 0 14px;
+  height: 30px;
+  padding: 0 12px;
   border: 1px solid var(--arcana-line);
   border-radius: var(--arcana-radius);
   background: #fff;
   color: var(--arcana-text);
   cursor: pointer;
+}
+
+.arcana-btn:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
 }
 
 .arcana-btn-primary {
@@ -56,6 +61,19 @@ button, input, select {
   margin-left: auto;
 }
 
-.arcana-btn:hover {
+.arcana-btn:hover:not(:disabled) {
   filter: brightness(0.98);
+}
+
+.arcana-btn.is-ready-reset {
+  position: relative;
+  border-color: var(--arcana-primary);
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.14);
+  animation: arcana-reset-glow 1.6s linear infinite;
+}
+
+@keyframes arcana-reset-glow {
+  0% { box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.12), inset 0 0 0 0 rgba(37, 99, 235, 0.2); }
+  50% { box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3), inset 0 0 0 1px rgba(37, 99, 235, 0.12); }
+  100% { box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.12), inset 0 0 0 0 rgba(37, 99, 235, 0.2); }
 }
