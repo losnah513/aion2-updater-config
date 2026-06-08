@@ -3,9 +3,17 @@ Version: ARC-0.1.00
 
 개요
 - DB 시트의 명명된 범위(성배/양피지/나침반/천칭)를 읽어 웹페이지 드롭다운으로 사용합니다.
+- GitHub Pages의 Arcana/index.html에서 Apps Script WebApp API를 호출하는 구조입니다.
 - 사용자가 보유 카드 스킬과 레벨을 입력하고 저장할 수 있습니다.
+- 보유 카드 저장은 초기 테스트 버전에서 브라우저 localStorage 기준으로 동작합니다.
 - 저장된 보유 카드가 있으면 그 값을 기준으로 부족분을 추천합니다.
 - 저장된 보유 카드가 없으면 전체 기준으로 추천 시뮬레이션을 실행합니다.
+
+API 연결
+- Arcana/js/config.js에서 Apps Script WebApp URL을 관리합니다.
+- 현재 API URL:
+  https://script.google.com/macros/s/AKfycbzVPXd24oZaoQAhnOBqlTJ_1WE2vghrok4153AdnjIQaKF3S4gRAHTEBcJSbtJS_w/exec
+- GitHub Pages에서 Apps Script 데이터를 읽기 위해 JSONP 방식으로 초기 데이터를 호출합니다.
 
 계산 기준
 - 최종 스킬 레벨 = 보유 카드 레벨 + 추천 카드 레벨 + 데바니온 보너스 4
@@ -16,12 +24,8 @@ Version: ARC-0.1.00
 - 추천은 가급적 3레벨 이하로 맞추고, 필요한 경우에만 4레벨을 허용하도록 설계합니다.
 
 파일 구조
-- index.html
-- css/
-- js/
-- AppsScript/
-- data/
-- assets/
+- GitHub 업로드 대상: Arcana/ 폴더
+- Apps Script 복사 대상: AppsScript/ 폴더
 
 KINOJO 연동 대비
 - CSS 클래스는 arcana- 접두어 사용

@@ -8,9 +8,11 @@ ArcanaApp.app = {
     state.version = data.version || state.version;
     state.targetLevel = data.targetLevel || state.targetLevel;
     state.devanionBonus = data.devanionBonus || state.devanionBonus;
+    state.maxCardLevel = data.maxCardLevel || state.maxCardLevel;
+    state.maxSlotLevel = data.maxSlotLevel || state.maxSlotLevel;
     state.arcanaTypes = data.arcanaTypes || state.arcanaTypes;
     state.skillsByArcana = data.skillsByArcana || {};
-    state.ownedCards = data.ownedCards || ArcanaApp.api.loadOwnedCardsFromLocal() || {};
+    state.ownedCards = ArcanaApp.api.mergeOwnedCards(data.ownedCards);
 
     ArcanaApp.ui.renderAll();
     ArcanaApp.app.bindEvents();

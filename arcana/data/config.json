@@ -1,6 +1,7 @@
 {
   "version": "ARC-0.1.00",
   "appName": "Arcana Skill Simulator",
+  "apiUrl": "https://script.google.com/macros/s/AKfycbzVPXd24oZaoQAhnOBqlTJ_1WE2vghrok4153AdnjIQaKF3S4gRAHTEBcJSbtJS_w/exec",
   "targetLevel": 20,
   "devanionBonus": 4,
   "maxSlotLevel": 4,
