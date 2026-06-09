@@ -1,0 +1,16 @@
+ARC-0.2.02
+
+[이번 작업 요약]
+- 클래스별 스킬 DB와 아르카나별 스킬 풀 읽기 로직을 수정했습니다.
+
+[실제 수정 파일]
+ARC_Constants.gs
+ARC_DBService.gs
+ARC_RecommendationService.gs
+ARC_WebApp.gs
+
+[신규 파일]
+없음
+
+[삭제 파일]
+없음

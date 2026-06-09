@@ -1,0 +1,9 @@
+Apps Script 파일 적용 순서
+
+ARC_CardService.gs
+ARC_Constants.gs
+ARC_DBService.gs
+ARC_Main.gs
+ARC_RecommendationService.gs
+ARC_Utils.gs
+ARC_WebApp.gs

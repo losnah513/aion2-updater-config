@@ -1,0 +1,1019 @@
+.arcana-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--arcana-line-soft);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(8px);
+}
+
+.arcana-title-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  min-width: 0;
+}
+
+.arcana-title-wrap h1 {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.arcana-version {
+  color: rgba(108, 117, 130, 0.58);
+  font-size: 9px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.arcana-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.arcana-icon-btn,
+.arcana-menu-link,
+.arcana-class-picker-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 26px;
+  padding: 0 9px;
+  border: 1px solid var(--arcana-line);
+  border-radius: var(--arcana-radius);
+  background: #fff;
+  color: var(--arcana-text);
+  text-decoration: none;
+  font-size: 11px;
+  cursor: pointer;
+  transition: transform 0.16s ease, border-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.arcana-icon-btn:disabled {
+  color: var(--arcana-muted);
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.arcana-menu-link:hover,
+.arcana-class-picker-button:hover {
+  transform: translateY(-1px);
+  border-color: var(--arcana-primary);
+  color: var(--arcana-primary);
+  box-shadow: 0 3px 9px rgba(37, 99, 235, 0.1);
+}
+
+.arcana-class-picker {
+  position: relative;
+}
+
+.arcana-class-picker-button {
+  min-width: 112px;
+  font-weight: 700;
+}
+
+.arcana-class-dropdown {
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  width: 236px;
+  padding: 8px;
+  border: 1px solid var(--arcana-line);
+  border-radius: var(--arcana-radius);
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12);
+  animation: arcana-class-drop 0.18s ease-out;
+}
+
+.arcana-class-dropdown-title {
+  margin-bottom: 7px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.arcana-class-card-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 5px;
+  max-height: 168px;
+  overflow: auto;
+}
+
+.arcana-class-card {
+  min-height: 28px;
+  border: 1px solid var(--arcana-line);
+  border-radius: var(--arcana-radius);
+  background: #fff;
+  cursor: pointer;
+  transition: transform 0.16s ease, border-color 0.16s ease, color 0.16s ease, background 0.16s ease;
+}
+
+.arcana-class-card:hover,
+.arcana-class-card.is-selected {
+  transform: translateY(-1px);
+  border-color: var(--arcana-primary);
+  color: var(--arcana-primary);
+  background: var(--arcana-primary-soft);
+}
+
+.arcana-class-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+@keyframes arcana-class-drop {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.arcana-refresh-notice {
+  margin: 6px 0 7px;
+  padding: 5px 8px;
+  border: 1px solid var(--arcana-line-soft);
+  border-radius: var(--arcana-radius);
+  background: #fff;
+  color: var(--arcana-muted);
+  font-size: 11px;
+}
+
+.arcana-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: opacity 0.16s ease, filter 0.16s ease;
+}
+
+.arcana-layout.is-class-locked {
+  opacity: 0.42;
+  filter: grayscale(0.25);
+  pointer-events: none;
+  user-select: none;
+}
+
+.arcana-compact-pair {
+  align-items: start;
+  justify-content: start;
+}
+
+.arcana-top-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(280px, var(--arcana-compact-panel-width)));
+  gap: 8px;
+}
+
+.arcana-compact-panel {
+  width: var(--arcana-compact-panel-width);
+  min-width: 280px;
+  max-width: var(--arcana-compact-panel-width);
+}
+
+.arcana-panel {
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid var(--arcana-line);
+  border-radius: var(--arcana-radius);
+  box-shadow: var(--arcana-shadow);
+  padding: 0;
+}
+
+.arcana-panel > :not(.arcana-panel-title):not(.arcana-loading-overlay) {
+  margin-left: 8px;
+  margin-right: 8px;
+}
+
+.arcana-panel > :last-child:not(.arcana-loading-overlay) {
+  margin-bottom: 8px;
+}
+
+.arcana-panel.is-saving,
+.arcana-panel.is-saved {
+  cursor: not-allowed;
+}
+
+.arcana-panel.is-saved::after {
+  content: '';
+  position: absolute;
+  inset: 29px 0 0;
+  pointer-events: none;
+  border-radius: 0 0 var(--arcana-radius) var(--arcana-radius);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(15, 23, 42, 0.05) 0,
+    rgba(15, 23, 42, 0.05) 5px,
+    rgba(255, 255, 255, 0) 5px,
+    rgba(255, 255, 255, 0) 10px
+  );
+}
+
+.arcana-panel-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 29px;
+  margin: 0 0 7px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--arcana-line-soft);
+  background: #fff;
+}
+
+.arcana-panel-title-inner {
+  min-height: 28px;
+  margin-bottom: 6px;
+  padding: 6px 8px;
+}
+
+.arcana-panel-title h2,
+.arcana-panel-title h3 {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.arcana-panel-title h3 {
+  font-size: 13px;
+}
+
+.arcana-panel-title span {
+  color: var(--arcana-muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.arcana-panel-title span.is-limit {
+  color: var(--arcana-danger);
+  font-weight: 800;
+  animation: arcana-limit-pulse 0.28s ease-out;
+}
+
+@keyframes arcana-limit-pulse {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.arcana-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.arcana-actions-right {
+  justify-content: flex-end;
+}
+
+.arcana-panel-message {
+  display: none;
+  margin-top: 6px;
+  padding: 6px 8px;
+  border: 1px solid var(--arcana-line-soft);
+  border-radius: var(--arcana-radius);
+  background: #fff;
+  color: var(--arcana-muted);
+  font-size: 11px;
+}
+
+.arcana-panel-message.is-visible {
+  display: block;
+  animation: arcana-message-drop 0.16s ease-out;
+}
+
+@keyframes arcana-message-drop {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 720px) {
+  .arcana-page {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  .arcana-topbar {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .arcana-title-wrap,
+  .arcana-topbar-actions {
+    justify-content: space-between;
+  }
+
+  .arcana-top-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .arcana-compact-panel {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+/* ARC-0.1.00 수정사항_3: 키노조형 상단 버튼과 내용 기준 폭 */
+.arcana-page {
+  width: max-content;
+  max-width: 100%;
+}
+
+.arcana-layout {
+  align-items: flex-start;
+}
+
+.arcana-refresh-notice,
+.arcana-topbar {
+  width: 100%;
+}
+
+.arcana-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.arcana-kinojo-menu-btn,
+.arcana-admin-plus-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--arcana-line);
+  border-radius: var(--arcana-radius);
+  background: #fff;
+  color: var(--arcana-muted);
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.arcana-kinojo-menu-btn {
+  flex-direction: column;
+  gap: 3px;
+}
+
+.arcana-kinojo-menu-btn span {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.arcana-admin-plus-btn {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.arcana-class-picker-button::after {
+  content: '⌄';
+  margin-left: 6px;
+  font-size: 12px;
+  transform: translateY(-1px);
+}
+
+.arcana-panel-title {
+  align-items: flex-start;
+}
+
+.arcana-panel-title span {
+  min-height: 14px;
+  line-height: 1.25;
+  text-align: right;
+}
+
+.arcana-equipment-panel,
+.arcana-editor-panel {
+  width: fit-content;
+  max-width: 100%;
+}
+
+.arcana-arcana-columns {
+  width: fit-content;
+}
+
+/* ARC-0.2.01: 항목 카드 크기 고정, 제목/본문 구분, 탑바 압축 */
+.arcana-topbar {
+  width: 100%;
+  min-height: 38px;
+  padding: 5px 0;
+  grid-template-columns: auto 1fr auto;
+}
+
+.arcana-title-wrap h1 {
+  font-size: 16px;
+}
+
+.arcana-version {
+  font-size: 8px;
+  opacity: 0.55;
+}
+
+.arcana-refresh-notice {
+  width: 100%;
+  margin: 5px 0 6px;
+  padding: 5px 7px;
+}
+
+.arcana-layout {
+  width: fit-content;
+  max-width: 100%;
+  gap: 7px;
+  align-items: start;
+}
+
+.arcana-top-grid {
+  width: fit-content;
+  grid-template-columns: repeat(2, var(--arcana-compact-panel-width));
+  gap: 7px;
+}
+
+.arcana-panel {
+  overflow: visible;
+  border-radius: var(--arcana-radius);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.035);
+}
+
+.arcana-panel > :not(.arcana-panel-title):not(.arcana-loading-overlay) {
+  margin-left: 7px;
+  margin-right: 7px;
+}
+
+.arcana-panel > :last-child:not(.arcana-loading-overlay) {
+  margin-bottom: 7px;
+}
+
+.arcana-panel-title {
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-start;
+  min-height: 40px;
+  margin: 0 0 6px;
+  padding: 5px 7px;
+  border-bottom: 1px solid var(--arcana-line-soft);
+  background: #fff;
+}
+
+.arcana-title-stack {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-height: 28px;
+}
+
+.arcana-panel-title h2,
+.arcana-panel-title h3 {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.1;
+}
+
+.arcana-panel-title h3 {
+  font-size: 12px;
+}
+
+.arcana-panel-title span {
+  display: block;
+  min-height: 14px;
+  line-height: 1.2;
+  color: var(--arcana-muted);
+  font-size: 10px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.arcana-panel-title span.is-limit {
+  color: var(--arcana-danger);
+  font-weight: 800;
+}
+
+.arcana-compact-panel {
+  width: var(--arcana-compact-panel-width);
+  min-width: var(--arcana-compact-panel-width);
+  max-width: var(--arcana-compact-panel-width);
+}
+
+.arcana-target-panel,
+.arcana-character-panel,
+.arcana-equipment-panel,
+.arcana-editor-panel {
+  width: fit-content;
+  max-width: 100%;
+}
+
+.arcana-actions {
+  gap: 4px;
+  margin-top: 5px;
+}
+
+.arcana-panel-message {
+  min-height: 22px;
+  margin-top: 5px;
+  padding: 4px 6px;
+  font-size: 10px;
+}
+
+.arcana-kinojo-menu-btn,
+.arcana-admin-plus-btn {
+  width: 23px;
+  height: 23px;
+}
+
+.arcana-class-picker-button {
+  min-width: 108px;
+  height: 24px;
+  font-weight: 700;
+}
+
+.arcana-class-picker-button::before {
+  content: '〈';
+  margin-right: 5px;
+  color: var(--arcana-muted);
+}
+
+.arcana-class-picker-button::after {
+  content: '〉';
+  margin-left: 5px;
+  color: var(--arcana-muted);
+}
+
+.arcana-class-dropdown {
+  width: 230px;
+  padding: 7px;
+}
+
+.arcana-menu-link {
+  height: 24px;
+  padding: 0 8px;
+}
+
+@media (max-width: 720px) {
+  .arcana-page {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .arcana-top-grid,
+  .arcana-arcana-columns {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .arcana-compact-panel,
+  .arcana-target-panel,
+  .arcana-character-panel,
+  .arcana-equipment-panel,
+  .arcana-editor-panel {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+}
+
+/* ARC-0.2.01: 상단 입력 영역 재배치 */
+.arcana-top-grid {
+  display: grid;
+  grid-template-columns:
+    var(--arcana-compact-panel-width)
+    var(--arcana-compact-panel-width)
+    var(--arcana-compact-panel-width);
+  gap: 7px;
+  align-items: stretch;
+  width: fit-content;
+}
+
+.arcana-target-panel,
+.arcana-equipment-panel,
+.arcana-future-panel {
+  width: var(--arcana-compact-panel-width);
+  min-width: var(--arcana-compact-panel-width);
+  max-width: var(--arcana-compact-panel-width);
+  align-self: stretch;
+}
+
+.arcana-future-panel {
+  color: var(--arcana-muted);
+}
+
+.arcana-future-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 210px;
+  padding: 12px;
+  border: 1px dashed var(--arcana-line);
+  border-radius: var(--arcana-radius);
+  color: var(--arcana-muted);
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+@media (max-width: 980px) {
+  .arcana-top-grid {
+    grid-template-columns:
+      var(--arcana-compact-panel-width)
+      var(--arcana-compact-panel-width);
+  }
+
+  .arcana-future-panel {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .arcana-top-grid {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .arcana-target-panel,
+  .arcana-equipment-panel,
+  .arcana-future-panel {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+}
+
+/* ARC-0.2.02: 클래스 선택창 아이콘 적용 및 크기 조정 */
+.arcana-class-picker-button {
+  min-width: 156px;
+  height: 31px;
+  gap: 6px;
+}
+
+.arcana-class-picker-button .arcana-class-icon,
+.arcana-class-card .arcana-class-icon {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  object-fit: cover;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+}
+
+.arcana-class-picker-button .arcana-class-icon {
+  flex-basis: 22px;
+  width: 22px;
+  height: 22px;
+}
+
+.arcana-class-picker-button span:not(.arcana-class-arrow) {
+  flex: 1 1 auto;
+  text-align: left;
+}
+
+.arcana-class-arrow {
+  color: var(--arcana-muted);
+  font-size: 12px;
+}
+
+.arcana-class-dropdown {
+  width: 330px;
+  padding: 10px;
+}
+
+.arcana-class-card-list {
+  gap: 7px;
+  max-height: 230px;
+}
+
+.arcana-class-card {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 7px;
+  padding: 0 9px;
+  font-weight: 700;
+}
+
+.arcana-layout.is-class-locked .arcana-panel {
+  background: #fff;
+}
+
+.arcana-layout.is-class-locked .arcana-panel-title span {
+  white-space: normal;
+}
+
+/* ARC-0.2.03: 클래스 선택은 최초 1회 쇼케이스, 이후 변경은 간략 모달로 분리합니다. */
+.arcana-title-wrap {
+  justify-content: center;
+  gap: 8px;
+}
+
+.arcana-title-wrap .arcana-class-picker {
+  margin-left: 2px;
+}
+
+.arcana-class-picker-button {
+  width: auto !important;
+  min-width: 92px !important;
+  height: 28px !important;
+  padding: 0 10px !important;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.arcana-class-picker-button::before,
+.arcana-class-picker-button::after {
+  content: none !important;
+}
+
+.arcana-class-picker-button span:not(.arcana-class-arrow) {
+  flex: 0 0 auto;
+  text-align: center;
+}
+
+.arcana-class-dropdown {
+  position: fixed;
+  inset: 0;
+  z-index: 160;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: auto !important;
+  padding: 18px;
+  border: 0;
+  border-radius: 0;
+  background: rgba(248, 250, 252, 0.72);
+  box-shadow: none;
+  backdrop-filter: blur(6px);
+  animation: arcana-class-overlay-in 0.18s ease-out;
+}
+
+.arcana-class-dropdown[hidden] {
+  display: none !important;
+}
+
+.arcana-class-dropdown-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 10px;
+  color: var(--arcana-text);
+  text-align: center;
+}
+
+.arcana-class-dropdown-title strong {
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.arcana-class-dropdown-title span {
+  color: var(--arcana-muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.arcana-class-dropdown.is-full-showcase .arcana-class-dropdown-title,
+.arcana-class-dropdown.is-full-showcase .arcana-class-showcase,
+.arcana-class-dropdown.is-full-showcase .arcana-class-card-list,
+.arcana-class-dropdown.is-full-showcase .arcana-class-actions {
+  animation: arcana-class-rise-in 0.62s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.arcana-class-dropdown.is-full-showcase .arcana-class-card-list {
+  animation-delay: 0.42s;
+}
+
+.arcana-class-dropdown.is-full-showcase .arcana-class-actions {
+  animation-delay: 0.52s;
+}
+
+.arcana-class-showcase {
+  display: none;
+}
+
+.arcana-class-dropdown.is-full-showcase .arcana-class-showcase {
+  position: relative;
+  display: block;
+  width: 360px;
+  height: 230px;
+  max-width: calc(100vw - 28px);
+  margin: 2px auto 9px;
+  perspective: 900px;
+  transform-style: preserve-3d;
+}
+
+.arcana-showcase-card {
+  --arcana-ring-radius: 118px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 62px;
+  height: 82px;
+  margin: -41px 0 0 -31px;
+  transform-style: preserve-3d;
+  transform:
+    rotateY(calc(var(--arcana-card-index) * 45deg))
+    translateZ(var(--arcana-ring-radius));
+  animation: arcana-showcase-orbit 16s linear infinite;
+  transition: opacity 0.32s ease, filter 0.2s ease;
+}
+
+.arcana-showcase-card-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid rgba(37, 99, 235, 0.22);
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 50% 14%, rgba(219, 234, 254, 0.92), rgba(255, 255, 255, 0.98) 46%),
+    #fff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14), inset 0 0 0 1px rgba(255, 255, 255, 0.78);
+  backface-visibility: hidden;
+  transform: rotateY(180deg);
+}
+
+.arcana-showcase-card .arcana-class-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.arcana-showcase-card span {
+  color: var(--arcana-text);
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.arcana-showcase-card.is-hover-showcase .arcana-showcase-card-face {
+  border-color: rgba(37, 99, 235, 0.86);
+  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.18), 0 0 0 1px rgba(37, 99, 235, 0.16);
+  transform: rotateY(180deg) translateY(-30px) scale(1.06);
+}
+
+.arcana-showcase-card.is-selected-showcase {
+  z-index: 4;
+  animation: arcana-selected-card-center 0.54s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.arcana-showcase-card.is-selected-showcase .arcana-showcase-card-face {
+  border-color: rgba(37, 99, 235, 0.96);
+  box-shadow: 0 16px 32px rgba(37, 99, 235, 0.22), 0 0 0 1px rgba(37, 99, 235, 0.18);
+}
+
+.arcana-showcase-card.is-falling-showcase {
+  animation: arcana-showcase-card-fall 0.46s ease-in forwards;
+}
+
+.arcana-class-card-list {
+  display: grid;
+  grid-template-columns: repeat(2, max-content) !important;
+  justify-content: center;
+  gap: 7px;
+  width: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+.arcana-class-card {
+  width: auto;
+  min-width: 104px;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.arcana-class-card .arcana-class-icon {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+}
+
+.arcana-class-dropdown.is-full-showcase .arcana-class-card {
+  min-width: 92px;
+  min-height: 32px;
+}
+
+.arcana-class-dropdown.is-compact-change {
+  inset: auto;
+  top: 46px;
+  left: 50%;
+  width: fit-content !important;
+  min-width: 238px;
+  max-width: calc(100vw - 24px);
+  padding: 11px;
+  border: 1px solid var(--arcana-line);
+  border-radius: var(--arcana-radius);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16);
+  transform: translateX(-50%);
+  animation: arcana-class-compact-in 0.2s ease-out;
+}
+
+.arcana-class-dropdown.is-compact-change .arcana-class-dropdown-title span,
+.arcana-class-dropdown.is-compact-change .arcana-class-showcase {
+  display: none;
+}
+
+.arcana-class-dropdown.is-compact-change .arcana-class-card-list {
+  grid-template-columns: repeat(2, max-content) !important;
+}
+
+.arcana-class-actions {
+  justify-content: center;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.arcana-class-actions .arcana-btn {
+  min-width: 92px;
+  min-height: 32px;
+}
+
+.arcana-target-panel .arcana-actions,
+.arcana-equipment-panel .arcana-actions {
+  justify-content: center !important;
+}
+
+@keyframes arcana-class-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes arcana-class-rise-in {
+  from { opacity: 0; transform: translateY(88px) rotateX(16deg); }
+  to { opacity: 1; transform: translateY(0) rotateX(0); }
+}
+
+@keyframes arcana-class-compact-in {
+  from { opacity: 0; transform: translate(-50%, -8px) scale(0.98); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+@keyframes arcana-showcase-orbit {
+  from {
+    transform:
+      rotateY(calc(var(--arcana-card-index) * 45deg))
+      translateZ(var(--arcana-ring-radius));
+  }
+  to {
+    transform:
+      rotateY(calc(var(--arcana-card-index) * 45deg + 360deg))
+      translateZ(var(--arcana-ring-radius));
+  }
+}
+
+@keyframes arcana-showcase-card-fall {
+  0% { opacity: 1; filter: blur(0); }
+  100% { opacity: 0; filter: blur(1px); transform: translateY(260px) rotateZ(18deg) scale(0.8); }
+}
+
+@keyframes arcana-selected-card-center {
+  0% { transform: rotateY(calc(var(--arcana-card-index) * 45deg)) translateZ(var(--arcana-ring-radius)); }
+  65% { transform: translate3d(0, 0, 0) rotateY(360deg) scale(1.08); }
+  100% { transform: translate3d(0, 0, 0) rotateY(360deg) scale(1.12); }
+}
+
+@media (max-width: 720px) {
+  .arcana-title-wrap {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .arcana-class-dropdown.is-full-showcase .arcana-class-showcase {
+    width: 300px;
+    height: 210px;
+  }
+
+  .arcana-showcase-card {
+    --arcana-ring-radius: 96px;
+    width: 54px;
+    height: 74px;
+    margin: -37px 0 0 -27px;
+  }
+
+  .arcana-class-card-list,
+  .arcana-class-dropdown.is-compact-change .arcana-class-card-list {
+    grid-template-columns: repeat(2, max-content) !important;
+  }
+}
