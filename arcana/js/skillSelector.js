@@ -2,11 +2,13 @@ window.ArcanaApp = window.ArcanaApp || {};
 
 ArcanaApp.skillSelector = {
   iconFiles: {
+    templar: 'guardian.json',
     guardian: 'guardian.json',
     gladiator: 'gladiator.json',
     ranger: 'ranger.json',
     assassin: 'assassin.json',
     sorcerer: 'sorcerer.json',
+    elementalist: 'spiritmaster.json',
     spiritmaster: 'spiritmaster.json',
     cleric: 'cleric.json',
     chanter: 'chanter.json',
@@ -30,6 +32,15 @@ ArcanaApp.skillSelector = {
     if (!wrapper) return;
 
     wrapper.innerHTML = '';
+
+    if (!state.hasSelectedClass) {
+      ArcanaApp.skillSelector.updateCountText(false);
+      const guide = document.createElement('div');
+      guide.className = 'arcana-friendly-guide';
+      guide.textContent = '어떤 클래스로 시뮬레이션을 진행할까요? 클래스를 선택하면 스킬 정보를 불러올 수 있어요.';
+      wrapper.appendChild(guide);
+      return;
+    }
 
     const skills = ArcanaApp.skillSelector.getActiveSkills();
     const iconMap = ArcanaApp.skillSelector.getCachedIconMap();
@@ -66,7 +77,6 @@ ArcanaApp.skillSelector = {
 
       if (state.selectedTargetSkills.includes(skill)) {
         button.classList.add('is-active');
-        button.appendChild(ArcanaApp.skillSelector.createLevelInput(skill));
       }
 
       button.addEventListener('click', () => {
@@ -77,47 +87,12 @@ ArcanaApp.skillSelector = {
     });
   },
 
-
-  createLevelInput(skill) {
-    const group = document.createElement('span');
-    group.className = 'arcana-skill-level-inline';
-
-    const label = document.createElement('span');
-    label.textContent = 'Lv';
-
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.inputMode = 'numeric';
-    input.pattern = '[0-9]*';
-    input.value = ArcanaApp.state.characterLevels[skill] || '';
-    input.dataset.skillLevelInput = skill;
-    input.setAttribute('aria-label', `${skill} 스킬 레벨`);
-
-    input.addEventListener('click', event => event.stopPropagation());
-    input.addEventListener('mousedown', event => event.stopPropagation());
-    input.addEventListener('input', () => {
-      const raw = input.value.replace(/[^0-9]/g, '');
-      input.value = raw;
-      const value = Number(raw || 0);
-
-      if (value > 0) {
-        ArcanaApp.state.characterLevels[skill] = value;
-      } else {
-        delete ArcanaApp.state.characterLevels[skill];
-      }
-    });
-
-    group.appendChild(label);
-    group.appendChild(input);
-    return group;
-  },
-
   getActiveSkills() {
     const state = ArcanaApp.state;
+    if (!state.hasSelectedClass || !state.currentClassKey) return [];
+
     const classData = state.classSkills[state.currentClassKey] || {};
-    const source = classData.active && classData.active.length > 0
-      ? classData.active
-      : state.activeSkills;
+    const source = classData.active || [];
 
     return Array.from(new Set((source || []).map(skill => String(skill).trim()).filter(Boolean)));
   },
@@ -143,13 +118,11 @@ ArcanaApp.skillSelector = {
     const key = ArcanaApp.skillSelector.getClassIconFileKey();
     const fileName = ArcanaApp.skillSelector.iconFiles[key];
 
-    if (!key || !fileName) return;
-    if (ArcanaApp.skillSelector.iconCache[key]) return;
-    if (ArcanaApp.skillSelector.iconLoading[key]) return;
+    if (!key || !fileName) return Promise.resolve();
+    if (ArcanaApp.skillSelector.iconCache[key]) return Promise.resolve();
+    if (ArcanaApp.skillSelector.iconLoading[key]) return ArcanaApp.skillSelector.iconLoading[key];
 
-    ArcanaApp.skillSelector.iconLoading[key] = true;
-
-    fetch(`data/skills/${fileName}`, { cache: 'no-cache' })
+    ArcanaApp.skillSelector.iconLoading[key] = fetch(`data/skills/${fileName}`, { cache: 'no-cache' })
       .then(response => {
         if (!response.ok) {
           throw new Error(`스킬 아이콘 데이터를 불러오지 못했습니다: ${fileName}`);
@@ -158,14 +131,15 @@ ArcanaApp.skillSelector = {
       })
       .then(data => {
         ArcanaApp.skillSelector.iconCache[key] = data || {};
-        ArcanaApp.skillSelector.iconLoading[key] = false;
-        ArcanaApp.skillSelector.render();
+        ArcanaApp.skillSelector.iconLoading[key] = null;
       })
       .catch(error => {
         console.warn('[Arcana] Skill icon load failed:', error);
         ArcanaApp.skillSelector.iconCache[key] = {};
-        ArcanaApp.skillSelector.iconLoading[key] = false;
+        ArcanaApp.skillSelector.iconLoading[key] = null;
       });
+
+    return ArcanaApp.skillSelector.iconLoading[key];
   },
 
   resolveIconUrl(url) {
@@ -192,7 +166,6 @@ ArcanaApp.skillSelector = {
 
     if (index >= 0) {
       state.selectedTargetSkills.splice(index, 1);
-      delete state.characterLevels[skill];
     } else {
       if (state.selectedTargetSkills.length >= state.maxTargetSkills) {
         ArcanaApp.skillSelector.updateCountText(true);
@@ -202,6 +175,7 @@ ArcanaApp.skillSelector = {
     }
 
     ArcanaApp.skillSelector.render();
+    ArcanaApp.app.resetRecommendation();
   },
 
   updateCountText(isLimitNotice) {
@@ -212,8 +186,13 @@ ArcanaApp.skillSelector = {
     const max = ArcanaApp.state.maxTargetSkills;
     text.classList.toggle('is-limit', Boolean(isLimitNotice));
 
+    if (!ArcanaApp.state.hasSelectedClass) {
+      text.textContent = '클래스를 선택하면 활성화됩니다';
+      return;
+    }
+
     if (isLimitNotice) {
-      text.textContent = `최대치인 ${max}개를 선택했습니다`;
+      text.textContent = `${max}개를 선택했습니다`;
       text.style.animation = 'none';
       text.offsetHeight;
       text.style.animation = '';

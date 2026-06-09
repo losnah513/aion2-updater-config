@@ -106,7 +106,7 @@ ArcanaApp.cardEditor = {
 
     const rows = (ArcanaApp.state.recommendationMeta && ArcanaApp.state.recommendationMeta.rows) || [];
     if (rows.length === 0) {
-      wrapper.innerHTML = '<div class="arcana-empty-line">목표 스킬을 선택하면 분석이 표시됩니다.</div>';
+      wrapper.innerHTML = '<div class="arcana-empty-line">목표 스킬을 선택하면 키노조 AI가 계산 근거를 차근차근 보여드릴게요.</div>';
       return wrapper;
     }
 
@@ -136,7 +136,7 @@ ArcanaApp.cardEditor = {
 
     const advice = (ArcanaApp.state.recommendationMeta && ArcanaApp.state.recommendationMeta.advice) || [];
     if (advice.length === 0) {
-      wrapper.innerHTML = '<div class="arcana-empty-line">추천 결과에 맞는 조언이 표시됩니다.</div>';
+      wrapper.innerHTML = '<div class="arcana-empty-line">추천 결과가 나오면 제작 부담을 줄이는 조언을 함께 남겨드릴게요.</div>';
       return wrapper;
     }
 
@@ -249,7 +249,7 @@ ArcanaApp.cardEditor = {
         });
       });
 
-      const validation = ArcanaApp.simulator.validateCardSlots(slots);
+      const validation = ArcanaApp.simulator.validateCardSlots(slots, arcanaName);
       if (!validation.ok) {
         throw new Error(`${arcanaName}: ${validation.message}`);
       }

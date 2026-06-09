@@ -1,31 +1,36 @@
-ARC-0.2.01
+ARC-0.2.02
 
 [이번 작업 요약]
-- 액티브 스킬 선택과 캐릭터 스킬 레벨 입력을 통합했습니다.
-- 클래스 변경 확인창을 페이지 내부 모달로 추가했습니다.
-- 클래스 변경 시 이전 클래스의 장비/추천 상태가 남는 문제를 수정했습니다.
-- 상단 입력 영역을 액티브 스킬 선택 / 장비 스킬 옵션 / 기능 추가 예정 영역 구조로 정리했습니다.
+- 클래스 선택, 반지 옵션, 액티브 스킬 선택, 추천 로직 관련 파일을 수정했습니다.
+- 클래스 아이콘은 새로 만들지 않고 기존 키노조 자산 경로를 사용합니다.
 
-[신규 파일]
-arcana/js/confirmModal.js
-
-[수정 파일]
+[실제 수정 파일]
 arcana/index.html
-arcana/README.txt
-arcana/MODIFIED_FILES.txt
-arcana/css/cards.css
-arcana/css/layout.css
-arcana/css/modal.css
-arcana/data/config.json
+arcana/js/api.js
 arcana/js/app.js
+arcana/js/cardEditor.js
 arcana/js/characterEditor.js
 arcana/js/classSelector.js
 arcana/js/config.js
 arcana/js/equipmentEditor.js
+arcana/js/recommendation.js
+arcana/js/simulator.js
 arcana/js/skillSelector.js
 arcana/js/state.js
-arcana/_docs/MODIFIED_FILES.txt
+arcana/css/cards.css
+arcana/css/layout.css
+arcana/css/main.css
 arcana/_docs/UPDATE_HISTORY.txt
+arcana/_docs/MODIFIED_FILES.txt
+
+[신규 파일]
+없음
 
 [삭제 파일]
 없음
+
+[Apps Script 교체 필요]
+ARC_Constants.gs
+ARC_DBService.gs
+ARC_RecommendationService.gs
+ARC_WebApp.gs

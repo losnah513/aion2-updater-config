@@ -116,11 +116,13 @@ ArcanaApp.equipmentEditor = {
   },
 
   collect() {
-    const options = { weapon: [], guarder: [], ring1: [], ring2: [] };
+    const options = { ring1: [], ring2: [] };
 
     document.querySelectorAll('.arcana-equipment-card[data-equipment]').forEach(card => {
       const equipmentKey = card.dataset.equipment;
       const used = new Set();
+
+      if (!options[equipmentKey]) options[equipmentKey] = [];
 
       card.querySelectorAll('select[data-equipment]').forEach(select => {
         const skill = select.value.trim();
@@ -132,7 +134,7 @@ ArcanaApp.equipmentEditor = {
 
         if (used.has(skill)) {
           const label = ArcanaApp.equipmentEditor.getEquipmentLabel(equipmentKey);
-          throw new Error(`${label}: 같은 장비 안에는 같은 스킬을 중복 등록할 수 없습니다.`);
+          throw new Error(`${label}: 같은 반지 안에는 같은 스킬을 중복 등록할 수 없습니다.`);
         }
 
         used.add(skill);

@@ -309,3 +309,28 @@ input[type='number'] {
   animation: arcana-active-ripple 1.8s ease-in-out infinite;
   pointer-events: none;
 }
+
+/* ARC-0.2.02: 선택 버튼은 내부 물결 없이 테두리 빛만 사용 */
+.arcana-skill-btn.is-active::after,
+.arcana-equipment-toggle.is-active::after,
+.arcana-class-card.is-selected::after,
+.arcana-skill-btn.arcana-skill-icon-btn.is-active::after {
+  content: none !important;
+  animation: none !important;
+  background: none !important;
+}
+
+.arcana-friendly-guide {
+  grid-column: 1 / -1;
+  min-height: 104px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  border: 1px dashed var(--arcana-line);
+  border-radius: var(--arcana-radius);
+  color: var(--arcana-muted);
+  line-height: 1.5;
+  text-align: center;
+  background: #fff;
+}

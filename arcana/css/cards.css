@@ -944,3 +944,46 @@
 .arcana-equipment-panel .arcana-equipment-list {
   flex: 0 0 auto;
 }
+
+/* ARC-0.2.02: 반지 전용 옵션 UI */
+.arcana-equipment-panel .arcana-equipment-toggle-row {
+  grid-template-columns: repeat(2, 58px) !important;
+}
+
+.arcana-equipment-panel .arcana-equipment-list {
+  grid-template-columns: repeat(2, var(--arcana-card-width)) !important;
+  width: fit-content;
+}
+
+.arcana-skill-level-inline {
+  display: none !important;
+}
+
+/* ARC-0.2.02: 현재/추천 영역은 유지하고 내부 카드만 반응형 변경 */
+.arcana-card-grid,
+.arcana-recommend-card-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 1180px) {
+  .arcana-card-grid,
+  .arcana-recommend-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .arcana-arcana-columns {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 6px;
+  }
+
+  .arcana-card-grid,
+  .arcana-recommend-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .arcana-card-box {
+    min-width: 0;
+  }
+}

@@ -20,11 +20,13 @@ ArcanaApp.simulator = {
   calculateEquipmentLevels(equipmentOptions) {
     const levels = {};
 
-    Object.values(equipmentOptions || {}).flat().forEach(slot => {
-      if (!slot || !slot.skill) return;
-      const skill = slot.skill.trim();
-      if (!skill) return;
-      levels[skill] = (levels[skill] || 0) + Number(slot.level || 1);
+    ['ring1', 'ring2'].forEach(key => {
+      (equipmentOptions[key] || []).forEach(slot => {
+        if (!slot || !slot.skill) return;
+        const skill = slot.skill.trim();
+        if (!skill) return;
+        levels[skill] = (levels[skill] || 0) + Number(slot.level || 1);
+      });
     });
 
     return levels;
@@ -35,9 +37,14 @@ ArcanaApp.simulator = {
   },
 
   calculateBaseLevels() {
-    const levels = { ...ArcanaApp.state.characterLevels };
-    const equipmentLevels = ArcanaApp.simulator.calculateEquipmentLevels(ArcanaApp.state.equipmentOptions);
-    const ownedCardLevels = ArcanaApp.simulator.calculateCardLevels(ArcanaApp.state.ownedCards);
+    const levels = {};
+    const state = ArcanaApp.state;
+    const equipmentLevels = ArcanaApp.simulator.calculateEquipmentLevels(state.equipmentOptions);
+    const ownedCardLevels = ArcanaApp.simulator.calculateCardLevels(state.ownedCards);
+
+    state.selectedTargetSkills.forEach(skill => {
+      levels[skill] = state.baseSkillLevel || 10;
+    });
 
     [equipmentLevels, ownedCardLevels].forEach(source => {
       Object.entries(source).forEach(([skill, level]) => {
@@ -48,10 +55,11 @@ ArcanaApp.simulator = {
     return levels;
   },
 
-  validateCardSlots(slots) {
+  validateCardSlots(slots, arcanaName) {
     const state = ArcanaApp.state;
     const usedSkills = new Set();
-    let totalLevel = 0;
+    const availableSkills = state.skillsByArcana[arcanaName] || [];
+    let growthPoint = 0;
 
     for (const slot of slots) {
       if (!slot || !slot.skill) continue;
@@ -63,16 +71,20 @@ ArcanaApp.simulator = {
         return { ok: false, message: '한 카드 안에는 같은 스킬을 중복 입력할 수 없습니다.' };
       }
 
-      if (level < 0 || level > state.maxSlotLevel) {
-        return { ok: false, message: '슬롯 스킬 레벨은 0~4까지만 입력할 수 있습니다.' };
+      if (availableSkills.length > 0 && !availableSkills.includes(skill)) {
+        return { ok: false, message: `${skill} 스킬은 ${arcanaName}에 등록할 수 없습니다.` };
+      }
+
+      if (level < 1 || level > state.maxSlotLevel) {
+        return { ok: false, message: '선택한 슬롯의 스킬 레벨은 1~4까지만 입력할 수 있습니다.' };
       }
 
       usedSkills.add(skill);
-      totalLevel += level;
+      growthPoint += Math.max(0, level - 1);
     }
 
-    if (totalLevel > state.maxCardLevel) {
-      return { ok: false, message: '카드 하나의 총 레벨은 최대 5입니다.' };
+    if (growthPoint > state.maxCardLevel) {
+      return { ok: false, message: '카드 하나의 성장 포인트는 최대 5입니다.' };
     }
 
     return { ok: true };

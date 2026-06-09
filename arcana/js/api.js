@@ -97,13 +97,18 @@ ArcanaApp.api = {
   },
 
   loadEquipmentOptionsFromLocal() {
-    const fallback = { weapon: [], guarder: [], ring1: [], ring2: [] };
+    const fallback = { ring1: [], ring2: [] };
     const equipment = ArcanaApp.api.readLocalObject('ARCANA_EQUIPMENT_OPTIONS', null);
 
-    if (equipment) return equipment;
+    if (equipment) {
+      return {
+        ring1: equipment.ring1 || [],
+        ring2: equipment.ring2 || []
+      };
+    }
 
-    const oldRings = ArcanaApp.api.readLocalObject('ARCANA_RING_OPTIONS', { ring1: [], ring2: [] });
-    return { ...fallback, ring1: oldRings.ring1 || [], ring2: oldRings.ring2 || [] };
+    const oldRings = ArcanaApp.api.readLocalObject('ARCANA_RING_OPTIONS', fallback);
+    return { ring1: oldRings.ring1 || [], ring2: oldRings.ring2 || [] };
   },
 
   clearEquipmentOptions() {
@@ -140,36 +145,40 @@ ArcanaApp.api = {
 
   getFallbackData() {
     const active = [
-      '예리한 일격', '절단의 맹타', '도약 찍기', '유리의 검',
+      '예리한 일격', '절단의 맹타', '도약 찍기', '유린의 검',
       '내려찍기', '검기 난무', '발목 베기', '분쇄 파동',
       '돌진 일격', '공중 결박', '파멸의 맹타', '충격 해제'
     ];
 
+    const arcanaSkills = {
+      '성배': active,
+      '양피지': ['예리한 일격', '도약 찍기', '내려찍기', '발목 베기', '공중 결박', '파멸의 맹타'],
+      '나침반': ['절단의 맹타', '유린의 검', '돌진 일격', '분쇄 파동', '검기 난무', '충격 해제'],
+      '종': active,
+      '겨울': active,
+      '천칭': active
+    };
+
     return {
       ok: true,
-      version: 'ARC-0.2.01',
+      version: 'ARC-0.2.02',
       targetLevel: 20,
+      baseSkillLevel: 10,
       devanionBonus: 4,
       maxCardLevel: 5,
       maxSlotLevel: 4,
       arcanaTypes: ['성배', '양피지', '나침반', '종', '겨울', '천칭'],
-      skillsByArcana: {
-        '성배': active,
-        '양피지': ['예리한 일격', '도약 찍기', '내려찍기', '발목 베기', '공중 결박', '파멸의 맹타'],
-        '나침반': ['절단의 맹타', '유리의 검', '돌진 일격', '분쇄 파동', '검기 난무', '충격 해제'],
-        '종': active,
-        '겨울': active,
-        '천칭': active
-      },
+      skillsByArcana: {},
       classList: [{ key: 'gladiator', name: '검성' }],
       classSkills: {
         gladiator: {
           active,
-          passive: ['생존 자세', '보호의 갑옷', '피의 흡수', '약점 파악']
+          passive: ['생존 자세', '보호의 갑옷', '피의 흡수', '약점 파악'],
+          arcanaSkills
         }
       },
-      activeSkills: active,
-      passiveSkills: ['생존 자세', '보호의 갑옷', '피의 흡수', '약점 파악'],
+      activeSkills: [],
+      passiveSkills: [],
       ownedCards: ArcanaApp.api.loadOwnedCardsFromLocal(),
       source: 'fallback'
     };

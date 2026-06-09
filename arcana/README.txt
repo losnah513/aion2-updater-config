@@ -1,7 +1,8 @@
 아르카나 스킬 시뮬레이터
-버전: ARC-0.2.01
+버전: ARC-0.2.02
 
-GitHub Pages에는 arcana 폴더만 업로드합니다.
-AppsScript 폴더는 구글 Apps Script 편집기에 복사해 넣는 용도입니다.
+이 폴더는 GitHub Pages에 업로드하는 웹페이지 파일입니다.
+Apps Script 파일은 별도 AppsScript 폴더에서 관리합니다.
 
-이번 버전은 액티브 스킬 선택과 캐릭터 스킬 레벨 입력을 통합하고, 클래스 변경 시 저장된 내용 초기화 확인창을 추가한 버전입니다.
+실행 주소 예시:
+https://losnah513.github.io/aion2-updater-config/arcana/

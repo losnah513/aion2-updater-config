@@ -1,8 +1,9 @@
 window.ArcanaApp = window.ArcanaApp || {};
 
 ArcanaApp.state = {
-  version: 'ARC-0.2.01',
+  version: 'ARC-0.2.02',
   targetLevel: 20,
+  baseSkillLevel: 10,
   devanionBonus: 4,
   maxTargetSkills: 7,
   maxCardLevel: 5,
@@ -10,9 +11,7 @@ ArcanaApp.state = {
   currentClassKey: '',
   pendingClassKey: '',
   hasSelectedClass: false,
-  classList: [
-    { key: 'gladiator', name: '검성' }
-  ],
+  classList: [],
   activeSkills: [],
   passiveSkills: [],
   classSkills: {},
@@ -21,15 +20,11 @@ ArcanaApp.state = {
   selectedTargetSkills: [],
   characterLevels: {},
   equipmentTypes: [
-    { key: 'weapon', label: '무기', slots: 6 },
-    { key: 'guarder', label: '가더', slots: 6 },
     { key: 'ring1', label: '반지1', slots: 6 },
     { key: 'ring2', label: '반지2', slots: 6 }
   ],
   selectedEquipmentKeys: [],
   equipmentOptions: {
-    weapon: [],
-    guarder: [],
     ring1: [],
     ring2: []
   },

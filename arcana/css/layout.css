@@ -647,3 +647,64 @@
     max-width: none;
   }
 }
+
+/* ARC-0.2.02: 클래스 선택창 아이콘 적용 및 크기 조정 */
+.arcana-class-picker-button {
+  min-width: 156px;
+  height: 31px;
+  gap: 6px;
+}
+
+.arcana-class-picker-button .arcana-class-icon,
+.arcana-class-card .arcana-class-icon {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  object-fit: cover;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+}
+
+.arcana-class-picker-button .arcana-class-icon {
+  flex-basis: 22px;
+  width: 22px;
+  height: 22px;
+}
+
+.arcana-class-picker-button span:not(.arcana-class-arrow) {
+  flex: 1 1 auto;
+  text-align: left;
+}
+
+.arcana-class-arrow {
+  color: var(--arcana-muted);
+  font-size: 12px;
+}
+
+.arcana-class-dropdown {
+  width: 330px;
+  padding: 10px;
+}
+
+.arcana-class-card-list {
+  gap: 7px;
+  max-height: 230px;
+}
+
+.arcana-class-card {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 7px;
+  padding: 0 9px;
+  font-weight: 700;
+}
+
+.arcana-layout.is-class-locked .arcana-panel {
+  background: #fff;
+}
+
+.arcana-layout.is-class-locked .arcana-panel-title span {
+  white-space: normal;
+}
