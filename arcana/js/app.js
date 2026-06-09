@@ -5,20 +5,22 @@ ArcanaApp.app = {
     const data = await ArcanaApp.api.loadInitialData();
     const state = ArcanaApp.state;
 
-    state.version = ArcanaApp.config.version || 'ARC-0.2.02';
+    state.version = ArcanaApp.config.version || 'ARC-0.2.03';
     state.targetLevel = data.targetLevel || state.targetLevel;
     state.baseSkillLevel = data.baseSkillLevel || state.baseSkillLevel;
     state.devanionBonus = data.devanionBonus || state.devanionBonus;
     state.maxCardLevel = data.maxCardLevel || state.maxCardLevel;
     state.maxSlotLevel = data.maxSlotLevel || state.maxSlotLevel;
     state.arcanaTypes = data.arcanaTypes || state.arcanaTypes;
-    state.classList = data.classList || state.classList;
+    state.classList = ArcanaApp.classSelector.normalizeClassList(data.classList || state.classList);
     state.classSkills = data.classSkills || {};
     state.skillsByArcana = {};
 
     state.pendingClassKey = '';
     state.currentClassKey = '';
     state.hasSelectedClass = false;
+    state.hasSeenClassShowcase = false;
+    state.showcaseSelectedKey = '';
     state.activeSkills = [];
     state.passiveSkills = [];
     state.ownedCards = {};

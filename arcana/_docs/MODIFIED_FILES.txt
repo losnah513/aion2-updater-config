@@ -1,27 +1,29 @@
-ARC-0.2.02
+ARC-0.2.03
 
 [이번 작업 요약]
-- 클래스 선택, 반지 옵션, 액티브 스킬 선택, 추천 로직 관련 파일을 수정했습니다.
-- 클래스 아이콘은 새로 만들지 않고 기존 키노조 자산 경로를 사용합니다.
+- 클래스 선택 최초 진입 쇼케이스 연출을 추가했습니다.
+- 클래스 선택 이후 [클래스 변경] 간략 모달 분기를 추가했습니다.
+- 클래스 표시 순서와 궁성/검성 매핑 오류를 방지하도록 프론트엔드 클래스 목록 정리 로직을 추가했습니다.
+- 클래스 선택 관련 버튼 규격과 저장/초기화 버튼 정렬을 수정했습니다.
+- 버전 표기를 ARC-0.2.03으로 갱신했습니다.
 
 [실제 수정 파일]
 arcana/index.html
-arcana/js/api.js
 arcana/js/app.js
-arcana/js/cardEditor.js
-arcana/js/characterEditor.js
+arcana/js/api.js
 arcana/js/classSelector.js
 arcana/js/config.js
-arcana/js/equipmentEditor.js
-arcana/js/recommendation.js
-arcana/js/simulator.js
-arcana/js/skillSelector.js
 arcana/js/state.js
-arcana/css/cards.css
+arcana/data/config.json
 arcana/css/layout.css
-arcana/css/main.css
+arcana/css/modal.css
+arcana/README.txt
 arcana/_docs/UPDATE_HISTORY.txt
 arcana/_docs/MODIFIED_FILES.txt
+AppsScript/ARC_Constants.gs
+AppsScript/ARC_RecommendationService.gs
+AppsScript/_docs/UPDATE_HISTORY.txt
+AppsScript/_docs/MODIFIED_FILES.txt
 
 [신규 파일]
 없음
@@ -31,6 +33,4 @@ arcana/_docs/MODIFIED_FILES.txt
 
 [Apps Script 교체 필요]
 ARC_Constants.gs
-ARC_DBService.gs
 ARC_RecommendationService.gs
-ARC_WebApp.gs

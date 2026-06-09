@@ -161,7 +161,7 @@ ArcanaApp.api = {
 
     return {
       ok: true,
-      version: 'ARC-0.2.02',
+      version: 'ARC-0.2.03',
       targetLevel: 20,
       baseSkillLevel: 10,
       devanionBonus: 4,

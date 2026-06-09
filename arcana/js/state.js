@@ -1,7 +1,7 @@
 window.ArcanaApp = window.ArcanaApp || {};
 
 ArcanaApp.state = {
-  version: 'ARC-0.2.02',
+  version: 'ARC-0.2.03',
   targetLevel: 20,
   baseSkillLevel: 10,
   devanionBonus: 4,
@@ -11,6 +11,8 @@ ArcanaApp.state = {
   currentClassKey: '',
   pendingClassKey: '',
   hasSelectedClass: false,
+  hasSeenClassShowcase: false,
+  showcaseSelectedKey: '',
   classList: [],
   activeSkills: [],
   passiveSkills: [],

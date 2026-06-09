@@ -708,3 +708,88 @@
 .arcana-layout.is-class-locked .arcana-panel-title span {
   white-space: normal;
 }
+
+/* ARC-0.2.03: 클래스 선택/변경 버튼과 간략 모달 정리 */
+.arcana-class-picker-button {
+  width: fit-content;
+  min-width: 112px;
+  max-width: 156px;
+  height: 30px;
+  padding: 0 9px;
+  gap: 5px;
+}
+
+.arcana-class-picker-button.has-class {
+  min-width: 126px;
+}
+
+.arcana-class-picker-button .arcana-class-icon,
+.arcana-class-card .arcana-class-icon {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+}
+
+.arcana-class-picker-button span:not(.arcana-class-arrow) {
+  flex: 0 0 auto;
+  text-align: center;
+}
+
+.arcana-class-dropdown {
+  right: 50%;
+  width: 266px;
+  padding: 9px;
+  transform: translateX(50%);
+  animation: arcana-class-rise-compact 0.2s ease-out;
+}
+
+.arcana-class-card-list {
+  grid-template-columns: repeat(2, max-content);
+  justify-content: center;
+  gap: 6px;
+  max-height: none;
+  overflow: visible;
+}
+
+.arcana-class-card {
+  width: 118px;
+  min-height: 36px;
+  justify-content: flex-start;
+  padding: 0 8px;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.arcana-class-actions {
+  justify-content: center;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.arcana-class-actions .arcana-btn,
+.arcana-showcase-actions .arcana-btn {
+  width: 118px;
+  height: 32px;
+  font-weight: 700;
+}
+
+.arcana-actions-right {
+  justify-content: center;
+}
+
+@keyframes arcana-class-rise-compact {
+  from { opacity: 0; transform: translateX(50%) translateY(10px); }
+  to { opacity: 1; transform: translateX(50%) translateY(0); }
+}
+
+@media (max-width: 720px) {
+  .arcana-class-dropdown {
+    right: 0;
+    transform: none;
+  }
+
+  @keyframes arcana-class-rise-compact {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
