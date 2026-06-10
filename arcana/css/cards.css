@@ -2542,3 +2542,180 @@
   opacity: 0.78 !important;
   filter: saturate(1.35) brightness(1.08) !important;
 }
+
+
+/* 수정사항_260610_11: 추천 CTA 재작업 - 버튼 형태 유지, 파동은 뒤쪽 애니메이션 레이어만 사용 */
+.arcana-recommend-section {
+  position: relative !important;
+}
+
+.arcana-recommend-section .arcana-recommend-actions {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 280px !important;
+  height: 220px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  transform: translate(-50%, -50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  pointer-events: none !important;
+  z-index: 7 !important;
+}
+
+.arcana-recommend-section.is-recommend-ready .arcana-recommend-actions,
+#arcanaRunSimulation[hidden] {
+  display: none !important;
+}
+
+.arcana-cta-wave-layer {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 250px !important;
+  height: 250px !important;
+  border-radius: 999px !important;
+  transform: translate(-50%, -50%) scale(0.78) !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+  opacity: 0.24 !important;
+  filter: saturate(0.75) blur(0.1px) !important;
+  background:
+    radial-gradient(circle, rgba(37,99,235,0.14) 0 10%, transparent 11%),
+    repeating-radial-gradient(circle, rgba(37,99,235,0.12) 0 1px, transparent 2px 22px) !important;
+  animation: arcana-cta-standby-ripple-11 4.8s ease-in-out infinite !important;
+}
+
+.arcana-cta-wave-layer::before,
+.arcana-cta-wave-layer::after {
+  content: '' !important;
+  position: absolute !important;
+  inset: 34px !important;
+  border-radius: inherit !important;
+  border: 1px solid rgba(37,99,235,0.22) !important;
+  box-shadow: 0 0 20px rgba(37,99,235,0.12) !important;
+  opacity: 0 !important;
+  animation: arcana-cta-ring-ripple-11 3.6s ease-out infinite !important;
+}
+
+.arcana-cta-wave-layer::after {
+  inset: 52px !important;
+  animation-delay: 1.15s !important;
+}
+
+#arcanaRunSimulation.arcana-kinojo-cta,
+#arcanaRunSimulation {
+  position: relative !important;
+  z-index: 2 !important;
+  pointer-events: auto !important;
+  width: auto !important;
+  height: 30px !important;
+  min-width: 112px !important;
+  min-height: 30px !important;
+  padding: 0 18px !important;
+  border-radius: 4px !important;
+  overflow: hidden !important;
+  color: var(--arcana-primary) !important;
+  background: rgba(255,255,255,0.98) !important;
+  border: 1px solid rgba(37,99,235,0.38) !important;
+  box-shadow: none !important;
+  animation: none !important;
+  transform-origin: center !important;
+}
+
+#arcanaRunSimulation.arcana-kinojo-cta::before,
+#arcanaRunSimulation.arcana-kinojo-cta::after,
+#arcanaRunSimulation::before,
+#arcanaRunSimulation::after {
+  content: none !important;
+  display: none !important;
+}
+
+.arcana-recommend-actions:hover .arcana-cta-wave-layer,
+.arcana-recommend-actions:has(#arcanaRunSimulation:hover) .arcana-cta-wave-layer,
+.arcana-recommend-actions:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-layer,
+.arcana-recommend-section:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-layer {
+  opacity: 0.72 !important;
+  filter: saturate(1.35) brightness(1.06) !important;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.22) 0 8%, transparent 9%),
+    repeating-radial-gradient(circle, rgba(37,99,235,0.12) 0 1px, rgba(45,212,191,0.16) 2px 3px, rgba(129,140,248,0.13) 4px 5px, transparent 6px 24px),
+    conic-gradient(from 90deg, rgba(37,99,235,0.18), rgba(45,212,191,0.18), rgba(129,140,248,0.17), rgba(236,72,153,0.10), rgba(37,99,235,0.18)) !important;
+  animation: arcana-cta-hover-ripple-11 2.2s cubic-bezier(.2,.7,.2,1) infinite !important;
+}
+
+.arcana-recommend-actions:hover .arcana-cta-wave-layer::before,
+.arcana-recommend-actions:hover .arcana-cta-wave-layer::after,
+.arcana-recommend-actions:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-layer::before,
+.arcana-recommend-actions:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-layer::after {
+  border-color: rgba(45,212,191,0.34) !important;
+  box-shadow: 0 0 28px rgba(99,102,241,0.18), 0 0 38px rgba(45,212,191,0.12) !important;
+  animation-duration: 2.35s !important;
+}
+
+#arcanaRunSimulation.arcana-kinojo-cta:hover:not(.is-soft-disabled),
+#arcanaRunSimulation.arcana-kinojo-cta.is-touch-preview:not(.is-soft-disabled),
+#arcanaRunSimulation:hover:not(.is-soft-disabled),
+#arcanaRunSimulation.is-touch-preview:not(.is-soft-disabled) {
+  transform: scale(1.045) !important;
+  color: #10245f !important;
+  background: #fff !important;
+  border-color: rgba(37,99,235,0.72) !important;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.08) !important;
+}
+
+.arcana-recommend-section.is-cta-loading .arcana-cta-wave-layer {
+  width: 310px !important;
+  height: 310px !important;
+  opacity: 1 !important;
+  filter: saturate(1.95) brightness(1.1) !important;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.34) 0 7%, transparent 8%),
+    repeating-radial-gradient(circle, rgba(37,99,235,0.16) 0 1px, rgba(45,212,191,0.22) 2px 4px, rgba(168,85,247,0.18) 5px 6px, rgba(236,72,153,0.12) 7px 8px, transparent 9px 27px),
+    conic-gradient(from 0deg, rgba(37,99,235,0.34), rgba(45,212,191,0.34), rgba(168,85,247,0.26), rgba(236,72,153,0.18), rgba(14,165,233,0.34), rgba(37,99,235,0.34)) !important;
+  animation: arcana-cta-loading-ripple-11 0.92s cubic-bezier(.08,.82,.17,1) infinite !important;
+}
+
+.arcana-recommend-section.is-cta-loading .arcana-cta-wave-layer::before,
+.arcana-recommend-section.is-cta-loading .arcana-cta-wave-layer::after {
+  border-color: rgba(255,255,255,0.32) !important;
+  box-shadow: 0 0 34px rgba(37,99,235,0.24), 0 0 46px rgba(168,85,247,0.16) !important;
+  animation: arcana-cta-ring-ripple-11 1.05s ease-out infinite !important;
+}
+
+.arcana-recommend-section.is-cta-loading #arcanaRunSimulation {
+  color: #10245f !important;
+  background: rgba(255,255,255,0.98) !important;
+  border-color: rgba(99,102,241,0.72) !important;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.10) !important;
+  animation: arcana-cta-loading-button-11 0.62s ease-in-out infinite alternate !important;
+}
+
+@keyframes arcana-cta-standby-ripple-11 {
+  0%, 100% { transform: translate(-50%, -50%) scale(0.72); opacity: 0.20; }
+  50% { transform: translate(-50%, -50%) scale(0.82); opacity: 0.32; }
+}
+
+@keyframes arcana-cta-ring-ripple-11 {
+  0% { transform: scale(0.56); opacity: 0.55; }
+  72%, 100% { transform: scale(1.55); opacity: 0; }
+}
+
+@keyframes arcana-cta-hover-ripple-11 {
+  0% { transform: translate(-50%, -50%) scale(0.82) rotate(0deg); }
+  48% { transform: translate(-50%, -50%) scale(1.03) rotate(110deg); }
+  100% { transform: translate(-50%, -50%) scale(0.88) rotate(260deg); }
+}
+
+@keyframes arcana-cta-loading-ripple-11 {
+  0% { transform: translate(-50%, -50%) scale(0.72) rotate(0deg); }
+  45% { transform: translate(-50%, -50%) scale(1.05) rotate(150deg); }
+  100% { transform: translate(-50%, -50%) scale(0.82) rotate(360deg); }
+}
+
+@keyframes arcana-cta-loading-button-11 {
+  from { transform: scale(0.96); }
+  to { transform: scale(1.05); }
+}

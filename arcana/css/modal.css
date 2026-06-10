@@ -727,3 +727,140 @@
     padding-bottom: 14px !important;
   }
 }
+
+
+/* 수정사항_260610_11: 클래스 선택 카드 재작업 - 선택 카드 불투명/중앙 배치/하단 버튼 고정 */
+.arcana-showcase-stage {
+  min-height: 540px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.arcana-showcase-copy {
+  flex: 0 0 auto !important;
+  padding-bottom: 0 !important;
+}
+
+.arcana-showcase-ring-wrap {
+  flex: 0 0 282px !important;
+  height: 282px !important;
+  margin: 0 auto !important;
+  perspective: 1180px !important;
+  transform: translateY(-6px) rotateX(62deg) !important;
+  transform-style: preserve-3d !important;
+}
+
+.arcana-showcase-ring {
+  top: 47% !important;
+  transform-style: preserve-3d !important;
+  animation-duration: 15.5s !important;
+}
+
+.arcana-showcase-card,
+.arcana-showcase-card * {
+  backface-visibility: hidden !important;
+  -webkit-backface-visibility: hidden !important;
+}
+
+.arcana-showcase-card {
+  opacity: 1 !important;
+  filter: none !important;
+  transform:
+    rotateY(calc(360deg / var(--arcana-card-count) * var(--arcana-card-index)))
+    translateZ(205px)
+    translateY(2px)
+    rotateY(calc(-360deg / var(--arcana-card-count) * var(--arcana-card-index)))
+    rotateX(-62deg) !important;
+}
+
+.arcana-showcase-card.is-hovered {
+  opacity: 1 !important;
+  filter: saturate(1.06) brightness(1.03) !important;
+  transform:
+    rotateY(calc(360deg / var(--arcana-card-count) * var(--arcana-card-index)))
+    translateZ(218px)
+    translateY(-22px)
+    rotateY(calc(-360deg / var(--arcana-card-count) * var(--arcana-card-index)))
+    rotateX(-62deg)
+    scale(1.08) !important;
+}
+
+.arcana-class-showcase.is-picked .arcana-showcase-ring {
+  animation: none !important;
+}
+
+.arcana-class-showcase.is-picked .arcana-showcase-ring-wrap {
+  transform: translateY(-6px) rotateX(0deg) !important;
+}
+
+.arcana-showcase-card.is-selected,
+.arcana-class-showcase.is-picked .arcana-showcase-card.is-selected {
+  left: 0 !important;
+  top: 0 !important;
+  z-index: 50 !important;
+  opacity: 1 !important;
+  filter: none !important;
+  background: linear-gradient(145deg, #ffffff, #f7faff) !important;
+  border-color: rgba(37, 99, 235, 1) !important;
+  pointer-events: auto !important;
+  transform: translate(-50%, -50%) rotateX(0deg) rotateY(0deg) scale(1.46) !important;
+  box-shadow: 0 26px 60px rgba(37, 99, 235, 0.28) !important;
+}
+
+.arcana-showcase-card.is-selected .arcana-showcase-card-inner,
+.arcana-showcase-card.is-selected .arcana-showcase-card-face,
+.arcana-showcase-card.is-selected .arcana-showcase-card-front,
+.arcana-showcase-card.is-selected .arcana-class-icon,
+.arcana-showcase-card.is-selected .arcana-showcase-card-name {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+.arcana-showcase-card.is-falling,
+.arcana-class-showcase.is-picked .arcana-showcase-card.is-falling {
+  opacity: 0.72 !important;
+  filter: saturate(0.78) brightness(0.96) !important;
+  z-index: 4 !important;
+  pointer-events: auto !important;
+  transform:
+    rotateY(calc(360deg / var(--arcana-card-count) * var(--arcana-card-index)))
+    translateZ(92px)
+    translateY(18px)
+    rotateY(calc(-360deg / var(--arcana-card-count) * var(--arcana-card-index)))
+    rotateX(0deg)
+    scale(0.62) !important;
+}
+
+.arcana-showcase-buttons {
+  margin-top: auto !important;
+  padding-top: 8px !important;
+  flex: 0 0 auto !important;
+}
+
+.arcana-showcase-actions {
+  flex: 0 0 auto !important;
+  margin-top: 10px !important;
+  padding-bottom: 18px !important;
+}
+
+@media (max-width: 720px) {
+  .arcana-showcase-stage {
+    min-height: 530px !important;
+  }
+
+  .arcana-showcase-ring-wrap {
+    flex-basis: 258px !important;
+    height: 258px !important;
+    transform: translateY(-2px) rotateX(58deg) !important;
+  }
+
+  .arcana-class-showcase.is-picked .arcana-showcase-ring-wrap {
+    transform: translateY(-2px) rotateX(0deg) !important;
+  }
+
+  .arcana-showcase-card.is-selected,
+  .arcana-class-showcase.is-picked .arcana-showcase-card.is-selected {
+    transform: translate(-50%, -50%) rotateX(0deg) rotateY(0deg) scale(1.28) !important;
+  }
+}

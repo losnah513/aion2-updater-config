@@ -574,9 +574,14 @@ ArcanaApp.classSelector = {
   buildArcanaSkillRules(activeSkills, passiveSkills) {
     const active = Array.from(new Set((activeSkills || []).map(skill => String(skill).trim()).filter(Boolean)));
     const passive = Array.from(new Set((passiveSkills || []).map(skill => String(skill).trim()).filter(Boolean)));
-    const letterIndex = letter => 'abcdefghijklmnopqrstuvwxyz'.indexOf(String(letter || '').trim().toLowerCase());
+    const skillColumnIndex = letter => {
+      const text = String(letter || '').trim().toLowerCase();
+      const index = 'abcdefghijklmnopqrstuvwxyz'.indexOf(text);
+      const startIndex = 'abcdefghijklmnopqrstuvwxyz'.indexOf('f');
+      return index >= startIndex ? index - startIndex : -1;
+    };
     const byLetters = (source, letters) => (letters || [])
-      .map(letter => source[letterIndex(letter)])
+      .map(letter => source[skillColumnIndex(letter)])
       .filter(Boolean);
 
     const specs = ArcanaApp.classSelector.getArcanaSkillRuleSpecs();
