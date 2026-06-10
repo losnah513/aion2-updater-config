@@ -2928,3 +2928,283 @@
   from { transform: scale(0.98); filter: brightness(1); }
   to { transform: scale(1.04); filter: brightness(1.2); }
 }
+
+/* 수정사항_260610_13: 추천 CTA SVG급 라인 비주얼라이저 실제 구현 */
+.arcana-recommend-section .arcana-recommend-actions {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 390px !important;
+  height: 390px !important;
+  transform: translate(-50%, -50%) !important;
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: center !important;
+  padding-bottom: 22px !important;
+  pointer-events: none !important;
+  z-index: 8 !important;
+}
+
+.arcana-recommend-section.is-recommend-ready .arcana-recommend-actions,
+#arcanaRunSimulation[hidden] {
+  display: none !important;
+}
+
+.arcana-cta-wave-layer {
+  position: absolute !important;
+  left: 50% !important;
+  top: 42% !important;
+  width: 320px !important;
+  height: 320px !important;
+  transform: translate(-50%, -50%) !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  filter: none !important;
+  opacity: 1 !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+  overflow: visible !important;
+  -webkit-mask: none !important;
+  mask: none !important;
+  animation: none !important;
+}
+
+.arcana-cta-wave-layer::before,
+.arcana-cta-wave-layer::after {
+  content: none !important;
+  display: none !important;
+}
+
+.arcana-cta-wave-halo {
+  position: absolute !important;
+  inset: 43px !important;
+  border-radius: 50% !important;
+  border: 1px solid rgba(17,24,39,0.12) !important;
+  box-shadow:
+    0 0 0 18px rgba(17,24,39,0.025),
+    0 0 0 42px rgba(17,24,39,0.018) !important;
+  opacity: 0.68 !important;
+  animation: arcana-visualizer-halo-idle-13 5.2s ease-in-out infinite !important;
+}
+
+.arcana-cta-wave-lines {
+  position: absolute !important;
+  inset: 0 !important;
+  border-radius: 50% !important;
+  animation: arcana-visualizer-ring-idle-13 14s linear infinite !important;
+}
+
+.arcana-cta-wave-lines i {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 1.6px !important;
+  height: calc(24px + (18px * var(--amp))) !important;
+  border-radius: 999px !important;
+  transform-origin: 50% 122px !important;
+  transform: translate(-50%, -122px) rotate(var(--angle)) scaleY(0.72) !important;
+  background: linear-gradient(to top, rgba(17,24,39,0.18), rgba(17,24,39,0.72), rgba(255,255,255,0.74)) !important;
+  box-shadow: 0 0 4px rgba(17,24,39,0.08) !important;
+  opacity: 0.56 !important;
+  animation: arcana-visualizer-line-idle-13 3.9s ease-in-out infinite !important;
+  animation-delay: var(--delay) !important;
+}
+
+.arcana-cta-analysis-text {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) scale(0.96) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 190px !important;
+  min-height: 88px !important;
+  border-radius: 28px !important;
+  color: #fff !important;
+  text-align: center !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  background: radial-gradient(circle, rgba(15,23,42,0.80), rgba(15,23,42,0.28) 64%, transparent 72%) !important;
+  text-shadow: 0 0 14px rgba(255,255,255,0.78) !important;
+  transition: opacity 0.22s ease, transform 0.22s ease !important;
+}
+
+.arcana-cta-analysis-text strong {
+  font-size: 31px !important;
+  line-height: 1.1 !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.04em !important;
+}
+
+.arcana-cta-analysis-text small {
+  margin-top: 10px !important;
+  font-size: 13px !important;
+  color: rgba(255,255,255,0.82) !important;
+  letter-spacing: -0.02em !important;
+}
+
+#arcanaRunSimulation.arcana-kinojo-cta,
+#arcanaRunSimulation {
+  position: relative !important;
+  z-index: 3 !important;
+  pointer-events: auto !important;
+  min-width: 176px !important;
+  height: 48px !important;
+  padding: 0 34px !important;
+  border-radius: 16px !important;
+  color: #111827 !important;
+  background: rgba(255,255,255,0.96) !important;
+  border: 1px solid rgba(17,24,39,0.44) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.02em !important;
+  overflow: hidden !important;
+  animation: none !important;
+}
+
+#arcanaRunSimulation.arcana-kinojo-cta::before,
+#arcanaRunSimulation.arcana-kinojo-cta::after,
+#arcanaRunSimulation::before,
+#arcanaRunSimulation::after {
+  content: none !important;
+  display: none !important;
+}
+
+.arcana-recommend-actions:hover .arcana-cta-wave-lines,
+.arcana-recommend-actions:has(#arcanaRunSimulation:hover) .arcana-cta-wave-lines,
+.arcana-recommend-actions:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-lines,
+.arcana-recommend-section:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-lines {
+  animation-duration: 8.5s !important;
+}
+
+.arcana-recommend-actions:hover .arcana-cta-wave-lines i,
+.arcana-recommend-actions:has(#arcanaRunSimulation:hover) .arcana-cta-wave-lines i,
+.arcana-recommend-actions:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-lines i,
+.arcana-recommend-section:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-lines i {
+  opacity: 0.84 !important;
+  background: linear-gradient(to top, rgba(17,24,39,0.26), rgba(17,24,39,0.90), rgba(255,255,255,0.94)) !important;
+  animation-duration: 2.2s !important;
+}
+
+.arcana-recommend-actions:hover .arcana-cta-wave-halo,
+.arcana-recommend-actions:has(#arcanaRunSimulation:hover) .arcana-cta-wave-halo,
+.arcana-recommend-actions:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-halo {
+  opacity: 0.84 !important;
+  box-shadow:
+    0 0 0 19px rgba(17,24,39,0.04),
+    0 0 0 46px rgba(17,24,39,0.026),
+    0 0 20px rgba(17,24,39,0.08) !important;
+}
+
+#arcanaRunSimulation.arcana-kinojo-cta:hover:not(.is-soft-disabled),
+#arcanaRunSimulation.arcana-kinojo-cta.is-touch-preview:not(.is-soft-disabled),
+#arcanaRunSimulation:hover:not(.is-soft-disabled),
+#arcanaRunSimulation.is-touch-preview:not(.is-soft-disabled) {
+  transform: scale(1.045) !important;
+  color: #111827 !important;
+  background: #fff !important;
+  border-color: rgba(17,24,39,0.76) !important;
+  box-shadow: 0 0 0 3px rgba(17,24,39,0.055) !important;
+}
+
+.arcana-recommend-section.is-cta-loading .arcana-recommend-actions {
+  width: 450px !important;
+  height: 450px !important;
+  align-items: flex-end !important;
+  padding-bottom: 16px !important;
+}
+
+.arcana-recommend-section.is-cta-loading .arcana-cta-wave-layer {
+  width: 386px !important;
+  height: 386px !important;
+  top: 45% !important;
+}
+
+.arcana-recommend-section.is-cta-loading .arcana-cta-wave-halo {
+  inset: 44px !important;
+  border-color: rgba(255,255,255,0.32) !important;
+  box-shadow:
+    0 0 0 16px rgba(37,99,235,0.08),
+    0 0 0 38px rgba(236,72,153,0.07),
+    0 0 38px rgba(45,212,191,0.26),
+    inset 0 0 32px rgba(255,255,255,0.14) !important;
+  animation: arcana-visualizer-halo-loading-13 1.15s ease-in-out infinite !important;
+}
+
+.arcana-recommend-section.is-cta-loading .arcana-cta-wave-lines {
+  animation: arcana-visualizer-ring-loading-13 2.2s linear infinite !important;
+}
+
+.arcana-recommend-section.is-cta-loading .arcana-cta-wave-lines i {
+  width: 1.9px !important;
+  height: calc(34px + (34px * var(--amp))) !important;
+  transform-origin: 50% 146px !important;
+  transform: translate(-50%, -146px) rotate(var(--angle)) scaleY(1) !important;
+  opacity: 0.96 !important;
+  background: linear-gradient(
+    to top,
+    hsla(var(--tone), 96%, 58%, 0.18),
+    hsla(var(--tone), 96%, 62%, 0.92),
+    rgba(255,255,255,0.96)
+  ) !important;
+  box-shadow: 0 0 10px hsla(var(--tone), 96%, 60%, 0.48) !important;
+  animation: arcana-visualizer-line-loading-13 0.82s ease-in-out infinite !important;
+  animation-delay: calc(var(--delay) * 0.42) !important;
+}
+
+.arcana-recommend-section.is-cta-loading .arcana-cta-analysis-text {
+  opacity: 1 !important;
+  transform: translate(-50%, -50%) scale(1) !important;
+  animation: arcana-visualizer-text-loading-13 0.9s ease-in-out infinite alternate !important;
+}
+
+.arcana-recommend-section.is-cta-loading #arcanaRunSimulation {
+  opacity: 0.42 !important;
+  color: rgba(255,255,255,0.36) !important;
+  background: rgba(15,23,42,0.58) !important;
+  border-color: rgba(255,255,255,0.24) !important;
+  box-shadow: none !important;
+  transform: scale(0.98) !important;
+  animation: none !important;
+}
+
+@keyframes arcana-visualizer-line-idle-13 {
+  0%, 100% { transform: translate(-50%, -122px) rotate(var(--angle)) scaleY(0.55); opacity: 0.38; }
+  46% { transform: translate(-50%, -122px) rotate(var(--angle)) scaleY(1.08); opacity: 0.68; }
+  72% { transform: translate(-50%, -122px) rotate(var(--angle)) scaleY(0.72); opacity: 0.48; }
+}
+
+@keyframes arcana-visualizer-ring-idle-13 {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes arcana-visualizer-halo-idle-13 {
+  0%, 100% { transform: scale(0.96); opacity: 0.46; }
+  50% { transform: scale(1.03); opacity: 0.78; }
+}
+
+@keyframes arcana-visualizer-line-loading-13 {
+  0%, 100% { transform: translate(-50%, -146px) rotate(var(--angle)) scaleY(0.62); filter: hue-rotate(0deg); }
+  38% { transform: translate(-50%, -146px) rotate(var(--angle)) scaleY(1.34); filter: hue-rotate(70deg); }
+  70% { transform: translate(-50%, -146px) rotate(var(--angle)) scaleY(0.92); filter: hue-rotate(150deg); }
+}
+
+@keyframes arcana-visualizer-ring-loading-13 {
+  from { transform: rotate(0deg) scale(0.98); }
+  50% { transform: rotate(205deg) scale(1.045); }
+  to { transform: rotate(360deg) scale(0.98); }
+}
+
+@keyframes arcana-visualizer-halo-loading-13 {
+  0%, 100% { transform: scale(0.92); opacity: 0.62; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+
+@keyframes arcana-visualizer-text-loading-13 {
+  from { text-shadow: 0 0 10px rgba(255,255,255,0.48), 0 0 22px rgba(168,85,247,0.28); }
+  to { text-shadow: 0 0 22px rgba(255,255,255,0.86), 0 0 44px rgba(45,212,191,0.36); }
+}
