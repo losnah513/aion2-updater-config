@@ -209,10 +209,10 @@ ArcanaApp.app = {
       if (recommendPanel) recommendPanel.classList.add('is-cta-loading');
       button.classList.add('is-loading');
 
-      await ArcanaApp.loadingOverlay.play('recommendArcanaCards', '아르카나가 저장한 스킬 흐름을 살펴보고 있어요.', () => {
-        const result = ArcanaApp.recommendation.generate();
-        ArcanaApp.ui.renderRecommendationResult(result);
-      });
+      await new Promise(resolve => window.setTimeout(resolve, 1450));
+      const result = ArcanaApp.recommendation.generate();
+      ArcanaApp.ui.renderRecommendationResult(result);
+      await new Promise(resolve => window.setTimeout(resolve, 260));
 
       if (recommendPanel) recommendPanel.classList.remove('is-cta-loading');
       button.hidden = false;

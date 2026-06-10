@@ -2719,3 +2719,212 @@
   from { transform: scale(0.96); }
   to { transform: scale(1.05); }
 }
+
+
+/* 수정사항_260610_12: 추천 CTA 파동형 비주얼라이저 재작업 */
+.arcana-recommend-section {
+  position: relative !important;
+}
+
+.arcana-recommend-section .arcana-recommend-actions {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 360px !important;
+  height: 360px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  transform: translate(-50%, -50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  pointer-events: none !important;
+  z-index: 7 !important;
+}
+
+.arcana-recommend-section.is-recommend-ready .arcana-recommend-actions,
+#arcanaRunSimulation[hidden] {
+  display: none !important;
+}
+
+.arcana-cta-wave-layer {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 300px !important;
+  height: 300px !important;
+  border-radius: 50% !important;
+  transform: translate(-50%, -50%) scale(0.82) rotate(0deg) !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+  opacity: 0.34 !important;
+  background:
+    radial-gradient(circle, transparent 0 39%, rgba(15,23,42,0.10) 40%, transparent 41%),
+    repeating-conic-gradient(from 0deg, rgba(15,23,42,0.72) 0 0.75deg, transparent 0.9deg 3.6deg) !important;
+  -webkit-mask: radial-gradient(circle, transparent 0 38%, #000 39% 59%, transparent 60% 100%) !important;
+  mask: radial-gradient(circle, transparent 0 38%, #000 39% 59%, transparent 60% 100%) !important;
+  filter: grayscale(1) saturate(0) contrast(1.05) !important;
+  animation: arcana-cta-lines-idle-12 4.8s ease-in-out infinite !important;
+}
+
+.arcana-cta-wave-layer::before,
+.arcana-cta-wave-layer::after {
+  content: '' !important;
+  position: absolute !important;
+  inset: 24px !important;
+  border-radius: inherit !important;
+  background: repeating-conic-gradient(from 18deg, rgba(15,23,42,0.36) 0 0.6deg, transparent 0.8deg 4deg) !important;
+  -webkit-mask: radial-gradient(circle, transparent 0 35%, #000 36% 58%, transparent 59% 100%) !important;
+  mask: radial-gradient(circle, transparent 0 35%, #000 36% 58%, transparent 59% 100%) !important;
+  opacity: 0.45 !important;
+  animation: arcana-cta-lines-idle-inner-12 5.7s ease-in-out infinite reverse !important;
+}
+
+.arcana-cta-wave-layer::after {
+  inset: 42px !important;
+  opacity: 0.24 !important;
+  animation-duration: 6.4s !important;
+}
+
+#arcanaRunSimulation.arcana-kinojo-cta,
+#arcanaRunSimulation {
+  position: relative !important;
+  z-index: 2 !important;
+  pointer-events: auto !important;
+  width: auto !important;
+  min-width: 148px !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  padding: 0 28px !important;
+  border-radius: 14px !important;
+  color: #111827 !important;
+  background: #fff !important;
+  border: 1px solid rgba(15,23,42,0.38) !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+  transform-origin: center !important;
+  animation: none !important;
+}
+
+#arcanaRunSimulation.arcana-kinojo-cta::before,
+#arcanaRunSimulation.arcana-kinojo-cta::after,
+#arcanaRunSimulation::before,
+#arcanaRunSimulation::after {
+  content: none !important;
+  display: none !important;
+}
+
+.arcana-recommend-actions:hover .arcana-cta-wave-layer,
+.arcana-recommend-actions:has(#arcanaRunSimulation:hover) .arcana-cta-wave-layer,
+.arcana-recommend-actions:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-layer,
+.arcana-recommend-section:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-layer {
+  opacity: 0.48 !important;
+  filter: grayscale(1) saturate(0) contrast(1.18) brightness(1.02) !important;
+  transform: translate(-50%, -50%) scale(0.93) rotate(0deg) !important;
+  animation: arcana-cta-lines-hover-12 2.6s ease-in-out infinite !important;
+}
+
+.arcana-recommend-actions:hover .arcana-cta-wave-layer::before,
+.arcana-recommend-actions:hover .arcana-cta-wave-layer::after,
+.arcana-recommend-actions:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-layer::before,
+.arcana-recommend-actions:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-layer::after {
+  opacity: 0.58 !important;
+  animation-duration: 2.9s !important;
+}
+
+#arcanaRunSimulation.arcana-kinojo-cta:hover:not(.is-soft-disabled),
+#arcanaRunSimulation.arcana-kinojo-cta.is-touch-preview:not(.is-soft-disabled),
+#arcanaRunSimulation:hover:not(.is-soft-disabled),
+#arcanaRunSimulation.is-touch-preview:not(.is-soft-disabled) {
+  transform: scale(1.045) !important;
+  color: #111827 !important;
+  background: #fff !important;
+  border-color: rgba(15,23,42,0.72) !important;
+  box-shadow: 0 0 0 3px rgba(15,23,42,0.06) !important;
+}
+
+.arcana-recommend-section.is-cta-loading .arcana-recommend-actions {
+  width: 420px !important;
+  height: 420px !important;
+}
+
+.arcana-recommend-section.is-cta-loading .arcana-cta-wave-layer {
+  width: 380px !important;
+  height: 380px !important;
+  opacity: 1 !important;
+  filter: saturate(1.85) contrast(1.08) brightness(1.06) !important;
+  background:
+    radial-gradient(circle, transparent 0 37%, rgba(255,255,255,0.42) 38%, transparent 40%),
+    repeating-conic-gradient(from 0deg,
+      rgba(37,99,235,0.95) 0 0.75deg,
+      transparent 0.9deg 2.4deg,
+      rgba(45,212,191,0.92) 2.5deg 3.2deg,
+      transparent 3.3deg 5.2deg,
+      rgba(168,85,247,0.88) 5.3deg 6deg,
+      transparent 6.1deg 8deg,
+      rgba(236,72,153,0.78) 8.1deg 8.7deg,
+      transparent 8.8deg 10.6deg) !important;
+  -webkit-mask: radial-gradient(circle, transparent 0 36%, #000 37% 62%, transparent 63% 100%) !important;
+  mask: radial-gradient(circle, transparent 0 36%, #000 37% 62%, transparent 63% 100%) !important;
+  animation: arcana-cta-lines-loading-12 0.92s cubic-bezier(.22,.61,.36,1) infinite !important;
+}
+
+.arcana-recommend-section.is-cta-loading .arcana-cta-wave-layer::before,
+.arcana-recommend-section.is-cta-loading .arcana-cta-wave-layer::after {
+  background: repeating-conic-gradient(from 28deg,
+      rgba(14,165,233,0.76) 0 0.65deg,
+      transparent 0.8deg 3deg,
+      rgba(250,204,21,0.65) 3.1deg 3.7deg,
+      transparent 3.8deg 6deg,
+      rgba(236,72,153,0.64) 6.1deg 6.7deg,
+      transparent 6.8deg 9deg) !important;
+  opacity: 0.76 !important;
+  animation: arcana-cta-lines-loading-inner-12 1.15s ease-in-out infinite reverse !important;
+}
+
+.arcana-recommend-section.is-cta-loading #arcanaRunSimulation {
+  min-width: 178px !important;
+  height: 58px !important;
+  border-radius: 18px !important;
+  color: #fff !important;
+  background: rgba(15,23,42,0.82) !important;
+  border-color: rgba(255,255,255,0.42) !important;
+  text-shadow: 0 0 14px rgba(255,255,255,0.45) !important;
+  box-shadow: 0 0 22px rgba(37,99,235,0.22) !important;
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.08em !important;
+  animation: arcana-cta-loading-text-12 0.8s ease-in-out infinite alternate !important;
+}
+
+@keyframes arcana-cta-lines-idle-12 {
+  0%, 100% { transform: translate(-50%, -50%) scale(0.78) rotate(0deg); opacity: 0.22; }
+  50% { transform: translate(-50%, -50%) scale(0.9) rotate(14deg); opacity: 0.38; }
+}
+
+@keyframes arcana-cta-lines-idle-inner-12 {
+  0%, 100% { transform: scale(0.84) rotate(0deg); opacity: 0.18; }
+  50% { transform: scale(1.04) rotate(-18deg); opacity: 0.48; }
+}
+
+@keyframes arcana-cta-lines-hover-12 {
+  0%, 100% { transform: translate(-50%, -50%) scale(0.9) rotate(0deg); }
+  35% { transform: translate(-50%, -50%) scale(1.02) rotate(28deg); }
+  70% { transform: translate(-50%, -50%) scale(0.94) rotate(58deg); }
+}
+
+@keyframes arcana-cta-lines-loading-12 {
+  0% { transform: translate(-50%, -50%) scale(0.86) rotate(0deg); }
+  42% { transform: translate(-50%, -50%) scale(1.12) rotate(150deg); }
+  100% { transform: translate(-50%, -50%) scale(0.96) rotate(360deg); }
+}
+
+@keyframes arcana-cta-lines-loading-inner-12 {
+  0%, 100% { transform: scale(0.72) rotate(0deg); }
+  50% { transform: scale(1.18) rotate(-160deg); }
+}
+
+@keyframes arcana-cta-loading-text-12 {
+  from { transform: scale(0.98); filter: brightness(1); }
+  to { transform: scale(1.04); filter: brightness(1.2); }
+}
