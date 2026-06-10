@@ -1643,3 +1643,205 @@
     min-height: 0 !important;
   }
 }
+
+
+/* 수정사항_260610_05: 카드 폭/안내 라인/CTA/저장 상태 안정화 */
+.arcana-top-grid {
+  grid-template-columns: repeat(3, minmax(280px, var(--arcana-compact-panel-width))) !important;
+  align-items: stretch !important;
+  justify-content: start !important;
+}
+
+.arcana-top-grid > .arcana-panel,
+.arcana-target-panel,
+.arcana-equipment-panel,
+.arcana-future-panel,
+.arcana-compact-panel {
+  width: var(--arcana-compact-panel-width) !important;
+  min-width: var(--arcana-compact-panel-width) !important;
+  max-width: var(--arcana-compact-panel-width) !important;
+  min-height: 344px !important;
+  box-sizing: border-box !important;
+}
+
+.arcana-panel-message {
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 40px !important;
+  margin: -7px 0 8px !important;
+  padding: 5px 8px !important;
+  border-bottom: 1px solid var(--arcana-line-soft) !important;
+  background: rgba(248, 250, 252, 0.84) !important;
+  font-size: 11px !important;
+  line-height: 1.35 !important;
+  text-align: center !important;
+  white-space: pre-line !important;
+  word-break: keep-all !important;
+  overflow-wrap: anywhere !important;
+}
+
+.arcana-actions {
+  margin-top: 14px !important;
+  padding-top: 7px !important;
+  gap: 6px !important;
+}
+
+.arcana-panel.is-saved::after {
+  inset: 76px 0 0 !important;
+}
+
+.arcana-target-panel.is-saved .arcana-skill-grid,
+.arcana-equipment-panel.is-saved .arcana-equipment-list,
+.arcana-owned-section.is-saved .arcana-card-grid {
+  filter: grayscale(0.72) saturate(0.48) opacity(0.58) blur(0.35px) !important;
+}
+
+.arcana-target-panel.is-saved .arcana-panel-title,
+.arcana-target-panel.is-saved .arcana-panel-message,
+.arcana-equipment-panel.is-saved .arcana-panel-title,
+.arcana-equipment-panel.is-saved .arcana-panel-message,
+.arcana-owned-section.is-saved .arcana-panel-title,
+.arcana-owned-section.is-saved .arcana-panel-message {
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+.arcana-card-box,
+.arcana-equipment-card {
+  min-height: 172px !important;
+}
+
+.arcana-arcana-section,
+.arcana-editor-panel,
+.arcana-recommend-section,
+.arcana-owned-section {
+  overflow: visible !important;
+}
+
+.arcana-card-grid {
+  align-items: stretch !important;
+}
+
+.arcana-recommend-area {
+  min-height: 378px !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.arcana-recommend-content {
+  min-height: 338px !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+.arcana-analysis-list,
+.arcana-advice-list {
+  max-height: 338px !important;
+}
+
+.arcana-recommend-actions {
+  position: relative !important;
+  z-index: 5 !important;
+  justify-content: center !important;
+  margin: 12px auto 0 !important;
+  padding: 0 !important;
+}
+
+#arcanaRunSimulation.arcana-kinojo-cta,
+#arcanaRunSimulation {
+  position: relative !important;
+  width: 94px !important;
+  height: 94px !important;
+  min-width: 94px !important;
+  border: 2px solid rgba(37, 99, 235, 0.72) !important;
+  border-radius: 999px !important;
+  background: #2563eb !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  color: #fff !important;
+  font-size: 15px !important;
+  font-weight: 900 !important;
+  line-height: 1.18 !important;
+  text-shadow: 0 0 8px rgba(255,255,255,0.64) !important;
+  transform-origin: center center !important;
+  transition: transform 0.18s ease, border-color 0.18s ease, color 0.18s ease !important;
+  animation: none !important;
+}
+
+#arcanaRunSimulation.arcana-kinojo-cta::before,
+#arcanaRunSimulation::before {
+  content: '' !important;
+  position: absolute !important;
+  inset: -4px !important;
+  border-radius: inherit !important;
+  padding: 3px !important;
+  background: conic-gradient(from var(--arcana-glow-angle), transparent 0deg, transparent 110deg, rgba(255,255,255,0.9) 160deg, rgba(125,211,252,0.95) 200deg, transparent 255deg, transparent 360deg) !important;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) !important;
+  -webkit-mask-composite: xor !important;
+  mask-composite: exclude !important;
+  animation: arcana-reset-border-spin 1.45s linear infinite !important;
+  pointer-events: none !important;
+}
+
+#arcanaRunSimulation.arcana-kinojo-cta:hover:not(.is-soft-disabled),
+#arcanaRunSimulation:hover:not(.is-soft-disabled) {
+  transform: scale(1.055) !important;
+  border-color: rgba(125, 211, 252, 0.98) !important;
+}
+
+#arcanaRunSimulation.is-vanishing {
+  animation: arcana-cta-pop-away 0.26s ease-in forwards !important;
+}
+
+@keyframes arcana-cta-pop-away {
+  0% { transform: scale(1); opacity: 1; }
+  45% { transform: scale(1.12); opacity: 0.9; }
+  100% { transform: scale(0.08); opacity: 0; }
+}
+
+.arcana-recommend-ai-text {
+  margin: 7px auto 0 !important;
+  max-width: 220px !important;
+  color: #fff !important;
+  font-family: 'Noto Sans KR', system-ui, sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  line-height: 1.35 !important;
+  text-align: center !important;
+  word-break: keep-all !important;
+  text-shadow:
+    -1px -1px 0 rgba(37, 99, 235, 0.72),
+    1px -1px 0 rgba(37, 99, 235, 0.72),
+    -1px 1px 0 rgba(37, 99, 235, 0.72),
+    1px 1px 0 rgba(37, 99, 235, 0.72),
+    0 0 12px rgba(37, 99, 235, 0.85) !important;
+}
+
+#arcanaSaveCharacterLevels:disabled:not(.is-ready-reset) {
+  opacity: 0.56 !important;
+  cursor: not-allowed !important;
+}
+
+@media (max-width: 1180px) {
+  .arcana-top-grid {
+    grid-template-columns: repeat(2, minmax(280px, var(--arcana-compact-panel-width))) !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .arcana-top-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .arcana-top-grid > .arcana-panel,
+  .arcana-target-panel,
+  .arcana-equipment-panel,
+  .arcana-future-panel,
+  .arcana-compact-panel {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+}

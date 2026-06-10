@@ -52,11 +52,18 @@ ArcanaApp.app = {
     const clearButton = document.getElementById('arcanaClearCharacterLevels');
 
     saveButton.addEventListener('click', async () => {
+      if (!ArcanaApp.state.selectedTargetSkills || ArcanaApp.state.selectedTargetSkills.length === 0) {
+        ArcanaApp.panelLock.showMessage('characterLevels', '최소 1개 이상 선택해야 저장할 수 있어요.');
+        ArcanaApp.app.updateCharacterSaveButtonState();
+        return;
+      }
+
       try {
         ArcanaApp.panelLock.setSaving('characterLevels', saveButton);
         await ArcanaApp.api.saveCharacterLevels({ selectedTargetSkills: ArcanaApp.state.selectedTargetSkills });
         ArcanaApp.state.characterSkillsSaved = true;
         ArcanaApp.panelLock.setSaved('characterLevels', saveButton, '선택한 액티브 스킬이 저장되었어요. 다시 고르려면 초기화를 눌러주세요.');
+        ArcanaApp.app.updateCharacterSaveButtonState();
         ArcanaApp.app.updateRecommendationButtonState();
       } catch (error) {
         ArcanaApp.panelLock.unlock('characterLevels', saveButton);
@@ -72,6 +79,7 @@ ArcanaApp.app = {
       ArcanaApp.skillSelector.render();
       ArcanaApp.panelLock.unlock('characterLevels', saveButton);
       ArcanaApp.app.resetRecommendation();
+      ArcanaApp.app.updateCharacterSaveButtonState();
       ArcanaApp.app.updateRecommendationButtonState();
     });
   },
@@ -170,6 +178,8 @@ ArcanaApp.app = {
       button.disabled = true;
       button.dataset.originalText = button.dataset.originalText || button.textContent;
       button.textContent = '분석중';
+      button.classList.add('is-vanishing');
+      await new Promise(resolve => window.setTimeout(resolve, 260));
       button.hidden = true;
 
       await ArcanaApp.loadingOverlay.play('recommendArcanaCards', '아르카나가 저장한 스킬 흐름을 살펴보고 있어요.', () => {
@@ -180,12 +190,35 @@ ArcanaApp.app = {
       button.hidden = false;
       button.disabled = false;
       button.textContent = '추천 시작';
+      button.classList.remove('is-vanishing');
+      button.classList.remove('is-vanishing');
       button.hidden = true;
       ArcanaApp.panelLock.showMessage('recommendArcanaCards', '추천 결과가 준비되었어요. 탭을 눌러 분석과 조언을 확인해보세요.');
       ArcanaApp.app.updateRecommendationButtonState();
     });
 
     ArcanaApp.app.updateRecommendationButtonState();
+  },
+
+  updateCharacterSaveButtonState() {
+    const saveButton = document.getElementById('arcanaSaveCharacterLevels');
+    if (!saveButton) return;
+
+    const panel = document.querySelector('[data-panel-key="characterLevels"]');
+    const isSaved = Boolean(panel && panel.classList.contains('is-saved'));
+    const hasClass = Boolean(ArcanaApp.state.hasSelectedClass);
+    const hasSelection = Boolean((ArcanaApp.state.selectedTargetSkills || []).length > 0);
+
+    if (isSaved) {
+      saveButton.disabled = true;
+      return;
+    }
+
+    saveButton.disabled = !(hasClass && hasSelection);
+
+    if (hasClass && !hasSelection) {
+      ArcanaApp.panelLock.showMessage('characterLevels', '최소 1개 이상 선택해야 저장할 수 있어요.');
+    }
   },
 
   canRunRecommendation() {
@@ -221,6 +254,7 @@ ArcanaApp.app = {
       button.hidden = false;
       button.disabled = false;
       button.textContent = '추천 시작';
+      button.classList.remove('is-vanishing');
     }
 
     ArcanaApp.panelLock.showMessage('recommendArcanaCards', '');

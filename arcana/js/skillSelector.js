@@ -39,6 +39,9 @@ ArcanaApp.skillSelector = {
       guide.className = 'arcana-friendly-guide';
       guide.textContent = '어떤 클래스로 시뮬레이션을 진행할까요? 클래스를 선택하면 스킬 정보를 불러올 수 있어요.';
       wrapper.appendChild(guide);
+      if (ArcanaApp.app && ArcanaApp.app.updateCharacterSaveButtonState) {
+        ArcanaApp.app.updateCharacterSaveButtonState();
+      }
       return;
     }
 
@@ -85,6 +88,10 @@ ArcanaApp.skillSelector = {
 
       wrapper.appendChild(button);
     });
+
+    if (ArcanaApp.app && ArcanaApp.app.updateCharacterSaveButtonState) {
+      ArcanaApp.app.updateCharacterSaveButtonState();
+    }
   },
 
   getActiveSkills() {
@@ -175,6 +182,9 @@ ArcanaApp.skillSelector = {
     }
 
     ArcanaApp.skillSelector.render();
+    if (ArcanaApp.app && ArcanaApp.app.updateCharacterSaveButtonState) {
+      ArcanaApp.app.updateCharacterSaveButtonState();
+    }
     ArcanaApp.app.resetRecommendation();
   },
 
