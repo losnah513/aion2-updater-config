@@ -1,18 +1,29 @@
 window.ArcanaApp = window.ArcanaApp || {};
 
 ArcanaApp.classSelector = {
-  classOrder: [
-    'guardian',
-    'templar',
-    'gladiator',
-    'assassin',
-    'ranger',
-    'sorcerer',
-    'spiritmaster',
-    'elementalist',
-    'cleric',
-    'chanter'
+  canonicalClassList: [
+    { key: 'templar', name: '수호성', englishName: 'Templar' },
+    { key: 'gladiator', name: '검성', englishName: 'Gladiator' },
+    { key: 'assassin', name: '살성', englishName: 'Assassin' },
+    { key: 'ranger', name: '궁성', englishName: 'Ranger' },
+    { key: 'sorcerer', name: '마도성', englishName: 'Sorcerer' },
+    { key: 'elementalist', name: '정령성', englishName: 'Spiritmaster' },
+    { key: 'cleric', name: '치유성', englishName: 'Cleric' },
+    { key: 'chanter', name: '호법성', englishName: 'Chanter' }
   ],
+
+  aliasMap: {
+    guardian: 'templar',
+    templar: 'templar',
+    gladiator: 'gladiator',
+    assassin: 'assassin',
+    ranger: 'ranger',
+    sorcerer: 'sorcerer',
+    spiritmaster: 'elementalist',
+    elementalist: 'elementalist',
+    cleric: 'cleric',
+    chanter: 'chanter'
+  },
 
   classNameMap: {
     templar: '수호성',
@@ -40,28 +51,21 @@ ArcanaApp.classSelector = {
     chanter: '../hall-of-fame/assets/class_icon_chanter.png'
   },
 
-  normalizeClassList(classList) {
-    const source = Array.isArray(classList) ? classList : [];
-    const uniqueByName = new Map();
+  normalizeClassKey(classKey) {
+    return ArcanaApp.classSelector.aliasMap[classKey] || classKey || '';
+  },
 
-    source.forEach(item => {
-      if (!item || !item.key) return;
-      const normalized = {
-        key: item.key,
-        name: ArcanaApp.classSelector.classNameMap[item.key] || item.name || item.key
-      };
-      if (!uniqueByName.has(normalized.name)) uniqueByName.set(normalized.name, normalized);
-    });
-
-    return Array.from(uniqueByName.values()).sort((a, b) => {
-      const ai = ArcanaApp.classSelector.classOrder.indexOf(a.key);
-      const bi = ArcanaApp.classSelector.classOrder.indexOf(b.key);
-      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
-    });
+  normalizeClassList() {
+    return ArcanaApp.classSelector.canonicalClassList.map(item => ({ ...item }));
   },
 
   getDisplayClassList() {
-    return ArcanaApp.classSelector.normalizeClassList(ArcanaApp.state.classList);
+    return ArcanaApp.classSelector.normalizeClassList();
+  },
+
+  getClassItem(classKey) {
+    const normalizedKey = ArcanaApp.classSelector.normalizeClassKey(classKey);
+    return ArcanaApp.classSelector.getDisplayClassList().find(item => item.key === normalizedKey) || null;
   },
 
   render() {
@@ -69,11 +73,14 @@ ArcanaApp.classSelector = {
     const button = document.getElementById('arcanaClassPickerButton');
     const list = document.getElementById('arcanaClassCardList');
     const layout = document.getElementById('arcanaMainLayout');
+    const picker = document.getElementById('arcanaClassPicker');
 
     if (!button || !list || !layout) return;
 
     button.innerHTML = '';
     button.classList.toggle('has-class', state.hasSelectedClass);
+    button.classList.toggle('is-initial-cta', !state.hasSelectedClass);
+    if (picker) picker.classList.toggle('is-initial-cta', !state.hasSelectedClass);
 
     if (state.hasSelectedClass) {
       const buttonIcon = ArcanaApp.classSelector.createClassIcon(state.currentClassKey, true);
@@ -81,7 +88,7 @@ ArcanaApp.classSelector = {
     }
 
     const label = document.createElement('span');
-    label.textContent = state.hasSelectedClass ? '클래스 변경' : '클래스 선택';
+    label.textContent = state.hasSelectedClass ? '클래스 변경' : '클래스 선택하기';
     button.appendChild(label);
 
     const arrow = document.createElement('span');
@@ -99,23 +106,27 @@ ArcanaApp.classSelector = {
     const list = document.getElementById('arcanaClassCardList');
     if (!list) return;
 
+    const activeKey = state.pendingClassKey || state.currentClassKey || '';
     list.innerHTML = '';
+
     ArcanaApp.classSelector.getDisplayClassList().forEach(item => {
       const card = ArcanaApp.classSelector.createClassButton(item, 'arcana-class-card');
-
-      if ((state.pendingClassKey || state.currentClassKey) === item.key) {
-        card.classList.add('is-selected');
-      }
+      card.classList.toggle('is-selected', activeKey === item.key);
 
       card.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
-        state.pendingClassKey = item.key;
-        ArcanaApp.classSelector.renderCompactClassList();
+        ArcanaApp.classSelector.selectCompactClass(item.key);
       });
 
       list.appendChild(card);
     });
+  },
+
+  selectCompactClass(classKey) {
+    const state = ArcanaApp.state;
+    state.pendingClassKey = ArcanaApp.classSelector.normalizeClassKey(classKey);
+    ArcanaApp.classSelector.renderCompactClassList();
   },
 
   bind() {
@@ -161,7 +172,8 @@ ArcanaApp.classSelector = {
       return;
     }
 
-    state.pendingClassKey = state.currentClassKey || state.pendingClassKey || '';
+    state.pendingClassKey = state.currentClassKey || '';
+    ArcanaApp.classSelector.renderCompactClassList();
     ArcanaApp.classSelector.open();
   },
 
@@ -197,6 +209,7 @@ ArcanaApp.classSelector = {
 
     state.pendingClassKey = '';
     state.showcaseSelectedKey = '';
+    state.touchPreviewClassKey = '';
 
     ArcanaApp.classSelector.renderShowcase();
     showcase.hidden = false;
@@ -219,6 +232,8 @@ ArcanaApp.classSelector = {
       showcase.querySelectorAll('.arcana-showcase-card').forEach(card => {
         card.classList.remove('is-selected', 'is-falling', 'is-hovered');
       });
+      const hint = showcase.querySelector('.arcana-touch-hint');
+      if (hint) hint.remove();
     }, 240);
   },
 
@@ -252,7 +267,15 @@ ArcanaApp.classSelector = {
     document.body.appendChild(showcase);
 
     showcase.addEventListener('click', event => {
-      if (event.target === showcase) ArcanaApp.classSelector.cancelShowcaseSelection();
+      if (event.target === showcase) {
+        ArcanaApp.classSelector.cancelShowcaseSelection();
+        return;
+      }
+
+      if (ArcanaApp.classSelector.isTouchMode()) {
+        const interactive = event.target.closest('.arcana-showcase-card, .arcana-showcase-name-btn, .arcana-showcase-actions button');
+        if (!interactive) ArcanaApp.classSelector.clearTouchPreview();
+      }
     });
 
     showcase.querySelector('#arcanaShowcaseConfirm').addEventListener('click', event => {
@@ -294,13 +317,24 @@ ArcanaApp.classSelector = {
       const inner = document.createElement('span');
       inner.className = 'arcana-showcase-card-inner';
 
+      const front = document.createElement('span');
+      front.className = 'arcana-showcase-card-face arcana-showcase-card-front';
       const icon = ArcanaApp.classSelector.createClassIcon(item.key, true);
-      if (icon) inner.appendChild(icon);
-
+      if (icon) front.appendChild(icon);
       const name = document.createElement('span');
       name.className = 'arcana-showcase-card-name';
       name.textContent = item.name;
-      inner.appendChild(name);
+      front.appendChild(name);
+
+      const back = document.createElement('span');
+      back.className = 'arcana-showcase-card-face arcana-showcase-card-back';
+      const english = document.createElement('span');
+      english.className = 'arcana-showcase-card-english';
+      english.textContent = item.englishName || item.key;
+      back.appendChild(english);
+
+      inner.appendChild(front);
+      inner.appendChild(back);
       card.appendChild(inner);
 
       card.addEventListener('mouseenter', () => ArcanaApp.classSelector.hoverShowcaseClass(item.key));
@@ -308,7 +342,7 @@ ArcanaApp.classSelector = {
       card.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
-        ArcanaApp.classSelector.pickShowcaseClass(item.key);
+        ArcanaApp.classSelector.handleShowcaseChoice(item.key, card);
       });
 
       ring.appendChild(card);
@@ -323,10 +357,72 @@ ArcanaApp.classSelector = {
       nameButton.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
-        ArcanaApp.classSelector.pickShowcaseClass(item.key);
+        ArcanaApp.classSelector.handleShowcaseChoice(item.key, nameButton);
       });
       buttons.appendChild(nameButton);
     });
+  },
+
+  isTouchMode() {
+    return ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+  },
+
+  handleShowcaseChoice(classKey, targetElement) {
+    const showcase = document.getElementById('arcanaClassShowcase');
+    if (!showcase || showcase.classList.contains('is-picked')) return;
+
+    if (ArcanaApp.classSelector.isTouchMode()) {
+      const previewKey = ArcanaApp.state.touchPreviewClassKey || '';
+      if (previewKey !== classKey) {
+        ArcanaApp.state.touchPreviewClassKey = classKey;
+        ArcanaApp.classSelector.hoverShowcaseClass(classKey);
+        ArcanaApp.classSelector.showTouchHint(classKey, targetElement);
+        return;
+      }
+    }
+
+    ArcanaApp.classSelector.pickShowcaseClass(classKey);
+  },
+
+  clearTouchPreview() {
+    const showcase = document.getElementById('arcanaClassShowcase');
+    ArcanaApp.state.touchPreviewClassKey = '';
+
+    if (!showcase) return;
+
+    showcase.querySelectorAll('.arcana-showcase-card').forEach(card => card.classList.remove('is-hovered'));
+    showcase.querySelectorAll('.arcana-showcase-name-btn').forEach(button => button.classList.remove('is-hovered'));
+
+    const hint = showcase.querySelector('.arcana-touch-hint');
+    if (hint) hint.remove();
+  },
+
+  showTouchHint(classKey, targetElement) {
+    const showcase = document.getElementById('arcanaClassShowcase');
+    const item = ArcanaApp.classSelector.getClassItem(classKey);
+    if (!showcase || !item || !targetElement) return;
+
+    let hint = showcase.querySelector('.arcana-touch-hint');
+    if (!hint) {
+      hint = document.createElement('div');
+      hint.className = 'arcana-touch-hint';
+      showcase.querySelector('.arcana-showcase-stage').appendChild(hint);
+    }
+
+    hint.innerHTML = `
+      <strong>[${item.name}]</strong>
+      <span>이 클래스로 진행하시는 거죠?</span>
+      <small>맞으시면 한 번 더 터치,<br>다시 선택하시려면 아무 곳이나 터치해주세요.</small>
+    `;
+
+    const stage = showcase.querySelector('.arcana-showcase-stage');
+    const targetRect = targetElement.getBoundingClientRect();
+    const stageRect = stage.getBoundingClientRect();
+    const left = targetRect.left + targetRect.width / 2 - stageRect.left;
+    const top = Math.max(76, targetRect.top - stageRect.top - 86);
+    hint.style.left = `${left}px`;
+    hint.style.top = `${top}px`;
+    hint.classList.add('is-visible');
   },
 
   hoverShowcaseClass(classKey) {
@@ -347,19 +443,24 @@ ArcanaApp.classSelector = {
     const showcase = document.getElementById('arcanaClassShowcase');
     if (!showcase || showcase.classList.contains('is-picked')) return;
 
-    state.pendingClassKey = classKey;
-    state.showcaseSelectedKey = classKey;
+    const nextKey = ArcanaApp.classSelector.normalizeClassKey(classKey);
+    state.pendingClassKey = nextKey;
+    state.showcaseSelectedKey = nextKey;
+    state.touchPreviewClassKey = '';
     showcase.classList.add('is-picked');
 
+    const hint = showcase.querySelector('.arcana-touch-hint');
+    if (hint) hint.remove();
+
     showcase.querySelectorAll('.arcana-showcase-card').forEach(card => {
-      const isSelected = card.dataset.classKey === classKey;
+      const isSelected = card.dataset.classKey === nextKey;
       card.classList.toggle('is-selected', isSelected);
       card.classList.toggle('is-falling', !isSelected);
       card.classList.remove('is-hovered');
     });
 
     showcase.querySelectorAll('.arcana-showcase-name-btn').forEach(button => {
-      button.classList.toggle('is-selected', button.dataset.classKey === classKey);
+      button.classList.toggle('is-selected', button.dataset.classKey === nextKey);
       button.classList.remove('is-hovered');
     });
 
@@ -370,6 +471,7 @@ ArcanaApp.classSelector = {
   cancelShowcaseSelection() {
     ArcanaApp.state.pendingClassKey = ArcanaApp.state.currentClassKey;
     ArcanaApp.state.showcaseSelectedKey = '';
+    ArcanaApp.state.touchPreviewClassKey = '';
     ArcanaApp.classSelector.closeShowcase();
   },
 
@@ -381,7 +483,7 @@ ArcanaApp.classSelector = {
 
   async confirm() {
     const state = ArcanaApp.state;
-    const nextKey = state.pendingClassKey || state.currentClassKey;
+    const nextKey = ArcanaApp.classSelector.normalizeClassKey(state.pendingClassKey || state.currentClassKey);
 
     if (!nextKey) return;
 
@@ -395,6 +497,7 @@ ArcanaApp.classSelector = {
     }
 
     if (isChangingClass && ArcanaApp.classSelector.hasSavedData()) {
+      ArcanaApp.classSelector.close();
       const confirmed = await ArcanaApp.confirmModal.open(
         '클래스를 변경하면 지금 저장한 내용은 초기화돼요. 그래도 새 클래스로 바꿔볼까요?'
       );
@@ -412,33 +515,46 @@ ArcanaApp.classSelector = {
 
   async applyClassWithLoading(nextKey) {
     const state = ArcanaApp.state;
-    const panelKeys = ['characterLevels', 'equipmentOptions', 'ownedArcanaCards', 'recommendArcanaCards'];
-
-    panelKeys.forEach(panelKey => {
-      ArcanaApp.loadingOverlay.show(panelKey, '클래스 정보를 불러오는 중입니다');
-    });
-
-    state.currentClassKey = nextKey;
-    state.pendingClassKey = nextKey;
-    state.hasSelectedClass = true;
-    state.hasSeenClassShowcase = true;
-    ArcanaApp.classSelector.resetClassDependentState();
-    ArcanaApp.classSelector.applyClassSkillData(nextKey);
-    ArcanaApp.classSelector.clearSavedPanels();
-
-    await ArcanaApp.classSelector.preloadClassAssets(nextKey);
-    await new Promise(resolve => window.setTimeout(resolve, 3200));
+    const normalizedKey = ArcanaApp.classSelector.normalizeClassKey(nextKey);
 
     ArcanaApp.classSelector.close();
     ArcanaApp.classSelector.closeShowcase();
-    ArcanaApp.ui.renderAll();
+    ArcanaApp.loadingOverlay.showPage('아르카나가 선택한 클래스의 스킬을 읽고 있어요.');
 
-    await new Promise(resolve => window.setTimeout(resolve, 250));
-    panelKeys.forEach(panelKey => ArcanaApp.loadingOverlay.hide(panelKey));
+    try {
+      state.currentClassKey = normalizedKey;
+      state.pendingClassKey = normalizedKey;
+      state.hasSelectedClass = true;
+      state.hasSeenClassShowcase = true;
+      ArcanaApp.classSelector.resetClassDependentState();
+      ArcanaApp.classSelector.applyClassSkillData(normalizedKey);
+      ArcanaApp.classSelector.clearSavedPanels();
+
+      await ArcanaApp.classSelector.preloadClassAssets(normalizedKey);
+      await new Promise(resolve => window.setTimeout(resolve, 1100));
+
+      ArcanaApp.ui.renderAll();
+      await new Promise(resolve => window.setTimeout(resolve, 250));
+    } finally {
+      ArcanaApp.loadingOverlay.hidePage();
+    }
   },
 
   applyClassSkillData(classKey) {
-    const classData = ArcanaApp.state.classSkills[classKey] || {};
+    const normalizedKey = ArcanaApp.classSelector.normalizeClassKey(classKey);
+    const fallbackMap = {
+      templar: ['templar', 'guardian'],
+      gladiator: ['gladiator'],
+      assassin: ['assassin'],
+      ranger: ['ranger'],
+      sorcerer: ['sorcerer'],
+      elementalist: ['elementalist', 'spiritmaster'],
+      cleric: ['cleric'],
+      chanter: ['chanter']
+    };
+    const keys = fallbackMap[normalizedKey] || [normalizedKey];
+    const classData = keys.map(key => ArcanaApp.state.classSkills[key]).find(Boolean) || {};
+
     ArcanaApp.state.activeSkills = classData.active || [];
     ArcanaApp.state.passiveSkills = classData.passive || [];
     ArcanaApp.state.skillsByArcana = classData.arcanaSkills || {};
@@ -510,12 +626,13 @@ ArcanaApp.classSelector = {
   },
 
   getClassName(classKey) {
-    const found = ArcanaApp.classSelector.getDisplayClassList().find(item => item.key === classKey);
-    return found ? found.name : '클래스 선택';
+    const item = ArcanaApp.classSelector.getClassItem(classKey);
+    return item ? item.name : '클래스 선택';
   },
 
   getClassIconUrl(classKey) {
-    return ArcanaApp.classSelector.classIconMap[classKey] || '';
+    const normalizedKey = ArcanaApp.classSelector.normalizeClassKey(classKey);
+    return ArcanaApp.classSelector.classIconMap[normalizedKey] || '';
   },
 
   createClassIcon(classKey, visible) {

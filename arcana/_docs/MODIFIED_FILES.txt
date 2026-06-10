@@ -1,11 +1,10 @@
-ARC-0.2.03
+ARC-0.2.04
 
 [이번 작업 요약]
-- 클래스 선택 최초 진입 쇼케이스 연출을 추가했습니다.
-- 클래스 선택 이후 [클래스 변경] 간략 모달 분기를 추가했습니다.
-- 클래스 표시 순서와 궁성/검성 매핑 오류를 방지하도록 프론트엔드 클래스 목록 정리 로직을 추가했습니다.
-- 클래스 선택 관련 버튼 규격과 저장/초기화 버튼 정렬을 수정했습니다.
-- 버전 표기를 ARC-0.2.03으로 갱신했습니다.
+- 궁성 누락 및 클래스 선택 상태 동기화 오류를 수정했습니다.
+- 클래스 로딩 방식을 카드별 스피너에서 전체 화면 중앙 로딩 오버레이로 변경했습니다.
+- 최초 진입 클래스 선택 CTA, 카드 뒷면 영문 표기, 모바일 첫 터치 확인 힌트를 추가했습니다.
+- 버전 표기를 ARC-0.2.04로 갱신했습니다.
 
 [실제 수정 파일]
 arcana/index.html
@@ -13,6 +12,7 @@ arcana/js/app.js
 arcana/js/api.js
 arcana/js/classSelector.js
 arcana/js/config.js
+arcana/js/loadingOverlay.js
 arcana/js/state.js
 arcana/data/config.json
 arcana/css/layout.css

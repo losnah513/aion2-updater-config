@@ -793,3 +793,38 @@
     to { opacity: 1; transform: translateY(0); }
   }
 }
+
+/* ARC-0.2.04: 최초 진입 클래스 선택 CTA 강조 */
+.arcana-class-picker.is-initial-cta {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.arcana-class-picker-button.is-initial-cta {
+  min-width: 168px;
+  height: 34px;
+  padding: 0 16px;
+  border-color: rgba(37, 99, 235, 0.8);
+  color: var(--arcana-primary);
+  font-size: 12px;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.06), 0 8px 20px rgba(37, 99, 235, 0.12);
+  animation: arcana-class-cta-breathe 2.4s ease-in-out infinite;
+}
+
+.arcana-class-picker-button.is-initial-cta::before {
+  content: "✨";
+  font-size: 12px;
+}
+
+@keyframes arcana-class-cta-breathe {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-1px) scale(1.03); }
+}
+
+@media (max-width: 720px) {
+  .arcana-class-picker.is-initial-cta {
+    position: static;
+    transform: none;
+  }
+}
