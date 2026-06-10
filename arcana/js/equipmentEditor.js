@@ -123,6 +123,7 @@ ArcanaApp.equipmentEditor = {
 
   collect() {
     const options = { ring1: [], ring2: [] };
+    const globallyUsed = new Set();
 
     document.querySelectorAll('.arcana-equipment-card[data-equipment]').forEach(card => {
       const equipmentKey = card.dataset.equipment;
@@ -143,7 +144,12 @@ ArcanaApp.equipmentEditor = {
           throw new Error(`${label}: 같은 반지 안에는 같은 스킬을 중복 등록할 수 없습니다.`);
         }
 
+        if (globallyUsed.has(skill)) {
+          throw new Error('반지1과 반지2에는 같은 스킬을 동시에 등록할 수 없습니다.');
+        }
+
         used.add(skill);
+        globallyUsed.add(skill);
         options[equipmentKey].push({ skill, level: 1 });
       });
     });

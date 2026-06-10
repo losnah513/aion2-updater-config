@@ -3,15 +3,49 @@ window.ArcanaApp = window.ArcanaApp || {};
 ArcanaApp.recommendation = {
   generate() {
     const state = ArcanaApp.state;
-    const baseLevels = ArcanaApp.simulator.calculateBaseLevels();
-    const needMap = ArcanaApp.recommendation.createNeedMap(baseLevels);
+    const prepared = ArcanaApp.recommendation.prepareResources();
+    const needMap = ArcanaApp.recommendation.createNeedMap(prepared.baseLevels);
     const recommendationCards = ArcanaApp.recommendation.buildRecommendationSet(needMap);
+    const meta = ArcanaApp.recommendation.buildMeta(recommendationCards, prepared.baseLevels, prepared.autoRingOptions);
 
-    const meta = ArcanaApp.recommendation.buildMeta(recommendationCards, baseLevels);
     state.recommendationCards = recommendationCards;
     state.recommendationMeta = meta;
     state.recommendationGenerated = true;
     return { cards: recommendationCards, meta };
+  },
+
+  prepareResources() {
+    const state = ArcanaApp.state;
+    const hasManualRing = Object.values(state.equipmentOptions || {})
+      .flat()
+      .some(slot => slot && String(slot.skill || '').trim());
+
+    const owned = ArcanaApp.simulator.calculateCardLevels(state.ownedCards);
+    const manualRing = ArcanaApp.simulator.calculateEquipmentLevels(state.equipmentOptions);
+    const baseLevels = {};
+
+    (state.selectedTargetSkills || []).forEach(skill => {
+      baseLevels[skill] = Number(state.baseSkillLevel || 10)
+        + Number(state.devanionBonus || 0)
+        + Number(owned[skill] || 0)
+        + Number(manualRing[skill] || 0);
+    });
+
+    const autoRingOptions = { ring1: [], ring2: [] };
+    if (!hasManualRing) {
+      const targets = (state.selectedTargetSkills || [])
+        .map(skill => ({ skill, shortage: Math.max(0, Number(state.targetLevel || 20) - Number(baseLevels[skill] || 0)) }))
+        .filter(item => item.shortage > 0)
+        .sort((a, b) => b.shortage - a.shortage);
+
+      targets.slice(0, 12).forEach((item, index) => {
+        const key = index < 6 ? 'ring1' : 'ring2';
+        autoRingOptions[key].push({ skill: item.skill, level: 1, auto: true });
+        baseLevels[item.skill] = Number(baseLevels[item.skill] || 0) + 1;
+      });
+    }
+
+    return { baseLevels, autoRingOptions };
   },
 
   createNeedMap(baseLevels) {
@@ -19,8 +53,7 @@ ArcanaApp.recommendation = {
     const needMap = {};
 
     state.selectedTargetSkills.forEach(skill => {
-      const current = Number(baseLevels[skill] || 0) + Number(state.devanionBonus || 0);
-      needMap[skill] = Math.max(0, state.targetLevel - current);
+      needMap[skill] = Math.max(0, Number(state.targetLevel || 20) - Number(baseLevels[skill] || 0));
     });
 
     return needMap;
@@ -29,7 +62,6 @@ ArcanaApp.recommendation = {
   buildRecommendationSet(needMap) {
     const state = ArcanaApp.state;
     const cards = {};
-    const workingNeed = { ...needMap };
     const usage = {};
 
     state.arcanaTypes.forEach(arcanaName => {
@@ -37,20 +69,19 @@ ArcanaApp.recommendation = {
       usage[arcanaName] = { growth: 0 };
     });
 
-    const targetSkills = (state.selectedTargetSkills || []).slice();
-    const sortedTargets = targetSkills.sort((a, b) => {
+    const sortedTargets = (state.selectedTargetSkills || []).slice().sort((a, b) => {
       const aArcana = ArcanaApp.recommendation.getAvailableArcanaForSkill(a).length || 99;
       const bArcana = ArcanaApp.recommendation.getAvailableArcanaForSkill(b).length || 99;
       if (aArcana !== bArcana) return aArcana - bArcana;
-      return Number(workingNeed[b] || 0) - Number(workingNeed[a] || 0);
+      return Number(needMap[b] || 0) - Number(needMap[a] || 0);
     });
 
     sortedTargets.forEach(skill => {
-      ArcanaApp.recommendation.allocateSkillAcrossCards(skill, workingNeed, cards, usage, 3);
+      ArcanaApp.recommendation.allocateSkill(skill, needMap, cards, usage, 3);
     });
 
     sortedTargets.forEach(skill => {
-      ArcanaApp.recommendation.allocateSkillAcrossCards(skill, workingNeed, cards, usage, 4);
+      ArcanaApp.recommendation.allocateSkill(skill, needMap, cards, usage, 4);
     });
 
     state.arcanaTypes.forEach(arcanaName => {
@@ -68,10 +99,10 @@ ArcanaApp.recommendation = {
     });
   },
 
-  allocateSkillAcrossCards(skill, needMap, cards, usage, preferredMaxLevel) {
+  allocateSkill(skill, needMap, cards, usage, preferredMaxLevel) {
     let guard = 0;
 
-    while (Number(needMap[skill] || 0) > 0 && guard < 30) {
+    while (Number(needMap[skill] || 0) > 0 && guard < 80) {
       guard += 1;
       const candidate = ArcanaApp.recommendation.findBestCardForSkill(skill, cards, usage, preferredMaxLevel);
       if (!candidate) break;
@@ -80,15 +111,17 @@ ArcanaApp.recommendation = {
       let slot = cardSlots.find(item => item.skill === skill);
 
       if (!slot) {
-        if (cardSlots.length >= 4) break;
         slot = { skill, level: 1, isTarget: true };
         cardSlots.push(slot);
         needMap[skill] = Math.max(0, Number(needMap[skill] || 0) - 1);
         if (Number(needMap[skill] || 0) <= 0) break;
       }
 
-      if (Number(slot.level || 0) >= preferredMaxLevel) continue;
-      if (Number(usage[candidate.arcanaName].growth || 0) >= ArcanaApp.state.maxCardLevel) continue;
+      const canGrow = Number(slot.level || 0) < preferredMaxLevel
+        && Number(slot.level || 0) < Number(ArcanaApp.state.maxSlotLevel || 4)
+        && Number(usage[candidate.arcanaName].growth || 0) < Number(ArcanaApp.state.maxCardLevel || 5);
+
+      if (!canGrow) continue;
 
       slot.level += 1;
       usage[candidate.arcanaName].growth += 1;
@@ -98,31 +131,31 @@ ArcanaApp.recommendation = {
 
   findBestCardForSkill(skill, cards, usage, preferredMaxLevel) {
     const state = ArcanaApp.state;
-    const candidates = ArcanaApp.recommendation.getAvailableArcanaForSkill(skill)
+    return ArcanaApp.recommendation.getAvailableArcanaForSkill(skill)
       .map(arcanaName => {
         const slots = cards[arcanaName] || [];
         const existing = slots.find(slot => slot.skill === skill);
-        const hasSlotRoom = slots.length < 4;
-        const hasGrowthRoom = Number(usage[arcanaName].growth || 0) < state.maxCardLevel;
-        const canUseExisting = existing && Number(existing.level || 0) < preferredMaxLevel && hasGrowthRoom;
-        const canAdd = !existing && hasSlotRoom;
+        const growth = Number(usage[arcanaName].growth || 0);
+        const canUseExisting = existing && Number(existing.level || 0) < preferredMaxLevel && growth < state.maxCardLevel;
+        const canAdd = !existing && slots.length < 4;
 
         if (!canUseExisting && !canAdd) return null;
 
         return {
           arcanaName,
-          existing,
           score:
-            (existing ? 100 : 0) +
-            (hasGrowthRoom ? 20 : 0) -
-            (slots.length * 2) -
-            Number(usage[arcanaName].growth || 0)
+            (existing ? 1000 : 0)
+            + (state.maxCardLevel - growth) * 10
+            - slots.length * 4
+            - ArcanaApp.recommendation.getCardDifficulty(slots)
         };
       })
       .filter(Boolean)
-      .sort((a, b) => b.score - a.score);
+      .sort((a, b) => b.score - a.score)[0] || null;
+  },
 
-    return candidates[0] || null;
+  getCardDifficulty(slots) {
+    return (slots || []).reduce((sum, slot) => sum + Math.max(0, Number(slot.level || 0) - 1), 0);
   },
 
   fillCardSlots(arcanaName, slots) {
@@ -141,57 +174,73 @@ ArcanaApp.recommendation = {
     slots.splice(4);
   },
 
-  buildMeta(cards, baseLevels) {
+  buildMeta(cards, baseLevels, autoRingOptions) {
     const state = ArcanaApp.state;
     const recommendedLevels = ArcanaApp.simulator.calculateCardLevels(cards);
+    const autoRingLevels = ArcanaApp.simulator.calculateEquipmentLevels(autoRingOptions || {});
+    const manualRingLevels = ArcanaApp.simulator.calculateEquipmentLevels(state.equipmentOptions || {});
+    const ownedLevels = ArcanaApp.simulator.calculateCardLevels(state.ownedCards || {});
+
     const rows = state.selectedTargetSkills.map(skill => {
-      const base = Number(state.baseSkillLevel || 10);
-      const equipment = Number(ArcanaApp.simulator.calculateEquipmentLevels(state.equipmentOptions)[skill] || 0);
-      const owned = Number(ArcanaApp.simulator.calculateCardLevels(state.ownedCards)[skill] || 0);
       const recommended = Number(recommendedLevels[skill] || 0);
-      const finalLevel = base + equipment + owned + recommended + state.devanionBonus;
-      const shortage = Math.max(0, state.targetLevel - finalLevel);
-      const must = shortage > 0 || recommended >= 4;
+      const finalLevel = Number(baseLevels[skill] || 0) + recommended;
+      const shortage = Math.max(0, Number(state.targetLevel || 20) - finalLevel);
 
       return {
         skill,
-        current: base,
-        equipment,
-        owned,
+        current: Number(state.baseSkillLevel || 10),
+        equipment: Number(manualRingLevels[skill] || 0) + Number(autoRingLevels[skill] || 0),
+        owned: Number(ownedLevels[skill] || 0),
         recommended,
-        bonus: state.devanionBonus,
+        bonus: Number(state.devanionBonus || 0),
         finalLevel,
         shortage,
-        must
+        must: shortage > 0 || recommended >= 4
       };
     });
 
-    const advice = ArcanaApp.recommendation.buildAdvice(rows);
-    return { rows, advice };
+    const failedRows = rows.filter(row => row.shortage > 0);
+    const successCount = rows.filter(row => row.finalLevel >= Number(state.targetLevel || 20)).length;
+    const advice = ArcanaApp.recommendation.buildAdvice(rows, autoRingOptions);
+
+    return {
+      rows,
+      advice,
+      autoRingOptions,
+      ok: failedRows.length === 0,
+      successCount,
+      failedSkills: failedRows.map(row => row.skill)
+    };
   },
 
-  buildAdvice(rows) {
+  buildAdvice(rows, autoRingOptions) {
     if (!rows || rows.length === 0) {
       return ['목표 스킬을 선택하면 키노조 AI가 부족한 부분을 함께 살펴볼게요.'];
     }
 
     const shortageRows = rows.filter(row => row.shortage > 0);
     const hardRows = rows.filter(row => row.recommended >= 4);
+    const autoRingSkills = Object.values(autoRingOptions || {}).flat().map(slot => slot.skill).filter(Boolean);
     const advice = [];
 
     if (shortageRows.length > 0) {
       const names = shortageRows.slice(0, 3).map(row => `${row.skill} ${row.shortage}레벨 부족`).join(', ');
-      advice.push(`${names} 상태예요. 반지 옵션이나 현재 아르카나에서 조금 더 보충하면 좋아요.`);
+      advice.push(`${names} 상태라서 현재 조건에서는 20레벨 추천을 확정할 수 없어요.`);
+    } else {
+      advice.push('현재 조건에서는 목표 스킬 20레벨 달성이 가능해 보여요.');
+    }
+
+    if (autoRingSkills.length > 0) {
+      advice.push(`반지 옵션은 ${autoRingSkills.slice(0, 6).join(', ')} 중심으로 자동 활용했어요.`);
     }
 
     if (hardRows.length > 0) {
       const names = hardRows.slice(0, 3).map(row => row.skill).join(', ');
-      advice.push(`${names}은 현재 조건에서 Lv4 부담이 있어요. 가능하면 반지 옵션으로 부담을 나누는 걸 추천해요.`);
+      advice.push(`${names}은 Lv4 부담이 있어요. 동일 달성 수에서는 Lv4를 줄이는 방향으로 계산했어요.`);
     }
 
-    if (advice.length === 0) {
-      advice.push('현재 조건에서는 목표 스킬 20레벨 달성이 가능해 보여요.');
-      advice.push('제작 부담이 한 카드에 몰리지 않도록 여러 아르카나에 나눠서 추천했어요.');
+    if (advice.length < 3 && shortageRows.length === 0) {
+      advice.push('카드별 추가 포인트 5 제한을 넘는 조합은 제외했어요.');
     }
 
     return advice.slice(0, 3);

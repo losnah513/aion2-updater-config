@@ -193,7 +193,7 @@ ArcanaApp.app = {
       button.classList.remove('is-vanishing');
       button.classList.remove('is-vanishing');
       button.hidden = true;
-      ArcanaApp.panelLock.showMessage('recommendArcanaCards', '추천 결과가 준비되었어요. 탭을 눌러 분석과 조언을 확인해보세요.');
+      ArcanaApp.panelLock.showMessage('recommendArcanaCards', ArcanaApp.state.recommendationMeta && ArcanaApp.state.recommendationMeta.ok === false ? '현재 조건에서는 20레벨 달성 조합을 찾지 못했어요. 분석 탭에서 부족 스킬을 확인해주세요.' : '추천 결과가 준비되었어요. 탭을 눌러 분석과 조언을 확인해보세요.');
       ArcanaApp.app.updateRecommendationButtonState();
     });
 

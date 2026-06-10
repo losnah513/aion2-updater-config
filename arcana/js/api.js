@@ -155,7 +155,7 @@ ArcanaApp.api = {
       '양피지': ['예리한 일격', '도약 찍기', '내려찍기', '발목 베기', '공중 결박', '파멸의 맹타'],
       '나침반': ['절단의 맹타', '유린의 검', '돌진 일격', '분쇄 파동', '검기 난무', '충격 해제'],
       '종': active,
-      '겨울': active,
+      '거울': active,
       '천칭': active
     };
 
@@ -167,9 +167,9 @@ ArcanaApp.api = {
       devanionBonus: 4,
       maxCardLevel: 5,
       maxSlotLevel: 4,
-      arcanaTypes: ['성배', '양피지', '나침반', '종', '겨울', '천칭'],
+      arcanaTypes: ['성배', '양피지', '나침반', '종', '거울', '천칭'],
       skillsByArcana: {},
-      classList: [{ key: 'gladiator', name: '검성' }],
+      classList: ArcanaApp.classSelector ? ArcanaApp.classSelector.normalizeClassList() : [{ key: 'gladiator', name: '검성' }],
       classSkills: {
         gladiator: {
           active,

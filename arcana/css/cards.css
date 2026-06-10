@@ -2000,3 +2000,153 @@
     max-width: none !important;
   }
 }
+
+/* 수정사항_260610_07: 구조 기준 통일 / 저장 본문 처리 / KINOJO CTA */
+.arcana-top-grid {
+  grid-template-columns: repeat(3, minmax(280px, 1fr)) !important;
+  grid-auto-flow: row !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  align-items: stretch !important;
+}
+
+.arcana-top-grid > .arcana-panel,
+.arcana-target-panel,
+.arcana-equipment-panel,
+.arcana-future-panel,
+.arcana-compact-panel {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+.arcana-panel-title,
+.arcana-panel-title-inner,
+.arcana-panel-title-compact {
+  min-height: 44px !important;
+  flex: 0 0 auto !important;
+}
+
+.arcana-panel-message,
+.arcana-panel > .arcana-panel-message {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 34px !important;
+  height: 34px !important;
+  margin: 6px 0 7px !important;
+  padding: 0 8px !important;
+  white-space: pre-line !important;
+  overflow: hidden !important;
+  text-align: center !important;
+  line-height: 1.35 !important;
+  word-break: keep-all !important;
+  overflow-wrap: anywhere !important;
+}
+
+.arcana-actions {
+  margin-top: 8px !important;
+  padding-top: 2px !important;
+}
+
+.arcana-panel.is-saved::after {
+  content: none !important;
+  display: none !important;
+}
+
+.arcana-target-panel.is-saved .arcana-skill-grid,
+.arcana-equipment-panel.is-saved .arcana-equipment-list,
+.arcana-owned-section.is-saved .arcana-card-grid {
+  position: relative !important;
+  filter: grayscale(0.34) blur(0.25px) !important;
+  opacity: 0.58 !important;
+  background-image: repeating-linear-gradient(-45deg, rgba(15,23,42,0.055) 0 6px, rgba(255,255,255,0.16) 6px 12px) !important;
+  background-clip: padding-box !important;
+}
+
+.arcana-equipment-list-fixed,
+.arcana-equipment-list {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.arcana-equipment-card {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 5px !important;
+  min-height: 0 !important;
+}
+
+.arcana-arcana-columns {
+  align-items: stretch !important;
+}
+
+.arcana-owned-section,
+.arcana-recommend-section {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.arcana-owned-section .arcana-card-grid,
+.arcana-recommend-section .arcana-recommend-area {
+  flex: 1 1 auto !important;
+  align-content: start !important;
+}
+
+#arcanaRunSimulation.arcana-kinojo-cta,
+#arcanaRunSimulation {
+  width: auto !important;
+  min-width: 132px !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  padding: 0 22px !important;
+  border: 1px solid rgba(37,99,235,0.62) !important;
+  border-radius: 3px !important;
+  background: #fff !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  color: #2563eb !important;
+  text-shadow: none !important;
+  letter-spacing: -0.02em !important;
+  transform-origin: center center !important;
+  animation: arcana-kinojo-border-loop 1.4s linear infinite !important;
+  transition: transform 0.18s ease, opacity 0.18s ease, border-color 0.18s ease, color 0.18s ease !important;
+}
+
+#arcanaRunSimulation.arcana-kinojo-cta:hover:not(.is-soft-disabled),
+#arcanaRunSimulation:hover:not(.is-soft-disabled) {
+  transform: scale(1.045) !important;
+  color: #1d4ed8 !important;
+}
+
+#arcanaRunSimulation.is-vanishing {
+  animation: arcana-cta-center-press 0.28s ease forwards !important;
+}
+
+@keyframes arcana-kinojo-border-loop {
+  0% { border-color: rgba(37,99,235,0.35); }
+  50% { border-color: rgba(125,211,252,0.95); }
+  100% { border-color: rgba(37,99,235,0.35); }
+}
+
+@keyframes arcana-cta-center-press {
+  0% { transform: scale(1); opacity: 1; }
+  65% { transform: scale(0.86); opacity: 0.82; }
+  100% { transform: scale(0.86); opacity: 0; }
+}
+
+@media (max-width: 980px) {
+  .arcana-top-grid {
+    grid-template-columns: repeat(3, minmax(220px, 1fr)) !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .arcana-top-grid,
+  .arcana-equipment-list-fixed,
+  .arcana-equipment-list {
+    grid-template-columns: 1fr !important;
+  }
+}

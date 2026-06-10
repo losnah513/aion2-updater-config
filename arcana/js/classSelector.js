@@ -555,9 +555,43 @@ ArcanaApp.classSelector = {
     const keys = fallbackMap[normalizedKey] || [normalizedKey];
     const classData = keys.map(key => ArcanaApp.state.classSkills[key]).find(Boolean) || {};
 
-    ArcanaApp.state.activeSkills = classData.active || [];
-    ArcanaApp.state.passiveSkills = classData.passive || [];
-    ArcanaApp.state.skillsByArcana = classData.arcanaSkills || {};
+    ArcanaApp.state.arcanaTypes = ['성배', '양피지', '나침반', '종', '거울', '천칭'];
+    ArcanaApp.state.activeSkills = Array.from(new Set((classData.active || []).map(skill => String(skill).trim()).filter(Boolean)));
+    ArcanaApp.state.passiveSkills = Array.from(new Set((classData.passive || []).map(skill => String(skill).trim()).filter(Boolean)));
+    ArcanaApp.state.skillsByArcana = ArcanaApp.classSelector.normalizeArcanaSkillMap({
+      ...classData,
+      active: ArcanaApp.state.activeSkills,
+      passive: ArcanaApp.state.passiveSkills
+    });
+  },
+
+
+  buildArcanaSkillRules(activeSkills, passiveSkills) {
+    const active = Array.from(new Set((activeSkills || []).map(skill => String(skill).trim()).filter(Boolean)));
+    const passive = Array.from(new Set((passiveSkills || []).map(skill => String(skill).trim()).filter(Boolean)));
+    const byIndex = (source, indexes) => indexes.map(index => source[index]).filter(Boolean);
+
+    return {
+      '성배': Array.from(new Set([...active, ...passive])),
+      '양피지': byIndex(active, [0, 2, 4, 6, 9, 10]),
+      '나침반': byIndex(active, [1, 3, 5, 7, 8, 6]),
+      '종': byIndex(passive, [0, 2, 4, 6, 8]),
+      '거울': byIndex(passive, [1, 3, 5, 7, 9]),
+      '천칭': Array.from(new Set([...active, ...passive]))
+    };
+  },
+
+  normalizeArcanaSkillMap(classData) {
+    const state = ArcanaApp.state;
+    const ruleMap = ArcanaApp.classSelector.buildArcanaSkillRules(classData.active || [], classData.passive || []);
+    const dbMap = classData.arcanaSkills || {};
+    const allSkills = new Set([...(classData.active || []), ...(classData.passive || [])].map(skill => String(skill).trim()).filter(Boolean));
+
+    return (state.arcanaTypes || []).reduce((map, arcanaName) => {
+      const source = dbMap[arcanaName] || dbMap[arcanaName === '거울' ? '겨울' : arcanaName] || ruleMap[arcanaName] || [];
+      map[arcanaName] = Array.from(new Set(source.map(skill => String(skill).trim()).filter(skill => skill && allSkills.has(skill))));
+      return map;
+    }, {});
   },
 
   async preloadClassAssets(classKey) {

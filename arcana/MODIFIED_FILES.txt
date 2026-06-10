@@ -1,17 +1,29 @@
-ARC-0.2.04_20260610_03
+ARC-0.2.04_20260610_07
 
-[이번 작업 요약]
-- 검수 리포트 기준으로 클래스 선택 전 블러 강도, 상단 3개 카드 크기 유지, 추천 시작 CTA 표시 방식을 재수정했습니다.
-- 추천 시작 후 버튼이 추천 결과를 가리지 않도록 숨김 처리했습니다.
-- 안내 문구가 여러 문장일 때 문장 단위 줄바꿈이 되도록 보강했습니다.
+[수정 파일]
+- arcana/index.html
+- arcana/css/cards.css
+- arcana/css/layout.css
+- arcana/js/app.js
+- arcana/js/api.js
+- arcana/js/classSelector.js
+- arcana/js/equipmentEditor.js
+- arcana/js/recommendation.js
+- arcana/js/state.js
+- arcana/data/config.json
+- arcana/_docs/MODIFIED_FILES.txt
 
-[실제 수정 파일]
-arcana/css/cards.css
-arcana/js/app.js
-arcana/js/panelLock.js
-arcana/_docs/UPDATE_HISTORY.txt
-arcana/_docs/MODIFIED_FILES.txt
-AppsScript/_docs/SCRIPT_IMPORT_ORDER.txt
+[수정 내용]
+- 상단 3개 카드의 placeholder/실제 렌더 구조 차이를 줄이고 3열 그리드가 클래스 선택 전후 모두 1:1:1로 유지되도록 재정리했습니다.
+- 카드 제목 아래 안내문 영역을 2줄 고정 높이로 통합하고, 안내문 변경으로 카드 높이가 변하지 않도록 고정했습니다.
+- 저장 후 빗금/흐림 처리를 제목칸과 안내문이 아닌 본문 영역에만 적용되도록 변경했습니다.
+- 반지1/반지2를 처음부터 좌우 표시하고, 두 반지 간 동일 스킬을 실제 선택 불가 및 저장 차단하도록 보강했습니다.
+- 현재 아르카나 동일 카드 내 중복 스킬 선택 차단 로직을 유지하면서 DB에 없는 스킬이 추천/저장되지 않도록 검증 흐름을 보강했습니다.
+- 추천 CTA를 KINOJO 스타일의 사각 버튼으로 재정리하고, 그림자/그라데이션/원형 효과를 제거했습니다.
+- 클래스 선택 버튼을 탑바 아래 중앙 고정 위치로 이동하고, 검성 중복/궁성 누락 방지를 위해 canonical 8클래스 기준을 적용했습니다.
+- 아르카나 6종을 성배/양피지/나침반/종/거울/천칭으로 통일하고, 겨울 표기를 거울로 교정했습니다.
+- 추천 엔진을 20레벨 달성 우선, 보유/반지 반영, 직접 지정 반지 고정, 옵션 추천 시 자동 반지 활용 방식으로 재작성했습니다.
+- Lv5 아르카나의 추가 포인트 5 제한을 넘는 추천 조합이 생성되지 않도록 추천 배정 로직을 제한했습니다.
 
 [신규 파일]
 없음
@@ -21,40 +33,3 @@ AppsScript/_docs/SCRIPT_IMPORT_ORDER.txt
 
 [Apps Script 교체 필요]
 없음
-수정사항_260610_05
-[수정 파일]
-- arcana/css/cards.css
-- arcana/js/app.js
-- arcana/js/skillSelector.js
-
-[수정 내용]
-- 클래스 미선택 상태의 상단 3개 카드 폭을 동일하게 유지하도록 그리드 기준을 재정의했습니다.
-- 카드 제목 아래 안내 문구 라인을 2줄 고정 높이로 통일했습니다.
-- 카드 본문과 저장/초기화 버튼 간격을 넓혔습니다.
-- 액티브 스킬은 최소 1개 이상 선택해야 저장 버튼이 활성화되도록 수정했습니다.
-- 액티브 스킬 저장 후 본문 영역의 채도/선명도를 낮추고 빗금 영역이 제목칸을 침범하지 않도록 조정했습니다.
-- 추천 시작 CTA의 그림자/그라데이션을 제거하고 테두리 빛 순환, hover 확대, 클릭 시 중심 축소 퇴장 효과를 적용했습니다.
-- 추천/현재 아르카나 카드 영역 높이와 드롭다운 표시 여유 공간을 보강했습니다.
-
-[삭제 파일]
-- 없음
-
-수정사항_260610_06
-[수정 파일]
-- arcana/css/cards.css
-- arcana/js/app.js
-- arcana/js/recommendation.js
-- AppsScript/ARC_Constants.gs
-- AppsScript/ARC_DBService.gs
-
-[수정 내용]
-- 상단 3개 카드 폭 미고정 원인을 보강했습니다.
-- 저장/초기화 버튼 간격과 저장 후 빗금 오버레이 시작 위치를 조정했습니다.
-- 아르카나 카드 내부 하단 빈 공간을 줄였습니다.
-- 추천 시작 CTA 효과를 버튼 자체와 결합하고 클릭 축소 퇴장 시간을 조정했습니다.
-- 추천 로직을 목표 스킬 20레벨 달성을 우선하도록 분산 배정 방식으로 개선했습니다.
-- 양피지/나침반 DB 필터를 행 기준 규칙으로 보강했습니다.
-
-[Apps Script 교체 필요]
-- ARC_Constants.gs
-- ARC_DBService.gs
