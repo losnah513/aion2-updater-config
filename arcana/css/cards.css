@@ -2150,3 +2150,110 @@
     grid-template-columns: 1fr !important;
   }
 }
+
+/* 수정사항_260610_08: 저장 완료 빗금은 제목/안내문 제외 본문만 덮음 */
+.arcana-panel.is-saved::after {
+  top: 74px !important;
+  inset-inline: 7px !important;
+  bottom: 7px !important;
+  z-index: 6 !important;
+  border: 1px solid rgba(15,23,42,0.04) !important;
+  border-radius: var(--arcana-radius) !important;
+  background-color: rgba(255,255,255,0.48) !important;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(15,23,42,0.12) 0,
+    rgba(15,23,42,0.12) 5px,
+    rgba(255,255,255,0.18) 5px,
+    rgba(255,255,255,0.18) 11px
+  ) !important;
+  backdrop-filter: grayscale(0.55) blur(0.45px) !important;
+}
+
+.arcana-panel.is-saved > :not(.arcana-panel-title):not(.arcana-panel-message):not(.arcana-loading-overlay) {
+  filter: grayscale(0.42) blur(0.25px) !important;
+  opacity: 0.64 !important;
+}
+
+.arcana-panel.is-saved > .arcana-panel-message,
+.arcana-panel.is-saved > .arcana-panel-title {
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+.arcana-owned-tab-spacer {
+  display: flex;
+  gap: 4px;
+  height: 27px;
+  margin: 0 7px 6px !important;
+  border-bottom: 1px solid var(--arcana-line-soft);
+  box-sizing: border-box;
+}
+
+.arcana-owned-tab-spacer span {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid var(--arcana-line);
+  border-bottom: 0;
+  border-radius: var(--arcana-radius) var(--arcana-radius) 0 0;
+  background: #fff;
+  color: var(--arcana-muted);
+  font-size: 11px;
+  box-sizing: border-box;
+}
+
+.arcana-owned-tab-spacer span:first-child {
+  color: var(--arcana-primary);
+}
+
+.arcana-owned-section .arcana-card-grid,
+.arcana-recommend-section .arcana-recommend-area {
+  min-height: 312px !important;
+  max-height: 312px !important;
+}
+
+/* 수정사항_260610_08: 추천 CTA KINOJO 스타일 재고정 */
+#arcanaRunSimulation.arcana-kinojo-cta,
+#arcanaRunSimulation {
+  min-width: 148px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 0 24px !important;
+  border: 1px solid rgba(37,99,235,0.68) !important;
+  border-radius: 999px !important;
+  background: #fff !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  color: #2563eb !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  transform-origin: center center !important;
+  animation: arcana-kinojo-border-loop-08 1.25s linear infinite !important;
+  transition: transform 0.18s ease, opacity 0.2s ease, border-color 0.18s ease, color 0.18s ease !important;
+}
+
+#arcanaRunSimulation.arcana-kinojo-cta:hover:not(.is-soft-disabled),
+#arcanaRunSimulation:hover:not(.is-soft-disabled) {
+  transform: scale(1.055) !important;
+  border-color: rgba(37,99,235,0.95) !important;
+  color: #1d4ed8 !important;
+}
+
+#arcanaRunSimulation.is-vanishing {
+  animation: arcana-cta-center-press-08 0.28s ease forwards !important;
+}
+
+@keyframes arcana-kinojo-border-loop-08 {
+  0% { border-color: rgba(37,99,235,0.42); }
+  33% { border-color: rgba(125,211,252,0.95); }
+  66% { border-color: rgba(59,130,246,0.95); }
+  100% { border-color: rgba(37,99,235,0.42); }
+}
+
+@keyframes arcana-cta-center-press-08 {
+  0% { transform: scale(1); opacity: 1; }
+  72% { transform: scale(0.84); opacity: 0.88; }
+  100% { transform: scale(0.84); opacity: 0; }
+}

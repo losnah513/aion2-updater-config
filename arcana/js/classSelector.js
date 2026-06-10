@@ -77,6 +77,8 @@ ArcanaApp.classSelector = {
 
     if (!button || !list || !layout) return;
 
+    document.body.classList.toggle('arcana-has-selected-class', Boolean(state.hasSelectedClass));
+
     button.innerHTML = '';
     button.classList.toggle('has-class', state.hasSelectedClass);
     button.classList.toggle('is-initial-cta', !state.hasSelectedClass);
@@ -569,14 +571,17 @@ ArcanaApp.classSelector = {
   buildArcanaSkillRules(activeSkills, passiveSkills) {
     const active = Array.from(new Set((activeSkills || []).map(skill => String(skill).trim()).filter(Boolean)));
     const passive = Array.from(new Set((passiveSkills || []).map(skill => String(skill).trim()).filter(Boolean)));
-    const byIndex = (source, indexes) => indexes.map(index => source[index]).filter(Boolean);
+    const letterIndex = letter => 'abcdefghijklmnopqrstuvwxyz'.indexOf(String(letter || '').trim().toLowerCase());
+    const byLetters = (source, letters) => letters
+      .map(letter => source[letterIndex(letter)])
+      .filter(Boolean);
 
     return {
       '성배': Array.from(new Set([...active, ...passive])),
-      '양피지': byIndex(active, [0, 2, 4, 6, 9, 10]),
-      '나침반': byIndex(active, [1, 3, 5, 7, 8, 6]),
-      '종': byIndex(passive, [0, 2, 4, 6, 8]),
-      '거울': byIndex(passive, [1, 3, 5, 7, 9]),
+      '양피지': byLetters(active, ['f', 'h', 'j', 'l', 'o', 'p']),
+      '나침반': byLetters(active, ['g', 'i', 'k', 'm', 'n', 'l']),
+      '종': byLetters(passive, ['f', 'h', 'j', 'l', 'n']),
+      '거울': byLetters(passive, ['g', 'i', 'k', 'm', 'o']),
       '천칭': Array.from(new Set([...active, ...passive]))
     };
   },
@@ -588,8 +593,12 @@ ArcanaApp.classSelector = {
     const allSkills = new Set([...(classData.active || []), ...(classData.passive || [])].map(skill => String(skill).trim()).filter(Boolean));
 
     return (state.arcanaTypes || []).reduce((map, arcanaName) => {
-      const source = dbMap[arcanaName] || dbMap[arcanaName === '거울' ? '겨울' : arcanaName] || ruleMap[arcanaName] || [];
-      map[arcanaName] = Array.from(new Set(source.map(skill => String(skill).trim()).filter(skill => skill && allSkills.has(skill))));
+      const legacyName = arcanaName === '거울' ? '겨울' : arcanaName;
+      const dbSource = dbMap[arcanaName] || dbMap[legacyName] || [];
+      const normalizedDb = Array.from(new Set(dbSource.map(skill => String(skill).trim()).filter(skill => skill && allSkills.has(skill))));
+      const ruleSource = ruleMap[arcanaName] || [];
+      const normalizedRule = Array.from(new Set(ruleSource.map(skill => String(skill).trim()).filter(skill => skill && allSkills.has(skill))));
+      map[arcanaName] = normalizedDb.length > 0 ? normalizedDb : normalizedRule;
       return map;
     }, {});
   },

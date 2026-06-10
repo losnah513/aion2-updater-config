@@ -854,3 +854,30 @@
     top: 46px !important;
   }
 }
+
+/* 수정사항_260610_08: 클래스 선택 버튼 위치 전환 / 우측 키노조 메뉴 제거 후 정렬 */
+body.arcana-has-selected-class .arcana-class-picker {
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
+  z-index: auto !important;
+}
+
+body.arcana-has-selected-class .arcana-refresh-notice {
+  margin-top: 5px !important;
+}
+
+body:not(.arcana-has-selected-class) .arcana-class-picker {
+  position: fixed !important;
+  top: 48px !important;
+  left: 50% !important;
+  right: auto !important;
+  z-index: 70 !important;
+  transform: translateX(-50%) !important;
+}
+
+body:not(.arcana-has-selected-class) .arcana-refresh-notice {
+  margin-top: 42px !important;
+}
