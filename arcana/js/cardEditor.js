@@ -41,7 +41,6 @@ ArcanaApp.cardEditor = {
         <div class="arcana-fog-writing">
           <strong>키노조 AI가</strong>
           <span>최적의 아르카나 세팅을 추천해드릴게요</span>
-          <small>정보를 저장한 뒤 추천 시작을 눌러주세요</small>
         </div>
       </div>
     `;

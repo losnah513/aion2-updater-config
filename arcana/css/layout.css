@@ -794,7 +794,7 @@
   }
 }
 
-/* ARC-0.2.05: 최초 진입 클래스 선택 CTA 강조 */
+/* 최초 진입 클래스 선택 CTA 강조 */
 .arcana-class-picker.is-initial-cta {
   position: absolute;
   left: 50%;

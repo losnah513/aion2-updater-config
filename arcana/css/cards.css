@@ -988,7 +988,7 @@
   }
 }
 
-/* ARC-0.2.06_20260610_01: 고정 안내문구 / 반지 2분할 / 추천 CTA 1차 */
+/* 20260610_01: 고정 안내문구 / 반지 2분할 / 추천 CTA 1차 */
 .arcana-panel-message {
   display: flex;
   align-items: center;
@@ -1087,4 +1087,132 @@
 
 .arcana-recommend-section.is-recommend-locked {
   opacity: 1;
+}
+
+/* 20260610_02: 검수 리포트 반영 - 안내 영역/반지 2분할/추천 CTA 재정렬 */
+.arcana-panel-message {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: calc(100% - 14px);
+  min-height: 34px;
+  margin: -1px 7px 7px !important;
+  padding: 5px 8px;
+  border: 1px solid var(--arcana-line-soft);
+  border-radius: var(--arcana-radius);
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--arcana-muted);
+  font-size: 11px;
+  line-height: 1.45;
+  text-align: center;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  opacity: 1;
+  transition: color 0.16s ease, text-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+.arcana-panel-message:not(.is-default) {
+  color: var(--arcana-primary);
+  border-color: rgba(37, 99, 235, 0.22);
+  text-shadow: 0 0 10px rgba(37, 99, 235, 0.12);
+}
+
+.arcana-layout.is-class-locked .arcana-panel-message {
+  visibility: hidden;
+}
+
+.arcana-equipment-list-fixed,
+.arcana-equipment-list {
+  display: grid !important;
+  grid-template-columns: repeat(2, var(--arcana-card-width)) !important;
+  gap: 7px;
+  width: fit-content;
+  min-height: 0;
+}
+
+.arcana-equipment-card {
+  display: block !important;
+  width: var(--arcana-card-width);
+  animation: none !important;
+}
+
+.arcana-equipment-card[hidden] {
+  display: block !important;
+}
+
+.arcana-recommend-section .arcana-actions,
+.arcana-recommend-section .arcana-recommend-actions {
+  position: static !important;
+  z-index: auto;
+  top: auto;
+  left: auto;
+  transform: none !important;
+  display: flex;
+  justify-content: center;
+  margin: 7px 7px 0 !important;
+}
+
+.arcana-recommend-section .arcana-recommend-message {
+  margin-top: 6px !important;
+}
+
+.arcana-recommend-area {
+  min-height: 236px;
+  max-height: 236px;
+}
+
+.arcana-recommend-placeholder {
+  position: relative;
+  inset: auto;
+  min-height: 236px;
+}
+
+.arcana-fog-writing {
+  max-width: 78%;
+  line-height: 1.45;
+}
+
+#arcanaRunSimulation {
+  width: 96px;
+  height: 96px;
+  min-width: 96px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 900;
+  color: #fff;
+  background: linear-gradient(145deg, #2563eb, #1d4ed8);
+  border-color: rgba(37, 99, 235, 0.78);
+  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.25), 0 0 0 5px rgba(37, 99, 235, 0.08);
+}
+
+#arcanaRunSimulation.is-soft-disabled {
+  color: rgba(255, 255, 255, 0.82);
+  background: linear-gradient(145deg, #8fb0ee, #6f95df);
+  border-color: rgba(111, 149, 223, 0.72);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.13), 0 0 0 4px rgba(125, 159, 230, 0.1);
+  cursor: not-allowed;
+}
+
+@media (max-width: 720px) {
+  .arcana-panel-message {
+    min-height: 42px;
+    font-size: 10px;
+  }
+
+  .arcana-equipment-list-fixed,
+  .arcana-equipment-list {
+    grid-template-columns: repeat(2, minmax(130px, var(--arcana-card-width))) !important;
+  }
+
+  .arcana-recommend-area {
+    min-height: 220px;
+    max-height: 220px;
+  }
+
+  .arcana-recommend-placeholder {
+    min-height: 220px;
+  }
 }
