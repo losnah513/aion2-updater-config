@@ -51,13 +51,14 @@ ArcanaApp.customSelect = {
     dropdown.addEventListener('click', event => {
       const item = event.target.closest('.arcana-custom-select-item');
       if (!item) return;
+      if (item.disabled || item.classList.contains('is-disabled')) return;
 
       hiddenSelect.value = item.dataset.value || '';
       button.textContent = hiddenSelect.value || config.placeholder || '선택';
-      hiddenSelect.dispatchEvent(new Event('change', { bubbles: true }));
       dropdown.hidden = true;
       wrapper.classList.remove('is-open');
       renderOptions();
+      hiddenSelect.dispatchEvent(new Event('change', { bubbles: true }));
     });
 
     button.addEventListener('click', event => {
@@ -117,6 +118,26 @@ ArcanaApp.customSelect = {
 
       wrapper.classList.toggle('is-disabled', disabled);
       if (button) button.disabled = disabled;
+    });
+  },
+
+  setDisabledValues(select, disabledValues) {
+    if (!select) return;
+    const disabledSet = disabledValues instanceof Set ? disabledValues : new Set(disabledValues || []);
+    const wrapper = select.closest('.arcana-custom-select');
+
+    Array.from(select.options || []).forEach(option => {
+      const value = option.value || '';
+      option.disabled = Boolean(value && disabledSet.has(value));
+    });
+
+    if (!wrapper) return;
+    wrapper.querySelectorAll('.arcana-custom-select-item').forEach(item => {
+      const value = item.dataset.value || '';
+      const isDisabled = Boolean(value && disabledSet.has(value));
+      item.disabled = isDisabled;
+      item.classList.toggle('is-disabled', isDisabled);
+      item.setAttribute('aria-disabled', isDisabled ? 'true' : 'false');
     });
   }
 };

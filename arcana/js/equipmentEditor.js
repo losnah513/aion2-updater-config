@@ -30,12 +30,54 @@ ArcanaApp.equipmentEditor = {
       const card = ArcanaApp.equipmentEditor.createEquipmentCard(equipment);
       wrapper.appendChild(card);
     });
+
+    ArcanaApp.equipmentEditor.bindLiveUpdates(wrapper);
+    ArcanaApp.equipmentEditor.updateDuplicateSkillLocks(wrapper);
+    ArcanaApp.equipmentEditor.updateSaveButtonLabel();
   },
 
   toggleEquipment() {
     ArcanaApp.equipmentEditor.ensureDefaultEquipmentKeys();
     ArcanaApp.equipmentEditor.render();
   },
+
+  bindLiveUpdates(wrapper) {
+    if (!wrapper || wrapper.dataset.arcanaBound === 'true') return;
+    wrapper.dataset.arcanaBound = 'true';
+
+    wrapper.addEventListener('change', event => {
+      if (!event.target.matches('select[data-equipment]')) return;
+      ArcanaApp.equipmentEditor.updateDuplicateSkillLocks(wrapper);
+      ArcanaApp.equipmentEditor.updateSaveButtonLabel();
+    });
+  },
+
+  updateDuplicateSkillLocks(root) {
+    const wrapper = root || document.getElementById('arcanaEquipmentEditor');
+    if (!wrapper) return;
+
+    const selects = Array.from(wrapper.querySelectorAll('select[data-equipment]'));
+    const selected = selects
+      .map(select => String(select.value || '').trim())
+      .filter(Boolean);
+
+    selects.forEach(select => {
+      const currentValue = String(select.value || '').trim();
+      const disabledValues = new Set(selected.filter(skill => skill && skill !== currentValue));
+      ArcanaApp.customSelect.setDisabledValues(select, disabledValues);
+    });
+  },
+
+  updateSaveButtonLabel() {
+    const button = document.getElementById('arcanaSaveEquipment');
+    if (!button) return;
+
+    const hasSelectedSkill = Array.from(document.querySelectorAll('select[data-equipment]'))
+      .some(select => String(select.value || '').trim());
+
+    button.textContent = hasSelectedSkill ? '반지 옵션 저장' : '옵션 추천 받기';
+  },
+
 
   createEquipmentCard(equipment) {
     const card = document.createElement('article');

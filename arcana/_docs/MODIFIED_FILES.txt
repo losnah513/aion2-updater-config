@@ -1,17 +1,19 @@
-ARC-0.2.04_20260610_03
+ARC-0.2.04_20260610_04
 
 [이번 작업 요약]
-- 검수 리포트 기준으로 클래스 선택 전 블러 강도, 상단 3개 카드 크기 유지, 추천 시작 CTA 표시 방식을 재수정했습니다.
-- 추천 시작 후 버튼이 추천 결과를 가리지 않도록 숨김 처리했습니다.
-- 안내 문구가 여러 문장일 때 문장 단위 줄바꿈이 되도록 보강했습니다.
+- 검수 리포트 기준으로 미반영 UI와 선택 차단 로직을 실제 파일에 반영했습니다.
+- 반지/현재 아르카나 중복 스킬 선택은 안내만 하는 방식이 아니라 실제 선택 불가 상태로 처리했습니다.
+- 추천 아르카나 시작 전 CTA와 안내 문구 배치를 재정리했습니다.
 
 [실제 수정 파일]
+arcana/index.html
 arcana/css/cards.css
 arcana/js/app.js
-arcana/js/panelLock.js
+arcana/js/cardEditor.js
+arcana/js/customSelect.js
+arcana/js/equipmentEditor.js
 arcana/_docs/UPDATE_HISTORY.txt
 arcana/_docs/MODIFIED_FILES.txt
-AppsScript/_docs/SCRIPT_IMPORT_ORDER.txt
 
 [신규 파일]
 없음

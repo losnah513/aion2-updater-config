@@ -14,6 +14,9 @@ ArcanaApp.cardEditor = {
     ArcanaApp.state.arcanaTypes.forEach(arcanaName => {
       ownedGrid.appendChild(ArcanaApp.cardEditor.createOwnedCard(arcanaName));
     });
+
+    ArcanaApp.cardEditor.bindOwnedCardUpdates(ownedGrid);
+    ArcanaApp.cardEditor.updateOwnedDuplicateSkillLocks(ownedGrid);
   },
 
   renderRecommendationArea() {
@@ -35,13 +38,40 @@ ArcanaApp.cardEditor = {
     area.appendChild(ArcanaApp.cardEditor.createRecommendationContent());
   },
 
+
+
+  bindOwnedCardUpdates(wrapper) {
+    if (!wrapper || wrapper.dataset.arcanaBound === 'true') return;
+    wrapper.dataset.arcanaBound = 'true';
+
+    wrapper.addEventListener('change', event => {
+      if (!event.target.matches('select[data-arcana]')) return;
+      ArcanaApp.cardEditor.updateOwnedDuplicateSkillLocks(wrapper);
+    });
+  },
+
+  updateOwnedDuplicateSkillLocks(root) {
+    const wrapper = root || document.getElementById('arcanaOwnedCardGrid');
+    if (!wrapper) return;
+
+    wrapper.querySelectorAll('.arcana-owned-card[data-arcana]').forEach(card => {
+      const selects = Array.from(card.querySelectorAll('select[data-arcana]'));
+      const selected = selects
+        .map(select => String(select.value || '').trim())
+        .filter(Boolean);
+
+      selects.forEach(select => {
+        const currentValue = String(select.value || '').trim();
+        const disabledValues = new Set(selected.filter(skill => skill && skill !== currentValue));
+        ArcanaApp.customSelect.setDisabledValues(select, disabledValues);
+      });
+    });
+  },
+
   createRecommendationPlaceholder() {
     return `
-      <div class="arcana-recommend-placeholder">
-        <div class="arcana-fog-writing">
-          <strong>키노조 AI가</strong>
-          <span>최적의 아르카나 세팅을 추천해드릴게요</span>
-        </div>
+      <div class="arcana-recommend-placeholder" aria-hidden="true">
+        <div class="arcana-recommend-empty-glow"></div>
       </div>
     `;
   },
