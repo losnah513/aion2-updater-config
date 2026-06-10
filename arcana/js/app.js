@@ -5,7 +5,7 @@ ArcanaApp.app = {
     const data = await ArcanaApp.api.loadInitialData();
     const state = ArcanaApp.state;
 
-    state.version = ArcanaApp.config.version || 'ARC-0.2.05';
+    state.version = ArcanaApp.config.version || 'ARC-0.2.06';
     state.targetLevel = data.targetLevel || state.targetLevel;
     state.baseSkillLevel = data.baseSkillLevel || state.baseSkillLevel;
     state.devanionBonus = data.devanionBonus || state.devanionBonus;
@@ -27,11 +27,12 @@ ArcanaApp.app = {
     state.characterLevels = {};
     state.equipmentOptions = { ring1: [], ring2: [] };
     state.ringOptions = { ring1: [], ring2: [] };
-    state.selectedEquipmentKeys = [];
+    state.selectedEquipmentKeys = ['ring1', 'ring2'];
     state.recommendationCards = {};
     state.recommendationMeta = null;
     state.recommendationGenerated = false;
     state.recommendationTab = 'cards';
+    state.characterSkillsSaved = false;
 
     ArcanaApp.ui.renderAll();
     ArcanaApp.app.bindEvents();
@@ -54,7 +55,9 @@ ArcanaApp.app = {
       try {
         ArcanaApp.panelLock.setSaving('characterLevels', saveButton);
         await ArcanaApp.api.saveCharacterLevels({ selectedTargetSkills: ArcanaApp.state.selectedTargetSkills });
+        ArcanaApp.state.characterSkillsSaved = true;
         ArcanaApp.panelLock.setSaved('characterLevels', saveButton, '선택한 액티브 스킬이 저장되었어요. 다시 고르려면 초기화를 눌러주세요.');
+        ArcanaApp.app.updateRecommendationButtonState();
       } catch (error) {
         ArcanaApp.panelLock.unlock('characterLevels', saveButton);
         ArcanaApp.panelLock.showMessage('characterLevels', error.message);
@@ -64,10 +67,12 @@ ArcanaApp.app = {
     clearButton.addEventListener('click', () => {
       ArcanaApp.state.selectedTargetSkills = [];
       ArcanaApp.state.characterLevels = {};
+      ArcanaApp.state.characterSkillsSaved = false;
       ArcanaApp.api.clearCharacterLevels();
       ArcanaApp.skillSelector.render();
       ArcanaApp.panelLock.unlock('characterLevels', saveButton);
       ArcanaApp.app.resetRecommendation();
+      ArcanaApp.app.updateRecommendationButtonState();
     });
   },
 
@@ -95,7 +100,7 @@ ArcanaApp.app = {
     clearButton.addEventListener('click', () => {
       ArcanaApp.state.equipmentOptions = { ring1: [], ring2: [] };
       ArcanaApp.state.ringOptions = { ring1: [], ring2: [] };
-      ArcanaApp.state.selectedEquipmentKeys = [];
+      ArcanaApp.state.selectedEquipmentKeys = ['ring1', 'ring2'];
       ArcanaApp.api.clearEquipmentOptions();
       ArcanaApp.equipmentEditor.render();
       ArcanaApp.panelLock.unlock('equipmentOptions', saveButton);
@@ -132,7 +137,24 @@ ArcanaApp.app = {
 
   bindSimulation() {
     const button = document.getElementById('arcanaRunSimulation');
+    if (!button) return;
+
+    const lockedMessage = '먼저 액티브 스킬을 선택하고 저장을 눌러주세요.';
+    const showLockedMessage = () => {
+      if (!ArcanaApp.app.canRunRecommendation()) {
+        ArcanaApp.panelLock.showMessage('recommendArcanaCards', lockedMessage);
+      }
+    };
+
+    button.addEventListener('mouseenter', showLockedMessage);
+    button.addEventListener('touchstart', showLockedMessage, { passive: true });
+
     button.addEventListener('click', async () => {
+      if (!ArcanaApp.app.canRunRecommendation()) {
+        showLockedMessage();
+        return;
+      }
+
       try {
         ArcanaApp.state.equipmentOptions = ArcanaApp.equipmentEditor.collect();
         ArcanaApp.state.ringOptions = {
@@ -147,17 +169,40 @@ ArcanaApp.app = {
 
       button.disabled = true;
       button.dataset.originalText = button.dataset.originalText || button.textContent;
-      button.textContent = '추천 분석중';
+      button.textContent = '분석중';
 
-      await ArcanaApp.loadingOverlay.play('recommendArcanaCards', '키노조 AI가 분석 중입니다', () => {
+      await ArcanaApp.loadingOverlay.play('recommendArcanaCards', '아르카나가 저장한 스킬 흐름을 살펴보고 있어요.', () => {
         const result = ArcanaApp.recommendation.generate();
         ArcanaApp.ui.renderRecommendationResult(result);
       });
 
       button.disabled = false;
-      button.textContent = '다른 세팅 추천';
+      button.textContent = '다시 추천';
       ArcanaApp.panelLock.showMessage('recommendArcanaCards', '추천 결과가 준비되었어요. 탭을 눌러 분석과 조언을 확인해보세요.');
+      ArcanaApp.app.updateRecommendationButtonState();
     });
+
+    ArcanaApp.app.updateRecommendationButtonState();
+  },
+
+  canRunRecommendation() {
+    return Boolean(ArcanaApp.state.characterSkillsSaved && ArcanaApp.state.selectedTargetSkills.length > 0);
+  },
+
+  updateRecommendationButtonState() {
+    const button = document.getElementById('arcanaRunSimulation');
+    if (!button) return;
+
+    const canRun = ArcanaApp.app.canRunRecommendation();
+    button.classList.toggle('is-soft-disabled', !canRun);
+    button.setAttribute('aria-disabled', canRun ? 'false' : 'true');
+
+    if (!ArcanaApp.state.recommendationGenerated) {
+      ArcanaApp.panelLock.showMessage(
+        'recommendArcanaCards',
+        canRun ? '추천을 시작할 준비가 되었어요.' : '액티브 스킬을 저장하면 추천을 시작할 수 있어요.'
+      );
+    }
   },
 
   resetRecommendation() {
@@ -174,6 +219,7 @@ ArcanaApp.app = {
     }
 
     ArcanaApp.panelLock.showMessage('recommendArcanaCards', '');
+    ArcanaApp.app.updateRecommendationButtonState();
   }
 };
 

@@ -1,6 +1,13 @@
 window.ArcanaApp = window.ArcanaApp || {};
 
 ArcanaApp.panelLock = {
+
+  defaultMessages: {
+    characterLevels: '스킬을 선택하고 저장을 눌러주세요.',
+    equipmentOptions: '반지 스킬을 선택하고 저장을 눌러주세요.',
+    ownedArcanaCards: '보유 아르카나를 입력하고 저장을 눌러주세요.',
+    recommendArcanaCards: '액티브 스킬을 저장하면 추천을 시작할 수 있어요.'
+  },
   setSaving(panelKey, button) {
     const panel = ArcanaApp.panelLock.getPanel(panelKey);
     if (!panel) return;
@@ -55,7 +62,7 @@ ArcanaApp.panelLock = {
       clearButton.classList.remove('is-ready-reset');
     }
 
-    ArcanaApp.panelLock.showMessage(panelKey, '');
+    ArcanaApp.panelLock.showMessage(panelKey);
   },
 
   getPanel(panelKey) {
@@ -75,8 +82,10 @@ ArcanaApp.panelLock = {
     const messageEl = document.querySelector(`[data-message-for="${panelKey}"]`);
     if (!messageEl) return;
 
-    messageEl.textContent = message || '';
-    messageEl.classList.toggle('is-visible', Boolean(message));
+    const text = message || ArcanaApp.panelLock.defaultMessages[panelKey] || '';
+    messageEl.textContent = text;
+    messageEl.classList.toggle('is-visible', Boolean(text));
+    messageEl.classList.toggle('is-default', !message);
   },
 
   setPanelInputs(panel, disabled) {

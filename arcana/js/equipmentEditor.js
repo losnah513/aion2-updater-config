@@ -2,8 +2,13 @@ window.ArcanaApp = window.ArcanaApp || {};
 
 ArcanaApp.equipmentEditor = {
   render() {
+    ArcanaApp.equipmentEditor.ensureDefaultEquipmentKeys();
     ArcanaApp.equipmentEditor.renderToggleButtons();
     ArcanaApp.equipmentEditor.renderCards();
+  },
+
+  ensureDefaultEquipmentKeys() {
+    ArcanaApp.state.selectedEquipmentKeys = ArcanaApp.state.equipmentTypes.map(equipment => equipment.key);
   },
 
   renderToggleButtons() {
@@ -11,65 +16,24 @@ ArcanaApp.equipmentEditor = {
     if (!wrapper) return;
 
     wrapper.innerHTML = '';
-
-    ArcanaApp.state.equipmentTypes.forEach(equipment => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'arcana-equipment-toggle';
-      button.textContent = equipment.label;
-      button.dataset.equipmentKey = equipment.key;
-
-      if (ArcanaApp.state.selectedEquipmentKeys.includes(equipment.key)) {
-        button.classList.add('is-active');
-      }
-
-      button.addEventListener('click', () => {
-        ArcanaApp.equipmentEditor.toggleEquipment(equipment.key);
-      });
-
-      wrapper.appendChild(button);
-    });
+    wrapper.hidden = true;
   },
 
   renderCards() {
     const wrapper = document.getElementById('arcanaEquipmentEditor');
     if (!wrapper) return;
 
-    const selectedKeys = ArcanaApp.state.selectedEquipmentKeys;
+    ArcanaApp.equipmentEditor.ensureDefaultEquipmentKeys();
+    wrapper.innerHTML = '';
 
-    Array.from(wrapper.querySelectorAll('.arcana-equipment-card[data-equipment]')).forEach(card => {
-      if (!selectedKeys.includes(card.dataset.equipment)) {
-        card.remove();
-      }
+    ArcanaApp.state.equipmentTypes.forEach(equipment => {
+      const card = ArcanaApp.equipmentEditor.createEquipmentCard(equipment);
+      wrapper.appendChild(card);
     });
-
-    ArcanaApp.state.equipmentTypes
-      .filter(equipment => selectedKeys.includes(equipment.key))
-      .forEach(equipment => {
-        if (wrapper.querySelector(`.arcana-equipment-card[data-equipment="${equipment.key}"]`)) {
-          return;
-        }
-
-        const card = ArcanaApp.equipmentEditor.createEquipmentCard(equipment);
-        card.classList.add('is-opening');
-        wrapper.appendChild(card);
-        window.setTimeout(() => card.classList.remove('is-opening'), 240);
-      });
   },
 
-  toggleEquipment(equipmentKey) {
-    const panel = document.querySelector('[data-panel-key="equipmentOptions"]');
-    if (panel && panel.classList.contains('is-saved')) return;
-
-    const selected = ArcanaApp.state.selectedEquipmentKeys;
-    const index = selected.indexOf(equipmentKey);
-
-    if (index >= 0) {
-      selected.splice(index, 1);
-    } else {
-      selected.push(equipmentKey);
-    }
-
+  toggleEquipment() {
+    ArcanaApp.equipmentEditor.ensureDefaultEquipmentKeys();
     ArcanaApp.equipmentEditor.render();
   },
 

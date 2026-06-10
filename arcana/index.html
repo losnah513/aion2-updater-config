@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>아르카나 스킬 시뮬레이터 ARC-0.2.05</title>
+  <title>아르카나 스킬 시뮬레이터 ARC-0.2.06</title>
 
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/layout.css" />
@@ -23,7 +23,7 @@
 
       <div class="arcana-title-wrap">
         <h1>아르카나 스킬 시뮬레이터</h1>
-        <span class="arcana-version">ARC-0.2.05</span>
+        <span class="arcana-version">ARC-0.2.06</span>
       </div>
 
       <div class="arcana-topbar-actions">
@@ -58,7 +58,7 @@
             </div>
           </div>
           <div id="arcanaTargetSkillList" class="arcana-skill-grid arcana-skill-grid-two"></div>
-          <div class="arcana-panel-message" data-message-for="characterLevels"></div>
+          <div class="arcana-panel-message is-visible" data-message-for="characterLevels">스킬을 선택하고 저장을 눌러주세요.</div>
           <div class="arcana-actions arcana-actions-right">
             <button id="arcanaSaveCharacterLevels" class="arcana-btn arcana-btn-primary">스킬 선택 저장</button>
             <button id="arcanaClearCharacterLevels" class="arcana-btn arcana-btn-ghost">초기화</button>
@@ -72,9 +72,9 @@
               <span>반지를 선택하면 스킬 옵션을 입력할 수 있어요</span>
             </div>
           </div>
-          <div class="arcana-equipment-toggle-row" id="arcanaEquipmentToggleRow"></div>
-          <div id="arcanaEquipmentEditor" class="arcana-equipment-list"></div>
-          <div class="arcana-panel-message" data-message-for="equipmentOptions"></div>
+          <div class="arcana-equipment-toggle-row" id="arcanaEquipmentToggleRow" hidden></div>
+          <div id="arcanaEquipmentEditor" class="arcana-equipment-list arcana-equipment-list-fixed"></div>
+          <div class="arcana-panel-message is-visible" data-message-for="equipmentOptions">반지 스킬을 선택하고 저장을 눌러주세요.</div>
           <div class="arcana-actions arcana-actions-right">
             <button id="arcanaSaveEquipment" class="arcana-btn arcana-btn-primary">반지 옵션 저장</button>
             <button id="arcanaClearEquipment" class="arcana-btn arcana-btn-ghost">초기화</button>
@@ -110,7 +110,7 @@
               </div>
             </div>
             <div id="arcanaOwnedCardGrid" class="arcana-card-grid"></div>
-            <div class="arcana-panel-message" data-message-for="ownedArcanaCards"></div>
+            <div class="arcana-panel-message is-visible" data-message-for="ownedArcanaCards">보유 아르카나를 입력하고 저장을 눌러주세요.</div>
             <div class="arcana-actions arcana-actions-right">
               <button id="arcanaSaveOwnedCards" class="arcana-btn arcana-btn-primary">보유 아르카나 저장</button>
               <button id="arcanaClearOwnedCards" class="arcana-btn arcana-btn-ghost">초기화</button>
@@ -125,7 +125,7 @@
               </div>
             </div>
             <div id="arcanaRecommendArea" class="arcana-recommend-area"></div>
-            <div class="arcana-panel-message" data-message-for="recommendArcanaCards"></div>
+            <div class="arcana-panel-message is-visible" data-message-for="recommendArcanaCards">액티브 스킬을 저장하면 추천을 시작할 수 있어요.</div>
             <div class="arcana-actions arcana-actions-right">
               <button id="arcanaRunSimulation" class="arcana-btn arcana-btn-primary">추천 시작</button>
             </div>

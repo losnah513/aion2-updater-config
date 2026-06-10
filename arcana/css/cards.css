@@ -987,3 +987,104 @@
     min-width: 0;
   }
 }
+
+/* ARC-0.2.06_20260610_01: 고정 안내문구 / 반지 2분할 / 추천 CTA 1차 */
+.arcana-panel-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  margin-top: 6px;
+  padding: 4px 8px;
+  color: var(--arcana-muted);
+  font-size: 11px;
+  line-height: 1.45;
+  text-align: center;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  opacity: 1;
+  transition: color 0.16s ease, text-shadow 0.16s ease;
+}
+
+.arcana-panel-message.is-visible {
+  opacity: 1;
+}
+
+.arcana-panel-message:not(.is-default) {
+  color: var(--arcana-primary);
+  text-shadow: 0 0 10px rgba(37, 99, 235, 0.12);
+}
+
+.arcana-equipment-toggle-row[hidden] {
+  display: none !important;
+}
+
+.arcana-equipment-list-fixed,
+.arcana-equipment-list {
+  display: grid;
+  grid-template-columns: repeat(2, 150px);
+  gap: 7px;
+  width: fit-content;
+  min-height: 0;
+}
+
+.arcana-equipment-card {
+  animation: none !important;
+}
+
+.arcana-recommend-section {
+  position: relative;
+}
+
+.arcana-recommend-section .arcana-actions {
+  position: absolute;
+  z-index: 3;
+  top: 196px;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  justify-content: center;
+}
+
+#arcanaRunSimulation {
+  width: 86px;
+  height: 86px;
+  min-width: 86px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(145deg, #2563eb, #1d4ed8);
+  border-color: rgba(37, 99, 235, 0.7);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.22), 0 0 0 4px rgba(37, 99, 235, 0.08);
+}
+
+#arcanaRunSimulation.is-soft-disabled {
+  color: rgba(255, 255, 255, 0.78);
+  background: linear-gradient(145deg, #9fb8ed, #7d9fe6);
+  border-color: rgba(125, 159, 230, 0.72);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.12), 0 0 0 3px rgba(125, 159, 230, 0.1);
+  cursor: not-allowed;
+}
+
+#arcanaRunSimulation:not(.is-soft-disabled):hover {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+}
+
+@media (max-width: 720px) {
+  .arcana-equipment-list-fixed,
+  .arcana-equipment-list {
+    grid-template-columns: repeat(2, 150px);
+  }
+
+  .arcana-panel-message {
+    min-height: 40px;
+  }
+}
+
+.arcana-recommend-section.is-recommend-locked {
+  opacity: 1;
+}

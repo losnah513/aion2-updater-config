@@ -603,7 +603,7 @@ ArcanaApp.classSelector = {
 
     state.selectedTargetSkills = [];
     state.characterLevels = {};
-    state.selectedEquipmentKeys = [];
+    state.selectedEquipmentKeys = ['ring1', 'ring2'];
     state.equipmentOptions = { ring1: [], ring2: [] };
     state.ringOptions = { ring1: [], ring2: [] };
     state.ownedCards = {};
@@ -611,6 +611,7 @@ ArcanaApp.classSelector = {
     state.recommendationMeta = null;
     state.recommendationGenerated = false;
     state.recommendationTab = 'cards';
+    state.characterSkillsSaved = false;
   },
 
   clearSavedPanels() {

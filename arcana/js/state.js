@@ -1,7 +1,7 @@
 window.ArcanaApp = window.ArcanaApp || {};
 
 ArcanaApp.state = {
-  version: 'ARC-0.2.05',
+  version: 'ARC-0.2.06',
   targetLevel: 20,
   baseSkillLevel: 10,
   devanionBonus: 4,
@@ -26,7 +26,7 @@ ArcanaApp.state = {
     { key: 'ring1', label: '반지1', slots: 6 },
     { key: 'ring2', label: '반지2', slots: 6 }
   ],
-  selectedEquipmentKeys: [],
+  selectedEquipmentKeys: ['ring1', 'ring2'],
   equipmentOptions: {
     ring1: [],
     ring2: []
@@ -39,5 +39,6 @@ ArcanaApp.state = {
   recommendationCards: {},
   recommendationMeta: null,
   recommendationGenerated: false,
-  recommendationTab: 'cards'
+  recommendationTab: 'cards',
+  characterSkillsSaved: false
 };

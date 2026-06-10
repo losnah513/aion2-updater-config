@@ -1,22 +1,23 @@
-ARC-0.2.05
+ARC-0.2.06_20260610_01
 
 [이번 작업 요약]
-- 프론트엔드 버전 표기를 ARC-0.2.05로 갱신했습니다.
-- class_skill_db 로딩은 Apps Script 수정 사항입니다.
+- 공통 안내 문구 영역 고정.
+- 반지 스킬 옵션 2분할 고정 표시.
+- 추천 시작 버튼 위치/형태/실행 조건 수정.
 
 [실제 수정 파일]
 arcana/index.html
-arcana/js/api.js
+arcana/css/cards.css
 arcana/js/app.js
-arcana/js/config.js
+arcana/js/equipmentEditor.js
+arcana/js/panelLock.js
 arcana/js/state.js
+arcana/js/config.js
 arcana/data/config.json
-arcana/README.txt
 arcana/_docs/UPDATE_HISTORY.txt
 arcana/_docs/MODIFIED_FILES.txt
 AppsScript/ARC_Constants.gs
 AppsScript/ARC_DBService.gs
-AppsScript/ARC_RecommendationService.gs
 AppsScript/_docs/UPDATE_HISTORY.txt
 AppsScript/_docs/MODIFIED_FILES.txt
 
@@ -29,4 +30,3 @@ AppsScript/_docs/MODIFIED_FILES.txt
 [Apps Script 교체 필요]
 ARC_Constants.gs
 ARC_DBService.gs
-ARC_RecommendationService.gs
