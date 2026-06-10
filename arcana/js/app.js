@@ -179,7 +179,7 @@ ArcanaApp.app = {
       button.dataset.originalText = button.dataset.originalText || button.textContent;
       button.textContent = '분석중';
       button.classList.add('is-vanishing');
-      await new Promise(resolve => window.setTimeout(resolve, 260));
+      await new Promise(resolve => window.setTimeout(resolve, 460));
       button.hidden = true;
 
       await ArcanaApp.loadingOverlay.play('recommendArcanaCards', '아르카나가 저장한 스킬 흐름을 살펴보고 있어요.', () => {

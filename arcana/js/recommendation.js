@@ -5,11 +5,7 @@ ArcanaApp.recommendation = {
     const state = ArcanaApp.state;
     const baseLevels = ArcanaApp.simulator.calculateBaseLevels();
     const needMap = ArcanaApp.recommendation.createNeedMap(baseLevels);
-    const recommendationCards = {};
-
-    state.arcanaTypes.forEach(arcanaName => {
-      recommendationCards[arcanaName] = ArcanaApp.recommendation.buildCard(arcanaName, needMap);
-    });
+    const recommendationCards = ArcanaApp.recommendation.buildRecommendationSet(needMap);
 
     const meta = ArcanaApp.recommendation.buildMeta(recommendationCards, baseLevels);
     state.recommendationCards = recommendationCards;
@@ -30,19 +26,107 @@ ArcanaApp.recommendation = {
     return needMap;
   },
 
-  buildCard(arcanaName, needMap) {
+  buildRecommendationSet(needMap) {
     const state = ArcanaApp.state;
-    const availableSkills = state.skillsByArcana[arcanaName] || [];
-    const targetCandidates = state.selectedTargetSkills
-      .filter(skill => availableSkills.includes(skill))
-      .filter(skill => Number(needMap[skill] || 0) > 0)
-      .slice(0, 4);
+    const cards = {};
+    const workingNeed = { ...needMap };
+    const usage = {};
 
-    const slots = targetCandidates.map(skill => ({ skill, level: 1, isTarget: true }));
-
-    slots.forEach(slot => {
-      needMap[slot.skill] = Math.max(0, Number(needMap[slot.skill] || 0) - 1);
+    state.arcanaTypes.forEach(arcanaName => {
+      cards[arcanaName] = [];
+      usage[arcanaName] = { growth: 0 };
     });
+
+    const targetSkills = (state.selectedTargetSkills || []).slice();
+    const sortedTargets = targetSkills.sort((a, b) => {
+      const aArcana = ArcanaApp.recommendation.getAvailableArcanaForSkill(a).length || 99;
+      const bArcana = ArcanaApp.recommendation.getAvailableArcanaForSkill(b).length || 99;
+      if (aArcana !== bArcana) return aArcana - bArcana;
+      return Number(workingNeed[b] || 0) - Number(workingNeed[a] || 0);
+    });
+
+    sortedTargets.forEach(skill => {
+      ArcanaApp.recommendation.allocateSkillAcrossCards(skill, workingNeed, cards, usage, 3);
+    });
+
+    sortedTargets.forEach(skill => {
+      ArcanaApp.recommendation.allocateSkillAcrossCards(skill, workingNeed, cards, usage, 4);
+    });
+
+    state.arcanaTypes.forEach(arcanaName => {
+      ArcanaApp.recommendation.fillCardSlots(arcanaName, cards[arcanaName]);
+    });
+
+    return cards;
+  },
+
+  getAvailableArcanaForSkill(skill) {
+    const state = ArcanaApp.state;
+    return (state.arcanaTypes || []).filter(arcanaName => {
+      const pool = state.skillsByArcana[arcanaName] || [];
+      return pool.includes(skill);
+    });
+  },
+
+  allocateSkillAcrossCards(skill, needMap, cards, usage, preferredMaxLevel) {
+    let guard = 0;
+
+    while (Number(needMap[skill] || 0) > 0 && guard < 30) {
+      guard += 1;
+      const candidate = ArcanaApp.recommendation.findBestCardForSkill(skill, cards, usage, preferredMaxLevel);
+      if (!candidate) break;
+
+      const cardSlots = cards[candidate.arcanaName];
+      let slot = cardSlots.find(item => item.skill === skill);
+
+      if (!slot) {
+        if (cardSlots.length >= 4) break;
+        slot = { skill, level: 1, isTarget: true };
+        cardSlots.push(slot);
+        needMap[skill] = Math.max(0, Number(needMap[skill] || 0) - 1);
+        if (Number(needMap[skill] || 0) <= 0) break;
+      }
+
+      if (Number(slot.level || 0) >= preferredMaxLevel) continue;
+      if (Number(usage[candidate.arcanaName].growth || 0) >= ArcanaApp.state.maxCardLevel) continue;
+
+      slot.level += 1;
+      usage[candidate.arcanaName].growth += 1;
+      needMap[skill] = Math.max(0, Number(needMap[skill] || 0) - 1);
+    }
+  },
+
+  findBestCardForSkill(skill, cards, usage, preferredMaxLevel) {
+    const state = ArcanaApp.state;
+    const candidates = ArcanaApp.recommendation.getAvailableArcanaForSkill(skill)
+      .map(arcanaName => {
+        const slots = cards[arcanaName] || [];
+        const existing = slots.find(slot => slot.skill === skill);
+        const hasSlotRoom = slots.length < 4;
+        const hasGrowthRoom = Number(usage[arcanaName].growth || 0) < state.maxCardLevel;
+        const canUseExisting = existing && Number(existing.level || 0) < preferredMaxLevel && hasGrowthRoom;
+        const canAdd = !existing && hasSlotRoom;
+
+        if (!canUseExisting && !canAdd) return null;
+
+        return {
+          arcanaName,
+          existing,
+          score:
+            (existing ? 100 : 0) +
+            (hasGrowthRoom ? 20 : 0) -
+            (slots.length * 2) -
+            Number(usage[arcanaName].growth || 0)
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.score - a.score);
+
+    return candidates[0] || null;
+  },
+
+  fillCardSlots(arcanaName, slots) {
+    const availableSkills = ArcanaApp.state.skillsByArcana[arcanaName] || [];
 
     availableSkills.forEach(skill => {
       if (slots.length >= 4) return;
@@ -50,43 +134,11 @@ ArcanaApp.recommendation = {
       slots.push({ skill, level: 1, isTarget: false });
     });
 
-    let growthPoint = state.maxCardLevel;
-    growthPoint = ArcanaApp.recommendation.distributeGrowth(slots, needMap, growthPoint, 3);
-    growthPoint = ArcanaApp.recommendation.distributeGrowth(slots, needMap, growthPoint, 4);
-
     while (slots.length < 4) {
       slots.push({ skill: '', level: 0, isTarget: false });
     }
 
-    return slots.map(slot => ({ skill: slot.skill, level: slot.level || 0 }));
-  },
-
-  distributeGrowth(slots, needMap, growthPoint, maxLevel) {
-    let changed = true;
-
-    while (growthPoint > 0 && changed) {
-      changed = false;
-
-      const targets = slots
-        .filter(slot => slot.isTarget)
-        .filter(slot => slot.skill)
-        .filter(slot => Number(needMap[slot.skill] || 0) > 0)
-        .filter(slot => Number(slot.level || 0) < maxLevel)
-        .sort((a, b) => Number(needMap[b.skill] || 0) - Number(needMap[a.skill] || 0));
-
-      for (const slot of targets) {
-        if (growthPoint <= 0) break;
-        if (Number(needMap[slot.skill] || 0) <= 0) continue;
-        if (Number(slot.level || 0) >= maxLevel) continue;
-
-        slot.level += 1;
-        needMap[slot.skill] = Math.max(0, Number(needMap[slot.skill] || 0) - 1);
-        growthPoint -= 1;
-        changed = true;
-      }
-    }
-
-    return growthPoint;
+    slots.splice(4);
   },
 
   buildMeta(cards, baseLevels) {
