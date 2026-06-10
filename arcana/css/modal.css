@@ -304,7 +304,7 @@
   }
 }
 
-/* ARC-0.2.04: 클래스 카드 뒷면/모바일 터치 확인 힌트/전체 로딩 오버레이 */
+/* ARC-0.2.05: 클래스 카드 뒷면/모바일 터치 확인 힌트/전체 로딩 오버레이 */
 .arcana-showcase-card-inner {
   position: relative;
   transform-style: preserve-3d;

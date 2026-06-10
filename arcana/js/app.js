@@ -5,7 +5,7 @@ ArcanaApp.app = {
     const data = await ArcanaApp.api.loadInitialData();
     const state = ArcanaApp.state;
 
-    state.version = ArcanaApp.config.version || 'ARC-0.2.04';
+    state.version = ArcanaApp.config.version || 'ARC-0.2.05';
     state.targetLevel = data.targetLevel || state.targetLevel;
     state.baseSkillLevel = data.baseSkillLevel || state.baseSkillLevel;
     state.devanionBonus = data.devanionBonus || state.devanionBonus;
