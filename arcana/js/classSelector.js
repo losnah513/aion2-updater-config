@@ -565,7 +565,7 @@ ArcanaApp.classSelector = {
   getArcanaSkillRuleSpecs() {
     return {
       '양피지': { type: 'active', letters: ['f', 'h', 'j', 'l', 'o', 'p'], expectedCount: 6 },
-      '나침반': { type: 'active', letters: ['g', 'i', 'k', 'm', 'n', 'l'], expectedCount: 6 },
+      '나침반': { type: 'active', letters: ['g', 'i', 'k', 'm', 'n', 'q'], expectedCount: 6 },
       '종': { type: 'passive', letters: ['f', 'h', 'j', 'l', 'n'], expectedCount: 5 },
       '거울': { type: 'passive', letters: ['g', 'i', 'k', 'm', 'o'], expectedCount: 5 }
     };
@@ -635,7 +635,10 @@ ArcanaApp.classSelector = {
       const normalizedDb = Array.from(new Set(dbSource.map(skill => String(skill).trim()).filter(skill => skill && allSkills.has(skill))));
       const ruleSource = ruleMap[arcanaName] || [];
       const normalizedRule = Array.from(new Set(ruleSource.map(skill => String(skill).trim()).filter(skill => skill && allSkills.has(skill))));
-      const source = strictRuleSpecs[arcanaName] ? normalizedRule : (normalizedDb.length > 0 ? normalizedDb : normalizedRule);
+      const isStrictArcana = Boolean(strictRuleSpecs[arcanaName]);
+      const source = isStrictArcana
+        ? (normalizedDb.length > 0 ? normalizedDb : normalizedRule)
+        : (normalizedDb.length > 0 ? normalizedDb : normalizedRule);
       map[arcanaName] = ArcanaApp.classSelector.validateArcanaSkillPool(arcanaName, source);
       return map;
     }, {});

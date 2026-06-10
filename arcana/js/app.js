@@ -205,15 +205,16 @@ ArcanaApp.app = {
       button.disabled = true;
       button.dataset.originalText = button.dataset.originalText || button.textContent;
       button.textContent = '분석중';
-      button.classList.add('is-vanishing', 'is-loading');
-      await new Promise(resolve => window.setTimeout(resolve, 460));
-      button.hidden = true;
+      const recommendPanel = document.querySelector('[data-panel-key="recommendArcanaCards"]');
+      if (recommendPanel) recommendPanel.classList.add('is-cta-loading');
+      button.classList.add('is-loading');
 
       await ArcanaApp.loadingOverlay.play('recommendArcanaCards', '아르카나가 저장한 스킬 흐름을 살펴보고 있어요.', () => {
         const result = ArcanaApp.recommendation.generate();
         ArcanaApp.ui.renderRecommendationResult(result);
       });
 
+      if (recommendPanel) recommendPanel.classList.remove('is-cta-loading');
       button.hidden = false;
       button.disabled = false;
       button.textContent = '추천 시작';

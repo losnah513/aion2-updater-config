@@ -666,3 +666,64 @@
     transform: translate(-50%, -50%) rotateX(0deg) rotateY(0deg) scale(1.25) !important;
   }
 }
+
+/* 수정사항_260610_10: 클래스 선택 카드 위치/투명도/하단 버튼 보정 */
+.arcana-showcase-stage {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.arcana-showcase-ring-wrap {
+  margin-top: -2px !important;
+  height: 236px !important;
+}
+
+.arcana-showcase-buttons {
+  margin-top: auto !important;
+  padding-top: 12px !important;
+}
+
+.arcana-showcase-actions {
+  margin-top: 10px !important;
+  padding-bottom: 16px !important;
+}
+
+.arcana-showcase-card,
+.arcana-showcase-card.is-selected,
+.arcana-showcase-card.is-hovered {
+  opacity: 1 !important;
+}
+
+.arcana-showcase-card.is-selected,
+.arcana-class-showcase.is-picked .arcana-showcase-card.is-selected {
+  background: linear-gradient(145deg, #ffffff, #f7faff) !important;
+  filter: saturate(1.12) brightness(1.04) !important;
+  opacity: 1 !important;
+}
+
+.arcana-showcase-card.is-selected .arcana-showcase-card-inner,
+.arcana-showcase-card.is-selected .arcana-showcase-card-face,
+.arcana-showcase-card.is-selected .arcana-showcase-card-front {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+.arcana-showcase-card.is-falling {
+  opacity: 0.38 !important;
+  pointer-events: auto !important;
+}
+
+@media (max-width: 720px) {
+  .arcana-showcase-stage {
+    min-height: 510px !important;
+  }
+
+  .arcana-showcase-buttons {
+    grid-template-columns: repeat(4, minmax(58px, 1fr)) !important;
+    width: calc(100% - 26px) !important;
+  }
+
+  .arcana-showcase-actions {
+    padding-bottom: 14px !important;
+  }
+}
