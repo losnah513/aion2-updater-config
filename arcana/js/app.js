@@ -47,6 +47,16 @@ ArcanaApp.app = {
     ArcanaApp.app.bindSimulation();
   },
 
+  isTouchMode() {
+    return ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+  },
+
+  clearRecommendationTouchPreview() {
+    const button = document.getElementById('arcanaRunSimulation');
+    ArcanaApp.state.recommendationTouchArmed = false;
+    if (button) button.classList.remove('is-touch-preview');
+  },
+
   bindCharacterSave() {
     const saveButton = document.getElementById('arcanaSaveCharacterLevels');
     const clearButton = document.getElementById('arcanaClearCharacterLevels');
@@ -157,11 +167,28 @@ ArcanaApp.app = {
     button.addEventListener('mouseenter', showLockedMessage);
     button.addEventListener('touchstart', showLockedMessage, { passive: true });
 
-    button.addEventListener('click', async () => {
+    document.addEventListener('click', event => {
+      if (!ArcanaApp.state.recommendationTouchArmed) return;
+      if (button.contains(event.target)) return;
+      ArcanaApp.app.clearRecommendationTouchPreview();
+      ArcanaApp.panelLock.showMessage('recommendArcanaCards', '추천 실행을 취소했어요.');
+    });
+
+    button.addEventListener('click', async event => {
       if (!ArcanaApp.app.canRunRecommendation()) {
         showLockedMessage();
         return;
       }
+
+      if (ArcanaApp.app.isTouchMode() && !ArcanaApp.state.recommendationTouchArmed) {
+        event.preventDefault();
+        ArcanaApp.state.recommendationTouchArmed = true;
+        button.classList.add('is-touch-preview');
+        ArcanaApp.panelLock.showMessage('recommendArcanaCards', '한 번 더 터치하면 추천 계산을 시작합니다. 다른 곳을 터치하면 취소됩니다.');
+        return;
+      }
+
+      ArcanaApp.app.clearRecommendationTouchPreview();
 
       try {
         ArcanaApp.state.equipmentOptions = ArcanaApp.equipmentEditor.collect();
@@ -178,7 +205,7 @@ ArcanaApp.app = {
       button.disabled = true;
       button.dataset.originalText = button.dataset.originalText || button.textContent;
       button.textContent = '분석중';
-      button.classList.add('is-vanishing');
+      button.classList.add('is-vanishing', 'is-loading');
       await new Promise(resolve => window.setTimeout(resolve, 460));
       button.hidden = true;
 
@@ -190,8 +217,7 @@ ArcanaApp.app = {
       button.hidden = false;
       button.disabled = false;
       button.textContent = '추천 시작';
-      button.classList.remove('is-vanishing');
-      button.classList.remove('is-vanishing');
+      button.classList.remove('is-vanishing', 'is-loading');
       button.hidden = true;
       ArcanaApp.panelLock.showMessage('recommendArcanaCards', ArcanaApp.state.recommendationMeta && ArcanaApp.state.recommendationMeta.ok === false ? '현재 조건에서는 20레벨 달성 조합을 찾지 못했어요. 분석 탭에서 부족 스킬을 확인해주세요.' : '추천 결과가 준비되었어요. 탭을 눌러 분석과 조언을 확인해보세요.');
       ArcanaApp.app.updateRecommendationButtonState();
@@ -254,7 +280,7 @@ ArcanaApp.app = {
       button.hidden = false;
       button.disabled = false;
       button.textContent = '추천 시작';
-      button.classList.remove('is-vanishing');
+      button.classList.remove('is-vanishing', 'is-loading', 'is-touch-preview');
     }
 
     ArcanaApp.panelLock.showMessage('recommendArcanaCards', '');

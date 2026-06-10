@@ -556,3 +556,113 @@
       rotateY(calc(-360deg / var(--arcana-card-count) * var(--arcana-card-index)));
   }
 }
+
+/* 수정사항_260610_09: 클래스 선택 화면 시점/카드 선택 연출/뒷면 반전 방지 */
+.arcana-showcase-stage {
+  min-height: 500px !important;
+  justify-content: start !important;
+}
+
+.arcana-showcase-copy {
+  margin-bottom: 4px !important;
+}
+
+.arcana-showcase-ring-wrap {
+  height: 230px !important;
+  margin-top: -12px !important;
+  perspective: 980px !important;
+  transform: translateY(-10px) rotateX(58deg) !important;
+  transform-style: preserve-3d !important;
+}
+
+.arcana-showcase-ring {
+  top: 38% !important;
+  transform-style: preserve-3d !important;
+  animation-duration: 14s !important;
+}
+
+.arcana-showcase-card-inner {
+  animation: none !important;
+  transform: rotateY(0deg) !important;
+  backface-visibility: hidden !important;
+}
+
+.arcana-showcase-card-face,
+.arcana-showcase-card-front,
+.arcana-showcase-card-back {
+  backface-visibility: hidden !important;
+  -webkit-backface-visibility: hidden !important;
+}
+
+.arcana-showcase-card-back {
+  display: none !important;
+}
+
+.arcana-showcase-card {
+  opacity: 1 !important;
+  transform:
+    rotateY(calc(360deg / var(--arcana-card-count) * var(--arcana-card-index)))
+    translateZ(200px)
+    translateY(0)
+    rotateY(calc(-360deg / var(--arcana-card-count) * var(--arcana-card-index)))
+    rotateX(-58deg) !important;
+  transition:
+    transform 0.62s cubic-bezier(.18,1.24,.28,1),
+    opacity 0.32s ease,
+    filter 0.32s ease,
+    box-shadow 0.32s ease !important;
+}
+
+.arcana-showcase-card.is-hovered {
+  opacity: 1 !important;
+  transform:
+    rotateY(calc(360deg / var(--arcana-card-count) * var(--arcana-card-index)))
+    translateZ(210px)
+    translateY(-18px)
+    rotateY(calc(-360deg / var(--arcana-card-count) * var(--arcana-card-index)))
+    rotateX(-58deg)
+    scale(1.08) !important;
+}
+
+.arcana-class-showcase.is-picked .arcana-showcase-ring {
+  animation: none !important;
+  transform: none !important;
+}
+
+.arcana-showcase-card.is-selected {
+  left: 50% !important;
+  top: 44% !important;
+  z-index: 40 !important;
+  opacity: 1 !important;
+  filter: saturate(1.08) brightness(1.03) !important;
+  pointer-events: auto !important;
+  transform: translate(-50%, -50%) rotateX(0deg) rotateY(0deg) scale(1.42) !important;
+  box-shadow: 0 24px 58px rgba(37, 99, 235, 0.26) !important;
+}
+
+.arcana-showcase-card.is-falling {
+  pointer-events: auto !important;
+  opacity: 0.58 !important;
+  filter: saturate(0.72) blur(0.2px) !important;
+  z-index: 2 !important;
+  transform:
+    rotateY(calc(360deg / var(--arcana-card-count) * var(--arcana-card-index)))
+    translateZ(86px)
+    translateY(24px)
+    rotateY(calc(-360deg / var(--arcana-card-count) * var(--arcana-card-index)))
+    rotateX(-58deg)
+    scale(0.64) !important;
+}
+
+@media (max-width: 720px) {
+  .arcana-showcase-ring-wrap {
+    height: 220px !important;
+    margin-top: -8px !important;
+    transform: translateY(-4px) rotateX(54deg) !important;
+  }
+
+  .arcana-showcase-card.is-selected {
+    top: 43% !important;
+    transform: translate(-50%, -50%) rotateX(0deg) rotateY(0deg) scale(1.25) !important;
+  }
+}

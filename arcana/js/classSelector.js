@@ -169,14 +169,8 @@ ArcanaApp.classSelector = {
   openPicker() {
     const state = ArcanaApp.state;
 
-    if (!state.hasSelectedClass && !state.hasSeenClassShowcase) {
-      ArcanaApp.classSelector.openShowcase();
-      return;
-    }
-
-    state.pendingClassKey = state.currentClassKey || '';
-    ArcanaApp.classSelector.renderCompactClassList();
-    ArcanaApp.classSelector.open();
+    state.pendingClassKey = state.hasSelectedClass ? state.currentClassKey : '';
+    ArcanaApp.classSelector.openShowcase();
   },
 
   toggle() {
@@ -371,7 +365,7 @@ ArcanaApp.classSelector = {
 
   handleShowcaseChoice(classKey, targetElement) {
     const showcase = document.getElementById('arcanaClassShowcase');
-    if (!showcase || showcase.classList.contains('is-picked')) return;
+    if (!showcase) return;
 
     if (ArcanaApp.classSelector.isTouchMode()) {
       const previewKey = ArcanaApp.state.touchPreviewClassKey || '';
@@ -429,7 +423,7 @@ ArcanaApp.classSelector = {
 
   hoverShowcaseClass(classKey) {
     const showcase = document.getElementById('arcanaClassShowcase');
-    if (!showcase || showcase.classList.contains('is-picked')) return;
+    if (!showcase) return;
 
     showcase.querySelectorAll('.arcana-showcase-card').forEach(card => {
       card.classList.toggle('is-hovered', card.dataset.classKey === classKey);
@@ -443,7 +437,7 @@ ArcanaApp.classSelector = {
   pickShowcaseClass(classKey) {
     const state = ArcanaApp.state;
     const showcase = document.getElementById('arcanaClassShowcase');
-    if (!showcase || showcase.classList.contains('is-picked')) return;
+    if (!showcase) return;
 
     const nextKey = ArcanaApp.classSelector.normalizeClassKey(classKey);
     state.pendingClassKey = nextKey;
@@ -568,22 +562,64 @@ ArcanaApp.classSelector = {
   },
 
 
+  getArcanaSkillRuleSpecs() {
+    return {
+      '양피지': { type: 'active', letters: ['f', 'h', 'j', 'l', 'o', 'p'], expectedCount: 6 },
+      '나침반': { type: 'active', letters: ['g', 'i', 'k', 'm', 'n', 'l'], expectedCount: 6 },
+      '종': { type: 'passive', letters: ['f', 'h', 'j', 'l', 'n'], expectedCount: 5 },
+      '거울': { type: 'passive', letters: ['g', 'i', 'k', 'm', 'o'], expectedCount: 5 }
+    };
+  },
+
   buildArcanaSkillRules(activeSkills, passiveSkills) {
     const active = Array.from(new Set((activeSkills || []).map(skill => String(skill).trim()).filter(Boolean)));
     const passive = Array.from(new Set((passiveSkills || []).map(skill => String(skill).trim()).filter(Boolean)));
     const letterIndex = letter => 'abcdefghijklmnopqrstuvwxyz'.indexOf(String(letter || '').trim().toLowerCase());
-    const byLetters = (source, letters) => letters
+    const byLetters = (source, letters) => (letters || [])
       .map(letter => source[letterIndex(letter)])
       .filter(Boolean);
 
-    return {
+    const specs = ArcanaApp.classSelector.getArcanaSkillRuleSpecs();
+    const map = {
       '성배': Array.from(new Set([...active, ...passive])),
-      '양피지': byLetters(active, ['f', 'h', 'j', 'l', 'o', 'p']),
-      '나침반': byLetters(active, ['g', 'i', 'k', 'm', 'n', 'l']),
-      '종': byLetters(passive, ['f', 'h', 'j', 'l', 'n']),
-      '거울': byLetters(passive, ['g', 'i', 'k', 'm', 'o']),
       '천칭': Array.from(new Set([...active, ...passive]))
     };
+
+    Object.keys(specs).forEach(arcanaName => {
+      const spec = specs[arcanaName];
+      const source = spec.type === 'passive' ? passive : active;
+      map[arcanaName] = byLetters(source, spec.letters);
+    });
+
+    return map;
+  },
+
+  validateArcanaSkillPool(arcanaName, pool, skillType) {
+    const specs = ArcanaApp.classSelector.getArcanaSkillRuleSpecs();
+    const spec = specs[arcanaName];
+    const normalizedPool = Array.from(new Set((pool || []).map(skill => String(skill).trim()).filter(Boolean)));
+
+    if (!spec) return normalizedPool;
+
+    const activeSet = new Set((ArcanaApp.state.activeSkills || []).map(skill => String(skill).trim()).filter(Boolean));
+    const passiveSet = new Set((ArcanaApp.state.passiveSkills || []).map(skill => String(skill).trim()).filter(Boolean));
+    const expectedSet = spec.type === 'passive' ? passiveSet : activeSet;
+    const wrongTypeSet = spec.type === 'passive' ? activeSet : passiveSet;
+    const typeSafePool = normalizedPool.filter(skill => expectedSet.has(skill) && !wrongTypeSet.has(skill));
+    const isValid = typeSafePool.length === spec.expectedCount;
+
+    if (!isValid) {
+      console.warn('[Arcana] 스킬 pool 검증 실패:', {
+        arcanaName,
+        expectedType: spec.type,
+        expectedCount: spec.expectedCount,
+        actualCount: typeSafePool.length,
+        pool: typeSafePool
+      });
+      return [];
+    }
+
+    return typeSafePool;
   },
 
   normalizeArcanaSkillMap(classData) {
@@ -591,6 +627,7 @@ ArcanaApp.classSelector = {
     const ruleMap = ArcanaApp.classSelector.buildArcanaSkillRules(classData.active || [], classData.passive || []);
     const dbMap = classData.arcanaSkills || {};
     const allSkills = new Set([...(classData.active || []), ...(classData.passive || [])].map(skill => String(skill).trim()).filter(Boolean));
+    const strictRuleSpecs = ArcanaApp.classSelector.getArcanaSkillRuleSpecs();
 
     return (state.arcanaTypes || []).reduce((map, arcanaName) => {
       const legacyName = arcanaName === '거울' ? '겨울' : arcanaName;
@@ -598,7 +635,8 @@ ArcanaApp.classSelector = {
       const normalizedDb = Array.from(new Set(dbSource.map(skill => String(skill).trim()).filter(skill => skill && allSkills.has(skill))));
       const ruleSource = ruleMap[arcanaName] || [];
       const normalizedRule = Array.from(new Set(ruleSource.map(skill => String(skill).trim()).filter(skill => skill && allSkills.has(skill))));
-      map[arcanaName] = normalizedDb.length > 0 ? normalizedDb : normalizedRule;
+      const source = strictRuleSpecs[arcanaName] ? normalizedRule : (normalizedDb.length > 0 ? normalizedDb : normalizedRule);
+      map[arcanaName] = ArcanaApp.classSelector.validateArcanaSkillPool(arcanaName, source);
       return map;
     }, {});
   },

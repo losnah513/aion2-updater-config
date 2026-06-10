@@ -2257,3 +2257,139 @@
   72% { transform: scale(0.84); opacity: 0.88; }
   100% { transform: scale(0.84); opacity: 0; }
 }
+
+/* 수정사항_260610_09: 추천 CTA 대기/Hover/모바일 1차 터치/Loading 파동 연출 */
+#arcanaRunSimulation.arcana-kinojo-cta,
+#arcanaRunSimulation {
+  position: relative !important;
+  isolation: isolate !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 148px !important;
+  min-height: 48px !important;
+  padding: 0 24px !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(56, 101, 255, 0.34) !important;
+  background: rgba(255, 255, 255, 0.94) !important;
+  color: #1d2b53 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+  transform: translateZ(0) !important;
+  transition: transform 0.22s ease, border-color 0.35s ease, color 0.35s ease, background 0.35s ease !important;
+}
+
+#arcanaRunSimulation.arcana-kinojo-cta::before,
+#arcanaRunSimulation.arcana-kinojo-cta::after,
+#arcanaRunSimulation::before,
+#arcanaRunSimulation::after {
+  content: '' !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 210% !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 50% !important;
+  transform: translate(-50%, -50%) scale(0.56) !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+}
+
+#arcanaRunSimulation.arcana-kinojo-cta::before,
+#arcanaRunSimulation::before {
+  border: 1px solid rgba(80, 116, 255, 0.18) !important;
+  background: radial-gradient(circle, rgba(95, 130, 255, 0.12) 0%, rgba(95, 130, 255, 0.04) 32%, transparent 66%) !important;
+  animation: arcana-cta-idle-pulse 3.8s ease-in-out infinite !important;
+}
+
+#arcanaRunSimulation.arcana-kinojo-cta::after,
+#arcanaRunSimulation::after {
+  border: 1px solid rgba(47, 117, 255, 0.12) !important;
+  background: radial-gradient(circle, rgba(47, 117, 255, 0.08) 0%, transparent 68%) !important;
+  animation: arcana-cta-idle-pulse 4.8s ease-in-out infinite reverse !important;
+}
+
+#arcanaRunSimulation.arcana-kinojo-cta:hover:not(.is-soft-disabled),
+#arcanaRunSimulation.arcana-kinojo-cta.is-touch-preview:not(.is-soft-disabled),
+#arcanaRunSimulation:hover:not(.is-soft-disabled),
+#arcanaRunSimulation.is-touch-preview:not(.is-soft-disabled) {
+  transform: scale(1.045) !important;
+  border-color: rgba(99, 102, 241, 0.62) !important;
+  color: #111f4d !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+}
+
+#arcanaRunSimulation.arcana-kinojo-cta:hover:not(.is-soft-disabled)::before,
+#arcanaRunSimulation.arcana-kinojo-cta.is-touch-preview:not(.is-soft-disabled)::before,
+#arcanaRunSimulation:hover:not(.is-soft-disabled)::before,
+#arcanaRunSimulation.is-touch-preview:not(.is-soft-disabled)::before {
+  border-color: rgba(80, 116, 255, 0.34) !important;
+  background:
+    radial-gradient(circle at 34% 38%, rgba(99, 102, 241, 0.24), transparent 36%),
+    radial-gradient(circle at 68% 60%, rgba(45, 212, 191, 0.16), transparent 38%),
+    radial-gradient(circle, rgba(96, 165, 250, 0.14) 0%, transparent 68%) !important;
+  animation: arcana-cta-hover-wave 2.25s cubic-bezier(.2,.7,.2,1) infinite !important;
+}
+
+#arcanaRunSimulation.arcana-kinojo-cta:hover:not(.is-soft-disabled)::after,
+#arcanaRunSimulation.arcana-kinojo-cta.is-touch-preview:not(.is-soft-disabled)::after,
+#arcanaRunSimulation:hover:not(.is-soft-disabled)::after,
+#arcanaRunSimulation.is-touch-preview:not(.is-soft-disabled)::after {
+  border-color: rgba(236, 72, 153, 0.22) !important;
+  background:
+    radial-gradient(circle at 62% 34%, rgba(236, 72, 153, 0.14), transparent 38%),
+    radial-gradient(circle at 40% 72%, rgba(250, 204, 21, 0.12), transparent 36%),
+    radial-gradient(circle, rgba(129, 140, 248, 0.12) 0%, transparent 70%) !important;
+  animation: arcana-cta-hover-wave 2.65s cubic-bezier(.2,.7,.2,1) infinite reverse !important;
+}
+
+#arcanaRunSimulation.is-vanishing,
+#arcanaRunSimulation.is-loading {
+  transform: scale(0.93) !important;
+  opacity: 1 !important;
+  color: #0f1b46 !important;
+  border-color: rgba(236, 72, 153, 0.54) !important;
+}
+
+#arcanaRunSimulation.is-vanishing::before,
+#arcanaRunSimulation.is-loading::before {
+  width: 240% !important;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.34), transparent 34%),
+    radial-gradient(circle at 72% 42%, rgba(45, 212, 191, 0.24), transparent 36%),
+    radial-gradient(circle at 48% 76%, rgba(236, 72, 153, 0.22), transparent 38%),
+    radial-gradient(circle, rgba(96, 165, 250, 0.2) 0%, transparent 68%) !important;
+  animation: arcana-cta-loading-wave 0.9s cubic-bezier(.08,.82,.17,1) infinite !important;
+}
+
+#arcanaRunSimulation.is-vanishing::after,
+#arcanaRunSimulation.is-loading::after {
+  width: 260% !important;
+  background:
+    radial-gradient(circle at 66% 30%, rgba(250, 204, 21, 0.2), transparent 34%),
+    radial-gradient(circle at 38% 64%, rgba(34, 197, 94, 0.18), transparent 34%),
+    radial-gradient(circle, rgba(129, 140, 248, 0.16) 0%, transparent 70%) !important;
+  animation: arcana-cta-loading-wave 1.08s cubic-bezier(.08,.82,.17,1) infinite reverse !important;
+}
+
+#arcanaRunSimulation.is-soft-disabled {
+  opacity: 0.55 !important;
+  transform: none !important;
+}
+
+@keyframes arcana-cta-idle-pulse {
+  0%, 100% { opacity: 0.38; transform: translate(-50%, -50%) scale(0.5); }
+  52% { opacity: 0.66; transform: translate(-50%, -50%) scale(0.68); }
+}
+
+@keyframes arcana-cta-hover-wave {
+  0% { opacity: 0.35; transform: translate(-50%, -50%) scale(0.5) rotate(0deg); }
+  50% { opacity: 0.82; transform: translate(-50%, -50%) scale(0.9) rotate(145deg); }
+  100% { opacity: 0.26; transform: translate(-50%, -50%) scale(1.1) rotate(300deg); }
+}
+
+@keyframes arcana-cta-loading-wave {
+  0% { opacity: 0.92; transform: translate(-50%, -50%) scale(0.44) rotate(0deg); }
+  62% { opacity: 0.58; transform: translate(-50%, -50%) scale(1.05) rotate(170deg); }
+  100% { opacity: 0.12; transform: translate(-50%, -50%) scale(1.28) rotate(360deg); }
+}
