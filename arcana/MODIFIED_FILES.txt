@@ -1,25 +1,17 @@
-ARC-0.2.04_20260610_02
+ARC-0.2.04_20260610_03
 
 [이번 작업 요약]
-- 검수 리포트 기준으로 공통 안내 문구, 반지 스킬 옵션, 추천 CTA 배치를 재수정했습니다.
-- 사용자 승인 없는 버전업 표기를 ARC-0.2.04 기준으로 되돌렸습니다.
+- 검수 리포트 기준으로 클래스 선택 전 블러 강도, 상단 3개 카드 크기 유지, 추천 시작 CTA 표시 방식을 재수정했습니다.
+- 추천 시작 후 버튼이 추천 결과를 가리지 않도록 숨김 처리했습니다.
+- 안내 문구가 여러 문장일 때 문장 단위 줄바꿈이 되도록 보강했습니다.
 
 [실제 수정 파일]
-arcana/index.html
 arcana/css/cards.css
-arcana/js/cardEditor.js
-arcana/js/config.js
-arcana/js/state.js
 arcana/js/app.js
-arcana/js/api.js
-arcana/data/config.json
-arcana/README.txt
+arcana/js/panelLock.js
 arcana/_docs/UPDATE_HISTORY.txt
 arcana/_docs/MODIFIED_FILES.txt
-AppsScript/ARC_Constants.gs
-AppsScript/ARC_RecommendationService.gs
-AppsScript/_docs/UPDATE_HISTORY.txt
-AppsScript/_docs/MODIFIED_FILES.txt
+AppsScript/_docs/SCRIPT_IMPORT_ORDER.txt
 
 [신규 파일]
 없음
@@ -27,13 +19,5 @@ AppsScript/_docs/MODIFIED_FILES.txt
 [삭제 파일]
 없음
 
-[삭제 후보 검토]
-AppsScript/ARC_RecommendationService.gs
-- ARC_runSimulation 호출 여부를 전체 코드에서 검색했습니다.
-- 현재 확인된 호출 위치는 해당 파일 내부의 함수 선언 1건뿐입니다.
-- 프론트엔드 추천 계산 구조에서는 실제 호출이 확인되지 않아 삭제 후보로 볼 수 있습니다.
-- 단, 이번 작업에서는 삭제하지 않았고 사용자 승인 후 삭제하는 것이 안전합니다.
-
 [Apps Script 교체 필요]
-ARC_Constants.gs
-ARC_RecommendationService.gs
+없음

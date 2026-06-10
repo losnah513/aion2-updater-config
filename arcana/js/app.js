@@ -170,14 +170,17 @@ ArcanaApp.app = {
       button.disabled = true;
       button.dataset.originalText = button.dataset.originalText || button.textContent;
       button.textContent = '분석중';
+      button.hidden = true;
 
       await ArcanaApp.loadingOverlay.play('recommendArcanaCards', '아르카나가 저장한 스킬 흐름을 살펴보고 있어요.', () => {
         const result = ArcanaApp.recommendation.generate();
         ArcanaApp.ui.renderRecommendationResult(result);
       });
 
+      button.hidden = false;
       button.disabled = false;
-      button.textContent = '다시 추천';
+      button.textContent = '추천 시작';
+      button.hidden = true;
       ArcanaApp.panelLock.showMessage('recommendArcanaCards', '추천 결과가 준비되었어요. 탭을 눌러 분석과 조언을 확인해보세요.');
       ArcanaApp.app.updateRecommendationButtonState();
     });
@@ -194,6 +197,7 @@ ArcanaApp.app = {
     if (!button) return;
 
     const canRun = ArcanaApp.app.canRunRecommendation();
+    button.hidden = Boolean(ArcanaApp.state.recommendationGenerated);
     button.classList.toggle('is-soft-disabled', !canRun);
     button.setAttribute('aria-disabled', canRun ? 'false' : 'true');
 
@@ -214,6 +218,7 @@ ArcanaApp.app = {
 
     const button = document.getElementById('arcanaRunSimulation');
     if (button) {
+      button.hidden = false;
       button.disabled = false;
       button.textContent = '추천 시작';
     }

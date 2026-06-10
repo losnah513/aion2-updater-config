@@ -83,9 +83,19 @@ ArcanaApp.panelLock = {
     if (!messageEl) return;
 
     const text = message || ArcanaApp.panelLock.defaultMessages[panelKey] || '';
-    messageEl.textContent = text;
+    messageEl.textContent = ArcanaApp.panelLock.formatMessage(text);
     messageEl.classList.toggle('is-visible', Boolean(text));
     messageEl.classList.toggle('is-default', !message);
+  },
+
+  formatMessage(text) {
+    return String(text || '')
+      .replace(/\s+/g, ' ')
+      .replace(/(\.)(\s+)/g, '$1\n')
+      .replace(/(요\.)(\s*)/g, '$1\n')
+      .replace(/(다\.)(\s*)/g, '$1\n')
+      .replace(/(세요\.)(\s*)/g, '$1\n')
+      .trim();
   },
 
   setPanelInputs(panel, disabled) {

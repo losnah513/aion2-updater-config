@@ -1216,3 +1216,215 @@
     min-height: 220px;
   }
 }
+
+
+/* 20260610_03: 검수 리포트 반영 - 잠금 블러/카드 높이/추천 CTA 재디자인 */
+.arcana-layout.is-class-locked {
+  opacity: 1 !important;
+  filter: none !important;
+  pointer-events: none;
+  user-select: none;
+}
+
+.arcana-layout.is-class-locked .arcana-panel > *:not(.arcana-loading-overlay) {
+  filter: blur(5.5px) saturate(0.72) !important;
+  opacity: 0.38 !important;
+}
+
+.arcana-layout.is-class-locked .arcana-panel-message {
+  visibility: visible !important;
+}
+
+.arcana-top-grid {
+  grid-template-columns: repeat(3, var(--arcana-compact-panel-width)) !important;
+  align-items: stretch !important;
+}
+
+.arcana-target-panel,
+.arcana-equipment-panel,
+.arcana-future-panel,
+.arcana-compact-panel {
+  width: var(--arcana-compact-panel-width) !important;
+  min-width: var(--arcana-compact-panel-width) !important;
+  max-width: var(--arcana-compact-panel-width) !important;
+  min-height: 354px !important;
+}
+
+.arcana-target-panel,
+.arcana-equipment-panel,
+.arcana-future-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.arcana-target-panel .arcana-skill-grid,
+.arcana-equipment-panel .arcana-equipment-list,
+.arcana-future-panel .arcana-future-placeholder {
+  flex: 1 1 auto;
+}
+
+.arcana-panel-message {
+  white-space: pre-line !important;
+  word-break: keep-all !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.45 !important;
+  min-height: 42px !important;
+  margin: -1px 7px 7px !important;
+}
+
+.arcana-actions {
+  margin-top: auto !important;
+}
+
+.arcana-equipment-list-fixed,
+.arcana-equipment-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  width: calc(100% - 14px) !important;
+  align-items: start !important;
+}
+
+.arcana-equipment-card {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.arcana-equipment-slot,
+.arcana-slot {
+  grid-template-columns: minmax(0, 1fr) 29px !important;
+}
+
+.arcana-custom-select,
+.arcana-custom-select-button,
+.arcana-equipment-slot select,
+.arcana-slot select {
+  width: 100% !important;
+}
+
+.arcana-recommend-section {
+  overflow: hidden !important;
+}
+
+.arcana-recommend-area {
+  min-height: 292px !important;
+  max-height: none !important;
+  overflow: hidden !important;
+}
+
+.arcana-recommend-placeholder {
+  position: relative !important;
+  min-height: 292px !important;
+  padding: 22px 16px !important;
+  background: radial-gradient(circle at center, rgba(37, 99, 235, 0.06), rgba(255, 255, 255, 0.88) 56%, rgba(255, 255, 255, 0.96)) !important;
+}
+
+.arcana-fog-writing {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 82%;
+  color: #fff !important;
+  text-shadow:
+    0 0 2px rgba(37, 99, 235, 0.95),
+    0 0 8px rgba(37, 99, 235, 0.58),
+    0 0 16px rgba(37, 99, 235, 0.28) !important;
+  z-index: 1;
+}
+
+.arcana-fog-writing strong,
+.arcana-fog-writing span,
+.arcana-fog-writing small {
+  color: #fff !important;
+}
+
+.arcana-recommend-section .arcana-recommend-actions {
+  position: absolute !important;
+  z-index: 5 !important;
+  top: 164px !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  width: 118px;
+  height: 118px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+#arcanaRunSimulation {
+  width: 112px !important;
+  height: 112px !important;
+  min-width: 112px !important;
+  border-radius: 999px !important;
+  color: #fff !important;
+  font-size: 15px !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.02em;
+  background:
+    radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.12) 21%, rgba(255, 255, 255, 0) 32%),
+    conic-gradient(from 180deg, #60a5fa, #2563eb, #1d4ed8, #7dd3fc, #2563eb, #60a5fa) !important;
+  border: 1px solid rgba(255, 255, 255, 0.82) !important;
+  box-shadow:
+    0 16px 34px rgba(37, 99, 235, 0.34),
+    0 0 0 5px rgba(37, 99, 235, 0.10),
+    0 0 24px rgba(96, 165, 250, 0.38),
+    inset 0 0 18px rgba(255, 255, 255, 0.22) !important;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.65), 0 1px 2px rgba(15, 23, 42, 0.24);
+}
+
+#arcanaRunSimulation::before {
+  content: '';
+  position: absolute;
+  inset: -7px;
+  border-radius: inherit;
+  border: 1px solid rgba(96, 165, 250, 0.34);
+  box-shadow: 0 0 20px rgba(96, 165, 250, 0.28);
+  animation: arcana-recommend-orbit 2.8s linear infinite;
+  pointer-events: none;
+}
+
+#arcanaRunSimulation:not(.is-soft-disabled) {
+  animation: arcana-recommend-breathe 2.2s ease-in-out infinite;
+}
+
+#arcanaRunSimulation.is-soft-disabled {
+  color: rgba(255, 255, 255, 0.72) !important;
+  background:
+    radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.52), rgba(255, 255, 255, 0) 30%),
+    linear-gradient(145deg, #9fb8ed, #7d9fe6) !important;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.14), 0 0 0 4px rgba(125, 159, 230, 0.10) !important;
+  animation: none !important;
+}
+
+#arcanaRunSimulation[hidden],
+.arcana-recommend-section.is-recommend-ready .arcana-recommend-actions {
+  display: none !important;
+}
+
+.arcana-recommend-section .arcana-recommend-message {
+  margin-top: 8px !important;
+}
+
+@keyframes arcana-recommend-breathe {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.035); filter: brightness(1.06); }
+}
+
+@keyframes arcana-recommend-orbit {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 720px) {
+  .arcana-top-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .arcana-target-panel,
+  .arcana-equipment-panel,
+  .arcana-future-panel,
+  .arcana-compact-panel {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+}
