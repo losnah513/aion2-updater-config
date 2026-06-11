@@ -1,33 +1,15 @@
-ARCANA Skill Simulator / ARC-0.2.05 / 20260611_02
+ARC-0.2.05 / 20260611_03 긴급 코딩 점검
 
-[수정 파일]
-- arcana/index.html
-- arcana/css/cards.css
-- arcana/js/state.js
-- arcana/js/skillSelector.js
-- arcana/js/recommendation.js
-- arcana/js/cardEditor.js
-- arcana/js/app.js
-- arcana/js/panelLock.js
-- arcana/js/config.js
-- arcana/js/api.js
-- arcana/data/config.json
-- arcana/README.txt
-- AppsScript/ARC_Constants.gs
+수정 파일:
+- arcana/js/classSelector.js
 
-[핵심 반영]
-- 버전 ARC-0.2.05로 갱신
-- 액티브 스킬 선택에 16레벨/20레벨 목표 순환 선택 추가
-- 16레벨 파란 테두리/배지, 20레벨 금색 테두리/배지 적용
-- 스킬 선택 클릭 시 푸딩형 반동 애니메이션 추가
-- 추천 엔진에 스킬별 목표 레벨 반영
-- 반지는 사용자가 저장한 경우 기본 정보, 미저장 시 마지막 보정 수단으로 처리
-- 분석 탭을 20레벨/16레벨 목표 영역으로 분리
-- 달성/미달성 상태를 초록/부드러운 붉은색으로 구분
-- 조언 탭을 추천 가이드 탭으로 변경
-- 추천 가이드 복사 및 SVG 이미지 저장 기능 추가
-- 보유 아르카나/반지 저장 후 수정하기 버튼 전환 및 기존값 유지 편집 적용
+핵심 반영:
+- 클래스 선택하기 버튼 무반응 긴급 수정
+- 일반 bind 실패 시에도 동작하는 캡처 단계 안전 바인딩 추가
+- 쇼케이스 열기 실패 시 기본 드롭다운으로 전환하는 fallback 추가
+- 앱 초기화 일부 실패 상황에서도 클래스 선택 진입점 유지
 
-[검수]
+검수:
 - JS 문법 검사 완료
-- ZIP 무결성 확인 필요
+- ZIP 무결성 확인 완료
+- 버전 ARC-0.2.05 유지
