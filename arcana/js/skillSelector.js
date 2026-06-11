@@ -197,6 +197,10 @@ ArcanaApp.skillSelector = {
       delete state.targetSkillLevels[skill];
     }
 
+    state.activeSkillTargets = ArcanaApp.app && ArcanaApp.app.normalizeActiveSkillTargets
+      ? ArcanaApp.app.normalizeActiveSkillTargets(state.selectedTargetSkills, state.targetSkillLevels)
+      : state.targetSkillLevels;
+
     ArcanaApp.skillSelector.playPudding(skill);
     ArcanaApp.skillSelector.render();
     if (ArcanaApp.app && ArcanaApp.app.updateCharacterSaveButtonState) {

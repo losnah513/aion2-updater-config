@@ -5,41 +5,76 @@ ArcanaApp.app = {
     const data = await ArcanaApp.api.loadInitialData();
     const state = ArcanaApp.state;
 
-    state.version = ArcanaApp.config.version || 'ARC-0.2.05';
-    state.targetLevel = data.targetLevel || state.targetLevel;
-    state.baseSkillLevel = data.baseSkillLevel || state.baseSkillLevel;
-    state.devanionBonus = data.devanionBonus || state.devanionBonus;
-    state.maxCardLevel = data.maxCardLevel || state.maxCardLevel;
-    state.maxSlotLevel = data.maxSlotLevel || state.maxSlotLevel;
+    state.version = ArcanaApp.config.version || data.version || 'ARC-0.2.06';
+    state.targetLevel = Number(data.targetLevel || state.targetLevel || 20);
+    state.baseSkillLevel = Number(data.baseSkillLevel || state.baseSkillLevel || 10);
+    state.devanionBonus = Number(data.devanionBonus || state.devanionBonus || 4);
+    state.maxCardLevel = Number(data.maxCardLevel || state.maxCardLevel || 5);
+    state.maxSlotLevel = Number(data.maxSlotLevel || state.maxSlotLevel || 4);
     state.arcanaTypes = data.arcanaTypes || state.arcanaTypes;
     state.classList = ArcanaApp.classSelector.normalizeClassList(data.classList || state.classList);
     state.classSkills = data.classSkills || {};
-    state.skillsByArcana = {};
 
-    state.pendingClassKey = '';
-    state.currentClassKey = '';
-    state.hasSelectedClass = false;
-    state.hasSeenClassShowcase = false;
-    state.showcaseSelectedKey = '';
-    state.activeSkills = [];
-    state.passiveSkills = [];
-    state.ownedCards = {};
-    state.characterLevels = {};
-    state.equipmentOptions = { ring1: [], ring2: [] };
-    state.ringOptions = { ring1: [], ring2: [] };
-    state.selectedEquipmentKeys = ['ring1', 'ring2'];
-    state.recommendationCards = {};
-    state.recommendationMeta = null;
-    state.recommendationGenerated = false;
-    state.recommendationTab = 'cards';
-    state.characterSkillsSaved = false;
+    ArcanaApp.app.hydrateSavedState(data);
 
     ArcanaApp.ui.renderAll();
     ArcanaApp.app.buildCtaVisualizer();
     ArcanaApp.app.bindEvents();
   },
 
+
+  hydrateSavedState(data = {}) {
+    const state = ArcanaApp.state;
+    const savedCharacter = ArcanaApp.api.loadCharacterLevelsFromLocal();
+    const savedEquipment = ArcanaApp.api.loadEquipmentOptionsFromLocal();
+    const savedOwnedCards = ArcanaApp.api.mergeOwnedCards(data.ownedCards || {});
+    const selectedSkills = Array.isArray(savedCharacter.selectedTargetSkills)
+      ? savedCharacter.selectedTargetSkills
+      : [];
+
+    state.pendingClassKey = '';
+    state.currentClassKey = '';
+    state.hasSelectedClass = false;
+    state.hasSeenClassShowcase = false;
+    state.showcaseSelectedKey = '';
+    state.touchPreviewClassKey = '';
+    state.activeSkills = [];
+    state.passiveSkills = [];
+    state.skillsByArcana = {};
+    state.selectedTargetSkills = selectedSkills;
+    state.targetSkillLevels = savedCharacter.targetSkillLevels || {};
+    state.activeSkillTargets = ArcanaApp.app.normalizeActiveSkillTargets(selectedSkills, state.targetSkillLevels);
+    state.characterLevels = savedCharacter.characterLevels || {};
+    state.characterSkillsSaved = selectedSkills.length > 0;
+    state.equipmentOptions = ArcanaApp.app.normalizeRingOptions(savedEquipment);
+    state.ringOptions = ArcanaApp.app.normalizeRingOptions(savedEquipment);
+    state.selectedEquipmentKeys = ['ring1', 'ring2'];
+    state.ownedCards = savedOwnedCards || {};
+    state.recommendationCards = {};
+    state.recommendationMeta = null;
+    state.recommendationResult = null;
+    state.recommendationGenerated = false;
+    state.recommendationTab = 'cards';
+  },
+
+  normalizeRingOptions(options = {}) {
+    return {
+      ring1: Array.isArray(options.ring1) ? options.ring1 : [],
+      ring2: Array.isArray(options.ring2) ? options.ring2 : []
+    };
+  },
+
+  normalizeActiveSkillTargets(selectedSkills = [], targetSkillLevels = {}) {
+    return selectedSkills.reduce((map, skill) => {
+      map[skill] = Number(targetSkillLevels[skill] || ArcanaApp.state.targetLevel || 20);
+      return map;
+    }, {});
+  },
+
   bindEvents() {
+    if (ArcanaApp.app._eventsBound) return;
+    ArcanaApp.app._eventsBound = true;
+
     ArcanaApp.classSelector.bind();
     ArcanaApp.confirmModal.bind();
     ArcanaApp.app.bindCharacterSave();
@@ -95,6 +130,7 @@ ArcanaApp.app = {
   bindCharacterSave() {
     const saveButton = document.getElementById('arcanaSaveCharacterLevels');
     const clearButton = document.getElementById('arcanaClearCharacterLevels');
+    if (!saveButton || !clearButton) return;
 
     saveButton.addEventListener('click', async () => {
       if (saveButton.dataset.editMode === 'saved') {
@@ -111,7 +147,8 @@ ArcanaApp.app = {
 
       try {
         ArcanaApp.panelLock.setSaving('characterLevels', saveButton);
-        await ArcanaApp.api.saveCharacterLevels({ selectedTargetSkills: ArcanaApp.state.selectedTargetSkills, targetSkillLevels: ArcanaApp.state.targetSkillLevels || {} });
+        ArcanaApp.state.activeSkillTargets = ArcanaApp.app.normalizeActiveSkillTargets(ArcanaApp.state.selectedTargetSkills, ArcanaApp.state.targetSkillLevels || {});
+        await ArcanaApp.api.saveCharacterLevels({ selectedTargetSkills: ArcanaApp.state.selectedTargetSkills, targetSkillLevels: ArcanaApp.state.targetSkillLevels || {}, activeSkillTargets: ArcanaApp.state.activeSkillTargets });
         ArcanaApp.state.characterSkillsSaved = true;
         ArcanaApp.panelLock.setSaved('characterLevels', saveButton, '선택한 액티브 스킬이 저장되었어요. 다시 고르려면 초기화를 눌러주세요.');
         ArcanaApp.app.updateCharacterSaveButtonState();
@@ -126,6 +163,7 @@ ArcanaApp.app = {
       ArcanaApp.state.selectedTargetSkills = [];
       ArcanaApp.state.targetSkillLevels = {};
       ArcanaApp.state.characterLevels = {};
+      ArcanaApp.state.activeSkillTargets = {};
       ArcanaApp.state.characterSkillsSaved = false;
       ArcanaApp.api.clearCharacterLevels();
       ArcanaApp.skillSelector.render();
@@ -139,6 +177,7 @@ ArcanaApp.app = {
   bindEquipmentSave() {
     const saveButton = document.getElementById('arcanaSaveEquipment');
     const clearButton = document.getElementById('arcanaClearEquipment');
+    if (!saveButton || !clearButton) return;
 
     saveButton.addEventListener('click', async () => {
       if (saveButton.dataset.editMode === 'saved') {
@@ -177,6 +216,7 @@ ArcanaApp.app = {
   bindArcanaCardSave() {
     const saveButton = document.getElementById('arcanaSaveOwnedCards');
     const clearButton = document.getElementById('arcanaClearOwnedCards');
+    if (!saveButton || !clearButton) return;
 
     saveButton.addEventListener('click', async () => {
       if (saveButton.dataset.editMode === 'saved') {
@@ -256,26 +296,29 @@ ArcanaApp.app = {
         return;
       }
 
+      const recommendPanel = document.querySelector('[data-panel-key="recommendArcanaCards"]');
       button.disabled = true;
       button.dataset.originalText = button.dataset.originalText || button.textContent;
       button.textContent = '분석중';
-      const recommendPanel = document.querySelector('[data-panel-key="recommendArcanaCards"]');
-      if (recommendPanel) recommendPanel.classList.add('is-cta-loading');
       button.classList.add('is-loading');
+      if (recommendPanel) recommendPanel.classList.add('is-cta-loading');
 
-      await new Promise(resolve => window.setTimeout(resolve, 1450));
-      const result = ArcanaApp.recommendation.generate();
-      ArcanaApp.ui.renderRecommendationResult(result);
-      await new Promise(resolve => window.setTimeout(resolve, 260));
-
-      if (recommendPanel) recommendPanel.classList.remove('is-cta-loading');
-      button.hidden = false;
-      button.disabled = false;
-      button.textContent = '추천 시작';
-      button.classList.remove('is-vanishing', 'is-loading');
-      button.hidden = true;
-      ArcanaApp.panelLock.showMessage('recommendArcanaCards', ArcanaApp.state.recommendationMeta && ArcanaApp.state.recommendationMeta.ok === false ? '현재 조건에서는 20레벨 달성 조합을 찾지 못했어요. 분석 탭에서 부족 스킬을 확인해주세요.' : '추천 결과가 준비되었어요. 탭을 눌러 분석과 조언을 확인해보세요.');
-      ArcanaApp.app.updateRecommendationButtonState();
+      try {
+        await new Promise(resolve => window.setTimeout(resolve, 1450));
+        const result = ArcanaApp.recommendation.generate();
+        ArcanaApp.ui.renderRecommendationResult(result);
+        await new Promise(resolve => window.setTimeout(resolve, 260));
+        ArcanaApp.panelLock.showMessage('recommendArcanaCards', ArcanaApp.state.recommendationMeta && ArcanaApp.state.recommendationMeta.ok === false ? '현재 조건에서는 20레벨 달성 조합을 찾지 못했어요. 분석 탭에서 부족 스킬을 확인해주세요.' : '추천 결과가 준비되었어요. 탭을 눌러 분석과 조언을 확인해보세요.');
+      } catch (error) {
+        ArcanaApp.state.recommendationGenerated = false;
+        ArcanaApp.panelLock.showMessage('recommendArcanaCards', error.message || '추천 계산 중 오류가 발생했어요.');
+      } finally {
+        if (recommendPanel) recommendPanel.classList.remove('is-cta-loading');
+        button.disabled = false;
+        button.textContent = '추천 시작';
+        button.classList.remove('is-vanishing', 'is-loading');
+        ArcanaApp.app.updateRecommendationButtonState();
+      }
     });
 
     ArcanaApp.app.updateRecommendationButtonState();
@@ -291,7 +334,7 @@ ArcanaApp.app = {
     const hasSelection = Boolean((ArcanaApp.state.selectedTargetSkills || []).length > 0);
 
     if (isSaved) {
-      saveButton.disabled = true;
+      saveButton.disabled = false;
       return;
     }
 
@@ -326,6 +369,7 @@ ArcanaApp.app = {
   resetRecommendation() {
     ArcanaApp.state.recommendationCards = {};
     ArcanaApp.state.recommendationMeta = null;
+    ArcanaApp.state.recommendationResult = null;
     ArcanaApp.state.recommendationGenerated = false;
     ArcanaApp.state.recommendationTab = 'cards';
     ArcanaApp.cardEditor.renderRecommendationArea();

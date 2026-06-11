@@ -132,35 +132,9 @@ ArcanaApp.classSelector = {
   },
 
 
-  bindEmergencyPickerDelegation() {
-    if (ArcanaApp.classSelector._emergencyPickerDelegationBound) return;
-    ArcanaApp.classSelector._emergencyPickerDelegationBound = true;
-
-    document.addEventListener('click', event => {
-      const button = event.target && event.target.closest
-        ? event.target.closest('#arcanaClassPickerButton')
-        : null;
-
-      if (!button) return;
-
-      event.preventDefault();
-      event.stopPropagation();
-
-      const state = ArcanaApp.state || {};
-      state.pendingClassKey = state.hasSelectedClass ? state.currentClassKey : '';
-
-      // 클래스 선택 버튼은 최상위 진입점이라, 일반 bind가 실패해도 항상 열려야 한다.
-      try {
-        ArcanaApp.classSelector.openShowcase();
-      } catch (error) {
-        console.error('[Arcana] 클래스 선택 쇼케이스 열기 실패. 기본 드롭다운으로 전환합니다.', error);
-        ArcanaApp.classSelector.open();
-      }
-    }, true);
-  },
-
   bind() {
-    ArcanaApp.classSelector.bindEmergencyPickerDelegation();
+    if (ArcanaApp.classSelector._eventsBound) return;
+    ArcanaApp.classSelector._eventsBound = true;
     const pickerButton = document.getElementById('arcanaClassPickerButton');
     const confirmButton = document.getElementById('arcanaConfirmClass');
     const closeButton = document.getElementById('arcanaCloseClass');
@@ -530,7 +504,6 @@ ArcanaApp.classSelector = {
       if (!confirmed) {
         state.pendingClassKey = state.currentClassKey;
         ArcanaApp.classSelector.render();
-        ArcanaApp.classSelector.open();
         return;
       }
     }
@@ -729,7 +702,12 @@ ArcanaApp.classSelector = {
     state.recommendationMeta = null;
     state.recommendationGenerated = false;
     state.recommendationTab = 'cards';
+    state.activeSkillTargets = {};
     state.characterSkillsSaved = false;
+
+    ArcanaApp.api.clearCharacterLevels();
+    ArcanaApp.api.clearEquipmentOptions();
+    ArcanaApp.api.clearOwnedCards();
   },
 
   clearSavedPanels() {
@@ -783,17 +761,3 @@ ArcanaApp.classSelector = {
     return button;
   }
 };
-
-// 긴급 안전장치: 앱 초기화 중 일부 모듈 오류가 나도 클래스 선택 진입점은 살아 있어야 한다.
-(function ensureArcanaClassPickerBootGuard() {
-  const boot = () => {
-    if (!window.ArcanaApp || !ArcanaApp.classSelector) return;
-    ArcanaApp.classSelector.bindEmergencyPickerDelegation();
-  };
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot, { once: true });
-  } else {
-    boot();
-  }
-})();

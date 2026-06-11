@@ -295,6 +295,25 @@ ArcanaApp.cardEditor = {
     URL.revokeObjectURL(url);
   },
 
+
+  createOwnedCard(arcanaName) {
+    const card = document.createElement('article');
+    card.className = 'arcana-card-box arcana-owned-card';
+    card.dataset.arcana = arcanaName;
+
+    const title = document.createElement('h4');
+    title.textContent = arcanaName;
+    card.appendChild(title);
+
+    const savedSlots = (ArcanaApp.state.ownedCards && ArcanaApp.state.ownedCards[arcanaName]) || [];
+
+    for (let index = 0; index < 4; index += 1) {
+      card.appendChild(ArcanaApp.cardEditor.createEditableSlot(arcanaName, index, savedSlots[index]));
+    }
+
+    return card;
+  },
+
   createRecommendationCard(arcanaName) {
     const card = document.createElement('article');
     card.className = 'arcana-card-box arcana-recommend-card';
@@ -370,8 +389,9 @@ ArcanaApp.cardEditor = {
       card.querySelectorAll('.arcana-slot').forEach(slotEl => {
         const select = slotEl.querySelector('select');
         const input = slotEl.querySelector('input');
+        if (!select || !input) return;
         slots.push({
-          skill: select.value,
+          skill: String(select.value || '').trim(),
           level: Number(input.value || 0)
         });
       });
