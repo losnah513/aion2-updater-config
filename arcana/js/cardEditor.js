@@ -83,7 +83,7 @@ ArcanaApp.cardEditor = {
     const items = [
       { key: 'cards', label: '추천 카드' },
       { key: 'analysis', label: '분석' },
-      { key: 'advice', label: '조언' }
+      { key: 'advice', label: '추천 가이드' }
     ];
 
     items.forEach(item => {
@@ -131,7 +131,7 @@ ArcanaApp.cardEditor = {
 
   createAnalysisTable() {
     const wrapper = document.createElement('div');
-    wrapper.className = 'arcana-analysis-list';
+    wrapper.className = 'arcana-analysis-list arcana-analysis-split-list';
 
     const rows = (ArcanaApp.state.recommendationMeta && ArcanaApp.state.recommendationMeta.rows) || [];
     if (rows.length === 0) {
@@ -139,21 +139,41 @@ ArcanaApp.cardEditor = {
       return wrapper;
     }
 
-    rows.forEach(row => {
-      const item = document.createElement('div');
-      item.className = 'arcana-analysis-row';
-      item.classList.toggle('is-short', row.shortage > 0);
-      item.classList.toggle('is-important', row.must && row.shortage === 0);
-      item.innerHTML = `
-        <strong>${row.skill}</strong>
-        <span>현재 ${row.current}</span>
-        <span>장비 ${row.equipment}</span>
-        <span>보유 ${row.owned}</span>
-        <span>추천 ${row.recommended}</span>
-        <span>데바 ${row.bonus}</span>
-        <b>${row.finalLevel}레벨</b>
-      `;
-      wrapper.appendChild(item);
+    [20, 16].forEach(targetLevel => {
+      const sectionRows = rows.filter(row => Number(row.targetLevel || 20) === targetLevel);
+      const section = document.createElement('section');
+      section.className = `arcana-analysis-section arcana-analysis-level-${targetLevel}`;
+
+      const title = document.createElement('h4');
+      const successCount = sectionRows.filter(row => row.achieved).length;
+      title.textContent = `${targetLevel}레벨 목표 스킬 (${successCount}/${sectionRows.length})`;
+      section.appendChild(title);
+
+      if (sectionRows.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'arcana-empty-line arcana-empty-line-mini';
+        empty.textContent = `${targetLevel}레벨 목표로 선택한 스킬이 없습니다.`;
+        section.appendChild(empty);
+      }
+
+      sectionRows.forEach(row => {
+        const item = document.createElement('div');
+        item.className = 'arcana-analysis-row arcana-analysis-row-v2';
+        item.classList.toggle('is-achieved', row.achieved);
+        item.classList.toggle('is-short', !row.achieved);
+        item.innerHTML = `
+          <strong>${row.skill}</strong>
+          <span>목표 ${row.targetLevel}</span>
+          <span>장비 ${row.equipment}</span>
+          <span>보유 ${row.owned}</span>
+          <span>추천 ${row.recommended}</span>
+          <b>${row.finalLevel}레벨</b>
+          <em>${row.achieved ? '달성' : (row.over > 0 ? `${row.over} 초과` : `${row.shortage} 부족`)}</em>
+        `;
+        section.appendChild(item);
+      });
+
+      wrapper.appendChild(section);
     });
 
     return wrapper;
@@ -161,40 +181,118 @@ ArcanaApp.cardEditor = {
 
   createAdviceList() {
     const wrapper = document.createElement('div');
-    wrapper.className = 'arcana-advice-list';
+    wrapper.className = 'arcana-advice-list arcana-guide-list';
+
+    const tools = document.createElement('div');
+    tools.className = 'arcana-guide-tools';
+
+    const copyButton = document.createElement('button');
+    copyButton.type = 'button';
+    copyButton.className = 'arcana-btn arcana-btn-ghost arcana-guide-tool-btn';
+    copyButton.textContent = '가이드 복사';
+    copyButton.addEventListener('click', () => ArcanaApp.cardEditor.copyGuideText());
+
+    const imageButton = document.createElement('button');
+    imageButton.type = 'button';
+    imageButton.className = 'arcana-btn arcana-btn-ghost arcana-guide-tool-btn';
+    imageButton.textContent = '이미지 저장';
+    imageButton.addEventListener('click', () => ArcanaApp.cardEditor.saveGuideImage());
+
+    tools.appendChild(copyButton);
+    tools.appendChild(imageButton);
+    wrapper.appendChild(tools);
+
+    const body = document.createElement('div');
+    body.className = 'arcana-guide-body';
 
     const advice = (ArcanaApp.state.recommendationMeta && ArcanaApp.state.recommendationMeta.advice) || [];
     if (advice.length === 0) {
-      wrapper.innerHTML = '<div class="arcana-empty-line">추천 결과가 나오면 제작 부담을 줄이는 조언을 함께 남겨드릴게요.</div>';
-      return wrapper;
+      body.innerHTML = '<div class="arcana-empty-line">추천 결과가 나오면 제작 부담을 줄이는 가이드를 함께 남겨드릴게요.</div>';
+    } else {
+      advice.forEach(text => {
+        const item = document.createElement('div');
+        item.className = 'arcana-advice-item arcana-guide-item';
+        item.textContent = text;
+        body.appendChild(item);
+      });
     }
 
-    advice.forEach(text => {
-      const item = document.createElement('div');
-      item.className = 'arcana-advice-item';
-      item.textContent = text;
-      wrapper.appendChild(item);
-    });
-
+    wrapper.appendChild(body);
     return wrapper;
   },
 
-  createOwnedCard(arcanaName) {
-    const card = document.createElement('article');
-    card.className = 'arcana-card-box arcana-owned-card';
-    card.dataset.arcana = arcanaName;
+  getGuideText() {
+    const advice = (ArcanaApp.state.recommendationMeta && ArcanaApp.state.recommendationMeta.advice) || [];
+    const rows = (ArcanaApp.state.recommendationMeta && ArcanaApp.state.recommendationMeta.rows) || [];
+    const lines = ['아르카나 추천 가이드'];
 
-    const title = document.createElement('h4');
-    title.textContent = arcanaName;
-    card.appendChild(title);
+    [20, 16].forEach(level => {
+      const levelRows = rows.filter(row => Number(row.targetLevel || 20) === level);
+      if (levelRows.length === 0) return;
+      lines.push('', `${level}레벨 목표`);
+      levelRows.forEach(row => {
+        lines.push(`- ${row.skill}: ${row.achieved ? '달성' : (row.over > 0 ? `${row.over} 초과` : `${row.shortage} 부족`)} / 최종 ${row.finalLevel}`);
+      });
+    });
 
-    const savedSlots = ArcanaApp.state.ownedCards[arcanaName] || [];
-
-    for (let index = 0; index < 4; index++) {
-      card.appendChild(ArcanaApp.cardEditor.createEditableSlot(arcanaName, index, savedSlots[index]));
+    if (advice.length > 0) {
+      lines.push('', '추천 가이드');
+      advice.forEach(text => lines.push(`- ${text}`));
     }
 
-    return card;
+    lines.push('', '아르카나 스킬 시뮬레이터 · 키노조 AI');
+    return lines.join('\n');
+  },
+
+  async copyGuideText() {
+    const text = ArcanaApp.cardEditor.getGuideText();
+    try {
+      await navigator.clipboard.writeText(text);
+      ArcanaApp.panelLock.showMessage('recommendArcanaCards', '추천 가이드를 클립보드에 복사했어요.');
+    } catch (error) {
+      ArcanaApp.panelLock.showMessage('recommendArcanaCards', '복사 권한이 없어 가이드를 선택해서 복사해주세요.');
+    }
+  },
+
+  saveGuideImage() {
+    const text = ArcanaApp.cardEditor.getGuideText();
+    const lines = text.split('\n');
+    const width = 900;
+    const lineHeight = 30;
+    const padding = 42;
+    const height = Math.max(360, padding * 2 + lines.length * lineHeight + 34);
+    const escapeXml = value => String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+
+    const textNodes = lines.map((line, index) => {
+      const y = padding + 32 + index * lineHeight;
+      const isTitle = index === 0 || line.endsWith('목표') || line === '추천 가이드';
+      const fill = index === 0 ? '#0f172a' : (line.includes('부족') || line.includes('초과') ? '#b45353' : '#334155');
+      const size = index === 0 ? 28 : (isTitle ? 20 : 16);
+      const weight = index === 0 || isTitle ? 800 : 500;
+      return `<text x="${padding}" y="${y}" font-size="${size}" font-weight="${weight}" fill="${fill}">${escapeXml(line)}</text>`;
+    }).join('');
+
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+        <rect width="100%" height="100%" rx="24" fill="#ffffff"/>
+        <rect x="18" y="18" width="${width - 36}" height="${height - 36}" rx="20" fill="#f8fafc" stroke="#dbe4f0"/>
+        ${textNodes}
+        <text x="${width - padding}" y="${height - 34}" text-anchor="end" font-size="15" font-weight="800" fill="#94a3b8">아르카나 스킬 시뮬레이터 · 키노조 AI</text>
+      </svg>`;
+
+    const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'arcana_kinojo_ai_guide.svg';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
   },
 
   createRecommendationCard(arcanaName) {

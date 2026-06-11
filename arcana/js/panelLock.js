@@ -32,8 +32,9 @@ ArcanaApp.panelLock = {
     ArcanaApp.panelLock.setPanelInputs(panel, true);
 
     if (button) {
-      button.disabled = true;
-      button.textContent = '저장 완료';
+      button.disabled = false;
+      button.textContent = '수정하기';
+      button.dataset.editMode = 'saved';
     }
 
     const clearButton = ArcanaApp.panelLock.getClearButton(panelKey);
@@ -55,6 +56,7 @@ ArcanaApp.panelLock = {
     if (saveButton) {
       saveButton.disabled = false;
       saveButton.textContent = saveButton.dataset.originalText || saveButton.textContent;
+      delete saveButton.dataset.editMode;
     }
 
     const clearButton = ArcanaApp.panelLock.getClearButton(panelKey);

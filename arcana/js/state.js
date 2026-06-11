@@ -1,7 +1,7 @@
 window.ArcanaApp = window.ArcanaApp || {};
 
 ArcanaApp.state = {
-  version: 'ARC-0.2.04',
+  version: 'ARC-0.2.05',
   targetLevel: 20,
   baseSkillLevel: 10,
   devanionBonus: 4,
@@ -21,6 +21,7 @@ ArcanaApp.state = {
   arcanaTypes: ['성배', '양피지', '나침반', '종', '거울', '천칭'],
   skillsByArcana: {},
   selectedTargetSkills: [],
+  targetSkillLevels: {},
   characterLevels: {},
   equipmentTypes: [
     { key: 'ring1', label: '반지1', slots: 6 },

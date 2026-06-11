@@ -3208,3 +3208,154 @@
   from { text-shadow: 0 0 10px rgba(255,255,255,0.48), 0 0 22px rgba(168,85,247,0.28); }
   to { text-shadow: 0 0 22px rgba(255,255,255,0.86), 0 0 44px rgba(45,212,191,0.36); }
 }
+
+/* ARC-0.2.05: 16/20 목표 선택, 추천 분석/가이드 개선 */
+.arcana-skill-btn.is-level-16 {
+  border-color: rgba(37, 99, 235, 0.82) !important;
+  background: linear-gradient(180deg, rgba(239, 246, 255, 0.96), rgba(255, 255, 255, 0.98)) !important;
+  color: #1d4ed8 !important;
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.10), 0 4px 12px rgba(37, 99, 235, 0.10) !important;
+}
+
+.arcana-skill-btn.is-level-20 {
+  border-color: rgba(184, 134, 11, 0.88) !important;
+  background: linear-gradient(180deg, rgba(255, 251, 235, 0.98), rgba(255, 255, 255, 0.98)) !important;
+  color: #92400e !important;
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.14), 0 4px 12px rgba(245, 158, 11, 0.13) !important;
+}
+
+.arcana-skill-level-badge {
+  position: relative;
+  z-index: 3;
+  flex: 0 0 auto;
+  min-width: 34px;
+  padding: 2px 5px;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.arcana-skill-btn.is-level-16 .arcana-skill-level-badge {
+  background: #2563eb;
+}
+
+.arcana-skill-btn.is-level-20 .arcana-skill-level-badge {
+  background: #b8860b;
+}
+
+.arcana-skill-btn.is-pudding {
+  animation: arcana-pudding-pop 0.24s cubic-bezier(.2, 1.35, .38, 1) both;
+}
+
+@keyframes arcana-pudding-pop {
+  0% { transform: scaleX(1) scaleY(1); }
+  28% { transform: scaleX(0.94) scaleY(0.88); }
+  58% { transform: scaleX(1.08) scaleY(1.06); }
+  78% { transform: scaleX(0.985) scaleY(1.015); }
+  100% { transform: scaleX(1) scaleY(1); }
+}
+
+.arcana-analysis-split-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.arcana-analysis-section {
+  border: 1px solid var(--arcana-line-soft);
+  border-radius: var(--arcana-radius);
+  background: #fff;
+  overflow: hidden;
+}
+
+.arcana-analysis-section h4 {
+  margin: 0;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--arcana-line-soft);
+  background: #f8fafc;
+  color: var(--arcana-text);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.arcana-analysis-level-20 h4 {
+  color: #92400e;
+}
+
+.arcana-analysis-level-16 h4 {
+  color: #1d4ed8;
+}
+
+.arcana-analysis-row-v2 {
+  grid-template-columns: minmax(90px, 1fr) 48px 44px 44px 44px 50px 48px !important;
+  margin: 5px 6px !important;
+  border-color: var(--arcana-line-soft);
+}
+
+.arcana-analysis-row-v2.is-achieved {
+  border-color: rgba(34, 120, 76, 0.32) !important;
+  background: linear-gradient(180deg, rgba(239, 253, 244, 0.96), rgba(255, 255, 255, 0.98)) !important;
+}
+
+.arcana-analysis-row-v2.is-achieved b,
+.arcana-analysis-row-v2.is-achieved em {
+  color: #22784c !important;
+}
+
+.arcana-analysis-row-v2.is-short {
+  border-color: rgba(180, 83, 83, 0.30) !important;
+  background: linear-gradient(180deg, rgba(255, 247, 247, 0.96), rgba(255, 255, 255, 0.98)) !important;
+}
+
+.arcana-analysis-row-v2.is-short b,
+.arcana-analysis-row-v2.is-short em {
+  color: #b45353 !important;
+}
+
+.arcana-analysis-row-v2 em {
+  font-style: normal;
+  font-weight: 900;
+  text-align: right;
+}
+
+.arcana-empty-line-mini {
+  padding: 8px !important;
+  font-size: 10px !important;
+}
+
+.arcana-guide-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.arcana-guide-tools {
+  display: flex;
+  justify-content: flex-end;
+  gap: 5px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 0 0 5px;
+  background: #fff;
+}
+
+.arcana-guide-tool-btn {
+  height: 24px;
+  padding: 0 8px;
+  font-size: 10px;
+}
+
+.arcana-guide-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.arcana-guide-item {
+  margin-bottom: 0 !important;
+  background: linear-gradient(180deg, #fff, #f8fafc) !important;
+}

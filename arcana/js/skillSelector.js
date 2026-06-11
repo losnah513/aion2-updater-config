@@ -56,6 +56,9 @@ ArcanaApp.skillSelector = {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'arcana-skill-btn arcana-skill-icon-btn';
+      if (ArcanaApp.skillSelector.lastPuddingSkill === skill) {
+        button.classList.add('is-pudding');
+      }
 
       const iconUrl = iconMap[skill];
       if (iconUrl) {
@@ -78,8 +81,13 @@ ArcanaApp.skillSelector = {
       name.textContent = skill;
       button.appendChild(name);
 
-      if (state.selectedTargetSkills.includes(skill)) {
-        button.classList.add('is-active');
+      const level = Number((state.targetSkillLevels || {})[skill] || 0);
+      if (level > 0) {
+        button.classList.add('is-active', `is-level-${level}`);
+        const badge = document.createElement('span');
+        badge.className = 'arcana-skill-level-badge';
+        badge.textContent = `Lv.${level}`;
+        button.appendChild(badge);
       }
 
       button.addEventListener('click', () => {
@@ -169,23 +177,44 @@ ArcanaApp.skillSelector = {
     if (panel && panel.classList.contains('is-saved')) return;
 
     const state = ArcanaApp.state;
-    const index = state.selectedTargetSkills.indexOf(skill);
+    state.targetSkillLevels = state.targetSkillLevels || {};
 
-    if (index >= 0) {
-      state.selectedTargetSkills.splice(index, 1);
-    } else {
-      if (state.selectedTargetSkills.length >= state.maxTargetSkills) {
-        ArcanaApp.skillSelector.updateCountText(true);
-        return;
-      }
-      state.selectedTargetSkills.push(skill);
+    const currentLevel = Number(state.targetSkillLevels[skill] || 0);
+    const hasSkill = state.selectedTargetSkills.includes(skill);
+
+    if (!hasSkill && state.selectedTargetSkills.length >= state.maxTargetSkills) {
+      ArcanaApp.skillSelector.updateCountText(true);
+      return;
     }
 
+    if (currentLevel <= 0) {
+      if (!hasSkill) state.selectedTargetSkills.push(skill);
+      state.targetSkillLevels[skill] = 16;
+    } else if (currentLevel === 16) {
+      state.targetSkillLevels[skill] = 20;
+    } else {
+      state.selectedTargetSkills = state.selectedTargetSkills.filter(item => item !== skill);
+      delete state.targetSkillLevels[skill];
+    }
+
+    ArcanaApp.skillSelector.playPudding(skill);
     ArcanaApp.skillSelector.render();
     if (ArcanaApp.app && ArcanaApp.app.updateCharacterSaveButtonState) {
       ArcanaApp.app.updateCharacterSaveButtonState();
     }
     ArcanaApp.app.resetRecommendation();
+  },
+
+  playPudding(skill) {
+    window.clearTimeout(ArcanaApp.skillSelector.puddingTimer);
+    ArcanaApp.skillSelector.lastPuddingSkill = skill;
+    ArcanaApp.skillSelector.puddingTimer = window.setTimeout(() => {
+      ArcanaApp.skillSelector.lastPuddingSkill = '';
+    }, 260);
+  },
+
+  getTargetLevel(skill) {
+    return Number((ArcanaApp.state.targetSkillLevels || {})[skill] || ArcanaApp.state.targetLevel || 20);
   },
 
   updateCountText(isLimitNotice) {

@@ -5,7 +5,7 @@ ArcanaApp.app = {
     const data = await ArcanaApp.api.loadInitialData();
     const state = ArcanaApp.state;
 
-    state.version = ArcanaApp.config.version || 'ARC-0.2.04';
+    state.version = ArcanaApp.config.version || 'ARC-0.2.05';
     state.targetLevel = data.targetLevel || state.targetLevel;
     state.baseSkillLevel = data.baseSkillLevel || state.baseSkillLevel;
     state.devanionBonus = data.devanionBonus || state.devanionBonus;
@@ -97,6 +97,12 @@ ArcanaApp.app = {
     const clearButton = document.getElementById('arcanaClearCharacterLevels');
 
     saveButton.addEventListener('click', async () => {
+      if (saveButton.dataset.editMode === 'saved') {
+        ArcanaApp.panelLock.unlock('characterLevels', saveButton);
+        ArcanaApp.panelLock.showMessage('characterLevels', '기존 선택을 유지한 채 수정할 수 있어요. 변경 후 다시 저장해주세요.');
+        return;
+      }
+
       if (!ArcanaApp.state.selectedTargetSkills || ArcanaApp.state.selectedTargetSkills.length === 0) {
         ArcanaApp.panelLock.showMessage('characterLevels', '최소 1개 이상 선택해야 저장할 수 있어요.');
         ArcanaApp.app.updateCharacterSaveButtonState();
@@ -105,7 +111,7 @@ ArcanaApp.app = {
 
       try {
         ArcanaApp.panelLock.setSaving('characterLevels', saveButton);
-        await ArcanaApp.api.saveCharacterLevels({ selectedTargetSkills: ArcanaApp.state.selectedTargetSkills });
+        await ArcanaApp.api.saveCharacterLevels({ selectedTargetSkills: ArcanaApp.state.selectedTargetSkills, targetSkillLevels: ArcanaApp.state.targetSkillLevels || {} });
         ArcanaApp.state.characterSkillsSaved = true;
         ArcanaApp.panelLock.setSaved('characterLevels', saveButton, '선택한 액티브 스킬이 저장되었어요. 다시 고르려면 초기화를 눌러주세요.');
         ArcanaApp.app.updateCharacterSaveButtonState();
@@ -118,6 +124,7 @@ ArcanaApp.app = {
 
     clearButton.addEventListener('click', () => {
       ArcanaApp.state.selectedTargetSkills = [];
+      ArcanaApp.state.targetSkillLevels = {};
       ArcanaApp.state.characterLevels = {};
       ArcanaApp.state.characterSkillsSaved = false;
       ArcanaApp.api.clearCharacterLevels();
@@ -134,6 +141,12 @@ ArcanaApp.app = {
     const clearButton = document.getElementById('arcanaClearEquipment');
 
     saveButton.addEventListener('click', async () => {
+      if (saveButton.dataset.editMode === 'saved') {
+        ArcanaApp.panelLock.unlock('equipmentOptions', saveButton);
+        ArcanaApp.panelLock.showMessage('equipmentOptions', '저장된 반지 옵션을 유지한 채 수정할 수 있어요. 변경 후 다시 저장해주세요.');
+        return;
+      }
+
       try {
         const equipment = ArcanaApp.equipmentEditor.collect();
         ArcanaApp.panelLock.setSaving('equipmentOptions', saveButton);
@@ -143,7 +156,7 @@ ArcanaApp.app = {
           ring2: equipment.ring2 || []
         };
         await ArcanaApp.api.saveEquipmentOptions(equipment);
-        ArcanaApp.panelLock.setSaved('equipmentOptions', saveButton, '반지 스킬 옵션이 저장되었어요. 추천 계산에 함께 반영할게요.');
+        ArcanaApp.panelLock.setSaved('equipmentOptions', saveButton, '반지 스킬 옵션이 저장되었어요. 수정하려면 수정하기를 눌러주세요.');
       } catch (error) {
         ArcanaApp.panelLock.unlock('equipmentOptions', saveButton);
         ArcanaApp.panelLock.showMessage('equipmentOptions', error.message);
@@ -166,12 +179,18 @@ ArcanaApp.app = {
     const clearButton = document.getElementById('arcanaClearOwnedCards');
 
     saveButton.addEventListener('click', async () => {
+      if (saveButton.dataset.editMode === 'saved') {
+        ArcanaApp.panelLock.unlock('ownedArcanaCards', saveButton);
+        ArcanaApp.panelLock.showMessage('ownedArcanaCards', '저장된 보유 아르카나를 유지한 채 수정할 수 있어요. 변경 후 다시 저장해주세요.');
+        return;
+      }
+
       try {
         const ownedCards = ArcanaApp.cardEditor.collect();
         ArcanaApp.panelLock.setSaving('ownedArcanaCards', saveButton);
         ArcanaApp.state.ownedCards = ownedCards;
         await ArcanaApp.api.saveOwnedCards(ownedCards);
-        ArcanaApp.panelLock.setSaved('ownedArcanaCards', saveButton, '보유 아르카나 정보가 저장되었어요. 이제 추천 시작을 눌러보세요.');
+        ArcanaApp.panelLock.setSaved('ownedArcanaCards', saveButton, '보유 아르카나 정보가 저장되었어요. 수정하려면 수정하기를 눌러주세요.');
         ArcanaApp.app.resetRecommendation();
       } catch (error) {
         ArcanaApp.panelLock.unlock('ownedArcanaCards', saveButton);
