@@ -480,3 +480,29 @@
   38% { transform: scaleY(1.36); filter: hue-rotate(70deg); }
   72% { transform: scaleY(0.76); filter: hue-rotate(150deg); }
 }
+
+
+/* ARC-0.3.00_20260612_05 CTA visibility hardening */
+.arcana-recommend-section .arcana-recommend-actions,
+.arcana-recommend-actions {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+.arcana-recommend-section.is-recommend-ready .arcana-recommend-actions {
+  display: flex !important;
+}
+
+#arcanaRunSimulation,
+#arcanaRunSimulation.arcana-kinojo-cta {
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+#arcanaRunSimulation[hidden] {
+  display: inline-flex !important;
+}

@@ -499,7 +499,20 @@ ArcanaApp.classSelector = {
       ? ArcanaApp.classService.getLookupKeys(normalizedKey)
       : [normalizedKey];
     const classSkills = ArcanaApp.state.classSkills || {};
-    const classData = keys.map(key => classSkills[key]).find(Boolean) || {};
+    const hasUsableData = data => Boolean(
+      data && (
+        (Array.isArray(data.active) && data.active.length > 0) ||
+        (Array.isArray(data.passive) && data.passive.length > 0) ||
+        (data.arcanaSkills && Object.values(data.arcanaSkills).some(list => Array.isArray(list) && list.length > 0))
+      )
+    );
+    let classData = keys.map(key => classSkills[key]).find(hasUsableData) || {};
+
+    if (!hasUsableData(classData) && ArcanaApp.api && ArcanaApp.api.getFallbackData) {
+      const fallbackSkills = (ArcanaApp.api.getFallbackData().classSkills || {});
+      classData = keys.map(key => fallbackSkills[ArcanaApp.classSelector.normalizeClassKey(key)] || fallbackSkills[key]).find(hasUsableData) || {};
+      console.warn('[Arcana] 클래스 스킬 DB가 비어 있어 내장 스킬 데이터로 보정합니다:', normalizedKey);
+    }
 
     ArcanaApp.state.arcanaTypes = ['성배', '양피지', '나침반', '종', '거울', '천칭'];
     ArcanaApp.state.activeSkills = Array.from(new Set((classData.active || []).map(skill => String(skill).trim()).filter(Boolean)));

@@ -26,13 +26,32 @@ ArcanaApp.app = {
 
   normalizeClassSkillData(classSkills = {}) {
     const result = {};
+    const mergeSkillData = (current = {}, next = {}) => {
+      const mergeList = (a, b) => Array.from(new Set([...(a || []), ...(b || [])].map(item => String(item || '').trim()).filter(Boolean)));
+      const mergeArcana = (a = {}, b = {}) => {
+        const arcanaMap = {};
+        [...Object.keys(a || {}), ...Object.keys(b || {})].forEach(arcanaName => {
+          arcanaMap[arcanaName] = mergeList(a[arcanaName], b[arcanaName]);
+        });
+        return arcanaMap;
+      };
+
+      return {
+        active: mergeList(current.active, next.active),
+        passive: mergeList(current.passive, next.passive),
+        arcanaSkills: mergeArcana(current.arcanaSkills, next.arcanaSkills)
+      };
+    };
+
     Object.entries(classSkills || {}).forEach(([rawKey, value]) => {
       const key = ArcanaApp.classService
         ? ArcanaApp.classService.normalizeKey(rawKey)
         : rawKey;
       if (!key) return;
-      result[key] = value || {};
+
+      result[key] = mergeSkillData(result[key], value || {});
     });
+
     return result;
   },
 
@@ -396,7 +415,7 @@ ArcanaApp.app = {
     if (!button) return;
 
     const canRun = ArcanaApp.app.canRunRecommendation();
-    button.hidden = Boolean(ArcanaApp.state.recommendationGenerated);
+    button.hidden = false;
     button.classList.toggle('is-soft-disabled', !canRun);
     button.setAttribute('aria-disabled', canRun ? 'false' : 'true');
 

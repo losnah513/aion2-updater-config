@@ -72,3 +72,11 @@ ARCANA ARC-0.3.00_20260612_03 MODIFIED FILES
 - Apps Script .gs syntax check 통과(.js 임시 확장자 검사)
 - ClassService: skill_db_templar → templar 확인
 - SkillTargetRules: 20목표 6개 → 16목표 3개 허용 / 초과 차단 확인
+
+
+[ARC-0.3.00_20260612_05]
+- 수호성 클래스 선택 시 class_skill_db 응답이 비어도 내장 데이터로 액티브/반지/아르카나 풀을 보정하도록 수정했습니다.
+- Apps Script class_skill_db 로딩에서 skill_db_templar 같은 DB 키를 유지하면서 templar/guardian 별칭도 함께 응답하도록 보강했습니다.
+- active/passive 행 타입에 한글 표기가 들어와도 읽히도록 정규화했습니다.
+- 아르카나 풀 검증 실패 시 전체 pool을 비우지 않고 원본 pool을 유지하도록 수정했습니다.
+- 추천 CTA 시작 버튼이 추천 완료/준비 상태에서 hidden 처리되어 사라지던 문제를 제거했습니다.
