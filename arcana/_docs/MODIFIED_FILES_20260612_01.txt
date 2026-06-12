@@ -1,0 +1,6 @@
+ARCANA 안정화 작업본 20260612_01
+- CTA 독립 컴포넌트 추가: js/components/arcana-cta.js, css/components/arcana-cta.css
+- 클래스 선택 보호 스타일 추가: css/components/class-selector.css
+- 카드 영역 침범 방지 스타일 추가: css/components/panel-containment.css
+- ARC-0.2.05 버전 표기 유지
+- ARCANA_MASTER_RULES_v2.txt 루트 포함

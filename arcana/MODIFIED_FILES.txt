@@ -1,44 +1,32 @@
-ARC-0.2.06 Stabilization Patch
+ARCANA 안정화 작업본 20260612_01
 
-[수정 파일]
-- arcana/index.html
-- arcana/data/config.json
-- arcana/js/config.js
-- arcana/js/state.js
-- arcana/js/app.js
-- arcana/js/ui.js
-- arcana/js/classSelector.js
-- arcana/js/skillSelector.js
-- arcana/js/cardEditor.js
+[규칙/버전]
+- index.html: 화면/타이틀 버전 표기를 ARC-0.2.05로 복구
+- js/state.js, js/config.js, js/app.js, data/config.json: 내부 버전 표기 ARC-0.2.05 유지
+- ARCANA_MASTER_RULES_v2.txt: 루트 최상위 포함
 
-[수정 내용]
-1. 렌더링 안정화
-- renderAll()을 단일 진입점으로 유지하되 모듈별 try/catch 보호를 추가했습니다.
-- 한 영역 렌더 실패가 전체 앱 이벤트 바인딩 중단으로 이어지지 않도록 했습니다.
+[CTA]
+- 신규: js/components/arcana-cta.js
+- 신규: css/components/arcana-cta.css
+- 추천 CTA를 독립 컴포넌트화
+- 회전형 스피너 동작 제거
+- 막대별 scaleY 파동 기반 idle / hover / loading 상태 구현
 
-2. 현재 아르카나 렌더링 복구
-- 누락되어 있던 cardEditor.createOwnedCard()를 복구했습니다.
-- 현재 아르카나 카드가 항상 arcanaTypes 기준으로 렌더링되도록 정리했습니다.
+[클래스 선택]
+- 신규: css/components/class-selector.css
+- 클래스 선택 UI 보호 스타일 분리
+- 탑바 아래 고정 위치와 모바일 위치를 독립 CSS로 관리
 
-3. 저장/수정 상태 안정화
-- 저장 후 '수정하기' 버튼이 다시 비활성화되는 문제를 수정했습니다.
-- 저장 버튼 바인딩에 null guard를 추가했습니다.
-- 저장된 보유 아르카나/반지/액티브 선택 데이터를 초기화 시 무조건 비우지 않도록 hydrateSavedState()로 통합했습니다.
-
-4. 상태관리 정리
-- selectedTargetSkills, targetSkillLevels, activeSkillTargets, ownedCards, equipmentOptions/ringOptions, recommendationResult를 단일 초기화 흐름으로 정리했습니다.
-- 클래스 변경 시 클래스 의존 상태와 localStorage 저장값을 함께 초기화하도록 정리했습니다.
-
-5. 이벤트 시스템 정리
-- 앱 이벤트 바인딩 중복 방지를 추가했습니다.
-- 클래스 선택 긴급 임시 캡처 이벤트와 부트 가드를 제거하고 일반 바인딩 흐름으로 통합했습니다.
-
-6. CTA 안정화
-- SVG 파동 CTA 생성은 buildCtaVisualizer() 단일 함수로 유지했습니다.
-- 추천 계산 중 오류 발생 시 버튼이 loading 상태에 갇히지 않도록 try/finally 처리했습니다.
+[카드/레이아웃]
+- 신규: css/components/panel-containment.css
+- 현재 아르카나/추천 아르카나 카드 영역에 header/body/footer containment 적용
+- 현재 아르카나 슬롯이 탭/저장 버튼/추천 영역을 침범하지 않도록 내부 스크롤 처리
+- 저장 버튼 영역 고정 및 탭 영역 z-index/배경 보호
 
 [검수 항목]
-- JS 문법 검사: 통과
-- 누락 함수 점검: createOwnedCard 복구 확인
-- 저장 후 수정하기 버튼 상태: 비활성화 제거
-- 추천 CTA loading 복구 흐름: try/finally 적용
+- ZIP 루트에 MASTER RULES 포함 여부
+- ARC-0.2.05 버전 유지 여부
+- CTA가 회전하지 않고 막대 길이 파동으로 동작하는지
+- 현재 아르카나 슬롯이 카드 밖으로 넘어가지 않는지
+- 보유 카드/분석 기준/저장 정보 탭이 묻히지 않는지
+- 클래스 선택 버튼 및 확인 흐름 유지 여부

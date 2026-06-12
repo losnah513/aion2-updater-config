@@ -1,0 +1,47 @@
+/*
+ * ARCANA CLASS SELECTOR MODULE
+ * 클래스 선택 UI 전용 보호 파일. 추천/저장/렌더 로직에서 직접 스타일 변경 금지.
+ */
+.arcana-class-picker {
+  position: fixed !important;
+  top: 48px !important;
+  left: 50% !important;
+  right: auto !important;
+  z-index: 70 !important;
+  transform: translateX(-50%) !important;
+}
+
+.arcana-class-picker-button {
+  min-width: 128px !important;
+  height: 32px !important;
+  gap: 6px !important;
+}
+
+.arcana-class-dropdown {
+  left: 50% !important;
+  right: auto !important;
+  transform: translateX(-50%) !important;
+}
+
+.arcana-class-picker.is-initial-cta {
+  position: fixed !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+}
+
+.arcana-refresh-notice {
+  margin-top: 42px !important;
+}
+
+@media (max-width: 720px) {
+  .arcana-class-picker,
+  .arcana-class-picker.is-initial-cta {
+    top: 90px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+
+  .arcana-refresh-notice {
+    margin-top: 48px !important;
+  }
+}

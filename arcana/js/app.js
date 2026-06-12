@@ -5,7 +5,7 @@ ArcanaApp.app = {
     const data = await ArcanaApp.api.loadInitialData();
     const state = ArcanaApp.state;
 
-    state.version = ArcanaApp.config.version || data.version || 'ARC-0.2.06';
+    state.version = ArcanaApp.config.version || data.version || 'ARC-0.2.05';
     state.targetLevel = Number(data.targetLevel || state.targetLevel || 20);
     state.baseSkillLevel = Number(data.baseSkillLevel || state.baseSkillLevel || 10);
     state.devanionBonus = Number(data.devanionBonus || state.devanionBonus || 4);
@@ -18,7 +18,7 @@ ArcanaApp.app = {
     ArcanaApp.app.hydrateSavedState(data);
 
     ArcanaApp.ui.renderAll();
-    ArcanaApp.app.buildCtaVisualizer();
+    if (ArcanaApp.cta && typeof ArcanaApp.cta.init === 'function') ArcanaApp.cta.init();
     ArcanaApp.app.bindEvents();
   },
 
@@ -301,7 +301,11 @@ ArcanaApp.app = {
       button.dataset.originalText = button.dataset.originalText || button.textContent;
       button.textContent = '분석중';
       button.classList.add('is-loading');
-      if (recommendPanel) recommendPanel.classList.add('is-cta-loading');
+      if (ArcanaApp.cta && typeof ArcanaApp.cta.setLoading === 'function') {
+        ArcanaApp.cta.setLoading();
+      } else if (recommendPanel) {
+        recommendPanel.classList.add('is-cta-loading');
+      }
 
       try {
         await new Promise(resolve => window.setTimeout(resolve, 1450));
@@ -313,7 +317,11 @@ ArcanaApp.app = {
         ArcanaApp.state.recommendationGenerated = false;
         ArcanaApp.panelLock.showMessage('recommendArcanaCards', error.message || '추천 계산 중 오류가 발생했어요.');
       } finally {
-        if (recommendPanel) recommendPanel.classList.remove('is-cta-loading');
+        if (ArcanaApp.cta && typeof ArcanaApp.cta.setIdle === 'function') {
+          ArcanaApp.cta.setIdle();
+        } else if (recommendPanel) {
+          recommendPanel.classList.remove('is-cta-loading');
+        }
         button.disabled = false;
         button.textContent = '추천 시작';
         button.classList.remove('is-vanishing', 'is-loading');
