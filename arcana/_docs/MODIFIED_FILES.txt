@@ -1,20 +1,54 @@
-ARCANA 안정화 작업본 20260612_01
+ARCANA MODIFIED FILES
+Version: ARC-0.3.00
+Build: 20260612_01
+Work: Recommendation UX Rebuild
 
-[규칙/버전]
-- ARC-0.2.05 유지
-- 승인 없는 버전업 표기 제거
-- ARCANA_MASTER_RULES_v2.txt 루트 포함
+[공통]
+- arcana/index.html
+  - 화면 타이틀 ARC-0.3.00 반영
+  - CTA / 클래스 선택 / 패널 보호 컴포넌트 연결 유지 확인
+
+- arcana/js/config.js
+  - 앱 버전 ARC-0.3.00 반영
+
+- arcana/data/config.json
+  - 데이터 설정 버전 ARC-0.3.00 반영
 
 [CTA]
-- js/components/arcana-cta.js 신규 추가
-- css/components/arcana-cta.css 신규 추가
-- 회전형 스피너 제거, 막대 파동형 CTA 유지
+- arcana/js/components/arcana-cta.js
+  - 회전형 CTA 금지 원칙을 독립 모듈 주석으로 명시
+  - idle / loading / complete / error 상태 전환 독립화
+  - 분석중 최소 유지 시간 4.2초 적용
+  - 분석 진행 문구 순차 출력 로직 추가
+  - 저장된 보유 아르카나/반지 여부에 따라 다른 안내 문구 출력
+  - 추천 엔진이 CTA DOM을 직접 변경하지 않고 상태만 요청하도록 정리
 
-[클래스 선택]
-- css/components/class-selector.css 신규 추가
-- 클래스 선택 UI 위치/스타일 보호
+- arcana/css/components/arcana-cta.css
+  - 회전 애니메이션 제거 기준 유지
+  - 막대 길이가 개별적으로 길어졌다 짧아지는 파동형 CTA 강화
+  - idle / hover / loading / complete / error 시각 상태 분리
+  - CTA 연결 텍스트 박스 전환 애니메이션 추가
 
-[카드/레이아웃]
-- css/components/panel-containment.css 신규 추가
-- 현재 아르카나/추천 아르카나 영역 침범 방지
-- 탭/저장버튼 고정, 본문 내부 스크롤 처리
+[추천 실행]
+- arcana/js/app.js
+  - 추천 결과가 빨리 계산되어도 CTA 분석중 상태가 최소 4.2초 유지되도록 수정
+  - 추천 성공/실패에 따라 CTA complete/error 상태로 종료
+  - 기존 1.45초 임시 대기 제거
+
+[레이아웃 보호]
+- arcana/css/components/panel-containment.css
+  - 현재 아르카나/추천 아르카나 카드의 header/body/footer 침범 방지 규칙 유지
+  - 현재 아르카나 본문 초과 시 내부 스크롤 처리 유지
+
+[필수 규칙 문서]
+- ARCANA_MASTER_RULES_v2.txt
+  - 루트 최상위 포함
+- arcana/ARCANA_MASTER_RULES_v2.txt
+  - 웹 폴더 내부 참조용 포함
+
+[검수 체크리스트]
+- JS 문법 검사 통과
+- CTA 독립 JS/CSS 연결 확인
+- 추천 실행 시 최소 4.2초 유지 로직 확인
+- CTA 분석 문구 순차 출력 로직 확인
+- ARC-0.3.00 버전 표기 확인

@@ -257,3 +257,28 @@
   from { text-shadow: 0 0 10px rgba(255,255,255,0.48), 0 0 22px rgba(168,85,247,0.28); }
   to { text-shadow: 0 0 22px rgba(255,255,255,0.86), 0 0 44px rgba(45,212,191,0.36); }
 }
+
+.arcana-cta-analysis-text.is-changing {
+  animation: arcanaCtaMessageSwap 0.38s ease-out both !important;
+}
+
+.arcana-recommend-section.is-cta-complete .arcana-cta-analysis-text,
+.arcana-recommend-section.is-cta-error .arcana-cta-analysis-text {
+  opacity: 1 !important;
+  transform: translate(-50%, -50%) scale(1) !important;
+}
+
+.arcana-recommend-section.is-cta-complete .arcana-cta-wave-lines i {
+  background: linear-gradient(to top, rgba(16,185,129,0.18), rgba(16,185,129,0.88), rgba(255,255,255,0.98)) !important;
+  box-shadow: 0 0 10px rgba(16,185,129,0.34) !important;
+}
+
+.arcana-recommend-section.is-cta-error .arcana-cta-wave-lines i {
+  background: linear-gradient(to top, rgba(239,68,68,0.14), rgba(239,68,68,0.78), rgba(255,255,255,0.94)) !important;
+  box-shadow: 0 0 8px rgba(239,68,68,0.26) !important;
+}
+
+@keyframes arcanaCtaMessageSwap {
+  0% { opacity: 0.35; transform: translate(-50%, -48%) scale(0.985); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}

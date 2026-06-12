@@ -5,7 +5,7 @@ ArcanaApp.app = {
     const data = await ArcanaApp.api.loadInitialData();
     const state = ArcanaApp.state;
 
-    state.version = ArcanaApp.config.version || data.version || 'ARC-0.2.05';
+    state.version = ArcanaApp.config.version || data.version || 'ARC-0.3.00';
     state.targetLevel = Number(data.targetLevel || state.targetLevel || 20);
     state.baseSkillLevel = Number(data.baseSkillLevel || state.baseSkillLevel || 10);
     state.devanionBonus = Number(data.devanionBonus || state.devanionBonus || 4);
@@ -297,6 +297,7 @@ ArcanaApp.app = {
       }
 
       const recommendPanel = document.querySelector('[data-panel-key="recommendArcanaCards"]');
+      let recommendationSucceeded = false;
       button.disabled = true;
       button.dataset.originalText = button.dataset.originalText || button.textContent;
       button.textContent = '분석중';
@@ -308,17 +309,25 @@ ArcanaApp.app = {
       }
 
       try {
-        await new Promise(resolve => window.setTimeout(resolve, 1450));
+        // 추천 계산이 빨리 끝나도 CTA 진행 UX는 최소 시간 동안 유지한다.
         const result = ArcanaApp.recommendation.generate();
+        if (ArcanaApp.cta && typeof ArcanaApp.cta.waitForMinimumDuration === 'function') {
+          await ArcanaApp.cta.waitForMinimumDuration(4200);
+        } else {
+          await new Promise(resolve => window.setTimeout(resolve, 4200));
+        }
         ArcanaApp.ui.renderRecommendationResult(result);
-        await new Promise(resolve => window.setTimeout(resolve, 260));
+        recommendationSucceeded = true;
         ArcanaApp.panelLock.showMessage('recommendArcanaCards', ArcanaApp.state.recommendationMeta && ArcanaApp.state.recommendationMeta.ok === false ? '현재 조건에서는 20레벨 달성 조합을 찾지 못했어요. 분석 탭에서 부족 스킬을 확인해주세요.' : '추천 결과가 준비되었어요. 탭을 눌러 분석과 조언을 확인해보세요.');
       } catch (error) {
+        if (ArcanaApp.cta && typeof ArcanaApp.cta.waitForMinimumDuration === 'function') {
+          await ArcanaApp.cta.waitForMinimumDuration(3200);
+        }
         ArcanaApp.state.recommendationGenerated = false;
         ArcanaApp.panelLock.showMessage('recommendArcanaCards', error.message || '추천 계산 중 오류가 발생했어요.');
       } finally {
-        if (ArcanaApp.cta && typeof ArcanaApp.cta.setIdle === 'function') {
-          ArcanaApp.cta.setIdle();
+        if (ArcanaApp.cta && typeof ArcanaApp.cta.setSuccess === 'function' && typeof ArcanaApp.cta.setError === 'function') {
+          recommendationSucceeded ? ArcanaApp.cta.setSuccess() : ArcanaApp.cta.setError();
         } else if (recommendPanel) {
           recommendPanel.classList.remove('is-cta-loading');
         }
