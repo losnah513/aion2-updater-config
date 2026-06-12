@@ -71,7 +71,7 @@ ArcanaApp.cardEditor = {
   createRecommendationPlaceholder() {
     return `
       <div class="arcana-recommend-placeholder" aria-hidden="true">
-        <div class="arcana-recommend-empty-glow"></div>
+        추천 조건을 저장하면 아래 버튼으로 분석을 시작할 수 있어요.
       </div>
     `;
   },

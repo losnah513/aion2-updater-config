@@ -175,20 +175,6 @@
   box-shadow: none;
 }
 
-.arcana-recommend-section {
-  transition: opacity 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
-}
-
-.arcana-recommend-section.is-recommend-locked {
-  opacity: 0.52;
-}
-
-.arcana-recommend-section.is-recommend-ready {
-  opacity: 1;
-  border-color: rgba(37, 99, 235, 0.4);
-  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.08);
-}
-
 .arcana-card-grid {
   display: grid;
   grid-template-columns: repeat(2, 150px);
@@ -563,52 +549,6 @@
   width: fit-content;
 }
 
-.arcana-recommend-area {
-  position: relative;
-  width: calc((var(--arcana-card-width) * 3) + 12px);
-  min-height: 312px;
-  max-height: 312px;
-  overflow: hidden;
-}
-
-.arcana-recommend-placeholder {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--arcana-line-soft);
-  border-radius: var(--arcana-radius);
-  background: rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(4px);
-}
-
-.arcana-fog-writing {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  color: rgba(7, 16, 31, 0.54);
-  text-align: center;
-  font-family: 'Comic Sans MS', 'Noto Sans KR', cursive, sans-serif;
-  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.95), 0 0 8px rgba(148, 163, 184, 0.32);
-}
-
-.arcana-fog-writing strong {
-  font-size: 15px;
-  font-weight: 800;
-}
-
-.arcana-fog-writing span {
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.arcana-fog-writing small {
-  font-size: 11px;
-  color: rgba(108, 117, 130, 0.72);
-}
-
 .arcana-recommend-tabs {
   display: flex;
   gap: 4px;
@@ -771,10 +711,7 @@
     grid-template-columns: repeat(4, 58px);
   }
 
-  .arcana-recommend-area {
-    width: 100%;
   }
-}
 
 
 /* ARC-0.2.01: 스킬 아이콘 버튼 UI */
@@ -1032,22 +969,6 @@
   animation: none !important;
 }
 
-.arcana-recommend-section {
-  position: relative;
-}
-
-.arcana-recommend-section .arcana-actions {
-  position: absolute;
-  z-index: 3;
-  top: 196px;
-  left: 50%;
-  transform: translateX(-50%);
-  margin: 0;
-  justify-content: center;
-}
-
-
-
 
 @media (max-width: 720px) {
   .arcana-equipment-list-fixed,
@@ -1058,10 +979,6 @@
   .arcana-panel-message {
     min-height: 40px;
   }
-}
-
-.arcana-recommend-section.is-recommend-locked {
-  opacity: 1;
 }
 
 .arcana-panel-message {
@@ -1117,28 +1034,6 @@
 }
 
 
-.arcana-recommend-section .arcana-recommend-message {
-  margin-top: 6px !important;
-}
-
-.arcana-recommend-area {
-  min-height: 236px;
-  max-height: 236px;
-}
-
-.arcana-recommend-placeholder {
-  position: relative;
-  inset: auto;
-  min-height: 236px;
-}
-
-.arcana-fog-writing {
-  max-width: 78%;
-  line-height: 1.45;
-}
-
-
-
 @media (max-width: 720px) {
   .arcana-panel-message {
     min-height: 42px;
@@ -1150,15 +1045,7 @@
     grid-template-columns: repeat(2, minmax(130px, var(--arcana-card-width))) !important;
   }
 
-  .arcana-recommend-area {
-    min-height: 220px;
-    max-height: 220px;
   }
-
-  .arcana-recommend-placeholder {
-    min-height: 220px;
-  }
-}
 
 
 .arcana-layout.is-class-locked {
@@ -1241,55 +1128,6 @@
 .arcana-slot select {
   width: 100% !important;
 }
-
-.arcana-recommend-section {
-  overflow: hidden !important;
-}
-
-.arcana-recommend-area {
-  min-height: 292px !important;
-  max-height: none !important;
-  overflow: hidden !important;
-}
-
-.arcana-recommend-placeholder {
-  position: relative !important;
-  min-height: 292px !important;
-  padding: 22px 16px !important;
-  background: radial-gradient(circle at center, rgba(37, 99, 235, 0.06), rgba(255, 255, 255, 0.88) 56%, rgba(255, 255, 255, 0.96)) !important;
-}
-
-.arcana-fog-writing {
-  position: absolute;
-  top: 40px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 82%;
-  color: #fff !important;
-  text-shadow:
-    0 0 2px rgba(37, 99, 235, 0.95),
-    0 0 8px rgba(37, 99, 235, 0.58),
-    0 0 16px rgba(37, 99, 235, 0.28) !important;
-  z-index: 1;
-}
-
-.arcana-fog-writing strong,
-.arcana-fog-writing span,
-.arcana-fog-writing small {
-  color: #fff !important;
-}
-
-
-
-
-
-
-
-.arcana-recommend-section .arcana-recommend-message {
-  margin-top: 8px !important;
-}
-
-
 
 @media (max-width: 720px) {
   .arcana-top-grid {
@@ -1374,68 +1212,6 @@
 .arcana-custom-select-item:disabled:hover {
   color: #b7c0cc !important;
   background: #f8fafc !important;
-}
-
-.arcana-recommend-section .arcana-recommend-area {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 196px;
-  max-height: 196px;
-  margin-bottom: 0;
-}
-
-.arcana-recommend-section.is-recommend-ready .arcana-recommend-area {
-  display: block;
-}
-
-.arcana-recommend-placeholder {
-  width: 100%;
-  min-height: 196px !important;
-  border: 1px dashed rgba(37, 99, 235, 0.18);
-  background:
-    radial-gradient(circle at center, rgba(37, 99, 235, 0.10), transparent 42%),
-    linear-gradient(180deg, rgba(255,255,255,0.86), rgba(248,250,252,0.92));
-  backdrop-filter: blur(3px);
-}
-
-.arcana-recommend-empty-glow {
-  width: 86px;
-  height: 86px;
-  border-radius: 999px;
-  background:
-    radial-gradient(circle, rgba(255, 255, 255, 0.98) 0 34%, rgba(147, 197, 253, 0.34) 35% 52%, transparent 54%),
-    conic-gradient(from 0deg, rgba(37,99,235,0.12), rgba(147,197,253,0.58), rgba(37,99,235,0.12));
-  filter: blur(0.2px);
-  opacity: 0.72;
-  animation: arcana-kinojo-ai-orb 3.8s ease-in-out infinite;
-}
-
-@keyframes arcana-kinojo-ai-orb {
-  0%, 100% { transform: scale(0.96); opacity: 0.58; }
-  50% { transform: scale(1.05); opacity: 0.88; }
-}
-
-
-
-
-
-
-.arcana-recommend-ai-text {
-  margin: 7px 7px 0;
-  color: #fff;
-  font-family: 'Comic Sans MS', 'Noto Sans KR', cursive, sans-serif;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1.45;
-  text-align: center;
-  text-shadow:
-    -1px -1px 0 rgba(37, 99, 235, 0.62),
-    1px -1px 0 rgba(37, 99, 235, 0.62),
-    -1px 1px 0 rgba(37, 99, 235, 0.62),
-    1px 1px 0 rgba(37, 99, 235, 0.62),
-    0 0 10px rgba(37, 99, 235, 0.72),
-    0 0 16px rgba(125, 211, 252, 0.72);
 }
 
 
@@ -1535,19 +1311,8 @@
 
 .arcana-arcana-section,
 .arcana-editor-panel,
-.arcana-recommend-section,
-.arcana-owned-section {
-  overflow: visible !important;
-}
-
 .arcana-card-grid {
   align-items: stretch !important;
-}
-
-.arcana-recommend-area {
-  min-height: 378px !important;
-  max-height: none !important;
-  overflow: visible !important;
 }
 
 .arcana-recommend-content {
@@ -1566,24 +1331,6 @@
 
 
 
-
-.arcana-recommend-ai-text {
-  margin: 7px auto 0 !important;
-  max-width: 220px !important;
-  color: #fff !important;
-  font-family: 'Noto Sans KR', system-ui, sans-serif !important;
-  font-size: 12px !important;
-  font-weight: 900 !important;
-  line-height: 1.35 !important;
-  text-align: center !important;
-  word-break: keep-all !important;
-  text-shadow:
-    -1px -1px 0 rgba(37, 99, 235, 0.72),
-    1px -1px 0 rgba(37, 99, 235, 0.72),
-    -1px 1px 0 rgba(37, 99, 235, 0.72),
-    1px 1px 0 rgba(37, 99, 235, 0.72),
-    0 0 12px rgba(37, 99, 235, 0.85) !important;
-}
 
 #arcanaSaveCharacterLevels:disabled:not(.is-ready-reset) {
   opacity: 0.56 !important;
@@ -1675,11 +1422,6 @@
 
 
 
-
-.arcana-recommend-ai-text {
-  margin: 5px auto 0 !important;
-  max-width: 240px !important;
-}
 
 @media (max-width: 980px) {
   .arcana-top-grid {
@@ -1794,22 +1536,7 @@
 }
 
 .arcana-owned-section,
-.arcana-recommend-section {
-  display: flex !important;
-  flex-direction: column !important;
-}
-
 .arcana-owned-section .arcana-card-grid,
-.arcana-recommend-section .arcana-recommend-area {
-  flex: 1 1 auto !important;
-  align-content: start !important;
-}
-
-
-
-
-
-
 @media (max-width: 980px) {
   .arcana-top-grid {
     grid-template-columns: repeat(3, minmax(220px, 1fr)) !important;
@@ -1885,104 +1612,6 @@
   min-height: 312px !important;
   max-height: 312px !important;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-.arcana-recommend-section {
-  position: relative !important;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-.arcana-recommend-section {
-  position: relative !important;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-.arcana-recommend-section {
-  position: relative !important;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

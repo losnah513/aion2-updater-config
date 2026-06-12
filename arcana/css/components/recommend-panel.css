@@ -1,0 +1,75 @@
+/*
+ * ARCANA RECOMMEND PANEL LAYOUT
+ * 역할: 추천 아르카나 카드의 레이아웃/높이/스크롤만 관리한다.
+ * CTA 시각 연출은 arcana-cta.css, 추천 계산은 recommendation.js가 담당한다.
+ */
+
+.arcana-owned-section,
+.arcana-recommend-section {
+  height: 610px;
+  max-height: 610px;
+}
+
+.arcana-recommend-section {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.arcana-recommend-section .arcana-panel-title,
+.arcana-recommend-section .arcana-panel-message {
+  flex: 0 0 auto;
+}
+
+.arcana-recommend-section .arcana-recommend-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.arcana-recommend-section.is-recommend-locked .arcana-recommend-area {
+  justify-content: center;
+}
+
+.arcana-recommend-placeholder {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  color: var(--arcana-muted);
+  font-size: 11px;
+  line-height: 1.45;
+  text-align: center;
+  background: transparent;
+  border: 0;
+}
+
+.arcana-recommend-section.is-recommend-ready .arcana-recommend-area {
+  justify-content: flex-start;
+}
+
+.arcana-recommend-tabs {
+  flex: 0 0 auto;
+  gap: 6px;
+  margin: 4px 0 6px;
+}
+
+.arcana-recommend-tabs button {
+  min-height: 28px;
+  padding: 5px 10px;
+  font-size: 11px;
+}
+
+.arcana-recommend-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 8px 10px;
+}

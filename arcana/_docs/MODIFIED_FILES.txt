@@ -1,42 +1,23 @@
-ARC-0.3.00_20260612_07
+ARCANA MODIFIED FILES - ARC-0.3.00_20260612_09
 
-[웹]
-- arcana/js/api.js
-  - 구 fallback 아르카나 풀 규칙 삭제/교체
-  - fallback도 MASTER RULES 기준 공통 규칙으로 통일
-  - 성배/천칭 = 액티브 F~Q + 패시브 F~O
-  - 양피지/나침반/종/거울 = 지정 열 규칙 적용
-
-- arcana/js/app.js
-  - 구 CTA 생성 함수 buildCtaVisualizer() 완전 제거
-  - CTA 생성/상태 관리는 js/components/arcana-cta.js 단일 관리로 정리
-  - 중복 addEventListener 코드 1건 정리
-
-- arcana/js/classService.js
-  - 수호성 스킬 아이콘 파일 기준을 guardian.json에서 templar.json으로 변경
-  - guardian legacy alias 제거
-  - 수호성 lookup 기준을 templar / skill_db_templar로 통일
-
-- arcana/data/skills/templar.json
-  - 수호성 표준 키에 맞춘 스킬 아이콘 데이터 파일 추가
-
-[Apps Script]
-- AppsScript/ARC_ClassKeyService.gs
-  - 수호성 legacy guardian alias 제거
-  - 주석 설명을 templar / skill_db_templar 기준으로 정정
-
-- AppsScript/ARC_DBService.gs
-  - 수호성 lookup 기준에서 guardian 제거
-  - skill_db_templar / templar 기준 유지
-
-[삭제/정리]
-- 구 CTA DOM 생성 로직 제거
-- 구 fallback 아르카나 규칙 제거
-- 수호성 guardian 로직 의존 제거
+[수정 파일]
+- arcana/index.html
+  - 추천 패널 레이아웃 전용 CSS recommend-panel.css 로드 추가
+- arcana/css/cards.css
+  - 구 추천 CTA/placeholder/orb/absolute action 스타일 제거
+  - 추천 CTA 관련 CSS를 공통 카드 파일에서 분리
+- arcana/css/components/recommend-panel.css
+  - 신규 파일
+  - 추천 아르카나 카드 높이/스크롤/placeholder 레이아웃만 관리
+- arcana/css/components/arcana-cta.css
+  - CTA 전용 CSS로 재작성
+  - 회전/오브 디자인 제거, 막대 파동 idle/hover/loading만 유지
+- arcana/js/cardEditor.js
+  - 구 CTA 오브 placeholder 마크업 제거
+  - 추천 전 placeholder를 단순 안내 텍스트로 변경
 
 [검수]
-- JS 문법 검사 통과: app.js / api.js / classService.js
-- CSS brace balance 확인: cards.css / arcana-cta.css
-- Apps Script brace balance 확인
-- grep 확인: buildCtaVisualizer 제거
-- grep 확인: 웹/GS 실행 코드 내 guardian alias 제거
+- cards.css 실행 스타일에서 arcana-recommend-empty-glow / arcana-kinojo-ai-orb / arcana-recommend-ai-text 제거 확인
+- index.html CSS 로드 순서 확인
+- JS 문법 검사 통과
+- CSS brace balance 확인
