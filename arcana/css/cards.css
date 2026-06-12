@@ -3359,3 +3359,33 @@
   margin-bottom: 0 !important;
   background: linear-gradient(180deg, #fff, #f8fafc) !important;
 }
+
+/* ARC-0.3.00_20260612_02: 20레벨 7개 목표 검증 경고 */
+.arcana-owned-card.has-recommendation-warning {
+  border-color: rgba(220, 38, 38, 0.72) !important;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.16) inset !important;
+}
+
+.arcana-owned-card .arcana-slot.has-recommendation-warning {
+  border-color: rgba(220, 38, 38, 0.9) !important;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2) !important;
+  background: rgba(254, 242, 242, 0.92) !important;
+}
+
+.arcana-owned-card .arcana-slot.has-recommendation-warning input,
+.arcana-owned-card .arcana-slot.has-recommendation-warning select,
+.arcana-owned-card .arcana-slot.has-recommendation-warning .arcana-custom-select-button {
+  border-color: rgba(220, 38, 38, 0.82) !important;
+}
+
+.arcana-owned-warning-text {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid rgba(220, 38, 38, 0.28);
+  border-radius: 10px;
+  background: rgba(254, 242, 242, 0.96);
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.45;
+}

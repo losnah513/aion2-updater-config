@@ -3,6 +3,15 @@ window.ArcanaApp = window.ArcanaApp || {};
 ArcanaApp.recommendation = {
   generate() {
     const state = ArcanaApp.state;
+    const validation = ArcanaApp.recommendation.validateBeforeGenerate(state.ownedCards || {});
+    if (!validation.ok) {
+      if (ArcanaApp.cardEditor && typeof ArcanaApp.cardEditor.renderOwnedCards === 'function') {
+        ArcanaApp.cardEditor.renderOwnedCards();
+      }
+      const error = new Error(validation.message || '현재 저장된 아르카나 조건으로는 추천 분석을 진행할 수 없습니다.');
+      error.validationResult = validation;
+      throw error;
+    }
     const prepared = ArcanaApp.recommendation.prepareResources();
     const needMap = ArcanaApp.recommendation.createNeedMap(prepared.baseLevels, prepared.ownedLevels);
     const recommendationCards = ArcanaApp.recommendation.buildRecommendationSet(needMap, prepared.baseLevels, prepared.ownedCards);
@@ -19,6 +28,127 @@ ArcanaApp.recommendation = {
     return level > 0 ? level : Number(ArcanaApp.state.targetLevel || 20);
   },
 
+
+  getTargetSummary() {
+    const state = ArcanaApp.state;
+    const targetLevels = state.targetSkillLevels || {};
+    const explicit = (state.selectedTargetSkills || []).filter(Boolean);
+    const level20 = explicit.filter(skill => Number(targetLevels[skill] || 0) === 20);
+    const level16 = explicit.filter(skill => Number(targetLevels[skill] || 0) === 16);
+    const totalPointBudget = Number(state.arcanaTotalSkillBudget || 42);
+    const usedBy20 = level20.length * 6;
+    const usedBy16 = level16.length * 2;
+    const remainPoints = Math.max(0, totalPointBudget - usedBy20 - usedBy16);
+    const auto16Limit = Math.floor(remainPoints / 2);
+
+    return {
+      explicit,
+      level20,
+      level16,
+      totalPointBudget,
+      usedBy20,
+      usedBy16,
+      remainPoints,
+      auto16Limit
+    };
+  },
+
+  getEffectiveTargetSkills() {
+    const state = ArcanaApp.state;
+    const summary = ArcanaApp.recommendation.getTargetSummary();
+    const result = summary.explicit.slice();
+    const seen = new Set(result);
+    const explicit16Count = summary.level16.length;
+    const needAuto16 = Math.max(0, summary.auto16Limit - explicit16Count);
+
+    if (needAuto16 <= 0) return result;
+
+    const activeSkills = ArcanaApp.skillSelector && typeof ArcanaApp.skillSelector.getActiveSkills === 'function'
+      ? ArcanaApp.skillSelector.getActiveSkills()
+      : (state.activeSkills || []);
+
+    const candidates = (activeSkills || [])
+      .map(skill => String(skill || '').trim())
+      .filter(skill => skill && !seen.has(skill))
+      .sort((a, b) => {
+        const aArcana = ArcanaApp.recommendation.getAvailableArcanaForSkill(a).length || 99;
+        const bArcana = ArcanaApp.recommendation.getAvailableArcanaForSkill(b).length || 99;
+        if (aArcana !== bArcana) return aArcana - bArcana;
+        return a.localeCompare(b, 'ko');
+      });
+
+    candidates.slice(0, needAuto16).forEach(skill => {
+      result.push(skill);
+      seen.add(skill);
+    });
+
+    return result;
+  },
+
+  getResolvedTargetLevel(skill) {
+    const state = ArcanaApp.state;
+    const savedLevel = Number((state.targetSkillLevels || {})[skill] || 0);
+    if (savedLevel > 0) return savedLevel;
+    return 16;
+  },
+
+  validateSevenTwentyOwnedCards(ownedCards) {
+    const state = ArcanaApp.state;
+    const summary = ArcanaApp.recommendation.getTargetSummary();
+    const level20Set = new Set(summary.level20);
+    const requiredArcana = ['성배', '양피지', '나침반', '천칭'];
+    const invalidSlots = [];
+    const invalidCards = [];
+
+    if (summary.level20.length !== 7) {
+      return { ok: true, invalidSlots, invalidCards, message: '' };
+    }
+
+    requiredArcana.forEach(arcanaName => {
+      const slots = (ownedCards && ownedCards[arcanaName]) || [];
+      const filledSlots = slots.filter(slot => slot && String(slot.skill || '').trim());
+      const targetSlots = slots
+        .map((slot, index) => ({ slot, index }))
+        .filter(item => item.slot && level20Set.has(String(item.slot.skill || '').trim()));
+      const hasLv4Target = targetSlots.some(item => Number(item.slot.level || 0) >= 4);
+
+      targetSlots.forEach(item => {
+        if (Number(item.slot.level || 0) > 0 && Number(item.slot.level || 0) < 4) {
+          invalidSlots.push({
+            arcanaName,
+            slotIndex: item.index,
+            skill: String(item.slot.skill || '').trim(),
+            level: Number(item.slot.level || 0),
+            reason: '20레벨 7개 목표에서는 이 아르카나에 4레벨 액티브가 필요합니다.'
+          });
+        }
+      });
+
+      if (!hasLv4Target && filledSlots.length >= 4) {
+        invalidCards.push({
+          arcanaName,
+          reason: `${arcanaName}에 20레벨 목표 스킬 4레벨 슬롯을 추가할 공간이 없습니다.`
+        });
+      }
+    });
+
+    const ok = invalidSlots.length === 0 && invalidCards.length === 0;
+    return {
+      ok,
+      invalidSlots,
+      invalidCards,
+      message: ok ? '' : '20레벨 스킬 7개를 달성하려면 성배, 양피지, 나침반, 천칭에 각각 4레벨 액티브 스킬이 최소 1개씩 필요합니다. 빨간색으로 표시된 보유 아르카나를 먼저 수정해주세요.'
+    };
+  },
+
+  validateBeforeGenerate(ownedCards) {
+    const summary = ArcanaApp.recommendation.getTargetSummary();
+    const validation = ArcanaApp.recommendation.validateSevenTwentyOwnedCards(ownedCards || ArcanaApp.state.ownedCards || {});
+    const result = { ...validation, summary };
+    ArcanaApp.state.recommendationValidation = result;
+    return result;
+  },
+
   prepareResources() {
     const state = ArcanaApp.state;
     const hasManualRing = Object.values(state.equipmentOptions || {})
@@ -30,7 +160,7 @@ ArcanaApp.recommendation = {
     const manualRingLevels = ArcanaApp.simulator.calculateEquipmentLevels(state.equipmentOptions || {});
     const baseLevels = {};
 
-    (state.selectedTargetSkills || []).forEach(skill => {
+    ArcanaApp.recommendation.getEffectiveTargetSkills().forEach(skill => {
       baseLevels[skill] = Number(state.baseSkillLevel || 10)
         + Number(state.devanionBonus || 0)
         + Number(manualRingLevels[skill] || 0);
@@ -42,8 +172,8 @@ ArcanaApp.recommendation = {
   createNeedMap(baseLevels, ownedLevels) {
     const needMap = {};
 
-    (ArcanaApp.state.selectedTargetSkills || []).forEach(skill => {
-      const targetLevel = ArcanaApp.recommendation.getSkillTargetLevel(skill);
+    ArcanaApp.recommendation.getEffectiveTargetSkills().forEach(skill => {
+      const targetLevel = ArcanaApp.recommendation.getResolvedTargetLevel(skill);
       needMap[skill] = Math.max(
         0,
         targetLevel
@@ -60,15 +190,17 @@ ArcanaApp.recommendation = {
     const cards = ArcanaApp.recommendation.createStartingCards(ownedCards);
     const usage = ArcanaApp.recommendation.createUsageMap(cards);
 
-    const sortedTargets = (state.selectedTargetSkills || []).slice().sort((a, b) => {
-      const aTarget = ArcanaApp.recommendation.getSkillTargetLevel(a);
-      const bTarget = ArcanaApp.recommendation.getSkillTargetLevel(b);
+    const sortedTargets = ArcanaApp.recommendation.getEffectiveTargetSkills().slice().sort((a, b) => {
+      const aTarget = ArcanaApp.recommendation.getResolvedTargetLevel(a);
+      const bTarget = ArcanaApp.recommendation.getResolvedTargetLevel(b);
       if (aTarget !== bTarget) return bTarget - aTarget;
       const aArcana = ArcanaApp.recommendation.getAvailableArcanaForSkill(a).length || 99;
       const bArcana = ArcanaApp.recommendation.getAvailableArcanaForSkill(b).length || 99;
       if (aArcana !== bArcana) return aArcana - bArcana;
       return Number(needMap[b] || 0) - Number(needMap[a] || 0);
     });
+
+    ArcanaApp.recommendation.enforceSevenTwentyLv4Anchors(cards, usage, needMap, baseLevels);
 
     sortedTargets.forEach(skill => {
       ArcanaApp.recommendation.allocateSkill(skill, needMap, cards, usage, baseLevels, 3);
@@ -127,9 +259,71 @@ ArcanaApp.recommendation = {
     });
   },
 
+  enforceSevenTwentyLv4Anchors(cards, usage, needMap, baseLevels) {
+    const summary = ArcanaApp.recommendation.getTargetSummary();
+    if (summary.level20.length !== 7) return;
+
+    const requiredArcana = ['성배', '양피지', '나침반', '천칭'];
+    const usedAnchorSkills = new Set();
+
+    requiredArcana.forEach(arcanaName => {
+      const slots = cards[arcanaName] || [];
+      let anchor = slots.find(slot => {
+        const skill = String(slot.skill || '').trim();
+        return summary.level20.includes(skill) && Number(slot.level || 0) >= 4;
+      });
+
+      if (anchor) {
+        usedAnchorSkills.add(String(anchor.skill || '').trim());
+        return;
+      }
+
+      const candidates = summary.level20
+        .filter(skill => ArcanaApp.recommendation.getAvailableArcanaForSkill(skill).includes(arcanaName))
+        .sort((a, b) => {
+          const aExisting = slots.some(slot => String(slot.skill || '').trim() === a) ? 1 : 0;
+          const bExisting = slots.some(slot => String(slot.skill || '').trim() === b) ? 1 : 0;
+          if (aExisting !== bExisting) return bExisting - aExisting;
+          if (usedAnchorSkills.has(a) !== usedAnchorSkills.has(b)) return usedAnchorSkills.has(a) ? 1 : -1;
+          return Number(needMap[b] || 0) - Number(needMap[a] || 0);
+        });
+
+      for (const skill of candidates) {
+        let slot = slots.find(item => String(item.skill || '').trim() === skill);
+        if (!slot) {
+          if (slots.filter(item => item && String(item.skill || '').trim()).length >= 4) continue;
+          slot = { skill, level: 1, isTarget: true, targetLevel: 20, isSevenTwentyAnchor: true };
+          slots.push(slot);
+          needMap[skill] = Math.max(0, Number(needMap[skill] || 0) - 1);
+        }
+
+        while (Number(slot.level || 0) < 4) {
+          const cardGrowth = Number(usage[arcanaName].growth || 0);
+          const currentCardLevels = ArcanaApp.simulator.calculateCardLevels(cards);
+          const currentFinal = Number(baseLevels[skill] || 0) + Number(currentCardLevels[skill] || 0);
+
+          if (cardGrowth >= Number(ArcanaApp.state.maxCardLevel || 5)) break;
+          if (currentFinal + 1 > 20) break;
+
+          slot.level = Number(slot.level || 0) + 1;
+          usage[arcanaName].growth += 1;
+          needMap[skill] = Math.max(0, Number(needMap[skill] || 0) - 1);
+        }
+
+        if (Number(slot.level || 0) >= 4) {
+          slot.isTarget = true;
+          slot.targetLevel = 20;
+          slot.isSevenTwentyAnchor = true;
+          usedAnchorSkills.add(skill);
+          break;
+        }
+      }
+    });
+  },
+
   allocateSkill(skill, needMap, cards, usage, baseLevels, preferredMaxLevel) {
     let guard = 0;
-    const targetLevel = ArcanaApp.recommendation.getSkillTargetLevel(skill);
+    const targetLevel = ArcanaApp.recommendation.getResolvedTargetLevel(skill);
 
     while (Number(needMap[skill] || 0) > 0 && guard < 80) {
       guard += 1;
@@ -206,7 +400,7 @@ ArcanaApp.recommendation = {
 
   fillCardSlots(arcanaName, slots) {
     const availableSkills = ArcanaApp.state.skillsByArcana[arcanaName] || [];
-    const targetSet = new Set(ArcanaApp.state.selectedTargetSkills || []);
+    const targetSet = new Set(ArcanaApp.recommendation.getEffectiveTargetSkills());
 
     availableSkills.forEach(skill => {
       if (slots.length >= 4) return;
@@ -229,8 +423,8 @@ ArcanaApp.recommendation = {
     const autoRingOptions = hasManualRing ? { ring1: [], ring2: [] } : ArcanaApp.recommendation.createAutoRingOptions(baseLevels, finalCardLevels);
     const autoRingLevels = ArcanaApp.simulator.calculateEquipmentLevels(autoRingOptions || {});
 
-    const rows = (state.selectedTargetSkills || []).map(skill => {
-      const targetLevel = ArcanaApp.recommendation.getSkillTargetLevel(skill);
+    const rows = ArcanaApp.recommendation.getEffectiveTargetSkills().map(skill => {
+      const targetLevel = ArcanaApp.recommendation.getResolvedTargetLevel(skill);
       const owned = Number(ownedLevels[skill] || 0);
       const cardTotal = Number(finalCardLevels[skill] || 0);
       const recommended = Math.max(0, cardTotal - owned);
@@ -242,6 +436,7 @@ ArcanaApp.recommendation = {
       return {
         skill,
         targetLevel,
+        autoTarget: !((state.selectedTargetSkills || []).includes(skill)),
         current: Number(state.baseSkillLevel || 10),
         equipment,
         manualRing: Number(manualRingLevels[skill] || 0),
@@ -263,6 +458,8 @@ ArcanaApp.recommendation = {
 
     return {
       rows,
+      targetSummary: ArcanaApp.recommendation.getTargetSummary(),
+      effectiveTargetSkills: ArcanaApp.recommendation.getEffectiveTargetSkills(),
       advice,
       autoRingOptions,
       hasManualRing,
@@ -275,9 +472,9 @@ ArcanaApp.recommendation = {
   createAutoRingOptions(baseLevels, cardLevels) {
     const state = ArcanaApp.state;
     const options = { ring1: [], ring2: [] };
-    const shortages = (state.selectedTargetSkills || [])
+    const shortages = ArcanaApp.recommendation.getEffectiveTargetSkills()
       .map(skill => {
-        const targetLevel = ArcanaApp.recommendation.getSkillTargetLevel(skill);
+        const targetLevel = ArcanaApp.recommendation.getResolvedTargetLevel(skill);
         const finalLevel = Number(baseLevels[skill] || 0) + Number(cardLevels[skill] || 0);
         return { skill, shortage: Math.max(0, targetLevel - finalLevel), targetLevel, finalLevel };
       })
@@ -308,9 +505,21 @@ ArcanaApp.recommendation = {
     const achieved20 = rows.filter(row => row.targetLevel === 20 && row.achieved).length;
     const achieved16 = rows.filter(row => row.targetLevel === 16 && row.achieved).length;
     const autoRingSkills = Object.values(autoRingOptions || {}).flat().map(slot => slot.skill).filter(Boolean);
+    const summary = ArcanaApp.recommendation.getTargetSummary();
+    const auto16Rows = rows.filter(row => row.autoTarget && Number(row.targetLevel || 0) === 16);
     const advice = [];
 
-    advice.push(`20레벨 목표 ${achieved20}개, 16레벨 목표 ${achieved16}개를 달성 기준으로 검토했어요.`);
+    advice.push(`20레벨 목표 ${summary.level20.length}개는 ${summary.usedBy20}포인트, 16레벨 직접 목표 ${summary.level16.length}개는 ${summary.usedBy16}포인트로 계산했어요.`);
+
+    if (auto16Rows.length > 0) {
+      advice.push(`남는 ${summary.remainPoints}포인트는 직접 지정하지 않은 액티브 스킬 ${auto16Rows.length}개를 16레벨 목표로 자동 분산했어요.`);
+    } else {
+      advice.push(`20레벨 목표 ${achieved20}개, 16레벨 목표 ${achieved16}개를 달성 기준으로 검토했어요.`);
+    }
+
+    if (summary.level20.length === 7) {
+      advice.push('20레벨 목표가 7개라서 성배, 양피지, 나침반, 천칭에 각각 4레벨 액티브 슬롯을 우선 배치했어요.');
+    }
 
     if (overRows.length > 0) {
       const names = overRows.slice(0, 4).map(row => `${row.skill} ${row.over}레벨 초과`).join(', ');

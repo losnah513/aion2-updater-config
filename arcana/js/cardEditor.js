@@ -163,7 +163,7 @@ ArcanaApp.cardEditor = {
         item.classList.toggle('is-short', !row.achieved);
         item.innerHTML = `
           <strong>${row.skill}</strong>
-          <span>목표 ${row.targetLevel}</span>
+          <span>${row.autoTarget ? '자동 16' : `목표 ${row.targetLevel}`}</span>
           <span>장비 ${row.equipment}</span>
           <span>보유 ${row.owned}</span>
           <span>추천 ${row.recommended}</span>
@@ -231,7 +231,7 @@ ArcanaApp.cardEditor = {
       if (levelRows.length === 0) return;
       lines.push('', `${level}레벨 목표`);
       levelRows.forEach(row => {
-        lines.push(`- ${row.skill}: ${row.achieved ? '달성' : (row.over > 0 ? `${row.over} 초과` : `${row.shortage} 부족`)} / 최종 ${row.finalLevel}`);
+        lines.push(`- ${row.skill}${row.autoTarget ? ' (자동 16)' : ''}: ${row.achieved ? '달성' : (row.over > 0 ? `${row.over} 초과` : `${row.shortage} 부족`)} / 최종 ${row.finalLevel}`);
       });
     });
 
@@ -306,9 +306,22 @@ ArcanaApp.cardEditor = {
     card.appendChild(title);
 
     const savedSlots = (ArcanaApp.state.ownedCards && ArcanaApp.state.ownedCards[arcanaName]) || [];
+    const validation = ArcanaApp.state.recommendationValidation || {};
+    const invalidCard = (validation.invalidCards || []).some(item => item.arcanaName === arcanaName);
+
+    if (invalidCard) {
+      card.classList.add('has-recommendation-warning');
+    }
 
     for (let index = 0; index < 4; index += 1) {
       card.appendChild(ArcanaApp.cardEditor.createEditableSlot(arcanaName, index, savedSlots[index]));
+    }
+
+    if (invalidCard) {
+      const warning = document.createElement('div');
+      warning.className = 'arcana-owned-warning-text';
+      warning.textContent = '20레벨 7개 조건: 이 카드에 4레벨 액티브 슬롯이 필요합니다.';
+      card.appendChild(warning);
     }
 
     return card;
@@ -353,6 +366,14 @@ ArcanaApp.cardEditor = {
   createEditableSlot(arcanaName, index, savedSlot) {
     const slot = document.createElement('div');
     slot.className = 'arcana-slot';
+    const validation = ArcanaApp.state.recommendationValidation || {};
+    const invalidSlot = (validation.invalidSlots || []).some(item => {
+      return item.arcanaName === arcanaName && Number(item.slotIndex) === Number(index);
+    });
+
+    if (invalidSlot) {
+      slot.classList.add('has-recommendation-warning');
+    }
 
     const select = ArcanaApp.customSelect.create({
       placeholder: '스킬 선택',
