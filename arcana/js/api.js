@@ -116,16 +116,18 @@ ArcanaApp.api = {
   },
 
   saveRingOptions(rings) {
-    localStorage.setItem('ARCANA_RING_OPTIONS', JSON.stringify(rings || {}));
-    return Promise.resolve({ ok: true, local: true });
+    // legacy 호환 함수. 실제 저장 키는 ARCANA_EQUIPMENT_OPTIONS 하나로 통일한다.
+    return ArcanaApp.api.saveEquipmentOptions(rings || {});
   },
 
   loadRingOptionsFromLocal() {
-    return ArcanaApp.api.readLocalObject('ARCANA_EQUIPMENT_OPTIONS', { ring1: [], ring2: [] });
+    // legacy ARCANA_RING_OPTIONS는 자동 복원하지 않는다.
+    return ArcanaApp.api.loadEquipmentOptionsFromLocal();
   },
 
   clearRingOptions() {
     localStorage.removeItem('ARCANA_RING_OPTIONS');
+    ArcanaApp.api.clearEquipmentOptions();
   },
 
   readLocalObject(key, fallback) {
@@ -143,20 +145,31 @@ ArcanaApp.api = {
   },
 
   getFallbackData() {
-    const active = [
-      '예리한 일격', '절단의 맹타', '도약 찍기', '유린의 검',
-      '내려찍기', '검기 난무', '발목 베기', '분쇄 파동',
-      '돌진 일격', '공중 결박', '파멸의 맹타', '충격 해제'
-    ];
-
-    const arcanaSkills = {
-      '성배': active,
-      '양피지': ['예리한 일격', '도약 찍기', '내려찍기', '발목 베기', '공중 결박', '파멸의 맹타'],
-      '나침반': ['절단의 맹타', '유린의 검', '분쇄 파동', '돌진 일격', '충격 해제', '파멸의 맹타'],
-      '종': ['생존 자세', '보호의 갑옷', '피의 흡수', '약점 파악', '전투 본능'],
-      '거울': ['생존 자세', '보호의 갑옷', '피의 흡수', '약점 파악', '전투 본능'],
-      '천칭': active
+    const fallbackActiveByClass = {
+      templar: ['맹렬한 일격', '연속 난타', '포획', '방패 강타', '심판', '섬광 난무', '쇠약의 맹타', '비호의 일격', '방패 돌격', '섬멸', '징벌', '충격 해제'],
+      gladiator: ['예리한 일격', '절단의 맹타', '도약 찍기', '유린의 검', '내려찍기', '검기 난무', '발목 베기', '분쇄 파동', '돌진 일격', '공중 결박', '파멸의 맹타', '충격 해제'],
+      assassin: ['암습', '기습', '연쇄 문양 각인', '문양 폭발', '살의', '그림자 낙하', '맹독의 칼날', '신속한 습격', '회피의 계약', '암살', '연막', '충격 해제'],
+      ranger: ['강습 화살', '속사', '올가미 화살', '저격', '폭발 화살', '침묵 화살', '덫 설치', '회피 사격', '집중 사격', '관통 화살', '화살 폭풍', '충격 해제'],
+      sorcerer: ['화염 화살', '빙결', '화염 폭발', '냉기 파동', '마력 폭발', '수면', '화염 난무', '얼음 창', '마력 집중', '공간 왜곡', '유성 낙하', '충격 해제'],
+      elementalist: ['정령 소환', '불꽃 화살', '대지의 사슬', '정령 강화', '흡수의 기운', '폭풍의 정령', '공포', '정령 희생', '마력 회복', '원소 폭발', '정령 보호', '충격 해제'],
+      cleric: ['징벌의 번개', '치유의 빛', '쾌유의 섬광', '정화', '신성한 일격', '보호막', '회복의 물결', '부활', '신성한 심판', '쾌속 치유', '구원의 손길', '충격 해제'],
+      chanter: ['단죄의 일격', '격려의 주문', '철벽의 주문', '치유의 주문', '연속 타격', '수호의 진언', '진격의 주문', '마력 회복', '승리의 주문', '천벌', '풍요의 진언', '충격 해제']
     };
+
+    const passive = ['생존 자세', '보호의 갑옷', '피의 흡수', '약점 파악', '전투 본능'];
+    const makeArcanaSkills = active => ({
+      '성배': active,
+      '양피지': active.filter((_, index) => [0, 2, 4, 6, 9, 10].includes(index)),
+      '나침반': active.filter((_, index) => [1, 3, 7, 8, 10, 11].includes(index)),
+      '종': passive,
+      '거울': passive,
+      '천칭': active
+    });
+
+    const classSkills = {};
+    Object.entries(fallbackActiveByClass).forEach(([key, active]) => {
+      classSkills[key] = { active, passive, arcanaSkills: makeArcanaSkills(active) };
+    });
 
     return {
       ok: true,
@@ -169,13 +182,7 @@ ArcanaApp.api = {
       arcanaTypes: ['성배', '양피지', '나침반', '종', '거울', '천칭'],
       skillsByArcana: {},
       classList: ArcanaApp.classSelector ? ArcanaApp.classSelector.normalizeClassList() : [{ key: 'gladiator', name: '검성' }],
-      classSkills: {
-        gladiator: {
-          active,
-          passive: ['생존 자세', '보호의 갑옷', '피의 흡수', '약점 파악', '전투 본능'],
-          arcanaSkills
-        }
-      },
+      classSkills,
       activeSkills: [],
       passiveSkills: [],
       ownedCards: ArcanaApp.api.loadOwnedCardsFromLocal(),

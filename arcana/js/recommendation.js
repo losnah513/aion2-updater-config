@@ -200,10 +200,12 @@ ArcanaApp.recommendation = {
       return Number(needMap[b] || 0) - Number(needMap[a] || 0);
     });
 
+    ArcanaApp.recommendation.prioritizeTwentyLevelLv4Slots(cards, usage, needMap, baseLevels);
     ArcanaApp.recommendation.enforceSevenTwentyLv4Anchors(cards, usage, needMap, baseLevels);
 
     sortedTargets.forEach(skill => {
-      ArcanaApp.recommendation.allocateSkill(skill, needMap, cards, usage, baseLevels, 3);
+      const targetLevel = ArcanaApp.recommendation.getResolvedTargetLevel(skill);
+      ArcanaApp.recommendation.allocateSkill(skill, needMap, cards, usage, baseLevels, targetLevel >= 20 ? 4 : 3);
     });
 
     sortedTargets.forEach(skill => {
@@ -256,6 +258,70 @@ ArcanaApp.recommendation = {
     return (state.arcanaTypes || []).filter(arcanaName => {
       const pool = state.skillsByArcana[arcanaName] || [];
       return pool.includes(skill);
+    });
+  },
+
+  prioritizeTwentyLevelLv4Slots(cards, usage, needMap, baseLevels) {
+    const summary = ArcanaApp.recommendation.getTargetSummary();
+    const targets = (summary.level20 || []).slice();
+
+    targets.forEach(skill => {
+      if (Number(needMap[skill] || 0) <= 0) return;
+
+      const existingLv4 = ArcanaApp.recommendation.getAvailableArcanaForSkill(skill).some(arcanaName => {
+        return (cards[arcanaName] || []).some(slot => String(slot.skill || '').trim() === skill && Number(slot.level || 0) >= 4);
+      });
+      if (existingLv4) return;
+
+      const candidates = ArcanaApp.recommendation.getAvailableArcanaForSkill(skill)
+        .map(arcanaName => {
+          const slots = cards[arcanaName] || [];
+          const existing = slots.find(slot => String(slot.skill || '').trim() === skill);
+          const growth = Number((usage[arcanaName] || {}).growth || 0);
+          const freeSlots = 4 - slots.filter(slot => slot && String(slot.skill || '').trim()).length;
+          const needGrowthToLv4 = existing ? Math.max(0, 4 - Number(existing.level || 0)) : 3;
+          const canUse = existing || freeSlots > 0;
+          const hasGrowth = growth + needGrowthToLv4 <= Number(ArcanaApp.state.maxCardLevel || 5);
+          if (!canUse || !hasGrowth) return null;
+
+          return {
+            arcanaName,
+            existing,
+            score:
+              (existing ? 3000 : 0)
+              + (existing && existing.isOwned ? 900 : 0)
+              + freeSlots * 20
+              + (Number(ArcanaApp.state.maxCardLevel || 5) - growth) * 14
+              - slots.length * 5
+          };
+        })
+        .filter(Boolean)
+        .sort((a, b) => b.score - a.score);
+
+      const selected = candidates[0];
+      if (!selected) return;
+
+      const slots = cards[selected.arcanaName];
+      let slot = selected.existing;
+      if (!slot) {
+        slot = { skill, level: 1, isTarget: true, targetLevel: 20, isTwentyLv4Priority: true };
+        slots.push(slot);
+        needMap[skill] = Math.max(0, Number(needMap[skill] || 0) - 1);
+      }
+
+      while (Number(slot.level || 0) < 4 && Number(needMap[skill] || 0) > 0) {
+        const currentCardLevels = ArcanaApp.simulator.calculateCardLevels(cards);
+        const currentFinal = Number(baseLevels[skill] || 0) + Number(currentCardLevels[skill] || 0);
+        if (currentFinal + 1 > 20) break;
+        if (Number((usage[selected.arcanaName] || {}).growth || 0) >= Number(ArcanaApp.state.maxCardLevel || 5)) break;
+
+        slot.level = Number(slot.level || 0) + 1;
+        slot.isTarget = true;
+        slot.targetLevel = 20;
+        slot.isTwentyLv4Priority = true;
+        usage[selected.arcanaName].growth += 1;
+        needMap[skill] = Math.max(0, Number(needMap[skill] || 0) - 1);
+      }
     });
   },
 
@@ -517,8 +583,12 @@ ArcanaApp.recommendation = {
       advice.push(`20레벨 목표 ${achieved20}개, 16레벨 목표 ${achieved16}개를 달성 기준으로 검토했어요.`);
     }
 
+    if (summary.level20.length > 0) {
+      advice.push('20레벨 목표 달성을 위해 필요한 4레벨 액티브 슬롯은 회피하지 않고 우선 활용했어요.');
+    }
+
     if (summary.level20.length === 7) {
-      advice.push('20레벨 목표가 7개라서 성배, 양피지, 나침반, 천칭에 각각 4레벨 액티브 슬롯을 우선 배치했어요.');
+      advice.push('20레벨 목표가 7개라서 성배, 양피지, 나침반, 천칭에 각각 4레벨 액티브 슬롯을 강제 조건으로 확인했어요.');
     }
 
     if (overRows.length > 0) {

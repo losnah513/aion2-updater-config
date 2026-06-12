@@ -23,6 +23,7 @@ ArcanaApp.classService = {
     guardian: 'templar',
     templar: 'templar',
     skill_db_gladiator: 'gladiator',
+    skill_db_gladiatior: 'gladiator',
     gladiator: 'gladiator',
     gladiatior: 'gladiator',
     skill_db_assassin: 'assassin',
@@ -92,7 +93,7 @@ ArcanaApp.classService = {
     const legacy = {
       templar: ['templar', 'guardian', 'skill_db_templar'],
       elementalist: ['elementalist', 'spiritmaster', 'skill_db_spiritmaster', 'skill_db_elementalist'],
-      gladiator: ['gladiator', 'gladiatior', 'skill_db_gladiator'],
+      gladiator: ['gladiator', 'gladiatior', 'skill_db_gladiator', 'skill_db_gladiatior'],
       assassin: ['assassin', 'skill_db_assassin'],
       ranger: ['ranger', 'skill_db_ranger'],
       sorcerer: ['sorcerer', 'skill_db_sorcerer'],

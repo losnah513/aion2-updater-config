@@ -7,7 +7,7 @@
 window.ArcanaApp = window.ArcanaApp || {};
 
 ArcanaApp.cta = {
-  lineCount: 144,
+  lineCount: 21,
   minLoadingMs: 4200,
   messageStepMs: 720,
   _loadingStartedAt: 0,
@@ -33,10 +33,10 @@ ArcanaApp.cta = {
         const line = document.createElement('i');
         const waveIndex = index % 36;
         line.style.setProperty('--i', String(index));
-        line.style.setProperty('--angle', `${(360 / ArcanaApp.cta.lineCount) * index}deg`);
-        line.style.setProperty('--delay', `${-waveIndex * 0.045}s`);
-        line.style.setProperty('--tone', `${(index * 2.5) % 360}deg`);
-        line.style.setProperty('--amp', `${0.68 + ((index * 7) % 31) / 100}`);
+        line.style.setProperty('--x', String(index));
+        line.style.setProperty('--delay', `${-waveIndex * 0.055}s`);
+        line.style.setProperty('--tone', `${190 + ((index * 9) % 120)}deg`);
+        line.style.setProperty('--amp', `${0.62 + ((index * 7) % 34) / 100}`);
         ring.appendChild(line);
       }
 
@@ -99,7 +99,7 @@ ArcanaApp.cta = {
       messages.push(['최적 세팅으로 추천해드릴게요', '모든 아르카나 후보를 비교해 현실적인 조합을 찾습니다.']);
     }
 
-    messages.push(['제작 난이도를 함께 고려하고 있어요', 'Lv4와 반지 사용을 최소화하는 방향으로 정리합니다.']);
+    messages.push(['제작 난이도를 함께 고려하고 있어요', '목표 달성에 필요한 4레벨은 우선 활용하고, 불필요한 낭비만 줄입니다.']);
     return messages;
   },
 

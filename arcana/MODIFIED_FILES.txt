@@ -1,74 +1,42 @@
-ARCANA ARC-0.3.00_20260612_03 MODIFIED FILES
+ARCANA MODIFIED FILES
+Version: ARC-0.3.00
+Build: 20260612_04
 
-[신규]
+[웹 JS 수정]
 - arcana/js/classService.js
-  - 클래스 키/표시명/아이콘/스킬 아이콘 파일 정규화 전용 서비스 추가
-  - skill_db_templar / templar / guardian / 수호성을 templar 표준 키로 통합
-
-- arcana/js/skillTargetRules.js
-  - 20레벨/16레벨 목표 선택 예산 규칙 전용 모듈 추가
-  - 20목표 +6, 16목표 +2, 총 예산 42포인트 기준 적용
-  - 20레벨 선택 순서 1~5 중요도 표시 기준 추가
-
-- AppsScript/ARC_ClassKeyService.gs
-  - Apps Script 클래스 키 정규화 전용 파일 추가
-  - 웹 classService.js와 같은 templar 표준 키 기준으로 정리
-
-[수정]
-- arcana/index.html
-  - classService.js, skillTargetRules.js 로딩 순서 추가
-
-- arcana/js/classSelector.js
-  - 내부 중복 클래스 매핑 제거
-  - ClassService 연결부만 남기도록 정리
-  - 수호성/templar/skill_db_templar 조회 경로 통합
-
-- arcana/js/skillSelector.js
-  - 총 선택 개수 7개 고정 제한 제거
-  - 20레벨 선택 개수에 따라 16레벨 추가 가능 수 동적 계산
-  - 20레벨 선택 순서 기준 중요도 1~5 뱃지 표시
-  - 수호성 스킬 아이콘 파일 로딩을 ClassService 기준으로 통합
-
-- arcana/js/app.js
-  - classSkills 응답 키 정규화 추가
-  - targetSkillPriority20 저장/복원/초기화 반영
-  - 액티브 스킬 저장 데이터에 중요도 순서 포함
-
-- arcana/js/state.js
-  - targetSkillPriority20 상태 추가
+  - class_skill_db 시트의 공식 DB 키는 그대로 유지하고, 내부 표준 키만 변환하도록 보강.
+  - skill_db_gladiatior 오타형 DB 키도 gladiator 내부 키로 매핑되도록 추가.
 
 - arcana/js/api.js
-  - 구 ARCANA_RING_OPTIONS fallback 복원 제거
-  - 새로고침 시 구 저장키 때문에 이전 기록이 되살아나는 흐름 차단
+  - API 실패/로컬 실행 fallback에서도 수호성(templar) 액티브 스킬이 비지 않도록 클래스별 기본 스킬 데이터 보강.
+  - legacy ARCANA_RING_OPTIONS 자동 복원 방지.
+  - 반지 저장 키를 ARCANA_EQUIPMENT_OPTIONS 기준으로 통일.
 
-- arcana/css/cards.css
-  - 20레벨 중요도 뱃지 스타일 추가
-  - 선택 제한 안내 강조 스타일 추가
+- arcana/js/recommendation.js
+  - 20레벨 목표 달성을 위해 필요한 4레벨 액티브 슬롯을 회피하지 않고 우선 활용하도록 추천 엔진 보강.
+  - Lv4 최소화는 목표 달성 후의 보조 기준으로만 작동하도록 우선순위 조정.
+  - 20레벨 목표 미달 조합 방지를 위해 Lv4 우선 배치 로직 추가.
 
-- AppsScript/ARC_Constants.gs
-  - ARC_VERSION을 ARC-0.3.00으로 정정
-  - 파일 상단 설명 주석 추가
+- arcana/js/components/arcana-cta.js
+  - CTA 막대 개수를 축소하고 수평 파동형 구조에 맞게 변수 정리.
+  - 분석 중 안내 문구에서 “Lv4 최소화” 표현 제거.
+  - 목표 달성에 필요한 4레벨은 우선 활용한다는 문구로 교체.
 
-- AppsScript/ARC_DBService.gs
-  - 클래스 정규화 함수 분리 후 중복 제거
-  - 파일 상단 설명 주석 추가
+[웹 CSS 수정]
+- arcana/css/components/arcana-cta.css
+  - 기존 원형/거대 CTA 스타일을 최종 override.
+  - 회전형 CTA 차단.
+  - 막대 길이가 독립적으로 변하는 수평 파동형 CTA로 재정리.
+  - CTA가 추천 아르카나 카드 높이를 밀어내지 않도록 높이 132px로 제한.
+  - 추천 아르카나 카드 높이를 현재 아르카나 카드와 동일하게 610px 기준으로 고정.
+  - 분석 탭 내용이 잘리지 않도록 추천 영역 내부 스크롤/간격 조정.
 
-- AppsScript/ARC_CardService.gs
-- AppsScript/ARC_Main.gs
-- AppsScript/ARC_Utils.gs
-- AppsScript/ARC_WebApp.gs
-  - 파일 상단 역할/포함 내용 설명 주석 추가
+[Apps Script]
+- 변경 없음.
 
-- AppsScript/_docs/SCRIPT_IMPORT_ORDER.txt
-  - ARC_ClassKeyService.gs 추가 순서 반영
-
-[정리]
-- 클래스 키 매핑 중복 위치 축소
-- 수호성 표준 키 templar 기준 통일
-- 구 반지 저장키 자동 복원 경로 제거
-
-[검수]
-- 웹 JS node --check 통과
-- Apps Script .gs syntax check 통과(.js 임시 확장자 검사)
-- ClassService: skill_db_templar → templar 확인
-- SkillTargetRules: 20목표 6개 → 16목표 3개 허용 / 초과 차단 확인
+[검수 메모]
+- JS 문법 검사 통과.
+- skill_db_ 접두어는 시트 공식 키로 유지.
+- 내부 로직 키만 templar/gladiator 등으로 정규화.
+- 수호성 fallback active 스킬 보강.
+- 20레벨 목표용 Lv4 우선 활용 로직 추가.
