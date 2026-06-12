@@ -1,15 +1,15 @@
 /*
  * ARCANA CTA MODULE
  * 독립 CTA 컴포넌트.
- * 회전형 스피너 금지. idle/hover/loading 모두 막대 길이가 변하는 파동형 CTA만 관리한다.
- * 추천 엔진은 이 모듈에 상태 전환만 요청하고 DOM/CSS를 직접 조작하지 않는다.
+ * 회전형/오브형 CTA 금지.
+ * 중심 원을 기준으로 바깥쪽으로 길어지는 방사형 막대 CTA만 관리한다.
  */
 window.ArcanaApp = window.ArcanaApp || {};
 
 ArcanaApp.cta = {
-  lineCount: 21,
-  minLoadingMs: 4200,
-  messageStepMs: 720,
+  lineCount: 144,
+  minLoadingMs: 5200,
+  messageStepMs: 920,
   _loadingStartedAt: 0,
   _messageTimer: null,
   _messageIndex: 0,
@@ -22,35 +22,77 @@ ArcanaApp.cta = {
     if (layer.dataset.ctaReady !== '1') {
       layer.dataset.ctaReady = '1';
       layer.textContent = '';
-
-      const halo = document.createElement('span');
-      halo.className = 'arcana-cta-wave-halo';
-
-      const ring = document.createElement('span');
-      ring.className = 'arcana-cta-wave-lines';
-
-      for (let index = 0; index < ArcanaApp.cta.lineCount; index += 1) {
-        const line = document.createElement('i');
-        const waveIndex = index % 36;
-        line.style.setProperty('--i', String(index));
-        line.style.setProperty('--x', String(index));
-        line.style.setProperty('--delay', `${-waveIndex * 0.055}s`);
-        line.style.setProperty('--tone', `${190 + ((index * 9) % 120)}deg`);
-        line.style.setProperty('--amp', `${0.62 + ((index * 7) % 34) / 100}`);
-        ring.appendChild(line);
-      }
-
-      const text = document.createElement('span');
-      text.className = 'arcana-cta-analysis-text';
-      text.setAttribute('aria-live', 'polite');
-      text.innerHTML = '<strong>추천 준비</strong><small>조건을 확인하면 분석을 시작할게요.</small>';
-
-      layer.appendChild(halo);
-      layer.appendChild(ring);
-      layer.appendChild(text);
+      layer.appendChild(ArcanaApp.cta.createWaveSvg());
     }
 
     ArcanaApp.cta.setIdle();
+  },
+
+  createWaveSvg() {
+    const svgNs = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNs, 'svg');
+    svg.classList.add('arcana-cta-wave-svg');
+    svg.setAttribute('viewBox', '-160 -160 320 320');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+
+    const softRing = document.createElementNS(svgNs, 'circle');
+    softRing.classList.add('arcana-cta-soft-ring');
+    softRing.setAttribute('cx', '0');
+    softRing.setAttribute('cy', '0');
+    softRing.setAttribute('r', '64');
+    svg.appendChild(softRing);
+
+    const innerRing = document.createElementNS(svgNs, 'circle');
+    innerRing.classList.add('arcana-cta-inner-ring');
+    innerRing.setAttribute('cx', '0');
+    innerRing.setAttribute('cy', '0');
+    innerRing.setAttribute('r', '65');
+    svg.appendChild(innerRing);
+
+    const lineGroup = document.createElementNS(svgNs, 'g');
+    lineGroup.classList.add('arcana-cta-wave-lines');
+    svg.appendChild(lineGroup);
+
+    const count = ArcanaApp.cta.lineCount;
+    const innerRadius = 70;
+    for (let index = 0; index < count; index += 1) {
+      const angle = (Math.PI * 2 * index) / count;
+      const degree = (360 * index) / count;
+      // 불규칙한 외곽 파도 형태를 만들기 위해 여러 주기의 파형을 합성한다.
+      const organic =
+        Math.sin(angle * 3.0 + 0.35) * 10 +
+        Math.sin(angle * 7.0 - 1.1) * 7 +
+        Math.sin(angle * 11.0 + 1.7) * 4;
+      const long = Math.max(36, Math.min(72, 52 + organic));
+      const hover = Math.max(30, long - 10);
+      const mid = Math.max(20, long - 22);
+      const soft = Math.max(16, long - 30);
+      const idle = Math.max(10, long - 38);
+      const outerRadius = innerRadius + long;
+      const x1 = Math.cos(angle) * innerRadius;
+      const y1 = Math.sin(angle) * innerRadius;
+      const x2 = Math.cos(angle) * outerRadius;
+      const y2 = Math.sin(angle) * outerRadius;
+
+      const line = document.createElementNS(svgNs, 'line');
+      line.classList.add('arcana-cta-wave-line');
+      line.setAttribute('x1', x1.toFixed(2));
+      line.setAttribute('y1', y1.toFixed(2));
+      line.setAttribute('x2', x2.toFixed(2));
+      line.setAttribute('y2', y2.toFixed(2));
+      line.style.setProperty('--idle', idle.toFixed(1));
+      line.style.setProperty('--soft', soft.toFixed(1));
+      line.style.setProperty('--mid', mid.toFixed(1));
+      line.style.setProperty('--hover', hover.toFixed(1));
+      line.style.setProperty('--long', long.toFixed(1));
+      line.style.setProperty('--delay', `${-(index % 48) * 0.035}s`);
+      line.style.setProperty('--tone', `${185 + ((degree + index * 3) % 170)}deg`);
+      line.style.setProperty('--alpha', `${0.28 + ((index * 13) % 38) / 100}`);
+      lineGroup.appendChild(line);
+    }
+
+    return svg;
   },
 
   getPanel() {
@@ -61,9 +103,8 @@ ArcanaApp.cta = {
     return document.querySelector('.arcana-cta-wave-layer');
   },
 
-  getTextNode() {
-    const layer = ArcanaApp.cta.getLayer();
-    return layer ? layer.querySelector('.arcana-cta-analysis-text') : null;
+  getButton() {
+    return document.getElementById('arcanaRunSimulation');
   },
 
   hasOwnedArcana() {
@@ -87,30 +128,29 @@ ArcanaApp.cta = {
     const hasAnySavedData = hasOwned || hasRings;
 
     const messages = [
-      ['아르카나 정보를 읽고 있어요', hasOwned ? '저장된 보유 아르카나를 먼저 확인합니다.' : '저장된 보유 아르카나가 있는지 확인합니다.'],
-      ['요청한 스킬 레벨을 확인했어요', ArcanaApp.cta.hasTargetSkills() ? '16/20 목표를 나누어 계산할게요.' : '목표 스킬 정보를 다시 확인하고 있어요.'],
-      ['반지 옵션을 확인하고 있어요', hasRings ? '저장된 반지 옵션은 현실 데이터로 유지합니다.' : '저장된 반지 옵션이 없으면 필요한 만큼만 자동 활용합니다.']
+      ['정보 확인중', hasOwned ? '저장된 아르카나를 읽고 있어요.' : '아르카나 정보를 확인하고 있어요.'],
+      ['목표 확인중', ArcanaApp.cta.hasTargetSkills() ? '요청한 16/20레벨 목표를 계산해요.' : '요청한 스킬 레벨을 확인하고 있어요.'],
+      ['반지 확인중', hasRings ? '저장된 반지 옵션을 유지해요.' : '부족한 만큼만 반지를 계산해요.']
     ];
 
     if (hasAnySavedData) {
-      messages.push(['저장한 내용을 바탕으로 추천할게요', '현재 세팅을 최대한 유지하면서 부족분만 계산합니다.']);
+      messages.push(['저장 기준 분석중', '저장한 내용을 바탕으로 추천해요.']);
     } else {
-      messages.push(['따로 저장하신 내용이 없어요', '전체 아르카나를 기준으로 계산을 시작합니다.']);
-      messages.push(['최적 세팅으로 추천해드릴게요', '모든 아르카나 후보를 비교해 현실적인 조합을 찾습니다.']);
+      messages.push(['전체 기준 분석중', '저장된 내용이 없어 전체 후보를 비교해요.']);
+      messages.push(['최적 세팅 탐색중', '모든 아르카나를 기준으로 추천해요.']);
     }
 
-    messages.push(['제작 난이도를 함께 고려하고 있어요', '목표 달성에 필요한 4레벨은 우선 활용하고, 불필요한 낭비만 줄입니다.']);
+    messages.push(['난이도 계산중', '필요한 4레벨은 우선 활용해요.']);
     return messages;
   },
 
-  setText(title, description) {
-    const text = ArcanaApp.cta.getTextNode();
-    if (!text) return;
-    text.classList.remove('is-changing');
-    // reflow로 문구 전환 애니메이션을 안정적으로 재시작한다.
-    void text.offsetWidth;
-    text.classList.add('is-changing');
-    text.innerHTML = `<strong>${ArcanaApp.cta.escapeHtml(title)}</strong><small>${ArcanaApp.cta.escapeHtml(description || '')}</small>`;
+  setButtonText(title, description) {
+    const button = ArcanaApp.cta.getButton();
+    if (!button) return;
+    const safeTitle = ArcanaApp.cta.escapeHtml(title || '추천 시작');
+    const safeDesc = ArcanaApp.cta.escapeHtml(description || '클릭하여 분석을 시작하세요');
+    button.innerHTML = `<span class="arcana-cta-main">${safeTitle}</span><span class="arcana-cta-sub">${safeDesc}</span>`;
+    button.setAttribute('aria-label', `${title || '추천 시작'} ${description || ''}`.trim());
   },
 
   escapeHtml(value) {
@@ -136,7 +176,7 @@ ArcanaApp.cta = {
 
     const show = () => {
       const message = ArcanaApp.cta._messages[ArcanaApp.cta._messageIndex % ArcanaApp.cta._messages.length];
-      ArcanaApp.cta.setText(message[0], message[1]);
+      ArcanaApp.cta.setButtonText(message[0], message[1]);
       ArcanaApp.cta._messageIndex += 1;
     };
 
@@ -150,7 +190,7 @@ ArcanaApp.cta = {
     if (!panel) return;
     panel.classList.remove('is-cta-loading', 'is-cta-complete', 'is-cta-error');
     panel.dataset.ctaState = 'idle';
-    ArcanaApp.cta.setText('추천 준비', '조건을 확인하면 분석을 시작할게요.');
+    ArcanaApp.cta.setButtonText('추천 시작', '클릭하여 분석을 시작하세요');
   },
 
   setLoading(options = {}) {
@@ -165,7 +205,7 @@ ArcanaApp.cta = {
 
   async waitForMinimumDuration(minMs) {
     const startedAt = ArcanaApp.cta._loadingStartedAt || Date.now();
-    const minimum = Number(minMs || ArcanaApp.cta.minLoadingMs || 4200);
+    const minimum = Number(minMs || ArcanaApp.cta.minLoadingMs || 5200);
     const elapsed = Date.now() - startedAt;
     const remain = Math.max(0, minimum - elapsed);
     if (remain > 0) {
@@ -175,11 +215,7 @@ ArcanaApp.cta = {
 
   async finishAfterMinimumDelay(success = true, minMs) {
     await ArcanaApp.cta.waitForMinimumDuration(minMs);
-    if (success) {
-      ArcanaApp.cta.setSuccess();
-    } else {
-      ArcanaApp.cta.setError();
-    }
+    success ? ArcanaApp.cta.setSuccess() : ArcanaApp.cta.setError();
   },
 
   setSuccess() {
@@ -189,8 +225,8 @@ ArcanaApp.cta = {
     panel.classList.remove('is-cta-loading', 'is-cta-error');
     panel.classList.add('is-cta-complete');
     panel.dataset.ctaState = 'complete';
-    ArcanaApp.cta.setText('추천 결과가 준비됐어요', '분석 탭과 추천 가이드를 확인해보세요.');
-    window.setTimeout(() => ArcanaApp.cta.setIdle(), 680);
+    ArcanaApp.cta.setButtonText('준비 완료', '결과를 확인해보세요');
+    window.setTimeout(() => ArcanaApp.cta.setIdle(), 700);
   },
 
   setError() {
@@ -200,7 +236,7 @@ ArcanaApp.cta = {
     panel.classList.remove('is-cta-loading', 'is-cta-complete');
     panel.classList.add('is-cta-error');
     panel.dataset.ctaState = 'error';
-    ArcanaApp.cta.setText('추천 계산을 멈췄어요', '입력값을 확인한 뒤 다시 시도해주세요.');
-    window.setTimeout(() => ArcanaApp.cta.setIdle(), 1200);
+    ArcanaApp.cta.setButtonText('계산 중단', '입력값을 확인해주세요');
+    window.setTimeout(() => ArcanaApp.cta.setIdle(), 1400);
   }
 };

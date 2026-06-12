@@ -311,7 +311,6 @@ ArcanaApp.app = {
       let recommendationSucceeded = false;
       button.disabled = true;
       button.dataset.originalText = button.dataset.originalText || button.textContent;
-      button.textContent = '분석중';
       button.classList.add('is-loading');
       if (ArcanaApp.cta && typeof ArcanaApp.cta.setLoading === 'function') {
         ArcanaApp.cta.setLoading();
@@ -323,16 +322,16 @@ ArcanaApp.app = {
         // 추천 계산이 빨리 끝나도 CTA 진행 UX는 최소 시간 동안 유지한다.
         const result = ArcanaApp.recommendation.generate();
         if (ArcanaApp.cta && typeof ArcanaApp.cta.waitForMinimumDuration === 'function') {
-          await ArcanaApp.cta.waitForMinimumDuration(4200);
+          await ArcanaApp.cta.waitForMinimumDuration(5200);
         } else {
-          await new Promise(resolve => window.setTimeout(resolve, 4200));
+          await new Promise(resolve => window.setTimeout(resolve, 5200));
         }
         ArcanaApp.ui.renderRecommendationResult(result);
         recommendationSucceeded = true;
         ArcanaApp.panelLock.showMessage('recommendArcanaCards', ArcanaApp.state.recommendationMeta && ArcanaApp.state.recommendationMeta.ok === false ? '현재 조건에서는 20레벨 달성 조합을 찾지 못했어요. 분석 탭에서 부족 스킬을 확인해주세요.' : '추천 결과가 준비되었어요. 탭을 눌러 분석과 조언을 확인해보세요.');
       } catch (error) {
         if (ArcanaApp.cta && typeof ArcanaApp.cta.waitForMinimumDuration === 'function') {
-          await ArcanaApp.cta.waitForMinimumDuration(3200);
+          await ArcanaApp.cta.waitForMinimumDuration(5200);
         }
         ArcanaApp.state.recommendationGenerated = false;
         ArcanaApp.panelLock.showMessage('recommendArcanaCards', error.message || '추천 계산 중 오류가 발생했어요.');
@@ -343,7 +342,8 @@ ArcanaApp.app = {
           recommendPanel.classList.remove('is-cta-loading');
         }
         button.disabled = false;
-        button.textContent = '추천 시작';
+        if (ArcanaApp.cta && typeof ArcanaApp.cta.setIdle === 'function') ArcanaApp.cta.setIdle();
+        else button.textContent = '추천 시작';
         button.classList.remove('is-vanishing', 'is-loading');
         ArcanaApp.app.updateRecommendationButtonState();
       }
@@ -406,7 +406,8 @@ ArcanaApp.app = {
     if (button) {
       button.hidden = false;
       button.disabled = false;
-      button.textContent = '추천 시작';
+      if (ArcanaApp.cta && typeof ArcanaApp.cta.setIdle === 'function') ArcanaApp.cta.setIdle();
+      else button.textContent = '추천 시작';
       button.classList.remove('is-vanishing', 'is-loading', 'is-touch-preview');
     }
 

@@ -73,3 +73,12 @@
   overflow-x: hidden;
   padding: 8px 8px 10px;
 }
+
+/* ARC-0.3.00_20260612_10: CTA는 카드 중앙에 떠야 하므로 추천 패널은 CTA 영역만 overflow를 허용한다. */
+.arcana-recommend-section {
+  overflow: visible;
+}
+
+.arcana-recommend-section.is-recommend-ready {
+  overflow: hidden;
+}
