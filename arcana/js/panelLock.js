@@ -6,7 +6,7 @@ ArcanaApp.panelLock = {
     characterLevels: '스킬을 선택하고 저장을 눌러주세요.',
     equipmentOptions: '반지 스킬을 선택하고 저장을 눌러주세요.',
     ownedArcanaCards: '보유 아르카나를 입력하고 저장을 눌러주세요.',
-    recommendArcanaCards: '액티브 스킬을 저장하면 추천을 시작할 수 있어요.'
+    recommendArcanaCards: ''
   },
   setSaving(panelKey, button) {
     const panel = ArcanaApp.panelLock.getPanel(panelKey);
