@@ -1,28 +1,6 @@
 window.ArcanaApp = window.ArcanaApp || {};
 
 ArcanaApp.skillSelector = {
-  iconFiles: {
-    templar: 'guardian.json',
-    guardian: 'guardian.json',
-    gladiator: 'gladiator.json',
-    ranger: 'ranger.json',
-    assassin: 'assassin.json',
-    sorcerer: 'sorcerer.json',
-    elementalist: 'spiritmaster.json',
-    spiritmaster: 'spiritmaster.json',
-    cleric: 'cleric.json',
-    chanter: 'chanter.json',
-
-    수호성: 'guardian.json',
-    검성: 'gladiator.json',
-    궁성: 'ranger.json',
-    살성: 'assassin.json',
-    마도성: 'sorcerer.json',
-    정령성: 'spiritmaster.json',
-    치유성: 'cleric.json',
-    호법성: 'chanter.json'
-  },
-
   iconCache: {},
   iconLoading: {},
 
@@ -88,6 +66,20 @@ ArcanaApp.skillSelector = {
         badge.className = 'arcana-skill-level-badge';
         badge.textContent = `Lv.${level}`;
         button.appendChild(badge);
+
+        if (level === 20 && ArcanaApp.skillTargetRules) {
+          const priorityNumber = ArcanaApp.skillTargetRules.getPriorityNumber(
+            skill,
+            state.targetSkillPriority20 || [],
+            state.targetSkillLevels || {}
+          );
+          if (priorityNumber > 0) {
+            const priority = document.createElement('span');
+            priority.className = 'arcana-skill-priority-badge';
+            priority.textContent = `중요도 ${priorityNumber}`;
+            button.appendChild(priority);
+          }
+        }
       }
 
       button.addEventListener('click', () => {
@@ -106,22 +98,18 @@ ArcanaApp.skillSelector = {
     const state = ArcanaApp.state;
     if (!state.hasSelectedClass || !state.currentClassKey) return [];
 
-    const classData = state.classSkills[state.currentClassKey] || {};
-    const source = classData.active || [];
+    const source = (state.activeSkills && state.activeSkills.length > 0)
+      ? state.activeSkills
+      : ((state.classSkills[state.currentClassKey] || {}).active || []);
 
     return Array.from(new Set((source || []).map(skill => String(skill).trim()).filter(Boolean)));
   },
 
   getClassIconFileKey() {
     const state = ArcanaApp.state;
-    const classKey = state.currentClassKey || state.pendingClassKey || '';
-    const className = ArcanaApp.classSelector && ArcanaApp.classSelector.getClassName
-      ? ArcanaApp.classSelector.getClassName(classKey)
+    return ArcanaApp.classSelector && ArcanaApp.classSelector.normalizeClassKey
+      ? ArcanaApp.classSelector.normalizeClassKey(state.currentClassKey || state.pendingClassKey || '')
       : '';
-
-    return ArcanaApp.skillSelector.iconFiles[classKey]
-      ? classKey
-      : className;
   },
 
   getCachedIconMap() {
@@ -131,7 +119,9 @@ ArcanaApp.skillSelector = {
 
   ensureIconData() {
     const key = ArcanaApp.skillSelector.getClassIconFileKey();
-    const fileName = ArcanaApp.skillSelector.iconFiles[key];
+    const fileName = ArcanaApp.classService
+      ? ArcanaApp.classService.getSkillIconFile(key)
+      : '';
 
     if (!key || !fileName) return Promise.resolve();
     if (ArcanaApp.skillSelector.iconCache[key]) return Promise.resolve();
@@ -178,23 +168,41 @@ ArcanaApp.skillSelector = {
 
     const state = ArcanaApp.state;
     state.targetSkillLevels = state.targetSkillLevels || {};
+    state.selectedTargetSkills = state.selectedTargetSkills || [];
+    state.targetSkillPriority20 = state.targetSkillPriority20 || [];
 
     const currentLevel = Number(state.targetSkillLevels[skill] || 0);
-    const hasSkill = state.selectedTargetSkills.includes(skill);
+    const nextLevel = currentLevel <= 0 ? 16 : (currentLevel === 16 ? 20 : 0);
+    const ruleCheck = ArcanaApp.skillTargetRules
+      ? ArcanaApp.skillTargetRules.canSetLevel(skill, nextLevel, state.targetSkillLevels)
+      : { ok: true };
 
-    if (!hasSkill && state.selectedTargetSkills.length >= state.maxTargetSkills) {
-      ArcanaApp.skillSelector.updateCountText(true);
+    if (!ruleCheck.ok) {
+      ArcanaApp.skillSelector.updateCountText(true, ArcanaApp.skillTargetRules.getLimitText(ruleCheck.reason));
       return;
     }
 
-    if (currentLevel <= 0) {
-      if (!hasSkill) state.selectedTargetSkills.push(skill);
-      state.targetSkillLevels[skill] = 16;
-    } else if (currentLevel === 16) {
-      state.targetSkillLevels[skill] = 20;
-    } else {
+    if (nextLevel <= 0) {
       state.selectedTargetSkills = state.selectedTargetSkills.filter(item => item !== skill);
       delete state.targetSkillLevels[skill];
+      state.targetSkillPriority20 = state.targetSkillPriority20.filter(item => item !== skill);
+    } else {
+      if (!state.selectedTargetSkills.includes(skill)) state.selectedTargetSkills.push(skill);
+      state.targetSkillLevels[skill] = nextLevel;
+
+      if (nextLevel === 20 && !state.targetSkillPriority20.includes(skill)) {
+        state.targetSkillPriority20.push(skill);
+      }
+      if (nextLevel === 16) {
+        state.targetSkillPriority20 = state.targetSkillPriority20.filter(item => item !== skill);
+      }
+    }
+
+    if (ArcanaApp.skillTargetRules) {
+      state.targetSkillPriority20 = ArcanaApp.skillTargetRules.normalizePriorityOrder(
+        state.targetSkillPriority20,
+        state.targetSkillLevels
+      );
     }
 
     state.activeSkillTargets = ArcanaApp.app && ArcanaApp.app.normalizeActiveSkillTargets
@@ -221,12 +229,10 @@ ArcanaApp.skillSelector = {
     return Number((ArcanaApp.state.targetSkillLevels || {})[skill] || ArcanaApp.state.targetLevel || 20);
   },
 
-  updateCountText(isLimitNotice) {
+  updateCountText(isLimitNotice, limitMessage) {
     const text = document.getElementById('arcanaTargetCountText');
     if (!text) return;
 
-    const current = ArcanaApp.state.selectedTargetSkills.length;
-    const max = ArcanaApp.state.maxTargetSkills;
     text.classList.toggle('is-limit', Boolean(isLimitNotice));
 
     if (!ArcanaApp.state.hasSelectedClass) {
@@ -235,20 +241,20 @@ ArcanaApp.skillSelector = {
     }
 
     if (isLimitNotice) {
-      text.textContent = `${max}개를 선택했습니다`;
+      text.textContent = limitMessage || '현재 선택 조건에서는 더 선택할 수 없어요.';
       text.style.animation = 'none';
       text.offsetHeight;
       text.style.animation = '';
       window.clearTimeout(ArcanaApp.skillSelector.limitTimer);
       ArcanaApp.skillSelector.limitTimer = window.setTimeout(() => {
         ArcanaApp.skillSelector.updateCountText(false);
-      }, 1200);
+      }, 1600);
       return;
     }
 
-    text.textContent = current === 0
-      ? `최대 ${max}개 선택 가능`
-      : `${current}개 선택 / 최대 ${max}개`;
+    text.textContent = ArcanaApp.skillTargetRules
+      ? ArcanaApp.skillTargetRules.getGuideText(ArcanaApp.state.targetSkillLevels || {})
+      : `${ArcanaApp.state.selectedTargetSkills.length}개 선택`;
   },
 
   updateSkillButtonWidth(wrapper, skills) {

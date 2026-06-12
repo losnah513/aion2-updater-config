@@ -3389,3 +3389,26 @@
   font-weight: 800;
   line-height: 1.45;
 }
+
+/* ARC-0.3.00_20260612_03: 20레벨 목표 중요도 표시 */
+.arcana-skill-priority-badge {
+  position: relative;
+  z-index: 3;
+  flex: 0 0 auto;
+  min-width: 48px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #111827;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1.2;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(17, 24, 39, 0.16);
+}
+
+.arcana-target-count-text.is-limit,
+#arcanaTargetCountText.is-limit {
+  color: #dc2626;
+  font-weight: 900;
+}

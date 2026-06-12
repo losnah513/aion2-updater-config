@@ -1,62 +1,16 @@
 window.ArcanaApp = window.ArcanaApp || {};
 
 ArcanaApp.classSelector = {
-  canonicalClassList: [
-    { key: 'templar', name: '수호성', englishName: 'Templar' },
-    { key: 'gladiator', name: '검성', englishName: 'Gladiator' },
-    { key: 'assassin', name: '살성', englishName: 'Assassin' },
-    { key: 'ranger', name: '궁성', englishName: 'Ranger' },
-    { key: 'sorcerer', name: '마도성', englishName: 'Sorcerer' },
-    { key: 'elementalist', name: '정령성', englishName: 'Spiritmaster' },
-    { key: 'cleric', name: '치유성', englishName: 'Cleric' },
-    { key: 'chanter', name: '호법성', englishName: 'Chanter' }
-  ],
-
-  aliasMap: {
-    guardian: 'templar',
-    templar: 'templar',
-    gladiator: 'gladiator',
-    assassin: 'assassin',
-    ranger: 'ranger',
-    sorcerer: 'sorcerer',
-    spiritmaster: 'elementalist',
-    elementalist: 'elementalist',
-    cleric: 'cleric',
-    chanter: 'chanter'
-  },
-
-  classNameMap: {
-    templar: '수호성',
-    guardian: '수호성',
-    gladiator: '검성',
-    assassin: '살성',
-    ranger: '궁성',
-    sorcerer: '마도성',
-    elementalist: '정령성',
-    spiritmaster: '정령성',
-    cleric: '치유성',
-    chanter: '호법성'
-  },
-
-  classIconMap: {
-    templar: '../hall-of-fame/assets/class_icon_templar.png',
-    guardian: '../hall-of-fame/assets/class_icon_templar.png',
-    gladiator: '../hall-of-fame/assets/class_icon_gladiator.png',
-    assassin: '../hall-of-fame/assets/class_icon_assassin.png',
-    ranger: '../hall-of-fame/assets/class_icon_ranger.png',
-    sorcerer: '../hall-of-fame/assets/class_icon_sorcerer.png',
-    elementalist: '../hall-of-fame/assets/class_icon_elementalist.png',
-    spiritmaster: '../hall-of-fame/assets/class_icon_elementalist.png',
-    cleric: '../hall-of-fame/assets/class_icon_cleric.png',
-    chanter: '../hall-of-fame/assets/class_icon_chanter.png'
-  },
-
   normalizeClassKey(classKey) {
-    return ArcanaApp.classSelector.aliasMap[classKey] || classKey || '';
+    return ArcanaApp.classService
+      ? ArcanaApp.classService.normalizeKey(classKey)
+      : (classKey || '');
   },
 
   normalizeClassList() {
-    return ArcanaApp.classSelector.canonicalClassList.map(item => ({ ...item }));
+    return ArcanaApp.classService
+      ? ArcanaApp.classService.normalizeList()
+      : [];
   },
 
   getDisplayClassList() {
@@ -64,8 +18,9 @@ ArcanaApp.classSelector = {
   },
 
   getClassItem(classKey) {
-    const normalizedKey = ArcanaApp.classSelector.normalizeClassKey(classKey);
-    return ArcanaApp.classSelector.getDisplayClassList().find(item => item.key === normalizedKey) || null;
+    return ArcanaApp.classService
+      ? ArcanaApp.classService.getItem(classKey)
+      : null;
   },
 
   render() {
@@ -540,18 +495,11 @@ ArcanaApp.classSelector = {
 
   applyClassSkillData(classKey) {
     const normalizedKey = ArcanaApp.classSelector.normalizeClassKey(classKey);
-    const fallbackMap = {
-      templar: ['templar', 'guardian'],
-      gladiator: ['gladiator'],
-      assassin: ['assassin'],
-      ranger: ['ranger'],
-      sorcerer: ['sorcerer'],
-      elementalist: ['elementalist', 'spiritmaster'],
-      cleric: ['cleric'],
-      chanter: ['chanter']
-    };
-    const keys = fallbackMap[normalizedKey] || [normalizedKey];
-    const classData = keys.map(key => ArcanaApp.state.classSkills[key]).find(Boolean) || {};
+    const keys = ArcanaApp.classService
+      ? ArcanaApp.classService.getLookupKeys(normalizedKey)
+      : [normalizedKey];
+    const classSkills = ArcanaApp.state.classSkills || {};
+    const classData = keys.map(key => classSkills[key]).find(Boolean) || {};
 
     ArcanaApp.state.arcanaTypes = ['성배', '양피지', '나침반', '종', '거울', '천칭'];
     ArcanaApp.state.activeSkills = Array.from(new Set((classData.active || []).map(skill => String(skill).trim()).filter(Boolean)));
@@ -723,13 +671,15 @@ ArcanaApp.classSelector = {
   },
 
   getClassName(classKey) {
-    const item = ArcanaApp.classSelector.getClassItem(classKey);
-    return item ? item.name : '클래스 선택';
+    return ArcanaApp.classService
+      ? ArcanaApp.classService.getName(classKey)
+      : '클래스 선택';
   },
 
   getClassIconUrl(classKey) {
-    const normalizedKey = ArcanaApp.classSelector.normalizeClassKey(classKey);
-    return ArcanaApp.classSelector.classIconMap[normalizedKey] || '';
+    return ArcanaApp.classService
+      ? ArcanaApp.classService.getIconUrl(classKey)
+      : '';
   },
 
   createClassIcon(classKey, visible) {

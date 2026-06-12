@@ -22,6 +22,7 @@ ArcanaApp.state = {
   skillsByArcana: {},
   selectedTargetSkills: [],
   targetSkillLevels: {},
+  targetSkillPriority20: [],
   activeSkillTargets: {},
   characterLevels: {},
   equipmentTypes: [

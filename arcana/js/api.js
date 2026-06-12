@@ -107,8 +107,7 @@ ArcanaApp.api = {
       };
     }
 
-    const oldRings = ArcanaApp.api.readLocalObject('ARCANA_RING_OPTIONS', fallback);
-    return { ring1: oldRings.ring1 || [], ring2: oldRings.ring2 || [] };
+    return fallback;
   },
 
   clearEquipmentOptions() {
@@ -122,7 +121,7 @@ ArcanaApp.api = {
   },
 
   loadRingOptionsFromLocal() {
-    return ArcanaApp.api.readLocalObject('ARCANA_RING_OPTIONS', { ring1: [], ring2: [] });
+    return ArcanaApp.api.readLocalObject('ARCANA_EQUIPMENT_OPTIONS', { ring1: [], ring2: [] });
   },
 
   clearRingOptions() {

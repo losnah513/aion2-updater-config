@@ -13,7 +13,7 @@ ArcanaApp.app = {
     state.maxSlotLevel = Number(data.maxSlotLevel || state.maxSlotLevel || 4);
     state.arcanaTypes = data.arcanaTypes || state.arcanaTypes;
     state.classList = ArcanaApp.classSelector.normalizeClassList(data.classList || state.classList);
-    state.classSkills = data.classSkills || {};
+    state.classSkills = ArcanaApp.app.normalizeClassSkillData(data.classSkills || {});
 
     ArcanaApp.app.hydrateSavedState(data);
 
@@ -22,6 +22,19 @@ ArcanaApp.app = {
     ArcanaApp.app.bindEvents();
   },
 
+
+
+  normalizeClassSkillData(classSkills = {}) {
+    const result = {};
+    Object.entries(classSkills || {}).forEach(([rawKey, value]) => {
+      const key = ArcanaApp.classService
+        ? ArcanaApp.classService.normalizeKey(rawKey)
+        : rawKey;
+      if (!key) return;
+      result[key] = value || {};
+    });
+    return result;
+  },
 
   hydrateSavedState(data = {}) {
     const state = ArcanaApp.state;
@@ -43,6 +56,9 @@ ArcanaApp.app = {
     state.skillsByArcana = {};
     state.selectedTargetSkills = selectedSkills;
     state.targetSkillLevels = savedCharacter.targetSkillLevels || {};
+    state.targetSkillPriority20 = ArcanaApp.skillTargetRules
+      ? ArcanaApp.skillTargetRules.normalizePriorityOrder(savedCharacter.targetSkillPriority20 || [], state.targetSkillLevels)
+      : (savedCharacter.targetSkillPriority20 || []);
     state.activeSkillTargets = ArcanaApp.app.normalizeActiveSkillTargets(selectedSkills, state.targetSkillLevels);
     state.characterLevels = savedCharacter.characterLevels || {};
     state.characterSkillsSaved = selectedSkills.length > 0;
@@ -147,8 +163,16 @@ ArcanaApp.app = {
 
       try {
         ArcanaApp.panelLock.setSaving('characterLevels', saveButton);
+        ArcanaApp.state.targetSkillPriority20 = ArcanaApp.skillTargetRules
+          ? ArcanaApp.skillTargetRules.normalizePriorityOrder(ArcanaApp.state.targetSkillPriority20 || [], ArcanaApp.state.targetSkillLevels || {})
+          : (ArcanaApp.state.targetSkillPriority20 || []);
         ArcanaApp.state.activeSkillTargets = ArcanaApp.app.normalizeActiveSkillTargets(ArcanaApp.state.selectedTargetSkills, ArcanaApp.state.targetSkillLevels || {});
-        await ArcanaApp.api.saveCharacterLevels({ selectedTargetSkills: ArcanaApp.state.selectedTargetSkills, targetSkillLevels: ArcanaApp.state.targetSkillLevels || {}, activeSkillTargets: ArcanaApp.state.activeSkillTargets });
+        await ArcanaApp.api.saveCharacterLevels({
+          selectedTargetSkills: ArcanaApp.state.selectedTargetSkills,
+          targetSkillLevels: ArcanaApp.state.targetSkillLevels || {},
+          targetSkillPriority20: ArcanaApp.state.targetSkillPriority20 || [],
+          activeSkillTargets: ArcanaApp.state.activeSkillTargets
+        });
         ArcanaApp.state.characterSkillsSaved = true;
         ArcanaApp.panelLock.setSaved('characterLevels', saveButton, '선택한 액티브 스킬이 저장되었어요. 다시 고르려면 초기화를 눌러주세요.');
         ArcanaApp.app.updateCharacterSaveButtonState();
@@ -162,6 +186,7 @@ ArcanaApp.app = {
     clearButton.addEventListener('click', () => {
       ArcanaApp.state.selectedTargetSkills = [];
       ArcanaApp.state.targetSkillLevels = {};
+      ArcanaApp.state.targetSkillPriority20 = [];
       ArcanaApp.state.characterLevels = {};
       ArcanaApp.state.activeSkillTargets = {};
       ArcanaApp.state.characterSkillsSaved = false;

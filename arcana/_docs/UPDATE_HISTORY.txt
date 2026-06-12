@@ -102,3 +102,13 @@ ARC-0.3.00 / 2026-06-12 작업본 01
 - 20레벨 목표 7개일 때 성배/양피지/나침반/천칭 Lv4 액티브 앵커 조건 반영
 - 저장된 보유 아르카나가 7개 20레벨 조건에 맞지 않으면 추천 분석 차단 및 빨간 경고 표시
 - AppsScript 변경 없음
+
+[ARC-0.3.00_20260612_03]
+- 수호성 class_skill_db 키(skill_db_templar)를 templar 표준 키로 통합했습니다.
+- 클래스 키 정규화 로직을 웹 classService.js와 Apps Script ARC_ClassKeyService.gs로 분리했습니다.
+- 기존 classSelector/skillSelector 내부 중복 매핑은 연결부만 남기고 정리했습니다.
+- 액티브 스킬 20/16 목표 선택 규칙을 skillTargetRules.js로 분리했습니다.
+- 20레벨 선택 개수에 따라 16레벨 추가 가능 수가 동적으로 계산되도록 수정했습니다.
+- 20레벨 선택 순서 기준 1~5 중요도 뱃지를 표시하도록 수정했습니다.
+- 구 ARCANA_RING_OPTIONS fallback 복원을 제거해 새로고침 시 과거 반지 기록이 되살아나는 경로를 차단했습니다.
+- Apps Script .gs 파일 상단에 역할/포함 내용 설명 주석을 추가했습니다.
