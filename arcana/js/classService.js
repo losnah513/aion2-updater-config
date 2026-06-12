@@ -8,7 +8,7 @@ window.ArcanaApp = window.ArcanaApp || {};
  */
 ArcanaApp.classService = {
   list: [
-    { key: 'templar', name: '수호성', englishName: 'Templar', icon: '../hall-of-fame/assets/class_icon_templar.png', skillIconFile: 'guardian.json' },
+    { key: 'templar', name: '수호성', englishName: 'Templar', icon: '../hall-of-fame/assets/class_icon_templar.png', skillIconFile: 'templar.json' },
     { key: 'gladiator', name: '검성', englishName: 'Gladiator', icon: '../hall-of-fame/assets/class_icon_gladiator.png', skillIconFile: 'gladiator.json' },
     { key: 'assassin', name: '살성', englishName: 'Assassin', icon: '../hall-of-fame/assets/class_icon_assassin.png', skillIconFile: 'assassin.json' },
     { key: 'ranger', name: '궁성', englishName: 'Ranger', icon: '../hall-of-fame/assets/class_icon_ranger.png', skillIconFile: 'ranger.json' },
@@ -20,12 +20,9 @@ ArcanaApp.classService = {
 
   aliasMap: {
     skill_db_templar: 'templar',
-    guardian: 'templar',
     templar: 'templar',
     skill_db_gladiator: 'gladiator',
-    skill_db_gladiatior: 'gladiator',
     gladiator: 'gladiator',
-    gladiatior: 'gladiator',
     skill_db_assassin: 'assassin',
     assassin: 'assassin',
     skill_db_ranger: 'ranger',
@@ -91,9 +88,9 @@ ArcanaApp.classService = {
   getLookupKeys(value) {
     const key = ArcanaApp.classService.normalizeKey(value);
     const legacy = {
-      templar: ['templar', 'guardian', 'skill_db_templar'],
+      templar: ['templar', 'skill_db_templar'],
       elementalist: ['elementalist', 'spiritmaster', 'skill_db_spiritmaster', 'skill_db_elementalist'],
-      gladiator: ['gladiator', 'gladiatior', 'skill_db_gladiator', 'skill_db_gladiatior'],
+      gladiator: ['gladiator', 'skill_db_gladiator'],
       assassin: ['assassin', 'skill_db_assassin'],
       ranger: ['ranger', 'skill_db_ranger'],
       sorcerer: ['sorcerer', 'skill_db_sorcerer'],

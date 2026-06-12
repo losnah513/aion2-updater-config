@@ -988,7 +988,6 @@
   }
 }
 
-/* 20260610_01: 고정 안내문구 / 반지 2분할 / 추천 CTA 1차 */
 .arcana-panel-message {
   display: flex;
   align-items: center;
@@ -1065,7 +1064,6 @@
   opacity: 1;
 }
 
-/* 20260610_02: 검수 리포트 반영 - 안내 영역/반지 2분할/추천 CTA 재정렬 */
 .arcana-panel-message {
   display: flex !important;
   align-items: center;
@@ -1163,7 +1161,6 @@
 }
 
 
-/* 20260610_03: 검수 리포트 반영 - 잠금 블러/카드 높이/추천 CTA 재디자인 */
 .arcana-layout.is-class-locked {
   opacity: 1 !important;
   filter: none !important;
@@ -1309,7 +1306,6 @@
   }
 }
 
-/* 20260610_04: 검수 리포트 반영 - 안내 라인/중복 선택 차단/추천 CTA 정리 */
 .arcana-top-grid {
   grid-template-columns: repeat(3, var(--arcana-compact-panel-width)) !important;
   grid-auto-rows: minmax(354px, auto) !important;
@@ -1391,8 +1387,6 @@
 
 .arcana-recommend-section.is-recommend-ready .arcana-recommend-area {
   display: block;
-  min-height: 312px;
-  max-height: 312px;
 }
 
 .arcana-recommend-placeholder {
@@ -1814,11 +1808,6 @@
 
 
 
-@keyframes arcana-kinojo-border-loop {
-  0% { border-color: rgba(37,99,235,0.35); }
-  50% { border-color: rgba(125,211,252,0.95); }
-  100% { border-color: rgba(37,99,235,0.35); }
-}
 
 
 @media (max-width: 980px) {
@@ -1892,8 +1881,7 @@
   color: var(--arcana-primary);
 }
 
-.arcana-owned-section .arcana-card-grid,
-.arcana-recommend-section .arcana-recommend-area {
+.arcana-owned-section .arcana-card-grid {
   min-height: 312px !important;
   max-height: 312px !important;
 }
@@ -1901,12 +1889,6 @@
 
 
 
-@keyframes arcana-kinojo-border-loop-08 {
-  0% { border-color: rgba(37,99,235,0.42); }
-  33% { border-color: rgba(125,211,252,0.95); }
-  66% { border-color: rgba(59,130,246,0.95); }
-  100% { border-color: rgba(37,99,235,0.42); }
-}
 
 
 
@@ -1923,7 +1905,6 @@
 
 
 
-/* 수정사항_260610_10: 추천 CTA 중앙 배치 + 버튼 뒤 파동 레이어 */
 .arcana-recommend-section {
   position: relative !important;
 }
@@ -1945,7 +1926,6 @@
 
 
 
-/* 수정사항_260610_11: 추천 CTA 재작업 - 버튼 형태 유지, 파동은 뒤쪽 애니메이션 레이어만 사용 */
 .arcana-recommend-section {
   position: relative !important;
 }
@@ -1969,7 +1949,6 @@
 
 
 
-/* 수정사항_260610_12: 추천 CTA 파동형 비주얼라이저 재작업 */
 .arcana-recommend-section {
   position: relative !important;
 }

@@ -619,25 +619,21 @@ ArcanaApp.classSelector = {
   },
 
   normalizeArcanaSkillMap(classData) {
-    const state = ArcanaApp.state;
-    const ruleMap = ArcanaApp.classSelector.buildArcanaSkillRules(classData.active || [], classData.passive || []);
-    const dbMap = classData.arcanaSkills || {};
-    const allSkills = new Set([...(classData.active || []), ...(classData.passive || [])].map(skill => String(skill).trim()).filter(Boolean));
-    const strictRuleSpecs = ArcanaApp.classSelector.getArcanaSkillRuleSpecs();
-
-    return (state.arcanaTypes || []).reduce((map, arcanaName) => {
-      const legacyName = arcanaName === '거울' ? '겨울' : arcanaName;
-      const dbSource = dbMap[arcanaName] || dbMap[legacyName] || [];
-      const normalizedDb = Array.from(new Set(dbSource.map(skill => String(skill).trim()).filter(skill => skill && allSkills.has(skill))));
-      const ruleSource = ruleMap[arcanaName] || [];
-      const normalizedRule = Array.from(new Set(ruleSource.map(skill => String(skill).trim()).filter(skill => skill && allSkills.has(skill))));
-      const isStrictArcana = Boolean(strictRuleSpecs[arcanaName]);
-      const source = isStrictArcana
-        ? (normalizedDb.length > 0 ? normalizedDb : normalizedRule)
-        : (normalizedDb.length > 0 ? normalizedDb : normalizedRule);
-      map[arcanaName] = ArcanaApp.classSelector.validateArcanaSkillPool(arcanaName, source);
-      return map;
-    }, {});
+    /*
+     * 아르카나 스킬 슬롯은 모든 클래스가 같은 공통 규칙을 사용한다.
+     * - 성배/천칭: 액티브 F~Q + 패시브 F~O
+     * - 양피지: 액티브 F/H/J/L/O/P
+     * - 나침반: 액티브 G/I/K/M/N/Q
+     * - 종: 패시브 F/H/J/L/N
+     * - 거울: 패시브 G/I/K/M/O
+     *
+     * Apps Script 응답의 arcanaSkills를 웹에서 재해석/검증하던 구 로직은
+     * 수호성처럼 특정 클래스에서 액티브가 탈락하는 원인이 되어 제거했다.
+     * 웹은 class_skill_db에서 읽은 active/passive 목록을 기준으로 공통 규칙만 적용한다.
+     */
+    const active = Array.from(new Set((classData.active || []).map(skill => String(skill).trim()).filter(Boolean)));
+    const passive = Array.from(new Set((classData.passive || []).map(skill => String(skill).trim()).filter(Boolean)));
+    return ArcanaApp.classSelector.buildArcanaSkillRules(active, passive);
   },
 
   async preloadClassAssets(classKey) {

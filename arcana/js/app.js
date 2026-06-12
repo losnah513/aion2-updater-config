@@ -129,39 +129,6 @@ ArcanaApp.app = {
   },
 
 
-  buildCtaVisualizer() {
-    const layer = document.querySelector('.arcana-cta-wave-layer');
-    if (!layer || layer.dataset.visualizerReady === '1') return;
-
-    layer.dataset.visualizerReady = '1';
-    layer.textContent = '';
-
-    const lineCount = 144;
-    const ring = document.createElement('span');
-    ring.className = 'arcana-cta-wave-lines';
-
-    for (let index = 0; index < lineCount; index += 1) {
-      const line = document.createElement('i');
-      line.style.setProperty('--i', String(index));
-      line.style.setProperty('--angle', `${(360 / lineCount) * index}deg`);
-      line.style.setProperty('--delay', `${-(index % 36) * 0.045}s`);
-      line.style.setProperty('--tone', `${index * 2.5}deg`);
-      line.style.setProperty('--amp', `${0.68 + ((index * 7) % 31) / 100}`);
-      ring.appendChild(line);
-    }
-
-    const halo = document.createElement('span');
-    halo.className = 'arcana-cta-wave-halo';
-
-    const text = document.createElement('span');
-    text.className = 'arcana-cta-analysis-text';
-    text.innerHTML = '<strong>분석 중...</strong><small>잠시만 기다려 주세요</small>';
-
-    layer.appendChild(halo);
-    layer.appendChild(ring);
-    layer.appendChild(text);
-  },
-
   bindCharacterSave() {
     const saveButton = document.getElementById('arcanaSaveCharacterLevels');
     const clearButton = document.getElementById('arcanaClearCharacterLevels');

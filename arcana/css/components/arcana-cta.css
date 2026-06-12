@@ -210,7 +210,7 @@
 }
 
 #arcanaRunSimulation,
-#arcanaRunSimulation.arcana-kinojo-cta {
+#arcanaRunSimulation.arcana-wave-cta {
   position: relative !important;
   z-index: 3 !important;
   display: inline-flex !important;
@@ -241,8 +241,8 @@
 
 #arcanaRunSimulation::before,
 #arcanaRunSimulation::after,
-#arcanaRunSimulation.arcana-kinojo-cta::before,
-#arcanaRunSimulation.arcana-kinojo-cta::after {
+#arcanaRunSimulation.arcana-wave-cta::before,
+#arcanaRunSimulation.arcana-wave-cta::after {
   content: none !important;
   display: none !important;
   animation: none !important;

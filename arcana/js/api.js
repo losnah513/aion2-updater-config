@@ -156,14 +156,23 @@ ArcanaApp.api = {
       chanter: ['단죄의 일격', '격려의 주문', '철벽의 주문', '치유의 주문', '연속 타격', '수호의 진언', '진격의 주문', '마력 회복', '승리의 주문', '천벌', '풍요의 진언', '충격 해제']
     };
 
-    const passive = ['생존 자세', '보호의 갑옷', '피의 흡수', '약점 파악', '전투 본능'];
+    const passive = [
+      '생존 자세', '보호의 갑옷', '피의 흡수', '약점 파악', '전투 본능',
+      '방어 숙련', '기민한 움직임', '마력 저항', '전장의 감각', '집중 강화'
+    ];
+
+    const pickByColumnIndex = (list, indexes) => indexes
+      .map(index => list[index])
+      .filter(Boolean);
+
     const makeArcanaSkills = active => ({
-      '성배': active,
-      '양피지': active.filter((_, index) => [0, 2, 4, 6, 9, 10].includes(index)),
-      '나침반': active.filter((_, index) => [1, 3, 7, 8, 10, 11].includes(index)),
-      '종': passive,
-      '거울': passive,
-      '천칭': active
+      // fallback 데이터도 class_skill_db의 공통 아르카나 규칙과 동일하게 유지한다.
+      '성배': [...active, ...passive],
+      '양피지': pickByColumnIndex(active, [0, 2, 4, 6, 9, 10]),
+      '나침반': pickByColumnIndex(active, [1, 3, 5, 7, 8, 11]),
+      '종': pickByColumnIndex(passive, [0, 2, 4, 6, 8]),
+      '거울': pickByColumnIndex(passive, [1, 3, 5, 7, 9]),
+      '천칭': [...active, ...passive]
     });
 
     const classSkills = {};
