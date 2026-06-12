@@ -1,7 +1,7 @@
 window.AION2_CONFIG = {
   CONFIG_JSON_URL: "https://losnah513.github.io/aion2-updater-config/config.json",
   EXT_VERSION: "1.c2.04",
-  BUILD_DATE: "260606",
+  BUILD_DATE: "260607",
   CLIENT_ROLE: "unknown",
   DEFAULT_SERVER_ID: 2002,
   WATCHDOG_LIMIT_MS: 60 * 1000,

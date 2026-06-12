@@ -6,65 +6,7 @@
    - Overflow stays inside each card area
 ============================================================ */
 
-/* Visitor card: friendly copy needs more room, left aligned */
-.visit-mini{
-  width:330px!important;
-  min-height:54px;
-  padding:8px 12px 8px 18px!important;
-  text-align:left!important;
-  line-height:1.42!important;
-}
-.visit-line{
-  display:block;
-  white-space:nowrap;
-  letter-spacing:-.15px;
-}
-.visit-line strong{
-  color:var(--blue);
-}
-.visit-line-total small{
-  color:#8492a6;
-}
-
-/* Admin visitor adjust: roomier two-line layout, button-only loading text */
-.admin-dropdown{
-  width:min(420px,calc(100vw - 24px))!important;
-}
-.admin-visit-control{
-  gap:10px!important;
-  padding:12px!important;
-}
-.admin-visit-row-main{
-  display:grid!important;
-  grid-template-columns:minmax(112px,1fr) auto auto!important;
-  align-items:center;
-  gap:8px;
-}
-.admin-visit-row-sign{
-  display:flex!important;
-  justify-content:flex-start;
-  gap:8px;
-}
-.admin-visit-actions{
-  display:grid!important;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-}
-.admin-visit-actions .btn,
-#adminVisitApplyBtn,
-#adminVisitCancelBtn{
-  min-width:0;
-  width:100%;
-  height:38px!important;
-  white-space:nowrap!important;
-}
-#adminVisitStatus{
-  display:none!important;
-}
-button.is-loading,
-button:disabled{
-  white-space:nowrap!important;
-}
+/* Topbar visitor/admin styles are centralized in ui/kinojo-common-ui.css. */
 
 /* PVE/PVP top5: fixed name / reaction / score alignment */
 .mini-row{

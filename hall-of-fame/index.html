@@ -8,59 +8,16 @@
 <meta content="전투력과 성장 기록으로 선정된 최고의 모험가들" property="og:description"/>
 <meta content="https://losnah513.github.io/aion2-updater-config/hall-of-fame/assets/hall-banner-v2.png?v=1c202" property="og:image"/>
 <title>KINOJO INFO</title>
-<link href="css/hall.css?cache=26060600" rel="stylesheet"/>
+<link href="css/hall.css?cache=26060700" rel="stylesheet"/>
 <link href="../ui/kinojo-layout.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../ui/kinojo-components.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
-<link href="../ui/kinojo-common-ui.css?cache=26060600" rel="stylesheet"/>
+<link href="../ui/kinojo-common-ui.css?cache=26060700" rel="stylesheet"/>
 <link href="../ui/kinojo-card-guards.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../ui/kinojo-animations.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 </head>
 <body>
-<main class="wrap"><div hidden="" id="kinojoCommonSlot"><section class="visit-mini" id="visitCard">👀 방문자 통계를 불러오는 중...</section><div class="admin-menu-wrap">
-<button aria-expanded="false" aria-haspopup="true" aria-label="관리자 메뉴" class="admin-menu-btn" id="adminMenuBtn" type="button">⋮</button>
-<section aria-hidden="true" class="admin-dropdown" id="adminDropdown">
-<div class="admin-dropdown-head">
-<strong>관리자 전용 메뉴입니다.</strong>
-<button aria-label="닫기" class="admin-dropdown-close" id="adminDropdownClose" type="button">×</button>
-</div>
-<div class="admin-login-panel" id="adminLoginPanel">
-<input class="search admin-password" id="adminPasswordInput" placeholder="비밀번호 입력" type="password"/>
-<button class="btn" id="adminLoginBtn" type="button">확인</button>
-<div class="admin-status" id="adminStatus"></div>
-</div>
-<div class="admin-control-panel" id="adminControlPanel" style="display:none">
-<button class="btn" id="adminMvpBtn" type="button">MVP 후보 확인</button>
-<div class="admin-visit-control" id="adminVisitControl">
-<div class="admin-visit-title">방문자수 조정</div>
-<div class="admin-visit-line admin-visit-row-main">
-<input aria-label="조정 인원수" class="search admin-visit-amount" id="adminVisitAmount" inputmode="numeric" max="9999" min="1" type="number" value="1"/>
-<span class="admin-visit-unit">명</span>
-<div aria-label="조정 대상" class="admin-swap">
-<button class="admin-swap-btn active" data-visit-target="daily" type="button">일일</button>
-<button class="admin-swap-btn" data-visit-target="total" type="button">누적</button>
-</div>
-</div>
-<div class="admin-visit-line admin-visit-row-sign">
-<div aria-label="증감 선택" class="admin-swap admin-sign-swap">
-<button class="admin-swap-btn active" data-visit-sign="plus" type="button">+</button>
-<button class="admin-swap-btn" data-visit-sign="minus" type="button">-</button>
-</div>
-</div>
-<div class="admin-visit-line admin-visit-actions">
-<button class="btn" id="adminVisitApplyBtn" type="button">반영</button>
-<button class="btn admin-close" id="adminVisitCancelBtn" type="button">취소</button>
-</div>
-<div class="admin-status" id="adminVisitStatus"></div>
-</div>
-<button class="btn" id="adminSnapshotBtn" type="button">성장왕 스냅샷 생성</button>
-<button class="btn" id="adminSnapshotTriggerBtn" type="button">자동 스냅샷 트리거 설치</button>
-</div>
-</section>
-</div></div>
-
+<main class="wrap">
 <section class="banner"><img alt="Kinojo Hall of Fame" src="assets/hall-banner-v2.png?v=1c202"/></section>
-
-
 <section class="chick-card" id="chickCard"><button aria-label="신입 병아리 접기" class="chick-close" id="chickCloseBtn" type="button">🐥</button><div class="chick-line"><div class="chick-head"><div class="chick-icon">🐥</div><div><div class="chick-title" id="chickTitle">신입 병아리</div><div class="chick-sub" id="chickSub">새로운 모험가들을 환영합니다!</div></div></div><div class="chick-tags" id="chickTags"></div></div></section>
 <section class="section" id="suggestionBox" style="display:none;margin-bottom:12px"><div class="section-head"><h2>💡 아이디어 제안 및 건의</h2><span class="section-note">운영자 검토 후 반영</span></div><div class="list"><input class="search" id="suggestTitle" placeholder="항목 이름"/><input class="search" id="suggestProposer" placeholder="제안자"/><textarea class="search" id="suggestMemo" placeholder="기준 설명" rows="3"></textarea><div class="suggest-actions"><button class="btn" id="submitSuggestBtn">제안 보내기</button><button class="btn" id="cancelSuggestBtn" type="button">취소</button></div></div></section>
 <div class="loading" id="app"><div><div class="loader-ring"></div><div id="loaderText">명예의 전당 데이터를 불러오는 중...</div></div></div>
@@ -94,7 +51,7 @@
 </div>
 </section>
 </main>
-<script src="../ui/kinojo-common-ui.js?cache=26060600"></script>
-<script src="js/app.js?cache=26060600"></script>
+<script src="../ui/kinojo-common-ui.js?cache=26060700"></script>
+<script src="js/app.js?cache=26060700"></script>
 </body>
 </html>

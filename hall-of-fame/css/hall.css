@@ -43,14 +43,6 @@ body.drawer-open{
   height:auto;
   display:block;
   object-fit:contain}
-.admin-menu-wrap{
-  position:relative;
-  z-index:30}
-.admin-menu-btn{
-  width:36px;
-  height:36px;
-  font-size:22px;
-  font-weight:1000}
 .admin-dropdown{
   position:absolute;
   top:42px;
@@ -186,24 +178,8 @@ body.drawer-open{
 .admin-visit-actions .btn{
   height:36px;
   padding:8px 11px!important}
-.visit-mini{
-  width:246px;
-  min-height:40px;
-  border:1px solid var(--line);
-  border-radius:var(--radius-control);
-  padding:6px 10px;
-  background:rgba(255,255,255,.9);
-  font-size:12px;
-  line-height:1.28;
-  color:#40526e;
-  box-shadow:none}
-.visit-mini strong{
-  color:var(--blue)}
-.visit-line{
-  display:block;
-  white-space:nowrap}
-.visit-line-total small{
-  color:#8492a6}
+
+
 .search,.btn,.page-btn,.send-btn,.reaction-choice button,.construction-ok{
   border:1px solid var(--line);
   background:rgba(255,255,255,.9);
@@ -967,28 +943,6 @@ body.drawer-open{
   place-items:center;
   color:#40526e;
   font-weight:900}
-.loader-ring{
-  width:58px;
-  height:58px;
-  border-radius:50%;
-  margin:0 auto 12px;
-  background:conic-gradient(from 0deg,#77a7ef,#8c70df,#c58b24,#77a7ef);
-  animation:spin 1.05s linear infinite;
-  position:relative}
-.loader-ring:before{
-  content:"";
-  position:absolute;
-  inset:7px;
-  border-radius:50%;
-  background:#f7faff}
-.loader-ring:after{
-  content:"🏆";
-  position:absolute;
-  inset:0;
-  display:grid;
-  place-items:center;
-  animation:counterSpin 1.05s linear infinite;
-  font-size:21px}
 .loader-text{
   min-width:210px;
   text-align:center}
@@ -1024,10 +978,7 @@ to{
 @media(max-width:760px){
 .wrap{
   padding:10px 8px 30px}
-.visit-mini{
-  width:205px}
-.visit-line{
-  font-size:11px}
+
 .section h2,.relation-main-head h2{
   font-size:15px}
 .section-note,.reaction-card-note{
@@ -1084,8 +1035,7 @@ to{
   height:24px}
 .sub-toggle.compact.on .toggle-knob,#subToggle.sub-toggle.on .toggle-knob{
   left:74px}
-.visit-mini{
-  width:194px}
+
 .recent-comment-item,.comment-item{
   grid-template-columns:44px minmax(0,1fr)}
 }
@@ -1093,20 +1043,19 @@ to{
 *,*::before,*::after{
   transition:none!important;
   animation:none!important}
-}.visit-mini{height:40px;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;text-align:right;padding:5px 10px}@keyframes kinojoCloseSpin{to{transform:rotate(360deg)}}.btn:hover,.page-btn:hover,.send-btn:hover,.reaction-choice button:hover,.construction-ok:hover,.pill:hover,.admin-swap-btn:hover{transform:scale(1.035)}
+}@keyframes kinojoCloseSpin{to{transform:rotate(360deg)}}.btn:hover,.page-btn:hover,.send-btn:hover,.reaction-choice button:hover,.construction-ok:hover,.pill:hover,.admin-swap-btn:hover{transform:scale(1.035)}
 .character-button{cursor:pointer;transition:color .22s ease,transform .22s ease}.character-button:hover{color:#2563eb;text-decoration:none;transform:scale(1.06)}
 .section-head,.overall-head,.mvp-head,.reaction-card-head,.relation-main-head{min-height:50px}.section h2,.overall h2,.mvp-card h2,.relation-main-head h2,.reaction-card-title{font-size:17px!important;line-height:1.2}.dashboard{grid-template-columns:minmax(0,6fr) minmax(0,4fr);align-items:stretch}.top-grid{grid-template-columns:repeat(2,minmax(0,1fr));height:100%}.top-grid .section{height:100%;display:grid;grid-template-rows:auto 1fr}.top-grid .list{align-content:start}.mini-row{min-height:31px;padding:3px 6px;gap:6px;grid-template-columns:46px minmax(0,1fr) 46px 82px}.rank-emblem{min-width:42px}.rank-emblem img{width:34px;height:34px}.rank-number{font-size:9px;margin-top:-2px}.name,.tag-name{font-size:12px}.meta,.owner-line{font-size:9px}.score{font-size:11px}.reaction-counts{font-size:9px;min-width:38px}.relation-combined-card{height:100%;min-height:0}.relation-viewport{max-height:none;height:100%;min-height:0;overflow:hidden}.relation-column{min-height:0;overflow:hidden}.relation-track{display:grid;gap:6px}.relation-column.is-scrollable .relation-track{animation:relationRoll 18s linear infinite}.relation-column.is-scrollable:hover .relation-track{animation-play-state:paused}.relation-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px;align-items:center;padding:7px;border:1px solid rgba(117,140,177,.16);border-radius:var(--radius-control);background:rgba(255,255,255,.58)}.relation-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:1000}.relation-server{font-size:10px;color:#7b8ba2;font-weight:900}.relation-reactions{grid-column:1/-1;justify-self:center}.relation-empty{height:100%;display:grid;place-items:center}.reaction-empty{min-height:118px;display:grid;place-items:center;text-align:center;color:var(--muted);font-weight:900}.recent-comment-card .comment-list.is-scrollable .comment-track{animation:commentRoll 28s linear infinite}@keyframes relationRoll{0%{transform:translateY(0)}100%{transform:translateY(-50%)}}
 .rank-tools{align-items:center}.class-tabs.rank-tabs{padding-left:12px;padding-right:12px}.overall .class-tabs.rank-tabs,.overall .rank-tools{max-width:100%}
 @media(max-width:900px){.dashboard{grid-template-columns:1fr}.top-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.relation-viewport{max-height:310px}.side-stack{min-height:310px}}
-@media(max-width:620px){.top-grid{grid-template-columns:1fr}.dashboard{grid-template-columns:1fr}.mini-row{grid-template-columns:44px minmax(0,1fr) 42px 74px}.visit-mini{width:194px}}
+@media(max-width:620px){.top-grid{grid-template-columns:1fr}.dashboard{grid-template-columns:1fr}.mini-row{grid-template-columns:44px minmax(0,1fr) 42px 74px}}
 
 /* ============================================================
    KINOJO 1.c2.04 UI System Fix
    공통 탑바 / 로딩 / 명예의 전당 레이아웃 보정
 ============================================================ */
 body{background:#fff!important;}
-.visit-mini{height:40px;min-height:40px;display:grid;align-content:center;text-align:right;line-height:1.16;padding:4px 10px;}
-.loader-ring{width:34px;height:34px;margin:0 auto 10px;border-radius:999px;background:conic-gradient(#2563eb 0 12.5%,#dbeafe 12.5% 25%,#93c5fd 25% 37.5%,#dbeafe 37.5% 50%,#60a5fa 50% 62.5%,#dbeafe 62.5% 75%,#3b82f6 75% 87.5%,#dbeafe 87.5%);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 0);mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 0);animation:kinojoSpinner .9s steps(8) infinite;}
+
 @keyframes kinojoSpinner{to{transform:rotate(360deg)}}
 .loader-text,#loaderText{display:inline-block;animation:kinojoTextFloat 1.15s ease-in-out infinite;}
 @keyframes kinojoTextFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
@@ -1132,7 +1081,7 @@ body{background:#fff!important;}
 .rank-table th:nth-child(5),.rank-table td:nth-child(5),.rank-table th:nth-child(6),.rank-table td:nth-child(6){text-align:right;}
 .reaction-empty{display:grid;place-items:center;text-align:center;}
 .recent-comment-card .comment-list.is-scrollable .comment-track{animation:commentRoll 28s linear infinite;}
-@media(max-width:760px){.dashboard{grid-template-columns:1fr!important}.top-grid{grid-template-columns:1fr}.reaction-board,.award-grid{grid-template-columns:1fr}.visit-mini{width:210px;font-size:11px}.relation-viewport{height:320px}}
+@media(max-width:760px){.dashboard{grid-template-columns:1fr!important}.top-grid{grid-template-columns:1fr}.reaction-board,.award-grid{grid-template-columns:1fr}.relation-viewport{height:320px}}
 @media(min-width:761px) and (max-width:1080px){.top-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard{grid-template-columns:1fr!important}.side-stack{min-height:330px}}
 
 
@@ -1160,14 +1109,13 @@ body{background:#fff!important;}
 .reaction-choice button.active.like-active,.reaction-choice button.active:first-child{background:linear-gradient(135deg,#dbeafe,#eff6ff)!important;border-color:#60a5fa!important;color:#1d4ed8!important;}
 .reaction-choice button.active.dislike-active,.reaction-choice button.active:nth-child(2){background:linear-gradient(135deg,#fee2e2,#fff1f2)!important;border-color:#f87171!important;color:#b91c1c!important;}
 .send-btn:disabled{opacity:.45;filter:saturate(.35);cursor:not-allowed!important;}
-@media(max-width:760px){.chick-card{top:58px}.relation-combined-head,.relation-viewport{grid-template-columns:1fr!important}.relation-viewport{max-height:360px!important}.kinojo-top-tools .visit-mini{display:none;}}
+@media(max-width:760px){.chick-card{top:58px}.relation-combined-head,.relation-viewport{grid-template-columns:1fr!important}.relation-viewport{max-height:360px!important}}
 
 
 /* ============================================================
    KINOJO 1.c2.04 Hall of Fame UI refinement
    - 원인 덮어쓰기용 important 최소 사용: 기존 1.c2.04 말미 중복 보정값 정리 목적
 ============================================================ */
-.admin-menu-wrap{transform:scale(.67);transform-origin:top right;}
 .admin-dropdown{right:0;width:270px;font-size:12px;}
 .admin-dropdown-head strong{font-size:12px;}
 .admin-dropdown-close,.reaction-close,.construction-close,.chick-close{border-radius:999px!important;display:grid;place-items:center;line-height:1;}
@@ -1224,4 +1172,4 @@ body{background:#fff!important;}
 .page-num.active{background:#2563eb;color:#fff;border-color:#2563eb;}
 .page-num:hover{transform:translateY(-1px);color:#2563eb;border-color:rgba(37,99,235,.35);}
 .page-num.active:hover{color:#fff;}
-@media(max-width:760px){.chick-card.collapsed{top:60px;right:12px}.section-head,.overall-head,.mvp-head,.reaction-card-head,.relation-main-head,.relation-sub-head{height:auto!important;min-height:28px!important}.relation-viewport{height:360px!important;max-height:360px!important}.rank-standard-note{white-space:normal}.admin-menu-wrap{transform:scale(.75)}}
+@media(max-width:760px){.chick-card.collapsed{top:60px;right:12px}.section-head,.overall-head,.mvp-head,.reaction-card-head,.relation-main-head,.relation-sub-head{height:auto!important;min-height:28px!important}.relation-viewport{height:360px!important;max-height:360px!important}.rank-standard-note{white-space:normal}}

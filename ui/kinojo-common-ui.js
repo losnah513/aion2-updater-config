@@ -1,4 +1,4 @@
-/* KINOJO common UI v1.c2.04 / work 260606_00 */
+/* KINOJO common UI v1.c2.04 / work 260607_00 */
 (function(){
   const DOCS={
     about:{title:"사이트 소개",html:`<h3>KINOJO INFO</h3><p>키노조 인포는 AION2 키노조 관련 정보를 한곳에서 확인하기 위한 정보 허브입니다.</p><p>성역 파티 확인, 레기온 기록, 명예의 전당 등 필요한 기능을 순차적으로 제공합니다.</p>`},
@@ -17,27 +17,119 @@
   function detach(el){if(el&&el.parentNode)el.parentNode.removeChild(el);return el}
   function removeLegacy(){
     const legacyTop=q('.top-utility');
-    const visit=legacyTop?q('#visitCard',legacyTop):q('#visitCard');
-    const admin=legacyTop?q('.admin-menu-wrap',legacyTop):q('.admin-menu-wrap');
+    const slot=q('#kinojoCommonSlot');
+    const visit=slot?q('#visitCard',slot):(legacyTop?q('#visitCard',legacyTop):q('#visitCard'));
+    const admin=slot?q('.admin-menu-wrap',slot):(legacyTop?q('.admin-menu-wrap',legacyTop):q('.admin-menu-wrap'));
     const rescued={visit:detach(visit),admin:detach(admin)};
+    if(slot)slot.remove();
     if(legacyTop)legacyTop.remove();
     document.querySelectorAll('.side-drawer,.drawer-page-panel,.info-drawer,.info-drawer-overlay,.kinojo-common-drawer,.kinojo-side-panel').forEach(el=>el.remove());
     return rescued;
+  }
+  function createVisitCard(){
+    const el=document.createElement('section');
+    el.className='visit-mini';
+    el.id='visitCard';
+    el.innerHTML='<span class="visit-line visit-line-today">👀 방문자 통계 준비중</span><span class="visit-line visit-line-total">🏛 누적 방문 기록 준비중</span>';
+    return el;
+  }
+  function createAdminMenu(info){
+    const wrap=document.createElement('div');
+    wrap.className='admin-menu-wrap';
+    const isHall=info.key==='hall';
+    wrap.innerHTML=`
+      <button aria-expanded="false" aria-haspopup="true" aria-label="관리자 메뉴" class="admin-menu-btn" id="adminMenuBtn" type="button">+</button>
+      <section aria-hidden="true" class="admin-dropdown" id="adminDropdown">
+        <div class="admin-dropdown-head">
+          <strong>관리자 전용 메뉴입니다.</strong>
+          <button aria-label="닫기" class="admin-dropdown-close kinojo-common-close" id="adminDropdownClose" type="button">×</button>
+        </div>
+        ${isHall?`
+        <div class="admin-login-panel" id="adminLoginPanel">
+          <input class="search admin-password" id="adminPasswordInput" placeholder="비밀번호 입력" type="password"/>
+          <button class="btn" id="adminLoginBtn" type="button">확인</button>
+          <div class="admin-status" id="adminStatus"></div>
+        </div>
+        <div class="admin-control-panel" id="adminControlPanel" style="display:none">
+          <button class="btn" id="adminMvpBtn" type="button">MVP 후보 확인</button>
+          <div class="admin-visit-control" id="adminVisitControl">
+            <div class="admin-visit-title">방문자수 조정</div>
+            <div class="admin-visit-line admin-visit-row-main">
+              <div aria-label="증감 선택" class="admin-swap admin-sign-swap">
+                <button class="admin-swap-btn active" data-visit-sign="plus" type="button">+</button>
+                <button class="admin-swap-btn" data-visit-sign="minus" type="button">-</button>
+              </div>
+              <input aria-label="조정 인원수" class="search admin-visit-amount" id="adminVisitAmount" inputmode="numeric" max="9999" min="1" type="number" value="1"/>
+              <span class="admin-visit-unit">명</span>
+              <div aria-label="조정 대상" class="admin-swap">
+                <button class="admin-swap-btn active" data-visit-target="daily" type="button">일일</button>
+                <button class="admin-swap-btn" data-visit-target="total" type="button">누적</button>
+              </div>
+            </div>
+            <div class="admin-status" id="adminVisitStatus"></div>
+            <div class="admin-visit-line admin-visit-actions">
+              <button class="btn" id="adminVisitApplyBtn" type="button">반영</button>
+              <button class="btn admin-close" id="adminVisitCancelBtn" type="button">취소</button>
+            </div>
+          </div>
+          <button class="btn" id="adminSnapshotBtn" type="button">성장왕 스냅샷 생성</button>
+          <button class="btn" id="adminSnapshotTriggerBtn" type="button">자동 스냅샷 트리거 설치</button>
+        </div>`:`
+        <div class="admin-login-panel admin-placeholder-panel">
+          <div class="admin-status">관리자 기능은 명예의 전당에서 우선 지원됩니다.</div>
+        </div>`}
+      </section>`;
+    return wrap;
+  }
+  function pageTimeId(info){
+    if(info.key==='sanctuary')return 'syncChip';
+    if(info.key==='hall')return 'topbarUpdateTime';
+    return 'topbarUpdateTime';
   }
   function makeTopbar(rescued,info){
     const bar=document.createElement('section');
     bar.className='kinojo-topbar';
     bar.setAttribute('aria-label','KINOJO INFO 공통 상단 메뉴');
-    const pageLabel=info.key==='sanctuary'?'성역':info.label;
-    bar.innerHTML=`<div class="kinojo-top-left"><button class="kinojo-menu-toggle" id="drawerToggleBtn" type="button" aria-label="메뉴 열기" aria-expanded="false"><span class="kinojo-menu-dots" aria-hidden="true"><i></i><i></i><i></i></span></button><span class="kinojo-top-page" ${info.key==='sanctuary'?'id="syncChip"':''}>${pageLabel}</span></div><div class="kinojo-top-center" id="kinojoUserStatus">레벨/등급/남은 좋아요·싫어요 자리 준비중</div><div class="kinojo-top-tools" id="kinojoTopTools"></div>`;
+    const timeText=info.key==='home'?'정보 허브':(info.key==='hall'?'업데이트 확인 중':'업데이트 확인 중');
+    bar.innerHTML=`
+      <div class="kinojo-top-left">
+        <button class="kinojo-menu-toggle" id="drawerToggleBtn" type="button" aria-label="메뉴 열기" aria-expanded="false">
+          <svg class="kinojo-menu-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <g class="menu-dots"><circle cx="6" cy="12" r="1.9"></circle><circle cx="12" cy="12" r="1.9"></circle><circle cx="18" cy="12" r="1.9"></circle></g>
+            <g class="menu-lines"><path d="M5 7.5H19"></path><path d="M5 12H19"></path><path d="M5 16.5H19"></path></g>
+          </svg>
+        </button>
+        <span class="kinojo-top-page"><strong>${info.label}</strong><small id="${pageTimeId(info)}">${timeText}</small></span>
+      </div>
+      <div class="kinojo-top-center" id="kinojoUserStatus">레벨/등급/남은 좋아요·싫어요 자리 준비중</div>
+      <div class="kinojo-top-tools" id="kinojoTopTools"></div>`;
     const tools=q('#kinojoTopTools',bar);
-    if(rescued.admin){
-      const adminBtn=rescued.admin.querySelector('#adminMenuBtn');
-      if(adminBtn){adminBtn.textContent='+';adminBtn.setAttribute('aria-label','관리자 메뉴 열기');}
-      tools.appendChild(rescued.admin);
-    }
-    if(rescued.visit)tools.appendChild(rescued.visit);
+    const admin=rescued.admin||createAdminMenu(info);
+    const visit=rescued.visit||createVisitCard();
+    const adminBtn=admin.querySelector('#adminMenuBtn');
+    if(adminBtn){adminBtn.textContent='+';adminBtn.setAttribute('aria-label','관리자 메뉴 열기');}
+    tools.appendChild(admin);
+    tools.appendChild(visit);
     document.body.insertBefore(bar,document.body.firstChild);
+  }
+  function toggleAdminMenu(){
+    const menu=q('#adminDropdown');const btn=q('#adminMenuBtn');
+    if(!menu)return;
+    const open=!menu.classList.contains('open');
+    menu.classList.toggle('open',open);
+    menu.setAttribute('aria-hidden',open?'false':'true');
+    if(btn)btn.setAttribute('aria-expanded',open?'true':'false');
+  }
+  function closeAdminMenuCommon(){
+    const menu=q('#adminDropdown');const btn=q('#adminMenuBtn');
+    if(menu){menu.classList.remove('open');menu.setAttribute('aria-hidden','true');}
+    if(btn)btn.setAttribute('aria-expanded','false');
+  }
+  function bindCommonAdmin(info){
+    if(info.key==='hall')return;
+    q('#adminMenuBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();toggleAdminMenu();});
+    q('#adminDropdownClose')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeAdminMenuCommon();});
+    document.addEventListener('click',e=>{const menu=q('#adminDropdown');if(menu&&menu.classList.contains('open')&&!menu.contains(e.target)&&!e.target.closest('#adminMenuBtn'))closeAdminMenuCommon();});
   }
   function makeDrawer(info){
     const isHall=info.key==='hall';
@@ -169,6 +261,7 @@
   makeTopbar(rescued,info);
   makeDrawer(info);
   bind();
+  bindCommonAdmin(info);
   window.KinojoCommonUI={openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel};
   window.openSideDrawer=openSideDrawer;
   window.closeSideDrawer=closeSideDrawer;

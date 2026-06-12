@@ -33,12 +33,9 @@
   .relation-track{max-height:180px;}
 }
 @media(max-width:760px){
-  .visit-mini{width:280px!important;}
   .mini-row{grid-template-columns:50px minmax(0,1fr) 66px 92px!important;}
 }
 @media(max-width:520px){
-  .visit-mini{width:252px!important;padding-left:14px!important;}
-  .visit-line{font-size:11px;}
   .mini-row{grid-template-columns:46px minmax(0,1fr) 62px 82px!important;}
   .rank-table{min-width:980px!important;}
 }
