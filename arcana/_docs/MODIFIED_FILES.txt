@@ -1,82 +1,33 @@
-ARCANA ARC-0.3.00_20260612_03 MODIFIED FILES
-
-[신규]
-- arcana/js/classService.js
-  - 클래스 키/표시명/아이콘/스킬 아이콘 파일 정규화 전용 서비스 추가
-  - skill_db_templar / templar / guardian / 수호성을 templar 표준 키로 통합
-
-- arcana/js/skillTargetRules.js
-  - 20레벨/16레벨 목표 선택 예산 규칙 전용 모듈 추가
-  - 20목표 +6, 16목표 +2, 총 예산 42포인트 기준 적용
-  - 20레벨 선택 순서 1~5 중요도 표시 기준 추가
-
-- AppsScript/ARC_ClassKeyService.gs
-  - Apps Script 클래스 키 정규화 전용 파일 추가
-  - 웹 classService.js와 같은 templar 표준 키 기준으로 정리
+ARC-0.3.00_20260612_06 CSS/UI Audit + Templar Load Fix
 
 [수정]
-- arcana/index.html
-  - classService.js, skillTargetRules.js 로딩 순서 추가
+- arcana/css/cards.css
+  - 추천 CTA 관련 구세대 CSS 전수 제거
+  - #arcanaRunSimulation / .arcana-cta-* / .arcana-recommend-actions 중복 정의 제거
+  - 회전형 CTA keyframes/구 디자인 충돌 제거
+
+- arcana/css/components/arcana-cta.css
+  - CTA 전용 CSS로 재작성
+  - 분석 전 idle 상태: 막대가 개별적으로 길어졌다 짧아지는 흑백 파동 적용
+  - hover 상태: 막대 진폭/속도 강화
+  - loading 상태: 컬러 막대 파동 + 텍스트 박스 유지
+  - 추천 시작 버튼 항상 표시되도록 visibility/display 보강
+  - 추천/현재 아르카나 카드 높이 610px 통일 유지
 
 - arcana/js/classSelector.js
-  - 내부 중복 클래스 매핑 제거
-  - ClassService 연결부만 남기도록 정리
-  - 수호성/templar/skill_db_templar 조회 경로 통합
+  - classSkills 데이터에 arcanaSkills만 있고 active/passive가 비어 있으면 내장 fallback active/passive로 보정
+  - 수호성처럼 서버 응답 일부가 비어도 액티브 스킬 선택 영역이 비지 않도록 처리
+  - strict pool 검증 실패 시 전체 pool을 []로 비우던 구 로직 제거, 원본 후보 유지
 
-- arcana/js/skillSelector.js
-  - 총 선택 개수 7개 고정 제한 제거
-  - 20레벨 선택 개수에 따라 16레벨 추가 가능 수 동적 계산
-  - 20레벨 선택 순서 기준 중요도 1~5 뱃지 표시
-  - 수호성 스킬 아이콘 파일 로딩을 ClassService 기준으로 통합
-
-- arcana/js/app.js
-  - classSkills 응답 키 정규화 추가
-  - targetSkillPriority20 저장/복원/초기화 반영
-  - 액티브 스킬 저장 데이터에 중요도 순서 포함
-
-- arcana/js/state.js
-  - targetSkillPriority20 상태 추가
-
-- arcana/js/api.js
-  - 구 ARCANA_RING_OPTIONS fallback 복원 제거
-  - 새로고침 시 구 저장키 때문에 이전 기록이 되살아나는 흐름 차단
-
-- arcana/css/cards.css
-  - 20레벨 중요도 뱃지 스타일 추가
-  - 선택 제한 안내 강조 스타일 추가
-
-- AppsScript/ARC_Constants.gs
-  - ARC_VERSION을 ARC-0.3.00으로 정정
-  - 파일 상단 설명 주석 추가
+- AppsScript/ARC_ClassKeyService.gs
+  - 클래스 키 정규화 시 대소문자 차이로 skill_db_templar/Templar가 누락되지 않도록 소문자 표준화
 
 - AppsScript/ARC_DBService.gs
-  - 클래스 정규화 함수 분리 후 중복 제거
-  - 파일 상단 설명 주석 추가
-
-- AppsScript/ARC_CardService.gs
-- AppsScript/ARC_Main.gs
-- AppsScript/ARC_Utils.gs
-- AppsScript/ARC_WebApp.gs
-  - 파일 상단 역할/포함 내용 설명 주석 추가
-
-- AppsScript/_docs/SCRIPT_IMPORT_ORDER.txt
-  - ARC_ClassKeyService.gs 추가 순서 반영
-
-[정리]
-- 클래스 키 매핑 중복 위치 축소
-- 수호성 표준 키 templar 기준 통일
-- 구 반지 저장키 자동 복원 경로 제거
+  - rowType 정규화 강화
+  - '액티브 스킬', '패시브 스킬', active_skill 같은 공백/언더바/하이픈 포함 표기를 인식하도록 보강
 
 [검수]
-- 웹 JS node --check 통과
-- Apps Script .gs syntax check 통과(.js 임시 확장자 검사)
-- ClassService: skill_db_templar → templar 확인
-- SkillTargetRules: 20목표 6개 → 16목표 3개 허용 / 초과 차단 확인
-
-
-[ARC-0.3.00_20260612_05]
-- 수호성 클래스 선택 시 class_skill_db 응답이 비어도 내장 데이터로 액티브/반지/아르카나 풀을 보정하도록 수정했습니다.
-- Apps Script class_skill_db 로딩에서 skill_db_templar 같은 DB 키를 유지하면서 templar/guardian 별칭도 함께 응답하도록 보강했습니다.
-- active/passive 행 타입에 한글 표기가 들어와도 읽히도록 정규화했습니다.
-- 아르카나 풀 검증 실패 시 전체 pool을 비우지 않고 원본 pool을 유지하도록 수정했습니다.
-- 추천 CTA 시작 버튼이 추천 완료/준비 상태에서 hidden 처리되어 사라지던 문제를 제거했습니다.
+- cards.css 내 CTA 직접 정의 제거 확인
+- CTA 전용 CSS는 arcana/css/components/arcana-cta.css만 사용하도록 정리
+- JS 문법 검사 통과
+- CSS brace balance 확인

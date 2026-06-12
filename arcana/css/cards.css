@@ -1047,32 +1047,8 @@
   justify-content: center;
 }
 
-#arcanaRunSimulation {
-  width: 86px;
-  height: 86px;
-  min-width: 86px;
-  padding: 0 10px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 800;
-  color: #fff;
-  background: linear-gradient(145deg, #2563eb, #1d4ed8);
-  border-color: rgba(37, 99, 235, 0.7);
-  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.22), 0 0 0 4px rgba(37, 99, 235, 0.08);
-}
 
-#arcanaRunSimulation.is-soft-disabled {
-  color: rgba(255, 255, 255, 0.78);
-  background: linear-gradient(145deg, #9fb8ed, #7d9fe6);
-  border-color: rgba(125, 159, 230, 0.72);
-  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.12), 0 0 0 3px rgba(125, 159, 230, 0.1);
-  cursor: not-allowed;
-}
 
-#arcanaRunSimulation:not(.is-soft-disabled):hover {
-  transform: translateY(-1px);
-  filter: brightness(1.04);
-}
 
 @media (max-width: 720px) {
   .arcana-equipment-list-fixed,
@@ -1142,17 +1118,6 @@
   display: block !important;
 }
 
-.arcana-recommend-section .arcana-actions,
-.arcana-recommend-section .arcana-recommend-actions {
-  position: static !important;
-  z-index: auto;
-  top: auto;
-  left: auto;
-  transform: none !important;
-  display: flex;
-  justify-content: center;
-  margin: 7px 7px 0 !important;
-}
 
 .arcana-recommend-section .arcana-recommend-message {
   margin-top: 6px !important;
@@ -1174,27 +1139,7 @@
   line-height: 1.45;
 }
 
-#arcanaRunSimulation {
-  width: 96px;
-  height: 96px;
-  min-width: 96px;
-  padding: 0 12px;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 900;
-  color: #fff;
-  background: linear-gradient(145deg, #2563eb, #1d4ed8);
-  border-color: rgba(37, 99, 235, 0.78);
-  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.25), 0 0 0 5px rgba(37, 99, 235, 0.08);
-}
 
-#arcanaRunSimulation.is-soft-disabled {
-  color: rgba(255, 255, 255, 0.82);
-  background: linear-gradient(145deg, #8fb0ee, #6f95df);
-  border-color: rgba(111, 149, 223, 0.72);
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.13), 0 0 0 4px rgba(125, 159, 230, 0.1);
-  cursor: not-allowed;
-}
 
 @media (max-width: 720px) {
   .arcana-panel-message {
@@ -1337,82 +1282,17 @@
   color: #fff !important;
 }
 
-.arcana-recommend-section .arcana-recommend-actions {
-  position: absolute !important;
-  z-index: 5 !important;
-  top: 164px !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  margin: 0 !important;
-  width: 118px;
-  height: 118px;
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-}
 
-#arcanaRunSimulation {
-  width: 112px !important;
-  height: 112px !important;
-  min-width: 112px !important;
-  border-radius: 999px !important;
-  color: #fff !important;
-  font-size: 15px !important;
-  font-weight: 900 !important;
-  letter-spacing: -0.02em;
-  background:
-    radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.12) 21%, rgba(255, 255, 255, 0) 32%),
-    conic-gradient(from 180deg, #60a5fa, #2563eb, #1d4ed8, #7dd3fc, #2563eb, #60a5fa) !important;
-  border: 1px solid rgba(255, 255, 255, 0.82) !important;
-  box-shadow:
-    0 16px 34px rgba(37, 99, 235, 0.34),
-    0 0 0 5px rgba(37, 99, 235, 0.10),
-    0 0 24px rgba(96, 165, 250, 0.38),
-    inset 0 0 18px rgba(255, 255, 255, 0.22) !important;
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.65), 0 1px 2px rgba(15, 23, 42, 0.24);
-}
 
-#arcanaRunSimulation::before {
-  content: '';
-  position: absolute;
-  inset: -7px;
-  border-radius: inherit;
-  border: 1px solid rgba(96, 165, 250, 0.34);
-  box-shadow: 0 0 20px rgba(96, 165, 250, 0.28);
-  animation: arcana-recommend-orbit 2.8s linear infinite;
-  pointer-events: none;
-}
 
-#arcanaRunSimulation:not(.is-soft-disabled) {
-  animation: arcana-recommend-breathe 2.2s ease-in-out infinite;
-}
 
-#arcanaRunSimulation.is-soft-disabled {
-  color: rgba(255, 255, 255, 0.72) !important;
-  background:
-    radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.52), rgba(255, 255, 255, 0) 30%),
-    linear-gradient(145deg, #9fb8ed, #7d9fe6) !important;
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.14), 0 0 0 4px rgba(125, 159, 230, 0.10) !important;
-  animation: none !important;
-}
 
-#arcanaRunSimulation[hidden],
-.arcana-recommend-section.is-recommend-ready .arcana-recommend-actions {
-  display: none !important;
-}
 
 .arcana-recommend-section .arcana-recommend-message {
   margin-top: 8px !important;
 }
 
-@keyframes arcana-recommend-breathe {
-  0%, 100% { transform: scale(1); filter: brightness(1); }
-  50% { transform: scale(1.035); filter: brightness(1.06); }
-}
 
-@keyframes arcana-recommend-orbit {
-  to { transform: rotate(360deg); }
-}
 
 @media (max-width: 720px) {
   .arcana-top-grid {
@@ -1542,60 +1422,10 @@
   50% { transform: scale(1.05); opacity: 0.88; }
 }
 
-.arcana-recommend-actions {
-  margin: 8px 7px 0 !important;
-}
 
-#arcanaRunSimulation.arcana-kinojo-cta,
-#arcanaRunSimulation {
-  width: 104px !important;
-  height: 104px !important;
-  min-width: 104px !important;
-  border-radius: 999px !important;
-  border: 1px solid rgba(37, 99, 235, 0.95) !important;
-  color: #fff !important;
-  font-weight: 900 !important;
-  letter-spacing: -0.02em;
-  text-shadow:
-    0 0 3px rgba(15, 23, 42, 0.78),
-    0 0 12px rgba(255, 255, 255, 0.86),
-    0 0 18px rgba(125, 211, 252, 0.68) !important;
-  background:
-    radial-gradient(circle at 35% 28%, rgba(255,255,255,0.46), transparent 27%),
-    radial-gradient(circle at 50% 72%, rgba(125,211,252,0.32), transparent 38%),
-    linear-gradient(145deg, #38bdf8, #2563eb 52%, #1e40af) !important;
-  box-shadow:
-    0 14px 32px rgba(37, 99, 235, 0.32),
-    0 0 0 5px rgba(37, 99, 235, 0.09),
-    inset 0 0 18px rgba(255,255,255,0.24) !important;
-  animation: arcana-kinojo-cta-breathe 2.6s ease-in-out infinite;
-}
 
-#arcanaRunSimulation.arcana-kinojo-cta::before,
-#arcanaRunSimulation::before {
-  content: '';
-  position: absolute;
-  inset: -3px;
-  border-radius: inherit;
-  padding: 3px;
-  background: conic-gradient(from var(--arcana-glow-angle), transparent, rgba(255,255,255,0.78), rgba(125,211,252,0.9), transparent);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  animation: arcana-reset-border-spin 1.25s linear infinite;
-  pointer-events: none;
-}
 
-#arcanaRunSimulation.is-soft-disabled {
-  opacity: 0.76;
-  filter: grayscale(0.12);
-  animation: none;
-}
 
-@keyframes arcana-kinojo-cta-breathe {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-2px) scale(1.035); }
-}
 
 .arcana-recommend-ai-text {
   margin: 7px 7px 0;
@@ -1614,10 +1444,6 @@
     0 0 16px rgba(125, 211, 252, 0.72);
 }
 
-.arcana-recommend-section.is-recommend-ready .arcana-recommend-ai-text,
-.arcana-recommend-section.is-recommend-ready .arcana-recommend-actions {
-  display: none !important;
-}
 
 @media (max-width: 980px) {
   .arcana-top-grid {
@@ -1741,65 +1567,11 @@
   max-height: 338px !important;
 }
 
-.arcana-recommend-actions {
-  position: relative !important;
-  z-index: 5 !important;
-  justify-content: center !important;
-  margin: 12px auto 0 !important;
-  padding: 0 !important;
-}
 
-#arcanaRunSimulation.arcana-kinojo-cta,
-#arcanaRunSimulation {
-  position: relative !important;
-  width: 94px !important;
-  height: 94px !important;
-  min-width: 94px !important;
-  border: 2px solid rgba(37, 99, 235, 0.72) !important;
-  border-radius: 999px !important;
-  background: #2563eb !important;
-  background-image: none !important;
-  box-shadow: none !important;
-  color: #fff !important;
-  font-size: 15px !important;
-  font-weight: 900 !important;
-  line-height: 1.18 !important;
-  text-shadow: 0 0 8px rgba(255,255,255,0.64) !important;
-  transform-origin: center center !important;
-  transition: transform 0.18s ease, border-color 0.18s ease, color 0.18s ease !important;
-  animation: none !important;
-}
 
-#arcanaRunSimulation.arcana-kinojo-cta::before,
-#arcanaRunSimulation::before {
-  content: '' !important;
-  position: absolute !important;
-  inset: -4px !important;
-  border-radius: inherit !important;
-  padding: 3px !important;
-  background: conic-gradient(from var(--arcana-glow-angle), transparent 0deg, transparent 110deg, rgba(255,255,255,0.9) 160deg, rgba(125,211,252,0.95) 200deg, transparent 255deg, transparent 360deg) !important;
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) !important;
-  -webkit-mask-composite: xor !important;
-  mask-composite: exclude !important;
-  animation: arcana-reset-border-spin 1.45s linear infinite !important;
-  pointer-events: none !important;
-}
 
-#arcanaRunSimulation.arcana-kinojo-cta:hover:not(.is-soft-disabled),
-#arcanaRunSimulation:hover:not(.is-soft-disabled) {
-  transform: scale(1.055) !important;
-  border-color: rgba(125, 211, 252, 0.98) !important;
-}
 
-#arcanaRunSimulation.is-vanishing {
-  animation: arcana-cta-pop-away 0.26s ease-in forwards !important;
-}
 
-@keyframes arcana-cta-pop-away {
-  0% { transform: scale(1); opacity: 1; }
-  45% { transform: scale(1.12); opacity: 0.9; }
-  100% { transform: scale(0.08); opacity: 0; }
-}
 
 .arcana-recommend-ai-text {
   margin: 7px auto 0 !important;
@@ -1903,68 +1675,12 @@
   align-items: start !important;
 }
 
-.arcana-recommend-actions {
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  margin: 8px auto 0 !important;
-  padding: 0 !important;
-}
 
-#arcanaRunSimulation.arcana-kinojo-cta,
-#arcanaRunSimulation {
-  position: relative !important;
-  overflow: hidden !important;
-  width: 96px !important;
-  height: 96px !important;
-  min-width: 96px !important;
-  border: 2px solid transparent !important;
-  border-radius: 999px !important;
-  background:
-    linear-gradient(#2563eb, #2563eb) padding-box,
-    conic-gradient(from var(--arcana-glow-angle), rgba(37,99,235,0.1), rgba(255,255,255,0.9), rgba(125,211,252,0.95), rgba(37,99,235,0.1)) border-box !important;
-  background-image:
-    linear-gradient(#2563eb, #2563eb),
-    conic-gradient(from var(--arcana-glow-angle), rgba(37,99,235,0.1), rgba(255,255,255,0.9), rgba(125,211,252,0.95), rgba(37,99,235,0.1)) !important;
-  box-shadow: none !important;
-  color: #fff !important;
-  font-size: 15px !important;
-  font-weight: 900 !important;
-  line-height: 1.15 !important;
-  text-shadow: 0 0 8px rgba(255,255,255,0.62) !important;
-  transform-origin: center center !important;
-  animation: arcana-reset-border-spin 1.25s linear infinite !important;
-  transition: transform 0.16s ease, opacity 0.16s ease !important;
-}
 
-#arcanaRunSimulation.arcana-kinojo-cta::before,
-#arcanaRunSimulation.arcana-kinojo-cta::after,
-#arcanaRunSimulation::before,
-#arcanaRunSimulation::after {
-  content: none !important;
-  display: none !important;
-}
 
-#arcanaRunSimulation.arcana-kinojo-cta:hover:not(.is-soft-disabled),
-#arcanaRunSimulation:hover:not(.is-soft-disabled) {
-  transform: scale(1.055) !important;
-}
 
-#arcanaRunSimulation.is-soft-disabled {
-  opacity: 0.62 !important;
-  filter: grayscale(0.18) !important;
-  animation: none !important;
-}
 
-#arcanaRunSimulation.is-vanishing {
-  animation: arcana-cta-pop-away 0.42s cubic-bezier(.2,.9,.2,1) forwards !important;
-}
 
-@keyframes arcana-cta-pop-away {
-  0% { transform: scale(1); opacity: 1; }
-  42% { transform: scale(1.10); opacity: 0.88; }
-  100% { transform: scale(0.02); opacity: 0; }
-}
 
 .arcana-recommend-ai-text {
   margin: 5px auto 0 !important;
@@ -2095,35 +1811,8 @@
   align-content: start !important;
 }
 
-#arcanaRunSimulation.arcana-kinojo-cta,
-#arcanaRunSimulation {
-  width: auto !important;
-  min-width: 132px !important;
-  height: 42px !important;
-  min-height: 42px !important;
-  padding: 0 22px !important;
-  border: 1px solid rgba(37,99,235,0.62) !important;
-  border-radius: 3px !important;
-  background: #fff !important;
-  background-image: none !important;
-  box-shadow: none !important;
-  color: #2563eb !important;
-  text-shadow: none !important;
-  letter-spacing: -0.02em !important;
-  transform-origin: center center !important;
-  animation: arcana-kinojo-border-loop 1.4s linear infinite !important;
-  transition: transform 0.18s ease, opacity 0.18s ease, border-color 0.18s ease, color 0.18s ease !important;
-}
 
-#arcanaRunSimulation.arcana-kinojo-cta:hover:not(.is-soft-disabled),
-#arcanaRunSimulation:hover:not(.is-soft-disabled) {
-  transform: scale(1.045) !important;
-  color: #1d4ed8 !important;
-}
 
-#arcanaRunSimulation.is-vanishing {
-  animation: arcana-cta-center-press 0.28s ease forwards !important;
-}
 
 @keyframes arcana-kinojo-border-loop {
   0% { border-color: rgba(37,99,235,0.35); }
@@ -2131,11 +1820,6 @@
   100% { border-color: rgba(37,99,235,0.35); }
 }
 
-@keyframes arcana-cta-center-press {
-  0% { transform: scale(1); opacity: 1; }
-  65% { transform: scale(0.86); opacity: 0.82; }
-  100% { transform: scale(0.86); opacity: 0; }
-}
 
 @media (max-width: 980px) {
   .arcana-top-grid {
@@ -2214,36 +1898,8 @@
   max-height: 312px !important;
 }
 
-/* 수정사항_260610_08: 추천 CTA KINOJO 스타일 재고정 */
-#arcanaRunSimulation.arcana-kinojo-cta,
-#arcanaRunSimulation {
-  min-width: 148px !important;
-  height: 38px !important;
-  min-height: 38px !important;
-  padding: 0 24px !important;
-  border: 1px solid rgba(37,99,235,0.68) !important;
-  border-radius: 999px !important;
-  background: #fff !important;
-  background-image: none !important;
-  box-shadow: none !important;
-  color: #2563eb !important;
-  font-weight: 800 !important;
-  letter-spacing: -0.02em !important;
-  transform-origin: center center !important;
-  animation: arcana-kinojo-border-loop-08 1.25s linear infinite !important;
-  transition: transform 0.18s ease, opacity 0.2s ease, border-color 0.18s ease, color 0.18s ease !important;
-}
 
-#arcanaRunSimulation.arcana-kinojo-cta:hover:not(.is-soft-disabled),
-#arcanaRunSimulation:hover:not(.is-soft-disabled) {
-  transform: scale(1.055) !important;
-  border-color: rgba(37,99,235,0.95) !important;
-  color: #1d4ed8 !important;
-}
 
-#arcanaRunSimulation.is-vanishing {
-  animation: arcana-cta-center-press-08 0.28s ease forwards !important;
-}
 
 @keyframes arcana-kinojo-border-loop-08 {
   0% { border-color: rgba(37,99,235,0.42); }
@@ -2252,296 +1908,41 @@
   100% { border-color: rgba(37,99,235,0.42); }
 }
 
-@keyframes arcana-cta-center-press-08 {
-  0% { transform: scale(1); opacity: 1; }
-  72% { transform: scale(0.84); opacity: 0.88; }
-  100% { transform: scale(0.84); opacity: 0; }
-}
 
-/* 수정사항_260610_09: 추천 CTA 대기/Hover/모바일 1차 터치/Loading 파동 연출 */
-#arcanaRunSimulation.arcana-kinojo-cta,
-#arcanaRunSimulation {
-  position: relative !important;
-  isolation: isolate !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  min-width: 148px !important;
-  min-height: 48px !important;
-  padding: 0 24px !important;
-  border-radius: 999px !important;
-  border: 1px solid rgba(56, 101, 255, 0.34) !important;
-  background: rgba(255, 255, 255, 0.94) !important;
-  color: #1d2b53 !important;
-  box-shadow: none !important;
-  overflow: visible !important;
-  transform: translateZ(0) !important;
-  transition: transform 0.22s ease, border-color 0.35s ease, color 0.35s ease, background 0.35s ease !important;
-}
 
-#arcanaRunSimulation.arcana-kinojo-cta::before,
-#arcanaRunSimulation.arcana-kinojo-cta::after,
-#arcanaRunSimulation::before,
-#arcanaRunSimulation::after {
-  content: '' !important;
-  position: absolute !important;
-  left: 50% !important;
-  top: 50% !important;
-  width: 210% !important;
-  aspect-ratio: 1 / 1 !important;
-  border-radius: 50% !important;
-  transform: translate(-50%, -50%) scale(0.56) !important;
-  pointer-events: none !important;
-  z-index: -1 !important;
-}
 
-#arcanaRunSimulation.arcana-kinojo-cta::before,
-#arcanaRunSimulation::before {
-  border: 1px solid rgba(80, 116, 255, 0.18) !important;
-  background: radial-gradient(circle, rgba(95, 130, 255, 0.12) 0%, rgba(95, 130, 255, 0.04) 32%, transparent 66%) !important;
-  animation: arcana-cta-idle-pulse 3.8s ease-in-out infinite !important;
-}
 
-#arcanaRunSimulation.arcana-kinojo-cta::after,
-#arcanaRunSimulation::after {
-  border: 1px solid rgba(47, 117, 255, 0.12) !important;
-  background: radial-gradient(circle, rgba(47, 117, 255, 0.08) 0%, transparent 68%) !important;
-  animation: arcana-cta-idle-pulse 4.8s ease-in-out infinite reverse !important;
-}
 
-#arcanaRunSimulation.arcana-kinojo-cta:hover:not(.is-soft-disabled),
-#arcanaRunSimulation.arcana-kinojo-cta.is-touch-preview:not(.is-soft-disabled),
-#arcanaRunSimulation:hover:not(.is-soft-disabled),
-#arcanaRunSimulation.is-touch-preview:not(.is-soft-disabled) {
-  transform: scale(1.045) !important;
-  border-color: rgba(99, 102, 241, 0.62) !important;
-  color: #111f4d !important;
-  background: rgba(255, 255, 255, 0.98) !important;
-}
 
-#arcanaRunSimulation.arcana-kinojo-cta:hover:not(.is-soft-disabled)::before,
-#arcanaRunSimulation.arcana-kinojo-cta.is-touch-preview:not(.is-soft-disabled)::before,
-#arcanaRunSimulation:hover:not(.is-soft-disabled)::before,
-#arcanaRunSimulation.is-touch-preview:not(.is-soft-disabled)::before {
-  border-color: rgba(80, 116, 255, 0.34) !important;
-  background:
-    radial-gradient(circle at 34% 38%, rgba(99, 102, 241, 0.24), transparent 36%),
-    radial-gradient(circle at 68% 60%, rgba(45, 212, 191, 0.16), transparent 38%),
-    radial-gradient(circle, rgba(96, 165, 250, 0.14) 0%, transparent 68%) !important;
-  animation: arcana-cta-hover-wave 2.25s cubic-bezier(.2,.7,.2,1) infinite !important;
-}
 
-#arcanaRunSimulation.arcana-kinojo-cta:hover:not(.is-soft-disabled)::after,
-#arcanaRunSimulation.arcana-kinojo-cta.is-touch-preview:not(.is-soft-disabled)::after,
-#arcanaRunSimulation:hover:not(.is-soft-disabled)::after,
-#arcanaRunSimulation.is-touch-preview:not(.is-soft-disabled)::after {
-  border-color: rgba(236, 72, 153, 0.22) !important;
-  background:
-    radial-gradient(circle at 62% 34%, rgba(236, 72, 153, 0.14), transparent 38%),
-    radial-gradient(circle at 40% 72%, rgba(250, 204, 21, 0.12), transparent 36%),
-    radial-gradient(circle, rgba(129, 140, 248, 0.12) 0%, transparent 70%) !important;
-  animation: arcana-cta-hover-wave 2.65s cubic-bezier(.2,.7,.2,1) infinite reverse !important;
-}
 
-#arcanaRunSimulation.is-vanishing,
-#arcanaRunSimulation.is-loading {
-  transform: scale(0.93) !important;
-  opacity: 1 !important;
-  color: #0f1b46 !important;
-  border-color: rgba(236, 72, 153, 0.54) !important;
-}
 
-#arcanaRunSimulation.is-vanishing::before,
-#arcanaRunSimulation.is-loading::before {
-  width: 240% !important;
-  background:
-    radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.34), transparent 34%),
-    radial-gradient(circle at 72% 42%, rgba(45, 212, 191, 0.24), transparent 36%),
-    radial-gradient(circle at 48% 76%, rgba(236, 72, 153, 0.22), transparent 38%),
-    radial-gradient(circle, rgba(96, 165, 250, 0.2) 0%, transparent 68%) !important;
-  animation: arcana-cta-loading-wave 0.9s cubic-bezier(.08,.82,.17,1) infinite !important;
-}
 
-#arcanaRunSimulation.is-vanishing::after,
-#arcanaRunSimulation.is-loading::after {
-  width: 260% !important;
-  background:
-    radial-gradient(circle at 66% 30%, rgba(250, 204, 21, 0.2), transparent 34%),
-    radial-gradient(circle at 38% 64%, rgba(34, 197, 94, 0.18), transparent 34%),
-    radial-gradient(circle, rgba(129, 140, 248, 0.16) 0%, transparent 70%) !important;
-  animation: arcana-cta-loading-wave 1.08s cubic-bezier(.08,.82,.17,1) infinite reverse !important;
-}
 
-#arcanaRunSimulation.is-soft-disabled {
-  opacity: 0.55 !important;
-  transform: none !important;
-}
 
-@keyframes arcana-cta-idle-pulse {
-  0%, 100% { opacity: 0.38; transform: translate(-50%, -50%) scale(0.5); }
-  52% { opacity: 0.66; transform: translate(-50%, -50%) scale(0.68); }
-}
 
-@keyframes arcana-cta-hover-wave {
-  0% { opacity: 0.35; transform: translate(-50%, -50%) scale(0.5) rotate(0deg); }
-  50% { opacity: 0.82; transform: translate(-50%, -50%) scale(0.9) rotate(145deg); }
-  100% { opacity: 0.26; transform: translate(-50%, -50%) scale(1.1) rotate(300deg); }
-}
 
-@keyframes arcana-cta-loading-wave {
-  0% { opacity: 0.92; transform: translate(-50%, -50%) scale(0.44) rotate(0deg); }
-  62% { opacity: 0.58; transform: translate(-50%, -50%) scale(1.05) rotate(170deg); }
-  100% { opacity: 0.12; transform: translate(-50%, -50%) scale(1.28) rotate(360deg); }
-}
 
 /* 수정사항_260610_10: 추천 CTA 중앙 배치 + 버튼 뒤 파동 레이어 */
 .arcana-recommend-section {
   position: relative !important;
 }
 
-.arcana-recommend-section .arcana-recommend-actions {
-  position: absolute !important;
-  left: 50% !important;
-  top: calc(50% + 34px) !important;
-  width: 210px !important;
-  height: 210px !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  transform: translate(-50%, -50%) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  z-index: 6 !important;
-  pointer-events: none !important;
-}
 
-.arcana-recommend-section.is-recommend-ready .arcana-recommend-actions,
-#arcanaRunSimulation[hidden] {
-  display: none !important;
-}
 
-.arcana-cta-wave-layer {
-  position: absolute !important;
-  left: 50% !important;
-  top: 50% !important;
-  width: 190px !important;
-  height: 190px !important;
-  border-radius: 999px !important;
-  transform: translate(-50%, -50%) !important;
-  pointer-events: none !important;
-  z-index: 0 !important;
-  background:
-    radial-gradient(circle, rgba(37,99,235,0.18) 0 22%, transparent 23%),
-    repeating-radial-gradient(circle, rgba(37,99,235,0.14) 0 2px, transparent 3px 18px) !important;
-  opacity: 0.42 !important;
-  filter: blur(0.2px) saturate(0.82) !important;
-  animation: arcana-cta-standby-wave 3.2s ease-in-out infinite !important;
-}
 
-.arcana-cta-wave-layer::before,
-.arcana-cta-wave-layer::after {
-  content: '' !important;
-  position: absolute !important;
-  inset: 18px !important;
-  border-radius: inherit !important;
-  border: 1px solid rgba(37,99,235,0.24) !important;
-  box-shadow: 0 0 22px rgba(37,99,235,0.16) !important;
-  animation: arcana-cta-ripple-soft 2.8s ease-out infinite !important;
-}
 
-.arcana-cta-wave-layer::after {
-  inset: 34px !important;
-  animation-delay: 0.9s !important;
-}
 
-#arcanaRunSimulation.arcana-kinojo-cta,
-#arcanaRunSimulation {
-  position: relative !important;
-  z-index: 2 !important;
-  pointer-events: auto !important;
-  width: 106px !important;
-  height: 106px !important;
-  min-width: 106px !important;
-  border-radius: 999px !important;
-  overflow: hidden !important;
-  transform-origin: center !important;
-  background:
-    radial-gradient(circle at 34% 28%, rgba(255,255,255,0.54), transparent 27%),
-    linear-gradient(145deg, #3b82f6, #2563eb 54%, #1d4ed8) !important;
-  border: 1px solid rgba(255,255,255,0.78) !important;
-  box-shadow:
-    0 14px 30px rgba(37,99,235,0.25),
-    0 0 0 5px rgba(37,99,235,0.08),
-    inset 0 0 18px rgba(255,255,255,0.2) !important;
-  animation: arcana-cta-button-idle 2.4s ease-in-out infinite !important;
-}
 
-.arcana-recommend-actions:hover .arcana-cta-wave-layer,
-#arcanaRunSimulation.is-touch-preview + .arcana-cta-wave-layer,
-.arcana-recommend-section:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-layer {
-  opacity: 0.78 !important;
-  filter: saturate(1.35) brightness(1.08) !important;
-  background:
-    radial-gradient(circle, rgba(125,211,252,0.28) 0 20%, transparent 21%),
-    repeating-radial-gradient(circle, rgba(37,99,235,0.12) 0 2px, rgba(125,211,252,0.18) 3px 4px, transparent 5px 19px),
-    conic-gradient(from 90deg, rgba(37,99,235,0.18), rgba(125,211,252,0.25), rgba(99,102,241,0.18), rgba(37,99,235,0.18)) !important;
-  animation: arcana-cta-hover-wave 1.7s ease-in-out infinite !important;
-}
 
-.arcana-recommend-section.is-cta-loading .arcana-cta-wave-layer {
-  width: 230px !important;
-  height: 230px !important;
-  opacity: 1 !important;
-  filter: saturate(1.85) brightness(1.12) !important;
-  background:
-    radial-gradient(circle, rgba(255,255,255,0.34) 0 13%, transparent 14%),
-    repeating-radial-gradient(circle, rgba(37,99,235,0.16) 0 2px, rgba(125,211,252,0.24) 3px 5px, rgba(168,85,247,0.16) 6px 7px, transparent 8px 22px),
-    conic-gradient(from 0deg, rgba(37,99,235,0.35), rgba(125,211,252,0.34), rgba(168,85,247,0.28), rgba(14,165,233,0.34), rgba(37,99,235,0.35)) !important;
-  animation: arcana-cta-loading-wave 0.95s ease-in-out infinite !important;
-}
 
-.arcana-recommend-section.is-cta-loading #arcanaRunSimulation {
-  background:
-    radial-gradient(circle at 35% 28%, rgba(255,255,255,0.8), transparent 28%),
-    conic-gradient(from var(--arcana-glow-angle), #38bdf8, #2563eb, #8b5cf6, #06b6d4, #38bdf8) !important;
-  animation: arcana-cta-loading-button 0.7s ease-in-out infinite alternate !important;
-}
 
-@keyframes arcana-cta-button-idle {
-  0%, 100% { transform: scale(1); filter: brightness(1); }
-  50% { transform: scale(1.025); filter: brightness(1.04); }
-}
 
-@keyframes arcana-cta-standby-wave {
-  0%, 100% { transform: translate(-50%, -50%) scale(0.94); opacity: 0.34; }
-  50% { transform: translate(-50%, -50%) scale(1.02); opacity: 0.48; }
-}
 
-@keyframes arcana-cta-ripple-soft {
-  0% { transform: scale(0.72); opacity: 0.42; }
-  70%, 100% { transform: scale(1.36); opacity: 0; }
-}
 
-@keyframes arcana-cta-hover-wave {
-  0%, 100% { transform: translate(-50%, -50%) scale(0.96) rotate(0deg); }
-  50% { transform: translate(-50%, -50%) scale(1.1) rotate(16deg); }
-}
 
-@keyframes arcana-cta-loading-wave {
-  0% { transform: translate(-50%, -50%) scale(0.82) rotate(0deg); }
-  55% { transform: translate(-50%, -50%) scale(1.18) rotate(140deg); }
-  100% { transform: translate(-50%, -50%) scale(0.9) rotate(360deg); }
-}
 
-@keyframes arcana-cta-loading-button {
-  from { transform: scale(0.94); filter: brightness(1.03) saturate(1.3); }
-  to { transform: scale(1.08); filter: brightness(1.18) saturate(1.8); }
-}
-.arcana-recommend-actions:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-layer,
-.arcana-recommend-actions:has(#arcanaRunSimulation:hover) .arcana-cta-wave-layer {
-  opacity: 0.78 !important;
-  filter: saturate(1.35) brightness(1.08) !important;
-}
+
 
 
 /* 수정사항_260610_11: 추천 CTA 재작업 - 버튼 형태 유지, 파동은 뒤쪽 애니메이션 레이어만 사용 */
@@ -2549,176 +1950,23 @@
   position: relative !important;
 }
 
-.arcana-recommend-section .arcana-recommend-actions {
-  position: absolute !important;
-  left: 50% !important;
-  top: 50% !important;
-  width: 280px !important;
-  height: 220px !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  transform: translate(-50%, -50%) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  pointer-events: none !important;
-  z-index: 7 !important;
-}
 
-.arcana-recommend-section.is-recommend-ready .arcana-recommend-actions,
-#arcanaRunSimulation[hidden] {
-  display: none !important;
-}
 
-.arcana-cta-wave-layer {
-  position: absolute !important;
-  left: 50% !important;
-  top: 50% !important;
-  width: 250px !important;
-  height: 250px !important;
-  border-radius: 999px !important;
-  transform: translate(-50%, -50%) scale(0.78) !important;
-  pointer-events: none !important;
-  z-index: 0 !important;
-  opacity: 0.24 !important;
-  filter: saturate(0.75) blur(0.1px) !important;
-  background:
-    radial-gradient(circle, rgba(37,99,235,0.14) 0 10%, transparent 11%),
-    repeating-radial-gradient(circle, rgba(37,99,235,0.12) 0 1px, transparent 2px 22px) !important;
-  animation: arcana-cta-standby-ripple-11 4.8s ease-in-out infinite !important;
-}
 
-.arcana-cta-wave-layer::before,
-.arcana-cta-wave-layer::after {
-  content: '' !important;
-  position: absolute !important;
-  inset: 34px !important;
-  border-radius: inherit !important;
-  border: 1px solid rgba(37,99,235,0.22) !important;
-  box-shadow: 0 0 20px rgba(37,99,235,0.12) !important;
-  opacity: 0 !important;
-  animation: arcana-cta-ring-ripple-11 3.6s ease-out infinite !important;
-}
 
-.arcana-cta-wave-layer::after {
-  inset: 52px !important;
-  animation-delay: 1.15s !important;
-}
 
-#arcanaRunSimulation.arcana-kinojo-cta,
-#arcanaRunSimulation {
-  position: relative !important;
-  z-index: 2 !important;
-  pointer-events: auto !important;
-  width: auto !important;
-  height: 30px !important;
-  min-width: 112px !important;
-  min-height: 30px !important;
-  padding: 0 18px !important;
-  border-radius: 4px !important;
-  overflow: hidden !important;
-  color: var(--arcana-primary) !important;
-  background: rgba(255,255,255,0.98) !important;
-  border: 1px solid rgba(37,99,235,0.38) !important;
-  box-shadow: none !important;
-  animation: none !important;
-  transform-origin: center !important;
-}
 
-#arcanaRunSimulation.arcana-kinojo-cta::before,
-#arcanaRunSimulation.arcana-kinojo-cta::after,
-#arcanaRunSimulation::before,
-#arcanaRunSimulation::after {
-  content: none !important;
-  display: none !important;
-}
 
-.arcana-recommend-actions:hover .arcana-cta-wave-layer,
-.arcana-recommend-actions:has(#arcanaRunSimulation:hover) .arcana-cta-wave-layer,
-.arcana-recommend-actions:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-layer,
-.arcana-recommend-section:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-layer {
-  opacity: 0.72 !important;
-  filter: saturate(1.35) brightness(1.06) !important;
-  background:
-    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.22) 0 8%, transparent 9%),
-    repeating-radial-gradient(circle, rgba(37,99,235,0.12) 0 1px, rgba(45,212,191,0.16) 2px 3px, rgba(129,140,248,0.13) 4px 5px, transparent 6px 24px),
-    conic-gradient(from 90deg, rgba(37,99,235,0.18), rgba(45,212,191,0.18), rgba(129,140,248,0.17), rgba(236,72,153,0.10), rgba(37,99,235,0.18)) !important;
-  animation: arcana-cta-hover-ripple-11 2.2s cubic-bezier(.2,.7,.2,1) infinite !important;
-}
 
-.arcana-recommend-actions:hover .arcana-cta-wave-layer::before,
-.arcana-recommend-actions:hover .arcana-cta-wave-layer::after,
-.arcana-recommend-actions:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-layer::before,
-.arcana-recommend-actions:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-layer::after {
-  border-color: rgba(45,212,191,0.34) !important;
-  box-shadow: 0 0 28px rgba(99,102,241,0.18), 0 0 38px rgba(45,212,191,0.12) !important;
-  animation-duration: 2.35s !important;
-}
 
-#arcanaRunSimulation.arcana-kinojo-cta:hover:not(.is-soft-disabled),
-#arcanaRunSimulation.arcana-kinojo-cta.is-touch-preview:not(.is-soft-disabled),
-#arcanaRunSimulation:hover:not(.is-soft-disabled),
-#arcanaRunSimulation.is-touch-preview:not(.is-soft-disabled) {
-  transform: scale(1.045) !important;
-  color: #10245f !important;
-  background: #fff !important;
-  border-color: rgba(37,99,235,0.72) !important;
-  box-shadow: 0 0 0 3px rgba(37,99,235,0.08) !important;
-}
 
-.arcana-recommend-section.is-cta-loading .arcana-cta-wave-layer {
-  width: 310px !important;
-  height: 310px !important;
-  opacity: 1 !important;
-  filter: saturate(1.95) brightness(1.1) !important;
-  background:
-    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.34) 0 7%, transparent 8%),
-    repeating-radial-gradient(circle, rgba(37,99,235,0.16) 0 1px, rgba(45,212,191,0.22) 2px 4px, rgba(168,85,247,0.18) 5px 6px, rgba(236,72,153,0.12) 7px 8px, transparent 9px 27px),
-    conic-gradient(from 0deg, rgba(37,99,235,0.34), rgba(45,212,191,0.34), rgba(168,85,247,0.26), rgba(236,72,153,0.18), rgba(14,165,233,0.34), rgba(37,99,235,0.34)) !important;
-  animation: arcana-cta-loading-ripple-11 0.92s cubic-bezier(.08,.82,.17,1) infinite !important;
-}
 
-.arcana-recommend-section.is-cta-loading .arcana-cta-wave-layer::before,
-.arcana-recommend-section.is-cta-loading .arcana-cta-wave-layer::after {
-  border-color: rgba(255,255,255,0.32) !important;
-  box-shadow: 0 0 34px rgba(37,99,235,0.24), 0 0 46px rgba(168,85,247,0.16) !important;
-  animation: arcana-cta-ring-ripple-11 1.05s ease-out infinite !important;
-}
 
-.arcana-recommend-section.is-cta-loading #arcanaRunSimulation {
-  color: #10245f !important;
-  background: rgba(255,255,255,0.98) !important;
-  border-color: rgba(99,102,241,0.72) !important;
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.10) !important;
-  animation: arcana-cta-loading-button-11 0.62s ease-in-out infinite alternate !important;
-}
 
-@keyframes arcana-cta-standby-ripple-11 {
-  0%, 100% { transform: translate(-50%, -50%) scale(0.72); opacity: 0.20; }
-  50% { transform: translate(-50%, -50%) scale(0.82); opacity: 0.32; }
-}
 
-@keyframes arcana-cta-ring-ripple-11 {
-  0% { transform: scale(0.56); opacity: 0.55; }
-  72%, 100% { transform: scale(1.55); opacity: 0; }
-}
 
-@keyframes arcana-cta-hover-ripple-11 {
-  0% { transform: translate(-50%, -50%) scale(0.82) rotate(0deg); }
-  48% { transform: translate(-50%, -50%) scale(1.03) rotate(110deg); }
-  100% { transform: translate(-50%, -50%) scale(0.88) rotate(260deg); }
-}
 
-@keyframes arcana-cta-loading-ripple-11 {
-  0% { transform: translate(-50%, -50%) scale(0.72) rotate(0deg); }
-  45% { transform: translate(-50%, -50%) scale(1.05) rotate(150deg); }
-  100% { transform: translate(-50%, -50%) scale(0.82) rotate(360deg); }
-}
 
-@keyframes arcana-cta-loading-button-11 {
-  from { transform: scale(0.96); }
-  to { transform: scale(1.05); }
-}
 
 
 /* 수정사항_260610_12: 추천 CTA 파동형 비주얼라이저 재작업 */
@@ -2726,488 +1974,55 @@
   position: relative !important;
 }
 
-.arcana-recommend-section .arcana-recommend-actions {
-  position: absolute !important;
-  left: 50% !important;
-  top: 50% !important;
-  width: 360px !important;
-  height: 360px !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  transform: translate(-50%, -50%) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  pointer-events: none !important;
-  z-index: 7 !important;
-}
 
-.arcana-recommend-section.is-recommend-ready .arcana-recommend-actions,
-#arcanaRunSimulation[hidden] {
-  display: none !important;
-}
 
-.arcana-cta-wave-layer {
-  position: absolute !important;
-  left: 50% !important;
-  top: 50% !important;
-  width: 300px !important;
-  height: 300px !important;
-  border-radius: 50% !important;
-  transform: translate(-50%, -50%) scale(0.82) rotate(0deg) !important;
-  pointer-events: none !important;
-  z-index: 0 !important;
-  opacity: 0.34 !important;
-  background:
-    radial-gradient(circle, transparent 0 39%, rgba(15,23,42,0.10) 40%, transparent 41%),
-    repeating-conic-gradient(from 0deg, rgba(15,23,42,0.72) 0 0.75deg, transparent 0.9deg 3.6deg) !important;
-  -webkit-mask: radial-gradient(circle, transparent 0 38%, #000 39% 59%, transparent 60% 100%) !important;
-  mask: radial-gradient(circle, transparent 0 38%, #000 39% 59%, transparent 60% 100%) !important;
-  filter: grayscale(1) saturate(0) contrast(1.05) !important;
-  animation: arcana-cta-lines-idle-12 4.8s ease-in-out infinite !important;
-}
 
-.arcana-cta-wave-layer::before,
-.arcana-cta-wave-layer::after {
-  content: '' !important;
-  position: absolute !important;
-  inset: 24px !important;
-  border-radius: inherit !important;
-  background: repeating-conic-gradient(from 18deg, rgba(15,23,42,0.36) 0 0.6deg, transparent 0.8deg 4deg) !important;
-  -webkit-mask: radial-gradient(circle, transparent 0 35%, #000 36% 58%, transparent 59% 100%) !important;
-  mask: radial-gradient(circle, transparent 0 35%, #000 36% 58%, transparent 59% 100%) !important;
-  opacity: 0.45 !important;
-  animation: arcana-cta-lines-idle-inner-12 5.7s ease-in-out infinite reverse !important;
-}
 
-.arcana-cta-wave-layer::after {
-  inset: 42px !important;
-  opacity: 0.24 !important;
-  animation-duration: 6.4s !important;
-}
 
-#arcanaRunSimulation.arcana-kinojo-cta,
-#arcanaRunSimulation {
-  position: relative !important;
-  z-index: 2 !important;
-  pointer-events: auto !important;
-  width: auto !important;
-  min-width: 148px !important;
-  height: 42px !important;
-  min-height: 42px !important;
-  padding: 0 28px !important;
-  border-radius: 14px !important;
-  color: #111827 !important;
-  background: #fff !important;
-  border: 1px solid rgba(15,23,42,0.38) !important;
-  box-shadow: none !important;
-  overflow: hidden !important;
-  transform-origin: center !important;
-  animation: none !important;
-}
 
-#arcanaRunSimulation.arcana-kinojo-cta::before,
-#arcanaRunSimulation.arcana-kinojo-cta::after,
-#arcanaRunSimulation::before,
-#arcanaRunSimulation::after {
-  content: none !important;
-  display: none !important;
-}
 
-.arcana-recommend-actions:hover .arcana-cta-wave-layer,
-.arcana-recommend-actions:has(#arcanaRunSimulation:hover) .arcana-cta-wave-layer,
-.arcana-recommend-actions:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-layer,
-.arcana-recommend-section:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-layer {
-  opacity: 0.48 !important;
-  filter: grayscale(1) saturate(0) contrast(1.18) brightness(1.02) !important;
-  transform: translate(-50%, -50%) scale(0.93) rotate(0deg) !important;
-  animation: arcana-cta-lines-hover-12 2.6s ease-in-out infinite !important;
-}
 
-.arcana-recommend-actions:hover .arcana-cta-wave-layer::before,
-.arcana-recommend-actions:hover .arcana-cta-wave-layer::after,
-.arcana-recommend-actions:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-layer::before,
-.arcana-recommend-actions:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-layer::after {
-  opacity: 0.58 !important;
-  animation-duration: 2.9s !important;
-}
 
-#arcanaRunSimulation.arcana-kinojo-cta:hover:not(.is-soft-disabled),
-#arcanaRunSimulation.arcana-kinojo-cta.is-touch-preview:not(.is-soft-disabled),
-#arcanaRunSimulation:hover:not(.is-soft-disabled),
-#arcanaRunSimulation.is-touch-preview:not(.is-soft-disabled) {
-  transform: scale(1.045) !important;
-  color: #111827 !important;
-  background: #fff !important;
-  border-color: rgba(15,23,42,0.72) !important;
-  box-shadow: 0 0 0 3px rgba(15,23,42,0.06) !important;
-}
 
-.arcana-recommend-section.is-cta-loading .arcana-recommend-actions {
-  width: 420px !important;
-  height: 420px !important;
-}
 
-.arcana-recommend-section.is-cta-loading .arcana-cta-wave-layer {
-  width: 380px !important;
-  height: 380px !important;
-  opacity: 1 !important;
-  filter: saturate(1.85) contrast(1.08) brightness(1.06) !important;
-  background:
-    radial-gradient(circle, transparent 0 37%, rgba(255,255,255,0.42) 38%, transparent 40%),
-    repeating-conic-gradient(from 0deg,
-      rgba(37,99,235,0.95) 0 0.75deg,
-      transparent 0.9deg 2.4deg,
-      rgba(45,212,191,0.92) 2.5deg 3.2deg,
-      transparent 3.3deg 5.2deg,
-      rgba(168,85,247,0.88) 5.3deg 6deg,
-      transparent 6.1deg 8deg,
-      rgba(236,72,153,0.78) 8.1deg 8.7deg,
-      transparent 8.8deg 10.6deg) !important;
-  -webkit-mask: radial-gradient(circle, transparent 0 36%, #000 37% 62%, transparent 63% 100%) !important;
-  mask: radial-gradient(circle, transparent 0 36%, #000 37% 62%, transparent 63% 100%) !important;
-  animation: arcana-cta-lines-loading-12 0.92s cubic-bezier(.22,.61,.36,1) infinite !important;
-}
 
-.arcana-recommend-section.is-cta-loading .arcana-cta-wave-layer::before,
-.arcana-recommend-section.is-cta-loading .arcana-cta-wave-layer::after {
-  background: repeating-conic-gradient(from 28deg,
-      rgba(14,165,233,0.76) 0 0.65deg,
-      transparent 0.8deg 3deg,
-      rgba(250,204,21,0.65) 3.1deg 3.7deg,
-      transparent 3.8deg 6deg,
-      rgba(236,72,153,0.64) 6.1deg 6.7deg,
-      transparent 6.8deg 9deg) !important;
-  opacity: 0.76 !important;
-  animation: arcana-cta-lines-loading-inner-12 1.15s ease-in-out infinite reverse !important;
-}
 
-.arcana-recommend-section.is-cta-loading #arcanaRunSimulation {
-  min-width: 178px !important;
-  height: 58px !important;
-  border-radius: 18px !important;
-  color: #fff !important;
-  background: rgba(15,23,42,0.82) !important;
-  border-color: rgba(255,255,255,0.42) !important;
-  text-shadow: 0 0 14px rgba(255,255,255,0.45) !important;
-  box-shadow: 0 0 22px rgba(37,99,235,0.22) !important;
-  font-size: 18px !important;
-  font-weight: 900 !important;
-  letter-spacing: 0.08em !important;
-  animation: arcana-cta-loading-text-12 0.8s ease-in-out infinite alternate !important;
-}
 
-@keyframes arcana-cta-lines-idle-12 {
-  0%, 100% { transform: translate(-50%, -50%) scale(0.78) rotate(0deg); opacity: 0.22; }
-  50% { transform: translate(-50%, -50%) scale(0.9) rotate(14deg); opacity: 0.38; }
-}
 
-@keyframes arcana-cta-lines-idle-inner-12 {
-  0%, 100% { transform: scale(0.84) rotate(0deg); opacity: 0.18; }
-  50% { transform: scale(1.04) rotate(-18deg); opacity: 0.48; }
-}
 
-@keyframes arcana-cta-lines-hover-12 {
-  0%, 100% { transform: translate(-50%, -50%) scale(0.9) rotate(0deg); }
-  35% { transform: translate(-50%, -50%) scale(1.02) rotate(28deg); }
-  70% { transform: translate(-50%, -50%) scale(0.94) rotate(58deg); }
-}
 
-@keyframes arcana-cta-lines-loading-12 {
-  0% { transform: translate(-50%, -50%) scale(0.86) rotate(0deg); }
-  42% { transform: translate(-50%, -50%) scale(1.12) rotate(150deg); }
-  100% { transform: translate(-50%, -50%) scale(0.96) rotate(360deg); }
-}
 
-@keyframes arcana-cta-lines-loading-inner-12 {
-  0%, 100% { transform: scale(0.72) rotate(0deg); }
-  50% { transform: scale(1.18) rotate(-160deg); }
-}
 
-@keyframes arcana-cta-loading-text-12 {
-  from { transform: scale(0.98); filter: brightness(1); }
-  to { transform: scale(1.04); filter: brightness(1.2); }
-}
 
-/* 수정사항_260610_13: 추천 CTA SVG급 라인 비주얼라이저 실제 구현 */
-.arcana-recommend-section .arcana-recommend-actions {
-  position: absolute !important;
-  left: 50% !important;
-  top: 50% !important;
-  width: 390px !important;
-  height: 390px !important;
-  transform: translate(-50%, -50%) !important;
-  display: flex !important;
-  align-items: flex-end !important;
-  justify-content: center !important;
-  padding-bottom: 22px !important;
-  pointer-events: none !important;
-  z-index: 8 !important;
-}
 
-.arcana-recommend-section.is-recommend-ready .arcana-recommend-actions,
-#arcanaRunSimulation[hidden] {
-  display: none !important;
-}
 
-.arcana-cta-wave-layer {
-  position: absolute !important;
-  left: 50% !important;
-  top: 42% !important;
-  width: 320px !important;
-  height: 320px !important;
-  transform: translate(-50%, -50%) !important;
-  border-radius: 50% !important;
-  background: transparent !important;
-  filter: none !important;
-  opacity: 1 !important;
-  pointer-events: none !important;
-  z-index: 0 !important;
-  overflow: visible !important;
-  -webkit-mask: none !important;
-  mask: none !important;
-  animation: none !important;
-}
 
-.arcana-cta-wave-layer::before,
-.arcana-cta-wave-layer::after {
-  content: none !important;
-  display: none !important;
-}
 
-.arcana-cta-wave-halo {
-  position: absolute !important;
-  inset: 43px !important;
-  border-radius: 50% !important;
-  border: 1px solid rgba(17,24,39,0.12) !important;
-  box-shadow:
-    0 0 0 18px rgba(17,24,39,0.025),
-    0 0 0 42px rgba(17,24,39,0.018) !important;
-  opacity: 0.68 !important;
-  animation: arcana-visualizer-halo-idle-13 5.2s ease-in-out infinite !important;
-}
 
-.arcana-cta-wave-lines {
-  position: absolute !important;
-  inset: 0 !important;
-  border-radius: 50% !important;
-  animation: arcana-visualizer-ring-idle-13 14s linear infinite !important;
-}
 
-.arcana-cta-wave-lines i {
-  position: absolute !important;
-  left: 50% !important;
-  top: 50% !important;
-  width: 1.6px !important;
-  height: calc(24px + (18px * var(--amp))) !important;
-  border-radius: 999px !important;
-  transform-origin: 50% 122px !important;
-  transform: translate(-50%, -122px) rotate(var(--angle)) scaleY(0.72) !important;
-  background: linear-gradient(to top, rgba(17,24,39,0.18), rgba(17,24,39,0.72), rgba(255,255,255,0.74)) !important;
-  box-shadow: 0 0 4px rgba(17,24,39,0.08) !important;
-  opacity: 0.56 !important;
-  animation: arcana-visualizer-line-idle-13 3.9s ease-in-out infinite !important;
-  animation-delay: var(--delay) !important;
-}
 
-.arcana-cta-analysis-text {
-  position: absolute !important;
-  left: 50% !important;
-  top: 50% !important;
-  transform: translate(-50%, -50%) scale(0.96) !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  min-width: 190px !important;
-  min-height: 88px !important;
-  border-radius: 28px !important;
-  color: #fff !important;
-  text-align: center !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-  background: radial-gradient(circle, rgba(15,23,42,0.80), rgba(15,23,42,0.28) 64%, transparent 72%) !important;
-  text-shadow: 0 0 14px rgba(255,255,255,0.78) !important;
-  transition: opacity 0.22s ease, transform 0.22s ease !important;
-}
 
-.arcana-cta-analysis-text strong {
-  font-size: 31px !important;
-  line-height: 1.1 !important;
-  font-weight: 900 !important;
-  letter-spacing: 0.04em !important;
-}
 
-.arcana-cta-analysis-text small {
-  margin-top: 10px !important;
-  font-size: 13px !important;
-  color: rgba(255,255,255,0.82) !important;
-  letter-spacing: -0.02em !important;
-}
 
-#arcanaRunSimulation.arcana-kinojo-cta,
-#arcanaRunSimulation {
-  position: relative !important;
-  z-index: 3 !important;
-  pointer-events: auto !important;
-  min-width: 176px !important;
-  height: 48px !important;
-  padding: 0 34px !important;
-  border-radius: 16px !important;
-  color: #111827 !important;
-  background: rgba(255,255,255,0.96) !important;
-  border: 1px solid rgba(17,24,39,0.44) !important;
-  box-shadow: none !important;
-  text-shadow: none !important;
-  font-weight: 900 !important;
-  letter-spacing: -0.02em !important;
-  overflow: hidden !important;
-  animation: none !important;
-}
 
-#arcanaRunSimulation.arcana-kinojo-cta::before,
-#arcanaRunSimulation.arcana-kinojo-cta::after,
-#arcanaRunSimulation::before,
-#arcanaRunSimulation::after {
-  content: none !important;
-  display: none !important;
-}
 
-.arcana-recommend-actions:hover .arcana-cta-wave-lines,
-.arcana-recommend-actions:has(#arcanaRunSimulation:hover) .arcana-cta-wave-lines,
-.arcana-recommend-actions:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-lines,
-.arcana-recommend-section:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-lines {
-  animation-duration: 8.5s !important;
-}
 
-.arcana-recommend-actions:hover .arcana-cta-wave-lines i,
-.arcana-recommend-actions:has(#arcanaRunSimulation:hover) .arcana-cta-wave-lines i,
-.arcana-recommend-actions:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-lines i,
-.arcana-recommend-section:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-lines i {
-  opacity: 0.84 !important;
-  background: linear-gradient(to top, rgba(17,24,39,0.26), rgba(17,24,39,0.90), rgba(255,255,255,0.94)) !important;
-  animation-duration: 2.2s !important;
-}
 
-.arcana-recommend-actions:hover .arcana-cta-wave-halo,
-.arcana-recommend-actions:has(#arcanaRunSimulation:hover) .arcana-cta-wave-halo,
-.arcana-recommend-actions:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-halo {
-  opacity: 0.84 !important;
-  box-shadow:
-    0 0 0 19px rgba(17,24,39,0.04),
-    0 0 0 46px rgba(17,24,39,0.026),
-    0 0 20px rgba(17,24,39,0.08) !important;
-}
 
-#arcanaRunSimulation.arcana-kinojo-cta:hover:not(.is-soft-disabled),
-#arcanaRunSimulation.arcana-kinojo-cta.is-touch-preview:not(.is-soft-disabled),
-#arcanaRunSimulation:hover:not(.is-soft-disabled),
-#arcanaRunSimulation.is-touch-preview:not(.is-soft-disabled) {
-  transform: scale(1.045) !important;
-  color: #111827 !important;
-  background: #fff !important;
-  border-color: rgba(17,24,39,0.76) !important;
-  box-shadow: 0 0 0 3px rgba(17,24,39,0.055) !important;
-}
 
-.arcana-recommend-section.is-cta-loading .arcana-recommend-actions {
-  width: 450px !important;
-  height: 450px !important;
-  align-items: flex-end !important;
-  padding-bottom: 16px !important;
-}
 
-.arcana-recommend-section.is-cta-loading .arcana-cta-wave-layer {
-  width: 386px !important;
-  height: 386px !important;
-  top: 45% !important;
-}
 
-.arcana-recommend-section.is-cta-loading .arcana-cta-wave-halo {
-  inset: 44px !important;
-  border-color: rgba(255,255,255,0.32) !important;
-  box-shadow:
-    0 0 0 16px rgba(37,99,235,0.08),
-    0 0 0 38px rgba(236,72,153,0.07),
-    0 0 38px rgba(45,212,191,0.26),
-    inset 0 0 32px rgba(255,255,255,0.14) !important;
-  animation: arcana-visualizer-halo-loading-13 1.15s ease-in-out infinite !important;
-}
 
-.arcana-recommend-section.is-cta-loading .arcana-cta-wave-lines {
-  animation: arcana-visualizer-ring-loading-13 2.2s linear infinite !important;
-}
 
-.arcana-recommend-section.is-cta-loading .arcana-cta-wave-lines i {
-  width: 1.9px !important;
-  height: calc(34px + (34px * var(--amp))) !important;
-  transform-origin: 50% 146px !important;
-  transform: translate(-50%, -146px) rotate(var(--angle)) scaleY(1) !important;
-  opacity: 0.96 !important;
-  background: linear-gradient(
-    to top,
-    hsla(var(--tone), 96%, 58%, 0.18),
-    hsla(var(--tone), 96%, 62%, 0.92),
-    rgba(255,255,255,0.96)
-  ) !important;
-  box-shadow: 0 0 10px hsla(var(--tone), 96%, 60%, 0.48) !important;
-  animation: arcana-visualizer-line-loading-13 0.82s ease-in-out infinite !important;
-  animation-delay: calc(var(--delay) * 0.42) !important;
-}
 
-.arcana-recommend-section.is-cta-loading .arcana-cta-analysis-text {
-  opacity: 1 !important;
-  transform: translate(-50%, -50%) scale(1) !important;
-  animation: arcana-visualizer-text-loading-13 0.9s ease-in-out infinite alternate !important;
-}
 
-.arcana-recommend-section.is-cta-loading #arcanaRunSimulation {
-  opacity: 0.42 !important;
-  color: rgba(255,255,255,0.36) !important;
-  background: rgba(15,23,42,0.58) !important;
-  border-color: rgba(255,255,255,0.24) !important;
-  box-shadow: none !important;
-  transform: scale(0.98) !important;
-  animation: none !important;
-}
 
-@keyframes arcana-visualizer-line-idle-13 {
-  0%, 100% { transform: translate(-50%, -122px) rotate(var(--angle)) scaleY(0.55); opacity: 0.38; }
-  46% { transform: translate(-50%, -122px) rotate(var(--angle)) scaleY(1.08); opacity: 0.68; }
-  72% { transform: translate(-50%, -122px) rotate(var(--angle)) scaleY(0.72); opacity: 0.48; }
-}
 
-@keyframes arcana-visualizer-ring-idle-13 {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
 
-@keyframes arcana-visualizer-halo-idle-13 {
-  0%, 100% { transform: scale(0.96); opacity: 0.46; }
-  50% { transform: scale(1.03); opacity: 0.78; }
-}
 
-@keyframes arcana-visualizer-line-loading-13 {
-  0%, 100% { transform: translate(-50%, -146px) rotate(var(--angle)) scaleY(0.62); filter: hue-rotate(0deg); }
-  38% { transform: translate(-50%, -146px) rotate(var(--angle)) scaleY(1.34); filter: hue-rotate(70deg); }
-  70% { transform: translate(-50%, -146px) rotate(var(--angle)) scaleY(0.92); filter: hue-rotate(150deg); }
-}
 
-@keyframes arcana-visualizer-ring-loading-13 {
-  from { transform: rotate(0deg) scale(0.98); }
-  50% { transform: rotate(205deg) scale(1.045); }
-  to { transform: rotate(360deg) scale(0.98); }
-}
 
-@keyframes arcana-visualizer-halo-loading-13 {
-  0%, 100% { transform: scale(0.92); opacity: 0.62; }
-  50% { transform: scale(1.1); opacity: 1; }
-}
 
-@keyframes arcana-visualizer-text-loading-13 {
-  from { text-shadow: 0 0 10px rgba(255,255,255,0.48), 0 0 22px rgba(168,85,247,0.28); }
-  to { text-shadow: 0 0 22px rgba(255,255,255,0.86), 0 0 44px rgba(45,212,191,0.36); }
-}
 
 /* ARC-0.2.05: 16/20 목표 선택, 추천 분석/가이드 개선 */
 .arcana-skill-btn.is-level-16 {

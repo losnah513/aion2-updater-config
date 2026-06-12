@@ -508,10 +508,37 @@ ArcanaApp.classSelector = {
     );
     let classData = keys.map(key => classSkills[key]).find(hasUsableData) || {};
 
-    if (!hasUsableData(classData) && ArcanaApp.api && ArcanaApp.api.getFallbackData) {
+    const getFallbackClassData = () => {
+      if (!ArcanaApp.api || !ArcanaApp.api.getFallbackData) return {};
       const fallbackSkills = (ArcanaApp.api.getFallbackData().classSkills || {});
-      classData = keys.map(key => fallbackSkills[ArcanaApp.classSelector.normalizeClassKey(key)] || fallbackSkills[key]).find(hasUsableData) || {};
-      console.warn('[Arcana] 클래스 스킬 DB가 비어 있어 내장 스킬 데이터로 보정합니다:', normalizedKey);
+      return keys
+        .map(key => fallbackSkills[ArcanaApp.classSelector.normalizeClassKey(key)] || fallbackSkills[key])
+        .find(hasUsableData) || {};
+    };
+
+    const fallbackData = getFallbackClassData();
+    const classActive = Array.from(new Set((classData.active || []).map(skill => String(skill).trim()).filter(Boolean)));
+    const classPassive = Array.from(new Set((classData.passive || []).map(skill => String(skill).trim()).filter(Boolean)));
+    const fallbackActive = Array.from(new Set((fallbackData.active || []).map(skill => String(skill).trim()).filter(Boolean)));
+    const fallbackPassive = Array.from(new Set((fallbackData.passive || []).map(skill => String(skill).trim()).filter(Boolean)));
+
+    if (classActive.length === 0 && fallbackActive.length > 0) {
+      classData = { ...classData, active: fallbackActive };
+      console.warn('[Arcana] 클래스 액티브 스킬 DB가 비어 있어 내장 스킬 데이터로 보정합니다:', normalizedKey);
+    }
+
+    if (classPassive.length === 0 && fallbackPassive.length > 0) {
+      classData = { ...classData, passive: fallbackPassive };
+      console.warn('[Arcana] 클래스 패시브 스킬 DB가 비어 있어 내장 스킬 데이터로 보정합니다:', normalizedKey);
+    }
+
+    if (!classData.arcanaSkills || !Object.values(classData.arcanaSkills).some(list => Array.isArray(list) && list.length > 0)) {
+      classData = { ...classData, arcanaSkills: fallbackData.arcanaSkills || classData.arcanaSkills || {} };
+    }
+
+    if (!hasUsableData(classData) && hasUsableData(fallbackData)) {
+      classData = fallbackData;
+      console.warn('[Arcana] 클래스 스킬 DB 전체가 비어 있어 내장 스킬 데이터로 보정합니다:', normalizedKey);
     }
 
     ArcanaApp.state.arcanaTypes = ['성배', '양피지', '나침반', '종', '거울', '천칭'];
@@ -577,14 +604,15 @@ ArcanaApp.classSelector = {
     const isValid = typeSafePool.length === spec.expectedCount;
 
     if (!isValid) {
-      console.warn('[Arcana] 스킬 pool 검증 실패:', {
+      console.warn('[Arcana] 스킬 pool 검증 실패. 전체 pool을 비우지 않고 원본 후보를 유지합니다:', {
         arcanaName,
         expectedType: spec.type,
         expectedCount: spec.expectedCount,
         actualCount: typeSafePool.length,
-        pool: typeSafePool
+        pool: typeSafePool,
+        originalPool: normalizedPool
       });
-      return [];
+      return normalizedPool;
     }
 
     return typeSafePool;

@@ -1,295 +1,20 @@
 /*
- * ARCANA CTA MODULE
- * 회전형 스피너 금지. 막대가 각자 길어졌다 짧아지는 파동형 CTA만 허용.
- * 추천 엔진 로직 수정 시 본 파일을 직접 건드리지 말 것.
+ * ARCANA CTA MODULE CSS
+ * 역할: 추천 아르카나 CTA 전용 스타일.
+ * 원칙: 회전 금지 / 구 CTA 디자인 금지 / 막대가 각자 길어졌다 짧아지는 파동만 허용.
+ * 주의: cards.css 또는 다른 공통 CSS에서 #arcanaRunSimulation, .arcana-cta-* 를 다시 정의하지 않는다.
  */
-.arcana-recommend-actions {
-  position: relative !important;
-  isolation: isolate !important;
-  min-height: 320px !important;
-  justify-content: center !important;
-  align-items: flex-end !important;
-  padding: 0 0 22px !important;
-  overflow: hidden !important;
-}
 
-.arcana-cta-wave-layer {
-  position: absolute !important;
-  left: 50% !important;
-  top: 45% !important;
-  z-index: 1 !important;
-  width: 310px !important;
-  height: 310px !important;
-  transform: translate(-50%, -50%) !important;
-  pointer-events: none !important;
-  opacity: 1 !important;
-  filter: none !important;
-  animation: none !important;
-}
-
-.arcana-cta-wave-layer::before,
-.arcana-cta-wave-layer::after {
-  content: '' !important;
-  position: absolute !important;
-  inset: 36px !important;
-  border: 1px solid rgba(17, 24, 39, 0.08) !important;
-  border-radius: 50% !important;
-  transform: none !important;
-  animation: arcanaCtaSoftPulse 3.2s ease-in-out infinite !important;
-  box-shadow: none !important;
-}
-
-.arcana-cta-wave-layer::after {
-  inset: 70px !important;
-  animation-delay: -1.4s !important;
-  opacity: 0.55 !important;
-}
-
-.arcana-cta-wave-halo {
-  position: absolute !important;
-  inset: 58px !important;
-  border: 1px solid rgba(17, 24, 39, 0.10) !important;
-  border-radius: 50% !important;
-  background: radial-gradient(circle, rgba(255,255,255,0.50), rgba(255,255,255,0.12) 58%, transparent 72%) !important;
-  transform: none !important;
-  animation: arcanaCtaSoftPulse 3.8s ease-in-out infinite reverse !important;
-  box-shadow: none !important;
-}
-
-.arcana-cta-wave-lines {
-  position: absolute !important;
-  inset: 0 !important;
-  border-radius: 50% !important;
-  transform: none !important;
-  animation: none !important;
-}
-
-.arcana-cta-wave-lines i {
-  position: absolute !important;
-  left: 50% !important;
-  top: 50% !important;
-  width: 1.5px !important;
-  height: calc(18px + (16px * var(--amp))) !important;
-  border-radius: 999px !important;
-  transform-origin: 50% 118px !important;
-  transform: translate(-50%, -118px) rotate(var(--angle)) scaleY(0.48) !important;
-  background: linear-gradient(to top, rgba(17,24,39,0.10), rgba(17,24,39,0.66), rgba(255,255,255,0.82)) !important;
-  opacity: 0.46 !important;
-  box-shadow: 0 0 3px rgba(17,24,39,0.07) !important;
-  animation: arcanaCtaBarIdle 2.65s ease-in-out infinite !important;
-  animation-delay: var(--delay) !important;
-}
-
-.arcana-recommend-actions:hover .arcana-cta-wave-lines i,
-.arcana-recommend-actions:has(#arcanaRunSimulation:hover) .arcana-cta-wave-lines i,
-.arcana-recommend-actions:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-lines i,
-.arcana-recommend-section:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-lines i {
-  height: calc(25px + (24px * var(--amp))) !important;
-  opacity: 0.78 !important;
-  background: linear-gradient(to top, rgba(17,24,39,0.18), rgba(17,24,39,0.90), rgba(255,255,255,0.94)) !important;
-  animation: arcanaCtaBarHover 1.38s ease-in-out infinite !important;
-  animation-delay: calc(var(--delay) * 0.58) !important;
-}
-
-.arcana-recommend-section.is-cta-loading .arcana-recommend-actions {
-  width: auto !important;
-  height: auto !important;
-  min-height: 360px !important;
-  align-items: flex-end !important;
-  padding-bottom: 20px !important;
-}
-
-.arcana-recommend-section.is-cta-loading .arcana-cta-wave-layer {
-  width: 360px !important;
-  height: 360px !important;
-  top: 44% !important;
-  transform: translate(-50%, -50%) !important;
-  animation: none !important;
-}
-
-.arcana-recommend-section.is-cta-loading .arcana-cta-wave-lines {
-  animation: none !important;
-  transform: none !important;
-}
-
-.arcana-recommend-section.is-cta-loading .arcana-cta-wave-lines i {
-  width: 1.9px !important;
-  height: calc(32px + (34px * var(--amp))) !important;
-  transform-origin: 50% 142px !important;
-  transform: translate(-50%, -142px) rotate(var(--angle)) scaleY(0.54) !important;
-  opacity: 0.98 !important;
-  background: linear-gradient(
-    to top,
-    hsla(var(--tone), 96%, 58%, 0.18),
-    hsla(var(--tone), 96%, 62%, 0.94),
-    rgba(255,255,255,0.98)
-  ) !important;
-  box-shadow: 0 0 9px hsla(var(--tone), 96%, 60%, 0.42) !important;
-  animation: arcanaCtaBarLoading 0.78s ease-in-out infinite !important;
-  animation-delay: calc(var(--delay) * 0.38) !important;
-}
-
-.arcana-recommend-section.is-cta-loading .arcana-cta-wave-halo {
-  inset: 48px !important;
-  border-color: rgba(255,255,255,0.30) !important;
-  background: radial-gradient(circle, rgba(15,23,42,0.16), rgba(37,99,235,0.13) 38%, rgba(236,72,153,0.07) 62%, transparent 74%) !important;
-  animation: arcanaCtaLoadingHalo 1.05s ease-in-out infinite !important;
-  box-shadow:
-    0 0 0 18px rgba(37,99,235,0.07),
-    0 0 0 38px rgba(236,72,153,0.055),
-    0 0 34px rgba(45,212,191,0.20) !important;
-}
-
-.arcana-cta-analysis-text {
-  position: absolute !important;
-  left: 50% !important;
-  top: 50% !important;
-  transform: translate(-50%, -50%) scale(0.96) !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  min-width: 176px !important;
-  min-height: 78px !important;
-  border-radius: 24px !important;
-  color: #fff !important;
-  text-align: center !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-  background: radial-gradient(circle, rgba(15,23,42,0.78), rgba(15,23,42,0.30) 64%, transparent 74%) !important;
-  text-shadow: 0 0 14px rgba(255,255,255,0.70) !important;
-  transition: opacity 0.2s ease, transform 0.2s ease !important;
-}
-
-.arcana-cta-analysis-text strong {
-  font-size: 28px !important;
-  line-height: 1.1 !important;
-  font-weight: 900 !important;
-}
-
-.arcana-cta-analysis-text small {
-  margin-top: 8px !important;
-  font-size: 12px !important;
-  color: rgba(255,255,255,0.82) !important;
-}
-
-.arcana-recommend-section.is-cta-loading .arcana-cta-analysis-text {
-  opacity: 1 !important;
-  transform: translate(-50%, -50%) scale(1) !important;
-  animation: arcanaCtaTextLoading 0.9s ease-in-out infinite alternate !important;
-}
-
-#arcanaRunSimulation.arcana-kinojo-cta,
-#arcanaRunSimulation {
-  position: relative !important;
-  z-index: 3 !important;
-  min-width: 176px !important;
-  height: 48px !important;
-  padding: 0 34px !important;
-  border-radius: 16px !important;
-  color: #111827 !important;
-  background: rgba(255,255,255,0.96) !important;
-  border: 1px solid rgba(17,24,39,0.44) !important;
-  box-shadow: none !important;
-  text-shadow: none !important;
-  font-weight: 900 !important;
-  overflow: hidden !important;
-  animation: none !important;
-}
-
-#arcanaRunSimulation.arcana-kinojo-cta::before,
-#arcanaRunSimulation.arcana-kinojo-cta::after,
-#arcanaRunSimulation::before,
-#arcanaRunSimulation::after {
-  content: none !important;
-  display: none !important;
-}
-
-#arcanaRunSimulation.arcana-kinojo-cta:hover:not(.is-soft-disabled),
-#arcanaRunSimulation.arcana-kinojo-cta.is-touch-preview:not(.is-soft-disabled),
-#arcanaRunSimulation:hover:not(.is-soft-disabled),
-#arcanaRunSimulation.is-touch-preview:not(.is-soft-disabled) {
-  transform: scale(1.045) !important;
-  color: #111827 !important;
-  background: #fff !important;
-  border-color: rgba(17,24,39,0.76) !important;
-  box-shadow: 0 0 0 3px rgba(17,24,39,0.055) !important;
-}
-
-.arcana-recommend-section.is-cta-loading #arcanaRunSimulation {
-  opacity: 0.38 !important;
-  color: rgba(255,255,255,0.34) !important;
-  background: rgba(15,23,42,0.58) !important;
-  border-color: rgba(255,255,255,0.22) !important;
-  transform: scale(0.98) !important;
-  animation: none !important;
-}
-
-@keyframes arcanaCtaBarIdle {
-  0%, 100% { transform: translate(-50%, -118px) rotate(var(--angle)) scaleY(0.38); opacity: 0.34; }
-  42% { transform: translate(-50%, -118px) rotate(var(--angle)) scaleY(1.03); opacity: 0.64; }
-  70% { transform: translate(-50%, -118px) rotate(var(--angle)) scaleY(0.58); opacity: 0.45; }
-}
-
-@keyframes arcanaCtaBarHover {
-  0%, 100% { transform: translate(-50%, -118px) rotate(var(--angle)) scaleY(0.45); opacity: 0.58; }
-  40% { transform: translate(-50%, -118px) rotate(var(--angle)) scaleY(1.24); opacity: 0.92; }
-  72% { transform: translate(-50%, -118px) rotate(var(--angle)) scaleY(0.74); opacity: 0.72; }
-}
-
-@keyframes arcanaCtaBarLoading {
-  0%, 100% { transform: translate(-50%, -142px) rotate(var(--angle)) scaleY(0.48); filter: hue-rotate(0deg); }
-  36% { transform: translate(-50%, -142px) rotate(var(--angle)) scaleY(1.38); filter: hue-rotate(70deg); }
-  72% { transform: translate(-50%, -142px) rotate(var(--angle)) scaleY(0.84); filter: hue-rotate(150deg); }
-}
-
-@keyframes arcanaCtaSoftPulse {
-  0%, 100% { transform: scale(0.96); opacity: 0.44; }
-  50% { transform: scale(1.04); opacity: 0.76; }
-}
-
-@keyframes arcanaCtaLoadingHalo {
-  0%, 100% { transform: scale(0.92); opacity: 0.62; }
-  50% { transform: scale(1.08); opacity: 1; }
-}
-
-@keyframes arcanaCtaTextLoading {
-  from { text-shadow: 0 0 10px rgba(255,255,255,0.48), 0 0 22px rgba(168,85,247,0.28); }
-  to { text-shadow: 0 0 22px rgba(255,255,255,0.86), 0 0 44px rgba(45,212,191,0.36); }
-}
-
-.arcana-cta-analysis-text.is-changing {
-  animation: arcanaCtaMessageSwap 0.38s ease-out both !important;
-}
-
-.arcana-recommend-section.is-cta-complete .arcana-cta-analysis-text,
-.arcana-recommend-section.is-cta-error .arcana-cta-analysis-text {
-  opacity: 1 !important;
-  transform: translate(-50%, -50%) scale(1) !important;
-}
-
-.arcana-recommend-section.is-cta-complete .arcana-cta-wave-lines i {
-  background: linear-gradient(to top, rgba(16,185,129,0.18), rgba(16,185,129,0.88), rgba(255,255,255,0.98)) !important;
-  box-shadow: 0 0 10px rgba(16,185,129,0.34) !important;
-}
-
-.arcana-recommend-section.is-cta-error .arcana-cta-wave-lines i {
-  background: linear-gradient(to top, rgba(239,68,68,0.14), rgba(239,68,68,0.78), rgba(255,255,255,0.94)) !important;
-  box-shadow: 0 0 8px rgba(239,68,68,0.26) !important;
-}
-
-@keyframes arcanaCtaMessageSwap {
-  0% { opacity: 0.35; transform: translate(-50%, -48%) scale(0.985); }
-  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-}
-
-/* ARC-0.3.00_20260612_04 CTA compact override
- * 원형 회전/거대 CTA가 카드 높이를 밀어내던 구 규칙을 최종 차단한다.
- */
 .arcana-recommend-section,
 .arcana-owned-section {
   height: 610px !important;
   max-height: 610px !important;
+}
+
+.arcana-recommend-section {
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
 }
 
 .arcana-recommend-section .arcana-recommend-area {
@@ -311,7 +36,7 @@
 }
 
 .arcana-recommend-section .arcana-recommend-tabs button {
-  height: 28px !important;
+  min-height: 28px !important;
   padding: 5px 10px !important;
   font-size: 11px !important;
 }
@@ -320,43 +45,51 @@
 .arcana-recommend-actions {
   position: relative !important;
   isolation: isolate !important;
-  flex: 0 0 132px !important;
-  min-height: 132px !important;
-  height: 132px !important;
-  max-height: 132px !important;
+  flex: 0 0 142px !important;
+  min-height: 142px !important;
+  height: 142px !important;
+  max-height: 142px !important;
+  width: 100% !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: flex-end !important;
   align-items: center !important;
-  padding: 70px 0 10px !important;
-  margin-top: 4px !important;
+  padding: 74px 0 12px !important;
+  margin: 4px 0 0 !important;
   overflow: hidden !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  transform: none !important;
+  z-index: 4 !important;
 }
 
 .arcana-recommend-section.is-recommend-ready .arcana-recommend-actions,
 .arcana-recommend-section.is-cta-loading .arcana-recommend-actions {
-  flex-basis: 132px !important;
-  min-height: 132px !important;
-  height: 132px !important;
-  max-height: 132px !important;
-  padding: 70px 0 10px !important;
+  display: flex !important;
+  flex-basis: 142px !important;
+  min-height: 142px !important;
+  height: 142px !important;
+  max-height: 142px !important;
 }
 
 .arcana-cta-wave-layer {
   position: absolute !important;
   left: 50% !important;
-  top: 8px !important;
+  top: 10px !important;
   z-index: 1 !important;
-  width: 230px !important;
-  height: 72px !important;
+  width: 226px !important;
+  height: 66px !important;
   transform: translateX(-50%) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   pointer-events: none !important;
   overflow: visible !important;
-  animation: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
   filter: none !important;
+  animation: none !important;
 }
 
 .arcana-cta-wave-layer::before,
@@ -364,12 +97,14 @@
 .arcana-cta-wave-halo {
   display: none !important;
   content: none !important;
+  animation: none !important;
+  transform: none !important;
 }
 
 .arcana-cta-wave-lines {
   position: relative !important;
   inset: auto !important;
-  width: 184px !important;
+  width: 188px !important;
   height: 56px !important;
   display: flex !important;
   align-items: center !important;
@@ -382,127 +117,186 @@
 
 .arcana-cta-wave-lines i {
   position: static !important;
-  left: auto !important;
-  top: auto !important;
   display: block !important;
+  flex: 0 0 4px !important;
   width: 4px !important;
   height: 30px !important;
   min-height: 12px !important;
   border-radius: 999px !important;
   transform-origin: center center !important;
-  transform: scaleY(0.42) !important;
+  transform: scaleY(0.36) !important;
   background: linear-gradient(to top, rgba(17,24,39,0.18), rgba(17,24,39,0.78), rgba(255,255,255,0.92)) !important;
-  opacity: 0.58 !important;
+  opacity: 0.52 !important;
   box-shadow: 0 0 2px rgba(17,24,39,0.08) !important;
-  animation: arcanaCtaCompactIdle 1.75s ease-in-out infinite !important;
+  animation: arcanaCtaBarIdle 1.85s ease-in-out infinite !important;
   animation-delay: var(--delay) !important;
 }
 
 .arcana-recommend-actions:hover .arcana-cta-wave-lines i,
 .arcana-recommend-actions:has(#arcanaRunSimulation:hover) .arcana-cta-wave-lines i,
 .arcana-recommend-actions:has(#arcanaRunSimulation.is-touch-preview) .arcana-cta-wave-lines i {
-  transform: scaleY(0.58) !important;
-  opacity: 0.86 !important;
-  animation: arcanaCtaCompactHover 1.05s ease-in-out infinite !important;
+  opacity: 0.88 !important;
+  animation-name: arcanaCtaBarHover !important;
+  animation-duration: 1.08s !important;
   animation-delay: calc(var(--delay) * 0.55) !important;
 }
 
 .arcana-recommend-section.is-cta-loading .arcana-cta-wave-layer {
-  width: 250px !important;
-  height: 80px !important;
+  width: 246px !important;
+  height: 76px !important;
   top: 4px !important;
   transform: translateX(-50%) !important;
 }
 
 .arcana-recommend-section.is-cta-loading .arcana-cta-wave-lines {
-  width: 196px !important;
-  height: 62px !important;
+  width: 198px !important;
+  height: 64px !important;
 }
 
 .arcana-recommend-section.is-cta-loading .arcana-cta-wave-lines i {
+  flex-basis: 4px !important;
   width: 4px !important;
-  height: 36px !important;
+  height: 38px !important;
   opacity: 0.98 !important;
-  background: linear-gradient(to top, hsla(var(--tone), 96%, 48%, 0.22), hsla(var(--tone), 96%, 58%, 0.92), rgba(255,255,255,0.96)) !important;
-  box-shadow: 0 0 8px hsla(var(--tone), 96%, 58%, 0.32) !important;
-  animation: arcanaCtaCompactLoading 0.72s ease-in-out infinite !important;
+  background: linear-gradient(to top, hsla(var(--tone),96%,48%,0.24), hsla(var(--tone),96%,58%,0.94), rgba(255,255,255,0.96)) !important;
+  box-shadow: 0 0 8px hsla(var(--tone),96%,58%,0.32) !important;
+  animation-name: arcanaCtaBarLoading !important;
+  animation-duration: 0.74s !important;
   animation-delay: calc(var(--delay) * 0.38) !important;
 }
 
 .arcana-cta-analysis-text {
   position: absolute !important;
   left: 50% !important;
-  top: 50% !important;
+  top: 39px !important;
   transform: translate(-50%, -50%) !important;
-  min-width: 148px !important;
-  min-height: 42px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 154px !important;
+  min-height: 44px !important;
+  max-width: 210px !important;
   padding: 7px 11px !important;
   border-radius: 14px !important;
   background: rgba(15,23,42,0.78) !important;
   color: #fff !important;
+  text-align: center !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  text-shadow: 0 0 12px rgba(255,255,255,0.58) !important;
+  transition: opacity 0.2s ease, transform 0.2s ease !important;
 }
 
 .arcana-cta-analysis-text strong {
   font-size: 13px !important;
   line-height: 1.16 !important;
   font-weight: 900 !important;
+  letter-spacing: -0.04em !important;
 }
 
 .arcana-cta-analysis-text small {
   margin-top: 3px !important;
   font-size: 9.5px !important;
   line-height: 1.16 !important;
+  color: rgba(255,255,255,0.84) !important;
 }
 
-#arcanaRunSimulation.arcana-kinojo-cta,
-#arcanaRunSimulation {
-  z-index: 3 !important;
-  min-width: 154px !important;
-  height: 42px !important;
-  padding: 0 24px !important;
-  border-radius: 14px !important;
-}
-
-@keyframes arcanaCtaCompactIdle {
-  0%, 100% { transform: scaleY(0.34); opacity: 0.40; }
-  42% { transform: scaleY(1.02); opacity: 0.68; }
-  72% { transform: scaleY(0.52); opacity: 0.52; }
-}
-
-@keyframes arcanaCtaCompactHover {
-  0%, 100% { transform: scaleY(0.44); opacity: 0.62; }
-  42% { transform: scaleY(1.28); opacity: 0.96; }
-  72% { transform: scaleY(0.72); opacity: 0.78; }
-}
-
-@keyframes arcanaCtaCompactLoading {
-  0%, 100% { transform: scaleY(0.42); filter: hue-rotate(0deg); }
-  38% { transform: scaleY(1.36); filter: hue-rotate(70deg); }
-  72% { transform: scaleY(0.76); filter: hue-rotate(150deg); }
-}
-
-
-/* ARC-0.3.00_20260612_05 CTA visibility hardening */
-.arcana-recommend-section .arcana-recommend-actions,
-.arcana-recommend-actions {
-  display: flex !important;
-  visibility: visible !important;
+.arcana-recommend-section.is-cta-loading .arcana-cta-analysis-text,
+.arcana-recommend-section.is-cta-complete .arcana-cta-analysis-text,
+.arcana-recommend-section.is-cta-error .arcana-cta-analysis-text {
   opacity: 1 !important;
-  pointer-events: auto !important;
-}
-
-.arcana-recommend-section.is-recommend-ready .arcana-recommend-actions {
-  display: flex !important;
+  transform: translate(-50%, -50%) scale(1) !important;
 }
 
 #arcanaRunSimulation,
 #arcanaRunSimulation.arcana-kinojo-cta {
+  position: relative !important;
+  z-index: 3 !important;
   display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   visibility: visible !important;
   opacity: 1 !important;
   pointer-events: auto !important;
+  min-width: 154px !important;
+  height: 42px !important;
+  padding: 0 24px !important;
+  border-radius: 14px !important;
+  color: #111827 !important;
+  background: rgba(255,255,255,0.96) !important;
+  border: 1px solid rgba(17,24,39,0.44) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.02em !important;
+  overflow: hidden !important;
+  animation: none !important;
+  transform: none !important;
 }
 
 #arcanaRunSimulation[hidden] {
   display: inline-flex !important;
+}
+
+#arcanaRunSimulation::before,
+#arcanaRunSimulation::after,
+#arcanaRunSimulation.arcana-kinojo-cta::before,
+#arcanaRunSimulation.arcana-kinojo-cta::after {
+  content: none !important;
+  display: none !important;
+  animation: none !important;
+}
+
+#arcanaRunSimulation:hover:not(.is-soft-disabled),
+#arcanaRunSimulation.is-touch-preview:not(.is-soft-disabled) {
+  transform: scale(1.035) !important;
+  background: #fff !important;
+  border-color: rgba(17,24,39,0.76) !important;
+  box-shadow: 0 0 0 3px rgba(17,24,39,0.055) !important;
+}
+
+.arcana-recommend-section.is-cta-loading #arcanaRunSimulation {
+  opacity: 0.42 !important;
+  color: rgba(255,255,255,0.36) !important;
+  background: rgba(15,23,42,0.58) !important;
+  border-color: rgba(255,255,255,0.22) !important;
+  transform: scale(0.98) !important;
+}
+
+.arcana-cta-analysis-text.is-changing {
+  animation: arcanaCtaMessageSwap 0.36s ease-out both !important;
+}
+
+.arcana-recommend-section.is-cta-complete .arcana-cta-wave-lines i {
+  background: linear-gradient(to top, rgba(16,185,129,0.18), rgba(16,185,129,0.88), rgba(255,255,255,0.98)) !important;
+  box-shadow: 0 0 8px rgba(16,185,129,0.30) !important;
+}
+
+.arcana-recommend-section.is-cta-error .arcana-cta-wave-lines i {
+  background: linear-gradient(to top, rgba(239,68,68,0.14), rgba(239,68,68,0.78), rgba(255,255,255,0.94)) !important;
+  box-shadow: 0 0 8px rgba(239,68,68,0.26) !important;
+}
+
+@keyframes arcanaCtaBarIdle {
+  0%, 100% { transform: scaleY(0.34); opacity: 0.42; }
+  42% { transform: scaleY(1.02); opacity: 0.70; }
+  72% { transform: scaleY(0.52); opacity: 0.54; }
+}
+
+@keyframes arcanaCtaBarHover {
+  0%, 100% { transform: scaleY(0.44); opacity: 0.64; }
+  42% { transform: scaleY(1.28); opacity: 0.98; }
+  72% { transform: scaleY(0.72); opacity: 0.80; }
+}
+
+@keyframes arcanaCtaBarLoading {
+  0%, 100% { transform: scaleY(0.42); filter: hue-rotate(0deg); }
+  38% { transform: scaleY(1.38); filter: hue-rotate(70deg); }
+  72% { transform: scaleY(0.76); filter: hue-rotate(150deg); }
+}
+
+@keyframes arcanaCtaMessageSwap {
+  0% { opacity: 0.35; transform: translate(-50%, -46%) scale(0.985); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
