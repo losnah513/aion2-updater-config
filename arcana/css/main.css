@@ -139,34 +139,6 @@ input[type='number'] {
   55%, 100% { transform: translateX(120%); }
 }
 
-/* ARC-0.1.00 수정사항_3: 버튼 활성/롤오버 상태 분리 */
-.arcana-btn,
-.arcana-skill-btn,
-.arcana-equipment-toggle,
-.arcana-class-card,
-.arcana-custom-select-button,
-.arcana-menu-link,
-.arcana-class-picker-button,
-.arcana-kinojo-menu-btn,
-.arcana-admin-plus-btn {
-  position: relative;
-  overflow: hidden;
-}
-
-.arcana-btn:hover:not(:disabled),
-.arcana-skill-btn:hover:not(.is-active),
-.arcana-equipment-toggle:hover:not(.is-active),
-.arcana-class-card:hover:not(.is-selected),
-.arcana-custom-select-button:hover:not(:disabled),
-.arcana-menu-link:hover,
-.arcana-class-picker-button:hover {
-  transform: translateY(-1px);
-  border-color: #9bb7f5;
-  color: var(--arcana-primary);
-  background: #fff;
-  box-shadow: 0 2px 5px rgba(37, 99, 235, 0.08);
-}
-
 .arcana-skill-btn.is-active,
 .arcana-equipment-toggle.is-active,
 .arcana-class-card.is-selected {

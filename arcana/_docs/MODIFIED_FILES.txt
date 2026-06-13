@@ -1,17 +1,32 @@
-ARC-0.3.01 · 260613_03
+ARC-0.3.01 · 260613_04
 
 [웹]
-- js/classSelector.js: 260613_02에서 제거된 카드 회전형 클래스 선택 모달을 복구하고, 상단 버튼은 모달 진입용으로 유지.
-- css/modal.css: 클래스 쇼케이스/회전 카드 모달 스타일 복구.
-- js/state.js: showcaseSelectedKey/touchPreviewClassKey/hasSeenClassShowcase 상태 복구.
-- css/components/arcana-pair-balance.css: 현재 아르카나/추천 아르카나의 제목·안내·탭·본문·하단 기준선 강제 통일.
-- css/cards.css: 저장 완료 상태에서 액티브/반지/아르카나 패널 채도 저하 및 잠금 연출 보강.
-- index.html/js/config.js: 화면 버전 표기 ARC-0.3.01 · 260613_03 반영.
+- CARD-01~05 영역 카드 번호 부여
+  CARD-01 액티브 스킬 선택
+  CARD-02 반지 스킬 옵션
+  CARD-03 추가 기능 영역
+  CARD-04 현재 아르카나
+  CARD-05 추천 아르카나
+- PC 기준 레이아웃 그룹 정리
+  top-row: 1:1:1
+  arcana-row: 1:1
+- 신규 레이아웃 관리자 CSS 추가: css/components/arcana-layout-manager.css
+- 신규 레이아웃 관리자 JS 추가: js/components/arcana-layout-manager.js
+- 기존 arcana-pair-balance.css 제거 및 링크 교체
+- cards.css의 구 카드 외곽/높이 보정 블록 제거
+- 클래스 선택 버튼 스타일 권한을 class-selector.css로 단일화
+- layout.css/main.css의 클래스 선택 버튼 중복 스타일 제거
+- 상단 클래스 버튼 클릭 경로를 카드 회전형 쇼케이스 모달로 단일화
+- HTML 내부 구 compact dropdown 마크업 제거
+- 중복 tabs.js 로드 제거
+- classSelector.js의 중복 const 선언 수정
+- 버전 표기 ARC-0.3.01 · 260613_04 반영
 
 [Apps Script]
-- 수정 없음.
-- 재배포 불필요.
+- 수정 없음
 
-[정리]
-- 260613_02의 “상단 드롭다운 단일화” 방향을 폐기하고, 사용자 의도였던 카드 회전형 클래스 선택 모달을 복구.
-- 좌우 아르카나 카드 높이 보정은 별도 balance CSS에서만 관리하도록 유지.
+[검수]
+- 클래스 선택 버튼 중복 스타일 grep 확인
+- 구 pair-balance 링크 제거 확인
+- JS 문법 검사 통과
+- CSS brace balance 검사 통과

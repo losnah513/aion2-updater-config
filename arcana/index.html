@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>아르카나 스킬 시뮬레이터 ARC-0.3.01 · 260613_03</title>
+  <title>아르카나 스킬 시뮬레이터 ARC-0.3.01 · 260613_04</title>
 
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/layout.css" />
@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="css/components/class-selector.css" />
   <link rel="stylesheet" href="css/components/recommend-panel.css" />
   <link rel="stylesheet" href="css/components/arcana-cta.css" />
-  <link rel="stylesheet" href="css/components/arcana-pair-balance.css" />
+  <link rel="stylesheet" href="css/components/arcana-layout-manager.css" />
 </head>
 <body>
   <div class="arcana-page">
@@ -28,22 +28,16 @@
 
       <div class="arcana-title-wrap">
         <h1>아르카나 스킬 시뮬레이터</h1>
-        <span class="arcana-version">ARC-0.3.01 · 260613_03</span>
+        <span class="arcana-version">ARC-0.3.01 · 260613_04</span>
       </div>
 
       <div class="arcana-topbar-actions">
         <div class="arcana-class-picker" id="arcanaClassPicker">
-          <button id="arcanaClassPickerButton" class="arcana-class-picker-button" type="button">
-            클래스 선택
+          <button id="arcanaClassPickerButton" class="arcana-class-picker-button is-initial-cta" type="button">
+            <span class="arcana-class-arrow" aria-hidden="true">‹</span>
+            <span>클래스 선택하기</span>
+            <span class="arcana-class-arrow" aria-hidden="true">›</span>
           </button>
-          <div id="arcanaClassPickerDropdown" class="arcana-class-dropdown" hidden>
-            <div class="arcana-class-dropdown-title">클래스 선택</div>
-            <div id="arcanaClassCardList" class="arcana-class-card-list"></div>
-            <div class="arcana-class-actions">
-              <button id="arcanaConfirmClass" class="arcana-btn arcana-btn-primary" type="button">확인</button>
-              <button id="arcanaCloseClass" class="arcana-btn arcana-btn-ghost" type="button">닫기</button>
-            </div>
-          </div>
         </div>
       </div>
     </header>
@@ -53,8 +47,8 @@
     </div>
 
     <main class="arcana-layout is-class-locked" id="arcanaMainLayout">
-      <div class="arcana-top-grid arcana-compact-pair">
-        <section class="arcana-panel arcana-target-panel arcana-compact-panel" data-panel-key="characterLevels">
+      <div class="arcana-top-grid arcana-compact-pair" data-layout-group="top-row">
+        <section class="arcana-panel arcana-target-panel arcana-compact-panel" data-panel-key="characterLevels" data-card="01" data-layout-role="top-card">
           <div class="arcana-panel-title">
             <div class="arcana-title-stack">
               <h2>액티브 스킬 선택</h2>
@@ -69,7 +63,7 @@
           </div>
         </section>
 
-        <section class="arcana-panel arcana-equipment-panel arcana-compact-panel" data-panel-key="equipmentOptions">
+        <section class="arcana-panel arcana-equipment-panel arcana-compact-panel" data-panel-key="equipmentOptions" data-card="02" data-layout-role="top-card">
           <div class="arcana-panel-title arcana-panel-title-compact">
             <div class="arcana-title-stack">
               <h2>반지 스킬 옵션</h2>
@@ -85,7 +79,7 @@
           </div>
         </section>
 
-        <section class="arcana-panel arcana-future-panel arcana-compact-panel" aria-label="기능 추가 예정 영역">
+        <section class="arcana-panel arcana-future-panel arcana-compact-panel" aria-label="기능 추가 예정 영역" data-card="03" data-layout-role="top-card">
           <div class="arcana-panel-title">
             <div class="arcana-title-stack">
               <h2>기능 추가 예정 영역</h2>
@@ -107,8 +101,8 @@
             <span>현재 정보 저장 후 분석 시작</span>
           </div>
         </div>
-        <div class="arcana-arcana-columns">
-          <section class="arcana-panel arcana-arcana-section arcana-owned-section" data-panel-key="ownedArcanaCards">
+        <div class="arcana-arcana-columns" data-layout-group="arcana-row">
+          <section class="arcana-panel arcana-arcana-section arcana-owned-section" data-panel-key="ownedArcanaCards" data-card="04" data-layout-role="arcana-card">
             <div class="arcana-panel-title arcana-panel-title-inner">
               <div class="arcana-title-stack">
                 <h3>현재 아르카나</h3>
@@ -126,7 +120,7 @@
             </div>
           </section>
 
-          <section class="arcana-panel arcana-arcana-section arcana-recommend-section is-recommend-locked" data-panel-key="recommendArcanaCards">
+          <section class="arcana-panel arcana-arcana-section arcana-recommend-section is-recommend-locked" data-panel-key="recommendArcanaCards" data-card="05" data-layout-role="arcana-card">
             <div class="arcana-panel-title arcana-panel-title-inner">
               <div class="arcana-title-stack">
                 <h3>추천 아르카나</h3>
@@ -164,6 +158,7 @@
   <script src="js/equipmentEditor.js"></script>
   <script src="js/skillSelector.js"></script>
   <script src="js/ui.js"></script>
+  <script src="js/components/arcana-layout-manager.js"></script>
   <script src="js/app.js"></script>
 
   <div id="arcanaConfirmModal" class="arcana-confirm-modal" hidden aria-hidden="true">

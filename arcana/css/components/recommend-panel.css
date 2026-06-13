@@ -1,7 +1,7 @@
 /*
  * ARCANA RECOMMEND PANEL LAYOUT
  * 역할: 추천 아르카나 카드 내부의 탭/본문/placeholder만 관리한다.
- * 카드 높이/좌우 균형은 arcana-pair-balance.css가 단독 관리한다.
+ * 카드 높이/좌우 균형은 arcana-layout-manager.css가 단독 관리한다.
  * CTA 시각 연출은 arcana-cta.css가 단독 관리한다.
  */
 

@@ -26,11 +26,10 @@ ArcanaApp.classSelector = {
   render() {
     const state = ArcanaApp.state;
     const button = document.getElementById('arcanaClassPickerButton');
-    const list = document.getElementById('arcanaClassCardList');
     const layout = document.getElementById('arcanaMainLayout');
     const picker = document.getElementById('arcanaClassPicker');
 
-    if (!button || !list || !layout) return;
+    if (!button || !layout) return;
 
     document.body.classList.toggle('arcana-has-selected-class', Boolean(state.hasSelectedClass));
 
@@ -38,6 +37,12 @@ ArcanaApp.classSelector = {
     button.classList.toggle('has-class', state.hasSelectedClass);
     button.classList.toggle('is-initial-cta', !state.hasSelectedClass);
     if (picker) picker.classList.toggle('is-initial-cta', !state.hasSelectedClass);
+
+    const leftArrow = document.createElement('span');
+    leftArrow.className = 'arcana-class-arrow';
+    leftArrow.setAttribute('aria-hidden', 'true');
+    leftArrow.textContent = '‹';
+    button.appendChild(leftArrow);
 
     if (state.hasSelectedClass) {
       const buttonIcon = ArcanaApp.classSelector.createClassIcon(state.currentClassKey, true);
@@ -48,80 +53,30 @@ ArcanaApp.classSelector = {
     label.textContent = state.hasSelectedClass ? '클래스 변경' : '클래스 선택하기';
     button.appendChild(label);
 
-    const arrow = document.createElement('span');
-    arrow.className = 'arcana-class-arrow';
-    arrow.textContent = '⌄';
-    button.appendChild(arrow);
+    const rightArrow = document.createElement('span');
+    rightArrow.className = 'arcana-class-arrow';
+    rightArrow.setAttribute('aria-hidden', 'true');
+    rightArrow.textContent = '›';
+    button.appendChild(rightArrow);
 
     layout.classList.toggle('is-class-locked', !state.hasSelectedClass);
 
-    ArcanaApp.classSelector.renderCompactClassList();
   },
 
-  renderCompactClassList() {
-    const state = ArcanaApp.state;
-    const list = document.getElementById('arcanaClassCardList');
-    if (!list) return;
-
-    const activeKey = state.pendingClassKey || state.currentClassKey || '';
-    list.innerHTML = '';
-
-    ArcanaApp.classSelector.getDisplayClassList().forEach(item => {
-      const card = ArcanaApp.classSelector.createClassButton(item, 'arcana-class-card');
-      card.classList.toggle('is-selected', activeKey === item.key);
-
-      card.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
-        ArcanaApp.classSelector.selectCompactClass(item.key);
-      });
-
-      list.appendChild(card);
-    });
-  },
-
-  selectCompactClass(classKey) {
-    const state = ArcanaApp.state;
-    state.pendingClassKey = ArcanaApp.classSelector.normalizeClassKey(classKey);
-    ArcanaApp.classSelector.renderCompactClassList();
-  },
-
+  /* compact dropdown 방식은 제거됨. 클래스 선택은 카드 회전형 쇼케이스만 사용한다. */
 
   bind() {
     if (ArcanaApp.classSelector._eventsBound) return;
     ArcanaApp.classSelector._eventsBound = true;
-    const pickerButton = document.getElementById('arcanaClassPickerButton');
-    const confirmButton = document.getElementById('arcanaConfirmClass');
-    const closeButton = document.getElementById('arcanaCloseClass');
 
+    const pickerButton = document.getElementById('arcanaClassPickerButton');
     if (pickerButton) {
       pickerButton.addEventListener('click', event => {
+        event.preventDefault();
         event.stopPropagation();
         ArcanaApp.classSelector.openPicker();
       });
     }
-
-    if (confirmButton) {
-      confirmButton.addEventListener('click', event => {
-        event.stopPropagation();
-        ArcanaApp.classSelector.confirm();
-      });
-    }
-
-    if (closeButton) {
-      closeButton.addEventListener('click', event => {
-        event.stopPropagation();
-        ArcanaApp.classSelector.cancelCompactSelection();
-      });
-    }
-
-    document.addEventListener('click', event => {
-      const picker = document.getElementById('arcanaClassPicker');
-      const showcase = document.getElementById('arcanaClassShowcase');
-      if (picker && picker.contains(event.target)) return;
-      if (showcase && !showcase.hidden && showcase.contains(event.target)) return;
-      ArcanaApp.classSelector.close();
-    });
   },
 
   openPicker() {
@@ -132,28 +87,15 @@ ArcanaApp.classSelector = {
   },
 
   toggle() {
-    const dropdown = document.getElementById('arcanaClassPickerDropdown');
-    if (!dropdown) return;
-    dropdown.hidden ? ArcanaApp.classSelector.openPicker() : ArcanaApp.classSelector.close();
+    ArcanaApp.classSelector.openPicker();
   },
 
   open() {
-    const dropdown = document.getElementById('arcanaClassPickerDropdown');
-    if (dropdown) {
-      dropdown.hidden = false;
-      dropdown.classList.add('is-compact');
-    }
+    ArcanaApp.classSelector.openShowcase();
   },
 
   close() {
-    const dropdown = document.getElementById('arcanaClassPickerDropdown');
-    if (dropdown) dropdown.hidden = true;
-  },
-
-  cancelCompactSelection() {
-    ArcanaApp.state.pendingClassKey = ArcanaApp.state.currentClassKey;
-    ArcanaApp.classSelector.close();
-    ArcanaApp.classSelector.render();
+    ArcanaApp.classSelector.closeShowcase();
   },
 
   openShowcase() {

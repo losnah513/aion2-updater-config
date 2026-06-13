@@ -40,64 +40,10 @@
   gap: 6px;
 }
 
-.arcana-icon-btn,
-.arcana-menu-link,
-.arcana-class-picker-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 26px;
-  padding: 0 9px;
-  border: 1px solid var(--arcana-line);
-  border-radius: var(--arcana-radius);
-  background: #fff;
-  color: var(--arcana-text);
-  text-decoration: none;
-  font-size: 11px;
-  cursor: pointer;
-  transition: transform 0.16s ease, border-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
-}
-
 .arcana-icon-btn:disabled {
   color: var(--arcana-muted);
   cursor: not-allowed;
   opacity: 0.55;
-}
-
-.arcana-menu-link:hover,
-.arcana-class-picker-button:hover {
-  transform: translateY(-1px);
-  border-color: var(--arcana-primary);
-  color: var(--arcana-primary);
-  box-shadow: 0 3px 9px rgba(37, 99, 235, 0.1);
-}
-
-.arcana-class-picker {
-  position: relative;
-}
-
-.arcana-class-picker-button {
-  min-width: 112px;
-  font-weight: 700;
-}
-
-.arcana-class-dropdown {
-  position: absolute;
-  top: calc(100% + 5px);
-  right: 0;
-  width: 236px;
-  padding: 8px;
-  border: 1px solid var(--arcana-line);
-  border-radius: var(--arcana-radius);
-  background: #fff;
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12);
-  animation: arcana-class-drop 0.18s ease-out;
-}
-
-.arcana-class-dropdown-title {
-  margin-bottom: 7px;
-  font-size: 12px;
-  font-weight: 700;
 }
 
 .arcana-class-card-list {
@@ -159,23 +105,6 @@
   filter: grayscale(0.25);
   pointer-events: none;
   user-select: none;
-}
-
-.arcana-compact-pair {
-  align-items: start;
-  justify-content: start;
-}
-
-.arcana-top-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(280px, var(--arcana-compact-panel-width)));
-  gap: 8px;
-}
-
-.arcana-compact-panel {
-  width: var(--arcana-compact-panel-width);
-  min-width: 280px;
-  max-width: var(--arcana-compact-panel-width);
 }
 
 .arcana-panel {
@@ -311,15 +240,6 @@
   .arcana-topbar-actions {
     justify-content: space-between;
   }
-
-  .arcana-top-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .arcana-compact-panel {
-    width: 100%;
-    max-width: none;
-  }
 }
 
 /* ARC-0.1.00 수정사항_3: 키노조형 상단 버튼과 내용 기준 폭 */
@@ -376,13 +296,6 @@
   line-height: 1;
 }
 
-.arcana-class-picker-button::after {
-  content: '⌄';
-  margin-left: 6px;
-  font-size: 12px;
-  transform: translateY(-1px);
-}
-
 .arcana-panel-title {
   align-items: flex-start;
 }
@@ -391,16 +304,6 @@
   min-height: 14px;
   line-height: 1.25;
   text-align: right;
-}
-
-.arcana-equipment-panel,
-.arcana-editor-panel {
-  width: fit-content;
-  max-width: 100%;
-}
-
-.arcana-arcana-columns {
-  width: fit-content;
 }
 
 /* ARC-0.2.01: 항목 카드 크기 고정, 제목/본문 구분, 탑바 압축 */
@@ -431,12 +334,6 @@
   max-width: 100%;
   gap: 7px;
   align-items: start;
-}
-
-.arcana-top-grid {
-  width: fit-content;
-  grid-template-columns: repeat(2, var(--arcana-compact-panel-width));
-  gap: 7px;
 }
 
 .arcana-panel {
@@ -499,20 +396,6 @@
   font-weight: 800;
 }
 
-.arcana-compact-panel {
-  width: var(--arcana-compact-panel-width);
-  min-width: var(--arcana-compact-panel-width);
-  max-width: var(--arcana-compact-panel-width);
-}
-
-.arcana-target-panel,
-.arcana-character-panel,
-.arcana-equipment-panel,
-.arcana-editor-panel {
-  width: fit-content;
-  max-width: 100%;
-}
-
 .arcana-actions {
   gap: 4px;
   margin-top: 5px;
@@ -531,29 +414,6 @@
   height: 23px;
 }
 
-.arcana-class-picker-button {
-  min-width: 108px;
-  height: 24px;
-  font-weight: 700;
-}
-
-.arcana-class-picker-button::before {
-  content: '〈';
-  margin-right: 5px;
-  color: var(--arcana-muted);
-}
-
-.arcana-class-picker-button::after {
-  content: '〉';
-  margin-left: 5px;
-  color: var(--arcana-muted);
-}
-
-.arcana-class-dropdown {
-  width: 230px;
-  padding: 7px;
-}
-
 .arcana-menu-link {
   height: 24px;
   padding: 0 8px;
@@ -564,47 +424,6 @@
     width: 100%;
     max-width: 100%;
   }
-
-  .arcana-top-grid,
-  .arcana-arcana-columns {
-    grid-template-columns: 1fr;
-    width: 100%;
-  }
-
-  .arcana-compact-panel,
-  .arcana-target-panel,
-  .arcana-character-panel,
-  .arcana-equipment-panel,
-  .arcana-editor-panel {
-    width: 100%;
-    min-width: 0;
-    max-width: none;
-  }
-}
-
-/* ARC-0.2.01: 상단 입력 영역 재배치 */
-.arcana-top-grid {
-  display: grid;
-  grid-template-columns:
-    var(--arcana-compact-panel-width)
-    var(--arcana-compact-panel-width)
-    var(--arcana-compact-panel-width);
-  gap: 7px;
-  align-items: stretch;
-  width: fit-content;
-}
-
-.arcana-target-panel,
-.arcana-equipment-panel,
-.arcana-future-panel {
-  width: var(--arcana-compact-panel-width);
-  min-width: var(--arcana-compact-panel-width);
-  max-width: var(--arcana-compact-panel-width);
-  align-self: stretch;
-}
-
-.arcana-future-panel {
-  color: var(--arcana-muted);
 }
 
 .arcana-future-placeholder {
@@ -621,69 +440,9 @@
   line-height: 1.45;
 }
 
-@media (max-width: 980px) {
-  .arcana-top-grid {
-    grid-template-columns:
-      var(--arcana-compact-panel-width)
-      var(--arcana-compact-panel-width);
-  }
-
-  .arcana-future-panel {
-    display: none;
-  }
-}
-
-@media (max-width: 720px) {
-  .arcana-top-grid {
-    grid-template-columns: 1fr;
-    width: 100%;
-  }
-
-  .arcana-target-panel,
-  .arcana-equipment-panel,
-  .arcana-future-panel {
-    width: 100%;
-    min-width: 0;
-    max-width: none;
-  }
-}
-
-/* ARC-0.2.02: 클래스 선택창 아이콘 적용 및 크기 조정 */
-.arcana-class-picker-button {
-  min-width: 156px;
-  height: 31px;
-  gap: 6px;
-}
-
-.arcana-class-picker-button .arcana-class-icon,
-.arcana-class-card .arcana-class-icon {
-  flex: 0 0 24px;
-  width: 24px;
-  height: 24px;
-  border-radius: 5px;
-  object-fit: cover;
-  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
-}
-
-.arcana-class-picker-button .arcana-class-icon {
-  flex-basis: 22px;
-  width: 22px;
-  height: 22px;
-}
-
-.arcana-class-picker-button span:not(.arcana-class-arrow) {
-  flex: 1 1 auto;
-  text-align: left;
-}
-
 .arcana-class-arrow {
   color: var(--arcana-muted);
   font-size: 12px;
-}
-
-.arcana-class-dropdown {
-  width: 330px;
-  padding: 10px;
 }
 
 .arcana-class-card-list {
@@ -707,40 +466,6 @@
 
 .arcana-layout.is-class-locked .arcana-panel-title span {
   white-space: normal;
-}
-
-/* ARC-0.2.03: 클래스 선택/변경 버튼과 간략 모달 정리 */
-.arcana-class-picker-button {
-  width: fit-content;
-  min-width: 112px;
-  max-width: 156px;
-  height: 30px;
-  padding: 0 9px;
-  gap: 5px;
-}
-
-.arcana-class-picker-button.has-class {
-  min-width: 126px;
-}
-
-.arcana-class-picker-button .arcana-class-icon,
-.arcana-class-card .arcana-class-icon {
-  flex: 0 0 22px;
-  width: 22px;
-  height: 22px;
-}
-
-.arcana-class-picker-button span:not(.arcana-class-arrow) {
-  flex: 0 0 auto;
-  text-align: center;
-}
-
-.arcana-class-dropdown {
-  right: 50%;
-  width: 266px;
-  padding: 9px;
-  transform: translateX(50%);
-  animation: arcana-class-rise-compact 0.2s ease-out;
 }
 
 .arcana-class-card-list {
@@ -782,10 +507,6 @@
 }
 
 @media (max-width: 720px) {
-  .arcana-class-dropdown {
-    right: 0;
-    transform: none;
-  }
 
   @keyframes arcana-class-rise-compact {
     from { opacity: 0; transform: translateY(10px); }

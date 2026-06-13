@@ -1,7 +1,7 @@
 /*
  * ARCANA PANEL CONTAINMENT
  * 역할: 카드 내부 컨텐츠가 카드 밖으로 침범하지 않도록 공통 min-height/스크롤만 제공한다.
- * 현재/추천 아르카나 카드 높이는 arcana-pair-balance.css가 단독 관리한다.
+ * 현재/추천 아르카나 카드 높이는 arcana-layout-manager.css가 단독 관리한다.
  */
 .arcana-panel {
   min-height: 0;

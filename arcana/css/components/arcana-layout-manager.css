@@ -1,0 +1,195 @@
+/*
+ * ARCANA LAYOUT MANAGER
+ * 역할: 영역 카드 번호/그룹별 크기와 배치를 단일 관리한다.
+ * CARD-01 액티브 스킬, CARD-02 반지 옵션, CARD-03 추가 기능
+ * CARD-04 현재 아르카나, CARD-05 추천 아르카나
+ * 원칙: 개별 컴포넌트 CSS는 내부 디자인만 담당하고, 카드 외곽 크기/그리드는 여기서만 관리한다.
+ */
+:root {
+  --arcana-layout-gap: 8px;
+  --arcana-top-card-height: 354px;
+  --arcana-arcana-card-height: 610px;
+  --arcana-arcana-title-height: 42px;
+  --arcana-arcana-message-height: 40px;
+  --arcana-arcana-tab-height: 34px;
+  --arcana-arcana-footer-height: 46px;
+}
+
+.arcana-page,
+.arcana-layout {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.arcana-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--arcana-layout-gap);
+}
+
+.arcana-layout.is-class-locked {
+  opacity: 1;
+  filter: none;
+  pointer-events: none;
+  user-select: none;
+}
+
+.arcana-layout.is-class-locked .arcana-panel > *:not(.arcana-loading-overlay) {
+  filter: blur(5.5px) saturate(0.72);
+  opacity: 0.38;
+}
+
+.arcana-layout.is-class-locked .arcana-panel-message {
+  visibility: visible;
+}
+
+[data-layout-group="top-row"] {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--arcana-layout-gap);
+  align-items: stretch;
+  width: 100%;
+}
+
+[data-layout-group="top-row"] > [data-layout-role="top-card"] {
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  min-height: var(--arcana-top-card-height);
+  height: var(--arcana-top-card-height);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+[data-layout-group="top-row"] .arcana-skill-grid,
+[data-layout-group="top-row"] .arcana-equipment-list,
+[data-layout-group="top-row"] .arcana-future-placeholder {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+[data-layout-group="arcana-row"] {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--arcana-layout-gap);
+  align-items: stretch;
+  width: 100%;
+}
+
+[data-layout-role="arcana-card"] {
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  height: var(--arcana-arcana-card-height);
+  min-height: var(--arcana-arcana-card-height);
+  max-height: var(--arcana-arcana-card-height);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+[data-card="04"] {
+  display: grid;
+  grid-template-rows: var(--arcana-arcana-title-height) var(--arcana-arcana-message-height) var(--arcana-arcana-tab-height) minmax(0, 1fr) var(--arcana-arcana-footer-height);
+}
+
+[data-card="05"] {
+  display: grid;
+  grid-template-rows: var(--arcana-arcana-title-height) var(--arcana-arcana-message-height) minmax(0, 1fr) var(--arcana-arcana-footer-height);
+}
+
+[data-layout-role="arcana-card"] .arcana-panel-title-inner {
+  height: var(--arcana-arcana-title-height);
+  min-height: var(--arcana-arcana-title-height);
+  margin: 0;
+  box-sizing: border-box;
+}
+
+[data-layout-role="arcana-card"] .arcana-panel-message {
+  height: var(--arcana-arcana-message-height);
+  min-height: var(--arcana-arcana-message-height);
+  margin: 0;
+  padding: 5px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+[data-card="04"] .arcana-owned-tab-spacer,
+[data-card="05"] .arcana-recommend-tabs {
+  height: var(--arcana-arcana-tab-height);
+  min-height: var(--arcana-arcana-tab-height);
+  margin: 0 8px 6px;
+  box-sizing: border-box;
+}
+
+[data-card="04"] #arcanaOwnedCardGrid,
+[data-card="05"] .arcana-recommend-area {
+  min-height: 0;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 8px 8px;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+[data-card="04"] .arcana-card-grid,
+[data-card="05"] .arcana-recommend-card-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  align-content: start;
+  align-items: start;
+}
+
+[data-card="04"] .arcana-card-box,
+[data-card="05"] .arcana-recommend-card-grid .arcana-card-box {
+  width: auto;
+  min-width: 0;
+  max-width: none;
+}
+
+[data-layout-role="arcana-card"] > .arcana-actions {
+  height: var(--arcana-arcana-footer-height);
+  min-height: var(--arcana-arcana-footer-height);
+  margin: 0 8px;
+  padding: 7px 0 8px;
+  border-top: 1px solid var(--arcana-line-soft);
+  justify-content: center;
+  align-items: center;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.arcana-recommend-section.is-recommend-ready > .arcana-recommend-actions {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (max-width: 980px) {
+  [data-layout-group="top-row"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  [data-layout-group="top-row"],
+  [data-layout-group="arcana-row"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  [data-layout-group="top-row"] > [data-layout-role="top-card"] {
+    height: auto;
+    min-height: 0;
+  }
+
+  [data-layout-role="arcana-card"] {
+    height: 620px;
+    min-height: 620px;
+    max-height: 620px;
+  }
+}
