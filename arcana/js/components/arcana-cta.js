@@ -147,10 +147,10 @@ ArcanaApp.cta = {
   setButtonText(title, description) {
     const button = ArcanaApp.cta.getButton();
     if (!button) return;
-    const safeTitle = ArcanaApp.cta.escapeHtml(title || '추천 시작');
+    const safeTitle = ArcanaApp.cta.escapeHtml(title || '분석 시작');
     const safeDesc = ArcanaApp.cta.escapeHtml(description || '클릭하여 분석을 시작하세요');
     button.innerHTML = `<span class="arcana-cta-main">${safeTitle}</span><span class="arcana-cta-sub">${safeDesc}</span>`;
-    button.setAttribute('aria-label', `${title || '추천 시작'} ${description || ''}`.trim());
+    button.setAttribute('aria-label', `${title || '분석 시작'} ${description || ''}`.trim());
   },
 
   escapeHtml(value) {
@@ -190,7 +190,7 @@ ArcanaApp.cta = {
     if (!panel) return;
     panel.classList.remove('is-cta-loading', 'is-cta-complete', 'is-cta-error');
     panel.dataset.ctaState = 'idle';
-    ArcanaApp.cta.setButtonText('추천 시작', '클릭하여 분석을 시작하세요');
+    ArcanaApp.cta.setButtonText('분석 시작', '클릭하여 분석을 시작하세요');
   },
 
   setLoading(options = {}) {

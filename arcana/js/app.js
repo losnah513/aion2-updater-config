@@ -5,7 +5,7 @@ ArcanaApp.app = {
     const data = await ArcanaApp.api.loadInitialData();
     const state = ArcanaApp.state;
 
-    state.version = ArcanaApp.config.version || data.version || 'ARC-0.3.00';
+    state.version = ArcanaApp.config.version || data.version || 'ARC-0.3.01';
     state.targetLevel = Number(data.targetLevel || state.targetLevel || 20);
     state.baseSkillLevel = Number(data.baseSkillLevel || state.baseSkillLevel || 10);
     state.devanionBonus = Number(data.devanionBonus || state.devanionBonus || 4);
@@ -276,7 +276,7 @@ ArcanaApp.app = {
       if (!ArcanaApp.state.recommendationTouchArmed) return;
       if (button.contains(event.target)) return;
       ArcanaApp.app.clearRecommendationTouchPreview();
-      ArcanaApp.panelLock.showMessage('recommendArcanaCards', '추천 실행을 취소했어요.');
+      ArcanaApp.panelLock.showMessage('recommendArcanaCards', '분석 실행을 취소했어요.');
     });
 
     button.addEventListener('click', async event => {
@@ -289,7 +289,7 @@ ArcanaApp.app = {
         event.preventDefault();
         ArcanaApp.state.recommendationTouchArmed = true;
         button.classList.add('is-touch-preview');
-        ArcanaApp.panelLock.showMessage('recommendArcanaCards', '한 번 더 터치하면 추천 계산을 시작합니다. 다른 곳을 터치하면 취소됩니다.');
+        ArcanaApp.panelLock.showMessage('recommendArcanaCards', '한 번 더 터치하면 분석을 시작합니다. 다른 곳을 터치하면 취소됩니다.');
         return;
       }
 
@@ -334,7 +334,7 @@ ArcanaApp.app = {
           await ArcanaApp.cta.waitForMinimumDuration(5200);
         }
         ArcanaApp.state.recommendationGenerated = false;
-        ArcanaApp.panelLock.showMessage('recommendArcanaCards', error.message || '추천 계산 중 오류가 발생했어요.');
+        ArcanaApp.panelLock.showMessage('recommendArcanaCards', error.message || '분석 중 오류가 발생했어요.');
       } finally {
         if (ArcanaApp.cta && typeof ArcanaApp.cta.setSuccess === 'function' && typeof ArcanaApp.cta.setError === 'function') {
           recommendationSucceeded ? ArcanaApp.cta.setSuccess() : ArcanaApp.cta.setError();
@@ -343,7 +343,7 @@ ArcanaApp.app = {
         }
         button.disabled = false;
         if (ArcanaApp.cta && typeof ArcanaApp.cta.setIdle === 'function') ArcanaApp.cta.setIdle();
-        else button.textContent = '추천 시작';
+        else button.textContent = '분석 시작';
         button.classList.remove('is-vanishing', 'is-loading');
         ArcanaApp.app.updateRecommendationButtonState();
       }
@@ -374,7 +374,12 @@ ArcanaApp.app = {
   },
 
   canRunRecommendation() {
-    return Boolean(ArcanaApp.state.characterSkillsSaved && ArcanaApp.state.selectedTargetSkills.length > 0);
+    return Boolean(
+      ArcanaApp.state.hasSelectedClass &&
+      ArcanaApp.state.characterSkillsSaved &&
+      Array.isArray(ArcanaApp.state.selectedTargetSkills) &&
+      ArcanaApp.state.selectedTargetSkills.length > 0
+    );
   },
 
   updateRecommendationButtonState() {
@@ -389,7 +394,7 @@ ArcanaApp.app = {
     if (!ArcanaApp.state.recommendationGenerated) {
       ArcanaApp.panelLock.showMessage(
         'recommendArcanaCards',
-        canRun ? '추천을 시작할 준비가 되었어요.' : '액티브 스킬을 저장하면 추천을 시작할 수 있어요.'
+        canRun ? '분석을 시작할 준비가 되었어요.' : '액티브 스킬을 저장하면 분석을 시작할 수 있어요.'
       );
     }
   },
@@ -407,7 +412,7 @@ ArcanaApp.app = {
       button.hidden = false;
       button.disabled = false;
       if (ArcanaApp.cta && typeof ArcanaApp.cta.setIdle === 'function') ArcanaApp.cta.setIdle();
-      else button.textContent = '추천 시작';
+      else button.textContent = '분석 시작';
       button.classList.remove('is-vanishing', 'is-loading', 'is-touch-preview');
     }
 

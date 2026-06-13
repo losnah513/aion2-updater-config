@@ -1,32 +1,42 @@
-ARCANA MODIFIED FILES - ARC-0.3.00_20260612_10
+ARCANA ARC-0.3.01 / 20260612_12
 
-[수정 파일]
-- arcana/css/components/arcana-cta.css
-  - CTA를 이미지 시안 기준의 방사형 막대 구조로 재작성
-  - 기존 가로 막대/박스형 상태 텍스트 제거
-  - 중심 원을 기준으로 바깥쪽으로 길어지는 SVG 막대 스타일 적용
-  - idle / hover / loading 세 상태 분리
-  - loading 상태는 다채로운 색상 파동으로 표시
-  - 추천 결과 생성 후 CTA가 분석/가이드 영역을 가리지 않도록 ready 상태에서 숨김 처리
+[웹]
+- arcana/index.html
+  - 화면 제목 버전 표기를 `ARC-0.3.01 · 260612_12`로 변경.
+  - 추천 시작 버튼명을 `분석 시작`으로 변경.
+  - 추천 안내 문구를 분석 기준으로 정리.
 
-- arcana/js/components/arcana-cta.js
-  - 144개 SVG 방사형 막대를 동적으로 생성하도록 변경
-  - 여러 주기의 파형을 합성해 외곽 라인이 규칙적인 원이 아니라 불규칙한 물결 형태가 되도록 구성
-  - CTA 텍스트를 별도 박스가 아니라 중앙 버튼 내부 문구로 통합
-  - 분석중 최소 유지 시간을 5.2초로 상향
-  - 분석중 문구 순차 출력 유지
+- arcana/js/config.js
+- arcana/js/state.js
+- arcana/data/config.json
+- arcana/README.txt
+  - ARC-0.3.01 버전 반영.
+
+- arcana/js/api.js
+  - 액티브 스킬 선택값의 legacy localStorage 자동 복원 제거.
+  - `ARCANA_CHARACTER_LEVELS` 키가 남아 있어도 재접속/새로고침 때 불러오지 않도록 정리.
+  - 스킬 저장은 현재 페이지 분석용 상태로만 처리.
+
+- arcana/js/classSelector.js
+  - 클래스 선택/재선택 시 `targetSkillLevels`, `targetSkillPriority20`까지 함께 초기화.
+  - 화면에는 이전 스킬이 남고 내부 state는 비어 분석 시작이 안 되는 불일치 원인 수정.
 
 - arcana/js/app.js
-  - 추천 계산 대기 시간을 CTA 기준에 맞춰 5.2초로 상향
-  - 분석중 버튼 텍스트를 앱에서 직접 덮어쓰지 않고 CTA 모듈이 관리하도록 정리
-  - 추천 리셋 시 CTA 모듈의 idle 상태로 복구하도록 변경
+  - 분석 실행 가능 조건에 클래스 선택 여부를 추가.
+  - CTA/버튼/안내 문구를 `분석 시작` 기준으로 변경.
 
-- arcana/css/components/recommend-panel.css
-  - CTA가 추천 카드 중앙에 배치될 수 있도록 추천 전 상태의 표시 구조 보정
-  - 추천 결과 표시 후에는 기존 카드 스크롤/높이 규칙을 유지
+- arcana/js/components/arcana-cta.js
+- arcana/css/components/arcana-cta.css
+  - CTA 기본 버튼명을 `분석 시작`으로 변경.
+  - 기존 방사형 CTA 상태/속도/5.2초 분석중 유지 구조는 유지.
+
+[Apps Script]
+- AppsScript/ARC_Constants.gs
+  - ARC_VERSION을 ARC-0.3.01로 변경.
+  - 배포 중인 웹앱에 반영하려면 Apps Script 배포 관리에서 기존 배포 수정 → 새 버전 생성 필요.
 
 [검수]
-- JS 문법 검사 통과: arcana-cta.js, app.js
-- CSS brace balance 확인: arcana-cta.css, recommend-panel.css
-- 구 CTA 클래스/오브형 placeholder 잔여 검색: 실행 CSS/JS/HTML 기준 없음
-- CTA 작업 외 수호성/추천 엔진/GS 로직 수정 없음
+- JS 문법 검사 대상: app.js, api.js, classSelector.js, arcana-cta.js.
+- 새로고침/재접속 시 이전 액티브 스킬 localStorage 복원 차단 확인.
+- 클래스 선택 시 targetSkillLevels까지 초기화되는 경로 확인.
+- CTA 버튼명 `분석 시작` 반영 확인.

@@ -678,6 +678,8 @@ ArcanaApp.classSelector = {
     const state = ArcanaApp.state;
 
     state.selectedTargetSkills = [];
+    state.targetSkillLevels = {};
+    state.targetSkillPriority20 = [];
     state.characterLevels = {};
     state.selectedEquipmentKeys = ['ring1', 'ring2'];
     state.equipmentOptions = { ring1: [], ring2: [] };

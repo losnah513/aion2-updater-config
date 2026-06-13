@@ -79,12 +79,19 @@ ArcanaApp.api = {
   },
 
   saveCharacterLevels(levels) {
-    localStorage.setItem('ARCANA_CHARACTER_LEVELS', JSON.stringify(levels || {}));
-    return Promise.resolve({ ok: true, local: true });
+    /*
+     * 액티브 목표 스킬은 현재 화면 분석을 위한 임시 저장값이다.
+     * 새로고침/F5/재접속 후에는 이전 선택값을 자동 복원하지 않는다.
+     * 과거 localStorage에 남은 legacy 키는 UI와 내부 state 불일치 원인이므로 저장 시에도 제거한다.
+     */
+    localStorage.removeItem('ARCANA_CHARACTER_LEVELS');
+    return Promise.resolve({ ok: true, local: false, sessionOnly: true });
   },
 
   loadCharacterLevelsFromLocal() {
-    return ArcanaApp.api.readLocalObject('ARCANA_CHARACTER_LEVELS', {});
+    // legacy 자동 복원 금지: 저장된 스킬이 화면에만 남고 분석은 불가한 상태를 방지한다.
+    localStorage.removeItem('ARCANA_CHARACTER_LEVELS');
+    return {};
   },
 
   clearCharacterLevels() {
@@ -182,7 +189,7 @@ ArcanaApp.api = {
 
     return {
       ok: true,
-      version: 'ARC-0.3.00',
+      version: 'ARC-0.3.01',
       targetLevel: 20,
       baseSkillLevel: 10,
       devanionBonus: 4,
