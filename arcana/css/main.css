@@ -88,50 +88,13 @@ input[type='number'] {
 .arcana-btn.is-ready-reset {
   position: relative;
   overflow: hidden;
-  border-color: rgba(37, 99, 235, 0.72);
-  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.08);
+  border-color: rgba(167, 139, 250, 0.34);
+  box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.08);
 }
 
-.arcana-btn.is-ready-reset::before {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: inherit;
-  padding: 2px;
-  background: conic-gradient(
-    from var(--arcana-glow-angle),
-    rgba(37, 99, 235, 0),
-    rgba(37, 99, 235, 0.08),
-    rgba(37, 99, 235, 1),
-    rgba(147, 197, 253, 1),
-    rgba(37, 99, 235, 0.08),
-    rgba(37, 99, 235, 0)
-  );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  animation: arcana-reset-border-spin 0.85s linear infinite;
-  pointer-events: none;
-}
-
+.arcana-btn.is-ready-reset::before,
 .arcana-btn.is-ready-reset::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.08), transparent);
-  transform: translateX(-100%);
-  animation: arcana-reset-sheen 1.4s ease-in-out infinite;
-  pointer-events: none;
-}
-
-@property --arcana-glow-angle {
-  syntax: '<angle>';
-  inherits: false;
-  initial-value: 0deg;
-}
-
-@keyframes arcana-reset-border-spin {
-  to { --arcana-glow-angle: 360deg; }
+  content: none;
 }
 
 @keyframes arcana-reset-sheen {
@@ -147,41 +110,6 @@ input[type='number'] {
   color: var(--arcana-primary);
   font-weight: 800;
   box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.18), inset 0 0 10px rgba(37, 99, 235, 0.055);
-}
-
-.arcana-skill-btn.is-active::before,
-.arcana-equipment-toggle.is-active::before,
-.arcana-class-card.is-selected::before {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: inherit;
-  padding: 2px;
-  background: conic-gradient(
-    from var(--arcana-glow-angle),
-    rgba(37, 99, 235, 0),
-    rgba(37, 99, 235, 0.1),
-    rgba(37, 99, 235, 0.95),
-    rgba(191, 219, 254, 0.9),
-    rgba(37, 99, 235, 0.1),
-    rgba(37, 99, 235, 0)
-  );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  animation: arcana-reset-border-spin 1.05s linear infinite;
-  pointer-events: none;
-}
-
-.arcana-skill-btn.is-active::after,
-.arcana-equipment-toggle.is-active::after,
-.arcana-class-card.is-selected::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at center, rgba(37, 99, 235, 0.12), transparent 54%);
-  animation: arcana-active-ripple 1.8s ease-in-out infinite;
-  pointer-events: none;
 }
 
 @keyframes arcana-active-ripple {
@@ -200,19 +128,11 @@ input[type='number'] {
 
 /* ARC-0.2.01: 키노조형 폭 제한과 버튼 효과 재정리 */
 :root {
-  --arcana-page-max: 760px;
   --arcana-card-width: 145px;
   --arcana-skill-button-width: 118px;
   --arcana-compact-panel-width: 260px;
   --arcana-control-height: 24px;
   --arcana-radius: 3px;
-}
-
-.arcana-page {
-  width: fit-content;
-  max-width: min(100%, var(--arcana-page-max));
-  min-width: 0;
-  padding: 0 6px 8px;
 }
 
 .arcana-btn {
@@ -243,53 +163,6 @@ input[type='number'] {
   color: var(--arcana-primary);
   font-weight: 800;
   box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.16), inset 0 0 10px rgba(37, 99, 235, 0.055);
-}
-
-.arcana-skill-btn.is-active::before,
-.arcana-equipment-toggle.is-active::before,
-.arcana-class-card.is-selected::before,
-.arcana-tab-btn.is-active::before {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: inherit;
-  padding: 2px;
-  background: conic-gradient(
-    from var(--arcana-glow-angle),
-    rgba(37, 99, 235, 0),
-    rgba(37, 99, 235, 0.15),
-    rgba(37, 99, 235, 1),
-    rgba(191, 219, 254, 0.95),
-    rgba(37, 99, 235, 0.15),
-    rgba(37, 99, 235, 0)
-  );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  animation: arcana-reset-border-spin 1.05s linear infinite;
-  pointer-events: none;
-}
-
-.arcana-skill-btn.is-active::after,
-.arcana-equipment-toggle.is-active::after,
-.arcana-class-card.is-selected::after,
-.arcana-tab-btn.is-active::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at center, rgba(37, 99, 235, 0.13), transparent 54%);
-  animation: arcana-active-ripple 1.8s ease-in-out infinite;
-  pointer-events: none;
-}
-
-/* ARC-0.2.02: 선택 버튼은 내부 물결 없이 테두리 빛만 사용 */
-.arcana-skill-btn.is-active::after,
-.arcana-equipment-toggle.is-active::after,
-.arcana-class-card.is-selected::after,
-.arcana-skill-btn.arcana-skill-icon-btn.is-active::after {
-  content: none !important;
-  animation: none !important;
-  background: none !important;
 }
 
 .arcana-friendly-guide {

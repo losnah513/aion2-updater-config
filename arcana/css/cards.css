@@ -720,31 +720,6 @@
     0 0 10px rgba(37, 99, 235, 0.22);
 }
 
-.arcana-skill-btn.arcana-skill-icon-btn.is-active::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background:
-    repeating-linear-gradient(
-      115deg,
-      rgba(37, 99, 235, 0) 0px,
-      rgba(37, 99, 235, 0) 10px,
-      rgba(37, 99, 235, 0.11) 18px,
-      rgba(125, 211, 252, 0.22) 28px,
-      rgba(37, 99, 235, 0) 42px
-    ),
-    radial-gradient(circle at 18% 50%, rgba(125, 211, 252, 0.16), transparent 42%);
-  background-size: 130px 100%, 100% 100%;
-  animation: arcana-skill-wave-flow 3.2s linear infinite;
-  pointer-events: none;
-}
-
-@keyframes arcana-skill-wave-flow {
-  from { background-position: 0 0, 0 0; }
-  to { background-position: 130px 0, 0 0; }
-}
-
 @media (max-width: 720px) {
   .arcana-skill-btn.arcana-skill-icon-btn {
     min-height: 44px;
@@ -1167,29 +1142,3 @@
 }
 
 
-/* ARC-0.3.01 · 260613_03: 저장 완료 패널의 채도 저하/잠금 연출 복구 */
-[data-panel-key="characterLevels"].is-saved .arcana-skill-btn,
-[data-panel-key="equipmentOptions"].is-saved .arcana-equipment-card,
-[data-panel-key="ownedArcanaCards"].is-saved .arcana-owned-card {
-  filter: saturate(0.48) brightness(0.98);
-  opacity: 0.78;
-  transition: filter 0.18s ease, opacity 0.18s ease;
-}
-
-[data-panel-key="characterLevels"].is-saved .arcana-skill-btn.is-active,
-[data-panel-key="equipmentOptions"].is-saved .arcana-equipment-card:has(select:not(:placeholder-shown)),
-[data-panel-key="ownedArcanaCards"].is-saved .arcana-owned-card {
-  filter: saturate(0.62) brightness(0.99);
-  opacity: 0.86;
-}
-
-[data-panel-key="characterLevels"].is-saved .arcana-skill-btn::after {
-  animation-duration: 5.6s !important;
-  opacity: 0.45;
-}
-
-[data-panel-key="characterLevels"].is-saved .arcana-skill-btn,
-[data-panel-key="equipmentOptions"].is-saved .arcana-equipment-card,
-[data-panel-key="ownedArcanaCards"].is-saved .arcana-owned-card {
-  pointer-events: none;
-}
