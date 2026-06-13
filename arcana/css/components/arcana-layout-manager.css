@@ -7,8 +7,8 @@
  */
 :root {
   --arcana-layout-gap: 8px;
-  --arcana-page-max: 1080px;
-  --arcana-top-card-height: 398px;
+  --arcana-page-max: 1020px;
+  --arcana-top-card-height: 388px;
   --arcana-arcana-card-height: 560px;
   --arcana-arcana-title-height: 40px;
   --arcana-arcana-message-height: 38px;
@@ -24,13 +24,14 @@
 }
 
 .arcana-page {
-  width: min(calc(100vw - 32px), var(--arcana-page-max)) !important;
+  width: min(calc(100vw - 48px), var(--arcana-page-max)) !important;
   max-width: var(--arcana-page-max) !important;
   min-width: 0 !important;
   margin-left: auto !important;
   margin-right: auto !important;
-  padding-left: 6px !important;
-  padding-right: 6px !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  box-sizing: border-box !important;
 }
 
 .arcana-topbar,
@@ -42,9 +43,12 @@
 }
 
 .arcana-layout {
-  display: flex;
-  flex-direction: column;
-  gap: var(--arcana-layout-gap);
+  display: flex !important;
+  flex-direction: column !important;
+  gap: var(--arcana-layout-gap) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  align-items: stretch !important;
 }
 
 .arcana-layout.is-class-locked {
@@ -113,7 +117,16 @@
 /* CARD-04~05: PC 기준 1:1 */
 .arcana-editor-panel {
   width: 100% !important;
-  overflow: visible !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+}
+.arcana-editor-panel > .arcana-panel-title {
+  flex: 0 0 auto !important;
+}
+.arcana-editor-panel > [data-layout-group="arcana-row"] {
+  flex: 0 0 auto !important;
 }
 
 [data-layout-group="arcana-row"] {
@@ -133,22 +146,19 @@
   max-height: var(--arcana-arcana-card-height) !important;
   overflow: hidden !important;
   box-sizing: border-box !important;
-  display: grid !important;
-  grid-template-rows:
-    var(--arcana-arcana-title-height)
-    var(--arcana-arcana-message-height)
-    var(--arcana-arcana-tab-height)
-    minmax(0, 1fr)
-    var(--arcana-arcana-footer-height) !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 [data-layout-role="arcana-card"] > *:not(.arcana-loading-overlay) {
   margin-left: 8px !important;
   margin-right: 8px !important;
-  min-width: 0;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
 }
 
 [data-layout-role="arcana-card"] .arcana-panel-title-inner {
+  flex: 0 0 var(--arcana-arcana-title-height) !important;
   height: var(--arcana-arcana-title-height) !important;
   min-height: var(--arcana-arcana-title-height) !important;
   margin-top: 0 !important;
@@ -157,6 +167,7 @@
 }
 
 [data-layout-role="arcana-card"] > .arcana-panel-message {
+  flex: 0 0 var(--arcana-arcana-message-height) !important;
   height: var(--arcana-arcana-message-height) !important;
   min-height: var(--arcana-arcana-message-height) !important;
   margin-top: 0 !important;
@@ -170,6 +181,7 @@
 
 [data-card="04"] .arcana-owned-tab-spacer,
 [data-card="05"] .arcana-recommend-tabs {
+  flex: 0 0 var(--arcana-arcana-tab-height) !important;
   height: var(--arcana-arcana-tab-height) !important;
   min-height: var(--arcana-arcana-tab-height) !important;
   margin-top: 0 !important;
@@ -183,8 +195,9 @@
 
 [data-card="04"] #arcanaOwnedCardGrid,
 [data-card="05"] .arcana-recommend-area {
+  flex: 1 1 auto !important;
   min-height: 0 !important;
-  height: 100% !important;
+  height: auto !important;
   max-height: none !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
@@ -212,6 +225,7 @@
 }
 
 [data-layout-role="arcana-card"] > .arcana-actions {
+  flex: 0 0 var(--arcana-arcana-footer-height) !important;
   height: var(--arcana-arcana-footer-height) !important;
   min-height: var(--arcana-arcana-footer-height) !important;
   margin-top: 0 !important;

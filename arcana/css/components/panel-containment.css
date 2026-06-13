@@ -8,7 +8,7 @@
 }
 
 .arcana-editor-panel {
-  overflow: visible !important;
+  overflow: hidden !important;
 }
 
 .arcana-owned-section #arcanaOwnedCardGrid::-webkit-scrollbar,

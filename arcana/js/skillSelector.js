@@ -238,7 +238,7 @@ ArcanaApp.skillSelector = {
       state.targetSkillPulseAt[skill] = Date.now() - Math.max(0, activeOrder) * 2310;
     }
 
-    const durationMs = 14500;
+    const durationMs = 20000;
     const elapsed = (Date.now() - state.targetSkillPulseAt[skill]) % durationMs;
     button.style.setProperty('--arcana-skill-flow-delay', `${-(elapsed / 1000).toFixed(2)}s`);
   },
