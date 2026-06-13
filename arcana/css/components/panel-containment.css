@@ -1,6 +1,7 @@
 /*
  * ARCANA PANEL CONTAINMENT
- * 카드 본문은 반드시 카드 영역 내부에 갇힌다. header/footer 침범 금지.
+ * 역할: 카드 내부 컨텐츠가 카드 밖으로 침범하지 않도록 공통 min-height/스크롤만 제공한다.
+ * 현재/추천 아르카나 카드 높이는 arcana-pair-balance.css가 단독 관리한다.
  */
 .arcana-panel {
   min-height: 0;
@@ -10,103 +11,24 @@
   overflow: visible !important;
 }
 
-.arcana-arcana-section {
-  display: flex !important;
-  flex-direction: column !important;
-  height: 610px !important;
-  max-height: 610px !important;
-  overflow: hidden !important;
-}
-
-.arcana-arcana-section > .arcana-panel-title,
-.arcana-arcana-section > .arcana-panel-message,
-.arcana-arcana-section > .arcana-owned-tab-spacer,
-.arcana-arcana-section > .arcana-actions,
-.arcana-arcana-section > .arcana-recommend-actions {
-  flex: 0 0 auto !important;
-}
-
-.arcana-owned-section #arcanaOwnedCardGrid {
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
-  max-height: none !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  align-content: start !important;
-  padding: 0 2px 6px 0 !important;
-}
-
-.arcana-owned-section .arcana-actions {
-  position: relative !important;
-  z-index: 5 !important;
-  margin-top: 7px !important;
-  padding-top: 7px !important;
-  border-top: 1px solid var(--arcana-line-soft) !important;
-  background: #fff !important;
-}
-
-.arcana-owned-tab-spacer {
-  position: relative !important;
-  z-index: 6 !important;
-  display: flex !important;
-  gap: 4px !important;
-  margin-bottom: 6px !important;
-  background: #fff !important;
-}
-
-.arcana-owned-tab-spacer span {
-  height: 28px !important;
-  padding: 6px 12px !important;
-  border: 1px solid var(--arcana-line) !important;
-  border-bottom-color: var(--arcana-line-soft) !important;
-  border-radius: var(--arcana-radius) var(--arcana-radius) 0 0 !important;
-  background: #fff !important;
-  color: var(--arcana-muted) !important;
-  font-size: 11px !important;
-  white-space: nowrap !important;
-}
-
-.arcana-owned-tab-spacer span:first-child {
-  color: var(--arcana-primary) !important;
-}
-
-.arcana-recommend-area {
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
-  max-height: none !important;
-  overflow: hidden !important;
-}
-
-.arcana-recommend-actions {
-  flex: 0 0 auto !important;
-}
-
 .arcana-owned-section #arcanaOwnedCardGrid::-webkit-scrollbar,
-.arcana-recommend-area::-webkit-scrollbar {
+.arcana-recommend-content::-webkit-scrollbar,
+.arcana-analysis-list::-webkit-scrollbar,
+.arcana-advice-list::-webkit-scrollbar {
   width: 6px;
 }
 
 .arcana-owned-section #arcanaOwnedCardGrid::-webkit-scrollbar-track,
-.arcana-recommend-area::-webkit-scrollbar-track {
+.arcana-recommend-content::-webkit-scrollbar-track,
+.arcana-analysis-list::-webkit-scrollbar-track,
+.arcana-advice-list::-webkit-scrollbar-track {
   background: #f5f7fb;
 }
 
 .arcana-owned-section #arcanaOwnedCardGrid::-webkit-scrollbar-thumb,
-.arcana-recommend-area::-webkit-scrollbar-thumb {
+.arcana-recommend-content::-webkit-scrollbar-thumb,
+.arcana-analysis-list::-webkit-scrollbar-thumb,
+.arcana-advice-list::-webkit-scrollbar-thumb {
   border-radius: 999px;
   background: #b8c3d4;
-}
-
-@media (max-width: 720px) {
-  .arcana-arcana-section {
-    width: 100% !important;
-    min-width: 0 !important;
-    max-width: none !important;
-    height: 620px !important;
-    max-height: 620px !important;
-  }
-
-  .arcana-owned-section #arcanaOwnedCardGrid {
-    grid-template-columns: repeat(2, var(--arcana-card-width)) !important;
-  }
 }

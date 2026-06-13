@@ -1,8 +1,7 @@
 /*
  * ARCANA PAIR BALANCE CSS
  * 역할: 현재 아르카나 / 추천 아르카나 카드의 외곽 높이와 내부 기준선을 맞춘다.
- * 범위: 좌우 아르카나 카드 레이아웃만 담당한다. CTA 연출, 추천 계산, 카드 데이터는 건드리지 않는다.
- * 기준: 같은 카드 화면에서 좌측/우측의 제목, 안내, 탭, 본문, 하단 영역이 같은 높이 체계로 정렬되어야 한다.
+ * 기준: 제목/안내/탭/본문/하단 영역을 같은 높이 체계로 고정한다.
  */
 
 :root {
@@ -17,28 +16,20 @@
 
 .arcana-owned-section,
 .arcana-recommend-section {
+  display: grid !important;
   height: var(--arcana-pair-panel-height) !important;
   min-height: var(--arcana-pair-panel-height) !important;
   max-height: var(--arcana-pair-panel-height) !important;
   overflow: hidden !important;
+  box-sizing: border-box !important;
 }
 
 .arcana-owned-section {
-  display: grid !important;
   grid-template-rows: auto auto var(--arcana-pair-tab-height) minmax(0, 1fr) var(--arcana-pair-footer-height) !important;
 }
 
 .arcana-recommend-section {
-  display: grid !important;
   grid-template-rows: auto auto minmax(0, 1fr) var(--arcana-pair-footer-height) !important;
-}
-
-.arcana-owned-section > .arcana-panel-title,
-.arcana-owned-section > .arcana-panel-message,
-.arcana-owned-section > .arcana-owned-tab-spacer,
-.arcana-recommend-section > .arcana-panel-title,
-.arcana-recommend-section > .arcana-panel-message {
-  min-height: 0 !important;
 }
 
 .arcana-owned-tab-spacer,
@@ -50,17 +41,19 @@
 }
 
 .arcana-owned-section #arcanaOwnedCardGrid {
+  height: 100% !important;
   min-height: 0 !important;
   max-height: none !important;
-  height: 100% !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
   align-content: start !important;
   align-items: start !important;
   padding: 0 2px 6px 0 !important;
+  box-sizing: border-box !important;
 }
 
-.arcana-owned-section > .arcana-actions {
+.arcana-owned-section > .arcana-actions,
+.arcana-recommend-section > .arcana-recommend-actions {
   min-height: var(--arcana-pair-footer-height) !important;
   height: var(--arcana-pair-footer-height) !important;
   display: flex !important;
@@ -70,61 +63,46 @@
   padding: 6px 0 0 !important;
   border-top: 1px solid var(--arcana-line-soft) !important;
   background: #fff !important;
+  box-sizing: border-box !important;
 }
 
 .arcana-recommend-section .arcana-recommend-area {
   min-height: 0 !important;
   height: 100% !important;
   overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+.arcana-recommend-section.is-recommend-locked .arcana-recommend-area {
   display: flex !important;
-  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .arcana-recommend-section.is-recommend-ready .arcana-recommend-area {
-  justify-content: stretch !important;
+  display: grid !important;
+  grid-template-rows: var(--arcana-pair-tab-height) minmax(0, 1fr) !important;
 }
 
 .arcana-recommend-section.is-recommend-ready .arcana-recommend-content {
-  flex: 1 1 auto !important;
   min-height: 0 !important;
+  height: 100% !important;
   max-height: none !important;
-  height: auto !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
-  padding: 8px 8px 10px !important;
+  box-sizing: border-box !important;
 }
 
 .arcana-recommend-section.is-recommend-ready .arcana-recommend-card-grid {
-  min-height: 100% !important;
   align-content: start !important;
   align-items: start !important;
 }
 
-.arcana-recommend-section.is-recommend-ready .arcana-analysis-list,
-.arcana-recommend-section.is-recommend-ready .arcana-advice-list {
-  max-height: none !important;
-  height: auto !important;
-  min-height: 0 !important;
-}
-
-/* 추천 결과가 표시된 뒤에도 하단 기준선은 현재 아르카나 저장 버튼 줄과 맞춘다.
-   실제 CTA는 보이지 않지만 높이만 남겨 좌우 카드의 내부 구조가 흔들리지 않게 한다. */
-.arcana-recommend-section.is-recommend-ready .arcana-recommend-actions {
-  position: relative !important;
-  left: auto !important;
-  top: auto !important;
-  transform: none !important;
-  width: auto !important;
-  height: var(--arcana-pair-footer-height) !important;
-  min-height: var(--arcana-pair-footer-height) !important;
-  flex: 0 0 var(--arcana-pair-footer-height) !important;
-  display: flex !important;
+/* 추천 결과 표시 후에는 CTA를 보이지 않게 하되, 좌측 저장 버튼 줄과 같은 하단 기준선은 유지한다. */
+.arcana-recommend-section.is-recommend-ready > .arcana-recommend-actions {
   visibility: hidden !important;
   opacity: 0 !important;
   pointer-events: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  overflow: hidden !important;
 }
 
 @media (max-width: 720px) {

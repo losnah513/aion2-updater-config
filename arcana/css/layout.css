@@ -766,8 +766,7 @@
   margin-top: 9px;
 }
 
-.arcana-class-actions .arcana-btn,
-.arcana-showcase-actions .arcana-btn {
+.arcana-class-actions .arcana-btn {
   width: 118px;
   height: 32px;
   font-weight: 700;
@@ -792,92 +791,4 @@
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
   }
-}
-
-/* 최초 진입 클래스 선택 CTA 강조 */
-.arcana-class-picker.is-initial-cta {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.arcana-class-picker-button.is-initial-cta {
-  min-width: 168px;
-  height: 34px;
-  padding: 0 16px;
-  border-color: rgba(37, 99, 235, 0.8);
-  color: var(--arcana-primary);
-  font-size: 12px;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.06), 0 8px 20px rgba(37, 99, 235, 0.12);
-  animation: arcana-class-cta-breathe 2.4s ease-in-out infinite;
-}
-
-.arcana-class-picker-button.is-initial-cta::before {
-  content: "✨";
-  font-size: 12px;
-}
-
-@keyframes arcana-class-cta-breathe {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-1px) scale(1.03); }
-}
-
-@media (max-width: 720px) {
-  .arcana-class-picker.is-initial-cta {
-    position: static;
-    transform: none;
-  }
-}
-
-/* 수정사항_260610_07: 클래스 선택 버튼 탑바 아래 중앙 고정 */
-.arcana-class-picker {
-  position: fixed !important;
-  top: 48px !important;
-  left: 50% !important;
-  right: auto !important;
-  z-index: 70 !important;
-  transform: translateX(-50%) !important;
-}
-
-.arcana-class-dropdown {
-  left: 50% !important;
-  right: auto !important;
-  transform: translateX(-50%) !important;
-}
-
-.arcana-refresh-notice {
-  margin-top: 42px !important;
-}
-
-@media (max-width: 720px) {
-  .arcana-class-picker {
-    top: 46px !important;
-  }
-}
-
-/* 수정사항_260610_08: 클래스 선택 버튼 위치 전환 / 우측 키노조 메뉴 제거 후 정렬 */
-body.arcana-has-selected-class .arcana-class-picker {
-  position: static !important;
-  top: auto !important;
-  left: auto !important;
-  right: auto !important;
-  transform: none !important;
-  z-index: auto !important;
-}
-
-body.arcana-has-selected-class .arcana-refresh-notice {
-  margin-top: 5px !important;
-}
-
-body:not(.arcana-has-selected-class) .arcana-class-picker {
-  position: fixed !important;
-  top: 48px !important;
-  left: 50% !important;
-  right: auto !important;
-  z-index: 70 !important;
-  transform: translateX(-50%) !important;
-}
-
-body:not(.arcana-has-selected-class) .arcana-refresh-notice {
-  margin-top: 42px !important;
 }
