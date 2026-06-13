@@ -1,0 +1,134 @@
+/*
+ * ARCANA PAIR BALANCE CSS
+ * 역할: 현재 아르카나 / 추천 아르카나 카드의 외곽 높이와 내부 기준선을 맞춘다.
+ * 범위: 좌우 아르카나 카드 레이아웃만 담당한다. CTA 연출, 추천 계산, 카드 데이터는 건드리지 않는다.
+ * 기준: 같은 카드 화면에서 좌측/우측의 제목, 안내, 탭, 본문, 하단 영역이 같은 높이 체계로 정렬되어야 한다.
+ */
+
+:root {
+  --arcana-pair-panel-height: 610px;
+  --arcana-pair-footer-height: 42px;
+  --arcana-pair-tab-height: 34px;
+}
+
+.arcana-arcana-columns {
+  align-items: stretch !important;
+}
+
+.arcana-owned-section,
+.arcana-recommend-section {
+  height: var(--arcana-pair-panel-height) !important;
+  min-height: var(--arcana-pair-panel-height) !important;
+  max-height: var(--arcana-pair-panel-height) !important;
+  overflow: hidden !important;
+}
+
+.arcana-owned-section {
+  display: grid !important;
+  grid-template-rows: auto auto var(--arcana-pair-tab-height) minmax(0, 1fr) var(--arcana-pair-footer-height) !important;
+}
+
+.arcana-recommend-section {
+  display: grid !important;
+  grid-template-rows: auto auto minmax(0, 1fr) var(--arcana-pair-footer-height) !important;
+}
+
+.arcana-owned-section > .arcana-panel-title,
+.arcana-owned-section > .arcana-panel-message,
+.arcana-owned-section > .arcana-owned-tab-spacer,
+.arcana-recommend-section > .arcana-panel-title,
+.arcana-recommend-section > .arcana-panel-message {
+  min-height: 0 !important;
+}
+
+.arcana-owned-tab-spacer,
+.arcana-recommend-tabs {
+  height: var(--arcana-pair-tab-height) !important;
+  min-height: var(--arcana-pair-tab-height) !important;
+  margin: 0 7px 6px !important;
+  box-sizing: border-box !important;
+}
+
+.arcana-owned-section #arcanaOwnedCardGrid {
+  min-height: 0 !important;
+  max-height: none !important;
+  height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  align-content: start !important;
+  align-items: start !important;
+  padding: 0 2px 6px 0 !important;
+}
+
+.arcana-owned-section > .arcana-actions {
+  min-height: var(--arcana-pair-footer-height) !important;
+  height: var(--arcana-pair-footer-height) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+  padding: 6px 0 0 !important;
+  border-top: 1px solid var(--arcana-line-soft) !important;
+  background: #fff !important;
+}
+
+.arcana-recommend-section .arcana-recommend-area {
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.arcana-recommend-section.is-recommend-ready .arcana-recommend-area {
+  justify-content: stretch !important;
+}
+
+.arcana-recommend-section.is-recommend-ready .arcana-recommend-content {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  height: auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 8px 8px 10px !important;
+}
+
+.arcana-recommend-section.is-recommend-ready .arcana-recommend-card-grid {
+  min-height: 100% !important;
+  align-content: start !important;
+  align-items: start !important;
+}
+
+.arcana-recommend-section.is-recommend-ready .arcana-analysis-list,
+.arcana-recommend-section.is-recommend-ready .arcana-advice-list {
+  max-height: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+/* 추천 결과가 표시된 뒤에도 하단 기준선은 현재 아르카나 저장 버튼 줄과 맞춘다.
+   실제 CTA는 보이지 않지만 높이만 남겨 좌우 카드의 내부 구조가 흔들리지 않게 한다. */
+.arcana-recommend-section.is-recommend-ready .arcana-recommend-actions {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+  transform: none !important;
+  width: auto !important;
+  height: var(--arcana-pair-footer-height) !important;
+  min-height: var(--arcana-pair-footer-height) !important;
+  flex: 0 0 var(--arcana-pair-footer-height) !important;
+  display: flex !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+@media (max-width: 720px) {
+  :root {
+    --arcana-pair-panel-height: 620px;
+  }
+}
