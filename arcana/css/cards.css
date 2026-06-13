@@ -1443,3 +1443,31 @@
   color: #dc2626;
   font-weight: 900;
 }
+
+
+/* ARC-0.3.01 · 260613_03: 저장 완료 패널의 채도 저하/잠금 연출 복구 */
+[data-panel-key="characterLevels"].is-saved .arcana-skill-btn,
+[data-panel-key="equipmentOptions"].is-saved .arcana-equipment-card,
+[data-panel-key="ownedArcanaCards"].is-saved .arcana-owned-card {
+  filter: saturate(0.48) brightness(0.98);
+  opacity: 0.78;
+  transition: filter 0.18s ease, opacity 0.18s ease;
+}
+
+[data-panel-key="characterLevels"].is-saved .arcana-skill-btn.is-active,
+[data-panel-key="equipmentOptions"].is-saved .arcana-equipment-card:has(select:not(:placeholder-shown)),
+[data-panel-key="ownedArcanaCards"].is-saved .arcana-owned-card {
+  filter: saturate(0.62) brightness(0.99);
+  opacity: 0.86;
+}
+
+[data-panel-key="characterLevels"].is-saved .arcana-skill-btn::after {
+  animation-duration: 5.6s !important;
+  opacity: 0.45;
+}
+
+[data-panel-key="characterLevels"].is-saved .arcana-skill-btn,
+[data-panel-key="equipmentOptions"].is-saved .arcana-equipment-card,
+[data-panel-key="ownedArcanaCards"].is-saved .arcana-owned-card {
+  pointer-events: none;
+}

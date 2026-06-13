@@ -110,3 +110,114 @@
     --arcana-pair-panel-height: 620px;
   }
 }
+
+
+/* ARC-0.3.01 · 260613_03: 좌우 아르카나 내부 기준선 강제 통일 */
+.arcana-editor-panel .arcana-arcana-columns {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  align-items: stretch !important;
+  gap: 8px !important;
+}
+
+.arcana-editor-panel .arcana-owned-section,
+.arcana-editor-panel .arcana-recommend-section {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 610px !important;
+  min-height: 610px !important;
+  max-height: 610px !important;
+  display: grid !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.arcana-editor-panel .arcana-owned-section {
+  grid-template-rows: 42px 40px 34px minmax(0, 1fr) 46px !important;
+}
+
+.arcana-editor-panel .arcana-recommend-section {
+  grid-template-rows: 42px 40px minmax(0, 1fr) 46px !important;
+}
+
+.arcana-editor-panel .arcana-panel-title-inner,
+.arcana-editor-panel .arcana-panel-message,
+.arcana-editor-panel .arcana-owned-tab-spacer,
+.arcana-editor-panel .arcana-recommend-tabs,
+.arcana-editor-panel .arcana-actions {
+  box-sizing: border-box !important;
+  flex: none !important;
+}
+
+.arcana-editor-panel .arcana-panel-title-inner {
+  height: 42px !important;
+  min-height: 42px !important;
+  margin: 0 !important;
+}
+
+.arcana-editor-panel .arcana-panel-message {
+  height: 40px !important;
+  min-height: 40px !important;
+  margin: 0 8px 6px !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.arcana-editor-panel .arcana-owned-tab-spacer,
+.arcana-editor-panel .arcana-recommend-tabs {
+  height: 34px !important;
+  min-height: 34px !important;
+  margin: 0 8px 6px !important;
+}
+
+.arcana-editor-panel #arcanaOwnedCardGrid,
+.arcana-editor-panel .arcana-recommend-area {
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 0 8px 8px !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.arcana-editor-panel .arcana-card-grid,
+.arcana-editor-panel .arcana-recommend-card-grid {
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+  align-content: start !important;
+  align-items: start !important;
+}
+
+.arcana-editor-panel .arcana-card-box,
+.arcana-editor-panel .arcana-recommend-card-grid .arcana-card-box {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+.arcana-editor-panel .arcana-owned-section > .arcana-actions,
+.arcana-editor-panel .arcana-recommend-section > .arcana-actions {
+  height: 46px !important;
+  min-height: 46px !important;
+  margin: 0 8px !important;
+  padding: 7px 0 8px !important;
+  border-top: 1px solid var(--arcana-line-soft) !important;
+  justify-content: center !important;
+  background: #fff !important;
+}
+
+.arcana-recommend-section.is-recommend-ready > .arcana-recommend-actions {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+@media (max-width: 720px) {
+  .arcana-editor-panel .arcana-arcana-columns {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}

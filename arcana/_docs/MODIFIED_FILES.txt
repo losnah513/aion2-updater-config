@@ -1,23 +1,17 @@
-ARC-0.3.01 · 260613_02
+ARC-0.3.01 · 260613_03
 
 [웹]
-- index.html: 웹 상단 버전 표기를 ARC-0.3.01 · 260613_02로 갱신
-- css/cards.css: 현재/추천 아르카나 높이를 방해하던 260610 계열 구 레이아웃 블록 제거
-- css/modal.css: 더 이상 사용하지 않는 최초 진입 쇼케이스 클래스 선택 UI 스타일 제거
-- css/layout.css: 구 클래스 선택 위치 보정 블록 제거
-- css/components/class-selector.css: 클래스 선택 버튼/드롭다운 단일 관리 스타일로 재정리
-- css/components/recommend-panel.css: 추천 패널 내부 전용 스타일로 축소
-- css/components/arcana-pair-balance.css: 현재/추천 아르카나 카드 높이와 내부 기준선 단일 관리
-- css/components/panel-containment.css: 현재/추천 카드 높이 고정 기능 제거, 공통 스크롤/침범 방지만 유지
-- js/classSelector.js: 쇼케이스형 클래스 선택 로직 제거, 상단 드롭다운 선택 방식으로 단일화
-- js/state.js / js/app.js: 쇼케이스 상태 키 제거
+- js/classSelector.js: 260613_02에서 제거된 카드 회전형 클래스 선택 모달을 복구하고, 상단 버튼은 모달 진입용으로 유지.
+- css/modal.css: 클래스 쇼케이스/회전 카드 모달 스타일 복구.
+- js/state.js: showcaseSelectedKey/touchPreviewClassKey/hasSeenClassShowcase 상태 복구.
+- css/components/arcana-pair-balance.css: 현재 아르카나/추천 아르카나의 제목·안내·탭·본문·하단 기준선 강제 통일.
+- css/cards.css: 저장 완료 상태에서 액티브/반지/아르카나 패널 채도 저하 및 잠금 연출 보강.
+- index.html/js/config.js: 화면 버전 표기 ARC-0.3.01 · 260613_03 반영.
 
 [Apps Script]
-- 수정 없음
-- 재배포 불필요
+- 수정 없음.
+- 재배포 불필요.
 
-[검수]
-- 실행 코드 기준 arcanaClassShowcase / arcana-showcase 잔여 제거 확인
-- cards.css 내 260610 구 레이아웃 블록 제거 확인
-- CSS brace balance 확인
-- JS 문법 검사 통과
+[정리]
+- 260613_02의 “상단 드롭다운 단일화” 방향을 폐기하고, 사용자 의도였던 카드 회전형 클래스 선택 모달을 복구.
+- 좌우 아르카나 카드 높이 보정은 별도 balance CSS에서만 관리하도록 유지.

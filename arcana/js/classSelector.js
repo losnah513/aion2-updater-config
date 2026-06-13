@@ -1,10 +1,5 @@
 window.ArcanaApp = window.ArcanaApp || {};
 
-/*
- * ARCANA CLASS SELECTOR
- * 역할: 상단 클래스 선택 버튼/드롭다운만 관리한다.
- * 과거 쇼케이스형 클래스 선택 UI는 이중 진입/중복 스타일 충돌 원인이어서 제거했다.
- */
 ArcanaApp.classSelector = {
   normalizeClassKey(classKey) {
     return ArcanaApp.classService
@@ -59,6 +54,7 @@ ArcanaApp.classSelector = {
     button.appendChild(arrow);
 
     layout.classList.toggle('is-class-locked', !state.hasSelectedClass);
+
     ArcanaApp.classSelector.renderCompactClassList();
   },
 
@@ -85,14 +81,15 @@ ArcanaApp.classSelector = {
   },
 
   selectCompactClass(classKey) {
-    ArcanaApp.state.pendingClassKey = ArcanaApp.classSelector.normalizeClassKey(classKey);
+    const state = ArcanaApp.state;
+    state.pendingClassKey = ArcanaApp.classSelector.normalizeClassKey(classKey);
     ArcanaApp.classSelector.renderCompactClassList();
   },
+
 
   bind() {
     if (ArcanaApp.classSelector._eventsBound) return;
     ArcanaApp.classSelector._eventsBound = true;
-
     const pickerButton = document.getElementById('arcanaClassPickerButton');
     const confirmButton = document.getElementById('arcanaConfirmClass');
     const closeButton = document.getElementById('arcanaCloseClass');
@@ -100,7 +97,7 @@ ArcanaApp.classSelector = {
     if (pickerButton) {
       pickerButton.addEventListener('click', event => {
         event.stopPropagation();
-        ArcanaApp.classSelector.toggle();
+        ArcanaApp.classSelector.openPicker();
       });
     }
 
@@ -120,16 +117,18 @@ ArcanaApp.classSelector = {
 
     document.addEventListener('click', event => {
       const picker = document.getElementById('arcanaClassPicker');
+      const showcase = document.getElementById('arcanaClassShowcase');
       if (picker && picker.contains(event.target)) return;
+      if (showcase && !showcase.hidden && showcase.contains(event.target)) return;
       ArcanaApp.classSelector.close();
     });
   },
 
   openPicker() {
     const state = ArcanaApp.state;
+
     state.pendingClassKey = state.hasSelectedClass ? state.currentClassKey : '';
-    ArcanaApp.classSelector.renderCompactClassList();
-    ArcanaApp.classSelector.open();
+    ArcanaApp.classSelector.openShowcase();
   },
 
   toggle() {
@@ -155,6 +154,285 @@ ArcanaApp.classSelector = {
     ArcanaApp.state.pendingClassKey = ArcanaApp.state.currentClassKey;
     ArcanaApp.classSelector.close();
     ArcanaApp.classSelector.render();
+  },
+
+  openShowcase() {
+    const state = ArcanaApp.state;
+    const showcase = ArcanaApp.classSelector.ensureShowcase();
+    if (!showcase) return;
+
+    state.pendingClassKey = '';
+    state.showcaseSelectedKey = '';
+    state.touchPreviewClassKey = '';
+
+    ArcanaApp.classSelector.renderShowcase();
+    showcase.hidden = false;
+    showcase.setAttribute('aria-hidden', 'false');
+
+    window.requestAnimationFrame(() => {
+      showcase.classList.add('is-open');
+    });
+  },
+
+  closeShowcase() {
+    const showcase = document.getElementById('arcanaClassShowcase');
+    if (!showcase) return;
+
+    showcase.classList.remove('is-open', 'is-picked');
+    showcase.setAttribute('aria-hidden', 'true');
+
+    window.setTimeout(() => {
+      showcase.hidden = true;
+      showcase.querySelectorAll('.arcana-showcase-card').forEach(card => {
+        card.classList.remove('is-selected', 'is-falling', 'is-hovered');
+      });
+      const hint = showcase.querySelector('.arcana-touch-hint');
+      if (hint) hint.remove();
+    }, 240);
+  },
+
+  ensureShowcase() {
+    let showcase = document.getElementById('arcanaClassShowcase');
+    if (showcase) return showcase;
+
+    showcase = document.createElement('div');
+    showcase.id = 'arcanaClassShowcase';
+    showcase.className = 'arcana-class-showcase';
+    showcase.hidden = true;
+    showcase.setAttribute('aria-hidden', 'true');
+
+    showcase.innerHTML = `
+      <div class="arcana-showcase-stage" role="dialog" aria-modal="true" aria-labelledby="arcanaShowcaseTitle">
+        <div class="arcana-showcase-copy">
+          <h2 id="arcanaShowcaseTitle">어떤 클래스로 시뮬레이션을 진행할까요?</h2>
+          <p>클래스를 선택하면 스킬 정보를 불러올 수 있어요.</p>
+        </div>
+        <div class="arcana-showcase-ring-wrap">
+          <div id="arcanaShowcaseRing" class="arcana-showcase-ring"></div>
+        </div>
+        <div id="arcanaShowcaseButtons" class="arcana-showcase-buttons"></div>
+        <div class="arcana-showcase-actions">
+          <button id="arcanaShowcaseConfirm" class="arcana-btn arcana-btn-primary" type="button" disabled>확인</button>
+          <button id="arcanaShowcaseClose" class="arcana-btn arcana-btn-ghost" type="button">닫기</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(showcase);
+
+    showcase.addEventListener('click', event => {
+      if (event.target === showcase) {
+        ArcanaApp.classSelector.cancelShowcaseSelection();
+        return;
+      }
+
+      if (ArcanaApp.classSelector.isTouchMode()) {
+        const interactive = event.target.closest('.arcana-showcase-card, .arcana-showcase-name-btn, .arcana-showcase-actions button');
+        if (!interactive) ArcanaApp.classSelector.clearTouchPreview();
+      }
+    });
+
+    showcase.querySelector('#arcanaShowcaseConfirm').addEventListener('click', event => {
+      event.stopPropagation();
+      ArcanaApp.classSelector.confirmShowcase();
+    });
+
+    showcase.querySelector('#arcanaShowcaseClose').addEventListener('click', event => {
+      event.stopPropagation();
+      ArcanaApp.classSelector.cancelShowcaseSelection();
+    });
+
+    return showcase;
+  },
+
+  renderShowcase() {
+    const state = ArcanaApp.state;
+    const showcase = ArcanaApp.classSelector.ensureShowcase();
+    const ring = showcase.querySelector('#arcanaShowcaseRing');
+    const buttons = showcase.querySelector('#arcanaShowcaseButtons');
+    const confirmButton = showcase.querySelector('#arcanaShowcaseConfirm');
+    const classList = ArcanaApp.classSelector.getDisplayClassList();
+
+    if (!ring || !buttons || !confirmButton) return;
+
+    ring.innerHTML = '';
+    buttons.innerHTML = '';
+    confirmButton.disabled = true;
+
+    classList.forEach((item, index) => {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'arcana-showcase-card';
+      card.dataset.classKey = item.key;
+      card.style.setProperty('--arcana-card-index', index);
+      card.style.setProperty('--arcana-card-count', classList.length);
+      card.setAttribute('aria-label', item.name);
+
+      const inner = document.createElement('span');
+      inner.className = 'arcana-showcase-card-inner';
+
+      const front = document.createElement('span');
+      front.className = 'arcana-showcase-card-face arcana-showcase-card-front';
+      const icon = ArcanaApp.classSelector.createClassIcon(item.key, true);
+      if (icon) front.appendChild(icon);
+      const name = document.createElement('span');
+      name.className = 'arcana-showcase-card-name';
+      name.textContent = item.name;
+      front.appendChild(name);
+
+      const back = document.createElement('span');
+      back.className = 'arcana-showcase-card-face arcana-showcase-card-back';
+      const english = document.createElement('span');
+      english.className = 'arcana-showcase-card-english';
+      english.textContent = item.englishName || item.key;
+      back.appendChild(english);
+
+      inner.appendChild(front);
+      inner.appendChild(back);
+      card.appendChild(inner);
+
+      card.addEventListener('mouseenter', () => ArcanaApp.classSelector.hoverShowcaseClass(item.key));
+      card.addEventListener('focus', () => ArcanaApp.classSelector.hoverShowcaseClass(item.key));
+      card.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        ArcanaApp.classSelector.handleShowcaseChoice(item.key, card);
+      });
+
+      ring.appendChild(card);
+
+      const nameButton = document.createElement('button');
+      nameButton.type = 'button';
+      nameButton.className = 'arcana-showcase-name-btn';
+      nameButton.dataset.classKey = item.key;
+      nameButton.textContent = item.name;
+      nameButton.addEventListener('mouseenter', () => ArcanaApp.classSelector.hoverShowcaseClass(item.key));
+      nameButton.addEventListener('focus', () => ArcanaApp.classSelector.hoverShowcaseClass(item.key));
+      nameButton.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        ArcanaApp.classSelector.handleShowcaseChoice(item.key, nameButton);
+      });
+      buttons.appendChild(nameButton);
+    });
+  },
+
+  isTouchMode() {
+    return ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+  },
+
+  handleShowcaseChoice(classKey, targetElement) {
+    const showcase = document.getElementById('arcanaClassShowcase');
+    if (!showcase) return;
+
+    if (ArcanaApp.classSelector.isTouchMode()) {
+      const previewKey = ArcanaApp.state.touchPreviewClassKey || '';
+      if (previewKey !== classKey) {
+        ArcanaApp.state.touchPreviewClassKey = classKey;
+        ArcanaApp.classSelector.hoverShowcaseClass(classKey);
+        ArcanaApp.classSelector.showTouchHint(classKey, targetElement);
+        return;
+      }
+    }
+
+    ArcanaApp.classSelector.pickShowcaseClass(classKey);
+  },
+
+  clearTouchPreview() {
+    const showcase = document.getElementById('arcanaClassShowcase');
+    ArcanaApp.state.touchPreviewClassKey = '';
+
+    if (!showcase) return;
+
+    showcase.querySelectorAll('.arcana-showcase-card').forEach(card => card.classList.remove('is-hovered'));
+    showcase.querySelectorAll('.arcana-showcase-name-btn').forEach(button => button.classList.remove('is-hovered'));
+
+    const hint = showcase.querySelector('.arcana-touch-hint');
+    if (hint) hint.remove();
+  },
+
+  showTouchHint(classKey, targetElement) {
+    const showcase = document.getElementById('arcanaClassShowcase');
+    const item = ArcanaApp.classSelector.getClassItem(classKey);
+    if (!showcase || !item || !targetElement) return;
+
+    let hint = showcase.querySelector('.arcana-touch-hint');
+    if (!hint) {
+      hint = document.createElement('div');
+      hint.className = 'arcana-touch-hint';
+      showcase.querySelector('.arcana-showcase-stage').appendChild(hint);
+    }
+
+    hint.innerHTML = `
+      <strong>[${item.name}]</strong>
+      <span>이 클래스로 진행하시는 거죠?</span>
+      <small>맞으시면 한 번 더 터치,<br>다시 선택하시려면 아무 곳이나 터치해주세요.</small>
+    `;
+
+    const stage = showcase.querySelector('.arcana-showcase-stage');
+    const targetRect = targetElement.getBoundingClientRect();
+    const stageRect = stage.getBoundingClientRect();
+    const left = targetRect.left + targetRect.width / 2 - stageRect.left;
+    const top = Math.max(76, targetRect.top - stageRect.top - 86);
+    hint.style.left = `${left}px`;
+    hint.style.top = `${top}px`;
+    hint.classList.add('is-visible');
+  },
+
+  hoverShowcaseClass(classKey) {
+    const showcase = document.getElementById('arcanaClassShowcase');
+    if (!showcase) return;
+
+    showcase.querySelectorAll('.arcana-showcase-card').forEach(card => {
+      card.classList.toggle('is-hovered', card.dataset.classKey === classKey);
+    });
+
+    showcase.querySelectorAll('.arcana-showcase-name-btn').forEach(button => {
+      button.classList.toggle('is-hovered', button.dataset.classKey === classKey);
+    });
+  },
+
+  pickShowcaseClass(classKey) {
+    const state = ArcanaApp.state;
+    const showcase = document.getElementById('arcanaClassShowcase');
+    if (!showcase) return;
+
+    const nextKey = ArcanaApp.classSelector.normalizeClassKey(classKey);
+    state.pendingClassKey = nextKey;
+    state.showcaseSelectedKey = nextKey;
+    state.touchPreviewClassKey = '';
+    showcase.classList.add('is-picked');
+
+    const hint = showcase.querySelector('.arcana-touch-hint');
+    if (hint) hint.remove();
+
+    showcase.querySelectorAll('.arcana-showcase-card').forEach(card => {
+      const isSelected = card.dataset.classKey === nextKey;
+      card.classList.toggle('is-selected', isSelected);
+      card.classList.toggle('is-falling', !isSelected);
+      card.classList.remove('is-hovered');
+    });
+
+    showcase.querySelectorAll('.arcana-showcase-name-btn').forEach(button => {
+      button.classList.toggle('is-selected', button.dataset.classKey === nextKey);
+      button.classList.remove('is-hovered');
+    });
+
+    const confirmButton = showcase.querySelector('#arcanaShowcaseConfirm');
+    if (confirmButton) confirmButton.disabled = false;
+  },
+
+  cancelShowcaseSelection() {
+    ArcanaApp.state.pendingClassKey = ArcanaApp.state.currentClassKey;
+    ArcanaApp.state.showcaseSelectedKey = '';
+    ArcanaApp.state.touchPreviewClassKey = '';
+    ArcanaApp.classSelector.closeShowcase();
+  },
+
+  async confirmShowcase() {
+    ArcanaApp.state.hasSeenClassShowcase = true;
+    ArcanaApp.classSelector.closeShowcase();
+    await ArcanaApp.classSelector.confirm();
   },
 
   async confirm() {
@@ -193,21 +471,23 @@ ArcanaApp.classSelector = {
     const normalizedKey = ArcanaApp.classSelector.normalizeClassKey(nextKey);
 
     ArcanaApp.classSelector.close();
+    ArcanaApp.classSelector.closeShowcase();
     ArcanaApp.loadingOverlay.showPage('아르카나가 선택한 클래스의 스킬을 읽고 있어요.');
 
     try {
       state.currentClassKey = normalizedKey;
       state.pendingClassKey = normalizedKey;
       state.hasSelectedClass = true;
+      state.hasSeenClassShowcase = true;
       ArcanaApp.classSelector.resetClassDependentState();
       ArcanaApp.classSelector.applyClassSkillData(normalizedKey);
       ArcanaApp.classSelector.clearSavedPanels();
 
       await ArcanaApp.classSelector.preloadClassAssets(normalizedKey);
-      await new Promise(resolve => window.setTimeout(resolve, 700));
+      await new Promise(resolve => window.setTimeout(resolve, 1100));
 
       ArcanaApp.ui.renderAll();
-      await new Promise(resolve => window.setTimeout(resolve, 180));
+      await new Promise(resolve => window.setTimeout(resolve, 250));
     } finally {
       ArcanaApp.loadingOverlay.hidePage();
     }
@@ -226,7 +506,6 @@ ArcanaApp.classSelector = {
         (data.arcanaSkills && Object.values(data.arcanaSkills).some(list => Array.isArray(list) && list.length > 0))
       )
     );
-
     let classData = keys.map(key => classSkills[key]).find(hasUsableData) || {};
 
     const getFallbackClassData = () => {
@@ -253,6 +532,10 @@ ArcanaApp.classSelector = {
       console.warn('[Arcana] 클래스 패시브 스킬 DB가 비어 있어 내장 스킬 데이터로 보정합니다:', normalizedKey);
     }
 
+    if (!classData.arcanaSkills || !Object.values(classData.arcanaSkills).some(list => Array.isArray(list) && list.length > 0)) {
+      classData = { ...classData, arcanaSkills: fallbackData.arcanaSkills || classData.arcanaSkills || {} };
+    }
+
     if (!hasUsableData(classData) && hasUsableData(fallbackData)) {
       classData = fallbackData;
       console.warn('[Arcana] 클래스 스킬 DB 전체가 비어 있어 내장 스킬 데이터로 보정합니다:', normalizedKey);
@@ -262,10 +545,12 @@ ArcanaApp.classSelector = {
     ArcanaApp.state.activeSkills = Array.from(new Set((classData.active || []).map(skill => String(skill).trim()).filter(Boolean)));
     ArcanaApp.state.passiveSkills = Array.from(new Set((classData.passive || []).map(skill => String(skill).trim()).filter(Boolean)));
     ArcanaApp.state.skillsByArcana = ArcanaApp.classSelector.normalizeArcanaSkillMap({
+      ...classData,
       active: ArcanaApp.state.activeSkills,
       passive: ArcanaApp.state.passiveSkills
     });
   },
+
 
   getArcanaSkillRuleSpecs() {
     return {
@@ -304,7 +589,48 @@ ArcanaApp.classSelector = {
     return map;
   },
 
+  validateArcanaSkillPool(arcanaName, pool, skillType) {
+    const specs = ArcanaApp.classSelector.getArcanaSkillRuleSpecs();
+    const spec = specs[arcanaName];
+    const normalizedPool = Array.from(new Set((pool || []).map(skill => String(skill).trim()).filter(Boolean)));
+
+    if (!spec) return normalizedPool;
+
+    const activeSet = new Set((ArcanaApp.state.activeSkills || []).map(skill => String(skill).trim()).filter(Boolean));
+    const passiveSet = new Set((ArcanaApp.state.passiveSkills || []).map(skill => String(skill).trim()).filter(Boolean));
+    const expectedSet = spec.type === 'passive' ? passiveSet : activeSet;
+    const wrongTypeSet = spec.type === 'passive' ? activeSet : passiveSet;
+    const typeSafePool = normalizedPool.filter(skill => expectedSet.has(skill) && !wrongTypeSet.has(skill));
+    const isValid = typeSafePool.length === spec.expectedCount;
+
+    if (!isValid) {
+      console.warn('[Arcana] 스킬 pool 검증 실패. 전체 pool을 비우지 않고 원본 후보를 유지합니다:', {
+        arcanaName,
+        expectedType: spec.type,
+        expectedCount: spec.expectedCount,
+        actualCount: typeSafePool.length,
+        pool: typeSafePool,
+        originalPool: normalizedPool
+      });
+      return normalizedPool;
+    }
+
+    return typeSafePool;
+  },
+
   normalizeArcanaSkillMap(classData) {
+    /*
+     * 아르카나 스킬 슬롯은 모든 클래스가 같은 공통 규칙을 사용한다.
+     * - 성배/천칭: 액티브 F~Q + 패시브 F~O
+     * - 양피지: 액티브 F/H/J/L/O/P
+     * - 나침반: 액티브 G/I/K/M/N/Q
+     * - 종: 패시브 F/H/J/L/N
+     * - 거울: 패시브 G/I/K/M/O
+     *
+     * Apps Script 응답의 arcanaSkills를 웹에서 재해석/검증하던 구 로직은
+     * 수호성처럼 특정 클래스에서 액티브가 탈락하는 원인이 되어 제거했다.
+     * 웹은 class_skill_db에서 읽은 active/passive 목록을 기준으로 공통 규칙만 적용한다.
+     */
     const active = Array.from(new Set((classData.active || []).map(skill => String(skill).trim()).filter(Boolean)));
     const passive = Array.from(new Set((classData.passive || []).map(skill => String(skill).trim()).filter(Boolean)));
     return ArcanaApp.classSelector.buildArcanaSkillRules(active, passive);
@@ -314,14 +640,18 @@ ArcanaApp.classSelector = {
     const promises = [];
     const iconUrl = ArcanaApp.classSelector.getClassIconUrl(classKey);
 
-    if (iconUrl) promises.push(ArcanaApp.classSelector.preloadImage(iconUrl));
+    if (iconUrl) {
+      promises.push(ArcanaApp.classSelector.preloadImage(iconUrl));
+    }
 
     if (ArcanaApp.skillSelector && ArcanaApp.skillSelector.ensureIconData) {
       await ArcanaApp.skillSelector.ensureIconData();
       const iconMap = ArcanaApp.skillSelector.getCachedIconMap();
       ArcanaApp.skillSelector.getActiveSkills().forEach(skill => {
         const url = iconMap[skill];
-        if (url) promises.push(ArcanaApp.classSelector.preloadImage(ArcanaApp.skillSelector.resolveIconUrl(url)));
+        if (url) {
+          promises.push(ArcanaApp.classSelector.preloadImage(ArcanaApp.skillSelector.resolveIconUrl(url)));
+        }
       });
     }
 
