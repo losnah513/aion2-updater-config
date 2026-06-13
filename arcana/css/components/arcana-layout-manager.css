@@ -7,7 +7,8 @@
  */
 :root {
   --arcana-layout-gap: 8px;
-  --arcana-top-card-height: 354px;
+  --arcana-page-max: 1280px;
+  --arcana-top-card-height: 430px;
   --arcana-arcana-card-height: 610px;
   --arcana-arcana-title-height: 42px;
   --arcana-arcana-message-height: 40px;
@@ -17,8 +18,20 @@
 
 .arcana-page,
 .arcana-layout {
-  width: 100%;
   box-sizing: border-box;
+}
+
+.arcana-page {
+  width: min(100%, var(--arcana-page-max));
+  max-width: var(--arcana-page-max);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.arcana-layout {
+  width: 100%;
 }
 
 .arcana-layout {
@@ -67,6 +80,23 @@
 [data-layout-group="top-row"] .arcana-future-placeholder {
   flex: 1 1 auto;
   min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+
+[data-layout-group="top-row"] > [data-layout-role="top-card"] > .arcana-actions {
+  flex: 0 0 auto;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--arcana-line-soft);
+  background: #fff;
+}
+
+[data-layout-group="top-row"] > [data-layout-role="top-card"] > .arcana-panel-message {
+  flex: 0 0 auto;
 }
 
 [data-layout-group="arcana-row"] {
@@ -177,8 +207,28 @@
 }
 
 @media (max-width: 720px) {
+  .arcana-page {
+    width: 100%;
+    max-width: 100%;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
   [data-layout-group="top-row"],
-  [data-layout-group="arcana-row"] {
+  
+[data-layout-group="top-row"] > [data-layout-role="top-card"] > .arcana-actions {
+  flex: 0 0 auto;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--arcana-line-soft);
+  background: #fff;
+}
+
+[data-layout-group="top-row"] > [data-layout-role="top-card"] > .arcana-panel-message {
+  flex: 0 0 auto;
+}
+
+[data-layout-group="arcana-row"] {
     grid-template-columns: minmax(0, 1fr);
   }
 

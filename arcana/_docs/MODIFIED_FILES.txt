@@ -1,32 +1,15 @@
-ARC-0.3.01 · 260613_04
+ARC-0.3.01 · 260613_05
 
-[웹]
-- CARD-01~05 영역 카드 번호 부여
-  CARD-01 액티브 스킬 선택
-  CARD-02 반지 스킬 옵션
-  CARD-03 추가 기능 영역
-  CARD-04 현재 아르카나
-  CARD-05 추천 아르카나
-- PC 기준 레이아웃 그룹 정리
-  top-row: 1:1:1
-  arcana-row: 1:1
-- 신규 레이아웃 관리자 CSS 추가: css/components/arcana-layout-manager.css
-- 신규 레이아웃 관리자 JS 추가: js/components/arcana-layout-manager.js
-- 기존 arcana-pair-balance.css 제거 및 링크 교체
-- cards.css의 구 카드 외곽/높이 보정 블록 제거
-- 클래스 선택 버튼 스타일 권한을 class-selector.css로 단일화
-- layout.css/main.css의 클래스 선택 버튼 중복 스타일 제거
-- 상단 클래스 버튼 클릭 경로를 카드 회전형 쇼케이스 모달로 단일화
-- HTML 내부 구 compact dropdown 마크업 제거
-- 중복 tabs.js 로드 제거
-- classSelector.js의 중복 const 선언 수정
-- 버전 표기 ARC-0.3.01 · 260613_04 반영
+[웹/CSS]
+- 전체 페이지/탑바/상단 1:1:1/하단 1:1 레이아웃 폭을 Layout Manager에서 1280px 기준으로 재조정
+- CARD-01~03 높이를 430px로 보정하고 내부 스크롤/하단 버튼 보호 적용
+- 신규 공통 효과 파일 추가: css/components/prism-aura.css
+- 저장 완료 카드 테두리와 CTA hover/loading 효과를 Prism Aura 계열로 통일
+- 기존 파란 계열 선택/저장 효과를 오팔·프리즘 컬러로 완화
+
+[웹/HTML]
+- 버전 표기 ARC-0.3.01 · 260613_05 반영
+- prism-aura.css 로드 추가
 
 [Apps Script]
 - 수정 없음
-
-[검수]
-- 클래스 선택 버튼 중복 스타일 grep 확인
-- 구 pair-balance 링크 제거 확인
-- JS 문법 검사 통과
-- CSS brace balance 검사 통과
