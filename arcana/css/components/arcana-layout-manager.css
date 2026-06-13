@@ -7,17 +7,19 @@
  */
 :root {
   --arcana-layout-gap: 8px;
-  --arcana-page-max: 1280px;
-  --arcana-top-card-height: 430px;
+  --arcana-page-max: 1160px;
+  --arcana-top-card-height: 420px;
   --arcana-arcana-card-height: 610px;
   --arcana-arcana-title-height: 42px;
   --arcana-arcana-message-height: 40px;
-  --arcana-arcana-tab-height: 34px;
-  --arcana-arcana-footer-height: 46px;
+  --arcana-arcana-tab-height: 36px;
+  --arcana-arcana-footer-height: 48px;
 }
 
 .arcana-page,
-.arcana-layout {
+.arcana-layout,
+[data-layout-group],
+[data-card] {
   box-sizing: border-box;
 }
 
@@ -32,9 +34,6 @@
 
 .arcana-layout {
   width: 100%;
-}
-
-.arcana-layout {
   display: flex;
   flex-direction: column;
   gap: var(--arcana-layout-gap);
@@ -56,6 +55,7 @@
   visibility: visible;
 }
 
+/* CARD-01~03: PC 기준 1:1:1 */
 [data-layout-group="top-row"] {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -68,11 +68,17 @@
   width: auto;
   min-width: 0;
   max-width: none;
-  min-height: var(--arcana-top-card-height);
   height: var(--arcana-top-card-height);
+  min-height: var(--arcana-top-card-height);
+  max-height: var(--arcana-top-card-height);
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
+  overflow: hidden;
+}
+
+[data-layout-group="top-row"] > [data-layout-role="top-card"] > .arcana-panel-title,
+[data-layout-group="top-row"] > [data-layout-role="top-card"] > .arcana-panel-message {
+  flex: 0 0 auto;
 }
 
 [data-layout-group="top-row"] .arcana-skill-grid,
@@ -86,17 +92,20 @@
   scrollbar-width: thin;
 }
 
-
 [data-layout-group="top-row"] > [data-layout-role="top-card"] > .arcana-actions {
   flex: 0 0 auto;
   margin-top: 6px;
   padding-top: 6px;
   border-top: 1px solid var(--arcana-line-soft);
   background: #fff;
+  justify-content: center;
+  align-items: center;
 }
 
-[data-layout-group="top-row"] > [data-layout-role="top-card"] > .arcana-panel-message {
-  flex: 0 0 auto;
+/* CARD-04~05: PC 기준 1:1 */
+.arcana-editor-panel {
+  width: 100%;
+  overflow: visible;
 }
 
 [data-layout-group="arcana-row"] {
@@ -120,12 +129,22 @@
 
 [data-card="04"] {
   display: grid;
-  grid-template-rows: var(--arcana-arcana-title-height) var(--arcana-arcana-message-height) var(--arcana-arcana-tab-height) minmax(0, 1fr) var(--arcana-arcana-footer-height);
+  grid-template-rows:
+    var(--arcana-arcana-title-height)
+    var(--arcana-arcana-message-height)
+    var(--arcana-arcana-tab-height)
+    minmax(0, 1fr)
+    var(--arcana-arcana-footer-height);
 }
 
 [data-card="05"] {
   display: grid;
-  grid-template-rows: var(--arcana-arcana-title-height) var(--arcana-arcana-message-height) minmax(0, 1fr) var(--arcana-arcana-footer-height);
+  grid-template-rows:
+    var(--arcana-arcana-title-height)
+    var(--arcana-arcana-message-height)
+    var(--arcana-arcana-tab-height)
+    minmax(0, 1fr)
+    var(--arcana-arcana-footer-height);
 }
 
 [data-layout-role="arcana-card"] .arcana-panel-title-inner {
@@ -150,8 +169,12 @@
 [data-card="05"] .arcana-recommend-tabs {
   height: var(--arcana-arcana-tab-height);
   min-height: var(--arcana-arcana-tab-height);
-  margin: 0 8px 6px;
+  margin: 0 8px;
   box-sizing: border-box;
+}
+
+[data-card="05"] .arcana-recommend-tabs:empty {
+  visibility: hidden;
 }
 
 [data-card="04"] #arcanaOwnedCardGrid,
@@ -160,7 +183,7 @@
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0 8px 8px;
+  padding: 8px;
   margin: 0;
   box-sizing: border-box;
 }
@@ -201,6 +224,10 @@
 }
 
 @media (max-width: 980px) {
+  :root {
+    --arcana-page-max: 100%;
+  }
+
   [data-layout-group="top-row"] {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -215,26 +242,14 @@
   }
 
   [data-layout-group="top-row"],
-  
-[data-layout-group="top-row"] > [data-layout-role="top-card"] > .arcana-actions {
-  flex: 0 0 auto;
-  margin-top: 6px;
-  padding-top: 6px;
-  border-top: 1px solid var(--arcana-line-soft);
-  background: #fff;
-}
-
-[data-layout-group="top-row"] > [data-layout-role="top-card"] > .arcana-panel-message {
-  flex: 0 0 auto;
-}
-
-[data-layout-group="arcana-row"] {
+  [data-layout-group="arcana-row"] {
     grid-template-columns: minmax(0, 1fr);
   }
 
   [data-layout-group="top-row"] > [data-layout-role="top-card"] {
     height: auto;
     min-height: 0;
+    max-height: none;
   }
 
   [data-layout-role="arcana-card"] {

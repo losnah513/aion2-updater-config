@@ -62,6 +62,7 @@ ArcanaApp.skillSelector = {
       const level = Number((state.targetSkillLevels || {})[skill] || 0);
       if (level > 0) {
         button.classList.add('is-active', `is-level-${level}`);
+        ArcanaApp.skillSelector.applyIndividualPrismTiming(button, skill);
         const badge = document.createElement('span');
         badge.className = 'arcana-skill-level-badge';
         badge.textContent = `Lv.${level}`;
@@ -170,6 +171,7 @@ ArcanaApp.skillSelector = {
     state.targetSkillLevels = state.targetSkillLevels || {};
     state.selectedTargetSkills = state.selectedTargetSkills || [];
     state.targetSkillPriority20 = state.targetSkillPriority20 || [];
+    state.targetSkillPulseAt = state.targetSkillPulseAt || {};
 
     const currentLevel = Number(state.targetSkillLevels[skill] || 0);
     const nextLevel = currentLevel <= 0 ? 16 : (currentLevel === 16 ? 20 : 0);
@@ -185,10 +187,12 @@ ArcanaApp.skillSelector = {
     if (nextLevel <= 0) {
       state.selectedTargetSkills = state.selectedTargetSkills.filter(item => item !== skill);
       delete state.targetSkillLevels[skill];
+      delete state.targetSkillPulseAt[skill];
       state.targetSkillPriority20 = state.targetSkillPriority20.filter(item => item !== skill);
     } else {
       if (!state.selectedTargetSkills.includes(skill)) state.selectedTargetSkills.push(skill);
       state.targetSkillLevels[skill] = nextLevel;
+      state.targetSkillPulseAt[skill] = Date.now();
 
       if (nextLevel === 20 && !state.targetSkillPriority20.includes(skill)) {
         state.targetSkillPriority20.push(skill);
@@ -223,6 +227,20 @@ ArcanaApp.skillSelector = {
     ArcanaApp.skillSelector.puddingTimer = window.setTimeout(() => {
       ArcanaApp.skillSelector.lastPuddingSkill = '';
     }, 260);
+  },
+
+  applyIndividualPrismTiming(button, skill) {
+    const state = ArcanaApp.state || {};
+    state.targetSkillPulseAt = state.targetSkillPulseAt || {};
+
+    if (!state.targetSkillPulseAt[skill]) {
+      const activeOrder = (state.selectedTargetSkills || []).indexOf(skill);
+      state.targetSkillPulseAt[skill] = Date.now() - Math.max(0, activeOrder) * 1370;
+    }
+
+    const durationMs = 7800;
+    const elapsed = (Date.now() - state.targetSkillPulseAt[skill]) % durationMs;
+    button.style.setProperty('--arcana-skill-flow-delay', `${-(elapsed / 1000).toFixed(2)}s`);
   },
 
   getTargetLevel(skill) {
