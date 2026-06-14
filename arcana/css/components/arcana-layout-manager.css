@@ -5,15 +5,15 @@
  */
 :root {
   --arcana-layout-gap: 8px;
-  --arcana-page-max: 1040px;
-  --arcana-top-card-height: 508px;
-  --arcana-arcana-card-height: 580px;
+  --arcana-page-max: 1000px;
+  --arcana-top-card-height: 455px;
+  --arcana-arcana-card-height: 520px;
   --arcana-arcana-title-height: 40px;
-  --arcana-arcana-message-height: 40px;
+  --arcana-arcana-message-height: 42px;
   --arcana-arcana-tab-height: 34px;
-  --arcana-arcana-footer-height: 50px;
+  --arcana-arcana-footer-height: 54px;
   --arcana-action-button-width: 112px;
-  --arcana-action-button-height: 30px;
+  --arcana-action-button-height: 32px;
 }
 
 .arcana-page,
@@ -341,4 +341,44 @@
     min-height: 620px !important;
     max-height: 620px !important;
   }
+}
+/* ARC-0.3.02 · 260614_03: 카드 길이/내부 중앙 정렬 보정 */
+[data-layout-group="top-row"] .arcana-skill-grid,
+[data-layout-group="top-row"] .arcana-equipment-list,
+[data-layout-group="top-row"] .arcana-future-placeholder {
+  align-content: center !important;
+  justify-content: center !important;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+
+[data-layout-group="top-row"] .arcana-skill-grid {
+  overflow-y: hidden !important;
+}
+
+[data-card="04"] #arcanaOwnedCardGrid,
+[data-card="05"] .arcana-recommend-card-grid {
+  align-content: center !important;
+  justify-content: center !important;
+  justify-items: center !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+[data-card="04"] #arcanaOwnedCardGrid {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+[data-card="05"] .arcana-recommend-content {
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+[data-card="05"] .arcana-recommend-area {
+  justify-content: center !important;
+}
+
+.arcana-actions .arcana-btn:not(.arcana-wave-cta) {
+  border-radius: 8px !important;
 }

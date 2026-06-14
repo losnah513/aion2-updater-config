@@ -217,3 +217,201 @@
     radial-gradient(circle at 50% 50%, rgba(255,255,255,0.98), rgba(255,255,255,0.92)),
     conic-gradient(from 0deg, rgba(177,162,255,.15), rgba(255,190,220,.12), rgba(125,211,252,.13), rgba(110,231,183,.09), rgba(177,162,255,.15));
 }
+/* ARC-0.3.02 · 260614_03: 효과 권한 재정렬
+ * - 20/16 버튼 효과를 동일한 두께로 복구
+ * - 저장 카드 외곽은 "테두리를 따라 흐르는" 프리즘으로만 표현
+ * - 빗금/채도 저하/버튼 선명도 유지
+ */
+@keyframes arcanaPrismEdgeOrbit {
+  0% { transform: rotate(0deg); opacity: .72; filter: saturate(.90) brightness(1.03); }
+  50% { opacity: .95; filter: saturate(1.10) brightness(1.07); }
+  100% { transform: rotate(360deg); opacity: .72; filter: saturate(.90) brightness(1.03); }
+}
+
+@keyframes arcanaSkillPuddingRestore {
+  0% { transform: translateY(0) scale(1); }
+  22% { transform: translateY(1px) scale(.965, 1.04); }
+  48% { transform: translateY(-1px) scale(1.022, .986); }
+  72% { transform: translateY(.4px) scale(.992, 1.012); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+.arcana-skill-btn.arcana-skill-icon-btn {
+  position: relative !important;
+  overflow: hidden !important;
+  isolation: isolate !important;
+  transform-origin: center !important;
+}
+
+.arcana-skill-btn.arcana-skill-icon-btn.is-pudding {
+  animation: arcanaSkillPuddingRestore .52s cubic-bezier(.18,.9,.22,1.18) !important;
+}
+
+.arcana-skill-btn.arcana-skill-icon-btn.is-active {
+  padding-right: 112px !important;
+  transition: transform .20s ease, box-shadow .28s ease, border-color .28s ease, background .28s ease, filter .22s ease !important;
+}
+
+.arcana-skill-btn.arcana-skill-icon-btn.is-active:hover {
+  transform: translateY(-1px) scale(1.01) !important;
+}
+
+.arcana-skill-btn.arcana-skill-icon-btn.is-active > * {
+  position: relative !important;
+  z-index: 10 !important;
+}
+
+.arcana-skill-btn.arcana-skill-icon-btn.is-active .arcana-skill-name {
+  padding-right: 0 !important;
+}
+
+.arcana-skill-btn.arcana-skill-icon-btn.is-active .arcana-skill-level-badge,
+.arcana-skill-btn.arcana-skill-icon-btn.is-active .arcana-skill-priority-badge {
+  position: absolute !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  height: 20px !important;
+  min-height: 20px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  z-index: 14 !important;
+  white-space: nowrap !important;
+  box-shadow: 0 2px 7px rgba(15, 23, 42, .15) !important;
+}
+
+.arcana-skill-btn.arcana-skill-icon-btn.is-active .arcana-skill-level-badge {
+  right: 68px !important;
+  min-width: 40px !important;
+  padding: 0 7px !important;
+  border-radius: 999px !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+}
+
+.arcana-skill-btn.arcana-skill-icon-btn.is-active .arcana-skill-priority-badge {
+  right: 7px !important;
+  min-width: 54px !important;
+  padding: 0 7px !important;
+  border-radius: 999px !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+}
+
+.arcana-skill-btn.arcana-skill-icon-btn.is-level-16:not(.has-priority-badge) {
+  padding-right: 56px !important;
+}
+
+.arcana-skill-btn.arcana-skill-icon-btn.is-level-16:not(.has-priority-badge) .arcana-skill-level-badge {
+  right: 8px !important;
+}
+
+.arcana-skill-btn.arcana-skill-icon-btn.is-active::after,
+.arcana-panel.is-saved::after,
+.arcana-panel.is-saving::after {
+  content: '' !important;
+  position: absolute !important;
+  pointer-events: none !important;
+  z-index: 9 !important;
+  inset: 0 !important;
+  border-radius: inherit !important;
+  padding: 3px !important;
+  background:
+    conic-gradient(from var(--arcana-prism-angle, 0deg),
+      rgba(255,255,255,0) 0deg,
+      rgba(255,238,191,.92) 34deg,
+      rgba(216,196,255,.86) 72deg,
+      rgba(177,225,255,.76) 118deg,
+      rgba(255,213,232,.82) 166deg,
+      rgba(255,244,210,.92) 214deg,
+      rgba(196,246,232,.66) 266deg,
+      rgba(255,255,255,0) 330deg,
+      rgba(255,255,255,0) 360deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) !important;
+  -webkit-mask-composite: xor !important;
+  mask-composite: exclude !important;
+  animation: arcanaPrismEdgeOrbit 26s linear infinite !important;
+  animation-delay: var(--arcana-skill-flow-delay, 0s) !important;
+  opacity: .95 !important;
+}
+
+.arcana-skill-btn.arcana-skill-icon-btn.is-level-20::after {
+  padding: 3px !important;
+  background:
+    conic-gradient(from var(--arcana-prism-angle, 0deg),
+      rgba(255,255,255,0) 0deg,
+      rgba(255,224,145,.98) 30deg,
+      rgba(255,245,212,.96) 70deg,
+      rgba(207,190,255,.80) 116deg,
+      rgba(177,225,255,.74) 162deg,
+      rgba(255,227,170,.98) 224deg,
+      rgba(255,205,230,.70) 282deg,
+      rgba(255,255,255,0) 338deg,
+      rgba(255,255,255,0) 360deg) !important;
+  opacity: 1 !important;
+}
+
+.arcana-skill-btn.arcana-skill-icon-btn.is-level-16::after {
+  padding: 3px !important;
+  background:
+    conic-gradient(from var(--arcana-prism-angle, 0deg),
+      rgba(255,255,255,0) 0deg,
+      rgba(216,196,255,.82) 34deg,
+      rgba(177,225,255,.88) 86deg,
+      rgba(246,233,255,.76) 144deg,
+      rgba(196,246,232,.64) 206deg,
+      rgba(177,225,255,.86) 270deg,
+      rgba(255,255,255,0) 338deg,
+      rgba(255,255,255,0) 360deg) !important;
+}
+
+.arcana-panel.is-saved,
+.arcana-panel.is-saving {
+  position: relative !important;
+  overflow: hidden !important;
+  isolation: isolate !important;
+  background:
+    repeating-linear-gradient(-45deg, rgba(148,163,184,.105) 0 6px, rgba(255,255,255,0) 6px 12px),
+    linear-gradient(180deg, rgba(255,255,255,.99), rgba(255,255,255,1)) !important;
+}
+
+.arcana-panel.is-saved::before,
+.arcana-panel.is-saving::before {
+  content: '' !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 2 !important;
+  pointer-events: none !important;
+  border-radius: inherit !important;
+  background: repeating-linear-gradient(-45deg, rgba(148,163,184,.13) 0 6px, rgba(255,255,255,0) 6px 12px) !important;
+  opacity: .52 !important;
+}
+
+.arcana-panel.is-saved::after,
+.arcana-panel.is-saving::after {
+  z-index: 3 !important;
+  padding: 3px !important;
+  animation-duration: 34s !important;
+  opacity: .86 !important;
+}
+
+.arcana-panel.is-saved > *,
+.arcana-panel.is-saving > * {
+  position: relative !important;
+  z-index: 5 !important;
+}
+
+.arcana-panel.is-saved > *:not(.arcana-actions):not(.arcana-panel-message),
+.arcana-panel.is-saving > *:not(.arcana-actions):not(.arcana-panel-message) {
+  filter: saturate(.58) brightness(1.015) !important;
+  opacity: .90 !important;
+}
+
+.arcana-panel.is-saved .arcana-actions,
+.arcana-panel.is-saving .arcana-actions,
+.arcana-panel.is-saved .arcana-panel-message,
+.arcana-panel.is-saving .arcana-panel-message {
+  filter: none !important;
+  opacity: 1 !important;
+}

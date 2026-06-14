@@ -903,5 +903,13 @@
   color: #dc2626;
   font-weight: 900;
 }
-
-
+/* ARC-0.3.02 · 260614_03: 스킬 뱃지 위치 복구. 효과는 prism-aura.css에서 담당. */
+.arcana-skill-btn.arcana-skill-icon-btn.is-active .arcana-skill-name {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+.arcana-skill-btn.arcana-skill-icon-btn.is-active .arcana-skill-level-badge,
+.arcana-skill-btn.arcana-skill-icon-btn.is-active .arcana-skill-priority-badge {
+  position: absolute !important;
+}

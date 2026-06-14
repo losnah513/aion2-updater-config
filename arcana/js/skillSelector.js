@@ -75,6 +75,7 @@ ArcanaApp.skillSelector = {
             state.targetSkillLevels || {}
           );
           if (priorityNumber > 0) {
+            button.classList.add('has-priority-badge');
             const priority = document.createElement('span');
             priority.className = 'arcana-skill-priority-badge';
             priority.textContent = `중요도 ${priorityNumber}`;
@@ -226,7 +227,7 @@ ArcanaApp.skillSelector = {
     ArcanaApp.skillSelector.lastPuddingSkill = skill;
     ArcanaApp.skillSelector.puddingTimer = window.setTimeout(() => {
       ArcanaApp.skillSelector.lastPuddingSkill = '';
-    }, 260);
+    }, 520);
   },
 
   applyIndividualPrismTiming(button, skill) {
