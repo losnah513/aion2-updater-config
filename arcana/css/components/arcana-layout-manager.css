@@ -5,13 +5,13 @@
  */
 :root {
   --arcana-layout-gap: 8px;
-  --arcana-page-max: 1000px;
-  --arcana-top-card-height: 462px;
+  --arcana-page-max: 1040px;
+  --arcana-top-card-height: 508px;
   --arcana-arcana-card-height: 580px;
   --arcana-arcana-title-height: 40px;
-  --arcana-arcana-message-height: 34px;
+  --arcana-arcana-message-height: 40px;
   --arcana-arcana-tab-height: 34px;
-  --arcana-arcana-footer-height: 44px;
+  --arcana-arcana-footer-height: 50px;
   --arcana-action-button-width: 112px;
   --arcana-action-button-height: 30px;
 }
@@ -102,11 +102,19 @@
   align-items: start !important;
 }
 
+[data-layout-group="top-row"] .arcana-skill-grid-two {
+  grid-template-columns: repeat(2, var(--arcana-skill-button-width)) !important;
+}
+
+[data-layout-group="top-row"] .arcana-equipment-list {
+  grid-template-columns: repeat(2, var(--arcana-card-width)) !important;
+}
+
 [data-layout-group="top-row"] > [data-layout-role="top-card"] > .arcana-actions {
-  flex: 0 0 44px !important;
-  height: 44px !important;
+  flex: 0 0 50px !important;
+  height: 50px !important;
   margin: 0 8px 8px !important;
-  padding: 6px 0 0 !important;
+  padding: 8px 0 0 !important;
   border-top: 1px solid var(--arcana-line-soft) !important;
   background: #fff !important;
 }
@@ -183,12 +191,20 @@
   margin-bottom: 0 !important;
 }
 
+[data-card="04"] .arcana-owned-tab-spacer {
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: flex-start !important;
+  gap: 4px !important;
+  overflow: hidden !important;
+}
+
 [data-card="05"] .arcana-recommend-tabs:empty {
   visibility: hidden;
 }
 
-[data-card="04"] #arcanaOwnedCardGrid,
-[data-card="05"] .arcana-recommend-area {
+/* CARD-04 본문: owned grid 자체가 body이므로 반드시 grid로 관리한다. */
+[data-card="04"] #arcanaOwnedCardGrid {
   flex: 1 1 auto !important;
   min-height: 0 !important;
   height: auto !important;
@@ -198,28 +214,57 @@
   padding: 8px !important;
   margin-top: 0 !important;
   margin-bottom: 0 !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, var(--arcana-card-width))) !important;
+  gap: 8px !important;
+  align-content: center !important;
+  justify-content: center !important;
+  align-items: start !important;
+  justify-items: stretch !important;
+}
+
+/* CARD-05 본문: wrapper는 flex, 실제 추천 카드 grid는 하위에서 관리한다. */
+[data-card="05"] .arcana-recommend-area {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow: hidden !important;
+  padding: 8px !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
   display: flex !important;
-  align-items: center !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
   justify-content: center !important;
 }
 
-[data-card="04"] .arcana-card-grid,
+[data-card="05"] .arcana-recommend-content {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
 [data-card="05"] .arcana-recommend-card-grid {
   width: 100% !important;
   display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 6px !important;
+  grid-template-columns: repeat(3, minmax(0, var(--arcana-card-width))) !important;
+  gap: 8px !important;
   align-content: center !important;
   justify-content: center !important;
-  align-items: center !important;
+  align-items: start !important;
   justify-items: stretch !important;
 }
 
 [data-card="04"] .arcana-card-box,
-[data-card="05"] .arcana-recommend-card-grid .arcana-card-box {
-  width: auto !important;
+[data-card="05"] .arcana-card-box {
+  width: var(--arcana-card-width) !important;
   min-width: 0 !important;
-  max-width: none !important;
+  max-width: var(--arcana-card-width) !important;
 }
 
 [data-layout-role="arcana-card"] > .arcana-actions {
@@ -228,7 +273,7 @@
   min-height: var(--arcana-arcana-footer-height) !important;
   margin-top: 0 !important;
   margin-bottom: 0 !important;
-  padding: 6px 0 7px !important;
+  padding: 8px 0 8px !important;
   border-top: 1px solid var(--arcana-line-soft) !important;
   background: #fff !important;
 }
@@ -260,13 +305,6 @@
   justify-content: center !important;
   text-align: center !important;
   white-space: nowrap !important;
-}
-
-#arcanaSaveOwnedCards,
-#arcanaClearOwnedCards {
-  width: calc(var(--arcana-action-button-width) + 10px) !important;
-  min-width: calc(var(--arcana-action-button-width) + 10px) !important;
-  max-width: calc(var(--arcana-action-button-width) + 10px) !important;
 }
 
 @media (max-width: 980px) {

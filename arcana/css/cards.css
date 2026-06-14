@@ -744,57 +744,7 @@
   display: none !important;
 }
 
-.arcana-equipment-list-fixed,
-.arcana-equipment-list {
-  display: grid;
-  grid-template-columns: repeat(2, 150px);
-  gap: 7px;
-  width: fit-content;
-  min-height: 0;
-}
-
-.arcana-equipment-card {
-  animation: none !important;
-}
-
-
-@media (max-width: 720px) {
-  .arcana-equipment-list-fixed,
-  .arcana-equipment-list {
-    grid-template-columns: repeat(2, 150px);
-  }
-}
-
-
-
-
-.arcana-equipment-list-fixed,
-.arcana-equipment-list {
-  display: grid !important;
-  grid-template-columns: repeat(2, var(--arcana-card-width)) !important;
-  gap: 7px;
-  width: fit-content;
-  min-height: 0;
-}
-
-.arcana-equipment-card {
-  display: block !important;
-  width: var(--arcana-card-width);
-  animation: none !important;
-}
-
-.arcana-equipment-card[hidden] {
-  display: block !important;
-}
-
-
-@media (max-width: 720px) {
-  .arcana-equipment-list-fixed,
-  .arcana-equipment-list {
-    grid-template-columns: repeat(2, minmax(130px, var(--arcana-card-width))) !important;
-  }
-}
-
+/* CARD/장비 grid width/height 권한은 arcana-layout-manager.css로 이관. */
 
 /* ARC-0.3.01 · 260613_04: 카드 외곽 레이아웃 권한은 arcana-layout-manager.css로 이관됨. */
 
