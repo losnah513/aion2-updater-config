@@ -1,0 +1,42 @@
+ARCANA ARC-0.3.01 / 20260612_12
+
+[웹]
+- arcana/index.html
+  - 화면 제목 버전 표기를 `ARC-0.3.01 · 260612_12`로 변경.
+  - 추천 시작 버튼명을 `분석 시작`으로 변경.
+  - 추천 안내 문구를 분석 기준으로 정리.
+
+- arcana/js/config.js
+- arcana/js/state.js
+- arcana/data/config.json
+- arcana/README.txt
+  - ARC-0.3.01 버전 반영.
+
+- arcana/js/api.js
+  - 액티브 스킬 선택값의 legacy localStorage 자동 복원 제거.
+  - `ARCANA_CHARACTER_LEVELS` 키가 남아 있어도 재접속/새로고침 때 불러오지 않도록 정리.
+  - 스킬 저장은 현재 페이지 분석용 상태로만 처리.
+
+- arcana/js/classSelector.js
+  - 클래스 선택/재선택 시 `targetSkillLevels`, `targetSkillPriority20`까지 함께 초기화.
+  - 화면에는 이전 스킬이 남고 내부 state는 비어 분석 시작이 안 되는 불일치 원인 수정.
+
+- arcana/js/app.js
+  - 분석 실행 가능 조건에 클래스 선택 여부를 추가.
+  - CTA/버튼/안내 문구를 `분석 시작` 기준으로 변경.
+
+- arcana/js/components/arcana-cta.js
+- arcana/css/components/arcana-cta.css
+  - CTA 기본 버튼명을 `분석 시작`으로 변경.
+  - 기존 방사형 CTA 상태/속도/5.2초 분석중 유지 구조는 유지.
+
+[Apps Script]
+- AppsScript/ARC_Constants.gs
+  - ARC_VERSION을 ARC-0.3.01로 변경.
+  - 배포 중인 웹앱에 반영하려면 Apps Script 배포 관리에서 기존 배포 수정 → 새 버전 생성 필요.
+
+[검수]
+- JS 문법 검사 대상: app.js, api.js, classSelector.js, arcana-cta.js.
+- 새로고침/재접속 시 이전 액티브 스킬 localStorage 복원 차단 확인.
+- 클래스 선택 시 targetSkillLevels까지 초기화되는 경로 확인.
+- CTA 버튼명 `분석 시작` 반영 확인.

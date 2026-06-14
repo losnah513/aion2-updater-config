@@ -1,0 +1,13 @@
+.arcana-status-line {
+  color: var(--arcana-muted);
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.arcana-input-error {
+  border-color: var(--arcana-danger) !important;
+}
+
+select[data-max-visible="5"] option {
+  line-height: 28px;
+}

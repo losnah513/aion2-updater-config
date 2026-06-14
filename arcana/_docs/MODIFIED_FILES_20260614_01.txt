@@ -1,0 +1,18 @@
+ARC-0.3.01 · 260614_01
+
+[웹]
+- index.html: 화면 버전 표기를 ARC-0.3.01 · 260614_01로 갱신.
+- css/components/arcana-layout-manager.css: 전체 페이지 폭을 1160px 기준으로 축소하고, CARD-01~05 레이아웃 구조를 재정리. 잘못 중첩된 미디어쿼리/중복 액션 규칙 제거.
+- css/components/prism-aura.css: Prism Aura 효과가 카드/스킬 버튼 영역 밖으로 새지 않도록 position/overflow/mask 범위를 재정의. 파란 계열 과다 사용을 줄이고 오팔·프리즘 계열로 정리.
+- js/skillSelector.js: 액티브 스킬 선택 효과가 전체 버튼에서 동시에 도는 문제를 완화하기 위해 스킬별 선택 시점 기준 애니메이션 타이밍을 부여.
+
+[수정 기준]
+- 페이지 전체 폭 과확장 보정.
+- 상단/하단 영역카드 기준선은 Layout Manager에서만 관리.
+- 저장 카드 Prism Aura는 카드 내부 외곽선에만 표시.
+- 스킬 버튼 Prism Aura는 각 버튼 내부에서만 개별 진행.
+- 기존처럼 큰 사선 오버레이가 화면 전체로 새는 현상 차단.
+
+[Apps Script]
+- 수정 없음.
+- 재배포 불필요.

@@ -1,0 +1,13 @@
+ARC-0.3.01 · 260613_01
+
+[웹]
+- index.html: 웹 상단 버전 표기를 ARC-0.3.01 · 260613_01로 변경
+- index.html: arcana-pair-balance.css 로드 추가
+- arcana/css/components/arcana-pair-balance.css: 현재/추천 아르카나 카드 좌우 높이와 내부 기준선 통일 규칙 신규 작성
+
+[Apps Script]
+- 수정 없음
+
+[검수]
+- 현재 아르카나와 추천 아르카나 외곽 높이 동일화 규칙 확인
+- 추천 결과 표시 후 CTA 숨김 상태에서도 하단 기준선 유지 확인

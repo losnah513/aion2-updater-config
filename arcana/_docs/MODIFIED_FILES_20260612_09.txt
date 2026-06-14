@@ -1,0 +1,23 @@
+ARCANA MODIFIED FILES - ARC-0.3.00_20260612_09
+
+[수정 파일]
+- arcana/index.html
+  - 추천 패널 레이아웃 전용 CSS recommend-panel.css 로드 추가
+- arcana/css/cards.css
+  - 구 추천 CTA/placeholder/orb/absolute action 스타일 제거
+  - 추천 CTA 관련 CSS를 공통 카드 파일에서 분리
+- arcana/css/components/recommend-panel.css
+  - 신규 파일
+  - 추천 아르카나 카드 높이/스크롤/placeholder 레이아웃만 관리
+- arcana/css/components/arcana-cta.css
+  - CTA 전용 CSS로 재작성
+  - 회전/오브 디자인 제거, 막대 파동 idle/hover/loading만 유지
+- arcana/js/cardEditor.js
+  - 구 CTA 오브 placeholder 마크업 제거
+  - 추천 전 placeholder를 단순 안내 텍스트로 변경
+
+[검수]
+- cards.css 실행 스타일에서 arcana-recommend-empty-glow / arcana-kinojo-ai-orb / arcana-recommend-ai-text 제거 확인
+- index.html CSS 로드 순서 확인
+- JS 문법 검사 통과
+- CSS brace balance 확인

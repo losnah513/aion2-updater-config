@@ -1,0 +1,231 @@
+/*
+ * ARCANA PRISM AURA EFFECT
+ * 역할: 저장 완료 패널, 16/20 선택 스킬 버튼, CTA 프리즘 효과를 단일 관리한다.
+ * 원칙: 효과는 대상 테두리 내부에만 머물고, 화면 전체 사선/사각형 자체 회전은 금지한다.
+ */
+:root {
+  --arcana-prism-lavender: rgba(177, 162, 255, 0.62);
+  --arcana-prism-pink: rgba(255, 190, 220, 0.44);
+  --arcana-prism-ice: rgba(170, 226, 255, 0.56);
+  --arcana-prism-mint: rgba(190, 247, 232, 0.36);
+  --arcana-prism-gold: rgba(255, 236, 180, 0.48);
+  --arcana-prism-shadow: 0 0 0 1px rgba(177, 162, 255, 0.10), 0 8px 18px rgba(170, 226, 255, 0.055);
+}
+
+@keyframes arcanaPrismBreath {
+  0%, 100% { opacity: 0.34; filter: saturate(0.82) brightness(1.02); }
+  50% { opacity: 0.62; filter: saturate(1.02) brightness(1.05); }
+}
+
+@keyframes arcanaPrismEdgeTravel {
+  0% { offset-distance: 0%; opacity: 0.10; }
+  8% { opacity: 0.58; }
+  50% { opacity: 0.76; }
+  92% { opacity: 0.54; }
+  100% { offset-distance: 100%; opacity: 0.10; }
+}
+
+/* 저장 패널: 채도 저하 + 빗금 잠금 + 외곽 테두리 빛 */
+.arcana-panel.is-saving,
+.arcana-panel.is-saved {
+  position: relative !important;
+  overflow: hidden !important;
+  isolation: isolate !important;
+  background:
+    repeating-linear-gradient(-45deg, rgba(148, 163, 184, 0.075) 0 6px, rgba(255,255,255,0) 6px 12px),
+    linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,255,255,1)) !important;
+  box-shadow: var(--arcana-shadow), var(--arcana-prism-shadow) !important;
+}
+
+.arcana-panel.is-saving > *,
+.arcana-panel.is-saved > * {
+  position: relative;
+  z-index: 3;
+}
+
+.arcana-panel.is-saved > *:not(.arcana-actions):not(.arcana-panel-message),
+.arcana-panel.is-saving > *:not(.arcana-actions):not(.arcana-panel-message) {
+  filter: saturate(0.58) brightness(1.01);
+  opacity: 0.90;
+}
+
+.arcana-panel.is-saving::before,
+.arcana-panel.is-saved::before {
+  content: '' !important;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border: 1px solid transparent;
+  border-radius: inherit;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    conic-gradient(from 28deg,
+      rgba(255,255,255,0.22),
+      var(--arcana-prism-lavender),
+      var(--arcana-prism-pink),
+      var(--arcana-prism-ice),
+      var(--arcana-prism-mint),
+      var(--arcana-prism-gold),
+      rgba(255,255,255,0.22)) border-box;
+  opacity: 0.46;
+  animation: arcanaPrismBreath 10.5s ease-in-out infinite;
+}
+
+.arcana-panel.is-saving::after,
+.arcana-panel.is-saved::after {
+  content: '' !important;
+  position: absolute;
+  z-index: 2;
+  width: 54px;
+  height: 2px;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.92), var(--arcana-prism-ice), var(--arcana-prism-lavender), transparent);
+  filter: blur(.15px) drop-shadow(0 0 4px rgba(170,226,255,.22));
+  offset-path: inset(2px round 3px);
+  offset-rotate: auto;
+  animation: arcanaPrismEdgeTravel 28s linear infinite;
+}
+
+/* 저장 후 조작 잠금: 카드 내부만 흐리게, 버튼/메시지는 선명하게 유지 */
+[data-panel-key="characterLevels"].is-saved .arcana-skill-btn,
+[data-panel-key="equipmentOptions"].is-saved .arcana-equipment-card,
+[data-panel-key="ownedArcanaCards"].is-saved .arcana-owned-card {
+  filter: saturate(0.48) brightness(0.99);
+  opacity: 0.80;
+  pointer-events: none;
+  transition: filter 0.18s ease, opacity 0.18s ease;
+}
+
+[data-panel-key="characterLevels"].is-saved .arcana-skill-btn.is-active,
+[data-panel-key="equipmentOptions"].is-saved .arcana-equipment-card,
+[data-panel-key="ownedArcanaCards"].is-saved .arcana-owned-card {
+  filter: saturate(0.64) brightness(1);
+  opacity: 0.92;
+}
+
+/* 선택 스킬 버튼: 16/20 모두 개별 테두리 흐름 유지 */
+.arcana-skill-btn.arcana-skill-icon-btn {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.arcana-skill-btn.arcana-skill-icon-btn > * {
+  position: relative;
+  z-index: 4;
+}
+
+.arcana-skill-btn.arcana-skill-icon-btn.is-active::before {
+  content: '' !important;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border: 1px solid transparent;
+  border-radius: inherit;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    conic-gradient(from 18deg,
+      rgba(255,255,255,0.22),
+      rgba(177,162,255,.60),
+      rgba(255,190,220,.44),
+      rgba(170,226,255,.56),
+      rgba(190,247,232,.36),
+      rgba(255,236,180,.30),
+      rgba(255,255,255,0.22)) border-box;
+  opacity: 0.62;
+  animation: arcanaPrismBreath 11.5s ease-in-out infinite;
+  animation-delay: var(--arcana-skill-flow-delay, 0s);
+}
+
+.arcana-skill-btn.arcana-skill-icon-btn.is-active::after {
+  content: '' !important;
+  position: absolute;
+  z-index: 2;
+  width: 28px;
+  height: 2px;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.92), rgba(170,226,255,.78), rgba(177,162,255,.62), transparent);
+  filter: drop-shadow(0 0 3px rgba(170,226,255,.18));
+  offset-path: inset(1px round 3px);
+  offset-rotate: auto;
+  animation: arcanaPrismEdgeTravel 26s linear infinite;
+  animation-delay: var(--arcana-skill-flow-delay, 0s);
+}
+
+.arcana-skill-btn.is-level-16 {
+  border-color: rgba(167, 139, 250, 0.50) !important;
+  background: linear-gradient(180deg, rgba(252, 250, 255, 0.98), rgba(255, 255, 255, 1)) !important;
+  color: #5b21b6 !important;
+  box-shadow: 0 0 0 1px rgba(170, 226, 255, 0.10), 0 4px 12px rgba(167, 139, 250, 0.07) !important;
+}
+
+.arcana-skill-btn.is-level-16 .arcana-skill-level-badge {
+  background: linear-gradient(135deg, #8b7cf6, #7dd3fc, #c4b5fd) !important;
+}
+
+.arcana-skill-btn.is-level-20 {
+  border-color: rgba(217, 164, 65, 0.56) !important;
+  color: #8a5a12 !important;
+  box-shadow: 0 0 0 1px rgba(253, 230, 138, 0.15), 0 4px 12px rgba(177, 162, 255, 0.06) !important;
+}
+
+.arcana-skill-btn.arcana-skill-icon-btn.is-level-20::before {
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    conic-gradient(from 22deg,
+      rgba(255,255,255,0.20),
+      rgba(255,236,180,.60),
+      rgba(177,162,255,.44),
+      rgba(255,190,220,.34),
+      rgba(170,226,255,.38),
+      rgba(255,236,180,.45),
+      rgba(255,255,255,0.20)) border-box;
+  opacity: 0.72;
+}
+
+.arcana-skill-btn.arcana-skill-icon-btn.is-level-20::after {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.96), rgba(255,236,180,.82), rgba(177,162,255,.58), transparent);
+  width: 30px;
+}
+
+.arcana-skill-btn.is-level-20 .arcana-skill-level-badge {
+  background: linear-gradient(135deg, #b48a29, #d9c081, #a994ff) !important;
+}
+
+/* CTA 프리즘 오라: idle은 흑백, hover는 단색성 오팔, loading은 부드러운 프리즘 전환 */
+.arcana-recommend-actions:hover .arcana-cta-wave-line,
+.arcana-recommend-actions:focus-within .arcana-cta-wave-line {
+  stroke: rgba(125, 211, 252, 0.58);
+  filter: drop-shadow(0 0 2px rgba(177, 162, 255, 0.13));
+}
+
+.arcana-recommend-section.is-cta-loading .arcana-cta-wave-line {
+  transition: stroke 1.35s ease, filter 1.35s ease, opacity 0.9s ease, stroke-width 0.9s ease;
+}
+
+#arcanaRunSimulation.arcana-wave-cta:hover:not(.is-soft-disabled),
+#arcanaRunSimulation.arcana-wave-cta:focus-visible:not(.is-soft-disabled),
+#arcanaRunSimulation.arcana-wave-cta.is-touch-preview:not(.is-soft-disabled) {
+  color: #6d28d9;
+  border-color: rgba(177, 162, 255, 0.30);
+  box-shadow:
+    0 14px 34px rgba(177, 162, 255, 0.08),
+    0 0 0 1px rgba(125, 211, 252, 0.06),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.94);
+}
+
+.arcana-recommend-section.is-cta-loading #arcanaRunSimulation.arcana-wave-cta {
+  color: #7c3aed;
+  border-color: rgba(177, 162, 255, 0.28);
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.98), rgba(255,255,255,0.92)),
+    conic-gradient(from 0deg, rgba(177,162,255,.15), rgba(255,190,220,.12), rgba(125,211,252,.13), rgba(110,231,183,.09), rgba(177,162,255,.15));
+}

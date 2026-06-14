@@ -1,0 +1,15 @@
+ARC-0.3.01 · 260613_05
+
+[웹/CSS]
+- 전체 페이지/탑바/상단 1:1:1/하단 1:1 레이아웃 폭을 Layout Manager에서 1280px 기준으로 재조정
+- CARD-01~03 높이를 430px로 보정하고 내부 스크롤/하단 버튼 보호 적용
+- 신규 공통 효과 파일 추가: css/components/prism-aura.css
+- 저장 완료 카드 테두리와 CTA hover/loading 효과를 Prism Aura 계열로 통일
+- 기존 파란 계열 선택/저장 효과를 오팔·프리즘 컬러로 완화
+
+[웹/HTML]
+- 버전 표기 ARC-0.3.01 · 260613_05 반영
+- prism-aura.css 로드 추가
+
+[Apps Script]
+- 수정 없음

@@ -1,0 +1,48 @@
+ARC-0.3.02 · 260614_01
+
+[작업 원칙]
+- 기존 작업물 감사 후 수정/추가/삭제 분류 방식 적용.
+- 새 CSS/JS를 덮어쓰기식으로 추가하지 않고, 중복 권한을 회수한 뒤 정리.
+
+[수정]
+- arcana/index.html
+  - 화면 버전 표기 ARC-0.3.02 · 260614_01 반영.
+  - 중복 로드되던 simulator.js script 1건 제거.
+- arcana/css/components/arcana-layout-manager.css
+  - 페이지 폭, CARD-01~05 배치, 카드 내부 높이, 버튼 규격 권한을 단일 관리하도록 재작성.
+  - CARD-01~03 높이 462px, CARD-04~05 높이 580px 기준으로 조정.
+  - CARD-04/05 title/message/tab/body/footer 구조 재정리.
+  - 카드 내부 본문 center 정렬 및 버튼 좌우 대칭 규격 정리.
+- arcana/css/components/prism-aura.css
+  - 저장 완료 패널 빗금/채도 저하/테두리 빛 흐름 효과를 단일 파일에서 관리하도록 재작성.
+  - 16레벨/20레벨 스킬 버튼 모두 프리즘 테두리 효과 적용.
+  - 스킬 버튼별 개별 타이밍 변수를 유지하도록 정리.
+  - 사선 전체 오버레이/사각형 자체 회전 계열 효과 제거.
+- arcana/css/cards.css
+  - CARD-04/05 grid/message/recommend-card-grid 중복 레이아웃 권한 제거.
+  - 스킬 버튼 active 색상 권한을 prism-aura.css로 회수.
+  - 깨진 legacy 반응형 grid 블록 제거.
+- arcana/css/layout.css
+  - arcana-actions / panel-message 등 중복 레이아웃 권한 제거.
+- arcana/css/main.css
+  - page 폭 권한을 Layout Manager로 이관.
+  - 스킬 active 색상 중복 권한 제거.
+- arcana/data/config.json, arcana/js/config.js, arcana/js/state.js, arcana/js/api.js, arcana/js/app.js
+  - ARC-0.3.02 버전 표기 반영.
+- AppsScript/ARC_Constants.gs
+  - ARC_VERSION을 ARC-0.3.02로 갱신.
+
+[추가]
+- 신규 파일 추가 없음.
+
+[삭제/회수]
+- 중복 simulator.js script 로드 제거.
+- cards.css 내 CARD-04/05 레이아웃 중복 권한 제거.
+- cards.css/main.css 내 스킬 active 색상 중복 권한 제거.
+- prism-aura.css 내 구 SoftSweep/사선 오버레이 계열 중복 효과 제거.
+
+[검수]
+- CSS brace balance 검사 통과.
+- 주요 JS 파일 node --check 통과.
+- grep 기준 arcana-panel-message / arcana-card-grid / arcana-recommend-card-grid 레이아웃 실행 권한이 Layout Manager 중심으로 회수됨.
+- Apps Script 수정 있음: 기존 웹앱 배포 관리 → 수정 → 새 버전 생성 필요.

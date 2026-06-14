@@ -1,0 +1,306 @@
+/*
+ * ARCANA LAYOUT MANAGER
+ * 역할: 페이지 폭, CARD-01~05 배치, 카드 외곽/내부 높이, 공통 버튼 규격을 단일 관리한다.
+ * 원칙: 개별 컴포넌트 CSS는 내부 디자인만 담당하고 width/height/grid 권한은 이 파일에 모은다.
+ */
+:root {
+  --arcana-layout-gap: 8px;
+  --arcana-page-max: 1000px;
+  --arcana-top-card-height: 462px;
+  --arcana-arcana-card-height: 580px;
+  --arcana-arcana-title-height: 40px;
+  --arcana-arcana-message-height: 34px;
+  --arcana-arcana-tab-height: 34px;
+  --arcana-arcana-footer-height: 44px;
+  --arcana-action-button-width: 112px;
+  --arcana-action-button-height: 30px;
+}
+
+.arcana-page,
+.arcana-layout,
+[data-layout-group],
+[data-card] {
+  box-sizing: border-box;
+}
+
+.arcana-page {
+  width: min(calc(100vw - 48px), var(--arcana-page-max)) !important;
+  max-width: var(--arcana-page-max) !important;
+  min-width: 0 !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.arcana-topbar,
+.arcana-refresh-notice,
+.arcana-layout {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.arcana-layout {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: var(--arcana-layout-gap) !important;
+  align-items: stretch !important;
+}
+
+.arcana-layout.is-class-locked {
+  opacity: 1 !important;
+  filter: none !important;
+  pointer-events: none;
+  user-select: none;
+}
+
+.arcana-layout.is-class-locked .arcana-panel > *:not(.arcana-loading-overlay) {
+  filter: blur(5.5px) saturate(0.72);
+  opacity: 0.38;
+}
+
+/* CARD-01~03: PC 기준 1:1:1 */
+[data-layout-group="top-row"] {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: var(--arcana-layout-gap) !important;
+  align-items: stretch !important;
+  width: 100% !important;
+}
+
+[data-layout-group="top-row"] > [data-layout-role="top-card"] {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: var(--arcana-top-card-height) !important;
+  min-height: var(--arcana-top-card-height) !important;
+  max-height: var(--arcana-top-card-height) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+[data-layout-group="top-row"] > [data-layout-role="top-card"] > .arcana-panel-title,
+[data-layout-group="top-row"] > [data-layout-role="top-card"] > .arcana-panel-message {
+  flex: 0 0 auto !important;
+}
+
+[data-layout-group="top-row"] .arcana-skill-grid,
+[data-layout-group="top-row"] .arcana-equipment-list,
+[data-layout-group="top-row"] .arcana-future-placeholder {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: hidden !important;
+  overflow-x: hidden !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding: 8px !important;
+  display: grid !important;
+  justify-content: center !important;
+  align-content: center !important;
+  justify-items: stretch !important;
+  align-items: start !important;
+}
+
+[data-layout-group="top-row"] > [data-layout-role="top-card"] > .arcana-actions {
+  flex: 0 0 44px !important;
+  height: 44px !important;
+  margin: 0 8px 8px !important;
+  padding: 6px 0 0 !important;
+  border-top: 1px solid var(--arcana-line-soft) !important;
+  background: #fff !important;
+}
+
+/* CARD-04~05: PC 기준 1:1 */
+.arcana-editor-panel {
+  width: 100% !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.arcana-editor-panel > .arcana-panel-title {
+  flex: 0 0 auto !important;
+}
+
+.arcana-editor-panel > [data-layout-group="arcana-row"] {
+  flex: 0 0 auto !important;
+}
+
+[data-layout-group="arcana-row"] {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: var(--arcana-layout-gap) !important;
+  align-items: stretch !important;
+  width: 100% !important;
+}
+
+[data-layout-role="arcana-card"] {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: var(--arcana-arcana-card-height) !important;
+  min-height: var(--arcana-arcana-card-height) !important;
+  max-height: var(--arcana-arcana-card-height) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+[data-layout-role="arcana-card"] > *:not(.arcana-loading-overlay) {
+  margin-left: 8px !important;
+  margin-right: 8px !important;
+  min-width: 0 !important;
+}
+
+[data-layout-role="arcana-card"] .arcana-panel-title-inner {
+  flex: 0 0 var(--arcana-arcana-title-height) !important;
+  height: var(--arcana-arcana-title-height) !important;
+  min-height: var(--arcana-arcana-title-height) !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+[data-layout-role="arcana-card"] > .arcana-panel-message {
+  flex: 0 0 var(--arcana-arcana-message-height) !important;
+  height: var(--arcana-arcana-message-height) !important;
+  min-height: var(--arcana-arcana-message-height) !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding: 4px 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+[data-card="04"] .arcana-owned-tab-spacer,
+[data-card="05"] .arcana-recommend-tabs {
+  flex: 0 0 var(--arcana-arcana-tab-height) !important;
+  height: var(--arcana-arcana-tab-height) !important;
+  min-height: var(--arcana-arcana-tab-height) !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+[data-card="05"] .arcana-recommend-tabs:empty {
+  visibility: hidden;
+}
+
+[data-card="04"] #arcanaOwnedCardGrid,
+[data-card="05"] .arcana-recommend-area {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 8px !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+[data-card="04"] .arcana-card-grid,
+[data-card="05"] .arcana-recommend-card-grid {
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+  align-content: center !important;
+  justify-content: center !important;
+  align-items: center !important;
+  justify-items: stretch !important;
+}
+
+[data-card="04"] .arcana-card-box,
+[data-card="05"] .arcana-recommend-card-grid .arcana-card-box {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+[data-layout-role="arcana-card"] > .arcana-actions {
+  flex: 0 0 var(--arcana-arcana-footer-height) !important;
+  height: var(--arcana-arcana-footer-height) !important;
+  min-height: var(--arcana-arcana-footer-height) !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding: 6px 0 7px !important;
+  border-top: 1px solid var(--arcana-line-soft) !important;
+  background: #fff !important;
+}
+
+.arcana-recommend-section.is-recommend-ready > .arcana-recommend-actions {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* 공통 버튼 규격: 저장/수정/초기화 버튼은 텍스트 길이와 무관하게 동일 크기 */
+.arcana-actions {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.arcana-actions .arcana-btn:not(.arcana-wave-cta) {
+  width: var(--arcana-action-button-width) !important;
+  min-width: var(--arcana-action-button-width) !important;
+  max-width: var(--arcana-action-button-width) !important;
+  height: var(--arcana-action-button-height) !important;
+  min-height: var(--arcana-action-button-height) !important;
+  max-height: var(--arcana-action-button-height) !important;
+  padding: 0 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+}
+
+#arcanaSaveOwnedCards,
+#arcanaClearOwnedCards {
+  width: calc(var(--arcana-action-button-width) + 10px) !important;
+  min-width: calc(var(--arcana-action-button-width) + 10px) !important;
+  max-width: calc(var(--arcana-action-button-width) + 10px) !important;
+}
+
+@media (max-width: 980px) {
+  :root {
+    --arcana-page-max: 100%;
+  }
+
+  [data-layout-group="top-row"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .arcana-page {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
+
+  [data-layout-group="top-row"],
+  [data-layout-group="arcana-row"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  [data-layout-group="top-row"] > [data-layout-role="top-card"] {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
+
+  [data-layout-role="arcana-card"] {
+    height: 620px !important;
+    min-height: 620px !important;
+    max-height: 620px !important;
+  }
+}
