@@ -12,6 +12,7 @@ ArcanaApp.skillSelector = {
     wrapper.innerHTML = '';
 
     if (!state.hasSelectedClass) {
+      ArcanaApp.skillSelector.updatePanelActiveClass(false);
       ArcanaApp.skillSelector.updateCountText(false);
       const guide = document.createElement('div');
       guide.className = 'arcana-friendly-guide';
@@ -91,9 +92,24 @@ ArcanaApp.skillSelector = {
       wrapper.appendChild(button);
     });
 
+    ArcanaApp.skillSelector.updatePanelActiveClass();
+
     if (ArcanaApp.app && ArcanaApp.app.updateCharacterSaveButtonState) {
       ArcanaApp.app.updateCharacterSaveButtonState();
     }
+  },
+
+  updatePanelActiveClass(forceActive) {
+    const panel = document.querySelector('[data-panel-key="characterLevels"]');
+    if (!panel) return;
+
+    const state = ArcanaApp.state || {};
+    const levels = state.targetSkillLevels || {};
+    const hasActiveSkill = typeof forceActive === 'boolean'
+      ? forceActive
+      : Object.values(levels).some(level => Number(level) > 0);
+
+    panel.classList.toggle('is-skill-active', Boolean(hasActiveSkill));
   },
 
   getActiveSkills() {

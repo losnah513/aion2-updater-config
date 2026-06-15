@@ -1,7 +1,7 @@
 /*
  * ARCANA PRISM AURA EFFECT
  * 역할: 액티브 스킬 선택 효과, 저장 완료 잠금 효과, CTA 프리즘 효과를 단일 관리한다.
- * ARC-0.3.02 · 260615_10
+ * ARC-0.3.02 · 260615_11
  * 원칙:
  * - 효과는 대상 테두리 자체에만 머문다.
  * - 버튼/카드 뒤에서 큰 판이 회전하는 효과 금지.
@@ -230,10 +230,7 @@
     repeating-linear-gradient(-45deg, rgba(148, 163, 184, 0.13) 0 6px, rgba(255,255,255,0) 6px 12px),
     linear-gradient(180deg, rgba(255,255,255,0.99), rgba(255,255,255,1)) !important;
   animation: arcanaSavedStripeBreath 18s ease-in-out infinite;
-  box-shadow:
-    var(--arcana-shadow),
-    0 0 0 1px rgba(205, 214, 229, 0.84),
-    0 8px 20px rgba(148, 163, 184, 0.06) !important;
+  box-shadow: none !important;
 }
 
 .arcana-panel.is-saving > *,
@@ -588,7 +585,7 @@
 
 
 /* ------------------------------------------------------------------
-   ARC-0.3.02 · 260615_10
+   ARC-0.3.02 · 260615_11
    테두리 혜성 광량 보강 + 액티브 스킬 영역 카드 외곽 혜성 적용
    - 크기/간격/레이아웃 값은 변경하지 않는다.
    - 두께는 유지하고 blur/drop-shadow/투명도만 보강한다.
@@ -649,7 +646,7 @@
   --arcana-panel-comet-spark: rgba(255, 203, 226, 0.62);
 }
 
-.arcana-target-panel:has(.arcana-skill-btn.is-active)::before {
+.arcana-target-panel.is-skill-active::before {
   content: '' !important;
   position: absolute !important;
   inset: -1px !important;
@@ -682,7 +679,7 @@
   animation: arcanaCometSpin 4.4s linear infinite !important;
 }
 
-.arcana-target-panel:has(.arcana-skill-btn.is-active)::after {
+.arcana-target-panel.is-skill-active::after {
   content: '' !important;
   position: absolute !important;
   inset: -5px !important;
@@ -714,11 +711,8 @@
     arcanaCometPulse 2.2s ease-in-out infinite !important;
 }
 
-.arcana-target-panel:has(.arcana-skill-btn.is-active) {
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,.82),
-    0 0 18px rgba(125, 211, 252, .10),
-    0 0 30px rgba(190, 174, 255, .08) !important;
+.arcana-target-panel.is-skill-active {
+  box-shadow: none !important;
 }
 
 /* 저장/저장완료 영역 카드: 두께 유지, 광량과 꼬리만 강화 */
@@ -762,4 +756,53 @@
     blur(.55px)
     drop-shadow(0 0 7px rgba(164, 222, 255, .40))
     drop-shadow(0 0 17px rgba(190, 174, 255, .24)) !important;
+}
+
+
+/* ------------------------------------------------------------------
+   ARC-0.3.02 · 260615_11
+   카드 그림자 제거 + 액티브 스킬 영역 카드 효과 안정화
+   - :has() 의존 제거: JS가 .is-skill-active 클래스를 직접 부여한다.
+   - 영역 카드 크기/간격/배치는 변경하지 않는다.
+   - 외곽 그림자/번짐 효과는 제거하고, 테두리 혜성 효과만 남긴다.
+------------------------------------------------------------------ */
+.arcana-panel {
+  box-shadow: none !important;
+}
+
+.arcana-target-panel {
+  position: relative !important;
+  isolation: isolate !important;
+}
+
+.arcana-target-panel.is-skill-active {
+  overflow: visible !important;
+  box-shadow: none !important;
+}
+
+.arcana-target-panel.is-skill-active > * {
+  position: relative !important;
+  z-index: 3 !important;
+}
+
+.arcana-target-panel.is-skill-active::before {
+  z-index: 1 !important;
+}
+
+.arcana-target-panel.is-skill-active::after {
+  z-index: 2 !important;
+}
+
+.arcana-panel.is-saving,
+.arcana-panel.is-saved {
+  box-shadow: none !important;
+}
+
+.arcana-panel.is-saving::before,
+.arcana-panel.is-saved::before,
+.arcana-panel.is-saving::after,
+.arcana-panel.is-saved::after,
+.arcana-target-panel.is-skill-active::before,
+.arcana-target-panel.is-skill-active::after {
+  box-shadow: none !important;
 }
