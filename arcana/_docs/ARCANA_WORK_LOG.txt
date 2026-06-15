@@ -1,0 +1,1098 @@
+ARCANA WORK LOG - 누적 기록
+
+규칙: 작업물이 늘어날 때마다 별도 MODIFIED_FILES를 추가하지 않고 이 파일 아래에 순번대로 누적한다.
+
+
+================================================================================
+[기존 기록] MODIFIED_FILES.txt
+================================================================================
+
+ARC-0.3.02 · 260614_03
+
+[수정]
+- arcana/index.html
+  - 화면 버전 표기를 ARC-0.3.02 · 260614_03으로 갱신.
+- arcana/js/skillSelector.js
+  - 20레벨 중요도 뱃지 위치 보정을 위한 has-priority-badge 클래스 추가.
+  - 클릭 푸딩 애니메이션 유지 시간을 늘려 딱딱한 반응을 완화.
+- arcana/css/components/prism-aura.css
+  - 16/20 스킬 버튼 프리즘 테두리 두께와 색감 복구.
+  - 저장 카드 빗금/채도 저하/외곽 테두리 흐름 효과 복구.
+  - 테두리 효과가 내용 전체를 덮지 않고 대상 내부에만 머물도록 재정리.
+- arcana/css/components/arcana-layout-manager.css
+  - 페이지 폭과 CARD-01~05 높이를 내용 기준으로 재조정.
+  - 카드 내부 BODY/그리드 중앙 정렬 보정.
+- arcana/css/cards.css
+  - 20레벨 뱃지와 중요도 뱃지가 서로 겹치지 않도록 위치 보정.
+
+[추가]
+- 없음.
+
+[삭제/회수]
+- 신규 파일 추가 없이 기존 prism-aura / layout-manager 권한 내에서 수정.
+- 구 효과를 새 파일로 덮어쓰지 않고 기존 효과 파일에 재연결.
+
+[Apps Script]
+- 수정 없음.
+- 재배포 불필요.
+
+
+================================================================================
+[기존 기록] MODIFIED_FILES_20260612_01.txt
+================================================================================
+
+ARCANA MODIFIED FILES
+Version: ARC-0.3.00
+Build: 20260612_01
+Work: Recommendation UX Rebuild
+
+[공통]
+- arcana/index.html
+  - 화면 타이틀 ARC-0.3.00 반영
+  - CTA / 클래스 선택 / 패널 보호 컴포넌트 연결 유지 확인
+
+- arcana/js/config.js
+  - 앱 버전 ARC-0.3.00 반영
+
+- arcana/data/config.json
+  - 데이터 설정 버전 ARC-0.3.00 반영
+
+[CTA]
+- arcana/js/components/arcana-cta.js
+  - 회전형 CTA 금지 원칙을 독립 모듈 주석으로 명시
+  - idle / loading / complete / error 상태 전환 독립화
+  - 분석중 최소 유지 시간 4.2초 적용
+  - 분석 진행 문구 순차 출력 로직 추가
+  - 저장된 보유 아르카나/반지 여부에 따라 다른 안내 문구 출력
+  - 추천 엔진이 CTA DOM을 직접 변경하지 않고 상태만 요청하도록 정리
+
+- arcana/css/components/arcana-cta.css
+  - 회전 애니메이션 제거 기준 유지
+  - 막대 길이가 개별적으로 길어졌다 짧아지는 파동형 CTA 강화
+  - idle / hover / loading / complete / error 시각 상태 분리
+  - CTA 연결 텍스트 박스 전환 애니메이션 추가
+
+[추천 실행]
+- arcana/js/app.js
+  - 추천 결과가 빨리 계산되어도 CTA 분석중 상태가 최소 4.2초 유지되도록 수정
+  - 추천 성공/실패에 따라 CTA complete/error 상태로 종료
+  - 기존 1.45초 임시 대기 제거
+
+[레이아웃 보호]
+- arcana/css/components/panel-containment.css
+  - 현재 아르카나/추천 아르카나 카드의 header/body/footer 침범 방지 규칙 유지
+  - 현재 아르카나 본문 초과 시 내부 스크롤 처리 유지
+
+[필수 규칙 문서]
+- ARCANA_MASTER_RULES_v2.txt
+  - 루트 최상위 포함
+- arcana/ARCANA_MASTER_RULES_v2.txt
+  - 웹 폴더 내부 참조용 포함
+
+[검수 체크리스트]
+- JS 문법 검사 통과
+- CTA 독립 JS/CSS 연결 확인
+- 추천 실행 시 최소 4.2초 유지 로직 확인
+- CTA 분석 문구 순차 출력 로직 확인
+- ARC-0.3.00 버전 표기 확인
+
+
+================================================================================
+[기존 기록] MODIFIED_FILES_20260612_02.txt
+================================================================================
+
+ARCANA MODIFIED FILES
+Version: ARC-0.3.00
+Date: 2026-06-12
+Sequence: 02
+Work: Recommendation Engine Algorithm Update
+
+[Web / JS]
+- arcana/js/recommendation.js
+  - 20/16 목표 포인트 예산 계산 추가
+  - 기본 14레벨 기준 20목표 +6, 16목표 +2 반영
+  - 총 예산 42포인트 기준 자동 16레벨 목표 분산 로직 추가
+  - 20레벨 목표 7개 조건에서 성배/양피지/나침반/천칭 Lv4 액티브 앵커 우선 배치
+  - 저장된 보유 아르카나가 20레벨 7개 조건을 막는 경우 추천 분석 차단
+  - 추천 메타에 targetSummary/effectiveTargetSkills/autoTarget 정보 추가
+
+- arcana/js/cardEditor.js
+  - 20레벨 7개 조건 검증 실패 슬롯 빨간 테두리 표시 연결
+  - 조건 미충족 카드 경고 문구 표시
+  - 분석/복사 가이드에 자동 16레벨 목표 표기 추가
+
+[Web / CSS]
+- arcana/css/cards.css
+  - 20레벨 7개 조건 미충족 카드/슬롯 경고 스타일 추가
+
+[Root]
+- MODIFIED_FILES.txt
+  - 이번 수정 내역 갱신
+
+[AppsScript]
+- 변경 없음
+
+[Data]
+- 변경 없음
+
+[Assets]
+- 변경 없음
+
+
+================================================================================
+[기존 기록] MODIFIED_FILES_20260612_03.txt
+================================================================================
+
+ARCANA ARC-0.3.00_20260612_03 MODIFIED FILES
+
+[신규]
+- arcana/js/classService.js
+  - 클래스 키/표시명/아이콘/스킬 아이콘 파일 정규화 전용 서비스 추가
+  - skill_db_templar / templar / guardian / 수호성을 templar 표준 키로 통합
+
+- arcana/js/skillTargetRules.js
+  - 20레벨/16레벨 목표 선택 예산 규칙 전용 모듈 추가
+  - 20목표 +6, 16목표 +2, 총 예산 42포인트 기준 적용
+  - 20레벨 선택 순서 1~5 중요도 표시 기준 추가
+
+- AppsScript/ARC_ClassKeyService.gs
+  - Apps Script 클래스 키 정규화 전용 파일 추가
+  - 웹 classService.js와 같은 templar 표준 키 기준으로 정리
+
+[수정]
+- arcana/index.html
+  - classService.js, skillTargetRules.js 로딩 순서 추가
+
+- arcana/js/classSelector.js
+  - 내부 중복 클래스 매핑 제거
+  - ClassService 연결부만 남기도록 정리
+  - 수호성/templar/skill_db_templar 조회 경로 통합
+
+- arcana/js/skillSelector.js
+  - 총 선택 개수 7개 고정 제한 제거
+  - 20레벨 선택 개수에 따라 16레벨 추가 가능 수 동적 계산
+  - 20레벨 선택 순서 기준 중요도 1~5 뱃지 표시
+  - 수호성 스킬 아이콘 파일 로딩을 ClassService 기준으로 통합
+
+- arcana/js/app.js
+  - classSkills 응답 키 정규화 추가
+  - targetSkillPriority20 저장/복원/초기화 반영
+  - 액티브 스킬 저장 데이터에 중요도 순서 포함
+
+- arcana/js/state.js
+  - targetSkillPriority20 상태 추가
+
+- arcana/js/api.js
+  - 구 ARCANA_RING_OPTIONS fallback 복원 제거
+  - 새로고침 시 구 저장키 때문에 이전 기록이 되살아나는 흐름 차단
+
+- arcana/css/cards.css
+  - 20레벨 중요도 뱃지 스타일 추가
+  - 선택 제한 안내 강조 스타일 추가
+
+- AppsScript/ARC_Constants.gs
+  - ARC_VERSION을 ARC-0.3.00으로 정정
+  - 파일 상단 설명 주석 추가
+
+- AppsScript/ARC_DBService.gs
+  - 클래스 정규화 함수 분리 후 중복 제거
+  - 파일 상단 설명 주석 추가
+
+- AppsScript/ARC_CardService.gs
+- AppsScript/ARC_Main.gs
+- AppsScript/ARC_Utils.gs
+- AppsScript/ARC_WebApp.gs
+  - 파일 상단 역할/포함 내용 설명 주석 추가
+
+- AppsScript/_docs/SCRIPT_IMPORT_ORDER.txt
+  - ARC_ClassKeyService.gs 추가 순서 반영
+
+[정리]
+- 클래스 키 매핑 중복 위치 축소
+- 수호성 표준 키 templar 기준 통일
+- 구 반지 저장키 자동 복원 경로 제거
+
+[검수]
+- 웹 JS node --check 통과
+- Apps Script .gs syntax check 통과(.js 임시 확장자 검사)
+- ClassService: skill_db_templar → templar 확인
+- SkillTargetRules: 20목표 6개 → 16목표 3개 허용 / 초과 차단 확인
+
+
+================================================================================
+[기존 기록] MODIFIED_FILES_20260612_06.txt
+================================================================================
+
+ARC-0.3.00_20260612_06 CSS/UI Audit + Templar Load Fix
+
+[수정]
+- arcana/css/cards.css
+  - 추천 CTA 관련 구세대 CSS 전수 제거
+  - #arcanaRunSimulation / .arcana-cta-* / .arcana-recommend-actions 중복 정의 제거
+  - 회전형 CTA keyframes/구 디자인 충돌 제거
+
+- arcana/css/components/arcana-cta.css
+  - CTA 전용 CSS로 재작성
+  - 분석 전 idle 상태: 막대가 개별적으로 길어졌다 짧아지는 흑백 파동 적용
+  - hover 상태: 막대 진폭/속도 강화
+  - loading 상태: 컬러 막대 파동 + 텍스트 박스 유지
+  - 추천 시작 버튼 항상 표시되도록 visibility/display 보강
+  - 추천/현재 아르카나 카드 높이 610px 통일 유지
+
+- arcana/js/classSelector.js
+  - classSkills 데이터에 arcanaSkills만 있고 active/passive가 비어 있으면 내장 fallback active/passive로 보정
+  - 수호성처럼 서버 응답 일부가 비어도 액티브 스킬 선택 영역이 비지 않도록 처리
+  - strict pool 검증 실패 시 전체 pool을 []로 비우던 구 로직 제거, 원본 후보 유지
+
+- AppsScript/ARC_ClassKeyService.gs
+  - 클래스 키 정규화 시 대소문자 차이로 skill_db_templar/Templar가 누락되지 않도록 소문자 표준화
+
+- AppsScript/ARC_DBService.gs
+  - rowType 정규화 강화
+  - '액티브 스킬', '패시브 스킬', active_skill 같은 공백/언더바/하이픈 포함 표기를 인식하도록 보강
+
+[검수]
+- cards.css 내 CTA 직접 정의 제거 확인
+- CTA 전용 CSS는 arcana/css/components/arcana-cta.css만 사용하도록 정리
+- JS 문법 검사 통과
+- CSS brace balance 확인
+
+
+================================================================================
+[기존 기록] MODIFIED_FILES_20260612_07.txt
+================================================================================
+
+ARC-0.3.00_20260612_07
+
+[웹]
+- arcana/js/api.js
+  - 구 fallback 아르카나 풀 규칙 삭제/교체
+  - fallback도 MASTER RULES 기준 공통 규칙으로 통일
+  - 성배/천칭 = 액티브 F~Q + 패시브 F~O
+  - 양피지/나침반/종/거울 = 지정 열 규칙 적용
+
+- arcana/js/app.js
+  - 구 CTA 생성 함수 buildCtaVisualizer() 완전 제거
+  - CTA 생성/상태 관리는 js/components/arcana-cta.js 단일 관리로 정리
+  - 중복 addEventListener 코드 1건 정리
+
+- arcana/js/classService.js
+  - 수호성 스킬 아이콘 파일 기준을 guardian.json에서 templar.json으로 변경
+  - guardian legacy alias 제거
+  - 수호성 lookup 기준을 templar / skill_db_templar로 통일
+
+- arcana/data/skills/templar.json
+  - 수호성 표준 키에 맞춘 스킬 아이콘 데이터 파일 추가
+
+[Apps Script]
+- AppsScript/ARC_ClassKeyService.gs
+  - 수호성 legacy guardian alias 제거
+  - 주석 설명을 templar / skill_db_templar 기준으로 정정
+
+- AppsScript/ARC_DBService.gs
+  - 수호성 lookup 기준에서 guardian 제거
+  - skill_db_templar / templar 기준 유지
+
+[삭제/정리]
+- 구 CTA DOM 생성 로직 제거
+- 구 fallback 아르카나 규칙 제거
+- 수호성 guardian 로직 의존 제거
+
+[검수]
+- JS 문법 검사 통과: app.js / api.js / classService.js
+- CSS brace balance 확인: cards.css / arcana-cta.css
+- Apps Script brace balance 확인
+- grep 확인: buildCtaVisualizer 제거
+- grep 확인: 웹/GS 실행 코드 내 guardian alias 제거
+
+
+================================================================================
+[기존 기록] MODIFIED_FILES_20260612_08.txt
+================================================================================
+
+ARC-0.3.00_20260612_08 수정 파일 기록
+
+[AppsScript]
+- AppsScript/ARC_ClassKeyService.gs
+  - 시트에서 gladiator 오타를 수정했다는 기준에 맞춰 gladiatior legacy alias 제거
+- AppsScript/ARC_DBService.gs
+  - ARC_getClassLookupKeys_에서 skill_db_gladiatior / gladiatior lookup 제거
+  - class_skill_db의 정상 키(skill_db_gladiator)만 사용하도록 정리
+
+[웹 JS]
+- arcana/js/classService.js
+  - skill_db_gladiatior / gladiatior alias 제거
+  - 클래스 lookup 기준을 gladiator / skill_db_gladiator로 정리
+- arcana/js/classSelector.js
+  - 아르카나 스킬맵 생성 시 GS arcanaSkills를 웹에서 재해석/검증하던 구 로직 제거
+  - 모든 클래스가 active/passive 목록에서 동일한 공통 아르카나 규칙으로 슬롯을 생성하도록 단일화
+  - 수호성에서 액티브가 탈락하고 패시브만 남을 수 있던 흐름 제거
+
+[웹 UI/CSS]
+- arcana/index.html
+  - 추천 시작 버튼의 구 CTA 클래스 arcana-kinojo-cta 제거
+  - 신규 CTA 전용 클래스 arcana-wave-cta로 교체
+- arcana/css/components/arcana-cta.css
+  - 신규 CTA 버튼 클래스 기준으로 선택자 정리
+  - 추천 시작 버튼 표시/파동형 CTA 전용 관리 유지
+- arcana/css/cards.css
+  - 구 CTA 관련 주석/키프레임/잔여 정의 제거
+  - 추천 영역 높이/표시 상태는 CTA 전용 CSS와 충돌하지 않도록 정리
+
+[검수]
+- 웹 JS 문법 검사 통과
+- cards.css / arcana-cta.css brace balance 통과
+- 실행 코드 기준 grep 확인: gladiatior / guardian / arcana-kinojo-cta / arcana-kinojo-border-loop 잔여 없음
+
+
+================================================================================
+[기존 기록] MODIFIED_FILES_20260612_09.txt
+================================================================================
+
+ARCANA MODIFIED FILES - ARC-0.3.00_20260612_09
+
+[수정 파일]
+- arcana/index.html
+  - 추천 패널 레이아웃 전용 CSS recommend-panel.css 로드 추가
+- arcana/css/cards.css
+  - 구 추천 CTA/placeholder/orb/absolute action 스타일 제거
+  - 추천 CTA 관련 CSS를 공통 카드 파일에서 분리
+- arcana/css/components/recommend-panel.css
+  - 신규 파일
+  - 추천 아르카나 카드 높이/스크롤/placeholder 레이아웃만 관리
+- arcana/css/components/arcana-cta.css
+  - CTA 전용 CSS로 재작성
+  - 회전/오브 디자인 제거, 막대 파동 idle/hover/loading만 유지
+- arcana/js/cardEditor.js
+  - 구 CTA 오브 placeholder 마크업 제거
+  - 추천 전 placeholder를 단순 안내 텍스트로 변경
+
+[검수]
+- cards.css 실행 스타일에서 arcana-recommend-empty-glow / arcana-kinojo-ai-orb / arcana-recommend-ai-text 제거 확인
+- index.html CSS 로드 순서 확인
+- JS 문법 검사 통과
+- CSS brace balance 확인
+
+
+================================================================================
+[기존 기록] MODIFIED_FILES_20260612_10.txt
+================================================================================
+
+ARCANA MODIFIED FILES - ARC-0.3.00_20260612_10
+
+[수정 파일]
+- arcana/css/components/arcana-cta.css
+  - CTA를 이미지 시안 기준의 방사형 막대 구조로 재작성
+  - 기존 가로 막대/박스형 상태 텍스트 제거
+  - 중심 원을 기준으로 바깥쪽으로 길어지는 SVG 막대 스타일 적용
+  - idle / hover / loading 세 상태 분리
+  - loading 상태는 다채로운 색상 파동으로 표시
+  - 추천 결과 생성 후 CTA가 분석/가이드 영역을 가리지 않도록 ready 상태에서 숨김 처리
+
+- arcana/js/components/arcana-cta.js
+  - 144개 SVG 방사형 막대를 동적으로 생성하도록 변경
+  - 여러 주기의 파형을 합성해 외곽 라인이 규칙적인 원이 아니라 불규칙한 물결 형태가 되도록 구성
+  - CTA 텍스트를 별도 박스가 아니라 중앙 버튼 내부 문구로 통합
+  - 분석중 최소 유지 시간을 5.2초로 상향
+  - 분석중 문구 순차 출력 유지
+
+- arcana/js/app.js
+  - 추천 계산 대기 시간을 CTA 기준에 맞춰 5.2초로 상향
+  - 분석중 버튼 텍스트를 앱에서 직접 덮어쓰지 않고 CTA 모듈이 관리하도록 정리
+  - 추천 리셋 시 CTA 모듈의 idle 상태로 복구하도록 변경
+
+- arcana/css/components/recommend-panel.css
+  - CTA가 추천 카드 중앙에 배치될 수 있도록 추천 전 상태의 표시 구조 보정
+  - 추천 결과 표시 후에는 기존 카드 스크롤/높이 규칙을 유지
+
+[검수]
+- JS 문법 검사 통과: arcana-cta.js, app.js
+- CSS brace balance 확인: arcana-cta.css, recommend-panel.css
+- 구 CTA 클래스/오브형 placeholder 잔여 검색: 실행 CSS/JS/HTML 기준 없음
+- CTA 작업 외 수호성/추천 엔진/GS 로직 수정 없음
+
+
+================================================================================
+[기존 기록] MODIFIED_FILES_20260612_12.txt
+================================================================================
+
+ARCANA ARC-0.3.01 / 20260612_12
+
+[웹]
+- arcana/index.html
+  - 화면 제목 버전 표기를 `ARC-0.3.01 · 260612_12`로 변경.
+  - 추천 시작 버튼명을 `분석 시작`으로 변경.
+  - 추천 안내 문구를 분석 기준으로 정리.
+
+- arcana/js/config.js
+- arcana/js/state.js
+- arcana/data/config.json
+- arcana/README.txt
+  - ARC-0.3.01 버전 반영.
+
+- arcana/js/api.js
+  - 액티브 스킬 선택값의 legacy localStorage 자동 복원 제거.
+  - `ARCANA_CHARACTER_LEVELS` 키가 남아 있어도 재접속/새로고침 때 불러오지 않도록 정리.
+  - 스킬 저장은 현재 페이지 분석용 상태로만 처리.
+
+- arcana/js/classSelector.js
+  - 클래스 선택/재선택 시 `targetSkillLevels`, `targetSkillPriority20`까지 함께 초기화.
+  - 화면에는 이전 스킬이 남고 내부 state는 비어 분석 시작이 안 되는 불일치 원인 수정.
+
+- arcana/js/app.js
+  - 분석 실행 가능 조건에 클래스 선택 여부를 추가.
+  - CTA/버튼/안내 문구를 `분석 시작` 기준으로 변경.
+
+- arcana/js/components/arcana-cta.js
+- arcana/css/components/arcana-cta.css
+  - CTA 기본 버튼명을 `분석 시작`으로 변경.
+  - 기존 방사형 CTA 상태/속도/5.2초 분석중 유지 구조는 유지.
+
+[Apps Script]
+- AppsScript/ARC_Constants.gs
+  - ARC_VERSION을 ARC-0.3.01로 변경.
+  - 배포 중인 웹앱에 반영하려면 Apps Script 배포 관리에서 기존 배포 수정 → 새 버전 생성 필요.
+
+[검수]
+- JS 문법 검사 대상: app.js, api.js, classSelector.js, arcana-cta.js.
+- 새로고침/재접속 시 이전 액티브 스킬 localStorage 복원 차단 확인.
+- 클래스 선택 시 targetSkillLevels까지 초기화되는 경로 확인.
+- CTA 버튼명 `분석 시작` 반영 확인.
+
+
+================================================================================
+[기존 기록] MODIFIED_FILES_20260613_01.txt
+================================================================================
+
+ARC-0.3.01 · 260613_01
+
+[웹]
+- index.html: 웹 상단 버전 표기를 ARC-0.3.01 · 260613_01로 변경
+- index.html: arcana-pair-balance.css 로드 추가
+- arcana/css/components/arcana-pair-balance.css: 현재/추천 아르카나 카드 좌우 높이와 내부 기준선 통일 규칙 신규 작성
+
+[Apps Script]
+- 수정 없음
+
+[검수]
+- 현재 아르카나와 추천 아르카나 외곽 높이 동일화 규칙 확인
+- 추천 결과 표시 후 CTA 숨김 상태에서도 하단 기준선 유지 확인
+
+
+================================================================================
+[기존 기록] MODIFIED_FILES_20260613_02.txt
+================================================================================
+
+ARC-0.3.01 · 260613_02
+
+[웹]
+- index.html: 웹 상단 버전 표기를 ARC-0.3.01 · 260613_02로 갱신
+- css/cards.css: 현재/추천 아르카나 높이를 방해하던 260610 계열 구 레이아웃 블록 제거
+- css/modal.css: 더 이상 사용하지 않는 최초 진입 쇼케이스 클래스 선택 UI 스타일 제거
+- css/layout.css: 구 클래스 선택 위치 보정 블록 제거
+- css/components/class-selector.css: 클래스 선택 버튼/드롭다운 단일 관리 스타일로 재정리
+- css/components/recommend-panel.css: 추천 패널 내부 전용 스타일로 축소
+- css/components/arcana-pair-balance.css: 현재/추천 아르카나 카드 높이와 내부 기준선 단일 관리
+- css/components/panel-containment.css: 현재/추천 카드 높이 고정 기능 제거, 공통 스크롤/침범 방지만 유지
+- js/classSelector.js: 쇼케이스형 클래스 선택 로직 제거, 상단 드롭다운 선택 방식으로 단일화
+- js/state.js / js/app.js: 쇼케이스 상태 키 제거
+
+[Apps Script]
+- 수정 없음
+- 재배포 불필요
+
+[검수]
+- 실행 코드 기준 arcanaClassShowcase / arcana-showcase 잔여 제거 확인
+- cards.css 내 260610 구 레이아웃 블록 제거 확인
+- CSS brace balance 확인
+- JS 문법 검사 통과
+
+
+================================================================================
+[기존 기록] MODIFIED_FILES_20260613_03.txt
+================================================================================
+
+ARC-0.3.01 · 260613_03
+
+[웹]
+- js/classSelector.js: 260613_02에서 제거된 카드 회전형 클래스 선택 모달을 복구하고, 상단 버튼은 모달 진입용으로 유지.
+- css/modal.css: 클래스 쇼케이스/회전 카드 모달 스타일 복구.
+- js/state.js: showcaseSelectedKey/touchPreviewClassKey/hasSeenClassShowcase 상태 복구.
+- css/components/arcana-pair-balance.css: 현재 아르카나/추천 아르카나의 제목·안내·탭·본문·하단 기준선 강제 통일.
+- css/cards.css: 저장 완료 상태에서 액티브/반지/아르카나 패널 채도 저하 및 잠금 연출 보강.
+- index.html/js/config.js: 화면 버전 표기 ARC-0.3.01 · 260613_03 반영.
+
+[Apps Script]
+- 수정 없음.
+- 재배포 불필요.
+
+[정리]
+- 260613_02의 “상단 드롭다운 단일화” 방향을 폐기하고, 사용자 의도였던 카드 회전형 클래스 선택 모달을 복구.
+- 좌우 아르카나 카드 높이 보정은 별도 balance CSS에서만 관리하도록 유지.
+
+
+================================================================================
+[기존 기록] MODIFIED_FILES_20260613_04.txt
+================================================================================
+
+ARC-0.3.01 · 260613_04
+
+[웹]
+- CARD-01~05 영역 카드 번호 부여
+  CARD-01 액티브 스킬 선택
+  CARD-02 반지 스킬 옵션
+  CARD-03 추가 기능 영역
+  CARD-04 현재 아르카나
+  CARD-05 추천 아르카나
+- PC 기준 레이아웃 그룹 정리
+  top-row: 1:1:1
+  arcana-row: 1:1
+- 신규 레이아웃 관리자 CSS 추가: css/components/arcana-layout-manager.css
+- 신규 레이아웃 관리자 JS 추가: js/components/arcana-layout-manager.js
+- 기존 arcana-pair-balance.css 제거 및 링크 교체
+- cards.css의 구 카드 외곽/높이 보정 블록 제거
+- 클래스 선택 버튼 스타일 권한을 class-selector.css로 단일화
+- layout.css/main.css의 클래스 선택 버튼 중복 스타일 제거
+- 상단 클래스 버튼 클릭 경로를 카드 회전형 쇼케이스 모달로 단일화
+- HTML 내부 구 compact dropdown 마크업 제거
+- 중복 tabs.js 로드 제거
+- classSelector.js의 중복 const 선언 수정
+- 버전 표기 ARC-0.3.01 · 260613_04 반영
+
+[Apps Script]
+- 수정 없음
+
+[검수]
+- 클래스 선택 버튼 중복 스타일 grep 확인
+- 구 pair-balance 링크 제거 확인
+- JS 문법 검사 통과
+- CSS brace balance 검사 통과
+
+
+================================================================================
+[기존 기록] MODIFIED_FILES_20260613_05.txt
+================================================================================
+
+ARC-0.3.01 · 260613_05
+
+[웹/CSS]
+- 전체 페이지/탑바/상단 1:1:1/하단 1:1 레이아웃 폭을 Layout Manager에서 1280px 기준으로 재조정
+- CARD-01~03 높이를 430px로 보정하고 내부 스크롤/하단 버튼 보호 적용
+- 신규 공통 효과 파일 추가: css/components/prism-aura.css
+- 저장 완료 카드 테두리와 CTA hover/loading 효과를 Prism Aura 계열로 통일
+- 기존 파란 계열 선택/저장 효과를 오팔·프리즘 컬러로 완화
+
+[웹/HTML]
+- 버전 표기 ARC-0.3.01 · 260613_05 반영
+- prism-aura.css 로드 추가
+
+[Apps Script]
+- 수정 없음
+
+
+================================================================================
+[기존 기록] MODIFIED_FILES_20260614_01.txt
+================================================================================
+
+ARC-0.3.01 · 260614_01
+
+[웹]
+- index.html: 화면 버전 표기를 ARC-0.3.01 · 260614_01로 갱신.
+- css/components/arcana-layout-manager.css: 전체 페이지 폭을 1160px 기준으로 축소하고, CARD-01~05 레이아웃 구조를 재정리. 잘못 중첩된 미디어쿼리/중복 액션 규칙 제거.
+- css/components/prism-aura.css: Prism Aura 효과가 카드/스킬 버튼 영역 밖으로 새지 않도록 position/overflow/mask 범위를 재정의. 파란 계열 과다 사용을 줄이고 오팔·프리즘 계열로 정리.
+- js/skillSelector.js: 액티브 스킬 선택 효과가 전체 버튼에서 동시에 도는 문제를 완화하기 위해 스킬별 선택 시점 기준 애니메이션 타이밍을 부여.
+
+[수정 기준]
+- 페이지 전체 폭 과확장 보정.
+- 상단/하단 영역카드 기준선은 Layout Manager에서만 관리.
+- 저장 카드 Prism Aura는 카드 내부 외곽선에만 표시.
+- 스킬 버튼 Prism Aura는 각 버튼 내부에서만 개별 진행.
+- 기존처럼 큰 사선 오버레이가 화면 전체로 새는 현상 차단.
+
+[Apps Script]
+- 수정 없음.
+- 재배포 불필요.
+
+
+================================================================================
+[기존 기록] MODIFIED_FILES_20260614_01_ARC_0_3_02.txt
+================================================================================
+
+ARC-0.3.02 · 260614_01
+
+권한 회수 패치.
+- Layout Manager: 페이지 폭/CARD-01~05/본문/푸터/공통 버튼 규격 관리.
+- Prism Aura: 저장 완료, 16/20 스킬 버튼, CTA 효과 단일 관리.
+- 중복 script, legacy grid/message/active effect 권한 제거.
+- Apps Script ARC_VERSION 갱신.
+
+
+================================================================================
+[기존 기록] MODIFIED_FILES_20260614_02.txt
+================================================================================
+
+ARC-0.3.01 · 260614_02
+
+[웹]
+- arcana/index.html
+  - 버전 표기 ARC-0.3.01 · 260614_02로 갱신.
+
+- arcana/css/components/arcana-layout-manager.css
+  - 전체 페이지 최대폭을 1080px 기준으로 재조정.
+  - CARD-01~03 / CARD-04~05의 폭·높이·본문·하단 영역 권한을 Layout Manager에서 강제 관리하도록 보강.
+  - 현재/추천 아르카나 내부 body/footer 영역을 분리해 버튼과 슬롯 영역 겹침을 방지.
+
+- arcana/css/components/prism-aura.css
+  - 저장 카드/선택 스킬/CTA의 Prism Aura 효과를 공통 파일에서만 관리하도록 재작성.
+  - 파란색 회전 테두리 대신 오팔·프리즘 계열 색감으로 보정.
+  - 저장 카드 효과가 화면 전체로 새지 않도록 패널 내부 border mask로 제한.
+  - 선택 스킬 버튼별로 개별 애니메이션 타이밍을 사용하도록 정리.
+  - 효과 속도를 더 느리게 보정.
+
+- arcana/css/main.css
+  - 구 page width 관리 제거.
+  - 구 파란색 회전 테두리/스킬 선택 효과 제거.
+
+- arcana/css/layout.css
+  - 저장 완료 패널의 구 사선 오버레이 제거.
+
+- arcana/css/cards.css
+  - 구 스킬 버튼 파란 파동 효과 및 저장 완료 중복 효과 제거.
+
+- arcana/js/skillSelector.js
+  - 스킬별 Prism Aura 타이밍 기준을 14.5초로 완화하고 선택 순서별 오프셋을 확대.
+
+[Apps Script]
+- 수정 없음.
+
+[검수]
+- CSS brace balance 확인.
+- 구 blue border spin / skill wave flow 잔여 검색.
+- Apps Script 수정 없음.
+
+
+================================================================================
+[기존 기록] MODIFIED_FILES_20260614_02_ARC_0_3_02.txt
+================================================================================
+
+ARC-0.3.02 · 260614_02
+
+[작업 원칙]
+- 기존 작업물 감사 후 수정/추가/삭제를 분류하고 작업.
+- 새 CSS 덮어쓰기식 추가가 아니라 기존 권한 회수 후 필요한 파일만 수정.
+
+[수정]
+- arcana/index.html
+  - 화면 버전 표기를 ARC-0.3.02 · 260614_02로 갱신.
+
+- arcana/css/components/arcana-layout-manager.css
+  - CARD-04 현재 아르카나 본문 영역을 flex가 아닌 grid 본문으로 재정리.
+  - CARD-05 추천 아르카나는 wrapper/flex, 추천 카드 grid는 하위 grid로 분리.
+  - CARD-01~03 높이를 늘려 액티브 스킬 스크롤 발생을 줄임.
+  - CARD-04/05 내부 title/message/tab/body/footer 배분을 다시 정리.
+  - 저장/수정/초기화 버튼 규격 통일 유지.
+
+- arcana/css/components/prism-aura.css
+  - 저장 완료 빗금 오버레이를 카드 전체에 다시 보이도록 복구.
+  - 저장 완료 카드 외곽 Prism Aura 흐름을 복구.
+  - 16레벨/20레벨 스킬 버튼 모두 테두리 흐름 효과가 보이도록 재연결.
+  - 스킬 버튼 선택 시 푸딩 효과를 복구.
+  - 20레벨은 골드/오팔 프리즘, 16레벨은 라벤더/아이스 프리즘으로 구분.
+  - 전체 사선/사각형 회전처럼 새는 효과는 제거하고 대상 내부에만 제한.
+
+- arcana/css/cards.css
+  - 장비 카드 grid/animation 중복 블록 중 Layout Manager와 충돌하는 legacy 권한 제거.
+
+[추가]
+- 없음.
+
+[삭제/회수]
+- cards.css 내 장비 카드 display/animation 중복 정의 일부 제거.
+- CARD-04 owned grid display 권한을 Layout Manager로 회수.
+- Prism Aura 효과 권한을 prism-aura.css로 유지.
+
+[Apps Script]
+- 수정 없음.
+- 재배포 불필요.
+
+[검수]
+- CSS brace balance 확인.
+- 주요 JS 문법 검사 확인.
+- 16/20 스킬 효과 클래스 연결 확인.
+- 저장 상태 is-saved/is-saving 효과 연결 확인.
+
+
+================================================================================
+[기존 기록] MODIFIED_FILES_20260614_03_ARC_0_3_02.txt
+================================================================================
+
+ARC-0.3.02 · 260614_03
+
+[수정]
+- arcana/index.html
+  - 화면 버전 표기를 ARC-0.3.02 · 260614_03으로 갱신.
+- arcana/js/skillSelector.js
+  - 20레벨 중요도 뱃지 위치 보정을 위한 has-priority-badge 클래스 추가.
+  - 클릭 푸딩 애니메이션 유지 시간을 늘려 딱딱한 반응을 완화.
+- arcana/css/components/prism-aura.css
+  - 16/20 스킬 버튼 프리즘 테두리 두께와 색감 복구.
+  - 저장 카드 빗금/채도 저하/외곽 테두리 흐름 효과 복구.
+  - 테두리 효과가 내용 전체를 덮지 않고 대상 내부에만 머물도록 재정리.
+- arcana/css/components/arcana-layout-manager.css
+  - 페이지 폭과 CARD-01~05 높이를 내용 기준으로 재조정.
+  - 카드 내부 BODY/그리드 중앙 정렬 보정.
+- arcana/css/cards.css
+  - 20레벨 뱃지와 중요도 뱃지가 서로 겹치지 않도록 위치 보정.
+
+[추가]
+- 없음.
+
+[삭제/회수]
+- 신규 파일 추가 없이 기존 prism-aura / layout-manager 권한 내에서 수정.
+- 구 효과를 새 파일로 덮어쓰지 않고 기존 효과 파일에 재연결.
+
+[Apps Script]
+- 수정 없음.
+- 재배포 불필요.
+
+
+================================================================================
+[기존 기록] MODIFIED_FILES_20260614_04_ARC_0_3_02.txt
+================================================================================
+
+ARC-0.3.02 · 260614_04
+
+[수정]
+- arcana/js/recommendation.js
+  - 20레벨 목표 배치 시 3레벨 분산을 먼저 시도하고, 부족분이 남을 때만 Lv4를 사용하도록 변경.
+  - 20레벨 7개 목표일 때만 성배/양피지/나침반/천칭 Lv4 앵커 조건을 선행 적용.
+  - 목표 달성 후 남는 아르카나 슬롯에 임의 스킬을 채우던 로직 제거.
+  - 남는 추천 슬롯은 '스킬 여유'로 표시하도록 변경.
+  - 추천 가이드 문구를 Lv4 필수 사용이 아니라 '필요할 때만 Lv4 사용' 기준으로 보정.
+
+- arcana/js/cardEditor.js
+  - 추천 카드의 자유 슬롯을 '스킬 여유'로 명확히 표시.
+  - 스킬 여유 슬롯이 추천 계산/목표 달성 표시와 혼동되지 않도록 별도 표시 상태 추가.
+
+- arcana/css/components/recommend-panel.css
+  - 추천 카드의 '스킬 여유' 슬롯 표시 스타일 추가.
+
+- ARCANA_MASTER_RULES_v2.txt
+- arcana/ARCANA_MASTER_RULES_v2.txt
+  - 최신 추천 엔진 규칙, Lv4 사용 규칙, 코드 작업 규칙, legacy 파일 규칙, 다음 채팅방 인수인계 확인 항목 반영.
+
+[추가]
+- 신규 파일 추가 없음.
+
+[삭제/회수]
+- 목표 달성 후 남는 슬롯에 아무 스킬을 자동 삽입하던 추천 엔진 로직 제거.
+- 20레벨 목표라는 이유만으로 Lv4를 선배치하던 추천 엔진 호출 제거.
+
+[검수]
+- 추천 엔진 JS 문법 검사 통과.
+- 목표 달성 후 스킬 여유 슬롯 표시 로직 확인.
+- Lv4는 목표 부족분이 남는 경우에만 후순위로 사용하도록 흐름 확인.
+
+[Apps Script]
+- 수정 없음.
+- 재배포 불필요.
+
+
+================================================================================
+[기존 기록] MODIFIED_FILES_20260615_01_ARC_0_3_02.txt
+================================================================================
+
+ARC-0.3.02 · 260615_01
+
+[수정]
+- arcana/index.html
+  - 화면 표기를 ARC-0.3.02 · 260615_01로 갱신.
+- arcana/css/components/prism-aura.css
+  - 액티브 스킬 버튼 테두리 효과를 버튼 뒤 배경 회전이 아닌 테두리 자체 흐름으로 재작성.
+  - 20레벨/16레벨 뱃지가 스킬명을 덮지 않도록 2줄 구조로 복구.
+  - 클릭 푸딩 반응을 부드럽게 복구.
+  - 저장 완료 카드의 빗금/채도 감소/테두리 흐름 효과를 단일 권한으로 정리.
+
+[추가]
+- ARCANA_NEXT_CHAT_PROMPT.txt
+- arcana/ARCANA_NEXT_CHAT_PROMPT.txt
+  - 다음 채팅방에서 파일 업로드 시 이어받을 수 있는 작업 전달용 프롬프트.
+- ARCANA_MASTER_RULES_v3.txt
+- arcana/ARCANA_MASTER_RULES_v3.txt
+  - 작업 절차, 날짜/순번 루틴, 권한 회수, Prism Aura, 추천 엔진 규칙 정리.
+- ARCANA_WORK_LOG.txt
+- arcana/ARCANA_WORK_LOG.txt
+  - 오늘 작업 순번과 변경 내용 기록.
+
+[삭제]
+- 없음.
+
+[Apps Script]
+- 수정 없음.
+- 재배포 불필요.
+
+[검수]
+- CSS brace balance 확인.
+- JS 변경 없음.
+- 화면 버전 표기 갱신 확인.
+- Prism Aura 권한이 prism-aura.css 내부에서만 처리되도록 정리.
+
+
+================================================================================
+[기존 기록] MODIFIED_FILES_20260615_03_ARC_0_3_02.txt
+================================================================================
+
+MODIFIED_FILES.txt
+ARC-0.3.02 · 260615_03
+
+[수정]
+- arcana/index.html
+  - 화면 버전 표기를 ARC-0.3.02 · 260615_03으로 갱신.
+- ARCANA_COMPASS.txt
+  - 루트 최상위 단일 규칙/프롬프트 문서로 신규 정리.
+  - 기존 MASTER RULES / NEXT CHAT PROMPT / WORK LOG 역할을 통합.
+- CHANGELOG.txt
+  - 기존 WORK LOG 역할을 통합.
+  - 260615_03 코드/로직 감사 결과 기록.
+- MODIFIED_FILES.txt
+  - 이번 작업 기준으로 갱신.
+
+[추가]
+- ARCANA_COMPASS.txt
+- CHANGELOG.txt
+- arcana/_docs/legacy/ARCANA_MASTER_RULES_v2.txt
+- arcana/_docs/legacy/ARCANA_MASTER_RULES_v3.txt
+- arcana/_docs/legacy/ARCANA_NEXT_CHAT_PROMPT.txt
+- arcana/_docs/legacy/ARCANA_WORK_LOG.txt
+
+[삭제/정리]
+- 루트 최상위에서 아래 파일 제거:
+  - ARCANA_MASTER_RULES_v2.txt
+  - ARCANA_MASTER_RULES_v3.txt
+  - ARCANA_NEXT_CHAT_PROMPT.txt
+  - ARCANA_WORK_LOG.txt
+- arcana/ 내부 중복 문서 제거:
+  - arcana/ARCANA_MASTER_RULES_v2.txt
+  - arcana/ARCANA_MASTER_RULES_v3.txt
+  - arcana/ARCANA_NEXT_CHAT_PROMPT.txt
+  - arcana/ARCANA_WORK_LOG.txt
+
+[로직 감사]
+- 추천 엔진 로직 변경 없음.
+- 저장 로직 변경 없음.
+- UI 효과 CSS 변경 없음.
+- 레이아웃 CSS 변경 없음.
+- Apps Script 기능 로직 변경 없음.
+
+[Apps Script]
+- 수정 없음.
+- 재배포 불필요.
+
+
+================================================================================
+[기존 기록] UPDATE_HISTORY.txt
+================================================================================
+
+ARC-0.2.05_20260611_02
+- 16/20 목표 스킬 선택, 추천 분석/가이드 탭, 저장 후 수정하기 기능을 추가했습니다.
+
+ARC-0.2.04_20260610_04
+
+[이번 작업 요약]
+- 검수 리포트 기준으로 미생성 ZIP 문제를 바로잡고 실제 작업본을 생성했습니다.
+- 클래스 미선택 상태에서도 상단 3개 카드가 동일한 폭과 높이를 유지하도록 보강했습니다.
+- 각 카드의 안내 문구 영역을 제목칸 바로 아래 통합 라인 형태로 재정리했습니다.
+- 반지1/반지2에서 이미 선택한 스킬은 다른 슬롯에서 선택할 수 없도록 비활성 처리했습니다.
+- 현재 아르카나의 같은 카드 안에서 이미 선택한 스킬은 다른 슬롯에서 선택할 수 없도록 비활성 처리했습니다.
+- 반지 스킬 미선택 상태에서는 저장 버튼 문구가 '옵션 추천 받기'로 보이도록 조정했습니다.
+- 추천 아르카나 시작 전 영역의 내용을 정리하고, KINOJO AI 문구를 추천 시작 버튼 아래로 이동했습니다.
+- 추천 시작 CTA를 KINOJO 스타일 원형 버튼으로 재디자인했습니다.
+
+[검수 포인트]
+- 클래스 미선택 상태에서 액티브 스킬 선택 / 반지 스킬 옵션 / 기능 추가 예정 카드가 1:1:1로 유지되는지 확인해야 합니다.
+- 반지1에서 선택한 스킬이 반지2 또는 다른 반지 슬롯에서 비활성화되는지 확인해야 합니다.
+- 현재 아르카나의 같은 카드 안에서 중복 스킬 선택이 차단되는지 확인해야 합니다.
+- 추천 시작 전 문구, 추천 시작 버튼, KINOJO AI 문구가 겹치지 않고 위아래로 자연스럽게 보이는지 확인해야 합니다.
+
+ARC-0.2.04_20260610_03
+
+[이번 작업 요약]
+- 클래스 선택 전 내부 카드 내용을 강한 블러로 처리했습니다.
+- 액티브 스킬 선택, 반지 스킬 옵션, 기능 추가 예정 카드가 클래스 선택 전에도 동일한 폭과 높이를 유지하도록 보강했습니다.
+- 추천 시작 버튼을 중앙 원형 CTA로 다시 디자인하고, 추천 결과 생성 후에는 버튼이 사라지도록 수정했습니다.
+- 안내 문구 문장 단위 줄바꿈을 보강했습니다.
+
+ARC-0.2.04_20260610_02
+
+[이번 작업 요약]
+- 검수 리포트 기준으로 1차 안정화 작업의 미반영 항목을 재수정했습니다.
+- 공통 안내 문구 영역을 각 카드 제목 바로 아래로 이동했습니다.
+- 클래스 선택 전 잠금 상태에서는 카드 내부 안내 문구가 어색하게 보이지 않도록 숨김 처리했습니다.
+- 저장/반영 문구는 고정된 안내 영역에서만 교체되도록 정리했습니다.
+- 반지 스킬 옵션은 반지1/반지2가 처음부터 좌우 2분할로 보이도록 표시 규칙을 보강했습니다.
+- 추천 시작 버튼의 절대 배치를 제거해 기존 안내 문구를 가리지 않도록 수정했습니다.
+- 추천 안내 문구, 원형 추천 시작 버튼, 결과 안내 문구가 위에서 아래로 겹치지 않게 배치되도록 정리했습니다.
+- 사용자 승인 없는 버전업을 되돌리기 위해 화면/설정 표기를 ARC-0.2.04 기준으로 정리했습니다.
+
+[검수 포인트]
+- 안내 문구가 저장 버튼 근처가 아니라 카드 제목 바로 아래에 고정되어야 합니다.
+- 클래스 선택 전 잠금 화면에서 카드 내부 안내 문구가 이상하게 노출되지 않아야 합니다.
+- 반지 스킬 옵션 영역에 반지1/반지2가 처음부터 동시에 보여야 합니다.
+- 추천 시작 버튼이 안내 텍스트를 가리지 않아야 합니다.
+- 추천 안내 문구는 버튼 아래 고정 영역에 표시되어야 합니다.
+수정사항_260610_05
+- 상단 3개 카드가 클래스 미선택 상태에서도 동일 폭을 유지하도록 레이아웃을 보강했습니다.
+- 안내 문구 통합 라인을 2줄 고정 높이로 통일하여 저장 전/후 문구 변경 시 카드 크기가 변하지 않도록 수정했습니다.
+- 저장/초기화 버튼과 본문 사이의 여백을 확대했습니다.
+- 액티브 스킬 미선택 상태에서는 저장 버튼이 활성화되지 않도록 수정했습니다.
+- 추천 시작 버튼을 KINOJO 스타일 기준으로 재디자인하고 클릭 시 사라지는 연출을 추가했습니다.
+- 아르카나 카드 영역의 높이와 드롭다운 표시 여유를 보강했습니다.
+
+수정사항_260610_06
+
+[이번 작업 요약]
+- 상단 3개 카드 폭 미고정 문제의 원인을 전수 점검하고, 980px/1180px 미디어쿼리와 fit-content 계열 폭 지정이 3열 고정을 덮어쓰는 문제를 보강했습니다.
+- 클래스 미선택 상태에서도 PC 프레임에서는 액티브 스킬 선택 / 반지 스킬 옵션 / 기능 추가 예정 영역이 3열 1:1:1 폭으로 유지되도록 재정의했습니다.
+- 카드 본문과 저장/초기화 버튼 간격을 이전 작업 대비 절반 수준으로 줄였습니다.
+- 저장 후 빗금 오버레이가 안내 문구 라인을 침범하지 않도록 시작 위치를 아래로 조정했습니다.
+- 추천 시작 CTA의 그라데이션/그림자 효과를 제거하고, 버튼과 분리되어 보이던 테두리 효과를 버튼 자체 border-box 애니메이션으로 재정리했습니다.
+- 추천 시작 클릭 시 축소 퇴장 연출이 보이도록 대기 시간을 늘렸습니다.
+- 현재/추천 아르카나 카드의 불필요한 하단 빈 공간을 줄였습니다.
+- 추천 로직을 카드별 단순 채우기 방식에서 목표 스킬별 필요 레벨을 여러 아르카나에 분산 배정하는 방식으로 개선했습니다.
+- 양피지/나침반 필터 규칙을 rowKeys 기준으로 정리하여, 행 기준 규칙을 우선 적용하도록 Apps Script DB 읽기 로직을 보강했습니다.
+
+[검수 포인트]
+- PC 화면에서 클래스 미선택 상태의 상단 3개 카드가 가로 3열 동일 폭으로 보이는지 확인해야 합니다.
+- 저장 후 빗금 영역이 제목칸과 안내 문구 라인을 침범하지 않아야 합니다.
+- 추천 시작 버튼 hover 시 버튼 자체 테두리를 따라 빛이 도는지 확인해야 합니다.
+- 추천 시작 클릭 시 버튼이 중심 기준으로 작아지며 사라지는지 확인해야 합니다.
+- 양피지/나침반 스킬 목록이 class_skill_db의 행 기준 규칙과 맞는지 확인해야 합니다.
+- 목표 스킬 20레벨 달성 가능 여부가 이전보다 적극적으로 계산되는지 확인해야 합니다.
+
+ARC-0.2.04_20260610_07
+- 버전은 ARC-0.2.04로 유지하고 작업 순번만 07로 증가했습니다.
+- 상단 3카드 폭, 안내문 2줄 고정, 저장 후 본문 전용 빗금 처리, 반지/아르카나 중복 선택 차단, 클래스 선택 고정 위치, 6종 아르카나 규칙, 추천 엔진 우선순위를 반영했습니다.
+
+[260610_10]
+- 나침반 스킬 pool 기준을 G/I/K/M/N/Q로 정정했습니다.
+- 현재 아르카나 스킬 pool에서 DB arcanaSkills를 우선 사용하도록 보정했습니다.
+- 클래스 선택 카드 선택 상태 반투명 제거와 버튼 하단 배치를 보정했습니다.
+- 추천 CTA 버튼 중앙 배치 및 버튼 뒤 파동 레이어를 추가했습니다.
+
+ARC-0.2.05 / 2026-06-12 작업본 01
+- ARC-0.2.05에서 발생한 클래스 선택/저장/현재 아르카나 렌더링/추천 CTA 회귀 이슈 안정화.
+- 렌더 체인 보호, 저장 상태 hydrate, 누락된 현재 아르카나 카드 렌더 함수 복구.
+
+ARC-0.3.00 / 2026-06-12 작업본 01
+- 추천 아르카나 CTA를 회전형이 아닌 막대 길이 파동형 독립 컴포넌트로 재정리.
+- 분석중 상태 최소 4.2초 유지.
+- 분석 진행 문구를 순차 출력하도록 적용.
+- 저장된 보유 아르카나/반지 여부에 따라 안내 문구 분기.
+- 현재 아르카나/추천 아르카나 카드 영역 침범 방지 규칙 유지 확인.
+
+[ARC-0.3.00 / 2026-06-12 / 02]
+- 추천 엔진 포인트 예산 알고리즘 추가
+- 20레벨 목표는 +6, 16레벨 목표는 +2로 계산
+- 총 42포인트 기준 남는 포인트를 자동 16레벨 목표로 분산
+- 20레벨 목표 7개일 때 성배/양피지/나침반/천칭 Lv4 액티브 앵커 조건 반영
+- 저장된 보유 아르카나가 7개 20레벨 조건에 맞지 않으면 추천 분석 차단 및 빨간 경고 표시
+- AppsScript 변경 없음
+
+[ARC-0.3.00_20260612_03]
+- 수호성 class_skill_db 키(skill_db_templar)를 templar 표준 키로 통합했습니다.
+- 클래스 키 정규화 로직을 웹 classService.js와 Apps Script ARC_ClassKeyService.gs로 분리했습니다.
+- 기존 classSelector/skillSelector 내부 중복 매핑은 연결부만 남기고 정리했습니다.
+- 액티브 스킬 20/16 목표 선택 규칙을 skillTargetRules.js로 분리했습니다.
+- 20레벨 선택 개수에 따라 16레벨 추가 가능 수가 동적으로 계산되도록 수정했습니다.
+- 20레벨 선택 순서 기준 1~5 중요도 뱃지를 표시하도록 수정했습니다.
+- 구 ARCANA_RING_OPTIONS fallback 복원을 제거해 새로고침 시 과거 반지 기록이 되살아나는 경로를 차단했습니다.
+- Apps Script .gs 파일 상단에 역할/포함 내용 설명 주석을 추가했습니다.
+
+[ARC-0.3.00_20260612_07]
+- 구 fallback 아르카나 풀 규칙을 제거하고 MASTER RULES 기준 공통 규칙으로 교체했습니다.
+- app.js 안에 남아 있던 구 CTA 생성 함수 buildCtaVisualizer()를 제거했습니다.
+- CTA는 js/components/arcana-cta.js와 css/components/arcana-cta.css 단일 관리로 정리했습니다.
+- 수호성 legacy guardian alias 의존을 제거하고 templar / skill_db_templar 기준으로 통일했습니다.
+
+
+================================================================================
+[기존 기록] legacy/ARCANA_MASTER_RULES_v2.txt
+================================================================================
+
+DEPRECATED FILE
+
+폐기 버전: ARC-0.3.02 · 260615_03
+폐기 사유: 규칙 파일 다중화 방지. ARCANA_COMPASS.txt로 통합.
+이관 위치: /ARCANA_COMPASS.txt 또는 /CHANGELOG.txt
+
+실행/작업 기준으로 사용하지 말 것.
+
+
+================================================================================
+[기존 기록] legacy/ARCANA_MASTER_RULES_v3.txt
+================================================================================
+
+DEPRECATED FILE
+
+폐기 버전: ARC-0.3.02 · 260615_03
+폐기 사유: 규칙 파일 다중화 방지. ARCANA_COMPASS.txt로 통합.
+이관 위치: /ARCANA_COMPASS.txt 또는 /CHANGELOG.txt
+
+실행/작업 기준으로 사용하지 말 것.
+
+
+================================================================================
+[기존 기록] legacy/ARCANA_NEXT_CHAT_PROMPT.txt
+================================================================================
+
+DEPRECATED FILE
+
+폐기 버전: ARC-0.3.02 · 260615_03
+폐기 사유: 다음 채팅방 프롬프트를 ARCANA_COMPASS.txt 내부 섹션으로 통합.
+이관 위치: /ARCANA_COMPASS.txt 또는 /CHANGELOG.txt
+
+실행/작업 기준으로 사용하지 말 것.
+
+
+================================================================================
+[기존 기록] legacy/ARCANA_WORK_LOG.txt
+================================================================================
+
+DEPRECATED FILE
+
+폐기 버전: ARC-0.3.02 · 260615_03
+폐기 사유: 작업 로그를 CHANGELOG.txt로 통합.
+이관 위치: /ARCANA_COMPASS.txt 또는 /CHANGELOG.txt
+
+실행/작업 기준으로 사용하지 말 것.
+
+
+================================================================================
+[20260615_07] ARC-0.3.02 UI_EFFECT_REWORK
+================================================================================
+
+[반영 규칙]
+- 20260615_03 레이아웃 잠금: 버튼/영역 카드 크기 변경 금지.
+- 효과는 해당 영역 내부 또는 레이아웃에 영향을 주지 않는 absolute/pseudo 요소로만 처리.
+- arcana/_docs는 이 파일 하나에 작업순서대로 누적.
+
+[수정]
+- css/components/prism-aura.css
+- js/skillSelector.js
+- arcana/_docs/ARCANA_WORK_LOG.txt
+
+[삭제/정리]
+- arcana/_docs 내부 개별 MODIFIED_FILES_*.txt / UPDATE_HISTORY.txt / legacy 문서들을 ARCANA_WORK_LOG.txt로 통합 후 제거.
+
+[작업 내용]
+1. 버튼 자체 확대/축소는 유지하면서 내부 아이콘/텍스트/뱃지만 squash/stretch 되도록 푸딩감 보강.
+2. 액티브 스킬 버튼 테두리 효과 두께를 절반 수준으로 축소.
+3. 두꺼운 선이 도는 방식 대신 작은 광점이 테두리 바깥쪽을 따라 도는 방식으로 변경.
+4. 저장 완료 영역 카드도 동일하게 얇은 외곽선 + 작은 광점 이동 방식으로 변경.
+5. 스킬명 말줄임 영역을 줄이고 뱃지를 absolute 처리해 버튼 크기 변경 없이 텍스트 노출 공간 확보.
+
+[Apps Script]
+- 수정 없음.
+
+[Extension]
+- 수정 없음.

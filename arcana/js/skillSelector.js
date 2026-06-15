@@ -227,7 +227,7 @@ ArcanaApp.skillSelector = {
     ArcanaApp.skillSelector.lastPuddingSkill = skill;
     ArcanaApp.skillSelector.puddingTimer = window.setTimeout(() => {
       ArcanaApp.skillSelector.lastPuddingSkill = '';
-    }, 620);
+    }, 680);
   },
 
   applyIndividualPrismTiming(button, skill) {
@@ -239,7 +239,7 @@ ArcanaApp.skillSelector = {
       state.targetSkillPulseAt[skill] = Date.now() - Math.max(0, activeOrder) * 2310;
     }
 
-    const durationMs = 6200;
+    const durationMs = 3900;
     const elapsed = (Date.now() - state.targetSkillPulseAt[skill]) % durationMs;
     button.style.setProperty('--arcana-skill-flow-delay', `${-(elapsed / 1000).toFixed(2)}s`);
   },
