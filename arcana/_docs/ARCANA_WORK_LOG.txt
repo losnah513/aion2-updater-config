@@ -1358,3 +1358,84 @@ ARC-0.3.02 · 260615_14
 - 탑바 버전을 260615_15로 갱신했다.
 - Apps Script 수정 없음.
 - Extension 수정 없음.
+
+================================================================================
+[작업 기록] ARC-0.3.02 · 260615_16
+================================================================================
+
+[기준 파일]
+- arcana_ARC-0.3.02_20260615_15.zip
+
+[수정]
+- arcana/index.html
+  - 화면 버전 표기를 ARC-0.3.02 · 260615_16으로 갱신.
+  - 클래스 쇼케이스 최종 오버라이드 CSS 연결.
+- CHANGELOG.txt
+  - 260615_16 작업 기록 추가.
+- MODIFIED_FILES.txt
+  - 이번 작업 수정/신규/삭제 목록으로 갱신.
+- arcana/_docs/ARCANA_WORK_LOG.txt
+  - 이번 작업 기록 누적.
+- arcana/_docs/ARCANA_INTERACTION_SYSTEM.txt
+  - 클래스 선택 쇼케이스 공전/자전 규칙 추가.
+
+[신규]
+- arcana/css/components/class-showcase-orbit-final.css
+  - 클래스 선택 쇼케이스 카드 공전/개별 자전 전용 오버라이드.
+  - 모달 내부 고정 영역에서만 카드가 움직이도록 반경/높이/overflow 제한.
+  - 단색 AION2 로고/룬진 느낌의 바닥 CSS 배경 추가.
+
+[삭제]
+- 없음.
+
+[검수 기준]
+- 클래스 카드가 모달 창 밖으로 삐져나가지 않아야 함.
+- 기존 클래스 선택 확정/닫기 로직은 유지되어야 함.
+- ACTION/NAV 버튼 시스템과 SELECT 버튼 시스템을 섞지 않아야 함.
+- Apps Script 재배포 불필요.
+- Extension 재설치 불필요.
+
+================================================================================
+[작업 기록] ARC-0.3.02 · 260615_17
+================================================================================
+
+[기준 파일]
+- arcana_ARC-0.3.02_20260615_16.zip
+
+[작업명]
+- 클래스 선택 쇼케이스 CSS 책임 교통정리
+
+[수정]
+- arcana/index.html
+  - 화면 버전 표기를 ARC-0.3.02 · 260615_17로 갱신.
+  - class-showcase-orbit-final.css 연결을 class-showcase.css 연결로 교체.
+- arcana/css/modal.css
+  - 클래스 선택 쇼케이스 관련 중복/누적 CSS를 제거.
+  - 확인 모달 전용 CSS만 남김.
+- arcana/css/components/class-selector.css
+  - 주석의 담당 파일 설명을 class-showcase.css 기준으로 수정.
+- arcana/css/components/class-showcase.css
+  - 클래스 선택 쇼케이스 모달/카드 배치/공전/개별 자전/바닥 문양을 단독 담당하도록 정리.
+- arcana/_docs/ARCANA_INTERACTION_SYSTEM.txt
+  - 쇼케이스 담당 파일을 class-showcase.css로 갱신.
+- CHANGELOG.txt
+  - 260615_17 작업 기록 추가.
+- MODIFIED_FILES.txt
+  - 이번 작업 수정/신규/삭제 목록으로 갱신.
+
+[삭제]
+- arcana/css/components/class-showcase-orbit-final.css
+  - 기존 modal.css 위에 덮어쓰던 임시 오버라이드 파일 제거.
+
+[정리 결과]
+- modal.css: 확인 모달 담당.
+- class-entry-gate.css: 최초 진입 중앙 안내 게이트 담당.
+- class-showcase.css: 실제 클래스 선택 쇼케이스 담당.
+- classSelector.js: DOM 생성/선택 확정 로직 담당.
+
+[검수 기준]
+- 클래스 카드 공전/자전 스타일이 class-showcase.css 한 곳에서만 관리되어야 함.
+- 기존 클래스 선택/확인/닫기 JS 동작은 유지되어야 함.
+- ACTION/NAV 버튼 시스템과 SELECT 버튼 시스템을 섞지 않아야 함.
+- Apps Script 재배포 불필요.
+- Extension 재설치 불필요.
