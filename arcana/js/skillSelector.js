@@ -227,7 +227,7 @@ ArcanaApp.skillSelector = {
     ArcanaApp.skillSelector.lastPuddingSkill = skill;
     ArcanaApp.skillSelector.puddingTimer = window.setTimeout(() => {
       ArcanaApp.skillSelector.lastPuddingSkill = '';
-    }, 760);
+    }, 620);
   },
 
   applyIndividualPrismTiming(button, skill) {
@@ -281,10 +281,10 @@ ArcanaApp.skillSelector = {
       .flatMap(item => item && item.active ? item.active : []);
     const source = allSkills.length > 0 ? allSkills : skills;
     const longest = source.reduce((max, skill) => Math.max(max, String(skill).length), 0);
-    const width = Math.min(184, Math.max(156, longest * 11 + 88));
+    const width = Math.min(144, Math.max(126, longest * 9 + 54));
 
     document.documentElement.style.setProperty('--arcana-skill-button-width', `${width}px`);
-    document.documentElement.style.setProperty('--arcana-compact-panel-width', `${width * 2 + 36}px`);
+    document.documentElement.style.setProperty('--arcana-compact-panel-width', `${width * 2 + 24}px`);
     wrapper.style.setProperty('--arcana-skill-button-width', `${width}px`);
   }
 };

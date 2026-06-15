@@ -48,7 +48,7 @@
   align-items: center;
   min-height: 26px;
   overflow: hidden;
-  text-overflow: clip;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 

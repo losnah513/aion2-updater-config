@@ -382,9 +382,3 @@
 .arcana-actions .arcana-btn:not(.arcana-wave-cta) {
   border-radius: 8px !important;
 }
-
-/* ARC-0.3.02 · 260615_04: 저장 카드 외곽 프리즘이 카드 밖에서도 보이도록 저장 상태만 클리핑 해제 */
-[data-layout-group="top-row"] > [data-layout-role="top-card"].is-saving,
-[data-layout-group="top-row"] > [data-layout-role="top-card"].is-saved {
-  overflow: visible !important;
-}
