@@ -18,6 +18,7 @@ ArcanaApp.app = {
     ArcanaApp.app.hydrateSavedState(data);
 
     ArcanaApp.ui.renderAll();
+    if (ArcanaApp.classEntryGate && typeof ArcanaApp.classEntryGate.init === 'function') ArcanaApp.classEntryGate.init();
     if (ArcanaApp.cta && typeof ArcanaApp.cta.init === 'function') ArcanaApp.cta.init();
     ArcanaApp.app.bindEvents();
   },

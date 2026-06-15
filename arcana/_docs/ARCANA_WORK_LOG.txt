@@ -1268,3 +1268,44 @@ DEPRECATED FILE
 □ 카드/버튼 크기 유지 확인
 □ Apps Script 재배포 불필요
 □ Extension 재설치 불필요
+
+
+============================================================
+ARC-0.3.02 · 260615_13
+작업명: 최초 클래스 선택 중앙 게이트 / 인터랙션 시스템 문서화
+
+[수정]
+- arcana/index.html
+- arcana/js/app.js
+
+[추가]
+- arcana/js/classEntryGate.js
+- arcana/css/components/class-entry-gate.css
+- arcana/_docs/ARCANA_INTERACTION_SYSTEM.txt
+
+[적용 내용]
+1. 페이지 상단/브라우저 타이틀 버전 표기를 ARC-0.3.02 · 260615_13으로 갱신.
+2. 클래스 미선택 첫 진입 시 화면 중앙에 클래스 선택 안내 게이트를 표시.
+3. 첫 진입 안내 상태에서는 탑바 우측 클래스 선택 버튼을 숨김 처리.
+4. 중앙 안내 버튼은 기존 classSelector.js의 클래스 선택 쇼케이스를 호출만 하도록 구성하여 선택 로직을 복제하지 않음.
+5. 클래스 선택 완료 후 중앙 안내창은 닫히고 탑바 우측 클래스 변경 버튼이 표시되도록 정리.
+6. 중앙 안내창의 X 버튼은 심플한 두 줄 형태로 구성하고, Hover/Touch Preview 회전 반응을 추가.
+7. PC Hover/Click, Mobile 1Tap/2Tap 규칙을 ARCANA_INTERACTION_SYSTEM.txt에 누적 문서화.
+
+[Apps Script]
+- 수정 없음.
+
+[Extension]
+- 수정 없음.
+
+[검수 항목]
+□ 첫 진입 클래스 미선택 상태에서 중앙 안내창 표시
+□ 첫 진입 상태에서 탑바 우측 클래스 선택 버튼 숨김
+□ 중앙 안내 버튼 클릭 시 기존 클래스 선택 쇼케이스 열림
+□ 클래스 선택 완료 후 탑바 우측 클래스 변경 버튼 표시
+□ 이후 클래스 변경은 탑바 버튼으로 진행
+□ X 버튼 PC Hover 회전 반응
+□ 모바일 1Tap Preview / 2Tap Execute 규칙
+□ 기존 버튼/카드 크기 변경 없음
+□ Apps Script 재배포 불필요
+□ Extension 재설치 불필요
