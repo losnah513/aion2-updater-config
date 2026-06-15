@@ -1349,3 +1349,12 @@ ARC-0.3.02 · 260615_14
 □ 기존 버튼/카드 크기 변경 없음
 □ Apps Script 재배포 불필요
 □ Extension 재설치 불필요
+
+[ARC-0.3.02 · 260615_15]
+작업명: Button System 준비 및 1차 통합
+- 일반 실행 버튼과 이동 버튼의 디자인/인터랙션 통합 파일을 추가했다.
+- 액티브 스킬 버튼과 선택형 슬롯은 통합 대상에서 제외해 EFFECT_FINAL 계열 손맛을 보호했다.
+- 모바일 1Tap Preview / 2Tap Execute 규칙을 ACTION/NAV 버튼에 적용했다.
+- 탑바 버전을 260615_15로 갱신했다.
+- Apps Script 수정 없음.
+- Extension 수정 없음.

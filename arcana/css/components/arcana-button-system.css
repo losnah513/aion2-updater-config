@@ -1,0 +1,168 @@
+/*
+ * ARCANA Button System
+ * Scope:
+ * - NAV BUTTON: navigation / topbar / open-a-panel buttons
+ * - ACTION BUTTON: save / confirm / cancel / reset / apply buttons
+ * Excluded by design:
+ * - SELECT BUTTON: skill buttons, arcana slots, class cards, dropdown list items
+ *
+ * Layout rule: do not change button width/height assigned by each card/layout file.
+ */
+:root {
+  --arcana-btn-radius: 7px;
+  --arcana-btn-border: rgba(37, 99, 235, 0.34);
+  --arcana-btn-border-strong: rgba(37, 99, 235, 0.72);
+  --arcana-btn-bg: #ffffff;
+  --arcana-btn-text: #1f4fbf;
+  --arcana-btn-fill: #2563eb;
+  --arcana-btn-fill-hover: #1d4ed8;
+  --arcana-btn-ghost-text: #334155;
+  --arcana-btn-ghost-border: rgba(148, 163, 184, 0.58);
+  --arcana-btn-pudding: cubic-bezier(0.2, 1.65, 0.28, 1);
+  --arcana-btn-press: cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+
+/* ACTION BUTTON --------------------------------------------------------- */
+.arcana-btn:not(.arcana-wave-cta) {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: var(--arcana-btn-radius);
+  border-color: var(--arcana-btn-border);
+  background: var(--arcana-btn-bg);
+  color: var(--arcana-btn-text);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  box-shadow: none;
+  transform-origin: 50% 62%;
+  transition:
+    transform 0.22s var(--arcana-btn-pudding),
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    color 0.18s ease,
+    opacity 0.18s ease;
+}
+
+.arcana-btn:not(.arcana-wave-cta)::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: -1;
+  border-radius: calc(var(--arcana-btn-radius) - 2px);
+  background: linear-gradient(115deg, transparent 0%, rgba(255,255,255,0.78) 42%, transparent 70%);
+  opacity: 0;
+  transform: translateX(-115%) skewX(-18deg);
+  transition: opacity 0.18s ease;
+  pointer-events: none;
+}
+
+.arcana-btn-primary:not(.arcana-wave-cta) {
+  border-color: var(--arcana-btn-border-strong);
+  background: var(--arcana-btn-fill);
+  color: #ffffff;
+}
+
+.arcana-btn-ghost:not(.arcana-wave-cta) {
+  border-color: var(--arcana-btn-ghost-border);
+  background: #ffffff;
+  color: var(--arcana-btn-ghost-text);
+}
+
+.arcana-btn:not(.arcana-wave-cta):hover:not(:disabled),
+.arcana-btn:not(.arcana-wave-cta):focus-visible:not(:disabled),
+.arcana-btn:not(.arcana-wave-cta).is-touch-preview:not(:disabled) {
+  transform: translateY(-1px) scaleX(1.025) scaleY(1.055);
+  border-color: var(--arcana-btn-border-strong);
+  background: var(--arcana-btn-fill-hover);
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.arcana-btn:not(.arcana-wave-cta):hover:not(:disabled)::before,
+.arcana-btn:not(.arcana-wave-cta):focus-visible:not(:disabled)::before,
+.arcana-btn:not(.arcana-wave-cta).is-touch-preview:not(:disabled)::before {
+  opacity: 0.54;
+  animation: arcanaActionBtnSheen 0.78s ease-out both;
+}
+
+.arcana-btn:not(.arcana-wave-cta):active:not(:disabled),
+.arcana-btn:not(.arcana-wave-cta).is-executing:not(:disabled) {
+  transform: translateY(1px) scaleX(1.045) scaleY(0.91);
+  transition-duration: 0.08s;
+  transition-timing-function: var(--arcana-btn-press);
+}
+
+.arcana-btn:disabled:not(.arcana-wave-cta) {
+  opacity: 0.62;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* NAV BUTTON ------------------------------------------------------------ */
+.arcana-class-picker-button {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  transform-origin: 50% 62%;
+  transition:
+    transform 0.24s var(--arcana-btn-pudding),
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    color 0.18s ease,
+    opacity 0.18s ease;
+}
+
+.arcana-class-picker-button::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(115deg, transparent 0%, rgba(255,255,255,0.86) 45%, transparent 72%);
+  opacity: 0;
+  transform: translateX(-112%) skewX(-18deg);
+  pointer-events: none;
+}
+
+.arcana-class-picker-button:hover,
+.arcana-class-picker-button:focus-visible,
+.arcana-class-picker-button.is-touch-preview {
+  transform: translateY(-1px) scaleX(1.018) scaleY(1.045);
+}
+
+.arcana-class-picker-button:hover::before,
+.arcana-class-picker-button:focus-visible::before,
+.arcana-class-picker-button.is-touch-preview::before {
+  opacity: 0.62;
+  animation: arcanaActionBtnSheen 0.82s ease-out both;
+}
+
+.arcana-class-picker-button:active,
+.arcana-class-picker-button.is-executing {
+  transform: translateY(1px) scaleX(1.035) scaleY(0.92);
+}
+
+/* Icon-only buttons are intentionally minimal. */
+.arcana-kinojo-menu-btn,
+.arcana-admin-plus-btn,
+.arcana-entry-gate-close {
+  box-shadow: none;
+}
+
+@keyframes arcanaActionBtnSheen {
+  0% { transform: translateX(-116%) skewX(-18deg); }
+  100% { transform: translateX(116%) skewX(-18deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arcana-btn:not(.arcana-wave-cta),
+  .arcana-class-picker-button {
+    transition: none;
+  }
+
+  .arcana-btn:not(.arcana-wave-cta)::before,
+  .arcana-class-picker-button::before {
+    animation: none !important;
+  }
+}
