@@ -76,3 +76,12 @@ ARCANA UI 작업은 결과물 완성 후 한 번에 확인하는 방식이 아�
 - BUTTON_SYSTEM
 - 중앙 진입 UX
 - 모바일 1Tap / 2Tap 인터랙션 규칙
+
+---
+[ARC-0.3.03 · 260615_02]
+- 클래스 쇼케이스 카드 크기를 축소하여 모달 영역 내부에서 여유롭게 보이도록 조정.
+- 클래스 카드 배치 로직을 선택 카드 중심 기준 공전형으로 보정.
+- 각 카드별 독립 wobble(자전) CSS 변수 주입 로직 추가.
+- 가까운 카드/먼 카드 원근감: scale, z-index, opacity, blur, saturation/brightness 차등 적용.
+- Apps Script 수정 없음.
+- Extension 수정 없음.

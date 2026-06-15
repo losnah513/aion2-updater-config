@@ -9,8 +9,8 @@ window.ArcanaApp = window.ArcanaApp || {};
 ArcanaApp.versionManager = {
   appVersion: 'ARC-0.3.03',
   buildDate: '20260615',
-  buildNo: '01',
-  buildCode: '260615_01',
+  buildNo: '02',
+  buildCode: '260615_02',
 
   get display() {
     return `${this.appVersion} · ${this.buildCode}`;
