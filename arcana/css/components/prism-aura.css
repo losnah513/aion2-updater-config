@@ -1,7 +1,7 @@
 /*
  * ARCANA PRISM AURA EFFECT
  * 역할: 액티브 스킬 선택 효과, 저장 완료 잠금 효과, CTA 프리즘 효과를 단일 관리한다.
- * ARC-0.3.02 · 260615_09
+ * ARC-0.3.02 · 260615_10
  * 원칙:
  * - 효과는 대상 테두리 자체에만 머문다.
  * - 버튼/카드 뒤에서 큰 판이 회전하는 효과 금지.
@@ -584,4 +584,182 @@
   background:
     radial-gradient(circle at 50% 50%, rgba(255,255,255,0.98), rgba(255,255,255,0.92)),
     conic-gradient(from 0deg, rgba(190,174,255,.15), rgba(255,203,226,.12), rgba(125,211,252,.13), rgba(110,231,183,.09), rgba(190,174,255,.15));
+}
+
+
+/* ------------------------------------------------------------------
+   ARC-0.3.02 · 260615_10
+   테두리 혜성 광량 보강 + 액티브 스킬 영역 카드 외곽 혜성 적용
+   - 크기/간격/레이아웃 값은 변경하지 않는다.
+   - 두께는 유지하고 blur/drop-shadow/투명도만 보강한다.
+------------------------------------------------------------------ */
+.arcana-skill-btn.arcana-skill-icon-btn.is-active {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.78),
+    0 0 10px color-mix(in srgb, var(--arcana-comet-tail) 44%, transparent),
+    0 0 18px color-mix(in srgb, var(--arcana-comet-core) 22%, transparent),
+    0 3px 8px rgba(15, 23, 42, 0.04) !important;
+}
+
+.arcana-skill-btn.arcana-skill-icon-btn.is-active::before {
+  background:
+    conic-gradient(from var(--arcana-comet-angle),
+      transparent 0deg,
+      transparent 188deg,
+      rgba(255,255,255,0.00) 204deg,
+      var(--arcana-comet-tail-soft) 226deg,
+      var(--arcana-comet-tail) 258deg,
+      var(--arcana-comet-core) 292deg,
+      var(--arcana-comet-head) 312deg,
+      rgba(255,255,255,1) 318deg,
+      var(--arcana-comet-spark) 325deg,
+      transparent 338deg,
+      transparent 360deg) !important;
+  opacity: 1 !important;
+  filter:
+    drop-shadow(0 0 3px color-mix(in srgb, var(--arcana-comet-tail) 78%, transparent))
+    drop-shadow(0 0 7px color-mix(in srgb, var(--arcana-comet-core) 50%, transparent)) !important;
+}
+
+.arcana-skill-btn.arcana-skill-icon-btn.is-active::after {
+  background:
+    conic-gradient(from var(--arcana-comet-angle),
+      transparent 0deg,
+      transparent 176deg,
+      rgba(255,255,255,0.00) 198deg,
+      var(--arcana-comet-tail-soft) 230deg,
+      var(--arcana-comet-tail) 274deg,
+      var(--arcana-comet-core) 306deg,
+      rgba(255,255,255,.88) 321deg,
+      transparent 344deg,
+      transparent 360deg) !important;
+  opacity: .72 !important;
+  filter:
+    blur(.35px)
+    drop-shadow(0 0 5px color-mix(in srgb, var(--arcana-comet-tail) 62%, transparent))
+    drop-shadow(0 0 11px color-mix(in srgb, var(--arcana-comet-core) 34%, transparent)) !important;
+}
+
+/* 액티브 스킬 영역 카드: 버튼과 같은 계열의 혜성 흐름을 카드 외곽에도 표시 */
+.arcana-target-panel {
+  --arcana-panel-comet-tail-soft: rgba(164, 222, 255, 0.17);
+  --arcana-panel-comet-tail: rgba(125, 211, 252, 0.64);
+  --arcana-panel-comet-core: rgba(190, 174, 255, 0.72);
+  --arcana-panel-comet-head: rgba(255, 255, 255, 1);
+  --arcana-panel-comet-spark: rgba(255, 203, 226, 0.62);
+}
+
+.arcana-target-panel:has(.arcana-skill-btn.is-active)::before {
+  content: '' !important;
+  position: absolute !important;
+  inset: -1px !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+  border-radius: inherit !important;
+  padding: 1px !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.50), rgba(255,255,255,.18)) padding-box,
+    conic-gradient(from var(--arcana-comet-angle),
+      rgba(255,255,255,.00) 0deg,
+      rgba(164,222,255,.08) 42deg,
+      rgba(255,255,255,.00) 86deg,
+      rgba(255,255,255,.00) 178deg,
+      rgba(255,255,255,0.00) 198deg,
+      var(--arcana-panel-comet-tail-soft) 226deg,
+      var(--arcana-panel-comet-tail) 260deg,
+      var(--arcana-panel-comet-core) 294deg,
+      var(--arcana-panel-comet-head) 315deg,
+      var(--arcana-panel-comet-spark) 323deg,
+      rgba(255,255,255,0.00) 340deg,
+      rgba(255,255,255,.00) 360deg) border-box !important;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) !important;
+  -webkit-mask-composite: xor !important;
+          mask-composite: exclude !important;
+  opacity: 1 !important;
+  filter:
+    drop-shadow(0 0 4px rgba(125, 211, 252, .42))
+    drop-shadow(0 0 10px rgba(190, 174, 255, .28)) !important;
+  animation: arcanaCometSpin 4.4s linear infinite !important;
+}
+
+.arcana-target-panel:has(.arcana-skill-btn.is-active)::after {
+  content: '' !important;
+  position: absolute !important;
+  inset: -5px !important;
+  z-index: 2 !important;
+  pointer-events: none !important;
+  border-radius: inherit !important;
+  padding: 5px !important;
+  background:
+    conic-gradient(from var(--arcana-comet-angle),
+      transparent 0deg,
+      transparent 162deg,
+      rgba(255,255,255,0.00) 188deg,
+      rgba(194,246,232,.12) 222deg,
+      rgba(125,211,252,.26) 266deg,
+      rgba(190,174,255,.38) 304deg,
+      rgba(255,255,255,.58) 322deg,
+      transparent 348deg,
+      transparent 360deg) !important;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) !important;
+  -webkit-mask-composite: xor !important;
+          mask-composite: exclude !important;
+  opacity: .72 !important;
+  filter:
+    blur(.45px)
+    drop-shadow(0 0 7px rgba(125, 211, 252, .36))
+    drop-shadow(0 0 15px rgba(190, 174, 255, .22)) !important;
+  animation:
+    arcanaCometSpin 4.4s linear infinite,
+    arcanaCometPulse 2.2s ease-in-out infinite !important;
+}
+
+.arcana-target-panel:has(.arcana-skill-btn.is-active) {
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.82),
+    0 0 18px rgba(125, 211, 252, .10),
+    0 0 30px rgba(190, 174, 255, .08) !important;
+}
+
+/* 저장/저장완료 영역 카드: 두께 유지, 광량과 꼬리만 강화 */
+.arcana-panel.is-saving::before,
+.arcana-panel.is-saved::before {
+  background:
+    conic-gradient(from var(--arcana-comet-angle),
+      transparent 0deg,
+      rgba(194, 246, 232, 0.07) 44deg,
+      transparent 92deg,
+      transparent 176deg,
+      rgba(194, 246, 232, 0.00) 198deg,
+      rgba(194, 246, 232, 0.24) 226deg,
+      rgba(164, 222, 255, 0.74) 264deg,
+      rgba(190, 174, 255, 0.82) 298deg,
+      rgba(255, 255, 255, 1) 317deg,
+      rgba(255, 223, 141, 0.82) 326deg,
+      transparent 342deg,
+      transparent 360deg) !important;
+  opacity: 1 !important;
+  filter:
+    drop-shadow(0 0 4px rgba(164, 222, 255, .50))
+    drop-shadow(0 0 11px rgba(190, 174, 255, .34)) !important;
+}
+
+.arcana-panel.is-saving::after,
+.arcana-panel.is-saved::after {
+  background:
+    conic-gradient(from var(--arcana-comet-angle),
+      transparent 0deg,
+      transparent 158deg,
+      rgba(194, 246, 232, 0.00) 188deg,
+      rgba(194, 246, 232, 0.16) 224deg,
+      rgba(164, 222, 255, 0.38) 270deg,
+      rgba(190, 174, 255, 0.50) 307deg,
+      rgba(255, 255, 255, 0.76) 326deg,
+      transparent 352deg,
+      transparent 360deg) !important;
+  opacity: .82 !important;
+  filter:
+    blur(.55px)
+    drop-shadow(0 0 7px rgba(164, 222, 255, .40))
+    drop-shadow(0 0 17px rgba(190, 174, 255, .24)) !important;
 }
