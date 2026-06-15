@@ -1,0 +1,45 @@
+MODIFIED_FILES.txt
+ARC-0.3.02 · 260615_03
+
+[수정]
+- arcana/index.html
+  - 화면 버전 표기를 ARC-0.3.02 · 260615_03으로 갱신.
+- ARCANA_COMPASS.txt
+  - 루트 최상위 단일 규칙/프롬프트 문서로 신규 정리.
+  - 기존 MASTER RULES / NEXT CHAT PROMPT / WORK LOG 역할을 통합.
+- CHANGELOG.txt
+  - 기존 WORK LOG 역할을 통합.
+  - 260615_03 코드/로직 감사 결과 기록.
+- MODIFIED_FILES.txt
+  - 이번 작업 기준으로 갱신.
+
+[추가]
+- ARCANA_COMPASS.txt
+- CHANGELOG.txt
+- arcana/_docs/legacy/ARCANA_MASTER_RULES_v2.txt
+- arcana/_docs/legacy/ARCANA_MASTER_RULES_v3.txt
+- arcana/_docs/legacy/ARCANA_NEXT_CHAT_PROMPT.txt
+- arcana/_docs/legacy/ARCANA_WORK_LOG.txt
+
+[삭제/정리]
+- 루트 최상위에서 아래 파일 제거:
+  - ARCANA_MASTER_RULES_v2.txt
+  - ARCANA_MASTER_RULES_v3.txt
+  - ARCANA_NEXT_CHAT_PROMPT.txt
+  - ARCANA_WORK_LOG.txt
+- arcana/ 내부 중복 문서 제거:
+  - arcana/ARCANA_MASTER_RULES_v2.txt
+  - arcana/ARCANA_MASTER_RULES_v3.txt
+  - arcana/ARCANA_NEXT_CHAT_PROMPT.txt
+  - arcana/ARCANA_WORK_LOG.txt
+
+[로직 감사]
+- 추천 엔진 로직 변경 없음.
+- 저장 로직 변경 없음.
+- UI 효과 CSS 변경 없음.
+- 레이아웃 CSS 변경 없음.
+- Apps Script 기능 로직 변경 없음.
+
+[Apps Script]
+- 수정 없음.
+- 재배포 불필요.

@@ -1,7 +1,7 @@
 /*
  * ARCANA PRISM AURA EFFECT
  * 역할: 액티브 스킬 선택 효과, 저장 완료 잠금 효과, CTA 프리즘 효과를 단일 관리한다.
- * ARC-0.3.02 · 260615_01
+ * ARC-0.3.02 · 260615_04
  * 원칙:
  * - 효과는 대상 테두리 자체에만 머문다.
  * - 버튼/카드 뒤에서 큰 판이 회전하는 효과 금지.
@@ -21,13 +21,30 @@
   --arcana-panel-prism-size: 5px;
 }
 
+@keyframes arcanaAuraSpinFast {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes arcanaAuraPulseFast {
+  0%, 100% { opacity: .62; filter: blur(7px) saturate(1.1); }
+  45% { opacity: .96; filter: blur(9px) saturate(1.35); }
+}
+
+@keyframes arcanaSkillAuraBreath {
+  0%, 100% { opacity: .72; filter: drop-shadow(0 0 3px rgba(125, 211, 252, .34)) drop-shadow(0 0 7px rgba(190, 174, 255, .22)); }
+  50% { opacity: 1; filter: drop-shadow(0 0 5px rgba(255,255,255,.86)) drop-shadow(0 0 11px rgba(125, 211, 252, .42)) drop-shadow(0 0 8px rgba(190, 174, 255, .32)); }
+}
+
 @keyframes arcanaSkillPuddingRestore {
-  0% { transform: translateY(0) scale(1); filter: brightness(1); }
-  12% { transform: translateY(2px) scale(0.935, 1.075); filter: brightness(1.08); }
-  32% { transform: translateY(-2px) scale(1.052, 0.952); filter: brightness(1.14); }
-  52% { transform: translateY(1px) scale(0.982, 1.03); filter: brightness(1.06); }
-  72% { transform: translateY(-0.5px) scale(1.014, 0.992); filter: brightness(1.03); }
-  100% { transform: translateY(0) scale(1); filter: brightness(1); }
+  0% { transform: translateY(0) rotate(0deg) scale(1); filter: brightness(1); }
+  10% { transform: translateY(3px) rotate(-0.8deg) scale(0.93, 1.09); filter: brightness(1.09); }
+  24% { transform: translateY(-4px) rotate(1.2deg) scale(1.075, 0.91); filter: brightness(1.17) saturate(1.08); }
+  39% { transform: translateY(2px) rotate(-1deg) scale(0.965, 1.055); filter: brightness(1.09); }
+  55% { transform: translateY(-2px) rotate(.55deg) scale(1.032, 0.975); filter: brightness(1.05); }
+  72% { transform: translateY(1px) rotate(-.25deg) scale(0.992, 1.016); filter: brightness(1.025); }
+  88% { transform: translateY(-.5px) rotate(.12deg) scale(1.006, .997); filter: brightness(1.01); }
+  100% { transform: translateY(0) rotate(0deg) scale(1); filter: brightness(1); }
 }
 
 @keyframes arcanaPrismEdgeTravelGold {
@@ -65,7 +82,7 @@
 .arcana-panel.is-saving,
 .arcana-panel.is-saved {
   position: relative !important;
-  overflow: hidden !important;
+  overflow: visible !important;
   isolation: isolate !important;
   cursor: not-allowed;
   background:
@@ -100,21 +117,54 @@
   opacity: 1 !important;
 }
 
+.arcana-panel.is-saving::before,
+.arcana-panel.is-saved::before {
+  content: '' !important;
+  position: absolute !important;
+  inset: -6px !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+  border-radius: calc(var(--arcana-radius) + 8px) !important;
+  background: conic-gradient(
+    from 0deg,
+    rgba(125, 211, 252, 0),
+    rgba(125, 211, 252, .56),
+    rgba(190, 174, 255, .70),
+    rgba(255, 241, 202, .72),
+    rgba(255, 203, 226, .50),
+    rgba(125, 211, 252, 0)
+  ) !important;
+  animation: arcanaAuraSpinFast 2.35s linear infinite, arcanaAuraPulseFast 1.35s ease-in-out infinite !important;
+  opacity: .86 !important;
+}
+
 .arcana-panel.is-saving::after,
 .arcana-panel.is-saved::after {
   content: '' !important;
   position: absolute !important;
-  inset: 0 !important;
+  inset: -2px !important;
   z-index: 4 !important;
   pointer-events: none !important;
-  border-radius: inherit !important;
-  background:
-    linear-gradient(90deg, transparent 0%, var(--arcana-prism-gold) 23%, var(--arcana-prism-white) 38%, var(--arcana-prism-lavender) 56%, transparent 76%) top / 230% var(--arcana-panel-prism-size) no-repeat,
-    linear-gradient(90deg, transparent 0%, var(--arcana-prism-opal) 20%, var(--arcana-prism-champagne) 40%, var(--arcana-prism-pink) 58%, transparent 80%) bottom / 230% var(--arcana-panel-prism-size) no-repeat,
-    linear-gradient(180deg, transparent 0%, var(--arcana-prism-white) 22%, var(--arcana-prism-gold) 42%, var(--arcana-prism-opal) 62%, transparent 82%) left / var(--arcana-panel-prism-size) 230% no-repeat,
-    linear-gradient(180deg, transparent 0%, var(--arcana-prism-lavender) 20%, var(--arcana-prism-champagne) 44%, var(--arcana-prism-mint) 64%, transparent 84%) right / var(--arcana-panel-prism-size) 230% no-repeat;
-  animation: arcanaPrismEdgeTravelGold 7.6s linear infinite !important;
-  opacity: .82;
+  border-radius: calc(var(--arcana-radius) + 4px) !important;
+  padding: var(--arcana-panel-prism-size) !important;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    var(--arcana-prism-opal) 42deg,
+    var(--arcana-prism-white) 76deg,
+    var(--arcana-prism-lavender) 116deg,
+    transparent 152deg,
+    var(--arcana-prism-mint) 210deg,
+    var(--arcana-prism-gold) 252deg,
+    var(--arcana-prism-white) 292deg,
+    transparent 360deg
+  ) !important;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) !important;
+  -webkit-mask-composite: xor !important;
+  mask-composite: exclude !important;
+  animation: arcanaAuraSpinFast 1.9s linear infinite !important;
+  opacity: .96 !important;
+  filter: drop-shadow(0 0 4px rgba(125,211,252,.42)) drop-shadow(0 0 8px rgba(190,174,255,.30)) !important;
 }
 
 /* 저장 완료 후 입력 카드들은 잠김을 알아볼 수 있게 낮은 채도 유지 */
@@ -135,7 +185,7 @@
 
 /* ------------------------------------------------------------------
    액티브 스킬 버튼: 푸딩 반응 + 테두리 자체만 따라 흐르는 프리즘
-   ARC-0.3.02 · 260615_02
+   ARC-0.3.02 · 260615_04
    - 배경색은 건드리지 않는다.
    - Lv / 중요도 뱃지는 오른쪽 고정 2줄 구조로 배치한다.
    - 프리즘은 버튼 뒤 배경이 아니라 버튼 테두리 자체만 따라 흐른다.
@@ -145,10 +195,10 @@
   overflow: hidden !important;
   isolation: isolate !important;
   display: grid !important;
-  grid-template-columns: 30px minmax(0, 1fr) 48px !important;
+  grid-template-columns: 30px minmax(0, 1fr) !important;
   grid-template-rows: 1fr !important;
   align-items: center !important;
-  column-gap: 7px !important;
+  column-gap: 8px !important;
   height: 44px !important;
   min-height: 44px !important;
   max-height: 44px !important;
@@ -165,11 +215,11 @@
 
 .arcana-skill-btn.arcana-skill-icon-btn:active:not(:disabled),
 .arcana-skill-btn.arcana-skill-icon-btn.is-pudding {
-  animation: arcanaSkillPuddingRestore .56s cubic-bezier(.16,.92,.2,1.22) !important;
+  animation: arcanaSkillPuddingRestore .72s cubic-bezier(.16,.92,.16,1.18) !important;
 }
 
 .arcana-skill-btn.arcana-skill-icon-btn:hover:not(:disabled) {
-  transform: translateY(-1px) scale(1.01) !important;
+  transform: translateY(-1px) scale(1.025, .99) !important;
 }
 
 .arcana-skill-btn.arcana-skill-icon-btn > * {
@@ -191,16 +241,17 @@
   grid-row: 1 / span 2 !important;
   align-self: center !important;
   min-width: 0 !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
   white-space: nowrap !important;
-  padding-right: 0 !important;
-  line-height: 1.18 !important;
-  font-size: 12px !important;
+  padding-right: 2px !important;
+  line-height: 1.14 !important;
+  font-size: 11px !important;
+  letter-spacing: -0.04em !important;
 }
 
 .arcana-skill-btn.arcana-skill-icon-btn.is-active {
-  grid-template-columns: 30px minmax(0, 1fr) 48px !important;
+  grid-template-columns: 30px minmax(0, 1fr) auto !important;
   grid-template-rows: 16px 16px !important;
   padding: 5px 7px !important;
 }
@@ -219,16 +270,16 @@
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 44px !important;
-  min-width: 44px !important;
-  max-width: 44px !important;
+  width: auto !important;
+  min-width: 32px !important;
+  max-width: 38px !important;
   height: 15px !important;
   min-height: 15px !important;
   max-height: 15px !important;
   padding: 0 4px !important;
   line-height: 1 !important;
   border-radius: 999px !important;
-  font-size: 9px !important;
+  font-size: 8.5px !important;
   font-weight: 900 !important;
   letter-spacing: -0.02em !important;
   white-space: nowrap !important;
@@ -265,17 +316,25 @@
   z-index: 5 !important;
   pointer-events: none !important;
   border-radius: inherit !important;
-  background:
-    linear-gradient(90deg, transparent 0%, var(--arcana-prism-white) 12%, var(--arcana-prism-lavender) 30%, var(--arcana-prism-opal) 50%, var(--arcana-prism-white) 66%, transparent 84%) top / 180% var(--arcana-skill-prism-size) no-repeat,
-    linear-gradient(90deg, transparent 0%, var(--arcana-prism-opal) 12%, var(--arcana-prism-white) 34%, var(--arcana-prism-pink) 56%, var(--arcana-prism-mint) 70%, transparent 86%) bottom / 180% var(--arcana-skill-prism-size) no-repeat,
-    linear-gradient(180deg, transparent 0%, var(--arcana-prism-lavender) 12%, var(--arcana-prism-white) 34%, var(--arcana-prism-mint) 56%, transparent 84%) left / var(--arcana-skill-prism-size) 180% no-repeat,
-    linear-gradient(180deg, transparent 0%, var(--arcana-prism-opal) 12%, var(--arcana-prism-pink) 34%, var(--arcana-prism-white) 56%, transparent 84%) right / var(--arcana-skill-prism-size) 180% no-repeat !important;
-  animation: arcanaPrismEdgeTravelSoft 6.2s linear infinite !important;
+  padding: var(--arcana-skill-prism-size) !important;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    var(--arcana-prism-white) 42deg,
+    var(--arcana-prism-lavender) 78deg,
+    var(--arcana-prism-opal) 128deg,
+    transparent 168deg,
+    var(--arcana-prism-mint) 222deg,
+    var(--arcana-prism-pink) 272deg,
+    var(--arcana-prism-white) 318deg,
+    transparent 360deg
+  ) !important;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) !important;
+  -webkit-mask-composite: xor !important;
+  mask-composite: exclude !important;
+  animation: arcanaAuraSpinFast 1.45s linear infinite, arcanaSkillAuraBreath 1.1s ease-in-out infinite !important;
   animation-delay: var(--arcana-skill-flow-delay, 0s) !important;
-  opacity: .98 !important;
-  filter:
-    drop-shadow(0 0 2px rgba(255,255,255,.90))
-    drop-shadow(0 0 6px rgba(190,174,255,.26)) !important;
+  opacity: .94 !important;
 }
 
 .arcana-skill-btn.arcana-skill-icon-btn.is-level-20 {
@@ -294,7 +353,7 @@
     linear-gradient(90deg, transparent 0%, var(--arcana-prism-opal) 10%, var(--arcana-prism-champagne) 30%, var(--arcana-prism-pink) 52%, var(--arcana-prism-white) 68%, transparent 86%) bottom / 180% var(--arcana-skill-prism-size) no-repeat,
     linear-gradient(180deg, transparent 0%, var(--arcana-prism-white) 10%, var(--arcana-prism-gold) 34%, var(--arcana-prism-opal) 58%, transparent 84%) left / var(--arcana-skill-prism-size) 180% no-repeat,
     linear-gradient(180deg, transparent 0%, var(--arcana-prism-lavender) 10%, var(--arcana-prism-champagne) 34%, var(--arcana-prism-mint) 58%, transparent 84%) right / var(--arcana-skill-prism-size) 180% no-repeat !important;
-  animation: arcanaPrismEdgeTravelGold 5.2s linear infinite !important;
+  animation: arcanaAuraSpinFast 1.25s linear infinite, arcanaSkillAuraBreath .95s ease-in-out infinite !important;
   animation-delay: var(--arcana-skill-flow-delay, 0s) !important;
   opacity: 1 !important;
   filter:
