@@ -55,8 +55,7 @@ ArcanaApp.customSelect = {
 
       hiddenSelect.value = item.dataset.value || '';
       button.textContent = hiddenSelect.value || config.placeholder || '선택';
-      dropdown.hidden = true;
-      wrapper.classList.remove('is-open');
+      ArcanaApp.customSelect.close(wrapper);
       renderOptions();
       hiddenSelect.dispatchEvent(new Event('change', { bubbles: true }));
     });
@@ -66,9 +65,13 @@ ArcanaApp.customSelect = {
       if (wrapper.classList.contains('is-disabled')) return;
 
       ArcanaApp.customSelect.closeAll(wrapper);
-      const nextHidden = !dropdown.hidden;
-      dropdown.hidden = nextHidden;
-      wrapper.classList.toggle('is-open', !nextHidden);
+      const shouldOpen = dropdown.hidden;
+
+      if (shouldOpen) {
+        ArcanaApp.customSelect.open(wrapper);
+      } else {
+        ArcanaApp.customSelect.close(wrapper);
+      }
     });
 
     if (config.disabled) {
@@ -84,6 +87,61 @@ ArcanaApp.customSelect = {
     wrapper.appendChild(dropdown);
 
     return wrapper;
+  },
+
+
+  open(wrapper) {
+    if (!wrapper) return;
+
+    const menu = wrapper.querySelector('.arcana-custom-select-menu');
+    if (!menu) return;
+
+    menu.hidden = false;
+    wrapper.classList.add('is-open');
+    ArcanaApp.customSelect.positionMenu(wrapper);
+  },
+
+  close(wrapper) {
+    if (!wrapper) return;
+
+    const menu = wrapper.querySelector('.arcana-custom-select-menu');
+    if (menu) {
+      menu.hidden = true;
+      menu.classList.remove('is-floating-menu');
+      menu.style.removeProperty('--arcana-floating-menu-top');
+      menu.style.removeProperty('--arcana-floating-menu-left');
+      menu.style.removeProperty('--arcana-floating-menu-width');
+      menu.style.removeProperty('--arcana-floating-menu-max-height');
+    }
+
+    wrapper.classList.remove('is-open', 'is-drop-up');
+  },
+
+  positionMenu(wrapper) {
+    const button = wrapper && wrapper.querySelector('.arcana-custom-select-button');
+    const menu = wrapper && wrapper.querySelector('.arcana-custom-select-menu');
+    if (!button || !menu || menu.hidden) return;
+
+    const rect = button.getBoundingClientRect();
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+    const gap = 4;
+    const defaultMaxHeight = 150;
+    const preferredHeight = Math.min(menu.scrollHeight || defaultMaxHeight, defaultMaxHeight);
+    const spaceBelow = Math.max(0, viewportHeight - rect.bottom - gap);
+    const spaceAbove = Math.max(0, rect.top - gap);
+    const shouldDropUp = spaceBelow < preferredHeight && spaceAbove > spaceBelow;
+    const availableHeight = shouldDropUp ? spaceAbove : spaceBelow;
+    const maxHeight = Math.max(72, Math.min(defaultMaxHeight, availableHeight));
+    const top = shouldDropUp
+      ? Math.max(gap, rect.top - maxHeight - gap)
+      : Math.min(viewportHeight - gap - maxHeight, rect.bottom + gap);
+
+    wrapper.classList.toggle('is-drop-up', shouldDropUp);
+    menu.classList.add('is-floating-menu');
+    menu.style.setProperty('--arcana-floating-menu-top', `${Math.max(gap, top)}px`);
+    menu.style.setProperty('--arcana-floating-menu-left', `${Math.round(rect.left)}px`);
+    menu.style.setProperty('--arcana-floating-menu-width', `${Math.round(rect.width)}px`);
+    menu.style.setProperty('--arcana-floating-menu-max-height', `${Math.round(maxHeight)}px`);
   },
 
   createItem(value, label, isSelected) {
@@ -103,9 +161,7 @@ ArcanaApp.customSelect = {
   closeAll(exceptWrapper) {
     document.querySelectorAll('.arcana-custom-select').forEach(wrapper => {
       if (wrapper === exceptWrapper) return;
-      wrapper.classList.remove('is-open');
-      const menu = wrapper.querySelector('.arcana-custom-select-menu');
-      if (menu) menu.hidden = true;
+      ArcanaApp.customSelect.close(wrapper);
     });
   },
 
@@ -147,3 +203,15 @@ document.addEventListener('click', () => {
     ArcanaApp.customSelect.closeAll();
   }
 });
+
+window.addEventListener('resize', () => {
+  if (!window.ArcanaApp || !ArcanaApp.customSelect) return;
+  ArcanaApp.customSelect.closeAll();
+});
+
+window.addEventListener('scroll', () => {
+  if (!window.ArcanaApp || !ArcanaApp.customSelect) return;
+  document.querySelectorAll('.arcana-custom-select.is-open').forEach(wrapper => {
+    ArcanaApp.customSelect.positionMenu(wrapper);
+  });
+}, true);

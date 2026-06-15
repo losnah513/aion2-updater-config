@@ -1231,3 +1231,40 @@ DEPRECATED FILE
 □ 버튼/영역 카드 크기 유지 확인
 □ Apps Script 재배포 불필요
 □ Extension 재설치 불필요
+
+---
+
+## ARC-0.3.02 / 20260615_12
+
+### 작업 구분
+- WEB UI 효과/드롭다운 보완
+- Apps Script 수정 없음
+- Extension 수정 없음
+
+### 기준 파일
+- arcana_ARC-0.3.02_20260615_11.zip
+
+### 적용 내용
+1. 탑바 및 브라우저 타이틀을 `ARC-0.3.02 · 260615_12`로 갱신.
+2. 저장 가능한 1번 카드(`characterLevels`), 2번 카드(`equipmentOptions`), 4번 카드(`ownedArcanaCards`)에 혜성 테두리 효과가 보이도록 overflow 우선순위를 보정.
+3. `prism-aura.css`를 `arcana-layout-manager.css` 이후에 로드하여 레이아웃 관리 CSS에 효과 표시 규칙이 덮이지 않도록 정리.
+4. 4번 카드 드롭다운이 하단 끝단에서 열릴 때 fixed 레이어로 분리하고, 아래 공간이 부족하면 위쪽으로 열리도록 보완.
+5. 20260615_03 기준 레이아웃 잠금 유지: 버튼 크기, 카드 크기, 저장 버튼 위치 변경 없음.
+6. `arcana/_docs`는 `ARCANA_WORK_LOG.txt` 단일 파일에 작업 순번별 누적 기록 유지.
+
+### 수정 파일
+- `arcana/index.html`
+- `arcana/css/components/prism-aura.css`
+- `arcana/js/customSelect.js`
+- `arcana/_docs/ARCANA_WORK_LOG.txt`
+- `MODIFIED_FILES.txt`
+
+### 검수 항목
+□ 탑바 버전 `ARC-0.3.02 · 260615_12` 확인
+□ 1번 카드 저장 후 혜성 테두리 효과 확인
+□ 2번 카드 저장 후 혜성 테두리 효과 확인
+□ 4번 카드 저장 후 혜성 테두리 효과 유지 확인
+□ 4번 카드 하단 드롭다운 위쪽 노출 확인
+□ 카드/버튼 크기 유지 확인
+□ Apps Script 재배포 불필요
+□ Extension 재설치 불필요

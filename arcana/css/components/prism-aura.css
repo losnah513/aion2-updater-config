@@ -806,3 +806,80 @@
 .arcana-target-panel.is-skill-active::after {
   box-shadow: none !important;
 }
+
+/* ------------------------------------------------------------------
+   ARC-0.3.02 · 260615_12
+   저장 카드 01/02/04 혜성 테두리 표시 안정화 + 드롭다운 고정 레이어
+   - 레이아웃/카드/버튼 크기는 변경하지 않는다.
+   - 외곽 효과만 clipping 되지 않도록 저장 카드 overflow 우선순위를 보정한다.
+   - 카드 내부 본문 영역은 기존 overflow 정책을 유지한다.
+------------------------------------------------------------------ */
+[data-card="01"].arcana-panel.is-saving,
+[data-card="01"].arcana-panel.is-saved,
+[data-card="02"].arcana-panel.is-saving,
+[data-card="02"].arcana-panel.is-saved,
+[data-card="04"].arcana-panel.is-saving,
+[data-card="04"].arcana-panel.is-saved,
+[data-card="01"].arcana-target-panel.is-skill-active {
+  overflow: visible !important;
+  isolation: isolate !important;
+  box-shadow: none !important;
+}
+
+[data-card="01"].arcana-panel.is-saving > *,
+[data-card="01"].arcana-panel.is-saved > *,
+[data-card="02"].arcana-panel.is-saving > *,
+[data-card="02"].arcana-panel.is-saved > *,
+[data-card="04"].arcana-panel.is-saving > *,
+[data-card="04"].arcana-panel.is-saved > *,
+[data-card="01"].arcana-target-panel.is-skill-active > * {
+  position: relative !important;
+  z-index: 3 !important;
+}
+
+[data-card="01"].arcana-panel.is-saving::before,
+[data-card="01"].arcana-panel.is-saved::before,
+[data-card="02"].arcana-panel.is-saving::before,
+[data-card="02"].arcana-panel.is-saved::before,
+[data-card="04"].arcana-panel.is-saving::before,
+[data-card="04"].arcana-panel.is-saved::before,
+[data-card="01"].arcana-target-panel.is-skill-active::before {
+  z-index: 1 !important;
+}
+
+[data-card="01"].arcana-panel.is-saving::after,
+[data-card="01"].arcana-panel.is-saved::after,
+[data-card="02"].arcana-panel.is-saving::after,
+[data-card="02"].arcana-panel.is-saved::after,
+[data-card="04"].arcana-panel.is-saving::after,
+[data-card="04"].arcana-panel.is-saved::after,
+[data-card="01"].arcana-target-panel.is-skill-active::after {
+  z-index: 2 !important;
+}
+
+[data-card="01"] .arcana-skill-grid,
+[data-card="02"] .arcana-equipment-list,
+[data-card="04"] #arcanaOwnedCardGrid {
+  overflow-x: hidden !important;
+}
+
+[data-card="01"] .arcana-skill-grid,
+[data-card="02"] .arcana-equipment-list {
+  overflow-y: hidden !important;
+}
+
+/* 드롭다운 메뉴는 fixed 레이어로 띄워 카드 내부 높이/스크롤을 밀지 않는다. */
+.arcana-custom-select-menu.is-floating-menu {
+  position: fixed !important;
+  z-index: 9999 !important;
+  top: var(--arcana-floating-menu-top, auto) !important;
+  left: var(--arcana-floating-menu-left, 0px) !important;
+  bottom: auto !important;
+  width: var(--arcana-floating-menu-width, 100px) !important;
+  max-height: var(--arcana-floating-menu-max-height, 150px) !important;
+  margin: 0 !important;
+}
+
+.arcana-custom-select.is-drop-up .arcana-custom-select-button::after {
+  content: '⌃';
+}
