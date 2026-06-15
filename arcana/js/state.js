@@ -1,7 +1,7 @@
 window.ArcanaApp = window.ArcanaApp || {};
 
 ArcanaApp.state = {
-  version: 'ARC-0.3.02',
+  version: (ArcanaApp.versionManager && ArcanaApp.versionManager.appVersion) || 'ARC-0.3.02',
   targetLevel: 20,
   baseSkillLevel: 10,
   devanionBonus: 4,

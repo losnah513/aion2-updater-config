@@ -1,0 +1,29 @@
+ARCANA VERSION SYSTEM
+
+[목적]
+버전/작업 순번이 index.html, config.js, state.js, 작업 로그에 흩어져 서로 다른 번호로 표시되는 문제를 방지한다.
+
+[단일 관리 파일]
+arcana/js/version-manager.js
+
+[관리 항목]
+- appVersion: 예) ARC-0.3.02
+- buildDate: 예) 20260615
+- buildNo: 예) 19
+- buildCode: 예) 260615_19
+- display: 예) ARC-0.3.02 · 260615_19
+
+[작업 순번 증가 시 필수 절차]
+1. ZIP 파일명 순번을 올린다.
+2. arcana/js/version-manager.js의 buildNo/buildCode를 올린다.
+3. index.html의 브라우저 title 및 fallback 텍스트를 같은 번호로 맞춘다.
+4. ARCANA_WORK_LOG.txt에 작업 기록을 누적한다.
+5. MODIFIED_FILES.txt에 WEB / Apps Script / Extension 수정 여부를 명시한다.
+
+[금지]
+- 탑바 버전 문자열을 여러 JS 파일에서 각각 관리하지 않는다.
+- CSS/JS 기능 작업 완료 후 탑바 버전 갱신을 생략하지 않는다.
+- 버전 표시를 임의 문자열로 새로 만들지 않는다.
+
+[현재 기준]
+ARC-0.3.02 · 260615_19
