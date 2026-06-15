@@ -343,17 +343,20 @@ ArcanaApp.cardEditor = {
       slotEl.className = 'arcana-slot';
       slotEl.classList.toggle('is-important-slot', Number(slot.level || 0) >= 4);
 
+      const isFreeSlot = Boolean(slot.isFreeSlot) || String(slot.skill || '').trim() === '스킬 여유';
+      slotEl.classList.toggle('is-free-slot', isFreeSlot);
+
       const select = ArcanaApp.customSelect.create({
-        placeholder: '추천 없음',
-        options: slot.skill ? [slot.skill] : [],
-        value: slot.skill || '',
+        placeholder: isFreeSlot ? '스킬 여유' : '추천 없음',
+        options: isFreeSlot ? ['스킬 여유'] : (slot.skill ? [slot.skill] : []),
+        value: isFreeSlot ? '스킬 여유' : (slot.skill || ''),
         disabled: true
       });
 
       const level = document.createElement('input');
       level.disabled = true;
-      level.value = slot.level || '';
-      level.placeholder = 'Lv';
+      level.value = isFreeSlot ? '여유' : (slot.level || '');
+      level.placeholder = isFreeSlot ? '여유' : 'Lv';
 
       slotEl.appendChild(select);
       slotEl.appendChild(level);

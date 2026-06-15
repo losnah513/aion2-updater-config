@@ -200,16 +200,21 @@ ArcanaApp.recommendation = {
       return Number(needMap[b] || 0) - Number(needMap[a] || 0);
     });
 
-    ArcanaApp.recommendation.prioritizeTwentyLevelLv4Slots(cards, usage, needMap, baseLevels);
+    // Lv4는 목표 달성에 꼭 필요한 경우에만 사용한다.
+    // 20레벨 목표가 7개일 때만 4레벨 앵커 조건을 먼저 강제한다.
     ArcanaApp.recommendation.enforceSevenTwentyLv4Anchors(cards, usage, needMap, baseLevels);
 
     sortedTargets.forEach(skill => {
       const targetLevel = ArcanaApp.recommendation.getResolvedTargetLevel(skill);
-      ArcanaApp.recommendation.allocateSkill(skill, needMap, cards, usage, baseLevels, targetLevel >= 20 ? 4 : 3);
+      ArcanaApp.recommendation.allocateSkill(skill, needMap, cards, usage, baseLevels, 3);
     });
 
+    // 3레벨 분산으로도 목표가 남을 때만 Lv4를 허용한다.
+    // 목표가 이미 달성된 스킬은 allocateSkill 내부에서 추가 성장하지 않는다.
     sortedTargets.forEach(skill => {
-      ArcanaApp.recommendation.allocateSkill(skill, needMap, cards, usage, baseLevels, 4);
+      if (Number(needMap[skill] || 0) > 0) {
+        ArcanaApp.recommendation.allocateSkill(skill, needMap, cards, usage, baseLevels, 4);
+      }
     });
 
     state.arcanaTypes.forEach(arcanaName => {
@@ -465,19 +470,10 @@ ArcanaApp.recommendation = {
   },
 
   fillCardSlots(arcanaName, slots) {
-    const availableSkills = ArcanaApp.state.skillsByArcana[arcanaName] || [];
-    const targetSet = new Set(ArcanaApp.recommendation.getEffectiveTargetSkills());
-
-    availableSkills.forEach(skill => {
-      if (slots.length >= 4) return;
-      if (slots.some(slot => slot.skill === skill)) return;
-      if (targetSet.has(skill)) return;
-
-      slots.push({ skill, level: 1, isTarget: false });
-    });
-
+    // 목표 달성 후 남는 슬롯에 임의 스킬을 채우지 않는다.
+    // 빈 슬롯은 추천 카드에서 '스킬 여유'로 표시한다.
     while (slots.length < 4) {
-      slots.push({ skill: '', level: 0, isTarget: false });
+      slots.push({ skill: '스킬 여유', level: 0, isTarget: false, isFreeSlot: true });
     }
 
     slots.splice(4);
@@ -578,13 +574,13 @@ ArcanaApp.recommendation = {
     advice.push(`20레벨 목표 ${summary.level20.length}개는 ${summary.usedBy20}포인트, 16레벨 직접 목표 ${summary.level16.length}개는 ${summary.usedBy16}포인트로 계산했어요.`);
 
     if (auto16Rows.length > 0) {
-      advice.push(`남는 ${summary.remainPoints}포인트는 직접 지정하지 않은 액티브 스킬 ${auto16Rows.length}개를 16레벨 목표로 자동 분산했어요.`);
+      advice.push(`남는 ${summary.remainPoints}포인트는 직접 지정하지 않은 액티브 스킬 ${auto16Rows.length}개를 16레벨 목표로 자동 분산했어요. 목표 달성 후 남는 아르카나 칸은 스킬 여유로 표시했어요.`);
     } else {
-      advice.push(`20레벨 목표 ${achieved20}개, 16레벨 목표 ${achieved16}개를 달성 기준으로 검토했어요.`);
+      advice.push(`20레벨 목표 ${achieved20}개, 16레벨 목표 ${achieved16}개를 달성 기준으로 검토했어요. 목표 달성 후 남는 아르카나 칸은 스킬 여유로 표시했어요.`);
     }
 
     if (summary.level20.length > 0) {
-      advice.push('20레벨 목표 달성을 위해 필요한 4레벨 액티브 슬롯은 회피하지 않고 우선 활용했어요.');
+      advice.push('20레벨 목표는 3레벨 분산을 먼저 시도하고, 목표가 남을 때만 4레벨 슬롯을 사용했어요.');
     }
 
     if (summary.level20.length === 7) {

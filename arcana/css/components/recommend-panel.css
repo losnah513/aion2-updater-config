@@ -47,3 +47,16 @@
   overflow-x: hidden;
   padding: 0 8px 10px;
 }
+
+/* ARC-0.3.02 · 260614_04: 목표 달성 후 남는 추천 칸은 임의 스킬 대신 스킬 여유로 표시한다. */
+.arcana-recommend-card .arcana-slot.is-free-slot {
+  opacity: 0.74;
+}
+
+.arcana-recommend-card .arcana-slot.is-free-slot select,
+.arcana-recommend-card .arcana-slot.is-free-slot input,
+.arcana-recommend-card .arcana-slot.is-free-slot .arcana-custom-select-trigger {
+  color: #8a94a6;
+  background: rgba(248, 250, 252, 0.84);
+  border-style: dashed;
+}
