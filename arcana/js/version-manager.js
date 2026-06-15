@@ -7,10 +7,10 @@ window.ArcanaApp = window.ArcanaApp || {};
  * ZIP 순번을 올릴 때 아래 buildNo/buildCode/display만 함께 갱신한다.
  */
 ArcanaApp.versionManager = {
-  appVersion: 'ARC-0.3.02',
+  appVersion: 'ARC-0.3.03',
   buildDate: '20260615',
-  buildNo: '19',
-  buildCode: '260615_19',
+  buildNo: '01',
+  buildCode: '260615_01',
 
   get display() {
     return `${this.appVersion} · ${this.buildCode}`;

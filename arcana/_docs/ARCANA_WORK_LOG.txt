@@ -1480,3 +1480,67 @@ Extension 수정: 없음
 □ 브라우저 title ARC-0.3.02 · 260615_19
 □ Apps Script 수정 없음
 □ Extension 수정 없음
+
+## ARC-0.3.02 / 20260615_20
+
+[작업명]
+Class Showcase Static Layout Master
+
+[기준]
+- Base: arcana_ARC-0.3.02_20260615_19.zip
+- EFFECT_FINAL 계열 버튼/테두리 효과 보존
+- 새 CSS 덮어쓰기 금지, class-showcase.css 단일 책임 유지
+
+[수정 내용]
+1. 탑바/브라우저 타이틀을 `ARC-0.3.02 · 260615_20`으로 갱신.
+2. 클래스 쇼케이스를 정적 배치 우선 구조로 재작성.
+3. `classSelector.js`에 `updateShowcaseLayout()`을 추가해 클래스 수 기반 위치 계산을 수행.
+4. 8장 기준 타원형 3D 배치, 새 클래스 추가 시 자동 반지름/스케일 보정 구조 적용.
+5. 공전/개별 자전은 이번 단계에서 의도적으로 비활성화하고, 카드 위치/크기/깊이/버튼 영역 안정화를 우선.
+6. 바닥 AION2 SVG 워터마크와 쇼케이스 3구역 구조 유지.
+
+[검수 항목]
+□ 클래스 카드가 창 밖으로 삐져나가지 않음
+□ 하단 클래스 버튼/확인/닫기 버튼 위치 유지
+□ 액티브 스킬 선택 버튼 영향 없음
+□ 버튼 시스템 영향 없음
+□ Apps Script 수정 없음
+□ Extension 수정 없음
+
+## ARC-0.3.03 / 20260615_01
+
+[작업명]
+SHOWCASE REBORN - 01_SHOWCASE_WINDOW
+
+[기준]
+- Base: arcana_ARC-0.3.02_20260615_20.zip
+- 버전업: ARC-0.3.02 → ARC-0.3.03
+- 작업 순번: 260615_01
+
+[공사 범위]
+1. 쇼케이스 창 크기를 화면을 과도하게 채우지 않는 중앙 부유형 크기로 재조정.
+2. class-showcase.css의 stage를 상단 설명 / 쇼케이스 / 클래스 버튼 / 확인·닫기 버튼 4구역으로 정리.
+3. 클래스 버튼과 확인·닫기 버튼이 하단에서 서로 침범하지 않도록 grid row를 분리.
+4. 화이트 퍼스널컬러 유지.
+5. version-manager.js 기준으로 탑바/브라우저 타이틀 버전 표기 갱신.
+6. ARCANA_BUILD_PIPELINE.txt를 추가하여 공사 → 감리 → 승인 루틴을 공식화.
+
+[코드 감사]
+- 쇼케이스 창/카드 배치 담당: css/components/class-showcase.css
+- 모달 공통 담당: css/modal.css, 이번 작업에서 수정하지 않음.
+- 쇼케이스 DOM/선택 로직 담당: js/classSelector.js, 배치 계산 로직은 유지하고 주석만 버전 기준으로 보정.
+- 새 CSS 오버라이드 파일 추가 없음.
+- 기존 SELECT BUTTON / EFFECT_FINAL / BUTTON_SYSTEM 수정 없음.
+
+[감리 항목]
+□ 화면을 꽉 채우지 않는 중앙 쇼케이스 크기
+□ 제목/쇼케이스/클래스 버튼/확인·닫기 버튼 영역 분리
+□ 버튼 영역 침범 없음
+□ 화이트 퍼스널컬러 유지
+□ 코드 덮어쓰기 방식 없음
+□ Apps Script 수정 없음
+□ Extension 수정 없음
+
+[다음 공정]
+ARC-0.3.03 · 260615_02
+SHOWCASE_LAYOUT: 이미지 기준 정적 카드 배치 고도화

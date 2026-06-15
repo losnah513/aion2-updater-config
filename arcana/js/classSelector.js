@@ -257,6 +257,51 @@ ArcanaApp.classSelector = {
       });
       buttons.appendChild(nameButton);
     });
+
+    ArcanaApp.classSelector.updateShowcaseLayout();
+  },
+
+  updateShowcaseLayout() {
+    const showcase = document.getElementById('arcanaClassShowcase');
+    if (!showcase) return;
+
+    const cards = Array.from(showcase.querySelectorAll('.arcana-showcase-card'));
+    const count = cards.length;
+    if (!count) return;
+
+    /*
+     * ARC-0.3.03 · 260615_01 Showcase Window 기준 유지
+     * 카드 수를 기준으로 타원형 3D 배치를 계산해 CSS 변수로 주입한다.
+     * 새 클래스가 추가되어도 클래스 배열만 늘어나면 자동으로 궤도에 합류한다.
+     */
+    const baseRadiusX = count <= 8 ? 318 : Math.min(350, 318 + (count - 8) * 12);
+    const baseRadiusY = count <= 8 ? 152 : Math.min(174, 152 + (count - 8) * 6);
+    const overflowScale = count <= 8 ? 1 : Math.max(0.78, 8 / count);
+    const startAngle = -90;
+
+    cards.forEach((card, index) => {
+      const angleDeg = startAngle + (360 / count) * index;
+      const angle = angleDeg * Math.PI / 180;
+      const x = Math.cos(angle) * baseRadiusX;
+      const y = Math.sin(angle) * baseRadiusY + 8;
+      const frontDepth = (Math.sin(angle) + 1) / 2;
+      const sideDepth = Math.abs(Math.cos(angle));
+      const scale = (0.84 + frontDepth * 0.18 - sideDepth * 0.02) * overflowScale;
+      const z = Math.round((frontDepth - 0.5) * 42);
+      const rotateZ = Math.cos(angle) * 22;
+      const rotateY = Math.cos(angle) * -18;
+      const rotateX = 8 + frontDepth * 7;
+      const zIndex = Math.round(20 + frontDepth * 70 + (count - index) * 0.01);
+
+      card.style.setProperty('--showcase-x', `${x.toFixed(1)}px`);
+      card.style.setProperty('--showcase-y', `${y.toFixed(1)}px`);
+      card.style.setProperty('--showcase-z', `${z}px`);
+      card.style.setProperty('--showcase-rx', `${rotateX.toFixed(1)}deg`);
+      card.style.setProperty('--showcase-ry', `${rotateY.toFixed(1)}deg`);
+      card.style.setProperty('--showcase-rz', `${rotateZ.toFixed(1)}deg`);
+      card.style.setProperty('--showcase-scale', scale.toFixed(3));
+      card.style.zIndex = String(zIndex);
+    });
   },
 
   isTouchMode() {
