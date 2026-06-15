@@ -2,6 +2,9 @@
  * ARCANA CLASS ENTRY GATE CSS
  * 역할: 최초 클래스 미선택 진입 안내만 담당한다.
  * 레이아웃 잠금: 기존 탑바/카드/버튼 크기를 수정하지 않는다.
+ * ARC-0.3.02 · 260615_14
+ * - 페이지 퍼스널컬러는 화이트 기준을 유지한다.
+ * - 중앙 카드 효과는 중심 회전 레이어가 아니라 EFFECT_FINAL 계열 혜성 테두리 방식만 사용한다.
  */
 .arcana-entry-gate {
   position: fixed;
@@ -11,9 +14,9 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(248, 250, 252, 0.72);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.74);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.22s ease;
@@ -32,58 +35,95 @@
   position: relative;
   width: min(420px, calc(100vw - 38px));
   padding: 28px 28px 24px;
-  border: 1px solid rgba(37, 99, 235, 0.18);
-  border-radius: 22px;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,255,0.94)),
-    radial-gradient(circle at 20% 0%, rgba(251,191,36,0.16), transparent 34%),
-    radial-gradient(circle at 82% 20%, rgba(99,102,241,0.14), transparent 36%);
-  box-shadow: 0 18px 46px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(255,255,255,0.72) inset;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.94));
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.10), 0 0 0 1px rgba(255,255,255,0.86) inset;
   text-align: center;
   transform: translateY(10px) scale(0.985);
   transition: transform 0.34s cubic-bezier(.2,1.15,.24,1), opacity 0.24s ease;
-  overflow: hidden;
+  overflow: visible;
+  isolation: isolate;
+}
+
+.arcana-entry-gate-card > * {
+  position: relative;
+  z-index: 3;
 }
 
 .arcana-entry-gate.is-open .arcana-entry-gate-card {
   transform: translateY(0) scale(1);
 }
 
-.arcana-entry-gate-card::before {
+.arcana-entry-gate-card::before,
+.arcana-entry-gate-card::after {
   content: '';
   position: absolute;
-  inset: -1px;
+  pointer-events: none;
   border-radius: inherit;
-  padding: 1px;
-  background: conic-gradient(
-    from 34deg,
-    rgba(255,255,255,0) 0deg,
-    rgba(255,255,255,0) 236deg,
-    rgba(125,211,252,0.18) 266deg,
-    rgba(167,139,250,0.36) 288deg,
-    rgba(251,191,36,0.55) 306deg,
-    rgba(255,255,255,0.9) 315deg,
-    rgba(251,191,36,0.34) 326deg,
-    rgba(255,255,255,0) 344deg,
-    rgba(255,255,255,0) 360deg
-  );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
           mask-composite: exclude;
-  animation: arcana-entry-comet 3.3s linear infinite;
-  pointer-events: none;
+}
+
+.arcana-entry-gate-card::before {
+  inset: -1px;
+  z-index: 1;
+  padding: 1px;
+  background:
+    conic-gradient(from var(--arcana-comet-angle),
+      transparent 0deg,
+      rgba(255,255,255,0.00) 176deg,
+      rgba(194,246,232,0.00) 198deg,
+      rgba(194,246,232,0.18) 226deg,
+      rgba(164,222,255,0.56) 262deg,
+      rgba(190,174,255,0.64) 296deg,
+      rgba(255,255,255,0.96) 316deg,
+      rgba(255,223,141,0.58) 326deg,
+      transparent 342deg,
+      transparent 360deg);
+  opacity: .95;
+  filter:
+    drop-shadow(0 0 4px rgba(164,222,255,.32))
+    drop-shadow(0 0 9px rgba(190,174,255,.20));
+  animation: arcanaCometSpin 4.8s linear infinite;
+}
+
+.arcana-entry-gate-card::after {
+  inset: -4px;
+  z-index: 2;
+  padding: 4px;
+  background:
+    conic-gradient(from var(--arcana-comet-angle),
+      transparent 0deg,
+      transparent 156deg,
+      rgba(194,246,232,0.00) 188deg,
+      rgba(194,246,232,0.10) 224deg,
+      rgba(164,222,255,0.24) 270deg,
+      rgba(190,174,255,0.32) 308deg,
+      rgba(255,255,255,0.48) 326deg,
+      transparent 352deg,
+      transparent 360deg);
+  opacity: .58;
+  filter:
+    blur(.35px)
+    drop-shadow(0 0 6px rgba(164,222,255,.24))
+    drop-shadow(0 0 12px rgba(190,174,255,.16));
+  animation:
+    arcanaCometSpin 4.8s linear infinite,
+    arcanaCometPulse 2.4s ease-in-out infinite;
 }
 
 .arcana-entry-gate-icon {
   width: 54px;
   height: 54px;
   margin: 0 auto 14px;
-  border: 1px solid rgba(37, 99, 235, 0.18);
-  border-radius: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(37,99,235,0.12), rgba(251,191,36,0.13));
+  background: rgba(255, 255, 255, 0.92);
   color: var(--arcana-primary);
   font-size: 25px;
   font-weight: 900;
@@ -128,7 +168,8 @@
   background: transparent;
   cursor: pointer;
   opacity: 0.72;
-  transition: opacity 0.18s ease, transform 0.22s cubic-bezier(.2,1.2,.24,1);
+  transform: rotate(0deg) scale(1);
+  transition: opacity 0.18s ease;
 }
 
 .arcana-entry-gate-close::before,
@@ -150,8 +191,12 @@
 .arcana-entry-gate-close:focus-visible,
 .arcana-entry-gate-close.is-touch-preview {
   opacity: 1;
-  transform: rotate(135deg) scale(1.05);
   outline: none;
+  animation: arcanaCloseWhirl 0.86s cubic-bezier(.08,.92,.20,1) both;
+}
+
+.arcana-entry-gate-close:active {
+  transform: scale(.92);
 }
 
 body:not(.arcana-has-selected-class):not(.arcana-entry-gate-dismissed) .arcana-class-picker {
@@ -159,8 +204,11 @@ body:not(.arcana-has-selected-class):not(.arcana-entry-gate-dismissed) .arcana-c
   pointer-events: none;
 }
 
-@keyframes arcana-entry-comet {
-  to { transform: rotate(360deg); }
+@keyframes arcanaCloseWhirl {
+  0% { transform: rotate(0deg) scale(1); }
+  28% { transform: rotate(520deg) scale(1.08); }
+  62% { transform: rotate(680deg) scale(1.04); }
+  100% { transform: rotate(720deg) scale(1.05); }
 }
 
 @media (max-width: 720px) {
@@ -171,7 +219,7 @@ body:not(.arcana-has-selected-class):not(.arcana-entry-gate-dismissed) .arcana-c
 
   .arcana-entry-gate-card {
     padding: 26px 20px 22px;
-    border-radius: 20px;
+    border-radius: 9px;
   }
 
   .arcana-entry-gate-title {
