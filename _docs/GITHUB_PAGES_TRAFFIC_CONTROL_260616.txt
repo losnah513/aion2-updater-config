@@ -1,0 +1,63 @@
+GITHUB PAGES TRAFFIC CONTROL 260616
+
+목적
+- GitHub_Pages 내부의 CSS/JS 누적 패치 흔적을 먼저 정리한다.
+- 최상위 ZIP 구조는 변경하지 않는다.
+- 삭제 대신 보관을 우선한다.
+
+유지한 최상위 구조
+- AppsScript/
+- GitHub_Pages/
+- KINOJO_1_c2_04/
+- KINOJO_PROJECT_RULES_260616.txt
+
+이번 1차 교통정리 범위
+- GitHub_Pages/ui 내부에서 HTML이 직접 참조하지 않는 레거시 UI 파일을 보관 위치로 이동.
+- 실제 페이지가 참조 중인 파일은 이동하지 않음.
+
+GitHub Pages 실제 참조 파일
+- index.html
+  - ui/info-home.css
+  - ui/kinojo-common-ui.css
+  - ui/kinojo-common-ui.js
+- hall-of-fame/index.html
+  - hall-of-fame/css/hall.css
+  - ui/kinojo-layout.css
+  - ui/kinojo-components.css
+  - ui/kinojo-common-ui.css
+  - ui/kinojo-card-guards.css
+  - ui/kinojo-animations.css
+  - ui/kinojo-common-ui.js
+  - hall-of-fame/js/app.js
+- sanctuary/index.html
+  - sanctuary/css/sanctuary.css
+  - ui/kinojo-common-ui.css
+  - ui/kinojo-common-ui.js
+  - sanctuary/js/sanctuary.js
+
+보관한 레거시 파일
+원래 위치 -> 보관 위치
+- GitHub_Pages/ui/styles.css -> GitHub_Pages/_docs/legacy_unused_ui_260616/styles.css
+- GitHub_Pages/ui/ui.js -> GitHub_Pages/_docs/legacy_unused_ui_260616/ui.js
+- GitHub_Pages/ui/icons.js -> GitHub_Pages/_docs/legacy_unused_ui_260616/icons.js
+- GitHub_Pages/ui/kinojo-responsive.css -> GitHub_Pages/_docs/legacy_unused_ui_260616/kinojo-responsive.css
+- GitHub_Pages/ui/kinojo-theme.css -> GitHub_Pages/_docs/legacy_unused_ui_260616/kinojo-theme.css
+- GitHub_Pages/ui/kinojo-viewport-rules.css -> GitHub_Pages/_docs/legacy_unused_ui_260616/kinojo-viewport-rules.css
+- GitHub_Pages/ui/cards/kinojo-card-layouts.css -> GitHub_Pages/_docs/legacy_unused_ui_260616/kinojo-card-layouts.css
+- GitHub_Pages/ui/cards/kinojo-overflow.css -> GitHub_Pages/_docs/legacy_unused_ui_260616/kinojo-overflow.css
+
+보관 사유
+- 현재 HTML에서 직접 참조되지 않음.
+- ui/styles.css와 ui/ui.js는 과거 확장프로그램/구버전 UI 패치 흔적이 섞여 있고 현재 GitHub Pages 진입 파일에서 사용하지 않음.
+- 삭제하지 않고 docs 하위에 보관하여 필요 시 복구 가능하게 함.
+
+남은 정리 후보
+- hall-of-fame/css/hall.css 말미의 1.c2.04 중복 보정 블록.
+- hall-of-fame/js/app.js의 제안 패널/반응 모달/관리자 바인딩 중복 가능 구간.
+- sanctuary/css/sanctuary.css의 한 줄 압축 상태. 추후 가독성 목적 포맷팅 권장.
+
+이번 작업에서 건드리지 않은 영역
+- AppsScript 코드
+- Chrome Extension 코드
+- GitHub_Pages HTML 경로
+- GitHub_Pages 실제 참조 CSS/JS 본문

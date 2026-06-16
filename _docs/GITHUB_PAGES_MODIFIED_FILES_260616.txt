@@ -1,0 +1,35 @@
+GITHUB PAGES MODIFIED FILES 260616
+
+[260616_01 교통정리 1차]
+
+수정/이동
+- GitHub_Pages/ui/styles.css
+  -> GitHub_Pages/_docs/legacy_unused_ui_260616/styles.css
+- GitHub_Pages/ui/ui.js
+  -> GitHub_Pages/_docs/legacy_unused_ui_260616/ui.js
+- GitHub_Pages/ui/icons.js
+  -> GitHub_Pages/_docs/legacy_unused_ui_260616/icons.js
+- GitHub_Pages/ui/kinojo-responsive.css
+  -> GitHub_Pages/_docs/legacy_unused_ui_260616/kinojo-responsive.css
+- GitHub_Pages/ui/kinojo-theme.css
+  -> GitHub_Pages/_docs/legacy_unused_ui_260616/kinojo-theme.css
+- GitHub_Pages/ui/kinojo-viewport-rules.css
+  -> GitHub_Pages/_docs/legacy_unused_ui_260616/kinojo-viewport-rules.css
+- GitHub_Pages/ui/cards/kinojo-card-layouts.css
+  -> GitHub_Pages/_docs/legacy_unused_ui_260616/kinojo-card-layouts.css
+- GitHub_Pages/ui/cards/kinojo-overflow.css
+  -> GitHub_Pages/_docs/legacy_unused_ui_260616/kinojo-overflow.css
+
+신규
+- GitHub_Pages/_docs/GITHUB_PAGES_TRAFFIC_CONTROL_260616.txt
+- GitHub_Pages/_docs/legacy_unused_ui_260616/
+
+삭제
+- 없음
+
+검수
+- 실제 HTML에서 참조하는 CSS/JS 파일 존재 확인.
+- GitHub_Pages JS 문법 검사 통과.
+- Chrome Extension JS 문법 검사 통과.
+- AppsScript 코드 변경 없음.
+- Chrome Extension 폴더 내부에 _docs 또는 _로 시작하는 폴더 없음 확인.
