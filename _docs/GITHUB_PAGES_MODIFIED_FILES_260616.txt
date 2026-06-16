@@ -1,3 +1,51 @@
+GITHUB_PAGES MODIFIED FILES 260616
+
+==================================================
+[260616_02] 교통정리 2차 - Hall of Fame JS 차선 분리
+==================================================
+
+[수정]
+- GitHub_Pages/hall-of-fame/index.html
+  - hall-of-fame 전용 JS 로드 순서를 업무별 파일로 분리.
+
+- GitHub_Pages/hall-of-fame/js/app.js
+  - 기존 대형 단일 파일 역할을 페이지 bootstrap 전용으로 축소.
+  - 최초 이벤트 바인딩과 load 시작만 담당.
+
+[신규]
+- GitHub_Pages/hall-of-fame/js/hall-state.js
+  - 명예의 전당 상수, 상태값, 공통 보조 함수 도로.
+
+- GitHub_Pages/hall-of-fame/js/hall-render.js
+  - 순위표, 관계카드, 반응 보드, 성장왕/벌크업, 로딩/데이터 로드 도로.
+  - 기존 코드에 호출만 있고 정의가 없던 renderPreserveSearchFocus()를 추가해 검색 실행 시 포커스 유지 오류를 방지.
+
+- GitHub_Pages/hall-of-fame/js/hall-admin.js
+  - 방문자 조정, 스냅샷, MVP 후보 확인, 관리자 결과 표시 도로.
+
+- GitHub_Pages/hall-of-fame/js/hall-reactions.js
+  - 좋아요/싫어요 팝오버, 반응 제한, 반응 제출 도로.
+
+- GitHub_Pages/hall-of-fame/js/hall-suggestions.js
+  - 아이디어 제안 및 건의 패널/전송 도로.
+
+- GitHub_Pages/hall-of-fame/js/hall-construction.js
+  - 공사중 안내 패널 도로.
+
+[보관]
+- GitHub_Pages/_docs/legacy_hall_app_260616/app_before_traffic_control_2.js
+  - 교통정리 2차 전 app.js 원본. 삭제하지 않고 복구/비교용으로 보관.
+
+[검수]
+- GitHub_Pages 전체 JS node --check 통과.
+- AppsScript 수정 없음.
+- Chrome Extension 수정 없음.
+
+
+==================================================
+[이전 기록]
+==================================================
+
 GITHUB PAGES MODIFIED FILES 260616
 
 [260616_01 교통정리 1차]

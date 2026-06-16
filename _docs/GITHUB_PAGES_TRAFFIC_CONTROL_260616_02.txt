@@ -1,0 +1,25 @@
+KINOJO GITHUB PAGES TRAFFIC CONTROL 260616_02
+
+목적
+- hall-of-fame/js/app.js에 누적된 렌더링, 관리자, 반응, 제안, 시작 로직을 업무별 도로로 분리한다.
+- 기능 변경보다 이후 유지보수 시 엉뚱한 폴더/파일에 작업하는 실수를 줄이는 것이 목적이다.
+
+차선 분리 결과
+- hall-state.js: 상수/상태/기본 보조 함수
+- hall-render.js: 화면 렌더링/데이터 로드
+- hall-admin.js: 관리자 기능
+- hall-reactions.js: 좋아요/싫어요/코멘트
+- hall-suggestions.js: 아이디어 제안
+- hall-construction.js: 공사중 안내
+- app.js: 페이지 부팅/이벤트 연결
+
+수정 금지 확인
+- AppsScript 내부 코드 수정 없음
+- KINOJO_1_c2_04 내부 코드 수정 없음
+- sanctuary 내부 코드 수정 없음
+
+검수
+- GitHub_Pages 전체 JS node --check 통과
+
+추가 안정화
+- renderPreserveSearchFocus() 누락을 보완해 순위 검색/조회 버튼 실행 시 런타임 오류 가능성을 줄였다.
