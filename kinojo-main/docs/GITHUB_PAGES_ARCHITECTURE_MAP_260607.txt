@@ -1,0 +1,17 @@
+GITHUB PAGES ARCHITECTURE MAP 260607
+
+[core]
+- 인증, 권한, API, 캐시, 로거, 모달, 토스트, 라우트 가드 등 공통 로직.
+
+[ui]
+- 공통 탑바, +메뉴, 공통 레이아웃, 카드 보호, 애니메이션, 반응형 스타일.
+- Topbar와 +Menu는 kinojo-common-ui.js/css에서 관리.
+
+[page]
+- index.html: 메인 페이지 전용 컨텐츠.
+- hall-of-fame/: 명예의 전당 전용 렌더링과 이벤트.
+- sanctuary/: 성역 전용 렌더링과 이벤트.
+
+구조 원칙
+- 공통 UI는 페이지별로 직접 만들지 않는다.
+- 페이지 파일은 공통 UI를 호출하고, 페이지 전용 렌더링만 담당한다.

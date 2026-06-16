@@ -1,0 +1,8 @@
+/*
+ * KINOJO THEME ENGINE
+ * Role: 공통 색상, 배경, 강조 톤, 향후 성역별 테마 변수 예정.
+ * Phase 1: 기존 화면에 연결하지 않는 구조 파일입니다.
+ */
+:root {
+  --kj-theme-ready: 1;
+}
