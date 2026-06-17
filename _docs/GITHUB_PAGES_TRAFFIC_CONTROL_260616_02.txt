@@ -20,6 +20,3 @@ KINOJO GITHUB PAGES TRAFFIC CONTROL 260616_02
 
 검수
 - GitHub_Pages 전체 JS node --check 통과
-
-추가 안정화
-- renderPreserveSearchFocus() 누락을 보완해 순위 검색/조회 버튼 실행 시 런타임 오류 가능성을 줄였다.

@@ -1,3 +1,7 @@
+/*
+ * KINOJO Hall of Fame reaction road
+ * 역할: 캐릭터 반응 팝오버, 로컬 제한, 서버 저장을 관리합니다.
+ */
 function positionReactionPopover(anchor,pop){
   const rect=anchor.getBoundingClientRect();
   const w=Math.min(320,Math.max(260,window.innerWidth-24));
@@ -92,7 +96,24 @@ async function submitReaction(){
     updateReactionSubmitState_();
   }
 }
-const reactionCommentInput_=document.getElementById("reactionComment");
-if(reactionCommentInput_)reactionCommentInput_.addEventListener("input",updateReactionSubmitState_);
-const reactionSubmitBtn_=document.getElementById("reactionSubmitBtn");
-if(reactionSubmitBtn_)reactionSubmitBtn_.onclick=submitReaction;
+
+
+function setReactionLimitLoading_(){
+  const comment=document.getElementById("reactionComment");
+  if(comment){
+    comment.value="";
+    comment.placeholder="남은 좋아요/싫어요 횟수 계산 중...";
+  }
+  ["reactionLikeBtn","reactionDislikeBtn"].forEach(id=>{
+    const btn=document.getElementById(id);
+    if(btn)btn.classList.add("checking");
+  });
+  setTimeout(()=>{
+    const likeBtn=document.getElementById("reactionLikeBtn");
+    const dislikeBtn=document.getElementById("reactionDislikeBtn");
+    if(likeBtn)likeBtn.classList.remove("checking");
+    if(dislikeBtn)dislikeBtn.classList.remove("checking");
+    const c=document.getElementById("reactionComment");
+    if(c)c.placeholder="전하고 싶은 말을 남겨주세요";
+  },450);
+}

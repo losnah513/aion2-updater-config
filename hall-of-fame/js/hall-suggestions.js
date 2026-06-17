@@ -1,4 +1,8 @@
-/* KINOJO drawer side page panel is managed by GitHub_Pages/ui/kinojo-common-ui.js */
+/*
+ * KINOJO Hall of Fame suggestion road
+ * 역할: 하단/사이드 제안 패널과 기존 인라인 제안 박스를 관리합니다.
+ * 주의: 같은 hallSuggestion action 호출은 이 파일에서만 수행합니다.
+ */
 function openSuggestionPanel(){
   const panel=document.getElementById("drawerPagePanel");
   const title=document.getElementById("drawerPageTitle");
@@ -45,4 +49,37 @@ async function submitSideSuggestion_(){
   }finally{
     if(submit){submit.disabled=false;submit.textContent=old||"제안 보내기";}
   }
+}
+
+
+function bindInlineSuggestionPanel(){
+  const cancelSuggestBtn=document.getElementById("cancelSuggestBtn");
+  if(cancelSuggestBtn)cancelSuggestBtn.onclick=closeInlineSuggestionPanel;
+
+  const submitSuggestBtn=document.getElementById("submitSuggestBtn");
+  if(submitSuggestBtn)submitSuggestBtn.onclick=submitInlineSuggestion_;
+}
+
+function closeInlineSuggestionPanel(){
+  const box=document.getElementById("suggestionBox");
+  const title=document.getElementById("suggestTitle");
+  const proposer=document.getElementById("suggestProposer");
+  const memo=document.getElementById("suggestMemo");
+  if(box)box.style.display="none";
+  if(title)title.value="";
+  if(proposer)proposer.value="";
+  if(memo)memo.value="";
+}
+
+async function submitInlineSuggestion_(){
+  const title=document.getElementById("suggestTitle")?.value.trim()||"";
+  const proposer=document.getElementById("suggestProposer")?.value.trim()||"";
+  const memo=document.getElementById("suggestMemo")?.value.trim()||"";
+  if(!title)return alert("항목 이름을 입력해 주세요.");
+  const res=await fetch(WEB_APP_URL,{method:"POST",body:JSON.stringify({action:"hallSuggestion",title,proposer,memo})});
+  const data=await res.json();
+  if(!data.ok)return alert(data.message||"전송 실패");
+  alert("제안이 접수되었습니다.");
+  closeInlineSuggestionPanel();
+  load();
 }

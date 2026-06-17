@@ -89,27 +89,6 @@ async function adminMvp(){
 async function showMvpAdminPrompt(){
   return adminMvp();
 }
-function bindLongPress(el,shortAction,longAction){let timer=null,fired=false;const start=ev=>{fired=false;clearTimeout(timer);timer=setTimeout(()=>{fired=true;longAction()},900)};const end=ev=>{clearTimeout(timer)};el.addEventListener("mousedown",start);el.addEventListener("touchstart",start,{passive:true});el.addEventListener("mouseup",end);el.addEventListener("mouseleave",end);el.addEventListener("touchend",end);el.addEventListener("click",ev=>{if(fired){ev.preventDefault();return}shortAction()})}
-function setReactionLimitLoading_(){
-  const comment=document.getElementById("reactionComment");
-  if(comment){
-    comment.value="";
-    comment.placeholder="남은 좋아요/싫어요 횟수 계산 중...";
-  }
-  ["reactionLikeBtn","reactionDislikeBtn"].forEach(id=>{
-    const btn=document.getElementById(id);
-    if(btn) btn.classList.add("checking");
-  });
-  setTimeout(()=>{
-    const likeBtn=document.getElementById("reactionLikeBtn");
-    const dislikeBtn=document.getElementById("reactionDislikeBtn");
-    if(likeBtn) likeBtn.classList.remove("checking");
-    if(dislikeBtn) dislikeBtn.classList.remove("checking");
-    const c=document.getElementById("reactionComment");
-    if(c) c.placeholder="전하고 싶은 말을 남겨주세요";
-  },450);
-}
-
 async function adminSnapshotTriggerInstall(){
   try{
     setAdminButtonLoading_("adminSnapshotTriggerBtn","설치 중...");

@@ -1,6 +1,58 @@
 GITHUB_PAGES MODIFIED FILES 260616
 
 ==================================================
+[260616_03] Hall Traffic Control 3
+==================================================
+
+[수정]
+- hall-of-fame/index.html
+  - 명예의 전당 JS 로드 목록에 hall-data.js, hall-events.js 추가
+  - 캐시 식별자를 26061603으로 갱신
+
+- hall-of-fame/js/app.js
+  - 시작/조립만 담당하도록 축소
+  - 정적 이벤트 바인딩, 반응 캐러셀, 방문자 기록, 데이터 로드를 전용 함수 호출로 연결
+
+- hall-of-fame/js/hall-render.js
+  - 데이터 통신/방문자 집계/로딩/동적 이벤트 바인딩 로직 제거
+  - 화면 HTML 렌더링 전용 도로로 정리
+
+- hall-of-fame/js/hall-admin.js
+  - 반응 UI 전용 함수 setReactionLimitLoading_ 제거
+  - 관리자 기능 중심으로 역할 정리
+
+- hall-of-fame/js/hall-reactions.js
+  - 반응 UI 로딩 함수 이동 수용
+  - 하단 즉시 실행 이벤트 바인딩 제거
+
+- hall-of-fame/js/hall-suggestions.js
+  - 기존 인라인 제안 박스 이벤트를 제안 전용 파일로 이동
+
+[신규]
+- hall-of-fame/js/hall-data.js
+  - Apps Script 통신, 방문자 집계, 로딩 상태 담당
+
+- hall-of-fame/js/hall-events.js
+  - 검색, 페이지네이션, 부캐 토글, 전역 클릭/ESC, 정적 버튼 바인딩 담당
+
+- _docs/GITHUB_PAGES_TRAFFIC_CONTROL_260616_03.txt
+  - 교통정리 3차 기록
+
+[삭제]
+- 없음
+
+[검수]
+- GitHub_Pages 전체 JS node --check 통과
+- Chrome Extension JS node --check 통과
+- AppsScript 수정 없음
+- Extension 수정 없음
+
+
+======= 이전 기록 =======
+
+GITHUB_PAGES MODIFIED FILES 260616
+
+==================================================
 [260616_02] 교통정리 2차 - Hall of Fame JS 차선 분리
 ==================================================
 
@@ -18,7 +70,6 @@ GITHUB_PAGES MODIFIED FILES 260616
 
 - GitHub_Pages/hall-of-fame/js/hall-render.js
   - 순위표, 관계카드, 반응 보드, 성장왕/벌크업, 로딩/데이터 로드 도로.
-  - 기존 코드에 호출만 있고 정의가 없던 renderPreserveSearchFocus()를 추가해 검색 실행 시 포커스 유지 오류를 방지.
 
 - GitHub_Pages/hall-of-fame/js/hall-admin.js
   - 방문자 조정, 스냅샷, MVP 후보 확인, 관리자 결과 표시 도로.
