@@ -106,6 +106,9 @@ function bindHallVisitAdminToggles(){
 }
 
 function bindHallStaticEvents(){
+  if(window.__KINOJO_HALL_STATIC_EVENTS_BOUND__)return;
+  window.__KINOJO_HALL_STATIC_EVENTS_BOUND__=true;
+
   window.addEventListener("resize",()=>requestAnimationFrame(applyOverflowMarquee));
 
   bindInlineSuggestionPanel();
@@ -208,7 +211,8 @@ function handleHallKeydown(e){
 }
 
 function startHallReactionCarouselTimer(){
-  setInterval(()=>{
+  if(window.__KINOJO_HALL_REACTION_TIMER__)return;
+  window.__KINOJO_HALL_REACTION_TIMER__=setInterval(()=>{
     if(Date.now()<reactionCarouselPausedUntil)return;
     if(document.activeElement&&document.activeElement.id==="rankSearchInput")return;
     reactionCarouselIndex++;
