@@ -1,6 +1,6 @@
 {
-  "version": "1.c2.04",
-  "buildDate": "260607",
+  "version": "1.c3.00",
+  "buildDate": "260617",
   "enabled": true,
   "testMode": false,
   "passwordHash": "c47986dd8ce4828fe097cf915e94fc9d859bb19d56e2157d86ff11b63f0a9e53",
@@ -9,10 +9,10 @@
     "9516658a61cf564d2001e1dc6b3f3fca526848dc65e4ac38faec05317e2dfedc"
   ],
   "webAppUrl": "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec",
-  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.c2.04/KINOJO_1_c2_04.zip",
-  "notice": "✅ KINOJO 1.c2.04 탑바 구조 보정 업데이트 (260607_00)",
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.c3.00/KINOJO_1_c3_00.zip",
+  "notice": "✅ KINOJO 1.c3.00 확장프로그램 편의성/Modern UI 업데이트",
   "hallOfFameUrl": "https://bit.ly/kinojo-index",
-  "news": "공통 탑바 구조 보정, 관리자 버튼/방문자 카드 공통 노출, 투명 배경 원형 막대 로딩 스피너 적용",
-  "patchTitle": "1.c2.04 Topbar Fix (260607_00)",
-  "patchBody": "공통 탑바의 관리자 버튼과 방문자 통계 카드를 모든 페이지에서 같은 구조로 표시하고, 로딩 스피너를 투명 배경 원형 막대 CSS 스피너로 통일했습니다."
+  "news": "조회 시작 안정화, 비밀번호 입력 모달 개선, Classic/Modern UI 선택, 업데이터 최적화 분리, 문서 구조 정리",
+  "patchTitle": "1.c3.00 Extension UI & Convenience",
+  "patchBody": "확장프로그램 조회 시작 안정화와 비밀번호 입력 모달 개선을 반영하고, Classic/Modern UI 선택 기능 및 업데이터 최적화 분리를 추가했습니다."
 }
