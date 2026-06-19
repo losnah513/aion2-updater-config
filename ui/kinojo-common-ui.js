@@ -45,12 +45,7 @@
           <button aria-label="닫기" class="admin-dropdown-close kinojo-common-close" id="adminDropdownClose" type="button">×</button>
         </div>
         ${isHall?`
-        <div class="admin-login-panel" id="adminLoginPanel">
-          <input class="search admin-password" id="adminPasswordInput" placeholder="비밀번호 입력" type="password"/>
-          <button class="btn" id="adminLoginBtn" type="button">확인</button>
-          <div class="admin-status" id="adminStatus"></div>
-        </div>
-        <div class="admin-control-panel" id="adminControlPanel" style="display:none">
+        <div class="admin-control-panel" id="adminControlPanel" style="display:grid">
           <button class="btn" id="adminMvpBtn" type="button">MVP 후보 확인</button>
           <div class="admin-visit-control" id="adminVisitControl">
             <div class="admin-visit-title">방문자수 조정</div>
@@ -109,11 +104,13 @@
       </div>
       <div class="kinojo-top-tools" id="kinojoTopTools"></div>`;
     const tools=q('#kinojoTopTools',bar);
+    const auth=q('#kinojoUserStatus',bar);
     const admin=rescued.admin||createAdminMenu(info);
     const visit=rescued.visit||createVisitCard();
     const adminBtn=admin.querySelector('#adminMenuBtn');
     if(adminBtn){adminBtn.textContent='+';adminBtn.setAttribute('aria-label','관리자 메뉴 열기');}
-    tools.appendChild(admin);
+    admin.style.display='none';
+    if(auth)auth.appendChild(admin);
     tools.appendChild(visit);
     document.body.insertBefore(bar,document.body.firstChild);
   }
