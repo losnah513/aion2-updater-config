@@ -215,3 +215,42 @@ body.kinojo-drawer-open{overflow:hidden;}
   .kinojo-side-panel.open{transform:translateX(0);}
   .kinojo-side-panel.standalone{width:100vw;}
 }
+
+/* Login / account management bridge - 260619_03 */
+.kinojo-auth-status{gap:7px;padding:0 8px;}
+.kinojo-login-btn,.kinojo-logout-btn{
+  appearance:none;border:1px solid rgba(37,99,235,.22);background:#fff;color:#2563eb;
+  border-radius:7px;padding:4px 8px;font-size:11px;font-weight:1000;cursor:pointer;line-height:1;
+  transition:transform .18s ease,border-color .18s ease,background .18s ease;
+}
+.kinojo-login-btn:hover,.kinojo-logout-btn:hover{transform:translateY(-1px);border-color:rgba(37,99,235,.42);background:#f8fbff;}
+.kinojo-auth-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#475569;}
+body.kinojo-logged-in .kinojo-auth-label{color:#1e40af;}
+body.kinojo-admin-user .kinojo-auth-label{color:#7c2d12;}
+.kinojo-login-modal{position:fixed;inset:0;z-index:9000;display:none;align-items:center;justify-content:center;background:rgba(15,23,42,.28);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);padding:18px;}
+.kinojo-login-modal.open{display:flex;}
+.kinojo-login-card{position:relative;width:min(380px,100%);border:1px solid var(--kinojo-common-line);border-radius:18px;background:#fff;padding:22px;box-shadow:0 24px 70px rgba(15,23,42,.2);display:grid;gap:10px;color:#1e2f4a;}
+.kinojo-login-close{position:absolute;right:12px;top:12px;width:30px;height:30px;border-radius:999px;border:1px solid var(--kinojo-common-line);background:#fff;cursor:pointer;font-size:20px;line-height:1;}
+.kinojo-login-kicker{font-size:11px;font-weight:1000;color:#2563eb;letter-spacing:.08em;}
+.kinojo-login-card h2{margin:0;font-size:22px;letter-spacing:-.5px;}
+.kinojo-login-card p{margin:0 0 4px;color:#667085;font-size:13px;line-height:1.45;}
+.kinojo-login-input{height:42px;text-align:center;font-size:16px;font-weight:1000;letter-spacing:.08em;text-transform:uppercase;}
+.kinojo-login-submit{height:40px;font-weight:1000;}
+.kinojo-login-status{min-height:18px;font-size:12px;font-weight:900;color:#2563eb;text-align:center;}
+.admin-account-panel{border:1px solid rgba(120,145,180,.22);border-radius:10px;padding:10px;background:#f8fbff;gap:8px;}
+.admin-account-title{font-weight:1000;color:#1e2f4a;font-size:12px;}
+.admin-account-grid{display:grid;gap:6px;}
+.admin-account-actions{display:flex;flex-wrap:wrap;gap:6px;}
+.admin-account-actions .btn{flex:1 1 auto;}
+.admin-account-list{display:grid;gap:6px;max-height:220px;overflow:auto;}
+.admin-account-row{display:grid;grid-template-columns:1fr auto;gap:3px 8px;padding:8px;border:1px solid rgba(120,145,180,.22);border-radius:8px;background:#fff;font-size:11px;}
+.admin-account-row strong{font-size:12px;color:#1e2f4a;}
+.admin-account-row code{font-weight:1000;color:#2563eb;background:#eff6ff;border-radius:6px;padding:2px 6px;}
+.admin-account-row span,.admin-account-row small{grid-column:1 / -1;color:#667085;}
+.admin-account-empty{padding:8px;color:#667085;font-weight:900;text-align:center;}
+@media(max-width:760px){.kinojo-login-modal{padding:12px}.kinojo-login-card{padding:20px}.admin-account-row{grid-template-columns:1fr}.admin-account-row code{justify-self:start}}
+@media(max-width:760px){
+  .kinojo-topbar{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);}
+  .kinojo-top-center.kinojo-auth-status{display:flex;min-width:0;max-width:150px;height:31px;font-size:10px;padding:0 6px;gap:4px;}
+  .kinojo-login-btn,.kinojo-logout-btn{font-size:10px;padding:3px 6px;}
+}

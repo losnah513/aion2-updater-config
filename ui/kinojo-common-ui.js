@@ -74,6 +74,7 @@
           </div>
           <button class="btn" id="adminSnapshotBtn" type="button">성장왕 스냅샷 생성</button>
           <button class="btn" id="adminSnapshotTriggerBtn" type="button">자동 스냅샷 트리거 설치</button>
+          <button class="btn" id="adminAccountBtn" type="button">회원 코드 관리</button>
         </div>`:`
         <div class="admin-login-panel admin-placeholder-panel">
           <div class="admin-status">관리자 기능은 명예의 전당에서 우선 지원됩니다.</div>
@@ -101,7 +102,11 @@
         </button>
         <span class="kinojo-top-page"><strong>${info.label}</strong><small id="${pageTimeId(info)}">${timeText}</small></span>
       </div>
-      <div class="kinojo-top-center" id="kinojoUserStatus">레벨/등급/남은 좋아요·싫어요 자리 준비중</div>
+      <div class="kinojo-top-center kinojo-auth-status" id="kinojoUserStatus">
+        <button class="kinojo-login-btn" id="kinojoLoginBtn" type="button">로그인</button>
+        <span class="kinojo-auth-label" id="kinojoAuthLabel">비회원 · 열람만 가능</span>
+        <button class="kinojo-logout-btn" id="kinojoLogoutBtn" type="button" style="display:none">로그아웃</button>
+      </div>
       <div class="kinojo-top-tools" id="kinojoTopTools"></div>`;
     const tools=q('#kinojoTopTools',bar);
     const admin=rescued.admin||createAdminMenu(info);

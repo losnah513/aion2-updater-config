@@ -4,6 +4,9 @@
  * 주의: 같은 hallSuggestion action 호출은 이 파일에서만 수행합니다.
  */
 function openSuggestionPanel(){
+  if(window.KinojoAuth && !window.KinojoAuth.requireLogin('로그인 후 제안하기를 이용할 수 있습니다.')){
+    return;
+  }
   const panel=document.getElementById("drawerPagePanel");
   const title=document.getElementById("drawerPageTitle");
   const body=document.getElementById("drawerPageBody");
@@ -26,6 +29,9 @@ function openSuggestionPanel(){
 }
 
 async function submitSideSuggestion_(){
+  if(window.KinojoAuth && !window.KinojoAuth.requireLogin('로그인 후 제안하기를 이용할 수 있습니다.')){
+    return;
+  }
   const title=document.getElementById("sideSuggestTitle")?.value.trim()||"";
   const proposer=document.getElementById("sideSuggestProposer")?.value.trim()||"";
   const memo=document.getElementById("sideSuggestMemo")?.value.trim()||"";
@@ -39,7 +45,7 @@ async function submitSideSuggestion_(){
   try{
     if(submit){submit.disabled=true;submit.textContent="전송 중...";}
     if(status)status.textContent="";
-    const res=await fetch(WEB_APP_URL,{method:"POST",body:JSON.stringify({action:"hallSuggestion",title,proposer,memo})});
+    const res=await fetch(WEB_APP_URL,{method:"POST",body:JSON.stringify({action:"hallSuggestion",title,proposer,memo,sessionToken:window.KinojoAuth?window.KinojoAuth.getToken():""})});
     const data=await res.json();
     if(!data.ok)throw new Error(data.message||"전송 실패");
     if(status)status.textContent="제안이 접수되었습니다.";
@@ -72,11 +78,14 @@ function closeInlineSuggestionPanel(){
 }
 
 async function submitInlineSuggestion_(){
+  if(window.KinojoAuth && !window.KinojoAuth.requireLogin('로그인 후 제안하기를 이용할 수 있습니다.')){
+    return;
+  }
   const title=document.getElementById("suggestTitle")?.value.trim()||"";
   const proposer=document.getElementById("suggestProposer")?.value.trim()||"";
   const memo=document.getElementById("suggestMemo")?.value.trim()||"";
   if(!title)return alert("항목 이름을 입력해 주세요.");
-  const res=await fetch(WEB_APP_URL,{method:"POST",body:JSON.stringify({action:"hallSuggestion",title,proposer,memo})});
+  const res=await fetch(WEB_APP_URL,{method:"POST",body:JSON.stringify({action:"hallSuggestion",title,proposer,memo,sessionToken:window.KinojoAuth?window.KinojoAuth.getToken():""})});
   const data=await res.json();
   if(!data.ok)return alert(data.message||"전송 실패");
   alert("제안이 접수되었습니다.");

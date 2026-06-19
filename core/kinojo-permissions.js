@@ -4,7 +4,7 @@
  * Phase 1: 기존 기능과 연결하지 않는 안전한 스켈레톤입니다.
  */
 window.KinojoPermissions = window.KinojoPermissions || {
-  version: '1.c2.04',
+  version: '1.3.1.00',
   labels: {
     0: '관람객',
     1: '참여자',

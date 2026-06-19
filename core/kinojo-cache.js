@@ -6,7 +6,7 @@
  * Phase 1: 기존 기능과 연결하지 않는 안전한 스켈레톤입니다.
  */
 window.KinojoCache = window.KinojoCache || {
-  version: '1.c2.04',
+  version: '1.3.1.00',
   ttl: {
     sanctuary: 60 * 1000,
     hall: 5 * 60 * 1000,
