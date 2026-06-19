@@ -6,7 +6,12 @@
  */
 function hallBuildUrl(action,params={}){
   const joiner=WEB_APP_URL.includes("?")?"&":"?";
-  const q=new URLSearchParams({action,...params,t:String(Date.now())});
+  const payload={action,...params,t:String(Date.now())};
+  if(action==='hallVisit' && params && params.mode && !['stats','visit','boost'].includes(String(params.mode))){
+    const token=window.KinojoAuth?.getSession?.()?.token || '';
+    if(token)payload.sessionToken=token;
+  }
+  const q=new URLSearchParams(payload);
   return WEB_APP_URL+joiner+q.toString();
 }
 
@@ -29,6 +34,7 @@ async function fetchVisitStats(mode="stats",boost=0){
       const res=await fetch(hallBuildUrl("hallVisit",{mode,boost:String(boost)}),{cache:"no-store"});
       const data=await res.json();
       if(data?.ok&&data.stats)renderVisits(data.stats);
+      if(data && data.ok===false) throw new Error(data.message || "방문자 통계 처리 실패");
       return data;
     }catch(e){
       return null;
@@ -73,6 +79,23 @@ function stopLoadingText(){
   }
 }
 
+
+function kinojoCardSpinner(label){
+  return '<div class="kinojo-card-loading"><span class="kinojo-spinner" aria-hidden="true"><span></span></span><span>'+escapeHtml(label||'불러오는 중')+'</span></div>';
+}
+function renderHallLoadingLayout(){
+  app.className='';
+  app.innerHTML=''
+    + '<section class="mvp-card">'+kinojoCardSpinner('시즌 MVP 준비 중')+'</section>'
+    + '<section class="section">'+kinojoCardSpinner('반응 현황 불러오는 중')+'</section>'
+    + '<section class="section">'+kinojoCardSpinner('성장왕/벌크업 진단 중')+'</section>'
+    + '<div class="dashboard"><div><div class="top-grid">'
+    + '<section class="section">'+kinojoCardSpinner('PVE TOP 5 불러오는 중')+'</section>'
+    + '<section class="section">'+kinojoCardSpinner('PVP TOP 5 불러오는 중')+'</section>'
+    + '</div></div><div class="side-stack"><section class="section">'+kinojoCardSpinner('관계 카드 불러오는 중')+'</section></div></div>'
+    + '<section class="overall">'+kinojoCardSpinner('전체 순위표 불러오는 중')+'</section>';
+}
+
 function preloadImages(paths){
   return Promise.all(paths.map(src=>new Promise(resolve=>{
     const img=new Image();
@@ -83,8 +106,7 @@ function preloadImages(paths){
 }
 
 async function load(){
-  app.className="loading";
-  app.innerHTML='<div><div class="loader-ring"></div><div class="loader-text" id="loaderText">명예의 전당 데이터를 불러오는 중</div></div>';
+  renderHallLoadingLayout();
   startLoadingText();
   try{
     await preloadImages(Object.values(RANK_EMBLEMS).concat(Object.values(CLASS_ICONS)));

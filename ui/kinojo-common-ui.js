@@ -38,38 +38,75 @@
     wrap.className='admin-menu-wrap';
     const isHall=info.key==='hall';
     wrap.innerHTML=`
-      <button aria-expanded="false" aria-haspopup="true" aria-label="관리자 메뉴" class="admin-menu-btn" id="adminMenuBtn" type="button">관리</button>
-      <section aria-hidden="true" class="admin-dropdown" id="adminDropdown">
-        <div class="admin-dropdown-head">
-          <strong>관리자 전용 메뉴입니다.</strong>
+      <button aria-expanded="false" aria-haspopup="true" aria-label="관리 패널 열기" class="admin-menu-btn" id="adminMenuBtn" type="button">관리</button>
+      <section aria-hidden="true" class="admin-dropdown admin-panel-modal" id="adminDropdown">
+        <div class="admin-dropdown-head admin-panel-head">
+          <div>
+            <strong>관리 패널</strong>
+            <span>권한에 맞는 운영 기능만 표시됩니다.</span>
+          </div>
           <button aria-label="닫기" class="admin-dropdown-close kinojo-common-close" id="adminDropdownClose" type="button">×</button>
         </div>
         ${isHall?`
-        <div class="admin-control-panel" id="adminControlPanel" style="display:grid">
-          <button class="btn" id="adminMvpBtn" type="button">MVP 후보 확인</button>
-          <div class="admin-visit-control" id="adminVisitControl">
-            <div class="admin-visit-title">방문자수 조정</div>
-            <div class="admin-visit-line admin-visit-row-main">
-              <div aria-label="증감 선택" class="admin-swap admin-sign-swap">
-                <button class="admin-swap-btn active" data-visit-sign="plus" type="button">+</button>
-                <button class="admin-swap-btn" data-visit-sign="minus" type="button">-</button>
+        <div class="admin-control-panel admin-shell" id="adminControlPanel" style="display:grid">
+          <nav class="admin-panel-tabs" aria-label="관리 패널 메뉴">
+            <button class="admin-panel-tab active" data-admin-panel="mvp" type="button">🏆 MVP</button>
+            <button class="admin-panel-tab" data-admin-panel="growth" type="button">📈 성장</button>
+            <button class="admin-panel-tab" data-admin-panel="account" type="button">👥 회원</button>
+            <button class="admin-panel-tab" data-admin-panel="system" type="button">⚙ 시스템</button>
+          </nav>
+          <div class="admin-panel-content">
+            <section class="admin-panel-pane active" data-admin-pane="mvp">
+              <div class="admin-pane-title"><strong>MVP 관리</strong><span>후보와 집계 상태를 확인합니다.</span></div>
+              <div class="admin-pane-actions">
+                <button class="btn" id="adminMvpBtn" type="button">MVP 후보 확인</button>
               </div>
-              <input aria-label="조정 인원수" class="search admin-visit-amount" id="adminVisitAmount" inputmode="numeric" max="9999" min="1" type="number" value="1"/>
-              <span class="admin-visit-unit">명</span>
-              <div aria-label="조정 대상" class="admin-swap">
-                <button class="admin-swap-btn active" data-visit-target="daily" type="button">일일</button>
-                <button class="admin-swap-btn" data-visit-target="total" type="button">누적</button>
+              <div class="admin-pane-result" data-admin-result="mvp"></div>
+            </section>
+            <section class="admin-panel-pane" data-admin-pane="growth">
+              <div class="admin-pane-title"><strong>성장 데이터</strong><span>성장왕/벌크업 스냅샷과 자동 집계를 확인합니다.</span></div>
+              <div class="admin-pane-actions">
+                <button class="btn" id="adminSnapshotBtn" type="button">성장왕 스냅샷 생성</button>
+                <button class="btn" id="adminSnapshotStatusBtn" type="button">스냅샷 상태 확인</button>
+                <button class="btn" id="adminSnapshotTriggerBtn" type="button">주간 성장 자동 집계 활성화</button>
               </div>
-            </div>
-            <div class="admin-status" id="adminVisitStatus"></div>
-            <div class="admin-visit-line admin-visit-actions">
-              <button class="btn" id="adminVisitApplyBtn" type="button">반영</button>
-              <button class="btn admin-close" id="adminVisitCancelBtn" type="button">취소</button>
-            </div>
+              <div class="admin-pane-result" data-admin-result="growth"></div>
+            </section>
+            <section class="admin-panel-pane" data-admin-pane="account">
+              <div class="admin-pane-title"><strong>회원 관리</strong><span>코드 생성, 등급, 권한을 관리합니다.</span></div>
+              <div class="admin-pane-actions">
+                <button class="btn" id="adminAccountBtn" type="button">회원 코드 관리</button>
+              </div>
+              <div class="admin-pane-result" data-admin-result="account"></div>
+            </section>
+            <section class="admin-panel-pane" data-admin-pane="system">
+              <div class="admin-pane-title"><strong>시스템</strong><span>마스터 전용 기능과 캐릭터 소유정보를 관리합니다.</span></div>
+              <div class="admin-pane-actions">
+                <button class="btn" id="adminOwnerMapQuickBtn" type="button">캐릭터 소유정보 갱신</button>
+              </div>
+              <div class="admin-visit-control master-only" id="adminVisitControl">
+                <div class="admin-visit-title">방문자수 조정 <span>MASTER 전용</span></div>
+                <div class="admin-visit-line admin-visit-row-main">
+                  <div aria-label="증감 선택" class="admin-swap admin-sign-swap">
+                    <button class="admin-swap-btn active" data-visit-sign="plus" type="button">+</button>
+                    <button class="admin-swap-btn" data-visit-sign="minus" type="button">-</button>
+                  </div>
+                  <input aria-label="조정 인원수" class="search admin-visit-amount" id="adminVisitAmount" inputmode="numeric" max="9999" min="1" type="number" value="1"/>
+                  <span class="admin-visit-unit">명</span>
+                  <div aria-label="조정 대상" class="admin-swap">
+                    <button class="admin-swap-btn active" data-visit-target="daily" type="button">일일</button>
+                    <button class="admin-swap-btn" data-visit-target="total" type="button">누적</button>
+                  </div>
+                </div>
+                <div class="admin-status" id="adminVisitStatus"></div>
+                <div class="admin-visit-line admin-visit-actions">
+                  <button class="btn" id="adminVisitApplyBtn" type="button">반영</button>
+                  <button class="btn admin-close" id="adminVisitCancelBtn" type="button">취소</button>
+                </div>
+              </div>
+              <div class="admin-pane-result" data-admin-result="system"></div>
+            </section>
           </div>
-          <button class="btn" id="adminSnapshotBtn" type="button">성장왕 스냅샷 생성</button>
-          <button class="btn" id="adminSnapshotTriggerBtn" type="button">자동 스냅샷 트리거 설치</button>
-          <button class="btn" id="adminAccountBtn" type="button">회원 코드 관리</button>
         </div>`:`
         <div class="admin-login-panel admin-placeholder-panel">
           <div class="admin-status">관리자 기능은 명예의 전당에서 우선 지원됩니다.</div>

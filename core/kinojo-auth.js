@@ -293,6 +293,11 @@
       + '<button class="btn" id="adminAccountListBtn" type="button">목록 새로고침</button>'
       + '</div>'
       + '</div>'
+      + '<div class="kinojo-account-filters">'
+      + '<input class="search" id="adminAccountSearchInput" placeholder="회원 검색" autocomplete="off" />'
+      + '<select class="admin-account-role-select" id="adminAccountRoleFilter"><option value="">전체 등급</option><option value="MASTER">MASTER</option><option value="SUB_MASTER">SUB MASTER</option><option value="MANAGER">MANAGER</option><option value="MEMBER">MEMBER</option></select>'
+      + '<select class="admin-account-role-select" id="adminAccountPermissionFilter"><option value="">전체 권한</option><option value="sanctuary_edit">성역 관리</option><option value="visit_manage">방문자수 조정</option><option value="snapshot_manage">성장왕 스냅샷</option><option value="account_manage">회원 코드 관리</option></select>'
+      + '</div>'
       + '<div class="admin-status" id="adminAccountStatus"></div>'
       + '<div class="admin-account-list" id="adminAccountList"></div>'
       + '</div>'
@@ -308,6 +313,10 @@
     modal.querySelector('#adminAccountListBtn')?.addEventListener('click', listAccountCodes);
     modal.querySelector('#adminOwnerMapSyncBtn')?.addEventListener('click', syncOwnerMap);
     modal.querySelector('#adminAccountList')?.addEventListener('click', handleAccountListClick);
+    modal.querySelector('#adminAccountList')?.addEventListener('change', handleAccountListChange);
+    modal.querySelector('#adminAccountSearchInput')?.addEventListener('input', applyAccountListFilters);
+    modal.querySelector('#adminAccountRoleFilter')?.addEventListener('change', applyAccountListFilters);
+    modal.querySelector('#adminAccountPermissionFilter')?.addEventListener('change', applyAccountListFilters);
     return modal;
   }
 
@@ -443,6 +452,7 @@
   function renderAccounts(accounts){
     const box = document.getElementById('adminAccountList');
     if(!box) return;
+    window.__KINOJO_ACCOUNT_LIST__ = accounts || [];
     if(!accounts.length){ box.innerHTML = '<div class="admin-account-empty">조회된 코드가 없습니다.</div>'; return; }
 
     box.innerHTML = accounts.map(account => {
@@ -454,19 +464,36 @@
       const toggleHtml = Object.keys(PERMISSION_LABELS).map(key => {
         const on = permissions.includes(key) || permissions.includes('all');
         const disabled = isRoot ? ' disabled' : '';
-        return '<button class="admin-permission-toggle ' + (on ? 'on' : '') + '" data-account-action="toggle-permission" data-code="' + safeText(account.code || '') + '" data-permission="' + key + '" type="button"' + disabled + '>' + safeText(PERMISSION_LABELS[key]) + '</button>';
+        return '<label class="admin-switch-row"><span>' + safeText(PERMISSION_LABELS[key]) + '</span><button aria-pressed="' + (on ? 'true' : 'false') + '" class="admin-permission-toggle ' + (on ? 'on' : '') + '" data-account-action="toggle-permission" data-code="' + safeText(account.code || '') + '" data-permission="' + key + '" type="button"' + disabled + '>' + safeText(PERMISSION_LABELS[key]) + '</button></label>';
       }).join('');
+      const roleOptions = ['MEMBER','MANAGER','SUB_MASTER'].map(r => '<option value="' + r + '"' + (role === r ? ' selected' : '') + '>' + safeText(roleLabel(r)) + '</option>').join('');
+      const roleSelect = isRoot ? '<span class="admin-account-role-fixed">MASTER</span>' : '<select class="admin-account-role-select" data-account-action="change-role" data-code="' + safeText(account.code || '') + '">' + roleOptions + '</select>'; 
       const deleteButton = isRoot
         ? '<button class="admin-account-delete" type="button" disabled>삭제 불가</button>'
         : '<button class="admin-account-delete" data-account-action="delete-code" data-code="' + safeText(account.code || '') + '" type="button">코드 삭제</button>';
 
-      return '<article class="admin-account-row" data-code="' + safeText(account.code || '') + '" data-permissions="' + safeText(account.permissions || '') + '">'
-        + '<div class="admin-account-main"><strong>' + safeText(account.mainCharacter || '-') + '</strong><span>' + safeText(roleLabel(role)) + ' · ' + (active ? '활성' : '비활성') + ' · ' + permissionText(account.permissions) + '</span></div>'
+      return '<article class="admin-account-row" data-role="' + safeText(role) + '" data-name="' + safeText(account.mainCharacter || '') + '" data-code="' + safeText(account.code || '') + '" data-permissions="' + safeText(account.permissions || '') + '">'
+        + '<div class="admin-account-main"><strong>' + safeText(account.mainCharacter || '-') + '</strong><span>' + (active ? '활성' : '비활성') + ' · ' + permissionText(account.permissions) + '</span></div>'
         + '<code class="' + (isRoot ? 'admin-code-hidden' : '') + '">' + safeText(displayCode) + '</code>'
-        + '<div class="admin-permission-list">' + toggleHtml + '</div>'
+        + roleSelect
+        + '<div class="admin-switch-list">' + toggleHtml + '</div>'
         + '<div class="admin-account-row-actions">' + deleteButton + '</div>'
         + '</article>';
     }).join('');
+    applyAccountListFilters();
+  }
+
+  function applyAccountListFilters(){
+    const q = String(document.getElementById('adminAccountSearchInput')?.value || '').toLowerCase().trim();
+    const role = String(document.getElementById('adminAccountRoleFilter')?.value || '');
+    const perm = String(document.getElementById('adminAccountPermissionFilter')?.value || '');
+    document.querySelectorAll('#adminAccountList .admin-account-row').forEach(row => {
+      const hay = ((row.dataset.name || '') + ' ' + (row.dataset.code || '')).toLowerCase();
+      const rowRole = row.dataset.role || '';
+      const rowPerm = row.dataset.permissions || '';
+      const visible = (!q || hay.includes(q)) && (!role || rowRole === role) && (!perm || rowPerm.split(',').includes(perm) || rowPerm === 'all');
+      row.style.display = visible ? '' : 'none';
+    });
   }
 
   async function handleAccountListClick(event){
@@ -491,6 +518,24 @@
       if(!confirm(code + ' 코드를 삭제할까요?')) return;
       await deleteAccountCode(code);
     }
+  }
+
+  async function handleAccountListChange(event){
+    const target = event.target.closest('[data-account-action="change-role"]');
+    if(!target) return;
+    const code = target.dataset.code || '';
+    const role = target.value || 'MEMBER';
+    await updateAccountRole(code, role);
+  }
+
+  async function updateAccountRole(code, role){
+    try{
+      setAccountStatus('등급 수정 중...', false);
+      const data = await accountAdmin('updateRole', { code, role });
+      if(!data.ok) throw new Error(data.message || '등급 수정 실패');
+      setAccountStatus('등급이 수정되었습니다.', false);
+      await listAccountCodes();
+    }catch(err){ setAccountStatus(err.message || String(err), true); }
   }
 
   async function updateAccountPermissions(code, permissions){

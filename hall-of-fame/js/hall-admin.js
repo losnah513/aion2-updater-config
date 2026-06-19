@@ -111,3 +111,71 @@ async function adminSnapshotTriggerInstall(){
 }
 
 
+
+// 260620 관리자 패널 탭/결과 영역 교통 정리
+(function patchKinojoAdminPanel(){
+  function activateAdminPane(key){
+    document.querySelectorAll('[data-admin-panel]').forEach(btn=>btn.classList.toggle('active',btn.dataset.adminPanel===key));
+    document.querySelectorAll('[data-admin-pane]').forEach(pane=>pane.classList.toggle('active',pane.dataset.adminPane===key));
+  }
+  function bindAdminTabs(){
+    document.querySelectorAll('[data-admin-panel]').forEach(btn=>{
+      if(btn.dataset.boundAdminTab)return;
+      btn.dataset.boundAdminTab='1';
+      btn.addEventListener('click',()=>activateAdminPane(btn.dataset.adminPanel));
+    });
+  }
+  function moveAdminResult(title, html, key){
+    const active=document.querySelector('.admin-panel-pane.active')?.dataset.adminPane || key || 'mvp';
+    const target=document.querySelector('[data-admin-result="'+active+'"]') || document.querySelector('[data-admin-result="mvp"]');
+    if(!target)return false;
+    target.innerHTML='<div class="admin-result-box"><div class="admin-result-head"><strong>'+escapeHtml(title||'결과')+'</strong><button type="button" aria-label="닫기">×</button></div><div class="admin-result-body">'+html+'</div></div>';
+    target.querySelector('button')?.addEventListener('click',()=>{target.innerHTML='';});
+    return true;
+  }
+  const originalOpen=window.openAdminDropdown;
+  window.openAdminDropdown=function(){
+    if(typeof originalOpen==='function')originalOpen();
+    bindAdminTabs();
+  };
+  window.showAdminResult_=function(title,html){
+    if(!moveAdminResult(title,html))alert((title||'결과')+'\n'+String(html||'').replace(/<[^>]+>/g,' '));
+  };
+  document.addEventListener('click',e=>{
+    const quick=e.target.closest('#adminOwnerMapQuickBtn');
+    if(quick){
+      e.preventDefault();
+      const auth=window.KinojoAuth;
+      if(auth&&typeof auth.openAccountAdmin==='function')auth.openAccountAdmin();
+    }
+  });
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindAdminTabs);else bindAdminTabs();
+})();
+
+async function adminSnapshotStatus(){
+  try{
+    setAdminButtonLoading_("adminSnapshotStatusBtn","확인 중...");
+    const token=window.KinojoAuth?.getSession?.()?.token || '';
+    const url=WEB_APP_URL+(WEB_APP_URL.includes("?")?"&":"?")+"action=weeklySnapshotDiagnose&sessionToken="+encodeURIComponent(token)+"&t="+Date.now();
+    const res=await fetch(url,{cache:"no-store"});
+    const data=await res.json();
+    if(!data.ok)return showAdminResult_("스냅샷 상태 확인",escapeHtml(data.message||"상태 확인 실패"));
+    const rows=(data.weeks||[]).slice(0,8).map(w=>'<div class="admin-result-row"><strong>'+escapeHtml(w.weekKey||'-')+'</strong><span>START '+Number(w.startCount||0)+'명 · END '+Number(w.endCount||0)+'명 · '+(w.ready?'정상':'비교 불가')+'</span></div>').join('')||'<div class="empty">스냅샷 데이터가 없습니다.</div>';
+    const trigger=data.trigger||{};
+    const summary='<div class="admin-result-meta">최근 정상 주차: '+escapeHtml(data.latestReadyWeekKey||'없음')+'</div>'
+      + '<div class="admin-result-meta">자동 트리거: '+(trigger.installed?'정상':'확인/설치 필요')+' · START '+Number(trigger.startCount||0)+'개 · END '+Number(trigger.endCount||0)+'개</div>'
+      + '<div class="admin-result-list">'+rows+'</div>';
+    showAdminResult_("스냅샷 상태 확인",summary);
+  }catch(e){
+    showAdminResult_("스냅샷 상태 확인","확인 오류: "+escapeHtml(e.message||e));
+  }finally{
+    clearAdminButtonLoading_("adminSnapshotStatusBtn","스냅샷 상태 확인");
+  }
+}
+
+(function bindSnapshotStatusButton(){
+  function bind(){const btn=document.getElementById('adminSnapshotStatusBtn');if(btn&&!btn.dataset.bound){btn.dataset.bound='1';btn.onclick=adminSnapshotStatus;}}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+  const oldOpen=window.openAdminDropdown;
+  window.openAdminDropdown=function(){if(typeof oldOpen==='function')oldOpen();bind();};
+})();

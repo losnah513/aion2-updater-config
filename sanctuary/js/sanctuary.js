@@ -15,7 +15,17 @@ function currentFallback(){return FALLBACK[currentId]||FALLBACK.rudra}
 function setActiveLinks(){document.querySelectorAll('[data-sanctuary-link]').forEach(a=>{a.classList.toggle('active',a.dataset.sanctuaryLink===currentId)})}
 /* KINOJO common drawer is managed by GitHub_Pages/ui/kinojo-common-ui.js */
 async function loadData(){setActiveLinks();renderSkeleton();try{const url=API_URL+(API_URL.includes('?')?'&':'?')+'action=sanctuary&id='+encodeURIComponent(currentId)+'&t='+Date.now();const res=await fetch(url,{cache:'no-store'});const data=await res.json();if(!data||!data.ok)throw new Error(data?.message||'성역 데이터 로드 실패');sanctuaryData=data;render(data);document.getElementById('syncChip').textContent='업데이트 '+(data.generatedAt||'완료')}catch(err){const f=currentFallback();sanctuaryData={ok:true,info:f.info,summary:{totalCharacters:0,teamCount:0,partyCount:0,averagePower:0},teams:[],waiting:[],tips:['성역 시트 또는 Apps Script 연결 후 실제 데이터가 표시됩니다.'],generatedAt:'대기중'};render(sanctuaryData);document.getElementById('syncChip').textContent='샘플 프레임 표시 중'}}
-function renderSkeleton(){document.getElementById('teamList').innerHTML='<div class="loading"><span>성역 파티 데이터를 불러오는 중...</span></div>'}
+function sanctuarySpinner(label){return '<div class="kinojo-card-loading"><span class="kinojo-spinner" aria-hidden="true"><span></span></span><span>'+esc(label||'불러오는 중')+'</span></div>'}
+function renderSkeleton(){
+  const summary=document.getElementById('summaryGrid');
+  const team=document.getElementById('teamList');
+  const waiting=document.getElementById('waitingSection');
+  const tip=document.getElementById('tipBody');
+  if(summary)summary.innerHTML=[sanctuarySpinner('등록 현황 집계 중'),sanctuarySpinner('팀 정보 확인 중'),sanctuarySpinner('파티 정보 확인 중'),sanctuarySpinner('평균 전투력 계산 중')].map(x=>'<div class="summary-card">'+x+'</div>').join('');
+  if(team)team.innerHTML=sanctuarySpinner('성역 파티 데이터를 불러오는 중');
+  if(waiting)waiting.innerHTML='<h2 class="waiting-title">대기자 명단</h2>'+sanctuarySpinner('대기자 확인 중');
+  if(tip)tip.innerHTML=sanctuarySpinner('공략 팁 불러오는 중');
+}
 function render(data){const info=data.info||currentFallback().info;const hero=document.getElementById('sanctuaryHero');hero.className='sanctuary-hero '+esc(info.sanctuaryId||currentId);document.getElementById('heroKicker').textContent='성역 '+(info.sanctuaryNo||'');document.getElementById('heroTitle').textContent=info.sanctuaryName||info.shortName||'성역';document.getElementById('heroSub').textContent='Boss. '+(info.bossName||'-')+' · '+(info.shortName||'');renderSummary(data);renderTeams(data.teams||[]);renderWaiting(data.waiting||[]);document.getElementById('tipTitle').textContent=(info.shortName||'성역')+' 공략 팁';document.getElementById('tipBody').innerHTML=(data.tips||[]).map(t=>'<div class="tip-line">'+esc(t)+'</div>').join('')||'<div class="tip-line">공략 팁이 준비 중입니다.</div>';setupSliders()}
 function renderSummary(data){const s=data.summary||{};document.getElementById('summaryGrid').innerHTML=[
   summaryCard(fmt(s.totalCharacters),'총 등록 캐릭터'),summaryCard(fmt(s.teamCount),'운영 팀'),summaryCard(fmt(s.partyCount),'운영 파티'),summaryCard(fmt(s.averagePower),'평균 전투력'),'<button class="summary-card summary-tip" id="tipOpenBtn" type="button"><div class="summary-num">💡</div><div class="summary-label">공략 팁 보기</div></button>'
