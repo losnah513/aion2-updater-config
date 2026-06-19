@@ -38,7 +38,7 @@
     wrap.className='admin-menu-wrap';
     const isHall=info.key==='hall';
     wrap.innerHTML=`
-      <button aria-expanded="false" aria-haspopup="true" aria-label="관리자 메뉴" class="admin-menu-btn" id="adminMenuBtn" type="button">+</button>
+      <button aria-expanded="false" aria-haspopup="true" aria-label="관리자 메뉴" class="admin-menu-btn" id="adminMenuBtn" type="button">관리</button>
       <section aria-hidden="true" class="admin-dropdown" id="adminDropdown">
         <div class="admin-dropdown-head">
           <strong>관리자 전용 메뉴입니다.</strong>
@@ -108,7 +108,7 @@
     const admin=rescued.admin||createAdminMenu(info);
     const visit=rescued.visit||createVisitCard();
     const adminBtn=admin.querySelector('#adminMenuBtn');
-    if(adminBtn){adminBtn.textContent='+';adminBtn.setAttribute('aria-label','관리자 메뉴 열기');}
+    if(adminBtn){adminBtn.textContent='관리';adminBtn.setAttribute('aria-label','관리 패널 열기');}
     admin.style.display='none';
     if(auth)auth.appendChild(admin);
     tools.appendChild(visit);

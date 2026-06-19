@@ -317,3 +317,70 @@ body.kinojo-admin-user .kinojo-auth-role{color:#9a3412;background:#fff7ed;border
   #kinojoUserStatus .admin-menu-btn{width:27px;height:27px;font-size:18px;}
   .kinojo-account-head p{font-size:11px;}
 }
+
+/* 13차 로그인/권한 UI + 공통 로딩 스피너 보정 - 260619_06 */
+.kinojo-topbar{min-height:62px;}
+.kinojo-top-center.kinojo-auth-status{
+  min-width:0; height:38px; display:flex; align-items:center; justify-content:center;
+  border:1px solid rgba(120,145,180,.22); border-radius:999px; background:rgba(255,255,255,.78);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 8px 22px rgba(30,64,175,.06);
+}
+.kinojo-auth-profile{display:inline-flex;align-items:center;gap:6px;min-width:0;}
+.kinojo-auth-class-icon{width:22px!important;height:22px!important;}
+.kinojo-auth-name{max-width:96px;font-size:12px;color:#17233a!important;}
+.kinojo-auth-role{font-size:10px;letter-spacing:.03em;text-transform:uppercase;}
+.kinojo-auth-role-master{color:#92400e!important;background:linear-gradient(180deg,#fff7ed,#ffedd5)!important;border-color:rgba(245,158,11,.34)!important;}
+.kinojo-auth-role-sub-master{color:#475569!important;background:linear-gradient(180deg,#f8fafc,#e2e8f0)!important;border-color:rgba(100,116,139,.3)!important;}
+.kinojo-auth-role-manager{color:#1d4ed8!important;background:linear-gradient(180deg,#eff6ff,#dbeafe)!important;border-color:rgba(37,99,235,.34)!important;}
+.kinojo-auth-role-member{color:#475569!important;background:#f8fafc!important;}
+.kinojo-auth-online{font-size:9px;color:#22c55e;filter:drop-shadow(0 0 5px rgba(34,197,94,.55));}
+#kinojoUserStatus .admin-menu-wrap{display:none;margin-left:2px;}
+body.kinojo-admin-user #kinojoUserStatus .admin-menu-wrap{display:block;}
+#kinojoUserStatus .admin-menu-btn{
+  width:auto!important;min-width:46px!important;height:28px!important;padding:0 10px!important;border-radius:999px!important;
+  font-size:11px!important;font-weight:1000!important;line-height:1!important;color:#2563eb!important;background:#fff!important;
+  border:1px solid rgba(37,99,235,.25)!important;box-shadow:0 6px 14px rgba(37,99,235,.08)!important;
+  transition:transform .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease!important;
+}
+#kinojoUserStatus .admin-menu-btn:hover{transform:translateY(-1px) scale(1.02);border-color:rgba(37,99,235,.48)!important;background:#f8fbff!important;}
+#kinojoUserStatus .admin-menu-btn:active{transform:translateY(0) scale(.98);box-shadow:inset 0 2px 6px rgba(37,99,235,.12)!important;}
+
+.kinojo-spinner{position:relative;display:inline-grid;place-items:center;width:18px;height:18px;flex:0 0 auto;vertical-align:-4px;}
+.kinojo-spinner::before,.kinojo-spinner::after{content:"";position:absolute;inset:0;border-radius:50%;}
+.kinojo-spinner::before{
+  background:conic-gradient(from 0deg,rgba(255,255,255,.98) 0 70deg,rgba(191,219,254,.75) 70deg 132deg,transparent 132deg 190deg,rgba(255,255,255,.88) 190deg 260deg,transparent 260deg 360deg);
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 4px));
+  mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 4px));
+  animation:kinojoSpinnerTrack 1.5s linear infinite;
+}
+.kinojo-spinner::after{
+  background:conic-gradient(from 0deg,transparent 0 42deg,#60a5fa 42deg 96deg,#2563eb 96deg 138deg,transparent 138deg 360deg);
+  filter:drop-shadow(0 0 7px rgba(37,99,235,.5));
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 4px));
+  mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 4px));
+  animation:kinojoSpinnerBlue 1s cubic-bezier(.55,.08,.25,.98) infinite;
+}
+.kinojo-spinner span{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.78);box-shadow:0 0 8px rgba(37,99,235,.16);}
+.kinojo-spinner-label{display:inline-block;margin-left:6px;}
+button.is-loading{display:inline-flex!important;align-items:center;justify-content:center;gap:5px;}
+.loader-ring{width:34px;height:34px;border:0!important;border-radius:50%;position:relative;background:none!important;animation:none!important;}
+.loader-ring::before,.loader-ring::after{content:"";position:absolute;inset:0;border-radius:50%;}
+.loader-ring::before{background:conic-gradient(from 0deg,#fff 0 76deg,rgba(191,219,254,.75) 76deg 132deg,transparent 132deg 190deg,#fff 190deg 258deg,transparent 258deg);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 6px));mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 6px));animation:kinojoSpinnerTrack 1.6s linear infinite;}
+.loader-ring::after{background:conic-gradient(from 0deg,transparent 0 36deg,#93c5fd 36deg 84deg,#2563eb 84deg 140deg,transparent 140deg 360deg);filter:drop-shadow(0 0 9px rgba(37,99,235,.55));-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 6px));mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 6px));animation:kinojoSpinnerBlue 1.05s cubic-bezier(.55,.08,.25,.98) infinite;}
+@keyframes kinojoSpinnerTrack{0%{transform:rotate(0deg);opacity:.72}50%{opacity:1}100%{transform:rotate(360deg);opacity:.72}}
+@keyframes kinojoSpinnerBlue{0%{transform:rotate(0deg) scale(.96);opacity:.82}45%{transform:rotate(210deg) scale(1.04);opacity:1}100%{transform:rotate(360deg) scale(.96);opacity:.86}}
+
+.kinojo-account-issue-box{display:grid;gap:9px;border:1px solid rgba(37,99,235,.18);border-radius:12px;background:#fff;padding:10px;}
+.kinojo-account-issue-box[hidden]{display:none!important;}
+.kinojo-account-character-result{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid rgba(120,145,180,.18);border-radius:10px;background:#f8fbff;padding:8px 10px;}
+.kinojo-account-character-result strong{font-size:14px;color:#17233a;}
+.kinojo-account-character-result span{font-size:12px;font-weight:900;color:#2563eb;}
+.kinojo-code-input{text-align:center;letter-spacing:.12em;text-transform:uppercase;font-size:16px!important;}
+.kinojo-account-help{font-size:11px;color:#64748b;font-weight:800;line-height:1.35;}
+@media(max-width:760px){
+  .kinojo-topbar{min-height:56px;}
+  .kinojo-top-center.kinojo-auth-status{max-width:190px;height:34px;}
+  .kinojo-auth-name{max-width:62px;}
+  .kinojo-auth-role{font-size:9px;padding:2px 5px;}
+  #kinojoUserStatus .admin-menu-btn{min-width:40px!important;height:26px!important;padding:0 8px!important;font-size:10px!important;}
+}
