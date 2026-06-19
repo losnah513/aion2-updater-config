@@ -1,12 +1,18 @@
 /*
  * KINOJO Login UI Bridge
- * Role: 코드 로그인, 세션 보관, 권한 상태 표시, 관리자 회원 코드 관리 UI를 담당합니다.
+ * Role: 코드 로그인, 세션 보관, 권한 상태 표시, 회원 코드 관리 모달을 담당합니다.
  * Note: 실제 권한 판정은 Apps Script account_logic.gs / reaction_logic.gs가 최종 처리합니다.
  */
 (function(){
   const STORAGE_KEY = 'kinojo_login_session_v1';
   const ACCOUNT_KEY = 'kinojo_login_account_v1';
   const LEGACY_ADMIN_PASSWORD = 'zlshwhghkdlxld';
+  const PERMISSION_LABELS = {
+    sanctuary_edit: '성역 관리',
+    visit_manage: '방문자수 조정',
+    snapshot_manage: '성장왕 스냅샷',
+    account_manage: '회원 코드 관리'
+  };
 
   function apiUrl(){
     const param = new URLSearchParams(location.search).get('api');
@@ -17,21 +23,12 @@
     return 'https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec';
   }
 
-  function buildUrl(action, params={}){
-    const base = apiUrl();
-    const joiner = base.includes('?') ? '&' : '?';
-    const q = new URLSearchParams(Object.assign({ action, t:String(Date.now()) }, params));
-    return base + joiner + q.toString();
-  }
-
   function readJson(key){
     try{ return JSON.parse(localStorage.getItem(key) || 'null'); }
     catch(_err){ return null; }
   }
 
-  function writeJson(key, value){
-    localStorage.setItem(key, JSON.stringify(value));
-  }
+  function writeJson(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
 
   function getSession(){
     const session = readJson(STORAGE_KEY);
@@ -43,9 +40,7 @@
     return session;
   }
 
-  function getAccount(){
-    return readJson(ACCOUNT_KEY);
-  }
+  function getAccount(){ return readJson(ACCOUNT_KEY); }
 
   function setSession(session, account){
     writeJson(STORAGE_KEY, session || {});
@@ -65,7 +60,26 @@
   function isAdmin(){ return getLevel() >= 5; }
 
   function safeText(value){
-    return String(value ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
+    return String(value ?? '')
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'",'&#39;');
+  }
+
+  function permissionArray(value){
+    return String(value || '')
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean);
+  }
+
+  function permissionText(value){
+    const arr = permissionArray(value);
+    if(arr.includes('all')) return '전체 권한';
+    if(!arr.length) return '일반회원';
+    return arr.map(key => PERMISSION_LABELS[key] || key).join(', ');
   }
 
   function updateStatus(){
@@ -97,7 +111,7 @@
     alert(text);
   }
 
-  function ensureModal(){
+  function ensureLoginModal(){
     let modal = document.getElementById('kinojoLoginModal');
     if(modal) return modal;
     modal = document.createElement('section');
@@ -122,7 +136,7 @@
   }
 
   function openLoginModal(reason){
-    const modal = ensureModal();
+    const modal = ensureLoginModal();
     const status = modal.querySelector('#kinojoLoginStatus');
     const input = modal.querySelector('#kinojoLoginCodeInput');
     if(status) status.textContent = reason || '';
@@ -139,7 +153,7 @@
   }
 
   async function submitLogin(){
-    const modal = ensureModal();
+    const modal = ensureLoginModal();
     const input = modal.querySelector('#kinojoLoginCodeInput');
     const button = modal.querySelector('#kinojoLoginSubmitBtn');
     const status = modal.querySelector('#kinojoLoginStatus');
@@ -172,38 +186,62 @@
     return document.getElementById('adminPasswordInput')?.value || LEGACY_ADMIN_PASSWORD;
   }
 
-  function ensureAccountAdminPanel(){
-    let panel = document.getElementById('adminAccountPanel');
-    const host = document.getElementById('adminControlPanel');
-    if(panel || !host) return panel;
-    panel = document.createElement('div');
-    panel.id = 'adminAccountPanel';
-    panel.className = 'admin-account-panel';
-    panel.style.display = 'none';
-    panel.innerHTML = '<div class="admin-account-title">회원 코드 관리</div>'
-      + '<div class="admin-account-grid">'
-      + '<input class="search" id="adminAccountMainInput" placeholder="본캐 이름" />'
-      + '<input class="search" id="adminAccountPermInput" placeholder="권한 플래그 예: sanctuary_edit" />'
-      + '<input class="search" id="adminAccountMemoInput" placeholder="메모" />'
+  function ensureAccountAdminModal(){
+    let modal = document.getElementById('kinojoAccountAdminModal');
+    if(modal) return modal;
+
+    modal = document.createElement('section');
+    modal.id = 'kinojoAccountAdminModal';
+    modal.className = 'kinojo-account-modal';
+    modal.setAttribute('aria-hidden','true');
+    modal.innerHTML = '<div class="kinojo-account-card" role="dialog" aria-modal="true" aria-labelledby="kinojoAccountAdminTitle">'
+      + '<div class="kinojo-account-head">'
+      + '<div><div class="kinojo-login-kicker">ADMIN</div><h2 id="kinojoAccountAdminTitle">회원 코드 관리</h2></div>'
+      + '<button class="kinojo-login-close" id="kinojoAccountCloseBtn" type="button" aria-label="닫기">×</button>'
       + '</div>'
-      + '<div class="admin-account-actions">'
+      + '<div class="kinojo-account-section">'
+      + '<label class="kinojo-account-label" for="adminAccountMainSelect">본캐 선택</label>'
+      + '<div class="kinojo-account-create-row">'
+      + '<select id="adminAccountMainSelect" class="search kinojo-account-select"><option value="">본캐 목록 불러오는 중...</option></select>'
       + '<button class="btn" id="adminAccountCreateBtn" type="button">코드 생성</button>'
-      + '<button class="btn" id="adminAccountListBtn" type="button">목록 조회</button>'
+      + '</div>'
+      + '</div>'
+      + '<div class="kinojo-account-section">'
+      + '<div class="kinojo-account-toolbar">'
+      + '<strong>회원 목록</strong>'
+      + '<div class="kinojo-account-toolbar-actions">'
       + '<button class="btn" id="adminOwnerMapSyncBtn" type="button">본캐/부캐 지도 갱신</button>'
+      + '<button class="btn" id="adminAccountListBtn" type="button">목록 새로고침</button>'
+      + '</div>'
       + '</div>'
       + '<div class="admin-status" id="adminAccountStatus"></div>'
-      + '<div class="admin-account-list" id="adminAccountList"></div>';
-    host.appendChild(panel);
-    panel.querySelector('#adminAccountCreateBtn')?.addEventListener('click', createAccountCode);
-    panel.querySelector('#adminAccountListBtn')?.addEventListener('click', listAccountCodes);
-    panel.querySelector('#adminOwnerMapSyncBtn')?.addEventListener('click', syncOwnerMap);
-    return panel;
+      + '<div class="admin-account-list" id="adminAccountList"></div>'
+      + '</div>'
+      + '</div>';
+
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e=>{ if(e.target === modal) closeAccountAdminModal(); });
+    modal.querySelector('#kinojoAccountCloseBtn')?.addEventListener('click', closeAccountAdminModal);
+    modal.querySelector('#adminAccountCreateBtn')?.addEventListener('click', createAccountCode);
+    modal.querySelector('#adminAccountListBtn')?.addEventListener('click', listAccountCodes);
+    modal.querySelector('#adminOwnerMapSyncBtn')?.addEventListener('click', syncOwnerMap);
+    modal.querySelector('#adminAccountList')?.addEventListener('click', handleAccountListClick);
+    return modal;
   }
 
-  function openAccountAdminPanel(){
-    const panel = ensureAccountAdminPanel();
-    if(!panel) return toast('회원 코드 관리 영역을 만들지 못했습니다.');
-    panel.style.display = panel.style.display === 'none' ? 'grid' : 'none';
+  function openAccountAdminModal(){
+    const modal = ensureAccountAdminModal();
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden','false');
+    loadMainCharacters();
+    listAccountCodes();
+  }
+
+  function closeAccountAdminModal(){
+    const modal = document.getElementById('kinojoAccountAdminModal');
+    if(!modal) return;
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden','true');
   }
 
   function setAccountStatus(message, isError){
@@ -221,18 +259,33 @@
     return res.json();
   }
 
+  async function loadMainCharacters(){
+    const select = document.getElementById('adminAccountMainSelect');
+    if(!select) return;
+    try{
+      select.innerHTML = '<option value="">본캐 목록 불러오는 중...</option>';
+      const data = await accountAdmin('listMains');
+      if(!data.ok) throw new Error(data.message || '본캐 목록 조회 실패');
+      const mains = data.mains || [];
+      select.innerHTML = '<option value="">본캐 선택</option>' + mains.map(name => '<option value="' + safeText(name) + '">' + safeText(name) + '</option>').join('');
+      if(!mains.length) setAccountStatus('등록된 본캐가 없습니다. 본캐/부캐 지도를 먼저 갱신해 주세요.', true);
+    }catch(err){
+      select.innerHTML = '<option value="">본캐 목록 조회 실패</option>';
+      setAccountStatus(err.message || String(err), true);
+    }
+  }
+
   async function createAccountCode(){
-    const mainCharacter = document.getElementById('adminAccountMainInput')?.value.trim() || '';
-    const permissions = document.getElementById('adminAccountPermInput')?.value.trim() || '';
-    const memo = document.getElementById('adminAccountMemoInput')?.value.trim() || '';
-    if(!mainCharacter){ setAccountStatus('본캐 이름을 입력해 주세요.', true); return; }
+    const select = document.getElementById('adminAccountMainSelect');
+    const mainCharacter = String(select?.value || '').trim();
+    if(!mainCharacter){ setAccountStatus('본캐를 선택해 주세요.', true); return; }
     try{
       setAccountStatus('코드 생성 중...', false);
-      const data = await accountAdmin('createCode', { mainCharacter, permissions, memo });
+      const data = await accountAdmin('createCode', { mainCharacter, permissions:'' });
       if(!data.ok) throw new Error(data.message || '코드 생성 실패');
       const account = data.account || {};
       setAccountStatus('생성 완료: ' + (account.mainCharacter || mainCharacter) + ' / ' + (account.code || '-'), false);
-      renderAccounts([account]);
+      await listAccountCodes();
     }catch(err){ setAccountStatus(err.message || String(err), true); }
   }
 
@@ -252,6 +305,7 @@
       const data = await accountAdmin('syncOwnerMap');
       if(!data.ok) throw new Error(data.message || '지도 갱신 실패');
       setAccountStatus('갱신 완료: 캐릭터 ' + Number(data.count || 0) + '명 / 본캐 ' + Number(data.mainCount || 0) + '명', false);
+      await loadMainCharacters();
     }catch(err){ setAccountStatus(err.message || String(err), true); }
   }
 
@@ -259,27 +313,89 @@
     const box = document.getElementById('adminAccountList');
     if(!box) return;
     if(!accounts.length){ box.innerHTML = '<div class="admin-account-empty">조회된 코드가 없습니다.</div>'; return; }
+
     box.innerHTML = accounts.map(account => {
       const active = account.active === true || String(account.active).toUpperCase() === 'TRUE';
-      return '<div class="admin-account-row">'
-        + '<strong>' + safeText(account.mainCharacter || '-') + '</strong>'
+      const isRoot = Number(account.level || 0) >= 5;
+      const permissions = permissionArray(account.permissions);
+      const toggleHtml = Object.keys(PERMISSION_LABELS).map(key => {
+        const on = permissions.includes(key) || permissions.includes('all');
+        const disabled = isRoot ? ' disabled' : '';
+        return '<button class="admin-permission-toggle ' + (on ? 'on' : '') + '" data-account-action="toggle-permission" data-code="' + safeText(account.code || '') + '" data-permission="' + key + '" type="button"' + disabled + '>' + safeText(PERMISSION_LABELS[key]) + '</button>';
+      }).join('');
+      const deleteButton = isRoot
+        ? '<button class="admin-account-delete" type="button" disabled>삭제 불가</button>'
+        : '<button class="admin-account-delete" data-account-action="delete-code" data-code="' + safeText(account.code || '') + '" type="button">코드 삭제</button>';
+
+      return '<article class="admin-account-row" data-code="' + safeText(account.code || '') + '" data-permissions="' + safeText(account.permissions || '') + '">'
+        + '<div class="admin-account-main"><strong>' + safeText(account.mainCharacter || '-') + '</strong><span>' + (active ? '활성' : '비활성') + ' · ' + permissionText(account.permissions) + '</span></div>'
         + '<code>' + safeText(account.code || '-') + '</code>'
-        + '<span>Lv.' + Number(account.level || 0) + ' · ' + (active ? '활성' : '비활성') + '</span>'
-        + '<small>' + safeText(account.permissions || account.memo || '') + '</small>'
-        + '</div>';
+        + '<div class="admin-permission-list">' + toggleHtml + '</div>'
+        + '<div class="admin-account-row-actions">' + deleteButton + '</div>'
+        + '</article>';
     }).join('');
+  }
+
+  async function handleAccountListClick(event){
+    const target = event.target.closest('[data-account-action]');
+    if(!target) return;
+    const action = target.dataset.accountAction;
+    const code = target.dataset.code || target.closest('.admin-account-row')?.dataset.code || '';
+    if(!code) return;
+
+    if(action === 'toggle-permission'){
+      const row = target.closest('.admin-account-row');
+      const permission = target.dataset.permission || '';
+      const current = permissionArray(row?.dataset.permissions || '');
+      const next = target.classList.contains('on')
+        ? current.filter(item => item !== permission)
+        : current.concat(permission).filter((item, index, arr) => arr.indexOf(item) === index);
+      await updateAccountPermissions(code, next);
+      return;
+    }
+
+    if(action === 'delete-code'){
+      if(!confirm(code + ' 코드를 삭제할까요?')) return;
+      await deleteAccountCode(code);
+    }
+  }
+
+  async function updateAccountPermissions(code, permissions){
+    try{
+      setAccountStatus('권한 수정 중...', false);
+      const data = await accountAdmin('updatePermissions', { code, permissions });
+      if(!data.ok) throw new Error(data.message || '권한 수정 실패');
+      setAccountStatus('권한이 수정되었습니다.', false);
+      await listAccountCodes();
+    }catch(err){ setAccountStatus(err.message || String(err), true); }
+  }
+
+  async function deleteAccountCode(code){
+    try{
+      setAccountStatus('코드 삭제 중...', false);
+      const data = await accountAdmin('deleteCode', { code });
+      if(!data.ok) throw new Error(data.message || '코드 삭제 실패');
+      setAccountStatus('코드가 삭제되었습니다.', false);
+      await listAccountCodes();
+    }catch(err){ setAccountStatus(err.message || String(err), true); }
   }
 
   function bind(){
     document.getElementById('kinojoLoginBtn')?.addEventListener('click', ()=>openLoginModal());
     document.getElementById('kinojoLogoutBtn')?.addEventListener('click', ()=>{ clearSession(); toast('로그아웃되었습니다.'); });
-    document.getElementById('adminAccountBtn')?.addEventListener('click', openAccountAdminPanel);
-    document.addEventListener('keydown', e=>{ if(e.key === 'Escape') closeLoginModal(); });
+    document.getElementById('adminAccountBtn')?.addEventListener('click', openAccountAdminModal);
+    document.addEventListener('keydown', e=>{
+      if(e.key === 'Escape'){
+        closeLoginModal();
+        closeAccountAdminModal();
+      }
+    });
     updateStatus();
   }
 
   window.KinojoAuth = {
     openLoginModal, closeLoginModal, requireLogin,
+    openAccountAdminModal, closeAccountAdminModal,
     getSession, getAccount, getToken, getLevel, isLoggedIn, isAdmin,
     updateStatus, clearSession
   };

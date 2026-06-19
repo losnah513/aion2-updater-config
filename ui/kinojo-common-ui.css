@@ -254,3 +254,43 @@ body.kinojo-admin-user .kinojo-auth-label{color:#7c2d12;}
   .kinojo-top-center.kinojo-auth-status{display:flex;min-width:0;max-width:150px;height:31px;font-size:10px;padding:0 6px;gap:4px;}
   .kinojo-login-btn,.kinojo-logout-btn{font-size:10px;padding:3px 6px;}
 }
+
+/* Login/account management modal - 260619_04 */
+.kinojo-account-modal{position:fixed;inset:0;z-index:9100;display:none;align-items:center;justify-content:center;background:rgba(15,23,42,.34);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:18px;}
+.kinojo-account-modal.open{display:flex;}
+.kinojo-account-card{width:min(760px,100%);max-height:min(86vh,760px);overflow:auto;border:1px solid rgba(120,145,180,.28);border-radius:20px;background:#fff;box-shadow:0 22px 70px rgba(15,23,42,.24);padding:20px;display:grid;gap:14px;}
+.kinojo-account-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;border-bottom:1px solid rgba(120,145,180,.18);padding-bottom:12px;}
+.kinojo-account-head h2{margin:3px 0 0;font-size:22px;letter-spacing:-.03em;color:#17233a;}
+.kinojo-account-section{display:grid;gap:10px;border:1px solid rgba(120,145,180,.18);border-radius:14px;background:#f8fbff;padding:12px;}
+.kinojo-account-label{font-size:12px;font-weight:1000;color:#334155;}
+.kinojo-account-create-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;}
+.kinojo-account-select{width:100%;min-height:42px;}
+.kinojo-account-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.kinojo-account-toolbar strong{font-size:14px;color:#17233a;}
+.kinojo-account-toolbar-actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;}
+.kinojo-account-toolbar-actions .btn{min-height:34px;font-size:12px;padding:0 10px;}
+.kinojo-account-modal .admin-account-list{display:grid;gap:8px;max-height:430px;overflow:auto;padding-right:2px;}
+.kinojo-account-modal .admin-account-row{display:grid;grid-template-columns:minmax(110px,1fr) auto;gap:8px 10px;padding:10px;border:1px solid rgba(120,145,180,.22);border-radius:12px;background:#fff;font-size:12px;}
+.kinojo-account-modal .admin-account-main{display:grid;gap:2px;min-width:0;}
+.kinojo-account-modal .admin-account-main strong{font-size:14px;color:#17233a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.kinojo-account-modal .admin-account-main span{font-size:11px;color:#64748b;font-weight:800;}
+.kinojo-account-modal .admin-account-row code{font-weight:1000;color:#2563eb;background:#eff6ff;border-radius:8px;padding:4px 7px;align-self:start;}
+.admin-permission-list{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:6px;}
+.admin-permission-toggle{appearance:none;border:1px solid rgba(120,145,180,.34);background:#fff;color:#475569;border-radius:999px;min-height:31px;padding:0 10px;font-size:12px;font-weight:1000;cursor:pointer;transition:transform .16s ease,border-color .16s ease,background .16s ease,color .16s ease;}
+.admin-permission-toggle:hover{transform:translateY(-1px);border-color:rgba(37,99,235,.4);}
+.admin-permission-toggle.on{background:#eaf1ff;border-color:rgba(37,99,235,.55);color:#1d4ed8;box-shadow:inset 0 0 0 1px rgba(37,99,235,.12);}
+.admin-permission-toggle[disabled]{opacity:.55;cursor:not-allowed;transform:none;}
+.admin-account-row-actions{grid-column:1 / -1;display:flex;justify-content:flex-end;}
+.admin-account-delete{appearance:none;border:1px solid rgba(239,68,68,.24);background:#fff5f5;color:#b91c1c;border-radius:10px;min-height:32px;padding:0 11px;font-size:12px;font-weight:1000;cursor:pointer;}
+.admin-account-delete:hover{border-color:rgba(239,68,68,.42);background:#fee2e2;}
+.admin-account-delete[disabled]{opacity:.55;cursor:not-allowed;background:#f8fafc;color:#94a3b8;border-color:rgba(148,163,184,.28);}
+@media(max-width:760px){
+  .kinojo-account-modal{padding:10px;align-items:flex-start;}
+  .kinojo-account-card{max-height:calc(100vh - 20px);padding:14px;border-radius:16px;}
+  .kinojo-account-create-row{grid-template-columns:1fr;}
+  .kinojo-account-toolbar{align-items:flex-start;flex-direction:column;}
+  .kinojo-account-toolbar-actions{width:100%;}
+  .kinojo-account-toolbar-actions .btn{flex:1 1 auto;}
+  .kinojo-account-modal .admin-account-row{grid-template-columns:1fr;}
+  .kinojo-account-modal .admin-account-row code{justify-self:start;}
+}
