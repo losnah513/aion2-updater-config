@@ -444,14 +444,15 @@
 }
 
 .arcana-page-spinner {
-  width: 38px;
-  height: 38px;
-  margin: 0 auto 13px;
-  border: 3px solid rgba(37, 99, 235, 0.18);
-  border-top-color: var(--arcana-primary);
-  border-radius: 50%;
-  animation: arcana-page-spinner-spin 0.8s linear infinite;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: conic-gradient(#2563eb 0 76deg, #ffffff 76deg 360deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
+  animation: arcana-page-spinner-spin 0.82s linear infinite;
 }
+
 
 .arcana-page-loading-box strong {
   display: block;

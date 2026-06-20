@@ -109,7 +109,8 @@
     };
     const file = map[key];
     if(!file) return '';
-    const prefix = location.pathname.includes('/hall-of-fame/') ? './assets/' : 'hall-of-fame/assets/';
+    const path = location.pathname;
+    const prefix = path.includes('/hall-of-fame/') ? './assets/' : (path.includes('/sanctuary/') || path.includes('/arcana/') ? '../hall-of-fame/assets/' : 'hall-of-fame/assets/');
     return prefix + 'class_icon_' + file + '.png';
   }
 
@@ -703,9 +704,12 @@
     document.getElementById('adminAccountBtn')?.addEventListener('click', openAccountAdminModal);
     document.addEventListener('click', e=>{
       const tab = e.target.closest('[data-admin-panel="account"]');
-      if(tab) setTimeout(openAccountAdminModal, 0);
+      if(!tab) return;
+      const inline = document.getElementById('kinojoAccountAdminInline');
+      if(!inline) return;
+      ensureAccountAdminPanel();
+      listAccountCodes();
     });
-    if(document.getElementById('kinojoAccountAdminInline')) setTimeout(openAccountAdminModal, 0);
     document.addEventListener('keydown', e=>{
       if(e.key === 'Escape'){
         closeLoginModal();

@@ -453,3 +453,47 @@
     to { opacity: 1; transform: translateY(0); }
   }
 }
+
+
+/* 26062008 KINOJO Shell 통합: 기존 arcana-topbar는 공통 탑바로 이관하고, 이 영역은 클래스 선택 전용 액션바로 축소합니다. */
+.arcana-actionbar {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(143, 164, 204, 0.24);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 14px 30px rgba(32, 48, 91, 0.08);
+  backdrop-filter: blur(10px);
+}
+.arcana-actionbar .arcana-title-wrap {
+  min-width: 0;
+}
+.arcana-actionbar .arcana-title-wrap h1 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.15;
+}
+.arcana-actionbar .arcana-version {
+  display: block;
+  margin-top: 3px;
+  color: #667085;
+  font-size: 11px;
+  font-weight: 800;
+}
+@media (max-width: 720px) {
+  .arcana-actionbar {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .arcana-actionbar .arcana-topbar-actions {
+    justify-content: stretch;
+  }
+  .arcana-actionbar .arcana-class-picker-button {
+    width: 100%;
+  }
+}

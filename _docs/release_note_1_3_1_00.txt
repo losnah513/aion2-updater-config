@@ -21,3 +21,11 @@ Style Reset & UI Cleanup
 - 공통 메뉴바 폭을 텍스트 길이에 맞게 축소하고 메뉴 항목 간격을 재조정했습니다.
 - 성역과 안내 사이에 ARCANA 스킬 시뮬레이터 링크를 추가했습니다.
 - GitHub Pages 캐시값을 26062005로 갱신했습니다.
+
+
+[26062008 통합 Shell / ARCANA 편입]
+- ARCANA 페이지를 GitHub_Pages/arcana/ 아래로 편입했습니다.
+- ARCANA의 복제된 kinojo-common-ui/kinojo-auth 파일을 제거하고 KINOJO 공용 UI/Auth를 참조하도록 변경했습니다.
+- 탑바, 메뉴바, 로그인 상태, 관리 패널, 공통 스피너를 KINOJO Shell 기준으로 통일했습니다.
+- 관리 패널을 명예의 전당 전용 의존에서 분리하고 공용 관리자 패널 스크립트(ui/kinojo-admin-panel.js)로 이동했습니다.
+- 로그인 직후 회원 관리 모달이 자동으로 뜨던 초기화 흐름을 제거했습니다.

@@ -1,28 +1,31 @@
-ARC-0.3.02 · 260614_03
+ARC-0.3.03 · 20260620_01
 
 [수정]
 - arcana/index.html
-  - 화면 버전 표기를 ARC-0.3.02 · 260614_03으로 갱신.
-- arcana/js/skillSelector.js
-  - 20레벨 중요도 뱃지 위치 보정을 위한 has-priority-badge 클래스 추가.
-  - 클릭 푸딩 애니메이션 유지 시간을 늘려 딱딱한 반응을 완화.
-- arcana/css/components/prism-aura.css
-  - 16/20 스킬 버튼 프리즘 테두리 두께와 색감 복구.
-  - 저장 카드 빗금/채도 저하/외곽 테두리 흐름 효과 복구.
-  - 테두리 효과가 내용 전체를 덮지 않고 대상 내부에만 머물도록 재정리.
-- arcana/css/components/arcana-layout-manager.css
-  - 페이지 폭과 CARD-01~05 높이를 내용 기준으로 재조정.
-  - 카드 내부 BODY/그리드 중앙 정렬 보정.
-- arcana/css/cards.css
-  - 20레벨 뱃지와 중요도 뱃지가 서로 겹치지 않도록 위치 보정.
+- arcana/js/loadingOverlay.js
+- ARCANA_COMPASS.txt
+- CHANGELOG.txt
+- MODIFIED_FILES.txt
 
 [추가]
-- 없음.
+- (삭제) arcana/css/kinojo-common-ui.css → ../ui/kinojo-common-ui.css 공통 참조
+  - KINOJO 공통 탑바/메뉴바/로그인 상태/로딩 스피너 스타일을 ARCANA에 동기화하기 위해 추가.
+- (삭제) arcana/js/kinojo-common-ui.js → ../ui/kinojo-common-ui.js 공통 참조
+  - KINOJO 공통 탑바/메뉴바 생성 로직을 ARCANA 경로에 맞게 조정해 추가.
+- (삭제) arcana/js/kinojo-auth.js → ../core/kinojo-auth.js 공통 참조
+  - KINOJO 로그인 상태 표시와 세션 공유를 ARCANA에서도 동일하게 사용하기 위해 추가.
 
-[삭제/회수]
-- 신규 파일 추가 없이 기존 prism-aura / layout-manager 권한 내에서 수정.
-- 구 효과를 새 파일로 덮어쓰지 않고 기존 효과 파일에 재연결.
+[삭제]
+- 없음
 
-[Apps Script]
-- 수정 없음.
-- 재배포 불필요.
+[검수]
+- 기존 ARCANA 레이아웃/카드/추천 엔진 권한 파일은 변경하지 않음.
+- 기존 arcana-topbar는 삭제하지 않고 KINOJO 공통 탑바 아래 클래스 선택 전용 액션바로 역할 축소.
+- 로딩 오버레이는 기존 loadingOverlay.js 권한 안에서 KINOJO 공통 스피너를 사용하도록 수정.
+- 중복 topbar/menu 코드를 기존 ARCANA 파일 위에 덮어쓰지 않고 별도 공통 UI 파일로 추가 후 HTML에서 연결.
+
+
+[2026-06-20 / KINOJO 통합 Shell 편입]
+- ARCANA가 KINOJO GitHub_Pages/arcana 경로로 편입됨.
+- ARCANA 복제 공통 UI/Auth 제거 후 KINOJO 공통 파일 참조로 변경.
+- ARCANA 상단바는 클래스 선택 액션바로 축소하고, 탑바/메뉴/로그인/관리/스피너는 KINOJO Shell 사용.

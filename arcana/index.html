@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>아르카나 스킬 시뮬레이터 ARC-0.3.03 · 260620_01</title>
+  <title>KINOJO INFO · 아르카나</title>
 
-  <link rel="stylesheet" href="css/kinojo-common-ui.css" />
+  <link rel="stylesheet" href="../ui/kinojo-common-ui.css?cache=26062008" />
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/cards.css" />
@@ -22,20 +22,12 @@
   <link rel="stylesheet" href="css/components/class-showcase-orbit-final.css" />
 </head>
 <body class="arcana-kinojo-synced">
-  <div class="arcana-page">
-    <header class="arcana-topbar">
-      <div class="arcana-topbar-left">
-        <button class="arcana-kinojo-menu-btn" type="button" disabled title="메뉴는 아직 준비 중입니다." aria-label="메뉴">
-          <span></span><span></span><span></span>
-        </button>
-        <button class="arcana-admin-plus-btn" type="button" disabled title="관리자 메뉴는 아직 준비 중입니다." aria-label="관리자">+</button>
-      </div>
-
+  <div class="arcana-page kinojo-integrated-page">
+    <header class="arcana-actionbar" aria-label="아르카나 전용 작업 영역">
       <div class="arcana-title-wrap">
         <h1>아르카나 스킬 시뮬레이터</h1>
-        <span class="arcana-version">ARC-0.3.03 · 260620_01</span>
+        <span class="arcana-version">ARC-0.3.03 · KINOJO 통합</span>
       </div>
-
       <div class="arcana-topbar-actions">
         <div class="arcana-class-picker" id="arcanaClassPicker">
           <button id="arcanaClassPickerButton" class="arcana-class-picker-button is-initial-cta" type="button">
@@ -144,8 +136,9 @@
     </main>
   </div>
 
-  <script src="js/kinojo-common-ui.js"></script>
-  <script src="js/kinojo-auth.js"></script>
+  <script src="../ui/kinojo-common-ui.js?cache=26062008"></script>
+  <script src="../ui/kinojo-admin-panel.js?cache=26062008"></script>
+  <script src="../core/kinojo-auth.js?cache=26062008"></script>
   <script src="js/state.js"></script>
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
