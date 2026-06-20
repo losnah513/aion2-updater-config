@@ -8,7 +8,7 @@ function renderPreserveSearchFocus(){
   const value=String(input?.value??keyword);
   const selectionStart=input?.selectionStart??value.length;
   const selectionEnd=input?.selectionEnd??value.length;
-  render();
+  renderOverallOnly();
   requestAnimationFrame(()=>{
     const next=document.getElementById("rankSearchInput");
     if(!next)return;
@@ -23,19 +23,19 @@ function bindHallDynamicEvents(){
     page+=btn.dataset.page==="next"?1:-1;
     if(page<1)page=1;
     if(page>total)page=total;
-    render();
+    renderOverallOnly();
   });
 
   document.querySelectorAll("[data-rank-page]").forEach(btn=>btn.onclick=()=>{
     const total=Math.max(1,Math.ceil(currentRankList().length/PAGE_SIZE));
     page=Math.max(1,Math.min(total,Number(btn.dataset.rankPage||1)));
-    render();
+    renderOverallOnly();
   });
 
   document.querySelectorAll("[data-rank-class]").forEach(btn=>btn.onclick=()=>{
     activeRankClass=btn.dataset.rankClass;
     page=1;
-    render();
+    renderOverallOnly();
   });
 
   const search=document.getElementById("rankSearchInput");
@@ -64,7 +64,7 @@ function bindHallDynamicEvents(){
   if(clear)clear.onclick=()=>{
     keyword="";
     page=1;
-    render();
+    renderOverallOnly();
   };
 
   const sub=document.getElementById("subToggle");
@@ -75,7 +75,7 @@ function bindHallDynamicEvents(){
     sub.classList.toggle("on",includeSubs);
     const t=sub.querySelector(".toggle-text");
     if(t)t.textContent=includeSubs?"부캐 ON":"부캐 OFF";
-    setTimeout(()=>{render();requestAnimationFrame(()=>window.scrollTo(0,savedY))},260);
+    setTimeout(()=>{renderOverallOnly();requestAnimationFrame(()=>window.scrollTo(0,savedY))},260);
   };
 }
 
@@ -216,6 +216,6 @@ function startHallReactionCarouselTimer(){
     if(Date.now()<reactionCarouselPausedUntil)return;
     if(document.activeElement&&document.activeElement.id==="rankSearchInput")return;
     reactionCarouselIndex++;
-    if(hallData)render();
+    if(hallData)renderReactionOnly();
   },60000);
 }

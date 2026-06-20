@@ -127,7 +127,29 @@ function writeHallCache(data){
   }catch(e){}
 }
 
-function applyHallData(data,{fromCache=false}={}){
+function hallDataSignature(data){
+  try{
+    const copy=JSON.parse(JSON.stringify(data||{}));
+    delete copy.updatedAt;
+    delete copy.visitStats;
+    return JSON.stringify(copy);
+  }catch(e){
+    return String(Date.now());
+  }
+}
+
+function applyHallData(data,{fromCache=false,initial=false,skipIfSame=false}={}){
+  const previousSignature=hallDataSignature(hallData);
+  const nextSignature=hallDataSignature(data);
+
+  if(skipIfSame && previousSignature===nextSignature){
+    const topbarUpdate=document.getElementById("topbarUpdateTime");
+    if(topbarUpdate && hallData?.updatedAt){
+      topbarUpdate.textContent="업데이트 "+hallData.updatedAt;
+    }
+    return false;
+  }
+
   hallData=data;
   if(hallData.visitStats){
     renderVisits(hallData.visitStats);
@@ -140,7 +162,8 @@ function applyHallData(data,{fromCache=false}={}){
     topbarUpdate.textContent=hallData?.updatedAt?"업데이트 "+hallData.updatedAt+suffix:"업데이트 완료"+suffix;
   }
   stopLoadingText();
-  render();
+  render({initial:initial,showSpinners:initial&&!fromCache});
+  return true;
 }
 
 async function fetchHallDataFresh(){
@@ -165,15 +188,15 @@ async function load(){
   try{
     await preloadImages(Object.values(RANK_EMBLEMS).concat(Object.values(CLASS_ICONS)));
     if(cached){
-      applyHallData(cached,{fromCache:true});
-      fetchHallDataFresh().then(data=>applyHallData(data)).catch(()=>{});
+      applyHallData(cached,{fromCache:true,initial:true});
+      fetchHallDataFresh().then(data=>applyHallData(data,{skipIfSame:true})).catch(()=>{});
       return;
     }
     const data=await fetchHallDataFresh();
-    applyHallData(data);
+    applyHallData(data,{initial:true});
   }catch(err){
     if(cached){
-      applyHallData(cached,{fromCache:true});
+      applyHallData(cached,{fromCache:true,initial:true});
       return;
     }
     stopLoadingText();

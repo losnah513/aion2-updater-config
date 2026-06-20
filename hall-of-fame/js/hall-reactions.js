@@ -97,7 +97,7 @@ async function submitReaction(){
     markLocalReaction(currentReactionItem.name,currentReactionType);
     if(data.summary&&hallData)hallData.reactionSummary=data.summary;
     if(status)status.textContent="한마디가 전달되었어요.";
-    setTimeout(()=>{closeReactionModal();render()},380);
+    setTimeout(()=>{closeReactionModal();renderReactionOnly();renderOverallOnly()},380);
   }catch(e){
     if(status)status.textContent="반응 저장 실패: "+(e.message||e);else alert("반응 저장 실패: "+(e.message||e));
   }finally{

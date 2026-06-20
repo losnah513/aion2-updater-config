@@ -211,18 +211,19 @@ function overallTable(){
 
   return '<section class="overall"><div class="overall-head"><div class="overall-title-block"><h2>'+title+'</h2>'+updateInfo+'</div><div class="overall-title-tools"><button class="sub-toggle compact '+(includeSubs?'on':'')+'" id="subToggle" type="button"><span class="toggle-knob"></span><span class="toggle-text">'+(includeSubs?'부캐 ON':'부캐 OFF')+'</span></button></div><div class="page-tools"><span>'+page+' / '+totalPages+'</span><button class="page-btn" data-page="prev">‹</button><button class="page-btn" data-page="next">›</button></div></div>'+searchToolsHtml()+rankTabs()+classReviewBoxHtml(activeRankClass)+'<div class="table-scroll"><table class="rank-table"><colgroup><col class="num"><col class="char-col"><col class="reaction-col"><col class="class-col"><col class="power-col"><col class="power-col"><col class="review-col"></colgroup><thead><tr><th class="num">순위</th><th>캐릭터명</th><th aria-label="좋아요 싫어요"></th><th>클래스</th><th>PVE</th><th>PVP</th><th>AI 리뷰</th></tr></thead><tbody>'+rows.join("")+'</tbody></table></div>'+paginationHtml(totalPages)+'</section>';
 }
-function setHallSlot(id,html){const el=document.getElementById(id);if(el)el.innerHTML=html}
-function bindHallAfterSlot(){bindHallDynamicEvents();bindCharacterButtons();requestAnimationFrame(applyOverflowMarquee)}
-function render(){
-  if(!hallData)return;
-  renderChicks();
-  app.className="";
-  app.innerHTML='<div id="hallSlotMvp">'+kinojoCardSpinner('시즌 MVP 준비 중')+'</div>'
-    + '<div id="hallSlotReactions">'+kinojoCardSpinner('반응 현황 불러오는 중')+'</div>'
-    + '<div id="hallSlotAwards">'+kinojoCardSpinner('성장왕/벌크업 진단 중')+'</div>'
-    + '<div class="dashboard"><div><div class="top-grid"><div id="hallSlotPve">'+kinojoCardSpinner('PVE TOP 5 불러오는 중')+'</div><div id="hallSlotPvp">'+kinojoCardSpinner('PVP TOP 5 불러오는 중')+'</div></div></div><div class="side-stack"><div id="hallSlotRelations">'+kinojoCardSpinner('관계 카드 불러오는 중')+'</div></div></div>'
-    + '<div id="hallSlotOverall">'+kinojoCardSpinner('전체 순위표 불러오는 중')+'</div>';
-  const tasks=[
+function setHallSlot(id,html){
+  const el=document.getElementById(id);
+  if(el)el.innerHTML=html;
+}
+
+function bindHallAfterSlot(){
+  bindHallDynamicEvents();
+  bindCharacterButtons();
+  requestAnimationFrame(applyOverflowMarquee);
+}
+
+function hallSlotTasks(){
+  return [
     ['hallSlotMvp',()=>mvpSection()],
     ['hallSlotReactions',()=>reactionBoard()],
     ['hallSlotAwards',()=>awardsBoard()],
@@ -231,12 +232,58 @@ function render(){
     ['hallSlotRelations',()=>combinedRelationBox()],
     ['hallSlotOverall',()=>overallTable()]
   ];
-  tasks.forEach(([id,fn],index)=>{
-    window.setTimeout(()=>{
-      window.requestAnimationFrame(()=>{
-        setHallSlot(id,fn());
-        bindHallAfterSlot();
-      });
-    },index*95);
+}
+
+function hallShellExists(){
+  return !!document.getElementById('hallSlotOverall');
+}
+
+function renderHallShell(showSpinners){
+  app.className='';
+  app.innerHTML='<div id="hallSlotMvp">'+(showSpinners?kinojoCardSpinner('시즌 MVP 준비 중'):'')+'</div>'
+    + '<div id="hallSlotReactions">'+(showSpinners?kinojoCardSpinner('반응 현황 불러오는 중'):'')+'</div>'
+    + '<div id="hallSlotAwards">'+(showSpinners?kinojoCardSpinner('성장왕/벌크업 진단 중'):'')+'</div>'
+    + '<div class="dashboard"><div><div class="top-grid"><div id="hallSlotPve">'+(showSpinners?kinojoCardSpinner('PVE TOP 5 불러오는 중'):'')+'</div><div id="hallSlotPvp">'+(showSpinners?kinojoCardSpinner('PVP TOP 5 불러오는 중'):'')+'</div></div></div><div class="side-stack"><div id="hallSlotRelations">'+(showSpinners?kinojoCardSpinner('관계 카드 불러오는 중'):'')+'</div></div></div>'
+    + '<div id="hallSlotOverall">'+(showSpinners?kinojoCardSpinner('전체 순위표 불러오는 중'):'')+'</div>';
+}
+
+function renderHallSlots(options={}){
+  if(!hallData)return;
+  const stagger=options.stagger===true;
+  hallSlotTasks().forEach(([id,fn],index)=>{
+    const draw=()=>{
+      setHallSlot(id,fn());
+      bindHallAfterSlot();
+    };
+    if(stagger){
+      window.setTimeout(()=>window.requestAnimationFrame(draw),index*95);
+    }else{
+      draw();
+    }
   });
+}
+
+function renderOverallOnly(){
+  if(!hallData)return;
+  if(!hallShellExists())return render({initial:false});
+  setHallSlot('hallSlotOverall',overallTable());
+  bindHallAfterSlot();
+}
+
+function renderReactionOnly(){
+  if(!hallData)return;
+  if(!hallShellExists())return render({initial:false});
+  setHallSlot('hallSlotReactions',reactionBoard());
+  bindHallAfterSlot();
+}
+
+function render(options={}){
+  if(!hallData)return;
+  const initial=options.initial===true || !hallShellExists();
+  const showSpinners=options.showSpinners===true;
+  renderChicks();
+  if(initial){
+    renderHallShell(showSpinners);
+  }
+  renderHallSlots({stagger:initial && showSpinners});
 }
