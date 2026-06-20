@@ -139,7 +139,9 @@
     const admin=rescued.admin||createAdminMenu(info);
     const visit=rescued.visit||createVisitCard();
     const adminBtn=admin.querySelector('#adminMenuBtn');
+    const adminPanel=admin.querySelector('#adminDropdown');
     if(adminBtn){adminBtn.textContent='관리';adminBtn.setAttribute('aria-label','관리 패널 열기');}
+    if(adminPanel)document.body.appendChild(adminPanel);
     admin.style.display='none';
     if(auth)auth.appendChild(admin);
     tools.appendChild(visit);

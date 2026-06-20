@@ -172,8 +172,8 @@
       + '<div class="kinojo-login-kicker">KINOJO LOGIN</div>'
       + '<h2 id="kinojoLoginTitle">회원 코드 로그인</h2>'
       + '<p>관리자가 발급한 코드로 로그인하면 좋아요·싫어요와 제안 기능을 사용할 수 있습니다.</p>'
-      + '<input id="kinojoLoginCodeInput" class="search kinojo-login-input" maxlength="12" placeholder="예: AB1234 또는 관리자 코드" autocomplete="one-time-code" />'
-      + '<button id="kinojoLoginSubmitBtn" class="btn kinojo-login-submit" type="button">로그인</button>'
+      + '<input id="kinojoLoginCodeInput" class="kinojo-login-input" maxlength="12" placeholder="예: AB1234 또는 관리자 코드" autocomplete="one-time-code" />'
+      + '<button id="kinojoLoginSubmitBtn" class="kinojo-login-submit" type="button"><span class="kinojo-login-btn-text">로그인</span></button>'
       + '<div id="kinojoLoginStatus" class="kinojo-login-status"></div>'
       + '</div>';
     document.body.appendChild(modal);
@@ -201,16 +201,24 @@
     modal.setAttribute('aria-hidden','true');
   }
 
+  function setLoginLoading_(button, loading){
+    if(!button) return;
+    button.disabled = !!loading;
+    button.innerHTML = loading
+      ? '<span class="kinojo-spinner" aria-hidden="true"></span><span class="kinojo-login-btn-text">확인중...</span>'
+      : '<span class="kinojo-login-btn-text">로그인</span>';
+  }
+
   async function submitLogin(){
     const modal = ensureLoginModal();
     const input = modal.querySelector('#kinojoLoginCodeInput');
     const button = modal.querySelector('#kinojoLoginSubmitBtn');
     const status = modal.querySelector('#kinojoLoginStatus');
+    if(button?.disabled) return;
     const code = String(input?.value || '').trim();
     if(!code){ if(status) status.textContent = '로그인 코드를 입력해 주세요.'; return; }
-    const old = button ? button.textContent : '';
     try{
-      if(button){ button.disabled = true; button.textContent = '확인 중...'; }
+      setLoginLoading_(button, true);
       if(status) status.textContent = '';
       const res = await fetch(apiUrl(), { method:'POST', body:JSON.stringify({ action:'login', code }) });
       const data = await res.json();
@@ -221,7 +229,7 @@
     }catch(err){
       if(status) status.textContent = err.message || String(err);
     }finally{
-      if(button){ button.disabled = false; button.textContent = old || '로그인'; }
+      setLoginLoading_(button, false);
     }
   }
 
@@ -319,37 +327,24 @@
 
   function ensureAccountAdminPanel(){
     const inline = document.getElementById('kinojoAccountAdminInline');
-    if(inline){
-      if(!inline.dataset.rendered){
-        inline.innerHTML = accountAdminMarkup_();
-        inline.dataset.rendered = '1';
-        bindAccountAdminEvents_(inline);
-      }
-      return inline;
+    if(!inline) return null;
+    if(!inline.dataset.rendered){
+      inline.innerHTML = accountAdminMarkup_();
+      inline.dataset.rendered = '1';
+      bindAccountAdminEvents_(inline);
     }
-    let modal = document.getElementById('kinojoAccountAdminModal');
-    if(!modal){
-      modal = document.createElement('section');
-      modal.id = 'kinojoAccountAdminModal';
-      modal.className = 'kinojo-account-modal';
-      modal.setAttribute('aria-hidden','true');
-      modal.innerHTML = '<div class="kinojo-account-fallback"><button class="kinojo-login-close kinojo-account-x" id="kinojoAccountCloseBtn" type="button" aria-label="닫기">×</button>' + accountAdminMarkup_() + '</div>';
-      document.body.appendChild(modal);
-      modal.addEventListener('click', e=>{ if(e.target === modal) closeAccountAdminModal(); });
-      modal.querySelector('#kinojoAccountCloseBtn')?.addEventListener('click', closeAccountAdminModal);
-      bindAccountAdminEvents_(modal);
-    }
-    return modal;
+    return inline;
   }
 
   function openAccountAdminModal(){
     const panel = ensureAccountAdminPanel();
-    if(panel.id === 'kinojoAccountAdminModal'){
-      panel.classList.add('open');
-      panel.setAttribute('aria-hidden','false');
+    if(!panel){
+      toast('관리 패널에서 회원 탭을 연 뒤 사용할 수 있습니다.');
+      return null;
     }
     listAccountCodes();
     setTimeout(()=>document.getElementById('adminAccountCharacterInput')?.focus(), 40);
+    return panel;
   }
 
   function closeAccountAdminModal(){
@@ -706,7 +701,7 @@
       const tab = e.target.closest('[data-admin-panel="account"]');
       if(!tab) return;
       const inline = document.getElementById('kinojoAccountAdminInline');
-      if(!inline) return;
+      if(!inline || !tab.classList.contains('active')) return;
       ensureAccountAdminPanel();
       listAccountCodes();
     });
