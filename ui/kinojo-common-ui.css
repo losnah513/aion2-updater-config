@@ -123,6 +123,29 @@ body.kinojo-drawer-open{overflow:hidden;}
 }
 .kinojo-top-tools .visit-line{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
+/* Login profile class icon */
+.kinojo-auth-profile{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  min-width:0;
+  max-width:100%;
+}
+.kinojo-auth-class-icon{
+  width:22px;
+  height:22px;
+  flex:0 0 22px;
+  display:block;
+  object-fit:contain;
+  object-position:center;
+}
+.kinojo-auth-name{
+  max-width:96px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
 /* Admin dropdown */
 .admin-menu-wrap{position:relative;z-index:40;transform:none!important;transform-origin:center!important;}
 .admin-dropdown{
