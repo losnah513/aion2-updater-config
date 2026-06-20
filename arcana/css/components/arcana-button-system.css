@@ -144,8 +144,6 @@
 }
 
 /* Icon-only buttons are intentionally minimal. */
-.arcana-kinojo-menu-btn,
-.arcana-admin-plus-btn,
 .arcana-entry-gate-close {
   box-shadow: none;
 }
