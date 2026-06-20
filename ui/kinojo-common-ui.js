@@ -11,6 +11,7 @@
     const path=location.pathname;
     if(path.includes('/hall-of-fame/'))return {key:'hall',label:'명예의 전당',root:'../'};
     if(path.includes('/sanctuary/'))return {key:'sanctuary',label:'성역',root:'../'};
+    if(path.includes('/arcana/'))return {key:'arcana',label:'아르카나',root:'../'};
     return {key:'home',label:'메인',root:'./'};
   }
   function q(s,root=document){return root.querySelector(s)}
@@ -36,7 +37,6 @@
   function createAdminMenu(info){
     const wrap=document.createElement('div');
     wrap.className='admin-menu-wrap';
-    const isHall=info.key==='hall';
     wrap.innerHTML=`
       <button aria-expanded="false" aria-haspopup="true" aria-label="관리 패널 열기" class="admin-menu-btn" id="adminMenuBtn" type="button">관리</button>
       <section aria-hidden="true" class="admin-dropdown admin-panel-modal" id="adminDropdown">
@@ -47,7 +47,6 @@
           </div>
           <button aria-label="닫기" class="admin-dropdown-close kinojo-common-close" id="adminDropdownClose" type="button">×</button>
         </div>
-        ${isHall?`
         <div class="admin-control-panel admin-shell" id="adminControlPanel" style="display:grid">
           <nav class="admin-panel-tabs" aria-label="관리 패널 메뉴">
             <button class="admin-panel-tab active" data-admin-panel="mvp" type="button">🏆 MVP</button>
@@ -105,10 +104,7 @@
               <div class="admin-pane-result" data-admin-result="system"></div>
             </section>
           </div>
-        </div>`:`
-        <div class="admin-login-panel admin-placeholder-panel">
-          <div class="admin-status">관리자 기능은 명예의 전당에서 우선 지원됩니다.</div>
-        </div>`}
+        </div>
       </section>`;
     return wrap;
   }
@@ -163,7 +159,6 @@
     if(btn)btn.setAttribute('aria-expanded','false');
   }
   function bindCommonAdmin(info){
-    if(info.key==='hall')return;
     q('#adminMenuBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();toggleAdminMenu();});
     q('#adminDropdownClose')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeAdminMenuCommon();});
     document.addEventListener('click',e=>{const menu=q('#adminDropdown');if(menu&&menu.classList.contains('open')&&!menu.contains(e.target)&&!e.target.closest('#adminMenuBtn'))closeAdminMenuCommon();});
@@ -171,10 +166,12 @@
   function makeDrawer(info){
     const isHall=info.key==='hall';
     const isSanctuary=info.key==='sanctuary';
+    const isArcana=info.key==='arcana';
     const home=info.root;
     const hallHref=isHall?'./':'hall-of-fame/';
-    const prefix=isHall||isSanctuary?'../':'';
-    const sanctuaryPrefix=isSanctuary?'./index.html':info.root+'sanctuary/index.html';
+    const prefix=(isHall||isSanctuary||isArcana)?'../':'';
+    const sanctuaryPrefix=isSanctuary?'./index.html':prefix+'sanctuary/index.html';
+    const arcanaHref=isArcana?'./':prefix+'arcana/';
     const drawer=document.createElement('section');
     drawer.className='kinojo-common-drawer';
     drawer.id='sideDrawer';
@@ -197,7 +194,7 @@
           <a href="${sanctuaryPrefix}?id=kaldrix" data-sanctuary-link="kaldrix">3. 무스펠의 성배</a>
           <div class="kinojo-drawer-divider"></div>
           <div class="kinojo-drawer-category">아르카나</div>
-          <a href="${info.root}arcana/">ARCANA 스킬 시뮬레이터</a>
+          <a href="${arcanaHref}" ${isArcana?'class="active" aria-disabled="true"':''}>ARCANA 스킬 시뮬레이터</a>
           <div class="kinojo-drawer-divider"></div>
           <div class="kinojo-drawer-category">안내</div>
           <button class="kinojo-drawer-link drawer-page-link" type="button" data-page-panel="about" data-drawer="about">사이트 소개</button>
@@ -302,7 +299,9 @@
   makeDrawer(info);
   bind();
   bindCommonAdmin(info);
-  window.KinojoCommonUI={openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel};
+  window.KinojoCommonUI={openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel,toggleAdminMenu,closeAdminMenuCommon};
+  window.openAdminDropdown=toggleAdminMenu;
+  window.closeAdminMenu=closeAdminMenuCommon;
   window.openSideDrawer=openSideDrawer;
   window.closeSideDrawer=closeSideDrawer;
   window.openDrawerPagePanel=openDrawerPagePanel;
