@@ -43,7 +43,7 @@ body.drawer-open{
   height:auto;
   display:block;
   object-fit:contain}
-.admin-dropdown{
+.admin-dropdown:not(.admin-panel-modal){
   position:absolute;
   top:42px;
   right:0;
@@ -55,7 +55,7 @@ body.drawer-open{
   display:none;
   overflow:hidden;
   z-index:70}
-.admin-dropdown.open{
+.admin-dropdown:not(.admin-panel-modal).open{
   display:block}
 .admin-dropdown-head{
   display:flex;
@@ -256,17 +256,20 @@ body.drawer-open{
   justify-content:space-between;
   align-items:center;
   gap:10px;
-  padding:12px 14px;
+  padding:9px 14px;
   border-bottom:1px solid rgba(117,140,177,.16);
   background:linear-gradient(90deg,rgba(255,255,255,.86),rgba(232,241,254,.74));
-  min-height:50px}
-.section h2,.overall h2,.mvp-card h2{
+  min-height:42px}
+.section h2,.overall h2,.mvp-card h2,.reaction-card-title{
   margin:0;
-  font-size:18px;
-  color:#2b3c5c}
+  font-size:15px;
+  line-height:1.18;
+  color:#2b3c5c;
+  font-weight:1000}
 .section-note{
   color:#7b8ba2;
-  font-size:12px;
+  font-size:11px;
+  font-weight:900;
   white-space:nowrap}
 .list{
   padding:10px;
@@ -277,6 +280,10 @@ body.drawer-open{
   color:var(--muted);
   text-align:center;
   font-size:13px}
+.hall-loading-shell{min-height:160px;display:grid;place-items:center;}
+.mvp-card.hall-loading-shell{min-height:280px;}
+.overall.hall-loading-shell{min-height:300px;}
+.relation-combined-card.hall-loading-shell{min-height:260px;}
 .dashboard{
   display:grid;
   grid-template-columns:1.1fr 1fr;
@@ -1199,3 +1206,19 @@ body{background:#fff!important;}
 .relation-server{font-size:10px!important;color:#7b8ba2!important;font-weight:900!important;white-space:nowrap!important;}
 .relation-reactions{display:flex!important;grid-column:1/-1!important;justify-self:end!important;gap:5px!important;font-size:10px!important;}
 @media(max-width:760px){.dashboard,.top-grid,.reaction-board,.award-grid{min-height:0}.top-grid .section,.side-stack .relation-combined-card,.relation-combined-card{min-height:320px!important}.relation-combined-head,.relation-viewport{grid-template-columns:1fr!important}.relation-viewport{height:360px!important;max-height:360px!important}}
+
+/* 26062010: hall card/control alignment authority */
+
+.overall .overall-head{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:10px;}
+.rank-tools{display:grid;grid-template-columns:minmax(260px,1fr) auto auto;gap:8px;padding:10px 12px;align-items:center;border-bottom:1px solid rgba(117,140,177,.12);}
+.rank-tools .search{height:40px;font-size:13px;}
+.rank-tools .btn{height:40px;min-width:64px;padding:0 12px;font-size:13px;}
+.rank-tabs{padding:8px 12px;border-bottom:1px solid rgba(117,140,177,.12);}
+.rank-tabs .pill{min-height:30px;padding:0 9px;font-size:12px;}
+.page-tools{display:flex;align-items:center;gap:8px;justify-content:flex-end;}
+.page-tools .page-btn{width:32px;height:32px;padding:0;display:grid;place-items:center;}
+.sub-toggle.compact{height:32px;min-width:106px;}
+.relation-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:8px;}
+.relation-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.relation-server{font-size:11px;color:#7b8ba2;font-weight:900;white-space:nowrap;}
+.relation-reactions{justify-self:end;}

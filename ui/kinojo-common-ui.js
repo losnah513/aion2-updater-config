@@ -141,7 +141,10 @@
     const adminBtn=admin.querySelector('#adminMenuBtn');
     const adminPanel=admin.querySelector('#adminDropdown');
     if(adminBtn){adminBtn.textContent='관리';adminBtn.setAttribute('aria-label','관리 패널 열기');}
-    if(adminPanel)document.body.appendChild(adminPanel);
+    if(adminPanel){
+      document.body.appendChild(adminPanel);
+      adminPanel.classList.add('kinojo-admin-shell-modal');
+    }
     admin.style.display='none';
     if(auth)auth.appendChild(admin);
     tools.appendChild(visit);
@@ -154,6 +157,10 @@
     menu.classList.toggle('open',open);
     menu.setAttribute('aria-hidden',open?'false':'true');
     if(btn)btn.setAttribute('aria-expanded',open?'true':'false');
+    if(open){
+      window.KinojoAdminPanel?.bind?.();
+      document.dispatchEvent(new CustomEvent('kinojo-admin-panel-ready'));
+    }
   }
   function closeAdminMenuCommon(){
     const menu=q('#adminDropdown');const btn=q('#adminMenuBtn');

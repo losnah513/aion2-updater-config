@@ -86,14 +86,14 @@ function kinojoCardSpinner(label){
 function renderHallLoadingLayout(){
   app.className='';
   app.innerHTML=''
-    + '<section class="mvp-card">'+kinojoCardSpinner('시즌 MVP 준비 중')+'</section>'
-    + '<section class="section">'+kinojoCardSpinner('반응 현황 불러오는 중')+'</section>'
-    + '<section class="section">'+kinojoCardSpinner('성장왕/벌크업 진단 중')+'</section>'
+    + '<section class="mvp-card hall-loading-shell">'+kinojoCardSpinner('시즌 MVP 준비 중')+'</section>'
+    + '<section class="section hall-loading-shell">'+kinojoCardSpinner('반응 현황 불러오는 중')+'</section>'
+    + '<section class="section hall-loading-shell">'+kinojoCardSpinner('성장왕/벌크업 진단 중')+'</section>'
     + '<div class="dashboard"><div><div class="top-grid">'
-    + '<section class="section">'+kinojoCardSpinner('PVE TOP 5 불러오는 중')+'</section>'
-    + '<section class="section">'+kinojoCardSpinner('PVP TOP 5 불러오는 중')+'</section>'
-    + '</div></div><div class="side-stack"><section class="section">'+kinojoCardSpinner('관계 카드 불러오는 중')+'</section></div></div>'
-    + '<section class="overall">'+kinojoCardSpinner('전체 순위표 불러오는 중')+'</section>';
+    + '<section class="section hall-loading-shell">'+kinojoCardSpinner('PVE TOP 5 불러오는 중')+'</section>'
+    + '<section class="section hall-loading-shell">'+kinojoCardSpinner('PVP TOP 5 불러오는 중')+'</section>'
+    + '</div></div><div class="side-stack"><section class="section relation-combined-card hall-loading-shell">'+kinojoCardSpinner('관계 카드 불러오는 중')+'</section></div></div>'
+    + '<section class="overall hall-loading-shell">'+kinojoCardSpinner('전체 순위표 불러오는 중')+'</section>';
 }
 
 function preloadImages(paths){

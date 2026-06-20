@@ -211,4 +211,30 @@ function overallTable(){
 
   return '<section class="overall"><div class="overall-head"><div class="overall-title-block"><h2>'+title+'</h2>'+updateInfo+'</div><div class="overall-title-tools"><button class="sub-toggle compact '+(includeSubs?'on':'')+'" id="subToggle" type="button"><span class="toggle-knob"></span><span class="toggle-text">'+(includeSubs?'부캐 ON':'부캐 OFF')+'</span></button></div><div class="page-tools"><span>'+page+' / '+totalPages+'</span><button class="page-btn" data-page="prev">‹</button><button class="page-btn" data-page="next">›</button></div></div>'+searchToolsHtml()+rankTabs()+classReviewBoxHtml(activeRankClass)+'<div class="table-scroll"><table class="rank-table"><colgroup><col class="num"><col class="char-col"><col class="reaction-col"><col class="class-col"><col class="power-col"><col class="power-col"><col class="review-col"></colgroup><thead><tr><th class="num">순위</th><th>캐릭터명</th><th aria-label="좋아요 싫어요"></th><th>클래스</th><th>PVE</th><th>PVP</th><th>AI 리뷰</th></tr></thead><tbody>'+rows.join("")+'</tbody></table></div>'+paginationHtml(totalPages)+'</section>';
 }
-function render(){if(!hallData)return;renderChicks();app.className="";app.innerHTML=mvpSection()+reactionBoard()+awardsBoard()+'<div class="dashboard"><div><div class="top-grid">'+rankBox("⚔ PVE TOP 5","",hallData.pveTop)+rankBox("⚔ PVP TOP 5","",hallData.pvpTop)+'</div></div><div class="side-stack">'+combinedRelationBox()+'</div></div>'+overallTable();bindHallDynamicEvents();bindCharacterButtons();requestAnimationFrame(applyOverflowMarquee)}
+function setHallSlot(id,html){const el=document.getElementById(id);if(el)el.innerHTML=html}
+function bindHallAfterSlot(){bindHallDynamicEvents();bindCharacterButtons();requestAnimationFrame(applyOverflowMarquee)}
+function render(){
+  if(!hallData)return;
+  renderChicks();
+  app.className="";
+  app.innerHTML='<div id="hallSlotMvp">'+kinojoCardSpinner('시즌 MVP 준비 중')+'</div>'
+    + '<div id="hallSlotReactions">'+kinojoCardSpinner('반응 현황 불러오는 중')+'</div>'
+    + '<div id="hallSlotAwards">'+kinojoCardSpinner('성장왕/벌크업 진단 중')+'</div>'
+    + '<div class="dashboard"><div><div class="top-grid"><div id="hallSlotPve">'+kinojoCardSpinner('PVE TOP 5 불러오는 중')+'</div><div id="hallSlotPvp">'+kinojoCardSpinner('PVP TOP 5 불러오는 중')+'</div></div></div><div class="side-stack"><div id="hallSlotRelations">'+kinojoCardSpinner('관계 카드 불러오는 중')+'</div></div></div>'
+    + '<div id="hallSlotOverall">'+kinojoCardSpinner('전체 순위표 불러오는 중')+'</div>';
+  const tasks=[
+    ['hallSlotMvp',()=>mvpSection()],
+    ['hallSlotReactions',()=>reactionBoard()],
+    ['hallSlotAwards',()=>awardsBoard()],
+    ['hallSlotPve',()=>rankBox("⚔ PVE TOP 5","",hallData.pveTop)],
+    ['hallSlotPvp',()=>rankBox("⚔ PVP TOP 5","",hallData.pvpTop)],
+    ['hallSlotRelations',()=>combinedRelationBox()],
+    ['hallSlotOverall',()=>overallTable()]
+  ];
+  tasks.forEach(([id,fn],index)=>{
+    setTimeout(()=>{
+      setHallSlot(id,fn());
+      bindHallAfterSlot();
+    },index*35);
+  });
+}

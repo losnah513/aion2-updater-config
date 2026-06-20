@@ -336,14 +336,17 @@
     return inline;
   }
 
-  function openAccountAdminModal(){
+  function renderAccountAdminInline(options){
     const panel = ensureAccountAdminPanel();
-    if(!panel){
-      toast('관리 패널에서 회원 탭을 연 뒤 사용할 수 있습니다.');
-      return null;
-    }
-    listAccountCodes();
-    setTimeout(()=>document.getElementById('adminAccountCharacterInput')?.focus(), 40);
+    if(!panel) return null;
+    if(options?.load !== false) listAccountCodes();
+    if(options?.focus) setTimeout(()=>document.getElementById('adminAccountCharacterInput')?.focus(), 40);
+    return panel;
+  }
+
+  function openAccountAdminModal(){
+    const panel = renderAccountAdminInline({ load:true, focus:true });
+    if(!panel) toast('관리 패널에서 회원 탭을 연 뒤 사용할 수 있습니다.');
     return panel;
   }
 
@@ -690,21 +693,12 @@
     document.addEventListener('visibilitychange', ()=>{
       if(document.visibilityState === 'visible') resetIdleLogoutTimer();
     });
-    window.addEventListener('pagehide', ()=>{ clearSession(); });
   }
 
   function bind(){
     document.getElementById('kinojoLoginBtn')?.addEventListener('click', ()=>openLoginModal());
     document.getElementById('kinojoLogoutBtn')?.addEventListener('click', ()=>{ clearSession(); toast('로그아웃되었습니다.'); });
     document.getElementById('adminAccountBtn')?.addEventListener('click', openAccountAdminModal);
-    document.addEventListener('click', e=>{
-      const tab = e.target.closest('[data-admin-panel="account"]');
-      if(!tab) return;
-      const inline = document.getElementById('kinojoAccountAdminInline');
-      if(!inline || !tab.classList.contains('active')) return;
-      ensureAccountAdminPanel();
-      listAccountCodes();
-    });
     document.addEventListener('keydown', e=>{
       if(e.key === 'Escape'){
         closeLoginModal();
@@ -717,7 +711,7 @@
 
   window.KinojoAuth = {
     openLoginModal, closeLoginModal, requireLogin,
-    openAccountAdminModal, closeAccountAdminModal,
+    openAccountAdminModal, closeAccountAdminModal, renderAccountAdminInline,
     getSession, getAccount, getToken, getLevel, isLoggedIn, isAdmin,
     updateStatus, clearSession
   };

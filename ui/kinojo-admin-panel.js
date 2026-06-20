@@ -35,12 +35,7 @@
     document.querySelectorAll('[data-admin-panel]').forEach(btn=>btn.classList.toggle('active',btn.dataset.adminPanel===key));
     document.querySelectorAll('[data-admin-pane]').forEach(pane=>pane.classList.toggle('active',pane.dataset.adminPane===key));
     if(key==='account'){
-      const inline=document.getElementById('kinojoAccountAdminInline');
-      if(inline&&window.KinojoAuth?.openAccountAdminModal){
-        // 인라인 영역만 렌더링합니다. 별도 회원 모달은 열지 않습니다.
-        const panel=window.KinojoAuth.openAccountAdminModal;
-        // 기존 공개 함수는 fallback 모달도 열 수 있어 직접 클릭 이벤트에서 렌더되도록 auth가 처리합니다.
-      }
+      window.KinojoAuth?.renderAccountAdminInline?.({ load:true, focus:false });
     }
   }
   function bindAdminTabs(){
@@ -139,13 +134,17 @@
     pairs.forEach(([id,fn])=>{const btn=document.getElementById(id);if(btn&&!btn.dataset.commonAdminBound){btn.dataset.commonAdminBound='1';btn.addEventListener('click',fn)}});
     document.querySelectorAll('[data-visit-sign]').forEach(btn=>{if(btn.dataset.boundVisitSign)return;btn.dataset.boundVisitSign='1';btn.addEventListener('click',()=>{document.querySelectorAll('[data-visit-sign]').forEach(b=>b.classList.remove('active'));btn.classList.add('active')})});
     document.querySelectorAll('[data-visit-target]').forEach(btn=>{if(btn.dataset.boundVisitTarget)return;btn.dataset.boundVisitTarget='1';btn.addEventListener('click',()=>{document.querySelectorAll('[data-visit-target]').forEach(b=>b.classList.remove('active'));btn.classList.add('active')})});
-    document.getElementById('adminOwnerMapQuickBtn')?.addEventListener('click',()=>{
-      document.querySelector('[data-admin-panel="account"]')?.click();
-      document.getElementById('adminOwnerMapSyncBtn')?.click();
-    },{once:false});
+    const ownerMapBtn=document.getElementById('adminOwnerMapQuickBtn');
+    if(ownerMapBtn&&!ownerMapBtn.dataset.commonAdminBound){
+      ownerMapBtn.dataset.commonAdminBound='1';
+      ownerMapBtn.addEventListener('click',()=>{
+        activateAdminPane('account');
+        setTimeout(()=>document.getElementById('adminOwnerMapSyncBtn')?.click(),0);
+      });
+    }
   }
   function init(){bindButtons()}
-  document.addEventListener('click',e=>{if(e.target.closest('#adminMenuBtn'))setTimeout(bindButtons,0)});
+  document.addEventListener('kinojo-admin-panel-ready',()=>bindButtons());
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
   window.KinojoAdminPanel={bind:bindButtons,adminMvp,adminSnapshot,adminSnapshotStatus,adminSnapshotTriggerInstall,adminVisitAdjust};
   window.setAdminButtonLoading_=setAdminButtonLoading_;
