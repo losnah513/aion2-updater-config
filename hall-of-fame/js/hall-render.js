@@ -232,9 +232,11 @@ function render(){
     ['hallSlotOverall',()=>overallTable()]
   ];
   tasks.forEach(([id,fn],index)=>{
-    setTimeout(()=>{
-      setHallSlot(id,fn());
-      bindHallAfterSlot();
-    },index*35);
+    window.setTimeout(()=>{
+      window.requestAnimationFrame(()=>{
+        setHallSlot(id,fn());
+        bindHallAfterSlot();
+      });
+    },index*95);
   });
 }

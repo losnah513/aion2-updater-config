@@ -698,8 +698,7 @@
   function bind(){
     document.getElementById('kinojoLoginBtn')?.addEventListener('click', ()=>openLoginModal());
     document.getElementById('kinojoLogoutBtn')?.addEventListener('click', ()=>{ clearSession(); toast('로그아웃되었습니다.'); });
-    document.getElementById('adminAccountBtn')?.addEventListener('click', openAccountAdminModal);
-    document.addEventListener('keydown', e=>{
+        document.addEventListener('keydown', e=>{
       if(e.key === 'Escape'){
         closeLoginModal();
         closeAccountAdminModal();

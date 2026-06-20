@@ -105,7 +105,7 @@ function preloadImages(paths){
   })));
 }
 
-const HALL_CACHE_KEY="kinojo_hall_cache_v26062004";
+const HALL_CACHE_KEY="kinojo_hall_cache_v26062011";
 const HALL_CACHE_TTL_MS=5*60*1000;
 
 function readHallCache(){

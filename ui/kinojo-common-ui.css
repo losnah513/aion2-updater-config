@@ -68,8 +68,7 @@ body.kinojo-drawer-open{overflow:hidden;}
 .kinojo-top-brand{display:none!important;}
 
 /* Topbar controls */
-.kinojo-menu-toggle,
-.kinojo-top-tools .admin-menu-btn{
+.kinojo-menu-toggle{
   appearance:none;
   width:32px;
   height:32px;
@@ -84,12 +83,8 @@ body.kinojo-drawer-open{overflow:hidden;}
   cursor:pointer;
   transition:transform .24s cubic-bezier(.16,1,.3,1),color .2s ease,border-color .2s ease,background .2s ease;
 }
-.kinojo-menu-toggle:hover,
-.kinojo-top-tools .admin-menu-btn:hover{transform:scale(1.04);color:var(--kinojo-common-blue);border-color:rgba(37,99,235,.34);}
-.kinojo-menu-toggle:active,
-.kinojo-top-tools .admin-menu-btn:active{transform:scale(.95);}
-.kinojo-top-tools .admin-menu-btn{font-size:22px;font-weight:1000;line-height:1;}
-.kinojo-top-tools .admin-menu-btn:hover{transform:rotate(90deg) scale(1.04);}
+.kinojo-menu-toggle:hover{transform:scale(1.04);color:var(--kinojo-common-blue);border-color:rgba(37,99,235,.34);}
+.kinojo-menu-toggle:active{transform:scale(.95);}
 .kinojo-menu-icon{width:20px;height:20px;display:block;overflow:visible;}
 .kinojo-menu-icon circle{fill:currentColor;transition:opacity .22s ease,transform .28s cubic-bezier(.16,1,.3,1);transform-origin:center;}
 .kinojo-menu-icon .menu-lines{opacity:0;transition:opacity .22s ease;}
@@ -209,181 +204,12 @@ body.kinojo-drawer-open{overflow:hidden;}
   .kinojo-top-page{height:31px;max-width:170px;padding:0 9px;}
   .kinojo-top-page strong{font-size:11px;}
   .kinojo-top-page small{font-size:9px;}
-  .kinojo-menu-toggle,.kinojo-top-tools .admin-menu-btn{width:31px;height:31px;}
+  .kinojo-menu-toggle{width:31px;height:31px;}
   .kinojo-top-tools{gap:5px;}
   .kinojo-top-tools .visit-mini{max-width:170px;font-size:9px;padding:0 8px;}
   .kinojo-side-panel{left:0;width:100vw;transform:translateX(104%);}
   .kinojo-side-panel.open{transform:translateX(0);}
   .kinojo-side-panel.standalone{width:100vw;}
-}
-
-/* Login / account management bridge - 260619_03 */
-.kinojo-auth-status{gap:7px;padding:0 8px;}
-.kinojo-login-btn,.kinojo-logout-btn{
-  appearance:none;border:1px solid rgba(37,99,235,.22);background:#fff;color:#2563eb;
-  border-radius:7px;padding:4px 8px;font-size:11px;font-weight:1000;cursor:pointer;line-height:1;
-  transition:transform .18s ease,border-color .18s ease,background .18s ease;
-}
-.kinojo-login-btn:hover,.kinojo-logout-btn:hover{transform:translateY(-1px);border-color:rgba(37,99,235,.42);background:#f8fbff;}
-.kinojo-auth-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#475569;}
-body.kinojo-logged-in .kinojo-auth-label{color:#1e40af;}
-body.kinojo-admin-user .kinojo-auth-label{color:#7c2d12;}
-.kinojo-login-modal{position:fixed;inset:0;z-index:9000;display:none;align-items:center;justify-content:center;background:rgba(15,23,42,.28);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);padding:18px;}
-.kinojo-login-modal.open{display:flex;}
-.kinojo-login-card{position:relative;width:min(380px,100%);border:1px solid var(--kinojo-common-line);border-radius:18px;background:#fff;padding:22px;box-shadow:0 24px 70px rgba(15,23,42,.2);display:grid;gap:10px;color:#1e2f4a;}
-.kinojo-login-close{position:absolute;right:12px;top:12px;width:30px;height:30px;border-radius:999px;border:1px solid var(--kinojo-common-line);background:#fff;cursor:pointer;font-size:20px;line-height:1;}
-.kinojo-login-kicker{font-size:11px;font-weight:1000;color:#2563eb;letter-spacing:.08em;}
-.kinojo-login-card h2{margin:0;font-size:22px;letter-spacing:-.5px;}
-.kinojo-login-card p{margin:0 0 4px;color:#667085;font-size:13px;line-height:1.45;}
-.kinojo-login-input{height:42px;text-align:center;font-size:16px;font-weight:1000;letter-spacing:.08em;text-transform:uppercase;}
-.kinojo-login-submit{height:40px;font-weight:1000;}
-.kinojo-login-status{min-height:18px;font-size:12px;font-weight:900;color:#2563eb;text-align:center;}
-.admin-account-panel{border:1px solid rgba(120,145,180,.22);border-radius:10px;padding:10px;background:#f8fbff;gap:8px;}
-.admin-account-title{font-weight:1000;color:#1e2f4a;font-size:12px;}
-.admin-account-grid{display:grid;gap:6px;}
-.admin-account-actions{display:flex;flex-wrap:wrap;gap:6px;}
-.admin-account-actions .btn{flex:1 1 auto;}
-.admin-account-list{display:grid;gap:6px;max-height:220px;overflow:auto;}
-.admin-account-row{display:grid;grid-template-columns:1fr auto;gap:3px 8px;padding:8px;border:1px solid rgba(120,145,180,.22);border-radius:8px;background:#fff;font-size:11px;}
-.admin-account-row strong{font-size:12px;color:#1e2f4a;}
-.admin-account-row code{font-weight:1000;color:#2563eb;background:#eff6ff;border-radius:6px;padding:2px 6px;}
-.admin-account-row span,.admin-account-row small{grid-column:1 / -1;color:#667085;}
-.admin-account-empty{padding:8px;color:#667085;font-weight:900;text-align:center;}
-@media(max-width:760px){.kinojo-login-modal{padding:12px}.kinojo-login-card{padding:20px}.admin-account-row{grid-template-columns:1fr}.admin-account-row code{justify-self:start}}
-@media(max-width:760px){
-  .kinojo-topbar{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);}
-  .kinojo-top-center.kinojo-auth-status{display:flex;min-width:0;max-width:150px;height:31px;font-size:10px;padding:0 6px;gap:4px;}
-  .kinojo-login-btn,.kinojo-logout-btn{font-size:10px;padding:3px 6px;}
-}
-
-/* Login/account management modal - 260619_04 */
-.kinojo-account-modal{position:fixed;inset:0;z-index:9100;display:none;align-items:center;justify-content:center;background:rgba(15,23,42,.34);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:18px;}
-.kinojo-account-modal.open{display:flex;}
-.kinojo-account-card{width:min(760px,100%);max-height:min(86vh,760px);overflow:auto;border:1px solid rgba(120,145,180,.28);border-radius:20px;background:#fff;box-shadow:0 22px 70px rgba(15,23,42,.24);padding:20px;display:grid;gap:14px;}
-.kinojo-account-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;border-bottom:1px solid rgba(120,145,180,.18);padding-bottom:12px;}
-.kinojo-account-head h2{margin:3px 0 0;font-size:22px;letter-spacing:-.03em;color:#17233a;}
-.kinojo-account-section{display:grid;gap:10px;border:1px solid rgba(120,145,180,.18);border-radius:14px;background:#f8fbff;padding:12px;}
-.kinojo-account-label{font-size:12px;font-weight:1000;color:#334155;}
-.kinojo-account-create-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;}
-.kinojo-account-select{width:100%;min-height:42px;}
-.kinojo-account-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;}
-.kinojo-account-toolbar strong{font-size:14px;color:#17233a;}
-.kinojo-account-toolbar-actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;}
-.kinojo-account-toolbar-actions .btn{min-height:34px;font-size:12px;padding:0 10px;}
-.kinojo-account-modal .admin-account-list{display:grid;gap:8px;max-height:430px;overflow:auto;padding-right:2px;}
-.kinojo-account-modal .admin-account-row{display:grid;grid-template-columns:minmax(110px,1fr) auto;gap:8px 10px;padding:10px;border:1px solid rgba(120,145,180,.22);border-radius:12px;background:#fff;font-size:12px;}
-.kinojo-account-modal .admin-account-main{display:grid;gap:2px;min-width:0;}
-.kinojo-account-modal .admin-account-main strong{font-size:14px;color:#17233a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.kinojo-account-modal .admin-account-main span{font-size:11px;color:#64748b;font-weight:800;}
-.kinojo-account-modal .admin-account-row code{font-weight:1000;color:#2563eb;background:#eff6ff;border-radius:8px;padding:4px 7px;align-self:start;}
-.admin-permission-list{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:6px;}
-.admin-permission-toggle{appearance:none;border:1px solid rgba(120,145,180,.34);background:#fff;color:#475569;border-radius:999px;min-height:31px;padding:0 10px;font-size:12px;font-weight:1000;cursor:pointer;transition:transform .16s ease,border-color .16s ease,background .16s ease,color .16s ease;}
-.admin-permission-toggle:hover{transform:translateY(-1px);border-color:rgba(37,99,235,.4);}
-.admin-permission-toggle.on{background:#eaf1ff;border-color:rgba(37,99,235,.55);color:#1d4ed8;box-shadow:inset 0 0 0 1px rgba(37,99,235,.12);}
-.admin-permission-toggle[disabled]{opacity:.55;cursor:not-allowed;transform:none;}
-.admin-account-row-actions{grid-column:1 / -1;display:flex;justify-content:flex-end;}
-.admin-account-delete{appearance:none;border:1px solid rgba(239,68,68,.24);background:#fff5f5;color:#b91c1c;border-radius:10px;min-height:32px;padding:0 11px;font-size:12px;font-weight:1000;cursor:pointer;}
-.admin-account-delete:hover{border-color:rgba(239,68,68,.42);background:#fee2e2;}
-.admin-account-delete[disabled]{opacity:.55;cursor:not-allowed;background:#f8fafc;color:#94a3b8;border-color:rgba(148,163,184,.28);}
-@media(max-width:760px){
-  .kinojo-account-modal{padding:10px;align-items:flex-start;}
-  .kinojo-account-card{max-height:calc(100vh - 20px);padding:14px;border-radius:16px;}
-  .kinojo-account-create-row{grid-template-columns:1fr;}
-  .kinojo-account-toolbar{align-items:flex-start;flex-direction:column;}
-  .kinojo-account-toolbar-actions{width:100%;}
-  .kinojo-account-toolbar-actions .btn{flex:1 1 auto;}
-  .kinojo-account-modal .admin-account-row{grid-template-columns:1fr;}
-  .kinojo-account-modal .admin-account-row code{justify-self:start;}
-}
-
-/* Login/account UI correction - 260619_05 */
-#kinojoUserStatus .admin-menu-wrap{display:none;}
-body.kinojo-admin-user #kinojoUserStatus .admin-menu-wrap{display:block;}
-#kinojoUserStatus .admin-menu-btn{width:28px;height:28px;font-size:20px;border-radius:8px;}
-.kinojo-auth-label{display:inline-flex;align-items:center;gap:5px;min-width:0;}
-.kinojo-auth-class-icon{width:18px;height:18px;border-radius:999px;object-fit:cover;flex:0 0 auto;box-shadow:0 0 0 1px rgba(120,145,180,.25);}
-.kinojo-auth-name{max-width:92px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:1000;color:#1e40af;}
-.kinojo-auth-role{font-size:10px;font-weight:1000;color:#64748b;background:#f1f5f9;border:1px solid rgba(120,145,180,.22);border-radius:999px;padding:2px 6px;}
-body.kinojo-admin-user .kinojo-auth-role{color:#9a3412;background:#fff7ed;border-color:rgba(251,146,60,.32);}
-.kinojo-account-card{position:relative;}
-.kinojo-account-x{right:12px!important;top:12px!important;}
-.kinojo-account-head{padding-right:36px;}
-.kinojo-account-head p{margin:4px 0 0;color:#64748b;font-size:12px;line-height:1.4;font-weight:800;}
-.kinojo-account-input{width:100%;min-height:42px;font-size:14px;font-weight:900;}
-.admin-code-hidden{color:#64748b!important;background:#f8fafc!important;}
-.admin-dropdown #adminLoginPanel{display:none!important;}
-.admin-dropdown #adminControlPanel{display:grid!important;}
-@media(max-width:760px){
-  .kinojo-auth-name{max-width:64px;}
-  #kinojoUserStatus .admin-menu-btn{width:27px;height:27px;font-size:18px;}
-  .kinojo-account-head p{font-size:11px;}
-}
-
-/* 13차 로그인/권한 UI + 공통 로딩 스피너 보정 - 260619_06 */
-.kinojo-topbar{min-height:62px;}
-.kinojo-top-center.kinojo-auth-status{
-  min-width:0; height:38px; display:flex; align-items:center; justify-content:center;
-  border:1px solid rgba(120,145,180,.22); border-radius:999px; background:rgba(255,255,255,.78);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 8px 22px rgba(30,64,175,.06);
-}
-.kinojo-auth-profile{display:inline-flex;align-items:center;gap:6px;min-width:0;}
-.kinojo-auth-class-icon{width:22px!important;height:22px!important;}
-.kinojo-auth-name{max-width:96px;font-size:12px;color:#17233a!important;}
-.kinojo-auth-role{font-size:10px;letter-spacing:.03em;text-transform:uppercase;}
-.kinojo-auth-role-master{color:#92400e!important;background:linear-gradient(180deg,#fff7ed,#ffedd5)!important;border-color:rgba(245,158,11,.34)!important;}
-.kinojo-auth-role-sub-master{color:#475569!important;background:linear-gradient(180deg,#f8fafc,#e2e8f0)!important;border-color:rgba(100,116,139,.3)!important;}
-.kinojo-auth-role-manager{color:#1d4ed8!important;background:linear-gradient(180deg,#eff6ff,#dbeafe)!important;border-color:rgba(37,99,235,.34)!important;}
-.kinojo-auth-role-member{color:#475569!important;background:#f8fafc!important;}
-.kinojo-auth-online{font-size:9px;color:#22c55e;filter:drop-shadow(0 0 5px rgba(34,197,94,.55));}
-#kinojoUserStatus .admin-menu-wrap{display:none;margin-left:2px;}
-body.kinojo-admin-user #kinojoUserStatus .admin-menu-wrap{display:block;}
-#kinojoUserStatus .admin-menu-btn{
-  width:auto!important;min-width:46px!important;height:28px!important;padding:0 10px!important;border-radius:999px!important;
-  font-size:11px!important;font-weight:1000!important;line-height:1!important;color:#2563eb!important;background:#fff!important;
-  border:1px solid rgba(37,99,235,.25)!important;box-shadow:0 6px 14px rgba(37,99,235,.08)!important;
-  transition:transform .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease!important;
-}
-#kinojoUserStatus .admin-menu-btn:hover{transform:translateY(-1px) scale(1.02);border-color:rgba(37,99,235,.48)!important;background:#f8fbff!important;}
-#kinojoUserStatus .admin-menu-btn:active{transform:translateY(0) scale(.98);box-shadow:inset 0 2px 6px rgba(37,99,235,.12)!important;}
-
-.kinojo-spinner{position:relative;display:inline-grid;place-items:center;width:18px;height:18px;flex:0 0 auto;vertical-align:-4px;}
-.kinojo-spinner::before,.kinojo-spinner::after{content:"";position:absolute;inset:0;border-radius:50%;}
-.kinojo-spinner::before{
-  background:conic-gradient(from 0deg,rgba(255,255,255,.98) 0 70deg,rgba(191,219,254,.75) 70deg 132deg,transparent 132deg 190deg,rgba(255,255,255,.88) 190deg 260deg,transparent 260deg 360deg);
-  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 4px));
-  mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 4px));
-  animation:kinojoSpinnerTrack 1.5s linear infinite;
-}
-.kinojo-spinner::after{
-  background:conic-gradient(from 0deg,transparent 0 42deg,#60a5fa 42deg 96deg,#2563eb 96deg 138deg,transparent 138deg 360deg);
-  filter:drop-shadow(0 0 7px rgba(37,99,235,.5));
-  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 4px));
-  mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 4px));
-  animation:kinojoSpinnerBlue 1s cubic-bezier(.55,.08,.25,.98) infinite;
-}
-.kinojo-spinner span{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.78);box-shadow:0 0 8px rgba(37,99,235,.16);}
-.kinojo-spinner-label{display:inline-block;margin-left:6px;}
-button.is-loading{display:inline-flex!important;align-items:center;justify-content:center;gap:5px;}
-.loader-ring{width:34px;height:34px;border:0!important;border-radius:50%;position:relative;background:none!important;animation:none!important;}
-.loader-ring::before,.loader-ring::after{content:"";position:absolute;inset:0;border-radius:50%;}
-.loader-ring::before{background:conic-gradient(from 0deg,#fff 0 76deg,rgba(191,219,254,.75) 76deg 132deg,transparent 132deg 190deg,#fff 190deg 258deg,transparent 258deg);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 6px));mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 6px));animation:kinojoSpinnerTrack 1.6s linear infinite;}
-.loader-ring::after{background:conic-gradient(from 0deg,transparent 0 36deg,#93c5fd 36deg 84deg,#2563eb 84deg 140deg,transparent 140deg 360deg);filter:drop-shadow(0 0 9px rgba(37,99,235,.55));-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 6px));mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 6px));animation:kinojoSpinnerBlue 1.05s cubic-bezier(.55,.08,.25,.98) infinite;}
-@keyframes kinojoSpinnerTrack{0%{transform:rotate(0deg);opacity:.72}50%{opacity:1}100%{transform:rotate(360deg);opacity:.72}}
-@keyframes kinojoSpinnerBlue{0%{transform:rotate(0deg) scale(.96);opacity:.82}45%{transform:rotate(210deg) scale(1.04);opacity:1}100%{transform:rotate(360deg) scale(.96);opacity:.86}}
-
-.kinojo-account-issue-box{display:grid;gap:9px;border:1px solid rgba(37,99,235,.18);border-radius:12px;background:#fff;padding:10px;}
-.kinojo-account-issue-box[hidden]{display:none!important;}
-.kinojo-account-character-result{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid rgba(120,145,180,.18);border-radius:10px;background:#f8fbff;padding:8px 10px;}
-.kinojo-account-character-result strong{font-size:14px;color:#17233a;}
-.kinojo-account-character-result span{font-size:12px;font-weight:900;color:#2563eb;}
-.kinojo-code-input{text-align:center;letter-spacing:.12em;text-transform:uppercase;font-size:16px!important;}
-.kinojo-account-help{font-size:11px;color:#64748b;font-weight:800;line-height:1.35;}
-@media(max-width:760px){
-  .kinojo-topbar{min-height:56px;}
-  .kinojo-top-center.kinojo-auth-status{max-width:190px;height:34px;}
-  .kinojo-auth-name{max-width:62px;}
-  .kinojo-auth-role{font-size:9px;padding:2px 5px;}
-  #kinojoUserStatus .admin-menu-btn{min-width:40px!important;height:26px!important;padding:0 8px!important;font-size:10px!important;}
 }
 
 /* 260620_09 공통 로그인 / 관리자 패널 정리
@@ -643,7 +469,7 @@ body[data-kinojo-role="MASTER"] .master-only{display:grid!important;}
   min-height:0;
   width:100%;
   display:grid;
-  grid-template-columns:250px minmax(0,1fr);
+  grid-template-columns:260px minmax(0,1fr);
   grid-template-rows:minmax(0,1fr);
   gap:10px;
   overflow:hidden;
@@ -662,7 +488,7 @@ body[data-kinojo-role="MASTER"] .master-only{display:grid!important;}
   background:#f8fbff;
   overflow:hidden;
 }
-.admin-account-inline .kinojo-account-create-section{align-content:start;height:100%;max-width:250px;}
+.admin-account-inline .kinojo-account-create-section{align-content:start;height:100%;max-width:260px;}
 .admin-account-inline .kinojo-account-label{font-size:11px;margin-bottom:6px;font-weight:1000;color:#334155;}
 .admin-account-inline .kinojo-account-create-row{display:grid;grid-template-columns:1fr;gap:7px;}
 .admin-account-inline .kinojo-account-input,
@@ -687,16 +513,16 @@ body[data-kinojo-role="MASTER"] .master-only{display:grid!important;}
 .admin-account-inline .admin-account-list{height:100%;overflow:auto;padding-right:6px;padding-bottom:10px;scrollbar-gutter:stable;border-radius:12px;}
 .admin-account-inline .admin-account-row{
   display:grid;
-  grid-template-columns:minmax(150px,1.1fr) 90px 130px minmax(260px,1.8fr) 72px;
+  grid-template-columns:minmax(170px,1.1fr) 92px 134px minmax(320px,2fr) 74px;
   grid-template-areas:"main code role perms action";
   gap:8px;
   align-items:center;
-  padding:10px 12px;
-  margin-bottom:8px;
+  padding:9px 10px;
+  margin-bottom:7px;
   border:1px solid rgba(120,145,180,.22);
   border-radius:11px;
   background:#fff;
-  min-height:96px;
+  min-height:88px;
 }
 .admin-account-inline .admin-account-row.dirty{border-color:rgba(37,99,235,.42);box-shadow:0 0 0 3px rgba(37,99,235,.08);background:#fbfdff;}
 .admin-account-inline .admin-account-main{grid-area:main;display:grid;gap:1px;min-width:0;}
@@ -709,11 +535,11 @@ body[data-kinojo-role="MASTER"] .master-only{display:grid!important;}
 .admin-account-inline .admin-account-role-fixed{grid-area:role;height:30px;min-height:30px;font-size:10.5px;border-radius:10px;}
 .admin-account-inline .admin-account-role-select{width:100%;border:1px solid rgba(120,145,180,.22);background:#fff;color:#334155;font-weight:900;padding:0 8px;}
 .admin-account-inline .admin-account-role-fixed{display:inline-grid;place-items:center;border:1px solid rgba(120,145,180,.22);background:#f8fafc;color:#334155;font-weight:1000;}
-.admin-account-inline .admin-switch-list{grid-area:perms;display:grid;grid-template-columns:repeat(2,minmax(118px,1fr));gap:6px 8px;align-items:center;}
-.admin-account-inline .admin-switch-row{display:flex;align-items:center;justify-content:space-between;gap:5px;min-width:0;min-height:34px;border:1px solid rgba(120,145,180,.14);border-radius:999px;background:#f8fbff;padding:4px 6px 4px 9px;font-size:10px;font-weight:900;color:#475569;}
+.admin-account-inline .admin-switch-list{grid-area:perms;display:grid;grid-template-columns:repeat(2,minmax(138px,1fr));gap:6px 8px;align-items:center;}
+.admin-account-inline .admin-switch-row{display:flex;align-items:center;justify-content:space-between;gap:5px;min-width:0;min-height:32px;border:1px solid rgba(120,145,180,.14);border-radius:999px;background:#f8fbff;padding:3px 6px 3px 9px;font-size:10px;font-weight:900;color:#475569;}
 .admin-account-inline .admin-switch-row span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.admin-account-inline .admin-permission-toggle{position:relative;width:46px;height:26px;flex:0 0 46px;border:0;border-radius:999px;background:#cbd5e1;box-shadow:inset 0 1px 3px rgba(15,23,42,.18);cursor:pointer;transition:background .18s ease,box-shadow .18s ease,transform .14s ease;padding:0;color:transparent;font-size:0;}
-.admin-account-inline .admin-permission-toggle span{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(15,23,42,.25);transition:transform .18s ease;}
+.admin-account-inline .admin-permission-toggle{position:relative;width:44px;height:24px;flex:0 0 44px;border:0;border-radius:999px;background:#cbd5e1;box-shadow:inset 0 1px 3px rgba(15,23,42,.18);cursor:pointer;transition:background .18s ease,box-shadow .18s ease,transform .14s ease;padding:0;color:transparent;font-size:0;}
+.admin-account-inline .admin-permission-toggle span{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(15,23,42,.25);transition:transform .18s ease;}
 .admin-account-inline .admin-permission-toggle.on{background:#2563eb;box-shadow:inset 0 1px 3px rgba(15,23,42,.16),0 0 0 3px rgba(37,99,235,.10);}
 .admin-account-inline .admin-permission-toggle.on span{transform:translateX(20px);}
 .admin-account-inline .admin-permission-toggle:hover{transform:translateY(-1px);}
