@@ -196,6 +196,9 @@
           <a href="${sanctuaryPrefix}?id=bagot" data-sanctuary-link="bagot">2. 침식의 정화소</a>
           <a href="${sanctuaryPrefix}?id=kaldrix" data-sanctuary-link="kaldrix">3. 무스펠의 성배</a>
           <div class="kinojo-drawer-divider"></div>
+          <div class="kinojo-drawer-category">아르카나</div>
+          <a href="${info.root}arcana/">ARCANA 스킬 시뮬레이터</a>
+          <div class="kinojo-drawer-divider"></div>
           <div class="kinojo-drawer-category">안내</div>
           <button class="kinojo-drawer-link drawer-page-link" type="button" data-page-panel="about" data-drawer="about">사이트 소개</button>
           <button class="kinojo-drawer-link drawer-page-link" type="button" data-page-panel="terms" data-drawer="terms">이용약관</button>

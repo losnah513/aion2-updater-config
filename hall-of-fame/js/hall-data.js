@@ -105,31 +105,77 @@ function preloadImages(paths){
   })));
 }
 
+const HALL_CACHE_KEY="kinojo_hall_cache_v26062004";
+const HALL_CACHE_TTL_MS=5*60*1000;
+
+function readHallCache(){
+  try{
+    const raw=sessionStorage.getItem(HALL_CACHE_KEY);
+    if(!raw)return null;
+    const cached=JSON.parse(raw);
+    if(!cached || !cached.savedAt || !cached.data)return null;
+    if(Date.now()-cached.savedAt>HALL_CACHE_TTL_MS)return null;
+    return cached.data;
+  }catch(e){return null}
+}
+
+function writeHallCache(data){
+  try{
+    if(data && data.ok!==false){
+      sessionStorage.setItem(HALL_CACHE_KEY,JSON.stringify({savedAt:Date.now(),data}));
+    }
+  }catch(e){}
+}
+
+function applyHallData(data,{fromCache=false}={}){
+  hallData=data;
+  if(hallData.visitStats){
+    renderVisits(hallData.visitStats);
+  }else if(!fromCache&&!window.__KINOJO_HALL_VISIT_RENDERED__&&!window.__KINOJO_HALL_VISIT_REQUEST_ACTIVE__){
+    fetchVisitStats();
+  }
+  const topbarUpdate=document.getElementById("topbarUpdateTime");
+  if(topbarUpdate){
+    const suffix=fromCache?" · 캐시":"";
+    topbarUpdate.textContent=hallData?.updatedAt?"업데이트 "+hallData.updatedAt+suffix:"업데이트 완료"+suffix;
+  }
+  stopLoadingText();
+  render();
+}
+
+async function fetchHallDataFresh(){
+  const res=await fetch(hallBuildUrl("hallOfFame"),{cache:"no-store"});
+  const text=await res.text();
+  if(!res.ok)throw new Error("HTTP "+res.status+": "+text.slice(0,180));
+  let data;
+  try{
+    data=JSON.parse(text);
+  }catch(parseErr){
+    throw new Error("Apps Script 응답이 JSON이 아닙니다: "+text.slice(0,180));
+  }
+  if(!data || data.ok===false)throw new Error(data?.message||data?.error||"명예의 전당 응답이 실패했습니다.");
+  writeHallCache(data);
+  return data;
+}
+
 async function load(){
   renderHallLoadingLayout();
   startLoadingText();
+  const cached=readHallCache();
   try{
     await preloadImages(Object.values(RANK_EMBLEMS).concat(Object.values(CLASS_ICONS)));
-    const res=await fetch(hallBuildUrl("hallOfFame"),{cache:"no-store"});
-    const text=await res.text();
-    if(!res.ok)throw new Error("HTTP "+res.status+": "+text.slice(0,180));
-    try{
-      hallData=JSON.parse(text);
-    }catch(parseErr){
-      throw new Error("Apps Script 응답이 JSON이 아닙니다: "+text.slice(0,180));
+    if(cached){
+      applyHallData(cached,{fromCache:true});
+      fetchHallDataFresh().then(data=>applyHallData(data)).catch(()=>{});
+      return;
     }
-    if(!hallData || hallData.ok===false)throw new Error(hallData?.message||hallData?.error||"명예의 전당 응답이 실패했습니다.");
-    if(hallData.visitStats){
-      renderVisits(hallData.visitStats);
-    }else if(!window.__KINOJO_HALL_VISIT_RENDERED__&&!window.__KINOJO_HALL_VISIT_REQUEST_ACTIVE__){
-      fetchVisitStats();
-    }
-
-    const topbarUpdate=document.getElementById("topbarUpdateTime");
-    if(topbarUpdate)topbarUpdate.textContent=hallData?.updatedAt?"업데이트 "+hallData.updatedAt:"업데이트 완료";
-    stopLoadingText();
-    render();
+    const data=await fetchHallDataFresh();
+    applyHallData(data);
   }catch(err){
+    if(cached){
+      applyHallData(cached,{fromCache:true});
+      return;
+    }
     stopLoadingText();
     app.className="";
     app.innerHTML='<div class="empty">명예의 전당 데이터를 불러오지 못했습니다.<br>'+escapeHtml(err.message||err)+'</div>';

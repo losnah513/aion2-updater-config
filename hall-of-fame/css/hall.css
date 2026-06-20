@@ -1173,3 +1173,29 @@ body{background:#fff!important;}
 .page-num:hover{transform:translateY(-1px);color:#2563eb;border-color:rgba(37,99,235,.35);}
 .page-num.active:hover{color:#fff;}
 @media(max-width:760px){.chick-card.collapsed{top:60px;right:12px}.section-head,.overall-head,.mvp-head,.reaction-card-head,.relation-main-head,.relation-sub-head{height:auto!important;min-height:28px!important}.relation-viewport{height:360px!important;max-height:360px!important}.rank-standard-note{white-space:normal}}
+
+
+/* 26062004 카드 로딩 고정 / TOP5 이름 복구 / 관계 카드 정렬 교통 정리 */
+#app > .mvp-card{min-height:318px;}
+.reaction-board{min-height:182px;}
+.award-grid{min-height:162px;}
+.dashboard{min-height:360px;}
+.top-grid .section{min-height:342px;}
+.side-stack .relation-combined-card{min-height:342px;}
+.overall{min-height:520px;}
+.kinojo-card-loading{height:100%;min-height:inherit;align-content:center;justify-content:center;}
+.top-grid .mini-row{grid-template-columns:42px minmax(96px,1fr) 82px!important;}
+.top-grid .mini-row .reaction-counts{display:none!important;}
+.top-grid .mini-row .name-wrap{min-width:0!important;display:block!important;overflow:visible!important;}
+.top-grid .mini-row .name{display:block!important;max-width:100%!important;min-width:0!important;color:#263852!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;}
+.top-grid .mini-row .score{grid-column:auto!important;}
+.relation-combined-card{min-height:342px!important;}
+.relation-combined-head{display:grid!important;grid-template-columns:1fr 1fr!important;}
+.relation-viewport{display:grid!important;grid-template-columns:1fr 1fr!important;grid-template-rows:none!important;height:100%!important;max-height:292px!important;gap:10px!important;padding:10px!important;overflow:hidden!important;}
+.relation-column{display:block!important;min-width:0!important;overflow:hidden!important;border:1px solid rgba(117,140,177,.16)!important;border-radius:var(--radius-control)!important;background:rgba(255,255,255,.48)!important;padding:8px!important;}
+.relation-track{display:grid!important;gap:6px!important;}
+.relation-row{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;width:100%!important;max-width:100%!important;justify-content:stretch!important;align-items:center!important;gap:6px!important;min-height:34px!important;padding:6px 8px!important;border:1px solid rgba(117,140,177,.14)!important;border-radius:var(--radius-control)!important;background:rgba(255,255,255,.62)!important;}
+.relation-name{font-size:12px!important;font-weight:1000!important;max-width:100%!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;color:#263852!important;}
+.relation-server{font-size:10px!important;color:#7b8ba2!important;font-weight:900!important;white-space:nowrap!important;}
+.relation-reactions{display:flex!important;grid-column:1/-1!important;justify-self:end!important;gap:5px!important;font-size:10px!important;}
+@media(max-width:760px){.dashboard,.top-grid,.reaction-board,.award-grid{min-height:0}.top-grid .section,.side-stack .relation-combined-card,.relation-combined-card{min-height:320px!important}.relation-combined-head,.relation-viewport{grid-template-columns:1fr!important}.relation-viewport{height:360px!important;max-height:360px!important}}
