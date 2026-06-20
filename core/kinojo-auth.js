@@ -257,18 +257,10 @@
     return letters === 2 && numbers === 4;
   }
 
-  function ensureAccountAdminModal(){
-    let modal = document.getElementById('kinojoAccountAdminModal');
-    if(modal) return modal;
-
-    modal = document.createElement('section');
-    modal.id = 'kinojoAccountAdminModal';
-    modal.className = 'kinojo-account-modal';
-    modal.setAttribute('aria-hidden','true');
-    modal.innerHTML = '<div class="kinojo-account-card" role="dialog" aria-modal="true" aria-labelledby="kinojoAccountAdminTitle">'
-      + '<button class="kinojo-login-close kinojo-account-x" id="kinojoAccountCloseBtn" type="button" aria-label="닫기">×</button>'
+  function accountAdminMarkup_(){
+    return '<div class="kinojo-account-card kinojo-account-inline-card" aria-labelledby="kinojoAccountAdminTitle">'
       + '<div class="kinojo-account-head">'
-      + '<div><div class="kinojo-login-kicker">MANAGE</div><h2 id="kinojoAccountAdminTitle">회원 코드 관리</h2><p>캐릭터를 먼저 조회한 뒤, 직접 정한 6자리 코드로 회원 계정을 생성합니다.</p></div>'
+      + '<div><div class="kinojo-login-kicker">MANAGE</div><h2 id="kinojoAccountAdminTitle">회원 관리</h2><p>캐릭터 조회 후 6자리 코드로 계정을 만들고, 변경사항은 저장하기를 눌렀을 때만 반영합니다.</p></div>'
       + '</div>'
       + '<div class="kinojo-account-section kinojo-account-create-section">'
       + '<label class="kinojo-account-label" for="adminAccountCharacterInput">캐릭터 이름 입력</label>'
@@ -285,10 +277,12 @@
       + '<button class="btn" id="adminAccountCreateBtn" type="button" disabled>코드 생성하기</button>'
       + '</div>'
       + '</div>'
-      + '<div class="kinojo-account-section">'
+      + '<div class="kinojo-account-section kinojo-account-list-section">'
       + '<div class="kinojo-account-toolbar">'
       + '<strong>회원 목록</strong>'
       + '<div class="kinojo-account-toolbar-actions">'
+      + '<button class="btn admin-account-save" id="adminAccountSaveBtn" type="button" disabled>변경내용 저장하기</button>'
+      + '<button class="btn admin-account-revert" id="adminAccountRevertBtn" type="button" disabled>되돌리기</button>'
       + '<button class="btn" id="adminOwnerMapSyncBtn" type="button">캐릭터 소유정보 갱신</button>'
       + '<button class="btn" id="adminAccountListBtn" type="button">목록 새로고침</button>'
       + '</div>'
@@ -296,34 +290,63 @@
       + '<div class="kinojo-account-filters">'
       + '<input class="search" id="adminAccountSearchInput" placeholder="회원 검색" autocomplete="off" />'
       + '<select class="admin-account-role-select" id="adminAccountRoleFilter"><option value="">전체 등급</option><option value="MASTER">MASTER</option><option value="SUB_MASTER">SUB MASTER</option><option value="MANAGER">MANAGER</option><option value="MEMBER">MEMBER</option></select>'
-      + '<select class="admin-account-role-select" id="adminAccountPermissionFilter"><option value="">전체 권한</option><option value="sanctuary_edit">성역 관리</option><option value="visit_manage">방문자수 조정</option><option value="snapshot_manage">성장왕 스냅샷</option><option value="account_manage">회원 코드 관리</option></select>'
+      + '<select class="admin-account-role-select" id="adminAccountPermissionFilter"><option value="">전체 권한</option><option value="sanctuary_edit">성역 관리</option><option value="visit_manage">방문자수 조정</option><option value="snapshot_manage">성장왕 스냅샷</option><option value="account_manage">회원 관리</option></select>'
       + '</div>'
       + '<div class="admin-status" id="adminAccountStatus"></div>'
       + '<div class="admin-account-list" id="adminAccountList"></div>'
       + '</div>'
       + '</div>';
+  }
 
-    document.body.appendChild(modal);
-    modal.addEventListener('click', e=>{ if(e.target === modal) closeAccountAdminModal(); });
-    modal.querySelector('#kinojoAccountCloseBtn')?.addEventListener('click', closeAccountAdminModal);
-    modal.querySelector('#adminAccountLookupBtn')?.addEventListener('click', lookupAccountCharacter);
-    modal.querySelector('#adminAccountCharacterInput')?.addEventListener('keydown', e=>{ if(e.key === 'Enter') lookupAccountCharacter(); });
-    modal.querySelector('#adminAccountCodeInput')?.addEventListener('input', validateAccountCodeInput);
-    modal.querySelector('#adminAccountCreateBtn')?.addEventListener('click', createAccountCode);
-    modal.querySelector('#adminAccountListBtn')?.addEventListener('click', listAccountCodes);
-    modal.querySelector('#adminOwnerMapSyncBtn')?.addEventListener('click', syncOwnerMap);
-    modal.querySelector('#adminAccountList')?.addEventListener('click', handleAccountListClick);
-    modal.querySelector('#adminAccountList')?.addEventListener('change', handleAccountListChange);
-    modal.querySelector('#adminAccountSearchInput')?.addEventListener('input', applyAccountListFilters);
-    modal.querySelector('#adminAccountRoleFilter')?.addEventListener('change', applyAccountListFilters);
-    modal.querySelector('#adminAccountPermissionFilter')?.addEventListener('change', applyAccountListFilters);
+  function bindAccountAdminEvents_(root){
+    if(!root || root.dataset.accountAdminBound) return;
+    root.dataset.accountAdminBound = '1';
+    root.querySelector('#adminAccountLookupBtn')?.addEventListener('click', lookupAccountCharacter);
+    root.querySelector('#adminAccountCharacterInput')?.addEventListener('keydown', e=>{ if(e.key === 'Enter') lookupAccountCharacter(); });
+    root.querySelector('#adminAccountCodeInput')?.addEventListener('input', validateAccountCodeInput);
+    root.querySelector('#adminAccountCreateBtn')?.addEventListener('click', createAccountCode);
+    root.querySelector('#adminAccountListBtn')?.addEventListener('click', listAccountCodes);
+    root.querySelector('#adminOwnerMapSyncBtn')?.addEventListener('click', syncOwnerMap);
+    root.querySelector('#adminAccountSaveBtn')?.addEventListener('click', savePendingAccountChanges);
+    root.querySelector('#adminAccountRevertBtn')?.addEventListener('click', revertPendingAccountChanges);
+    root.querySelector('#adminAccountList')?.addEventListener('click', handleAccountListClick);
+    root.querySelector('#adminAccountList')?.addEventListener('change', handleAccountListChange);
+    root.querySelector('#adminAccountSearchInput')?.addEventListener('input', applyAccountListFilters);
+    root.querySelector('#adminAccountRoleFilter')?.addEventListener('change', applyAccountListFilters);
+    root.querySelector('#adminAccountPermissionFilter')?.addEventListener('change', applyAccountListFilters);
+  }
+
+  function ensureAccountAdminPanel(){
+    const inline = document.getElementById('kinojoAccountAdminInline');
+    if(inline){
+      if(!inline.dataset.rendered){
+        inline.innerHTML = accountAdminMarkup_();
+        inline.dataset.rendered = '1';
+        bindAccountAdminEvents_(inline);
+      }
+      return inline;
+    }
+    let modal = document.getElementById('kinojoAccountAdminModal');
+    if(!modal){
+      modal = document.createElement('section');
+      modal.id = 'kinojoAccountAdminModal';
+      modal.className = 'kinojo-account-modal';
+      modal.setAttribute('aria-hidden','true');
+      modal.innerHTML = '<div class="kinojo-account-fallback"><button class="kinojo-login-close kinojo-account-x" id="kinojoAccountCloseBtn" type="button" aria-label="닫기">×</button>' + accountAdminMarkup_() + '</div>';
+      document.body.appendChild(modal);
+      modal.addEventListener('click', e=>{ if(e.target === modal) closeAccountAdminModal(); });
+      modal.querySelector('#kinojoAccountCloseBtn')?.addEventListener('click', closeAccountAdminModal);
+      bindAccountAdminEvents_(modal);
+    }
     return modal;
   }
 
   function openAccountAdminModal(){
-    const modal = ensureAccountAdminModal();
-    modal.classList.add('open');
-    modal.setAttribute('aria-hidden','false');
+    const panel = ensureAccountAdminPanel();
+    if(panel.id === 'kinojoAccountAdminModal'){
+      panel.classList.add('open');
+      panel.setAttribute('aria-hidden','false');
+    }
     listAccountCodes();
     setTimeout(()=>document.getElementById('adminAccountCharacterInput')?.focus(), 40);
   }
@@ -351,6 +374,8 @@
   }
 
   let pendingIssueCharacter = null;
+  let pendingAccountChanges = {};
+  let accountAdminRendered = false;
 
   function setLookupStatus(message, isError){
     const el = document.getElementById('adminAccountLookupStatus');
@@ -449,10 +474,95 @@
     }catch(err){ setAccountStatus(err.message || String(err), true); }
   }
 
+  function normalizePermissions_(permissions){
+    return permissionArray(permissions).filter((item, index, arr) => item && arr.indexOf(item) === index);
+  }
+
+  function updateAccountSaveButtons_(){
+    const hasChanges = Object.keys(pendingAccountChanges || {}).length > 0;
+    const saveBtn = document.getElementById('adminAccountSaveBtn');
+    const revertBtn = document.getElementById('adminAccountRevertBtn');
+    if(saveBtn) saveBtn.disabled = !hasChanges;
+    if(revertBtn) revertBtn.disabled = !hasChanges;
+    const status = document.getElementById('adminAccountStatus');
+    if(status && hasChanges){
+      status.className = 'admin-status pending';
+      status.textContent = '저장하지 않은 변경사항이 있습니다. 저장하기 또는 되돌리기를 선택해 주세요.';
+    }
+  }
+
+  function markAccountRowDirty_(row){
+    if(!row) return;
+    const code = row.dataset.code || '';
+    if(!code) return;
+    const originalRole = row.dataset.originalRole || 'MEMBER';
+    const originalPermissions = normalizePermissions_(row.dataset.originalPermissions || '').join(',');
+    const nextRole = row.dataset.role || 'MEMBER';
+    const nextPermissions = normalizePermissions_(row.dataset.permissions || '').join(',');
+    const changed = originalRole !== nextRole || originalPermissions !== nextPermissions;
+    row.classList.toggle('dirty', changed);
+    if(changed){
+      pendingAccountChanges[code] = {
+        code,
+        originalRole,
+        role: nextRole,
+        originalPermissions,
+        permissions: nextPermissions
+      };
+    }else{
+      delete pendingAccountChanges[code];
+    }
+    updateAccountSaveButtons_();
+  }
+
+  function setPermissionToggleState_(button, on){
+    if(!button) return;
+    button.classList.toggle('on', !!on);
+    button.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+
+  function refreshPermissionSummary_(row){
+    const summary = row?.querySelector('[data-account-summary]');
+    if(!summary) return;
+    summary.textContent = roleLabel(row.dataset.role || 'MEMBER') + ' · ' + permissionText(row.dataset.permissions || '');
+  }
+
+  async function savePendingAccountChanges(){
+    const changes = Object.values(pendingAccountChanges || {});
+    if(!changes.length){ setAccountStatus('저장할 변경사항이 없습니다.', false); return; }
+    const btn = document.getElementById('adminAccountSaveBtn');
+    try{
+      setButtonLoading(btn, true, '저장 중');
+      setAccountStatus('변경내용 저장 중...', false);
+      for(const change of changes){
+        if(change.originalRole !== change.role){
+          const roleRes = await accountAdmin('updateRole', { code: change.code, role: change.role });
+          if(!roleRes.ok) throw new Error(roleRes.message || '등급 수정 실패');
+        }
+        if(change.originalPermissions !== change.permissions){
+          const permRes = await accountAdmin('updatePermissions', { code: change.code, permissions: normalizePermissions_(change.permissions) });
+          if(!permRes.ok) throw new Error(permRes.message || '권한 수정 실패');
+        }
+      }
+      pendingAccountChanges = {};
+      setAccountStatus('변경내용이 저장되었습니다.', false);
+      await listAccountCodes();
+    }catch(err){ setAccountStatus(err.message || String(err), true); }
+    finally{ setButtonLoading(btn, false); updateAccountSaveButtons_(); }
+  }
+
+  function revertPendingAccountChanges(){
+    pendingAccountChanges = {};
+    renderAccounts(window.__KINOJO_ACCOUNT_LIST__ || []);
+    setAccountStatus('변경내용을 되돌렸습니다.', false);
+  }
+
   function renderAccounts(accounts){
     const box = document.getElementById('adminAccountList');
     if(!box) return;
     window.__KINOJO_ACCOUNT_LIST__ = accounts || [];
+    pendingAccountChanges = {};
+    updateAccountSaveButtons_();
     if(!accounts.length){ box.innerHTML = '<div class="admin-account-empty">조회된 코드가 없습니다.</div>'; return; }
 
     box.innerHTML = accounts.map(account => {
@@ -460,11 +570,12 @@
       const role = roleOf(account);
       const isRoot = role === 'MASTER';
       const displayCode = isRoot ? '마스터 계정' : (account.code || '-');
-      const permissions = permissionArray(account.permissions);
+      const permissions = normalizePermissions_(account.permissions);
+      const permDataset = permissions.join(',');
       const toggleHtml = Object.keys(PERMISSION_LABELS).map(key => {
         const on = permissions.includes(key) || permissions.includes('all');
         const disabled = isRoot ? ' disabled' : '';
-        return '<label class="admin-switch-row"><span>' + safeText(PERMISSION_LABELS[key]) + '</span><button aria-pressed="' + (on ? 'true' : 'false') + '" class="admin-permission-toggle ' + (on ? 'on' : '') + '" data-account-action="toggle-permission" data-code="' + safeText(account.code || '') + '" data-permission="' + key + '" type="button"' + disabled + '>' + safeText(PERMISSION_LABELS[key]) + '</button></label>';
+        return '<label class="admin-switch-row"><span>' + safeText(PERMISSION_LABELS[key]) + '</span><button aria-label="' + safeText(PERMISSION_LABELS[key]) + ' 권한" aria-pressed="' + (on ? 'true' : 'false') + '" class="admin-permission-toggle ' + (on ? 'on' : '') + '" data-account-action="toggle-permission" data-code="' + safeText(account.code || '') + '" data-permission="' + key + '" type="button"' + disabled + '><span></span></button></label>';
       }).join('');
       const roleOptions = ['MEMBER','MANAGER','SUB_MASTER'].map(r => '<option value="' + r + '"' + (role === r ? ' selected' : '') + '>' + safeText(roleLabel(r)) + '</option>').join('');
       const roleSelect = isRoot ? '<span class="admin-account-role-fixed">MASTER</span>' : '<select class="admin-account-role-select" data-account-action="change-role" data-code="' + safeText(account.code || '') + '">' + roleOptions + '</select>'; 
@@ -472,8 +583,8 @@
         ? '<button class="admin-account-delete" type="button" disabled>삭제 불가</button>'
         : '<button class="admin-account-delete" data-account-action="delete-code" data-code="' + safeText(account.code || '') + '" type="button">코드 삭제</button>';
 
-      return '<article class="admin-account-row" data-role="' + safeText(role) + '" data-name="' + safeText(account.mainCharacter || '') + '" data-code="' + safeText(account.code || '') + '" data-permissions="' + safeText(account.permissions || '') + '">'
-        + '<div class="admin-account-main"><strong>' + safeText(account.mainCharacter || '-') + '</strong><span>' + (active ? '활성' : '비활성') + ' · ' + permissionText(account.permissions) + '</span></div>'
+      return '<article class="admin-account-row" data-original-role="' + safeText(role) + '" data-original-permissions="' + safeText(permDataset) + '" data-role="' + safeText(role) + '" data-name="' + safeText(account.mainCharacter || '') + '" data-code="' + safeText(account.code || '') + '" data-permissions="' + safeText(permDataset) + '">'
+        + '<div class="admin-account-main"><strong>' + safeText(account.mainCharacter || '-') + '</strong><span>' + (active ? '활성' : '비활성') + '</span><small data-account-summary>' + safeText(roleLabel(role)) + ' · ' + safeText(permissionText(account.permissions)) + '</small></div>'
         + '<code class="' + (isRoot ? 'admin-code-hidden' : '') + '">' + safeText(displayCode) + '</code>'
         + roleSelect
         + '<div class="admin-switch-list">' + toggleHtml + '</div>'
@@ -506,11 +617,14 @@
     if(action === 'toggle-permission'){
       const row = target.closest('.admin-account-row');
       const permission = target.dataset.permission || '';
-      const current = permissionArray(row?.dataset.permissions || '');
+      const current = normalizePermissions_(row?.dataset.permissions || '');
       const next = target.classList.contains('on')
         ? current.filter(item => item !== permission)
         : current.concat(permission).filter((item, index, arr) => arr.indexOf(item) === index);
-      await updateAccountPermissions(code, next);
+      if(row) row.dataset.permissions = next.join(',');
+      setPermissionToggleState_(target, next.includes(permission));
+      refreshPermissionSummary_(row);
+      markAccountRowDirty_(row);
       return;
     }
 
@@ -523,9 +637,11 @@
   async function handleAccountListChange(event){
     const target = event.target.closest('[data-account-action="change-role"]');
     if(!target) return;
-    const code = target.dataset.code || '';
+    const row = target.closest('.admin-account-row');
     const role = target.value || 'MEMBER';
-    await updateAccountRole(code, role);
+    if(row) row.dataset.role = role;
+    refreshPermissionSummary_(row);
+    markAccountRowDirty_(row);
   }
 
   async function updateAccountRole(code, role){
@@ -585,6 +701,11 @@
     document.getElementById('kinojoLoginBtn')?.addEventListener('click', ()=>openLoginModal());
     document.getElementById('kinojoLogoutBtn')?.addEventListener('click', ()=>{ clearSession(); toast('로그아웃되었습니다.'); });
     document.getElementById('adminAccountBtn')?.addEventListener('click', openAccountAdminModal);
+    document.addEventListener('click', e=>{
+      const tab = e.target.closest('[data-admin-panel="account"]');
+      if(tab) setTimeout(openAccountAdminModal, 0);
+    });
+    if(document.getElementById('kinojoAccountAdminInline')) setTimeout(openAccountAdminModal, 0);
     document.addEventListener('keydown', e=>{
       if(e.key === 'Escape'){
         closeLoginModal();

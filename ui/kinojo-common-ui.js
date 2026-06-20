@@ -73,10 +73,8 @@
               <div class="admin-pane-result" data-admin-result="growth"></div>
             </section>
             <section class="admin-panel-pane" data-admin-pane="account">
-              <div class="admin-pane-title"><strong>회원 관리</strong><span>코드 생성, 등급, 권한을 관리합니다.</span></div>
-              <div class="admin-pane-actions">
-                <button class="btn" id="adminAccountBtn" type="button">회원 코드 관리</button>
-              </div>
+              <div class="admin-pane-title"><strong>회원 관리</strong><span>코드 생성, 등급, 권한을 한 화면에서 관리합니다.</span></div>
+              <div class="admin-account-inline" id="kinojoAccountAdminInline"></div>
               <div class="admin-pane-result" data-admin-result="account"></div>
             </section>
             <section class="admin-panel-pane" data-admin-pane="system">
