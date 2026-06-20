@@ -13,7 +13,7 @@ ArcanaApp.loadingOverlay = {
       overlay.className = 'arcana-loading-overlay';
       overlay.innerHTML = `
         <div class="arcana-loading-box">
-          <img src="assets/images/loading-spinner.png" alt="로딩" />
+          <div class="kinojo-loader-ring" aria-hidden="true"></div>
           <span></span>
           <small>잠시만 기다려주세요</small>
         </div>
@@ -43,7 +43,7 @@ ArcanaApp.loadingOverlay = {
       overlay.className = 'arcana-page-loading-overlay';
       overlay.innerHTML = `
         <div class="arcana-page-loading-box" role="status" aria-live="polite">
-          <div class="arcana-page-spinner" aria-hidden="true"></div>
+          <div class="kinojo-loader-ring arcana-page-spinner" aria-hidden="true"></div>
           <strong></strong>
           <small>잠시만 기다려주세요.</small>
         </div>

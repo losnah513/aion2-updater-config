@@ -1,7 +1,7 @@
 /*
  * ARCANA CLASS SELECTOR CSS
  * 역할: 상단 클래스 선택 버튼만 담당한다.
- * 카드 회전형 선택 창은 class-showcase.css가 단독 담당한다.
+ * 카드 회전형 선택 창은 modal.css의 showcase 스타일이 담당한다.
  * 중복 방지: layout.css/main.css/cards.css에서는 이 버튼의 크기/형태를 정의하지 않는다.
  */
 .arcana-class-picker {

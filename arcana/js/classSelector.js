@@ -113,7 +113,6 @@ ArcanaApp.classSelector = {
 
     window.requestAnimationFrame(() => {
       showcase.classList.add('is-open');
-      ArcanaApp.classSelector.startShowcaseMotion();
     });
   },
 
@@ -121,7 +120,6 @@ ArcanaApp.classSelector = {
     const showcase = document.getElementById('arcanaClassShowcase');
     if (!showcase) return;
 
-    ArcanaApp.classSelector.stopShowcaseMotion();
     showcase.classList.remove('is-open', 'is-picked');
     showcase.setAttribute('aria-hidden', 'true');
 
@@ -259,116 +257,6 @@ ArcanaApp.classSelector = {
       });
       buttons.appendChild(nameButton);
     });
-
-    ArcanaApp.classSelector.updateShowcaseLayout();
-  },
-
-  updateShowcaseLayout(orbitAngleDeg = 0, elapsedSeconds = 0) {
-    const showcase = document.getElementById('arcanaClassShowcase');
-    if (!showcase) return;
-
-    const ringWrap = showcase.querySelector('.arcana-showcase-ring-wrap');
-    const cards = Array.from(showcase.querySelectorAll('.arcana-showcase-card'));
-    const count = cards.length;
-    if (!count || !ringWrap) return;
-
-    /*
-     * ARC-0.3.03 · 260615_02 Showcase Layout/Motion
-     * - 카드 수 기반 자동 배치
-     * - 선택 카드가 앞쪽 하단으로 오도록 기준 각도를 계산
-     * - 공전은 offset만 더하고, 각 카드 자전은 독립 wobble 값으로 분리
-     * - 카드 크기는 CSS 변수, 궤도 반경은 실제 쇼케이스 영역 크기로 계산한다.
-     */
-    const rect = ringWrap.getBoundingClientRect();
-    const width = Math.max(rect.width || 760, 320);
-    const height = Math.max(rect.height || 340, 240);
-    const isCompact = width < 560;
-    const step = 360 / count;
-    const selectedKey = ArcanaApp.state.showcaseSelectedKey || ArcanaApp.state.pendingClassKey || ArcanaApp.state.currentClassKey || '';
-    const selectedIndex = Math.max(0, cards.findIndex(card => card.dataset.classKey === selectedKey));
-
-    const overflowScale = count <= 8 ? 1 : Math.max(0.72, 8 / count);
-    const radiusX = Math.min(width * (isCompact ? 0.34 : 0.39), 320) * overflowScale;
-    const radiusY = Math.min(height * (isCompact ? 0.30 : 0.34), 132) * overflowScale;
-    const baseAngle = 90 - selectedIndex * step;
-    const motionAngle = Number.isFinite(orbitAngleDeg) ? orbitAngleDeg : 0;
-
-    cards.forEach((card, index) => {
-      const angleDeg = baseAngle + motionAngle + step * index;
-      const angle = angleDeg * Math.PI / 180;
-      const x = Math.cos(angle) * radiusX;
-      const y = Math.sin(angle) * radiusY - (isCompact ? 4 : 2);
-
-      // sin(angle)이 클수록 화면 앞쪽/하단에 가까운 카드로 취급한다.
-      const frontDepth = (Math.sin(angle) + 1) / 2;
-      const sideDepth = Math.abs(Math.cos(angle));
-      const scale = (0.66 + frontDepth * 0.25 - sideDepth * 0.015) * overflowScale;
-      const z = Math.round((frontDepth - 0.42) * (isCompact ? 44 : 58));
-      const rotateX = 5 + frontDepth * 9;
-      const rotateY = Math.cos(angle) * -30;
-      const rotateZ = Math.cos(angle) * -18;
-      const wobbleSeed = index * 1.37;
-      const wobbleSpeed = 0.78 + (index % 5) * 0.11;
-      const wobbleAmount = 1.25 + (index % 4) * 0.32;
-      const wobble = Math.sin(elapsedSeconds * wobbleSpeed + wobbleSeed) * wobbleAmount;
-      const opacity = 0.46 + frontDepth * 0.54;
-      const blur = frontDepth < 0.16 ? 0.3 : 0;
-      const saturation = 0.86 + frontDepth * 0.16;
-      const brightness = 0.96 + frontDepth * 0.08;
-      const zIndex = Math.round(20 + frontDepth * 90 + (count - index) * 0.01);
-
-      card.style.setProperty('--showcase-x', `${x.toFixed(1)}px`);
-      card.style.setProperty('--showcase-y', `${y.toFixed(1)}px`);
-      card.style.setProperty('--showcase-z', `${z}px`);
-      card.style.setProperty('--showcase-rx', `${rotateX.toFixed(1)}deg`);
-      card.style.setProperty('--showcase-ry', `${rotateY.toFixed(1)}deg`);
-      card.style.setProperty('--showcase-rz', `${rotateZ.toFixed(1)}deg`);
-      card.style.setProperty('--showcase-wobble', `${wobble.toFixed(2)}deg`);
-      card.style.setProperty('--showcase-scale', scale.toFixed(3));
-      card.style.setProperty('--showcase-opacity', opacity.toFixed(3));
-      card.style.setProperty('--showcase-blur', `${blur.toFixed(2)}px`);
-      card.style.setProperty('--showcase-saturation', saturation.toFixed(3));
-      card.style.setProperty('--showcase-brightness', brightness.toFixed(3));
-      card.style.zIndex = String(zIndex);
-    });
-  },
-
-  startShowcaseMotion() {
-    const showcase = document.getElementById('arcanaClassShowcase');
-    if (!showcase || showcase.hidden) return;
-
-    ArcanaApp.classSelector.stopShowcaseMotion();
-
-    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) {
-      ArcanaApp.classSelector.updateShowcaseLayout(0, 0);
-      return;
-    }
-
-    const startTime = performance.now();
-    const orbitSpeedDegPerSecond = 4.2;
-
-    const tick = now => {
-      const currentShowcase = document.getElementById('arcanaClassShowcase');
-      if (!currentShowcase || currentShowcase.hidden || !currentShowcase.classList.contains('is-open')) {
-        ArcanaApp.classSelector.stopShowcaseMotion();
-        return;
-      }
-
-      const elapsedSeconds = (now - startTime) / 1000;
-      const orbitAngle = (elapsedSeconds * orbitSpeedDegPerSecond) % 360;
-      ArcanaApp.classSelector.updateShowcaseLayout(orbitAngle, elapsedSeconds);
-      ArcanaApp.classSelector._showcaseMotionFrame = window.requestAnimationFrame(tick);
-    };
-
-    ArcanaApp.classSelector._showcaseMotionFrame = window.requestAnimationFrame(tick);
-  },
-
-  stopShowcaseMotion() {
-    if (ArcanaApp.classSelector._showcaseMotionFrame) {
-      window.cancelAnimationFrame(ArcanaApp.classSelector._showcaseMotionFrame);
-      ArcanaApp.classSelector._showcaseMotionFrame = null;
-    }
   },
 
   isTouchMode() {
