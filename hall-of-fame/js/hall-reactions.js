@@ -16,12 +16,72 @@ function positionReactionPopover(anchor,pop){
   pop.dataset.fixedLeft=String(left);
   pop.dataset.fixedTop=String(top);
 }
-function closeReactionModal(){const pop=document.getElementById("reactionPopover");if(pop){pop.style.display="none";pop.setAttribute("aria-hidden","true")}currentReactionItem=null}
+function closeReactionModal(){hideCharacterPreview_();const pop=document.getElementById("reactionPopover");if(pop){pop.style.display="none";pop.setAttribute("aria-hidden","true")}currentReactionItem=null}
 function getVisitorId(){let id=localStorage.getItem("kinojoVisitorId");if(!id){id="v_"+Date.now()+"_"+Math.random().toString(36).slice(2);localStorage.setItem("kinojoVisitorId",id)}return id}
 function todayKey(){return new Date().toLocaleDateString("ko-KR",{timeZone:"Asia/Seoul"})}
 function checkLocalReactionLimit(name,type){const day=todayKey();const sameKey="kinojo_react_"+day+"_"+name+"_"+type;const countKey="kinojo_react_count_"+day+"_"+type;if(localStorage.getItem(sameKey)==="1")return "같은 캐릭터에게 같은 반응은 하루 1번만 남길 수 있습니다.";const count=Number(localStorage.getItem(countKey)||"0");if(count>=3)return (type==="like"?"좋아요":"싫어요")+"는 하루 3번까지만 남길 수 있습니다.";return ""}
 function markLocalReaction(name,type){const day=todayKey();const sameKey="kinojo_react_"+day+"_"+name+"_"+type;const countKey="kinojo_react_count_"+day+"_"+type;localStorage.setItem(sameKey,"1");localStorage.setItem(countKey,String(Number(localStorage.getItem(countKey)||"0")+1))}
-async function bindCharacterButtons(){document.querySelectorAll("[data-character]").forEach(btn=>{btn.onclick=ev=>{ev.stopPropagation();const name=btn.dataset.character;const all=[...(hallData?.overallAll||[]),...(hallData?.overallMain||[])];const found=all.find(x=>x.name===name)||{name};openReactionModal(found,btn)}});document.querySelectorAll("[data-reaction-card]").forEach(card=>{card.onclick=()=>{reactionCarouselPausedUntil=Date.now()+10000}})}
+function findHallCharacterByName(name){
+  const target=String(name||"").trim();
+  if(!target)return {name:""};
+  const groups=[
+    hallData?.overallAll,
+    hallData?.overallMain,
+    hallData?.demonFamilyAll,
+    hallData?.demonFamily,
+    hallData?.partyFriendAll,
+    hallData?.partyFriend,
+    hallData?.newChicks,
+    hallData?.growthTop,
+    hallData?.bulkTop,
+    hallData?.pveTop,
+    hallData?.pvpTop,
+    hallData?.mvpCandidatesTop3,
+    hallData?.mvp?[hallData.mvp]:[]
+  ];
+  for(const group of groups){
+    const found=(group||[]).find(item=>String(item?.name||"").trim()===target);
+    if(found)return found;
+  }
+  return {name:target};
+}
+function getCharacterPreviewTooltip_(){
+  let tooltip=document.getElementById("characterPreviewTooltip");
+  if(tooltip)return tooltip;
+  tooltip=document.createElement("div");
+  tooltip.id="characterPreviewTooltip";
+  tooltip.className="character-preview-tooltip";
+  tooltip.setAttribute("aria-hidden","true");
+  tooltip.innerHTML='<div class="character-preview-avatar"></div><div class="character-preview-name"></div>';
+  document.body.appendChild(tooltip);
+  return tooltip;
+}
+function hideCharacterPreview_(){
+  const tooltip=document.getElementById("characterPreviewTooltip");
+  if(!tooltip)return;
+  tooltip.classList.remove("is-visible");
+  tooltip.setAttribute("aria-hidden","true");
+}
+function showCharacterPreview_(item,anchor){
+  const imageUrl=String(item?.profileImageUrl||"").trim();
+  if(!imageUrl||!anchor)return;
+  const tooltip=getCharacterPreviewTooltip_();
+  const avatar=tooltip.querySelector(".character-preview-avatar");
+  const name=tooltip.querySelector(".character-preview-name");
+  if(avatar)avatar.innerHTML='<img src="'+imageUrl.replace(/"/g,"%22")+'" alt="">';
+  if(name)name.textContent=item?.name||"캐릭터";
+  const rect=anchor.getBoundingClientRect();
+  const size=116;
+  let left=rect.left+(rect.width/2)-(size/2);
+  left=Math.max(12,Math.min(window.innerWidth-size-12,left));
+  let top=rect.top-size-12;
+  if(top<12)top=rect.bottom+12;
+  tooltip.style.left=left+"px";
+  tooltip.style.top=top+"px";
+  tooltip.classList.add("is-visible");
+  tooltip.setAttribute("aria-hidden","false");
+}
+async function bindCharacterButtons(){document.querySelectorAll("[data-character]").forEach(btn=>{btn.onclick=ev=>{ev.stopPropagation();const name=btn.dataset.character;const found=findHallCharacterByName(name);openReactionModal(found,btn)};btn.onmouseenter=()=>showCharacterPreview_(findHallCharacterByName(btn.dataset.character),btn);btn.onmouseleave=hideCharacterPreview_;btn.onfocus=()=>showCharacterPreview_(findHallCharacterByName(btn.dataset.character),btn);btn.onblur=hideCharacterPreview_;});document.querySelectorAll("[data-reaction-card]").forEach(card=>{card.onclick=()=>{reactionCarouselPausedUntil=Date.now()+10000}})}
 
 
 /* knj-infoweb(v_260603_01) reaction submit guard patch */
@@ -34,6 +94,7 @@ function updateReactionSubmitState_(){
   submitBtn.classList.toggle("is-sending",!!reactionSubmitting);
 }
 function openReactionModal(item,anchor){
+  hideCharacterPreview_();
   if(window.KinojoAuth && !window.KinojoAuth.requireLogin('로그인 후 좋아요·싫어요를 남길 수 있습니다.')){
     return;
   }
@@ -45,10 +106,22 @@ function openReactionModal(item,anchor){
   const profileImage=document.getElementById("reactionProfileImage");
   const profileName=document.getElementById("reactionProfileName");
   const profileSub=document.getElementById("reactionProfileSub");
+  const detailLink=document.getElementById("reactionDetailLink");
   const imageUrl=String(item?.profileImageUrl||"").trim();
+  const detailUrl=String(item?.detailUrl||"").trim();
   if(title)title.textContent=(item?.name||"캐릭터")+"님께 한마디";
   if(profileName)profileName.textContent=item?.name||"캐릭터";
   if(profileSub)profileSub.textContent=[item?.className||"",item?.meta||item?.serverName||""].filter(Boolean).join(" · ")||"좋아요·싫어요를 남겨보세요";
+  if(detailLink){
+    if(detailUrl){
+      detailLink.href=detailUrl;
+      detailLink.style.display="inline-flex";
+      detailLink.setAttribute("aria-label",(item?.name||"캐릭터")+" 아이온2 캐릭터 정보실 열기");
+    }else{
+      detailLink.removeAttribute("href");
+      detailLink.style.display="none";
+    }
+  }
   if(profileImage){
     if(imageUrl){
       profileImage.classList.remove("is-empty");
