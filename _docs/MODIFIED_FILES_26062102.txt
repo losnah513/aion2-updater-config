@@ -1,0 +1,28 @@
+KINOJO 1.3.1.00 - 2026-06-21 02 수정 파일
+
+[WEB]
+- GitHub_Pages/hall-of-fame/js/hall-events.js
+  - 명예의 전당 전용 adminMenuBtn/adminDropdownClose onclick 재바인딩 제거.
+  - 관리 패널 열기/닫기는 공통 UI(kinojo-common-ui.js)에서만 담당하도록 정리.
+  - 기존 공통 toggle과 Hall 전용 onclick이 동시에 실행되어 패널이 즉시 닫히던 문제 수정.
+
+- GitHub_Pages/ui/kinojo-components.css
+  - 공통 컴포넌트 버튼 selector에서 admin-menu-btn/admin-dropdown-close 제외.
+  - 명예의 전당에서 관리 버튼이 components.css의 !important 라운드 규칙에 끌려가던 문제 정리.
+  - 신규 덮어쓰기 CSS 추가 없이 기존 selector 직접 수정.
+
+- GitHub_Pages/hall-of-fame/index.html
+  - 수정된 kinojo-components.css 캐시값 26062102로 갱신.
+  - 수정된 hall-events.js 캐시값 26062102로 갱신.
+
+[APPSCRIPT]
+- 수정 없음.
+
+[EXTENSION]
+- 수정 없음.
+
+[검수]
+- adminMenuBtn onclick 직접 바인딩 제거 확인.
+- admin-menu-btn이 kinojo-components.css 공통 버튼 selector에서 제외된 것 확인.
+- JS 문법 검사 대상.
+- ZIP 무결성 검수 대상.
