@@ -596,3 +596,34 @@ body[data-kinojo-role="MASTER"] .master-only{display:grid!important;}
   .admin-pane-title{display:grid;}
   .admin-pane-title span{text-align:left;}
 }
+
+/* 26062112: login code request / admin inquiry notice */
+.kinojo-code-request-box{
+  display:grid;
+  gap:8px;
+  margin-top:10px;
+  padding:12px;
+  border:1px solid rgba(37,99,235,.14);
+  border-radius:14px;
+  background:linear-gradient(180deg,#f8fbff,#fff);
+}
+.kinojo-code-request-box strong{font-size:13px;font-weight:1000;color:#172554;}
+.kinojo-code-request-box p{margin:0;color:#64748b;font-size:12px;line-height:1.35;}
+.kinojo-code-request-submit{
+  min-height:34px;
+  border:1px solid rgba(37,99,235,.22);
+  border-radius:11px;
+  background:#fff;
+  color:#1d4ed8;
+  font-size:12px;
+  font-weight:1000;
+  cursor:pointer;
+}
+.kinojo-code-request-submit:hover:not(:disabled){background:#eff6ff;border-color:rgba(37,99,235,.42);}
+.kinojo-code-request-submit:disabled{opacity:.68;cursor:wait;}
+.kinojo-inquiry-notice-card{max-width:420px;}
+.kinojo-inquiry-list{list-style:none;margin:0;padding:0;display:grid;gap:6px;}
+.kinojo-inquiry-list li{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;padding:8px 10px;border:1px solid rgba(15,23,42,.08);border-radius:10px;background:#f8fafc;font-size:12px;}
+.kinojo-inquiry-list strong{color:#2563eb;font-weight:1000;}
+.kinojo-inquiry-list span{font-weight:900;color:#0f172a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.kinojo-inquiry-list small{grid-column:1/-1;color:#64748b;font-size:11px;}

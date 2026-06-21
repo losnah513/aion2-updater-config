@@ -114,6 +114,82 @@
     return prefix + 'class_icon_' + file + '.png';
   }
 
+
+  function visitorId_(){
+    let id = localStorage.getItem('kinojoVisitorId');
+    if(!id){ id = 'v_' + Date.now() + '_' + Math.random().toString(36).slice(2); localStorage.setItem('kinojoVisitorId', id); }
+    return id;
+  }
+
+  async function submitLoginCodeRequest(){
+    const modal = ensureLoginModal();
+    const input = modal.querySelector('#kinojoCodeRequestCharacter');
+    const memo = modal.querySelector('#kinojoCodeRequestMemo');
+    const status = modal.querySelector('#kinojoCodeRequestStatus');
+    const button = modal.querySelector('#kinojoCodeRequestBtn');
+    const characterName = String(input?.value || '').trim();
+    const memoText = String(memo?.value || '').trim();
+    if(!characterName){ if(status) status.textContent = '코드를 발급받을 캐릭터명을 입력해 주세요.'; return; }
+    try{
+      if(button) button.disabled = true;
+      if(status) status.textContent = '요청 접수 중...';
+      const res = await fetch(apiUrl(), { method:'POST', body:JSON.stringify({
+        action:'inquiryRequest',
+        category:'코드요청',
+        characterName,
+        memo:memoText,
+        requester:visitorId_(),
+        url:location.href
+      })});
+      const data = await res.json();
+      if(!data.ok) throw new Error(data.message || '요청 접수 실패');
+      if(status) status.textContent = '요청이 접수되었습니다. 관리자가 확인 후 코드를 발급합니다.';
+      if(input) input.value = '';
+      if(memo) memo.value = '';
+    }catch(err){
+      if(status) status.textContent = err.message || String(err);
+    }finally{
+      if(button) button.disabled = false;
+    }
+  }
+
+  async function checkAdminInquiries_(){
+    const session = getSession();
+    if(!session || !canOpenManage(roleOf(session))) return;
+    try{
+      const res = await fetch(apiUrl(), { method:'POST', body:JSON.stringify({ action:'adminInquiryList', sessionToken:getToken() }) });
+      const data = await res.json();
+      if(!data.ok || !Number(data.openCount || 0)) return;
+      showAdminInquiryNotice_(data.inquiries || [], Number(data.openCount || 0));
+    }catch(e){}
+  }
+
+  function showAdminInquiryNotice_(inquiries, openCount){
+    if(document.getElementById('kinojoAdminInquiryNotice')) return;
+    const modal = document.createElement('section');
+    modal.id = 'kinojoAdminInquiryNotice';
+    modal.className = 'kinojo-login-modal open kinojo-inquiry-notice-modal';
+    modal.setAttribute('aria-hidden','false');
+    const items = (inquiries || []).slice(0,5).map(item=>{
+      return '<li><strong>' + safeText(item.category || '문의') + '</strong> '
+        + '<span>' + safeText(item.characterName || item.memo || '-') + '</span>'
+        + '<small>' + safeText(item.createdAt || '') + '</small></li>';
+    }).join('');
+    modal.innerHTML = '<div class="kinojo-login-card kinojo-inquiry-notice-card" role="dialog" aria-modal="true">'
+      + '<button class="kinojo-login-close" type="button" aria-label="닫기">×</button>'
+      + '<div class="kinojo-login-kicker">ADMIN REQUEST</div>'
+      + '<h2>확인할 요청이 있습니다</h2>'
+      + '<p>미확인 문의/코드요청 ' + safeText(openCount) + '건이 접수되어 있습니다.</p>'
+      + '<ul class="kinojo-inquiry-list">' + items + '</ul>'
+      + '<button class="kinojo-login-submit" type="button" id="kinojoInquiryNoticeOkBtn">확인</button>'
+      + '</div>';
+    document.body.appendChild(modal);
+    const close = ()=>{ modal.remove(); };
+    modal.querySelector('.kinojo-login-close')?.addEventListener('click', close);
+    modal.querySelector('#kinojoInquiryNoticeOkBtn')?.addEventListener('click', close);
+    modal.addEventListener('click', e=>{ if(e.target === modal) close(); });
+  }
+
   function updateStatus(){
     const label = document.getElementById('kinojoAuthLabel');
     const loginBtn = document.getElementById('kinojoLoginBtn');
@@ -175,11 +251,20 @@
       + '<input id="kinojoLoginCodeInput" class="kinojo-login-input" maxlength="12" placeholder="예: AB1234 또는 관리자 코드" autocomplete="one-time-code" />'
       + '<button id="kinojoLoginSubmitBtn" class="kinojo-login-submit" type="button"><span class="kinojo-login-btn-text">로그인</span></button>'
       + '<div id="kinojoLoginStatus" class="kinojo-login-status"></div>'
+      + '<div class="kinojo-code-request-box">'
+      + '<strong>코드를 발급받고 싶으신가요?</strong>'
+      + '<p>캐릭터명을 남겨주시면 관리자가 확인 후 코드를 발급합니다.</p>'
+      + '<input id="kinojoCodeRequestCharacter" class="kinojo-login-input" placeholder="캐릭터명" autocomplete="off" />'
+      + '<input id="kinojoCodeRequestMemo" class="kinojo-login-input" placeholder="남길 말 선택 입력" autocomplete="off" />'
+      + '<button id="kinojoCodeRequestBtn" class="kinojo-code-request-submit" type="button">코드 요청하기</button>'
+      + '<div id="kinojoCodeRequestStatus" class="kinojo-login-status"></div>'
+      + '</div>'
       + '</div>';
     document.body.appendChild(modal);
     modal.addEventListener('click', e=>{ if(e.target === modal) closeLoginModal(); });
     modal.querySelector('#kinojoLoginCloseBtn')?.addEventListener('click', closeLoginModal);
     modal.querySelector('#kinojoLoginSubmitBtn')?.addEventListener('click', submitLogin);
+    modal.querySelector('#kinojoCodeRequestBtn')?.addEventListener('click', submitLoginCodeRequest);
     modal.querySelector('#kinojoLoginCodeInput')?.addEventListener('keydown', e=>{ if(e.key === 'Enter') submitLogin(); });
     return modal;
   }
@@ -225,6 +310,7 @@
       if(!data.ok) throw new Error(data.message || '로그인에 실패했습니다.');
       setSession(data.session, data.account);
       if(status) status.textContent = '로그인되었습니다.';
+      setTimeout(checkAdminInquiries_, 450);
       setTimeout(closeLoginModal, 280);
     }catch(err){
       if(status) status.textContent = err.message || String(err);
