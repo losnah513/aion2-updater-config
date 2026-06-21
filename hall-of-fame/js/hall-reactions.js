@@ -42,7 +42,22 @@ function openReactionModal(item,anchor){
   currentReactionType="like";
   const title=document.getElementById("reactionModalTitle");
   const input=document.getElementById("reactionComment");
+  const profileImage=document.getElementById("reactionProfileImage");
+  const profileName=document.getElementById("reactionProfileName");
+  const profileSub=document.getElementById("reactionProfileSub");
+  const imageUrl=String(item?.profileImageUrl||"").trim();
   if(title)title.textContent=(item?.name||"캐릭터")+"님께 한마디";
+  if(profileName)profileName.textContent=item?.name||"캐릭터";
+  if(profileSub)profileSub.textContent=[item?.className||"",item?.meta||item?.serverName||""].filter(Boolean).join(" · ")||"좋아요·싫어요를 남겨보세요";
+  if(profileImage){
+    if(imageUrl){
+      profileImage.classList.remove("is-empty");
+      profileImage.innerHTML='<img src="'+imageUrl.replace(/"/g,"%22")+'" alt="">';
+    }else{
+      profileImage.classList.add("is-empty");
+      profileImage.textContent="PROFILE";
+    }
+  }
   if(input){
     input.value="";
     input.oninput=updateReactionSubmitState_;
