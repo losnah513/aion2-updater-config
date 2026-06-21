@@ -118,11 +118,8 @@ function bindHallStaticEvents(){
   const footerSuggestBtn=document.getElementById("footerSuggestBtn");
   if(footerSuggestBtn)footerSuggestBtn.onclick=openSuggestionPanel;
 
-  const adminMenuBtn=document.getElementById("adminMenuBtn");
-  if(adminMenuBtn)adminMenuBtn.onclick=openAdminDropdown;
-
-  const adminDropdownClose=document.getElementById("adminDropdownClose");
-  if(adminDropdownClose)adminDropdownClose.onclick=closeAdminMenu;
+  // 관리 패널 열기/닫기는 공통 UI(kinojo-common-ui.js)에서만 담당한다.
+  // Hall 전용 onclick을 다시 걸면 공통 toggle과 충돌해 버튼이 즉시 닫히는 문제가 생긴다.
 
   const adminLoginBtn=document.getElementById("adminLoginBtn");
   if(adminLoginBtn)adminLoginBtn.onclick=adminLogin;

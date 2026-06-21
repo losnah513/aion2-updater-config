@@ -213,7 +213,14 @@ function overallTable(){
 }
 function setHallSlot(id,html){
   const el=document.getElementById(id);
-  if(el)el.innerHTML=html;
+  if(!el)return;
+  el.classList.remove('is-ready','is-pending');
+  el.classList.add('is-rendering');
+  el.innerHTML=html;
+  requestAnimationFrame(()=>{
+    el.classList.remove('is-rendering');
+    el.classList.add('is-ready');
+  });
 }
 
 function bindHallAfterSlot(){
@@ -222,15 +229,37 @@ function bindHallAfterSlot(){
   requestAnimationFrame(applyOverflowMarquee);
 }
 
+function compactImageList(paths){
+  return [...new Set((paths||[]).filter(Boolean))];
+}
+
+function rankEmblemsForList(list,totalFallback=10){
+  const items=Array.isArray(list)?list:[];
+  const total=items.length||totalFallback;
+  return compactImageList(items.slice(0,Math.max(5,items.length)).map((_,idx)=>RANK_EMBLEMS[rankEmblemKey(idx+1,total)]));
+}
+
+function classIconsForList(list){
+  const items=Array.isArray(list)?list:[];
+  return compactImageList(items.map(item=>CLASS_ICONS[item?.className]));
+}
+
+function currentOverallPreviewList(){
+  return currentRankList().slice((page-1)*PAGE_SIZE,page*PAGE_SIZE);
+}
+
 function hallSlotTasks(){
+  const pveList=hallData?.pveTop||[];
+  const pvpList=hallData?.pvpTop||[];
+  const overallList=currentOverallPreviewList();
   return [
-    ['hallSlotMvp',()=>mvpSection()],
-    ['hallSlotReactions',()=>reactionBoard()],
-    ['hallSlotAwards',()=>awardsBoard()],
-    ['hallSlotPve',()=>rankBox("⚔ PVE TOP 5","",hallData.pveTop)],
-    ['hallSlotPvp',()=>rankBox("⚔ PVP TOP 5","",hallData.pvpTop)],
-    ['hallSlotRelations',()=>combinedRelationBox()],
-    ['hallSlotOverall',()=>overallTable()]
+    {id:'hallSlotMvp',images:[RANK_EMBLEMS.mvp],render:()=>mvpSection()},
+    {id:'hallSlotReactions',images:[],render:()=>reactionBoard()},
+    {id:'hallSlotAwards',images:[],render:()=>awardsBoard()},
+    {id:'hallSlotPve',images:rankEmblemsForList(pveList).concat(classIconsForList(pveList)),render:()=>rankBox("⚔ PVE TOP 5","",hallData.pveTop)},
+    {id:'hallSlotPvp',images:rankEmblemsForList(pvpList).concat(classIconsForList(pvpList)),render:()=>rankBox("⚔ PVP TOP 5","",hallData.pvpTop)},
+    {id:'hallSlotRelations',images:[],render:()=>combinedRelationBox()},
+    {id:'hallSlotOverall',images:rankEmblemsForList(overallList,currentRankList().length).concat(Object.values(CLASS_ICONS)),render:()=>overallTable()}
   ];
 }
 
@@ -240,26 +269,36 @@ function hallShellExists(){
 
 function renderHallShell(showSpinners){
   app.className='';
-  app.innerHTML='<div id="hallSlotMvp">'+(showSpinners?kinojoCardSpinner('시즌 MVP 준비 중'):'')+'</div>'
-    + '<div id="hallSlotReactions">'+(showSpinners?kinojoCardSpinner('반응 현황 불러오는 중'):'')+'</div>'
-    + '<div id="hallSlotAwards">'+(showSpinners?kinojoCardSpinner('성장왕/벌크업 진단 중'):'')+'</div>'
-    + '<div class="dashboard"><div><div class="top-grid"><div id="hallSlotPve">'+(showSpinners?kinojoCardSpinner('PVE TOP 5 불러오는 중'):'')+'</div><div id="hallSlotPvp">'+(showSpinners?kinojoCardSpinner('PVP TOP 5 불러오는 중'):'')+'</div></div></div><div class="side-stack"><div id="hallSlotRelations">'+(showSpinners?kinojoCardSpinner('관계 카드 불러오는 중'):'')+'</div></div></div>'
-    + '<div id="hallSlotOverall">'+(showSpinners?kinojoCardSpinner('전체 순위표 불러오는 중'):'')+'</div>';
+  const slotClass='hall-slot is-pending';
+  app.innerHTML='<div id="hallSlotMvp" class="'+slotClass+'">'+(showSpinners?kinojoCardSpinner('시즌 MVP 준비 중'):'')+'</div>'
+    + '<div id="hallSlotReactions" class="'+slotClass+'">'+(showSpinners?kinojoCardSpinner('반응 현황 불러오는 중'):'')+'</div>'
+    + '<div id="hallSlotAwards" class="'+slotClass+'">'+(showSpinners?kinojoCardSpinner('성장왕/벌크업 진단 중'):'')+'</div>'
+    + '<div class="dashboard"><div><div class="top-grid"><div id="hallSlotPve" class="'+slotClass+'">'+(showSpinners?kinojoCardSpinner('PVE TOP 5 불러오는 중'):'')+'</div><div id="hallSlotPvp" class="'+slotClass+'">'+(showSpinners?kinojoCardSpinner('PVP TOP 5 불러오는 중'):'')+'</div></div></div><div class="side-stack"><div id="hallSlotRelations" class="'+slotClass+'">'+(showSpinners?kinojoCardSpinner('관계 카드 불러오는 중'):'')+'</div></div></div>'
+    + '<div id="hallSlotOverall" class="'+slotClass+'">'+(showSpinners?kinojoCardSpinner('전체 순위표 불러오는 중'):'')+'</div>';
 }
 
 function renderHallSlots(options={}){
   if(!hallData)return;
-  const stagger=options.stagger===true;
-  hallSlotTasks().forEach(([id,fn],index)=>{
+  const progressive=options.progressive===true;
+  const token=(window.__KINOJO_HALL_RENDER_TOKEN__||0)+1;
+  window.__KINOJO_HALL_RENDER_TOKEN__=token;
+
+  hallSlotTasks().forEach((task,index)=>{
     const draw=()=>{
-      setHallSlot(id,fn());
+      if(token!==window.__KINOJO_HALL_RENDER_TOKEN__)return;
+      setHallSlot(task.id,task.render());
       bindHallAfterSlot();
     };
-    if(stagger){
-      window.setTimeout(()=>window.requestAnimationFrame(draw),index*95);
-    }else{
-      draw();
+
+    if(progressive){
+      const wait=typeof preloadImages==='function'?preloadImages(task.images):Promise.resolve();
+      window.setTimeout(()=>{
+        wait.then(()=>window.requestAnimationFrame(draw)).catch(()=>window.requestAnimationFrame(draw));
+      },index*35);
+      return;
     }
+
+    draw();
   });
 }
 
@@ -285,5 +324,5 @@ function render(options={}){
   if(initial){
     renderHallShell(showSpinners);
   }
-  renderHallSlots({stagger:initial && showSpinners});
+  renderHallSlots({progressive:initial && showSpinners});
 }

@@ -96,13 +96,21 @@ function renderHallLoadingLayout(){
     + '<section class="overall hall-loading-shell">'+kinojoCardSpinner('전체 순위표 불러오는 중')+'</section>';
 }
 
+const HALL_PRELOADED_IMAGES=new Map();
+
 function preloadImages(paths){
-  return Promise.all(paths.map(src=>new Promise(resolve=>{
-    const img=new Image();
-    img.onload=()=>resolve(true);
-    img.onerror=()=>resolve(false);
-    img.src=src+"?v=1c101e";
-  })));
+  const unique=[...new Set((paths||[]).filter(Boolean))];
+  return Promise.all(unique.map(src=>{
+    if(HALL_PRELOADED_IMAGES.has(src))return HALL_PRELOADED_IMAGES.get(src);
+    const job=new Promise(resolve=>{
+      const img=new Image();
+      img.onload=()=>resolve(true);
+      img.onerror=()=>resolve(false);
+      img.src=src;
+    });
+    HALL_PRELOADED_IMAGES.set(src,job);
+    return job;
+  }));
 }
 
 const HALL_CACHE_KEY="kinojo_hall_cache_v26062011";
@@ -162,7 +170,7 @@ function applyHallData(data,{fromCache=false,initial=false,skipIfSame=false}={})
     topbarUpdate.textContent=hallData?.updatedAt?"업데이트 "+hallData.updatedAt+suffix:"업데이트 완료"+suffix;
   }
   stopLoadingText();
-  render({initial:initial,showSpinners:initial&&!fromCache});
+  render({initial:initial,showSpinners:initial});
   return true;
 }
 
@@ -186,7 +194,6 @@ async function load(){
   startLoadingText();
   const cached=readHallCache();
   try{
-    await preloadImages(Object.values(RANK_EMBLEMS).concat(Object.values(CLASS_ICONS)));
     if(cached){
       applyHallData(cached,{fromCache:true,initial:true});
       fetchHallDataFresh().then(data=>applyHallData(data,{skipIfSame:true})).catch(()=>{});

@@ -145,39 +145,40 @@ body.drawer-open{
   display:grid;
   grid-template-columns:minmax(72px,1fr) auto auto}
 .admin-visit-amount{
-  height:36px!important;
-  padding:8px 10px!important;
+  height:32px!important;
+  padding:0 9px!important;
   text-align:right}
 .admin-visit-unit{
-  font-size:12px;
+  font-size:11px;
   font-weight:1000;
   color:#52657f}
 .admin-swap{
   display:inline-grid;
   grid-auto-flow:column;
   border:1px solid var(--line);
-  border-radius:var(--radius-control);
+  border-radius:9px;
   overflow:hidden;
   background:#fff}
 .admin-swap-btn{
   border:0;
   border-right:1px solid var(--line);
   background:#fff;
-  color:#64748b;
-  min-width:42px;
-  height:34px;
+  color:#17233a;
+  min-width:38px;
+  height:32px;
+  font-size:11px;
   font-weight:1000;
   cursor:pointer}
 .admin-swap-btn:last-child{
   border-right:0}
 .admin-swap-btn.active{
-  background:linear-gradient(135deg,#dbeafe,#ede9fe);
-  color:#1e3a8a}
+  background:#eff6ff;
+  color:#2563eb}
 .admin-sign-swap .admin-swap-btn{
-  min-width:36px}
+  min-width:32px}
 .admin-visit-actions .btn{
-  height:36px;
-  padding:8px 11px!important}
+  height:32px;
+  padding:0 10px!important}
 
 
 .search,.btn,.page-btn,.send-btn,.reaction-choice button,.construction-ok{
@@ -1222,3 +1223,20 @@ body{background:#fff!important;}
 .relation-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .relation-server{font-size:11px;color:#7b8ba2;font-weight:900;white-space:nowrap;}
 .relation-reactions{justify-self:end;}
+
+/* 26062015: 카드별 progressive load - 스피너는 즉시 보이고 실제 카드만 준비 후 fade-in */
+.hall-slot{
+  transition:opacity .24s ease, transform .24s ease;
+}
+.hall-slot.is-pending{
+  opacity:1;
+  transform:translateY(0);
+}
+.hall-slot.is-rendering{
+  opacity:0;
+  transform:translateY(8px);
+}
+.hall-slot.is-ready{
+  opacity:1;
+  transform:translateY(0);
+}

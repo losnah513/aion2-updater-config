@@ -29,7 +29,7 @@ body{
   background:#fff!important;
   box-shadow:none!important;
 }
-.search,.btn,.page-btn,.send-btn,.reaction-choice button,.construction-ok,.pill,.admin-swap-btn,.admin-menu-btn,.admin-dropdown-close,.reaction-close{
+.search,.btn,.page-btn,.send-btn,.reaction-choice button,.construction-ok,.pill,.admin-swap-btn,.reaction-close{
   background:#fff!important;
   border-radius:var(--radius-control)!important;
   box-shadow:none!important;

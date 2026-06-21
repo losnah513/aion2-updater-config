@@ -475,9 +475,15 @@ body.kinojo-admin-user .kinojo-auth-label{color:#7c2d12;}
 .admin-pane-title strong{font-size:16px;color:#17233a;}
 .admin-pane-title span{font-size:10px;color:#64748b;font-weight:800;text-align:right;line-height:1.25;}
 .admin-pane-actions{display:flex;flex-wrap:wrap;gap:8px;}
-.admin-panel-modal .admin-pane-actions .btn,.admin-panel-modal .admin-visit-actions .btn,.admin-panel-modal .btn{appearance:none;border:1px solid rgba(120,145,180,.24);background:#fff;color:#17233a;border-radius:10px;min-height:36px;padding:0 12px;font-size:12px;font-weight:1000;cursor:pointer;box-shadow:none;transition:transform .16s ease,border-color .16s ease,background .16s ease,color .16s ease;}
-.admin-panel-modal .admin-pane-actions .btn:hover:not(:disabled),.admin-panel-modal .admin-visit-actions .btn:hover:not(:disabled),.admin-panel-modal .btn:hover:not(:disabled){transform:translateY(-1px);border-color:rgba(37,99,235,.38);background:#f8fbff;color:#2563eb;}
-.admin-panel-modal .admin-pane-actions .btn:active:not(:disabled),.admin-panel-modal .admin-visit-actions .btn:active:not(:disabled),.admin-panel-modal .btn:active:not(:disabled){transform:translateY(0) scale(.99);}
+/* 관리 패널 버튼은 텍스트 크기 대비 과한 높이/여백을 줄이고, 방문자수 토글 버튼까지 같은 규격으로 통일한다. */
+.admin-panel-modal .admin-pane-actions .btn,.admin-panel-modal .admin-visit-actions .btn,.admin-panel-modal .btn,.admin-panel-modal .admin-swap-btn{appearance:none;border:1px solid rgba(120,145,180,.24);background:#fff;color:#17233a;border-radius:9px;min-height:32px;height:32px;padding:0 10px;font-size:11px;font-weight:1000;line-height:1;cursor:pointer;box-shadow:none;transition:transform .16s ease,border-color .16s ease,background .16s ease,color .16s ease;}
+.admin-panel-modal .admin-pane-actions .btn:hover:not(:disabled),.admin-panel-modal .admin-visit-actions .btn:hover:not(:disabled),.admin-panel-modal .btn:hover:not(:disabled),.admin-panel-modal .admin-swap-btn:hover:not(:disabled){transform:translateY(-1px);border-color:rgba(37,99,235,.38);background:#f8fbff;color:#2563eb;}
+.admin-panel-modal .admin-pane-actions .btn:active:not(:disabled),.admin-panel-modal .admin-visit-actions .btn:active:not(:disabled),.admin-panel-modal .btn:active:not(:disabled),.admin-panel-modal .admin-swap-btn:active:not(:disabled){transform:translateY(0) scale(.99);}
+.admin-panel-modal .admin-swap{display:inline-grid;grid-auto-flow:column;border:1px solid rgba(120,145,180,.24);border-radius:9px;overflow:hidden;background:#fff;}
+.admin-panel-modal .admin-swap-btn{min-width:38px;border:0;border-right:1px solid rgba(120,145,180,.24);border-radius:0;}
+.admin-panel-modal .admin-swap-btn:last-child{border-right:0;}
+.admin-panel-modal .admin-swap-btn.active{background:#eff6ff;color:#2563eb;}
+.admin-panel-modal .admin-sign-swap .admin-swap-btn{min-width:32px;}
 .admin-pane-result{display:grid;gap:8px;}
 .admin-result-box{margin:0;}
 .master-only{display:none!important;}
@@ -517,7 +523,7 @@ body[data-kinojo-role="MASTER"] .master-only{display:grid!important;}
 .admin-account-inline .kinojo-account-input,
 .admin-account-inline .search,
 .admin-account-inline select{min-height:36px;height:36px;font-size:12px;border-radius:10px;box-sizing:border-box;}
-.admin-account-inline .btn{min-height:34px;height:34px;border-radius:10px;font-size:11px;padding:0 10px;}
+.admin-account-inline .btn{min-height:32px;height:32px;border-radius:9px;font-size:11px;padding:0 10px;}
 .admin-account-inline .kinojo-account-issue-box{margin-top:8px;padding:9px;border-radius:11px;}
 .admin-account-inline .kinojo-account-character-result{gap:2px;margin-bottom:8px;}
 .admin-account-inline .kinojo-account-help{font-size:10px;line-height:1.25;margin:5px 0 7px;color:#64748b;font-weight:800;}
