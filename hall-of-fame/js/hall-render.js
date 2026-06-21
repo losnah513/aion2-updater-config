@@ -201,7 +201,7 @@ function emptyRankRowHtml(rank){
 function searchToolsHtml(){
   const resultCount=currentRankList().length;
   const info=keyword?'<div class="search-info">현재 순위 영역에서만 '+resultCount+'명 검색됨</div>':'';
-  return '<section class="tools rank-tools"><input class="search" id="rankSearchInput" value="'+escapeHtml(keyword)+'" placeholder="캐릭터명 / 서버 / 직업 검색"><button class="btn" id="rankRefreshBtn" type="button">조회</button><button class="btn" id="rankClearBtn" type="button">초기화</button></section>'+info;
+  return '<section class="tools rank-tools"><input class="search" id="rankSearchInput" value="'+escapeHtml(keyword)+'" placeholder="캐릭터명 / 서버 / 직업 검색"><button class="btn" id="rankRefreshBtn" type="button">조회</button><button class="btn" id="rankClearBtn" type="button">초기화</button><button class="sub-toggle compact '+(includeSubs?'on':'')+'" id="subToggle" type="button"><span class="toggle-knob"></span><span class="toggle-text">'+(includeSubs?'부캐 ON':'부캐 OFF')+'</span></button></section>'+info;
 }
 
 function paginationHtml(totalPages){
@@ -225,9 +225,9 @@ function overallTable(){
   const slice=list.slice(start,start+PAGE_SIZE);
   const isClassMode=activeRankClass!=="전체";
   const title=activeRankClass==="전체"
-    ? '🏅 키노조 전체 순위'
+    ? '🏅 깡 레기온 전체 순위'
     : '<span class="rank-title-wrap"><span class="rank-title-text">'+escapeHtml(activeRankClass)+' 순위</span></span>';
-  const updateInfo='<div class="rank-standard-note">순위 기준: list 시트 전투력 업데이트 기준'+(hallData?.updatedAt?' · 최종 업데이트 '+escapeHtml(hallData.updatedAt):'')+'</div>';
+  const updateInfo='<span class="rank-standard-note">순위 기준: list 시트 전투력 업데이트 기준'+(hallData?.updatedAt?' · 최종 업데이트 '+escapeHtml(hallData.updatedAt):'')+'</span>';
 
   const rows=[];
 
@@ -249,7 +249,7 @@ function overallTable(){
     rows.push('<tr><td colspan="7"><div class="empty">해당 조건의 순위 데이터가 없습니다.</div></td></tr>');
   }
 
-  return '<section class="overall"><div class="overall-head"><div class="overall-title-block"><h2>'+title+'</h2>'+updateInfo+'</div><div class="overall-title-tools"><button class="sub-toggle compact '+(includeSubs?'on':'')+'" id="subToggle" type="button"><span class="toggle-knob"></span><span class="toggle-text">'+(includeSubs?'부캐 ON':'부캐 OFF')+'</span></button></div><div class="page-tools"><span>'+page+' / '+totalPages+'</span><button class="page-btn" data-page="prev">‹</button><button class="page-btn" data-page="next">›</button></div></div>'+searchToolsHtml()+rankTabs()+classReviewBoxHtml(activeRankClass)+'<div class="table-scroll"><table class="rank-table"><colgroup><col class="num"><col class="char-col"><col class="reaction-col"><col class="class-col"><col class="power-col"><col class="power-col"><col class="review-col"></colgroup><thead><tr><th class="num">순위</th><th>캐릭터명</th><th aria-label="좋아요 싫어요"></th><th>클래스</th><th>PVE</th><th>PVP</th><th>AI 리뷰</th></tr></thead><tbody>'+rows.join("")+'</tbody></table></div>'+paginationHtml(totalPages)+'</section>';
+  return '<section class="overall"><div class="overall-head"><div class="overall-title-block"><h2>'+title+'</h2>'+updateInfo+'</div></div>'+searchToolsHtml()+rankTabs()+classReviewBoxHtml(activeRankClass)+'<div class="table-scroll"><table class="rank-table"><colgroup><col class="num"><col class="char-col"><col class="reaction-col"><col class="class-col"><col class="power-col"><col class="power-col"><col class="review-col"></colgroup><thead><tr><th class="num">순위</th><th>캐릭터명</th><th aria-label="좋아요 싫어요"></th><th>클래스</th><th>PVE</th><th>PVP</th><th>AI 리뷰</th></tr></thead><tbody>'+rows.join("")+'</tbody></table></div>'+paginationHtml(totalPages)+'</section>';
 }
 function setHallSlot(id,html){
   const el=document.getElementById(id);

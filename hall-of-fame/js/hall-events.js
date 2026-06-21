@@ -18,14 +18,6 @@ function renderPreserveSearchFocus(){
 }
 
 function bindHallDynamicEvents(){
-  document.querySelectorAll("[data-page]").forEach(btn=>btn.onclick=()=>{
-    const total=Math.max(1,Math.ceil(currentRankList().length/PAGE_SIZE));
-    page+=btn.dataset.page==="next"?1:-1;
-    if(page<1)page=1;
-    if(page>total)page=total;
-    renderOverallOnly();
-  });
-
   document.querySelectorAll("[data-rank-page]").forEach(btn=>btn.onclick=()=>{
     const total=Math.max(1,Math.ceil(currentRankList().length/PAGE_SIZE));
     page=Math.max(1,Math.min(total,Number(btn.dataset.rankPage||1)));
