@@ -565,7 +565,6 @@
     if(!accounts.length){ box.innerHTML = '<div class="admin-account-empty">조회된 코드가 없습니다.</div>'; return; }
 
     box.innerHTML = accounts.map(account => {
-      const active = account.active === true || String(account.active).toUpperCase() === 'TRUE';
       const role = roleOf(account);
       const isRoot = role === 'MASTER';
       const displayCode = isRoot ? '마스터 계정' : (account.code || '-');
@@ -579,13 +578,12 @@
       const roleOptions = ['MEMBER','MANAGER','SUB_MASTER'].map(r => '<option value="' + r + '"' + (role === r ? ' selected' : '') + '>' + safeText(roleLabel(r)) + '</option>').join('');
       const roleSelect = isRoot ? '<span class="admin-account-role-fixed">MASTER</span>' : '<select class="admin-account-role-select" data-account-action="change-role" data-code="' + safeText(account.code || '') + '">' + roleOptions + '</select>'; 
       const deleteButton = isRoot
-        ? '<button class="admin-account-delete" type="button" disabled>삭제 불가</button>'
-        : '<button class="admin-account-delete" data-account-action="delete-code" data-code="' + safeText(account.code || '') + '" type="button">코드 삭제</button>';
+        ? '<button class="btn admin-account-delete" type="button" disabled>삭제 불가</button>'
+        : '<button class="btn admin-account-delete" data-account-action="delete-code" data-code="' + safeText(account.code || '') + '" type="button">코드 삭제</button>';
 
       return '<article class="admin-account-row" data-original-role="' + safeText(role) + '" data-original-permissions="' + safeText(permDataset) + '" data-role="' + safeText(role) + '" data-name="' + safeText(account.mainCharacter || '') + '" data-code="' + safeText(account.code || '') + '" data-permissions="' + safeText(permDataset) + '">'
-        + '<div class="admin-account-main"><strong>' + safeText(account.mainCharacter || '-') + '</strong><span>' + (active ? '활성' : '비활성') + '</span><small data-account-summary>' + safeText(roleLabel(role)) + ' · ' + safeText(permissionText(account.permissions)) + '</small></div>'
-        + '<code class="' + (isRoot ? 'admin-code-hidden' : '') + '">' + safeText(displayCode) + '</code>'
         + roleSelect
+        + '<div class="admin-account-main"><strong>' + safeText(account.mainCharacter || '-') + '</strong><code class="' + (isRoot ? 'admin-code-hidden' : '') + '">' + safeText(displayCode) + '</code></div>'
         + '<div class="admin-switch-list">' + toggleHtml + '</div>'
         + '<div class="admin-account-row-actions">' + deleteButton + '</div>'
         + '</article>';
