@@ -45,14 +45,35 @@ function profileImageHtml(item,className,label){
   if(!url)return '<div class="'+className+' is-empty" aria-hidden="true">'+escapeHtml(label||"PROFILE")+'</div>';
   return '<img class="'+className+'" src="'+escapeHtml(url)+'" alt="'+alt+'" loading="lazy" decoding="async">';
 }
+function mvpCandidateImageHtml(item){
+  const url=profileImageUrlFor(item);
+  if(!url)return '<div class="mvp-candidate-image is-empty" aria-hidden="true">?</div>';
+  return '<img class="mvp-candidate-image" src="'+escapeHtml(url)+'" alt="MVP 후보 이미지" loading="lazy" decoding="async">';
+}
+function mvpNameLine(item,index){
+  if(!item||!item.name)return '';
+  return '<div class="mvp-final-rank-name"><span>'+(index+1)+'위</span><strong>'+escapeHtml(item.name)+'</strong></div>';
+}
 function mvpSection(){
   const mvp=hallData?.mvp||null;
-  if(mvp&&mvp.name){
-    return '<section class="mvp-card has-profile-image"><div class="mvp-head"><h2>👑 시즌 MVP</h2><span class="section-note">챌린저</span></div>'
-      + '<div class="mvp-body mvp-profile-body"><div class="mvp-profile-frame">'+profileImageHtml(mvp,'mvp-profile-image','MVP')+'</div>'
-      + '<div class="mvp-profile-info"><div class="mvp-name">'+flowText(mvp.name,mvp)+'</div>'
+  const candidates=(hallData?.mvpCandidatesTop3||[]).filter(Boolean).slice(0,3);
+  const confirmed=hallData?.mvpConfirmed===true && mvp&&mvp.name;
+  if(confirmed){
+    const rankNames=(candidates.length?candidates:[mvp]).slice(0,3);
+    const subNames=rankNames.slice(1,3).map((item,index)=>mvpNameLine(item,index+1)).join('');
+    return '<section class="mvp-card has-profile-image is-confirmed"><div class="mvp-head"><h2>👑 시즌 MVP</h2><span class="section-note">확정</span></div>'
+      + '<div class="mvp-body mvp-profile-body mvp-final-body"><div class="mvp-final-visual"><img class="mvp-final-emblem" src="'+RANK_EMBLEMS.mvp+'" alt="MVP 엠블럼">'
+      + '<div class="mvp-profile-frame">'+profileImageHtml(mvp,'mvp-profile-image','MVP')+'</div></div>'
+      + '<div class="mvp-profile-info"><div class="mvp-final-label">시즌 챌린저</div><div class="mvp-name">'+flowText(mvp.name,mvp)+'</div>'
       + (mvp.meta?'<div class="mvp-meta">'+escapeHtml(mvp.meta)+'</div>':'')
-      + '<div class="mvp-score">'+escapeHtml(mvp.label||mvp.pvePowerLabel||mvp.pvpPowerLabel||'')+'</div></div></div></section>';
+      + '<div class="mvp-score">'+escapeHtml(mvp.label||mvp.pvePowerLabel||mvp.pvpPowerLabel||'')+'</div>'
+      + (subNames?'<div class="mvp-final-subnames">'+subNames+'</div>':'')+'</div></div></section>';
+  }
+  if(candidates.length){
+    const previews=candidates.map(item=>'<div class="mvp-candidate-blur-card"><div class="mvp-candidate-frame">'+mvpCandidateImageHtml(item)+'</div></div>').join('');
+    return '<section class="mvp-card is-candidate-preview"><div class="mvp-head"><h2>👑 시즌 MVP</h2><span class="section-note">후보 추적 중</span></div>'
+      + '<div class="mvp-body mvp-candidate-body"><div class="mvp-candidate-title">이번 시즌 유력 후보</div><div class="mvp-candidate-list">'+previews+'</div>'
+      + '<div class="mvp-wait-sub">순위와 이름은 확정 전까지 공개되지 않습니다.</div></div></section>';
   }
   return '<section class="mvp-card"><div class="mvp-head"><h2>👑 시즌 MVP</h2><span class="section-note">챌린저</span></div><div class="mvp-body mvp-challenger-waiting"><div class="mvp-emblem-wrap"><img class="mvp-emblem-blur" src="'+RANK_EMBLEMS.mvp+'" alt="챌린저 엠블럼"><div class="mvp-emblem-question">?</div></div><div class="mvp-wait-title">첫 번째 챌린저를 기다리는 중</div><div class="mvp-wait-sub">아직 이 엠블럼의 주인은 정해지지 않았습니다.</div></div></section>';
 }
@@ -272,7 +293,7 @@ function hallSlotTasks(){
   const pvpList=hallData?.pvpTop||[];
   const overallList=currentOverallPreviewList();
   return [
-    {id:'hallSlotMvp',images:[RANK_EMBLEMS.mvp].concat(hallData?.mvp?.profileImageUrl?[hallData.mvp.profileImageUrl]:[]),render:()=>mvpSection()},
+    {id:'hallSlotMvp',images:[RANK_EMBLEMS.mvp].concat(hallData?.mvp?.profileImageUrl?[hallData.mvp.profileImageUrl]:[]).concat((hallData?.mvpCandidatesTop3||[]).map(item=>item?.profileImageUrl).filter(Boolean)),render:()=>mvpSection()},
     {id:'hallSlotReactions',images:[],render:()=>reactionBoard()},
     {id:'hallSlotAwards',images:[],render:()=>awardsBoard()},
     {id:'hallSlotPve',images:rankEmblemsForList(pveList).concat(classIconsForList(pveList)),render:()=>rankBox("⚔ PVE TOP 5","",hallData.pveTop)},
