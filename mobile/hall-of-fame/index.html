@@ -1,3 +1,61 @@
 <!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>KINOJO INFO · Mobile Hall</title><link rel="stylesheet" href="../mobile.css?cache=26062205"></head>
-<body><main class="mobile-wrap"><div class="mobile-top"><div class="mobile-brand">KINOJO MOBILE</div><a class="mobile-pill" href="../../home.html?view=desktop">PC 화면</a></div><section class="mobile-hero"><h1>명예의 전당 모바일</h1><p>모바일 전용 카드/순위 구조를 적용할 독립 화면입니다.</p></section><a class="mobile-action" href="../../hall-of-fame/?view=desktop">현재 PC 화면으로 열기</a><div class="mobile-note">데이터 API와 반응 로직은 공통으로 공유하고, 모바일 UI만 별도 구현합니다.</div></main><nav class="mobile-bottom-nav"><a class="" href="../index.html">메인</a><a class="is-active" href="../hall-of-fame/">명예</a><a class="" href="../sanctuary/">성역</a><a class="" href="../arcana/">아르카나</a></nav></body></html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KINOJO INFO · Mobile Hall</title>
+<link rel="stylesheet" href="../../ui/kinojo-common-ui.css?cache=26062103">
+<link rel="stylesheet" href="../mobile.css?cache=26062208">
+</head>
+<body class="mobile-home-page mobile-hall-page">
+<main class="mobile-wrap mobile-hall-wrap">
+  <section class="mobile-hall-stack" aria-label="명예의 전당 모바일 요약">
+    <a class="mobile-feature-card mobile-hall-card mobile-hall-mvp" href="../../hall-of-fame/?view=desktop#season-mvp" aria-label="시즌 MVP 확인">
+      <span class="mobile-card-bg" aria-hidden="true"></span>
+      <span class="mobile-card-shade" aria-hidden="true"></span>
+      <span class="mobile-card-copy">
+        <strong>시즌 MVP</strong>
+        <span>이번 시즌 대표 캐릭터</span>
+      </span>
+      <span class="mobile-card-enter" aria-hidden="true">›</span>
+    </a>
+    <a class="mobile-feature-card mobile-hall-card mobile-hall-growth" href="../../hall-of-fame/?view=desktop#growth" aria-label="성장 기록 확인">
+      <span class="mobile-card-bg" aria-hidden="true"></span>
+      <span class="mobile-card-shade" aria-hidden="true"></span>
+      <span class="mobile-card-copy">
+        <strong>성장 기록</strong>
+        <span>성장왕 · 벌크업</span>
+      </span>
+      <span class="mobile-card-enter" aria-hidden="true">›</span>
+    </a>
+    <a class="mobile-feature-card mobile-hall-card mobile-hall-like" href="../../hall-of-fame/?view=desktop#likes" aria-label="좋아요 TOP3 확인">
+      <span class="mobile-card-bg" aria-hidden="true"></span>
+      <span class="mobile-card-shade" aria-hidden="true"></span>
+      <span class="mobile-card-copy">
+        <strong>좋아요 TOP3</strong>
+        <span>최근 인기 캐릭터</span>
+      </span>
+      <span class="mobile-card-enter" aria-hidden="true">›</span>
+    </a>
+    <a class="mobile-feature-card mobile-hall-card mobile-hall-ranking" href="../../hall-of-fame/?view=desktop#ranking" aria-label="랭킹 조회 확인">
+      <span class="mobile-card-bg" aria-hidden="true"></span>
+      <span class="mobile-card-shade" aria-hidden="true"></span>
+      <span class="mobile-card-copy">
+        <strong>랭킹 조회</strong>
+        <span>깡 레기온 랭킹 조회 등</span>
+      </span>
+      <span class="mobile-card-enter" aria-hidden="true">›</span>
+    </a>
+    <section class="mobile-hall-search" aria-label="캐릭터 검색 안내">
+      <strong>캐릭터 검색</strong>
+      <span>모바일 검색 UI는 다음 단계에서 데이터 조회 화면과 연결합니다.</span>
+      <a href="../../hall-of-fame/?view=desktop#search">현재 검색 화면 열기</a>
+    </section>
+  </section>
+</main>
+<nav class="mobile-bottom-nav" aria-label="모바일 하단 메뉴"><a href="../index.html">메인</a><a class="is-active" href="../hall-of-fame/">명예</a><a href="../sanctuary/">성역</a><a href="../arcana/">아르카나</a></nav>
+<script src="../../ui/kinojo-common-ui.js?cache=26062013"></script>
+<script src="../../ui/kinojo-admin-panel.js?cache=26062013"></script>
+<script src="../../core/kinojo-auth.js?cache=26062103"></script>
+</body>
+</html>
