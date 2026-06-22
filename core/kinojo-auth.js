@@ -533,8 +533,8 @@
       + '<span class="kinojo-code-request-notice-time">' + time + '</span>'
       + '</div>'
       + '<div class="kinojo-code-request-notice-row-actions">'
-      + '<button class="btn primary kinojo-code-request-approve" data-code-request-approve type="button">코드 등록</button>'
-      + '<button class="btn danger kinojo-code-request-reject" data-code-request-reject type="button">요청 거절</button>'
+      + '<button class="kinojo-modal-action-btn kinojo-modal-action-btn--primary kinojo-code-request-approve" data-code-request-approve type="button">코드 등록</button>'
+      + '<button class="kinojo-modal-action-btn kinojo-modal-action-btn--danger kinojo-code-request-reject" data-code-request-reject type="button">요청 거절</button>'
       + '</div>'
       + '<div class="admin-status kinojo-code-request-item-status" data-code-request-status></div>'
       + '</article>';
@@ -558,7 +558,7 @@
       + '<p class="kinojo-code-request-notice-lead">처리 대기 중인 회원 코드 요청입니다.</p>'
       + '<div class="kinojo-code-request-notice-list">' + list.map(requestNoticeItemMarkup_).join('') + '</div>'
       + '<div class="kinojo-code-request-notice-actions">'
-      + '<button class="btn" data-code-request-close type="button">닫기</button>'
+      + '<button class="kinojo-modal-action-btn kinojo-modal-action-btn--ghost" data-code-request-close type="button">닫기</button>'
       + '</div>'
       + '<div id="kinojoCodeRequestNoticeStatus" class="admin-status"></div>'
       + '</div>';

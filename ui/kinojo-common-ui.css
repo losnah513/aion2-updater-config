@@ -1004,3 +1004,72 @@ body[data-kinojo-role="MASTER"] .master-only{display:grid!important;}
   .kinojo-auth-name{max-width:56px;font-size:9.5px;}
   .kinojo-login-btn,.kinojo-logout-btn,.kinojo-admin-mini-btn{padding:0 5px;font-size:9px;}
 }
+
+
+/* ============================================================
+   2026-06-22_15 공통 회원 코드 요청 모달 액션 버튼 격리
+   - 페이지별 button/.btn 전역 스타일이 요청함 버튼을 덮지 못하도록 전용 클래스 고정
+   - 코드 등록/요청 거절/닫기 버튼을 역할별 컴포넌트로 분리
+============================================================ */
+.kinojo-code-request-notice-modal .kinojo-modal-action-btn{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  box-sizing:border-box!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:40px!important;
+  padding:0 12px!important;
+  border-radius:10px!important;
+  border:1px solid transparent!important;
+  font-family:inherit!important;
+  font-size:12px!important;
+  font-weight:1000!important;
+  line-height:1!important;
+  letter-spacing:-.02em!important;
+  text-align:center!important;
+  white-space:nowrap!important;
+  cursor:pointer!important;
+  text-decoration:none!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
+.kinojo-code-request-notice-modal .kinojo-modal-action-btn:disabled{
+  opacity:.62!important;
+  cursor:not-allowed!important;
+}
+.kinojo-code-request-notice-modal .kinojo-modal-action-btn--primary{
+  border-color:rgba(37,99,235,.36)!important;
+  background:#2563eb!important;
+  color:#fff!important;
+}
+.kinojo-code-request-notice-modal .kinojo-modal-action-btn--danger{
+  border-color:rgba(220,38,38,.35)!important;
+  background:#fff1f2!important;
+  color:#b91c1c!important;
+}
+.kinojo-code-request-notice-modal .kinojo-modal-action-btn--ghost{
+  border-color:rgba(120,145,180,.34)!important;
+  background:#fff!important;
+  color:#17233a!important;
+}
+.kinojo-code-request-notice-modal .kinojo-code-request-notice-row-actions{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  gap:7px!important;
+}
+.kinojo-code-request-notice-modal .kinojo-code-request-notice-actions{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:8px!important;
+}
+@media(max-width:430px){
+  .kinojo-code-request-notice-modal .kinojo-modal-action-btn{
+    min-height:36px!important;
+    padding:0 8px!important;
+    border-radius:9px!important;
+    font-size:11px!important;
+  }
+}
