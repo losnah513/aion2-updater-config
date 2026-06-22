@@ -181,7 +181,7 @@
       + '<button id="kinojoLoginSubmitBtn" class="kinojo-login-submit" type="button"><span class="kinojo-login-btn-text">로그인</span></button>'
       + '<div id="kinojoLoginStatus" class="kinojo-login-status"></div>'
       + '<div class="kinojo-code-request-panel" id="kinojoCodeRequestPanel">'
-      + '<div class="kinojo-code-request-title">코드가 없으세요?</div>'
+      + '<div class="kinojo-code-request-title"><span>코드가 없거나</span> <span class="kinojo-code-request-title-blue">잊으셨나요?</span></div>'
       + '<div class="kinojo-code-request-row">'
       + '<input id="kinojoCodeRequestCharacterInput" class="kinojo-login-input kinojo-code-request-character" placeholder="캐릭터 이름" autocomplete="off" />'
       + '<button id="kinojoCodeRequestLookupBtn" class="kinojo-code-request-lookup" type="button">조회</button>'
@@ -351,7 +351,18 @@
     const el = document.getElementById('kinojoCodeRequestLookupStatus');
     if(!el) return;
     el.className = 'kinojo-login-status kinojo-code-request-status ' + (isError ? 'error' : 'success');
-    el.textContent = message || '';
+    const text = String(message || '');
+    const sentenceLines = {
+      '요청 코드는 영문 2자와 숫자 4자로 구성해야 합니다. 순서는 자유입니다.': [
+        '요청 코드는 영문 2자와 숫자 4자로 구성해야 합니다.',
+        '순서는 자유입니다.'
+      ]
+    };
+    if(sentenceLines[text]){
+      el.innerHTML = sentenceLines[text].map(line => '<span>' + safeText(line) + '</span>').join('');
+      return;
+    }
+    el.textContent = text;
   }
 
   function resetCodeRequestPanel(clearName){
