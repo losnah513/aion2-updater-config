@@ -1,9 +1,7 @@
 (function () {
   window.ArcanaApp = window.ArcanaApp || {};
 
-  const PREVIEW_CLASS = 'is-touch-preview';
   const EXECUTING_CLASS = 'is-executing';
-  const PREVIEW_TIMEOUT = 1600;
 
   const selectors = [
     '.arcana-btn:not(.arcana-wave-cta)',
@@ -21,15 +19,6 @@
     '.arcana-showcase-name-btn'
   ];
 
-  const state = {
-    previewTarget: null,
-    previewTimer: 0
-  };
-
-  function isCoarsePointer() {
-    return window.matchMedia && window.matchMedia('(hover: none), (pointer: coarse)').matches;
-  }
-
   function getButton(target) {
     if (!(target instanceof Element)) return null;
     const button = target.closest(selectors.join(','));
@@ -38,22 +27,19 @@
     return button;
   }
 
-  function clearPreview(target) {
-    const button = target || state.previewTarget;
-    if (button) button.classList.remove(PREVIEW_CLASS);
-    if (state.previewTimer) window.clearTimeout(state.previewTimer);
-    state.previewTimer = 0;
-    if (!target || state.previewTarget === target) state.previewTarget = null;
-  }
-
-  function setPreview(button) {
-    clearPreview();
-    state.previewTarget = button;
-    button.classList.add(PREVIEW_CLASS);
-    state.previewTimer = window.setTimeout(() => clearPreview(button), PREVIEW_TIMEOUT);
+  function clearPreview() {
+    document.querySelectorAll('.is-touch-preview').forEach(element => {
+      element.classList.remove('is-touch-preview');
+    });
+    if (ArcanaApp.state) {
+      ArcanaApp.state.touchPreviewClassKey = '';
+      ArcanaApp.state.recommendationTouchArmed = false;
+    }
   }
 
   function flashExecute(button) {
+    if (!button) return;
+    button.classList.remove('is-touch-preview');
     button.classList.add(EXECUTING_CLASS);
     window.setTimeout(() => button.classList.remove(EXECUTING_CLASS), 150);
   }
@@ -62,29 +48,17 @@
     const button = getButton(event.target);
     if (!button) return;
 
-    if (!isCoarsePointer()) {
-      flashExecute(button);
-      return;
-    }
-
-    if (state.previewTarget !== button || !button.classList.contains(PREVIEW_CLASS)) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      setPreview(button);
-      return;
-    }
-
-    clearPreview(button);
+    /*
+     * 모바일 UX 규칙:
+     * - 1회 탭으로 즉시 실행한다.
+     * - 과거의 touch-preview / 두 번째 탭 확정 로직은 사용하지 않는다.
+     * - 클래스 선택처럼 확인 버튼이 있는 흐름은 모달 내부 확인 버튼만 별도 확정 단계로 둔다.
+     */
+    clearPreview();
     flashExecute(button);
   }
 
-  function onPointerLeave(event) {
-    const button = getButton(event.target);
-    if (button && state.previewTarget === button && !isCoarsePointer()) clearPreview(button);
-  }
-
   document.addEventListener('click', onClick, true);
-  document.addEventListener('pointerleave', onPointerLeave, true);
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape') clearPreview();
   });
