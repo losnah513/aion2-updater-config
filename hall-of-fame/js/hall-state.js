@@ -1,5 +1,5 @@
 const WEB_APP_URL=new URLSearchParams(location.search).get("api")||"https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec";
-const CLASS_ORDER=["검성","수호성","살성","궁성","정령성","마도성","치유성","호법성"];
+const CLASS_ORDER=["수호성","검성","살성","궁성","마도성","정령성","치유성","호법성"];
 const HALL_ASSET_BASE=(location.pathname.includes("/mobile/hall-of-fame/")?"../../hall-of-fame/assets/":"assets/");
 const CLASS_ICONS={"검성":HALL_ASSET_BASE+"class_icon_gladiator.png","수호성":HALL_ASSET_BASE+"class_icon_templar.png","살성":HALL_ASSET_BASE+"class_icon_assassin.png","궁성":HALL_ASSET_BASE+"class_icon_ranger.png","정령성":HALL_ASSET_BASE+"class_icon_elementalist.png","마도성":HALL_ASSET_BASE+"class_icon_sorcerer.png","치유성":HALL_ASSET_BASE+"class_icon_cleric.png","호법성":HALL_ASSET_BASE+"class_icon_chanter.png"};
 const RANK_EMBLEMS={mvp:HALL_ASSET_BASE+"emblem_mvp_challenger.png",diamond:HALL_ASSET_BASE+"emblem_rank_diamond.png",crystal:HALL_ASSET_BASE+"emblem_rank_crystal.png",gold:HALL_ASSET_BASE+"emblem_rank_gold.png",silver:HALL_ASSET_BASE+"emblem_rank_silver.png",bronze:HALL_ASSET_BASE+"emblem_rank_bronze.png"};

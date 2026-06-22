@@ -1558,3 +1558,112 @@ body{background:#fff!important;}
   .rank-tools .search{grid-column:1/-1;max-width:none;}
   .rank-tools .sub-toggle.compact{height:36px;min-width:104px;}
 }
+
+
+/* ============================================================
+   2026-06-22_12 모바일 명예의 전당 UI 압축 보정
+   - 신입 병아리 카드 축소
+   - 순위 조작 버튼 축소
+   - 클래스 탭 모바일 6+2 구조 및 향후 클래스 추가용 자동 줄바꿈 준비
+============================================================ */
+@media(max-width:760px){
+  body.kinojo-mobile-hall-detail-page .wrap{padding:8px 7px 92px;}
+  body.kinojo-mobile-hall-detail-page .banner{margin-bottom:8px;}
+  body.kinojo-mobile-hall-detail-page .chick-card{
+    top:92px;
+    margin-bottom:8px;
+    padding:8px 38px 8px 10px;
+    min-height:46px;
+    border-radius:12px;
+  }
+  body.kinojo-mobile-hall-detail-page .chick-line{gap:6px;}
+  body.kinojo-mobile-hall-detail-page .chick-head{gap:6px;}
+  body.kinojo-mobile-hall-detail-page .chick-icon{font-size:18px;line-height:1;}
+  body.kinojo-mobile-hall-detail-page .chick-title{font-size:11px;line-height:1.15;}
+  body.kinojo-mobile-hall-detail-page .chick-sub{font-size:9.5px;line-height:1.2;}
+  body.kinojo-mobile-hall-detail-page .chick-tags{gap:4px;margin-top:5px;}
+  body.kinojo-mobile-hall-detail-page .chick-tag{font-size:9.5px;padding:4px 6px;border-radius:999px;line-height:1.05;}
+  body.kinojo-mobile-hall-detail-page .chick-close{right:7px;top:7px;width:28px;height:28px;font-size:16px;}
+  body.kinojo-mobile-hall-detail-page .chick-card.collapsed{top:92px;right:10px;width:34px;height:34px;min-height:34px;}
+  body.kinojo-mobile-hall-detail-page .chick-card.collapsed .chick-close{width:34px;height:34px;font-size:18px;}
+
+  body.kinojo-mobile-hall-detail-page .rank-tools{
+    grid-template-columns:minmax(0,1fr) auto auto auto;
+    gap:5px;
+    padding:7px 8px;
+    align-items:center;
+  }
+  body.kinojo-mobile-hall-detail-page .rank-tools .search{
+    grid-column:1/-1;
+    height:34px;
+    font-size:11px;
+    border-radius:9px;
+  }
+  body.kinojo-mobile-hall-detail-page .rank-tools .btn{
+    height:30px;
+    min-width:48px;
+    padding:0 8px;
+    font-size:10.5px;
+    border-radius:8px;
+  }
+  body.kinojo-mobile-hall-detail-page .rank-tools .sub-toggle.compact,
+  body.kinojo-mobile-hall-detail-page #subToggle.sub-toggle{
+    height:30px;
+    min-width:78px;
+    padding:0 8px 0 32px;
+    font-size:10px;
+    border-radius:999px;
+  }
+  body.kinojo-mobile-hall-detail-page .rank-tools .sub-toggle.compact .toggle-knob,
+  body.kinojo-mobile-hall-detail-page #subToggle.sub-toggle .toggle-knob{
+    width:22px;
+    height:22px;
+    left:4px;
+  }
+  body.kinojo-mobile-hall-detail-page .rank-tools .sub-toggle.compact.on .toggle-knob,
+  body.kinojo-mobile-hall-detail-page #subToggle.sub-toggle.on .toggle-knob{
+    transform:translateX(47px);
+  }
+  body.kinojo-mobile-hall-detail-page .rank-tools .sub-toggle.compact .toggle-text,
+  body.kinojo-mobile-hall-detail-page #subToggle.sub-toggle .toggle-text{font-size:10px;}
+
+  body.kinojo-mobile-hall-detail-page .class-tabs.rank-tabs{
+    display:grid;
+    grid-template-columns:repeat(6,minmax(0,1fr));
+    gap:5px;
+    overflow:visible;
+    padding:8px;
+  }
+  body.kinojo-mobile-hall-detail-page .class-tabs.rank-tabs .pill{
+    min-width:0;
+    height:30px;
+    padding:0 3px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:2px;
+    border-radius:8px;
+    font-size:9.5px;
+    letter-spacing:-.06em;
+    white-space:nowrap;
+  }
+  body.kinojo-mobile-hall-detail-page .class-tabs.rank-tabs .all-rank{
+    grid-column:1/-1;
+    justify-self:stretch;
+    height:32px;
+    font-size:11px;
+  }
+  body.kinojo-mobile-hall-detail-page .class-tabs.rank-tabs .pill:nth-child(n+8){
+    grid-column:span 3;
+  }
+  body.kinojo-mobile-hall-detail-page .class-tabs.rank-tabs .tab-icon{
+    width:13px;
+    height:13px;
+    margin-right:1px;
+    vertical-align:-2px;
+  }
+}
+@media(max-width:380px){
+  body.kinojo-mobile-hall-detail-page .class-tabs.rank-tabs .pill{font-size:8.7px;}
+  body.kinojo-mobile-hall-detail-page .class-tabs.rank-tabs .tab-icon{width:12px;height:12px;}
+}
