@@ -1667,3 +1667,110 @@ body{background:#fff!important;}
   body.kinojo-mobile-hall-detail-page .class-tabs.rank-tabs .pill{font-size:8.7px;}
   body.kinojo-mobile-hall-detail-page .class-tabs.rank-tabs .tab-icon{width:12px;height:12px;}
 }
+
+/* ============================================================
+   2026-06-22_14 모바일 명예의 전당 밀도 재보정
+   - 신입 병아리 카드, 순위 조작 버튼, 클래스 탭을 Fold 전면 비율 기준으로 압축
+   - 클래스 탭은 6+2 기본 구조를 유지하고 신규 클래스 추가 시 자동 줄바꿈
+============================================================ */
+@media(max-width:760px){
+  body.kinojo-mobile-hall-detail-page .chick-card{
+    top:76px;
+    margin-bottom:6px;
+    padding:6px 32px 6px 8px;
+    min-height:34px;
+    border-radius:10px;
+  }
+  body.kinojo-mobile-hall-detail-page .chick-line,
+  body.kinojo-mobile-hall-detail-page .chick-head{gap:4px;}
+  body.kinojo-mobile-hall-detail-page .chick-icon{font-size:13px;line-height:1;}
+  body.kinojo-mobile-hall-detail-page .chick-title{font-size:9.2px;line-height:1.05;letter-spacing:-.04em;}
+  body.kinojo-mobile-hall-detail-page .chick-sub{font-size:7.8px;line-height:1.1;letter-spacing:-.04em;}
+  body.kinojo-mobile-hall-detail-page .chick-tags{gap:3px;margin-top:3px;}
+  body.kinojo-mobile-hall-detail-page .chick-tag{font-size:7.8px;padding:3px 5px;line-height:1;border-radius:999px;}
+  body.kinojo-mobile-hall-detail-page .chick-close{right:5px;top:5px;width:24px;height:24px;font-size:13px;border-radius:8px;}
+  body.kinojo-mobile-hall-detail-page .chick-card.collapsed{top:76px;right:8px;width:28px;height:28px;min-height:28px;border-radius:9px;}
+  body.kinojo-mobile-hall-detail-page .chick-card.collapsed .chick-close{width:28px;height:28px;font-size:14px;}
+
+  body.kinojo-mobile-hall-detail-page .rank-tools{
+    grid-template-columns:minmax(0,1fr) 42px 48px 68px;
+    gap:4px;
+    padding:6px 7px;
+  }
+  body.kinojo-mobile-hall-detail-page .rank-tools .search{
+    grid-column:1/-1;
+    height:31px;
+    padding:0 9px;
+    font-size:10px;
+    border-radius:8px;
+  }
+  body.kinojo-mobile-hall-detail-page .rank-tools .btn{
+    height:26px;
+    min-width:0;
+    padding:0 5px;
+    font-size:9px;
+    border-radius:7px;
+    letter-spacing:-.04em;
+  }
+  body.kinojo-mobile-hall-detail-page .rank-tools .sub-toggle.compact,
+  body.kinojo-mobile-hall-detail-page #subToggle.sub-toggle{
+    height:26px;
+    min-width:68px;
+    padding:0 5px 0 28px;
+    font-size:8.8px;
+    border-radius:999px;
+    letter-spacing:-.05em;
+  }
+  body.kinojo-mobile-hall-detail-page .rank-tools .sub-toggle.compact .toggle-knob,
+  body.kinojo-mobile-hall-detail-page #subToggle.sub-toggle .toggle-knob{
+    width:19px;
+    height:19px;
+    left:4px;
+  }
+  body.kinojo-mobile-hall-detail-page .rank-tools .sub-toggle.compact.on .toggle-knob,
+  body.kinojo-mobile-hall-detail-page #subToggle.sub-toggle.on .toggle-knob{transform:translateX(41px);}
+  body.kinojo-mobile-hall-detail-page .rank-tools .sub-toggle.compact .toggle-text,
+  body.kinojo-mobile-hall-detail-page #subToggle.sub-toggle .toggle-text{font-size:8.8px;}
+
+  body.kinojo-mobile-hall-detail-page .class-tabs.rank-tabs{
+    display:grid;
+    grid-template-columns:repeat(6,minmax(0,1fr));
+    grid-auto-flow:row;
+    gap:4px;
+    padding:7px;
+    overflow:visible;
+  }
+  body.kinojo-mobile-hall-detail-page .class-tabs.rank-tabs .pill{
+    min-width:0;
+    height:27px;
+    padding:0 2px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:1px;
+    font-size:8.5px;
+    line-height:1;
+    letter-spacing:-.08em;
+    border-radius:7px;
+    white-space:nowrap;
+  }
+  body.kinojo-mobile-hall-detail-page .class-tabs.rank-tabs .all-rank{
+    grid-column:1/-1;
+    height:29px;
+    font-size:10px;
+    letter-spacing:-.04em;
+  }
+  /* 전체 버튼 이후 1~6번째 클래스 = 윗줄 6칸, 7번째부터는 2칸 기준으로 넓게 배치 */
+  body.kinojo-mobile-hall-detail-page .class-tabs.rank-tabs .pill:nth-child(n+8){grid-column:span 3;}
+  body.kinojo-mobile-hall-detail-page .class-tabs.rank-tabs .tab-icon{
+    width:11px;
+    height:11px;
+    margin-right:1px;
+    vertical-align:-2px;
+  }
+}
+@media(max-width:380px){
+  body.kinojo-mobile-hall-detail-page .rank-tools{grid-template-columns:minmax(0,1fr) 40px 45px 64px;}
+  body.kinojo-mobile-hall-detail-page .class-tabs.rank-tabs .pill{font-size:7.8px;}
+  body.kinojo-mobile-hall-detail-page .class-tabs.rank-tabs .tab-icon{width:10px;height:10px;}
+}

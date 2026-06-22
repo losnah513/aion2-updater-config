@@ -928,3 +928,79 @@ body[data-kinojo-role="MASTER"] .master-only{display:grid!important;}
   .kinojo-code-request-notice-time{font-size:11px;}
   .kinojo-code-request-notice-row-actions .btn{min-height:35px;font-size:11px;padding:0 6px;}
 }
+
+/* ============================================================
+   2026-06-22_14 모바일 공통 탑바 재압축 보정
+   - Fold 접힘형에서도 로그인/계정 영역이 방문자 카드에 밀리지 않도록 보정
+   - 기존 공통 탑바 구조는 유지하고 모바일 표시 밀도만 조정
+============================================================ */
+@media(max-width:760px){
+  .kinojo-topbar{
+    width:100%;
+    grid-template-columns:minmax(0,.9fr) minmax(126px,1.05fr);
+    grid-template-areas:"left auth" "tools tools";
+    align-items:center;
+    gap:5px 6px;
+    padding:5px 7px 6px;
+  }
+  .kinojo-top-left{min-width:0;gap:5px;}
+  .kinojo-menu-toggle{width:28px;height:28px;border-radius:8px;}
+  .kinojo-menu-icon{width:18px;height:18px;}
+  .kinojo-top-page{
+    height:28px;
+    min-width:0;
+    max-width:none;
+    padding:0 7px;
+    border-radius:8px;
+  }
+  .kinojo-top-page strong{font-size:10.5px;line-height:1;letter-spacing:-.05em;}
+  .kinojo-top-page small{font-size:8.5px;line-height:1;margin-top:2px;}
+  .kinojo-top-center{
+    width:100%;
+    max-width:none;
+    height:28px;
+    justify-content:flex-end;
+    padding:0 5px;
+    gap:4px;
+    border-radius:8px;
+  }
+  .kinojo-login-btn,.kinojo-logout-btn{
+    height:23px;
+    min-height:23px;
+    padding:0 6px;
+    font-size:9.5px;
+    border-radius:7px;
+    flex:0 0 auto;
+  }
+  .kinojo-auth-label{
+    display:inline-flex;
+    align-items:center;
+    justify-content:flex-end;
+    min-width:0;
+    max-width:100%;
+    font-size:9.5px;
+    letter-spacing:-.05em;
+    overflow:hidden;
+  }
+  .kinojo-auth-profile{min-width:0;gap:3px;}
+  .kinojo-auth-class-icon{width:16px;height:16px;flex:0 0 16px;}
+  .kinojo-auth-name{max-width:70px;font-size:10px;letter-spacing:-.04em;}
+  .kinojo-auth-role{display:none!important;}
+  .kinojo-auth-online{font-size:8px;}
+  .kinojo-admin-mini-btn{height:23px;min-height:23px;padding:0 6px;font-size:9.5px;border-radius:7px;}
+  .kinojo-top-tools{width:100%;}
+  .kinojo-top-tools .visit-mini{
+    height:25px;
+    padding:0 7px;
+    font-size:8.2px;
+    line-height:1.05;
+    border-radius:8px;
+  }
+}
+@media(max-width:380px){
+  .kinojo-topbar{grid-template-columns:minmax(0,.78fr) minmax(116px,1.12fr);}
+  .kinojo-top-page strong{font-size:10px;}
+  .kinojo-top-page small{font-size:8px;}
+  .kinojo-auth-name{max-width:56px;font-size:9.5px;}
+  .kinojo-login-btn,.kinojo-logout-btn,.kinojo-admin-mini-btn{padding:0 5px;font-size:9px;}
+}
