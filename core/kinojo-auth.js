@@ -14,7 +14,6 @@
     snapshot_manage: '성장왕 스냅샷',
     account_manage: '회원 코드 관리'
   };
-  const CODE_REQUEST_NOTICE_KEY = 'kinojo_seen_code_request_ids_v1';
   let codeRequestLookupCharacter = null;
   let codeRequestSubmitted = false;
   let codeRequestNoticeChecking = false;
@@ -56,6 +55,11 @@
   function clearSession(){
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(ACCOUNT_KEY);
+    const modal = document.getElementById('kinojoLoginModal');
+    if(modal){
+      modal.querySelector('#kinojoLoginCodeInput') && (modal.querySelector('#kinojoLoginCodeInput').value = '');
+      resetCodeRequestPanel(true);
+    }
     updateStatus();
   }
 
@@ -167,7 +171,8 @@
 
   function ensureLoginModal(){
     let modal = document.getElementById('kinojoLoginModal');
-    if(modal) return modal;
+    if(modal && modal.querySelector('#kinojoLoginCodeInput')) return modal;
+    if(modal) modal.remove();
     modal = document.createElement('section');
     modal.id = 'kinojoLoginModal';
     modal.className = 'kinojo-login-modal';
@@ -219,7 +224,8 @@
     const status = modal.querySelector('#kinojoLoginStatus');
     const input = modal.querySelector('#kinojoLoginCodeInput');
     if(status) status.textContent = reason || '';
-    resetCodeRequestPanel(false);
+    if(input) input.value = '';
+    resetCodeRequestPanel(true);
     modal.classList.add('open');
     modal.setAttribute('aria-hidden','false');
     setTimeout(()=>input?.focus(), 30);
@@ -256,6 +262,8 @@
       if(!data.ok) throw new Error(data.message || '로그인에 실패했습니다.');
       setSession(data.session, data.account);
       if(status) status.textContent = '로그인되었습니다.';
+      if(input) input.value = '';
+      resetCodeRequestPanel(true);
       setTimeout(closeLoginModal, 280);
     }catch(err){
       if(status) status.textContent = err.message || String(err);
@@ -438,6 +446,27 @@
     }
   }
 
+  function showCodeRequestComplete(){
+    const modal = ensureLoginModal();
+    const card = modal.querySelector('.kinojo-login-card');
+    if(!card) return;
+    card.classList.add('kinojo-code-request-complete-card');
+    card.innerHTML = '<button class="kinojo-login-close" id="kinojoLoginCompleteCloseBtn" type="button" aria-label="닫기">×</button>'
+      + '<div class="kinojo-login-kicker">REQUEST COMPLETE</div>'
+      + '<h2>코드 요청 완료되었습니다</h2>'
+      + '<p class="kinojo-code-request-complete-text">관리자가 확인 후 등록하면 요청한 코드로 로그인할 수 있습니다.</p>'
+      + '<button class="kinojo-login-submit primary" id="kinojoLoginCompleteDoneBtn" type="button">닫기</button>';
+    const done = () => {
+      closeLoginModal();
+      setTimeout(() => {
+        const current = document.getElementById('kinojoLoginModal');
+        if(current) current.remove();
+      }, 180);
+    };
+    card.querySelector('#kinojoLoginCompleteCloseBtn')?.addEventListener('click', done);
+    card.querySelector('#kinojoLoginCompleteDoneBtn')?.addEventListener('click', done);
+  }
+
   async function submitCodeRequest(){
     const modal = ensureLoginModal();
     const button = modal.querySelector('#kinojoCodeRequestSubmitBtn');
@@ -450,20 +479,33 @@
       const data = await codeRequest('submitRequest', { characterName:codeRequestLookupCharacter.mainCharacter, requestedCode:code });
       if(!data.ok) throw new Error(data.message || '코드 요청 실패');
       codeRequestSubmitted = true;
-      codeRequestStatus('요청이 접수되었습니다. 관리자가 확인 후 등록합니다.', false);
-      button.disabled = true;
+      resetCodeRequestPanel(true);
+      showCodeRequestComplete();
+      return;
     }catch(err){ codeRequestStatus(err.message || String(err), true); }
     finally{ setButtonLoading(button, false); validateCodeRequestOtp(); }
   }
 
-  function readSeenCodeRequestIds(){
-    try{ return JSON.parse(localStorage.getItem(CODE_REQUEST_NOTICE_KEY) || '[]'); }
-    catch(_err){ return []; }
-  }
-
-  function writeSeenCodeRequestIds(ids){
-    try{ localStorage.setItem(CODE_REQUEST_NOTICE_KEY, JSON.stringify((ids || []).slice(-80))); }
-    catch(_err){}
+  function formatCodeRequestTime(value){
+    const raw = String(value || '').trim();
+    if(!raw) return '-';
+    let date = null;
+    const shortMatch = raw.match(/^(\d{2})[\/.-](\d{1,2})[\/.-](\d{1,2})\s+(\d{1,2}):(\d{2})/);
+    if(shortMatch){
+      date = new Date(2000 + Number(shortMatch[1]), Number(shortMatch[2]) - 1, Number(shortMatch[3]), Number(shortMatch[4]), Number(shortMatch[5]));
+    }else{
+      const longMatch = raw.match(/^(\d{4})[\/.-](\d{1,2})[\/.-](\d{1,2})\s+(\d{1,2}):(\d{2})/);
+      if(longMatch){
+        date = new Date(Number(longMatch[1]), Number(longMatch[2]) - 1, Number(longMatch[3]), Number(longMatch[4]), Number(longMatch[5]));
+      }else{
+        const parsed = new Date(raw);
+        if(!Number.isNaN(parsed.getTime())) date = parsed;
+      }
+    }
+    if(!date || Number.isNaN(date.getTime())) return raw;
+    const days = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
+    const pad = num => String(num).padStart(2, '0');
+    return pad(date.getMonth() + 1) + '월 ' + pad(date.getDate()) + '일 ' + days[date.getDay()] + ' ' + pad(date.getHours()) + '시' + pad(date.getMinutes()) + '분';
   }
 
   async function checkPendingCodeRequests(){
@@ -474,19 +516,32 @@
       if(!data.ok) return;
       const requests = data.requests || [];
       if(!requests.length) return;
-      const seen = readSeenCodeRequestIds();
-      const next = requests.find(item => item.requestId && !seen.includes(item.requestId)) || requests[0];
-      if(!next) return;
-      if(next.requestId && !seen.includes(next.requestId)){
-        seen.push(next.requestId);
-        writeSeenCodeRequestIds(seen);
-      }
-      openCodeRequestNotice(next);
+      openCodeRequestNotice(requests);
     }catch(_err){}
     finally{ codeRequestNoticeChecking = false; }
   }
 
-  function openCodeRequestNotice(request){
+  function requestNoticeItemMarkup_(request){
+    const requestId = safeText(request.requestId || '');
+    const character = safeText(request.characterName || '-');
+    const code = safeText(request.requestedCode || '-');
+    const time = safeText(formatCodeRequestTime(request.time || request.requestedAt || ''));
+    return '<article class="kinojo-code-request-notice-item" data-request-id="' + requestId + '">'
+      + '<div class="kinojo-code-request-notice-main">'
+      + '<strong class="kinojo-code-request-notice-name">' + character + '</strong>'
+      + '<code class="kinojo-code-request-notice-code">' + code + '</code>'
+      + '<span class="kinojo-code-request-notice-time">' + time + '</span>'
+      + '</div>'
+      + '<div class="kinojo-code-request-notice-row-actions">'
+      + '<button class="btn primary kinojo-code-request-approve" data-code-request-approve type="button">코드 등록</button>'
+      + '<button class="btn danger kinojo-code-request-reject" data-code-request-reject type="button">요청 거절</button>'
+      + '</div>'
+      + '<div class="admin-status kinojo-code-request-item-status" data-code-request-status></div>'
+      + '</article>';
+  }
+
+  function openCodeRequestNotice(requests){
+    const list = Array.isArray(requests) ? requests : [requests].filter(Boolean);
     let modal = document.getElementById('kinojoCodeRequestNoticeModal');
     if(!modal){
       modal = document.createElement('section');
@@ -496,25 +551,20 @@
       document.body.appendChild(modal);
       modal.addEventListener('click', e=>{ if(e.target === modal) closeCodeRequestNotice(); });
     }
-    modal.dataset.requestId = request.requestId || '';
     modal.innerHTML = '<div class="kinojo-login-card kinojo-code-request-notice-card" role="dialog" aria-modal="true">'
       + '<button class="kinojo-login-close" data-code-request-close type="button" aria-label="닫기">×</button>'
       + '<div class="kinojo-login-kicker">CODE REQUEST</div>'
-      + '<h2>회원 코드 요청</h2>'
-      + '<p class="kinojo-code-request-notice-lead">' + safeText(request.characterName || '-') + '님이 회원 코드를 요청했습니다.</p>'
-      + '<div class="kinojo-code-request-notice-grid">'
-      + '<div><span>캐릭터명</span><strong>' + safeText(request.characterName || '-') + '</strong></div>'
-      + '<div><span>요청 코드</span><code>' + safeText(request.requestedCode || '-') + '</code></div>'
-      + '<div><span>요청 시간</span><strong>' + safeText(request.time || '-') + '</strong></div>'
-      + '</div>'
+      + '<h2>회원 코드 요청 ' + list.length + '건</h2>'
+      + '<p class="kinojo-code-request-notice-lead">처리 대기 중인 회원 코드 요청입니다.</p>'
+      + '<div class="kinojo-code-request-notice-list">' + list.map(requestNoticeItemMarkup_).join('') + '</div>'
       + '<div class="kinojo-code-request-notice-actions">'
       + '<button class="btn" data-code-request-close type="button">닫기</button>'
-      + '<button class="btn primary" id="kinojoApproveCodeRequestBtn" type="button">코드 등록</button>'
       + '</div>'
       + '<div id="kinojoCodeRequestNoticeStatus" class="admin-status"></div>'
       + '</div>';
     modal.querySelectorAll('[data-code-request-close]').forEach(btn => btn.addEventListener('click', closeCodeRequestNotice));
-    modal.querySelector('#kinojoApproveCodeRequestBtn')?.addEventListener('click', () => approveCodeRequestFromNotice(request));
+    modal.querySelectorAll('[data-code-request-approve]').forEach(btn => btn.addEventListener('click', () => processCodeRequestFromNotice(btn, 'approveCodeRequest')));
+    modal.querySelectorAll('[data-code-request-reject]').forEach(btn => btn.addEventListener('click', () => processCodeRequestFromNotice(btn, 'rejectCodeRequest')));
     modal.classList.add('open');
     modal.setAttribute('aria-hidden','false');
   }
@@ -526,20 +576,36 @@
     modal.setAttribute('aria-hidden','true');
   }
 
-  async function approveCodeRequestFromNotice(request){
-    const modal = document.getElementById('kinojoCodeRequestNoticeModal');
-    const button = document.getElementById('kinojoApproveCodeRequestBtn');
-    const status = document.getElementById('kinojoCodeRequestNoticeStatus');
+  async function refreshCodeRequestNoticeList_(){
+    const data = await accountAdmin('listCodeRequests');
+    if(!data.ok) return;
+    const requests = data.requests || [];
+    if(!requests.length){
+      closeCodeRequestNotice();
+      return;
+    }
+    openCodeRequestNotice(requests);
+  }
+
+  async function processCodeRequestFromNotice(button, command){
+    const item = button?.closest('.kinojo-code-request-notice-item');
+    const requestId = item?.dataset.requestId || '';
+    const status = item?.querySelector('[data-code-request-status]');
+    const isReject = command === 'rejectCodeRequest';
+    if(!requestId) return;
     try{
-      setButtonLoading(button, true, '등록중');
-      if(status){ status.className = 'admin-status'; status.textContent = '회원 코드 등록 중...'; }
-      const data = await accountAdmin('approveCodeRequest', { requestId:request.requestId });
-      if(!data.ok) throw new Error(data.message || '코드 등록 실패');
-      if(status){ status.className = 'admin-status success'; status.textContent = (request.characterName || '-') + ' / ' + (request.requestedCode || '-') + ' 등록 완료'; }
-      await listAccountCodes();
-      setTimeout(closeCodeRequestNotice, 650);
-    }catch(err){ if(status){ status.className = 'admin-status error'; status.textContent = err.message || String(err); } }
-    finally{ setButtonLoading(button, false); }
+      setButtonLoading(button, true, isReject ? '거절중' : '등록중');
+      if(status){ status.className = 'admin-status pending kinojo-code-request-item-status'; status.textContent = isReject ? '요청 거절 처리 중...' : '회원 코드 등록 중...'; }
+      const data = await accountAdmin(command, { requestId });
+      if(!data.ok) throw new Error(data.message || (isReject ? '요청 거절 실패' : '코드 등록 실패'));
+      if(status){ status.className = 'admin-status success kinojo-code-request-item-status'; status.textContent = data.message || (isReject ? '요청을 거절했습니다.' : '회원 코드가 등록되었습니다.'); }
+      if(!isReject) await listAccountCodes();
+      setTimeout(refreshCodeRequestNoticeList_, 320);
+    }catch(err){
+      if(status){ status.className = 'admin-status error kinojo-code-request-item-status'; status.textContent = err.message || String(err); }
+    }finally{
+      setButtonLoading(button, false);
+    }
   }
 
   function accountAdminMarkup_(){
