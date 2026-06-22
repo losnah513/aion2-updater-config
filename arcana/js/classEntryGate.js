@@ -79,24 +79,11 @@ ArcanaApp.classEntryGate = {
   },
 
   handleAction(event, button) {
-    if (ArcanaApp.classEntryGate.isTouchMode() && ArcanaApp.classEntryGate._touchTarget !== 'action') {
-      ArcanaApp.classEntryGate._touchTarget = 'action';
-      button.classList.add('is-touch-preview');
-      button.textContent = '한 번 더 터치해서 선택';
-      ArcanaApp.classEntryGate.clearTouchPreviewLater(button);
-      return;
-    }
 
     ArcanaApp.classEntryGate.openClassPicker();
   },
 
   handleClose(event, button) {
-    if (ArcanaApp.classEntryGate.isTouchMode() && ArcanaApp.classEntryGate._touchTarget !== 'close') {
-      ArcanaApp.classEntryGate._touchTarget = 'close';
-      button.classList.add('is-touch-preview');
-      ArcanaApp.classEntryGate.clearTouchPreviewLater(button);
-      return;
-    }
 
     ArcanaApp.classEntryGate.dismiss();
   },

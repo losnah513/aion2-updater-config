@@ -267,15 +267,6 @@ ArcanaApp.classSelector = {
     const showcase = document.getElementById('arcanaClassShowcase');
     if (!showcase) return;
 
-    if (ArcanaApp.classSelector.isTouchMode()) {
-      const previewKey = ArcanaApp.state.touchPreviewClassKey || '';
-      if (previewKey !== classKey) {
-        ArcanaApp.state.touchPreviewClassKey = classKey;
-        ArcanaApp.classSelector.hoverShowcaseClass(classKey);
-        ArcanaApp.classSelector.showTouchHint(classKey, targetElement);
-        return;
-      }
-    }
 
     ArcanaApp.classSelector.pickShowcaseClass(classKey);
   },
@@ -308,7 +299,7 @@ ArcanaApp.classSelector = {
     hint.innerHTML = `
       <strong>[${item.name}]</strong>
       <span>이 클래스로 진행하시는 거죠?</span>
-      <small>맞으시면 한 번 더 터치,<br>다시 선택하시려면 아무 곳이나 터치해주세요.</small>
+      <small>선택 후 확인 버튼으로 반영됩니다.</small>
     `;
 
     const stage = showcase.querySelector('.arcana-showcase-stage');

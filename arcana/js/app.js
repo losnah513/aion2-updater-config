@@ -270,24 +270,9 @@ ArcanaApp.app = {
     button.addEventListener('mouseenter', showLockedMessage);
     button.addEventListener('touchstart', showLockedMessage, { passive: true });
 
-    document.addEventListener('click', event => {
-      if (!ArcanaApp.state.recommendationTouchArmed) return;
-      if (button.contains(event.target)) return;
-      ArcanaApp.app.clearRecommendationTouchPreview();
-      ArcanaApp.panelLock.showMessage('recommendArcanaCards', '분석 실행을 취소했어요.');
-    });
-
     button.addEventListener('click', async event => {
       if (!ArcanaApp.app.canRunRecommendation()) {
         showLockedMessage();
-        return;
-      }
-
-      if (ArcanaApp.app.isTouchMode() && !ArcanaApp.state.recommendationTouchArmed) {
-        event.preventDefault();
-        ArcanaApp.state.recommendationTouchArmed = true;
-        button.classList.add('is-touch-preview');
-        ArcanaApp.panelLock.showMessage('recommendArcanaCards', '한 번 더 터치하면 분석을 시작합니다. 다른 곳을 터치하면 취소됩니다.');
         return;
       }
 
