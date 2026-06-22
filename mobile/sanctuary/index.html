@@ -1,68 +1,65 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="ko">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>KINOJO INFO · Mobile Sanctuary</title>
-<link rel="stylesheet" href="../../ui/kinojo-common-ui.css?cache=26062103">
-<link rel="stylesheet" href="../../ui/kinojo-sanctuary-cards.css?cache=26062209">
-<link rel="stylesheet" href="../mobile.css?cache=26062209">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
+<meta content="KINOJO INFO 성역" property="og:title"/>
+<meta content="키노조 성역 파티 현황" property="og:description"/>
+<meta content="https://losnah513.github.io/aion2-updater-config/hall-of-fame/assets/hall-banner-v2.png?v=1c202" property="og:image"/>
+<title>KINOJO INFO · 성역</title>
+<link href="../../sanctuary/css/sanctuary.css?cache=26062013" rel="stylesheet"/>
+<link href="../../ui/kinojo-common-ui.css?cache=26062103" rel="stylesheet"/>
+<link href="../mobile.css?cache=26062210" rel="stylesheet"/>
 </head>
-<body class="mobile-home-page mobile-sanctuary-page">
-<main class="mobile-wrap mobile-sanctuary-wrap">
-  <section class="mobile-sanctuary-page-stack" aria-label="성역 모바일 페이지">
-    <section class="mobile-feature-card mobile-sanctuary-carousel mobile-sanctuary-page-carousel" data-mobile-sanctuary-carousel aria-label="성역 선택">
-      <div class="mobile-sanctuary-track" id="mobileSanctuaryTrack" data-sanctuary-track>
-        <a class="mobile-sanctuary-slide is-active mobile-sanctuary-rudra" data-sanctuary-slide data-arrow-name="1성역" href="../../sanctuary/?id=rudra&view=desktop" aria-label="1성역 파티 정보 확인">
-          <span class="mobile-card-bg" aria-hidden="true"></span>
-          <span class="mobile-card-shade" aria-hidden="true"></span>
-          <span class="mobile-card-copy">
-            <strong>성역 1</strong>
-            <span>파티 정보 확인</span>
-          </span>
-        </a>
-        <a class="mobile-sanctuary-slide mobile-sanctuary-bagot" data-sanctuary-slide data-arrow-name="2성역" href="../../sanctuary/?id=bagot&view=desktop" aria-label="2성역 파티 정보 확인">
-          <span class="mobile-card-bg" aria-hidden="true"></span>
-          <span class="mobile-card-shade" aria-hidden="true"></span>
-          <span class="mobile-card-copy">
-            <strong>성역 2</strong>
-            <span>파티 정보 확인</span>
-          </span>
-        </a>
-        <a class="mobile-sanctuary-slide mobile-sanctuary-kaldrix" data-sanctuary-slide data-arrow-name="3성역" href="../../sanctuary/?id=kaldrix&view=desktop" aria-label="3성역 파티 정보 확인">
-          <span class="mobile-card-bg" aria-hidden="true"></span>
-          <span class="mobile-card-shade" aria-hidden="true"></span>
-          <span class="mobile-card-copy">
-            <strong>성역 3</strong>
-            <span>파티 정보 확인</span>
-          </span>
-        </a>
-      </div>
-      <button class="mobile-sanctuary-arrow mobile-sanctuary-prev" id="mobileSanctuaryPrev" data-sanctuary-prev type="button" aria-label="이전 성역 보기">
-        <span class="arrow-mark">‹</span><span class="arrow-label">1성역</span>
-      </button>
-      <button class="mobile-sanctuary-arrow mobile-sanctuary-next" id="mobileSanctuaryNext" data-sanctuary-next type="button" aria-label="다음 성역 보기">
-        <span class="arrow-label">2성역</span><span class="arrow-mark">›</span>
-      </button>
-      <div class="mobile-sanctuary-dots" id="mobileSanctuaryDots" aria-hidden="true"><span class="active" data-sanctuary-dot></span><span data-sanctuary-dot></span><span data-sanctuary-dot></span></div>
-    </section>
+<body class="kinojo-mobile-detail-page kinojo-mobile-sanctuary-detail-page">
+<main class="wrap">
 
-    <section class="mobile-sanctuary-guide" aria-label="성역 이용 안내">
-      <strong>성역 카드 이동</strong>
-      <span>좌우 화살표 또는 스와이프로 성역을 넘기고, 카드를 누르면 해당 파티 정보로 이동합니다.</span>
-    </section>
 
-    <div class="mobile-sanctuary-link-grid" aria-label="성역 바로가기">
-      <a href="../../sanctuary/?id=rudra&view=desktop"><strong>1성역</strong><span>루드라팟</span></a>
-      <a href="../../sanctuary/?id=bagot&view=desktop"><strong>2성역</strong><span>파티 정보</span></a>
-      <a href="../../sanctuary/?id=kaldrix&view=desktop"><strong>3성역</strong><span>파티 정보</span></a>
-    </div>
-  </section>
+<section class="sanctuary-hero" id="sanctuaryHero">
+<div class="hero-bg" id="heroBg"></div>
+<div class="hero-fade"></div>
+<div class="hero-text">
+<div class="hero-kicker" id="heroKicker">성역</div>
+<h1 id="heroTitle">성역 데이터를 불러오는 중...</h1>
+<p id="heroSub">KINOJO Sanctuary Framework</p>
+</div>
+</section>
+<section aria-label="성역 선택" class="sanctuary-tabs">
+<a class="sanctuary-tab" data-sanctuary-link="rudra" href="./?id=rudra">1. 심연의 재련: 루드라</a>
+<a class="sanctuary-tab" data-sanctuary-link="bagot" href="./?id=bagot">2. 침식의 정화소</a>
+<a class="sanctuary-tab" data-sanctuary-link="kaldrix" href="./?id=kaldrix">3. 무스펠의 성배</a>
+</section>
+<section aria-label="성역 요약" class="summary-grid" id="summaryGrid"></section>
+<section aria-hidden="true" class="tip-panel" id="tipPanel">
+<div class="tip-card">
+<button aria-label="공략 팁 닫기" class="tip-close" id="tipCloseBtn" type="button">×</button>
+<div class="tip-kicker">공략 팁</div>
+<h2 id="tipTitle">공략 팁</h2>
+<div class="tip-body" id="tipBody"></div>
+</div>
+</section>
+<section aria-label="수정 모드 준비" class="edit-shell">
+<button class="edit-btn" id="editModeBtn" type="button">수정하기</button>
+<span class="edit-note">관리자 코드 기반 편집 모드 준비 영역입니다.</span>
+</section>
+<section class="team-list" id="teamList"></section>
+<section class="waiting-section" id="waitingSection"></section>
+<footer class="footer common-footer"><div class="footer-links"><a href="../../pages/about.html">사이트 소개</a><a href="../../pages/terms.html">이용약관</a><a href="../../pages/privacy.html">개인정보처리방침</a><a href="../../pages/contact.html">아이디어 제안 및 건의</a></div><div class="footer-powered">Powered by AION2 · 깡 레기온 지원</div></footer>
 </main>
-<nav class="mobile-bottom-nav" aria-label="모바일 하단 메뉴"><a href="../index.html">메인</a><a href="../hall-of-fame/">명예</a><a class="is-active" href="../sanctuary/">성역</a><a href="../arcana/">아르카나</a></nav>
+<section aria-hidden="true" class="admin-code-modal" id="adminCodeModal">
+<div aria-labelledby="adminCodeTitle" aria-modal="false" class="admin-code-card" role="dialog">
+<button aria-label="닫기" class="admin-code-close" id="adminCodeCloseBtn" type="button">×</button>
+<div class="tip-kicker">EDIT MODE</div>
+<h2 id="adminCodeTitle">관리자 코드를 입력하세요</h2>
+<input class="admin-code-input" disabled="" placeholder="관리자 코드" type="password"/>
+<p>드래그 앤 드랍 편집, 팀명 변경, 대표 캐릭터 설정은 다음 단계에서 연결됩니다.</p>
+<button class="edit-btn" disabled="" type="button">확인</button>
+</div>
+</section>
 <script src="../../ui/kinojo-common-ui.js?cache=26062013"></script>
 <script src="../../ui/kinojo-admin-panel.js?cache=26062013"></script>
 <script src="../../core/kinojo-auth.js?cache=26062103"></script>
-<script src="../mobile-sanctuary-carousel.js?cache=26062209"></script>
+<script src="../../sanctuary/js/sanctuary.js?cache=26062013"></script>
 </body>
 </html>

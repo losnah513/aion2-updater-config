@@ -446,3 +446,185 @@ body{min-height:100svh}.mobile-wrap{width:100%;max-width:560px;padding:clamp(16p
   .mobile-sanctuary-link-grid strong{font-size:15px}
   .mobile-sanctuary-link-grid span{font-size:11px}
 }
+
+
+/* ============================================================
+   KINOJO Mobile Detail Restore v26062210
+   - 명예의 전당/성역 내부 페이지는 카드형 중간 입구가 아니라
+     기존 KINOJO 실제 기능 화면을 모바일 폭에 맞춰 최적화한다.
+   - 모바일 메인 허브 카드 UI와 내부 기능 페이지 UI를 분리한다.
+============================================================ */
+.kinojo-mobile-detail-page{
+  color-scheme:light;
+  min-height:100svh;
+  background:#f5f7fb;
+  color:#102033;
+  overflow-x:hidden;
+}
+.kinojo-mobile-detail-page .kinojo-topbar{
+  max-width:100%;
+}
+.kinojo-mobile-detail-page .wrap{
+  width:100%;
+  max-width:100%;
+  margin:0 auto;
+  padding-left:clamp(10px,3.2vw,16px);
+  padding-right:clamp(10px,3.2vw,16px);
+  padding-bottom:calc(24px + env(safe-area-inset-bottom));
+}
+.kinojo-mobile-detail-page .footer.common-footer{
+  margin-left:0;
+  margin-right:0;
+}
+
+/* Hall of Fame mobile: PC 기능/데이터 구조 유지 + 모바일 1열 최적화 */
+.kinojo-mobile-hall-detail-page .banner{
+  margin-top:10px;
+  border-radius:18px;
+  overflow:hidden;
+}
+.kinojo-mobile-hall-detail-page .banner img{
+  width:100%;
+  height:auto;
+  display:block;
+}
+.kinojo-mobile-hall-detail-page .section,
+.kinojo-mobile-hall-detail-page .chick-card,
+.kinojo-mobile-hall-detail-page .list,
+.kinojo-mobile-hall-detail-page .card,
+.kinojo-mobile-hall-detail-page .rank-card,
+.kinojo-mobile-hall-detail-page .mvp-card,
+.kinojo-mobile-hall-detail-page .relation-card,
+.kinojo-mobile-hall-detail-page .mini-card{
+  max-width:100%;
+}
+.kinojo-mobile-hall-detail-page .section-head{
+  gap:8px;
+  align-items:flex-start;
+}
+.kinojo-mobile-hall-detail-page .section-head h2{
+  font-size:clamp(17px,4.8vw,22px);
+  line-height:1.15;
+}
+.kinojo-mobile-hall-detail-page .section-note{
+  font-size:12px;
+}
+.kinojo-mobile-hall-detail-page .search,
+.kinojo-mobile-hall-detail-page input,
+.kinojo-mobile-hall-detail-page textarea,
+.kinojo-mobile-hall-detail-page button{
+  max-width:100%;
+}
+.kinojo-mobile-hall-detail-page table{
+  width:100%;
+}
+.kinojo-mobile-hall-detail-page .loading{
+  min-height:220px;
+}
+@media (max-width:540px){
+  .kinojo-mobile-hall-detail-page .wrap{padding-top:10px;}
+  .kinojo-mobile-hall-detail-page .grid,
+  .kinojo-mobile-hall-detail-page .summary-grid,
+  .kinojo-mobile-hall-detail-page .rank-grid,
+  .kinojo-mobile-hall-detail-page .top-grid,
+  .kinojo-mobile-hall-detail-page .relation-grid,
+  .kinojo-mobile-hall-detail-page .hall-grid{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:12px!important;
+  }
+  .kinojo-mobile-hall-detail-page .section{
+    margin-bottom:12px!important;
+    border-radius:18px!important;
+  }
+  .kinojo-mobile-hall-detail-page .ranking-table,
+  .kinojo-mobile-hall-detail-page .table-wrap,
+  .kinojo-mobile-hall-detail-page .rank-table-wrap{
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .kinojo-mobile-hall-detail-page .reaction-popover{
+    inset:auto 10px calc(10px + env(safe-area-inset-bottom)) 10px!important;
+    width:auto!important;
+    max-width:none!important;
+  }
+}
+
+/* Sanctuary mobile: 기존 성역 기능 화면 유지 + 세로 모바일 최적화 */
+.kinojo-mobile-sanctuary-detail-page .wrap{
+  padding-top:10px;
+}
+.kinojo-mobile-sanctuary-detail-page .sanctuary-hero{
+  aspect-ratio:21/9;
+  min-height:auto;
+  max-height:none;
+  border-radius:20px;
+  overflow:hidden;
+  margin-top:10px;
+}
+.kinojo-mobile-sanctuary-detail-page .hero-text{
+  left:clamp(16px,4.5vw,24px);
+  right:clamp(16px,4.5vw,24px);
+  bottom:clamp(16px,4.8vw,24px);
+}
+.kinojo-mobile-sanctuary-detail-page .hero-kicker{
+  font-size:clamp(12px,3.4vw,14px);
+}
+.kinojo-mobile-sanctuary-detail-page .hero-text h1{
+  font-size:clamp(24px,7.1vw,38px);
+  line-height:1.05;
+  letter-spacing:-.06em;
+}
+.kinojo-mobile-sanctuary-detail-page .hero-text p{
+  font-size:clamp(13px,3.7vw,16px);
+  line-height:1.3;
+}
+.kinojo-mobile-sanctuary-detail-page .sanctuary-tabs{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  padding:8px 0 4px;
+  -webkit-overflow-scrolling:touch;
+  scroll-snap-type:x proximity;
+}
+.kinojo-mobile-sanctuary-detail-page .sanctuary-tab{
+  flex:0 0 auto;
+  min-width:max-content;
+  scroll-snap-align:start;
+  border-radius:999px;
+  white-space:nowrap;
+}
+.kinojo-mobile-sanctuary-detail-page .summary-grid,
+.kinojo-mobile-sanctuary-detail-page .team-list,
+.kinojo-mobile-sanctuary-detail-page .waiting-section{
+  max-width:100%;
+}
+@media (max-width:540px){
+  .kinojo-mobile-sanctuary-detail-page .summary-grid,
+  .kinojo-mobile-sanctuary-detail-page .team-list,
+  .kinojo-mobile-sanctuary-detail-page .waiting-section,
+  .kinojo-mobile-sanctuary-detail-page .team-grid,
+  .kinojo-mobile-sanctuary-detail-page .party-grid{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:12px!important;
+  }
+  .kinojo-mobile-sanctuary-detail-page .edit-shell{
+    display:grid;
+    gap:8px;
+  }
+  .kinojo-mobile-sanctuary-detail-page .tip-panel .tip-card,
+  .kinojo-mobile-sanctuary-detail-page .admin-code-card{
+    width:min(calc(100vw - 24px),520px)!important;
+    max-width:none!important;
+  }
+}
+@media (max-width:430px) and (min-height:880px){
+  .kinojo-mobile-sanctuary-detail-page .sanctuary-hero{
+    aspect-ratio:21/9;
+  }
+  .kinojo-mobile-detail-page .wrap{
+    padding-left:10px;
+    padding-right:10px;
+  }
+}
