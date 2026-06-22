@@ -1,3 +1,77 @@
 <!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>KINOJO INFO · Mobile</title><link rel="stylesheet" href="mobile.css?cache=26062205"></head>
-<body><main class="mobile-wrap"><div class="mobile-top"><div class="mobile-brand">KINOJO MOBILE</div><a class="mobile-pill" href="../home.html?view=desktop">PC 화면</a></div><section class="mobile-hero"><h1>모바일 전용 입구</h1><p>모바일은 터치와 세로 화면을 기준으로 별도 도로에서 열립니다. PC 화면과 데이터 로직은 충돌하지 않게 분리합니다.</p></section><section class="mobile-grid"><a class="mobile-card" href="hall-of-fame/"><strong>명예의 전당</strong><span>모바일 전용 순위/반응 화면으로 연결될 자리입니다.</span></a><a class="mobile-card" href="sanctuary/"><strong>성역 파티</strong><span>루드라/바고트/칼드릭스 파티를 모바일 구조로 확인합니다.</span></a><a class="mobile-card" href="arcana/"><strong>아르카나</strong><span>더블터치 확정 없이 1회 탭 기준으로 재구성합니다.</span></a></section><div class="mobile-note">1차 공사는 진입로 분리입니다. 기존 PC 페이지는 보존하고, 모바일 화면은 이 폴더에서 독립적으로 확장합니다.</div></main><nav class="mobile-bottom-nav"><a class="is-active" href="index.html">메인</a><a class="" href="hall-of-fame/">명예</a><a class="" href="sanctuary/">성역</a><a class="" href="arcana/">아르카나</a></nav></body></html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KINOJO INFO · Mobile</title>
+<link rel="stylesheet" href="../ui/kinojo-common-ui.css?cache=26062103">
+<link rel="stylesheet" href="../ui/kinojo-sanctuary-cards.css?cache=26062207">
+<link rel="stylesheet" href="mobile.css?cache=26062207">
+</head>
+<body class="mobile-home-page">
+<main class="mobile-wrap mobile-home-wrap">
+  <section class="mobile-home-stack" aria-label="KINOJO 모바일 메뉴">
+    <a class="mobile-feature-card mobile-feature-hall" href="hall-of-fame/" aria-label="명예의 전당 열기">
+      <span class="mobile-card-bg" aria-hidden="true"></span>
+      <span class="mobile-card-shade" aria-hidden="true"></span>
+      <span class="mobile-card-copy">
+        <strong>명예의 전당</strong>
+        <span>깡 레기온 랭킹 조회 등</span>
+      </span>
+      <span class="mobile-card-enter" aria-hidden="true">›</span>
+    </a>
+
+    <section class="mobile-feature-card mobile-sanctuary-carousel" aria-label="성역 파티 카드">
+      <div class="mobile-sanctuary-track" id="mobileSanctuaryTrack">
+        <a class="mobile-sanctuary-slide is-active mobile-sanctuary-rudra" href="sanctuary/?id=rudra" aria-label="1성역 파티 정보 확인">
+          <span class="mobile-card-bg" aria-hidden="true"></span>
+          <span class="mobile-card-shade" aria-hidden="true"></span>
+          <span class="mobile-card-copy">
+            <strong>성역 1</strong>
+            <span>파티 정보 확인</span>
+          </span>
+        </a>
+        <a class="mobile-sanctuary-slide mobile-sanctuary-bagot" href="sanctuary/?id=bagot" aria-label="2성역 파티 정보 확인">
+          <span class="mobile-card-bg" aria-hidden="true"></span>
+          <span class="mobile-card-shade" aria-hidden="true"></span>
+          <span class="mobile-card-copy">
+            <strong>성역 2</strong>
+            <span>파티 정보 확인</span>
+          </span>
+        </a>
+        <a class="mobile-sanctuary-slide mobile-sanctuary-kaldrix" href="sanctuary/?id=kaldrix" aria-label="3성역 파티 정보 확인">
+          <span class="mobile-card-bg" aria-hidden="true"></span>
+          <span class="mobile-card-shade" aria-hidden="true"></span>
+          <span class="mobile-card-copy">
+            <strong>성역 3</strong>
+            <span>파티 정보 확인</span>
+          </span>
+        </a>
+      </div>
+      <button class="mobile-sanctuary-arrow mobile-sanctuary-prev" id="mobileSanctuaryPrev" type="button" aria-label="이전 성역 보기">
+        <span class="arrow-mark">‹</span><span class="arrow-label">1성역</span>
+      </button>
+      <button class="mobile-sanctuary-arrow mobile-sanctuary-next" id="mobileSanctuaryNext" type="button" aria-label="다음 성역 보기">
+        <span class="arrow-label">2성역</span><span class="arrow-mark">›</span>
+      </button>
+      <div class="mobile-sanctuary-dots" id="mobileSanctuaryDots" aria-hidden="true"><span class="active"></span><span></span><span></span></div>
+    </section>
+
+    <a class="mobile-feature-card mobile-feature-arcana" href="arcana/" aria-label="아르카나 열기">
+      <span class="mobile-card-bg" aria-hidden="true"></span>
+      <span class="mobile-card-shade" aria-hidden="true"></span>
+      <span class="mobile-card-copy">
+        <strong>ARCANA</strong>
+        <span>조합 시뮬레이터</span>
+      </span>
+      <span class="mobile-card-enter" aria-hidden="true">›</span>
+    </a>
+  </section>
+</main>
+<nav class="mobile-bottom-nav" aria-label="모바일 하단 메뉴"><a class="is-active" href="index.html">메인</a><a href="hall-of-fame/">명예</a><a href="sanctuary/">성역</a><a href="arcana/">아르카나</a></nav>
+<script src="../ui/kinojo-common-ui.js?cache=26062013"></script>
+<script src="../ui/kinojo-admin-panel.js?cache=26062013"></script>
+<script src="../core/kinojo-auth.js?cache=26062103"></script>
+<script src="mobile-home.js?cache=26062207"></script>
+</body>
+</html>

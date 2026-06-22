@@ -1,0 +1,26 @@
+KINOJO 1.3.1.00 / 2026-06-22 / 작업 07
+
+[작업 목적]
+- 모바일 메인 실제 카드 UI 구현
+- 성역 카드 이미지 자원을 PC/Mobile에서 같은 변수로 참조하도록 정리
+- 성역 모바일 캐러셀의 좌우 화살표/다음 카드명 표기 구현
+
+[수정 파일]
+- GitHub_Pages/home.html
+- GitHub_Pages/mobile/index.html
+- GitHub_Pages/mobile/mobile.css
+- GitHub_Pages/ui/info-home.css
+
+[신규 파일]
+- GitHub_Pages/mobile/mobile-home.js
+- GitHub_Pages/ui/kinojo-sanctuary-cards.css
+- GitHub_Pages/_docs/MODIFIED_FILES_26062207.txt
+
+[삭제 파일]
+- 없음
+
+[AppsScript]
+- 수정 없음
+
+[Extension]
+- 수정 없음

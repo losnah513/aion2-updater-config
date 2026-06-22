@@ -182,28 +182,40 @@ body.drawer-open{
   transition:opacity .34s ease,transform .42s cubic-bezier(.16,1,.3,1),filter .42s cubic-bezier(.16,1,.3,1)}
 .rudra-bg{
   z-index:1;
-  background:url("hall-of-fame/assets/sanctuary/rudra/rudra-bg.png") center/cover no-repeat;
+  background-image:var(--kinojo-sanctuary-rudra-bg);
+  background-position:center;
+  background-size:cover;
+  background-repeat:no-repeat;
   filter:brightness(.64) saturate(.88);
   opacity:1;
   clip-path:inset(0 round 2px)}
 .rudra-boss{
   z-index:5;
   inset:0;
-  background:url("hall-of-fame/assets/sanctuary/rudra/rudra-boss.png") center 34%/86% auto no-repeat;
+  background-image:var(--kinojo-sanctuary-rudra-boss);
+  background-position:center 34%;
+  background-size:86% auto;
+  background-repeat:no-repeat;
   opacity:.78;
   filter:brightness(.74) saturate(.9) drop-shadow(0 10px 18px rgba(0,0,0,.42));
   transform:translate(0,0) scale(1);
   transform-origin:42% 82%}
 .rudra-lightning-main{
   z-index:8;
-  background:url("hall-of-fame/assets/sanctuary/rudra/rudra-lightning.png") 56% 25%/64% auto no-repeat;
+  background-image:var(--kinojo-sanctuary-rudra-lightning);
+  background-position:56% 25%;
+  background-size:64% auto;
+  background-repeat:no-repeat;
   opacity:0;
   transform:rotate(-8deg) scale(1.08);
   mix-blend-mode:screen;
   filter:drop-shadow(0 0 18px rgba(184,110,255,.9))}
 .rudra-lightning-right{
   z-index:9;
-  background:url("hall-of-fame/assets/sanctuary/rudra/rudra-lightning-right.png") 76% 20%/72% auto no-repeat;
+  background-image:var(--kinojo-sanctuary-rudra-lightning-right);
+  background-position:76% 20%;
+  background-size:72% auto;
+  background-repeat:no-repeat;
   opacity:0;
   transform:rotate(12deg) scale(1.18);
   mix-blend-mode:screen;
@@ -301,10 +313,10 @@ body.drawer-open{
   content:"";position:absolute;inset:0;z-index:1;transition:.38s ease;
 }
 .bagot-card::before{
-  background:radial-gradient(circle at 52% 26%,rgba(205,255,244,.82),rgba(65,144,131,.66) 38%,rgba(22,48,58,.96) 100%);
+  background:var(--kinojo-sanctuary-bagot-bg);
 }
 .kaldrix-card::before{
-  background:radial-gradient(circle at 67% 24%,rgba(255,229,178,.86),rgba(167,111,54,.72) 42%,rgba(54,36,42,.98) 100%);
+  background:var(--kinojo-sanctuary-kaldrix-bg);
 }
 .bagot-card::after,.kaldrix-card::after{
   content:"";position:absolute;inset:0;z-index:3;
