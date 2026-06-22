@@ -1,0 +1,37 @@
+Kinojo_1_3_1_00_20260621_09
+
+[APPSCRIPT]
+수정
+- AppsScript/sheet.gs
+  · LookupSnapshot 시스템 시트 생성/초기화 함수 추가
+  · 조회 시작 시 list 스냅샷 저장 구조 추가
+  · CharacterImages 선등록/상태 관리 구조 추가
+  · CharacterImages 헤더를 status/errorMessage 포함 구조로 확장
+  · 성공/실패 상태 갱신 시 기존 이미지 URL 보호 유지
+
+- AppsScript/update.gs
+  · action=list 조회 시작 시 LookupSnapshot 생성
+  · 조회 대상 캐릭터를 CharacterImages에 먼저 PENDING 등록
+  · 캐릭터 처리 성공/실패/누락 상태를 LookupSnapshot과 CharacterImages에 기록
+  · doPost catch에서 body 참조 스코프 오류 방지
+
+- AppsScript/system_sheet.gs
+  · CharacterImages 헤더 확장
+  · LookupSnapshot 시스템 시트 생성 대상 추가
+
+[EXTENSION]
+수정
+- KINOJO_1_3_1_00/updater/updater.js
+  · 조회 시작 시 서버가 반환한 snapshotCreated 값을 진행 로그에 표시
+
+[WEB]
+수정 없음
+
+[루트]
+수정 없음
+
+검수
+- updater.js 문법 체크 통과
+- background.js 문법 체크 통과
+- update.gs / sheet.gs / system_sheet.gs JS 파서 문법 체크 통과
+- ZIP 무결성 검사 예정

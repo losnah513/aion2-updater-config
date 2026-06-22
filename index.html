@@ -1,81 +1,36 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta property="og:title" content="KINOJO INFO">
-<meta property="og:description" content="키노조 정보 허브 - 성역 파티 확인과 명예의 전당">
-<meta property="og:image" content="https://losnah513.github.io/aion2-updater-config/hall-of-fame/assets/hall-banner-v2.png?v=26060301">
-<title>KINOJO INFO</title>
-<link rel="stylesheet" href="ui/info-home.css?cache=26062013">
-<link rel="stylesheet" href="ui/kinojo-common-ui.css?cache=26062103">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="KINOJO INFO 기기별 진입 라우터" />
+  <title>KINOJO INFO</title>
+  <script>
+    (function () {
+      'use strict';
+      var params = new URLSearchParams(window.location.search || '');
+      var forcedView = params.get('view') || params.get('device') || '';
+      if (forcedView === 'desktop' || forcedView === 'pc') {
+        try { sessionStorage.setItem('kinojoPreferredView', 'desktop'); } catch (error) {}
+      }
+      if (forcedView === 'mobile') {
+        try { sessionStorage.setItem('kinojoPreferredView', 'mobile'); } catch (error) {}
+      }
+      var preferredView = '';
+      try { preferredView = sessionStorage.getItem('kinojoPreferredView') || ''; } catch (error) {}
+      var ua = navigator.userAgent || navigator.vendor || '';
+      var uaMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+      var coarsePointer = false;
+      try { coarsePointer = window.matchMedia && window.matchMedia('(pointer: coarse)').matches; } catch (error) {}
+      var narrow = window.innerWidth > 0 && window.innerWidth <= 820;
+      var mobile = preferredView === 'mobile' || (preferredView !== 'desktop' && (uaMobile || (coarsePointer && narrow)));
+      var target = mobile ? 'mobile/' : 'home.html';
+      window.location.replace(target + window.location.search + window.location.hash);
+    })();
+  </script>
 </head>
 <body>
-<main class="wrap">
-  <section class="hero">
-    <div class="eyebrow">✨ AION2 · KINOJO PORTAL</div>
-    <div class="info-logo-slot" aria-label="KINOJO INFO 로고 영역">
-      <!-- 실제 로고 이미지가 준비되면 아래 placeholder를 img로 교체하세요.
-      <img class="info-logo-img" src="assets/kinojo-info-logo.png" alt="KINOJO INFO">
-      -->
-      <div class="info-logo-placeholder">KINOJO INFO LOGO IMAGE</div>
-    </div>
-    <p class="subtitle">성역 파티 확인, 레기온 기록, 명예의 전당으로 이어지는 키노조 정보 허브입니다.</p>
-    <a class="hall-banner" href="hall-of-fame/" aria-label="Hall of Fame 열기"><img src="hall-of-fame/assets/hall-banner-v2.png?v=26060301" alt="Kinojo Hall of Fame"></a>
-  </section>
-  <section class="sanctuary-row" aria-label="성역 파티 확인">
-    <a class="card rudra-card" href="sanctuary/index.html?id=rudra" aria-label="성역 1 루드라팟 파티 확인">
-      <span class="badge">OPEN</span>
-      <span class="rudra-layer rudra-bg" aria-hidden="true"></span>
-      <span class="rudra-layer rudra-lightning-main" aria-hidden="true"></span>
-      <span class="rudra-layer rudra-lightning-right" aria-hidden="true"></span>
-      <span class="rudra-layer rudra-boss" aria-hidden="true"></span>
-      <div class="rudra-content">
-        <div>
-          <div class="rudra-title">성역 1</div>
-          <div class="rudra-sub">심연의 재련: 루드라</div>
-        </div>
-        <div class="rudra-enter">›</div>
-      </div>
-    </a>
-    <a class="card bagot-card" href="sanctuary/index.html?id=bagot" aria-label="성역 2 바고트팟 파티 확인">
-      <span class="sanctuary-symbol" aria-hidden="true">⚔️</span>
-      <div class="sanctuary-card-content">
-        <div><div class="sanctuary-title">성역 2</div><div class="sanctuary-sub">침식의 정화소 · 바고트</div></div>
-        <div class="sanctuary-enter">›</div>
-      </div>
-    </a>
-    <a class="card kaldrix-card" href="sanctuary/index.html?id=kaldrix" aria-label="성역 3 칼드릭스팟 파티 확인">
-      <span class="sanctuary-symbol" aria-hidden="true">🔮</span>
-      <div class="sanctuary-card-content">
-        <div><div class="sanctuary-title">성역 3</div><div class="sanctuary-sub">무스펠의 성배 · 칼드릭스</div></div>
-        <div class="sanctuary-enter">›</div>
-      </div>
-    </a>
-  </section>
-  <footer class="footer common-footer">
-    <div class="footer-links">
-      <button type="button" data-drawer="about">사이트 소개</button>
-      <button type="button" data-drawer="terms">이용약관</button>
-      <button type="button" data-drawer="privacy">개인정보처리방침</button>
-      <button type="button" data-drawer="contact">아이디어 제안 및 건의</button>
-    </div>
-    <div class="footer-powered">Powered by AION2 · 깡 레기온 지원</div>
-  </footer>
-</main>
-
-<div class="construction-notice" id="constructionNotice" aria-hidden="true">
-  <div class="construction-card" role="dialog" aria-modal="false" aria-labelledby="constructionTitle">
-    <button class="construction-close" id="constructionCloseBtn" type="button" aria-label="닫기">×</button>
-    <div class="construction-kicker">KINOJO INFO</div>
-    <h2 id="constructionTitle">페이지 인테리어 공사중입니다~</h2>
-    <p id="constructionMessage">1성역 루드라팟 페이지는 인테리어 공사중입니다. 조금만 기다려 주세요.</p>
-    <button class="construction-ok" id="constructionOkBtn" type="button">확인</button>
-  </div>
-</div>
-
-<script src="ui/kinojo-common-ui.js?cache=26062013"></script>
-<script src="ui/kinojo-admin-panel.js?cache=26062013"></script>
-<script src="core/kinojo-auth.js?cache=26062103"></script>
+  <p>KINOJO INFO로 이동 중입니다.</p>
+  <p><a href="home.html?view=desktop">PC 화면으로 열기</a> · <a href="mobile/?view=mobile">모바일 화면으로 열기</a></p>
 </body>
 </html>

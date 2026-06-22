@@ -1,0 +1,45 @@
+KINOJO MODIFIED FILES 26062106
+
+[EXTENSION]
+수정
+- KINOJO_1_3_1_00/background.js
+  · fizz-download/profileimage 직접 추출 로직 제거
+  · 캐릭터 상세 HTML에서 charKey 추출 추가
+  · 상세 URL의 /characters/{serverId}/ 값과 charKey로 profileimg.plaync.com 이미지 URL 생성
+  · FETCH_CHARACTER_PAGE_TEXT 응답 payload에 serverId/charKey/profileImageUrl 포함
+
+- KINOJO_1_3_1_00/updater/updater.js
+  · background 응답의 serverId/charKey를 normalizeCharacterPagePayload에서 유지
+  · profileimg.plaync.com 형식의 이미지 URL 정규화로 변경
+  · 상세 페이지 직접 처리 흐름에서도 charKey 기반 이미지 URL 생성
+  · submitCharacterRaw 전송 payload에 charKey/serverId/profileImageUrl 포함
+
+[APPSCRIPT]
+수정
+- AppsScript/sheet.gs
+  · CharacterImages 컬럼 구조를 serverId/characterName/charKey/profileImageUrl/detailUrl/imageUpdatedAt로 변경
+  · 기존 26062105 CharacterImages 시트의 C열 profileImageUrl 구조를 charKey 컬럼 삽입 방식으로 자동 마이그레이션
+  · fizz-download/profileimage 검증 로직 제거
+  · profileimg.plaync.com 이미지 URL 생성/검증 로직 추가
+  · charKey 기준 중복 행 탐색 보강
+
+- AppsScript/update.gs
+  · submit/submitCharacterRaw 수신 payload에서 charKey 처리 추가
+  · profileImageUrl이 비어 있어도 serverId+charKey로 이미지 URL 생성 후 CharacterImages에 저장
+
+- AppsScript/system_sheet.gs
+  · ensureKinojoSystemSheets_의 CharacterImages 헤더에 charKey 추가
+
+[WEB]
+수정 없음
+
+[루트]
+수정 없음
+
+[검수]
+- background.js node --check 통과
+- updater.js node --check 통과
+- AppsScript/sheet.gs node --check 통과
+- AppsScript/update.gs node --check 통과
+- AppsScript/system_sheet.gs node --check 통과
+- ZIP 무결성 검사 통과
