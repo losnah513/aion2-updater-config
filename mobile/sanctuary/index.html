@@ -1,3 +1,68 @@
 <!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>KINOJO INFO · Mobile Sanctuary</title><link rel="stylesheet" href="../mobile.css?cache=26062205"></head>
-<body><main class="mobile-wrap"><div class="mobile-top"><div class="mobile-brand">KINOJO MOBILE</div><a class="mobile-pill" href="../../home.html?view=desktop">PC 화면</a></div><section class="mobile-hero"><h1>성역 모바일</h1><p>세로형 탭과 터치형 파티 카드로 분리할 독립 화면입니다.</p></section><a class="mobile-action" href="../../sanctuary/?view=desktop">현재 PC 화면으로 열기</a><div class="mobile-note">성역별 id 파라미터는 유지하되 모바일 표시 구조만 따로 만듭니다.</div></main><nav class="mobile-bottom-nav"><a class="" href="../index.html">메인</a><a class="" href="../hall-of-fame/">명예</a><a class="is-active" href="../sanctuary/">성역</a><a class="" href="../arcana/">아르카나</a></nav></body></html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KINOJO INFO · Mobile Sanctuary</title>
+<link rel="stylesheet" href="../../ui/kinojo-common-ui.css?cache=26062103">
+<link rel="stylesheet" href="../../ui/kinojo-sanctuary-cards.css?cache=26062209">
+<link rel="stylesheet" href="../mobile.css?cache=26062209">
+</head>
+<body class="mobile-home-page mobile-sanctuary-page">
+<main class="mobile-wrap mobile-sanctuary-wrap">
+  <section class="mobile-sanctuary-page-stack" aria-label="성역 모바일 페이지">
+    <section class="mobile-feature-card mobile-sanctuary-carousel mobile-sanctuary-page-carousel" data-mobile-sanctuary-carousel aria-label="성역 선택">
+      <div class="mobile-sanctuary-track" id="mobileSanctuaryTrack" data-sanctuary-track>
+        <a class="mobile-sanctuary-slide is-active mobile-sanctuary-rudra" data-sanctuary-slide data-arrow-name="1성역" href="../../sanctuary/?id=rudra&view=desktop" aria-label="1성역 파티 정보 확인">
+          <span class="mobile-card-bg" aria-hidden="true"></span>
+          <span class="mobile-card-shade" aria-hidden="true"></span>
+          <span class="mobile-card-copy">
+            <strong>성역 1</strong>
+            <span>파티 정보 확인</span>
+          </span>
+        </a>
+        <a class="mobile-sanctuary-slide mobile-sanctuary-bagot" data-sanctuary-slide data-arrow-name="2성역" href="../../sanctuary/?id=bagot&view=desktop" aria-label="2성역 파티 정보 확인">
+          <span class="mobile-card-bg" aria-hidden="true"></span>
+          <span class="mobile-card-shade" aria-hidden="true"></span>
+          <span class="mobile-card-copy">
+            <strong>성역 2</strong>
+            <span>파티 정보 확인</span>
+          </span>
+        </a>
+        <a class="mobile-sanctuary-slide mobile-sanctuary-kaldrix" data-sanctuary-slide data-arrow-name="3성역" href="../../sanctuary/?id=kaldrix&view=desktop" aria-label="3성역 파티 정보 확인">
+          <span class="mobile-card-bg" aria-hidden="true"></span>
+          <span class="mobile-card-shade" aria-hidden="true"></span>
+          <span class="mobile-card-copy">
+            <strong>성역 3</strong>
+            <span>파티 정보 확인</span>
+          </span>
+        </a>
+      </div>
+      <button class="mobile-sanctuary-arrow mobile-sanctuary-prev" id="mobileSanctuaryPrev" data-sanctuary-prev type="button" aria-label="이전 성역 보기">
+        <span class="arrow-mark">‹</span><span class="arrow-label">1성역</span>
+      </button>
+      <button class="mobile-sanctuary-arrow mobile-sanctuary-next" id="mobileSanctuaryNext" data-sanctuary-next type="button" aria-label="다음 성역 보기">
+        <span class="arrow-label">2성역</span><span class="arrow-mark">›</span>
+      </button>
+      <div class="mobile-sanctuary-dots" id="mobileSanctuaryDots" aria-hidden="true"><span class="active" data-sanctuary-dot></span><span data-sanctuary-dot></span><span data-sanctuary-dot></span></div>
+    </section>
+
+    <section class="mobile-sanctuary-guide" aria-label="성역 이용 안내">
+      <strong>성역 카드 이동</strong>
+      <span>좌우 화살표 또는 스와이프로 성역을 넘기고, 카드를 누르면 해당 파티 정보로 이동합니다.</span>
+    </section>
+
+    <div class="mobile-sanctuary-link-grid" aria-label="성역 바로가기">
+      <a href="../../sanctuary/?id=rudra&view=desktop"><strong>1성역</strong><span>루드라팟</span></a>
+      <a href="../../sanctuary/?id=bagot&view=desktop"><strong>2성역</strong><span>파티 정보</span></a>
+      <a href="../../sanctuary/?id=kaldrix&view=desktop"><strong>3성역</strong><span>파티 정보</span></a>
+    </div>
+  </section>
+</main>
+<nav class="mobile-bottom-nav" aria-label="모바일 하단 메뉴"><a href="../index.html">메인</a><a href="../hall-of-fame/">명예</a><a class="is-active" href="../sanctuary/">성역</a><a href="../arcana/">아르카나</a></nav>
+<script src="../../ui/kinojo-common-ui.js?cache=26062013"></script>
+<script src="../../ui/kinojo-admin-panel.js?cache=26062013"></script>
+<script src="../../core/kinojo-auth.js?cache=26062103"></script>
+<script src="../mobile-sanctuary-carousel.js?cache=26062209"></script>
+</body>
+</html>

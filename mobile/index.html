@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>KINOJO INFO · Mobile</title>
 <link rel="stylesheet" href="../ui/kinojo-common-ui.css?cache=26062103">
-<link rel="stylesheet" href="../ui/kinojo-sanctuary-cards.css?cache=26062208">
-<link rel="stylesheet" href="mobile.css?cache=26062208">
+<link rel="stylesheet" href="../ui/kinojo-sanctuary-cards.css?cache=26062209">
+<link rel="stylesheet" href="mobile.css?cache=26062209">
 </head>
 <body class="mobile-home-page">
 <main class="mobile-wrap mobile-home-wrap">
@@ -21,9 +21,9 @@
       <span class="mobile-card-enter" aria-hidden="true">›</span>
     </a>
 
-    <section class="mobile-feature-card mobile-sanctuary-carousel" aria-label="성역 파티 카드">
-      <div class="mobile-sanctuary-track" id="mobileSanctuaryTrack">
-        <a class="mobile-sanctuary-slide is-active mobile-sanctuary-rudra" href="sanctuary/?id=rudra" aria-label="1성역 파티 정보 확인">
+    <section class="mobile-feature-card mobile-sanctuary-carousel" data-mobile-sanctuary-carousel aria-label="성역 파티 카드">
+      <div class="mobile-sanctuary-track" id="mobileSanctuaryTrack" data-sanctuary-track>
+        <a class="mobile-sanctuary-slide is-active mobile-sanctuary-rudra" data-sanctuary-slide data-arrow-name="1성역" href="sanctuary/?id=rudra" aria-label="1성역 파티 정보 확인">
           <span class="mobile-card-bg" aria-hidden="true"></span>
           <span class="mobile-card-shade" aria-hidden="true"></span>
           <span class="mobile-card-copy">
@@ -31,7 +31,7 @@
             <span>파티 정보 확인</span>
           </span>
         </a>
-        <a class="mobile-sanctuary-slide mobile-sanctuary-bagot" href="sanctuary/?id=bagot" aria-label="2성역 파티 정보 확인">
+        <a class="mobile-sanctuary-slide mobile-sanctuary-bagot" data-sanctuary-slide data-arrow-name="2성역" href="sanctuary/?id=bagot" aria-label="2성역 파티 정보 확인">
           <span class="mobile-card-bg" aria-hidden="true"></span>
           <span class="mobile-card-shade" aria-hidden="true"></span>
           <span class="mobile-card-copy">
@@ -39,7 +39,7 @@
             <span>파티 정보 확인</span>
           </span>
         </a>
-        <a class="mobile-sanctuary-slide mobile-sanctuary-kaldrix" href="sanctuary/?id=kaldrix" aria-label="3성역 파티 정보 확인">
+        <a class="mobile-sanctuary-slide mobile-sanctuary-kaldrix" data-sanctuary-slide data-arrow-name="3성역" href="sanctuary/?id=kaldrix" aria-label="3성역 파티 정보 확인">
           <span class="mobile-card-bg" aria-hidden="true"></span>
           <span class="mobile-card-shade" aria-hidden="true"></span>
           <span class="mobile-card-copy">
@@ -48,13 +48,13 @@
           </span>
         </a>
       </div>
-      <button class="mobile-sanctuary-arrow mobile-sanctuary-prev" id="mobileSanctuaryPrev" type="button" aria-label="이전 성역 보기">
+      <button class="mobile-sanctuary-arrow mobile-sanctuary-prev" id="mobileSanctuaryPrev" data-sanctuary-prev type="button" aria-label="이전 성역 보기">
         <span class="arrow-mark">‹</span><span class="arrow-label">1성역</span>
       </button>
-      <button class="mobile-sanctuary-arrow mobile-sanctuary-next" id="mobileSanctuaryNext" type="button" aria-label="다음 성역 보기">
+      <button class="mobile-sanctuary-arrow mobile-sanctuary-next" id="mobileSanctuaryNext" data-sanctuary-next type="button" aria-label="다음 성역 보기">
         <span class="arrow-label">2성역</span><span class="arrow-mark">›</span>
       </button>
-      <div class="mobile-sanctuary-dots" id="mobileSanctuaryDots" aria-hidden="true"><span class="active"></span><span></span><span></span></div>
+      <div class="mobile-sanctuary-dots" id="mobileSanctuaryDots" aria-hidden="true"><span class="active" data-sanctuary-dot></span><span data-sanctuary-dot></span><span data-sanctuary-dot></span></div>
     </section>
 
     <a class="mobile-feature-card mobile-feature-arcana" href="arcana/" aria-label="아르카나 열기">
@@ -72,6 +72,7 @@
 <script src="../ui/kinojo-common-ui.js?cache=26062013"></script>
 <script src="../ui/kinojo-admin-panel.js?cache=26062013"></script>
 <script src="../core/kinojo-auth.js?cache=26062103"></script>
-<script src="mobile-home.js?cache=26062208"></script>
+<script src="mobile-sanctuary-carousel.js?cache=26062209"></script>
+<script src="mobile-home.js?cache=26062209"></script>
 </body>
 </html>
