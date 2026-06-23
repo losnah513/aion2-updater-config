@@ -180,14 +180,14 @@
       + '<div class="kinojo-login-kicker">KINOJO LOGIN</div>'
       + '<h2 id="kinojoLoginTitle">회원 코드 로그인</h2>'
       + '<p id="kinojoLoginHelpText">관리자가 발급한 코드로 로그인하면 좋아요·싫어요와 제안 기능을 사용할 수 있습니다.</p>'
-      + '<input id="kinojoLoginCodeInput" type="hidden" autocomplete="one-time-code" />'
-      + '<div class="kinojo-code-otp kinojo-login-otp" id="kinojoLoginOtp" aria-label="회원 코드 입력">'
-      + '<input class="kinojo-code-otp-cell" maxlength="1" inputmode="text" autocomplete="one-time-code" />'
-      + '<input class="kinojo-code-otp-cell" maxlength="1" inputmode="text" />'
-      + '<input class="kinojo-code-otp-cell" maxlength="1" inputmode="text" />'
-      + '<input class="kinojo-code-otp-cell" maxlength="1" inputmode="text" />'
-      + '<input class="kinojo-code-otp-cell" maxlength="1" inputmode="text" />'
-      + '<input class="kinojo-code-otp-cell" maxlength="1" inputmode="text" />'
+      + '<input id="kinojoLoginCodeInput" class="kinojo-login-real-input" type="text" autocomplete="one-time-code" inputmode="text" aria-label="회원 코드 입력" />'
+      + '<div class="kinojo-code-otp kinojo-login-otp kinojo-login-otp-display" id="kinojoLoginOtp" aria-hidden="true">'
+      + '<span class="kinojo-code-otp-cell"></span>'
+      + '<span class="kinojo-code-otp-cell"></span>'
+      + '<span class="kinojo-code-otp-cell"></span>'
+      + '<span class="kinojo-code-otp-cell"></span>'
+      + '<span class="kinojo-code-otp-cell"></span>'
+      + '<span class="kinojo-code-otp-cell"></span>'
       + '</div>'
       + '<button id="kinojoLoginSubmitBtn" class="kinojo-login-submit" type="button"><span class="kinojo-login-btn-text">로그인</span></button>'
       + '<div id="kinojoLoginStatus" class="kinojo-login-status"></div>'
@@ -250,7 +250,7 @@
     resetCodeRequestPanel(true);
     modal.classList.add('open');
     modal.setAttribute('aria-hidden','false');
-    setTimeout(()=>modal.querySelector('#kinojoLoginOtp .kinojo-code-otp-cell')?.focus(), 30);
+    setTimeout(()=>modal.querySelector('#kinojoLoginCodeInput')?.focus(), 30);
   }
 
   function closeLoginModal(){
@@ -341,81 +341,49 @@
   }
 
   function normalizeLoginCodeText_(value){
-    return String(value || '').replace(/[a-z]/g, ch => ch.toUpperCase()).replace(/\s+/g, '').slice(0, 6);
-  }
-
-  function loginOtpValue(root){
-    return Array.from(root?.querySelectorAll('.kinojo-code-otp-cell') || []).map(input => input.value || '').join('');
+    return Array.from(String(value || '').replace(/[a-z]/g, ch => ch.toUpperCase()).replace(/\s+/g, '')).slice(0, 6).join('');
   }
 
   function setLoginOtpValue(root, value){
-    const cells = Array.from(root?.querySelectorAll('.kinojo-code-otp-cell') || []);
-    const chars = Array.from(normalizeLoginCodeText_(value));
-    cells.forEach((cell, index) => { cell.value = chars[index] || ''; });
     const hidden = document.getElementById('kinojoLoginCodeInput');
-    if(hidden) hidden.value = chars.join('');
+    const normalized = normalizeLoginCodeText_(value);
+    if(hidden && hidden.value !== normalized) hidden.value = normalized;
+    renderLoginOtpDisplay(root, normalized);
   }
 
-  function syncLoginOtpHidden(root){
-    const hidden = document.getElementById('kinojoLoginCodeInput');
-    if(hidden) hidden.value = normalizeLoginCodeText_(loginOtpValue(root));
+  function renderLoginOtpDisplay(root, value){
+    const cells = Array.from(root?.querySelectorAll('.kinojo-code-otp-cell') || []);
+    const chars = Array.from(normalizeLoginCodeText_(value));
+    cells.forEach((cell, index) => { cell.textContent = chars[index] || ''; });
+    root?.classList.toggle('is-filled', chars.length >= cells.length);
   }
 
   function bindLoginOtpInput(root){
     if(!root || root.dataset.loginOtpBound) return;
     root.dataset.loginOtpBound = '1';
-    const cells = Array.from(root.querySelectorAll('.kinojo-code-otp-cell'));
+    const hidden = document.getElementById('kinojoLoginCodeInput');
+    if(!hidden) return;
+    let composing = false;
 
-    function focusNext(index){
-      if(index < cells.length - 1) cells[index + 1].focus();
-    }
-    function focusByLength(length){
-      cells[Math.min(Math.max(length, 0), cells.length - 1)]?.focus();
-    }
-    function commitCell(cell, index, value){
-      const chars = Array.from(normalizeLoginCodeText_(value));
-      if(chars.length > 1){
-        setLoginOtpValue(root, chars.join(''));
-        focusByLength(chars.length);
-        return;
-      }
-      cell.value = chars[0] || '';
-      syncLoginOtpHidden(root);
-      if(chars.length) focusNext(index);
+    function sync(){
+      if(composing) return;
+      setLoginOtpValue(root, hidden.value || '');
     }
 
-    cells.forEach((cell, index) => {
-      cell.removeAttribute('maxlength');
-      cell.setAttribute('autocomplete', index === 0 ? 'one-time-code' : 'off');
-      cell.addEventListener('compositionstart', () => { cell.dataset.composing = '1'; });
-      cell.addEventListener('compositionend', event => {
-        cell.dataset.composing = '';
-        commitCell(cell, index, event.target.value || '');
-      });
-      cell.addEventListener('input', event => {
-        if(cell.dataset.composing === '1' || event.isComposing) return;
-        commitCell(cell, index, event.target.value || '');
-      });
-      cell.addEventListener('keydown', event => {
-        if(event.isComposing || cell.dataset.composing === '1') return;
-        if(event.key === 'Backspace' && !cell.value && index > 0){
-          cells[index - 1].focus();
-          cells[index - 1].value = '';
-          syncLoginOtpHidden(root);
-          event.preventDefault();
-        }
-        if(event.key === 'ArrowLeft' && index > 0){ event.preventDefault(); cells[index - 1].focus(); }
-        if(event.key === 'ArrowRight' && index < cells.length - 1){ event.preventDefault(); cells[index + 1].focus(); }
-      });
-      cell.addEventListener('paste', event => {
-        const text = event.clipboardData?.getData('text') || '';
-        if(!text) return;
-        event.preventDefault();
-        setLoginOtpValue(root, text);
-        const value = Array.from(normalizeLoginCodeText_(text));
-        focusByLength(value.length);
-      });
+    hidden.addEventListener('compositionstart', () => { composing = true; });
+    hidden.addEventListener('compositionend', () => { composing = false; sync(); });
+    hidden.addEventListener('input', event => {
+      if(event.isComposing || composing) return;
+      sync();
     });
+    hidden.addEventListener('paste', () => setTimeout(sync, 0));
+    hidden.addEventListener('focus', () => root.classList.add('is-focused'));
+    hidden.addEventListener('blur', () => root.classList.remove('is-focused'));
+    root.addEventListener('click', () => hidden.focus());
+    root.addEventListener('keydown', event => {
+      if(event.key === 'Enter') submitLogin();
+    });
+    renderLoginOtpDisplay(root, hidden.value || '');
   }
 
   function bindOtpInput(root, onChange){

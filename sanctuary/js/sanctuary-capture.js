@@ -8,22 +8,49 @@
   function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
 
   const DEFAULT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec';
-  const API_URL = (window.KINOJO_API_URL || new URLSearchParams(location.search).get('api') || DEFAULT_WEB_APP_URL);
+  const API_URL = (new URLSearchParams(location.search).get('api') || window.KINOJO_API_URL || window.WEB_APP_URL || DEFAULT_WEB_APP_URL);
   const profileDataUrlCache = new Map();
 
   function apiUrl(){ return API_URL; }
 
-  async function requestProfileProxy(payload, mode){
-    if(mode === 'get'){
-      const params = new URLSearchParams({ action:'profileImageProxy', url:payload.url });
-      const res = await fetch(apiUrl() + (apiUrl().includes('?') ? '&' : '?') + params.toString(), { method:'GET' });
-      return res.json();
+  function profileDebugEnabled(){
+    return !!(window.KINOJO_SANCTUARY_PROFILE_DEBUG || new URLSearchParams(location.search).get('profileDebug') === '1');
+  }
+
+  async function readProxyJson(res, label){
+    const text = await res.text();
+    if(!res.ok){
+      throw new Error(label + ' HTTP ' + res.status + ' / ' + text.slice(0, 160));
     }
-    const res = await fetch(apiUrl(), {
-      method:'POST',
-      body:JSON.stringify({ action:'profileImageProxy', url:payload.url })
+    try{
+      return JSON.parse(text);
+    }catch(err){
+      throw new Error(label + ' JSON parse failed / ' + text.slice(0, 160));
+    }
+  }
+
+  async function fetchWithTimeout(url, options, ms){
+    const controller = new AbortController();
+    const timer = setTimeout(()=>controller.abort(), ms || 12000);
+    try{
+      return await fetch(url, Object.assign({}, options || {}, { signal: controller.signal }));
+    }finally{
+      clearTimeout(timer);
+    }
+  }
+
+  async function requestProfileProxy(payload){
+    const label = 'KINOJO profile proxy GET';
+    const params = new URLSearchParams({
+      action:'profileImageProxy',
+      url:payload.url,
+      t:String(Date.now())
     });
-    return res.json();
+    const res = await fetchWithTimeout(apiUrl() + (apiUrl().includes('?') ? '&' : '?') + params.toString(), {
+      method:'GET',
+      cache:'no-store'
+    }, 15000);
+    return readProxyJson(res, label);
   }
 
   async function proxyProfileImageUrl(src){
@@ -33,32 +60,39 @@
     if(profileDataUrlCache.has(url)) return profileDataUrlCache.get(url);
 
     let dataUrl = '';
+    const failures = [];
+
     try{
-      // 1차: 기존 POST 방식. 로그인/관리 API와 같은 경로를 사용합니다.
-      const data = await requestProfileProxy({ url }, 'post');
+      const data = await requestProfileProxy({ url });
       dataUrl = data && data.ok && data.dataUrl ? data.dataUrl : '';
-      if(!dataUrl && data && !data.ok){
-        console.warn('KINOJO profile proxy POST returned not ok:', data.message || data.status || data);
+      if(dataUrl){
+        if(profileDebugEnabled()){
+          console.info('KINOJO profile proxy OK:', {
+            mode:'get',
+            url,
+            length:dataUrl.length,
+            cached:!!data.cached,
+            contentType:data.contentType || ''
+          });
+        }
+      }else{
+        failures.push({ mode:'get', message:data && (data.message || data.status || data.error || data.contentType) || 'not ok' });
       }
     }catch(err){
-      console.warn('KINOJO profile proxy POST failed:', err);
+      failures.push({ mode:'get', message:String(err && err.message || err) });
     }
 
-    if(!dataUrl){
-      try{
-        // 2차: POST가 브라우저/배포 환경에서 막히는 경우를 대비한 GET 보정.
-        const data = await requestProfileProxy({ url }, 'get');
-        dataUrl = data && data.ok && data.dataUrl ? data.dataUrl : '';
-        if(!dataUrl && data && !data.ok){
-          console.warn('KINOJO profile proxy GET returned not ok:', data.message || data.status || data);
-        }
-      }catch(err){
-        console.warn('KINOJO profile proxy GET failed:', err);
-      }
+    if(dataUrl){
+      profileDataUrlCache.set(url, dataUrl);
+      return dataUrl;
     }
 
-    profileDataUrlCache.set(url, dataUrl || '');
-    return dataUrl || '';
+    // 실패값을 캐시에 저장하지 않습니다. 이전 버전은 빈 문자열도 캐시해서 한 번 실패하면
+    // 새로고침 전까지 계속 클래스 아이콘 fallback만 표시되는 문제가 있었습니다.
+    if(profileDebugEnabled()){
+      console.warn('KINOJO profile proxy failed:', { url, failures });
+    }
+    return '';
   }
 
   function getMemberData(card){
@@ -195,14 +229,14 @@
   async function renderPartyCanvas(data, options){
     const opts = options || {};
     const dpr = clamp(window.devicePixelRatio || 1, 1, 2);
-    const width = 620;
+    const width = 540;
     const cols = 2;
     const gap = 10;
     const pad = 20;
     const headerH = 76;
     const footH = 34;
     const cellW = Math.floor((width - pad*2 - gap) / cols);
-    const cellH = 76;
+    const cellH = 68;
     const rows = Math.max(1, Math.ceil(data.members.length / cols));
     const height = pad + headerH + rows*cellH + (rows-1)*gap + footH + pad;
     const canvas = document.createElement('canvas');
@@ -230,7 +264,7 @@
       const row = Math.floor(idx / cols);
       const x = pad + col*(cellW + gap);
       const cy = y + row*(cellH + gap);
-      const profileSize = 56;
+      const profileSize = 52;
       const profileX = x + cellW - profileSize - 10;
       const profileY = cy + Math.floor((cellH - profileSize) / 2);
       ctx.fillStyle = m.empty ? '#fbfdff' : '#ffffff';
@@ -239,9 +273,9 @@
       if(icons[idx]) ctx.drawImage(icons[idx], x+12, cy+18, 22, 22);
       else{ ctx.fillStyle = m.empty ? '#edf2f7' : '#eaf1fb'; roundRect(ctx,x+12,cy+18,22,22,7); ctx.fill(); }
       ctx.fillStyle = m.empty ? '#7b8798' : '#1f2f46'; ctx.font = '900 17px Arial, sans-serif';
-      drawText(ctx, m.name || (m.empty?'모집중':'-'), x+42, cy+16, cellW-112, 21);
+      drawText(ctx, m.name || (m.empty?'모집중':'-'), x+42, cy+14, cellW-104, 21);
       ctx.fillStyle = '#667085'; ctx.font = '800 11px Arial, sans-serif';
-      drawText(ctx, m.meta || '', x+42, cy+44, cellW-112, 15);
+      drawText(ctx, m.meta || '', x+42, cy+40, cellW-104, 15);
       if(profiles[idx]) drawCircleImage(ctx, profiles[idx], profileX, profileY, profileSize);
       else drawFallbackProfile(ctx, icons[idx], profileX, profileY, profileSize, m.empty);
     });
@@ -263,7 +297,7 @@
       partyCanvases.push(await renderPartyCanvas(party, { subtitle: data.name + ' · KINOJO Sanctuary Party' }));
     }
     const dpr = clamp(window.devicePixelRatio || 1, 1, 2);
-    const width = 620;
+    const width = 540;
     const gap = 14;
     const pad = 20;
     const headerH = 78;
