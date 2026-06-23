@@ -1,5 +1,5 @@
 window.AION2_CONFIG = {
-  CONFIG_JSON_URL: "https://losnah513.github.io/aion2-updater-config/config.json",
+  CONFIG_JSON_URL: "https://kinojo.info/config.json",
   EXT_VERSION: "1.c2.04",
   BUILD_DATE: "260607",
   CLIENT_ROLE: "unknown",
@@ -34,7 +34,7 @@ window.AION2_CONFIG = {
     CLIENT_ROLE: "AION2_CLIENT_ROLE"
   },
   RELEASES_URL: "https://github.com/losnah513/aion2-updater-config/releases/latest",
-  HALL_OF_FAME_URL: "https://bit.ly/kinojo-index",
+  HALL_OF_FAME_URL: "https://kinojo.info/hof/",
   MAIN_SERVER_ID: "2002"
 };
 

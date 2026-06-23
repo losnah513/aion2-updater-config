@@ -117,9 +117,7 @@
     };
     const file = map[key];
     if(!file) return '';
-    const path = location.pathname;
-    const prefix = path.includes('/hall-of-fame/') ? './assets/' : (path.includes('/sanctuary/') || path.includes('/arcana/') ? '../hall-of-fame/assets/' : 'hall-of-fame/assets/');
-    return prefix + 'class_icon_' + file + '.png';
+    return '/hall-of-fame/assets/class_icon_' + file + '.png';
   }
 
   function updateStatus(){

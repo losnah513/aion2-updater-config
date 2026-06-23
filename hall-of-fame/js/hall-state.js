@@ -1,6 +1,11 @@
 const WEB_APP_URL=new URLSearchParams(location.search).get("api")||"https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec";
 const CLASS_ORDER=["수호성","검성","살성","궁성","마도성","정령성","치유성","호법성"];
-const HALL_ASSET_BASE=(location.pathname.includes("/mobile/hall-of-fame/")?"../../hall-of-fame/assets/":"assets/");
+const HALL_ASSET_BASE=(function(){
+  const path=location.pathname.replace(/\\/g,"/");
+  if(path.includes("/m/hof/")||path.includes("/mobile/hall-of-fame/")) return "../../hall-of-fame/assets/";
+  if(path.includes("/hof/")) return "../hall-of-fame/assets/";
+  return "assets/";
+})();
 const CLASS_ICONS={"검성":HALL_ASSET_BASE+"class_icon_gladiator.png","수호성":HALL_ASSET_BASE+"class_icon_templar.png","살성":HALL_ASSET_BASE+"class_icon_assassin.png","궁성":HALL_ASSET_BASE+"class_icon_ranger.png","정령성":HALL_ASSET_BASE+"class_icon_elementalist.png","마도성":HALL_ASSET_BASE+"class_icon_sorcerer.png","치유성":HALL_ASSET_BASE+"class_icon_cleric.png","호법성":HALL_ASSET_BASE+"class_icon_chanter.png"};
 const RANK_EMBLEMS={mvp:HALL_ASSET_BASE+"emblem_mvp_challenger.png",diamond:HALL_ASSET_BASE+"emblem_rank_diamond.png",crystal:HALL_ASSET_BASE+"emblem_rank_crystal.png",gold:HALL_ASSET_BASE+"emblem_rank_gold.png",silver:HALL_ASSET_BASE+"emblem_rank_silver.png",bronze:HALL_ASSET_BASE+"emblem_rank_bronze.png"};
 let hallData=null,keyword="",includeSubs=false,page=1,activeRankClass="전체",chicksExpanded=false,chicksCollapsed=false,longPressTimer=null,longPressFired=false,loadingTimer=null,loadingStep=0,currentReactionItem=null,currentReactionType="like",reactionCarouselIndex=0,reactionCarouselPausedUntil=0,reactionSubmitting=false,searchComposing=false,searchDebounceTimer=null,adminAuthed=false;
