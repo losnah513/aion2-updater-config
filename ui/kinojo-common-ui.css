@@ -1073,3 +1073,28 @@ body[data-kinojo-role="MASTER"] .master-only{display:grid!important;}
     font-size:11px!important;
   }
 }
+
+/* 20260623-11 관리자/공지 패치 */
+.kinojo-notice-strip{position:relative;z-index:1200;display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;width:min(1180px,calc(100% - 20px));margin:6px auto 8px;padding:8px 10px;border:1px solid rgba(120,145,180,.18);border-radius:14px;background:rgba(255,255,255,.94);box-shadow:0 10px 30px rgba(15,23,42,.06);color:#17233a;box-sizing:border-box;}
+.kinojo-notice-title{display:inline-grid;place-items:center;min-height:24px;padding:0 9px;border-radius:999px;background:#eff6ff;color:#2563eb;font-size:11px;font-weight:1000;white-space:nowrap;}
+.kinojo-notice-list{display:grid;gap:4px;min-width:0;}
+.kinojo-notice-item{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:7px;align-items:center;min-width:0;font-size:11px;font-weight:900;line-height:1.25;}
+.kinojo-notice-item strong{color:#17233a;white-space:nowrap;}
+.kinojo-notice-author{color:#2563eb;white-space:nowrap;}
+.kinojo-notice-text{min-width:0;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.kinojo-notice-empty{font-size:11px;font-weight:900;color:#64748b;}
+.admin-panel-pane{grid-template-rows:auto auto minmax(0,1fr);align-content:start;}
+.admin-pane-title{min-height:42px;align-items:center;}
+.admin-panel-pane[data-admin-pane="account"]{grid-template-rows:auto minmax(0,1fr) auto;}
+.admin-panel-pane[data-admin-pane="system"]{grid-template-rows:auto auto auto minmax(0,1fr);}
+.admin-account-inline .kinojo-account-inline-card{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);}
+.admin-account-inline .kinojo-account-create-section{height:auto;max-width:none;display:grid;gap:7px;}
+.admin-account-inline .kinojo-account-mini-title{font-size:12px;font-weight:1000;color:#17233a;}
+.admin-account-inline .kinojo-account-create-row{grid-template-columns:minmax(0,1fr) 84px;align-items:center;}
+.admin-notice-control{display:grid;gap:8px;padding:10px;border:1px solid rgba(120,145,180,.18);border-radius:12px;background:#f8fbff;}
+.admin-notice-title{font-size:13px;font-weight:1000;color:#17233a;}
+.admin-notice-title span{font-size:10px;color:#2563eb;background:#eff6ff;border:1px solid rgba(37,99,235,.18);border-radius:999px;padding:2px 6px;margin-left:4px;}
+.admin-notice-grid{display:grid;grid-template-columns:160px 160px;gap:8px;}
+.admin-panel-modal .admin-notice-input{min-height:34px;height:34px;border-radius:9px;border:1px solid rgba(120,145,180,.24);padding:0 10px;box-sizing:border-box;font-size:12px;}
+.admin-panel-modal .admin-notice-content{width:100%;min-height:72px;border-radius:10px;border:1px solid rgba(120,145,180,.24);padding:9px 10px;box-sizing:border-box;font-size:12px;resize:vertical;font-family:inherit;}
+@media(max-width:760px){.kinojo-notice-strip{grid-template-columns:1fr;margin-top:5px;padding:8px}.kinojo-notice-item{grid-template-columns:auto auto;}.kinojo-notice-text{grid-column:1/-1}.admin-account-inline .kinojo-account-create-row,.admin-notice-grid{grid-template-columns:1fr;}}

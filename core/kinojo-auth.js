@@ -612,10 +612,10 @@
       + '<div><div class="kinojo-login-kicker">MANAGE</div><h2 id="kinojoAccountAdminTitle">회원 관리</h2><p>캐릭터 조회 후 6자리 코드로 계정을 만들고, 변경사항은 저장하기를 눌렀을 때만 반영합니다.</p></div>'
       + '</div>'
       + '<div class="kinojo-account-section kinojo-account-create-section">'
-      + '<label class="kinojo-account-label" for="adminAccountCharacterInput">캐릭터 이름 입력</label>'
+      + '<div class="kinojo-account-mini-title">캐릭터명 조회</div>'
       + '<div class="kinojo-account-create-row">'
-      + '<input id="adminAccountCharacterInput" class="search kinojo-account-input" placeholder="예: 청소기" autocomplete="off" />'
-      + '<button class="btn" id="adminAccountLookupBtn" type="button">캐릭터 조회하기</button>'
+      + '<input id="adminAccountCharacterInput" class="search kinojo-account-input" placeholder="캐릭터명 입력" autocomplete="off" />'
+      + '<button class="btn" id="adminAccountLookupBtn" type="button">조회</button>'
       + '</div>'
       + '<div class="admin-status" id="adminAccountLookupStatus"></div>'
       + '<div class="kinojo-account-issue-box" id="adminAccountIssueBox" hidden>'
@@ -628,7 +628,7 @@
       + '</div>'
       + '<div class="kinojo-account-section kinojo-account-list-section">'
       + '<div class="kinojo-account-toolbar">'
-      + '<strong>회원 목록</strong>'
+      + '<strong>회원 관리</strong>'
       + '<div class="kinojo-account-toolbar-actions">'
       + '<button class="btn admin-account-save" id="adminAccountSaveBtn" type="button" disabled>변경내용 저장하기</button>'
       + '<button class="btn admin-account-revert" id="adminAccountRevertBtn" type="button" disabled>되돌리기</button>'
@@ -1025,7 +1025,7 @@
   }
 
   function bindIdleLogout(){
-    ['click','keydown','scroll','touchstart','mousemove'].forEach(type=>{
+    ['click','keydown','scroll','touchstart','touchmove','pointerdown','pointermove','mousemove'].forEach(type=>{
       window.addEventListener(type, resetIdleLogoutTimer, { passive:true });
     });
     document.addEventListener('visibilitychange', ()=>{

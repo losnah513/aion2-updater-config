@@ -36,6 +36,29 @@
     el.innerHTML='<span class="visit-line visit-line-today">👀 방문자 통계 준비중</span><span class="visit-line visit-line-total">🏛 누적 방문 기록 준비중</span>';
     return el;
   }
+  function createNoticeStrip(info){
+    const strip=document.createElement('section');
+    strip.className='kinojo-notice-strip';
+    strip.id='kinojoNoticeStrip';
+    strip.setAttribute('aria-label','최근 공지사항');
+    strip.innerHTML='<div class="kinojo-notice-title">공지</div><div class="kinojo-notice-list" id="kinojoNoticeList"><span class="kinojo-notice-empty">최근 공지를 불러오는 중입니다.</span></div>';
+    return strip;
+  }
+  async function loadCommonNotices(){
+    const list=document.getElementById('kinojoNoticeList');
+    if(!list)return;
+    try{
+      const base=(new URLSearchParams(location.search).get('api')) || (typeof WEB_APP_URL!=='undefined'&&WEB_APP_URL) || 'https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec';
+      const url=base+(base.includes('?')?'&':'?')+'action=notices&limit=3&t='+Date.now();
+      const res=await fetch(url,{cache:'no-store'});
+      const data=await res.json();
+      const notices=(data&&data.ok&&Array.isArray(data.notices))?data.notices.slice(0,3):[];
+      if(!notices.length){list.innerHTML='<span class="kinojo-notice-empty">등록된 공지가 없습니다.</span>';return;}
+      list.innerHTML=notices.map(item=>'<article class="kinojo-notice-item"><strong>'+escapeHtml(item.noticeType||item.notice||'공지')+'</strong><span class="kinojo-notice-author">'+escapeHtml(item.author||'관리자')+'</span><span class="kinojo-notice-text">'+escapeHtml(item.content||'')+'</span></article>').join('');
+    }catch(_e){
+      list.innerHTML='<span class="kinojo-notice-empty">공지사항을 불러오지 못했습니다.</span>';
+    }
+  }
   function createAdminMenu(info){
     const wrap=document.createElement('div');
     wrap.className='admin-menu-wrap';
@@ -103,6 +126,16 @@
                   <button class="btn admin-close" id="adminVisitCancelBtn" type="button">취소</button>
                 </div>
               </div>
+              <div class="admin-notice-control" id="adminNoticeControl">
+                <div class="admin-notice-title">공지사항 작성 <span>최근 3줄 노출</span></div>
+                <div class="admin-notice-grid">
+                  <input class="search admin-notice-input" id="adminNoticeType" placeholder="공지" autocomplete="off" />
+                  <input class="search admin-notice-input" id="adminNoticeAuthor" placeholder="작성자" autocomplete="off" />
+                </div>
+                <textarea class="search admin-notice-content" id="adminNoticeContent" placeholder="내용" rows="3"></textarea>
+                <div class="admin-status" id="adminNoticeStatus"></div>
+                <div class="admin-pane-actions"><button class="btn" id="adminNoticeSaveBtn" type="button">공지 등록</button></div>
+              </div>
               <div class="admin-pane-result" data-admin-result="system"></div>
             </section>
           </div>
@@ -151,6 +184,9 @@
     if(auth)auth.appendChild(admin);
     tools.appendChild(visit);
     document.body.insertBefore(bar,document.body.firstChild);
+    const notice=createNoticeStrip(info);
+    document.body.insertBefore(notice,bar.nextSibling);
+    setTimeout(loadCommonNotices,0);
   }
   function toggleAdminMenu(){
     const menu=q('#adminDropdown');const btn=q('#adminMenuBtn');
@@ -310,7 +346,7 @@
   makeDrawer(info);
   bind();
   bindCommonAdmin(info);
-  window.KinojoCommonUI={openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel,toggleAdminMenu,closeAdminMenuCommon};
+  window.KinojoCommonUI={openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel,toggleAdminMenu,closeAdminMenuCommon,reloadNotices:loadCommonNotices};
   window.openAdminDropdown=toggleAdminMenu;
   window.closeAdminMenu=closeAdminMenuCommon;
   window.openSideDrawer=openSideDrawer;

@@ -126,10 +126,35 @@
     }catch(e){if(status){status.className='admin-status error';status.textContent='방문자수 반영 실패: '+(e.message||e)}}
     finally{clearAdminButtonLoading_('adminVisitApplyBtn','반영')}
   }
+  async function adminSaveNotice(){
+    const typeEl=document.getElementById('adminNoticeType');
+    const authorEl=document.getElementById('adminNoticeAuthor');
+    const contentEl=document.getElementById('adminNoticeContent');
+    const status=document.getElementById('adminNoticeStatus');
+    const noticeType=String(typeEl?.value||'').trim();
+    const author=String(authorEl?.value||'').trim();
+    const content=String(contentEl?.value||'').trim();
+    if(!noticeType||!author||!content){
+      if(status){status.className='admin-status error';status.textContent='공지, 작성자, 내용을 모두 입력해 주세요.';}
+      return;
+    }
+    try{
+      setAdminButtonLoading_('adminNoticeSaveBtn','등록 중...');
+      if(status){status.className='admin-status pending';status.textContent='공지사항 등록 중...';}
+      const res=await fetch(apiUrl(),{method:'POST',body:JSON.stringify({action:'noticeAdmin',command:'createNotice',sessionToken:token(),noticeType,author,content})});
+      const data=await res.json();
+      if(!data.ok)throw new Error(data.message||'공지사항 등록 실패');
+      if(status){status.className='admin-status success';status.textContent='공지사항이 등록되었습니다.';}
+      if(contentEl)contentEl.value='';
+      window.KinojoCommonUI?.reloadNotices?.();
+    }catch(e){
+      if(status){status.className='admin-status error';status.textContent='공지사항 등록 실패: '+(e.message||e);}
+    }finally{clearAdminButtonLoading_('adminNoticeSaveBtn','공지 등록')}
+  }
   function bindButtons(){
     bindAdminTabs();
     const pairs=[
-      ['adminMvpBtn',adminMvp],['adminSnapshotBtn',adminSnapshot],['adminSnapshotStatusBtn',adminSnapshotStatus],['adminSnapshotTriggerBtn',adminSnapshotTriggerInstall],['adminVisitApplyBtn',adminVisitAdjust]
+      ['adminMvpBtn',adminMvp],['adminSnapshotBtn',adminSnapshot],['adminSnapshotStatusBtn',adminSnapshotStatus],['adminSnapshotTriggerBtn',adminSnapshotTriggerInstall],['adminVisitApplyBtn',adminVisitAdjust],['adminNoticeSaveBtn',adminSaveNotice]
     ];
     pairs.forEach(([id,fn])=>{const btn=document.getElementById(id);if(btn&&!btn.dataset.commonAdminBound){btn.dataset.commonAdminBound='1';btn.addEventListener('click',fn)}});
     document.querySelectorAll('[data-visit-sign]').forEach(btn=>{if(btn.dataset.boundVisitSign)return;btn.dataset.boundVisitSign='1';btn.addEventListener('click',()=>{document.querySelectorAll('[data-visit-sign]').forEach(b=>b.classList.remove('active'));btn.classList.add('active')})});
@@ -146,7 +171,7 @@
   function init(){bindButtons()}
   document.addEventListener('kinojo-admin-panel-ready',()=>bindButtons());
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
-  window.KinojoAdminPanel={bind:bindButtons,adminMvp,adminSnapshot,adminSnapshotStatus,adminSnapshotTriggerInstall,adminVisitAdjust};
+  window.KinojoAdminPanel={bind:bindButtons,adminMvp,adminSnapshot,adminSnapshotStatus,adminSnapshotTriggerInstall,adminVisitAdjust,adminSaveNotice};
   window.setAdminButtonLoading_=setAdminButtonLoading_;
   window.clearAdminButtonLoading_=clearAdminButtonLoading_;
   window.showAdminResult_=showAdminResult_;
