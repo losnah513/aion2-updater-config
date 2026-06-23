@@ -39,11 +39,15 @@
     }
   }
 
-  async function requestProfileProxy(payload){
+  function isImageDataUrl(value){
+    return /^data:image\/(?:png|jpe?g|webp|gif);base64,/i.test(String(value || ''));
+  }
+
+  async function requestProfileProxy(url){
     const label = 'KINOJO profile proxy GET';
     const params = new URLSearchParams({
       action:'profileImageProxy',
-      url:payload.url,
+      url,
       t:String(Date.now())
     });
     const res = await fetchWithTimeout(apiUrl() + (apiUrl().includes('?') ? '&' : '?') + params.toString(), {
@@ -63,8 +67,8 @@
     const failures = [];
 
     try{
-      const data = await requestProfileProxy({ url });
-      dataUrl = data && data.ok && data.dataUrl ? data.dataUrl : '';
+      const data = await requestProfileProxy(url);
+      dataUrl = data && data.ok && isImageDataUrl(data.dataUrl) ? data.dataUrl : '';
       if(dataUrl){
         if(profileDebugEnabled()){
           console.info('KINOJO profile proxy OK:', {
@@ -76,7 +80,11 @@
           });
         }
       }else{
-        failures.push({ mode:'get', message:data && (data.message || data.status || data.error || data.contentType) || 'not ok' });
+        failures.push({
+          mode:'get',
+          message:data && (data.message || data.status || data.error || data.contentType) || 'not ok',
+          length:data && data.dataUrl ? String(data.dataUrl).length : 0
+        });
       }
     }catch(err){
       failures.push({ mode:'get', message:String(err && err.message || err) });
@@ -165,7 +173,10 @@
       // 로딩 실패로 처리되어 프로필 대신 클래스 아이콘 fallback이 뜨는 문제가 있었습니다.
       if(/^https?:\/\//i.test(url)) img.crossOrigin = 'anonymous';
       img.onload = ()=>resolve(img);
-      img.onerror = ()=>resolve(null);
+      img.onerror = ()=>{
+        if(profileDebugEnabled()) console.warn('KINOJO image load failed:', url.slice(0, 180));
+        resolve(null);
+      };
       img.src = url;
     });
   }

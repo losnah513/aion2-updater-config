@@ -200,13 +200,14 @@
       + '<div id="kinojoCodeRequestLookupStatus" class="kinojo-login-status kinojo-code-request-status"></div>'
       + '<div id="kinojoCodeRequestCodeBox" class="kinojo-code-request-code-box" hidden>'
       + '<div class="kinojo-code-request-character-result" id="kinojoCodeRequestCharacterResult"></div>'
+      + '<input id="kinojoCodeRequestCodeInput" class="kinojo-login-real-input kinojo-code-request-real-input" type="text" autocomplete="one-time-code" inputmode="text" aria-label="요청 코드 입력" />'
       + '<div class="kinojo-code-otp" id="kinojoCodeRequestOtp" aria-label="요청 코드 6자리 입력">'
-      + '<input class="kinojo-code-otp-cell" maxlength="1" inputmode="text" autocomplete="one-time-code" />'
-      + '<input class="kinojo-code-otp-cell" maxlength="1" inputmode="text" />'
-      + '<input class="kinojo-code-otp-cell" maxlength="1" inputmode="text" />'
-      + '<input class="kinojo-code-otp-cell" maxlength="1" inputmode="text" />'
-      + '<input class="kinojo-code-otp-cell" maxlength="1" inputmode="text" />'
-      + '<input class="kinojo-code-otp-cell" maxlength="1" inputmode="text" />'
+      + '<span class="kinojo-code-otp-cell"></span>'
+      + '<span class="kinojo-code-otp-cell"></span>'
+      + '<span class="kinojo-code-otp-cell"></span>'
+      + '<span class="kinojo-code-otp-cell"></span>'
+      + '<span class="kinojo-code-otp-cell"></span>'
+      + '<span class="kinojo-code-otp-cell"></span>'
       + '</div>'
       + '<div class="kinojo-account-help">영문 2자 + 숫자 4자, 순서는 자유입니다.</div>'
       + '<button id="kinojoCodeRequestSubmitBtn" class="kinojo-login-submit kinojo-code-request-submit" type="button" disabled>요청하기</button>'
@@ -222,7 +223,7 @@
     modal.querySelector('#kinojoCodeRequestLookupBtn')?.addEventListener('click', lookupCodeRequestCharacter);
     modal.querySelector('#kinojoCodeRequestCharacterInput')?.addEventListener('keydown', e=>{ if(e.key === 'Enter') lookupCodeRequestCharacter(); });
     modal.querySelector('#kinojoCodeRequestSubmitBtn')?.addEventListener('click', submitCodeRequest);
-    bindOtpInput(modal.querySelector('#kinojoCodeRequestOtp'), validateCodeRequestOtp);
+    bindCodeRequestOtpInput(modal.querySelector('#kinojoCodeRequestOtp'), validateCodeRequestOtp);
     return modal;
   }
 
@@ -331,10 +332,21 @@
 
 
   function otpValue(root){
+    const inputId = root?.dataset?.otpInputId || '';
+    const hidden = inputId ? document.getElementById(inputId) : null;
+    if(hidden) return normalizeMemberCodeText_(hidden.value || '');
     return Array.from(root?.querySelectorAll('.kinojo-code-otp-cell') || []).map(input => input.value || '').join('').toUpperCase();
   }
 
   function setOtpValue(root, value){
+    const inputId = root?.dataset?.otpInputId || '';
+    const hidden = inputId ? document.getElementById(inputId) : null;
+    if(hidden){
+      const normalized = normalizeMemberCodeText_(value);
+      if(hidden.value !== normalized) hidden.value = normalized;
+      renderCodeRequestOtpDisplay(root, normalized);
+      return;
+    }
     const cells = Array.from(root?.querySelectorAll('.kinojo-code-otp-cell') || []);
     const chars = String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6).split('');
     cells.forEach((cell, index) => { cell.value = chars[index] || ''; });
@@ -342,6 +354,10 @@
 
   function normalizeLoginCodeText_(value){
     return Array.from(String(value || '').replace(/[a-z]/g, ch => ch.toUpperCase()).replace(/\s+/g, '')).slice(0, 6).join('');
+  }
+
+  function normalizeMemberCodeText_(value){
+    return Array.from(String(value || '').replace(/[a-z]/g, ch => ch.toUpperCase()).replace(/\s+/g, '').replace(/[^A-Z0-9]/g, '')).slice(0, 6).join('');
   }
 
   function setLoginOtpValue(root, value){
@@ -384,6 +400,47 @@
       if(event.key === 'Enter') submitLogin();
     });
     renderLoginOtpDisplay(root, hidden.value || '');
+  }
+
+  function renderCodeRequestOtpDisplay(root, value){
+    const cells = Array.from(root?.querySelectorAll('.kinojo-code-otp-cell') || []);
+    const chars = Array.from(normalizeMemberCodeText_(value));
+    cells.forEach((cell, index) => { cell.textContent = chars[index] || ''; });
+    root?.classList.toggle('is-filled', chars.length >= cells.length);
+  }
+
+  function bindCodeRequestOtpInput(root, onChange){
+    if(!root || root.dataset.otpBound) return;
+    root.dataset.otpBound = '1';
+    root.dataset.otpInputId = 'kinojoCodeRequestCodeInput';
+    root.classList.add('kinojo-code-request-otp-display');
+    root.setAttribute('role', 'button');
+    root.setAttribute('tabindex', '0');
+    const hidden = document.getElementById('kinojoCodeRequestCodeInput');
+    if(!hidden) return;
+    let composing = false;
+
+    function sync(){
+      if(composing) return;
+      setOtpValue(root, hidden.value || '');
+      if(typeof onChange === 'function') onChange();
+    }
+
+    hidden.addEventListener('compositionstart', () => { composing = true; });
+    hidden.addEventListener('compositionend', () => { composing = false; sync(); });
+    hidden.addEventListener('input', event => {
+      if(event.isComposing || composing) return;
+      sync();
+    });
+    hidden.addEventListener('paste', () => setTimeout(sync, 0));
+    hidden.addEventListener('focus', () => root.classList.add('is-focused'));
+    hidden.addEventListener('blur', () => root.classList.remove('is-focused'));
+    root.addEventListener('click', () => hidden.focus());
+    root.addEventListener('keydown', event => {
+      if(event.key === 'Enter') submitCodeRequest();
+      else hidden.focus();
+    });
+    renderCodeRequestOtpDisplay(root, hidden.value || '');
   }
 
   function bindOtpInput(root, onChange){
@@ -494,7 +551,7 @@
       if(box) box.hidden = false;
       if(button){ button.disabled = true; button.textContent = '조회완료'; delete button.dataset.originalText; button.classList.remove('is-loading'); }
       codeRequestStatus('조회 완료. 요청할 회원 코드를 입력해 주세요.', false);
-      modal.querySelector('#kinojoCodeRequestOtp .kinojo-code-otp-cell')?.focus();
+      modal.querySelector('#kinojoCodeRequestCodeInput')?.focus();
       validateCodeRequestOtp();
     }catch(err){ codeRequestStatus(err.message || String(err), true); }
     finally{
