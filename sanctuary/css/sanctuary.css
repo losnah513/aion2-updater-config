@@ -54,3 +54,74 @@ body{background:#fff!important;}
 .team-copy-btn:hover{transform:translateY(-1px);border-color:rgba(56,101,176,.42);background:#fff;}
 .team-copy-btn:disabled{cursor:wait;opacity:.68;transform:none;}
 @media(max-width:760px){.team-copy-btn{padding:5px 8px;font-size:10px}.team-name{align-items:center}}
+
+/* 20260623_14: KINOJO style copy icon buttons + login-gated copy tooltip */
+.kinojo-copy-icon-btn{
+  position:relative;
+  width:30px;
+  height:30px;
+  min-width:30px;
+  padding:0!important;
+  display:inline-grid;
+  place-items:center;
+  border-radius:999px!important;
+  border:1px solid rgba(56,101,176,.26)!important;
+  background:linear-gradient(145deg,#ffffff,#eef4ff)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.96),0 4px 10px rgba(15,23,42,.08)!important;
+  color:#26466d!important;
+  font-size:0!important;
+  line-height:1!important;
+  cursor:pointer;
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease,filter .18s ease;
+}
+.kinojo-copy-icon-btn:hover{
+  transform:translateY(-1px) scale(1.055)!important;
+  border-color:rgba(56,101,176,.46)!important;
+  filter:brightness(1.03);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,1),0 7px 16px rgba(15,23,42,.12)!important;
+}
+.kinojo-copy-icon-btn:active{transform:translateY(0) scale(.98)!important;}
+.kinojo-copy-icon-btn:disabled{cursor:wait;opacity:.72;filter:saturate(.78);transform:none!important;}
+.copy-single-icon,.copy-stack-icon{position:relative;width:15px;height:17px;display:block;}
+.copy-single-icon::before,.copy-single-icon::after,.copy-stack-icon span{
+  content:"";
+  position:absolute;
+  border:1.8px solid currentColor;
+  border-radius:3px;
+  background:rgba(255,255,255,.64);
+  box-sizing:border-box;
+}
+.copy-single-icon::before{width:11px;height:13px;left:0;top:0;opacity:.55;}
+.copy-single-icon::after{width:11px;height:13px;right:0;bottom:0;background:#fff;}
+.copy-stack-icon span:first-child{width:11px;height:13px;left:0;top:0;opacity:.48;}
+.copy-stack-icon span:last-child{width:12px;height:14px;right:0;bottom:0;background:#fff;box-shadow:-4px -4px 0 -2px rgba(38,70,109,.38);}
+.kinojo-copy-icon-btn.is-copying::after{
+  content:"";
+  width:15px;height:15px;border:2px solid rgba(38,70,109,.24);border-top-color:#26466d;border-radius:50%;animation:kinojoCopySpin .7s linear infinite;
+}
+.kinojo-copy-icon-btn.is-copying .copy-single-icon,.kinojo-copy-icon-btn.is-copying .copy-stack-icon{display:none;}
+.kinojo-copy-icon-btn[data-kinojo-tooltip]::before{
+  content:attr(data-kinojo-tooltip);
+  position:absolute;
+  left:50%;bottom:calc(100% + 9px);
+  transform:translateX(-50%) translateY(4px);
+  width:max-content;
+  max-width:260px;
+  padding:7px 10px;
+  border:1px solid rgba(120,145,180,.24);
+  border-radius:10px;
+  background:rgba(255,255,255,.98);
+  color:#344054;
+  font-size:11px;
+  font-weight:900;
+  line-height:1.35;
+  box-shadow:0 10px 24px rgba(15,23,42,.10);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .16s ease,transform .16s ease;
+  z-index:30;
+}
+.kinojo-copy-icon-btn[data-kinojo-tooltip]:hover::before,
+.kinojo-copy-icon-btn[data-kinojo-tooltip]:focus-visible::before{opacity:1;transform:translateX(-50%) translateY(0);}
+@keyframes kinojoCopySpin{to{transform:rotate(360deg)}}
+@media(max-width:520px){.kinojo-copy-icon-btn{width:28px;height:28px;min-width:28px}.kinojo-copy-icon-btn[data-kinojo-tooltip]::before{display:none}}

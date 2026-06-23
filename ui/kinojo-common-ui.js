@@ -17,6 +17,7 @@
     return {key:'home',label:'메인',root:'./',mobile};
   }
   function q(s,root=document){return root.querySelector(s)}
+  function escapeHtml(value){return String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('\"','&quot;').replaceAll("'",'&#39;')}
   function detach(el){if(el&&el.parentNode)el.parentNode.removeChild(el);return el}
   function removeLegacy(){
     const legacyTop=q('.top-utility');
@@ -59,6 +60,56 @@
       list.innerHTML='<span class="kinojo-notice-empty">공지사항을 불러오지 못했습니다.</span>';
     }
   }
+
+  function commonApiUrl(){
+    return (new URLSearchParams(location.search).get('api')) || (typeof WEB_APP_URL!=='undefined'&&WEB_APP_URL) || 'https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec';
+  }
+  function renderCommonVisits(stats){
+    const el=document.getElementById('visitCard');
+    if(!el)return;
+    const today=Number(stats?.todayVisits||0).toLocaleString('ko-KR');
+    const total=Number(stats?.totalVisits||0).toLocaleString('ko-KR');
+    el.innerHTML='<span class="visit-line visit-line-today">👀 오늘 '+today+'명의 모험가님이 다녀가셨어요.</span><span class="visit-line visit-line-total">🏛 누적 '+total+'회의 발걸음이 키노조에 남았습니다.</span>';
+  }
+  async function loadCommonVisits(info){
+    if(window.__KINOJO_HALL_VISIT_RENDERED__) return;
+    const el=document.getElementById('visitCard');
+    if(!el)return;
+    try{
+      const base=commonApiUrl();
+      const key='kinojo_common_visit_'+(info?.key||'page')+'_'+new Date().toLocaleDateString('ko-KR',{timeZone:'Asia/Seoul'});
+      const first=localStorage.getItem(key)!=='1';
+      if(first) localStorage.setItem(key,'1');
+      const params=new URLSearchParams({action:'hallVisit',mode:first?'visit':'stats',boost:first?'1':'0',t:String(Date.now())});
+      const url=base+(base.includes('?')?'&':'?')+params.toString();
+      const res=await fetch(url,{cache:'no-store'});
+      const data=await res.json();
+      if(data?.ok&&data.stats)renderCommonVisits(data.stats);
+    }catch(_err){
+      if(!window.__KINOJO_HALL_VISIT_RENDERED__) el.innerHTML='<span class="visit-line visit-line-today">👀 방문자 통계 확인중</span><span class="visit-line visit-line-total">🏛 누적 방문 기록 확인중</span>';
+    }
+  }
+  function toast(message){
+    const el=document.createElement('div');
+    el.className='kinojo-common-toast';
+    el.textContent=String(message||'');
+    document.body.appendChild(el);
+    requestAnimationFrame(()=>el.classList.add('show'));
+    setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),220);},2100);
+  }
+  function bindImageGuards(){
+    if(document.documentElement.dataset.kinojoImageGuardBound==='1')return;
+    document.documentElement.dataset.kinojoImageGuardBound='1';
+    document.addEventListener('contextmenu',e=>{
+      const target=e.target;
+      if(target&&target.closest&&target.closest('img, picture, svg, canvas, .sanctuary-hero, .hero-bg, .mvp-profile-image, .character-preview-avatar, .reaction-profile-image, .char-card')) e.preventDefault();
+    },true);
+    document.addEventListener('dragstart',e=>{
+      const target=e.target;
+      if(target&&target.closest&&target.closest('img, picture, svg, canvas')) e.preventDefault();
+    },true);
+  }
+
   function createAdminMenu(info){
     const wrap=document.createElement('div');
     wrap.className='admin-menu-wrap';
@@ -187,6 +238,7 @@
     const notice=createNoticeStrip(info);
     document.body.insertBefore(notice,bar.nextSibling);
     setTimeout(loadCommonNotices,0);
+    setTimeout(()=>loadCommonVisits(info),40);
   }
   function toggleAdminMenu(){
     const menu=q('#adminDropdown');const btn=q('#adminMenuBtn');
@@ -346,7 +398,8 @@
   makeDrawer(info);
   bind();
   bindCommonAdmin(info);
-  window.KinojoCommonUI={openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel,toggleAdminMenu,closeAdminMenuCommon,reloadNotices:loadCommonNotices};
+  bindImageGuards();
+  window.KinojoCommonUI={toast,openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel,toggleAdminMenu,closeAdminMenuCommon,reloadNotices:loadCommonNotices};
   window.openAdminDropdown=toggleAdminMenu;
   window.closeAdminMenu=closeAdminMenuCommon;
   window.openSideDrawer=openSideDrawer;

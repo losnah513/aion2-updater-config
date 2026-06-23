@@ -95,7 +95,7 @@ function updateReactionSubmitState_(){
 }
 function openReactionModal(item,anchor){
   hideCharacterPreview_();
-  if(window.KinojoAuth && !window.KinojoAuth.requireLogin('로그인 후 좋아요·싫어요를 남길 수 있습니다.')){
+  if(window.KinojoAuth && !window.KinojoAuth.requireLogin('로그인 후 좋아요·싫어요를 남길 수 있습니다.', {context:'hall'})){
     return;
   }
   reactionSubmitting=false;
@@ -167,7 +167,7 @@ async function submitReaction(){
     return;
   }
   try{
-    if(window.KinojoAuth && !window.KinojoAuth.requireLogin('로그인 후 좋아요·싫어요를 남길 수 있습니다.')){
+    if(window.KinojoAuth && !window.KinojoAuth.requireLogin('로그인 후 좋아요·싫어요를 남길 수 있습니다.', {context:'hall'})){
       updateReactionSubmitState_();
       return;
     }
@@ -178,7 +178,7 @@ async function submitReaction(){
     const res=await fetch(WEB_APP_URL,{method:"POST",body:JSON.stringify({action:"hallReaction",characterName:currentReactionItem.name,owner:currentReactionItem.owner||"",className:currentReactionItem.className||"",reaction:currentReactionType,comment:comment,clientKey:getVisitorId(),sessionToken:sessionToken})});
     const data=await res.json();
     if(!data.ok){
-      if(data.authRequired&&window.KinojoAuth)window.KinojoAuth.openLoginModal(data.message||"로그인 후 이용할 수 있습니다.");
+      if(data.authRequired&&window.KinojoAuth)window.KinojoAuth.openLoginModal(data.message||"로그인 후 이용할 수 있습니다.", {context:"hall"});
       if(status)status.textContent=data.message||"저장 실패";else alert(data.message||"저장 실패");
       return;
     }

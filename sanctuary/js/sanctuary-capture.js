@@ -240,6 +240,11 @@
     setTimeout(()=>URL.revokeObjectURL(url),1500);
   }
 
+  function requireSanctuaryCopyLogin(){
+    if(!window.KinojoAuth || typeof window.KinojoAuth.requireLogin !== 'function') return true;
+    return window.KinojoAuth.requireLogin('로그인 후 클립보드 복사 기능을 사용할 수 있습니다.', { context:'sanctuary' });
+  }
+
   function toast(message){
     if(window.KinojoCommonUI?.toast) return window.KinojoCommonUI.toast(message);
     const el=document.createElement('div');
@@ -261,10 +266,11 @@
   }
 
   async function handleCopy(btn){
+    if(!requireSanctuaryCopyLogin()) return;
     const party = btn.closest('.party-card');
     if(!party) return;
-    const old = btn.textContent;
-    btn.disabled = true; btn.textContent = '생성중';
+    const oldHtml = btn.innerHTML;
+    btn.disabled = true; btn.classList.add('is-copying');
     try{
       const canvas = await makePartyCanvas(party);
       const result = await copyCanvasWithFallback(canvas, 'kinojo-party-'+safeText(party.dataset.partyNo || 'party')+'.png');
@@ -273,15 +279,16 @@
       console.warn('KINOJO party capture failed:', err);
       toast('파티 이미지 생성에 실패했습니다.');
     }finally{
-      btn.disabled = false; btn.textContent = old;
+      btn.disabled = false; btn.classList.remove('is-copying'); btn.innerHTML = oldHtml;
     }
   }
 
   async function handleTeamCopy(btn){
+    if(!requireSanctuaryCopyLogin()) return;
     const team = btn.closest('.team-card');
     if(!team) return;
-    const old = btn.textContent;
-    btn.disabled = true; btn.textContent = '생성중';
+    const oldHtml = btn.innerHTML;
+    btn.disabled = true; btn.classList.add('is-copying');
     try{
       const canvas = await makeTeamCanvas(team);
       const result = await copyCanvasWithFallback(canvas, 'kinojo-team-'+safeText(team.dataset.team || 'team')+'.png');
@@ -290,7 +297,7 @@
       console.warn('KINOJO team capture failed:', err);
       toast('팀 전체 이미지 생성에 실패했습니다.');
     }finally{
-      btn.disabled = false; btn.textContent = old;
+      btn.disabled = false; btn.classList.remove('is-copying'); btn.innerHTML = oldHtml;
     }
   }
 

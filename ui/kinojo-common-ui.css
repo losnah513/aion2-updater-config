@@ -1098,3 +1098,31 @@ body[data-kinojo-role="MASTER"] .master-only{display:grid!important;}
 .admin-panel-modal .admin-notice-input{min-height:34px;height:34px;border-radius:9px;border:1px solid rgba(120,145,180,.24);padding:0 10px;box-sizing:border-box;font-size:12px;}
 .admin-panel-modal .admin-notice-content{width:100%;min-height:72px;border-radius:10px;border:1px solid rgba(120,145,180,.24);padding:9px 10px;box-sizing:border-box;font-size:12px;resize:vertical;font-family:inherit;}
 @media(max-width:760px){.kinojo-notice-strip{grid-template-columns:1fr;margin-top:5px;padding:8px}.kinojo-notice-item{grid-template-columns:auto auto;}.kinojo-notice-text{grid-column:1/-1}.admin-account-inline .kinojo-account-create-row,.admin-notice-grid{grid-template-columns:1fr;}}
+
+/* 20260623_14: light image guard + shared toast */
+img,picture,canvas,svg,.sanctuary-hero,.hero-bg,.mvp-profile-image,.character-preview-avatar,.reaction-profile-image{
+  -webkit-user-drag:none;
+  user-select:none;
+  -webkit-touch-callout:none;
+}
+.kinojo-common-toast{
+  position:fixed;
+  left:50%;
+  bottom:24px;
+  transform:translateX(-50%) translateY(8px);
+  z-index:9999;
+  max-width:min(360px,calc(100vw - 28px));
+  padding:10px 14px;
+  border-radius:999px;
+  background:rgba(15,23,42,.88);
+  color:#fff;
+  font-size:13px;
+  font-weight:900;
+  line-height:1.35;
+  text-align:center;
+  box-shadow:0 10px 28px rgba(15,23,42,.18);
+  opacity:0;
+  transition:opacity .18s ease,transform .18s ease;
+  pointer-events:none;
+}
+.kinojo-common-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}

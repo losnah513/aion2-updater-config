@@ -179,7 +179,7 @@
       + '<button class="kinojo-login-close" id="kinojoLoginCloseBtn" type="button" aria-label="닫기">×</button>'
       + '<div class="kinojo-login-kicker">KINOJO LOGIN</div>'
       + '<h2 id="kinojoLoginTitle">회원 코드 로그인</h2>'
-      + '<p>관리자가 발급한 코드로 로그인하면 좋아요·싫어요와 제안 기능을 사용할 수 있습니다.</p>'
+      + '<p id="kinojoLoginHelpText">관리자가 발급한 코드로 로그인하면 좋아요·싫어요와 제안 기능을 사용할 수 있습니다.</p>'
       + '<input id="kinojoLoginCodeInput" class="kinojo-login-input" maxlength="12" placeholder="예: AB1234 또는 관리자 코드" autocomplete="one-time-code" />'
       + '<button id="kinojoLoginSubmitBtn" class="kinojo-login-submit" type="button"><span class="kinojo-login-btn-text">로그인</span></button>'
       + '<div id="kinojoLoginStatus" class="kinojo-login-status"></div>'
@@ -217,10 +217,24 @@
     return modal;
   }
 
-  function openLoginModal(reason){
+  function loginHelpText_(context){
+    const key = String(context || '').trim();
+    if(key === 'sanctuary'){
+      return '관리자가 발급한 코드로 로그인하면<br>클립보드 복사 기능을 사용할 수 있고<br>상위 권한이 있는 경우 수정 기능도 사용할 수 있습니다.';
+    }
+    if(key === 'hall' || key === 'reaction'){
+      return '관리자가 발급한 코드로 로그인하면<br>좋아요/싫어요와 다양한 기능을 사용할 수 있습니다';
+    }
+    return '관리자가 발급한 코드로 로그인하면 좋아요·싫어요와 제안 기능을 사용할 수 있습니다.';
+  }
+
+  function openLoginModal(reason, options){
     const modal = ensureLoginModal();
     const status = modal.querySelector('#kinojoLoginStatus');
     const input = modal.querySelector('#kinojoLoginCodeInput');
+    const help = modal.querySelector('#kinojoLoginHelpText');
+    const opts = (options && typeof options === 'object') ? options : {};
+    if(help) help.innerHTML = opts.helperHtml || loginHelpText_(opts.context || '');
     if(status) status.textContent = reason || '';
     if(input) input.value = '';
     resetCodeRequestPanel(true);
@@ -270,9 +284,9 @@
     }
   }
 
-  function requireLogin(message){
+  function requireLogin(message, options){
     if(isLoggedIn()) return true;
-    openLoginModal(message || '로그인 후 이용할 수 있습니다.');
+    openLoginModal(message || '로그인 후 이용할 수 있습니다.', options);
     return false;
   }
 
