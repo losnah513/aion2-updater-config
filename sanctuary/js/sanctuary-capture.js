@@ -138,14 +138,14 @@
   async function renderPartyCanvas(data, options){
     const opts = options || {};
     const dpr = clamp(window.devicePixelRatio || 1, 1, 2);
-    const width = 900;
+    const width = 760;
     const cols = 2;
-    const gap = 14;
-    const pad = 28;
-    const headerH = 86;
-    const footH = 46;
+    const gap = 12;
+    const pad = 24;
+    const headerH = 82;
+    const footH = 42;
     const cellW = Math.floor((width - pad*2 - gap) / cols);
-    const cellH = 104;
+    const cellH = 92;
     const rows = Math.max(1, Math.ceil(data.members.length / cols));
     const height = pad + headerH + rows*cellH + (rows-1)*gap + footH + pad;
     const canvas = document.createElement('canvas');
@@ -164,18 +164,18 @@
       const row = Math.floor(idx / cols);
       const x = pad + col*(cellW + gap);
       const cy = y + row*(cellH + gap);
-      const profileSize = 62;
-      const profileX = x + cellW - profileSize - 15;
+      const profileSize = 68;
+      const profileX = x + cellW - profileSize - 12;
       const profileY = cy + Math.floor((cellH - profileSize) / 2);
       ctx.fillStyle = m.empty ? '#fbfdff' : '#ffffff';
       roundRect(ctx,x,cy,cellW,cellH,16); ctx.fill();
       ctx.strokeStyle = m.empty ? '#d6deeb' : '#dce5f2'; ctx.lineWidth = 1.5; ctx.setLineDash(m.empty ? [7,6] : []); ctx.stroke(); ctx.setLineDash([]);
-      if(icons[idx]) ctx.drawImage(icons[idx], x+17, cy+23, 28, 28);
-      else{ ctx.fillStyle = m.empty ? '#edf2f7' : '#eaf1fb'; roundRect(ctx,x+17,cy+23,28,28,8); ctx.fill(); }
-      ctx.fillStyle = m.empty ? '#7b8798' : '#1f2f46'; ctx.font = '900 19px Arial, sans-serif';
-      drawText(ctx, m.name || (m.empty?'모집중':'-'), x+55, cy+19, cellW-140, 23);
-      ctx.fillStyle = '#667085'; ctx.font = '800 13px Arial, sans-serif';
-      drawText(ctx, m.meta || '', x+55, cy+51, cellW-140, 17);
+      if(icons[idx]) ctx.drawImage(icons[idx], x+15, cy+21, 25, 25);
+      else{ ctx.fillStyle = m.empty ? '#edf2f7' : '#eaf1fb'; roundRect(ctx,x+15,cy+21,25,25,8); ctx.fill(); }
+      ctx.fillStyle = m.empty ? '#7b8798' : '#1f2f46'; ctx.font = '900 18px Arial, sans-serif';
+      drawText(ctx, m.name || (m.empty?'모집중':'-'), x+49, cy+18, cellW-135, 22);
+      ctx.fillStyle = '#667085'; ctx.font = '800 12px Arial, sans-serif';
+      drawText(ctx, m.meta || '', x+49, cy+49, cellW-135, 16);
       if(profiles[idx]) drawCircleImage(ctx, profiles[idx], profileX, profileY, profileSize);
       else drawFallbackProfile(ctx, icons[idx], profileX, profileY, profileSize, m.empty);
     });
@@ -197,10 +197,10 @@
       partyCanvases.push(await renderPartyCanvas(party, { subtitle: data.name + ' · KINOJO Sanctuary Party' }));
     }
     const dpr = clamp(window.devicePixelRatio || 1, 1, 2);
-    const width = 900;
-    const gap = 20;
-    const pad = 28;
-    const headerH = 92;
+    const width = 760;
+    const gap = 18;
+    const pad = 24;
+    const headerH = 88;
     const height = headerH + partyCanvases.reduce((sum,c)=>sum + Math.round(c.height / dpr), 0) + Math.max(0, partyCanvases.length-1)*gap + pad;
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(width*dpr); canvas.height = Math.round(height*dpr);
@@ -301,15 +301,61 @@
     }
   }
 
+  function ensureFloatingTooltip(){
+    let tip = document.getElementById('kinojoFloatingTooltip');
+    if(!tip){
+      tip = document.createElement('div');
+      tip.id = 'kinojoFloatingTooltip';
+      tip.className = 'kinojo-floating-tooltip';
+      tip.setAttribute('role','tooltip');
+      document.body.appendChild(tip);
+    }
+    return tip;
+  }
+
+  function showFloatingTooltip(btn){
+    const text = btn?.dataset?.kinojoTooltip || btn?.getAttribute('title') || '';
+    if(!text) return;
+    const tip = ensureFloatingTooltip();
+    tip.textContent = text;
+    tip.classList.add('show');
+    const rect = btn.getBoundingClientRect();
+    const pad = 10;
+    const tipRect = tip.getBoundingClientRect();
+    let left = rect.left + rect.width / 2 - tipRect.width / 2;
+    left = clamp(left, pad, window.innerWidth - tipRect.width - pad);
+    let top = rect.top - tipRect.height - 10;
+    if(top < pad) top = rect.bottom + 10;
+    tip.style.left = left + 'px';
+    tip.style.top = top + 'px';
+  }
+
+  function hideFloatingTooltip(){
+    const tip = document.getElementById('kinojoFloatingTooltip');
+    if(tip) tip.classList.remove('show');
+  }
+
+  function bindFloatingTooltip(btn){
+    if(!btn || btn.dataset.floatingTooltipBound === '1') return;
+    btn.dataset.floatingTooltipBound = '1';
+    btn.addEventListener('mouseenter', ()=>showFloatingTooltip(btn));
+    btn.addEventListener('focus', ()=>showFloatingTooltip(btn));
+    btn.addEventListener('mouseleave', hideFloatingTooltip);
+    btn.addEventListener('blur', hideFloatingTooltip);
+    btn.addEventListener('click', hideFloatingTooltip);
+  }
+
   function bind(){
     document.querySelectorAll('[data-party-copy]').forEach((btn)=>{
       if(btn.dataset.captureBound === '1') return;
       btn.dataset.captureBound = '1';
+      bindFloatingTooltip(btn);
       btn.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); handleCopy(btn); });
     });
     document.querySelectorAll('[data-team-copy]').forEach((btn)=>{
       if(btn.dataset.captureBound === '1') return;
       btn.dataset.captureBound = '1';
+      bindFloatingTooltip(btn);
       btn.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); handleTeamCopy(btn); });
     });
   }

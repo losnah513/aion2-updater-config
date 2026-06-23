@@ -125,3 +125,26 @@ body{background:#fff!important;}
 .kinojo-copy-icon-btn[data-kinojo-tooltip]:focus-visible::before{opacity:1;transform:translateX(-50%) translateY(0);}
 @keyframes kinojoCopySpin{to{transform:rotate(360deg)}}
 @media(max-width:520px){.kinojo-copy-icon-btn{width:28px;height:28px;min-width:28px}.kinojo-copy-icon-btn[data-kinojo-tooltip]::before{display:none}}
+
+
+/* 20260623_15: copy tooltip floats above all cards, so parent overflow never clips it. */
+.kinojo-copy-icon-btn[data-kinojo-tooltip]::before{display:none!important;content:none!important;}
+.kinojo-floating-tooltip{
+  position:fixed;
+  z-index:2147483000;
+  max-width:min(320px,calc(100vw - 20px));
+  padding:9px 11px;
+  border:1px solid rgba(120,145,180,.25);
+  border-radius:12px;
+  background:rgba(15,23,42,.94);
+  color:#fff;
+  font-size:12px;
+  font-weight:900;
+  line-height:1.35;
+  box-shadow:0 10px 26px rgba(15,23,42,.2);
+  pointer-events:none;
+  opacity:0;
+  transform:translateY(4px);
+  transition:opacity .14s ease,transform .14s ease;
+}
+.kinojo-floating-tooltip.show{opacity:1;transform:translateY(0);}
