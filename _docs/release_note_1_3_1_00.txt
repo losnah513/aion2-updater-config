@@ -128,3 +128,20 @@ Style Reset & UI Cleanup
 - 모바일 성역에서 클래스 아이콘 경로가 모바일 경로 기준으로 깨지던 문제를 보정했습니다.
 - 모바일 성역 파티 캐릭터 배치를 1열에서 2열로 변경했습니다.
 - AppsScript / Extension 수정 없음.
+
+
+[260622_17 URL Route Cleanup]
+- Canonical public routes were added: /hof/, /m/, /m/hof/, /m/sanctuary/, /m/arcana/.
+- Legacy routes remain usable through redirect pages or preserved asset folders: /hall-of-fame/, /mobile/.
+- Internal navigation was updated to the short routes where user-facing.
+- Extension config URLs now point to https://kinojo.info while GitHub release download links remain unchanged.
+- Apps Script was checked; no executable Apps Script URL routing change was required.
+
+## 2026-06-22 / 18 / SEO_OG_URL_Metadata
+- KINOJO 대표 도메인(kinojo.info) 기준으로 주요 페이지의 title, description, canonical, Open Graph, Twitter Card 메타 정보를 정리했습니다.
+- 카카오톡/디스코드 등 링크 공유 시 대표 이미지가 노출되도록 assets/images/common/kinojo-og.jpg를 추가하고 모든 주요 페이지의 og:image로 연결했습니다.
+- 메인 페이지 배너를 KINOJO 대표 이미지로 교체했습니다.
+- 모바일 메인(/m/)에도 대표 배너를 추가했습니다.
+- sitemap.xml과 robots.txt를 추가했습니다. 검색엔진 제출 주소는 https://kinojo.info/sitemap.xml 입니다.
+- /hof/, /m/, /m/hof/, /m/sanctuary/, /m/arcana/ 기준의 새 주소 체계를 유지하고, 기존 /hall-of-fame/, /mobile/ 경로는 리다이렉트 상태로 보존했습니다.
+- AppsScript와 Extension은 수정하지 않았습니다.
