@@ -7,6 +7,33 @@
   function safeText(value){ return String(value || '').replace(/\s+/g, ' ').trim(); }
   function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
 
+  const DEFAULT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec';
+  const API_URL = (window.KINOJO_API_URL || new URLSearchParams(location.search).get('api') || DEFAULT_WEB_APP_URL);
+  const profileDataUrlCache = new Map();
+
+  function apiUrl(){ return API_URL; }
+
+  async function proxyProfileImageUrl(src){
+    const url = safeText(src);
+    if(!url) return '';
+    if(url.startsWith('data:')) return url;
+    if(profileDataUrlCache.has(url)) return profileDataUrlCache.get(url);
+    try{
+      const res = await fetch(apiUrl(), {
+        method:'POST',
+        body:JSON.stringify({ action:'profileImageProxy', url })
+      });
+      const data = await res.json();
+      const dataUrl = data && data.ok && data.dataUrl ? data.dataUrl : '';
+      profileDataUrlCache.set(url, dataUrl);
+      return dataUrl;
+    }catch(err){
+      console.warn('KINOJO profile image proxy failed:', err);
+      profileDataUrlCache.set(url, '');
+      return '';
+    }
+  }
+
   function getMemberData(card){
     const empty = card.classList.contains('empty-slot');
     if(empty){
@@ -127,25 +154,25 @@
     ctx.strokeStyle = '#d9e2f0'; ctx.lineWidth = 2; ctx.stroke();
 
     const pad = 28;
-    ctx.fillStyle = '#1f2f46'; ctx.font = '800 31px Arial, sans-serif'; ctx.textBaseline='top';
+    ctx.fillStyle = '#1f2f46'; ctx.font = '800 27px Arial, sans-serif'; ctx.textBaseline='top';
     ctx.fillText(title, pad, pad);
     ctx.fillStyle = '#667085'; ctx.font = '800 17px Arial, sans-serif';
-    if(count) ctx.fillText(count, width - pad - ctx.measureText(count).width, pad + 8);
-    ctx.fillStyle = '#8a5a0a'; ctx.font = '800 14px Arial, sans-serif';
-    ctx.fillText(sub || 'KINOJO Sanctuary Party', pad, pad + 43);
+    if(count) ctx.fillText(count, width - pad - ctx.measureText(count).width, pad + 6);
+    ctx.fillStyle = '#8a5a0a'; ctx.font = '800 13px Arial, sans-serif';
+    ctx.fillText(sub || 'KINOJO Sanctuary Party', pad, pad + 38);
   }
 
   async function renderPartyCanvas(data, options){
     const opts = options || {};
     const dpr = clamp(window.devicePixelRatio || 1, 1, 2);
-    const width = 760;
+    const width = 620;
     const cols = 2;
-    const gap = 12;
-    const pad = 24;
-    const headerH = 82;
-    const footH = 42;
+    const gap = 10;
+    const pad = 20;
+    const headerH = 76;
+    const footH = 34;
     const cellW = Math.floor((width - pad*2 - gap) / cols);
-    const cellH = 92;
+    const cellH = 76;
     const rows = Math.max(1, Math.ceil(data.members.length / cols));
     const height = pad + headerH + rows*cellH + (rows-1)*gap + footH + pad;
     const canvas = document.createElement('canvas');
@@ -157,25 +184,26 @@
     drawPartyBase(ctx, width, height, data.title, opts.subtitle, data.count);
 
     const icons = await Promise.all(data.members.map(m=>loadImage(m.icon)));
-    const profiles = await Promise.all(data.members.map(m=>loadImage(m.profileImage)));
+    const profileUrls = await Promise.all(data.members.map(m=>proxyProfileImageUrl(m.profileImage)));
+    const profiles = await Promise.all(profileUrls.map(src=>loadImage(src)));
     let y = pad + headerH;
     data.members.forEach((m, idx)=>{
       const col = idx % cols;
       const row = Math.floor(idx / cols);
       const x = pad + col*(cellW + gap);
       const cy = y + row*(cellH + gap);
-      const profileSize = 68;
-      const profileX = x + cellW - profileSize - 12;
+      const profileSize = 56;
+      const profileX = x + cellW - profileSize - 10;
       const profileY = cy + Math.floor((cellH - profileSize) / 2);
       ctx.fillStyle = m.empty ? '#fbfdff' : '#ffffff';
       roundRect(ctx,x,cy,cellW,cellH,16); ctx.fill();
-      ctx.strokeStyle = m.empty ? '#d6deeb' : '#dce5f2'; ctx.lineWidth = 1.5; ctx.setLineDash(m.empty ? [7,6] : []); ctx.stroke(); ctx.setLineDash([]);
-      if(icons[idx]) ctx.drawImage(icons[idx], x+15, cy+21, 25, 25);
-      else{ ctx.fillStyle = m.empty ? '#edf2f7' : '#eaf1fb'; roundRect(ctx,x+15,cy+21,25,25,8); ctx.fill(); }
-      ctx.fillStyle = m.empty ? '#7b8798' : '#1f2f46'; ctx.font = '900 18px Arial, sans-serif';
-      drawText(ctx, m.name || (m.empty?'모집중':'-'), x+49, cy+18, cellW-135, 22);
-      ctx.fillStyle = '#667085'; ctx.font = '800 12px Arial, sans-serif';
-      drawText(ctx, m.meta || '', x+49, cy+49, cellW-135, 16);
+      ctx.strokeStyle = m.empty ? '#d6deeb' : '#dce5f2'; ctx.lineWidth = 1.4; ctx.setLineDash(m.empty ? [7,6] : []); ctx.stroke(); ctx.setLineDash([]);
+      if(icons[idx]) ctx.drawImage(icons[idx], x+12, cy+18, 22, 22);
+      else{ ctx.fillStyle = m.empty ? '#edf2f7' : '#eaf1fb'; roundRect(ctx,x+12,cy+18,22,22,7); ctx.fill(); }
+      ctx.fillStyle = m.empty ? '#7b8798' : '#1f2f46'; ctx.font = '900 17px Arial, sans-serif';
+      drawText(ctx, m.name || (m.empty?'모집중':'-'), x+42, cy+16, cellW-112, 21);
+      ctx.fillStyle = '#667085'; ctx.font = '800 11px Arial, sans-serif';
+      drawText(ctx, m.meta || '', x+42, cy+44, cellW-112, 15);
       if(profiles[idx]) drawCircleImage(ctx, profiles[idx], profileX, profileY, profileSize);
       else drawFallbackProfile(ctx, icons[idx], profileX, profileY, profileSize, m.empty);
     });
@@ -197,10 +225,10 @@
       partyCanvases.push(await renderPartyCanvas(party, { subtitle: data.name + ' · KINOJO Sanctuary Party' }));
     }
     const dpr = clamp(window.devicePixelRatio || 1, 1, 2);
-    const width = 760;
-    const gap = 18;
-    const pad = 24;
-    const headerH = 88;
+    const width = 620;
+    const gap = 14;
+    const pad = 20;
+    const headerH = 78;
     const height = headerH + partyCanvases.reduce((sum,c)=>sum + Math.round(c.height / dpr), 0) + Math.max(0, partyCanvases.length-1)*gap + pad;
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(width*dpr); canvas.height = Math.round(height*dpr);
@@ -210,10 +238,10 @@
 
     ctx.fillStyle = '#eef4ff';
     ctx.fillRect(0,0,width,height);
-    ctx.fillStyle = '#1f2f46'; ctx.font = '900 34px Arial, sans-serif'; ctx.textBaseline='top';
-    ctx.fillText(data.name, pad, 24);
-    ctx.fillStyle = '#667085'; ctx.font = '800 15px Arial, sans-serif';
-    ctx.fillText([data.meta, data.leader].filter(Boolean).join(' · '), pad, 64);
+    ctx.fillStyle = '#1f2f46'; ctx.font = '900 30px Arial, sans-serif'; ctx.textBaseline='top';
+    ctx.fillText(data.name, pad, 20);
+    ctx.fillStyle = '#667085'; ctx.font = '800 13px Arial, sans-serif';
+    ctx.fillText([data.meta, data.leader].filter(Boolean).join(' · '), pad, 56);
 
     let y = headerH;
     partyCanvases.forEach((partyCanvas)=>{

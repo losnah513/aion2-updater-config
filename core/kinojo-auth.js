@@ -365,20 +365,39 @@
     if(!root || root.dataset.loginOtpBound) return;
     root.dataset.loginOtpBound = '1';
     const cells = Array.from(root.querySelectorAll('.kinojo-code-otp-cell'));
+
+    function focusNext(index){
+      if(index < cells.length - 1) cells[index + 1].focus();
+    }
+    function focusByLength(length){
+      cells[Math.min(Math.max(length, 0), cells.length - 1)]?.focus();
+    }
+    function commitCell(cell, index, value){
+      const chars = Array.from(normalizeLoginCodeText_(value));
+      if(chars.length > 1){
+        setLoginOtpValue(root, chars.join(''));
+        focusByLength(chars.length);
+        return;
+      }
+      cell.value = chars[0] || '';
+      syncLoginOtpHidden(root);
+      if(chars.length) focusNext(index);
+    }
+
     cells.forEach((cell, index) => {
+      cell.removeAttribute('maxlength');
+      cell.setAttribute('autocomplete', index === 0 ? 'one-time-code' : 'off');
+      cell.addEventListener('compositionstart', () => { cell.dataset.composing = '1'; });
+      cell.addEventListener('compositionend', event => {
+        cell.dataset.composing = '';
+        commitCell(cell, index, event.target.value || '');
+      });
       cell.addEventListener('input', event => {
-        const raw = normalizeLoginCodeText_(event.target.value || '');
-        const chars = Array.from(raw);
-        if(chars.length > 1){
-          setLoginOtpValue(root, raw);
-          cells[Math.min(chars.length, cells.length - 1)]?.focus();
-        }else{
-          event.target.value = chars[0] || '';
-          syncLoginOtpHidden(root);
-          if(chars.length && index < cells.length - 1) cells[index + 1].focus();
-        }
+        if(cell.dataset.composing === '1' || event.isComposing) return;
+        commitCell(cell, index, event.target.value || '');
       });
       cell.addEventListener('keydown', event => {
+        if(event.isComposing || cell.dataset.composing === '1') return;
         if(event.key === 'Backspace' && !cell.value && index > 0){
           cells[index - 1].focus();
           cells[index - 1].value = '';
@@ -394,7 +413,7 @@
         event.preventDefault();
         setLoginOtpValue(root, text);
         const value = Array.from(normalizeLoginCodeText_(text));
-        cells[Math.min(value.length, cells.length - 1)]?.focus();
+        focusByLength(value.length);
       });
     });
   }
