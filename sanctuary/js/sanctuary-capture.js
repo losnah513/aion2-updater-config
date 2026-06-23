@@ -13,25 +13,52 @@
 
   function apiUrl(){ return API_URL; }
 
-  async function proxyProfileImageUrl(src){
-    const url = safeText(src);
-    if(!url) return '';
-    if(url.startsWith('data:')) return url;
-    if(profileDataUrlCache.has(url)) return profileDataUrlCache.get(url);
-    try{
-      const res = await fetch(apiUrl(), {
-        method:'POST',
-        body:JSON.stringify({ action:'profileImageProxy', url })
-      });
-      const data = await res.json();
-      const dataUrl = data && data.ok && data.dataUrl ? data.dataUrl : '';
-      profileDataUrlCache.set(url, dataUrl);
-      return dataUrl;
-    }catch(err){
-      console.warn('KINOJO profile image proxy failed:', err);
-      profileDataUrlCache.set(url, '');
-      return '';
+  async function requestProfileProxy(payload, mode){
+    if(mode === 'get'){
+      const params = new URLSearchParams({ action:'profileImageProxy', url:payload.url });
+      const res = await fetch(apiUrl() + (apiUrl().includes('?') ? '&' : '?') + params.toString(), { method:'GET' });
+      return res.json();
     }
+    const res = await fetch(apiUrl(), {
+      method:'POST',
+      body:JSON.stringify({ action:'profileImageProxy', url:payload.url })
+    });
+    return res.json();
+  }
+
+  async function proxyProfileImageUrl(src){
+    const url = safeText(src).replace(/&amp;/g, '&');
+    if(!url) return '';
+    if(url.startsWith('data:image/')) return url;
+    if(profileDataUrlCache.has(url)) return profileDataUrlCache.get(url);
+
+    let dataUrl = '';
+    try{
+      // 1차: 기존 POST 방식. 로그인/관리 API와 같은 경로를 사용합니다.
+      const data = await requestProfileProxy({ url }, 'post');
+      dataUrl = data && data.ok && data.dataUrl ? data.dataUrl : '';
+      if(!dataUrl && data && !data.ok){
+        console.warn('KINOJO profile proxy POST returned not ok:', data.message || data.status || data);
+      }
+    }catch(err){
+      console.warn('KINOJO profile proxy POST failed:', err);
+    }
+
+    if(!dataUrl){
+      try{
+        // 2차: POST가 브라우저/배포 환경에서 막히는 경우를 대비한 GET 보정.
+        const data = await requestProfileProxy({ url }, 'get');
+        dataUrl = data && data.ok && data.dataUrl ? data.dataUrl : '';
+        if(!dataUrl && data && !data.ok){
+          console.warn('KINOJO profile proxy GET returned not ok:', data.message || data.status || data);
+        }
+      }catch(err){
+        console.warn('KINOJO profile proxy GET failed:', err);
+      }
+    }
+
+    profileDataUrlCache.set(url, dataUrl || '');
+    return dataUrl || '';
   }
 
   function getMemberData(card){
@@ -96,13 +123,16 @@
   }
 
   async function loadImage(src){
-    if(!src) return null;
+    const url = safeText(src).replace(/&amp;/g, '&');
+    if(!url) return null;
     return new Promise((resolve)=>{
       const img = new Image();
-      img.crossOrigin = 'anonymous';
+      // data URL에는 crossOrigin을 걸지 않습니다. 일부 브라우저에서 data URL + crossOrigin 조합이
+      // 로딩 실패로 처리되어 프로필 대신 클래스 아이콘 fallback이 뜨는 문제가 있었습니다.
+      if(/^https?:\/\//i.test(url)) img.crossOrigin = 'anonymous';
       img.onload = ()=>resolve(img);
       img.onerror = ()=>resolve(null);
-      img.src = src;
+      img.src = url;
     });
   }
 
@@ -186,6 +216,14 @@
     const icons = await Promise.all(data.members.map(m=>loadImage(m.icon)));
     const profileUrls = await Promise.all(data.members.map(m=>proxyProfileImageUrl(m.profileImage)));
     const profiles = await Promise.all(profileUrls.map(src=>loadImage(src)));
+    if(window.KINOJO_SANCTUARY_PROFILE_DEBUG){
+      console.table(data.members.map((m, i)=>({
+        name:m.name,
+        hasProfileUrl:!!m.profileImage,
+        proxied:!!profileUrls[i],
+        loaded:!!profiles[i]
+      })));
+    }
     let y = pad + headerH;
     data.members.forEach((m, idx)=>{
       const col = idx % cols;
