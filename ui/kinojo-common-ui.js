@@ -8,11 +8,13 @@
   };
 
   function pageInfo(){
-    const path=location.pathname;
-    if(path.includes('/hall-of-fame/'))return {key:'hall',label:'명예의 전당',root:'../'};
-    if(path.includes('/sanctuary/'))return {key:'sanctuary',label:'성역',root:'../'};
-    if(path.includes('/arcana/'))return {key:'arcana',label:'아르카나',root:'../'};
-    return {key:'home',label:'메인',root:'./'};
+    const path=location.pathname.replace(/\\/g,'/');
+    const mobile=/(^|\/)m(\/|$)|(^|\/)mobile(\/|$)/.test(path);
+    if(path.includes('/hof/')||path.includes('/hall-of-fame/'))return {key:'hall',label:'명예의 전당',root:mobile?'../../':'../',mobile};
+    if(path.includes('/sanctuary/'))return {key:'sanctuary',label:'성역',root:mobile?'../../':'../',mobile};
+    if(path.includes('/arcana/'))return {key:'arcana',label:'아르카나',root:mobile?'../../':'../',mobile};
+    if(mobile)return {key:'home',label:'메인',root:'../',mobile};
+    return {key:'home',label:'메인',root:'./',mobile};
   }
   function q(s,root=document){return root.querySelector(s)}
   function detach(el){if(el&&el.parentNode)el.parentNode.removeChild(el);return el}
@@ -176,11 +178,11 @@
     const isHall=info.key==='hall';
     const isSanctuary=info.key==='sanctuary';
     const isArcana=info.key==='arcana';
-    const home=info.root;
-    const hallHref=isHall?'./':'hall-of-fame/';
-    const prefix=(isHall||isSanctuary||isArcana)?'../':'';
-    const sanctuaryPrefix=isSanctuary?'./index.html':prefix+'sanctuary/index.html';
-    const arcanaHref=isArcana?'./':prefix+'arcana/';
+    const base=info.mobile?'/m/':'/';
+    const home=base;
+    const hallHref=isHall?'./':base+'hof/';
+    const sanctuaryPrefix=isSanctuary?'./':base+'sanctuary/';
+    const arcanaHref=isArcana?'./':base+'arcana/';
     const drawer=document.createElement('section');
     drawer.className='kinojo-common-drawer';
     drawer.id='sideDrawer';
@@ -188,12 +190,12 @@
     drawer.innerHTML=`
       <div class="kinojo-drawer-panel" role="dialog" aria-modal="false" aria-labelledby="drawerTitle">
         <div class="kinojo-drawer-head">
-          <a id="drawerTitle" class="kinojo-drawer-title" href="https://bit.ly/kinojo-index">KINOJO INFO</a>
+          <a id="drawerTitle" class="kinojo-drawer-title" href="/">KINOJO INFO</a>
           <button class="kinojo-common-close kinojo-drawer-close" id="drawerCloseBtn" type="button" aria-label="메뉴 닫기">×</button>
         </div>
         <nav class="kinojo-drawer-nav" aria-label="KINOJO INFO 메뉴">
           <div class="kinojo-drawer-category">바로가기</div>
-          <a href="${isHall?'./':prefix+hallHref}" ${isHall?'class="active" aria-disabled="true"':''}>명예의 전당</a>
+          <a href="${hallHref}" ${isHall?'class="active" aria-disabled="true"':''}>명예의 전당</a>
           <a href="https://aion2.plaync.com/ko-kr/index?redirect=false" target="_blank" rel="noopener">아이온2 공식으로 이동</a>
           <a href="https://aion2.plaync.com/ko-kr/board/notice/list" target="_blank" rel="noopener">아이온2 공지로 이동</a>
           <div class="kinojo-drawer-divider"></div>

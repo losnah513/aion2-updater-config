@@ -607,3 +607,40 @@ body{background:#fff!important;}
 .common-footer{display:grid;gap:8px;justify-items:center;}
 .footer-links{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;}
 .footer-powered{font-size:11px;color:#98a2b3;font-weight:900;}
+
+/* 26062218: KINOJO INFO 대표 배너 */
+.kinojo-main-banner{
+  display:block;
+  width:min(960px,100%);
+  margin:14px auto 0;
+  border:1px solid rgba(17,24,39,.12);
+  border-radius:12px;
+  overflow:hidden;
+  background:#111827;
+  box-shadow:0 14px 34px rgba(15,23,42,.14);
+  text-decoration:none;
+  color:inherit;
+  transition:transform .22s ease, filter .22s ease, box-shadow .22s ease;
+}
+.kinojo-main-banner:hover{
+  transform:translateY(-2px);
+  filter:brightness(1.03);
+  box-shadow:0 18px 42px rgba(15,23,42,.18);
+}
+.kinojo-main-banner img{
+  display:block;
+  width:100%;
+  height:auto;
+  aspect-ratio:16/9;
+  object-fit:cover;
+}
+@media (max-width:540px){
+  .kinojo-main-banner{
+    width:100%;
+    border-radius:10px;
+    margin-top:10px;
+  }
+  .kinojo-main-banner img{
+    min-height:170px;
+  }
+}

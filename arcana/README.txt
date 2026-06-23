@@ -5,7 +5,7 @@
 Apps Script 파일은 별도 AppsScript 폴더에서 관리합니다.
 
 실행 주소 예시:
-https://losnah513.github.io/aion2-updater-config/arcana/
+https://kinojo.info/arcana/
 
 
 [2026-06-20 통합 Shell 기준]

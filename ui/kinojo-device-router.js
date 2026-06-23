@@ -35,7 +35,7 @@
   html.classList.toggle('kinojo-device-desktop', !isMobile);
 
   var currentPath = window.location.pathname.replace(/\\/g, '/');
-  var isInsideMobile = /\/mobile(\/|$)/.test(currentPath);
+  var isInsideMobile = /\/(mobile|m)(\/|$)/.test(currentPath);
   var isInsideDesktop = /\/desktop(\/|$)/.test(currentPath);
 
   if (!isMobile || isInsideMobile) return;
