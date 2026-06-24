@@ -19,6 +19,7 @@
   let codeRequestNoticeChecking = false;
 
   function apiUrl(){
+    if(window.KinojoApi && typeof window.KinojoApi.getBaseUrl === 'function') return window.KinojoApi.getBaseUrl();
     const param = new URLSearchParams(location.search).get('api');
     if(param) return param;
     try{
@@ -66,6 +67,10 @@
   function isLoggedIn(){ return !!getSession(); }
   function getToken(){ return getSession()?.token || ''; }
   function roleOf(source){
+    if(window.KinojoPermissions && typeof window.KinojoPermissions.normalizeRole === 'function'){
+      const role = window.KinojoPermissions.normalizeRole(source);
+      return role === 'GUEST' ? '' : role;
+    }
     const raw = String(source?.role || '').toUpperCase();
     if(raw === 'MASTER' || raw === 'SUB_MASTER' || raw === 'MANAGER' || raw === 'MEMBER') return raw;
     const level = Number(source?.level || 0);
@@ -77,7 +82,10 @@
   function roleLabel(role){
     return ({MASTER:'MASTER', SUB_MASTER:'SUB MASTER', MANAGER:'MANAGER', MEMBER:'MEMBER'}[role] || 'MEMBER');
   }
-  function canOpenManage(role){ return ['MASTER','SUB_MASTER','MANAGER'].includes(role); }
+  function canOpenManage(role){
+    if(window.KinojoPermissions && typeof window.KinojoPermissions.canManage === 'function') return window.KinojoPermissions.canManage(role);
+    return ['MASTER','SUB_MASTER','MANAGER'].includes(role);
+  }
   function getLevel(){
     const role = roleOf(getSession());
     return role === 'MASTER' ? 5 : role === 'SUB_MASTER' ? 4 : role === 'MANAGER' ? 3 : role === 'MEMBER' ? 1 : 0;
@@ -280,8 +288,9 @@
     try{
       setLoginLoading_(button, true);
       if(status) status.textContent = '';
-      const res = await fetch(apiUrl(), { method:'POST', body:JSON.stringify({ action:'login', code }) });
-      const data = await res.json();
+      const data = window.KinojoApi
+        ? await window.KinojoApi.postAction('login', { code })
+        : await (await fetch(apiUrl(), { method:'POST', body:JSON.stringify({ action:'login', code }) })).json();
       if(!data.ok) throw new Error(data.message || '로그인에 실패했습니다.');
       setSession(data.session, data.account);
       if(status) status.textContent = '로그인되었습니다.';
@@ -469,9 +478,11 @@
   }
 
   async function codeRequest(command, extra={}){
+    const body = Object.assign({ command, version:document.documentElement.dataset.kinojoVersion || '', url:location.href }, extra);
+    if(window.KinojoApi) return window.KinojoApi.postAction('codeRequest', body);
     const res = await fetch(apiUrl(), {
       method:'POST',
-      body:JSON.stringify(Object.assign({ action:'codeRequest', command, version:document.documentElement.dataset.kinojoVersion || '', url:location.href }, extra))
+      body:JSON.stringify(Object.assign({ action:'codeRequest' }, body))
     });
     return res.json();
   }
@@ -783,9 +794,11 @@
   }
 
   async function accountAdmin(command, extra={}){
+    const body = Object.assign({ command, sessionToken:getToken() }, extra);
+    if(window.KinojoApi) return window.KinojoApi.postAction('accountAdmin', body);
     const res = await fetch(apiUrl(), {
       method:'POST',
-      body:JSON.stringify(Object.assign({ action:'accountAdmin', command, sessionToken:getToken() }, extra))
+      body:JSON.stringify(Object.assign({ action:'accountAdmin' }, body))
     });
     return res.json();
   }
