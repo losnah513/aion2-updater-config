@@ -1,0 +1,22 @@
+Kinojo_1_3_1_13_20260623_18
+
+[수정 파일]
+- GitHub_Pages/sanctuary/js/sanctuary-capture.js
+  - 프로필 프록시 호출을 GET 우선으로 변경
+  - 실패값 빈 문자열 캐시 제거
+  - profileDebug=1 또는 window.KINOJO_SANCTUARY_PROFILE_DEBUG=true 시 실패 단계 확인 로그 출력
+  - 프록시 응답 JSON 파싱 실패/HTTP 실패 원인 출력 보강
+
+- AppsScript/sanctuary.gs
+  - handleProfileImageProxy_ 안정화
+  - profileimg.plaync.com 요청 헤더 보강
+  - normalizeAionProfileImageUrl_ 의존성 안전 처리
+  - 이미지가 아닌 응답/HTTP 실패 응답 진단 정보 추가
+
+[원인 확인]
+- 성역 카드의 data-profile-image 값은 정상 출력됨
+- 기존 실패 원인은 성역 데이터 매칭이 아니라 클립보드 캔버스 합성 전 프로필 프록시/이미지 변환 단계로 판단
+- 이전 코드의 문제: 프록시 실패 시 빈 문자열을 캐시해서 한 번 실패하면 새로고침 전까지 계속 클래스 아이콘 fallback이 표시될 수 있었음
+
+[Apps Script 적용 필요]
+- 이번 패치는 AppsScript/sanctuary.gs 교체 및 웹앱 새 배포가 필요함

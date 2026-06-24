@@ -1,0 +1,27 @@
+KINOJO 1.3.1.08 / 20260623_13
+
+[웹 교체]
+- GitHub_Pages/sanctuary/index.html
+  · 성역 CSS/JS 캐시 버전 갱신
+- GitHub_Pages/m/sanctuary/index.html
+  · 모바일 성역 CSS/JS 캐시 버전 갱신
+- GitHub_Pages/sanctuary/css/sanctuary.css
+  · 팀명 옆 전체복사 버튼 스타일 추가
+- GitHub_Pages/sanctuary/js/sanctuary.js
+  · 팀명 옆 전체복사 버튼 렌더링
+  · 캐릭터 카드에 profileImageUrl 데이터 속성 추가
+- GitHub_Pages/sanctuary/js/sanctuary-capture.js
+  · 파티 이미지 복사 시 캐릭터 프로필 이미지를 원형 테두리로 표시
+  · 프로필 이미지 실패 시 클래스 아이콘 원형 표시로 대체
+  · 팀 전체복사 기능 추가
+  · 팀 아래 여러 파티 이미지를 세로 정렬한 PNG 생성
+
+[Apps Script 교체]
+- AppsScript/sanctuary.gs
+  · 성역 payload 슬롯 데이터에 profileImageUrl/detailUrl 포함
+  · CHARACTER_MASTER의 기존 프로필 이미지 정보를 성역 데이터에 재사용
+
+[검수]
+- sanctuary.js node --check 통과
+- sanctuary-capture.js node --check 통과
+- ZIP 무결성 검사 필요

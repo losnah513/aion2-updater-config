@@ -1,0 +1,51 @@
+KINOJO MODIFIED FILES - 20260623_14
+Release: Kinojo_1_3_1_09_20260623_14.zip
+
+[웹 / 교체]
+- GitHub_Pages/core/kinojo-auth.js
+  - 로그인 모달 안내 문구를 호출 위치별로 조건부 출력하도록 보강.
+  - 명예의 전당/성역 각각 다른 로그인 안내 문구 지원.
+
+- GitHub_Pages/hall-of-fame/js/hall-reactions.js
+  - 비로그인 상태에서 캐릭터명 클릭/좋아요·싫어요 진입 시 명예의 전당용 로그인 안내 문구 출력.
+
+- GitHub_Pages/sanctuary/js/sanctuary.js
+  - 파티 복사/팀 전체복사 버튼을 키노조 UI 스타일 원형 볼록 아이콘 버튼으로 변경.
+  - 파티 복사 버튼 툴팁 문구 추가.
+  - 팀 전체복사 버튼 툴팁 문구 추가.
+
+- GitHub_Pages/sanctuary/js/sanctuary-capture.js
+  - 성역 파티/팀 이미지 클립보드 복사 기능을 로그인 사용자 전용으로 제한.
+  - 비로그인 클릭 시 기존 회원 코드 로그인 모달 재사용.
+  - 복사 진행 중 버튼 상태를 아이콘 유지형 로딩으로 변경.
+
+- GitHub_Pages/sanctuary/js/sanctuary-editor.js
+  - 비로그인/권한 부족 시 성역용 로그인 안내 문구 출력.
+
+- GitHub_Pages/sanctuary/css/sanctuary.css
+  - 원형 볼록 복사 아이콘 버튼 스타일 추가.
+  - 단일 파티 복사 아이콘/팀 전체복사 다중 이미지 아이콘 스타일 추가.
+  - 롤오버 툴팁 스타일 추가.
+
+- GitHub_Pages/ui/kinojo-common-ui.js
+  - 공통 방문자 통계 로딩 보강.
+  - 명예의 전당 외 페이지에서도 방문자수 표시되도록 공통 Topbar에서 hallVisit API 호출.
+  - 이미지 우클릭/드래그 방지 이벤트 추가.
+  - 공통 Toast 유틸 추가.
+
+- GitHub_Pages/ui/kinojo-common-ui.css
+  - 이미지 드래그/길게 누르기 방지 CSS 추가.
+  - 공통 Toast 스타일 추가.
+
+[Apps Script]
+- 변경 없음.
+
+[신규 파일]
+- 없음.
+
+[삭제 파일]
+- 없음.
+
+[검수]
+- 변경 JS 파일 node --check 통과.
+- ZIP 무결성 검사 대상.

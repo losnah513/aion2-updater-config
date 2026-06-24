@@ -39,15 +39,11 @@
     }
   }
 
-  function isImageDataUrl(value){
-    return /^data:image\/(?:png|jpe?g|webp|gif);base64,/i.test(String(value || ''));
-  }
-
-  async function requestProfileProxy(url){
+  async function requestProfileProxy(payload){
     const label = 'KINOJO profile proxy GET';
     const params = new URLSearchParams({
       action:'profileImageProxy',
-      url,
+      url:payload.url,
       t:String(Date.now())
     });
     const res = await fetchWithTimeout(apiUrl() + (apiUrl().includes('?') ? '&' : '?') + params.toString(), {
@@ -67,8 +63,8 @@
     const failures = [];
 
     try{
-      const data = await requestProfileProxy(url);
-      dataUrl = data && data.ok && isImageDataUrl(data.dataUrl) ? data.dataUrl : '';
+      const data = await requestProfileProxy({ url });
+      dataUrl = data && data.ok && data.dataUrl ? data.dataUrl : '';
       if(dataUrl){
         if(profileDebugEnabled()){
           console.info('KINOJO profile proxy OK:', {
@@ -80,11 +76,7 @@
           });
         }
       }else{
-        failures.push({
-          mode:'get',
-          message:data && (data.message || data.status || data.error || data.contentType) || 'not ok',
-          length:data && data.dataUrl ? String(data.dataUrl).length : 0
-        });
+        failures.push({ mode:'get', message:data && (data.message || data.status || data.error || data.contentType) || 'not ok' });
       }
     }catch(err){
       failures.push({ mode:'get', message:String(err && err.message || err) });
@@ -169,16 +161,38 @@
     if(!url) return null;
     return new Promise((resolve)=>{
       const img = new Image();
-      // data URL에는 crossOrigin을 걸지 않습니다. 일부 브라우저에서 data URL + crossOrigin 조합이
-      // 로딩 실패로 처리되어 프로필 대신 클래스 아이콘 fallback이 뜨는 문제가 있었습니다.
+      // data URL에는 crossOrigin을 걸지 않습니다. 외부 URL은 canvas 정합성을 위해 anonymous로 시도합니다.
       if(/^https?:\/\//i.test(url)) img.crossOrigin = 'anonymous';
       img.onload = ()=>resolve(img);
-      img.onerror = ()=>{
-        if(profileDebugEnabled()) console.warn('KINOJO image load failed:', url.slice(0, 180));
-        resolve(null);
-      };
+      img.onerror = ()=>resolve(null);
       img.src = url;
     });
+  }
+
+  async function loadProfileImage(profileUrl, name){
+    const original = safeText(profileUrl).replace(/&amp;/g, '&');
+    if(!original) return { img:null, source:'none' };
+
+    // 1) 우선 원본 URL을 CORS anonymous로 직접 시도합니다. profileimg 서버가 CORS를 허용하면 가장 빠릅니다.
+    const direct = await loadImage(original);
+    if(direct){
+      if(profileDebugEnabled()) console.info('KINOJO profile direct OK:', name || '', original);
+      return { img:direct, source:'direct' };
+    }
+
+    // 2) 직접 로딩 실패 시 Apps Script 프록시가 반환한 data URL을 시도합니다.
+    const proxied = await proxyProfileImageUrl(original);
+    if(proxied){
+      const proxyImg = await loadImage(proxied);
+      if(proxyImg){
+        if(profileDebugEnabled()) console.info('KINOJO profile proxy image OK:', name || '', original);
+        return { img:proxyImg, source:'proxy' };
+      }
+      if(profileDebugEnabled()) console.warn('KINOJO profile proxy dataUrl load failed:', name || '', original, proxied.slice(0, 48));
+    }
+
+    if(profileDebugEnabled()) console.warn('KINOJO profile all failed:', name || '', original);
+    return { img:null, source:'fallback' };
   }
 
   function drawCircleImage(ctx, img, x, y, size){
@@ -259,13 +273,13 @@
     drawPartyBase(ctx, width, height, data.title, opts.subtitle, data.count);
 
     const icons = await Promise.all(data.members.map(m=>loadImage(m.icon)));
-    const profileUrls = await Promise.all(data.members.map(m=>proxyProfileImageUrl(m.profileImage)));
-    const profiles = await Promise.all(profileUrls.map(src=>loadImage(src)));
-    if(window.KINOJO_SANCTUARY_PROFILE_DEBUG){
+    const profileResults = await Promise.all(data.members.map(m=>loadProfileImage(m.profileImage, m.name)));
+    const profiles = profileResults.map(item=>item.img);
+    if(window.KINOJO_SANCTUARY_PROFILE_DEBUG || new URLSearchParams(location.search).get('profileDebug') === '1'){
       console.table(data.members.map((m, i)=>({
         name:m.name,
         hasProfileUrl:!!m.profileImage,
-        proxied:!!profileUrls[i],
+        profileSource:profileResults[i]?.source || 'none',
         loaded:!!profiles[i]
       })));
     }

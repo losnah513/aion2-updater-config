@@ -1,0 +1,15 @@
+Kinojo_1_3_1_15_20260623_20
+
+[교체]
+- GitHub_Pages/core/kinojo-auth.js
+- GitHub_Pages/ui/kinojo-common-ui.css
+- GitHub_Pages/sanctuary/js/sanctuary-capture.js
+- GitHub_Pages/sanctuary/index.html
+- GitHub_Pages/m/sanctuary/index.html
+
+[수정]
+- 회원 코드 로그인 입력을 실제 input 1개 + 6칸 미리보기 구조로 정리
+- 한글 IME 조합 중 자모 분리/역순 표시 방지
+- 성역 복사용 프로필 이미지는 원본 URL 직접 로딩 후 실패 시 Apps Script 프록시를 시도하도록 정리
+- 프로필 로딩 실패 단계 확인용 profileDebug 로그 보강
+- 캐시 번호 2026062320 갱신
