@@ -42,7 +42,7 @@
     strip.className='kinojo-notice-strip';
     strip.id='kinojoNoticeStrip';
     strip.setAttribute('aria-label','최근 공지사항');
-    strip.innerHTML='<div class="kinojo-notice-title">공지</div><div class="kinojo-notice-list" id="kinojoNoticeList"><span class="kinojo-notice-empty">최근 공지를 불러오는 중입니다.</span></div>';
+    strip.innerHTML='<div class="kinojo-notice-list" id="kinojoNoticeList"><span class="kinojo-notice-empty">최근 공지를 불러오는 중입니다.</span></div>';
     return strip;
   }
   async function loadCommonNotices(){
@@ -54,7 +54,12 @@
         : await (await fetch(commonApiUrl()+(commonApiUrl().includes('?')?'&':'?')+'action=notices&limit=3&t='+Date.now(),{cache:'no-store'})).json();
       const notices=(data&&data.ok&&Array.isArray(data.notices))?data.notices.slice(0,3):[];
       if(!notices.length){list.innerHTML='<span class="kinojo-notice-empty">등록된 공지가 없습니다.</span>';return;}
-      list.innerHTML=notices.map(item=>'<article class="kinojo-notice-item"><strong>'+escapeHtml(item.noticeType||item.notice||'공지')+'</strong><span class="kinojo-notice-author">'+escapeHtml(item.author||'관리자')+'</span><span class="kinojo-notice-text">'+escapeHtml(item.content||'')+'</span></article>').join('');
+      list.innerHTML=notices.map(item=>{
+        const type=String(item.noticeType||item.notice||'공지').trim()||'공지';
+        const typeKey=type==='이벤트'?'event':(type==='알림'?'alert':'notice');
+        const icon=typeKey==='event'?'🎁':(typeKey==='alert'?'🔔':'📢');
+        return '<article class="kinojo-notice-item kinojo-notice-type-'+typeKey+'"><strong><span class="kinojo-notice-icon">'+icon+'</span>'+escapeHtml(type)+'</strong><span class="kinojo-notice-text">'+escapeHtml(item.content||'')+'</span><span class="kinojo-notice-author">'+escapeHtml(item.author||'관리자')+'</span></article>';
+      }).join('');
     }catch(_e){
       list.innerHTML='<span class="kinojo-notice-empty">공지사항을 불러오지 못했습니다.</span>';
     }
@@ -177,14 +182,17 @@
                 </div>
               </div>
               <div class="admin-notice-control" id="adminNoticeControl">
-                <div class="admin-notice-title">공지사항 작성 <span>최근 3줄 노출</span></div>
-                <div class="admin-notice-grid">
-                  <input class="search admin-notice-input" id="adminNoticeType" placeholder="공지" autocomplete="off" />
-                  <input class="search admin-notice-input" id="adminNoticeAuthor" placeholder="작성자" autocomplete="off" />
-                </div>
-                <textarea class="search admin-notice-content" id="adminNoticeContent" placeholder="내용" rows="3"></textarea>
+                <div class="admin-notice-title">공지사항 작성 <span>하단 공지 BAR 노출</span></div>
+                <label class="admin-notice-label" for="adminNoticeType">종류</label>
+                <select class="search admin-notice-input admin-notice-select" id="adminNoticeType">
+                  <option value="공지">공지</option>
+                  <option value="알림">알림</option>
+                  <option value="이벤트">이벤트</option>
+                </select>
+                <label class="admin-notice-label" for="adminNoticeContent">내용</label>
+                <textarea class="search admin-notice-content" id="adminNoticeContent" placeholder="공지 BAR에 표시할 내용을 입력하세요." rows="4"></textarea>
+                <div class="admin-notice-actions"><button class="btn" id="adminNoticeSaveBtn" type="button">공지 등록</button></div>
                 <div class="admin-status" id="adminNoticeStatus"></div>
-                <div class="admin-pane-actions"><button class="btn" id="adminNoticeSaveBtn" type="button">공지 등록</button></div>
               </div>
               <div class="admin-pane-result" data-admin-result="system"></div>
             </section>
@@ -235,7 +243,7 @@
     tools.appendChild(visit);
     document.body.insertBefore(bar,document.body.firstChild);
     const notice=createNoticeStrip(info);
-    document.body.insertBefore(notice,bar.nextSibling);
+    document.body.appendChild(notice);
     setTimeout(loadCommonNotices,0);
     setTimeout(()=>loadCommonVisits(info),40);
   }

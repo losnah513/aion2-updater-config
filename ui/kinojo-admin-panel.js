@@ -124,20 +124,18 @@
   }
   async function adminSaveNotice(){
     const typeEl=document.getElementById('adminNoticeType');
-    const authorEl=document.getElementById('adminNoticeAuthor');
     const contentEl=document.getElementById('adminNoticeContent');
     const status=document.getElementById('adminNoticeStatus');
     const noticeType=String(typeEl?.value||'').trim();
-    const author=String(authorEl?.value||'').trim();
     const content=String(contentEl?.value||'').trim();
-    if(!noticeType||!author||!content){
-      if(status){status.className='admin-status error';status.textContent='공지, 작성자, 내용을 모두 입력해 주세요.';}
+    if(!noticeType||!content){
+      if(status){status.className='admin-status error';status.textContent='공지 종류와 내용을 입력해 주세요.';}
       return;
     }
     try{
       setAdminButtonLoading_('adminNoticeSaveBtn','등록 중...');
       if(status){status.className='admin-status pending';status.textContent='공지사항 등록 중...';}
-      const data=window.KinojoApi ? await window.KinojoApi.postAction('noticeAdmin',{command:'createNotice',sessionToken:token(),noticeType,author,content}) : await (await fetch(apiUrl(),{method:'POST',body:JSON.stringify({action:'noticeAdmin',command:'createNotice',sessionToken:token(),noticeType,author,content})})).json();
+      const data=window.KinojoApi ? await window.KinojoApi.postAction('noticeAdmin',{command:'createNotice',sessionToken:token(),noticeType,content}) : await (await fetch(apiUrl(),{method:'POST',body:JSON.stringify({action:'noticeAdmin',command:'createNotice',sessionToken:token(),noticeType,content})})).json();
       if(!data.ok)throw new Error(data.message||'공지사항 등록 실패');
       if(status){status.className='admin-status success';status.textContent='공지사항이 등록되었습니다.';}
       if(contentEl)contentEl.value='';

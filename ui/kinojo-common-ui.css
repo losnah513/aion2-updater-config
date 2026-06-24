@@ -1166,3 +1166,61 @@ img,picture,canvas,svg,.sanctuary-hero,.hero-bg,.mvp-profile-image,.character-pr
 .kinojo-login-otp-display.is-focused .kinojo-code-otp-cell{
   box-shadow:0 0 0 2px rgba(49,130,206,.22), inset 0 1px 2px rgba(15,23,42,.08);
 }
+
+
+/* 20260624-01 공지 BAR 하단 고정 / 확장 UI 스타일 */
+body{padding-bottom:52px;}
+.kinojo-notice-strip{
+  position:fixed !important;
+  left:50% !important;
+  right:auto !important;
+  bottom:10px !important;
+  top:auto !important;
+  transform:translateX(-50%) !important;
+  z-index:2600 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:min(980px,calc(100% - 18px)) !important;
+  min-height:38px !important;
+  margin:0 !important;
+  padding:7px 12px !important;
+  border:1px solid rgba(120,190,255,.34) !important;
+  border-radius:16px !important;
+  background:linear-gradient(180deg,#171a20 0%,#080a0e 100%) !important;
+  box-shadow:0 14px 34px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.12) !important;
+  color:#fff !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+}
+.kinojo-notice-strip:before{
+  content:"";
+  position:absolute;left:10px;right:10px;top:0;height:2px;
+  background:linear-gradient(90deg,transparent,#67e8f9,#8b5cf6,#f0abfc,transparent);
+  opacity:.92;
+}
+.kinojo-notice-list{display:flex !important;align-items:center !important;justify-content:center !important;gap:14px !important;min-width:0;width:100%;}
+.kinojo-notice-item{display:flex !important;align-items:center !important;justify-content:center !important;gap:8px !important;min-width:0;text-align:center !important;font-size:12px !important;font-weight:900 !important;line-height:1.25;color:#f8fafc !important;}
+.kinojo-notice-item strong{display:inline-flex !important;align-items:center;gap:4px;flex:0 0 auto;min-height:23px;padding:0 9px;border-radius:999px;background:rgba(59,130,246,.18);border:1px solid rgba(96,165,250,.34);color:#bfdbfe !important;white-space:nowrap;}
+.kinojo-notice-item.kinojo-notice-type-alert strong{background:rgba(245,158,11,.18);border-color:rgba(251,191,36,.38);color:#fde68a !important;}
+.kinojo-notice-item.kinojo-notice-type-event strong{background:rgba(34,197,94,.17);border-color:rgba(74,222,128,.35);color:#bbf7d0 !important;}
+.kinojo-notice-author{flex:0 0 auto;color:#94a3b8 !important;font-size:11px !important;white-space:nowrap;}
+.kinojo-notice-text{min-width:0;max-width:58vw;color:#fff !important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center !important;}
+.kinojo-notice-empty{font-size:12px;font-weight:900;color:#cbd5e1;text-align:center;}
+.admin-notice-control{display:grid;grid-template-columns:1fr;gap:7px;padding:12px;border:1px solid rgba(120,145,180,.18);border-radius:14px;background:#f8fbff;}
+.admin-notice-title{font-size:13px;font-weight:1000;color:#17233a;}
+.admin-notice-title span{font-size:10px;color:#2563eb;background:#eff6ff;border:1px solid rgba(37,99,235,.18);border-radius:999px;padding:2px 6px;margin-left:4px;}
+.admin-notice-label{font-size:11px;font-weight:1000;color:#475569;margin-top:2px;}
+.admin-panel-modal .admin-notice-input{width:100%;min-height:34px;height:34px;border-radius:9px;border:1px solid rgba(120,145,180,.24);padding:0 10px;box-sizing:border-box;font-size:12px;background:#fff;}
+.admin-panel-modal .admin-notice-select{appearance:auto;}
+.admin-panel-modal .admin-notice-content{width:100%;min-height:88px;border-radius:10px;border:1px solid rgba(120,145,180,.24);padding:9px 10px;box-sizing:border-box;font-size:12px;resize:vertical;font-family:inherit;background:#fff;}
+.admin-notice-actions{display:flex;justify-content:center;align-items:center;margin-top:2px;}
+.admin-notice-actions .btn{min-width:128px;}
+@media(max-width:760px){
+  body{padding-bottom:68px;}
+  .kinojo-notice-strip{bottom:8px !important;width:calc(100% - 14px) !important;border-radius:14px !important;padding:8px 10px !important;}
+  .kinojo-notice-list{gap:6px !important;}
+  .kinojo-notice-item{font-size:11px !important;gap:6px !important;}
+  .kinojo-notice-author{display:none;}
+  .kinojo-notice-text{max-width:64vw;}
+}

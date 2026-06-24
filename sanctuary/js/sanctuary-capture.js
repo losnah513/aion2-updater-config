@@ -10,6 +10,7 @@
   const DEFAULT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec';
   const API_URL = (new URLSearchParams(location.search).get('api') || window.KINOJO_API_URL || window.WEB_APP_URL || DEFAULT_WEB_APP_URL);
   const profileDataUrlCache = new Map();
+  const profileRetryDelayMs = 180;
   const diagnosticState = { last: null };
 
   function apiUrl(){ return API_URL; }
@@ -234,6 +235,50 @@
     return { img:null, source:'fallback', diagnostic };
   }
 
+
+  function sleep(ms){ return new Promise(resolve=>setTimeout(resolve, ms || 0)); }
+
+  async function loadProfileImageStable(profileUrl, name){
+    const first = await loadProfileImage(profileUrl, name);
+    if(first && first.img) return first;
+
+    const original = safeText(profileUrl).replace(/&amp;/g, '&');
+    const mergedDiagnostic = Object.assign({}, first && first.diagnostic ? first.diagnostic : {});
+    mergedDiagnostic.retry = { tried:false, ok:false };
+    if(!original) return first;
+
+    for(let attempt = 1; attempt <= 2; attempt++){
+      await sleep(profileRetryDelayMs * attempt);
+      const retryDiagnostic = {
+        profileUrl: original,
+        hasProfileUrl: true,
+        direct: { skipped:true, reason:'retry uses proxy only' },
+        retryAttempt: attempt
+      };
+      const proxied = await proxyProfileImageUrl(original, retryDiagnostic);
+      if(proxied){
+        retryDiagnostic.dataUrlLoad = { tried:true, length:proxied.length };
+        const proxyImg = await loadImage(proxied);
+        retryDiagnostic.dataUrlLoad.ok = !!proxyImg;
+        if(proxyImg){
+          mergedDiagnostic.retry = { tried:true, ok:true, attempt };
+          return { img:proxyImg, source:'proxy-retry-' + attempt, diagnostic:Object.assign(mergedDiagnostic, retryDiagnostic) };
+        }
+      }
+      mergedDiagnostic.retry = { tried:true, ok:false, attempt, proxy:retryDiagnostic.proxy || null, dataUrlLoad:retryDiagnostic.dataUrlLoad || null };
+    }
+    return { img:null, source:'fallback', diagnostic:mergedDiagnostic };
+  }
+
+  async function loadProfilesSequential(members){
+    const results = [];
+    for(const member of members){
+      results.push(await loadProfileImageStable(member.profileImage, member.name));
+      await sleep(70);
+    }
+    return results;
+  }
+
   function drawCircleImage(ctx, img, x, y, size){
     ctx.save();
     ctx.beginPath();
@@ -312,7 +357,7 @@
     drawPartyBase(ctx, width, height, data.title, opts.subtitle, data.count);
 
     const icons = await Promise.all(data.members.map(m=>loadImage(m.icon)));
-    const profileResults = await Promise.all(data.members.map(m=>loadProfileImage(m.profileImage, m.name)));
+    const profileResults = await loadProfilesSequential(data.members);
     const profiles = profileResults.map(item=>item.img);
     const diagnostics = {
       type:'party',
