@@ -37,12 +37,25 @@
     el.innerHTML='<span class="visit-line visit-line-today">👀 방문자 통계 준비중</span><span class="visit-line visit-line-total">🏛 누적 방문 기록 준비중</span>';
     return el;
   }
+  const KINOJO_NOTICE_ROTATE_SECONDS = 10;
+  const KINOJO_NOTICE_MARQUEE_DELAY_SECONDS = 5;
+  let kinojoNoticeState = { items: [], index: 0, timer: null };
+
   function createNoticeStrip(info){
     const strip=document.createElement('section');
     strip.className='kinojo-notice-strip';
     strip.id='kinojoNoticeStrip';
     strip.setAttribute('aria-label','최근 공지사항');
-    strip.innerHTML='<div class="kinojo-notice-list" id="kinojoNoticeList"><span class="kinojo-notice-empty">최근 공지를 불러오는 중입니다.</span></div>';
+    strip.innerHTML=''
+      +'<div class="kinojo-notice-list" id="kinojoNoticeList"><span class="kinojo-notice-empty">최근 공지를 불러오는 중입니다.</span></div>'
+      +'<button class="kinojo-notice-detail-btn" id="kinojoNoticeDetailBtn" type="button" aria-label="공지사항 상세 보기">상세 보기</button>';
+    setTimeout(()=>{
+      const btn=document.getElementById('kinojoNoticeDetailBtn');
+      if(btn&&!btn.dataset.bound){
+        btn.dataset.bound='1';
+        btn.addEventListener('click',()=>showNoticeBoardModal());
+      }
+    },0);
     return strip;
   }
   function normalizeNoticeAuthor_(author){
@@ -55,33 +68,120 @@
       .replace(/\s{2,}/g,' ')
       .trim() || '관리자';
   }
+  function noticeTypeMeta_(type){
+    const label=String(type||'공지').trim()||'공지';
+    const key=label==='이벤트'?'event':(label==='알림'?'alert':'notice');
+    const icon=key==='event'?'🎁':(key==='alert'?'🔔':'📢');
+    return {label,key,icon};
+  }
+  function renderNoticeItemHtml_(item){
+    const meta=noticeTypeMeta_(item.noticeType||item.notice||'공지');
+    const author=normalizeNoticeAuthor_(item.author||'관리자');
+    const content=String(item.content||'').trim();
+    return '<article class="kinojo-notice-item kinojo-notice-type-'+meta.key+'" data-notice-type="'+meta.key+'">'
+      +'<strong><span class="kinojo-notice-icon">'+meta.icon+'</span>'+escapeHtml(meta.label)+'</strong>'
+      +'<span class="kinojo-notice-author">'+escapeHtml(author)+'</span>'
+      +'<span class="kinojo-notice-text"><span class="kinojo-notice-text-inner">'+escapeHtml(content)+'</span></span>'
+      +'</article>';
+  }
+  function clearNoticeTimer_(){
+    if(kinojoNoticeState.timer){
+      clearInterval(kinojoNoticeState.timer);
+      kinojoNoticeState.timer=null;
+    }
+  }
+  function applyNoticeMarqueeIfNeeded_(itemEl){
+    if(!itemEl)return;
+    const textBox=itemEl.querySelector('.kinojo-notice-text');
+    const inner=itemEl.querySelector('.kinojo-notice-text-inner');
+    if(!textBox||!inner)return;
+    inner.classList.remove('is-marquee-active');
+    inner.style.removeProperty('--notice-marquee-distance');
+    setTimeout(()=>{
+      const overflow=Math.max(0, inner.scrollWidth - textBox.clientWidth);
+      if(overflow>8){
+        inner.style.setProperty('--notice-marquee-distance', '-'+(overflow+28)+'px');
+        inner.classList.add('is-marquee-active');
+      }
+    }, KINOJO_NOTICE_MARQUEE_DELAY_SECONDS*1000);
+  }
+  function showNoticeAt_(index){
+    const list=document.getElementById('kinojoNoticeList');
+    const items=kinojoNoticeState.items||[];
+    if(!list||!items.length)return;
+    const safeIndex=((index%items.length)+items.length)%items.length;
+    kinojoNoticeState.index=safeIndex;
+    list.classList.remove('is-entering');
+    list.classList.add('is-leaving');
+    setTimeout(()=>{
+      list.innerHTML=renderNoticeItemHtml_(items[safeIndex]);
+      list.classList.remove('is-leaving');
+      list.classList.add('is-entering');
+      applyNoticeMarqueeIfNeeded_(list.querySelector('.kinojo-notice-item'));
+      setTimeout(()=>list.classList.remove('is-entering'),520);
+    },220);
+  }
+  function startNoticeRotation_(){
+    clearNoticeTimer_();
+    const items=kinojoNoticeState.items||[];
+    if(items.length<=1)return;
+    kinojoNoticeState.timer=setInterval(()=>{
+      showNoticeAt_(kinojoNoticeState.index+1);
+    }, KINOJO_NOTICE_ROTATE_SECONDS*1000);
+  }
+  async function fetchNotices_(limit){
+    return window.KinojoApi
+      ? await window.KinojoApi.getAction('notices', { limit:limit })
+      : await (await fetch(commonApiUrl()+(commonApiUrl().includes('?')?'&':'?')+'action=notices&limit='+encodeURIComponent(limit)+'&t='+Date.now(),{cache:'no-store'})).json();
+  }
   async function loadCommonNotices(){
     const list=document.getElementById('kinojoNoticeList');
     if(!list)return;
+    clearNoticeTimer_();
     try{
-      const data=window.KinojoApi
-        ? await window.KinojoApi.getAction('notices', { limit:5 })
-        : await (await fetch(commonApiUrl()+(commonApiUrl().includes('?')?'&':'?')+'action=notices&limit=5&t='+Date.now(),{cache:'no-store'})).json();
+      const data=await fetchNotices_(5);
       const notices=(data&&data.ok&&Array.isArray(data.notices))?data.notices.slice(0,5):[];
       if(!notices.length){list.innerHTML='<span class="kinojo-notice-empty">등록된 공지가 없습니다.</span>';return;}
-      const total=Math.max(1,notices.length);
-      list.style.setProperty('--notice-total', String(total));
-      list.innerHTML=notices.map((item,index)=>{
-        const type=String(item.noticeType||item.notice||'공지').trim()||'공지';
-        const typeKey=type==='이벤트'?'event':(type==='알림'?'alert':'notice');
-        const icon=typeKey==='event'?'🎁':(typeKey==='alert'?'🔔':'📢');
-        const content=String(item.content||'').trim();
-        const longClass=content.length>34?' is-long':'';
-        const delay=index*5;
-        return '<article class="kinojo-notice-item kinojo-notice-type-'+typeKey+longClass+'" style="--notice-delay:'+delay+'s;--notice-duration:'+(total*5)+'s">'
-          +'<strong><span class="kinojo-notice-icon">'+icon+'</span>'+escapeHtml(type)+'</strong>'
-          +'<span class="kinojo-notice-author">'+escapeHtml(normalizeNoticeAuthor_(item.author||'관리자'))+'</span>'
-          +'<span class="kinojo-notice-text"><span class="kinojo-notice-text-inner">'+escapeHtml(content)+'</span></span>'
-          +'</article>';
-      }).join('');
+      kinojoNoticeState.items=notices;
+      kinojoNoticeState.index=0;
+      list.innerHTML=renderNoticeItemHtml_(notices[0]);
+      applyNoticeMarqueeIfNeeded_(list.querySelector('.kinojo-notice-item'));
+      startNoticeRotation_();
     }catch(_e){
       list.innerHTML='<span class="kinojo-notice-empty">공지사항을 불러오지 못했습니다.</span>';
     }
+  }
+  async function showNoticeBoardModal(){
+    let notices=[];
+    try{
+      const data=await fetchNotices_(50);
+      notices=(data&&data.ok&&Array.isArray(data.notices))?data.notices:[];
+    }catch(e){
+      showSafeError?.(e,{feature:'공지사항 상세 보기',title:'공지사항을 불러오지 못했습니다.',message:'잠시 후 다시 시도해 주세요.'});
+      return;
+    }
+    const overlay=document.createElement('div');
+    overlay.className='kinojo-notice-board-overlay';
+    const rows=notices.length?notices.map((item)=>{
+      const meta=noticeTypeMeta_(item.noticeType||item.notice||'공지');
+      return '<article class="kinojo-notice-board-row kinojo-notice-type-'+meta.key+'">'
+        +'<div class="kinojo-notice-board-head"><span class="kinojo-notice-board-badge">'+meta.icon+' '+escapeHtml(meta.label)+'</span><span class="kinojo-notice-board-date">'+escapeHtml(item.createdAt||'')+'</span></div>'
+        +'<div class="kinojo-notice-board-content">'+escapeHtml(item.content||'')+'</div>'
+        +'<div class="kinojo-notice-board-author">'+escapeHtml(normalizeNoticeAuthor_(item.author||'관리자'))+'</div>'
+        +'</article>';
+    }).join(''):'<div class="kinojo-notice-board-empty">등록된 공지사항이 없습니다.</div>';
+    overlay.innerHTML='<section class="kinojo-notice-board-card" role="dialog" aria-modal="true" aria-label="공지사항 상세 보기">'
+      +'<button class="kinojo-notice-board-close" type="button" aria-label="닫기">×</button>'
+      +'<div class="kinojo-notice-board-kicker">KINOJO NOTICE</div>'
+      +'<h3>공지사항</h3>'
+      +'<p class="kinojo-notice-board-desc">최근 등록된 공지, 알림, 이벤트를 최신순으로 확인합니다.</p>'
+      +'<div class="kinojo-notice-board-list">'+rows+'</div>'
+      +'</section>';
+    const close=()=>overlay.remove();
+    overlay.addEventListener('click',(e)=>{if(e.target===overlay)close();});
+    overlay.querySelector('.kinojo-notice-board-close')?.addEventListener('click',close);
+    document.addEventListener('keydown',function esc(e){if(e.key==='Escape'){document.removeEventListener('keydown',esc);close();}});
+    document.body.appendChild(overlay);
   }
 
 
