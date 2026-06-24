@@ -49,10 +49,9 @@
     const list=document.getElementById('kinojoNoticeList');
     if(!list)return;
     try{
-      const base=(new URLSearchParams(location.search).get('api')) || (typeof WEB_APP_URL!=='undefined'&&WEB_APP_URL) || 'https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec';
-      const url=base+(base.includes('?')?'&':'?')+'action=notices&limit=3&t='+Date.now();
-      const res=await fetch(url,{cache:'no-store'});
-      const data=await res.json();
+      const data=window.KinojoApi
+        ? await window.KinojoApi.getAction('notices', { limit:3 })
+        : await (await fetch(commonApiUrl()+(commonApiUrl().includes('?')?'&':'?')+'action=notices&limit=3&t='+Date.now(),{cache:'no-store'})).json();
       const notices=(data&&data.ok&&Array.isArray(data.notices))?data.notices.slice(0,3):[];
       if(!notices.length){list.innerHTML='<span class="kinojo-notice-empty">등록된 공지가 없습니다.</span>';return;}
       list.innerHTML=notices.map(item=>'<article class="kinojo-notice-item"><strong>'+escapeHtml(item.noticeType||item.notice||'공지')+'</strong><span class="kinojo-notice-author">'+escapeHtml(item.author||'관리자')+'</span><span class="kinojo-notice-text">'+escapeHtml(item.content||'')+'</span></article>').join('');
@@ -62,6 +61,7 @@
   }
 
   function commonApiUrl(){
+    if(window.KinojoApi && typeof window.KinojoApi.getBaseUrl === 'function') return window.KinojoApi.getBaseUrl();
     return (new URLSearchParams(location.search).get('api')) || (typeof WEB_APP_URL!=='undefined'&&WEB_APP_URL) || 'https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec';
   }
   function renderCommonVisits(stats){
@@ -76,20 +76,19 @@
     const el=document.getElementById('visitCard');
     if(!el)return;
     try{
-      const base=commonApiUrl();
       const key='kinojo_common_visit_'+(info?.key||'page')+'_'+new Date().toLocaleDateString('ko-KR',{timeZone:'Asia/Seoul'});
       const first=localStorage.getItem(key)!=='1';
       if(first) localStorage.setItem(key,'1');
-      const params=new URLSearchParams({action:'hallVisit',mode:first?'visit':'stats',boost:first?'1':'0',t:String(Date.now())});
-      const url=base+(base.includes('?')?'&':'?')+params.toString();
-      const res=await fetch(url,{cache:'no-store'});
-      const data=await res.json();
+      const data=window.KinojoApi
+        ? await window.KinojoApi.getAction('hallVisit', { mode:first?'visit':'stats', boost:first?'1':'0' })
+        : await (await fetch(commonApiUrl()+(commonApiUrl().includes('?')?'&':'?')+new URLSearchParams({action:'hallVisit',mode:first?'visit':'stats',boost:first?'1':'0',t:String(Date.now())}).toString(),{cache:'no-store'})).json();
       if(data?.ok&&data.stats)renderCommonVisits(data.stats);
     }catch(_err){
       if(!window.__KINOJO_HALL_VISIT_RENDERED__) el.innerHTML='<span class="visit-line visit-line-today">👀 방문자 통계 확인중</span><span class="visit-line visit-line-total">🏛 누적 방문 기록 확인중</span>';
     }
   }
   function toast(message){
+    if(window.KinojoToast && typeof window.KinojoToast.show === 'function') return window.KinojoToast.show(message);
     const el=document.createElement('div');
     el.className='kinojo-common-toast';
     el.textContent=String(message||'');
