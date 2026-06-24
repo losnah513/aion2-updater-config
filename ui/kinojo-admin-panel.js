@@ -136,12 +136,26 @@
       setAdminButtonLoading_('adminNoticeSaveBtn','등록 중...');
       if(status){status.className='admin-status pending';status.textContent='공지사항 등록 중...';}
       const data=window.KinojoApi ? await window.KinojoApi.postAction('noticeAdmin',{command:'createNotice',sessionToken:token(),noticeType,content}) : await (await fetch(apiUrl(),{method:'POST',body:JSON.stringify({action:'noticeAdmin',command:'createNotice',sessionToken:token(),noticeType,content})})).json();
-      if(!data.ok)throw new Error(data.message||'공지사항 등록 실패');
+      if(!data || data.ok === false){
+        throw Object.assign(new Error(data?.message||'공지사항 등록 결과를 확인하지 못했습니다.'), { data });
+      }
       if(status){status.className='admin-status success';status.textContent='공지사항이 등록되었습니다.';}
       if(contentEl)contentEl.value='';
       window.KinojoCommonUI?.reloadNotices?.();
     }catch(e){
-      if(status){status.className='admin-status error';status.textContent='공지사항 등록 실패: '+(e.message||e);}
+      let saved=false;
+      try{
+        const check=window.KinojoApi ? await window.KinojoApi.getAction('notices',{limit:5}) : null;
+        saved=!!(check&&check.ok&&Array.isArray(check.notices)&&check.notices.some(n=>String(n.content||'').trim()===content));
+      }catch(_checkErr){}
+      if(saved){
+        if(status){status.className='admin-status success';status.textContent='공지사항은 등록되었습니다. 다만 응답 확인 중 경고가 있었습니다.';}
+        if(contentEl)contentEl.value='';
+        window.KinojoCommonUI?.reloadNotices?.();
+      }else{
+        if(status){status.className='admin-status error';status.textContent='공지사항 등록이 정상 처리되지 않았습니다.';}
+        window.KinojoSafeError?.show?.(e,{feature:'공지사항 등록',action:'noticeAdmin/createNotice',payload:{noticeType,content},title:'공지사항 등록이 정상 처리되지 않았습니다.',message:'오류 진단 내용을 복사해서 전달해 주세요.'});
+      }
     }finally{clearAdminButtonLoading_('adminNoticeSaveBtn','공지 등록')}
   }
   function bindButtons(){

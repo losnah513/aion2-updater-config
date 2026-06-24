@@ -31,13 +31,21 @@
     const text = await res.text();
     if(text){
       try{ data = JSON.parse(text); }
-      catch(_err){ data = { ok:false, message:text }; }
+      catch(_err){
+        data = {
+          ok:false,
+          message:/<!doctype html|<html[\s>]/i.test(text) ? '서버 응답을 JSON으로 해석하지 못했습니다.' : text,
+          responseText:text,
+          bodySample:text.slice(0,1200)
+        };
+      }
     }
     if(!res.ok){
       const msg = data?.message || data?.error || ('HTTP ' + res.status);
       const err = new Error(msg);
       err.status = res.status;
       err.data = data;
+      err.responseText = data?.responseText || text;
       throw err;
     }
     return data;

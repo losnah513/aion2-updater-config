@@ -45,24 +45,92 @@
     strip.innerHTML='<div class="kinojo-notice-list" id="kinojoNoticeList"><span class="kinojo-notice-empty">최근 공지를 불러오는 중입니다.</span></div>';
     return strip;
   }
+  function normalizeNoticeAuthor_(author){
+    return String(author || '관리자')
+      .replace(/\s*Lv\.?\s*\d+/gi,'')
+      .replace(/\s*Level\s*\d+/gi,'')
+      .replace(/\(\s*([^)]*?)\s*Lv\.?\s*\d+\s*\)/gi,'($1)')
+      .replace(/\(\s*([^)]*?)\s*Level\s*\d+\s*\)/gi,'($1)')
+      .replace(/\(\s*\)/g,'')
+      .replace(/\s{2,}/g,' ')
+      .trim() || '관리자';
+  }
   async function loadCommonNotices(){
     const list=document.getElementById('kinojoNoticeList');
     if(!list)return;
     try{
       const data=window.KinojoApi
-        ? await window.KinojoApi.getAction('notices', { limit:3 })
-        : await (await fetch(commonApiUrl()+(commonApiUrl().includes('?')?'&':'?')+'action=notices&limit=3&t='+Date.now(),{cache:'no-store'})).json();
-      const notices=(data&&data.ok&&Array.isArray(data.notices))?data.notices.slice(0,3):[];
+        ? await window.KinojoApi.getAction('notices', { limit:5 })
+        : await (await fetch(commonApiUrl()+(commonApiUrl().includes('?')?'&':'?')+'action=notices&limit=5&t='+Date.now(),{cache:'no-store'})).json();
+      const notices=(data&&data.ok&&Array.isArray(data.notices))?data.notices.slice(0,5):[];
       if(!notices.length){list.innerHTML='<span class="kinojo-notice-empty">등록된 공지가 없습니다.</span>';return;}
-      list.innerHTML=notices.map(item=>{
+      const total=Math.max(1,notices.length);
+      list.style.setProperty('--notice-total', String(total));
+      list.innerHTML=notices.map((item,index)=>{
         const type=String(item.noticeType||item.notice||'공지').trim()||'공지';
         const typeKey=type==='이벤트'?'event':(type==='알림'?'alert':'notice');
         const icon=typeKey==='event'?'🎁':(typeKey==='alert'?'🔔':'📢');
-        return '<article class="kinojo-notice-item kinojo-notice-type-'+typeKey+'"><strong><span class="kinojo-notice-icon">'+icon+'</span>'+escapeHtml(type)+'</strong><span class="kinojo-notice-text">'+escapeHtml(item.content||'')+'</span><span class="kinojo-notice-author">'+escapeHtml(item.author||'관리자')+'</span></article>';
+        const content=String(item.content||'').trim();
+        const longClass=content.length>34?' is-long':'';
+        const delay=index*5;
+        return '<article class="kinojo-notice-item kinojo-notice-type-'+typeKey+longClass+'" style="--notice-delay:'+delay+'s;--notice-duration:'+(total*5)+'s">'
+          +'<strong><span class="kinojo-notice-icon">'+icon+'</span>'+escapeHtml(type)+'</strong>'
+          +'<span class="kinojo-notice-author">'+escapeHtml(normalizeNoticeAuthor_(item.author||'관리자'))+'</span>'
+          +'<span class="kinojo-notice-text"><span class="kinojo-notice-text-inner">'+escapeHtml(content)+'</span></span>'
+          +'</article>';
       }).join('');
     }catch(_e){
       list.innerHTML='<span class="kinojo-notice-empty">공지사항을 불러오지 못했습니다.</span>';
     }
+  }
+
+
+  function shortenErrorMessage_(value){
+    const text=String(value?.message || value || '알 수 없는 오류가 발생했습니다.');
+    if(/<!doctype html|<html[\s>]/i.test(text)) return '요청 처리 중 서버 응답을 해석하지 못했습니다.';
+    return text.length>140 ? text.slice(0,140)+'…' : text;
+  }
+  function buildErrorDetails_(error, context){
+    const lines=[];
+    lines.push('KINOJO ERROR REPORT');
+    lines.push('time: '+new Date().toISOString());
+    lines.push('page: '+location.href);
+    if(context?.feature) lines.push('feature: '+context.feature);
+    if(context?.action) lines.push('action: '+context.action);
+    if(context?.payload) lines.push('payload: '+JSON.stringify(context.payload));
+    if(error?.status) lines.push('status: '+error.status);
+    if(error?.message) lines.push('message: '+error.message);
+    if(error?.data) lines.push('data: '+JSON.stringify(error.data).slice(0,2500));
+    const raw=String(error?.responseText || error?.raw || error || '');
+    if(raw) lines.push('raw: '+raw.slice(0,2500));
+    return lines.join('\n');
+  }
+  function showSafeError(error, context){
+    const title=context?.title || '기능이 정상적으로 작동하지 않았습니다.';
+    const message=context?.message || shortenErrorMessage_(error);
+    const details=buildErrorDetails_(error, context || {});
+    const old=document.getElementById('kinojoSafeErrorModal');
+    if(old) old.remove();
+    const overlay=document.createElement('div');
+    overlay.className='kinojo-safe-error-overlay';
+    overlay.id='kinojoSafeErrorModal';
+    overlay.innerHTML='<section class="kinojo-safe-error-card" role="dialog" aria-modal="true" aria-label="오류 안내">'
+      +'<button type="button" class="kinojo-safe-error-close" aria-label="닫기">×</button>'
+      +'<div class="kinojo-safe-error-kicker">KINOJO SAFETY</div>'
+      +'<h3>'+escapeHtml(title)+'</h3>'
+      +'<p>'+escapeHtml(message)+'</p>'
+      +'<div class="kinojo-safe-error-actions"><button type="button" class="kinojo-safe-error-copy">진단 내용 복사</button><button type="button" class="kinojo-safe-error-ok">확인</button></div>'
+      +'</section>';
+    const close=()=>overlay.remove();
+    overlay.querySelector('.kinojo-safe-error-close')?.addEventListener('click',close);
+    overlay.querySelector('.kinojo-safe-error-ok')?.addEventListener('click',close);
+    overlay.addEventListener('click',e=>{if(e.target===overlay)close();});
+    overlay.querySelector('.kinojo-safe-error-copy')?.addEventListener('click',async()=>{
+      try{await navigator.clipboard.writeText(details); toast('진단 내용이 복사되었습니다.');}
+      catch(_e){window.prompt('아래 내용을 복사해 주세요.', details);}
+    });
+    document.body.appendChild(overlay);
+    return {details, close};
   }
 
   function commonApiUrl(){
@@ -406,7 +474,8 @@
   bind();
   bindCommonAdmin(info);
   bindImageGuards();
-  window.KinojoCommonUI={toast,openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel,toggleAdminMenu,closeAdminMenuCommon,reloadNotices:loadCommonNotices};
+  window.KinojoCommonUI={toast,showSafeError,reportError:showSafeError,openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel,toggleAdminMenu,closeAdminMenuCommon,reloadNotices:loadCommonNotices};
+  window.KinojoSafeError={show:showSafeError,report:showSafeError};
   window.openAdminDropdown=toggleAdminMenu;
   window.closeAdminMenu=closeAdminMenuCommon;
   window.openSideDrawer=openSideDrawer;
