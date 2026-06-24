@@ -186,10 +186,10 @@
     modal.innerHTML = '<div class="kinojo-login-card" role="dialog" aria-modal="true" aria-labelledby="kinojoLoginTitle">'
       + '<button class="kinojo-login-close" id="kinojoLoginCloseBtn" type="button" aria-label="닫기">×</button>'
       + '<div class="kinojo-login-kicker">KINOJO LOGIN</div>'
-      + '<h2 id="kinojoLoginTitle">회원 코드 로그인</h2>'
-      + '<p id="kinojoLoginHelpText">관리자가 발급한 코드로 로그인하면 좋아요·싫어요와 제안 기능을 사용할 수 있습니다.</p>'
-      + '<input id="kinojoLoginCodeInput" class="kinojo-login-input kinojo-login-text-input" type="text" autocomplete="one-time-code" inputmode="text" spellcheck="false" placeholder="회원 코드를 입력하세요" aria-label="회원 코드 입력" />'
-      + '<div class="kinojo-code-otp kinojo-login-otp kinojo-login-otp-display" id="kinojoLoginOtp" aria-label="입력된 회원 코드 미리보기">'
+      + '<h2 id="kinojoLoginTitle">PASS KEY</h2>'
+      + '<p id="kinojoLoginHelpText">관리자가 발급한 PASS KEY로 로그인하면 좋아요·싫어요와 제안 기능을 사용할 수 있습니다.</p>'
+      + '<input id="kinojoLoginCodeInput" class="kinojo-login-input kinojo-login-text-input" type="text" autocomplete="one-time-code" inputmode="text" spellcheck="false" placeholder="PASS KEY를 입력하세요" aria-label="PASS KEY 입력" />'
+      + '<div class="kinojo-code-otp kinojo-login-otp kinojo-login-otp-display" id="kinojoLoginOtp" aria-label="입력된 PASS KEY 미리보기">'
       + '<span class="kinojo-code-otp-cell"></span>'
       + '<span class="kinojo-code-otp-cell"></span>'
       + '<span class="kinojo-code-otp-cell"></span>'
@@ -237,12 +237,12 @@
   function loginHelpText_(context){
     const key = String(context || '').trim();
     if(key === 'sanctuary'){
-      return '관리자가 발급한 코드로 로그인하면<br>클립보드 복사 기능을 사용할 수 있고<br>상위 권한이 있는 경우 수정 기능도 사용할 수 있습니다.';
+      return '관리자가 발급한 PASS KEY로 로그인하면<br>클립보드 복사 기능을 사용할 수 있고<br>상위 권한이 있는 경우 수정 기능도 사용할 수 있습니다.';
     }
     if(key === 'hall' || key === 'reaction'){
-      return '관리자가 발급한 코드로 로그인하면<br>좋아요/싫어요와 다양한 기능을 사용할 수 있습니다';
+      return '관리자가 발급한 PASS KEY로 로그인하면<br>좋아요/싫어요와 다양한 기능을 사용할 수 있습니다';
     }
-    return '관리자가 발급한 코드로 로그인하면 좋아요·싫어요와 제안 기능을 사용할 수 있습니다.';
+    return '관리자가 발급한 PASS KEY로 로그인하면 좋아요·싫어요와 제안 기능을 사용할 수 있습니다.';
   }
 
   function openLoginModal(reason, options){
@@ -272,7 +272,7 @@
     if(!button) return;
     button.disabled = !!loading;
     button.innerHTML = loading
-      ? '<span class="kinojo-spinner" aria-hidden="true"></span><span class="kinojo-login-btn-text">확인중...</span>'
+      ? '<span class="kinojo-spinner" aria-hidden="true"></span><span class="kinojo-login-btn-text">PASS KEY 확인 중...</span>'
       : '<span class="kinojo-login-btn-text">로그인</span>';
   }
 
@@ -282,9 +282,11 @@
     const button = modal.querySelector('#kinojoLoginSubmitBtn');
     const status = modal.querySelector('#kinojoLoginStatus');
     if(button?.disabled) return;
-    syncLoginOtpHidden(modal.querySelector('#kinojoLoginOtp'));
-    const code = String(input?.value || '').trim();
-    if(!code){ if(status) status.textContent = '로그인 코드를 입력해 주세요.'; return; }
+    const root = modal.querySelector('#kinojoLoginOtp');
+    setLoginOtpValue(root, input?.value || '', { skipInput:true });
+    const code = normalizeLoginCodeText_(input?.value || '').trim();
+    if(input && input.value !== code) input.value = code;
+    if(!code){ if(status) status.textContent = 'PASS KEY를 입력해 주세요.'; return; }
     try{
       setLoginLoading_(button, true);
       if(status) status.textContent = '';
@@ -350,7 +352,7 @@
   }
 
   function normalizeLoginCodeText_(value){
-    // 회원 로그인 코드는 관리자 고정 한글 코드(예: 키노조화이팅)와 일반 영문/숫자 코드를 모두 허용합니다.
+    // PASS KEY는 관리자 고정 한글 코드(예: 키노조화이팅)와 일반 영문/숫자 코드를 모두 허용합니다.
     // 한글 IME 조합 중간값을 강제로 분해하지 않기 위해 실제 입력은 input 1개에서 처리하고,
     // 6칸은 완성된 문자열을 보여주는 preview 역할만 합니다.
     return Array.from(String(value || '').replace(/[a-z]/g, ch => ch.toUpperCase()).replace(/\s+/g, '')).slice(0, 12).join('');
