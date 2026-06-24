@@ -1128,31 +1128,41 @@ img,picture,canvas,svg,.sanctuary-hero,.hero-bg,.mvp-profile-image,.character-pr
 .kinojo-common-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
 
-/* 20260623_15: login code uses the same separated cells as code request, with Hangul allowed. */
+/* 20260623_20: login code uses one natural input plus six preview cells. */
+.kinojo-login-text-input{
+  width:100%;
+  min-height:42px;
+  border-radius:13px;
+  border:1px solid rgba(120,145,180,.26);
+  background:#fff;
+  color:#17233a;
+  box-sizing:border-box;
+  padding:0 14px;
+  margin:8px 0 8px;
+  font-size:17px;
+  font-weight:900;
+  letter-spacing:.02em;
+  outline:none;
+  ime-mode:active;
+}
+.kinojo-login-text-input:focus{
+  border-color:rgba(37,99,235,.45);
+  box-shadow:0 0 0 3px rgba(49,130,206,.15), inset 0 1px 2px rgba(15,23,42,.04);
+}
 .kinojo-login-otp{margin:2px 0 1px;}
 .kinojo-login-otp .kinojo-code-otp-cell{text-transform:uppercase;ime-mode:active;}
-
-/* KINOJO login code: real input + visual cells for smooth Korean IME composition */
-.kinojo-login-real-input{
-  position:absolute;
-  width:1px;
-  height:1px;
-  opacity:.01;
-  pointer-events:none;
-  left:-9999px;
-}
-.kinojo-login-otp-display,
-.kinojo-code-request-otp-display{
+.kinojo-login-otp-display{
   cursor:text;
 }
-.kinojo-login-otp-display .kinojo-code-otp-cell,
-.kinojo-code-request-otp-display .kinojo-code-otp-cell{
+.kinojo-login-otp-display .kinojo-code-otp-cell{
   display:inline-flex;
   align-items:center;
   justify-content:center;
   user-select:none;
 }
-.kinojo-login-otp-display.is-focused .kinojo-code-otp-cell,
-.kinojo-code-request-otp-display.is-focused .kinojo-code-otp-cell{
+.kinojo-login-otp-display .kinojo-code-otp-cell.filled{
+  background:#fbfdff;
+}
+.kinojo-login-otp-display.is-focused .kinojo-code-otp-cell{
   box-shadow:0 0 0 2px rgba(49,130,206,.22), inset 0 1px 2px rgba(15,23,42,.08);
 }

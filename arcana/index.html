@@ -1,61 +1,61 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>KINOJO INFO - ARCANA</title>
-<meta name="description" content="?�이?? ?�래??조합�??�킬 ?�장???�계?�는 KINOJO ARCANA ?��??�이?�입?�다.">
+<meta name="description" content="아이온2 클래스 조합과 스킬 성장을 설계하는 KINOJO ARCANA 시뮬레이터입니다.">
 <link rel="canonical" href="https://kinojo.info/arcana/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="KINOJO INFO">
 <meta property="og:title" content="KINOJO INFO - ARCANA">
-<meta property="og:description" content="?�이?? ?�래??조합�??�킬 ?�장???�계?�는 KINOJO ARCANA ?��??�이?�입?�다.">
+<meta property="og:description" content="아이온2 클래스 조합과 스킬 성장을 설계하는 KINOJO ARCANA 시뮬레이터입니다.">
 <meta property="og:url" content="https://kinojo.info/arcana/">
 <meta property="og:image" content="https://kinojo.info/assets/images/common/kinojo-og.jpg">
 <meta property="og:image:width" content="1536">
 <meta property="og:image:height" content="864">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="KINOJO INFO - ARCANA">
-<meta name="twitter:description" content="?�이?? ?�래??조합�??�킬 ?�장???�계?�는 KINOJO ARCANA ?��??�이?�입?�다.">
+<meta name="twitter:description" content="아이온2 클래스 조합과 스킬 성장을 설계하는 KINOJO ARCANA 시뮬레이터입니다.">
 <meta name="twitter:image" content="https://kinojo.info/assets/images/common/kinojo-og.jpg">
 
-  <link rel="stylesheet" href="../ui/kinojo-common-ui.css?cache=2026062321" />
-  <link rel="stylesheet" href="css/main.css?cache=2026062321" />
-  <link rel="stylesheet" href="css/layout.css?cache=2026062321" />
-  <link rel="stylesheet" href="css/cards.css?cache=2026062321" />
-  <link rel="stylesheet" href="css/simulator.css?cache=2026062321" />
-  <link rel="stylesheet" href="css/modal.css?cache=2026062321" />
-  <link rel="stylesheet" href="css/components/panel-containment.css?cache=2026062321" />
-  <link rel="stylesheet" href="css/components/class-selector.css?cache=2026062321" />
-  <link rel="stylesheet" href="css/components/class-entry-gate.css?cache=2026062321" />
-  <link rel="stylesheet" href="css/components/recommend-panel.css?cache=2026062321" />
-  <link rel="stylesheet" href="css/components/arcana-cta.css?cache=2026062321" />
-  <link rel="stylesheet" href="css/components/arcana-layout-manager.css?cache=2026062321" />
-  <link rel="stylesheet" href="css/components/prism-aura.css?cache=2026062321" />
-  <link rel="stylesheet" href="css/components/arcana-button-system.css?cache=2026062321" />
-  <link rel="stylesheet" href="css/components/class-showcase-orbit-final.css?cache=2026062321" />
-<script src="../ui/kinojo-device-router.js?cache=2026062321" data-mobile-path="../m/arcana/"></script>
+  <link rel="stylesheet" href="../ui/kinojo-common-ui.css?cache=2026062311" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/cards.css" />
+  <link rel="stylesheet" href="css/simulator.css" />
+  <link rel="stylesheet" href="css/modal.css" />
+  <link rel="stylesheet" href="css/components/panel-containment.css" />
+  <link rel="stylesheet" href="css/components/class-selector.css" />
+  <link rel="stylesheet" href="css/components/class-entry-gate.css" />
+  <link rel="stylesheet" href="css/components/recommend-panel.css" />
+  <link rel="stylesheet" href="css/components/arcana-cta.css" />
+  <link rel="stylesheet" href="css/components/arcana-layout-manager.css" />
+  <link rel="stylesheet" href="css/components/prism-aura.css" />
+  <link rel="stylesheet" href="css/components/arcana-button-system.css" />
+  <link rel="stylesheet" href="css/components/class-showcase-orbit-final.css" />
+<script src="../ui/kinojo-device-router.js?cache=26062205" data-mobile-path="../m/arcana/"></script>
 </head>
 <body class="arcana-kinojo-synced">
   <div class="arcana-page kinojo-integrated-page">
-    <header class="arcana-actionbar" aria-label="?�르카나 ?�용 ?�업 ?�역">
+    <header class="arcana-actionbar" aria-label="아르카나 전용 작업 영역">
       <div class="arcana-title-wrap">
-        <h1>?�르카나 ?�킬 ?��??�이??/h1>
-        <span class="arcana-version">ARC-0.3.03 · KINOJO ?�합</span>
+        <h1>아르카나 스킬 시뮬레이터</h1>
+        <span class="arcana-version">ARC-0.3.03 · KINOJO 통합</span>
       </div>
       <div class="arcana-topbar-actions">
         <div class="arcana-class-picker" id="arcanaClassPicker">
           <button id="arcanaClassPickerButton" class="arcana-class-picker-button is-initial-cta" type="button">
-            <span class="arcana-class-arrow" aria-hidden="true">??/span>
-            <span>?�래???�택?�기</span>
-            <span class="arcana-class-arrow" aria-hidden="true">??/span>
+            <span class="arcana-class-arrow" aria-hidden="true">‹</span>
+            <span>클래스 선택하기</span>
+            <span class="arcana-class-arrow" aria-hidden="true">›</span>
           </button>
         </div>
       </div>
     </header>
 
     <div id="arcanaRefreshNotice" class="arcana-refresh-notice" role="status">
-      ?�로고침?�면 ?�재 ?�면???�력???�용?� 초기?�됩?�다. ?�요????��?� ?�?????�용?�주?�요.
+      새로고침하면 현재 화면에 입력한 내용은 초기화됩니다. 필요한 항목은 저장 후 사용해주세요.
     </div>
 
     <main class="arcana-layout is-class-locked" id="arcanaMainLayout">
@@ -63,45 +63,45 @@
         <section class="arcana-panel arcana-target-panel arcana-compact-panel" data-panel-key="characterLevels" data-card="01" data-layout-role="top-card">
           <div class="arcana-panel-title">
             <div class="arcana-title-stack">
-              <h2>?�티�??�킬 ?�택</h2>
-              <span id="arcanaTargetCountText">최�? 7�??�택 가??/span>
+              <h2>액티브 스킬 선택</h2>
+              <span id="arcanaTargetCountText">최대 7개 선택 가능</span>
             </div>
           </div>
-          <div class="arcana-panel-message is-visible is-default" data-message-for="characterLevels">?�킬???�택?�고 ?�?�을 ?�러주세??</div>
+          <div class="arcana-panel-message is-visible is-default" data-message-for="characterLevels">스킬을 선택하고 저장을 눌러주세요.</div>
           <div id="arcanaTargetSkillList" class="arcana-skill-grid arcana-skill-grid-two"></div>
           <div class="arcana-actions arcana-actions-right">
-            <button id="arcanaSaveCharacterLevels" class="arcana-btn arcana-btn-primary">?�킬 ?�택 ?�??/button>
-            <button id="arcanaClearCharacterLevels" class="arcana-btn arcana-btn-ghost">초기??/button>
+            <button id="arcanaSaveCharacterLevels" class="arcana-btn arcana-btn-primary">스킬 선택 저장</button>
+            <button id="arcanaClearCharacterLevels" class="arcana-btn arcana-btn-ghost">초기화</button>
           </div>
         </section>
 
         <section class="arcana-panel arcana-equipment-panel arcana-compact-panel" data-panel-key="equipmentOptions" data-card="02" data-layout-role="top-card">
           <div class="arcana-panel-title arcana-panel-title-compact">
             <div class="arcana-title-stack">
-              <h2>반�? ?�킬 ?�션</h2>
-              <span>반�?�??�택?�면 ?�킬 ?�션???�력?????�어??/span>
+              <h2>반지 스킬 옵션</h2>
+              <span>반지를 선택하면 스킬 옵션을 입력할 수 있어요</span>
             </div>
           </div>
-          <div class="arcana-panel-message is-visible is-default" data-message-for="equipmentOptions">반�? ?�킬???�택?�고 ?�?�을 ?�러주세??</div>
+          <div class="arcana-panel-message is-visible is-default" data-message-for="equipmentOptions">반지 스킬을 선택하고 저장을 눌러주세요.</div>
           <div class="arcana-equipment-toggle-row" id="arcanaEquipmentToggleRow" hidden></div>
           <div id="arcanaEquipmentEditor" class="arcana-equipment-list arcana-equipment-list-fixed"></div>
           <div class="arcana-actions arcana-actions-right">
-            <button id="arcanaSaveEquipment" class="arcana-btn arcana-btn-primary">반�? ?�션 ?�??/button>
-            <button id="arcanaClearEquipment" class="arcana-btn arcana-btn-ghost">초기??/button>
+            <button id="arcanaSaveEquipment" class="arcana-btn arcana-btn-primary">반지 옵션 저장</button>
+            <button id="arcanaClearEquipment" class="arcana-btn arcana-btn-ghost">초기화</button>
           </div>
         </section>
 
-        <section class="arcana-panel arcana-future-panel arcana-compact-panel" aria-label="기능 추�? ?�정 ?�역" data-card="03" data-layout-role="top-card">
+        <section class="arcana-panel arcana-future-panel arcana-compact-panel" aria-label="기능 추가 예정 영역" data-card="03" data-layout-role="top-card">
           <div class="arcana-panel-title">
             <div class="arcana-title-stack">
-              <h2>기능 추�? ?�정 ?�역</h2>
-              <span>추�? 기능 배치??�?카드</span>
+              <h2>기능 추가 예정 영역</h2>
+              <span>추가 기능 배치용 빈 카드</span>
             </div>
           </div>
-          <div class="arcana-panel-message is-visible is-default" data-message-for="futureOptions">추�? 기능??준�?중입?�다.
-카드 ??�� ?�이 기�???맞춰???�역?�니??</div>
+          <div class="arcana-panel-message is-visible is-default" data-message-for="futureOptions">추가 기능을 준비 중입니다.
+카드 폭과 높이 기준을 맞춰둔 영역입니다.</div>
           <div class="arcana-future-placeholder">
-            ?�음 기능?????�역??배치?????�습?�다.
+            다음 기능을 이 영역에 배치할 수 있습니다.
           </div>
         </section>
       </div>
@@ -109,41 +109,41 @@
       <section class="arcana-panel arcana-editor-panel" data-panel-key="arcanaCards">
         <div class="arcana-panel-title arcana-panel-title-compact">
           <div class="arcana-title-stack">
-            <h2>?�르카나 카드 ?�션</h2>
-            <span>?�재 ?�보 ?�????분석 ?�작</span>
+            <h2>아르카나 카드 옵션</h2>
+            <span>현재 정보 저장 후 분석 시작</span>
           </div>
         </div>
         <div class="arcana-arcana-columns" data-layout-group="arcana-row">
           <section class="arcana-panel arcana-arcana-section arcana-owned-section" data-panel-key="ownedArcanaCards" data-card="04" data-layout-role="arcana-card">
             <div class="arcana-panel-title arcana-panel-title-inner">
               <div class="arcana-title-stack">
-                <h3>?�재 ?�르카나</h3>
-                <span>직접 ?�력 ???�??/span>
+                <h3>현재 아르카나</h3>
+                <span>직접 입력 후 저장</span>
               </div>
             </div>
-            <div class="arcana-panel-message is-visible is-default" data-message-for="ownedArcanaCards">보유 ?�르카나�??�력?�고 ?�?�을 ?�러주세??</div>
+            <div class="arcana-panel-message is-visible is-default" data-message-for="ownedArcanaCards">보유 아르카나를 입력하고 저장을 눌러주세요.</div>
             <div class="arcana-owned-tab-spacer" aria-hidden="true">
-              <span>보유 카드</span><span>분석 기�?</span><span>?�???�보</span>
+              <span>보유 카드</span><span>분석 기준</span><span>저장 정보</span>
             </div>
             <div id="arcanaOwnedCardGrid" class="arcana-card-grid"></div>
             <div class="arcana-actions arcana-actions-right">
-              <button id="arcanaSaveOwnedCards" class="arcana-btn arcana-btn-primary">보유 ?�르카나 ?�??/button>
-              <button id="arcanaClearOwnedCards" class="arcana-btn arcana-btn-ghost">초기??/button>
+              <button id="arcanaSaveOwnedCards" class="arcana-btn arcana-btn-primary">보유 아르카나 저장</button>
+              <button id="arcanaClearOwnedCards" class="arcana-btn arcana-btn-ghost">초기화</button>
             </div>
           </section>
 
           <section class="arcana-panel arcana-arcana-section arcana-recommend-section is-recommend-locked" data-panel-key="recommendArcanaCards" data-card="05" data-layout-role="arcana-card">
             <div class="arcana-panel-title arcana-panel-title-inner">
               <div class="arcana-title-stack">
-                <h3>추천 ?�르카나</h3>
-                <span>추천 카드 / 분석 / 추천 가?�드</span>
+                <h3>추천 아르카나</h3>
+                <span>추천 카드 / 분석 / 추천 가이드</span>
               </div>
             </div>
             <div class="arcana-panel-message is-visible is-default arcana-recommend-message" data-message-for="recommendArcanaCards"></div>
             <div id="arcanaRecommendArea" class="arcana-recommend-area"></div>
             <div class="arcana-actions arcana-actions-right arcana-recommend-actions">
               <span class="arcana-cta-wave-layer" aria-hidden="true"></span>
-              <button id="arcanaRunSimulation" class="arcana-btn arcana-btn-primary arcana-wave-cta">분석 ?�작</button>
+              <button id="arcanaRunSimulation" class="arcana-btn arcana-btn-primary arcana-wave-cta">분석 시작</button>
             </div>
           </section>
         </div>
@@ -151,39 +151,39 @@
     </main>
   </div>
 
-  <script src="../ui/kinojo-common-ui.js?cache=2026062321"></script>
-  <script src="../ui/kinojo-admin-panel.js?cache=2026062321"></script>
-  <script src="../core/kinojo-auth.js?cache=2026062321"></script>
-  <script src="js/state.js?cache=2026062321"></script>
-  <script src="js/config.js?cache=2026062321"></script>
-  <script src="js/api.js?cache=2026062321"></script>
-  <script src="js/classService.js?cache=2026062321"></script>
-  <script src="js/skillTargetRules.js?cache=2026062321"></script>
-  <script src="js/panelLock.js?cache=2026062321"></script>
-  <script src="js/loadingOverlay.js?cache=2026062321"></script>
-  <script src="js/simulator.js?cache=2026062321"></script>
-  <script src="js/recommendation.js?cache=2026062321"></script>
-  <script src="js/components/arcana-cta.js?cache=2026062321"></script>
-  <script src="js/classSelector.js?cache=2026062321"></script>
-  <script src="js/classEntryGate.js?cache=2026062321"></script>
-  <script src="js/customSelect.js?cache=2026062321"></script>
-  <script src="js/tabs.js?cache=2026062321"></script>
-  <script src="js/confirmModal.js?cache=2026062321"></script>
-  <script src="js/cardEditor.js?cache=2026062321"></script>
-  <script src="js/characterEditor.js?cache=2026062321"></script>
-  <script src="js/equipmentEditor.js?cache=2026062321"></script>
-  <script src="js/skillSelector.js?cache=2026062321"></script>
-  <script src="js/ui.js?cache=2026062321"></script>
-  <script src="js/components/arcana-layout-manager.js?cache=2026062321"></script>
-  <script src="js/components/arcana-button-system.js?cache=2026062321"></script>
-  <script src="js/app.js?cache=2026062321"></script>
+  <script src="../ui/kinojo-common-ui.js?cache=2026062311"></script>
+  <script src="../ui/kinojo-admin-panel.js?cache=2026062311"></script>
+  <script src="../core/kinojo-auth.js?cache=2026062311"></script>
+  <script src="js/state.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/classService.js"></script>
+  <script src="js/skillTargetRules.js"></script>
+  <script src="js/panelLock.js"></script>
+  <script src="js/loadingOverlay.js"></script>
+  <script src="js/simulator.js"></script>
+  <script src="js/recommendation.js"></script>
+  <script src="js/components/arcana-cta.js"></script>
+  <script src="js/classSelector.js"></script>
+  <script src="js/classEntryGate.js"></script>
+  <script src="js/customSelect.js"></script>
+  <script src="js/tabs.js"></script>
+  <script src="js/confirmModal.js"></script>
+  <script src="js/cardEditor.js"></script>
+  <script src="js/characterEditor.js"></script>
+  <script src="js/equipmentEditor.js"></script>
+  <script src="js/skillSelector.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/components/arcana-layout-manager.js"></script>
+  <script src="js/components/arcana-button-system.js"></script>
+  <script src="js/app.js"></script>
 
   <div id="arcanaConfirmModal" class="arcana-confirm-modal" hidden aria-hidden="true">
     <div class="arcana-confirm-card" role="dialog" aria-modal="true" aria-labelledby="arcanaConfirmTitle">
-      <h2 id="arcanaConfirmTitle">?�래??변�??�인</h2>
-      <p id="arcanaConfirmMessage">?�래?��? 변경하�?기존 ?�?�한 ?�용?� 초기?�됩?�다. 변경하?�겠?�니�?</p>
+      <h2 id="arcanaConfirmTitle">클래스 변경 확인</h2>
+      <p id="arcanaConfirmMessage">클래스를 변경하면 기존 저장한 내용은 초기화됩니다. 변경하시겠습니까?</p>
       <div class="arcana-confirm-actions">
-        <button id="arcanaConfirmOk" class="arcana-btn arcana-btn-primary" type="button">변경하�?/button>
+        <button id="arcanaConfirmOk" class="arcana-btn arcana-btn-primary" type="button">변경하기</button>
         <button id="arcanaConfirmCancel" class="arcana-btn arcana-btn-ghost" type="button">취소</button>
       </div>
     </div>

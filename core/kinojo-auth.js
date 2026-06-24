@@ -180,8 +180,8 @@
       + '<div class="kinojo-login-kicker">KINOJO LOGIN</div>'
       + '<h2 id="kinojoLoginTitle">회원 코드 로그인</h2>'
       + '<p id="kinojoLoginHelpText">관리자가 발급한 코드로 로그인하면 좋아요·싫어요와 제안 기능을 사용할 수 있습니다.</p>'
-      + '<input id="kinojoLoginCodeInput" class="kinojo-login-real-input" type="text" autocomplete="one-time-code" inputmode="text" aria-label="회원 코드 입력" />'
-      + '<div class="kinojo-code-otp kinojo-login-otp kinojo-login-otp-display" id="kinojoLoginOtp" aria-hidden="true">'
+      + '<input id="kinojoLoginCodeInput" class="kinojo-login-input kinojo-login-text-input" type="text" autocomplete="one-time-code" inputmode="text" spellcheck="false" placeholder="회원 코드를 입력하세요" aria-label="회원 코드 입력" />'
+      + '<div class="kinojo-code-otp kinojo-login-otp kinojo-login-otp-display" id="kinojoLoginOtp" aria-label="입력된 회원 코드 미리보기">'
       + '<span class="kinojo-code-otp-cell"></span>'
       + '<span class="kinojo-code-otp-cell"></span>'
       + '<span class="kinojo-code-otp-cell"></span>'
@@ -200,14 +200,13 @@
       + '<div id="kinojoCodeRequestLookupStatus" class="kinojo-login-status kinojo-code-request-status"></div>'
       + '<div id="kinojoCodeRequestCodeBox" class="kinojo-code-request-code-box" hidden>'
       + '<div class="kinojo-code-request-character-result" id="kinojoCodeRequestCharacterResult"></div>'
-      + '<input id="kinojoCodeRequestCodeInput" class="kinojo-login-real-input kinojo-code-request-real-input" type="text" autocomplete="one-time-code" inputmode="text" aria-label="요청 코드 입력" />'
       + '<div class="kinojo-code-otp" id="kinojoCodeRequestOtp" aria-label="요청 코드 6자리 입력">'
-      + '<span class="kinojo-code-otp-cell"></span>'
-      + '<span class="kinojo-code-otp-cell"></span>'
-      + '<span class="kinojo-code-otp-cell"></span>'
-      + '<span class="kinojo-code-otp-cell"></span>'
-      + '<span class="kinojo-code-otp-cell"></span>'
-      + '<span class="kinojo-code-otp-cell"></span>'
+      + '<input class="kinojo-code-otp-cell" maxlength="1" inputmode="text" autocomplete="one-time-code" />'
+      + '<input class="kinojo-code-otp-cell" maxlength="1" inputmode="text" />'
+      + '<input class="kinojo-code-otp-cell" maxlength="1" inputmode="text" />'
+      + '<input class="kinojo-code-otp-cell" maxlength="1" inputmode="text" />'
+      + '<input class="kinojo-code-otp-cell" maxlength="1" inputmode="text" />'
+      + '<input class="kinojo-code-otp-cell" maxlength="1" inputmode="text" />'
       + '</div>'
       + '<div class="kinojo-account-help">영문 2자 + 숫자 4자, 순서는 자유입니다.</div>'
       + '<button id="kinojoCodeRequestSubmitBtn" class="kinojo-login-submit kinojo-code-request-submit" type="button" disabled>요청하기</button>'
@@ -219,11 +218,11 @@
     modal.querySelector('#kinojoLoginCloseBtn')?.addEventListener('click', closeLoginModal);
     modal.querySelector('#kinojoLoginSubmitBtn')?.addEventListener('click', submitLogin);
     bindLoginOtpInput(modal.querySelector('#kinojoLoginOtp'));
-    modal.querySelector('#kinojoLoginOtp')?.addEventListener('keydown', e=>{ if(e.key === 'Enter') submitLogin(); });
+    modal.querySelector('#kinojoLoginCodeInput')?.addEventListener('keydown', e=>{ if(e.key === 'Enter') submitLogin(); });
     modal.querySelector('#kinojoCodeRequestLookupBtn')?.addEventListener('click', lookupCodeRequestCharacter);
     modal.querySelector('#kinojoCodeRequestCharacterInput')?.addEventListener('keydown', e=>{ if(e.key === 'Enter') lookupCodeRequestCharacter(); });
     modal.querySelector('#kinojoCodeRequestSubmitBtn')?.addEventListener('click', submitCodeRequest);
-    bindCodeRequestOtpInput(modal.querySelector('#kinojoCodeRequestOtp'), validateCodeRequestOtp);
+    bindOtpInput(modal.querySelector('#kinojoCodeRequestOtp'), validateCodeRequestOtp);
     return modal;
   }
 
@@ -332,115 +331,65 @@
 
 
   function otpValue(root){
-    const inputId = root?.dataset?.otpInputId || '';
-    const hidden = inputId ? document.getElementById(inputId) : null;
-    if(hidden) return normalizeMemberCodeText_(hidden.value || '');
     return Array.from(root?.querySelectorAll('.kinojo-code-otp-cell') || []).map(input => input.value || '').join('').toUpperCase();
   }
 
   function setOtpValue(root, value){
-    const inputId = root?.dataset?.otpInputId || '';
-    const hidden = inputId ? document.getElementById(inputId) : null;
-    if(hidden){
-      const normalized = normalizeMemberCodeText_(value);
-      if(hidden.value !== normalized) hidden.value = normalized;
-      renderCodeRequestOtpDisplay(root, normalized);
-      return;
-    }
     const cells = Array.from(root?.querySelectorAll('.kinojo-code-otp-cell') || []);
     const chars = String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6).split('');
     cells.forEach((cell, index) => { cell.value = chars[index] || ''; });
   }
 
   function normalizeLoginCodeText_(value){
-    return Array.from(String(value || '').replace(/[a-z]/g, ch => ch.toUpperCase()).replace(/\s+/g, '')).slice(0, 6).join('');
+    // 회원 로그인 코드는 관리자 고정 한글 코드(예: 키노조화이팅)와 일반 영문/숫자 코드를 모두 허용합니다.
+    // 한글 IME 조합 중간값을 강제로 분해하지 않기 위해 실제 입력은 input 1개에서 처리하고,
+    // 6칸은 완성된 문자열을 보여주는 preview 역할만 합니다.
+    return Array.from(String(value || '').replace(/[a-z]/g, ch => ch.toUpperCase()).replace(/\s+/g, '')).slice(0, 12).join('');
   }
 
-  function normalizeMemberCodeText_(value){
-    return Array.from(String(value || '').replace(/[a-z]/g, ch => ch.toUpperCase()).replace(/\s+/g, '').replace(/[^A-Z0-9]/g, '')).slice(0, 6).join('');
-  }
-
-  function setLoginOtpValue(root, value){
-    const hidden = document.getElementById('kinojoLoginCodeInput');
+  function setLoginOtpValue(root, value, options){
+    const input = document.getElementById('kinojoLoginCodeInput');
     const normalized = normalizeLoginCodeText_(value);
-    if(hidden && hidden.value !== normalized) hidden.value = normalized;
+    const skipInput = options && options.skipInput;
+    if(input && !skipInput && input.value !== normalized) input.value = normalized;
     renderLoginOtpDisplay(root, normalized);
   }
 
   function renderLoginOtpDisplay(root, value){
     const cells = Array.from(root?.querySelectorAll('.kinojo-code-otp-cell') || []);
     const chars = Array.from(normalizeLoginCodeText_(value));
-    cells.forEach((cell, index) => { cell.textContent = chars[index] || ''; });
+    cells.forEach((cell, index) => {
+      cell.textContent = chars[index] || '';
+      cell.classList.toggle('filled', !!chars[index]);
+    });
     root?.classList.toggle('is-filled', chars.length >= cells.length);
   }
 
   function bindLoginOtpInput(root){
     if(!root || root.dataset.loginOtpBound) return;
     root.dataset.loginOtpBound = '1';
-    const hidden = document.getElementById('kinojoLoginCodeInput');
-    if(!hidden) return;
+    const input = document.getElementById('kinojoLoginCodeInput');
+    if(!input) return;
     let composing = false;
 
-    function sync(){
-      if(composing) return;
-      setLoginOtpValue(root, hidden.value || '');
+    function sync(options){
+      if(composing && !(options && options.force)) return;
+      const normalized = normalizeLoginCodeText_(input.value || '');
+      if(input.value !== normalized) input.value = normalized;
+      setLoginOtpValue(root, normalized, { skipInput:true });
     }
 
-    hidden.addEventListener('compositionstart', () => { composing = true; });
-    hidden.addEventListener('compositionend', () => { composing = false; sync(); });
-    hidden.addEventListener('input', event => {
+    input.addEventListener('compositionstart', () => { composing = true; root.classList.add('is-composing'); });
+    input.addEventListener('compositionend', () => { composing = false; root.classList.remove('is-composing'); sync({ force:true }); });
+    input.addEventListener('input', event => {
       if(event.isComposing || composing) return;
       sync();
     });
-    hidden.addEventListener('paste', () => setTimeout(sync, 0));
-    hidden.addEventListener('focus', () => root.classList.add('is-focused'));
-    hidden.addEventListener('blur', () => root.classList.remove('is-focused'));
-    root.addEventListener('click', () => hidden.focus());
-    root.addEventListener('keydown', event => {
-      if(event.key === 'Enter') submitLogin();
-    });
-    renderLoginOtpDisplay(root, hidden.value || '');
-  }
-
-  function renderCodeRequestOtpDisplay(root, value){
-    const cells = Array.from(root?.querySelectorAll('.kinojo-code-otp-cell') || []);
-    const chars = Array.from(normalizeMemberCodeText_(value));
-    cells.forEach((cell, index) => { cell.textContent = chars[index] || ''; });
-    root?.classList.toggle('is-filled', chars.length >= cells.length);
-  }
-
-  function bindCodeRequestOtpInput(root, onChange){
-    if(!root || root.dataset.otpBound) return;
-    root.dataset.otpBound = '1';
-    root.dataset.otpInputId = 'kinojoCodeRequestCodeInput';
-    root.classList.add('kinojo-code-request-otp-display');
-    root.setAttribute('role', 'button');
-    root.setAttribute('tabindex', '0');
-    const hidden = document.getElementById('kinojoCodeRequestCodeInput');
-    if(!hidden) return;
-    let composing = false;
-
-    function sync(){
-      if(composing) return;
-      setOtpValue(root, hidden.value || '');
-      if(typeof onChange === 'function') onChange();
-    }
-
-    hidden.addEventListener('compositionstart', () => { composing = true; });
-    hidden.addEventListener('compositionend', () => { composing = false; sync(); });
-    hidden.addEventListener('input', event => {
-      if(event.isComposing || composing) return;
-      sync();
-    });
-    hidden.addEventListener('paste', () => setTimeout(sync, 0));
-    hidden.addEventListener('focus', () => root.classList.add('is-focused'));
-    hidden.addEventListener('blur', () => root.classList.remove('is-focused'));
-    root.addEventListener('click', () => hidden.focus());
-    root.addEventListener('keydown', event => {
-      if(event.key === 'Enter') submitCodeRequest();
-      else hidden.focus();
-    });
-    renderCodeRequestOtpDisplay(root, hidden.value || '');
+    input.addEventListener('paste', () => setTimeout(()=>sync({ force:true }), 0));
+    input.addEventListener('focus', () => root.classList.add('is-focused'));
+    input.addEventListener('blur', () => root.classList.remove('is-focused'));
+    root.addEventListener('click', () => input.focus());
+    renderLoginOtpDisplay(root, input.value || '');
   }
 
   function bindOtpInput(root, onChange){
@@ -551,7 +500,7 @@
       if(box) box.hidden = false;
       if(button){ button.disabled = true; button.textContent = '조회완료'; delete button.dataset.originalText; button.classList.remove('is-loading'); }
       codeRequestStatus('조회 완료. 요청할 회원 코드를 입력해 주세요.', false);
-      modal.querySelector('#kinojoCodeRequestCodeInput')?.focus();
+      modal.querySelector('#kinojoCodeRequestOtp .kinojo-code-otp-cell')?.focus();
       validateCodeRequestOtp();
     }catch(err){ codeRequestStatus(err.message || String(err), true); }
     finally{
