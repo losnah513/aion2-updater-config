@@ -1,0 +1,25 @@
+Kinojo_1_3_1_19_20260623_24
+
+목적
+- 성역 클립보드 복사 이미지의 프로필 이미지 미출력 원인 진단.
+- 실제 클립보드 복사 직전 생성된 PNG를 화면에서 확인할 수 있는 임시 미리보기 모달 추가.
+
+수정 파일
+- GitHub_Pages/sanctuary/js/sanctuary-capture.js
+  - 프로필 URL, 직접 로딩, Apps Script 프록시, dataUrl 로딩, 최종 fallback 여부 진단 정보 수집.
+  - 복사 이미지 생성 후 미리보기 모달 표시.
+  - 진단 로그 콘솔 출력 및 로그 복사 버튼 추가.
+
+- GitHub_Pages/sanctuary/css/sanctuary.css
+  - 복사 이미지 미리보기/프로필 진단 모달 스타일 추가.
+
+- GitHub_Pages/sanctuary/index.html
+- GitHub_Pages/m/sanctuary/index.html
+  - sanctuary.css / sanctuary-capture.js 캐시 번호 갱신.
+
+- AppsScript/sanctuary.gs
+  - profileImageProxy 실패 응답에 contentType, inferredContentType, byteLength, bodySample, stack 일부 등 진단 정보 보강.
+
+적용 주의
+- AppsScript/sanctuary.gs 변경 포함: Apps Script 교체 후 새 배포 필요.
+- 이 버전의 미리보기 모달은 원인 확인용 임시 기능이며, 원인 확정 후 제거 또는 관리자 디버그 모드 전용으로 전환 예정.

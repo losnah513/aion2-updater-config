@@ -14,5 +14,10 @@
   "hallOfFameUrl": "https://kinojo.info/hof/",
   "news": "Classic 무광 다크 복구, Modern 유리 패널/화이트 카드 분리, 조회 시작 버튼 프리즘 효과 재정비",
   "patchTitle": "1.3.1.00 Style Reset & UI Cleanup",
-  "patchBody": "테마 CSS가 레이아웃을 침범하던 문제를 정리하고, Classic/Modern 스타일과 조회 시작 버튼 효과를 재구성했습니다."
+  "patchBody": "테마 CSS가 레이아웃을 침범하던 문제를 정리하고, Classic/Modern 스타일과 조회 시작 버튼 효과를 재구성했습니다.",
+  "supabase": {
+    "enabled": false,
+    "url": "https://josvoltpktvwysrasffq.supabase.co",
+    "publishableKey": "PASTE_SUPABASE_PUBLISHABLE_KEY_HERE"
+  }
 }

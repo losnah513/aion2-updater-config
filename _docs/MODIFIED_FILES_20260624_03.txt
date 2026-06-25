@@ -1,0 +1,14 @@
+Kinojo_1_3_1_22_20260624_03
+
+수정 파일
+- GitHub_Pages/ui/kinojo-common-ui.js
+- GitHub_Pages/ui/kinojo-common-ui.css
+- AppsScript/notice_logic.gs
+
+반영 내용
+- 공지 BAR 최근 5건을 한 번에 하나씩 표시하도록 변경
+- 10초 간격으로 다음 공지로 위쪽 페이드아웃/교체
+- 긴 본문은 최초 5초 정지 후, 공지 내용 영역에서만 왼쪽으로 흐름
+- 오른쪽 고정 [상세 보기] 버튼 추가
+- 공지 상세 보기 모달/게시판 UI 추가
+- 공지 상세 조회를 위해 notices limit 최대 50건까지 허용

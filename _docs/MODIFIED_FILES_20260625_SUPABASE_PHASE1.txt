@@ -1,0 +1,32 @@
+KINOJO 1.3.1.22 Supabase Phase 1
+
+수정/추가 파일
+- Supabase/KINOJO_SUPABASE_PHASE1_SQL_20260625.sql
+- GitHub_Pages/core/kinojo-supabase.js
+- GitHub_Pages/config.json
+- KINOJO_1_3_1_05/core/supabase.js
+- KINOJO_1_3_1_05/core/config.js
+- KINOJO_1_3_1_05/core/auth.js
+- KINOJO_1_3_1_05/updater/updater.js
+- KINOJO_1_3_1_05/manifest.json
+
+핵심 반영
+- Supabase crawl_locks / crawl_status / extension_sessions SQL 준비
+- 확장프로그램 PASS KEY 인증을 Supabase member_codes 우선으로 통합할 수 있는 브리지 추가
+- Supabase 설정이 비활성화거나 publishable key가 없으면 기존 비밀번호 인증으로 fallback
+- 조회 시작 전 Supabase 전역 lock을 먼저 확인하여 다른 PC/브라우저 조회 중이면 즉시 차단
+- 조회 세션 생성 후 Supabase lock 고정
+- 조회 중 10초 heartbeat로 Supabase lock 진행률 갱신
+- 조회 완료/일시정지/초기화 시 Supabase lock 해제
+- 기존 Apps Script list/submit/ping 구조는 유지하여 안전하게 단계적 이관
+
+적용 순서
+1. Supabase SQL Editor에서 Supabase/KINOJO_SUPABASE_PHASE1_SQL_20260625.sql 실행
+2. Supabase Dashboard > Settings > API Keys에서 Publishable key 복사
+3. KINOJO_1_3_1_05/core/config.js 의 publishableKey에 붙여넣고 enabled:true 변경
+4. GitHub_Pages/config.json 의 supabase.publishableKey에 붙여넣고 enabled:true 변경
+5. 확장프로그램 재로드 후 PASS KEY 로그인 테스트
+
+주의
+- Secret key / service_role key / DB password는 어떤 파일에도 넣지 않는다.
+- Phase 1은 RLS 정식 정책 전 테스트용 권한 포함. 운영 확정 후 RLS 정책으로 잠근다.
