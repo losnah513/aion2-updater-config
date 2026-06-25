@@ -310,10 +310,33 @@
     try{
       setLoginLoading_(button, true);
       if(status) status.textContent = '';
-      const data = window.KinojoApi
-        ? await window.KinojoApi.postAction('login', { code })
-        : await (await fetch(apiUrl(), { method:'POST', body:JSON.stringify({ action:'login', code }) })).json();
-      if(!data.ok) throw new Error(data.message || '로그인에 실패했습니다.');
+      let data = null;
+      let supabaseError = null;
+      if(window.KinojoSupabase && typeof window.KinojoSupabase.verifyPassKey === 'function'){
+        try{
+          data = await window.KinojoSupabase.verifyPassKey(code);
+        }catch(err){
+          supabaseError = err;
+        }
+      }
+      if(!data){
+        data = window.KinojoApi
+          ? await window.KinojoApi.postAction('login', { code })
+          : await (await fetch(apiUrl(), { method:'POST', body:JSON.stringify({ action:'login', code }) })).json();
+      }
+      if(!data.ok) throw new Error(data.message || (supabaseError && supabaseError.message) || '로그인에 실패했습니다.');
+      const sessionRole = roleOf(data.session) || roleOf(data.account);
+      if(!sessionRole){
+        throw new Error('로그인 응답에 등급 정보가 없습니다. PASS KEY 권한 설정을 확인해 주세요.');
+      }
+      if(data.session){
+        data.session.role = sessionRole;
+        data.session.roleLabel = data.session.roleLabel || roleLabel(sessionRole);
+      }
+      if(data.account){
+        data.account.role = roleOf(data.account) || sessionRole;
+        data.account.roleLabel = data.account.roleLabel || roleLabel(data.account.role);
+      }
       setSession(data.session, data.account);
       if(status) status.textContent = '로그인되었습니다.';
       if(input) input.value = '';
