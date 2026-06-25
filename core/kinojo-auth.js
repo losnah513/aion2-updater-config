@@ -17,6 +17,19 @@
   let codeRequestLookupCharacter = null;
   let codeRequestSubmitted = false;
   let codeRequestNoticeChecking = false;
+  const AUTH_SCHEMA_VERSION = 'role-v2-20260625';
+
+  function migrateAuthCacheIfNeeded(){
+    try{
+      const key = 'kinojo_auth_schema_version';
+      if(localStorage.getItem(key) === AUTH_SCHEMA_VERSION) return;
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(ACCOUNT_KEY);
+      localStorage.setItem(key, AUTH_SCHEMA_VERSION);
+    }catch(_err){}
+  }
+
+  migrateAuthCacheIfNeeded();
 
   function apiUrl(){
     if(window.KinojoApi && typeof window.KinojoApi.getBaseUrl === 'function') return window.KinojoApi.getBaseUrl();
@@ -67,20 +80,27 @@
   function isLoggedIn(){ return !!getSession(); }
   function getToken(){ return getSession()?.token || ''; }
   function roleOf(source){
+    if(!source) return '';
     if(window.KinojoPermissions && typeof window.KinojoPermissions.normalizeRole === 'function'){
       const role = window.KinojoPermissions.normalizeRole(source);
       return role === 'GUEST' ? '' : role;
     }
-    const raw = String(source?.role || '').toUpperCase();
-    if(raw === 'MASTER' || raw === 'SUB_MASTER' || raw === 'MANAGER' || raw === 'MEMBER') return raw;
+    const raw = String(source?.role || source?.roleLabel || source?.role_label || '').trim().toUpperCase().replace(/[\s-]+/g, '_');
+    if(raw === 'MASTER') return 'MASTER';
+    if(raw === 'SUB_MASTER' || raw === 'SUBMASTER') return 'SUB_MASTER';
+    if(raw === 'MANAGER' || raw === 'ADMIN') return 'MANAGER';
+    if(raw === 'STAFF') return 'STAFF';
+    if(raw === 'MEMBER' || raw === 'TESTER') return 'MEMBER';
     const level = Number(source?.level || 0);
     if(level >= 5) return 'MASTER';
     if(level >= 4) return 'SUB_MASTER';
     if(level >= 3) return 'MANAGER';
-    return source ? 'MEMBER' : '';
+    if(level >= 2) return 'STAFF';
+    if(level >= 1) return 'MEMBER';
+    return '';
   }
   function roleLabel(role){
-    return ({MASTER:'MASTER', SUB_MASTER:'SUB MASTER', MANAGER:'MANAGER', MEMBER:'MEMBER'}[role] || 'MEMBER');
+    return ({MASTER:'Master', SUB_MASTER:'Sub Master', MANAGER:'Manager', STAFF:'Staff', MEMBER:'Member', GUEST:'Guest'}[role] || 'Guest');
   }
   function canOpenManage(role){
     if(window.KinojoPermissions && typeof window.KinojoPermissions.canManage === 'function') return window.KinojoPermissions.canManage(role);
@@ -88,7 +108,7 @@
   }
   function getLevel(){
     const role = roleOf(getSession());
-    return role === 'MASTER' ? 5 : role === 'SUB_MASTER' ? 4 : role === 'MANAGER' ? 3 : role === 'MEMBER' ? 1 : 0;
+    return role === 'MASTER' ? 5 : role === 'SUB_MASTER' ? 4 : role === 'MANAGER' ? 3 : role === 'STAFF' ? 2 : role === 'MEMBER' ? 1 : 0;
   }
   function isAdmin(){ return canOpenManage(roleOf(getSession())); }
 
@@ -138,7 +158,7 @@
 
     if(session){
       const name = account?.mainCharacter || session.mainCharacter || '회원';
-      const role = roleOf(session) || roleOf(account) || 'MEMBER';
+      const role = roleOf(session) || roleOf(account) || '';
       const className = account?.className || session.className || '';
       const icon = classIconFor(className);
       if(label){
@@ -729,7 +749,7 @@
       + '</div>'
       + '<div class="kinojo-account-filters">'
       + '<input class="search" id="adminAccountSearchInput" placeholder="회원 검색" autocomplete="off" />'
-      + '<select class="admin-account-role-select" id="adminAccountRoleFilter"><option value="">전체 등급</option><option value="MASTER">MASTER</option><option value="SUB_MASTER">SUB MASTER</option><option value="MANAGER">MANAGER</option><option value="MEMBER">MEMBER</option></select>'
+      + '<select class="admin-account-role-select" id="adminAccountRoleFilter"><option value="">전체 등급</option><option value="MASTER">Master</option><option value="SUB_MASTER">Sub Master</option><option value="MANAGER">Manager</option><option value="STAFF">Staff</option><option value="MEMBER">Member</option></select>'
       + '<select class="admin-account-role-select" id="adminAccountPermissionFilter"><option value="">전체 권한</option><option value="sanctuary_edit">성역 관리</option><option value="visit_manage">방문자수 조정</option><option value="snapshot_manage">성장왕 스냅샷</option><option value="account_manage">회원 관리</option></select>'
       + '</div>'
       + '<div class="admin-status" id="adminAccountStatus"></div>'
@@ -1008,7 +1028,7 @@
         const disabled = isRoot ? ' disabled' : '';
         return '<label class="admin-switch-row"><span>' + safeText(PERMISSION_LABELS[key]) + '</span><button aria-label="' + safeText(PERMISSION_LABELS[key]) + ' 권한" aria-pressed="' + (on ? 'true' : 'false') + '" class="admin-permission-toggle ' + (on ? 'on' : '') + '" data-account-action="toggle-permission" data-code="' + safeText(account.code || '') + '" data-permission="' + key + '" type="button"' + disabled + '><span></span></button></label>';
       }).join('');
-      const roleOptions = ['MEMBER','MANAGER','SUB_MASTER'].map(r => '<option value="' + r + '"' + (role === r ? ' selected' : '') + '>' + safeText(roleLabel(r)) + '</option>').join('');
+      const roleOptions = ['MEMBER','STAFF','MANAGER','SUB_MASTER'].map(r => '<option value="' + r + '"' + (role === r ? ' selected' : '') + '>' + safeText(roleLabel(r)) + '</option>').join('');
       const roleSelect = isRoot ? '<span class="admin-account-role-fixed">MASTER</span>' : '<select class="admin-account-role-select" data-account-action="change-role" data-code="' + safeText(account.code || '') + '">' + roleOptions + '</select>'; 
       const deleteButton = isRoot
         ? '<button class="btn admin-account-delete" type="button" disabled>삭제 불가</button>'
