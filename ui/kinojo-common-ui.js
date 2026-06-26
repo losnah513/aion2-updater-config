@@ -350,7 +350,8 @@
                 </div>
               </div>
               <div class="admin-notice-control" id="adminNoticeControl">
-                <div class="admin-notice-title">공지사항 작성 <span>하단 공지 BAR 노출</span></div>
+                <div class="admin-notice-title">공지사항 관리 <span>등록 · 수정 · 삭제</span></div>
+                <input id="adminNoticeEditingId" type="hidden" value=""/>
                 <label class="admin-notice-label" for="adminNoticeType">종류</label>
                 <select class="search admin-notice-input admin-notice-select" id="adminNoticeType">
                   <option value="공지">공지</option>
@@ -359,8 +360,13 @@
                 </select>
                 <label class="admin-notice-label" for="adminNoticeContent">내용</label>
                 <textarea class="search admin-notice-content" id="adminNoticeContent" placeholder="공지 BAR에 표시할 내용을 입력하세요." rows="4"></textarea>
-                <div class="admin-notice-actions"><button class="btn" id="adminNoticeSaveBtn" type="button">공지 등록</button></div>
+                <div class="admin-notice-actions">
+                  <button class="btn" id="adminNoticeSaveBtn" type="button">공지 등록</button>
+                  <button class="btn admin-close" id="adminNoticeResetBtn" type="button">새 공지</button>
+                  <button class="btn admin-close" id="adminNoticeReloadBtn" type="button">목록 새로고침</button>
+                </div>
                 <div class="admin-status" id="adminNoticeStatus"></div>
+                <div class="admin-notice-list" id="adminNoticeAdminList" aria-label="등록된 공지사항 목록">공지 목록을 불러오는 중입니다.</div>
               </div>
               <div class="admin-pane-result" data-admin-result="system"></div>
             </section>

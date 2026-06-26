@@ -1461,3 +1461,15 @@ body{padding-bottom:52px;}
   .kinojo-notice-board-card{padding:20px 16px;width:94vw;max-height:84vh;}
   .kinojo-notice-board-content{font-size:13px;}
 }
+
+/* 20260626-10 관리자 공지 수정/삭제 UI */
+.admin-notice-actions{gap:6px;flex-wrap:wrap;}
+.admin-notice-list{display:grid;gap:7px;max-height:260px;overflow:auto;padding:4px;border-top:1px solid rgba(120,145,180,.18);}
+.admin-notice-list-empty{padding:10px;border:1px dashed rgba(120,145,180,.28);border-radius:10px;background:#fff;color:#64748b;font-size:12px;text-align:center;}
+.admin-notice-list-empty.error{color:#b91c1c;background:#fff7f7;border-color:rgba(239,68,68,.25);}
+.admin-notice-card{display:grid;gap:6px;padding:9px;border:1px solid rgba(120,145,180,.2);border-radius:12px;background:#fff;}
+.admin-notice-card-head{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:11px;color:#64748b;}
+.admin-notice-card-head strong{color:#1e3a8a;font-size:12px;}
+.admin-notice-card p{margin:0;font-size:12px;line-height:1.45;color:#17233a;white-space:pre-wrap;word-break:break-word;}
+.admin-notice-card-actions{display:flex;justify-content:flex-end;gap:6px;}
+.admin-notice-card-actions .btn{min-width:58px;padding:6px 9px;font-size:11px;}
