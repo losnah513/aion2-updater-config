@@ -139,8 +139,11 @@
   }
 
   function buildUrl(cfg, path, query){
-    const params = new URLSearchParams(query || '');
-    const queryString = params.toString();
+    // query가 문자열이면 이미 필요한 인코딩이 적용된 REST 쿼리로 간주한다.
+    // URLSearchParams로 다시 감싸면 한글 PASS KEY가 이중 인코딩되어 조회 결과가 []가 된다.
+    const queryString = typeof query === 'string'
+      ? query.replace(/^\?/, '')
+      : new URLSearchParams(query || {}).toString();
     return cfg.url + '/rest/v1/' + path.replace(/^\//, '') + (queryString ? '?' + queryString : '');
   }
 
@@ -217,7 +220,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.14-web-passkey-apikey-only',
+    version:'1.3.1.15-web-passkey-utf8-query-fix',
     getConfig,
     isPreferred,
     isConfigured,
