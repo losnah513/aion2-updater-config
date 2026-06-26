@@ -1,6 +1,6 @@
 {
-  "version": "1.3.1.14",
-  "buildDate": "260625",
+  "version": "1.3.1.15",
+  "buildDate": "260626",
   "enabled": true,
   "testMode": false,
   "passwordHash": "c47986dd8ce4828fe097cf915e94fc9d859bb19d56e2157d86ff11b63f0a9e53",
@@ -9,12 +9,12 @@
     "9516658a61cf564d2001e1dc6b3f3fca526848dc65e4ac38faec05317e2dfedc"
   ],
   "webAppUrl": "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec",
-  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.3.1.14/KINOJO_1_3_1_14.zip",
-  "notice": "✅ KINOJO 1.3.1.14 Supabase JWT 오류 수정",
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.3.1.15/KINOJO_1_3_1_15.zip",
+  "notice": "✅ KINOJO 1.3.1.15 Supabase 한글 PASS KEY 조회 수정",
   "hallOfFameUrl": "https://kinojo.info/hof/",
-  "news": "Supabase PASS KEY 로그인 요청에서 Authorization JWT 오류가 발생하지 않도록 apikey 헤더만 사용하게 수정했습니다.",
-  "patchTitle": "1.3.1.14 Supabase Auth Header Fix",
-  "patchBody": "웹과 확장프로그램의 Supabase REST 요청에서 publishable key를 Authorization Bearer로 보내던 문제를 제거하고 apikey 헤더만 사용하도록 수정했습니다.",
+  "news": "Supabase PASS KEY 로그인에서 한글 키가 이중 인코딩되어 조회 결과가 비던 문제를 수정했습니다.",
+  "patchTitle": "1.3.1.15 Supabase UTF-8 Pass Key Fix",
+  "patchBody": "웹과 확장프로그램의 Supabase REST URL 생성 로직을 수정해 한글 PASS KEY가 정상 조회되도록 했습니다.",
   "supabase": {
     "enabled": true,
     "url": "https://josvoltpktvwysrasffq.supabase.co",
