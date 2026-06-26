@@ -1,7 +1,0 @@
-DEPRECATED FILE
-
-폐기 버전: ARC-0.3.02 · 260615_03
-폐기 사유: 작업 로그를 CHANGELOG.txt로 통합.
-이관 위치: /ARCANA_COMPASS.txt 또는 /CHANGELOG.txt
-
-실행/작업 기준으로 사용하지 말 것.

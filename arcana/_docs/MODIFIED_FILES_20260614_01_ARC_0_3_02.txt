@@ -1,7 +1,0 @@
-ARC-0.3.02 · 260614_01
-
-권한 회수 패치.
-- Layout Manager: 페이지 폭/CARD-01~05/본문/푸터/공통 버튼 규격 관리.
-- Prism Aura: 저장 완료, 16/20 스킬 버튼, CTA 효과 단일 관리.
-- 중복 script, legacy grid/message/active effect 권한 제거.
-- Apps Script ARC_VERSION 갱신.
