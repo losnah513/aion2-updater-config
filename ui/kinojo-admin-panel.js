@@ -59,7 +59,7 @@
   async function adminMvp(){
     try{
       setAdminButtonLoading_('adminMvpBtn','확인 중...');
-      const data=window.KinojoApi ? await window.KinojoApi.getAction('mvpAdmin',{sessionToken:token()}) : await (await fetch(adminUrl('mvpAdmin',{sessionToken:token()}),{cache:'no-store'})).json();
+      const data=window.KinojoSupabase?.adminUnsupported ? await window.KinojoSupabase.adminUnsupported('MVP 후보 확인') : {ok:false,message:'Supabase 설정을 확인해 주세요.'};
       if(!data.ok)return showAdminResult_('MVP 후보 확인',escapeHtml(data.message||'후보 확인 실패'),'mvp');
       const season=data.season||{};
       const rows=(data.candidates||[]).slice(0,5).map((item,i)=>
@@ -74,7 +74,7 @@
   async function adminSnapshot(){
     try{
       setAdminButtonLoading_('adminSnapshotBtn','생성 중...');
-      const data=window.KinojoApi ? await window.KinojoApi.getAction('weeklySnapshot',{sessionToken:token()}) : await (await fetch(adminUrl('weeklySnapshot',{sessionToken:token()}),{cache:'no-store'})).json();
+      const data=window.KinojoSupabase?.adminUnsupported ? await window.KinojoSupabase.adminUnsupported('성장왕 스냅샷 생성') : {ok:false,message:'Supabase 설정을 확인해 주세요.'};
       if(!data.ok)return showAdminResult_('성장왕 스냅샷 생성',escapeHtml(data.message||'스냅샷 저장 실패'),'growth');
       showAdminResult_('성장왕 스냅샷 생성','저장 완료: '+Number(data.result?.count||0)+'명','growth');
     }catch(e){showAdminResult_('성장왕 스냅샷 생성','저장 오류: '+escapeHtml(e.message||e),'growth')}
@@ -83,7 +83,7 @@
   async function adminSnapshotTriggerInstall(){
     try{
       setAdminButtonLoading_('adminSnapshotTriggerBtn','설치 중...');
-      const data=window.KinojoApi ? await window.KinojoApi.getAction('weeklySnapshotTriggers',{sessionToken:token()}) : await (await fetch(adminUrl('weeklySnapshotTriggers',{sessionToken:token()}),{cache:'no-store'})).json();
+      const data=window.KinojoSupabase?.adminUnsupported ? await window.KinojoSupabase.adminUnsupported('주간 성장 자동 집계 활성화') : {ok:false,message:'Supabase 설정을 확인해 주세요.'};
       if(!data.ok){
         const msg=data.needAuth?'자동 트리거 설치 권한 승인이 필요합니다. Apps Script 편집기에서 installWeeklyGrowthSnapshotTriggers_ 함수를 한 번 직접 실행해 권한 승인 후 다시 시도해 주세요.':(data.message||'자동 트리거 설치 실패');
         return showAdminResult_('주간 성장 자동 집계 활성화',escapeHtml(msg),'growth');
@@ -95,7 +95,7 @@
   async function adminSnapshotStatus(){
     try{
       setAdminButtonLoading_('adminSnapshotStatusBtn','확인 중...');
-      const data=window.KinojoApi ? await window.KinojoApi.getAction('weeklySnapshotDiagnose',{sessionToken:token()}) : await (await fetch(adminUrl('weeklySnapshotDiagnose',{sessionToken:token()}),{cache:'no-store'})).json();
+      const data=window.KinojoSupabase?.adminUnsupported ? await window.KinojoSupabase.adminUnsupported('스냅샷 상태 확인') : {ok:false,message:'Supabase 설정을 확인해 주세요.'};
       if(!data.ok)return showAdminResult_('스냅샷 상태 확인',escapeHtml(data.message||'상태 확인 실패'),'growth');
       const rows=(data.weeks||[]).slice(0,8).map(w=>'<div class="admin-result-row"><strong>'+escapeHtml(w.weekKey||'-')+'</strong><span>START '+Number(w.startCount||0)+'명 · END '+Number(w.endCount||0)+'명 · '+(w.ready?'정상':'비교 불가')+'</span></div>').join('')||'<div class="empty">스냅샷 데이터가 없습니다.</div>';
       const trigger=data.trigger||{};
@@ -115,7 +115,7 @@
     try{
       setAdminButtonLoading_('adminVisitApplyBtn','반영중...');
       if(status){status.className='admin-status';status.textContent='반영 중...'}
-      const data=window.KinojoApi ? await window.KinojoApi.getAction('hallVisit',{mode,boost:String(amount),sessionToken:token()}) : await (await fetch(adminUrl('hallVisit',{mode,boost:String(amount),sessionToken:token()}),{cache:'no-store'})).json();
+      const data=window.KinojoSupabase?.adminVisit ? await window.KinojoSupabase.adminVisit(mode, amount) : {ok:false,message:'Supabase 설정을 확인해 주세요.'};
       if(!data.ok)throw new Error(data.message||'방문자수 반영 실패');
       if(typeof window.renderVisits==='function'&&data.stats)window.renderVisits(data.stats);
       if(status){status.className='admin-status success';status.textContent='방문자수 반영 완료되었습니다.'}
@@ -135,7 +135,7 @@
     try{
       setAdminButtonLoading_('adminNoticeSaveBtn','등록 중...');
       if(status){status.className='admin-status pending';status.textContent='공지사항 등록 중...';}
-      const data=window.KinojoApi ? await window.KinojoApi.postAction('noticeAdmin',{command:'createNotice',sessionToken:token(),noticeType,content}) : await (await fetch(apiUrl(),{method:'POST',body:JSON.stringify({action:'noticeAdmin',command:'createNotice',sessionToken:token(),noticeType,content})})).json();
+      const data=window.KinojoSupabase?.adminNotice ? await window.KinojoSupabase.adminNotice('createNotice',{noticeType,content}) : {ok:false,message:'Supabase 설정을 확인해 주세요.'};
       if(!data || data.ok === false){
         throw Object.assign(new Error(data?.message||'공지사항 등록 결과를 확인하지 못했습니다.'), { data });
       }
@@ -145,7 +145,7 @@
     }catch(e){
       let saved=false;
       try{
-        const check=window.KinojoApi ? await window.KinojoApi.getAction('notices',{limit:5}) : null;
+        const check=window.KinojoSupabase?.getLatestAnnouncements ? {ok:true,notices:await window.KinojoSupabase.getLatestAnnouncements(5)} : null;
         saved=!!(check&&check.ok&&Array.isArray(check.notices)&&check.notices.some(n=>String(n.content||'').trim()===content));
       }catch(_checkErr){}
       if(saved){
