@@ -134,16 +134,14 @@
   function headers(cfg){
     return {
       apikey: cfg.publishableKey,
-      Authorization: 'Bearer ' + cfg.publishableKey,
-      authorization: 'Bearer ' + cfg.publishableKey,
       'content-type': 'application/json'
     };
   }
 
   function buildUrl(cfg, path, query){
     const params = new URLSearchParams(query || '');
-    if(!params.has('apikey')) params.set('apikey', cfg.publishableKey);
-    return cfg.url + '/rest/v1/' + path.replace(/^\//, '') + '?' + params.toString();
+    const queryString = params.toString();
+    return cfg.url + '/rest/v1/' + path.replace(/^\//, '') + (queryString ? '?' + queryString : '');
   }
 
   async function request(path, options){
@@ -219,7 +217,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.13-web-passkey-apikey-fix',
+    version:'1.3.1.14-web-passkey-apikey-only',
     getConfig,
     isPreferred,
     isConfigured,
