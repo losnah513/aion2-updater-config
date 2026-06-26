@@ -10,7 +10,7 @@
     enabled:false,
     url:'https://josvoltpktvwysrasffq.supabase.co',
     publishableKey:'PASTE_SUPABASE_PUBLISHABLE_KEY_HERE',
-    fallbackToAppsScript:true
+    fallbackToAppsScript:false
   };
   let remoteConfigLoaded = false;
   let remoteConfig = null;
@@ -85,7 +85,7 @@
     cfg.rawEnabled = cfg.enabled === true || String(cfg.enabled).toLowerCase() === 'true';
     cfg.hasPlaceholderKey = !cfg.publishableKey || /PASTE_|YOUR_|여기에/i.test(cfg.publishableKey);
     cfg.enabled = !!(cfg.rawEnabled && cfg.url && cfg.publishableKey && !cfg.hasPlaceholderKey);
-    cfg.fallbackToAppsScript = cfg.fallbackToAppsScript !== false;
+    cfg.fallbackToAppsScript = cfg.fallbackToAppsScript === true;
     return cfg;
   }
 
@@ -134,6 +134,7 @@
   function headers(cfg){
     return {
       apikey: cfg.publishableKey,
+      Authorization: 'Bearer ' + cfg.publishableKey,
       'content-type': 'application/json'
     };
   }
@@ -220,7 +221,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.15-web-passkey-utf8-query-fix',
+    version:'1.3.1.15-web-passkey-supabase-only-2026062604',
     getConfig,
     isPreferred,
     isConfigured,

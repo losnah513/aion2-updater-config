@@ -19,6 +19,6 @@
     "enabled": true,
     "url": "https://josvoltpktvwysrasffq.supabase.co",
     "publishableKey": "sb_publishable__v26JGbKRFKGbU0SseU5Iw_qwIoHUAC",
-    "fallbackToAppsScript": true
+    "fallbackToAppsScript": false
   }
 }

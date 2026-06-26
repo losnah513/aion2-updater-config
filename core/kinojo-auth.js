@@ -313,23 +313,37 @@
       let data = null;
       let supabaseError = null;
       let supabasePreferred = false;
+      let allowLegacyAppsScriptLogin = true;
+
       if(window.KinojoSupabase && typeof window.KinojoSupabase.verifyPassKey === 'function'){
         try{
           if(typeof window.KinojoSupabase.loadRemoteConfig === 'function') await window.KinojoSupabase.loadRemoteConfig();
           supabasePreferred = typeof window.KinojoSupabase.isPreferred === 'function' ? window.KinojoSupabase.isPreferred() : true;
-          data = await window.KinojoSupabase.verifyPassKey(code);
+          const cfg = window.KinojoSupabase.getConfig ? window.KinojoSupabase.getConfig() : null;
+          allowLegacyAppsScriptLogin = !!(cfg && cfg.fallbackToAppsScript === true);
+
+          if(supabasePreferred){
+            data = await window.KinojoSupabase.verifyPassKey(code);
+          }
         }catch(err){
           supabaseError = err;
           const cfg = window.KinojoSupabase.getConfig ? window.KinojoSupabase.getConfig() : null;
-          if(err && err.kinojoSupabaseConfigError){
+          allowLegacyAppsScriptLogin = !!(cfg && cfg.fallbackToAppsScript === true);
+
+          // Supabase 이관 이후 로그인은 member_codes 단일 경로로 처리한다.
+          // Apps Script에 과거 코드가 남아 있어도 여기로 넘기지 않아 중복 로그인/오류 누적을 막는다.
+          if(supabasePreferred && !allowLegacyAppsScriptLogin){
             throw err;
           }
-          if(cfg && cfg.fallbackToAppsScript === false){
+          if(err && err.kinojoSupabaseConfigError){
             throw err;
           }
         }
       }
       if(!data){
+        if(supabasePreferred && !allowLegacyAppsScriptLogin){
+          throw supabaseError || new Error('PASS KEY가 없거나 비활성화된 계정입니다.');
+        }
         data = window.KinojoApi
           ? await window.KinojoApi.postAction('login', { code })
           : await (await fetch(apiUrl(), { method:'POST', body:JSON.stringify({ action:'login', code }) })).json();
