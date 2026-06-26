@@ -1,0 +1,62 @@
+/*
+ * ARCANA RECOMMEND PANEL LAYOUT
+ * 역할: 추천 아르카나 카드 내부의 탭/본문/placeholder만 관리한다.
+ * 카드 높이/좌우 균형은 arcana-layout-manager.css가 단독 관리한다.
+ * CTA 시각 연출은 arcana-cta.css가 단독 관리한다.
+ */
+
+.arcana-recommend-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.arcana-recommend-placeholder {
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  color: var(--arcana-muted);
+  font-size: 11px;
+  line-height: 1.45;
+  text-align: center;
+  background: transparent;
+  border: 0;
+}
+
+.arcana-recommend-tabs {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 4px;
+  min-height: 34px;
+  margin: 0 7px 6px;
+  border-bottom: 1px solid var(--arcana-line-soft);
+  box-sizing: border-box;
+}
+
+.arcana-recommend-tabs button {
+  min-height: 28px;
+  padding: 5px 10px;
+  font-size: 11px;
+}
+
+.arcana-recommend-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 8px 10px;
+}
+
+/* ARC-0.3.02 · 260614_04: 목표 달성 후 남는 추천 칸은 임의 스킬 대신 스킬 여유로 표시한다. */
+.arcana-recommend-card .arcana-slot.is-free-slot {
+  opacity: 0.74;
+}
+
+.arcana-recommend-card .arcana-slot.is-free-slot select,
+.arcana-recommend-card .arcana-slot.is-free-slot input,
+.arcana-recommend-card .arcana-slot.is-free-slot .arcana-custom-select-trigger {
+  color: #8a94a6;
+  background: rgba(248, 250, 252, 0.84);
+  border-style: dashed;
+}
