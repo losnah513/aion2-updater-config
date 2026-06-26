@@ -18,7 +18,7 @@
   "supabase": {
     "enabled": true,
     "url": "https://josvoltpktvwysrasffq.supabase.co",
-    "publishableKey": "PASTE_SUPABASE_PUBLISHABLE_KEY_HERE",
+    "publishableKey": "sb_publishable__v26JGbKRFKGbU0SseU5Iw_qwIoHUAC",
     "fallbackToAppsScript": true
   }
 }
