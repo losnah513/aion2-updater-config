@@ -1,5 +1,5 @@
 {
-  "version": "1.3.1.10",
+  "version": "1.3.1.11",
   "buildDate": "260625",
   "enabled": true,
   "testMode": false,
@@ -10,14 +10,14 @@
   ],
   "webAppUrl": "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec",
   "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.3.1.10/KINOJO_1_3_1_10.zip",
-  "notice": "✅ KINOJO 1.3.1.10 웹/확장 PASS KEY Supabase 우선 로그인 준비",
+  "notice": "✅ KINOJO 1.3.1.11 웹/확장 PASS KEY Supabase 우선 로그인 활성",
   "hallOfFameUrl": "https://kinojo.info/hof/",
-  "news": "웹 PASS KEY와 확장프로그램 PASS KEY가 Supabase member_codes를 우선 조회하도록 연결했습니다. publishableKey 입력 후 활성화됩니다.",
-  "patchTitle": "1.3.1.10 Supabase Pass Key Bridge",
-  "patchBody": "웹과 확장프로그램 로그인에서 Supabase member_codes 우선 조회, Apps Script fallback, role/level 매핑 보정을 반영했습니다.",
+  "news": "웹 PASS KEY와 확장프로그램 PASS KEY가 Supabase member_codes를 우선 조회합니다. publishableKey 입력 및 member_codes 등록 후 사용하세요.",
+  "patchTitle": "1.3.1.11 Supabase Pass Key Active",
+  "patchBody": "웹과 확장프로그램 로그인에서 Supabase member_codes 우선 조회를 활성화하고 웹 캐시 갱신을 보강했습니다.",
   "supabase": {
     "enabled": true,
     "url": "https://josvoltpktvwysrasffq.supabase.co",
-    "publishableKey": "Psb_publishable__v26JGbKRFKGbU0SseU5Iw_qwIoHUAC"
+    "publishableKey": "PASTE_SUPABASE_PUBLISHABLE_KEY_HERE"
   }
 }

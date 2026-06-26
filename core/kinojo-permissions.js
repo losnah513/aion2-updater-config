@@ -61,7 +61,7 @@
   function canCrawl(account){ return hasLevel(account, 1); }
 
   window.KinojoPermissions = {
-    version:'1.3.1.26',
+    version:'1.3.1.28',
     ROLE_LEVEL,
     ROLE_LABEL,
     labels,

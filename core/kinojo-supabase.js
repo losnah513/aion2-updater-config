@@ -186,7 +186,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.27-web-ext-passkey-bridge',
+    version:'1.3.1.28-web-ext-passkey-active',
     getConfig,
     loadRemoteConfig,
     normalizePassKey,

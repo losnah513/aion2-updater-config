@@ -17,7 +17,7 @@
   let codeRequestLookupCharacter = null;
   let codeRequestSubmitted = false;
   let codeRequestNoticeChecking = false;
-  const AUTH_SCHEMA_VERSION = 'role-v2-20260625';
+  const AUTH_SCHEMA_VERSION = 'supabase-passkey-v3-20260625';
 
   function migrateAuthCacheIfNeeded(){
     try{
