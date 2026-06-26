@@ -1,5 +1,5 @@
 {
-  "version": "1.3.1.11",
+  "version": "1.3.1.12",
   "buildDate": "260625",
   "enabled": true,
   "testMode": false,
@@ -9,15 +9,16 @@
     "9516658a61cf564d2001e1dc6b3f3fca526848dc65e4ac38faec05317e2dfedc"
   ],
   "webAppUrl": "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec",
-  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.3.1.10/KINOJO_1_3_1_10.zip",
-  "notice": "✅ KINOJO 1.3.1.11 웹/확장 PASS KEY Supabase 우선 로그인 활성",
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.3.1.12/KINOJO_1_3_1_12.zip",
+  "notice": "✅ KINOJO 1.3.1.12 Supabase PASS KEY 실제 연결 준비",
   "hallOfFameUrl": "https://kinojo.info/hof/",
-  "news": "웹 PASS KEY와 확장프로그램 PASS KEY가 Supabase member_codes를 우선 조회합니다. publishableKey 입력 및 member_codes 등록 후 사용하세요.",
-  "patchTitle": "1.3.1.11 Supabase Pass Key Active",
-  "patchBody": "웹과 확장프로그램 로그인에서 Supabase member_codes 우선 조회를 활성화하고 웹 캐시 갱신을 보강했습니다.",
+  "news": "Supabase SQL 실행 후 config.json의 publishableKey를 sb_publishable_ 전체 문자열로 교체하면 웹/확장 PASS KEY가 Supabase member_codes를 우선 조회합니다.",
+  "patchTitle": "1.3.1.12 Supabase Pass Key Connect",
+  "patchBody": "웹과 확장프로그램이 Supabase member_codes를 실제 우선 조회하도록 연결 안내와 오류 메시지를 보강했습니다.",
   "supabase": {
     "enabled": true,
     "url": "https://josvoltpktvwysrasffq.supabase.co",
-    "publishableKey": "PASTE_SUPABASE_PUBLISHABLE_KEY_HERE"
+    "publishableKey": "PASTE_SUPABASE_PUBLISHABLE_KEY_HERE",
+    "fallbackToAppsScript": true
   }
 }

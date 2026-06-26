@@ -9,7 +9,8 @@
   const DEFAULT_CONFIG = {
     enabled:false,
     url:'https://josvoltpktvwysrasffq.supabase.co',
-    publishableKey:'PASTE_SUPABASE_PUBLISHABLE_KEY_HERE'
+    publishableKey:'PASTE_SUPABASE_PUBLISHABLE_KEY_HERE',
+    fallbackToAppsScript:true
   };
   let remoteConfigLoaded = false;
   let remoteConfig = null;
@@ -79,8 +80,22 @@
     const cfg = Object.assign({}, DEFAULT_CONFIG, fromRemote, runtime);
     cfg.url = String(cfg.url || '').replace(/\/$/, '');
     cfg.publishableKey = String(cfg.publishableKey || cfg.anonKey || '').trim();
-    cfg.enabled = !!(cfg.enabled && cfg.url && cfg.publishableKey && !/PASTE_|YOUR_/i.test(cfg.publishableKey));
+    cfg.rawEnabled = cfg.enabled === true || String(cfg.enabled).toLowerCase() === 'true';
+    cfg.hasPlaceholderKey = !cfg.publishableKey || /PASTE_|YOUR_|여기에/i.test(cfg.publishableKey);
+    cfg.enabled = !!(cfg.rawEnabled && cfg.url && cfg.publishableKey && !cfg.hasPlaceholderKey);
+    cfg.fallbackToAppsScript = cfg.fallbackToAppsScript !== false;
     return cfg;
+  }
+
+  function isPreferred(){
+    const runtime = window.KINOJO_SUPABASE_CONFIG || {};
+    const fromRemote = remoteConfig && remoteConfig.supabase || {};
+    const raw = Object.assign({}, DEFAULT_CONFIG, fromRemote, runtime);
+    return raw.enabled === true || String(raw.enabled).toLowerCase() === 'true';
+  }
+
+  function isConfigured(){
+    return getConfig().enabled;
   }
 
   async function loadRemoteConfig(){
@@ -96,7 +111,21 @@
   async function ensureConfig(){
     await loadRemoteConfig();
     const cfg = getConfig();
-    if(!cfg.enabled) throw new Error('Supabase 설정이 비활성화되어 있습니다. config.json의 supabase.enabled와 publishableKey를 확인하세요.');
+    if(!cfg.rawEnabled){
+      const err = new Error('Supabase 설정이 꺼져 있습니다. config.json의 supabase.enabled를 true로 설정하세요.');
+      err.kinojoSupabaseConfigError = true;
+      throw err;
+    }
+    if(cfg.hasPlaceholderKey){
+      const err = new Error('Supabase publishableKey가 아직 입력되지 않았습니다. sb_publishable_로 시작하는 전체 키를 config.json에 넣어주세요.');
+      err.kinojoSupabaseConfigError = true;
+      throw err;
+    }
+    if(!cfg.url){
+      const err = new Error('Supabase URL이 비어 있습니다. https://프로젝트.supabase.co 형식으로 입력하세요.');
+      err.kinojoSupabaseConfigError = true;
+      throw err;
+    }
     return cfg;
   }
 
@@ -186,8 +215,10 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.28-web-ext-passkey-active',
+    version:'1.3.1.12-web-passkey-connect',
     getConfig,
+    isPreferred,
+    isConfigured,
     loadRemoteConfig,
     normalizePassKey,
     normalizeRole,

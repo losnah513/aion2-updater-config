@@ -17,7 +17,7 @@
   let codeRequestLookupCharacter = null;
   let codeRequestSubmitted = false;
   let codeRequestNoticeChecking = false;
-  const AUTH_SCHEMA_VERSION = 'supabase-passkey-v3-20260625';
+  const AUTH_SCHEMA_VERSION = 'supabase-passkey-v4-20260625';
 
   function migrateAuthCacheIfNeeded(){
     try{
@@ -312,11 +312,21 @@
       if(status) status.textContent = '';
       let data = null;
       let supabaseError = null;
+      let supabasePreferred = false;
       if(window.KinojoSupabase && typeof window.KinojoSupabase.verifyPassKey === 'function'){
         try{
+          if(typeof window.KinojoSupabase.loadRemoteConfig === 'function') await window.KinojoSupabase.loadRemoteConfig();
+          supabasePreferred = typeof window.KinojoSupabase.isPreferred === 'function' ? window.KinojoSupabase.isPreferred() : true;
           data = await window.KinojoSupabase.verifyPassKey(code);
         }catch(err){
           supabaseError = err;
+          const cfg = window.KinojoSupabase.getConfig ? window.KinojoSupabase.getConfig() : null;
+          if(err && err.kinojoSupabaseConfigError){
+            throw err;
+          }
+          if(cfg && cfg.fallbackToAppsScript === false){
+            throw err;
+          }
         }
       }
       if(!data){
@@ -327,7 +337,10 @@
       if(!data.ok) throw new Error(data.message || (supabaseError && supabaseError.message) || '로그인에 실패했습니다.');
       const sessionRole = roleOf(data.session) || roleOf(data.account);
       if(!sessionRole){
-        throw new Error('로그인 응답에 등급 정보가 없습니다. PASS KEY 권한 설정을 확인해 주세요.');
+        if(supabasePreferred && supabaseError){
+          throw new Error('Supabase 로그인 실패: ' + (supabaseError.message || supabaseError));
+        }
+        throw new Error('로그인 응답에 등급 정보가 없습니다. Supabase member_codes 등록 또는 Apps Script 새 배포 상태를 확인해 주세요.');
       }
       if(data.session){
         data.session.role = sessionRole;
