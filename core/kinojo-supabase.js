@@ -78,7 +78,9 @@
     const runtime = window.KINOJO_SUPABASE_CONFIG || {};
     const fromRemote = remoteConfig && remoteConfig.supabase || {};
     const cfg = Object.assign({}, DEFAULT_CONFIG, fromRemote, runtime);
-    cfg.url = String(cfg.url || '').replace(/\/$/, '');
+    cfg.url = String(cfg.url || '').trim()
+      .replace(/\/rest\/v1\/?$/i, '')
+      .replace(/\/$/, '');
     cfg.publishableKey = String(cfg.publishableKey || cfg.anonKey || '').trim();
     cfg.rawEnabled = cfg.enabled === true || String(cfg.enabled).toLowerCase() === 'true';
     cfg.hasPlaceholderKey = !cfg.publishableKey || /PASTE_|YOUR_|여기에/i.test(cfg.publishableKey);
@@ -132,14 +134,16 @@
   function headers(cfg){
     return {
       apikey: cfg.publishableKey,
+      Authorization: 'Bearer ' + cfg.publishableKey,
       authorization: 'Bearer ' + cfg.publishableKey,
       'content-type': 'application/json'
     };
   }
 
   function buildUrl(cfg, path, query){
-    const qs = query ? (query.startsWith('?') ? query : '?' + query) : '';
-    return cfg.url + '/rest/v1/' + path.replace(/^\//, '') + qs;
+    const params = new URLSearchParams(query || '');
+    if(!params.has('apikey')) params.set('apikey', cfg.publishableKey);
+    return cfg.url + '/rest/v1/' + path.replace(/^\//, '') + '?' + params.toString();
   }
 
   async function request(path, options){
@@ -215,7 +219,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.12-web-passkey-connect',
+    version:'1.3.1.13-web-passkey-apikey-fix',
     getConfig,
     isPreferred,
     isConfigured,

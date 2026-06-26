@@ -1,5 +1,5 @@
 {
-  "version": "1.3.1.12",
+  "version": "1.3.1.13",
   "buildDate": "260625",
   "enabled": true,
   "testMode": false,
@@ -9,12 +9,12 @@
     "9516658a61cf564d2001e1dc6b3f3fca526848dc65e4ac38faec05317e2dfedc"
   ],
   "webAppUrl": "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec",
-  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.3.1.12/KINOJO_1_3_1_12.zip",
-  "notice": "✅ KINOJO 1.3.1.12 Supabase PASS KEY 실제 연결 준비",
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.3.1.13/KINOJO_1_3_1_13.zip",
+  "notice": "✅ KINOJO 1.3.1.13 Supabase API Key 헤더/URL 파라미터 보강",
   "hallOfFameUrl": "https://kinojo.info/hof/",
-  "news": "Supabase SQL 실행 후 config.json의 publishableKey를 sb_publishable_ 전체 문자열로 교체하면 웹/확장 PASS KEY가 Supabase member_codes를 우선 조회합니다.",
-  "patchTitle": "1.3.1.12 Supabase Pass Key Connect",
-  "patchBody": "웹과 확장프로그램이 Supabase member_codes를 실제 우선 조회하도록 연결 안내와 오류 메시지를 보강했습니다.",
+  "news": "Supabase PASS KEY 로그인 요청에서 No API key found 오류가 나지 않도록 API Key 전달 방식을 보강했습니다.",
+  "patchTitle": "1.3.1.13 Supabase API Key Fix",
+  "patchBody": "웹과 확장프로그램의 Supabase REST 요청에 apikey 헤더와 URL 파라미터를 함께 전달하도록 보강했습니다.",
   "supabase": {
     "enabled": true,
     "url": "https://josvoltpktvwysrasffq.supabase.co",
