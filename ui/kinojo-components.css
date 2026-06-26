@@ -1,0 +1,56 @@
+/* ============================================================
+   KINOJO Shared Components / Visual Contract
+   ------------------------------------------------------------
+   - Common white UI surface rules
+   - Shared buttons, cards, tags, and hover behavior
+   - Loaded after feature CSS to keep the visual contract stable
+============================================================ */
+
+/* KINOJO visual-contract restore patch: white UI, no shadows, compact radii, stable columns */
+:root{
+  --panel:#fff;
+  --line:#e5e7eb;
+  --radius-card:2px;
+  --radius-control:3px;
+  --radius-name-card:3px;
+  --shadow:none;
+}
+body{
+  background:#fff!important;
+}
+.banner,.section,.overall,.classes,.mvp-card,.reaction-card,.award-card,.relation-combined-card,
+.chick-card,.admin-dropdown,.admin-result-box,.admin-visit-control,.reaction-popover,.construction-card,.visit-mini{
+  background:#fff!important;
+  border-radius:var(--radius-card)!important;
+  box-shadow:none!important;
+}
+.section-head,.overall-head,.mvp-head,.reaction-card-head,.relation-main-head,.relation-sub-head,
+.admin-dropdown-head,.admin-result-head,.reaction-popover-head{
+  background:#fff!important;
+  box-shadow:none!important;
+}
+.search,.btn,.page-btn,.send-btn,.reaction-choice button,.construction-ok,.pill,.admin-swap-btn,.reaction-close{
+  background:#fff!important;
+  border-radius:var(--radius-control)!important;
+  box-shadow:none!important;
+}
+.btn,.page-btn,.send-btn,.reaction-choice button,.construction-ok,.pill,.admin-swap-btn,.character-name-text,.name-tag,.mini-row,.award-row,.relation-row{
+  transition:transform .16s ease, background-color .16s ease, border-color .16s ease, filter .16s ease, opacity .16s ease;
+}
+.btn:hover,.page-btn:hover,.send-btn:hover,.reaction-choice button:hover,.construction-ok:hover,
+.pill:hover,.admin-swap-btn:hover{
+  background:#f8fafc!important;
+  border-color:#cfd6df!important;
+  transform:translateY(-1px);
+  filter:none!important;
+}
+.pill.active,.admin-swap-btn.active,.reaction-choice button.active{
+  background:#eef4ff!important;
+  border-color:#aebee0!important;
+}
+.name-tag,.character-name-text{
+  border-radius:var(--radius-name-card)!important;
+}
+.mini-row:hover,.award-row:hover,.relation-row:hover,.name-tag:hover{
+  background:#f8fafc!important;
+}
