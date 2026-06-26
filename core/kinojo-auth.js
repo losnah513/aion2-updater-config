@@ -551,12 +551,10 @@
 
   async function codeRequest(command, extra={}){
     const body = Object.assign({ command, version:document.documentElement.dataset.kinojoVersion || '', url:location.href }, extra);
-    if(window.KinojoApi) return window.KinojoApi.postAction('codeRequest', body);
-    const res = await fetch(apiUrl(), {
-      method:'POST',
-      body:JSON.stringify(Object.assign({ action:'codeRequest' }, body))
-    });
-    return res.json();
+    if(window.KinojoSupabase && window.KinojoSupabase.isConfigured && window.KinojoSupabase.isConfigured()){
+      return window.KinojoSupabase.publicCodeRequest(command, body);
+    }
+    throw new Error('회원 코드 신청은 Supabase 서버 이관 후 사용 가능합니다. config.json과 code_requests 정책을 확인해 주세요.');
   }
 
   async function lookupCodeRequestCharacter(){
@@ -867,12 +865,10 @@
 
   async function accountAdmin(command, extra={}){
     const body = Object.assign({ command, sessionToken:getToken() }, extra);
-    if(window.KinojoApi) return window.KinojoApi.postAction('accountAdmin', body);
-    const res = await fetch(apiUrl(), {
-      method:'POST',
-      body:JSON.stringify(Object.assign({ action:'accountAdmin' }, body))
-    });
-    return res.json();
+    if(window.KinojoSupabase && window.KinojoSupabase.isConfigured && window.KinojoSupabase.isConfigured()){
+      return window.KinojoSupabase.adminAccount(command, body);
+    }
+    throw new Error('관리자 페이지 기능은 Supabase 서버 이관 후 사용 가능합니다. config.json과 관리자 테이블 정책을 확인해 주세요.');
   }
 
   let pendingIssueCharacter = null;
