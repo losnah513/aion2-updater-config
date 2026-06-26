@@ -16,6 +16,8 @@
   };
   let remoteConfigLoaded = false;
   let remoteConfig = null;
+  let remoteConfigPromise = null;
+  let remoteConfigError = null;
 
   const ROLE_LEVELS = {
     GUEST:0,
@@ -99,29 +101,56 @@
   }
 
   function isConfigured(){
+    // 동기 상태 확인용이다. 기능 실행 전 판정에는 ensureConfig()/ensureReady()를 사용한다.
+    // config.json 로드가 아직 진행 중이면 즉시 실패 처리하지 않도록 로드를 시작만 해 둔다.
+    if(!remoteConfigLoaded && !remoteConfigPromise) loadRemoteConfig().catch(()=>{});
     return getConfig().enabled;
+  }
+
+  async function isConfiguredAsync(){
+    try{
+      await ensureConfig();
+      return true;
+    }catch(_err){
+      return false;
+    }
   }
 
   async function ensureReady(){
-    await loadRemoteConfig();
-    return getConfig().enabled;
+    return ensureConfig();
   }
 
-  async function loadRemoteConfig(){
-    if(remoteConfigLoaded) return remoteConfig;
-    remoteConfigLoaded = true;
-    try{
-      const res = await fetch(new URL('/config.json', location.origin).toString() + '?t=' + Date.now(), { cache:'no-store' });
-      if(res.ok) remoteConfig = await res.json();
-    }catch(_err){ remoteConfig = null; }
-    return remoteConfig;
+  async function loadRemoteConfig(force){
+    if(remoteConfigLoaded && !force) return remoteConfig;
+    if(remoteConfigPromise && !force) return remoteConfigPromise;
+
+    remoteConfigPromise = (async function(){
+      try{
+        remoteConfigError = null;
+        const res = await fetch(new URL('/config.json', location.origin).toString() + '?t=' + Date.now(), { cache:'no-store' });
+        if(!res.ok) throw new Error('config.json HTTP ' + res.status);
+        remoteConfig = await res.json();
+        remoteConfigLoaded = true;
+        return remoteConfig;
+      }catch(err){
+        remoteConfig = null;
+        remoteConfigLoaded = false;
+        remoteConfigError = err;
+        throw err;
+      }finally{
+        remoteConfigPromise = null;
+      }
+    })();
+
+    return remoteConfigPromise;
   }
 
   async function ensureConfig(){
     await loadRemoteConfig();
     const cfg = getConfig();
     if(!remoteConfig && !(window.KINOJO_SUPABASE_CONFIG && Object.keys(window.KINOJO_SUPABASE_CONFIG).length)){
-      const err = new Error('Supabase config.json을 아직 읽지 못했습니다. 네트워크 또는 배포 경로를 확인해 주세요.');
+      const reason = remoteConfigError && remoteConfigError.message ? ' (' + remoteConfigError.message + ')' : '';
+      const err = new Error('Supabase config.json을 읽지 못했습니다. 네트워크 또는 배포 경로를 확인해 주세요.' + reason);
       err.kinojoSupabaseConfigError = true;
       throw err;
     }
@@ -220,11 +249,14 @@
 
   function currentAccount(){
     const auth = window.KinojoAuth || {};
-    const account = typeof auth.getAccount === 'function' ? auth.getAccount() : readLocalJson('kinojo_login_account_v1');
-    const session = typeof auth.getSession === 'function' ? auth.getSession() : readLocalJson('kinojo_login_session_v1');
-    // 관리자 패널의 권한 판정은 account/session 중 어느 한쪽만 있어도 동일하게 인식해야 한다.
-    // Supabase 이관 중 구버전 코드는 account만, 신버전 코드는 session만 참조하는 문제가 반복되어 여기서 단일 principal로 병합한다.
-    return Object.assign({}, session || {}, account || {});
+    const storedAccount = readLocalJson('kinojo_login_account_v1');
+    const storedSession = readLocalJson('kinojo_login_session_v1');
+    const authAccount = typeof auth.getAccount === 'function' ? auth.getAccount() : null;
+    const authSession = typeof auth.getSession === 'function' ? auth.getSession() : null;
+    // 관리자 권한 판정은 Auth 함수 반환값이 비었거나 세션 만료 판정을 받아도
+    // Supabase 로그인 시 저장된 account/session을 함께 병합해 동일 기준으로 처리한다.
+    // 기능별로 getSession만 보거나 getAccount만 봐서 관리자 권한이 흔들리는 문제를 방지한다.
+    return Object.assign({}, storedSession || {}, storedAccount || {}, authSession || {}, authAccount || {});
   }
 
   function assertAdmin(){
@@ -540,25 +572,85 @@
     return ['공지','알림','이벤트'].includes(type) ? type : '공지';
   }
 
+  function noticeFromRow(row){
+    if(!row) return null;
+    return {
+      id: row.id,
+      noticeType: row.notice_type || row.notice || '공지',
+      notice: row.notice || row.notice_type || '공지',
+      author: row.author || '관리자',
+      content: row.content || '',
+      isActive: row.is_active !== false,
+      priority: Number(row.priority || 0),
+      createdBy: row.created_by || '',
+      createdAt: row.created_at || '',
+      updatedAt: row.updated_at || ''
+    };
+  }
+
+  async function listAdminNotices(limit){
+    assertAdmin();
+    const q = 'select=*&is_active=eq.true&order=priority.desc,created_at.desc&limit=' + encodeURIComponent(limit || 20);
+    const rows = await request('announcements', { query:q });
+    return { ok:true, notices:(Array.isArray(rows) ? rows : []).map(noticeFromRow).filter(Boolean) };
+  }
+
   async function adminNotice(command, extra={}){
     const admin = assertAdmin();
     const normalizedCommand = String(command || '').trim();
-    if(normalizedCommand !== 'createNotice') return { ok:false, message:'알 수 없는 공지 관리자 명령입니다.' };
-    const content = String(extra.content || '').trim();
-    if(!content) return { ok:false, message:'공지 내용을 입력해 주세요.' };
-    const noticeType = normalizeNoticeType(extra.noticeType || extra.notice);
-    const body = {
-      notice_type: noticeType,
-      notice: noticeType,
-      author: noticeAuthorLabel(admin.account),
-      content: content.slice(0, 500),
-      is_active: true,
-      priority: 0,
-      created_by: admin.account.mainCharacter || admin.role
-    };
-    const rows = await request('announcements', { method:'POST', headers:{ Prefer:'return=representation' }, body });
-    const row = Array.isArray(rows) ? rows[0] : rows;
-    return { ok:true, notice:{ createdAt:row.created_at, noticeType:row.notice_type || noticeType, author:row.author || body.author, content:row.content || content } };
+
+    if(normalizedCommand === 'listNotices' || normalizedCommand === 'listNotice'){
+      return listAdminNotices(extra.limit || 20);
+    }
+
+    if(normalizedCommand === 'createNotice'){
+      const content = String(extra.content || '').trim();
+      if(!content) return { ok:false, message:'공지 내용을 입력해 주세요.' };
+      const noticeType = normalizeNoticeType(extra.noticeType || extra.notice);
+      const body = {
+        notice_type: noticeType,
+        notice: noticeType,
+        author: noticeAuthorLabel(admin.account),
+        content: content.slice(0, 500),
+        is_active: true,
+        priority: Number(extra.priority || 0),
+        created_by: admin.account.mainCharacter || admin.role
+      };
+      const rows = await request('announcements', { method:'POST', headers:{ Prefer:'return=representation' }, body });
+      const row = Array.isArray(rows) ? rows[0] : rows;
+      return { ok:true, notice:noticeFromRow(row) };
+    }
+
+    if(normalizedCommand === 'updateNotice'){
+      const id = Number(extra.id || 0);
+      if(!id) return { ok:false, message:'수정할 공지 ID가 없습니다.' };
+      const content = String(extra.content || '').trim();
+      if(!content) return { ok:false, message:'공지 내용을 입력해 주세요.' };
+      const noticeType = normalizeNoticeType(extra.noticeType || extra.notice);
+      const body = {
+        notice_type: noticeType,
+        notice: noticeType,
+        content: content.slice(0, 500),
+        priority: Number(extra.priority || 0),
+        updated_at: new Date().toISOString()
+      };
+      const rows = await request('announcements', { method:'PATCH', query:'id=eq.' + encodeURIComponent(id), headers:{ Prefer:'return=representation' }, body });
+      const row = Array.isArray(rows) ? rows[0] : rows;
+      return { ok:true, notice:noticeFromRow(row), message:'공지사항이 수정되었습니다.' };
+    }
+
+    if(normalizedCommand === 'deleteNotice' || normalizedCommand === 'disableNotice'){
+      const id = Number(extra.id || 0);
+      if(!id) return { ok:false, message:'삭제할 공지 ID가 없습니다.' };
+      await request('announcements', {
+        method:'PATCH',
+        query:'id=eq.' + encodeURIComponent(id),
+        body:{ is_active:false, updated_at:new Date().toISOString() }
+      });
+      return { ok:true, id, message:'공지사항이 삭제되었습니다.' };
+    }
+
+    return { ok:false, message:'알 수 없는 공지 관리자 명령입니다.' };
   }
 
   function todayVisitKey(){
@@ -672,10 +764,11 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.15-web-admin-config-ready-2026062608',
+    version:'1.3.1.15-web-admin-notice-manage-2026062610',
     getConfig,
     isPreferred,
     isConfigured,
+    isConfiguredAsync,
     ensureReady,
     loadRemoteConfig,
     normalizePassKey,
