@@ -1,7 +1,7 @@
 /*
  * KINOJO Login UI Bridge
  * Role: 코드 로그인, 세션 보관, 권한 상태 표시, 회원 코드 관리 모달을 담당합니다.
- * Note: 실제 권한 판정은 Apps Script account_logic.gs / reaction_logic.gs가 최종 처리합니다.
+ * Note: 실제 권한 판정은 Supabase member_codes / Server Engine 기준으로 처리합니다.
  */
 (function(){
   const STORAGE_KEY = 'kinojo_login_session_v1';
@@ -38,7 +38,7 @@
     try{
       if(typeof WEB_APP_URL !== 'undefined' && WEB_APP_URL) return WEB_APP_URL;
     }catch(_err){}
-    return 'https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec';
+    return '';
   }
 
   function readJson(key){
@@ -331,7 +331,7 @@
           allowLegacyAppsScriptLogin = !!(cfg && cfg.fallbackToAppsScript === true);
 
           // Supabase 이관 이후 로그인은 member_codes 단일 경로로 처리한다.
-          // Apps Script에 과거 코드가 남아 있어도 여기로 넘기지 않아 중복 로그인/오류 누적을 막는다.
+          // legacy API에 과거 코드가 남아 있어도 여기로 넘기지 않아 중복 로그인/오류 누적을 막는다.
           if(supabasePreferred && !allowLegacyAppsScriptLogin){
             throw err;
           }
@@ -354,7 +354,7 @@
         if(supabasePreferred && supabaseError){
           throw new Error('Supabase 로그인 실패: ' + (supabaseError.message || supabaseError));
         }
-        throw new Error('로그인 응답에 등급 정보가 없습니다. Supabase member_codes 등록 또는 Apps Script 새 배포 상태를 확인해 주세요.');
+        throw new Error('로그인 응답에 등급 정보가 없습니다. Supabase member_codes 등록 상태를 확인해 주세요.');
       }
       if(data.session){
         data.session.role = sessionRole;

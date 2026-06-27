@@ -210,6 +210,58 @@
   const ADMIN_ROLES = ['MASTER','SUB_MASTER','MANAGER'];
   const PERMISSION_KEYS = ['sanctuary_edit','visit_manage','snapshot_manage','account_manage'];
 
+  const AION2_SERVER_MASTER = [
+    { raceId:1, serverId:'1001', serverName:'시엘', shortName:'시엘' }, { raceId:1, serverId:'1002', serverName:'네자칸', shortName:'네자' },
+    { raceId:1, serverId:'1003', serverName:'바이젤', shortName:'바이' }, { raceId:1, serverId:'1004', serverName:'카이시넬', shortName:'카이' },
+    { raceId:1, serverId:'1005', serverName:'유스티엘', shortName:'유스' }, { raceId:1, serverId:'1006', serverName:'아리엘', shortName:'아리' },
+    { raceId:1, serverId:'1007', serverName:'프레기온', shortName:'프레' }, { raceId:1, serverId:'1008', serverName:'메스람타에다', shortName:'메스' },
+    { raceId:1, serverId:'1009', serverName:'히타니에', shortName:'히타' }, { raceId:1, serverId:'1010', serverName:'나니아', shortName:'나니' },
+    { raceId:1, serverId:'1011', serverName:'타하바타', shortName:'타하' }, { raceId:1, serverId:'1012', serverName:'루터스', shortName:'루터' },
+    { raceId:1, serverId:'1013', serverName:'페르노스', shortName:'페르' }, { raceId:1, serverId:'1014', serverName:'다미누', shortName:'다미' },
+    { raceId:1, serverId:'1015', serverName:'카사카', shortName:'카사' }, { raceId:1, serverId:'1016', serverName:'바카르마', shortName:'바카' },
+    { raceId:1, serverId:'1017', serverName:'챈가룽', shortName:'챈가' }, { raceId:1, serverId:'1018', serverName:'코치룽', shortName:'코치' },
+    { raceId:1, serverId:'1019', serverName:'이슈타르', shortName:'이슈' }, { raceId:1, serverId:'1020', serverName:'티아마트', shortName:'티아' },
+    { raceId:1, serverId:'1021', serverName:'포에타', shortName:'포에' },
+    { raceId:2, serverId:'2001', serverName:'이스라펠', shortName:'이스' }, { raceId:2, serverId:'2002', serverName:'지켈', shortName:'지켈' },
+    { raceId:2, serverId:'2003', serverName:'트리니엘', shortName:'트리' }, { raceId:2, serverId:'2004', serverName:'루미엘', shortName:'루미' },
+    { raceId:2, serverId:'2005', serverName:'마르쿠탄', shortName:'마르' }, { raceId:2, serverId:'2006', serverName:'아스펠', shortName:'아스' },
+    { raceId:2, serverId:'2007', serverName:'에레슈키갈', shortName:'에레' }, { raceId:2, serverId:'2008', serverName:'브리트라', shortName:'브리' },
+    { raceId:2, serverId:'2009', serverName:'네몬', shortName:'네몬' }, { raceId:2, serverId:'2010', serverName:'하달', shortName:'하달' },
+    { raceId:2, serverId:'2011', serverName:'루드라', shortName:'루드' }, { raceId:2, serverId:'2012', serverName:'울고른', shortName:'울고' },
+    { raceId:2, serverId:'2013', serverName:'무닌', shortName:'무닌' }, { raceId:2, serverId:'2014', serverName:'오다르', shortName:'오다' },
+    { raceId:2, serverId:'2015', serverName:'젠카카', shortName:'젠카' }, { raceId:2, serverId:'2016', serverName:'크로메데', shortName:'크로' },
+    { raceId:2, serverId:'2017', serverName:'콰이링', shortName:'콰이' }, { raceId:2, serverId:'2018', serverName:'바바룽', shortName:'바바' },
+    { raceId:2, serverId:'2019', serverName:'파프니르', shortName:'파프' }, { raceId:2, serverId:'2020', serverName:'인드나흐', shortName:'인드' },
+    { raceId:2, serverId:'2021', serverName:'이스할겐', shortName:'이스' }
+  ];
+
+  function stripServerSuffixFromCharacterName(value){
+    return String(value || '').trim().replace(/\[[^\]]+\]\s*$/, '').trim();
+  }
+  function getServerSuffixFromCharacterName(value){
+    const match = String(value || '').trim().match(/\[([^\]]+)\]\s*$/);
+    return match ? String(match[1] || '').trim() : '';
+  }
+  function getServerIdFromShortName(value){
+    const key = String(value || '').trim();
+    if(!key) return '';
+    if(key === '이스') return '2001';
+    const hit = AION2_SERVER_MASTER.find(s => s.serverName === key || s.shortName === key);
+    return hit ? hit.serverId : '';
+  }
+  function getServerNameByServerId(value){
+    const id = String(value || '').trim();
+    const hit = AION2_SERVER_MASTER.find(s => s.serverId === id);
+    return hit ? hit.serverName : '';
+  }
+  function parseCharacterLookupInput(value, fallbackServerId='2002'){
+    const raw = String(value || '').trim();
+    const characterName = stripServerSuffixFromCharacterName(raw);
+    const suffix = getServerSuffixFromCharacterName(raw);
+    const serverId = getServerIdFromShortName(suffix) || String(fallbackServerId || '2002');
+    return { raw, characterName, serverSuffix:suffix, serverId, serverName:getServerNameByServerId(serverId) };
+  }
+
   function normalizeMemberCode(value){
     return String(value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
   }
@@ -334,31 +386,38 @@
   }
 
   async function lookupMainCharacter(name){
-    const target = String(name || '').trim();
+    const parsed = parseCharacterLookupInput(name);
+    const target = parsed.characterName;
     if(!target) return { ok:false, message:'캐릭터 이름을 입력해 주세요.' };
 
-    // Phase 2 초기 서버 이관: CHARACTER_MASTER가 Supabase에 없거나 권한이 없으면 입력값을 본캐 후보로 유지한다.
-    // 이후 CHARACTER_MASTER 이관이 완료되면 이 함수가 서버 기준 본캐 판정으로 자동 강화된다.
+    // Server Engine 이관 기준: Apps Script의 [서버약칭] 파싱을 웹에서도 동일하게 적용한다.
+    // 예) 찐찐[울고] -> character_name=찐찐, server_id=2012. DB에는 서버 태그를 저장하지 않는다.
     try{
-      const query = [
-        'select=character_name,main_character_name,is_main,class_name',
-        'or=(character_name.eq.' + encodeURIComponent(target) + ',main_character_name.eq.' + encodeURIComponent(target) + ')',
-        'limit=20'
-      ].join('&');
-      const rows = await request('character_master', { query });
+      const filters = [
+        'select=server_id,server_name,character_name,main_character_name,is_main,class_name',
+        'or=(character_name.eq.' + encodeURIComponent(target) + ',main_character_name.eq.' + encodeURIComponent(target) + ')'
+      ];
+      if(parsed.serverSuffix) filters.push('server_id=eq.' + encodeURIComponent(parsed.serverId));
+      filters.push('limit=20');
+      const rows = await request('character_master', { query:filters.join('&') });
       const list = Array.isArray(rows) ? rows : [];
-      const exact = list.find(row => String(row.character_name || '').trim() === target) || list[0];
+      const exact = list.find(row => String(row.character_name || '').trim() === target && (!parsed.serverSuffix || String(row.server_id || '') === parsed.serverId))
+        || list.find(row => String(row.character_name || '').trim() === target)
+        || list[0];
       if(exact){
-        const main = String(exact.main_character_name || exact.character_name || target).trim();
-        const isMain = exact.is_main === true || String(exact.is_main).toUpperCase() === 'TRUE' || main === String(exact.character_name || '').trim();
-        if(!isMain) return { ok:false, message:'메인 캐릭터만 코드 발급이 가능합니다.', character:{ characterName:target, mainCharacter:main, className:exact.class_name || '' } };
-        return { ok:true, character:{ characterName:String(exact.character_name || main), mainCharacter:main, className:exact.class_name || '', role:'MEMBER' } };
+        const main = stripServerSuffixFromCharacterName(exact.main_character_name || exact.character_name || target);
+        const rowName = stripServerSuffixFromCharacterName(exact.character_name || target);
+        const isMain = exact.is_main === true || String(exact.is_main).toUpperCase() === 'TRUE' || main === rowName;
+        const serverId = String(exact.server_id || parsed.serverId || '');
+        const serverName = exact.server_name || parsed.serverName || getServerNameByServerId(serverId);
+        if(!isMain) return { ok:false, message:'메인 캐릭터만 코드 발급이 가능합니다.', character:{ characterName:rowName, mainCharacter:main, className:exact.class_name || '', serverId, serverName } };
+        return { ok:true, character:{ characterName:rowName || main, mainCharacter:main, className:exact.class_name || '', role:'MEMBER', serverId, serverName } };
       }
     }catch(_err){
       // CHARACTER_MASTER 서버 이관 전에는 회원관리 이관을 막지 않는다.
     }
 
-    return { ok:true, character:{ characterName:target, mainCharacter:target, className:'클래스 미확인', role:'MEMBER' }, pendingCharacterMaster:true };
+    return { ok:true, character:{ characterName:target, mainCharacter:target, className:'클래스 미확인', role:'MEMBER', serverId:parsed.serverId, serverName:parsed.serverName }, pendingCharacterMaster:true };
   }
 
   async function publicCodeRequest(command, extra={}){
@@ -714,6 +773,223 @@
     return { ok:true, stats };
   }
 
+
+  function buildRpcUrl(cfg, fn){
+    return cfg.url + '/rest/v1/rpc/' + String(fn || '').replace(/^\//, '');
+  }
+
+  async function rpc(fn, params){
+    const cfg = await ensureConfig();
+    const res = await fetch(buildRpcUrl(cfg, fn), {
+      method:'POST',
+      headers:Object.assign(headers(cfg), { Prefer:'return=representation' }),
+      body:JSON.stringify(params || {}),
+      cache:'no-store'
+    });
+    const text = await res.text();
+    let data = null;
+    if(text){
+      try{ data = JSON.parse(text); }catch(_err){ data = text; }
+    }
+    if(!res.ok) throw new Error(data && (data.message || data.details || data.hint) || text || ('HTTP ' + res.status));
+    return data;
+  }
+
+  function snakeOrCamel(row, snake, camel, fallback){
+    if(row && row[camel] !== undefined && row[camel] !== null) return row[camel];
+    if(row && row[snake] !== undefined && row[snake] !== null) return row[snake];
+    return fallback;
+  }
+
+  function numberLabel(value){
+    const n = Number(value || 0);
+    return Number.isFinite(n) && n > 0 ? n.toLocaleString('ko-KR') : '';
+  }
+
+  function hallItemFromRow(row, rankFallback){
+    const name = stripServerSuffixFromCharacterName(snakeOrCamel(row, 'character_name', 'characterName', ''));
+    const owner = stripServerSuffixFromCharacterName(snakeOrCamel(row, 'main_character_name', 'mainCharacterName', name));
+    const serverId = String(snakeOrCamel(row, 'server_id', 'serverId', '') || '');
+    const serverName = snakeOrCamel(row, 'server_name', 'serverName', '') || getServerNameByServerId(serverId);
+    const pvePower = Number(snakeOrCamel(row, 'power_total', 'powerTotal', 0) || 0);
+    const pvpPower = Number(snakeOrCamel(row, 'pvp_power_total', 'pvpPowerTotal', 0) || 0);
+    const itemLevel = Number(snakeOrCamel(row, 'item_level_total', 'itemLevelTotal', 0) || 0);
+    const powerDelta = Number(snakeOrCamel(row, 'power_delta', 'powerDelta', 0) || 0);
+    const itemDelta = Number(snakeOrCamel(row, 'item_level_delta', 'itemLevelDelta', 0) || 0);
+    const className = snakeOrCamel(row, 'class_name', 'className', '') || '';
+    const reviewText = snakeOrCamel(row, 'review_text', 'reviewText', '') || '';
+    const growthLabel = snakeOrCamel(row, 'growth_label', 'growthLabel', '') || '';
+    const rank = Number(snakeOrCamel(row, 'rank_no', 'rankNo', rankFallback || 0) || rankFallback || 0);
+    return {
+      rank,
+      name,
+      owner,
+      className,
+      serverId,
+      serverName,
+      meta:serverName,
+      category:'PVE',
+      value:pvePower,
+      label:numberLabel(pvePower),
+      pvePower:pvePower,
+      pvePowerLabel:numberLabel(pvePower),
+      pvpPower:pvpPower,
+      pvpPowerLabel:numberLabel(pvpPower),
+      pveItem:itemLevel,
+      pvpItem:0,
+      itemLevel:itemLevel,
+      itemLabel:itemDelta ? (itemDelta > 0 ? '+' : '') + numberLabel(itemDelta) : numberLabel(itemLevel),
+      powerDelta,
+      itemLevelDelta:itemDelta,
+      powerLabel:powerDelta ? (powerDelta > 0 ? '+' : '') + numberLabel(powerDelta) : numberLabel(pvePower),
+      pveReview:reviewText || growthLabel,
+      pvpReview:growthLabel || reviewText,
+      growthStatus:snakeOrCamel(row, 'growth_status', 'growthStatus', '') || '',
+      growthLabel,
+      profileImageUrl:snakeOrCamel(row, 'profile_image_url', 'profileImageUrl', '') || '',
+      detailUrl:snakeOrCamel(row, 'detail_url', 'detailUrl', '') || '',
+      isMain:snakeOrCamel(row, 'is_main', 'isMain', true) !== false,
+      raw:row
+    };
+  }
+
+  function groupByClass(items){
+    const map = {};
+    (items || []).forEach(item => {
+      const key = item.className || '직업 미확인';
+      if(!map[key]) map[key] = [];
+      map[key].push(item);
+    });
+    return map;
+  }
+
+  function countByClass(items){
+    const count = {};
+    (items || []).forEach(item => {
+      const key = item.className || '직업 미확인';
+      count[key] = (count[key] || 0) + 1;
+    });
+    return count;
+  }
+
+  function defaultClassReviewPool(){
+    return {
+      full:['클래스 경쟁이 치열합니다. 순위권 진입은 쉽지 않겠어요.'],
+      nearlyFull:['상위권 구도가 점점 선명해지고 있습니다.'],
+      small:['아직 표본이 적어 다음 조회가 기대됩니다.'],
+      partyReady:['파티 구성이 가능한 인원이 모였습니다.'],
+      needOneMore:['한 명만 더 모이면 더 재미있는 경쟁이 됩니다.'],
+      lonely:['아직 외로운 클래스입니다. 새 랭커를 기다립니다.']
+    };
+  }
+
+  async function getWebRanking(limit){
+    return rpc('kinojo_web_get_ranking', { p_limit:Number(limit || 300) });
+  }
+
+  async function getWebHallOfFame(limit){
+    const hall = await rpc('kinojo_web_get_hall_of_fame', { p_limit:Number(limit || 300) });
+    const mvp = await rpc('kinojo_web_get_mvp_candidates', { p_limit:20 }).catch(()=>({ ok:true, items:[] }));
+    const rows = Array.isArray(hall && hall.items) ? hall.items : [];
+    const items = rows.map((row, idx) => hallItemFromRow(row, idx + 1));
+    const main = items.filter(item => item.isMain !== false);
+    const all = items.slice();
+    const pveTop = items.slice().sort((a,b)=>(b.pvePower||0)-(a.pvePower||0)).slice(0,5).map((item,idx)=>Object.assign({}, item, { rank:idx+1, category:'PVE', value:item.pvePower, label:item.pvePowerLabel }));
+    const pvpTop = items.slice().sort((a,b)=>(b.pvpPower||0)-(a.pvpPower||0)).slice(0,5).map((item,idx)=>Object.assign({}, item, { rank:idx+1, category:'PVP', value:item.pvpPower, label:item.pvpPowerLabel }));
+    const mvpCandidatesTop3 = (Array.isArray(mvp && mvp.items) ? mvp.items : []).map((row, idx)=>hallItemFromRow(row, idx + 1)).slice(0,3);
+    const updatedAt = rows[0] && (rows[0].updated_at || rows[0].ranking_date || rows[0].created_at) || '';
+    return {
+      ok:true,
+      source:'supabase_035',
+      updatedAt,
+      overallMain:main,
+      overallAll:all,
+      classMain:groupByClass(main),
+      classAll:groupByClass(all),
+      classMainCount:countByClass(main),
+      classAllCount:countByClass(all),
+      pveTop,
+      pvpTop,
+      mvp:mvpCandidatesTop3[0] || null,
+      mvpCandidatesTop3,
+      mvpConfirmed:false,
+      weeklyAwards:{
+        growthKing:items.slice().sort((a,b)=>(b.itemLevelDelta||0)-(a.itemLevelDelta||0)).filter(x=>x.itemLevelDelta).slice(0,5),
+        bulkUp:items.slice().sort((a,b)=>(b.powerDelta||0)-(a.powerDelta||0)).filter(x=>x.powerDelta).slice(0,5)
+      },
+      demonFamily:items.filter(item => String(item.serverId || '').startsWith('2') && item.serverId !== '2002').slice(0,40),
+      demonFamilyAll:items.filter(item => String(item.serverId || '').startsWith('2') && item.serverId !== '2002').slice(0,80),
+      partyFriend:items.filter(item => String(item.serverId || '').startsWith('1')).slice(0,40),
+      partyFriendAll:items.filter(item => String(item.serverId || '').startsWith('1')).slice(0,80),
+      newChicks:[],
+      reactionSummary:{ byName:{}, likeTop:[], dislikeTop:[] },
+      classReviewPool:defaultClassReviewPool()
+    };
+  }
+
+  async function getWebDashboard(){
+    return rpc('kinojo_web_get_dashboard', {});
+  }
+
+  async function getWebUpdaterStatus(){
+    return rpc('kinojo_web_get_updater_status', {});
+  }
+
+  function getVisitorKey(){
+    const key = 'kinojo_visitor_key_v1';
+    let value = '';
+    try{ value = localStorage.getItem(key) || ''; }catch(_err){}
+    if(!value){
+      value = 'kv_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
+      try{ localStorage.setItem(key, value); }catch(_err){}
+    }
+    return value;
+  }
+
+  async function logPageView(pageKey, payload){
+    return rpc('kinojo_log_page_view', {
+      p_page_key:String(pageKey || ''),
+      p_page_url:String(location.href || ''),
+      p_visitor_key:getVisitorKey(),
+      p_referrer:String(document.referrer || ''),
+      p_user_agent:String(navigator.userAgent || ''),
+      p_source_type:'WEB',
+      p_payload:payload || {}
+    });
+  }
+
+  async function getVisitStatsFromServer(pageKey, shouldLog){
+    if(shouldLog){
+      await logPageView(pageKey || 'web', {}).catch(()=>{});
+    }
+    const date = todayVisitKey();
+    const rows = await request('v_kinojo_page_view_daily', { query:'select=*&order=visit_date.asc' }).catch(()=>[]);
+    const stats = emptyVisitStats(date);
+    (Array.isArray(rows) ? rows : []).forEach(row => {
+      const rowDate = String(row.visit_date || '').replace(/-/g,'').slice(2,8);
+      const views = Number(row.view_count || row.visitor_count || 0);
+      stats.totalVisits += views;
+      if(rowDate === date) stats.todayVisits += views;
+    });
+    return stats;
+  }
+
+  async function webAction(action, params){
+    const name = String(action || '').trim();
+    const extra = params || {};
+    if(name === 'hallOfFame') return getWebHallOfFame(extra.limit || 300);
+    if(name === 'ranking') return getWebRanking(extra.limit || 300);
+    if(name === 'dashboard') return getWebDashboard();
+    if(name === 'updaterStatus') return getWebUpdaterStatus();
+    if(name === 'notices') return { ok:true, notices:(await getLatestAnnouncements(extra.limit || 5)).map(noticeFromRow).filter(Boolean) };
+    if(name === 'hallVisit'){
+      const mode = String(extra.mode || 'stats');
+      const shouldLog = mode === 'visit' || Number(extra.boost || 0) > 0;
+      return { ok:true, stats:await getVisitStatsFromServer(extra.pageKey || 'hall', shouldLog) };
+    }
+    return null;
+  }
+
   async function adminUnsupported(feature){
     return { ok:false, message:feature + ' 기능은 Phase 2에서 Apps Script 호출을 차단했습니다. 서버 연산 테이블/RPC 이관 후 활성화됩니다.' };
   }
@@ -764,7 +1040,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.15-web-admin-notice-manage-2026062610',
+    version:'1.3.1.15-web-read-api-2026062621',
     getConfig,
     isPreferred,
     isConfigured,
@@ -777,6 +1053,13 @@
     roleToLevel,
     getRoleLabel,
     request,
+    rpc,
+    webAction,
+    getWebHallOfFame,
+    getWebRanking,
+    getWebDashboard,
+    getWebUpdaterStatus,
+    logPageView,
     verifyPassKey,
     getLatestAnnouncements,
     getLockStatus,

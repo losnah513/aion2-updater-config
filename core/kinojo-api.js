@@ -1,11 +1,11 @@
 /*
  * KINOJO API ENGINE
- * Role: Apps Script/Web API 호출 공통 래퍼.
+ * Role: Server Engine 우선 / Apps Script legacy API 호출 공통 래퍼.
  * Rule: 각 페이지가 fetch를 직접 늘리지 않고 이 파일을 통해 GET/POST/action 호출을 공유합니다.
  */
 (function(){
   'use strict';
-  const DEFAULT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec';
+  const DEFAULT_WEB_APP_URL = '';
 
   function getBaseUrl(){
     const param = new URLSearchParams(location.search || '').get('api');
@@ -59,16 +59,24 @@
     return request(url, { method:'POST', body:JSON.stringify(body || {}) });
   }
 
-  function getAction(action, params){
+  async function getAction(action, params){
+    if(window.KinojoSupabase && typeof window.KinojoSupabase.webAction === 'function'){
+      const data = await window.KinojoSupabase.webAction(action, params || {});
+      if(data) return data;
+    }
     return getJson(getBaseUrl(), Object.assign({ action, t:Date.now() }, params || {}));
   }
 
-  function postAction(action, body){
+  async function postAction(action, body){
+    if(window.KinojoSupabase && typeof window.KinojoSupabase.webAction === 'function'){
+      const data = await window.KinojoSupabase.webAction(action, body || {});
+      if(data) return data;
+    }
     return postJson(getBaseUrl(), Object.assign({ action }, body || {}));
   }
 
   window.KinojoApi = {
-    version:'1.3.1.17',
+    version:'1.3.1.18-server-engine-bridge',
     ready:true,
     DEFAULT_WEB_APP_URL,
     getBaseUrl,

@@ -7,7 +7,9 @@ ArcanaApp.api = {
     const apiUrl = ArcanaApp.config && ArcanaApp.config.apiUrl;
 
     if (!apiUrl) {
-      return Promise.resolve(ArcanaApp.api.getFallbackData());
+      const data = ArcanaApp.api.getFallbackData();
+      data.source = 'local_server_bridge_pending';
+      return Promise.resolve(data);
     }
 
     return ArcanaApp.api
@@ -19,7 +21,7 @@ ArcanaApp.api = {
         return data;
       })
       .catch(error => {
-        console.warn('[Arcana] API 연결 실패. 임시 데이터로 실행합니다.', error);
+        console.warn('[Arcana] Server Engine 전용 API 대기 중. 내장 데이터로 실행합니다.', error);
         return ArcanaApp.api.getFallbackData();
       });
   },
