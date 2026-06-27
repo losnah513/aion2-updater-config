@@ -811,9 +811,11 @@
     const owner = stripServerSuffixFromCharacterName(snakeOrCamel(row, 'main_character_name', 'mainCharacterName', name));
     const serverId = String(snakeOrCamel(row, 'server_id', 'serverId', '') || '');
     const serverName = snakeOrCamel(row, 'server_name', 'serverName', '') || getServerNameByServerId(serverId);
-    const pvePower = Number(snakeOrCamel(row, 'power_total', 'powerTotal', 0) || 0);
-    const pvpPower = Number(snakeOrCamel(row, 'pvp_power_total', 'pvpPowerTotal', 0) || 0);
-    const itemLevel = Number(snakeOrCamel(row, 'item_level_total', 'itemLevelTotal', 0) || 0);
+    const pvePower = Number(snakeOrCamel(row, 'pve_power_total', 'pvePowerTotal', snakeOrCamel(row, 'latest_pve_combat_power', 'latestPveCombatPower', snakeOrCamel(row, 'power_total', 'powerTotal', 0))) || 0);
+    const pvpPower = Number(snakeOrCamel(row, 'pvp_power_total', 'pvpPowerTotal', snakeOrCamel(row, 'latest_pvp_combat_power', 'latestPvpCombatPower', 0)) || 0);
+    const pveItem = Number(snakeOrCamel(row, 'pve_item_level', 'pveItemLevel', snakeOrCamel(row, 'latest_pve_item_level', 'latestPveItemLevel', 0)) || 0);
+    const pvpItem = Number(snakeOrCamel(row, 'pvp_item_level', 'pvpItemLevel', snakeOrCamel(row, 'latest_pvp_item_level', 'latestPvpItemLevel', 0)) || 0);
+    const itemLevel = Number(snakeOrCamel(row, 'item_level_total', 'itemLevelTotal', (pveItem || 0) + (pvpItem || 0)) || 0);
     const powerDelta = Number(snakeOrCamel(row, 'power_delta', 'powerDelta', 0) || 0);
     const itemDelta = Number(snakeOrCamel(row, 'item_level_delta', 'itemLevelDelta', 0) || 0);
     const className = snakeOrCamel(row, 'class_name', 'className', '') || '';
@@ -835,8 +837,8 @@
       pvePowerLabel:numberLabel(pvePower),
       pvpPower:pvpPower,
       pvpPowerLabel:numberLabel(pvpPower),
-      pveItem:itemLevel,
-      pvpItem:0,
+      pveItem:pveItem,
+      pvpItem:pvpItem,
       itemLevel:itemLevel,
       itemLabel:itemDelta ? (itemDelta > 0 ? '+' : '') + numberLabel(itemDelta) : numberLabel(itemLevel),
       powerDelta,
@@ -894,8 +896,12 @@
     const items = rows.map((row, idx) => hallItemFromRow(row, idx + 1));
     const main = items.filter(item => item.isMain !== false);
     const all = items.slice();
-    const pveTop = items.slice().sort((a,b)=>(b.pvePower||0)-(a.pvePower||0)).slice(0,5).map((item,idx)=>Object.assign({}, item, { rank:idx+1, category:'PVE', value:item.pvePower, label:item.pvePowerLabel }));
-    const pvpTop = items.slice().sort((a,b)=>(b.pvpPower||0)-(a.pvpPower||0)).slice(0,5).map((item,idx)=>Object.assign({}, item, { rank:idx+1, category:'PVP', value:item.pvpPower, label:item.pvpPowerLabel }));
+    const serverPveTop = Array.isArray(hall && hall.pveTop) ? hall.pveTop.map((row, idx)=>hallItemFromRow(row, idx + 1)) : [];
+    const serverPvpTop = Array.isArray(hall && hall.pvpTop) ? hall.pvpTop.map((row, idx)=>hallItemFromRow(row, idx + 1)) : [];
+    const pveTop = (serverPveTop.length ? serverPveTop : items.slice().sort((a,b)=>(b.pvePower||0)-(a.pvePower||0)).slice(0,5))
+      .map((item,idx)=>Object.assign({}, item, { rank:idx+1, category:'PVE', value:item.pvePower, label:item.pvePowerLabel }));
+    const pvpTop = (serverPvpTop.length ? serverPvpTop : items.slice().sort((a,b)=>(b.pvpPower||0)-(a.pvpPower||0)).slice(0,5))
+      .map((item,idx)=>Object.assign({}, item, { rank:idx+1, category:'PVP', value:item.pvpPower, label:item.pvpPowerLabel }));
     const mvpCandidatesTop3 = (Array.isArray(mvp && mvp.items) ? mvp.items : []).map((row, idx)=>hallItemFromRow(row, idx + 1)).slice(0,3);
     const updatedAt = rows[0] && (rows[0].updated_at || rows[0].ranking_date || rows[0].created_at) || '';
     return {
@@ -1049,13 +1055,92 @@
     return rpc('kinojo_web_save_sanctuary', { p_payload:extra || {} });
   }
 
+
+
+  function getClientId(){
+    const key = 'kinojo_runtime_client_id_v1';
+    let value = '';
+    try{ value = localStorage.getItem(key) || ''; }catch(_err){}
+    if(!value){
+      value = 'web_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
+      try{ localStorage.setItem(key, value); }catch(_err){}
+    }
+    return value;
+  }
+
+  function normalizeRuntimeStatus(result){
+    if(!result) return { ok:false, isLocked:false, status:'unknown', message:'상태 없음' };
+    const status = result.status && typeof result.status === 'object' && !Array.isArray(result.status)
+      ? result.status
+      : result;
+    return Object.assign({ ok:result.ok !== false }, status);
+  }
+
+  async function runtimeGetStatus(){
+    const data = await rpc('kinojo_runtime_get_live_status', {}).catch(async function(){
+      return await getWebUpdaterStatus();
+    });
+    return normalizeRuntimeStatus(data);
+  }
+
+  async function runtimeStart(passCode, options){
+    const extra = options || {};
+    const data = await rpc('kinojo_runtime_start', {
+      p_pass_code:normalizePassKey(passCode || ''),
+      p_tool_name:String(extra.toolName || 'KINOJO_UPDATER_WEB'),
+      p_client_id:String(extra.clientId || getClientId()),
+      p_progress_total:Number(extra.progressTotal || 0),
+      p_payload:extra.payload || {}
+    });
+    return data;
+  }
+
+  async function runtimeProgress(sessionId, sessionToken, progress){
+    const p = progress || {};
+    const data = await rpc('kinojo_runtime_progress', {
+      p_session_id:String(sessionId || ''),
+      p_session_token:String(sessionToken || ''),
+      p_stage:p.stage || null,
+      p_current_character:p.currentCharacter || p.characterName || null,
+      p_message:p.message || null,
+      p_progress_current:p.current === undefined ? null : Number(p.current),
+      p_progress_total:p.total === undefined ? null : Number(p.total),
+      p_payload:p.payload || {}
+    });
+    return data;
+  }
+
+  async function runtimeFinish(sessionId, sessionToken, status, message, summary){
+    const data = await rpc('kinojo_runtime_finish', {
+      p_session_id:String(sessionId || ''),
+      p_session_token:String(sessionToken || ''),
+      p_status:String(status || 'completed'),
+      p_message:message || null,
+      p_summary:summary || {}
+    });
+    return data;
+  }
+
+  async function runtimeForceRelease(adminPassCode, reason){
+    const data = await rpc('kinojo_runtime_force_release', {
+      p_admin_pass_code:normalizePassKey(adminPassCode || ''),
+      p_reason:String(reason || 'admin_force_release')
+    });
+    return data;
+  }
+
   async function webAction(action, params){
     const name = String(action || '').trim();
     const extra = params || {};
     if(name === 'hallOfFame') return getWebHallOfFame(extra.limit || 300);
     if(name === 'ranking') return getWebRanking(extra.limit || 300);
     if(name === 'dashboard') return getWebDashboard();
-    if(name === 'updaterStatus') return getWebUpdaterStatus();
+    if(name === 'updaterStatus') return runtimeGetStatus();
+    if(name === 'runtimeStatus') return runtimeGetStatus();
+    if(name === 'runtimeStart') return runtimeStart(extra.passCode, extra);
+    if(name === 'runtimeProgress') return runtimeProgress(extra.sessionId, extra.sessionToken, extra);
+    if(name === 'runtimeFinish') return runtimeFinish(extra.sessionId, extra.sessionToken, extra.status, extra.message, extra.summary);
+    if(name === 'runtimeForceRelease') return runtimeForceRelease(extra.adminPassCode || extra.passCode, extra.reason);
     if(name === 'hallReaction') return submitHallReaction(extra);
     if(name === 'hallSuggestion') return submitHallSuggestion(extra);
     if(name === 'sanctuary') return getSanctuaryData(extra.id || extra.sanctuaryId || 'rudra');
@@ -1119,7 +1204,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.32-web-direct-2026062623',
+    version:'1.3.1.32-runtime-starter-2026062624',
     getConfig,
     isPreferred,
     isConfigured,
@@ -1138,6 +1223,11 @@
     getWebRanking,
     getWebDashboard,
     getWebUpdaterStatus,
+    runtimeGetStatus,
+    runtimeStart,
+    runtimeProgress,
+    runtimeFinish,
+    runtimeForceRelease,
     getHallReactionSummary,
     submitHallReaction,
     submitHallSuggestion,
