@@ -1,8 +1,8 @@
-const WEB_APP_URL=new URLSearchParams(location.search).get("api")||"https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec";
+const WEB_APP_URL=new URLSearchParams(location.search).get("api")||"";
 const CLASS_ORDER=["수호성","검성","살성","궁성","마도성","정령성","치유성","호법성"];
 const HALL_ASSET_BASE=(function(){
   const path=location.pathname.replace(/\\/g,"/");
-  if(path.includes("/m/hof/")||path.includes("/mobile/hall-of-fame/")) return "../../hall-of-fame/assets/";
+  if(path.includes("/m/hof/")) return "../../hall-of-fame/assets/";
   if(path.includes("/hof/")) return "../hall-of-fame/assets/";
   return "assets/";
 })();

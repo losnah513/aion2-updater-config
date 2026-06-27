@@ -7,7 +7,7 @@
   function safeText(value){ return String(value || '').replace(/\s+/g, ' ').trim(); }
   function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
 
-  const DEFAULT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec';
+  const DEFAULT_WEB_APP_URL = '';
   const API_URL = (new URLSearchParams(location.search).get('api') || window.KINOJO_API_URL || window.WEB_APP_URL || DEFAULT_WEB_APP_URL);
   const profileDataUrlCache = new Map();
   const profileRetryDelayMs = 180;
@@ -48,6 +48,7 @@
       url:payload.url,
       t:String(Date.now())
     });
+    if(!apiUrl()) throw new Error('profile image proxy API is not configured');
     const res = await fetchWithTimeout(apiUrl() + (apiUrl().includes('?') ? '&' : '?') + params.toString(), {
       method:'GET',
       cache:'no-store'

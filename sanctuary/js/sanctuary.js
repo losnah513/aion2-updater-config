@@ -1,4 +1,4 @@
-const DEFAULT_WEB_APP_URL="https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec";
+const DEFAULT_WEB_APP_URL="";
 const API_URL=new URLSearchParams(location.search).get("api")||DEFAULT_WEB_APP_URL;
 const params=new URLSearchParams(location.search);
 const currentId=params.get("id")||"rudra";
@@ -9,7 +9,7 @@ const FALLBACK={
 };
 const SANCTUARY_ASSET_BASE=(function(){
   const path=location.pathname.replace(/\\/g,'/');
-  return (path.includes('/m/')||path.includes('/mobile/'))?'../../hall-of-fame/assets/':'../hall-of-fame/assets/';
+  return path.includes('/m/')?'../../hall-of-fame/assets/':'../hall-of-fame/assets/';
 })();
 const CLASS_ICON={"검성":"class_icon_gladiator.png","수호성":"class_icon_templar.png","살성":"class_icon_assassin.png","궁성":"class_icon_ranger.png","정령성":"class_icon_elementalist.png","마도성":"class_icon_sorcerer.png","치유성":"class_icon_cleric.png","호법성":"class_icon_chanter.png"};
 function classIconSrc(className){return CLASS_ICON[className]?SANCTUARY_ASSET_BASE+CLASS_ICON[className]:''}
@@ -24,8 +24,8 @@ function sanctuaryCacheKey(){return 'kinojo_sanctuary_cache_v26062004_'+currentI
 function readSanctuaryCache(){try{const raw=sessionStorage.getItem(sanctuaryCacheKey());if(!raw)return null;const cached=JSON.parse(raw);if(!cached||!cached.savedAt||!cached.data)return null;if(Date.now()-cached.savedAt>SANCTUARY_CACHE_TTL_MS)return null;return cached.data}catch(e){return null}}
 function writeSanctuaryCache(data){try{if(data&&data.ok!==false)sessionStorage.setItem(sanctuaryCacheKey(),JSON.stringify({savedAt:Date.now(),data}))}catch(e){}}
 function applySanctuaryData(data,{fromCache=false}={}){sanctuaryData=data;render(data);const chip=document.getElementById('syncChip');if(chip)chip.textContent='업데이트 '+(data.generatedAt||'완료')+(fromCache?' · 캐시':'')}
-async function fetchSanctuaryFresh(){const url=API_URL+(API_URL.includes('?')?'&':'?')+'action=sanctuary&id='+encodeURIComponent(currentId)+'&t='+Date.now();const res=await fetch(url,{cache:'no-store'});const data=await res.json();if(!data||!data.ok)throw new Error(data?.message||'성역 데이터 로드 실패');writeSanctuaryCache(data);return data}
-async function loadData(){setActiveLinks();renderSkeleton();const cached=readSanctuaryCache();try{if(cached){applySanctuaryData(cached,{fromCache:true});fetchSanctuaryFresh().then(data=>applySanctuaryData(data)).catch(()=>{});return}const data=await fetchSanctuaryFresh();applySanctuaryData(data)}catch(err){if(cached){applySanctuaryData(cached,{fromCache:true});return}const f=currentFallback();sanctuaryData={ok:true,info:f.info,summary:{totalCharacters:0,teamCount:0,partyCount:0,averagePower:0},teams:[],waiting:[],tips:['성역 시트 또는 Apps Script 연결 후 실제 데이터가 표시됩니다.'],generatedAt:'대기중'};render(sanctuaryData);(document.getElementById('syncChip')||{}).textContent='샘플 프레임 표시 중'}}
+async function fetchSanctuaryFresh(){if(window.KinojoSupabase&&typeof window.KinojoSupabase.webAction==='function'){const dashboard=await window.KinojoSupabase.webAction('dashboard',{});if(dashboard&&dashboard.ok){throw new Error('성역 Server Engine 전용 API는 아직 연결 대기 중입니다.');}}if(!API_URL)throw new Error('성역 Server Engine 전용 API가 아직 준비되지 않았습니다.');const url=API_URL+(API_URL.includes('?')?'&':'?')+'action=sanctuary&id='+encodeURIComponent(currentId)+'&t='+Date.now();const res=await fetch(url,{cache:'no-store'});const data=await res.json();if(!data||!data.ok)throw new Error(data?.message||'성역 데이터 로드 실패');writeSanctuaryCache(data);return data}
+async function loadData(){setActiveLinks();renderSkeleton();const cached=readSanctuaryCache();try{if(cached){applySanctuaryData(cached,{fromCache:true});fetchSanctuaryFresh().then(data=>applySanctuaryData(data)).catch(()=>{});return}const data=await fetchSanctuaryFresh();applySanctuaryData(data)}catch(err){if(cached){applySanctuaryData(cached,{fromCache:true});return}const f=currentFallback();sanctuaryData={ok:true,info:f.info,summary:{totalCharacters:0,teamCount:0,partyCount:0,averagePower:0},teams:[],waiting:[],tips:['성역 Server Engine 전용 API 연결 후 실제 데이터가 표시됩니다.'],generatedAt:'대기중'};render(sanctuaryData);(document.getElementById('syncChip')||{}).textContent='샘플 프레임 표시 중'}}
 function sanctuarySpinner(label){return '<div class="kinojo-card-loading"><span class="kinojo-spinner" aria-hidden="true"><span></span></span><span>'+esc(label||'불러오는 중')+'</span></div>'}
 function renderSkeleton(){
   const summary=document.getElementById('summaryGrid');

@@ -9,7 +9,7 @@
 
   function pageInfo(){
     const path=location.pathname.replace(/\\/g,'/');
-    const mobile=/(^|\/)m(\/|$)|(^|\/)mobile(\/|$)/.test(path);
+    const mobile=/(^|\/)m(\/|$)/.test(path);
     if(path.includes('/hof/')||path.includes('/hall-of-fame/'))return {key:'hall',label:'명예의 전당',root:mobile?'../../':'../',mobile};
     if(path.includes('/sanctuary/'))return {key:'sanctuary',label:'성역',root:mobile?'../../':'../',mobile};
     if(path.includes('/arcana/'))return {key:'arcana',label:'아르카나',root:mobile?'../../':'../',mobile};
@@ -235,7 +235,7 @@
 
   function commonApiUrl(){
     if(window.KinojoApi && typeof window.KinojoApi.getBaseUrl === 'function') return window.KinojoApi.getBaseUrl();
-    return (new URLSearchParams(location.search).get('api')) || (typeof WEB_APP_URL!=='undefined'&&WEB_APP_URL) || 'https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec';
+    return (new URLSearchParams(location.search).get('api')) || (typeof WEB_APP_URL!=='undefined'&&WEB_APP_URL) || '';
   }
   function renderCommonVisits(stats){
     const el=document.getElementById('visitCard');

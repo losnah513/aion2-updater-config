@@ -2,7 +2,7 @@
  * sanctuary-editor.js - KINOJO Sanctuary sheet editor
  * Role: 성역 페이지의 수정하기 버튼을 실제 시트 저장 기능과 연결합니다.
  * - 기존 성역 시트 마커(1-1, 1-2...) 기준 슬롯 데이터를 편집합니다.
- * - 팀명, 대표자, 팀 색상은 sanctuary_teams 메타 시트에 저장합니다.
+ * - 팀명, 대표자, 팀 색상은 sanctuary_teams 메타 서버에 저장합니다.
  */
 (function(){
   const CLASS_OPTIONS = ['', '검성', '수호성', '살성', '궁성', '정령성', '마도성', '치유성', '호법성'];
@@ -12,7 +12,7 @@
       if(typeof API_URL !== 'undefined' && API_URL) return API_URL;
       if(typeof DEFAULT_WEB_APP_URL !== 'undefined' && DEFAULT_WEB_APP_URL) return DEFAULT_WEB_APP_URL;
     }catch(_err){}
-    return 'https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec';
+    return '';
   }
 
   function currentSanctuaryId(){
@@ -57,7 +57,7 @@
     modal.setAttribute('aria-hidden', 'true');
     modal.innerHTML = '<div class="sanctuary-editor-card" role="dialog" aria-modal="true" aria-labelledby="sanctuaryEditorTitle">'
       + '<div class="sanctuary-editor-head">'
-      + '<div><div class="tip-kicker">SANCTUARY EDIT</div><h2 id="sanctuaryEditorTitle">성역 시트 수정</h2></div>'
+      + '<div><div class="tip-kicker">SANCTUARY EDIT</div><h2 id="sanctuaryEditorTitle">성역 서버 수정</h2></div>'
       + '<button class="sanctuary-editor-close" type="button" aria-label="닫기">×</button>'
       + '</div>'
       + '<div class="sanctuary-editor-help">캐릭터명 / 직업 / 전투력 / 본캐명을 수정하면 원본 성역 시트의 해당 슬롯에 저장됩니다.</div>'
@@ -65,7 +65,7 @@
       + '<div class="sanctuary-editor-foot">'
       + '<span class="sanctuary-editor-status" id="sanctuaryEditorStatus"></span>'
       + '<button class="edit-btn" id="sanctuaryEditorReloadBtn" type="button">새로고침</button>'
-      + '<button class="edit-btn sanctuary-editor-save" id="sanctuaryEditorSaveBtn" type="button">시트에 저장</button>'
+      + '<button class="edit-btn sanctuary-editor-save" id="sanctuaryEditorSaveBtn" type="button">서버에 저장</button>'
       + '</div>'
       + '</div>';
     document.body.appendChild(modal);
@@ -175,8 +175,9 @@
       if(!token()) throw new Error('관리자 로그인 후 사용할 수 있습니다.');
       const payload = collect();
       if(!payload.updates.length) throw new Error('저장할 슬롯이 없습니다.');
-      if(status){ status.className = 'sanctuary-editor-status pending'; status.textContent = '시트 저장 중...'; }
+      if(status){ status.className = 'sanctuary-editor-status pending'; status.textContent = 'Server Engine 저장 대기 중...'; }
       if(btn){ btn.disabled = true; btn.textContent = '저장 중...'; }
+      if(!apiUrl()) throw new Error('성역 관리자 저장 API는 Server Engine 이관 후 활성화됩니다.');
       const res = await fetch(apiUrl(), {
         method: 'POST',
         body: JSON.stringify({
@@ -198,7 +199,7 @@
       if(status){ status.className = 'sanctuary-editor-status error'; status.textContent = err.message || String(err); }
       else toast(err.message || String(err));
     }finally{
-      if(btn){ btn.disabled = false; btn.textContent = '시트에 저장'; }
+      if(btn){ btn.disabled = false; btn.textContent = '서버에 저장'; }
     }
   }
 
@@ -217,7 +218,7 @@
     const btn = document.getElementById('editModeBtn');
     if(btn && !btn.dataset.sanctuaryEditorBound){
       btn.dataset.sanctuaryEditorBound = '1';
-      btn.textContent = '성역 시트 수정';
+      btn.textContent = '성역 서버 수정';
       btn.addEventListener('click', function(e){
         e.preventDefault();
         e.stopImmediatePropagation();

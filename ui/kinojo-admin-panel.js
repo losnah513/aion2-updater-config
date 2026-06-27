@@ -15,12 +15,13 @@
     const param=new URLSearchParams(location.search).get('api');
     if(param)return param;
     try{ if(typeof WEB_APP_URL!=='undefined'&&WEB_APP_URL)return WEB_APP_URL; }catch(_e){}
-    return 'https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec';
+    return '';
   }
   function token(){return window.KinojoAuth?.getSession?.()?.token || window.KinojoAuth?.getToken?.() || ''}
   function adminUrl(action,params={}){
     const base=apiUrl();
     const q=new URLSearchParams(Object.assign({action,t:String(Date.now())},params));
+    if(!base) return '';
     return base+(base.includes('?')?'&':'?')+q.toString();
   }
   function setAdminButtonLoading_(id,text){

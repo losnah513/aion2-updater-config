@@ -1,6 +1,6 @@
 /*
  * KINOJO Hall of Fame data road
- * 역할: Apps Script 통신, 방문자 집계, 로딩 상태를 관리합니다.
+ * 역할: Server Engine 035 Web Read API 통신, 방문자 집계, 로딩 상태를 관리합니다.
  * 주의: 화면 렌더링 HTML은 hall-render.js에서만 조립합니다.
  * 260617 교통정리 4차 재진행: 방문자 집계 요청 중복 방지 가드를 추가합니다.
  */
@@ -31,8 +31,9 @@ async function fetchVisitStats(mode="stats",boost=0){
 
   window.__KINOJO_HALL_VISIT_REQUEST_ACTIVE__=(async()=>{
     try{
-      const res=await fetch(hallBuildUrl("hallVisit",{mode,boost:String(boost)}),{cache:"no-store"});
-      const data=await res.json();
+      const data=window.KinojoApi
+        ? await window.KinojoApi.getAction("hallVisit",{mode,boost:String(boost),pageKey:"hall"})
+        : await (await fetch(hallBuildUrl("hallVisit",{mode,boost:String(boost)}),{cache:"no-store"})).json();
       if(data?.ok&&data.stats)renderVisits(data.stats);
       if(data && data.ok===false) throw new Error(data.message || "방문자 통계 처리 실패");
       return data;
@@ -175,14 +176,18 @@ function applyHallData(data,{fromCache=false,initial=false,skipIfSame=false}={})
 }
 
 async function fetchHallDataFresh(){
-  const res=await fetch(hallBuildUrl("hallOfFame"),{cache:"no-store"});
-  const text=await res.text();
-  if(!res.ok)throw new Error("HTTP "+res.status+": "+text.slice(0,180));
   let data;
-  try{
-    data=JSON.parse(text);
-  }catch(parseErr){
-    throw new Error("Apps Script 응답이 JSON이 아닙니다: "+text.slice(0,180));
+  if(window.KinojoApi){
+    data=await window.KinojoApi.getAction("hallOfFame",{limit:300});
+  }else{
+    const res=await fetch(hallBuildUrl("hallOfFame"),{cache:"no-store"});
+    const text=await res.text();
+    if(!res.ok)throw new Error("HTTP "+res.status+": "+text.slice(0,180));
+    try{
+      data=JSON.parse(text);
+    }catch(parseErr){
+      throw new Error("Server Engine 응답이 JSON이 아닙니다: "+text.slice(0,180));
+    }
   }
   if(!data || data.ok===false)throw new Error(data?.message||data?.error||"명예의 전당 응답이 실패했습니다.");
   writeHallCache(data);
