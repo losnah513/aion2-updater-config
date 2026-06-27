@@ -82,7 +82,7 @@
           <strong>조회 런타임</strong>
           <span data-runtime-label>확인 중</span>
         </div>
-        <a class="kinojo-runtime-link" href="/updater/">Updater Web</a>
+        <span class="kinojo-runtime-link">확장프로그램 상태</span>
       </div>
       <p class="kinojo-runtime-message" data-runtime-message>서버 상태 확인 중...</p>
       <div class="kinojo-runtime-progress"><span data-runtime-bar></span></div>
