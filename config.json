@@ -1,6 +1,6 @@
 {
-  "version": "1.3.1.32",
-  "buildDate": "26062624",
+  "version": "1.3.1.20",
+  "buildDate": "26062701",
   "enabled": true,
   "testMode": false,
   "passwordHash": "c47986dd8ce4828fe097cf915e94fc9d859bb19d56e2157d86ff11b63f0a9e53",
@@ -8,17 +8,18 @@
     "de9fe7e1e91bc7448ff39abf12a58e25c8ef6680864650c6bf2bf8e24c26e15e",
     "9516658a61cf564d2001e1dc6b3f3fca526848dc65e4ac38faec05317e2dfedc"
   ],
-  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.3.1.15/KINOJO_1_3_1_15.zip",
-  "notice": "✅ KINOJO 1.3.1.32 Runtime Starter / Updater Web 연결",
+  "downloadUrl": "https://github.com/losnah513/aion2-updater-config/releases/download/v1.3.1.20/KINOJO_1_3_1_20.zip",
+  "notice": "✅ KINOJO 1.3.1.20 확장프로그램 런타임 안정화",
   "hallOfFameUrl": "https://kinojo.info/hof/",
-  "news": "Updater Web은 Server Engine START 버튼과 진행 UI 역할로 연결되었습니다. Runtime Lock/Heartbeat/Progress 상태를 웹에서 직접 확인합니다.",
-  "patchTitle": "1.3.1.32 Runtime Starter Bridge",
-  "patchBody": "KINOJO Updater Web, Runtime Status UI, Server Engine Lock/Progress API 연결을 추가했습니다.",
+  "news": "확장프로그램 조회 상태, Runtime Lock, Heartbeat, Progress 상태 표시를 정리했습니다.",
+  "patchTitle": "1.3.1.20 Extension Runtime Lock UI",
+  "patchBody": "확장프로그램 버전/다운로드 경로를 정리하고 서버 Runtime 상태 표기를 개선했습니다.",
   "supabase": {
     "enabled": true,
     "url": "https://josvoltpktvwysrasffq.supabase.co",
     "publishableKey": "sb_publishable__v26JGbKRFKGbU0SseU5Iw_qwIoHUAC",
     "fallbackToAppsScript": false
   },
-  "updaterWebUrl": "https://kinojo.info/updater/"
+  "extensionVersion": "1.3.1.20",
+  "siteVersion": "1.3.1.32"
 }

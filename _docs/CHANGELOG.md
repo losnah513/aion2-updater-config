@@ -26,9 +26,9 @@
 - `GitHub_Pages/m/hof/index.html`
 - `GitHub_Pages/m/sanctuary/index.html`
 - `GitHub_Pages/sanctuary/index.html`
-- `KINOJO_1_3_1_15/core/config.js`
-- `KINOJO_1_3_1_15/core/supabase.js`
-- `KINOJO_1_3_1_15/manifest.json`
+- `KINOJO_1_3_1_20/core/config.js`
+- `KINOJO_1_3_1_20/core/supabase.js`
+- `KINOJO_1_3_1_20/manifest.json`
 
 ### 반영
 - Supabase PASS KEY 조회 URL 생성 시 `URLSearchParams(query || '')` 재처리 제거.
