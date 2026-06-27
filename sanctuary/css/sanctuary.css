@@ -271,3 +271,7 @@ body{background:#fff!important;}
   .kinojo-copy-preview-body{grid-template-columns:1fr;}
   .kinojo-copy-preview-foot{align-items:flex-start;flex-direction:column;}
 }
+
+/* 2026-06-27_03: Server Engine sanctuary sync chip */
+#syncChip{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(56,101,176,.22);background:#f8fbff;border-radius:999px;padding:7px 10px;color:#26466d;font-weight:1000}
+#syncChip::before{content:"";width:7px;height:7px;border-radius:999px;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.12)}

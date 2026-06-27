@@ -1,7 +1,7 @@
 /*
- * sanctuary-editor.js - KINOJO Sanctuary sheet editor
+ * sanctuary-editor.js - KINOJO Sanctuary Server Engine editor
  * Role: 성역 페이지의 수정하기 버튼을 실제 시트 저장 기능과 연결합니다.
- * - 기존 성역 시트 마커(1-1, 1-2...) 기준 슬롯 데이터를 편집합니다.
+ * - Supabase sanctuary_slots 기준 슬롯 데이터를 편집합니다.
  * - 팀명, 대표자, 팀 색상은 sanctuary_teams 메타 서버에 저장합니다.
  */
 (function(){
@@ -54,7 +54,7 @@
       + '<div><div class="tip-kicker">SANCTUARY EDIT</div><h2 id="sanctuaryEditorTitle">성역 서버 수정</h2></div>'
       + '<button class="sanctuary-editor-close" type="button" aria-label="닫기">×</button>'
       + '</div>'
-      + '<div class="sanctuary-editor-help">캐릭터명 / 직업 / 전투력 / 본캐명을 수정하면 원본 성역 시트의 해당 슬롯에 저장됩니다.</div>'
+      + '<div class="sanctuary-editor-help">캐릭터명 / 직업 / 전투력 / 본캐명을 수정하면 Supabase 성역 슬롯에 저장됩니다.</div>'
       + '<div class="sanctuary-editor-body" id="sanctuaryEditorBody"></div>'
       + '<div class="sanctuary-editor-foot">'
       + '<span class="sanctuary-editor-status" id="sanctuaryEditorStatus"></span>'
@@ -179,8 +179,8 @@
         updates: payload.updates,
         teamMeta: payload.teamMeta
       });
-      if(!result.ok) throw new Error(result.message || '성역 시트 저장 실패');
-      try{ sessionStorage.removeItem('kinojo_sanctuary_cache_v26062004_' + currentSanctuaryId()); }catch(_err){}
+      if(!result.ok) throw new Error(result.message || '성역 서버 저장 실패');
+      try{ sessionStorage.removeItem('kinojo_sanctuary_cache_v2026062703_' + currentSanctuaryId()); }catch(_err){}
       if(status){ status.className = 'sanctuary-editor-status success'; status.textContent = '저장 완료 · ' + Number(result.updatedSlots || 0) + '개 슬롯 반영'; }
       await reloadFresh();
       setTimeout(close, 350);

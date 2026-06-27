@@ -216,7 +216,7 @@
       return { img:direct, source:'direct', diagnostic };
     }
 
-    // 2) 직접 로딩 실패 시 Apps Script 프록시가 반환한 data URL을 시도합니다.
+    // 2) 직접 로딩 실패 시 프로필 이미지 프록시가 반환한 data URL을 시도합니다.
     const proxied = await proxyProfileImageUrl(original, diagnostic);
     if(proxied){
       diagnostic.dataUrlLoad = { tried:true, length:proxied.length };
