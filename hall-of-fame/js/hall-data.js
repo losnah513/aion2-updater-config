@@ -5,14 +5,12 @@
  * 260617 교통정리 4차 재진행: 방문자 집계 요청 중복 방지 가드를 추가합니다.
  */
 function hallBuildUrl(action,params={}){
-  const joiner=WEB_APP_URL.includes("?")?"&":"?";
+  // Legacy Apps Script URL 조립 금지. Server Engine은 KinojoApi/KinojoSupabase를 통해 호출한다.
+  const base=window.KinojoApi?.getBaseUrl?.() || HALL_API_PARAM || '';
+  if(!base)return '';
   const payload={action,...params,t:String(Date.now())};
-  if(action==='hallVisit' && params && params.mode && !['stats','visit','boost'].includes(String(params.mode))){
-    const token=window.KinojoAuth?.getSession?.()?.token || '';
-    if(token)payload.sessionToken=token;
-  }
   const q=new URLSearchParams(payload);
-  return WEB_APP_URL+joiner+q.toString();
+  return base+(base.includes('?')?'&':'?')+q.toString();
 }
 
 function renderVisits(stats){
@@ -31,9 +29,7 @@ async function fetchVisitStats(mode="stats",boost=0){
 
   window.__KINOJO_HALL_VISIT_REQUEST_ACTIVE__=(async()=>{
     try{
-      const data=window.KinojoApi
-        ? await window.KinojoApi.getAction("hallVisit",{mode,boost:String(boost),pageKey:"hall"})
-        : await (await fetch(hallBuildUrl("hallVisit",{mode,boost:String(boost)}),{cache:"no-store"})).json();
+      const data=await window.KinojoApi.getAction("hallVisit",{mode,boost:String(boost),pageKey:"hall"});
       if(data?.ok&&data.stats)renderVisits(data.stats);
       if(data && data.ok===false) throw new Error(data.message || "방문자 통계 처리 실패");
       return data;
@@ -177,18 +173,8 @@ function applyHallData(data,{fromCache=false,initial=false,skipIfSame=false}={})
 
 async function fetchHallDataFresh(){
   let data;
-  if(window.KinojoApi){
-    data=await window.KinojoApi.getAction("hallOfFame",{limit:300});
-  }else{
-    const res=await fetch(hallBuildUrl("hallOfFame"),{cache:"no-store"});
-    const text=await res.text();
-    if(!res.ok)throw new Error("HTTP "+res.status+": "+text.slice(0,180));
-    try{
-      data=JSON.parse(text);
-    }catch(parseErr){
-      throw new Error("Server Engine 응답이 JSON이 아닙니다: "+text.slice(0,180));
-    }
-  }
+  if(!window.KinojoApi) throw new Error("KinojoApi 연결을 확인해 주세요.");
+  data=await window.KinojoApi.getAction("hallOfFame",{limit:300});
   if(!data || data.ok===false)throw new Error(data?.message||data?.error||"명예의 전당 응답이 실패했습니다.");
   writeHallCache(data);
   return data;

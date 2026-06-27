@@ -922,7 +922,7 @@
       partyFriend:items.filter(item => String(item.serverId || '').startsWith('1')).slice(0,40),
       partyFriendAll:items.filter(item => String(item.serverId || '').startsWith('1')).slice(0,80),
       newChicks:[],
-      reactionSummary:{ byName:{}, likeTop:[], dislikeTop:[] },
+      reactionSummary:await getHallReactionSummary(),
       classReviewPool:defaultClassReviewPool()
     };
   }
@@ -974,6 +974,81 @@
     return stats;
   }
 
+
+  function reactionSummaryFromRows(rows){
+    const byName = {};
+    const likeTop = [];
+    const dislikeTop = [];
+    (Array.isArray(rows) ? rows : []).forEach(row => {
+      const name = stripServerSuffixFromCharacterName(row.character_name || row.characterName || '');
+      if(!name) return;
+      const like = Number(row.like_count || row.likeCount || 0);
+      const dislike = Number(row.dislike_count || row.dislikeCount || 0);
+      byName[name] = { like, dislike, total:Number(row.total_count || row.totalCount || like + dislike) };
+      likeTop.push({ name, like, dislike, total:like + dislike });
+      dislikeTop.push({ name, like, dislike, total:like + dislike });
+    });
+    likeTop.sort((a,b)=>(b.like||0)-(a.like||0));
+    dislikeTop.sort((a,b)=>(b.dislike||0)-(a.dislike||0));
+    return { byName, likeTop:likeTop.slice(0,10), dislikeTop:dislikeTop.slice(0,10) };
+  }
+
+  async function getHallReactionSummary(){
+    const rows = await request('v_reaction_summary', { query:'select=*&order=total_count.desc&limit=200' }).catch(()=>[]);
+    return reactionSummaryFromRows(rows);
+  }
+
+  async function submitHallReaction(extra={}){
+    const characterName = stripServerSuffixFromCharacterName(extra.characterName || extra.character_name || '');
+    const reaction = String(extra.reaction || '').trim().toLowerCase();
+    const comment = String(extra.comment || '').trim().slice(0, 20);
+    if(!characterName) return { ok:false, message:'캐릭터 이름이 없습니다.' };
+    if(!['like','dislike'].includes(reaction)) return { ok:false, message:'반응 종류가 올바르지 않습니다.' };
+    if(!comment) return { ok:false, message:'전하고 싶은 말을 입력해 주세요.' };
+    const authAccount = currentAccount();
+    const body = {
+      character_name: characterName,
+      owner: stripServerSuffixFromCharacterName(extra.owner || ''),
+      class_name: String(extra.className || extra.class_name || '').trim(),
+      reaction,
+      comment,
+      client_key: String(extra.clientKey || extra.client_key || getVisitorKey()).trim(),
+      actor_main_character: String(authAccount && (authAccount.mainCharacter || authAccount.mainCharacterName) || '').trim(),
+      session_token: String(extra.sessionToken || extra.session_token || '').trim()
+    };
+    await request('reaction_logs', { method:'POST', headers:{ Prefer:'return=minimal' }, body });
+    const summary = await getHallReactionSummary();
+    return { ok:true, message:'한마디가 전달되었어요.', summary };
+  }
+
+  async function submitHallSuggestion(extra={}){
+    const title = String(extra.title || '').trim().slice(0, 80);
+    const proposer = String(extra.proposer || '').trim().slice(0, 60);
+    const memo = String(extra.memo || '').trim().slice(0, 1000);
+    if(!title) return { ok:false, message:'항목 이름을 입력해 주세요.' };
+    const authAccount = currentAccount();
+    const body = {
+      title,
+      proposer,
+      memo,
+      status:'PENDING',
+      actor_main_character: String(authAccount && (authAccount.mainCharacter || authAccount.mainCharacterName) || proposer || '').trim(),
+      session_token: String(extra.sessionToken || extra.session_token || '').trim()
+    };
+    const rows = await request('hall_suggestions', { method:'POST', headers:{ Prefer:'return=representation' }, body });
+    const row = Array.isArray(rows) ? rows[0] : rows;
+    return { ok:true, message:'제안이 접수되었습니다.', suggestion:row || null };
+  }
+
+  async function getSanctuaryData(id){
+    return rpc('kinojo_web_get_sanctuary', { p_sanctuary_id:String(id || 'rudra') });
+  }
+
+  async function saveSanctuaryData(extra={}){
+    assertAdmin();
+    return rpc('kinojo_web_save_sanctuary', { p_payload:extra || {} });
+  }
+
   async function webAction(action, params){
     const name = String(action || '').trim();
     const extra = params || {};
@@ -981,6 +1056,10 @@
     if(name === 'ranking') return getWebRanking(extra.limit || 300);
     if(name === 'dashboard') return getWebDashboard();
     if(name === 'updaterStatus') return getWebUpdaterStatus();
+    if(name === 'hallReaction') return submitHallReaction(extra);
+    if(name === 'hallSuggestion') return submitHallSuggestion(extra);
+    if(name === 'sanctuary') return getSanctuaryData(extra.id || extra.sanctuaryId || 'rudra');
+    if(name === 'sanctuaryAdmin') return saveSanctuaryData(extra);
     if(name === 'notices') return { ok:true, notices:(await getLatestAnnouncements(extra.limit || 5)).map(noticeFromRow).filter(Boolean) };
     if(name === 'hallVisit'){
       const mode = String(extra.mode || 'stats');
@@ -1040,7 +1119,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.15-web-read-api-2026062621',
+    version:'1.3.1.32-web-direct-2026062623',
     getConfig,
     isPreferred,
     isConfigured,
@@ -1059,6 +1138,11 @@
     getWebRanking,
     getWebDashboard,
     getWebUpdaterStatus,
+    getHallReactionSummary,
+    submitHallReaction,
+    submitHallSuggestion,
+    getSanctuaryData,
+    saveSanctuaryData,
     logPageView,
     verifyPassKey,
     getLatestAnnouncements,

@@ -175,8 +175,7 @@ async function submitReaction(){
     updateReactionSubmitState_();
     if(status)status.textContent="전송 중...";
     const sessionToken=window.KinojoAuth?window.KinojoAuth.getToken():"";
-    const res=await fetch(WEB_APP_URL,{method:"POST",body:JSON.stringify({action:"hallReaction",characterName:currentReactionItem.name,owner:currentReactionItem.owner||"",className:currentReactionItem.className||"",reaction:currentReactionType,comment:comment,clientKey:getVisitorId(),sessionToken:sessionToken})});
-    const data=await res.json();
+    const data=await window.KinojoApi.postAction("hallReaction",{characterName:currentReactionItem.name,owner:currentReactionItem.owner||"",className:currentReactionItem.className||"",reaction:currentReactionType,comment:comment,clientKey:getVisitorId(),sessionToken:sessionToken});
     if(!data.ok){
       if(data.authRequired&&window.KinojoAuth)window.KinojoAuth.openLoginModal(data.message||"로그인 후 이용할 수 있습니다.", {context:"hall"});
       if(status)status.textContent=data.message||"저장 실패";else alert(data.message||"저장 실패");

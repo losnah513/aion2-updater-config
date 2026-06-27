@@ -5,13 +5,14 @@
  */
 (function(){
   'use strict';
-  const DEFAULT_WEB_APP_URL = '';
+  const DEFAULT_API_URL = '';
 
   function getBaseUrl(){
+    // Server Engine 이관 후 GitHub Pages는 Apps Script URL로 fallback하지 않는다.
+    // ?api= 값은 로컬 진단용으로만 허용하며, 기본 동작은 KinojoSupabase.webAction이다.
     const param = new URLSearchParams(location.search || '').get('api');
     if(param) return param;
-    try{ if(typeof WEB_APP_URL !== 'undefined' && WEB_APP_URL) return WEB_APP_URL; }catch(_err){}
-    return DEFAULT_WEB_APP_URL;
+    return DEFAULT_API_URL;
   }
 
   function withQuery(base, params){
@@ -64,7 +65,9 @@
       const data = await window.KinojoSupabase.webAction(action, params || {});
       if(data) return data;
     }
-    return getJson(getBaseUrl(), Object.assign({ action, t:Date.now() }, params || {}));
+    const base = getBaseUrl();
+    if(!base) throw new Error('Server Engine API가 준비되지 않았습니다. KinojoSupabase 연결을 확인해 주세요.');
+    return getJson(base, Object.assign({ action, t:Date.now() }, params || {}));
   }
 
   async function postAction(action, body){
@@ -72,13 +75,15 @@
       const data = await window.KinojoSupabase.webAction(action, body || {});
       if(data) return data;
     }
-    return postJson(getBaseUrl(), Object.assign({ action }, body || {}));
+    const base = getBaseUrl();
+    if(!base) throw new Error('Server Engine API가 준비되지 않았습니다. KinojoSupabase 연결을 확인해 주세요.');
+    return postJson(base, Object.assign({ action }, body || {}));
   }
 
   window.KinojoApi = {
-    version:'1.3.1.18-server-engine-bridge',
+    version:'1.3.1.32-server-engine-direct-2026062623',
     ready:true,
-    DEFAULT_WEB_APP_URL,
+    DEFAULT_API_URL,
     getBaseUrl,
     withQuery,
     request,

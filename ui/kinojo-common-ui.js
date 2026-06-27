@@ -235,7 +235,7 @@
 
   function commonApiUrl(){
     if(window.KinojoApi && typeof window.KinojoApi.getBaseUrl === 'function') return window.KinojoApi.getBaseUrl();
-    return (new URLSearchParams(location.search).get('api')) || (typeof WEB_APP_URL!=='undefined'&&WEB_APP_URL) || '';
+    return (new URLSearchParams(location.search).get('api')) || '';
   }
   function renderCommonVisits(stats){
     const el=document.getElementById('visitCard');

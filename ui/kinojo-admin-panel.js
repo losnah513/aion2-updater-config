@@ -14,7 +14,6 @@
     if(window.KinojoApi && typeof window.KinojoApi.getBaseUrl === 'function') return window.KinojoApi.getBaseUrl();
     const param=new URLSearchParams(location.search).get('api');
     if(param)return param;
-    try{ if(typeof WEB_APP_URL!=='undefined'&&WEB_APP_URL)return WEB_APP_URL; }catch(_e){}
     return '';
   }
   function token(){return window.KinojoAuth?.getSession?.()?.token || window.KinojoAuth?.getToken?.() || ''}

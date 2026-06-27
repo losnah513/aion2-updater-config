@@ -7,13 +7,7 @@
 (function(){
   const CLASS_OPTIONS = ['', '검성', '수호성', '살성', '궁성', '정령성', '마도성', '치유성', '호법성'];
 
-  function apiUrl(){
-    try{
-      if(typeof API_URL !== 'undefined' && API_URL) return API_URL;
-      if(typeof DEFAULT_WEB_APP_URL !== 'undefined' && DEFAULT_WEB_APP_URL) return DEFAULT_WEB_APP_URL;
-    }catch(_err){}
-    return '';
-  }
+  function apiUrl(){ return ''; }
 
   function currentSanctuaryId(){
     try{ if(typeof currentId !== 'undefined' && currentId) return currentId; }catch(_err){}
@@ -175,21 +169,16 @@
       if(!token()) throw new Error('관리자 로그인 후 사용할 수 있습니다.');
       const payload = collect();
       if(!payload.updates.length) throw new Error('저장할 슬롯이 없습니다.');
-      if(status){ status.className = 'sanctuary-editor-status pending'; status.textContent = 'Server Engine 저장 대기 중...'; }
+      if(status){ status.className = 'sanctuary-editor-status pending'; status.textContent = 'Server Engine 저장 중...'; }
       if(btn){ btn.disabled = true; btn.textContent = '저장 중...'; }
-      if(!apiUrl()) throw new Error('성역 관리자 저장 API는 Server Engine 이관 후 활성화됩니다.');
-      const res = await fetch(apiUrl(), {
-        method: 'POST',
-        body: JSON.stringify({
-          action: 'sanctuaryAdmin',
-          command: 'saveSheet',
-          sessionToken: token(),
-          sanctuaryId: currentSanctuaryId(),
-          updates: payload.updates,
-          teamMeta: payload.teamMeta
-        })
+      if(!window.KinojoApi) throw new Error('KinojoApi 연결을 확인해 주세요.');
+      const result = await window.KinojoApi.postAction('sanctuaryAdmin', {
+        command: 'saveSheet',
+        sessionToken: token(),
+        sanctuaryId: currentSanctuaryId(),
+        updates: payload.updates,
+        teamMeta: payload.teamMeta
       });
-      const result = await res.json();
       if(!result.ok) throw new Error(result.message || '성역 시트 저장 실패');
       try{ sessionStorage.removeItem('kinojo_sanctuary_cache_v26062004_' + currentSanctuaryId()); }catch(_err){}
       if(status){ status.className = 'sanctuary-editor-status success'; status.textContent = '저장 완료 · ' + Number(result.updatedSlots || 0) + '개 슬롯 반영'; }

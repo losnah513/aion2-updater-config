@@ -1,4 +1,4 @@
-const WEB_APP_URL=new URLSearchParams(location.search).get("api")||"";
+const HALL_API_PARAM=new URLSearchParams(location.search).get("api")||"";
 const CLASS_ORDER=["수호성","검성","살성","궁성","마도성","정령성","치유성","호법성"];
 const HALL_ASSET_BASE=(function(){
   const path=location.pathname.replace(/\\/g,"/");

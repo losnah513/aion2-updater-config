@@ -45,8 +45,7 @@ async function submitSideSuggestion_(){
   try{
     if(submit){submit.disabled=true;submit.textContent="전송 중...";}
     if(status)status.textContent="";
-    const res=await fetch(WEB_APP_URL,{method:"POST",body:JSON.stringify({action:"hallSuggestion",title,proposer,memo,sessionToken:window.KinojoAuth?window.KinojoAuth.getToken():""})});
-    const data=await res.json();
+    const data=await window.KinojoApi.postAction("hallSuggestion",{title,proposer,memo,sessionToken:window.KinojoAuth?window.KinojoAuth.getToken():""});
     if(!data.ok)throw new Error(data.message||"전송 실패");
     if(status)status.textContent="제안이 접수되었습니다.";
     setTimeout(()=>{closeDrawerPagePanel();load()},520);
@@ -85,8 +84,7 @@ async function submitInlineSuggestion_(){
   const proposer=document.getElementById("suggestProposer")?.value.trim()||"";
   const memo=document.getElementById("suggestMemo")?.value.trim()||"";
   if(!title)return alert("항목 이름을 입력해 주세요.");
-  const res=await fetch(WEB_APP_URL,{method:"POST",body:JSON.stringify({action:"hallSuggestion",title,proposer,memo,sessionToken:window.KinojoAuth?window.KinojoAuth.getToken():""})});
-  const data=await res.json();
+  const data=await window.KinojoApi.postAction("hallSuggestion",{title,proposer,memo,sessionToken:window.KinojoAuth?window.KinojoAuth.getToken():""});
   if(!data.ok)return alert(data.message||"전송 실패");
   alert("제안이 접수되었습니다.");
   closeInlineSuggestionPanel();

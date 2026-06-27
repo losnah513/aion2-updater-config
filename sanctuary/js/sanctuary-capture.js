@@ -7,13 +7,12 @@
   function safeText(value){ return String(value || '').replace(/\s+/g, ' ').trim(); }
   function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
 
-  const DEFAULT_WEB_APP_URL = '';
-  const API_URL = (new URLSearchParams(location.search).get('api') || window.KINOJO_API_URL || window.WEB_APP_URL || DEFAULT_WEB_APP_URL);
+  const SANCTUARY_API_PARAM = new URLSearchParams(location.search).get('api') || '';
   const profileDataUrlCache = new Map();
   const profileRetryDelayMs = 180;
   const diagnosticState = { last: null };
 
-  function apiUrl(){ return API_URL; }
+  function apiUrl(){ return SANCTUARY_API_PARAM; }
 
   function profileDebugEnabled(){
     return !!(window.KINOJO_SANCTUARY_PROFILE_DEBUG || new URLSearchParams(location.search).get('profileDebug') === '1');
