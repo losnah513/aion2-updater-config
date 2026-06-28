@@ -1087,7 +1087,7 @@
     const extra = options || {};
     const data = await rpc('kinojo_runtime_start', {
       p_pass_code:normalizePassKey(passCode || ''),
-      p_tool_name:String(extra.toolName || 'KINOJO_UPDATER_WEB'),
+      p_tool_name:String(extra.toolName || 'KINOJO_EXTENSION'),
       p_client_id:String(extra.clientId || getClientId()),
       p_progress_total:Number(extra.progressTotal || 0),
       p_payload:extra.payload || {}

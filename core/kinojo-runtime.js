@@ -79,10 +79,10 @@
     box.innerHTML = `
       <div class="kinojo-runtime-head">
         <div>
-          <strong>조회 런타임</strong>
+          <strong>확장 조회 상태</strong>
           <span data-runtime-label>확인 중</span>
         </div>
-        <span class="kinojo-runtime-link">확장프로그램 상태</span>
+        <span class="kinojo-runtime-link">상태 정보</span>
       </div>
       <p class="kinojo-runtime-message" data-runtime-message>서버 상태 확인 중...</p>
       <div class="kinojo-runtime-progress"><span data-runtime-bar></span></div>
