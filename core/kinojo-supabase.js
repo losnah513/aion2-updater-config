@@ -893,8 +893,11 @@
     const hall = await rpc('kinojo_web_get_hall_of_fame', { p_limit:Number(limit || 300) });
     const mvp = await rpc('kinojo_web_get_mvp_candidates', { p_limit:20 }).catch(()=>({ ok:true, items:[] }));
     const rows = Array.isArray(hall && hall.items) ? hall.items : [];
-    const items = rows.map((row, idx) => hallItemFromRow(row, idx + 1));
-    const main = items.filter(item => item.isMain !== false);
+    const allRows = Array.isArray(hall && hall.allItems) && hall.allItems.length ? hall.allItems : rows;
+    const displayRows = rows.length ? rows : allRows;
+    const items = allRows.map((row, idx) => hallItemFromRow(row, idx + 1));
+    const mainItems = displayRows.map((row, idx) => hallItemFromRow(row, idx + 1)).filter(item => item.isMain !== false);
+    const main = mainItems.length ? mainItems : items.filter(item => item.isMain !== false);
     const all = items.slice();
     const serverPveTop = Array.isArray(hall && hall.pveTop) ? hall.pveTop.map((row, idx)=>hallItemFromRow(row, idx + 1)) : [];
     const serverPvpTop = Array.isArray(hall && hall.pvpTop) ? hall.pvpTop.map((row, idx)=>hallItemFromRow(row, idx + 1)) : [];
@@ -923,9 +926,9 @@
         growthKing:items.slice().sort((a,b)=>(b.itemLevelDelta||0)-(a.itemLevelDelta||0)).filter(x=>x.itemLevelDelta).slice(0,5),
         bulkUp:items.slice().sort((a,b)=>(b.powerDelta||0)-(a.powerDelta||0)).filter(x=>x.powerDelta).slice(0,5)
       },
-      demonFamily:items.filter(item => String(item.serverId || '').startsWith('2') && item.serverId !== '2002').slice(0,40),
+      demonFamily:main.filter(item => String(item.serverId || '').startsWith('2') && item.serverId !== '2002').slice(0,40),
       demonFamilyAll:items.filter(item => String(item.serverId || '').startsWith('2') && item.serverId !== '2002').slice(0,80),
-      partyFriend:items.filter(item => String(item.serverId || '').startsWith('1')).slice(0,40),
+      partyFriend:main.filter(item => String(item.serverId || '').startsWith('1')).slice(0,40),
       partyFriendAll:items.filter(item => String(item.serverId || '').startsWith('1')).slice(0,80),
       newChicks:[],
       reactionSummary:await getHallReactionSummary(),
@@ -990,9 +993,10 @@
       if(!name) return;
       const like = Number(row.like_count || row.likeCount || 0);
       const dislike = Number(row.dislike_count || row.dislikeCount || 0);
-      byName[name] = { like, dislike, total:Number(row.total_count || row.totalCount || like + dislike) };
-      likeTop.push({ name, like, dislike, total:like + dislike });
-      dislikeTop.push({ name, like, dislike, total:like + dislike });
+      const comments = Array.isArray(row.comments) ? row.comments.filter(Boolean) : [];
+      byName[name] = { like, dislike, total:Number(row.total_count || row.totalCount || like + dislike), comments };
+      likeTop.push({ name, like, dislike, total:like + dislike, comments });
+      dislikeTop.push({ name, like, dislike, total:like + dislike, comments });
     });
     likeTop.sort((a,b)=>(b.like||0)-(a.like||0));
     dislikeTop.sort((a,b)=>(b.dislike||0)-(a.dislike||0));
