@@ -32,9 +32,13 @@
   }
   function createVisitCard(){
     const el=document.createElement('section');
-    el.className='visit-mini';
+    el.className='visit-mini kinojo-visitor-statusbar';
     el.id='visitCard';
-    el.innerHTML='<span class="visit-line visit-line-today">👀 방문자 통계 준비중</span><span class="visit-line visit-line-total">🏛 누적 방문 기록 준비중</span>';
+    el.setAttribute('aria-label','방문자 및 서버 연결 상태');
+    el.innerHTML=''
+      +'<span class="visit-side visit-total"><span class="visit-icon">👥</span><span class="visit-text"><b>누적 방문자</b><strong data-visit-total>확인중</strong></span></span>'
+      +'<span class="visit-light is-checking" data-visit-server-light><i></i><b>서버 확인중</b></span>'
+      +'<span class="visit-side visit-today"><span class="visit-text"><b>오늘 방문자</b><strong data-visit-today>확인중</strong></span><span class="visit-icon">📅</span></span>';
     return el;
   }
   const KINOJO_NOTICE_ROTATE_SECONDS = 10;
@@ -237,12 +241,24 @@
     if(window.KinojoApi && typeof window.KinojoApi.getBaseUrl === 'function') return window.KinojoApi.getBaseUrl();
     return (new URLSearchParams(location.search).get('api')) || '';
   }
+  function setVisitServerLight(state, label){
+    const light=document.querySelector('[data-visit-server-light]');
+    if(!light)return;
+    light.classList.remove('is-ok','is-delay','is-error','is-checking');
+    light.classList.add(state||'is-ok');
+    const b=light.querySelector('b');
+    if(b)b.textContent=label||'서버 연결 정상';
+  }
   function renderCommonVisits(stats){
     const el=document.getElementById('visitCard');
     if(!el)return;
-    const today=Number(stats?.todayVisits||0).toLocaleString('ko-KR');
-    const total=Number(stats?.totalVisits||0).toLocaleString('ko-KR');
-    el.innerHTML='<span class="visit-line visit-line-today">👀 오늘 '+today+'명의 모험가님이 다녀가셨어요.</span><span class="visit-line visit-line-total">🏛 누적 '+total+'회의 발걸음이 키노조에 남았습니다.</span>';
+    const today=Number(stats?.todayVisits||0).toLocaleString('ko-KR')+'명';
+    const total=Number(stats?.totalVisits||0).toLocaleString('ko-KR')+'회';
+    const t=el.querySelector('[data-visit-today]');
+    const a=el.querySelector('[data-visit-total]');
+    if(t)t.textContent=today;
+    if(a)a.textContent=total;
+    setVisitServerLight('is-ok','서버 연결 정상');
   }
   async function loadCommonVisits(info){
     if(window.__KINOJO_HALL_VISIT_RENDERED__) return;
@@ -257,7 +273,11 @@
         : await (await fetch(commonApiUrl()+(commonApiUrl().includes('?')?'&':'?')+new URLSearchParams({action:'hallVisit',mode:first?'visit':'stats',boost:first?'1':'0',t:String(Date.now())}).toString(),{cache:'no-store'})).json();
       if(data?.ok&&data.stats)renderCommonVisits(data.stats);
     }catch(_err){
-      if(!window.__KINOJO_HALL_VISIT_RENDERED__) el.innerHTML='<span class="visit-line visit-line-today">👀 방문자 통계 확인중</span><span class="visit-line visit-line-total">🏛 누적 방문 기록 확인중</span>';
+      setVisitServerLight('is-error','서버 연결 오류');
+      const t=el.querySelector('[data-visit-today]');
+      const a=el.querySelector('[data-visit-total]');
+      if(t)t.textContent='확인중';
+      if(a)a.textContent='확인중';
     }
   }
   function toast(message){
@@ -414,8 +434,11 @@
     }
     admin.style.display='none';
     if(auth)auth.appendChild(admin);
-    tools.appendChild(visit);
-    document.body.insertBefore(bar,document.body.firstChild);
+    const visitRail=document.createElement('section');
+    visitRail.className='kinojo-visit-rail';
+    visitRail.appendChild(visit);
+    document.body.insertBefore(visitRail,document.body.firstChild);
+    document.body.insertBefore(bar,visitRail.nextSibling);
     const notice=createNoticeStrip(info);
     document.body.appendChild(notice);
     setTimeout(loadCommonNotices,0);
