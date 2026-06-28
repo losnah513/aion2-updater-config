@@ -36,9 +36,9 @@
     el.id='visitCard';
     el.setAttribute('aria-label','방문자 및 서버 연결 상태');
     el.innerHTML=''
-      +'<span class="visit-side visit-total"><span class="visit-icon">👥</span><span class="visit-text"><b>누적 방문자</b><strong data-visit-total>확인중</strong></span></span>'
+      +'<span class="visit-side visit-total"><span class="visit-icon">👥</span><span class="visit-text"><b>누적</b><strong data-visit-total>확인중</strong></span></span>'
       +'<span class="visit-light is-checking" data-visit-server-light><i></i><b>서버 확인중</b></span>'
-      +'<span class="visit-side visit-today"><span class="visit-text"><b>오늘 방문자</b><strong data-visit-today>확인중</strong></span><span class="visit-icon">📅</span></span>';
+      +'<span class="visit-side visit-today"><span class="visit-text"><b>오늘</b><strong data-visit-today>확인중</strong></span><span class="visit-icon">📅</span></span>';
     return el;
   }
   const KINOJO_NOTICE_ROTATE_SECONDS = 10;
@@ -598,6 +598,9 @@
   }
   const rescued=removeLegacy();
   const info=pageInfo();
+  document.body.classList.add('kinojo-page-' + info.key);
+  if(info.mobile) document.body.classList.add('kinojo-page-mobile');
+  document.body.dataset.kinojoPage = info.key;
   makeTopbar(rescued,info);
   makeDrawer(info);
   bind();

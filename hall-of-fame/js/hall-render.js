@@ -137,21 +137,12 @@ function randomFrom(list){
 }
 
 function rankEmblemKey(rank,total=10){
+  // KINOJO rank emblem rule: 1위는 Diamond, 2위 Crystal, 3위 Gold, 4~10위 Silver, 이후 Bronze.
+  // 전체/클래스별 모두 화면에 표시되는 순번 기준으로 동일하게 적용한다.
   if(rank<=1)return "diamond";
-  if(total<10){
-    if(rank===2)return "crystal";
-    if(rank===3)return "gold";
-    if(rank===4)return "silver";
-    return "bronze";
-  }
-  const crystalLimit=Math.max(2,Math.ceil(total*0.05));
-  const goldRate=total<=20?0.20:0.15;
-  const silverRate=total<=20?0.35:0.25;
-  const goldLimit=Math.max(crystalLimit+1,Math.floor(total*goldRate));
-  const silverLimit=Math.max(goldLimit+1,Math.floor(total*silverRate));
-  if(rank<=crystalLimit)return "crystal";
-  if(rank<=goldLimit)return "gold";
-  if(rank<=silverLimit)return "silver";
+  if(rank===2)return "crystal";
+  if(rank===3)return "gold";
+  if(rank<=10)return "silver";
   return "bronze";
 }
 
@@ -236,7 +227,7 @@ function overallTable(){
     const rank=start+i+1;
 
     if(item){
-      const displayRank=Number(item.rank||rank);rows.push('<tr><td class="num">'+rankEmblemHtml(displayRank,list.length)+'</td><td><div class="rank-name-flex rank-name-flex-table"><div class="rank-name-main"><span class="rank-name-cell">'+flowText(item.name,item)+'</span>'+ownerLine(item)+'</div></div></td><td class="rank-reactions">'+reactionCountsHtml(item)+'</td><td>'+classIconHtml(item.className,false)+'</td><td class="power">'+escapeHtml(item.pvePowerLabel||item.label||"")+'</td><td class="power">'+escapeHtml(item.pvpPowerLabel||"")+'</td><td class="reviews"><div>🐲 '+escapeHtml(item.pveReview||"")+'</div><div>⚔️ '+escapeHtml(item.pvpReview||"")+'</div></td></tr>');
+      const displayRank=isClassMode?rank:Number(item.rank||rank);rows.push('<tr><td class="num">'+rankEmblemHtml(displayRank,list.length)+'</td><td><div class="rank-name-flex rank-name-flex-table"><div class="rank-name-main"><span class="rank-name-cell">'+flowText(item.name,item)+'</span>'+ownerLine(item)+'</div></div></td><td class="rank-reactions">'+reactionCountsHtml(item)+'</td><td>'+classIconHtml(item.className,false)+'</td><td class="power">'+escapeHtml(item.pvePowerLabel||item.label||"")+'</td><td class="power">'+escapeHtml(item.pvpPowerLabel||"")+'</td><td class="reviews"><div>🐲 '+escapeHtml(item.pveReview||"")+'</div><div>⚔️ '+escapeHtml(item.pvpReview||"")+'</div></td></tr>');
       continue;
     }
 
