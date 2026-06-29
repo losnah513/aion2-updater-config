@@ -179,7 +179,7 @@ async function fetchHallRankingView(){
 async function reloadHallRankingView(){
   if(!hallData)return;
   rankingLoading=true;
-  if(hallShellExists())setHallSlot('hallSlotOverall',kinojoCardSpinner('서버 순위 불러오는 중'));
+  setRankPanelLoading(true,'서버 순위 불러오는 중');
   try{
     hallData.rankingView=await fetchHallRankingView();
   }catch(err){
@@ -208,15 +208,12 @@ async function load(){
   startLoadingText();
   const cached=readHallCache();
   try{
-    if(cached){
-      applyHallData(cached,{fromCache:true,initial:true});
-      fetchHallDataFresh().then(data=>applyHallData(data,{skipIfSame:true})).catch(()=>{});
-      return;
-    }
+    // 서버 순위/RPC 응답이 도착하기 전 빈 카드가 먼저 렌더링되는 문제를 막기 위해
+    // 초기 화면은 캐시 즉시 렌더링 대신 키노조 로딩 스피너를 유지한다.
     const data=await fetchHallDataFresh();
     applyHallData(data,{initial:true});
   }catch(err){
-    if(cached){
+    if(cached && Array.isArray(cached?.rankingView?.items) && cached.rankingView.items.length){
       applyHallData(cached,{fromCache:true,initial:true});
       return;
     }

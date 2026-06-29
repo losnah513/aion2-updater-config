@@ -1984,3 +1984,20 @@ body{background:#fff!important;}
   .overall.rank-redesign .tab-icon{width:13px!important;height:13px!important;margin-right:1px!important;}
   .overall.rank-redesign .table-scroll{padding:8px 12px 0!important;}
 }
+
+
+/* 20260629-08: ranking row profile/review loading polish */
+.rank-result-panel{position:relative;min-height:520px;}
+.rank-result-panel.is-loading .table-scroll,.rank-result-panel.is-loading .rank-pagination{opacity:.34;filter:saturate(.8);pointer-events:none;}
+.rank-result-loading{position:absolute;inset:0;display:grid;place-items:center;background:rgba(255,255,255,.74);backdrop-filter:blur(2px);z-index:3;border-radius:18px;}
+.rank-name-flex-table{display:flex!important;align-items:center;gap:10px;min-width:0;}
+.rank-profile-avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;flex:0 0 auto;border:1px solid rgba(117,140,177,.28);background:linear-gradient(135deg,#f8fbff,#eaf1fb);box-shadow:0 4px 12px rgba(15,31,60,.08);display:grid;place-items:center;font-size:13px;font-weight:1000;color:#6b7c95;}
+.rank-profile-avatar.top-rank{width:50px;height:50px;border-width:2px;box-shadow:0 8px 18px rgba(17,63,145,.16);}
+.rank-top-row td{background:linear-gradient(90deg,rgba(255,249,230,.72),rgba(255,255,255,.98));}
+.rank-top-1 .rank-name-cell{font-size:15px;font-weight:1000;color:#102a5c;}
+.rank-top-2 .rank-name-cell,.rank-top-3 .rank-name-cell{font-size:14px;font-weight:1000;}
+.rank-sub-meta{font-size:10px;color:#7b8ba2;font-weight:800;margin-top:2px;}
+.reviews .review-muted{color:#9aa8bb;font-weight:800;}
+.reviews{min-width:260px;}
+.overall.rank-redesign{overflow:hidden;}
+@media(max-width:760px){.rank-result-panel{min-height:440px}.rank-profile-avatar{width:32px;height:32px}.rank-profile-avatar.top-rank{width:40px;height:40px}.reviews{min-width:180px}}

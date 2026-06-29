@@ -122,6 +122,35 @@ function reactionBoard(){return '<div class="reaction-board">'+reactionCard("lik
 function awardsBoard(){const w=hallData?.weeklyAwards||{};return '<div class="award-grid">'+awardCard("🌱 성장왕","PVE+PVP 아이템레벨 주간 증가량",w.growthKing||[],"itemLabel")+awardCard("💪 벌크업","PVE+PVP 전투력 주간 증가량",w.bulkUp||[],"powerLabel")+'</div>'}
 function awardCard(title,note,list,labelKey){return '<section class="award-card"><div class="section-head"><h2>'+title+'</h2><span class="section-note">'+note+'</span></div><div class="award-body">'+(list.length?list.map((item,i)=>'<div class="award-row"><div class="award-rank">'+(i+1)+'위</div><div class="award-name"><div class="rank-name-flex"><div class="rank-name-main">'+flowText(item.name,item)+ownerLine(item)+'</div></div></div><div class="award-score">'+escapeHtml(item[labelKey]||'')+'</div></div>').join(''):'<div class="empty">비교 가능한 주간 데이터가 부족합니다.</div>')+'</div></section>'}
 
+
+function setRankPanelLoading(isLoading,message){
+  const panel=document.getElementById('rankResultPanel');
+  if(!panel)return;
+  panel.classList.toggle('is-loading',!!isLoading);
+  let overlay=panel.querySelector('.rank-result-loading');
+  if(isLoading){
+    if(!overlay){
+      overlay=document.createElement('div');
+      overlay.className='rank-result-loading';
+      panel.appendChild(overlay);
+    }
+    overlay.innerHTML=kinojoCardSpinner(message||'서버 순위 불러오는 중');
+  }else if(overlay){
+    overlay.remove();
+  }
+}
+function rankProfileHtml(item,rank){
+  const url=profileImageUrlFor(item);
+  const cls='rank-profile-avatar '+(rank<=3?'top-rank':'')+(url?'':' is-empty');
+  if(!url)return '<div class="'+cls+'" aria-hidden="true">'+escapeHtml((item?.name||'?').slice(0,1))+'</div>';
+  return '<img class="'+cls+'" src="'+escapeHtml(url)+'" alt="'+escapeHtml((item?.name||'캐릭터')+' 프로필')+'" loading="lazy" decoding="async">';
+}
+function reviewLineHtml(icon,text){
+  const safe=String(text||'').trim();
+  if(!safe)return '<div class="review-muted">'+icon+' 리뷰 대기 중</div>';
+  return '<div>'+icon+' '+escapeHtml(safe)+'</div>';
+}
+
 function rankModeButtonHtml(mode,label){
   const active=activeRankMode===mode;
   return '<button class="rank-mode-choice '+(active?'active':'')+'" data-rank-mode="'+mode+'" type="button" aria-pressed="'+(active?'true':'false')+'"><span class="mode-icon" aria-hidden="true">⚔️</span><span>'+label+'</span></button>';
@@ -250,7 +279,9 @@ function overallTable(){
     const rank=start+i+1;
 
     if(item){
-      const displayRank=Number(item.rank||item.rankNo||rank);rows.push('<tr><td class="num">'+rankEmblemHtml(displayRank,rankingTotalCount())+'</td><td><div class="rank-name-flex rank-name-flex-table"><div class="rank-name-main"><span class="rank-name-cell">'+flowText(item.name,item)+'</span>'+ownerLine(item)+'</div></div></td><td class="rank-reactions">'+reactionCountsHtml(item)+'</td><td>'+classIconHtml(item.className,false)+'</td><td class="power">'+escapeHtml(item.pvePowerLabel||item.label||"")+'</td><td class="power">'+escapeHtml(item.pvpPowerLabel||"")+'</td><td class="reviews"><div>🐲 '+escapeHtml(item.pveReview||"")+'</div><div>⚔️ '+escapeHtml(item.pvpReview||"")+'</div></td></tr>');
+      const displayRank=Number(item.rank||item.rankNo||rank);
+      const topClass=displayRank<=3?' rank-top-row rank-top-'+displayRank:'';
+      rows.push('<tr class="rank-row'+topClass+'"><td class="num">'+rankEmblemHtml(displayRank,rankingTotalCount(),item)+'</td><td><div class="rank-name-flex rank-name-flex-table">'+rankProfileHtml(item,displayRank)+'<div class="rank-name-main"><span class="rank-name-cell">'+flowText(item.name,item)+'</span>'+ownerLine(item)+(item.serverName?'<div class="rank-sub-meta">'+escapeHtml(item.serverName)+'</div>':'')+'</div></div></td><td class="rank-reactions">'+reactionCountsHtml(item)+'</td><td>'+classIconHtml(item.className,false)+'</td><td class="power">'+escapeHtml(item.pvePowerLabel||item.label||"")+'</td><td class="power">'+escapeHtml(item.pvpPowerLabel||"")+'</td><td class="reviews">'+reviewLineHtml('🐲',item.pveReview||item.reviewText)+reviewLineHtml('⚔️',item.pvpReview||item.reviewText)+'</td></tr>');
       continue;
     }
 
@@ -263,7 +294,7 @@ function overallTable(){
     rows.push('<tr><td colspan="7"><div class="empty">해당 조건의 순위 데이터가 없습니다.</div></td></tr>');
   }
 
-  return '<section class="overall rank-redesign"><div class="overall-head"><div class="overall-title-block"><h2>'+title+'</h2>'+updateInfo+'</div><button class="btn rank-head-refresh" id="rankHeadRefreshBtn" type="button">↻ 새로고침</button></div>'+searchToolsHtml()+rankTabs()+classReviewBoxHtml(activeRankClass)+'<div class="table-scroll"><table class="rank-table"><colgroup><col class="num"><col class="char-col"><col class="reaction-col"><col class="class-col"><col class="power-col"><col class="power-col"><col class="review-col"></colgroup><thead><tr><th class="num">순위</th><th>캐릭터</th><th aria-label="좋아요 싫어요"></th><th>직업</th><th>전투력(PVE)</th><th>전투력(PVP)</th><th>AI 리뷰</th></tr></thead><tbody>'+rows.join("")+'</tbody></table></div>'+paginationHtml(totalPages)+'</section>';
+  return '<section class="overall rank-redesign"><div class="overall-head"><div class="overall-title-block"><h2>'+title+'</h2>'+updateInfo+'</div><button class="btn rank-head-refresh" id="rankHeadRefreshBtn" type="button">↻ 새로고침</button></div>'+searchToolsHtml()+rankTabs()+classReviewBoxHtml(activeRankClass)+'<div id="rankResultPanel" class="rank-result-panel"><div class="table-scroll"><table class="rank-table"><colgroup><col class="num"><col class="char-col"><col class="reaction-col"><col class="class-col"><col class="power-col"><col class="power-col"><col class="review-col"></colgroup><thead><tr><th class="num">순위</th><th>캐릭터</th><th aria-label="좋아요 싫어요"></th><th>직업</th><th>전투력(PVE)</th><th>전투력(PVP)</th><th>AI 리뷰</th></tr></thead><tbody>'+rows.join("")+'</tbody></table></div>'+paginationHtml(totalPages)+'</div></section>';
 }
 function setHallSlot(id,html){
   const el=document.getElementById(id);
@@ -361,6 +392,7 @@ function renderOverallOnly(){
   if(!hallShellExists())return render({initial:false});
   setHallSlot('hallSlotOverall',overallTable());
   bindHallAfterSlot();
+  setRankPanelLoading(false);
 }
 
 function renderReactionOnly(){
