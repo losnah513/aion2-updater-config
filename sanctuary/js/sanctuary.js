@@ -8,7 +8,7 @@ const FALLBACK={
 };
 const SANCTUARY_ASSET_BASE=(function(){
   const path=location.pathname.replace(/\\/g,'/');
-  return path.includes('/m/')?'../../hall-of-fame/assets/':'../hall-of-fame/assets/';
+  return path.includes('/m/')?'../../hof/assets/':'../hof/assets/';
 })();
 const CLASS_ICON={"검성":"class_icon_gladiator.png","수호성":"class_icon_templar.png","살성":"class_icon_assassin.png","궁성":"class_icon_ranger.png","정령성":"class_icon_elementalist.png","마도성":"class_icon_sorcerer.png","치유성":"class_icon_cleric.png","호법성":"class_icon_chanter.png"};
 function classIconSrc(className){return CLASS_ICON[className]?SANCTUARY_ASSET_BASE+CLASS_ICON[className]:''}

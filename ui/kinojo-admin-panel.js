@@ -120,7 +120,7 @@
       if(status){status.className='admin-status';status.textContent='반영 중...'}
       const data=window.KinojoSupabase?.adminVisit ? await window.KinojoSupabase.adminVisit(mode, amount) : {ok:false,message:'Supabase 설정을 확인해 주세요.'};
       if(!data.ok)throw new Error(data.message||'방문자수 반영 실패');
-      if(typeof window.renderVisits==='function'&&data.stats)window.renderVisits(data.stats);
+      if(window.KinojoCommonUI && typeof window.KinojoCommonUI.renderVisits==='function' && data.stats)window.KinojoCommonUI.renderVisits(data.stats);
       if(status){status.className='admin-status success';status.textContent='방문자수 반영 완료되었습니다.'}
     }catch(e){if(status){status.className='admin-status error';status.textContent='방문자수 반영 실패: '+(e.message||e)}}
     finally{clearAdminButtonLoading_('adminVisitApplyBtn','반영')}

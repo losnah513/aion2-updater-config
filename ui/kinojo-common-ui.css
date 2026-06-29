@@ -12,8 +12,8 @@ body.kinojo-drawer-open{overflow:hidden;}
 
 /* Topbar */
 .kinojo-topbar{
-  position:sticky;
-  top:0;
+  position:relative;
+  top:auto;
   z-index:900;
   width:min(1180px,100%);
   min-height:var(--kinojo-topbar-height);
@@ -1517,9 +1517,9 @@ body.kinojo-page-sanctuary .wrap{
   box-sizing:border-box;
 }
 .kinojo-visit-rail{
-  position:sticky;
-  top:0;
-  z-index:10004;
+  position:relative;
+  top:auto;
+  z-index:10002;
   width:min(var(--kinojo-page-max,1120px),calc(100% - 28px));
   margin:8px auto 5px;
   display:flex;
@@ -1609,3 +1609,11 @@ body.kinojo-page-sanctuary .sanctuary-party-nav{border-radius:var(--kinojo-card-
   .kinojo-top-page strong{font-size:10px;}
   .kinojo-top-page small{font-size:8px;}
 }
+
+
+/* 20260629_04 visitor/topbar final guard
+   방문자 통계는 화면 고정 금지. 스크롤 시 탑바와 겹치지 않도록 공통 UI에서 최종 차단한다. */
+.kinojo-visit-rail{position:relative!important;top:auto!important;z-index:10002!important;}
+.kinojo-visitor-statusbar{position:relative!important;}
+.kinojo-topbar{position:relative!important;top:auto!important;}
+.kinojo-top-tools .visit-mini{position:relative!important;top:auto!important;}

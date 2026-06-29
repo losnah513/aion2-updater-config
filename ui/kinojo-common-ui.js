@@ -1,5 +1,7 @@
 /* KINOJO common UI v1.c2.04 / work 260607_00 */
 (function(){
+  if(window.__KINOJO_COMMON_UI_INIT_DONE__) return;
+  window.__KINOJO_COMMON_UI_INIT_DONE__ = true;
   const DOCS={
     about:{title:"사이트 소개",html:`<h3>KINOJO INFO</h3><p>키노조 인포는 AION2 키노조 관련 정보를 한곳에서 확인하기 위한 정보 허브입니다.</p><p>성역 파티 확인, 레기온 기록, 명예의 전당 등 필요한 기능을 순차적으로 제공합니다.</p>`},
     terms:{title:"이용약관",html:`<h3>이용 안내</h3><p>본 사이트는 키노조 관련 정보를 편리하게 확인하기 위한 비공식 정보 페이지입니다.</p><ul><li>사이트 정보의 무단 변조 또는 악의적 사용을 금지합니다.</li><li>표시되는 데이터는 참고용이며 최종 판단은 이용자 본인에게 있습니다.</li><li>서비스 구조는 사전 안내 없이 변경될 수 있습니다.</li></ul>`},
@@ -22,9 +24,11 @@
   function removeLegacy(){
     const legacyTop=q('.top-utility');
     const slot=q('#kinojoCommonSlot');
-    const visit=slot?q('#visitCard',slot):(legacyTop?q('#visitCard',legacyTop):q('#visitCard'));
+    // 방문자바는 공통 UI가 매번 새 구조로만 생성한다. 기존 #visitCard를 재사용하면
+    // hall-of-fame 구 방문자 HTML/클래스가 다시 살아나 공통 방문자바를 덮어쓸 수 있다.
+    document.querySelectorAll('#visitCard,.visit-mini').forEach(el=>detach(el));
     const admin=slot?q('.admin-menu-wrap',slot):(legacyTop?q('.admin-menu-wrap',legacyTop):q('.admin-menu-wrap'));
-    const rescued={visit:detach(visit),admin:detach(admin)};
+    const rescued={visit:null,admin:detach(admin)};
     if(slot)slot.remove();
     if(legacyTop)legacyTop.remove();
     document.querySelectorAll('.side-drawer,.drawer-page-panel,.info-drawer,.info-drawer-overlay,.kinojo-common-drawer,.kinojo-side-panel').forEach(el=>el.remove());
