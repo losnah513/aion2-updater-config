@@ -311,6 +311,37 @@
     return Object.assign({}, storedSession || {}, storedAccount || {}, authSession || {}, authAccount || {});
   }
 
+
+  function currentPassKey(){
+    const account = currentAccount();
+    const raw = account && (account.passCode || account.pass_code || account.passKey || account.pass_key || account.code);
+    const normalized = normalizePassKey(raw || '');
+    if(!normalized){
+      const err = new Error('관리자 PASS KEY 확인이 필요합니다. 다시 로그인 후 시도해 주세요.');
+      err.kinojoAdminAuthError = true;
+      throw err;
+    }
+    return normalized;
+  }
+
+  function normalizeCodeRequestRow(row){
+    if(!row) return null;
+    return {
+      id: row.id,
+      requestId: row.request_id || row.requestId || '',
+      time: row.created_at || row.createdAt || row.requestedAt || '',
+      requestedAt: row.created_at || row.createdAt || row.requestedAt || '',
+      characterName: row.character_name || row.characterName || '',
+      requestedCode: normalizeMemberCode(row.requested_code || row.requestedCode || ''),
+      status: row.status || '',
+      className: row.class_name || row.className || '',
+      memo: row.memo || '',
+      processedAt: row.processed_at || row.processedAt || '',
+      processedBy: row.processed_by || row.processedBy || '',
+      raw: row
+    };
+  }
+
   function assertAdmin(){
     const account = currentAccount();
     const role = normalizeRole(account && account.role, account && account.level);
@@ -438,31 +469,16 @@
       if(await findMemberByCode(requestedCode)) return { ok:false, message:'이미 사용 중인 코드입니다. 다른 코드로 요청해 주세요.' };
       if(await findMemberByMainCharacter(lookup.character.mainCharacter)) return { ok:false, message:'이미 활성화된 회원 코드가 있습니다.' };
 
-      const pendingQuery = [
-        'select=id,request_id,character_name,requested_code,status',
-        'status=eq.PENDING',
-        'or=(character_name.eq.' + encodeURIComponent(lookup.character.mainCharacter) + ',requested_code.eq.' + encodeURIComponent(requestedCode) + ')',
-        'limit=1'
-      ].join('&');
-      const pending = await request('code_requests', { query:pendingQuery });
-      if(Array.isArray(pending) && pending.length){
-        const row = pending[0];
-        if(row.character_name === lookup.character.mainCharacter) return { ok:false, message:'이미 처리 대기 중인 코드 요청이 있습니다.' };
-        return { ok:false, message:'이미 다른 요청에 사용된 코드입니다. 다른 코드로 요청해 주세요.' };
-      }
-
-      const body = {
-        request_id: makeRequestId(),
-        character_name: lookup.character.mainCharacter,
-        requested_code: requestedCode,
-        class_name: lookup.character.className || '',
-        status: 'PENDING',
-        version: String(extra.version || ''),
-        url: String(extra.url || location.href || '')
-      };
-      const rows = await request('code_requests', { method:'POST', headers:{ Prefer:'return=representation' }, body });
-      const row = Array.isArray(rows) ? rows[0] : rows;
-      return { ok:true, message:'회원 코드 요청이 접수되었습니다.', request:{ requestId:row.request_id, characterName:row.character_name, requestedCode:row.requested_code, status:row.status, requestedAt:row.created_at } };
+      const data = await rpc('kinojo_code_request_submit', {
+        p_character_name: lookup.character.mainCharacter,
+        p_requested_code: requestedCode,
+        p_class_name: lookup.character.className || '',
+        p_version: String(extra.version || ''),
+        p_url: String(extra.url || location.href || ''),
+        p_memo: String(extra.memo || '')
+      });
+      const row = normalizeCodeRequestRow(data && (data.request || data.row || data));
+      return { ok:true, message:'회원 코드 요청이 접수되었습니다.', request:row };
     }
 
     return { ok:false, message:'알 수 없는 코드 요청 명령입니다.' };
@@ -508,51 +524,41 @@
     }
 
     if(normalizedCommand === 'listCodeRequests'){
-      const rows = await request('code_requests', { query:'select=*&status=eq.PENDING&order=created_at.asc' });
-      const requests = (Array.isArray(rows) ? rows : []).map(row => ({
-        id: row.id,
-        requestId: row.request_id,
-        time: row.created_at,
-        characterName: row.character_name,
-        requestedCode: row.requested_code,
-        status: row.status,
-        className: row.class_name || ''
-      }));
-      return { ok:true, requests };
+      const data = await rpc('kinojo_code_request_list', {
+        p_pass_key: currentPassKey(),
+        p_status: String(extra.status || 'PENDING'),
+        p_limit: Number(extra.limit || 100)
+      });
+      const source = data && data.requests || [];
+      return { ok:true, requests:(Array.isArray(source) ? source : []).map(normalizeCodeRequestRow).filter(Boolean) };
     }
 
     if(normalizedCommand === 'approveCodeRequest'){
       const requestId = String(extra.requestId || '').trim();
       if(!requestId) return { ok:false, message:'처리할 코드 요청을 찾지 못했습니다.' };
-      const rows = await request('code_requests', { query:'select=*&request_id=eq.' + encodeURIComponent(requestId) + '&limit=1' });
-      const req = Array.isArray(rows) ? rows[0] : null;
-      if(!req) return { ok:false, message:'코드 요청을 찾지 못했습니다.' };
-      if(req.status !== 'PENDING') return { ok:false, message:'이미 처리된 요청입니다.' };
-      const created = await adminAccount('createCode', { mainCharacter:req.character_name, code:req.requested_code, permissions:'' });
-      if(!created.ok) return created;
-      await request('code_requests', {
-        method:'PATCH',
-        query:'request_id=eq.' + encodeURIComponent(requestId),
-        headers:{ Prefer:'return=representation' },
-        body:{ status:'APPROVED', processed_at:new Date().toISOString(), processed_by:admin.account.mainCharacter || admin.role }
+      const data = await rpc('kinojo_code_request_approve', {
+        p_pass_key: currentPassKey(),
+        p_request_id: requestId,
+        p_level: Number(extra.level || 1),
+        p_role: String(extra.role || 'MEMBER'),
+        p_role_label: extra.roleLabel || null,
+        p_can_like: extra.canLike !== false,
+        p_can_suggest: extra.canSuggest !== false,
+        p_can_manage: extra.canManage === true,
+        p_memo: String(extra.memo || '')
       });
-      return { ok:true, message:'회원 코드가 등록되었습니다.', requestId, account:created.account, request:{ characterName:req.character_name, requestedCode:req.requested_code, status:'APPROVED' } };
+      return { ok:true, message:'회원 코드가 등록되었습니다.', requestId, account:accountFromRow(data && (data.member || data.account)), request:normalizeCodeRequestRow(data && (data.request || {})) };
     }
 
     if(normalizedCommand === 'rejectCodeRequest'){
       const requestId = String(extra.requestId || '').trim();
       if(!requestId) return { ok:false, message:'처리할 코드 요청을 찾지 못했습니다.' };
-      const rows = await request('code_requests', { query:'select=*&request_id=eq.' + encodeURIComponent(requestId) + '&limit=1' });
-      const req = Array.isArray(rows) ? rows[0] : null;
-      if(!req) return { ok:false, message:'코드 요청을 찾지 못했습니다.' };
-      if(req.status !== 'PENDING') return { ok:false, message:'이미 처리된 요청입니다.' };
-      await request('code_requests', {
-        method:'PATCH',
-        query:'request_id=eq.' + encodeURIComponent(requestId),
-        headers:{ Prefer:'return=representation' },
-        body:{ status:'REJECTED', processed_at:new Date().toISOString(), processed_by:admin.account.mainCharacter || admin.role }
+      const data = await rpc('kinojo_code_request_reject', {
+        p_pass_key: currentPassKey(),
+        p_request_id: requestId,
+        p_reason: String(extra.reason || extra.memo || '')
       });
-      return { ok:true, message:'코드 요청을 거절했습니다.', requestId, request:{ characterName:req.character_name, requestedCode:req.requested_code, status:'REJECTED' } };
+      return { ok:true, message:'코드 요청을 거절했습니다.', requestId, request:normalizeCodeRequestRow(data && (data.request || {})) };
     }
 
     if(normalizedCommand === 'updateRole'){
@@ -1222,6 +1228,8 @@
       canSuggest: row.can_suggest !== false,
       canManage: row.can_manage === true || roleLevel >= 3,
       source: 'supabase',
+      passCode: code,
+      passKey: code,
       verifiedAt: Date.now()
     };
     return {
@@ -1233,6 +1241,8 @@
         roleLabel: profile.roleLabel,
         level: profile.level,
         source:'supabase',
+        passCode: code,
+        passKey: code,
         expiresAt: Date.now() + 5 * 60 * 1000
       },
       account: profile,
@@ -1241,7 +1251,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.32-runtime-starter-2026062624',
+    version:'1.3.1.34-code-request-rpc-2026062913',
     getConfig,
     isPreferred,
     isConfigured,
