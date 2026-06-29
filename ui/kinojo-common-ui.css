@@ -1169,7 +1169,7 @@ img,picture,canvas,svg,.sanctuary-hero,.hero-bg,.mvp-profile-image,.character-pr
 
 
 /* 20260624-01 공지 BAR 하단 고정 / 확장 UI 스타일 */
-body{padding-bottom:52px;}
+
 .kinojo-notice-strip{
   position:fixed !important;
   left:50% !important;
@@ -1217,7 +1217,6 @@ body{padding-bottom:52px;}
 .admin-notice-actions{display:flex;justify-content:center;align-items:center;margin-top:2px;}
 .admin-notice-actions .btn{min-width:128px;}
 @media(max-width:760px){
-  body{padding-bottom:68px;}
   .kinojo-notice-strip{bottom:8px !important;width:calc(100% - 14px) !important;border-radius:14px !important;padding:8px 10px !important;}
   .kinojo-notice-list{gap:6px !important;}
   .kinojo-notice-item{font-size:11px !important;gap:6px !important;}
@@ -1617,3 +1616,25 @@ body.kinojo-page-sanctuary .sanctuary-party-nav{border-radius:var(--kinojo-card-
 .kinojo-visitor-statusbar{position:relative!important;}
 .kinojo-topbar{position:relative!important;top:auto!important;}
 .kinojo-top-tools .visit-mini{position:relative!important;top:auto!important;}
+
+
+/* 20260629-05 공통 공지bar 위치 정책 최종 정리
+   - 모든 페이지 공통 UI에서만 1회 생성
+   - 화면 하단 fixed/sticky 금지
+   - 탑바 아래 문서 흐름 안에서만 표시 */
+body{padding-bottom:0!important;}
+.kinojo-notice-strip{
+  position:relative!important;
+  left:auto!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:auto!important;
+  transform:none!important;
+  z-index:1200!important;
+  width:min(var(--kinojo-page-max,1120px),calc(100% - 28px))!important;
+  margin:0 auto 10px!important;
+  box-sizing:border-box!important;
+}
+@media(max-width:720px){
+  .kinojo-notice-strip{width:calc(100% - 14px)!important;margin:0 auto 8px!important;}
+}

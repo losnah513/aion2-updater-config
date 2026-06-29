@@ -447,81 +447,6 @@ body.drawer-open{
   padding-left:19px}
 .info-drawer-body li{
   margin:4px 0}
-.construction-notice{
-  position:fixed;
-  inset:0;
-  z-index:10040;
-  display:grid;
-  place-items:center;
-  padding:18px;
-  opacity:0;
-  visibility:hidden;
-  pointer-events:none;
-  background:rgba(255,255,255,.22);
-  backdrop-filter:blur(8px);
-  -webkit-backdrop-filter:blur(8px);
-  transition:.28s ease}
-.construction-notice.open{
-  opacity:1;
-  visibility:visible;
-  pointer-events:auto}
-.construction-card{
-  position:relative;
-  width:min(360px,100%);
-  background:#fff;
-  border:1px solid var(--line);
-  border-radius:var(--card-radius);
-  box-shadow:none;
-  padding:22px 20px 18px;
-  text-align:center}
-.construction-kicker{
-  color:#667085;
-  font-size:12px;
-  font-weight:1000;
-  margin-bottom:8px}
-.construction-card h2{
-  margin:0;
-  color:#263444;
-  font-size:20px;
-  letter-spacing:-.5px}
-.construction-card p{
-  margin:10px 0 16px;
-  color:#667085;
-  font-size:13px;
-  line-height:1.45}
-.construction-close{
-  position:absolute;
-  top:10px;
-  right:10px;
-  width:30px;
-  height:30px;
-  border:1px solid var(--line);
-  background:#fff;
-  color:#64748b;
-  border-radius:var(--button-radius);
-  cursor:pointer;
-  font-size:18px;
-  font-weight:1000}
-.construction-ok{
-  height:38px;
-  min-width:96px;
-  border:1px solid #d8ecd0;
-  background:#f1f8ed;
-  color:#2f6f3a;
-  border-radius:var(--button-radius);
-  font-weight:1000;
-  cursor:pointer}
-@media(max-width:900px){
-.hall-banner{
-  width:100%}
-.sanctuary-row{
-  grid-template-columns:1fr;
-  padding-top:12px}
-.rudra-card:hover + .card,.rudra-card:hover + .card + .card{
-  transform:none}
-.rudra-card:hover .rudra-boss,.rudra-card:focus-visible .rudra-boss,.rudra-card:active .rudra-boss{
-  transform:translate(18px,-28px) scale(1.22)}
-}
 @media(max-width:720px){
 .wrap{
   padding:12px 10px 32px}
@@ -552,11 +477,11 @@ body.drawer-open{
   animation:none!important}
 }
 /* KINOJO main visual-contract restore patch */
-body,.card,.eyebrow,.hall-banner,.info-logo-placeholder,.info-drawer,.construction-card{
+body,.card,.eyebrow,.hall-banner,.info-logo-placeholder,.info-drawer{
   background:#fff!important;
   box-shadow:none!important;
 }
-.card,.hall-banner,.info-logo-placeholder,.construction-card,.info-drawer-close,.construction-close,.construction-ok{
+.card,.hall-banner,.info-logo-placeholder,.info-drawer-close{
   border-radius:2px!important;
 }
 .card:hover:not(.disabled){

@@ -19,7 +19,7 @@ body{
   background:#fff!important;
 }
 .banner,.section,.overall,.classes,.mvp-card,.reaction-card,.award-card,.relation-combined-card,
-.chick-card,.admin-dropdown,.admin-result-box,.admin-visit-control,.reaction-popover,.construction-card,.visit-mini{
+.chick-card,.admin-dropdown,.admin-result-box,.admin-visit-control,.reaction-popover,.visit-mini{
   background:#fff!important;
   border-radius:var(--radius-card)!important;
   box-shadow:none!important;
@@ -29,15 +29,15 @@ body{
   background:#fff!important;
   box-shadow:none!important;
 }
-.search,.btn,.page-btn,.send-btn,.reaction-choice button,.construction-ok,.pill,.admin-swap-btn,.reaction-close{
+.search,.btn,.page-btn,.send-btn,.reaction-choice button,.pill,.admin-swap-btn,.reaction-close{
   background:#fff!important;
   border-radius:var(--radius-control)!important;
   box-shadow:none!important;
 }
-.btn,.page-btn,.send-btn,.reaction-choice button,.construction-ok,.pill,.admin-swap-btn,.character-name-text,.name-tag,.mini-row,.award-row,.relation-row{
+.btn,.page-btn,.send-btn,.reaction-choice button,.pill,.admin-swap-btn,.character-name-text,.name-tag,.mini-row,.award-row,.relation-row{
   transition:transform .16s ease, background-color .16s ease, border-color .16s ease, filter .16s ease, opacity .16s ease;
 }
-.btn:hover,.page-btn:hover,.send-btn:hover,.reaction-choice button:hover,.construction-ok:hover,
+.btn:hover,.page-btn:hover,.send-btn:hover,.reaction-choice button:hover:hover,
 .pill:hover,.admin-swap-btn:hover{
   background:#f8fafc!important;
   border-color:#cfd6df!important;
