@@ -834,9 +834,9 @@
       serverId,
       serverName,
       meta:serverName,
-      category:'PVE',
-      value:pvePower,
-      label:numberLabel(pvePower),
+      category:String(snakeOrCamel(row, 'rank_mode', 'rankMode', 'PVE') || 'PVE').toUpperCase()==='PVP'?'PVP':'PVE',
+      value:(String(snakeOrCamel(row, 'rank_mode', 'rankMode', 'PVE') || 'PVE').toUpperCase()==='PVP'?pvpPower:pvePower),
+      label:numberLabel(String(snakeOrCamel(row, 'rank_mode', 'rankMode', 'PVE') || 'PVE').toUpperCase()==='PVP'?pvpPower:pvePower),
       pvePower:pvePower,
       pvePowerLabel:numberLabel(pvePower),
       pvpPower:pvpPower,
@@ -893,7 +893,7 @@
     return rpc('kinojo_web_get_ranking', { p_limit:Number(limit || 300) });
   }
 
-  async function getWebHallOfFame(limit){
+  async function getWebHallOfFame(limit, extra={}){
     const hall = await rpc('kinojo_web_get_hall_of_fame', { p_limit:Number(limit || 300) });
     const mvp = await rpc('kinojo_web_get_mvp_candidates', { p_limit:20 }).catch(()=>({ ok:true, items:[] }));
     const rows = Array.isArray(hall && hall.items) ? hall.items : [];
@@ -911,6 +911,7 @@
       .map((item,idx)=>Object.assign({}, item, { rank:idx+1, category:'PVP', value:item.pvpPower, label:item.pvpPowerLabel }));
     const mvpCandidatesTop3 = (Array.isArray(mvp && mvp.items) ? mvp.items : []).map((row, idx)=>hallItemFromRow(row, idx + 1)).slice(0,3);
     const updatedAt = rows[0] && (rows[0].updated_at || rows[0].ranking_date || rows[0].created_at) || '';
+    const rankingView = await getWebHallRankingView(Object.assign({limit, page:1, pageSize:10, includeSubs:false, className:'전체', search:'', rankMode:'PVE'}, extra || {})).catch(()=>null);
     return {
       ok:true,
       source:'supabase_035',
@@ -936,8 +937,35 @@
       partyFriendAll:items.filter(item => String(item.serverId || '').startsWith('1')).slice(0,80),
       newChicks:[],
       reactionSummary:await getHallReactionSummary(),
-      classReviewPool:defaultClassReviewPool()
+      classReviewPool:defaultClassReviewPool(),
+      rankingView
     };
+  }
+
+  async function getWebHallRankingView(extra={}){
+    const data = await rpc('kinojo_web_get_hall_ranking_view', {
+      p_limit:Number(extra.limit || 300),
+      p_page:Number(extra.page || 1),
+      p_page_size:Number(extra.pageSize || extra.page_size || 10),
+      p_include_subs:!!extra.includeSubs || !!extra.include_subs,
+      p_class_name:String(extra.className || extra.class_name || '전체'),
+      p_search:String(extra.search || ''),
+      p_rank_mode:String(extra.rankMode || extra.rank_mode || 'PVE').toUpperCase()==='PVP'?'PVP':'PVE'
+    });
+    const rows = Array.isArray(data && data.items) ? data.items : [];
+    const items = rows.map((row, idx)=>hallItemFromRow(row, idx + 1));
+    return Object.assign({}, data || {}, {
+      ok:data?.ok!==false,
+      items,
+      totalCount:Number(data?.totalCount || data?.total_count || items.length || 0),
+      page:Number(data?.page || extra.page || 1),
+      pageSize:Number(data?.pageSize || data?.page_size || extra.pageSize || 10),
+      rankMode:data?.rankMode || data?.rank_mode || extra.rankMode || 'PVE',
+      className:data?.className || data?.class_name || extra.className || '전체',
+      search:data?.search || extra.search || '',
+      includeSubs:!!(data?.includeSubs || data?.include_subs || extra.includeSubs),
+      classCounts:data?.classCounts || data?.class_counts || {}
+    });
   }
 
   async function getWebDashboard(){
@@ -1140,7 +1168,8 @@
   async function webAction(action, params){
     const name = String(action || '').trim();
     const extra = params || {};
-    if(name === 'hallOfFame') return getWebHallOfFame(extra.limit || 300);
+    if(name === 'hallOfFame') return getWebHallOfFame(extra.limit || 300, extra);
+    if(name === 'hallRankingView') return getWebHallRankingView(extra);
     if(name === 'ranking') return getWebRanking(extra.limit || 300);
     if(name === 'dashboard') return getWebDashboard();
     if(name === 'updaterStatus') return runtimeGetStatus();
