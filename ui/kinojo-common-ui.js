@@ -261,7 +261,6 @@
     setVisitServerLight('is-ok','서버 연결 정상');
   }
   async function loadCommonVisits(info){
-    if(window.__KINOJO_HALL_VISIT_RENDERED__) return;
     const el=document.getElementById('visitCard');
     if(!el)return;
     try{
@@ -606,7 +605,7 @@
   bind();
   bindCommonAdmin(info);
   bindImageGuards();
-  window.KinojoCommonUI={toast,showSafeError,reportError:showSafeError,openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel,toggleAdminMenu,closeAdminMenuCommon,reloadNotices:loadCommonNotices};
+  window.KinojoCommonUI={toast,showSafeError,reportError:showSafeError,openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel,toggleAdminMenu,closeAdminMenuCommon,reloadNotices:loadCommonNotices,renderVisits:renderCommonVisits,loadVisits:loadCommonVisits};
   window.KinojoSafeError={show:showSafeError,report:showSafeError};
   window.openAdminDropdown=toggleAdminMenu;
   window.closeAdminMenu=closeAdminMenuCommon;

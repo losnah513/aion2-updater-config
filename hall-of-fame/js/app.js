@@ -30,8 +30,6 @@
     // data road
     "hallBuildUrl",
     "renderVisits",
-    "fetchVisitStats",
-    "recordDailyVisitOnce",
     "load",
 
     // event road
@@ -68,6 +66,5 @@
 
   bindHallStaticEvents();
   startHallReactionCarouselTimer();
-  recordDailyVisitOnce();
   load();
 })();

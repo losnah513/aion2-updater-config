@@ -14,44 +14,27 @@ function hallBuildUrl(action,params={}){
 }
 
 function renderVisits(stats){
-  const today=Number(stats?.todayVisits||0).toLocaleString("ko-KR");
-  const total=Number(stats?.totalVisits||0).toLocaleString("ko-KR");
-  const el=document.getElementById("visitCard");
-  if(!el)return;
-  el.innerHTML='<span class="visit-line visit-line-today">👀 오늘 '+today+'명의 모험가님이 다녀가셨어요.</span><span class="visit-line visit-line-total">🏛 누적 '+total+'회의 발걸음이 키노조에 남았습니다.</span>';
-  window.__KINOJO_HALL_VISIT_RENDERED__=true;
+  // 방문자 UI는 전 페이지 공통 상단바(kinojo-common-ui.js)만 담당한다.
+  // 명예의 전당 전용 구 방문자 HTML을 #visitCard에 직접 주입하지 않는다.
+  if(window.KinojoCommonUI && typeof window.KinojoCommonUI.renderVisits === "function"){
+    window.KinojoCommonUI.renderVisits(stats);
+  }
 }
 
 async function fetchVisitStats(mode="stats",boost=0){
-  if(window.__KINOJO_HALL_VISIT_REQUEST_ACTIVE__){
-    return window.__KINOJO_HALL_VISIT_REQUEST_ACTIVE__;
+  // 명예의 전당 전용 방문자 요청은 공통 UI와 중복되어 비활성화한다.
+  // 관리자 방문자수 조정 등 외부 호출 호환을 위해 함수명만 유지한다.
+  if(mode === "stats" && window.KinojoCommonUI && typeof window.KinojoCommonUI.loadVisits === "function"){
+    return window.KinojoCommonUI.loadVisits({key:"hall"});
   }
-
-  window.__KINOJO_HALL_VISIT_REQUEST_ACTIVE__=(async()=>{
-    try{
-      const data=await window.KinojoApi.getAction("hallVisit",{mode,boost:String(boost),pageKey:"hall"});
-      if(data?.ok&&data.stats)renderVisits(data.stats);
-      if(data && data.ok===false) throw new Error(data.message || "방문자 통계 처리 실패");
-      return data;
-    }catch(e){
-      return null;
-    }finally{
-      window.__KINOJO_HALL_VISIT_REQUEST_ACTIVE__=null;
-    }
-  })();
-
-  return window.__KINOJO_HALL_VISIT_REQUEST_ACTIVE__;
+  return null;
 }
 
 function recordDailyVisitOnce(){
-  const key="kinojo_hof_visit_"+new Date().toLocaleDateString("ko-KR",{timeZone:"Asia/Seoul"});
-  if(localStorage.getItem(key)==="1"){
-    fetchVisitStats();
-    return;
-  }
-  localStorage.setItem(key,"1");
-  fetchVisitStats("visit",1);
+  // 방문자 1일 1회 기록은 공통 UI loadCommonVisits()에서 pageKey 기준으로 처리한다.
+  return null;
 }
+
 
 function startLoadingText(){
   stopLoadingText();
@@ -158,8 +141,6 @@ function applyHallData(data,{fromCache=false,initial=false,skipIfSame=false}={})
   hallData=data;
   if(hallData.visitStats){
     renderVisits(hallData.visitStats);
-  }else if(!fromCache&&!window.__KINOJO_HALL_VISIT_RENDERED__&&!window.__KINOJO_HALL_VISIT_REQUEST_ACTIVE__){
-    fetchVisitStats();
   }
   const topbarUpdate=document.getElementById("topbarUpdateTime");
   if(topbarUpdate){
