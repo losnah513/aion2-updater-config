@@ -1,4 +1,4 @@
-function miniRow(item,i,total){const rank=i+1;const itemLevel=itemLevelFor(item,item.category);const scoreHtml='<div class="score-stack">'+(itemLevel?'<div class="item-level">'+escapeHtml(itemLevel)+'</div>':'')+'<div class="power-score">'+escapeHtml(numberOnly(item.value)||item.label||"")+'</div></div>';return '<div class="mini-row '+itemClass(item)+'"><div class="medal rank-medal">'+rankEmblemHtml(rank,total)+'</div><div class="name-wrap"><div class="name">'+flowText(item.name,item)+'</div>'+ownerLine(item)+(item.meta?'<div class="meta">'+escapeHtml(item.meta)+'</div>':'')+'</div>'+reactionCountsHtml(item)+'<div class="score">'+scoreHtml+'</div></div>'}
+function miniRow(item,i,total){const rank=i+1;const itemLevel=itemLevelFor(item,item.category);const scoreHtml='<div class="score-stack">'+(itemLevel?'<div class="item-level">'+escapeHtml(itemLevel)+'</div>':'')+'<div class="power-score">'+escapeHtml(numberOnly(item.value)||item.label||"")+'</div></div>';return '<div class="mini-row '+itemClass(item)+'"><div class="medal rank-medal">'+rankEmblemHtml(rank,total,item)+'</div><div class="name-wrap"><div class="name">'+flowText(item.name,item)+'</div>'+ownerLine(item)+(item.meta?'<div class="meta">'+escapeHtml(item.meta)+'</div>':'')+'</div>'+reactionCountsHtml(item)+'<div class="score">'+scoreHtml+'</div></div>'}
 function rankBox(title,note,list){const items=(list||[]).filter(match);return '<section class="section"><div class="section-head"><h2>'+title+'</h2><span class="section-note">'+(note||'')+'</span></div><div class="list">'+(items.length?items.map((item,i)=>miniRow(item,i,items.length)).join(""):'<div class="empty">아직 데이터가 부족해요.</div>')+'</div></section>'}
 function tagBox(title,note,list){const items=(list||[]).filter(match);return '<section class="section"><div class="section-head"><h2>'+title+'</h2><span class="section-note">'+(note||'')+'</span></div><div class="tag-list swipe-list">'+(items.length?items.map(item=>'<div class="name-tag '+itemClass(item)+'"><div class="tag-name-wrap"><div class="tag-name">'+flowText(item.name,item)+'</div></div>'+ownerLine(item)+(item.meta?'<div class="tag-meta">'+escapeHtml(item.meta)+'</div>':'')+'</div>').join(""):'<div class="empty">아직 데이터가 부족해요.</div>')+'</div></section>'}
 function combinedRelationBox(){
@@ -136,18 +136,37 @@ function randomFrom(list){
   return list[Math.floor(Math.random()*list.length)];
 }
 
-function rankEmblemKey(rank,total=10){
-  // KINOJO rank emblem rule: 1위는 Diamond, 2위 Crystal, 3위 Gold, 4~10위 Silver, 이후 Bronze.
-  // 전체/클래스별 모두 화면에 표시되는 순번 기준으로 동일하게 적용한다.
-  if(rank<=1)return "diamond";
-  if(rank===2)return "crystal";
-  if(rank===3)return "gold";
-  if(rank<=10)return "silver";
+function rankEmblemKey(rank,total=10,item=null){
+  const fromServer=String(item?.rankTier||item?.rank_tier||item?.emblemTier||item?.rank_emblem_tier||"").toLowerCase();
+  if(["diamond","crystal","gold","silver","bronze"].includes(fromServer))return fromServer;
+
+  // Apps Script rankTierForMvp_ 이전 규칙:
+  // 1위 Diamond.
+  // 총원 10명 미만: 2위 Crystal, 3위 Gold, 4위 Silver, 5위 이하 Bronze.
+  // 총원 10명 이상: Crystal 상위 5%(최소 2위), Gold 20명 이하 20%/21명 이상 15%,
+  // Silver 20명 이하 35%/21명 이상 25%, 이후 Bronze.
+  const r=Number(rank||0);
+  const t=Number(total||0);
+  if(r<=1)return "diamond";
+  if(t<10){
+    if(r===2)return "crystal";
+    if(r===3)return "gold";
+    if(r===4)return "silver";
+    return "bronze";
+  }
+  const crystalLimit=Math.max(2,Math.ceil(t*0.05));
+  const goldRate=t<=20?0.20:0.15;
+  const silverRate=t<=20?0.35:0.25;
+  const goldLimit=Math.max(crystalLimit+1,Math.floor(t*goldRate));
+  const silverLimit=Math.max(goldLimit+1,Math.floor(t*silverRate));
+  if(r<=crystalLimit)return "crystal";
+  if(r<=goldLimit)return "gold";
+  if(r<=silverLimit)return "silver";
   return "bronze";
 }
 
-function rankEmblemHtml(rank,total=10){
-  const key=rankEmblemKey(rank,total);
+function rankEmblemHtml(rank,total=10,item=null){
+  const key=rankEmblemKey(rank,total,item);
   const number='<span class="rank-number">#'+rank+'</span>';
   return '<span class="rank-emblem rank-emblem-'+key+'"><img src="'+RANK_EMBLEMS[key]+'" alt="rank emblem" draggable="false">'+number+'</span>';
 }
