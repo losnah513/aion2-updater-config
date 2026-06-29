@@ -2001,3 +2001,353 @@ body{background:#fff!important;}
 .reviews{min-width:260px;}
 .overall.rank-redesign{overflow:hidden;}
 @media(max-width:760px){.rank-result-panel{min-height:440px}.rank-profile-avatar{width:32px;height:32px}.rank-profile-avatar.top-rank{width:40px;height:40px}.reviews{min-width:180px}}
+
+/* KINOJO HOF Rank UI 2.0 - 20260629
+   목표: 서버 순위 렌더 전용 구조를 유지하면서 상단 컨트롤/필터/테이블을 대시보드형으로 정돈한다. */
+.overall.rank-redesign{
+  overflow:hidden;
+  border:1px solid rgba(150,164,190,.28);
+  border-radius:18px;
+  background:linear-gradient(180deg,#fff,#fbfdff);
+}
+.overall.rank-redesign .overall-head{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:16px;
+  align-items:center;
+  padding:22px 28px 18px;
+  border-bottom:1px solid rgba(117,140,177,.14);
+}
+.overall.rank-redesign .overall-title-block{
+  display:flex;
+  align-items:baseline;
+  flex-wrap:wrap;
+  gap:12px;
+  min-width:0;
+}
+.overall.rank-redesign .overall-title-block h2{
+  margin:0;
+  font-size:26px;
+  line-height:1.2;
+  letter-spacing:-.04em;
+  color:#152238;
+  white-space:nowrap;
+}
+.overall.rank-redesign .rank-standard-note{
+  color:#74829a;
+  font-size:13px;
+  font-weight:800;
+}
+.overall.rank-redesign .rank-head-refresh{
+  min-width:112px;
+  height:44px;
+  border-radius:10px;
+  background:#fff;
+}
+.rank-control-panel{
+  padding:22px 28px 18px;
+  border-bottom:1px solid rgba(117,140,177,.14);
+  background:#fff;
+}
+.rank-primary-row{
+  display:grid;
+  grid-template-columns:420px minmax(360px,1fr);
+  gap:34px;
+  align-items:center;
+}
+.rank-mode-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+.rank-mode-choice{
+  height:56px;
+  border:1px solid rgba(117,140,177,.28);
+  border-radius:10px;
+  background:#fff;
+  color:#18243a;
+  font-weight:1000;
+  font-size:18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  cursor:pointer;
+  box-shadow:none;
+  transition:transform .16s ease, border-color .16s ease, background .16s ease;
+}
+.rank-mode-choice:hover{transform:translateY(-1px);border-color:rgba(28,88,180,.45)}
+.rank-mode-choice.active{
+  background:linear-gradient(135deg,#0d47a1,#123f91);
+  border-color:#0d47a1;
+  color:#fff;
+}
+.rank-mode-choice .mode-icon{font-size:19px;line-height:1}
+.rank-search-row{
+  display:grid;
+  grid-template-columns:minmax(260px,1fr) 140px 140px;
+  gap:12px;
+  align-items:center;
+}
+.rank-search-wrap{position:relative;min-width:0}
+.rank-search-wrap .search{
+  width:100%;
+  height:56px;
+  padding:0 52px 0 18px;
+  border:1px solid rgba(117,140,177,.28);
+  border-radius:10px;
+  background:#fff;
+  font-size:15px;
+  font-weight:800;
+}
+.rank-search-icon{
+  position:absolute;
+  right:18px;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:24px;
+  color:#101827;
+  pointer-events:none;
+}
+.rank-action-btn{
+  height:56px;
+  border-radius:10px;
+  background:#fff;
+  font-weight:1000;
+  font-size:16px;
+}
+.rank-option-row{
+  display:flex;
+  align-items:center;
+  gap:28px;
+  margin-top:18px;
+}
+.rank-option-group{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-height:38px;
+}
+.rank-option-label{
+  font-size:13px;
+  font-weight:1000;
+  color:#26364f;
+  white-space:nowrap;
+}
+.rank-mini-mode{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  width:124px;
+  height:34px;
+  padding:3px;
+  border-radius:999px;
+  border:1px solid rgba(117,140,177,.26);
+  background:#f8fafc;
+}
+.rank-mini-mode span{
+  display:grid;
+  place-items:center;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:1000;
+  color:#64748b;
+}
+.rank-mini-mode span.active{
+  background:#0d47a1;
+  color:#fff;
+}
+.sub-toggle.compact,#subToggle.sub-toggle{
+  width:118px;
+  height:36px;
+  background:#fff;
+}
+.sub-toggle.compact.on,#subToggle.sub-toggle.on{
+  background:#fff;
+}
+.sub-toggle.compact.on .toggle-knob,#subToggle.sub-toggle.on .toggle-knob{left:86px;background:#0d47a1}
+.rank-filter-block{
+  display:grid;
+  grid-template-columns:86px minmax(0,1fr);
+  align-items:center;
+  gap:12px;
+  padding:18px 28px;
+  border-bottom:1px solid rgba(117,140,177,.14);
+  background:#fbfdff;
+}
+.rank-filter-label{
+  font-size:14px;
+  font-weight:1000;
+  color:#152238;
+  white-space:nowrap;
+}
+.class-tabs.rank-tabs{
+  padding:0;
+  border:0;
+  gap:8px;
+}
+.class-tabs.rank-tabs .pill{
+  min-height:40px;
+  padding:8px 13px;
+  border-radius:9px;
+  background:#fff;
+  font-size:14px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+}
+.class-tabs.rank-tabs .pill.active{
+  background:#eef5ff;
+  border-color:#2563eb;
+  color:#0d47a1;
+}
+.rank-result-panel{
+  position:relative;
+  min-height:680px;
+  padding:18px 28px 24px;
+}
+.rank-result-panel .table-scroll{
+  border:1px solid rgba(117,140,177,.18);
+  border-radius:12px;
+  background:#fff;
+  overflow:hidden;
+}
+.rank-table{
+  min-width:1040px;
+  table-layout:fixed;
+}
+.rank-table th,.rank-table td{
+  padding:14px 16px;
+  font-size:14px;
+}
+.rank-table th{
+  height:48px;
+  background:#f8fafc;
+  color:#26364f;
+  font-weight:1000;
+}
+.rank-table .num{width:92px}
+.rank-table .char-col{width:270px}
+.rank-table .reaction-col{width:74px}
+.rank-table .class-col{width:106px}
+.rank-table .power-col{width:130px}
+.rank-table .review-col{width:auto}
+.rank-row.rank-top-row td{
+  padding-top:18px;
+  padding-bottom:18px;
+  background:linear-gradient(90deg,rgba(255,251,235,.72),rgba(255,255,255,.96));
+}
+.rank-row.rank-top-2 td{background:linear-gradient(90deg,rgba(248,250,252,.95),rgba(255,255,255,.96))}
+.rank-row.rank-top-3 td{background:linear-gradient(90deg,rgba(255,247,237,.74),rgba(255,255,255,.96))}
+.rank-name-flex-table{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+.rank-profile-avatar{
+  flex:0 0 auto;
+  width:52px;
+  height:52px;
+  border-radius:50%;
+  object-fit:cover;
+  background:linear-gradient(135deg,#edf2ff,#f8fafc);
+  border:2px solid #fff;
+  outline:1px solid rgba(117,140,177,.18);
+  display:grid;
+  place-items:center;
+  font-weight:1000;
+  color:#64748b;
+}
+.rank-profile-avatar.top-rank{
+  width:66px;
+  height:66px;
+  outline:2px solid rgba(245,158,11,.38);
+}
+.rank-name-main{min-width:0;display:flex;flex-direction:column;gap:3px}
+.rank-name-cell{font-size:16px;font-weight:1000;color:#152238;line-height:1.2}
+.rank-top-row .rank-name-cell{font-size:18px}
+.rank-sub-meta{font-size:12px;color:#74829a;font-weight:800}
+.rank-table .power{
+  font-size:16px;
+  color:#152238;
+  font-weight:1000;
+}
+.rank-reactions .reaction-counts{
+  justify-content:center;
+}
+.reviews{
+  font-size:13px;
+  color:#40526e;
+}
+.ai-review-line{
+  display:flex;
+  gap:8px;
+  align-items:flex-start;
+  line-height:1.45;
+}
+.ai-review-label{
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  height:22px;
+  padding:0 8px;
+  border-radius:999px;
+  background:#eef5ff;
+  color:#0d47a1;
+  font-size:11px;
+  font-weight:1000;
+}
+.review-status-line{
+  margin-top:5px;
+  color:#64748b;
+  font-weight:800;
+}
+.rank-pagination{
+  display:flex;
+  justify-content:center;
+  gap:6px;
+  margin-top:20px;
+}
+.rank-pagination .page-num{
+  min-width:44px;
+  height:44px;
+  border-radius:8px;
+  border:1px solid rgba(117,140,177,.22);
+  background:#fff;
+  font-weight:900;
+}
+.rank-pagination .page-num.active{
+  background:#0d47a1;
+  color:#fff;
+  border-color:#0d47a1;
+}
+.rank-pagination .page-num.edge{min-width:72px;font-size:12px;color:#64748b}
+.rank-result-loading{
+  position:absolute;
+  inset:18px 28px 24px;
+  z-index:5;
+  display:grid;
+  place-items:center;
+  border-radius:12px;
+  background:rgba(255,255,255,.82);
+  backdrop-filter:blur(4px);
+}
+@media(max-width:1100px){
+  .rank-primary-row{grid-template-columns:1fr;gap:14px}
+  .rank-mode-row{max-width:420px}
+  .rank-result-panel{min-height:620px}
+}
+@media(max-width:760px){
+  .overall.rank-redesign .overall-head{padding:16px 14px;grid-template-columns:1fr}
+  .overall.rank-redesign .overall-title-block h2{font-size:20px;white-space:normal}
+  .rank-control-panel{padding:16px 14px}
+  .rank-search-row{grid-template-columns:1fr 1fr}
+  .rank-search-wrap{grid-column:1/-1}
+  .rank-mode-row{grid-template-columns:1fr 1fr;max-width:none}
+  .rank-mode-choice,.rank-search-wrap .search,.rank-action-btn{height:48px;font-size:14px}
+  .rank-option-row{gap:14px;flex-wrap:wrap}
+  .rank-filter-block{grid-template-columns:1fr;padding:14px}
+  .rank-result-panel{padding:14px;min-height:560px}
+  .rank-result-loading{inset:14px}
+  .rank-table th,.rank-table td{padding:12px 10px}
+}

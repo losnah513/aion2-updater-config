@@ -88,7 +88,7 @@ function preloadImages(paths){
   }));
 }
 
-const HALL_CACHE_KEY="kinojo_hall_cache_v2026062906";
+const HALL_CACHE_KEY="kinojo_hall_cache_v2026062909";
 const HALL_CACHE_TTL_MS=5*60*1000;
 
 function readHallCache(){
