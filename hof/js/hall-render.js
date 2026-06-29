@@ -234,7 +234,7 @@ function classReviewBoxHtml(className){
 }
 
 function emptyRankRowHtml(rank){
-  return '<tr class="rank-empty-row"><td class="num">'+rankEmblemHtml(rank)+'</td><td><span class="rank-empty-mark">—</span></td><td></td><td>'+classIconHtml(activeRankClass,false)+'</td><td></td><td></td><td></td></tr>';
+  return '<tr class="rank-empty-row"><td class="num">'+rankEmblemHtml(rank)+'</td><td><span class="rank-empty-mark">—</span></td><td>'+classIconHtml(activeRankClass,false)+'</td><td></td><td></td><td></td></tr>';
 }
 
 function searchToolsHtml(){
@@ -267,7 +267,9 @@ function rankTableRowsHtml(){
       const pve=item.pvePowerLabel||item.label||"";
       const pvp=item.pvpPowerLabel||"";
       const reviewText=item.aiReview||item.reviewText||item.pveReview||item.pvpReview||'';
-      rows.push('<tr class="rank-row'+topClass+'"><td class="num">'+rankEmblemHtml(displayRank,rankingTotalCount(),item)+'</td><td><div class="rank-name-flex rank-name-flex-table">'+rankProfileHtml(item,displayRank)+'<div class="rank-name-main"><span class="rank-name-cell">'+flowText(item.name,item)+'</span>'+ownerLine(item)+'<div class="rank-sub-meta">'+escapeHtml([item.level?('Lv.'+item.level):'',item.serverName||''].filter(Boolean).join(' · '))+'</div></div></div></td><td class="rank-reactions">'+reactionCountsHtml(item)+'</td><td>'+classIconHtml(item.className,false)+'</td><td class="power">'+escapeHtml(pve)+'</td><td class="power">'+escapeHtml(pvp)+'</td><td class="reviews"><div class="ai-review-line"><span class="ai-review-label">AI 리뷰</span><span>'+escapeHtml(reviewText||'리뷰 대기 중')+'</span></div><div class="review-status-line">'+escapeHtml(item.growthLabel||item.growthStatus||'변화없음')+'</div></td></tr>');
+      const metaLine=escapeHtml([item.level?('Lv.'+item.level):'',item.serverName||'',item.legionName||item.legion||''].filter(Boolean).join(' · '));
+      const growth=escapeHtml(item.growthLabel||item.growthStatus||'변화없음');
+      rows.push('<tr class="rank-row'+topClass+'"><td class="num">'+rankEmblemHtml(displayRank,rankingTotalCount(),item)+'</td><td><div class="rank-name-flex rank-name-flex-table">'+rankProfileHtml(item,displayRank)+'<div class="rank-name-main"><span class="rank-name-cell">'+flowText(item.name,item)+'</span>'+ownerLine(item)+'<div class="rank-sub-meta">'+metaLine+'</div><div class="rank-inline-reactions">'+reactionCountsHtml(item)+'</div></div></div></td><td class="rank-class-cell">'+classIconHtml(item.className,false)+'</td><td class="power power-pve"><span class="power-label">PVE</span><strong>'+escapeHtml(pve||'-')+'</strong></td><td class="power power-pvp"><span class="power-label">PVP</span><strong>'+escapeHtml(pvp||'-')+'</strong></td><td class="reviews"><div class="review-status-line"><span class="review-status-badge">'+growth+'</span></div><div class="ai-review-line"><span>'+escapeHtml(reviewText||'리뷰 대기 중')+'</span></div></td></tr>');
       continue;
     }
     if(isClassMode){
@@ -276,14 +278,14 @@ function rankTableRowsHtml(){
   }
 
   if(!rows.length){
-    rows.push('<tr><td colspan="7"><div class="empty">해당 조건의 순위 데이터가 없습니다.</div></td></tr>');
+    rows.push('<tr><td colspan="6"><div class="empty">해당 조건의 순위 데이터가 없습니다.</div></td></tr>');
   }
   return rows.join("");
 }
 
 function rankResultInnerHtml(){
   const totalPages=Math.max(1,Math.ceil(rankingTotalCount()/PAGE_SIZE));
-  return '<div class="table-scroll"><table class="rank-table"><colgroup><col class="num"><col class="char-col"><col class="reaction-col"><col class="class-col"><col class="power-col"><col class="power-col"><col class="review-col"></colgroup><thead><tr><th class="num">순위</th><th>캐릭터</th><th aria-label="좋아요 싫어요"></th><th>직업</th><th>전투력(PVE)</th><th>전투력(PVP)</th><th>AI 리뷰</th></tr></thead><tbody>'+rankTableRowsHtml()+'</tbody></table></div>'+paginationHtml(totalPages);
+  return '<div class="table-scroll"><table class="rank-table"><colgroup><col class="num"><col class="char-col"><col class="class-col"><col class="power-col"><col class="power-col"><col class="review-col"></colgroup><thead><tr><th class="num">순위</th><th>캐릭터</th><th>직업</th><th>PVE</th><th>PVP</th><th>AI 리뷰</th></tr></thead><tbody>'+rankTableRowsHtml()+'</tbody></table></div>'+paginationHtml(totalPages);
 }
 
 function rankTitleHtml(){
