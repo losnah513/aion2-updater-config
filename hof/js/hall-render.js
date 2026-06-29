@@ -1,9 +1,9 @@
 function miniRow(item,i,total){const rank=i+1;const itemLevel=itemLevelFor(item,item.category);const scoreHtml='<div class="score-stack">'+(itemLevel?'<div class="item-level">'+escapeHtml(itemLevel)+'</div>':'')+'<div class="power-score">'+escapeHtml(numberOnly(item.value)||item.label||"")+'</div></div>';return '<div class="mini-row '+itemClass(item)+'"><div class="medal rank-medal">'+rankEmblemHtml(rank,total,item)+'</div><div class="name-wrap"><div class="name">'+flowText(item.name,item)+'</div>'+ownerLine(item)+(item.meta?'<div class="meta">'+escapeHtml(item.meta)+'</div>':'')+'</div>'+reactionCountsHtml(item)+'<div class="score">'+scoreHtml+'</div></div>'}
-function rankBox(title,note,list){const items=(list||[]).filter(match);return '<section class="section"><div class="section-head"><h2>'+title+'</h2><span class="section-note">'+(note||'')+'</span></div><div class="list">'+(items.length?items.map((item,i)=>miniRow(item,i,items.length)).join(""):'<div class="empty">아직 데이터가 부족해요.</div>')+'</div></section>'}
+function rankBox(title,note,list){const items=(list||[]);return '<section class="section"><div class="section-head"><h2>'+title+'</h2><span class="section-note">'+(note||'')+'</span></div><div class="list">'+(items.length?items.map((item,i)=>miniRow(item,i,items.length)).join(""):'<div class="empty">아직 데이터가 부족해요.</div>')+'</div></section>'}
 function tagBox(title,note,list){const items=(list||[]).filter(match);return '<section class="section"><div class="section-head"><h2>'+title+'</h2><span class="section-note">'+(note||'')+'</span></div><div class="tag-list swipe-list">'+(items.length?items.map(item=>'<div class="name-tag '+itemClass(item)+'"><div class="tag-name-wrap"><div class="tag-name">'+flowText(item.name,item)+'</div></div>'+ownerLine(item)+(item.meta?'<div class="tag-meta">'+escapeHtml(item.meta)+'</div>':'')+'</div>').join(""):'<div class="empty">아직 데이터가 부족해요.</div>')+'</div></section>'}
 function combinedRelationBox(){
-  const demonItems=(currentDemon()||[]).filter(match);
-  const partyItems=(currentParty()||[]).filter(match);
+  const demonItems=(currentDemon()||[]);
+  const partyItems=(currentParty()||[]);
 
   const renderColumn=function(items,type){
     const base=(items||[]).length?items:[];
@@ -35,7 +35,7 @@ function combinedRelationBox(){
     + '</section>';
 }
 function chickLabel(item){const server=item.meta?'['+item.meta.replace("천족 · ","")+']':'';const cls=item.className?' ('+item.className+')':'';const owner=item.owner&&item.owner!==item.name?' / 본캐 '+item.owner:'';return item.name+server+cls+owner}
-function renderChicks(){const items=(hallData?.newChicks||[]).filter(match);const card=document.getElementById("chickCard");if(!card)return;if(!items.length){card.style.display="none";return}card.classList.toggle("collapsed",chicksCollapsed);card.style.display="block";document.getElementById("chickTitle").textContent="🐣 신입 병아리 "+items.length+"명 입장!";document.getElementById("chickSub").textContent=items.length>=5?"새로운 모험가들이 우르르 둥지에 들어왔어요!":"새로운 모험가들을 따뜻하게 환영합니다!";const shown=chicksExpanded?items:items.slice(0,5);document.getElementById("chickTags").innerHTML=shown.map(item=>'<span class="chick-tag">'+escapeHtml(chickLabel(item))+'</span>').join("")+(items.length>5?'<span class="chick-tag chick-more" id="chickMore">'+(chicksExpanded?"접기":"+"+(items.length-5)+"명 더 보기")+'</span>':'');const more=document.getElementById("chickMore");if(more)more.onclick=()=>{chicksExpanded=!chicksExpanded;renderChicks()};const close=document.getElementById("chickCloseBtn");if(close&&!close.dataset.bound){close.dataset.bound="1";close.onclick=()=>{chicksCollapsed=!chicksCollapsed;card.classList.toggle("collapsed",chicksCollapsed);close.setAttribute("aria-label",chicksCollapsed?"신입 병아리 펼치기":"신입 병아리 접기")}}}
+function renderChicks(){const items=(hallData?.newChicks||[]);const card=document.getElementById("chickCard");if(!card)return;if(!items.length){card.style.display="none";return}card.classList.toggle("collapsed",chicksCollapsed);card.style.display="block";document.getElementById("chickTitle").textContent="🐣 신입 병아리 "+items.length+"명 입장!";document.getElementById("chickSub").textContent=items.length>=5?"새로운 모험가들이 우르르 둥지에 들어왔어요!":"새로운 모험가들을 따뜻하게 환영합니다!";const shown=chicksExpanded?items:items.slice(0,5);document.getElementById("chickTags").innerHTML=shown.map(item=>'<span class="chick-tag">'+escapeHtml(chickLabel(item))+'</span>').join("")+(items.length>5?'<span class="chick-tag chick-more" id="chickMore">'+(chicksExpanded?"접기":"+"+(items.length-5)+"명 더 보기")+'</span>':'');const more=document.getElementById("chickMore");if(more)more.onclick=()=>{chicksExpanded=!chicksExpanded;renderChicks()};const close=document.getElementById("chickCloseBtn");if(close&&!close.dataset.bound){close.dataset.bound="1";close.onclick=()=>{chicksCollapsed=!chicksCollapsed;card.classList.toggle("collapsed",chicksCollapsed);close.setAttribute("aria-label",chicksCollapsed?"신입 병아리 펼치기":"신입 병아리 접기")}}}
 function profileImageUrlFor(item){
   return String(item?.profileImageUrl||"").trim();
 }
@@ -122,13 +122,13 @@ function reactionBoard(){return '<div class="reaction-board">'+reactionCard("lik
 function awardsBoard(){const w=hallData?.weeklyAwards||{};return '<div class="award-grid">'+awardCard("🌱 성장왕","PVE+PVP 아이템레벨 주간 증가량",w.growthKing||[],"itemLabel")+awardCard("💪 벌크업","PVE+PVP 전투력 주간 증가량",w.bulkUp||[],"powerLabel")+'</div>'}
 function awardCard(title,note,list,labelKey){return '<section class="award-card"><div class="section-head"><h2>'+title+'</h2><span class="section-note">'+note+'</span></div><div class="award-body">'+(list.length?list.map((item,i)=>'<div class="award-row"><div class="award-rank">'+(i+1)+'위</div><div class="award-name"><div class="rank-name-flex"><div class="rank-name-main">'+flowText(item.name,item)+ownerLine(item)+'</div></div></div><div class="award-score">'+escapeHtml(item[labelKey]||'')+'</div></div>').join(''):'<div class="empty">비교 가능한 주간 데이터가 부족합니다.</div>')+'</div></section>'}
 
-function rankTabs(){return '<div class="class-tabs rank-tabs"><button class="pill all-rank '+(activeRankClass==="전체"?"active":"")+'" data-rank-class="전체">전체</button>'+CLASS_ORDER.map(cls=>'<button class="pill '+(activeRankClass===cls?"active":"")+'" data-rank-class="'+cls+'">'+classTabIcon(cls)+cls+'</button>').join("")+'</div>'}
+function rankModeButtonHtml(mode,label){
+  const active=activeRankMode===mode;
+  return '<button class="rank-mode-choice '+(active?'active':'')+'" data-rank-mode="'+mode+'" type="button" aria-pressed="'+(active?'true':'false')+'"><span class="mode-icon" aria-hidden="true">⚔️</span><span>'+label+'</span></button>';
+}
+function rankTabs(){return '<div class="rank-filter-block"><div class="rank-filter-label">직업 필터</div><div class="class-tabs rank-tabs"><button class="pill all-rank '+(activeRankClass==="전체"?"active":"")+'" data-rank-class="전체">전체</button>'+CLASS_ORDER.map(cls=>'<button class="pill '+(activeRankClass===cls?"active":"")+'" data-rank-class="'+cls+'">'+classTabIcon(cls)+cls+'</button>').join("")+'</div></div>'}
 function currentRankList(){
-  if(activeRankClass!=="전체"){
-    const map=includeSubs?(hallData?.classAll||{}):(hallData?.classMain||{});
-    return (map[activeRankClass]||[]).filter(match);
-  }
-  return currentOverall().filter(match);
+  return rankingItems();
 }
 
 function randomFrom(list){
@@ -139,12 +139,29 @@ function randomFrom(list){
 function rankEmblemKey(rank,total=10,item=null){
   const fromServer=String(item?.rankTier||item?.rank_tier||item?.emblemTier||item?.rank_emblem_tier||"").toLowerCase();
   if(["diamond","crystal","gold","silver","bronze"].includes(fromServer))return fromServer;
-  // 표시 전용 예외: 빈 행/서버 미응답 시에만 최소 fallback을 사용한다.
-  // 실제 순위의 등급은 034 Ranking Engine의 rank_tier가 단일 기준이다.
+
+  // Apps Script rankTierForMvp_ 이전 규칙:
+  // 1위 Diamond.
+  // 총원 10명 미만: 2위 Crystal, 3위 Gold, 4위 Silver, 5위 이하 Bronze.
+  // 총원 10명 이상: Crystal 상위 5%(최소 2위), Gold 20명 이하 20%/21명 이상 15%,
+  // Silver 20명 이하 35%/21명 이상 25%, 이후 Bronze.
   const r=Number(rank||0);
+  const t=Number(total||0);
   if(r<=1)return "diamond";
-  if(r===2)return "crystal";
-  if(r===3)return "gold";
+  if(t<10){
+    if(r===2)return "crystal";
+    if(r===3)return "gold";
+    if(r===4)return "silver";
+    return "bronze";
+  }
+  const crystalLimit=Math.max(2,Math.ceil(t*0.05));
+  const goldRate=t<=20?0.20:0.15;
+  const silverRate=t<=20?0.35:0.25;
+  const goldLimit=Math.max(crystalLimit+1,Math.floor(t*goldRate));
+  const silverLimit=Math.max(goldLimit+1,Math.floor(t*silverRate));
+  if(r<=crystalLimit)return "crystal";
+  if(r<=goldLimit)return "gold";
+  if(r<=silverLimit)return "silver";
   return "bronze";
 }
 
@@ -155,14 +172,14 @@ function rankEmblemHtml(rank,total=10,item=null){
 }
 
 function classCountMap(){
-  return includeSubs?(hallData?.classAllCount||{}):(hallData?.classMainCount||{});
+  return hallData?.rankingView?.classCounts || (includeSubs?(hallData?.classAllCount||{}):(hallData?.classMainCount||{}));
 }
 
 function getClassTotalCount(className){
   const map=classCountMap();
   const fromMap=Number(map[className]||0);
   if(fromMap>0)return fromMap;
-  return currentOverall().filter(item=>item.className===className).length;
+  return fromMap;
 }
 
 function getClassReviewGroupKey(count){
@@ -192,9 +209,13 @@ function emptyRankRowHtml(rank){
 }
 
 function searchToolsHtml(){
-  const resultCount=currentRankList().length;
-  const info=keyword?'<div class="search-info">현재 순위 영역에서만 '+resultCount+'명 검색됨</div>':'';
-  return '<section class="tools rank-tools"><div class="rank-basis-toggle"><button class="pill rank-basis '+(activeRankBasis==='PVE_POWER'?'active':'')+'" data-rank-basis="PVE_POWER" type="button">PVE 전투력</button><button class="pill rank-basis '+(activeRankBasis==='PVP_POWER'?'active':'')+'" data-rank-basis="PVP_POWER" type="button">PVP 전투력</button></div><input class="search" id="rankSearchInput" value="'+escapeHtml(keyword)+'" placeholder="캐릭터명 / 서버 / 직업 검색"><button class="btn" id="rankRefreshBtn" type="button">조회</button><button class="btn" id="rankClearBtn" type="button">초기화</button><button class="sub-toggle compact '+(includeSubs?'on':'')+'" id="subToggle" type="button"><span class="toggle-knob"></span><span class="toggle-text">'+(includeSubs?'부캐 ON':'부캐 OFF')+'</span></button></section>'+info;
+  const resultCount=rankingTotalCount();
+  const info=keyword?'<div class="search-info">서버 기준 '+resultCount+'명 검색됨</div>':'';
+  return '<section class="rank-control-panel">'
+    + '<div class="rank-mode-row" role="group" aria-label="전투력 기준 선택">'+rankModeButtonHtml('PVE','PVE 전투력')+rankModeButtonHtml('PVP','PVP 전투력')+'</div>'
+    + '<div class="rank-search-row"><div class="rank-search-wrap"><input class="search" id="rankSearchInput" value="'+escapeHtml(keyword)+'" placeholder="캐릭터명 / 서버 / 직업 검색"><span class="rank-search-icon" aria-hidden="true">⌕</span></div><button class="btn rank-action-btn" id="rankRefreshBtn" type="button">조회</button><button class="btn rank-action-btn" id="rankClearBtn" type="button">초기화</button></div>'
+    + '<div class="rank-option-row"><div class="rank-option-group"><span class="rank-option-label">부캐 표시</span><button class="sub-toggle compact '+(includeSubs?'on':'')+'" id="subToggle" type="button" aria-pressed="'+(includeSubs?'true':'false')+'"><span class="toggle-knob"></span><span class="toggle-text">'+(includeSubs?'ON':'OFF')+'</span></button></div><div class="rank-option-group"><span class="rank-option-label">전투력 기준</span><span class="rank-current-mode">'+activeRankMode+'</span></div></div>'
+    + '</section>'+info;
 }
 
 function paginationHtml(totalPages){
@@ -211,16 +232,16 @@ function paginationHtml(totalPages){
 
 function overallTable(){
   const list=currentRankList();
-  const totalPages=Math.max(1,Math.ceil(list.length/PAGE_SIZE));
+  const totalPages=Math.max(1,Math.ceil(rankingTotalCount()/PAGE_SIZE));
   if(page>totalPages)page=totalPages;
 
   const start=(page-1)*PAGE_SIZE;
-  const slice=list.slice(start,start+PAGE_SIZE);
+  const slice=list;
   const isClassMode=activeRankClass!=="전체";
   const title=activeRankClass==="전체"
-    ? '🏅 깡 레기온 전체 순위'
+    ? '🏅 깡 레기온 전체 순위 · '+activeRankMode
     : '<span class="rank-title-wrap"><span class="rank-title-text">'+escapeHtml(activeRankClass)+' 순위</span></span>';
-  const updateInfo='<span class="rank-standard-note">순위 기준: Server Engine ' + (activeRankBasis==='PVP_POWER'?'PVP 전투력':'PVE 전투력') + ''+(hallData?.updatedAt?' · 최종 업데이트 '+escapeHtml(hallData.updatedAt):'')+'</span>';
+  const updateInfo='<span class="rank-standard-note">순위 기준: 서버 '+activeRankMode+' 전투력 기준'+(hallData?.updatedAt?' · 최종 업데이트 '+escapeHtml(hallData.updatedAt):'')+'</span>';
 
   const rows=[];
 
@@ -229,7 +250,7 @@ function overallTable(){
     const rank=start+i+1;
 
     if(item){
-      const displayRank=Number(item.rank||rank);const emblemTotal=Number(item.rankTotal||list.length);rows.push('<tr><td class="num">'+rankEmblemHtml(displayRank,emblemTotal,item)+'</td><td><div class="rank-name-flex rank-name-flex-table"><div class="rank-name-main"><span class="rank-name-cell">'+flowText(item.name,item)+'</span>'+ownerLine(item)+'</div></div></td><td class="rank-reactions">'+reactionCountsHtml(item)+'</td><td>'+classIconHtml(item.className,false)+'</td><td class="power">'+escapeHtml(item.pvePowerLabel||item.label||"")+'</td><td class="power">'+escapeHtml(item.pvpPowerLabel||"")+'</td><td class="reviews"><div>🐲 '+escapeHtml(item.pveReview||"")+'</div><div>⚔️ '+escapeHtml(item.pvpReview||"")+'</div></td></tr>');
+      const displayRank=Number(item.rank||item.rankNo||rank);rows.push('<tr><td class="num">'+rankEmblemHtml(displayRank,rankingTotalCount())+'</td><td><div class="rank-name-flex rank-name-flex-table"><div class="rank-name-main"><span class="rank-name-cell">'+flowText(item.name,item)+'</span>'+ownerLine(item)+'</div></div></td><td class="rank-reactions">'+reactionCountsHtml(item)+'</td><td>'+classIconHtml(item.className,false)+'</td><td class="power">'+escapeHtml(item.pvePowerLabel||item.label||"")+'</td><td class="power">'+escapeHtml(item.pvpPowerLabel||"")+'</td><td class="reviews"><div>🐲 '+escapeHtml(item.pveReview||"")+'</div><div>⚔️ '+escapeHtml(item.pvpReview||"")+'</div></td></tr>');
       continue;
     }
 
@@ -242,7 +263,7 @@ function overallTable(){
     rows.push('<tr><td colspan="7"><div class="empty">해당 조건의 순위 데이터가 없습니다.</div></td></tr>');
   }
 
-  return '<section class="overall"><div class="overall-head"><div class="overall-title-block"><h2>'+title+'</h2>'+updateInfo+'</div></div>'+searchToolsHtml()+rankTabs()+classReviewBoxHtml(activeRankClass)+'<div class="table-scroll"><table class="rank-table"><colgroup><col class="num"><col class="char-col"><col class="reaction-col"><col class="class-col"><col class="power-col"><col class="power-col"><col class="review-col"></colgroup><thead><tr><th class="num">순위</th><th>캐릭터명</th><th aria-label="좋아요 싫어요"></th><th>클래스</th><th>PVE</th><th>PVP</th><th>AI 리뷰</th></tr></thead><tbody>'+rows.join("")+'</tbody></table></div>'+paginationHtml(totalPages)+'</section>';
+  return '<section class="overall rank-redesign"><div class="overall-head"><div class="overall-title-block"><h2>'+title+'</h2>'+updateInfo+'</div><button class="btn rank-head-refresh" id="rankHeadRefreshBtn" type="button">↻ 새로고침</button></div>'+searchToolsHtml()+rankTabs()+classReviewBoxHtml(activeRankClass)+'<div class="table-scroll"><table class="rank-table"><colgroup><col class="num"><col class="char-col"><col class="reaction-col"><col class="class-col"><col class="power-col"><col class="power-col"><col class="review-col"></colgroup><thead><tr><th class="num">순위</th><th>캐릭터</th><th aria-label="좋아요 싫어요"></th><th>직업</th><th>전투력(PVE)</th><th>전투력(PVP)</th><th>AI 리뷰</th></tr></thead><tbody>'+rows.join("")+'</tbody></table></div>'+paginationHtml(totalPages)+'</section>';
 }
 function setHallSlot(id,html){
   const el=document.getElementById(id);
@@ -278,7 +299,7 @@ function classIconsForList(list){
 }
 
 function currentOverallPreviewList(){
-  return currentRankList().slice((page-1)*PAGE_SIZE,page*PAGE_SIZE);
+  return currentRankList();
 }
 
 function hallSlotTasks(){
@@ -292,7 +313,7 @@ function hallSlotTasks(){
     {id:'hallSlotPve',images:rankEmblemsForList(pveList).concat(classIconsForList(pveList)),render:()=>rankBox("⚔ PVE TOP 5","",hallData.pveTop)},
     {id:'hallSlotPvp',images:rankEmblemsForList(pvpList).concat(classIconsForList(pvpList)),render:()=>rankBox("⚔ PVP TOP 5","",hallData.pvpTop)},
     {id:'hallSlotRelations',images:[],render:()=>combinedRelationBox()},
-    {id:'hallSlotOverall',images:rankEmblemsForList(overallList,currentRankList().length).concat(Object.values(CLASS_ICONS)),render:()=>overallTable()}
+    {id:'hallSlotOverall',images:rankEmblemsForList(overallList,rankingTotalCount()).concat(Object.values(CLASS_ICONS)),render:()=>overallTable()}
   ];
 }
 

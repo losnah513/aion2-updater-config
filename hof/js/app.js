@@ -30,8 +30,6 @@
     // data road
     "hallBuildUrl",
     "renderVisits",
-    "fetchVisitStats",
-    "recordDailyVisitOnce",
     "load",
 
     // event road
@@ -45,11 +43,10 @@
     "closeReactionModal",
     "submitReaction",
 
-    // admin/suggestion/construction roads
+    // admin/suggestion roads
     "openAdminDropdown",
     "closeAdminMenu",
-    "openSuggestionPanel",
-    "openConstructionNotice"
+    "openSuggestionPanel"
   ];
 
   const missing=requiredFunctions.filter(name=>typeof window[name]!=="function");
@@ -68,6 +65,5 @@
 
   bindHallStaticEvents();
   startHallReactionCarouselTimer();
-  recordDailyVisitOnce();
   load();
 })();
