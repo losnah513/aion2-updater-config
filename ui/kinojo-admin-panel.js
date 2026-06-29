@@ -38,6 +38,9 @@
     if(key==='account'){
       window.KinojoAuth?.renderAccountAdminInline?.({ load:true, focus:false });
     }
+    if(key==='character'){
+      loadAdminCharacters();
+    }
     if(key==='system'){
       loadAdminNotices();
     }
@@ -239,12 +242,124 @@
       window.KinojoSafeError?.show?.(e,{feature:editingId?'공지사항 수정':'공지사항 등록',action:'noticeAdmin/'+(editingId?'updateNotice':'createNotice'),payload:{id:editingId,noticeType,content},title:'공지사항 처리가 정상 처리되지 않았습니다.',message:'오류 진단 내용을 복사해서 전달해 주세요.'});
     }finally{clearAdminButtonLoading_('adminNoticeSaveBtn',editingId?'공지 수정 저장':'공지 등록')}
   }
+
+
+  function characterStatusLabel_(ch){
+    if(!ch) return '';
+    if(ch.isActive) return '<span class="admin-character-status active">활성</span>';
+    const reason = escapeHtml(ch.inactiveReason || '비활성');
+    return '<span class="admin-character-status inactive">'+reason+'</span>';
+  }
+  function renderAdminCharacters_(characters){
+    const box=document.getElementById('adminCharacterList');
+    if(!box)return;
+    if(!Array.isArray(characters)||!characters.length){
+      box.innerHTML='<div class="admin-result-meta">검색 결과가 없습니다.</div>';
+      return;
+    }
+    box.innerHTML=characters.map(ch=>{
+      const name=escapeHtml(ch.characterName||'');
+      const server=escapeHtml(ch.serverName||ch.serverId||'');
+      const cls=escapeHtml(ch.className||'직업 미확인');
+      const pve=Number(ch.pvePower||0)>0?Number(ch.pvePower||0).toLocaleString('ko-KR'):'-';
+      const pvp=Number(ch.pvpPower||0)>0?Number(ch.pvpPower||0).toLocaleString('ko-KR'):'-';
+      const avatar=ch.profileImageUrl?'<img src="'+escapeHtml(ch.profileImageUrl)+'" alt="" loading="lazy"/>':'<span class="admin-character-avatar-fallback">?</span>';
+      const renamed=ch.renamedTo?'<div class="admin-character-meta">변경 대상: '+escapeHtml(ch.renamedTo)+'</div>':'';
+      const inactive=ch.inactiveMemo?'<div class="admin-character-meta">메모: '+escapeHtml(ch.inactiveMemo)+'</div>':'';
+      return '<article class="admin-character-card" data-character-name="'+name+'" data-server-id="'+escapeHtml(ch.serverId||'')+'">'
+        +'<div class="admin-character-main">'
+        +'<div class="admin-character-avatar">'+avatar+'</div>'
+        +'<div class="admin-character-info"><strong>'+name+'</strong><span>'+server+' · '+cls+'</span><small>PVE '+pve+' · PVP '+pvp+'</small>'+renamed+inactive+'</div>'
+        +'</div>'
+        +'<div class="admin-character-actions">'+characterStatusLabel_(ch)
+        +(ch.isActive?'<button class="btn admin-character-deactivate" type="button">탈퇴 처리</button><button class="btn admin-close admin-character-rename" type="button">이름변경 기록</button>':'<button class="btn admin-character-restore" type="button">복구</button>')
+        +'</div>'
+        +'</article>';
+    }).join('');
+    box.querySelectorAll('.admin-character-deactivate').forEach(btn=>btn.addEventListener('click',()=>adminCharacterDeactivate(btn.closest('.admin-character-card'))));
+    box.querySelectorAll('.admin-character-restore').forEach(btn=>btn.addEventListener('click',()=>adminCharacterRestore(btn.closest('.admin-character-card'))));
+    box.querySelectorAll('.admin-character-rename').forEach(btn=>btn.addEventListener('click',()=>adminCharacterRename(btn.closest('.admin-character-card'))));
+  }
+  function selectedCharacterPayload_(card){
+    return {
+      characterName: card?.dataset.characterName || '',
+      serverId: card?.dataset.serverId || '',
+      reason: document.getElementById('adminCharacterReason')?.value || '탈퇴',
+      memo: document.getElementById('adminCharacterMemo')?.value || '',
+      newName: document.getElementById('adminCharacterNewName')?.value || ''
+    };
+  }
+  async function loadAdminCharacters(){
+    const box=document.getElementById('adminCharacterList');
+    if(!box)return;
+    const status=document.getElementById('adminCharacterStatus');
+    const search=document.getElementById('adminCharacterSearchInput')?.value || '';
+    const includeInactive=document.getElementById('adminCharacterIncludeInactive')?.checked !== false;
+    try{
+      if(status){status.className='admin-status pending';status.textContent='캐릭터 검색 중...';}
+      box.innerHTML='<div class="admin-result-meta">캐릭터 검색 중입니다.</div>';
+      const data=window.KinojoSupabase?.adminCharacter ? await window.KinojoSupabase.adminCharacter('search',{search,includeInactive,limit:50}) : {ok:false,message:'Supabase 설정을 확인해 주세요.'};
+      if(!data||data.ok===false)throw new Error(data?.message||'캐릭터 검색 실패');
+      renderAdminCharacters_(data.characters||[]);
+      if(status){status.className='admin-status success';status.textContent='검색 완료: '+Number((data.characters||[]).length)+'건';}
+    }catch(e){
+      if(status){status.className='admin-status error';status.textContent='캐릭터 검색 실패: '+(e.message||e);}
+      if(box)box.innerHTML='<div class="admin-result-meta error">캐릭터 검색 실패</div>';
+    }
+  }
+  async function adminCharacterDeactivate(card){
+    const payload=selectedCharacterPayload_(card);
+    if(!payload.characterName)return;
+    if(window.confirm && !window.confirm(payload.characterName+' 캐릭터를 랭킹/조회에서 제외할까요?'))return;
+    const status=document.getElementById('adminCharacterStatus');
+    try{
+      if(status){status.className='admin-status pending';status.textContent='탈퇴 처리 중...';}
+      const data=await window.KinojoSupabase.adminCharacter('deactivate',payload);
+      if(!data||data.ok===false)throw new Error(data?.message||'탈퇴 처리 실패');
+      if(status){status.className='admin-status success';status.textContent=data.message||'탈퇴 처리 완료';}
+      await loadAdminCharacters();
+    }catch(e){if(status){status.className='admin-status error';status.textContent='탈퇴 처리 실패: '+(e.message||e);}}
+  }
+  async function adminCharacterRestore(card){
+    const payload=selectedCharacterPayload_(card);
+    if(!payload.characterName)return;
+    const status=document.getElementById('adminCharacterStatus');
+    try{
+      if(status){status.className='admin-status pending';status.textContent='복구 중...';}
+      const data=await window.KinojoSupabase.adminCharacter('restore',payload);
+      if(!data||data.ok===false)throw new Error(data?.message||'복구 실패');
+      if(status){status.className='admin-status success';status.textContent=data.message||'복구 완료';}
+      await loadAdminCharacters();
+    }catch(e){if(status){status.className='admin-status error';status.textContent='복구 실패: '+(e.message||e);}}
+  }
+  async function adminCharacterRename(card){
+    const payload=selectedCharacterPayload_(card);
+    if(!payload.characterName)return;
+    if(!String(payload.newName||'').trim()){
+      const status=document.getElementById('adminCharacterStatus');
+      if(status){status.className='admin-status error';status.textContent='새 캐릭터명을 입력해 주세요.';}
+      document.getElementById('adminCharacterNewName')?.focus();
+      return;
+    }
+    if(window.confirm && !window.confirm(payload.characterName+' → '+payload.newName+' 이름변경 이력을 기록할까요? 기존 이름은 비활성 처리됩니다.'))return;
+    const status=document.getElementById('adminCharacterStatus');
+    try{
+      if(status){status.className='admin-status pending';status.textContent='이름변경 기록 중...';}
+      const data=await window.KinojoSupabase.adminCharacter('markRenamed',{previousName:payload.characterName,newName:payload.newName,serverId:payload.serverId,memo:payload.memo});
+      if(!data||data.ok===false)throw new Error(data?.message||'이름변경 기록 실패');
+      if(status){status.className='admin-status success';status.textContent=data.message||'이름변경 기록 완료';}
+      await loadAdminCharacters();
+    }catch(e){if(status){status.className='admin-status error';status.textContent='이름변경 기록 실패: '+(e.message||e);}}
+  }
+
   function bindButtons(){
     bindAdminTabs();
     const pairs=[
-      ['adminMvpBtn',adminMvp],['adminSnapshotBtn',adminSnapshot],['adminSnapshotStatusBtn',adminSnapshotStatus],['adminSnapshotTriggerBtn',adminSnapshotTriggerInstall],['adminVisitApplyBtn',adminVisitAdjust],['adminNoticeSaveBtn',adminSaveNotice],['adminNoticeResetBtn',resetNoticeForm],['adminNoticeReloadBtn',loadAdminNotices]
+      ['adminMvpBtn',adminMvp],['adminSnapshotBtn',adminSnapshot],['adminSnapshotStatusBtn',adminSnapshotStatus],['adminSnapshotTriggerBtn',adminSnapshotTriggerInstall],['adminVisitApplyBtn',adminVisitAdjust],['adminCharacterSearchBtn',loadAdminCharacters],['adminNoticeSaveBtn',adminSaveNotice],['adminNoticeResetBtn',resetNoticeForm],['adminNoticeReloadBtn',loadAdminNotices]
     ];
     pairs.forEach(([id,fn])=>{const btn=document.getElementById(id);if(btn&&!btn.dataset.commonAdminBound){btn.dataset.commonAdminBound='1';btn.addEventListener('click',fn)}});
+    const charSearchInput=document.getElementById('adminCharacterSearchInput');
+    if(charSearchInput&&!charSearchInput.dataset.commonAdminBound){charSearchInput.dataset.commonAdminBound='1';charSearchInput.addEventListener('keydown',e=>{if(e.key==='Enter')loadAdminCharacters();});}
     document.querySelectorAll('[data-visit-sign]').forEach(btn=>{if(btn.dataset.boundVisitSign)return;btn.dataset.boundVisitSign='1';btn.addEventListener('click',()=>{document.querySelectorAll('[data-visit-sign]').forEach(b=>b.classList.remove('active'));btn.classList.add('active')})});
     document.querySelectorAll('[data-visit-target]').forEach(btn=>{if(btn.dataset.boundVisitTarget)return;btn.dataset.boundVisitTarget='1';btn.addEventListener('click',()=>{document.querySelectorAll('[data-visit-target]').forEach(b=>b.classList.remove('active'));btn.classList.add('active')})});
     const ownerMapBtn=document.getElementById('adminOwnerMapQuickBtn');
@@ -259,7 +374,7 @@
   function init(){bindButtons();loadAdminNotices()}
   document.addEventListener('kinojo-admin-panel-ready',()=>bindButtons());
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
-  window.KinojoAdminPanel={bind:bindButtons,adminMvp,adminSnapshot,adminSnapshotStatus,adminSnapshotTriggerInstall,adminVisitAdjust,adminSaveNotice,loadAdminNotices,resetNoticeForm,adminDeleteNotice};
+  window.KinojoAdminPanel={bind:bindButtons,adminMvp,adminSnapshot,adminSnapshotStatus,adminSnapshotTriggerInstall,adminVisitAdjust,adminSaveNotice,loadAdminNotices,resetNoticeForm,adminDeleteNotice,loadAdminCharacters,adminCharacterDeactivate,adminCharacterRestore,adminCharacterRename};
   window.setAdminButtonLoading_=setAdminButtonLoading_;
   window.clearAdminButtonLoading_=clearAdminButtonLoading_;
   window.showAdminResult_=showAdminResult_;

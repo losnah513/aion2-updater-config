@@ -323,6 +323,7 @@
             <button class="admin-panel-tab active" data-admin-panel="mvp" type="button">🏆 MVP</button>
             <button class="admin-panel-tab" data-admin-panel="growth" type="button">📈 성장</button>
             <button class="admin-panel-tab" data-admin-panel="account" type="button">👥 회원</button>
+            <button class="admin-panel-tab" data-admin-panel="character" type="button">🧍 캐릭터</button>
             <button class="admin-panel-tab" data-admin-panel="system" type="button">⚙ 시스템</button>
           </nav>
           <div class="admin-panel-content">
@@ -346,6 +347,30 @@
               <div class="admin-pane-title"><strong>회원 관리</strong><span>코드 생성, 등급, 권한을 한 화면에서 관리합니다.</span></div>
               <div class="admin-account-inline" id="kinojoAccountAdminInline"></div>
               <div class="admin-pane-result" data-admin-result="account"></div>
+            </section>
+
+            <section class="admin-panel-pane" data-admin-pane="character">
+              <div class="admin-pane-title"><strong>캐릭터 관리</strong><span>탈퇴/복구/이름변경 이력을 서버 기준으로 관리합니다.</span></div>
+              <div class="admin-character-control" id="adminCharacterControl">
+                <div class="admin-character-search-row">
+                  <input class="search admin-character-search" id="adminCharacterSearchInput" placeholder="캐릭터명 또는 서버명 검색" type="text"/>
+                  <label class="admin-character-check"><input id="adminCharacterIncludeInactive" type="checkbox" checked/> 비활성 포함</label>
+                  <button class="btn" id="adminCharacterSearchBtn" type="button">검색</button>
+                </div>
+                <div class="admin-character-form-row">
+                  <select class="search admin-character-reason" id="adminCharacterReason">
+                    <option value="탈퇴">탈퇴</option>
+                    <option value="이름변경">이름변경</option>
+                    <option value="중복">중복</option>
+                    <option value="기타">기타</option>
+                  </select>
+                  <input class="search admin-character-new-name" id="adminCharacterNewName" placeholder="이름변경 시 새 캐릭터명" type="text"/>
+                  <input class="search admin-character-memo" id="adminCharacterMemo" placeholder="관리 메모" type="text"/>
+                </div>
+                <div class="admin-status" id="adminCharacterStatus"></div>
+                <div class="admin-character-list" id="adminCharacterList"><div class="admin-result-meta">검색어를 입력하고 캐릭터를 조회하세요.</div></div>
+              </div>
+              <div class="admin-pane-result" data-admin-result="character"></div>
             </section>
             <section class="admin-panel-pane" data-admin-pane="system">
               <div class="admin-pane-title"><strong>시스템</strong><span>마스터 전용 기능과 캐릭터 소유정보를 관리합니다.</span></div>

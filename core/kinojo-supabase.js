@@ -625,6 +625,76 @@
   }
 
 
+
+
+  function normalizeAdminCharacterRow(row){
+    if(!row) return null;
+    return {
+      characterName: row.character_name || row.characterName || '',
+      mainCharacterName: row.main_character_name || row.mainCharacterName || '',
+      serverId: row.server_id || row.serverId || '',
+      serverName: row.server_name || row.serverName || getServerNameByServerId(row.server_id || row.serverId || ''),
+      className: row.class_name || row.className || '',
+      profileImageUrl: row.profile_image_url || row.profileImageUrl || '',
+      isMain: row.is_main === true || row.isMain === true,
+      isActive: row.is_active !== false && row.isActive !== false,
+      inactiveReason: row.inactive_reason || row.inactiveReason || '',
+      inactiveMemo: row.inactive_memo || row.inactiveMemo || '',
+      inactivatedAt: row.inactivated_at || row.inactivatedAt || '',
+      restoredAt: row.restored_at || row.restoredAt || '',
+      previousName: row.previous_name || row.previousName || '',
+      renamedTo: row.renamed_to || row.renamedTo || '',
+      pvePower: Number(row.latest_pve_combat_power || row.latestPveCombatPower || 0),
+      pvpPower: Number(row.latest_pvp_combat_power || row.latestPvpCombatPower || 0),
+      lastSyncedAt: row.last_synced_at || row.lastSyncedAt || ''
+    };
+  }
+
+  async function adminCharacter(command, extra={}){
+    assertAdmin();
+    const normalizedCommand = String(command || '').trim();
+    if(normalizedCommand === 'search'){
+      const data = await rpc('kinojo_admin_character_search', {
+        p_pass_key: currentPassKey(),
+        p_search: String(extra.search || extra.characterName || ''),
+        p_include_inactive: extra.includeInactive !== false,
+        p_limit: Number(extra.limit || 30)
+      });
+      const rows = data && (data.characters || data.items || []);
+      return { ok:data && data.ok !== false, message:data && data.message || '', characters:(Array.isArray(rows) ? rows : []).map(normalizeAdminCharacterRow).filter(Boolean) };
+    }
+    if(normalizedCommand === 'deactivate'){
+      const data = await rpc('kinojo_admin_character_deactivate', {
+        p_pass_key: currentPassKey(),
+        p_character_name: String(extra.characterName || ''),
+        p_server_id: extra.serverId ? Number(extra.serverId) : null,
+        p_reason: String(extra.reason || '탈퇴'),
+        p_memo: String(extra.memo || '')
+      });
+      return data || { ok:false, message:'처리 결과를 확인하지 못했습니다.' };
+    }
+    if(normalizedCommand === 'restore'){
+      const data = await rpc('kinojo_admin_character_restore', {
+        p_pass_key: currentPassKey(),
+        p_character_name: String(extra.characterName || ''),
+        p_server_id: extra.serverId ? Number(extra.serverId) : null,
+        p_memo: String(extra.memo || '')
+      });
+      return data || { ok:false, message:'처리 결과를 확인하지 못했습니다.' };
+    }
+    if(normalizedCommand === 'markRenamed'){
+      const data = await rpc('kinojo_admin_character_mark_renamed', {
+        p_pass_key: currentPassKey(),
+        p_previous_name: String(extra.previousName || extra.characterName || ''),
+        p_new_name: String(extra.newName || extra.renamedTo || ''),
+        p_server_id: extra.serverId ? Number(extra.serverId) : null,
+        p_memo: String(extra.memo || '')
+      });
+      return data || { ok:false, message:'처리 결과를 확인하지 못했습니다.' };
+    }
+    return { ok:false, message:'알 수 없는 캐릭터 관리 명령입니다.' };
+  }
+
   function noticeAuthorLabel(account){
     const role = normalizeRole(account && account.role, account && account.level);
     const label = role === 'SUB_MASTER' ? 'SUB MASTER' : role;
@@ -1251,7 +1321,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.34-code-request-rpc-2026062913',
+    version:'1.3.1.34-character-status-2026062914',
     getConfig,
     isPreferred,
     isConfigured,
@@ -1291,6 +1361,7 @@
     isValidMemberCode,
     normalizePermissions,
     adminNotice,
+    adminCharacter,
     adminVisit,
     getVisitStats,
     adminUnsupported
