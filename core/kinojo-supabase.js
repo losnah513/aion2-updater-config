@@ -822,8 +822,12 @@
     const reviewText = snakeOrCamel(row, 'review_text', 'reviewText', '') || '';
     const growthLabel = snakeOrCamel(row, 'growth_label', 'growthLabel', '') || '';
     const rank = Number(snakeOrCamel(row, 'rank_no', 'rankNo', rankFallback || 0) || rankFallback || 0);
+    const rankTotal = Number(snakeOrCamel(row, 'rank_total', 'rankTotal', 0) || 0);
+    const rankTier = snakeOrCamel(row, 'rank_tier', 'rankTier', '') || '';
     return {
       rank,
+      rankTotal,
+      rankTier,
       name,
       owner,
       className,
