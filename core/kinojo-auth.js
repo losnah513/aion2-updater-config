@@ -142,7 +142,7 @@
     };
     const file = map[key];
     if(!file) return '';
-    return '/hall-of-fame/assets/class_icon_' + file + '.png';
+    return '/hof/assets/class_icon_' + file + '.png';
   }
 
   function updateStatus(){

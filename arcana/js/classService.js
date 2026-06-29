@@ -8,14 +8,14 @@ window.ArcanaApp = window.ArcanaApp || {};
  */
 ArcanaApp.classService = {
   list: [
-    { key: 'templar', name: '수호성', englishName: 'Templar', icon: '../hall-of-fame/assets/class_icon_templar.png', skillIconFile: 'templar.json' },
-    { key: 'gladiator', name: '검성', englishName: 'Gladiator', icon: '../hall-of-fame/assets/class_icon_gladiator.png', skillIconFile: 'gladiator.json' },
-    { key: 'assassin', name: '살성', englishName: 'Assassin', icon: '../hall-of-fame/assets/class_icon_assassin.png', skillIconFile: 'assassin.json' },
-    { key: 'ranger', name: '궁성', englishName: 'Ranger', icon: '../hall-of-fame/assets/class_icon_ranger.png', skillIconFile: 'ranger.json' },
-    { key: 'sorcerer', name: '마도성', englishName: 'Sorcerer', icon: '../hall-of-fame/assets/class_icon_sorcerer.png', skillIconFile: 'sorcerer.json' },
-    { key: 'elementalist', name: '정령성', englishName: 'Spiritmaster', icon: '../hall-of-fame/assets/class_icon_elementalist.png', skillIconFile: 'spiritmaster.json' },
-    { key: 'cleric', name: '치유성', englishName: 'Cleric', icon: '../hall-of-fame/assets/class_icon_cleric.png', skillIconFile: 'cleric.json' },
-    { key: 'chanter', name: '호법성', englishName: 'Chanter', icon: '../hall-of-fame/assets/class_icon_chanter.png', skillIconFile: 'chanter.json' }
+    { key: 'templar', name: '수호성', englishName: 'Templar', icon: '../hof/assets/class_icon_templar.png', skillIconFile: 'templar.json' },
+    { key: 'gladiator', name: '검성', englishName: 'Gladiator', icon: '../hof/assets/class_icon_gladiator.png', skillIconFile: 'gladiator.json' },
+    { key: 'assassin', name: '살성', englishName: 'Assassin', icon: '../hof/assets/class_icon_assassin.png', skillIconFile: 'assassin.json' },
+    { key: 'ranger', name: '궁성', englishName: 'Ranger', icon: '../hof/assets/class_icon_ranger.png', skillIconFile: 'ranger.json' },
+    { key: 'sorcerer', name: '마도성', englishName: 'Sorcerer', icon: '../hof/assets/class_icon_sorcerer.png', skillIconFile: 'sorcerer.json' },
+    { key: 'elementalist', name: '정령성', englishName: 'Spiritmaster', icon: '../hof/assets/class_icon_elementalist.png', skillIconFile: 'spiritmaster.json' },
+    { key: 'cleric', name: '치유성', englishName: 'Cleric', icon: '../hof/assets/class_icon_cleric.png', skillIconFile: 'cleric.json' },
+    { key: 'chanter', name: '호법성', englishName: 'Chanter', icon: '../hof/assets/class_icon_chanter.png', skillIconFile: 'chanter.json' }
   ],
 
   aliasMap: {
