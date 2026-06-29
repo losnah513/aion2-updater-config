@@ -141,9 +141,25 @@ function setRankPanelLoading(isLoading,message){
 }
 function rankProfileHtml(item,rank){
   const url=profileImageUrlFor(item);
-  const cls='rank-profile-avatar '+(rank<=3?'top-rank':'')+(url?'':' is-empty');
+  const rankClass=rank<=3?(' top-rank rank-avatar-top-'+rank):'';
+  const cls='rank-profile-avatar'+rankClass+(url?'':' is-empty');
   if(!url)return '<div class="'+cls+'" aria-hidden="true">'+escapeHtml((item?.name||'?').slice(0,1))+'</div>';
   return '<img class="'+cls+'" src="'+escapeHtml(url)+'" alt="'+escapeHtml((item?.name||'캐릭터')+' 프로필')+'" loading="lazy" decoding="async">';
+}
+function rankOwnerBadgeHtml(item){
+  const owner=String(item?.owner||'').trim();
+  const name=String(item?.name||'').trim();
+  const isSub=!!(owner&&name&&owner!==name);
+  if(isSub)return '<span class="rank-owner-badge is-sub" title="본캐 '+escapeHtml(owner)+'">부캐 · '+escapeHtml(owner)+'</span>';
+  return '<span class="rank-owner-badge is-main">본캐</span>';
+}
+function rankReactionBoxHtml(type,count){
+  const icon=type==='like'?'👍':'👎';
+  return '<span class="rank-reaction-box '+type+'"><span class="rank-reaction-icon">'+icon+'</span><span>'+escapeHtml(String(count||0))+'</span></span>';
+}
+function rankInlineReactionBoxesHtml(item){
+  const r=reactionDataFor(item);
+  return '<div class="rank-reaction-boxes">'+rankReactionBoxHtml('like',r.like)+rankReactionBoxHtml('dislike',r.dislike)+'</div>';
 }
 function reviewLineHtml(icon,text){
   const safe=String(text||'').trim();
@@ -267,9 +283,9 @@ function rankTableRowsHtml(){
       const pve=item.pvePowerLabel||item.label||"";
       const pvp=item.pvpPowerLabel||"";
       const reviewText=item.aiReview||item.reviewText||item.pveReview||item.pvpReview||'';
-      const metaLine=escapeHtml([item.level?('Lv.'+item.level):'',item.serverName||'',item.legionName||item.legion||''].filter(Boolean).join(' · '));
+      const serverText=escapeHtml(item.serverName||'');
       const growth=escapeHtml(item.growthLabel||item.growthStatus||'변화없음');
-      rows.push('<tr class="rank-row'+topClass+'"><td class="num">'+rankEmblemHtml(displayRank,rankingTotalCount(),item)+'</td><td><div class="rank-name-flex rank-name-flex-table">'+rankProfileHtml(item,displayRank)+'<div class="rank-name-main"><span class="rank-name-cell">'+flowText(item.name,item)+'</span>'+ownerLine(item)+'<div class="rank-sub-meta">'+metaLine+'</div><div class="rank-inline-reactions">'+reactionCountsHtml(item)+'</div></div></div></td><td class="rank-class-cell">'+classIconHtml(item.className,false)+'</td><td class="power power-pve"><span class="power-label">PVE</span><strong>'+escapeHtml(pve||'-')+'</strong></td><td class="power power-pvp"><span class="power-label">PVP</span><strong>'+escapeHtml(pvp||'-')+'</strong></td><td class="reviews"><div class="review-status-line"><span class="review-status-badge">'+growth+'</span></div><div class="ai-review-line"><span>'+escapeHtml(reviewText||'리뷰 대기 중')+'</span></div></td></tr>');
+      rows.push('<tr class="rank-row'+topClass+'"><td class="num">'+rankEmblemHtml(displayRank,rankingTotalCount(),item)+'</td><td class="rank-character-cell"><div class="rank-name-flex rank-name-flex-table">'+rankProfileHtml(item,displayRank)+'<div class="rank-name-main"><div class="rank-name-title"><span class="rank-name-cell">'+flowText(item.name,item)+'</span>'+rankOwnerBadgeHtml(item)+'</div><div class="rank-sub-meta">'+serverText+'</div>'+rankInlineReactionBoxesHtml(item)+'</div></div></td><td class="rank-class-cell">'+classIconHtml(item.className,false)+'<span class="rank-class-name">'+escapeHtml(item.className||'')+'</span></td><td class="power power-pve"><strong>'+escapeHtml(pve||'-')+'</strong></td><td class="power power-pvp"><strong>'+escapeHtml(pvp||'-')+'</strong></td><td class="reviews"><div class="review-status-line"><span class="review-status-badge">'+growth+'</span></div><div class="ai-review-line"><span>'+escapeHtml(reviewText||'리뷰 대기 중')+'</span></div></td></tr>');
       continue;
     }
     if(isClassMode){
