@@ -43,11 +43,10 @@
     "closeReactionModal",
     "submitReaction",
 
-    // admin/suggestion/construction roads
+    // admin/suggestion roads
     "openAdminDropdown",
     "closeAdminMenu",
-    "openSuggestionPanel",
-    "openConstructionNotice"
+    "openSuggestionPanel"
   ];
 
   const missing=requiredFunctions.filter(name=>typeof window[name]!=="function");
