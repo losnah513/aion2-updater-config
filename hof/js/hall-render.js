@@ -139,29 +139,12 @@ function randomFrom(list){
 function rankEmblemKey(rank,total=10,item=null){
   const fromServer=String(item?.rankTier||item?.rank_tier||item?.emblemTier||item?.rank_emblem_tier||"").toLowerCase();
   if(["diamond","crystal","gold","silver","bronze"].includes(fromServer))return fromServer;
-
-  // Apps Script rankTierForMvp_ 이전 규칙:
-  // 1위 Diamond.
-  // 총원 10명 미만: 2위 Crystal, 3위 Gold, 4위 Silver, 5위 이하 Bronze.
-  // 총원 10명 이상: Crystal 상위 5%(최소 2위), Gold 20명 이하 20%/21명 이상 15%,
-  // Silver 20명 이하 35%/21명 이상 25%, 이후 Bronze.
+  // 표시 전용 예외: 빈 행/서버 미응답 시에만 최소 fallback을 사용한다.
+  // 실제 순위의 등급은 034 Ranking Engine의 rank_tier가 단일 기준이다.
   const r=Number(rank||0);
-  const t=Number(total||0);
   if(r<=1)return "diamond";
-  if(t<10){
-    if(r===2)return "crystal";
-    if(r===3)return "gold";
-    if(r===4)return "silver";
-    return "bronze";
-  }
-  const crystalLimit=Math.max(2,Math.ceil(t*0.05));
-  const goldRate=t<=20?0.20:0.15;
-  const silverRate=t<=20?0.35:0.25;
-  const goldLimit=Math.max(crystalLimit+1,Math.floor(t*goldRate));
-  const silverLimit=Math.max(goldLimit+1,Math.floor(t*silverRate));
-  if(r<=crystalLimit)return "crystal";
-  if(r<=goldLimit)return "gold";
-  if(r<=silverLimit)return "silver";
+  if(r===2)return "crystal";
+  if(r===3)return "gold";
   return "bronze";
 }
 
@@ -211,7 +194,7 @@ function emptyRankRowHtml(rank){
 function searchToolsHtml(){
   const resultCount=currentRankList().length;
   const info=keyword?'<div class="search-info">현재 순위 영역에서만 '+resultCount+'명 검색됨</div>':'';
-  return '<section class="tools rank-tools"><input class="search" id="rankSearchInput" value="'+escapeHtml(keyword)+'" placeholder="캐릭터명 / 서버 / 직업 검색"><button class="btn" id="rankRefreshBtn" type="button">조회</button><button class="btn" id="rankClearBtn" type="button">초기화</button><button class="sub-toggle compact '+(includeSubs?'on':'')+'" id="subToggle" type="button"><span class="toggle-knob"></span><span class="toggle-text">'+(includeSubs?'부캐 ON':'부캐 OFF')+'</span></button></section>'+info;
+  return '<section class="tools rank-tools"><div class="rank-basis-toggle"><button class="pill rank-basis '+(activeRankBasis==='PVE_POWER'?'active':'')+'" data-rank-basis="PVE_POWER" type="button">PVE 전투력</button><button class="pill rank-basis '+(activeRankBasis==='PVP_POWER'?'active':'')+'" data-rank-basis="PVP_POWER" type="button">PVP 전투력</button></div><input class="search" id="rankSearchInput" value="'+escapeHtml(keyword)+'" placeholder="캐릭터명 / 서버 / 직업 검색"><button class="btn" id="rankRefreshBtn" type="button">조회</button><button class="btn" id="rankClearBtn" type="button">초기화</button><button class="sub-toggle compact '+(includeSubs?'on':'')+'" id="subToggle" type="button"><span class="toggle-knob"></span><span class="toggle-text">'+(includeSubs?'부캐 ON':'부캐 OFF')+'</span></button></section>'+info;
 }
 
 function paginationHtml(totalPages){
@@ -237,7 +220,7 @@ function overallTable(){
   const title=activeRankClass==="전체"
     ? '🏅 깡 레기온 전체 순위'
     : '<span class="rank-title-wrap"><span class="rank-title-text">'+escapeHtml(activeRankClass)+' 순위</span></span>';
-  const updateInfo='<span class="rank-standard-note">순위 기준: list 시트 전투력 업데이트 기준'+(hallData?.updatedAt?' · 최종 업데이트 '+escapeHtml(hallData.updatedAt):'')+'</span>';
+  const updateInfo='<span class="rank-standard-note">순위 기준: Server Engine ' + (activeRankBasis==='PVP_POWER'?'PVP 전투력':'PVE 전투력') + ''+(hallData?.updatedAt?' · 최종 업데이트 '+escapeHtml(hallData.updatedAt):'')+'</span>';
 
   const rows=[];
 
@@ -246,7 +229,7 @@ function overallTable(){
     const rank=start+i+1;
 
     if(item){
-      const displayRank=isClassMode?rank:Number(item.rank||rank);rows.push('<tr><td class="num">'+rankEmblemHtml(displayRank,list.length)+'</td><td><div class="rank-name-flex rank-name-flex-table"><div class="rank-name-main"><span class="rank-name-cell">'+flowText(item.name,item)+'</span>'+ownerLine(item)+'</div></div></td><td class="rank-reactions">'+reactionCountsHtml(item)+'</td><td>'+classIconHtml(item.className,false)+'</td><td class="power">'+escapeHtml(item.pvePowerLabel||item.label||"")+'</td><td class="power">'+escapeHtml(item.pvpPowerLabel||"")+'</td><td class="reviews"><div>🐲 '+escapeHtml(item.pveReview||"")+'</div><div>⚔️ '+escapeHtml(item.pvpReview||"")+'</div></td></tr>');
+      const displayRank=Number(item.rank||rank);const emblemTotal=Number(item.rankTotal||list.length);rows.push('<tr><td class="num">'+rankEmblemHtml(displayRank,emblemTotal,item)+'</td><td><div class="rank-name-flex rank-name-flex-table"><div class="rank-name-main"><span class="rank-name-cell">'+flowText(item.name,item)+'</span>'+ownerLine(item)+'</div></div></td><td class="rank-reactions">'+reactionCountsHtml(item)+'</td><td>'+classIconHtml(item.className,false)+'</td><td class="power">'+escapeHtml(item.pvePowerLabel||item.label||"")+'</td><td class="power">'+escapeHtml(item.pvpPowerLabel||"")+'</td><td class="reviews"><div>🐲 '+escapeHtml(item.pveReview||"")+'</div><div>⚔️ '+escapeHtml(item.pvpReview||"")+'</div></td></tr>');
       continue;
     }
 

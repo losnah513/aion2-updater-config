@@ -3,18 +3,25 @@ const CLASS_ORDER=["수호성","검성","살성","궁성","마도성","정령성
 const HALL_ASSET_BASE=(function(){
   const path=location.pathname.replace(/\\/g,"/");
   if(path.includes("/m/hof/")) return "../../hof/assets/";
-  if(path.includes("/hof/")) return "./assets/";
+  if(path.includes("/hof/")) return "assets/";
   return "assets/";
 })();
 const CLASS_ICONS={"검성":HALL_ASSET_BASE+"class_icon_gladiator.png","수호성":HALL_ASSET_BASE+"class_icon_templar.png","살성":HALL_ASSET_BASE+"class_icon_assassin.png","궁성":HALL_ASSET_BASE+"class_icon_ranger.png","정령성":HALL_ASSET_BASE+"class_icon_elementalist.png","마도성":HALL_ASSET_BASE+"class_icon_sorcerer.png","치유성":HALL_ASSET_BASE+"class_icon_cleric.png","호법성":HALL_ASSET_BASE+"class_icon_chanter.png"};
 const RANK_EMBLEMS={mvp:HALL_ASSET_BASE+"emblem_mvp_challenger.png",diamond:HALL_ASSET_BASE+"emblem_rank_diamond.png",crystal:HALL_ASSET_BASE+"emblem_rank_crystal.png",gold:HALL_ASSET_BASE+"emblem_rank_gold.png",silver:HALL_ASSET_BASE+"emblem_rank_silver.png",bronze:HALL_ASSET_BASE+"emblem_rank_bronze.png"};
-let hallData=null,keyword="",includeSubs=false,page=1,activeRankClass="전체",chicksExpanded=false,chicksCollapsed=false,longPressTimer=null,longPressFired=false,loadingTimer=null,loadingStep=0,currentReactionItem=null,currentReactionType="like",reactionCarouselIndex=0,reactionCarouselPausedUntil=0,reactionSubmitting=false,searchComposing=false,searchDebounceTimer=null,adminAuthed=false;
+let hallData=null,keyword="",includeSubs=false,page=1,activeRankClass="전체",chicksExpanded=false,chicksCollapsed=false,longPressTimer=null,longPressFired=false,loadingTimer=null,loadingStep=0,currentReactionItem=null,currentReactionType="like",reactionCarouselIndex=0,reactionCarouselPausedUntil=0,reactionSubmitting=false,searchComposing=false,searchDebounceTimer=null,adminAuthed=false,activeRankBasis="PVE_POWER";
 const PAGE_SIZE=10,app=document.getElementById("app");
 function escapeHtml(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;")}
 function rankIcon(i){return i===0?"🥇":i===1?"🥈":i===2?"🥉":i+1}
 function numberOnly(value){const n=Number(String(value??"").replace(/[^0-9.-]/g,""));return Number.isFinite(n)&&n>0?n.toLocaleString("ko-KR"):""}
 function itemLevelFor(item,category){return category==="PVP"?numberOnly(item?.pvpItem):numberOnly(item?.pveItem)}
-function currentOverall(){return includeSubs?(hallData.overallAll||[]):(hallData.overallMain||[])}
+function currentOverall(){
+  const key=activeRankBasis==='PVP_POWER'?'pvp':'pve';
+  const byType=hallData?.rankingByType||{};
+  const typed=byType[key]||{};
+  if(includeSubs&&typed.all)return typed.all;
+  if(!includeSubs&&typed.main)return typed.main;
+  return includeSubs?(hallData.overallAll||[]):(hallData.overallMain||[]);
+}
 function currentDemon(){return includeSubs?(hallData.demonFamilyAll||hallData.demonFamily||[]):(hallData.demonFamily||[])}
 function currentParty(){return includeSubs?(hallData.partyFriendAll||hallData.partyFriend||[]):(hallData.partyFriend||[])}
 function match(item){if(!keyword)return true;return [item.name,item.owner,item.serverName,item.meta,item.className,item.pveReview,item.pvpReview].join(" ").toLowerCase().includes(keyword.toLowerCase())}

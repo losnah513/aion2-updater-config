@@ -14,22 +14,44 @@ function hallBuildUrl(action,params={}){
 }
 
 function renderVisits(stats){
-  // 방문자 UI 갱신은 공통 UI(kinojo-common-ui.js)의 loadCommonVisits/renderCommonVisits에서만 실행한다.
-  // Hall API 응답의 visitStats는 캐시/응답 시점에 따라 공통 방문자바를 다시 덮어쓸 수 있으므로 여기서는 무시한다.
-  return null;
+  const today=Number(stats?.todayVisits||0).toLocaleString("ko-KR");
+  const total=Number(stats?.totalVisits||0).toLocaleString("ko-KR");
+  const el=document.getElementById("visitCard");
+  if(!el)return;
+  el.innerHTML='<span class="visit-line visit-line-today">👀 오늘 '+today+'명의 모험가님이 다녀가셨어요.</span><span class="visit-line visit-line-total">🏛 누적 '+total+'회의 발걸음이 키노조에 남았습니다.</span>';
+  window.__KINOJO_HALL_VISIT_RENDERED__=true;
 }
 
 async function fetchVisitStats(mode="stats",boost=0){
-  // 명예의 전당 전용 방문자 요청은 공통 UI와 중복되므로 완전 비활성화한다.
-  // 관리자 조정은 공통 관리자 패널의 KinojoApi hallVisit 호출만 사용한다.
-  return null;
+  if(window.__KINOJO_HALL_VISIT_REQUEST_ACTIVE__){
+    return window.__KINOJO_HALL_VISIT_REQUEST_ACTIVE__;
+  }
+
+  window.__KINOJO_HALL_VISIT_REQUEST_ACTIVE__=(async()=>{
+    try{
+      const data=await window.KinojoApi.getAction("hallVisit",{mode,boost:String(boost),pageKey:"hall"});
+      if(data?.ok&&data.stats)renderVisits(data.stats);
+      if(data && data.ok===false) throw new Error(data.message || "방문자 통계 처리 실패");
+      return data;
+    }catch(e){
+      return null;
+    }finally{
+      window.__KINOJO_HALL_VISIT_REQUEST_ACTIVE__=null;
+    }
+  })();
+
+  return window.__KINOJO_HALL_VISIT_REQUEST_ACTIVE__;
 }
 
 function recordDailyVisitOnce(){
-  // 방문자 1일 1회 기록은 공통 UI loadCommonVisits()에서 pageKey 기준으로만 처리한다.
-  return null;
+  const key="kinojo_hof_visit_"+new Date().toLocaleDateString("ko-KR",{timeZone:"Asia/Seoul"});
+  if(localStorage.getItem(key)==="1"){
+    fetchVisitStats();
+    return;
+  }
+  localStorage.setItem(key,"1");
+  fetchVisitStats("visit",1);
 }
-
 
 function startLoadingText(){
   stopLoadingText();
@@ -134,7 +156,11 @@ function applyHallData(data,{fromCache=false,initial=false,skipIfSame=false}={})
   }
 
   hallData=data;
-  // Hall 응답의 visitStats는 공통 방문자바를 덮어쓰지 않는다.
+  if(hallData.visitStats){
+    renderVisits(hallData.visitStats);
+  }else if(!fromCache&&!window.__KINOJO_HALL_VISIT_RENDERED__&&!window.__KINOJO_HALL_VISIT_REQUEST_ACTIVE__){
+    fetchVisitStats();
+  }
   const topbarUpdate=document.getElementById("topbarUpdateTime");
   if(topbarUpdate){
     const suffix=fromCache?" · 캐시":"";
