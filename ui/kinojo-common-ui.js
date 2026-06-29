@@ -423,11 +423,13 @@
         <span class="kinojo-auth-label" id="kinojoAuthLabel">비회원 · 열람만 가능</span>
         <button class="kinojo-logout-btn" id="kinojoLogoutBtn" type="button" style="display:none">로그아웃</button>
       </div>
-      <div class="kinojo-top-tools" id="kinojoTopTools"></div>`;
+      <div class="kinojo-top-tools" id="kinojoTopTools"></div>
+      <div class="kinojo-top-visitor-row" id="kinojoTopVisitorRow"></div>`;
     const tools=q('#kinojoTopTools',bar);
     const auth=q('#kinojoUserStatus',bar);
     const admin=rescued.admin||createAdminMenu(info);
     const visit=rescued.visit||createVisitCard();
+    const visitorRow=q('#kinojoTopVisitorRow',bar);
     const adminBtn=admin.querySelector('#adminMenuBtn');
     const adminPanel=admin.querySelector('#adminDropdown');
     if(adminBtn){adminBtn.textContent='관리';adminBtn.setAttribute('aria-label','관리 패널 열기');}
@@ -437,11 +439,8 @@
     }
     admin.style.display='none';
     if(auth)auth.appendChild(admin);
-    const visitRail=document.createElement('section');
-    visitRail.className='kinojo-visit-rail';
-    visitRail.appendChild(visit);
-    document.body.insertBefore(visitRail,document.body.firstChild);
-    document.body.insertBefore(bar,visitRail.nextSibling);
+    if(visitorRow)visitorRow.appendChild(visit);
+    document.body.insertBefore(bar,document.body.firstChild);
     const notice=createNoticeStrip(info);
     document.body.appendChild(notice);
     setTimeout(loadCommonNotices,0);
