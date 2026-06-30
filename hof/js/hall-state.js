@@ -8,19 +8,15 @@ const HALL_ASSET_BASE=(function(){
 })();
 const CLASS_ICONS={"검성":HALL_ASSET_BASE+"class_icon_gladiator.png","수호성":HALL_ASSET_BASE+"class_icon_templar.png","살성":HALL_ASSET_BASE+"class_icon_assassin.png","궁성":HALL_ASSET_BASE+"class_icon_ranger.png","정령성":HALL_ASSET_BASE+"class_icon_elementalist.png","마도성":HALL_ASSET_BASE+"class_icon_sorcerer.png","치유성":HALL_ASSET_BASE+"class_icon_cleric.png","호법성":HALL_ASSET_BASE+"class_icon_chanter.png"};
 const RANK_EMBLEMS={mvp:HALL_ASSET_BASE+"emblem_mvp_challenger.png",diamond:HALL_ASSET_BASE+"emblem_rank_diamond.png",crystal:HALL_ASSET_BASE+"emblem_rank_crystal.png",gold:HALL_ASSET_BASE+"emblem_rank_gold.png",silver:HALL_ASSET_BASE+"emblem_rank_silver.png",bronze:HALL_ASSET_BASE+"emblem_rank_bronze.png"};
-let hallData=null,keyword="",includeSubs=false,page=1,activeRankClass="전체",activeRankMode="PVE",rankingLoading=false,chicksExpanded=false,chicksCollapsed=false,longPressTimer=null,longPressFired=false,loadingTimer=null,loadingStep=0,currentReactionItem=null,currentReactionType="like",reactionCarouselIndex=0,reactionCarouselPausedUntil=0,reactionSubmitting=false,searchComposing=false,searchDebounceTimer=null,adminAuthed=false;
-const PAGE_SIZE=10,app=document.getElementById("app");
+let hallData=null,includeSubs=false,chicksExpanded=false,chicksCollapsed=false,longPressTimer=null,longPressFired=false,loadingTimer=null,loadingStep=0,currentReactionItem=null,currentReactionType="like",reactionCarouselIndex=0,reactionCarouselPausedUntil=0,reactionSubmitting=false,adminAuthed=false;
+const app=document.getElementById("app");
 function escapeHtml(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;")}
 function rankIcon(i){return i===0?"🥇":i===1?"🥈":i===2?"🥉":i+1}
 function numberOnly(value){const n=Number(String(value??"").replace(/[^0-9.-]/g,""));return Number.isFinite(n)&&n>0?n.toLocaleString("ko-KR"):""}
 function itemLevelFor(item,category){return category==="PVP"?numberOnly(item?.pvpItem):numberOnly(item?.pveItem)}
-function currentOverall(){return includeSubs?(hallData.overallAll||[]):(hallData.overallMain||[])}
 function currentDemon(){return includeSubs?(hallData.demonFamilyAll||hallData.demonFamily||[]):(hallData.demonFamily||[])}
 function currentParty(){return includeSubs?(hallData.partyFriendAll||hallData.partyFriend||[]):(hallData.partyFriend||[])}
 function match(item){return true}
-function activeRankingView(){return hallData?.rankingView||{items:[],totalCount:0,page:page,pageSize:PAGE_SIZE,rankMode:activeRankMode,className:activeRankClass,search:keyword}}
-function rankingItems(){const view=activeRankingView();return Array.isArray(view.items)?view.items:[]}
-function rankingTotalCount(){const view=activeRankingView();return Number(view.totalCount||rankingItems().length||0)}
 
 function reactionIcon(kind){
   const cls=kind==="dislike"?"dislike-icon":"like-icon";

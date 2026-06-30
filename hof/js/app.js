@@ -18,18 +18,13 @@
   const requiredFunctions=[
     // state/helpers
     "escapeHtml",
-    "currentOverall",
     "match",
 
-    // render road
+    // summary render road
     "render",
     "renderChicks",
-    "reactionBoard",
-    "overallTable",
 
     // data road
-    "hallBuildUrl",
-    "renderVisits",
     "load",
 
     // event road

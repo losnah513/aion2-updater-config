@@ -1,6 +1,6 @@
 /*
  * KINOJO Hall of Fame data road
- * 역할: Server Engine 035 Web Read API 통신, 방문자 집계, 로딩 상태를 관리합니다.
+ * 역할: Server Engine 049 HOF Summary API 통신과 로딩 상태를 관리합니다.
  * 주의: 화면 렌더링 HTML은 hall-render.js에서만 조립합니다.
  * 260617 교통정리 4차 재진행: 방문자 집계 요청 중복 방지 가드를 추가합니다.
  */
@@ -12,24 +12,6 @@ function hallBuildUrl(action,params={}){
   const q=new URLSearchParams(payload);
   return base+(base.includes('?')?'&':'?')+q.toString();
 }
-
-function renderVisits(stats){
-  // 방문자 UI 갱신은 공통 UI(kinojo-common-ui.js)의 loadCommonVisits/renderCommonVisits에서만 실행한다.
-  // Hall API 응답의 visitStats는 캐시/응답 시점에 따라 공통 방문자바를 다시 덮어쓸 수 있으므로 여기서는 무시한다.
-  return null;
-}
-
-async function fetchVisitStats(mode="stats",boost=0){
-  // 명예의 전당 전용 방문자 요청은 공통 UI와 중복되므로 완전 비활성화한다.
-  // 관리자 조정은 공통 관리자 패널의 KinojoApi hallVisit 호출만 사용한다.
-  return null;
-}
-
-function recordDailyVisitOnce(){
-  // 방문자 1일 1회 기록은 공통 UI loadCommonVisits()에서 pageKey 기준으로만 처리한다.
-  return null;
-}
-
 
 function startLoadingText(){
   stopLoadingText();
@@ -87,7 +69,7 @@ function preloadImages(paths){
   }));
 }
 
-const HALL_CACHE_KEY="kinojo_hall_summary_cache_v2026062920";
+const HALL_CACHE_KEY="kinojo_hall_summary_cache_v2026062921";
 const HALL_CACHE_TTL_MS=5*60*1000;
 
 function readHallCache(){
@@ -142,52 +124,6 @@ function applyHallData(data,{fromCache=false,initial=false,skipIfSame=false}={})
   stopLoadingText();
   render({initial:initial,showSpinners:initial});
   return true;
-}
-
-function normalizeRankViewPayload(view){
-  const data=view&&view.ok!==false?view:{};
-  return {
-    ok:data.ok!==false,
-    items:Array.isArray(data.items)?data.items:[],
-    totalCount:Number(data.totalCount||data.total_count||0),
-    page:Number(data.page||page||1),
-    pageSize:Number(data.pageSize||data.page_size||PAGE_SIZE),
-    rankMode:String(data.rankMode||data.rank_mode||activeRankMode||'PVE').toUpperCase()==='PVP'?'PVP':'PVE',
-    className:data.className||data.class_name||activeRankClass||'전체',
-    search:data.search||keyword||'',
-    includeSubs:!!(data.includeSubs||data.include_subs||includeSubs),
-    classCounts:data.classCounts||data.class_counts||{}
-  };
-}
-
-async function fetchHallRankingView(){
-  if(!window.KinojoApi)throw new Error('KinojoApi 연결을 확인해 주세요.');
-  const data=await window.KinojoApi.getAction('hallRankingView',{
-    limit:300,
-    page:page,
-    pageSize:PAGE_SIZE,
-    includeSubs:includeSubs,
-    className:activeRankClass,
-    search:keyword,
-    rankMode:activeRankMode
-  });
-  if(!data||data.ok===false)throw new Error(data?.message||data?.error||'서버 순위 응답이 실패했습니다.');
-  return normalizeRankViewPayload(data);
-}
-
-async function reloadHallRankingView(){
-  if(!hallData)return;
-  rankingLoading=true;
-  setRankPanelLoading(true,'서버 순위 불러오는 중');
-  try{
-    hallData.rankingView=await fetchHallRankingView();
-  }catch(err){
-    hallData.rankingView={items:[],totalCount:0,page:page,pageSize:PAGE_SIZE,rankMode:activeRankMode,className:activeRankClass,search:keyword,classCounts:{}};
-    console.warn('Kinojo hall ranking view failed:',err);
-  }finally{
-    rankingLoading=false;
-    renderOverallOnly();
-  }
 }
 
 async function fetchHallDataFresh(){

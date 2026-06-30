@@ -48,95 +48,9 @@ function bindHallStaticEvents(){
 }
 
 function bindHallDynamicEvents(){
-  const search=document.getElementById('rankSearchInput');
-  if(search&&!search.dataset.hallBound){
-    search.dataset.hallBound='1';
-    search.addEventListener('compositionstart',function(){searchComposing=true;});
-    search.addEventListener('compositionend',function(){searchComposing=false;applyRankSearch_(search.value);});
-    search.addEventListener('input',function(){
-      if(searchComposing)return;
-      clearTimeout(searchDebounceTimer);
-      searchDebounceTimer=setTimeout(function(){applyRankSearch_(search.value);},180);
-    });
-    search.addEventListener('keydown',function(e){
-      if(e.key==='Enter'){
-        e.preventDefault();
-        applyRankSearch_(search.value);
-      }
-    });
-  }
-
-  ['rankRefreshBtn','rankHeadRefreshBtn'].forEach(function(id){
-    const refresh=document.getElementById(id);
-    if(refresh&&!refresh.dataset.hallBound){
-      refresh.dataset.hallBound='1';
-      refresh.addEventListener('click',function(){load();});
-    }
-  });
-
-  const clear=document.getElementById('rankClearBtn');
-  if(clear&&!clear.dataset.hallBound){
-    clear.dataset.hallBound='1';
-    clear.addEventListener('click',function(){
-      keyword='';
-      page=1;
-      const input=document.getElementById('rankSearchInput');
-      if(input)input.value='';
-      reloadHallRankingView();
-    });
-  }
-
-  document.querySelectorAll('[data-rank-mode]').forEach(function(btn){
-    if(btn.dataset.hallBound)return;
-    btn.dataset.hallBound='1';
-    btn.addEventListener('click',function(){
-      const next=String(btn.dataset.rankMode||'PVE').toUpperCase();
-      if(next!==activeRankMode){
-        activeRankMode=next==='PVP'?'PVP':'PVE';
-        page=1;
-        reloadHallRankingView();
-      }
-    });
-  });
-
-  const sub=document.getElementById('subToggle');
-  if(sub&&!sub.dataset.hallBound){
-    sub.dataset.hallBound='1';
-    sub.addEventListener('click',function(){
-      includeSubs=!includeSubs;
-      page=1;
-      reloadHallRankingView();
-    });
-  }
-
-  document.querySelectorAll('[data-rank-class]').forEach(function(btn){
-    if(btn.dataset.hallBound)return;
-    btn.dataset.hallBound='1';
-    btn.addEventListener('click',function(){
-      activeRankClass=btn.dataset.rankClass||'전체';
-      page=1;
-      reloadHallRankingView();
-    });
-  });
-
-  document.querySelectorAll('[data-rank-page]').forEach(function(btn){
-    if(btn.dataset.hallBound)return;
-    btn.dataset.hallBound='1';
-    btn.addEventListener('click',function(){
-      const next=Number(btn.dataset.rankPage||1);
-      if(Number.isFinite(next)&&next>0){
-        page=next;
-        reloadHallRankingView();
-        document.getElementById('hallSlotOverall')?.scrollIntoView({behavior:'smooth',block:'start'});
-      }
-    });
-  });
-}
-
-function applyRankSearch_(value){
-  keyword=String(value||'').trim();
-  page=1;
-  reloadHallRankingView();
+  // STEP 2-1: /hof는 요약 쇼케이스 전용이다.
+  // 전체 랭킹 검색/필터/페이지네이션 이벤트는 STEP 3 /ranking 전용으로 분리한다.
+  bindCharacterButtons();
 }
 
 function applyOverflowMarquee(){
