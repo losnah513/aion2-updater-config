@@ -184,7 +184,7 @@ function hofGodsSummary(){
 function hofRankingLinkCard(){
   return '<section class="section hof-ranking-link-card"><div class="section-head"><h2>📊 레기온 전체 순위</h2><span class="section-note">PVE / PVP 상세 비교</span></div>'
     + '<p class="hof-ranking-link-copy">전체 순위, 클래스 필터, 검색, 부캐 포함 조회는 새 전체 순위 페이지에서 확인합니다.</p>'
-    + '<button class="btn kinojo-btn hof-ranking-link-btn" type="button" disabled aria-disabled="true">레기온 전체 순위 보기 · STEP 3 공개</button></section>';
+    + '<a class="btn kinojo-btn hof-ranking-link-btn" href="../ranking/">레기온 전체 순위 보기</a></section>';
 }
 function awardCard(title,note,list,labelKey){return '<section class="award-card"><div class="section-head"><h2>'+title+'</h2><span class="section-note">'+note+'</span></div><div class="award-body">'+(list.length?list.map((item,i)=>'<div class="award-row"><div class="award-rank">'+(i+1)+'위</div><div class="award-name"><div class="rank-name-flex"><div class="rank-name-main">'+flowText(item.name,item)+ownerLine(item)+'</div></div></div><div class="award-score">'+escapeHtml(item[labelKey]||'')+'</div></div>').join(''):'<div class="empty">비교 가능한 주간 데이터가 부족합니다.</div>')+'</div></section>'}
 

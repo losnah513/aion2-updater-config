@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>KINOJO INFO - 레기온 전체 순위</title>
+<meta name="description" content="아이온2 지켈 깡 레기온의 PVE/PVP 전체 순위 모바일 페이지입니다."/>
+<link rel="canonical" href="https://kinojo.info/ranking/"/>
+<link href="../../ranking/css/ranking.css?cache=2026062922" rel="stylesheet"/>
+<link href="../mobile.css?cache=2026062922" rel="stylesheet"/>
+<link href="../../ui/kinojo-layout.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
+<link href="../../ui/kinojo-components.css?cache=26062102" rel="stylesheet"/>
+<link href="../../ui/kinojo-common-ui.css?cache=2026062922" rel="stylesheet"/>
+<link href="../../ui/kinojo-card-guards.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
+<link href="../../ui/kinojo-animations.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
+</head>
+<body class="kinojo-page-ranking is-mobile-ranking">
+<main class="ranking-wrap">
+  <section class="ranking-hero">
+    <div><p class="ranking-kicker">KINOJO LEGION RANKING</p><h1>레기온 전체 순위</h1><p>PVE / PVP 탭으로 순위를 전환합니다.</p></div>
+    <a class="kinojo-btn ranking-hof-link" href="../../m/hof/">명예의 전당</a>
+  </section>
+  <section class="ranking-mobile-mode-tabs" aria-label="전투력 기준 선택">
+    <button class="is-active" data-mobile-mode="PVE" type="button">PVE</button>
+    <button data-mobile-mode="PVP" type="button">PVP</button>
+  </section>
+  <section class="ranking-toolbar" aria-label="순위 검색 및 필터">
+    <div class="ranking-search-box"><label for="rankingSearch">캐릭터 검색</label><input id="rankingSearch" class="kinojo-input" type="search" placeholder="캐릭터명 / 본캐명 / 서버 검색" autocomplete="off"/></div>
+    <div class="ranking-filter-box"><span class="ranking-filter-title">직업</span><div class="ranking-class-tabs" id="rankingClassTabs"></div></div>
+    <div class="ranking-action-box"><label class="ranking-toggle"><input id="rankingIncludeSubs" type="checkbox"/> <span>부캐 포함</span></label><button class="kinojo-btn" id="rankingSearchBtn" type="button">조회</button><button class="kinojo-btn secondary" id="rankingResetBtn" type="button">초기화</button></div>
+  </section>
+  <section class="ranking-status" id="rankingStatus">데이터 준비 중...</section>
+  <section class="ranking-board" id="rankingBoard" aria-live="polite"><div class="ranking-loading"><span class="kinojo-spinner"><span></span></span><span>레기온 전체 순위를 불러오는 중...</span></div></section>
+  <section class="ranking-pager" aria-label="페이지 이동"><button class="kinojo-btn secondary" id="rankingPrevBtn" type="button">이전</button><span id="rankingPageInfo">1 / 1</span><button class="kinojo-btn secondary" id="rankingNextBtn" type="button">다음</button></section>
+  <footer class="footer common-footer"><div class="footer-links"><a href="../../pages/about.html">사이트 소개</a><a href="../../pages/terms.html">이용약관</a><a href="../../pages/privacy.html">개인정보처리방침</a></div><div class="footer-powered">Powered by AION2 · 깡 레기온 지원</div></footer>
+</main>
+<script src="../../core/kinojo-api.js?cache=2026062922"></script>
+<script src="../../core/kinojo-cache.js?cache=2026062922"></script>
+<script src="../../core/kinojo-permissions.js?cache=2026062922"></script>
+<script src="../../core/kinojo-toast.js?cache=2026062922"></script>
+<script src="../../core/kinojo-modal.js?cache=2026062922"></script>
+<script src="../../core/kinojo-route-guard.js?cache=2026062922"></script>
+<script src="../../core/kinojo-debug.js?cache=2026062922"></script>
+<script src="../../core/kinojo-logger.js?cache=2026062922"></script>
+<script src="../../ui/kinojo-common-ui.js?cache=2026062922"></script>
+<script src="../../ui/kinojo-admin-panel.js?cache=2026062922"></script>
+<script src="../../core/kinojo-supabase.js?cache=2026062922"></script>
+<script src="../../core/kinojo-auth.js?cache=2026062922"></script>
+<script src="../../ranking/js/ranking.js?cache=2026062922"></script>
+</body>
+</html>
