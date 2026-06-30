@@ -9,7 +9,8 @@
     sanctuary:60 * 1000,
     hall:5 * 60 * 1000,
     account:60 * 1000,
-    tips:30 * 60 * 1000
+    tips:30 * 60 * 1000,
+    ranking:45 * 1000
   };
   function now(){ return Date.now(); }
   function pack(value, ttlMs){ return { value, expiresAt: ttlMs ? now() + Number(ttlMs) : 0 }; }
@@ -45,5 +46,5 @@
       return value;
     }catch(_err){ return null; }
   }
-  window.KinojoCache = { version:'1.3.1.17', ttl, set, get, remove, clear, setSession, getSession, clearAll:()=>clear() };
+  window.KinojoCache = { version:'1.3.1.34-step6-2026062925', ttl, set, get, remove, clear, setSession, getSession, clearAll:()=>clear() };
 })();

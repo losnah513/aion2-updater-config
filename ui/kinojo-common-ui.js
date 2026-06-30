@@ -13,6 +13,7 @@
     const path=location.pathname.replace(/\\/g,'/');
     const mobile=/(^|\/)m(\/|$)/.test(path);
     if(path.includes('/hof/')||path.includes('/hall-of-fame/'))return {key:'hall',label:'명예의 전당',root:mobile?'../../':'../',mobile};
+    if(path.includes('/ranking/'))return {key:'ranking',label:'레기온 순위',root:mobile?'../../':'../',mobile};
     if(path.includes('/sanctuary/'))return {key:'sanctuary',label:'성역',root:mobile?'../../':'../',mobile};
     if(path.includes('/arcana/'))return {key:'arcana',label:'아르카나',root:mobile?'../../':'../',mobile};
     if(mobile)return {key:'home',label:'메인',root:'../',mobile};
@@ -495,11 +496,13 @@
   }
   function makeDrawer(info){
     const isHall=info.key==='hall';
+    const isRanking=info.key==='ranking';
     const isSanctuary=info.key==='sanctuary';
     const isArcana=info.key==='arcana';
     const base=info.mobile?'/m/':'/';
     const home=base;
     const hallHref=isHall?'./':base+'hof/';
+    const rankingHref=isRanking?'./':base+'ranking/';
     const sanctuaryPrefix=isSanctuary?'./':base+'sanctuary/';
     const arcanaHref=isArcana?'./':base+'arcana/';
     const drawer=document.createElement('section');
@@ -515,6 +518,7 @@
         <nav class="kinojo-drawer-nav" aria-label="KINOJO INFO 메뉴">
           <div class="kinojo-drawer-category">바로가기</div>
           <a href="${hallHref}" ${isHall?'class="active" aria-disabled="true"':''}>명예의 전당</a>
+          <a href="${rankingHref}" ${isRanking?'class="active" aria-disabled="true"':''}>레기온 순위</a>
           <a href="https://aion2.plaync.com/ko-kr/index?redirect=false" target="_blank" rel="noopener">아이온2 공식으로 이동</a>
           <a href="https://aion2.plaync.com/ko-kr/board/notice/list" target="_blank" rel="noopener">아이온2 공지로 이동</a>
           <div class="kinojo-drawer-divider"></div>
