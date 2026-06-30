@@ -1297,6 +1297,18 @@
     return data;
   }
 
+
+  async function getWebLegionRanking(extra={}){
+    const data = await rpc('kinojo_web_get_legion_ranking', {
+      p_page:Number(extra.page || 1),
+      p_page_size:Number(extra.pageSize || extra.page_size || 20),
+      p_include_subs:!!extra.includeSubs || !!extra.include_subs,
+      p_class_name:String(extra.className || extra.class_name || '전체'),
+      p_search:String(extra.search || '')
+    });
+    return Object.assign({ ok:true }, data || {});
+  }
+
   async function runtimeForceRelease(adminPassCode, reason){
     const data = await rpc('kinojo_runtime_force_release', {
       p_admin_pass_code:normalizePassKey(adminPassCode || ''),
@@ -1311,6 +1323,7 @@
     if(name === 'hallOfFame') return getWebHallOfFame(extra.limit || 300, extra);
     if(name === 'hofSummary') return getWebHofSummary(extra);
     if(name === 'hallRankingView') return getWebHallRankingView(extra);
+    if(name === 'legionRanking') return getWebLegionRanking(extra);
     if(name === 'ranking') return getWebRanking(extra.limit || 300);
     if(name === 'dashboard') return getWebDashboard();
     if(name === 'updaterStatus') return runtimeGetStatus();
