@@ -63,12 +63,11 @@ function renderHallLoadingLayout(){
   app.innerHTML=''
     + '<section class="mvp-card hall-loading-shell">'+kinojoCardSpinner('시즌 MVP 준비 중')+'</section>'
     + '<section class="section hall-loading-shell">'+kinojoCardSpinner('반응 현황 불러오는 중')+'</section>'
-    + '<section class="section hall-loading-shell">'+kinojoCardSpinner('성장왕/벌크업 진단 중')+'</section>'
+    + '<section class="section hall-loading-shell">'+kinojoCardSpinner('명예 타이틀 집계 중')+'</section>'
     + '<div class="dashboard"><div><div class="top-grid">'
-    + '<section class="section hall-loading-shell">'+kinojoCardSpinner('PVE TOP 5 불러오는 중')+'</section>'
-    + '<section class="section hall-loading-shell">'+kinojoCardSpinner('PVP TOP 5 불러오는 중')+'</section>'
-    + '</div></div><div class="side-stack"><section class="section relation-combined-card hall-loading-shell">'+kinojoCardSpinner('관계 카드 불러오는 중')+'</section></div></div>'
-    + '<section class="overall hall-loading-shell">'+kinojoCardSpinner('전체 순위표 불러오는 중')+'</section>';
+    + '<section class="section hall-loading-shell">'+kinojoCardSpinner('PVE TOP 3 불러오는 중')+'</section>'
+    + '<section class="section hall-loading-shell">'+kinojoCardSpinner('PVP TOP 3 불러오는 중')+'</section>'
+    + '</div></div><div class="side-stack"><section class="section relation-combined-card hall-loading-shell">'+kinojoCardSpinner('전체 순위 링크 준비 중')+'</section></div></div>';
 }
 
 const HALL_PRELOADED_IMAGES=new Map();
@@ -88,7 +87,7 @@ function preloadImages(paths){
   }));
 }
 
-const HALL_CACHE_KEY="kinojo_hall_cache_v2026062909";
+const HALL_CACHE_KEY="kinojo_hall_summary_cache_v2026062920";
 const HALL_CACHE_TTL_MS=5*60*1000;
 
 function readHallCache(){
@@ -194,11 +193,8 @@ async function reloadHallRankingView(){
 async function fetchHallDataFresh(){
   let data;
   if(!window.KinojoApi) throw new Error("KinojoApi 연결을 확인해 주세요.");
-  data=await window.KinojoApi.getAction("hallOfFame",{limit:300,rankMode:activeRankMode,includeSubs:includeSubs,className:activeRankClass,search:keyword,page:page,pageSize:PAGE_SIZE});
-  if(!data || data.ok===false)throw new Error(data?.message||data?.error||"명예의 전당 응답이 실패했습니다.");
-  if(!data.rankingView){
-    try{ data.rankingView=await fetchHallRankingView(); }catch(err){ console.warn('Kinojo hall ranking initial view failed:',err); }
-  }
+  data=await window.KinojoApi.getAction("hofSummary",{includeSubs:includeSubs});
+  if(!data || data.ok===false)throw new Error(data?.message||data?.error||"명예의 전당 요약 응답이 실패했습니다.");
   writeHallCache(data);
   return data;
 }
@@ -213,7 +209,7 @@ async function load(){
     const data=await fetchHallDataFresh();
     applyHallData(data,{initial:true});
   }catch(err){
-    if(cached && Array.isArray(cached?.rankingView?.items) && cached.rankingView.items.length){
+    if(cached && cached.ok!==false){
       applyHallData(cached,{fromCache:true,initial:true});
       return;
     }

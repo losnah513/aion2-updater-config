@@ -120,6 +120,72 @@ function recentCommentCard(){
 }
 function reactionBoard(){return '<div class="reaction-board">'+reactionCard("like")+reactionCard("dislike")+recentCommentCard()+'</div>'}
 function awardsBoard(){const w=hallData?.weeklyAwards||{};return '<div class="award-grid">'+awardCard("🌱 성장왕","PVE+PVP 아이템레벨 주간 증가량",w.growthKing||[],"itemLabel")+awardCard("💪 벌크업","PVE+PVP 전투력 주간 증가량",w.bulkUp||[],"powerLabel")+'</div>'}
+
+function hofMetricValue(item,metric){
+  if(!item)return '';
+  if(metric==='like')return '👍 '+Number(item.like||0).toLocaleString('ko-KR');
+  if(metric==='dislike')return '👎 '+Number(item.dislike||0).toLocaleString('ko-KR');
+  if(metric==='pvp')return item.pvpPowerLabel||numberOnly(item.pvpPower)||'-';
+  if(metric==='pve')return item.pvePowerLabel||numberOnly(item.pvePower)||'-';
+  if(metric==='growth')return item.powerLabel||((item.powerDelta>0?'+':'')+numberOnly(item.powerDelta));
+  if(metric==='enhance')return item.itemLabel||((item.itemLevelDelta>0?'+':'')+numberOnly(item.itemLevelDelta));
+  return item.label||'';
+}
+function hofSummaryCard(item,index,metric){
+  if(!item)return '<div class="hof-summary-empty">데이터 대기 중</div>';
+  const rank=Number(item.rank||index+1||1);
+  const metricText=escapeHtml(hofMetricValue(item,metric)||'-');
+  const meta=[item.serverName||item.meta||'', item.className||''].filter(Boolean).join(' · ');
+  const owner=String(item.owner||'').trim();
+  const name=String(item.name||'').trim();
+  const ownerNote=owner&&owner!==name?'<span class="hof-owner-note">본캐 '+escapeHtml(owner)+'</span>':'';
+  const topClass=rank<=3?' is-top is-top-'+rank:'';
+  return '<div class="hof-summary-card'+topClass+'" data-character="'+escapeHtml(name)+'">'
+    + '<div class="hof-summary-rank">'+rankIcon(rank-1)+'</div>'
+    + '<div class="hof-summary-profile">'+rankProfileHtml(item,rank)+'</div>'
+    + '<div class="hof-summary-info"><div class="hof-summary-name"><strong>'+escapeHtml(name||'-')+'</strong>'+ownerNote+'</div>'
+    + '<div class="hof-summary-meta">'+escapeHtml(meta||'지켈')+'</div>'
+    + '<div class="hof-summary-reactions">'+rankReactionBoxHtml('like',item.like||0)+rankReactionBoxHtml('dislike',item.dislike||0)+'</div></div>'
+    + '<div class="hof-summary-score '+escapeHtml(metric)+'">'+metricText+'</div>'
+    + '</div>';
+}
+function hofTopList(title,note,list,metric){
+  const items=(list||[]).slice(0,3);
+  return '<section class="section hof-summary-section"><div class="section-head"><h2>'+title+'</h2><span class="section-note">'+escapeHtml(note||'')+'</span></div><div class="hof-summary-list">'
+    + (items.length?items.map((item,i)=>hofSummaryCard(item,i,metric)).join(''):'<div class="empty">아직 데이터가 부족합니다.</div>')
+    + '</div></section>';
+}
+function hofGodCard(title,note,item,metric){
+  return '<section class="section hof-summary-section hof-god-section"><div class="section-head"><h2>'+title+'</h2><span class="section-note">'+escapeHtml(note||'')+'</span></div><div class="hof-summary-list hof-god-list">'
+    + (item?hofSummaryCard(Object.assign({},item,{rank:1}),0,metric):'<div class="empty">비교 가능한 데이터가 부족합니다.</div>')
+    + '</div></section>';
+}
+function hofReactionsSummary(){
+  const s=hallData?.summarySections||{};
+  return '<div class="hof-two-grid">'
+    + hofTopList('👍 좋아요 TOP 3','모두에게 사랑받은 모험가',s.likesTop||hallData?.reactionSummary?.likeTop||[],'like')
+    + hofTopList('👎 싫어요 TOP 3','뜨거운 관심을 받은 모험가',s.dislikesTop||hallData?.reactionSummary?.dislikeTop||[],'dislike')
+    + '</div>';
+}
+function hofCombatSummary(){
+  const s=hallData?.summarySections||{};
+  return '<div class="hof-two-grid">'
+    + hofTopList('⚔ PVE 전투력 TOP 3','PVE 전투력 기준',s.pveTop||hallData?.pveTop||[],'pve')
+    + hofTopList('🛡 PVP 전투력 TOP 3','PVP 전투력 기준',s.pvpTop||hallData?.pvpTop||[],'pvp')
+    + '</div>';
+}
+function hofGodsSummary(){
+  const s=hallData?.summarySections||{};
+  return '<div class="hof-two-grid hof-god-grid">'
+    + hofGodCard('💎 강화의 신','아이템레벨 성장 1위',s.enhanceGod || hallData?.weeklyAwards?.bulkUp?.[0], 'enhance')
+    + hofGodCard('🔥 성장의 신','전투력 성장 1위',s.growthGod || hallData?.weeklyAwards?.growthKing?.[0], 'growth')
+    + '</div>';
+}
+function hofRankingLinkCard(){
+  return '<section class="section hof-ranking-link-card"><div class="section-head"><h2>📊 레기온 전체 순위</h2><span class="section-note">PVE / PVP 상세 비교</span></div>'
+    + '<p class="hof-ranking-link-copy">전체 순위, 클래스 필터, 검색, 부캐 포함 조회는 새 전체 순위 페이지에서 확인합니다.</p>'
+    + '<button class="btn kinojo-btn hof-ranking-link-btn" type="button" disabled aria-disabled="true">레기온 전체 순위 보기 · STEP 3 공개</button></section>';
+}
 function awardCard(title,note,list,labelKey){return '<section class="award-card"><div class="section-head"><h2>'+title+'</h2><span class="section-note">'+note+'</span></div><div class="award-body">'+(list.length?list.map((item,i)=>'<div class="award-row"><div class="award-rank">'+(i+1)+'위</div><div class="award-name"><div class="rank-name-flex"><div class="rank-name-main">'+flowText(item.name,item)+ownerLine(item)+'</div></div></div><div class="award-score">'+escapeHtml(item[labelKey]||'')+'</div></div>').join(''):'<div class="empty">비교 가능한 주간 데이터가 부족합니다.</div>')+'</div></section>'}
 
 
@@ -366,32 +432,33 @@ function currentOverallPreviewList(){
 }
 
 function hallSlotTasks(){
-  const pveList=hallData?.pveTop||[];
-  const pvpList=hallData?.pvpTop||[];
-  const overallList=currentOverallPreviewList();
+  const s=hallData?.summarySections||{};
+  const images=[];
+  ['likesTop','dislikesTop','pveTop','pvpTop'].forEach(key=>{
+    (s[key]||[]).forEach(item=>{ if(item?.profileImageUrl)images.push(item.profileImageUrl); });
+  });
+  [s.growthGod,s.enhanceGod].forEach(item=>{ if(item?.profileImageUrl)images.push(item.profileImageUrl); });
   return [
-    {id:'hallSlotMvp',images:[RANK_EMBLEMS.mvp].concat(hallData?.mvp?.profileImageUrl?[hallData.mvp.profileImageUrl]:[]).concat((hallData?.mvpCandidatesTop3||[]).map(item=>item?.profileImageUrl).filter(Boolean)),render:()=>mvpSection()},
-    {id:'hallSlotReactions',images:[],render:()=>reactionBoard()},
-    {id:'hallSlotAwards',images:[],render:()=>awardsBoard()},
-    {id:'hallSlotPve',images:rankEmblemsForList(pveList).concat(classIconsForList(pveList)),render:()=>rankBox("⚔ PVE TOP 5","",hallData.pveTop)},
-    {id:'hallSlotPvp',images:rankEmblemsForList(pvpList).concat(classIconsForList(pvpList)),render:()=>rankBox("⚔ PVP TOP 5","",hallData.pvpTop)},
-    {id:'hallSlotRelations',images:[],render:()=>combinedRelationBox()},
-    {id:'hallSlotOverall',images:rankEmblemsForList(overallList,rankingTotalCount()).concat(Object.values(CLASS_ICONS)),render:()=>overallTable()}
+    {id:'hallSlotReactions',images:compactImageList(images),render:()=>hofReactionsSummary()},
+    {id:'hallSlotCombat',images:compactImageList(images),render:()=>hofCombatSummary()},
+    {id:'hallSlotGods',images:compactImageList(images),render:()=>hofGodsSummary()},
+    {id:'hallSlotRankingLink',images:[],render:()=>hofRankingLinkCard()}
   ];
 }
 
 function hallShellExists(){
-  return !!document.getElementById('hallSlotOverall');
+  return !!document.getElementById('hallSlotReactions') && !!document.getElementById('hallSlotCombat');
 }
 
 function renderHallShell(showSpinners){
   app.className='';
   const slotClass='hall-slot is-pending';
-  app.innerHTML='<div id="hallSlotMvp" class="'+slotClass+'">'+(showSpinners?kinojoCardSpinner('시즌 MVP 준비 중'):'')+'</div>'
-    + '<div id="hallSlotReactions" class="'+slotClass+'">'+(showSpinners?kinojoCardSpinner('반응 현황 불러오는 중'):'')+'</div>'
-    + '<div id="hallSlotAwards" class="'+slotClass+'">'+(showSpinners?kinojoCardSpinner('성장왕/벌크업 진단 중'):'')+'</div>'
-    + '<div class="dashboard"><div><div class="top-grid"><div id="hallSlotPve" class="'+slotClass+'">'+(showSpinners?kinojoCardSpinner('PVE TOP 5 불러오는 중'):'')+'</div><div id="hallSlotPvp" class="'+slotClass+'">'+(showSpinners?kinojoCardSpinner('PVP TOP 5 불러오는 중'):'')+'</div></div></div><div class="side-stack"><div id="hallSlotRelations" class="'+slotClass+'">'+(showSpinners?kinojoCardSpinner('관계 카드 불러오는 중'):'')+'</div></div></div>'
-    + '<div id="hallSlotOverall" class="'+slotClass+'">'+(showSpinners?kinojoCardSpinner('전체 순위표 불러오는 중'):'')+'</div>';
+  app.innerHTML='<div class="hof-summary-layout">'
+    + '<div id="hallSlotReactions" class="'+slotClass+'">'+(showSpinners?kinojoCardSpinner('좋아요/싫어요 TOP 3 불러오는 중'):'')+'</div>'
+    + '<div id="hallSlotCombat" class="'+slotClass+'">'+(showSpinners?kinojoCardSpinner('PVE/PVP TOP 3 불러오는 중'):'')+'</div>'
+    + '<div id="hallSlotGods" class="'+slotClass+'">'+(showSpinners?kinojoCardSpinner('강화의 신/성장의 신 집계 중'):'')+'</div>'
+    + '<div id="hallSlotRankingLink" class="'+slotClass+'">'+(showSpinners?kinojoCardSpinner('전체 순위 페이지 준비 중'):'')+'</div>'
+    + '</div>';
 }
 
 function renderHallSlots(options={}){
@@ -455,7 +522,7 @@ function renderOverallOnly(){
 function renderReactionOnly(){
   if(!hallData)return;
   if(!hallShellExists())return render({initial:false});
-  setHallSlot('hallSlotReactions',reactionBoard());
+  setHallSlot('hallSlotReactions',hofReactionsSummary());
   bindHallAfterSlot();
 }
 
