@@ -1,4 +1,9 @@
-/* KINOJO Ranking Page - STEP 4 Ranking Card Redesign */
+/* ===========================================================
+   KINOJO Ranking Page CSS - STEP 6 Refactor
+   역할: /ranking, /m/ranking 전용 스타일입니다.
+   규칙: 공통 버튼/입력/배지 기본값은 kinojo-common-ui.css를 사용하고,
+        이 파일은 레기온 전체 순위 레이아웃과 랭킹 카드만 관리합니다.
+=========================================================== */
 :root{
   --ranking-bg:#f7f4ee;
   --ranking-panel:#fffaf2;
@@ -6,121 +11,239 @@
   --ranking-text:#2b2118;
   --ranking-muted:#7e6b55;
   --ranking-gold:#b88936;
-  --ranking-silver:#aeb4bf;
-  --ranking-bronze:#bd7a49;
   --ranking-pve:#256fb2;
   --ranking-pvp:#7f46c2;
   --ranking-like:#e86f71;
   --ranking-dislike:#6480d9;
 }
-body.kinojo-page-ranking{background:linear-gradient(180deg,#fbf7ef 0%,#f5efe3 100%);color:var(--ranking-text)}
-.ranking-wrap{width:min(1480px,calc(100% - 32px));margin:0 auto;padding:138px 0 74px;}
-.ranking-hero{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 20px;margin-bottom:14px;border:1px solid var(--ranking-line);border-radius:22px;background:rgba(255,250,242,.86);backdrop-filter:blur(10px)}
-.ranking-kicker{margin:0 0 4px;font-size:11px;letter-spacing:.12em;color:var(--ranking-gold);font-weight:800}
-.ranking-hero h1{margin:0;font-size:22px;line-height:1.18;letter-spacing:-.04em}.ranking-hero p{margin:7px 0 0;font-size:13px;color:var(--ranking-muted)}
-.ranking-hof-link{white-space:nowrap;text-decoration:none}
-.ranking-toolbar{display:grid;grid-template-columns:minmax(260px,1.2fr) minmax(420px,2fr) auto;gap:10px;align-items:stretch;padding:12px;margin-bottom:10px;border:1px solid var(--ranking-line);border-radius:20px;background:rgba(255,250,242,.88)}
-.ranking-search-box,.ranking-filter-box,.ranking-action-box{display:flex;align-items:center;gap:8px;min-width:0}.ranking-search-box{flex-direction:column;align-items:stretch}.ranking-search-box label,.ranking-filter-title{font-size:11px;font-weight:800;color:var(--ranking-muted);letter-spacing:-.02em}.ranking-search-box input{height:32px!important;font-size:13px!important}
-.ranking-class-tabs{display:flex;flex-wrap:wrap;gap:6px}.ranking-class-tab{height:30px;padding:0 10px;border:1px solid rgba(126,95,50,.25);border-radius:999px;background:#fff;color:#564535;font-size:12px;font-weight:700;cursor:pointer}.ranking-class-tab.is-active{background:#2b2118;color:#fff;border-color:#2b2118}.ranking-class-tab:hover{transform:translateY(-1px)}
-.ranking-action-box{justify-content:flex-end}.ranking-action-box .kinojo-btn,.ranking-hof-link{min-height:30px!important;height:30px!important;padding:0 12px!important;font-size:12px!important;border-radius:999px!important}.ranking-toggle{display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 10px;border:1px solid rgba(126,95,50,.22);border-radius:999px;background:#fff;font-size:12px;font-weight:700;color:#564535;white-space:nowrap}.ranking-toggle input{width:14px;height:14px}
-.ranking-status{margin:0 0 10px;padding:0 4px;font-size:12px;color:var(--ranking-muted)}
-.ranking-board{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;min-height:540px}.ranking-loading,.ranking-empty{grid-column:1/-1;min-height:360px;display:flex;align-items:center;justify-content:center;gap:10px;border:1px solid var(--ranking-line);border-radius:22px;background:rgba(255,250,242,.88);color:var(--ranking-muted);font-size:13px;text-align:center}.ranking-empty.error{color:#a04444}
-.ranking-panel{border:1px solid var(--ranking-line);border-radius:22px;background:rgba(255,250,242,.90);overflow:hidden;box-shadow:0 12px 40px rgba(83,60,31,.06)}
-.ranking-panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid var(--ranking-line);background:rgba(255,255,255,.48)}.ranking-panel-head h2{margin:0;font-size:16px;letter-spacing:-.04em}.ranking-panel-head p{margin:4px 0 0;font-size:11px;color:var(--ranking-muted)}.ranking-panel-chip{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:999px;color:#fff;font-size:12px;font-weight:900}.ranking-panel-chip.pve{background:var(--ranking-pve)}.ranking-panel-chip.pvp{background:var(--ranking-pvp)}
-.ranking-card-list{display:flex;flex-direction:column;gap:0}.ranking-card{position:relative;overflow:hidden;padding:11px 12px;border-bottom:1px solid rgba(126,95,50,.14);background:rgba(255,255,255,.34)}.ranking-card:last-child{border-bottom:0}.ranking-card-main{display:grid;grid-template-columns:38px minmax(132px,.82fr) 62px 68px 78px;gap:7px;align-items:center}.ranking-rank{font-size:15px;font-weight:900;text-align:center;color:#6b5130}.ranking-character{display:flex;align-items:center;gap:8px;min-width:0}.ranking-avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;flex:0 0 auto;border:1px solid rgba(126,95,50,.24);background:#f1e8d9;display:flex;align-items:center;justify-content:center;font-weight:900;color:#8b6a3a}.ranking-avatar.top-one,.ranking-avatar.top-two,.ranking-avatar.top-three{border-color:rgba(126,95,50,.24);box-shadow:none}
-.ranking-character-meta{min-width:0}.ranking-name-line{display:flex;align-items:center;gap:5px;min-width:0}.ranking-name-line strong{font-size:13px;line-height:1.15;max-width:78px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ranking-owner-note,.ranking-main-badge{font-size:10px;font-weight:800;color:#8a7358;background:#f2eadc;border:1px solid rgba(126,95,50,.17);border-radius:999px;padding:1px 5px;white-space:nowrap}.ranking-main-badge{color:#7a5b23}.ranking-server-line{margin-top:2px;font-size:11px;color:var(--ranking-muted)}.ranking-reaction-boxes{display:flex;gap:4px;margin-top:4px}.ranking-reaction-box{display:inline-flex;align-items:center;gap:3px;height:18px;padding:0 6px;border-radius:5px;font-size:10px;font-weight:900}.ranking-reaction-box.like{background:rgba(232,111,113,.13);color:#b74e50}.ranking-reaction-box.dislike{background:rgba(100,128,217,.13);color:#5268b8}
-.ranking-class-chip{height:24px;display:flex;align-items:center;justify-content:center;border-radius:999px;background:#f2eadc;color:#5a4631;font-size:11px;font-weight:800}.ranking-stat{display:flex;flex-direction:column;gap:2px;align-items:flex-end}.ranking-stat span{font-size:10px;color:var(--ranking-muted);font-weight:800}.ranking-stat strong{font-size:13px;line-height:1.1}.ranking-stat.pve strong{color:var(--ranking-pve)}.ranking-stat.pvp strong{color:var(--ranking-pvp)}.ranking-stat.item strong{color:#6b5130}.ranking-review{margin-top:8px;padding:8px 10px;border-radius:12px;background:rgba(247,244,238,.82);border:1px solid rgba(126,95,50,.14)}.ranking-review-badge{display:inline-flex;margin-bottom:4px;height:18px;align-items:center;padding:0 6px;border-radius:999px;background:#2b2118;color:#fff;font-size:10px;font-weight:900}.ranking-review p{margin:0;font-size:12px;line-height:1.45;color:#4a3a2a;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.ranking-card.top-one,.ranking-card.top-two,.ranking-card.top-three{border:1px solid rgba(126,95,50,.16);border-radius:16px;margin:8px 8px 0;background:rgba(255,255,255,.52);box-shadow:0 8px 24px rgba(83,60,31,.07)}
-.ranking-card.top-one::after,.ranking-card.top-two::after,.ranking-card.top-three::after{content:"";position:absolute;inset:0;border-radius:16px;pointer-events:none;background:linear-gradient(90deg,transparent,var(--flow-color),transparent) top left/42% 2px no-repeat,linear-gradient(180deg,transparent,var(--flow-color),transparent) top right/2px 42% no-repeat,linear-gradient(270deg,transparent,var(--flow-color),transparent) bottom right/42% 2px no-repeat,linear-gradient(0deg,transparent,var(--flow-color),transparent) bottom left/2px 42% no-repeat;opacity:var(--flow-opacity,.85);animation:kinojoRankingBorderFlow var(--flow-speed,3.2s) linear infinite}.ranking-card.top-one{--flow-color:rgba(231,178,64,.95);--flow-opacity:.95;--flow-speed:3.6s}.ranking-card.top-two{--flow-color:rgba(180,188,200,.86);--flow-opacity:.78;--flow-speed:3.9s}.ranking-card.top-three{--flow-color:rgba(205,131,72,.86);--flow-opacity:.72;--flow-speed:4.2s}
-@keyframes kinojoRankingBorderFlow{0%{background-position:-42% 0,100% -42%,142% 100%,0 142%}100%{background-position:142% 0,100% 142%,-42% 100%,0 -42%}}
-.ranking-pager{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px}.ranking-pager .kinojo-btn{height:30px!important;min-height:30px!important;font-size:12px!important;border-radius:999px!important}.ranking-pager span{font-size:12px;font-weight:800;color:var(--ranking-muted)}
-.ranking-mobile-mode-tabs{display:none}
-@media (max-width: 980px){.ranking-wrap{width:min(100% - 20px,760px);padding-top:124px}.ranking-toolbar{grid-template-columns:1fr}.ranking-filter-box,.ranking-action-box{justify-content:flex-start;flex-wrap:wrap}.ranking-board{grid-template-columns:1fr}.ranking-card-main{grid-template-columns:36px minmax(132px,1fr) 58px 64px 74px}.ranking-panel-head h2{font-size:15px}}
-@media (max-width: 760px){.ranking-wrap{width:calc(100% - 16px);padding-top:118px}.ranking-hero{padding:14px;border-radius:18px}.ranking-hero h1{font-size:19px}.ranking-hero p{font-size:12px}.ranking-mobile-mode-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}.ranking-mobile-mode-tabs button{height:32px;border-radius:999px;border:1px solid var(--ranking-line);background:#fff;font-size:13px;font-weight:900;color:#5a4631}.ranking-mobile-mode-tabs button.is-active{background:#2b2118;color:#fff}.ranking-board[data-mobile-mode="PVE"] .ranking-panel.pvp,.ranking-board[data-mobile-mode="PVP"] .ranking-panel.pve{display:none}.ranking-board{min-height:460px}.ranking-card{padding:10px}.ranking-card.top-one,.ranking-card.top-two,.ranking-card.top-three{margin:7px 6px 0}.ranking-card-main{grid-template-columns:30px 1fr 52px 62px;grid-template-areas:"rank char class power" "rank char item power";gap:6px}.ranking-rank{grid-area:rank}.ranking-character{grid-area:char}.ranking-class-chip{grid-area:class;height:22px;font-size:11px}.ranking-stat.item{grid-area:item}.ranking-stat.pve,.ranking-stat.pvp{grid-area:power}.ranking-stat span{font-size:9px}.ranking-stat strong{font-size:12px}.ranking-avatar{width:34px;height:34px}.ranking-name-line strong{max-width:94px}.ranking-review{margin-top:7px}.ranking-review p{-webkit-line-clamp:3}.ranking-panel.pve .ranking-card-main .ranking-stat.pvp,.ranking-panel.pvp .ranking-card-main .ranking-stat.pve{display:none}}
-@media (prefers-reduced-motion: reduce){.ranking-card.top-one::after,.ranking-card.top-two::after,.ranking-card.top-three::after{animation:none;background-position:0 0,100% 0,100% 100%,0 100%}}
-
-/* ===========================================================
-   20260629 STEP5 - Mobile Ranking Layout
-   - PC keeps PVE/PVP split view.
-   - Mobile uses sheet-like PVE/PVP tabs and a compact filter panel.
-   - Ranking card component is reused; only layout changes by viewport.
-=========================================================== */
-.ranking-mobile-filter-head{display:none;}
-@media (max-width:760px){
-  body.kinojo-page-ranking{overflow-x:hidden;}
-  .ranking-wrap{padding-bottom:86px;}
-  .ranking-mobile-mode-tabs{
-    position:sticky;
-    top:calc(var(--kinojo-common-topbar-height, 92px) + 4px);
-    z-index:30;
-    padding:6px;
-    border:1px solid var(--ranking-line);
-    border-radius:16px;
-    background:rgba(255,250,242,.96);
-    backdrop-filter:blur(10px);
-    box-shadow:0 8px 20px rgba(83,60,31,.06);
-  }
-  .ranking-mobile-filter-head{
-    display:flex;
-    grid-column:1/-1;
-    align-items:center;
-    justify-content:space-between;
-    gap:8px;
-    min-height:32px;
-  }
-  .ranking-mobile-filter-head span{
-    font-size:12px;
-    font-weight:950;
-    color:var(--ranking-muted);
-  }
-  .ranking-mobile-filter-head .kinojo-btn{
-    height:28px!important;
-    min-height:28px!important;
-    padding:0 10px!important;
-    font-size:11px!important;
-  }
-  .ranking-toolbar{
-    display:grid;
-    grid-template-columns:1fr;
-    gap:8px;
-    padding:10px;
-    border-radius:18px;
-  }
-  .ranking-search-box{gap:4px;}
-  .ranking-filter-box,
-  .ranking-action-box{
-    display:none;
-    padding-top:8px;
-    border-top:1px solid rgba(126,95,50,.14);
-  }
-  .ranking-toolbar.is-filter-open .ranking-filter-box,
-  .ranking-toolbar.is-filter-open .ranking-action-box{display:flex;}
-  .ranking-filter-box{align-items:flex-start;flex-direction:column;gap:7px;}
-  .ranking-class-tabs{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;}
-  .ranking-class-tab{width:100%;height:28px;padding:0 4px;font-size:11px;border-radius:9px;}
-  .ranking-action-box{display:none;grid-template-columns:1fr 1fr;gap:6px;align-items:center;}
-  .ranking-toolbar.is-filter-open .ranking-action-box{display:grid;}
-  .ranking-toggle{grid-column:1/-1;justify-content:center;width:100%;height:28px;font-size:11px;border-radius:10px;}
-  .ranking-action-box .kinojo-btn{width:100%;height:28px!important;min-height:28px!important;font-size:11px!important;border-radius:10px!important;}
-  .ranking-status{font-size:11px;line-height:1.35;padding:0 2px;}
-  .ranking-board{gap:10px;}
-  .ranking-panel{border-radius:18px;}
-  .ranking-panel-head{padding:11px 12px;}
-  .ranking-panel-head h2{font-size:14px;}
-  .ranking-panel-head p{font-size:10px;}
-  .ranking-panel-chip{height:23px;padding:0 8px;font-size:11px;}
-  .ranking-card-list{gap:6px;padding:6px;}
-  .ranking-card,.ranking-card:last-child{border:1px solid rgba(126,95,50,.13);border-radius:14px;background:rgba(255,255,255,.55);}
-  .ranking-card.top-one,.ranking-card.top-two,.ranking-card.top-three{margin:0;border-radius:14px;}
-  .ranking-card.top-one::after,.ranking-card.top-two::after,.ranking-card.top-three::after{border-radius:14px;opacity:.62;}
-  .ranking-review{border-radius:10px;padding:7px 8px;}
-  .ranking-review p{font-size:11px;line-height:1.42;}
-  .ranking-pager{position:sticky;bottom:48px;z-index:25;margin:10px auto 0;padding:7px 8px;width:max-content;max-width:calc(100% - 24px);border:1px solid rgba(126,95,50,.18);border-radius:999px;background:rgba(255,250,242,.96);box-shadow:0 8px 20px rgba(83,60,31,.08);backdrop-filter:blur(10px);}
+body.kinojo-page-ranking{
+  background:linear-gradient(180deg,#fbf7ef 0%,#f5efe3 100%);
+  color:var(--ranking-text);
 }
+.ranking-wrap{
+  width:min(1480px,calc(100% - 32px));
+  margin:0 auto;
+  padding:138px 0 74px;
+}
+.ranking-hero{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  padding:18px 20px;
+  margin-bottom:14px;
+  border:1px solid var(--ranking-line);
+  border-radius:22px;
+  background:rgba(255,250,242,.86);
+  backdrop-filter:blur(10px);
+}
+.ranking-kicker{margin:0 0 4px;font-size:11px;letter-spacing:.12em;color:var(--ranking-gold);font-weight:800}
+.ranking-hero h1{margin:0;font-size:22px;line-height:1.18;letter-spacing:-.04em}
+.ranking-hero p{margin:7px 0 0;font-size:13px;color:var(--ranking-muted)}
+.ranking-hof-link{white-space:nowrap;text-decoration:none}
+
+/* Toolbar */
+.ranking-toolbar{
+  display:grid;
+  grid-template-columns:minmax(260px,1.2fr) minmax(420px,2fr) auto;
+  gap:10px;
+  align-items:stretch;
+  padding:12px;
+  margin-bottom:10px;
+  border:1px solid var(--ranking-line);
+  border-radius:20px;
+  background:rgba(255,250,242,.88);
+}
+.ranking-search-box,.ranking-filter-box,.ranking-action-box{display:flex;align-items:center;gap:8px;min-width:0}
+.ranking-search-box{flex-direction:column;align-items:stretch}
+.ranking-search-box label,.ranking-filter-title{font-size:11px;font-weight:800;color:var(--ranking-muted);letter-spacing:-.02em}
+.ranking-search-box input{height:32px!important;font-size:13px!important}
+.ranking-class-tabs{display:flex;flex-wrap:wrap;gap:6px}
+.ranking-class-tab{
+  height:30px;
+  padding:0 10px;
+  border:1px solid rgba(126,95,50,.25);
+  border-radius:999px;
+  background:#fff;
+  color:#564535;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+}
+.ranking-class-tab.is-active{background:#2b2118;color:#fff;border-color:#2b2118}
+.ranking-class-tab:hover{transform:translateY(-1px)}
+.ranking-action-box{justify-content:flex-end}
+.ranking-action-box .kinojo-btn,.ranking-hof-link,.ranking-pager .kinojo-btn{
+  min-height:30px!important;
+  height:30px!important;
+  padding:0 12px!important;
+  font-size:12px!important;
+  border-radius:999px!important;
+}
+.ranking-toggle{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  height:30px;
+  padding:0 10px;
+  border:1px solid rgba(126,95,50,.22);
+  border-radius:999px;
+  background:#fff;
+  font-size:12px;
+  font-weight:700;
+  color:#564535;
+  white-space:nowrap;
+}
+.ranking-toggle input{width:14px;height:14px}
+.ranking-mobile-filter-head{display:none}
+.ranking-status{margin:0 0 10px;padding:0 4px;font-size:12px;color:var(--ranking-muted)}
+
+/* Board */
+.ranking-board{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;min-height:540px}
+.ranking-loading,.ranking-empty{
+  grid-column:1/-1;
+  min-height:360px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  border:1px solid var(--ranking-line);
+  border-radius:22px;
+  background:rgba(255,250,242,.88);
+  color:var(--ranking-muted);
+  font-size:13px;
+  text-align:center;
+}
+.ranking-empty.error{color:#a04444}
+.ranking-panel{border:1px solid var(--ranking-line);border-radius:22px;background:rgba(255,250,242,.90);overflow:hidden;box-shadow:0 12px 40px rgba(83,60,31,.06)}
+.ranking-panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid var(--ranking-line);background:rgba(255,255,255,.48)}
+.ranking-panel-head h2{margin:0;font-size:16px;letter-spacing:-.04em}
+.ranking-panel-head p{margin:4px 0 0;font-size:11px;color:var(--ranking-muted)}
+.ranking-panel-chip{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:999px;color:#fff;font-size:12px;font-weight:900}
+.ranking-panel-chip.pve{background:var(--ranking-pve)}
+.ranking-panel-chip.pvp{background:var(--ranking-pvp)}
+
+/* Card */
+.ranking-card-list{display:flex;flex-direction:column;gap:0}
+.ranking-card{position:relative;overflow:hidden;padding:11px 12px;border-bottom:1px solid rgba(126,95,50,.14);background:rgba(255,255,255,.34)}
+.ranking-card:last-child{border-bottom:0}
+.ranking-card-main{display:grid;grid-template-columns:38px minmax(132px,.82fr) 62px 68px 78px;gap:7px;align-items:center}
+.ranking-rank{font-size:15px;font-weight:900;text-align:center;color:#6b5130}
+.ranking-character{display:flex;align-items:center;gap:8px;min-width:0}
+.ranking-avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;flex:0 0 auto;border:1px solid rgba(126,95,50,.24);background:#f1e8d9;display:flex;align-items:center;justify-content:center;font-weight:900;color:#8b6a3a}
+.ranking-avatar.top-one,.ranking-avatar.top-two,.ranking-avatar.top-three{border-color:rgba(126,95,50,.24);box-shadow:none}
+.ranking-character-meta{min-width:0}
+.ranking-name-line{display:flex;align-items:center;gap:5px;min-width:0}
+.ranking-name-line strong{font-size:13px;line-height:1.15;max-width:78px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ranking-owner-note,.ranking-main-badge{font-size:10px;font-weight:800;color:#8a7358;background:#f2eadc;border:1px solid rgba(126,95,50,.17);border-radius:999px;padding:1px 5px;white-space:nowrap}
+.ranking-main-badge{color:#7a5b23}
+.ranking-server-line{margin-top:2px;font-size:11px;color:var(--ranking-muted)}
+.ranking-reaction-boxes{display:flex;gap:4px;margin-top:4px}
+.ranking-reaction-box{display:inline-flex;align-items:center;gap:3px;height:18px;padding:0 6px;border-radius:5px;font-size:10px;font-weight:900}
+.ranking-reaction-box.like{background:rgba(232,111,113,.13);color:#b74e50}
+.ranking-reaction-box.dislike{background:rgba(100,128,217,.13);color:#5268b8}
+.ranking-class-chip{height:24px;display:flex;align-items:center;justify-content:center;border-radius:999px;background:#f2eadc;color:#5a4631;font-size:11px;font-weight:800}
+.ranking-stat{display:flex;flex-direction:column;gap:2px;align-items:flex-end}
+.ranking-stat span{font-size:10px;color:var(--ranking-muted);font-weight:800}
+.ranking-stat strong{font-size:13px;line-height:1.1}
+.ranking-stat.pve strong{color:var(--ranking-pve)}
+.ranking-stat.pvp strong{color:var(--ranking-pvp)}
+.ranking-stat.item strong{color:#6b5130}
+.ranking-review{margin-top:8px;padding:8px 10px;border-radius:12px;background:rgba(247,244,238,.82);border:1px solid rgba(126,95,50,.14)}
+.ranking-review-badge{display:inline-flex;margin-bottom:4px;height:18px;align-items:center;padding:0 6px;border-radius:999px;background:#2b2118;color:#fff;font-size:10px;font-weight:900}
+.ranking-review p{margin:0;font-size:12px;line-height:1.45;color:#4a3a2a;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* TOP3 flowing border: border-line flow only, no rotating object */
+.ranking-card.top-one,.ranking-card.top-two,.ranking-card.top-three{border:1px solid rgba(126,95,50,.16);border-radius:16px;margin:8px 8px 0;background:rgba(255,255,255,.52);box-shadow:0 8px 24px rgba(83,60,31,.07)}
+.ranking-card.top-one::after,.ranking-card.top-two::after,.ranking-card.top-three::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:16px;
+  pointer-events:none;
+  background:linear-gradient(90deg,transparent,var(--flow-color),transparent) top left/42% 2px no-repeat,
+             linear-gradient(180deg,transparent,var(--flow-color),transparent) top right/2px 42% no-repeat,
+             linear-gradient(270deg,transparent,var(--flow-color),transparent) bottom right/42% 2px no-repeat,
+             linear-gradient(0deg,transparent,var(--flow-color),transparent) bottom left/2px 42% no-repeat;
+  opacity:var(--flow-opacity,.85);
+  animation:kinojoRankingBorderFlow var(--flow-speed,3.2s) linear infinite;
+}
+.ranking-card.top-one{--flow-color:rgba(231,178,64,.95);--flow-opacity:.95;--flow-speed:3.6s}
+.ranking-card.top-two{--flow-color:rgba(180,188,200,.86);--flow-opacity:.78;--flow-speed:3.9s}
+.ranking-card.top-three{--flow-color:rgba(205,131,72,.86);--flow-opacity:.72;--flow-speed:4.2s}
+@keyframes kinojoRankingBorderFlow{0%{background-position:-42% 0,100% -42%,142% 100%,0 142%}100%{background-position:142% 0,100% 142%,-42% 100%,0 -42%}}
+
+/* Pager */
+.ranking-pager{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px}
+.ranking-pager span{font-size:12px;font-weight:800;color:var(--ranking-muted)}
+.ranking-mobile-mode-tabs{display:none}
+
+@media (max-width:980px){
+  .ranking-wrap{width:min(100% - 20px,760px);padding-top:124px}
+  .ranking-toolbar{grid-template-columns:1fr}
+  .ranking-filter-box,.ranking-action-box{justify-content:flex-start;flex-wrap:wrap}
+  .ranking-board{grid-template-columns:1fr}
+  .ranking-card-main{grid-template-columns:36px minmax(132px,1fr) 58px 64px 74px}
+  .ranking-panel-head h2{font-size:15px}
+}
+
+@media (max-width:760px){
+  body.kinojo-page-ranking{overflow-x:hidden}
+  .ranking-wrap{width:calc(100% - 16px);padding-top:118px;padding-bottom:86px}
+  .ranking-hero{padding:14px;border-radius:18px}
+  .ranking-hero h1{font-size:19px}
+  .ranking-hero p{font-size:12px}
+  .ranking-mobile-mode-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;position:sticky;top:calc(var(--kinojo-common-topbar-height, 92px) + 4px);z-index:30;padding:6px;border:1px solid var(--ranking-line);border-radius:16px;background:rgba(255,250,242,.96);backdrop-filter:blur(10px);box-shadow:0 8px 20px rgba(83,60,31,.06)}
+  .ranking-mobile-mode-tabs button{height:32px;border-radius:999px;border:1px solid var(--ranking-line);background:#fff;font-size:13px;font-weight:900;color:#5a4631}
+  .ranking-mobile-mode-tabs button.is-active{background:#2b2118;color:#fff}
+  .ranking-mobile-filter-head{display:flex;grid-column:1/-1;align-items:center;justify-content:space-between;gap:8px;min-height:32px}
+  .ranking-mobile-filter-head span{font-size:12px;font-weight:950;color:var(--ranking-muted)}
+  .ranking-mobile-filter-head .kinojo-btn{height:28px!important;min-height:28px!important;padding:0 10px!important;font-size:11px!important}
+  .ranking-toolbar{display:grid;grid-template-columns:1fr;gap:8px;padding:10px;border-radius:18px}
+  .ranking-search-box{gap:4px}
+  .ranking-filter-box,.ranking-action-box{display:none;padding-top:8px;border-top:1px solid rgba(126,95,50,.14)}
+  .ranking-toolbar.is-filter-open .ranking-filter-box{display:flex;align-items:flex-start;flex-direction:column;gap:7px}
+  .ranking-toolbar.is-filter-open .ranking-action-box{display:grid;grid-template-columns:1fr 1fr;gap:6px;align-items:center}
+  .ranking-class-tabs{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+  .ranking-class-tab{width:100%;height:28px;padding:0 4px;font-size:11px;border-radius:9px}
+  .ranking-toggle{grid-column:1/-1;justify-content:center;width:100%;height:28px;font-size:11px;border-radius:10px}
+  .ranking-action-box .kinojo-btn{width:100%;height:28px!important;min-height:28px!important;font-size:11px!important;border-radius:10px!important}
+  .ranking-status{font-size:11px;line-height:1.35;padding:0 2px}
+  .ranking-board{grid-template-columns:1fr;gap:10px;min-height:460px}
+  .ranking-board[data-mobile-mode="PVE"] .ranking-panel.pvp,.ranking-board[data-mobile-mode="PVP"] .ranking-panel.pve{display:none}
+  .ranking-panel{border-radius:18px}
+  .ranking-panel-head{padding:11px 12px}
+  .ranking-panel-head h2{font-size:14px}
+  .ranking-panel-head p{font-size:10px}
+  .ranking-panel-chip{height:23px;padding:0 8px;font-size:11px}
+  .ranking-card-list{gap:6px;padding:6px}
+  .ranking-card,.ranking-card:last-child{padding:10px;border:1px solid rgba(126,95,50,.13);border-radius:14px;background:rgba(255,255,255,.55)}
+  .ranking-card.top-one,.ranking-card.top-two,.ranking-card.top-three{margin:0;border-radius:14px}
+  .ranking-card.top-one::after,.ranking-card.top-two::after,.ranking-card.top-three::after{border-radius:14px;opacity:.62}
+  .ranking-card-main{grid-template-columns:30px 1fr 52px 62px;grid-template-areas:"rank char class power" "rank char item power";gap:6px}
+  .ranking-rank{grid-area:rank}
+  .ranking-character{grid-area:char}
+  .ranking-class-chip{grid-area:class;height:22px;font-size:11px}
+  .ranking-stat.item{grid-area:item}
+  .ranking-stat.pve,.ranking-stat.pvp{grid-area:power}
+  .ranking-stat span{font-size:9px}
+  .ranking-stat strong{font-size:12px}
+  .ranking-avatar{width:34px;height:34px}
+  .ranking-name-line strong{max-width:94px}
+  .ranking-review{margin-top:7px;border-radius:10px;padding:7px 8px}
+  .ranking-review p{font-size:11px;line-height:1.42;-webkit-line-clamp:3}
+  .ranking-panel.pve .ranking-card-main .ranking-stat.pvp,.ranking-panel.pvp .ranking-card-main .ranking-stat.pve{display:none}
+  .ranking-pager{position:sticky;bottom:48px;z-index:25;margin:10px auto 0;padding:7px 8px;width:max-content;max-width:calc(100% - 24px);border:1px solid rgba(126,95,50,.18);border-radius:999px;background:rgba(255,250,242,.96);box-shadow:0 8px 20px rgba(83,60,31,.08);backdrop-filter:blur(10px)}
+}
+
 @media (max-width:380px){
-  .ranking-class-tabs{grid-template-columns:repeat(2,minmax(0,1fr));}
-  .ranking-card-main{grid-template-columns:28px 1fr 48px 58px;gap:5px;}
-  .ranking-avatar{width:31px;height:31px;}
-  .ranking-name-line strong{max-width:82px;font-size:12px;}
-  .ranking-owner-note,.ranking-main-badge{font-size:9px;padding:1px 4px;}
+  .ranking-class-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ranking-card-main{grid-template-columns:28px 1fr 48px 58px;gap:5px}
+  .ranking-avatar{width:31px;height:31px}
+  .ranking-name-line strong{max-width:82px;font-size:12px}
+  .ranking-owner-note,.ranking-main-badge{font-size:9px;padding:1px 4px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .ranking-card.top-one::after,.ranking-card.top-two::after,.ranking-card.top-three::after{animation:none;background-position:0 0,100% 0,100% 100%,0 100%}
 }
