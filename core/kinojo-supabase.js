@@ -1044,6 +1044,70 @@
     });
   }
 
+
+  async function getWebHofSummary(extra={}){
+    const data = await rpc('kinojo_web_get_hof_summary', { p_include_subs:!!extra.includeSubs || !!extra.include_subs });
+    const sections = data && data.sections ? data.sections : {};
+    const toList = function(rows, category){
+      return (Array.isArray(rows) ? rows : []).map((row, idx)=>{
+        const item = hallItemFromRow(row, idx + 1);
+        const like = Number(snakeOrCamel(row, 'like_count', 'likeCount', 0) || 0);
+        const dislike = Number(snakeOrCamel(row, 'dislike_count', 'dislikeCount', 0) || 0);
+        return Object.assign({}, item, {
+          rank:Number(snakeOrCamel(row, 'rank_no', 'rankNo', idx + 1) || idx + 1),
+          category:category || item.category,
+          like,
+          dislike,
+          reactionComments:snakeOrCamel(row, 'reaction_comments', 'reactionComments', []) || snakeOrCamel(row, 'comments', 'comments', []) || [],
+          value:category === 'PVP' ? item.pvpPower : category === 'PVE' ? item.pvePower : item.value,
+          label:category === 'PVP' ? item.pvpPowerLabel : category === 'PVE' ? item.pvePowerLabel : item.label
+        });
+      });
+    };
+    const toItem = function(row, category){
+      if(!row || !Object.keys(row).length) return null;
+      return toList([row], category)[0] || null;
+    };
+    const likesTop = toList(sections.likesTop3, 'LIKE');
+    const dislikesTop = toList(sections.dislikesTop3, 'DISLIKE');
+    const pveTop = toList(sections.pveTop3, 'PVE');
+    const pvpTop = toList(sections.pvpTop3, 'PVP');
+    const growthGod = toItem(sections.growthGod, 'GROWTH');
+    const enhanceGod = toItem(sections.enhanceGod, 'ENHANCE');
+    const allSummaryItems = likesTop.concat(dislikesTop, pveTop, pvpTop, growthGod?[growthGod]:[], enhanceGod?[enhanceGod]:[]);
+    const byName = {};
+    allSummaryItems.forEach(item=>{
+      if(!item || !item.name) return;
+      byName[item.name] = {
+        like:Number(item.like || 0),
+        dislike:Number(item.dislike || 0),
+        comments:Array.isArray(item.reactionComments) ? item.reactionComments : []
+      };
+    });
+    return {
+      ok:data?.ok!==false,
+      source:data?.source || 'supabase_049',
+      updatedAt:data?.updatedAt || data?.updated_at || new Date().toLocaleString('ko-KR'),
+      includeSubs:!!(data?.includeSubs || data?.include_subs || extra.includeSubs),
+      pveTop,
+      pvpTop,
+      overallMain:allSummaryItems,
+      overallAll:allSummaryItems,
+      reactionSummary:{ likeTop:likesTop, dislikeTop:dislikesTop, byName },
+      weeklyAwards:{ growthKing:growthGod?[growthGod]:[], bulkUp:enhanceGod?[enhanceGod]:[] },
+      summarySections:{ likesTop, dislikesTop, pveTop, pvpTop, growthGod, enhanceGod },
+      mvp:null,
+      mvpCandidatesTop3:[],
+      mvpConfirmed:false,
+      newChicks:[],
+      demonFamily:[],
+      demonFamilyAll:[],
+      partyFriend:[],
+      partyFriendAll:[],
+      classReviewPool:defaultClassReviewPool()
+    };
+  }
+
   async function getWebDashboard(){
     return rpc('kinojo_web_get_dashboard', {});
   }
@@ -1245,6 +1309,7 @@
     const name = String(action || '').trim();
     const extra = params || {};
     if(name === 'hallOfFame') return getWebHallOfFame(extra.limit || 300, extra);
+    if(name === 'hofSummary') return getWebHofSummary(extra);
     if(name === 'hallRankingView') return getWebHallRankingView(extra);
     if(name === 'ranking') return getWebRanking(extra.limit || 300);
     if(name === 'dashboard') return getWebDashboard();
