@@ -38,3 +38,89 @@ body.kinojo-page-ranking{background:linear-gradient(180deg,#fbf7ef 0%,#f5efe3 10
 @media (max-width: 980px){.ranking-wrap{width:min(100% - 20px,760px);padding-top:124px}.ranking-toolbar{grid-template-columns:1fr}.ranking-filter-box,.ranking-action-box{justify-content:flex-start;flex-wrap:wrap}.ranking-board{grid-template-columns:1fr}.ranking-card-main{grid-template-columns:36px minmax(132px,1fr) 58px 64px 74px}.ranking-panel-head h2{font-size:15px}}
 @media (max-width: 760px){.ranking-wrap{width:calc(100% - 16px);padding-top:118px}.ranking-hero{padding:14px;border-radius:18px}.ranking-hero h1{font-size:19px}.ranking-hero p{font-size:12px}.ranking-mobile-mode-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}.ranking-mobile-mode-tabs button{height:32px;border-radius:999px;border:1px solid var(--ranking-line);background:#fff;font-size:13px;font-weight:900;color:#5a4631}.ranking-mobile-mode-tabs button.is-active{background:#2b2118;color:#fff}.ranking-board[data-mobile-mode="PVE"] .ranking-panel.pvp,.ranking-board[data-mobile-mode="PVP"] .ranking-panel.pve{display:none}.ranking-board{min-height:460px}.ranking-card{padding:10px}.ranking-card.top-one,.ranking-card.top-two,.ranking-card.top-three{margin:7px 6px 0}.ranking-card-main{grid-template-columns:30px 1fr 52px 62px;grid-template-areas:"rank char class power" "rank char item power";gap:6px}.ranking-rank{grid-area:rank}.ranking-character{grid-area:char}.ranking-class-chip{grid-area:class;height:22px;font-size:11px}.ranking-stat.item{grid-area:item}.ranking-stat.pve,.ranking-stat.pvp{grid-area:power}.ranking-stat span{font-size:9px}.ranking-stat strong{font-size:12px}.ranking-avatar{width:34px;height:34px}.ranking-name-line strong{max-width:94px}.ranking-review{margin-top:7px}.ranking-review p{-webkit-line-clamp:3}.ranking-panel.pve .ranking-card-main .ranking-stat.pvp,.ranking-panel.pvp .ranking-card-main .ranking-stat.pve{display:none}}
 @media (prefers-reduced-motion: reduce){.ranking-card.top-one::after,.ranking-card.top-two::after,.ranking-card.top-three::after{animation:none;background-position:0 0,100% 0,100% 100%,0 100%}}
+
+/* ===========================================================
+   20260629 STEP5 - Mobile Ranking Layout
+   - PC keeps PVE/PVP split view.
+   - Mobile uses sheet-like PVE/PVP tabs and a compact filter panel.
+   - Ranking card component is reused; only layout changes by viewport.
+=========================================================== */
+.ranking-mobile-filter-head{display:none;}
+@media (max-width:760px){
+  body.kinojo-page-ranking{overflow-x:hidden;}
+  .ranking-wrap{padding-bottom:86px;}
+  .ranking-mobile-mode-tabs{
+    position:sticky;
+    top:calc(var(--kinojo-common-topbar-height, 92px) + 4px);
+    z-index:30;
+    padding:6px;
+    border:1px solid var(--ranking-line);
+    border-radius:16px;
+    background:rgba(255,250,242,.96);
+    backdrop-filter:blur(10px);
+    box-shadow:0 8px 20px rgba(83,60,31,.06);
+  }
+  .ranking-mobile-filter-head{
+    display:flex;
+    grid-column:1/-1;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    min-height:32px;
+  }
+  .ranking-mobile-filter-head span{
+    font-size:12px;
+    font-weight:950;
+    color:var(--ranking-muted);
+  }
+  .ranking-mobile-filter-head .kinojo-btn{
+    height:28px!important;
+    min-height:28px!important;
+    padding:0 10px!important;
+    font-size:11px!important;
+  }
+  .ranking-toolbar{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:8px;
+    padding:10px;
+    border-radius:18px;
+  }
+  .ranking-search-box{gap:4px;}
+  .ranking-filter-box,
+  .ranking-action-box{
+    display:none;
+    padding-top:8px;
+    border-top:1px solid rgba(126,95,50,.14);
+  }
+  .ranking-toolbar.is-filter-open .ranking-filter-box,
+  .ranking-toolbar.is-filter-open .ranking-action-box{display:flex;}
+  .ranking-filter-box{align-items:flex-start;flex-direction:column;gap:7px;}
+  .ranking-class-tabs{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;}
+  .ranking-class-tab{width:100%;height:28px;padding:0 4px;font-size:11px;border-radius:9px;}
+  .ranking-action-box{display:none;grid-template-columns:1fr 1fr;gap:6px;align-items:center;}
+  .ranking-toolbar.is-filter-open .ranking-action-box{display:grid;}
+  .ranking-toggle{grid-column:1/-1;justify-content:center;width:100%;height:28px;font-size:11px;border-radius:10px;}
+  .ranking-action-box .kinojo-btn{width:100%;height:28px!important;min-height:28px!important;font-size:11px!important;border-radius:10px!important;}
+  .ranking-status{font-size:11px;line-height:1.35;padding:0 2px;}
+  .ranking-board{gap:10px;}
+  .ranking-panel{border-radius:18px;}
+  .ranking-panel-head{padding:11px 12px;}
+  .ranking-panel-head h2{font-size:14px;}
+  .ranking-panel-head p{font-size:10px;}
+  .ranking-panel-chip{height:23px;padding:0 8px;font-size:11px;}
+  .ranking-card-list{gap:6px;padding:6px;}
+  .ranking-card,.ranking-card:last-child{border:1px solid rgba(126,95,50,.13);border-radius:14px;background:rgba(255,255,255,.55);}
+  .ranking-card.top-one,.ranking-card.top-two,.ranking-card.top-three{margin:0;border-radius:14px;}
+  .ranking-card.top-one::after,.ranking-card.top-two::after,.ranking-card.top-three::after{border-radius:14px;opacity:.62;}
+  .ranking-review{border-radius:10px;padding:7px 8px;}
+  .ranking-review p{font-size:11px;line-height:1.42;}
+  .ranking-pager{position:sticky;bottom:48px;z-index:25;margin:10px auto 0;padding:7px 8px;width:max-content;max-width:calc(100% - 24px);border:1px solid rgba(126,95,50,.18);border-radius:999px;background:rgba(255,250,242,.96);box-shadow:0 8px 20px rgba(83,60,31,.08);backdrop-filter:blur(10px);}
+}
+@media (max-width:380px){
+  .ranking-class-tabs{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .ranking-card-main{grid-template-columns:28px 1fr 48px 58px;gap:5px;}
+  .ranking-avatar{width:31px;height:31px;}
+  .ranking-name-line strong{max-width:82px;font-size:12px;}
+  .ranking-owner-note,.ranking-main-badge{font-size:9px;padding:1px 4px;}
+}

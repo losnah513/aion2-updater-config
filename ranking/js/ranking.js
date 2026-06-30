@@ -142,6 +142,16 @@
     const resetBtn=$('rankingResetBtn');
     const prev=$('rankingPrevBtn');
     const next=$('rankingNextBtn');
+    const filterToggle=$('rankingFilterToggleBtn');
+    const toolbar=document.querySelector('.ranking-toolbar');
+    if(filterToggle && toolbar){
+      filterToggle.addEventListener('click',()=>{
+        const open=!toolbar.classList.contains('is-filter-open');
+        toolbar.classList.toggle('is-filter-open', open);
+        filterToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        filterToggle.textContent=open ? '닫기' : '필터';
+      });
+    }
     if(search){ search.addEventListener('keydown',e=>{ if(e.key==='Enter'){ state.search=search.value.trim(); state.page=1; loadRanking(); } }); }
     if(include){ include.addEventListener('change',()=>{ state.includeSubs=include.checked; state.page=1; loadRanking(); }); }
     if(searchBtn){ searchBtn.addEventListener('click',()=>{ state.search=search?.value.trim()||''; state.page=1; loadRanking(); }); }
@@ -152,7 +162,11 @@
       btn.addEventListener('click',()=>{
         state.mobileMode=btn.dataset.mobileMode==='PVP'?'PVP':'PVE';
         document.querySelectorAll('[data-mobile-mode]').forEach(b=>b.classList.toggle('is-active', b===btn));
-        const board=$('rankingBoard'); if(board) board.dataset.mobileMode=state.mobileMode;
+        const board=$('rankingBoard');
+        if(board){
+          board.dataset.mobileMode=state.mobileMode;
+          if(isMobile) board.scrollIntoView({block:'start', behavior:'smooth'});
+        }
       });
     });
   }
