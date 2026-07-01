@@ -7,7 +7,7 @@
   'use strict';
   const Ranking = window.KinojoRanking = window.KinojoRanking || {};
 
-  const CLASS_ORDER = ['전체','수호성','검성','살성','궁성','마도성','정령성','치유성','호법성'];
+  const CLASS_ORDER = ['전체','수호성','검성','살성','궁성','마도성','정령성','치유성','호법성','권성'];
 
   function $(id){ return document.getElementById(id); }
   function escapeHtml(v){
