@@ -15,7 +15,8 @@ ArcanaApp.classService = {
     { key: 'sorcerer', name: '마도성', englishName: 'Sorcerer', icon: '../hof/assets/class_icon_sorcerer.png', skillIconFile: 'sorcerer.json' },
     { key: 'elementalist', name: '정령성', englishName: 'Spiritmaster', icon: '../hof/assets/class_icon_elementalist.png', skillIconFile: 'spiritmaster.json' },
     { key: 'cleric', name: '치유성', englishName: 'Cleric', icon: '../hof/assets/class_icon_cleric.png', skillIconFile: 'cleric.json' },
-    { key: 'chanter', name: '호법성', englishName: 'Chanter', icon: '../hof/assets/class_icon_chanter.png', skillIconFile: 'chanter.json' }
+    { key: 'chanter', name: '호법성', englishName: 'Chanter', icon: '../hof/assets/class_icon_chanter.png', skillIconFile: 'chanter.json' },
+    { key: 'brawler', name: '권성', englishName: 'Brawler', icon: '', skillIconFile: 'brawler.json', disabled: true }
   ],
 
   aliasMap: {
@@ -36,7 +37,9 @@ ArcanaApp.classService = {
     skill_db_cleric: 'cleric',
     cleric: 'cleric',
     skill_db_chanter: 'chanter',
-    chanter: 'chanter'
+    chanter: 'chanter',
+    skill_db_brawler: 'brawler',
+    brawler: 'brawler'
   },
 
   nameMap: {
@@ -47,7 +50,8 @@ ArcanaApp.classService = {
     '마도성': 'sorcerer',
     '정령성': 'elementalist',
     '치유성': 'cleric',
-    '호법성': 'chanter'
+    '호법성': 'chanter',
+    '권성': 'brawler'
   },
 
   normalizeKey(value, displayName) {

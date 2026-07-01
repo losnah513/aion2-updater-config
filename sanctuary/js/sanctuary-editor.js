@@ -5,7 +5,7 @@
  * - 팀명, 대표자, 팀 색상은 sanctuary_teams 메타 서버에 저장합니다.
  */
 (function(){
-  const CLASS_OPTIONS = ['', '검성', '수호성', '살성', '궁성', '정령성', '마도성', '치유성', '호법성'];
+  const CLASS_OPTIONS = ['', '검성', '수호성', '살성', '궁성', '정령성', '마도성', '치유성', '호법성', '권성'];
 
   function apiUrl(){ return ''; }
 
