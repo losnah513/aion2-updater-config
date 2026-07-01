@@ -1,10 +1,10 @@
-/* KINOJO Admin Console v2026070106 */
+/* KINOJO Admin Console v2026070108 */
 (function(){
   'use strict';
   const $ = (s,r=document)=>r.querySelector(s);
   const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
   const state = { tab:'dashboard', requests:[], accounts:[], characters:[], logs:[] };
-  const CACHE = '2026070106';
+  const CACHE = '2026070108';
   function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
   function addLog(type,msg){
     const t = new Date(); const line = '['+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+':'+String(t.getSeconds()).padStart(2,'0')+'] '+String(type||'INFO')+' · '+String(msg||'');
@@ -86,12 +86,44 @@
 
   async function loadAccounts(){
     setStatus('#memberStatus','회원 목록을 불러오는 중...','');
-    try{ const data=await adminAccount('listCodes',{}); state.accounts=data.accounts||[]; renderAccounts(state.accounts); setStatus('#memberStatus','회원 '+state.accounts.length+'명','ok'); }
+    try{ const data=await adminAccount('listCodes',{}); state.accounts=data.accounts||[]; applyMemberFilters(); }
     catch(err){ setStatus('#memberStatus',err.message||String(err),'error'); }
+  }
+  function getAccountCode(a){ return a.code || a.passCode || a.pass_code || ''; }
+  function getAccountName(a){ return a.mainCharacter || a.main_character_name || a.mainCharacterName || '-'; }
+  function getAccountRole(a){ return a.role || a.roleLabel || 'MEMBER'; }
+  function applyMemberFilters(){
+    const q = String($('#memberSearch')?.value || '').trim().toLowerCase();
+    const role = String($('#memberRoleFilter')?.value || '').trim();
+    const filtered = (state.accounts || []).filter(a=>{
+      const hay = [getAccountName(a), getAccountCode(a), getAccountRole(a)].join(' ').toLowerCase();
+      if(q && !hay.includes(q)) return false;
+      if(role && String(getAccountRole(a)).toUpperCase() !== role) return false;
+      return true;
+    });
+    renderAccounts(filtered);
+    setStatus('#memberStatus','회원 '+filtered.length+'건 표시 / 전체 '+(state.accounts||[]).length+'건','ok');
   }
   function renderAccounts(list){
     const root=$('#memberList'); if(!root)return;
-    root.innerHTML=list.length?list.map(a=>'<article class="admin-row"><div class="admin-row-main"><strong>'+esc(a.mainCharacter||a.main_character_name||'-')+'</strong><span>'+esc(a.code||a.passCode||a.pass_code||'')+' · '+esc(a.role||a.roleLabel||'MEMBER')+'</span></div><div class="admin-row-actions"><span class="admin-pill '+(a.isActive===false?'error':'ok')+'">'+(a.isActive===false?'비활성':'활성')+'</span></div></article>').join(''):'<div class="admin-empty">회원 코드가 없습니다.</div>';
+    root.innerHTML=list.length?list.map(a=>{
+      const code=esc(getAccountCode(a)); const name=esc(getAccountName(a)); const role=esc(String(getAccountRole(a)).toUpperCase());
+      const active=a.isActive!==false;
+      const isMaster=role==='MASTER';
+      return '<article class="admin-row admin-member-row" data-member-code="'+code+'"><div class="admin-row-main"><strong>'+name+'</strong><span>코드 '+code+' · '+role+'</span></div><div class="admin-row-actions"><span class="admin-pill '+(active?'ok':'error')+'">'+(active?'활성':'비활성')+'</span><select class="admin-select compact" data-member-role '+(isMaster?'disabled':'')+'><option value="MEMBER" '+(role==='MEMBER'?'selected':'')+'>Member</option><option value="STAFF" '+(role==='STAFF'?'selected':'')+'>Staff</option><option value="MANAGER" '+(role==='MANAGER'?'selected':'')+'>Manager</option><option value="SUB_MASTER" '+(role==='SUB_MASTER'?'selected':'')+'>Sub Master</option></select><button class="admin-btn danger" data-member-disable '+(isMaster?'disabled':'')+'>비활성</button><button class="admin-btn" data-member-delete '+(isMaster?'disabled':'')+'>삭제</button></div></article>';
+    }).join(''):'<div class="admin-empty">회원 코드가 없습니다.</div>';
+  }
+  async function handleMemberAction(target){
+    const row=target.closest('[data-member-code]'); const code=row?.dataset.memberCode; if(!code)return;
+    target.disabled=true;
+    try{
+      let res;
+      if(target.matches('[data-member-role]')) res=await adminAccount('updateRole',{code,role:target.value});
+      else if(target.matches('[data-member-disable]')) res=await adminAccount('disableCode',{code});
+      else if(target.matches('[data-member-delete]')){ if(!confirm('회원 코드를 삭제할까요?')){target.disabled=false;return;} res=await adminAccount('deleteCode',{code}); }
+      if(res && res.ok===false) throw new Error(res.message||'회원 처리 실패');
+      toast(res?.message||'회원 정보 처리 완료'); addLog('MEMBER',(res?.message||'회원 처리')+' · '+code); await loadAccounts();
+    }catch(err){ setStatus('#memberStatus',err.message||String(err),'error'); target.disabled=false; }
   }
 
   async function searchCharacters(){
@@ -142,12 +174,12 @@
 
   async function loadNotices(){
     setStatus('#noticeStatus','공지 목록을 불러오는 중...','');
-    try{ const list=await action('notices',{limit:20}); const notices=list.notices||[]; $('#noticeList').innerHTML=notices.length?notices.map(n=>'<article class="admin-row"><div class="admin-row-main"><strong>'+esc(n.noticeType||n.notice||'공지')+'</strong><span>'+esc(n.content||'')+'</span></div><div class="admin-row-actions"><span class="admin-pill info">'+esc(n.author||'관리자')+'</span></div></article>').join(''):'<div class="admin-empty">등록된 공지가 없습니다.</div>'; setStatus('#noticeStatus','공지 '+notices.length+'건','ok'); }
+    try{ const list=await adminNotice('listNotices',{limit:20}); const notices=list.notices||[]; $('#noticeList').innerHTML=notices.length?notices.map(n=>'<article class="admin-row"><div class="admin-row-main"><strong>'+esc(n.noticeType||n.notice||'공지')+'</strong><span>'+esc(n.content||'')+'</span></div><div class="admin-row-actions"><span class="admin-pill info">'+esc(n.author||'관리자')+'</span></div></article>').join(''):'<div class="admin-empty">등록된 공지가 없습니다.</div>'; setStatus('#noticeStatus','공지 '+notices.length+'건','ok'); }
     catch(err){ setStatus('#noticeStatus',err.message||String(err),'error'); }
   }
   async function saveNotice(){
     const content=$('#noticeContent')?.value||''; const noticeType=$('#noticeType')?.value||'공지'; if(!content.trim()){setStatus('#noticeStatus','공지 내용을 입력하세요.','error');return;}
-    try{ const res=await adminNotice('save',{content,noticeType}); if(res.ok===false)throw new Error(res.message||'공지 저장 실패'); $('#noticeContent').value=''; toast('공지 저장 완료'); await loadNotices(); }
+    try{ const res=await adminNotice('createNotice',{content,noticeType}); if(res.ok===false)throw new Error(res.message||'공지 저장 실패'); $('#noticeContent').value=''; toast('공지 저장 완료'); await loadNotices(); }
     catch(err){ setStatus('#noticeStatus',err.message||String(err),'error'); }
   }
   async function refreshServerStatus(){
@@ -168,7 +200,7 @@
     $('#adminLogoutBtn')?.addEventListener('click',()=>{window.KinojoAuth?.clearSession?.(); location.href='../';});
     $('#requestReloadBtn')?.addEventListener('click',loadCodeRequests);
     $('#requestList')?.addEventListener('click',e=>{ if(e.target.matches('[data-approve-request]')) processRequest(e.target,'approveCodeRequest'); if(e.target.matches('[data-reject-request]')) processRequest(e.target,'rejectCodeRequest'); });
-    $('#memberReloadBtn')?.addEventListener('click',loadAccounts);
+    $('#memberReloadBtn')?.addEventListener('click',loadAccounts); $('#memberSearch')?.addEventListener('input',applyMemberFilters); $('#memberRoleFilter')?.addEventListener('change',applyMemberFilters); $('#memberList')?.addEventListener('click',e=>{ if(e.target.matches('[data-member-disable],[data-member-delete]')) handleMemberAction(e.target); }); $('#memberList')?.addEventListener('change',e=>{ if(e.target.matches('[data-member-role]')) handleMemberAction(e.target); });
     $('#characterSearchBtn')?.addEventListener('click',searchCharacters);
     $('#characterSearch')?.addEventListener('keydown',e=>{ if(e.key==='Enter') searchCharacters(); });
     $('#characterList')?.addEventListener('click',e=>{ if(e.target.matches('[data-char-deactivate]')) handleCharacterAction(e.target,'deactivate'); if(e.target.matches('[data-char-restore]')) handleCharacterAction(e.target,'restore'); if(e.target.matches('[data-char-rename]')) handleCharacterAction(e.target,'markRenamed'); });
