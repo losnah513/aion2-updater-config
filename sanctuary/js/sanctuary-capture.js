@@ -332,7 +332,7 @@
     ctx.fillStyle = '#667085'; ctx.font = '800 17px Arial, sans-serif';
     if(count) ctx.fillText(count, width - pad - ctx.measureText(count).width, pad + 6);
     ctx.fillStyle = '#8a5a0a'; ctx.font = '800 13px Arial, sans-serif';
-    ctx.fillText(sub || 'KINOJO Sanctuary Party', pad, pad + 38);
+    ctx.fillText(sub || 'KINOJO Sanctuary Force', pad, pad + 38);
   }
 
   async function renderPartyCanvas(data, options){
@@ -422,7 +422,7 @@
     const data = getTeamData(team);
     const partyCanvases = [];
     for(const party of data.parties){
-      partyCanvases.push(await renderPartyCanvas(party, { subtitle: data.name + ' · KINOJO Sanctuary Party' }));
+      partyCanvases.push(await renderPartyCanvas(party, { subtitle: data.name + ' · KINOJO Sanctuary Force' }));
     }
     const dpr = clamp(window.devicePixelRatio || 1, 1, 2);
     const width = 540;
@@ -589,10 +589,10 @@
       const canvas = await makeTeamCanvas(team);
       showCopyPreview(canvas, 'kinojo-team-'+safeText(team.dataset.team || 'team')+'.png');
       const result = await copyCanvasWithFallback(canvas, 'kinojo-team-'+safeText(team.dataset.team || 'team')+'.png');
-      toast(result === 'copied' ? '팀 전체 파티 이미지가 클립보드에 복사되었습니다.' : '클립보드 복사 제한으로 PNG 파일을 저장했습니다.');
+      toast(result === 'copied' ? '포스 전체 파티 이미지가 클립보드에 복사되었습니다.' : '클립보드 복사 제한으로 PNG 파일을 저장했습니다.');
     }catch(err){
       console.warn('KINOJO team capture failed:', err);
-      toast('팀 전체 이미지 생성에 실패했습니다.');
+      toast('포스 전체 이미지 생성에 실패했습니다.');
     }finally{
       btn.disabled = false; btn.classList.remove('is-copying'); btn.innerHTML = oldHtml;
     }

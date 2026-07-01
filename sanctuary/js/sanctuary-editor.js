@@ -2,7 +2,7 @@
  * sanctuary-editor.js - KINOJO Sanctuary Server Engine editor
  * Role: 성역 페이지의 수정하기 버튼을 실제 시트 저장 기능과 연결합니다.
  * - Supabase sanctuary_slots 기준 슬롯 데이터를 편집합니다.
- * - 포스명, 대표자, 포스 색상은 sanctuary_teams 메타 서버에 저장합니다.
+ * - 포스명, 대표자, 포스 색상은 legacy sanctuary_teams 테이블의 포스 메타로 저장합니다. 상위 개념의 팀은 여러 포스를 운영하는 그룹입니다.
  */
 (function(){
   const CLASS_OPTIONS = ['', '검성', '수호성', '살성', '궁성', '정령성', '마도성', '치유성', '호법성', '권성'];
@@ -180,7 +180,7 @@
         teamMeta: payload.teamMeta
       });
       if(!result.ok) throw new Error(result.message || '성역 서버 저장 실패');
-      try{ sessionStorage.removeItem('kinojo_sanctuary_cache_v2026070104_' + currentSanctuaryId()); }catch(_err){}
+      try{ sessionStorage.removeItem('kinojo_sanctuary_cache_v2026070105_' + currentSanctuaryId()); }catch(_err){}
       if(status){ status.className = 'sanctuary-editor-status success'; status.textContent = '저장 완료 · ' + Number(result.updatedSlots || 0) + '개 슬롯 반영'; }
       await reloadFresh();
       setTimeout(close, 350);
