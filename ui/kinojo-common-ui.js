@@ -16,6 +16,7 @@
     if(path.includes('/ranking/'))return {key:'ranking',label:'레기온 순위',root:mobile?'../../':'../',mobile};
     if(path.includes('/sanctuary/'))return {key:'sanctuary',label:'성역',root:mobile?'../../':'../',mobile};
     if(path.includes('/arcana/'))return {key:'arcana',label:'아르카나',root:mobile?'../../':'../',mobile};
+    if(path.includes('/admin/'))return {key:'admin',label:'관리자 콘솔',root:mobile?'../../':'../',mobile};
     if(mobile)return {key:'home',label:'메인',root:'../',mobile};
     return {key:'home',label:'메인',root:'./',mobile};
   }
@@ -440,12 +441,13 @@
       {key:'hall',label:'명예의 전당',href:base+'hof/'},
       {key:'ranking',label:'레기온 순위',href:base+'ranking/'},
       {key:'sanctuary',label:'성역',href:base+'sanctuary/?id=rudra'},
-      {key:'arcana',label:'아르카나',href:base+'arcana/'}
+      {key:'arcana',label:'아르카나',href:base+'arcana/'},
+      {key:'admin',label:'관리자',href:base+'admin/',adminOnly:true}
     ];
     const navHtml=navItems.map(item=>{
       const active=item.key===info.key;
       const href=active?'./':item.href;
-      return '<a class="kinojo-top-nav-link'+(active?' active':'')+'" href="'+href+'"'+(active?' aria-current="page"':'')+'>'+item.label+'</a>';
+      return '<a class="kinojo-top-nav-link'+(active?' active':'')+(item.adminOnly?' kinojo-admin-only-link':'')+'" href="'+href+'"'+(active?' aria-current="page"':'')+'>'+item.label+'</a>';
     }).join('');
     bar.innerHTML=`
       <div class="kinojo-top-left">
@@ -543,6 +545,7 @@
           <div class="kinojo-drawer-divider"></div>
           <div class="kinojo-drawer-category">아르카나</div>
           <a href="${arcanaHref}" ${isArcana?'class="active" aria-disabled="true"':''}>ARCANA 스킬 시뮬레이터</a>
+          <a class="kinojo-admin-only-link" href="${base}admin/">관리자 콘솔</a>
           <div class="kinojo-drawer-divider"></div>
           <div class="kinojo-drawer-category">안내</div>
           <button class="kinojo-drawer-link drawer-page-link" type="button" data-page-panel="about" data-drawer="about">사이트 소개</button>
