@@ -1,4 +1,4 @@
-/* KINOJO Admin Console v2026070106 */
+/* KINOJO Admin Console v2026070110 */
 :root{
   --admin-bg:#f5f7fb;
   --admin-panel:#ffffff;
@@ -31,3 +31,23 @@ body.kinojo-page-admin{background:var(--admin-bg);color:var(--admin-ink);font-fa
 /* 20260701_08 admin phase2 functional controls */
 .admin-select.compact{height:34px;padding:6px 8px;border-radius:10px;font-size:12px}.admin-member-tools{margin-bottom:10px}.admin-member-row .admin-row-actions{align-items:center}.admin-member-row .admin-btn{height:34px;padding:0 10px;border-radius:10px;font-size:12px}
 @media (max-width:760px){.admin-select.compact{width:100%;height:38px}.admin-member-row .admin-row-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.admin-member-row .admin-row-actions .admin-pill{grid-column:1/-1;width:max-content}.admin-member-row .admin-row-actions .admin-select{grid-column:1/-1}}
+
+
+/* 20260701_09 admin phase3 bridge/report UX + 20260701_10 admin phase4 system settings split */
+.admin-bridge-box{margin-top:14px;border:1px solid #dbeafe;background:linear-gradient(180deg,#f8fbff,#ffffff);border-radius:16px;padding:14px;display:grid;gap:10px}
+.admin-bridge-title strong{display:block;font-size:14px;color:#0f172a}.admin-bridge-title span{display:block;margin-top:3px;color:var(--admin-muted);font-size:12px;font-weight:750}
+.admin-callout{border:1px solid #e5e7eb;border-radius:16px;padding:14px;background:#f8fafc;display:grid;gap:8px}.admin-callout strong{font-size:14px}.admin-callout span{color:var(--admin-muted);font-size:12px;font-weight:750}.admin-callout.error{border-color:#fecaca;background:#fff5f5;color:#991b1b}.admin-callout.error span{color:#b91c1c}
+.admin-sync-report{border:1px solid #dbeafe;border-radius:16px;background:#f8fbff;overflow:hidden;color:#0f172a}.admin-sync-report.ok{border-color:#bbf7d0;background:#f7fff9}.admin-sync-report.error{border-color:#fecaca;background:#fff7f7}.admin-report-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(15,23,42,.08);font-weight:900}.admin-report-head span{font-size:12px;color:var(--admin-muted);font-weight:800}.admin-report-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border-bottom:1px solid rgba(15,23,42,.08)}.admin-report-row{padding:12px 14px;border-right:1px solid rgba(15,23,42,.08);display:grid;gap:4px}.admin-report-row:nth-child(3n){border-right:0}.admin-report-row span{font-size:11px;color:var(--admin-muted);font-weight:900}.admin-report-row strong{font-size:15px}.admin-report-raw{padding:10px 14px}.admin-report-raw summary{cursor:pointer;font-weight:900;color:#1558d6}.admin-report-raw pre{margin:10px 0 0;background:#0f172a;color:#dbeafe;border-radius:12px;padding:12px;max-height:240px;overflow:auto;font-size:12px}
+@media (max-width:760px){.admin-report-grid{grid-template-columns:1fr 1fr}.admin-report-row:nth-child(3n){border-right:1px solid rgba(15,23,42,.08)}.admin-report-row:nth-child(2n){border-right:0}.admin-bridge-box .admin-form-row{grid-template-columns:1fr}.admin-bridge-box .admin-btn{width:100%}}
+
+
+/* 20260701_10 admin phase4: server monitor and MASTER system settings split */
+.admin-bridge-box.monitor{background:linear-gradient(180deg,#f8fafc,#fff);border-color:#e2e8f0}
+.admin-bridge-box.monitor .admin-form-row{margin-top:2px}
+.admin-pane[data-admin-pane="system"] .admin-callout{margin-bottom:12px}
+.admin-pane[data-admin-pane="system"] .admin-bridge-box{border-color:#bfdbfe;background:linear-gradient(180deg,#eff6ff,#fff)}
+.admin-system-item strong{max-width:58%;text-align:right;word-break:break-word}
+@media (max-width:760px){
+  .admin-system-item{align-items:flex-start;gap:8px;flex-direction:column}
+  .admin-system-item strong{max-width:100%;text-align:left}
+}
