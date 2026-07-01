@@ -434,6 +434,19 @@
     bar.className='kinojo-topbar';
     bar.setAttribute('aria-label','KINOJO INFO 공통 상단 메뉴');
     const timeText=info.key==='home'?'정보 허브':(info.key==='hall'?'업데이트 확인 중':'업데이트 확인 중');
+    const base=info.mobile?'/m/':'/';
+    const navItems=[
+      {key:'home',label:'HOME',href:base},
+      {key:'hall',label:'명예의 전당',href:base+'hof/'},
+      {key:'ranking',label:'레기온 순위',href:base+'ranking/'},
+      {key:'sanctuary',label:'성역',href:base+'sanctuary/?id=rudra'},
+      {key:'arcana',label:'아르카나',href:base+'arcana/'}
+    ];
+    const navHtml=navItems.map(item=>{
+      const active=item.key===info.key;
+      const href=active?'./':item.href;
+      return '<a class="kinojo-top-nav-link'+(active?' active':'')+'" href="'+href+'"'+(active?' aria-current="page"':'')+'>'+item.label+'</a>';
+    }).join('');
     bar.innerHTML=`
       <div class="kinojo-top-left">
         <button class="kinojo-menu-toggle" id="drawerToggleBtn" type="button" aria-label="메뉴 열기" aria-expanded="false">
@@ -444,6 +457,7 @@
         </button>
         <span class="kinojo-top-page"><strong>${info.label}</strong><small id="${pageTimeId(info)}">${timeText}</small></span>
       </div>
+      <nav class="kinojo-top-nav" id="kinojoTopNav" aria-label="KINOJO 주요 메뉴">${navHtml}</nav>
       <div class="kinojo-top-center kinojo-auth-status" id="kinojoUserStatus">
         <button class="kinojo-login-btn" id="kinojoLoginBtn" type="button">로그인</button>
         <span class="kinojo-auth-label" id="kinojoAuthLabel">비회원 · 열람만 가능</span>
