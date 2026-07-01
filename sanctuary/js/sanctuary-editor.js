@@ -2,7 +2,7 @@
  * sanctuary-editor.js - KINOJO Sanctuary Server Engine editor
  * Role: 성역 페이지의 수정하기 버튼을 실제 시트 저장 기능과 연결합니다.
  * - Supabase sanctuary_slots 기준 슬롯 데이터를 편집합니다.
- * - 팀명, 대표자, 팀 색상은 sanctuary_teams 메타 서버에 저장합니다.
+ * - 포스명, 대표자, 포스 색상은 sanctuary_teams 메타 서버에 저장합니다.
  */
 (function(){
   const CLASS_OPTIONS = ['', '검성', '수호성', '살성', '궁성', '정령성', '마도성', '치유성', '호법성', '권성'];
@@ -77,8 +77,8 @@
     const parties = (team.parties || []).map(party => renderParty(team, party)).join('');
     return '<section class="sanctuary-editor-team" data-editor-team="' + esc(team.teamNo) + '">'
       + '<div class="sanctuary-editor-team-head">'
-      + '<div class="sanctuary-editor-team-title">' + esc(team.teamNo) + '팀</div>'
-      + '<label>팀명<input data-team-field="teamName" value="' + esc(team.nameMode === 'manual' ? team.teamName : '') + '" placeholder="비우면 자동 팀명" /></label>'
+      + '<div class="sanctuary-editor-team-title">' + esc(team.teamNo) + '포스</div>'
+      + '<label>포스명<input data-team-field="teamName" value="' + esc(team.nameMode === 'manual' ? team.teamName : '') + '" placeholder="비우면 자동 포스명" /></label>'
       + '<label>대표자<select data-team-field="leaderCharacter">' + leaderOptions + '</select></label>'
       + '<label>색상<input data-team-field="customColor" type="color" value="' + esc(team.customColor || '#8b5cf6') + '" /></label>'
       + '</div>'
@@ -118,7 +118,7 @@
       toast('성역 데이터를 먼저 불러와야 합니다.');
       return;
     }
-    body.innerHTML = source.teams.length ? source.teams.map(renderTeam).join('') : '<div class="empty-main">수정할 팀 데이터가 없습니다.</div>';
+    body.innerHTML = source.teams.length ? source.teams.map(renderTeam).join('') : '<div class="empty-main">수정할 포스 데이터가 없습니다.</div>';
     if(status) status.textContent = '';
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
@@ -180,7 +180,7 @@
         teamMeta: payload.teamMeta
       });
       if(!result.ok) throw new Error(result.message || '성역 서버 저장 실패');
-      try{ sessionStorage.removeItem('kinojo_sanctuary_cache_v2026062703_' + currentSanctuaryId()); }catch(_err){}
+      try{ sessionStorage.removeItem('kinojo_sanctuary_cache_v2026070104_' + currentSanctuaryId()); }catch(_err){}
       if(status){ status.className = 'sanctuary-editor-status success'; status.textContent = '저장 완료 · ' + Number(result.updatedSlots || 0) + '개 슬롯 반영'; }
       await reloadFresh();
       setTimeout(close, 350);
