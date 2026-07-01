@@ -9,10 +9,10 @@
 <link rel="canonical" href="https://kinojo.info/m/admin/"/>
 <link href="../../ui/kinojo-layout.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../../ui/kinojo-components.css?cache=26062102" rel="stylesheet"/>
-<link href="../../ui/kinojo-common-ui.css?cache=2026070108" rel="stylesheet"/>
+<link href="../../ui/kinojo-common-ui.css?cache=2026070109" rel="stylesheet"/>
 <link href="../../ui/kinojo-card-guards.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../../ui/kinojo-animations.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
-<link href="../../admin/css/admin.css?cache=2026070108" rel="stylesheet"/>
+<link href="../../admin/css/admin.css?cache=2026070109" rel="stylesheet"/>
 
 </head>
 <body class="kinojo-page-admin">
@@ -50,23 +50,23 @@
     <section class="admin-pane" data-admin-pane="characters"><section class="admin-card"><div class="admin-card-head"><div><h2>캐릭터 관리</h2><p>탈퇴/복구/이름변경 이력을 서버 기준으로 관리합니다.</p></div></div><div class="admin-form"><div class="admin-form-row"><input class="admin-input grow" id="characterSearch" placeholder="캐릭터명 / 서버명 검색"/><label class="admin-btn"><input id="characterIncludeInactive" type="checkbox" checked/> 비활성 포함</label><button class="admin-btn primary" id="characterSearchBtn" type="button">검색</button></div><div class="admin-form-row"><select class="admin-select" id="characterReason"><option value="탈퇴">탈퇴</option><option value="이름변경">이름변경</option><option value="중복">중복</option><option value="기타">기타</option></select><input class="admin-input grow" id="characterNewName" placeholder="이름변경 시 새 캐릭터명"/><input class="admin-input grow" id="characterMemo" placeholder="관리 메모"/></div></div><div id="characterStatus" class="admin-statusline"></div><div class="admin-list" id="characterList"><div class="admin-empty">검색어를 입력하고 캐릭터를 조회하세요.</div></div></section></section>
     <section class="admin-pane" data-admin-pane="sanctuary"><section class="admin-card"><div class="admin-card-head"><div><h2>성역 관리 · 시트 동기화</h2><p>팀 › 포스 › 파티 › 슬롯 구조를 스프레드시트에서 읽어 서버에 반영합니다.</p></div></div><div class="admin-form-row"><select class="admin-select" id="sanctuarySyncId"><option value="all">전체 성역</option><option value="rudra">루드라</option><option value="bagot">바고트</option><option value="kaldrix">칼드릭스</option></select><button class="admin-btn" id="sanctuaryPreviewBtn" type="button">서버 미리보기</button><button class="admin-btn primary" id="sanctuarySyncBtn" type="button">시트 → 서버 동기화</button></div><div class="admin-sync-flow"><div class="admin-sync-step active" data-step="1"><strong>시트 읽기</strong><span>원본 성역 시트 확인</span></div><div class="admin-sync-step" data-step="2"><strong>미리보기</strong><span>변경 내용 확인</span></div><div class="admin-sync-step" data-step="3"><strong>서버 반영</strong><span>RPC로 안전 처리</span></div><div class="admin-sync-step" data-step="4"><strong>완료 리포트</strong><span>결과 확인</span></div></div><div id="sanctuarySyncStatus" class="admin-statusline"></div><div id="sanctuarySyncResult" class="admin-log">성역 동기화 결과가 여기에 표시됩니다.</div></section></section>
     <section class="admin-pane" data-admin-pane="notices"><section class="admin-card"><div class="admin-card-head"><div><h2>공지 관리</h2><p>하단 공지바에 표시할 공지를 작성합니다.</p></div><button class="admin-btn" id="noticeReloadBtn" type="button">목록 새로고침</button></div><div class="admin-form"><div class="admin-form-row"><select class="admin-select" id="noticeType"><option value="공지">공지</option><option value="알림">알림</option><option value="이벤트">이벤트</option></select><button class="admin-btn primary" id="noticeSaveBtn" type="button">공지 등록</button></div><textarea class="admin-textarea" id="noticeContent" placeholder="공지 내용을 입력하세요."></textarea></div><div id="noticeStatus" class="admin-statusline"></div><div class="admin-list" id="noticeList"></div></section></section>
-    <section class="admin-pane" data-admin-pane="server"><section class="admin-card"><div class="admin-card-head"><div><h2>서버 / 동기화</h2><p>Apps Script Bridge와 서버 상태를 확인합니다.</p></div><button class="admin-btn" id="serverRefreshBtn" type="button">상태 확인</button></div><div id="serverStatusBox"></div><div class="admin-form-row" style="margin-top:12px"><input class="admin-input grow" id="webAppUrlInput" placeholder="Apps Script WebApp URL 저장"/><button class="admin-btn primary" id="webAppSaveBtn" type="button">URL 저장</button></div><div id="serverStatus" class="admin-statusline"></div></section></section>
+    <section class="admin-pane" data-admin-pane="server"><section class="admin-card"><div class="admin-card-head"><div><h2>서버 / 동기화</h2><p>Apps Script Bridge와 서버 상태를 확인합니다.</p></div><button class="admin-btn" id="serverRefreshBtn" type="button">상태 확인</button></div><div id="serverStatusBox"></div><div class="admin-bridge-box"><div class="admin-bridge-title"><strong>Apps Script Bridge 설정</strong><span>성역 시트 동기화와 list 시트 반영에 사용하는 WebApp URL입니다.</span></div><div class="admin-form-row"><input class="admin-input grow" id="webAppUrlInput" placeholder="https://script.google.com/macros/s/.../exec"/><button class="admin-btn primary" id="webAppSaveBtn" type="button">URL 저장</button><button class="admin-btn" id="webAppTestBtn" type="button">연결 테스트</button></div><div id="serverStatus" class="admin-statusline"></div></div></section></section>
     <section class="admin-pane" data-admin-pane="logs"><section class="admin-card"><div class="admin-card-head"><div><h2>최근 로그</h2><p>관리자 페이지에서 수행한 작업 기록입니다.</p></div></div><pre class="admin-log" id="adminLogBox">아직 로그가 없습니다.</pre></section></section>
   </section>
 </main>
 <div class="admin-bottom-actions"><button class="active" data-admin-tab="dashboard">홈</button><button data-admin-tab="requests">코드</button><button data-admin-tab="sanctuary">성역</button><button data-admin-tab="notices">공지</button></div>
-<script src="../../core/kinojo-api.js?cache=2026070108"></script>
-<script src="../../core/kinojo-cache.js?cache=2026070108"></script>
-<script src="../../core/kinojo-permissions.js?cache=2026070108"></script>
-<script src="../../core/kinojo-toast.js?cache=2026070108"></script>
-<script src="../../core/kinojo-modal.js?cache=2026070108"></script>
-<script src="../../core/kinojo-route-guard.js?cache=2026070108"></script>
-<script src="../../core/kinojo-debug.js?cache=2026070108"></script>
-<script src="../../core/kinojo-logger.js?cache=2026070108"></script>
-<script src="../../ui/kinojo-common-ui.js?cache=2026070108"></script>
-<script src="../../ui/kinojo-admin-panel.js?cache=2026070108"></script>
-<script src="../../core/kinojo-supabase.js?cache=2026070108"></script>
-<script src="../../core/kinojo-auth.js?cache=2026070108"></script>
-<script src="../../admin/js/admin.js?cache=2026070108"></script>
+<script src="../../core/kinojo-api.js?cache=2026070109"></script>
+<script src="../../core/kinojo-cache.js?cache=2026070109"></script>
+<script src="../../core/kinojo-permissions.js?cache=2026070109"></script>
+<script src="../../core/kinojo-toast.js?cache=2026070109"></script>
+<script src="../../core/kinojo-modal.js?cache=2026070109"></script>
+<script src="../../core/kinojo-route-guard.js?cache=2026070109"></script>
+<script src="../../core/kinojo-debug.js?cache=2026070109"></script>
+<script src="../../core/kinojo-logger.js?cache=2026070109"></script>
+<script src="../../ui/kinojo-common-ui.js?cache=2026070109"></script>
+<script src="../../ui/kinojo-admin-panel.js?cache=2026070109"></script>
+<script src="../../core/kinojo-supabase.js?cache=2026070109"></script>
+<script src="../../core/kinojo-auth.js?cache=2026070109"></script>
+<script src="../../admin/js/admin.js?cache=2026070109"></script>
 </body>
 </html>
