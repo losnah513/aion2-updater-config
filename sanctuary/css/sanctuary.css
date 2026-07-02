@@ -427,3 +427,63 @@ body{background:#fff!important;}
 .san-team-head-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
 .team-group-copy-btn{flex:0 0 auto}
 @media(max-width:720px){.san-team-head-actions{justify-content:flex-start}.team-group-copy-btn{width:28px;height:28px;min-width:28px}}
+
+/* 20260702_02 Sanctuary force rail containment fix
+   - 포스 카드 개수만큼 우측 영역이 늘어나지 않도록 레일 표시 영역을 탑바/본문 폭 안에 고정
+   - PC: 같은 팀의 포스는 가로 레일 + 좌우 화살표로 이동
+   - Mobile: 포스 카드 1개 단위 터치 슬라이드 유지 */
+.team-list,
+.san-team-group,
+.san-force-rail-shell,
+.san-force-list{
+  min-width:0;
+  max-width:100%;
+}
+.san-team-group{
+  overflow:hidden;
+}
+.san-force-rail-shell{
+  width:100%;
+  max-width:100%;
+  overflow:hidden;
+  isolation:isolate;
+}
+.san-force-list{
+  width:100%;
+  max-width:100%;
+  min-inline-size:0;
+  overscroll-behavior-x:contain;
+  -webkit-overflow-scrolling:touch;
+}
+.san-force-list .force-card{
+  max-width:calc(100vw - 56px);
+}
+@media(min-width:901px){
+  .san-force-list{
+    scrollbar-width:none;
+  }
+  .san-force-list::-webkit-scrollbar{display:none;}
+}
+@media(max-width:900px){
+  .san-force-rail-shell{
+    padding-left:0;
+    padding-right:0;
+  }
+  .san-force-list{
+    gap:10px;
+    padding-left:0;
+    padding-right:0;
+  }
+  .san-force-list .force-card{
+    flex:0 0 100%;
+    width:100%;
+    max-width:100%;
+  }
+}
+@media(max-width:520px){
+  .san-force-list .force-card{
+    flex-basis:100%;
+    width:100%;
+    max-width:100%;
+  }
+}
