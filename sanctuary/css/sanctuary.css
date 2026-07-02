@@ -295,3 +295,130 @@ body{background:#fff!important;}
 .san-force-list .team-card{box-shadow:none}
 @media (min-width:980px){.san-force-list{grid-template-columns:1fr}.san-team-group{padding:14px}}
 @media (max-width:720px){.san-team-title{font-size:18px}.san-team-group{padding:10px}.san-team-group-head{padding-bottom:10px}.san-force-list{gap:10px}}
+
+/* 20260701_15 Sanctuary force card rail: 팀 > 포스(10명) > 좌/우 파티(5명) */
+.san-team-scroll-hint{
+  align-self:flex-start;
+  border:1px solid rgba(56,101,176,.18);
+  background:#f8fbff;
+  color:#26466d;
+  border-radius:999px;
+  padding:7px 10px;
+  font-size:11px;
+  font-weight:1000;
+  white-space:nowrap;
+}
+.san-force-rail-shell{
+  position:relative;
+  padding:2px 2px 4px;
+}
+.san-force-list{
+  display:flex !important;
+  gap:12px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  scroll-behavior:smooth;
+  scroll-snap-type:x proximity;
+  scrollbar-width:thin;
+  padding:2px 2px 8px;
+}
+.san-force-list::-webkit-scrollbar{height:7px}
+.san-force-list::-webkit-scrollbar-thumb{background:rgba(117,140,177,.32);border-radius:999px}
+.san-force-list .force-card{
+  flex:0 0 520px;
+  width:520px;
+  scroll-snap-align:start;
+  box-shadow:none;
+}
+.force-card .team-head{
+  align-items:center;
+  padding:12px 13px 10px;
+}
+.force-card .team-name{
+  font-size:18px;
+}
+.force-card .team-meta{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  flex-wrap:wrap;
+}
+.force-count-badge{
+  display:inline-flex;
+  align-items:center;
+  min-height:22px;
+  padding:3px 8px;
+  border:1px solid rgba(34,197,94,.26);
+  background:#f0fdf4;
+  color:#15803d;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:1000;
+}
+.force-party-pair{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:0;
+  padding:10px;
+  background:linear-gradient(180deg,#fbfdff,#fff);
+}
+.force-party-pair .party-card{
+  flex:none;
+  width:auto;
+  min-width:0;
+  border-radius:12px;
+  border:1px solid rgba(117,140,177,.20);
+  background:#fff;
+}
+.force-party-pair .party-card:first-child{
+  border-top-right-radius:0;
+  border-bottom-right-radius:0;
+}
+.force-party-pair .party-card:nth-child(2){
+  border-left:0;
+  border-top-left-radius:0;
+  border-bottom-left-radius:0;
+}
+.force-party-pair .party-head{
+  min-height:42px;
+  padding:9px 10px;
+}
+.force-party-pair .slot-grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:6px;
+  padding:9px;
+}
+.force-party-pair .char-card,
+.force-party-pair .empty-slot{
+  min-height:46px;
+  padding:7px 8px;
+}
+.force-party-pair .char-name{
+  font-size:12px;
+}
+.force-party-pair .char-meta{
+  font-size:10px;
+}
+.san-force-rail-shell>.slide-btn{
+  z-index:5;
+}
+@media(min-width:1180px){
+  .san-force-list .force-card{flex-basis:500px;width:500px}
+}
+@media(max-width:900px){
+  .san-force-list{scroll-snap-type:x mandatory;padding-bottom:10px}
+  .san-force-list .force-card{flex:0 0 calc(100vw - 44px);width:calc(100vw - 44px)}
+  .san-team-scroll-hint{font-size:10px;padding:6px 8px}
+}
+@media(max-width:520px){
+  .san-force-list .force-card{flex-basis:calc(100vw - 32px);width:calc(100vw - 32px)}
+  .force-card .team-head{align-items:flex-start;gap:8px}
+  .force-card .team-name{font-size:16px}
+  .force-card .leader{font-size:11px;padding:5px 7px}
+  .force-party-pair{padding:8px}
+  .force-party-pair .party-head{padding:8px}
+  .force-party-pair .slot-grid{padding:7px;gap:5px}
+  .force-party-pair .char-card,
+  .force-party-pair .empty-slot{min-height:44px;padding:6px}
+}
