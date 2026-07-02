@@ -422,3 +422,8 @@ body{background:#fff!important;}
   .force-party-pair .char-card,
   .force-party-pair .empty-slot{min-height:44px;padding:6px}
 }
+
+/* 20260702_01 Sanctuary copy scope fix: 복사 단위는 포스/팀만 유지하고 파티 단위 복사는 제거 */
+.san-team-head-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.team-group-copy-btn{flex:0 0 auto}
+@media(max-width:720px){.san-team-head-actions{justify-content:flex-start}.team-group-copy-btn{width:28px;height:28px;min-width:28px}}

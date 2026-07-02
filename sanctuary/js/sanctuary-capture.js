@@ -451,6 +451,42 @@
     return canvas;
   }
 
+
+  async function makeTeamGroupCanvas(group){
+    const forces = Array.from(group.querySelectorAll('.team-card'));
+    const groupName = safeText(group.dataset.teamGroupName || group.querySelector('.san-team-title')?.textContent || '성역 운영 팀');
+    const meta = safeText(group.querySelector('.san-team-meta')?.textContent || '');
+    const forceCanvases = [];
+    for(const force of forces){
+      forceCanvases.push(await makeTeamCanvas(force));
+    }
+    const dpr = clamp(window.devicePixelRatio || 1, 1, 2);
+    const width = 580;
+    const gap = 18;
+    const pad = 20;
+    const headerH = 86;
+    const height = headerH + forceCanvases.reduce((sum,c)=>sum + Math.round(c.height / dpr), 0) + Math.max(0, forceCanvases.length-1)*gap + pad;
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(width*dpr); canvas.height = Math.round(height*dpr);
+    canvas.style.width = width+'px'; canvas.style.height = height+'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr,dpr);
+
+    ctx.fillStyle = '#eaf1fb';
+    ctx.fillRect(0,0,width,height);
+    ctx.fillStyle = '#17233a'; ctx.font = '900 31px Arial, sans-serif'; ctx.textBaseline='top';
+    ctx.fillText(groupName, pad, 22);
+    ctx.fillStyle = '#64748b'; ctx.font = '800 13px Arial, sans-serif';
+    ctx.fillText(meta, pad, 62);
+
+    let y = headerH;
+    forceCanvases.forEach((forceCanvas)=>{
+      ctx.drawImage(forceCanvas, pad, y, 540, Math.round(forceCanvas.height / dpr));
+      y += Math.round(forceCanvas.height / dpr) + gap;
+    });
+    return canvas;
+  }
+
   function canvasToBlob(canvas){
     return new Promise((resolve)=>canvas.toBlob(resolve,'image/png'));
   }
@@ -560,26 +596,9 @@
     }
   }
 
-  async function handleCopy(btn){
-    if(!requireSanctuaryCopyLogin()) return;
-    const party = btn.closest('.party-card');
-    if(!party) return;
-    const oldHtml = btn.innerHTML;
-    btn.disabled = true; btn.classList.add('is-copying');
-    try{
-      const canvas = await makePartyCanvas(party);
-      showCopyPreview(canvas, 'kinojo-party-'+safeText(party.dataset.partyNo || 'party')+'.png');
-      const result = await copyCanvasWithFallback(canvas, 'kinojo-party-'+safeText(party.dataset.partyNo || 'party')+'.png');
-      toast(result === 'copied' ? '파티 이미지가 클립보드에 복사되었습니다.' : '클립보드 복사 제한으로 PNG 파일을 저장했습니다.');
-    }catch(err){
-      console.warn('KINOJO party capture failed:', err);
-      toast('파티 이미지 생성에 실패했습니다.');
-    }finally{
-      btn.disabled = false; btn.classList.remove('is-copying'); btn.innerHTML = oldHtml;
-    }
-  }
+  // 파티 단위 복사는 20260702 규칙에 따라 비활성화합니다. 최소 복사 단위는 포스입니다.
 
-  async function handleTeamCopy(btn){
+  async function handleForceCopy(btn){
     if(!requireSanctuaryCopyLogin()) return;
     const team = btn.closest('.team-card');
     if(!team) return;
@@ -588,11 +607,31 @@
     try{
       const canvas = await makeTeamCanvas(team);
       showCopyPreview(canvas, 'kinojo-team-'+safeText(team.dataset.team || 'team')+'.png');
-      const result = await copyCanvasWithFallback(canvas, 'kinojo-team-'+safeText(team.dataset.team || 'team')+'.png');
-      toast(result === 'copied' ? '포스 전체 파티 이미지가 클립보드에 복사되었습니다.' : '클립보드 복사 제한으로 PNG 파일을 저장했습니다.');
+      const result = await copyCanvasWithFallback(canvas, 'kinojo-force-'+safeText(team.dataset.force || team.dataset.team || 'force')+'.png');
+      toast(result === 'copied' ? '포스 이미지가 클립보드에 복사되었습니다.' : '클립보드 복사 제한으로 PNG 파일을 저장했습니다.');
     }catch(err){
-      console.warn('KINOJO team capture failed:', err);
-      toast('포스 전체 이미지 생성에 실패했습니다.');
+      console.warn('KINOJO force capture failed:', err);
+      toast('포스 이미지 생성에 실패했습니다.');
+    }finally{
+      btn.disabled = false; btn.classList.remove('is-copying'); btn.innerHTML = oldHtml;
+    }
+  }
+
+
+  async function handleTeamGroupCopy(btn){
+    if(!requireSanctuaryCopyLogin()) return;
+    const group = btn.closest('.san-team-group');
+    if(!group) return;
+    const oldHtml = btn.innerHTML;
+    btn.disabled = true; btn.classList.add('is-copying');
+    try{
+      const canvas = await makeTeamGroupCanvas(group);
+      showCopyPreview(canvas, 'kinojo-team-'+safeText(group.dataset.teamGroup || 'team')+'.png');
+      const result = await copyCanvasWithFallback(canvas, 'kinojo-team-'+safeText(group.dataset.teamGroup || 'team')+'.png');
+      toast(result === 'copied' ? '팀 전체 이미지가 클립보드에 복사되었습니다.' : '클립보드 복사 제한으로 PNG 파일을 저장했습니다.');
+    }catch(err){
+      console.warn('KINOJO team group capture failed:', err);
+      toast('팀 전체 이미지 생성에 실패했습니다.');
     }finally{
       btn.disabled = false; btn.classList.remove('is-copying'); btn.innerHTML = oldHtml;
     }
@@ -643,20 +682,20 @@
   }
 
   function bind(){
-    document.querySelectorAll('[data-party-copy]').forEach((btn)=>{
+    document.querySelectorAll('[data-force-copy]').forEach((btn)=>{
       if(btn.dataset.captureBound === '1') return;
       btn.dataset.captureBound = '1';
       bindFloatingTooltip(btn);
-      btn.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); handleCopy(btn); });
+      btn.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); handleForceCopy(btn); });
     });
-    document.querySelectorAll('[data-team-copy]').forEach((btn)=>{
+    document.querySelectorAll('[data-team-group-copy]').forEach((btn)=>{
       if(btn.dataset.captureBound === '1') return;
       btn.dataset.captureBound = '1';
       bindFloatingTooltip(btn);
-      btn.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); handleTeamCopy(btn); });
+      btn.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); handleTeamGroupCopy(btn); });
     });
   }
 
-  window.KinojoSanctuaryCapture = { bind, makePartyCanvas, makeTeamCanvas };
+  window.KinojoSanctuaryCapture = { bind, makePartyCanvas, makeTeamCanvas, makeTeamGroupCanvas };
   document.addEventListener('DOMContentLoaded', bind);
 })();
