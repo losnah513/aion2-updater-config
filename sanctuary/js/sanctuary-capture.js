@@ -1,6 +1,6 @@
 /*
  * KINOJO Sanctuary Capture Bridge
- * Version: 20260703_02
+ * Version: 20260703_03
  * Role: 성역 클립보드 복사에서 웹 Canvas 합성을 제거하고 Server Edge Function이 만든 PNG를 클립보드에 넣는 전용 브릿지.
  * Rule: 복사 최소 단위는 포스, 큰 단위는 운영 팀. 파티 단위 복사는 만들지 않는다.
  */
@@ -123,11 +123,33 @@
     throw new Error('Server Copy API HTTP ' + res.status + ' / ' + text.slice(0, 240));
   }
 
-  async function copyBlob(blob){
-    if(!blob) throw new Error('복사할 이미지 Blob이 없습니다.');
+  function assertClipboardReady(){
+    if(!window.isSecureContext) throw new Error('HTTPS 보안 컨텍스트에서만 이미지 클립보드를 사용할 수 있습니다.');
     if(!navigator.clipboard || typeof navigator.clipboard.write !== 'function') throw new Error('이 브라우저는 이미지 클립보드를 지원하지 않습니다.');
-    const type = blob.type || 'image/png';
-    await navigator.clipboard.write([new ClipboardItem({ [type]: blob })]);
+    if(typeof ClipboardItem === 'undefined') throw new Error('ClipboardItem을 사용할 수 없습니다.');
+  }
+
+  async function copyBlob(blob){
+    assertClipboardReady();
+    if(!blob) throw new Error('복사할 이미지 Blob이 없습니다.');
+    const pngBlob = blob.type === 'image/png' ? blob : await normalizeServerImageBlob(blob);
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })]);
+  }
+
+  async function copyImagePromiseToClipboard(imagePromise){
+    // 중요: Chrome/Edge는 서버 호출/이미지 변환 후 clipboard.write()를 호출하면
+    // 사용자 클릭 활성화(user activation)가 끊겨 붙여넣기가 실패하거나 빈 클립보드가 될 수 있다.
+    // 따라서 클릭 이벤트 안에서 즉시 clipboard.write()를 호출하고, Blob은 Promise로 지연 공급한다.
+    assertClipboardReady();
+    const pngPromise = Promise.resolve(imagePromise).then(async (result)=>{
+      const blob = result && result.blob ? result.blob : result;
+      if(!blob) throw new Error('서버 이미지 Blob이 없습니다.');
+      const normalized = blob.type === 'image/png' ? blob : await normalizeServerImageBlob(blob);
+      if(!normalized || normalized.type !== 'image/png') throw new Error('PNG Blob 변환에 실패했습니다.');
+      return normalized;
+    });
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngPromise })]);
+    return await pngPromise;
   }
 
   function downloadBlob(blob, filename){
@@ -169,13 +191,18 @@
   }
 
   async function copyServerRenderedImage(payload){
-    const result = await requestServerCopyImage(payload);
+    const imagePromise = requestServerCopyImage(payload);
     try{
-      await copyBlob(result.blob);
+      await copyImagePromiseToClipboard(imagePromise);
       return 'copied';
     }catch(err){
-      showServerCopyFallback(result.blob, result.filename, String(err && err.message || err));
-      return 'preview';
+      let result = null;
+      try{ result = await imagePromise; }catch(_err){}
+      if(result && result.blob){
+        showServerCopyFallback(result.blob, result.filename, String(err && err.message || err));
+        return 'preview';
+      }
+      throw err;
     }
   }
 
@@ -273,6 +300,6 @@
     });
   }
 
-  window.KinojoSanctuaryCapture = { bind, version:'20260703_02_server_svg_bridge_copy' };
+  window.KinojoSanctuaryCapture = { bind, version:'20260703_03_clipboard_promise_activation' };
   document.addEventListener('DOMContentLoaded', bind);
 })();
