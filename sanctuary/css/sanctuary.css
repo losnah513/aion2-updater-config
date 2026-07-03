@@ -15,6 +15,7 @@ body{background:#fff!important;}
 .footer-links a{color:#667085;text-decoration:none;font-weight:900;transition:color .22s ease,transform .22s ease;}
 .footer-links a:hover{color:#2563eb;transform:scale(1.04)}
 .footer-powered{font-size:11px;color:#98a2b3;font-weight:900;}
+
 @media(max-width:760px){.summary-grid{grid-template-columns:1fr 1fr}.party-card{flex-basis:86vw}}
 
 
@@ -255,7 +256,9 @@ body{background:#fff!important;}
   font-size:12px;
   font-weight:800;
 }
-.kinojo-copy-preview-copylog{
+.kinojo-copy-preview-copylog,
+.kinojo-copy-preview-copyimage,
+.kinojo-copy-preview-download{
   border:1px solid rgba(80,112,160,.28);
   border-radius:999px;
   padding:8px 12px;
@@ -271,6 +274,10 @@ body{background:#fff!important;}
   .kinojo-copy-preview-body{grid-template-columns:1fr;}
   .kinojo-copy-preview-foot{align-items:flex-start;flex-direction:column;}
 }
+
+/* 20260702_03 clipboard preview action buttons */
+.kinojo-copy-preview-copyimage{background:#1f2f46;color:#fff;}
+.kinojo-copy-preview-download{background:#eef4ff;}
 
 /* 2026-06-27_03: Server Engine sanctuary sync chip */
 #syncChip{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(56,101,176,.22);background:#f8fbff;border-radius:999px;padding:7px 10px;color:#26466d;font-weight:1000}
@@ -487,3 +494,4 @@ body{background:#fff!important;}
     max-width:100%;
   }
 }
+
