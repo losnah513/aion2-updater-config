@@ -1,7 +1,7 @@
 /*
  * KINOJO Sanctuary Capture Bridge
- * Version: 20260703_03
- * Role: 성역 클립보드 복사에서 웹 Canvas 합성을 제거하고 Server Edge Function이 만든 PNG를 클립보드에 넣는 전용 브릿지.
+ * Version: 20260703_04
+ * Role: Edge Function이 최종 생성한 PNG Blob을 클립보드에 넣는 전용 브릿지.
  * Rule: 복사 최소 단위는 포스, 큰 단위는 운영 팀. 파티 단위 복사는 만들지 않는다.
  */
 (function(){
@@ -52,46 +52,6 @@
   }
 
 
-  function blobToDataUrl(blob){
-    return new Promise((resolve, reject)=>{
-      const reader = new FileReader();
-      reader.onload = ()=>resolve(String(reader.result || ''));
-      reader.onerror = ()=>reject(reader.error || new Error('Blob을 dataURL로 변환하지 못했습니다.'));
-      reader.readAsDataURL(blob);
-    });
-  }
-
-  function dataUrlToPngBlob(dataUrl){
-    return new Promise((resolve, reject)=>{
-      const img = new Image();
-      img.onload = ()=>{
-        try{
-          const canvas = document.createElement('canvas');
-          canvas.width = Math.max(1, img.naturalWidth || img.width || 1);
-          canvas.height = Math.max(1, img.naturalHeight || img.height || 1);
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0);
-          canvas.toBlob((blob)=>{
-            if(blob) resolve(blob);
-            else reject(new Error('SVG 미리보기 이미지를 PNG로 변환하지 못했습니다.'));
-          }, 'image/png');
-        }catch(err){ reject(err); }
-      };
-      img.onerror = ()=>reject(new Error('SVG 이미지를 로드하지 못했습니다.'));
-      img.src = dataUrl;
-    });
-  }
-
-  async function normalizeServerImageBlob(blob){
-    const type = String(blob?.type || '').toLowerCase();
-    if(type.includes('png')) return blob;
-    if(type.includes('svg')){
-      const dataUrl = await blobToDataUrl(blob);
-      return await dataUrlToPngBlob(dataUrl);
-    }
-    return blob;
-  }
-
   async function requestServerCopyImage(payload){
     const cfg = await ensureSupabaseConfig();
     const res = await fetchWithTimeout(functionUrl(cfg), {
@@ -103,21 +63,16 @@
         'authorization':'Bearer ' + cfg.key
       },
       body:JSON.stringify(payload || {})
-    }, 35000);
+    }, 45000);
     const contentType = res.headers.get('content-type') || '';
     if(res.ok && /^image\/png/i.test(contentType)){
-      const rawBlob = await res.blob();
-      const blob = await normalizeServerImageBlob(rawBlob);
-      return { ok:true, blob, contentType:blob.type || 'image/png', filename:res.headers.get('x-kinojo-filename') || payload.filename || 'kinojo-sanctuary.png' };
+      const blob = await res.blob();
+      if(!blob || blob.type !== 'image/png') throw new Error('서버 PNG Blob이 올바르지 않습니다.');
+      return { ok:true, blob, contentType:'image/png', filename:res.headers.get('x-kinojo-filename') || payload.filename || 'kinojo-sanctuary.png' };
     }
-    if(res.ok && /json/i.test(contentType)){
-      const data = await res.json();
-      if(data && data.ok && data.dataUrl){
-        const rawBlob = await (await fetch(data.dataUrl)).blob();
-        const blob = await normalizeServerImageBlob(rawBlob);
-        return { ok:true, blob, contentType:blob.type || 'image/png', filename:(data.filename || payload.filename || 'kinojo-sanctuary.png').replace(/\.svg$/i,'.png'), meta:data };
-      }
-      throw new Error(data && (data.message || data.error) || '서버 이미지 응답이 비어 있습니다.');
+    if(/json/i.test(contentType)){
+      const data = await res.json().catch(()=>null);
+      throw new Error(data && (data.message || data.error) || '서버 PNG 응답이 아닙니다.');
     }
     const text = await res.text().catch(()=>'');
     throw new Error('Server Copy API HTTP ' + res.status + ' / ' + text.slice(0, 240));
@@ -131,9 +86,8 @@
 
   async function copyBlob(blob){
     assertClipboardReady();
-    if(!blob) throw new Error('복사할 이미지 Blob이 없습니다.');
-    const pngBlob = blob.type === 'image/png' ? blob : await normalizeServerImageBlob(blob);
-    await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })]);
+    if(!blob || blob.type !== 'image/png') throw new Error('복사할 PNG Blob이 없습니다.');
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
   }
 
   async function copyImagePromiseToClipboard(imagePromise){
@@ -144,9 +98,8 @@
     const pngPromise = Promise.resolve(imagePromise).then(async (result)=>{
       const blob = result && result.blob ? result.blob : result;
       if(!blob) throw new Error('서버 이미지 Blob이 없습니다.');
-      const normalized = blob.type === 'image/png' ? blob : await normalizeServerImageBlob(blob);
-      if(!normalized || normalized.type !== 'image/png') throw new Error('PNG Blob 변환에 실패했습니다.');
-      return normalized;
+      if(blob.type !== 'image/png') throw new Error('서버가 image/png가 아닌 응답을 반환했습니다.');
+      return blob;
     });
     await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngPromise })]);
     return await pngPromise;
@@ -300,6 +253,6 @@
     });
   }
 
-  window.KinojoSanctuaryCapture = { bind, version:'20260703_03_clipboard_promise_activation' };
+  window.KinojoSanctuaryCapture = { bind, version:'20260703_04_server_final_png' };
   document.addEventListener('DOMContentLoaded', bind);
 })();
