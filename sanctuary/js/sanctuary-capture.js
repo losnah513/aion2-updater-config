@@ -1,6 +1,6 @@
 /*
  * KINOJO Sanctuary Capture Bridge
- * Version: 20260702_04
+ * Version: 20260703_02
  * Role: 성역 클립보드 복사에서 웹 Canvas 합성을 제거하고 Server Edge Function이 만든 PNG를 클립보드에 넣는 전용 브릿지.
  * Rule: 복사 최소 단위는 포스, 큰 단위는 운영 팀. 파티 단위 복사는 만들지 않는다.
  */
@@ -51,6 +51,47 @@
     finally{ clearTimeout(timer); }
   }
 
+
+  function blobToDataUrl(blob){
+    return new Promise((resolve, reject)=>{
+      const reader = new FileReader();
+      reader.onload = ()=>resolve(String(reader.result || ''));
+      reader.onerror = ()=>reject(reader.error || new Error('Blob을 dataURL로 변환하지 못했습니다.'));
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  function dataUrlToPngBlob(dataUrl){
+    return new Promise((resolve, reject)=>{
+      const img = new Image();
+      img.onload = ()=>{
+        try{
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, img.naturalWidth || img.width || 1);
+          canvas.height = Math.max(1, img.naturalHeight || img.height || 1);
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          canvas.toBlob((blob)=>{
+            if(blob) resolve(blob);
+            else reject(new Error('SVG 미리보기 이미지를 PNG로 변환하지 못했습니다.'));
+          }, 'image/png');
+        }catch(err){ reject(err); }
+      };
+      img.onerror = ()=>reject(new Error('SVG 이미지를 로드하지 못했습니다.'));
+      img.src = dataUrl;
+    });
+  }
+
+  async function normalizeServerImageBlob(blob){
+    const type = String(blob?.type || '').toLowerCase();
+    if(type.includes('png')) return blob;
+    if(type.includes('svg')){
+      const dataUrl = await blobToDataUrl(blob);
+      return await dataUrlToPngBlob(dataUrl);
+    }
+    return blob;
+  }
+
   async function requestServerCopyImage(payload){
     const cfg = await ensureSupabaseConfig();
     const res = await fetchWithTimeout(functionUrl(cfg), {
@@ -65,13 +106,16 @@
     }, 35000);
     const contentType = res.headers.get('content-type') || '';
     if(res.ok && /^image\/png/i.test(contentType)){
-      return { ok:true, blob:await res.blob(), contentType:'image/png', filename:res.headers.get('x-kinojo-filename') || payload.filename || 'kinojo-sanctuary.png' };
+      const rawBlob = await res.blob();
+      const blob = await normalizeServerImageBlob(rawBlob);
+      return { ok:true, blob, contentType:blob.type || 'image/png', filename:res.headers.get('x-kinojo-filename') || payload.filename || 'kinojo-sanctuary.png' };
     }
     if(res.ok && /json/i.test(contentType)){
       const data = await res.json();
       if(data && data.ok && data.dataUrl){
-        const blob = await (await fetch(data.dataUrl)).blob();
-        return { ok:true, blob, contentType:blob.type || 'image/png', filename:data.filename || payload.filename || 'kinojo-sanctuary.png', meta:data };
+        const rawBlob = await (await fetch(data.dataUrl)).blob();
+        const blob = await normalizeServerImageBlob(rawBlob);
+        return { ok:true, blob, contentType:blob.type || 'image/png', filename:(data.filename || payload.filename || 'kinojo-sanctuary.png').replace(/\.svg$/i,'.png'), meta:data };
       }
       throw new Error(data && (data.message || data.error) || '서버 이미지 응답이 비어 있습니다.');
     }
@@ -229,6 +273,6 @@
     });
   }
 
-  window.KinojoSanctuaryCapture = { bind, version:'20260702_04_server_edge_copy' };
+  window.KinojoSanctuaryCapture = { bind, version:'20260703_02_server_svg_bridge_copy' };
   document.addEventListener('DOMContentLoaded', bind);
 })();
