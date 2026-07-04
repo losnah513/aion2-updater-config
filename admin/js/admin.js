@@ -4,7 +4,7 @@
   const $ = (s,r=document)=>r.querySelector(s);
   const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
   const state = { tab:'dashboard', requests:[], accounts:[], characters:[], logs:[], eventNoticeGroups:[], eventNoticeEditingId:null };
-  const CACHE = '2026070417';
+  const CACHE = '2026070418';
   function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
   function addLog(type,msg){
     const t = new Date(); const line = '['+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+':'+String(t.getSeconds()).padStart(2,'0')+'] '+String(type||'INFO')+' · '+String(msg||'');
@@ -309,7 +309,7 @@
     root.innerHTML=groups.map(raw=>{
       const g=normalizeEventNoticeGroup(raw);
       const pillClass=eventNoticePillClass(g.status);
-      const types=(g.items||[]).slice(0,4).map(item=>{
+      const types=(g.items||[]).slice(0,6).map(item=>{
         const type=item.noticeType||item.notice_type;
         const meta=eventNoticeTypeMeta(type);
         return '<span class="type-'+esc(meta.value || type)+'"><i>'+esc(meta.icon || 'INFO')+'</i>'+esc(meta.label)+'</span>';
@@ -371,7 +371,7 @@
     '</article>';
   }
   function getDefaultEventNoticeItem(order){
-    const t=EVENT_NOTICE_TYPES[order % Math.min(EVENT_NOTICE_TYPES.length,4)] || EVENT_NOTICE_TYPES[0];
+    const t=EVENT_NOTICE_TYPES[order % Math.min(EVENT_NOTICE_TYPES.length,6)] || EVENT_NOTICE_TYPES[0];
     return { noticeType:t.value, eventDate:todayDateInputValue(), eventTime:'22:00', title:t.title, description:t.body, displayOrder:order+1 };
   }
   function renumberEventNoticeEditor(){
@@ -382,8 +382,8 @@
       const up=card.querySelector('[data-event-card-up]'); if(up) up.disabled=idx===0;
       const down=card.querySelector('[data-event-card-down]'); if(down) down.disabled=idx===cards.length-1;
     });
-    const add=$('#eventNoticeAddCardBtn'); if(add) add.disabled=cards.length>=4;
-    const count=$('#eventNoticeEditorCount'); if(count) count.textContent='카드 '+cards.length+'/4';
+    const add=$('#eventNoticeAddCardBtn'); if(add) add.disabled=cards.length>=6;
+    const count=$('#eventNoticeEditorCount'); if(count) count.textContent='카드 '+cards.length+'/6';
   }
   function applyEventNoticeTypeTemplate(card){
     const type=card?.querySelector('[data-event-field="noticeType"]')?.value || 'abyss_low';
@@ -406,7 +406,7 @@
     $('#eventNoticeGroupTitle') && ($('#eventNoticeGroupTitle').value = group?.title || '이벤트 공지');
     $('#eventNoticeGroupStatus') && ($('#eventNoticeGroupStatus').value = String(group?.rawStatus || group?.status || 'draft').toLowerCase());
     $('#eventNoticeGroupPriority') && ($('#eventNoticeGroupPriority').value = String(group?.priority || 0));
-    const items = (Array.isArray(group?.items) && group.items.length) ? group.items.slice(0,4) : [getDefaultEventNoticeItem(0)];
+    const items = (Array.isArray(group?.items) && group.items.length) ? group.items.slice(0,6) : [getDefaultEventNoticeItem(0)];
     $('#eventNoticeEditorCards').innerHTML = items.map((item,idx)=>renderEventNoticeEditorCard(item,idx)).join('');
     setStatus('#eventNoticeEditorStatus','', '');
     modal.classList.add('active');
@@ -437,7 +437,7 @@
   }
   function renderEventNoticePreviewBlock(group){
     const g=group ? normalizeEventNoticeGroup(group) : normalizeEventNoticeGroup(collectEventNoticeEditorPayload());
-    const items=(g.items||[]).slice(0,4).map(normalizeEventNoticeItemForPreview);
+    const items=(g.items||[]).slice(0,6).map(normalizeEventNoticeItemForPreview);
     const cards=items.map(item=>'<article class="kinojo-event-preview-card type-'+esc(item.type)+'"><i>'+esc(item.icon||'INFO')+'</i><div><strong>'+esc(item.label)+'</strong><b>'+esc(item.title)+'</b><span>'+esc(item.description||'')+'</span></div><time>'+esc(item.time||'--:--')+'</time></article>').join('');
     return '<div class="kinojo-event-preview-wrap"><header><span>EVENT NOTICE</span><strong>'+esc(g.title||'이벤트 공지')+'</strong></header><div class="kinojo-event-preview-cards">'+cards+'</div><footer><button type="button">오늘 하루 그만보기</button><button type="button">닫기</button></footer></div>';
   }
@@ -495,7 +495,7 @@
     const payload=collectEventNoticeEditorPayload();
     if(!payload.title){ setStatus('#eventNoticeEditorStatus','공지 묶음 제목을 입력하세요.','error'); return; }
     if(!payload.items.length){ setStatus('#eventNoticeEditorStatus','공지 카드를 최소 1개 이상 입력하세요.','error'); return; }
-    if(payload.items.length>4){ setStatus('#eventNoticeEditorStatus','공지 카드는 최대 4개까지 등록 가능합니다.','error'); return; }
+    if(payload.items.length>6){ setStatus('#eventNoticeEditorStatus','공지 카드는 최대 6개까지 등록 가능합니다.','error'); return; }
     for(let i=0;i<payload.items.length;i++){
       const item=payload.items[i];
       if(!item.noticeType){ setStatus('#eventNoticeEditorStatus','공지 카드 '+(i+1)+'번의 종류를 선택하세요.','error'); return; }
@@ -598,7 +598,7 @@
     $('#eventNoticePreviewCloseBtn')?.addEventListener('click',closeEventNoticePreview);
     $('#eventNoticePreviewOkBtn')?.addEventListener('click',closeEventNoticePreview);
     $('#eventNoticePreviewBackdrop')?.addEventListener('click',closeEventNoticePreview);
-    $('#eventNoticeAddCardBtn')?.addEventListener('click',()=>{ const root=$('#eventNoticeEditorCards'); if(!root)return; const cards=$$('[data-event-notice-card]',root); if(cards.length>=4){setStatus('#eventNoticeEditorStatus','공지 카드는 최대 4개까지 등록 가능합니다.','error');return;} root.insertAdjacentHTML('beforeend',renderEventNoticeEditorCard(getDefaultEventNoticeItem(cards.length),cards.length)); renumberEventNoticeEditor(); });
+    $('#eventNoticeAddCardBtn')?.addEventListener('click',()=>{ const root=$('#eventNoticeEditorCards'); if(!root)return; const cards=$$('[data-event-notice-card]',root); if(cards.length>=6){setStatus('#eventNoticeEditorStatus','공지 카드는 최대 6개까지 등록 가능합니다.','error');return;} root.insertAdjacentHTML('beforeend',renderEventNoticeEditorCard(getDefaultEventNoticeItem(cards.length),cards.length)); renumberEventNoticeEditor(); });
     $('#eventNoticeEditorCards')?.addEventListener('click',e=>{
       const card=e.target.closest('[data-event-notice-card]'); if(!card)return;
       if(e.target.matches('[data-event-card-remove]')){ card.remove(); renumberEventNoticeEditor(); }

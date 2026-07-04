@@ -12,7 +12,7 @@
 <link href="../ui/kinojo-common-ui.css?cache=2026070110" rel="stylesheet"/>
 <link href="../ui/kinojo-card-guards.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../ui/kinojo-animations.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
-<link href="./css/admin.css?cache=2026070417" rel="stylesheet"/>
+<link href="./css/admin.css?cache=2026070421" rel="stylesheet"/>
 <script src="../ui/kinojo-device-router.js?cache=2026070110" data-mobile-path="../m/admin/"></script>
 </head>
 <body class="kinojo-page-admin">
@@ -61,7 +61,7 @@
   <div class="admin-event-editor-backdrop" id="eventNoticeEditorBackdrop"></div>
   <section class="admin-event-editor-panel" role="dialog" aria-modal="true" aria-labelledby="eventNoticeEditorTitle">
     <header class="admin-event-editor-head">
-      <div><h2 id="eventNoticeEditorTitle">이벤트 공지 등록</h2><p>공지 묶음 1개에 카드를 최대 4개까지 추가합니다.</p></div>
+      <div><h2 id="eventNoticeEditorTitle">이벤트 공지 등록</h2><p>공지 묶음 1개에 카드를 최대 6개까지 추가합니다.</p></div>
       <button class="admin-icon-btn" id="eventNoticeEditorCloseBtn" type="button" aria-label="닫기">×</button>
     </header>
     <div class="admin-event-editor-body">
@@ -75,7 +75,7 @@
         <input class="admin-input" id="eventNoticeGroupPriority" type="number" value="0" min="0" max="999" placeholder="우선순위"/>
       </div>
       <div class="admin-event-editor-toolbar">
-        <strong id="eventNoticeEditorCount">카드 1/4</strong>
+        <strong id="eventNoticeEditorCount">카드 1/6</strong>
         <button class="admin-btn" id="eventNoticeAddCardBtn" type="button">카드 추가</button>
       </div>
       <div class="admin-event-editor-cards" id="eventNoticeEditorCards"></div>
@@ -113,6 +113,6 @@
 <script src="../ui/kinojo-admin-panel.js?cache=2026070110"></script>
 <script src="../core/kinojo-supabase.js?cache=2026070415"></script>
 <script src="../core/kinojo-auth.js?cache=2026070110"></script>
-<script src="./js/admin.js?cache=2026070417"></script>
+<script src="./js/admin.js?cache=2026070421"></script>
 </body>
 </html>

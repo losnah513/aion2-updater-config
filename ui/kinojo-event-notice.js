@@ -10,7 +10,7 @@ STEP : 3-4 실제 적용/시각 확인 보강
 
   const STORAGE_PREFIX = 'kinojo_event_notice_dismissed_';
   const SESSION_PREFIX = 'kinojo_event_notice_closed_';
-  const DEFAULT_LIMIT = 10;
+  const DEFAULT_LIMIT = 10; // group limit, cards are capped by server/admin at 6
   const KST_TZ = 'Asia/Seoul';
 
   function kstParts(date){
@@ -135,7 +135,7 @@ STEP : 3-4 실제 적용/시각 확인 보강
     const items = Array.isArray(group?.items) ? group.items : [];
     const id = groupId(group);
     return '<section class="kinojo-event-notice-group" data-event-notice-group="'+esc(id)+'">'
-      + '<header class="kinojo-event-notice-head"><div><span>EVENT NOTICE</span><strong>'+esc(group?.groupTitle || group?.title || '이벤트 공지')+'</strong></div><em class="kinojo-event-notice-count">'+items.length+'/4</em></header>'
+      + '<header class="kinojo-event-notice-head"><div><span>EVENT NOTICE</span><strong>'+esc(group?.groupTitle || group?.title || '이벤트 공지')+'</strong></div><em class="kinojo-event-notice-count">'+items.length+'/6</em></header>'
       + '<div class="kinojo-event-notice-cards">'+items.map(renderItem).join('')+'</div>'
       + '<footer class="kinojo-event-notice-actions"><button type="button" data-event-notice-today="'+esc(id)+'">오늘 하루 그만보기</button><button class="close" type="button" data-event-notice-close="'+esc(id)+'">닫기</button></footer>'
       + '</section>';
@@ -176,7 +176,9 @@ STEP : 3-4 실제 적용/시각 확인 보강
       { noticeType:'abyss_low', eventDate:yyyy, eventTime:time, title:'어비스 하층', description:'하층 전투가 곧 시작됩니다. 포스 준비를 확인하세요.' },
       { noticeType:'abyss_middle', eventDate:yyyy, eventTime:time, title:'어비스 중층', description:'중층 이동 경로와 파티 구성을 확인하세요.' },
       { noticeType:'abyss_boss', eventDate:yyyy, eventTime:time, title:'어비스 보스', description:'보스 등장 전 집결 위치를 확인하세요.' },
-      { noticeType:'rift', eventDate:yyyy, eventTime:time, title:'시공', description:'시공 진입 시간이 가까워졌습니다.' }
+      { noticeType:'rift', eventDate:yyyy, eventTime:time, title:'시공', description:'시공 진입 시간이 가까워졌습니다.' },
+      { noticeType:'event', eventDate:yyyy, eventTime:time, title:'긴급 공지', description:'예비 공지 카드도 한 화면에 표시됩니다.' },
+      { noticeType:'custom', eventDate:yyyy, eventTime:time, title:'자유 공지', description:'최대 6장 기준 레이아웃 테스트입니다.' }
     ];
     return [{ groupId:'preview', popupVersion:'preview', groupTitle:'이벤트 공지 미리보기', items }];
   }
