@@ -3,7 +3,7 @@ KINOJO Event Notice Popup
 기능 : 사용자 페이지 진입 이벤트 공지 팝업 공통 로더
 정리일 : 2026-07-04
 규칙 : 공지 묶음별 오늘 하루 그만보기 분리
-STEP : 3-3 골드 와이드 이미지 배너
+STEP : 3-4 실제 적용/시각 확인 보강
 =========================================================== */
 (function(){
   'use strict';
@@ -157,6 +157,31 @@ STEP : 3-3 골드 와이드 이미지 배너
     }
   }
 
+
+  function hasPreviewFlag(){
+    try{
+      const params = new URLSearchParams(window.location.search || '');
+      return params.has('noticeTest') || params.has('eventNoticeTest') || params.has('eventNoticePreview');
+    }catch(_err){
+      return false;
+    }
+  }
+
+  function buildPreviewGroups(){
+    const now = new Date();
+    const base = new Date(now.getTime() + 20 * 60000);
+    const yyyy = new Intl.DateTimeFormat('sv-SE', { timeZone: KST_TZ, year:'numeric', month:'2-digit', day:'2-digit' }).format(base);
+    const time = new Intl.DateTimeFormat('ko-KR', { timeZone: KST_TZ, hour:'2-digit', minute:'2-digit', hour12:false }).format(base).replace(/\./g,'').trim();
+    const items = [
+      { noticeType:'abyss_low', eventDate:yyyy, eventTime:time, title:'어비스 하층', description:'하층 전투가 곧 시작됩니다. 포스 준비를 확인하세요.' },
+      { noticeType:'abyss_middle', eventDate:yyyy, eventTime:time, title:'어비스 중층', description:'중층 이동 경로와 파티 구성을 확인하세요.' },
+      { noticeType:'abyss_boss', eventDate:yyyy, eventTime:time, title:'어비스 보스', description:'보스 등장 전 집결 위치를 확인하세요.' },
+      { noticeType:'rift', eventDate:yyyy, eventTime:time, title:'시공', description:'시공 진입 시간이 가까워졌습니다.' }
+    ];
+    return [{ groupId:'preview', popupVersion:'preview', groupTitle:'이벤트 공지 미리보기', items }];
+  }
+
+
   async function loadGroups(){
     if(!window.KinojoSupabase || typeof window.KinojoSupabase.getWebEventNoticeGroups !== 'function') return [];
     const res = await window.KinojoSupabase.getWebEventNoticeGroups(DEFAULT_LIMIT);
@@ -172,7 +197,7 @@ STEP : 3-3 골드 와이드 이미지 배너
 
     let groups = [];
     try{
-      groups = await loadGroups();
+      groups = hasPreviewFlag() ? buildPreviewGroups() : await loadGroups();
     }catch(err){
       console.warn('KINOJO event notice load failed:', err);
       return;
@@ -211,5 +236,5 @@ STEP : 3-3 골드 와이드 이미지 배너
   }
 
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once:true }); else init();
-  window.KinojoEventNotice = { init };
+  window.KinojoEventNotice = { init, buildPreviewGroups };
 })();
