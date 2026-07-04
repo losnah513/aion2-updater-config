@@ -2,8 +2,8 @@
 KINOJO Event Notice Popup
 기능 : 사용자 페이지 진입 이벤트 공지 팝업 공통 UI
 정리일 : 2026-07-05
-STEP : 3-5-1 이벤트 공지 레이아웃 CSS 리팩터링
-규칙 : 중복 선택자 제거 / 카드 독립 플로팅 / 이미지 높이 기준 우측 정렬
+STEP : 3-5-2 이미지 위치/그라데이션 자연화 리팩터링
+규칙 : 이미지 높이 기준 유지 / 카드 중앙 우측 배치 / 자연 그라데이션
 =========================================================== */
 
 .kinojo-event-notice-root{
@@ -136,6 +136,7 @@ STEP : 3-5-1 이벤트 공지 레이아웃 CSS 리팩터링
   overflow:hidden;
   isolation:isolate;
   color:#fff;
+  --notice-image-x:63%;
   background:#060504;
   box-shadow:
     0 13px 34px rgba(0,0,0,.34),
@@ -145,7 +146,7 @@ STEP : 3-5-1 이벤트 공지 레이아웃 CSS 리팩터링
   transform:translateZ(0);
 }
 
-/* 이미지 전용 레이어: 이미지 원본 비율 유지, 카드 높이 기준, 오른쪽 정렬 */
+/* 이미지 전용 레이어: 이미지 원본 비율 유지, 카드 높이 기준, 카드 중심보다 살짝 오른쪽 배치 */
 .kinojo-event-notice-card::before{
   content:"";
   position:absolute;
@@ -154,11 +155,15 @@ STEP : 3-5-1 이벤트 공지 레이아웃 CSS 리팩터링
   background-color:#060504;
   background-repeat:no-repeat;
   background-size:auto 100%;
-  background-position:right center;
-  opacity:.94;
+  background-position:var(--notice-image-x,63%) center;
+  opacity:.96;
   filter:saturate(1.06) contrast(1.02);
   transform:translateZ(0);
 }
+.kinojo-event-notice-card.type-abyss_low{--notice-image-x:61%}
+.kinojo-event-notice-card.type-abyss_middle{--notice-image-x:60%}
+.kinojo-event-notice-card.type-abyss_boss{--notice-image-x:64%}
+.kinojo-event-notice-card.type-rift{--notice-image-x:66%}
 .kinojo-event-notice-card.type-abyss_low::before{background-image:url('../assets/event-notice/abyss-low.webp')}
 .kinojo-event-notice-card.type-abyss_middle::before{background-image:url('../assets/event-notice/abyss-middle.webp')}
 .kinojo-event-notice-card.type-abyss_boss::before{background-image:url('../assets/event-notice/abyss-boss.webp')}
@@ -180,15 +185,17 @@ STEP : 3-5-1 이벤트 공지 레이아웃 CSS 리팩터링
   pointer-events:none;
   background:
     linear-gradient(90deg,
-      rgba(5,4,3,1) 0%,
-      rgba(10,8,5,.99) 14%,
-      rgba(43,33,12,.96) 30%,
-      rgba(119,85,28,.66) 43%,
-      rgba(15,12,7,.22) 58%,
-      rgba(7,6,5,.42) 78%,
-      rgba(5,4,3,.82) 100%),
-    radial-gradient(circle at 15% 50%,rgba(242,204,105,.22),transparent 24%),
-    linear-gradient(180deg,rgba(255,251,229,.10),transparent 30%,rgba(0,0,0,.24));
+      rgba(4,3,2,1) 0%,
+      rgba(8,6,4,.985) 18%,
+      rgba(30,23,10,.90) 31%,
+      rgba(90,68,22,.58) 43%,
+      rgba(117,87,29,.26) 53%,
+      rgba(22,17,9,.075) 64%,
+      rgba(8,6,4,.16) 78%,
+      rgba(5,4,3,.58) 100%),
+    radial-gradient(ellipse at 20% 50%,rgba(244,205,101,.20),transparent 27%),
+    radial-gradient(ellipse at 86% 50%,rgba(0,0,0,.42),transparent 26%),
+    linear-gradient(180deg,rgba(255,251,229,.08),transparent 35%,rgba(0,0,0,.20));
 }
 
 .kinojo-event-notice-glow{
@@ -406,18 +413,19 @@ STEP : 3-5-1 이벤트 공지 레이아웃 CSS 리팩터링
   .kinojo-event-notice-card{border-radius:14px}
   .kinojo-event-notice-card::before{
     background-size:auto 100%;
-    background-position:right center;
+    background-position:var(--notice-image-x,63%) center;
   }
   .kinojo-event-notice-card::after{
     background:
       linear-gradient(90deg,
-        rgba(5,4,3,1) 0%,
-        rgba(10,8,5,.99) 18%,
-        rgba(43,33,12,.95) 36%,
-        rgba(119,85,28,.58) 52%,
-        rgba(15,12,7,.32) 70%,
-        rgba(5,4,3,.72) 100%),
-      radial-gradient(circle at 15% 50%,rgba(242,204,105,.18),transparent 25%);
+        rgba(4,3,2,1) 0%,
+        rgba(8,6,4,.985) 20%,
+        rgba(38,29,12,.88) 37%,
+        rgba(100,74,24,.46) 51%,
+        rgba(22,17,9,.10) 64%,
+        rgba(5,4,3,.54) 100%),
+      radial-gradient(ellipse at 17% 50%,rgba(242,204,105,.18),transparent 26%),
+      radial-gradient(ellipse at 87% 50%,rgba(0,0,0,.36),transparent 28%);
   }
   .kinojo-event-notice-glow{width:31%}
   .kinojo-event-notice-glow::before{left:16px;width:34px;height:34px}
