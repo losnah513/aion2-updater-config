@@ -498,3 +498,121 @@ STEP : 3-2 공지 종류별 자동 테마
   .kinojo-event-notice-title{font-size:17px}
   .kinojo-event-notice-timebox time{font-size:32px}
 }
+
+/* 20260704_20 STEP 3-4 visual patch
+   - 공지 묶음 배경은 투명 유리 느낌으로 축소
+   - 각 공지 카드는 독립 플로팅 카드로 표현
+   - 배경 이미지는 카드 높이에 맞추고 오른쪽 고정(auto 100%)
+*/
+.kinojo-event-notice-root{
+  background:rgba(7,8,12,.34);
+  backdrop-filter:blur(8px) saturate(1.04);
+  -webkit-backdrop-filter:blur(8px) saturate(1.04);
+}
+.kinojo-event-notice-stack{
+  width:min(760px,calc(100vw - 32px));
+  gap:18px;
+  padding:12px 6px;
+}
+.kinojo-event-notice-group{
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:28px;
+  background:rgba(255,255,255,.035);
+  backdrop-filter:blur(7px) saturate(1.04);
+  -webkit-backdrop-filter:blur(7px) saturate(1.04);
+  box-shadow:none;
+  overflow:visible;
+}
+.kinojo-event-notice-head{
+  padding:19px 20px 13px;
+  background:transparent;
+  border:0;
+}
+.kinojo-event-notice-head span{
+  color:#e8c979;
+  text-shadow:0 2px 12px rgba(0,0,0,.35);
+}
+.kinojo-event-notice-head strong{
+  color:rgba(255,255,255,.94);
+  text-shadow:0 3px 16px rgba(0,0,0,.40);
+}
+.kinojo-event-notice-count{
+  border-color:rgba(212,175,86,.54);
+  background:rgba(15,13,8,.46);
+  color:#f3d27a;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.04);
+}
+.kinojo-event-notice-cards{
+  gap:12px;
+  padding:0 16px 16px;
+}
+.kinojo-event-notice-card{
+  border-radius:18px;
+  background:rgba(8,7,5,.82);
+  box-shadow:
+    0 18px 32px rgba(0,0,0,.30),
+    0 0 0 1px rgba(255,255,255,.045) inset,
+    0 0 0 1px rgba(212,175,86,.28);
+}
+.kinojo-event-notice-card::before{
+  inset:0 0 0 auto;
+  width:68%;
+  background-size:auto 100%;
+  background-position:right center;
+  background-repeat:no-repeat;
+  opacity:.98;
+  filter:saturate(1.04) contrast(1.02);
+}
+.kinojo-event-notice-card::after{
+  background:
+    linear-gradient(90deg,
+      rgba(8,7,5,1) 0%,
+      rgba(18,14,7,.99) 25%,
+      rgba(73,52,17,.82) 38%,
+      rgba(73,52,17,.46) 48%,
+      rgba(8,7,5,.12) 61%,
+      rgba(8,7,5,.28) 79%,
+      rgba(8,7,5,.62) 100%),
+    radial-gradient(circle at 17% 50%,rgba(232,201,121,.20),rgba(232,201,121,0) 28%),
+    linear-gradient(180deg,rgba(255,248,222,.08),rgba(0,0,0,.10) 48%,rgba(0,0,0,.32));
+}
+.kinojo-event-notice-actions{
+  margin:0 16px 16px;
+  padding:0;
+  gap:10px;
+  border:0;
+  background:transparent;
+}
+.kinojo-event-notice-actions button{
+  height:46px;
+  border-color:rgba(255,255,255,.18);
+  background:rgba(9,9,8,.46);
+  color:#fff8e7;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  box-shadow:0 10px 24px rgba(0,0,0,.18), inset 0 0 0 1px rgba(255,255,255,.04);
+}
+.kinojo-event-notice-actions .close{
+  background:linear-gradient(180deg,rgba(244,213,125,.92),rgba(174,126,39,.94));
+  color:#130f07;
+  border-color:rgba(255,232,158,.76);
+}
+@media(max-width:720px){
+  .kinojo-event-notice-root{align-items:center;padding:12px 8px max(12px,env(safe-area-inset-bottom))}
+  .kinojo-event-notice-stack{width:100%;max-height:88vh;gap:14px;padding:6px 4px}
+  .kinojo-event-notice-group{border-radius:22px;background:rgba(255,255,255,.03)}
+  .kinojo-event-notice-head{padding:15px 14px 10px}
+  .kinojo-event-notice-cards{padding:0 10px 12px;gap:10px}
+  .kinojo-event-notice-card{min-height:104px;border-radius:16px;aspect-ratio:12/3}
+  .kinojo-event-notice-card::before{width:72%;background-size:auto 100%;background-position:right center}
+  .kinojo-event-notice-card::after{
+    background:
+      linear-gradient(90deg,rgba(8,7,5,1) 0%,rgba(24,17,7,.98) 36%,rgba(93,66,19,.56) 52%,rgba(8,7,5,.18) 68%,rgba(8,7,5,.72) 100%),
+      radial-gradient(circle at 13% 50%,rgba(212,175,86,.18),rgba(212,175,86,0) 25%);
+  }
+  .kinojo-event-notice-actions{position:sticky;bottom:0;margin:0 10px 10px;padding:0;gap:8px;background:transparent}
+}
+@media(max-width:380px){
+  .kinojo-event-notice-card::before{width:76%}
+}
+
