@@ -3,8 +3,8 @@
   'use strict';
   const $ = (s,r=document)=>r.querySelector(s);
   const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
-  const state = { tab:'dashboard', requests:[], accounts:[], characters:[], logs:[] };
-  const CACHE = '2026070409';
+  const state = { tab:'dashboard', requests:[], accounts:[], characters:[], logs:[], eventNoticeGroups:[], eventNoticeEditingId:null };
+  const CACHE = '2026070410';
   function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
   function addLog(type,msg){
     const t = new Date(); const line = '['+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+':'+String(t.getSeconds()).padStart(2,'0')+'] '+String(type||'INFO')+' · '+String(msg||'');
@@ -20,6 +20,23 @@
   function adminCharacter(cmd, extra){ return window.KinojoSupabase.adminCharacter(cmd, extra||{}); }
   function adminNotice(cmd, extra){ return window.KinojoSupabase.adminNotice(cmd, extra||{}); }
   function adminEventNotice(cmd, extra){ return window.KinojoSupabase.adminEventNotice(cmd, extra||{}); }
+  const EVENT_NOTICE_TYPES = [
+    { value:'abyss_low', label:'어비스 하층', title:'어비스 하층 일정 안내', body:'하층 전장 이동과 파티 준비를 확인하세요.' },
+    { value:'abyss_middle', label:'어비스 중층', title:'어비스 중층 일정 안내', body:'중층 전장 이동과 파티 준비를 확인하세요.' },
+    { value:'rift', label:'시공', title:'시공 일정 안내', body:'시공 입장 시간과 이동 동선을 확인하세요.' },
+    { value:'abyss_boss', label:'어비스 보스', title:'어비스 보스 일정 안내', body:'보스 등장 전 파티와 위치를 확인하세요.' },
+    { value:'event', label:'이벤트', title:'이벤트 공지', body:'이벤트 내용을 확인하세요.' },
+    { value:'custom', label:'자유공지', title:'공지', body:'공지 내용을 확인하세요.' }
+  ];
+  function eventNoticeTypeLabel(value){
+    const hit = EVENT_NOTICE_TYPES.find(t=>t.value===String(value||''));
+    return hit ? hit.label : String(value||'공지');
+  }
+  function todayDateInputValue(){
+    const d=new Date();
+    d.setMinutes(d.getMinutes()-d.getTimezoneOffset());
+    return d.toISOString().slice(0,10);
+  }
   async function action(name, params){ return window.KinojoApi ? window.KinojoApi.getAction(name, params||{}) : window.KinojoSupabase.webAction(name, params||{}); }
 
   function switchTab(tab){
@@ -264,6 +281,7 @@
       status:g.runtimeStatus || g.runtime_status || g.status || '',
       rawStatus:g.status || '',
       itemCount:Number(g.itemCount || g.item_count || (Array.isArray(g.items)?g.items.length:0) || 0),
+      priority:Number(g.priority || 0),
       popupVersion:Number(g.popupVersion || g.popup_version || 0),
       createdAt:g.createdAt || g.created_at || '',
       updatedAt:g.updatedAt || g.updated_at || '',
@@ -288,16 +306,133 @@
     try{
       const data=await adminEventNotice('listGroups',{status,limit:30});
       const groups=data.groups || data.items || data.eventNotices || [];
-      renderEventNoticeGroups(Array.isArray(groups)?groups:[]);
-      setStatus('#eventNoticeStatus','이벤트 공지 묶음 '+(Array.isArray(groups)?groups.length:0)+'건','ok');
+      state.eventNoticeGroups=(Array.isArray(groups)?groups:[]).map(normalizeEventNoticeGroup);
+      renderEventNoticeGroups(state.eventNoticeGroups);
+      setStatus('#eventNoticeStatus','이벤트 공지 묶음 '+state.eventNoticeGroups.length+'건','ok');
     }catch(err){
       setStatus('#eventNoticeStatus',err.message||String(err),'error');
       $('#eventNoticeList') && ($('#eventNoticeList').innerHTML='<div class="admin-empty">이벤트 공지 목록을 불러오지 못했습니다.</div>');
     }
   }
+  function getEventNoticeGroupById(id){
+    const key=String(id||'');
+    return (state.eventNoticeGroups||[]).find(g=>String(g.id)===key) || null;
+  }
+  function eventNoticeTypeOptions(selected){
+    return EVENT_NOTICE_TYPES.map(t=>'<option value="'+esc(t.value)+'" '+(String(selected||'')===t.value?'selected':'')+'>'+esc(t.label)+'</option>').join('');
+  }
+  function renderEventNoticeEditorCard(item, index){
+    const type=item?.noticeType || item?.notice_type || 'abyss_low';
+    const date=item?.eventDate || item?.event_date || (item?.eventAt || item?.event_at || '').slice(0,10) || todayDateInputValue();
+    const time=item?.eventTime || item?.event_time || ((item?.eventAt || item?.event_at || '').match(/T(\d{2}:\d{2})/)||[])[1] || '22:00';
+    const title=item?.title || item?.mainText || '';
+    const description=item?.description || item?.bodyText || '';
+    return '<article class="admin-event-editor-card" data-event-notice-card>'+
+      '<div class="admin-event-card-head"><strong>공지 카드 '+(index+1)+'</strong><button class="admin-btn danger" type="button" data-event-card-remove '+(index===0?'disabled':'')+'>삭제</button></div>'+
+      '<div class="admin-event-card-grid">'+
+        '<label>공지 종류<select class="admin-select" data-event-field="noticeType">'+eventNoticeTypeOptions(type)+'</select></label>'+
+        '<label>날짜<input class="admin-input" type="date" data-event-field="eventDate" value="'+esc(date)+'"/></label>'+
+        '<label>시간<input class="admin-input" type="time" data-event-field="eventTime" value="'+esc(time)+'"/></label>'+
+      '</div>'+
+      '<label>메인 텍스트<input class="admin-input" data-event-field="title" maxlength="80" placeholder="예: 어비스 하층 요새전 시작" value="'+esc(title)+'"/></label>'+
+      '<label>본문 작은 텍스트<textarea class="admin-textarea small" data-event-field="description" maxlength="200" placeholder="예: 10분 전 파티 합류 / 이동 준비">'+esc(description)+'</textarea></label>'+
+    '</article>';
+  }
+  function getDefaultEventNoticeItem(order){
+    const t=EVENT_NOTICE_TYPES[order % Math.min(EVENT_NOTICE_TYPES.length,4)] || EVENT_NOTICE_TYPES[0];
+    return { noticeType:t.value, eventDate:todayDateInputValue(), eventTime:'22:00', title:t.title, description:t.body, displayOrder:order+1 };
+  }
+  function renumberEventNoticeEditor(){
+    const cards=$$('[data-event-notice-card]', $('#eventNoticeEditorCards'));
+    cards.forEach((card,idx)=>{
+      const strong=card.querySelector('.admin-event-card-head strong'); if(strong) strong.textContent='공지 카드 '+(idx+1);
+      const remove=card.querySelector('[data-event-card-remove]'); if(remove) remove.disabled=cards.length<=1;
+    });
+    const add=$('#eventNoticeAddCardBtn'); if(add) add.disabled=cards.length>=4;
+    const count=$('#eventNoticeEditorCount'); if(count) count.textContent='카드 '+cards.length+'/4';
+  }
+  function applyEventNoticeTypeTemplate(card){
+    const type=card?.querySelector('[data-event-field="noticeType"]')?.value || 'abyss_low';
+    const preset=EVENT_NOTICE_TYPES.find(t=>t.value===type) || EVENT_NOTICE_TYPES[0];
+    const title=card.querySelector('[data-event-field="title"]');
+    const description=card.querySelector('[data-event-field="description"]');
+    if(title && !title.value.trim()) title.value=preset.title;
+    if(description && !description.value.trim()) description.value=preset.body;
+  }
+  function openEventNoticeEditor(group){
+    state.eventNoticeEditingId = group?.id || null;
+    const modal=$('#eventNoticeEditorModal'); if(!modal)return;
+    const title=$('#eventNoticeEditorTitle');
+    if(title) title.textContent = group ? '이벤트 공지 수정' : '이벤트 공지 등록';
+    $('#eventNoticeGroupTitle') && ($('#eventNoticeGroupTitle').value = group?.title || '이벤트 공지');
+    $('#eventNoticeGroupStatus') && ($('#eventNoticeGroupStatus').value = String(group?.rawStatus || group?.status || 'draft').toLowerCase());
+    $('#eventNoticeGroupPriority') && ($('#eventNoticeGroupPriority').value = String(group?.priority || 0));
+    const items = (Array.isArray(group?.items) && group.items.length) ? group.items.slice(0,4) : [getDefaultEventNoticeItem(0)];
+    $('#eventNoticeEditorCards').innerHTML = items.map((item,idx)=>renderEventNoticeEditorCard(item,idx)).join('');
+    setStatus('#eventNoticeEditorStatus','', '');
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden','false');
+    renumberEventNoticeEditor();
+  }
+  function closeEventNoticeEditor(){
+    const modal=$('#eventNoticeEditorModal'); if(!modal)return;
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden','true');
+    state.eventNoticeEditingId=null;
+  }
   function startEventNoticeCreate(){
-    setStatus('#eventNoticeStatus','STEP 2-2에서 공지 묶음 등록 폼을 연결합니다. 현재 단계는 목록 조회 뼈대입니다.','');
-    toast('이벤트 공지 등록 폼은 STEP 2-2에서 연결됩니다.');
+    openEventNoticeEditor(null);
+  }
+  function editEventNoticeGroup(id){
+    const group=getEventNoticeGroupById(id);
+    if(!group){ setStatus('#eventNoticeStatus','수정할 이벤트 공지 묶음을 찾지 못했습니다. 목록을 새로고침해 주세요.','error'); return; }
+    openEventNoticeEditor(group);
+  }
+  function collectEventNoticeEditorPayload(){
+    const cards=$$('[data-event-notice-card]', $('#eventNoticeEditorCards'));
+    const items=cards.map((card,idx)=>{
+      const get=(key)=>card.querySelector('[data-event-field="'+key+'"]')?.value || '';
+      return {
+        displayOrder:idx+1,
+        noticeType:get('noticeType'),
+        eventDate:get('eventDate'),
+        eventTime:get('eventTime'),
+        title:get('title').trim(),
+        description:get('description').trim()
+      };
+    });
+    return {
+      groupId:state.eventNoticeEditingId || null,
+      title:($('#eventNoticeGroupTitle')?.value || '이벤트 공지').trim(),
+      status:$('#eventNoticeGroupStatus')?.value || 'draft',
+      priority:Number($('#eventNoticeGroupPriority')?.value || 0),
+      items
+    };
+  }
+  async function saveEventNoticeEditor(){
+    const payload=collectEventNoticeEditorPayload();
+    if(!payload.items.length){ setStatus('#eventNoticeEditorStatus','공지 카드를 최소 1개 이상 입력하세요.','error'); return; }
+    if(payload.items.length>4){ setStatus('#eventNoticeEditorStatus','공지 카드는 최대 4개까지 등록 가능합니다.','error'); return; }
+    for(let i=0;i<payload.items.length;i++){
+      const item=payload.items[i];
+      if(!item.noticeType){ setStatus('#eventNoticeEditorStatus','공지 카드 '+(i+1)+'번의 종류를 선택하세요.','error'); return; }
+      if(!item.eventDate){ setStatus('#eventNoticeEditorStatus','공지 카드 '+(i+1)+'번의 날짜를 입력하세요.','error'); return; }
+      if(!item.eventTime){ setStatus('#eventNoticeEditorStatus','공지 카드 '+(i+1)+'번의 시간을 입력하세요.','error'); return; }
+      if(!item.title){ setStatus('#eventNoticeEditorStatus','공지 카드 '+(i+1)+'번의 메인 텍스트를 입력하세요.','error'); return; }
+    }
+    const btn=$('#eventNoticeEditorSaveBtn'); if(btn) btn.disabled=true;
+    setStatus('#eventNoticeEditorStatus','이벤트 공지를 저장하는 중...','');
+    try{
+      const res=await adminEventNotice('saveGroup', payload);
+      if(res && res.ok===false) throw new Error(res.message || '이벤트 공지 저장 실패');
+      toast('이벤트 공지 저장 완료');
+      closeEventNoticeEditor();
+      await loadEventNoticeGroups();
+    }catch(err){
+      setStatus('#eventNoticeEditorStatus',err.message||String(err),'error');
+    }finally{
+      if(btn) btn.disabled=false;
+    }
   }
 
   async function loadNotices(){
@@ -370,7 +505,14 @@
     $('#sanctuarySyncBtn')?.addEventListener('click',runSanctuarySync);
     $('#noticeReloadBtn')?.addEventListener('click',loadNotices); $('#noticeSaveBtn')?.addEventListener('click',saveNotice);
     $('#eventNoticeReloadBtn')?.addEventListener('click',loadEventNoticeGroups); $('#eventNoticeCreateBtn')?.addEventListener('click',startEventNoticeCreate); $('#eventNoticeStatusFilter')?.addEventListener('change',loadEventNoticeGroups);
-    $('#eventNoticeList')?.addEventListener('click',e=>{ if(e.target.matches('[data-event-notice-edit]')) startEventNoticeCreate(); if(e.target.matches('[data-event-notice-delete]')) setStatus('#eventNoticeStatus','삭제 기능은 STEP 2-3에서 연결합니다.',''); });
+    $('#eventNoticeList')?.addEventListener('click',e=>{ const row=e.target.closest('[data-event-notice-id]'); if(e.target.matches('[data-event-notice-edit]')) editEventNoticeGroup(row?.dataset.eventNoticeId); if(e.target.matches('[data-event-notice-delete]')) setStatus('#eventNoticeStatus','삭제 기능은 STEP 2-3에서 연결합니다.',''); });
+    $('#eventNoticeEditorCloseBtn')?.addEventListener('click',closeEventNoticeEditor);
+    $('#eventNoticeEditorCancelBtn')?.addEventListener('click',closeEventNoticeEditor);
+    $('#eventNoticeEditorBackdrop')?.addEventListener('click',closeEventNoticeEditor);
+    $('#eventNoticeEditorSaveBtn')?.addEventListener('click',saveEventNoticeEditor);
+    $('#eventNoticeAddCardBtn')?.addEventListener('click',()=>{ const root=$('#eventNoticeEditorCards'); if(!root)return; const cards=$$('[data-event-notice-card]',root); if(cards.length>=4){setStatus('#eventNoticeEditorStatus','공지 카드는 최대 4개까지 등록 가능합니다.','error');return;} root.insertAdjacentHTML('beforeend',renderEventNoticeEditorCard(getDefaultEventNoticeItem(cards.length),cards.length)); renumberEventNoticeEditor(); });
+    $('#eventNoticeEditorCards')?.addEventListener('click',e=>{ if(e.target.matches('[data-event-card-remove]')){ e.target.closest('[data-event-notice-card]')?.remove(); renumberEventNoticeEditor(); } });
+    $('#eventNoticeEditorCards')?.addEventListener('change',e=>{ if(e.target.matches('[data-event-field="noticeType"]')) applyEventNoticeTypeTemplate(e.target.closest('[data-event-notice-card]')); });
     $('#webAppSaveBtn')?.addEventListener('click',saveWebAppUrl); $('#webAppClearBtn')?.addEventListener('click',clearWebAppUrl); $('#webAppTestBtn')?.addEventListener('click',()=>testWebAppConnection('#serverStatus')); $('#webAppTestBtnSystem')?.addEventListener('click',()=>testWebAppConnection('#systemStatus')); $('#serverRefreshBtn')?.addEventListener('click',refreshServerStatus); $('#goSystemSettingsBtn')?.addEventListener('click',()=>switchTab('system'));
     document.addEventListener('click',e=>{ if(e.target.matches('[data-jump-server]')) switchTab('server'); if(e.target.matches('[data-jump-system]')) switchTab('system'); });
     $('#quickCodeBtn')?.addEventListener('click',()=>switchTab('requests')); $('#quickSanctuaryBtn')?.addEventListener('click',()=>switchTab('sanctuary')); $('#quickMemberBtn')?.addEventListener('click',()=>switchTab('members')); $('#quickNoticeBtn')?.addEventListener('click',()=>switchTab('notices'));
