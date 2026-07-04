@@ -495,3 +495,42 @@ body{background:#fff!important;}
   }
 }
 
+
+/* 20260703_05: sanctuary clipboard result toast is centered, independent from notice bars. */
+.kinojo-sanctuary-center-toast-host{
+  position:fixed;
+  inset:0;
+  z-index:2147483400;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  pointer-events:none;
+}
+.kinojo-sanctuary-center-toast{
+  max-width:min(560px,calc(100vw - 32px));
+  padding:16px 20px;
+  border:1px solid rgba(255,255,255,.22);
+  border-radius:18px;
+  background:rgba(15,23,42,.92);
+  color:#fff;
+  font-family:Arial,'Noto Sans KR',sans-serif;
+  font-size:15px;
+  font-weight:900;
+  line-height:1.45;
+  text-align:center;
+  box-shadow:0 22px 58px rgba(15,23,42,.28);
+  opacity:0;
+  transform:translateY(10px) scale(.985);
+  transition:opacity .22s ease,transform .22s ease;
+  white-space:normal;
+  word-break:keep-all;
+}
+.kinojo-sanctuary-center-toast.is-visible{opacity:1;transform:translateY(0) scale(1);}
+.kinojo-sanctuary-center-toast.is-leaving{opacity:0;transform:translateY(-6px) scale(.99);}
+.kinojo-sanctuary-center-toast.is-success{background:rgba(31,47,70,.94);}
+.kinojo-sanctuary-center-toast.is-warn{background:rgba(96,65,18,.94);}
+.kinojo-sanctuary-center-toast.is-error{background:rgba(120,25,35,.95);}
+@media(max-width:520px){
+  .kinojo-sanctuary-center-toast{font-size:14px;padding:14px 16px;border-radius:16px;}
+}

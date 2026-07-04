@@ -1,6 +1,6 @@
 /*
  * KINOJO Sanctuary Capture Bridge
- * Version: 20260703_04
+ * Version: 20260703_05
  * Role: Edge Function이 최종 생성한 PNG Blob을 클립보드에 넣는 전용 브릿지.
  * Rule: 복사 최소 단위는 포스, 큰 단위는 운영 팀. 파티 단위 복사는 만들지 않는다.
  */
@@ -14,12 +14,30 @@
   function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
   function currentSanctuaryId(){ return new URLSearchParams(location.search || '').get('id') || 'rudra'; }
 
-  function toast(message){
-    if(window.KinojoCommonUI?.toast) return window.KinojoCommonUI.toast(message);
-    const el=document.createElement('div');
-    el.textContent=message;
-    el.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9999;background:rgba(15,23,42,.88);color:#fff;padding:10px 14px;border-radius:999px;font:800 13px sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.16)';
-    document.body.appendChild(el); setTimeout(()=>el.remove(),2100);
+  function toast(message, type){
+    let host = document.getElementById('kinojoSanctuaryCenterToastHost');
+    if(!host){
+      host = document.createElement('div');
+      host.id = 'kinojoSanctuaryCenterToastHost';
+      host.className = 'kinojo-sanctuary-center-toast-host';
+      document.body.appendChild(host);
+    }
+    const el = document.createElement('div');
+    el.className = 'kinojo-sanctuary-center-toast ' + (type === 'error' ? 'is-error' : type === 'warn' ? 'is-warn' : 'is-success');
+    el.textContent = message;
+    host.appendChild(el);
+    requestAnimationFrame(()=>el.classList.add('is-visible'));
+    setTimeout(()=>{
+      el.classList.remove('is-visible');
+      el.classList.add('is-leaving');
+      setTimeout(()=>{ el.remove(); if(!host.children.length) host.remove(); }, 280);
+    }, type === 'error' ? 4200 : 2200);
+  }
+
+  function compactErrorMessage(err){
+    const raw = safeText(err && err.message ? err.message : err);
+    if(!raw) return '알 수 없는 오류';
+    return raw.replace(/^Server Copy API HTTP\s*/i, 'HTTP ').slice(0, 160);
   }
 
   function requireSanctuaryCopyLogin(){
@@ -137,8 +155,8 @@
     function close(){ if(imageUrl) URL.revokeObjectURL(imageUrl); modal.remove(); }
     modal.querySelectorAll('[data-preview-close]').forEach(btn=>btn.addEventListener('click', close));
     modal.querySelector('.kinojo-copy-preview-copyimage')?.addEventListener('click', async ()=>{
-      try{ await copyBlob(blob); toast('이미지가 클립보드에 복사되었습니다.'); close(); }
-      catch(err){ console.warn('KINOJO server copy retry failed:', err); toast('브라우저가 이미지 클립보드를 막았습니다. PNG 저장을 사용해 주세요.'); }
+      try{ await copyBlob(blob); toast('이미지가 클립보드에 복사되었습니다.', 'success'); close(); }
+      catch(err){ console.warn('KINOJO server copy retry failed:', err); toast('브라우저가 이미지 클립보드를 막았습니다. PNG 저장을 사용해 주세요.', 'error'); }
     });
     modal.querySelector('.kinojo-copy-preview-download')?.addEventListener('click', ()=>downloadBlob(blob, filename));
   }
@@ -191,10 +209,10 @@
     btn.disabled = true; btn.classList.add('is-copying');
     try{
       const result = await copyServerRenderedImage(payload);
-      toast(result === 'copied' ? successText : '서버 이미지를 만들었습니다. 미리보기에서 다시 복사할 수 있습니다.');
+      toast(result === 'copied' ? successText : '서버 이미지를 만들었습니다. 미리보기에서 다시 복사할 수 있습니다.', result === 'copied' ? 'success' : 'warn');
     }catch(err){
       console.warn('KINOJO sanctuary server copy failed:', err);
-      toast('서버 이미지 생성에 실패했습니다. Edge Function 배포와 Supabase 설정을 확인해 주세요.');
+      toast('서버 이미지 생성 실패: ' + compactErrorMessage(err), 'error');
     }finally{
       btn.disabled = false; btn.classList.remove('is-copying'); btn.innerHTML = oldHtml;
     }
@@ -253,6 +271,6 @@
     });
   }
 
-  window.KinojoSanctuaryCapture = { bind, version:'20260703_04_server_final_png' };
+  window.KinojoSanctuaryCapture = { bind, version:'20260703_05_center_toast_resvg_fix' };
   document.addEventListener('DOMContentLoaded', bind);
 })();
