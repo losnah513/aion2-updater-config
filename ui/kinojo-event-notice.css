@@ -2,7 +2,7 @@
 KINOJO Event Notice Popup
 기능 : 사용자 페이지 진입 이벤트 공지 팝업 공통 UI
 정리일 : 2026-07-04
-STEP : 3-1 사용자 팝업 UI 최종 디자인
+STEP : 3-2 공지 종류별 자동 테마
 =========================================================== */
 .kinojo-event-notice-root{
   position:fixed;
@@ -255,4 +255,245 @@ STEP : 3-1 사용자 팝업 UI 최종 디자인
   .kinojo-event-notice-copy{right:124px}
   .kinojo-event-notice-title{font-size:17px}
   .kinojo-event-notice-timebox time{font-size:34px}
+}
+
+/* 20260704_16 STEP 3-2 notice type theme/icon layer */
+.kinojo-event-notice-icon{
+  position:absolute;
+  right:128px;
+  top:15px;
+  z-index:1;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:62px;
+  height:26px;
+  border:1px solid rgba(255,255,255,.32);
+  border-radius:999px;
+  background:rgba(255,255,255,.16);
+  color:rgba(255,255,255,.94);
+  font-size:10px;
+  font-weight:1000;
+  letter-spacing:.08em;
+  box-shadow:0 6px 18px rgba(0,0,0,.16);
+}
+.kinojo-event-notice-card.type-abyss_low::before{
+  background:
+    radial-gradient(circle at 84% 20%,rgba(255,255,255,.22) 0 7%,transparent 8%),
+    linear-gradient(135deg,#f97316 0%,#b45309 44%,#431407 100%);
+}
+.kinojo-event-notice-card.type-abyss_middle::before{
+  background:
+    radial-gradient(circle at 84% 20%,rgba(219,234,254,.30) 0 7%,transparent 8%),
+    linear-gradient(135deg,#2563eb 0%,#4338ca 42%,#1e1b4b 100%);
+}
+.kinojo-event-notice-card.type-rift::before{
+  background:
+    radial-gradient(circle at 84% 20%,rgba(245,208,254,.30) 0 7%,transparent 8%),
+    linear-gradient(135deg,#06b6d4 0%,#7c3aed 48%,#312e81 100%);
+}
+.kinojo-event-notice-card.type-abyss_boss::before{
+  background:
+    radial-gradient(circle at 84% 20%,rgba(254,226,226,.28) 0 7%,transparent 8%),
+    linear-gradient(135deg,#dc2626 0%,#991b1b 46%,#450a0a 100%);
+}
+.kinojo-event-notice-card.type-event::before{
+  background:
+    radial-gradient(circle at 84% 20%,rgba(204,251,241,.28) 0 7%,transparent 8%),
+    linear-gradient(135deg,#14b8a6 0%,#0f766e 42%,#042f2e 100%);
+}
+.kinojo-event-notice-card.type-custom::before{
+  background:
+    radial-gradient(circle at 84% 20%,rgba(226,232,240,.28) 0 7%,transparent 8%),
+    linear-gradient(135deg,#475569 0%,#334155 44%,#020617 100%);
+}
+.kinojo-event-notice-card.type-abyss_low .kinojo-event-notice-label{border-color:rgba(254,215,170,.55);background:rgba(251,146,60,.24)}
+.kinojo-event-notice-card.type-abyss_middle .kinojo-event-notice-label{border-color:rgba(191,219,254,.55);background:rgba(59,130,246,.24)}
+.kinojo-event-notice-card.type-rift .kinojo-event-notice-label{border-color:rgba(216,180,254,.55);background:rgba(168,85,247,.24)}
+.kinojo-event-notice-card.type-abyss_boss .kinojo-event-notice-label{border-color:rgba(254,202,202,.58);background:rgba(220,38,38,.24)}
+@media(max-width:720px){
+  .kinojo-event-notice-icon{right:112px;top:11px;min-width:48px;height:22px;font-size:9px}
+}
+
+/* 20260704_17 STEP 3-3 gold wide image banner redesign
+   원칙: 기존 이벤트 공지 컴포넌트 수정 / 신규 엔진 생성 없음 */
+.kinojo-event-notice-group{
+  border:1px solid rgba(212,175,86,.62);
+  background:linear-gradient(180deg,rgba(16,14,10,.96),rgba(8,7,5,.98));
+  box-shadow:0 30px 92px rgba(0,0,0,.48),0 0 0 1px rgba(255,255,255,.06) inset;
+}
+.kinojo-event-notice-head{
+  background:linear-gradient(180deg,rgba(33,26,12,.96),rgba(14,12,8,.96));
+  border-bottom:1px solid rgba(212,175,86,.35);
+}
+.kinojo-event-notice-head span{color:#d9b766;text-shadow:0 0 14px rgba(212,175,86,.22)}
+.kinojo-event-notice-head strong{color:#fff8e7;text-shadow:0 3px 18px rgba(0,0,0,.42)}
+.kinojo-event-notice-count{border-color:rgba(212,175,86,.42);background:rgba(212,175,86,.12);color:#f6d77d}
+.kinojo-event-notice-cards{gap:9px;background:linear-gradient(180deg,rgba(8,7,5,.98),rgba(10,9,7,.98))}
+.kinojo-event-notice-card{
+  min-height:130px;
+  border-radius:6px 18px 6px 18px;
+  background:#080705;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.08),
+    inset 0 0 0 2px rgba(212,175,86,.22),
+    0 12px 30px rgba(0,0,0,.28);
+}
+.kinojo-event-notice-card::before{
+  content:"";
+  position:absolute;
+  inset:0 0 0 auto;
+  width:72%;
+  z-index:-3;
+  background-repeat:no-repeat;
+  background-position:right center;
+  background-size:auto 100%;
+  opacity:.94;
+  filter:saturate(1.08) contrast(1.03);
+}
+.kinojo-event-notice-card::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  background:
+    linear-gradient(90deg,
+      rgba(8,7,5,.98) 0%,
+      rgba(32,25,11,.96) 19%,
+      rgba(101,72,22,.72) 34%,
+      rgba(8,7,5,.18) 58%,
+      rgba(8,7,5,.38) 78%,
+      rgba(8,7,5,.82) 100%),
+    radial-gradient(circle at 16% 50%,rgba(212,175,86,.20),rgba(212,175,86,0) 28%),
+    linear-gradient(180deg,rgba(255,248,222,.10),rgba(0,0,0,.12) 48%,rgba(0,0,0,.35));
+}
+.kinojo-event-notice-card.type-abyss_low::before{background-image:url('../assets/event-notice/abyss-low.webp')}
+.kinojo-event-notice-card.type-abyss_middle::before{background-image:url('../assets/event-notice/abyss-middle.webp')}
+.kinojo-event-notice-card.type-abyss_boss::before{background-image:url('../assets/event-notice/abyss-boss.webp')}
+.kinojo-event-notice-card.type-rift::before{background-image:url('../assets/event-notice/rift.webp')}
+.kinojo-event-notice-card.type-event::before,
+.kinojo-event-notice-card.type-custom::before{background:linear-gradient(135deg,#2b2111,#111827)}
+.kinojo-event-notice-card .kinojo-event-notice-glow{
+  inset:0 auto 0 0;
+  width:34%;
+  height:100%;
+  border-radius:0;
+  background:
+    linear-gradient(90deg,rgba(212,175,86,.16),rgba(212,175,86,0)),
+    radial-gradient(circle at 23% 49%,rgba(255,243,183,.20),rgba(255,243,183,0) 34%);
+}
+.kinojo-event-notice-card .kinojo-event-notice-glow::before{
+  content:"";
+  position:absolute;
+  left:24px;
+  top:50%;
+  width:70px;
+  height:70px;
+  transform:translateY(-50%);
+  border:1px solid rgba(212,175,86,.52);
+  border-radius:999px;
+  background:radial-gradient(circle,rgba(212,175,86,.20),rgba(8,7,5,.40) 62%,rgba(8,7,5,.65));
+  box-shadow:0 0 0 8px rgba(212,175,86,.045),0 0 22px rgba(212,175,86,.18);
+}
+.kinojo-event-notice-icon{
+  left:44px;
+  right:auto;
+  top:50%;
+  width:32px;
+  min-width:32px;
+  height:32px;
+  transform:translateY(-50%);
+  border:0;
+  background:transparent;
+  color:#f5d37a;
+  font-size:0;
+  box-shadow:none;
+}
+.kinojo-event-notice-icon::before{
+  content:"◆";
+  font-size:26px;
+  line-height:1;
+  text-shadow:0 0 18px rgba(212,175,86,.45),0 2px 8px rgba(0,0,0,.50);
+}
+.kinojo-event-notice-card.type-rift .kinojo-event-notice-icon::before{content:"◎"}
+.kinojo-event-notice-card.type-abyss_boss .kinojo-event-notice-icon::before{content:"♛"}
+.kinojo-event-notice-copy{
+  left:112px;
+  right:178px;
+  gap:7px;
+}
+.kinojo-event-notice-label{
+  border-color:rgba(212,175,86,.72)!important;
+  background:rgba(16,14,10,.72)!important;
+  color:#f4d57d;
+  box-shadow:0 0 0 1px rgba(255,255,255,.04) inset,0 6px 18px rgba(0,0,0,.18);
+}
+.kinojo-event-notice-title{
+  color:#fffaf0;
+  font-size:31px;
+  letter-spacing:-.055em;
+  text-shadow:0 3px 18px rgba(0,0,0,.65),0 0 18px rgba(212,175,86,.12);
+}
+.kinojo-event-notice-desc{
+  color:#f3e7c8;
+  font-size:15px;
+  font-weight:900;
+  text-shadow:0 2px 12px rgba(0,0,0,.55);
+}
+.kinojo-event-notice-timebox{
+  right:24px;
+  bottom:18px;
+  gap:5px;
+}
+.kinojo-event-notice-timebox time{
+  color:#fffaf0;
+  font-size:56px;
+  font-family:Georgia,'Times New Roman',serif;
+  font-weight:900;
+  letter-spacing:-.03em;
+  text-shadow:0 4px 18px rgba(0,0,0,.74),0 0 18px rgba(212,175,86,.16);
+}
+.kinojo-event-notice-timebox b{
+  border-color:rgba(212,175,86,.36);
+  background:rgba(28,22,10,.70);
+  color:#f3d27a;
+  font-size:13px;
+  box-shadow:0 5px 16px rgba(0,0,0,.20);
+}
+.kinojo-event-notice-date{color:rgba(255,250,235,.78)}
+.kinojo-event-notice-actions{
+  border-top:1px solid rgba(212,175,86,.28);
+  background:linear-gradient(180deg,rgba(13,12,9,.98),rgba(8,7,5,.99));
+}
+.kinojo-event-notice-actions button{
+  border-color:rgba(212,175,86,.46);
+  background:rgba(255,255,255,.06);
+  color:#fff8e7;
+}
+.kinojo-event-notice-actions button:hover{background:rgba(212,175,86,.13);box-shadow:0 10px 20px rgba(0,0,0,.20)}
+.kinojo-event-notice-actions .close{background:linear-gradient(180deg,#d7b76b,#a77a28);border-color:#e8c979;color:#111}
+.kinojo-event-notice-actions .close:hover{background:linear-gradient(180deg,#f0d48c,#b9872e)}
+@media(max-width:720px){
+  .kinojo-event-notice-card{min-height:100px;border-radius:5px 16px 5px 16px}
+  .kinojo-event-notice-card::before{width:78%;background-size:auto 100%}
+  .kinojo-event-notice-card::after{
+    background:
+      linear-gradient(90deg,rgba(8,7,5,.98) 0%,rgba(39,29,12,.96) 33%,rgba(8,7,5,.14) 61%,rgba(8,7,5,.76) 100%),
+      radial-gradient(circle at 13% 50%,rgba(212,175,86,.17),rgba(212,175,86,0) 25%);
+  }
+  .kinojo-event-notice-card .kinojo-event-notice-glow::before{left:13px;width:46px;height:46px}
+  .kinojo-event-notice-icon{left:24px;width:24px;min-width:24px;height:24px}
+  .kinojo-event-notice-icon::before{font-size:20px}
+  .kinojo-event-notice-copy{left:68px;right:116px;gap:4px}
+  .kinojo-event-notice-label{font-size:9px;padding:3px 7px}
+  .kinojo-event-notice-title{font-size:19px;line-height:1.06}
+  .kinojo-event-notice-desc{font-size:11px;-webkit-line-clamp:1}
+  .kinojo-event-notice-timebox{right:13px;bottom:12px;gap:3px}
+  .kinojo-event-notice-timebox time{font-size:36px}
+  .kinojo-event-notice-timebox b{font-size:10px;padding:3px 7px}
+}
+@media(max-width:380px){
+  .kinojo-event-notice-copy{left:62px;right:104px}
+  .kinojo-event-notice-title{font-size:17px}
+  .kinojo-event-notice-timebox time{font-size:32px}
 }

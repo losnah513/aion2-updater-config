@@ -3,7 +3,7 @@ KINOJO Event Notice Popup
 기능 : 사용자 페이지 진입 이벤트 공지 팝업 공통 로더
 정리일 : 2026-07-04
 규칙 : 공지 묶음별 오늘 하루 그만보기 분리
-STEP : 3-1 사용자 팝업 UI 최종 디자인
+STEP : 3-3 골드 와이드 이미지 배너
 =========================================================== */
 (function(){
   'use strict';
@@ -58,20 +58,28 @@ STEP : 3-1 사용자 팝업 UI 최종 디자인
   function markDismissed(group){ safeSet(localStorage, dismissKey(group), '1'); }
   function markClosed(group){ safeSet(sessionStorage, closeKey(group), '1'); }
 
-  function typeLabel(type){
+  function typeMeta(type){
     const t = normalizeType(type);
     return ({
-      abyss_low:'어비스 하층',
-      abyss_middle:'어비스 중층',
-      rift:'시공',
-      abyss_boss:'어비스 보스',
-      event:'이벤트',
-      custom:'공지'
-    })[t] || '공지';
+      abyss_low:{ label:'어비스 하층', icon:'◆', tone:'gold' },
+      abyss_middle:{ label:'어비스 중층', icon:'◆', tone:'gold' },
+      rift:{ label:'시공', icon:'◎', tone:'gold' },
+      abyss_boss:{ label:'어비스 보스', icon:'♛', tone:'gold' },
+      event:{ label:'이벤트', icon:'◆', tone:'gold' },
+      custom:{ label:'공지', icon:'◆', tone:'gold' }
+    })[t] || { label:'공지', icon:'INFO', tone:'slate' };
+  }
+
+  function typeLabel(type){
+    return typeMeta(type).label;
   }
 
   function labelOf(item){
     return item?.noticeTypeLabel || item?.notice_type_label || typeLabel(item?.noticeType || item?.notice_type);
+  }
+
+  function iconOf(item){
+    return item?.noticeTypeIcon || item?.notice_type_icon || typeMeta(item?.noticeType || item?.notice_type).icon;
   }
 
   function timeOf(item){
@@ -108,11 +116,13 @@ STEP : 3-1 사용자 팝업 UI 최종 디자인
     const date = dateOf(item);
     const time = timeOf(item);
     const relative = relativeText(item);
-    return '<article class="kinojo-event-notice-card type-'+esc(type)+'">'
+    const label = labelOf(item);
+    return '<article class="kinojo-event-notice-card type-'+esc(type)+'" data-event-notice-theme="'+esc(type)+'">'
       + '<span class="kinojo-event-notice-glow" aria-hidden="true"></span>'
+      + '<span class="kinojo-event-notice-icon" aria-hidden="true">'+esc(iconOf(item))+'</span>'
       + '<div class="kinojo-event-notice-copy">'
-      + '<span class="kinojo-event-notice-label">'+esc(labelOf(item))+'</span>'
-      + '<strong class="kinojo-event-notice-title">'+esc(item?.title || labelOf(item))+'</strong>'
+      + '<span class="kinojo-event-notice-label">'+esc(label)+'</span>'
+      + '<strong class="kinojo-event-notice-title">'+esc(item?.title || label)+'</strong>'
       + '<span class="kinojo-event-notice-desc">'+esc(item?.description || '')+'</span>'
       + '</div>'
       + '<div class="kinojo-event-notice-timebox"><time>'+esc(time)+'</time>'
@@ -192,7 +202,6 @@ STEP : 3-1 사용자 팝업 UI 최종 디자인
     const onKey = function(e){
       if(e.key !== 'Escape') return;
       groups.forEach(markClosed);
-      root.classList.add('is-hiding');
       root.classList.add('is-hiding');
       root.classList.remove('is-visible');
       window.setTimeout(() => root.remove(), 220);
