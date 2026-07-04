@@ -2,25 +2,257 @@
 KINOJO Event Notice Popup
 기능 : 사용자 페이지 진입 이벤트 공지 팝업 공통 UI
 정리일 : 2026-07-04
-STEP : 2-5 운영 전 안정화
+STEP : 3-1 사용자 팝업 UI 최종 디자인
 =========================================================== */
-.kinojo-event-notice-root{position:fixed;inset:0;z-index:120;display:none;align-items:center;justify-content:center;padding:28px;background:rgba(15,23,42,.46);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.kinojo-event-notice-root.is-visible{display:flex;animation:kinojoEventOverlayIn .18s ease-out both}
-.kinojo-event-notice-stack{width:min(620px,calc(100vw - 32px));max-height:min(82vh,860px);overflow:auto;display:grid;gap:14px;padding:8px 4px;overscroll-behavior:contain}
-.kinojo-event-notice-group{border:1px solid rgba(255,255,255,.7);border-radius:24px;background:rgba(255,255,255,.92);box-shadow:0 26px 80px rgba(15,23,42,.25);overflow:hidden;animation:kinojoEventGroupIn .22s ease-out both}
-.kinojo-event-notice-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px 18px 10px;background:linear-gradient(180deg,#ffffff,#f8fbff)}
-.kinojo-event-notice-head span{display:block;font-size:11px;letter-spacing:.18em;font-weight:1000;color:#2563eb;text-transform:uppercase}.kinojo-event-notice-head strong{display:block;margin-top:2px;font-size:20px;font-weight:1000;color:#0f172a}.kinojo-event-notice-count{flex:0 0 auto;border:1px solid #dbeafe;border-radius:999px;padding:6px 9px;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:1000}
-.kinojo-event-notice-cards{display:grid;gap:8px;padding:0 14px 14px}
-.kinojo-event-notice-card{position:relative;min-height:92px;aspect-ratio:12/3;border-radius:18px;overflow:hidden;color:#fff;background:#1e293b;isolation:isolate;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
-.kinojo-event-notice-card::before{content:"";position:absolute;inset:0;z-index:-2;background:linear-gradient(135deg,#1e40af,#7c3aed)}
-.kinojo-event-notice-card::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(2,6,23,.74),rgba(2,6,23,.26) 48%,rgba(2,6,23,.75));}
+.kinojo-event-notice-root{
+  position:fixed;
+  inset:0;
+  z-index:120;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:28px;
+  background:rgba(15,23,42,.50);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+.kinojo-event-notice-root.is-visible{display:flex;animation:kinojoEventOverlayIn .22s ease-out both}
+.kinojo-event-notice-root.is-hiding{animation:kinojoEventOverlayOut .18s ease-in both}
+.kinojo-event-notice-stack{
+  width:min(680px,calc(100vw - 32px));
+  max-height:min(84vh,880px);
+  overflow:auto;
+  display:grid;
+  gap:16px;
+  padding:10px 5px;
+  overscroll-behavior:contain;
+}
+.kinojo-event-notice-group{
+  border:1px solid rgba(255,255,255,.78);
+  border-radius:26px;
+  background:rgba(255,255,255,.94);
+  box-shadow:0 28px 84px rgba(15,23,42,.30);
+  overflow:hidden;
+  animation:kinojoEventGroupIn .26s cubic-bezier(.2,.8,.2,1) both;
+}
+.kinojo-event-notice-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding:17px 20px 11px;
+  background:linear-gradient(180deg,#ffffff,#f7fbff);
+}
+.kinojo-event-notice-head span{
+  display:block;
+  font-size:11px;
+  letter-spacing:.18em;
+  font-weight:1000;
+  color:#2563eb;
+  text-transform:uppercase;
+}
+.kinojo-event-notice-head strong{
+  display:block;
+  margin-top:2px;
+  font-size:21px;
+  font-weight:1000;
+  color:#0f172a;
+  line-height:1.08;
+  word-break:keep-all;
+}
+.kinojo-event-notice-count{
+  flex:0 0 auto;
+  border:1px solid #dbeafe;
+  border-radius:999px;
+  padding:6px 10px;
+  background:#eff6ff;
+  color:#1d4ed8;
+  font-size:12px;
+  font-weight:1000;
+}
+.kinojo-event-notice-cards{
+  display:grid;
+  gap:10px;
+  padding:0 16px 16px;
+}
+.kinojo-event-notice-card{
+  position:relative;
+  min-height:118px;
+  aspect-ratio:12/3;
+  border-radius:20px;
+  overflow:hidden;
+  color:#fff;
+  background:#1e293b;
+  isolation:isolate;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.20),0 14px 28px rgba(15,23,42,.16);
+  transform:translateZ(0);
+}
+.kinojo-event-notice-card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-3;
+  background:linear-gradient(135deg,#1e40af,#7c3aed);
+  background-size:cover;
+  background-position:center;
+}
+.kinojo-event-notice-card::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  background:
+    linear-gradient(90deg,rgba(2,6,23,.78),rgba(2,6,23,.32) 48%,rgba(2,6,23,.70)),
+    linear-gradient(0deg,rgba(2,6,23,.40),rgba(2,6,23,.05) 42%,rgba(255,255,255,.08));
+}
+.kinojo-event-notice-card .kinojo-event-notice-glow{
+  position:absolute;
+  inset:auto -8% -34% auto;
+  width:54%;
+  height:96%;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.22),rgba(255,255,255,0) 68%);
+  z-index:-2;
+  pointer-events:none;
+}
 .kinojo-event-notice-card.type-abyss_low::before{background:radial-gradient(circle at 20% 20%,#fef3c7 0,#f97316 30%,#7c2d12 72%)}
 .kinojo-event-notice-card.type-abyss_middle::before{background:radial-gradient(circle at 18% 24%,#dbeafe 0,#2563eb 34%,#1e1b4b 78%)}
 .kinojo-event-notice-card.type-rift::before{background:radial-gradient(circle at 22% 20%,#f5d0fe 0,#a855f7 34%,#312e81 78%)}
 .kinojo-event-notice-card.type-abyss_boss::before{background:radial-gradient(circle at 20% 22%,#fee2e2 0,#dc2626 34%,#450a0a 78%)}
 .kinojo-event-notice-card.type-event::before,.kinojo-event-notice-card.type-custom::before{background:radial-gradient(circle at 20% 22%,#ccfbf1 0,#0f766e 34%,#042f2e 78%)}
-.kinojo-event-notice-copy{position:absolute;left:18px;top:50%;transform:translateY(-50%);right:132px;display:grid;gap:4px}.kinojo-event-notice-label{display:inline-flex;width:max-content;border:1px solid rgba(255,255,255,.38);border-radius:999px;padding:3px 8px;background:rgba(255,255,255,.16);font-size:11px;font-weight:1000;letter-spacing:.06em}.kinojo-event-notice-title{font-size:20px;font-weight:1000;line-height:1.08;text-shadow:0 2px 10px rgba(0,0,0,.24);word-break:keep-all}.kinojo-event-notice-desc{font-size:12px;font-weight:800;color:rgba(255,255,255,.86);line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.kinojo-event-notice-timebox{position:absolute;right:18px;bottom:13px;text-align:right;display:grid;gap:1px}.kinojo-event-notice-timebox time{font-size:34px;line-height:.9;font-weight:1000;letter-spacing:-.05em;text-shadow:0 3px 14px rgba(0,0,0,.34)}.kinojo-event-notice-timebox b{font-size:11px;line-height:1.1;font-weight:1000;color:rgba(255,255,255,.94);text-shadow:0 2px 10px rgba(0,0,0,.3)}.kinojo-event-notice-date{font-size:11px;font-weight:900;color:rgba(255,255,255,.8)}
-.kinojo-event-notice-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 14px 14px;border-top:1px solid #e5e7eb;background:#fff}.kinojo-event-notice-actions button{height:42px;border-radius:14px;border:1px solid #dbeafe;background:#f8fbff;color:#1e3a8a;font-weight:1000;cursor:pointer}.kinojo-event-notice-actions button:hover{transform:translateY(-1px);background:#eff6ff}.kinojo-event-notice-actions .close{background:#111827;border-color:#111827;color:#fff}
-@keyframes kinojoEventOverlayIn{from{opacity:0}to{opacity:1}}@keyframes kinojoEventGroupIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
-@media(max-width:720px){.kinojo-event-notice-root{align-items:flex-end;padding:14px 10px max(14px,env(safe-area-inset-bottom))}.kinojo-event-notice-stack{width:100%;max-height:86vh;gap:10px;padding:4px}.kinojo-event-notice-group{border-radius:22px}.kinojo-event-notice-head{padding:14px 14px 9px}.kinojo-event-notice-head strong{font-size:18px}.kinojo-event-notice-cards{padding:0 10px 10px}.kinojo-event-notice-card{min-height:88px;aspect-ratio:auto}.kinojo-event-notice-copy{left:14px;right:118px}.kinojo-event-notice-title{font-size:17px}.kinojo-event-notice-desc{font-size:11px;-webkit-line-clamp:1}.kinojo-event-notice-timebox{right:14px;bottom:12px}.kinojo-event-notice-timebox time{font-size:30px}.kinojo-event-notice-timebox b{font-size:10px}.kinojo-event-notice-actions{position:sticky;bottom:0;padding:10px;grid-template-columns:1fr 1fr}.kinojo-event-notice-actions button{height:44px}}
+.kinojo-event-notice-copy{
+  position:absolute;
+  left:20px;
+  top:50%;
+  transform:translateY(-50%);
+  right:178px;
+  display:grid;
+  gap:5px;
+  min-width:0;
+}
+.kinojo-event-notice-label{
+  display:inline-flex;
+  width:max-content;
+  max-width:100%;
+  border:1px solid rgba(255,255,255,.42);
+  border-radius:999px;
+  padding:4px 10px;
+  background:rgba(255,255,255,.18);
+  font-size:11px;
+  font-weight:1000;
+  letter-spacing:.06em;
+  box-shadow:0 4px 12px rgba(0,0,0,.12);
+}
+.kinojo-event-notice-title{
+  font-size:24px;
+  font-weight:1000;
+  line-height:1.05;
+  letter-spacing:-.04em;
+  text-shadow:0 3px 14px rgba(0,0,0,.30);
+  word-break:keep-all;
+  overflow:hidden;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+}
+.kinojo-event-notice-desc{
+  font-size:13px;
+  font-weight:800;
+  color:rgba(255,255,255,.88);
+  line-height:1.28;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  text-shadow:0 2px 9px rgba(0,0,0,.20);
+}
+.kinojo-event-notice-timebox{
+  position:absolute;
+  right:20px;
+  bottom:16px;
+  text-align:right;
+  display:grid;
+  justify-items:end;
+  gap:2px;
+}
+.kinojo-event-notice-timebox time{
+  display:block;
+  font-size:48px;
+  line-height:.85;
+  font-weight:1000;
+  letter-spacing:-.07em;
+  text-shadow:0 4px 18px rgba(0,0,0,.42);
+}
+.kinojo-event-notice-timebox b{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:20px;
+  border-radius:999px;
+  padding:3px 8px;
+  background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.28);
+  font-size:12px;
+  line-height:1.05;
+  font-weight:1000;
+  color:rgba(255,255,255,.96);
+  text-shadow:0 2px 10px rgba(0,0,0,.32);
+}
+.kinojo-event-notice-date{
+  font-size:11px;
+  font-weight:900;
+  color:rgba(255,255,255,.78);
+  text-shadow:0 2px 8px rgba(0,0,0,.30);
+}
+.kinojo-event-notice-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  padding:13px 16px 16px;
+  border-top:1px solid #e5e7eb;
+  background:#fff;
+}
+.kinojo-event-notice-actions button{
+  height:44px;
+  border-radius:14px;
+  border:1px solid #dbeafe;
+  background:#f8fbff;
+  color:#1e3a8a;
+  font-weight:1000;
+  cursor:pointer;
+  transition:transform .16s ease,background .16s ease,box-shadow .16s ease;
+}
+.kinojo-event-notice-actions button:hover{
+  transform:translateY(-1px);
+  background:#eff6ff;
+  box-shadow:0 8px 16px rgba(30,64,175,.10);
+}
+.kinojo-event-notice-actions .close{background:#111827;border-color:#111827;color:#fff}
+.kinojo-event-notice-actions .close:hover{background:#020617}
+@keyframes kinojoEventOverlayIn{from{opacity:0}to{opacity:1}}
+@keyframes kinojoEventOverlayOut{from{opacity:1}to{opacity:0}}
+@keyframes kinojoEventGroupIn{from{opacity:0;transform:translateY(14px) scale(.982)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:720px){
+  .kinojo-event-notice-root{align-items:flex-end;padding:14px 10px max(14px,env(safe-area-inset-bottom))}
+  .kinojo-event-notice-stack{width:100%;max-height:86vh;gap:12px;padding:4px}
+  .kinojo-event-notice-group{border-radius:22px}
+  .kinojo-event-notice-head{padding:14px 14px 10px}
+  .kinojo-event-notice-head strong{font-size:18px}
+  .kinojo-event-notice-cards{padding:0 10px 10px;gap:9px}
+  .kinojo-event-notice-card{min-height:100px;aspect-ratio:auto;border-radius:18px}
+  .kinojo-event-notice-copy{left:14px;right:138px;gap:4px}
+  .kinojo-event-notice-label{font-size:10px;padding:3px 8px}
+  .kinojo-event-notice-title{font-size:18px;-webkit-line-clamp:2}
+  .kinojo-event-notice-desc{font-size:11px;-webkit-line-clamp:1}
+  .kinojo-event-notice-timebox{right:14px;bottom:13px}
+  .kinojo-event-notice-timebox time{font-size:38px}
+  .kinojo-event-notice-timebox b{font-size:10px;min-height:18px;padding:3px 7px}
+  .kinojo-event-notice-date{font-size:10px}
+  .kinojo-event-notice-actions{position:sticky;bottom:0;padding:10px;grid-template-columns:1fr 1fr}
+  .kinojo-event-notice-actions button{height:46px;border-radius:14px}
+}
+@media(max-width:380px){
+  .kinojo-event-notice-copy{right:124px}
+  .kinojo-event-notice-title{font-size:17px}
+  .kinojo-event-notice-timebox time{font-size:34px}
+}

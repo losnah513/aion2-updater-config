@@ -3,7 +3,7 @@ KINOJO Event Notice Popup
 기능 : 사용자 페이지 진입 이벤트 공지 팝업 공통 로더
 정리일 : 2026-07-04
 규칙 : 공지 묶음별 오늘 하루 그만보기 분리
-STEP : 2-5 운영 전 안정화
+STEP : 3-1 사용자 팝업 UI 최종 디자인
 =========================================================== */
 (function(){
   'use strict';
@@ -109,6 +109,7 @@ STEP : 2-5 운영 전 안정화
     const time = timeOf(item);
     const relative = relativeText(item);
     return '<article class="kinojo-event-notice-card type-'+esc(type)+'">'
+      + '<span class="kinojo-event-notice-glow" aria-hidden="true"></span>'
       + '<div class="kinojo-event-notice-copy">'
       + '<span class="kinojo-event-notice-label">'+esc(labelOf(item))+'</span>'
       + '<strong class="kinojo-event-notice-title">'+esc(item?.title || labelOf(item))+'</strong>'
@@ -140,6 +141,7 @@ STEP : 2-5 운영 전 안정화
     const card = root.querySelector(selector);
     if(card) card.remove();
     if(!root.querySelector('[data-event-notice-group]')){
+      root.classList.add('is-hiding');
       root.classList.remove('is-visible');
       window.setTimeout(() => root.remove(), 220);
     }
@@ -190,6 +192,8 @@ STEP : 2-5 운영 전 안정화
     const onKey = function(e){
       if(e.key !== 'Escape') return;
       groups.forEach(markClosed);
+      root.classList.add('is-hiding');
+      root.classList.add('is-hiding');
       root.classList.remove('is-visible');
       window.setTimeout(() => root.remove(), 220);
       document.removeEventListener('keydown', onKey);
