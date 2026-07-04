@@ -289,14 +289,34 @@
       items:Array.isArray(g.items)?g.items:[]
     };
   }
+  function eventNoticeTypeMeta(value){
+    return EVENT_NOTICE_TYPES.find(t=>t.value===String(value||'')) || EVENT_NOTICE_TYPES[0];
+  }
+  function formatEventNoticeDateRange(g){
+    const items=Array.isArray(g.items)?g.items:[];
+    const dates=items.map(it=>it.eventAt||it.event_at||'').filter(Boolean).sort();
+    if(!dates.length) return '일정 없음';
+    const first=formatEventDateTime(dates[0]);
+    const last=formatEventDateTime(dates[dates.length-1]);
+    return first===last ? first : first+' ~ '+last;
+  }
   function renderEventNoticeGroups(groups){
     const root=$('#eventNoticeList'); if(!root)return;
     if(!groups.length){ root.innerHTML='<div class="admin-empty">이벤트 공지 묶음이 없습니다.</div>'; return; }
     root.innerHTML=groups.map(raw=>{
       const g=normalizeEventNoticeGroup(raw);
       const pillClass=eventNoticePillClass(g.status);
-      const firstItems=(g.items||[]).slice(0,4).map(item=>esc(item.noticeTypeLabel||item.notice_type_label||item.noticeType||item.notice_type||'공지')).join(' · ');
-      return '<article class="admin-row admin-event-notice-row" data-event-notice-id="'+esc(g.id)+'"><div class="admin-row-main"><strong>'+esc(g.title)+'</strong><span>카드 '+g.itemCount+'개 · 다음 일정 '+esc(formatEventDateTime(g.nextEventAt))+' · v'+g.popupVersion+'</span>'+(firstItems?'<span class="admin-event-notice-types">'+firstItems+'</span>':'')+'</div><div class="admin-row-actions"><span class="admin-pill '+pillClass+'">'+esc(eventNoticeStatusLabel(g.status))+'</span><button class="admin-btn" type="button" data-event-notice-edit>수정</button><button class="admin-btn danger" type="button" data-event-notice-delete>삭제</button></div></article>';
+      const types=(g.items||[]).slice(0,4).map(item=>{
+        const type=item.noticeType||item.notice_type;
+        const meta=eventNoticeTypeMeta(type);
+        return '<span>'+esc(meta.label)+'</span>';
+      }).join('');
+      return '<article class="admin-event-notice-entry" data-event-notice-id="'+esc(g.id)+'">'+
+        '<div class="admin-event-notice-entry-top"><span class="admin-pill '+pillClass+'">'+esc(eventNoticeStatusLabel(g.status))+'</span><strong>'+esc(g.title)+'</strong></div>'+
+        '<div class="admin-event-notice-entry-meta"><span>카드 '+g.itemCount+'개</span><span>'+esc(formatEventNoticeDateRange(g))+'</span><span>v'+g.popupVersion+'</span></div>'+ 
+        (types?'<div class="admin-event-notice-type-list">'+types+'</div>':'')+
+        '<div class="admin-event-notice-entry-actions"><button class="admin-btn" type="button" data-event-notice-preview>미리보기</button><button class="admin-btn" type="button" data-event-notice-edit>수정</button><button class="admin-btn" type="button" data-event-notice-duplicate>복제</button><button class="admin-btn danger" type="button" data-event-notice-delete>삭제</button></div>'+ 
+      '</article>';
     }).join('');
   }
   async function loadEventNoticeGroups(){
@@ -328,7 +348,7 @@
     const title=item?.title || item?.mainText || '';
     const description=item?.description || item?.bodyText || '';
     return '<article class="admin-event-editor-card" data-event-notice-card>'+
-      '<div class="admin-event-card-head"><strong>공지 카드 '+(index+1)+'</strong><button class="admin-btn danger" type="button" data-event-card-remove '+(index===0?'disabled':'')+'>삭제</button></div>'+
+      '<div class="admin-event-card-head"><strong>공지 카드 '+(index+1)+'</strong><div class="admin-event-card-actions"><button class="admin-btn" type="button" data-event-card-up>↑</button><button class="admin-btn" type="button" data-event-card-down>↓</button><button class="admin-btn danger" type="button" data-event-card-remove '+(index===0?'disabled':'')+'>삭제</button></div></div>'+
       '<div class="admin-event-card-grid">'+
         '<label>공지 종류<select class="admin-select" data-event-field="noticeType">'+eventNoticeTypeOptions(type)+'</select></label>'+
         '<label>날짜<input class="admin-input" type="date" data-event-field="eventDate" value="'+esc(date)+'"/></label>'+
@@ -347,6 +367,8 @@
     cards.forEach((card,idx)=>{
       const strong=card.querySelector('.admin-event-card-head strong'); if(strong) strong.textContent='공지 카드 '+(idx+1);
       const remove=card.querySelector('[data-event-card-remove]'); if(remove) remove.disabled=cards.length<=1;
+      const up=card.querySelector('[data-event-card-up]'); if(up) up.disabled=idx===0;
+      const down=card.querySelector('[data-event-card-down]'); if(down) down.disabled=idx===cards.length-1;
     });
     const add=$('#eventNoticeAddCardBtn'); if(add) add.disabled=cards.length>=4;
     const count=$('#eventNoticeEditorCount'); if(count) count.textContent='카드 '+cards.length+'/4';
@@ -387,6 +409,49 @@
     const group=getEventNoticeGroupById(id);
     if(!group){ setStatus('#eventNoticeStatus','수정할 이벤트 공지 묶음을 찾지 못했습니다. 목록을 새로고침해 주세요.','error'); return; }
     openEventNoticeEditor(group);
+  }
+  function normalizeEventNoticeItemForPreview(item){
+    const type=item?.noticeType || item?.notice_type || 'event';
+    const meta=eventNoticeTypeMeta(type);
+    const eventAt=item?.eventAt || item?.event_at || '';
+    const date=item?.eventDate || item?.event_date || (eventAt ? String(eventAt).slice(0,10) : '');
+    const time=item?.eventTime || item?.event_time || ((String(eventAt).match(/T(\d{2}:\d{2})/)||[])[1]) || '';
+    return { type, label:meta.label, title:item?.title || item?.mainText || '이벤트 공지', description:item?.description || item?.bodyText || '', date, time };
+  }
+  function renderEventNoticePreviewBlock(group){
+    const g=group ? normalizeEventNoticeGroup(group) : normalizeEventNoticeGroup(collectEventNoticeEditorPayload());
+    const items=(g.items||[]).slice(0,4).map(normalizeEventNoticeItemForPreview);
+    const cards=items.map(item=>'<article class="kinojo-event-preview-card type-'+esc(item.type)+'"><div><strong>'+esc(item.label)+'</strong><b>'+esc(item.title)+'</b><span>'+esc(item.description||'')+'</span></div><time>'+esc(item.time||'--:--')+'</time></article>').join('');
+    return '<div class="kinojo-event-preview-wrap"><header><span>EVENT NOTICE</span><strong>'+esc(g.title||'이벤트 공지')+'</strong></header><div class="kinojo-event-preview-cards">'+cards+'</div><footer><button type="button">오늘 하루 그만보기</button><button type="button">닫기</button></footer></div>';
+  }
+  function openEventNoticePreview(group){
+    const modal=$('#eventNoticePreviewModal'); const body=$('#eventNoticePreviewBody'); if(!modal||!body)return;
+    body.innerHTML=renderEventNoticePreviewBlock(group);
+    modal.classList.add('active'); modal.setAttribute('aria-hidden','false');
+  }
+  function closeEventNoticePreview(){
+    const modal=$('#eventNoticePreviewModal'); if(!modal)return;
+    modal.classList.remove('active'); modal.setAttribute('aria-hidden','true');
+  }
+  function duplicateEventNoticeGroup(id){
+    const group=getEventNoticeGroupById(id);
+    if(!group){ setStatus('#eventNoticeStatus','복제할 이벤트 공지 묶음을 찾지 못했습니다.','error'); return; }
+    const clone=Object.assign({}, group, { id:null, title:(group.title||'이벤트 공지')+' 복사본', rawStatus:'draft', status:'DRAFT' });
+    clone.items=(group.items||[]).map((item,idx)=>Object.assign({}, item, { id:null, displayOrder:idx+1, display_order:idx+1 }));
+    openEventNoticeEditor(clone);
+    setStatus('#eventNoticeEditorStatus','복제본입니다. 날짜와 문구를 확인한 뒤 저장하세요.','');
+  }
+  async function deleteEventNoticeGroup(id){
+    const group=getEventNoticeGroupById(id);
+    if(!group){ setStatus('#eventNoticeStatus','삭제할 이벤트 공지 묶음을 찾지 못했습니다.','error'); return; }
+    if(!confirm('이벤트 공지 묶음 "'+(group.title||'')+'"을 삭제 처리할까요?')) return;
+    setStatus('#eventNoticeStatus','이벤트 공지를 삭제 처리하는 중...','');
+    try{
+      const res=await adminEventNotice('deleteGroup',{groupId:id});
+      if(res && res.ok===false) throw new Error(res.message||'이벤트 공지 삭제 실패');
+      toast('이벤트 공지 삭제 완료');
+      await loadEventNoticeGroups();
+    }catch(err){ setStatus('#eventNoticeStatus',err.message||String(err),'error'); }
   }
   function collectEventNoticeEditorPayload(){
     const cards=$$('[data-event-notice-card]', $('#eventNoticeEditorCards'));
@@ -505,13 +570,22 @@
     $('#sanctuarySyncBtn')?.addEventListener('click',runSanctuarySync);
     $('#noticeReloadBtn')?.addEventListener('click',loadNotices); $('#noticeSaveBtn')?.addEventListener('click',saveNotice);
     $('#eventNoticeReloadBtn')?.addEventListener('click',loadEventNoticeGroups); $('#eventNoticeCreateBtn')?.addEventListener('click',startEventNoticeCreate); $('#eventNoticeStatusFilter')?.addEventListener('change',loadEventNoticeGroups);
-    $('#eventNoticeList')?.addEventListener('click',e=>{ const row=e.target.closest('[data-event-notice-id]'); if(e.target.matches('[data-event-notice-edit]')) editEventNoticeGroup(row?.dataset.eventNoticeId); if(e.target.matches('[data-event-notice-delete]')) setStatus('#eventNoticeStatus','삭제 기능은 STEP 2-3에서 연결합니다.',''); });
+    $('#eventNoticeList')?.addEventListener('click',e=>{ const row=e.target.closest('[data-event-notice-id]'); const id=row?.dataset.eventNoticeId; if(e.target.matches('[data-event-notice-preview]')) openEventNoticePreview(getEventNoticeGroupById(id)); if(e.target.matches('[data-event-notice-edit]')) editEventNoticeGroup(id); if(e.target.matches('[data-event-notice-duplicate]')) duplicateEventNoticeGroup(id); if(e.target.matches('[data-event-notice-delete]')) deleteEventNoticeGroup(id); });
     $('#eventNoticeEditorCloseBtn')?.addEventListener('click',closeEventNoticeEditor);
     $('#eventNoticeEditorCancelBtn')?.addEventListener('click',closeEventNoticeEditor);
     $('#eventNoticeEditorBackdrop')?.addEventListener('click',closeEventNoticeEditor);
     $('#eventNoticeEditorSaveBtn')?.addEventListener('click',saveEventNoticeEditor);
+    $('#eventNoticeEditorPreviewBtn')?.addEventListener('click',()=>openEventNoticePreview(null));
+    $('#eventNoticePreviewCloseBtn')?.addEventListener('click',closeEventNoticePreview);
+    $('#eventNoticePreviewOkBtn')?.addEventListener('click',closeEventNoticePreview);
+    $('#eventNoticePreviewBackdrop')?.addEventListener('click',closeEventNoticePreview);
     $('#eventNoticeAddCardBtn')?.addEventListener('click',()=>{ const root=$('#eventNoticeEditorCards'); if(!root)return; const cards=$$('[data-event-notice-card]',root); if(cards.length>=4){setStatus('#eventNoticeEditorStatus','공지 카드는 최대 4개까지 등록 가능합니다.','error');return;} root.insertAdjacentHTML('beforeend',renderEventNoticeEditorCard(getDefaultEventNoticeItem(cards.length),cards.length)); renumberEventNoticeEditor(); });
-    $('#eventNoticeEditorCards')?.addEventListener('click',e=>{ if(e.target.matches('[data-event-card-remove]')){ e.target.closest('[data-event-notice-card]')?.remove(); renumberEventNoticeEditor(); } });
+    $('#eventNoticeEditorCards')?.addEventListener('click',e=>{
+      const card=e.target.closest('[data-event-notice-card]'); if(!card)return;
+      if(e.target.matches('[data-event-card-remove]')){ card.remove(); renumberEventNoticeEditor(); }
+      if(e.target.matches('[data-event-card-up]')){ const prev=card.previousElementSibling; if(prev) card.parentNode.insertBefore(card,prev); renumberEventNoticeEditor(); }
+      if(e.target.matches('[data-event-card-down]')){ const next=card.nextElementSibling; if(next) card.parentNode.insertBefore(next,card); renumberEventNoticeEditor(); }
+    });
     $('#eventNoticeEditorCards')?.addEventListener('change',e=>{ if(e.target.matches('[data-event-field="noticeType"]')) applyEventNoticeTypeTemplate(e.target.closest('[data-event-notice-card]')); });
     $('#webAppSaveBtn')?.addEventListener('click',saveWebAppUrl); $('#webAppClearBtn')?.addEventListener('click',clearWebAppUrl); $('#webAppTestBtn')?.addEventListener('click',()=>testWebAppConnection('#serverStatus')); $('#webAppTestBtnSystem')?.addEventListener('click',()=>testWebAppConnection('#systemStatus')); $('#serverRefreshBtn')?.addEventListener('click',refreshServerStatus); $('#goSystemSettingsBtn')?.addEventListener('click',()=>switchTab('system'));
     document.addEventListener('click',e=>{ if(e.target.matches('[data-jump-server]')) switchTab('server'); if(e.target.matches('[data-jump-system]')) switchTab('system'); });

@@ -12,7 +12,7 @@
 <link href="../../ui/kinojo-common-ui.css?cache=2026070110" rel="stylesheet"/>
 <link href="../../ui/kinojo-card-guards.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../../ui/kinojo-animations.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
-<link href="../../admin/css/admin.css?cache=2026070410" rel="stylesheet"/>
+<link href="../../admin/css/admin.css?cache=2026070411" rel="stylesheet"/>
 
 </head>
 <body class="kinojo-page-admin">
@@ -83,8 +83,21 @@
     </div>
     <footer class="admin-event-editor-actions">
       <button class="admin-btn" id="eventNoticeEditorCancelBtn" type="button">닫기</button>
+      <button class="admin-btn" id="eventNoticeEditorPreviewBtn" type="button">미리보기</button>
       <button class="admin-btn primary" id="eventNoticeEditorSaveBtn" type="button">저장</button>
     </footer>
+  </section>
+</div>
+
+<div class="admin-event-preview-modal" id="eventNoticePreviewModal" aria-hidden="true">
+  <div class="admin-event-preview-backdrop" id="eventNoticePreviewBackdrop"></div>
+  <section class="admin-event-preview-panel" role="dialog" aria-modal="true" aria-labelledby="eventNoticePreviewTitle">
+    <header class="admin-event-preview-head">
+      <div><h2 id="eventNoticePreviewTitle">이벤트 공지 미리보기</h2><p>사용자 페이지 진입 시 노출될 공지 묶음 형태입니다.</p></div>
+      <button class="admin-icon-btn" id="eventNoticePreviewCloseBtn" type="button" aria-label="닫기">×</button>
+    </header>
+    <div class="admin-event-preview-body" id="eventNoticePreviewBody"></div>
+    <footer class="admin-event-preview-actions"><button class="admin-btn primary" id="eventNoticePreviewOkBtn" type="button">확인</button></footer>
   </section>
 </div>
 <div class="admin-bottom-actions"><button class="active" data-admin-tab="dashboard">홈</button><button data-admin-tab="requests">코드</button><button data-admin-tab="sanctuary">성역</button><button data-admin-tab="notices">공지</button></div>
@@ -100,6 +113,6 @@
 <script src="../../ui/kinojo-admin-panel.js?cache=2026070110"></script>
 <script src="../../core/kinojo-supabase.js?cache=2026070409"></script>
 <script src="../../core/kinojo-auth.js?cache=2026070110"></script>
-<script src="../../admin/js/admin.js?cache=2026070410"></script>
+<script src="../../admin/js/admin.js?cache=2026070411"></script>
 </body>
 </html>
