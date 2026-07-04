@@ -4,7 +4,7 @@
   const $ = (s,r=document)=>r.querySelector(s);
   const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
   const state = { tab:'dashboard', requests:[], accounts:[], characters:[], logs:[], eventNoticeGroups:[], eventNoticeEditingId:null };
-  const CACHE = '2026070410';
+  const CACHE = '2026070417';
   function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
   function addLog(type,msg){
     const t = new Date(); const line = '['+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+':'+String(t.getSeconds()).padStart(2,'0')+'] '+String(type||'INFO')+' · '+String(msg||'');
@@ -21,12 +21,12 @@
   function adminNotice(cmd, extra){ return window.KinojoSupabase.adminNotice(cmd, extra||{}); }
   function adminEventNotice(cmd, extra){ return window.KinojoSupabase.adminEventNotice(cmd, extra||{}); }
   const EVENT_NOTICE_TYPES = [
-    { value:'abyss_low', label:'어비스 하층', title:'어비스 하층 일정 안내', body:'하층 전장 이동과 파티 준비를 확인하세요.' },
-    { value:'abyss_middle', label:'어비스 중층', title:'어비스 중층 일정 안내', body:'중층 전장 이동과 파티 준비를 확인하세요.' },
-    { value:'rift', label:'시공', title:'시공 일정 안내', body:'시공 입장 시간과 이동 동선을 확인하세요.' },
-    { value:'abyss_boss', label:'어비스 보스', title:'어비스 보스 일정 안내', body:'보스 등장 전 파티와 위치를 확인하세요.' },
-    { value:'event', label:'이벤트', title:'이벤트 공지', body:'이벤트 내용을 확인하세요.' },
-    { value:'custom', label:'자유공지', title:'공지', body:'공지 내용을 확인하세요.' }
+    { value:'abyss_low', label:'어비스 하층', icon:'◆', tone:'gold', title:'어비스 하층 일정 안내', body:'하층 전장 이동과 파티 준비를 확인하세요.' },
+    { value:'abyss_middle', label:'어비스 중층', icon:'◆', tone:'gold', title:'어비스 중층 일정 안내', body:'중층 전장 이동과 파티 준비를 확인하세요.' },
+    { value:'rift', label:'시공', icon:'◎', tone:'gold', title:'시공 일정 안내', body:'시공 입장 시간과 이동 동선을 확인하세요.' },
+    { value:'abyss_boss', label:'어비스 보스', icon:'♛', tone:'gold', title:'어비스 보스 일정 안내', body:'보스 등장 전 파티와 위치를 확인하세요.' },
+    { value:'event', label:'이벤트', icon:'◆', tone:'gold', title:'이벤트 공지', body:'이벤트 내용을 확인하세요.' },
+    { value:'custom', label:'자유공지', icon:'◆', tone:'gold', title:'공지', body:'공지 내용을 확인하세요.' }
   ];
   function eventNoticeTypeLabel(value){
     const hit = EVENT_NOTICE_TYPES.find(t=>t.value===String(value||''));
@@ -312,7 +312,7 @@
       const types=(g.items||[]).slice(0,4).map(item=>{
         const type=item.noticeType||item.notice_type;
         const meta=eventNoticeTypeMeta(type);
-        return '<span>'+esc(meta.label)+'</span>';
+        return '<span class="type-'+esc(meta.value || type)+'"><i>'+esc(meta.icon || 'INFO')+'</i>'+esc(meta.label)+'</span>';
       }).join('');
       return '<article class="admin-event-notice-entry" data-event-notice-id="'+esc(g.id)+'">'+
         '<div class="admin-event-notice-entry-top"><span class="admin-pill '+pillClass+'">'+esc(eventNoticeStatusLabel(g.status))+'</span><strong>'+esc(g.title)+'</strong></div>'+
@@ -356,10 +356,11 @@
     const type=item?.noticeType || item?.notice_type || 'abyss_low';
     const date=item?.eventDate || item?.event_date || (item?.eventAt || item?.event_at || '').slice(0,10) || todayDateInputValue();
     const time=item?.eventTime || item?.event_time || ((item?.eventAt || item?.event_at || '').match(/T(\d{2}:\d{2})/)||[])[1] || '22:00';
+    const meta=eventNoticeTypeMeta(type);
     const title=item?.title || item?.mainText || '';
     const description=item?.description || item?.bodyText || '';
-    return '<article class="admin-event-editor-card" data-event-notice-card>'+
-      '<div class="admin-event-card-head"><strong>공지 카드 '+(index+1)+'</strong><div class="admin-event-card-actions"><button class="admin-btn" type="button" data-event-card-up>↑</button><button class="admin-btn" type="button" data-event-card-down>↓</button><button class="admin-btn danger" type="button" data-event-card-remove '+(index===0?'disabled':'')+'>삭제</button></div></div>'+
+    return '<article class="admin-event-editor-card theme-'+esc(type)+'" data-event-notice-card>'+
+      '<div class="admin-event-card-head"><strong><i class="admin-event-type-icon">'+esc(meta.icon || 'INFO')+'</i> 공지 카드 '+(index+1)+'</strong><div class="admin-event-card-actions"><button class="admin-btn" type="button" data-event-card-up>↑</button><button class="admin-btn" type="button" data-event-card-down>↓</button><button class="admin-btn danger" type="button" data-event-card-remove '+(index===0?'disabled':'')+'>삭제</button></div></div>'+
       '<div class="admin-event-card-grid">'+
         '<label>공지 종류<select class="admin-select" data-event-field="noticeType">'+eventNoticeTypeOptions(type)+'</select></label>'+
         '<label>날짜<input class="admin-input" type="date" data-event-field="eventDate" value="'+esc(date)+'"/></label>'+
@@ -391,6 +392,11 @@
     const description=card.querySelector('[data-event-field="description"]');
     if(title && !title.value.trim()) title.value=preset.title;
     if(description && !description.value.trim()) description.value=preset.body;
+    if(card){
+      card.className = card.className.replace(/\btheme-[a-z0-9_]+\b/g,'').trim() + ' theme-' + preset.value;
+      const icon=card.querySelector('.admin-event-type-icon');
+      if(icon) icon.textContent=preset.icon || 'INFO';
+    }
   }
   function openEventNoticeEditor(group){
     state.eventNoticeEditingId = group?.id || null;
@@ -427,12 +433,12 @@
     const eventAt=item?.eventAt || item?.event_at || '';
     const date=item?.eventDate || item?.event_date || (eventAt ? String(eventAt).slice(0,10) : '');
     const time=item?.eventTime || item?.event_time || ((String(eventAt).match(/T(\d{2}:\d{2})/)||[])[1]) || '';
-    return { type, label:meta.label, title:item?.title || item?.mainText || '이벤트 공지', description:item?.description || item?.bodyText || '', date, time };
+    return { type, label:meta.label, icon:meta.icon || 'INFO', title:item?.title || item?.mainText || '이벤트 공지', description:item?.description || item?.bodyText || '', date, time };
   }
   function renderEventNoticePreviewBlock(group){
     const g=group ? normalizeEventNoticeGroup(group) : normalizeEventNoticeGroup(collectEventNoticeEditorPayload());
     const items=(g.items||[]).slice(0,4).map(normalizeEventNoticeItemForPreview);
-    const cards=items.map(item=>'<article class="kinojo-event-preview-card type-'+esc(item.type)+'"><div><strong>'+esc(item.label)+'</strong><b>'+esc(item.title)+'</b><span>'+esc(item.description||'')+'</span></div><time>'+esc(item.time||'--:--')+'</time></article>').join('');
+    const cards=items.map(item=>'<article class="kinojo-event-preview-card type-'+esc(item.type)+'"><i>'+esc(item.icon||'INFO')+'</i><div><strong>'+esc(item.label)+'</strong><b>'+esc(item.title)+'</b><span>'+esc(item.description||'')+'</span></div><time>'+esc(item.time||'--:--')+'</time></article>').join('');
     return '<div class="kinojo-event-preview-wrap"><header><span>EVENT NOTICE</span><strong>'+esc(g.title||'이벤트 공지')+'</strong></header><div class="kinojo-event-preview-cards">'+cards+'</div><footer><button type="button">오늘 하루 그만보기</button><button type="button">닫기</button></footer></div>';
   }
   function openEventNoticePreview(group){
