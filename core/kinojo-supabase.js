@@ -771,6 +771,16 @@
     return { ok:false, message:'알 수 없는 이벤트 공지 관리자 명령입니다.' };
   }
 
+
+
+  async function getWebEventNoticeGroups(limit){
+    const data = await rpc('kinojo_web_event_notice_groups', {
+      p_limit: Number(limit || 10)
+    });
+    if(data && typeof data === 'object') return data;
+    return { ok:true, groups:[] };
+  }
+
   async function adminNotice(command, extra={}){
     const admin = assertAdmin();
     const normalizedCommand = String(command || '').trim();
@@ -1440,7 +1450,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.35-event-notice-admin-2026070409',
+    version:'1.3.1.35-event-notice-popup-2026070412',
     getConfig,
     isPreferred,
     isConfigured,
@@ -1479,6 +1489,7 @@
     normalizeMemberCode,
     isValidMemberCode,
     normalizePermissions,
+    getWebEventNoticeGroups,
     adminNotice,
     adminEventNotice,
     adminCharacter,
