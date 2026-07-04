@@ -257,6 +257,8 @@
     if(key==='SCHEDULED') return '예정';
     if(key==='ACTIVE') return '진행중';
     if(key==='EXPIRED') return '종료';
+    if(key==='PAUSED') return '일시중지';
+    if(key==='PUBLISHED') return '노출';
     if(key==='DELETED') return '삭제됨';
     return key || '상태 없음';
   }
@@ -265,6 +267,7 @@
     if(key==='DRAFT') return 'info';
     if(key==='SCHEDULED') return 'info';
     if(key==='ACTIVE') return 'ok';
+    if(key==='PAUSED') return 'info';
     if(key==='EXPIRED' || key==='DELETED') return 'error';
     return 'info';
   }
@@ -324,9 +327,17 @@
     const status=$('#eventNoticeStatusFilter')?.value || 'ALL';
     setStatus('#eventNoticeStatus','이벤트 공지 목록을 불러오는 중...','');
     try{
-      const data=await adminEventNotice('listGroups',{status,limit:30});
+      const data=await adminEventNotice('listGroups',{status,limit:50});
       const groups=data.groups || data.items || data.eventNotices || [];
       state.eventNoticeGroups=(Array.isArray(groups)?groups:[]).map(normalizeEventNoticeGroup);
+      state.eventNoticeGroups.sort((a,b)=>{
+        const order={draft:10,scheduled:20,active:30,paused:40,expired:50,deleted:60};
+        const oa=order[String(a.status||'').toLowerCase()]||90;
+        const ob=order[String(b.status||'').toLowerCase()]||90;
+        if(oa!==ob) return oa-ob;
+        if((b.priority||0)!==(a.priority||0)) return (b.priority||0)-(a.priority||0);
+        return String(b.createdAt||'').localeCompare(String(a.createdAt||''));
+      });
       renderEventNoticeGroups(state.eventNoticeGroups);
       setStatus('#eventNoticeStatus','이벤트 공지 묶음 '+state.eventNoticeGroups.length+'건','ok');
     }catch(err){
@@ -476,6 +487,7 @@
   }
   async function saveEventNoticeEditor(){
     const payload=collectEventNoticeEditorPayload();
+    if(!payload.title){ setStatus('#eventNoticeEditorStatus','공지 묶음 제목을 입력하세요.','error'); return; }
     if(!payload.items.length){ setStatus('#eventNoticeEditorStatus','공지 카드를 최소 1개 이상 입력하세요.','error'); return; }
     if(payload.items.length>4){ setStatus('#eventNoticeEditorStatus','공지 카드는 최대 4개까지 등록 가능합니다.','error'); return; }
     for(let i=0;i<payload.items.length;i++){
@@ -491,6 +503,7 @@
       const res=await adminEventNotice('saveGroup', payload);
       if(res && res.ok===false) throw new Error(res.message || '이벤트 공지 저장 실패');
       toast('이벤트 공지 저장 완료');
+      setStatus('#eventNoticeStatus','저장 후 목록을 새로고침했습니다.','ok');
       closeEventNoticeEditor();
       await loadEventNoticeGroups();
     }catch(err){

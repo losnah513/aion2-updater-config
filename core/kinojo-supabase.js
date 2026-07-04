@@ -1450,7 +1450,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.35-event-notice-popup-2026070412',
+    version:'1.3.1.35-event-notice-popup-2026070413',
     getConfig,
     isPreferred,
     isConfigured,
