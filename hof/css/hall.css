@@ -1767,3 +1767,45 @@ body{background:#fff!important;}
   body.kinojo-mobile-hall-detail-page .hof-ranking-banner-main strong{font-size:17px;}
   body.kinojo-mobile-hall-detail-page .hof-ranking-banner-link em{width:max-content;}
 }
+
+
+/* 20260704 character reaction modal sticker layout - existing popover restyle */
+body.reaction-popover-open::before{content:"";position:fixed;inset:0;z-index:10040;background:rgba(15,23,42,.45);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);}
+.reaction-popover{left:50%!important;top:50%!important;transform:translate(-50%,-50%);width:min(720px,calc(100vw - 42px))!important;overflow:visible!important;border-radius:26px!important;border:1px solid rgba(210,222,240,.92)!important;box-shadow:0 28px 80px rgba(15,23,42,.30)!important;background:#fff!important;animation:reactionModalIn .22s ease both;}
+.reaction-popover-head{display:none!important;}
+.reaction-popover-body{position:relative;display:grid!important;grid-template-columns:210px minmax(0,1fr);grid-template-areas:"avatar meta" "spacer choices" "input input" "status status";gap:14px 22px!important;min-height:360px;padding:42px 38px 28px 38px!important;}
+.reaction-profile-row{display:contents!important;}
+.reaction-profile-image{grid-area:avatar;align-self:start;justify-self:center;width:210px!important;height:210px!important;margin:-110px 0 0 -42px;border-radius:50%!important;border:10px solid #fff!important;background:#eef4ff!important;box-shadow:0 18px 38px rgba(15,23,42,.28)!important;overflow:hidden!important;color:#9aa8bb!important;font-size:13px!important;font-weight:1000!important;}
+.reaction-profile-image img{width:100%;height:100%;object-fit:cover;display:block;}
+.reaction-profile-meta{grid-area:meta;min-width:0;padding:4px 48px 0 0;}
+.reaction-kicker{font-size:13px;font-weight:1000;letter-spacing:.16em;color:#b27812;margin-bottom:4px;}
+.reaction-profile-name{font-size:30px!important;line-height:1.14!important;font-weight:1000!important;color:#16243a!important;letter-spacing:-.8px;}
+.reaction-profile-sub{margin-top:8px!important;color:#344054!important;font-size:16px!important;font-weight:900!important;}
+.reaction-detail-link{margin-top:10px;}
+.reaction-close{position:absolute!important;right:22px!important;top:22px!important;z-index:2;width:42px!important;height:42px!important;border:1px solid rgba(120,145,180,.25)!important;border-radius:50%!important;background:#fff!important;color:#344054!important;font-size:32px!important;font-weight:900!important;display:grid!important;place-items:center!important;line-height:1!important;box-shadow:none!important;}
+.reaction-choice{grid-area:choices;display:grid!important;grid-template-columns:1fr 1fr!important;gap:14px!important;}
+.reaction-choice button{height:54px!important;border-radius:999px!important;border:1px solid rgba(117,140,177,.25)!important;background:#f8fafc!important;color:#344054!important;font-size:16px!important;font-weight:1000!important;transition:transform .16s ease,background .16s ease,border-color .16s ease!important;}
+.reaction-choice button:hover{transform:translateY(-1px) scale(1.015)!important;}
+.reaction-choice button.active{background:#eef5ff!important;border-color:rgba(56,101,176,.45)!important;color:#2454b8!important;}
+.reaction-input-row{grid-area:input;display:grid!important;grid-template-columns:1fr auto!important;gap:10px!important;padding:16px!important;border:1px solid rgba(117,140,177,.24)!important;border-radius:18px!important;background:#fff!important;}
+.reaction-comment-label{grid-column:1/-1;color:#344054;font-size:15px;font-weight:1000;}
+.reaction-comment{grid-column:1/2!important;min-height:96px!important;height:auto!important;resize:none!important;border:1px solid rgba(117,140,177,.28)!important;border-radius:14px!important;background:#fbfdff!important;padding:14px 16px!important;color:#1e2f4a!important;font-size:15px!important;font-weight:800!important;}
+.reaction-comment:focus{border-color:rgba(56,101,176,.48)!important;background:#fff!important;outline:none!important;}
+.send-btn{grid-column:2/3!important;align-self:end!important;min-width:92px!important;height:48px!important;border-radius:999px!important;font-size:16px!important;font-weight:1000!important;background:#1e2f4a!important;color:#fff!important;}
+.send-btn svg{display:none!important;}
+.reaction-status{grid-area:status;min-height:20px;text-align:right;color:#667085;font-size:13px;font-weight:900;}
+@keyframes reactionModalIn{from{opacity:0;transform:translate(-50%,-46%) scale(.98)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@media(max-width:760px){
+  .reaction-popover{width:min(560px,calc(100vw - 26px))!important;border-radius:20px!important;}
+  .reaction-popover-body{grid-template-columns:118px minmax(0,1fr);gap:10px 14px!important;min-height:0;padding:48px 18px 20px!important;}
+  .reaction-profile-image{width:118px!important;height:118px!important;margin:-72px 0 0 -12px;border-width:7px!important;}
+  .reaction-profile-name{font-size:24px!important;}
+  .reaction-profile-sub{font-size:13px!important;}
+  .reaction-kicker{font-size:11px;}
+  .reaction-close{right:14px!important;top:14px!important;width:38px!important;height:38px!important;font-size:28px!important;}
+  .reaction-choice{grid-column:1/-1;grid-template-columns:1fr 1fr!important;gap:8px!important;}
+  .reaction-choice button{height:42px!important;font-size:13px!important;}
+  .reaction-input-row{grid-column:1/-1;padding:12px!important;}
+  .reaction-comment{min-height:74px!important;font-size:13px!important;}
+  .send-btn{min-width:74px!important;height:40px!important;font-size:13px!important;}
+}

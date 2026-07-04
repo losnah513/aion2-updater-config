@@ -597,3 +597,34 @@ body{background:#fff!important;}
   .sanctuary-reaction-modal{padding:12px;align-items:center;}
   .sanctuary-reaction-card{border-radius:16px;padding:16px;}
 }
+
+
+/* 20260704 sanctuary reaction modal sticker layout */
+.sanctuary-reaction-card{width:min(720px,calc(100vw - 42px))!important;min-height:360px!important;display:grid!important;grid-template-columns:210px minmax(0,1fr)!important;grid-template-areas:"avatar meta" "spacer actions" "input input" "foot foot"!important;gap:14px 22px!important;padding:42px 38px 28px!important;border-radius:26px!important;overflow:visible!important;box-shadow:0 28px 80px rgba(15,23,42,.30)!important;}
+.sanctuary-reaction-close{right:22px!important;top:22px!important;width:42px!important;height:42px!important;font-size:32px!important;line-height:1!important;display:grid!important;place-items:center!important;}
+.sanctuary-reaction-profile{display:contents!important;padding:0!important;}
+.sanctuary-reaction-avatar{grid-area:avatar;align-self:start;justify-self:center;width:210px!important;height:210px!important;margin:-110px 0 0 -42px!important;border-radius:50%!important;border:10px solid #fff!important;box-shadow:0 18px 38px rgba(15,23,42,.28)!important;background:#eef4ff!important;font-size:13px!important;}
+.sanctuary-reaction-meta{grid-area:meta;min-width:0;padding:4px 48px 0 0;}
+.sanctuary-reaction-kicker{font-size:13px;font-weight:1000;letter-spacing:.16em;color:#b27812;margin-bottom:4px;}
+.sanctuary-reaction-card h2{margin:0!important;font-size:30px!important;line-height:1.14!important;font-weight:1000!important;color:#16243a!important;letter-spacing:-.8px!important;}
+.sanctuary-reaction-card p{margin:8px 0 0!important;color:#344054!important;font-size:16px!important;font-weight:900!important;}
+.sanctuary-reaction-actions{grid-area:actions;display:grid!important;grid-template-columns:1fr 1fr!important;gap:14px!important;}
+.sanctuary-reaction-type{height:54px!important;border-radius:999px!important;background:#f8fafc!important;font-size:16px!important;}
+.sanctuary-reaction-input{grid-area:input;display:grid;gap:8px;padding:16px;border:1px solid rgba(117,140,177,.24);border-radius:18px;background:#fff;}
+.sanctuary-reaction-input label{color:#344054;font-size:15px;font-weight:1000;}
+.sanctuary-reaction-comment{min-height:96px!important;border-radius:14px!important;padding:14px 16px!important;font-size:15px!important;}
+.sanctuary-reaction-foot{grid-area:foot;}
+.sanctuary-reaction-submit{min-width:92px!important;height:48px!important;border-radius:999px!important;background:#1e2f4a!important;color:#fff!important;}
+@media(max-width:760px){
+  .sanctuary-reaction-card{width:min(560px,calc(100vw - 26px))!important;min-height:0!important;grid-template-columns:118px minmax(0,1fr)!important;gap:10px 14px!important;padding:48px 18px 20px!important;border-radius:20px!important;}
+  .sanctuary-reaction-avatar{width:118px!important;height:118px!important;margin:-72px 0 0 -12px!important;border-width:7px!important;}
+  .sanctuary-reaction-card h2{font-size:24px!important;}
+  .sanctuary-reaction-card p{font-size:13px!important;}
+  .sanctuary-reaction-kicker{font-size:11px!important;}
+  .sanctuary-reaction-close{right:14px!important;top:14px!important;width:38px!important;height:38px!important;font-size:28px!important;}
+  .sanctuary-reaction-actions{grid-column:1/-1;grid-template-columns:1fr 1fr!important;gap:8px!important;}
+  .sanctuary-reaction-type{height:42px!important;font-size:13px!important;}
+  .sanctuary-reaction-input{grid-column:1/-1;padding:12px!important;}
+  .sanctuary-reaction-comment{min-height:74px!important;font-size:13px!important;}
+  .sanctuary-reaction-submit{min-width:74px!important;height:40px!important;font-size:13px!important;}
+}

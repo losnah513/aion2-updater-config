@@ -3,20 +3,15 @@
  * 역할: 캐릭터 반응 팝오버, 로컬 제한, 서버 저장을 관리합니다.
  */
 function positionReactionPopover(anchor,pop){
-  const rect=anchor.getBoundingClientRect();
-  const w=Math.min(320,Math.max(260,window.innerWidth-24));
-  let left=Math.min(window.innerWidth-w-12,Math.max(12,rect.left));
-  let top=rect.bottom+8;
-  const h=Math.min(270,pop.offsetHeight||250);
-  if(top+h>window.innerHeight-12) top=Math.max(12,rect.top-h-8);
+  if(!pop)return;
   pop.style.position="fixed";
-  pop.style.width=w+"px";
-  pop.style.left=left+"px";
-  pop.style.top=top+"px";
-  pop.dataset.fixedLeft=String(left);
-  pop.dataset.fixedTop=String(top);
+  pop.style.left="50%";
+  pop.style.top="50%";
+  pop.style.width="";
+  pop.dataset.fixedLeft="center";
+  pop.dataset.fixedTop="center";
 }
-function closeReactionModal(){hideCharacterPreview_();const pop=document.getElementById("reactionPopover");if(pop){pop.style.display="none";pop.setAttribute("aria-hidden","true")}currentReactionItem=null}
+function closeReactionModal(){hideCharacterPreview_();const pop=document.getElementById("reactionPopover");if(pop){pop.style.display="none";pop.setAttribute("aria-hidden","true")}document.body.classList.remove("reaction-popover-open");currentReactionItem=null}
 function getVisitorId(){let id=localStorage.getItem("kinojoVisitorId");if(!id){id="v_"+Date.now()+"_"+Math.random().toString(36).slice(2);localStorage.setItem("kinojoVisitorId",id)}return id}
 function todayKey(){return new Date().toLocaleDateString("ko-KR",{timeZone:"Asia/Seoul"})}
 function checkLocalReactionLimit(name,type){const day=todayKey();const sameKey="kinojo_react_"+day+"_"+name+"_"+type;const countKey="kinojo_react_count_"+day+"_"+type;if(localStorage.getItem(sameKey)==="1")return "같은 캐릭터에게 같은 반응은 하루 1번만 남길 수 있습니다.";const count=Number(localStorage.getItem(countKey)||"0");if(count>=3)return (type==="like"?"좋아요":"싫어요")+"는 하루 3번까지만 남길 수 있습니다.";return ""}
@@ -144,6 +139,7 @@ function openReactionModal(item,anchor){
   updateReactionSubmitState_();
   setReactionLimitLoading_();
   const pop=document.getElementById("reactionPopover");
+  document.body.classList.add("reaction-popover-open");
   pop.style.display="block";
   pop.setAttribute("aria-hidden","false");
   positionReactionPopover(anchor||document.body,pop);
