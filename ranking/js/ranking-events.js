@@ -39,6 +39,30 @@
   function setRankingReactionType(type){rankingReactionType=type==='dislike'?'dislike':'like';const like=document.getElementById('rankingReactionLikeBtn');const dislike=document.getElementById('rankingReactionDislikeBtn');if(like)like.classList.toggle('active',rankingReactionType==='like');if(dislike)dislike.classList.toggle('active',rankingReactionType==='dislike')}
   function updateRankingReactionSubmitState(){const input=document.getElementById('rankingReactionComment');const btn=document.getElementById('rankingReactionSubmitBtn');if(btn){btn.disabled=rankingReactionSubmitting||!(input&&input.value.trim())}}
   function openRankingReactionModal(card){
+    if(window.KinojoCharacterReaction){
+      const name=card.dataset.charName||card.dataset.character||'';
+      const target={name:name,owner:card.dataset.charOwner||'',className:card.dataset.charClass||'',server:card.dataset.charServer||'',power:card.dataset.charPower||'',profileImageUrl:card.dataset.profileImage||''};
+      window.KinojoCharacterReaction.open({
+        source:'ranking',
+        context:'ranking',
+        limitPrefix:'kinojo_ranking_react',
+        target:target,
+        onSubmit:async function(payload){
+          return await window.KinojoApi.postAction('hallReaction',{
+            characterName:payload.target.name,
+            owner:payload.target.owner||'',
+            className:payload.target.className||'',
+            reaction:payload.reaction,
+            comment:payload.comment,
+            clientKey:payload.clientKey,
+            sessionToken:payload.sessionToken,
+            source:'ranking'
+          });
+        }
+      });
+      return;
+    }
+
     if(window.KinojoAuth&&!window.KinojoAuth.requireLogin('로그인 후 좋아요·싫어요를 남길 수 있습니다.',{context:'ranking'}))return;
     const name=card.dataset.charName||card.dataset.character||'';
     rankingReactionTarget={name:name,owner:card.dataset.charOwner||'',className:card.dataset.charClass||'',server:card.dataset.charServer||'',power:card.dataset.charPower||'',profileImageUrl:card.dataset.profileImage||''};

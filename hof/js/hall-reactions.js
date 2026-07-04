@@ -90,6 +90,43 @@ function updateReactionSubmitState_(){
 }
 function openReactionModal(item,anchor){
   hideCharacterPreview_();
+  reactionSubmitting=false;
+  currentReactionItem=item;
+  currentReactionType="like";
+  if(window.KinojoCharacterReaction){
+    window.KinojoCharacterReaction.open({
+      source:"hall",
+      context:"hall",
+      limitPrefix:"kinojo_react",
+      target:{
+        name:item?.name||"캐릭터",
+        owner:item?.owner||"",
+        className:item?.className||"",
+        server:item?.serverName||item?.meta||"",
+        profileImageUrl:item?.profileImageUrl||"",
+        detailUrl:item?.detailUrl||"",
+        sub:[item?.className||"",item?.meta||item?.serverName||""].filter(Boolean).join(" · ")||"좋아요·싫어요를 남겨보세요"
+      },
+      onSubmit:async function(payload){
+        const data=await window.KinojoApi.postAction("hallReaction",{
+          characterName:payload.target.name,
+          owner:payload.target.owner||"",
+          className:payload.target.className||"",
+          reaction:payload.reaction,
+          comment:payload.comment,
+          clientKey:payload.clientKey,
+          sessionToken:payload.sessionToken
+        });
+        return data;
+      },
+      onSuccess:function(data){
+        if(data.summary&&hallData)hallData.reactionSummary=data.summary;
+        setTimeout(function(){renderReactionOnly();renderOverallOnly()},430);
+      }
+    });
+    return;
+  }
+
   if(window.KinojoAuth && !window.KinojoAuth.requireLogin('로그인 후 좋아요·싫어요를 남길 수 있습니다.', {context:'hall'})){
     return;
   }
