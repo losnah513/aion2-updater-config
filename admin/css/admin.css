@@ -51,3 +51,19 @@ body.kinojo-page-admin{background:var(--admin-bg);color:var(--admin-ink);font-fa
   .admin-system-item{align-items:flex-start;gap:8px;flex-direction:column}
   .admin-system-item strong{max-width:100%;text-align:left}
 }
+
+
+/* 20260704_09 event notice admin STEP 2-1 */
+.admin-event-notice-card{border-color:#dbeafe;background:linear-gradient(180deg,#f8fbff,#fff)}
+.admin-event-notice-tools{margin-bottom:10px}
+.admin-event-notice-row{align-items:flex-start}
+.admin-event-notice-row .admin-row-main{min-width:0}
+.admin-event-notice-types{color:#1558d6!important;font-weight:900!important}
+.admin-event-notice-row .admin-row-actions{align-items:center}
+@media (max-width:760px){
+  .admin-event-notice-card .admin-card-head{display:grid;gap:10px}
+  .admin-event-notice-card .admin-card-head .admin-row-actions{display:grid;grid-template-columns:1fr 1fr;width:100%}
+  .admin-event-notice-card .admin-card-head .admin-btn{width:100%}
+  .admin-event-notice-row .admin-row-actions{display:grid;grid-template-columns:1fr 1fr;width:100%}
+  .admin-event-notice-row .admin-row-actions .admin-pill{grid-column:1/-1;width:max-content}
+}

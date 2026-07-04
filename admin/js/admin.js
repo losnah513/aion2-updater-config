@@ -1,10 +1,10 @@
-/* KINOJO Admin Console v2026070110 */
+/* KINOJO Admin Console v2026070409 */
 (function(){
   'use strict';
   const $ = (s,r=document)=>r.querySelector(s);
   const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
   const state = { tab:'dashboard', requests:[], accounts:[], characters:[], logs:[] };
-  const CACHE = '2026070110';
+  const CACHE = '2026070409';
   function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
   function addLog(type,msg){
     const t = new Date(); const line = '['+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+':'+String(t.getSeconds()).padStart(2,'0')+'] '+String(type||'INFO')+' · '+String(msg||'');
@@ -19,6 +19,7 @@
   function adminAccount(cmd, extra){ return window.KinojoSupabase.adminAccount(cmd, extra||{}); }
   function adminCharacter(cmd, extra){ return window.KinojoSupabase.adminCharacter(cmd, extra||{}); }
   function adminNotice(cmd, extra){ return window.KinojoSupabase.adminNotice(cmd, extra||{}); }
+  function adminEventNotice(cmd, extra){ return window.KinojoSupabase.adminEventNotice(cmd, extra||{}); }
   async function action(name, params){ return window.KinojoApi ? window.KinojoApi.getAction(name, params||{}) : window.KinojoSupabase.webAction(name, params||{}); }
 
   function switchTab(tab){
@@ -32,7 +33,7 @@
     if(tab==='members') loadAccounts();
     if(tab==='notices') loadNotices();
     if(tab==='server') refreshServerStatus();
-    if(tab==='system') refreshSystemSettings();
+    if(tab==='system'){ refreshSystemSettings(); loadEventNoticeGroups(); }
   }
 
   function renderAccessBlocked(){
@@ -232,6 +233,73 @@
     finally{ btn&&(btn.disabled=false); }
   }
 
+
+  function eventNoticeStatusLabel(status){
+    const key=String(status||'').toUpperCase();
+    if(key==='DRAFT') return '작성중';
+    if(key==='SCHEDULED') return '예정';
+    if(key==='ACTIVE') return '진행중';
+    if(key==='EXPIRED') return '종료';
+    if(key==='DELETED') return '삭제됨';
+    return key || '상태 없음';
+  }
+  function eventNoticePillClass(status){
+    const key=String(status||'').toUpperCase();
+    if(key==='DRAFT') return 'info';
+    if(key==='SCHEDULED') return 'info';
+    if(key==='ACTIVE') return 'ok';
+    if(key==='EXPIRED' || key==='DELETED') return 'error';
+    return 'info';
+  }
+  function formatEventDateTime(value){
+    if(!value) return '-';
+    const d=new Date(value);
+    if(Number.isNaN(d.getTime())) return String(value);
+    return d.toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+  }
+  function normalizeEventNoticeGroup(g){
+    return {
+      id:g.id || g.groupId || g.group_id || '',
+      title:g.title || g.groupTitle || '이벤트 공지',
+      status:g.runtimeStatus || g.runtime_status || g.status || '',
+      rawStatus:g.status || '',
+      itemCount:Number(g.itemCount || g.item_count || (Array.isArray(g.items)?g.items.length:0) || 0),
+      popupVersion:Number(g.popupVersion || g.popup_version || 0),
+      createdAt:g.createdAt || g.created_at || '',
+      updatedAt:g.updatedAt || g.updated_at || '',
+      nextEventAt:g.nextEventAt || g.next_event_at || '',
+      items:Array.isArray(g.items)?g.items:[]
+    };
+  }
+  function renderEventNoticeGroups(groups){
+    const root=$('#eventNoticeList'); if(!root)return;
+    if(!groups.length){ root.innerHTML='<div class="admin-empty">이벤트 공지 묶음이 없습니다.</div>'; return; }
+    root.innerHTML=groups.map(raw=>{
+      const g=normalizeEventNoticeGroup(raw);
+      const pillClass=eventNoticePillClass(g.status);
+      const firstItems=(g.items||[]).slice(0,4).map(item=>esc(item.noticeTypeLabel||item.notice_type_label||item.noticeType||item.notice_type||'공지')).join(' · ');
+      return '<article class="admin-row admin-event-notice-row" data-event-notice-id="'+esc(g.id)+'"><div class="admin-row-main"><strong>'+esc(g.title)+'</strong><span>카드 '+g.itemCount+'개 · 다음 일정 '+esc(formatEventDateTime(g.nextEventAt))+' · v'+g.popupVersion+'</span>'+(firstItems?'<span class="admin-event-notice-types">'+firstItems+'</span>':'')+'</div><div class="admin-row-actions"><span class="admin-pill '+pillClass+'">'+esc(eventNoticeStatusLabel(g.status))+'</span><button class="admin-btn" type="button" data-event-notice-edit>수정</button><button class="admin-btn danger" type="button" data-event-notice-delete>삭제</button></div></article>';
+    }).join('');
+  }
+  async function loadEventNoticeGroups(){
+    if(!$('#eventNoticeList')) return;
+    const status=$('#eventNoticeStatusFilter')?.value || 'ALL';
+    setStatus('#eventNoticeStatus','이벤트 공지 목록을 불러오는 중...','');
+    try{
+      const data=await adminEventNotice('listGroups',{status,limit:30});
+      const groups=data.groups || data.items || data.eventNotices || [];
+      renderEventNoticeGroups(Array.isArray(groups)?groups:[]);
+      setStatus('#eventNoticeStatus','이벤트 공지 묶음 '+(Array.isArray(groups)?groups.length:0)+'건','ok');
+    }catch(err){
+      setStatus('#eventNoticeStatus',err.message||String(err),'error');
+      $('#eventNoticeList') && ($('#eventNoticeList').innerHTML='<div class="admin-empty">이벤트 공지 목록을 불러오지 못했습니다.</div>');
+    }
+  }
+  function startEventNoticeCreate(){
+    setStatus('#eventNoticeStatus','STEP 2-2에서 공지 묶음 등록 폼을 연결합니다. 현재 단계는 목록 조회 뼈대입니다.','');
+    toast('이벤트 공지 등록 폼은 STEP 2-2에서 연결됩니다.');
+  }
+
   async function loadNotices(){
     setStatus('#noticeStatus','공지 목록을 불러오는 중...','');
     try{ const list=await adminNotice('listNotices',{limit:20}); const notices=list.notices||[]; $('#noticeList').innerHTML=notices.length?notices.map(n=>'<article class="admin-row"><div class="admin-row-main"><strong>'+esc(n.noticeType||n.notice||'공지')+'</strong><span>'+esc(n.content||'')+'</span></div><div class="admin-row-actions"><span class="admin-pill info">'+esc(n.author||'관리자')+'</span></div></article>').join(''):'<div class="admin-empty">등록된 공지가 없습니다.</div>'; setStatus('#noticeStatus','공지 '+notices.length+'건','ok'); }
@@ -301,6 +369,8 @@
     $('#sanctuaryPreviewBtn')?.addEventListener('click',async()=>{ setStatus('#sanctuarySyncStatus','서버 성역 데이터를 불러오는 중...',''); try{ const id=$('#sanctuarySyncId')?.value||'rudra'; const data=await action('sanctuary',{id:id==='all'?'rudra':id}); $('#sanctuarySyncResult').innerHTML=renderSyncReport(Object.assign({ok:true},data)); setSyncStep(2); setStatus('#sanctuarySyncStatus','서버 미리보기 완료','ok'); }catch(err){setStatus('#sanctuarySyncStatus',err.message||String(err),'error');} });
     $('#sanctuarySyncBtn')?.addEventListener('click',runSanctuarySync);
     $('#noticeReloadBtn')?.addEventListener('click',loadNotices); $('#noticeSaveBtn')?.addEventListener('click',saveNotice);
+    $('#eventNoticeReloadBtn')?.addEventListener('click',loadEventNoticeGroups); $('#eventNoticeCreateBtn')?.addEventListener('click',startEventNoticeCreate); $('#eventNoticeStatusFilter')?.addEventListener('change',loadEventNoticeGroups);
+    $('#eventNoticeList')?.addEventListener('click',e=>{ if(e.target.matches('[data-event-notice-edit]')) startEventNoticeCreate(); if(e.target.matches('[data-event-notice-delete]')) setStatus('#eventNoticeStatus','삭제 기능은 STEP 2-3에서 연결합니다.',''); });
     $('#webAppSaveBtn')?.addEventListener('click',saveWebAppUrl); $('#webAppClearBtn')?.addEventListener('click',clearWebAppUrl); $('#webAppTestBtn')?.addEventListener('click',()=>testWebAppConnection('#serverStatus')); $('#webAppTestBtnSystem')?.addEventListener('click',()=>testWebAppConnection('#systemStatus')); $('#serverRefreshBtn')?.addEventListener('click',refreshServerStatus); $('#goSystemSettingsBtn')?.addEventListener('click',()=>switchTab('system'));
     document.addEventListener('click',e=>{ if(e.target.matches('[data-jump-server]')) switchTab('server'); if(e.target.matches('[data-jump-system]')) switchTab('system'); });
     $('#quickCodeBtn')?.addEventListener('click',()=>switchTab('requests')); $('#quickSanctuaryBtn')?.addEventListener('click',()=>switchTab('sanctuary')); $('#quickMemberBtn')?.addEventListener('click',()=>switchTab('members')); $('#quickNoticeBtn')?.addEventListener('click',()=>switchTab('notices'));

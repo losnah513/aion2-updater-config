@@ -730,6 +730,47 @@
     return { ok:true, notices:(Array.isArray(rows) ? rows : []).map(noticeFromRow).filter(Boolean) };
   }
 
+
+  async function adminEventNotice(command, extra={}){
+    assertAdmin();
+    const normalizedCommand = String(command || '').trim();
+    const passKey = currentPassKey();
+
+    if(normalizedCommand === 'listGroups' || normalizedCommand === 'listEventNotices'){
+      const data = await rpc('kinojo_admin_event_notice_list', {
+        p_pass_key: passKey,
+        p_limit: Number(extra.limit || 30),
+        p_status: String(extra.status || 'ALL').toUpperCase()
+      });
+      return data && typeof data === 'object' ? data : { ok:true, groups:[] };
+    }
+
+    if(normalizedCommand === 'saveGroup' || normalizedCommand === 'saveEventNotice'){
+      const payload = extra || {};
+      const data = await rpc('kinojo_admin_event_notice_save', {
+        p_pass_key: passKey,
+        p_group_id: payload.groupId || payload.group_id || null,
+        p_group_title: payload.title || payload.groupTitle || '이벤트 공지',
+        p_status: payload.status || 'draft',
+        p_priority: Number(payload.priority || 0),
+        p_items: payload.items || []
+      });
+      return data && typeof data === 'object' ? data : { ok:true };
+    }
+
+    if(normalizedCommand === 'deleteGroup' || normalizedCommand === 'deleteEventNotice'){
+      const groupId = Number(extra.groupId || extra.group_id || extra.id || 0);
+      if(!groupId) return { ok:false, message:'삭제할 이벤트 공지 묶음 ID가 없습니다.' };
+      const data = await rpc('kinojo_admin_event_notice_delete', {
+        p_pass_key: passKey,
+        p_group_id: groupId
+      });
+      return data && typeof data === 'object' ? data : { ok:true, id:groupId };
+    }
+
+    return { ok:false, message:'알 수 없는 이벤트 공지 관리자 명령입니다.' };
+  }
+
   async function adminNotice(command, extra={}){
     const admin = assertAdmin();
     const normalizedCommand = String(command || '').trim();
@@ -1399,7 +1440,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.34-character-status-2026062914',
+    version:'1.3.1.35-event-notice-admin-2026070409',
     getConfig,
     isPreferred,
     isConfigured,
@@ -1439,6 +1480,7 @@
     isValidMemberCode,
     normalizePermissions,
     adminNotice,
+    adminEventNotice,
     adminCharacter,
     adminVisit,
     getVisitStats,
