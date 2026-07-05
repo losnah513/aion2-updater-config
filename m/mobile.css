@@ -650,3 +650,75 @@ body{min-height:100svh}.mobile-wrap{width:100%;max-width:560px;padding:clamp(16p
 @media (max-width:430px) and (min-height:850px){
   .mobile-og-banner img{min-height:160px;}
 }
+
+/* ===========================================================
+   20260705_19 Mobile home cleanup
+   - Main page returns to KINOJO white base.
+   - Topbar text visibility fix.
+   - OG banner height reduced and right-aligned with left gradient.
+   - Remove duplicated bottom nav behind common notice strip on /m/.
+   =========================================================== */
+.mobile-home-page{
+  background:#ffffff !important;
+  color:#102033 !important;
+}
+.mobile-home-page .mobile-home-wrap{
+  background:#ffffff !important;
+}
+.mobile-home-page .kinojo-topbar{
+  background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(248,250,252,.94)) !important;
+  border:1px solid rgba(120,145,180,.20) !important;
+  box-shadow:0 10px 24px rgba(15,23,42,.10), inset 0 1px 0 rgba(255,255,255,.90) !important;
+  color:#102033 !important;
+}
+.mobile-home-page .kinojo-menu-toggle,
+.mobile-home-page .kinojo-top-page,
+.mobile-home-page .kinojo-top-center,
+.mobile-home-page .kinojo-top-tools .visit-mini{
+  background:#ffffff !important;
+  border-color:rgba(120,145,180,.24) !important;
+  color:#102033 !important;
+}
+.mobile-home-page .kinojo-top-page strong,
+.mobile-home-page .kinojo-account-name,
+.mobile-home-page .kinojo-auth-name,
+.mobile-home-page .kinojo-auth-label,
+.mobile-home-page .kinojo-top-page small,
+.mobile-home-page .kinojo-top-tools .visit-mini{
+  color:#334155 !important;
+  opacity:1 !important;
+  text-shadow:none !important;
+}
+.mobile-home-page .kinojo-top-page strong,
+.mobile-home-page .kinojo-account-name,
+.mobile-home-page .kinojo-auth-name{
+  color:#102033 !important;
+}
+.mobile-og-banner{
+  position:relative;
+  min-height:0 !important;
+  border-radius:18px;
+  background:#ffffff;
+  border-color:rgba(120,145,180,.18);
+  box-shadow:0 12px 28px rgba(15,23,42,.10);
+}
+.mobile-og-banner::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(90deg,rgba(255,255,255,.96) 0%,rgba(255,255,255,.78) 26%,rgba(255,255,255,.22) 54%,rgba(255,255,255,0) 82%);
+}
+.mobile-og-banner img{
+  height:clamp(116px,33vw,152px) !important;
+  min-height:0 !important;
+  aspect-ratio:auto !important;
+  object-fit:cover !important;
+  object-position:right center !important;
+}
+.mobile-home-page .mobile-bottom-nav{
+  display:none !important;
+}
+.mobile-home-page .mobile-wrap{
+  padding-bottom:calc(78px + env(safe-area-inset-bottom)) !important;
+}
