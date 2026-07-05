@@ -313,7 +313,7 @@
     const adminConsoleHref=adminBase+'admin/';
     wrap.className='admin-menu-wrap';
     wrap.innerHTML=`
-      <button aria-expanded="false" aria-haspopup="true" aria-label="관리 패널 열기" class="admin-menu-btn" id="adminMenuBtn" type="button">관리</button>
+      <button aria-expanded="false" aria-haspopup="true" aria-label="관리자 페이지 새 창 열기" class="admin-menu-btn" id="adminMenuBtn" type="button">관리</button>
       <section aria-hidden="true" class="admin-dropdown admin-panel-modal" id="adminDropdown">
         <div class="admin-dropdown-head admin-panel-head">
           <div>
@@ -321,9 +321,6 @@
             <span>권한에 맞는 운영 기능만 표시됩니다.</span>
           </div>
           <button aria-label="닫기" class="admin-dropdown-close kinojo-common-close" id="adminDropdownClose" type="button">×</button>
-        </div>
-        <div class="admin-panel-shortcuts" aria-label="관리자 바로가기">
-          <a class="btn admin-console-link" href="${adminConsoleHref}">관리자 페이지 열기</a>
         </div>
         <div class="admin-control-panel admin-shell" id="adminControlPanel" style="display:grid">
           <nav class="admin-panel-tabs" aria-label="관리 패널 메뉴">
@@ -478,7 +475,7 @@
     const visitorRow=q('#kinojoTopVisitorRow',bar);
     const adminBtn=admin.querySelector('#adminMenuBtn');
     const adminPanel=admin.querySelector('#adminDropdown');
-    if(adminBtn){adminBtn.textContent='관리';adminBtn.setAttribute('aria-label','관리 패널 열기');}
+    if(adminBtn){adminBtn.textContent='관리';adminBtn.setAttribute('aria-label','관리자 페이지 새 창 열기');adminBtn.dataset.adminHref=adminConsoleHref;}
     if(adminPanel){
       document.body.appendChild(adminPanel);
       adminPanel.classList.add('kinojo-admin-shell-modal');
@@ -510,7 +507,12 @@
     if(btn)btn.setAttribute('aria-expanded','false');
   }
   function bindCommonAdmin(info){
-    q('#adminMenuBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();toggleAdminMenu();});
+    q('#adminMenuBtn')?.addEventListener('click',e=>{
+      e.preventDefault();
+      e.stopPropagation();
+      const href=e.currentTarget?.dataset?.adminHref||(info?.mobile?'/m/admin/':'/admin/');
+      window.open(href,'_blank','noopener');
+    });
     q('#adminDropdownClose')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeAdminMenuCommon();});
     document.addEventListener('click',e=>{const menu=q('#adminDropdown');if(menu&&menu.classList.contains('open')&&!menu.contains(e.target)&&!e.target.closest('#adminMenuBtn'))closeAdminMenuCommon();});
   }

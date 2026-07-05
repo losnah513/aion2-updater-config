@@ -14,11 +14,9 @@ STEP : 3-7 디자인 마감 / 모바일 튜닝 / Fade-Hover Motion
   align-items:center;
   justify-content:center;
   padding:clamp(12px,2.4vh,28px);
-  background:
-    radial-gradient(circle at 50% 42%,rgba(224,183,86,.075),transparent 38%),
-    rgba(8,10,15,.44);
-  backdrop-filter:blur(10px) saturate(1.08);
-  -webkit-backdrop-filter:blur(10px) saturate(1.08);
+  background:transparent;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
 }
 .kinojo-event-notice-root.is-visible{
   display:flex;
@@ -164,6 +162,8 @@ STEP : 3-7 디자인 마감 / 모바일 튜닝 / Fade-Hover Motion
   filter:saturate(1.07) contrast(1.025);
   transform:translateZ(0) scale(1.006);
   transition:transform .22s ease,filter .22s ease,opacity .22s ease;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.10) 12%,rgba(0,0,0,.58) 25%,#000 42%,#000 100%);
+  mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.10) 12%,rgba(0,0,0,.58) 25%,#000 42%,#000 100%);
 }
 .kinojo-event-notice-card.type-abyss_low{--notice-image-x:62%}
 .kinojo-event-notice-card.type-abyss_middle{--notice-image-x:61%}
@@ -181,7 +181,7 @@ STEP : 3-7 디자인 마감 / 모바일 튜닝 / Fade-Hover Motion
     linear-gradient(135deg,#2b2111,#101827 65%,#050505);
 }
 
-/* 그라데이션 전용 레이어: 왼쪽 빈 영역 채움 + 텍스트 가독성 */
+/* 그라데이션 전용 레이어: 왼쪽 검은 바탕과 우측 이미지를 부드럽게 연결 */
 .kinojo-event-notice-card::after{
   content:"";
   position:absolute;
@@ -190,17 +190,18 @@ STEP : 3-7 디자인 마감 / 모바일 튜닝 / Fade-Hover Motion
   pointer-events:none;
   background:
     linear-gradient(90deg,
-      rgba(4,3,2,1) 0%,
-      rgba(8,6,4,.985) 17%,
-      rgba(29,22,10,.88) 30%,
-      rgba(84,63,21,.50) 42%,
-      rgba(120,90,31,.22) 53%,
-      rgba(28,21,10,.060) 64%,
-      rgba(8,6,4,.14) 79%,
-      rgba(5,4,3,.54) 100%),
-    radial-gradient(ellipse at 20% 50%,rgba(244,205,101,.17),transparent 29%),
-    radial-gradient(ellipse at 88% 50%,rgba(0,0,0,.36),transparent 28%),
-    linear-gradient(180deg,rgba(255,251,229,.075),transparent 36%,rgba(0,0,0,.18));
+      rgba(5,4,3,1) 0%,
+      rgba(7,5,3,1) 18%,
+      rgba(19,14,7,.96) 31%,
+      rgba(45,32,12,.78) 43%,
+      rgba(85,61,21,.42) 53%,
+      rgba(20,14,7,.16) 64%,
+      rgba(8,6,4,.22) 77%,
+      rgba(4,3,2,.76) 100%),
+    linear-gradient(90deg,rgba(0,0,0,.92) 0%,rgba(0,0,0,.70) 30%,rgba(0,0,0,.12) 54%,rgba(0,0,0,.0) 66%),
+    radial-gradient(ellipse at 22% 50%,rgba(244,205,101,.17),transparent 31%),
+    radial-gradient(ellipse at 73% 50%,rgba(255,238,180,.055),transparent 40%),
+    linear-gradient(180deg,rgba(255,251,229,.075),transparent 38%,rgba(0,0,0,.20));
 }
 
 .kinojo-event-notice-card:hover{
