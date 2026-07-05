@@ -250,6 +250,26 @@ function hofBackgroundClass(metric){
   if(metric==='dislike')return 'is-dislike';
   return 'is-default';
 }
+
+function hofMetricIcon(metric){
+  if(metric==='enhance')return '✦';
+  if(metric==='growth')return '▲';
+  if(metric==='pve')return 'PVE';
+  if(metric==='pvp')return 'PVP';
+  if(metric==='like')return '♥';
+  if(metric==='dislike')return '◆';
+  return 'H';
+}
+function hofMetricToneLabel(metric){
+  if(metric==='enhance')return 'ENHANCE GOD';
+  if(metric==='growth')return 'GROWTH GOD';
+  if(metric==='pve')return 'PVE TOP 3';
+  if(metric==='pvp')return 'PVP TOP 3';
+  if(metric==='like')return 'LIKE TOP 3';
+  if(metric==='dislike')return 'DISLIKE TOP 3';
+  return 'KINOJO HALL';
+}
+
 function hofClassBadge(item){
   const cls=hofClassName(item);
   return cls?'<span class="hof-v2-class-badge">'+escapeHtml(cls)+'</span>':'';
@@ -267,7 +287,7 @@ function hofTop3Card(item,index,metric){
   const server=hofServerName(item)||'지켈';
   const summary=hofRankSummaryText(item,metric);
   const score=hofMetricValue(item,metric)||'-';
-  return '<button type="button" class="hof-v2-top3-item" data-character="'+escapeHtml(name)+'" data-hof-metric="'+escapeHtml(metric)+'" data-hof-rank="'+rank+'" data-hof-score="'+escapeHtml(score)+'" aria-label="'+escapeHtml(name)+' 상세 보기">'
+  return '<button type="button" class="hof-v2-top3-item rank-'+rank+'" data-character="'+escapeHtml(name)+'" data-hof-metric="'+escapeHtml(metric)+'" data-hof-rank="'+rank+'" data-hof-score="'+escapeHtml(score)+'" aria-label="'+escapeHtml(name)+' 상세 보기">'
     + '<span class="hof-v2-rank-stack">'+hofRankMedal(rank)+'</span>'
     + '<span class="hof-v2-portrait-wrap">'+hofRankPortrait(item,rank,'small')+'</span>'
     + '<span class="hof-v2-top3-info"><span class="hof-v2-top3-name">'+escapeHtml(name)+'</span>'
@@ -281,7 +301,7 @@ function hofWidePanel(title,note,list,metric){
   const items=(list||[]).slice(0,3);
   return '<section class="hof-v2-panel hof-v2-wide '+hofBackgroundClass(metric)+'" data-hof-panel="'+escapeHtml(metric)+'">'
     + '<div class="hof-v2-panel-bg" aria-hidden="true"></div>'
-    + '<div class="hof-v2-panel-head"><div><span class="hof-v2-kicker">KINOJO HALL</span><h2>'+escapeHtml(title)+'</h2></div><p>'+escapeHtml(note||'')+'</p></div>'
+    + '<div class="hof-v2-panel-head"><div><span class="hof-v2-kicker">'+escapeHtml(hofMetricToneLabel(metric))+'</span><h2><span class="hof-v2-title-icon">'+escapeHtml(hofMetricIcon(metric))+'</span>'+escapeHtml(title)+'</h2></div><p>'+escapeHtml(note||'')+'</p></div>'
     + '<div class="hof-v2-top3">'+[0,1,2].map(i=>hofTop3Card(items[i],i,metric)).join('')+'</div>'
     + '</section>';
 }
@@ -299,7 +319,7 @@ function hofGodHeroCard(title,note,item,metric){
   const bodyAttrs=hasItem?' type="button" data-character="'+escapeHtml(name)+'" data-hof-metric="'+escapeHtml(metric)+'" data-hof-rank="1" data-hof-score="'+escapeHtml(score)+'" aria-label="'+escapeHtml(name)+' 상세 보기"':'';
   return '<section class="hof-v2-panel hof-v2-god '+hofBackgroundClass(metric)+'" data-hof-panel="'+escapeHtml(metric)+'">'
     + '<div class="hof-v2-panel-bg" aria-hidden="true"></div>'
-    + '<div class="hof-v2-god-head"><span class="hof-v2-kicker">KINOJO HALL</span><h2>'+escapeHtml(title)+'</h2><p>'+escapeHtml(note||'')+'</p></div>'
+    + '<div class="hof-v2-god-head"><span class="hof-v2-kicker">'+escapeHtml(hofMetricToneLabel(metric))+'</span><h2><span class="hof-v2-title-icon">'+escapeHtml(hofMetricIcon(metric))+'</span>'+escapeHtml(title)+'</h2><p>'+escapeHtml(note||'')+'</p></div>'
     + '<'+bodyTag+' class="hof-v2-god-main'+(hasItem?'':' is-empty')+'"'+bodyAttrs+'>'
     + '<span class="hof-v2-god-portrait">'+hofRankPortrait(safeItem,1,'large')+(hasItem?hofRankMedal(1):'')+'</span>'
     + '<strong>'+escapeHtml(name)+'</strong>'
@@ -335,7 +355,7 @@ function hofMyRankingPanel(){
       + '</div>';
   }).join('');
   return '<aside class="hof-v2-panel hof-v2-my-rank">'
-    + '<div class="hof-v2-my-head"><span class="hof-v2-kicker">MY KINOJO</span><h2>내 랭킹 정보</h2><p>'+(isLoggedIn&&myName?escapeHtml(myName)+' 기준으로 표시됩니다.':'로그인한 캐릭터 기준으로 표시됩니다.')+'</p></div>'
+    + '<div class="hof-v2-my-head"><span class="hof-v2-kicker">MY KINOJO</span><h2><span class="hof-v2-title-icon">◎</span>내 랭킹 정보</h2><p>'+(isLoggedIn&&myName?escapeHtml(myName)+' 기준으로 표시됩니다.':'로그인한 캐릭터 기준으로 표시됩니다.')+'</p></div>'
     + (!isLoggedIn?'<div class="hof-v2-login-guide"><span>🔒</span><strong>로그인 후 나의 랭킹을 확인하세요.</strong><button type="button" onclick="window.KinojoAuth?.openLoginModal?.()">로그인</button></div>':'')
     + '<div class="hof-v2-my-list">'+rowHtml+'</div>'
     + '</aside>';

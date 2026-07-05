@@ -2114,3 +2114,53 @@ button.hof-v2-god-main:hover{transform:translateY(-2px);background:rgba(255,255,
   .hof-v2-top3-score{max-width:62px;font-size:12px;}
   .hof-v2-badge-line{display:none;}
 }
+
+/* ===========================================================
+   KINOJO Hall of Fame v2 STEP 6 - visual finish refinements
+   - Uses existing v2 selectors; no new component branch added
+   - White main typography + gold accent maintained
+   =========================================================== */
+.hof-v2-layout{gap:18px;}
+.hof-v2-panel{
+  backdrop-filter:blur(16px) saturate(1.12);
+  -webkit-backdrop-filter:blur(16px) saturate(1.12);
+}
+.hof-v2-panel:before{
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.16),transparent 34%),
+    radial-gradient(circle at 18% 8%,rgba(255,232,169,.22),transparent 28%),
+    radial-gradient(circle at 84% 80%,rgba(255,255,255,.08),transparent 34%);
+}
+.hof-v2-panel:after{box-shadow:inset 0 0 0 1px rgba(255,255,255,.07),inset 0 0 38px rgba(217,180,95,.08);}
+.hof-v2-panel-bg{filter:blur(.2px) saturate(1.18);}
+.hof-v2-panel.is-enhance .hof-v2-panel-bg{background:radial-gradient(circle at 78% 18%,rgba(255,111,61,.26),transparent 34%),linear-gradient(135deg,rgba(93,19,12,.62),rgba(4,7,14,.78));}
+.hof-v2-panel.is-growth .hof-v2-panel-bg{background:radial-gradient(circle at 72% 16%,rgba(98,173,255,.25),transparent 34%),linear-gradient(135deg,rgba(10,36,84,.62),rgba(4,7,14,.78));}
+.hof-v2-panel.is-pve .hof-v2-panel-bg{background:radial-gradient(circle at 82% 18%,rgba(222,171,76,.22),transparent 34%),linear-gradient(135deg,rgba(66,40,14,.58),rgba(4,7,14,.80));}
+.hof-v2-panel.is-pvp .hof-v2-panel-bg{background:radial-gradient(circle at 82% 18%,rgba(95,134,255,.24),transparent 34%),linear-gradient(135deg,rgba(18,31,76,.64),rgba(4,7,14,.80));}
+.hof-v2-panel.is-like .hof-v2-panel-bg{background:radial-gradient(circle at 82% 18%,rgba(255,209,110,.24),transparent 34%),linear-gradient(135deg,rgba(79,48,9,.56),rgba(4,7,14,.80));}
+.hof-v2-panel.is-dislike .hof-v2-panel-bg{background:radial-gradient(circle at 82% 18%,rgba(255,94,108,.22),transparent 34%),linear-gradient(135deg,rgba(76,18,28,.58),rgba(4,7,14,.80));}
+.hof-v2-panel-head h2,.hof-v2-god-head h2,.hof-v2-my-head h2{display:flex;align-items:center;gap:8px;}
+.hof-v2-title-icon{display:inline-grid;place-items:center;min-width:26px;height:26px;padding:0 7px;border:1px solid rgba(217,180,95,.42);border-radius:8px;background:linear-gradient(135deg,rgba(217,180,95,.24),rgba(255,255,255,.06));color:#ffe6a0;font-size:12px;line-height:1;box-shadow:0 0 18px rgba(217,180,95,.16);}
+.hof-v2-kicker{letter-spacing:.14em;}
+.hof-v2-top3-item{box-shadow:inset 0 0 0 1px rgba(255,255,255,.035);}
+.hof-v2-top3-item.rank-1{background:linear-gradient(180deg,rgba(217,180,95,.20),rgba(255,255,255,.045));border-color:rgba(217,180,95,.38);}
+.hof-v2-top3-item.rank-2{background:linear-gradient(180deg,rgba(215,222,236,.12),rgba(255,255,255,.035));}
+.hof-v2-top3-item.rank-3{background:linear-gradient(180deg,rgba(207,129,70,.12),rgba(255,255,255,.035));}
+.hof-v2-top3-item:before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(115deg,transparent 0%,rgba(255,255,255,.12) 42%,transparent 68%);transform:translateX(-120%);opacity:0;pointer-events:none;}
+.hof-v2-top3-item:hover:before{animation:hofV2Shine .75s ease both;}
+.hof-v2-portrait{background:linear-gradient(135deg,rgba(255,255,255,.18),rgba(217,180,95,.10));}
+.hof-v2-portrait-wrap{position:relative;}
+.hof-v2-portrait-wrap:after,.hof-v2-god-portrait:after{content:"";position:absolute;inset:-6px;border-radius:50%;border:1px solid rgba(217,180,95,.16);box-shadow:0 0 22px rgba(217,180,95,.10);pointer-events:none;}
+.hof-v2-god{box-shadow:0 22px 58px rgba(0,0,0,.34),0 0 0 1px rgba(217,180,95,.08) inset;}
+.hof-v2-god-main{border:1px solid rgba(255,255,255,.06);background:radial-gradient(circle at 50% 34%,rgba(217,180,95,.10),transparent 46%);}
+.hof-v2-god-main strong,.hof-v2-top3-name{color:#fffaf0;}
+.hof-v2-god-score{border-top-color:rgba(217,180,95,.36);border-bottom:1px solid rgba(217,180,95,.18);}
+.hof-v2-my-row{transition:transform .16s ease,border-color .16s ease,background .16s ease;}
+.hof-v2-my-row.is-found:hover{transform:translateX(2px);border-color:rgba(217,180,95,.55);}
+@keyframes hofV2Shine{0%{opacity:0;transform:translateX(-120%);}35%{opacity:1;}100%{opacity:0;transform:translateX(120%);}}
+@media (prefers-reduced-motion:reduce){.hof-v2-top3-item:hover:before{animation:none}.hof-v2-my-row{transition:none}}
+@media (max-width:760px){
+  .hof-v2-panel-head h2,.hof-v2-god-head h2,.hof-v2-my-head h2{gap:6px;}
+  .hof-v2-title-icon{min-width:22px;height:22px;border-radius:7px;font-size:10px;}
+  .hof-v2-top3-item:before{display:none;}
+}
