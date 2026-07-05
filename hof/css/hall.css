@@ -1809,3 +1809,460 @@ body.reaction-popover-open::before{content:"";position:fixed;inset:0;z-index:100
   .reaction-comment{min-height:74px!important;font-size:13px!important;}
   .send-btn{min-width:74px!important;height:40px!important;font-size:13px!important;}
 }
+
+/* ===========================================================
+   KINOJO Hall of Fame v2 Layout STEP 1
+   - Main color: white
+   - Point color: gold
+   - Layout-only renewal based on existing data binding
+   =========================================================== */
+body{
+  background:
+    radial-gradient(circle at 18% 12%,rgba(218,176,85,.20),transparent 28%),
+    radial-gradient(circle at 78% 18%,rgba(116,146,204,.18),transparent 32%),
+    linear-gradient(180deg,#09101d 0%,#111827 48%,#070b12 100%);
+  color:#fff;
+}
+.wrap{
+  width:min(1420px,100%);
+  padding:112px 18px 52px;
+}
+.banner{
+  display:none;
+}
+.chick-card{
+  display:none!important;
+}
+#app{
+  min-height:0;
+}
+.hof-v2-shell{
+  width:100%;
+}
+.hof-v2-layout{
+  --hof-gold:#d9b45f;
+  --hof-gold-soft:rgba(217,180,95,.66);
+  --hof-white:#fffaf0;
+  --hof-muted:rgba(255,255,255,.66);
+  --hof-line:rgba(217,180,95,.26);
+  display:grid;
+  grid-template-columns:minmax(244px,300px) minmax(520px,1fr) minmax(250px,320px);
+  gap:14px;
+  align-items:stretch;
+}
+.hof-v2-left,.hof-v2-center,.hof-v2-right{
+  min-width:0;
+}
+.hof-v2-center{
+  display:grid;
+  gap:14px;
+}
+.hof-v2-two{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+.hof-v2-panel{
+  position:relative;
+  overflow:hidden;
+  border:1px solid rgba(217,180,95,.22);
+  border-radius:8px;
+  background:
+    linear-gradient(135deg,rgba(255,255,255,.10),rgba(255,255,255,.035)),
+    rgba(5,8,14,.82);
+  box-shadow:0 16px 44px rgba(0,0,0,.26), inset 0 0 0 1px rgba(255,255,255,.05);
+  color:var(--hof-white);
+}
+.hof-v2-panel:before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  border-radius:inherit;
+  background:
+    linear-gradient(90deg,rgba(217,180,95,.48),transparent 18%,transparent 82%,rgba(217,180,95,.26)),
+    linear-gradient(180deg,rgba(255,255,255,.12),transparent 28%,rgba(0,0,0,.18));
+  opacity:.52;
+  mix-blend-mode:screen;
+}
+.hof-v2-panel-bg{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  opacity:.76;
+  background:
+    radial-gradient(circle at 20% 28%,rgba(217,180,95,.24),transparent 28%),
+    radial-gradient(circle at 80% 64%,rgba(0,0,0,.72),transparent 34%);
+}
+.hof-v2-panel-bg:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg,rgba(0,0,0,.66) 0%,rgba(0,0,0,.38) 50%,rgba(0,0,0,.74) 100%);
+}
+.hof-v2-panel.is-enhance .hof-v2-panel-bg{
+  background:radial-gradient(circle at 50% 20%,rgba(255,68,42,.46),transparent 34%),linear-gradient(145deg,#43100e,#08090c 62%);
+}
+.hof-v2-panel.is-growth .hof-v2-panel-bg{
+  background:radial-gradient(circle at 28% 32%,rgba(55,150,255,.42),transparent 32%),linear-gradient(145deg,#0d2746,#070a10 68%);
+}
+.hof-v2-panel.is-pve .hof-v2-panel-bg{
+  background:radial-gradient(circle at 22% 40%,rgba(217,180,95,.36),transparent 34%),linear-gradient(145deg,#231a10,#080a0f 68%);
+}
+.hof-v2-panel.is-pvp .hof-v2-panel-bg{
+  background:radial-gradient(circle at 24% 40%,rgba(92,128,205,.36),transparent 34%),linear-gradient(145deg,#121d33,#080a0f 70%);
+}
+.hof-v2-panel.is-like .hof-v2-panel-bg{
+  background:radial-gradient(circle at 18% 50%,rgba(71,166,255,.38),transparent 34%),linear-gradient(145deg,#0d2238,#080a0f 72%);
+}
+.hof-v2-panel.is-dislike .hof-v2-panel-bg{
+  background:radial-gradient(circle at 78% 36%,rgba(187,54,69,.38),transparent 34%),linear-gradient(145deg,#310f18,#080a0f 72%);
+}
+.hof-v2-panel-head,.hof-v2-god-head,.hof-v2-my-head{
+  position:relative;
+  z-index:1;
+}
+.hof-v2-panel-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding:18px 20px 6px;
+  text-align:center;
+}
+.hof-v2-panel-head>div{
+  flex:1;
+}
+.hof-v2-kicker{
+  display:block;
+  color:var(--hof-gold);
+  font-size:11px;
+  letter-spacing:.18em;
+  font-weight:1000;
+}
+.hof-v2-panel h2,.hof-v2-my-head h2{
+  margin:2px 0 0;
+  color:var(--hof-white);
+  font-size:22px;
+  line-height:1.15;
+  letter-spacing:-.04em;
+  text-shadow:0 2px 12px rgba(0,0,0,.58);
+}
+.hof-v2-panel-head p,.hof-v2-my-head p,.hof-v2-god-head p{
+  margin:4px 0 0;
+  color:rgba(255,250,240,.74);
+  font-size:13px;
+  font-weight:800;
+}
+.hof-v2-top3{
+  position:relative;
+  z-index:1;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  padding:12px 18px 18px;
+}
+.hof-v2-top3-item{
+  position:relative;
+  min-width:0;
+  display:grid;
+  justify-items:center;
+  gap:4px;
+  border:0;
+  background:transparent;
+  color:var(--hof-white);
+  cursor:pointer;
+  padding:2px 4px 0;
+}
+.hof-v2-top3-item:hover .hof-v2-portrait{
+  transform:translateY(-2px) scale(1.035);
+  box-shadow:0 0 0 2px rgba(217,180,95,.36),0 0 24px rgba(217,180,95,.26);
+}
+.hof-v2-medal{
+  display:grid;
+  place-items:center;
+  width:32px;
+  height:32px;
+  border:1px solid rgba(217,180,95,.72);
+  background:linear-gradient(145deg,rgba(217,180,95,.25),rgba(0,0,0,.42));
+  color:#fff3c4;
+  font-weight:1000;
+  transform:rotate(45deg);
+  box-shadow:0 0 18px rgba(217,180,95,.18);
+}
+.hof-v2-medal::first-letter{
+  transform:rotate(-45deg);
+}
+.hof-v2-medal{
+  font-size:0;
+}
+.hof-v2-medal:after{
+  content:attr(class);
+  display:none;
+}
+.hof-v2-medal-1:before{content:"1";font-size:15px;transform:rotate(-45deg)}
+.hof-v2-medal-2:before{content:"2";font-size:15px;transform:rotate(-45deg)}
+.hof-v2-medal-3:before{content:"3";font-size:15px;transform:rotate(-45deg)}
+.hof-v2-portrait{
+  display:block;
+  object-fit:cover;
+  border-radius:50%;
+  border:2px solid rgba(217,180,95,.78);
+  background:rgba(255,255,255,.08);
+  color:#fff5d7;
+  font-weight:1000;
+  transition:transform .18s ease,box-shadow .18s ease;
+}
+.hof-v2-portrait.small{
+  width:70px;
+  height:70px;
+}
+.hof-v2-portrait.large{
+  width:112px;
+  height:112px;
+  font-size:32px;
+  display:grid;
+  place-items:center;
+}
+.hof-v2-portrait.is-empty.small{
+  display:grid;
+  place-items:center;
+  font-size:22px;
+}
+.hof-v2-top3-name{
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#fffdf5;
+  font-size:15px;
+  font-weight:1000;
+}
+.hof-v2-top3-meta{
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:rgba(255,255,255,.62);
+  font-size:11px;
+  font-weight:800;
+}
+.hof-v2-top3-score{
+  color:#f4cf77;
+  font-size:17px;
+  line-height:1.1;
+}
+.hof-v2-god{
+  min-height:100%;
+  display:grid;
+  grid-template-rows:auto 1fr auto auto;
+  align-items:center;
+  padding:24px 18px 20px;
+}
+.hof-v2-god-head{
+  text-align:center;
+}
+.hof-v2-god-main{
+  position:relative;
+  z-index:1;
+  display:grid;
+  justify-items:center;
+  align-content:center;
+  gap:7px;
+  min-height:260px;
+  border:0;
+  background:transparent;
+  color:var(--hof-white);
+  cursor:pointer;
+}
+.hof-v2-god-main .hof-v2-medal{
+  margin-top:-22px;
+  width:38px;
+  height:38px;
+}
+.hof-v2-god-main strong{
+  font-size:24px;
+  letter-spacing:-.04em;
+}
+.hof-v2-god-main span:not(.hof-v2-medal){
+  color:rgba(255,255,255,.72);
+  font-size:13px;
+  font-weight:800;
+}
+.hof-v2-god-score{
+  position:relative;
+  z-index:1;
+  display:grid;
+  justify-items:center;
+  gap:4px;
+  padding:12px;
+  border-top:1px solid rgba(217,180,95,.22);
+}
+.hof-v2-god-score strong{
+  color:#fff;
+  font-size:44px;
+  line-height:1;
+  text-shadow:0 2px 12px rgba(0,0,0,.62),0 0 18px rgba(217,180,95,.22);
+}
+.hof-v2-god-score span,.hof-v2-god-sub span{
+  color:rgba(255,255,255,.64);
+  font-size:13px;
+  font-weight:900;
+}
+.hof-v2-god-sub{
+  position:relative;
+  z-index:1;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  padding:12px 14px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(0,0,0,.28);
+}
+.hof-v2-god-sub strong{
+  color:#f4cf77;
+  font-size:20px;
+}
+.hof-v2-my-rank{
+  padding:20px 16px;
+  min-height:100%;
+}
+.hof-v2-my-head{
+  text-align:center;
+  padding-bottom:16px;
+  border-bottom:1px solid rgba(217,180,95,.18);
+}
+.hof-v2-login-guide{
+  position:relative;
+  z-index:1;
+  display:grid;
+  justify-items:center;
+  gap:10px;
+  padding:18px 12px;
+  margin:14px 0;
+  color:rgba(255,255,255,.72);
+  background:rgba(255,255,255,.045);
+  border:1px solid rgba(255,255,255,.10);
+}
+.hof-v2-login-guide button{
+  border:1px solid rgba(217,180,95,.34);
+  background:linear-gradient(135deg,rgba(217,180,95,.95),rgba(169,117,34,.95));
+  color:#17100a;
+  border-radius:8px;
+  padding:9px 32px;
+  font-weight:1000;
+  cursor:pointer;
+}
+.hof-v2-my-list{
+  position:relative;
+  z-index:1;
+  display:grid;
+  gap:10px;
+  margin-top:14px;
+}
+.hof-v2-my-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:13px 12px;
+  border:1px solid rgba(217,180,95,.16);
+  background:linear-gradient(90deg,rgba(255,255,255,.08),rgba(255,255,255,.025));
+}
+.hof-v2-my-row strong{
+  display:block;
+  color:#fffaf0;
+  font-size:15px;
+}
+.hof-v2-my-row span,.hof-v2-my-row em{
+  display:block;
+  color:rgba(255,255,255,.58);
+  font-style:normal;
+  font-size:12px;
+  font-weight:900;
+}
+.hof-v2-my-row b{
+  display:block;
+  color:#f4cf77;
+  font-size:19px;
+  text-align:right;
+}
+.hof-v2-empty-dot{
+  display:grid;
+  place-items:center;
+  width:42px;
+  height:42px;
+  border:1px dashed rgba(217,180,95,.28);
+  border-radius:50%;
+  color:rgba(255,255,255,.48);
+  font-weight:1000;
+}
+.hof-v2-empty-text{
+  color:rgba(255,255,255,.46);
+  font-size:12px;
+  font-weight:900;
+}
+@media (max-width:1180px){
+  .hof-v2-layout{
+    grid-template-columns:1fr;
+  }
+  .hof-v2-left,.hof-v2-right{
+    order:0;
+  }
+  .hof-v2-center{
+    order:1;
+  }
+  .hof-v2-right{
+    order:2;
+  }
+  .hof-v2-god{
+    min-height:0;
+  }
+  .hof-v2-god-main{
+    min-height:180px;
+  }
+}
+@media (max-width:760px){
+  .wrap{
+    padding:92px 10px 86px;
+  }
+  .hof-v2-two{
+    grid-template-columns:1fr;
+  }
+  .hof-v2-panel-head{
+    display:block;
+    padding:15px 14px 4px;
+  }
+  .hof-v2-panel h2,.hof-v2-my-head h2{
+    font-size:19px;
+  }
+  .hof-v2-top3{
+    grid-template-columns:1fr;
+    padding:10px 12px 14px;
+  }
+  .hof-v2-top3-item{
+    grid-template-columns:auto auto 1fr auto;
+    align-items:center;
+    justify-items:start;
+    text-align:left;
+    gap:10px;
+    padding:9px 8px;
+    border:1px solid rgba(255,255,255,.08);
+    background:rgba(0,0,0,.22);
+  }
+  .hof-v2-top3-meta{
+    grid-column:3/5;
+  }
+  .hof-v2-portrait.small{
+    width:48px;
+    height:48px;
+  }
+  .hof-v2-medal{
+    width:28px;
+    height:28px;
+  }
+  .hof-v2-god-score strong{
+    font-size:36px;
+  }
+}

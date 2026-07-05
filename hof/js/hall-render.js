@@ -123,62 +123,104 @@ function awardsBoard(){const w=hallData?.weeklyAwards||{};return '<div class="aw
 
 function hofMetricValue(item,metric){
   if(!item)return '';
-  if(metric==='like')return '👍 '+Number(item.like||0).toLocaleString('ko-KR');
-  if(metric==='dislike')return '👎 '+Number(item.dislike||0).toLocaleString('ko-KR');
+  if(metric==='like')return Number(item.like||0).toLocaleString('ko-KR');
+  if(metric==='dislike')return Number(item.dislike||0).toLocaleString('ko-KR');
   if(metric==='pvp')return item.pvpPowerLabel||numberOnly(item.pvpPower)||'-';
   if(metric==='pve')return item.pvePowerLabel||numberOnly(item.pvePower)||'-';
   if(metric==='growth')return item.powerLabel||((item.powerDelta>0?'+':'')+numberOnly(item.powerDelta));
   if(metric==='enhance')return item.itemLabel||((item.itemLevelDelta>0?'+':'')+numberOnly(item.itemLevelDelta));
   return item.label||'';
 }
-function hofSummaryCard(item,index,metric){
-  if(!item)return '<div class="hof-summary-empty">데이터 대기 중</div>';
-  const rank=Number(item.rank||index+1||1);
-  const metricText=escapeHtml(hofMetricValue(item,metric)||'-');
-  const meta=[item.serverName||item.meta||'', item.className||''].filter(Boolean).join(' · ');
-  const owner=String(item.owner||'').trim();
-  const name=String(item.name||'').trim();
-  const ownerNote=owner&&owner!==name?'<span class="hof-owner-note">본캐 '+escapeHtml(owner)+'</span>':'';
-  const topClass=rank<=3?' is-top is-top-'+rank:'';
-  return '<div class="hof-summary-card'+topClass+'" data-character="'+escapeHtml(name)+'">'
-    + '<div class="hof-summary-rank">'+rankIcon(rank-1)+'</div>'
-    + '<div class="hof-summary-profile">'+rankProfileHtml(item,rank)+'</div>'
-    + '<div class="hof-summary-info"><div class="hof-summary-name"><strong>'+escapeHtml(name||'-')+'</strong>'+ownerNote+'</div>'
-    + '<div class="hof-summary-meta">'+escapeHtml(meta||'지켈')+'</div>'
-    + '<div class="hof-summary-reactions">'+rankReactionBoxHtml('like',item.like||0)+rankReactionBoxHtml('dislike',item.dislike||0)+'</div></div>'
-    + '<div class="hof-summary-score '+escapeHtml(metric)+'">'+metricText+'</div>'
-    + '</div>';
+function hofRankMedal(rank){
+  return '<span class="hof-v2-medal hof-v2-medal-'+rank+'">'+rank+'</span>';
 }
-function hofTopList(title,note,list,metric){
+function hofRankPortrait(item,rank,size){
+  const url=profileImageUrlFor(item);
+  const cls='hof-v2-portrait '+(size||'')+(url?'':' is-empty');
+  if(!url)return '<div class="'+cls+'" aria-hidden="true">'+escapeHtml((item?.name||'?').slice(0,1))+'</div>';
+  return '<img class="'+cls+'" src="'+escapeHtml(url)+'" alt="'+escapeHtml((item?.name||'캐릭터')+' 프로필')+'" loading="lazy" decoding="async">';
+}
+function hofBackgroundClass(metric){
+  if(metric==='enhance')return 'is-enhance';
+  if(metric==='growth')return 'is-growth';
+  if(metric==='pve')return 'is-pve';
+  if(metric==='pvp')return 'is-pvp';
+  if(metric==='like')return 'is-like';
+  if(metric==='dislike')return 'is-dislike';
+  return 'is-default';
+}
+function hofTop3Card(item,index,metric){
+  const rank=index+1;
+  if(!item)return '<div class="hof-v2-top3-item is-empty"><div class="hof-v2-empty-dot">'+rank+'</div><div class="hof-v2-empty-text">데이터 대기</div></div>';
+  const name=String(item.name||'-');
+  const meta=[item.serverName||item.meta||'지켈', item.className||''].filter(Boolean).join(' · ');
+  return '<button type="button" class="hof-v2-top3-item" data-character="'+escapeHtml(name)+'">'
+    + hofRankMedal(rank)
+    + hofRankPortrait(item,rank,'small')
+    + '<span class="hof-v2-top3-name">'+escapeHtml(name)+'</span>'
+    + '<span class="hof-v2-top3-meta">'+escapeHtml(meta)+'</span>'
+    + '<strong class="hof-v2-top3-score">'+escapeHtml(hofMetricValue(item,metric)||'-')+'</strong>'
+    + '</button>';
+}
+function hofWidePanel(title,note,list,metric){
   const items=(list||[]).slice(0,3);
-  return '<section class="section hof-summary-section"><div class="section-head"><h2>'+title+'</h2><span class="section-note">'+escapeHtml(note||'')+'</span></div><div class="hof-summary-list">'
-    + (items.length?items.map((item,i)=>hofSummaryCard(item,i,metric)).join(''):'<div class="empty">아직 데이터가 부족합니다.</div>')
-    + '</div></section>';
+  return '<section class="hof-v2-panel hof-v2-wide '+hofBackgroundClass(metric)+'">'
+    + '<div class="hof-v2-panel-bg" aria-hidden="true"></div>'
+    + '<div class="hof-v2-panel-head"><div><span class="hof-v2-kicker">KINOJO HALL</span><h2>'+escapeHtml(title)+'</h2></div><p>'+escapeHtml(note||'')+'</p></div>'
+    + '<div class="hof-v2-top3">'+[0,1,2].map(i=>hofTop3Card(items[i],i,metric)).join('')+'</div>'
+    + '</section>';
 }
-function hofGodCard(title,note,item,metric){
-  return '<section class="section hof-summary-section hof-god-section"><div class="section-head"><h2>'+title+'</h2><span class="section-note">'+escapeHtml(note||'')+'</span></div><div class="hof-summary-list hof-god-list">'
-    + (item?hofSummaryCard(Object.assign({},item,{rank:1}),0,metric):'<div class="empty">비교 가능한 데이터가 부족합니다.</div>')
-    + '</div></section>';
+function hofGodHeroCard(title,note,item,metric){
+  const safeItem=item||null;
+  const name=String(safeItem?.name||'집계 대기');
+  const score=hofMetricValue(safeItem,metric)||'-';
+  const meta=[safeItem?.serverName||safeItem?.meta||'', safeItem?.className||''].filter(Boolean).join(' · ');
+  const deltaLabel=metric==='enhance'?'강화 수치':'성장량';
+  const recent=metric==='enhance'?(safeItem?.itemLevelDelta||safeItem?.valueDelta):(safeItem?.powerDelta||safeItem?.valueDelta);
+  const recentText=recent?((Number(recent)>0?'+':'')+Number(recent).toLocaleString('ko-KR')):'-';
+  return '<section class="hof-v2-panel hof-v2-god '+hofBackgroundClass(metric)+'">'
+    + '<div class="hof-v2-panel-bg" aria-hidden="true"></div>'
+    + '<div class="hof-v2-god-head"><span class="hof-v2-kicker">EVENT NOTICE</span><h2>'+escapeHtml(title)+'</h2><p>'+escapeHtml(note||'')+'</p></div>'
+    + '<button type="button" class="hof-v2-god-main" data-character="'+escapeHtml(name)+'">'
+    + hofRankPortrait(safeItem,1,'large')
+    + hofRankMedal(1)
+    + '<strong>'+escapeHtml(name)+'</strong>'
+    + '<span>'+escapeHtml(meta||'지켈')+'</span>'
+    + '</button>'
+    + '<div class="hof-v2-god-score"><strong>'+escapeHtml(score)+'</strong><span>'+deltaLabel+'</span></div>'
+    + '<div class="hof-v2-god-sub"><span>최근 변화</span><strong>'+escapeHtml(recentText)+'</strong></div>'
+    + '</section>';
 }
-function hofReactionsSummary(){
+function hofMyRankingPanel(){
+  const isLoggedIn=!!(window.KinojoAuth&&typeof window.KinojoAuth.getSession==='function'&&window.KinojoAuth.getSession());
+  const rows=[
+    ['강화의 신','RANK -','강화 수치','-','enhance'],
+    ['PVE 랭킹','RANK -','포인트','-','pve'],
+    ['PVP 랭킹','RANK -','포인트','-','pvp'],
+    ['좋아요 랭킹','RANK -','포인트','-','like'],
+    ['싫어요 랭킹','RANK -','포인트','-','dislike'],
+    ['성장의 신','RANK -','이번주 성장량','-','growth']
+  ];
+  return '<aside class="hof-v2-panel hof-v2-my-rank">'
+    + '<div class="hof-v2-my-head"><h2>내 랭킹 정보</h2><p>로그인한 캐릭터 기준으로 표시됩니다.</p></div>'
+    + (!isLoggedIn?'<div class="hof-v2-login-guide"><span>🔒</span><strong>로그인 후 나의 랭킹을 확인하세요.</strong><button type="button" onclick="window.openLoginModal&&window.openLoginModal()">로그인</button></div>':'')
+    + '<div class="hof-v2-my-list">'+rows.map(row=>'<div class="hof-v2-my-row '+hofBackgroundClass(row[4])+'"><div><strong>'+escapeHtml(row[0])+'</strong><span>'+escapeHtml(row[1])+'</span></div><div><em>'+escapeHtml(row[2])+'</em><b>'+escapeHtml(row[3])+'</b></div></div>').join('')+'</div>'
+    + '</aside>';
+}
+function hofV2Layout(){
   const s=hallData?.summarySections||{};
-  return '<div class="hof-two-grid">'
-    + hofTopList('👍 좋아요 TOP 3','모두에게 사랑받은 모험가',s.likesTop||hallData?.reactionSummary?.likeTop||[],'like')
-    + hofTopList('👎 싫어요 TOP 3','뜨거운 관심을 받은 모험가',s.dislikesTop||hallData?.reactionSummary?.dislikeTop||[],'dislike')
-    + '</div>';
-}
-function hofCombatSummary(){
-  const s=hallData?.summarySections||{};
-  return '<div class="hof-two-grid">'
-    + hofTopList('⚔ PVE 전투력 TOP 3','PVE 전투력 기준',s.pveTop||hallData?.pveTop||[],'pve')
-    + hofTopList('🛡 PVP 전투력 TOP 3','PVP 전투력 기준',s.pvpTop||hallData?.pvpTop||[],'pvp')
-    + '</div>';
-}
-function hofGodsSummary(){
-  const s=hallData?.summarySections||{};
-  return '<div class="hof-two-grid hof-god-grid">'
-    + hofGodCard('💎 강화의 신','아이템레벨 성장 1위',s.enhanceGod || hallData?.weeklyAwards?.bulkUp?.[0], 'enhance')
-    + hofGodCard('🔥 성장의 신','전투력 성장 1위',s.growthGod || hallData?.weeklyAwards?.growthKing?.[0], 'growth')
+  return '<div class="hof-v2-layout">'
+    + '<div class="hof-v2-left">'+hofGodHeroCard('강화의 신','키노조 최강의 강화 마스터',s.enhanceGod || hallData?.weeklyAwards?.bulkUp?.[0], 'enhance')+'</div>'
+    + '<div class="hof-v2-center">'
+    + hofWidePanel('고독의 투기장 (PVE 랭킹)','던전과 전장에서 증명된 강자들',s.pveTop||hallData?.pveTop||[],'pve')
+    + hofWidePanel('협력의 투기장 (PVP 랭킹)','치열한 전장에서 승리한 자들',s.pvpTop||hallData?.pvpTop||[],'pvp')
+    + '<div class="hof-v2-two">'
+    + hofWidePanel('악몽 (좋아요)','가장 많은 사랑을 받은 자들',s.likesTop||hallData?.reactionSummary?.likeTop||[],'like')
+    + hofWidePanel('초월 (싫어요)','가장 뜨거운 관심을 받은 자들',s.dislikesTop||hallData?.reactionSummary?.dislikeTop||[],'dislike')
+    + '</div>'
+    + hofGodHeroCard('성장의 신','가장 눈부신 성장을 보여준 자',s.growthGod || hallData?.weeklyAwards?.growthKing?.[0], 'growth')
+    + '</div>'
+    + '<div class="hof-v2-right">'+hofMyRankingPanel()+'</div>'
     + '</div>';
 }
 function hofRankingLinkCard(){
@@ -191,9 +233,6 @@ function hofRankingLinkCard(){
     + '<p class="hof-ranking-banner-note">추후 제작한 배너 이미지로 교체 가능한 공통 배너 영역입니다.</p>'
     + '</section>';
 }
-function awardCard(title,note,list,labelKey){return '<section class="award-card"><div class="section-head"><h2>'+title+'</h2><span class="section-note">'+note+'</span></div><div class="award-body">'+(list.length?list.map((item,i)=>'<div class="award-row"><div class="award-rank">'+(i+1)+'위</div><div class="award-name"><div class="rank-name-flex"><div class="rank-name-main">'+flowText(item.name,item)+ownerLine(item)+'</div></div></div><div class="award-score">'+escapeHtml(item[labelKey]||'')+'</div></div>').join(''):'<div class="empty">비교 가능한 주간 데이터가 부족합니다.</div>')+'</div></section>'}
-
-
 function rankProfileHtml(item,rank){
   const url=profileImageUrlFor(item);
   const rankClass=rank<=3?(' top-rank rank-avatar-top-'+rank):'';
@@ -257,26 +296,18 @@ function hallSlotTasks(){
   });
   [s.growthGod,s.enhanceGod].forEach(item=>{ if(item?.profileImageUrl)images.push(item.profileImageUrl); });
   return [
-    {id:'hallSlotReactions',images:compactImageList(images),render:()=>hofReactionsSummary()},
-    {id:'hallSlotCombat',images:compactImageList(images),render:()=>hofCombatSummary()},
-    {id:'hallSlotGods',images:compactImageList(images),render:()=>hofGodsSummary()},
-    {id:'hallSlotRankingLink',images:[],render:()=>hofRankingLinkCard()}
+    {id:'hallSlotV2Layout',images:compactImageList(images),render:()=>hofV2Layout()}
   ];
 }
 
 function hallShellExists(){
-  return !!document.getElementById('hallSlotReactions') && !!document.getElementById('hallSlotCombat');
+  return !!document.getElementById('hallSlotV2Layout');
 }
 
 function renderHallShell(showSpinners){
   app.className='';
   const slotClass='hall-slot is-pending';
-  app.innerHTML='<div class="hof-summary-layout">'
-    + '<div id="hallSlotReactions" class="'+slotClass+'">'+(showSpinners?kinojoCardSpinner('좋아요/싫어요 TOP 3 불러오는 중'):'')+'</div>'
-    + '<div id="hallSlotCombat" class="'+slotClass+'">'+(showSpinners?kinojoCardSpinner('PVE/PVP TOP 3 불러오는 중'):'')+'</div>'
-    + '<div id="hallSlotGods" class="'+slotClass+'">'+(showSpinners?kinojoCardSpinner('강화의 신/성장의 신 집계 중'):'')+'</div>'
-    + '<div id="hallSlotRankingLink" class="'+slotClass+'">'+(showSpinners?kinojoCardSpinner('전체 순위 페이지 준비 중'):'')+'</div>'
-    + '</div>';
+  app.innerHTML='<div class="hof-v2-shell"><div id="hallSlotV2Layout" class="'+slotClass+'">'+(showSpinners?kinojoCardSpinner('명예의 전당 v2 레이아웃 준비 중'):'')+'</div></div>';
 }
 
 function renderHallSlots(options={}){
@@ -307,7 +338,7 @@ function renderHallSlots(options={}){
 function renderReactionOnly(){
   if(!hallData)return;
   if(!hallShellExists())return render({initial:false});
-  setHallSlot('hallSlotReactions',hofReactionsSummary());
+  setHallSlot('hallSlotV2Layout',hofV2Layout());
   bindHallAfterSlot();
 }
 
