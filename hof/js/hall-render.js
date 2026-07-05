@@ -121,21 +121,64 @@ function recentCommentCard(){
 function reactionBoard(){return '<div class="reaction-board">'+reactionCard("like")+reactionCard("dislike")+recentCommentCard()+'</div>'}
 function awardsBoard(){const w=hallData?.weeklyAwards||{};return '<div class="award-grid">'+awardCard("🌱 성장왕","PVE+PVP 아이템레벨 주간 증가량",w.growthKing||[],"itemLabel")+awardCard("💪 벌크업","PVE+PVP 전투력 주간 증가량",w.bulkUp||[],"powerLabel")+'</div>'}
 
+function hofFirstDefined(){
+  for(let i=0;i<arguments.length;i++){
+    const v=arguments[i];
+    if(v!==undefined && v!==null && String(v).trim()!=='')return v;
+  }
+  return '';
+}
+function hofNumberLike(value){
+  const raw=hofFirstDefined(value,'');
+  if(raw==='')return '';
+  const n=Number(String(raw).replace(/[^0-9.-]/g,''));
+  return Number.isFinite(n)?n:'';
+}
+function hofSignedNumber(value){
+  const n=hofNumberLike(value);
+  if(n==='')return '';
+  return (n>0?'+':'')+n.toLocaleString('ko-KR');
+}
+function hofCharName(item){
+  return String(hofFirstDefined(item?.name,item?.characterName,item?.character_name,item?.mainCharacterName,item?.main_character_name,'')).trim();
+}
+function hofServerName(item){
+  const meta=String(hofFirstDefined(item?.serverName,item?.server_name,item?.server,item?.meta,'')).trim();
+  return meta.replace(/^천족\s*·\s*/,'').replace(/^마족\s*·\s*/,'');
+}
+function hofClassName(item){
+  return String(hofFirstDefined(item?.className,item?.class_name,item?.job,item?.class,'')).trim();
+}
+function hofOwnerName(item){
+  return String(hofFirstDefined(item?.owner,item?.ownerName,item?.owner_name,item?.mainCharacterName,item?.main_character_name,'')).trim();
+}
 function hofMetricValue(item,metric){
   if(!item)return '';
-  if(metric==='like')return Number(item.like||item.value||0).toLocaleString('ko-KR');
-  if(metric==='dislike')return Number(item.dislike||item.value||0).toLocaleString('ko-KR');
-  if(metric==='pvp')return item.pvpPowerLabel||numberOnly(item.pvpPower||item.value)||'-';
-  if(metric==='pve')return item.pvePowerLabel||numberOnly(item.pvePower||item.value)||'-';
-  if(metric==='growth')return item.powerLabel||item.label||((Number(item.powerDelta||item.valueDelta||0)>0?'+':'')+numberOnly(item.powerDelta||item.valueDelta));
-  if(metric==='enhance')return item.itemLabel||item.label||((Number(item.itemLevelDelta||item.valueDelta||0)>0?'+':'')+numberOnly(item.itemLevelDelta||item.valueDelta));
+  if(metric==='like')return Number(hofFirstDefined(item.like,item.likeCount,item.like_count,item.value,0)).toLocaleString('ko-KR');
+  if(metric==='dislike')return Number(hofFirstDefined(item.dislike,item.dislikeCount,item.dislike_count,item.dislike_count_total,item.value,0)).toLocaleString('ko-KR');
+  if(metric==='pvp')return hofFirstDefined(item.pvpPowerLabel,item.pvp_power_label,numberOnly(hofFirstDefined(item.pvpPower,item.pvp_power,item.latest_pvp_combat_power,item.value,'')),'-');
+  if(metric==='pve')return hofFirstDefined(item.pvePowerLabel,item.pve_power_label,numberOnly(hofFirstDefined(item.pvePower,item.pve_power,item.latest_pve_combat_power,item.value,'')),'-');
+  if(metric==='growth')return hofFirstDefined(item.powerLabel,item.power_label,item.label,hofSignedNumber(hofFirstDefined(item.powerDelta,item.power_delta,item.itemDelta,item.item_delta,item.valueDelta,item.value_delta,item.value,'')),'-');
+  if(metric==='enhance')return hofFirstDefined(item.itemLabel,item.item_label,item.label,hofSignedNumber(hofFirstDefined(item.itemLevelDelta,item.item_level_delta,item.valueDelta,item.value_delta,item.value,'')),'-');
   return item.label||'';
+}
+function hofMetricRawValue(item,metric){
+  if(!item)return '';
+  if(metric==='like')return hofFirstDefined(item.like,item.likeCount,item.like_count,item.value,'');
+  if(metric==='dislike')return hofFirstDefined(item.dislike,item.dislikeCount,item.dislike_count,item.value,'');
+  if(metric==='pvp')return hofFirstDefined(item.pvpPower,item.pvp_power,item.latest_pvp_combat_power,item.value,'');
+  if(metric==='pve')return hofFirstDefined(item.pvePower,item.pve_power,item.latest_pve_combat_power,item.value,'');
+  if(metric==='growth')return hofFirstDefined(item.powerDelta,item.power_delta,item.itemDelta,item.item_delta,item.valueDelta,item.value_delta,item.value,'');
+  if(metric==='enhance')return hofFirstDefined(item.itemLevelDelta,item.item_level_delta,item.valueDelta,item.value_delta,item.value,'');
+  return hofFirstDefined(item.value,'');
 }
 function hofMetricLabel(metric){
   if(metric==='like')return '좋아요';
   if(metric==='dislike')return '싫어요';
   if(metric==='growth')return '성장량';
   if(metric==='enhance')return '강화 수치';
+  if(metric==='pvp')return 'PVP 전투력';
+  if(metric==='pve')return 'PVE 전투력';
   return '포인트';
 }
 function hofNormalizeName(value){
@@ -155,42 +198,48 @@ function hofCollectMetricList(metric){
   const r=hallData?.reactionSummary||{};
   if(metric==='enhance')return [s.enhanceGod, ...(hallData?.weeklyAwards?.bulkUp||[])].filter(Boolean);
   if(metric==='growth')return [s.growthGod, ...(hallData?.weeklyAwards?.growthKing||[])].filter(Boolean);
-  if(metric==='pve')return (s.pveTop||hallData?.pveTop||[]).filter(Boolean);
-  if(metric==='pvp')return (s.pvpTop||hallData?.pvpTop||[]).filter(Boolean);
-  if(metric==='like')return (s.likesTop||r.likeTop||[]).filter(Boolean);
-  if(metric==='dislike')return (s.dislikesTop||r.dislikeTop||[]).filter(Boolean);
+  if(metric==='pve')return (s.pveTop||s.pveTop3||hallData?.pveTop||hallData?.pveTop3||[]).filter(Boolean);
+  if(metric==='pvp')return (s.pvpTop||s.pvpTop3||hallData?.pvpTop||hallData?.pvpTop3||[]).filter(Boolean);
+  if(metric==='like')return (s.likesTop||s.likeTop||r.likeTop||[]).filter(Boolean);
+  if(metric==='dislike')return (s.dislikesTop||s.dislikeTop||r.dislikeTop||[]).filter(Boolean);
   return [];
 }
 function hofFindMyMetric(metric){
   const name=hofNormalizeName(hofSessionName());
   if(!name)return null;
   const list=hofCollectMetricList(metric);
-  const found=list.find(item=>hofNormalizeName(item?.name)===name || hofNormalizeName(item?.owner)===name);
+  const found=list.find(item=>{
+    const charName=hofNormalizeName(hofCharName(item));
+    const ownerName=hofNormalizeName(hofOwnerName(item));
+    return charName===name || ownerName===name;
+  });
   if(!found)return null;
-  const rank=Number(found.rank||found.rankNo||found.position||0) || (list.indexOf(found)+1);
+  const rank=Number(hofFirstDefined(found.rank,found.rankNo,found.rank_no,found.position,0)) || (list.indexOf(found)+1);
   return { item:found, rank:rank, score:hofMetricValue(found,metric)||'-' };
 }
 function hofRankSummaryText(item,metric){
   if(!item)return '';
   const bits=[];
-  if(metric==='growth' && (item.powerDelta||item.valueDelta)){
+  if(metric==='growth'){
     bits.push('이번주 '+hofMetricValue(item,metric));
-  }else if(metric==='enhance' && (item.itemLevelDelta||item.valueDelta)){
+  }else if(metric==='enhance'){
     bits.push('최근 '+hofMetricValue(item,metric));
   }else{
     bits.push(hofMetricLabel(metric)+' '+hofMetricValue(item,metric));
   }
-  if(item.className)bits.push(item.className);
+  const cls=hofClassName(item);
+  if(cls)bits.push(cls);
   return bits.filter(Boolean).join(' · ');
 }
 function hofRankMedal(rank){
-  return '<span class="hof-v2-medal hof-v2-medal-'+rank+'">'+rank+'</span>';
+  return '<span class="hof-v2-medal hof-v2-medal-'+rank+'" aria-label="'+rank+'위"><span>'+rank+'</span></span>';
 }
 function hofRankPortrait(item,rank,size){
   const url=profileImageUrlFor(item);
+  const name=hofCharName(item)||'?';
   const cls='hof-v2-portrait '+(size||'')+(url?'':' is-empty');
-  if(!url)return '<div class="'+cls+'" aria-hidden="true">'+escapeHtml((item?.name||'?').slice(0,1))+'</div>';
-  return '<img class="'+cls+'" src="'+escapeHtml(url)+'" alt="'+escapeHtml((item?.name||'캐릭터')+' 프로필')+'" loading="lazy" decoding="async">';
+  if(!url)return '<div class="'+cls+'" aria-hidden="true">'+escapeHtml(name.slice(0,1))+'</div>';
+  return '<img class="'+cls+'" src="'+escapeHtml(url)+'" alt="'+escapeHtml(name+' 프로필')+'" loading="lazy" decoding="async">';
 }
 function hofBackgroundClass(metric){
   if(metric==='enhance')return 'is-enhance';
@@ -201,24 +250,36 @@ function hofBackgroundClass(metric){
   if(metric==='dislike')return 'is-dislike';
   return 'is-default';
 }
+function hofClassBadge(item){
+  const cls=hofClassName(item);
+  return cls?'<span class="hof-v2-class-badge">'+escapeHtml(cls)+'</span>':'';
+}
+function hofOwnerBadge(item){
+  const name=hofCharName(item);
+  const owner=hofOwnerName(item);
+  if(owner && name && hofNormalizeName(owner)!==hofNormalizeName(name))return '<span class="hof-v2-owner-badge">부캐 · '+escapeHtml(owner)+'</span>';
+  return name?'<span class="hof-v2-owner-badge is-main">본캐</span>':'';
+}
 function hofTop3Card(item,index,metric){
   const rank=index+1;
   if(!item)return '<div class="hof-v2-top3-item is-empty"><div class="hof-v2-empty-dot">'+rank+'</div><div class="hof-v2-empty-text">데이터 대기</div></div>';
-  const name=String(item.name||'-');
-  const meta=[item.serverName||item.meta||'지켈', item.className||''].filter(Boolean).join(' · ');
+  const name=hofCharName(item)||'-';
+  const server=hofServerName(item)||'지켈';
   const summary=hofRankSummaryText(item,metric);
-  return '<button type="button" class="hof-v2-top3-item" data-character="'+escapeHtml(name)+'" aria-label="'+escapeHtml(name)+' 상세 보기">'
+  const score=hofMetricValue(item,metric)||'-';
+  return '<button type="button" class="hof-v2-top3-item" data-character="'+escapeHtml(name)+'" data-hof-metric="'+escapeHtml(metric)+'" data-hof-rank="'+rank+'" data-hof-score="'+escapeHtml(score)+'" aria-label="'+escapeHtml(name)+' 상세 보기">'
     + '<span class="hof-v2-rank-stack">'+hofRankMedal(rank)+'</span>'
     + '<span class="hof-v2-portrait-wrap">'+hofRankPortrait(item,rank,'small')+'</span>'
     + '<span class="hof-v2-top3-info"><span class="hof-v2-top3-name">'+escapeHtml(name)+'</span>'
-    + '<span class="hof-v2-top3-meta">'+escapeHtml(meta)+'</span>'
+    + '<span class="hof-v2-top3-meta">'+escapeHtml(server)+'</span>'
+    + '<span class="hof-v2-badge-line">'+hofClassBadge(item)+hofOwnerBadge(item)+'</span>'
     + (summary?'<span class="hof-v2-top3-summary">'+escapeHtml(summary)+'</span>':'')+'</span>'
-    + '<strong class="hof-v2-top3-score">'+escapeHtml(hofMetricValue(item,metric)||'-')+'</strong>'
+    + '<strong class="hof-v2-top3-score"><small>'+escapeHtml(hofMetricLabel(metric))+'</small>'+escapeHtml(score)+'</strong>'
     + '</button>';
 }
 function hofWidePanel(title,note,list,metric){
   const items=(list||[]).slice(0,3);
-  return '<section class="hof-v2-panel hof-v2-wide '+hofBackgroundClass(metric)+'">'
+  return '<section class="hof-v2-panel hof-v2-wide '+hofBackgroundClass(metric)+'" data-hof-panel="'+escapeHtml(metric)+'">'
     + '<div class="hof-v2-panel-bg" aria-hidden="true"></div>'
     + '<div class="hof-v2-panel-head"><div><span class="hof-v2-kicker">KINOJO HALL</span><h2>'+escapeHtml(title)+'</h2></div><p>'+escapeHtml(note||'')+'</p></div>'
     + '<div class="hof-v2-top3">'+[0,1,2].map(i=>hofTop3Card(items[i],i,metric)).join('')+'</div>'
@@ -226,21 +287,24 @@ function hofWidePanel(title,note,list,metric){
 }
 function hofGodHeroCard(title,note,item,metric){
   const safeItem=item||null;
-  const name=String(safeItem?.name||'집계 대기');
-  const score=hofMetricValue(safeItem,metric)||'-';
-  const meta=[safeItem?.serverName||safeItem?.meta||'', safeItem?.className||''].filter(Boolean).join(' · ');
-  const deltaLabel=metric==='enhance'?'강화 수치':'이번주 성장량';
-  const recent=metric==='enhance'?(safeItem?.itemLevelDelta||safeItem?.valueDelta):(safeItem?.powerDelta||safeItem?.valueDelta);
-  const recentText=recent?((Number(recent)>0?'+':'')+Number(recent).toLocaleString('ko-KR')):'-';
-  const compare=safeItem?.growthRateLabel||safeItem?.rateLabel||safeItem?.weekCompareLabel||'';
-  return '<section class="hof-v2-panel hof-v2-god '+hofBackgroundClass(metric)+'">'
+  const hasItem=!!(safeItem&&hofCharName(safeItem));
+  const name=hasItem?hofCharName(safeItem):'집계 대기';
+  const score=hasItem?(hofMetricValue(safeItem,metric)||'-'):'-';
+  const meta=[hofServerName(safeItem), hofClassName(safeItem)].filter(Boolean).join(' · ');
+  const deltaLabel=metric==='enhance'?'최고 강화 수치':'이번주 성장량';
+  const recent=metric==='enhance'?hofFirstDefined(safeItem?.itemLevelDelta,safeItem?.item_level_delta,safeItem?.valueDelta,safeItem?.value_delta,''):hofFirstDefined(safeItem?.powerDelta,safeItem?.power_delta,safeItem?.itemDelta,safeItem?.item_delta,safeItem?.valueDelta,safeItem?.value_delta,'');
+  const recentText=recent!==''?hofSignedNumber(recent):'-';
+  const compare=hofFirstDefined(safeItem?.growthRateLabel,safeItem?.growth_rate_label,safeItem?.rateLabel,safeItem?.rate_label,safeItem?.weekCompareLabel,safeItem?.week_compare_label,'');
+  const bodyTag=hasItem?'button':'div';
+  const bodyAttrs=hasItem?' type="button" data-character="'+escapeHtml(name)+'" data-hof-metric="'+escapeHtml(metric)+'" data-hof-rank="1" data-hof-score="'+escapeHtml(score)+'" aria-label="'+escapeHtml(name)+' 상세 보기"':'';
+  return '<section class="hof-v2-panel hof-v2-god '+hofBackgroundClass(metric)+'" data-hof-panel="'+escapeHtml(metric)+'">'
     + '<div class="hof-v2-panel-bg" aria-hidden="true"></div>'
     + '<div class="hof-v2-god-head"><span class="hof-v2-kicker">KINOJO HALL</span><h2>'+escapeHtml(title)+'</h2><p>'+escapeHtml(note||'')+'</p></div>'
-    + '<button type="button" class="hof-v2-god-main" data-character="'+escapeHtml(name)+'" aria-label="'+escapeHtml(name)+' 상세 보기">'
-    + '<span class="hof-v2-god-portrait">'+hofRankPortrait(safeItem,1,'large')+hofRankMedal(1)+'</span>'
+    + '<'+bodyTag+' class="hof-v2-god-main'+(hasItem?'':' is-empty')+'"'+bodyAttrs+'>'
+    + '<span class="hof-v2-god-portrait">'+hofRankPortrait(safeItem,1,'large')+(hasItem?hofRankMedal(1):'')+'</span>'
     + '<strong>'+escapeHtml(name)+'</strong>'
     + '<span>'+escapeHtml(meta||'지켈')+'</span>'
-    + '</button>'
+    + '</'+bodyTag+'>'
     + '<div class="hof-v2-god-score"><strong>'+escapeHtml(score)+'</strong><span>'+deltaLabel+'</span></div>'
     + '<div class="hof-v2-god-sub"><span>최근 변화</span><strong>'+escapeHtml(recentText)+'</strong></div>'
     + (compare?'<div class="hof-v2-god-compare"><span>전주 대비</span><strong>'+escapeHtml(compare)+'</strong></div>':'')
@@ -260,34 +324,38 @@ function hofMyRankingPanel(){
   const rowHtml=rows.map(row=>{
     const title=row[0];
     const metric=row[1];
-    const found=hofFindMyMetric(metric);
+    const found=isLoggedIn?hofFindMyMetric(metric):null;
     const rankText=found?'RANK '+found.rank:'RANK -';
     const label=hofMetricLabel(metric);
     const score=found?found.score:'-';
-    const nameLine=found?.item?.name?'<span class="hof-v2-my-name">'+escapeHtml(found.item.name)+'</span>':'';
-    return '<div class="hof-v2-my-row '+hofBackgroundClass(metric)+(found?' is-found':'')+'">'
+    const nameLine=found?.item?'<span class="hof-v2-my-name">'+escapeHtml(hofCharName(found.item))+'</span>':'';
+    return '<div class="hof-v2-my-row '+hofBackgroundClass(metric)+(found?' is-found':'')+'" data-hof-metric="'+escapeHtml(metric)+'">'
       + '<div><strong>'+escapeHtml(title)+'</strong><span>'+escapeHtml(rankText)+'</span>'+nameLine+'</div>'
       + '<div><em>'+escapeHtml(label)+'</em><b>'+escapeHtml(score)+'</b></div>'
       + '</div>';
   }).join('');
   return '<aside class="hof-v2-panel hof-v2-my-rank">'
-    + '<div class="hof-v2-my-head"><h2>내 랭킹 정보</h2><p>'+(isLoggedIn&&myName?escapeHtml(myName)+' 기준으로 표시됩니다.':'로그인한 캐릭터 기준으로 표시됩니다.')+'</p></div>'
+    + '<div class="hof-v2-my-head"><span class="hof-v2-kicker">MY KINOJO</span><h2>내 랭킹 정보</h2><p>'+(isLoggedIn&&myName?escapeHtml(myName)+' 기준으로 표시됩니다.':'로그인한 캐릭터 기준으로 표시됩니다.')+'</p></div>'
     + (!isLoggedIn?'<div class="hof-v2-login-guide"><span>🔒</span><strong>로그인 후 나의 랭킹을 확인하세요.</strong><button type="button" onclick="window.KinojoAuth?.openLoginModal?.()">로그인</button></div>':'')
     + '<div class="hof-v2-my-list">'+rowHtml+'</div>'
     + '</aside>';
 }
 function hofV2Layout(){
   const s=hallData?.summarySections||{};
+  const pveList=s.pveTop||s.pveTop3||hallData?.pveTop||hallData?.pveTop3||[];
+  const pvpList=s.pvpTop||s.pvpTop3||hallData?.pvpTop||hallData?.pvpTop3||[];
+  const likeList=s.likesTop||s.likeTop||hallData?.reactionSummary?.likeTop||[];
+  const dislikeList=s.dislikesTop||s.dislikeTop||hallData?.reactionSummary?.dislikeTop||[];
   return '<div class="hof-v2-layout">'
-    + '<div class="hof-v2-left">'+hofGodHeroCard('강화의 신','키노조 최강의 강화 마스터',s.enhanceGod || hallData?.weeklyAwards?.bulkUp?.[0], 'enhance')+'</div>'
+    + '<div class="hof-v2-left">'+hofGodHeroCard('강화의 신','최고 강화 기록을 가진 모험가',s.enhanceGod || hallData?.weeklyAwards?.bulkUp?.[0], 'enhance')+'</div>'
     + '<div class="hof-v2-center">'
-    + hofWidePanel('고독의 투기장 (PVE 랭킹)','던전과 전장에서 증명된 강자들',s.pveTop||hallData?.pveTop||[],'pve')
-    + hofWidePanel('협력의 투기장 (PVP 랭킹)','치열한 전장에서 승리한 자들',s.pvpTop||hallData?.pvpTop||[],'pvp')
+    + hofWidePanel('고독의 투기장','PVE 랭킹 TOP 3',pveList,'pve')
+    + hofWidePanel('협력의 투기장','PVP 랭킹 TOP 3',pvpList,'pvp')
     + '<div class="hof-v2-two">'
-    + hofWidePanel('악몽 (좋아요)','가장 많은 사랑을 받은 자들',s.likesTop||hallData?.reactionSummary?.likeTop||[],'like')
-    + hofWidePanel('초월 (싫어요)','가장 뜨거운 관심을 받은 자들',s.dislikesTop||hallData?.reactionSummary?.dislikeTop||[],'dislike')
+    + hofWidePanel('악몽','좋아요 TOP 3',likeList,'like')
+    + hofWidePanel('초월','싫어요 TOP 3',dislikeList,'dislike')
     + '</div>'
-    + hofGodHeroCard('성장의 신','가장 눈부신 성장을 보여준 자',s.growthGod || hallData?.weeklyAwards?.growthKing?.[0], 'growth')
+    + hofGodHeroCard('성장의 신','이번 주 가장 눈부신 성장',s.growthGod || hallData?.weeklyAwards?.growthKing?.[0], 'growth')
     + '</div>'
     + '<div class="hof-v2-right">'+hofMyRankingPanel()+'</div>'
     + '</div>';

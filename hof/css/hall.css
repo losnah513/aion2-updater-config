@@ -2444,3 +2444,241 @@ body{
   .hof-v2-top3-score{grid-column:4/5;align-self:center;}
   .hof-v2-top3-summary{display:none;}
 }
+
+/* ===========================================================
+   HOF v2 STEP 3 - final card UI / data-ready card details
+   =========================================================== */
+.hof-v2-layout{
+  grid-template-columns:minmax(260px,310px) minmax(560px,1fr) minmax(270px,330px);
+}
+.hof-v2-panel{
+  border-color:rgba(217,180,95,.30);
+  background:
+    linear-gradient(135deg,rgba(255,255,255,.115),rgba(255,255,255,.035)),
+    rgba(3,6,12,.88);
+}
+.hof-v2-panel-bg{
+  filter:saturate(1.05) contrast(1.02);
+}
+.hof-v2-panel-bg:after{
+  background:
+    linear-gradient(90deg,rgba(0,0,0,.76) 0%,rgba(0,0,0,.34) 48%,rgba(0,0,0,.80) 100%),
+    radial-gradient(circle at 50% 0%,rgba(255,255,255,.12),transparent 42%);
+  backdrop-filter:blur(1.5px);
+}
+.hof-v2-panel-head h2,
+.hof-v2-god-head h2,
+.hof-v2-my-head h2{
+  color:#fff;
+  text-transform:none;
+}
+.hof-v2-panel-head p{
+  color:rgba(255,255,255,.72);
+  line-height:1.35;
+}
+.hof-v2-medal{
+  position:relative;
+  font-size:0!important;
+  overflow:visible;
+}
+.hof-v2-medal span{
+  display:grid;
+  place-items:center;
+  width:100%;
+  height:100%;
+  transform:rotate(-45deg);
+  color:#fff4c8;
+  font-size:15px;
+  font-weight:1000;
+  line-height:1;
+}
+.hof-v2-medal:before,
+.hof-v2-medal:after{
+  content:""!important;
+  display:none!important;
+}
+.hof-v2-medal-1{
+  border-color:rgba(255,220,120,.96);
+  background:linear-gradient(145deg,rgba(255,220,120,.46),rgba(118,70,12,.58));
+  box-shadow:0 0 18px rgba(255,210,96,.26);
+}
+.hof-v2-medal-2{
+  border-color:rgba(235,239,246,.78);
+  background:linear-gradient(145deg,rgba(235,239,246,.30),rgba(68,79,95,.52));
+}
+.hof-v2-medal-3{
+  border-color:rgba(218,146,86,.80);
+  background:linear-gradient(145deg,rgba(218,146,86,.34),rgba(83,45,22,.58));
+}
+.hof-v2-top3-item{
+  grid-template-rows:auto auto minmax(50px,auto) auto;
+  min-height:162px;
+  border-color:rgba(255,255,255,.105);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
+}
+.hof-v2-top3-item[data-hof-rank="1"]{
+  border-color:rgba(217,180,95,.42);
+  background:linear-gradient(180deg,rgba(217,180,95,.13),rgba(0,0,0,.22));
+}
+.hof-v2-top3-info{
+  gap:3px;
+  line-height:1.12;
+}
+.hof-v2-top3-name{
+  font-size:16px;
+  letter-spacing:-.03em;
+  text-shadow:0 2px 10px rgba(0,0,0,.52);
+}
+.hof-v2-top3-meta{
+  color:rgba(255,255,255,.66);
+}
+.hof-v2-badge-line{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:4px;
+  min-height:18px;
+  max-width:100%;
+}
+.hof-v2-class-badge,
+.hof-v2-owner-badge{
+  display:inline-flex;
+  align-items:center;
+  max-width:100%;
+  height:18px;
+  padding:0 6px;
+  border:1px solid rgba(217,180,95,.26);
+  border-radius:999px;
+  background:rgba(0,0,0,.24);
+  color:rgba(255,250,240,.74);
+  font-size:10px;
+  font-weight:1000;
+  white-space:nowrap;
+}
+.hof-v2-owner-badge.is-main{
+  color:rgba(244,207,119,.88);
+}
+.hof-v2-top3-score{
+  display:grid;
+  justify-items:center;
+  gap:2px;
+  min-width:0;
+  max-width:100%;
+  color:#ffd877;
+}
+.hof-v2-top3-score small{
+  display:block;
+  color:rgba(255,255,255,.55);
+  font-size:10px;
+  font-weight:900;
+  line-height:1;
+}
+.hof-v2-portrait{
+  box-shadow:0 0 0 1px rgba(255,255,255,.08),0 8px 20px rgba(0,0,0,.26);
+}
+.hof-v2-top3-item[data-hof-rank="1"] .hof-v2-portrait.small{
+  width:76px;
+  height:76px;
+}
+.hof-v2-god{
+  min-height:520px;
+  align-content:stretch;
+}
+.hof-v2-god-main{
+  border-radius:8px;
+  margin:12px 0 4px;
+  transition:transform .18s ease,background .18s ease;
+}
+button.hof-v2-god-main:hover{
+  transform:translateY(-2px);
+  background:rgba(255,255,255,.04);
+}
+.hof-v2-god-main.is-empty{
+  cursor:default;
+  opacity:.86;
+}
+.hof-v2-god-main strong{
+  color:#fff;
+  text-shadow:0 2px 14px rgba(0,0,0,.56);
+}
+.hof-v2-god-score strong{
+  font-size:42px;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.hof-v2-my-rank{
+  border-color:rgba(217,180,95,.30);
+  background:linear-gradient(155deg,rgba(255,255,255,.095),rgba(255,255,255,.035)),rgba(4,7,14,.88);
+}
+.hof-v2-my-row{
+  border-color:rgba(255,255,255,.095);
+}
+.hof-v2-my-row.is-found:before{
+  background:#d9b45f;
+  box-shadow:0 0 14px rgba(217,180,95,.52);
+}
+.hof-v2-my-row b{
+  max-width:126px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+@media (max-width:1180px){
+  .hof-v2-layout{
+    grid-template-columns:1fr;
+  }
+  .hof-v2-god{
+    min-height:0;
+  }
+  .hof-v2-left .hof-v2-god,
+  .hof-v2-center>.hof-v2-god{
+    grid-template-columns:minmax(190px,.8fr) 1fr;
+    grid-template-rows:auto auto auto;
+    column-gap:18px;
+  }
+  .hof-v2-god-head{
+    grid-column:1/3;
+  }
+  .hof-v2-god-main{
+    grid-row:2/4;
+    min-height:210px;
+  }
+  .hof-v2-god-score,
+  .hof-v2-god-sub,
+  .hof-v2-god-compare{
+    align-self:center;
+  }
+}
+@media (max-width:760px){
+  .hof-v2-top3-item,
+  .hof-v2-top3-item[data-hof-rank="1"]{
+    min-height:0;
+  }
+  .hof-v2-top3-item[data-hof-rank="1"] .hof-v2-portrait.small,
+  .hof-v2-portrait.small{
+    width:50px;
+    height:50px;
+  }
+  .hof-v2-badge-line{
+    justify-content:flex-start;
+  }
+  .hof-v2-top3-score{
+    justify-items:end;
+    font-size:16px;
+  }
+  .hof-v2-top3-score small,
+  .hof-v2-top3-summary{
+    display:none;
+  }
+  .hof-v2-left .hof-v2-god,
+  .hof-v2-center>.hof-v2-god{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+  .hof-v2-god-head,
+  .hof-v2-god-main{
+    grid-column:auto;
+    grid-row:auto;
+  }
+}
