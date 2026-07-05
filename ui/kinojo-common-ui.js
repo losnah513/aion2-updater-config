@@ -434,6 +434,7 @@
   }
   function makeTopbar(rescued,info){
     const bar=document.createElement('section');
+    const adminConsoleHref=(info&&info.mobile)?'/m/admin/':'/admin/';
     bar.className='kinojo-topbar';
     bar.setAttribute('aria-label','KINOJO INFO 공통 상단 메뉴');
     const timeText=info.key==='home'?'정보 허브':(info.key==='hall'?'업데이트 확인 중':'업데이트 확인 중');
