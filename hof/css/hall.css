@@ -2682,3 +2682,232 @@ button.hof-v2-god-main:hover{
     grid-row:auto;
   }
 }
+
+
+/* ===========================================================
+   HOF v2 STEP 4 - responsive QA / mobile finish
+   =========================================================== */
+.hof-v2-shell{
+  width:100%;
+  max-width:100%;
+}
+.hof-v2-layout{
+  min-width:0;
+}
+.hof-v2-panel,
+.hof-v2-top3-item,
+.hof-v2-god-main,
+.hof-v2-my-row{
+  -webkit-tap-highlight-color:transparent;
+}
+.hof-v2-panel-head h2,
+.hof-v2-god-head h2,
+.hof-v2-my-head h2,
+.hof-v2-top3-name,
+.hof-v2-my-row strong{
+  word-break:keep-all;
+}
+.hof-v2-top3-score,
+.hof-v2-god-score strong,
+.hof-v2-my-row b{
+  white-space:nowrap;
+}
+.hof-v2-top3-item.is-empty{
+  cursor:default;
+  opacity:.78;
+}
+.hof-v2-top3-item.is-empty .hof-v2-empty-dot{
+  margin-top:4px;
+}
+@media (min-width:1181px){
+  .hof-v2-layout{
+    grid-template-columns:minmax(260px,310px) minmax(560px,1fr) minmax(270px,330px);
+    align-items:stretch;
+  }
+  .hof-v2-left .hof-v2-god,
+  .hof-v2-right .hof-v2-my-rank{
+    height:100%;
+  }
+  .hof-v2-center{
+    align-content:start;
+  }
+}
+@media (max-width:1180px) and (min-width:761px){
+  .hof-v2-layout{
+    grid-template-columns:1fr;
+    gap:14px;
+  }
+  .hof-v2-center{
+    gap:14px;
+  }
+  .hof-v2-left .hof-v2-god,
+  .hof-v2-center>.hof-v2-god{
+    grid-template-columns:minmax(180px,.75fr) minmax(0,1fr);
+    padding:18px;
+  }
+  .hof-v2-my-list{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media (max-width:760px){
+  .wrap{
+    width:100%;
+    padding-left:8px!important;
+    padding-right:8px!important;
+  }
+  .hof-v2-layout,
+  .hof-v2-center,
+  .hof-v2-two{
+    gap:10px;
+  }
+  .hof-v2-panel{
+    border-radius:7px;
+  }
+  .hof-v2-panel:after{
+    border-radius:6px;
+  }
+  .hof-v2-panel-head,
+  .hof-v2-god-head,
+  .hof-v2-my-head{
+    text-align:left;
+  }
+  .hof-v2-panel-head{
+    padding:13px 12px 5px;
+  }
+  .hof-v2-god-head,
+  .hof-v2-my-head{
+    padding:0 2px 10px;
+  }
+  .hof-v2-panel-head p,
+  .hof-v2-god-head p,
+  .hof-v2-my-head p{
+    text-align:left;
+    font-size:11px;
+  }
+  .hof-v2-panel h2,
+  .hof-v2-god-head h2,
+  .hof-v2-my-head h2{
+    font-size:18px;
+  }
+  .hof-v2-top3{
+    gap:7px;
+    padding:8px 9px 11px;
+  }
+  .hof-v2-top3-item,
+  .hof-v2-top3-item[data-hof-rank="1"]{
+    grid-template-columns:28px 46px minmax(0,1fr) minmax(60px,auto)!important;
+    gap:7px;
+    padding:8px 7px;
+    border-radius:6px;
+  }
+  .hof-v2-rank-stack,
+  .hof-v2-portrait-wrap,
+  .hof-v2-top3-info,
+  .hof-v2-top3-score{
+    min-width:0;
+  }
+  .hof-v2-medal{
+    width:25px;
+    height:25px;
+  }
+  .hof-v2-medal span{
+    font-size:12px;
+  }
+  .hof-v2-top3-item[data-hof-rank="1"] .hof-v2-portrait.small,
+  .hof-v2-portrait.small{
+    width:44px;
+    height:44px;
+  }
+  .hof-v2-top3-name{
+    max-width:100%;
+    font-size:14px;
+  }
+  .hof-v2-top3-meta{
+    font-size:10px;
+  }
+  .hof-v2-class-badge,
+  .hof-v2-owner-badge{
+    height:16px;
+    padding:0 5px;
+    font-size:9px;
+  }
+  .hof-v2-top3-score{
+    max-width:76px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    font-size:14px;
+    text-align:right;
+  }
+  .hof-v2-god{
+    min-height:0;
+    padding:14px 12px 12px;
+  }
+  .hof-v2-god-main{
+    min-height:128px;
+    margin:6px 0 2px;
+  }
+  .hof-v2-portrait.large{
+    width:76px;
+    height:76px;
+  }
+  .hof-v2-god-main strong{
+    font-size:19px;
+  }
+  .hof-v2-god-score{
+    margin:0;
+    padding:9px 8px;
+  }
+  .hof-v2-god-score strong{
+    font-size:30px;
+  }
+  .hof-v2-god-sub,
+  .hof-v2-god-compare{
+    margin:6px 0 0;
+    padding:9px 10px;
+  }
+  .hof-v2-my-rank{
+    padding:14px 12px;
+  }
+  .hof-v2-my-list{
+    gap:7px;
+    margin-top:10px;
+  }
+  .hof-v2-my-row{
+    min-height:58px;
+    padding:10px 9px;
+  }
+  .hof-v2-my-row strong{
+    font-size:13px;
+  }
+  .hof-v2-my-row b{
+    max-width:94px;
+    font-size:15px;
+  }
+  .hof-v2-login-guide{
+    margin:10px 0;
+    padding:14px 10px;
+  }
+}
+@media (max-width:380px){
+  .hof-v2-top3-item,
+  .hof-v2-top3-item[data-hof-rank="1"]{
+    grid-template-columns:24px 40px minmax(0,1fr) minmax(52px,auto)!important;
+    gap:5px;
+    padding:7px 6px;
+  }
+  .hof-v2-portrait.small,
+  .hof-v2-top3-item[data-hof-rank="1"] .hof-v2-portrait.small{
+    width:38px;
+    height:38px;
+  }
+  .hof-v2-top3-name{
+    font-size:13px;
+  }
+  .hof-v2-top3-score{
+    max-width:62px;
+    font-size:12px;
+  }
+  .hof-v2-badge-line{
+    display:none;
+  }
+}
