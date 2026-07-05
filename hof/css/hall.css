@@ -2164,3 +2164,206 @@ button.hof-v2-god-main:hover{transform:translateY(-2px);background:rgba(255,255,
   .hof-v2-title-icon{min-width:22px;height:22px;border-radius:7px;font-size:10px;}
   .hof-v2-top3-item:before{display:none;}
 }
+
+
+/* ===========================================================
+   KINOJO HOF v2 STEP 7 QA PATCH
+   - Replace reference-only content names with real ranking names in JS.
+   - Secure mobile bottom breathing room so fixed notice bar does not cover cards.
+   =========================================================== */
+@media(max-width:760px){
+  body.kinojo-mobile-hall-detail-page .wrap{
+    padding-bottom:150px!important;
+  }
+  body.kinojo-mobile-hall-detail-page .hof-v2-layout{
+    margin-bottom:64px;
+  }
+}
+@media(max-width:420px){
+  body.kinojo-mobile-hall-detail-page .wrap{
+    padding-bottom:166px!important;
+  }
+}
+
+/* ===========================================================
+   KINOJO HOF v2 STEP 8 COLOR SYSTEM PATCH
+   - Restore KINOJO identity: White main surface + Gold accent
+   - Reference fantasy colors are reduced to weak background tints only
+   =========================================================== */
+.hof-v2-shell{
+  --hof-white:#ffffff;
+  --hof-offwhite:#fbfcff;
+  --hof-ink:#17233a;
+  --hof-sub:#536278;
+  --hof-muted:#7b8798;
+  --hof-gold:#d6a94d;
+  --hof-gold-strong:#b98522;
+  --hof-line:rgba(24,38,61,.12);
+  --hof-soft:rgba(255,255,255,.94);
+}
+.hof-v2-layout{color:var(--hof-ink);}
+.hof-v2-panel,
+.hof-v2-my-rank{
+  border-color:rgba(185,133,34,.25)!important;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.98),rgba(247,250,255,.94))!important;
+  color:var(--hof-ink)!important;
+  box-shadow:0 14px 34px rgba(18,32,56,.12),0 0 0 1px rgba(255,255,255,.80) inset!important;
+}
+.hof-v2-panel:before{
+  background:
+    radial-gradient(circle at 16% 8%,rgba(214,169,77,.16),transparent 32%),
+    linear-gradient(145deg,rgba(255,255,255,.72),transparent 42%)!important;
+}
+.hof-v2-panel:after{
+  box-shadow:inset 0 0 0 1px rgba(214,169,77,.13),inset 0 0 34px rgba(214,169,77,.045)!important;
+}
+.hof-v2-panel-bg{
+  opacity:.42!important;
+  filter:saturate(.72) brightness(1.18)!important;
+}
+.hof-v2-panel.is-enhance .hof-v2-panel-bg,
+.hof-v2-panel.is-growth .hof-v2-panel-bg,
+.hof-v2-panel.is-pve .hof-v2-panel-bg,
+.hof-v2-panel.is-pvp .hof-v2-panel-bg,
+.hof-v2-panel.is-like .hof-v2-panel-bg,
+.hof-v2-panel.is-dislike .hof-v2-panel-bg{
+  background:
+    radial-gradient(circle at 84% 10%,rgba(214,169,77,.16),transparent 30%),
+    linear-gradient(135deg,rgba(255,255,255,.96),rgba(238,243,251,.86))!important;
+}
+.hof-v2-panel.is-enhance{--hof-panel-accent:rgba(185,133,34,.48);}
+.hof-v2-panel.is-growth{--hof-panel-accent:rgba(185,133,34,.42);}
+.hof-v2-panel.is-pve{--hof-panel-accent:rgba(185,133,34,.40);}
+.hof-v2-panel.is-pvp{--hof-panel-accent:rgba(185,133,34,.40);}
+.hof-v2-panel.is-like{--hof-panel-accent:rgba(185,133,34,.38);}
+.hof-v2-panel.is-dislike{--hof-panel-accent:rgba(185,133,34,.38);}
+.hof-v2-panel-head,
+.hof-v2-god-head,
+.hof-v2-my-head{position:relative;z-index:3;}
+.hof-v2-kicker{
+  color:var(--hof-gold-strong)!important;
+  text-shadow:none!important;
+}
+.hof-v2-panel-head h2,
+.hof-v2-god-head h2,
+.hof-v2-my-head h2{
+  color:var(--hof-ink)!important;
+  text-shadow:none!important;
+}
+.hof-v2-panel-head p,
+.hof-v2-god-head p,
+.hof-v2-my-head p{
+  color:var(--hof-sub)!important;
+  text-shadow:none!important;
+}
+.hof-v2-title-icon{
+  border-color:rgba(185,133,34,.34)!important;
+  background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(248,239,216,.86))!important;
+  color:var(--hof-gold-strong)!important;
+  box-shadow:0 5px 15px rgba(185,133,34,.12)!important;
+}
+.hof-v2-top3-item,
+.hof-v2-top3-item.rank-1,
+.hof-v2-top3-item.rank-2,
+.hof-v2-top3-item.rank-3,
+.hof-v2-top3-item[data-hof-rank="1"]{
+  border-color:var(--hof-line)!important;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.96),rgba(246,249,254,.90))!important;
+  color:var(--hof-ink)!important;
+  box-shadow:0 8px 20px rgba(18,32,56,.08),inset 0 1px 0 rgba(255,255,255,.92)!important;
+}
+.hof-v2-top3-item.rank-1,
+.hof-v2-top3-item[data-hof-rank="1"]{
+  border-color:rgba(185,133,34,.36)!important;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.98),rgba(252,247,235,.92))!important;
+}
+.hof-v2-top3-item:hover{
+  border-color:rgba(185,133,34,.46)!important;
+  background:linear-gradient(180deg,#fff,rgba(252,248,238,.94))!important;
+  box-shadow:0 14px 30px rgba(18,32,56,.13),0 0 0 1px rgba(214,169,77,.14) inset!important;
+}
+.hof-v2-top3-item:before{background:linear-gradient(115deg,transparent 0%,rgba(214,169,77,.20) 42%,transparent 68%)!important;}
+.hof-v2-medal{
+  border-color:rgba(185,133,34,.68)!important;
+  background:linear-gradient(145deg,rgba(250,241,217,.98),rgba(213,168,77,.72))!important;
+  color:#493008!important;
+  box-shadow:0 0 0 1px rgba(255,255,255,.70) inset,0 7px 16px rgba(185,133,34,.18)!important;
+}
+.hof-v2-medal span{color:#493008!important;text-shadow:none!important;}
+.hof-v2-medal-2{background:linear-gradient(145deg,#fff,#dfe5ee)!important;border-color:rgba(146,158,176,.62)!important;}
+.hof-v2-medal-3{background:linear-gradient(145deg,#fff3e8,#d9a071)!important;border-color:rgba(174,103,54,.56)!important;}
+.hof-v2-portrait{
+  border-color:rgba(185,133,34,.72)!important;
+  background:#fff!important;
+  color:var(--hof-gold-strong)!important;
+  box-shadow:0 0 0 3px rgba(255,255,255,.92),0 8px 18px rgba(18,32,56,.14)!important;
+}
+.hof-v2-portrait-wrap:after,
+.hof-v2-god-portrait:after{border-color:rgba(185,133,34,.18)!important;box-shadow:0 0 20px rgba(185,133,34,.08)!important;}
+.hof-v2-top3-name,
+.hof-v2-god-main strong,
+.hof-v2-my-row strong{
+  color:var(--hof-ink)!important;
+  text-shadow:none!important;
+}
+.hof-v2-top3-meta,
+.hof-v2-top3-summary,
+.hof-v2-god-main span:not(.hof-v2-medal),
+.hof-v2-god-score span,
+.hof-v2-god-sub span,
+.hof-v2-god-compare span,
+.hof-v2-my-row span,
+.hof-v2-my-row em,
+.hof-v2-login-guide{
+  color:var(--hof-sub)!important;
+  text-shadow:none!important;
+}
+.hof-v2-class-badge,
+.hof-v2-owner-badge{
+  border-color:rgba(185,133,34,.22)!important;
+  background:rgba(255,255,255,.82)!important;
+  color:#5b6678!important;
+}
+.hof-v2-owner-badge.is-main{color:var(--hof-gold-strong)!important;}
+.hof-v2-top3-score,
+.hof-v2-god-score strong,
+.hof-v2-god-sub strong,
+.hof-v2-my-row b{
+  color:var(--hof-gold-strong)!important;
+  text-shadow:none!important;
+}
+.hof-v2-top3-score small{color:var(--hof-muted)!important;}
+.hof-v2-god-main{
+  border-color:rgba(185,133,34,.16)!important;
+  background:linear-gradient(180deg,rgba(255,255,255,.70),rgba(248,250,254,.54))!important;
+}
+button.hof-v2-god-main:hover{background:rgba(255,255,255,.84)!important;}
+.hof-v2-god-score{
+  border-top-color:rgba(185,133,34,.26)!important;
+  border-bottom-color:rgba(185,133,34,.16)!important;
+  background:linear-gradient(90deg,transparent,rgba(255,250,238,.86),transparent)!important;
+}
+.hof-v2-god-sub,
+.hof-v2-god-compare,
+.hof-v2-login-guide,
+.hof-v2-my-row{
+  border-color:var(--hof-line)!important;
+  background:rgba(255,255,255,.72)!important;
+}
+.hof-v2-my-row:before{background:rgba(185,133,34,.24)!important;}
+.hof-v2-my-row.is-found{
+  border-color:rgba(185,133,34,.36)!important;
+  background:linear-gradient(90deg,rgba(255,249,235,.90),rgba(255,255,255,.78))!important;
+}
+.hof-v2-empty-dot{
+  border-color:rgba(185,133,34,.30)!important;
+  color:var(--hof-gold-strong)!important;
+  background:rgba(255,255,255,.64)!important;
+}
+.hof-v2-empty-text{color:var(--hof-muted)!important;}
+@media(max-width:760px){
+  .hof-v2-panel,.hof-v2-my-rank{box-shadow:0 8px 20px rgba(18,32,56,.10),0 0 0 1px rgba(255,255,255,.84) inset!important;}
+}

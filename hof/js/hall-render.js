@@ -369,11 +369,11 @@ function hofV2Layout(){
   return '<div class="hof-v2-layout">'
     + '<div class="hof-v2-left">'+hofGodHeroCard('강화의 신','최고 강화 기록을 가진 모험가',s.enhanceGod || hallData?.weeklyAwards?.bulkUp?.[0], 'enhance')+'</div>'
     + '<div class="hof-v2-center">'
-    + hofWidePanel('고독의 투기장','PVE 랭킹 TOP 3',pveList,'pve')
-    + hofWidePanel('협력의 투기장','PVP 랭킹 TOP 3',pvpList,'pvp')
+    + hofWidePanel('PVE 랭킹','PVE 랭킹 TOP 3',pveList,'pve')
+    + hofWidePanel('PVP 랭킹','PVP 랭킹 TOP 3',pvpList,'pvp')
     + '<div class="hof-v2-two">'
-    + hofWidePanel('악몽','좋아요 TOP 3',likeList,'like')
-    + hofWidePanel('초월','싫어요 TOP 3',dislikeList,'dislike')
+    + hofWidePanel('좋아요 랭킹','좋아요 TOP 3',likeList,'like')
+    + hofWidePanel('싫어요 랭킹','싫어요 TOP 3',dislikeList,'dislike')
     + '</div>'
     + hofGodHeroCard('성장의 신','이번 주 가장 눈부신 성장',s.growthGod || hallData?.weeklyAwards?.growthKing?.[0], 'growth')
     + '</div>'
