@@ -220,14 +220,9 @@ function hofFindMyMetric(metric){
 function hofRankSummaryText(item,metric){
   if(!item)return '';
   const bits=[];
-  if(metric==='growth'){
-    bits.push('이번주 '+hofMetricValue(item,metric));
-  }else if(metric==='enhance'){
-    bits.push('최근 '+hofMetricValue(item,metric));
-  }else{
-    bits.push(hofMetricLabel(metric)+' '+hofMetricValue(item,metric));
-  }
+  const server=hofServerName(item);
   const cls=hofClassName(item);
+  if(server)bits.push(server);
   if(cls)bits.push(cls);
   return bits.filter(Boolean).join(' · ');
 }
@@ -291,9 +286,8 @@ function hofTop3Card(item,index,metric){
     + '<span class="hof-v2-rank-stack">'+hofRankMedal(rank)+'</span>'
     + '<span class="hof-v2-portrait-wrap">'+hofRankPortrait(item,rank,'small')+'</span>'
     + '<span class="hof-v2-top3-info"><span class="hof-v2-top3-name">'+escapeHtml(name)+'</span>'
-    + '<span class="hof-v2-top3-meta">'+escapeHtml(server)+'</span>'
-    + '<span class="hof-v2-badge-line">'+hofClassBadge(item)+hofOwnerBadge(item)+'</span>'
-    + (summary?'<span class="hof-v2-top3-summary">'+escapeHtml(summary)+'</span>':'')+'</span>'
+    + '<span class="hof-v2-top3-meta">'+escapeHtml(summary||server)+'</span>'
+    + '<span class="hof-v2-badge-line">'+hofClassBadge(item)+hofOwnerBadge(item)+'</span></span>'
     + '<strong class="hof-v2-top3-score"><small>'+escapeHtml(hofMetricLabel(metric))+'</small>'+escapeHtml(score)+'</strong>'
     + '</button>';
 }
@@ -367,7 +361,7 @@ function hofV2Layout(){
   const likeList=s.likesTop||s.likeTop||hallData?.reactionSummary?.likeTop||[];
   const dislikeList=s.dislikesTop||s.dislikeTop||hallData?.reactionSummary?.dislikeTop||[];
   return '<div class="hof-v2-layout">'
-    + '<div class="hof-v2-left">'+hofGodHeroCard('강화의 신','최고 강화 기록을 가진 모험가',s.enhanceGod || hallData?.weeklyAwards?.bulkUp?.[0], 'enhance')+'</div>'
+    + '<div class="hof-v2-left">'+hofGodHeroCard('강화의 신','최고 강화 기록',s.enhanceGod || hallData?.weeklyAwards?.bulkUp?.[0], 'enhance')+'</div>'
     + '<div class="hof-v2-center">'
     + hofWidePanel('PVE 랭킹','PVE 랭킹 TOP 3',pveList,'pve')
     + hofWidePanel('PVP 랭킹','PVP 랭킹 TOP 3',pvpList,'pvp')
@@ -375,7 +369,7 @@ function hofV2Layout(){
     + hofWidePanel('좋아요 랭킹','좋아요 TOP 3',likeList,'like')
     + hofWidePanel('싫어요 랭킹','싫어요 TOP 3',dislikeList,'dislike')
     + '</div>'
-    + hofGodHeroCard('성장의 신','이번 주 가장 눈부신 성장',s.growthGod || hallData?.weeklyAwards?.growthKing?.[0], 'growth')
+    + hofGodHeroCard('성장의 신','이번주 성장량',s.growthGod || hallData?.weeklyAwards?.growthKing?.[0], 'growth')
     + '</div>'
     + '<div class="hof-v2-right">'+hofMyRankingPanel()+'</div>'
     + '</div>';
