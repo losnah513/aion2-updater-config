@@ -3,7 +3,7 @@ KINOJO Event Notice Popup
 기능 : 사용자 페이지 진입 이벤트 공지 팝업 공통 로더
 정리일 : 2026-07-05
 규칙 : 공지 묶음별 오늘 하루 그만보기 분리 / 제거 애니메이션은 기존 DOM에만 적용
-STEP : 3-7 닫기 Fade Motion 보강
+STEP : 5 운영 QA / 닫기 라이프사이클 정리
 =========================================================== */
 (function(){
   'use strict';
@@ -11,6 +11,7 @@ STEP : 3-7 닫기 Fade Motion 보강
   const STORAGE_PREFIX = 'kinojo_event_notice_dismissed_';
   const SESSION_PREFIX = 'kinojo_event_notice_closed_';
   const DEFAULT_LIMIT = 10; // group limit, cards are capped by server/admin at 6
+  const MAX_CARDS = 6;
   const KST_TZ = 'Asia/Seoul';
 
   function kstParts(date){
@@ -132,7 +133,7 @@ STEP : 3-7 닫기 Fade Motion 보강
   }
 
   function renderGroup(group){
-    const items = Array.isArray(group?.items) ? group.items : [];
+    const items = (Array.isArray(group?.items) ? group.items : []).slice(0, MAX_CARDS);
     const id = groupId(group);
     return '<section class="kinojo-event-notice-group" data-event-notice-group="'+esc(id)+'">'
       + '<header class="kinojo-event-notice-head"><div><span>EVENT NOTICE</span><strong>'+esc(group?.groupTitle || group?.title || '이벤트 공지')+'</strong></div><em class="kinojo-event-notice-count">'+items.length+'/6</em></header>'
@@ -145,7 +146,16 @@ STEP : 3-7 닫기 Fade Motion 보강
     return groups.find(g => groupId(g) === String(id || '')) || null;
   }
 
-  function removeGroup(root, group){
+  function closeRoot(root, onCleanup){
+    root.classList.add('is-hiding');
+    root.classList.remove('is-visible');
+    window.setTimeout(() => {
+      if(typeof onCleanup === 'function') onCleanup();
+      root.remove();
+    }, 220);
+  }
+
+  function removeGroup(root, group, onCleanup){
     const id = groupId(group);
     const selector = '[data-event-notice-group="'+(window.CSS && CSS.escape ? CSS.escape(id) : id.replace(/"/g, '\\"'))+'"]';
     const card = root.querySelector(selector);
@@ -155,9 +165,7 @@ STEP : 3-7 닫기 Fade Motion 보강
     }
     window.setTimeout(() => {
       if(!root.querySelector('[data-event-notice-group]:not(.is-removing)')){
-        root.classList.add('is-hiding');
-        root.classList.remove('is-visible');
-        window.setTimeout(() => root.remove(), 220);
+        closeRoot(root, onCleanup);
       }
     }, 190);
   }
@@ -220,6 +228,11 @@ STEP : 3-7 닫기 Fade Motion 보강
     document.body.appendChild(root);
     requestAnimationFrame(() => root.classList.add('is-visible'));
 
+    let onKey;
+    const cleanup = function(){
+      if(onKey) document.removeEventListener('keydown', onKey);
+    };
+
     root.addEventListener('click', function(e){
       const todayBtn = e.target.closest('[data-event-notice-today]');
       const closeBtn = e.target.closest('[data-event-notice-close]');
@@ -228,16 +241,13 @@ STEP : 3-7 닫기 Fade Motion 보강
       const group = findGroup(groups, id);
       if(!group) return;
       if(todayBtn) markDismissed(group); else markClosed(group);
-      removeGroup(root, group);
+      removeGroup(root, group, cleanup);
     });
 
-    const onKey = function(e){
+    onKey = function(e){
       if(e.key !== 'Escape') return;
       groups.forEach(markClosed);
-      root.classList.add('is-hiding');
-      root.classList.remove('is-visible');
-      window.setTimeout(() => root.remove(), 220);
-      document.removeEventListener('keydown', onKey);
+      closeRoot(root, cleanup);
     };
     document.addEventListener('keydown', onKey);
   }
