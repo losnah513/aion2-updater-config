@@ -123,13 +123,65 @@ function awardsBoard(){const w=hallData?.weeklyAwards||{};return '<div class="aw
 
 function hofMetricValue(item,metric){
   if(!item)return '';
-  if(metric==='like')return Number(item.like||0).toLocaleString('ko-KR');
-  if(metric==='dislike')return Number(item.dislike||0).toLocaleString('ko-KR');
-  if(metric==='pvp')return item.pvpPowerLabel||numberOnly(item.pvpPower)||'-';
-  if(metric==='pve')return item.pvePowerLabel||numberOnly(item.pvePower)||'-';
-  if(metric==='growth')return item.powerLabel||((item.powerDelta>0?'+':'')+numberOnly(item.powerDelta));
-  if(metric==='enhance')return item.itemLabel||((item.itemLevelDelta>0?'+':'')+numberOnly(item.itemLevelDelta));
+  if(metric==='like')return Number(item.like||item.value||0).toLocaleString('ko-KR');
+  if(metric==='dislike')return Number(item.dislike||item.value||0).toLocaleString('ko-KR');
+  if(metric==='pvp')return item.pvpPowerLabel||numberOnly(item.pvpPower||item.value)||'-';
+  if(metric==='pve')return item.pvePowerLabel||numberOnly(item.pvePower||item.value)||'-';
+  if(metric==='growth')return item.powerLabel||item.label||((Number(item.powerDelta||item.valueDelta||0)>0?'+':'')+numberOnly(item.powerDelta||item.valueDelta));
+  if(metric==='enhance')return item.itemLabel||item.label||((Number(item.itemLevelDelta||item.valueDelta||0)>0?'+':'')+numberOnly(item.itemLevelDelta||item.valueDelta));
   return item.label||'';
+}
+function hofMetricLabel(metric){
+  if(metric==='like')return '좋아요';
+  if(metric==='dislike')return '싫어요';
+  if(metric==='growth')return '성장량';
+  if(metric==='enhance')return '강화 수치';
+  return '포인트';
+}
+function hofNormalizeName(value){
+  return String(value||'').trim().replace(/\s+/g,'').toLowerCase();
+}
+function hofSessionName(){
+  const session=window.KinojoAuth?.getSession?.()||{};
+  const account=window.KinojoAuth?.getAccount?.()||{};
+  const candidates=[
+    session.characterName, session.mainCharacterName, session.main_character_name, session.name,
+    account.characterName, account.mainCharacterName, account.main_character_name, account.name
+  ];
+  return candidates.map(v=>String(v||'').trim()).find(Boolean)||'';
+}
+function hofCollectMetricList(metric){
+  const s=hallData?.summarySections||{};
+  const r=hallData?.reactionSummary||{};
+  if(metric==='enhance')return [s.enhanceGod, ...(hallData?.weeklyAwards?.bulkUp||[])].filter(Boolean);
+  if(metric==='growth')return [s.growthGod, ...(hallData?.weeklyAwards?.growthKing||[])].filter(Boolean);
+  if(metric==='pve')return (s.pveTop||hallData?.pveTop||[]).filter(Boolean);
+  if(metric==='pvp')return (s.pvpTop||hallData?.pvpTop||[]).filter(Boolean);
+  if(metric==='like')return (s.likesTop||r.likeTop||[]).filter(Boolean);
+  if(metric==='dislike')return (s.dislikesTop||r.dislikeTop||[]).filter(Boolean);
+  return [];
+}
+function hofFindMyMetric(metric){
+  const name=hofNormalizeName(hofSessionName());
+  if(!name)return null;
+  const list=hofCollectMetricList(metric);
+  const found=list.find(item=>hofNormalizeName(item?.name)===name || hofNormalizeName(item?.owner)===name);
+  if(!found)return null;
+  const rank=Number(found.rank||found.rankNo||found.position||0) || (list.indexOf(found)+1);
+  return { item:found, rank:rank, score:hofMetricValue(found,metric)||'-' };
+}
+function hofRankSummaryText(item,metric){
+  if(!item)return '';
+  const bits=[];
+  if(metric==='growth' && (item.powerDelta||item.valueDelta)){
+    bits.push('이번주 '+hofMetricValue(item,metric));
+  }else if(metric==='enhance' && (item.itemLevelDelta||item.valueDelta)){
+    bits.push('최근 '+hofMetricValue(item,metric));
+  }else{
+    bits.push(hofMetricLabel(metric)+' '+hofMetricValue(item,metric));
+  }
+  if(item.className)bits.push(item.className);
+  return bits.filter(Boolean).join(' · ');
 }
 function hofRankMedal(rank){
   return '<span class="hof-v2-medal hof-v2-medal-'+rank+'">'+rank+'</span>';
@@ -154,11 +206,13 @@ function hofTop3Card(item,index,metric){
   if(!item)return '<div class="hof-v2-top3-item is-empty"><div class="hof-v2-empty-dot">'+rank+'</div><div class="hof-v2-empty-text">데이터 대기</div></div>';
   const name=String(item.name||'-');
   const meta=[item.serverName||item.meta||'지켈', item.className||''].filter(Boolean).join(' · ');
-  return '<button type="button" class="hof-v2-top3-item" data-character="'+escapeHtml(name)+'">'
-    + hofRankMedal(rank)
-    + hofRankPortrait(item,rank,'small')
-    + '<span class="hof-v2-top3-name">'+escapeHtml(name)+'</span>'
+  const summary=hofRankSummaryText(item,metric);
+  return '<button type="button" class="hof-v2-top3-item" data-character="'+escapeHtml(name)+'" aria-label="'+escapeHtml(name)+' 상세 보기">'
+    + '<span class="hof-v2-rank-stack">'+hofRankMedal(rank)+'</span>'
+    + '<span class="hof-v2-portrait-wrap">'+hofRankPortrait(item,rank,'small')+'</span>'
+    + '<span class="hof-v2-top3-info"><span class="hof-v2-top3-name">'+escapeHtml(name)+'</span>'
     + '<span class="hof-v2-top3-meta">'+escapeHtml(meta)+'</span>'
+    + (summary?'<span class="hof-v2-top3-summary">'+escapeHtml(summary)+'</span>':'')+'</span>'
     + '<strong class="hof-v2-top3-score">'+escapeHtml(hofMetricValue(item,metric)||'-')+'</strong>'
     + '</button>';
 }
@@ -175,36 +229,51 @@ function hofGodHeroCard(title,note,item,metric){
   const name=String(safeItem?.name||'집계 대기');
   const score=hofMetricValue(safeItem,metric)||'-';
   const meta=[safeItem?.serverName||safeItem?.meta||'', safeItem?.className||''].filter(Boolean).join(' · ');
-  const deltaLabel=metric==='enhance'?'강화 수치':'성장량';
+  const deltaLabel=metric==='enhance'?'강화 수치':'이번주 성장량';
   const recent=metric==='enhance'?(safeItem?.itemLevelDelta||safeItem?.valueDelta):(safeItem?.powerDelta||safeItem?.valueDelta);
   const recentText=recent?((Number(recent)>0?'+':'')+Number(recent).toLocaleString('ko-KR')):'-';
+  const compare=safeItem?.growthRateLabel||safeItem?.rateLabel||safeItem?.weekCompareLabel||'';
   return '<section class="hof-v2-panel hof-v2-god '+hofBackgroundClass(metric)+'">'
     + '<div class="hof-v2-panel-bg" aria-hidden="true"></div>'
-    + '<div class="hof-v2-god-head"><span class="hof-v2-kicker">EVENT NOTICE</span><h2>'+escapeHtml(title)+'</h2><p>'+escapeHtml(note||'')+'</p></div>'
-    + '<button type="button" class="hof-v2-god-main" data-character="'+escapeHtml(name)+'">'
-    + hofRankPortrait(safeItem,1,'large')
-    + hofRankMedal(1)
+    + '<div class="hof-v2-god-head"><span class="hof-v2-kicker">KINOJO HALL</span><h2>'+escapeHtml(title)+'</h2><p>'+escapeHtml(note||'')+'</p></div>'
+    + '<button type="button" class="hof-v2-god-main" data-character="'+escapeHtml(name)+'" aria-label="'+escapeHtml(name)+' 상세 보기">'
+    + '<span class="hof-v2-god-portrait">'+hofRankPortrait(safeItem,1,'large')+hofRankMedal(1)+'</span>'
     + '<strong>'+escapeHtml(name)+'</strong>'
     + '<span>'+escapeHtml(meta||'지켈')+'</span>'
     + '</button>'
     + '<div class="hof-v2-god-score"><strong>'+escapeHtml(score)+'</strong><span>'+deltaLabel+'</span></div>'
     + '<div class="hof-v2-god-sub"><span>최근 변화</span><strong>'+escapeHtml(recentText)+'</strong></div>'
+    + (compare?'<div class="hof-v2-god-compare"><span>전주 대비</span><strong>'+escapeHtml(compare)+'</strong></div>':'')
     + '</section>';
 }
 function hofMyRankingPanel(){
   const isLoggedIn=!!(window.KinojoAuth&&typeof window.KinojoAuth.getSession==='function'&&window.KinojoAuth.getSession());
+  const myName=hofSessionName();
   const rows=[
-    ['강화의 신','RANK -','강화 수치','-','enhance'],
-    ['PVE 랭킹','RANK -','포인트','-','pve'],
-    ['PVP 랭킹','RANK -','포인트','-','pvp'],
-    ['좋아요 랭킹','RANK -','포인트','-','like'],
-    ['싫어요 랭킹','RANK -','포인트','-','dislike'],
-    ['성장의 신','RANK -','이번주 성장량','-','growth']
+    ['강화의 신','enhance'],
+    ['PVE 랭킹','pve'],
+    ['PVP 랭킹','pvp'],
+    ['좋아요 랭킹','like'],
+    ['싫어요 랭킹','dislike'],
+    ['성장의 신','growth']
   ];
+  const rowHtml=rows.map(row=>{
+    const title=row[0];
+    const metric=row[1];
+    const found=hofFindMyMetric(metric);
+    const rankText=found?'RANK '+found.rank:'RANK -';
+    const label=hofMetricLabel(metric);
+    const score=found?found.score:'-';
+    const nameLine=found?.item?.name?'<span class="hof-v2-my-name">'+escapeHtml(found.item.name)+'</span>':'';
+    return '<div class="hof-v2-my-row '+hofBackgroundClass(metric)+(found?' is-found':'')+'">'
+      + '<div><strong>'+escapeHtml(title)+'</strong><span>'+escapeHtml(rankText)+'</span>'+nameLine+'</div>'
+      + '<div><em>'+escapeHtml(label)+'</em><b>'+escapeHtml(score)+'</b></div>'
+      + '</div>';
+  }).join('');
   return '<aside class="hof-v2-panel hof-v2-my-rank">'
-    + '<div class="hof-v2-my-head"><h2>내 랭킹 정보</h2><p>로그인한 캐릭터 기준으로 표시됩니다.</p></div>'
-    + (!isLoggedIn?'<div class="hof-v2-login-guide"><span>🔒</span><strong>로그인 후 나의 랭킹을 확인하세요.</strong><button type="button" onclick="window.openLoginModal&&window.openLoginModal()">로그인</button></div>':'')
-    + '<div class="hof-v2-my-list">'+rows.map(row=>'<div class="hof-v2-my-row '+hofBackgroundClass(row[4])+'"><div><strong>'+escapeHtml(row[0])+'</strong><span>'+escapeHtml(row[1])+'</span></div><div><em>'+escapeHtml(row[2])+'</em><b>'+escapeHtml(row[3])+'</b></div></div>').join('')+'</div>'
+    + '<div class="hof-v2-my-head"><h2>내 랭킹 정보</h2><p>'+(isLoggedIn&&myName?escapeHtml(myName)+' 기준으로 표시됩니다.':'로그인한 캐릭터 기준으로 표시됩니다.')+'</p></div>'
+    + (!isLoggedIn?'<div class="hof-v2-login-guide"><span>🔒</span><strong>로그인 후 나의 랭킹을 확인하세요.</strong><button type="button" onclick="window.KinojoAuth?.openLoginModal?.()">로그인</button></div>':'')
+    + '<div class="hof-v2-my-list">'+rowHtml+'</div>'
     + '</aside>';
 }
 function hofV2Layout(){

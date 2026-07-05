@@ -2266,3 +2266,181 @@ body{
     font-size:36px;
   }
 }
+
+/* ===========================================================
+   HOF v2 STEP 2 - card detail / spacing / my ranking polish
+   =========================================================== */
+.hof-v2-layout{
+  gap:16px;
+}
+.hof-v2-panel{
+  isolation:isolate;
+}
+.hof-v2-wide{
+  min-height:220px;
+}
+.hof-v2-panel:after{
+  content:"";
+  position:absolute;
+  inset:1px;
+  pointer-events:none;
+  border-radius:7px;
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:inset 0 0 32px rgba(217,180,95,.07);
+  z-index:1;
+}
+.hof-v2-panel-head{
+  align-items:center;
+  padding:18px 20px 8px;
+}
+.hof-v2-panel-head p{
+  max-width:220px;
+  text-align:right;
+}
+.hof-v2-top3{
+  gap:12px;
+  padding:12px 18px 20px;
+}
+.hof-v2-top3-item{
+  grid-template-rows:auto auto auto auto;
+  align-content:start;
+  min-height:140px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:7px;
+  background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(0,0,0,.20));
+  padding:10px 8px 9px;
+  transition:transform .18s ease,border-color .18s ease,background .18s ease;
+}
+.hof-v2-top3-item:hover{
+  transform:translateY(-2px);
+  border-color:rgba(217,180,95,.45);
+  background:linear-gradient(180deg,rgba(255,255,255,.11),rgba(0,0,0,.24));
+}
+.hof-v2-rank-stack{
+  display:grid;
+  place-items:center;
+  height:28px;
+}
+.hof-v2-portrait-wrap{
+  display:grid;
+  place-items:center;
+  margin-top:-2px;
+}
+.hof-v2-top3-info{
+  display:grid;
+  justify-items:center;
+  max-width:100%;
+  min-width:0;
+}
+.hof-v2-top3-summary{
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  margin-top:3px;
+  color:rgba(255,250,240,.52);
+  font-size:10px;
+  font-weight:900;
+}
+.hof-v2-top3-score{
+  margin-top:1px;
+  font-size:18px;
+  letter-spacing:-.02em;
+}
+.hof-v2-god{
+  border-color:rgba(217,180,95,.34);
+}
+.hof-v2-god-portrait{
+  position:relative;
+  display:grid;
+  place-items:center;
+}
+.hof-v2-god-portrait .hof-v2-medal{
+  position:absolute;
+  left:50%;
+  bottom:-10px;
+  transform:translateX(-50%) rotate(45deg);
+}
+.hof-v2-god-main .hof-v2-medal{
+  margin-top:0;
+}
+.hof-v2-god-main strong{
+  margin-top:8px;
+}
+.hof-v2-god-score{
+  margin:0 6px;
+  border-top-color:rgba(217,180,95,.28);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.045),transparent);
+}
+.hof-v2-god-sub,
+.hof-v2-god-compare{
+  margin:8px 6px 0;
+  border-radius:6px;
+}
+.hof-v2-god-compare{
+  position:relative;
+  z-index:1;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  padding:10px 14px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(0,0,0,.22);
+}
+.hof-v2-god-compare span{
+  color:rgba(255,255,255,.64);
+  font-size:13px;
+  font-weight:900;
+}
+.hof-v2-god-compare strong{
+  color:#9fe88a;
+  font-size:18px;
+}
+.hof-v2-my-row{
+  position:relative;
+  overflow:hidden;
+  border-radius:7px;
+  min-height:68px;
+}
+.hof-v2-my-row:before{
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:5px;
+  background:rgba(217,180,95,.28);
+}
+.hof-v2-my-row.is-found{
+  border-color:rgba(217,180,95,.34);
+  background:linear-gradient(90deg,rgba(217,180,95,.13),rgba(255,255,255,.03));
+}
+.hof-v2-my-name{
+  margin-top:3px;
+  color:rgba(255,250,240,.82)!important;
+  font-size:11px!important;
+}
+@media (max-width:760px){
+  .hof-v2-wide{
+    min-height:0;
+  }
+  .hof-v2-panel-head p{
+    max-width:none;
+    text-align:center;
+  }
+  .hof-v2-top3-item{
+    grid-template-columns:auto auto minmax(0,1fr) auto;
+    grid-template-rows:auto auto;
+    min-height:0;
+  }
+  .hof-v2-rank-stack,
+  .hof-v2-portrait-wrap,
+  .hof-v2-top3-info,
+  .hof-v2-top3-score{
+    grid-row:1/2;
+  }
+  .hof-v2-rank-stack{grid-column:1/2;}
+  .hof-v2-portrait-wrap{grid-column:2/3;}
+  .hof-v2-top3-info{grid-column:3/4;justify-items:start;}
+  .hof-v2-top3-score{grid-column:4/5;align-self:center;}
+  .hof-v2-top3-summary{display:none;}
+}
