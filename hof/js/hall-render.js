@@ -292,9 +292,10 @@ function hofTop3Card(item,index,metric){
 }
 function hofWidePanel(title,note,list,metric){
   const items=(list||[]).slice(0,3);
+  const compactTitle=(metric==='pve'||metric==='pvp')?title.replace(' 랭킹',' TOP3'):title.replace(' 랭킹',' TOP3');
   return '<section class="hof-v2-panel hof-v2-wide '+hofBackgroundClass(metric)+'" data-hof-panel="'+escapeHtml(metric)+'">'
     + '<div class="hof-v2-panel-bg" aria-hidden="true"></div>'
-    + '<div class="hof-v2-panel-head"><div><span class="hof-v2-kicker">'+escapeHtml(hofMetricToneLabel(metric))+'</span><h2><span class="hof-v2-title-icon">'+escapeHtml(hofMetricIcon(metric))+'</span>'+escapeHtml(title)+'</h2></div><p>'+escapeHtml(note||'')+'</p></div>'
+    + '<div class="hof-v2-panel-head is-compact"><h2><span class="hof-v2-title-icon">'+escapeHtml(hofMetricIcon(metric))+'</span>'+escapeHtml(compactTitle)+'</h2></div>'
     + '<div class="hof-v2-top3">'+[0,1,2].map(i=>hofTop3Card(items[i],i,metric)).join('')+'</div>'
     + '</section>';
 }
@@ -312,7 +313,7 @@ function hofGodHeroCard(title,note,item,metric){
   const bodyAttrs=hasItem?' type="button" data-character="'+escapeHtml(name)+'" data-hof-metric="'+escapeHtml(metric)+'" data-hof-rank="1" data-hof-score="'+escapeHtml(score)+'" aria-label="'+escapeHtml(name)+' 상세 보기"':'';
   return '<section class="hof-v2-panel hof-v2-god '+hofBackgroundClass(metric)+'" data-hof-panel="'+escapeHtml(metric)+'">'
     + '<div class="hof-v2-panel-bg" aria-hidden="true"></div>'
-    + '<div class="hof-v2-god-head"><span class="hof-v2-kicker">'+escapeHtml(hofMetricToneLabel(metric))+'</span><h2><span class="hof-v2-title-icon">'+escapeHtml(hofMetricIcon(metric))+'</span>'+escapeHtml(title)+'</h2><p>'+escapeHtml(note||'')+'</p></div>'
+    + '<div class="hof-v2-god-head is-compact"><h2><span class="hof-v2-title-icon">'+escapeHtml(hofMetricIcon(metric))+'</span>'+escapeHtml(title)+'</h2></div>'
     + '<'+bodyTag+' class="hof-v2-god-main'+(hasItem?'':' is-empty')+'"'+bodyAttrs+'>'
     + '<span class="hof-v2-god-portrait">'+hofRankPortrait(safeItem,1,'large')+(hasItem?hofRankMedal(1):'')+'</span>'
     + '<strong>'+escapeHtml(name)+'</strong>'
