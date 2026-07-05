@@ -1,9 +1,9 @@
 /* ===========================================================
 KINOJO Event Notice Popup
 기능 : 사용자 페이지 진입 이벤트 공지 팝업 공통 로더
-정리일 : 2026-07-04
-규칙 : 공지 묶음별 오늘 하루 그만보기 분리
-STEP : 3-4 실제 적용/시각 확인 보강
+정리일 : 2026-07-05
+규칙 : 공지 묶음별 오늘 하루 그만보기 분리 / 제거 애니메이션은 기존 DOM에만 적용
+STEP : 3-7 닫기 Fade Motion 보강
 =========================================================== */
 (function(){
   'use strict';
@@ -149,12 +149,17 @@ STEP : 3-4 실제 적용/시각 확인 보강
     const id = groupId(group);
     const selector = '[data-event-notice-group="'+(window.CSS && CSS.escape ? CSS.escape(id) : id.replace(/"/g, '\\"'))+'"]';
     const card = root.querySelector(selector);
-    if(card) card.remove();
-    if(!root.querySelector('[data-event-notice-group]')){
-      root.classList.add('is-hiding');
-      root.classList.remove('is-visible');
-      window.setTimeout(() => root.remove(), 220);
+    if(card){
+      card.classList.add('is-removing');
+      window.setTimeout(() => card.remove(), 180);
     }
+    window.setTimeout(() => {
+      if(!root.querySelector('[data-event-notice-group]:not(.is-removing)')){
+        root.classList.add('is-hiding');
+        root.classList.remove('is-visible');
+        window.setTimeout(() => root.remove(), 220);
+      }
+    }, 190);
   }
 
 

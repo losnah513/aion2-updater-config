@@ -309,6 +309,8 @@
 
   function createAdminMenu(info){
     const wrap=document.createElement('div');
+    const adminBase=info?.mobile?'/m/':'/';
+    const adminConsoleHref=adminBase+'admin/';
     wrap.className='admin-menu-wrap';
     wrap.innerHTML=`
       <button aria-expanded="false" aria-haspopup="true" aria-label="관리 패널 열기" class="admin-menu-btn" id="adminMenuBtn" type="button">관리</button>
@@ -319,6 +321,9 @@
             <span>권한에 맞는 운영 기능만 표시됩니다.</span>
           </div>
           <button aria-label="닫기" class="admin-dropdown-close kinojo-common-close" id="adminDropdownClose" type="button">×</button>
+        </div>
+        <div class="admin-panel-shortcuts" aria-label="관리자 바로가기">
+          <a class="btn admin-console-link" href="${adminConsoleHref}">관리자 페이지 열기</a>
         </div>
         <div class="admin-control-panel admin-shell" id="adminControlPanel" style="display:grid">
           <nav class="admin-panel-tabs" aria-label="관리 패널 메뉴">
@@ -441,8 +446,7 @@
       {key:'hall',label:'명예의 전당',href:base+'hof/'},
       {key:'ranking',label:'레기온 순위',href:base+'ranking/'},
       {key:'sanctuary',label:'성역',href:base+'sanctuary/?id=rudra'},
-      {key:'arcana',label:'아르카나',href:base+'arcana/'},
-      {key:'admin',label:'관리자',href:base+'admin/',adminOnly:true}
+      {key:'arcana',label:'아르카나',href:base+'arcana/'}
     ];
     const navHtml=navItems.map(item=>{
       const active=item.key===info.key;
@@ -545,7 +549,6 @@
           <div class="kinojo-drawer-divider"></div>
           <div class="kinojo-drawer-category">아르카나</div>
           <a href="${arcanaHref}" ${isArcana?'class="active" aria-disabled="true"':''}>ARCANA 스킬 시뮬레이터</a>
-          <a class="kinojo-admin-only-link" href="${base}admin/">관리자 콘솔</a>
           <div class="kinojo-drawer-divider"></div>
           <div class="kinojo-drawer-category">안내</div>
           <button class="kinojo-drawer-link drawer-page-link" type="button" data-page-panel="about" data-drawer="about">사이트 소개</button>

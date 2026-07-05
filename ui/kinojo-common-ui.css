@@ -1829,3 +1829,8 @@ body.kinojo-page-sanctuary .sanctuary-party-nav{border-radius:var(--kinojo-card-
 body.kinojo-admin-user .kinojo-admin-only-link{display:inline-flex!important}
 .kinojo-drawer-nav .kinojo-admin-only-link{display:none!important}
 body.kinojo-admin-user .kinojo-drawer-nav .kinojo-admin-only-link{display:flex!important}
+
+/* 20260705_05 admin entry unification */
+.admin-panel-shortcuts{padding:0 20px 12px;display:flex;justify-content:flex-end;background:#fff}
+.admin-console-link{height:36px;min-width:132px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-size:12px;font-weight:950}
+@media(max-width:720px){.admin-panel-shortcuts{padding:0 14px 10px}.admin-console-link{width:100%;height:38px}}
