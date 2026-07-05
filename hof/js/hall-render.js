@@ -283,8 +283,7 @@ function hofTop3Card(item,index,metric){
   const summary=hofRankSummaryText(item,metric);
   const score=hofMetricValue(item,metric)||'-';
   return '<button type="button" class="hof-v2-top3-item rank-'+rank+'" data-character="'+escapeHtml(name)+'" data-hof-metric="'+escapeHtml(metric)+'" data-hof-rank="'+rank+'" data-hof-score="'+escapeHtml(score)+'" aria-label="'+escapeHtml(name)+' 상세 보기">'
-    + '<span class="hof-v2-rank-stack">'+hofRankMedal(rank)+'</span>'
-    + '<span class="hof-v2-portrait-wrap">'+hofRankPortrait(item,rank,'small')+'</span>'
+    + '<span class="hof-v2-portrait-wrap">'+hofRankPortrait(item,rank,'small')+hofRankMedal(rank)+'</span>'
     + '<span class="hof-v2-top3-info"><span class="hof-v2-top3-name">'+escapeHtml(name)+'</span>'
     + '<span class="hof-v2-top3-meta">'+escapeHtml(summary||server)+'</span>'
     + '<span class="hof-v2-badge-line">'+hofClassBadge(item)+hofOwnerBadge(item)+'</span></span>'
@@ -361,15 +360,13 @@ function hofV2Layout(){
   const likeList=s.likesTop||s.likeTop||hallData?.reactionSummary?.likeTop||[];
   const dislikeList=s.dislikesTop||s.dislikeTop||hallData?.reactionSummary?.dislikeTop||[];
   return '<div class="hof-v2-layout">'
-    + '<div class="hof-v2-left">'+hofGodHeroCard('강화의 신','최고 강화 기록',s.enhanceGod || hallData?.weeklyAwards?.bulkUp?.[0], 'enhance')+'</div>'
-    + '<div class="hof-v2-center">'
-    + hofWidePanel('PVE 랭킹','PVE 랭킹 TOP 3',pveList,'pve')
-    + hofWidePanel('PVP 랭킹','PVP 랭킹 TOP 3',pvpList,'pvp')
-    + '<div class="hof-v2-two">'
-    + hofWidePanel('좋아요 랭킹','좋아요 TOP 3',likeList,'like')
-    + hofWidePanel('싫어요 랭킹','싫어요 TOP 3',dislikeList,'dislike')
-    + '</div>'
-    + hofGodHeroCard('성장의 신','이번주 성장량',s.growthGod || hallData?.weeklyAwards?.growthKing?.[0], 'growth')
+    + '<div class="hof-v2-board">'
+    + '<div class="hof-v2-area hof-v2-area-enhance">'+hofGodHeroCard('강화의 신','최고 강화 기록',s.enhanceGod || hallData?.weeklyAwards?.bulkUp?.[0], 'enhance')+'</div>'
+    + '<div class="hof-v2-area hof-v2-area-pve">'+hofWidePanel('PVE 랭킹','PVE TOP 3',pveList,'pve')+'</div>'
+    + '<div class="hof-v2-area hof-v2-area-pvp">'+hofWidePanel('PVP 랭킹','PVP TOP 3',pvpList,'pvp')+'</div>'
+    + '<div class="hof-v2-area hof-v2-area-like">'+hofWidePanel('좋아요 랭킹','좋아요 TOP 3',likeList,'like')+'</div>'
+    + '<div class="hof-v2-area hof-v2-area-dislike">'+hofWidePanel('싫어요 랭킹','싫어요 TOP 3',dislikeList,'dislike')+'</div>'
+    + '<div class="hof-v2-area hof-v2-area-growth">'+hofGodHeroCard('성장의 신','이번주 성장량',s.growthGod || hallData?.weeklyAwards?.growthKing?.[0], 'growth')+'</div>'
     + '</div>'
     + '<div class="hof-v2-right">'+hofMyRankingPanel()+'</div>'
     + '</div>';

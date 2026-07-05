@@ -2123,3 +2123,166 @@ button.hof-v2-god-main:hover{background:#fffdf8;border-color:rgba(201,148,47,.42
   .hof-v2-top3-name{font-size:13px;}
   .hof-v2-top3-score{max-width:64px;font-size:12px;}
 }
+
+
+/* ==========================================================
+   KINOJO HOF v2 - 6 area fixed grid reset (20260705_18)
+   Rule: white main, gold only for profile/rank/highlight.
+   ========================================================== */
+.hof-v2-shell{width:100%;}
+.hof-v2-layout{
+  --hof-ink:#15213a;
+  --hof-sub:#62708a;
+  --hof-muted:#8a96aa;
+  --hof-gold:#c9962e;
+  --hof-gold-deep:#9b6817;
+  --hof-line:rgba(22,34,58,.12);
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 280px!important;
+  gap:18px!important;
+  align-items:stretch!important;
+  max-width:1180px;
+  margin:0 auto;
+}
+.hof-v2-board{
+  display:grid;
+  grid-template-columns:260px minmax(0,1fr) minmax(0,1fr) 250px;
+  grid-template-rows:220px 220px 270px;
+  grid-template-areas:
+    "enhance pve pve pve"
+    "enhance pvp pvp pvp"
+    "like like dislike growth";
+  gap:14px;
+  padding:12px;
+  border:1px solid rgba(201,150,46,.22);
+  border-radius:10px;
+  background:#fff;
+  box-shadow:none;
+  min-width:0;
+}
+.hof-v2-area{min-width:0;min-height:0;display:grid;}
+.hof-v2-area-enhance{grid-area:enhance;}
+.hof-v2-area-pve{grid-area:pve;}
+.hof-v2-area-pvp{grid-area:pvp;}
+.hof-v2-area-like{grid-area:like;}
+.hof-v2-area-dislike{grid-area:dislike;}
+.hof-v2-area-growth{grid-area:growth;}
+.hof-v2-panel{
+  height:100%;
+  min-height:0!important;
+  overflow:hidden;
+  border:1px solid var(--hof-line)!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  box-shadow:none!important;
+  color:var(--hof-ink)!important;
+}
+.hof-v2-panel.is-enhance,.hof-v2-panel.is-growth,.hof-v2-panel.is-pve,.hof-v2-panel.is-pvp,.hof-v2-panel.is-like,.hof-v2-panel.is-dislike{background:#fff!important;}
+.hof-v2-panel-bg,.hof-v2-panel:before,.hof-v2-panel:after{display:none!important;content:none!important;}
+.hof-v2-panel-head,.hof-v2-god-head,.hof-v2-my-head{
+  min-height:auto!important;
+  padding:13px 14px 8px!important;
+  display:flex!important;
+  align-items:flex-start!important;
+  justify-content:space-between!important;
+  gap:10px!important;
+  border-bottom:1px solid rgba(22,34,58,.08)!important;
+  background:#fff!important;
+  text-align:left!important;
+}
+.hof-v2-panel-head>div,.hof-v2-god-head>div{min-width:0;}
+.hof-v2-kicker{display:block;margin:0 0 4px;color:var(--hof-gold-deep)!important;font-size:11px!important;font-weight:1000!important;letter-spacing:.18em!important;text-transform:uppercase;}
+.hof-v2-panel h2,.hof-v2-god-head h2,.hof-v2-my-head h2{margin:0!important;color:var(--hof-ink)!important;font-size:22px!important;line-height:1.05!important;font-weight:1000!important;letter-spacing:-.05em!important;text-shadow:none!important;word-break:keep-all;}
+.hof-v2-panel-head p,.hof-v2-god-head p,.hof-v2-my-head p{margin:2px 0 0!important;color:var(--hof-sub)!important;font-size:12px!important;font-weight:900!important;line-height:1.25!important;text-align:right!important;max-width:130px!important;word-break:keep-all;}
+.hof-v2-title-icon{display:inline-flex;align-items:center;justify-content:center;width:auto;min-width:28px;height:22px;margin-right:7px;padding:0 7px;border:1px solid rgba(201,150,46,.32);border-radius:6px;background:#fff;color:var(--hof-gold-deep);font-size:11px;font-weight:1000;vertical-align:middle;}
+
+/* TOP3 list: profile left, information right. Rank badge overlaps portrait bottom. */
+.hof-v2-top3{display:grid!important;grid-template-columns:1fr!important;gap:7px!important;padding:9px 14px 12px!important;height:calc(100% - 76px);align-content:stretch!important;}
+.hof-v2-top3-item,.hof-v2-top3-item[data-hof-rank="1"]{
+  display:grid!important;
+  grid-template-columns:58px minmax(0,1fr) minmax(86px,auto)!important;
+  grid-template-rows:1fr!important;
+  align-items:center!important;
+  justify-items:stretch!important;
+  gap:10px!important;
+  min-height:0!important;
+  height:auto!important;
+  padding:8px 10px!important;
+  border:1px solid rgba(22,34,58,.10)!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  text-align:left!important;
+  box-shadow:none!important;
+}
+.hof-v2-top3-item:hover{background:#fffdf8!important;border-color:rgba(201,150,46,.38)!important;transform:none!important;}
+.hof-v2-rank-stack{display:none!important;}
+.hof-v2-portrait-wrap{position:relative;display:grid!important;place-items:center!important;width:58px;height:58px;min-width:58px;}
+.hof-v2-portrait.small,.hof-v2-top3-item[data-hof-rank="1"] .hof-v2-portrait.small{width:52px!important;height:52px!important;border:2px solid rgba(201,150,46,.72)!important;border-radius:50%!important;background:#fff!important;object-fit:cover;box-shadow:none!important;}
+.hof-v2-portrait-wrap .hof-v2-medal{position:absolute!important;left:50%!important;bottom:-5px!important;width:26px!important;height:26px!important;transform:translateX(-50%) rotate(45deg)!important;z-index:2!important;}
+.hof-v2-medal{border:1px solid rgba(201,150,46,.70)!important;border-radius:3px!important;background:#fff8e8!important;box-shadow:none!important;}
+.hof-v2-medal span{transform:rotate(-45deg)!important;color:#5b3b08!important;font-size:12px!important;font-weight:1000!important;}
+.hof-v2-medal-2{border-color:#bec8d4!important;background:#f8fafc!important;}
+.hof-v2-medal-2 span{color:#4b5563!important;}
+.hof-v2-medal-3{border-color:#d4a06a!important;background:#fff3e8!important;}
+.hof-v2-medal-3 span{color:#7a421c!important;}
+.hof-v2-top3-info{display:grid!important;justify-items:start!important;align-content:center!important;gap:3px!important;min-width:0!important;line-height:1.15!important;}
+.hof-v2-top3-name{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--hof-ink)!important;font-size:17px!important;font-weight:1000!important;letter-spacing:-.04em!important;}
+.hof-v2-top3-meta{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--hof-sub)!important;font-size:11px!important;font-weight:900!important;}
+.hof-v2-badge-line{display:flex!important;justify-content:flex-start!important;align-items:center!important;gap:4px!important;min-height:17px!important;overflow:hidden;}
+.hof-v2-class-badge,.hof-v2-owner-badge{height:17px!important;padding:0 6px!important;border:1px solid rgba(201,150,46,.24)!important;border-radius:999px!important;background:#fff!important;color:#66758c!important;font-size:9px!important;font-weight:1000!important;white-space:nowrap!important;}
+.hof-v2-owner-badge.is-main{color:var(--hof-gold-deep)!important;}
+.hof-v2-top3-score{display:grid!important;justify-items:end!important;align-self:center!important;gap:2px!important;min-width:0!important;max-width:110px!important;color:var(--hof-gold-deep)!important;font-size:18px!important;line-height:1.05!important;text-align:right!important;white-space:nowrap!important;overflow:hidden;text-overflow:ellipsis;}
+.hof-v2-top3-score small{display:block!important;color:var(--hof-muted)!important;font-size:9px!important;font-weight:900!important;line-height:1!important;}
+.hof-v2-empty-dot{width:34px!important;height:34px!important;margin:0!important;border-radius:50%!important;background:#fff!important;}
+.hof-v2-empty-text{align-self:center;color:var(--hof-muted)!important;font-size:12px!important;font-weight:900!important;}
+.hof-v2-top3-item.is-empty{grid-template-columns:58px minmax(0,1fr)!important;opacity:.72!important;}
+
+/* God cards: same visual rule, rank badge overlaps portrait bottom. */
+.hof-v2-god{display:grid!important;grid-template-rows:auto 1fr auto auto!important;padding:0 0 12px!important;background:#fff!important;}
+.hof-v2-god-main{display:grid!important;justify-items:center!important;align-content:center!important;gap:8px!important;min-height:0!important;margin:10px 14px 8px!important;padding:12px!important;border:1px solid rgba(22,34,58,.10)!important;border-radius:7px!important;background:#fff!important;box-shadow:none!important;}
+.hof-v2-portrait.large{width:86px!important;height:86px!important;border:2px solid rgba(201,150,46,.76)!important;border-radius:50%!important;background:#fff!important;object-fit:cover;}
+.hof-v2-god-portrait{position:relative!important;display:grid!important;place-items:center!important;}
+.hof-v2-god-portrait .hof-v2-medal{position:absolute!important;left:50%!important;bottom:-8px!important;width:30px!important;height:30px!important;transform:translateX(-50%) rotate(45deg)!important;z-index:2!important;}
+.hof-v2-god-main strong{margin-top:8px!important;color:var(--hof-ink)!important;font-size:21px!important;font-weight:1000!important;letter-spacing:-.05em!important;}
+.hof-v2-god-main span:not(.hof-v2-medal){color:var(--hof-sub)!important;font-size:12px!important;font-weight:900!important;}
+.hof-v2-god-score{display:grid!important;justify-items:center!important;gap:2px!important;margin:0 14px 7px!important;padding:9px 8px!important;border-top:1px solid rgba(201,150,46,.18)!important;border-bottom:1px solid rgba(201,150,46,.12)!important;background:#fff!important;}
+.hof-v2-god-score strong{color:var(--hof-gold-deep)!important;font-size:30px!important;line-height:1!important;white-space:nowrap!important;}
+.hof-v2-god-score span,.hof-v2-god-sub span,.hof-v2-god-compare span{color:var(--hof-sub)!important;font-size:11px!important;font-weight:900!important;}
+.hof-v2-god-sub,.hof-v2-god-compare{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;margin:6px 14px 0!important;padding:8px 10px!important;border:1px solid rgba(22,34,58,.10)!important;border-radius:7px!important;background:#fff!important;}
+.hof-v2-god-sub strong,.hof-v2-god-compare strong{color:var(--hof-gold-deep)!important;font-size:15px!important;}
+.hof-v2-area-growth .hof-v2-god{grid-template-rows:auto 1fr auto!important;}
+.hof-v2-area-growth .hof-v2-god-compare{display:none!important;}
+
+/* Right panel remains separate; compact white system. */
+.hof-v2-right{min-width:0;display:grid;}
+.hof-v2-my-rank{height:100%;background:#fff!important;border:1px solid var(--hof-line)!important;border-radius:8px!important;}
+.hof-v2-my-list{display:grid!important;grid-template-columns:1fr!important;gap:8px!important;margin:10px 12px 0!important;}
+.hof-v2-my-row{min-height:52px!important;padding:9px 10px!important;border:1px solid rgba(22,34,58,.10)!important;border-radius:7px!important;background:#fff!important;}
+.hof-v2-my-row:before{background:rgba(201,150,46,.34)!important;}
+.hof-v2-my-row b{color:var(--hof-gold-deep)!important;font-size:16px!important;}
+
+@media (max-width:1180px){
+  .hof-v2-layout{grid-template-columns:1fr!important;}
+  .hof-v2-board{grid-template-columns:260px minmax(0,1fr) minmax(0,1fr);grid-template-rows:220px 220px 250px 250px;grid-template-areas:"enhance pve pve" "enhance pvp pvp" "like like dislike" "growth growth growth";}
+  .hof-v2-my-list{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+}
+@media (max-width:760px){
+  .wrap{width:100%;padding:92px 8px 104px!important;}
+  .hof-v2-layout{display:grid!important;grid-template-columns:1fr!important;gap:10px!important;}
+  .hof-v2-board{display:grid!important;grid-template-columns:1fr!important;grid-template-rows:auto!important;grid-template-areas:"enhance" "pve" "pvp" "like" "dislike" "growth";gap:10px!important;padding:8px!important;border-radius:8px!important;}
+  .hof-v2-panel-head,.hof-v2-god-head,.hof-v2-my-head{padding:12px 12px 8px!important;}
+  .hof-v2-panel h2,.hof-v2-god-head h2,.hof-v2-my-head h2{font-size:19px!important;}
+  .hof-v2-panel-head p,.hof-v2-god-head p,.hof-v2-my-head p{max-width:120px!important;font-size:11px!important;}
+  .hof-v2-top3{height:auto!important;padding:8px 10px 10px!important;gap:7px!important;}
+  .hof-v2-top3-item,.hof-v2-top3-item[data-hof-rank="1"]{grid-template-columns:54px minmax(0,1fr) minmax(72px,auto)!important;min-height:64px!important;padding:8px!important;gap:8px!important;}
+  .hof-v2-portrait-wrap{width:54px;height:54px;min-width:54px;}
+  .hof-v2-portrait.small,.hof-v2-top3-item[data-hof-rank="1"] .hof-v2-portrait.small{width:48px!important;height:48px!important;}
+  .hof-v2-portrait-wrap .hof-v2-medal{width:24px!important;height:24px!important;bottom:-5px!important;}
+  .hof-v2-top3-name{font-size:15px!important;}
+  .hof-v2-badge-line{display:none!important;}
+  .hof-v2-top3-score{font-size:15px!important;max-width:82px!important;}
+  .hof-v2-god-main{min-height:130px!important;margin:9px 12px 8px!important;}
+  .hof-v2-portrait.large{width:76px!important;height:76px!important;}
+  .hof-v2-god-score strong{font-size:28px!important;}
+  .hof-v2-my-list{grid-template-columns:1fr!important;}
+}
