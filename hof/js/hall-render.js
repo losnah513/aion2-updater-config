@@ -277,22 +277,34 @@ function hofOwnerBadge(item){
 }
 function hofTop3Card(item,index,metric){
   const rank=index+1;
-  if(!item)return '<div class="hof-v2-top3-item is-empty"><div class="hof-v2-empty-dot">'+rank+'</div><div class="hof-v2-empty-text">데이터 대기</div></div>';
+  if(!item){
+    if(rank===1)return '<div class="hof-v2-top3-item rank-1 is-empty"><span class="hof-v2-portrait-wrap is-empty"><span class="hof-v2-empty-dot">1</span></span><span class="hof-v2-top3-info"><span class="hof-v2-top3-name">데이터 대기</span><span class="hof-v2-top3-meta">집계 준비 중</span></span><strong class="hof-v2-top3-score"><small>'+escapeHtml(hofMetricLabel(metric))+'</small>-</strong></div>';
+    return '<div class="hof-v2-top3-item rank-'+rank+' is-empty is-compact-rank"><span class="hof-v2-row-medal"><span>'+rank+'</span></span><span class="hof-v2-top3-info"><span class="hof-v2-top3-name">데이터 대기</span><span class="hof-v2-top3-meta">집계 준비 중</span></span><strong class="hof-v2-top3-score"><small>'+escapeHtml(hofMetricLabel(metric))+'</small>-</strong></div>';
+  }
   const name=hofCharName(item)||'-';
   const server=hofServerName(item)||'지켈';
   const summary=hofRankSummaryText(item,metric);
   const score=hofMetricValue(item,metric)||'-';
-  return '<button type="button" class="hof-v2-top3-item rank-'+rank+'" data-character="'+escapeHtml(name)+'" data-hof-metric="'+escapeHtml(metric)+'" data-hof-rank="'+rank+'" data-hof-score="'+escapeHtml(score)+'" aria-label="'+escapeHtml(name)+' 상세 보기">'
-    + '<span class="hof-v2-portrait-wrap">'+hofRankPortrait(item,rank,'small')+hofRankMedal(rank)+'</span>'
+  const commonAttrs=' data-character="'+escapeHtml(name)+'" data-hof-metric="'+escapeHtml(metric)+'" data-hof-rank="'+rank+'" data-hof-score="'+escapeHtml(score)+'" aria-label="'+escapeHtml(name)+' 상세 보기"';
+  if(rank===1){
+    return '<button type="button" class="hof-v2-top3-item rank-1"'+commonAttrs+'>'
+      + '<span class="hof-v2-portrait-wrap">'+hofRankPortrait(item,rank,'small')+hofRankMedal(rank)+'</span>'
+      + '<span class="hof-v2-top3-info"><span class="hof-v2-top3-name">'+escapeHtml(name)+'</span>'
+      + '<span class="hof-v2-top3-meta">'+escapeHtml(summary||server)+'</span>'
+      + '<span class="hof-v2-badge-line">'+hofClassBadge(item)+hofOwnerBadge(item)+'</span></span>'
+      + '<strong class="hof-v2-top3-score"><small>'+escapeHtml(hofMetricLabel(metric))+'</small>'+escapeHtml(score)+'</strong>'
+      + '</button>';
+  }
+  return '<button type="button" class="hof-v2-top3-item rank-'+rank+' is-compact-rank"'+commonAttrs+'>'
+    + '<span class="hof-v2-row-medal hof-v2-row-medal-'+rank+'"><span>'+rank+'</span></span>'
     + '<span class="hof-v2-top3-info"><span class="hof-v2-top3-name">'+escapeHtml(name)+'</span>'
-    + '<span class="hof-v2-top3-meta">'+escapeHtml(summary||server)+'</span>'
-    + '<span class="hof-v2-badge-line">'+hofClassBadge(item)+hofOwnerBadge(item)+'</span></span>'
+    + '<span class="hof-v2-top3-meta">'+escapeHtml(summary||server)+'</span></span>'
     + '<strong class="hof-v2-top3-score"><small>'+escapeHtml(hofMetricLabel(metric))+'</small>'+escapeHtml(score)+'</strong>'
     + '</button>';
 }
 function hofWidePanel(title,note,list,metric){
   const items=(list||[]).slice(0,3);
-  const compactTitle=(metric==='pve'||metric==='pvp')?title.replace(' 랭킹',' TOP3'):title.replace(' 랭킹',' TOP3');
+  const compactTitle=(metric==='pve')?'PVE TOP3':(metric==='pvp')?'PVP TOP3':(metric==='like')?'좋아요 TOP3':title.replace(' 랭킹',' TOP3');
   return '<section class="hof-v2-panel hof-v2-wide '+hofBackgroundClass(metric)+'" data-hof-panel="'+escapeHtml(metric)+'">'
     + '<div class="hof-v2-panel-bg" aria-hidden="true"></div>'
     + '<div class="hof-v2-panel-head is-compact"><h2><span class="hof-v2-title-icon">'+escapeHtml(hofMetricIcon(metric))+'</span>'+escapeHtml(compactTitle)+'</h2></div>'
@@ -324,6 +336,33 @@ function hofGodHeroCard(title,note,item,metric){
     + (compare?'<div class="hof-v2-god-compare"><span>전주 대비</span><strong>'+escapeHtml(compare)+'</strong></div>':'')
     + '</section>';
 }
+function hofRankingLinkCard(){
+  return '<section class="hof-v2-panel hof-v2-ranking-link" aria-label="레기온 랭킹 페이지 이동">'
+    + '<a href="../ranking/" class="hof-v2-ranking-link-inner">'
+    + '<span class="hof-v2-ranking-kicker">LEGION RANKING</span>'
+    + '<strong>레기온 랭킹 바로가기</strong>'
+    + '<span>전체 순위 · 클래스 필터 · PVE/PVP 랭킹을 확인하세요.</span>'
+    + '<em>이동하기 ›</em>'
+    + '</a>'
+    + '</section>';
+}
+function hofV2Layout(){
+  const s=hallData?.summarySections||{};
+  const pveList=s.pveTop||s.pveTop3||hallData?.pveTop||hallData?.pveTop3||[];
+  const pvpList=s.pvpTop||s.pvpTop3||hallData?.pvpTop||hallData?.pvpTop3||[];
+  const likeList=s.likesTop||s.likeTop||hallData?.reactionSummary?.likeTop||[];
+  return '<div class="hof-v2-layout">'
+    + '<div class="hof-v2-board">'
+    + '<div class="hof-v2-area hof-v2-area-enhance">'+hofGodHeroCard('강화의 신','최고 강화 기록',s.enhanceGod || hallData?.weeklyAwards?.bulkUp?.[0], 'enhance')+'</div>'
+    + '<div class="hof-v2-area hof-v2-area-pve">'+hofWidePanel('PVE 랭킹','PVE TOP 3',pveList,'pve')+'</div>'
+    + '<div class="hof-v2-area hof-v2-area-pvp">'+hofWidePanel('PVP 랭킹','PVP TOP 3',pvpList,'pvp')+'</div>'
+    + '<div class="hof-v2-area hof-v2-area-growth">'+hofGodHeroCard('성장의 신','이번주 성장량',s.growthGod || hallData?.weeklyAwards?.growthKing?.[0], 'growth')+'</div>'
+    + '<div class="hof-v2-area hof-v2-area-like">'+hofWidePanel('좋아요 랭킹','좋아요 TOP 3',likeList,'like')+'</div>'
+    + '<div class="hof-v2-area hof-v2-area-ranking-link">'+hofRankingLinkCard()+'</div>'
+    + '</div>'
+    + '<div class="hof-v2-right">'+hofMyRankingPanel()+'</div>'
+    + '</div>';
+}
 function hofMyRankingPanel(){
   const isLoggedIn=!!(window.KinojoAuth&&typeof window.KinojoAuth.getSession==='function'&&window.KinojoAuth.getSession());
   const myName=hofSessionName();
@@ -353,34 +392,6 @@ function hofMyRankingPanel(){
     + (!isLoggedIn?'<div class="hof-v2-login-guide"><span>🔒</span><strong>로그인 후 나의 랭킹을 확인하세요.</strong><button type="button" onclick="window.KinojoAuth?.openLoginModal?.()">로그인</button></div>':'')
     + '<div class="hof-v2-my-list">'+rowHtml+'</div>'
     + '</aside>';
-}
-function hofV2Layout(){
-  const s=hallData?.summarySections||{};
-  const pveList=s.pveTop||s.pveTop3||hallData?.pveTop||hallData?.pveTop3||[];
-  const pvpList=s.pvpTop||s.pvpTop3||hallData?.pvpTop||hallData?.pvpTop3||[];
-  const likeList=s.likesTop||s.likeTop||hallData?.reactionSummary?.likeTop||[];
-  const dislikeList=s.dislikesTop||s.dislikeTop||hallData?.reactionSummary?.dislikeTop||[];
-  return '<div class="hof-v2-layout">'
-    + '<div class="hof-v2-board">'
-    + '<div class="hof-v2-area hof-v2-area-enhance">'+hofGodHeroCard('강화의 신','최고 강화 기록',s.enhanceGod || hallData?.weeklyAwards?.bulkUp?.[0], 'enhance')+'</div>'
-    + '<div class="hof-v2-area hof-v2-area-pve">'+hofWidePanel('PVE 랭킹','PVE TOP 3',pveList,'pve')+'</div>'
-    + '<div class="hof-v2-area hof-v2-area-pvp">'+hofWidePanel('PVP 랭킹','PVP TOP 3',pvpList,'pvp')+'</div>'
-    + '<div class="hof-v2-area hof-v2-area-like">'+hofWidePanel('좋아요 랭킹','좋아요 TOP 3',likeList,'like')+'</div>'
-    + '<div class="hof-v2-area hof-v2-area-dislike">'+hofWidePanel('싫어요 랭킹','싫어요 TOP 3',dislikeList,'dislike')+'</div>'
-    + '<div class="hof-v2-area hof-v2-area-growth">'+hofGodHeroCard('성장의 신','이번주 성장량',s.growthGod || hallData?.weeklyAwards?.growthKing?.[0], 'growth')+'</div>'
-    + '</div>'
-    + '<div class="hof-v2-right">'+hofMyRankingPanel()+'</div>'
-    + '</div>';
-}
-function hofRankingLinkCard(){
-  return '<section class="section hof-ranking-link-card hof-ranking-banner-slot" aria-label="레기온 전체 순위 바로가기">'
-    + '<a class="hof-ranking-banner-link" href="../ranking/">'
-    + '<div class="hof-ranking-banner-kicker">LEGION RANKING</div>'
-    + '<div class="hof-ranking-banner-main"><strong>레기온 전체 순위</strong><span>PVE · PVP 좌우 비교 / 클래스 필터 / 캐릭터 검색</span></div>'
-    + '<em>바로가기</em>'
-    + '</a>'
-    + '<p class="hof-ranking-banner-note">추후 제작한 배너 이미지로 교체 가능한 공통 배너 영역입니다.</p>'
-    + '</section>';
 }
 function rankProfileHtml(item,rank){
   const url=profileImageUrlFor(item);
