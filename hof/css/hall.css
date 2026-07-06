@@ -2062,3 +2062,141 @@ body{
   .hof-v2-top3-score{font-size:12px!important;max-width:68px!important;}
   .hof-v2-top3-meta{font-size:10px!important;}
 }
+
+
+/* ==========================================================
+   KINOJO HOF v2 - Final ratio/rail patch (20260706_03)
+   - Board ratio: top 1:2:1, bottom 1:1
+   - Wide panels: left vertical title rail + horizontal TOP3 content
+   - Like panel follows the same left rail rule
+   ========================================================== */
+.hof-v2-board{
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  grid-template-rows:230px 230px 230px!important;
+  grid-template-areas:
+    "enhance pve pve growth"
+    "enhance pvp pvp growth"
+    "like like ranking ranking"!important;
+}
+.hof-v2-wide{
+  display:grid!important;
+  grid-template-columns:82px minmax(0,1fr)!important;
+  grid-template-rows:1fr!important;
+}
+.hof-v2-wide .hof-v2-panel-head.is-compact{
+  grid-column:1!important;
+  grid-row:1!important;
+  width:82px!important;
+  height:100%!important;
+  min-height:0!important;
+  padding:12px 8px!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border-bottom:0!important;
+  border-right:1px solid rgba(22,34,58,.08)!important;
+  background:linear-gradient(180deg,#fff 0%,#fffdf8 100%)!important;
+}
+.hof-v2-wide .hof-v2-panel-head.is-compact h2{
+  width:100%!important;
+  height:100%!important;
+  display:grid!important;
+  grid-template-rows:auto auto!important;
+  place-items:center!important;
+  align-content:center!important;
+  gap:8px!important;
+  white-space:normal!important;
+  text-align:center!important;
+  font-size:18px!important;
+  line-height:1.08!important;
+  letter-spacing:-.04em!important;
+}
+.hof-v2-wide .hof-v2-title-icon{
+  min-width:34px!important;
+  width:auto!important;
+  height:24px!important;
+  padding:0 7px!important;
+  font-size:10px!important;
+}
+.hof-v2-wide .hof-v2-top3{
+  grid-column:2!important;
+  grid-row:1!important;
+  height:100%!important;
+  padding:10px 12px!important;
+  display:grid!important;
+  grid-template-columns:1.12fr .88fr .88fr!important;
+  grid-template-rows:1fr!important;
+  gap:9px!important;
+  min-width:0!important;
+}
+.hof-v2-wide .hof-v2-top3-item{
+  min-width:0!important;
+  height:100%!important;
+  align-content:center!important;
+}
+.hof-v2-wide .hof-v2-top3-item.rank-1{
+  grid-template-columns:62px minmax(0,1fr)!important;
+  grid-template-rows:auto auto!important;
+  gap:8px 10px!important;
+  padding:10px 12px!important;
+  background:#fffdf8!important;
+  border-color:rgba(201,150,46,.20)!important;
+}
+.hof-v2-wide .hof-v2-top3-item.rank-1 .hof-v2-top3-info{
+  grid-column:2!important;
+  grid-row:1!important;
+}
+.hof-v2-wide .hof-v2-top3-item.rank-1 .hof-v2-top3-score{
+  grid-column:1 / -1!important;
+  grid-row:2!important;
+  justify-self:end!important;
+  max-width:100%!important;
+  font-size:20px!important;
+}
+.hof-v2-wide .hof-v2-top3-item.is-compact-rank{
+  grid-template-columns:34px minmax(0,1fr)!important;
+  grid-template-rows:auto auto!important;
+  gap:6px 8px!important;
+  padding:10px 10px!important;
+}
+.hof-v2-wide .hof-v2-top3-item.is-compact-rank .hof-v2-top3-info{
+  grid-column:2!important;
+  grid-row:1!important;
+}
+.hof-v2-wide .hof-v2-top3-item.is-compact-rank .hof-v2-top3-score{
+  grid-column:1 / -1!important;
+  grid-row:2!important;
+  justify-self:end!important;
+  max-width:100%!important;
+  font-size:18px!important;
+}
+.hof-v2-wide .hof-v2-top3-name{font-size:18px!important;}
+.hof-v2-wide .is-compact-rank .hof-v2-top3-name{font-size:16px!important;}
+.hof-v2-wide .hof-v2-top3-meta{font-size:11px!important;}
+.hof-v2-wide .is-compact-rank .hof-v2-top3-meta{font-size:11px!important;}
+.hof-v2-wide .hof-v2-top3-score small{font-size:9px!important;}
+.hof-v2-wide .hof-v2-portrait-wrap{width:62px!important;height:62px!important;min-width:62px!important;}
+.hof-v2-wide .hof-v2-portrait.small{width:56px!important;height:56px!important;}
+.hof-v2-god-main{min-height:0!important;}
+.hof-v2-portrait.large{width:104px!important;height:104px!important;}
+.hof-v2-god-main strong{font-size:23px!important;}
+.hof-v2-god-score strong{font-size:32px!important;}
+@media (max-width:1180px){
+  .hof-v2-board{grid-template-columns:repeat(4,minmax(0,1fr))!important;grid-template-rows:220px 220px 220px!important;}
+  .hof-v2-wide{grid-template-columns:76px minmax(0,1fr)!important;}
+  .hof-v2-wide .hof-v2-panel-head.is-compact{width:76px!important;}
+  .hof-v2-wide .hof-v2-top3{grid-template-columns:1.05fr .95fr .95fr!important;gap:8px!important;padding:9px!important;}
+}
+@media (max-width:760px){
+  .hof-v2-board{grid-template-columns:1fr!important;grid-template-rows:auto!important;grid-template-areas:"enhance" "pve" "pvp" "growth" "like" "ranking"!important;}
+  .hof-v2-wide{display:grid!important;grid-template-columns:1fr!important;grid-template-rows:38px 1fr!important;height:220px!important;}
+  .hof-v2-wide .hof-v2-panel-head.is-compact{grid-column:1!important;grid-row:1!important;width:100%!important;height:38px!important;min-height:38px!important;padding:7px 10px!important;justify-content:flex-start!important;border-right:0!important;border-bottom:1px solid rgba(22,34,58,.08)!important;background:#fff!important;}
+  .hof-v2-wide .hof-v2-panel-head.is-compact h2{display:flex!important;width:auto!important;height:auto!important;grid-template-rows:none!important;place-items:center!important;align-content:center!important;gap:7px!important;text-align:left!important;white-space:nowrap!important;font-size:18px!important;}
+  .hof-v2-wide .hof-v2-top3{grid-column:1!important;grid-row:2!important;height:100%!important;grid-template-columns:1fr!important;grid-template-rows:1fr .5fr .5fr!important;gap:6px!important;padding:8px!important;}
+  .hof-v2-wide .hof-v2-top3-item.rank-1{grid-template-columns:54px minmax(0,1fr) minmax(78px,auto)!important;grid-template-rows:1fr!important;padding:7px 8px!important;gap:8px!important;background:#fff!important;}
+  .hof-v2-wide .hof-v2-top3-item.rank-1 .hof-v2-top3-info{grid-column:2!important;grid-row:1!important;}
+  .hof-v2-wide .hof-v2-top3-item.rank-1 .hof-v2-top3-score{grid-column:3!important;grid-row:1!important;max-width:82px!important;font-size:14px!important;}
+  .hof-v2-wide .hof-v2-top3-item.is-compact-rank{grid-template-columns:30px minmax(0,1fr) minmax(78px,auto)!important;grid-template-rows:1fr!important;padding:5px 8px!important;gap:7px!important;}
+  .hof-v2-wide .hof-v2-top3-item.is-compact-rank .hof-v2-top3-info{grid-column:2!important;grid-row:1!important;}
+  .hof-v2-wide .hof-v2-top3-item.is-compact-rank .hof-v2-top3-score{grid-column:3!important;grid-row:1!important;max-width:82px!important;font-size:14px!important;}
+  .hof-v2-portrait.large{width:96px!important;height:96px!important;}
+}
