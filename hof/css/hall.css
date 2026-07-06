@@ -2325,3 +2325,209 @@ body{
   .hof-v2-wide .hof-v2-top3-meta{font-size:11px!important;}
   .hof-v2-wide .hof-v2-top3-score small{font-size:9px!important;}
 }
+
+/* ==========================================================
+   KINOJO HOF v2 - Width + height compression patch (20260706_05)
+   - Remove cramped board feeling by widening HOF shell
+   - Keep top ratio: enhance 1 : pve/pvp 2 : growth 1
+   - Keep bottom ratio: like 1 : ranking banner 1
+   - Reduce row heights and title rail width without changing information priority
+   ========================================================== */
+@media (min-width:761px){
+  .wrap{
+    width:min(1520px,100%)!important;
+    max-width:1520px!important;
+    padding-left:16px!important;
+    padding-right:16px!important;
+  }
+  .hof-v2-shell{
+    width:100%!important;
+    max-width:100%!important;
+  }
+  .hof-v2-layout{
+    max-width:1460px!important;
+    width:100%!important;
+    grid-template-columns:minmax(0,1fr) 250px!important;
+    gap:12px!important;
+  }
+  .hof-v2-board{
+    grid-template-columns:1fr 1fr 1fr 1fr!important;
+    grid-template-rows:205px 205px 200px!important;
+    grid-template-areas:
+      "enhance pve pve growth"
+      "enhance pvp pvp growth"
+      "like like ranking ranking"!important;
+    gap:10px!important;
+    padding:9px!important;
+  }
+  .hof-v2-wide{
+    grid-template-columns:74px minmax(0,1fr)!important;
+  }
+  .hof-v2-wide .hof-v2-panel-head.is-compact{
+    width:74px!important;
+    padding:10px 6px!important;
+  }
+  .hof-v2-wide .hof-v2-panel-head.is-compact h2{
+    gap:7px!important;
+    font-size:17px!important;
+    line-height:1.06!important;
+  }
+  .hof-v2-wide .hof-v2-title-icon{
+    min-width:30px!important;
+    height:22px!important;
+    padding:0 6px!important;
+    font-size:9px!important;
+  }
+  .hof-v2-wide .hof-v2-top3{
+    padding:8px 10px!important;
+    gap:6px!important;
+    grid-template-rows:1fr .66fr .66fr!important;
+  }
+  .hof-v2-wide .hof-v2-top3-item.rank-1{
+    grid-template-columns:66px minmax(0,1fr) 118px!important;
+    gap:10px!important;
+    padding:7px 10px!important;
+  }
+  .hof-v2-wide .hof-v2-top3-item.rank-1 .hof-v2-portrait-wrap{
+    width:58px!important;
+    height:58px!important;
+    min-width:58px!important;
+  }
+  .hof-v2-wide .hof-v2-portrait.small{
+    width:52px!important;
+    height:52px!important;
+  }
+  .hof-v2-wide .hof-v2-top3-item.rank-1 .hof-v2-top3-score{
+    max-width:118px!important;
+    font-size:18px!important;
+  }
+  .hof-v2-wide .hof-v2-top3-item.is-compact-rank{
+    grid-template-columns:38px minmax(0,1fr) 118px!important;
+    gap:9px!important;
+    padding:5px 10px!important;
+  }
+  .hof-v2-wide .hof-v2-top3-item.is-compact-rank .hof-v2-top3-score{
+    max-width:118px!important;
+    font-size:16px!important;
+  }
+  .hof-v2-wide .hof-v2-top3-name{
+    font-size:16px!important;
+    line-height:1.04!important;
+  }
+  .hof-v2-wide .is-compact-rank .hof-v2-top3-name{
+    font-size:15px!important;
+  }
+  .hof-v2-wide .hof-v2-top3-meta{
+    font-size:10px!important;
+    line-height:1.05!important;
+  }
+  .hof-v2-badge-line{
+    gap:3px!important;
+  }
+  .hof-v2-class-badge,.hof-v2-owner-badge{
+    height:16px!important;
+    padding:0 5px!important;
+    font-size:8.5px!important;
+  }
+  .hof-v2-top3-score small{
+    font-size:8.5px!important;
+  }
+  .hof-v2-row-medal{
+    width:24px!important;
+    height:24px!important;
+    font-size:11px!important;
+  }
+  .hof-v2-portrait-wrap .hof-v2-medal{
+    width:25px!important;
+    height:25px!important;
+  }
+  .hof-v2-god{
+    grid-template-rows:36px minmax(0,1fr) auto auto!important;
+    padding-bottom:8px!important;
+  }
+  .hof-v2-god-head.is-compact{
+    height:36px!important;
+    min-height:36px!important;
+    padding:6px 9px!important;
+  }
+  .hof-v2-god-head.is-compact h2{
+    font-size:18px!important;
+  }
+  .hof-v2-god-main{
+    margin:8px 10px 6px!important;
+    padding:10px 8px!important;
+    gap:7px!important;
+  }
+  .hof-v2-portrait.large{
+    width:116px!important;
+    height:116px!important;
+  }
+  .hof-v2-god-portrait .hof-v2-medal{
+    width:32px!important;
+    height:32px!important;
+    bottom:-9px!important;
+  }
+  .hof-v2-god-main strong{
+    font-size:22px!important;
+    margin-top:7px!important;
+  }
+  .hof-v2-god-main span:not(.hof-v2-medal){
+    font-size:11px!important;
+  }
+  .hof-v2-god-score{
+    margin:0 10px 5px!important;
+    padding:8px 7px!important;
+  }
+  .hof-v2-god-score strong{
+    font-size:29px!important;
+  }
+  .hof-v2-god-score span,.hof-v2-god-sub span,.hof-v2-god-compare span{
+    font-size:10px!important;
+  }
+  .hof-v2-god-sub,.hof-v2-god-compare{
+    margin:5px 10px 0!important;
+    padding:7px 9px!important;
+  }
+  .hof-v2-ranking-link-inner{
+    padding:18px 22px!important;
+    gap:7px!important;
+  }
+  .hof-v2-ranking-link-inner strong{
+    font-size:23px!important;
+  }
+  .hof-v2-ranking-link-inner span:not(.hof-v2-ranking-kicker){
+    font-size:12px!important;
+  }
+  .hof-v2-ranking-link-inner em{
+    padding:8px 16px!important;
+  }
+  .hof-v2-right{
+    min-width:0!important;
+  }
+  .hof-v2-my-head{
+    padding:12px 12px 9px!important;
+  }
+  .hof-v2-my-head h2{
+    font-size:19px!important;
+  }
+  .hof-v2-my-list{
+    gap:7px!important;
+    margin:9px 10px 0!important;
+  }
+  .hof-v2-my-row{
+    min-height:47px!important;
+    padding:8px 9px!important;
+  }
+}
+@media (min-width:761px) and (max-width:1180px){
+  .hof-v2-layout{
+    grid-template-columns:1fr!important;
+    max-width:1120px!important;
+  }
+  .hof-v2-board{
+    grid-template-rows:200px 200px 195px!important;
+  }
+  .hof-v2-my-list{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+}
