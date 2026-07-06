@@ -2200,3 +2200,128 @@ body{
   .hof-v2-wide .hof-v2-top3-item.is-compact-rank .hof-v2-top3-score{grid-column:3!important;grid-row:1!important;max-width:82px!important;font-size:14px!important;}
   .hof-v2-portrait.large{width:96px!important;height:96px!important;}
 }
+
+/* ==========================================================
+   KINOJO HOF v2 - Rail + horizontal row restore (20260706_04)
+   - Keep only the section title as left vertical rail on PC
+   - Ranking content stays horizontal row list, not narrow vertical columns
+   ========================================================== */
+@media (min-width:761px){
+  .hof-v2-wide{
+    display:grid!important;
+    grid-template-columns:82px minmax(0,1fr)!important;
+    grid-template-rows:1fr!important;
+  }
+  .hof-v2-wide .hof-v2-panel-head.is-compact{
+    grid-column:1!important;
+    grid-row:1!important;
+    width:82px!important;
+    height:100%!important;
+    min-height:0!important;
+    padding:12px 8px!important;
+    border-right:1px solid rgba(22,34,58,.08)!important;
+    border-bottom:0!important;
+    background:linear-gradient(180deg,#fff 0%,#fffdf8 100%)!important;
+  }
+  .hof-v2-wide .hof-v2-panel-head.is-compact h2{
+    width:100%!important;
+    height:100%!important;
+    display:grid!important;
+    grid-template-rows:auto auto!important;
+    align-content:center!important;
+    justify-items:center!important;
+    gap:8px!important;
+    text-align:center!important;
+    white-space:normal!important;
+    font-size:18px!important;
+    line-height:1.08!important;
+  }
+  .hof-v2-wide .hof-v2-title-icon{
+    min-width:34px!important;
+    width:auto!important;
+    height:24px!important;
+    padding:0 7px!important;
+    font-size:10px!important;
+  }
+  .hof-v2-wide .hof-v2-top3{
+    grid-column:2!important;
+    grid-row:1!important;
+    height:100%!important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    grid-template-rows:1.12fr .86fr .86fr!important;
+    gap:8px!important;
+    padding:10px 12px!important;
+    min-width:0!important;
+  }
+  .hof-v2-wide .hof-v2-top3-item{
+    min-width:0!important;
+    width:100%!important;
+    height:100%!important;
+    align-items:center!important;
+    align-content:center!important;
+    overflow:hidden!important;
+  }
+  .hof-v2-wide .hof-v2-top3-item.rank-1{
+    display:grid!important;
+    grid-template-columns:72px minmax(0,1fr) minmax(108px,auto)!important;
+    grid-template-rows:1fr!important;
+    gap:12px!important;
+    padding:9px 12px!important;
+    background:#fffdf8!important;
+    border-color:rgba(201,150,46,.20)!important;
+  }
+  .hof-v2-wide .hof-v2-top3-item.rank-1 .hof-v2-portrait-wrap{
+    grid-column:1!important;
+    grid-row:1!important;
+    width:62px!important;
+    height:62px!important;
+    min-width:62px!important;
+    justify-self:center!important;
+  }
+  .hof-v2-wide .hof-v2-top3-item.rank-1 .hof-v2-top3-info{
+    grid-column:2!important;
+    grid-row:1!important;
+  }
+  .hof-v2-wide .hof-v2-top3-item.rank-1 .hof-v2-top3-score{
+    grid-column:3!important;
+    grid-row:1!important;
+    justify-self:end!important;
+    max-width:132px!important;
+    font-size:20px!important;
+  }
+  .hof-v2-wide .hof-v2-top3-item.is-compact-rank{
+    display:grid!important;
+    grid-template-columns:42px minmax(0,1fr) minmax(108px,auto)!important;
+    grid-template-rows:1fr!important;
+    gap:11px!important;
+    padding:7px 12px!important;
+    background:#fff!important;
+  }
+  .hof-v2-wide .hof-v2-top3-item.is-compact-rank .hof-v2-compact-medal{
+    grid-column:1!important;
+    grid-row:1!important;
+    justify-self:center!important;
+  }
+  .hof-v2-wide .hof-v2-top3-item.is-compact-rank .hof-v2-top3-info{
+    grid-column:2!important;
+    grid-row:1!important;
+  }
+  .hof-v2-wide .hof-v2-top3-item.is-compact-rank .hof-v2-top3-score{
+    grid-column:3!important;
+    grid-row:1!important;
+    justify-self:end!important;
+    max-width:132px!important;
+    font-size:18px!important;
+  }
+  .hof-v2-wide .hof-v2-top3-name{
+    font-size:18px!important;
+    max-width:100%!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+  }
+  .hof-v2-wide .is-compact-rank .hof-v2-top3-name{font-size:17px!important;}
+  .hof-v2-wide .hof-v2-top3-meta{font-size:11px!important;}
+  .hof-v2-wide .hof-v2-top3-score small{font-size:9px!important;}
+}
