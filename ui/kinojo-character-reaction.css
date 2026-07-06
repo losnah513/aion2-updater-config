@@ -3,262 +3,40 @@
  * 역할: 명예의 전당·랭킹·성역 공통 캐릭터 반응 모달 디자인.
  * 규칙: 페이지별 중복 모달 UI를 만들지 않고 이 공통 모달을 사용한다.
  */
-.kinojo-character-reaction-modal{
-  position:fixed;
-  inset:0;
-  z-index:12000;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  padding:clamp(22px,5vw,54px);
-  background:rgba(15,23,42,.34);
-  backdrop-filter:blur(10px);
-}
-.kinojo-character-reaction-modal.open{display:flex;}
-.kinojo-character-reaction-backdrop{position:absolute;inset:0;}
-.kinojo-character-reaction-dialog{
-  position:relative;
-  width:min(440px,calc(100vw - 34px));
-  min-height:360px;
-  padding:86px 24px 22px;
-  border:1px solid rgba(148,163,184,.32);
-  border-radius:30px;
-  background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(248,250,252,.98));
-  box-shadow:0 26px 70px rgba(15,23,42,.22);
-  color:#0f172a;
-  overflow:visible;
-  transform:translateY(8px) scale(.98);
-  opacity:0;
-  animation:kinojoCharacterReactionIn .2s ease forwards;
-}
-@keyframes kinojoCharacterReactionIn{to{transform:translateY(0) scale(1);opacity:1;}}
-.kinojo-character-reaction-close{
-  position:absolute;
-  top:14px;
-  right:14px;
-  width:34px;
-  height:34px;
-  border:0;
-  border-radius:999px;
-  background:rgba(15,23,42,.07);
-  color:#334155;
-  font-size:22px;
-  line-height:1;
-  cursor:pointer;
-}
-.kinojo-character-reaction-close:hover{background:rgba(15,23,42,.12);}
-.kinojo-character-reaction-avatar{
-  position:absolute;
-  left:24px;
-  top:-54px;
-  width:132px;
-  height:132px;
-  border-radius:999px;
-  border:7px solid #fff;
-  background:linear-gradient(135deg,#e2e8f0,#f8fafc);
-  box-shadow:0 22px 44px rgba(15,23,42,.22),0 0 0 1px rgba(148,163,184,.22);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  overflow:hidden;
-  color:#94a3b8;
-  font-size:12px;
-  font-weight:900;
-  letter-spacing:.12em;
-  user-select:none;
-}
-.kinojo-character-reaction-avatar img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  display:block;
-}
-.kinojo-character-reaction-avatar.is-empty::after{
-  content:"PROFILE";
-}
-.kinojo-character-reaction-badge{
-  position:absolute;
-  left:118px;
-  top:38px;
-  max-width:180px;
-  padding:6px 12px;
-  border-radius:999px;
-  background:#0f172a;
-  color:#fff;
-  box-shadow:0 10px 24px rgba(15,23,42,.18);
-  font-size:12px;
-  font-weight:900;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-.kinojo-character-reaction-head{
-  display:flex;
-  flex-direction:column;
-  gap:7px;
-  margin:0 44px 18px 0;
-}
-.kinojo-character-reaction-kicker{
-  font-size:11px;
-  font-weight:1000;
-  letter-spacing:.16em;
-  color:#2563eb;
-}
-.kinojo-character-reaction-title{
-  margin:0;
-  font-size:clamp(24px,4vw,34px);
-  font-weight:1000;
-  line-height:1.04;
-  letter-spacing:-.05em;
-}
-.kinojo-character-reaction-sub{
-  min-height:20px;
-  margin:0;
-  color:#64748b;
-  font-size:13px;
-  font-weight:700;
-  line-height:1.45;
-}
-.kinojo-character-reaction-detail{
-  display:none;
-  align-items:center;
-  gap:6px;
-  width:max-content;
-  margin:0 0 16px;
-  padding:7px 11px;
-  border:1px solid rgba(37,99,235,.16);
-  border-radius:999px;
-  background:rgba(37,99,235,.07);
-  color:#1d4ed8;
-  font-size:12px;
-  font-weight:900;
-  text-decoration:none;
-}
-.kinojo-character-reaction-detail.is-visible{display:inline-flex;}
-.kinojo-character-reaction-actions{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  margin:10px 0 14px;
-}
-.kinojo-character-reaction-type{
-  height:46px;
-  border:1px solid rgba(148,163,184,.34);
-  border-radius:999px;
-  background:#fff;
-  color:#334155;
-  font-size:14px;
-  font-weight:1000;
-  cursor:pointer;
-  transition:transform .16s ease,background .16s ease,border-color .16s ease,box-shadow .16s ease;
-}
-.kinojo-character-reaction-type:hover{transform:translateY(-1px);box-shadow:0 10px 20px rgba(15,23,42,.09);}
-.kinojo-character-reaction-type.active{
-  border-color:rgba(37,99,235,.28);
-  background:linear-gradient(135deg,#2563eb,#60a5fa);
-  color:#fff;
-  box-shadow:0 12px 26px rgba(37,99,235,.22);
-}
-.kinojo-character-reaction-input{
-  display:flex;
-  flex-direction:column;
-  gap:7px;
-  margin-top:6px;
-}
-.kinojo-character-reaction-input label{
-  color:#475569;
-  font-size:12px;
-  font-weight:900;
-}
-.kinojo-character-reaction-comment{
-  width:100%;
-  min-height:92px;
-  resize:none;
-  padding:13px 14px;
-  border:1px solid rgba(148,163,184,.34);
-  border-radius:18px;
-  outline:none;
-  background:#fff;
-  color:#0f172a;
-  font:inherit;
-  font-size:14px;
-  font-weight:700;
-  box-sizing:border-box;
-}
-.kinojo-character-reaction-comment:focus{
-  border-color:rgba(37,99,235,.45);
-  box-shadow:0 0 0 4px rgba(37,99,235,.1);
-}
-.kinojo-character-reaction-foot{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  margin-top:14px;
-}
-.kinojo-character-reaction-status{
-  min-height:18px;
-  color:#64748b;
-  font-size:12px;
-  font-weight:800;
-}
-.kinojo-character-reaction-submit{
-  min-width:88px;
-  height:42px;
-  border:0;
-  border-radius:999px;
-  background:#0f172a;
-  color:#fff;
-  font-weight:1000;
-  cursor:pointer;
-  padding:0 18px;
-}
-.kinojo-character-reaction-submit:disabled{
-  cursor:not-allowed;
-  opacity:.45;
-}
-[data-character],
-.ranking-reaction-card,
-.san-reaction-card{
-  cursor:pointer;
-  transition:transform .16s ease,filter .16s ease,box-shadow .16s ease;
-}
-[data-character]:hover,
-.ranking-reaction-card:hover,
-.san-reaction-card:hover{
-  transform:translateY(-1px) scale(1.012);
-  filter:saturate(1.04);
-}
-.ranking-reaction-card:focus-visible,
-.san-reaction-card:focus-visible,
-[data-character]:focus-visible{
-  outline:3px solid rgba(37,99,235,.38);
-  outline-offset:3px;
-}
-@media(max-width:640px){
-  .kinojo-character-reaction-modal{padding:28px 14px;}
-  .kinojo-character-reaction-dialog{
-    width:min(360px,calc(100vw - 28px));
-    min-height:330px;
-    padding:76px 18px 18px;
-    border-radius:24px;
-  }
-  .kinojo-character-reaction-avatar{
-    width:108px;
-    height:108px;
-    left:18px;
-    top:-42px;
-    border-width:6px;
-  }
-  .kinojo-character-reaction-badge{
-    left:96px;
-    top:36px;
-    max-width:150px;
-    font-size:11px;
-  }
-  .kinojo-character-reaction-title{font-size:26px;}
-  .kinojo-character-reaction-actions{gap:8px;}
-  .kinojo-character-reaction-type{height:42px;font-size:13px;}
-  .kinojo-character-reaction-foot{align-items:flex-start;flex-direction:column;}
-  .kinojo-character-reaction-submit{width:100%;}
-}
+.kinojo-character-reaction-modal{position:fixed;inset:0;z-index:12000;display:none;align-items:center;justify-content:center;padding:clamp(22px,5vw,54px);background:rgba(15,23,42,.34);backdrop-filter:blur(10px)}
+.kinojo-character-reaction-modal.open{display:flex}
+.kinojo-character-reaction-backdrop{position:absolute;inset:0}
+.kinojo-character-reaction-dialog{position:relative;width:min(440px,calc(100vw - 34px));min-height:360px;padding:76px 24px 22px;border:1px solid rgba(148,163,184,.32);border-radius:30px;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(248,250,252,.98));box-shadow:0 26px 70px rgba(15,23,42,.22);color:#0f172a;overflow:visible;transform:translateY(8px) scale(.98);opacity:0;animation:kinojoCharacterReactionIn .2s ease forwards}
+@keyframes kinojoCharacterReactionIn{to{transform:translateY(0) scale(1);opacity:1}}
+.kinojo-character-reaction-close{position:absolute;top:14px;right:14px;width:34px;height:34px;border:0;border-radius:999px;background:rgba(15,23,42,.07);color:#334155;font-size:22px;line-height:1;cursor:pointer}
+.kinojo-character-reaction-close:hover{background:rgba(15,23,42,.12)}
+.kinojo-character-reaction-avatar{position:absolute;left:30px;top:-48px;width:118px;height:118px;border-radius:999px;border:7px solid #fff;background:linear-gradient(135deg,#e2e8f0,#f8fafc);box-shadow:0 22px 44px rgba(15,23,42,.22),0 0 0 1px rgba(148,163,184,.22);display:flex;align-items:center;justify-content:center;overflow:hidden;color:#94a3b8;font-size:12px;font-weight:900;letter-spacing:.12em;user-select:none}
+.kinojo-character-reaction-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.kinojo-character-reaction-avatar.is-empty::after{content:"PROFILE"}
+.kinojo-character-reaction-class{position:absolute;left:152px;top:78px;width:44px;height:44px;border-radius:999px;background:#0f172a;box-shadow:0 10px 24px rgba(15,23,42,.18);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.kinojo-character-reaction-class img{width:28px;height:28px;object-fit:contain;display:block}
+.kinojo-character-reaction-class.is-empty::after{content:"";width:14px;height:14px;border-radius:999px;background:rgba(255,255,255,.45)}
+.kinojo-character-reaction-info{min-height:132px;margin:0 12px 18px 200px;display:flex;flex-direction:column;justify-content:flex-start;gap:7px}
+.kinojo-character-reaction-head{display:flex;flex-direction:column;gap:7px;margin:0}
+.kinojo-character-reaction-kicker{font-size:11px;font-weight:1000;letter-spacing:.16em;color:#2563eb}
+.kinojo-character-reaction-title{margin:0;font-size:clamp(24px,4vw,34px);font-weight:1000;line-height:1.04;letter-spacing:-.05em}
+.kinojo-character-reaction-sub{min-height:20px;margin:0;color:#64748b;font-size:13px;font-weight:700;line-height:1.45}
+.kinojo-character-reaction-detail{display:none;align-items:center;gap:6px;width:max-content;margin:-68px 0 48px 0;padding:7px 11px;border:1px solid rgba(37,99,235,.16);border-radius:999px;background:rgba(37,99,235,.07);color:#1d4ed8;font-size:12px;font-weight:900;text-decoration:none}
+.kinojo-character-reaction-detail.is-visible{display:inline-flex}
+.kinojo-character-reaction-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0 14px}
+.kinojo-character-reaction-type{height:46px;border:1px solid rgba(148,163,184,.34);border-radius:999px;background:#fff;color:#334155;font-size:14px;font-weight:1000;cursor:pointer;transition:transform .16s ease,background .16s ease,border-color .16s ease,box-shadow .16s ease}
+.kinojo-character-reaction-type:hover{transform:translateY(-1px);box-shadow:0 10px 20px rgba(15,23,42,.09)}
+.kinojo-character-reaction-type.active{border-color:rgba(37,99,235,.28);background:linear-gradient(135deg,#2563eb,#60a5fa);color:#fff;box-shadow:0 12px 26px rgba(37,99,235,.22)}
+.kinojo-character-reaction-input{display:flex;flex-direction:column;gap:7px;margin-top:6px}
+.kinojo-character-reaction-input label{color:#475569;font-size:12px;font-weight:900}
+.kinojo-character-reaction-comment{width:100%;min-height:92px;resize:none;padding:13px 14px;border:1px solid rgba(148,163,184,.34);border-radius:18px;outline:none;background:#fff;color:#0f172a;font:inherit;font-size:14px;font-weight:700;box-sizing:border-box}
+.kinojo-character-reaction-comment:focus{border-color:rgba(37,99,235,.45);box-shadow:0 0 0 4px rgba(37,99,235,.1)}
+.kinojo-character-reaction-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px}
+.kinojo-character-reaction-status{min-height:18px;color:#64748b;font-size:12px;font-weight:800}
+.kinojo-character-reaction-submit{min-width:88px;height:42px;border:0;border-radius:999px;background:#0f172a;color:#fff;font-weight:1000;cursor:pointer;padding:0 18px}
+.kinojo-character-reaction-submit:disabled{cursor:not-allowed;opacity:.45}
+[data-character],.ranking-reaction-card,.san-reaction-card{cursor:pointer;transition:transform .16s ease,filter .16s ease,box-shadow .16s ease}
+[data-character]:hover,.ranking-reaction-card:hover,.san-reaction-card:hover{transform:translateY(-1px) scale(1.012);filter:saturate(1.04)}
+.ranking-reaction-card:focus-visible,.san-reaction-card:focus-visible,[data-character]:focus-visible{outline:3px solid rgba(37,99,235,.38);outline-offset:3px}
+@media(max-width:640px){.kinojo-character-reaction-modal{padding:28px 14px}.kinojo-character-reaction-dialog{width:min(360px,calc(100vw - 28px));min-height:330px;padding:76px 18px 18px;border-radius:24px}.kinojo-character-reaction-avatar{width:108px;height:108px;left:28px;top:-42px;border-width:6px}.kinojo-character-reaction-class{left:142px;top:80px;width:38px;height:38px}.kinojo-character-reaction-class img{width:24px;height:24px}.kinojo-character-reaction-info{min-height:120px;margin:0 0 14px 190px}.kinojo-character-reaction-title{font-size:26px}.kinojo-character-reaction-sub{font-size:12px}.kinojo-character-reaction-detail{margin:-58px 0 42px 0}.kinojo-character-reaction-actions{gap:8px}.kinojo-character-reaction-type{height:42px;font-size:13px}.kinojo-character-reaction-foot{align-items:flex-start;flex-direction:column}.kinojo-character-reaction-submit{width:100%}}
+@media(max-width:390px){.kinojo-character-reaction-avatar{left:20px}.kinojo-character-reaction-class{left:132px}.kinojo-character-reaction-info{margin-left:180px}.kinojo-character-reaction-dialog{padding-left:16px;padding-right:16px}}

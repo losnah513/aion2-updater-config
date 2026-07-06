@@ -53,7 +53,8 @@
     const growthLabel = text(pick(row,'growth_label','growthLabel',''), '기록 확인');
     const review = text(pick(row,'review_text','reviewText',''), growthLabel || 'AI 리뷰 대기 중');
     const profile = text(pick(row,'profile_image_url','profileImageUrl',''), '');
-    return { rank,name,owner,server,className,like,dislike,pvePower,pvpPower,pveItem,pvpItem,review,growthLabel,profile,mode };
+    const detailUrl = text(pick(row,'detail_url','detailUrl',''), '');
+    return { rank,name,owner,server,className,like,dislike,pvePower,pvpPower,pveItem,pvpItem,review,growthLabel,profile,detailUrl,mode };
   }
 
   Ranking.utils = { CLASS_ORDER, $, escapeHtml, num, pick, text, stripServerSuffix, isMobileRanking, normalizeRow };
