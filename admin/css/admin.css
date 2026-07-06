@@ -323,3 +323,17 @@ body.kinojo-page-admin{background:var(--admin-bg);color:var(--admin-ink);font-fa
   .kinojo-event-preview-card time{right:10px!important;font-size:28px!important}
   .kinojo-event-preview-wrap footer button{height:38px!important}
 }
+
+
+/* ===========================================================
+KINOJO Event Notice Preview Visibility Patch 20260705
+- 사용자 팝업과 동일하게 카드 레이어/버튼 시인성 강화
+=========================================================== */
+.admin-event-preview-backdrop{background:rgba(15,23,42,.34)!important;backdrop-filter:none!important}
+.kinojo-event-preview-wrap{background:rgba(246,248,252,.96)!important;border:1px solid rgba(226,232,240,.88)!important;box-shadow:0 28px 90px rgba(15,23,42,.30)!important}
+.kinojo-event-preview-wrap header strong{color:#111827!important;text-shadow:none!important}
+.kinojo-event-preview-card{background:#07111f!important;border:1px solid rgba(225,184,82,.34)!important;box-shadow:0 14px 32px rgba(15,23,42,.34),0 2px 10px rgba(15,23,42,.20)!important}
+.kinojo-event-preview-card:before{opacity:1!important}
+.kinojo-event-preview-card:after{background:linear-gradient(90deg,rgba(5,4,3,1) 0%,rgba(7,5,3,1) 22%,rgba(19,14,7,.96) 36%,rgba(42,29,12,.62) 53%,rgba(10,8,5,.28) 64%,rgba(4,3,2,.76) 100%)!important}
+.kinojo-event-preview-wrap footer button{height:44px!important;border:2px solid #3b82f6!important;background:#fff!important;color:#111827!important;box-shadow:0 10px 24px rgba(15,23,42,.18)!important}
+.kinojo-event-preview-wrap footer button:hover{background:#2563eb!important;color:#fff!important}

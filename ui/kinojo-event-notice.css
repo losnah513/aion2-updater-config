@@ -2,7 +2,7 @@
 KINOJO Event Notice Popup
 기능 : 사용자 페이지 진입 이벤트 공지 팝업 공통 UI
 정리일 : 2026-07-05
-STEP : 3-7 디자인 마감 / 모바일 튜닝 / Fade-Hover Motion
+STEP : Visual Patch / 카드 레이어 분리 / 버튼 시인성 개선
 규칙 : 이미지 높이 기준 유지 / 카드 중앙 우측 배치 / 자연 그라데이션 / 중복 레이어 금지
 =========================================================== */
 
@@ -38,23 +38,21 @@ STEP : 3-7 디자인 마감 / 모바일 튜닝 / Fade-Hover Motion
 
 .kinojo-event-notice-group{
   --notice-card-h:clamp(72px,calc((100dvh - 198px) / 6),116px);
-  --notice-gap:clamp(8px,1.05vh,12px);
+  --notice-gap:clamp(10px,1.2vh,14px);
   position:relative;
   display:flex;
   flex-direction:column;
   gap:var(--notice-gap);
   max-height:calc(100dvh - 28px);
   padding:clamp(12px,1.8vh,18px);
-  border:1px solid rgba(255,255,255,.10);
+  border:1px solid rgba(226,232,240,.88);
   border-radius:26px;
-  background:rgba(255,255,255,.055);
+  background:rgba(246,248,252,.96);
   box-shadow:
-    0 26px 92px rgba(0,0,0,.44),
-    0 0 44px rgba(225,184,82,.055),
-    inset 0 0 0 1px rgba(255,255,255,.035),
-    inset 0 1px 0 rgba(255,255,255,.10);
-  backdrop-filter:blur(18px) saturate(1.12);
-  -webkit-backdrop-filter:blur(18px) saturate(1.12);
+    0 28px 90px rgba(15,23,42,.30),
+    0 0 0 1px rgba(255,255,255,.70) inset;
+  backdrop-filter:blur(12px) saturate(1.04);
+  -webkit-backdrop-filter:blur(12px) saturate(1.04);
   overflow:visible;
   animation:kinojoEventGroupIn .26s cubic-bezier(.2,.8,.2,1) both;
 }
@@ -65,9 +63,9 @@ STEP : 3-7 디자인 마감 / 모바일 튜닝 / Fade-Hover Motion
   border-radius:inherit;
   pointer-events:none;
   background:
-    radial-gradient(circle at 18% 7%,rgba(255,236,176,.12),transparent 30%),
-    linear-gradient(180deg,rgba(255,255,255,.050),rgba(255,255,255,.018));
-  opacity:.78;
+    radial-gradient(circle at 18% 7%,rgba(45,104,255,.06),transparent 30%),
+    linear-gradient(180deg,rgba(255,255,255,.50),rgba(255,255,255,.12));
+  opacity:.92;
 }
 
 .kinojo-event-notice-head{
@@ -97,7 +95,7 @@ STEP : 3-7 디자인 마감 / 모바일 튜닝 / Fade-Hover Motion
   font-size:clamp(20px,2.4vh,25px);
   line-height:.95;
   font-weight:1000;
-  color:#fffaf0;
+  color:#111827;
   letter-spacing:-.045em;
   text-shadow:0 4px 20px rgba(0,0,0,.52);
   word-break:keep-all;
@@ -138,12 +136,12 @@ STEP : 3-7 디자인 마감 / 모바일 튜닝 / Fade-Hover Motion
   isolation:isolate;
   color:#fff;
   --notice-image-x:63%;
-  background:#060504;
+  background:#07111f;
+  border:1px solid rgba(225,184,82,.34);
   box-shadow:
-    0 12px 30px rgba(0,0,0,.32),
-    0 2px 8px rgba(0,0,0,.22),
-    inset 0 0 0 1px rgba(224,183,86,.32),
-    inset 0 1px 0 rgba(255,255,255,.10);
+    0 14px 32px rgba(15,23,42,.34),
+    0 2px 10px rgba(15,23,42,.20),
+    inset 0 0 0 1px rgba(255,255,255,.045);
   transform:translateZ(0);
   transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease,filter .18s ease;
 }
@@ -154,16 +152,16 @@ STEP : 3-7 디자인 마감 / 모바일 튜닝 / Fade-Hover Motion
   position:absolute;
   inset:0;
   z-index:-3;
-  background-color:#060504;
+  background-color:#07111f;
   background-repeat:no-repeat;
   background-size:auto 100%;
   background-position:var(--notice-image-x,63%) center;
-  opacity:.96;
+  opacity:1;
   filter:saturate(1.07) contrast(1.025);
   transform:translateZ(0) scale(1.006);
   transition:transform .22s ease,filter .22s ease,opacity .22s ease;
-  -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.10) 12%,rgba(0,0,0,.58) 25%,#000 42%,#000 100%);
-  mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.10) 12%,rgba(0,0,0,.58) 25%,#000 42%,#000 100%);
+  -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.10) 10%,rgba(0,0,0,.52) 24%,#000 40%,#000 100%);
+  mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.10) 10%,rgba(0,0,0,.52) 24%,#000 40%,#000 100%);
 }
 .kinojo-event-notice-card.type-abyss_low{--notice-image-x:62%}
 .kinojo-event-notice-card.type-abyss_middle{--notice-image-x:61%}
@@ -194,8 +192,8 @@ STEP : 3-7 디자인 마감 / 모바일 튜닝 / Fade-Hover Motion
       rgba(7,5,3,1) 18%,
       rgba(19,14,7,.96) 31%,
       rgba(45,32,12,.78) 43%,
-      rgba(85,61,21,.42) 53%,
-      rgba(20,14,7,.16) 64%,
+      rgba(42,29,12,.62) 53%,
+      rgba(10,8,5,.28) 64%,
       rgba(8,6,4,.22) 77%,
       rgba(4,3,2,.76) 100%),
     linear-gradient(90deg,rgba(0,0,0,.92) 0%,rgba(0,0,0,.70) 30%,rgba(0,0,0,.12) 54%,rgba(0,0,0,.0) 66%),
@@ -209,8 +207,7 @@ STEP : 3-7 디자인 마감 / 모바일 튜닝 / Fade-Hover Motion
   box-shadow:
     0 16px 38px rgba(0,0,0,.36),
     0 0 26px rgba(225,184,82,.075),
-    inset 0 0 0 1px rgba(237,201,113,.46),
-    inset 0 1px 0 rgba(255,255,255,.13);
+    inset 0 0 0 1px rgba(237,201,113,.54);
 }
 .kinojo-event-notice-card:hover::before{
   transform:translateZ(0) scale(1.018);
@@ -385,15 +382,15 @@ STEP : 3-7 디자인 마감 / 모바일 튜닝 / Fade-Hover Motion
 }
 .kinojo-event-notice-actions button{
   height:clamp(38px,5.4vh,46px);
-  border:1px solid rgba(255,255,255,.13);
+  border:2px solid #3b82f6;
   border-radius:14px;
-  background:rgba(255,255,255,.060);
-  color:#fff8e7;
+  background:#ffffff;
+  color:#111827;
   font-weight:1000;
   cursor:pointer;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.035),0 10px 28px rgba(0,0,0,.23);
-  backdrop-filter:blur(14px);
-  -webkit-backdrop-filter:blur(14px);
+  box-shadow:0 10px 24px rgba(15,23,42,.18);
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
   position:relative;
   overflow:hidden;
   transition:transform .16s ease,background .16s ease,box-shadow .16s ease,border-color .16s ease,filter .16s ease;
@@ -410,17 +407,18 @@ STEP : 3-7 디자인 마감 / 모바일 튜닝 / Fade-Hover Motion
 .kinojo-event-notice-actions button:hover::before{transform:translateX(115%)}
 .kinojo-event-notice-actions button:hover{
   transform:translateY(-1px);
-  border-color:rgba(225,184,82,.40);
-  background:rgba(225,184,82,.11);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 13px 30px rgba(0,0,0,.26);
+  border-color:#2563eb;
+  background:#2563eb;
+  color:#ffffff;
+  box-shadow:0 13px 30px rgba(37,99,235,.28);
 }
 .kinojo-event-notice-actions .close{
-  border-color:rgba(241,207,127,.74);
-  background:linear-gradient(180deg,#e3c36d,#b9872e);
-  color:#151006;
-  text-shadow:0 1px 0 rgba(255,255,255,.22);
+  border-color:#3b82f6;
+  background:#ffffff;
+  color:#111827;
+  text-shadow:none;
 }
-.kinojo-event-notice-actions .close:hover{background:linear-gradient(180deg,#f1d58a,#c89535)}
+.kinojo-event-notice-actions .close:hover{background:#2563eb;color:#ffffff}
 
 @keyframes kinojoEventOverlayIn{from{opacity:0}to{opacity:1}}
 @keyframes kinojoEventOverlayOut{from{opacity:1}to{opacity:0}}
@@ -438,8 +436,8 @@ STEP : 3-7 디자인 마감 / 모바일 튜닝 / Fade-Hover Motion
     gap:10px;
   }
   .kinojo-event-notice-group{
-    --notice-card-h:clamp(58px,calc((100dvh - 132px) / 6),82px);
-    --notice-gap:6px;
+    --notice-card-h:clamp(58px,calc((100dvh - 140px) / 6),80px);
+    --notice-gap:8px;
     max-height:calc(100dvh - 18px);
     padding:10px;
     border-radius:22px;
@@ -476,11 +474,11 @@ STEP : 3-7 디자인 마감 / 모바일 튜닝 / Fade-Hover Motion
   .kinojo-event-notice-timebox b{font-size:9px;min-height:15px;padding:1px 6px}
   .kinojo-event-notice-date{font-size:8px}
   .kinojo-event-notice-actions{gap:8px}
-  .kinojo-event-notice-actions button{height:42px;border-radius:13px;font-size:13px}
+  .kinojo-event-notice-actions button{height:44px;border-radius:13px;font-size:13px}
 }
 
 @media(max-width:390px){
-  .kinojo-event-notice-group{--notice-card-h:clamp(54px,calc((100dvh - 126px) / 6),76px);padding:8px;--notice-gap:5px}
+  .kinojo-event-notice-group{--notice-card-h:clamp(54px,calc((100dvh - 132px) / 6),74px);padding:8px;--notice-gap:7px}
   .kinojo-event-notice-head span{font-size:9px}
   .kinojo-event-notice-head strong{font-size:17px}
   .kinojo-event-notice-copy{left:68px;right:104px}
