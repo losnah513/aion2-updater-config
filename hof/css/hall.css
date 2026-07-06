@@ -1699,3 +1699,28 @@ body{
     grid-template-rows:200px 200px 195px!important;
   }
 }
+
+
+/* ============================================================
+   KINOJO HOF PATCH 20260706_04
+   1등 프로필 뱃지 위치 보정: 프로필 아래 중앙 배치로 잘리지 않도록 왼쪽 측면에 고정.
+   ============================================================ */
+.hof-v2-portrait-wrap .hof-v2-medal{
+  left:-2px!important;
+  top:50%!important;
+  bottom:auto!important;
+  width:26px!important;
+  height:26px!important;
+  transform:translate(-35%,-50%) rotate(45deg)!important;
+  z-index:4!important;
+}
+.hof-v2-god-portrait .hof-v2-medal{
+  left:0!important;
+  top:50%!important;
+  bottom:auto!important;
+  width:30px!important;
+  height:30px!important;
+  transform:translate(-38%,-50%) rotate(45deg)!important;
+  z-index:4!important;
+}
+.hof-v2-portrait-wrap,.hof-v2-god-portrait{overflow:visible!important;}

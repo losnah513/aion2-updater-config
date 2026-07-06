@@ -45,7 +45,8 @@
   function classIconFor(className){
     const key = CLASS_ICON_MAP[String(className || '').trim()];
     if(!key) return '';
-    return '../hof/assets/class_icon_' + key + '.png';
+    const base = String(location.pathname || '').includes('/m/') ? '../../hof/assets/' : '../hof/assets/';
+    return base + 'class_icon_' + key + '.png';
   }
 
   function numText(value){
@@ -129,7 +130,6 @@
           '<div class="kinojo-character-reaction-kicker">REACTION</div>' +
           '<h2 class="kinojo-character-reaction-title" id="kinojoCharacterReactionTitle">캐릭터</h2>' +
           '<p class="kinojo-character-reaction-sub" id="kinojoCharacterReactionSub">좋아요·싫어요와 코멘트를 남겨보세요.</p>' +
-        '</div>' +
         '</div>' +
         '<a class="kinojo-character-reaction-detail" id="kinojoCharacterReactionDetail" href="#" target="_blank" rel="noopener noreferrer">정보실 ↗</a>' +
         '<div class="kinojo-character-reaction-actions">' +
