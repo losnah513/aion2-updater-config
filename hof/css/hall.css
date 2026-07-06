@@ -2458,3 +2458,190 @@ button.hof-v2-god-main:hover{background:#fffdf8;border-color:rgba(201,148,47,.42
   .hof-v2-god-sub,.hof-v2-god-compare{margin:5px 10px 0!important;padding:7px 8px!important;}
   .hof-v2-my-list{grid-template-columns:1fr!important;}
 }
+
+/* ==========================================================
+   KINOJO HOF v2 - horizontal card title rail patch (20260706_01)
+   Goal: horizontal panels use left vertical title rail, body owns height.
+   ========================================================== */
+.hof-v2-board{
+  grid-template-columns:260px minmax(0,1fr) minmax(0,1fr) 250px!important;
+  grid-template-rows:202px 202px 246px!important;
+  gap:12px!important;
+  padding:12px!important;
+}
+.hof-v2-wide{
+  display:grid!important;
+  grid-template-columns:86px minmax(0,1fr)!important;
+  grid-template-rows:1fr!important;
+  align-items:stretch!important;
+}
+.hof-v2-wide .hof-v2-panel-head{
+  grid-column:1/2!important;
+  grid-row:1/2!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:8px!important;
+  min-width:0!important;
+  height:100%!important;
+  padding:10px 8px!important;
+  border-right:1px solid rgba(22,34,58,.08)!important;
+  border-bottom:0!important;
+  text-align:center!important;
+}
+.hof-v2-wide .hof-v2-panel-head h2{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:7px!important;
+  width:100%!important;
+  font-size:18px!important;
+  line-height:1.05!important;
+  letter-spacing:-.04em!important;
+  word-break:keep-all!important;
+  white-space:normal!important;
+}
+.hof-v2-wide .hof-v2-title-icon{
+  margin:0!important;
+  min-width:34px!important;
+  height:26px!important;
+  padding:0 8px!important;
+  font-size:11px!important;
+}
+.hof-v2-wide .hof-v2-top3{
+  grid-column:2/3!important;
+  grid-row:1/2!important;
+  height:100%!important;
+  min-height:0!important;
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  grid-template-rows:repeat(3,minmax(0,1fr))!important;
+  align-content:stretch!important;
+  gap:8px!important;
+  padding:10px 12px!important;
+}
+.hof-v2-wide .hof-v2-top3-item,
+.hof-v2-wide .hof-v2-top3-item[data-hof-rank="1"]{
+  width:min(100%,460px)!important;
+  height:100%!important;
+  min-height:0!important;
+  justify-self:start!important;
+  grid-template-columns:54px minmax(112px,210px) 96px!important;
+  gap:10px!important;
+  padding:6px 10px!important;
+  overflow:hidden!important;
+}
+.hof-v2-wide .hof-v2-portrait-wrap{
+  width:54px!important;
+  height:48px!important;
+}
+.hof-v2-wide .hof-v2-portrait.small,
+.hof-v2-wide .hof-v2-top3-item[data-hof-rank="1"] .hof-v2-portrait.small{
+  width:44px!important;
+  height:44px!important;
+}
+.hof-v2-wide .hof-v2-medal{
+  width:25px!important;
+  height:25px!important;
+  bottom:-7px!important;
+}
+.hof-v2-wide .hof-v2-medal span{font-size:11px!important;}
+.hof-v2-wide .hof-v2-top3-name{font-size:15px!important;line-height:1.05!important;}
+.hof-v2-wide .hof-v2-top3-meta{font-size:10px!important;line-height:1.05!important;}
+.hof-v2-wide .hof-v2-badge-line{min-height:15px!important;gap:3px!important;}
+.hof-v2-wide .hof-v2-class-badge,
+.hof-v2-wide .hof-v2-owner-badge{height:15px!important;padding:0 5px!important;font-size:8.5px!important;}
+.hof-v2-wide .hof-v2-top3-score{
+  width:96px!important;
+  max-width:96px!important;
+  justify-self:end!important;
+  font-size:16px!important;
+  line-height:1!important;
+}
+.hof-v2-wide .hof-v2-top3-score small{font-size:8.5px!important;}
+.hof-v2-god-head{min-height:70px!important;}
+.hof-v2-god-main{margin:10px 12px 8px!important;min-height:0!important;}
+.hof-v2-area-enhance .hof-v2-god-main{height:calc(100% - 190px)!important;}
+.hof-v2-area-growth .hof-v2-god-main{height:106px!important;}
+.hof-v2-god-score{margin:0 12px 6px!important;padding:9px 8px!important;}
+.hof-v2-god-score strong{font-size:30px!important;}
+.hof-v2-god-sub,.hof-v2-god-compare{margin:6px 12px 0!important;padding:8px 10px!important;}
+.hof-v2-my-head{min-height:70px!important;padding:12px 14px 8px!important;}
+.hof-v2-my-list{gap:7px!important;margin:10px 12px 0!important;}
+.hof-v2-my-row{min-height:52px!important;padding:8px 10px!important;}
+
+@media (max-width:1180px){
+  .hof-v2-board{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    grid-template-rows:auto!important;
+    grid-template-areas:
+      "enhance growth"
+      "pve pve"
+      "pvp pvp"
+      "like dislike"!important;
+  }
+  .hof-v2-area-enhance .hof-v2-god-main,
+  .hof-v2-area-growth .hof-v2-god-main{height:132px!important;}
+}
+@media (max-width:760px){
+  .hof-v2-board{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    grid-template-areas:"enhance" "pve" "pvp" "like" "dislike" "growth"!important;
+    grid-template-rows:auto!important;
+    gap:10px!important;
+    padding:10px!important;
+  }
+  .hof-v2-wide{
+    display:block!important;
+  }
+  .hof-v2-wide .hof-v2-panel-head{
+    display:flex!important;
+    flex-direction:row!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    height:auto!important;
+    min-height:40px!important;
+    padding:8px 10px!important;
+    border-right:0!important;
+    border-bottom:1px solid rgba(22,34,58,.08)!important;
+    text-align:left!important;
+  }
+  .hof-v2-wide .hof-v2-panel-head h2{
+    display:flex!important;
+    flex-direction:row!important;
+    justify-content:flex-start!important;
+    gap:8px!important;
+    font-size:17px!important;
+    line-height:1.1!important;
+  }
+  .hof-v2-wide .hof-v2-title-icon{min-width:30px!important;height:22px!important;font-size:10px!important;}
+  .hof-v2-wide .hof-v2-top3{
+    height:auto!important;
+    grid-template-rows:repeat(3,58px)!important;
+    gap:6px!important;
+    padding:8px 9px 10px!important;
+  }
+  .hof-v2-wide .hof-v2-top3-item,
+  .hof-v2-wide .hof-v2-top3-item[data-hof-rank="1"]{
+    width:100%!important;
+    grid-template-columns:50px minmax(0,1fr) 82px!important;
+    gap:8px!important;
+    padding:6px 8px!important;
+  }
+  .hof-v2-wide .hof-v2-portrait-wrap{width:50px!important;height:44px!important;}
+  .hof-v2-wide .hof-v2-portrait.small,
+  .hof-v2-wide .hof-v2-top3-item[data-hof-rank="1"] .hof-v2-portrait.small{width:40px!important;height:40px!important;}
+  .hof-v2-wide .hof-v2-medal{width:23px!important;height:23px!important;bottom:-7px!important;}
+  .hof-v2-wide .hof-v2-top3-name{font-size:14px!important;}
+  .hof-v2-wide .hof-v2-top3-meta{font-size:10px!important;}
+  .hof-v2-wide .hof-v2-badge-line{display:none!important;}
+  .hof-v2-wide .hof-v2-top3-score{width:82px!important;max-width:82px!important;font-size:13px!important;}
+  .hof-v2-wide .hof-v2-top3-score small{font-size:8px!important;}
+  .hof-v2-god-head{min-height:44px!important;}
+  .hof-v2-area-enhance .hof-v2-god-main,
+  .hof-v2-area-growth .hof-v2-god-main{height:118px!important;}
+  .hof-v2-god-score strong{font-size:26px!important;}
+}
