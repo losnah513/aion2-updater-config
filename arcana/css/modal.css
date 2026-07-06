@@ -625,11 +625,6 @@
     scale(1.08) !important;
 }
 
-.arcana-class-showcase.is-picked .arcana-showcase-ring {
-  animation: none !important;
-  transform: none !important;
-}
-
 .arcana-showcase-card.is-selected {
   left: 50% !important;
   top: 44% !important;
@@ -945,11 +940,6 @@
     scale(1.08) !important;
 }
 
-.arcana-class-showcase.is-picked .arcana-showcase-ring {
-  animation: none !important;
-  transform: none !important;
-}
-
 .arcana-class-showcase.is-picked .arcana-showcase-ring-wrap {
   transform: translateY(-12px) rotateX(0deg) !important;
   min-height: 292px !important;
@@ -967,15 +957,6 @@
   border-color: rgba(37, 99, 235, 1) !important;
   box-shadow: 0 24px 58px rgba(37, 99, 235, 0.25) !important;
   transform: translate(-50%, -50%) rotateX(0deg) rotateY(0deg) scale(1.48) !important;
-}
-
-.arcana-showcase-card.is-selected .arcana-showcase-card-inner,
-.arcana-showcase-card.is-selected .arcana-showcase-card-face,
-.arcana-showcase-card.is-selected .arcana-showcase-card-front,
-.arcana-showcase-card.is-selected .arcana-class-icon,
-.arcana-showcase-card.is-selected .arcana-showcase-card-name {
-  opacity: 1 !important;
-  filter: none !important;
 }
 
 .arcana-showcase-card.is-falling,
@@ -1015,14 +996,5 @@
   .arcana-showcase-ring-wrap {
     min-height: 260px !important;
     transform: translateY(-8px) rotateX(54deg) !important;
-  }
-
-  .arcana-class-showcase.is-picked .arcana-showcase-ring-wrap {
-    transform: translateY(-6px) rotateX(0deg) !important;
-  }
-
-  .arcana-showcase-card.is-selected,
-  .arcana-class-showcase.is-picked .arcana-showcase-card.is-selected {
-    transform: translate(-50%, -50%) rotateX(0deg) rotateY(0deg) scale(1.28) !important;
   }
 }
