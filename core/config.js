@@ -87,7 +87,8 @@ window.AION2_REMOTE = {
     const config = await window.AION2_HTTP.getJson(C.CONFIG_JSON_URL);
 
     const enabled = config.enabled === true || String(config.enabled).toUpperCase() === "TRUE";
-    const webAppUrl = String(config.webAppUrl || "").trim();
+    const rawWebAppUrl = config.webAppUrl || config.appsScriptUrl || config.sheetSyncWebAppUrl || (config.bridge && config.bridge.webAppUrl) || "";
+    const webAppUrl = String(rawWebAppUrl || "").trim();
     const notice = String(config.notice || "").trim();
     const latestVersion = String(config.version || "").trim();
     const downloadUrl = String(config.downloadUrl || "").trim();
@@ -107,13 +108,15 @@ window.AION2_REMOTE = {
     }
 
     if (!enabled) throw new Error(notice || "현재 자동조회 기능이 비활성화되어 있습니다.");
-    if (!webAppUrl) throw new Error("config.json에 webAppUrl이 없습니다.");
-    if (!/^https:\/\/script\.google\.com\/macros\/s\//.test(webAppUrl)) {
-      localStorage.removeItem(C.KEYS.WEBAPP);
-      throw new Error("config.json의 webAppUrl이 Apps Script 배포 URL이 아닙니다.");
+    // 20260706_05: Supabase 전환 이후에도 list 시트 실제 반영에는 Apps Script Bridge URL이 필요하다.
+    // URL이 없으면 기존 정상 저장값을 유지하고, URL이 있을 때만 검증/저장한다.
+    if (webAppUrl) {
+      if (!/^https:\/\/script\.google\.com\/macros\/s\//.test(webAppUrl)) {
+        localStorage.removeItem(C.KEYS.WEBAPP);
+        throw new Error("config.json의 webAppUrl이 Apps Script 배포 URL이 아닙니다.");
+      }
+      localStorage.setItem(C.KEYS.WEBAPP, webAppUrl);
     }
-
-    localStorage.setItem(C.KEYS.WEBAPP, webAppUrl);
     return { ...config, webAppUrl, notice, latestVersion, downloadUrl, testMode, passwordHash };
   }
 };

@@ -170,9 +170,9 @@
   }
 
   async function getWebAppUrl(){
-    const saved=localStorage.getItem('kinojo_admin_webapp_url')||''; if(saved) return saved;
+    const saved=localStorage.getItem('kinojo_admin_webapp_url')||localStorage.getItem('AION2_OFFICIAL_WEBAPP')||''; if(saved) return saved;
     const configUrl = location.pathname.includes('/m/') ? '../../config.json' : '../config.json';
-    try{ const cfg=await fetch(configUrl,{cache:'no-store'}).then(r=>r.json()); return String(cfg.webAppUrl||cfg.appsScriptUrl||''); }catch(_e){return '';}
+    try{ const cfg=await fetch(configUrl,{cache:'no-store'}).then(r=>r.json()); return String(cfg.webAppUrl||cfg.appsScriptUrl||cfg.sheetSyncWebAppUrl||(cfg.bridge&&cfg.bridge.webAppUrl)||''); }catch(_e){return '';}
   }
   async function callAppsScript(actionName,body){
     const url=await getWebAppUrl();
@@ -216,7 +216,7 @@
   async function testWebAppConnection(statusTarget){
     const statusSel = statusTarget || '#serverStatus';
     const input=$('#webAppUrlInput'); const typed=String(input?.value||'').trim();
-    if(typed && /^https:\/\/script\.google\.com\/macros\/s\//.test(typed) && isMaster()) localStorage.setItem('kinojo_admin_webapp_url',typed);
+    if(typed && /^https:\/\/script\.google\.com\/macros\/s\//.test(typed) && isMaster()) localStorage.setItem('kinojo_admin_webapp_url',typed); localStorage.setItem('AION2_OFFICIAL_WEBAPP',typed);
     const url=await getWebAppUrl();
     if(!url){ setStatus(statusSel,'Apps Script WebApp URL을 먼저 등록하세요.','error'); return; }
     setStatus(statusSel,'Apps Script Bridge 연결 테스트 중...','');
@@ -535,7 +535,7 @@
   }
   function renderServerBox(data){
     const root=$('#serverStatusBox'); if(!root)return;
-    const localUrl = localStorage.getItem('kinojo_admin_webapp_url') || '';
+    const localUrl = localStorage.getItem('kinojo_admin_webapp_url') || localStorage.getItem('AION2_OFFICIAL_WEBAPP') || '';
     const bridgeLabel = localUrl ? 'URL 저장됨' : 'config.json 또는 시스템 설정 확인';
     root.innerHTML='<div class="admin-system-list"><div class="admin-system-item"><span><i class="admin-dot"></i>Supabase DB</span><strong>정상</strong></div><div class="admin-system-item"><span><i class="admin-dot"></i>RPC / Functions</span><strong>'+(data?.ok===false?'확인 필요':'정상')+'</strong></div><div class="admin-system-item"><span><i class="admin-dot"></i>Updater Runtime</span><strong>'+esc(data?.message||'정상')+'</strong></div><div class="admin-system-item"><span><i class="admin-dot"></i>Apps Script Bridge</span><strong>'+esc(bridgeLabel)+'</strong></div><div class="admin-system-item"><span><i class="admin-dot"></i>최근 성역 동기화</span><strong>'+esc(localStorage.getItem('kinojo_admin_last_sanctuary_sync')||'기록 없음')+'</strong></div></div>';
   }
@@ -545,6 +545,7 @@
     if(!v){ setStatus('#systemStatus','저장할 Apps Script WebApp URL을 입력하세요.','error'); return; }
     if(!/^https:\/\/script\.google\.com\/macros\/s\//.test(v)){setStatus('#systemStatus','Apps Script WebApp URL 형식을 확인하세요.','error');return;}
     localStorage.setItem('kinojo_admin_webapp_url',v);
+    localStorage.setItem('AION2_OFFICIAL_WEBAPP',v);
     setStatus('#systemStatus','Apps Script WebApp URL 저장 완료','ok');
     addLog('SYSTEM','Apps Script WebApp URL 저장');
     refreshServerStatus();
@@ -552,13 +553,14 @@
   function clearWebAppUrl(){
     if(!isMaster()){ setStatus('#systemStatus','MASTER 권한만 시스템 URL을 삭제할 수 있습니다.','error'); return; }
     localStorage.removeItem('kinojo_admin_webapp_url');
+    localStorage.removeItem('AION2_OFFICIAL_WEBAPP');
     const input=$('#webAppUrlInput'); if(input) input.value='';
     setStatus('#systemStatus','Apps Script WebApp URL 저장값을 삭제했습니다. config.json 값이 있으면 자동 fallback 됩니다.','ok');
     refreshServerStatus();
   }
   async function refreshSystemSettings(){
     const input=$('#webAppUrlInput');
-    const saved=localStorage.getItem('kinojo_admin_webapp_url')||'';
+    const saved=localStorage.getItem('kinojo_admin_webapp_url')||localStorage.getItem('AION2_OFFICIAL_WEBAPP')||'';
     if(input) input.value=saved;
     if(!isMaster()){
       if(input) input.disabled=true;
