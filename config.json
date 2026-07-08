@@ -3,9 +3,9 @@
   "buildDate": "26062701",
   "enabled": true,
   "testMode": false,
-  "webAppUrl": "",
+  "webAppUrl": "https://script.google.com/macros/s/AKfycbztXbGEbiId1yOfa3CVmErivNVi5IUi64qxIQRf8Sm_KduCPieeAKlNRMGyYkKL5iPaYg/exec",
   "appsScriptUrl": "",
-  "sheetSyncWebAppUrl": "",
+  "sheetSyncWebAppUrl": "https://script.google.com/macros/s/AKfycbwMVIxp8noZEcTf3dIKDkUpQZyUX0ANNdB96ILb3thWql7wKZYu13HBnVWvybiV3QEs/exec",
   "passwordHash": "c47986dd8ce4828fe097cf915e94fc9d859bb19d56e2157d86ff11b63f0a9e53",
   "adminPasswordHashes": [
     "de9fe7e1e91bc7448ff39abf12a58e25c8ef6680864650c6bf2bf8e24c26e15e",
