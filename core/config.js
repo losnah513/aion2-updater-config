@@ -21,6 +21,7 @@ window.AION2_CONFIG = {
     STORAGE: "AION2_OFFICIAL_QUEUE",
     CURRENT: "AION2_OFFICIAL_CURRENT",
     WEBAPP: "AION2_OFFICIAL_WEBAPP",
+    SHEET_SYNC_WEBAPP: "AION2_OFFICIAL_SHEET_SYNC_WEBAPP",
     RUNNING: "AION2_OFFICIAL_RUNNING",
     LOG: "AION2_OFFICIAL_LOGS",
     LAST_PROGRESS: "AION2_OFFICIAL_LAST_PROGRESS",
@@ -87,8 +88,10 @@ window.AION2_REMOTE = {
     const config = await window.AION2_HTTP.getJson(C.CONFIG_JSON_URL);
 
     const enabled = config.enabled === true || String(config.enabled).toUpperCase() === "TRUE";
-    const rawWebAppUrl = config.webAppUrl || config.appsScriptUrl || config.sheetSyncWebAppUrl || (config.bridge && config.bridge.webAppUrl) || "";
+    const rawWebAppUrl = config.webAppUrl || config.appsScriptUrl || (config.bridge && config.bridge.webAppUrl) || "";
+    const rawSheetSyncWebAppUrl = config.sheetSyncWebAppUrl || (config.bridge && (config.bridge.sheetSyncWebAppUrl || config.bridge.sheetSyncUrl)) || rawWebAppUrl || "";
     const webAppUrl = String(rawWebAppUrl || "").trim();
+    const sheetSyncWebAppUrl = String(rawSheetSyncWebAppUrl || "").trim();
     const notice = String(config.notice || "").trim();
     const latestVersion = String(config.version || "").trim();
     const downloadUrl = String(config.downloadUrl || "").trim();
@@ -117,6 +120,13 @@ window.AION2_REMOTE = {
       }
       localStorage.setItem(C.KEYS.WEBAPP, webAppUrl);
     }
-    return { ...config, webAppUrl, notice, latestVersion, downloadUrl, testMode, passwordHash };
+    if (sheetSyncWebAppUrl) {
+      if (!/^https:\/\/script\.google\.com\/macros\/s\//.test(sheetSyncWebAppUrl)) {
+        localStorage.removeItem(C.KEYS.SHEET_SYNC_WEBAPP);
+        throw new Error("config.json의 sheetSyncWebAppUrl이 Apps Script 배포 URL이 아닙니다.");
+      }
+      localStorage.setItem(C.KEYS.SHEET_SYNC_WEBAPP, sheetSyncWebAppUrl);
+    }
+    return { ...config, webAppUrl, sheetSyncWebAppUrl, notice, latestVersion, downloadUrl, testMode, passwordHash };
   }
 };

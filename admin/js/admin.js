@@ -172,7 +172,7 @@
   async function getWebAppUrl(){
     const saved=localStorage.getItem('kinojo_admin_webapp_url')||localStorage.getItem('AION2_OFFICIAL_WEBAPP')||''; if(saved) return saved;
     const configUrl = location.pathname.includes('/m/') ? '../../config.json' : '../config.json';
-    try{ const cfg=await fetch(configUrl,{cache:'no-store'}).then(r=>r.json()); return String(cfg.webAppUrl||cfg.appsScriptUrl||cfg.sheetSyncWebAppUrl||(cfg.bridge&&cfg.bridge.webAppUrl)||''); }catch(_e){return '';}
+    try{ const cfg=await fetch(configUrl,{cache:'no-store'}).then(r=>r.json()); return String(cfg.webAppUrl||cfg.appsScriptUrl||(cfg.bridge&&cfg.bridge.webAppUrl)||''); }catch(_e){return '';}
   }
   async function callAppsScript(actionName,body){
     const url=await getWebAppUrl();
