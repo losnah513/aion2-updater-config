@@ -981,7 +981,7 @@
       growthLabel,
       profileImageUrl:snakeOrCamel(row, 'profile_image_url', 'profileImageUrl', '') || '',
       detailUrl:snakeOrCamel(row, 'detail_url', 'detailUrl', '') || '',
-      isMain:snakeOrCamel(row, 'is_main', 'isMain', true) !== false,
+      isMain:(() => { const raw=snakeOrCamel(row, 'is_main', 'isMain', null); if(raw===true || String(raw).toLowerCase()==='true') return true; if(raw===false || String(raw).toLowerCase()==='false') return false; return stripServerSuffixFromCharacterName(name)===stripServerSuffixFromCharacterName(owner); })(),
       raw:row
     };
   }

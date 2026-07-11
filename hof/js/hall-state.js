@@ -6,7 +6,8 @@ const HALL_ASSET_BASE=(function(){
   if(path.includes("/hof/")) return "./assets/";
   return "assets/";
 })();
-const CLASS_ICONS={"검성":HALL_ASSET_BASE+"class_icon_gladiator.png","수호성":HALL_ASSET_BASE+"class_icon_templar.png","살성":HALL_ASSET_BASE+"class_icon_assassin.png","궁성":HALL_ASSET_BASE+"class_icon_ranger.png","정령성":HALL_ASSET_BASE+"class_icon_elementalist.png","마도성":HALL_ASSET_BASE+"class_icon_sorcerer.png","치유성":HALL_ASSET_BASE+"class_icon_cleric.png","호법성":HALL_ASSET_BASE+"class_icon_chanter.png","권성":""};
+const CLASS_ASSET_BASE="/assets/images/classes/";
+const CLASS_ICONS={"검성":CLASS_ASSET_BASE+"class_icon_gladiator.png","수호성":CLASS_ASSET_BASE+"class_icon_templar.png","살성":CLASS_ASSET_BASE+"class_icon_assassin.png","궁성":CLASS_ASSET_BASE+"class_icon_ranger.png","정령성":CLASS_ASSET_BASE+"class_icon_elementalist.png","마도성":CLASS_ASSET_BASE+"class_icon_sorcerer.png","치유성":CLASS_ASSET_BASE+"class_icon_cleric.png","호법성":CLASS_ASSET_BASE+"class_icon_chanter.png","권성":CLASS_ASSET_BASE+"class_icon_fighter.png"};
 const RANK_EMBLEMS={mvp:HALL_ASSET_BASE+"emblem_mvp_challenger.png",diamond:HALL_ASSET_BASE+"emblem_rank_diamond.png",crystal:HALL_ASSET_BASE+"emblem_rank_crystal.png",gold:HALL_ASSET_BASE+"emblem_rank_gold.png",silver:HALL_ASSET_BASE+"emblem_rank_silver.png",bronze:HALL_ASSET_BASE+"emblem_rank_bronze.png"};
 let hallData=null,includeSubs=false,chicksExpanded=false,chicksCollapsed=false,longPressTimer=null,longPressFired=false,loadingTimer=null,loadingStep=0,currentReactionItem=null,currentReactionType="like",reactionCarouselIndex=0,reactionCarouselPausedUntil=0,reactionSubmitting=false,adminAuthed=false;
 const app=document.getElementById("app");

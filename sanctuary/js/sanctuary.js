@@ -6,12 +6,9 @@ const FALLBACK={
   bagot:{info:{sanctuaryId:"bagot",sanctuaryNo:2,sanctuaryName:"침식의 정화소",shortName:"바고트팟",bossName:"바고트"}},
   kaldrix:{info:{sanctuaryId:"kaldrix",sanctuaryNo:3,sanctuaryName:"무스펠의 성배",shortName:"칼드릭스팟",bossName:"칼드릭스"}}
 };
-const SANCTUARY_ASSET_BASE=(function(){
-  const path=location.pathname.replace(/\\/g,'/');
-  return path.includes('/m/')?'../../hof/assets/':'../hof/assets/';
-})();
-const CLASS_ICON={"검성":"class_icon_gladiator.png","수호성":"class_icon_templar.png","살성":"class_icon_assassin.png","궁성":"class_icon_ranger.png","정령성":"class_icon_elementalist.png","마도성":"class_icon_sorcerer.png","치유성":"class_icon_cleric.png","호법성":"class_icon_chanter.png","권성":""};
-function classIconSrc(className){return CLASS_ICON[className]?SANCTUARY_ASSET_BASE+CLASS_ICON[className]:''}
+const CLASS_ASSET_BASE='/assets/images/classes/';
+const CLASS_ICON={"검성":"class_icon_gladiator.png","수호성":"class_icon_templar.png","살성":"class_icon_assassin.png","궁성":"class_icon_ranger.png","정령성":"class_icon_elementalist.png","마도성":"class_icon_sorcerer.png","치유성":"class_icon_cleric.png","호법성":"class_icon_chanter.png","권성":"class_icon_fighter.png"};
+function classIconSrc(className){return CLASS_ICON[className]?CLASS_ASSET_BASE+CLASS_ICON[className]:''}
 let sanctuaryData=null;
 function esc(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;")}
 function fmt(n){return Number(n||0).toLocaleString("ko-KR")}
