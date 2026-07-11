@@ -661,7 +661,7 @@ ArcanaApp.classSelector = {
     const icon = document.createElement('img');
     icon.className = 'arcana-class-icon';
     icon.alt = '';
-    icon.src = url || '../hof/assets/class_icon_gladiator.png';
+    icon.src = url || '/assets/images/classes/class_icon_gladiator.png';
     icon.decoding = 'async';
     icon.loading = 'lazy';
     return icon;

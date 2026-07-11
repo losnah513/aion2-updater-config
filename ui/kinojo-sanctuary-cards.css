@@ -2,10 +2,10 @@
    PC home and mobile home must reference the same asset variables.
    Replace these variables when final sanctuary card images are prepared. */
 :root{
-  --kinojo-sanctuary-rudra-bg:url("../hof/assets/sanctuary/rudra/rudra-bg.png");
-  --kinojo-sanctuary-rudra-boss:url("../hof/assets/sanctuary/rudra/rudra-boss.png");
-  --kinojo-sanctuary-rudra-lightning:url("../hof/assets/sanctuary/rudra/rudra-lightning.png");
-  --kinojo-sanctuary-rudra-lightning-right:url("../hof/assets/sanctuary/rudra/rudra-lightning-right.png");
+  --kinojo-sanctuary-rudra-bg:url("/assets/images/sanctuary/rudra/rudra-bg.png");
+  --kinojo-sanctuary-rudra-boss:url("/assets/images/sanctuary/rudra/rudra-boss.png");
+  --kinojo-sanctuary-rudra-lightning:url("/assets/images/sanctuary/rudra/rudra-lightning.png");
+  --kinojo-sanctuary-rudra-lightning-right:url("/assets/images/sanctuary/rudra/rudra-lightning-right.png");
   --kinojo-sanctuary-bagot-bg:radial-gradient(circle at 56% 24%,rgba(205,255,244,.82),rgba(65,144,131,.66) 38%,rgba(22,48,58,.96) 100%);
   --kinojo-sanctuary-kaldrix-bg:radial-gradient(circle at 67% 24%,rgba(255,229,178,.86),rgba(167,111,54,.72) 42%,rgba(54,36,42,.98) 100%);
 }

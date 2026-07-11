@@ -39,14 +39,13 @@
 
   const CLASS_ICON_MAP = {
     '수호성':'templar','검성':'gladiator','살성':'assassin','궁성':'ranger',
-    '마도성':'sorcerer','정령성':'elementalist','치유성':'cleric','호법성':'chanter'
+    '마도성':'sorcerer','정령성':'elementalist','치유성':'cleric','호법성':'chanter','권성':'fighter'
   };
 
   function classIconFor(className){
     const key = CLASS_ICON_MAP[String(className || '').trim()];
     if(!key) return '';
-    const base = String(location.pathname || '').includes('/m/') ? '../../hof/assets/' : '../hof/assets/';
-    return base + 'class_icon_' + key + '.png';
+    return '/assets/images/classes/class_icon_' + key + '.png';
   }
 
   function numText(value){
