@@ -12,7 +12,7 @@
 
   function safeText(value){ return String(value || '').replace(/\s+/g, ' ').trim(); }
   function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
-  function currentSanctuaryId(){ return new URLSearchParams(location.search || '').get('id') || 'rudra'; }
+  function currentSanctuaryId(){ return String(new URLSearchParams(location.search || '').get('id') || window.KinojoSanctuaryCurrentId || '').trim().toLowerCase(); }
 
   function toast(message, type){
     let host = document.getElementById('kinojoSanctuaryCenterToastHost');

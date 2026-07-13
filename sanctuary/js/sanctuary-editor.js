@@ -11,7 +11,7 @@
 
   function currentSanctuaryId(){
     try{ if(typeof currentId !== 'undefined' && currentId) return currentId; }catch(_err){}
-    return new URLSearchParams(location.search).get('id') || 'rudra';
+    return String(new URLSearchParams(location.search).get('id') || window.KinojoSanctuaryCurrentId || '').trim().toLowerCase();
   }
 
   function data(){
@@ -167,6 +167,7 @@
     const btn = modal.querySelector('#sanctuaryEditorSaveBtn');
     try{
       if(!token()) throw new Error('관리자 로그인 후 사용할 수 있습니다.');
+      if(!currentSanctuaryId()) throw new Error('성역 Master 정보를 먼저 불러와 주세요.');
       const payload = collect();
       if(!payload.updates.length) throw new Error('저장할 슬롯이 없습니다.');
       if(status){ status.className = 'sanctuary-editor-status pending'; status.textContent = 'Server Engine 저장 중...'; }
@@ -180,7 +181,7 @@
         teamMeta: payload.teamMeta
       });
       if(!result.ok) throw new Error(result.message || '성역 서버 저장 실패');
-      try{ sessionStorage.removeItem('kinojo_sanctuary_cache_v2026070105_' + currentSanctuaryId()); }catch(_err){}
+      try{ sessionStorage.removeItem('kinojo_sanctuary_cache_v2026071301_' + currentSanctuaryId()); }catch(_err){}
       if(status){ status.className = 'sanctuary-editor-status success'; status.textContent = '저장 완료 · ' + Number(result.updatedSlots || 0) + '개 슬롯 반영'; }
       await reloadFresh();
       setTimeout(close, 350);

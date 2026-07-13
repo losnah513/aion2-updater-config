@@ -1,27 +1,23 @@
 const SANCTUARY_API_PARAM=new URLSearchParams(location.search).get("api")||"";
 const params=new URLSearchParams(location.search);
-const currentId=params.get("id")||"rudra";
-const FALLBACK={
-  rudra:{info:{sanctuaryId:"rudra",sanctuaryNo:1,sanctuaryName:"심연의 재련: 루드라",shortName:"루드라팟",bossName:"루드라"}},
-  bagot:{info:{sanctuaryId:"bagot",sanctuaryNo:2,sanctuaryName:"침식의 정화소",shortName:"바고트팟",bossName:"바고트"}},
-  kaldrix:{info:{sanctuaryId:"kaldrix",sanctuaryNo:3,sanctuaryName:"무스펠의 성배",shortName:"칼드릭스팟",bossName:"칼드릭스"}}
-};
+let currentId=String(params.get("id")||"").trim().toLowerCase();
+let masterInfo=null;
 const CLASS_ASSET_BASE='/assets/images/classes/';
 const CLASS_ICON={"검성":"class_icon_gladiator.png","수호성":"class_icon_templar.png","살성":"class_icon_assassin.png","궁성":"class_icon_ranger.png","정령성":"class_icon_elementalist.png","마도성":"class_icon_sorcerer.png","치유성":"class_icon_cleric.png","호법성":"class_icon_chanter.png","권성":"class_icon_fighter.png"};
 function classIconSrc(className){return CLASS_ICON[className]?CLASS_ASSET_BASE+CLASS_ICON[className]:''}
 let sanctuaryData=null;
 function esc(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;")}
 function fmt(n){return Number(n||0).toLocaleString("ko-KR")}
-function currentFallback(){return FALLBACK[currentId]||FALLBACK.rudra}
+function currentFallback(){return {info:masterInfo||{sanctuaryId:currentId,sanctuaryNo:"",sanctuaryName:"성역",shortName:"성역",bossName:""}}}
 function setActiveLinks(){}
 /* KINOJO common drawer is managed by GitHub_Pages/ui/kinojo-common-ui.js */
 const SANCTUARY_CACHE_TTL_MS=5*60*1000;
-function sanctuaryCacheKey(){return 'kinojo_sanctuary_cache_v2026070115_'+currentId}
+function sanctuaryCacheKey(){return 'kinojo_sanctuary_cache_v2026071301_'+(currentId||'default')}
 function readSanctuaryCache(){try{const raw=sessionStorage.getItem(sanctuaryCacheKey());if(!raw)return null;const cached=JSON.parse(raw);if(!cached||!cached.savedAt||!cached.data)return null;if(Date.now()-cached.savedAt>SANCTUARY_CACHE_TTL_MS)return null;return cached.data}catch(e){return null}}
 function writeSanctuaryCache(data){try{if(data&&data.ok!==false)sessionStorage.setItem(sanctuaryCacheKey(),JSON.stringify({savedAt:Date.now(),data}))}catch(e){}}
-function applySanctuaryData(data,{fromCache=false}={}){sanctuaryData=data;render(data);const chip=document.getElementById('syncChip');if(chip)chip.textContent=(data.source==='supabase_035_sanctuary'?'Server Engine ':'')+'업데이트 '+(data.generatedAt||'완료')+(fromCache?' · 캐시':'')}
-async function fetchSanctuaryFresh(){if(!window.KinojoApi)throw new Error('KinojoApi 연결을 확인해 주세요.');const data=await window.KinojoApi.getAction('sanctuary',{id:currentId});if(!data||data.ok===false)throw new Error(data?.message||'성역 데이터 로드 실패');writeSanctuaryCache(data);return data}
-async function loadData(){setActiveLinks();renderSkeleton();const cached=readSanctuaryCache();try{if(cached){applySanctuaryData(cached,{fromCache:true});fetchSanctuaryFresh().then(data=>applySanctuaryData(data)).catch(()=>{});return}const data=await fetchSanctuaryFresh();applySanctuaryData(data)}catch(err){if(cached){applySanctuaryData(cached,{fromCache:true});return}const f=currentFallback();sanctuaryData={ok:true,info:f.info,summary:{totalCharacters:0,teamCount:0,partyCount:0,averagePower:0},teams:[],waiting:[],tips:['성역 Server Engine 데이터가 아직 비어 있습니다. 관리자 저장 후 실제 데이터가 표시됩니다.'],generatedAt:'데이터 없음'};render(sanctuaryData);(document.getElementById('syncChip')||{}).textContent='샘플 프레임 표시 중'}}
+function applySanctuaryData(data,{fromCache=false}={}){sanctuaryData=data;masterInfo=data?.info||data?.master||masterInfo;currentId=String(masterInfo?.sanctuaryId||masterInfo?.code||currentId||"").trim().toLowerCase();window.KinojoSanctuaryCurrentId=currentId;if(currentId&&!params.get("id")){const next=new URL(location.href);next.searchParams.set("id",currentId);history.replaceState(null,"",next)}render(data);const chip=document.getElementById("syncChip");if(chip)chip.textContent="Server Engine 업데이트 "+(data.generatedAt||"완료")+(fromCache?" · 캐시":"")}
+async function fetchSanctuaryFresh(){if(!window.KinojoApi)throw new Error('KinojoApi 연결을 확인해 주세요.');const data=await window.KinojoApi.getAction('sanctuary',{id:currentId||''});if(!data||data.ok===false)throw new Error(data?.message||'성역 데이터 로드 실패');writeSanctuaryCache(data);return data}
+async function loadData(){setActiveLinks();renderSkeleton();const cached=readSanctuaryCache();try{if(cached){applySanctuaryData(cached,{fromCache:true});fetchSanctuaryFresh().then(data=>applySanctuaryData(data)).catch(()=>{});return}const data=await fetchSanctuaryFresh();applySanctuaryData(data)}catch(err){if(cached){applySanctuaryData(cached,{fromCache:true});return}const f=currentFallback();sanctuaryData={ok:true,info:f.info,summary:{totalCharacters:0,teamCount:0,partyCount:0,averagePower:0},teams:[],waiting:[],tips:['성역 Server Engine 연결을 확인해 주세요.'],generatedAt:'데이터 없음'};render(sanctuaryData);(document.getElementById('syncChip')||{}).textContent='성역 데이터를 불러오지 못했습니다.'}}
 function sanctuarySpinner(label){return '<div class="kinojo-card-loading"><span class="kinojo-spinner" aria-hidden="true"><span></span></span><span>'+esc(label||'불러오는 중')+'</span></div>'}
 function renderSkeleton(){
   const summary=document.getElementById('summaryGrid');
@@ -33,7 +29,8 @@ function renderSkeleton(){
   if(waiting)waiting.innerHTML='<h2 class="waiting-title">대기자 명단</h2>'+sanctuarySpinner('대기자 확인 중');
   if(tip)tip.innerHTML=sanctuarySpinner('공략 팁 불러오는 중');
 }
-function render(data){const info=data.info||currentFallback().info;const hero=document.getElementById('sanctuaryHero');hero.className='sanctuary-hero '+esc(info.sanctuaryId||currentId);document.getElementById('heroKicker').textContent='성역 '+(info.sanctuaryNo||'');document.getElementById('heroTitle').textContent=info.sanctuaryName||info.shortName||'성역';document.getElementById('heroSub').textContent='Boss. '+(info.bossName||'-')+' · '+(info.shortName||'');renderSummary(data);const teamGroups=normalizeSanctuaryTeamGroups(data);renderPartyQuickNav((teamGroups||[]).flatMap(g=>g.forces||[]));renderTeamGroups(teamGroups);renderWaiting(data.waiting||[]);document.getElementById('tipTitle').textContent=(info.shortName||'성역')+' 공략 팁';document.getElementById('tipBody').innerHTML=(data.tips||[]).map(t=>'<div class="tip-line">'+esc(t)+'</div>').join('')||'<div class="tip-line">공략 팁이 준비 중입니다.</div>';setupSliders();bindSanctuaryReactionCards();window.KinojoSanctuaryCapture?.bind?.()}
+function applyHeroVisual(info){const bg=document.getElementById("heroBg");if(!bg)return;const image=String(info?.bannerImage||"").trim();const background=String(info?.cardBackground||"").trim();bg.style.background="";bg.style.backgroundImage="";if(image&&(image.startsWith("/")||image.startsWith("https://"))){bg.style.backgroundImage="url(\""+image.replace(/[\"()]/g,encodeURIComponent)+"\")";return}if(/^(radial-gradient|linear-gradient)\(/i.test(background)&&!/[;{}]/.test(background))bg.style.background=background}
+function render(data){const info=data.info||currentFallback().info;const hero=document.getElementById("sanctuaryHero");hero.className="sanctuary-hero";applyHeroVisual(info);document.getElementById("heroKicker").textContent="성역 "+(info.sanctuaryNo||"");document.getElementById("heroTitle").textContent=info.sanctuaryName||info.shortName||"성역";document.getElementById("heroSub").textContent="Boss. "+(info.bossName||"-")+" · "+(info.shortName||"");renderSummary(data);const teamGroups=normalizeSanctuaryTeamGroups(data);renderPartyQuickNav((teamGroups||[]).flatMap(g=>g.forces||[]));renderTeamGroups(teamGroups);renderWaiting(data.waiting||[]);document.getElementById('tipTitle').textContent=(info.shortName||'성역')+' 공략 팁';document.getElementById('tipBody').innerHTML=(data.tips||[]).map(t=>'<div class="tip-line">'+esc(t)+'</div>').join('')||'<div class="tip-line">공략 팁이 준비 중입니다.</div>';setupSliders();bindSanctuaryReactionCards();window.KinojoSanctuaryCapture?.bind?.()}
 function renderSummary(data){const s=data.summary||{};const groups=normalizeSanctuaryTeamGroups(data);const teamCount=(s.operatingTeamCount??s.teamGroupCount??groups.length)||1;const forceCount=(s.forceCount??s.teamCount??groups.reduce((sum,g)=>sum+(g.forces||[]).length,0))||0;document.getElementById('summaryGrid').innerHTML=[
   summaryCard(fmt(s.totalCharacters),'총 등록 캐릭터'),summaryCard(fmt(teamCount),'운영 팀'),summaryCard(fmt(forceCount),'운영 포스'),summaryCard(fmt(s.partyCount),'운영 파티'),summaryCard(fmt(s.averagePower),'평균 전투력'),'<button class="summary-card summary-tip" id="tipOpenBtn" type="button"><div class="summary-num">💡</div><div class="summary-label">공략 팁 보기</div></button>'
 ].join('');document.getElementById('tipOpenBtn')?.addEventListener('click',openTip)}
