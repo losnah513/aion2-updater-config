@@ -1427,3 +1427,6 @@ KINOJO Sanctuary Topbar Alert 20260713 STEP 5
   .kinojo-sanctuary-alert:not([hidden]) + .kinojo-visitor-statusbar .visit-text b{display:none;}
   .kinojo-sanctuary-alert:not([hidden]) + .kinojo-visitor-statusbar .visit-icon{display:none;}
 }
+/* 20260713_08 sanctuary master list belongs to the common drawer, not page cards */
+.kinojo-drawer-sanctuary-list{display:grid;grid-template-columns:minmax(0,1fr);gap:2px;min-width:0}
+.kinojo-drawer-sanctuary-list>a{display:block;width:100%;min-width:0;white-space:normal;word-break:keep-all}

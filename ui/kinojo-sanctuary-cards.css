@@ -40,7 +40,6 @@
 .sanctuary-master-card-symbol::after{content:"";position:absolute;inset:0;z-index:3;background:linear-gradient(180deg,rgba(8,10,18,0) 38%,rgba(4,9,18,.75) 76%,rgba(3,6,12,.95) 100%)}
 .sanctuary-master-card-symbol:hover::before{transform:scale(1.06);filter:saturate(1.1) brightness(1.08)}
 .sanctuary-master-content{position:absolute;z-index:12}
-.kinojo-drawer-sanctuary-list{display:grid;gap:2px}
 
 .mobile-sanctuary-track>.sanctuary-master-loading,
 .mobile-sanctuary-track>.sanctuary-master-error{
