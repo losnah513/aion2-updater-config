@@ -19,7 +19,7 @@
 <meta name="twitter:title" content="KINOJO INFO - 성역">
 <meta name="twitter:description" content="아이온2 지켈 서버 깡 레기온의 성역 포스 정보와 구성 현황을 확인할 수 있습니다.">
 <meta name="twitter:image" content="https://kinojo.info/assets/images/common/kinojo-og.jpg">
-<link href="../../sanctuary/css/sanctuary.css?cache=2026071112" rel="stylesheet"/>
+<link href="../../sanctuary/css/sanctuary.css?cache=2026071303" rel="stylesheet"/>
 <link href="../../ui/kinojo-common-ui.css?cache=2026070519" rel="stylesheet"/>
 <link href="../../ui/kinojo-character-reaction.css?cache=2026070604" rel="stylesheet"/>
 <link href="../mobile.css?cache=2026070519" rel="stylesheet"/>
@@ -37,6 +37,28 @@
 <h1 id="heroTitle">성역 데이터를 불러오는 중...</h1>
 <p id="heroSub">Server Engine Sanctuary Data</p>
 </div>
+</section>
+<section aria-label="이번 주 성역 운영" class="sanctuary-operation" id="sanctuaryOperation">
+<header class="sanctuary-operation-head">
+<div>
+<div class="sanctuary-operation-kicker">SANCTUARY OPERATION</div>
+<h2>이번 주 운영</h2>
+<p id="operationWeekLabel">아이온 주간 일정을 불러오는 중...</p>
+</div>
+<div class="sanctuary-operation-auth" id="operationAuthState">Server Engine 확인 중</div>
+</header>
+<div class="sanctuary-operation-overview" id="operationOverview"></div>
+<div class="sanctuary-operation-schedules" id="operationScheduleList"></div>
+<section aria-label="선택 일정 팀 현황" class="sanctuary-operation-teams" id="operationTeamPanel">
+<header class="sanctuary-operation-team-head">
+<div>
+<div class="sanctuary-operation-kicker">TEAM STATUS</div>
+<h3 id="operationTeamTitle">팀 운영 현황</h3>
+</div>
+<p id="operationTeamSub">일정을 선택하면 팀별 참여 현황이 표시됩니다.</p>
+</header>
+<div class="sanctuary-operation-team-list" id="operationTeamList"></div>
+</section>
 </section>
 <section aria-label="파티 바로가기" class="sanctuary-party-nav" id="partyQuickNav"></section>
 <section aria-label="성역 요약" class="summary-grid" id="summaryGrid"></section>
@@ -77,12 +99,12 @@
 <script src="../../core/kinojo-logger.js?cache=2026070115"></script>
 <script src="../../ui/kinojo-common-ui.js?cache=2026071301"></script>
 <script src="../../ui/kinojo-admin-panel.js?cache=2026070115"></script>
-<script src="../../core/kinojo-supabase.js?cache=2026071301"></script>
-<script src="../../core/kinojo-auth.js?cache=2026071112"></script>
+<script src="../../core/kinojo-supabase.js?cache=2026071303"></script>
+<script src="../../core/kinojo-auth.js?cache=2026071303"></script>
 <script src="../../ui/kinojo-event-notice.js?cache=2026070521"></script>
 <script src="../../ui/kinojo-character-reaction.js?cache=2026071112"></script>
 <script src="../../sanctuary/js/sanctuary-capture.js?cache=2026071301"></script>
-<script src="../../sanctuary/js/sanctuary.js?cache=2026071301"></script>
+<script src="../../sanctuary/js/sanctuary.js?cache=2026071303"></script>
 <script src="../../sanctuary/js/sanctuary-editor.js?cache=2026071301"></script>
 </body>
 </html>

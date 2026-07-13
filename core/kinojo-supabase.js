@@ -1281,6 +1281,15 @@
     return rpc('kinojo_web_get_sanctuary_v2', { p_sanctuary_code:String(id || '') || null });
   }
 
+  async function getSanctuaryOperationOverview(extra={}){
+    const params = {
+      p_sanctuary_code:String(extra.id || extra.sanctuaryId || extra.sanctuaryCode || '') || null,
+      p_pass_key:normalizePassKey(extra.passKey || extra.passCode || '') || null
+    };
+    if(extra.now) params.p_now = extra.now;
+    return rpc('kinojo_web_get_sanctuary_operation_overview', params);
+  }
+
   async function saveSanctuaryData(extra={}){
     assertAdmin();
     return rpc('kinojo_web_save_sanctuary', { p_payload:extra || {} });
@@ -1391,6 +1400,7 @@
     if(name === 'hallSuggestion') return submitHallSuggestion(extra);
     if(name === 'sanctuaryMaster') return getSanctuaryMaster();
     if(name === 'sanctuary') return getSanctuaryData(extra.id || extra.sanctuaryId || '');
+    if(name === 'sanctuaryOperation') return getSanctuaryOperationOverview(extra);
     if(name === 'sanctuaryAdmin') return saveSanctuaryData(extra);
     if(name === 'notices') return { ok:true, notices:(await getLatestAnnouncements(extra.limit || 5)).map(noticeFromRow).filter(Boolean) };
     if(name === 'hallVisit'){
@@ -1455,7 +1465,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.36-sanctuary-master-2026071301',
+    version:'1.3.1.37-sanctuary-operation-2026071303',
     getConfig,
     isPreferred,
     isConfigured,
@@ -1484,6 +1494,7 @@
     submitHallSuggestion,
     getSanctuaryMaster,
     getSanctuaryData,
+    getSanctuaryOperationOverview,
     saveSanctuaryData,
     logPageView,
     verifyPassKey,

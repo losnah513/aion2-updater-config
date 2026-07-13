@@ -6,6 +6,10 @@ const CLASS_ASSET_BASE='/assets/images/classes/';
 const CLASS_ICON={"검성":"class_icon_gladiator.png","수호성":"class_icon_templar.png","살성":"class_icon_assassin.png","궁성":"class_icon_ranger.png","정령성":"class_icon_elementalist.png","마도성":"class_icon_sorcerer.png","치유성":"class_icon_cleric.png","호법성":"class_icon_chanter.png","권성":"class_icon_fighter.png"};
 function classIconSrc(className){return CLASS_ICON[className]?CLASS_ASSET_BASE+CLASS_ICON[className]:''}
 let sanctuaryData=null;
+let sanctuaryOperationData=null;
+let operationLoadKey='';
+let operationRequestSeq=0;
+let activeOperationScheduleId=null;
 function esc(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;")}
 function fmt(n){return Number(n||0).toLocaleString("ko-KR")}
 function currentFallback(){return {info:masterInfo||{sanctuaryId:currentId,sanctuaryNo:"",sanctuaryName:"성역",shortName:"성역",bossName:""}}}
@@ -15,7 +19,7 @@ const SANCTUARY_CACHE_TTL_MS=5*60*1000;
 function sanctuaryCacheKey(){return 'kinojo_sanctuary_cache_v2026071301_'+(currentId||'default')}
 function readSanctuaryCache(){try{const raw=sessionStorage.getItem(sanctuaryCacheKey());if(!raw)return null;const cached=JSON.parse(raw);if(!cached||!cached.savedAt||!cached.data)return null;if(Date.now()-cached.savedAt>SANCTUARY_CACHE_TTL_MS)return null;return cached.data}catch(e){return null}}
 function writeSanctuaryCache(data){try{if(data&&data.ok!==false)sessionStorage.setItem(sanctuaryCacheKey(),JSON.stringify({savedAt:Date.now(),data}))}catch(e){}}
-function applySanctuaryData(data,{fromCache=false}={}){sanctuaryData=data;masterInfo=data?.info||data?.master||masterInfo;currentId=String(masterInfo?.sanctuaryId||masterInfo?.code||currentId||"").trim().toLowerCase();window.KinojoSanctuaryCurrentId=currentId;if(currentId&&!params.get("id")){const next=new URL(location.href);next.searchParams.set("id",currentId);history.replaceState(null,"",next)}render(data);const chip=document.getElementById("syncChip");if(chip)chip.textContent="Server Engine 업데이트 "+(data.generatedAt||"완료")+(fromCache?" · 캐시":"")}
+function applySanctuaryData(data,{fromCache=false}={}){sanctuaryData=data;masterInfo=data?.info||data?.master||masterInfo;currentId=String(masterInfo?.sanctuaryId||masterInfo?.code||currentId||"").trim().toLowerCase();window.KinojoSanctuaryCurrentId=currentId;if(currentId&&!params.get("id")){const next=new URL(location.href);next.searchParams.set("id",currentId);history.replaceState(null,"",next)}render(data);ensureSanctuaryOperation();const chip=document.getElementById("syncChip");if(chip)chip.textContent="Server Engine 업데이트 "+(data.generatedAt||"완료")+(fromCache?" · 캐시":"")}
 async function fetchSanctuaryFresh(){if(!window.KinojoApi)throw new Error('KinojoApi 연결을 확인해 주세요.');const data=await window.KinojoApi.getAction('sanctuary',{id:currentId||''});if(!data||data.ok===false)throw new Error(data?.message||'성역 데이터 로드 실패');writeSanctuaryCache(data);return data}
 async function loadData(){setActiveLinks();renderSkeleton();const cached=readSanctuaryCache();try{if(cached){applySanctuaryData(cached,{fromCache:true});fetchSanctuaryFresh().then(data=>applySanctuaryData(data)).catch(()=>{});return}const data=await fetchSanctuaryFresh();applySanctuaryData(data)}catch(err){if(cached){applySanctuaryData(cached,{fromCache:true});return}const f=currentFallback();sanctuaryData={ok:true,info:f.info,summary:{totalCharacters:0,teamCount:0,partyCount:0,averagePower:0},teams:[],waiting:[],tips:['성역 Server Engine 연결을 확인해 주세요.'],generatedAt:'데이터 없음'};render(sanctuaryData);(document.getElementById('syncChip')||{}).textContent='성역 데이터를 불러오지 못했습니다.'}}
 function sanctuarySpinner(label){return '<div class="kinojo-card-loading"><span class="kinojo-spinner" aria-hidden="true"><span></span></span><span>'+esc(label||'불러오는 중')+'</span></div>'}
@@ -28,6 +32,142 @@ function renderSkeleton(){
   if(team)team.innerHTML=sanctuarySpinner('성역 포스 데이터를 불러오는 중');
   if(waiting)waiting.innerHTML='<h2 class="waiting-title">대기자 명단</h2>'+sanctuarySpinner('대기자 확인 중');
   if(tip)tip.innerHTML=sanctuarySpinner('공략 팁 불러오는 중');
+  renderOperationSkeleton();
+}
+
+function currentSanctuaryPassKey(){
+  const session=window.KinojoAuth&&typeof window.KinojoAuth.getSession==='function'?window.KinojoAuth.getSession():null;
+  return String(session?.passKey||session?.passCode||'').trim();
+}
+function operationStatusClass(value){
+  const state=String(value||'').toLowerCase();
+  return ['today','survey','coordinating','confirmed','canceled','completed'].includes(state)?state:'survey';
+}
+function renderOperationSkeleton(){
+  const week=document.getElementById('operationWeekLabel');
+  const auth=document.getElementById('operationAuthState');
+  const overview=document.getElementById('operationOverview');
+  const schedules=document.getElementById('operationScheduleList');
+  const teams=document.getElementById('operationTeamList');
+  if(week)week.textContent='아이온 주간 · 수요일부터 화요일까지';
+  if(auth)auth.textContent='Server Engine 확인 중';
+  if(overview)overview.innerHTML=[sanctuarySpinner('이번 주 일정 확인 중'),sanctuarySpinner('응답 현황 확인 중'),sanctuarySpinner('내 팀 확인 중')].map(x=>'<div class="sanctuary-operation-stat">'+x+'</div>').join('');
+  if(schedules)schedules.innerHTML=sanctuarySpinner('성역 운영 일정을 불러오는 중');
+  if(teams)teams.innerHTML=sanctuarySpinner('팀 참여 현황을 불러오는 중');
+}
+function ensureSanctuaryOperation(force=false){
+  if(!currentId)return;
+  const key=currentId+'|'+currentSanctuaryPassKey();
+  if(!force&&operationLoadKey===key)return;
+  operationLoadKey=key;
+  loadSanctuaryOperation(key);
+}
+async function loadSanctuaryOperation(key){
+  const seq=++operationRequestSeq;
+  renderOperationSkeleton();
+  try{
+    if(!window.KinojoApi)throw new Error('KinojoApi 연결을 확인해 주세요.');
+    const data=await window.KinojoApi.getAction('sanctuaryOperation',{id:currentId,passKey:currentSanctuaryPassKey()});
+    if(seq!==operationRequestSeq||key!==operationLoadKey)return;
+    if(!data||data.ok===false)throw new Error(data?.message||'성역 운영 정보 로드 실패');
+    sanctuaryOperationData=data;
+    activeOperationScheduleId=data.primaryScheduleId||data.items?.[0]?.id||null;
+    renderSanctuaryOperation(data);
+  }catch(err){
+    if(seq!==operationRequestSeq)return;
+    const auth=document.getElementById('operationAuthState');
+    const overview=document.getElementById('operationOverview');
+    const schedules=document.getElementById('operationScheduleList');
+    const teams=document.getElementById('operationTeamList');
+    if(auth)auth.textContent='운영 정보 연결 실패';
+    if(overview)overview.innerHTML='<div class="sanctuary-operation-empty">Server Engine 운영 정보를 불러오지 못했습니다.</div>';
+    if(schedules)schedules.innerHTML='<div class="sanctuary-operation-empty">'+esc(err?.message||'일정 조회 실패')+'</div>';
+    if(teams)teams.innerHTML='';
+  }
+}
+function operationStat(value,label,sub=''){
+  return '<div class="sanctuary-operation-stat"><strong>'+esc(value)+'</strong><span>'+esc(label)+'</span>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</div>';
+}
+function renderSanctuaryOperation(data){
+  const items=Array.isArray(data.items)?data.items:[];
+  const primary=items.find(item=>String(item.id)===String(data.primaryScheduleId))||items[0]||null;
+  const week=document.getElementById('operationWeekLabel');
+  const auth=document.getElementById('operationAuthState');
+  const overview=document.getElementById('operationOverview');
+  const schedules=document.getElementById('operationScheduleList');
+  if(week)week.textContent='아이온 주간 '+String(data.weekLabel||'')+' · 수요일~화요일';
+  if(auth){
+    const user=data.user||null;
+    auth.textContent=data.authenticated?(String(user?.mainCharacterName||'로그인 사용자')+(user?.teamNo?' · '+user.teamNo+'팀':' · 소속 팀 미확인')):'PASS KEY 로그인 시 내 팀 일정이 강조됩니다.';
+    auth.classList.toggle('is-logged-in',!!data.authenticated);
+  }
+  if(overview)overview.innerHTML=[
+    operationStat(data.scheduleCount||0,'이번 주 일정',data.hasSchedule?'Server 등록 완료':'등록된 일정 없음'),
+    operationStat(data.responseRequiredCount||0,'응답 필요',data.authenticated?'내 일정 기준':'로그인 후 확인'),
+    operationStat(primary?.displayLabel||'대기','우선 일정',primary?String(primary.dateLabel||'')+' '+String(primary.startTime||''):'일정 등록 대기')
+  ].join('');
+  if(!items.length){
+    if(schedules)schedules.innerHTML='<div class="sanctuary-operation-empty"><strong>이번 주 등록된 일정이 없습니다.</strong><span>관리자가 일정을 등록하면 상태와 참여 현황이 여기에 표시됩니다.</span></div>';
+    renderOperationTeams(null);
+    return;
+  }
+  if(schedules){
+    schedules.innerHTML=items.map(operationScheduleHtml).join('');
+    schedules.querySelectorAll('[data-operation-schedule]').forEach(btn=>btn.addEventListener('click',()=>selectOperationSchedule(btn.dataset.operationSchedule,true)));
+  }
+  selectOperationSchedule(activeOperationScheduleId||data.primaryScheduleId||items[0].id,false);
+}
+function operationScheduleHtml(item){
+  const summary=item.summary||{};
+  const state=operationStatusClass(item.displayState||item.effectiveStatus);
+  const active=String(item.id)===String(activeOperationScheduleId);
+  const userResponse=item.user?.response;
+  const responseText=item.responseRequired?'응답 필요':(userResponse&&userResponse.statusLabel?'내 응답 '+userResponse.statusLabel:'');
+  return '<article class="sanctuary-operation-schedule '+(active?'is-active ':'')+'status-'+state+'" data-operation-card="'+esc(item.id)+'">'
+    +'<div class="sanctuary-operation-schedule-main"><span class="sanctuary-operation-status status-'+state+'">'+esc(item.displayLabel||item.statusLabel||'조사중')+'</span><div><h3>'+esc(item.title||item.sanctuaryName||'성역 일정')+'</h3><p>'+esc(item.dateLabel||item.targetDate||'')+(item.startTime?' · '+esc(item.startTime):'')+(item.endTime?'~'+esc(item.endTime):'')+'</p></div></div>'
+    +'<div class="sanctuary-operation-schedule-meta"><span>참여 '+esc(summary.participatingCount??0)+'명</span><span>불가 '+esc(summary.unavailableCount??0)+'명</span><span>미응답 '+esc(summary.pendingCount??0)+'명</span><span>응답률 '+esc(summary.responseRate??0)+'%</span></div>'
+    +(responseText?'<div class="sanctuary-operation-response '+(item.responseRequired?'needs-response':'')+'">'+esc(responseText)+'</div>':'')
+    +'<button class="sanctuary-operation-view" type="button" data-operation-schedule="'+esc(item.id)+'">일정 보기</button></article>';
+}
+function selectOperationSchedule(scheduleId,scroll){
+  const items=Array.isArray(sanctuaryOperationData?.items)?sanctuaryOperationData.items:[];
+  const selected=items.find(item=>String(item.id)===String(scheduleId))||items[0]||null;
+  activeOperationScheduleId=selected?.id||null;
+  document.querySelectorAll('[data-operation-card]').forEach(card=>card.classList.toggle('is-active',String(card.dataset.operationCard)===String(activeOperationScheduleId)));
+  renderOperationTeams(selected);
+  if(scroll&&selected)document.getElementById('operationTeamPanel')?.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function operationMemberHtml(member){
+  const state=String(member.status||'pending').toLowerCase()||'pending';
+  return '<li class="sanctuary-operation-member member-'+esc(state)+'"><strong>'+esc(member.memberName||'-')+'</strong><span>'+esc(member.statusLabel||'미응답')+(member.timeText?' · '+esc(member.timeText):'')+'</span></li>';
+}
+function operationTeamHtml(team){
+  const summary=team.summary||{};
+  const state=operationStatusClass(team.effectiveStatus||team.status);
+  const recommended=summary.recommendedTime?.label||'';
+  const members=Array.isArray(summary.members)?summary.members:[];
+  return '<article class="sanctuary-operation-team '+(team.isUserTeam?'is-user-team ':'')+'status-'+state+'">'
+    +'<header><div><span class="sanctuary-operation-status status-'+state+'">'+esc(team.statusLabel||'조사중')+'</span><h4>'+esc(team.teamName||((team.teamNo||'')+'팀'))+'</h4></div>'+(team.isUserTeam?'<span class="sanctuary-operation-myteam">내 팀</span>':'')+'</header>'
+    +'<p class="sanctuary-operation-team-time">'+(team.startTime?esc(team.startTime)+(team.endTime?'~'+esc(team.endTime):''):'시간 조율 중')+(team.note?' · '+esc(team.note):'')+'</p>'
+    +'<div class="sanctuary-operation-team-metrics"><span><strong>'+esc(summary.availableCount??0)+'</strong> 가능</span><span><strong>'+esc(summary.negotiableCount??0)+'</strong> 협의</span><span><strong>'+esc(summary.unavailableCount??0)+'</strong> 불가</span><span><strong>'+esc(summary.pendingCount??0)+'</strong> 미응답</span></div>'
+    +'<div class="sanctuary-operation-team-rate"><span>응답률 '+esc(summary.responseRate??0)+'%</span><span>참여율 '+esc(summary.participationRate??0)+'%</span>'+(recommended?'<span>추천 '+esc(recommended)+'</span>':'')+'</div>'
+    +'<details class="sanctuary-operation-members"><summary>팀원 현황 보기</summary><ul>'+(members.length?members.map(operationMemberHtml).join(''):'<li class="sanctuary-operation-member"><span>등록된 팀원이 없습니다.</span></li>')+'</ul></details></article>';
+}
+function renderOperationTeams(schedule){
+  const title=document.getElementById('operationTeamTitle');
+  const sub=document.getElementById('operationTeamSub');
+  const list=document.getElementById('operationTeamList');
+  if(!list)return;
+  if(!schedule){
+    if(title)title.textContent='팀 운영 현황';
+    if(sub)sub.textContent='등록된 일정이 없습니다.';
+    list.innerHTML='<div class="sanctuary-operation-empty">일정이 등록되면 팀별 상태와 참여 현황이 표시됩니다.</div>';
+    return;
+  }
+  if(title)title.textContent=String(schedule.title||schedule.sanctuaryName||'성역 일정')+' · 팀 현황';
+  if(sub)sub.textContent=String(schedule.dateLabel||'')+(schedule.startTime?' · '+String(schedule.startTime):'')+' · '+String(schedule.displayLabel||schedule.statusLabel||'');
+  const teams=Array.isArray(schedule.teams)?schedule.teams:[];
+  list.innerHTML=teams.length?teams.map(operationTeamHtml).join(''):'<div class="sanctuary-operation-empty">대상 팀 정보가 없습니다.</div>';
 }
 function applyHeroVisual(info){const bg=document.getElementById("heroBg");if(!bg)return;const image=String(info?.bannerImage||"").trim();const background=String(info?.cardBackground||"").trim();bg.style.background="";bg.style.backgroundImage="";if(image&&(image.startsWith("/")||image.startsWith("https://"))){bg.style.backgroundImage="url(\""+image.replace(/[\"()]/g,encodeURIComponent)+"\")";return}if(/^(radial-gradient|linear-gradient)\(/i.test(background)&&!/[;{}]/.test(background))bg.style.background=background}
 function render(data){const info=data.info||currentFallback().info;const hero=document.getElementById("sanctuaryHero");hero.className="sanctuary-hero";applyHeroVisual(info);document.getElementById("heroKicker").textContent="성역 "+(info.sanctuaryNo||"");document.getElementById("heroTitle").textContent=info.sanctuaryName||info.shortName||"성역";document.getElementById("heroSub").textContent="Boss. "+(info.bossName||"-")+" · "+(info.shortName||"");renderSummary(data);const teamGroups=normalizeSanctuaryTeamGroups(data);renderPartyQuickNav((teamGroups||[]).flatMap(g=>g.forces||[]));renderTeamGroups(teamGroups);renderWaiting(data.waiting||[]);document.getElementById('tipTitle').textContent=(info.shortName||'성역')+' 공략 팁';document.getElementById('tipBody').innerHTML=(data.tips||[]).map(t=>'<div class="tip-line">'+esc(t)+'</div>').join('')||'<div class="tip-line">공략 팁이 준비 중입니다.</div>';setupSliders();bindSanctuaryReactionCards();window.KinojoSanctuaryCapture?.bind?.()}
@@ -128,4 +268,5 @@ function bindSanctuaryReactionCards(){document.querySelectorAll('.san-reaction-c
 
 function setupSliders(){document.querySelectorAll('.san-force-rail-shell').forEach(shell=>{const track=shell.querySelector('.san-force-list'),left=shell.querySelector('.slide-btn.left'),right=shell.querySelector('.slide-btn.right');if(!track||!left||!right)return;function update(){const max=track.scrollWidth-track.clientWidth;left.classList.toggle('show',track.scrollLeft>8);right.classList.toggle('show',max>8&&track.scrollLeft<max-8)}left.onclick=()=>track.scrollBy({left:-Math.min(420,track.clientWidth*.86),behavior:'smooth'});right.onclick=()=>track.scrollBy({left:Math.min(420,track.clientWidth*.86),behavior:'smooth'});track.addEventListener('scroll',update,{passive:true});window.addEventListener('resize',update);setTimeout(update,80)})}
 function openTip(){document.getElementById('tipPanel')?.classList.add('open');document.getElementById('tipPanel')?.setAttribute('aria-hidden','false')}function closeTip(){document.getElementById('tipPanel')?.classList.remove('open');document.getElementById('tipPanel')?.setAttribute('aria-hidden','true')}function openAdmin(){if(window.KinojoSanctuaryEditor&&typeof window.KinojoSanctuaryEditor.open==='function')return window.KinojoSanctuaryEditor.open();document.getElementById('adminCodeModal')?.classList.add('open');document.getElementById('adminCodeModal')?.setAttribute('aria-hidden','false')}function closeAdmin(){document.getElementById('adminCodeModal')?.classList.remove('open');document.getElementById('adminCodeModal')?.setAttribute('aria-hidden','true')}
+window.addEventListener('kinojo:auth-changed',()=>{operationLoadKey='';if(currentId)ensureSanctuaryOperation(true)});
 document.getElementById('tipCloseBtn')?.addEventListener('click',closeTip);document.getElementById('tipPanel')?.addEventListener('click',e=>{if(e.target.id==='tipPanel')closeTip()});document.getElementById('editModeBtn')?.addEventListener('click',openAdmin);document.getElementById('adminCodeCloseBtn')?.addEventListener('click',closeAdmin);document.getElementById('adminCodeModal')?.addEventListener('click',e=>{if(e.target.id==='adminCodeModal')closeAdmin()});document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeTip();closeAdmin()}});loadData();

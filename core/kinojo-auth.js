@@ -57,10 +57,17 @@
 
   function getAccount(){ return readJson(ACCOUNT_KEY); }
 
+  function emitAuthChanged(session, account){
+    window.dispatchEvent(new CustomEvent('kinojo:auth-changed', {
+      detail:{ loggedIn:!!(session && session.token), session:session || null, account:account || null }
+    }));
+  }
+
   function setSession(session, account){
     writeJson(STORAGE_KEY, session || {});
     writeJson(ACCOUNT_KEY, account || {});
     updateStatus();
+    emitAuthChanged(session, account);
   }
 
   function clearSession(){
@@ -72,6 +79,7 @@
       resetCodeRequestPanel(true);
     }
     updateStatus();
+    emitAuthChanged(null, null);
   }
 
   function isLoggedIn(){ return !!getSession(); }

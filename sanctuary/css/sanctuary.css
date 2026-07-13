@@ -628,3 +628,70 @@ body{background:#fff!important;}
   .sanctuary-reaction-comment{min-height:74px!important;font-size:13px!important;}
   .sanctuary-reaction-submit{min-width:74px!important;height:40px!important;font-size:13px!important;}
 }
+
+/* 20260713 STEP 3: Server-driven sanctuary operation overview */
+.sanctuary-operation{margin:0 0 12px;padding:14px;border:1px solid rgba(56,101,176,.22);border-radius:var(--radius-card);background:linear-gradient(180deg,#f8fbff 0,#fff 42%)}
+.sanctuary-operation-head,.sanctuary-operation-team-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.sanctuary-operation-head h2,.sanctuary-operation-team-head h3{margin:3px 0 4px;color:#17233a;font-size:21px;line-height:1.15;letter-spacing:-.5px}
+.sanctuary-operation-head p,.sanctuary-operation-team-head p{margin:0;color:#667085;font-size:12px;font-weight:900}
+.sanctuary-operation-kicker{color:#2563eb;font-size:10px;font-weight:1000;letter-spacing:.14em}
+.sanctuary-operation-auth{max-width:360px;padding:7px 10px;border:1px solid rgba(100,116,139,.18);border-radius:999px;background:#fff;color:#64748b;font-size:11px;font-weight:1000;text-align:right}
+.sanctuary-operation-auth.is-logged-in{border-color:rgba(34,197,94,.28);background:#f0fdf4;color:#15803d}
+.sanctuary-operation-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+.sanctuary-operation-stat{min-height:74px;padding:11px 12px;border:1px solid rgba(120,145,180,.2);border-radius:8px;background:#fff;display:grid;align-content:center;gap:2px}
+.sanctuary-operation-stat strong{font-size:20px;line-height:1.1;color:#17233a}
+.sanctuary-operation-stat span{font-size:11px;font-weight:1000;color:#475569}
+.sanctuary-operation-stat small{font-size:10px;font-weight:900;color:#94a3b8}
+.sanctuary-operation-schedules{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:10px}
+.sanctuary-operation-schedule{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px 12px;padding:12px;border:1px solid rgba(120,145,180,.22);border-radius:9px;background:#fff;transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+.sanctuary-operation-schedule.is-active{border-color:rgba(37,99,235,.48);box-shadow:0 0 0 2px rgba(37,99,235,.08)}
+.sanctuary-operation-schedule-main{display:flex;align-items:flex-start;gap:9px;min-width:0}
+.sanctuary-operation-schedule-main h3{margin:1px 0 3px;font-size:15px;line-height:1.2;color:#17233a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sanctuary-operation-schedule-main p{margin:0;color:#64748b;font-size:11px;font-weight:900}
+.sanctuary-operation-status{display:inline-flex;align-items:center;justify-content:center;min-width:46px;height:24px;padding:0 8px;border:1px solid transparent;border-radius:999px;font-size:10px;font-weight:1000;white-space:nowrap}
+.sanctuary-operation-status.status-today{background:#fff1f2;border-color:#fecdd3;color:#be123c}
+.sanctuary-operation-status.status-survey{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
+.sanctuary-operation-status.status-coordinating{background:#fff7ed;border-color:#fed7aa;color:#c2410c}
+.sanctuary-operation-status.status-confirmed{background:#f0fdf4;border-color:#bbf7d0;color:#15803d}
+.sanctuary-operation-status.status-canceled{background:#f8fafc;border-color:#cbd5e1;color:#64748b}
+.sanctuary-operation-status.status-completed{background:#f5f3ff;border-color:#ddd6fe;color:#6d28d9}
+.sanctuary-operation-schedule-meta{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap}
+.sanctuary-operation-schedule-meta span,.sanctuary-operation-response{padding:4px 7px;border-radius:999px;background:#f8fafc;color:#475569;font-size:10px;font-weight:1000}
+.sanctuary-operation-response{grid-column:1;justify-self:start;background:#eef2ff;color:#4338ca}
+.sanctuary-operation-response.needs-response{background:#fff1f2;color:#be123c}
+.sanctuary-operation-view{grid-column:2;grid-row:1/3;align-self:center;appearance:none;border:1px solid rgba(37,99,235,.24);border-radius:999px;background:#fff;color:#1d4ed8;padding:7px 10px;font-size:11px;font-weight:1000;cursor:pointer}
+.sanctuary-operation-teams{margin-top:12px;padding-top:12px;border-top:1px solid rgba(120,145,180,.16)}
+.sanctuary-operation-team-head{align-items:end}
+.sanctuary-operation-team-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:9px}
+.sanctuary-operation-team{padding:12px;border:1px solid rgba(120,145,180,.22);border-radius:9px;background:#fff}
+.sanctuary-operation-team.is-user-team{border-color:rgba(37,99,235,.5);box-shadow:inset 0 0 0 1px rgba(37,99,235,.08)}
+.sanctuary-operation-team>header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sanctuary-operation-team>header>div{display:flex;align-items:center;gap:7px;min-width:0}
+.sanctuary-operation-team h4{margin:0;color:#17233a;font-size:15px}
+.sanctuary-operation-myteam{padding:4px 7px;border-radius:999px;background:#2563eb;color:#fff;font-size:10px;font-weight:1000}
+.sanctuary-operation-team-time{margin:8px 0;color:#64748b;font-size:11px;font-weight:900}
+.sanctuary-operation-team-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.sanctuary-operation-team-metrics span{padding:7px 3px;border-radius:7px;background:#f8fafc;color:#64748b;font-size:9px;font-weight:900;text-align:center}
+.sanctuary-operation-team-metrics strong{display:block;color:#17233a;font-size:15px}
+.sanctuary-operation-team-rate{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+.sanctuary-operation-team-rate span{padding:4px 6px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-size:9px;font-weight:1000}
+.sanctuary-operation-members{margin-top:8px;border-top:1px solid rgba(120,145,180,.14);padding-top:7px}
+.sanctuary-operation-members summary{cursor:pointer;color:#475569;font-size:10px;font-weight:1000}
+.sanctuary-operation-members ul{display:grid;gap:4px;margin:7px 0 0;padding:0;list-style:none}
+.sanctuary-operation-member{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 7px;border-radius:7px;background:#f8fafc;font-size:10px}
+.sanctuary-operation-member strong{color:#17233a}
+.sanctuary-operation-member span{color:#64748b;text-align:right}
+.sanctuary-operation-empty{grid-column:1/-1;display:grid;gap:4px;padding:18px;border:1px dashed rgba(120,145,180,.28);border-radius:9px;background:#fff;color:#64748b;font-size:12px;font-weight:900;text-align:center}
+.sanctuary-operation-empty strong{color:#17233a;font-size:14px}
+@media(max-width:900px){.sanctuary-operation-team-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:680px){
+  .sanctuary-operation{padding:11px}
+  .sanctuary-operation-head,.sanctuary-operation-team-head{display:grid;gap:7px}
+  .sanctuary-operation-auth{max-width:none;text-align:left}
+  .sanctuary-operation-overview{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .sanctuary-operation-stat{min-height:66px;padding:8px}
+  .sanctuary-operation-stat strong{font-size:17px}
+  .sanctuary-operation-schedules,.sanctuary-operation-team-list{grid-template-columns:1fr}
+  .sanctuary-operation-schedule{grid-template-columns:minmax(0,1fr) auto}
+  .sanctuary-operation-team-metrics{grid-template-columns:repeat(4,1fr)}
+}
