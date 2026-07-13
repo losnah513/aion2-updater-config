@@ -3,7 +3,7 @@
   'use strict';
   const $ = (s,r=document)=>r.querySelector(s);
   const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
-  const state = { tab:'dashboard', requests:[], accounts:[], characters:[], logs:[], eventNoticeGroups:[], eventNoticeEditingId:null };
+  const state = { tab:'dashboard', requests:[], accounts:[], characters:[], logs:[], eventNoticeGroups:[], eventNoticeEditingId:null, sanctuarySchedules:[], sanctuaryMasters:[], sanctuaryStatusOptions:[], sanctuaryScheduleLoaded:false };
   const CACHE = '2026070418';
   function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
   function addLog(type,msg){
@@ -48,6 +48,7 @@
     if(tab==='dashboard') refreshDashboard();
     if(tab==='requests') loadCodeRequests();
     if(tab==='members') loadAccounts();
+    if(tab==='sanctuary') loadSanctuaryScheduleConsole();
     if(tab==='notices') loadNotices();
     if(tab==='server') refreshServerStatus();
     if(tab==='system'){ refreshSystemSettings(); loadEventNoticeGroups(); }
@@ -248,6 +249,147 @@
       addLog('ERROR',msg);
     }
     finally{ btn&&(btn.disabled=false); }
+  }
+
+  function dateTimeLocalValue(value){
+    if(!value) return '';
+    const date=new Date(value);
+    if(Number.isNaN(date.getTime())) return '';
+    const local=new Date(date.getTime()-date.getTimezoneOffset()*60000);
+    return local.toISOString().slice(0,16);
+  }
+  function selectedSanctuaryMaster(){
+    const code=String($('#sanctuaryScheduleCode')?.value||'').toLowerCase();
+    return (state.sanctuaryMasters||[]).find(item=>String(item.code||'').toLowerCase()===code)||null;
+  }
+  function fillSanctuaryScheduleSelects(){
+    const filter=$('#sanctuaryScheduleFilter');
+    const editor=$('#sanctuaryScheduleCode');
+    const previousFilter=filter?.value||'';
+    const previousEditor=editor?.value||'';
+    const rows=state.sanctuaryMasters||[];
+    if(filter){
+      filter.innerHTML='<option value="">전체 성역</option>'+rows.map(item=>'<option value="'+esc(item.code)+'">'+esc(item.name||item.shortName||item.code)+'</option>').join('');
+      filter.value=rows.some(item=>String(item.code)===previousFilter)?previousFilter:'';
+    }
+    if(editor){
+      editor.innerHTML=rows.map(item=>'<option value="'+esc(item.code)+'">'+esc(item.name||item.shortName||item.code)+'</option>').join('');
+      editor.value=rows.some(item=>String(item.code)===previousEditor)?previousEditor:String(rows[0]?.code||'');
+    }
+  }
+  function fillSanctuaryStatusSelect(selected){
+    const select=$('#sanctuaryScheduleStatusSelect');
+    if(!select)return;
+    const rows=state.sanctuaryStatusOptions||[];
+    select.innerHTML=rows.map(item=>'<option value="'+esc(item.value)+'">'+esc(item.label)+'</option>').join('');
+    if(rows.some(item=>String(item.value)===String(selected||'')))select.value=String(selected);
+  }
+  function renderSanctuaryTeamOptions(selectedTeams){
+    const root=$('#sanctuaryScheduleTeamOptions');
+    if(!root)return;
+    const master=selectedSanctuaryMaster();
+    const selected=new Set((selectedTeams||[]).map(item=>Number(item?.teamNo||item?.operatingTeamNo||item)).filter(Boolean));
+    const teams=Array.isArray(master?.teams)?master.teams:[];
+    root.innerHTML=teams.length?teams.map(team=>'<label class="admin-schedule-team-option"><input type="checkbox" value="'+esc(team.teamNo)+'" '+(selected.has(Number(team.teamNo))?'checked':'')+'/><span>'+esc(team.teamName||team.teamNo+'팀')+'</span></label>').join(''):'<span class="admin-empty compact">성역 팀 구성을 찾지 못했습니다.</span>';
+  }
+  function resetSanctuaryScheduleEditor(schedule){
+    const item=schedule||null;
+    $('#sanctuaryScheduleId') && ($('#sanctuaryScheduleId').value=item?.id||'');
+    $('#sanctuaryScheduleEditorTitle') && ($('#sanctuaryScheduleEditorTitle').textContent=item?'일정 변경':'새 일정 등록');
+    const code=String(item?.sanctuaryCode||$('#sanctuaryScheduleFilter')?.value||state.sanctuaryMasters?.[0]?.code||'');
+    if($('#sanctuaryScheduleCode'))$('#sanctuaryScheduleCode').value=code;
+    $('#sanctuaryScheduleDate') && ($('#sanctuaryScheduleDate').value=String(item?.targetDate||state.sanctuaryConsoleToday||todayDateInputValue()));
+    $('#sanctuaryScheduleStart') && ($('#sanctuaryScheduleStart').value=String(item?.startTime||''));
+    $('#sanctuaryScheduleEnd') && ($('#sanctuaryScheduleEnd').value=String(item?.endTime||''));
+    $('#sanctuaryScheduleTitle') && ($('#sanctuaryScheduleTitle').value=String(item?.title||''));
+    $('#sanctuaryScheduleLocation') && ($('#sanctuaryScheduleLocation').value=String(item?.location||''));
+    $('#sanctuaryScheduleDeadline') && ($('#sanctuaryScheduleDeadline').value=dateTimeLocalValue(item?.responseDeadline));
+    $('#sanctuaryScheduleDescription') && ($('#sanctuaryScheduleDescription').value=String(item?.description||''));
+    fillSanctuaryStatusSelect(item?.status||'survey');
+    renderSanctuaryTeamOptions(item?.teams||[]);
+  }
+  function sanctuaryScheduleRowHtml(item){
+    const status=esc(item.effectiveStatus||item.status||'survey');
+    const teams=Array.isArray(item.teams)?item.teams:[];
+    const teamText=teams.map(team=>String(team.teamNo||'')+'팀').filter(Boolean).join(' · ');
+    const time=item.startTime?(item.startTime+(item.endTime?'~'+item.endTime:'')):'시간 조율 중';
+    return '<article class="admin-schedule-row" data-sanctuary-schedule-id="'+esc(item.id)+'">'
+      +'<div class="admin-schedule-row-main"><div><span class="admin-pill schedule-'+status+'">'+esc(item.statusLabel||item.status||'조사중')+'</span><strong>'+esc(item.title||item.sanctuaryName||'성역 일정')+'</strong></div><p>'+esc(item.dateLabel||item.targetDate)+' · '+esc(time)+(teamText?' · '+esc(teamText):'')+'</p></div>'
+      +'<div class="admin-schedule-row-actions"><button class="admin-btn" type="button" data-schedule-edit>변경</button><button class="admin-btn" type="button" data-schedule-status="coordinating">조율</button><button class="admin-btn primary" type="button" data-schedule-status="confirmed">확정</button><button class="admin-btn danger" type="button" data-schedule-status="canceled">취소</button><button class="admin-btn" type="button" data-schedule-status="completed">완료</button></div></article>';
+  }
+  function renderSanctuaryScheduleList(){
+    const root=$('#sanctuaryScheduleList');
+    if(!root)return;
+    const rows=state.sanctuarySchedules||[];
+    root.innerHTML=rows.length?rows.map(sanctuaryScheduleRowHtml).join(''):'<div class="admin-empty">조회 범위에 등록된 성역 일정이 없습니다.</div>';
+  }
+  async function loadSanctuaryScheduleConsole(force){
+    if(state.tab!=='sanctuary'&&!force)return;
+    setStatus('#sanctuaryScheduleAdminStatus','성역 일정과 팀 구성을 불러오는 중...','');
+    try{
+      const data=await action('adminSanctuaryScheduleConsole',{from:$('#sanctuaryScheduleFrom')?.value||'',to:$('#sanctuaryScheduleTo')?.value||'',sanctuaryCode:$('#sanctuaryScheduleFilter')?.value||''});
+      if(!data||data.ok===false)throw new Error(data?.message||'성역 일정 조회 실패');
+      state.sanctuaryMasters=Array.isArray(data.sanctuaries)?data.sanctuaries:[];
+      state.sanctuarySchedules=Array.isArray(data.schedules)?data.schedules:[];
+      state.sanctuaryStatusOptions=Array.isArray(data.statusOptions)?data.statusOptions:[];
+      state.sanctuaryConsoleToday=String(data.today||todayDateInputValue());
+      state.sanctuaryScheduleLoaded=true;
+      if($('#sanctuaryScheduleFrom')&&!$('#sanctuaryScheduleFrom').value)$('#sanctuaryScheduleFrom').value=String(data.from||'');
+      if($('#sanctuaryScheduleTo')&&!$('#sanctuaryScheduleTo').value)$('#sanctuaryScheduleTo').value=String(data.to||'');
+      fillSanctuaryScheduleSelects();
+      renderSanctuaryScheduleList();
+      if(!$('#sanctuaryScheduleId')?.value)resetSanctuaryScheduleEditor(null);
+      setStatus('#sanctuaryScheduleAdminStatus','성역 일정 '+state.sanctuarySchedules.length+'건 · 아이온 주간 '+esc(data.aionWeekStart)+' ~ '+esc(data.aionWeekEnd),'ok');
+    }catch(err){setStatus('#sanctuaryScheduleAdminStatus',err.message||String(err),'error');}
+  }
+  function sanctuaryScheduleById(id){return (state.sanctuarySchedules||[]).find(item=>Number(item.id)===Number(id))||null;}
+  function collectSanctuarySchedulePayload(){
+    const master=selectedSanctuaryMaster();
+    const checked=$$('#sanctuaryScheduleTeamOptions input[type="checkbox"]:checked').map(input=>Number(input.value)).filter(Boolean);
+    const allTeams=(Array.isArray(master?.teams)?master.teams:[]).map(team=>Number(team.teamNo)).filter(Boolean);
+    const deadline=$('#sanctuaryScheduleDeadline')?.value||'';
+    return {
+      sanctuaryCode:String($('#sanctuaryScheduleCode')?.value||''),
+      targetDate:String($('#sanctuaryScheduleDate')?.value||''),
+      startTime:String($('#sanctuaryScheduleStart')?.value||''),
+      endTime:String($('#sanctuaryScheduleEnd')?.value||''),
+      title:String($('#sanctuaryScheduleTitle')?.value||''),
+      description:String($('#sanctuaryScheduleDescription')?.value||''),
+      status:String($('#sanctuaryScheduleStatusSelect')?.value||'survey'),
+      location:String($('#sanctuaryScheduleLocation')?.value||''),
+      responseDeadline:deadline?new Date(deadline).toISOString():null,
+      teams:(checked.length?checked:allTeams).map(teamNo=>({teamNo}))
+    };
+  }
+  async function saveSanctuarySchedule(){
+    const button=$('#sanctuaryScheduleSaveBtn');
+    const payload=collectSanctuarySchedulePayload();
+    if(!payload.sanctuaryCode||!payload.targetDate){setStatus('#sanctuaryScheduleAdminStatus','성역과 일정 날짜를 입력하세요.','error');return;}
+    button&&(button.disabled=true);
+    try{
+      const scheduleId=Number($('#sanctuaryScheduleId')?.value||0)||null;
+      const data=await action('adminSanctuaryScheduleSave',{scheduleId,payload});
+      if(!data||data.ok===false)throw new Error(data?.message||'일정 저장 실패');
+      toast(scheduleId?'성역 일정이 변경되었습니다.':'성역 일정이 등록되었습니다.');
+      addLog('SANCTUARY_SCHEDULE',scheduleId?'일정 변경':'일정 등록');
+      resetSanctuaryScheduleEditor(null);
+      await loadSanctuaryScheduleConsole(true);
+      window.KinojoCommonUI?.reloadSanctuaryAlert?.();
+    }catch(err){setStatus('#sanctuaryScheduleAdminStatus',err.message||String(err),'error');}
+    finally{button&&(button.disabled=false);}
+  }
+  async function changeSanctuaryScheduleStatus(scheduleId,status){
+    let reason='';
+    if(status==='canceled'){reason=prompt('취소 사유를 입력하세요.','')||'';if(!reason.trim())return;}
+    try{
+      const data=await action('adminSanctuaryScheduleStatus',{scheduleId,status,reason});
+      if(!data||data.ok===false)throw new Error(data?.message||'일정 상태 변경 실패');
+      toast('성역 일정 상태가 변경되었습니다.');
+      addLog('SANCTUARY_SCHEDULE_STATUS',scheduleId+' → '+status);
+      resetSanctuaryScheduleEditor(null);
+      await loadSanctuaryScheduleConsole(true);
+      window.KinojoCommonUI?.reloadSanctuaryAlert?.();
+    }catch(err){setStatus('#sanctuaryScheduleAdminStatus',err.message||String(err),'error');}
   }
 
 
@@ -589,6 +731,18 @@
     $('#characterList')?.addEventListener('click',e=>{ if(e.target.matches('[data-char-deactivate]')) handleCharacterAction(e.target,'deactivate'); if(e.target.matches('[data-char-restore]')) handleCharacterAction(e.target,'restore'); if(e.target.matches('[data-char-rename]')) handleCharacterAction(e.target,'markRenamed'); });
     $('#sanctuaryPreviewBtn')?.addEventListener('click',async()=>{ setStatus('#sanctuarySyncStatus','서버 성역 데이터를 불러오는 중...',''); try{ const select=$('#sanctuarySyncId'); const id=select?.value||''; const defaultId=select?.dataset.sanctuaryDefaultCode||Array.from(select?.options||[]).map(o=>o.value).find(v=>v&&v!=='all')||''; const data=await action('sanctuary',{id:id==='all'?defaultId:id}); $('#sanctuarySyncResult').innerHTML=renderSyncReport(Object.assign({ok:true},data)); setSyncStep(2); setStatus('#sanctuarySyncStatus','서버 미리보기 완료','ok'); }catch(err){setStatus('#sanctuarySyncStatus',err.message||String(err),'error');} });
     $('#sanctuarySyncBtn')?.addEventListener('click',runSanctuarySync);
+    $('#sanctuaryScheduleReloadBtn')?.addEventListener('click',()=>loadSanctuaryScheduleConsole(true));
+    $('#sanctuaryScheduleSearchBtn')?.addEventListener('click',()=>loadSanctuaryScheduleConsole(true));
+    $('#sanctuaryScheduleNewBtn')?.addEventListener('click',()=>resetSanctuaryScheduleEditor(null));
+    $('#sanctuaryScheduleEditorResetBtn')?.addEventListener('click',()=>resetSanctuaryScheduleEditor(null));
+    $('#sanctuaryScheduleCancelEditBtn')?.addEventListener('click',()=>resetSanctuaryScheduleEditor(null));
+    $('#sanctuaryScheduleSaveBtn')?.addEventListener('click',saveSanctuarySchedule);
+    $('#sanctuaryScheduleCode')?.addEventListener('change',()=>renderSanctuaryTeamOptions([]));
+    $('#sanctuaryScheduleList')?.addEventListener('click',e=>{
+      const row=e.target.closest('[data-sanctuary-schedule-id]'); const id=Number(row?.dataset.sanctuaryScheduleId||0); if(!id)return;
+      if(e.target.matches('[data-schedule-edit]'))resetSanctuaryScheduleEditor(sanctuaryScheduleById(id));
+      if(e.target.matches('[data-schedule-status]'))changeSanctuaryScheduleStatus(id,e.target.dataset.scheduleStatus);
+    });
     $('#noticeReloadBtn')?.addEventListener('click',loadNotices); $('#noticeSaveBtn')?.addEventListener('click',saveNotice);
     $('#eventNoticeReloadBtn')?.addEventListener('click',loadEventNoticeGroups); $('#eventNoticeCreateBtn')?.addEventListener('click',startEventNoticeCreate); $('#eventNoticeStatusFilter')?.addEventListener('change',loadEventNoticeGroups);
     $('#eventNoticeList')?.addEventListener('click',e=>{ const row=e.target.closest('[data-event-notice-id]'); const id=row?.dataset.eventNoticeId; if(e.target.matches('[data-event-notice-preview]')) openEventNoticePreview(getEventNoticeGroupById(id)); if(e.target.matches('[data-event-notice-edit]')) editEventNoticeGroup(id); if(e.target.matches('[data-event-notice-duplicate]')) duplicateEventNoticeGroup(id); if(e.target.matches('[data-event-notice-delete]')) deleteEventNoticeGroup(id); });

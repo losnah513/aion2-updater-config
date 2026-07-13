@@ -57,6 +57,8 @@ function renderOperationSkeleton(){
 }
 function ensureSanctuaryOperation(force=false){
   if(!currentId)return;
+  const scheduleLink=document.getElementById('operationSchedulePageLink');
+  if(scheduleLink){const mobile=/(^|\/)m(\/|$)/.test(location.pathname);scheduleLink.href=(mobile?'/m/sanctuary-schedule/':'/sanctuary-schedule/')+'?id='+encodeURIComponent(currentId)}
   const key=currentId+'|'+currentSanctuaryPassKey();
   if(!force&&operationLoadKey===key)return;
   operationLoadKey=key;

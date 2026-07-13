@@ -337,3 +337,54 @@ KINOJO Event Notice Preview Visibility Patch 20260705
 .kinojo-event-preview-card:after{background:linear-gradient(90deg,rgba(5,4,3,1) 0%,rgba(7,5,3,1) 22%,rgba(19,14,7,.96) 36%,rgba(42,29,12,.62) 53%,rgba(10,8,5,.28) 64%,rgba(4,3,2,.76) 100%)!important}
 .kinojo-event-preview-wrap footer button{height:44px!important;border:2px solid #3b82f6!important;background:#fff!important;color:#111827!important;box-shadow:0 10px 24px rgba(15,23,42,.18)!important}
 .kinojo-event-preview-wrap footer button:hover{background:#2563eb!important;color:#fff!important}
+
+/* ===========================================================
+KINOJO Sanctuary Schedule Admin 20260713 STEP 5
+=========================================================== */
+.admin-sanctuary-schedule-card{margin-top:16px;}
+.admin-schedule-filter-row{align-items:flex-end;}
+.admin-schedule-date-label{display:grid;gap:5px;color:#64748b;font-size:11px;font-weight:900;}
+.admin-schedule-date-label .admin-input{min-width:148px;}
+.admin-schedule-layout{display:grid;grid-template-columns:minmax(330px,.78fr) minmax(0,1.22fr);gap:14px;align-items:start;}
+.admin-schedule-editor{display:grid;gap:12px;padding:14px;border:1px solid rgba(148,163,184,.26);border-radius:16px;background:linear-gradient(180deg,#fbfdff,#f7faff);}
+.admin-schedule-editor-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.admin-schedule-editor-head strong{font-size:15px;color:#17233a;}
+.admin-schedule-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.admin-schedule-grid label{display:grid;gap:5px;color:#64748b;font-size:11px;font-weight:900;}
+.admin-schedule-grid label.wide{grid-column:1/-1;}
+.admin-schedule-grid .admin-input,.admin-schedule-grid .admin-select,.admin-schedule-grid .admin-textarea{width:100%;box-sizing:border-box;}
+.admin-schedule-team-box{display:grid;gap:9px;padding:11px;border:1px dashed rgba(59,130,246,.28);border-radius:13px;background:rgba(239,246,255,.58);}
+.admin-schedule-team-box>div:first-child{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.admin-schedule-team-box strong{font-size:12px;color:#1e3a8a;}
+.admin-schedule-team-box span{font-size:10px;color:#64748b;}
+.admin-schedule-team-options{display:flex;flex-wrap:wrap;gap:7px;}
+.admin-schedule-team-option{display:inline-flex!important;grid-template-columns:none!important;align-items:center;gap:5px!important;height:28px;padding:0 9px;border:1px solid rgba(100,116,139,.24);border-radius:999px;background:#fff;color:#334155!important;font-size:10px!important;cursor:pointer;}
+.admin-schedule-team-option input{margin:0;accent-color:#2563eb;}
+.admin-schedule-save-row{justify-content:flex-end;}
+.admin-schedule-list{display:grid;gap:9px;max-height:720px;overflow:auto;padding-right:3px;}
+.admin-schedule-row{display:grid;gap:10px;padding:13px;border:1px solid rgba(148,163,184,.25);border-radius:15px;background:#fff;box-shadow:0 8px 20px rgba(15,23,42,.05);}
+.admin-schedule-row-main{display:grid;gap:6px;min-width:0;}
+.admin-schedule-row-main>div{display:flex;align-items:center;gap:8px;min-width:0;}
+.admin-schedule-row-main strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#17233a;font-size:13px;}
+.admin-schedule-row-main p{margin:0;color:#64748b;font-size:11px;font-weight:800;}
+.admin-schedule-row-actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;}
+.admin-schedule-row-actions .admin-btn{min-height:30px;padding:0 10px;font-size:10px;}
+.admin-pill.schedule-survey{background:#eef2ff;color:#4338ca;}
+.admin-pill.schedule-coordinating{background:#fff7ed;color:#c2410c;}
+.admin-pill.schedule-confirmed{background:#ecfdf5;color:#047857;}
+.admin-pill.schedule-canceled{background:#fef2f2;color:#b91c1c;}
+.admin-pill.schedule-completed{background:#f1f5f9;color:#475569;}
+.admin-empty.compact{padding:6px 0;border:0;background:transparent;text-align:left;}
+@media(max-width:900px){
+  .admin-schedule-layout{grid-template-columns:1fr;}
+  .admin-schedule-list{max-height:none;}
+}
+@media(max-width:620px){
+  .admin-schedule-filter-row{align-items:stretch;}
+  .admin-schedule-date-label{width:100%;}
+  .admin-schedule-date-label .admin-input{min-width:0;width:100%;}
+  .admin-schedule-grid{grid-template-columns:1fr;}
+  .admin-schedule-grid label.wide{grid-column:auto;}
+  .admin-schedule-team-box>div:first-child{align-items:flex-start;flex-direction:column;}
+  .admin-schedule-row-actions{justify-content:flex-start;}
+}
