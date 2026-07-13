@@ -197,9 +197,9 @@ function normalizeSanctuaryTeamGroups(data){
   });
   return Object.keys(buckets).map(Number).sort((a,b)=>a-b).map(k=>buckets[k]);
 }
-function renderTeamGroups(groups){const root=document.getElementById('teamList');if(!groups.length){root.innerHTML='<div class="empty-main">아직 표시할 포스 데이터가 없습니다.<br>관리자 수정에서 팀 > 포스 > 파티 슬롯을 저장하면 Server Engine 기준으로 표시됩니다.</div>';return}root.innerHTML=groups.map(teamGroupHtml).join('')}
+function renderTeamGroups(groups){const root=document.getElementById('teamList');if(!groups.length){root.innerHTML='<div class="empty-main">아직 표시할 성역 편성 데이터가 없습니다.<br>MASTER 성역 시트 동기화 상태를 확인해 주세요.</div>';return}root.innerHTML=groups.map(teamGroupHtml).join('')}
 function sortedForces(forces){return (forces||[]).slice().sort((a,b)=>Number(a.forceNo||a.teamNo||0)-Number(b.forceNo||b.teamNo||0))}
-function teamGroupHtml(g){const forces=sortedForces(g.forces);const total=forces.reduce((sum,f)=>sum+Number(f.characterCount||0),0);const partyCount=forces.reduce((sum,f)=>sum+Number(f.partyCount||0),0);const avg=total?Math.round(forces.reduce((sum,f)=>sum+(Number(f.averagePower||0)*Number(f.characterCount||0)),0)/total):0;const groupName=g.teamGroupName||((g.teamGroupNo||'')+'팀');return '<section class="san-team-group" id="'+esc(teamGroupAnchorId(g))+'" data-team-group="'+esc(g.teamGroupNo||'')+'" data-team-group-name="'+esc(groupName)+'"><header class="san-team-group-head"><div><div class="san-team-kicker">TEAM</div><h2 class="san-team-title">'+esc(groupName)+'</h2><p class="san-team-meta">'+fmt(forces.length)+'포스 · '+fmt(total)+'캐릭터 · '+fmt(partyCount)+'파티 · 평균 '+fmt(avg)+'</p></div><div class="san-team-head-actions"><button class="team-group-copy-btn kinojo-copy-icon-btn team-copy-icon" type="button" data-team-group-copy data-kinojo-tooltip="이 운영 팀의 모든 포스를 클립보드에 복사합니다" title="이 운영 팀의 모든 포스를 클립보드에 복사합니다" aria-label="'+esc(groupName)+' 전체 팀 클립보드 복사"><span class="copy-stack-icon" aria-hidden="true"><span></span><span></span></span></button><div class="san-team-scroll-hint">가로로 포스 확인</div></div></header><div class="san-force-rail-shell"><button class="slide-btn left" type="button" aria-label="이전 포스">‹</button><div class="san-force-list">'+forces.map(f=>teamHtml(f,g)).join('')+'</div><button class="slide-btn right" type="button" aria-label="다음 포스">›</button></div></section>'}
+function teamGroupHtml(g){const forces=sortedForces(g.forces);const total=forces.reduce((sum,f)=>sum+Number(f.characterCount||0),0);const partyCount=forces.reduce((sum,f)=>sum+Number(f.partyCount||0),0);const avg=total?Math.round(forces.reduce((sum,f)=>sum+(Number(f.averagePower||0)*Number(f.characterCount||0)),0)/total):0;const groupName=g.teamGroupName||g.operatingTeamName||((g.teamGroupNo||'')+'팀');const leader=g.leaderCharacter||'';const mode=g.nameMode==='manual'?'사용자 지정':'자동 생성';return '<section class="san-team-group" id="'+esc(teamGroupAnchorId(g))+'" data-team-group="'+esc(g.teamGroupNo||'')+'" data-team-group-name="'+esc(groupName)+'"><header class="san-team-group-head"><div><div class="san-team-kicker">TEAM · '+esc(mode)+'</div><h2 class="san-team-title">'+esc(groupName)+'</h2><p class="san-team-meta">'+fmt(forces.length)+'포스 · '+fmt(total)+'캐릭터 · '+fmt(partyCount)+'파티 · 평균 '+fmt(avg)+(leader?' · 대표 '+esc(leader):' · 대표 미설정')+'</p></div><div class="san-team-head-actions"><button class="team-group-copy-btn kinojo-copy-icon-btn team-copy-icon" type="button" data-team-group-copy data-kinojo-tooltip="이 운영 팀의 모든 포스를 클립보드에 복사합니다" title="이 운영 팀의 모든 포스를 클립보드에 복사합니다" aria-label="'+esc(groupName)+' 전체 팀 클립보드 복사"><span class="copy-stack-icon" aria-hidden="true"><span></span><span></span></span></button><div class="san-team-scroll-hint">가로로 포스 확인</div></div></header><div class="san-force-rail-shell"><button class="slide-btn left" type="button" aria-label="이전 포스">‹</button><div class="san-force-list">'+forces.map(f=>teamHtml(f,g)).join('')+'</div><button class="slide-btn right" type="button" aria-label="다음 포스">›</button></div></section>'}
 function normalizeForceParties(t){
   const byNo={};
   (Array.isArray(t.parties)?t.parties:[]).forEach(p=>{const no=Number(p.partyNo||1);byNo[no]=Object.assign({},p,{partyNo:no});});
@@ -207,21 +207,18 @@ function normalizeForceParties(t){
   return [byNo[1],byNo[2]].map(p=>{const slots=(Array.isArray(p.slots)?p.slots.slice(0,5):[]);while(slots.length<5)slots.push({name:'',vacancyText:'공석'});return Object.assign({},p,{capacity:p.capacity||5,filled:p.filled??slots.filter(s=>s&&s.name).length,slots});});
 }
 function teamHtml(t,g){
-  const custom=t.nameMode==='manual';
-  const style=custom&&t.customColor?' style="--custom-color:'+esc(t.customColor)+'"':'';
   const groupNo=(g&&g.teamGroupNo)||t.teamGroupNo||t.operatingTeamNo||t.groupNo||'';
-  const forceNo=t.forceNo||t.teamNo;
-  const forceName=t.forceName||t.teamName||((groupNo?groupNo+'팀 ':'')+forceNo+'포스');
+  const forceNo=Number(t.forceNo||(Number(t.teamNo||0)>=100?Number(t.teamNo)%100:t.teamNo)||1);
+  const forceName=t.forceName||forceNo+'포스';
   const forceId=t.forceId||t.teamId;
   const parties=normalizeForceParties(t);
   const filled=parties.reduce((sum,p)=>sum+Number(p.filled||0),0);
   const avg=fmt(t.averagePower);
   return '<article class="team-card force-card" id="'+esc(teamAnchorId(t))+'" data-team="'+esc(t.teamId||groupNo)+'" data-force="'+esc(forceId||forceNo)+'">'
-    + '<header class="team-head"><div class="team-title-wrap"><div class="team-name '+(custom?'custom':'')+'"'+style+'>'
-    + '<span>'+esc(forceName)+'</span><span class="team-badge">'+(custom?'CUSTOM':'AUTO')+'</span>'
-    + '<button class="team-copy-btn kinojo-copy-icon-btn team-copy-icon" type="button" data-force-copy data-kinojo-tooltip="해당 포스 전체를 클립보드에 복사합니다" title="해당 포스 전체를 클립보드에 복사합니다" aria-label="'+esc(forceName)+' 포스 클립보드 복사"><span class="copy-stack-icon" aria-hidden="true"><span></span><span></span></span></button>'
-    + '</div><div class="team-meta"><span class="force-count-badge">'+fmt(filled)+' / 10</span><span>'+fmt(t.partyCount||2)+'파티</span><span>평균 '+avg+'</span></div></div>'
-    + '<div class="leader">👑 '+esc(t.leaderCharacter||'대표 미설정')+'</div></header>'
+    + '<header class="team-head"><div class="team-title-wrap"><div class="team-name">'
+    + '<span>'+esc(forceName)+'</span>'
+    + '<button class="team-copy-btn kinojo-copy-icon-btn team-copy-icon" type="button" data-force-copy data-kinojo-tooltip="해당 포스 전체를 클립보드에 복사합니다" title="해당 포스 전체를 클립보드에 복사합니다" aria-label="'+esc(forceName)+' 클립보드 복사"><span class="copy-stack-icon" aria-hidden="true"><span></span><span></span></span></button>'
+    + '</div><div class="team-meta"><span class="force-count-badge">'+fmt(filled)+' / 10</span><span>'+fmt(t.partyCount||2)+'파티</span><span>평균 '+avg+'</span></div></div></header>'
     + '<div class="force-party-pair">'+parties.map(partyHtml).join('')+'</div></article>';
 }
 function partyHtml(p){return '<section class="party-card force-party-column" data-party-no="'+esc(p.partyNo)+'"><div class="party-head"><div class="party-title-row"><div class="party-title">'+esc(p.partyNo)+'파티</div></div><div class="party-count">'+fmt(p.filled)+' / '+fmt(p.capacity||5)+'</div></div><div class="slot-grid">'+(p.slots||[]).slice(0,5).map(slotHtml).join('')+'</div></section>'}

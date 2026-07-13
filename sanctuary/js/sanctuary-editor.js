@@ -1,18 +1,15 @@
 /*
- * sanctuary-editor.js - KINOJO Sanctuary Server Engine editor
- * Role: 성역 페이지의 수정 버튼을 Supabase 성역 슬롯 저장과 연결합니다.
- * - 화면은 운영 팀 단위로 전환하며, 선택한 팀의 포스만 접이식으로 표시합니다.
- * - 슬롯과 포스 메타 저장 규격은 기존 Server Engine 계약을 그대로 사용합니다.
+ * sanctuary-editor.js - KINOJO Sanctuary operating team editor
+ * Role: MASTER 성역 시트의 편성 정보는 읽기 전용으로 보여주고,
+ *       운영 팀 이름과 대표자만 Server Engine에 저장합니다.
  */
 (function(){
-  const CLASS_OPTIONS = ['', '검성', '수호성', '살성', '궁성', '정령성', '마도성', '치유성', '호법성', '권성'];
-
   function currentSanctuaryId(){
     try{ if(typeof currentId !== 'undefined' && currentId) return currentId; }catch(_err){}
     return String(new URLSearchParams(location.search).get('id') || window.KinojoSanctuaryCurrentId || '').trim().toLowerCase();
   }
 
-  function data(){
+  function sourceData(){
     try{ if(typeof sanctuaryData !== 'undefined' && sanctuaryData) return sanctuaryData; }catch(_err){}
     return null;
   }
@@ -40,191 +37,201 @@
     alert(message);
   }
 
-  function groupKey(group, index){
-    return String(group.teamGroupNo || group.teamId || index + 1);
-  }
-
-  function groupName(group, index){
-    return String(group.teamGroupName || group.operatingTeamName || ((group.teamGroupNo || index + 1) + '팀'));
-  }
-
   function forceNo(force, index){
-    return Number(force.forceNo || force.displayForceNo || force.teamNo || index + 1);
+    return Number(force?.forceNo || force?.displayForceNo || (Number(force?.teamNo || 0) >= 100 ? Number(force.teamNo) % 100 : force?.teamNo) || index + 1);
   }
 
-  function storageTeamNo(force, group, index){
-    const stored = Number(force.teamNo || force.storageTeamNo || 0);
-    if(stored) return stored;
-    const groupNo = Number(group?.teamGroupNo || group?.operatingTeamNo || 1);
-    return (groupNo * 100) + forceNo(force, index);
-  }
-
-  function forceName(force, index){
-    return String(force.forceName || force.teamName || (forceNo(force, index) + '포스'));
-  }
-
-  function memberCount(force){
-    let count = 0;
-    (force.parties || []).forEach(party => (party.slots || []).forEach(slot => { if(String(slot?.name || '').trim()) count += 1; }));
-    return count;
+  function memberNames(group){
+    const names = [];
+    const seen = new Set();
+    (group.forces || []).forEach(force => {
+      (force.parties || []).forEach(party => {
+        (party.slots || []).forEach(slot => {
+          const name = String(slot?.name || '').trim();
+          if(name && !seen.has(name)){
+            seen.add(name);
+            names.push(name);
+          }
+        });
+      });
+    });
+    return names;
   }
 
   function normalizeTeamGroups(source){
     const explicit = Array.isArray(source?.teamGroups) ? source.teamGroups : [];
     if(explicit.length){
-      return explicit.map((group, index) => ({
-        ...group,
-        teamGroupNo: group.teamGroupNo || index + 1,
-        teamGroupName: groupName(group, index),
-        forces: Array.isArray(group.forces) ? group.forces.slice() : []
-      })).sort((a,b) => Number(a.teamGroupNo || 0) - Number(b.teamGroupNo || 0));
+      return explicit.map((group, index) => {
+        const no = Number(group.teamGroupNo || group.operatingTeamNo || index + 1);
+        const forces = Array.isArray(group.forces) ? group.forces.slice() : [];
+        const autoName = String(group.autoTeamName || group.autoName || '').trim();
+        const displayName = String(group.teamGroupName || group.operatingTeamName || group.teamName || autoName || (no + '팀')).trim();
+        return {
+          ...group,
+          teamGroupNo:no,
+          teamGroupName:displayName,
+          autoTeamName:autoName || displayName,
+          nameMode:String(group.nameMode || 'auto').toLowerCase() === 'manual' ? 'manual' : 'auto',
+          leaderCharacter:String(group.leaderCharacter || '').trim(),
+          forces:forces.sort((a,b) => forceNo(a,0) - forceNo(b,0))
+        };
+      }).sort((a,b) => a.teamGroupNo - b.teamGroupNo);
     }
 
     const buckets = new Map();
     (Array.isArray(source?.teams) ? source.teams : []).forEach((force, index) => {
-      const no = force.teamGroupNo || force.operatingTeamNo || force.groupNo || 1;
-      const key = String(no);
-      if(!buckets.has(key)){
-        buckets.set(key, {
-          teamGroupNo: no,
-          teamGroupName: force.teamGroupName || force.operatingTeamName || (no + '팀'),
-          forces: []
+      const no = Number(force.teamGroupNo || force.operatingTeamNo || force.groupNo || 1);
+      if(!buckets.has(no)){
+        buckets.set(no, {
+          teamGroupNo:no,
+          teamGroupName:String(force.teamGroupName || force.operatingTeamName || (no + '팀')),
+          autoTeamName:String(force.autoTeamName || force.teamGroupName || force.operatingTeamName || (no + '팀')),
+          nameMode:String(force.nameMode || 'auto').toLowerCase() === 'manual' ? 'manual' : 'auto',
+          leaderCharacter:String(force.leaderCharacter || '').trim(),
+          forces:[]
         });
       }
-      buckets.get(key).forces.push({...force, __sourceIndex:index});
+      buckets.get(no).forces.push({...force,__sourceIndex:index});
     });
     return Array.from(buckets.values())
-      .sort((a,b) => Number(a.teamGroupNo || 0) - Number(b.teamGroupNo || 0))
-      .map(group => ({...group, forces:(group.forces || []).sort((a,b) => forceNo(a,0) - forceNo(b,0))}));
+      .sort((a,b) => a.teamGroupNo - b.teamGroupNo)
+      .map(group => ({...group,forces:group.forces.sort((a,b) => forceNo(a,0) - forceNo(b,0))}));
   }
 
   function ensureModal(){
     let modal = document.getElementById('sanctuaryEditorModal');
     if(modal) return modal;
+
     modal = document.createElement('section');
     modal.id = 'sanctuaryEditorModal';
     modal.className = 'sanctuary-editor-modal';
     modal.setAttribute('aria-hidden', 'true');
-    modal.innerHTML = '<div class="sanctuary-editor-card" role="dialog" aria-modal="true" aria-labelledby="sanctuaryEditorTitle">'
-      + '<div class="sanctuary-editor-head">'
-      + '<div><div class="tip-kicker">SANCTUARY TEAM EDIT</div><h2 id="sanctuaryEditorTitle">성역 팀 구성 수정</h2></div>'
-      + '<button class="sanctuary-editor-close" type="button" aria-label="닫기">×</button>'
-      + '</div>'
-      + '<div class="sanctuary-editor-help"><strong>팀을 먼저 선택</strong>한 뒤 필요한 포스만 열어 수정하세요. 저장은 모든 팀의 변경 내용을 한 번에 반영합니다.</div>'
-      + '<div class="sanctuary-editor-body" id="sanctuaryEditorBody"></div>'
-      + '<div class="sanctuary-editor-foot">'
-      + '<span class="sanctuary-editor-status" id="sanctuaryEditorStatus"></span>'
-      + '<button class="edit-btn" id="sanctuaryEditorReloadBtn" type="button">새로고침</button>'
-      + '<button class="edit-btn sanctuary-editor-save" id="sanctuaryEditorSaveBtn" type="button">서버에 저장</button>'
-      + '</div>'
+    modal.innerHTML = ''
+      + '<div class="sanctuary-editor-card" role="dialog" aria-modal="true" aria-labelledby="sanctuaryEditorTitle">'
+      + '  <header class="sanctuary-editor-head">'
+      + '    <div><div class="tip-kicker">SANCTUARY TEAM MANAGEMENT</div><h2 id="sanctuaryEditorTitle">성역 정보 수정</h2><p>MASTER 성역 시트 편성은 읽기 전용이며 팀 이름과 대표자만 수정할 수 있습니다.</p></div>'
+      + '    <button class="sanctuary-editor-close" type="button" aria-label="닫기">×</button>'
+      + '  </header>'
+      + '  <div class="sanctuary-editor-summary" id="sanctuaryEditorSummary"></div>'
+      + '  <div class="sanctuary-editor-body" id="sanctuaryEditorBody"></div>'
+      + '  <footer class="sanctuary-editor-foot">'
+      + '    <span class="sanctuary-editor-status" id="sanctuaryEditorStatus"></span>'
+      + '    <button class="edit-btn" id="sanctuaryEditorReloadBtn" type="button">새로고침</button>'
+      + '    <button class="edit-btn sanctuary-editor-save" id="sanctuaryEditorSaveBtn" type="button">변경사항 저장</button>'
+      + '  </footer>'
       + '</div>';
+
     document.body.appendChild(modal);
     modal.addEventListener('click', event => { if(event.target === modal) close(); });
     modal.querySelector('.sanctuary-editor-close')?.addEventListener('click', close);
     modal.querySelector('#sanctuaryEditorSaveBtn')?.addEventListener('click', save);
-    modal.querySelector('#sanctuaryEditorReloadBtn')?.addEventListener('click', () => { close(); reloadFresh(); });
+    modal.querySelector('#sanctuaryEditorReloadBtn')?.addEventListener('click', () => reloadFresh());
     return modal;
   }
 
-  function renderTeamTab(group, index){
-    const forces = Array.isArray(group.forces) ? group.forces : [];
-    const members = forces.reduce((sum, force) => sum + memberCount(force), 0);
-    const key = groupKey(group, index);
-    return '<button class="sanctuary-editor-team-tab" type="button" role="tab" aria-selected="' + (index === 0 ? 'true' : 'false') + '" data-editor-team-tab="' + esc(key) + '">'
-      + '<strong>' + esc(groupName(group, index)) + '</strong>'
-      + '<span>' + forces.length + '포스 · ' + members + '명</span>'
-      + '</button>';
-  }
-
-  function renderTeamGroup(group, index){
-    const forces = Array.isArray(group.forces) ? group.forces : [];
-    const members = forces.reduce((sum, force) => sum + memberCount(force), 0);
-    const key = groupKey(group, index);
-    return '<section class="sanctuary-editor-team-panel' + (index === 0 ? ' active' : '') + '" role="tabpanel" data-editor-team-panel="' + esc(key) + '"' + (index === 0 ? '' : ' hidden') + '>'
-      + '<header class="sanctuary-editor-group-head">'
-      + '<div><span>OPERATING TEAM</span><h3>' + esc(groupName(group, index)) + '</h3><p>' + forces.length + '개 포스 · 현재 ' + members + '명 배치</p></div>'
-      + '<div class="sanctuary-editor-group-count"><strong>' + members + '</strong><span>배치 인원</span></div>'
-      + '</header>'
-      + '<div class="sanctuary-editor-force-list">'
-      + (forces.length ? forces.map((force, forceIndex) => renderForce(force, group, forceIndex, forces.length)).join('') : '<div class="empty-main">이 팀에 등록된 포스가 없습니다.</div>')
-      + '</div>'
-      + '</section>';
-  }
-
-  function renderForce(force, group, index, forceCount){
+  function forceMembers(force){
     const members = [];
-    (force.parties || []).forEach(party => (party.slots || []).forEach(slot => { if(slot.name) members.push(slot.name); }));
-    const leaderOptions = ['<option value="">대표 미설정</option>']
-      .concat(members.map(name => '<option value="' + esc(name) + '" ' + (name === force.leaderCharacter ? 'selected' : '') + '>' + esc(name) + '</option>'))
-      .join('');
-    const parties = (force.parties || []).map(party => renderParty(party)).join('');
+    (force.parties || []).forEach(party => {
+      (party.slots || []).forEach(slot => {
+        const name = String(slot?.name || '').trim();
+        if(name) members.push(name);
+      });
+    });
+    return members;
+  }
+
+  function renderForceSummary(force, index){
     const no = forceNo(force, index);
-    const storedNo = storageTeamNo(force, group, index);
-    const groupNo = Number(group?.teamGroupNo || group?.operatingTeamNo || 1);
-    const name = forceName(force, index);
-    const compactTitle = forceCount === 1 ? '팀 기본 구성' : name;
-    return '<details class="sanctuary-editor-force" data-editor-team="' + esc(storedNo) + '" data-editor-team-group="' + esc(groupNo) + '" data-editor-force-no="' + esc(no) + '"' + (index === 0 ? ' open' : '') + '>'
-      + '<summary class="sanctuary-editor-force-summary">'
-      + '<div class="sanctuary-editor-force-summary-main"><span>' + (forceCount === 1 ? 'TEAM ROSTER' : 'FORCE ' + esc(no)) + '</span><strong>' + esc(compactTitle) + '</strong><small>' + members.length + ' / 10명 · ' + ((force.parties || []).length || 2) + '파티</small></div>'
-      + '<div class="sanctuary-editor-force-toggle">열기</div>'
-      + '</summary>'
-      + '<div class="sanctuary-editor-force-body">'
-      + '<div class="sanctuary-editor-team-head">'
-      + '<div class="sanctuary-editor-team-title">' + esc(name) + '</div>'
-      + '<label>구성명<input data-team-field="teamName" value="' + esc(force.nameMode === 'manual' ? (force.teamName || force.forceName || '') : '') + '" placeholder="비우면 자동 구성명" /></label>'
-      + '<label>대표자<select data-team-field="leaderCharacter">' + leaderOptions + '</select></label>'
-      + '<label>색상<input data-team-field="customColor" type="color" value="' + esc(force.customColor || '#8b5cf6') + '" /></label>'
-      + '</div>'
-      + parties
-      + '</div>'
-      + '</details>';
-  }
-
-  function renderParty(party){
-    return '<div class="sanctuary-editor-party" data-editor-party="' + esc(party.partyNo) + '">'
-      + '<div class="sanctuary-editor-party-title">' + esc(party.partyNo) + '파티</div>'
-      + '<div class="sanctuary-editor-slot-head"><span>슬롯</span><span>캐릭터명</span><span>직업</span><span>전투력</span><span>본캐명</span></div>'
-      + (party.slots || []).map(slot => renderSlot(slot)).join('')
+    const members = forceMembers(force);
+    const parties = Number(force.partyCount || (force.parties || []).length || 2);
+    return '<div class="sanctuary-editor-roster-force">'
+      + '<div><strong>' + esc(no) + '포스</strong><span>' + esc(parties) + '파티 · ' + esc(members.length) + '명</span></div>'
+      + '<p>' + (members.length ? members.map(esc).join(' · ') : '등록 인원 없음') + '</p>'
       + '</div>';
   }
 
-  function renderSlot(slot){
-    const options = CLASS_OPTIONS.map(item => '<option value="' + esc(item) + '" ' + (String(slot.className || '') === item ? 'selected' : '') + '>' + esc(item || '선택') + '</option>').join('');
-    return '<div class="sanctuary-editor-slot" data-editor-slot="' + esc(slot.slotNo) + '">'
-      + '<span class="sanctuary-editor-slot-no">' + esc(slot.slotNo) + '</span>'
-      + '<input data-slot-field="name" value="' + esc(slot.name || '') + '" placeholder="캐릭터명" />'
-      + '<select data-slot-field="className">' + options + '</select>'
-      + '<input data-slot-field="power" value="' + esc(slot.power || '') + '" inputmode="numeric" placeholder="전투력" />'
-      + '<input data-slot-field="owner" value="' + esc(slot.owner || '') + '" placeholder="본캐명" />'
+  function renderTeamCard(group, index){
+    const no = Number(group.teamGroupNo || index + 1);
+    const forces = Array.isArray(group.forces) ? group.forces : [];
+    const members = memberNames(group);
+    const autoName = String(group.autoTeamName || group.teamGroupName || (no + '팀')).trim();
+    const mode = group.nameMode === 'manual' ? 'manual' : 'auto';
+    const displayName = String(group.teamGroupName || autoName || (no + '팀')).trim();
+    const leader = String(group.leaderCharacter || '').trim();
+    const leaderOptions = ['<option value="">대표 미설정</option>']
+      .concat(members.map(name => '<option value="' + esc(name) + '"' + (name === leader ? ' selected' : '') + '>' + esc(name) + '</option>'))
+      .join('');
+
+    return '<article class="sanctuary-editor-team-card" data-editor-team-group="' + esc(no) + '" data-name-mode="' + esc(mode) + '" data-auto-name="' + esc(autoName) + '">'
+      + '<div class="sanctuary-editor-team-number">' + esc(no) + '<span>팀</span></div>'
+      + '<div class="sanctuary-editor-team-main">'
+      + '  <div class="sanctuary-editor-team-name-row">'
+      + '    <span class="sanctuary-editor-mode ' + (mode === 'manual' ? 'manual' : 'auto') + '" data-team-mode-label>' + (mode === 'manual' ? '사용자 지정' : '자동 생성') + '</span>'
+      + '    <label class="sanctuary-editor-name-field"><span>팀 이름</span><input data-team-field="teamName" maxlength="40" value="' + esc(displayName) + '" /></label>'
+      + '    <button class="sanctuary-editor-auto-btn" type="button" data-team-auto>자동 이름</button>'
+      + '  </div>'
+      + '  <div class="sanctuary-editor-team-controls">'
+      + '    <label><span>대표자</span><select data-team-field="leaderCharacter">' + leaderOptions + '</select></label>'
+      + '    <div class="sanctuary-editor-team-stat"><span>포스</span><strong>' + esc(forces.length) + '개</strong></div>'
+      + '    <div class="sanctuary-editor-team-stat"><span>인원</span><strong>' + esc(members.length) + '명</strong></div>'
+      + '  </div>'
+      + '  <details class="sanctuary-editor-roster">'
+      + '    <summary>MASTER 시트 편성 상세 보기</summary>'
+      + '    <div class="sanctuary-editor-roster-list">' + (forces.length ? forces.map(renderForceSummary).join('') : '<div class="empty-main">등록된 포스가 없습니다.</div>') + '</div>'
+      + '  </details>'
+      + '</div>'
+      + '</article>';
+  }
+
+  function renderSummary(source, groups){
+    const info = source?.info || {};
+    const forceCount = groups.reduce((sum, group) => sum + (group.forces || []).length, 0);
+    const memberCount = groups.reduce((sum, group) => sum + memberNames(group).length, 0);
+    return '<div class="sanctuary-editor-summary-name"><span>선택 성역</span><strong>' + esc(info.sanctuaryName || info.shortName || currentSanctuaryId()) + '</strong></div>'
+      + '<div class="sanctuary-editor-summary-metrics">'
+      + '  <span>운영 팀 <strong>' + esc(groups.length) + '개</strong></span>'
+      + '  <span>포스 <strong>' + esc(forceCount) + '개</strong></span>'
+      + '  <span>총 인원 <strong>' + esc(memberCount) + '명</strong></span>'
       + '</div>';
   }
 
-  function activateTeam(key, focusTab){
-    const modal = ensureModal();
-    modal.querySelectorAll('[data-editor-team-tab]').forEach(tab => {
-      const active = String(tab.dataset.editorTeamTab) === String(key);
-      tab.classList.toggle('active', active);
-      tab.setAttribute('aria-selected', active ? 'true' : 'false');
-      if(active && focusTab) tab.focus({preventScroll:true});
-    });
-    modal.querySelectorAll('[data-editor-team-panel]').forEach(panel => {
-      const active = String(panel.dataset.editorTeamPanel) === String(key);
-      panel.classList.toggle('active', active);
-      panel.hidden = !active;
-    });
+  function setMode(card, mode){
+    const normalized = mode === 'manual' ? 'manual' : 'auto';
+    card.dataset.nameMode = normalized;
+    const label = card.querySelector('[data-team-mode-label]');
+    if(label){
+      label.classList.toggle('manual', normalized === 'manual');
+      label.classList.toggle('auto', normalized === 'auto');
+      label.textContent = normalized === 'manual' ? '사용자 지정' : '자동 생성';
+    }
   }
 
-  function bindTeamTabs(modal){
-    modal.querySelectorAll('[data-editor-team-tab]').forEach(tab => {
-      tab.addEventListener('click', () => activateTeam(tab.dataset.editorTeamTab, false));
+  function bindCards(modal){
+    modal.querySelectorAll('[data-editor-team-group]').forEach(card => {
+      const input = card.querySelector('[data-team-field="teamName"]');
+      const autoButton = card.querySelector('[data-team-auto]');
+      if(input){
+        input.addEventListener('input', () => {
+          const autoName = String(card.dataset.autoName || '').trim();
+          setMode(card, String(input.value || '').trim() === autoName ? 'auto' : 'manual');
+        });
+      }
+      if(autoButton){
+        autoButton.addEventListener('click', () => {
+          if(input) input.value = String(card.dataset.autoName || '');
+          setMode(card, 'auto');
+        });
+      }
     });
   }
 
   function open(){
     const modal = ensureModal();
     const body = modal.querySelector('#sanctuaryEditorBody');
+    const summary = modal.querySelector('#sanctuaryEditorSummary');
     const status = modal.querySelector('#sanctuaryEditorStatus');
-    const source = data();
+    const source = sourceData();
+
     if(!token()){
       toast('관리자 로그인 후 사용할 수 있습니다.');
       return;
@@ -233,18 +240,16 @@
       toast('성역 데이터를 먼저 불러와야 합니다.');
       return;
     }
+
     const groups = normalizeTeamGroups(source);
-    if(!groups.length){
-      body.innerHTML = '<div class="empty-main">수정할 팀 데이터가 없습니다.</div>';
-    }else{
-      body.innerHTML = '<div class="sanctuary-editor-workspace' + (groups.length === 1 ? ' single-team' : '') + '">'
-        + (groups.length > 1 ? '<nav class="sanctuary-editor-team-nav" role="tablist" aria-label="성역 운영 팀">' + groups.map(renderTeamTab).join('') + '</nav>' : '')
-        + '<div class="sanctuary-editor-team-content">' + groups.map(renderTeamGroup).join('') + '</div>'
-        + '</div>';
-      bindTeamTabs(modal);
-      activateTeam(groupKey(groups[0], 0), false);
-    }
-    if(status) status.textContent = '';
+    summary.innerHTML = renderSummary(source, groups);
+    body.innerHTML = groups.length
+      ? '<div class="sanctuary-editor-team-list">' + groups.map(renderTeamCard).join('') + '</div>'
+        + '<aside class="sanctuary-editor-guide"><strong>안내 사항</strong><span>팀 이름을 비우는 대신 ‘자동 이름’을 누르면 Server Engine의 형용사 + 생물 이름을 사용합니다.</span><span>대표자는 해당 팀의 MASTER 시트 등록 캐릭터 중에서만 선택할 수 있습니다.</span><span>캐릭터명·직업·전투력·본캐명은 MASTER 성역 시트 원본이므로 이 화면에서 수정되지 않습니다.</span></aside>'
+      : '<div class="empty-main">수정할 운영 팀 데이터가 없습니다.</div>';
+
+    bindCards(modal);
+    if(status){ status.className = 'sanctuary-editor-status'; status.textContent = ''; }
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
     document.body.classList.add('sanctuary-editor-open');
@@ -260,34 +265,19 @@
 
   function collect(){
     const modal = ensureModal();
-    const updates = [];
     const teamMeta = [];
-    modal.querySelectorAll('[data-editor-team]').forEach(forceEl => {
-      const teamNo = Number(forceEl.dataset.editorTeam || 0);
-      const teamGroupNo = Number(forceEl.dataset.editorTeamGroup || 0);
-      const forceNoValue = Number(forceEl.dataset.editorForceNo || 0);
-      const teamName = String(forceEl.querySelector('[data-team-field="teamName"]')?.value || '').trim();
-      const leaderCharacter = String(forceEl.querySelector('[data-team-field="leaderCharacter"]')?.value || '').trim();
-      const customColor = String(forceEl.querySelector('[data-team-field="customColor"]')?.value || '').trim();
-      teamMeta.push({ teamNo, teamGroupNo, forceNo: forceNoValue, teamName, nameMode: teamName ? 'manual' : 'auto', leaderCharacter, customColor });
-      forceEl.querySelectorAll('[data-editor-party]').forEach(partyEl => {
-        const partyNo = Number(partyEl.dataset.editorParty || 0);
-        partyEl.querySelectorAll('[data-editor-slot]').forEach(slotEl => {
-          updates.push({
-            teamNo,
-            teamGroupNo,
-            forceNo: forceNoValue,
-            partyNo,
-            slotNo: Number(slotEl.dataset.editorSlot || 0),
-            name: String(slotEl.querySelector('[data-slot-field="name"]')?.value || '').trim(),
-            className: String(slotEl.querySelector('[data-slot-field="className"]')?.value || '').trim(),
-            power: String(slotEl.querySelector('[data-slot-field="power"]')?.value || '').replace(/[^0-9]/g, ''),
-            owner: String(slotEl.querySelector('[data-slot-field="owner"]')?.value || '').trim()
-          });
-        });
+    modal.querySelectorAll('[data-editor-team-group]').forEach(card => {
+      const mode = card.dataset.nameMode === 'manual' ? 'manual' : 'auto';
+      const inputName = String(card.querySelector('[data-team-field="teamName"]')?.value || '').trim();
+      const leaderCharacter = String(card.querySelector('[data-team-field="leaderCharacter"]')?.value || '').trim();
+      teamMeta.push({
+        teamGroupNo:Number(card.dataset.editorTeamGroup || 0),
+        teamName:mode === 'manual' ? inputName : '',
+        nameMode:mode,
+        leaderCharacter
       });
     });
-    return { updates, teamMeta };
+    return { updates:[], teamMeta };
   }
 
   async function save(){
@@ -298,27 +288,29 @@
       if(!token()) throw new Error('관리자 로그인 후 사용할 수 있습니다.');
       if(!currentSanctuaryId()) throw new Error('성역 Master 정보를 먼저 불러와 주세요.');
       const payload = collect();
-      if(!payload.updates.length) throw new Error('저장할 슬롯이 없습니다.');
+      if(!payload.teamMeta.length) throw new Error('저장할 운영 팀 정보가 없습니다.');
       if(status){ status.className = 'sanctuary-editor-status pending'; status.textContent = 'Server Engine 저장 중...'; }
       if(btn){ btn.disabled = true; btn.textContent = '저장 중...'; }
       if(!window.KinojoApi) throw new Error('KinojoApi 연결을 확인해 주세요.');
+
       const result = await window.KinojoApi.postAction('sanctuaryAdmin', {
-        command: 'saveSheet',
-        sessionToken: token(),
-        sanctuaryId: currentSanctuaryId(),
-        updates: payload.updates,
-        teamMeta: payload.teamMeta
+        command:'saveTeamMeta',
+        sessionToken:token(),
+        sanctuaryId:currentSanctuaryId(),
+        updates:payload.updates,
+        teamMeta:payload.teamMeta
       });
-      if(!result.ok) throw new Error(result.message || '성역 서버 저장 실패');
+      if(!result.ok) throw new Error(result.message || '성역 운영 팀 저장 실패');
+
       try{ sessionStorage.removeItem('kinojo_sanctuary_cache_v2026071301_' + currentSanctuaryId()); }catch(_err){}
-      if(status){ status.className = 'sanctuary-editor-status success'; status.textContent = '저장 완료 · ' + Number(result.updatedSlots || 0) + '개 슬롯 반영'; }
+      if(status){ status.className = 'sanctuary-editor-status success'; status.textContent = '저장 완료 · ' + Number(result.updatedTeams || 0) + '개 팀 반영'; }
       await reloadFresh();
-      setTimeout(close, 350);
+      setTimeout(close, 450);
     }catch(err){
       if(status){ status.className = 'sanctuary-editor-status error'; status.textContent = err.message || String(err); }
       else toast(err.message || String(err));
     }finally{
-      if(btn){ btn.disabled = false; btn.textContent = '서버에 저장'; }
+      if(btn){ btn.disabled = false; btn.textContent = '변경사항 저장'; }
     }
   }
 
@@ -327,6 +319,8 @@
       if(typeof fetchSanctuaryFresh === 'function' && typeof applySanctuaryData === 'function'){
         const fresh = await fetchSanctuaryFresh();
         applySanctuaryData(fresh);
+        const modal = document.getElementById('sanctuaryEditorModal');
+        if(modal?.classList.contains('open')) open();
         return;
       }
     }catch(_err){}
@@ -337,7 +331,7 @@
     const btn = document.getElementById('editModeBtn');
     if(btn && !btn.dataset.sanctuaryEditorBound){
       btn.dataset.sanctuaryEditorBound = '1';
-      btn.textContent = '성역 팀 수정';
+      btn.textContent = '성역 정보 수정';
       btn.addEventListener('click', function(event){
         event.preventDefault();
         event.stopImmediatePropagation();
