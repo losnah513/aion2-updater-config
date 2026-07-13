@@ -676,10 +676,11 @@
     
   }
   function renderServerBox(data){
-    const root=$('#serverStatusBox'); if(!root)return;
+    const roots=$$('[data-server-status-box]'); if(!roots.length)return;
     const localUrl = localStorage.getItem('kinojo_admin_webapp_url') || localStorage.getItem('AION2_OFFICIAL_WEBAPP') || '';
     const bridgeLabel = localUrl ? 'URL 저장됨' : 'config.json 또는 시스템 설정 확인';
-    root.innerHTML='<div class="admin-system-list"><div class="admin-system-item"><span><i class="admin-dot"></i>Supabase DB</span><strong>정상</strong></div><div class="admin-system-item"><span><i class="admin-dot"></i>RPC / Functions</span><strong>'+(data?.ok===false?'확인 필요':'정상')+'</strong></div><div class="admin-system-item"><span><i class="admin-dot"></i>Updater Runtime</span><strong>'+esc(data?.message||'정상')+'</strong></div><div class="admin-system-item"><span><i class="admin-dot"></i>Apps Script Bridge</span><strong>'+esc(bridgeLabel)+'</strong></div><div class="admin-system-item"><span><i class="admin-dot"></i>최근 성역 동기화</span><strong>'+esc(localStorage.getItem('kinojo_admin_last_sanctuary_sync')||'기록 없음')+'</strong></div></div>';
+    const html='<div class="admin-system-list"><div class="admin-system-item"><span><i class="admin-dot"></i>Supabase DB</span><strong>정상</strong></div><div class="admin-system-item"><span><i class="admin-dot"></i>RPC / Functions</span><strong>'+(data?.ok===false?'확인 필요':'정상')+'</strong></div><div class="admin-system-item"><span><i class="admin-dot"></i>Updater Runtime</span><strong>'+esc(data?.message||'정상')+'</strong></div><div class="admin-system-item"><span><i class="admin-dot"></i>Apps Script Bridge</span><strong>'+esc(bridgeLabel)+'</strong></div><div class="admin-system-item"><span><i class="admin-dot"></i>최근 성역 동기화</span><strong>'+esc(localStorage.getItem('kinojo_admin_last_sanctuary_sync')||'기록 없음')+'</strong></div></div>';
+    roots.forEach(root=>{root.innerHTML=html;});
   }
   function saveWebAppUrl(){
     if(!isMaster()){ setStatus('#systemStatus','MASTER 권한만 시스템 URL을 변경할 수 있습니다.','error'); return; }
