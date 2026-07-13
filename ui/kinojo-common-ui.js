@@ -14,6 +14,7 @@
     const mobile=/(^|\/)m(\/|$)/.test(path);
     if(path.includes('/hof/')||path.includes('/hall-of-fame/'))return {key:'hall',label:'명예의 전당',root:mobile?'../../':'../',mobile};
     if(path.includes('/ranking/'))return {key:'ranking',label:'레기온 순위',root:mobile?'../../':'../',mobile};
+    if(path.includes('/sanctuary-schedule/'))return {key:'schedule',label:'성역 스케줄',root:mobile?'../../':'../',mobile};
     if(path.includes('/sanctuary/'))return {key:'sanctuary',label:'성역',root:mobile?'../../':'../',mobile};
     if(path.includes('/arcana/'))return {key:'arcana',label:'아르카나',root:mobile?'../../':'../',mobile};
     if(path.includes('/admin/'))return {key:'admin',label:'관리자 콘솔',root:mobile?'../../':'../',mobile};
@@ -427,6 +428,63 @@
       </section>`;
     return wrap;
   }
+  let sanctuaryAlertRequestSeq=0;
+  function commonPassKey_(){
+    const auth=window.KinojoAuth||{};
+    const account=typeof auth.getAccount==='function'?auth.getAccount():null;
+    const session=typeof auth.getSession==='function'?auth.getSession():null;
+    return String(account?.passKey||account?.passCode||session?.passKey||session?.passCode||'').trim();
+  }
+  function clearSanctuaryAlert_(){
+    const alert=q('#kinojoSanctuaryAlert');
+    if(!alert)return;
+    alert.hidden=true;
+    alert.className='kinojo-sanctuary-alert';
+    alert.removeAttribute('href');
+  }
+  function sanctuaryAlertHref_(info,item){
+    const base=info?.mobile?'/m/':'/';
+    const params=new URLSearchParams();
+    if(item?.sanctuaryCode)params.set('id',String(item.sanctuaryCode));
+    if(item?.targetDate)params.set('date',String(item.targetDate));
+    if(item?.id)params.set('schedule',String(item.id));
+    return base+'sanctuary-schedule/'+(params.toString()?'?'+params.toString():'');
+  }
+  function renderSanctuaryAlert_(data,info){
+    const alert=q('#kinojoSanctuaryAlert');
+    if(!alert)return;
+    if(!data||data.ok===false||data.visible!==true||!data.item){clearSanctuaryAlert_();return;}
+    const item=data.item||{};
+    const teamNo=item.user?.teamNo;
+    const time=item.startTime||'시간 조율 중';
+    const meta=[item.dateLabel||item.targetDate,time,teamNo?teamNo+'팀':''].filter(Boolean).join(' · ');
+    alert.className='kinojo-sanctuary-alert tone-'+escapeHtml(data.tone||'confirmed');
+    alert.href=sanctuaryAlertHref_(info,item);
+    alert.hidden=false;
+    alert.innerHTML='<span class="kinojo-sanctuary-alert-badge">'+escapeHtml(data.label||'성역 일정')+'</span>'
+      +'<strong>'+escapeHtml(item.title||item.sanctuaryShortName||item.sanctuaryName||'성역 일정')+'</strong>'
+      +'<small>'+escapeHtml(meta)+'</small>';
+  }
+  async function loadSanctuaryAlert_(info,retry){
+    if(!window.KinojoAuth){
+      if((retry||0)<20)setTimeout(()=>loadSanctuaryAlert_(info,(retry||0)+1),120);
+      return;
+    }
+    const passKey=commonPassKey_();
+    if(!passKey){clearSanctuaryAlert_();return;}
+    if(!window.KinojoApi?.getAction||!window.KinojoSupabase?.webAction){
+      if((retry||0)<20)setTimeout(()=>loadSanctuaryAlert_(info,(retry||0)+1),120);
+      return;
+    }
+    const seq=++sanctuaryAlertRequestSeq;
+    try{
+      const data=await window.KinojoApi.getAction('mySanctuaryTopbar',{passKey});
+      if(seq!==sanctuaryAlertRequestSeq)return;
+      renderSanctuaryAlert_(data,info);
+    }catch(_err){
+      if(seq===sanctuaryAlertRequestSeq)clearSanctuaryAlert_();
+    }
+  }
   function pageTimeId(info){
     if(info.key==='sanctuary')return 'syncChip';
     if(info.key==='hall')return 'topbarUpdateTime';
@@ -444,6 +502,7 @@
       {key:'hall',label:'명예의 전당',href:base+'hof/'},
       {key:'ranking',label:'레기온 순위',href:base+'ranking/'},
       {key:'sanctuary',label:'성역',href:base+'sanctuary/'},
+      {key:'schedule',label:'성역 스케줄',href:base+'sanctuary-schedule/'},
       {key:'arcana',label:'아르카나',href:base+'arcana/'}
     ];
     const navHtml=navItems.map(item=>{
@@ -468,7 +527,9 @@
         <button class="kinojo-logout-btn" id="kinojoLogoutBtn" type="button" style="display:none">로그아웃</button>
       </div>
       <div class="kinojo-top-tools" id="kinojoTopTools"></div>
-      <div class="kinojo-top-visitor-row" id="kinojoTopVisitorRow"></div>`;
+      <div class="kinojo-top-visitor-row" id="kinojoTopVisitorRow">
+        <a class="kinojo-sanctuary-alert" id="kinojoSanctuaryAlert" hidden></a>
+      </div>`;
     const tools=q('#kinojoTopTools',bar);
     const auth=q('#kinojoUserStatus',bar);
     const admin=rescued.admin||createAdminMenu(info);
@@ -485,6 +546,8 @@
     if(auth)auth.appendChild(admin);
     if(visitorRow)visitorRow.appendChild(visit);
     document.body.insertBefore(bar,document.body.firstChild);
+    setTimeout(()=>loadSanctuaryAlert_(info,0),220);
+    window.addEventListener('kinojo:auth-changed',()=>setTimeout(()=>loadSanctuaryAlert_(info,0),20));
     const notice=createNoticeStrip(info);
     document.body.appendChild(notice);
     setTimeout(loadCommonNotices,0);
@@ -521,12 +584,14 @@
     const isHall=info.key==='hall';
     const isRanking=info.key==='ranking';
     const isSanctuary=info.key==='sanctuary';
+    const isSchedule=info.key==='schedule';
     const isArcana=info.key==='arcana';
     const base=info.mobile?'/m/':'/';
     const home=base;
     const hallHref=isHall?'./':base+'hof/';
     const rankingHref=isRanking?'./':base+'ranking/';
     const sanctuaryPrefix=isSanctuary?'./':base+'sanctuary/';
+    const scheduleHref=isSchedule?'./':base+'sanctuary-schedule/';
     const arcanaHref=isArcana?'./':base+'arcana/';
     const drawer=document.createElement('section');
     drawer.className='kinojo-common-drawer';
@@ -549,6 +614,7 @@
           <div class="kinojo-drawer-sanctuary-list" data-sanctuary-master-nav data-sanctuary-base="${sanctuaryPrefix}">
             <a href="${sanctuaryPrefix}">성역 목록 불러오는 중</a>
           </div>
+          <a href="${scheduleHref}" ${isSchedule?'class="active" aria-disabled="true"':''}>성역 스케줄</a>
           <div class="kinojo-drawer-divider"></div>
           <div class="kinojo-drawer-category">아르카나</div>
           <a href="${arcanaHref}" ${isArcana?'class="active" aria-disabled="true"':''}>ARCANA 스킬 시뮬레이터</a>
@@ -669,7 +735,7 @@
   bindCommonAdmin(info);
   bindImageGuards();
   loadSanctuaryMasterRenderer();
-  window.KinojoCommonUI={toast,showSafeError,reportError:showSafeError,openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel,toggleAdminMenu,closeAdminMenuCommon,reloadNotices:loadCommonNotices,renderVisits:renderCommonVisits,loadVisits:loadCommonVisits};
+  window.KinojoCommonUI={toast,showSafeError,reportError:showSafeError,openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel,toggleAdminMenu,closeAdminMenuCommon,reloadNotices:loadCommonNotices,reloadSanctuaryAlert:()=>loadSanctuaryAlert_(info,0),renderVisits:renderCommonVisits,loadVisits:loadCommonVisits};
   window.KinojoSafeError={show:showSafeError,report:showSafeError};
   window.openAdminDropdown=toggleAdminMenu;
   window.closeAdminMenu=closeAdminMenuCommon;

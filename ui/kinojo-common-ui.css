@@ -1381,3 +1381,49 @@ body.kinojo-page-home .card{
     display:none !important;
   }
 }
+
+/* ===========================================================
+KINOJO Sanctuary Topbar Alert 20260713 STEP 5
+- Server Engine이 선택한 본인 팀 일정 1건만 표시합니다.
+=========================================================== */
+.kinojo-top-visitor-row{gap:7px!important;}
+.kinojo-sanctuary-alert[hidden]{display:none!important;}
+.kinojo-sanctuary-alert{
+  flex:1 1 360px;
+  min-width:0;
+  max-width:470px;
+  height:28px;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+  gap:7px;
+  padding:0 10px;
+  border:1px solid rgba(37,99,235,.30);
+  border-radius:999px;
+  background:linear-gradient(135deg,rgba(239,246,255,.98),rgba(238,242,255,.96));
+  color:#172554;
+  text-decoration:none;
+  box-shadow:0 7px 16px rgba(37,99,235,.10),inset 0 1px 0 rgba(255,255,255,.92);
+  box-sizing:border-box;
+  overflow:hidden;
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+}
+.kinojo-sanctuary-alert:hover{transform:translateY(-1px);border-color:rgba(37,99,235,.55);box-shadow:0 9px 20px rgba(37,99,235,.16);}
+.kinojo-sanctuary-alert-badge{height:18px;display:inline-flex;align-items:center;padding:0 7px;border-radius:999px;background:#2563eb;color:#fff;font-size:8px;font-weight:1000;white-space:nowrap;}
+.kinojo-sanctuary-alert strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;font-weight:1000;letter-spacing:-.03em;}
+.kinojo-sanctuary-alert small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#4f6290;font-size:8px;font-weight:900;}
+.kinojo-sanctuary-alert.tone-today{border-color:rgba(220,38,38,.34);background:linear-gradient(135deg,rgba(254,242,242,.98),rgba(255,247,237,.96));color:#7f1d1d;}
+.kinojo-sanctuary-alert.tone-today .kinojo-sanctuary-alert-badge{background:#dc2626;}
+.kinojo-sanctuary-alert.tone-response{border-color:rgba(217,119,6,.34);background:linear-gradient(135deg,rgba(255,251,235,.98),rgba(255,247,237,.96));color:#78350f;}
+.kinojo-sanctuary-alert.tone-response .kinojo-sanctuary-alert-badge{background:#d97706;}
+.kinojo-top-visitor-row .kinojo-visitor-statusbar{flex:1 1 460px;width:auto!important;max-width:620px!important;min-width:220px;}
+@media(max-width:720px){
+  .kinojo-top-visitor-row{gap:4px!important;}
+  .kinojo-sanctuary-alert{flex:1 1 58%;max-width:none;height:26px;padding:0 6px;grid-template-columns:auto minmax(0,1fr);gap:4px;}
+  .kinojo-sanctuary-alert-badge{height:16px;padding:0 5px;font-size:7px;}
+  .kinojo-sanctuary-alert strong{font-size:8px;}
+  .kinojo-sanctuary-alert small{display:none;}
+  .kinojo-top-visitor-row .kinojo-visitor-statusbar{flex:1 1 42%;min-width:128px;max-width:none!important;}
+  .kinojo-sanctuary-alert:not([hidden]) + .kinojo-visitor-statusbar .visit-text b{display:none;}
+  .kinojo-sanctuary-alert:not([hidden]) + .kinojo-visitor-statusbar .visit-icon{display:none;}
+}

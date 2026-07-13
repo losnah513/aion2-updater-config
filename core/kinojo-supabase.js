@@ -1290,6 +1290,77 @@
     return rpc('kinojo_web_get_sanctuary_operation_overview', params);
   }
 
+  async function getSanctuaryScheduleCalendar(extra={}){
+    return rpc('kinojo_web_get_sanctuary_schedule_calendar', {
+      p_view:String(extra.view || 'month').toLowerCase() === 'week' ? 'week' : 'month',
+      p_anchor:String(extra.anchor || '').trim() || null,
+      p_sanctuary_code:String(extra.id || extra.sanctuaryId || extra.sanctuaryCode || '').trim() || null,
+      p_pass_key:normalizePassKey(extra.passKey || extra.passCode || '') || null
+    });
+  }
+
+  async function getSanctuaryScheduleDay(extra={}){
+    const scheduleId = Number(extra.scheduleId || extra.schedule_id || 0);
+    return rpc('kinojo_web_get_sanctuary_schedule_day', {
+      p_sanctuary_code:String(extra.id || extra.sanctuaryId || extra.sanctuaryCode || '').trim() || null,
+      p_target_date:String(extra.targetDate || extra.target_date || '').trim() || null,
+      p_pass_key:normalizePassKey(extra.passKey || extra.passCode || '') || null,
+      p_schedule_id:Number.isFinite(scheduleId) && scheduleId > 0 ? scheduleId : null
+    });
+  }
+
+  async function saveSanctuaryAvailability(extra={}){
+    const scheduleId = Number(extra.scheduleId || extra.schedule_id || 0);
+    return rpc('kinojo_sanctuary_save_availability', {
+      p_pass_key:normalizePassKey(extra.passKey || extra.passCode || ''),
+      p_sanctuary_code:String(extra.id || extra.sanctuaryId || extra.sanctuaryCode || '').trim() || null,
+      p_target_date:String(extra.targetDate || extra.target_date || '').trim() || null,
+      p_response_status:String(extra.status || extra.responseStatus || extra.response_status || 'unknown').trim().toLowerCase(),
+      p_time_text:String(extra.timeText || extra.time_text || '').trim() || null,
+      p_note:String(extra.note || '').trim() || null,
+      p_schedule_id:Number.isFinite(scheduleId) && scheduleId > 0 ? scheduleId : null
+    });
+  }
+
+  async function getMySanctuaryTopbar(extra={}){
+    return rpc('kinojo_web_get_my_sanctuary_topbar', {
+      p_pass_key:normalizePassKey(extra.passKey || extra.passCode || ''),
+      p_now:String(extra.now || new Date().toISOString())
+    });
+  }
+
+  async function getAdminSanctuaryScheduleConsole(extra={}){
+    assertAdmin();
+    return rpc('kinojo_admin_sanctuary_schedule_console', {
+      p_pass_key:currentPassKey(),
+      p_from:String(extra.from || extra.dateFrom || '').trim() || null,
+      p_to:String(extra.to || extra.dateTo || '').trim() || null,
+      p_sanctuary_code:String(extra.sanctuaryCode || extra.id || '').trim().toLowerCase() || null
+    });
+  }
+
+  async function saveAdminSanctuarySchedule(extra={}){
+    assertAdmin();
+    const scheduleId = Number(extra.scheduleId || extra.schedule_id || 0);
+    return rpc('kinojo_admin_sanctuary_schedule_save', {
+      p_pass_key:currentPassKey(),
+      p_schedule_id:Number.isFinite(scheduleId) && scheduleId > 0 ? scheduleId : null,
+      p_payload:extra.payload && typeof extra.payload === 'object' ? extra.payload : extra
+    });
+  }
+
+  async function setAdminSanctuaryScheduleStatus(extra={}){
+    assertAdmin();
+    const scheduleId = Number(extra.scheduleId || extra.schedule_id || 0);
+    if(!Number.isFinite(scheduleId) || scheduleId <= 0) throw new Error('변경할 성역 일정을 찾지 못했습니다.');
+    return rpc('kinojo_admin_sanctuary_schedule_set_status', {
+      p_pass_key:currentPassKey(),
+      p_schedule_id:scheduleId,
+      p_status:String(extra.status || '').trim().toLowerCase(),
+      p_reason:String(extra.reason || '').trim() || null
+    });
+  }
+
   async function saveSanctuaryData(extra={}){
     assertAdmin();
     return rpc('kinojo_web_save_sanctuary', { p_payload:extra || {} });
@@ -1401,6 +1472,13 @@
     if(name === 'sanctuaryMaster') return getSanctuaryMaster();
     if(name === 'sanctuary') return getSanctuaryData(extra.id || extra.sanctuaryId || '');
     if(name === 'sanctuaryOperation') return getSanctuaryOperationOverview(extra);
+    if(name === 'sanctuaryScheduleCalendar') return getSanctuaryScheduleCalendar(extra);
+    if(name === 'sanctuaryScheduleDay') return getSanctuaryScheduleDay(extra);
+    if(name === 'sanctuaryAvailabilitySave') return saveSanctuaryAvailability(extra);
+    if(name === 'mySanctuaryTopbar') return getMySanctuaryTopbar(extra);
+    if(name === 'adminSanctuaryScheduleConsole') return getAdminSanctuaryScheduleConsole(extra);
+    if(name === 'adminSanctuaryScheduleSave') return saveAdminSanctuarySchedule(extra);
+    if(name === 'adminSanctuaryScheduleStatus') return setAdminSanctuaryScheduleStatus(extra);
     if(name === 'sanctuaryAdmin') return saveSanctuaryData(extra);
     if(name === 'notices') return { ok:true, notices:(await getLatestAnnouncements(extra.limit || 5)).map(noticeFromRow).filter(Boolean) };
     if(name === 'hallVisit'){
@@ -1465,7 +1543,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.37-sanctuary-operation-2026071303',
+    version:'1.3.1.39-sanctuary-admin-topbar-2026071306',
     getConfig,
     isPreferred,
     isConfigured,
@@ -1495,6 +1573,13 @@
     getSanctuaryMaster,
     getSanctuaryData,
     getSanctuaryOperationOverview,
+    getSanctuaryScheduleCalendar,
+    getSanctuaryScheduleDay,
+    saveSanctuaryAvailability,
+    getMySanctuaryTopbar,
+    getAdminSanctuaryScheduleConsole,
+    saveAdminSanctuarySchedule,
+    setAdminSanctuaryScheduleStatus,
     saveSanctuaryData,
     logPageView,
     verifyPassKey,
