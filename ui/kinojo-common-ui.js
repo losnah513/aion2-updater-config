@@ -443,7 +443,7 @@
       {key:'home',label:'HOME',href:base},
       {key:'hall',label:'명예의 전당',href:base+'hof/'},
       {key:'ranking',label:'레기온 순위',href:base+'ranking/'},
-      {key:'sanctuary',label:'성역',href:base+'sanctuary/?id=rudra'},
+      {key:'sanctuary',label:'성역',href:base+'sanctuary/'},
       {key:'arcana',label:'아르카나',href:base+'arcana/'}
     ];
     const navHtml=navItems.map(item=>{
@@ -546,9 +546,9 @@
           <a href="https://aion2.plaync.com/ko-kr/board/notice/list" target="_blank" rel="noopener">아이온2 공지로 이동</a>
           <div class="kinojo-drawer-divider"></div>
           <div class="kinojo-drawer-category">성역</div>
-          <a href="${sanctuaryPrefix}?id=rudra" data-sanctuary-link="rudra">1. 심연의 재련: 루드라</a>
-          <a href="${sanctuaryPrefix}?id=bagot" data-sanctuary-link="bagot">2. 침식의 정화소</a>
-          <a href="${sanctuaryPrefix}?id=kaldrix" data-sanctuary-link="kaldrix">3. 무스펠의 성배</a>
+          <div class="kinojo-drawer-sanctuary-list" data-sanctuary-master-nav data-sanctuary-base="${sanctuaryPrefix}">
+            <a href="${sanctuaryPrefix}">성역 목록 불러오는 중</a>
+          </div>
           <div class="kinojo-drawer-divider"></div>
           <div class="kinojo-drawer-category">아르카나</div>
           <a href="${arcanaHref}" ${isArcana?'class="active" aria-disabled="true"':''}>ARCANA 스킬 시뮬레이터</a>
@@ -650,6 +650,14 @@
     });
     document.addEventListener('keydown',e=>{if(e.key==='Escape'){const p=q('#drawerPagePanel');if(p?.classList.contains('open'))return closeDrawerPagePanel();const d=q('#sideDrawer');if(d?.classList.contains('open'))return closeSideDrawer();}});
   }
+  function loadSanctuaryMasterRenderer(){
+    if(document.querySelector('script[data-kinojo-sanctuary-master-loader]')) return;
+    const script=document.createElement('script');
+    script.src='/ui/kinojo-sanctuary-master.js?cache=2026071301';
+    script.async=true;
+    script.dataset.kinojoSanctuaryMasterLoader='true';
+    document.head.appendChild(script);
+  }
   const rescued=removeLegacy();
   const info=pageInfo();
   document.body.classList.add('kinojo-page-' + info.key);
@@ -660,6 +668,7 @@
   bind();
   bindCommonAdmin(info);
   bindImageGuards();
+  loadSanctuaryMasterRenderer();
   window.KinojoCommonUI={toast,showSafeError,reportError:showSafeError,openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel,toggleAdminMenu,closeAdminMenuCommon,reloadNotices:loadCommonNotices,renderVisits:renderCommonVisits,loadVisits:loadCommonVisits};
   window.KinojoSafeError={show:showSafeError,report:showSafeError};
   window.openAdminDropdown=toggleAdminMenu;

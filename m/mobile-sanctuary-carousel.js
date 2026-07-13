@@ -8,12 +8,16 @@
   function clamp(value,min,max){return Math.max(min,Math.min(max,value))}
 
   function initCarousel(root){
+    root._kinojoSanctuaryCarouselController?.abort?.();
+    const controller=new AbortController();
+    const signal=controller.signal;
+    root._kinojoSanctuaryCarouselController=controller;
     const track=q('[data-sanctuary-track]',root)||q('.mobile-sanctuary-track',root);
     const slides=qa('[data-sanctuary-slide]',root).length?qa('[data-sanctuary-slide]',root):qa('.mobile-sanctuary-slide',root);
     const prev=q('[data-sanctuary-prev]',root)||q('.mobile-sanctuary-prev',root);
     const next=q('[data-sanctuary-next]',root)||q('.mobile-sanctuary-next',root);
     const dots=qa('[data-sanctuary-dot]',root).length?qa('[data-sanctuary-dot]',root):qa('.mobile-sanctuary-dots span',root);
-    if(!track||slides.length<2||!prev||!next)return;
+    if(!track||!slides.length||!prev||!next)return;
 
     let index=clamp(Number(root.dataset.initialIndex||0),0,slides.length-1);
     let startX=0,startY=0,currentX=0,dragging=false,pointerId=null,dragMoved=false;
@@ -81,12 +85,12 @@
       setTimeout(()=>{dragMoved=false},0);
     }
 
-    prev.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();move(-1)});
-    next.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();move(1)});
+    prev.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();move(-1)},{signal});
+    next.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();move(1)},{signal});
     slides.forEach(slide=>{
       slide.addEventListener('click',e=>{
         if(dragMoved){e.preventDefault();e.stopPropagation();}
-      });
+      },{signal});
     });
 
     if(window.PointerEvent){
@@ -94,28 +98,34 @@
         if(e.pointerType==='mouse'&&e.button!==0)return;
         begin(e.clientX,e.clientY,e.pointerId);
         track.setPointerCapture?.(e.pointerId);
-      });
+      },{signal});
       track.addEventListener('pointermove',e=>{
         if(pointerId!==null&&e.pointerId!==pointerId)return;
         update(e.clientX,e.clientY,e);
-      },{passive:false});
-      track.addEventListener('pointerup',end);
-      track.addEventListener('pointercancel',end);
+      },{passive:false,signal});
+      track.addEventListener('pointerup',end,{signal});
+      track.addEventListener('pointercancel',end,{signal});
     }else{
       track.addEventListener('touchstart',e=>{
         const t=e.touches[0]; if(t)begin(t.clientX,t.clientY,null);
-      },{passive:true});
+      },{passive:true,signal});
       track.addEventListener('touchmove',e=>{
         const t=e.touches[0]; if(t)update(t.clientX,t.clientY,e);
-      },{passive:false});
-      track.addEventListener('touchend',end);
-      track.addEventListener('touchcancel',end);
+      },{passive:false,signal});
+      track.addEventListener('touchend',end,{signal});
+      track.addEventListener('touchcancel',end,{signal});
     }
-    window.addEventListener('resize',render,{passive:true});
+    window.addEventListener('resize',render,{passive:true,signal});
     render();
   }
 
   function init(){qa('[data-mobile-sanctuary-carousel]').forEach(initCarousel)}
+  window.KinojoMobileSanctuaryCarousel={init,initCarousel};
+  window.addEventListener('kinojo:sanctuary-master-rendered',()=>{
+    qa('[data-mobile-sanctuary-carousel]').forEach(root=>{
+      initCarousel(root);
+    });
+  });
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
   else init();
 })();

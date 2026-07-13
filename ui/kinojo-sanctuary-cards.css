@@ -9,3 +9,49 @@
   --kinojo-sanctuary-bagot-bg:radial-gradient(circle at 56% 24%,rgba(205,255,244,.82),rgba(65,144,131,.66) 38%,rgba(22,48,58,.96) 100%);
   --kinojo-sanctuary-kaldrix-bg:radial-gradient(circle at 67% 24%,rgba(255,229,178,.86),rgba(167,111,54,.72) 42%,rgba(54,36,42,.98) 100%);
 }
+
+/* 20260713 STEP 1: sanctuary_master 공통 반복 렌더링 */
+.sanctuary-row[data-sanctuary-master-list="desktop"]{grid-template-columns:repeat(auto-fit,minmax(min(250px,100%),1fr))}
+.sanctuary-master-loading,
+.sanctuary-master-error{
+  min-height:120px;
+  display:grid;
+  place-items:center;
+  grid-column:1/-1;
+  padding:18px;
+  border:1px dashed rgba(120,145,180,.32);
+  border-radius:12px;
+  background:rgba(255,255,255,.78);
+  color:#64748b;
+  font-size:13px;
+  font-weight:900;
+  text-align:center;
+}
+.sanctuary-master-card{
+  position:relative;
+  min-width:0;
+  background:var(--sanctuary-master-bg,#101827);
+  border-color:color-mix(in srgb,var(--sanctuary-master-accent,#64748b) 36%,transparent);
+}
+.sanctuary-master-card-layered{isolation:isolate;overflow:visible}
+.sanctuary-master-layer{position:absolute;inset:0;display:block;background-position:center;background-size:cover;background-repeat:no-repeat;pointer-events:none}
+.sanctuary-master-card-symbol{overflow:hidden;color:#fff}
+.sanctuary-master-card-symbol::before{content:"";position:absolute;inset:0;background:var(--sanctuary-master-bg,linear-gradient(135deg,#1e293b,#0f172a));z-index:1;transition:transform .35s ease,filter .35s ease}
+.sanctuary-master-card-symbol::after{content:"";position:absolute;inset:0;z-index:3;background:linear-gradient(180deg,rgba(8,10,18,0) 38%,rgba(4,9,18,.75) 76%,rgba(3,6,12,.95) 100%)}
+.sanctuary-master-card-symbol:hover::before{transform:scale(1.06);filter:saturate(1.1) brightness(1.08)}
+.sanctuary-master-content{position:absolute;z-index:12}
+.kinojo-drawer-sanctuary-list{display:grid;gap:2px}
+
+.mobile-sanctuary-track>.sanctuary-master-loading,
+.mobile-sanctuary-track>.sanctuary-master-error{
+  position:absolute;
+  inset:0;
+  min-height:0;
+  z-index:2;
+  border:0;
+  border-radius:inherit;
+  background:linear-gradient(135deg,#172033,#0b1220);
+  color:rgba(255,255,255,.82);
+}
+.sanctuary-master-mobile-slide{background:var(--sanctuary-master-bg,linear-gradient(135deg,#172033,#0b1220))}
+.sanctuary-master-mobile-bg{background:var(--sanctuary-master-bg,linear-gradient(135deg,#172033,#0b1220));background-position:center;background-size:cover;background-repeat:no-repeat}

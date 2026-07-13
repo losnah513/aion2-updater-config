@@ -1273,8 +1273,12 @@
     return { ok:true, message:'제안이 접수되었습니다.', suggestion:row || null };
   }
 
+  async function getSanctuaryMaster(){
+    return rpc('kinojo_web_get_sanctuary_master', {});
+  }
+
   async function getSanctuaryData(id){
-    return rpc('kinojo_web_get_sanctuary', { p_sanctuary_id:String(id || 'rudra') });
+    return rpc('kinojo_web_get_sanctuary_v2', { p_sanctuary_code:String(id || '') || null });
   }
 
   async function saveSanctuaryData(extra={}){
@@ -1385,7 +1389,8 @@
     if(name === 'runtimeForceRelease') return runtimeForceRelease(extra.adminPassCode || extra.passCode, extra.reason);
     if(name === 'hallReaction') return submitHallReaction(extra);
     if(name === 'hallSuggestion') return submitHallSuggestion(extra);
-    if(name === 'sanctuary') return getSanctuaryData(extra.id || extra.sanctuaryId || 'rudra');
+    if(name === 'sanctuaryMaster') return getSanctuaryMaster();
+    if(name === 'sanctuary') return getSanctuaryData(extra.id || extra.sanctuaryId || '');
     if(name === 'sanctuaryAdmin') return saveSanctuaryData(extra);
     if(name === 'notices') return { ok:true, notices:(await getLatestAnnouncements(extra.limit || 5)).map(noticeFromRow).filter(Boolean) };
     if(name === 'hallVisit'){
@@ -1450,7 +1455,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.35-event-notice-popup-2026070413',
+    version:'1.3.1.36-sanctuary-master-2026071301',
     getConfig,
     isPreferred,
     isConfigured,
@@ -1477,6 +1482,7 @@
     getHallReactionSummary,
     submitHallReaction,
     submitHallSuggestion,
+    getSanctuaryMaster,
     getSanctuaryData,
     saveSanctuaryData,
     logPageView,
