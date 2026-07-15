@@ -101,6 +101,9 @@
     const items = Array.isArray(day.items) ? day.items : [];
     const classes = ['schedule-day'];
     if(state.view === 'month' && !day.isInAnchorMonth) classes.push('is-outside');
+    if(items.length) classes.push('is-has-schedule');
+    const today = String(state.calendar?.today || '');
+    if(today && String(day.date || '') < today) classes.push('is-past');
     if(day.isToday) classes.push('is-today');
     if(day.dayName === '일') classes.push('is-sunday');
     if(day.dayName === '토') classes.push('is-saturday');

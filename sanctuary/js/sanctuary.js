@@ -6,10 +6,8 @@ const CLASS_ASSET_BASE='/assets/images/classes/';
 const CLASS_ICON={"검성":"class_icon_gladiator.png","수호성":"class_icon_templar.png","살성":"class_icon_assassin.png","궁성":"class_icon_ranger.png","정령성":"class_icon_elementalist.png","마도성":"class_icon_sorcerer.png","치유성":"class_icon_cleric.png","호법성":"class_icon_chanter.png","권성":"class_icon_fighter.png"};
 function classIconSrc(className){return CLASS_ICON[className]?CLASS_ASSET_BASE+CLASS_ICON[className]:''}
 let sanctuaryData=null;
-let sanctuaryOperationData=null;
 let operationLoadKey='';
 let operationRequestSeq=0;
-let activeOperationScheduleId=null;
 function esc(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;")}
 function fmt(n){return Number(n||0).toLocaleString("ko-KR")}
 function currentFallback(){return {info:masterInfo||{sanctuaryId:currentId,sanctuaryNo:"",sanctuaryName:"성역",shortName:"성역",bossName:""}}}
@@ -48,14 +46,10 @@ function operationStatusClass(value){
 function renderOperationSkeleton(){
   const week=document.getElementById('operationWeekLabel');
   const auth=document.getElementById('operationAuthState');
-  const overview=document.getElementById('operationOverview');
   const schedules=document.getElementById('operationScheduleList');
-  const teams=document.getElementById('operationTeamList');
   if(week)week.textContent='아이온 주간 · 수요일부터 화요일까지';
   if(auth)auth.textContent='Server Engine 확인 중';
-  if(overview)overview.innerHTML=[sanctuarySpinner('이번 주 일정 확인 중'),sanctuarySpinner('응답 현황 확인 중'),sanctuarySpinner('내 팀 확인 중')].map(x=>'<div class="sanctuary-operation-stat">'+x+'</div>').join('');
-  if(schedules)schedules.innerHTML=sanctuarySpinner('성역 운영 일정을 불러오는 중');
-  if(teams)teams.innerHTML=sanctuarySpinner('팀 참여 현황을 불러오는 중');
+  if(schedules)schedules.innerHTML=sanctuarySpinner('성역 일정을 불러오는 중');
 }
 function ensureSanctuaryOperation(force=false){
   if(!currentId)return;
@@ -74,111 +68,50 @@ async function loadSanctuaryOperation(key){
     const data=await window.KinojoApi.getAction('sanctuaryOperation',{id:currentId,passKey:currentSanctuaryPassKey()});
     if(seq!==operationRequestSeq||key!==operationLoadKey)return;
     if(!data||data.ok===false)throw new Error(data?.message||'성역 운영 정보 로드 실패');
-    sanctuaryOperationData=data;
-    activeOperationScheduleId=data.primaryScheduleId||data.items?.[0]?.id||null;
     renderSanctuaryOperation(data);
   }catch(err){
     if(seq!==operationRequestSeq)return;
     const auth=document.getElementById('operationAuthState');
-    const overview=document.getElementById('operationOverview');
     const schedules=document.getElementById('operationScheduleList');
-    const teams=document.getElementById('operationTeamList');
     if(auth)auth.textContent='운영 정보 연결 실패';
-    if(overview)overview.innerHTML='<div class="sanctuary-operation-empty">Server Engine 운영 정보를 불러오지 못했습니다.</div>';
     if(schedules)schedules.innerHTML='<div class="sanctuary-operation-empty">'+esc(err?.message||'일정 조회 실패')+'</div>';
-    if(teams)teams.innerHTML='';
   }
-}
-function operationStat(value,label,sub=''){
-  return '<div class="sanctuary-operation-stat"><strong>'+esc(value)+'</strong><span>'+esc(label)+'</span>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</div>';
 }
 function renderSanctuaryOperation(data){
   const items=Array.isArray(data.items)?data.items:[];
-  const primary=items.find(item=>String(item.id)===String(data.primaryScheduleId))||items[0]||null;
   const week=document.getElementById('operationWeekLabel');
   const auth=document.getElementById('operationAuthState');
-  const overview=document.getElementById('operationOverview');
   const schedules=document.getElementById('operationScheduleList');
   const isUpcoming=data.displayMode==='next_upcoming';
-  if(week)week.textContent=isUpcoming?'이번 주 일정 없음 · 가장 가까운 다음 일정 표시':'아이온 주간 '+String(data.weekLabel||'')+' · 수요일~화요일';
+  if(week)week.textContent=isUpcoming?'이번 주 일정 없음 · 다음 예정 일정':'아이온 주간 '+String(data.weekLabel||'')+' · 수요일~화요일';
   if(auth){
     const user=data.user||null;
-    auth.textContent=data.authenticated?(String(user?.mainCharacterName||'로그인 사용자')+(user?.teamName?' · '+user.teamName:(user?.teamNo?' · '+user.teamNo+'팀':' · 소속 팀 미확인'))):'PASS KEY 로그인 시 내 팀 투표 일정이 강조됩니다.';
+    auth.textContent=data.authenticated?(String(user?.teamName||user?.mainCharacterName||'로그인 완료')):'PASS KEY 로그인 시 내 일정 강조';
     auth.classList.toggle('is-logged-in',!!data.authenticated);
   }
-  const fixedPrimary=primary&&!primary.requiresResponse;
-  if(overview)overview.innerHTML=[
-    operationStat(data.scheduleCount||0,isUpcoming?'다음 예정 일정':'이번 주 일정',data.hasSchedule?(isUpcoming?'가장 가까운 미래 일정':'Server 등록 완료'):'등록된 일정 없음'),
-    operationStat(fixedPrimary?'없음':(data.responseRequiredCount||0),'응답 필요',fixedPrimary?'확정 일정은 응답하지 않음':(data.authenticated?'내 투표 일정 기준':'로그인 후 확인')),
-    operationStat(primary?.scheduleModeLabel||primary?.displayLabel||'대기','우선 일정',primary?String(primary.dateLabel||'')+' '+String(primary.startTime||''):'일정 등록 대기')
-  ].join('');
+  if(!schedules)return;
   if(!items.length){
-    if(schedules)schedules.innerHTML='<div class="sanctuary-operation-empty"><strong>등록된 예정 일정이 없습니다.</strong><span>관리자가 일정을 등록하면 이곳에 표시됩니다.</span></div>';
-    renderOperationTeams(null);
+    schedules.innerHTML='<div class="sanctuary-operation-empty"><strong>등록된 예정 일정이 없습니다.</strong><span>성역 스케줄에서 일정을 확인할 수 있습니다.</span></div>';
     return;
   }
-  if(schedules){
-    schedules.innerHTML=items.map(operationScheduleHtml).join('');
-    schedules.querySelectorAll('[data-operation-schedule]').forEach(btn=>btn.addEventListener('click',()=>selectOperationSchedule(btn.dataset.operationSchedule,true)));
-  }
-  selectOperationSchedule(activeOperationScheduleId||data.primaryScheduleId||items[0].id,false);
+  schedules.innerHTML=items.map(operationScheduleHtml).join('');
+  schedules.querySelectorAll('[data-operation-schedule]').forEach(button=>button.addEventListener('click',()=>{
+    const selected=items.find(item=>String(item.id)===String(button.dataset.operationSchedule));
+    if(selected)openOperationScheduleModal(selected);
+  }));
 }
 function operationScheduleHtml(item){
-  const summary=item.summary||{};
   const state=operationStatusClass(item.displayState||item.effectiveStatus);
-  const active=String(item.id)===String(activeOperationScheduleId);
   const userResponse=item.user?.response;
-  const responseText=item.requiresResponse?(item.responseRequired?'응답 필요':(userResponse&&userResponse.statusLabel?'내 응답 '+userResponse.statusLabel:'투표 일정')):'확정된 일정';
-  const teamName=item.teams?.[0]?.teamName||item.teams?.[0]?.teamNo&&item.teams[0].teamNo+'팀'||'';
-  const metrics=item.requiresResponse?'<div class="sanctuary-operation-schedule-meta"><span>참여 '+esc(summary.participatingCount??0)+'명</span><span>불가 '+esc(summary.unavailableCount??0)+'명</span><span>미응답 '+esc(summary.pendingCount??0)+'명</span><span>응답률 '+esc(summary.responseRate??0)+'%</span></div>':'';
-  return '<article class="sanctuary-operation-schedule '+(active?'is-active ':'')+'status-'+state+'" data-operation-card="'+esc(item.id)+'">'
-    +'<div class="sanctuary-operation-schedule-main"><span class="sanctuary-operation-status status-'+state+'">'+esc(item.scheduleModeLabel||item.displayLabel||item.statusLabel||'일정')+'</span><div><h3>'+esc(teamName||item.title||item.sanctuaryName||'성역 일정')+'</h3><p>'+esc(item.dateLabel||item.targetDate||'')+(item.startTime?' · '+esc(item.startTime):'')+(item.location?' · '+esc(item.location):'')+'</p></div></div>'
-    +metrics
-    +'<div class="sanctuary-operation-response '+(item.responseRequired?'needs-response':'')+'">'+esc(responseText)+'</div>'
-    +'<button class="sanctuary-operation-view" type="button" data-operation-schedule="'+esc(item.id)+'">일정 보기</button></article>';
-}
-function selectOperationSchedule(scheduleId,openDetail){
-  const items=Array.isArray(sanctuaryOperationData?.items)?sanctuaryOperationData.items:[];
-  const selected=items.find(item=>String(item.id)===String(scheduleId))||items[0]||null;
-  activeOperationScheduleId=selected?.id||null;
-  document.querySelectorAll('[data-operation-card]').forEach(card=>card.classList.toggle('is-active',String(card.dataset.operationCard)===String(activeOperationScheduleId)));
-  renderOperationTeams(selected);
-  if(openDetail&&selected)openOperationScheduleModal(selected);
-}
-function operationMemberHtml(member){
-  const state=String(member.status||'pending').toLowerCase()||'pending';
-  return '<li class="sanctuary-operation-member member-'+esc(state)+'"><strong>'+esc(member.memberName||member.characterName||'-')+'</strong><span>'+esc(member.statusLabel||'미응답')+(member.timeText?' · '+esc(member.timeText):'')+'</span></li>';
-}
-function operationTeamHtml(team,schedule){
-  const state=operationStatusClass(team.effectiveStatus||team.status);
-  if(!schedule?.requiresResponse){
-    return '<article class="sanctuary-operation-team is-fixed status-'+state+'"><header><div><span class="sanctuary-operation-status status-'+state+'">일정 확정</span><h4>'+esc(team.teamName||((team.teamNo||'')+'팀'))+'</h4></div>'+(team.isUserTeam?'<span class="sanctuary-operation-myteam">내 팀</span>':'')+'</header><p class="sanctuary-operation-team-time">'+esc(schedule?.dateLabel||'')+(schedule?.startTime?' · '+esc(schedule.startTime):'')+(schedule?.location?' · '+esc(schedule.location):'')+'</p><div class="sanctuary-operation-fixed-message">참여 응답 없이 확정 일정으로 안내됩니다.</div></article>';
-  }
-  const summary=team.summary||{};
-  const recommended=summary.recommendedTime?.label||summary.recommendedTime||'';
-  const members=Array.isArray(summary.members)?summary.members:[];
-  return '<article class="sanctuary-operation-team '+(team.isUserTeam?'is-user-team ':'')+'status-'+state+'">'
-    +'<header><div><span class="sanctuary-operation-status status-'+state+'">투표 필요</span><h4>'+esc(team.teamName||((team.teamNo||'')+'팀'))+'</h4></div>'+(team.isUserTeam?'<span class="sanctuary-operation-myteam">내 팀</span>':'')+'</header>'
-    +'<p class="sanctuary-operation-team-time">'+(schedule?.startTime?esc(schedule.startTime):'시작 시간 확인')+(team.note?' · '+esc(team.note):'')+'</p>'
-    +'<div class="sanctuary-operation-team-metrics"><span><strong>'+esc(summary.availableCount??0)+'</strong> 가능</span><span><strong>'+esc(summary.negotiableCount??0)+'</strong> 협의</span><span><strong>'+esc(summary.unavailableCount??0)+'</strong> 불가</span><span><strong>'+esc(summary.pendingCount??0)+'</strong> 미응답</span></div>'
-    +'<div class="sanctuary-operation-team-rate"><span>응답률 '+esc(summary.responseRate??0)+'%</span><span>참여율 '+esc(summary.participationRate??0)+'%</span>'+(recommended?'<span>추천 '+esc(recommended)+'</span>':'')+'</div>'
-    +'<details class="sanctuary-operation-members"><summary>팀원 현황 보기</summary><ul>'+(members.length?members.map(operationMemberHtml).join(''):'<li class="sanctuary-operation-member"><span>등록된 팀원이 없습니다.</span></li>')+'</ul></details></article>';
-}
-function renderOperationTeams(schedule){
-  const title=document.getElementById('operationTeamTitle');
-  const sub=document.getElementById('operationTeamSub');
-  const list=document.getElementById('operationTeamList');
-  if(!list)return;
-  if(!schedule){
-    if(title)title.textContent='팀 운영 현황';
-    if(sub)sub.textContent='등록된 일정이 없습니다.';
-    list.innerHTML='<div class="sanctuary-operation-empty">일정이 등록되면 팀 정보가 표시됩니다.</div>';
-    return;
-  }
-  if(title)title.textContent=(schedule.requiresResponse?'투표 현황':'확정 일정 대상 팀');
-  if(sub)sub.textContent=String(schedule.dateLabel||'')+(schedule.startTime?' · '+String(schedule.startTime):'')+' · '+String(schedule.scheduleModeLabel||schedule.displayLabel||'');
-  const teams=Array.isArray(schedule.teams)?schedule.teams:[];
-  list.innerHTML=teams.length?teams.map(team=>operationTeamHtml(team,schedule)).join(''):'<div class="sanctuary-operation-empty">대상 팀 정보가 없습니다.</div>';
+  const teamName=item.teams?.[0]?.teamName||item.teams?.[0]?.teamNo&&item.teams[0].teamNo+'팀'||'팀 미확인';
+  const responseText=item.requiresResponse?(item.responseRequired?'응답 필요':(userResponse?.statusLabel||'투표 일정')):'일정 확정';
+  const meta=[item.dateLabel||item.targetDate||'',item.startTime||'',item.location||''].filter(Boolean).join(' · ');
+  return '<button class="sanctuary-operation-schedule status-'+state+(item.responseRequired?' needs-response':'')+'" type="button" data-operation-schedule="'+esc(item.id)+'">'
+    +'<span class="sanctuary-operation-status status-'+state+'">'+esc(item.scheduleModeLabel||item.displayLabel||item.statusLabel||'일정')+'</span>'
+    +'<strong class="sanctuary-operation-schedule-title">'+esc(teamName)+'</strong>'
+    +'<span class="sanctuary-operation-schedule-time">'+esc(meta)+'</span>'
+    +'<span class="sanctuary-operation-response">'+esc(responseText)+'</span>'
+    +'<span class="sanctuary-operation-arrow" aria-hidden="true">›</span></button>';
 }
 function ensureOperationScheduleModal(){
   let modal=document.getElementById('sanctuaryScheduleDetailModal');

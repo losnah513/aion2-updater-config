@@ -555,29 +555,32 @@ body{min-height:100svh}.mobile-wrap{width:100%;max-width:560px;padding:clamp(16p
   padding-top:10px;
 }
 .kinojo-mobile-sanctuary-detail-page .sanctuary-hero{
-  aspect-ratio:21/9;
-  min-height:auto;
-  max-height:none;
-  border-radius:20px;
+  aspect-ratio:auto;
+  height:clamp(110px,22vw,220px);
+  min-height:0;
+  max-height:220px;
+  border-radius:18px;
   overflow:hidden;
-  margin-top:10px;
+  margin-top:8px;
 }
 .kinojo-mobile-sanctuary-detail-page .hero-text{
-  left:clamp(16px,4.5vw,24px);
-  right:clamp(16px,4.5vw,24px);
-  bottom:clamp(16px,4.8vw,24px);
+  position:absolute;
+  left:clamp(14px,4vw,22px);
+  right:clamp(14px,4vw,22px);
+  bottom:clamp(12px,3.4vw,20px);
+  padding:0;
 }
 .kinojo-mobile-sanctuary-detail-page .hero-kicker{
-  font-size:clamp(12px,3.4vw,14px);
+  font-size:clamp(10px,2.5vw,12px);
 }
 .kinojo-mobile-sanctuary-detail-page .hero-text h1{
-  font-size:clamp(24px,7.1vw,38px);
+  font-size:clamp(21px,5.2vw,30px);
   line-height:1.05;
-  letter-spacing:-.06em;
+  letter-spacing:-.055em;
 }
 .kinojo-mobile-sanctuary-detail-page .hero-text p{
-  font-size:clamp(13px,3.7vw,16px);
-  line-height:1.3;
+  font-size:clamp(11px,2.8vw,14px);
+  line-height:1.25;
 }
 .kinojo-mobile-sanctuary-detail-page .sanctuary-tabs{
   display:flex;
@@ -621,7 +624,7 @@ body{min-height:100svh}.mobile-wrap{width:100%;max-width:560px;padding:clamp(16p
 }
 @media (max-width:430px) and (min-height:880px){
   .kinojo-mobile-sanctuary-detail-page .sanctuary-hero{
-    aspect-ratio:21/9;
+    height:clamp(118px,21vw,210px);
   }
   .kinojo-mobile-detail-page .wrap{
     padding-left:10px;
