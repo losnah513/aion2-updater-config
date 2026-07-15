@@ -363,6 +363,18 @@
     return { account, role, level };
   }
 
+  function assertScheduleManager(){
+    const account = currentAccount();
+    const role = normalizeRole(account && account.role, account && account.level);
+    const level = Number(account && account.level || roleToLevel(role, 0));
+    if(!account || level < 2){
+      const err = new Error('성역 일정 관리 권한이 필요합니다.');
+      err.kinojoAdminAuthError = true;
+      throw err;
+    }
+    return { account, role, level };
+  }
+
   function makeRequestId(){
     const stamp = new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
     const rand = Math.random().toString(36).slice(2, 10).toUpperCase();
@@ -1330,7 +1342,7 @@
   }
 
   async function getAdminSanctuaryScheduleConsole(extra={}){
-    assertAdmin();
+    assertScheduleManager();
     return rpc('kinojo_admin_sanctuary_schedule_console', {
       p_pass_key:currentPassKey(),
       p_from:String(extra.from || extra.dateFrom || '').trim() || null,
@@ -1340,7 +1352,7 @@
   }
 
   async function saveAdminSanctuarySchedule(extra={}){
-    assertAdmin();
+    assertScheduleManager();
     const scheduleId = Number(extra.scheduleId || extra.schedule_id || 0);
     return rpc('kinojo_admin_sanctuary_schedule_save', {
       p_pass_key:currentPassKey(),
@@ -1350,7 +1362,7 @@
   }
 
   async function setAdminSanctuaryScheduleStatus(extra={}){
-    assertAdmin();
+    assertScheduleManager();
     const scheduleId = Number(extra.scheduleId || extra.schedule_id || 0);
     if(!Number.isFinite(scheduleId) || scheduleId <= 0) throw new Error('변경할 성역 일정을 찾지 못했습니다.');
     return rpc('kinojo_admin_sanctuary_schedule_set_status', {
@@ -1358,6 +1370,21 @@
       p_schedule_id:scheduleId,
       p_status:String(extra.status || '').trim().toLowerCase(),
       p_reason:String(extra.reason || '').trim() || null
+    });
+  }
+
+  async function getSanctuaryRolePermissions(){
+    assertAdmin();
+    return rpc('kinojo_admin_sanctuary_role_permissions', { p_pass_key:currentPassKey() });
+  }
+
+  async function setSanctuaryRolePermission(extra={}){
+    assertAdmin();
+    return rpc('kinojo_admin_sanctuary_role_permission_set', {
+      p_pass_key:currentPassKey(),
+      p_role_key:String(extra.role || extra.roleKey || '').trim().toUpperCase(),
+      p_permission_key:String(extra.permissionKey || extra.permission || '').trim(),
+      p_enabled:extra.enabled === true
     });
   }
 
@@ -1479,6 +1506,8 @@
     if(name === 'adminSanctuaryScheduleConsole') return getAdminSanctuaryScheduleConsole(extra);
     if(name === 'adminSanctuaryScheduleSave') return saveAdminSanctuarySchedule(extra);
     if(name === 'adminSanctuaryScheduleStatus') return setAdminSanctuaryScheduleStatus(extra);
+    if(name === 'sanctuaryRolePermissions') return getSanctuaryRolePermissions(extra);
+    if(name === 'sanctuaryRolePermissionSet') return setSanctuaryRolePermission(extra);
     if(name === 'sanctuaryAdmin') return saveSanctuaryData(extra);
     if(name === 'notices') return { ok:true, notices:(await getLatestAnnouncements(extra.limit || 5)).map(noticeFromRow).filter(Boolean) };
     if(name === 'hallVisit'){
@@ -1497,7 +1526,7 @@
     const code = normalizePassKey(passKey);
     if(!code) throw new Error('PASS KEY를 입력해 주세요.');
     const query = [
-      'select=id,main_character_name,pass_code,level,role,role_label,can_like,can_suggest,can_manage,is_active',
+      'select=id,main_character_name,pass_code,level,role,role_label,permissions,can_like,can_suggest,can_manage,is_active',
       'pass_code=eq.' + encodeURIComponent(code),
       'is_active=eq.true',
       'limit=1'
@@ -1519,6 +1548,7 @@
       canLike: row.can_like !== false,
       canSuggest: row.can_suggest !== false,
       canManage: row.can_manage === true || roleLevel >= 3,
+      permissions: normalizePermissions(row.permissions),
       source: 'supabase',
       passCode: code,
       passKey: code,
@@ -1532,6 +1562,7 @@
         role: profile.role,
         roleLabel: profile.roleLabel,
         level: profile.level,
+        permissions: profile.permissions,
         source:'supabase',
         passCode: code,
         passKey: code,
@@ -1543,7 +1574,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.39-sanctuary-admin-topbar-2026071306',
+    version:'1.3.1.40-sanctuary-role-scope-2026071517',
     getConfig,
     isPreferred,
     isConfigured,
@@ -1580,6 +1611,8 @@
     getAdminSanctuaryScheduleConsole,
     saveAdminSanctuarySchedule,
     setAdminSanctuaryScheduleStatus,
+    getSanctuaryRolePermissions,
+    setSanctuaryRolePermission,
     saveSanctuaryData,
     logPageView,
     verifyPassKey,

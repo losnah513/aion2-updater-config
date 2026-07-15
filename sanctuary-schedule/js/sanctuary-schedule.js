@@ -12,7 +12,8 @@
     responseStatus: 'unknown',
     requestSeq: 0,
     daySeq: 0,
-    saving: false
+    saving: false,
+    navigating: false
   };
 
   const $ = selector => document.querySelector(selector);
@@ -39,6 +40,15 @@
     if(!el) return;
     el.textContent = message;
     el.classList.toggle('is-error', !!error);
+  }
+  function sleep(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
+  function setNavigationBusy(busy){
+    state.navigating=!!busy;
+    ['#schedulePrevBtn','#scheduleNextBtn'].forEach(selector=>{const button=$(selector);if(button)button.disabled=!!busy;});
+  }
+  function clearNavigationClasses(root){
+    if(!root)return;
+    root.classList.remove('is-navigating-prev','is-navigating-next','is-entering-prev','is-entering-next');
   }
   function updateUrl(){
     const next = new URL(location.href);
@@ -273,9 +283,14 @@
   }
   async function loadCalendar(options={}){
     const seq = ++state.requestSeq;
-    setSync('Server Engine 연결 중');
+    const silent=options.silent===true;
+    const direction=options.navigationDirection==='prev'?'prev':options.navigationDirection==='next'?'next':'';
     const root = $('#scheduleCalendarViewport');
-    if(root) root.innerHTML = '<div class="schedule-calendar-loading"><span class="kinojo-spinner" aria-hidden="true"></span><strong>통합 일정을 불러오는 중...</strong></div>';
+    const started=Date.now();
+    if(!silent){
+      setSync('Server Engine 연결 중');
+      if(root) root.innerHTML = '<div class="schedule-calendar-loading"><span class="kinojo-spinner" aria-hidden="true"></span><strong>통합 일정을 불러오는 중...</strong></div>';
+    }else setSync(direction==='prev'?'이전 기간으로 이동 중':'다음 기간으로 이동 중');
     try{
       if(!window.KinojoApi) throw new Error('KinojoApi 연결을 확인해 주세요.');
       const data = await window.KinojoApi.getAction('sanctuaryScheduleCalendar', {
@@ -283,31 +298,47 @@
         anchor:state.anchor,
         passKey:currentPassKey()
       });
+      if(direction){const remain=260-(Date.now()-started);if(remain>0)await sleep(remain);}
       if(seq !== state.requestSeq) return;
       if(!data || data.ok === false) throw new Error(data?.message || '성역 달력 조회 실패');
       state.calendar = data;
       state.anchor = String(data.anchor || state.anchor || '');
-      if(!options.preserveSelection) pickInitialDate(); else pickInitialDate();
+      pickInitialDate();
       renderToolbar();
       renderWeekHead();
+      clearNavigationClasses(root);
       renderCalendar();
+      if(direction&&root){
+        root.classList.add('is-entering-'+direction);
+        void root.offsetWidth;
+        requestAnimationFrame(()=>root.classList.remove('is-entering-'+direction));
+      }
       updateUrl();
       setSync('Server Engine 업데이트 '+new Date(data.generatedAt || Date.now()).toLocaleString('ko-KR'));
       await loadDay();
     }catch(error){
       if(seq !== state.requestSeq) return;
+      clearNavigationClasses(root);
       setSync(error?.message || '일정 조회 실패', true);
-      if(root) root.innerHTML = '<div class="schedule-error">'+esc(error?.message || String(error))+'</div>';
+      if(!silent&&root) root.innerHTML = '<div class="schedule-error">'+esc(error?.message || String(error))+'</div>';
+      else toast(error?.message || String(error),'error');
+    }finally{
+      if(direction){clearNavigationClasses(root);setNavigationBusy(false);}
     }
   }
   function navigatePanel(direction){
+    if(state.navigating)return;
     const panel = currentPanel();
     const next = direction === 'prev' ? panel?.previousAnchor : panel?.nextAnchor;
     if(!next) return;
+    const root=$('#scheduleCalendarViewport');
+    setNavigationBusy(true);
+    clearNavigationClasses(root);
+    root?.classList.add('is-navigating-'+direction);
     state.anchor = String(next);
     state.selectedDate = '';
     state.selectedScheduleId = null;
-    loadCalendar();
+    loadCalendar({silent:true,navigationDirection:direction});
   }
   function bind(){
     $$('[data-schedule-view]').forEach(button => button.addEventListener('click', () => {

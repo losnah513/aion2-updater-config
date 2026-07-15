@@ -501,13 +501,17 @@
       {key:'home',label:'HOME',href:base},
       {key:'hall',label:'명예의 전당',href:base+'hof/'},
       {key:'ranking',label:'레기온 순위',href:base+'ranking/'},
-      {key:'sanctuary',label:'성역',href:base+'sanctuary/'},
+      {key:'sanctuary',label:'성역',href:base+'sanctuary/',sanctuaryMenu:true},
       {key:'schedule',label:'성역 스케줄',href:base+'sanctuary-schedule/'},
       {key:'arcana',label:'아르카나',href:base+'arcana/'}
     ];
     const navHtml=navItems.map(item=>{
       const active=item.key===info.key;
       const href=active?'./':item.href;
+      if(item.sanctuaryMenu){
+        const sanctuaryBase=info.mobile?'/m/sanctuary/':'/sanctuary/';
+        return '<span class="kinojo-top-sanctuary-wrap"><button class="kinojo-top-nav-link kinojo-top-sanctuary-toggle'+(active?' active':'')+'" id="kinojoTopSanctuaryToggle" type="button" aria-expanded="false" aria-haspopup="menu"'+(active?' aria-current="page"':'')+'>성역 <i aria-hidden="true">▾</i></button><span class="kinojo-top-sanctuary-menu" id="kinojoTopSanctuaryMenu" role="menu" aria-hidden="true" data-sanctuary-master-nav data-sanctuary-base="'+sanctuaryBase+'"><a href="'+sanctuaryBase+'">성역 목록 불러오는 중</a></span></span>';
+      }
       return '<a class="kinojo-top-nav-link'+(active?' active':'')+(item.adminOnly?' kinojo-admin-only-link':'')+'" href="'+href+'"'+(active?' aria-current="page"':'')+'>'+item.label+'</a>';
     }).join('');
     bar.innerHTML=`
@@ -546,6 +550,23 @@
     if(auth)auth.appendChild(admin);
     if(visitorRow)visitorRow.appendChild(visit);
     document.body.insertBefore(bar,document.body.firstChild);
+    const sanctuaryToggle=q('#kinojoTopSanctuaryToggle',bar);
+    const sanctuaryMenu=q('#kinojoTopSanctuaryMenu',bar);
+    const closeSanctuaryMenu=()=>{
+      if(!sanctuaryToggle||!sanctuaryMenu)return;
+      sanctuaryToggle.setAttribute('aria-expanded','false');
+      sanctuaryMenu.setAttribute('aria-hidden','true');
+      sanctuaryMenu.classList.remove('is-open');
+    };
+    sanctuaryToggle?.addEventListener('click',event=>{
+      event.preventDefault();event.stopPropagation();
+      const open=sanctuaryMenu?.classList.toggle('is-open')===true;
+      sanctuaryToggle.setAttribute('aria-expanded',open?'true':'false');
+      sanctuaryMenu?.setAttribute('aria-hidden',open?'false':'true');
+    });
+    sanctuaryMenu?.addEventListener('click',event=>{if(event.target.closest('a'))closeSanctuaryMenu();});
+    document.addEventListener('click',event=>{if(!event.target.closest('.kinojo-top-sanctuary-wrap'))closeSanctuaryMenu();});
+    document.addEventListener('keydown',event=>{if(event.key==='Escape')closeSanctuaryMenu();});
     setTimeout(()=>loadSanctuaryAlert_(info,0),220);
     window.addEventListener('kinojo:auth-changed',()=>setTimeout(()=>loadSanctuaryAlert_(info,0),20));
     const notice=createNoticeStrip(info);
@@ -753,7 +774,7 @@
   function loadSanctuaryMasterRenderer(){
     if(document.querySelector('script[data-kinojo-sanctuary-master-loader]')) return;
     const script=document.createElement('script');
-    script.src='/ui/kinojo-sanctuary-master.js?cache=2026071301';
+    script.src='/ui/kinojo-sanctuary-master.js?cache=2026071517';
     script.async=true;
     script.dataset.kinojoSanctuaryMasterLoader='true';
     document.head.appendChild(script);

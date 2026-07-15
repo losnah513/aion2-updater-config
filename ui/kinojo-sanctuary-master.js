@@ -202,10 +202,11 @@
   }
 
   function renderNavigation(payload){
+    const currentCode=safeCode(new URLSearchParams(location.search).get('id') || new URLSearchParams(location.search).get('sanctuary'));
     document.querySelectorAll('[data-sanctuary-master-nav]').forEach(root=>{
       const basePath = root.dataset.sanctuaryBase || '/sanctuary/';
       root.innerHTML = payload.items.map(item=>
-        '<a href="'+esc(basePath+'?id='+encodeURIComponent(item.code))+'" data-sanctuary-link="'+esc(item.code)+'">'+esc(item.order+'. '+item.name)+'</a>'
+        '<a class="'+(currentCode===item.code?'active':'')+'" href="'+esc(basePath+'?id='+encodeURIComponent(item.code))+'" data-sanctuary-link="'+esc(item.code)+'">'+esc(item.order+'. '+item.name)+'</a>'
       ).join('');
     });
     document.querySelectorAll('[data-sanctuary-master-default-link]').forEach(link=>{

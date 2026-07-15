@@ -52,6 +52,7 @@
   function levelOf(source){ return ROLE_LEVEL[normalizeRole(source)] || 0; }
   function hasLevel(source, requiredLevel){ return levelOf(source) >= Number(requiredLevel || 0); }
   function canManage(source){ return hasLevel(source, 3); }
+  function canOpenAdmin(source){ return hasLevel(source, 2); }
   function canEditSanctuary(account){
     if(canManage(account)) return true;
     const perms = String(account?.permissions || account?.permission || '');
@@ -61,7 +62,7 @@
   function canCrawl(account){ return hasLevel(account, 1); }
 
   window.KinojoPermissions = {
-    version:'1.3.1.28',
+    version:'1.3.1.29',
     ROLE_LEVEL,
     ROLE_LABEL,
     labels,
@@ -70,6 +71,7 @@
     levelOf,
     hasLevel,
     canManage,
+    canOpenAdmin,
     canEditSanctuary,
     canReact,
     canCrawl

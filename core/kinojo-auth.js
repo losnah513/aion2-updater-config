@@ -108,14 +108,15 @@
     return ({MASTER:'Master', SUB_MASTER:'Sub Master', MANAGER:'Manager', STAFF:'Staff', MEMBER:'Member', GUEST:'Guest'}[role] || 'Guest');
   }
   function canOpenManage(role){
-    if(window.KinojoPermissions && typeof window.KinojoPermissions.canManage === 'function') return window.KinojoPermissions.canManage(role);
-    return ['MASTER','SUB_MASTER','MANAGER'].includes(role);
+    if(window.KinojoPermissions && typeof window.KinojoPermissions.canOpenAdmin === 'function') return window.KinojoPermissions.canOpenAdmin(role);
+    return ['MASTER','SUB_MASTER','MANAGER','STAFF'].includes(role);
   }
   function getLevel(){
     const role = roleOf(getSession());
     return role === 'MASTER' ? 5 : role === 'SUB_MASTER' ? 4 : role === 'MANAGER' ? 3 : role === 'STAFF' ? 2 : role === 'MEMBER' ? 1 : 0;
   }
   function isAdmin(){ return canOpenManage(roleOf(getSession())); }
+  function canManageAccounts(role){ return ['MASTER','SUB_MASTER','MANAGER'].includes(String(role||'')); }
 
   function safeText(value){
     return String(value ?? '')
@@ -180,7 +181,7 @@
       document.body.classList.add('kinojo-logged-in');
       document.body.classList.toggle('kinojo-admin-user', canOpenManage(role));
       document.body.dataset.kinojoRole = role;
-      if(canOpenManage(role)) setTimeout(checkPendingCodeRequests, 120);
+      if(canManageAccounts(role)) setTimeout(checkPendingCodeRequests, 120);
       resetIdleLogoutTimer();
     }else{
       if(label) label.textContent = '비회원 · 열람만 가능';
