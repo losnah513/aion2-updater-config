@@ -364,3 +364,21 @@ KINOJO Sanctuary Schedule Admin 20260713 STEP 12
   .admin-bottom-actions{bottom:var(--kinojo-safe-bottom,0px);}
 }
 .admin-event-editor-panel,.admin-event-preview-panel{max-height:100%;}
+
+/* 2026-07-15 sanctuary permission matrix / STAFF scoped console */
+.admin-role-permission-wrap{width:100%;overflow:auto;border:1px solid rgba(73,94,128,.16);border-radius:16px;background:#fff}
+.admin-role-permission-table{width:100%;min-width:760px;border-collapse:collapse;table-layout:fixed}
+.admin-role-permission-table th,.admin-role-permission-table td{padding:12px 10px;border-bottom:1px solid rgba(73,94,128,.12);border-right:1px solid rgba(73,94,128,.08);text-align:center;vertical-align:middle}
+.admin-role-permission-table thead th{position:sticky;top:0;z-index:1;background:#f5f8fd;color:#41516d;font-size:12px}
+.admin-role-permission-table tbody th{width:280px;text-align:left;background:#fbfcff}
+.admin-role-permission-table tbody th strong{display:block;font-size:13px;color:#202b40}
+.admin-role-permission-table tbody th small{display:block;margin-top:4px;color:#77839a;font-size:10px;line-height:1.45}
+.admin-permission-toggle{display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
+.admin-permission-toggle input{width:18px;height:18px;accent-color:#3978f6}
+.admin-permission-toggle span{min-width:28px;font-size:10px;font-weight:900;color:#77839a}
+.admin-permission-toggle input:checked+span{color:#24744a}
+.admin-permission-toggle input:disabled+span{opacity:.68}
+.kinojo-staff-console .admin-sanctuary-schedule-card{margin-top:0}
+.kinojo-staff-console .admin-shell{max-width:1180px}
+.kinojo-staff-console [data-admin-full-only]{display:none!important}
+@media(max-width:760px){.admin-role-permission-table{min-width:670px}.admin-role-permission-table th,.admin-role-permission-table td{padding:9px 7px}.admin-role-permission-table tbody th{width:220px}}

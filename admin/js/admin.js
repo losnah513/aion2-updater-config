@@ -1,10 +1,10 @@
-/* KINOJO Admin Console v2026070409 */
+/* KINOJO Admin Console v2026071517 */
 (function(){
   'use strict';
   const $ = (s,r=document)=>r.querySelector(s);
   const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
-  const state = { tab:'dashboard', requests:[], accounts:[], characters:[], logs:[], eventNoticeGroups:[], eventNoticeEditingId:null, sanctuarySchedules:[], sanctuaryMasters:[], sanctuaryStatusOptions:[], sanctuaryScheduleLoaded:false };
-  const CACHE = '2026070418';
+  const state = { tab:'dashboard', requests:[], accounts:[], characters:[], logs:[], eventNoticeGroups:[], eventNoticeEditingId:null, sanctuarySchedules:[], sanctuaryMasters:[], sanctuaryStatusOptions:[], sanctuaryScheduleLoaded:false, sanctuaryScheduleAccess:null, sanctuaryRolePermissions:null, sanctuaryScheduleSaving:false };
+  const CACHE = '2026071517';
   function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
   function addLog(type,msg){
     const t = new Date(); const line = '['+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+':'+String(t.getSeconds()).padStart(2,'0')+'] '+String(type||'INFO')+' · '+String(msg||'');
@@ -13,9 +13,22 @@
   function setStatus(id,msg,kind){ const el=$(id); if(!el)return; el.textContent=msg||''; el.className='admin-statusline '+(kind||''); }
   function toast(msg){ if(window.KinojoToast?.show) window.KinojoToast.show(msg); else addLog('TOAST',msg); }
   function roleLabel(){ const s=window.KinojoAuth?.getSession?.()||{}; return s.roleLabel||s.role||'관리자'; }
-  function roleKey(){ const s=window.KinojoAuth?.getSession?.()||{}; return String(s.role||s.roleLabel||'').toUpperCase(); }
-  function isMaster(){ return roleKey()==='MASTER' || roleKey()==='LV5' || roleKey().includes('MASTER'); }
-  function isAdmin(){ return !!window.KinojoAuth?.isAdmin?.(); }
+  function roleKey(){ const s=window.KinojoAuth?.getSession?.()||{}; return String(s.role||s.roleLabel||'').toUpperCase().replace(/\s+/g,'_'); }
+  function roleLevel(){
+    const s=window.KinojoAuth?.getSession?.()||{};
+    const direct=Number(s.level||0);
+    if(direct>0)return direct;
+    const role=roleKey();
+    if(role==='MASTER'||role==='LV5')return 5;
+    if(role==='SUB_MASTER'||role==='SUBMASTER'||role==='LV4')return 4;
+    if(role==='MANAGER'||role==='LV3')return 3;
+    if(role==='STAFF'||role==='LV2')return 2;
+    return 1;
+  }
+  function isMaster(){ return roleLevel()>=5; }
+  function isFullAdmin(){ return roleLevel()>=3; }
+  function isStaffConsole(){ return roleLevel()===2; }
+  function isAdmin(){ return roleLevel()>=2; }
   function adminAccount(cmd, extra){ return window.KinojoSupabase.adminAccount(cmd, extra||{}); }
   function adminCharacter(cmd, extra){ return window.KinojoSupabase.adminCharacter(cmd, extra||{}); }
   function adminNotice(cmd, extra){ return window.KinojoSupabase.adminNotice(cmd, extra||{}); }
@@ -40,6 +53,7 @@
   async function action(name, params){ return window.KinojoApi ? window.KinojoApi.getAction(name, params||{}) : window.KinojoSupabase.webAction(name, params||{}); }
 
   function switchTab(tab){
+    if(isStaffConsole() && tab!=='sanctuary') tab='sanctuary';
     state.tab = tab;
     $$('.admin-nav button').forEach(b=>b.classList.toggle('active', b.dataset.adminTab===tab));
     $$('.admin-bottom-actions button').forEach(b=>b.classList.toggle('active', b.dataset.adminTab===tab));
@@ -47,7 +61,7 @@
     const sel=$('#adminMobileSelect'); if(sel) sel.value=tab;
     if(tab==='dashboard') refreshDashboard();
     if(tab==='requests') loadCodeRequests();
-    if(tab==='members') loadAccounts();
+    if(tab==='members'){ loadAccounts(); if(isMaster()) loadSanctuaryRolePermissions(); }
     if(tab==='sanctuary') loadSanctuaryScheduleConsole();
     if(tab==='notices') loadNotices();
     if(tab==='server') refreshServerStatus();
@@ -55,7 +69,7 @@
   }
 
   function renderAccessBlocked(){
-    document.body.innerHTML = '<main class="admin-access-block"><h1>관리자 권한이 필요합니다</h1><p>로그인 후 MASTER / SUB MASTER / MANAGER 권한으로 접근할 수 있습니다.</p><button class="admin-btn primary" id="adminLoginGo" type="button">로그인</button></main>';
+    document.body.innerHTML = '<main class="admin-access-block"><h1>관리자 권한이 필요합니다</h1><p>로그인 후 STAFF 이상 권한으로 접근할 수 있습니다. STAFF는 담당 팀 성역 일정만 관리할 수 있습니다.</p><button class="admin-btn primary" id="adminLoginGo" type="button">로그인</button></main>';
     $('#adminLoginGo')?.addEventListener('click',()=>window.KinojoAuth?.openLoginModal?.());
   }
 
@@ -146,6 +160,45 @@
       if(res && res.ok===false) throw new Error(res.message||'회원 처리 실패');
       toast(res?.message||'회원 정보 처리 완료'); addLog('MEMBER',(res?.message||'회원 처리')+' · '+code); await loadAccounts();
     }catch(err){ setStatus('#memberStatus',err.message||String(err),'error'); target.disabled=false; }
+  }
+
+  const SANCTUARY_ROLE_LABELS={MEMBER:'Member',STAFF:'Staff',MANAGER:'Manager',SUB_MASTER:'Sub Master',MASTER:'Master'};
+  function renderSanctuaryRolePermissions(data){
+    const root=$('#sanctuaryRolePermissionMatrix');
+    const card=$('#sanctuaryRolePermissionCard');
+    if(card)card.hidden=!isMaster();
+    if(!root||!isMaster())return;
+    const roles=Array.isArray(data?.roles)?data.roles:['MEMBER','STAFF','MANAGER','SUB_MASTER','MASTER'];
+    const items=Array.isArray(data?.items)?data.items:[];
+    root.innerHTML=items.length?'<table class="admin-role-permission-table"><thead><tr><th>기능</th>'+roles.map(role=>'<th>'+esc(SANCTUARY_ROLE_LABELS[role]||role)+'</th>').join('')+'</tr></thead><tbody>'+items.map(item=>'<tr><th><strong>'+esc(item.label||item.permissionKey)+'</strong><small>'+esc(item.description||'')+'</small></th>'+roles.map(role=>{const checked=role==='MASTER'||item.roles?.[role]===true;return '<td><label class="admin-permission-toggle"><input type="checkbox" data-sanctuary-role-permission data-role="'+esc(role)+'" data-permission="'+esc(item.permissionKey)+'" '+(checked?'checked':'')+' '+(role==='MASTER'?'disabled':'')+'/><span>'+(checked?'ON':'OFF')+'</span></label></td>';}).join('')+'</tr>').join('')+'</tbody></table>':'<div class="admin-empty">등록된 성역 권한 항목이 없습니다.</div>';
+  }
+  async function loadSanctuaryRolePermissions(){
+    const card=$('#sanctuaryRolePermissionCard');
+    if(card)card.hidden=!isMaster();
+    if(!isMaster())return;
+    setStatus('#sanctuaryRolePermissionStatus','등급별 권한을 불러오는 중...','');
+    try{
+      const data=await action('sanctuaryRolePermissions',{});
+      if(!data||data.ok===false)throw new Error(data?.message||'권한표 조회 실패');
+      state.sanctuaryRolePermissions=data;
+      renderSanctuaryRolePermissions(data);
+      setStatus('#sanctuaryRolePermissionStatus','등급별 기본 권한이 적용 중입니다. MASTER 권한은 항상 ON입니다.','ok');
+    }catch(err){setStatus('#sanctuaryRolePermissionStatus',err.message||String(err),'error');}
+  }
+  async function setSanctuaryRolePermission(input){
+    if(!isMaster()||!input)return;
+    input.disabled=true;
+    try{
+      const data=await action('sanctuaryRolePermissionSet',{role:input.dataset.role,permissionKey:input.dataset.permission,enabled:input.checked});
+      if(!data||data.ok===false)throw new Error(data?.message||'권한 저장 실패');
+      state.sanctuaryRolePermissions=data;
+      renderSanctuaryRolePermissions(data);
+      setStatus('#sanctuaryRolePermissionStatus','권한 설정을 저장했습니다. 다음 Server 요청부터 적용됩니다.','ok');
+    }catch(err){
+      input.checked=!input.checked;
+      input.disabled=false;
+      setStatus('#sanctuaryRolePermissionStatus',err.message||String(err),'error');
+    }
   }
 
   async function searchCharacters(){
@@ -343,12 +396,13 @@
       if(!data||data.ok===false)throw new Error(data?.message||'성역 일정 조회 실패');
       state.sanctuaryMasters=Array.isArray(data.sanctuaries)?data.sanctuaries:[];
       state.sanctuarySchedules=Array.isArray(data.schedules)?data.schedules:[];
+      state.sanctuaryScheduleAccess=data.access&&typeof data.access==='object'?data.access:null;
       state.sanctuaryConsoleToday=String(data.today||todayDateInputValue());
       state.sanctuaryScheduleLoaded=true;
       fillSanctuaryScheduleSelects();
       renderSanctuaryScheduleList();
       if(!$('#sanctuaryScheduleId')?.value)resetSanctuaryScheduleEditor(null);
-      setStatus('#sanctuaryScheduleAdminStatus','성역 일정 '+state.sanctuarySchedules.length+'건 · 아이온 주간 '+esc(data.aionWeekStart)+' ~ '+esc(data.aionWeekEnd),'ok');
+      setStatus('#sanctuaryScheduleAdminStatus',(state.sanctuaryScheduleAccess?.canManageAll?'전체 팀 관리':'담당 팀 관리')+' · 성역 일정 '+state.sanctuarySchedules.length+'건 · 아이온 주간 '+esc(data.aionWeekStart)+' ~ '+esc(data.aionWeekEnd),'ok');
     }catch(err){setStatus('#sanctuaryScheduleAdminStatus',err.message||String(err),'error');}
   }
   function sanctuaryScheduleById(id){return (state.sanctuarySchedules||[]).find(item=>Number(item.id)===Number(id))||null;}
@@ -732,7 +786,7 @@
     $('#adminLogoutBtn')?.addEventListener('click',()=>{window.KinojoAuth?.clearSession?.(); location.href='../';});
     $('#requestReloadBtn')?.addEventListener('click',loadCodeRequests);
     $('#requestList')?.addEventListener('click',e=>{ if(e.target.matches('[data-approve-request]')) processRequest(e.target,'approveCodeRequest'); if(e.target.matches('[data-reject-request]')) processRequest(e.target,'rejectCodeRequest'); });
-    $('#memberReloadBtn')?.addEventListener('click',loadAccounts); $('#memberSearch')?.addEventListener('input',applyMemberFilters); $('#memberRoleFilter')?.addEventListener('change',applyMemberFilters); $('#memberList')?.addEventListener('click',e=>{ if(e.target.matches('[data-member-disable],[data-member-delete]')) handleMemberAction(e.target); }); $('#memberList')?.addEventListener('change',e=>{ if(e.target.matches('[data-member-role]')) handleMemberAction(e.target); });
+    $('#memberReloadBtn')?.addEventListener('click',loadAccounts); $('#sanctuaryRolePermissionReloadBtn')?.addEventListener('click',loadSanctuaryRolePermissions); $('#sanctuaryRolePermissionMatrix')?.addEventListener('change',e=>{if(e.target.matches('[data-sanctuary-role-permission]'))setSanctuaryRolePermission(e.target);}); $('#memberSearch')?.addEventListener('input',applyMemberFilters); $('#memberRoleFilter')?.addEventListener('change',applyMemberFilters); $('#memberList')?.addEventListener('click',e=>{ if(e.target.matches('[data-member-disable],[data-member-delete]')) handleMemberAction(e.target); }); $('#memberList')?.addEventListener('change',e=>{ if(e.target.matches('[data-member-role]')) handleMemberAction(e.target); });
     $('#characterSearchBtn')?.addEventListener('click',searchCharacters);
     $('#characterSearch')?.addEventListener('keydown',e=>{ if(e.key==='Enter') searchCharacters(); });
     $('#characterList')?.addEventListener('click',e=>{ if(e.target.matches('[data-char-deactivate]')) handleCharacterAction(e.target,'deactivate'); if(e.target.matches('[data-char-restore]')) handleCharacterAction(e.target,'restore'); if(e.target.matches('[data-char-rename]')) handleCharacterAction(e.target,'markRenamed'); });
@@ -779,7 +833,14 @@
     let tries=0; while(tries<30 && !window.KinojoAuth){ await new Promise(r=>setTimeout(r,100)); tries++; }
     if(!isAdmin()){ renderAccessBlocked(); return; }
     $('#adminRoleLabel') && ($('#adminRoleLabel').textContent=roleLabel());
-    bind(); renderLogs(); switchTab('dashboard');
+    if(isStaffConsole()){
+      document.body.classList.add('kinojo-staff-console');
+      $$('[data-admin-full-only]').forEach(el=>el.hidden=true);
+      $$('.admin-nav [data-admin-tab],.admin-bottom-actions [data-admin-tab]').forEach(el=>{if(el.dataset.adminTab!=='sanctuary')el.hidden=true;});
+      const mobile=$('#adminMobileSelect'); if(mobile)Array.from(mobile.options).forEach(option=>{if(option.value!=='sanctuary')option.remove();});
+    }
+    const permissionCard=$('#sanctuaryRolePermissionCard'); if(permissionCard)permissionCard.hidden=!isMaster();
+    bind(); renderLogs(); switchTab(isStaffConsole()?'sanctuary':'dashboard');
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 })();

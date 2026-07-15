@@ -9,10 +9,10 @@
 <link rel="canonical" href="https://kinojo.info/admin/"/>
 <link href="../ui/kinojo-layout.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../ui/kinojo-components.css?cache=26062102" rel="stylesheet"/>
-<link href="../ui/kinojo-common-ui.css?cache=2026071312" rel="stylesheet"/>
+<link href="../ui/kinojo-common-ui.css?cache=2026071517" rel="stylesheet"/>
 <link href="../ui/kinojo-card-guards.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../ui/kinojo-animations.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
-<link href="./css/admin.css?cache=2026071312" rel="stylesheet"/>
+<link href="./css/admin.css?cache=2026071517" rel="stylesheet"/>
 <script src="../ui/kinojo-device-router.js?cache=2026070110" data-mobile-path="../m/admin/"></script>
 </head>
 <body class="kinojo-page-admin">
@@ -47,10 +47,10 @@
     </section>
 
     <section class="admin-pane" data-admin-pane="requests"><section class="admin-card"><div class="admin-card-head"><div><h2>회원 코드 요청</h2><p>신규 이용자가 요청한 코드를 승인/거절합니다.</p></div><button class="admin-btn" id="requestReloadBtn" type="button">새로고침</button></div><div id="requestStatus" class="admin-statusline"></div><div class="admin-list" id="requestList"></div></section></section>
-    <section class="admin-pane" data-admin-pane="members"><section class="admin-card"><div class="admin-card-head"><div><h2>회원 관리</h2><p>회원 코드, 등급, 활성 상태를 확인하고 수정합니다.</p></div><button class="admin-btn" id="memberReloadBtn" type="button">목록 불러오기</button></div><div class="admin-form-row admin-member-tools"><input class="admin-input grow" id="memberSearch" placeholder="회원명 / 코드 / 등급 검색"/><select class="admin-select" id="memberRoleFilter"><option value="">전체 등급</option><option value="MEMBER">Member</option><option value="STAFF">Staff</option><option value="MANAGER">Manager</option><option value="SUB_MASTER">Sub Master</option><option value="MASTER">Master</option></select></div><div id="memberStatus" class="admin-statusline"></div><div class="admin-list" id="memberList"><div class="admin-empty">회원 목록을 불러오세요.</div></div></section></section>
+    <section class="admin-pane" data-admin-pane="members"><section class="admin-card"><div class="admin-card-head"><div><h2>회원 관리</h2><p>회원 코드, 등급, 활성 상태를 확인하고 수정합니다.</p></div><button class="admin-btn" id="memberReloadBtn" type="button">목록 불러오기</button></div><div class="admin-form-row admin-member-tools"><input class="admin-input grow" id="memberSearch" placeholder="회원명 / 코드 / 등급 검색"/><select class="admin-select" id="memberRoleFilter"><option value="">전체 등급</option><option value="MEMBER">Member</option><option value="STAFF">Staff</option><option value="MANAGER">Manager</option><option value="SUB_MASTER">Sub Master</option><option value="MASTER">Master</option></select></div><div id="memberStatus" class="admin-statusline"></div><div class="admin-list" id="memberList"><div class="admin-empty">회원 목록을 불러오세요.</div></div></section><section class="admin-card admin-role-permission-card" id="sanctuaryRolePermissionCard" hidden><div class="admin-card-head"><div><h2>성역 등급별 권한</h2><p>등급별 기본 권한을 한눈에 확인하고 MASTER가 직접 설정합니다.</p></div><button class="admin-btn" id="sanctuaryRolePermissionReloadBtn" type="button">권한 불러오기</button></div><div id="sanctuaryRolePermissionStatus" class="admin-statusline"></div><div class="admin-role-permission-wrap" id="sanctuaryRolePermissionMatrix"><div class="admin-empty">권한표를 불러오세요.</div></div></section></section>
     <section class="admin-pane" data-admin-pane="characters"><section class="admin-card"><div class="admin-card-head"><div><h2>캐릭터 관리</h2><p>탈퇴/복구/이름변경 이력을 서버 기준으로 관리합니다.</p></div></div><div class="admin-form"><div class="admin-form-row"><input class="admin-input grow" id="characterSearch" placeholder="캐릭터명 / 서버명 검색"/><label class="admin-btn"><input id="characterIncludeInactive" type="checkbox" checked/> 비활성 포함</label><button class="admin-btn primary" id="characterSearchBtn" type="button">검색</button></div><div class="admin-form-row"><select class="admin-select" id="characterReason"><option value="탈퇴">탈퇴</option><option value="이름변경">이름변경</option><option value="중복">중복</option><option value="기타">기타</option></select><input class="admin-input grow" id="characterNewName" placeholder="이름변경 시 새 캐릭터명"/><input class="admin-input grow" id="characterMemo" placeholder="관리 메모"/></div></div><div id="characterStatus" class="admin-statusline"></div><div class="admin-list" id="characterList"><div class="admin-empty">검색어를 입력하고 캐릭터를 조회하세요.</div></div></section></section>
     <section class="admin-pane" data-admin-pane="sanctuary">
-      <section class="admin-card">
+      <section class="admin-card" data-admin-full-only>
         <div class="admin-card-head"><div><h2>성역 관리 · 시트 동기화</h2><p>팀 › 포스 › 파티 › 슬롯 구조를 스프레드시트에서 읽어 서버에 반영합니다.</p></div></div>
         <div class="admin-form-row"><select class="admin-select" id="sanctuarySyncId" data-sanctuary-master-select data-include-all="true"><option value="all">전체 성역</option></select><button class="admin-btn" id="sanctuaryPreviewBtn" type="button">서버 미리보기</button><button class="admin-btn primary" id="sanctuarySyncBtn" type="button">시트 → 서버 동기화</button></div>
         <div class="admin-sync-flow"><div class="admin-sync-step active" data-step="1"><strong>시트 읽기</strong><span>원본 성역 시트 확인</span></div><div class="admin-sync-step" data-step="2"><strong>미리보기</strong><span>변경 내용 확인</span></div><div class="admin-sync-step" data-step="3"><strong>서버 반영</strong><span>RPC로 안전 처리</span></div><div class="admin-sync-step" data-step="4"><strong>완료 리포트</strong><span>결과 확인</span></div></div>
@@ -138,16 +138,16 @@
 <div class="admin-bottom-actions"><button class="active" data-admin-tab="dashboard">홈</button><button data-admin-tab="requests">코드</button><button data-admin-tab="sanctuary">성역</button><button data-admin-tab="notices">공지</button></div>
 <script src="../core/kinojo-api.js?cache=2026070110"></script>
 <script src="../core/kinojo-cache.js?cache=2026070110"></script>
-<script src="../core/kinojo-permissions.js?cache=2026070110"></script>
+<script src="../core/kinojo-permissions.js?cache=2026071517"></script>
 <script src="../core/kinojo-toast.js?cache=2026070110"></script>
 <script src="../core/kinojo-modal.js?cache=2026070110"></script>
 <script src="../core/kinojo-route-guard.js?cache=2026070110"></script>
 <script src="../core/kinojo-debug.js?cache=2026070110"></script>
 <script src="../core/kinojo-logger.js?cache=2026070110"></script>
-<script src="../ui/kinojo-common-ui.js?cache=2026071312"></script>
+<script src="../ui/kinojo-common-ui.js?cache=2026071517"></script>
 <script src="../ui/kinojo-admin-panel.js?cache=2026070110"></script>
-<script src="../core/kinojo-supabase.js?cache=2026071312"></script>
-<script src="../core/kinojo-auth.js?cache=2026071112"></script>
-<script src="./js/admin.js?cache=2026071312"></script>
+<script src="../core/kinojo-supabase.js?cache=2026071517"></script>
+<script src="../core/kinojo-auth.js?cache=2026071517"></script>
+<script src="./js/admin.js?cache=2026071517"></script>
 </body>
 </html>

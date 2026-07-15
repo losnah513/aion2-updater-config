@@ -32,6 +32,20 @@
     }catch(_err){ return ''; }
   }
 
+  function currentLevel(){
+    const session=window.KinojoAuth?.getSession?.()||{};
+    const direct=Number(session.level||0);
+    if(direct>0)return direct;
+    const role=String(session.role||session.roleLabel||'').toUpperCase().replace(/\s+/g,'_');
+    if(role==='MASTER')return 5;
+    if(role==='SUB_MASTER'||role==='SUBMASTER')return 4;
+    if(role==='MANAGER'||role==='ADMIN')return 3;
+    if(role==='STAFF')return 2;
+    return 1;
+  }
+  function canEditTeamInfo(){return currentLevel()>=3;}
+  function canAssignLeader(){return currentLevel()>=4;}
+
   function toast(message){
     if(window.KinojoToast && typeof window.KinojoToast.show === 'function') return window.KinojoToast.show(message);
     alert(message);
@@ -109,7 +123,7 @@
     modal.innerHTML = ''
       + '<div class="sanctuary-editor-card" role="dialog" aria-modal="true" aria-labelledby="sanctuaryEditorTitle">'
       + '  <header class="sanctuary-editor-head">'
-      + '    <div><div class="tip-kicker">SANCTUARY TEAM MANAGEMENT</div><h2 id="sanctuaryEditorTitle">성역 정보 수정</h2><p>MASTER 성역 시트 편성은 읽기 전용이며 팀 이름과 대표자만 수정할 수 있습니다.</p></div>'
+      + '    <div><div class="tip-kicker">SANCTUARY TEAM MANAGEMENT</div><h2 id="sanctuaryEditorTitle">성역 정보 수정</h2><p>MASTER 성역 시트 편성은 읽기 전용입니다. 팀 이름은 Manager 이상, 대표자는 Sub Master 이상이 수정합니다.</p></div>'
       + '    <button class="sanctuary-editor-close" type="button" aria-label="닫기">×</button>'
       + '  </header>'
       + '  <div class="sanctuary-editor-summary" id="sanctuaryEditorSummary"></div>'
@@ -171,7 +185,7 @@
       + '    <button class="sanctuary-editor-auto-btn" type="button" data-team-auto>자동 이름</button>'
       + '  </div>'
       + '  <div class="sanctuary-editor-team-controls">'
-      + '    <label><span>대표자</span><select data-team-field="leaderCharacter">' + leaderOptions + '</select></label>'
+      + '    <label><span>대표자' + (canAssignLeader() ? '' : ' · Sub Master 이상') + '</span><select data-team-field="leaderCharacter" ' + (canAssignLeader() ? '' : 'disabled aria-disabled="true"') + '>' + leaderOptions + '</select></label>'
       + '    <div class="sanctuary-editor-team-stat"><span>포스</span><strong>' + esc(forces.length) + '개</strong></div>'
       + '    <div class="sanctuary-editor-team-stat"><span>인원</span><strong>' + esc(members.length) + '명</strong></div>'
       + '  </div>'
@@ -232,8 +246,8 @@
     const status = modal.querySelector('#sanctuaryEditorStatus');
     const source = sourceData();
 
-    if(!token()){
-      toast('관리자 로그인 후 사용할 수 있습니다.');
+    if(!token() || !canEditTeamInfo()){
+      toast('성역 팀 정보 수정은 Manager 이상만 사용할 수 있습니다.');
       return;
     }
     if(!source){
@@ -245,7 +259,7 @@
     summary.innerHTML = renderSummary(source, groups);
     body.innerHTML = groups.length
       ? '<div class="sanctuary-editor-team-list">' + groups.map(renderTeamCard).join('') + '</div>'
-        + '<aside class="sanctuary-editor-guide"><strong>안내 사항</strong><span>팀 이름을 비우는 대신 ‘자동 이름’을 누르면 Server Engine의 형용사 + 생물 이름을 사용합니다.</span><span>대표자는 해당 팀의 MASTER 시트 등록 캐릭터 중에서만 선택할 수 있습니다.</span><span>캐릭터명·직업·전투력·본캐명은 MASTER 성역 시트 원본이므로 이 화면에서 수정되지 않습니다.</span></aside>'
+        + '<aside class="sanctuary-editor-guide"><strong>안내 사항</strong><span>팀 이름을 비우는 대신 ‘자동 이름’을 누르면 Server Engine의 형용사 + 생물 이름을 사용합니다.</span><span>대표자는 Sub Master 이상이 해당 팀의 MASTER 시트 등록 캐릭터 중에서만 선택할 수 있습니다.</span><span>대표자로 지정된 본캐 계정은 Server Engine에서 STAFF 이상으로 자동 승급되며, 코드가 없으면 발급 시 자동 적용됩니다.</span><span>캐릭터명·직업·전투력·본캐명은 MASTER 성역 시트 원본이므로 이 화면에서 수정되지 않습니다.</span></aside>'
       : '<div class="empty-main">수정할 운영 팀 데이터가 없습니다.</div>';
 
     bindCards(modal);
@@ -327,6 +341,10 @@
     location.reload();
   }
 
+  function updateEditButtonAccess(){
+    const btn=document.getElementById('editModeBtn');
+    if(btn)btn.hidden=!canEditTeamInfo();
+  }
   function bind(){
     const btn = document.getElementById('editModeBtn');
     if(btn && !btn.dataset.sanctuaryEditorBound){
@@ -338,6 +356,8 @@
         open();
       }, true);
     }
+    updateEditButtonAccess();
+    window.addEventListener('kinojo:auth-changed',updateEditButtonAccess);
     document.addEventListener('keydown', event => { if(event.key === 'Escape') close(); });
   }
 
