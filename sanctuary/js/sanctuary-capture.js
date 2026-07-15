@@ -1,7 +1,7 @@
 /*
  * KINOJO Sanctuary Capture Bridge
- * Version: 20260703_05
- * Role: Edge Function이 최종 생성한 PNG Blob을 클립보드에 넣는 전용 브릿지.
+ * Version: 20260715_18
+ * Role: Edge Function SVG를 PNG Blob으로 변환해 클립보드에 넣는 전용 브릿지.
  * Rule: 복사 최소 단위는 포스, 큰 단위는 운영 팀. 파티 단위 복사는 만들지 않는다.
  */
 (function(){
@@ -70,6 +70,30 @@
   }
 
 
+  async function svgBlobToPng(svgBlob){
+    const svgText = await svgBlob.text();
+    const sizeMatch = svgText.match(/<svg[^>]*\bwidth=["']([0-9.]+)["'][^>]*\bheight=["']([0-9.]+)["']/i)
+      || svgText.match(/<svg[^>]*\bviewBox=["'][^"']*?([0-9.]+)\s+([0-9.]+)["']/i);
+    const width = Math.max(1, Math.round(Number(sizeMatch?.[1] || 1200)));
+    const height = Math.max(1, Math.round(Number(sizeMatch?.[2] || 800)));
+    const url = URL.createObjectURL(new Blob([svgText], {type:'image/svg+xml'}));
+    try{
+      const image = await new Promise((resolve,reject)=>{
+        const img = new Image();
+        img.onload = ()=>resolve(img);
+        img.onerror = ()=>reject(new Error('서버 SVG 이미지를 불러오지 못했습니다.'));
+        img.src = url;
+      });
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext('2d');
+      if(!context) throw new Error('PNG 변환 Canvas를 만들지 못했습니다.');
+      context.drawImage(image,0,0,width,height);
+      return await new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('PNG 변환에 실패했습니다.')),'image/png'));
+    }finally{ URL.revokeObjectURL(url); }
+  }
+
   async function requestServerCopyImage(payload){
     const cfg = await ensureSupabaseConfig();
     const res = await fetchWithTimeout(functionUrl(cfg), {
@@ -87,6 +111,13 @@
       const blob = await res.blob();
       if(!blob || blob.type !== 'image/png') throw new Error('서버 PNG Blob이 올바르지 않습니다.');
       return { ok:true, blob, contentType:'image/png', filename:res.headers.get('x-kinojo-filename') || payload.filename || 'kinojo-sanctuary.png' };
+    }
+    if(res.ok && /^image\/svg\+xml/i.test(contentType)){
+      const svgBlob = await res.blob();
+      const blob = await svgBlobToPng(svgBlob);
+      const rawName = res.headers.get('x-kinojo-filename') || payload.filename || 'kinojo-sanctuary.png';
+      const filename = String(rawName).replace(/\.svg$/i,'.png');
+      return { ok:true, blob, contentType:'image/png', filename };
     }
     if(/json/i.test(contentType)){
       const data = await res.json().catch(()=>null);
@@ -271,6 +302,6 @@
     });
   }
 
-  window.KinojoSanctuaryCapture = { bind, version:'20260703_05_center_toast_resvg_fix' };
+  window.KinojoSanctuaryCapture = { bind, version:'20260715_18_native_svg_png_bridge' };
   document.addEventListener('DOMContentLoaded', bind);
 })();
