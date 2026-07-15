@@ -69,8 +69,9 @@ function preloadImages(paths){
   }));
 }
 
-const HALL_CACHE_KEY="kinojo_hall_summary_cache_v2026062921";
+const HALL_CACHE_KEY="kinojo_hall_summary_cache_v2026071518";
 const HALL_CACHE_TTL_MS=5*60*1000;
+let hallLoadRequestSeq=0;
 
 function readHallCache(){
   try{
@@ -129,13 +130,17 @@ function applyHallData(data,{fromCache=false,initial=false,skipIfSame=false}={})
 async function fetchHallDataFresh(){
   let data;
   if(!window.KinojoApi) throw new Error("KinojoApi 연결을 확인해 주세요.");
-  data=await window.KinojoApi.getAction("hofSummary",{includeSubs:includeSubs});
+  const session=window.KinojoAuth?.getSession?.()||{};
+  const account=window.KinojoAuth?.getAccount?.()||{};
+  const passKey=String(account.passKey||account.passCode||session.passKey||session.passCode||'').trim();
+  data=await window.KinojoApi.getAction("hofSummary",{includeSubs:includeSubs,passKey});
   if(!data || data.ok===false)throw new Error(data?.message||data?.error||"명예의 전당 요약 응답이 실패했습니다.");
   writeHallCache(data);
   return data;
 }
 
 async function load(){
+  const requestSeq=++hallLoadRequestSeq;
   renderHallLoadingLayout();
   startLoadingText();
   const cached=readHallCache();
@@ -143,14 +148,25 @@ async function load(){
     // 서버 순위/RPC 응답이 도착하기 전 빈 카드가 먼저 렌더링되는 문제를 막기 위해
     // 초기 화면은 캐시 즉시 렌더링 대신 키노조 로딩 스피너를 유지한다.
     const data=await fetchHallDataFresh();
+    if(requestSeq!==hallLoadRequestSeq)return false;
     applyHallData(data,{initial:true});
+    return true;
   }catch(err){
+    if(requestSeq!==hallLoadRequestSeq)return false;
     if(cached && cached.ok!==false){
       applyHallData(cached,{fromCache:true,initial:true});
-      return;
+      return true;
     }
     stopLoadingText();
     app.className="";
     app.innerHTML='<div class="empty">명예의 전당 데이터를 불러오지 못했습니다.<br>'+escapeHtml(err.message||err)+'</div>';
+    return false;
   }
 }
+
+
+async function reloadHallAfterAuthChange(){
+  try{ sessionStorage.removeItem(HALL_CACHE_KEY); }catch(_err){}
+  return load();
+}
+window.reloadHallAfterAuthChange=reloadHallAfterAuthChange;

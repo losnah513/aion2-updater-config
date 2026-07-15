@@ -6,8 +6,13 @@
 (function(){
   const STORAGE_KEY = 'kinojo_login_session_v1';
   const ACCOUNT_KEY = 'kinojo_login_account_v1';
-  const IDLE_LOGOUT_MS = 5 * 60 * 1000;
+  const IDLE_LOGOUT_MS = 10 * 60 * 1000;
+  const IDLE_WARNING_MS = 60 * 1000;
+  const ACTIVITY_WRITE_THROTTLE_MS = 15 * 1000;
   let idleLogoutTimer = null;
+  let idleCountdownTimer = null;
+  let idleWarningOpen = false;
+  let lastActivityWriteAt = 0;
   const PERMISSION_LABELS = {
     sanctuary_edit: '성역 관리',
     visit_manage: '방문자수 조정',
@@ -48,7 +53,19 @@
   function getSession(){
     const session = readJson(STORAGE_KEY);
     if(!session || !session.token) return null;
-    if(Number(session.expiresAt || 0) && Date.now() > Number(session.expiresAt)){
+    const lastActivityAt = Number(session.lastActivityAt || 0);
+    if(!lastActivityAt){
+      // 구 5분 절대 만료 세션은 안전하게 한 번 로그아웃하고 새 무조작 세션으로 다시 로그인합니다.
+      if(Number(session.expiresAt || 0) && Date.now() > Number(session.expiresAt)){
+        clearSession();
+        return null;
+      }
+      session.lastActivityAt = Date.now();
+      delete session.expiresAt;
+      writeJson(STORAGE_KEY, session);
+      return session;
+    }
+    if(Date.now() - lastActivityAt >= IDLE_LOGOUT_MS + IDLE_WARNING_MS){
       clearSession();
       return null;
     }
@@ -64,13 +81,17 @@
   }
 
   function setSession(session, account){
-    writeJson(STORAGE_KEY, session || {});
+    const nextSession = Object.assign({}, session || {}, { lastActivityAt:Date.now() });
+    delete nextSession.expiresAt;
+    writeJson(STORAGE_KEY, nextSession);
     writeJson(ACCOUNT_KEY, account || {});
+    closeIdleLogoutWarning();
     updateStatus();
-    emitAuthChanged(session, account);
+    emitAuthChanged(nextSession, account);
   }
 
   function clearSession(){
+    closeIdleLogoutWarning();
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(ACCOUNT_KEY);
     const modal = document.getElementById('kinojoLoginModal');
@@ -1182,23 +1203,103 @@
 
   function clearIdleLogoutTimer(){
     if(idleLogoutTimer){ clearTimeout(idleLogoutTimer); idleLogoutTimer = null; }
+    if(idleCountdownTimer){ clearInterval(idleCountdownTimer); idleCountdownTimer = null; }
   }
 
-  function resetIdleLogoutTimer(){
-    if(!getSession()) return;
-    clearIdleLogoutTimer();
-    idleLogoutTimer = setTimeout(()=>{
+  function ensureIdleLogoutModal(){
+    let modal = document.getElementById('kinojoIdleLogoutModal');
+    if(modal) return modal;
+    modal = document.createElement('section');
+    modal.id = 'kinojoIdleLogoutModal';
+    modal.className = 'kinojo-idle-modal';
+    modal.setAttribute('aria-hidden','true');
+    modal.innerHTML = '<div class="kinojo-idle-card" role="alertdialog" aria-modal="true" aria-labelledby="kinojoIdleTitle" aria-describedby="kinojoIdleMessage">'
+      + '<div class="kinojo-idle-kicker">SESSION NOTICE</div>'
+      + '<h2 id="kinojoIdleTitle">자동 로그아웃 안내</h2>'
+      + '<p id="kinojoIdleMessage">일정 시간 조작이 없어 자동 로그아웃됩니다.</p>'
+      + '<div class="kinojo-idle-count"><strong id="kinojoIdleCountdown">60</strong><span>초 후 로그아웃</span></div>'
+      + '<div class="kinojo-idle-actions"><button type="button" id="kinojoIdleExtendBtn">로그인 연장</button><button type="button" id="kinojoIdleLogoutBtn">로그아웃</button></div>'
+      + '</div>';
+    document.body.appendChild(modal);
+    modal.querySelector('#kinojoIdleExtendBtn')?.addEventListener('click', ()=>{
+      closeIdleLogoutWarning();
+      markActivity(true);
+      toast('로그인 시간이 연장되었습니다.');
+    });
+    modal.querySelector('#kinojoIdleLogoutBtn')?.addEventListener('click', ()=>{
+      closeIdleLogoutWarning();
       clearSession();
-      toast('5분 동안 조작이 없어 자동 로그아웃되었습니다.');
-    }, IDLE_LOGOUT_MS);
+      toast('로그아웃되었습니다.');
+    });
+    return modal;
   }
+
+  function closeIdleLogoutWarning(){
+    idleWarningOpen = false;
+    if(idleCountdownTimer){ clearInterval(idleCountdownTimer); idleCountdownTimer = null; }
+    const modal = document.getElementById('kinojoIdleLogoutModal');
+    if(modal){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); }
+  }
+
+  function forceIdleLogout(){
+    closeIdleLogoutWarning();
+    clearSession();
+    toast('일정 시간 조작이 없어 자동 로그아웃되었습니다.');
+  }
+
+  function openIdleLogoutWarning(remainingMs){
+    if(!getSession()) return;
+    const modal = ensureIdleLogoutModal();
+    idleWarningOpen = true;
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden','false');
+    const countdown = modal.querySelector('#kinojoIdleCountdown');
+    const deadline = Date.now() + Math.max(0, Number(remainingMs || IDLE_WARNING_MS));
+    const tick = ()=>{
+      const remaining = Math.max(0, deadline - Date.now());
+      if(countdown) countdown.textContent = String(Math.max(0, Math.ceil(remaining / 1000)));
+      if(remaining <= 0) forceIdleLogout();
+    };
+    tick();
+    if(idleCountdownTimer) clearInterval(idleCountdownTimer);
+    idleCountdownTimer = setInterval(tick, 250);
+  }
+
+  function scheduleIdleLogoutCheck(){
+    clearIdleLogoutTimer();
+    const session = getSession();
+    if(!session) return;
+    const elapsed = Date.now() - Number(session.lastActivityAt || Date.now());
+    if(elapsed >= IDLE_LOGOUT_MS + IDLE_WARNING_MS){ forceIdleLogout(); return; }
+    if(elapsed >= IDLE_LOGOUT_MS){ openIdleLogoutWarning(IDLE_LOGOUT_MS + IDLE_WARNING_MS - elapsed); return; }
+    idleLogoutTimer = setTimeout(scheduleIdleLogoutCheck, Math.max(250, IDLE_LOGOUT_MS - elapsed));
+  }
+
+  function markActivity(forceWrite){
+    if(idleWarningOpen) return;
+    const session = readJson(STORAGE_KEY);
+    if(!session || !session.token) return;
+    const now = Date.now();
+    if(forceWrite || now - lastActivityWriteAt >= ACTIVITY_WRITE_THROTTLE_MS){
+      session.lastActivityAt = now;
+      delete session.expiresAt;
+      writeJson(STORAGE_KEY, session);
+      lastActivityWriteAt = now;
+    }
+    scheduleIdleLogoutCheck();
+  }
+
+  function resetIdleLogoutTimer(){ markActivity(false); }
 
   function bindIdleLogout(){
-    ['click','keydown','scroll','touchstart','touchmove','pointerdown','pointermove','mousemove'].forEach(type=>{
+    ['click','keydown','scroll','touchstart','pointerdown'].forEach(type=>{
       window.addEventListener(type, resetIdleLogoutTimer, { passive:true });
     });
     document.addEventListener('visibilitychange', ()=>{
-      if(document.visibilityState === 'visible') resetIdleLogoutTimer();
+      if(document.visibilityState === 'visible') scheduleIdleLogoutCheck();
+    });
+    window.addEventListener('storage', event=>{
+      if(event.key === STORAGE_KEY){ updateStatus(); scheduleIdleLogoutCheck(); }
     });
   }
 
@@ -1220,7 +1321,7 @@
     openLoginModal, closeLoginModal, requireLogin,
     openAccountAdminModal, closeAccountAdminModal, renderAccountAdminInline,
     getSession, getAccount, getToken, getLevel, isLoggedIn, isAdmin,
-    updateStatus, clearSession
+    updateStatus, clearSession, resetIdleLogoutTimer
   };
 
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);

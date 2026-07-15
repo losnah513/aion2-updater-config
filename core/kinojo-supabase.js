@@ -1109,7 +1109,10 @@
 
 
   async function getWebHofSummary(extra={}){
-    const data = await rpc('kinojo_web_get_hof_summary', { p_include_subs:!!extra.includeSubs || !!extra.include_subs });
+    const data = await rpc('kinojo_web_get_hof_summary', {
+      p_include_subs:!!extra.includeSubs || !!extra.include_subs,
+      p_pass_key:String(extra.passKey || extra.pass_key || '').trim() || null
+    });
     const sections = data && data.sections ? data.sections : {};
     const toList = function(rows, category){
       return (Array.isArray(rows) ? rows : []).map((row, idx)=>{
@@ -1138,6 +1141,17 @@
     const growthGod = toItem(sections.growthGod, 'GROWTH');
     const enhanceGod = toItem(sections.enhanceGod, 'ENHANCE');
     const allSummaryItems = likesTop.concat(dislikesTop, pveTop, pvpTop, growthGod?[growthGod]:[], enhanceGod?[enhanceGod]:[]);
+    const rawMyRanking = data && data.myRanking && typeof data.myRanking === 'object' ? data.myRanking : {};
+    const myRanking = {};
+    ['enhance','pve','pvp','like','dislike','growth'].forEach(metric=>{
+      const row = rawMyRanking[metric];
+      if(!row || typeof row !== 'object' || !Number(row.rank_no || row.rankNo || 0)) return;
+      const item = hallItemFromRow(row, Number(row.rank_no || row.rankNo || 0));
+      const score = Number(row.score || 0);
+      let scoreLabel = numberLabel(score);
+      if(metric === 'growth' || metric === 'enhance') scoreLabel = (score > 0 ? '+' : '') + numberLabel(score);
+      myRanking[metric] = { item, rank:Number(row.rank_no || row.rankNo || 0), score:scoreLabel || '-' };
+    });
     const byName = {};
     allSummaryItems.forEach(item=>{
       if(!item || !item.name) return;
@@ -1159,6 +1173,7 @@
       reactionSummary:{ likeTop:likesTop, dislikeTop:dislikesTop, byName },
       weeklyAwards:{ growthKing:growthGod?[growthGod]:[], bulkUp:enhanceGod?[enhanceGod]:[] },
       summarySections:{ likesTop, dislikesTop, pveTop, pvpTop, growthGod, enhanceGod },
+      myRanking,
       mvp:null,
       mvpCandidatesTop3:[],
       mvpConfirmed:false,
@@ -1290,7 +1305,11 @@
   }
 
   async function getSanctuaryData(id){
-    return rpc('kinojo_web_get_sanctuary_v2', { p_sanctuary_code:String(id || '') || null });
+    const auth = window.KinojoAuth || {};
+    const session = typeof auth.getSession === 'function' ? auth.getSession() : null;
+    const account = typeof auth.getAccount === 'function' ? auth.getAccount() : null;
+    const passKey = String(account?.passKey || account?.passCode || session?.passKey || session?.passCode || '').trim();
+    return rpc('kinojo_web_get_sanctuary_v2', { p_sanctuary_code:String(id || '') || null, p_pass_key:passKey || null });
   }
 
   async function getSanctuaryOperationOverview(extra={}){
@@ -1566,7 +1585,7 @@
         source:'supabase',
         passCode: code,
         passKey: code,
-        expiresAt: Date.now() + 5 * 60 * 1000
+        lastActivityAt: Date.now()
       },
       account: profile,
       profile
@@ -1574,7 +1593,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.40-sanctuary-role-scope-2026071517',
+    version:'1.3.1.41-session-sanctuary-hof-2026071518',
     getConfig,
     isPreferred,
     isConfigured,

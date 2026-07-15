@@ -30,6 +30,34 @@
     const session = window.KinojoAuth?.getSession?.();
     return String(session?.passKey || session?.passCode || '').trim();
   }
+  function isLoggedIn(){ return !!window.KinojoAuth?.getSession?.(); }
+  function ensureAuthGate(){
+    let gate = document.getElementById('scheduleAuthGate');
+    if(gate) return gate;
+    gate = document.createElement('section');
+    gate.id = 'scheduleAuthGate';
+    gate.className = 'schedule-auth-gate';
+    gate.innerHTML = '<span aria-hidden="true">🔒</span><strong>로그인 후 성역 스케줄을 확인할 수 있습니다.</strong><p>PASS KEY 로그인 시 본인 팀 일정과 투표 기능이 활성화됩니다.</p><button type="button" id="scheduleAuthLoginBtn">로그인</button>';
+    document.querySelector('.schedule-wrap')?.insertBefore(gate, document.querySelector('.schedule-toolbar'));
+    gate.querySelector('#scheduleAuthLoginBtn')?.addEventListener('click', ()=>window.KinojoAuth?.openLoginModal?.('성역 스케줄은 PASS KEY 로그인이 필요합니다.', {context:'sanctuary-schedule'}));
+    return gate;
+  }
+  function syncScheduleAuthGate(){
+    const loggedIn = isLoggedIn();
+    document.body.classList.toggle('schedule-auth-locked', !loggedIn);
+    const gate = ensureAuthGate();
+    gate.hidden = loggedIn;
+    if(!loggedIn){
+      state.requestSeq += 1;
+      state.daySeq += 1;
+      state.calendar = null;
+      state.day = null;
+      setSync('로그인 후 이용 가능');
+      return false;
+    }
+    return true;
+  }
+
   function toast(message, type){
     if(type === 'error' && window.KinojoToast?.error) return window.KinojoToast.error(message);
     if(type === 'success' && window.KinojoToast?.success) return window.KinojoToast.success(message);
@@ -358,9 +386,11 @@
     });
     $('#schedulePrevBtn')?.addEventListener('click', () => navigatePanel('prev'));
     $('#scheduleNextBtn')?.addEventListener('click', () => navigatePanel('next'));
-    window.addEventListener('kinojo:auth-changed', () => loadCalendar({preserveSelection:true}));
+    window.addEventListener('kinojo:auth-changed', () => {
+      if(syncScheduleAuthGate()) loadCalendar({preserveSelection:true});
+    });
     renderToolbar();
-    loadCalendar();
+    if(syncScheduleAuthGate()) loadCalendar();
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
   else bind();

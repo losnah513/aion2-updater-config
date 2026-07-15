@@ -60,5 +60,6 @@
 
   bindHallStaticEvents();
   startHallReactionCarouselTimer();
+  window.addEventListener('kinojo:auth-changed',()=>window.reloadHallAfterAuthChange?.());
   load();
 })();

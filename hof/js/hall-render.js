@@ -205,6 +205,8 @@ function hofCollectMetricList(metric){
   return [];
 }
 function hofFindMyMetric(metric){
+  const serverResult=hallData?.myRanking?.[metric];
+  if(serverResult&&Number(serverResult.rank||0)>0)return serverResult;
   const name=hofNormalizeName(hofSessionName());
   if(!name)return null;
   const list=hofCollectMetricList(metric);

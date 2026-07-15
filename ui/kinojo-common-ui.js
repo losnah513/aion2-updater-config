@@ -490,6 +490,15 @@
     if(info.key==='hall')return 'topbarUpdateTime';
     return 'topbarUpdateTime';
   }
+
+  function syncAuthRequiredUi_(){
+    const loggedIn=!!window.KinojoAuth?.getSession?.();
+    document.querySelectorAll('[data-kinojo-auth-required]').forEach(element=>{
+      element.hidden=!loggedIn;
+      element.setAttribute('aria-hidden',loggedIn?'false':'true');
+    });
+  }
+
   function makeTopbar(rescued,info){
     const bar=document.createElement('section');
     const adminConsoleHref=(info&&info.mobile)?'/m/admin/':'/admin/';
@@ -502,7 +511,7 @@
       {key:'hall',label:'명예의 전당',href:base+'hof/'},
       {key:'ranking',label:'레기온 순위',href:base+'ranking/'},
       {key:'sanctuary',label:'성역',href:base+'sanctuary/',sanctuaryMenu:true},
-      {key:'schedule',label:'성역 스케줄',href:base+'sanctuary-schedule/'},
+      {key:'schedule',label:'성역 스케줄',href:base+'sanctuary-schedule/',authRequired:true},
       {key:'arcana',label:'아르카나',href:base+'arcana/'}
     ];
     const navHtml=navItems.map(item=>{
@@ -512,7 +521,7 @@
         const sanctuaryBase=info.mobile?'/m/sanctuary/':'/sanctuary/';
         return '<span class="kinojo-top-sanctuary-wrap"><button class="kinojo-top-nav-link kinojo-top-sanctuary-toggle'+(active?' active':'')+'" id="kinojoTopSanctuaryToggle" type="button" aria-expanded="false" aria-haspopup="menu"'+(active?' aria-current="page"':'')+'>성역 <i aria-hidden="true">▾</i></button><span class="kinojo-top-sanctuary-menu" id="kinojoTopSanctuaryMenu" role="menu" aria-hidden="true" data-sanctuary-master-nav data-sanctuary-base="'+sanctuaryBase+'"><a href="'+sanctuaryBase+'">성역 목록 불러오는 중</a></span></span>';
       }
-      return '<a class="kinojo-top-nav-link'+(active?' active':'')+(item.adminOnly?' kinojo-admin-only-link':'')+'" href="'+href+'"'+(active?' aria-current="page"':'')+'>'+item.label+'</a>';
+      return '<a class="kinojo-top-nav-link'+(active?' active':'')+(item.adminOnly?' kinojo-admin-only-link':'')+'" href="'+href+'"'+(active?' aria-current="page"':'')+(item.authRequired?' data-kinojo-auth-required="true"':'')+'>'+item.label+'</a>';
     }).join('');
     bar.innerHTML=`
       <div class="kinojo-top-left">
@@ -568,7 +577,7 @@
     document.addEventListener('click',event=>{if(!event.target.closest('.kinojo-top-sanctuary-wrap'))closeSanctuaryMenu();});
     document.addEventListener('keydown',event=>{if(event.key==='Escape')closeSanctuaryMenu();});
     setTimeout(()=>loadSanctuaryAlert_(info,0),220);
-    window.addEventListener('kinojo:auth-changed',()=>setTimeout(()=>loadSanctuaryAlert_(info,0),20));
+    window.addEventListener('kinojo:auth-changed',()=>{syncAuthRequiredUi_();setTimeout(()=>loadSanctuaryAlert_(info,0),20);});
     const notice=createNoticeStrip(info);
     document.body.appendChild(notice);
     setTimeout(loadCommonNotices,0);
@@ -635,7 +644,7 @@
           <div class="kinojo-drawer-sanctuary-list" data-sanctuary-master-nav data-sanctuary-base="${sanctuaryPrefix}">
             <a href="${sanctuaryPrefix}">성역 목록 불러오는 중</a>
           </div>
-          <a href="${scheduleHref}" ${isSchedule?'class="active" aria-disabled="true"':''}>성역 스케줄</a>
+          <a href="${scheduleHref}" data-kinojo-auth-required="true" ${isSchedule?'class="active" aria-disabled="true"':''}>성역 스케줄</a>
           <div class="kinojo-drawer-divider"></div>
           <div class="kinojo-drawer-category">아르카나</div>
           <a href="${arcanaHref}" ${isArcana?'class="active" aria-disabled="true"':''}>ARCANA 스킬 시뮬레이터</a>
@@ -786,12 +795,15 @@
   document.body.dataset.kinojoPage = info.key;
   makeTopbar(rescued,info);
   makeDrawer(info);
+  syncAuthRequiredUi_();
+  setTimeout(syncAuthRequiredUi_,120);
+  setTimeout(syncAuthRequiredUi_,600);
   bindSafeAreas();
   bind();
   bindCommonAdmin(info);
   bindImageGuards();
   loadSanctuaryMasterRenderer();
-  window.KinojoCommonUI={toast,showSafeError,reportError:showSafeError,openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel,toggleAdminMenu,closeAdminMenuCommon,reloadNotices:loadCommonNotices,reloadSanctuaryAlert:()=>{const result=loadSanctuaryAlert_(info,0);setTimeout(measureSafeAreas,50);return result;},renderVisits:renderCommonVisits,loadVisits:loadCommonVisits};
+  window.KinojoCommonUI={toast,showSafeError,reportError:showSafeError,openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel,toggleAdminMenu,closeAdminMenuCommon,reloadNotices:loadCommonNotices,reloadSanctuaryAlert:()=>{const result=loadSanctuaryAlert_(info,0);setTimeout(measureSafeAreas,50);return result;},syncAuthRequiredUi:syncAuthRequiredUi_,renderVisits:renderCommonVisits,loadVisits:loadCommonVisits};
   window.KinojoSafeError={show:showSafeError,report:showSafeError};
   window.openAdminDropdown=toggleAdminMenu;
   window.closeAdminMenu=closeAdminMenuCommon;
