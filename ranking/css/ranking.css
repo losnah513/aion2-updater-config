@@ -99,7 +99,7 @@ body.kinojo-page-ranking{
 .ranking-status{margin:0 0 10px;padding:0 4px;font-size:12px;color:var(--ranking-muted)}
 
 /* Board */
-.ranking-board{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;min-height:540px}
+.ranking-board{width:min(100%,1040px);margin-inline:auto;display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;min-height:540px}
 .ranking-loading,.ranking-empty{
   grid-column:1/-1;
   min-height:360px;
