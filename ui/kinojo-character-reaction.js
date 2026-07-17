@@ -48,6 +48,66 @@
     return '/assets/images/classes/class_icon_' + key + '.png';
   }
 
+
+  function normalizedImageUrl(value){
+    const raw = String(value || '').trim();
+    if(!raw) return '';
+    if(raw.startsWith('//')) return 'https:' + raw;
+    if(raw.startsWith('/') || /^https?:\/\//i.test(raw) || /^data:image\//i.test(raw)) return raw;
+    return '';
+  }
+
+  function characterImageCandidates(target){
+    const item = target || {};
+    const profile = normalizedImageUrl(item.profileImageUrl || item.profileImage || item.profile || item.imageUrl || '');
+    const classIcon = normalizedImageUrl(item.classIconUrl || item.classIcon || item.iconUrl || classIconFor(item.className || item.class || ''));
+    return [
+      profile ? { url: profile, kind: 'profile' } : null,
+      classIcon ? { url: classIcon, kind: 'class' } : null
+    ].filter((candidate, index, list) => candidate && list.findIndex(other => other.url === candidate.url) === index);
+  }
+
+  function mountCharacterImage(container, target, options){
+    if(!container) return;
+    const opts = options || {};
+    const item = target || {};
+    const candidates = characterImageCandidates(item);
+    const fallbackEnabled = opts.fallbackText !== false;
+    const fallbackText = fallbackEnabled ? (String(opts.fallbackText || item.name || '?').trim().slice(0, 1) || '?') : '';
+    let index = 0;
+
+    container.classList.remove('is-empty', 'is-class-fallback');
+    container.replaceChildren();
+
+    const renderNext = () => {
+      if(index >= candidates.length){
+        container.classList.add('is-empty');
+        container.textContent = fallbackText;
+        container.dataset.imageState = 'empty';
+        return;
+      }
+
+      const candidate = candidates[index++];
+      const image = document.createElement('img');
+      image.src = candidate.url;
+      image.alt = opts.alt || ((item.name || '캐릭터') + ' 프로필');
+      image.loading = opts.loading === 'eager' ? 'eager' : 'lazy';
+      image.decoding = 'async';
+      image.referrerPolicy = 'no-referrer';
+      image.style.objectFit = candidate.kind === 'class' ? 'contain' : 'cover';
+      image.style.padding = candidate.kind === 'class' ? (opts.classIconPadding || '20%') : '0';
+      image.addEventListener('load', () => {
+        container.classList.toggle('is-class-fallback', candidate.kind === 'class');
+        container.classList.remove('is-empty');
+        container.dataset.imageState = candidate.kind;
+      }, { once:true });
+      image.addEventListener('error', renderNext, { once:true });
+      container.replaceChildren(image);
+    };
+
+    renderNext();
+  }
+
   function numText(value){
     const raw = String(value == null ? '' : value).replace(/[^0-9]/g, '');
     const n = Number(raw || 0);
@@ -238,14 +298,12 @@
     }
 
     if(avatar){
-      const image = String(target.profileImageUrl || '').trim();
-      if(image){
-        avatar.classList.remove('is-empty');
-        avatar.innerHTML = '<img src="' + safeUrl(image) + '" alt="' + esc((target.name || '캐릭터') + ' 프로필') + '">';
-      }else{
-        avatar.classList.add('is-empty');
-        avatar.innerHTML = '';
-      }
+      mountCharacterImage(avatar, target, {
+        loading:'eager',
+        fallbackText:false,
+        alt:(target.name || '캐릭터') + ' 프로필',
+        classIconPadding:'24%'
+      });
     }
 
     if(detail){
@@ -366,5 +424,10 @@
     }
   }
 
+  window.KinojoCharacterProfileImage = {
+    mount: mountCharacterImage,
+    classIconFor,
+    candidates: characterImageCandidates
+  };
   window.KinojoCharacterReaction = { open, close, setType };
 })();
