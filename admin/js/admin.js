@@ -291,10 +291,23 @@
     const verificationMatched=committedRows.length?committedRows.every(row=>row.matched===true):null;
     const expectedMembers=verificationRows.reduce((sum,row)=>sum+Number(row.expectedMembers||row.expected_members||0),0);
     const savedMembers=committedRows.reduce((sum,row)=>sum+Number(row.savedMembers||row.saved_members||0),0);
-    const profileResolved=verificationRows.reduce((sum,row)=>sum+Number(row.profileResolved||row.profile_resolved||0),0);
-    const profileMissing=verificationRows.reduce((sum,row)=>sum+Number(row.profileMissing||row.profile_missing||0),0);
+    const profileDiagnostic=data?.profileDiagnostic||data?.profile_diagnostic||null;
+    let profileResolved=verificationRows.reduce((sum,row)=>sum+Number(row.profileResolved||row.profile_resolved||0),0);
+    let profileMissing=verificationRows.reduce((sum,row)=>sum+Number(row.profileMissing||row.profile_missing||0),0);
+    if(profileDiagnostic?.ok===true){profileResolved=Number(profileDiagnostic.profileResolved||profileDiagnostic.profile_resolved||0);profileMissing=Number(profileDiagnostic.profileMissing||profileDiagnostic.profile_missing||0)}
     const title = esc(resultList.length>1?'전체 성역':info.sanctuaryName || info.sanctuary_name || info.bossName || info.boss_name || current.sanctuaryName || current.sanctuaryId || '성역 동기화');
-    return { title, teams, forces, parties, slots, updated, failed, verificationRows, committedRows, verificationMatched, expectedMembers, savedMembers, profileResolved, profileMissing };
+    return { title, teams, forces, parties, slots, updated, failed, verificationRows, committedRows, verificationMatched, expectedMembers, savedMembers, profileResolved, profileMissing, profileDiagnostic };
+  }
+  function renderProfileDiagnostic(diagnostic,{open=false}={}){
+    if(!diagnostic)return '';
+    if(diagnostic.ok===false)return '<div class="admin-profile-diagnostic-error">프로필 상세 진단 실패: '+esc(diagnostic.message||'진단 RPC를 확인해 주세요.')+'</div>';
+    const missingCharacters=Array.isArray(diagnostic.profileMissingCharacters)?diagnostic.profileMissingCharacters:[];
+    if(!missingCharacters.length)return '';
+    const missingRows=missingCharacters.map(item=>{
+      const location=[item.sanctuaryName||item.sanctuaryId||'',item.teamGroupNo?item.teamGroupNo+'팀':'',item.forceNo?item.forceNo+'포스':'',item.partyNo?item.partyNo+'파티 '+(item.slotNo||'')+'슬롯':''].filter(Boolean).join(' · ');
+      return '<article class="admin-profile-missing-row"><div><strong>'+esc(item.characterName||'-')+'</strong><span>'+esc([item.className||'직업 미확인',location].filter(Boolean).join(' · '))+'</span></div><em>'+esc(item.reason||'프로필 확인 필요')+'</em></article>';
+    }).join('');
+    return '<details class="admin-profile-diagnostic"'+(open?' open':'')+'><summary>프로필 미확인 '+missingCharacters.length+'명 보기 · '+Number(diagnostic.profileResolved||0).toLocaleString('ko-KR')+'명 확인</summary><div class="admin-profile-missing-list">'+missingRows+'</div></details>';
   }
   function renderSyncReport(data){
     const s = summarizeSanctuary(data||{});
@@ -310,7 +323,8 @@
       ['실패', s.failed ? s.failed+'건' : '0건']
     ].map(([k,v])=>'<div class="admin-report-row"><span>'+k+'</span><strong>'+esc(v)+'</strong></div>').join('');
     const completedAt=data?.completedAt||data?.completed_at||data?.generatedAt||data?.generated_at||new Date().toISOString();
-    return '<section class="admin-sync-report '+(ok?'ok':'error')+'"><div class="admin-report-head"><strong>'+(ok?(data?.mode==='preview'?'변경 미리보기 완료':'동기화 완료'):'동기화 확인 필요')+'</strong><span>'+esc(new Date(completedAt).toLocaleString('ko-KR'))+'</span></div><div class="admin-report-grid">'+rows+'</div><details class="admin-report-raw"><summary>서버 응답 보기</summary><pre>'+esc(JSON.stringify(data,null,2))+'</pre></details></section>';
+    const diagnosticHtml=renderProfileDiagnostic(s.profileDiagnostic,{open:true});
+    return '<section class="admin-sync-report '+(ok?'ok':'error')+'"><div class="admin-report-head"><strong>'+(ok?(data?.mode==='preview'?'변경 미리보기 완료':'동기화 완료'):'동기화 확인 필요')+'</strong><span>'+esc(new Date(completedAt).toLocaleString('ko-KR'))+'</span></div><div class="admin-report-grid">'+rows+'</div>'+diagnosticHtml+'<details class="admin-report-raw"><summary>서버 응답 보기</summary><pre>'+esc(JSON.stringify(data,null,2))+'</pre></details></section>';
   }
   async function testWebAppConnection(statusTarget){
     const statusSel = statusTarget || '#serverStatus';
@@ -324,7 +338,7 @@
       refreshServerStatus();
     }catch(err){ setStatus(statusSel,'Apps Script Bridge 연결 실패: '+(err.message||err),'error'); addLog('ERROR',err.message||err); }
   }
-  function setSyncStep(n){ $$('.admin-sync-step').forEach((el,i)=>{ el.classList.toggle('done',i<n-1); el.classList.toggle('active',i===n-1); }); }
+  function setSyncStep(n,complete=false){ $$('.admin-sync-step').forEach((el,i)=>{ el.classList.toggle('done',complete||i<n-1); el.classList.toggle('active',!complete&&i===n-1); }); }
   function formatServerTime(value){
     if(!value)return '기록 없음';
     const date=new Date(value);
@@ -336,14 +350,18 @@
     const queue=data?.queue||{};
     const latest=data?.recentSync||data?.recent_sync||jobs[0]||{};
     const rows=jobs.slice(0,8).map(job=>{const verification=job.verification||{};const verified=verification.matched===true?' · 저장 재검증 완료':'';return '<article class="admin-row"><div class="admin-row-main"><strong>'+esc(job.sanctuaryName||job.sanctuary_name||job.sanctuaryId||job.sanctuary_id||'-')+'</strong><span>'+esc(formatServerTime(job.completedAt||job.completed_at||job.createdAt||job.created_at))+' · '+esc(job.mode||'-')+verified+'</span></div><div class="admin-row-actions"><span class="admin-pill '+(String(job.status||'').toLowerCase()==='completed'?'ok':String(job.status||'').toLowerCase()==='failed'?'error':'pending')+'">'+esc(job.status||'대기')+'</span></div></article>'}).join('');
-    root.innerHTML='<section class="admin-sync-report"><div class="admin-report-head"><strong>Server Engine 동기화 상태</strong><span>'+esc(formatServerTime(data?.generatedAt||data?.generated_at))+'</span></div><div class="admin-report-grid"><div class="admin-report-row"><span>최근 완료</span><strong>'+esc(formatServerTime(latest.completedAt||latest.completed_at))+'</strong></div><div class="admin-report-row"><span>Updater Queue</span><strong>'+Number(queue.updaterActive||queue.updater_active||0).toLocaleString('ko-KR')+'건</strong></div><div class="admin-report-row"><span>List Queue</span><strong>'+Number(queue.listPending||queue.list_pending||0).toLocaleString('ko-KR')+'건</strong></div><div class="admin-report-row"><span>성역 Queue</span><strong>'+Number(queue.sanctuaryPending||queue.sanctuary_pending||0).toLocaleString('ko-KR')+'건</strong></div></div></section>'+(rows?'<div class="admin-list">'+rows+'</div>':'<div class="admin-empty">아직 성역 시트 동기화 기록이 없습니다.</div>');
+    root.innerHTML='<section class="admin-sync-report"><div class="admin-report-head"><strong>Server Engine 동기화 상태</strong><span>'+esc(formatServerTime(data?.generatedAt||data?.generated_at))+'</span></div><div class="admin-report-grid"><div class="admin-report-row"><span>최근 완료</span><strong>'+esc(formatServerTime(latest.completedAt||latest.completed_at))+'</strong></div><div class="admin-report-row"><span>Updater Queue</span><strong>'+Number(queue.updaterActive||queue.updater_active||0).toLocaleString('ko-KR')+'건</strong></div><div class="admin-report-row"><span>List Queue</span><strong>'+Number(queue.listPending||queue.list_pending||0).toLocaleString('ko-KR')+'건</strong></div><div class="admin-report-row"><span>성역 Queue</span><strong>'+Number(queue.sanctuaryPending||queue.sanctuary_pending||0).toLocaleString('ko-KR')+'건</strong></div></div>'+renderProfileDiagnostic(data?.profileDiagnostic,{open:false})+'</section>'+(rows?'<div class="admin-list">'+rows+'</div>':'<div class="admin-empty">아직 성역 시트 동기화 기록이 없습니다.</div>');
   }
   async function loadSanctuarySyncConsole(force){
     if(force)setSyncStep(1);
     setStatus('#sanctuarySyncStatus','Server Engine 동기화 상태를 불러오는 중...','');
     try{
-      const data=await action('adminSanctuarySheetSync',{mode:'status'});
+      const [data,profileDiagnostic]=await Promise.all([
+        action('adminSanctuarySheetSync',{mode:'status'}),
+        action('adminSanctuaryProfileDiagnostic',{sanctuaryId:'all'}).catch(error=>({ok:false,message:error?.message||String(error)}))
+      ]);
       if(data?.ok===false)throw new Error(data.message||'동기화 상태 조회 실패');
+      data.profileDiagnostic=profileDiagnostic;
       renderSanctuarySyncStatus(data);
       setStatus('#sanctuarySyncStatus','Server Engine 상태를 불러왔습니다.','ok');
     }catch(err){setStatus('#sanctuarySyncStatus',err.message||String(err),'error');}
@@ -364,8 +382,12 @@
       setSyncStep(2); setStatus('#sanctuarySyncStatus','Server Engine에서 원본을 파싱·검증하고 반영하는 중...','');
       const data=await action('adminSanctuarySheetSync',{mode:'apply',sanctuaryId:id});
       if(data.ok===false) throw new Error(data.message||'성역 동기화 실패');
-      setSyncStep(3); setStatus('#sanctuarySyncStatus','Server Engine 반영 결과를 확인하는 중...','');
-      setSyncStep(4); setStatus('#sanctuarySyncStatus','성역 동기화 완료','ok'); $('#sanctuarySyncResult').innerHTML=renderSyncReport(data); addLog('SANCTUARY','성역 동기화 완료'); await Promise.all([refreshDashboard(),refreshServerStatus()]);
+      setSyncStep(3); setStatus('#sanctuarySyncStatus','Server Engine 저장 결과와 프로필 미확인 대상을 확인하는 중...','');
+      try{
+        const diagnostic=await action('adminSanctuaryProfileDiagnostic',{sanctuaryId:id});
+        data.profileDiagnostic=diagnostic;
+      }catch(diagnosticError){data.profileDiagnostic={ok:false,message:diagnosticError?.message||String(diagnosticError)}}
+      setSyncStep(4,true); setStatus('#sanctuarySyncStatus','성역 동기화 및 프로필 진단 완료','ok'); $('#sanctuarySyncResult').innerHTML=renderSyncReport(data); addLog('SANCTUARY','성역 동기화 및 프로필 진단 완료'); await Promise.all([refreshDashboard(),refreshServerStatus()]);
     }catch(err){
       const msg=err.message||String(err);
       setStatus('#sanctuarySyncStatus',msg,'error');
