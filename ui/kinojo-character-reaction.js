@@ -42,8 +42,15 @@
     '마도성':'sorcerer','정령성':'elementalist','치유성':'cleric','호법성':'chanter','권성':'fighter'
   };
 
+  function normalizeClassName(className){
+    return String(className || '')
+      .replace(/[\s\u200B-\u200D\uFEFF]+/g, '')
+      .replace(/[\[(（].*?[\])）]\s*$/g, '')
+      .trim();
+  }
+
   function classIconFor(className){
-    const key = CLASS_ICON_MAP[String(className || '').trim()];
+    const key = CLASS_ICON_MAP[normalizeClassName(className)];
     if(!key) return '';
     return '/assets/images/classes/class_icon_' + key + '.png';
   }
@@ -59,7 +66,12 @@
 
   function characterImageCandidates(target){
     const item = target || {};
-    const profile = normalizedImageUrl(item.profileImageUrl || item.profileImage || item.profile || item.imageUrl || '');
+    const serverId = String(item.serverId || item.server_id || '').trim();
+    const charKey = String(item.charKey || item.char_key || '').trim();
+    const derivedProfile = /^\d+$/.test(serverId) && /^\d{10,}$/.test(charKey)
+      ? 'https://profileimg.plaync.com/game_profile_images/aion2/images?gameServerKey=' + encodeURIComponent(serverId) + '&charKey=' + encodeURIComponent(charKey)
+      : '';
+    const profile = normalizedImageUrl(item.profileImageUrl || item.profileImage || item.profile || item.imageUrl || derivedProfile);
     const classIcon = normalizedImageUrl(item.classIconUrl || item.classIcon || item.iconUrl || classIconFor(item.className || item.class || ''));
     return [
       profile ? { url: profile, kind: 'profile' } : null,

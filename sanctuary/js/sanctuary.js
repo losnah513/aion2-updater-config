@@ -25,7 +25,7 @@ function currentFallback(){return {info:masterInfo||{sanctuaryId:currentId,sanct
 function setActiveLinks(){}
 /* KINOJO common drawer is managed by GitHub_Pages/ui/kinojo-common-ui.js */
 const SANCTUARY_CACHE_TTL_MS=5*60*1000;
-function sanctuaryCacheKey(){const session=window.KinojoAuth?.getSession?.()||{};const identity=String(session.mainCharacter||session.mainCharacterName||'guest').trim().replace(/[^0-9A-Za-z가-힣_-]+/g,'_');return 'kinojo_sanctuary_cache_v2026071711_'+(currentId||'default')+'_'+(identity||'guest')}
+function sanctuaryCacheKey(){const session=window.KinojoAuth?.getSession?.()||{};const identity=String(session.mainCharacter||session.mainCharacterName||'guest').trim().replace(/[^0-9A-Za-z가-힣_-]+/g,'_');return 'kinojo_sanctuary_cache_v2026071713_'+(currentId||'default')+'_'+(identity||'guest')}
 function readSanctuaryCache(){try{const raw=sessionStorage.getItem(sanctuaryCacheKey());if(!raw)return null;const cached=JSON.parse(raw);if(!cached||!cached.savedAt||!cached.data)return null;if(Date.now()-cached.savedAt>SANCTUARY_CACHE_TTL_MS)return null;return cached.data}catch(e){return null}}
 function writeSanctuaryCache(data){try{if(data&&data.ok!==false)sessionStorage.setItem(sanctuaryCacheKey(),JSON.stringify({savedAt:Date.now(),data}))}catch(e){}}
 function sanctuaryTopbarUpdateText(value,fromCache=false){const raw=String(value||'').trim();const matched=raw.match(/(?:T|\s)(\d{1,2}:\d{2})(?::\d{2})?/)||raw.match(/(\d{1,2}:\d{2})/);const time=matched?.[1]||'';return time?'업데이트 '+time+(fromCache?' · 캐시':''):(fromCache?'캐시 데이터':'업데이트 완료')}
@@ -106,6 +106,7 @@ function operationStatusClass(value){
   return ['today','survey','coordinating','confirmed','canceled','completed'].includes(state)?state:'survey';
 }
 function renderOperationSkeleton(){
+  if(!currentSanctuaryPassKey()){renderOperationLoginRequired();return}
   const week=document.getElementById('operationWeekLabel');
   const auth=document.getElementById('operationAuthState');
   const schedules=document.getElementById('operationScheduleList');
@@ -113,11 +114,21 @@ function renderOperationSkeleton(){
   if(auth)auth.textContent='Server Engine 확인 중';
   if(schedules)schedules.innerHTML=sanctuarySpinner('성역 일정을 불러오는 중');
 }
+function renderOperationLoginRequired(){
+  const week=document.getElementById('operationWeekLabel');
+  const auth=document.getElementById('operationAuthState');
+  const schedules=document.getElementById('operationScheduleList');
+  if(week)week.textContent='아이온 주간 · 수요일부터 화요일까지';
+  if(auth){auth.textContent='로그인 필요';auth.classList.remove('is-logged-in')}
+  if(schedules)schedules.innerHTML='<div class="sanctuary-operation-empty"><strong>로그인하시면 성역 일정을 확인할 수 있습니다</strong></div>';
+}
 function ensureSanctuaryOperation(force=false){
   if(!currentId)return Promise.resolve();
   const scheduleLink=document.getElementById('operationSchedulePageLink');
   if(scheduleLink){const mobile=/(^|\/)m(\/|$)/.test(location.pathname);scheduleLink.href=(mobile?'/m/sanctuary-schedule/':'/sanctuary-schedule/')}
-  const key=currentId+'|'+currentSanctuaryPassKey();
+  const passKey=currentSanctuaryPassKey();
+  const key=currentId+'|'+passKey;
+  if(!passKey){operationRequestSeq+=1;operationLoadedKey=key;operationLoadKey=key;operationRefreshQueued=false;renderOperationLoginRequired();return Promise.resolve()}
   if(operationLoadPromise){if(force)operationRefreshQueued=true;return operationLoadPromise}
   if(!force&&operationLoadedKey===key)return Promise.resolve();
   operationLoadKey=key;
@@ -146,6 +157,7 @@ async function loadSanctuaryOperation(key){
       const data=await withRequestTimeout(window.KinojoApi.getAction('sanctuaryOperation',{id:currentId,passKey:currentSanctuaryPassKey()}),OPERATION_REQUEST_TIMEOUT_MS,'성역 일정 응답 시간이 초과되었습니다.');
       if(seq!==operationRequestSeq||key!==operationLoadKey)return;
       if(!data||data.ok===false)throw new Error(data?.message||'성역 운영 정보 로드 실패');
+      if(data.authRequired===true||data.authenticated===false){renderOperationLoginRequired();operationLoadedKey=key;return}
       renderSanctuaryOperation(data);operationLoadedKey=key;return;
     }catch(err){
       lastError=err;
@@ -315,7 +327,7 @@ function teamHtml(t,g){
     + '<div class="force-party-pair">'+parties.map(partyHtml).join('')+'</div></article>';
 }
 function partyHtml(p){return '<section class="party-card force-party-column" data-party-no="'+esc(p.partyNo)+'"><div class="party-head"><div class="party-title-row"><div class="party-title">'+esc(p.partyNo)+'파티</div></div><div class="party-count">'+fmt(p.filled)+' / '+fmt(p.capacity||5)+'</div></div><div class="slot-grid">'+(p.slots||[]).slice(0,5).map(slotHtml).join('')+'</div></section>'}
-function sanctuaryProfileUrl(s){return String(s.profileImageUrl||s.profileUrl||s.profile_image_url||s.imageUrl||s.characterImageUrl||'').trim();}
+function sanctuaryProfileUrl(s){const direct=String(s.profileImageUrl||s.profileUrl||s.profile_image_url||s.imageUrl||s.characterImageUrl||'').trim();if(direct)return direct;const serverId=String(s.serverId||s.server_id||'').trim();const charKey=String(s.charKey||s.char_key||'').trim();return /^\d+$/.test(serverId)&&/^\d{10,}$/.test(charKey)?'https://profileimg.plaync.com/game_profile_images/aion2/images?gameServerKey='+encodeURIComponent(serverId)+'&charKey='+encodeURIComponent(charKey):'';}
 function sanctuaryDetailUrl(s){return String(s.detailUrl||s.detail_url||s.url||'').trim();}
 function slotHtml(s){
   if(!s.name)return '<div class="empty-slot"><strong>+ '+esc(s.vacancyText||'파티 인원 모집중')+'</strong><span>대기자 명단에서 추가 가능</span></div>';
@@ -326,14 +338,14 @@ function slotHtml(s){
   const mainCharacterName=String(s.mainCharacterName||s.owner||'').trim();
   const isMain=s.isMain===true;
   const ownerBadge=isMain?'<span class="char-main-badge">본캐</span>':(mainCharacterName?'<span class="char-owner-badge" title="소유 본캐 '+esc(mainCharacterName)+'">본캐 '+esc(mainCharacterName)+'</span>':'');
-  const profileHtml='<span class="char-profile is-empty" data-character-profile data-char-name="'+esc(s.name)+'" data-char-class="'+esc(className)+'" data-profile-image="'+esc(profile)+'">?</span>';
-  return '<button class="char-card san-reaction-card '+(isMain?'is-main-character':'is-sub-character')+'" type="button" draggable="false" data-char-name="'+esc(s.name)+'" data-char-class="'+esc(className)+'" data-char-power="'+esc(fmt(s.power))+'" data-char-owner="'+esc(mainCharacterName)+'" data-profile-image="'+esc(profile)+'" data-detail-url="'+esc(sanctuaryDetailUrl(s))+'" aria-label="'+esc(s.name)+' 반응 남기기">'
+  const profileHtml='<span class="char-profile is-empty" data-character-profile data-char-name="'+esc(s.name)+'" data-char-class="'+esc(className)+'" data-profile-image="'+esc(profile)+'" data-server-id="'+esc(s.serverId||s.server_id||'')+'" data-char-key="'+esc(s.charKey||s.char_key||'')+'">?</span>';
+  return '<button class="char-card san-reaction-card '+(isMain?'is-main-character':'is-sub-character')+'" type="button" draggable="false" data-char-name="'+esc(s.name)+'" data-char-class="'+esc(className)+'" data-char-power="'+esc(fmt(s.power))+'" data-char-owner="'+esc(mainCharacterName)+'" data-profile-image="'+esc(profile)+'" data-server-id="'+esc(s.serverId||s.server_id||'')+'" data-char-key="'+esc(s.charKey||s.char_key||'')+'" data-detail-url="'+esc(sanctuaryDetailUrl(s))+'" aria-label="'+esc(s.name)+' 반응 남기기">'
     +'<span class="char-text"><span class="char-name-row"><span class="char-name">'+esc(s.name)+'</span>'+ownerBadge+'</span><span class="char-meta">'+icon+esc(className)+' · '+fmt(s.power)+'</span></span>'+profileHtml+'</button>';
 }
 function bindSanctuaryProfileImages(){
   const loader=window.KinojoCharacterProfileImage;
   document.querySelectorAll('[data-character-profile]').forEach(container=>{
-    const target={name:container.dataset.charName||'',className:container.dataset.charClass||'',profileImageUrl:container.dataset.profileImage||''};
+    const target={name:container.dataset.charName||'',className:container.dataset.charClass||'',profileImageUrl:container.dataset.profileImage||'',serverId:container.dataset.serverId||'',charKey:container.dataset.charKey||''};
     if(loader&&typeof loader.mount==='function'){
       loader.mount(container,target,{loading:'lazy',fallbackText:'?',classIconPadding:'22%'});
     }

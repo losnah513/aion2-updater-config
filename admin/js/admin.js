@@ -286,8 +286,15 @@
     const slots = totals?totals.slots:Number(summary.slotCount||summary.slot_count||countArray(current,['slots','slotList','members','characters'])||0);
     const updated = resultList.length?resultList.reduce((sum,row)=>sum+Number(row.result?.slots||row.updated||row.updatedCount||0),0):Number(summary.updated||summary.updatedCount||current.result?.slots||current.updated||current.updatedCount||current.synced||current.syncedCount||0);
     const failed = Array.isArray(data?.results)?data.results.filter(item=>item?.ok===false).length:Number(current.failed||current.failedCount||current.errorCount||0);
+    const verificationRows=(resultList.length?resultList:[current]).map(row=>row?.verification||row?.result?.verification||{}).filter(row=>row&&Object.keys(row).length);
+    const committedRows=verificationRows.filter(row=>row.committed===true);
+    const verificationMatched=committedRows.length?committedRows.every(row=>row.matched===true):null;
+    const expectedMembers=verificationRows.reduce((sum,row)=>sum+Number(row.expectedMembers||row.expected_members||0),0);
+    const savedMembers=committedRows.reduce((sum,row)=>sum+Number(row.savedMembers||row.saved_members||0),0);
+    const profileResolved=verificationRows.reduce((sum,row)=>sum+Number(row.profileResolved||row.profile_resolved||0),0);
+    const profileMissing=verificationRows.reduce((sum,row)=>sum+Number(row.profileMissing||row.profile_missing||0),0);
     const title = esc(resultList.length>1?'전체 성역':info.sanctuaryName || info.sanctuary_name || info.bossName || info.boss_name || current.sanctuaryName || current.sanctuaryId || '성역 동기화');
-    return { title, teams, forces, parties, slots, updated, failed };
+    return { title, teams, forces, parties, slots, updated, failed, verificationRows, committedRows, verificationMatched, expectedMembers, savedMembers, profileResolved, profileMissing };
   }
   function renderSyncReport(data){
     const s = summarizeSanctuary(data||{});
@@ -298,6 +305,8 @@
       ['파티', s.parties ? s.parties+'개' : '-'],
       ['슬롯/캐릭터', s.slots ? s.slots+'명' : '-'],
       ['반영', s.updated ? s.updated+'건' : '-'],
+      ['저장 재검증', s.committedRows.length?(s.verificationMatched?s.savedMembers+'명 일치':'불일치'):(s.verificationRows.length?'미리보기 · 미반영':'-')],
+      ['프로필', s.verificationRows.length?(s.profileResolved+'명 확인 · '+s.profileMissing+'명 미확인'):'-'],
       ['실패', s.failed ? s.failed+'건' : '0건']
     ].map(([k,v])=>'<div class="admin-report-row"><span>'+k+'</span><strong>'+esc(v)+'</strong></div>').join('');
     const completedAt=data?.completedAt||data?.completed_at||data?.generatedAt||data?.generated_at||new Date().toISOString();
@@ -326,7 +335,7 @@
     const jobs=Array.isArray(data?.jobs)?data.jobs:[];
     const queue=data?.queue||{};
     const latest=data?.recentSync||data?.recent_sync||jobs[0]||{};
-    const rows=jobs.slice(0,8).map(job=>'<article class="admin-row"><div class="admin-row-main"><strong>'+esc(job.sanctuaryName||job.sanctuary_name||job.sanctuaryId||job.sanctuary_id||'-')+'</strong><span>'+esc(formatServerTime(job.completedAt||job.completed_at||job.createdAt||job.created_at))+' · '+esc(job.mode||'-')+'</span></div><div class="admin-row-actions"><span class="admin-pill '+(String(job.status||'').toLowerCase()==='completed'?'ok':String(job.status||'').toLowerCase()==='failed'?'error':'pending')+'">'+esc(job.status||'대기')+'</span></div></article>').join('');
+    const rows=jobs.slice(0,8).map(job=>{const verification=job.verification||{};const verified=verification.matched===true?' · 저장 재검증 완료':'';return '<article class="admin-row"><div class="admin-row-main"><strong>'+esc(job.sanctuaryName||job.sanctuary_name||job.sanctuaryId||job.sanctuary_id||'-')+'</strong><span>'+esc(formatServerTime(job.completedAt||job.completed_at||job.createdAt||job.created_at))+' · '+esc(job.mode||'-')+verified+'</span></div><div class="admin-row-actions"><span class="admin-pill '+(String(job.status||'').toLowerCase()==='completed'?'ok':String(job.status||'').toLowerCase()==='failed'?'error':'pending')+'">'+esc(job.status||'대기')+'</span></div></article>'}).join('');
     root.innerHTML='<section class="admin-sync-report"><div class="admin-report-head"><strong>Server Engine 동기화 상태</strong><span>'+esc(formatServerTime(data?.generatedAt||data?.generated_at))+'</span></div><div class="admin-report-grid"><div class="admin-report-row"><span>최근 완료</span><strong>'+esc(formatServerTime(latest.completedAt||latest.completed_at))+'</strong></div><div class="admin-report-row"><span>Updater Queue</span><strong>'+Number(queue.updaterActive||queue.updater_active||0).toLocaleString('ko-KR')+'건</strong></div><div class="admin-report-row"><span>List Queue</span><strong>'+Number(queue.listPending||queue.list_pending||0).toLocaleString('ko-KR')+'건</strong></div><div class="admin-report-row"><span>성역 Queue</span><strong>'+Number(queue.sanctuaryPending||queue.sanctuary_pending||0).toLocaleString('ko-KR')+'건</strong></div></div></section>'+(rows?'<div class="admin-list">'+rows+'</div>':'<div class="admin-empty">아직 성역 시트 동기화 기록이 없습니다.</div>');
   }
   async function loadSanctuarySyncConsole(force){

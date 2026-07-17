@@ -1341,7 +1341,7 @@
       p_pass_key:normalizePassKey(extra.passKey || extra.passCode || '') || null
     };
     if(extra.now) params.p_now = extra.now;
-    return rpc('kinojo_web_get_sanctuary_operation_overview', params);
+    return rpc('kinojo_web_get_sanctuary_operation_overview_member_251', params);
   }
 
   async function getSanctuaryScheduleCalendar(extra={}){
@@ -1524,7 +1524,7 @@
       return invokeEdgeFunction('lookup-sheet-bridge',{
         action:'adminBridgePing',
         passKey,
-        clientVersion:'kinojo-web-2026071712'
+        clientVersion:'kinojo-web-2026071713'
       });
     }
     if(normalized!=='preview'&&normalized!=='apply')return {ok:false,message:'알 수 없는 성역 시트 동기화 명령입니다.'};
@@ -1533,7 +1533,7 @@
       passKey,
       sanctuaryId:String(extra.sanctuaryId||extra.id||'all'),
       mode:normalized,
-      clientVersion:'kinojo-web-2026071712'
+      clientVersion:'kinojo-web-2026071713'
     });
   }
 
