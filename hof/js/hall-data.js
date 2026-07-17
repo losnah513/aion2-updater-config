@@ -42,14 +42,11 @@ function kinojoCardSpinner(label){
 }
 function renderHallLoadingLayout(){
   app.className='';
-  app.innerHTML=''
-    + '<section class="mvp-card hall-loading-shell">'+kinojoCardSpinner('시즌 MVP 준비 중')+'</section>'
-    + '<section class="section hall-loading-shell">'+kinojoCardSpinner('반응 현황 불러오는 중')+'</section>'
-    + '<section class="section hall-loading-shell">'+kinojoCardSpinner('명예 타이틀 집계 중')+'</section>'
-    + '<div class="dashboard"><div><div class="top-grid">'
-    + '<section class="section hall-loading-shell">'+kinojoCardSpinner('PVE TOP 3 불러오는 중')+'</section>'
-    + '<section class="section hall-loading-shell">'+kinojoCardSpinner('PVP TOP 3 불러오는 중')+'</section>'
-    + '</div></div><div class="side-stack"><section class="section relation-combined-card hall-loading-shell">'+kinojoCardSpinner('전체 순위 링크 준비 중')+'</section></div></div>';
+  app.innerHTML='<section class="hof-v2-loading" aria-live="polite" aria-busy="true">'
+    + '<div class="hof-v2-loading-mark">'+kinojoCardSpinner('명예의 전당 불러오는 중')+'</div>'
+    + '<div class="hof-v2-loading-lines" aria-hidden="true"><span></span><span></span><span></span></div>'
+    + '<p id="loaderText">서버가 최신 순위와 주간 집계를 준비하고 있습니다.</p>'
+    + '</section>';
 }
 
 const HALL_PRELOADED_IMAGES=new Map();

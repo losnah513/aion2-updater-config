@@ -313,119 +313,8 @@
     const adminBase=info?.mobile?'/m/':'/';
     const adminConsoleHref=adminBase+'admin/';
     wrap.className='admin-menu-wrap';
-    wrap.innerHTML=`
-      <button aria-expanded="false" aria-haspopup="true" aria-label="관리자 페이지 새 창 열기" class="admin-menu-btn" id="adminMenuBtn" type="button">관리</button>
-      <section aria-hidden="true" class="admin-dropdown admin-panel-modal" id="adminDropdown">
-        <div class="admin-dropdown-head admin-panel-head">
-          <div>
-            <strong>관리 패널</strong>
-            <span>권한에 맞는 운영 기능만 표시됩니다.</span>
-          </div>
-          <button aria-label="닫기" class="admin-dropdown-close kinojo-common-close" id="adminDropdownClose" type="button">×</button>
-        </div>
-        <div class="admin-control-panel admin-shell" id="adminControlPanel" style="display:grid">
-          <nav class="admin-panel-tabs" aria-label="관리 패널 메뉴">
-            <button class="admin-panel-tab active" data-admin-panel="mvp" type="button">🏆 MVP</button>
-            <button class="admin-panel-tab" data-admin-panel="growth" type="button">📈 성장</button>
-            <button class="admin-panel-tab" data-admin-panel="account" type="button">👥 회원</button>
-            <button class="admin-panel-tab" data-admin-panel="character" type="button">🧍 캐릭터</button>
-            <button class="admin-panel-tab" data-admin-panel="system" type="button">⚙ 시스템</button>
-          </nav>
-          <div class="admin-panel-content">
-            <section class="admin-panel-pane active" data-admin-pane="mvp">
-              <div class="admin-pane-title"><strong>MVP 관리</strong><span>후보와 집계 상태를 확인합니다.</span></div>
-              <div class="admin-pane-actions">
-                <button class="btn" id="adminMvpBtn" type="button">MVP 후보 확인</button>
-              </div>
-              <div class="admin-pane-result" data-admin-result="mvp"></div>
-            </section>
-            <section class="admin-panel-pane" data-admin-pane="growth">
-              <div class="admin-pane-title"><strong>성장 데이터</strong><span>성장왕/벌크업 스냅샷과 자동 집계를 확인합니다.</span></div>
-              <div class="admin-pane-actions">
-                <button class="btn" id="adminSnapshotBtn" type="button">성장왕 스냅샷 생성</button>
-                <button class="btn" id="adminSnapshotStatusBtn" type="button">스냅샷 상태 확인</button>
-                <button class="btn" id="adminSnapshotTriggerBtn" type="button">주간 성장 자동 집계 활성화</button>
-              </div>
-              <div class="admin-pane-result" data-admin-result="growth"></div>
-            </section>
-            <section class="admin-panel-pane" data-admin-pane="account">
-              <div class="admin-pane-title"><strong>회원 관리</strong><span>코드 생성, 등급, 권한을 한 화면에서 관리합니다.</span></div>
-              <div class="admin-account-inline" id="kinojoAccountAdminInline"></div>
-              <div class="admin-pane-result" data-admin-result="account"></div>
-            </section>
-
-            <section class="admin-panel-pane" data-admin-pane="character">
-              <div class="admin-pane-title"><strong>캐릭터 관리</strong><span>탈퇴/복구/이름변경 이력을 서버 기준으로 관리합니다.</span></div>
-              <div class="admin-character-control" id="adminCharacterControl">
-                <div class="admin-character-search-row">
-                  <input class="search admin-character-search" id="adminCharacterSearchInput" placeholder="캐릭터명 또는 서버명 검색" type="text"/>
-                  <label class="admin-character-check"><input id="adminCharacterIncludeInactive" type="checkbox" checked/> 비활성 포함</label>
-                  <button class="btn" id="adminCharacterSearchBtn" type="button">검색</button>
-                </div>
-                <div class="admin-character-form-row">
-                  <select class="search admin-character-reason" id="adminCharacterReason">
-                    <option value="탈퇴">탈퇴</option>
-                    <option value="이름변경">이름변경</option>
-                    <option value="중복">중복</option>
-                    <option value="기타">기타</option>
-                  </select>
-                  <input class="search admin-character-new-name" id="adminCharacterNewName" placeholder="이름변경 시 새 캐릭터명" type="text"/>
-                  <input class="search admin-character-memo" id="adminCharacterMemo" placeholder="관리 메모" type="text"/>
-                </div>
-                <div class="admin-status" id="adminCharacterStatus"></div>
-                <div class="admin-character-list" id="adminCharacterList"><div class="admin-result-meta">검색어를 입력하고 캐릭터를 조회하세요.</div></div>
-              </div>
-              <div class="admin-pane-result" data-admin-result="character"></div>
-            </section>
-            <section class="admin-panel-pane" data-admin-pane="system">
-              <div class="admin-pane-title"><strong>시스템</strong><span>마스터 전용 기능과 캐릭터 소유정보를 관리합니다.</span></div>
-              <div class="admin-pane-actions">
-                <button class="btn" id="adminOwnerMapQuickBtn" type="button">캐릭터 소유정보 갱신</button>
-              </div>
-              <div class="admin-visit-control master-only" id="adminVisitControl">
-                <div class="admin-visit-title">방문자수 조정 <span>MASTER 전용</span></div>
-                <div class="admin-visit-line admin-visit-row-main">
-                  <div aria-label="증감 선택" class="admin-swap admin-sign-swap">
-                    <button class="admin-swap-btn active" data-visit-sign="plus" type="button">+</button>
-                    <button class="admin-swap-btn" data-visit-sign="minus" type="button">-</button>
-                  </div>
-                  <input aria-label="조정 인원수" class="search admin-visit-amount" id="adminVisitAmount" inputmode="numeric" max="9999" min="1" type="number" value="1"/>
-                  <span class="admin-visit-unit">명</span>
-                  <div aria-label="조정 대상" class="admin-swap">
-                    <button class="admin-swap-btn active" data-visit-target="daily" type="button">일일</button>
-                    <button class="admin-swap-btn" data-visit-target="total" type="button">누적</button>
-                  </div>
-                </div>
-                <div class="admin-status" id="adminVisitStatus"></div>
-                <div class="admin-visit-line admin-visit-actions">
-                  <button class="btn" id="adminVisitApplyBtn" type="button">반영</button>
-                  <button class="btn admin-close" id="adminVisitCancelBtn" type="button">취소</button>
-                </div>
-              </div>
-              <div class="admin-notice-control" id="adminNoticeControl">
-                <div class="admin-notice-title">공지사항 관리 <span>등록 · 수정 · 삭제</span></div>
-                <input id="adminNoticeEditingId" type="hidden" value=""/>
-                <label class="admin-notice-label" for="adminNoticeType">종류</label>
-                <select class="search admin-notice-input admin-notice-select" id="adminNoticeType">
-                  <option value="공지">공지</option>
-                  <option value="알림">알림</option>
-                  <option value="이벤트">이벤트</option>
-                </select>
-                <label class="admin-notice-label" for="adminNoticeContent">내용</label>
-                <textarea class="search admin-notice-content" id="adminNoticeContent" placeholder="공지 BAR에 표시할 내용을 입력하세요." rows="4"></textarea>
-                <div class="admin-notice-actions">
-                  <button class="btn" id="adminNoticeSaveBtn" type="button">공지 등록</button>
-                  <button class="btn admin-close" id="adminNoticeResetBtn" type="button">새 공지</button>
-                  <button class="btn admin-close" id="adminNoticeReloadBtn" type="button">목록 새로고침</button>
-                </div>
-                <div class="admin-status" id="adminNoticeStatus"></div>
-                <div class="admin-notice-list" id="adminNoticeAdminList" aria-label="등록된 공지사항 목록">공지 목록을 불러오는 중입니다.</div>
-              </div>
-              <div class="admin-pane-result" data-admin-result="system"></div>
-            </section>
-          </div>
-        </div>
-      </section>`;
+    wrap.innerHTML='<button aria-label="관리자 콘솔 새 창 열기" class="admin-menu-btn" id="adminMenuBtn" type="button">관리</button>';
+    wrap.querySelector('#adminMenuBtn').dataset.adminHref=adminConsoleHref;
     return wrap;
   }
   let sanctuaryAlertRequestSeq=0;
@@ -549,12 +438,7 @@
     const visit=rescued.visit||createVisitCard();
     const visitorRow=q('#kinojoTopVisitorRow',bar);
     const adminBtn=admin.querySelector('#adminMenuBtn');
-    const adminPanel=admin.querySelector('#adminDropdown');
     if(adminBtn){adminBtn.textContent='관리';adminBtn.setAttribute('aria-label','관리자 페이지 새 창 열기');adminBtn.dataset.adminHref=adminConsoleHref;}
-    if(adminPanel){
-      document.body.appendChild(adminPanel);
-      adminPanel.classList.add('kinojo-admin-shell-modal');
-    }
     admin.style.display='none';
     if(auth)auth.appendChild(admin);
     if(visitorRow)visitorRow.appendChild(visit);
@@ -584,22 +468,11 @@
     setTimeout(()=>loadCommonVisits(info),40);
   }
   function toggleAdminMenu(){
-    const menu=q('#adminDropdown');const btn=q('#adminMenuBtn');
-    if(!menu)return;
-    const open=!menu.classList.contains('open');
-    menu.classList.toggle('open',open);
-    menu.setAttribute('aria-hidden',open?'false':'true');
-    if(btn)btn.setAttribute('aria-expanded',open?'true':'false');
-    if(open){
-      window.KinojoAdminPanel?.bind?.();
-      document.dispatchEvent(new CustomEvent('kinojo-admin-panel-ready'));
-    }
+    const btn=q('#adminMenuBtn');
+    const href=btn?.dataset?.adminHref||'/admin/';
+    window.open(href,'_blank','noopener');
   }
-  function closeAdminMenuCommon(){
-    const menu=q('#adminDropdown');const btn=q('#adminMenuBtn');
-    if(menu){menu.classList.remove('open');menu.setAttribute('aria-hidden','true');}
-    if(btn)btn.setAttribute('aria-expanded','false');
-  }
+  function closeAdminMenuCommon(){}
   function bindCommonAdmin(info){
     q('#adminMenuBtn')?.addEventListener('click',e=>{
       e.preventDefault();
@@ -607,8 +480,6 @@
       const href=e.currentTarget?.dataset?.adminHref||(info?.mobile?'/m/admin/':'/admin/');
       window.open(href,'_blank','noopener');
     });
-    q('#adminDropdownClose')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeAdminMenuCommon();});
-    document.addEventListener('click',e=>{const menu=q('#adminDropdown');if(menu&&menu.classList.contains('open')&&!menu.contains(e.target)&&!e.target.closest('#adminMenuBtn'))closeAdminMenuCommon();});
   }
   function makeDrawer(info){
     const isHall=info.key==='hall';

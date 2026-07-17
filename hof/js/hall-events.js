@@ -40,11 +40,40 @@ function bindHallStaticEvents(){
     submitReaction();
   });
 
+  document.addEventListener('click',function(e){
+    const toggle=e.target.closest('[data-hof-period-toggle]');
+    if(toggle){
+      e.preventDefault();
+      const popover=document.getElementById('hofPeriodPopover');
+      if(!popover)return;
+      const willOpen=popover.hidden;
+      closeHallPeriodPopover();
+      if(willOpen){
+        popover.hidden=false;
+        popover.setAttribute('aria-hidden','false');
+        toggle.setAttribute('aria-expanded','true');
+      }
+      return;
+    }
+    if(!e.target.closest('[data-hof-period]'))closeHallPeriodPopover();
+    if(e.target.closest('#hofMyRankingLoginBtn'))window.KinojoAuth?.openLoginModal?.();
+  });
+
   document.addEventListener('keydown',function(e){
-    if(e.key==='Escape')closeReactionModal();
+    if(e.key==='Escape'){
+      closeReactionModal();
+      closeHallPeriodPopover();
+    }
   });
 
   bindInlineSuggestionPanel();
+}
+
+function closeHallPeriodPopover(){
+  const popover=document.getElementById('hofPeriodPopover');
+  const toggle=document.querySelector('[data-hof-period-toggle]');
+  if(popover){popover.hidden=true;popover.setAttribute('aria-hidden','true');}
+  if(toggle)toggle.setAttribute('aria-expanded','false');
 }
 
 function bindHallDynamicEvents(){
@@ -64,13 +93,4 @@ function applyOverflowMarquee(){
       el.style.removeProperty('--marquee-shift');
     }
   });
-}
-
-function startHallReactionCarouselTimer(){
-  if(window.__KINOJO_HALL_REACTION_TIMER__)return;
-  window.__KINOJO_HALL_REACTION_TIMER__=window.setInterval(function(){
-    if(Date.now()<reactionCarouselPausedUntil)return;
-    reactionCarouselIndex+=1;
-    renderReactionOnly();
-  },6000);
 }

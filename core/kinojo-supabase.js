@@ -206,6 +206,21 @@
     return data;
   }
 
+  async function invokeEdgeFunction(functionName, body){
+    const cfg=await ensureConfig();
+    const res=await fetch(cfg.url+'/functions/v1/'+String(functionName||'').replace(/^\//,''),{
+      method:'POST',
+      headers:headers(cfg),
+      body:JSON.stringify(body||{}),
+      cache:'no-store'
+    });
+    const text=await res.text();
+    let data=null;
+    if(text){try{data=JSON.parse(text);}catch(_err){data={ok:false,message:text};}}
+    if(!res.ok||data?.ok===false)throw new Error(data?.message||data?.error||text||('Edge Function HTTP '+res.status));
+    return data||{ok:true};
+  }
+
 
   const ADMIN_ROLES = ['MASTER','SUB_MASTER','MANAGER'];
   const PERMISSION_KEYS = ['sanctuary_edit','visit_manage','snapshot_manage','account_manage'];
@@ -1142,6 +1157,13 @@
     const enhanceGod = toItem(sections.enhanceGod, 'ENHANCE');
     const allSummaryItems = likesTop.concat(dislikesTop, pveTop, pvpTop, growthGod?[growthGod]:[], enhanceGod?[enhanceGod]:[]);
     const rawMyRanking = data && data.myRanking && typeof data.myRanking === 'object' ? data.myRanking : {};
+    const rawRankingPeriod = data && (data.rankingPeriod || data.ranking_period || data.weeklyPeriod || data.weekly_period) || {};
+    const rankingPeriod = {
+      startAt:rawRankingPeriod.startAt || rawRankingPeriod.start_at || '',
+      endAt:rawRankingPeriod.endAt || rawRankingPeriod.end_at || '',
+      timezone:rawRankingPeriod.timezone || 'Asia/Seoul',
+      endExclusive:rawRankingPeriod.endExclusive !== undefined ? !!rawRankingPeriod.endExclusive : !!rawRankingPeriod.end_exclusive
+    };
     const myRanking = {};
     ['enhance','pve','pvp','like','dislike','growth'].forEach(metric=>{
       const row = rawMyRanking[metric];
@@ -1174,6 +1196,7 @@
       weeklyAwards:{ growthKing:growthGod?[growthGod]:[], bulkUp:enhanceGod?[enhanceGod]:[] },
       summarySections:{ likesTop, dislikesTop, pveTop, pvpTop, growthGod, enhanceGod },
       myRanking,
+      rankingPeriod,
       mvp:null,
       mvpCandidatesTop3:[],
       mvpConfirmed:false,
@@ -1490,6 +1513,30 @@
     return Object.assign({ ok:true }, data || {});
   }
 
+  async function adminSanctuarySheetSync(command, extra={}){
+    assertAdmin();
+    const passKey=currentPassKey();
+    const normalized=String(command||'status').trim().toLowerCase();
+    if(normalized==='status'){
+      return rpc('kinojo_admin_sanctuary_sheet_sync_status',{p_pass_key:passKey});
+    }
+    if(normalized==='ping'){
+      return invokeEdgeFunction('lookup-sheet-bridge',{
+        action:'adminBridgePing',
+        passKey,
+        clientVersion:'kinojo-web-2026071712'
+      });
+    }
+    if(normalized!=='preview'&&normalized!=='apply')return {ok:false,message:'알 수 없는 성역 시트 동기화 명령입니다.'};
+    return invokeEdgeFunction('lookup-sheet-bridge',{
+      action:'adminSanctuarySheetSync',
+      passKey,
+      sanctuaryId:String(extra.sanctuaryId||extra.id||'all'),
+      mode:normalized,
+      clientVersion:'kinojo-web-2026071712'
+    });
+  }
+
   async function runtimeForceRelease(adminPassCode, reason){
     const data = await rpc('kinojo_runtime_force_release', {
       p_admin_pass_code:normalizePassKey(adminPassCode || ''),
@@ -1527,6 +1574,7 @@
     if(name === 'adminSanctuaryScheduleStatus') return setAdminSanctuaryScheduleStatus(extra);
     if(name === 'sanctuaryRolePermissions') return getSanctuaryRolePermissions(extra);
     if(name === 'sanctuaryRolePermissionSet') return setSanctuaryRolePermission(extra);
+    if(name === 'adminSanctuarySheetSync') return adminSanctuarySheetSync(extra.mode || extra.command || 'status', extra);
     if(name === 'sanctuaryAdmin') return saveSanctuaryData(extra);
     if(name === 'notices') return { ok:true, notices:(await getLatestAnnouncements(extra.limit || 5)).map(noticeFromRow).filter(Boolean) };
     if(name === 'hallVisit'){
@@ -1646,6 +1694,7 @@
     getWebEventNoticeGroups,
     adminNotice,
     adminEventNotice,
+    adminSanctuarySheetSync,
     adminCharacter,
     adminVisit,
     getVisitStats,

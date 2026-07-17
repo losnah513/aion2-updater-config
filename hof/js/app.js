@@ -31,7 +31,6 @@
     "bindHallStaticEvents",
     "bindHallDynamicEvents",
     "applyOverflowMarquee",
-    "startHallReactionCarouselTimer",
 
     // reaction road
     "bindCharacterButtons",
@@ -59,7 +58,6 @@
   window.__KINOJO_HALL_INIT_DONE__=true;
 
   bindHallStaticEvents();
-  startHallReactionCarouselTimer();
   window.addEventListener('kinojo:auth-changed',()=>window.reloadHallAfterAuthChange?.());
   load();
 })();

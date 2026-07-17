@@ -1,125 +1,9 @@
-function miniRow(item,i,total){const rank=i+1;const itemLevel=itemLevelFor(item,item.category);const scoreHtml='<div class="score-stack">'+(itemLevel?'<div class="item-level">'+escapeHtml(itemLevel)+'</div>':'')+'<div class="power-score">'+escapeHtml(numberOnly(item.value)||item.label||"")+'</div></div>';return '<div class="mini-row '+itemClass(item)+'"><div class="medal rank-medal">'+rankEmblemHtml(rank,total,item)+'</div><div class="name-wrap"><div class="name">'+flowText(item.name,item)+'</div>'+ownerLine(item)+(item.meta?'<div class="meta">'+escapeHtml(item.meta)+'</div>':'')+'</div>'+reactionCountsHtml(item)+'<div class="score">'+scoreHtml+'</div></div>'}
-function rankBox(title,note,list){const items=(list||[]);return '<section class="section"><div class="section-head"><h2>'+title+'</h2><span class="section-note">'+(note||'')+'</span></div><div class="list">'+(items.length?items.map((item,i)=>miniRow(item,i,items.length)).join(""):'<div class="empty">아직 데이터가 부족해요.</div>')+'</div></section>'}
-function tagBox(title,note,list){const items=(list||[]).filter(match);return '<section class="section"><div class="section-head"><h2>'+title+'</h2><span class="section-note">'+(note||'')+'</span></div><div class="tag-list swipe-list">'+(items.length?items.map(item=>'<div class="name-tag '+itemClass(item)+'"><div class="tag-name-wrap"><div class="tag-name">'+flowText(item.name,item)+'</div></div>'+ownerLine(item)+(item.meta?'<div class="tag-meta">'+escapeHtml(item.meta)+'</div>':'')+'</div>').join(""):'<div class="empty">아직 데이터가 부족해요.</div>')+'</div></section>'}
-function combinedRelationBox(){
-  const demonItems=(currentDemon()||[]);
-  const partyItems=(currentParty()||[]);
-
-  const renderColumn=function(items,type){
-    const base=(items||[]).length?items:[];
-    const html=base.length
-      ? base.map(item=>{
-          const reaction=reactionDataFor(item);
-          const serverText=item.meta||item.serverName||item.server||"";
-          return '<div class="relation-row '+itemClass(item)+'" data-character="'+escapeHtml(item.name)+'">'
-            + '<span class="relation-name">'+escapeHtml(item.name)+'</span>'
-            + (serverText?'<span class="relation-server">'+escapeHtml(serverText)+'</span>':'<span class="relation-server"></span>')
-            + reactionPairHtml(reaction.like,reaction.dislike,'relation-reactions')
-            + '</div>';
-        }).join("")
-      : '<div class="empty relation-empty">아직 데이터가 부족해요.</div>';
-    const scrollClass=base.length>6?' is-scrollable':'';
-    const track=base.length>6?html+html:html;
-    return '<div class="relation-column '+type+scrollClass+'"><div class="relation-track">'+track+'</div></div>';
-  };
-
-  return '<section class="section relation-combined-card">'
-    + '<div class="relation-combined-head">'
-    + '<div class="section-head relation-main-head"><h2>😈 같은 마족이면 가족이지</h2><span class="section-note">타서버 마족</span></div>'
-    + '<div class="section-head relation-sub-head"><h2>🤝 같은 파티면 친구지</h2><span class="section-note">천족 서버</span></div>'
-    + '</div>'
-    + '<div class="relation-viewport">'
-    + renderColumn(demonItems,"demon")
-    + renderColumn(partyItems,"party")
-    + '</div>'
-    + '</section>';
-}
 function chickLabel(item){const server=item.meta?'['+item.meta.replace("천족 · ","")+']':'';const cls=item.className?' ('+item.className+')':'';const owner=item.owner&&item.owner!==item.name?' / 본캐 '+item.owner:'';return item.name+server+cls+owner}
 function renderChicks(){const items=(hallData?.newChicks||[]);const card=document.getElementById("chickCard");if(!card)return;if(!items.length){card.style.display="none";return}card.classList.toggle("collapsed",chicksCollapsed);card.style.display="block";document.getElementById("chickTitle").textContent="🐣 신입 병아리 "+items.length+"명 입장!";document.getElementById("chickSub").textContent=items.length>=5?"새로운 모험가들이 우르르 둥지에 들어왔어요!":"새로운 모험가들을 따뜻하게 환영합니다!";const shown=chicksExpanded?items:items.slice(0,5);document.getElementById("chickTags").innerHTML=shown.map(item=>'<span class="chick-tag">'+escapeHtml(chickLabel(item))+'</span>').join("")+(items.length>5?'<span class="chick-tag chick-more" id="chickMore">'+(chicksExpanded?"접기":"+"+(items.length-5)+"명 더 보기")+'</span>':'');const more=document.getElementById("chickMore");if(more)more.onclick=()=>{chicksExpanded=!chicksExpanded;renderChicks()};const close=document.getElementById("chickCloseBtn");if(close&&!close.dataset.bound){close.dataset.bound="1";close.onclick=()=>{chicksCollapsed=!chicksCollapsed;card.classList.toggle("collapsed",chicksCollapsed);close.setAttribute("aria-label",chicksCollapsed?"신입 병아리 펼치기":"신입 병아리 접기")}}}
 function profileImageUrlFor(item){
   return String(item?.profileImageUrl||"").trim();
 }
-function profileImageHtml(item,className,label){
-  const url=profileImageUrlFor(item);
-  const alt=escapeHtml((item?.name||"캐릭터")+" 프로필 이미지");
-  if(!url)return '<div class="'+className+' is-empty" aria-hidden="true">'+escapeHtml(label||"PROFILE")+'</div>';
-  return '<img class="'+className+'" src="'+escapeHtml(url)+'" alt="'+alt+'" loading="lazy" decoding="async">';
-}
-function mvpCandidateImageHtml(item){
-  const url=profileImageUrlFor(item);
-  if(!url)return '<div class="mvp-candidate-image is-empty" aria-hidden="true">?</div>';
-  return '<img class="mvp-candidate-image" src="'+escapeHtml(url)+'" alt="MVP 후보 이미지" loading="lazy" decoding="async">';
-}
-function mvpNameLine(item,index){
-  if(!item||!item.name)return '';
-  return '<div class="mvp-final-rank-name"><span>'+(index+1)+'위</span><strong>'+escapeHtml(item.name)+'</strong></div>';
-}
-function mvpSection(){
-  const mvp=hallData?.mvp||null;
-  const candidates=(hallData?.mvpCandidatesTop3||[]).filter(Boolean).slice(0,3);
-  const confirmed=hallData?.mvpConfirmed===true && mvp&&mvp.name;
-  if(confirmed){
-    const rankNames=(candidates.length?candidates:[mvp]).slice(0,3);
-    const subNames=rankNames.slice(1,3).map((item,index)=>mvpNameLine(item,index+1)).join('');
-    return '<section class="mvp-card has-profile-image is-confirmed"><div class="mvp-head"><h2>👑 시즌 MVP</h2><span class="section-note">확정</span></div>'
-      + '<div class="mvp-body mvp-profile-body mvp-final-body"><div class="mvp-final-visual"><img class="mvp-final-emblem" src="'+RANK_EMBLEMS.mvp+'" alt="MVP 엠블럼">'
-      + '<div class="mvp-profile-frame">'+profileImageHtml(mvp,'mvp-profile-image','MVP')+'</div></div>'
-      + '<div class="mvp-profile-info"><div class="mvp-final-label">시즌 챌린저</div><div class="mvp-name">'+flowText(mvp.name,mvp)+'</div>'
-      + (mvp.meta?'<div class="mvp-meta">'+escapeHtml(mvp.meta)+'</div>':'')
-      + '<div class="mvp-score">'+escapeHtml(mvp.label||mvp.pvePowerLabel||mvp.pvpPowerLabel||'')+'</div>'
-      + (subNames?'<div class="mvp-final-subnames">'+subNames+'</div>':'')+'</div></div></section>';
-  }
-  if(candidates.length){
-    const previews=candidates.map(item=>'<div class="mvp-candidate-blur-card"><div class="mvp-candidate-frame">'+mvpCandidateImageHtml(item)+'</div></div>').join('');
-    return '<section class="mvp-card is-candidate-preview"><div class="mvp-head"><h2>👑 시즌 MVP</h2><span class="section-note">후보 추적 중</span></div>'
-      + '<div class="mvp-body mvp-candidate-body"><div class="mvp-candidate-title">이번 시즌 유력 후보</div><div class="mvp-candidate-list">'+previews+'</div>'
-      + '<div class="mvp-wait-sub">순위와 이름은 확정 전까지 공개되지 않습니다.</div></div></section>';
-  }
-  return '<section class="mvp-card"><div class="mvp-head"><h2>👑 시즌 MVP</h2><span class="section-note">챌린저</span></div><div class="mvp-body mvp-challenger-waiting"><div class="mvp-emblem-wrap"><img class="mvp-emblem-blur" src="'+RANK_EMBLEMS.mvp+'" alt="챌린저 엠블럼"><div class="mvp-emblem-question">?</div></div><div class="mvp-wait-title">첫 번째 챌린저를 기다리는 중</div><div class="mvp-wait-sub">아직 이 엠블럼의 주인은 정해지지 않았습니다.</div></div></section>';
-}
-
 function reactionDataFor(item){const by=hallData?.reactionSummary?.byName||{};return by[item?.name]||{like:0,dislike:0,comments:[]}}
-function reactionCountsHtml(item){
-  const r=reactionDataFor(item);
-  return '<div class="reaction-counts">'+reactionPairHtml(r.like,r.dislike,'mini-reactions')+'</div>';
-}
-function reactionCard(type){
-  const summary=hallData?.reactionSummary||{};
-  const list=(type==="like"?summary.likeTop:summary.dislikeTop)||[];
-  const title=type==="like"?"좋아요 TOP 3":"싫어요 TOP 3";
-  const titleIcon=reactionIcon(type==="like"?"like":"dislike");
-  const note=type==="like"?"모두에게 사랑받는 모험가":"이분은 어쩌다 이렇게 미움을 샀을까요?";
-  if(!list.length)return '<section class="reaction-card '+type+'-top-card"><div class="reaction-card-head"><div class="reaction-card-title">'+titleIcon+'<span>'+title+'</span></div><div class="reaction-card-note">'+note+'</div></div><div class="reaction-empty">아직 반응 데이터가 부족합니다.</div></section>';
-  const now=Date.now();
-  const idx=(now<reactionCarouselPausedUntil)?reactionCarouselIndex:reactionCarouselIndex%list.length;
-  const item=list[idx%list.length];
-  const displayRank=(idx%list.length)+1;
-  const comments=(item.comments||[]).filter(Boolean);
-  const meta=item.serverName?'<div class="reaction-server">'+escapeHtml(item.serverName)+'</div>':'';
-  const commentItems=comments.length?comments.map(c=>'<div class="comment-item">“'+escapeHtml(c)+'”</div>').join(''):'<div class="comment-item">아직 코멘트가 없습니다.</div>';
-  const track=comments.length>5?commentItems+commentItems:commentItems;
-  const overflowClass=comments.length>5?' is-scrollable':'';
-  return '<section class="reaction-card '+type+'-top-card" data-reaction-card="'+type+'">'
-    + '<div class="reaction-card-head"><div class="reaction-card-title">'+titleIcon+'<span>'+title+'</span></div><div class="reaction-card-note">'+note+'</div></div>'
-    + '<div class="reaction-top-body"><div class="reaction-top-left"><div class="reaction-rank">'+displayRank+'위</div>'
-    + '<span class="reaction-name" data-character="'+escapeHtml(item.name)+'">'+escapeHtml(item.name)+'</span>'+meta
-    + '<div class="reaction-score-line icon-row">'+reactionPairHtml(item.like,item.dislike,'top-reaction-pair')+'</div></div>'
-    + '<div class="reaction-top-divider" aria-hidden="true"></div><div class="reaction-comments comment-list'+overflowClass+'"><div class="comment-track">'+track+'</div></div></div></section>';
-}
-function recentCommentCard(){
-  const by=hallData?.reactionSummary?.byName||{};
-  const rows=[];
-  Object.keys(by).forEach(name=>{
-    (by[name].comments||[]).filter(Boolean).forEach(c=>rows.push({name,comment:c}));
-  });
-  const list=rows.slice(0,10);
-  const overflowClass=list.length>5?' is-scrollable':'';
-  const items=list.length?list.map(x=>'<div class="comment-item recent-comment-item"><strong>'+escapeHtml(x.name)+'</strong><span>“'+escapeHtml(x.comment)+'”</span></div>').join(''):'<div class="comment-item">아직 남겨진 한마디가 없습니다.</div>';
-  const track=list.length>5?items+items:items;
-  return '<section class="reaction-card recent-comment-card"><div class="reaction-card-head"><div class="reaction-card-title"><span class="comment-title-icon" aria-hidden="true"></span><span>최근 한마디</span></div><div class="reaction-card-note">따뜻한 말은 오래 남아요</div></div><div class="reaction-comments recent comment-list'+overflowClass+'"><div class="comment-track">'+track+'</div></div></section>';
-}
-function reactionBoard(){return '<div class="reaction-board">'+reactionCard("like")+reactionCard("dislike")+recentCommentCard()+'</div>'}
-function awardsBoard(){const w=hallData?.weeklyAwards||{};return '<div class="award-grid">'+awardCard("🌱 성장왕","PVE+PVP 아이템레벨 주간 증가량",w.growthKing||[],"itemLabel")+awardCard("💪 벌크업","PVE+PVP 전투력 주간 증가량",w.bulkUp||[],"powerLabel")+'</div>'}
 
 function hofFirstDefined(){
   for(let i=0;i<arguments.length;i++){
@@ -319,7 +203,7 @@ function hofGodHeroCard(title,note,item,metric){
   const name=hasItem?hofCharName(safeItem):'집계 대기';
   const score=hasItem?(hofMetricValue(safeItem,metric)||'-'):'-';
   const meta=[hofServerName(safeItem), hofClassName(safeItem)].filter(Boolean).join(' · ');
-  const deltaLabel=metric==='enhance'?'최고 강화 수치':'이번주 성장량';
+  const deltaLabel=metric==='enhance'?'주간 아이템레벨 증가':'주간 전투력 증가';
   const recent=metric==='enhance'?hofFirstDefined(safeItem?.itemLevelDelta,safeItem?.item_level_delta,safeItem?.valueDelta,safeItem?.value_delta,''):hofFirstDefined(safeItem?.powerDelta,safeItem?.power_delta,safeItem?.itemDelta,safeItem?.item_delta,safeItem?.valueDelta,safeItem?.value_delta,'');
   const recentText=recent!==''?hofSignedNumber(recent):'-';
   const compare=hofFirstDefined(safeItem?.growthRateLabel,safeItem?.growth_rate_label,safeItem?.rateLabel,safeItem?.rate_label,safeItem?.weekCompareLabel,safeItem?.week_compare_label,'');
@@ -334,7 +218,7 @@ function hofGodHeroCard(title,note,item,metric){
     + '<span>'+escapeHtml(meta||'지켈')+'</span>'
     + '</'+bodyTag+'>'
     + '<div class="hof-v2-god-score"><strong>'+escapeHtml(score)+'</strong><span>'+deltaLabel+'</span></div>'
-    + '<div class="hof-v2-god-sub"><span>최근 변화</span><strong>'+escapeHtml(recentText)+'</strong></div>'
+    + '<div class="hof-v2-god-sub"><span>이번 주 합계</span><strong>'+escapeHtml(recentText)+'</strong></div>'
     + (compare?'<div class="hof-v2-god-compare"><span>전주 대비</span><strong>'+escapeHtml(compare)+'</strong></div>':'')
     + '</section>';
 }
@@ -348,12 +232,34 @@ function hofRankingLinkCard(){
     + '</a>'
     + '</section>';
 }
+function hofFormatKstDate(value){
+  if(!value)return '';
+  const date=new Date(value);
+  if(Number.isNaN(date.getTime()))return '';
+  return new Intl.DateTimeFormat('ko-KR',{
+    timeZone:'Asia/Seoul',year:'numeric',month:'long',day:'numeric',weekday:'long',
+    hour:'numeric',minute:'2-digit',hour12:true
+  }).format(date).replace(/\s+/g,' ').trim();
+}
+function hofCollectionPeriodBar(){
+  const period=hallData?.rankingPeriod||hallData?.weeklyPeriod||{};
+  const start=hofFormatKstDate(period.startAt||period.start_at);
+  const end=hofFormatKstDate(period.endAt||period.end_at);
+  const label=start&&end?start+' ~ '+end+' 직전':'서버 집계 기간 확인 중';
+  const detail=start&&end?'이번 주 집계: '+label:'집계 기간은 Server Engine 응답이 준비되면 표시됩니다.';
+  return '<div class="hof-v2-period" data-hof-period>'
+    + '<div class="hof-v2-period-label"><span>집계 기준</span><strong>'+escapeHtml(label)+'</strong></div>'
+    + '<button class="hof-v2-period-info" type="button" data-hof-period-toggle aria-label="주간 집계 기준 안내" aria-expanded="false" aria-controls="hofPeriodPopover">i</button>'
+    + '<div class="hof-v2-period-popover" id="hofPeriodPopover" role="dialog" aria-label="주간 집계 기준" aria-hidden="true" hidden>'
+    + '<strong>아이온 주간 집계</strong><p>'+escapeHtml(detail)+'</p><span>Asia/Seoul · 시작 시각 포함, 종료 시각 미포함</span>'
+    + '</div></div>';
+}
 function hofV2Layout(){
   const s=hallData?.summarySections||{};
   const pveList=s.pveTop||s.pveTop3||hallData?.pveTop||hallData?.pveTop3||[];
   const pvpList=s.pvpTop||s.pvpTop3||hallData?.pvpTop||hallData?.pvpTop3||[];
   const likeList=s.likesTop||s.likeTop||hallData?.reactionSummary?.likeTop||[];
-  return '<div class="hof-v2-layout">'
+  return hofCollectionPeriodBar()+'<div class="hof-v2-layout">'
     + '<div class="hof-v2-board">'
     + '<div class="hof-v2-area hof-v2-area-enhance">'+hofGodHeroCard('강화의 신','최고 강화 기록',s.enhanceGod || hallData?.weeklyAwards?.bulkUp?.[0], 'enhance')+'</div>'
     + '<div class="hof-v2-area hof-v2-area-pve">'+hofWidePanel('PVE 랭킹','PVE TOP 3',pveList,'pve')+'</div>'
@@ -368,31 +274,36 @@ function hofV2Layout(){
 function hofMyRankingPanel(){
   const isLoggedIn=!!(window.KinojoAuth&&typeof window.KinojoAuth.getSession==='function'&&window.KinojoAuth.getSession());
   const myName=hofSessionName();
-  const rows=[
-    ['강화의 신','enhance'],
-    ['PVE 랭킹','pve'],
-    ['PVP 랭킹','pvp'],
-    ['좋아요 랭킹','like'],
-    ['싫어요 랭킹','dislike'],
-    ['성장의 신','growth']
-  ];
-  const rowHtml=rows.map(row=>{
-    const title=row[0];
-    const metric=row[1];
-    const found=isLoggedIn?hofFindMyMetric(metric):null;
-    const rankText=found?'RANK '+found.rank:'RANK -';
-    const label=hofMetricLabel(metric);
-    const score=found?found.score:'-';
-    const nameLine=found?.item?'<span class="hof-v2-my-name">'+escapeHtml(hofCharName(found.item))+'</span>':'';
-    return '<div class="hof-v2-my-row '+hofBackgroundClass(metric)+(found?' is-found':'')+'" data-hof-metric="'+escapeHtml(metric)+'">'
-      + '<div><strong>'+escapeHtml(title)+'</strong><span>'+escapeHtml(rankText)+'</span>'+nameLine+'</div>'
-      + '<div><em>'+escapeHtml(label)+'</em><b>'+escapeHtml(score)+'</b></div>'
+  const metrics=['pve','pvp','enhance','growth','like','dislike'];
+  const foundByMetric={};
+  metrics.forEach(metric=>{foundByMetric[metric]=isLoggedIn?hofFindMyMetric(metric):null;});
+  const profileMetric=metrics.find(metric=>foundByMetric[metric]?.item);
+  const item=profileMetric?foundByMetric[profileMetric].item:null;
+  const displayName=hofCharName(item)||myName||'내 캐릭터';
+  const profileMeta=[hofServerName(item),hofClassName(item)].filter(Boolean).join(' · ')||'캐릭터 정보를 확인 중입니다.';
+  const primaryHtml=['pve','pvp'].map(metric=>{
+    const found=foundByMetric[metric];
+    const power=metric==='pve'?hofFirstDefined(item?.pvePower,item?.pve_power,''):hofFirstDefined(item?.pvpPower,item?.pvp_power,'');
+    const itemLevel=metric==='pve'?hofFirstDefined(item?.pveItem,item?.pve_item,''):hofFirstDefined(item?.pvpItem,item?.pvp_item,'');
+    const powerText=power!==''?Number(power).toLocaleString('ko-KR'):'-';
+    const itemText=itemLevel!==''?Number(itemLevel).toLocaleString('ko-KR'):'-';
+    return '<article class="hof-v2-my-current is-'+metric+'" data-hof-metric="'+metric+'">'
+      + '<div class="hof-v2-my-current-head"><span>'+metric.toUpperCase()+'</span><strong>'+(found?Number(found.rank).toLocaleString('ko-KR')+'위':'-')+'</strong></div>'
+      + '<dl><div><dt>전투력</dt><dd>'+escapeHtml(powerText)+'</dd></div><div><dt>아이템 Lv.</dt><dd>'+escapeHtml(itemText)+'</dd></div></dl>'
+      + '</article>';
+  }).join('');
+  const secondaryRows=[['강화의 신','enhance'],['성장의 신','growth'],['좋아요','like'],['싫어요','dislike']];
+  const secondaryHtml=secondaryRows.map(([title,metric])=>{
+    const found=foundByMetric[metric];
+    return '<div class="hof-v2-my-row '+hofBackgroundClass(metric)+(found?' is-found':'')+'" data-hof-metric="'+metric+'">'
+      + '<div><strong>'+escapeHtml(title)+'</strong><span>'+(found?Number(found.rank).toLocaleString('ko-KR')+'위':'순위 없음')+'</span></div>'
+      + '<div><em>'+escapeHtml(hofMetricLabel(metric))+'</em><b>'+escapeHtml(found?found.score:'-')+'</b></div>'
       + '</div>';
   }).join('');
   return '<aside class="hof-v2-panel hof-v2-my-rank">'
-    + '<div class="hof-v2-my-head"><span class="hof-v2-kicker">MY KINOJO</span><h2><span class="hof-v2-title-icon">◎</span>내 랭킹 정보</h2><p>'+(isLoggedIn&&myName?escapeHtml(myName)+' 기준으로 표시됩니다.':'로그인한 캐릭터 기준으로 표시됩니다.')+'</p></div>'
-    + (!isLoggedIn?'<div class="hof-v2-login-guide"><span>🔒</span><strong>로그인 후 나의 랭킹을 확인하세요.</strong><button type="button" onclick="window.KinojoAuth?.openLoginModal?.()">로그인</button></div>':'')
-    + '<div class="hof-v2-my-list">'+rowHtml+'</div>'
+    + '<div class="hof-v2-my-head"><span class="hof-v2-kicker">MY KINOJO</span><h2><span class="hof-v2-title-icon">◎</span>내 랭킹</h2><p>현재 서버 랭킹 기준</p></div>'
+    + (!isLoggedIn?'<div class="hof-v2-login-guide"><span>🔒</span><strong>로그인 후 나의 랭킹을 확인하세요.</strong><button id="hofMyRankingLoginBtn" type="button">로그인</button></div>':'')
+    + (isLoggedIn?'<div class="hof-v2-my-profile">'+hofRankPortrait(item,0,'my')+'<div><strong>'+escapeHtml(displayName)+'</strong><span>'+escapeHtml(profileMeta)+'</span><em>본인 카드</em></div></div><div class="hof-v2-my-current-grid">'+primaryHtml+'</div><div class="hof-v2-my-list">'+secondaryHtml+'</div>':'')
     + '</aside>';
 }
 function rankProfileHtml(item,rank){
