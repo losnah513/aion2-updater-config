@@ -5,22 +5,85 @@ let masterInfo=null;
 function classIconSrc(className){return window.KinojoCharacterProfileImage?.classIconFor?.(className)||''}
 let sanctuaryData=null;
 let operationLoadKey='';
+let operationLoadedKey='';
+let operationLoadPromise=null;
+let operationRefreshQueued=false;
 let operationRequestSeq=0;
+let sanctuaryLoadPromise=null;
+let sanctuaryRefreshQueued=false;
+let sanctuaryHasRenderedData=false;
 let sanctuaryRequestSeq=0;
+const SANCTUARY_REQUEST_TIMEOUT_MS=12000;
+const SANCTUARY_AUTO_RETRY_LIMIT=2;
+const OPERATION_REQUEST_TIMEOUT_MS=10000;
+const OPERATION_AUTO_RETRY_LIMIT=2;
+function waitMs(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
+function withRequestTimeout(task,timeoutMs,message){return Promise.race([Promise.resolve(task),new Promise((_,reject)=>setTimeout(()=>{const error=new Error(message||'요청 시간이 초과되었습니다.');error.code='REQUEST_TIMEOUT';reject(error)},timeoutMs))])}
 function esc(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;")}
 function fmt(n){return Number(n||0).toLocaleString("ko-KR")}
 function currentFallback(){return {info:masterInfo||{sanctuaryId:currentId,sanctuaryNo:"",sanctuaryName:"성역",shortName:"성역",bossName:""}}}
 function setActiveLinks(){}
 /* KINOJO common drawer is managed by GitHub_Pages/ui/kinojo-common-ui.js */
 const SANCTUARY_CACHE_TTL_MS=5*60*1000;
-function sanctuaryCacheKey(){const session=window.KinojoAuth?.getSession?.()||{};const identity=String(session.mainCharacter||session.mainCharacterName||'guest').trim().replace(/[^0-9A-Za-z가-힣_-]+/g,'_');return 'kinojo_sanctuary_cache_v2026071522_'+(currentId||'default')+'_'+(identity||'guest')}
+function sanctuaryCacheKey(){const session=window.KinojoAuth?.getSession?.()||{};const identity=String(session.mainCharacter||session.mainCharacterName||'guest').trim().replace(/[^0-9A-Za-z가-힣_-]+/g,'_');return 'kinojo_sanctuary_cache_v2026071711_'+(currentId||'default')+'_'+(identity||'guest')}
 function readSanctuaryCache(){try{const raw=sessionStorage.getItem(sanctuaryCacheKey());if(!raw)return null;const cached=JSON.parse(raw);if(!cached||!cached.savedAt||!cached.data)return null;if(Date.now()-cached.savedAt>SANCTUARY_CACHE_TTL_MS)return null;return cached.data}catch(e){return null}}
 function writeSanctuaryCache(data){try{if(data&&data.ok!==false)sessionStorage.setItem(sanctuaryCacheKey(),JSON.stringify({savedAt:Date.now(),data}))}catch(e){}}
 function sanctuaryTopbarUpdateText(value,fromCache=false){const raw=String(value||'').trim();const matched=raw.match(/(?:T|\s)(\d{1,2}:\d{2})(?::\d{2})?/)||raw.match(/(\d{1,2}:\d{2})/);const time=matched?.[1]||'';return time?'업데이트 '+time+(fromCache?' · 캐시':''):(fromCache?'캐시 데이터':'업데이트 완료')}
 function setSanctuarySyncState(value,{fromCache=false,error=false}={}){const raw=String(value||'').trim();const bodyChip=document.getElementById('sanctuarySyncChip');if(bodyChip)bodyChip.textContent=error?(raw||'성역 데이터를 불러오지 못했습니다.'):'Server Engine 업데이트 '+(raw||'완료')+(fromCache?' · 캐시':'');const topbarChip=document.getElementById('syncChip');if(topbarChip)topbarChip.textContent=error?'업데이트 확인 실패':sanctuaryTopbarUpdateText(raw,fromCache)}
-function applySanctuaryData(data,{fromCache=false}={}){sanctuaryData=data;masterInfo=data?.info||data?.master||masterInfo;currentId=String(masterInfo?.sanctuaryId||masterInfo?.code||currentId||"").trim().toLowerCase();window.KinojoSanctuaryCurrentId=currentId;if(currentId&&!params.get("id")){const next=new URL(location.href);next.searchParams.set("id",currentId);history.replaceState(null,"",next)}render(data);ensureSanctuaryOperation();setSanctuarySyncState(data.generatedAt||"완료",{fromCache})}
-async function fetchSanctuaryFresh(){const seq=++sanctuaryRequestSeq;if(!window.KinojoApi)throw new Error('KinojoApi 연결을 확인해 주세요.');const data=await window.KinojoApi.getAction('sanctuary',{id:currentId||''});if(seq!==sanctuaryRequestSeq)return null;if(!data||data.ok===false)throw new Error(data?.message||'성역 데이터 로드 실패');writeSanctuaryCache(data);return data}
-async function loadData(){setActiveLinks();renderSkeleton();const cached=readSanctuaryCache();try{if(cached){applySanctuaryData(cached,{fromCache:true});fetchSanctuaryFresh().then(data=>{if(data)applySanctuaryData(data)}).catch(()=>{});return}const data=await fetchSanctuaryFresh();if(data)applySanctuaryData(data)}catch(err){if(cached){applySanctuaryData(cached,{fromCache:true});return}const f=currentFallback();sanctuaryData={ok:true,info:f.info,summary:{totalCharacters:0,operatingTeamCount:0,averagePower:0,waitingCount:0},teams:[],waiting:[],tips:['성역 Server Engine 연결을 확인해 주세요.'],generatedAt:'데이터 없음'};render(sanctuaryData);setSanctuarySyncState('성역 데이터를 불러오지 못했습니다.',{error:true})}}
+function validateSanctuaryPayload(data){
+  if(!data||data.ok===false)throw new Error(data?.message||'성역 데이터 로드 실패');
+  const groups=normalizeSanctuaryTeamGroups(data);
+  const summary=data.summary||{};
+  const expectedTeamCount=Number(summary.operatingTeamCount??summary.teamGroupCount??summary.teamCount??0);
+  if(expectedTeamCount>0&&!groups.length){const error=new Error('성역 팀 데이터가 완전히 도착하지 않았습니다.');error.code='SANCTUARY_TEAM_DATA_INCOMPLETE';throw error}
+  return data;
+}
+function applySanctuaryData(data,{fromCache=false}={}){sanctuaryData=data;sanctuaryHasRenderedData=true;masterInfo=data?.info||data?.master||masterInfo;currentId=String(masterInfo?.sanctuaryId||masterInfo?.code||currentId||"").trim().toLowerCase();window.KinojoSanctuaryCurrentId=currentId;if(currentId&&!params.get("id")){const next=new URL(location.href);next.searchParams.set("id",currentId);history.replaceState(null,"",next)}render(data);ensureSanctuaryOperation();setSanctuarySyncState(data.generatedAt||"완료",{fromCache})}
+async function fetchSanctuaryFresh(){
+  if(!window.KinojoApi)throw new Error('KinojoApi 연결을 확인해 주세요.');
+  const data=await withRequestTimeout(window.KinojoApi.getAction('sanctuary',{id:currentId||''}),SANCTUARY_REQUEST_TIMEOUT_MS,'성역 팀 데이터 응답 시간이 초과되었습니다.');
+  validateSanctuaryPayload(data);
+  writeSanctuaryCache(data);
+  return data;
+}
+function renderSanctuaryLoadProgress(message){
+  if(sanctuaryHasRenderedData)return;
+  const root=document.getElementById('teamList');
+  if(root)root.innerHTML='<div class="sanctuary-load-state">'+sanctuarySpinner(message||'성역 팀 데이터를 다시 확인하는 중')+'</div>';
+}
+function renderSanctuaryLoadError(error){
+  const message=String(error?.message||'성역 데이터를 불러오지 못했습니다.');
+  const team=document.getElementById('teamList');
+  const summary=document.getElementById('summaryGrid');
+  const waiting=document.getElementById('waitingSection');
+  const tip=document.getElementById('tipBody');
+  if(team)team.innerHTML='<div class="sanctuary-load-error"><strong>팀 목록을 불러오지 못했습니다.</strong><span>'+esc(message)+'</span><button type="button" class="sanctuary-retry-btn" data-sanctuary-retry>다시 불러오기</button></div>';
+  if(summary)summary.innerHTML=[summaryCard('-', '등록 캐릭터'),summaryCard('-', '운영 팀'),summaryCard('-', '평균 전투력'),summaryCard('-', '대기자')].join('');
+  if(waiting)waiting.innerHTML='<h2 class="waiting-title">대기자 명단</h2><div class="sanctuary-load-inline-error">팀 데이터 로드 후 표시됩니다.</div>';
+  if(tip)tip.innerHTML='<div class="tip-line">성역 Server Engine 연결을 확인해 주세요.</div>';
+  team?.querySelector('[data-sanctuary-retry]')?.addEventListener('click',()=>loadData({force:true,preserveRendered:true}));
+}
+async function fetchSanctuaryFreshWithRetry(seq){
+  let lastError=null;
+  for(let attempt=1;attempt<=SANCTUARY_AUTO_RETRY_LIMIT;attempt+=1){
+    try{const data=await fetchSanctuaryFresh();if(seq!==sanctuaryRequestSeq)return null;return data}
+    catch(error){lastError=error;if(seq!==sanctuaryRequestSeq)return null;if(attempt<SANCTUARY_AUTO_RETRY_LIMIT){renderSanctuaryLoadProgress('팀 데이터 재확인 중 · '+(attempt+1)+'/'+SANCTUARY_AUTO_RETRY_LIMIT);await waitMs(650*attempt)}}
+  }
+  throw lastError||new Error('성역 데이터 로드 실패');
+}
+async function loadData({force=false,preserveRendered=false}={}){
+  setActiveLinks();
+  if(sanctuaryLoadPromise){if(force)sanctuaryRefreshQueued=true;return sanctuaryLoadPromise}
+  if(!sanctuaryHasRenderedData&&!preserveRendered)renderSkeleton();
+  const cached=!force?readSanctuaryCache():null;
+  if(cached&&!sanctuaryHasRenderedData){try{validateSanctuaryPayload(cached);applySanctuaryData(cached,{fromCache:true})}catch(_error){}}
+  const seq=++sanctuaryRequestSeq;
+  sanctuaryLoadPromise=(async()=>{
+    try{const data=await fetchSanctuaryFreshWithRetry(seq);if(data&&seq===sanctuaryRequestSeq)applySanctuaryData(data)}
+    catch(err){if(seq!==sanctuaryRequestSeq)return;if(sanctuaryHasRenderedData){setSanctuarySyncState(err?.message||'최신 성역 데이터 확인 실패',{error:true})}else{renderSanctuaryLoadError(err);setSanctuarySyncState(err?.message||'성역 데이터를 불러오지 못했습니다.',{error:true})}}
+  })().finally(()=>{sanctuaryLoadPromise=null;if(sanctuaryRefreshQueued){sanctuaryRefreshQueued=false;loadData({force:true,preserveRendered:true})}});
+  return sanctuaryLoadPromise;
+}
 function sanctuarySpinner(label){return '<div class="kinojo-card-loading"><span class="kinojo-spinner" aria-hidden="true"><span></span></span><span>'+esc(label||'불러오는 중')+'</span></div>'}
 function renderSkeleton(){
   const summary=document.getElementById('summaryGrid');
@@ -51,30 +114,47 @@ function renderOperationSkeleton(){
   if(schedules)schedules.innerHTML=sanctuarySpinner('성역 일정을 불러오는 중');
 }
 function ensureSanctuaryOperation(force=false){
-  if(!currentId)return;
+  if(!currentId)return Promise.resolve();
   const scheduleLink=document.getElementById('operationSchedulePageLink');
   if(scheduleLink){const mobile=/(^|\/)m(\/|$)/.test(location.pathname);scheduleLink.href=(mobile?'/m/sanctuary-schedule/':'/sanctuary-schedule/')}
   const key=currentId+'|'+currentSanctuaryPassKey();
-  if(!force&&operationLoadKey===key)return;
+  if(operationLoadPromise){if(force)operationRefreshQueued=true;return operationLoadPromise}
+  if(!force&&operationLoadedKey===key)return Promise.resolve();
   operationLoadKey=key;
-  loadSanctuaryOperation(key);
+  operationLoadPromise=loadSanctuaryOperation(key).finally(()=>{operationLoadPromise=null;if(operationRefreshQueued){operationRefreshQueued=false;ensureSanctuaryOperation(true)}});
+  return operationLoadPromise;
+}
+function renderOperationRetrying(attempt){
+  const auth=document.getElementById('operationAuthState');
+  const schedules=document.getElementById('operationScheduleList');
+  if(auth)auth.textContent='일정 다시 확인 중';
+  if(schedules)schedules.innerHTML=sanctuarySpinner('성역 일정 재확인 중 · '+attempt+'/'+OPERATION_AUTO_RETRY_LIMIT);
+}
+function renderOperationLoadError(error){
+  const auth=document.getElementById('operationAuthState');
+  const schedules=document.getElementById('operationScheduleList');
+  if(auth)auth.textContent='운영 정보 연결 실패';
+  if(schedules){schedules.innerHTML='<div class="sanctuary-operation-empty"><strong>성역 일정을 불러오지 못했습니다.</strong><span>'+esc(error?.message||'일정 조회 실패')+'</span><button class="sanctuary-retry-btn" type="button" data-operation-retry>다시 불러오기</button></div>';schedules.querySelector('[data-operation-retry]')?.addEventListener('click',()=>ensureSanctuaryOperation(true))}
 }
 async function loadSanctuaryOperation(key){
   const seq=++operationRequestSeq;
   renderOperationSkeleton();
-  try{
-    if(!window.KinojoApi)throw new Error('KinojoApi 연결을 확인해 주세요.');
-    const data=await window.KinojoApi.getAction('sanctuaryOperation',{id:currentId,passKey:currentSanctuaryPassKey()});
-    if(seq!==operationRequestSeq||key!==operationLoadKey)return;
-    if(!data||data.ok===false)throw new Error(data?.message||'성역 운영 정보 로드 실패');
-    renderSanctuaryOperation(data);
-  }catch(err){
-    if(seq!==operationRequestSeq)return;
-    const auth=document.getElementById('operationAuthState');
-    const schedules=document.getElementById('operationScheduleList');
-    if(auth)auth.textContent='운영 정보 연결 실패';
-    if(schedules)schedules.innerHTML='<div class="sanctuary-operation-empty">'+esc(err?.message||'일정 조회 실패')+'</div>';
+  let lastError=null;
+  for(let attempt=1;attempt<=OPERATION_AUTO_RETRY_LIMIT;attempt+=1){
+    try{
+      if(!window.KinojoApi)throw new Error('KinojoApi 연결을 확인해 주세요.');
+      const data=await withRequestTimeout(window.KinojoApi.getAction('sanctuaryOperation',{id:currentId,passKey:currentSanctuaryPassKey()}),OPERATION_REQUEST_TIMEOUT_MS,'성역 일정 응답 시간이 초과되었습니다.');
+      if(seq!==operationRequestSeq||key!==operationLoadKey)return;
+      if(!data||data.ok===false)throw new Error(data?.message||'성역 운영 정보 로드 실패');
+      renderSanctuaryOperation(data);operationLoadedKey=key;return;
+    }catch(err){
+      lastError=err;
+      if(seq!==operationRequestSeq||key!==operationLoadKey)return;
+      if(attempt<OPERATION_AUTO_RETRY_LIMIT){renderOperationRetrying(attempt+1);await waitMs(700*attempt)}
+    }
   }
+  operationLoadedKey='';
+  renderOperationLoadError(lastError);
 }
 function renderSanctuaryOperation(data){
   const items=Array.isArray(data.items)?data.items:[];
@@ -134,7 +214,7 @@ function openOperationScheduleModal(item){
 }
 function closeOperationScheduleModal(){const modal=document.getElementById('sanctuaryScheduleDetailModal');if(modal){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}document.body.classList.remove('kinojo-modal-open');}
 function applyHeroVisual(info){const bg=document.getElementById("heroBg");if(!bg)return;const image=String(info?.bannerImage||"").trim();const background=String(info?.cardBackground||"").trim();bg.style.background="";bg.style.backgroundImage="";if(image&&(image.startsWith("/")||image.startsWith("https://"))){bg.style.backgroundImage="url(\""+image.replace(/[\"()]/g,encodeURIComponent)+"\")";return}if(/^(radial-gradient|linear-gradient)\(/i.test(background)&&!/[;{}]/.test(background))bg.style.background=background}
-function render(data){const info=data.info||currentFallback().info;const hero=document.getElementById("sanctuaryHero");hero.className="sanctuary-hero";applyHeroVisual(info);document.getElementById("heroKicker").textContent="성역 "+(info.sanctuaryNo||"");document.getElementById("heroTitle").textContent=info.sanctuaryName||info.shortName||"성역";document.getElementById("heroSub").textContent="Boss. "+(info.bossName||"-")+" · "+(info.shortName||"");renderSummary(data);const teamGroups=normalizeSanctuaryTeamGroups(data);renderTeamQuickNav(teamGroups);renderTeamGroups(teamGroups);renderWaiting(data.waiting||[]);document.getElementById('tipTitle').textContent=(info.shortName||'성역')+' 공략 팁';document.getElementById('tipBody').innerHTML=(data.tips||[]).map(t=>'<div class="tip-line">'+esc(t)+'</div>').join('')||'<div class="tip-line">공략 팁이 준비 중입니다.</div>';bindSanctuaryProfileImages();setupSliders();bindSanctuaryReactionCards();window.KinojoSanctuaryCapture?.bind?.()}
+function render(data){const info=data.info||currentFallback().info;const hero=document.getElementById("sanctuaryHero");hero.className="sanctuary-hero";applyHeroVisual(info);document.getElementById("heroKicker").textContent="성역 "+(info.sanctuaryNo||"");document.getElementById("heroTitle").textContent=info.sanctuaryName||info.shortName||"성역";document.getElementById("heroSub").textContent="Boss. "+(info.bossName||"-")+" · "+(info.shortName||"");renderSummary(data);const teamGroups=normalizeSanctuaryTeamGroups(data);renderTeamQuickNav(teamGroups);renderTeamGroups(teamGroups);renderWaiting(data.waiting||[]);document.getElementById('tipTitle').textContent=(info.shortName||'성역')+' 공략 팁';document.getElementById('tipBody').innerHTML=(data.tips||[]).map(t=>'<div class="tip-line">'+esc(t)+'</div>').join('')||'<div class="tip-line">공략 팁이 준비 중입니다.</div>';bindSanctuaryProfileImages();setupSliders();bindForceSwitchers();bindSanctuaryReactionCards();verifyTeamRender(teamGroups);window.KinojoSanctuaryCapture?.bind?.()}
 function renderSummary(data){
   const s=data.summary||{};
   const cards=[
@@ -206,11 +286,12 @@ function teamGroupHtml(g){
   const leader=String(g.leaderCharacter||'').trim();
   const mode=g.nameMode==='manual'?'사용자 지정':'자동 생성';
   const isUserTeam=g.isUserTeam===true;
-  const meta=fmt(g.forceCount)+'포스 · '+fmt(g.memberCount)+'캐릭터'+(leader?' · 대표 '+esc(leader):' · 대표 미설정');
+  const meta=fmt(g.forceCount||forces.length)+'포스 · '+fmt(g.memberCount)+'캐릭터'+(leader?' · 대표 '+esc(leader):' · 대표 미설정');
+  const forceSwitcher=forces.length>1?'<div class="san-force-switcher" role="group" aria-label="'+esc(groupName)+' 포스 선택">'+forces.map((force,index)=>'<button class="san-force-switch-btn'+(index===0?' is-active':'')+'" type="button" data-force-target="'+esc(teamAnchorId(force))+'">'+esc(force.forceName||Number(force.forceNo||index+1)+'포스')+'</button>').join('')+'</div>':'';
   return '<section class="san-team-group'+(isUserTeam?' is-user-team':'')+'" id="'+esc(teamGroupAnchorId(g))+'" data-team-group="'+esc(g.teamGroupNo||'')+'" data-team-group-name="'+esc(groupName)+'">'
     +'<header class="san-team-group-head"><div><div class="san-team-kicker">TEAM · '+esc(mode)+(isUserTeam?'<span class="san-team-my-badge">내 소속 팀</span>':'')+'</div><h2 class="san-team-title">'+esc(groupName)+'</h2><p class="san-team-meta">'+meta+'</p></div>'
-    +'<div class="san-team-head-actions"><button class="team-group-copy-btn kinojo-copy-icon-btn team-copy-icon" type="button" data-team-group-copy data-kinojo-tooltip="이 운영 팀의 모든 포스를 클립보드에 복사합니다" title="이 운영 팀의 모든 포스를 클립보드에 복사합니다" aria-label="'+esc(groupName)+' 전체 팀 클립보드 복사"><span class="copy-stack-icon" aria-hidden="true"><span></span><span></span></span></button><div class="san-team-scroll-hint">가로로 포스 확인</div></div></header>'
-    +'<div class="san-force-rail-shell"><button class="slide-btn left" type="button" aria-label="이전 포스">‹</button><div class="san-force-list">'+forces.map(f=>teamHtml(f,g)).join('')+'</div><button class="slide-btn right" type="button" aria-label="다음 포스">›</button></div></section>';
+    +'<div class="san-team-head-actions">'+forceSwitcher+'<button class="team-group-copy-btn kinojo-copy-icon-btn team-copy-icon" type="button" data-team-group-copy data-kinojo-tooltip="이 운영 팀의 모든 포스를 클립보드에 복사합니다" title="이 운영 팀의 모든 포스를 클립보드에 복사합니다" aria-label="'+esc(groupName)+' 전체 팀 클립보드 복사"><span class="copy-stack-icon" aria-hidden="true"><span></span><span></span></span></button><div class="san-team-scroll-hint">가로로 포스 확인</div></div></header>'
+    +'<div class="san-force-rail-shell'+(forces.length>1?' has-multiple-forces':'')+'" data-force-count="'+forces.length+'"><button class="slide-btn left" type="button" aria-label="이전 포스">‹</button><div class="san-force-list">'+forces.map(f=>teamHtml(f,g)).join('')+'</div><button class="slide-btn right" type="button" aria-label="다음 포스">›</button></div></section>';
 }
 function normalizeForceParties(t){
   const byNo={};
@@ -244,7 +325,7 @@ function slotHtml(s){
   const profile=sanctuaryProfileUrl(s);
   const mainCharacterName=String(s.mainCharacterName||s.owner||'').trim();
   const isMain=s.isMain===true;
-  const ownerBadge=!isMain&&mainCharacterName?'<span class="char-owner-badge" title="소유 본캐 '+esc(mainCharacterName)+'">본캐 '+esc(mainCharacterName)+'</span>':'';
+  const ownerBadge=isMain?'<span class="char-main-badge">본캐</span>':(mainCharacterName?'<span class="char-owner-badge" title="소유 본캐 '+esc(mainCharacterName)+'">본캐 '+esc(mainCharacterName)+'</span>':'');
   const profileHtml='<span class="char-profile is-empty" data-character-profile data-char-name="'+esc(s.name)+'" data-char-class="'+esc(className)+'" data-profile-image="'+esc(profile)+'">?</span>';
   return '<button class="char-card san-reaction-card '+(isMain?'is-main-character':'is-sub-character')+'" type="button" draggable="false" data-char-name="'+esc(s.name)+'" data-char-class="'+esc(className)+'" data-char-power="'+esc(fmt(s.power))+'" data-char-owner="'+esc(mainCharacterName)+'" data-profile-image="'+esc(profile)+'" data-detail-url="'+esc(sanctuaryDetailUrl(s))+'" aria-label="'+esc(s.name)+' 반응 남기기">'
     +'<span class="char-text"><span class="char-name-row"><span class="char-name">'+esc(s.name)+'</span>'+ownerBadge+'</span><span class="char-meta">'+icon+esc(className)+' · '+fmt(s.power)+'</span></span>'+profileHtml+'</button>';
@@ -293,7 +374,25 @@ function openSanctuaryReactionModalFromCard(card){
 }
 function bindSanctuaryReactionCards(){document.querySelectorAll('.san-reaction-card').forEach(card=>{card.onclick=event=>{event.preventDefault();event.stopPropagation();openSanctuaryReactionModalFromCard(card);};});}
 
-function setupSliders(){document.querySelectorAll('.san-force-rail-shell').forEach(shell=>{const track=shell.querySelector('.san-force-list'),left=shell.querySelector('.slide-btn.left'),right=shell.querySelector('.slide-btn.right');if(!track||!left||!right)return;function update(){const max=track.scrollWidth-track.clientWidth;left.classList.toggle('show',track.scrollLeft>8);right.classList.toggle('show',max>8&&track.scrollLeft<max-8)}left.onclick=()=>track.scrollBy({left:-Math.min(420,track.clientWidth*.86),behavior:'smooth'});right.onclick=()=>track.scrollBy({left:Math.min(420,track.clientWidth*.86),behavior:'smooth'});track.addEventListener('scroll',update,{passive:true});window.addEventListener('resize',update);setTimeout(update,80)})}
+function verifyTeamRender(groups){
+  const expected=Array.isArray(groups)?groups.length:0;
+  if(!expected)return;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{const root=document.getElementById('teamList');if(root&&root.querySelectorAll('.san-team-group').length!==expected){renderTeamGroups(groups);bindSanctuaryProfileImages();setupSliders();bindForceSwitchers();bindSanctuaryReactionCards()}}));
+}
+function bindForceSwitchers(){
+  document.querySelectorAll('.san-team-group').forEach(group=>{
+    const track=group.querySelector('.san-force-list');
+    const cards=Array.from(group.querySelectorAll('.force-card'));
+    const buttons=Array.from(group.querySelectorAll('[data-force-target]'));
+    if(!track||cards.length<2||!buttons.length)return;
+    let raf=0;
+    const activate=()=>{raf=0;let selected=cards[0];let distance=Infinity;cards.forEach(card=>{const current=Math.abs(card.offsetLeft-track.scrollLeft);if(current<distance){distance=current;selected=card}});buttons.forEach(button=>button.classList.toggle('is-active',button.dataset.forceTarget===selected.id))};
+    buttons.forEach(button=>button.addEventListener('click',()=>{const target=document.getElementById(button.dataset.forceTarget);if(!target)return;track.scrollTo({left:Math.max(0,target.offsetLeft-track.offsetLeft),behavior:'smooth'});buttons.forEach(item=>item.classList.toggle('is-active',item===button))}));
+    track.addEventListener('scroll',()=>{if(!raf)raf=requestAnimationFrame(activate)},{passive:true});
+    activate();
+  });
+}
+function setupSliders(){document.querySelectorAll('.san-force-rail-shell').forEach(shell=>{const track=shell.querySelector('.san-force-list'),left=shell.querySelector('.slide-btn.left'),right=shell.querySelector('.slide-btn.right');if(!track||!left||!right)return;function update(){const max=Math.max(0,track.scrollWidth-track.clientWidth);left.classList.toggle('show',max>8&&track.scrollLeft>8);right.classList.toggle('show',max>8&&track.scrollLeft<max-8)}left.onclick=()=>track.scrollBy({left:-Math.min(520,track.clientWidth*.9),behavior:'smooth'});right.onclick=()=>track.scrollBy({left:Math.min(520,track.clientWidth*.9),behavior:'smooth'});track.addEventListener('scroll',update,{passive:true});if(typeof ResizeObserver==='function'){const observer=new ResizeObserver(update);observer.observe(track);observer.observe(shell)}requestAnimationFrame(()=>requestAnimationFrame(update));setTimeout(update,280)})}
 function openTip(){document.getElementById('tipPanel')?.classList.add('open');document.getElementById('tipPanel')?.setAttribute('aria-hidden','false')}function closeTip(){document.getElementById('tipPanel')?.classList.remove('open');document.getElementById('tipPanel')?.setAttribute('aria-hidden','true')}function openAdmin(){if(window.KinojoSanctuaryEditor&&typeof window.KinojoSanctuaryEditor.open==='function')return window.KinojoSanctuaryEditor.open();document.getElementById('adminCodeModal')?.classList.add('open');document.getElementById('adminCodeModal')?.setAttribute('aria-hidden','false')}function closeAdmin(){document.getElementById('adminCodeModal')?.classList.remove('open');document.getElementById('adminCodeModal')?.setAttribute('aria-hidden','true')}
-window.addEventListener('kinojo:auth-changed',()=>{operationLoadKey='';if(currentId){ensureSanctuaryOperation(true);fetchSanctuaryFresh().then(data=>{if(data)applySanctuaryData(data)}).catch(err=>setSanctuarySyncState(err?.message||'로그인 기준 성역 갱신 실패',{error:true}))}});
+window.addEventListener('kinojo:auth-changed',()=>{operationLoadedKey='';loadData({force:true,preserveRendered:true});if(currentId)ensureSanctuaryOperation(true)});
 document.getElementById('tipOpenBtn')?.addEventListener('click',openTip);document.getElementById('tipCloseBtn')?.addEventListener('click',closeTip);document.getElementById('tipPanel')?.addEventListener('click',e=>{if(e.target.id==='tipPanel')closeTip()});document.getElementById('editModeBtn')?.addEventListener('click',openAdmin);document.getElementById('adminCodeCloseBtn')?.addEventListener('click',closeAdmin);document.getElementById('adminCodeModal')?.addEventListener('click',e=>{if(e.target.id==='adminCodeModal')closeAdmin()});document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeTip();closeAdmin()}});loadData();
