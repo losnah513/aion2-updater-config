@@ -1,10 +1,11 @@
-/* KINOJO Admin Console v2026071517 */
+/* KINOJO Admin Console v2026071712 */
 (function(){
   'use strict';
   const $ = (s,r=document)=>r.querySelector(s);
   const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
-  const state = { tab:'dashboard', requests:[], accounts:[], characters:[], logs:[], eventNoticeGroups:[], eventNoticeEditingId:null, sanctuarySchedules:[], sanctuaryMasters:[], sanctuaryStatusOptions:[], sanctuaryScheduleLoaded:false, sanctuaryScheduleAccess:null, sanctuaryRolePermissions:null, sanctuaryScheduleSaving:false };
-  const CACHE = '2026071517';
+  const state = { tab:'dashboard', subtab:'', loaded:{}, subtabs:{ members:'accounts', notices:'general', system:'server-status' }, requests:[], accounts:[], characters:[], logs:[], eventNoticeGroups:[], eventNoticeEditingId:null, sanctuarySchedules:[], sanctuaryMasters:[], sanctuaryStatusOptions:[], sanctuaryScheduleLoaded:false, sanctuaryScheduleAccess:null, sanctuaryRolePermissions:null, sanctuaryScheduleSaving:false };
+  const CACHE = '2026071712';
+  const DEFAULT_SUBTABS = { members:'accounts', notices:'general', system:'server-status' };
   function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
   function addLog(type,msg){
     const t = new Date(); const line = '['+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+':'+String(t.getSeconds()).padStart(2,'0')+'] '+String(type||'INFO')+' · '+String(msg||'');
@@ -52,20 +53,62 @@
   }
   async function action(name, params){ return window.KinojoApi ? window.KinojoApi.getAction(name, params||{}) : window.KinojoSupabase.webAction(name, params||{}); }
 
-  function switchTab(tab){
+  function adminRoute(){
+    const raw=decodeURIComponent(String(location.hash||'').replace(/^#/,''));
+    let [tab,subtab]=raw.split('/').filter(Boolean);
+    if(tab==='server'){tab='system';subtab='server-status';}
+    if(!document.querySelector('[data-admin-pane="'+String(tab||'')+'"]'))tab=isStaffConsole()?'sanctuary':'dashboard';
+    return {tab,subtab:subtab||DEFAULT_SUBTABS[tab]||''};
+  }
+  function writeAdminRoute(tab,subtab){
+    const value='#'+tab+(subtab?'/'+subtab:'');
+    if(location.hash===value)return;
+    history.replaceState(null,'',location.pathname+location.search+value);
+  }
+  function loadFeature(tab,subtab,force){
+    const key=tab+(subtab?'/'+subtab:'');
+    if(state.loaded[key]&&!force)return;
+    state.loaded[key]=true;
+    if(tab==='dashboard') refreshDashboard();
+    if(tab==='requests') loadCodeRequests();
+    if(tab==='members'&&subtab==='accounts') loadAccounts();
+    if(tab==='members'&&subtab==='permissions'&&isMaster()) loadSanctuaryRolePermissions();
+    if(tab==='sanctuary') loadSanctuaryScheduleConsole(force===true);
+    if(tab==='notices'&&subtab==='general') loadNotices();
+    if(tab==='notices'&&subtab==='event') loadEventNoticeGroups();
+    if(tab==='system'&&subtab==='server-status') refreshServerStatus();
+    if(tab==='system'&&subtab==='sheet-sync') loadSanctuarySyncConsole(force===true);
+    if(tab==='system'&&subtab==='environment') refreshSystemSettings();
+  }
+  function switchSubtab(tab,subtab,options={}){
+    const pane=$('[data-admin-pane="'+tab+'"]');
+    if(!pane)return;
+    const available=$$('[data-admin-subtab]',pane).filter(button=>!button.hidden).map(button=>button.dataset.adminSubtab);
+    const next=available.includes(subtab)?subtab:(DEFAULT_SUBTABS[tab]||available[0]||'');
+    state.subtabs[tab]=next;
+    state.subtab=next;
+    $$('[data-admin-subtab]',pane).forEach(button=>button.classList.toggle('active',button.dataset.adminSubtab===next));
+    $$('[data-admin-subpane]',pane).forEach(subpane=>subpane.classList.toggle('active',subpane.dataset.adminSubpane===next));
+    if(options.updateRoute!==false)writeAdminRoute(tab,next);
+    loadFeature(tab,next,options.force===true);
+  }
+  function switchTab(tab,options={}){
+    if(tab==='server'){tab='system';options=Object.assign({},options,{subtab:'server-status'});}
     if(isStaffConsole() && tab!=='sanctuary') tab='sanctuary';
+    if(!document.querySelector('[data-admin-pane="'+tab+'"]'))tab=isStaffConsole()?'sanctuary':'dashboard';
     state.tab = tab;
     $$('.admin-nav button').forEach(b=>b.classList.toggle('active', b.dataset.adminTab===tab));
     $$('.admin-bottom-actions button').forEach(b=>b.classList.toggle('active', b.dataset.adminTab===tab));
     $$('.admin-pane').forEach(p=>p.classList.toggle('active', p.dataset.adminPane===tab));
     const sel=$('#adminMobileSelect'); if(sel) sel.value=tab;
-    if(tab==='dashboard') refreshDashboard();
-    if(tab==='requests') loadCodeRequests();
-    if(tab==='members'){ loadAccounts(); if(isMaster()) loadSanctuaryRolePermissions(); }
-    if(tab==='sanctuary') loadSanctuaryScheduleConsole();
-    if(tab==='notices') loadNotices();
-    if(tab==='server') refreshServerStatus();
-    if(tab==='system'){ refreshSystemSettings(); loadEventNoticeGroups(); }
+    const subnav=$('[data-admin-subnav="'+tab+'"]',document);
+    if(subnav){
+      switchSubtab(tab,options.subtab||state.subtabs[tab]||DEFAULT_SUBTABS[tab],options);
+    }else{
+      state.subtab='';
+      if(options.updateRoute!==false)writeAdminRoute(tab,'');
+      loadFeature(tab,'',options.force===true);
+    }
   }
 
   function renderAccessBlocked(){
@@ -75,25 +118,28 @@
 
   async function refreshDashboard(){
     try{
-      const [visit, req, runtime] = await Promise.allSettled([
+      const [visit, req, runtime, sync] = await Promise.allSettled([
         action('hallVisit',{ mode:'stats', pageKey:'admin' }),
         adminAccount('listCodeRequests',{ status:'PENDING', limit:20 }),
-        action('runtimeStatus',{})
+        action('runtimeStatus',{}),
+        action('adminSanctuarySheetSync',{mode:'status'})
       ]);
       const stats = visit.status==='fulfilled' ? (visit.value.stats || visit.value || {}) : {};
       const requests = req.status==='fulfilled' ? (req.value.requests || []) : [];
       const runtimeData = runtime.status==='fulfilled' ? runtime.value : {};
+      const syncData = sync.status==='fulfilled' ? sync.value : {};
       $('#statVisitors').textContent = Number(stats.today || stats.daily || 0).toLocaleString('ko-KR');
       $('#statVisitorsSub').textContent = '누적 '+Number(stats.total || 0).toLocaleString('ko-KR');
       $('#statRequests').textContent = String(requests.length||0);
       $('#statRequestsSub').textContent = requests.length ? '대기 중' : '처리할 요청 없음';
-      $('#statSanctuary').textContent = '대기';
-      $('#statSanctuarySub').textContent = localStorage.getItem('kinojo_admin_last_sanctuary_sync') || '최근 동기화 기록 없음';
+      const recentSync=syncData.recentSync||syncData.recent_sync||{};
+      $('#statSanctuary').textContent = recentSync.status==='failed' ? '확인' : recentSync.completedAt||recentSync.completed_at ? '정상' : '대기';
+      $('#statSanctuarySub').textContent = formatServerTime(recentSync.completedAt||recentSync.completed_at);
       $('#statServer').textContent = runtimeData.ok === false ? '점검' : '정상';
       $('#statServerSub').textContent = runtimeData.message || '모든 시스템 확인';
       state.requests=requests;
       renderRequestPreview(requests.slice(0,3));
-      renderServerBox(runtimeData);
+      renderServerBox(runtimeData,syncData);
       $('#adminPendingBadge').textContent=String(requests.length||0);
       addLog('INFO','대시보드 새로고침 완료');
     }catch(err){ addLog('ERROR',err.message||err); }
@@ -223,35 +269,24 @@
     catch(err){ setStatus('#characterStatus',err.message||String(err),'error'); btn.disabled=false; }
   }
 
-  async function getWebAppUrl(){
-    const saved=localStorage.getItem('kinojo_admin_webapp_url')||localStorage.getItem('AION2_OFFICIAL_WEBAPP')||''; if(saved) return saved;
-    const configUrl = location.pathname.includes('/m/') ? '../../config.json' : '../config.json';
-    try{ const cfg=await fetch(configUrl,{cache:'no-store'}).then(r=>r.json()); return String(cfg.webAppUrl||cfg.appsScriptUrl||(cfg.bridge&&cfg.bridge.webAppUrl)||''); }catch(_e){return '';}
-  }
-  async function callAppsScript(actionName,body){
-    const url=await getWebAppUrl();
-    if(!url) throw new Error('Apps Script WebApp URL이 없습니다. MASTER 권한으로 시스템 설정 탭에서 URL을 저장하세요.');
-    const res=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action:actionName},body||{}))});
-    const text=await res.text();
-    if(!res.ok) throw new Error('Apps Script 호출 실패: HTTP '+res.status+' · '+text.slice(0,120));
-    try{return JSON.parse(text);}catch(_e){throw new Error('Apps Script 응답을 해석하지 못했습니다. '+text.slice(0,120));}
-  }
-  function renderBridgeMissing(){
-    return '<div class="admin-callout error"><strong>Apps Script WebApp URL이 없습니다.</strong><span>MASTER 권한으로 시스템 설정 탭에서 Apps Script WebApp URL을 저장한 뒤 다시 실행하세요.</span><button class="admin-btn primary" type="button" data-jump-system>시스템 설정으로 이동</button></div>';
-  }
   function countArray(data, keys){
     for(const k of keys){ if(Array.isArray(data?.[k])) return data[k].length; }
     return 0;
   }
   function summarizeSanctuary(data){
-    const info = data?.info || data?.sanctuary || data || {};
-    const teams = countArray(data,['teams','teamList']);
-    const forces = countArray(data,['forces','forceList']) || teams;
-    const parties = countArray(data,['parties','partyList']);
-    const slots = countArray(data,['slots','slotList','members','characters']);
-    const updated = Number(data?.updated || data?.updatedCount || data?.synced || data?.syncedCount || 0);
-    const failed = Number(data?.failed || data?.failedCount || data?.errorCount || 0);
-    const title = esc(info.sanctuary_name || info.sanctuaryName || info.boss_name || info.bossName || '성역 동기화');
+    const resultList=Array.isArray(data?.results)?data.results:[];
+    const first=resultList[0]||null;
+    const current=first||data||{};
+    const summary=current.summary||current.parsedSummary||current.parsed_summary||{};
+    const info = current.info || current.sanctuary || current.payload?.info || current;
+    const totals=resultList.length?resultList.reduce((acc,row)=>{const s=row.summary||row.parsedSummary||row.parsed_summary||{};acc.teams+=Number(s.teamCount||s.team_count||0);acc.forces+=Number(s.forceCount||s.force_count||s.teamCount||s.team_count||0);acc.parties+=Number(s.partyCount||s.party_count||0);acc.slots+=Number(s.slotCount||s.slot_count||0);return acc;},{teams:0,forces:0,parties:0,slots:0}):null;
+    const teams = totals?totals.teams:Number(summary.teamCount||summary.team_count||countArray(current,['teams','teamList'])||0);
+    const forces = totals?totals.forces:Number(summary.forceCount||summary.force_count||countArray(current,['forces','forceList'])||teams);
+    const parties = totals?totals.parties:Number(summary.partyCount||summary.party_count||countArray(current,['parties','partyList'])||0);
+    const slots = totals?totals.slots:Number(summary.slotCount||summary.slot_count||countArray(current,['slots','slotList','members','characters'])||0);
+    const updated = resultList.length?resultList.reduce((sum,row)=>sum+Number(row.result?.slots||row.updated||row.updatedCount||0),0):Number(summary.updated||summary.updatedCount||current.result?.slots||current.updated||current.updatedCount||current.synced||current.syncedCount||0);
+    const failed = Array.isArray(data?.results)?data.results.filter(item=>item?.ok===false).length:Number(current.failed||current.failedCount||current.errorCount||0);
+    const title = esc(resultList.length>1?'전체 성역':info.sanctuaryName || info.sanctuary_name || info.bossName || info.boss_name || current.sanctuaryName || current.sanctuaryId || '성역 동기화');
     return { title, teams, forces, parties, slots, updated, failed };
   }
   function renderSyncReport(data){
@@ -265,40 +300,66 @@
       ['반영', s.updated ? s.updated+'건' : '-'],
       ['실패', s.failed ? s.failed+'건' : '0건']
     ].map(([k,v])=>'<div class="admin-report-row"><span>'+k+'</span><strong>'+esc(v)+'</strong></div>').join('');
-    return '<section class="admin-sync-report '+(ok?'ok':'error')+'"><div class="admin-report-head"><strong>'+(ok?'동기화 완료':'동기화 확인 필요')+'</strong><span>'+new Date().toLocaleString('ko-KR')+'</span></div><div class="admin-report-grid">'+rows+'</div><details class="admin-report-raw"><summary>원본 응답 보기</summary><pre>'+esc(JSON.stringify(data,null,2))+'</pre></details></section>';
+    const completedAt=data?.completedAt||data?.completed_at||data?.generatedAt||data?.generated_at||new Date().toISOString();
+    return '<section class="admin-sync-report '+(ok?'ok':'error')+'"><div class="admin-report-head"><strong>'+(ok?(data?.mode==='preview'?'변경 미리보기 완료':'동기화 완료'):'동기화 확인 필요')+'</strong><span>'+esc(new Date(completedAt).toLocaleString('ko-KR'))+'</span></div><div class="admin-report-grid">'+rows+'</div><details class="admin-report-raw"><summary>서버 응답 보기</summary><pre>'+esc(JSON.stringify(data,null,2))+'</pre></details></section>';
   }
   async function testWebAppConnection(statusTarget){
     const statusSel = statusTarget || '#serverStatus';
-    const input=$('#webAppUrlInput'); const typed=String(input?.value||'').trim();
-    if(typed && /^https:\/\/script\.google\.com\/macros\/s\//.test(typed) && isMaster()) localStorage.setItem('kinojo_admin_webapp_url',typed); localStorage.setItem('AION2_OFFICIAL_WEBAPP',typed);
-    const url=await getWebAppUrl();
-    if(!url){ setStatus(statusSel,'Apps Script WebApp URL을 먼저 등록하세요.','error'); return; }
-    setStatus(statusSel,'Apps Script Bridge 연결 테스트 중...','');
+    setStatus(statusSel,'Server Engine을 통한 Apps Script Bridge 연결 테스트 중...','');
     try{
-      const res=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'ping',source:'admin_console'})});
-      const text=await res.text();
-      let parsed=null; try{ parsed=JSON.parse(text); }catch(_e){}
-      const msg = parsed?.message || parsed?.status || (res.ok ? '응답 수신' : 'HTTP '+res.status);
-      if(!res.ok) throw new Error(msg+' · '+text.slice(0,120));
+      const res=await action('adminSanctuarySheetSync',{mode:'ping'});
+      if(res?.ok===false)throw new Error(res.message||'Bridge 연결 실패');
+      const msg=res?.message||'AppsScript_MASTER 브릿지 정상';
       setStatus(statusSel,'Apps Script Bridge 연결 확인: '+msg,'ok');
       addLog('BRIDGE','Apps Script 연결 테스트 성공');
       refreshServerStatus();
     }catch(err){ setStatus(statusSel,'Apps Script Bridge 연결 실패: '+(err.message||err),'error'); addLog('ERROR',err.message||err); }
   }
   function setSyncStep(n){ $$('.admin-sync-step').forEach((el,i)=>{ el.classList.toggle('done',i<n-1); el.classList.toggle('active',i===n-1); }); }
+  function formatServerTime(value){
+    if(!value)return '기록 없음';
+    const date=new Date(value);
+    return Number.isNaN(date.getTime())?String(value):date.toLocaleString('ko-KR');
+  }
+  function renderSanctuarySyncStatus(data){
+    const root=$('#sanctuarySyncResult'); if(!root)return;
+    const jobs=Array.isArray(data?.jobs)?data.jobs:[];
+    const queue=data?.queue||{};
+    const latest=data?.recentSync||data?.recent_sync||jobs[0]||{};
+    const rows=jobs.slice(0,8).map(job=>'<article class="admin-row"><div class="admin-row-main"><strong>'+esc(job.sanctuaryName||job.sanctuary_name||job.sanctuaryId||job.sanctuary_id||'-')+'</strong><span>'+esc(formatServerTime(job.completedAt||job.completed_at||job.createdAt||job.created_at))+' · '+esc(job.mode||'-')+'</span></div><div class="admin-row-actions"><span class="admin-pill '+(String(job.status||'').toLowerCase()==='completed'?'ok':String(job.status||'').toLowerCase()==='failed'?'error':'pending')+'">'+esc(job.status||'대기')+'</span></div></article>').join('');
+    root.innerHTML='<section class="admin-sync-report"><div class="admin-report-head"><strong>Server Engine 동기화 상태</strong><span>'+esc(formatServerTime(data?.generatedAt||data?.generated_at))+'</span></div><div class="admin-report-grid"><div class="admin-report-row"><span>최근 완료</span><strong>'+esc(formatServerTime(latest.completedAt||latest.completed_at))+'</strong></div><div class="admin-report-row"><span>Updater Queue</span><strong>'+Number(queue.updaterActive||queue.updater_active||0).toLocaleString('ko-KR')+'건</strong></div><div class="admin-report-row"><span>List Queue</span><strong>'+Number(queue.listPending||queue.list_pending||0).toLocaleString('ko-KR')+'건</strong></div><div class="admin-report-row"><span>성역 Queue</span><strong>'+Number(queue.sanctuaryPending||queue.sanctuary_pending||0).toLocaleString('ko-KR')+'건</strong></div></div></section>'+(rows?'<div class="admin-list">'+rows+'</div>':'<div class="admin-empty">아직 성역 시트 동기화 기록이 없습니다.</div>');
+  }
+  async function loadSanctuarySyncConsole(force){
+    if(force)setSyncStep(1);
+    setStatus('#sanctuarySyncStatus','Server Engine 동기화 상태를 불러오는 중...','');
+    try{
+      const data=await action('adminSanctuarySheetSync',{mode:'status'});
+      if(data?.ok===false)throw new Error(data.message||'동기화 상태 조회 실패');
+      renderSanctuarySyncStatus(data);
+      setStatus('#sanctuarySyncStatus','Server Engine 상태를 불러왔습니다.','ok');
+    }catch(err){setStatus('#sanctuarySyncStatus',err.message||String(err),'error');}
+  }
+  async function runSanctuaryPreview(){
+    const id=$('#sanctuarySyncId')?.value||'all'; const btn=$('#sanctuaryPreviewBtn'); btn&&(btn.disabled=true); setSyncStep(1); setStatus('#sanctuarySyncStatus','Apps Script에서 원본 시트를 읽는 중...','');
+    try{
+      const data=await action('adminSanctuarySheetSync',{mode:'preview',sanctuaryId:id});
+      if(data?.ok===false)throw new Error(data.message||'성역 변경 미리보기 실패');
+      setSyncStep(2); setStatus('#sanctuarySyncStatus','Server Engine 변경 미리보기 완료','ok');
+      $('#sanctuarySyncResult').innerHTML=renderSyncReport(data); addLog('SANCTUARY','성역 변경 미리보기 완료');
+    }catch(err){setStatus('#sanctuarySyncStatus',err.message||String(err),'error');addLog('ERROR',err.message||err);}
+    finally{btn&&(btn.disabled=false);}
+  }
   async function runSanctuarySync(){
     const id=$('#sanctuarySyncId')?.value||'all'; const btn=$('#sanctuarySyncBtn'); btn&&(btn.disabled=true); setSyncStep(1); setStatus('#sanctuarySyncStatus','성역 시트를 읽는 중...','');
     try{
-      await new Promise(r=>setTimeout(r,350)); setSyncStep(2); setStatus('#sanctuarySyncStatus','변경사항 미리보기 준비 중...','');
-      await new Promise(r=>setTimeout(r,350)); setSyncStep(3); setStatus('#sanctuarySyncStatus','서버 반영 중...','');
-      const data=await callAppsScript('sanctuaryImportToServer',{id,actor:'admin_console'});
+      setSyncStep(2); setStatus('#sanctuarySyncStatus','Server Engine에서 원본을 파싱·검증하고 반영하는 중...','');
+      const data=await action('adminSanctuarySheetSync',{mode:'apply',sanctuaryId:id});
       if(data.ok===false) throw new Error(data.message||'성역 동기화 실패');
-      setSyncStep(4); localStorage.setItem('kinojo_admin_last_sanctuary_sync',new Date().toLocaleString('ko-KR'));
-      setStatus('#sanctuarySyncStatus','성역 동기화 완료','ok'); $('#sanctuarySyncResult').innerHTML=renderSyncReport(data); addLog('SANCTUARY','성역 동기화 완료'); await refreshDashboard();
+      setSyncStep(3); setStatus('#sanctuarySyncStatus','Server Engine 반영 결과를 확인하는 중...','');
+      setSyncStep(4); setStatus('#sanctuarySyncStatus','성역 동기화 완료','ok'); $('#sanctuarySyncResult').innerHTML=renderSyncReport(data); addLog('SANCTUARY','성역 동기화 완료'); await Promise.all([refreshDashboard(),refreshServerStatus()]);
     }catch(err){
       const msg=err.message||String(err);
       setStatus('#sanctuarySyncStatus',msg,'error');
-      if(msg.includes('WebApp URL')) $('#sanctuarySyncResult').innerHTML=renderBridgeMissing();
       addLog('ERROR',msg);
     }
     finally{ btn&&(btn.disabled=false); }
@@ -732,57 +793,39 @@
     catch(err){ setStatus('#noticeStatus',err.message||String(err),'error'); }
   }
   async function refreshServerStatus(){
-    try{ const data=await action('runtimeStatus',{}); renderServerBox(data); addLog('SERVER','서버 상태 새로고침'); }catch(err){ addLog('ERROR',err.message||err); }
-    
+    try{
+      const [runtime,sync]=await Promise.all([action('runtimeStatus',{}),action('adminSanctuarySheetSync',{mode:'status'})]);
+      renderServerBox(runtime,sync); addLog('SERVER','서버 상태 새로고침');
+    }catch(err){ addLog('ERROR',err.message||err); }
   }
-  function renderServerBox(data){
+  function renderServerBox(data,syncData={}){
     const roots=$$('[data-server-status-box]'); if(!roots.length)return;
-    const localUrl = localStorage.getItem('kinojo_admin_webapp_url') || localStorage.getItem('AION2_OFFICIAL_WEBAPP') || '';
-    const bridgeLabel = localUrl ? 'URL 저장됨' : 'config.json 또는 시스템 설정 확인';
-    const html='<div class="admin-system-list"><div class="admin-system-item"><span><i class="admin-dot"></i>Supabase DB</span><strong>정상</strong></div><div class="admin-system-item"><span><i class="admin-dot"></i>RPC / Functions</span><strong>'+(data?.ok===false?'확인 필요':'정상')+'</strong></div><div class="admin-system-item"><span><i class="admin-dot"></i>Updater Runtime</span><strong>'+esc(data?.message||'정상')+'</strong></div><div class="admin-system-item"><span><i class="admin-dot"></i>Apps Script Bridge</span><strong>'+esc(bridgeLabel)+'</strong></div><div class="admin-system-item"><span><i class="admin-dot"></i>최근 성역 동기화</span><strong>'+esc(localStorage.getItem('kinojo_admin_last_sanctuary_sync')||'기록 없음')+'</strong></div></div>';
+    const queue=syncData.queue||{};
+    const recent=syncData.recentSync||syncData.recent_sync||{};
+    const queueTotal=Number(queue.updaterActive||queue.updater_active||0)+Number(queue.listPending||queue.list_pending||0)+Number(queue.sanctuaryPending||queue.sanctuary_pending||0);
+    const html='<div class="admin-system-list"><div class="admin-system-item"><span><i class="admin-dot"></i>Supabase DB</span><strong>'+(syncData?.ok===false?'확인 필요':'정상')+'</strong></div><div class="admin-system-item"><span><i class="admin-dot"></i>RPC / Edge Functions</span><strong>'+(data?.ok===false?'확인 필요':'정상')+'</strong></div><div class="admin-system-item"><span><i class="admin-dot"></i>Updater Runtime</span><strong>'+esc(data?.message||'정상')+'</strong></div><div class="admin-system-item"><span><i class="admin-dot"></i>Queue 상태</span><strong>'+queueTotal.toLocaleString('ko-KR')+'건 처리 중/대기</strong></div><div class="admin-system-item"><span><i class="admin-dot"></i>Apps Script Bridge</span><strong>Edge Secret으로 관리</strong></div><div class="admin-system-item"><span><i class="admin-dot"></i>최근 성역 동기화</span><strong>'+esc(formatServerTime(recent.completedAt||recent.completed_at))+'</strong></div></div>';
     roots.forEach(root=>{root.innerHTML=html;});
   }
-  function saveWebAppUrl(){
-    if(!isMaster()){ setStatus('#systemStatus','MASTER 권한만 시스템 URL을 변경할 수 있습니다.','error'); return; }
-    const v=$('#webAppUrlInput')?.value.trim()||'';
-    if(!v){ setStatus('#systemStatus','저장할 Apps Script WebApp URL을 입력하세요.','error'); return; }
-    if(!/^https:\/\/script\.google\.com\/macros\/s\//.test(v)){setStatus('#systemStatus','Apps Script WebApp URL 형식을 확인하세요.','error');return;}
-    localStorage.setItem('kinojo_admin_webapp_url',v);
-    localStorage.setItem('AION2_OFFICIAL_WEBAPP',v);
-    setStatus('#systemStatus','Apps Script WebApp URL 저장 완료','ok');
-    addLog('SYSTEM','Apps Script WebApp URL 저장');
-    refreshServerStatus();
-  }
-  function clearWebAppUrl(){
-    if(!isMaster()){ setStatus('#systemStatus','MASTER 권한만 시스템 URL을 삭제할 수 있습니다.','error'); return; }
-    localStorage.removeItem('kinojo_admin_webapp_url');
-    localStorage.removeItem('AION2_OFFICIAL_WEBAPP');
-    const input=$('#webAppUrlInput'); if(input) input.value='';
-    setStatus('#systemStatus','Apps Script WebApp URL 저장값을 삭제했습니다. config.json 값이 있으면 자동 fallback 됩니다.','ok');
-    refreshServerStatus();
-  }
   async function refreshSystemSettings(){
-    const input=$('#webAppUrlInput');
-    const saved=localStorage.getItem('kinojo_admin_webapp_url')||localStorage.getItem('AION2_OFFICIAL_WEBAPP')||'';
-    if(input) input.value=saved;
     if(!isMaster()){
-      if(input) input.disabled=true;
-      $('#webAppSaveBtn') && ($('#webAppSaveBtn').disabled=true);
-      $('#webAppClearBtn') && ($('#webAppClearBtn').disabled=true);
-      setStatus('#systemStatus','현재 계정은 MASTER가 아니므로 시스템 설정을 수정할 수 없습니다.','error');
+      $('#webAppTestBtnSystem') && ($('#webAppTestBtnSystem').disabled=true);
+      setStatus('#systemStatus','현재 계정은 MASTER가 아니므로 인프라 연결 진단을 실행할 수 없습니다.','error');
     }else{
-      if(input) input.disabled=false;
-      $('#webAppSaveBtn') && ($('#webAppSaveBtn').disabled=false);
-      $('#webAppClearBtn') && ($('#webAppClearBtn').disabled=false);
-      setStatus('#systemStatus', saved ? '저장된 Apps Script WebApp URL이 있습니다.' : '저장된 URL이 없습니다. config.json fallback을 사용하거나 URL을 저장하세요.','');
+      $('#webAppTestBtnSystem') && ($('#webAppTestBtnSystem').disabled=false);
+      setStatus('#systemStatus','Bridge URL은 Supabase Edge Function Secret에서만 관리됩니다. 브라우저에는 저장하지 않습니다.','ok');
     }
   }
   function renderLogs(){ const root=$('#adminLogBox'); if(root) root.textContent=state.logs.length?state.logs.join('\n'):'아직 로그가 없습니다.'; }
 
   function bind(){
     $$('.admin-nav button,.admin-bottom-actions button').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.adminTab)));
+    $$('.admin-subnav').forEach(nav=>nav.addEventListener('click',event=>{
+      const button=event.target.closest('[data-admin-subtab]');
+      if(!button)return;
+      switchSubtab(nav.dataset.adminSubnav,button.dataset.adminSubtab);
+    }));
     $('#adminMobileSelect')?.addEventListener('change',e=>switchTab(e.target.value));
-    $('#adminRefreshBtn')?.addEventListener('click',()=>switchTab(state.tab));
+    $('#adminRefreshBtn')?.addEventListener('click',()=>switchTab(state.tab,{subtab:state.subtab,force:true}));
     $('#adminLogoutBtn')?.addEventListener('click',()=>{window.KinojoAuth?.clearSession?.(); location.href='../';});
     $('#requestReloadBtn')?.addEventListener('click',loadCodeRequests);
     $('#requestList')?.addEventListener('click',e=>{ if(e.target.matches('[data-approve-request]')) processRequest(e.target,'approveCodeRequest'); if(e.target.matches('[data-reject-request]')) processRequest(e.target,'rejectCodeRequest'); });
@@ -790,7 +833,7 @@
     $('#characterSearchBtn')?.addEventListener('click',searchCharacters);
     $('#characterSearch')?.addEventListener('keydown',e=>{ if(e.key==='Enter') searchCharacters(); });
     $('#characterList')?.addEventListener('click',e=>{ if(e.target.matches('[data-char-deactivate]')) handleCharacterAction(e.target,'deactivate'); if(e.target.matches('[data-char-restore]')) handleCharacterAction(e.target,'restore'); if(e.target.matches('[data-char-rename]')) handleCharacterAction(e.target,'markRenamed'); });
-    $('#sanctuaryPreviewBtn')?.addEventListener('click',async()=>{ setStatus('#sanctuarySyncStatus','서버 성역 데이터를 불러오는 중...',''); try{ const select=$('#sanctuarySyncId'); const id=select?.value||''; const defaultId=select?.dataset.sanctuaryDefaultCode||Array.from(select?.options||[]).map(o=>o.value).find(v=>v&&v!=='all')||''; const data=await action('sanctuary',{id:id==='all'?defaultId:id}); $('#sanctuarySyncResult').innerHTML=renderSyncReport(Object.assign({ok:true},data)); setSyncStep(2); setStatus('#sanctuarySyncStatus','서버 미리보기 완료','ok'); }catch(err){setStatus('#sanctuarySyncStatus',err.message||String(err),'error');} });
+    $('#sanctuaryPreviewBtn')?.addEventListener('click',runSanctuaryPreview);
     $('#sanctuarySyncBtn')?.addEventListener('click',runSanctuarySync);
     $('#sanctuaryScheduleReloadBtn')?.addEventListener('click',()=>loadSanctuaryScheduleConsole(true));
     $('#sanctuaryScheduleNewBtn')?.addEventListener('click',()=>resetSanctuaryScheduleEditor(null));
@@ -825,9 +868,10 @@
       if(e.target.matches('[data-event-card-down]')){ const next=card.nextElementSibling; if(next) card.parentNode.insertBefore(next,card); renumberEventNoticeEditor(); }
     });
     $('#eventNoticeEditorCards')?.addEventListener('change',e=>{ if(e.target.matches('[data-event-field="noticeType"]')) applyEventNoticeTypeTemplate(e.target.closest('[data-event-notice-card]')); });
-    $('#webAppSaveBtn')?.addEventListener('click',saveWebAppUrl); $('#webAppClearBtn')?.addEventListener('click',clearWebAppUrl); $('#webAppTestBtn')?.addEventListener('click',()=>testWebAppConnection('#serverStatus')); $('#webAppTestBtnSystem')?.addEventListener('click',()=>testWebAppConnection('#systemStatus')); $('#serverRefreshBtn')?.addEventListener('click',refreshServerStatus); $('#goSystemSettingsBtn')?.addEventListener('click',()=>switchTab('system'));
-    document.addEventListener('click',e=>{ if(e.target.matches('[data-jump-server]')) switchTab('server'); if(e.target.matches('[data-jump-system]')) switchTab('system'); });
-    $('#quickCodeBtn')?.addEventListener('click',()=>switchTab('requests')); $('#quickSanctuaryBtn')?.addEventListener('click',()=>switchTab('sanctuary')); $('#quickMemberBtn')?.addEventListener('click',()=>switchTab('members')); $('#quickNoticeBtn')?.addEventListener('click',()=>switchTab('notices'));
+    $('#webAppTestBtn')?.addEventListener('click',()=>testWebAppConnection('#serverStatus')); $('#webAppTestBtnSystem')?.addEventListener('click',()=>testWebAppConnection('#systemStatus')); $('#serverRefreshBtn')?.addEventListener('click',refreshServerStatus); $('#goSystemSettingsBtn')?.addEventListener('click',()=>switchTab('system',{subtab:'environment'}));
+    document.addEventListener('click',e=>{ if(e.target.matches('[data-jump-server]')) switchTab('system',{subtab:'server-status'}); if(e.target.matches('[data-jump-system]')) switchTab('system',{subtab:'environment'}); });
+    window.addEventListener('hashchange',()=>{const route=adminRoute();switchTab(route.tab,{subtab:route.subtab,updateRoute:false});});
+    $('#quickCodeBtn')?.addEventListener('click',()=>switchTab('requests')); $('#quickSanctuaryBtn')?.addEventListener('click',()=>switchTab('system',{subtab:'sheet-sync'})); $('#quickMemberBtn')?.addEventListener('click',()=>switchTab('members',{subtab:'accounts'})); $('#quickNoticeBtn')?.addEventListener('click',()=>switchTab('notices',{subtab:'general'}));
   }
   async function init(){
     let tries=0; while(tries<30 && !window.KinojoAuth){ await new Promise(r=>setTimeout(r,100)); tries++; }
@@ -840,7 +884,10 @@
       const mobile=$('#adminMobileSelect'); if(mobile)Array.from(mobile.options).forEach(option=>{if(option.value!=='sanctuary')option.remove();});
     }
     const permissionCard=$('#sanctuaryRolePermissionCard'); if(permissionCard)permissionCard.hidden=!isMaster();
-    bind(); renderLogs(); switchTab(isStaffConsole()?'sanctuary':'dashboard');
+    const permissionTab=$('[data-admin-subnav="members"] [data-admin-subtab="permissions"]'); if(permissionTab)permissionTab.hidden=!isMaster();
+    bind(); renderLogs();
+    const route=adminRoute();
+    switchTab(isStaffConsole()?'sanctuary':route.tab,{subtab:isStaffConsole()?'':route.subtab,updateRoute:true});
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 })();
