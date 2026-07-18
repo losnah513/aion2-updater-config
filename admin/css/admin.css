@@ -394,3 +394,31 @@ KINOJO Sanctuary Schedule Admin 20260713 STEP 12
 .kinojo-staff-console .admin-shell{max-width:1180px}
 .kinojo-staff-console [data-admin-full-only]{display:none!important}
 @media(max-width:760px){.admin-role-permission-table{min-width:670px}.admin-role-permission-table th,.admin-role-permission-table td{padding:9px 7px}.admin-role-permission-table tbody th{width:220px}}
+
+/* 2026-07-18 · 성역 프로필 상세 진단 UI */
+.admin-profile-diagnostic{padding:12px 14px;border-bottom:1px solid rgba(15,23,42,.08);background:#fff}
+.admin-profile-diagnostic summary{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;color:#17233a;font-weight:950;list-style-position:inside}
+.admin-profile-diagnostic summary strong{color:#9a5a00}
+.admin-profile-diagnostic summary span{color:#64748b;font-size:11px;font-weight:900;text-align:right}
+.admin-profile-reason-summary{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+.admin-profile-reason-summary span{padding:5px 8px;border:1px solid #fde68a;border-radius:999px;background:#fffbeb;color:#92400e;font-size:10px;font-weight:950}
+.admin-profile-missing-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px;max-height:420px;overflow:auto}
+.admin-profile-missing-row{display:block;min-width:0;padding:10px 11px;border:1px solid #f8d993;border-radius:12px;background:linear-gradient(180deg,#fffdf7,#fffaf0)}
+.admin-profile-missing-main{display:grid;gap:4px;min-width:0}
+.admin-profile-missing-title{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.admin-profile-missing-title strong{overflow:hidden;text-overflow:ellipsis;color:#17233a;font-size:13px;white-space:nowrap}
+.admin-profile-missing-title em{flex:0 0 auto;max-width:54%;padding:4px 7px;border-radius:999px;background:#fef3c7;color:#92400e;font-size:9px;font-style:normal;font-weight:950;text-align:center}
+.admin-profile-missing-main>span{overflow:hidden;text-overflow:ellipsis;color:#64748b;font-size:10px;font-weight:850;white-space:nowrap}
+.admin-profile-missing-main>small{color:#94a3b8;font-size:9px;font-weight:800;word-break:break-all}
+.admin-profile-diagnostic-ok{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;border-bottom:1px solid rgba(15,23,42,.08);background:#f0fdf4;color:#166534}
+.admin-profile-diagnostic-ok strong{font-size:12px}.admin-profile-diagnostic-ok span{font-size:11px;font-weight:900}
+.admin-profile-diagnostic-error{margin:11px 14px;padding:12px 13px;border:1px solid #fcd34d;border-radius:12px;background:#fffbeb;color:#78350f;font-weight:800}
+.admin-profile-diagnostic-error>strong{display:block;color:#166534;font-size:13px}
+.admin-profile-diagnostic-error>p{margin:5px 0 9px;color:#92400e;font-size:11px;font-weight:900}
+.admin-profile-diagnostic-error dl{display:grid;gap:5px;margin:0}
+.admin-profile-diagnostic-error dl>div{display:grid;grid-template-columns:56px minmax(0,1fr);gap:8px;font-size:10px}
+.admin-profile-diagnostic-error dt{color:#a16207;font-weight:950}.admin-profile-diagnostic-error dd{margin:0;color:#475569;font-weight:850;word-break:break-word}
+.admin-profile-diagnostic-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+.admin-profile-diagnostic-actions .admin-btn{min-height:32px;padding:6px 10px}
+.admin-profile-diagnostic-actions small{color:#94a3b8;font-size:9px;font-weight:800;text-align:right;word-break:break-all}
+@media(max-width:720px){.admin-profile-diagnostic summary{align-items:flex-start;flex-direction:column}.admin-profile-diagnostic summary span{text-align:left}.admin-profile-missing-list{grid-template-columns:1fr;max-height:360px}.admin-profile-diagnostic-actions{align-items:flex-start;flex-direction:column}.admin-profile-diagnostic-actions small{text-align:left}.admin-profile-missing-title{align-items:flex-start}.admin-profile-missing-title em{max-width:58%}}

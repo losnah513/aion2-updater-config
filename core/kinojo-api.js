@@ -60,28 +60,45 @@
     return request(url, { method:'POST', body:JSON.stringify(body || {}) });
   }
 
+  function actionNotRegisteredError(action){
+    const err = new Error('Server Engine 액션이 현재 WEB 모듈에 등록되지 않았습니다: ' + String(action || 'unknown'));
+    err.code = 'KINOJO_ACTION_NOT_REGISTERED';
+    err.action = String(action || '');
+    return err;
+  }
+
   async function getAction(action, params){
+    let usedSupabase = false;
     if(window.KinojoSupabase && typeof window.KinojoSupabase.webAction === 'function'){
+      usedSupabase = true;
       const data = await window.KinojoSupabase.webAction(action, params || {});
-      if(data) return data;
+      if(data !== null && data !== undefined) return data;
     }
     const base = getBaseUrl();
-    if(!base) throw new Error('Server Engine API가 준비되지 않았습니다. KinojoSupabase 연결을 확인해 주세요.');
+    if(!base){
+      if(usedSupabase) throw actionNotRegisteredError(action);
+      throw new Error('Server Engine WEB 모듈을 불러오지 못했습니다. 페이지 새로고침 후 다시 확인해 주세요.');
+    }
     return getJson(base, Object.assign({ action, t:Date.now() }, params || {}));
   }
 
   async function postAction(action, body){
+    let usedSupabase = false;
     if(window.KinojoSupabase && typeof window.KinojoSupabase.webAction === 'function'){
+      usedSupabase = true;
       const data = await window.KinojoSupabase.webAction(action, body || {});
-      if(data) return data;
+      if(data !== null && data !== undefined) return data;
     }
     const base = getBaseUrl();
-    if(!base) throw new Error('Server Engine API가 준비되지 않았습니다. KinojoSupabase 연결을 확인해 주세요.');
+    if(!base){
+      if(usedSupabase) throw actionNotRegisteredError(action);
+      throw new Error('Server Engine WEB 모듈을 불러오지 못했습니다. 페이지 새로고침 후 다시 확인해 주세요.');
+    }
     return postJson(base, Object.assign({ action }, body || {}));
   }
 
   window.KinojoApi = {
-    version:'1.3.1.32-server-engine-direct-2026062623',
+    version:'1.3.1.33-action-diagnostic-2026071819',
     ready:true,
     DEFAULT_API_URL,
     getBaseUrl,

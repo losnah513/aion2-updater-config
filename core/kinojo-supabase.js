@@ -1524,7 +1524,7 @@
       return invokeEdgeFunction('lookup-sheet-bridge',{
         action:'adminBridgePing',
         passKey,
-        clientVersion:'kinojo-web-2026071713'
+        clientVersion:'kinojo-web-2026071819'
       });
     }
     if(normalized!=='preview'&&normalized!=='apply')return {ok:false,message:'알 수 없는 성역 시트 동기화 명령입니다.'};
@@ -1533,7 +1533,15 @@
       passKey,
       sanctuaryId:String(extra.sanctuaryId||extra.id||'all'),
       mode:normalized,
-      clientVersion:'kinojo-web-2026071713'
+      clientVersion:'kinojo-web-2026071819'
+    });
+  }
+
+  async function adminSanctuaryProfileDiagnostic(extra={}){
+    assertAdmin();
+    return rpc('kinojo_admin_sanctuary_profile_diagnostic_252', {
+      p_pass_key:currentPassKey(),
+      p_sanctuary_id:String(extra.sanctuaryId || extra.id || 'all').trim().toLowerCase() || 'all'
     });
   }
 
@@ -1575,6 +1583,7 @@
     if(name === 'sanctuaryRolePermissions') return getSanctuaryRolePermissions(extra);
     if(name === 'sanctuaryRolePermissionSet') return setSanctuaryRolePermission(extra);
     if(name === 'adminSanctuarySheetSync') return adminSanctuarySheetSync(extra.mode || extra.command || 'status', extra);
+    if(name === 'adminSanctuaryProfileDiagnostic') return adminSanctuaryProfileDiagnostic(extra);
     if(name === 'sanctuaryAdmin') return saveSanctuaryData(extra);
     if(name === 'notices') return { ok:true, notices:(await getLatestAnnouncements(extra.limit || 5)).map(noticeFromRow).filter(Boolean) };
     if(name === 'hallVisit'){
@@ -1641,7 +1650,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.41-session-sanctuary-hof-2026071518',
+    version:'1.3.1.42-admin-sanctuary-diagnostic-2026071819',
     getConfig,
     isPreferred,
     isConfigured,
@@ -1695,6 +1704,7 @@
     adminNotice,
     adminEventNotice,
     adminSanctuarySheetSync,
+    adminSanctuaryProfileDiagnostic,
     adminCharacter,
     adminVisit,
     getVisitStats,
