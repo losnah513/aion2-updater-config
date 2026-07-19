@@ -101,11 +101,14 @@ function openReactionModal(item,anchor){
       target:{
         name:item?.name||"캐릭터",
         owner:item?.owner||"",
-        className:item?.className||"",
-        server:item?.serverName||item?.meta||"",
-        profileImageUrl:item?.profileImageUrl||"",
-        detailUrl:item?.detailUrl||"",
-        sub:[item?.className||"",item?.meta||item?.serverName||""].filter(Boolean).join(" · ")||"좋아요·싫어요를 남겨보세요"
+        className:item?.className||item?.class_name||"",
+        server:item?.serverName||item?.server_name||item?.meta||"",
+        serverId:item?.serverId||item?.server_id||"",
+        pvePower:item?.pvePower||item?.pve_power||item?.latest_pve_combat_power||"",
+        pvpPower:item?.pvpPower||item?.pvp_power||item?.latest_pvp_combat_power||"",
+        profileImageUrl:item?.profileImageUrl||item?.profile_image_url||"",
+        classIconUrl:item?.classIconUrl||item?.class_icon_url||"",
+        detailUrl:item?.detailUrl||item?.detail_url||""
       },
       onSubmit:async function(payload){
         const data=await window.KinojoApi.postAction("hallReaction",{

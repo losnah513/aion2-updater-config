@@ -11,7 +11,8 @@
     submitting: false,
     type: 'like',
     target: null,
-    options: null
+    options: null,
+    returnFocus: null
   };
 
   function visitorId(){
@@ -144,39 +145,53 @@
 
   function mergeMasterRow(target, row){
     if(!row) return target;
-    const pve = firstValue(row.latest_pve_combat_power, row.pve_power_total, row.pvePowerTotal);
-    const pvp = firstValue(row.latest_pvp_combat_power, row.pvp_power_total, row.pvpPowerTotal);
-    const power = firstValue(row.latest_power_total, row.power_total, row.powerTotal, pve, pvp, target.power);
+    const pve = firstValue(row.latest_pve_combat_power, row.pve_power_total, row.pvePowerTotal, target.pvePower);
+    const pvp = firstValue(row.latest_pvp_combat_power, row.pvp_power_total, row.pvpPowerTotal, target.pvpPower);
     const className = firstValue(row.class_name, row.className, target.className);
     const server = firstValue(row.server_name, row.serverName, target.server);
+    const serverId = firstValue(row.server_id, row.serverId, target.serverId);
     const detailUrl = firstValue(row.detail_url, row.detailUrl, target.detailUrl);
     const profileImageUrl = firstValue(row.profile_image_url, row.profileImageUrl, target.profileImageUrl);
     const owner = firstValue(row.main_character_name, row.mainCharacterName, target.owner);
     return normalizeTarget(Object.assign({}, target, {
-      className, server, owner, profileImageUrl, detailUrl,
-      power: numText(power) || target.power,
-      pvePower: numText(pve) || target.pvePower || '',
-      pvpPower: numText(pvp) || target.pvpPower || '',
+      className, server, serverId, owner, profileImageUrl, detailUrl,
+      pvePower: numText(pve) || '',
+      pvpPower: numText(pvp) || '',
       classIconUrl: firstValue(target.classIconUrl, classIconFor(className))
     }));
   }
 
-  async function fetchCharacterMaster(name){
-    const target = characterMasterQueryName(name);
-    if(!target || !window.KinojoSupabase || typeof window.KinojoSupabase.request !== 'function') return null;
-    const select = 'select=character_name,main_character_name,server_name,class_name,profile_image_url,detail_url,latest_power_total,latest_pve_combat_power,latest_pvp_combat_power';
-    const query = select + '&character_name=eq.' + target + '&limit=1';
+  async function fetchCharacterMaster(target){
+    const item = target || {};
+    const name = characterMasterQueryName(item.name);
+    if(!name || !window.KinojoSupabase || typeof window.KinojoSupabase.request !== 'function') return null;
+
+    const select = 'select=character_name,main_character_name,server_id,server_name,class_name,profile_image_url,detail_url,latest_pve_combat_power,latest_pvp_combat_power';
+    let query = select + '&character_name=eq.' + name;
+    const serverId = String(item.serverId || '').trim();
+    const serverName = String(item.server || '').trim();
+    if(/^\d+$/.test(serverId)){
+      query += '&server_id=eq.' + encodeURIComponent(serverId);
+    }else if(serverName && !serverName.includes('·')){
+      query += '&server_name=eq.' + encodeURIComponent(serverName);
+    }else{
+      return null;
+    }
+    query += '&limit=1';
     const rows = await window.KinojoSupabase.request('character_master', { query });
     return Array.isArray(rows) ? rows[0] || null : null;
   }
 
   async function enrichTargetFromMaster(){
-    const currentName = state.target && state.target.name;
-    if(!currentName) return;
+    const current = state.target;
+    if(!current || !current.name) return;
+    const identity = [current.name, current.serverId || current.server || ''].join('|');
     try{
-      const row = await fetchCharacterMaster(currentName);
-      if(!row || !state.open || !state.target || state.target.name !== currentName) return;
-      state.target = mergeMasterRow(state.target, row);
+      const row = await fetchCharacterMaster(current);
+      const active = state.target;
+      const activeIdentity = active ? [active.name, active.serverId || active.server || ''].join('|') : '';
+      if(!row || !state.open || identity !== activeIdentity) return;
+      state.target = mergeMasterRow(active, row);
       renderTarget();
     }catch(_err){
       // 서버 상세 조회 실패 시 페이지 카드 데이터로 표시한다.
@@ -193,16 +208,24 @@
     modal.setAttribute('aria-hidden', 'true');
     modal.innerHTML =
       '<div class="kinojo-character-reaction-backdrop" data-kinojo-character-reaction-close></div>' +
-      '<div class="kinojo-character-reaction-dialog" role="dialog" aria-modal="true" aria-labelledby="kinojoCharacterReactionTitle">' +
+      '<div class="kinojo-character-reaction-dialog" role="dialog" aria-modal="true" aria-labelledby="kinojoCharacterReactionTitle" tabindex="-1">' +
         '<button class="kinojo-character-reaction-close" type="button" aria-label="닫기" data-kinojo-character-reaction-close>×</button>' +
-        '<div class="kinojo-character-reaction-avatar is-empty" id="kinojoCharacterReactionAvatar" aria-hidden="true"></div>' +
-        '<div class="kinojo-character-reaction-class" id="kinojoCharacterReactionClass" aria-hidden="true"></div>' +
-        '<div class="kinojo-character-reaction-info">' +
-          '<div class="kinojo-character-reaction-kicker">REACTION</div>' +
-          '<h2 class="kinojo-character-reaction-title" id="kinojoCharacterReactionTitle">캐릭터</h2>' +
-          '<p class="kinojo-character-reaction-sub" id="kinojoCharacterReactionSub">좋아요·싫어요와 코멘트를 남겨보세요.</p>' +
+        '<div class="kinojo-character-reaction-profile">' +
+          '<div class="kinojo-character-reaction-visual" aria-hidden="true">' +
+            '<div class="kinojo-character-reaction-avatar is-empty" id="kinojoCharacterReactionAvatar"></div>' +
+            '<div class="kinojo-character-reaction-class" id="kinojoCharacterReactionClass"></div>' +
+          '</div>' +
+          '<div class="kinojo-character-reaction-info">' +
+            '<div class="kinojo-character-reaction-kicker">REACTION</div>' +
+            '<h2 class="kinojo-character-reaction-title" id="kinojoCharacterReactionTitle">캐릭터</h2>' +
+            '<p class="kinojo-character-reaction-sub" id="kinojoCharacterReactionSub">좋아요·싫어요와 코멘트를 남겨보세요.</p>' +
+            '<div class="kinojo-character-reaction-powers" aria-label="캐릭터 전투력">' +
+              '<span class="kinojo-character-reaction-power is-pve"><b>PVE</b><strong id="kinojoCharacterReactionPvePower">-</strong></span>' +
+              '<span class="kinojo-character-reaction-power is-pvp"><b>PVP</b><strong id="kinojoCharacterReactionPvpPower">-</strong></span>' +
+            '</div>' +
+            '<a class="kinojo-character-reaction-detail" id="kinojoCharacterReactionDetail" href="#" target="_blank" rel="noopener noreferrer">정보실 ↗</a>' +
+          '</div>' +
         '</div>' +
-        '<a class="kinojo-character-reaction-detail" id="kinojoCharacterReactionDetail" href="#" target="_blank" rel="noopener noreferrer">정보실 ↗</a>' +
         '<div class="kinojo-character-reaction-actions">' +
           '<button class="kinojo-character-reaction-type active" id="kinojoCharacterReactionLikeBtn" type="button" data-kinojo-reaction-type="like">👍 좋아요</button>' +
           '<button class="kinojo-character-reaction-type" id="kinojoCharacterReactionDislikeBtn" type="button" data-kinojo-reaction-type="dislike">👎 싫어요</button>' +
@@ -278,14 +301,17 @@
     const t = target || {};
     const name = t.name || t.characterName || t.charName || '';
     const className = t.className || t.class || '';
-    const power = numText(t.power || t.powerText || t.combatPower || t.latestPowerTotal || t.latest_power_total || '') || String(t.power || t.powerText || t.combatPower || '');
     const server = t.server || t.serverName || '';
+    const serverId = String(t.serverId || t.server_id || '').trim();
+    const charKey = String(t.charKey || t.char_key || '').trim();
     const owner = t.owner || t.mainCharacterName || '';
     const profileImageUrl = t.profileImageUrl || t.profileImage || t.profile || t.imageUrl || '';
     const detailUrl = t.detailUrl || t.url || '';
     const classIconUrl = t.classIconUrl || t.classIcon || t.iconUrl || classIconFor(className);
-    const sub = [className, power ? ('전투력 ' + power) : '', server].filter(Boolean).join(' · ');
-    return { name, className, power, server, owner, profileImageUrl, detailUrl, classIconUrl, sub };
+    const pvePower = numText(firstValue(t.pvePower, t.pve_power, t.pvePowerTotal, t.latestPveCombatPower, t.latest_pve_combat_power));
+    const pvpPower = numText(firstValue(t.pvpPower, t.pvp_power, t.pvpPowerTotal, t.latestPvpCombatPower, t.latest_pvp_combat_power));
+    const sub = [className, server].filter(Boolean).join(' · ');
+    return { name, className, server, serverId, charKey, owner, profileImageUrl, detailUrl, classIconUrl, pvePower, pvpPower, sub };
   }
 
   function renderTarget(){
@@ -295,9 +321,13 @@
     const title = document.getElementById('kinojoCharacterReactionTitle');
     const sub = document.getElementById('kinojoCharacterReactionSub');
     const detail = document.getElementById('kinojoCharacterReactionDetail');
+    const pvePower = document.getElementById('kinojoCharacterReactionPvePower');
+    const pvpPower = document.getElementById('kinojoCharacterReactionPvpPower');
 
     if(title) title.textContent = target.name || '캐릭터';
     if(sub) sub.textContent = target.sub || '좋아요·싫어요와 코멘트를 남겨보세요.';
+    if(pvePower) pvePower.textContent = target.pvePower || '-';
+    if(pvpPower) pvpPower.textContent = target.pvpPower || '-';
     if(classIcon){
       const icon = String(target.classIconUrl || classIconFor(target.className) || '').trim();
       if(icon){
@@ -340,6 +370,7 @@
     state.target = normalizeTarget(opts.target || {});
     state.type = 'like';
     state.submitting = false;
+    state.returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
     const modal = ensureModal();
     const input = document.getElementById('kinojoCharacterReactionComment');
@@ -348,12 +379,17 @@
     renderTarget();
     setType('like');
     updateSubmitState();
-    enrichTargetFromMaster();
 
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('kinojo-character-reaction-open');
     state.open = true;
-    setTimeout(() => input?.focus(), 60);
+    enrichTargetFromMaster();
+
+    const dialog = modal.querySelector('.kinojo-character-reaction-dialog');
+    requestAnimationFrame(() => {
+      try{ dialog?.focus({ preventScroll:true }); }catch(_err){ dialog?.focus(); }
+    });
     return true;
   }
 
@@ -363,10 +399,16 @@
       modal.classList.remove('open');
       modal.setAttribute('aria-hidden', 'true');
     }
+    document.body.classList.remove('kinojo-character-reaction-open');
     state.open = false;
     state.submitting = false;
     state.target = null;
     state.options = null;
+    const returnFocus = state.returnFocus;
+    state.returnFocus = null;
+    if(returnFocus && document.contains(returnFocus)){
+      try{ returnFocus.focus({ preventScroll:true }); }catch(_err){ returnFocus.focus(); }
+    }
   }
 
   async function submit(){
