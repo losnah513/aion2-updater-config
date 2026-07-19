@@ -1513,6 +1513,29 @@
     return Object.assign({ ok:true }, data || {});
   }
 
+  async function getMeterStats(extra={}){
+    const data = await rpc('kinojo_meter_web_stats_v1', {
+      p_class_name:String(extra.className || extra.class_name || '').trim() || null,
+      p_boss_name:String(extra.bossName || extra.boss_name || '').trim() || null,
+      p_bucket_size:Number(extra.bucketSize || extra.bucket_size || 50000),
+      p_days:Number(extra.days || 30)
+    });
+    return Object.assign({ ok:true }, data || {});
+  }
+
+  async function getMeterMyComparison(extra={}){
+    const passKey=currentPassKey();
+    if(!passKey) return { ok:false, hasRecord:false, message:'PASS KEY 로그인이 필요합니다.' };
+    const data = await rpc('kinojo_meter_web_my_comparison_v1', {
+      p_pass_key:passKey,
+      p_class_name:String(extra.className || extra.class_name || '').trim() || null,
+      p_boss_name:String(extra.bossName || extra.boss_name || '').trim() || null,
+      p_bucket_size:Number(extra.bucketSize || extra.bucket_size || 50000),
+      p_days:Number(extra.days || 30)
+    });
+    return Object.assign({ ok:true }, data || {});
+  }
+
   async function adminSanctuarySheetSync(command, extra={}){
     assertAdmin();
     const passKey=currentPassKey();
@@ -1560,6 +1583,8 @@
     if(name === 'hofSummary') return getWebHofSummary(extra);
     if(name === 'hallRankingView') return getWebHallRankingView(extra);
     if(name === 'legionRanking') return getWebLegionRanking(extra);
+    if(name === 'meterStats') return getMeterStats(extra);
+    if(name === 'meterMyComparison') return getMeterMyComparison(extra);
     if(name === 'ranking') return getWebRanking(extra.limit || 300);
     if(name === 'dashboard') return getWebDashboard();
     if(name === 'updaterStatus') return runtimeGetStatus();
@@ -1669,6 +1694,8 @@
     getWebRanking,
     getWebDashboard,
     getWebUpdaterStatus,
+    getMeterStats,
+    getMeterMyComparison,
     runtimeGetStatus,
     runtimeStart,
     runtimeProgress,

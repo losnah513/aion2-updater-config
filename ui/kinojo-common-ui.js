@@ -14,6 +14,7 @@
     const mobile=/(^|\/)m(\/|$)/.test(path);
     if(path.includes('/hof/')||path.includes('/hall-of-fame/'))return {key:'hall',label:'명예의 전당',root:mobile?'../../':'../',mobile};
     if(path.includes('/ranking/'))return {key:'ranking',label:'레기온 순위',root:mobile?'../../':'../',mobile};
+    if(path.includes('/meter/'))return {key:'meter',label:'미터기 통계',root:mobile?'../../':'../',mobile};
     if(path.includes('/sanctuary-schedule/'))return {key:'schedule',label:'성역 스케줄',root:mobile?'../../':'../',mobile};
     if(path.includes('/sanctuary/'))return {key:'sanctuary',label:'성역',root:mobile?'../../':'../',mobile};
     if(path.includes('/arcana/'))return {key:'arcana',label:'아르카나',root:mobile?'../../':'../',mobile};
@@ -484,6 +485,7 @@
   function makeDrawer(info){
     const isHall=info.key==='hall';
     const isRanking=info.key==='ranking';
+    const isMeter=info.key==='meter';
     const isSanctuary=info.key==='sanctuary';
     const isSchedule=info.key==='schedule';
     const isArcana=info.key==='arcana';
@@ -491,6 +493,7 @@
     const home=base;
     const hallHref=isHall?'./':base+'hof/';
     const rankingHref=isRanking?'./':base+'ranking/';
+    const meterHref=isMeter?'./':base+'meter/';
     const sanctuaryPrefix=isSanctuary?'./':base+'sanctuary/';
     const scheduleHref=isSchedule?'./':base+'sanctuary-schedule/';
     const arcanaHref=isArcana?'./':base+'arcana/';
@@ -508,6 +511,7 @@
           <div class="kinojo-drawer-category">바로가기</div>
           <a href="${hallHref}" ${isHall?'class="active" aria-disabled="true"':''}>명예의 전당</a>
           <a href="${rankingHref}" ${isRanking?'class="active" aria-disabled="true"':''}>레기온 순위</a>
+          <a href="${meterHref}" ${isMeter?'class="active" aria-disabled="true"':''}>미터기 통계 <small>BETA</small></a>
           <a href="https://aion2.plaync.com/ko-kr/index?redirect=false" target="_blank" rel="noopener">아이온2 공식으로 이동</a>
           <a href="https://aion2.plaync.com/ko-kr/board/notice/list" target="_blank" rel="noopener">아이온2 공지로 이동</a>
           <div class="kinojo-drawer-divider"></div>
