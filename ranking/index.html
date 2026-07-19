@@ -12,10 +12,10 @@
 <meta property="og:description" content="PVE/PVP 전투력 순위를 한 화면에서 비교합니다."/>
 <meta property="og:url" content="https://kinojo.info/ranking/"/>
 <meta property="og:image" content="https://kinojo.info/assets/images/common/kinojo-og.jpg"/>
-<link href="./css/ranking.css?cache=2026071711" rel="stylesheet"/>
+<link href="./css/ranking.css?cache=2026071905" rel="stylesheet"/>
 <link href="../ui/kinojo-layout.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../ui/kinojo-components.css?cache=26062102" rel="stylesheet"/>
-<link href="../ui/kinojo-common-ui.css?cache=2026071518" rel="stylesheet"/>
+<link href="../ui/kinojo-common-ui.css?cache=2026071905" rel="stylesheet"/>
 <link href="../ui/kinojo-character-reaction.css?cache=2026071903" rel="stylesheet"/>
 <link href="../ui/kinojo-card-guards.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../ui/kinojo-animations.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
@@ -56,13 +56,9 @@
     <div class="ranking-loading"><span class="kinojo-spinner"><span></span></span><span>레기온 전체 순위를 불러오는 중...</span></div>
   </section>
 
-  <section class="ranking-pager" aria-label="페이지 이동">
-    <button class="kinojo-btn secondary" id="rankingPrevBtn" type="button">이전</button>
-    <span id="rankingPageInfo">1 / 1</span>
-    <button class="kinojo-btn secondary" id="rankingNextBtn" type="button">다음</button>
-  </section>
+  <section class="ranking-load-more" id="rankingLoadMore" aria-label="순위 더보기" hidden><button class="kinojo-btn secondary" id="rankingLoadMoreBtn" type="button">20명 더보기</button><span id="rankingLoadMoreInfo" aria-live="polite"></span></section>
 
-  <footer class="footer common-footer"><div class="footer-links"><a href="../pages/about.html">사이트 소개</a><a href="../pages/terms.html">이용약관</a><a href="../pages/privacy.html">개인정보처리방침</a></div><div class="footer-powered">Powered by AION2 · 깡 레기온 지원</div></footer>
+  <footer class="footer common-footer"><div class="footer-links"><a href="../pages/about.html">사이트 소개</a><a href="../pages/terms.html">이용약관</a><a href="../pages/privacy.html">개인정보처리방침</a><a href="../pages/contact.html">아이디어 제안 및 건의</a></div><div class="footer-powered">Powered by AION2 · 깡 레기온 지원</div></footer>
 </main>
 <script src="../core/kinojo-api.js?cache=2026062925"></script>
 <script src="../core/kinojo-cache.js?cache=2026062925"></script>
@@ -78,11 +74,11 @@
 <script src="../core/kinojo-auth.js?cache=2026071518"></script>
 <script src="../ui/kinojo-event-notice.js?cache=2026070521"></script>
 <script src="../ui/kinojo-character-reaction.js?cache=2026071903"></script>
-<script src="./js/ranking-utils.js?cache=2026071903"></script>
-<script src="./js/ranking-data.js?cache=2026062925"></script>
+<script src="./js/ranking-utils.js?cache=2026071905"></script>
+<script src="./js/ranking-data.js?cache=2026071905"></script>
 <script src="./js/ranking-card.js?cache=2026071903"></script>
-<script src="./js/ranking-render.js?cache=2026062925"></script>
-<script src="./js/ranking-events.js?cache=2026071903"></script>
+<script src="./js/ranking-render.js?cache=2026071905"></script>
+<script src="./js/ranking-events.js?cache=2026071905"></script>
 <script src="./js/ranking-app.js?cache=2026062925"></script>
 </body>
 </html>

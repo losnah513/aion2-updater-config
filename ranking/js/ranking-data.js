@@ -1,7 +1,7 @@
 /*
  * KINOJO Ranking Data
- * 역할: Server Engine 050 RPC 호출과 상태만 관리합니다.
- * 규칙: 웹 자체 순위 계산 금지. 조건은 RPC 파라미터로만 전달합니다.
+ * 역할: Server Engine 050 RPC 호출과 표시용 페이지 누적 상태만 관리합니다.
+ * 규칙: 웹 자체 순위 계산·정렬·필터링 금지. Server가 반환한 20명 단위 결과를 순서대로 이어 붙여 표시합니다.
  */
 (function(){
   'use strict';
@@ -19,40 +19,85 @@
     mobileMode: 'PVE'
   };
 
-  function cacheKey(){
-    return ['ranking', state.page, state.pageSize, state.className, state.search, state.includeSubs ? 'subs' : 'main'].join('::');
+  function cacheKey(page){
+    return ['ranking', Number(page || state.page), state.pageSize, state.className, state.search, state.includeSubs ? 'subs' : 'main'].join('::');
   }
-  function readCache(){
+  function readCache(page){
     if(!window.KinojoCache) return null;
-    return window.KinojoCache.getSession(cacheKey());
+    return window.KinojoCache.getSession(cacheKey(page));
   }
-  function writeCache(data){
+  function writeCache(page, data){
     if(!window.KinojoCache) return data;
-    return window.KinojoCache.setSession(cacheKey(), data, 45 * 1000);
+    return window.KinojoCache.setSession(cacheKey(page), data, 45 * 1000);
   }
-  function totalPages(){
-    const d = state.data || {};
-    const maxTotal = Math.max(Number(d.pveTotalCount || 0), Number(d.pvpTotalCount || 0));
-    return Math.max(1, Math.ceil(maxTotal / state.pageSize));
+  function rows(data, mode){
+    return Array.isArray(mode === 'PVP' ? data?.pvpItems : data?.pveItems)
+      ? (mode === 'PVP' ? data.pvpItems : data.pveItems)
+      : [];
   }
-  async function fetchRanking(){
-    const cached = readCache();
+  function total(data, mode){
+    return Number(mode === 'PVP' ? data?.pvpTotalCount : data?.pveTotalCount) || 0;
+  }
+  function mergePageData(current, next){
+    if(!current) return next;
+    return Object.assign({}, current, next, {
+      pveItems: rows(current, 'PVE').concat(rows(next, 'PVE')),
+      pvpItems: rows(current, 'PVP').concat(rows(next, 'PVP')),
+      pveTotalCount: total(next, 'PVE') || total(current, 'PVE'),
+      pvpTotalCount: total(next, 'PVP') || total(current, 'PVP'),
+      classCounts: next?.classCounts || current?.classCounts || {}
+    });
+  }
+  async function fetchPage(page){
+    const pageNo = Math.max(1, Number(page || 1));
+    const cached = readCache(pageNo);
     if(cached) return cached;
     if(!window.KinojoApi) throw new Error('KinojoApi 연결을 확인해 주세요.');
     const data = await window.KinojoApi.getAction('legionRanking', {
-      page: state.page,
+      page: pageNo,
       pageSize: state.pageSize,
       includeSubs: state.includeSubs,
       className: state.className,
       search: state.search
     });
     if(!data || data.ok === false) throw new Error(data?.message || data?.error || '레기온 순위 응답이 실패했습니다.');
-    return writeCache(data);
+    return writeCache(pageNo, data);
   }
-  function setSearch(value){ state.search = U.text(value); state.page = 1; }
-  function setClass(value){ state.className = U.text(value, '전체'); state.page = 1; }
-  function setIncludeSubs(value){ state.includeSubs = !!value; state.page = 1; }
-  function reset(){ state.page = 1; state.className = '전체'; state.search = ''; state.includeSubs = false; }
+  async function fetchRanking(options){
+    const append = !!options?.append;
+    const pageData = await fetchPage(state.page);
+    return append ? mergePageData(state.data, pageData) : pageData;
+  }
+  function totalPages(){
+    const maxTotal = Math.max(total(state.data, 'PVE'), total(state.data, 'PVP'));
+    return Math.max(1, Math.ceil(maxTotal / state.pageSize));
+  }
+  function hasMore(){ return state.page < totalPages(); }
+  function advancePage(){
+    if(!hasMore()) return false;
+    state.page += 1;
+    return true;
+  }
+  function retreatPage(){ state.page = Math.max(1, state.page - 1); }
+  function loadedCount(mode){ return rows(state.data, mode).length; }
+  function resetResult(){ state.page = 1; state.data = null; }
+  function setSearch(value){ state.search = U.text(value); resetResult(); }
+  function setClass(value){ state.className = U.text(value, '전체'); resetResult(); }
+  function setIncludeSubs(value){ state.includeSubs = !!value; resetResult(); }
+  function reset(){ state.className = '전체'; state.search = ''; state.includeSubs = false; resetResult(); }
 
-  Ranking.data = { state, fetchRanking, totalPages, setSearch, setClass, setIncludeSubs, reset };
+  Ranking.data = {
+    state,
+    fetchRanking,
+    totalPages,
+    hasMore,
+    advancePage,
+    retreatPage,
+    loadedCount,
+    total,
+    setSearch,
+    setClass,
+    setIncludeSubs,
+    reset
+  };
 })();

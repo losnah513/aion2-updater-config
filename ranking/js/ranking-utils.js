@@ -35,7 +35,7 @@
     return text(v).replace(/\[[^\]]+\]\s*$/,'').trim();
   }
   function isMobileRanking(){
-    return document.body.classList.contains('is-mobile-ranking') || window.matchMedia('(max-width: 760px)').matches;
+    return window.matchMedia('(max-width: 699px)').matches;
   }
 
   function normalizeRow(row, mode){

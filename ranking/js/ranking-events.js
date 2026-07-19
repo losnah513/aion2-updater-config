@@ -80,18 +80,34 @@
     try{if(window.KinojoAuth&&!window.KinojoAuth.requireLogin('로그인 후 좋아요·싫어요를 남길 수 있습니다.',{context:'ranking'}))return;rankingReactionSubmitting=true;updateRankingReactionSubmitState();if(status)status.textContent='전송 중...';const sessionToken=window.KinojoAuth?window.KinojoAuth.getToken():'';const data=await window.KinojoApi.postAction('hallReaction',{characterName:rankingReactionTarget.name,owner:rankingReactionTarget.owner||'',className:rankingReactionTarget.className||'',reaction:rankingReactionType,comment:comment,clientKey:rankingVisitorId(),sessionToken:sessionToken,source:'ranking'});if(!data||!data.ok){if(data&&data.authRequired&&window.KinojoAuth)window.KinojoAuth.openLoginModal(data.message||'로그인 후 이용할 수 있습니다.',{context:'ranking'});if(status)status.textContent=(data&&data.message)||'저장 실패';return}rankingMarkReaction(rankingReactionTarget.name,rankingReactionType);if(status)status.textContent='한마디가 전달되었어요.';setTimeout(closeRankingReactionModal,420)}catch(e){if(status)status.textContent='반응 저장 실패: '+(e.message||e)}finally{rankingReactionSubmitting=false;updateRankingReactionSubmitState()}
   }
 
-  async function loadRanking(){
+  async function loadRanking(options){
     if(D.state.loading) return;
+    const append = !!options?.append;
+    const scrollY = window.scrollY;
     D.state.loading = true;
-    Ranking.render.renderLoading();
+    if(append) Ranking.render.setLoadMoreLoading(true);
+    else Ranking.render.renderLoading();
     try{
-      D.state.data = await D.fetchRanking();
+      D.state.data = await D.fetchRanking({ append:append });
       Ranking.render.render();
       bindDynamicEvents();
+      if(append){
+        requestAnimationFrame(() => window.scrollTo({ top:scrollY, left:0, behavior:'auto' }));
+      }
     }catch(err){
-      Ranking.render.renderError(err);
+      if(append){
+        D.retreatPage();
+        Ranking.render.setLoadMoreLoading(false);
+        Ranking.render.updateLoadMore();
+        const status = U.$('rankingStatus');
+        if(status) status.textContent = '추가 순위를 불러오지 못했습니다 · ' + (err.message || err);
+      }else{
+        Ranking.render.renderError(err);
+      }
     }finally{
       D.state.loading = false;
+      Ranking.render.setLoadMoreLoading(false);
+      Ranking.render.updateLoadMore();
     }
   }
   function bindDynamicEvents(){
@@ -111,8 +127,7 @@
     const include = U.$('rankingIncludeSubs');
     const searchBtn = U.$('rankingSearchBtn');
     const resetBtn = U.$('rankingResetBtn');
-    const prev = U.$('rankingPrevBtn');
-    const next = U.$('rankingNextBtn');
+    const loadMore = U.$('rankingLoadMoreBtn');
     const filterToggle = U.$('rankingFilterToggleBtn');
     const toolbar = document.querySelector('.ranking-toolbar');
 
@@ -146,21 +161,18 @@
         loadRanking();
       });
     }
-    if(prev){
-      prev.addEventListener('click', () => { if(D.state.page > 1){ D.state.page--; loadRanking(); } });
-    }
-    if(next){
-      next.addEventListener('click', () => { if(D.state.page < D.totalPages()){ D.state.page++; loadRanking(); } });
+    if(loadMore){
+      loadMore.addEventListener('click', () => {
+        if(D.advancePage()) loadRanking({ append:true });
+      });
     }
     document.querySelectorAll('[data-mobile-mode]').forEach(btn => {
       btn.addEventListener('click', () => {
         D.state.mobileMode = btn.dataset.mobileMode === 'PVP' ? 'PVP' : 'PVE';
         document.querySelectorAll('[data-mobile-mode]').forEach(b => b.classList.toggle('is-active', b === btn));
         const board = U.$('rankingBoard');
-        if(board){
-          board.dataset.mobileMode = D.state.mobileMode;
-          if(U.isMobileRanking()) board.scrollIntoView({ block:'start', behavior:'smooth' });
-        }
+        if(board) board.dataset.mobileMode = D.state.mobileMode;
+        Ranking.render.updateLoadMore();
       });
     });
   }

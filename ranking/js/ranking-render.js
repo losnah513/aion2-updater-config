@@ -1,6 +1,7 @@
 /*
  * KINOJO Ranking Render
- * 역할: 상태와 서버 응답을 화면에 렌더링합니다.
+ * 역할: 상태와 Server 응답을 화면에 표시합니다.
+ * 규칙: 순위 계산 없이 Server가 반환한 행과 전체 건수만 출력합니다.
  */
 (function(){
   'use strict';
@@ -24,15 +25,47 @@
       return '<button type="button" class="ranking-class-tab '+(D.state.className === cls ? 'is-active' : '')+'" data-class="'+U.escapeHtml(cls)+'">'+U.escapeHtml(cls)+U.escapeHtml(count)+'</button>';
     }).join('');
   }
+  function updateLoadMore(){
+    const shell = U.$('rankingLoadMore');
+    const button = U.$('rankingLoadMoreBtn');
+    const info = U.$('rankingLoadMoreInfo');
+    if(!shell || !button || !info) return;
+
+    const pveLoaded = D.loadedCount('PVE');
+    const pvpLoaded = D.loadedCount('PVP');
+    const pveTotal = D.total(D.state.data, 'PVE');
+    const pvpTotal = D.total(D.state.data, 'PVP');
+    const hasRows = pveTotal > 0 || pvpTotal > 0;
+    const narrow = U.isMobileRanking();
+    const mode = D.state.mobileMode === 'PVP' ? 'PVP' : 'PVE';
+    const modeLoaded = mode === 'PVP' ? pvpLoaded : pveLoaded;
+    const modeTotal = mode === 'PVP' ? pvpTotal : pveTotal;
+    const displayHasMore = narrow ? modeLoaded < modeTotal : D.hasMore();
+
+    shell.hidden = !hasRows;
+    button.hidden = !displayHasMore;
+    button.disabled = !!D.state.loading;
+    if(!D.state.loading) button.textContent = '20명 더보기';
+
+    if(narrow){
+      info.textContent = Math.min(modeLoaded, modeTotal).toLocaleString('ko-KR')+' / '+modeTotal.toLocaleString('ko-KR')+'명';
+    }else{
+      info.textContent = 'PVE '+Math.min(pveLoaded,pveTotal).toLocaleString('ko-KR')+' / '+pveTotal.toLocaleString('ko-KR')+' · PVP '+Math.min(pvpLoaded,pvpTotal).toLocaleString('ko-KR')+' / '+pvpTotal.toLocaleString('ko-KR');
+    }
+    shell.classList.toggle('is-complete', !displayHasMore);
+  }
+  function setLoadMoreLoading(loading){
+    const button = U.$('rankingLoadMoreBtn');
+    if(!button) return;
+    button.disabled = !!loading;
+    button.textContent = loading ? '불러오는 중...' : '20명 더보기';
+  }
   function render(){
     const board = U.$('rankingBoard');
     if(!board) return;
     const d = D.state.data || {};
     board.innerHTML = panelHtml('PVE', d.pveItems || [], d.pveTotalCount || 0) + panelHtml('PVP', d.pvpItems || [], d.pvpTotalCount || 0);
-    if(U.isMobileRanking()) board.dataset.mobileMode = D.state.mobileMode;
-
-    const pageInfo = U.$('rankingPageInfo');
-    if(pageInfo) pageInfo.textContent = D.state.page + ' / ' + D.totalPages();
+    board.dataset.mobileMode = D.state.mobileMode;
 
     const status = U.$('rankingStatus');
     if(status){
@@ -42,24 +75,24 @@
       status.textContent = parts.join(' · ');
     }
     renderClassTabs();
-
-    const prev = U.$('rankingPrevBtn');
-    const next = U.$('rankingNextBtn');
-    if(prev) prev.disabled = D.state.page <= 1;
-    if(next) next.disabled = D.state.page >= D.totalPages();
+    updateLoadMore();
   }
   function renderLoading(){
     const board = U.$('rankingBoard');
     if(board) board.innerHTML = '<div class="ranking-loading"><span class="kinojo-spinner"><span></span></span><span>레기온 전체 순위를 불러오는 중...</span></div>';
     const status = U.$('rankingStatus');
     if(status) status.textContent = '서버 순위 계산 결과를 요청하는 중...';
+    const shell = U.$('rankingLoadMore');
+    if(shell) shell.hidden = true;
   }
   function renderError(err){
     const board = U.$('rankingBoard');
     if(board) board.innerHTML = '<div class="ranking-empty error">레기온 전체 순위를 불러오지 못했습니다.<br>'+U.escapeHtml(err.message || err)+'</div>';
     const status = U.$('rankingStatus');
     if(status) status.textContent = '순위 로딩 실패';
+    const shell = U.$('rankingLoadMore');
+    if(shell) shell.hidden = true;
   }
 
-  Ranking.render = { render, renderLoading, renderError, renderClassTabs };
+  Ranking.render = { render, renderLoading, renderError, renderClassTabs, updateLoadMore, setLoadMoreLoading };
 })();
