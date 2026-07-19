@@ -1329,3 +1329,61 @@ body{padding-top:var(--kinojo-safe-top)!important;padding-bottom:calc(var(--kino
 .kinojo-idle-modal{position:fixed;inset:0;z-index:2147483644;display:none;align-items:center;justify-content:center;padding:calc(var(--kinojo-safe-top,0px) + 18px) 16px calc(var(--kinojo-safe-bottom,0px) + 18px);background:rgba(15,23,42,.58);backdrop-filter:blur(8px);box-sizing:border-box}.kinojo-idle-modal.open{display:flex}.kinojo-idle-card{width:min(420px,100%);border:1px solid rgba(148,163,184,.34);border-radius:24px;background:#fff;box-shadow:0 26px 80px rgba(15,23,42,.3);padding:26px;text-align:center}.kinojo-idle-kicker{font-size:11px;font-weight:1000;letter-spacing:.12em;color:#2563eb}.kinojo-idle-card h2{margin:8px 0 6px;font-size:24px;color:#172033}.kinojo-idle-card p{margin:0;color:#64748b;font-size:14px;line-height:1.55}.kinojo-idle-count{display:flex;align-items:baseline;justify-content:center;gap:7px;margin:22px 0;padding:16px;border-radius:18px;background:#f1f5ff;color:#1d4ed8}.kinojo-idle-count strong{font-size:42px;line-height:1}.kinojo-idle-count span{font-size:13px;font-weight:900}.kinojo-idle-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.kinojo-idle-actions button{min-height:46px;border-radius:14px;border:1px solid #d8e0ec;background:#fff;color:#334155;font-weight:900;cursor:pointer}.kinojo-idle-actions button:first-child{border-color:#2563eb;background:#2563eb;color:#fff}.kinojo-idle-actions button:hover{transform:translateY(-1px)}
 [hidden]{display:none!important}
 @media(max-width:640px){.kinojo-idle-card{padding:22px 18px;border-radius:20px}.kinojo-idle-card h2{font-size:21px}.kinojo-idle-count strong{font-size:36px}.kinojo-idle-actions{grid-template-columns:1fr}}
+
+
+/* ===========================================================
+KINOJO Common Footer 20260719
+- 사이트 소개/약관/개인정보/건의 링크를 전 페이지에서 동일하게 표시합니다.
+=========================================================== */
+.common-footer{
+  width:100%;
+  display:grid!important;
+  gap:8px;
+  justify-items:center;
+  margin:18px auto 0!important;
+  padding:4px 8px 0;
+  color:#7b8ba2;
+  text-align:center;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.2px;
+  box-sizing:border-box;
+}
+.common-footer .footer-links{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:center;
+  align-items:center;
+}
+.common-footer .footer-links a,
+.common-footer .footer-links button{
+  appearance:none;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  padding:3px 1px;
+  color:#667085;
+  font:inherit;
+  font-size:12px;
+  font-weight:900;
+  line-height:1.35;
+  text-decoration:none;
+  cursor:pointer;
+  transition:color .18s ease,transform .18s ease;
+}
+.common-footer .footer-links a:hover,
+.common-footer .footer-links button:hover,
+.common-footer .footer-links a:focus-visible,
+.common-footer .footer-links button:focus-visible{
+  color:#2563eb;
+  transform:translateY(-1px);
+  outline:none;
+}
+.common-footer .footer-powered{font-size:11px;color:#98a2b3;font-weight:900;}
+@media(max-width:699px){
+  .common-footer{gap:7px;margin-top:16px!important;padding-inline:4px;font-size:11px;}
+  .common-footer .footer-links{gap:6px 9px;}
+  .common-footer .footer-links a,.common-footer .footer-links button{font-size:11px;}
+  .common-footer .footer-powered{font-size:10px;}
+}
