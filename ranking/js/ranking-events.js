@@ -41,7 +41,7 @@
   function openRankingReactionModal(card){
     if(window.KinojoCharacterReaction){
       const name=card.dataset.charName||card.dataset.character||'';
-      const target={name:name,owner:card.dataset.charOwner||'',className:card.dataset.charClass||'',server:card.dataset.charServer||'',power:card.dataset.charPower||'',profileImageUrl:card.dataset.profileImage||'',detailUrl:card.dataset.detailUrl||'',pvePower:card.dataset.pvePower||'',pvpPower:card.dataset.pvpPower||''};
+      const target={name:name,owner:card.dataset.charOwner||'',className:card.dataset.charClass||'',server:card.dataset.charServer||'',serverId:card.dataset.serverId||'',profileImageUrl:card.dataset.profileImage||'',detailUrl:card.dataset.detailUrl||'',pvePower:card.dataset.pvePower||'',pvpPower:card.dataset.pvpPower||''};
       window.KinojoCharacterReaction.open({
         source:'ranking',
         context:'ranking',
@@ -65,12 +65,12 @@
 
     if(window.KinojoAuth&&!window.KinojoAuth.requireLogin('로그인 후 좋아요·싫어요를 남길 수 있습니다.',{context:'ranking'}))return;
     const name=card.dataset.charName||card.dataset.character||'';
-    rankingReactionTarget={name:name,owner:card.dataset.charOwner||'',className:card.dataset.charClass||'',server:card.dataset.charServer||'',power:card.dataset.charPower||'',profileImageUrl:card.dataset.profileImage||'',detailUrl:card.dataset.detailUrl||'',pvePower:card.dataset.pvePower||'',pvpPower:card.dataset.pvpPower||''};
+    rankingReactionTarget={name:name,owner:card.dataset.charOwner||'',className:card.dataset.charClass||'',server:card.dataset.charServer||'',serverId:card.dataset.serverId||'',profileImageUrl:card.dataset.profileImage||'',detailUrl:card.dataset.detailUrl||'',pvePower:card.dataset.pvePower||'',pvpPower:card.dataset.pvpPower||''};
     const modal=ensureRankingReactionModal();const title=document.getElementById('rankingReactionTitle');const sub=document.getElementById('rankingReactionSub');const avatar=document.getElementById('rankingReactionAvatar');const input=document.getElementById('rankingReactionComment');const status=document.getElementById('rankingReactionStatus');
     if(title)title.textContent=name;
     if(sub)sub.textContent=[rankingReactionTarget.className,rankingReactionTarget.power?('전투력 '+rankingReactionTarget.power):'',rankingReactionTarget.server].filter(Boolean).join(' · ')||'좋아요·싫어요와 코멘트를 남겨보세요.';
     if(avatar){const image=String(rankingReactionTarget.profileImageUrl||'').trim();if(image){avatar.classList.remove('is-empty');avatar.innerHTML='<img src="'+image.replace(/"/g,'%22')+'" alt="">'}else{avatar.classList.add('is-empty');avatar.textContent='PROFILE'}}
-    if(input)input.value='';if(status)status.textContent='';rankingReactionSubmitting=false;setRankingReactionType('like');updateRankingReactionSubmitState();modal.classList.add('open');modal.setAttribute('aria-hidden','false');setTimeout(()=>input?.focus(),50);
+    if(input)input.value='';if(status)status.textContent='';rankingReactionSubmitting=false;setRankingReactionType('like');updateRankingReactionSubmitState();modal.classList.add('open');modal.setAttribute('aria-hidden','false');
   }
   function closeRankingReactionModal(){const modal=document.getElementById('rankingReactionModal');if(modal){modal.classList.remove('open');modal.setAttribute('aria-hidden','true')}rankingReactionTarget=null;rankingReactionSubmitting=false}
   async function submitRankingReaction(){

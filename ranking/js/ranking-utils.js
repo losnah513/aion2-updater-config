@@ -43,6 +43,7 @@
     const name = stripServerSuffix(pick(row,'character_name','characterName','')) || '-';
     const owner = stripServerSuffix(pick(row,'main_character_name','mainCharacterName',name)) || name;
     const server = text(pick(row,'server_name','serverName','지켈'),'지켈');
+    const serverId = text(pick(row,'server_id','serverId',''),'');
     const className = text(pick(row,'class_name','className','-'),'-');
     const like = Number(pick(row,'like_count','likeCount',0) || 0);
     const dislike = Number(pick(row,'dislike_count','dislikeCount',0) || 0);
@@ -54,7 +55,7 @@
     const review = text(pick(row,'review_text','reviewText',''), growthLabel || 'AI 리뷰 대기 중');
     const profile = text(pick(row,'profile_image_url','profileImageUrl',''), '');
     const detailUrl = text(pick(row,'detail_url','detailUrl',''), '');
-    return { rank,name,owner,server,className,like,dislike,pvePower,pvpPower,pveItem,pvpItem,review,growthLabel,profile,detailUrl,mode };
+    return { rank,name,owner,server,serverId,className,like,dislike,pvePower,pvpPower,pveItem,pvpItem,review,growthLabel,profile,detailUrl,mode };
   }
 
   Ranking.utils = { CLASS_ORDER, $, escapeHtml, num, pick, text, stripServerSuffix, isMobileRanking, normalizeRow };
