@@ -1,0 +1,11 @@
+{
+  "enabled": true,
+  "version": "0.1.0 UI Prototype",
+  "installerSize": "32KB 테스트 설치기",
+  "downloadUrl": "",
+  "releasePageUrl": "",
+  "sha256": "EC2728960E1447E06DB8E98B1164DE5CE4FA85E4DBEE155865F353DECD805EA4",
+  "edgeFunctionName": "meter-ingest",
+  "demoFallback": true,
+  "notice": "현재 설치기는 UI·PASS KEY·캐릭터 선택·오버레이 구조를 확인하는 프로토타입이며 실제 패킷 수집은 포함하지 않습니다."
+}

@@ -1,0 +1,571 @@
+/* ============================================================
+   KINOJO INFO Home Styles
+   ------------------------------------------------------------
+   Extracted from index.html without visual changes.
+   Version remains 1.c2.04.
+============================================================ */
+:root{
+  --text:#263444;
+  --muted:#667085;
+  --line:#e5e7eb;
+  --blue:#2563eb;
+  --card-radius:2px;
+  --button-radius:3px;
+  --shadow:none;
+}
+*{
+  box-sizing:border-box}
+html,body{
+  margin:0;
+  min-height:100vh}
+body{
+  font-family:Arial,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  color:var(--text);
+  background:#fff}
+body.drawer-open{
+  overflow:hidden}
+.wrap{
+  width:min(1080px,100%);
+  margin:0 auto;
+  padding:18px 14px 40px}
+.hero{
+  padding:16px 8px 14px;
+  text-align:center}
+.eyebrow{
+  display:inline-flex;
+  gap:7px;
+  align-items:center;
+  border:1px solid var(--line);
+  background:#fff;
+  border-radius:999px;
+  padding:7px 12px;
+  color:#475467;
+  font-size:12px;
+  font-weight:900;
+  box-shadow:none}
+.info-logo-slot{
+  width:100%;
+  min-height:86px;
+  margin:12px auto 5px;
+  display:flex;
+  align-items:center;
+  justify-content:center}
+.info-logo-placeholder{
+  width:min(520px,92%);
+  height:86px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:1px dashed #cfd6df;
+  border-radius:var(--card-radius);
+  background:#fff;
+  color:#98a2b3;
+  font-size:14px;
+  font-weight:1000;
+  letter-spacing:.08em;
+  box-shadow:none}
+.info-logo-img{
+  display:block;
+  max-width:min(520px,92%);
+  max-height:86px;
+  object-fit:contain}
+.subtitle{
+  margin:0 auto;
+  color:var(--muted);
+  font-size:15px;
+  line-height:1.55;
+  max-width:560px}
+.hall-banner{
+  display:block;
+  width:60%;
+  margin:14px auto 0;
+  border-radius:var(--card-radius);
+  overflow:hidden;
+  border:1px solid var(--line);
+  box-shadow:none;
+  background:#fff;
+  text-decoration:none;
+  color:inherit;
+  transition:.18s ease}
+.hall-banner:hover{
+  transform:translateY(-2px) scale(1.005);
+  filter:brightness(1.04)}
+.hall-banner img{
+  display:block;
+  width:100%;
+  height:auto}
+.sanctuary-row{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:14px;
+  margin-top:16px;
+  align-items:stretch;
+  overflow:visible;
+  padding-top:18px}
+.card{
+  position:relative;
+  display:block;
+  aspect-ratio:4/3;
+  padding:18px;
+  border:1px solid var(--line);
+  border-radius:var(--card-radius);
+  background:#fff;
+  box-shadow:none;
+  overflow:hidden;
+  text-decoration:none;
+  color:inherit;
+  transition:transform .38s cubic-bezier(.16,1,.3,1),border-color .28s ease,filter .28s ease}
+.card.disabled{
+  opacity:.72;
+  cursor:not-allowed}
+.icon{
+  font-size:36px;
+  margin-bottom:9px}
+.card-title{
+  font-size:23px;
+  font-weight:1000;
+  letter-spacing:-.6px}
+.card-sub{
+  margin-top:6px;
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.45}
+.badge{
+  position:absolute;
+  right:14px;
+  top:14px;
+  z-index:8;
+  border-radius:999px;
+  padding:6px 10px;
+  font-size:11px;
+  font-weight:1000;
+  background:rgba(255,255,255,.74);
+  color:#d7caff;
+  border:1px solid rgba(215,190,255,.42);
+  backdrop-filter:blur(6px)}
+.rudra-card{
+  padding:0;
+  isolation:isolate;
+  cursor:pointer;
+  border-color:rgba(137,118,178,.35);
+  background:#070a12;
+  color:#fff;
+  overflow:visible;
+  transform-origin:left bottom;
+  z-index:2}
+.rudra-card .badge{
+  display:none}
+.rudra-card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  background:linear-gradient(180deg,rgba(8,10,18,0) 34%,rgba(8,8,14,.78) 72%,rgba(4,4,8,.96) 100%);
+  z-index:6;
+  pointer-events:none;
+  clip-path:inset(0 round 2px)}
+.rudra-card::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  border:1px solid rgba(255,255,255,.18);
+  z-index:11;
+  pointer-events:none;
+  transition:.28s ease;
+  clip-path:inset(0 round 2px)}
+.rudra-layer{
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  pointer-events:none;
+  transition:opacity .34s ease,transform .42s cubic-bezier(.16,1,.3,1),filter .42s cubic-bezier(.16,1,.3,1)}
+.rudra-bg{
+  z-index:1;
+  background-image:var(--kinojo-sanctuary-rudra-bg);
+  background-position:center;
+  background-size:cover;
+  background-repeat:no-repeat;
+  filter:brightness(.64) saturate(.88);
+  opacity:1;
+  clip-path:inset(0 round 2px)}
+.rudra-boss{
+  z-index:5;
+  inset:0;
+  background-image:var(--kinojo-sanctuary-rudra-boss);
+  background-position:center 34%;
+  background-size:86% auto;
+  background-repeat:no-repeat;
+  opacity:.78;
+  filter:brightness(.74) saturate(.9) drop-shadow(0 10px 18px rgba(0,0,0,.42));
+  transform:translate(0,0) scale(1);
+  transform-origin:42% 82%}
+.rudra-lightning-main{
+  z-index:8;
+  background-image:var(--kinojo-sanctuary-rudra-lightning);
+  background-position:56% 25%;
+  background-size:64% auto;
+  background-repeat:no-repeat;
+  opacity:0;
+  transform:rotate(-8deg) scale(1.08);
+  mix-blend-mode:screen;
+  filter:drop-shadow(0 0 18px rgba(184,110,255,.9))}
+.rudra-lightning-right{
+  z-index:9;
+  background-image:var(--kinojo-sanctuary-rudra-lightning-right);
+  background-position:76% 20%;
+  background-size:72% auto;
+  background-repeat:no-repeat;
+  opacity:0;
+  transform:rotate(12deg) scale(1.18);
+  mix-blend-mode:screen;
+  filter:drop-shadow(0 0 14px rgba(180,98,255,.74))}
+.rudra-content{
+  position:absolute;
+  left:16px;
+  right:14px;
+  bottom:13px;
+  z-index:12;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:12px;
+  align-items:end;
+  text-shadow:0 2px 12px rgba(0,0,0,.72)}
+.rudra-title{
+  font-size:24px;
+  font-weight:1000;
+  letter-spacing:-.8px;
+  line-height:1;
+  color:#fff}
+.rudra-sub{
+  margin-top:7px;
+  font-size:14px;
+  font-weight:900;
+  color:rgba(255,255,255,.88)}
+.rudra-enter{
+  width:32px;
+  height:32px;
+  border-radius:var(--button-radius);
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(230,214,255,.52);
+  background:rgba(20,14,38,.42);
+  font-size:24px;
+  color:#f5eaff;
+  transition:.28s ease}
+.rudra-card:hover,.rudra-card:focus-visible,.rudra-card:active{
+  z-index:20;
+  border-color:rgba(168,85,247,.62);
+  box-shadow:none}
+.rudra-card:hover::after,.rudra-card:focus-visible::after,.rudra-card:active::after{
+  box-shadow:0 0 26px rgba(176,95,255,.74),inset 0 0 24px rgba(176,95,255,.25);
+  border-color:rgba(216,190,255,.78)}
+.rudra-card:hover .rudra-bg,.rudra-card:focus-visible .rudra-bg,.rudra-card:active .rudra-bg{
+  filter:brightness(1.58) saturate(1.06) blur(.6px);
+  transform:scale(1.025)}
+.rudra-card:hover .rudra-boss,.rudra-card:focus-visible .rudra-boss,.rudra-card:active .rudra-boss{
+  opacity:1;
+  transform:translate(34px,-42px) scale(1.38);
+  filter:brightness(1.13) saturate(1.14) drop-shadow(0 0 20px rgba(168,85,247,.62)) drop-shadow(0 22px 30px rgba(0,0,0,.5))}
+.rudra-card:hover .rudra-lightning-main,.rudra-card:focus-visible .rudra-lightning-main,.rudra-card:active .rudra-lightning-main{
+  animation:rudraStrikeMain .95s steps(2,end) infinite}
+.rudra-card:hover .rudra-lightning-right,.rudra-card:focus-visible .rudra-lightning-right,.rudra-card:active .rudra-lightning-right{
+  animation:rudraStrikeRight 1.24s steps(2,end) infinite}
+.rudra-card:hover + .card,.rudra-card:focus-visible + .card,.rudra-card:active + .card{
+  transform:translateX(14px)}
+.rudra-card:hover + .card + .card,.rudra-card:focus-visible + .card + .card,.rudra-card:active + .card + .card{
+  transform:translateX(8px)}
+@keyframes rudraStrikeMain{
+0%,16%,100%{
+  opacity:0;
+  filter:drop-shadow(0 0 0 rgba(204,142,255,0))}
+18%,22%{
+  opacity:.95;
+  filter:drop-shadow(0 0 24px rgba(216,180,254,.98))}
+28%,54%{
+  opacity:.08}
+58%,63%{
+  opacity:.62;
+  filter:drop-shadow(0 0 18px rgba(168,85,247,.82))}
+}
+@keyframes rudraStrikeRight{
+0%,36%,100%{
+  opacity:0}
+38%,41%{
+  opacity:.48;
+  filter:drop-shadow(0 0 18px rgba(216,180,254,.88)) blur(.2px)}
+46%,72%{
+  opacity:.06}
+76%,79%{
+  opacity:.36}
+}
+.bagot-card,.kaldrix-card{
+  padding:0;
+  isolation:isolate;
+  cursor:pointer;
+  color:#fff;
+  overflow:hidden;
+  border-color:rgba(120,145,180,.32);
+  background:#101827;
+  transform-origin:center bottom;
+}
+.bagot-card::before,.kaldrix-card::before{
+  content:"";position:absolute;inset:0;z-index:1;transition:.38s ease;
+}
+.bagot-card::before{
+  background:var(--kinojo-sanctuary-bagot-bg);
+}
+.kaldrix-card::before{
+  background:var(--kinojo-sanctuary-kaldrix-bg);
+}
+.bagot-card::after,.kaldrix-card::after{
+  content:"";position:absolute;inset:0;z-index:3;
+  background:linear-gradient(180deg,rgba(8,10,18,0) 38%,rgba(4,9,18,.75) 76%,rgba(3,6,12,.95) 100%);
+}
+.sanctuary-symbol{
+  position:absolute;right:20px;top:24px;z-index:2;font-size:58px;line-height:1;
+  opacity:.62;filter:drop-shadow(0 10px 16px rgba(0,0,0,.32));
+  transition:.38s cubic-bezier(.16,1,.3,1);
+}
+.sanctuary-card-content{
+  position:absolute;left:16px;right:14px;bottom:13px;z-index:5;
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:end;
+  text-shadow:0 2px 12px rgba(0,0,0,.72);
+}
+.sanctuary-title{font-size:24px;font-weight:1000;letter-spacing:-.8px;line-height:1;color:#fff}
+.sanctuary-sub{margin-top:7px;font-size:14px;font-weight:900;color:rgba(255,255,255,.88)}
+.sanctuary-enter{width:32px;height:32px;border-radius:var(--button-radius);display:grid;place-items:center;border:1px solid rgba(255,255,255,.52);background:rgba(20,25,38,.38);font-size:24px;color:#fff;transition:.28s ease}
+.bagot-card:hover,.bagot-card:focus-visible,.kaldrix-card:hover,.kaldrix-card:focus-visible{
+  transform:translateY(-2px) scale(1.012);filter:brightness(1.04);
+}
+.bagot-card:hover::before,.bagot-card:focus-visible::before,.kaldrix-card:hover::before,.kaldrix-card:focus-visible::before{
+  transform:scale(1.06);filter:saturate(1.12) brightness(1.08);
+}
+.bagot-card:hover .sanctuary-symbol,.bagot-card:focus-visible .sanctuary-symbol{
+  transform:translate(-8px,-10px) scale(1.18) rotate(-6deg);opacity:.82;
+}
+.kaldrix-card:hover .sanctuary-symbol,.kaldrix-card:focus-visible .sanctuary-symbol{
+  transform:translate(8px,-12px) scale(1.18) rotate(7deg);opacity:.82;
+}
+.sanctuary-row:has(.bagot-card:hover) .rudra-card,.sanctuary-row:has(.bagot-card:focus-visible) .rudra-card{
+  transform:translateX(-10px);
+}
+.sanctuary-row:has(.bagot-card:hover) .kaldrix-card,.sanctuary-row:has(.bagot-card:focus-visible) .kaldrix-card{
+  transform:translateX(10px);
+}
+.sanctuary-row:has(.kaldrix-card:hover) .rudra-card,.sanctuary-row:has(.kaldrix-card:focus-visible) .rudra-card{
+  transform:translateX(-14px);
+}
+.sanctuary-row:has(.kaldrix-card:hover) .bagot-card,.sanctuary-row:has(.kaldrix-card:focus-visible) .bagot-card{
+  transform:translateX(-8px);
+}
+
+.footer{
+  display:flex;
+  justify-content:center;
+  gap:16px;
+  flex-wrap:wrap;
+  margin-top:24px}
+.footer button{
+  appearance:none;
+  border:0;
+  background:transparent;
+  color:#667085;
+  text-decoration:none;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+  padding:4px 2px;
+  font-family:inherit;
+  border-radius:var(--button-radius)}
+.footer button:hover{
+  color:var(--blue)}
+.info-drawer-overlay{
+  position:fixed;
+  inset:0;
+  z-index:1000;
+  display:none;
+  background:rgba(255,255,255,.1);
+  backdrop-filter:blur(5px);
+  -webkit-backdrop-filter:blur(5px)}
+.info-drawer-overlay.is-open{
+  display:block}
+.info-drawer{
+  position:fixed;
+  z-index:1001;
+  left:0;
+  top:0;
+  width:min(460px,92vw);
+  height:100dvh;
+  background:#fff;
+  border-right:1px solid var(--line);
+  box-shadow:none;
+  transform:translateX(-104%);
+  transition:transform .28s ease;
+  display:flex;
+  flex-direction:column}
+.info-drawer.is-open{
+  transform:translateX(0)}
+.info-drawer-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:18px 18px 14px;
+  border-bottom:1px solid var(--line)}
+.info-drawer-title{
+  margin:0;
+  font-size:20px;
+  font-weight:1000;
+  letter-spacing:-.4px}
+.info-drawer-close{
+  appearance:none;
+  border:1px solid var(--line);
+  background:#fff;
+  color:#475467;
+  width:38px;
+  height:38px;
+  border-radius:var(--button-radius);
+  cursor:pointer;
+  font-size:22px;
+  line-height:1}
+.info-drawer-body{
+  padding:18px;
+  overflow:auto;
+  line-height:1.7;
+  color:#344054;
+  font-size:14px}
+.info-drawer-body h3{
+  margin:18px 0 8px;
+  font-size:16px}
+.info-drawer-body h3:first-child{
+  margin-top:0}
+.info-drawer-body p{
+  margin:0 0 12px}
+.info-drawer-body ul{
+  margin:0 0 12px;
+  padding-left:19px}
+.info-drawer-body li{
+  margin:4px 0}
+@media(max-width:720px){
+.wrap{
+  padding:12px 10px 32px}
+.info-logo-slot{
+  min-height:72px;
+  margin-top:10px}
+.info-logo-placeholder{
+  height:72px;
+  font-size:12px}
+.info-logo-img{
+  max-height:72px}
+.card-title{
+  font-size:21px}
+.rudra-title{
+  font-size:21px}
+.rudra-sub{
+  font-size:13px}
+.rudra-boss{
+  background-size:92% auto}
+.rudra-lightning-main{
+  background-size:56% auto}
+.rudra-lightning-right{
+  background-size:60% auto}
+}
+@media(prefers-reduced-motion:reduce){
+*,*::before,*::after{
+  transition:none!important;
+  animation:none!important}
+}
+/* KINOJO main visual-contract restore patch */
+body,.card,.eyebrow,.hall-banner,.info-logo-placeholder,.info-drawer{
+  background:#fff!important;
+  box-shadow:none!important;
+}
+.card,.hall-banner,.info-logo-placeholder,.info-drawer-close{
+  border-radius:2px!important;
+}
+.card:hover:not(.disabled){
+  transform:translateY(-2px);
+  border-color:#cfd6df;
+}
+.rudra-card{
+  clip-path:inset(0 -72px -1px 0 round 2px);
+  overflow:visible!important;
+}
+.rudra-card::before,.rudra-card::after,.rudra-bg{
+  clip-path:inset(0 0 0 0 round 2px)!important;
+}
+.rudra-card:hover::after,.rudra-card:focus-visible::after,.rudra-card:active::after{
+  box-shadow:none!important;
+}
+.rudra-boss{
+  background-position:46% 42%!important;
+  background-size:92% auto!important;
+  transform-origin:20% 100%!important;
+  clip-path:inset(0 0 0 0 round 2px);
+}
+.rudra-card:hover .rudra-boss,.rudra-card:focus-visible .rudra-boss,.rudra-card:active .rudra-boss{
+  transform:translate(58px,-66px) scale(1.72)!important;
+  filter:brightness(1.16) saturate(1.18) drop-shadow(0 0 18px rgba(168,85,247,.42))!important;
+}
+.rudra-card:hover + .card,.rudra-card:focus-visible + .card,.rudra-card:active + .card{
+  transform:translateX(18px)!important;
+}
+.rudra-card:hover + .card + .card,.rudra-card:focus-visible + .card + .card,.rudra-card:active + .card + .card{
+  transform:translateX(10px)!important;
+}
+@media(max-width:900px){
+  .rudra-card:hover .rudra-boss,.rudra-card:focus-visible .rudra-boss,.rudra-card:active .rudra-boss{
+    transform:translate(34px,-42px) scale(1.36)!important;
+  }
+}
+
+
+/* Common topbar/drawer rules moved to ui/kinojo-common-ui.css. */
+
+/* ============================================================
+   KINOJO 1.c2.04 UI System Fix - INFO HOME
+============================================================ */
+body{background:#fff!important;}
+.card:not(.rudra-card):not(.bagot-card):not(.kaldrix-card):hover .sanctuary-title,.card:not(.rudra-card):not(.bagot-card):not(.kaldrix-card):hover .sanctuary-sub{transform:scale(1.04);color:#2563eb;}
+.sanctuary-title,.sanctuary-sub{display:inline-block;transition:color .22s ease,transform .22s ease;}
+.common-footer{display:grid;gap:8px;justify-items:center;}
+.footer-links{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;}
+.footer-powered{font-size:11px;color:#98a2b3;font-weight:900;}
+
+/* 26062218: KINOJO INFO 대표 배너 */
+.kinojo-main-banner{
+  display:block;
+  width:min(960px,100%);
+  margin:14px auto 0;
+  border:1px solid rgba(17,24,39,.12);
+  border-radius:12px;
+  overflow:hidden;
+  background:#111827;
+  box-shadow:0 14px 34px rgba(15,23,42,.14);
+  text-decoration:none;
+  color:inherit;
+  transition:transform .22s ease, filter .22s ease, box-shadow .22s ease;
+}
+.kinojo-main-banner:hover{
+  transform:translateY(-2px);
+  filter:brightness(1.03);
+  box-shadow:0 18px 42px rgba(15,23,42,.18);
+}
+.kinojo-main-banner img{
+  display:block;
+  width:100%;
+  height:auto;
+  aspect-ratio:16/9;
+  object-fit:cover;
+}
+@media (max-width:540px){
+  .kinojo-main-banner{
+    width:100%;
+    border-radius:10px;
+    margin-top:10px;
+  }
+  .kinojo-main-banner img{
+    min-height:170px;
+  }
+}

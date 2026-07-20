@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>KINOJO INFO - 미터기 통계</title>
+<meta name="description" content="KINOJO Meter의 클래스·전투력 구간별 DPS와 내 전투 기록 백분위를 확인합니다."/>
+<link rel="canonical" href="https://kinojo.info/meter/"/>
+<link href="../../ui/kinojo-layout.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
+<link href="../../ui/kinojo-components.css?cache=26062102" rel="stylesheet"/>
+<link href="../../ui/kinojo-common-ui.css?cache=2026071905" rel="stylesheet"/>
+<link href="../../meter/css/meter.css?cache=2026072001" rel="stylesheet"/>
+</head>
+<body class="kinojo-meter-page kinojo-meter-mobile">
+<main class="meter-wrap">
+  <section class="meter-hero">
+    <div class="meter-hero-copy"><div class="meter-kicker">KINOJO METER · PROTOTYPE</div><h1>내 전투를 같은 조건에서 비교하세요</h1><p>클래스, 보스, 전투력 구간을 서버가 동일한 기준으로 집계합니다.</p><div class="meter-hero-actions"><a class="kinojo-btn meter-primary" id="meterDownloadBtn" href="#download">테스트 버전 다운로드</a><a class="kinojo-btn secondary" href="#stats">통계 보기</a></div></div>
+    <aside class="meter-download-card" id="download"><span class="meter-beta">BETA</span><h2>KINOJO Meter</h2><p>PASS KEY 인증 · 캐릭터 선택 · 실시간 오버레이</p><dl><div><dt>버전</dt><dd id="meterVersion">0.1.0 Prototype</dd></div><div><dt>초기 설치기</dt><dd id="meterInstallerSize">50MB 이하</dd></div><div><dt>지원</dt><dd>Windows 10/11 x64</dd></div></dl><a class="kinojo-btn meter-download-full" id="meterDirectDownload" href="#" aria-disabled="true">다운로드 준비 중</a><small id="meterDownloadNote">GitHub Release 업로드 후 자동 연결됩니다.</small></aside>
+  </section>
+  <section class="meter-notice" id="meterNotice"><strong>프로토타입 안내</strong><span>서버 데이터가 없으면 샘플 통계를 표시합니다.</span></section>
+  <section class="meter-filter-card" id="stats" aria-label="미터기 통계 필터"><div><label for="meterClass">클래스</label><select id="meterClass"></select></div><div><label for="meterBoss">보스</label><select id="meterBoss"><option value="">전체 보스</option><option value="루드라">루드라</option><option value="타하바타">타하바타</option><option value="크로메데">크로메데</option></select></div><div><label for="meterBucket">전투력 구간</label><select id="meterBucket"><option value="25000">25,000</option><option value="50000" selected>50,000</option><option value="100000">100,000</option></select></div><div><label for="meterDays">집계 기간</label><select id="meterDays"><option value="7">최근 7일</option><option value="30" selected>최근 30일</option><option value="90">최근 90일</option></select></div><button class="kinojo-btn meter-query" id="meterQueryBtn" type="button">통계 조회</button></section>
+  <section class="meter-summary"><article><span>유효 전투</span><strong id="meterEncounterCount">-</strong><small>클리어 기록</small></article><article><span>참여 캐릭터</span><strong id="meterCharacterCount">-</strong><small>익명 집계</small></article><article><span>중앙값 DPS</span><strong id="meterMedianDps">-</strong><small>대표 비교값</small></article><article><span>상위 10% DPS</span><strong id="meterP90Dps">-</strong><small>90 percentile</small></article></section>
+  <section class="meter-grid"><article class="meter-panel meter-distribution-panel"><header><div><span>CLASS DISTRIBUTION</span><h2>전투력 구간별 DPS</h2></div><small id="meterUpdatedAt">업데이트 대기</small></header><div class="meter-chart-head"><span>전투력</span><span>중앙값 / 상위 10%</span></div><div class="meter-bucket-chart" id="meterBucketChart"><div class="meter-loading">통계를 불러오는 중...</div></div><p class="meter-footnote">표본 10건 미만 구간은 공개하지 않습니다.</p></article><article class="meter-panel meter-my-panel"><header><div><span>MY PERFORMANCE</span><h2>내 DPS 분석</h2></div></header><div id="meterMyEmpty" class="meter-my-empty"><strong>PASS KEY로 내 기록 확인</strong><p>계정에 연결된 캐릭터 기록을 동일 조건과 비교합니다.</p><form class="meter-pass-form" id="meterPassForm"><label for="meterPassKey">PASS KEY</label><div><input id="meterPassKey" type="password" maxlength="80" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="PASS KEY 입력"/><button class="kinojo-btn secondary" id="meterMyQueryBtn" type="submit">내 기록 비교</button></div><small>입력값은 저장하지 않으며 조회 후 즉시 지웁니다.</small><p class="meter-pass-error" id="meterPassError" role="status"></p></form></div><div id="meterMyResult" class="meter-my-result" hidden><div class="meter-percentile"><span>동일 조건</span><strong id="meterMyTop">상위 -%</strong><small id="meterMySample">표본 -전</small></div><dl><div><dt>내 DPS</dt><dd id="meterMyDps">-</dd></div><div><dt>구간 중앙값</dt><dd id="meterMyMedian">-</dd></div><div><dt>중앙값 대비</dt><dd id="meterMyDiff">-</dd></div></dl><button class="meter-my-reset" id="meterMyResetBtn" type="button">다른 조건·계정 조회</button></div></article></section>
+  <section class="meter-method"><div><span>01</span><strong>미터기 수집</strong><p>완료 전투를 확정합니다.</p></div><div><span>02</span><strong>서버 검증</strong><p>중복과 비정상 기록을 차단합니다.</p></div><div><span>03</span><strong>WEB 비교</strong><p>집계 결과만 표시합니다.</p></div></section>
+  <footer class="footer common-footer"><div class="footer-links"><a href="../../pages/about.html">사이트 소개</a><a href="../../pages/terms.html">이용약관</a><a href="../../pages/privacy.html">개인정보처리방침</a><a href="../../pages/contact.html">아이디어 제안 및 건의</a></div><div class="footer-powered">Powered by KINOJO INFO</div></footer>
+</main>
+<script src="../../core/kinojo-api.js?cache=2026070115"></script><script src="../../core/kinojo-cache.js?cache=2026070115"></script><script src="../../core/kinojo-permissions.js?cache=2026071517"></script><script src="../../core/kinojo-toast.js?cache=2026070115"></script><script src="../../core/kinojo-modal.js?cache=2026070115"></script><script src="../../core/kinojo-route-guard.js?cache=2026070115"></script><script src="../../ui/kinojo-common-ui.js?cache=2026071712"></script><script src="../../core/kinojo-supabase.js?cache=2026071907"></script><script src="../../core/kinojo-auth.js?cache=2026071907"></script><script src="../../meter/js/meter-app.js?cache=2026072001"></script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KINOJO INFO · 모바일</title>
+<meta name="description" content="아이온2 지켈 서버 깡 레기온의 비공식 정보 사이트입니다.">
+<link rel="canonical" href="https://kinojo.info/m/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="KINOJO INFO">
+<meta property="og:title" content="KINOJO INFO · 모바일">
+<meta property="og:description" content="아이온2 지켈 서버 깡 레기온의 비공식 정보 사이트입니다.">
+<meta property="og:url" content="https://kinojo.info/m/">
+<meta property="og:image" content="https://kinojo.info/assets/images/common/kinojo-og.jpg">
+<meta property="og:image:width" content="1536">
+<meta property="og:image:height" content="864">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="KINOJO INFO · 모바일">
+<meta name="twitter:description" content="아이온2 지켈 서버 깡 레기온의 비공식 정보 사이트입니다.">
+<meta name="twitter:image" content="https://kinojo.info/assets/images/common/kinojo-og.jpg">
+<link rel="stylesheet" href="../ui/kinojo-common-ui.css?cache=2026071518">
+<link rel="stylesheet" href="../ui/kinojo-sanctuary-cards.css?cache=2026071308">
+<link rel="stylesheet" href="mobile.css?cache=2026070519">
+<link rel="stylesheet" href="../ui/kinojo-event-notice.css?cache=2026070521">
+</head>
+<body class="mobile-home-page">
+<main class="mobile-wrap mobile-home-wrap">
+  <section class="mobile-home-stack" aria-label="KINOJO 모바일 메뉴">
+    <a class="mobile-og-banner" href="hof/" aria-label="KINOJO INFO 대표 배너">
+      <img src="../assets/images/common/kinojo-og.jpg?cache=26062218" alt="KINOJO INFO 깡 레기온 대표 배너">
+    </a>
+    <a class="mobile-feature-card mobile-feature-hall" href="hof/" aria-label="명예의 전당 열기">
+      <span class="mobile-card-bg" aria-hidden="true"></span>
+      <span class="mobile-card-shade" aria-hidden="true"></span>
+      <span class="mobile-card-copy">
+        <strong>명예의 전당</strong>
+        <span>깡 레기온 랭킹 조회 등</span>
+      </span>
+      <span class="mobile-card-enter" aria-hidden="true">›</span>
+    </a>
+
+    <section class="mobile-feature-card mobile-sanctuary-carousel" data-mobile-sanctuary-carousel aria-label="성역 파티 카드">
+      <div class="mobile-sanctuary-track" id="mobileSanctuaryTrack" data-sanctuary-track data-sanctuary-master-list="mobile" data-sanctuary-base="sanctuary/">
+        <div class="sanctuary-master-loading">성역 목록을 불러오는 중입니다.</div>
+      </div>
+      <button class="mobile-sanctuary-arrow mobile-sanctuary-prev" id="mobileSanctuaryPrev" data-sanctuary-prev type="button" aria-label="이전 성역 보기">
+        <span class="arrow-mark">‹</span><span class="arrow-label">1성역</span>
+      </button>
+      <button class="mobile-sanctuary-arrow mobile-sanctuary-next" id="mobileSanctuaryNext" data-sanctuary-next type="button" aria-label="다음 성역 보기">
+        <span class="arrow-label">2성역</span><span class="arrow-mark">›</span>
+      </button>
+      <div class="mobile-sanctuary-dots" id="mobileSanctuaryDots" data-sanctuary-master-dots aria-hidden="true"></div>
+    </section>
+
+    <a class="mobile-feature-card mobile-feature-arcana" href="arcana/" aria-label="아르카나 열기">
+      <span class="mobile-card-bg" aria-hidden="true"></span>
+      <span class="mobile-card-shade" aria-hidden="true"></span>
+      <span class="mobile-card-copy">
+        <strong>ARCANA</strong>
+        <span>조합 시뮬레이터</span>
+      </span>
+      <span class="mobile-card-enter" aria-hidden="true">›</span>
+    </a>
+  </section>
+</main>
+<nav class="mobile-bottom-nav" aria-label="모바일 하단 메뉴"><a class="is-active" href="index.html">메인</a><a href="hof/">명예</a><a href="sanctuary/">성역</a><a href="arcana/">아르카나</a></nav>
+<script src="../core/kinojo-api.js?cache=2026062610"></script>
+<script src="../core/kinojo-cache.js?cache=2026062610"></script>
+<script src="../core/kinojo-permissions.js?cache=2026071517"></script>
+<script src="../core/kinojo-toast.js?cache=2026062610"></script>
+<script src="../core/kinojo-modal.js?cache=2026062610"></script>
+<script src="../core/kinojo-route-guard.js?cache=2026062610"></script>
+<script src="../core/kinojo-debug.js?cache=2026062610"></script>
+<script src="../core/kinojo-logger.js?cache=2026062610"></script>
+<script src="../ui/kinojo-common-ui.js?cache=2026071712"></script>
+<script src="../ui/kinojo-admin-panel.js?cache=2026071712"></script>
+<script src="../core/kinojo-supabase.js?cache=2026071518"></script>
+<script src="../core/kinojo-auth.js?cache=2026071518"></script>
+<script src="../ui/kinojo-event-notice.js?cache=2026070521"></script>
+<script src="mobile-sanctuary-carousel.js?cache=2026071301"></script>
+<script src="mobile-home.js?cache=2026062610"></script>
+</body>
+</html>
