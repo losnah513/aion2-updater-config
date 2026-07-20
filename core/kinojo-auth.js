@@ -138,6 +138,21 @@
   }
   function isAdmin(){ return canOpenManage(roleOf(getSession())); }
   function canManageAccounts(role){ return ['MASTER','SUB_MASTER','MANAGER'].includes(String(role||'')); }
+  function currentAdminAccount_(){ return typeof getAccount === 'function' ? getAccount() : null; }
+  function canEditManagedAccount_(account){
+    const actor=currentAdminAccount_();
+    const actorLevel=roleLevel(roleOf(actor));
+    const targetLevel=roleLevel(roleOf(account));
+    if(!actor || actorLevel<3) return false;
+    if((actor.id&&account.id&&String(actor.id)===String(account.id)) || (actor.mainCharacter&&account.mainCharacter&&String(actor.mainCharacter)===String(account.mainCharacter))) return false;
+    return targetLevel<actorLevel;
+  }
+  function assignableRoles_(actorRole){
+    if(actorRole==='MASTER') return ['MEMBER','STAFF','MANAGER','SUB_MASTER'];
+    if(actorRole==='SUB_MASTER') return ['MEMBER','STAFF','MANAGER'];
+    if(actorRole==='MANAGER') return ['MEMBER','STAFF'];
+    return [];
+  }
 
   function safeText(value){
     return String(value ?? '')
@@ -1097,18 +1112,20 @@
     box.innerHTML = accounts.map(account => {
       const role = roleOf(account);
       const isRoot = role === 'MASTER';
+      const actorRole = roleOf(currentAdminAccount_());
+      const editable = canEditManagedAccount_(account);
       const displayCode = isRoot ? '마스터 계정' : (account.code || '-');
       const permissions = normalizePermissions_(account.permissions);
       const permDataset = permissions.join(',');
       const toggleHtml = Object.keys(PERMISSION_LABELS).map(key => {
         const on = permissions.includes(key) || permissions.includes('all');
-        const disabled = isRoot ? ' disabled' : '';
+        const disabled = editable ? '' : ' disabled';
         return '<label class="admin-switch-row"><span>' + safeText(PERMISSION_LABELS[key]) + '</span><button aria-label="' + safeText(PERMISSION_LABELS[key]) + ' 권한" aria-pressed="' + (on ? 'true' : 'false') + '" class="admin-permission-toggle ' + (on ? 'on' : '') + '" data-account-action="toggle-permission" data-code="' + safeText(account.code || '') + '" data-permission="' + key + '" type="button"' + disabled + '><span></span></button></label>';
       }).join('');
-      const roleOptions = ['MEMBER','STAFF','MANAGER','SUB_MASTER'].map(r => '<option value="' + r + '"' + (role === r ? ' selected' : '') + '>' + safeText(roleLabel(r)) + '</option>').join('');
-      const roleSelect = isRoot ? '<span class="admin-account-role-fixed">MASTER</span>' : '<select class="admin-account-role-select" data-account-action="change-role" data-code="' + safeText(account.code || '') + '">' + roleOptions + '</select>'; 
-      const deleteButton = isRoot
-        ? '<button class="btn admin-account-delete" type="button" disabled>삭제 불가</button>'
+      const roleOptions = assignableRoles_(actorRole).map(r => '<option value="' + r + '"' + (role === r ? ' selected' : '') + '>' + safeText(roleLabel(r)) + '</option>').join('');
+      const roleSelect = !editable ? '<span class="admin-account-role-fixed">' + safeText(roleLabel(role)) + '</span>' : '<select class="admin-account-role-select" data-account-action="change-role" data-code="' + safeText(account.code || '') + '">' + roleOptions + '</select>'; 
+      const deleteButton = !editable
+        ? '<button class="btn admin-account-delete" type="button" disabled>수정 불가</button>'
         : '<button class="btn admin-account-delete" data-account-action="delete-code" data-code="' + safeText(account.code || '') + '" type="button">코드 삭제</button>';
 
       return '<article class="admin-account-row" data-original-role="' + safeText(role) + '" data-original-permissions="' + safeText(permDataset) + '" data-role="' + safeText(role) + '" data-name="' + safeText(account.mainCharacter || '') + '" data-code="' + safeText(account.code || '') + '" data-permissions="' + safeText(permDataset) + '">'

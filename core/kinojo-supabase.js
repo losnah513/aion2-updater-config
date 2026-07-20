@@ -591,43 +591,31 @@
     if(normalizedCommand === 'updateRole'){
       const code = normalizeMemberCode(extra.code);
       if(!isValidMemberCode(code)) return { ok:false, message:'회원 코드 형식이 올바르지 않습니다.' };
-      const role = normalizeRole(extra.role, 1);
-      if(role === 'MASTER') return { ok:false, message:'마스터 등급은 고정 계정만 사용할 수 있습니다.' };
-      const member = await findMemberByCode(code);
-      if(!member) return { ok:false, message:'해당 코드를 찾지 못했습니다.' };
-      if(normalizeRole(member.role, member.level) === 'MASTER') return { ok:false, message:'마스터 계정 등급은 수정할 수 없습니다.' };
-      const rows = await request('member_codes', { method:'PATCH', query:'pass_code=eq.' + encodeURIComponent(code), headers:{ Prefer:'return=representation' }, body:roleRowPatch(role) });
-      return { ok:true, message:'등급이 수정되었습니다.', code, account:accountFromRow(Array.isArray(rows) ? rows[0] : rows) };
+      const data = await rpc('kinojo_admin_member_manage_261', {
+        p_pass_key:currentPassKey(), p_target_code:code, p_action:'update_role',
+        p_payload:{ role:normalizeRole(extra.role,1) }
+      });
+      return { ok:true, message:'등급이 수정되었습니다.', code, account:accountFromRow(data?.member) };
     }
 
     if(normalizedCommand === 'updatePermissions'){
       const code = normalizeMemberCode(extra.code);
       if(!isValidMemberCode(code)) return { ok:false, message:'회원 코드 형식이 올바르지 않습니다.' };
-      const member = await findMemberByCode(code);
-      if(!member) return { ok:false, message:'해당 코드를 찾지 못했습니다.' };
-      if(normalizeRole(member.role, member.level) === 'MASTER') return { ok:false, message:'마스터 계정 권한은 수정할 수 없습니다.' };
-      const permissions = normalizePermissions(extra.permissions);
-      const rows = await request('member_codes', {
-        method:'PATCH',
-        query:'pass_code=eq.' + encodeURIComponent(code),
-        headers:{ Prefer:'return=representation' },
-        body:{ permissions, can_manage:permissions.includes('account_manage') || permissions.includes('all') || Number(member.level || 0) >= 3 }
+      const data = await rpc('kinojo_admin_member_manage_261', {
+        p_pass_key:currentPassKey(), p_target_code:code, p_action:'update_permissions',
+        p_payload:{ permissions:normalizePermissions(extra.permissions) }
       });
-      return { ok:true, message:'권한이 수정되었습니다.', code, account:accountFromRow(Array.isArray(rows) ? rows[0] : rows) };
+      return { ok:true, message:'권한이 수정되었습니다.', code, account:accountFromRow(data?.member) };
     }
 
     if(normalizedCommand === 'deleteCode' || normalizedCommand === 'disableCode'){
       const code = normalizeMemberCode(extra.code);
       if(!isValidMemberCode(code)) return { ok:false, message:'회원 코드 형식이 올바르지 않습니다.' };
-      const member = await findMemberByCode(code);
-      if(!member) return { ok:false, message:'해당 코드를 찾지 못했습니다.' };
-      if(normalizeRole(member.role, member.level) === 'MASTER') return { ok:false, message:'마스터 계정은 삭제할 수 없습니다.' };
-      if(normalizedCommand === 'deleteCode'){
-        await request('member_codes', { method:'DELETE', query:'pass_code=eq.' + encodeURIComponent(code) });
-        return { ok:true, message:'회원 코드가 삭제되었습니다.', code };
-      }
-      await request('member_codes', { method:'PATCH', query:'pass_code=eq.' + encodeURIComponent(code), body:{ is_active:false } });
-      return { ok:true, message:'회원 코드가 비활성화되었습니다.', code };
+      await rpc('kinojo_admin_member_manage_261', {
+        p_pass_key:currentPassKey(), p_target_code:code,
+        p_action:normalizedCommand === 'deleteCode' ? 'delete' : 'disable', p_payload:{}
+      });
+      return { ok:true, message:normalizedCommand === 'deleteCode' ? '회원 코드가 삭제되었습니다.' : '회원 코드가 비활성화되었습니다.', code };
     }
 
     if(normalizedCommand === 'permissionOptions'){
@@ -1513,29 +1501,6 @@
     return Object.assign({ ok:true }, data || {});
   }
 
-  async function getMeterStats(extra={}){
-    const data = await rpc('kinojo_meter_web_stats_v1', {
-      p_class_name:String(extra.className || extra.class_name || '').trim() || null,
-      p_boss_name:String(extra.bossName || extra.boss_name || '').trim() || null,
-      p_bucket_size:Number(extra.bucketSize || extra.bucket_size || 50000),
-      p_days:Number(extra.days || 30)
-    });
-    return Object.assign({ ok:true }, data || {});
-  }
-
-  async function getMeterMyComparison(extra={}){
-    const passKey=currentPassKey();
-    if(!passKey) return { ok:false, hasRecord:false, message:'PASS KEY 로그인이 필요합니다.' };
-    const data = await rpc('kinojo_meter_web_my_comparison_v1', {
-      p_pass_key:passKey,
-      p_class_name:String(extra.className || extra.class_name || '').trim() || null,
-      p_boss_name:String(extra.bossName || extra.boss_name || '').trim() || null,
-      p_bucket_size:Number(extra.bucketSize || extra.bucket_size || 50000),
-      p_days:Number(extra.days || 30)
-    });
-    return Object.assign({ ok:true }, data || {});
-  }
-
   async function adminSanctuarySheetSync(command, extra={}){
     assertAdmin();
     const passKey=currentPassKey();
@@ -1583,8 +1548,6 @@
     if(name === 'hofSummary') return getWebHofSummary(extra);
     if(name === 'hallRankingView') return getWebHallRankingView(extra);
     if(name === 'legionRanking') return getWebLegionRanking(extra);
-    if(name === 'meterStats') return getMeterStats(extra);
-    if(name === 'meterMyComparison') return getMeterMyComparison(extra);
     if(name === 'ranking') return getWebRanking(extra.limit || 300);
     if(name === 'dashboard') return getWebDashboard();
     if(name === 'updaterStatus') return runtimeGetStatus();
@@ -1694,8 +1657,6 @@
     getWebRanking,
     getWebDashboard,
     getWebUpdaterStatus,
-    getMeterStats,
-    getMeterMyComparison,
     runtimeGetStatus,
     runtimeStart,
     runtimeProgress,
