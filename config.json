@@ -24,14 +24,5 @@
     "fallbackToAppsScript": false
   },
   "extensionVersion": "1.3.1.20",
-  "siteVersion": "1.3.1.43-meter-prototype-2026071901",
-  "meter": {
-    "enabled": true,
-    "version": "0.1.0 Prototype",
-    "installerSize": "32KB 테스트 설치기",
-    "downloadUrl": "https://github.com/losnah513/kinojo-meter/releases/latest/download/KINOJO_Meter_Prototype_Setup.exe",
-    "releasePageUrl": "https://github.com/losnah513/kinojo-meter/releases/latest",
-    "sha256": "EC2728960E1447E06DB8E98B1164DE5CE4FA85E4DBEE155865F353DECD805EA4",
-    "statsPageUrl": "https://kinojo.info/meter/"
-  }
+  "siteVersion": "1.3.1.36-2026070606"
 }

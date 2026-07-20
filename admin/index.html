@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>KINOJO INFO - 관리자 콘솔</title>
+<meta name="description" content="KINOJO INFO 관리자 콘솔입니다. 회원, 코드 요청, 캐릭터, 성역 동기화, 공지, 서버 상태를 관리합니다."/>
+<meta name="robots" content="noindex,nofollow"/>
+<link rel="canonical" href="https://kinojo.info/admin/"/>
+<link href="../ui/kinojo-layout.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
+<link href="../ui/kinojo-components.css?cache=26062102" rel="stylesheet"/>
+<link href="../ui/kinojo-common-ui.css?cache=2026071518" rel="stylesheet"/>
+<link href="../ui/kinojo-card-guards.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
+<link href="../ui/kinojo-animations.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
+<link href="./css/admin.css?cache=2026071819" rel="stylesheet"/>
+<script src="../ui/kinojo-device-router.js?cache=2026070110" data-mobile-path="../m/admin/"></script>
+</head>
+<body class="kinojo-page-admin">
+<main class="kinojo-admin-console">
+  <aside class="admin-side" aria-label="관리자 메뉴">
+    <div class="admin-brand"><div class="admin-brand-mark">🛡</div><div><strong>KINOJO</strong><span>ADMIN CONSOLE</span></div></div>
+    <nav class="admin-nav">
+      <button class="active" data-admin-tab="dashboard" type="button">🏠 대시보드</button>
+      <button data-admin-tab="requests" type="button">🧾 코드 요청 <span class="badge" id="adminPendingBadge">0</span></button>
+      <button data-admin-tab="members" type="button">👥 회원 관리</button>
+      <button data-admin-tab="characters" type="button">🧍 캐릭터 관리</button>
+      <button data-admin-tab="sanctuary" type="button">🏰 성역 관리</button>
+      <button data-admin-tab="notices" type="button">📢 공지 관리</button>
+      <button data-admin-tab="system" type="button">⚙ 시스템 설정</button>
+      <button data-admin-tab="logs" type="button">📋 로그 관리</button>
+    </nav>
+    <div class="admin-side-user"><div class="avatar">👤</div><div><strong id="adminRoleLabel">관리자</strong><span>권한 기반 메뉴 표시</span></div></div>
+  </aside>
+  <section class="admin-main">
+    <header class="admin-top">
+      <div class="admin-top-left"><button class="admin-icon-btn admin-mobile-menu" type="button">☰</button><div class="admin-title"><h1>관리자 콘솔</h1><p>서버 RPC 기준으로 운영 데이터를 관리합니다.</p></div></div>
+      <div class="admin-top-actions"><button class="admin-icon-btn admin-notify" type="button">🔔<i id="adminNotifyCount">5</i></button><button class="admin-icon-btn primary" id="adminRefreshBtn" type="button">새로고침</button><button class="admin-icon-btn" id="adminLogoutBtn" type="button">로그아웃</button></div>
+    </header>
+    <select class="admin-mobile-select" id="adminMobileSelect" aria-label="관리 메뉴 선택">
+      <option value="dashboard">대시보드</option><option value="requests">코드 요청</option><option value="members">회원 관리</option><option value="characters">캐릭터 관리</option><option value="sanctuary">성역 관리</option><option value="notices">공지 관리</option><option value="system">시스템 설정</option><option value="logs">로그 관리</option>
+    </select>
+
+    <section class="admin-pane active" data-admin-pane="dashboard">
+      <div class="admin-grid"><article class="admin-stat"><div class="admin-stat-icon">👥</div><div><span>오늘 방문자</span><strong id="statVisitors">-</strong><em id="statVisitorsSub">확인 중</em></div></article><article class="admin-stat"><div class="admin-stat-icon">🧾</div><div><span>코드 요청</span><strong id="statRequests">-</strong><em id="statRequestsSub">확인 중</em></div></article><article class="admin-stat"><div class="admin-stat-icon">🔄</div><div><span>성역 동기화</span><strong id="statSanctuary">-</strong><em id="statSanctuarySub">확인 중</em></div></article><article class="admin-stat"><div class="admin-stat-icon">🛡</div><div><span>서버 상태</span><strong id="statServer">-</strong><em id="statServerSub">확인 중</em></div></article></div>
+      <div class="admin-three"><section class="admin-card"><div class="admin-card-head"><div><h2>최근 코드 요청</h2><p>관리자 승인 대기 목록</p></div><button class="admin-link-btn" data-admin-tab="requests" id="quickCodeBtn" type="button">전체 보기 ›</button></div><div class="admin-list" id="recentRequests"></div></section><section class="admin-card"><div class="admin-card-head"><div><h2>서버 상태</h2><p>Bridge / RPC 상태 확인</p></div></div><div id="serverStatusOverview" data-server-status-box></div></section><section class="admin-card"><div class="admin-card-head"><div><h2>바로가기</h2><p>자주 쓰는 운영 기능</p></div></div><div class="admin-quick-grid"><button class="admin-btn" id="quickSanctuaryBtn" type="button">성역 동기화</button><button class="admin-btn" id="quickMemberBtn" type="button">회원 검색</button><button class="admin-btn" id="quickNoticeBtn" type="button">공지 작성</button><a class="admin-btn" href="../sanctuary/" data-sanctuary-master-default-link data-sanctuary-base="../sanctuary/">성역 보기</a></div></section></div>
+    </section>
+
+    <section class="admin-pane" data-admin-pane="requests"><section class="admin-card"><div class="admin-card-head"><div><h2>회원 코드 요청</h2><p>신규 이용자가 요청한 코드를 승인/거절합니다.</p></div><button class="admin-btn" id="requestReloadBtn" type="button">새로고침</button></div><div id="requestStatus" class="admin-statusline"></div><div class="admin-list" id="requestList"></div></section></section>
+    <section class="admin-pane" data-admin-pane="members">
+      <nav class="admin-subnav" data-admin-subnav="members" aria-label="회원 관리 하위 기능"><button class="active" data-admin-subtab="accounts" type="button">회원 목록</button><button data-admin-subtab="permissions" type="button">등급별 권한</button></nav>
+      <div class="admin-subpane active" data-admin-subpane="accounts"><section class="admin-card"><div class="admin-card-head"><div><h2>회원 관리</h2><p>회원 코드, 등급, 활성 상태를 확인하고 수정합니다.</p></div><button class="admin-btn" id="memberReloadBtn" type="button">목록 불러오기</button></div><div class="admin-form-row admin-member-tools"><input class="admin-input grow" id="memberSearch" placeholder="회원명 / 코드 / 등급 검색"/><select class="admin-select" id="memberRoleFilter"><option value="">전체 등급</option><option value="MEMBER">Member</option><option value="STAFF">Staff</option><option value="MANAGER">Manager</option><option value="SUB_MASTER">Sub Master</option><option value="MASTER">Master</option></select></div><div id="memberStatus" class="admin-statusline"></div><div class="admin-list" id="memberList"><div class="admin-empty">회원 목록을 불러오세요.</div></div></section></div>
+      <div class="admin-subpane" data-admin-subpane="permissions"><section class="admin-card admin-role-permission-card" id="sanctuaryRolePermissionCard" hidden><div class="admin-card-head"><div><h2>성역 등급별 권한</h2><p>등급별 기본 권한을 한눈에 확인하고 MASTER가 직접 설정합니다.</p></div><button class="admin-btn" id="sanctuaryRolePermissionReloadBtn" type="button">권한 불러오기</button></div><div id="sanctuaryRolePermissionStatus" class="admin-statusline"></div><div class="admin-role-permission-wrap" id="sanctuaryRolePermissionMatrix"><div class="admin-empty">권한표를 불러오세요.</div></div></section></div>
+    </section>
+    <section class="admin-pane" data-admin-pane="characters"><section class="admin-card"><div class="admin-card-head"><div><h2>캐릭터 관리</h2><p>탈퇴/복구/이름변경 이력을 서버 기준으로 관리합니다.</p></div></div><div class="admin-form"><div class="admin-form-row"><input class="admin-input grow" id="characterSearch" placeholder="캐릭터명 / 서버명 검색"/><label class="admin-btn"><input id="characterIncludeInactive" type="checkbox" checked/> 비활성 포함</label><button class="admin-btn primary" id="characterSearchBtn" type="button">검색</button></div><div class="admin-form-row"><select class="admin-select" id="characterReason"><option value="탈퇴">탈퇴</option><option value="이름변경">이름변경</option><option value="중복">중복</option><option value="기타">기타</option></select><input class="admin-input grow" id="characterNewName" placeholder="이름변경 시 새 캐릭터명"/><input class="admin-input grow" id="characterMemo" placeholder="관리 메모"/></div></div><div id="characterStatus" class="admin-statusline"></div><div class="admin-list" id="characterList"><div class="admin-empty">검색어를 입력하고 캐릭터를 조회하세요.</div></div></section></section>
+    <section class="admin-pane" data-admin-pane="sanctuary">
+      <section class="admin-card admin-sanctuary-schedule-card">
+        <div class="admin-card-head"><div><h2>성역 일정 관리</h2><p>성역과 팀 하나를 선택해 투표 일정 또는 확정 일정을 등록합니다.</p></div><div class="admin-row-actions"><button class="admin-btn" id="sanctuaryScheduleReloadBtn" type="button">새로고침</button><button class="admin-btn primary" id="sanctuaryScheduleNewBtn" type="button">새 일정</button></div></div>
+        <div class="admin-schedule-auto-range"><strong>현재 아이온 주간 자동 조회</strong><span>수요일~화요일 · 모든 활성 성역</span></div>
+        <div id="sanctuaryScheduleAdminStatus" class="admin-statusline"></div>
+        <div class="admin-schedule-layout">
+          <div class="admin-schedule-editor" id="sanctuaryScheduleEditor">
+            <input id="sanctuaryScheduleId" type="hidden"/>
+            <div class="admin-schedule-editor-head"><strong id="sanctuaryScheduleEditorTitle">새 일정 등록</strong><button class="admin-link-btn" id="sanctuaryScheduleEditorResetBtn" type="button">입력 초기화</button></div>
+            <div class="admin-schedule-top-grid">
+              <label>성역<select class="admin-select" id="sanctuaryScheduleCode"><option value="">성역 선택</option></select></label>
+              <label>팀<select class="admin-select" id="sanctuaryScheduleTeam"><option value="">팀 선택</option></select></label>
+            </div>
+            <fieldset class="admin-schedule-mode" id="sanctuaryScheduleModeGroup">
+              <legend>일정 방식</legend>
+              <label><input type="radio" name="sanctuaryScheduleMode" value="vote"/><span><strong>투표 필요</strong><small>팀원이 가능 시간과 참여 여부를 응답합니다.</small></span></label>
+              <label><input type="radio" name="sanctuaryScheduleMode" value="fixed" checked/><span><strong>일정 확정</strong><small>응답 없이 확정 일정만 안내합니다.</small></span></label>
+            </fieldset>
+            <div class="admin-schedule-grid">
+              <label class="wide">날짜 및 시작 시간<input class="admin-input" id="sanctuaryScheduleStartsAt" type="datetime-local"/></label>
+              <label class="wide admin-schedule-deadline is-hidden" id="sanctuaryScheduleDeadlineField">응답 마감<input class="admin-input" id="sanctuaryScheduleDeadline" type="datetime-local" disabled/></label>
+              <label class="wide">장소<input class="admin-input" id="sanctuaryScheduleLocation" maxlength="80" placeholder="디스코드 / 집결 위치"/></label>
+              <label class="wide">안내<textarea class="admin-textarea" id="sanctuaryScheduleDescription" rows="3" maxlength="500" placeholder="일정 안내 또는 조율 메모"></textarea></label>
+            </div>
+            <div class="admin-form-row admin-schedule-save-row"><button class="admin-btn primary" id="sanctuaryScheduleSaveBtn" type="button" disabled>일정 저장</button><button class="admin-btn" id="sanctuaryScheduleCancelEditBtn" type="button">취소</button></div>
+          </div>
+          <div class="admin-schedule-list" id="sanctuaryScheduleList"><div class="admin-empty">일정을 불러오는 중입니다.</div></div>
+        </div>
+      </section>
+    </section>
+    <section class="admin-pane" data-admin-pane="notices">
+      <nav class="admin-subnav" data-admin-subnav="notices" aria-label="공지 관리 하위 기능"><button class="active" data-admin-subtab="general" type="button">일반 공지</button><button data-admin-subtab="event" type="button">이벤트 공지</button></nav>
+      <div class="admin-subpane active" data-admin-subpane="general"><section class="admin-card"><div class="admin-card-head"><div><h2>일반 공지</h2><p>하단 공지바에 표시할 공지를 작성합니다.</p></div><button class="admin-btn" id="noticeReloadBtn" type="button">목록 새로고침</button></div><div class="admin-form"><div class="admin-form-row"><select class="admin-select" id="noticeType"><option value="공지">공지</option><option value="알림">알림</option><option value="이벤트">이벤트</option></select><button class="admin-btn primary" id="noticeSaveBtn" type="button">공지 등록</button></div><textarea class="admin-textarea" id="noticeContent" placeholder="공지 내용을 입력하세요."></textarea></div><div id="noticeStatus" class="admin-statusline"></div><div class="admin-list" id="noticeList"></div></section></div>
+      <div class="admin-subpane" data-admin-subpane="event"><section class="admin-card admin-event-notice-card"><div class="admin-card-head"><div><h2>이벤트 공지 관리</h2><p>페이지 진입 팝업에 표시할 이벤트 공지 묶음 목록입니다.</p></div><div class="admin-row-actions"><button class="admin-btn" id="eventNoticeReloadBtn" type="button">목록 새로고침</button><button class="admin-btn primary" id="eventNoticeCreateBtn" type="button">이벤트 공지 등록</button></div></div><div class="admin-form-row admin-event-notice-tools"><select class="admin-select" id="eventNoticeStatusFilter"><option value="ALL">전체 상태</option><option value="DRAFT">작성중</option><option value="SCHEDULED">예정</option><option value="ACTIVE">진행중</option><option value="PAUSED">일시중지</option><option value="EXPIRED">종료</option><option value="DELETED">삭제됨</option></select></div><div id="eventNoticeStatus" class="admin-statusline"></div><div class="admin-list admin-event-notice-list" id="eventNoticeList"><div class="admin-empty">이벤트 공지 목록을 불러오세요.</div></div></section></div>
+    </section>
+    <section class="admin-pane" data-admin-pane="system">
+      <nav class="admin-subnav" data-admin-subnav="system" aria-label="시스템 설정 하위 기능"><button class="active" data-admin-subtab="server-status" type="button">서버 상태</button><button data-admin-subtab="sheet-sync" type="button">시트 동기화</button><button data-admin-subtab="environment" type="button">권한·환경 설정</button></nav>
+      <div class="admin-subpane active" data-admin-subpane="server-status"><section class="admin-card"><div class="admin-card-head"><div><h2>서버 상태·진단</h2><p>Server Engine Runtime, Queue와 Bridge 연결 상태를 확인합니다.</p></div><button class="admin-btn" id="serverRefreshBtn" type="button">상태 확인</button></div><div id="serverStatusDetail" data-server-status-box></div><div class="admin-bridge-box monitor"><div class="admin-bridge-title"><strong>Bridge 모니터링</strong><span>시트 원본 전달에 사용하는 Apps Script Bridge 상태입니다.</span></div><div class="admin-form-row"><button class="admin-btn primary" id="webAppTestBtn" type="button">연결 테스트</button><button class="admin-btn" id="goSystemSettingsBtn" type="button">환경 설정</button></div><div id="serverStatus" class="admin-statusline"></div></div></section></div>
+      <div class="admin-subpane" data-admin-subpane="sheet-sync" data-admin-full-only><section class="admin-card"><div class="admin-card-head"><div><h2>성역 시트 동기화</h2><p>원본 시트는 그대로 전달하고 비교·판정·반영은 Server Engine에서 수행합니다.</p></div></div><div class="admin-form-row"><select class="admin-select" id="sanctuarySyncId" data-sanctuary-master-select data-include-all="true"><option value="all">전체 성역</option></select><button class="admin-btn" id="sanctuaryPreviewBtn" type="button">변경 미리보기</button><button class="admin-btn primary" id="sanctuarySyncBtn" type="button">서버 동기화</button></div><div class="admin-sync-flow"><div class="admin-sync-step active" data-step="1"><strong>원본 읽기</strong><span>Apps Script 전달</span></div><div class="admin-sync-step" data-step="2"><strong>서버 비교</strong><span>변경 판정</span></div><div class="admin-sync-step" data-step="3"><strong>Queue 반영</strong><span>Server Engine</span></div><div class="admin-sync-step" data-step="4"><strong>완료 리포트</strong><span>결과 확인</span></div></div><div id="sanctuarySyncStatus" class="admin-statusline"></div><div id="sanctuarySyncResult" class="admin-log">서버 동기화 상태와 최근 결과가 여기에 표시됩니다.</div></section></div>
+      <div class="admin-subpane" data-admin-subpane="environment"><section class="admin-card"><div class="admin-card-head"><div><h2>권한·환경 설정</h2><p>MASTER 전용 인프라 연결 상태를 확인합니다.</p></div></div><div class="admin-callout"><strong>Server-managed Bridge</strong><span>Apps Script WebApp URL은 Supabase Edge Function Secret에서만 관리하며 브라우저에 저장하거나 노출하지 않습니다.</span></div><div class="admin-bridge-box"><div class="admin-bridge-title"><strong>AppsScript_MASTER 연결 진단</strong><span>WEB → Edge Function → Apps Script 순서로 실제 연결을 확인합니다.</span></div><div class="admin-form-row"><button class="admin-btn primary" id="webAppTestBtnSystem" type="button">서버 경유 연결 테스트</button></div><div id="systemStatus" class="admin-statusline"></div></div></section></div>
+    </section>
+    <section class="admin-pane" data-admin-pane="logs"><section class="admin-card"><div class="admin-card-head"><div><h2>최근 로그</h2><p>관리자 페이지에서 수행한 작업 기록입니다.</p></div></div><pre class="admin-log" id="adminLogBox">아직 로그가 없습니다.</pre></section></section>
+  </section>
+</main>
+
+<div class="admin-event-editor-modal kinojo-safe-overlay" id="eventNoticeEditorModal" aria-hidden="true">
+  <div class="admin-event-editor-backdrop" id="eventNoticeEditorBackdrop"></div>
+  <section class="admin-event-editor-panel" role="dialog" aria-modal="true" aria-labelledby="eventNoticeEditorTitle">
+    <header class="admin-event-editor-head">
+      <div><h2 id="eventNoticeEditorTitle">이벤트 공지 등록</h2><p>공지 묶음 1개에 카드를 최대 6개까지 추가합니다.</p></div>
+      <button class="admin-icon-btn" id="eventNoticeEditorCloseBtn" type="button" aria-label="닫기">×</button>
+    </header>
+    <div class="admin-event-editor-body">
+      <div class="admin-form-row admin-event-editor-meta">
+        <input class="admin-input grow" id="eventNoticeGroupTitle" maxlength="80" placeholder="공지 묶음 제목"/>
+        <select class="admin-select" id="eventNoticeGroupStatus">
+          <option value="draft">작성중</option>
+          <option value="published">노출</option>
+          <option value="paused">일시중지</option>
+        </select>
+        <input class="admin-input" id="eventNoticeGroupPriority" type="number" value="0" min="0" max="999" placeholder="우선순위"/>
+      </div>
+      <div class="admin-event-editor-toolbar">
+        <strong id="eventNoticeEditorCount">카드 1/6</strong>
+        <button class="admin-btn" id="eventNoticeAddCardBtn" type="button">카드 추가</button>
+      </div>
+      <div class="admin-event-editor-cards" id="eventNoticeEditorCards"></div>
+      <div id="eventNoticeEditorStatus" class="admin-statusline"></div>
+    </div>
+    <footer class="admin-event-editor-actions">
+      <button class="admin-btn" id="eventNoticeEditorCancelBtn" type="button">닫기</button>
+      <button class="admin-btn" id="eventNoticeEditorPreviewBtn" type="button">미리보기</button>
+      <button class="admin-btn primary" id="eventNoticeEditorSaveBtn" type="button">저장</button>
+    </footer>
+  </section>
+</div>
+
+<div class="admin-event-preview-modal kinojo-safe-overlay" id="eventNoticePreviewModal" aria-hidden="true">
+  <div class="admin-event-preview-backdrop" id="eventNoticePreviewBackdrop"></div>
+  <section class="admin-event-preview-panel" role="dialog" aria-modal="true" aria-labelledby="eventNoticePreviewTitle">
+    <header class="admin-event-preview-head">
+      <div><h2 id="eventNoticePreviewTitle">이벤트 공지 미리보기</h2><p>사용자 페이지 진입 시 노출될 공지 묶음 형태입니다.</p></div>
+      <button class="admin-icon-btn" id="eventNoticePreviewCloseBtn" type="button" aria-label="닫기">×</button>
+    </header>
+    <div class="admin-event-preview-body" id="eventNoticePreviewBody"></div>
+    <footer class="admin-event-preview-actions"><button class="admin-btn primary" id="eventNoticePreviewOkBtn" type="button">확인</button></footer>
+  </section>
+</div>
+<div class="admin-bottom-actions"><button class="active" data-admin-tab="dashboard">홈</button><button data-admin-tab="requests">코드</button><button data-admin-tab="sanctuary">성역</button><button data-admin-tab="notices">공지</button></div>
+<script src="../core/kinojo-api.js?cache=2026071819"></script>
+<script src="../core/kinojo-cache.js?cache=2026070110"></script>
+<script src="../core/kinojo-permissions.js?cache=2026071517"></script>
+<script src="../core/kinojo-toast.js?cache=2026070110"></script>
+<script src="../core/kinojo-modal.js?cache=2026070110"></script>
+<script src="../core/kinojo-route-guard.js?cache=2026070110"></script>
+<script src="../core/kinojo-debug.js?cache=2026070110"></script>
+<script src="../core/kinojo-logger.js?cache=2026070110"></script>
+<script src="../ui/kinojo-common-ui.js?cache=2026071712"></script>
+<script src="../ui/kinojo-admin-panel.js?cache=2026071712"></script>
+<script src="../core/kinojo-supabase.js?cache=2026071907"></script>
+<script src="../core/kinojo-auth.js?cache=2026071907"></script>
+<script src="./js/admin.js?cache=2026071819"></script>
+</body>
+</html>

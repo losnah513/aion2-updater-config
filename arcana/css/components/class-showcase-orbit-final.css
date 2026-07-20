@@ -1,0 +1,390 @@
+/*
+ * ARCANA Class Showcase Orbit Final
+ * - 클래스 카드 쇼케이스 전용 최종 오버라이드입니다.
+ * - 기존 선택 로직은 건드리지 않고, 카드 공전/개별 자전/바닥 문양만 담당합니다.
+ * - 카드가 모달 밖으로 삐져나가지 않도록 stage/ring 내부 영역 안에서만 움직입니다.
+ */
+
+.arcana-class-showcase {
+  --showcase-card-w: 94px;
+  --showcase-card-h: 128px;
+  --showcase-orbit-radius: 196px;
+  --showcase-orbit-radius-hover: 208px;
+  --showcase-orbit-speed: 28s;
+  --showcase-card-thickness: 7px;
+}
+
+.arcana-showcase-stage {
+  position: relative !important;
+  width: min(820px, calc(100vw - 24px)) !important;
+  min-height: 690px !important;
+  max-height: calc(100vh - 24px) !important;
+  overflow: hidden !important;
+  border-radius: 12px !important;
+  background:
+    radial-gradient(ellipse at 50% 45%, rgba(226, 232, 240, 0.78), transparent 42%),
+    radial-gradient(circle at 50% 44%, rgba(37, 99, 235, 0.055), transparent 31%),
+    #fff !important;
+}
+
+.arcana-showcase-copy {
+  position: relative !important;
+  z-index: 8 !important;
+  padding: 22px 18px 0 !important;
+}
+
+.arcana-showcase-copy h2 {
+  font-size: 22px !important;
+  letter-spacing: -0.03em !important;
+}
+
+.arcana-showcase-copy p {
+  margin-top: 8px !important;
+  font-size: 13px !important;
+}
+
+.arcana-showcase-ring-wrap {
+  position: relative !important;
+  flex: 0 0 416px !important;
+  width: min(640px, calc(100vw - 64px)) !important;
+  height: 416px !important;
+  min-height: 416px !important;
+  margin: 4px auto 0 !important;
+  overflow: visible !important;
+  perspective: 980px !important;
+  transform: rotateX(0deg) !important;
+  transform-style: preserve-3d !important;
+}
+
+/* 바닥 문양: 공식 로고 에셋이 들어오기 전까지 단색화 로고/룬진 느낌을 CSS로 구성한다. */
+.arcana-showcase-ring-wrap::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  width: 560px;
+  height: 292px;
+  max-width: calc(100vw - 84px);
+  transform: translate(-50%, -50%) rotateX(58deg);
+  transform-origin: center;
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at center, rgba(148, 163, 184, 0.11) 0 9%, transparent 10%),
+    repeating-radial-gradient(ellipse at center, transparent 0 26px, rgba(148, 163, 184, 0.12) 27px 28px, transparent 29px 46px),
+    conic-gradient(from 0deg, transparent 0 18deg, rgba(148, 163, 184, 0.14) 19deg 20deg, transparent 21deg 58deg, rgba(148, 163, 184, 0.11) 59deg 60deg, transparent 61deg 360deg);
+  opacity: 0.78;
+  filter: blur(0.08px);
+}
+
+.arcana-showcase-ring-wrap::after {
+  content: "AION2";
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  transform: translate(-50%, -50%) rotateX(58deg);
+  color: rgba(100, 116, 139, 0.12);
+  font-size: clamp(42px, 8vw, 78px);
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.arcana-showcase-ring {
+  position: absolute !important;
+  left: 50% !important;
+  top: 52% !important;
+  width: 1px !important;
+  height: 1px !important;
+  transform-style: preserve-3d !important;
+  animation: arcana-class-orbit-final var(--showcase-orbit-speed) linear infinite !important;
+  will-change: transform;
+}
+
+.arcana-class-showcase.is-picked .arcana-showcase-ring {
+  animation-play-state: paused !important;
+}
+
+.arcana-showcase-card {
+  --card-angle: calc(360deg / var(--arcana-card-count) * var(--arcana-card-index));
+  position: absolute !important;
+  left: calc(var(--showcase-card-w) / -2) !important;
+  top: calc(var(--showcase-card-h) / -2) !important;
+  width: var(--showcase-card-w) !important;
+  height: var(--showcase-card-h) !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  border: 1px solid rgba(111, 159, 255, 0.44) !important;
+  border-radius: 13px !important;
+  background: linear-gradient(150deg, rgba(255,255,255,0.98), rgba(247,250,255,0.96)) !important;
+  box-shadow:
+    0 13px 24px rgba(15, 23, 42, 0.12),
+    0 1px 0 rgba(255,255,255,0.96) inset !important;
+  opacity: 1 !important;
+  filter: none !important;
+  transform:
+    rotate(var(--card-angle))
+    translateY(calc(var(--showcase-orbit-radius) * -1))
+    rotateX(8deg)
+    rotateZ(0deg) !important;
+  transform-style: preserve-3d !important;
+  transform-origin: center !important;
+  animation: arcana-showcase-card-rise-final 0.48s cubic-bezier(.19,1,.22,1) both !important;
+  animation-delay: calc(0.045s * var(--arcana-card-index)) !important;
+  transition:
+    transform 0.26s cubic-bezier(.2,.9,.2,1),
+    border-color 0.2s ease,
+    box-shadow 0.24s ease,
+    filter 0.2s ease !important;
+  will-change: transform;
+}
+
+.arcana-showcase-card::before {
+  content: "";
+  position: absolute;
+  inset: 6px -5px -8px 7px;
+  z-index: -1;
+  border-radius: 12px;
+  background: rgba(148, 163, 184, 0.20);
+  transform: translateZ(-1px) skewX(-4deg);
+  filter: blur(0.1px);
+  opacity: 0.54;
+}
+
+.arcana-showcase-card::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: -7px;
+  bottom: -8px;
+  height: var(--showcase-card-thickness);
+  border-radius: 0 0 12px 12px;
+  background: linear-gradient(90deg, rgba(205, 213, 226, 0.72), rgba(241, 245, 249, 0.9), rgba(148, 163, 184, 0.58));
+  transform: skewX(-15deg);
+  transform-origin: top left;
+  pointer-events: none;
+}
+
+.arcana-showcase-card-inner {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: inherit !important;
+  overflow: hidden !important;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.96), rgba(248,251,255,0.94)),
+    radial-gradient(circle at 48% 22%, rgba(37, 99, 235, 0.08), transparent 38%) !important;
+  transform-origin: center !important;
+  animation: arcana-class-card-sway var(--card-sway-speed, 3.4s) cubic-bezier(.44,0,.2,1) infinite alternate !important;
+  animation-delay: var(--card-sway-delay, 0s) !important;
+}
+
+.arcana-showcase-card:nth-child(1) { --card-sway-speed: 3.1s; --card-sway-delay: -0.4s; --card-sway-angle: 4.5deg; }
+.arcana-showcase-card:nth-child(2) { --card-sway-speed: 3.9s; --card-sway-delay: -1.2s; --card-sway-angle: -3.6deg; }
+.arcana-showcase-card:nth-child(3) { --card-sway-speed: 2.95s; --card-sway-delay: -0.9s; --card-sway-angle: 5.2deg; }
+.arcana-showcase-card:nth-child(4) { --card-sway-speed: 4.2s; --card-sway-delay: -1.8s; --card-sway-angle: -4.8deg; }
+.arcana-showcase-card:nth-child(5) { --card-sway-speed: 3.45s; --card-sway-delay: -0.2s; --card-sway-angle: 3.8deg; }
+.arcana-showcase-card:nth-child(6) { --card-sway-speed: 4.05s; --card-sway-delay: -1.4s; --card-sway-angle: -5.4deg; }
+.arcana-showcase-card:nth-child(7) { --card-sway-speed: 3.25s; --card-sway-delay: -2.1s; --card-sway-angle: 4.1deg; }
+.arcana-showcase-card:nth-child(8) { --card-sway-speed: 3.75s; --card-sway-delay: -0.7s; --card-sway-angle: -4.2deg; }
+
+.arcana-showcase-card .arcana-class-icon {
+  width: 52px !important;
+  height: 52px !important;
+  border-radius: 50% !important;
+  object-fit: contain !important;
+  opacity: 0.74 !important;
+  filter: grayscale(0.94) sepia(0.28) saturate(0.86) brightness(1.06) contrast(0.92) !important;
+  box-shadow: none !important;
+}
+
+.arcana-showcase-card-name {
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.04em !important;
+  color: rgba(15, 23, 42, 0.92) !important;
+  writing-mode: horizontal-tb !important;
+  white-space: nowrap !important;
+}
+
+.arcana-showcase-card.is-hovered {
+  z-index: 30 !important;
+  border-color: rgba(37, 99, 235, 0.92) !important;
+  filter: saturate(1.05) brightness(1.03) !important;
+  box-shadow:
+    0 18px 34px rgba(37, 99, 235, 0.18),
+    0 0 0 1px rgba(37, 99, 235, 0.06) inset !important;
+  transform:
+    rotate(var(--card-angle))
+    translateY(calc(var(--showcase-orbit-radius-hover) * -1))
+    rotateX(8deg)
+    scale(1.06) !important;
+}
+
+.arcana-showcase-card.is-hovered .arcana-showcase-card-inner,
+.arcana-showcase-name-btn.is-hovered + .arcana-showcase-card-inner {
+  animation-duration: 1.9s !important;
+}
+
+.arcana-class-showcase.is-picked .arcana-showcase-ring-wrap {
+  transform: none !important;
+}
+
+.arcana-class-showcase.is-picked .arcana-showcase-ring-wrap::before,
+.arcana-class-showcase.is-picked .arcana-showcase-ring-wrap::after {
+  opacity: 0.32;
+}
+
+.arcana-showcase-card.is-selected,
+.arcana-class-showcase.is-picked .arcana-showcase-card.is-selected {
+  left: calc(var(--showcase-card-w) / -2) !important;
+  top: calc(var(--showcase-card-h) / -2) !important;
+  z-index: 90 !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  border-color: rgba(37, 99, 235, 1) !important;
+  background: linear-gradient(150deg, #fff, #f8fbff) !important;
+  box-shadow:
+    0 26px 58px rgba(37, 99, 235, 0.24),
+    0 0 0 1px rgba(37, 99, 235, 0.08) inset !important;
+  transform: translate(-50%, -50%) rotateX(0deg) rotateZ(0deg) scale(1.55) !important;
+}
+
+.arcana-showcase-card.is-selected .arcana-showcase-card-inner,
+.arcana-class-showcase.is-picked .arcana-showcase-card.is-selected .arcana-showcase-card-inner {
+  animation: none !important;
+  transform: none !important;
+}
+
+.arcana-showcase-card.is-falling,
+.arcana-class-showcase.is-picked .arcana-showcase-card.is-falling {
+  z-index: 4 !important;
+  opacity: 0.28 !important;
+  filter: saturate(0.56) brightness(0.96) blur(0.2px) !important;
+  pointer-events: none !important;
+  transform:
+    rotate(var(--card-angle))
+    translateY(-112px)
+    rotateX(0deg)
+    scale(0.62) !important;
+}
+
+.arcana-showcase-buttons {
+  position: relative !important;
+  z-index: 12 !important;
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(92px, 1fr)) !important;
+  width: min(560px, calc(100vw - 72px)) !important;
+  gap: 8px !important;
+  margin: auto auto 0 !important;
+  padding-top: 4px !important;
+}
+
+.arcana-showcase-actions {
+  position: relative !important;
+  z-index: 12 !important;
+  margin-top: 10px !important;
+  padding-bottom: 22px !important;
+}
+
+@keyframes arcana-class-orbit-final {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes arcana-showcase-card-rise-final {
+  from {
+    opacity: 0;
+    transform:
+      rotate(var(--card-angle))
+      translateY(-128px)
+      rotateX(16deg)
+      scale(0.82);
+  }
+  to {
+    opacity: 1;
+    transform:
+      rotate(var(--card-angle))
+      translateY(calc(var(--showcase-orbit-radius) * -1))
+      rotateX(8deg)
+      scale(1);
+  }
+}
+
+@keyframes arcana-class-card-sway {
+  0% {
+    transform: rotateZ(calc(var(--card-sway-angle) * -0.55)) rotateX(0.6deg) translateY(0);
+  }
+  38% {
+    transform: rotateZ(calc(var(--card-sway-angle) * 0.92)) rotateX(-0.2deg) translateY(-1px);
+  }
+  70% {
+    transform: rotateZ(calc(var(--card-sway-angle) * -0.22)) rotateX(0.3deg) translateY(0.5px);
+  }
+  100% {
+    transform: rotateZ(var(--card-sway-angle)) rotateX(-0.5deg) translateY(-1px);
+  }
+}
+
+@media (max-height: 740px) {
+  .arcana-showcase-stage {
+    min-height: calc(100vh - 24px) !important;
+  }
+
+  .arcana-showcase-ring-wrap {
+    flex-basis: 360px !important;
+    height: 360px !important;
+    min-height: 360px !important;
+    margin-top: -6px !important;
+  }
+
+  .arcana-class-showcase {
+    --showcase-card-w: 84px;
+    --showcase-card-h: 116px;
+    --showcase-orbit-radius: 172px;
+    --showcase-orbit-radius-hover: 184px;
+  }
+}
+
+@media (max-width: 720px) {
+  .arcana-showcase-stage {
+    width: min(620px, calc(100vw - 16px)) !important;
+    min-height: 620px !important;
+  }
+
+  .arcana-showcase-ring-wrap {
+    width: calc(100vw - 48px) !important;
+    flex-basis: 340px !important;
+    height: 340px !important;
+    min-height: 340px !important;
+  }
+
+  .arcana-class-showcase {
+    --showcase-card-w: 78px;
+    --showcase-card-h: 106px;
+    --showcase-orbit-radius: 154px;
+    --showcase-orbit-radius-hover: 164px;
+  }
+
+  .arcana-showcase-ring-wrap::before {
+    width: 420px;
+    height: 228px;
+  }
+
+  .arcana-showcase-buttons {
+    grid-template-columns: repeat(4, minmax(60px, 1fr)) !important;
+    width: calc(100% - 28px) !important;
+  }
+
+  .arcana-showcase-card.is-selected,
+  .arcana-class-showcase.is-picked .arcana-showcase-card.is-selected {
+    transform: translate(-50%, -50%) rotateX(0deg) rotateZ(0deg) scale(1.24) !important;
+  }
+}
