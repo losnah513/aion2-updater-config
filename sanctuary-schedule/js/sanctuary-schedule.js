@@ -7,6 +7,8 @@
     anchor: String(query.get('anchor') || query.get('date') || '').trim(),
     selectedDate: String(query.get('date') || '').trim(),
     selectedScheduleId: Number(query.get('schedule') || 0) || null,
+    scope: 'mine',
+    canViewAllTeams: false,
     calendar: null,
     day: null,
     responseStatus: 'unknown',
@@ -50,8 +52,11 @@
     if(!loggedIn){
       state.requestSeq += 1;
       state.daySeq += 1;
+      state.scope = 'mine';
+      state.canViewAllTeams = false;
       state.calendar = null;
       state.day = null;
+      renderToolbar();
       setSync('로그인 후 이용 가능');
       return false;
     }
@@ -118,8 +123,32 @@
   }
   function renderToolbar(){
     $$('[data-schedule-view]').forEach(button => button.classList.toggle('is-active', button.dataset.scheduleView === state.view));
+    const scopeSwitch = $('#scheduleScopeSwitch');
+    if(scopeSwitch) scopeSwitch.hidden = !state.canViewAllTeams;
+    $$('[data-schedule-scope]').forEach(button => {
+      const scope = button.dataset.scheduleScope === 'all' ? 'all' : 'mine';
+      button.classList.toggle('is-active', scope === state.scope);
+      button.disabled = scope === 'all' && !state.canViewAllTeams;
+    });
+    const scopeLabel = $('#scheduleIntegratedScopeLabel');
+    if(scopeLabel) scopeLabel.textContent = state.scope === 'all' ? '모든 팀 일정' : '내 팀 일정';
     const link = $('#scheduleSanctuaryLink');
     if(link) link.href = /(^|\/)m(\/|$)/.test(location.pathname) ? '/m/sanctuary/' : '/sanctuary/';
+  }
+  function resetScheduleViewForAccount(){
+    state.requestSeq += 1;
+    state.daySeq += 1;
+    state.scope = 'mine';
+    state.canViewAllTeams = false;
+    state.calendar = null;
+    state.day = null;
+    state.selectedDate = '';
+    state.selectedScheduleId = null;
+    const calendar = $('#scheduleCalendarViewport');
+    const detail = $('#scheduleDetail');
+    if(calendar) calendar.innerHTML = '<div class="schedule-calendar-loading"><span class="kinojo-spinner" aria-hidden="true"></span><strong>내 팀 일정을 불러오는 중...</strong></div>';
+    if(detail) detail.innerHTML = '<div class="schedule-detail-loading"><span class="kinojo-spinner" aria-hidden="true"></span><strong>날짜를 선택해 주세요.</strong></div>';
+    renderToolbar();
   }
   function renderWeekHead(){
     const order = Array.isArray(state.calendar?.dayOrder) ? state.calendar.dayOrder : [];
@@ -238,8 +267,9 @@
     if(item && Number(item.id) !== Number(state.selectedScheduleId)) state.selectedScheduleId = Number(item.id) || null;
     const team = selectedTeamName(item);
     const detailMeta = item ? [item.sanctuaryName || item.sanctuaryShortName, team, item.startTime, item.location].filter(Boolean).join(' · ') : '';
-    root.innerHTML = '<header class="schedule-detail-head"><div><span class="schedule-detail-kicker">전체 성역 통합 일정</span><h2>'+esc(day.dateLabel || day.targetDate)+'</h2><p>'+esc(detailMeta || '등록된 일정을 선택해 주세요.')+'</p></div><span class="schedule-detail-badge">'+rows.length+'개 일정</span></header>'
-      + '<section class="schedule-section"><div class="schedule-section-title"><h3>등록 일정</h3><span>성역·팀별</span></div><div class="schedule-list">'+(rows.length?rows.map(scheduleItemHtml).join(''):'<div class="schedule-empty">이 날짜에는 등록된 성역 일정이 없습니다.</div>')+'</div></section>'
+    const scopeTitle = String(day.appliedScope || state.scope) === 'all' ? '모든 팀 일정' : '내 팀 일정';
+    root.innerHTML = '<header class="schedule-detail-head"><div><span class="schedule-detail-kicker">'+scopeTitle+'</span><h2>'+esc(day.dateLabel || day.targetDate)+'</h2><p>'+esc(detailMeta || '등록된 일정을 선택해 주세요.')+'</p></div><span class="schedule-detail-badge">'+rows.length+'개 일정</span></header>'
+      + '<section class="schedule-section"><div class="schedule-section-title"><h3>등록 일정</h3><span>'+scopeTitle+'</span></div><div class="schedule-list">'+(rows.length?rows.map(scheduleItemHtml).join(''):'<div class="schedule-empty">이 날짜에는 표시할 성역 일정이 없습니다.</div>')+'</div></section>'
       + (item ? '<section class="schedule-section schedule-info-card"><div class="schedule-section-title"><h3>일정 안내</h3><span>'+esc(item.scheduleModeLabel || (item.requiresResponse?'투표 필요':'일정 확정'))+'</span></div>'
         + '<dl class="schedule-info-list"><div><dt>성역</dt><dd>'+esc(item.sanctuaryName || item.sanctuaryShortName || '')+'</dd></div><div><dt>팀</dt><dd>'+esc(team || '팀 미확인')+'</dd></div><div><dt>시작</dt><dd>'+esc(item.dateLabel || item.targetDate)+' '+esc(item.startTime || '시간 미정')+'</dd></div>'+(item.location?'<div><dt>장소</dt><dd>'+esc(item.location)+'</dd></div>':'')+(item.description?'<div><dt>안내</dt><dd>'+esc(item.description)+'</dd></div>':'')+'</dl></section>' : '')
       + (item ? '<section class="schedule-section"><div class="schedule-section-title"><h3>'+(item.requiresResponse?'투표 참여':'일정 상태')+'</h3><span>'+esc(day.user?.mainCharacterName || '')+'</span></div>'+responseFormHtml(day,item)+'</section>' : '')
@@ -268,7 +298,8 @@
       const data = await window.KinojoApi.getAction('sanctuaryScheduleDay', {
         targetDate:state.selectedDate,
         scheduleId:state.selectedScheduleId,
-        passKey:currentPassKey()
+        passKey:currentPassKey(),
+        scope:state.scope
       });
       if(seq !== state.daySeq) return;
       if(!data || data.ok === false) throw new Error(data?.message || '날짜 상세 조회 실패');
@@ -317,18 +348,21 @@
     const started=Date.now();
     if(!silent){
       setSync('Server Engine 연결 중');
-      if(root) root.innerHTML = '<div class="schedule-calendar-loading"><span class="kinojo-spinner" aria-hidden="true"></span><strong>통합 일정을 불러오는 중...</strong></div>';
+      if(root) root.innerHTML = '<div class="schedule-calendar-loading"><span class="kinojo-spinner" aria-hidden="true"></span><strong>성역 일정을 불러오는 중...</strong></div>';
     }else setSync(direction==='prev'?'이전 기간으로 이동 중':'다음 기간으로 이동 중');
     try{
       if(!window.KinojoApi) throw new Error('KinojoApi 연결을 확인해 주세요.');
       const data = await window.KinojoApi.getAction('sanctuaryScheduleCalendar', {
         view:state.view,
         anchor:state.anchor,
-        passKey:currentPassKey()
+        passKey:currentPassKey(),
+        scope:state.scope
       });
       if(direction){const remain=260-(Date.now()-started);if(remain>0)await sleep(remain);}
       if(seq !== state.requestSeq) return;
       if(!data || data.ok === false) throw new Error(data?.message || '성역 달력 조회 실패');
+      state.canViewAllTeams = data.canViewAllTeams === true;
+      state.scope = data.appliedScope === 'all' && state.canViewAllTeams ? 'all' : 'mine';
       state.calendar = data;
       state.anchor = String(data.anchor || state.anchor || '');
       pickInitialDate();
@@ -378,6 +412,20 @@
       state.selectedScheduleId = null;
       loadCalendar();
     }));
+    $$('[data-schedule-scope]').forEach(button => button.addEventListener('click', () => {
+      const nextScope = button.dataset.scheduleScope === 'all' ? 'all' : 'mine';
+      if(nextScope === 'all' && !state.canViewAllTeams) return;
+      if(nextScope === state.scope) return;
+      state.scope = nextScope;
+      state.daySeq += 1;
+      state.selectedDate = '';
+      state.selectedScheduleId = null;
+      state.day = null;
+      renderToolbar();
+      const detail = $('#scheduleDetail');
+      if(detail) detail.innerHTML = '<div class="schedule-detail-loading"><span class="kinojo-spinner" aria-hidden="true"></span><strong>'+ (state.scope === 'all' ? '모든 팀' : '내 팀') +' 일정을 불러오는 중...</strong></div>';
+      loadCalendar();
+    }));
     $('#scheduleTodayBtn')?.addEventListener('click', () => {
       state.anchor = '';
       state.selectedDate = '';
@@ -387,7 +435,8 @@
     $('#schedulePrevBtn')?.addEventListener('click', () => navigatePanel('prev'));
     $('#scheduleNextBtn')?.addEventListener('click', () => navigatePanel('next'));
     window.addEventListener('kinojo:auth-changed', () => {
-      if(syncScheduleAuthGate()) loadCalendar({preserveSelection:true});
+      resetScheduleViewForAccount();
+      if(syncScheduleAuthGate()) loadCalendar();
     });
     renderToolbar();
     if(syncScheduleAuthGate()) loadCalendar();

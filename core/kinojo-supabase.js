@@ -1332,22 +1332,28 @@
     return rpc('kinojo_web_get_sanctuary_operation_overview_member_251', params);
   }
 
+  function normalizeSanctuaryScheduleScope(value){
+    return String(value || 'mine').trim().toLowerCase() === 'all' ? 'all' : 'mine';
+  }
+
   async function getSanctuaryScheduleCalendar(extra={}){
-    return rpc('kinojo_web_get_sanctuary_schedule_calendar', {
+    return rpc('kinojo_web_get_sanctuary_schedule_calendar_262', {
       p_view:String(extra.view || 'month').toLowerCase() === 'week' ? 'week' : 'month',
       p_anchor:String(extra.anchor || '').trim() || null,
       p_sanctuary_code:String(extra.id || extra.sanctuaryId || extra.sanctuaryCode || '').trim() || null,
-      p_pass_key:normalizePassKey(extra.passKey || extra.passCode || '') || null
+      p_pass_key:normalizePassKey(extra.passKey || extra.passCode || '') || null,
+      p_scope:normalizeSanctuaryScheduleScope(extra.scope || extra.teamScope || extra.team_scope)
     });
   }
 
   async function getSanctuaryScheduleDay(extra={}){
     const scheduleId = Number(extra.scheduleId || extra.schedule_id || 0);
-    return rpc('kinojo_web_get_sanctuary_schedule_day', {
+    return rpc('kinojo_web_get_sanctuary_schedule_day_262', {
       p_sanctuary_code:String(extra.id || extra.sanctuaryId || extra.sanctuaryCode || '').trim() || null,
       p_target_date:String(extra.targetDate || extra.target_date || '').trim() || null,
       p_pass_key:normalizePassKey(extra.passKey || extra.passCode || '') || null,
-      p_schedule_id:Number.isFinite(scheduleId) && scheduleId > 0 ? scheduleId : null
+      p_schedule_id:Number.isFinite(scheduleId) && scheduleId > 0 ? scheduleId : null,
+      p_scope:normalizeSanctuaryScheduleScope(extra.scope || extra.teamScope || extra.team_scope)
     });
   }
 

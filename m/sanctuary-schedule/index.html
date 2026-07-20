@@ -13,10 +13,10 @@
 <meta property="og:url" content="https://kinojo.info/m/sanctuary-schedule/"/>
 <meta property="og:image" content="https://kinojo.info/assets/images/common/kinojo-og.jpg"/>
 <meta name="twitter:card" content="summary_large_image"/>
-<link href="../../ui/kinojo-common-ui.css?cache=2026071905" rel="stylesheet"/>
+<link href="../../ui/kinojo-common-ui.css?cache=2026071906" rel="stylesheet"/>
 <link href="../../ui/kinojo-event-notice.css?cache=2026070521" rel="stylesheet"/>
-<link href="../mobile.css?cache=2026070519" rel="stylesheet"/>
-<link href="../../sanctuary-schedule/css/sanctuary-schedule.css?cache=2026071518" rel="stylesheet"/>
+<link href="../mobile.css?cache=2026071906" rel="stylesheet"/>
+<link href="../../sanctuary-schedule/css/sanctuary-schedule.css?cache=2026072001" rel="stylesheet"/>
 </head>
 <body class="kinojo-mobile-detail-page kinojo-sanctuary-schedule-page kinojo-mobile-sanctuary-schedule-page">
 <main class="schedule-wrap">
@@ -24,18 +24,22 @@
     <div>
       <div class="schedule-kicker">SANCTUARY OPERATION</div>
       <h1 id="scheduleTitle">성역 스케줄</h1>
-      <p>월간은 일반 달력으로, 주간은 아이온 수요일~화요일 기준으로 모든 성역 일정을 함께 확인합니다.</p>
+      <p>월간 또는 주간으로 내 팀 성역 일정을 확인합니다. 관리 권한 계정은 필요할 때 모든 팀으로 전환할 수 있습니다.</p>
     </div>
     <a class="schedule-back-link" id="scheduleSanctuaryLink" href="../sanctuary/">성역 파티 보기</a>
   </section>
 
   <section class="schedule-toolbar" aria-label="스케줄 보기 설정">
     <div class="schedule-integrated-label" aria-label="전체 성역 통합 보기">
-      <strong>전체 성역 통합</strong><span>성역별 일정을 한 달력에서 확인</span>
+      <strong>전체 성역 통합</strong><span id="scheduleIntegratedScopeLabel">내 팀 일정</span>
     </div>
     <div class="schedule-view-switch" role="group" aria-label="월간 또는 주간 보기">
       <button type="button" class="is-active" data-schedule-view="month">월간</button>
       <button type="button" data-schedule-view="week">주간</button>
+    </div>
+    <div class="schedule-scope-switch" id="scheduleScopeSwitch" role="group" aria-label="내 팀 또는 모든 팀 보기" hidden>
+      <button type="button" class="is-active" data-schedule-scope="mine">내 팀</button>
+      <button type="button" data-schedule-scope="all">모든 팀</button>
     </div>
     <button type="button" class="schedule-today-btn" id="scheduleTodayBtn">오늘</button>
     <div class="schedule-sync" id="scheduleSyncState">Server Engine 연결 중</div>
@@ -73,9 +77,9 @@
 <script src="../../core/kinojo-logger.js?cache=2026070115"></script>
 <script src="../../ui/kinojo-common-ui.js?cache=2026071712"></script>
 <script src="../../ui/kinojo-admin-panel.js?cache=2026071712"></script>
-<script src="../../core/kinojo-supabase.js?cache=2026071518"></script>
+<script src="../../core/kinojo-supabase.js?cache=2026072001"></script>
 <script src="../../core/kinojo-auth.js?cache=2026071518"></script>
 <script src="../../ui/kinojo-event-notice.js?cache=2026070521"></script>
-<script src="../../sanctuary-schedule/js/sanctuary-schedule.js?cache=2026071518"></script>
+<script src="../../sanctuary-schedule/js/sanctuary-schedule.js?cache=2026072001"></script>
 </body>
 </html>
