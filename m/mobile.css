@@ -121,6 +121,17 @@ body{min-height:100svh}.mobile-wrap{width:100%;max-width:560px;padding:clamp(16p
     linear-gradient(135deg,#0b1728 0%,#12294a 45%,#080c14 100%);
 }
 .mobile-feature-hall{border-color:rgba(219,171,74,.34)}
+
+.mobile-feature-meter .mobile-card-bg{
+  background:
+    linear-gradient(90deg,rgba(96,165,250,.12) 1px,transparent 1px),
+    linear-gradient(rgba(96,165,250,.1) 1px,transparent 1px),
+    radial-gradient(circle at 76% 34%,rgba(96,165,250,.48),transparent 25%),
+    radial-gradient(circle at 28% 68%,rgba(79,70,229,.34),transparent 30%),
+    linear-gradient(135deg,#0b1d3d 0%,#123b78 48%,#11133b 100%);
+  background-size:26px 26px,26px 26px,auto,auto,auto;
+}
+.mobile-feature-meter{border-color:rgba(96,165,250,.38)}
 .mobile-feature-arcana .mobile-card-bg{
   background:
     radial-gradient(circle at 72% 42%,rgba(34,211,238,.4),transparent 26%),

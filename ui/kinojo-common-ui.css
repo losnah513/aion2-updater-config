@@ -1387,3 +1387,30 @@ KINOJO Common Footer 20260719
   .common-footer .footer-links a,.common-footer .footer-links button{font-size:11px;}
   .common-footer .footer-powered{font-size:10px;}
 }
+
+
+/* ===========================================================
+KINOJO Meter Web Integration 20260722
+- KINOJO Meter is a first-class common route.
+- Mobile routes keep the compact topbar even on unfolded Fold/tablet widths.
+=========================================================== */
+body.kinojo-page-meter{--kinojo-page-max:1180px;}
+.kinojo-top-nav{gap:3px!important;padding-inline:4px!important;}
+.kinojo-top-nav-link{padding-inline:6px!important;font-size:10px!important;}
+body.kinojo-page-mobile .kinojo-topbar{
+  top:6px!important;
+  width:min(760px,calc(100% - 14px))!important;
+  min-height:88px!important;
+  padding:7px!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  grid-template-rows:36px 32px!important;
+  grid-template-areas:"left auth" "visit visit"!important;
+  gap:5px!important;
+  border-radius:13px!important;
+}
+body.kinojo-page-mobile .kinojo-top-nav,
+body.kinojo-page-mobile .kinojo-top-tools{display:none!important;}
+body.kinojo-page-mobile .kinojo-top-center{height:28px;min-width:auto;max-width:160px;padding:0 8px;font-size:10px;}
+body.kinojo-page-mobile .kinojo-top-page{height:28px;max-width:150px;padding:0 8px;}
+body.kinojo-page-mobile .kinojo-top-visitor-row{padding-top:5px;}
+body.kinojo-page-mobile.kinojo-page-home .kinojo-topbar{width:min(560px,calc(100% - 14px))!important;}

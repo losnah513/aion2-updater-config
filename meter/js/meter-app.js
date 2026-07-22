@@ -54,8 +54,8 @@
 
   async function loadConfiguration() {
     const [local, site] = await Promise.all([
-      readJson('/meter/meter-config.json?build=2026072001'),
-      readJson('/config.json?meter=2026072001')
+      readJson('/meter/meter-config.json?build=2026072201'),
+      readJson('/config.json?meter=2026072201')
     ]);
     meterConfig = Object.assign(meterConfig, local || {});
     const supabase = site && site.supabase ? site.supabase : {};
@@ -66,14 +66,16 @@
 
     if (meterConfig.version) $('meterVersion').textContent = meterConfig.version;
     if (meterConfig.installerSize) $('meterInstallerSize').textContent = meterConfig.installerSize;
-    if (meterConfig.notice) $('meterNotice').innerHTML = `<strong>프로토타입 안내</strong><span>${escapeHtml(meterConfig.notice)}</span>`;
+    if (meterConfig.notice) $('meterNotice').innerHTML = `<strong>KINOJO METER</strong><span>${escapeHtml(meterConfig.notice)}</span>`;
 
     const downloadUrl = String(meterConfig.downloadUrl || '').trim();
-    if (downloadUrl) {
-      $('meterDirectDownload').href = downloadUrl;
-      $('meterDirectDownload').textContent = 'Windows 테스트 버전 다운로드';
+    const releasePageUrl = String(meterConfig.releasePageUrl || '').trim();
+    const targetUrl = downloadUrl || releasePageUrl;
+    if (targetUrl) {
+      $('meterDirectDownload').href = targetUrl;
+      $('meterDirectDownload').textContent = downloadUrl ? 'Windows 테스트 버전 다운로드' : '릴리스 페이지 열기';
       $('meterDirectDownload').removeAttribute('aria-disabled');
-      $('meterDownloadBtn').href = downloadUrl;
+      $('meterDownloadBtn').href = targetUrl;
       const sha = String(meterConfig.sha256 || '').trim();
       $('meterDownloadNote').textContent = sha ? `SHA-256 ${sha}` : '다운로드 파일의 게시된 체크섬을 확인해 주세요.';
     }
@@ -174,7 +176,7 @@
 
   function bind() {
     $('meterClass').innerHTML = classes.map((name) => `<option value="${name === '전체' ? '' : name}">${name}</option>`).join('');
-    $('meterClass').value = '궁성';
+    $('meterClass').value = '';
     $('meterQueryBtn').addEventListener('click', loadStats);
     $('meterPassForm').addEventListener('submit', (event) => {
       event.preventDefault();

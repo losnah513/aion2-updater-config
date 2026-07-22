@@ -5,11 +5,13 @@
   <url><loc>https://kinojo.info/sanctuary/</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
   <url><loc>https://kinojo.info/sanctuary-schedule/</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
   <url><loc>https://kinojo.info/arcana/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://kinojo.info/meter/</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
   <url><loc>https://kinojo.info/m/</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
   <url><loc>https://kinojo.info/m/hof/</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
   <url><loc>https://kinojo.info/m/sanctuary/</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
   <url><loc>https://kinojo.info/m/sanctuary-schedule/</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
   <url><loc>https://kinojo.info/m/arcana/</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://kinojo.info/m/meter/</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
   <url><loc>https://kinojo.info/pages/about.html</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
   <url><loc>https://kinojo.info/pages/contact.html</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
   <url><loc>https://kinojo.info/pages/privacy.html</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
