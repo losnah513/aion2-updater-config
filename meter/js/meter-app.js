@@ -21,6 +21,11 @@
   let catalogVersion = '';
   let latestStats = null;
   let statsView = 'power';
+  let meterSessionToken = '';
+  let meterSessionExpiresAt = '';
+  let meterAccount = null;
+  let meterCharacters = [];
+  let selectedMeterCharacter = null;
 
   function formatDps(value) {
     if (value === null || value === undefined || value === '') return '-';
@@ -387,7 +392,7 @@
     $('meterAppliedFilters').innerHTML = '<span>Server 필터 확인 중</span>';
     $('meterPeriodRange').textContent = 'Server 집계 기간 확인 중';
     $('meterBucketChart').innerHTML = '<div class="meter-loading">Server Engine 통계를 불러오는 중...</div>';
-    hideMine();
+    invalidateMineResult('통계 조건이 변경되었습니다. 현재 조건으로 다시 비교해 주세요.');
 
     try {
       const data = await callMeter('stats', filterParams());
@@ -488,48 +493,279 @@
     if (latestStats) renderBreakdown(latestStats);
   }
 
-  async function loadMine(passKey) {
-    const button = $('meterMyQueryBtn');
+  function formatPower(value) {
+    const number = Number(value);
+    return Number.isFinite(number) && number > 0 ? Math.trunc(number).toLocaleString('ko-KR') : '미확인';
+  }
+
+  function safeImageUrl(value) {
+    const url = String(value || '').trim();
+    return /^https:\/\//i.test(url) ? url : '';
+  }
+
+  function comparisonFilterParams() {
+    return {
+      contentKey: $('meterContent').value || null,
+      dungeonKey: $('meterDungeon').value || null,
+      variantKey: $('meterVariant').value || null,
+      bossKey: $('meterBoss').value || null,
+      periodKey: $('meterPeriod').value || 'WEEK'
+    };
+  }
+
+  function myConditionText() {
+    const filters = comparisonFilterParams();
+    const parts = [
+      filters.contentKey ? catalogLabel('contentKey', filters.contentKey) : '전체 콘텐츠',
+      filters.dungeonKey ? catalogLabel('dungeonKey', filters.dungeonKey) : '전체 던전',
+      filters.variantKey ? catalogLabel('variantKey', filters.variantKey) : '전체 난이도',
+      filters.bossKey ? catalogLabel('bossKey', filters.bossKey) : '전체 보스',
+      filters.periodKey ? catalogLabel('periodKey', filters.periodKey) : '주간'
+    ];
+    return `${parts.join(' · ')} · 클래스와 전투력은 선택 캐릭터 기록 기준`;
+  }
+
+  function setMyPanels(mode) {
+    $('meterMyLogin').hidden = mode !== 'login';
+    $('meterCharacterPicker').hidden = mode !== 'picker';
+    $('meterMyWorkspace').hidden = mode !== 'workspace';
+    $('meterMyLogoutBtn').hidden = mode === 'login';
+  }
+
+  function characterCardMarkup(character) {
+    const image = safeImageUrl(character.profileImageUrl);
+    const initial = escapeHtml(String(character.characterName || '?').slice(0, 1));
+    const portrait = image
+      ? `<img src="${escapeHtml(image)}" alt="" loading="lazy" referrerpolicy="no-referrer"/>`
+      : `<span>${initial}</span>`;
+    return `<button class="meter-character-card" type="button" data-character-key="${escapeHtml(character.characterKey)}">
+      <span class="meter-character-portrait">${portrait}</span>
+      <span class="meter-character-copy">
+        <span class="meter-character-name">${escapeHtml(character.characterName || '이름 미확인')}${character.isMain ? '<i>본캐</i>' : ''}</span>
+        <span>${escapeHtml(character.serverName || character.serverId || '서버 미확인')} · ${escapeHtml(character.className || '클래스 미확인')}</span>
+        <small>전투력 ${formatPower(character.pveCombatPower)}</small>
+      </span>
+      <b>선택</b>
+    </button>`;
+  }
+
+  function renderCharacterPicker() {
+    $('meterAccountName').textContent = meterAccount && meterAccount.mainCharacterName
+      ? `${meterAccount.mainCharacterName} · ${meterAccount.roleLabel || meterAccount.role || 'Member'}`
+      : 'KINOJO 계정';
+    $('meterSessionExpiry').textContent = meterSessionExpiresAt
+      ? `${serverTime(meterSessionExpiresAt)} KST까지`
+      : '새로고침 시 자동 종료';
+    $('meterCharacterList').innerHTML = meterCharacters.map(characterCardMarkup).join('');
+    $('meterCharacterError').textContent = meterCharacters.length ? '' : '선택할 수 있는 활성 캐릭터가 없습니다.';
+    $('meterCharacterList').querySelectorAll('[data-character-key]').forEach((button) => {
+      button.addEventListener('click', () => selectMineCharacter(button.dataset.characterKey || ''));
+    });
+  }
+
+  function renderSelectedCharacter() {
+    const character = selectedMeterCharacter || {};
+    const image = safeImageUrl(character.profileImageUrl);
+    const initial = escapeHtml(String(character.characterName || '?').slice(0, 1));
+    const portrait = image
+      ? `<img src="${escapeHtml(image)}" alt="" loading="lazy" referrerpolicy="no-referrer"/>`
+      : `<span>${initial}</span>`;
+    $('meterSelectedCharacter').innerHTML = `<span class="meter-character-portrait">${portrait}</span>
+      <span><small>선택 캐릭터</small><strong>${escapeHtml(character.characterName || '이름 미확인')}</strong><b>${escapeHtml(character.serverName || character.serverId || '서버 미확인')} · ${escapeHtml(character.className || '클래스 미확인')} · 전투력 ${formatPower(character.pveCombatPower)}</b></span>`;
+    $('meterMyConditionText').textContent = myConditionText();
+  }
+
+  function resetMineResult(message) {
+    $('meterMyResult').hidden = true;
+    $('meterMyStatus').textContent = message || '';
+    $('meterMyTop').textContent = '상위 -%';
+    $('meterMySample').textContent = '표본 확인 중';
+    $('meterMyDps').textContent = '-';
+    $('meterMyMedian').textContent = '-';
+    $('meterMyDiff').textContent = '-';
+    $('meterMyRecordMeta').textContent = '';
+  }
+
+  function invalidateMineResult(message) {
+    if (!meterSessionToken || !selectedMeterCharacter) return;
+    $('meterMyConditionText').textContent = myConditionText();
+    resetMineResult(message || '조건이 변경되었습니다. 다시 비교해 주세요.');
+  }
+
+  async function loginMine(passKey) {
+    const button = $('meterLoginBtn');
     const errorBox = $('meterPassError');
     errorBox.textContent = '';
     button.disabled = true;
-    button.textContent = '조회 중...';
+    button.textContent = '로그인 중...';
 
     try {
-      const result = await callMeter('myComparison', Object.assign(filterParams(), { passKey }));
-      if (!result.hasRecord) throw new Error(result.message || '비교할 유효 전투가 없습니다.');
-      $('meterMyEmpty').hidden = true;
-      $('meterMyResult').hidden = false;
-      $('meterMyTop').textContent = '상위 ' + Number(result.topPercent || 0).toFixed(1) + '%';
-      $('meterMySample').textContent = '표본 ' + formatCount(result.encounterCount ?? result.sampleCount, '0') + '전';
-      $('meterMyDps').textContent = formatDps(result.myDps);
-      $('meterMyMedian').textContent = formatDps(result.medianDps);
-      const diff = Number(result.diffFromMedianPercent ?? result.diffPercent ?? 0);
-      $('meterMyDiff').textContent = (diff >= 0 ? '+' : '') + diff.toFixed(1) + '%';
+      const result = await callMeter('login', {
+        passKey,
+        clientVersion: meterConfig.version ? `WEB_${meterConfig.version}` : 'WEB_50007'
+      });
+      if (!result.sessionToken || !Array.isArray(result.characters) || result.characters.length === 0) {
+        throw new Error(result.message || '계정에 연결된 활성 캐릭터가 없습니다.');
+      }
+      meterSessionToken = String(result.sessionToken);
+      meterSessionExpiresAt = String(result.expiresAt || '');
+      meterAccount = result.account || null;
+      meterCharacters = result.characters;
+      selectedMeterCharacter = null;
+      renderCharacterPicker();
+      setMyPanels('picker');
     } catch (error) {
-      errorBox.textContent = error.message || '내 기록을 불러오지 못했습니다.';
+      errorBox.textContent = error.message || 'PASS KEY 로그인에 실패했습니다.';
     } finally {
       $('meterPassKey').value = '';
+      button.disabled = false;
+      button.textContent = '로그인';
+    }
+  }
+
+  async function selectMineCharacter(characterKey) {
+    if (!meterSessionToken || !characterKey) return;
+    const buttons = Array.from($('meterCharacterList').querySelectorAll('button'));
+    buttons.forEach((button) => { button.disabled = true; });
+    $('meterCharacterError').textContent = '선택 캐릭터를 Server에서 확인하는 중입니다.';
+
+    try {
+      const result = await callMeter('selectCharacter', {
+        sessionToken: meterSessionToken,
+        characterKey
+      });
+      const source = meterCharacters.find((row) => row.characterKey === characterKey) || {};
+      selectedMeterCharacter = Object.assign({}, source, result.selectedCharacter || {});
+      renderSelectedCharacter();
+      setMyPanels('workspace');
+      resetMineResult('선택한 캐릭터의 최근 유효 전투를 확인합니다.');
+      await loadMineSession();
+    } catch (error) {
+      $('meterCharacterError').textContent = error.message || '캐릭터를 선택하지 못했습니다.';
+    } finally {
+      buttons.forEach((button) => { button.disabled = false; });
+    }
+  }
+
+  function renderMineResult(result) {
+    const hasPublicComparison = result.hasPublicComparison !== false;
+    $('meterMyResult').hidden = false;
+    $('meterMyDps').textContent = formatDps(result.myDps);
+    $('meterMyResultLabel').textContent = result.bossName
+      ? `${result.bossName} · ${result.powerBand && result.powerBand.displayName ? result.powerBand.displayName : '동일 전투력'}`
+      : '동일 조건';
+
+    if (hasPublicComparison) {
+      $('meterMyTop').textContent = '상위 ' + Number(result.topPercent || 0).toFixed(1) + '%';
+      $('meterMySample').textContent = '표본 ' + formatCount(result.encounterCount ?? result.sampleCount, '0') + '전';
+      $('meterMyMedian').textContent = formatDps(result.medianDps);
+      const diff = Number(result.diffFromMedianPercent ?? 0);
+      $('meterMyDiff').textContent = (diff >= 0 ? '+' : '') + diff.toFixed(1) + '%';
+      $('meterMyStatus').textContent = result.message || '동일 조건 비교를 완료했습니다.';
+    } else {
+      const minimum = Number(result.minimumEncounterCount || 10);
+      $('meterMyTop').textContent = '비교 공개 대기';
+      $('meterMySample').textContent = `${minimum.toLocaleString('ko-KR')}전 이상 필요`;
+      $('meterMyMedian').textContent = '-';
+      $('meterMyDiff').textContent = '-';
+      $('meterMyStatus').textContent = result.message || '동일 조건 공개 표본이 부족합니다.';
+    }
+
+    const occurred = serverTime(result.occurredAt);
+    const dungeon = result.dungeonName || catalogLabel('dungeonKey', result.dungeonKey);
+    const boss = result.bossName || catalogLabel('bossKey', result.bossKey);
+    $('meterMyRecordMeta').textContent = [dungeon, boss, occurred ? `${occurred} KST` : ''].filter(Boolean).join(' · ');
+  }
+
+  async function loadMineSession() {
+    if (!meterSessionToken || !selectedMeterCharacter) return;
+    const button = $('meterMyCompareBtn');
+    button.disabled = true;
+    button.textContent = '비교 중...';
+    resetMineResult('선택 캐릭터와 동일 조건의 Server 통계를 확인하는 중입니다.');
+
+    try {
+      const result = await callMeter('myComparison', Object.assign(
+        { sessionToken: meterSessionToken },
+        comparisonFilterParams()
+      ));
+      if (!result.hasRecord) {
+        $('meterMyStatus').textContent = result.message || '선택 조건의 유효 전투가 없습니다.';
+        return;
+      }
+      if (result.selectedCharacter) {
+        selectedMeterCharacter = Object.assign({}, selectedMeterCharacter, result.selectedCharacter);
+        renderSelectedCharacter();
+      }
+      renderMineResult(result);
+    } catch (error) {
+      const message = error.message || '내 기록을 불러오지 못했습니다.';
+      $('meterMyStatus').textContent = message;
+      if (/세션|만료|PASS KEY/.test(message)) await logoutMine(true);
+    } finally {
       button.disabled = false;
       button.textContent = '내 기록 비교';
     }
   }
 
-  function hideMine() {
-    $('meterMyEmpty').hidden = false;
-    $('meterMyResult').hidden = true;
+  async function logoutMine(silent) {
+    const token = meterSessionToken;
+    meterSessionToken = '';
+    meterSessionExpiresAt = '';
+    meterAccount = null;
+    meterCharacters = [];
+    selectedMeterCharacter = null;
+    $('meterCharacterList').replaceChildren();
     $('meterPassError').textContent = '';
-    $('meterPassKey').value = '';
+    $('meterCharacterError').textContent = '';
+    resetMineResult('');
+    setMyPanels('login');
+    if (token) {
+      try { await callMeter('logout', { sessionToken: token }); }
+      catch (error) { if (!silent) $('meterPassError').textContent = error.message || '로그아웃 처리에 실패했습니다.'; }
+    }
+  }
+
+  function logoutMineKeepalive() {
+    if (!meterSessionToken || !edgeUrl || !publishableKey) return;
+    const token = meterSessionToken;
+    meterSessionToken = '';
+    fetch(edgeUrl, {
+      method: 'POST',
+      keepalive: true,
+      headers: {
+        apikey: publishableKey,
+        authorization: `Bearer ${publishableKey}`,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ action: 'logout', sessionToken: token })
+    }).catch(() => {});
+  }
+
+  function showCharacterPicker() {
+    if (!meterSessionToken) return;
+    selectedMeterCharacter = null;
+    resetMineResult('');
+    renderCharacterPicker();
+    setMyPanels('picker');
   }
 
   function bind() {
     setControlsEnabled(false);
-    $('meterContent').addEventListener('change', () => refreshDungeonOptions(true));
+    $('meterContent').addEventListener('change', () => {
+      refreshDungeonOptions(true);
+      invalidateMineResult();
+    });
     $('meterDungeon').addEventListener('change', () => {
       refreshVariantOptions(true);
       refreshBossOptions(true);
+      invalidateMineResult();
     });
-    $('meterVariant').addEventListener('change', () => refreshBossOptions(true));
+    $('meterVariant').addEventListener('change', () => {
+      refreshBossOptions(true);
+      invalidateMineResult();
+    });
+    ['meterBoss', 'meterPeriod'].forEach((id) => $(id).addEventListener('change', () => invalidateMineResult()));
     $('meterQueryBtn').addEventListener('click', loadStats);
     $('meterViewPower').addEventListener('click', () => setStatsView('power'));
     $('meterViewClass').addEventListener('click', () => setStatsView('class'));
@@ -540,9 +776,12 @@
         $('meterPassError').textContent = 'PASS KEY를 입력해 주세요.';
         return;
       }
-      loadMine(passKey);
+      loginMine(passKey);
     });
-    $('meterMyResetBtn').addEventListener('click', hideMine);
+    $('meterMyCompareBtn').addEventListener('click', loadMineSession);
+    $('meterChangeCharacterBtn').addEventListener('click', showCharacterPicker);
+    $('meterMyLogoutBtn').addEventListener('click', () => logoutMine(false));
+    window.addEventListener('pagehide', logoutMineKeepalive);
   }
 
   document.addEventListener('DOMContentLoaded', async () => {

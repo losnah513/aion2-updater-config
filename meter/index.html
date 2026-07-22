@@ -15,7 +15,7 @@
 <link href="../ui/kinojo-layout.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../ui/kinojo-components.css?cache=2026072201" rel="stylesheet"/>
 <link href="../ui/kinojo-common-ui.css?cache=2026072201" rel="stylesheet"/>
-<link href="../meter/css/meter.css?cache=2026072203" rel="stylesheet"/>
+<link href="../meter/css/meter.css?cache=2026072204" rel="stylesheet"/>
 <script src="../ui/kinojo-device-router.js?cache=2026072201" data-mobile-path="../m/meter/"></script>
 </head>
 <body class="kinojo-meter-page">
@@ -97,22 +97,56 @@
     </article>
 
     <article class="meter-panel meter-my-panel">
-      <header><div><span>MY PERFORMANCE</span><h2>내 DPS 분석</h2></div></header>
-      <div id="meterMyEmpty" class="meter-my-empty">
+      <header>
+        <div><span>MY PERFORMANCE</span><h2>내 DPS 분석</h2></div>
+        <button class="meter-my-logout" id="meterMyLogoutBtn" type="button" hidden>로그아웃</button>
+      </header>
+
+      <div id="meterMyLogin" class="meter-my-empty">
         <div class="meter-my-icon" aria-hidden="true">%</div>
-        <strong>PASS KEY로 내 기록 확인</strong>
-        <p>KINOJO 계정의 최근 유효 기록을 선택한 클래스·전투력·보스 조건과 비교합니다.</p>
+        <strong>PASS KEY 로그인</strong>
+        <p>PASS KEY로 계정을 확인한 뒤 비교할 캐릭터를 직접 선택합니다.</p>
         <form class="meter-pass-form" id="meterPassForm">
           <label for="meterPassKey">PASS KEY</label>
-          <div><input id="meterPassKey" type="password" maxlength="80" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="PASS KEY 입력"/><button class="kinojo-btn meter-secondary" id="meterMyQueryBtn" type="submit">내 기록 비교</button></div>
-          <small>PASS KEY는 브라우저에 저장하지 않고 조회 후 즉시 지웁니다.</small>
+          <div><input id="meterPassKey" type="password" maxlength="80" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="PASS KEY 입력"/><button class="kinojo-btn meter-secondary" id="meterLoginBtn" type="submit">로그인</button></div>
+          <small>PASS KEY는 로그인 요청에만 사용하며 브라우저에 저장하지 않습니다.</small>
           <p class="meter-pass-error" id="meterPassError" role="status"></p>
         </form>
       </div>
-      <div id="meterMyResult" class="meter-my-result" hidden>
-        <div class="meter-percentile"><span>동일 조건</span><strong id="meterMyTop">상위 -%</strong><small id="meterMySample">표본 -전</small></div>
-        <dl><div><dt>내 DPS</dt><dd id="meterMyDps">-</dd></div><div><dt>구간 중앙값</dt><dd id="meterMyMedian">-</dd></div><div><dt>중앙값 대비</dt><dd id="meterMyDiff">-</dd></div></dl>
-        <button class="meter-my-reset" id="meterMyResetBtn" type="button">다른 조건·계정 조회</button>
+
+      <div id="meterCharacterPicker" class="meter-character-picker" hidden>
+        <div class="meter-account-row">
+          <div><span>로그인 계정</span><strong id="meterAccountName">-</strong></div>
+          <small id="meterSessionExpiry">세션 확인 중</small>
+        </div>
+        <p class="meter-picker-guide">비교할 캐릭터를 선택하세요. 본캐와 연결된 활성 캐릭터만 표시됩니다.</p>
+        <div class="meter-character-list" id="meterCharacterList"></div>
+        <p class="meter-pass-error" id="meterCharacterError" role="status"></p>
+      </div>
+
+      <div id="meterMyWorkspace" class="meter-my-workspace" hidden>
+        <div class="meter-selected-character" id="meterSelectedCharacter"></div>
+        <div class="meter-my-condition">
+          <strong>현재 조건으로 비교</strong>
+          <span id="meterMyConditionText">콘텐츠·던전·보스·기간 조건을 사용합니다.</span>
+        </div>
+        <button class="kinojo-btn meter-secondary meter-my-compare" id="meterMyCompareBtn" type="button">내 기록 비교</button>
+        <p class="meter-my-status" id="meterMyStatus" role="status"></p>
+
+        <div id="meterMyResult" class="meter-my-result" hidden>
+          <div class="meter-percentile">
+            <span id="meterMyResultLabel">동일 조건</span>
+            <strong id="meterMyTop">상위 -%</strong>
+            <small id="meterMySample">표본 확인 중</small>
+          </div>
+          <dl>
+            <div><dt>내 DPS</dt><dd id="meterMyDps">-</dd></div>
+            <div><dt>구간 중앙값</dt><dd id="meterMyMedian">-</dd></div>
+            <div><dt>중앙값 대비</dt><dd id="meterMyDiff">-</dd></div>
+          </dl>
+          <p class="meter-my-record-meta" id="meterMyRecordMeta"></p>
+          <button class="meter-my-reset" id="meterChangeCharacterBtn" type="button">다른 캐릭터 선택</button>
+        </div>
       </div>
     </article>
   </section>
@@ -134,6 +168,6 @@
 <script src="../ui/kinojo-common-ui.js?cache=2026072201"></script>
 <script src="../core/kinojo-supabase.js?cache=2026072201"></script>
 <script src="../core/kinojo-auth.js?cache=2026072201"></script>
-<script src="./js/meter-app.js?cache=2026072203"></script>
+<script src="./js/meter-app.js?cache=2026072204"></script>
 </body>
 </html>
