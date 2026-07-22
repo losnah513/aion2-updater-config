@@ -15,7 +15,7 @@
 <link href="../../ui/kinojo-layout.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../../ui/kinojo-components.css?cache=2026072201" rel="stylesheet"/>
 <link href="../../ui/kinojo-common-ui.css?cache=2026072201" rel="stylesheet"/>
-<link href="../../meter/css/meter.css?cache=2026072201" rel="stylesheet"/>
+<link href="../../meter/css/meter.css?cache=2026072202" rel="stylesheet"/>
 </head>
 <body class="kinojo-meter-page">
 <main class="meter-wrap">
@@ -54,11 +54,14 @@
   </section>
 
   <section class="meter-filter-card" aria-label="미터기 통계 필터">
-    <div><label for="meterClass">클래스</label><select id="meterClass"></select></div>
-    <div><label for="meterBoss">보스</label><select id="meterBoss"><option value="">전체 보스</option><option value="루드라">루드라</option><option value="타하바타">타하바타</option><option value="크로메데">크로메데</option></select></div>
-    <div><label for="meterBucket">전투력 구간</label><select id="meterBucket"><option value="25000">25,000</option><option value="50000" selected>50,000</option><option value="100000">100,000</option></select></div>
-    <div><label for="meterDays">집계 기간</label><select id="meterDays"><option value="7">최근 7일</option><option value="30" selected>최근 30일</option><option value="90">최근 90일</option></select></div>
-    <button class="kinojo-btn meter-query" id="meterQueryBtn" type="button">통계 조회</button>
+    <div><label for="meterClass">클래스</label><select id="meterClass" disabled><option>Server 카탈로그 로딩 중</option></select></div>
+    <div><label for="meterContent">콘텐츠</label><select id="meterContent" disabled><option>Server 카탈로그 로딩 중</option></select></div>
+    <div><label for="meterDungeon">던전</label><select id="meterDungeon" disabled><option>Server 카탈로그 로딩 중</option></select></div>
+    <div><label for="meterVariant">난이도·단계</label><select id="meterVariant" disabled><option>던전을 먼저 선택하세요</option></select></div>
+    <div><label for="meterBoss">보스</label><select id="meterBoss" disabled><option>Server 카탈로그 로딩 중</option></select></div>
+    <div><label for="meterPowerBand">전투력 구간</label><select id="meterPowerBand" disabled><option>Server 카탈로그 로딩 중</option></select></div>
+    <div><label for="meterPeriod">집계 기간</label><select id="meterPeriod" disabled><option>Server 카탈로그 로딩 중</option></select></div>
+    <button class="kinojo-btn meter-query" id="meterQueryBtn" type="button" disabled>통계 조회</button>
   </section>
 
   <section class="meter-summary" aria-label="통계 요약">
@@ -114,6 +117,6 @@
 <script src="../../ui/kinojo-common-ui.js?cache=2026072201"></script>
 <script src="../../core/kinojo-supabase.js?cache=2026072201"></script>
 <script src="../../core/kinojo-auth.js?cache=2026072201"></script>
-<script src="../../meter/js/meter-app.js?cache=2026072201"></script>
+<script src="../../meter/js/meter-app.js?cache=2026072202"></script>
 </body>
 </html>
