@@ -343,7 +343,7 @@
     body.innerHTML = '<section class="sanctuary-editor-detail">'
       + '<div class="sanctuary-editor-detail-nav"><button type="button" data-editor-action="back-to-picker">← 다른 팀 선택</button><span>2단계 · 선택 팀 정보</span></div>'
       + '<div class="sanctuary-editor-settings">' + renderNamePanel(group) + renderLeaderPanel(group) + '</div>'
-      + '<details class="sanctuary-editor-roster" open>'
+      + '<details class="sanctuary-editor-roster">'
       + '<summary><span><strong>MASTER 시트 편성 상세 보기</strong><small>포스와 파티별 캐릭터 카드</small></span></summary>'
       + '<div class="sanctuary-editor-roster-list">' + ((group.forces || []).length ? group.forces.map(renderForce).join('') : '<div class="empty-main">등록된 포스가 없습니다.</div>') + '</div>'
       + '</details></section>';
