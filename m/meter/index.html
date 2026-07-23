@@ -103,14 +103,13 @@
 
       <div id="meterMyLogin" class="meter-my-empty">
         <div class="meter-my-icon" aria-hidden="true">%</div>
-        <strong>PASS KEY 로그인</strong>
-        <p>PASS KEY로 계정을 확인한 뒤 비교할 캐릭터를 직접 선택합니다.</p>
-        <form class="meter-pass-form" id="meterPassForm">
-          <label for="meterPassKey">PASS KEY</label>
-          <div><input id="meterPassKey" type="password" maxlength="80" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="PASS KEY 입력"/><button class="kinojo-btn meter-secondary" id="meterLoginBtn" type="submit">로그인</button></div>
-          <small>PASS KEY는 로그인 요청에만 사용하며 브라우저에 저장하지 않습니다.</small>
+        <strong>내 DPS 분석 연결</strong>
+        <p>KINOJO 공통 로그인 창에서 PASS KEY를 확인한 뒤 비교할 캐릭터를 선택합니다.</p>
+        <div class="meter-login-action">
+          <button class="kinojo-btn meter-secondary" id="meterOpenLoginBtn" type="button">PASS KEY 입력하기</button>
+          <small id="meterLoginGuide">로그인 완료 후 연결 캐릭터 목록을 불러옵니다.</small>
           <p class="meter-pass-error" id="meterPassError" role="status"></p>
-        </form>
+        </div>
       </div>
 
       <div id="meterCharacterPicker" class="meter-character-picker" hidden>
@@ -166,7 +165,7 @@
 <script src="../../core/kinojo-route-guard.js?cache=2026072201"></script>
 <script src="../../ui/kinojo-common-ui.js?cache=2026072201"></script>
 <script src="../../core/kinojo-supabase.js?cache=2026072201"></script>
-<script src="../../core/kinojo-auth.js?cache=2026072201"></script>
-<script src="../../meter/js/meter-app.js?cache=2026072204"></script>
+<script src="../../core/kinojo-auth.js?cache=2026072202"></script>
+<script src="../../meter/js/meter-app.js?cache=2026072205"></script>
 </body>
 </html>

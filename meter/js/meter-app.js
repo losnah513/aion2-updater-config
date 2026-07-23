@@ -3,7 +3,7 @@
  * Server Engine owns catalog data, filter relations, period windows,
  * power bands, publication policy and statistics. WEB only builds controls
  * from the catalog, sends canonical keys and renders returned values.
- * PASS KEY values are never persisted.
+ * Meter does not create a page-specific PASS KEY store. Authentication uses the common KINOJO login modal.
  */
 (function () {
   'use strict';
@@ -26,6 +26,7 @@
   let meterAccount = null;
   let meterCharacters = [];
   let selectedMeterCharacter = null;
+  let meterAuthConnecting = false;
 
   function formatDps(value) {
     if (value === null || value === undefined || value === '') return '-';
@@ -592,17 +593,47 @@
     resetMineResult(message || '조건이 변경되었습니다. 다시 비교해 주세요.');
   }
 
-  async function loginMine(passKey) {
-    const button = $('meterLoginBtn');
+  function commonAuthState(detail) {
+    const source = detail && typeof detail === 'object' ? detail : {};
+    const auth = window.KinojoAuth || {};
+    const session = source.session || (typeof auth.getSession === 'function' ? auth.getSession() : null);
+    const account = source.account || (typeof auth.getAccount === 'function' ? auth.getAccount() : null);
+    const passKey = String(
+      (account && (account.passKey || account.passCode)) ||
+      (session && (session.passKey || session.passCode)) || ''
+    ).trim();
+    return { session, account, passKey, loggedIn: Boolean(source.loggedIn || (session && session.token)) };
+  }
+
+  function renderCommonLoginState(detail) {
+    const state = commonAuthState(detail);
+    const button = $('meterOpenLoginBtn');
+    const guide = $('meterLoginGuide');
+    if (!button || !guide) return;
+    if (state.loggedIn && state.passKey) {
+      const name = state.account && (state.account.mainCharacterName || state.account.mainCharacter);
+      button.textContent = meterAuthConnecting ? '계정 연결 중...' : '로그인 계정으로 연결';
+      guide.textContent = name ? `${name} 계정으로 캐릭터 목록을 불러옵니다.` : '현재 로그인 계정으로 캐릭터 목록을 불러옵니다.';
+    } else {
+      button.textContent = 'PASS KEY 입력하기';
+      guide.textContent = '기존 KINOJO 로그인 창에서 PASS KEY를 입력합니다.';
+    }
+    button.disabled = meterAuthConnecting;
+  }
+
+  async function loginMine(passKey, authDetail) {
+    const button = $('meterOpenLoginBtn');
     const errorBox = $('meterPassError');
+    if (meterAuthConnecting || meterSessionToken) return;
     errorBox.textContent = '';
-    button.disabled = true;
-    button.textContent = '로그인 중...';
+    meterAuthConnecting = true;
+    renderCommonLoginState(authDetail);
 
     try {
+      if (!edgeUrl || !publishableKey) await loadConfiguration();
       const result = await callMeter('login', {
         passKey,
-        clientVersion: meterConfig.version ? `WEB_${meterConfig.version}` : 'WEB_50007'
+        clientVersion: meterConfig.version ? `WEB_${meterConfig.version}` : 'WEB_50008'
       });
       if (!result.sessionToken || !Array.isArray(result.characters) || result.characters.length === 0) {
         throw new Error(result.message || '계정에 연결된 활성 캐릭터가 없습니다.');
@@ -615,12 +646,39 @@
       renderCharacterPicker();
       setMyPanels('picker');
     } catch (error) {
-      errorBox.textContent = error.message || 'PASS KEY 로그인에 실패했습니다.';
+      errorBox.textContent = error.message || 'KINOJO 로그인 계정을 Meter에 연결하지 못했습니다.';
     } finally {
-      $('meterPassKey').value = '';
-      button.disabled = false;
-      button.textContent = '로그인';
+      meterAuthConnecting = false;
+      renderCommonLoginState(authDetail);
     }
+  }
+
+  async function connectMineFromCommonAuth(detail) {
+    const state = commonAuthState(detail);
+    if (!state.loggedIn || !state.passKey) {
+      renderCommonLoginState(detail);
+      return false;
+    }
+    await loginMine(state.passKey, detail);
+    return Boolean(meterSessionToken);
+  }
+
+  async function openCommonLoginForMine() {
+    $('meterPassError').textContent = '';
+    const state = commonAuthState();
+    if (state.loggedIn && state.passKey) {
+      await connectMineFromCommonAuth({ loggedIn: true, session: state.session, account: state.account });
+      return;
+    }
+    if (window.KinojoModal && typeof window.KinojoModal.openLogin === 'function') {
+      window.KinojoModal.openLogin('내 DPS 분석을 사용하려면 로그인해 주세요.', { context: 'meter' });
+      return;
+    }
+    if (window.KinojoAuth && typeof window.KinojoAuth.openLoginModal === 'function') {
+      window.KinojoAuth.openLoginModal('내 DPS 분석을 사용하려면 로그인해 주세요.', { context: 'meter' });
+      return;
+    }
+    $('meterPassError').textContent = '공통 로그인 모달을 불러오지 못했습니다.';
   }
 
   async function selectMineCharacter(characterKey) {
@@ -708,7 +766,7 @@
     }
   }
 
-  async function logoutMine(silent) {
+  async function logoutMine(silent, clearCommonAuth) {
     const token = meterSessionToken;
     meterSessionToken = '';
     meterSessionExpiresAt = '';
@@ -720,9 +778,13 @@
     $('meterCharacterError').textContent = '';
     resetMineResult('');
     setMyPanels('login');
+    renderCommonLoginState();
     if (token) {
       try { await callMeter('logout', { sessionToken: token }); }
-      catch (error) { if (!silent) $('meterPassError').textContent = error.message || '로그아웃 처리에 실패했습니다.'; }
+      catch (error) { if (!silent) $('meterPassError').textContent = error.message || 'Meter 세션 종료에 실패했습니다.'; }
+    }
+    if (clearCommonAuth && window.KinojoAuth && typeof window.KinojoAuth.clearSession === 'function') {
+      window.KinojoAuth.clearSession();
     }
   }
 
@@ -752,6 +814,7 @@
 
   function bind() {
     setControlsEnabled(false);
+    renderCommonLoginState();
     $('meterContent').addEventListener('change', () => {
       refreshDungeonOptions(true);
       invalidateMineResult();
@@ -769,18 +832,19 @@
     $('meterQueryBtn').addEventListener('click', loadStats);
     $('meterViewPower').addEventListener('click', () => setStatsView('power'));
     $('meterViewClass').addEventListener('click', () => setStatsView('class'));
-    $('meterPassForm').addEventListener('submit', (event) => {
-      event.preventDefault();
-      const passKey = $('meterPassKey').value.trim();
-      if (!passKey) {
-        $('meterPassError').textContent = 'PASS KEY를 입력해 주세요.';
-        return;
-      }
-      loginMine(passKey);
-    });
+    $('meterOpenLoginBtn').addEventListener('click', openCommonLoginForMine);
     $('meterMyCompareBtn').addEventListener('click', loadMineSession);
     $('meterChangeCharacterBtn').addEventListener('click', showCharacterPicker);
-    $('meterMyLogoutBtn').addEventListener('click', () => logoutMine(false));
+    $('meterMyLogoutBtn').addEventListener('click', () => logoutMine(false, true));
+    window.addEventListener('kinojo:auth-changed', async (event) => {
+      const detail = event.detail || {};
+      renderCommonLoginState(detail);
+      if (detail.loggedIn) {
+        if (!meterSessionToken) await connectMineFromCommonAuth(detail);
+      } else if (meterSessionToken) {
+        await logoutMine(true, false);
+      }
+    });
     window.addEventListener('pagehide', logoutMineKeepalive);
   }
 

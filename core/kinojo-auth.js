@@ -304,6 +304,9 @@
     if(key === 'hall' || key === 'reaction'){
       return '관리자가 발급한 PASS KEY로 로그인하면<br>좋아요/싫어요와 다양한 기능을 사용할 수 있습니다';
     }
+    if(key === 'meter'){
+      return '관리자가 발급한 PASS KEY로 로그인하면<br>연결 캐릭터를 선택하고 내 DPS를 Server 통계와 비교할 수 있습니다.';
+    }
     return '관리자가 발급한 PASS KEY로 로그인하면 좋아요·싫어요와 제안 기능을 사용할 수 있습니다.';
   }
 
