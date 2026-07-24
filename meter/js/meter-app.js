@@ -239,8 +239,8 @@
 
   async function loadConfiguration() {
     const [local, site] = await Promise.all([
-      readJson('/meter/meter-config.json?build=2026072402'),
-      readJson('/config.json?meter=2026072402')
+      readJson('/meter/meter-config.json?build=2026072403'),
+      readJson('/config.json?meter=2026072403')
     ]);
     meterConfig = Object.assign(meterConfig, local || {});
     const supabase = site && site.supabase ? site.supabase : {};
@@ -407,6 +407,12 @@
     if (state === 'PUBLISHED') {
       badge.textContent = '공개 완료';
       badge.classList.add('is-published');
+    } else if (state === 'NO_DATA') {
+      badge.textContent = '수집 대기';
+      badge.classList.add('is-no-data');
+    } else if (state === 'SUPPRESSED') {
+      badge.textContent = '표본 집계 중';
+      badge.classList.add('is-suppressed');
     } else if (state === 'ERROR') {
       badge.textContent = '조회 오류';
       badge.classList.add('is-error');
@@ -426,6 +432,14 @@
     $('meterAverageDps').textContent = '-';
     $('meterMedianDps').textContent = '-';
     $('meterP90Dps').textContent = '-';
+  }
+
+  function renderNoDataSummary() {
+    $('meterEncounterCount').textContent = '0';
+    $('meterCharacterCount').textContent = '대기';
+    $('meterAverageDps').textContent = '대기';
+    $('meterMedianDps').textContent = '대기';
+    $('meterP90Dps').textContent = '대기';
   }
 
   function serverTime(value) {
@@ -542,7 +556,13 @@
 
     if (data.hasPublicStats === false) {
       const noData = data.publicState === 'NO_DATA';
-      resetSummary(noData ? '0' : '비공개');
+      if (noData) {
+        renderNoDataSummary();
+        $('meterNotice').innerHTML = '<strong>전투 데이터 준비 중</strong><span>현재 유효 전투는 0건이며 Server 연결은 정상입니다. 검증 완료 전투가 수집되면 자동으로 통계가 표시됩니다.</span>';
+      } else {
+        resetSummary('비공개');
+        $('meterNotice').innerHTML = `<strong>공개 기준 집계 중</strong><span>${escapeHtml(data.publicMessage || 'Server 공개 기준을 충족할 때까지 정확한 통계값을 보호합니다.')}</span>`;
+      }
       setStatsState(data.publicState, data.publicMessage || 'Server 공개 기준을 충족하지 못했습니다.');
       renderBreakdown(data);
       return;
@@ -556,6 +576,7 @@
     $('meterMedianDps').textContent = formatDps(data.medianDps);
     $('meterP90Dps').textContent = formatDps(top10Dps);
     setStatsState('PUBLISHED', data.publicMessage || 'Server 공개 기준을 충족한 통계입니다.');
+    $('meterNotice').innerHTML = '<strong>Server Engine</strong><span>선택한 Server 카탈로그 key로 완료·검증 전투를 조회했습니다.</span>';
     renderBreakdown(data);
   }
 
@@ -568,7 +589,10 @@
     if (data.hasPublicStats === false) {
       const minimum = minimumPublicCount(data);
       const message = data.publicMessage || (minimum ? `${minimum}건 이상 수집되면 공개합니다.` : '공개 가능한 표본이 없습니다.');
-      $('meterBucketChart').innerHTML = `<div class="meter-empty"><strong>${escapeHtml(message)}</strong><span>정확한 표본 수와 DPS 값은 공개 기준 미달 시 표시하지 않습니다.</span></div>`;
+      const guide = data.publicState === 'NO_DATA'
+        ? 'Server 연결은 정상입니다. 검증 완료 전투가 수집되면 이 영역에 자동으로 통계가 표시됩니다.'
+        : '정확한 표본 수와 DPS 값은 공개 기준 미달 시 표시하지 않습니다.';
+      $('meterBucketChart').innerHTML = `<div class="meter-empty"><strong>${escapeHtml(message)}</strong><span>${escapeHtml(guide)}</span></div>`;
       return;
     }
 
