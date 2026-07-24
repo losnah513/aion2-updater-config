@@ -1,4 +1,4 @@
-/* KINOJO Admin Console v2026072409 */
+/* KINOJO Admin Console v2026072410 */
 (function(){
   'use strict';
   const $ = (s,r=document)=>r.querySelector(s);
@@ -171,17 +171,34 @@
 
   async function loadAccounts(){
     setStatus('#memberStatus','회원 목록을 불러오는 중...','');
-    try{ const data=await adminAccount('listCodes',{}); state.accounts=data.accounts||[]; applyMemberFilters(); }
+    try{
+      const data=await adminAccount('listCodes',{});
+      state.accounts=data.accounts||[];
+      state.memberCodeVisibility=String(data.codeVisibility||'VISIBLE').toUpperCase();
+      const search=$('#memberSearch');
+      if(search)search.placeholder=state.memberCodeVisibility==='MASKED'?'회원명 / 등급 검색':'회원명 / 코드 / 등급 검색';
+      applyMemberFilters();
+    }
     catch(err){ setStatus('#memberStatus',err.message||String(err),'error'); }
   }
-  function getAccountCode(a){ return a.code || a.passCode || a.pass_code || ''; }
+  const MEMBER_ROLE_LABELS={MEMBER:'Member',STAFF:'Staff',MANAGER:'Manager',SUB_MASTER:'Sub Master',MASTER:'Master'};
+  function normalizeMemberRole(value){ return String(value||'MEMBER').trim().toUpperCase().replace(/[\s-]+/g,'_').replace('SUBMASTER','SUB_MASTER'); }
+  function getAccountId(a){ return String(a.memberId ?? a.member_id ?? a.id ?? ''); }
+  function getAccountCode(a){ return a.codeDisplay || a.code_display || a.code || a.passCode || a.pass_code || ''; }
   function getAccountName(a){ return a.mainCharacter || a.main_character_name || a.mainCharacterName || '-'; }
-  function getAccountRole(a){ return a.role || a.roleLabel || 'MEMBER'; }
+  function getAccountRole(a){ return normalizeMemberRole(a.role || a.roleLabel || 'MEMBER'); }
+  function getAccountRoleLabel(a){ const role=getAccountRole(a); return a.roleLabel || a.role_label || MEMBER_ROLE_LABELS[role] || role; }
+  function getAccountCanEdit(a){ return a.canEdit===true || a.can_edit===true; }
+  function getAccountAllowedRoles(a){
+    const source=Array.isArray(a.allowedRoles)?a.allowedRoles:Array.isArray(a.allowed_roles)?a.allowed_roles:[];
+    return source.map(normalizeMemberRole).filter(role=>MEMBER_ROLE_LABELS[role]);
+  }
   function applyMemberFilters(){
     const q = String($('#memberSearch')?.value || '').trim().toLowerCase();
     const role = String($('#memberRoleFilter')?.value || '').trim();
     const filtered = (state.accounts || []).filter(a=>{
-      const hay = [getAccountName(a), getAccountCode(a), getAccountRole(a)].join(' ').toLowerCase();
+      const searchableCode=(a.codeMasked===true||a.code_masked===true)?'':getAccountCode(a);
+      const hay = [getAccountName(a), searchableCode, getAccountRole(a), getAccountRoleLabel(a)].join(' ').toLowerCase();
       if(q && !hay.includes(q)) return false;
       if(role && String(getAccountRole(a)).toUpperCase() !== role) return false;
       return true;
@@ -192,22 +209,56 @@
   function renderAccounts(list){
     const root=$('#memberList'); if(!root)return;
     root.innerHTML=list.length?list.map(a=>{
-      const code=esc(getAccountCode(a)); const name=esc(getAccountName(a)); const role=esc(String(getAccountRole(a)).toUpperCase());
-      const active=a.isActive!==false;
-      const isMaster=role==='MASTER';
-      return '<article class="admin-row admin-member-row" data-member-code="'+code+'"><div class="admin-row-main"><strong>'+name+'</strong><span>코드 '+code+' · '+role+'</span></div><div class="admin-row-actions"><span class="admin-pill '+(active?'ok':'error')+'">'+(active?'활성':'비활성')+'</span><select class="admin-select compact" data-member-role '+(isMaster?'disabled':'')+'><option value="MEMBER" '+(role==='MEMBER'?'selected':'')+'>Member</option><option value="STAFF" '+(role==='STAFF'?'selected':'')+'>Staff</option><option value="MANAGER" '+(role==='MANAGER'?'selected':'')+'>Manager</option><option value="SUB_MASTER" '+(role==='SUB_MASTER'?'selected':'')+'>Sub Master</option></select><button class="admin-btn danger" data-member-disable '+(isMaster?'disabled':'')+'>비활성</button><button class="admin-btn" data-member-delete '+(isMaster?'disabled':'')+'>삭제</button></div></article>';
+      const memberId=esc(getAccountId(a)); const code=esc(getAccountCode(a)||'••••••'); const name=esc(getAccountName(a));
+      const roleKey=getAccountRole(a); const role=esc(roleKey); const roleName=esc(getAccountRoleLabel(a));
+      const active=(a.isActive ?? a.is_active ?? a.active)!==false;
+      const masked=a.codeMasked===true||a.code_masked===true;
+      const canEdit=getAccountCanEdit(a);
+      const allowed=getAccountAllowedRoles(a);
+      const options=allowed.map(option=>'<option value="'+option+'" '+(option===roleKey?'selected':'')+'>'+esc(MEMBER_ROLE_LABELS[option])+'</option>').join('');
+      const controls=canEdit
+        ? '<button class="admin-btn admin-member-role-open" data-member-role-open type="button">등급 변경</button><button class="admin-btn danger" data-member-disable type="button">비활성</button><button class="admin-btn" data-member-delete type="button">삭제</button>'
+        : '<span class="admin-member-locked">변경 권한 없음</span>';
+      const editor=canEdit&&options
+        ? '<div class="admin-member-role-editor" data-member-role-editor hidden><span><b>현재 '+roleName+'</b>에서 변경</span><select class="admin-select compact" data-member-role-select>'+options+'</select><button class="admin-btn primary" data-member-role-save type="button">적용</button><button class="admin-btn ghost" data-member-role-cancel type="button">취소</button></div>'
+        : '';
+      return '<article class="admin-row admin-member-row" data-member-id="'+memberId+'" data-member-name="'+name+'" data-member-role="'+role+'"><div class="admin-member-summary"><div class="admin-row-main"><strong>'+name+'</strong><div class="admin-member-meta"><span class="admin-member-code '+(masked?'is-masked':'')+'">회원 코드 <b>'+code+'</b></span><span class="admin-member-role-badge role-'+role.toLowerCase()+'">'+roleName+'</span></div></div><div class="admin-row-actions"><span class="admin-pill '+(active?'ok':'error')+'">'+(active?'활성':'비활성')+'</span>'+controls+'</div></div>'+editor+'</article>';
     }).join(''):'<div class="admin-empty">회원 코드가 없습니다.</div>';
   }
   async function handleMemberAction(target){
-    const row=target.closest('[data-member-code]'); const code=row?.dataset.memberCode; if(!code)return;
+    const row=target.closest('[data-member-id]'); const memberId=row?.dataset.memberId; if(!memberId)return;
+    const memberName=row.dataset.memberName||'회원';
+    const currentRole=normalizeMemberRole(row.dataset.memberRole);
+    const editor=$('[data-member-role-editor]',row);
+    if(target.matches('[data-member-role-open]')){
+      if(editor)editor.hidden=!editor.hidden;
+      return;
+    }
+    if(target.matches('[data-member-role-cancel]')){
+      if(editor)editor.hidden=true;
+      return;
+    }
     target.disabled=true;
     try{
       let res;
-      if(target.matches('[data-member-role]')) res=await adminAccount('updateRole',{code,role:target.value});
-      else if(target.matches('[data-member-disable]')) res=await adminAccount('disableCode',{code});
-      else if(target.matches('[data-member-delete]')){ if(!confirm('회원 코드를 삭제할까요?')){target.disabled=false;return;} res=await adminAccount('deleteCode',{code}); }
+      if(target.matches('[data-member-role-save]')){
+        const nextRole=normalizeMemberRole($('[data-member-role-select]',row)?.value);
+        if(nextRole===currentRole){ if(editor)editor.hidden=true; target.disabled=false; return; }
+        const before=MEMBER_ROLE_LABELS[currentRole]||currentRole;
+        const after=MEMBER_ROLE_LABELS[nextRole]||nextRole;
+        if(!confirm(memberName+' 회원의 등급을 '+before+' → '+after+'로 변경할까요?')){target.disabled=false;return;}
+        res=await adminAccount('updateRole',{memberId,role:nextRole});
+      }
+      else if(target.matches('[data-member-disable]')){
+        if(!confirm(memberName+' 회원 코드를 비활성화할까요?')){target.disabled=false;return;}
+        res=await adminAccount('disableCode',{memberId});
+      }
+      else if(target.matches('[data-member-delete]')){
+        if(!confirm(memberName+' 회원 코드를 삭제할까요? 이 작업은 되돌릴 수 없습니다.')){target.disabled=false;return;}
+        res=await adminAccount('deleteCode',{memberId});
+      }
       if(res && res.ok===false) throw new Error(res.message||'회원 처리 실패');
-      toast(res?.message||'회원 정보 처리 완료'); addLog('MEMBER',(res?.message||'회원 처리')+' · '+code); await loadAccounts();
+      toast(res?.message||'회원 정보 처리 완료'); addLog('MEMBER',(res?.message||'회원 처리')+' · '+memberName); await loadAccounts();
     }catch(err){ setStatus('#memberStatus',err.message||String(err),'error'); target.disabled=false; }
   }
 
@@ -1087,7 +1138,7 @@
     $('#adminLogoutBtn')?.addEventListener('click',()=>{window.KinojoAuth?.clearSession?.(); location.href='../';});
     $('#requestReloadBtn')?.addEventListener('click',loadCodeRequests);
     $('#requestList')?.addEventListener('click',e=>{ if(e.target.matches('[data-approve-request]')) processRequest(e.target,'approveCodeRequest'); if(e.target.matches('[data-reject-request]')) processRequest(e.target,'rejectCodeRequest'); });
-    $('#memberReloadBtn')?.addEventListener('click',loadAccounts); $('#sanctuaryRolePermissionReloadBtn')?.addEventListener('click',loadSanctuaryRolePermissions); $('#sanctuaryRolePermissionMatrix')?.addEventListener('change',e=>{if(e.target.matches('[data-sanctuary-role-permission]'))setSanctuaryRolePermission(e.target);}); $('#memberSearch')?.addEventListener('input',applyMemberFilters); $('#memberRoleFilter')?.addEventListener('change',applyMemberFilters); $('#memberList')?.addEventListener('click',e=>{ if(e.target.matches('[data-member-disable],[data-member-delete]')) handleMemberAction(e.target); }); $('#memberList')?.addEventListener('change',e=>{ if(e.target.matches('[data-member-role]')) handleMemberAction(e.target); });
+    $('#memberReloadBtn')?.addEventListener('click',loadAccounts); $('#sanctuaryRolePermissionReloadBtn')?.addEventListener('click',loadSanctuaryRolePermissions); $('#sanctuaryRolePermissionMatrix')?.addEventListener('change',e=>{if(e.target.matches('[data-sanctuary-role-permission]'))setSanctuaryRolePermission(e.target);}); $('#memberSearch')?.addEventListener('input',applyMemberFilters); $('#memberRoleFilter')?.addEventListener('change',applyMemberFilters); $('#memberList')?.addEventListener('click',e=>{ if(e.target.matches('[data-member-role-open],[data-member-role-save],[data-member-role-cancel],[data-member-disable],[data-member-delete]')) handleMemberAction(e.target); });
     $('#characterSearchBtn')?.addEventListener('click',searchCharacters);
     $('#characterSearch')?.addEventListener('keydown',e=>{ if(e.key==='Enter') searchCharacters(); });
     $('#characterList')?.addEventListener('click',e=>{ if(e.target.matches('[data-char-deactivate]')) handleCharacterAction(e.target,'deactivate'); if(e.target.matches('[data-char-restore]')) handleCharacterAction(e.target,'restore'); if(e.target.matches('[data-char-rename]')) handleCharacterAction(e.target,'markRenamed'); });

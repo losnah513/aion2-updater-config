@@ -409,18 +409,30 @@
     const perms = row.permissions !== undefined && row.permissions !== null
       ? normalizePermissions(row.permissions)
       : (row.can_manage ? ['account_manage'] : []);
+    const memberId = row.memberId ?? row.member_id ?? row.id ?? null;
+    const rawCode = row.code ?? row.passCode ?? row.pass_code ?? '';
+    const codeDisplay = row.codeDisplay ?? row.code_display ?? rawCode;
+    const codeMasked = row.codeMasked === true || row.code_masked === true;
+    const active = (row.isActive ?? row.is_active ?? row.active) !== false;
     return {
-      id: row.id,
-      code: role === 'MASTER' ? '' : String(row.pass_code || ''),
-      mainCharacter: row.main_character_name || '',
-      mainCharacterName: row.main_character_name || '',
+      id: memberId,
+      memberId,
+      code: String(rawCode || ''),
+      codeDisplay: String(codeDisplay || ''),
+      codeMasked,
+      mainCharacter: row.mainCharacter || row.main_character_name || '',
+      mainCharacterName: row.mainCharacterName || row.main_character_name || '',
       level,
       role,
-      roleLabel: row.role_label || roleLabelFor(role, level),
+      roleLabel: row.roleLabel || row.role_label || roleLabelFor(role, level),
       permissions: permissionsToText(perms),
-      active: row.is_active !== false,
-      createdAt: row.created_at || '',
-      updatedAt: row.updated_at || '',
+      active,
+      isActive: active,
+      canEdit: row.canEdit === true || row.can_edit === true,
+      isSelf: row.isSelf === true || row.is_self === true,
+      allowedRoles: Array.isArray(row.allowedRoles) ? row.allowedRoles : (Array.isArray(row.allowed_roles) ? row.allowed_roles : []),
+      createdAt: row.createdAt || row.created_at || '',
+      updatedAt: row.updatedAt || row.updated_at || '',
       memo: row.memo || ''
     };
   }
@@ -428,19 +440,15 @@
   async function findMemberByCode(code){
     const normalized = normalizeMemberCode(code);
     if(!normalized) return null;
-    const rows = await request('member_codes', {
-      query: 'select=*&pass_code=eq.' + encodeURIComponent(normalized) + '&limit=1'
-    });
-    return Array.isArray(rows) ? rows[0] || null : null;
+    const data = await rpc('kinojo_member_code_exists_264', { p_code:normalized });
+    return data?.exists === true ? { exists:true } : null;
   }
 
   async function findMemberByMainCharacter(name){
     const target = String(name || '').trim();
     if(!target) return null;
-    const rows = await request('member_codes', {
-      query: 'select=*&main_character_name=eq.' + encodeURIComponent(target) + '&is_active=eq.true&limit=1'
-    });
-    return Array.isArray(rows) ? rows[0] || null : null;
+    const data = await rpc('kinojo_member_main_character_exists_264', { p_main_character_name:target });
+    return data?.exists === true ? { exists:true } : null;
   }
 
   async function lookupMainCharacter(name){
@@ -530,24 +538,25 @@
       if(!isValidMemberCode(code)) return { ok:false, message:'코드는 총 6자리이며 알파벳 2개와 숫자 4개를 포함해야 합니다.' };
       if(await findMemberByCode(code)) return { ok:false, message:'이미 존재하는 코드입니다. 다른 코드로 등록해 주세요.' };
       if(await findMemberByMainCharacter(lookup.character.mainCharacter)) return { ok:false, message:'이미 활성화된 코드가 있습니다.' };
-      const rolePatch = roleRowPatch('MEMBER');
       const permissions = normalizePermissions(extra.permissions);
-      const body = Object.assign({
-        main_character_name: lookup.character.mainCharacter,
-        pass_code: code,
-        can_like: true,
-        can_suggest: true,
-        can_manage: permissions.includes('account_manage') || permissions.includes('all'),
-        is_active: true,
-        permissions
-      }, rolePatch);
-      const rows = await request('member_codes', { method:'POST', headers:{ Prefer:'return=representation' }, body });
-      return { ok:true, message:'회원 코드가 생성되었습니다.', account:accountFromRow(Array.isArray(rows) ? rows[0] : rows) };
+      const data = await rpc('kinojo_admin_member_create_264', {
+        p_pass_key:currentPassKey(),
+        p_main_character_name:lookup.character.mainCharacter,
+        p_member_code:code,
+        p_permissions:permissions
+      });
+      return { ok:true, message:'회원 코드가 생성되었습니다.', account:accountFromRow(data?.member) };
     }
 
     if(normalizedCommand === 'listCodes'){
-      const rows = await request('member_codes', { query:'select=*&order=level.desc,main_character_name.asc' });
-      return { ok:true, accounts:(Array.isArray(rows) ? rows : []).map(accountFromRow) };
+      const data = await rpc('kinojo_admin_member_list_264', { p_pass_key:currentPassKey() });
+      const source = Array.isArray(data?.accounts) ? data.accounts : [];
+      return {
+        ok:true,
+        accounts:source.map(accountFromRow).filter(Boolean),
+        codeVisibility:String(data?.codeVisibility || data?.code_visibility || 'VISIBLE').toUpperCase(),
+        actor:data?.actor || null
+      };
     }
 
     if(normalizedCommand === 'listCodeRequests'){
@@ -589,33 +598,33 @@
     }
 
     if(normalizedCommand === 'updateRole'){
-      const code = normalizeMemberCode(extra.code);
-      if(!isValidMemberCode(code)) return { ok:false, message:'회원 코드 형식이 올바르지 않습니다.' };
-      const data = await rpc('kinojo_admin_member_manage_261', {
-        p_pass_key:currentPassKey(), p_target_code:code, p_action:'update_role',
+      const memberId = Number(extra.memberId || extra.member_id || 0);
+      if(!Number.isInteger(memberId) || memberId <= 0) return { ok:false, message:'변경할 회원을 찾지 못했습니다.' };
+      const data = await rpc('kinojo_admin_member_manage_264', {
+        p_pass_key:currentPassKey(), p_target_member_id:memberId, p_action:'update_role',
         p_payload:{ role:normalizeRole(extra.role,1) }
       });
-      return { ok:true, message:'등급이 수정되었습니다.', code, account:accountFromRow(data?.member) };
+      return { ok:true, message:'등급이 수정되었습니다.', memberId, account:accountFromRow(data?.member) };
     }
 
     if(normalizedCommand === 'updatePermissions'){
-      const code = normalizeMemberCode(extra.code);
-      if(!isValidMemberCode(code)) return { ok:false, message:'회원 코드 형식이 올바르지 않습니다.' };
-      const data = await rpc('kinojo_admin_member_manage_261', {
-        p_pass_key:currentPassKey(), p_target_code:code, p_action:'update_permissions',
+      const memberId = Number(extra.memberId || extra.member_id || 0);
+      if(!Number.isInteger(memberId) || memberId <= 0) return { ok:false, message:'변경할 회원을 찾지 못했습니다.' };
+      const data = await rpc('kinojo_admin_member_manage_264', {
+        p_pass_key:currentPassKey(), p_target_member_id:memberId, p_action:'update_permissions',
         p_payload:{ permissions:normalizePermissions(extra.permissions) }
       });
-      return { ok:true, message:'권한이 수정되었습니다.', code, account:accountFromRow(data?.member) };
+      return { ok:true, message:'권한이 수정되었습니다.', memberId, account:accountFromRow(data?.member) };
     }
 
     if(normalizedCommand === 'deleteCode' || normalizedCommand === 'disableCode'){
-      const code = normalizeMemberCode(extra.code);
-      if(!isValidMemberCode(code)) return { ok:false, message:'회원 코드 형식이 올바르지 않습니다.' };
-      await rpc('kinojo_admin_member_manage_261', {
-        p_pass_key:currentPassKey(), p_target_code:code,
+      const memberId = Number(extra.memberId || extra.member_id || 0);
+      if(!Number.isInteger(memberId) || memberId <= 0) return { ok:false, message:'변경할 회원을 찾지 못했습니다.' };
+      await rpc('kinojo_admin_member_manage_264', {
+        p_pass_key:currentPassKey(), p_target_member_id:memberId,
         p_action:normalizedCommand === 'deleteCode' ? 'delete' : 'disable', p_payload:{}
       });
-      return { ok:true, message:normalizedCommand === 'deleteCode' ? '회원 코드가 삭제되었습니다.' : '회원 코드가 비활성화되었습니다.', code };
+      return { ok:true, message:normalizedCommand === 'deleteCode' ? '회원 코드가 삭제되었습니다.' : '회원 코드가 비활성화되었습니다.', memberId };
     }
 
     if(normalizedCommand === 'permissionOptions'){
@@ -1615,29 +1624,26 @@
   async function verifyPassKey(passKey){
     const code = normalizePassKey(passKey);
     if(!code) throw new Error('PASS KEY를 입력해 주세요.');
-    const query = [
-      'select=id,main_character_name,pass_code,level,role,role_label,permissions,can_like,can_suggest,can_manage,is_active',
-      'pass_code=eq.' + encodeURIComponent(code),
-      'is_active=eq.true',
-      'limit=1'
-    ].join('&');
-    const rows = await request('member_codes', { query });
-    const row = Array.isArray(rows) ? rows[0] : null;
-    if(!row) throw new Error('PASS KEY가 없거나 비활성화된 계정입니다.');
+    const data = await rpc('kinojo_member_verify_session_264', {
+      p_pass_key:code,
+      p_tool_name:'KINOJO_WEB'
+    });
+    if(!data || data.ok === false) throw new Error(data?.message || 'PASS KEY가 없거나 비활성화된 계정입니다.');
+    const row = data.profile || {};
     const level = Number(row.level || 0);
     const role = normalizeRole(row.role, level);
     const roleLevel = level || roleToLevel(role, 0);
     if(roleLevel < 1) throw new Error('조회 권한이 없는 계정입니다. Member 이상만 사용할 수 있습니다.');
     const profile = {
       id: row.id,
-      mainCharacter: row.main_character_name || '',
-      mainCharacterName: row.main_character_name || '',
+      mainCharacter: row.mainCharacter || row.main_character_name || '',
+      mainCharacterName: row.mainCharacterName || row.main_character_name || '',
       role,
-      roleLabel: row.role_label || getRoleLabel(role, roleLevel),
+      roleLabel: row.roleLabel || row.role_label || getRoleLabel(role, roleLevel),
       level: roleLevel,
-      canLike: row.can_like !== false,
-      canSuggest: row.can_suggest !== false,
-      canManage: row.can_manage === true || roleLevel >= 3,
+      canLike: (row.canLike ?? row.can_like) !== false,
+      canSuggest: (row.canSuggest ?? row.can_suggest) !== false,
+      canManage: (row.canManage ?? row.can_manage) === true || roleLevel >= 3,
       permissions: normalizePermissions(row.permissions),
       source: 'supabase',
       passCode: code,
@@ -1664,7 +1670,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.43-meter-admin-2026072409',
+    version:'1.3.1.44-admin-member-security-2026072410',
     getConfig,
     isPreferred,
     isConfigured,
