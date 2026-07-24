@@ -19,6 +19,7 @@
     releaseChannel: 'stable',
     webClientVersion: 'WEB_50011'
   };
+  let desktopRelease = null;
   let edgeUrl = '';
   let publishableKey = '';
   let catalog = null;
@@ -31,6 +32,7 @@
   let meterCharacters = [];
   let selectedMeterCharacter = null;
   let meterAuthConnecting = false;
+  let meterSessionExpiryTimer = 0;
 
   function formatDps(value) {
     if (value === null || value === undefined || value === '') return '-';
@@ -237,8 +239,8 @@
 
   async function loadConfiguration() {
     const [local, site] = await Promise.all([
-      readJson('/meter/meter-config.json?build=2026072401'),
-      readJson('/config.json?meter=2026072401')
+      readJson('/meter/meter-config.json?build=2026072402'),
+      readJson('/config.json?meter=2026072402')
     ]);
     meterConfig = Object.assign(meterConfig, local || {});
     const supabase = site && site.supabase ? site.supabase : {};
@@ -260,7 +262,67 @@
     }
   }
 
+  function hasMeterAccess() {
+    return Boolean(meterSessionToken);
+  }
+
+  function renderDownloadAccess() {
+    if (!desktopRelease) return;
+    const loggedIn = hasMeterAccess();
+    const direct = $('meterDirectDownload');
+    const hero = $('meterDownloadBtn');
+
+    if (loggedIn) {
+      direct.href = desktopRelease.downloadUrl;
+      direct.textContent = 'Windows 설치 파일 다운로드';
+      direct.removeAttribute('aria-disabled');
+      hero.href = desktopRelease.downloadUrl;
+      hero.textContent = 'Windows 버전 다운로드';
+      hero.removeAttribute('aria-disabled');
+      return;
+    }
+
+    direct.href = '#download';
+    direct.textContent = 'PASS KEY 로그인 후 다운로드';
+    direct.setAttribute('aria-disabled', 'true');
+    hero.href = '#download';
+    hero.textContent = 'PASS KEY 로그인 후 다운로드';
+    hero.setAttribute('aria-disabled', 'true');
+  }
+
+  function renderMeterAccessState() {
+    const loggedIn = hasMeterAccess();
+    const access = $('meterStatsAccess');
+    const content = $('meterStatsContent');
+    const lock = $('meterStatsLock');
+
+    if (access) access.classList.toggle('is-locked', !loggedIn);
+    if (content) {
+      content.setAttribute('aria-hidden', String(!loggedIn));
+      content.inert = !loggedIn;
+    }
+    if (lock) lock.hidden = loggedIn;
+    renderDownloadAccess();
+  }
+
+  function scheduleMeterSessionExpiry() {
+    if (meterSessionExpiryTimer) window.clearTimeout(meterSessionExpiryTimer);
+    meterSessionExpiryTimer = 0;
+    const expiresAt = Date.parse(meterSessionExpiresAt);
+    if (!Number.isFinite(expiresAt)) return;
+    const delay = expiresAt - Date.now();
+    if (delay <= 0) {
+      logoutMine(true, false);
+      return;
+    }
+    meterSessionExpiryTimer = window.setTimeout(
+      () => logoutMine(true, false),
+      Math.min(delay + 250, 2147483647)
+    );
+  }
+
   function setReleaseUnavailable(message) {
+    desktopRelease = null;
     $('meterVersion').textContent = '배포 대기';
     $('meterInstallerSize').textContent = '-';
     $('meterDirectDownload').href = '#download';
@@ -291,13 +353,10 @@
 
     $('meterVersion').textContent = version;
     $('meterInstallerSize').textContent = formatFileSize(release.fileSize);
-    $('meterDirectDownload').href = downloadUrl;
-    $('meterDirectDownload').textContent = 'Windows 설치 파일 다운로드';
-    $('meterDirectDownload').removeAttribute('aria-disabled');
-    $('meterDownloadBtn').href = downloadUrl;
-    $('meterDownloadBtn').textContent = 'Windows 버전 다운로드';
+    desktopRelease = { downloadUrl };
     $('meterDownloadNote').textContent = `${fileName || `KINOJO Meter ${version}`} · SHA-256 ${sha256}`;
     $('meterReleaseNote').textContent = String(release.releaseNote || 'Server에서 검증된 활성 릴리스입니다.');
+    renderDownloadAccess();
   }
 
   async function loadDesktopRelease() {
@@ -707,6 +766,8 @@
       meterAccount = result.account || null;
       meterCharacters = result.characters;
       selectedMeterCharacter = null;
+      scheduleMeterSessionExpiry();
+      renderMeterAccessState();
       renderCharacterPicker();
       setMyPanels('picker');
     } catch (error) {
@@ -735,11 +796,11 @@
       return;
     }
     if (window.KinojoModal && typeof window.KinojoModal.openLogin === 'function') {
-      window.KinojoModal.openLogin('내 DPS 분석을 사용하려면 로그인해 주세요.', { context: 'meter' });
+      window.KinojoModal.openLogin('미터기 다운로드와 전투 통계를 사용하려면 로그인해 주세요.', { context: 'meter' });
       return;
     }
     if (window.KinojoAuth && typeof window.KinojoAuth.openLoginModal === 'function') {
-      window.KinojoAuth.openLoginModal('내 DPS 분석을 사용하려면 로그인해 주세요.', { context: 'meter' });
+      window.KinojoAuth.openLoginModal('미터기 다운로드와 전투 통계를 사용하려면 로그인해 주세요.', { context: 'meter' });
       return;
     }
     $('meterPassError').textContent = '공통 로그인 모달을 불러오지 못했습니다.';
@@ -834,9 +895,12 @@
     const token = meterSessionToken;
     meterSessionToken = '';
     meterSessionExpiresAt = '';
+    if (meterSessionExpiryTimer) window.clearTimeout(meterSessionExpiryTimer);
+    meterSessionExpiryTimer = 0;
     meterAccount = null;
     meterCharacters = [];
     selectedMeterCharacter = null;
+    renderMeterAccessState();
     $('meterCharacterList').replaceChildren();
     $('meterPassError').textContent = '';
     $('meterCharacterError').textContent = '';
@@ -856,6 +920,8 @@
     if (!meterSessionToken || !edgeUrl || !publishableKey) return;
     const token = meterSessionToken;
     meterSessionToken = '';
+    if (meterSessionExpiryTimer) window.clearTimeout(meterSessionExpiryTimer);
+    meterSessionExpiryTimer = 0;
     fetch(edgeUrl, {
       method: 'POST',
       keepalive: true,
@@ -879,6 +945,7 @@
   function bind() {
     setControlsEnabled(false);
     renderCommonLoginState();
+    renderMeterAccessState();
     $('meterContent').addEventListener('change', () => {
       refreshDungeonOptions(true);
       invalidateMineResult();
@@ -897,6 +964,7 @@
     $('meterViewPower').addEventListener('click', () => setStatsView('power'));
     $('meterViewClass').addEventListener('click', () => setStatsView('class'));
     $('meterOpenLoginBtn').addEventListener('click', openCommonLoginForMine);
+    $('meterStatsLoginBtn').addEventListener('click', openCommonLoginForMine);
     $('meterMyCompareBtn').addEventListener('click', loadMineSession);
     $('meterChangeCharacterBtn').addEventListener('click', showCharacterPicker);
     $('meterMyLogoutBtn').addEventListener('click', () => logoutMine(false, true));

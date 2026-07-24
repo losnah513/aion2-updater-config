@@ -15,7 +15,7 @@
 <link href="../ui/kinojo-layout.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../ui/kinojo-components.css?cache=2026072201" rel="stylesheet"/>
 <link href="../ui/kinojo-common-ui.css?cache=2026072201" rel="stylesheet"/>
-<link href="../meter/css/meter.css?cache=2026072401" rel="stylesheet"/>
+<link href="../meter/css/meter.css?cache=2026072402" rel="stylesheet"/>
 <script src="../ui/kinojo-device-router.js?cache=2026072201" data-mobile-path="../m/meter/"></script>
 </head>
 <body class="kinojo-meter-page">
@@ -50,37 +50,45 @@
 
   <section class="meter-notice" id="meterNotice"><strong>KINOJO METER</strong><span>실전 패킷 Decoder 검증과 서버 통계 연결을 준비하고 있습니다.</span></section>
 
-  <section class="meter-section-head" id="stats">
-    <div><span>COMBAT STATISTICS</span><h2>전투 통계</h2></div>
-    <p>조건을 선택하면 Server Engine이 계산한 공개 통계를 불러옵니다.</p>
-  </section>
+  <section class="meter-stats-access is-locked" id="meterStatsAccess" aria-label="전투 통계 접근">
+    <div class="meter-stats-lock" id="meterStatsLock" role="status">
+      <span class="meter-stats-lock-icon" aria-hidden="true">K</span>
+      <strong>PASS KEY 로그인 후 전투 통계를 확인할 수 있습니다.</strong>
+      <p>로그인 정보는 저장하지 않으며, 현재 페이지의 Meter 세션에서만 사용합니다.</p>
+      <button class="kinojo-btn meter-primary" id="meterStatsLoginBtn" type="button">PASS KEY 로그인</button>
+    </div>
+    <div class="meter-stats-content" id="meterStatsContent" aria-hidden="true" inert>
+      <section class="meter-section-head" id="stats">
+        <div><span>COMBAT STATISTICS</span><h2>전투 통계</h2></div>
+        <p>조건을 선택하면 Server Engine이 계산한 공개 통계를 불러옵니다.</p>
+      </section>
 
-  <section class="meter-filter-card" aria-label="미터기 통계 필터">
-    <div><label for="meterClass">클래스</label><select id="meterClass" disabled><option>Server 카탈로그 로딩 중</option></select></div>
-    <div><label for="meterContent">콘텐츠</label><select id="meterContent" disabled><option>Server 카탈로그 로딩 중</option></select></div>
-    <div><label for="meterDungeon">던전</label><select id="meterDungeon" disabled><option>Server 카탈로그 로딩 중</option></select></div>
-    <div><label for="meterVariant">난이도·단계</label><select id="meterVariant" disabled><option>던전을 먼저 선택하세요</option></select></div>
-    <div><label for="meterBoss">보스</label><select id="meterBoss" disabled><option>Server 카탈로그 로딩 중</option></select></div>
-    <div><label for="meterPowerBand">전투력 구간</label><select id="meterPowerBand" disabled><option>Server 카탈로그 로딩 중</option></select></div>
-    <div><label for="meterPeriod">집계 기간</label><select id="meterPeriod" disabled><option>Server 카탈로그 로딩 중</option></select></div>
-    <button class="kinojo-btn meter-query" id="meterQueryBtn" type="button" disabled>통계 조회</button>
-  </section>
+      <section class="meter-filter-card" aria-label="미터기 통계 필터">
+        <div><label for="meterClass">클래스</label><select id="meterClass" disabled><option>Server 카탈로그 로딩 중</option></select></div>
+        <div><label for="meterContent">콘텐츠</label><select id="meterContent" disabled><option>Server 카탈로그 로딩 중</option></select></div>
+        <div><label for="meterDungeon">던전</label><select id="meterDungeon" disabled><option>Server 카탈로그 로딩 중</option></select></div>
+        <div><label for="meterVariant">난이도·단계</label><select id="meterVariant" disabled><option>던전을 먼저 선택하세요</option></select></div>
+        <div><label for="meterBoss">보스</label><select id="meterBoss" disabled><option>Server 카탈로그 로딩 중</option></select></div>
+        <div><label for="meterPowerBand">전투력 구간</label><select id="meterPowerBand" disabled><option>Server 카탈로그 로딩 중</option></select></div>
+        <div><label for="meterPeriod">집계 기간</label><select id="meterPeriod" disabled><option>Server 카탈로그 로딩 중</option></select></div>
+        <button class="kinojo-btn meter-query" id="meterQueryBtn" type="button" disabled>통계 조회</button>
+      </section>
 
-  <section class="meter-stats-meta" id="meterStatsMeta" aria-live="polite">
+      <section class="meter-stats-meta" id="meterStatsMeta" aria-live="polite">
     <div class="meter-stats-state"><span id="meterStatsState">조회 대기</span><strong id="meterStatsMessage">Server 공개 통계를 불러오는 중입니다.</strong></div>
     <div class="meter-applied-filters" id="meterAppliedFilters"><span>필터 확인 중</span></div>
     <small id="meterPeriodRange">Server 집계 기간 확인 중</small>
-  </section>
+      </section>
 
-  <section class="meter-summary" aria-label="통계 요약">
+      <section class="meter-summary" aria-label="통계 요약">
     <article><span>유효 전투</span><strong id="meterEncounterCount">-</strong><small>완료·검증 기록</small></article>
     <article><span>참여 캐릭터</span><strong id="meterCharacterCount">-</strong><small>중복 제외 표본</small></article>
     <article><span>평균 DPS</span><strong id="meterAverageDps">-</strong><small>전체 전투 평균</small></article>
     <article><span>중앙값 DPS</span><strong id="meterMedianDps">-</strong><small>대표 비교값</small></article>
     <article><span>상위 10% DPS</span><strong id="meterP90Dps">-</strong><small>90 percentile 기준</small></article>
-  </section>
+      </section>
 
-  <section class="meter-grid">
+      <section class="meter-grid">
     <article class="meter-panel meter-distribution-panel">
       <header>
         <div><span>SERVER DISTRIBUTION</span><h2 id="meterChartTitle">전투력 구간별 DPS</h2></div>
@@ -149,6 +157,8 @@
         </div>
       </div>
     </article>
+      </section>
+    </div>
   </section>
 
   <section class="meter-method" aria-label="KINOJO Meter 처리 과정">
@@ -168,6 +178,6 @@
 <script src="../ui/kinojo-common-ui.js?cache=2026072201"></script>
 <script src="../core/kinojo-supabase.js?cache=2026072201"></script>
 <script src="../core/kinojo-auth.js?cache=2026072202"></script>
-<script src="./js/meter-app.js?cache=2026072401"></script>
+<script src="./js/meter-app.js?cache=2026072402"></script>
 </body>
 </html>
