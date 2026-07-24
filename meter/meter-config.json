@@ -1,10 +1,6 @@
 {
   "enabled": true,
-  "version": "0.2.15 Test",
-  "installerSize": "429,056 bytes (419KB)",
-  "downloadUrl": "",
-  "releasePageUrl": "",
-  "sha256": "282D95EA6A0CC512F88BE82CECAAD35A7B52A66E5C3018B279EC56FB25B11911",
   "edgeFunctionName": "meter-ingest",
-  "notice": "테스트 빌드입니다. 실제 AION2 바이너리 Decoder 검증 전에는 운영 전투 기록을 업로드하지 않습니다."
+  "releaseChannel": "stable",
+  "webClientVersion": "WEB_50011"
 }

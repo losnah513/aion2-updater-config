@@ -15,7 +15,7 @@
 <link href="../ui/kinojo-layout.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../ui/kinojo-components.css?cache=2026072201" rel="stylesheet"/>
 <link href="../ui/kinojo-common-ui.css?cache=2026072201" rel="stylesheet"/>
-<link href="../meter/css/meter.css?cache=2026072204" rel="stylesheet"/>
+<link href="../meter/css/meter.css?cache=2026072401" rel="stylesheet"/>
 <script src="../ui/kinojo-device-router.js?cache=2026072201" data-mobile-path="../m/meter/"></script>
 </head>
 <body class="kinojo-meter-page">
@@ -26,7 +26,7 @@
       <h1>내 전투를 같은 조건에서 비교하세요</h1>
       <p>클래스, 보스, 전투력 구간을 Server Engine이 동일한 기준으로 집계합니다. 웹은 계산하지 않고 검증된 결과만 표시합니다.</p>
       <div class="meter-hero-actions">
-        <a class="kinojo-btn meter-primary" id="meterDownloadBtn" href="#download">테스트 버전 확인</a>
+        <a class="kinojo-btn meter-primary" id="meterDownloadBtn" href="#download">배포 상태 확인</a>
         <a class="kinojo-btn meter-secondary" href="#stats">통계 보기</a>
       </div>
       <div class="meter-hero-trust" aria-label="KINOJO Meter 처리 원칙">
@@ -38,12 +38,13 @@
       <h2>KINOJO Meter</h2>
       <p>PASS KEY 인증 · 캐릭터 선택 · 전투 오버레이</p>
       <dl>
-        <div><dt>버전</dt><dd id="meterVersion">0.2.15 Test</dd></div>
-        <div><dt>설치 파일</dt><dd id="meterInstallerSize">419KB</dd></div>
+        <div><dt>버전</dt><dd id="meterVersion">Server 확인 중</dd></div>
+        <div><dt>설치 파일</dt><dd id="meterInstallerSize">Server 확인 중</dd></div>
         <div><dt>지원 환경</dt><dd>Windows 10/11 x64</dd></div>
       </dl>
-      <a class="kinojo-btn meter-download-full" id="meterDirectDownload" href="#" aria-disabled="true">다운로드 준비 중</a>
-      <small id="meterDownloadNote">정식 배포 주소가 등록되면 이 버튼이 활성화됩니다.</small>
+      <a class="kinojo-btn meter-download-full" id="meterDirectDownload" href="#download" aria-disabled="true">다운로드 정보 확인 중</a>
+      <small id="meterDownloadNote">Server Release Master를 확인하고 있습니다.</small>
+      <div class="meter-release-note" id="meterReleaseNote">최신 배포 메모를 불러오는 중입니다.</div>
     </aside>
   </section>
 
@@ -167,6 +168,6 @@
 <script src="../ui/kinojo-common-ui.js?cache=2026072201"></script>
 <script src="../core/kinojo-supabase.js?cache=2026072201"></script>
 <script src="../core/kinojo-auth.js?cache=2026072202"></script>
-<script src="./js/meter-app.js?cache=2026072205"></script>
+<script src="./js/meter-app.js?cache=2026072401"></script>
 </body>
 </html>

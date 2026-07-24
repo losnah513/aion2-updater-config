@@ -14,7 +14,11 @@
     'meterBoss', 'meterPowerBand', 'meterPeriod', 'meterQueryBtn'
   ];
 
-  let meterConfig = { edgeFunctionName: 'meter-ingest' };
+  let meterConfig = {
+    edgeFunctionName: 'meter-ingest',
+    releaseChannel: 'stable',
+    webClientVersion: 'WEB_50011'
+  };
   let edgeUrl = '';
   let publishableKey = '';
   let catalog = null;
@@ -41,6 +45,15 @@
     if (value === null || value === undefined || value === '') return emptyValue || '-';
     const number = Number(value);
     return Number.isFinite(number) ? Math.trunc(number).toLocaleString('ko-KR') : (emptyValue || '-');
+  }
+
+  function formatFileSize(value) {
+    const bytes = Number(value);
+    if (!Number.isFinite(bytes) || bytes <= 0) return '-';
+    const formattedBytes = Math.trunc(bytes).toLocaleString('ko-KR');
+    if (bytes >= 1048576) return `${(bytes / 1048576).toFixed(2)} MB (${formattedBytes} bytes)`;
+    if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} KB (${formattedBytes} bytes)`;
+    return `${formattedBytes} bytes`;
   }
 
   function escapeHtml(value) {
@@ -224,8 +237,8 @@
 
   async function loadConfiguration() {
     const [local, site] = await Promise.all([
-      readJson('/meter/meter-config.json?build=2026072203'),
-      readJson('/config.json?meter=2026072203')
+      readJson('/meter/meter-config.json?build=2026072401'),
+      readJson('/config.json?meter=2026072401')
     ]);
     meterConfig = Object.assign(meterConfig, local || {});
     const supabase = site && site.supabase ? site.supabase : {};
@@ -233,21 +246,72 @@
     publishableKey = String(supabase.publishableKey || '');
     edgeUrl = base && publishableKey ? `${base}/functions/v1/${meterConfig.edgeFunctionName || 'meter-ingest'}` : '';
     if (!edgeUrl) throw new Error('KINOJO 서버 연결 설정이 없습니다.');
+  }
 
-    if (meterConfig.version) $('meterVersion').textContent = meterConfig.version;
-    if (meterConfig.installerSize) $('meterInstallerSize').textContent = meterConfig.installerSize;
-    if (meterConfig.notice) $('meterNotice').innerHTML = `<strong>KINOJO METER</strong><span>${escapeHtml(meterConfig.notice)}</span>`;
+  function safeReleaseUrl(value) {
+    try {
+      const url = new URL(String(value || '').trim());
+      const valid = url.protocol === 'https:'
+        && url.hostname.toLowerCase() === 'github.com'
+        && /\/releases\/download\/[^/]+\/[^/]+$/i.test(url.pathname);
+      return valid ? url.href : '';
+    } catch {
+      return '';
+    }
+  }
 
-    const downloadUrl = String(meterConfig.downloadUrl || '').trim();
-    const releasePageUrl = String(meterConfig.releasePageUrl || '').trim();
-    const targetUrl = downloadUrl || releasePageUrl;
-    if (targetUrl) {
-      $('meterDirectDownload').href = targetUrl;
-      $('meterDirectDownload').textContent = downloadUrl ? 'Windows 테스트 버전 다운로드' : '릴리스 페이지 열기';
-      $('meterDirectDownload').removeAttribute('aria-disabled');
-      $('meterDownloadBtn').href = targetUrl;
-      const sha = String(meterConfig.sha256 || '').trim();
-      $('meterDownloadNote').textContent = sha ? `SHA-256 ${sha}` : '다운로드 파일의 게시된 체크섬을 확인해 주세요.';
+  function setReleaseUnavailable(message) {
+    $('meterVersion').textContent = '배포 대기';
+    $('meterInstallerSize').textContent = '-';
+    $('meterDirectDownload').href = '#download';
+    $('meterDirectDownload').textContent = '다운로드 준비 중';
+    $('meterDirectDownload').setAttribute('aria-disabled', 'true');
+    $('meterDownloadBtn').href = '#download';
+    $('meterDownloadBtn').textContent = '배포 상태 확인';
+    $('meterDownloadNote').textContent = message || 'Server에 활성 릴리스가 등록되지 않았습니다.';
+    $('meterReleaseNote').textContent = '배포 정보는 Server Release Master에서 관리합니다.';
+  }
+
+  function renderDesktopRelease(data) {
+    const release = data && data.desktopUpdate && typeof data.desktopUpdate === 'object'
+      ? data.desktopUpdate
+      : null;
+    if (!data || data.releaseAvailable !== true || !release) {
+      setReleaseUnavailable('현재 다운로드 가능한 활성 릴리스가 없습니다.');
+      return;
+    }
+
+    const downloadUrl = safeReleaseUrl(release.downloadUrl);
+    const version = String(release.version || '').trim();
+    const sha256 = String(release.sha256 || '').trim().toUpperCase();
+    const fileName = String(release.fileName || '').trim();
+    if (!downloadUrl || !version || !/^[0-9A-F]{64}$/.test(sha256)) {
+      throw new Error('Server 릴리스 정보가 다운로드 안전 기준을 충족하지 않습니다.');
+    }
+
+    $('meterVersion').textContent = version;
+    $('meterInstallerSize').textContent = formatFileSize(release.fileSize);
+    $('meterDirectDownload').href = downloadUrl;
+    $('meterDirectDownload').textContent = 'Windows 설치 파일 다운로드';
+    $('meterDirectDownload').removeAttribute('aria-disabled');
+    $('meterDownloadBtn').href = downloadUrl;
+    $('meterDownloadBtn').textContent = 'Windows 버전 다운로드';
+    $('meterDownloadNote').textContent = `${fileName || `KINOJO Meter ${version}`} · SHA-256 ${sha256}`;
+    $('meterReleaseNote').textContent = String(release.releaseNote || 'Server에서 검증된 활성 릴리스입니다.');
+  }
+
+  async function loadDesktopRelease() {
+    $('meterVersion').textContent = 'Server 확인 중';
+    $('meterInstallerSize').textContent = 'Server 확인 중';
+    $('meterDownloadNote').textContent = 'Server Release Master를 확인하고 있습니다.';
+    $('meterReleaseNote').textContent = '최신 배포 메모를 불러오는 중입니다.';
+    try {
+      const data = await callMeter('desktopUpdate', {
+        channel: String(meterConfig.releaseChannel || 'stable')
+      });
+      renderDesktopRelease(data);
+    } catch (error) {
+      setReleaseUnavailable(error.message || '다운로드 정보를 불러오지 못했습니다.');
     }
   }
 
@@ -633,7 +697,7 @@
       if (!edgeUrl || !publishableKey) await loadConfiguration();
       const result = await callMeter('login', {
         passKey,
-        clientVersion: meterConfig.version ? `WEB_${meterConfig.version}` : 'WEB_50008'
+        clientVersion: String(meterConfig.webClientVersion || 'WEB_50011')
       });
       if (!result.sessionToken || !Array.isArray(result.characters) || result.characters.length === 0) {
         throw new Error(result.message || '계정에 연결된 활성 캐릭터가 없습니다.');
@@ -852,7 +916,7 @@
     bind();
     try {
       await loadConfiguration();
-      await loadCatalog();
+      await Promise.all([loadDesktopRelease(), loadCatalog()]);
       await loadStats();
     } catch (error) {
       setControlsEnabled(false);
