@@ -17,9 +17,12 @@
   let meterConfig = {
     edgeFunctionName: 'meter-ingest',
     releaseChannel: 'stable',
-    webClientVersion: 'WEB_50011'
+    webClientVersion: 'WEB_50012'
   };
   let desktopRelease = null;
+  let consentDocument = null;
+  let consentAccepted = false;
+  let consentAcceptedAt = '';
   let edgeUrl = '';
   let publishableKey = '';
   let catalog = null;
@@ -271,23 +274,34 @@
     const loggedIn = hasMeterAccess();
     const direct = $('meterDirectDownload');
     const hero = $('meterDownloadBtn');
+    const state = $('meterConsentState');
 
-    if (loggedIn) {
-      direct.href = desktopRelease.downloadUrl;
+    direct.href = '#download';
+    hero.href = '#download';
+    direct.removeAttribute('aria-disabled');
+    hero.removeAttribute('aria-disabled');
+    state.classList.remove('is-accepted', 'is-error');
+
+    if (loggedIn && consentAccepted) {
       direct.textContent = 'Windows 설치 파일 다운로드';
-      direct.removeAttribute('aria-disabled');
-      hero.href = desktopRelease.downloadUrl;
       hero.textContent = 'Windows 버전 다운로드';
-      hero.removeAttribute('aria-disabled');
+      state.textContent = consentAcceptedAt
+        ? `필수 동의 확인 · ${serverTime(consentAcceptedAt)} KST`
+        : '현재 버전의 필수 동의가 확인되었습니다.';
+      state.classList.add('is-accepted');
       return;
     }
 
-    direct.href = '#download';
+    if (loggedIn) {
+      direct.textContent = '필수 동의 후 다운로드';
+      hero.textContent = '필수 동의 후 다운로드';
+      state.textContent = '두 필수 항목에 동의해야 다운로드할 수 있습니다.';
+      return;
+    }
+
     direct.textContent = 'PASS KEY 로그인 후 다운로드';
-    direct.setAttribute('aria-disabled', 'true');
-    hero.href = '#download';
     hero.textContent = 'PASS KEY 로그인 후 다운로드';
-    hero.setAttribute('aria-disabled', 'true');
+    state.textContent = 'PASS KEY 로그인과 필수 동의가 필요합니다.';
   }
 
   function renderMeterAccessState() {
@@ -303,6 +317,188 @@
     }
     if (lock) lock.hidden = loggedIn;
     renderDownloadAccess();
+  }
+
+  function safeConsentLink(value, allowedHost, fallback) {
+    try {
+      const url = new URL(String(value || '').trim());
+      return url.protocol === 'https:' && url.hostname.toLowerCase() === allowedHost ? url.href : fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  function renderConsentList(id, items) {
+    const list = $(id);
+    list.replaceChildren();
+    asArray(items).forEach((item) => {
+      const li = document.createElement('li');
+      li.textContent = String(item || '');
+      if (li.textContent) list.appendChild(li);
+    });
+    if (!list.children.length) {
+      const li = document.createElement('li');
+      li.textContent = 'Server에 등록된 항목이 없습니다.';
+      list.appendChild(li);
+    }
+  }
+
+  function renderConsentDocument(data) {
+    if (!data || data.ok !== true || !String(data.documentVersion || '').trim()) {
+      throw new Error(data && data.message ? data.message : '필수 동의 문서를 불러오지 못했습니다.');
+    }
+    consentDocument = data;
+    $('meterConsentTitle').textContent = String(data.documentTitle || 'KINOJO Meter 필수 이용 동의');
+    $('meterConsentVersion').textContent = `${data.documentVersion} · 시행 ${serverTime(data.effectiveAt) || '-' } KST`;
+    $('meterConsentRiskText').textContent = String(data.serviceRiskText || '');
+    $('meterConsentStatsText').textContent = String(data.statisticsText || '');
+    $('meterConsentRetention').textContent = String(data.retentionText || '');
+    $('meterConsentWithdrawal').textContent = String(data.withdrawalText || '');
+    renderConsentList('meterConsentCollection', data.collectionItems);
+    renderConsentList('meterConsentPurposes', data.usePurposes);
+    $('meterConsentPolicyLink').href = safeConsentLink(
+      data.aion2PolicyUrl,
+      'www.plaync.com',
+      'https://www.plaync.com/policy/operation/aion2'
+    );
+    const privacyFallback = $('meterConsentPrivacyLink').href;
+    $('meterConsentPrivacyLink').href = safeConsentLink(data.privacyUrl, 'kinojo.info', privacyFallback);
+  }
+
+  async function loadConsentDocument() {
+    const data = await callMeter('consentDocument', {});
+    renderConsentDocument(data);
+  }
+
+  async function refreshConsentStatus() {
+    consentAccepted = false;
+    consentAcceptedAt = '';
+    if (!meterSessionToken || !consentDocument) {
+      renderDownloadAccess();
+      return false;
+    }
+    try {
+      const result = await callMeter('consentStatus', {
+        sessionToken: meterSessionToken,
+        documentVersion: consentDocument.documentVersion
+      });
+      consentAccepted = result.accepted === true;
+      consentAcceptedAt = String(result.acceptedAt || '');
+      renderDownloadAccess();
+      return consentAccepted;
+    } catch (error) {
+      renderDownloadAccess();
+      const state = $('meterConsentState');
+      state.textContent = error.message || '동의 상태를 확인하지 못했습니다.';
+      state.classList.add('is-error');
+      return false;
+    }
+  }
+
+  function updateConsentConfirmState() {
+    $('meterConsentConfirmBtn').disabled = !consentDocument
+      || !$('meterConsentRiskCheck').checked
+      || !$('meterConsentStatsCheck').checked;
+  }
+
+  function openConsentModal() {
+    if (!consentDocument) {
+      $('meterConsentState').textContent = 'Server 동의 문서를 불러오지 못했습니다.';
+      $('meterConsentState').classList.add('is-error');
+      return;
+    }
+    $('meterConsentRiskCheck').checked = false;
+    $('meterConsentStatsCheck').checked = false;
+    $('meterConsentError').textContent = '';
+    updateConsentConfirmState();
+    $('meterConsentModal').hidden = false;
+    document.body.classList.add('meter-consent-open');
+    $('meterConsentRiskCheck').focus();
+  }
+
+  function closeConsentModal() {
+    $('meterConsentModal').hidden = true;
+    document.body.classList.remove('meter-consent-open');
+  }
+
+  async function authorizeAndDownload() {
+    if (!meterSessionToken || !consentDocument || !desktopRelease) return;
+    const direct = $('meterDirectDownload');
+    const hero = $('meterDownloadBtn');
+    let failureMessage = '';
+    direct.setAttribute('aria-disabled', 'true');
+    hero.setAttribute('aria-disabled', 'true');
+    direct.textContent = 'Server 다운로드 승인 확인 중';
+    hero.textContent = '다운로드 승인 확인 중';
+    try {
+      const result = await callMeter('desktopDownloadAuthorization', {
+        sessionToken: meterSessionToken,
+        documentVersion: consentDocument.documentVersion,
+        channel: String(meterConfig.releaseChannel || 'stable'),
+        clientVersion: String(meterConfig.webClientVersion || 'WEB_50012')
+      });
+      const release = result && result.desktopUpdate && typeof result.desktopUpdate === 'object'
+        ? result.desktopUpdate
+        : null;
+      const downloadUrl = release ? safeReleaseUrl(release.downloadUrl) : '';
+      if (result.authorized !== true || !downloadUrl) {
+        throw new Error(result.message || 'Server가 다운로드를 승인하지 않았습니다.');
+      }
+      window.location.assign(downloadUrl);
+    } catch (error) {
+      consentAccepted = false;
+      consentAcceptedAt = '';
+      failureMessage = error.message || '다운로드 승인을 확인하지 못했습니다.';
+    } finally {
+      renderDownloadAccess();
+      if (failureMessage) {
+        $('meterConsentState').textContent = failureMessage;
+        $('meterConsentState').classList.add('is-error');
+      }
+    }
+  }
+
+  async function recordConsentAndDownload() {
+    if (!meterSessionToken || !consentDocument) return;
+    const button = $('meterConsentConfirmBtn');
+    button.disabled = true;
+    button.textContent = 'Server에 동의 기록 중';
+    $('meterConsentError').textContent = '';
+    try {
+      const result = await callMeter('recordConsent', {
+        sessionToken: meterSessionToken,
+        documentVersion: consentDocument.documentVersion,
+        serviceRiskAccepted: $('meterConsentRiskCheck').checked,
+        statisticsAccepted: $('meterConsentStatsCheck').checked,
+        clientSurface: 'WEB',
+        clientVersion: String(meterConfig.webClientVersion || 'WEB_50012')
+      });
+      if (result.accepted !== true) throw new Error(result.message || '필수 동의를 기록하지 못했습니다.');
+      consentAccepted = true;
+      consentAcceptedAt = String(result.acceptedAt || '');
+      closeConsentModal();
+      renderDownloadAccess();
+      await authorizeAndDownload();
+    } catch (error) {
+      $('meterConsentError').textContent = error.message || '필수 동의를 기록하지 못했습니다.';
+    } finally {
+      button.textContent = '동의하고 다운로드';
+      updateConsentConfirmState();
+    }
+  }
+
+  function requestDownload(event) {
+    if (event) event.preventDefault();
+    if (!desktopRelease) return;
+    if (!meterSessionToken) {
+      openCommonLoginForMine();
+      return;
+    }
+    if (consentAccepted) {
+      authorizeAndDownload();
+      return;
+    }
+    openConsentModal();
   }
 
   function scheduleMeterSessionExpiry() {
@@ -330,6 +526,9 @@
     $('meterDirectDownload').setAttribute('aria-disabled', 'true');
     $('meterDownloadBtn').href = '#download';
     $('meterDownloadBtn').textContent = '배포 상태 확인';
+    $('meterConsentState').textContent = '활성 릴리스가 등록될 때까지 다운로드할 수 없습니다.';
+    $('meterConsentState').classList.remove('is-accepted');
+    $('meterConsentState').classList.add('is-error');
     $('meterDownloadNote').textContent = message || 'Server에 활성 릴리스가 등록되지 않았습니다.';
     $('meterReleaseNote').textContent = '배포 정보는 Server Release Master에서 관리합니다.';
   }
@@ -353,7 +552,7 @@
 
     $('meterVersion').textContent = version;
     $('meterInstallerSize').textContent = formatFileSize(release.fileSize);
-    desktopRelease = { downloadUrl };
+    desktopRelease = { version, fileName, sha256 };
     $('meterDownloadNote').textContent = `${fileName || `KINOJO Meter ${version}`} · SHA-256 ${sha256}`;
     $('meterReleaseNote').textContent = String(release.releaseNote || 'Server에서 검증된 활성 릴리스입니다.');
     renderDownloadAccess();
@@ -814,6 +1013,7 @@
       meterCharacters = result.characters;
       selectedMeterCharacter = null;
       scheduleMeterSessionExpiry();
+      await refreshConsentStatus();
       renderMeterAccessState();
       renderCharacterPicker();
       setMyPanels('picker');
@@ -947,6 +1147,9 @@
     meterAccount = null;
     meterCharacters = [];
     selectedMeterCharacter = null;
+    consentAccepted = false;
+    consentAcceptedAt = '';
+    closeConsentModal();
     renderMeterAccessState();
     $('meterCharacterList').replaceChildren();
     $('meterPassError').textContent = '';
@@ -1015,6 +1218,17 @@
     $('meterMyCompareBtn').addEventListener('click', loadMineSession);
     $('meterChangeCharacterBtn').addEventListener('click', showCharacterPicker);
     $('meterMyLogoutBtn').addEventListener('click', () => logoutMine(false, true));
+    $('meterDownloadBtn').addEventListener('click', requestDownload);
+    $('meterDirectDownload').addEventListener('click', requestDownload);
+    $('meterConsentRiskCheck').addEventListener('change', updateConsentConfirmState);
+    $('meterConsentStatsCheck').addEventListener('change', updateConsentConfirmState);
+    $('meterConsentConfirmBtn').addEventListener('click', recordConsentAndDownload);
+    document.querySelectorAll('[data-consent-close]').forEach((element) => {
+      element.addEventListener('click', closeConsentModal);
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !$('meterConsentModal').hidden) closeConsentModal();
+    });
     window.addEventListener('kinojo:auth-changed', async (event) => {
       const detail = event.detail || {};
       renderCommonLoginState(detail);
@@ -1031,7 +1245,8 @@
     bind();
     try {
       await loadConfiguration();
-      await Promise.all([loadDesktopRelease(), loadCatalog()]);
+      await Promise.all([loadDesktopRelease(), loadConsentDocument(), loadCatalog()]);
+      if (meterSessionToken) await refreshConsentStatus();
       await loadStats();
     } catch (error) {
       setControlsEnabled(false);

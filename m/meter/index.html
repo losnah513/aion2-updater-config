@@ -15,7 +15,7 @@
 <link href="../../ui/kinojo-layout.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../../ui/kinojo-components.css?cache=2026072201" rel="stylesheet"/>
 <link href="../../ui/kinojo-common-ui.css?cache=2026072201" rel="stylesheet"/>
-<link href="../../meter/css/meter.css?cache=2026072404" rel="stylesheet"/>
+<link href="../../meter/css/meter.css?cache=2026072405" rel="stylesheet"/>
 </head>
 <body class="kinojo-meter-page">
 <main class="meter-wrap">
@@ -42,6 +42,7 @@
         <div><dt>지원 환경</dt><dd>Windows 10/11 x64</dd></div>
       </dl>
       <a class="kinojo-btn meter-download-full" id="meterDirectDownload" href="#download" aria-disabled="true">다운로드 정보 확인 중</a>
+      <div class="meter-consent-state" id="meterConsentState">PASS KEY 로그인과 필수 동의가 필요합니다.</div>
       <small id="meterDownloadNote">Server Release Master를 확인하고 있습니다.</small>
       <div class="meter-release-note" id="meterReleaseNote">최신 배포 메모를 불러오는 중입니다.</div>
     </aside>
@@ -168,6 +169,43 @@
 
   <footer class="footer common-footer"><div class="footer-links"><a href="../../pages/about.html">사이트 소개</a><a href="../../pages/terms.html">이용약관</a><a href="../../pages/privacy.html">개인정보처리방침</a><a href="../../pages/contact.html">아이디어 제안 및 건의</a></div><div class="footer-powered">Powered by KINOJO INFO · AION2 비공식 도구</div></footer>
 </main>
+<div class="meter-consent-modal" id="meterConsentModal" hidden>
+  <div class="meter-consent-backdrop" data-consent-close></div>
+  <section class="meter-consent-dialog" role="dialog" aria-modal="true" aria-labelledby="meterConsentTitle">
+    <header>
+      <div><span>REQUIRED CONSENT</span><h2 id="meterConsentTitle">KINOJO Meter 필수 이용 동의</h2></div>
+      <button class="meter-consent-close" type="button" aria-label="동의 창 닫기" data-consent-close>×</button>
+    </header>
+    <div class="meter-consent-version" id="meterConsentVersion">Server 동의 문서를 확인하는 중입니다.</div>
+    <div class="meter-consent-scroll">
+      <article>
+        <h3>1. 비공식 외부 프로그램 이용 위험</h3>
+        <p id="meterConsentRiskText">동의 내용을 불러오는 중입니다.</p>
+        <a id="meterConsentPolicyLink" href="https://www.plaync.com/policy/operation/aion2" target="_blank" rel="noopener noreferrer">AION2 운영정책 확인</a>
+      </article>
+      <article>
+        <h3>2. 전투 통계 수집·이용</h3>
+        <p id="meterConsentStatsText">동의 내용을 불러오는 중입니다.</p>
+        <div class="meter-consent-columns">
+          <div><strong>수집 항목</strong><ul id="meterConsentCollection"><li>Server 확인 중</li></ul></div>
+          <div><strong>이용 목적</strong><ul id="meterConsentPurposes"><li>Server 확인 중</li></ul></div>
+        </div>
+        <p><strong>보유 기간</strong><span id="meterConsentRetention">Server 확인 중</span></p>
+        <p><strong>거부·철회</strong><span id="meterConsentWithdrawal">Server 확인 중</span></p>
+        <a id="meterConsentPrivacyLink" href="../../pages/privacy.html" target="_blank" rel="noopener noreferrer">개인정보처리방침 확인</a>
+      </article>
+    </div>
+    <div class="meter-consent-checks">
+      <label><input id="meterConsentRiskCheck" type="checkbox"/> <span><b>[필수]</b> 비공식 외부 프로그램 사용에 따른 위험과 서비스 변경·종료 가능성을 확인했습니다.</span></label>
+      <label><input id="meterConsentStatsCheck" type="checkbox"/> <span><b>[필수]</b> 전투 통계 수집·이용 항목, 목적, 보유 기간과 철회 방법을 확인하고 동의합니다.</span></label>
+    </div>
+    <p class="meter-consent-error" id="meterConsentError" role="status"></p>
+    <footer>
+      <button class="kinojo-btn meter-secondary" type="button" data-consent-close>취소</button>
+      <button class="kinojo-btn meter-primary" id="meterConsentConfirmBtn" type="button" disabled>동의하고 다운로드</button>
+    </footer>
+  </section>
+</div>
 <script src="../../core/kinojo-api.js?cache=2026072201"></script>
 <script src="../../core/kinojo-cache.js?cache=2026072201"></script>
 <script src="../../core/kinojo-permissions.js?cache=2026072201"></script>
@@ -177,6 +215,6 @@
 <script src="../../ui/kinojo-common-ui.js?cache=2026072201"></script>
 <script src="../../core/kinojo-supabase.js?cache=2026072201"></script>
 <script src="../../core/kinojo-auth.js?cache=2026072202"></script>
-<script src="../../meter/js/meter-app.js?cache=2026072404"></script>
+<script src="../../meter/js/meter-app.js?cache=2026072405"></script>
 </body>
 </html>
