@@ -97,16 +97,28 @@ function renderSkeleton(){
   renderOperationSkeleton();
 }
 
-function currentSanctuaryPassKey(){
-  const session=window.KinojoAuth&&typeof window.KinojoAuth.getSession==='function'?window.KinojoAuth.getSession():null;
-  return String(session?.passKey||session?.passCode||'').trim();
+function readStoredSanctuaryAuth(key){
+  try{return JSON.parse(localStorage.getItem(key)||'null')}catch(_error){return null}
 }
+function currentSanctuaryAuthState(){
+  const auth=window.KinojoAuth||{};
+  const session=typeof auth.getSession==='function'?auth.getSession():null;
+  const account=typeof auth.getAccount==='function'?auth.getAccount():null;
+  const storedSession=readStoredSanctuaryAuth('kinojo_login_session_v1');
+  const storedAccount=readStoredSanctuaryAuth('kinojo_login_account_v1');
+  const merged=Object.assign({},storedSession||{},storedAccount||{},session||{},account||{});
+  const passKey=String(merged.passKey||merged.passCode||merged.pass_key||merged.pass_code||'').trim();
+  const loggedIn=Boolean(session?.token||storedSession?.token);
+  return {passKey,loggedIn};
+}
+function currentSanctuaryPassKey(){return currentSanctuaryAuthState().passKey}
 function operationStatusClass(value){
   const state=String(value||'').toLowerCase();
   return ['today','survey','coordinating','confirmed','canceled','completed'].includes(state)?state:'survey';
 }
 function renderOperationSkeleton(){
-  if(!currentSanctuaryPassKey()){renderOperationLoginRequired();return}
+  const authState=currentSanctuaryAuthState();
+  if(!authState.passKey){if(authState.loggedIn)renderOperationAuthUnavailable();else renderOperationLoginRequired();return}
   const week=document.getElementById('operationWeekLabel');
   const auth=document.getElementById('operationAuthState');
   const schedules=document.getElementById('operationScheduleList');
@@ -122,13 +134,22 @@ function renderOperationLoginRequired(){
   if(auth){auth.textContent='로그인 필요';auth.classList.remove('is-logged-in')}
   if(schedules)schedules.innerHTML='<div class="sanctuary-operation-empty"><strong>로그인하시면 성역 일정을 확인할 수 있습니다</strong></div>';
 }
+function renderOperationAuthUnavailable(){
+  const week=document.getElementById('operationWeekLabel');
+  const auth=document.getElementById('operationAuthState');
+  const schedules=document.getElementById('operationScheduleList');
+  if(week)week.textContent='아이온 주간 · 수요일부터 화요일까지';
+  if(auth){auth.textContent='로그인 인증 확인 필요';auth.classList.remove('is-logged-in')}
+  if(schedules)schedules.innerHTML='<div class="sanctuary-operation-empty"><strong>로그인 상태를 다시 확인해 주세요.</strong><span>로그아웃 후 다시 로그인하면 일정을 불러옵니다.</span></div>';
+}
 function ensureSanctuaryOperation(force=false){
   if(!currentId)return Promise.resolve();
   const scheduleLink=document.getElementById('operationSchedulePageLink');
   if(scheduleLink){const mobile=/(^|\/)m(\/|$)/.test(location.pathname);scheduleLink.href=(mobile?'/m/sanctuary-schedule/':'/sanctuary-schedule/')}
-  const passKey=currentSanctuaryPassKey();
+  const authState=currentSanctuaryAuthState();
+  const passKey=authState.passKey;
   const key=currentId+'|'+passKey;
-  if(!passKey){operationRequestSeq+=1;operationLoadedKey=key;operationLoadKey=key;operationRefreshQueued=false;renderOperationLoginRequired();return Promise.resolve()}
+  if(!passKey){operationRequestSeq+=1;operationLoadedKey=key;operationLoadKey=key;operationRefreshQueued=false;if(authState.loggedIn)renderOperationAuthUnavailable();else renderOperationLoginRequired();return Promise.resolve()}
   if(operationLoadPromise){if(force)operationRefreshQueued=true;return operationLoadPromise}
   if(!force&&operationLoadedKey===key)return Promise.resolve();
   operationLoadKey=key;

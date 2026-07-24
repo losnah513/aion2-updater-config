@@ -1027,16 +1027,23 @@
     resetMineResult(message || '조건이 변경되었습니다. 다시 비교해 주세요.');
   }
 
+  function readStoredCommonAuth(key) {
+    try { return JSON.parse(localStorage.getItem(key) || 'null'); }
+    catch (_error) { return null; }
+  }
+
   function commonAuthState(detail) {
     const source = detail && typeof detail === 'object' ? detail : {};
     const auth = window.KinojoAuth || {};
-    const session = source.session || (typeof auth.getSession === 'function' ? auth.getSession() : null);
-    const account = source.account || (typeof auth.getAccount === 'function' ? auth.getAccount() : null);
+    const storedSession = readStoredCommonAuth('kinojo_login_session_v1');
+    const storedAccount = readStoredCommonAuth('kinojo_login_account_v1');
+    const session = source.session || (typeof auth.getSession === 'function' ? auth.getSession() : null) || storedSession;
+    const account = source.account || (typeof auth.getAccount === 'function' ? auth.getAccount() : null) || storedAccount;
     const passKey = String(
-      (account && (account.passKey || account.passCode)) ||
-      (session && (session.passKey || session.passCode)) || ''
+      (account && (account.passKey || account.passCode || account.pass_key || account.pass_code)) ||
+      (session && (session.passKey || session.passCode || session.pass_key || session.pass_code)) || ''
     ).trim();
-    return { session, account, passKey, loggedIn: Boolean(source.loggedIn || (session && session.token)) };
+    return { session, account, passKey, loggedIn: Boolean(source.loggedIn || (session && session.token) || (storedSession && storedSession.token)) };
   }
 
   function renderCommonLoginState(detail) {
@@ -1310,6 +1317,7 @@
     try {
       await loadConfiguration();
       await Promise.all([loadPublicConsole(), loadDesktopRelease(), loadConsentDocument(), loadCatalog()]);
+      if (!meterSessionToken) await connectMineFromCommonAuth();
       if (meterSessionToken) await refreshConsentStatus();
       await loadStats();
     } catch (error) {
