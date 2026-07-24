@@ -430,16 +430,18 @@
     $('meterEncounterCount').textContent = encounterValue === undefined ? '-' : encounterValue;
     $('meterCharacterCount').textContent = '-';
     $('meterAverageDps').textContent = '-';
-    $('meterMedianDps').textContent = '-';
-    $('meterP90Dps').textContent = '-';
+    $('meterOverallP90Dps').textContent = '-';
+    $('meterClassP90Dps').textContent = '-';
+    $('meterClassP90Note').textContent = '클래스 선택 시 표시';
   }
 
   function renderNoDataSummary() {
     $('meterEncounterCount').textContent = '0';
     $('meterCharacterCount').textContent = '대기';
     $('meterAverageDps').textContent = '대기';
-    $('meterMedianDps').textContent = '대기';
-    $('meterP90Dps').textContent = '대기';
+    $('meterOverallP90Dps').textContent = '대기';
+    $('meterClassP90Dps').textContent = '대기';
+    $('meterClassP90Note').textContent = '전투 데이터 수집 대기';
   }
 
   function serverTime(value) {
@@ -511,8 +513,8 @@
     const policy = policySource || (catalog && catalog.statisticsPolicy) || {};
     const minimum = Number(policy.minimumEncounterCount || 0);
     $('meterStatsFootnote').textContent = minimum > 0
-      ? `선택 조건과 각 분류의 유효 전투가 ${minimum.toLocaleString('ko-KR')}건 이상일 때만 Server 통계를 표시합니다.`
-      : 'Server 공개 기준을 충족한 분류만 표시합니다.';
+      ? `선택 조건과 각 분류의 완료·검증 전투가 ${minimum.toLocaleString('ko-KR')}건 이상일 때만 통계를 표시합니다.`
+      : '키노조 AI Engine 공개 기준을 충족한 분류만 표시합니다.';
   }
 
   async function loadStats() {
@@ -529,12 +531,12 @@
     resetSummary();
     $('meterAppliedFilters').innerHTML = '<span>Server 필터 확인 중</span>';
     $('meterPeriodRange').textContent = 'Server 집계 기간 확인 중';
-    $('meterBucketChart').innerHTML = '<div class="meter-loading">Server Engine 통계를 불러오는 중...</div>';
+    $('meterBucketChart').innerHTML = '<div class="meter-loading">키노조 AI Engine 통계를 불러오는 중...</div>';
     invalidateMineResult('통계 조건이 변경되었습니다. 현재 조건으로 다시 비교해 주세요.');
 
     try {
       const data = await callMeter('stats', filterParams());
-      $('meterNotice').innerHTML = '<strong>Server Engine</strong><span>선택한 Server 카탈로그 key로 완료·검증 전투를 조회했습니다.</span>';
+      $('meterNotice').innerHTML = '<strong>키노조 AI Engine</strong><span>선택한 기준으로 완료·검증 전투를 조회했습니다.</span>';
       renderStats(data);
     } catch (error) {
       setStatsState('ERROR', error.message || '통계를 불러오지 못했습니다.');
@@ -558,7 +560,7 @@
       const noData = data.publicState === 'NO_DATA';
       if (noData) {
         renderNoDataSummary();
-        $('meterNotice').innerHTML = '<strong>전투 데이터 준비 중</strong><span>현재 유효 전투는 0건이며 Server 연결은 정상입니다. 검증 완료 전투가 수집되면 자동으로 통계가 표시됩니다.</span>';
+        $('meterNotice').innerHTML = '<strong>전투 데이터 준비 중</strong><span>현재 참여 횟수는 0건이며 Server 연결은 정상입니다. 검증 완료 전투가 수집되면 자동으로 통계가 표시됩니다.</span>';
       } else {
         resetSummary('비공개');
         $('meterNotice').innerHTML = `<strong>공개 기준 집계 중</strong><span>${escapeHtml(data.publicMessage || 'Server 공개 기준을 충족할 때까지 정확한 통계값을 보호합니다.')}</span>`;
@@ -569,14 +571,35 @@
     }
 
     const participantCount = data.participantCharacterCount ?? data.characterCount;
-    const top10Dps = data.top10PercentDps ?? data.top10Dps ?? data.p90Dps;
+    const filters = data.appliedFilters || filterParams();
+    const selectedClassKey = filters.classKey || '';
+    const selectedClassName = selectedClassKey ? catalogLabel('classKey', selectedClassKey) : '';
+    const genericTop10Dps = data.top10PercentDps ?? data.top10Dps ?? data.p90Dps;
+    const overallTop10Dps = data.overallTop10PercentDps
+      ?? data.overallTop10Dps
+      ?? data.overallP90Dps
+      ?? (selectedClassKey ? null : genericTop10Dps);
+    const selectedClassRow = selectedClassKey
+      ? asArray(data.classBreakdown).find((row) => String(row.classKey || '') === String(selectedClassKey))
+      : null;
+    const classTop10Dps = data.classTop10PercentDps
+      ?? data.classTop10Dps
+      ?? data.classP90Dps
+      ?? (selectedClassKey
+        ? (selectedClassRow
+          ? (selectedClassRow.top10PercentDps ?? selectedClassRow.top10Dps ?? selectedClassRow.p90Dps)
+          : genericTop10Dps)
+        : null);
     $('meterEncounterCount').textContent = formatCount(data.encounterCount);
     $('meterCharacterCount').textContent = formatCount(participantCount);
     $('meterAverageDps').textContent = formatDps(data.averageDps);
-    $('meterMedianDps').textContent = formatDps(data.medianDps);
-    $('meterP90Dps').textContent = formatDps(top10Dps);
+    $('meterOverallP90Dps').textContent = formatDps(overallTop10Dps);
+    $('meterClassP90Dps').textContent = formatDps(classTop10Dps);
+    $('meterClassP90Note').textContent = selectedClassName
+      ? `${selectedClassName} 90 percentile`
+      : '클래스 선택 시 표시';
     setStatsState('PUBLISHED', data.publicMessage || 'Server 공개 기준을 충족한 통계입니다.');
-    $('meterNotice').innerHTML = '<strong>Server Engine</strong><span>선택한 Server 카탈로그 key로 완료·검증 전투를 조회했습니다.</span>';
+    $('meterNotice').innerHTML = '<strong>키노조 AI Engine</strong><span>선택한 기준으로 완료·검증 전투를 조회했습니다.</span>';
     renderBreakdown(data);
   }
 
@@ -845,7 +868,7 @@
       selectedMeterCharacter = Object.assign({}, source, result.selectedCharacter || {});
       renderSelectedCharacter();
       setMyPanels('workspace');
-      resetMineResult('선택한 캐릭터의 최근 유효 전투를 확인합니다.');
+      resetMineResult('선택한 캐릭터의 최근 완료·검증 전투를 확인합니다.');
       await loadMineSession();
     } catch (error) {
       $('meterCharacterError').textContent = error.message || '캐릭터를 선택하지 못했습니다.';
@@ -897,7 +920,7 @@
         comparisonFilterParams()
       ));
       if (!result.hasRecord) {
-        $('meterMyStatus').textContent = result.message || '선택 조건의 유효 전투가 없습니다.';
+        $('meterMyStatus').textContent = result.message || '선택 조건의 완료·검증 전투가 없습니다.';
         return;
       }
       if (result.selectedCharacter) {
