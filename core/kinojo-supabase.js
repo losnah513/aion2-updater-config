@@ -786,6 +786,26 @@
     return { ok:false, message:'알 수 없는 이벤트 공지 관리자 명령입니다.' };
   }
 
+  async function adminMeter(command, extra={}){
+    const admin = assertAdmin();
+    if(Number(admin.level || 0) < 5 || String(admin.role || '').toUpperCase() !== 'MASTER'){
+      return { ok:false, message:'키노조 미터 운영 설정은 MASTER만 관리할 수 있습니다.' };
+    }
+    const actions = {
+      console:'adminMeterConsole',
+      saveOperation:'adminMeterOperationSave',
+      saveNotice:'adminMeterNoticeSave',
+      deleteNotice:'adminMeterNoticeDelete'
+    };
+    const action = actions[String(command || '').trim()];
+    if(!action) return { ok:false, message:'알 수 없는 키노조 미터 관리자 명령입니다.' };
+    return invokeEdgeFunction('meter-ingest', Object.assign({
+      action,
+      passKey:currentPassKey(),
+      channel:String(extra.channel || 'stable')
+    }, extra || {}));
+  }
+
 
 
   async function getWebEventNoticeGroups(limit){
@@ -1644,7 +1664,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.42-admin-sanctuary-diagnostic-2026071819',
+    version:'1.3.1.43-meter-admin-2026072409',
     getConfig,
     isPreferred,
     isConfigured,
@@ -1697,6 +1717,7 @@
     getWebEventNoticeGroups,
     adminNotice,
     adminEventNotice,
+    adminMeter,
     adminSanctuarySheetSync,
     adminSanctuaryProfileDiagnostic,
     adminCharacter,

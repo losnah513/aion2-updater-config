@@ -15,7 +15,7 @@
 <link href="../../ui/kinojo-layout.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../../ui/kinojo-components.css?cache=2026072201" rel="stylesheet"/>
 <link href="../../ui/kinojo-common-ui.css?cache=2026072201" rel="stylesheet"/>
-<link href="../../meter/css/meter.css?cache=2026072406" rel="stylesheet"/>
+<link href="../../meter/css/meter.css?cache=2026072409" rel="stylesheet"/>
 </head>
 <body class="kinojo-meter-page">
 <main class="meter-wrap">
@@ -24,10 +24,11 @@
       <div class="meter-kicker"><span>KINOJO</span> METER · TEST</div>
       <h1><span>아이온2 전용 DPS ADDON,</span><strong>키노조 미터</strong></h1>
       <p>키노조 AI Engine이 계산하고 집계합니다.</p>
-      <div class="meter-hero-actions">
-        <a class="kinojo-btn meter-primary" id="meterDownloadBtn" href="#download">배포 상태 확인</a>
-        <a class="kinojo-btn meter-secondary" href="#stats">통계 보기</a>
-      </div>
+      <section class="meter-hero-notice" id="meterNotice" aria-live="polite">
+        <div class="meter-hero-notice-head"><span id="meterNoticeType">안내</span><time id="meterNoticeTime">Server 확인 중</time></div>
+        <strong id="meterNoticeTitle">키노조 미터 공지를 불러오는 중입니다.</strong>
+        <p id="meterNoticeContent">업데이트와 점검 안내를 Server에서 확인하고 있습니다.</p>
+      </section>
       <div class="meter-hero-trust" aria-label="KINOJO Meter 처리 원칙">
         <span>PASS KEY 미저장</span><span>AI Engine 집계</span><span>완료 전투만 반영</span>
       </div>
@@ -48,7 +49,7 @@
     </aside>
   </section>
 
-  <section class="meter-notice" id="meterNotice"><strong>KINOJO METER</strong><span>실전 패킷 Decoder 검증과 서버 통계 연결을 준비하고 있습니다.</span></section>
+  <section class="meter-system-notice" id="meterSystemNotice" hidden><strong>SERVER</strong><span>Server 연결 상태를 확인하고 있습니다.</span></section>
 
   <section class="meter-stats-access is-locked" id="meterStatsAccess" aria-label="전투 통계 접근">
     <div class="meter-stats-lock" id="meterStatsLock" role="status">
@@ -215,6 +216,6 @@
 <script src="../../ui/kinojo-common-ui.js?cache=2026072201"></script>
 <script src="../../core/kinojo-supabase.js?cache=2026072201"></script>
 <script src="../../core/kinojo-auth.js?cache=2026072202"></script>
-<script src="../../meter/js/meter-app.js?cache=2026072405"></script>
+<script src="../../meter/js/meter-app.js?cache=2026072409"></script>
 </body>
 </html>

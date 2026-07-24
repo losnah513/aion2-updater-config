@@ -17,9 +17,11 @@
   let meterConfig = {
     edgeFunctionName: 'meter-ingest',
     releaseChannel: 'stable',
-    webClientVersion: 'WEB_50012'
+    webClientVersion: 'WEB_50013'
   };
   let desktopRelease = null;
+  let meterOperation = null;
+  let meterNotices = [];
   let consentDocument = null;
   let consentAccepted = false;
   let consentAcceptedAt = '';
@@ -269,22 +271,44 @@
     return Boolean(meterSessionToken);
   }
 
+  function downloadEnabled() {
+    return Boolean(meterOperation && meterOperation.downloadEnabled === true);
+  }
+
   function renderDownloadAccess() {
-    if (!desktopRelease) return;
     const loggedIn = hasMeterAccess();
     const direct = $('meterDirectDownload');
-    const hero = $('meterDownloadBtn');
     const state = $('meterConsentState');
 
     direct.href = '#download';
-    hero.href = '#download';
-    direct.removeAttribute('aria-disabled');
-    hero.removeAttribute('aria-disabled');
+    direct.classList.remove('is-maintenance');
     state.classList.remove('is-accepted', 'is-error');
+
+    if (!meterOperation) {
+      direct.textContent = '다운로드 상태 확인 중';
+      direct.setAttribute('aria-disabled', 'true');
+      state.textContent = 'Server 운영 상태를 확인하고 있습니다.';
+      return;
+    }
+
+    if (!downloadEnabled()) {
+      const resume = serverTime(meterOperation.resumeAt);
+      direct.textContent = '점검 중';
+      direct.setAttribute('aria-disabled', 'true');
+      direct.classList.add('is-maintenance');
+      state.textContent = resume ? `다운로드 점검 중 · ${resume} KST 재개 예정` : '현재 다운로드 점검 중입니다.';
+      state.classList.add('is-error');
+      $('meterDownloadNote').textContent = String(
+        meterOperation.disabledMessage || '키노조 미터 다운로드를 점검하고 있습니다.'
+      );
+      return;
+    }
+
+    if (!desktopRelease) return;
+    direct.removeAttribute('aria-disabled');
 
     if (loggedIn && consentAccepted) {
       direct.textContent = 'Windows 설치 파일 다운로드';
-      hero.textContent = 'Windows 버전 다운로드';
       state.textContent = consentAcceptedAt
         ? `필수 동의 확인 · ${serverTime(consentAcceptedAt)} KST`
         : '현재 버전의 필수 동의가 확인되었습니다.';
@@ -294,13 +318,11 @@
 
     if (loggedIn) {
       direct.textContent = '필수 동의 후 다운로드';
-      hero.textContent = '필수 동의 후 다운로드';
       state.textContent = '두 필수 항목에 동의해야 다운로드할 수 있습니다.';
       return;
     }
 
     direct.textContent = 'PASS KEY 로그인 후 다운로드';
-    hero.textContent = 'PASS KEY 로그인 후 다운로드';
     state.textContent = 'PASS KEY 로그인과 필수 동의가 필요합니다.';
   }
 
@@ -422,32 +444,36 @@
   }
 
   async function authorizeAndDownload() {
-    if (!meterSessionToken || !consentDocument || !desktopRelease) return;
+    if (!meterSessionToken || !consentDocument || !desktopRelease || !downloadEnabled()) return;
     const direct = $('meterDirectDownload');
-    const hero = $('meterDownloadBtn');
     let failureMessage = '';
     direct.setAttribute('aria-disabled', 'true');
-    hero.setAttribute('aria-disabled', 'true');
     direct.textContent = 'Server 다운로드 승인 확인 중';
-    hero.textContent = '다운로드 승인 확인 중';
     try {
       const result = await callMeter('desktopDownloadAuthorization', {
         sessionToken: meterSessionToken,
         documentVersion: consentDocument.documentVersion,
         channel: String(meterConfig.releaseChannel || 'stable'),
-        clientVersion: String(meterConfig.webClientVersion || 'WEB_50012')
+        clientVersion: String(meterConfig.webClientVersion || 'WEB_50013')
       });
       const release = result && result.desktopUpdate && typeof result.desktopUpdate === 'object'
         ? result.desktopUpdate
         : null;
+      if (result && result.operation && typeof result.operation === 'object') {
+        meterOperation = result.operation;
+      }
       const downloadUrl = release ? safeReleaseUrl(release.downloadUrl) : '';
       if (result.authorized !== true || !downloadUrl) {
-        throw new Error(result.message || 'Server가 다운로드를 승인하지 않았습니다.');
+        const denied = new Error(result.message || 'Server가 다운로드를 승인하지 않았습니다.');
+        denied.code = String(result.code || 'DOWNLOAD_NOT_AUTHORIZED');
+        throw denied;
       }
       window.location.assign(downloadUrl);
     } catch (error) {
-      consentAccepted = false;
-      consentAcceptedAt = '';
+      if (/동의|세션|PASS KEY/i.test(String(error.message || ''))) {
+        consentAccepted = false;
+        consentAcceptedAt = '';
+      }
       failureMessage = error.message || '다운로드 승인을 확인하지 못했습니다.';
     } finally {
       renderDownloadAccess();
@@ -471,7 +497,7 @@
         serviceRiskAccepted: $('meterConsentRiskCheck').checked,
         statisticsAccepted: $('meterConsentStatsCheck').checked,
         clientSurface: 'WEB',
-        clientVersion: String(meterConfig.webClientVersion || 'WEB_50012')
+        clientVersion: String(meterConfig.webClientVersion || 'WEB_50013')
       });
       if (result.accepted !== true) throw new Error(result.message || '필수 동의를 기록하지 못했습니다.');
       consentAccepted = true;
@@ -489,6 +515,10 @@
 
   function requestDownload(event) {
     if (event) event.preventDefault();
+    if (!downloadEnabled()) {
+      renderDownloadAccess();
+      return;
+    }
     if (!desktopRelease) return;
     if (!meterSessionToken) {
       openCommonLoginForMine();
@@ -524,8 +554,6 @@
     $('meterDirectDownload').href = '#download';
     $('meterDirectDownload').textContent = '다운로드 준비 중';
     $('meterDirectDownload').setAttribute('aria-disabled', 'true');
-    $('meterDownloadBtn').href = '#download';
-    $('meterDownloadBtn').textContent = '배포 상태 확인';
     $('meterConsentState').textContent = '활성 릴리스가 등록될 때까지 다운로드할 수 없습니다.';
     $('meterConsentState').classList.remove('is-accepted');
     $('meterConsentState').classList.add('is-error');
@@ -592,12 +620,49 @@
     return data;
   }
 
+  function setSystemNotice(title, message, visible = true) {
+    const root = $('meterSystemNotice');
+    if (!root) return;
+    root.hidden = !visible;
+    root.innerHTML = `<strong>${escapeHtml(title || 'SERVER')}</strong><span>${escapeHtml(message || '')}</span>`;
+  }
+
+  function renderPublicConsole(data) {
+    meterOperation = data && data.operation && typeof data.operation === 'object'
+      ? data.operation
+      : { downloadEnabled: false, disabledMessage: '다운로드 운영 상태를 확인하지 못했습니다.' };
+    meterNotices = asArray(data && data.notices);
+    const notice = meterNotices[0] || {
+      noticeType: 'INFO',
+      title: '키노조 미터 안내',
+      content: '업데이트와 점검 안내는 이 영역에서 확인할 수 있습니다.',
+      updatedAt: data && data.serverTime
+    };
+    const labels = { INFO: '안내', UPDATE: '업데이트', MAINTENANCE: '점검', WARNING: '주의' };
+    const type = String(notice.noticeType || 'INFO').toUpperCase();
+    $('meterNoticeType').textContent = labels[type] || '안내';
+    $('meterNoticeType').dataset.tone = type;
+    $('meterNoticeTitle').textContent = String(notice.title || '키노조 미터 안내');
+    $('meterNoticeContent').textContent = String(notice.content || '');
+    $('meterNoticeTime').textContent = serverTime(notice.updatedAt || notice.startsAt || data.serverTime)
+      ? `${serverTime(notice.updatedAt || notice.startsAt || data.serverTime)} KST`
+      : 'Server 공지';
+    renderDownloadAccess();
+  }
+
+  async function loadPublicConsole() {
+    const data = await callMeter('publicConsole', {
+      channel: String(meterConfig.releaseChannel || 'stable')
+    });
+    renderPublicConsole(data);
+  }
+
   async function loadCatalog() {
     setControlsEnabled(false);
-    $('meterNotice').innerHTML = '<strong>Server Catalog</strong><span>클래스·콘텐츠·던전·보스 기준정보를 불러오는 중입니다.</span>';
+    setSystemNotice('SERVER CATALOG', '클래스·콘텐츠·던전·보스 기준정보를 불러오는 중입니다.');
     const data = await callMeter('catalog', catalogVersion ? { catalogVersion } : {});
     renderCatalog(data);
-    $('meterNotice').innerHTML = `<strong>Server Catalog</strong><span>${escapeHtml(catalogVersion)} 기준정보를 사용합니다.</span>`;
+    setSystemNotice('SERVER CATALOG', `${catalogVersion} 기준정보를 사용합니다.`, false);
   }
 
   function setStatsState(state, message) {
@@ -735,7 +800,7 @@
 
     try {
       const data = await callMeter('stats', filterParams());
-      $('meterNotice').innerHTML = '<strong>키노조 AI Engine</strong><span>선택한 기준으로 완료·검증 전투를 조회했습니다.</span>';
+      setSystemNotice('키노조 AI Engine', '선택한 기준으로 완료·검증 전투를 조회했습니다.', false);
       renderStats(data);
     } catch (error) {
       setStatsState('ERROR', error.message || '통계를 불러오지 못했습니다.');
@@ -759,10 +824,10 @@
       const noData = data.publicState === 'NO_DATA';
       if (noData) {
         renderNoDataSummary();
-        $('meterNotice').innerHTML = '<strong>전투 데이터 준비 중</strong><span>현재 참여 횟수는 0건이며 Server 연결은 정상입니다. 검증 완료 전투가 수집되면 자동으로 통계가 표시됩니다.</span>';
+        setSystemNotice('전투 데이터 준비 중', '현재 참여 횟수는 0건이며 Server 연결은 정상입니다. 검증 완료 전투가 수집되면 자동으로 통계가 표시됩니다.');
       } else {
         resetSummary('비공개');
-        $('meterNotice').innerHTML = `<strong>공개 기준 집계 중</strong><span>${escapeHtml(data.publicMessage || 'Server 공개 기준을 충족할 때까지 정확한 통계값을 보호합니다.')}</span>`;
+        setSystemNotice('공개 기준 집계 중', data.publicMessage || 'Server 공개 기준을 충족할 때까지 정확한 통계값을 보호합니다.');
       }
       setStatsState(data.publicState, data.publicMessage || 'Server 공개 기준을 충족하지 못했습니다.');
       renderBreakdown(data);
@@ -798,7 +863,7 @@
       ? `${selectedClassName} 90 percentile`
       : '클래스 선택 시 표시';
     setStatsState('PUBLISHED', data.publicMessage || 'Server 공개 기준을 충족한 통계입니다.');
-    $('meterNotice').innerHTML = '<strong>키노조 AI Engine</strong><span>선택한 기준으로 완료·검증 전투를 조회했습니다.</span>';
+    setSystemNotice('키노조 AI Engine', '선택한 기준으로 완료·검증 전투를 조회했습니다.', false);
     renderBreakdown(data);
   }
 
@@ -1218,7 +1283,6 @@
     $('meterMyCompareBtn').addEventListener('click', loadMineSession);
     $('meterChangeCharacterBtn').addEventListener('click', showCharacterPicker);
     $('meterMyLogoutBtn').addEventListener('click', () => logoutMine(false, true));
-    $('meterDownloadBtn').addEventListener('click', requestDownload);
     $('meterDirectDownload').addEventListener('click', requestDownload);
     $('meterConsentRiskCheck').addEventListener('change', updateConsentConfirmState);
     $('meterConsentStatsCheck').addEventListener('change', updateConsentConfirmState);
@@ -1245,14 +1309,14 @@
     bind();
     try {
       await loadConfiguration();
-      await Promise.all([loadDesktopRelease(), loadConsentDocument(), loadCatalog()]);
+      await Promise.all([loadPublicConsole(), loadDesktopRelease(), loadConsentDocument(), loadCatalog()]);
       if (meterSessionToken) await refreshConsentStatus();
       await loadStats();
     } catch (error) {
       setControlsEnabled(false);
       setStatsState('ERROR', error.message || 'Server 카탈로그를 불러오지 못했습니다.');
       resetSummary();
-      $('meterNotice').innerHTML = `<strong>연결 오류</strong><span>${escapeHtml(error.message || 'Server 카탈로그를 불러오지 못했습니다.')}</span>`;
+      setSystemNotice('연결 오류', error.message || 'Server 카탈로그를 불러오지 못했습니다.');
       $('meterBucketChart').innerHTML = '<div class="meter-empty">Server 기준정보 연결을 확인해 주세요.</div>';
     }
   });

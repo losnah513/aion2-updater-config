@@ -1,10 +1,10 @@
-/* KINOJO Admin Console v2026071819 */
+/* KINOJO Admin Console v2026072409 */
 (function(){
   'use strict';
   const $ = (s,r=document)=>r.querySelector(s);
   const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
-  const state = { tab:'dashboard', subtab:'', loaded:{}, subtabs:{ members:'accounts', notices:'general', system:'server-status' }, requests:[], accounts:[], characters:[], logs:[], eventNoticeGroups:[], eventNoticeEditingId:null, sanctuarySchedules:[], sanctuaryMasters:[], sanctuaryStatusOptions:[], sanctuaryScheduleLoaded:false, sanctuaryScheduleAccess:null, sanctuaryRolePermissions:null, sanctuaryScheduleSaving:false, lastSanctuarySyncData:null, lastSanctuaryStatusData:null, lastSanctuaryId:'all' };
-  const CACHE = '2026071819';
+  const state = { tab:'dashboard', subtab:'', loaded:{}, subtabs:{ members:'accounts', notices:'general', system:'server-status' }, requests:[], accounts:[], characters:[], logs:[], eventNoticeGroups:[], eventNoticeEditingId:null, meterConsole:null, meterNotices:[], sanctuarySchedules:[], sanctuaryMasters:[], sanctuaryStatusOptions:[], sanctuaryScheduleLoaded:false, sanctuaryScheduleAccess:null, sanctuaryRolePermissions:null, sanctuaryScheduleSaving:false, lastSanctuarySyncData:null, lastSanctuaryStatusData:null, lastSanctuaryId:'all' };
+  const CACHE = '2026072409';
   const DEFAULT_SUBTABS = { members:'accounts', notices:'general', system:'server-status' };
   function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
   function addLog(type,msg){
@@ -34,6 +34,7 @@
   function adminCharacter(cmd, extra){ return window.KinojoSupabase.adminCharacter(cmd, extra||{}); }
   function adminNotice(cmd, extra){ return window.KinojoSupabase.adminNotice(cmd, extra||{}); }
   function adminEventNotice(cmd, extra){ return window.KinojoSupabase.adminEventNotice(cmd, extra||{}); }
+  function adminMeter(cmd, extra){ return window.KinojoSupabase.adminMeter(cmd, extra||{}); }
   const EVENT_NOTICE_TYPES = [
     { value:'abyss_low', label:'어비스 하층', icon:'◆', tone:'gold', title:'어비스 하층 일정 안내', body:'하층 전장 이동과 파티 준비를 확인하세요.' },
     { value:'abyss_middle', label:'어비스 중층', icon:'◆', tone:'gold', title:'어비스 중층 일정 안내', body:'중층 전장 이동과 파티 준비를 확인하세요.' },
@@ -76,6 +77,7 @@
     if(tab==='sanctuary') loadSanctuaryScheduleConsole(force===true);
     if(tab==='notices'&&subtab==='general') loadNotices();
     if(tab==='notices'&&subtab==='event') loadEventNoticeGroups();
+    if(tab==='meter'&&isMaster()) loadMeterAdminConsole();
     if(tab==='system'&&subtab==='server-status') refreshServerStatus();
     if(tab==='system'&&subtab==='sheet-sync') loadSanctuarySyncConsole(force===true);
     if(tab==='system'&&subtab==='environment') refreshSystemSettings();
@@ -94,6 +96,7 @@
   }
   function switchTab(tab,options={}){
     if(tab==='server'){tab='system';options=Object.assign({},options,{subtab:'server-status'});}
+    if(tab==='meter'&&!isMaster())tab='dashboard';
     if(isStaffConsole() && tab!=='sanctuary') tab='sanctuary';
     if(!document.querySelector('[data-admin-pane="'+tab+'"]'))tab=isStaffConsole()?'sanctuary':'dashboard';
     state.tab = tab;
@@ -890,6 +893,163 @@
     try{ const res=await adminNotice('createNotice',{content,noticeType}); if(res.ok===false)throw new Error(res.message||'공지 저장 실패'); $('#noticeContent').value=''; toast('공지 저장 완료'); await loadNotices(); }
     catch(err){ setStatus('#noticeStatus',err.message||String(err),'error'); }
   }
+
+  const METER_NOTICE_LABELS={INFO:'안내',UPDATE:'업데이트',MAINTENANCE:'점검',WARNING:'주의'};
+  function meterDateInput(value){
+    const date=value?new Date(value):new Date();
+    if(Number.isNaN(date.getTime()))return '';
+    const local=new Date(date.getTime()-date.getTimezoneOffset()*60000);
+    return local.toISOString().slice(0,16);
+  }
+  function meterIsoFromInput(value){
+    const raw=String(value||'').trim();
+    if(!raw)return null;
+    const date=new Date(raw);
+    return Number.isNaN(date.getTime())?null:date.toISOString();
+  }
+  function meterFileSize(value){
+    const bytes=Number(value||0);
+    if(!Number.isFinite(bytes)||bytes<=0)return '-';
+    return bytes>=1048576?(bytes/1048576).toFixed(2)+' MB':Math.trunc(bytes).toLocaleString('ko-KR')+' bytes';
+  }
+  function normalizeMeterNotice(row){
+    return {
+      noticeId:Number(row?.noticeId||row?.notice_id||0),
+      noticeType:String(row?.noticeType||row?.notice_type||'INFO').toUpperCase(),
+      title:String(row?.title||''),
+      content:String(row?.content||''),
+      isPublished:row?.isPublished===true||row?.is_published===true,
+      isPinned:row?.isPinned===true||row?.is_pinned===true,
+      startsAt:row?.startsAt||row?.starts_at||'',
+      endsAt:row?.endsAt||row?.ends_at||'',
+      updatedAt:row?.updatedAt||row?.updated_at||''
+    };
+  }
+  function meterNoticeById(id){
+    const key=Number(id||0);
+    return state.meterNotices.find(item=>item.noticeId===key)||null;
+  }
+  function resetMeterNoticeEditor(notice){
+    const item=notice||null;
+    $('#meterAdminNoticeId').value=item?String(item.noticeId):'';
+    $('#meterAdminNoticeType').value=item?.noticeType||'INFO';
+    $('#meterAdminNoticeTitle').value=item?.title||'';
+    $('#meterAdminNoticeContent').value=item?.content||'';
+    $('#meterAdminNoticeStartsAt').value=meterDateInput(item?.startsAt||new Date());
+    $('#meterAdminNoticeEndsAt').value=item?.endsAt?meterDateInput(item.endsAt):'';
+    $('#meterAdminNoticePublished').checked=item?item.isPublished:true;
+    $('#meterAdminNoticePinned').checked=item?item.isPinned:false;
+    setStatus('#meterAdminNoticeStatus',item?'선택한 공지를 수정합니다.':'새 공지를 작성합니다.','');
+  }
+  function renderMeterNotices(){
+    const root=$('#meterAdminNoticeList'); if(!root)return;
+    if(!state.meterNotices.length){root.innerHTML='<div class="admin-empty">등록된 키노조 미터 공지가 없습니다.</div>';return;}
+    root.innerHTML=state.meterNotices.map(item=>{
+      const type=METER_NOTICE_LABELS[item.noticeType]||'안내';
+      const range=item.endsAt?formatServerTime(item.startsAt)+' ~ '+formatServerTime(item.endsAt):formatServerTime(item.startsAt)+'부터';
+      return '<article class="admin-meter-notice-row '+(item.isPublished?'':'is-unpublished')+'" data-meter-notice-id="'+item.noticeId+'">'+
+        '<div class="admin-meter-notice-row-head"><div><span class="admin-meter-notice-tone '+esc(item.noticeType)+'">'+esc(type)+'</span>'+(item.isPinned?'<span class="admin-pill info">고정</span>':'')+(item.isPublished?'<span class="admin-pill ok">게시</span>':'<span class="admin-pill">비게시</span>')+'</div><small>'+esc(formatServerTime(item.updatedAt))+'</small></div>'+
+        '<h3>'+esc(item.title)+'</h3><p>'+esc(item.content)+'</p><div class="admin-meter-notice-meta"><span>'+esc(range)+'</span></div>'+
+        '<div class="admin-meter-notice-actions"><button class="admin-btn" type="button" data-meter-notice-edit>수정</button><button class="admin-btn danger" type="button" data-meter-notice-delete>삭제</button></div></article>';
+    }).join('');
+  }
+  function renderMeterAdminConsole(data){
+    state.meterConsole=data||{};
+    const operation=data?.operation||{};
+    state.meterNotices=(Array.isArray(data?.notices)?data.notices:[]).map(normalizeMeterNotice);
+    const enabled=operation.downloadEnabled===true;
+    $('#meterAdminDownloadEnabled').checked=enabled;
+    $('#meterAdminDisabledMessage').value=String(operation.disabledMessage||'키노조 미터 다운로드를 점검하고 있습니다. 잠시 후 다시 시도해 주세요.');
+    $('#meterAdminResumeAt').value=operation.resumeAt?meterDateInput(operation.resumeAt):'';
+    const badge=$('#meterAdminOperationBadge');
+    badge.textContent=enabled?'다운로드 ON':'점검 중 · OFF';
+    badge.classList.toggle('is-off',!enabled);
+    const release=data?.release?.desktopUpdate||null;
+    $('#meterAdminReleaseVersion').textContent=release?.version||'-';
+    $('#meterAdminReleaseFile').textContent=release?.fileName||'-';
+    $('#meterAdminReleaseSize').textContent=meterFileSize(release?.fileSize);
+    $('#meterAdminReleasePublished').textContent=formatServerTime(release?.publishedAt);
+    $('#meterAdminReleaseState').textContent=data?.release?.releaseAvailable===true?(enabled?'다운로드 가능':'운영 점검 중'):'활성 릴리스 없음';
+    renderMeterNotices();
+  }
+  async function loadMeterAdminConsole(){
+    if(!isMaster())return;
+    setStatus('#meterAdminOperationStatus','키노조 미터 운영 정보를 불러오는 중...','');
+    try{
+      const data=await adminMeter('console',{channel:'stable'});
+      if(!data||data.ok===false)throw new Error(data?.message||'키노조 미터 운영 정보 조회 실패');
+      renderMeterAdminConsole(data);
+      if(!$('#meterAdminNoticeId').value)resetMeterNoticeEditor(null);
+      setStatus('#meterAdminOperationStatus','Server 운영 정보를 불러왔습니다.','ok');
+    }catch(err){setStatus('#meterAdminOperationStatus',err.message||String(err),'error');}
+  }
+  async function saveMeterOperation(){
+    if(!isMaster())return;
+    const enabled=$('#meterAdminDownloadEnabled').checked;
+    const disabledMessage=$('#meterAdminDisabledMessage').value.trim();
+    if(!disabledMessage){setStatus('#meterAdminOperationStatus','비활성화 안내 문구를 입력하세요.','error');return;}
+    const prompt=enabled?'키노조 미터 다운로드를 활성화할까요?':'다운로드를 즉시 점검 중으로 전환하고 Server 승인을 차단할까요?';
+    if(!confirm(prompt))return;
+    const button=$('#meterAdminOperationSaveBtn');button.disabled=true;
+    setStatus('#meterAdminOperationStatus','운영 상태를 저장하는 중...','');
+    try{
+      const data=await adminMeter('saveOperation',{
+        channel:'stable',
+        downloadEnabled:enabled,
+        disabledMessage,
+        resumeAt:enabled?null:meterIsoFromInput($('#meterAdminResumeAt').value)
+      });
+      if(!data||data.ok===false)throw new Error(data?.message||'운영 상태 저장 실패');
+      renderMeterAdminConsole(data);
+      setStatus('#meterAdminOperationStatus',data.message||'운영 상태를 저장했습니다.','ok');
+      toast(data.message||'키노조 미터 운영 상태 저장 완료');
+      addLog('METER',enabled?'다운로드 활성화':'다운로드 점검 전환');
+    }catch(err){setStatus('#meterAdminOperationStatus',err.message||String(err),'error');}
+    finally{button.disabled=false;}
+  }
+  async function saveMeterNotice(){
+    if(!isMaster())return;
+    const title=$('#meterAdminNoticeTitle').value.trim();
+    const content=$('#meterAdminNoticeContent').value.trim();
+    if(!title||!content){setStatus('#meterAdminNoticeStatus','공지 제목과 내용을 모두 입력하세요.','error');return;}
+    const startsAt=meterIsoFromInput($('#meterAdminNoticeStartsAt').value);
+    const endsAt=meterIsoFromInput($('#meterAdminNoticeEndsAt').value);
+    if(!startsAt){setStatus('#meterAdminNoticeStatus','게시 시작 시각을 확인하세요.','error');return;}
+    if(endsAt&&Date.parse(endsAt)<=Date.parse(startsAt)){setStatus('#meterAdminNoticeStatus','게시 종료는 시작보다 늦어야 합니다.','error');return;}
+    const button=$('#meterAdminNoticeSaveBtn');button.disabled=true;
+    setStatus('#meterAdminNoticeStatus','키노조 미터 공지를 저장하는 중...','');
+    try{
+      const data=await adminMeter('saveNotice',{
+        noticeId:Number($('#meterAdminNoticeId').value||0)||null,
+        noticeType:$('#meterAdminNoticeType').value,
+        title,
+        content,
+        isPublished:$('#meterAdminNoticePublished').checked,
+        isPinned:$('#meterAdminNoticePinned').checked,
+        startsAt,
+        endsAt
+      });
+      if(!data||data.ok===false)throw new Error(data?.message||'Meter 공지 저장 실패');
+      renderMeterAdminConsole(data);
+      resetMeterNoticeEditor(null);
+      setStatus('#meterAdminNoticeStatus',data.message||'키노조 미터 공지를 저장했습니다.','ok');
+      toast('키노조 미터 공지 저장 완료');
+    }catch(err){setStatus('#meterAdminNoticeStatus',err.message||String(err),'error');}
+    finally{button.disabled=false;}
+  }
+  async function deleteMeterNotice(id){
+    const item=meterNoticeById(id);if(!item)return;
+    if(!confirm('키노조 미터 공지 "'+item.title+'"을 삭제할까요?'))return;
+    setStatus('#meterAdminNoticeStatus','공지 삭제 중...','');
+    try{
+      const data=await adminMeter('deleteNotice',{noticeId:item.noticeId});
+      if(!data||data.ok===false)throw new Error(data?.message||'Meter 공지 삭제 실패');
+      renderMeterAdminConsole(data);
+      resetMeterNoticeEditor(null);
+      setStatus('#meterAdminNoticeStatus',data.message||'공지를 삭제했습니다.','ok');
+    }catch(err){setStatus('#meterAdminNoticeStatus',err.message||String(err),'error');}
+  }
+
   async function refreshServerStatus(){
     try{
       const [runtime,sync]=await Promise.all([action('runtimeStatus',{}),action('adminSanctuarySheetSync',{mode:'status'})]);
@@ -948,6 +1108,17 @@
       if(e.target.matches('[data-schedule-status]'))changeSanctuaryScheduleStatus(id,e.target.dataset.scheduleStatus);
     });
     $('#noticeReloadBtn')?.addEventListener('click',loadNotices); $('#noticeSaveBtn')?.addEventListener('click',saveNotice);
+    $('#meterAdminReloadBtn')?.addEventListener('click',loadMeterAdminConsole);
+    $('#meterAdminOperationSaveBtn')?.addEventListener('click',saveMeterOperation);
+    $('#meterAdminNoticeNewBtn')?.addEventListener('click',()=>resetMeterNoticeEditor(null));
+    $('#meterAdminNoticeCancelBtn')?.addEventListener('click',()=>resetMeterNoticeEditor(null));
+    $('#meterAdminNoticeSaveBtn')?.addEventListener('click',saveMeterNotice);
+    $('#meterAdminNoticeList')?.addEventListener('click',e=>{
+      const row=e.target.closest('[data-meter-notice-id]');if(!row)return;
+      const id=Number(row.dataset.meterNoticeId||0);
+      if(e.target.matches('[data-meter-notice-edit]'))resetMeterNoticeEditor(meterNoticeById(id));
+      if(e.target.matches('[data-meter-notice-delete]'))deleteMeterNotice(id);
+    });
     $('#eventNoticeReloadBtn')?.addEventListener('click',loadEventNoticeGroups); $('#eventNoticeCreateBtn')?.addEventListener('click',startEventNoticeCreate); $('#eventNoticeStatusFilter')?.addEventListener('change',loadEventNoticeGroups);
     $('#eventNoticeList')?.addEventListener('click',e=>{ const row=e.target.closest('[data-event-notice-id]'); const id=row?.dataset.eventNoticeId; if(e.target.matches('[data-event-notice-preview]')) openEventNoticePreview(getEventNoticeGroupById(id)); if(e.target.matches('[data-event-notice-edit]')) editEventNoticeGroup(id); if(e.target.matches('[data-event-notice-duplicate]')) duplicateEventNoticeGroup(id); if(e.target.matches('[data-event-notice-delete]')) deleteEventNoticeGroup(id); });
     $('#eventNoticeEditorCloseBtn')?.addEventListener('click',closeEventNoticeEditor);
@@ -983,6 +1154,7 @@
     }
     const permissionCard=$('#sanctuaryRolePermissionCard'); if(permissionCard)permissionCard.hidden=!isMaster();
     const permissionTab=$('[data-admin-subnav="members"] [data-admin-subtab="permissions"]'); if(permissionTab)permissionTab.hidden=!isMaster();
+    $$('[data-admin-master-only]').forEach(element=>{element.hidden=!isMaster();});
     bind(); renderLogs();
     const route=adminRoute();
     switchTab(isStaffConsole()?'sanctuary':route.tab,{subtab:isStaffConsole()?'':route.subtab,updateRoute:true});
