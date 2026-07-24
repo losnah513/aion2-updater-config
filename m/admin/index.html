@@ -9,10 +9,10 @@
 <link rel="canonical" href="https://kinojo.info/m/admin/"/>
 <link href="../../ui/kinojo-layout.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../../ui/kinojo-components.css?cache=26062102" rel="stylesheet"/>
-<link href="../../ui/kinojo-common-ui.css?cache=2026072201" rel="stylesheet"/>
+<link href="../../ui/kinojo-common-ui.css?cache=2026072411" rel="stylesheet"/>
 <link href="../../ui/kinojo-card-guards.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../../ui/kinojo-animations.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
-<link href="../../admin/css/admin.css?cache=2026072410" rel="stylesheet"/>
+<link href="../../admin/css/admin.css?cache=2026072411" rel="stylesheet"/>
 
 </head>
 <body class="kinojo-page-admin">
@@ -30,13 +30,14 @@
       <button data-admin-tab="system" type="button">⚙ 시스템 설정</button>
       <button data-admin-tab="logs" type="button">📋 로그 관리</button>
     </nav>
-    <div class="admin-side-user"><div class="avatar">👤</div><div><strong id="adminRoleLabel">관리자</strong><span>권한 기반 메뉴 표시</span></div></div>
+    <div class="admin-side-user"><div class="avatar">👤</div><div class="admin-side-user-copy"><strong id="adminRoleLabel">관리자</strong><span>권한 기반 메뉴 표시</span></div><button class="admin-side-logout" id="adminLogoutBtn" type="button">로그아웃</button></div>
   </aside>
   <section class="admin-main">
     <header class="admin-top">
       <div class="admin-top-left"><button class="admin-icon-btn admin-mobile-menu" type="button">☰</button><div class="admin-title"><h1>관리자 콘솔</h1><p>서버 RPC 기준으로 운영 데이터를 관리합니다.</p></div></div>
-      <div class="admin-top-actions"><button class="admin-icon-btn admin-notify" type="button">🔔<i id="adminNotifyCount">5</i></button><button class="admin-icon-btn primary" id="adminRefreshBtn" type="button">새로고침</button><button class="admin-icon-btn" id="adminLogoutBtn" type="button">로그아웃</button></div>
+      
     </header>
+    <div class="admin-mobile-user"><span><strong id="adminMobileRoleLabel">관리자</strong><small>권한 기반 메뉴 표시</small></span><button class="admin-side-logout" id="adminMobileLogoutBtn" type="button">로그아웃</button></div>
     <select class="admin-mobile-select" id="adminMobileSelect" aria-label="관리 메뉴 선택">
       <option value="dashboard">대시보드</option><option value="requests">코드 요청</option><option value="members">회원 관리</option><option value="characters">캐릭터 관리</option><option value="sanctuary">성역 관리</option><option value="notices">공지 관리</option><option value="meter" data-admin-master-only>키노조 미터</option><option value="system">시스템 설정</option><option value="logs">로그 관리</option>
     </select>
@@ -145,7 +146,23 @@
       <div class="admin-subpane" data-admin-subpane="sheet-sync" data-admin-full-only><section class="admin-card"><div class="admin-card-head"><div><h2>성역 시트 동기화</h2><p>원본 시트는 그대로 전달하고 비교·판정·반영은 Server Engine에서 수행합니다.</p></div></div><div class="admin-form-row"><select class="admin-select" id="sanctuarySyncId" data-sanctuary-master-select data-include-all="true"><option value="all">전체 성역</option></select><button class="admin-btn" id="sanctuaryPreviewBtn" type="button">변경 미리보기</button><button class="admin-btn primary" id="sanctuarySyncBtn" type="button">서버 동기화</button></div><div class="admin-sync-flow"><div class="admin-sync-step active" data-step="1"><strong>원본 읽기</strong><span>Apps Script 전달</span></div><div class="admin-sync-step" data-step="2"><strong>서버 비교</strong><span>변경 판정</span></div><div class="admin-sync-step" data-step="3"><strong>Queue 반영</strong><span>Server Engine</span></div><div class="admin-sync-step" data-step="4"><strong>완료 리포트</strong><span>결과 확인</span></div></div><div id="sanctuarySyncStatus" class="admin-statusline"></div><div id="sanctuarySyncResult" class="admin-log">서버 동기화 상태와 최근 결과가 여기에 표시됩니다.</div></section></div>
       <div class="admin-subpane" data-admin-subpane="environment"><section class="admin-card"><div class="admin-card-head"><div><h2>권한·환경 설정</h2><p>MASTER 전용 인프라 연결 상태를 확인합니다.</p></div></div><div class="admin-callout"><strong>Server-managed Bridge</strong><span>Apps Script WebApp URL은 Supabase Edge Function Secret에서만 관리하며 브라우저에 저장하거나 노출하지 않습니다.</span></div><div class="admin-bridge-box"><div class="admin-bridge-title"><strong>AppsScript_MASTER 연결 진단</strong><span>WEB → Edge Function → Apps Script 순서로 실제 연결을 확인합니다.</span></div><div class="admin-form-row"><button class="admin-btn primary" id="webAppTestBtnSystem" type="button">서버 경유 연결 테스트</button></div><div id="systemStatus" class="admin-statusline"></div></div></section></div>
     </section>
-    <section class="admin-pane" data-admin-pane="logs"><section class="admin-card"><div class="admin-card-head"><div><h2>최근 로그</h2><p>관리자 페이지에서 수행한 작업 기록입니다.</p></div></div><pre class="admin-log" id="adminLogBox">아직 로그가 없습니다.</pre></section></section>
+    <section class="admin-pane" data-admin-pane="logs">
+      <nav class="admin-subnav" data-admin-subnav="logs" aria-label="로그 관리 하위 기능"><button class="active" data-admin-subtab="activity" type="button">작업 로그</button><button data-admin-subtab="visitors" type="button">방문자</button></nav>
+      <div class="admin-subpane active" data-admin-subpane="activity"><section class="admin-card"><div class="admin-card-head"><div><h2>최근 로그</h2><p>관리자 페이지에서 수행한 작업 기록입니다.</p></div></div><pre class="admin-log" id="adminLogBox">아직 로그가 없습니다.</pre></section></div>
+      <div class="admin-subpane" data-admin-subpane="visitors">
+        <section class="admin-card admin-visitor-card">
+          <div class="admin-card-head"><div><h2>방문자 통계</h2><p>한국 시간 00:00~23:59 기준 순 방문자와 페이지 조회를 확인합니다.</p></div><div class="admin-row-actions"><button class="admin-btn active" data-visitor-days="7" type="button">7일</button><button class="admin-btn" data-visitor-days="30" type="button">30일</button><button class="admin-btn" id="visitorReloadBtn" type="button">새로고침</button></div></div>
+          <div class="admin-visitor-summary"><article><span>오늘 방문자</span><strong id="visitorTodayTotal">-</strong><em id="visitorTodayBreakdown">비로그인 - · 로그인 -</em></article><article><span>페이지 조회</span><strong id="visitorTodayViews">-</strong><em>중복 포함</em></article><article><span>집계 기준</span><strong id="visitorServerDate">-</strong><em>Asia/Seoul</em></article></div>
+          <div class="admin-visitor-layout"><div><h3>방문 추이</h3><div class="admin-visitor-trend" id="visitorTrend"><div class="admin-empty">통계를 불러오는 중입니다.</div></div></div><div><h3>오늘 페이지별 통계</h3><div class="admin-visitor-pages" id="visitorPages"><div class="admin-empty">통계를 불러오는 중입니다.</div></div></div></div>
+          <div id="visitorAggregateStatus" class="admin-statusline"></div>
+        </section>
+        <section class="admin-card" id="visitorHistoryCard">
+          <div class="admin-card-head"><div><h2>방문·로그인 이력</h2><p>Sub Master·Master만 회원별 로그인 시각과 당시 등급을 확인할 수 있습니다.</p></div></div>
+          <div class="admin-visitor-filters"><label>시작일<input class="admin-input" id="visitorDateFrom" type="date"/></label><label>종료일<input class="admin-input" id="visitorDateTo" type="date"/></label><label>회원명<input class="admin-input" id="visitorMemberSearch" placeholder="회원명 검색"/></label><label>로그인 여부<select class="admin-select" id="visitorLoginFilter"><option value="ALL">전체</option><option value="LOGIN">로그인</option><option value="ANONYMOUS">비로그인</option></select></label><label>페이지<select class="admin-select" id="visitorPageFilter"><option value="">전체 페이지</option><option value="home">메인</option><option value="hall">명예의 전당</option><option value="ranking">랭킹</option><option value="sanctuary">성역</option><option value="sanctuary-schedule">성역 일정</option><option value="meter">미터</option><option value="arcana">아르카나</option><option value="admin">관리자</option><option value="pages">기타 페이지</option></select></label><button class="admin-btn primary" id="visitorSearchBtn" type="button">조회</button></div>
+          <div id="visitorHistoryStatus" class="admin-statusline"></div><div class="admin-visitor-history" id="visitorHistoryList"><div class="admin-empty">방문 이력을 불러오세요.</div></div><div class="admin-pagination"><button class="admin-btn" id="visitorPrevBtn" type="button">이전</button><span id="visitorPageInfo">1 / 1</span><button class="admin-btn" id="visitorNextBtn" type="button">다음</button></div>
+        </section>
+      </div>
+    </section>
   </section>
 </main>
 
@@ -201,10 +218,10 @@
 <script src="../../core/kinojo-route-guard.js?cache=2026070110"></script>
 <script src="../../core/kinojo-debug.js?cache=2026070110"></script>
 <script src="../../core/kinojo-logger.js?cache=2026070110"></script>
-<script src="../../ui/kinojo-common-ui.js?cache=2026072201"></script>
+<script src="../../ui/kinojo-common-ui.js?cache=2026072411"></script>
 <script src="../../ui/kinojo-admin-panel.js?cache=2026071712"></script>
-<script src="../../core/kinojo-supabase.js?cache=2026072410"></script>
-<script src="../../core/kinojo-auth.js?cache=2026071907"></script>
-<script src="../../admin/js/admin.js?cache=2026072410"></script>
+<script src="../../core/kinojo-supabase.js?cache=2026072411"></script>
+<script src="../../core/kinojo-auth.js?cache=2026072411"></script>
+<script src="../../admin/js/admin.js?cache=2026072411"></script>
 </body>
 </html>

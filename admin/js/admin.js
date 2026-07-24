@@ -1,11 +1,11 @@
-/* KINOJO Admin Console v2026072410 */
+/* KINOJO Admin Console v2026072411 */
 (function(){
   'use strict';
   const $ = (s,r=document)=>r.querySelector(s);
   const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
-  const state = { tab:'dashboard', subtab:'', loaded:{}, subtabs:{ members:'accounts', notices:'general', system:'server-status' }, requests:[], accounts:[], characters:[], logs:[], eventNoticeGroups:[], eventNoticeEditingId:null, meterConsole:null, meterNotices:[], sanctuarySchedules:[], sanctuaryMasters:[], sanctuaryStatusOptions:[], sanctuaryScheduleLoaded:false, sanctuaryScheduleAccess:null, sanctuaryRolePermissions:null, sanctuaryScheduleSaving:false, lastSanctuarySyncData:null, lastSanctuaryStatusData:null, lastSanctuaryId:'all' };
-  const CACHE = '2026072409';
-  const DEFAULT_SUBTABS = { members:'accounts', notices:'general', system:'server-status' };
+  const state = { tab:'dashboard', subtab:'', loaded:{}, subtabs:{ members:'accounts', notices:'general', system:'server-status' }, requests:[], accounts:[], characters:[], logs:[], eventNoticeGroups:[], eventNoticeEditingId:null, meterConsole:null, meterNotices:[], sanctuarySchedules:[], sanctuaryMasters:[], sanctuaryStatusOptions:[], sanctuaryScheduleLoaded:false, sanctuaryScheduleAccess:null, sanctuaryRolePermissions:null, sanctuaryScheduleSaving:false, lastSanctuarySyncData:null, lastSanctuaryStatusData:null, lastSanctuaryId:'all', visitorDays:7, visitorPage:1, visitorTotalPages:1, visitorCanViewMemberHistory:false };
+  const CACHE = '2026072411';
+  const DEFAULT_SUBTABS = { members:'accounts', notices:'general', system:'server-status', logs:'activity' };
   function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
   function addLog(type,msg){
     const t = new Date(); const line = '['+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+':'+String(t.getSeconds()).padStart(2,'0')+'] '+String(type||'INFO')+' · '+String(msg||'');
@@ -35,6 +35,7 @@
   function adminNotice(cmd, extra){ return window.KinojoSupabase.adminNotice(cmd, extra||{}); }
   function adminEventNotice(cmd, extra){ return window.KinojoSupabase.adminEventNotice(cmd, extra||{}); }
   function adminMeter(cmd, extra){ return window.KinojoSupabase.adminMeter(cmd, extra||{}); }
+  function adminVisitor(cmd, extra){ return window.KinojoSupabase.adminVisitor(cmd, extra||{}); }
   const EVENT_NOTICE_TYPES = [
     { value:'abyss_low', label:'어비스 하층', icon:'◆', tone:'gold', title:'어비스 하층 일정 안내', body:'하층 전장 이동과 파티 준비를 확인하세요.' },
     { value:'abyss_middle', label:'어비스 중층', icon:'◆', tone:'gold', title:'어비스 중층 일정 안내', body:'중층 전장 이동과 파티 준비를 확인하세요.' },
@@ -81,6 +82,7 @@
     if(tab==='system'&&subtab==='server-status') refreshServerStatus();
     if(tab==='system'&&subtab==='sheet-sync') loadSanctuarySyncConsole(force===true);
     if(tab==='system'&&subtab==='environment') refreshSystemSettings();
+    if(tab==='logs'&&subtab==='visitors') loadVisitorDashboard(force===true);
   }
   function switchSubtab(tab,subtab,options={}){
     const pane=$('[data-admin-pane="'+tab+'"]');
@@ -131,8 +133,9 @@
       const requests = req.status==='fulfilled' ? (req.value.requests || []) : [];
       const runtimeData = runtime.status==='fulfilled' ? runtime.value : {};
       const syncData = sync.status==='fulfilled' ? sync.value : {};
-      $('#statVisitors').textContent = Number(stats.today || stats.daily || 0).toLocaleString('ko-KR');
-      $('#statVisitorsSub').textContent = '누적 '+Number(stats.total || 0).toLocaleString('ko-KR');
+      $('#statVisitors').textContent = Number(stats.todayVisits ?? stats.today ?? stats.daily ?? 0).toLocaleString('ko-KR');
+      const anonymous=Number(stats.todayAnonymous ?? 0), logged=Number(stats.todayLoggedIn ?? 0), views=Number(stats.todayPageViews ?? 0);
+      $('#statVisitorsSub').textContent = '비로그인 '+anonymous.toLocaleString('ko-KR')+' · 로그인 '+logged.toLocaleString('ko-KR')+(views?' · 조회 '+views.toLocaleString('ko-KR'):'');
       $('#statRequests').textContent = String(requests.length||0);
       $('#statRequestsSub').textContent = requests.length ? '대기 중' : '처리할 요청 없음';
       const recentSync=syncData.recentSync||syncData.recent_sync||{};
@@ -1124,6 +1127,51 @@
       setStatus('#systemStatus','Bridge URL은 Supabase Edge Function Secret에서만 관리됩니다. 브라우저에는 저장하지 않습니다.','ok');
     }
   }
+  function visitorDate(value){
+    if(!value)return '-';
+    try{return new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(value));}catch(_err){return String(value);}
+  }
+  function visitorNumber(value){return Number(value||0).toLocaleString('ko-KR');}
+  function renderVisitorTrend(rows){
+    const root=$('#visitorTrend'); if(!root)return;
+    root.innerHTML=(rows||[]).length?(rows||[]).map(row=>'<article><span>'+esc(row.visit_date||row.visitDate||'-')+'</span><strong>'+visitorNumber(row.unique_visitors||row.uniqueVisitors)+'</strong><em>익명 '+visitorNumber(row.anonymous_visitors||row.anonymousVisitors)+' · 로그인 '+visitorNumber(row.logged_in_visitors||row.loggedInVisitors)+' · 조회 '+visitorNumber(row.page_views||row.pageViews)+'</em></article>').join(''):'<div class="admin-empty">집계된 방문 데이터가 없습니다.</div>';
+  }
+  function renderVisitorPages(rows){
+    const root=$('#visitorPages'); if(!root)return;
+    root.innerHTML=(rows||[]).length?(rows||[]).map(row=>'<article><span>'+esc(row.page_key||row.pageKey||'-')+'</span><strong>'+visitorNumber(row.unique_visitors||row.uniqueVisitors)+'명</strong><em>'+visitorNumber(row.page_views||row.pageViews)+'회 조회</em></article>').join(''):'<div class="admin-empty">오늘 페이지별 데이터가 없습니다.</div>';
+  }
+  async function loadVisitorDashboard(force){
+    try{
+      if(force)state.loaded['logs/visitors']=false;
+      setStatus('#visitorAggregateStatus','방문 통계를 불러오는 중입니다.');
+      const data=await adminVisitor('dashboard',{days:state.visitorDays});
+      const summary=data.summary||{};
+      $('#visitorTodayTotal').textContent=visitorNumber(summary.unique_visitors||summary.uniqueVisitors);
+      $('#visitorTodayBreakdown').textContent='비로그인 '+visitorNumber(summary.anonymous_visitors||summary.anonymousVisitors)+' · 로그인 '+visitorNumber(summary.logged_in_visitors||summary.loggedInVisitors);
+      $('#visitorTodayViews').textContent=visitorNumber(summary.page_views||summary.pageViews);
+      $('#visitorServerDate').textContent=String(data.serverDate||summary.visit_date||summary.visitDate||'-');
+      renderVisitorTrend(data.trend||[]); renderVisitorPages(data.pages||[]);
+      state.visitorCanViewMemberHistory=Boolean(data.canViewMemberHistory);
+      const history=$('#visitorHistoryCard'); if(history)history.hidden=!state.visitorCanViewMemberHistory;
+      setStatus('#visitorAggregateStatus','한국 시간 기준으로 집계했습니다.','success');
+      if(state.visitorCanViewMemberHistory)await loadVisitorHistory(1);
+    }catch(err){setStatus('#visitorAggregateStatus',err.message||String(err),'error');}
+  }
+  async function loadVisitorHistory(page){
+    if(!state.visitorCanViewMemberHistory)return;
+    state.visitorPage=Math.max(1,Number(page||1));
+    try{
+      setStatus('#visitorHistoryStatus','방문 이력을 불러오는 중입니다.');
+      const data=await adminVisitor('history',{dateFrom:$('#visitorDateFrom')?.value||null,dateTo:$('#visitorDateTo')?.value||null,memberSearch:$('#visitorMemberSearch')?.value.trim()||null,loginFilter:$('#visitorLoginFilter')?.value||'ALL',pageKey:$('#visitorPageFilter')?.value||null,page:state.visitorPage,pageSize:20});
+      state.visitorTotalPages=Math.max(1,Number(data.totalPages||1));
+      const root=$('#visitorHistoryList'); const rows=data.rows||[];
+      if(root)root.innerHTML=rows.length?rows.map(row=>'<article class="admin-visitor-history-row"><div><strong>'+esc(row.memberName||'익명 방문자')+'</strong><span>'+(row.isLoggedIn?esc(row.memberRole||'회원'):'비로그인')+'</span></div><div><span>로그인 '+visitorDate(row.loginAt)+'</span><span>최초 '+visitorDate(row.firstVisitAt)+'</span><span>마지막 '+visitorDate(row.lastVisitAt)+'</span></div><div><strong>'+visitorNumber(row.pageViews)+'회</strong><span>'+esc((row.pages||[]).join(', ')||'-')+'</span></div></article>').join(''):'<div class="admin-empty">조건에 맞는 방문 이력이 없습니다.</div>';
+      $('#visitorPageInfo').textContent=state.visitorPage+' / '+state.visitorTotalPages;
+      $('#visitorPrevBtn').disabled=state.visitorPage<=1; $('#visitorNextBtn').disabled=state.visitorPage>=state.visitorTotalPages;
+      setStatus('#visitorHistoryStatus','총 '+visitorNumber(data.total)+'건','success');
+    }catch(err){setStatus('#visitorHistoryStatus',err.message||String(err),'error');}
+  }
+
   function renderLogs(){ const root=$('#adminLogBox'); if(root) root.textContent=state.logs.length?state.logs.join('\n'):'아직 로그가 없습니다.'; }
 
   function bind(){
@@ -1134,8 +1182,8 @@
       switchSubtab(nav.dataset.adminSubnav,button.dataset.adminSubtab);
     }));
     $('#adminMobileSelect')?.addEventListener('change',e=>switchTab(e.target.value));
-    $('#adminRefreshBtn')?.addEventListener('click',()=>switchTab(state.tab,{subtab:state.subtab,force:true}));
-    $('#adminLogoutBtn')?.addEventListener('click',()=>{window.KinojoAuth?.clearSession?.(); location.href='../';});
+    const logout=()=>{window.KinojoAuth?.clearSession?.(); location.href='../';};
+    $('#adminLogoutBtn')?.addEventListener('click',logout); $('#adminMobileLogoutBtn')?.addEventListener('click',logout);
     $('#requestReloadBtn')?.addEventListener('click',loadCodeRequests);
     $('#requestList')?.addEventListener('click',e=>{ if(e.target.matches('[data-approve-request]')) processRequest(e.target,'approveCodeRequest'); if(e.target.matches('[data-reject-request]')) processRequest(e.target,'rejectCodeRequest'); });
     $('#memberReloadBtn')?.addEventListener('click',loadAccounts); $('#sanctuaryRolePermissionReloadBtn')?.addEventListener('click',loadSanctuaryRolePermissions); $('#sanctuaryRolePermissionMatrix')?.addEventListener('change',e=>{if(e.target.matches('[data-sanctuary-role-permission]'))setSanctuaryRolePermission(e.target);}); $('#memberSearch')?.addEventListener('input',applyMemberFilters); $('#memberRoleFilter')?.addEventListener('change',applyMemberFilters); $('#memberList')?.addEventListener('click',e=>{ if(e.target.matches('[data-member-role-open],[data-member-role-save],[data-member-role-cancel],[data-member-disable],[data-member-delete]')) handleMemberAction(e.target); });
@@ -1190,6 +1238,11 @@
     $('#eventNoticeEditorCards')?.addEventListener('change',e=>{ if(e.target.matches('[data-event-field="noticeType"]')) applyEventNoticeTypeTemplate(e.target.closest('[data-event-notice-card]')); });
     $('#webAppTestBtn')?.addEventListener('click',()=>testWebAppConnection('#serverStatus')); $('#webAppTestBtnSystem')?.addEventListener('click',()=>testWebAppConnection('#systemStatus')); $('#serverRefreshBtn')?.addEventListener('click',refreshServerStatus); $('#goSystemSettingsBtn')?.addEventListener('click',()=>switchTab('system',{subtab:'environment'}));
     document.addEventListener('click',e=>{ const retry=e.target.closest('[data-profile-diagnostic-retry]'); if(retry){retryProfileDiagnostic(retry);return;} if(e.target.matches('[data-jump-server]')) switchTab('system',{subtab:'server-status'}); if(e.target.matches('[data-jump-system]')) switchTab('system',{subtab:'environment'}); });
+    $$('[data-visitor-days]').forEach(button=>button.addEventListener('click',()=>{state.visitorDays=Number(button.dataset.visitorDays||7);$$('[data-visitor-days]').forEach(item=>item.classList.toggle('active',item===button));loadVisitorDashboard(true);}));
+    $('#visitorReloadBtn')?.addEventListener('click',()=>loadVisitorDashboard(true));
+    $('#visitorSearchBtn')?.addEventListener('click',()=>loadVisitorHistory(1));
+    $('#visitorPrevBtn')?.addEventListener('click',()=>loadVisitorHistory(state.visitorPage-1));
+    $('#visitorNextBtn')?.addEventListener('click',()=>loadVisitorHistory(state.visitorPage+1));
     window.addEventListener('hashchange',()=>{const route=adminRoute();switchTab(route.tab,{subtab:route.subtab,updateRoute:false});});
     $('#quickCodeBtn')?.addEventListener('click',()=>switchTab('requests')); $('#quickSanctuaryBtn')?.addEventListener('click',()=>switchTab('system',{subtab:'sheet-sync'})); $('#quickMemberBtn')?.addEventListener('click',()=>switchTab('members',{subtab:'accounts'})); $('#quickNoticeBtn')?.addEventListener('click',()=>switchTab('notices',{subtab:'general'}));
   }
@@ -1197,6 +1250,9 @@
     let tries=0; while(tries<30 && !window.KinojoAuth){ await new Promise(r=>setTimeout(r,100)); tries++; }
     if(!isAdmin()){ renderAccessBlocked(); return; }
     $('#adminRoleLabel') && ($('#adminRoleLabel').textContent=roleLabel());
+    $('#adminMobileRoleLabel') && ($('#adminMobileRoleLabel').textContent=roleLabel());
+    const today=todayDateInputValue(); const from=new Date(today+'T00:00:00'); from.setDate(from.getDate()-6);
+    if($('#visitorDateTo'))$('#visitorDateTo').value=today; if($('#visitorDateFrom'))$('#visitorDateFrom').value=from.toISOString().slice(0,10);
     if(isStaffConsole()){
       document.body.classList.add('kinojo-staff-console');
       $$('[data-admin-full-only]').forEach(el=>el.hidden=true);

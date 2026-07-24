@@ -410,6 +410,7 @@
         data.account.roleLabel = data.account.roleLabel || roleLabel(data.account.role);
       }
       setSession(data.session, data.account);
+      window.KinojoSupabase?.logLoginVisit?.().catch(()=>{});
       if(status) status.textContent = '로그인되었습니다.';
       if(input) input.value = '';
       setLoginOtpValue(modal.querySelector('#kinojoLoginOtp'), '');

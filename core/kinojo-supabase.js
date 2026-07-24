@@ -1245,32 +1245,52 @@
     return value;
   }
 
+  function currentPageKey(){
+    const path=String(location.pathname||'').toLowerCase();
+    if(path.includes('/sanctuary-schedule/'))return 'sanctuary-schedule';
+    if(path.includes('/sanctuary/'))return 'sanctuary';
+    if(path.includes('/admin/'))return 'admin';
+    if(path.includes('/hof/')||path.includes('/hall-of-fame/'))return 'hall';
+    if(path.includes('/ranking/'))return 'ranking';
+    if(path.includes('/meter/'))return 'meter';
+    if(path.includes('/arcana/'))return 'arcana';
+    if(path.includes('/pages/'))return 'pages';
+    return 'home';
+  }
+  function optionalPassKey(){
+    try{return currentPassKey();}catch(_err){return '';}
+  }
+
   async function logPageView(pageKey, payload){
+    const body=Object.assign({},payload||{});
+    const passKey=optionalPassKey();
+    if(passKey)body.authPassKey=passKey;
+    body.eventType=body.eventType||'PAGE_VIEW';
     return rpc('kinojo_log_page_view', {
-      p_page_key:String(pageKey || ''),
+      p_page_key:String(pageKey || currentPageKey()),
       p_page_url:String(location.href || ''),
       p_visitor_key:getVisitorKey(),
       p_referrer:String(document.referrer || ''),
       p_user_agent:String(navigator.userAgent || ''),
       p_source_type:'WEB',
-      p_payload:payload || {}
+      p_payload:body
     });
+  }
+  async function logLoginVisit(pageKey){
+    return logPageView(pageKey||currentPageKey(),{eventType:'LOGIN'});
   }
 
   async function getVisitStatsFromServer(pageKey, shouldLog){
-    if(shouldLog){
-      await logPageView(pageKey || 'web', {}).catch(()=>{});
+    if(shouldLog) await logPageView(pageKey || currentPageKey(), {eventType:'PAGE_VIEW'}).catch(()=>{});
+    try{
+      const data=await rpc('kinojo_public_visit_summary_266',{});
+      return data?.stats||emptyVisitStats(todayVisitKey());
+    }catch(_err){
+      const rows=await request('v_kinojo_page_view_daily',{query:'select=*&order=visit_date.asc'}).catch(()=>[]);
+      const stats=emptyVisitStats(todayVisitKey());
+      (Array.isArray(rows)?rows:[]).forEach(row=>{const rowDate=String(row.visit_date||'').replace(/-/g,'').slice(2,8);const views=Number(row.view_count||0);stats.totalVisits+=views;if(rowDate===stats.date)stats.todayVisits+=Number(row.visitor_count||0);});
+      return stats;
     }
-    const date = todayVisitKey();
-    const rows = await request('v_kinojo_page_view_daily', { query:'select=*&order=visit_date.asc' }).catch(()=>[]);
-    const stats = emptyVisitStats(date);
-    (Array.isArray(rows) ? rows : []).forEach(row => {
-      const rowDate = String(row.visit_date || '').replace(/-/g,'').slice(2,8);
-      const views = Number(row.view_count || row.visitor_count || 0);
-      stats.totalVisits += views;
-      if(rowDate === date) stats.todayVisits += views;
-    });
-    return stats;
   }
 
 
@@ -1617,6 +1637,16 @@
     return null;
   }
 
+  async function adminVisitor(cmd, extra={}){
+    assertAdmin();
+    if(cmd==='dashboard') return rpc('kinojo_admin_visitor_dashboard_266',{p_pass_key:currentPassKey(),p_days:Number(extra.days||7)});
+    if(cmd==='history') return rpc('kinojo_admin_visitor_history_266',{
+      p_pass_key:currentPassKey(),p_date_from:extra.dateFrom||null,p_date_to:extra.dateTo||null,p_member_search:extra.memberSearch||null,
+      p_login_filter:extra.loginFilter||'ALL',p_page_key:extra.pageKey||null,p_page:Number(extra.page||1),p_page_size:Number(extra.pageSize||20)
+    });
+    return {ok:false,message:'지원하지 않는 방문자 관리 명령입니다.'};
+  }
+
   async function adminUnsupported(feature){
     return { ok:false, message:feature + ' 기능은 Phase 2에서 Apps Script 호출을 차단했습니다. 서버 연산 테이블/RPC 이관 후 활성화됩니다.' };
   }
@@ -1670,7 +1700,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.44-admin-member-security-2026072410',
+    version:'1.3.1.45-visitor-analytics-2026072411',
     getConfig,
     isPreferred,
     isConfigured,
@@ -1711,6 +1741,7 @@
     setSanctuaryRolePermission,
     saveSanctuaryData,
     logPageView,
+    logLoginVisit,
     verifyPassKey,
     getLatestAnnouncements,
     getLockStatus,
@@ -1728,6 +1759,7 @@
     adminSanctuaryProfileDiagnostic,
     adminCharacter,
     adminVisit,
+    adminVisitor,
     getVisitStats,
     adminUnsupported
   };

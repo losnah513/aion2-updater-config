@@ -272,12 +272,10 @@
     const el=document.getElementById('visitCard');
     if(!el)return;
     try{
-      const key='kinojo_common_visit_'+(info?.key||'page')+'_'+new Date().toLocaleDateString('ko-KR',{timeZone:'Asia/Seoul'});
-      const first=localStorage.getItem(key)!=='1';
-      if(first) localStorage.setItem(key,'1');
+      const pageKey=info?.key||'home';
       const data=window.KinojoApi
-        ? await window.KinojoApi.getAction('hallVisit', { mode:first?'visit':'stats', boost:first?'1':'0' })
-        : await (await fetch(commonApiUrl()+(commonApiUrl().includes('?')?'&':'?')+new URLSearchParams({action:'hallVisit',mode:first?'visit':'stats',boost:first?'1':'0',t:String(Date.now())}).toString(),{cache:'no-store'})).json();
+        ? await window.KinojoApi.getAction('hallVisit', { mode:'visit', pageKey })
+        : await (await fetch(commonApiUrl()+(commonApiUrl().includes('?')?'&':'?')+new URLSearchParams({action:'hallVisit',mode:'visit',pageKey,t:String(Date.now())}).toString(),{cache:'no-store'})).json();
       if(data?.ok&&data.stats)renderCommonVisits(data.stats);
     }catch(_err){
       setVisitServerLight('is-error','서버 연결 오류');
