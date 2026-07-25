@@ -12,7 +12,7 @@
 <link href="../ui/kinojo-common-ui.css?cache=2026072502" rel="stylesheet"/>
 <link href="../ui/kinojo-card-guards.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../ui/kinojo-animations.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
-<link href="./css/admin.css?cache=2026072502" rel="stylesheet"/>
+<link href="./css/admin.css?cache=2026072503" rel="stylesheet"/>
 <script src="../ui/kinojo-device-router.js?cache=2026070110" data-mobile-path="../m/admin/"></script>
 </head>
 <body class="kinojo-page-admin">
@@ -53,7 +53,35 @@
       <div class="admin-subpane active" data-admin-subpane="accounts"><section class="admin-card"><div class="admin-card-head"><div><h2>회원 관리</h2><p>현재 등급을 확인하고 권한 범위 안에서 변경합니다. 회원 코드는 Master·Sub Master에게만 표시됩니다.</p></div><button class="admin-btn" id="memberReloadBtn" type="button">목록 불러오기</button></div><div class="admin-form-row admin-member-tools"><input class="admin-input grow" id="memberSearch" placeholder="회원명 / 코드 / 등급 검색"/><select class="admin-select" id="memberRoleFilter"><option value="">전체 등급</option><option value="MEMBER">Member</option><option value="STAFF">Staff</option><option value="MANAGER">Manager</option><option value="SUB_MASTER">Sub Master</option><option value="MASTER">Master</option></select></div><div id="memberStatus" class="admin-statusline"></div><div class="admin-list" id="memberList"><div class="admin-empty">회원 목록을 불러오세요.</div></div></section></div>
       <div class="admin-subpane" data-admin-subpane="permissions"><section class="admin-card admin-role-permission-card" id="sanctuaryRolePermissionCard" hidden><div class="admin-card-head"><div><h2>성역 등급별 권한</h2><p>등급별 기본 권한을 한눈에 확인하고 MASTER가 직접 설정합니다.</p></div><button class="admin-btn" id="sanctuaryRolePermissionReloadBtn" type="button">권한 불러오기</button></div><div id="sanctuaryRolePermissionStatus" class="admin-statusline"></div><div class="admin-role-permission-wrap" id="sanctuaryRolePermissionMatrix"><div class="admin-empty">권한표를 불러오세요.</div></div></section></div>
     </section>
-    <section class="admin-pane" data-admin-pane="characters"><section class="admin-card"><div class="admin-card-head"><div><h2>캐릭터 관리</h2><p>탈퇴/복구/이름변경 이력을 서버 기준으로 관리합니다.</p></div></div><div class="admin-form"><div class="admin-form-row"><input class="admin-input grow" id="characterSearch" placeholder="캐릭터명 / 서버명 검색"/><label class="admin-btn"><input id="characterIncludeInactive" type="checkbox" checked/> 비활성 포함</label><button class="admin-btn primary" id="characterSearchBtn" type="button">검색</button></div><div class="admin-form-row"><select class="admin-select" id="characterReason"><option value="탈퇴">탈퇴</option><option value="이름변경">이름변경</option><option value="중복">중복</option><option value="기타">기타</option></select><input class="admin-input grow" id="characterNewName" placeholder="이름변경 시 새 캐릭터명"/><input class="admin-input grow" id="characterMemo" placeholder="관리 메모"/></div></div><div id="characterStatus" class="admin-statusline"></div><div class="admin-list" id="characterList"><div class="admin-empty">검색어를 입력하고 캐릭터를 조회하세요.</div></div></section><section class="admin-card admin-character-identity-card"><div class="admin-card-head"><div><h2>공식 캐릭터 조회</h2><p>저장된 고유값으로 현재 서버·캐릭터명을 Server Engine이 확인합니다. MASTER·SUB MASTER 전용입니다.</p></div></div><div id="characterIdentityResult"><div class="admin-empty">캐릭터 검색 후 [공식 조회]를 누르세요.</div></div></section></section>
+    <section class="admin-pane" data-admin-pane="characters">
+      <nav class="admin-subnav" data-admin-subnav="characters" aria-label="캐릭터 관리 하위 기능"><button class="active" data-admin-subtab="lookup" type="button">정보 최신화</button><button data-admin-subtab="records" type="button">캐릭터 상태</button></nav>
+      <div class="admin-subpane active" data-admin-subpane="lookup">
+        <section class="admin-card admin-lookup-console">
+          <div class="admin-card-head"><div><h2>캐릭터 정보 최신화</h2><p>Server가 list와 Master를 대조해 Queue를 만들고, Extension이 공식 페이지 원본을 수집하면 Server가 아이템레벨·전투력·Snapshot·랭킹·list를 반영합니다.</p></div><button class="admin-btn" id="characterLookupReloadBtn" type="button">상태 새로고침</button></div>
+          <div class="admin-lookup-settings">
+            <label>조회 범위<select class="admin-select" id="characterLookupScope"><option value="all">전체 캐릭터</option><option value="missing_only">신규 캐릭터만</option><option value="single">특정 캐릭터</option></select></label>
+            <label>캐릭터명<input class="admin-input" id="characterLookupName" placeholder="특정 캐릭터 선택 시 입력" disabled/></label>
+            <label>클래스 필터<input class="admin-input" id="characterLookupClasses" placeholder="선택 사항 · 쉼표 구분"/></label>
+            <label>서버 필터<input class="admin-input" id="characterLookupServers" placeholder="서버명 또는 ID · 쉼표 구분"/></label>
+            <label>종족 필터<input class="admin-input" id="characterLookupRaces" placeholder="선택 사항 · 쉼표 구분"/></label>
+            <fieldset><legend>장비 유형</legend><label><input type="checkbox" name="characterLookupGear" value="PVE" checked/> PVE</label><label><input type="checkbox" name="characterLookupGear" value="PVP" checked/> PVP</label></fieldset>
+          </div>
+          <div class="admin-lookup-start-row"><button class="admin-btn primary" id="characterLookupStartBtn" type="button">조회 Queue 준비</button><span>1단계에서는 Queue 준비 후 같은 PASS KEY로 Extension의 조회 시작 버튼을 눌러야 합니다.</span></div>
+          <div id="characterLookupStatus" class="admin-statusline"></div>
+          <div class="admin-lookup-extension-guide" id="characterLookupExtensionGuide" hidden><strong>Extension 연결 대기</strong><span>아이온2 캐릭터 정보실에서 KINOJO Extension을 열고 같은 PASS KEY로 조회 시작을 누르세요. 새 세션을 만들지 않고 이 Queue를 이어받습니다.</span></div>
+          <div class="admin-lookup-overview">
+            <article><span>상태</span><strong id="characterLookupState" class="admin-pill">대기</strong><em id="characterLookupMessage">조회 작업을 시작하면 진행 상태가 표시됩니다.</em></article>
+            <article><span>현재 캐릭터</span><strong id="characterLookupCurrent">-</strong><em>세션 <b id="characterLookupSession">없음</b> · 요청자 <b id="characterLookupOwner">-</b></em></article>
+            <article><span>처리 완료</span><strong id="characterLookupCount">0 / 0</strong><em>성공 <b id="characterLookupSuccess">0</b> · 재시도 <b id="characterLookupRetry">0</b> · 실패 <b id="characterLookupFailed">0</b></em></article>
+            <article><span>전체 진행률</span><strong id="characterLookupPercent">0.0%</strong><div class="admin-lookup-progress"><i id="characterLookupProgressBar"></i></div></article>
+          </div>
+          <div class="admin-lookup-steps"><article class="admin-lookup-step pending" id="characterLookupStep1"><small>STEP 1</small><strong>원본 대조</strong><span>0.0%</span></article><article class="admin-lookup-step pending" id="characterLookupStep2"><small>STEP 2</small><strong>공식 조회</strong><span>0.0%</span></article><article class="admin-lookup-step pending" id="characterLookupStep3"><small>STEP 3</small><strong>서버 후처리</strong><span>0.0%</span></article></div>
+          <div class="admin-lookup-controls"><button class="admin-btn" id="characterLookupPauseBtn" type="button" disabled>일시정지</button><button class="admin-btn primary" id="characterLookupResumeBtn" type="button" disabled>재개</button><button class="admin-btn danger" id="characterLookupStopBtn" type="button" disabled>작업 중단</button></div>
+          <div class="admin-lookup-events" id="characterLookupEvents"><div class="admin-empty">아직 조회 이벤트가 없습니다.</div></div>
+        </section>
+      </div>
+      <div class="admin-subpane" data-admin-subpane="records"><section class="admin-card"><div class="admin-card-head"><div><h2>캐릭터 상태 관리</h2><p>탈퇴·복구·이름변경 이력을 Server 기준으로 관리합니다.</p></div></div><div class="admin-form"><div class="admin-form-row"><input class="admin-input grow" id="characterSearch" placeholder="캐릭터명 / 서버명 검색"/><label class="admin-btn"><input id="characterIncludeInactive" type="checkbox" checked/> 비활성 포함</label><button class="admin-btn primary" id="characterSearchBtn" type="button">검색</button></div><div class="admin-form-row"><select class="admin-select" id="characterReason"><option value="탈퇴">탈퇴</option><option value="이름변경">이름변경</option><option value="중복">중복</option><option value="기타">기타</option></select><input class="admin-input grow" id="characterNewName" placeholder="이름변경 시 새 캐릭터명"/><input class="admin-input grow" id="characterMemo" placeholder="관리 메모"/></div></div><div id="characterStatus" class="admin-statusline"></div><div class="admin-list" id="characterList"><div class="admin-empty">검색어를 입력하고 캐릭터를 조회하세요.</div></div></section></div>
+    </section>
     <section class="admin-pane" data-admin-pane="sanctuary">
       <section class="admin-card admin-sanctuary-schedule-card">
         <div class="admin-card-head"><div><h2>성역 일정 관리</h2><p>성역과 팀 하나를 선택해 투표 일정 또는 확정 일정을 등록합니다.</p></div><div class="admin-row-actions"><button class="admin-btn" id="sanctuaryScheduleReloadBtn" type="button">새로고침</button><button class="admin-btn primary" id="sanctuaryScheduleNewBtn" type="button">새 일정</button></div></div>
@@ -220,8 +248,8 @@
 <script src="../core/kinojo-logger.js?cache=2026070110"></script>
 <script src="../ui/kinojo-common-ui.js?cache=2026072502"></script>
 <script src="../ui/kinojo-admin-panel.js?cache=2026071712"></script>
-<script src="../core/kinojo-supabase.js?cache=2026072502"></script>
+<script src="../core/kinojo-supabase.js?cache=2026072503"></script>
 <script src="../core/kinojo-auth.js?cache=2026072502"></script>
-<script src="./js/admin.js?cache=2026072502"></script>
+<script src="./js/admin.js?cache=2026072503"></script>
 </body>
 </html>
