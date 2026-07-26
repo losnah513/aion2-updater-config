@@ -499,3 +499,15 @@ KINOJO Sanctuary Schedule Admin 20260713 STEP 12
 @media(max-width:1100px){.admin-lookup-settings{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-lookup-overview{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:720px){.admin-lookup-settings,.admin-lookup-overview,.admin-lookup-steps{grid-template-columns:1fr}.admin-lookup-events article{grid-template-columns:1fr;gap:3px}.admin-lookup-start-row{align-items:stretch}.admin-lookup-start-row .admin-btn{width:100%}}
 
+
+.admin-lookup-direct-result{display:grid;gap:14px;padding:16px;border:1px solid #9fc4f7;border-radius:16px;background:#f7fbff}
+.admin-lookup-direct-result[hidden]{display:none!important}
+.admin-lookup-direct-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.admin-lookup-direct-head>div{display:grid;gap:4px}.admin-lookup-direct-head strong{font-size:15px;color:#173d6f}.admin-lookup-direct-head span{font-size:12px;color:#657a94}
+.admin-lookup-direct-character{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.admin-lookup-direct-character strong{font-size:18px;color:#17263a}.admin-lookup-direct-character span{font-size:12px;color:#60728a}
+.admin-lookup-direct-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.admin-lookup-direct-grid article{display:grid;gap:6px;padding:13px;border:1px solid #dbe8f7;border-radius:13px;background:#fff;min-width:0}
+.admin-lookup-direct-grid article span{font-size:11px;font-weight:800;color:#6d7e93}.admin-lookup-direct-grid article strong{font-size:19px;color:#175fbf}.admin-lookup-direct-grid article em{font-size:11px;font-style:normal;color:#748399}
+.admin-lookup-direct-meta{display:flex;gap:8px;flex-wrap:wrap}.admin-lookup-direct-meta span{padding:6px 9px;border-radius:999px;background:#eaf3ff;color:#345d8f;font-size:11px;font-weight:700}
+@media(max-width:1000px){.admin-lookup-direct-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.admin-lookup-direct-grid{grid-template-columns:1fr}.admin-lookup-direct-head{align-items:center}}

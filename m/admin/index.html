@@ -12,7 +12,7 @@
 <link href="../../ui/kinojo-common-ui.css?cache=2026072411" rel="stylesheet"/>
 <link href="../../ui/kinojo-card-guards.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../../ui/kinojo-animations.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
-<link href="../../admin/css/admin.css?cache=2026072503" rel="stylesheet"/>
+<link href="../../admin/css/admin.css?cache=2026072504" rel="stylesheet"/>
 
 </head>
 <body class="kinojo-page-admin">
@@ -57,7 +57,7 @@
       <nav class="admin-subnav" data-admin-subnav="characters" aria-label="캐릭터 관리 하위 기능"><button class="active" data-admin-subtab="lookup" type="button">정보 최신화</button><button data-admin-subtab="records" type="button">캐릭터 상태</button></nav>
       <div class="admin-subpane active" data-admin-subpane="lookup">
         <section class="admin-card admin-lookup-console">
-          <div class="admin-card-head"><div><h2>캐릭터 정보 최신화</h2><p>Server가 list와 Master를 대조해 Queue를 만들고, Extension이 공식 페이지 원본을 수집하면 Server가 아이템레벨·전투력·Snapshot·랭킹·list를 반영합니다.</p></div><button class="admin-btn" id="characterLookupReloadBtn" type="button">상태 새로고침</button></div>
+          <div class="admin-card-head"><div><h2>캐릭터 정보 최신화</h2><p>특정 캐릭터는 Server가 PLAYNC 공식 API를 직접 조회해 아이템레벨·전투력·Snapshot·랭킹을 반영합니다. 전체·신규 조회는 Extension Queue 방식으로 실행합니다.</p></div><button class="admin-btn" id="characterLookupReloadBtn" type="button">상태 새로고침</button></div>
           <div class="admin-lookup-settings">
             <label>조회 범위<select class="admin-select" id="characterLookupScope"><option value="all">전체 캐릭터</option><option value="missing_only">신규 캐릭터만</option><option value="single">특정 캐릭터</option></select></label>
             <label>캐릭터명<input class="admin-input" id="characterLookupName" placeholder="특정 캐릭터 선택 시 입력" disabled/></label>
@@ -66,9 +66,9 @@
             <label>종족 필터<input class="admin-input" id="characterLookupRaces" placeholder="선택 사항 · 쉼표 구분"/></label>
             <fieldset><legend>장비 유형</legend><label><input type="checkbox" name="characterLookupGear" value="PVE" checked/> PVE</label><label><input type="checkbox" name="characterLookupGear" value="PVP" checked/> PVP</label></fieldset>
           </div>
-          <div class="admin-lookup-start-row"><button class="admin-btn primary" id="characterLookupStartBtn" type="button">조회 Queue 준비</button><span>1단계에서는 Queue 준비 후 같은 PASS KEY로 Extension의 조회 시작 버튼을 눌러야 합니다.</span></div>
+          <div class="admin-lookup-start-row"><button class="admin-btn primary" id="characterLookupDirectBtn" type="button" disabled>Server 1명 직접 조회</button><button class="admin-btn" id="characterLookupStartBtn" type="button">Extension Queue 준비</button><span>특정 캐릭터는 Server가 직접 처리합니다. 전체·신규 또는 필터 대량 조회는 Queue 준비 후 같은 PASS KEY로 Extension을 연결합니다.</span></div>
           <div id="characterLookupStatus" class="admin-statusline"></div>
-          <div class="admin-lookup-extension-guide" id="characterLookupExtensionGuide" hidden><strong>Extension 연결 대기</strong><span>아이온2 캐릭터 정보실에서 KINOJO Extension을 열고 같은 PASS KEY로 조회 시작을 누르세요. 새 세션을 만들지 않고 이 Queue를 이어받습니다.</span></div>
+          <div class="admin-lookup-extension-guide" id="characterLookupExtensionGuide" hidden><strong>Extension 연결 대기</strong><span>아이온2 캐릭터 정보실에서 KINOJO Extension을 열고 같은 PASS KEY로 조회 시작을 누르세요. 새 세션을 만들지 않고 이 Queue를 이어받습니다.</span></div><section class="admin-lookup-direct-result" id="characterLookupDirectResult" hidden><div class="admin-lookup-direct-head"><div><strong>Server 직접 조회 결과</strong><span>공식 API 수치와 기존 Server Parser·Master 반영 결과</span></div><span class="admin-pill" id="characterLookupDirectBadge">완료</span></div><div id="characterLookupDirectBody"></div></section>
           <div class="admin-lookup-overview">
             <article><span>상태</span><strong id="characterLookupState" class="admin-pill">대기</strong><em id="characterLookupMessage">조회 작업을 시작하면 진행 상태가 표시됩니다.</em></article>
             <article><span>현재 캐릭터</span><strong id="characterLookupCurrent">-</strong><em>세션 <b id="characterLookupSession">없음</b> · 요청자 <b id="characterLookupOwner">-</b></em></article>
@@ -248,8 +248,8 @@
 <script src="../../core/kinojo-logger.js?cache=2026070110"></script>
 <script src="../../ui/kinojo-common-ui.js?cache=2026072411"></script>
 <script src="../../ui/kinojo-admin-panel.js?cache=2026071712"></script>
-<script src="../../core/kinojo-supabase.js?cache=2026072503"></script>
+<script src="../../core/kinojo-supabase.js?cache=2026072504"></script>
 <script src="../../core/kinojo-auth.js?cache=2026072411"></script>
-<script src="../../admin/js/admin.js?cache=2026072503"></script>
+<script src="../../admin/js/admin.js?cache=2026072504"></script>
 </body>
 </html>

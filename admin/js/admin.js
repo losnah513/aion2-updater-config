@@ -1,10 +1,10 @@
-/* KINOJO Admin Console v2026072503 */
+/* KINOJO Admin Console v2026072504 */
 (function(){
   'use strict';
   const $ = (s,r=document)=>r.querySelector(s);
   const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
-  const state = { tab:'dashboard', subtab:'', loaded:{}, subtabs:{ members:'accounts', characters:'lookup', notices:'general', system:'server-status' }, requests:[], accounts:[], characters:[], logs:[], eventNoticeGroups:[], eventNoticeEditingId:null, meterConsole:null, meterNotices:[], sanctuarySchedules:[], sanctuaryMasters:[], sanctuaryStatusOptions:[], sanctuaryScheduleLoaded:false, sanctuaryScheduleAccess:null, sanctuaryRolePermissions:null, sanctuaryScheduleSaving:false, lastSanctuarySyncData:null, lastSanctuaryStatusData:null, lastSanctuaryId:'all', visitorDays:7, visitorPage:1, visitorTotalPages:1, visitorCanViewMemberHistory:false, lookupConsole:null, lookupSessionId:'', lookupSessionToken:'', lookupPollTimer:null, lookupHeartbeatAt:0, lookupStarting:false };
-  const CACHE = '2026072503';
+  const state = { tab:'dashboard', subtab:'', loaded:{}, subtabs:{ members:'accounts', characters:'lookup', notices:'general', system:'server-status' }, requests:[], accounts:[], characters:[], logs:[], eventNoticeGroups:[], eventNoticeEditingId:null, meterConsole:null, meterNotices:[], sanctuarySchedules:[], sanctuaryMasters:[], sanctuaryStatusOptions:[], sanctuaryScheduleLoaded:false, sanctuaryScheduleAccess:null, sanctuaryRolePermissions:null, sanctuaryScheduleSaving:false, lastSanctuarySyncData:null, lastSanctuaryStatusData:null, lastSanctuaryId:'all', visitorDays:7, visitorPage:1, visitorTotalPages:1, visitorCanViewMemberHistory:false, lookupConsole:null, lookupSessionId:'', lookupSessionToken:'', lookupPollTimer:null, lookupHeartbeatAt:0, lookupStarting:false, lookupDirectRunning:false, lookupDirectResult:null };
+  const CACHE = '2026072504';
   const DEFAULT_SUBTABS = { members:'accounts', characters:'lookup', notices:'general', system:'server-status', logs:'activity' };
   function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
   function addLog(type,msg){
@@ -333,6 +333,45 @@
       races:lookupSplit($('#characterLookupRaces')?.value)
     };
   }
+  function readDirectCharacterRequest(){
+    const scope=String($('#characterLookupScope')?.value||'all');
+    if(scope!=='single')throw new Error('조회 범위를 특정 캐릭터로 선택하세요.');
+    const characterName=String($('#characterLookupName')?.value||'').trim();
+    if(!characterName)throw new Error('Server에서 직접 조회할 캐릭터명을 입력하세요.');
+    const servers=lookupSplit($('#characterLookupServers')?.value);
+    if(servers.length>1)throw new Error('Server 1명 직접 조회는 서버를 하나만 지정할 수 있습니다.');
+    return {characterName,server:servers[0]||'',serverId:servers[0]||null};
+  }
+  function directMetric(value){const number=Number(value);return Number.isFinite(number)&&number>0?number.toLocaleString('ko-KR'):'-';}
+  function directDelta(previous,current){
+    const before=Number(previous||0),after=Number(current||0);
+    if(!before||!after)return '';
+    const delta=after-before;
+    return delta===0?'변동 없음':(delta>0?'+':'')+delta.toLocaleString('ko-KR');
+  }
+  function renderCharacterDirectResult(data){
+    state.lookupDirectResult=data||null;
+    const root=$('#characterLookupDirectResult');const body=$('#characterLookupDirectBody');const badge=$('#characterLookupDirectBadge');
+    if(!root||!body)return;
+    root.hidden=!data;
+    if(!data){body.innerHTML='';return;}
+    const ok=data.ok===true&&data.completed!==false;
+    if(badge){badge.textContent=ok?'완료':'실패';badge.className='admin-pill '+(ok?'ok':'error');}
+    if(!ok){body.innerHTML='<div class="admin-empty">'+esc(data.message||'Server 직접 조회에 실패했습니다.')+'</div>';return;}
+    const previous=data.previous||{};const current=data.current||{};const parsed=data.parsed||{};const official=data.official||{};const character=data.character||{};
+    const pveItem=current.pveItemLevel??parsed.pveItemLevel??(String(parsed.gearType||'').toUpperCase()==='PVE'?official.itemLevel:null);
+    const pvePower=current.pveCombatPower??parsed.pveCombatPower??(String(parsed.gearType||'').toUpperCase()==='PVE'?official.combatPower:null);
+    const pvpItem=current.pvpItemLevel??parsed.pvpItemLevel??(String(parsed.gearType||'').toUpperCase()==='PVP'?official.itemLevel:null);
+    const pvpPower=current.pvpCombatPower??parsed.pvpCombatPower??(String(parsed.gearType||'').toUpperCase()==='PVP'?official.combatPower:null);
+    body.innerHTML='<div class="admin-lookup-direct-character"><strong>'+esc(character.characterName||current.characterName||'-')+'</strong><span>'+esc(character.serverName||current.serverName||character.serverId||'')+' · '+esc(character.className||current.className||'')+' · 판정 '+esc(parsed.gearType||parsed.gearParseStatus||'-')+'</span></div>'+
+      '<div class="admin-lookup-direct-grid">'+
+      '<article><span>PVE 아이템레벨</span><strong>'+directMetric(pveItem)+'</strong><em>이전 '+directMetric(previous.pveItemLevel)+' · '+esc(directDelta(previous.pveItemLevel,pveItem))+'</em></article>'+
+      '<article><span>PVE 전투력</span><strong>'+directMetric(pvePower)+'</strong><em>이전 '+directMetric(previous.pveCombatPower)+' · '+esc(directDelta(previous.pveCombatPower,pvePower))+'</em></article>'+
+      '<article><span>PVP 아이템레벨</span><strong>'+directMetric(pvpItem)+'</strong><em>이전 '+directMetric(previous.pvpItemLevel)+' · '+esc(directDelta(previous.pvpItemLevel,pvpItem))+'</em></article>'+
+      '<article><span>PVP 전투력</span><strong>'+directMetric(pvpPower)+'</strong><em>이전 '+directMetric(previous.pvpCombatPower)+' · '+esc(directDelta(previous.pvpCombatPower,pvpPower))+'</em></article>'+
+      '</div><div class="admin-lookup-direct-meta"><span>공식 수치 '+directMetric(official.itemLevel)+' / '+directMetric(official.combatPower)+'</span><span>Master '+esc(parsed.masterSyncStatus||'반영 완료')+'</span><span>list '+(data.listSyncQueued===true?'동기화 Queue 준비':'Queue 확인 필요')+'</span><span>세션 '+esc(String(data.sessionId||'').slice(0,8))+'…</span></div>';
+  }
+
   function lookupStatusLabel(data){
     if(!data)return '대기';
     if(data.controlState==='paused')return '일시정지';
@@ -379,7 +418,9 @@
     const canControl=data?.canControl===true;
     const active=data?.active===true;
     const paused=data?.controlState==='paused';
-    if($('#characterLookupStartBtn'))$('#characterLookupStartBtn').disabled=state.lookupStarting||active||roleLevel()<4;
+    const singleScope=String($('#characterLookupScope')?.value||'all')==='single';
+    if($('#characterLookupStartBtn'))$('#characterLookupStartBtn').disabled=state.lookupStarting||state.lookupDirectRunning||active||roleLevel()<4;
+    if($('#characterLookupDirectBtn')){const button=$('#characterLookupDirectBtn');button.disabled=state.lookupStarting||state.lookupDirectRunning||active||roleLevel()<4||!singleScope;button.textContent=state.lookupDirectRunning?'Server 조회 진행 중...':'Server 1명 직접 조회';}
     if($('#characterLookupPauseBtn'))$('#characterLookupPauseBtn').disabled=!canControl||!active||paused;
     if($('#characterLookupResumeBtn'))$('#characterLookupResumeBtn').disabled=!canControl||!active||!paused;
     if($('#characterLookupStopBtn'))$('#characterLookupStopBtn').disabled=!canControl||!active;
@@ -392,6 +433,13 @@
       if(!data||data.ok===false)throw new Error(data?.message||'조회 상태 확인 실패');
       if(data.sessionId&&!state.lookupSessionId)storeLookupSession(data.sessionId,state.lookupSessionToken);
       renderCharacterLookupConsole(data);
+      const rawPayload=data?.session?.raw_payload||data?.job?.raw_payload||{};
+      if(data.sessionId&&data.active!==true&&rawPayload.directRefresh===true&&!state.lookupDirectResult){
+        try{
+          const direct=await adminLookup('directresult',{sessionId:data.sessionId});
+          if(direct&&direct.ok!==false)renderCharacterDirectResult(Object.assign({ok:true,completed:String(data?.session?.status||data?.job?.status||'').toLowerCase()==='completed',sessionId:data.sessionId,listSyncQueued:true},direct));
+        }catch(_directResultError){}
+      }
       if(data.active===true&&data.waitingExtension===true&&state.lookupSessionToken&&Date.now()-state.lookupHeartbeatAt>20000){
         state.lookupHeartbeatAt=Date.now();
         const p=data.progress?.progress||data.progress||{};
@@ -411,6 +459,25 @@
     await refreshCharacterLookupStatus({statusLine:force===true});
     startCharacterLookupPolling();
   }
+  async function startDirectCharacterRefresh(){
+    if(state.lookupDirectRunning)return;
+    if(roleLevel()<4){setStatus('#characterLookupStatus','Server 직접 조회 권한은 MASTER·SUB MASTER에게만 있습니다.','error');return;}
+    let request;
+    try{request=readDirectCharacterRequest();}catch(err){setStatus('#characterLookupStatus',err.message||String(err),'error');return;}
+    state.lookupDirectRunning=true;state.lookupDirectResult=null;renderCharacterDirectResult(null);storeLookupSession('','');state.lookupConsole=null;renderCharacterLookupConsole(null);
+    setStatus('#characterLookupStatus',request.characterName+' 공식 정보와 장비를 Server에서 직접 조회하는 중입니다...','');
+    try{
+      const data=await adminLookup('directrefresh',request);
+      if(!data||data.ok===false)throw new Error(data?.message||'Server 직접 조회 실패');
+      storeLookupSession(data.sessionId||'','');
+      renderCharacterDirectResult(data);
+      setStatus('#characterLookupStatus',data.message||'Server 직접 조회와 최신화를 완료했습니다.','ok');
+      toast(request.characterName+' Server 직접 최신화 완료');
+      await refreshCharacterLookupStatus({statusLine:false});
+    }catch(err){const failed={ok:false,completed:false,message:err.message||String(err)};renderCharacterDirectResult(failed);setStatus('#characterLookupStatus',failed.message,'error');await refreshCharacterLookupStatus({statusLine:false});}
+    finally{state.lookupDirectRunning=false;renderCharacterLookupConsole(state.lookupConsole||null);}
+  }
+
   async function startCharacterLookup(){
     if(state.lookupStarting)return;
     if(roleLevel()<4){setStatus('#characterLookupStatus','조회 시작 권한은 MASTER·SUB MASTER에게만 있습니다.','error');return;}
@@ -1320,12 +1387,13 @@
     $('#requestReloadBtn')?.addEventListener('click',loadCodeRequests);
     $('#requestList')?.addEventListener('click',e=>{ if(e.target.matches('[data-approve-request]')) processRequest(e.target,'approveCodeRequest'); if(e.target.matches('[data-reject-request]')) processRequest(e.target,'rejectCodeRequest'); });
     $('#memberReloadBtn')?.addEventListener('click',loadAccounts); $('#sanctuaryRolePermissionReloadBtn')?.addEventListener('click',loadSanctuaryRolePermissions); $('#sanctuaryRolePermissionMatrix')?.addEventListener('change',e=>{if(e.target.matches('[data-sanctuary-role-permission]'))setSanctuaryRolePermission(e.target);}); $('#memberSearch')?.addEventListener('input',applyMemberFilters); $('#memberRoleFilter')?.addEventListener('change',applyMemberFilters); $('#memberList')?.addEventListener('click',e=>{ if(e.target.matches('[data-member-role-open],[data-member-role-save],[data-member-role-cancel],[data-member-disable],[data-member-delete]')) handleMemberAction(e.target); });
+    $('#characterLookupDirectBtn')?.addEventListener('click',startDirectCharacterRefresh);
     $('#characterLookupStartBtn')?.addEventListener('click',startCharacterLookup);
     $('#characterLookupReloadBtn')?.addEventListener('click',()=>refreshCharacterLookupStatus({statusLine:true}));
     $('#characterLookupPauseBtn')?.addEventListener('click',()=>controlCharacterLookup('pause'));
     $('#characterLookupResumeBtn')?.addEventListener('click',()=>controlCharacterLookup('resume'));
     $('#characterLookupStopBtn')?.addEventListener('click',()=>controlCharacterLookup('cancel'));
-    $('#characterLookupScope')?.addEventListener('change',e=>{const single=e.target.value==='single';if($('#characterLookupName'))$('#characterLookupName').disabled=!single;});
+    $('#characterLookupScope')?.addEventListener('change',e=>{const single=e.target.value==='single';if($('#characterLookupName'))$('#characterLookupName').disabled=!single;if(!single)renderCharacterDirectResult(null);renderCharacterLookupConsole(state.lookupConsole||null);});
     $('#characterSearchBtn')?.addEventListener('click',searchCharacters);
     $('#characterSearch')?.addEventListener('keydown',e=>{ if(e.key==='Enter') searchCharacters(); });
     $('#characterList')?.addEventListener('click',e=>{ if(e.target.matches('[data-char-deactivate]')) handleCharacterAction(e.target,'deactivate'); if(e.target.matches('[data-char-restore]')) handleCharacterAction(e.target,'restore'); if(e.target.matches('[data-char-rename]')) handleCharacterAction(e.target,'markRenamed'); });

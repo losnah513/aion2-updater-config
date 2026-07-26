@@ -1603,6 +1603,27 @@
     const normalized=String(command||'status').trim().toLowerCase();
     const passKey=currentPassKey();
 
+    if(normalized==='directrefresh'){
+      const characterName=String(extra.characterName||extra.character_name||'').trim();
+      if(!characterName) return {ok:false,code:'CHARACTER_NAME_REQUIRED',message:'Server에서 직접 조회할 캐릭터명을 입력하세요.'};
+      const serverRaw=String(extra.serverId||extra.server_id||extra.server||'').trim();
+      const serverId=/^\d+$/.test(serverRaw)?Number(serverRaw):(Number(getServerIdFromShortName(serverRaw))||null);
+      return invokeEdgeFunction('character-refresh-worker',{
+        action:'refreshOne',
+        passKey,
+        characterName,
+        serverId,
+        clientVersion:'KINOJO_WEB_2026072504'
+      });
+    }
+
+    if(normalized==='directresult'){
+      return rpc('kinojo_admin_direct_refresh_result_v269',{
+        p_pass_key:passKey,
+        p_session_id:String(extra.sessionId||'')
+      });
+    }
+
     if(normalized==='start'){
       const lookupFilter=normalizeAdminLookupFilter(extra);
       const lookupFilterSummary=String(extra.lookupFilterSummary||adminLookupFilterSummary(lookupFilter));
@@ -1871,7 +1892,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.47-admin-lookup-console-2026072503',
+    version:'1.3.1.48-admin-direct-refresh-2026072504',
     getConfig,
     isPreferred,
     isConfigured,
