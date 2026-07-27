@@ -478,6 +478,13 @@ KINOJO Sanctuary Schedule Admin 20260713 STEP 12
 .admin-lookup-settings fieldset label{display:flex;align-items:center;gap:6px;white-space:nowrap}
 .admin-lookup-start-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:13px;border-radius:14px;background:#f5f9ff;border:1px solid #dce9fa}
 .admin-lookup-start-row span{font-size:12px;color:#62748a}
+.admin-lookup-exit-safety{display:grid;grid-template-columns:14px minmax(0,1fr);gap:12px;align-items:start;padding:15px 17px;border:1px solid #dbe4ee;border-radius:15px;background:#f8fafc;transition:background .2s ease,border-color .2s ease,box-shadow .2s ease}
+.admin-lookup-exit-safety i{width:12px;height:12px;margin-top:3px;border-radius:999px;background:#94a3b8;box-shadow:0 0 0 5px rgba(148,163,184,.14)}
+.admin-lookup-exit-safety div{display:grid;gap:4px}.admin-lookup-exit-safety strong{font-size:14px;color:#334155}.admin-lookup-exit-safety span{font-size:12px;line-height:1.55;color:#64748b}
+.admin-lookup-exit-safety.unsafe{border-color:#fdba74;background:#fff7ed;box-shadow:0 8px 22px rgba(234,88,12,.08)}.admin-lookup-exit-safety.unsafe i{background:#ea580c;box-shadow:0 0 0 5px rgba(234,88,12,.14)}.admin-lookup-exit-safety.unsafe strong{color:#9a3412}.admin-lookup-exit-safety.unsafe span{color:#9a3412}
+.admin-lookup-exit-safety.safe{border-color:#86efac;background:#f0fdf4;box-shadow:0 8px 22px rgba(22,163,74,.08)}.admin-lookup-exit-safety.safe i{background:#16a34a;box-shadow:0 0 0 5px rgba(22,163,74,.14)}.admin-lookup-exit-safety.safe strong{color:#166534}.admin-lookup-exit-safety.safe span{color:#166534}
+.admin-lookup-exit-safety.complete{border-color:#93c5fd;background:#eff6ff}.admin-lookup-exit-safety.complete i{background:#2563eb;box-shadow:0 0 0 5px rgba(37,99,235,.14)}.admin-lookup-exit-safety.complete strong{color:#1e40af}.admin-lookup-exit-safety.complete span{color:#1e40af}
+.admin-lookup-exit-safety.attention{border-color:#fca5a5;background:#fef2f2}.admin-lookup-exit-safety.attention i{background:#dc2626;box-shadow:0 0 0 5px rgba(220,38,38,.14)}.admin-lookup-exit-safety.attention strong{color:#991b1b}.admin-lookup-exit-safety.attention span{color:#991b1b}
 .admin-lookup-extension-guide{display:grid;gap:5px;padding:14px 16px;border:1px solid #94bfff;border-radius:14px;background:#edf5ff;color:#174b8e}
 .admin-lookup-extension-guide strong{font-size:14px}.admin-lookup-extension-guide span{font-size:12px;line-height:1.55}
 .admin-lookup-overview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}

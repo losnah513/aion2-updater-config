@@ -1,10 +1,10 @@
-/* KINOJO Admin Console v2026072702 */
+/* KINOJO Admin Console v2026072709 */
 (function(){
   'use strict';
   const $ = (s,r=document)=>r.querySelector(s);
   const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
-  const state = { tab:'dashboard', subtab:'', loaded:{}, subtabs:{ members:'accounts', characters:'lookup', notices:'general', system:'server-status' }, requests:[], accounts:[], characters:[], logs:[], eventNoticeGroups:[], eventNoticeEditingId:null, meterConsole:null, meterNotices:[], sanctuarySchedules:[], sanctuaryMasters:[], sanctuaryStatusOptions:[], sanctuaryScheduleLoaded:false, sanctuaryScheduleAccess:null, sanctuaryRolePermissions:null, sanctuaryScheduleSaving:false, lastSanctuarySyncData:null, lastSanctuaryStatusData:null, lastSanctuaryId:'all', visitorDays:7, visitorPage:1, visitorTotalPages:1, visitorCanViewMemberHistory:false, lookupConsole:null, lookupSessionId:'', lookupSessionToken:'', lookupPollTimer:null, lookupHeartbeatAt:0, lookupStarting:false, lookupDirectRunning:false, lookupDirectResult:null, lookupQueueRunning:false, lookupQueueLoopId:0 };
-  const CACHE = '2026072702';
+  const state = { tab:'dashboard', subtab:'', loaded:{}, subtabs:{ members:'accounts', characters:'lookup', notices:'general', system:'server-status' }, requests:[], accounts:[], characters:[], logs:[], eventNoticeGroups:[], eventNoticeEditingId:null, meterConsole:null, meterNotices:[], sanctuarySchedules:[], sanctuaryMasters:[], sanctuaryStatusOptions:[], sanctuaryScheduleLoaded:false, sanctuaryScheduleAccess:null, sanctuaryRolePermissions:null, sanctuaryScheduleSaving:false, lastSanctuarySyncData:null, lastSanctuaryStatusData:null, lastSanctuaryId:'all', visitorDays:7, visitorPage:1, visitorTotalPages:1, visitorCanViewMemberHistory:false, lookupConsole:null, lookupSessionId:'', lookupSessionToken:'', lookupPollTimer:null, lookupHeartbeatAt:0, lookupStarting:false, lookupDirectRunning:false, lookupDirectResult:null, lookupQueueRunning:false, lookupExitSafety:'idle' };
+  const CACHE = '2026072709';
   const DEFAULT_SUBTABS = { members:'accounts', characters:'lookup', notices:'general', system:'server-status', logs:'activity' };
   function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
   function addLog(type,msg){
@@ -393,6 +393,27 @@
     return data.active?'실행 중':'대기';
   }
   function lookupStepClass(value){const key=String(value||'pending');return ['done','active','error'].includes(key)?key:'pending';}
+  function lookupExitSafety(data){
+    if(state.lookupDirectRunning)return{state:'unsafe',title:'현재 페이지를 닫지 마세요',message:'한 명 직접 조회를 처리하고 있습니다. 지금 페이지나 브라우저를 종료하면 조회가 중단될 수 있습니다.'};
+    const handoff=data?.handoff||{};
+    const serverQueue=data?.serverQueue===true;
+    const active=data?.active===true;
+    const sessionStatus=String(data?.session?.status||data?.job?.status||'').toLowerCase();
+    if(handoff.safety==='complete'||sessionStatus==='completed'||data?.postprocessComplete===true)return{state:'complete',title:'조회 완료',message:'캐릭터 조회와 Master·성장 리뷰·랭킹·Google list 반영을 완료했습니다.'};
+    if(serverQueue&&handoff.safety==='safe')return{state:'safe',title:'서버 실행 인계 완료',message:'이제 이 페이지나 브라우저를 닫아도 조회와 후처리가 정상적으로 계속됩니다.'};
+    if(serverQueue&&handoff.safety==='attention')return{state:'attention',title:'서버 상태 확인 필요',message:String(handoff.message||'서버 Heartbeat가 지연되고 있습니다. 페이지를 유지하고 상태를 확인해 주세요.')};
+    if(active)return{state:'unsafe',title:'현재 페이지를 닫지 마세요',message:serverQueue?'서버 실행을 준비하고 있습니다. 지금 페이지나 브라우저를 종료하면 조회가 중단될 수 있습니다.':'Extension 조회가 끝나기 전에는 페이지와 정보실 창을 닫지 마세요.'};
+    return{state:'idle',title:'조회 대기',message:'조회 작업을 시작하면 브라우저 종료 안전 상태를 여기에서 확인할 수 있습니다.'};
+  }
+  function renderLookupExitSafety(data){
+    const safety=lookupExitSafety(data);
+    state.lookupExitSafety=safety.state;
+    const box=$('#characterLookupExitSafety');
+    if(!box)return;
+    box.className='admin-lookup-exit-safety '+safety.state;
+    const title=box.querySelector('[data-exit-safety-title]');if(title)title.textContent=safety.title;
+    const message=box.querySelector('[data-exit-safety-message]');if(message)message.textContent=safety.message;
+  }
   function renderCharacterLookupConsole(data){
     state.lookupConsole=data||null;
     const empty=!data||!data.sessionId;
@@ -436,6 +457,7 @@
     if($('#characterLookupResumeBtn'))$('#characterLookupResumeBtn').disabled=!canControl||!active||!paused;
     if($('#characterLookupStopBtn'))$('#characterLookupStopBtn').disabled=!canControl||!active;
     if($('#characterLookupExtensionGuide'))$('#characterLookupExtensionGuide').hidden=!(data?.waitingExtension===true);
+    renderLookupExitSafety(data);
   }
   async function refreshCharacterLookupStatus(options={}){
     loadStoredLookupSession();
@@ -455,9 +477,6 @@
         state.lookupHeartbeatAt=Date.now();
         const p=data.progress?.progress||data.progress||{};
         adminLookup('heartbeat',{sessionId:data.sessionId,sessionToken:state.lookupSessionToken,current:Number(p.completedCount||0),total:Number(p.total||data.queueMeta?.queueCount||0)}).catch(()=>{});
-      }
-      if(data.active===true&&data.serverQueue===true&&data.controlState!=='paused'&&data.controlState!=='cancelled'&&state.lookupSessionToken&&!state.lookupQueueRunning){
-        runCharacterServerQueueLoop(data.sessionId,state.lookupSessionToken).catch(()=>{});
       }
       if(options.statusLine!==false)setStatus('#characterLookupStatus',data.message||'조회 상태를 갱신했습니다.',data.active?'ok':'');
       return data;
@@ -492,52 +511,28 @@
     finally{state.lookupDirectRunning=false;renderCharacterLookupConsole(state.lookupConsole||null);}
   }
 
-  function queueDelay(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
-  async function runCharacterServerQueueLoop(sessionId,sessionToken){
-    if(state.lookupQueueRunning)return;
-    const sid=String(sessionId||state.lookupSessionId||'');const token=String(sessionToken||state.lookupSessionToken||'');
-    if(!sid||!token){setStatus('#characterLookupStatus','Server Queue를 이어서 실행할 세션 정보가 없습니다. 같은 탭에서 다시 시작하세요.','error');return;}
-    const loopId=++state.lookupQueueLoopId;state.lookupQueueRunning=true;renderCharacterLookupConsole(state.lookupConsole||null);
-    try{
-      while(loopId===state.lookupQueueLoopId){
-        const data=await adminLookup('runserverqueue',{sessionId:sid,sessionToken:token,batchLimit:5});
-        if(!data||data.ok===false)throw new Error(data?.message||'Server Queue Batch 처리 실패');
-        await refreshCharacterLookupStatus({statusLine:false});
-        if(data.failed===true){
-          if(data.hasMore===true&&data.retryable!==false){setStatus('#characterLookupStatus',data.message||'Server 후처리 단계가 실패해 같은 단계부터 재시도합니다.','');await queueDelay(1200);continue;}
-          setStatus('#characterLookupStatus',data.message||'Server Queue 처리에 실패했습니다.','error');break;
-        }
-        if(data.done===true||data.completed===true){
-          if(data.partialSuccess===true){setStatus('#characterLookupStatus',data.message||'일부 캐릭터는 최종 실패했지만 성공 캐릭터의 Server 후처리를 완료했습니다.','');toast('Server Queue 부분 완료');}
-          else{setStatus('#characterLookupStatus',data.message||'Server Queue 조회와 후처리를 완료했습니다.','ok');toast('Server Queue 후처리 완료');}
-          break;
-        }
-        if(data.paused===true||data.cancelled===true){setStatus('#characterLookupStatus',data.message||'Server Queue 상태가 변경되었습니다.',data.cancelled?'error':'');break;}
-        if(data.busy===true){await queueDelay(1500);continue;}
-        if(data.hasMore!==true)break;
-        await queueDelay(data.postprocess===true?900:500);
-      }
-    }catch(err){setStatus('#characterLookupStatus',err.message||String(err),'error');}
-    finally{if(loopId===state.lookupQueueLoopId)state.lookupQueueRunning=false;renderCharacterLookupConsole(state.lookupConsole||null);}
-  }
   async function startCharacterServerQueue(){
     if(state.lookupStarting||state.lookupQueueRunning)return;
     if(roleLevel()<4){setStatus('#characterLookupStatus','Server Queue 시작 권한은 MASTER·SUB MASTER에게만 있습니다.','error');return;}
     let lookupFilter;
     try{lookupFilter=readLookupFilter();}catch(err){setStatus('#characterLookupStatus',err.message||String(err),'error');return;}
-    state.lookupStarting=true;state.lookupQueueLoopId+=1;renderCharacterLookupConsole(state.lookupConsole||null);setStatus('#characterLookupStatus','Google list와 Server Master를 대조해 Server Target Queue를 준비하는 중입니다...','');
+    state.lookupStarting=true;state.lookupQueueRunning=true;renderCharacterLookupConsole(state.lookupConsole||null);setStatus('#characterLookupStatus','Google list와 Server Master를 대조해 Server Target Queue를 준비하는 중입니다...','');
     try{
       const data=await adminLookup('startserverqueue',{lookupFilter});
       if(!data||data.ok===false)throw new Error(data?.message||'Server Queue 시작 실패');
       storeLookupSession(data.sessionId||'',data.sessionToken||'');
       if(data.noTargets===true){setStatus('#characterLookupStatus',data.lookupFilter?.lookupMode==='missing_only'?'신규 캐릭터가 없어 조회 없이 완료했습니다.':'조회 대상이 없습니다.','ok');}
       else{
-        setStatus('#characterLookupStatus','Server Queue 준비 완료 · 최대 5명씩 공식 조회 후 Master·성장 리뷰·랭킹까지 처리합니다.','ok');
+        setStatus('#characterLookupStatus','Server Queue 준비 완료 · 서버 자동 실행을 인계하는 중입니다...','');
         await refreshCharacterLookupStatus({statusLine:false});
-        runCharacterServerQueueLoop(data.sessionId,data.sessionToken).catch(()=>{});
+        const handed=await adminLookup('startautonomous',{sessionId:data.sessionId,sessionToken:data.sessionToken});
+        if(!handed||handed.ok===false||handed.accepted!==true)throw new Error(handed?.message||'서버 자동 실행 인계 실패');
+        setStatus('#characterLookupStatus',handed.message||'서버 실행 인계를 완료했습니다.','ok');
+        toast('서버 실행 인계 완료 · 브라우저 종료 가능');
+        await refreshCharacterLookupStatus({statusLine:false});
       }
     }catch(err){setStatus('#characterLookupStatus',err.message||String(err),'error');}
-    finally{state.lookupStarting=false;renderCharacterLookupConsole(state.lookupConsole||null);}
+    finally{state.lookupStarting=false;state.lookupQueueRunning=false;renderCharacterLookupConsole(state.lookupConsole||null);}
   }
 
   async function startCharacterLookup(){
@@ -564,10 +559,17 @@
       setStatus('#characterLookupStatus',command==='pause'?'일시정지 요청 중...':command==='resume'?'재개 요청 중...':'중단 요청 중...','');
       const data=await adminLookup('control',{sessionId,command});
       if(!data||data.ok===false)throw new Error(data?.message||'작업 제어 실패');
-      if(command==='pause'||command==='cancel')state.lookupQueueLoopId+=1;
       setStatus('#characterLookupStatus',data.message||'작업 상태를 변경했습니다.','ok');
       const status=await refreshCharacterLookupStatus({statusLine:false});
-      if(command==='resume'&&status?.serverQueue===true&&state.lookupSessionToken)runCharacterServerQueueLoop(sessionId,state.lookupSessionToken).catch(()=>{});
+      if(command==='resume'&&status?.serverQueue===true&&state.lookupSessionToken){
+        state.lookupQueueRunning=true;renderCharacterLookupConsole(status);
+        try{
+          const handed=await adminLookup('startautonomous',{sessionId,sessionToken:state.lookupSessionToken});
+          if(!handed||handed.ok===false||handed.accepted!==true)throw new Error(handed?.message||'서버 자동 실행 재인계 실패');
+          setStatus('#characterLookupStatus',handed.message||'서버 자동 실행을 재개했습니다.','ok');
+          await refreshCharacterLookupStatus({statusLine:false});
+        }finally{state.lookupQueueRunning=false;renderCharacterLookupConsole(state.lookupConsole||null);}
+      }
     }catch(err){setStatus('#characterLookupStatus',err.message||String(err),'error');}
   }
 
@@ -1516,6 +1518,11 @@
     $('#visitorPrevBtn')?.addEventListener('click',()=>loadVisitorHistory(state.visitorPage-1));
     $('#visitorNextBtn')?.addEventListener('click',()=>loadVisitorHistory(state.visitorPage+1));
     window.addEventListener('hashchange',()=>{const route=adminRoute();switchTab(route.tab,{subtab:route.subtab,updateRoute:false});});
+    window.addEventListener('beforeunload',event=>{
+      if(state.lookupExitSafety!=='unsafe')return;
+      event.preventDefault();
+      event.returnValue='';
+    });
     $('#quickCodeBtn')?.addEventListener('click',()=>switchTab('requests')); $('#quickSanctuaryBtn')?.addEventListener('click',()=>switchTab('system',{subtab:'sheet-sync'})); $('#quickMemberBtn')?.addEventListener('click',()=>switchTab('members',{subtab:'accounts'})); $('#quickNoticeBtn')?.addEventListener('click',()=>switchTab('notices',{subtab:'general'}));
   }
   async function init(){

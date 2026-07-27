@@ -66,8 +66,9 @@
             <label>종족 필터<input class="admin-input" id="characterLookupRaces" placeholder="선택 사항 · 쉼표 구분"/></label>
             <fieldset><legend>장비 유형</legend><label><input type="checkbox" name="characterLookupGear" value="PVE" checked/> PVE</label><label><input type="checkbox" name="characterLookupGear" value="PVP" checked/> PVP</label></fieldset>
           </div>
-          <div class="admin-lookup-start-row"><button class="admin-btn" id="characterLookupDirectBtn" type="button" disabled>Server 1명 직접 조회</button><button class="admin-btn primary" id="characterLookupServerQueueBtn" type="button">Server Queue 시작</button><button class="admin-btn" id="characterLookupStartBtn" type="button">Extension Queue 준비</button><span>Server Queue는 전체·신규·필터 Target을 최대 5명씩 공식 조회한 뒤 Master → 성장 리뷰 → 랭킹을 처리합니다. 중간 실패는 완료된 단계를 건너뛰고 실패 단계부터 최대 3회 재시도합니다. Google list 실제 쓰기·검증은 다음 단계이며 Extension Queue는 비상 수동 경로로 유지합니다.</span></div>
+          <div class="admin-lookup-start-row"><button class="admin-btn" id="characterLookupDirectBtn" type="button" disabled>Server 1명 직접 조회</button><button class="admin-btn primary" id="characterLookupServerQueueBtn" type="button">Server Queue 시작</button><button class="admin-btn" id="characterLookupStartBtn" type="button">Extension Queue 준비</button><span>Server Queue는 전체·신규·필터 Target을 최대 5명씩 공식 조회한 뒤 Master → 성장 리뷰 → 랭킹 → Google list 쓰기·검증까지 처리합니다. 서버 인계 완료 뒤에는 브라우저를 닫아도 다음 Batch와 후처리가 계속되며, 실패 단계는 최대 3회 재시도합니다.</span></div>
           <div id="characterLookupStatus" class="admin-statusline"></div>
+          <div class="admin-lookup-exit-safety idle" id="characterLookupExitSafety" role="status" aria-live="polite"><i aria-hidden="true"></i><div><strong data-exit-safety-title>조회 대기</strong><span data-exit-safety-message>조회 작업을 시작하면 브라우저 종료 안전 상태를 여기에서 확인할 수 있습니다.</span></div></div>
           <div class="admin-lookup-extension-guide" id="characterLookupExtensionGuide" hidden><strong>Extension 연결 대기</strong><span>아이온2 캐릭터 정보실에서 KINOJO Extension을 열고 같은 PASS KEY로 조회 시작을 누르세요. 새 세션을 만들지 않고 이 Queue를 이어받습니다.</span></div><section class="admin-lookup-direct-result" id="characterLookupDirectResult" hidden><div class="admin-lookup-direct-head"><div><strong>Server 직접 조회 결과</strong><span>공식 API 수치와 기존 Server Parser·Master 반영 결과</span></div><span class="admin-pill" id="characterLookupDirectBadge">완료</span></div><div id="characterLookupDirectBody"></div></section>
           <div class="admin-lookup-overview">
             <article><span>상태</span><strong id="characterLookupState" class="admin-pill">대기</strong><em id="characterLookupMessage">조회 작업을 시작하면 진행 상태가 표시됩니다.</em></article>
@@ -248,7 +249,7 @@
 <script src="../../core/kinojo-logger.js?cache=2026070110"></script>
 <script src="../../ui/kinojo-common-ui.js?cache=2026072411"></script>
 <script src="../../ui/kinojo-admin-panel.js?cache=2026071712"></script>
-<script src="../../core/kinojo-supabase.js?cache=2026072702"></script>
+<script src="../../core/kinojo-supabase.js?cache=2026072709"></script>
 <script src="../../core/kinojo-auth.js?cache=2026072411"></script>
 <script src="../../admin/js/admin.js?cache=2026072702"></script>
 </body>

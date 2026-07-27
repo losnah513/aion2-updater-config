@@ -1,7 +1,7 @@
 /*
  * KINOJO Character Reaction Modal
- * 역할: 명예의 전당·랭킹·성역이 함께 쓰는 캐릭터 반응 모달.
- * 규칙: 페이지별 반응 저장 로직은 옵션으로 받고, 모달 UI는 여기서만 생성한다.
+ * 역할: 명예의 전당·랭킹·성역이 함께 쓰는 실시간 캐릭터 상세·반응 모달.
+ * 규칙: PLAYNC 정보는 실시간 표시만 하며 DB에 저장하지 않는다.
  */
 (function(){
   'use strict';
@@ -12,8 +12,15 @@
     type: 'like',
     target: null,
     options: null,
-    returnFocus: null
+    returnFocus: null,
+    tab: 'overview',
+    live: null,
+    liveLoading: false,
+    detailLoading: false
   };
+  const LIVE_CACHE_TTL = 120000;
+  const liveCache = new Map();
+  const liveInflight = new Map();
 
   function visitorId(){
     let id = localStorage.getItem('kinojoVisitorId');
@@ -193,6 +200,7 @@
       if(!row || !state.open || identity !== activeIdentity) return;
       state.target = mergeMasterRow(active, row);
       renderTarget();
+      if(!state.live && !state.liveLoading) loadLiveOverview();
     }catch(_err){
       // 서버 상세 조회 실패 시 페이지 카드 데이터로 표시한다.
     }
@@ -210,33 +218,37 @@
       '<div class="kinojo-character-reaction-backdrop" data-kinojo-character-reaction-close></div>' +
       '<div class="kinojo-character-reaction-dialog" role="dialog" aria-modal="true" aria-labelledby="kinojoCharacterReactionTitle" tabindex="-1">' +
         '<button class="kinojo-character-reaction-close" type="button" aria-label="닫기" data-kinojo-character-reaction-close>×</button>' +
-        '<div class="kinojo-character-reaction-profile">' +
-          '<div class="kinojo-character-reaction-visual" aria-hidden="true">' +
-            '<div class="kinojo-character-reaction-avatar is-empty" id="kinojoCharacterReactionAvatar"></div>' +
-            '<div class="kinojo-character-reaction-class" id="kinojoCharacterReactionClass"></div>' +
-          '</div>' +
+        '<header class="kinojo-character-reaction-profile">' +
+          '<div class="kinojo-character-reaction-visual" aria-hidden="true"><div class="kinojo-character-reaction-avatar is-empty" id="kinojoCharacterReactionAvatar"></div><div class="kinojo-character-reaction-class" id="kinojoCharacterReactionClass"></div></div>' +
           '<div class="kinojo-character-reaction-info">' +
-            '<div class="kinojo-character-reaction-kicker">REACTION</div>' +
+            '<div class="kinojo-character-reaction-kicker">LIVE CHARACTER</div>' +
             '<h2 class="kinojo-character-reaction-title" id="kinojoCharacterReactionTitle">캐릭터</h2>' +
-            '<p class="kinojo-character-reaction-sub" id="kinojoCharacterReactionSub">좋아요·싫어요와 코멘트를 남겨보세요.</p>' +
-            '<div class="kinojo-character-reaction-powers" aria-label="캐릭터 전투력">' +
-              '<span class="kinojo-character-reaction-power is-pve"><b>PVE</b><strong id="kinojoCharacterReactionPvePower">-</strong></span>' +
-              '<span class="kinojo-character-reaction-power is-pvp"><b>PVP</b><strong id="kinojoCharacterReactionPvpPower">-</strong></span>' +
+            '<p class="kinojo-character-reaction-sub" id="kinojoCharacterReactionSub">PLAYNC 실시간 정보를 불러오는 중입니다.</p>' +
+            '<div class="kinojo-character-reaction-powers" aria-label="캐릭터 핵심 정보">' +
+              '<span class="kinojo-character-reaction-power is-pve"><b>전투력</b><strong id="kinojoCharacterReactionPvePower">-</strong></span>' +
+              '<span class="kinojo-character-reaction-power is-pvp"><b>아이템 레벨</b><strong id="kinojoCharacterReactionPvpPower">-</strong></span>' +
             '</div>' +
-            '<a class="kinojo-character-reaction-detail" id="kinojoCharacterReactionDetail" href="#" target="_blank" rel="noopener noreferrer">정보실 ↗</a>' +
+            '<div class="kinojo-character-live-meta"><span id="kinojoCharacterLiveTime">실시간 조회 준비</span><a class="kinojo-character-reaction-detail" id="kinojoCharacterReactionDetail" href="#" target="_blank" rel="noopener noreferrer">PLAYNC 정보실 ↗</a></div>' +
           '</div>' +
-        '</div>' +
-        '<div class="kinojo-character-reaction-actions">' +
-          '<button class="kinojo-character-reaction-type active" id="kinojoCharacterReactionLikeBtn" type="button" data-kinojo-reaction-type="like">👍 좋아요</button>' +
-          '<button class="kinojo-character-reaction-type" id="kinojoCharacterReactionDislikeBtn" type="button" data-kinojo-reaction-type="dislike">👎 싫어요</button>' +
-        '</div>' +
-        '<div class="kinojo-character-reaction-input">' +
-          '<label for="kinojoCharacterReactionComment">코멘트 · 20자 이내로 한마디</label>' +
-          '<textarea id="kinojoCharacterReactionComment" class="kinojo-character-reaction-comment" maxlength="20" rows="3" placeholder="전하고 싶은 말을 남겨주세요"></textarea>' +
-        '</div>' +
-        '<div class="kinojo-character-reaction-foot">' +
-          '<span class="kinojo-character-reaction-status" id="kinojoCharacterReactionStatus"></span>' +
-          '<button class="kinojo-character-reaction-submit" id="kinojoCharacterReactionSubmitBtn" type="button">전송</button>' +
+        '</header>' +
+        '<nav class="kinojo-character-live-tabs" aria-label="캐릭터 상세 탭">' +
+          '<button class="active" type="button" data-kinojo-character-tab="overview">종합</button>' +
+          '<button type="button" data-kinojo-character-tab="equipment">장비</button>' +
+          '<button type="button" data-kinojo-character-tab="stats">스탯·스킬</button>' +
+          '<button type="button" data-kinojo-character-tab="daevanion">데바니온</button>' +
+          '<button type="button" data-kinojo-character-tab="reaction">평가·코멘트</button>' +
+        '</nav>' +
+        '<div class="kinojo-character-live-status" id="kinojoCharacterLiveStatus">PLAYNC에서 최신 정보를 불러오고 있습니다.</div>' +
+        '<div class="kinojo-character-live-panels">' +
+          '<section class="kinojo-character-live-panel active" data-kinojo-character-panel="overview"><div class="kinojo-character-live-loading">실시간 프로필과 핵심 능력치를 불러오는 중입니다.</div></section>' +
+          '<section class="kinojo-character-live-panel" data-kinojo-character-panel="equipment"></section>' +
+          '<section class="kinojo-character-live-panel" data-kinojo-character-panel="stats"></section>' +
+          '<section class="kinojo-character-live-panel" data-kinojo-character-panel="daevanion"></section>' +
+          '<section class="kinojo-character-live-panel" data-kinojo-character-panel="reaction">' +
+            '<div class="kinojo-character-reaction-actions"><button class="kinojo-character-reaction-type active" id="kinojoCharacterReactionLikeBtn" type="button" data-kinojo-reaction-type="like">👍 좋아요</button><button class="kinojo-character-reaction-type" id="kinojoCharacterReactionDislikeBtn" type="button" data-kinojo-reaction-type="dislike">👎 싫어요</button></div>' +
+            '<div class="kinojo-character-reaction-input"><label for="kinojoCharacterReactionComment">코멘트 · 20자 이내로 한마디</label><textarea id="kinojoCharacterReactionComment" class="kinojo-character-reaction-comment" maxlength="20" rows="3" placeholder="전하고 싶은 말을 남겨주세요"></textarea></div>' +
+            '<div class="kinojo-character-reaction-foot"><span class="kinojo-character-reaction-status" id="kinojoCharacterReactionStatus"></span><button class="kinojo-character-reaction-submit" id="kinojoCharacterReactionSubmitBtn" type="button">전송</button></div>' +
+          '</section>' +
         '</div>' +
       '</div>';
 
@@ -246,6 +258,17 @@
     });
     modal.querySelectorAll('[data-kinojo-reaction-type]').forEach(btn => {
       btn.addEventListener('click', () => setType(btn.dataset.kinojoReactionType || 'like'));
+    });
+    modal.querySelectorAll('[data-kinojo-character-tab]').forEach(btn => {
+      btn.addEventListener('click', () => setTab(btn.dataset.kinojoCharacterTab || 'overview'));
+    });
+    modal.addEventListener('click', event => {
+      const item = event.target.closest('[data-live-equipment-item]');
+      if(item) loadEquipmentDetail(item);
+      const board = event.target.closest('[data-live-daevanion-board]');
+      if(board) loadDaevanionDetail(board);
+      const closeDetail = event.target.closest('[data-live-detail-close]');
+      if(closeDetail && closeDetail.parentElement) closeDetail.parentElement.hidden = true;
     });
     modal.querySelector('#kinojoCharacterReactionSubmitBtn')?.addEventListener('click', submit);
     modal.querySelector('#kinojoCharacterReactionComment')?.addEventListener('input', updateSubmitState);
@@ -283,6 +306,221 @@
     if(status) status.textContent = message || '';
   }
 
+  function setLiveStatus(message, kind){
+    const status = document.getElementById('kinojoCharacterLiveStatus');
+    if(!status) return;
+    status.textContent = message || '';
+    status.className = 'kinojo-character-live-status ' + (kind || '');
+  }
+
+  function setTab(tab){
+    const allowed = ['overview','equipment','stats','daevanion','reaction'];
+    state.tab = allowed.includes(tab) ? tab : 'overview';
+    document.querySelectorAll('#kinojoCharacterReactionModal [data-kinojo-character-tab]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.kinojoCharacterTab === state.tab);
+    });
+    document.querySelectorAll('#kinojoCharacterReactionModal [data-kinojo-character-panel]').forEach(panel => {
+      panel.classList.toggle('active', panel.dataset.kinojoCharacterPanel === state.tab);
+    });
+  }
+
+  function liveIdentity(target){
+    const item = target || {};
+    return {
+      characterName:item.name || '',
+      serverId:item.serverId || '',
+      charKey:item.charKey || '',
+      detailUrl:item.detailUrl || '',
+      characterId:item.characterId || ''
+    };
+  }
+
+  function liveIdentityKey(target){
+    const item = liveIdentity(target);
+    return [item.serverId,item.charKey || item.characterId || item.characterName].join('|');
+  }
+
+  async function liveRequest(action, payload, cacheSuffix){
+    if(!window.KinojoSupabase || typeof window.KinojoSupabase.getLiveCharacterProfile !== 'function'){
+      throw new Error('실시간 캐릭터 조회 모듈을 불러오지 못했습니다.');
+    }
+    const key = [action,liveIdentityKey(state.target),cacheSuffix || ''].join('|');
+    const cached = liveCache.get(key);
+    if(cached && Date.now() - cached.savedAt < LIVE_CACHE_TTL) return cached.data;
+    if(liveInflight.has(key)) return liveInflight.get(key);
+    const promise = window.KinojoSupabase.getLiveCharacterProfile(action, Object.assign({}, liveIdentity(state.target), payload || {}))
+      .then(data => {
+        if(!data || data.ok === false) throw new Error(data?.message || '실시간 캐릭터 조회 실패');
+        liveCache.set(key, { savedAt:Date.now(), data });
+        return data;
+      })
+      .finally(() => liveInflight.delete(key));
+    liveInflight.set(key, promise);
+    return promise;
+  }
+
+  function livePanel(name){
+    return document.querySelector('#kinojoCharacterReactionModal [data-kinojo-character-panel="' + name + '"]');
+  }
+
+  function effectText(stat){
+    const effects = Array.isArray(stat?.effects) ? stat.effects.filter(Boolean) : [];
+    return effects.length ? effects.join(' · ') : '공식 최종값 미제공';
+  }
+
+  function renderLiveOverview(data){
+    const panel = livePanel('overview');
+    if(!panel) return;
+    const profile = data.profile || {};
+    const stats = Array.isArray(data.coreStats) ? data.coreStats : [];
+    panel.innerHTML =
+      '<div class="kinojo-character-live-section-head"><div><strong>핵심 능력치</strong><span>PLAYNC 공식 응답에서 확인되는 효과를 표시합니다.</span></div><em>실시간</em></div>' +
+      '<div class="kinojo-character-core-stats">' +
+        stats.map(stat => '<article class="' + (stat.available ? 'available' : 'unavailable') + '"><span>' + esc(stat.label) + '</span><strong>' + esc(effectText(stat)) + '</strong></article>').join('') +
+      '</div>' +
+      '<div class="kinojo-character-live-facts">' +
+        [
+          ['레벨',profile.level || '-'],['종족',profile.raceName || '-'],['성별',profile.genderName || '-'],
+          ['레기온',profile.regionName || '-'],['칭호',profile.titleName || '-'],['클래스',profile.className || '-']
+        ].map(row => '<article><span>' + esc(row[0]) + '</span><strong>' + esc(row[1]) + '</strong></article>').join('') +
+      '</div>' +
+      '<p class="kinojo-character-live-note">' + esc(data.note || '실시간 정보는 KINOJO DB에 저장하지 않습니다.') + '</p>';
+  }
+
+  function renderLiveEquipment(data){
+    const panel = livePanel('equipment');
+    if(!panel) return;
+    const items = Array.isArray(data.equipment) ? data.equipment : [];
+    panel.innerHTML =
+      '<div class="kinojo-character-live-section-head"><div><strong>장착 장비</strong><span>장비를 누를 때만 해당 상세 정보를 1회 추가 조회합니다.</span></div><em>' + items.length + '개</em></div>' +
+      '<div class="kinojo-character-equipment-grid">' +
+        items.map(item => '<button type="button" data-live-equipment-item data-item-id="' + Number(item.id || 0) + '" data-slot-pos="' + Number(item.slotPos || 0) + '"><img src="' + safeUrl(item.icon) + '" alt=""><span><b>' + esc(item.name || '-') + '</b><small>' + esc(item.grade || '') + (Number(item.enchantLevel || 0) ? ' · +' + Number(item.enchantLevel) : '') + '</small></span></button>').join('') +
+      '</div><div class="kinojo-character-live-detail" id="kinojoLiveEquipmentDetail" hidden></div>';
+  }
+
+  function renderLiveStats(data){
+    const panel = livePanel('stats');
+    if(!panel) return;
+    const base = Array.isArray(data.baseStats) ? data.baseStats : [];
+    const skills = Array.isArray(data.skills) ? data.skills : [];
+    panel.innerHTML =
+      '<div class="kinojo-character-live-split">' +
+        '<section><div class="kinojo-character-live-section-head"><div><strong>기본 능력치</strong><span>공식 정보실 원본</span></div><em>' + base.length + '개</em></div><div class="kinojo-character-base-stat-list">' +
+          base.map(row => '<article><span>' + esc(row.name || row.type || '-') + '</span><strong>' + esc(row.value ?? '-') + '</strong><small>' + esc((row.effects || []).join(' · ')) + '</small></article>').join('') +
+        '</div></section>' +
+        '<section><div class="kinojo-character-live-section-head"><div><strong>스킬</strong><span>현재 습득·장착 정보</span></div><em>' + skills.length + '개</em></div><div class="kinojo-character-skill-list">' +
+          skills.map(skill => '<article><span>' + esc(skill.name || '-') + '</span><small>' + esc(skill.category || '') + ' · Lv.' + Number(skill.level || 0) + (skill.equip ? ' · 장착' : '') + '</small></article>').join('') +
+        '</div></section>' +
+      '</div>';
+  }
+
+  function renderLiveDaevanion(data){
+    const panel = livePanel('daevanion');
+    if(!panel) return;
+    const boards = Array.isArray(data.daevanion) ? data.daevanion : [];
+    panel.innerHTML =
+      '<div class="kinojo-character-live-section-head"><div><strong>데바니온 보드</strong><span>보드를 누를 때만 해당 노드 정보를 1회 추가 조회합니다.</span></div><em>' + boards.length + '개</em></div>' +
+      '<div class="kinojo-character-daevanion-grid">' +
+        boards.map(board => '<button type="button" data-live-daevanion-board data-board-id="' + Number(board.id || 0) + '"><span><b>' + esc(board.name || '-') + '</b><small>' + Number(board.openNodeCount || 0) + ' / ' + Number(board.totalNodeCount || 0) + '</small></span><strong>' + Number(board.openPercent || 0) + '%</strong></button>').join('') +
+      '</div><div class="kinojo-character-live-detail" id="kinojoLiveDaevanionDetail" hidden></div>';
+  }
+
+  function applyLiveProfile(data){
+    state.live = data;
+    const profile = data.profile || {};
+    state.target = normalizeTarget(Object.assign({}, state.target, {
+      name:profile.characterName || state.target?.name,
+      className:profile.className || state.target?.className,
+      server:profile.serverName || state.target?.server,
+      serverId:profile.serverId || state.target?.serverId,
+      charKey:data.identity?.charKey || state.target?.charKey,
+      characterId:data.identity?.characterId || state.target?.characterId,
+      profileImageUrl:profile.profileImageUrl || state.target?.profileImageUrl,
+      pvePower:profile.combatPower || state.target?.pvePower,
+      pvpPower:profile.itemLevel || state.target?.pvpPower
+    }));
+    state.target.sub = [profile.className,profile.serverName,profile.level ? 'Lv.' + profile.level : '',profile.regionName].filter(Boolean).join(' · ');
+    renderTarget();
+    renderLiveOverview(data);
+    renderLiveEquipment(data);
+    renderLiveStats(data);
+    renderLiveDaevanion(data);
+    const time = document.getElementById('kinojoCharacterLiveTime');
+    if(time) time.textContent = 'PLAYNC 실시간 · ' + new Date(data.fetchedAt || Date.now()).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+    setLiveStatus('실시간 조회 ' + Number(data.requestCount || 2) + '회 완료 · 장비와 데바니온 상세는 선택한 항목만 추가 조회합니다.','ok');
+  }
+
+  async function loadLiveOverview(){
+    if(state.liveLoading) return;
+    const identity = liveIdentityKey(state.target);
+    if(!state.target?.name || !state.target?.serverId){
+      setLiveStatus('캐릭터 서버 정보를 확인한 뒤 실시간 조회합니다.','');
+      return;
+    }
+    state.liveLoading = true;
+    setLiveStatus('PLAYNC에서 프로필과 장비 목록을 실시간으로 불러오고 있습니다.','loading');
+    try{
+      const data = await liveRequest('overview');
+      if(!state.open || identity !== liveIdentityKey(state.target)) return;
+      applyLiveProfile(data);
+    }catch(error){
+      setLiveStatus((error.message || String(error)) + ' · 잠시 뒤 다시 열어 주세요.','error');
+      const panel = livePanel('overview');
+      if(panel) panel.innerHTML = '<div class="kinojo-character-live-error"><strong>실시간 정보를 불러오지 못했습니다.</strong><span>' + esc(error.message || error) + '</span></div>';
+    }finally{
+      state.liveLoading = false;
+    }
+  }
+
+  function detailArrays(value, keys, depth){
+    if(depth > 5 || !value || typeof value !== 'object') return [];
+    for(const key of keys) if(Array.isArray(value[key])) return value[key];
+    for(const child of Object.values(value)){
+      const found = detailArrays(child, keys, depth + 1);
+      if(found.length) return found;
+    }
+    return [];
+  }
+
+  async function loadEquipmentDetail(button){
+    if(state.detailLoading) return;
+    const itemId = Number(button.dataset.itemId || 0), slotPos = Number(button.dataset.slotPos || 0);
+    const root = document.getElementById('kinojoLiveEquipmentDetail');
+    if(!itemId || !slotPos || !root) return;
+    state.detailLoading = true;
+    root.hidden = false;
+    root.innerHTML = '<div class="kinojo-character-live-loading">선택한 장비 상세를 불러오는 중입니다.</div>';
+    try{
+      const data = await liveRequest('equipmentItem',{ itemId, slotPos },itemId + ':' + slotPos);
+      const main = detailArrays(data.item,['mainStats'],0), sub = detailArrays(data.item,['subStats'],0), magic = detailArrays(data.item,['magicStoneStat'],0);
+      root.innerHTML = '<button type="button" class="kinojo-character-live-detail-close" data-live-detail-close>닫기</button><strong>선택 장비 상세</strong>' +
+        '<div class="kinojo-character-live-detail-stats">' +
+          [...main,...sub,...magic].map(row => '<span><b>' + esc(row.name || row.id || '-') + '</b><em>' + esc(row.value ?? row.extra ?? '-') + '</em></span>').join('') +
+        '</div>';
+    }catch(error){
+      root.innerHTML = '<strong>장비 상세 조회 실패</strong><span>' + esc(error.message || error) + '</span>';
+    }finally{ state.detailLoading = false; }
+  }
+
+  async function loadDaevanionDetail(button){
+    if(state.detailLoading) return;
+    const boardId = Number(button.dataset.boardId || 0);
+    const root = document.getElementById('kinojoLiveDaevanionDetail');
+    if(!boardId || !root) return;
+    state.detailLoading = true;
+    root.hidden = false;
+    root.innerHTML = '<div class="kinojo-character-live-loading">선택한 보드 노드를 불러오는 중입니다.</div>';
+    try{
+      const data = await liveRequest('daevanionDetail',{ boardId },String(boardId));
+      const nodes = detailArrays(data.board,['nodeList'],0).filter(row => Number(row.open || 0) === 1);
+      const effects = nodes.flatMap(row => Array.isArray(row.effectList) ? row.effectList : []).map(row => row.desc).filter(Boolean);
+      root.innerHTML = '<button type="button" class="kinojo-character-live-detail-close" data-live-detail-close>닫기</button><strong>활성 노드 효과</strong><div class="kinojo-character-live-detail-stats">' +
+        effects.slice(0,80).map(value => '<span><b>' + esc(value) + '</b></span>').join('') + '</div>';
+    }catch(error){
+      root.innerHTML = '<strong>데바니온 상세 조회 실패</strong><span>' + esc(error.message || error) + '</span>';
+    }finally{ state.detailLoading = false; }
+  }
+
   function setType(type){
     state.type = type === 'dislike' ? 'dislike' : 'like';
     const like = document.getElementById('kinojoCharacterReactionLikeBtn');
@@ -304,6 +542,7 @@
     const server = t.server || t.serverName || '';
     const serverId = String(t.serverId || t.server_id || '').trim();
     const charKey = String(t.charKey || t.char_key || '').trim();
+    const characterId = String(t.characterId || t.character_id || '').trim();
     const owner = t.owner || t.mainCharacterName || '';
     const profileImageUrl = t.profileImageUrl || t.profileImage || t.profile || t.imageUrl || '';
     const detailUrl = t.detailUrl || t.url || '';
@@ -311,7 +550,7 @@
     const pvePower = numText(firstValue(t.pvePower, t.pve_power, t.pvePowerTotal, t.latestPveCombatPower, t.latest_pve_combat_power));
     const pvpPower = numText(firstValue(t.pvpPower, t.pvp_power, t.pvpPowerTotal, t.latestPvpCombatPower, t.latest_pvp_combat_power));
     const sub = [className, server].filter(Boolean).join(' · ');
-    return { name, className, server, serverId, charKey, owner, profileImageUrl, detailUrl, classIconUrl, pvePower, pvpPower, sub };
+    return { name, className, server, serverId, charKey, characterId, owner, profileImageUrl, detailUrl, classIconUrl, pvePower, pvpPower, sub };
   }
 
   function renderTarget(){
@@ -361,15 +600,15 @@
 
   function open(options){
     const opts = options || {};
-    const context = opts.context || opts.source || 'character';
-    if(window.KinojoAuth && opts.requireLogin !== false && !window.KinojoAuth.requireLogin('로그인 후 좋아요·싫어요를 남길 수 있습니다.', { context })){
-      return false;
-    }
 
     state.options = opts;
     state.target = normalizeTarget(opts.target || {});
     state.type = 'like';
     state.submitting = false;
+    state.live = null;
+    state.liveLoading = false;
+    state.detailLoading = false;
+    state.tab = 'overview';
     state.returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
     const modal = ensureModal();
@@ -378,6 +617,7 @@
     setStatus('');
     renderTarget();
     setType('like');
+    setTab('overview');
     updateSubmitState();
 
     modal.classList.add('open');
@@ -385,6 +625,7 @@
     document.body.classList.add('kinojo-character-reaction-open');
     state.open = true;
     enrichTargetFromMaster();
+    loadLiveOverview();
 
     const dialog = modal.querySelector('.kinojo-character-reaction-dialog');
     requestAnimationFrame(() => {
@@ -402,6 +643,9 @@
     document.body.classList.remove('kinojo-character-reaction-open');
     state.open = false;
     state.submitting = false;
+    state.liveLoading = false;
+    state.detailLoading = false;
+    state.live = null;
     state.target = null;
     state.options = null;
     const returnFocus = state.returnFocus;

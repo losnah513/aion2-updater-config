@@ -1613,7 +1613,7 @@
         passKey,
         characterName,
         serverId,
-        clientVersion:'KINOJO_WEB_2026072702'
+        clientVersion:'KINOJO_WEB_2026072709'
       });
     }
 
@@ -1640,10 +1640,10 @@
             serverQueue:true,
             lookupOnlyPhase:false,
             postprocessPhase:true,
-            sheetDeferred:true,
+            sheetDeferred:false,
             extensionDoesNotReadListSheet:true,
             listReadMode:'server_edge_bridge',
-            clientVersion:'KINOJO_WEB_2026072702',
+            clientVersion:'KINOJO_WEB_2026072709',
             pageUrl:location.href,
             lookupFilter,
             lookupFilterSummary
@@ -1658,11 +1658,11 @@
           action:'prepareList',
           sessionId,
           sessionToken,
-          clientVersion:'KINOJO_WEB_2026072702',
+          clientVersion:'KINOJO_WEB_2026072709',
           payload:{
             schemaVersion:'kinojo-lookup-v2',
             pageUrl:location.href,
-            clientVersion:'KINOJO_WEB_2026072702',
+            clientVersion:'KINOJO_WEB_2026072709',
             requestedSurface:'ADMIN_WEB_SERVER_QUEUE',
             lookupFilter,
             lookupFilterSummary
@@ -1684,7 +1684,7 @@
           batchLimit:5,
           lookupOnlyPhase:false,
           postprocessPhase:true,
-          sheetDeferred:true
+          sheetDeferred:false
         };
 
         if(queueCount<=0){
@@ -1692,7 +1692,7 @@
           return {ok:true,completed:true,noTargets:true,sessionId,queueMeta,lookupFilter,lookupFilterSummary,finish:finished};
         }
 
-        const registered=await rpc('kinojo_admin_server_queue_register_v271',{
+        const registered=await rpc('kinojo_admin_server_queue_register_v274',{
           p_pass_key:passKey,
           p_session_id:sessionId,
           p_session_token:sessionToken,
@@ -1709,6 +1709,18 @@
       }
     }
 
+    if(normalized==='startautonomous'){
+      const sessionId=String(extra.sessionId||'');
+      const sessionToken=String(extra.sessionToken||'');
+      if(!sessionId||!sessionToken)return {ok:false,code:'MISSING_SESSION',message:'서버 자동 실행 인계에 필요한 sessionId/sessionToken이 없습니다.'};
+      return invokeEdgeFunction('character-refresh-worker',{
+        action:'startAutonomous',
+        sessionId,
+        sessionToken,
+        clientVersion:'KINOJO_WEB_2026072709'
+      });
+    }
+
     if(normalized==='runserverqueue'){
       const sessionId=String(extra.sessionId||'');
       const sessionToken=String(extra.sessionToken||'');
@@ -1718,7 +1730,7 @@
         sessionId,
         sessionToken,
         batchLimit:Math.max(1,Math.min(Number(extra.batchLimit||5),5)),
-        clientVersion:'KINOJO_WEB_2026072702'
+        clientVersion:'KINOJO_WEB_2026072709'
       });
     }
 
@@ -1807,14 +1819,14 @@
     }
 
     if(normalized==='status'){
-      return rpc('kinojo_admin_server_queue_status_v271',{
+      return rpc('kinojo_admin_server_queue_status_v274',{
         p_pass_key:passKey,
         p_session_id:extra.sessionId?String(extra.sessionId):null
       });
     }
 
     if(normalized==='control'){
-      return rpc('kinojo_admin_server_queue_control_v271',{
+      return rpc('kinojo_admin_server_queue_control_v274',{
         p_pass_key:passKey,
         p_session_id:String(extra.sessionId||''),
         p_command:String(extra.command||extra.control||'')
@@ -1844,6 +1856,14 @@
       p_search:String(extra.search || '')
     });
     return Object.assign({ ok:true }, data || {});
+  }
+
+  async function getLiveCharacterProfile(action, extra={}){
+    const payload=Object.assign({},extra||{},{
+      action:String(action||'overview'),
+      clientVersion:'KINOJO_WEB_2026072709'
+    });
+    return invokeEdgeFunction('character-profile-live',payload);
   }
 
   async function adminSanctuarySheetSync(command, extra={}){
@@ -2049,6 +2069,7 @@
     adminSanctuaryProfileDiagnostic,
     adminCharacter,
     adminLookup,
+    getLiveCharacterProfile,
     adminVisit,
     adminVisitor,
     getVisitStats,

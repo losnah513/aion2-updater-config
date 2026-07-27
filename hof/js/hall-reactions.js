@@ -104,6 +104,7 @@ function openReactionModal(item,anchor){
         className:item?.className||item?.class_name||"",
         server:item?.serverName||item?.server_name||item?.meta||"",
         serverId:item?.serverId||item?.server_id||"",
+        charKey:item?.charKey||item?.char_key||"",
         pvePower:item?.pvePower||item?.pve_power||item?.latest_pve_combat_power||"",
         pvpPower:item?.pvpPower||item?.pvp_power||item?.latest_pvp_combat_power||"",
         profileImageUrl:item?.profileImageUrl||item?.profile_image_url||"",

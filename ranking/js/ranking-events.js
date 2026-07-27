@@ -41,7 +41,7 @@
   function openRankingReactionModal(card){
     if(window.KinojoCharacterReaction){
       const name=card.dataset.charName||card.dataset.character||'';
-      const target={name:name,owner:card.dataset.charOwner||'',className:card.dataset.charClass||'',server:card.dataset.charServer||'',serverId:card.dataset.serverId||'',profileImageUrl:card.dataset.profileImage||'',detailUrl:card.dataset.detailUrl||'',pvePower:card.dataset.pvePower||'',pvpPower:card.dataset.pvpPower||''};
+      const target={name:name,owner:card.dataset.charOwner||'',className:card.dataset.charClass||'',server:card.dataset.charServer||'',serverId:card.dataset.serverId||'',charKey:card.dataset.charKey||'',profileImageUrl:card.dataset.profileImage||'',detailUrl:card.dataset.detailUrl||'',pvePower:card.dataset.pvePower||'',pvpPower:card.dataset.pvpPower||''};
       window.KinojoCharacterReaction.open({
         source:'ranking',
         context:'ranking',
