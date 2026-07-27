@@ -16,7 +16,10 @@
     tab: 'overview',
     live: null,
     liveLoading: false,
-    detailLoading: false
+    detailLoading: false,
+    equipmentCategory: 'weapon',
+    equipmentPage: { weapon:0, armor:0, accessory:0 },
+    equipmentTouchStart: null
   };
   const LIVE_CACHE_TTL = 120000;
   const liveCache = new Map();
@@ -232,9 +235,9 @@
           '</div>' +
         '</header>' +
         '<nav class="kinojo-character-live-tabs" aria-label="캐릭터 상세 탭">' +
-          '<button class="active" type="button" data-kinojo-character-tab="overview">종합</button>' +
+          '<button class="active" type="button" data-kinojo-character-tab="overview">능력치</button>' +
           '<button type="button" data-kinojo-character-tab="equipment">장비</button>' +
-          '<button type="button" data-kinojo-character-tab="stats">스탯·스킬</button>' +
+          '<button type="button" data-kinojo-character-tab="stats">기본 스탯·스킬</button>' +
           '<button type="button" data-kinojo-character-tab="daevanion">데바니온</button>' +
           '<button type="button" data-kinojo-character-tab="reaction">평가·코멘트</button>' +
         '</nav>' +
@@ -263,6 +266,10 @@
       btn.addEventListener('click', () => setTab(btn.dataset.kinojoCharacterTab || 'overview'));
     });
     modal.addEventListener('click', event => {
+      const category = event.target.closest('[data-equipment-category]');
+      if(category) setEquipmentCategory(category.dataset.equipmentCategory || 'weapon');
+      const pageMove = event.target.closest('[data-equipment-page-move]');
+      if(pageMove) moveEquipmentPage(Number(pageMove.dataset.equipmentPageMove || 0));
       const item = event.target.closest('[data-live-equipment-item]');
       if(item) loadEquipmentDetail(item);
       const board = event.target.closest('[data-live-daevanion-board]');
@@ -270,6 +277,20 @@
       const closeDetail = event.target.closest('[data-live-detail-close]');
       if(closeDetail && closeDetail.parentElement) closeDetail.parentElement.hidden = true;
     });
+    modal.addEventListener('touchstart', event => {
+      const surface = event.target.closest('[data-equipment-page-surface]');
+      const touch = surface && event.touches ? event.touches[0] : null;
+      state.equipmentTouchStart = touch ? { x:touch.clientX, y:touch.clientY } : null;
+    }, { passive:true });
+    modal.addEventListener('touchend', event => {
+      const surface = event.target.closest('[data-equipment-page-surface]');
+      const start = state.equipmentTouchStart;
+      const touch = surface && event.changedTouches ? event.changedTouches[0] : null;
+      state.equipmentTouchStart = null;
+      if(!start || !touch) return;
+      const dx = touch.clientX - start.x, dy = touch.clientY - start.y;
+      if(Math.abs(dx) >= 44 && Math.abs(dx) > Math.abs(dy) * 1.25) moveEquipmentPage(dx < 0 ? 1 : -1);
+    }, { passive:true });
     modal.querySelector('#kinojoCharacterReactionSubmitBtn')?.addEventListener('click', submit);
     modal.querySelector('#kinojoCharacterReactionComment')?.addEventListener('input', updateSubmitState);
     document.addEventListener('keydown', event => {
@@ -363,9 +384,28 @@
     return document.querySelector('#kinojoCharacterReactionModal [data-kinojo-character-panel="' + name + '"]');
   }
 
-  function effectText(stat){
-    const effects = Array.isArray(stat?.effects) ? stat.effects.filter(Boolean) : [];
-    return effects.length ? effects.join(' · ') : '공식 최종값 미제공';
+  function formattedStatValue(stat){
+    const totals = Array.isArray(stat?.totals) ? stat.totals : [];
+    if(!totals.length) return '—';
+    return totals.map(total => {
+      const value = Number(total.value || 0);
+      const text = Number.isInteger(value) ? String(value) : value.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
+      return total.unit === 'percent' ? text + '%' : (value > 0 ? '+' : '') + text;
+    }).join(' · ');
+  }
+
+  function statSourceText(stat){
+    const rows = Array.isArray(stat?.contributions) ? stat.contributions : [];
+    return rows.length ? rows.map(row => row.source).filter(Boolean).join(' + ') : '최종값 제공 안 됨';
+  }
+
+  function renderCoreStatCard(stat){
+    const available = stat && stat.available;
+    return '<article class="' + (available ? 'available' : 'unavailable') + '">' +
+      '<div class="kinojo-character-stat-card-head"><span>' + esc(stat?.label || '-') + '</span><em>' + esc(available ? '확인 합계' : '미제공') + '</em></div>' +
+      '<strong>' + esc(formattedStatValue(stat)) + '</strong>' +
+      '<small>' + esc(statSourceText(stat)) + '</small>' +
+    '</article>';
   }
 
   function renderLiveOverview(data){
@@ -373,10 +413,25 @@
     if(!panel) return;
     const profile = data.profile || {};
     const stats = Array.isArray(data.coreStats) ? data.coreStats : [];
+    const groups = [
+      { key:'basic', label:'기본 공격', description:'공격력 · 치명타 · 명중 · 전투속도' },
+      { key:'amplify', label:'피해 증폭', description:'피해 유형별 증폭값을 서로 분리' },
+      { key:'combat', label:'전투 효과', description:'완벽 · 강타 · 다단 히트 · 재사용시간' }
+    ];
     panel.innerHTML =
-      '<div class="kinojo-character-live-section-head"><div><strong>핵심 능력치</strong><span>PLAYNC 공식 응답에서 확인되는 효과를 표시합니다.</span></div><em>실시간</em></div>' +
-      '<div class="kinojo-character-core-stats">' +
-        stats.map(stat => '<article class="' + (stat.available ? 'available' : 'unavailable') + '"><span>' + esc(stat.label) + '</span><strong>' + esc(effectText(stat)) + '</strong></article>').join('') +
+      '<div class="kinojo-character-live-section-head"><div><strong>핵심 능력치</strong><span>같은 능력치와 같은 단위만 하나로 합산합니다.</span></div><em>PLAYNC 실시간</em></div>' +
+      '<div class="kinojo-character-stat-method">' +
+        '<span><b>합산</b> 같은 능력치·같은 단위</span>' +
+        '<span><b>분리</b> 고정 수치와 %</span>' +
+        '<span><b>제외</b> 검증되지 않은 추정 공식</span>' +
+      '</div>' +
+      '<div class="kinojo-character-stat-groups">' +
+        groups.map(group =>
+          '<section class="kinojo-character-stat-group is-' + group.key + '">' +
+            '<header><div><strong>' + esc(group.label) + '</strong><span>' + esc(group.description) + '</span></div><em>' + stats.filter(stat => stat.group === group.key && stat.available).length + ' / ' + stats.filter(stat => stat.group === group.key).length + '</em></header>' +
+            '<div class="kinojo-character-core-stats">' + stats.filter(stat => stat.group === group.key).map(renderCoreStatCard).join('') + '</div>' +
+          '</section>'
+        ).join('') +
       '</div>' +
       '<div class="kinojo-character-live-facts">' +
         [
@@ -387,15 +442,78 @@
       '<p class="kinojo-character-live-note">' + esc(data.note || '실시간 정보는 KINOJO DB에 저장하지 않습니다.') + '</p>';
   }
 
+  const EQUIPMENT_CATEGORIES = [
+    { key:'weapon', label:'무기' },
+    { key:'armor', label:'방어구' },
+    { key:'accessory', label:'장신구' }
+  ];
+
+  function equipmentPageSize(){
+    return window.matchMedia && window.matchMedia('(max-width: 640px)').matches ? 4 : 8;
+  }
+
+  function equipmentGroups(items){
+    return EQUIPMENT_CATEGORIES.reduce((groups, category) => {
+      groups[category.key] = items.filter(item => item.category === category.key);
+      return groups;
+    }, {});
+  }
+
+  function setEquipmentCategory(category){
+    if(!EQUIPMENT_CATEGORIES.some(item => item.key === category)) return;
+    state.equipmentCategory = category;
+    if(state.live) renderLiveEquipment(state.live);
+  }
+
+  function moveEquipmentPage(delta){
+    if(!state.live || !delta) return;
+    const items = Array.isArray(state.live.equipment) ? state.live.equipment : [];
+    const currentItems = equipmentGroups(items)[state.equipmentCategory] || [];
+    const pageCount = Math.max(1, Math.ceil(currentItems.length / equipmentPageSize()));
+    const current = Math.min(Number(state.equipmentPage[state.equipmentCategory] || 0), pageCount - 1);
+    state.equipmentPage[state.equipmentCategory] = Math.max(0, Math.min(pageCount - 1, current + delta));
+    renderLiveEquipment(state.live);
+  }
+
   function renderLiveEquipment(data){
     const panel = livePanel('equipment');
     if(!panel) return;
     const items = Array.isArray(data.equipment) ? data.equipment : [];
+    const groups = equipmentGroups(items);
+    const activeCategory = EQUIPMENT_CATEGORIES.find(category => category.key === state.equipmentCategory) || EQUIPMENT_CATEGORIES[0];
+    const currentItems = groups[activeCategory.key] || [];
+    const pageSize = equipmentPageSize();
+    const pageCount = Math.max(1, Math.ceil(currentItems.length / pageSize));
+    const page = Math.max(0, Math.min(Number(state.equipmentPage[activeCategory.key] || 0), pageCount - 1));
+    state.equipmentPage[activeCategory.key] = page;
+    const visibleItems = currentItems.slice(page * pageSize, page * pageSize + pageSize);
     panel.innerHTML =
-      '<div class="kinojo-character-live-section-head"><div><strong>장착 장비</strong><span>장비를 누를 때만 해당 상세 정보를 1회 추가 조회합니다.</span></div><em>' + items.length + '개</em></div>' +
-      '<div class="kinojo-character-equipment-grid">' +
-        items.map(item => '<button type="button" data-live-equipment-item data-item-id="' + Number(item.id || 0) + '" data-slot-pos="' + Number(item.slotPos || 0) + '"><img src="' + safeUrl(item.icon) + '" alt=""><span><b>' + esc(item.name || '-') + '</b><small>' + esc(item.grade || '') + (Number(item.enchantLevel || 0) ? ' · +' + Number(item.enchantLevel) : '') + '</small></span></button>').join('') +
-      '</div><div class="kinojo-character-live-detail" id="kinojoLiveEquipmentDetail" hidden></div>';
+      '<div class="kinojo-character-live-section-head"><div><strong>장착 장비</strong><span>분류와 페이지를 바꿔도 모달 위치는 유지됩니다.</span></div><em>총 ' + items.length + '개</em></div>' +
+      '<nav class="kinojo-character-equipment-categories" aria-label="장비 분류">' +
+        EQUIPMENT_CATEGORIES.map(category =>
+          '<button type="button" class="' + (category.key === activeCategory.key ? 'active' : '') + '" data-equipment-category="' + category.key + '">' +
+            '<span>' + esc(category.label) + '</span><strong>' + (groups[category.key] || []).length + '</strong>' +
+          '</button>'
+        ).join('') +
+      '</nav>' +
+      '<section class="kinojo-character-equipment-browser">' +
+        '<header class="kinojo-character-equipment-toolbar"><div><strong>' + esc(activeCategory.label) + '</strong><span>' + currentItems.length + '개 장착</span></div>' +
+          '<div class="kinojo-character-equipment-pager" aria-label="장비 페이지">' +
+            '<button type="button" data-equipment-page-move="-1" aria-label="이전 페이지" ' + (page <= 0 ? 'disabled' : '') + '>‹</button>' +
+            '<span><b>' + (page + 1) + '</b> / ' + pageCount + '</span>' +
+            '<button type="button" data-equipment-page-move="1" aria-label="다음 페이지" ' + (page >= pageCount - 1 ? 'disabled' : '') + '>›</button>' +
+          '</div>' +
+        '</header>' +
+        '<div class="kinojo-character-equipment-page" data-equipment-page-surface>' +
+          (visibleItems.length ?
+            '<div class="kinojo-character-equipment-grid">' +
+              visibleItems.map(item => '<button type="button" data-live-equipment-item data-item-id="' + Number(item.id || 0) + '" data-slot-pos="' + Number(item.slotPos || 0) + '"><img src="' + safeUrl(item.icon) + '" alt=""><span><small class="kinojo-character-equipment-slot">' + esc(item.slotLabel || item.slotPosName || '') + '</small><b>' + esc(item.name || '-') + '</b><small>' + esc(item.grade || '') + (Number(item.enchantLevel || 0) ? ' · +' + Number(item.enchantLevel) : '') + (Number(item.exceedLevel || 0) ? ' · 돌파 ' + Number(item.exceedLevel) : '') + '</small></span></button>').join('') +
+            '</div>' :
+            '<div class="kinojo-character-equipment-empty">장착된 ' + esc(activeCategory.label) + '가 없습니다.</div>') +
+        '</div>' +
+        '<p class="kinojo-character-equipment-hint">장비를 선택하면 이 화면 아래에서 강화·옵션·마석 상세를 확인합니다.<span>모바일은 좌우로 넘길 수 있습니다.</span></p>' +
+      '</section>' +
+      '<div class="kinojo-character-live-detail" id="kinojoLiveEquipmentDetail" hidden></div>';
   }
 
   function renderLiveStats(data){
@@ -493,7 +611,7 @@
     try{
       const data = await liveRequest('equipmentItem',{ itemId, slotPos },itemId + ':' + slotPos);
       const main = detailArrays(data.item,['mainStats'],0), sub = detailArrays(data.item,['subStats'],0), magic = detailArrays(data.item,['magicStoneStat'],0);
-      root.innerHTML = '<button type="button" class="kinojo-character-live-detail-close" data-live-detail-close>닫기</button><strong>선택 장비 상세</strong>' +
+      root.innerHTML = '<button type="button" class="kinojo-character-live-detail-close" data-live-detail-close>닫기</button><strong>' + esc(button.querySelector('b')?.textContent || '선택 장비') + '</strong>' +
         '<div class="kinojo-character-live-detail-stats">' +
           [...main,...sub,...magic].map(row => '<span><b>' + esc(row.name || row.id || '-') + '</b><em>' + esc(row.value ?? row.extra ?? '-') + '</em></span>').join('') +
         '</div>';
@@ -609,6 +727,9 @@
     state.liveLoading = false;
     state.detailLoading = false;
     state.tab = 'overview';
+    state.equipmentCategory = 'weapon';
+    state.equipmentPage = { weapon:0, armor:0, accessory:0 };
+    state.equipmentTouchStart = null;
     state.returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
     const modal = ensureModal();
@@ -645,6 +766,7 @@
     state.submitting = false;
     state.liveLoading = false;
     state.detailLoading = false;
+    state.equipmentTouchStart = null;
     state.live = null;
     state.target = null;
     state.options = null;
