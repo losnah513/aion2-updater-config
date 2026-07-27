@@ -1,10 +1,10 @@
-/* KINOJO Admin Console v2026072504 */
+/* KINOJO Admin Console v2026072701 */
 (function(){
   'use strict';
   const $ = (s,r=document)=>r.querySelector(s);
   const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
-  const state = { tab:'dashboard', subtab:'', loaded:{}, subtabs:{ members:'accounts', characters:'lookup', notices:'general', system:'server-status' }, requests:[], accounts:[], characters:[], logs:[], eventNoticeGroups:[], eventNoticeEditingId:null, meterConsole:null, meterNotices:[], sanctuarySchedules:[], sanctuaryMasters:[], sanctuaryStatusOptions:[], sanctuaryScheduleLoaded:false, sanctuaryScheduleAccess:null, sanctuaryRolePermissions:null, sanctuaryScheduleSaving:false, lastSanctuarySyncData:null, lastSanctuaryStatusData:null, lastSanctuaryId:'all', visitorDays:7, visitorPage:1, visitorTotalPages:1, visitorCanViewMemberHistory:false, lookupConsole:null, lookupSessionId:'', lookupSessionToken:'', lookupPollTimer:null, lookupHeartbeatAt:0, lookupStarting:false, lookupDirectRunning:false, lookupDirectResult:null };
-  const CACHE = '2026072504';
+  const state = { tab:'dashboard', subtab:'', loaded:{}, subtabs:{ members:'accounts', characters:'lookup', notices:'general', system:'server-status' }, requests:[], accounts:[], characters:[], logs:[], eventNoticeGroups:[], eventNoticeEditingId:null, meterConsole:null, meterNotices:[], sanctuarySchedules:[], sanctuaryMasters:[], sanctuaryStatusOptions:[], sanctuaryScheduleLoaded:false, sanctuaryScheduleAccess:null, sanctuaryRolePermissions:null, sanctuaryScheduleSaving:false, lastSanctuarySyncData:null, lastSanctuaryStatusData:null, lastSanctuaryId:'all', visitorDays:7, visitorPage:1, visitorTotalPages:1, visitorCanViewMemberHistory:false, lookupConsole:null, lookupSessionId:'', lookupSessionToken:'', lookupPollTimer:null, lookupHeartbeatAt:0, lookupStarting:false, lookupDirectRunning:false, lookupDirectResult:null, lookupQueueRunning:false, lookupQueueLoopId:0 };
+  const CACHE = '2026072701';
   const DEFAULT_SUBTABS = { members:'accounts', characters:'lookup', notices:'general', system:'server-status', logs:'activity' };
   function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
   function addLog(type,msg){
@@ -377,8 +377,10 @@
     if(data.controlState==='paused')return '일시정지';
     if(data.controlState==='cancelled')return '중단';
     if(data.waitingExtension)return 'Extension 연결 대기';
+    if(data.active&&data.serverQueue===true)return 'Server Queue 진행';
     if(data.active&&data.extensionClaimed)return '조회 진행';
     const status=String(data.session?.status||data.job?.status||'').toLowerCase();
+    if(status==='completed'&&data.lookupOnlyPhase===true)return '조회 수집 완료';
     if(status==='completed')return '완료';
     if(status==='failed')return '실패';
     if(status==='cancelled')return '중단';
@@ -415,12 +417,15 @@
     steps.forEach(step=>{const el=$('#'+step.id);if(!el)return;const cls=lookupStepClass(step.status);el.className='admin-lookup-step '+cls;el.querySelector('strong').textContent=step.label;el.querySelector('span').textContent=Number(step.percent||0).toFixed(1)+'%';});
     const events=$('#characterLookupEvents');
     if(events){const rows=Array.isArray(data?.events)?data.events:[];events.innerHTML=rows.length?rows.map(row=>'<article><time>'+esc(formatServerTime(row.created_at||row.createdAt))+'</time><strong>'+esc(row.stage||row.event_type||row.eventType||'EVENT')+'</strong><span>'+esc(row.message||'')+'</span></article>').join(''):'<div class="admin-empty">아직 조회 이벤트가 없습니다.</div>';}
+    const failures=$('#characterLookupFailures');
+    if(failures){const rows=Array.isArray(data?.failurePreview)?data.failurePreview:[];failures.hidden=!rows.length;failures.innerHTML=rows.length?'<strong>재시도·실패 Target</strong>'+rows.map(row=>'<article><span>'+esc(row.character_name||row.characterName||'-')+' · '+esc(row.target_status||row.targetStatus||'-')+' · '+Number(row.attempt_count||row.attemptCount||0)+'/'+Number(row.max_attempts||row.maxAttempts||3)+'</span><em>'+esc(row.last_error||row.lastError||row.last_failure_code||row.lastFailureCode||'')+'</em></article>').join(''):'';}
     const canControl=data?.canControl===true;
     const active=data?.active===true;
     const paused=data?.controlState==='paused';
     const singleScope=String($('#characterLookupScope')?.value||'all')==='single';
-    if($('#characterLookupStartBtn'))$('#characterLookupStartBtn').disabled=state.lookupStarting||state.lookupDirectRunning||active||roleLevel()<4;
-    if($('#characterLookupDirectBtn')){const button=$('#characterLookupDirectBtn');button.disabled=state.lookupStarting||state.lookupDirectRunning||active||roleLevel()<4||!singleScope;button.textContent=state.lookupDirectRunning?'Server 조회 진행 중...':'Server 1명 직접 조회';}
+    if($('#characterLookupStartBtn'))$('#characterLookupStartBtn').disabled=state.lookupStarting||state.lookupDirectRunning||state.lookupQueueRunning||active||roleLevel()<4;
+    if($('#characterLookupServerQueueBtn')){const button=$('#characterLookupServerQueueBtn');button.disabled=state.lookupStarting||state.lookupDirectRunning||state.lookupQueueRunning||active||roleLevel()<4;button.textContent=state.lookupQueueRunning?'Server Queue 처리 중...':'Server Queue 시작';}
+    if($('#characterLookupDirectBtn')){const button=$('#characterLookupDirectBtn');button.disabled=state.lookupStarting||state.lookupDirectRunning||state.lookupQueueRunning||active||roleLevel()<4||!singleScope;button.textContent=state.lookupDirectRunning?'Server 조회 진행 중...':'Server 1명 직접 조회';}
     if($('#characterLookupPauseBtn'))$('#characterLookupPauseBtn').disabled=!canControl||!active||paused;
     if($('#characterLookupResumeBtn'))$('#characterLookupResumeBtn').disabled=!canControl||!active||!paused;
     if($('#characterLookupStopBtn'))$('#characterLookupStopBtn').disabled=!canControl||!active;
@@ -444,6 +449,9 @@
         state.lookupHeartbeatAt=Date.now();
         const p=data.progress?.progress||data.progress||{};
         adminLookup('heartbeat',{sessionId:data.sessionId,sessionToken:state.lookupSessionToken,current:Number(p.completedCount||0),total:Number(p.total||data.queueMeta?.queueCount||0)}).catch(()=>{});
+      }
+      if(data.active===true&&data.serverQueue===true&&data.controlState!=='paused'&&data.controlState!=='cancelled'&&state.lookupSessionToken&&!state.lookupQueueRunning){
+        runCharacterServerQueueLoop(data.sessionId,state.lookupSessionToken).catch(()=>{});
       }
       if(options.statusLine!==false)setStatus('#characterLookupStatus',data.message||'조회 상태를 갱신했습니다.',data.active?'ok':'');
       return data;
@@ -478,6 +486,46 @@
     finally{state.lookupDirectRunning=false;renderCharacterLookupConsole(state.lookupConsole||null);}
   }
 
+  function queueDelay(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
+  async function runCharacterServerQueueLoop(sessionId,sessionToken){
+    if(state.lookupQueueRunning)return;
+    const sid=String(sessionId||state.lookupSessionId||'');const token=String(sessionToken||state.lookupSessionToken||'');
+    if(!sid||!token){setStatus('#characterLookupStatus','Server Queue를 이어서 실행할 세션 정보가 없습니다. 같은 탭에서 다시 시작하세요.','error');return;}
+    const loopId=++state.lookupQueueLoopId;state.lookupQueueRunning=true;renderCharacterLookupConsole(state.lookupConsole||null);
+    try{
+      while(loopId===state.lookupQueueLoopId){
+        const data=await adminLookup('runserverqueue',{sessionId:sid,sessionToken:token,batchLimit:5});
+        if(!data||data.ok===false)throw new Error(data?.message||'Server Queue Batch 처리 실패');
+        await refreshCharacterLookupStatus({statusLine:false});
+        if(data.done===true||data.completed===true){setStatus('#characterLookupStatus',data.message||'3-1차 Server Queue 조회를 완료했습니다.','ok');toast('Server Queue 공식 조회 완료');break;}
+        if(data.paused===true||data.cancelled===true){setStatus('#characterLookupStatus',data.message||'Server Queue 상태가 변경되었습니다.',data.cancelled?'error':'');break;}
+        if(data.busy===true){await queueDelay(1500);continue;}
+        if(data.hasMore!==true)break;
+        await queueDelay(500);
+      }
+    }catch(err){setStatus('#characterLookupStatus',err.message||String(err),'error');}
+    finally{if(loopId===state.lookupQueueLoopId)state.lookupQueueRunning=false;renderCharacterLookupConsole(state.lookupConsole||null);}
+  }
+  async function startCharacterServerQueue(){
+    if(state.lookupStarting||state.lookupQueueRunning)return;
+    if(roleLevel()<4){setStatus('#characterLookupStatus','Server Queue 시작 권한은 MASTER·SUB MASTER에게만 있습니다.','error');return;}
+    let lookupFilter;
+    try{lookupFilter=readLookupFilter();}catch(err){setStatus('#characterLookupStatus',err.message||String(err),'error');return;}
+    state.lookupStarting=true;state.lookupQueueLoopId+=1;renderCharacterLookupConsole(state.lookupConsole||null);setStatus('#characterLookupStatus','Google list와 Server Master를 대조해 Server Target Queue를 준비하는 중입니다...','');
+    try{
+      const data=await adminLookup('startserverqueue',{lookupFilter});
+      if(!data||data.ok===false)throw new Error(data?.message||'Server Queue 시작 실패');
+      storeLookupSession(data.sessionId||'',data.sessionToken||'');
+      if(data.noTargets===true){setStatus('#characterLookupStatus',data.lookupFilter?.lookupMode==='missing_only'?'신규 캐릭터가 없어 조회 없이 완료했습니다.':'조회 대상이 없습니다.','ok');}
+      else{
+        setStatus('#characterLookupStatus','Server Queue 준비 완료 · 최대 5명씩 순차 조회를 시작합니다.','ok');
+        await refreshCharacterLookupStatus({statusLine:false});
+        runCharacterServerQueueLoop(data.sessionId,data.sessionToken).catch(()=>{});
+      }
+    }catch(err){setStatus('#characterLookupStatus',err.message||String(err),'error');}
+    finally{state.lookupStarting=false;renderCharacterLookupConsole(state.lookupConsole||null);}
+  }
+
   async function startCharacterLookup(){
     if(state.lookupStarting)return;
     if(roleLevel()<4){setStatus('#characterLookupStatus','조회 시작 권한은 MASTER·SUB MASTER에게만 있습니다.','error');return;}
@@ -502,8 +550,10 @@
       setStatus('#characterLookupStatus',command==='pause'?'일시정지 요청 중...':command==='resume'?'재개 요청 중...':'중단 요청 중...','');
       const data=await adminLookup('control',{sessionId,command});
       if(!data||data.ok===false)throw new Error(data?.message||'작업 제어 실패');
+      if(command==='pause'||command==='cancel')state.lookupQueueLoopId+=1;
       setStatus('#characterLookupStatus',data.message||'작업 상태를 변경했습니다.','ok');
-      await refreshCharacterLookupStatus({statusLine:false});
+      const status=await refreshCharacterLookupStatus({statusLine:false});
+      if(command==='resume'&&status?.serverQueue===true&&state.lookupSessionToken)runCharacterServerQueueLoop(sessionId,state.lookupSessionToken).catch(()=>{});
     }catch(err){setStatus('#characterLookupStatus',err.message||String(err),'error');}
   }
 
@@ -1388,6 +1438,7 @@
     $('#requestList')?.addEventListener('click',e=>{ if(e.target.matches('[data-approve-request]')) processRequest(e.target,'approveCodeRequest'); if(e.target.matches('[data-reject-request]')) processRequest(e.target,'rejectCodeRequest'); });
     $('#memberReloadBtn')?.addEventListener('click',loadAccounts); $('#sanctuaryRolePermissionReloadBtn')?.addEventListener('click',loadSanctuaryRolePermissions); $('#sanctuaryRolePermissionMatrix')?.addEventListener('change',e=>{if(e.target.matches('[data-sanctuary-role-permission]'))setSanctuaryRolePermission(e.target);}); $('#memberSearch')?.addEventListener('input',applyMemberFilters); $('#memberRoleFilter')?.addEventListener('change',applyMemberFilters); $('#memberList')?.addEventListener('click',e=>{ if(e.target.matches('[data-member-role-open],[data-member-role-save],[data-member-role-cancel],[data-member-disable],[data-member-delete]')) handleMemberAction(e.target); });
     $('#characterLookupDirectBtn')?.addEventListener('click',startDirectCharacterRefresh);
+    $('#characterLookupServerQueueBtn')?.addEventListener('click',startCharacterServerQueue);
     $('#characterLookupStartBtn')?.addEventListener('click',startCharacterLookup);
     $('#characterLookupReloadBtn')?.addEventListener('click',()=>refreshCharacterLookupStatus({statusLine:true}));
     $('#characterLookupPauseBtn')?.addEventListener('click',()=>controlCharacterLookup('pause'));

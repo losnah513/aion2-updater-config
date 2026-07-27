@@ -1613,7 +1613,7 @@
         passKey,
         characterName,
         serverId,
-        clientVersion:'KINOJO_WEB_2026072504'
+        clientVersion:'KINOJO_WEB_2026072701'
       });
     }
 
@@ -1621,6 +1621,100 @@
       return rpc('kinojo_admin_direct_refresh_result_v269',{
         p_pass_key:passKey,
         p_session_id:String(extra.sessionId||'')
+      });
+    }
+
+    if(normalized==='startserverqueue'){
+      const lookupFilter=normalizeAdminLookupFilter(extra);
+      const lookupFilterSummary=String(extra.lookupFilterSummary||adminLookupFilterSummary(lookupFilter));
+      let started=null;
+      try{
+        started=await runtimeStart(passKey,{
+          toolName:'KINOJO_SERVER_CHARACTER_QUEUE',
+          clientId:'ADMIN_WEB_SERVER_QUEUE',
+          progressTotal:0,
+          payload:{
+            schemaVersion:'kinojo-crawl-v1',
+            tool:'KINOJO_ADMIN_WEB',
+            requestedSurface:'ADMIN_WEB_SERVER_QUEUE',
+            serverQueue:true,
+            lookupOnlyPhase:true,
+            extensionDoesNotReadListSheet:true,
+            listReadMode:'server_edge_bridge',
+            clientVersion:'KINOJO_WEB_2026072701',
+            pageUrl:location.href,
+            lookupFilter,
+            lookupFilterSummary
+          }
+        });
+        if(!started||started.ok!==true)throw new Error(started?.message||started?.code||'Server Queue 세션 생성 실패');
+        const sessionId=String(started.sessionId||started.session_id||'');
+        const sessionToken=String(started.sessionToken||started.session_token||'');
+        if(!sessionId||!sessionToken)throw new Error('Server Queue sessionId/sessionToken이 비어 있습니다.');
+
+        const prepared=await invokeEdgeFunction('lookup-sheet-bridge',{
+          action:'prepareList',
+          sessionId,
+          sessionToken,
+          clientVersion:'KINOJO_WEB_2026072701',
+          payload:{
+            schemaVersion:'kinojo-lookup-v2',
+            pageUrl:location.href,
+            clientVersion:'KINOJO_WEB_2026072701',
+            requestedSurface:'ADMIN_WEB_SERVER_QUEUE',
+            lookupFilter,
+            lookupFilterSummary
+          }
+        });
+        if(!prepared||prepared.ok!==true)throw new Error(prepared?.message||prepared?.code||'Server Engine LIST / MASTER 대조 실패');
+
+        const queueCount=Number(prepared.queueCount||prepared.queue?.length||0);
+        const queueMeta={
+          queueCount,
+          rawListCount:Number(prepared.rawListCount||prepared.listCount||0),
+          existingMasterCount:Number(prepared.existingMasterCount||prepared.existingCount||0),
+          newCharacterCount:Number(prepared.newCharacterCount||prepared.newCount||0),
+          invalidServerCount:Number(prepared.invalidServerCount||0),
+          lookupMode:String(prepared.lookupMode||lookupFilter.lookupMode),
+          lookupFilter,
+          lookupFilterSummary:String(prepared.lookupFilterSummary||lookupFilterSummary),
+          source:'ADMIN_WEB_SERVER_QUEUE',
+          batchLimit:5,
+          lookupOnlyPhase:true
+        };
+
+        if(queueCount<=0){
+          const finished=await runtimeFinish(sessionId,sessionToken,'completed',lookupFilter.lookupMode==='missing_only'?'신규 캐릭터가 없어 조회 없이 완료했습니다.':'조회 대상이 없어 완료했습니다.',{source:'ADMIN_WEB_SERVER_QUEUE',phase:'NO_TARGETS',queueMeta});
+          return {ok:true,completed:true,noTargets:true,sessionId,queueMeta,lookupFilter,lookupFilterSummary,finish:finished};
+        }
+
+        const registered=await rpc('kinojo_admin_server_queue_register_v270',{
+          p_pass_key:passKey,
+          p_session_id:sessionId,
+          p_session_token:sessionToken,
+          p_queue_meta:queueMeta
+        });
+        if(!registered||registered.ok!==true)throw new Error(registered?.message||registered?.code||'Server Queue 등록 실패');
+
+        return {ok:true,sessionId,sessionToken,queueMeta,lookupFilter,lookupFilterSummary,prepared,registered,message:registered.message};
+      }catch(error){
+        if(started?.sessionId&&started?.sessionToken){
+          try{await runtimeFinish(started.sessionId,started.sessionToken,'failed',error?.message||String(error),{source:'ADMIN_WEB_SERVER_QUEUE',stage:'START_FAILED'});}catch(_finishErr){}
+        }
+        throw error;
+      }
+    }
+
+    if(normalized==='runserverqueue'){
+      const sessionId=String(extra.sessionId||'');
+      const sessionToken=String(extra.sessionToken||'');
+      if(!sessionId||!sessionToken)return {ok:false,code:'MISSING_SESSION',message:'Server Queue sessionId/sessionToken이 필요합니다.'};
+      return invokeEdgeFunction('character-refresh-worker',{
+        action:'runQueue',
+        sessionId,
+        sessionToken,
+        batchLimit:Math.max(1,Math.min(Number(extra.batchLimit||5),5)),
+        clientVersion:'KINOJO_WEB_2026072701'
       });
     }
 
@@ -1709,14 +1803,14 @@
     }
 
     if(normalized==='status'){
-      return rpc('kinojo_admin_lookup_status_v268',{
+      return rpc('kinojo_admin_server_queue_status_v270',{
         p_pass_key:passKey,
         p_session_id:extra.sessionId?String(extra.sessionId):null
       });
     }
 
     if(normalized==='control'){
-      return rpc('kinojo_admin_lookup_control_v268',{
+      return rpc('kinojo_admin_server_queue_control_v270',{
         p_pass_key:passKey,
         p_session_id:String(extra.sessionId||''),
         p_command:String(extra.command||extra.control||'')
@@ -1892,7 +1986,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.48-admin-direct-refresh-2026072504',
+    version:'1.3.1.49-admin-server-queue-2026072701',
     getConfig,
     isPreferred,
     isConfigured,

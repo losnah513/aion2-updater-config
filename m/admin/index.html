@@ -12,7 +12,7 @@
 <link href="../../ui/kinojo-common-ui.css?cache=2026072411" rel="stylesheet"/>
 <link href="../../ui/kinojo-card-guards.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../../ui/kinojo-animations.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
-<link href="../../admin/css/admin.css?cache=2026072504" rel="stylesheet"/>
+<link href="../../admin/css/admin.css?cache=2026072701" rel="stylesheet"/>
 
 </head>
 <body class="kinojo-page-admin">
@@ -66,7 +66,7 @@
             <label>종족 필터<input class="admin-input" id="characterLookupRaces" placeholder="선택 사항 · 쉼표 구분"/></label>
             <fieldset><legend>장비 유형</legend><label><input type="checkbox" name="characterLookupGear" value="PVE" checked/> PVE</label><label><input type="checkbox" name="characterLookupGear" value="PVP" checked/> PVP</label></fieldset>
           </div>
-          <div class="admin-lookup-start-row"><button class="admin-btn primary" id="characterLookupDirectBtn" type="button" disabled>Server 1명 직접 조회</button><button class="admin-btn" id="characterLookupStartBtn" type="button">Extension Queue 준비</button><span>특정 캐릭터는 Server가 직접 처리합니다. 전체·신규 또는 필터 대량 조회는 Queue 준비 후 같은 PASS KEY로 Extension을 연결합니다.</span></div>
+          <div class="admin-lookup-start-row"><button class="admin-btn" id="characterLookupDirectBtn" type="button" disabled>Server 1명 직접 조회</button><button class="admin-btn primary" id="characterLookupServerQueueBtn" type="button">Server Queue 시작</button><button class="admin-btn" id="characterLookupStartBtn" type="button">Extension Queue 준비</button><span>Server Queue는 관리자 탭이 열려 있는 동안 전체·신규·필터 Target을 최대 5명씩 순차 조회합니다. 3-1차에서는 공식 조회와 Snapshot 저장까지만 수행하며 Extension Queue는 비상 수동 경로로 유지합니다.</span></div>
           <div id="characterLookupStatus" class="admin-statusline"></div>
           <div class="admin-lookup-extension-guide" id="characterLookupExtensionGuide" hidden><strong>Extension 연결 대기</strong><span>아이온2 캐릭터 정보실에서 KINOJO Extension을 열고 같은 PASS KEY로 조회 시작을 누르세요. 새 세션을 만들지 않고 이 Queue를 이어받습니다.</span></div><section class="admin-lookup-direct-result" id="characterLookupDirectResult" hidden><div class="admin-lookup-direct-head"><div><strong>Server 직접 조회 결과</strong><span>공식 API 수치와 기존 Server Parser·Master 반영 결과</span></div><span class="admin-pill" id="characterLookupDirectBadge">완료</span></div><div id="characterLookupDirectBody"></div></section>
           <div class="admin-lookup-overview">
@@ -77,7 +77,7 @@
           </div>
           <div class="admin-lookup-steps"><article class="admin-lookup-step pending" id="characterLookupStep1"><small>STEP 1</small><strong>원본 대조</strong><span>0.0%</span></article><article class="admin-lookup-step pending" id="characterLookupStep2"><small>STEP 2</small><strong>공식 조회</strong><span>0.0%</span></article><article class="admin-lookup-step pending" id="characterLookupStep3"><small>STEP 3</small><strong>서버 후처리</strong><span>0.0%</span></article></div>
           <div class="admin-lookup-controls"><button class="admin-btn" id="characterLookupPauseBtn" type="button" disabled>일시정지</button><button class="admin-btn primary" id="characterLookupResumeBtn" type="button" disabled>재개</button><button class="admin-btn danger" id="characterLookupStopBtn" type="button" disabled>작업 중단</button></div>
-          <div class="admin-lookup-events" id="characterLookupEvents"><div class="admin-empty">아직 조회 이벤트가 없습니다.</div></div>
+          <div class="admin-lookup-events" id="characterLookupEvents"><div class="admin-empty">아직 조회 이벤트가 없습니다.</div></div><div class="admin-lookup-failures" id="characterLookupFailures" hidden></div>
         </section>
       </div>
       <div class="admin-subpane" data-admin-subpane="records"><section class="admin-card"><div class="admin-card-head"><div><h2>캐릭터 상태 관리</h2><p>탈퇴·복구·이름변경 이력을 Server 기준으로 관리합니다.</p></div></div><div class="admin-form"><div class="admin-form-row"><input class="admin-input grow" id="characterSearch" placeholder="캐릭터명 / 서버명 검색"/><label class="admin-btn"><input id="characterIncludeInactive" type="checkbox" checked/> 비활성 포함</label><button class="admin-btn primary" id="characterSearchBtn" type="button">검색</button></div><div class="admin-form-row"><select class="admin-select" id="characterReason"><option value="탈퇴">탈퇴</option><option value="이름변경">이름변경</option><option value="중복">중복</option><option value="기타">기타</option></select><input class="admin-input grow" id="characterNewName" placeholder="이름변경 시 새 캐릭터명"/><input class="admin-input grow" id="characterMemo" placeholder="관리 메모"/></div></div><div id="characterStatus" class="admin-statusline"></div><div class="admin-list" id="characterList"><div class="admin-empty">검색어를 입력하고 캐릭터를 조회하세요.</div></div></section></div>
@@ -248,8 +248,8 @@
 <script src="../../core/kinojo-logger.js?cache=2026070110"></script>
 <script src="../../ui/kinojo-common-ui.js?cache=2026072411"></script>
 <script src="../../ui/kinojo-admin-panel.js?cache=2026071712"></script>
-<script src="../../core/kinojo-supabase.js?cache=2026072504"></script>
+<script src="../../core/kinojo-supabase.js?cache=2026072701"></script>
 <script src="../../core/kinojo-auth.js?cache=2026072411"></script>
-<script src="../../admin/js/admin.js?cache=2026072504"></script>
+<script src="../../admin/js/admin.js?cache=2026072701"></script>
 </body>
 </html>
