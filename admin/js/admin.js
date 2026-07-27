@@ -1,10 +1,10 @@
-/* KINOJO Admin Console v2026072709 */
+/* KINOJO Admin Console v2026072801 */
 (function(){
   'use strict';
   const $ = (s,r=document)=>r.querySelector(s);
   const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
-  const state = { tab:'dashboard', subtab:'', loaded:{}, subtabs:{ members:'accounts', characters:'lookup', notices:'general', system:'server-status' }, requests:[], accounts:[], characters:[], logs:[], eventNoticeGroups:[], eventNoticeEditingId:null, meterConsole:null, meterNotices:[], sanctuarySchedules:[], sanctuaryMasters:[], sanctuaryStatusOptions:[], sanctuaryScheduleLoaded:false, sanctuaryScheduleAccess:null, sanctuaryRolePermissions:null, sanctuaryScheduleSaving:false, lastSanctuarySyncData:null, lastSanctuaryStatusData:null, lastSanctuaryId:'all', visitorDays:7, visitorPage:1, visitorTotalPages:1, visitorCanViewMemberHistory:false, lookupConsole:null, lookupSessionId:'', lookupSessionToken:'', lookupPollTimer:null, lookupHeartbeatAt:0, lookupStarting:false, lookupDirectRunning:false, lookupDirectResult:null, lookupQueueRunning:false, lookupExitSafety:'idle' };
-  const CACHE = '2026072709';
+  const state = { tab:'dashboard', subtab:'', loaded:{}, subtabs:{ members:'accounts', characters:'lookup', notices:'general', system:'server-status' }, requests:[], accounts:[], characters:[], logs:[], eventNoticeGroups:[], eventNoticeEditingId:null, meterConsole:null, meterNotices:[], sanctuarySchedules:[], sanctuaryMasters:[], sanctuaryStatusOptions:[], sanctuaryScheduleLoaded:false, sanctuaryScheduleAccess:null, sanctuaryRolePermissions:null, sanctuaryScheduleSaving:false, lastSanctuarySyncData:null, lastSanctuaryStatusData:null, lastSanctuaryId:'all', visitorDays:7, visitorPage:1, visitorTotalPages:1, visitorCanViewMemberHistory:false, lookupConsole:null, lookupSessionId:'', lookupSessionToken:'', lookupPollTimer:null, lookupHeartbeatAt:0, lookupStarting:false, lookupQueueRunning:false, lookupExitSafety:'idle', lookupHistory:[], lookupHistoryDetails:{} };
+  const CACHE = '2026072801';
   const DEFAULT_SUBTABS = { members:'accounts', characters:'lookup', notices:'general', system:'server-status', logs:'activity' };
   function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
   function addLog(type,msg){
@@ -333,43 +333,109 @@
       races:lookupSplit($('#characterLookupRaces')?.value)
     };
   }
-  function readDirectCharacterRequest(){
-    const scope=String($('#characterLookupScope')?.value||'all');
-    if(scope!=='single')throw new Error('조회 범위를 특정 캐릭터로 선택하세요.');
-    const characterName=String($('#characterLookupName')?.value||'').trim();
-    if(!characterName)throw new Error('Server에서 직접 조회할 캐릭터명을 입력하세요.');
-    const servers=lookupSplit($('#characterLookupServers')?.value);
-    if(servers.length>1)throw new Error('Server 1명 직접 조회는 서버를 하나만 지정할 수 있습니다.');
-    return {characterName,server:servers[0]||'',serverId:servers[0]||null};
+  function lookupCount(value){
+    const number=Number(value);
+    return Number.isFinite(number)&&number>=0?number.toLocaleString('ko-KR'):'-';
   }
-  function directMetric(value){const number=Number(value);return Number.isFinite(number)&&number>0?number.toLocaleString('ko-KR'):'-';}
-  function directDelta(previous,current){
-    const before=Number(previous||0),after=Number(current||0);
-    if(!before||!after)return '';
-    const delta=after-before;
-    return delta===0?'변동 없음':(delta>0?'+':'')+delta.toLocaleString('ko-KR');
+  function redactDiagnostic(value,depth=0){
+    if(depth>8)return '[DEPTH_LIMIT]';
+    if(Array.isArray(value))return value.slice(0,200).map(item=>redactDiagnostic(item,depth+1));
+    if(!value||typeof value!=='object')return value;
+    return Object.fromEntries(Object.entries(value).map(([key,item])=>[
+      key,
+      /pass.?key|pass.?code|session.?token|authorization|cookie|secret|apikey/i.test(key)?'[REDACTED]':redactDiagnostic(item,depth+1)
+    ]));
   }
-  function renderCharacterDirectResult(data){
-    state.lookupDirectResult=data||null;
-    const root=$('#characterLookupDirectResult');const body=$('#characterLookupDirectBody');const badge=$('#characterLookupDirectBadge');
-    if(!root||!body)return;
-    root.hidden=!data;
-    if(!data){body.innerHTML='';return;}
-    const ok=data.ok===true&&data.completed!==false;
-    if(badge){badge.textContent=ok?'완료':'실패';badge.className='admin-pill '+(ok?'ok':'error');}
-    if(!ok){body.innerHTML='<div class="admin-empty">'+esc(data.message||'Server 직접 조회에 실패했습니다.')+'</div>';return;}
-    const previous=data.previous||{};const current=data.current||{};const parsed=data.parsed||{};const official=data.official||{};const character=data.character||{};
-    const pveItem=current.pveItemLevel??parsed.pveItemLevel??(String(parsed.gearType||'').toUpperCase()==='PVE'?official.itemLevel:null);
-    const pvePower=current.pveCombatPower??parsed.pveCombatPower??(String(parsed.gearType||'').toUpperCase()==='PVE'?official.combatPower:null);
-    const pvpItem=current.pvpItemLevel??parsed.pvpItemLevel??(String(parsed.gearType||'').toUpperCase()==='PVP'?official.itemLevel:null);
-    const pvpPower=current.pvpCombatPower??parsed.pvpCombatPower??(String(parsed.gearType||'').toUpperCase()==='PVP'?official.combatPower:null);
-    body.innerHTML='<div class="admin-lookup-direct-character"><strong>'+esc(character.characterName||current.characterName||'-')+'</strong><span>'+esc(character.serverName||current.serverName||character.serverId||'')+' · '+esc(character.className||current.className||'')+' · 판정 '+esc(parsed.gearType||parsed.gearParseStatus||'-')+'</span></div>'+
-      '<div class="admin-lookup-direct-grid">'+
-      '<article><span>PVE 아이템레벨</span><strong>'+directMetric(pveItem)+'</strong><em>이전 '+directMetric(previous.pveItemLevel)+' · '+esc(directDelta(previous.pveItemLevel,pveItem))+'</em></article>'+
-      '<article><span>PVE 전투력</span><strong>'+directMetric(pvePower)+'</strong><em>이전 '+directMetric(previous.pveCombatPower)+' · '+esc(directDelta(previous.pveCombatPower,pvePower))+'</em></article>'+
-      '<article><span>PVP 아이템레벨</span><strong>'+directMetric(pvpItem)+'</strong><em>이전 '+directMetric(previous.pvpItemLevel)+' · '+esc(directDelta(previous.pvpItemLevel,pvpItem))+'</em></article>'+
-      '<article><span>PVP 전투력</span><strong>'+directMetric(pvpPower)+'</strong><em>이전 '+directMetric(previous.pvpCombatPower)+' · '+esc(directDelta(previous.pvpCombatPower,pvpPower))+'</em></article>'+
-      '</div><div class="admin-lookup-direct-meta"><span>공식 수치 '+directMetric(official.itemLevel)+' / '+directMetric(official.combatPower)+'</span><span>Master '+esc(parsed.masterSyncStatus||'반영 완료')+'</span><span>list '+(data.listSyncQueued===true?'동기화 Queue 준비':'Queue 확인 필요')+'</span><span>세션 '+esc(String(data.sessionId||'').slice(0,8))+'…</span></div>';
+  async function copyText(text){
+    const value=String(text||'');
+    try{await navigator.clipboard.writeText(value);}
+    catch(_error){
+      const area=document.createElement('textarea');area.value=value;area.setAttribute('readonly','');area.style.position='fixed';area.style.opacity='0';document.body.appendChild(area);area.select();
+      const ok=document.execCommand('copy');area.remove();if(!ok)throw new Error('클립보드 복사 권한을 확인해 주세요.');
+    }
+    toast('클립보드에 복사되었습니다.');
+  }
+  function diagnosticPayload(data=state.lookupConsole){
+    const progressBox=data?.progress||{};
+    return redactDiagnostic({
+      schemaVersion:'kinojo-admin-lookup-diagnostic-v1',
+      webVersion:'2026072801',
+      copiedAt:new Date().toISOString(),
+      sessionId:data?.sessionId||null,
+      source:data?.session?.raw_payload?.requestedSurface||data?.queueMeta?.source||null,
+      status:lookupStatusLabel(data),
+      message:data?.message||data?.session?.message||data?.job?.message||'',
+      queueMeta:data?.queueMeta||{},
+      progress:progressBox.progress||progressBox,
+      handoff:data?.handoff||{},
+      postprocess:data?.postprocess||{},
+      failures:data?.failurePreview||[],
+      events:data?.events||[]
+    });
+  }
+  async function copyLookupDiagnostics(){
+    await copyText(JSON.stringify(diagnosticPayload(),null,2));
+  }
+  async function copyLookupFailure(index){
+    const rows=Array.isArray(state.lookupConsole?.failurePreview)?state.lookupConsole.failurePreview:[];
+    const row=rows[index];if(!row)return;
+    await copyText(JSON.stringify(redactDiagnostic({
+      schemaVersion:'kinojo-admin-lookup-failure-v1',
+      webVersion:'2026072801',
+      sessionId:state.lookupConsole?.sessionId||null,
+      copiedAt:new Date().toISOString(),
+      failure:row
+    }),null,2));
+  }
+  function historySessionId(item){return String(item?.sessionId||item?.session_id||item?.id||'');}
+  function historySummary(item){
+    const summary=item?.summary||item?.result||item?.progress||{};
+    const total=Number(summary.total||item?.total||0);
+    const success=Number(summary.successCount||summary.success||item?.successCount||item?.success||0);
+    const failed=Number(summary.finalFailedCount||summary.failedCount||item?.finalFailedCount||item?.failedCount||0);
+    return{total,success,failed};
+  }
+  function renderLookupHistory(){
+    const root=$('#characterLookupHistoryList');if(!root)return;
+    const rows=Array.isArray(state.lookupHistory)?state.lookupHistory:[];
+    if(!rows.length){root.innerHTML='<div class="admin-empty">저장된 조회 기록이 없습니다.</div>';return;}
+    root.innerHTML=rows.map(item=>{
+      const sessionId=historySessionId(item);const summary=historySummary(item);
+      const status=String(item.status||item.runStatus||item.resultStatus||'완료');
+      const title=String(item.displayLabel||item.title||item.lookupFilterSummary||item.startedAt||item.started_at||'조회 기록');
+      const time=item.completedAt||item.finishedAt||item.startedAt||item.started_at||'';
+      const detail=state.lookupHistoryDetails[sessionId];
+      return '<article class="admin-lookup-history-item"><div class="admin-lookup-history-main"><strong>'+esc(title)+'</strong><span>'+esc(status)+' · 대상 '+lookupCount(summary.total)+' · 성공 '+lookupCount(summary.success)+' · 실패 '+lookupCount(summary.failed)+'</span><time>'+esc(formatServerTime(time))+'</time></div><div class="admin-lookup-history-actions"><button class="admin-btn" type="button" data-lookup-history-detail="'+esc(sessionId)+'">상세</button><button class="admin-btn" type="button" data-lookup-history-copy="'+esc(sessionId)+'">로그 복사</button></div>'+(detail?'<pre class="admin-lookup-history-detail">'+esc(JSON.stringify(redactDiagnostic(detail),null,2))+'</pre>':'')+'</article>';
+    }).join('');
+  }
+  async function loadLookupHistory(){
+    const root=$('#characterLookupHistoryList');if(root)root.innerHTML='<div class="admin-empty">Server 조회 기록을 불러오는 중입니다.</div>';
+    try{
+      const data=await adminLookup('history',{limit:40});
+      if(!data||data.ok===false)throw new Error(data?.message||'조회 기록을 불러오지 못했습니다.');
+      state.lookupHistory=Array.isArray(data.items)?data.items:Array.isArray(data.reports)?data.reports:[];
+      renderLookupHistory();
+    }catch(error){if(root)root.innerHTML='<div class="admin-empty error">'+esc(error.message||String(error))+'</div>';}
+  }
+  async function loadLookupHistoryDetail(sessionId){
+    if(!sessionId)return null;
+    const data=await adminLookup('historydetail',{sessionId});
+    if(!data||data.ok===false)throw new Error(data?.message||'조회 상세 기록을 불러오지 못했습니다.');
+    const detail=data.report||data;
+    state.lookupHistoryDetails[sessionId]=detail;
+    renderLookupHistory();
+    return detail;
+  }
+  async function handleLookupHistoryClick(button){
+    const detailId=button.dataset.lookupHistoryDetail;
+    const copyId=button.dataset.lookupHistoryCopy;
+    const sessionId=detailId||copyId;if(!sessionId)return;
+    button.disabled=true;
+    try{
+      const detail=state.lookupHistoryDetails[sessionId]||await loadLookupHistoryDetail(sessionId);
+      if(copyId)await copyText(JSON.stringify(redactDiagnostic({schemaVersion:'kinojo-lookup-history-v1',webVersion:'2026072801',copiedAt:new Date().toISOString(),sessionId,report:detail}),null,2));
+    }catch(error){setStatus('#characterLookupStatus',error.message||String(error),'error');}
+    finally{button.disabled=false;}
   }
 
   function lookupStatusLabel(data){
@@ -394,7 +460,6 @@
   }
   function lookupStepClass(value){const key=String(value||'pending');return ['done','active','error'].includes(key)?key:'pending';}
   function lookupExitSafety(data){
-    if(state.lookupDirectRunning)return{state:'unsafe',title:'현재 페이지를 닫지 마세요',message:'한 명 직접 조회를 처리하고 있습니다. 지금 페이지나 브라우저를 종료하면 조회가 중단될 수 있습니다.'};
     const handoff=data?.handoff||{};
     const serverQueue=data?.serverQueue===true;
     const active=data?.active===true;
@@ -436,6 +501,13 @@
     if($('#characterLookupFailed'))$('#characterLookupFailed').textContent=Number(progress.finalFailedCount||0).toLocaleString('ko-KR');
     if($('#characterLookupPercent'))$('#characterLookupPercent').textContent=percent.toFixed(1)+'%';
     if($('#characterLookupProgressBar'))$('#characterLookupProgressBar').style.width=percent+'%';
+    const queueMeta=data?.queueMeta||data?.session?.raw_payload?.queueMeta||{};
+    const sourceSummary=data?.sourceSummary||{};
+    if($('#characterLookupListCount'))$('#characterLookupListCount').textContent=lookupCount(sourceSummary.listCount??queueMeta.rawListCount);
+    if($('#characterLookupMasterCount'))$('#characterLookupMasterCount').textContent=lookupCount(sourceSummary.serverMasterTotal??queueMeta.masterTotalCount??queueMeta.existingMasterCount);
+    if($('#characterLookupMatchedCount'))$('#characterLookupMatchedCount').textContent=lookupCount(sourceSummary.matchedCount??queueMeta.matchedMasterCount??queueMeta.existingMasterCount);
+    if($('#characterLookupNewCount'))$('#characterLookupNewCount').textContent=lookupCount(sourceSummary.newCharacterCount??queueMeta.newCharacterCount);
+    if($('#characterLookupTargetCount'))$('#characterLookupTargetCount').textContent=lookupCount(sourceSummary.targetCount??queueMeta.queueCount??total);
     const steps=[
       {id:'characterLookupStep1',status:progress.step1Status,percent:progress.step1Percent,label:'원본 대조'},
       {id:'characterLookupStep2',status:progress.step2Status,percent:progress.step2Percent,label:'공식 조회'},
@@ -445,34 +517,29 @@
     const events=$('#characterLookupEvents');
     if(events){const rows=Array.isArray(data?.events)?data.events:[];events.innerHTML=rows.length?rows.map(row=>'<article><time>'+esc(formatServerTime(row.created_at||row.createdAt))+'</time><strong>'+esc(row.stage||row.event_type||row.eventType||'EVENT')+'</strong><span>'+esc(row.message||'')+'</span></article>').join(''):'<div class="admin-empty">아직 조회 이벤트가 없습니다.</div>';}
     const failures=$('#characterLookupFailures');
-    if(failures){const rows=Array.isArray(data?.failurePreview)?data.failurePreview:[];failures.hidden=!rows.length;failures.innerHTML=rows.length?'<strong>재시도·실패 Target</strong>'+rows.map(row=>'<article><span>'+esc(row.character_name||row.characterName||'-')+' · '+esc(row.target_status||row.targetStatus||'-')+' · '+Number(row.attempt_count||row.attemptCount||0)+'/'+Number(row.max_attempts||row.maxAttempts||3)+'</span><em>'+esc(row.last_error||row.lastError||row.last_failure_code||row.lastFailureCode||'')+'</em></article>').join(''):'';}
+    if(failures){
+      const rows=Array.isArray(data?.failurePreview)?data.failurePreview:[];
+      failures.hidden=!rows.length;
+      failures.innerHTML=rows.length?'<div class="admin-lookup-failure-head"><strong>확인 필요 캐릭터 '+rows.length+'명</strong><span>오류별 복사 버튼으로 진단 정보를 전달할 수 있습니다.</span></div>'+rows.map((row,index)=>'<article><div><span>'+esc(row.character_name||row.characterName||'-')+' · '+esc(row.target_status||row.targetStatus||'-')+' · '+Number(row.attempt_count||row.attemptCount||0)+'/'+Number(row.max_attempts||row.maxAttempts||3)+'</span><em>'+esc(row.last_error||row.lastError||row.last_failure_code||row.lastFailureCode||'')+'</em></div><button class="admin-btn" type="button" data-lookup-failure-copy="'+index+'">오류 정보 복사</button></article>').join(''):'';
+    }
     const canControl=data?.canControl===true;
     const active=data?.active===true;
     const paused=data?.controlState==='paused';
     const singleScope=String($('#characterLookupScope')?.value||'all')==='single';
-    if($('#characterLookupStartBtn'))$('#characterLookupStartBtn').disabled=state.lookupStarting||state.lookupDirectRunning||state.lookupQueueRunning||active||roleLevel()<4;
-    if($('#characterLookupServerQueueBtn')){const button=$('#characterLookupServerQueueBtn');button.disabled=state.lookupStarting||state.lookupDirectRunning||state.lookupQueueRunning||active||roleLevel()<4;button.textContent=state.lookupQueueRunning?'Server Queue 처리 중...':'Server Queue 시작';}
-    if($('#characterLookupDirectBtn')){const button=$('#characterLookupDirectBtn');button.disabled=state.lookupStarting||state.lookupDirectRunning||state.lookupQueueRunning||active||roleLevel()<4||!singleScope;button.textContent=state.lookupDirectRunning?'Server 조회 진행 중...':'Server 1명 직접 조회';}
+    if($('#characterLookupServerQueueBtn')){const button=$('#characterLookupServerQueueBtn');button.disabled=state.lookupStarting||state.lookupQueueRunning||active||roleLevel()<4;button.textContent=state.lookupQueueRunning?'조회 준비 중...':singleScope?'선택 캐릭터 조회 시작':'전체 조회 시작';}
     if($('#characterLookupPauseBtn'))$('#characterLookupPauseBtn').disabled=!canControl||!active||paused;
     if($('#characterLookupResumeBtn'))$('#characterLookupResumeBtn').disabled=!canControl||!active||!paused;
     if($('#characterLookupStopBtn'))$('#characterLookupStopBtn').disabled=!canControl||!active;
-    if($('#characterLookupExtensionGuide'))$('#characterLookupExtensionGuide').hidden=!(data?.waitingExtension===true);
     renderLookupExitSafety(data);
   }
   async function refreshCharacterLookupStatus(options={}){
     loadStoredLookupSession();
     try{
-      const data=await adminLookup('status',{sessionId:state.lookupSessionId||null});
+      let data=await adminLookup('status',{sessionId:null});
+      if((!data||data.ok===false||!data.sessionId)&&state.lookupSessionId)data=await adminLookup('status',{sessionId:state.lookupSessionId});
       if(!data||data.ok===false)throw new Error(data?.message||'조회 상태 확인 실패');
-      if(data.sessionId&&!state.lookupSessionId)storeLookupSession(data.sessionId,state.lookupSessionToken);
+      if(data.sessionId&&data.sessionId!==state.lookupSessionId)storeLookupSession(data.sessionId,'');
       renderCharacterLookupConsole(data);
-      const rawPayload=data?.session?.raw_payload||data?.job?.raw_payload||{};
-      if(data.sessionId&&data.active!==true&&rawPayload.directRefresh===true&&!state.lookupDirectResult){
-        try{
-          const direct=await adminLookup('directresult',{sessionId:data.sessionId});
-          if(direct&&direct.ok!==false)renderCharacterDirectResult(Object.assign({ok:true,completed:String(data?.session?.status||data?.job?.status||'').toLowerCase()==='completed',sessionId:data.sessionId,listSyncQueued:true},direct));
-        }catch(_directResultError){}
-      }
       if(data.active===true&&data.waitingExtension===true&&state.lookupSessionToken&&Date.now()-state.lookupHeartbeatAt>20000){
         state.lookupHeartbeatAt=Date.now();
         const p=data.progress?.progress||data.progress||{};
@@ -490,25 +557,8 @@
     loadStoredLookupSession();
     if(roleLevel()<4){setStatus('#characterLookupStatus','Manager는 진행 상태만 확인할 수 있고 조회 시작·제어는 MASTER·SUB MASTER만 가능합니다.','');}
     await refreshCharacterLookupStatus({statusLine:force===true});
+    await loadLookupHistory();
     startCharacterLookupPolling();
-  }
-  async function startDirectCharacterRefresh(){
-    if(state.lookupDirectRunning)return;
-    if(roleLevel()<4){setStatus('#characterLookupStatus','Server 직접 조회 권한은 MASTER·SUB MASTER에게만 있습니다.','error');return;}
-    let request;
-    try{request=readDirectCharacterRequest();}catch(err){setStatus('#characterLookupStatus',err.message||String(err),'error');return;}
-    state.lookupDirectRunning=true;state.lookupDirectResult=null;renderCharacterDirectResult(null);storeLookupSession('','');state.lookupConsole=null;renderCharacterLookupConsole(null);
-    setStatus('#characterLookupStatus',request.characterName+' 공식 정보와 장비를 Server에서 직접 조회하는 중입니다...','');
-    try{
-      const data=await adminLookup('directrefresh',request);
-      if(!data||data.ok===false)throw new Error(data?.message||'Server 직접 조회 실패');
-      storeLookupSession(data.sessionId||'','');
-      renderCharacterDirectResult(data);
-      setStatus('#characterLookupStatus',data.message||'Server 직접 조회와 최신화를 완료했습니다.','ok');
-      toast(request.characterName+' Server 직접 최신화 완료');
-      await refreshCharacterLookupStatus({statusLine:false});
-    }catch(err){const failed={ok:false,completed:false,message:err.message||String(err)};renderCharacterDirectResult(failed);setStatus('#characterLookupStatus',failed.message,'error');await refreshCharacterLookupStatus({statusLine:false});}
-    finally{state.lookupDirectRunning=false;renderCharacterLookupConsole(state.lookupConsole||null);}
   }
 
   async function startCharacterServerQueue(){
@@ -535,22 +585,6 @@
     finally{state.lookupStarting=false;state.lookupQueueRunning=false;renderCharacterLookupConsole(state.lookupConsole||null);}
   }
 
-  async function startCharacterLookup(){
-    if(state.lookupStarting)return;
-    if(roleLevel()<4){setStatus('#characterLookupStatus','조회 시작 권한은 MASTER·SUB MASTER에게만 있습니다.','error');return;}
-    let lookupFilter;
-    try{lookupFilter=readLookupFilter();}catch(err){setStatus('#characterLookupStatus',err.message||String(err),'error');return;}
-    state.lookupStarting=true; renderCharacterLookupConsole(state.lookupConsole||null); setStatus('#characterLookupStatus','Server 조회 세션과 Target Queue를 준비하는 중입니다...','');
-    try{
-      const data=await adminLookup('start',{lookupFilter});
-      if(!data||data.ok===false)throw new Error(data?.message||'조회 시작 실패');
-      storeLookupSession(data.sessionId||'',data.sessionToken||'');
-      if(data.noTargets===true){setStatus('#characterLookupStatus',data.lookupFilter?.lookupMode==='missing_only'?'신규 캐릭터가 없어 조회 없이 완료했습니다.':'조회 대상이 없습니다.','ok');}
-      else{setStatus('#characterLookupStatus','Queue 준비 완료 · Extension에서 같은 PASS KEY로 조회 시작을 누르세요.','ok');toast('캐릭터 최신화 Queue를 준비했습니다.');}
-      await refreshCharacterLookupStatus({statusLine:false});
-    }catch(err){setStatus('#characterLookupStatus',err.message||String(err),'error');}
-    finally{state.lookupStarting=false;renderCharacterLookupConsole(state.lookupConsole||null);}
-  }
   async function controlCharacterLookup(command){
     const sessionId=state.lookupConsole?.sessionId||state.lookupSessionId;
     if(!sessionId){setStatus('#characterLookupStatus','제어할 조회 세션이 없습니다.','error');return;}
@@ -1453,14 +1487,16 @@
     $('#requestReloadBtn')?.addEventListener('click',loadCodeRequests);
     $('#requestList')?.addEventListener('click',e=>{ if(e.target.matches('[data-approve-request]')) processRequest(e.target,'approveCodeRequest'); if(e.target.matches('[data-reject-request]')) processRequest(e.target,'rejectCodeRequest'); });
     $('#memberReloadBtn')?.addEventListener('click',loadAccounts); $('#sanctuaryRolePermissionReloadBtn')?.addEventListener('click',loadSanctuaryRolePermissions); $('#sanctuaryRolePermissionMatrix')?.addEventListener('change',e=>{if(e.target.matches('[data-sanctuary-role-permission]'))setSanctuaryRolePermission(e.target);}); $('#memberSearch')?.addEventListener('input',applyMemberFilters); $('#memberRoleFilter')?.addEventListener('change',applyMemberFilters); $('#memberList')?.addEventListener('click',e=>{ if(e.target.matches('[data-member-role-open],[data-member-role-save],[data-member-role-cancel],[data-member-disable],[data-member-delete]')) handleMemberAction(e.target); });
-    $('#characterLookupDirectBtn')?.addEventListener('click',startDirectCharacterRefresh);
     $('#characterLookupServerQueueBtn')?.addEventListener('click',startCharacterServerQueue);
-    $('#characterLookupStartBtn')?.addEventListener('click',startCharacterLookup);
     $('#characterLookupReloadBtn')?.addEventListener('click',()=>refreshCharacterLookupStatus({statusLine:true}));
+    $('#characterLookupHistoryReloadBtn')?.addEventListener('click',loadLookupHistory);
+    $('#characterLookupCopyDiagnosticsBtn')?.addEventListener('click',copyLookupDiagnostics);
+    $('#characterLookupHistoryList')?.addEventListener('click',e=>{const button=e.target.closest('[data-lookup-history-detail],[data-lookup-history-copy]');if(button)handleLookupHistoryClick(button);});
+    $('#characterLookupFailures')?.addEventListener('click',e=>{const button=e.target.closest('[data-lookup-failure-copy]');if(button)copyLookupFailure(Number(button.dataset.lookupFailureCopy||0));});
     $('#characterLookupPauseBtn')?.addEventListener('click',()=>controlCharacterLookup('pause'));
     $('#characterLookupResumeBtn')?.addEventListener('click',()=>controlCharacterLookup('resume'));
     $('#characterLookupStopBtn')?.addEventListener('click',()=>controlCharacterLookup('cancel'));
-    $('#characterLookupScope')?.addEventListener('change',e=>{const single=e.target.value==='single';if($('#characterLookupName'))$('#characterLookupName').disabled=!single;if(!single)renderCharacterDirectResult(null);renderCharacterLookupConsole(state.lookupConsole||null);});
+    $('#characterLookupScope')?.addEventListener('change',e=>{const single=e.target.value==='single';if($('#characterLookupName'))$('#characterLookupName').disabled=!single;renderCharacterLookupConsole(state.lookupConsole||null);});
     $('#characterSearchBtn')?.addEventListener('click',searchCharacters);
     $('#characterSearch')?.addEventListener('keydown',e=>{ if(e.key==='Enter') searchCharacters(); });
     $('#characterList')?.addEventListener('click',e=>{ if(e.target.matches('[data-char-deactivate]')) handleCharacterAction(e.target,'deactivate'); if(e.target.matches('[data-char-restore]')) handleCharacterAction(e.target,'restore'); if(e.target.matches('[data-char-rename]')) handleCharacterAction(e.target,'markRenamed'); });
