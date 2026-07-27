@@ -1,10 +1,10 @@
-/* KINOJO Admin Console v2026072701 */
+/* KINOJO Admin Console v2026072702 */
 (function(){
   'use strict';
   const $ = (s,r=document)=>r.querySelector(s);
   const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
   const state = { tab:'dashboard', subtab:'', loaded:{}, subtabs:{ members:'accounts', characters:'lookup', notices:'general', system:'server-status' }, requests:[], accounts:[], characters:[], logs:[], eventNoticeGroups:[], eventNoticeEditingId:null, meterConsole:null, meterNotices:[], sanctuarySchedules:[], sanctuaryMasters:[], sanctuaryStatusOptions:[], sanctuaryScheduleLoaded:false, sanctuaryScheduleAccess:null, sanctuaryRolePermissions:null, sanctuaryScheduleSaving:false, lastSanctuarySyncData:null, lastSanctuaryStatusData:null, lastSanctuaryId:'all', visitorDays:7, visitorPage:1, visitorTotalPages:1, visitorCanViewMemberHistory:false, lookupConsole:null, lookupSessionId:'', lookupSessionToken:'', lookupPollTimer:null, lookupHeartbeatAt:0, lookupStarting:false, lookupDirectRunning:false, lookupDirectResult:null, lookupQueueRunning:false, lookupQueueLoopId:0 };
-  const CACHE = '2026072701';
+  const CACHE = '2026072702';
   const DEFAULT_SUBTABS = { members:'accounts', characters:'lookup', notices:'general', system:'server-status', logs:'activity' };
   function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
   function addLog(type,msg){
@@ -377,6 +377,12 @@
     if(data.controlState==='paused')return '일시정지';
     if(data.controlState==='cancelled')return '중단';
     if(data.waitingExtension)return 'Extension 연결 대기';
+    const postprocess=data.postprocess||{};
+    if(data.postprocessComplete===true&&data.partialSuccess===true)return '부분 완료';
+    if(data.postprocessComplete===true)return '후처리 완료';
+    if(String(postprocess.status||'').toLowerCase()==='failed')return data.postprocessRetryable===true?'후처리 재시도':'후처리 실패';
+    const progressBox=data.progress||{};const progress=progressBox.progress||progressBox;
+    if(data.active&&data.serverQueue===true&&String(progress.step2Status||'').toLowerCase()==='done')return 'Server 후처리';
     if(data.active&&data.serverQueue===true)return 'Server Queue 진행';
     if(data.active&&data.extensionClaimed)return '조회 진행';
     const status=String(data.session?.status||data.job?.status||'').toLowerCase();
@@ -398,7 +404,7 @@
     const statusLabel=lookupStatusLabel(data);
     const currentCharacter=String(progress.currentCharacter||data?.job?.current_character||data?.job?.currentCharacter||'');
     const message=String(data?.message||data?.session?.message||data?.job?.message||'조회 작업을 시작하면 이 영역에서 진행 상태를 확인할 수 있습니다.');
-    const statusEl=$('#characterLookupState'); if(statusEl){statusEl.textContent=statusLabel;statusEl.className='admin-pill '+(statusLabel==='완료'?'ok':statusLabel==='실패'||statusLabel==='중단'?'error':statusLabel==='일시정지'?'warn':'active');}
+    const statusEl=$('#characterLookupState'); if(statusEl){statusEl.textContent=statusLabel;statusEl.className='admin-pill '+(['완료','후처리 완료'].includes(statusLabel)?'ok':['실패','중단','후처리 실패'].includes(statusLabel)?'error':['일시정지','부분 완료','후처리 재시도'].includes(statusLabel)?'warn':'active');}
     if($('#characterLookupSession'))$('#characterLookupSession').textContent=empty?'세션 없음':String(data.sessionId).slice(0,8)+'…';
     if($('#characterLookupOwner'))$('#characterLookupOwner').textContent=String(data?.session?.requested_by_character||data?.job?.requested_by_character||'-');
     if($('#characterLookupMessage'))$('#characterLookupMessage').textContent=message;
@@ -497,11 +503,19 @@
         const data=await adminLookup('runserverqueue',{sessionId:sid,sessionToken:token,batchLimit:5});
         if(!data||data.ok===false)throw new Error(data?.message||'Server Queue Batch 처리 실패');
         await refreshCharacterLookupStatus({statusLine:false});
-        if(data.done===true||data.completed===true){setStatus('#characterLookupStatus',data.message||'3-1차 Server Queue 조회를 완료했습니다.','ok');toast('Server Queue 공식 조회 완료');break;}
+        if(data.failed===true){
+          if(data.hasMore===true&&data.retryable!==false){setStatus('#characterLookupStatus',data.message||'Server 후처리 단계가 실패해 같은 단계부터 재시도합니다.','');await queueDelay(1200);continue;}
+          setStatus('#characterLookupStatus',data.message||'Server Queue 처리에 실패했습니다.','error');break;
+        }
+        if(data.done===true||data.completed===true){
+          if(data.partialSuccess===true){setStatus('#characterLookupStatus',data.message||'일부 캐릭터는 최종 실패했지만 성공 캐릭터의 Server 후처리를 완료했습니다.','');toast('Server Queue 부분 완료');}
+          else{setStatus('#characterLookupStatus',data.message||'Server Queue 조회와 후처리를 완료했습니다.','ok');toast('Server Queue 후처리 완료');}
+          break;
+        }
         if(data.paused===true||data.cancelled===true){setStatus('#characterLookupStatus',data.message||'Server Queue 상태가 변경되었습니다.',data.cancelled?'error':'');break;}
         if(data.busy===true){await queueDelay(1500);continue;}
         if(data.hasMore!==true)break;
-        await queueDelay(500);
+        await queueDelay(data.postprocess===true?900:500);
       }
     }catch(err){setStatus('#characterLookupStatus',err.message||String(err),'error');}
     finally{if(loopId===state.lookupQueueLoopId)state.lookupQueueRunning=false;renderCharacterLookupConsole(state.lookupConsole||null);}
@@ -518,7 +532,7 @@
       storeLookupSession(data.sessionId||'',data.sessionToken||'');
       if(data.noTargets===true){setStatus('#characterLookupStatus',data.lookupFilter?.lookupMode==='missing_only'?'신규 캐릭터가 없어 조회 없이 완료했습니다.':'조회 대상이 없습니다.','ok');}
       else{
-        setStatus('#characterLookupStatus','Server Queue 준비 완료 · 최대 5명씩 순차 조회를 시작합니다.','ok');
+        setStatus('#characterLookupStatus','Server Queue 준비 완료 · 최대 5명씩 공식 조회 후 Master·성장 리뷰·랭킹까지 처리합니다.','ok');
         await refreshCharacterLookupStatus({statusLine:false});
         runCharacterServerQueueLoop(data.sessionId,data.sessionToken).catch(()=>{});
       }
