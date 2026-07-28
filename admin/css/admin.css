@@ -1,4 +1,4 @@
-/* KINOJO Admin Console v2026072702 */
+/* KINOJO Admin Console v2026072803 */
 :root{
   --admin-bg:#f5f7fb;
   --admin-panel:#ffffff;
@@ -513,7 +513,7 @@ KINOJO Sanctuary Schedule Admin 20260713 STEP 12
 
 .admin-lookup-failures{display:grid;gap:9px;padding:14px;border:1px solid #f0c2be;border-radius:14px;background:#fff8f7}
 .admin-lookup-failures[hidden]{display:none!important}
-.admin-lookup-failure-head{display:grid;gap:3px}.admin-lookup-failure-head strong{font-size:13px;color:#a33a34}.admin-lookup-failure-head span{font-size:11px;color:#9a5751}
+.admin-lookup-failure-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.admin-lookup-failure-head>div{display:grid;gap:3px}.admin-lookup-failure-head strong{font-size:13px;color:#a33a34}.admin-lookup-failure-head span{font-size:11px;color:#9a5751}
 .admin-lookup-failures article{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 11px;border:1px solid #f2d8d5;border-radius:11px;background:#fff}
 .admin-lookup-failures article>div{display:grid;gap:4px;min-width:0}
 .admin-lookup-failures article span{font-size:12px;font-weight:800;color:#67413e}
@@ -525,4 +525,4 @@ KINOJO Sanctuary Schedule Admin 20260713 STEP 12
 .admin-lookup-history-main{display:grid;gap:3px;min-width:0}.admin-lookup-history-main strong{font-size:13px;color:#263b54}.admin-lookup-history-main span,.admin-lookup-history-main time{font-size:11px;color:#718096}
 .admin-lookup-history-actions{display:flex;gap:6px}.admin-lookup-history-detail{grid-column:1/-1;max-height:280px;margin:4px 0 0;padding:12px;overflow:auto;border-radius:10px;background:#172033;color:#e5eefb;font-size:10px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
 @media(max-width:1100px){.admin-lookup-settings{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-lookup-overview{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-lookup-source-summary{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:720px){.admin-lookup-settings,.admin-lookup-overview,.admin-lookup-steps,.admin-lookup-source-summary{grid-template-columns:1fr}.admin-lookup-events article{grid-template-columns:1fr;gap:3px}.admin-lookup-start-row{align-items:stretch}.admin-lookup-start-row .admin-btn{width:100%}.admin-lookup-filter-details>summary,.admin-lookup-diagnostics>summary,.admin-lookup-history-head{align-items:flex-start;flex-direction:column}.admin-lookup-failures article,.admin-lookup-history-item{grid-template-columns:1fr}.admin-lookup-history-actions{width:100%}.admin-lookup-history-actions .admin-btn,.admin-lookup-failures article .admin-btn{width:100%}}
+@media(max-width:720px){.admin-lookup-settings,.admin-lookup-overview,.admin-lookup-steps,.admin-lookup-source-summary{grid-template-columns:1fr}.admin-lookup-events article{grid-template-columns:1fr;gap:3px}.admin-lookup-start-row{align-items:stretch}.admin-lookup-start-row .admin-btn{width:100%}.admin-lookup-filter-details>summary,.admin-lookup-diagnostics>summary,.admin-lookup-history-head,.admin-lookup-failure-head{align-items:stretch;flex-direction:column}.admin-lookup-failures article,.admin-lookup-history-item{grid-template-columns:1fr}.admin-lookup-history-actions{width:100%;flex-wrap:wrap}.admin-lookup-history-actions .admin-btn,.admin-lookup-failures article .admin-btn,.admin-lookup-failure-head>.admin-btn{width:100%}}
