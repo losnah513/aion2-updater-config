@@ -105,6 +105,7 @@ function applyHallData(data,{fromCache=false,initial=false,skipIfSame=false}={})
   const nextSignature=hallDataSignature(data);
 
   if(skipIfSame && previousSignature===nextSignature){
+    hallData=data;
     const topbarUpdate=document.getElementById("topbarUpdateTime");
     if(topbarUpdate && hallData?.updatedAt){
       topbarUpdate.textContent="업데이트 "+hallData.updatedAt;
@@ -138,20 +139,22 @@ async function fetchHallDataFresh(){
 
 async function load(){
   const requestSeq=++hallLoadRequestSeq;
-  renderHallLoadingLayout();
-  startLoadingText();
   const cached=readHallCache();
+  const hasCached=!!(cached && cached.ok!==false);
+  if(hasCached){
+    applyHallData(cached,{fromCache:true,initial:true});
+  }else{
+    renderHallLoadingLayout();
+    startLoadingText();
+  }
   try{
-    // 서버 순위/RPC 응답이 도착하기 전 빈 카드가 먼저 렌더링되는 문제를 막기 위해
-    // 초기 화면은 캐시 즉시 렌더링 대신 키노조 로딩 스피너를 유지한다.
     const data=await fetchHallDataFresh();
     if(requestSeq!==hallLoadRequestSeq)return false;
-    applyHallData(data,{initial:true});
+    applyHallData(data,{initial:!hasCached,skipIfSame:hasCached});
     return true;
   }catch(err){
     if(requestSeq!==hallLoadRequestSeq)return false;
-    if(cached && cached.ok!==false){
-      applyHallData(cached,{fromCache:true,initial:true});
+    if(hasCached){
       return true;
     }
     stopLoadingText();

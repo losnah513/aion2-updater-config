@@ -34,10 +34,6 @@
     return id;
   }
 
-  function todayKey(){
-    return new Date().toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' });
-  }
-
   function esc(value){
     return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({
       '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
@@ -297,29 +293,6 @@
       if(event.key === 'Escape') close();
     });
     return modal;
-  }
-
-  function limitKeyPrefix(){
-    return (state.options && state.options.limitPrefix) || ('kinojo_' + ((state.options && state.options.source) || 'common') + '_react');
-  }
-
-  function checkLimit(name, type){
-    const day = todayKey();
-    const prefix = limitKeyPrefix();
-    const sameKey = prefix + '_' + day + '_' + name + '_' + type;
-    const countKey = prefix + '_count_' + day + '_' + type;
-    if(localStorage.getItem(sameKey) === '1') return '같은 캐릭터에게 같은 반응은 하루 1번만 남길 수 있습니다.';
-    const count = Number(localStorage.getItem(countKey) || '0');
-    if(count >= 3) return (type === 'like' ? '좋아요' : '싫어요') + '는 하루 3번까지만 남길 수 있습니다.';
-    return '';
-  }
-
-  function markLimit(name, type){
-    const day = todayKey();
-    const prefix = limitKeyPrefix();
-    localStorage.setItem(prefix + '_' + day + '_' + name + '_' + type, '1');
-    const countKey = prefix + '_count_' + day + '_' + type;
-    localStorage.setItem(countKey, String(Number(localStorage.getItem(countKey) || '0') + 1));
   }
 
   function setStatus(message){
@@ -790,13 +763,6 @@
       return;
     }
 
-    const limit = checkLimit(target.name, state.type);
-    if(limit){
-      setStatus(limit);
-      updateSubmitState();
-      return;
-    }
-
     try{
       const context = opts.context || opts.source || 'character';
       if(window.KinojoAuth && opts.requireLogin !== false && !window.KinojoAuth.requireLogin('로그인 후 좋아요·싫어요를 남길 수 있습니다.', { context })){
@@ -814,8 +780,7 @@
       }else{
         data = await window.KinojoApi.postAction('hallReaction', {
           characterName: target.name,
-          owner: target.owner || '',
-          className: target.className || '',
+          serverId: target.serverId || '',
           reaction: state.type,
           comment,
           clientKey: visitorId(),
@@ -832,8 +797,7 @@
         return;
       }
 
-      markLimit(target.name, state.type);
-      setStatus('한마디가 전달되었어요.');
+      setStatus(data.message || '한마디가 전달되었어요.');
       if(typeof opts.onSuccess === 'function') opts.onSuccess(data, { target, reaction: state.type, comment });
       setTimeout(close, opts.closeDelay || 420);
     }catch(error){

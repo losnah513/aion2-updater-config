@@ -127,7 +127,7 @@
     remoteConfigPromise = (async function(){
       try{
         remoteConfigError = null;
-        const res = await fetch(new URL('/config.json', location.origin).toString() + '?t=' + Date.now(), { cache:'no-store' });
+        const res = await fetch(new URL('/config.json', location.origin).toString(), { cache:'no-cache' });
         if(!res.ok) throw new Error('config.json HTTP ' + res.status);
         remoteConfig = await res.json();
         remoteConfigLoaded = true;
@@ -1073,38 +1073,8 @@
       growthLabel,
       profileImageUrl:snakeOrCamel(row, 'profile_image_url', 'profileImageUrl', '') || '',
       detailUrl:snakeOrCamel(row, 'detail_url', 'detailUrl', '') || '',
-      isMain:(() => { const raw=snakeOrCamel(row, 'is_main', 'isMain', null); if(raw===true || String(raw).toLowerCase()==='true') return true; if(raw===false || String(raw).toLowerCase()==='false') return false; return stripServerSuffixFromCharacterName(name)===stripServerSuffixFromCharacterName(owner); })(),
+      isMain:(() => { const raw=snakeOrCamel(row, 'is_main', 'isMain', null); if(raw===true || String(raw).toLowerCase()==='true') return true; if(raw===false || String(raw).toLowerCase()==='false') return false; return null; })(),
       raw:row
-    };
-  }
-
-  function groupByClass(items){
-    const map = {};
-    (items || []).forEach(item => {
-      const key = item.className || '직업 미확인';
-      if(!map[key]) map[key] = [];
-      map[key].push(item);
-    });
-    return map;
-  }
-
-  function countByClass(items){
-    const count = {};
-    (items || []).forEach(item => {
-      const key = item.className || '직업 미확인';
-      count[key] = (count[key] || 0) + 1;
-    });
-    return count;
-  }
-
-  function defaultClassReviewPool(){
-    return {
-      full:['클래스 경쟁이 치열합니다. 순위권 진입은 쉽지 않겠어요.'],
-      nearlyFull:['상위권 구도가 점점 선명해지고 있습니다.'],
-      small:['아직 표본이 적어 다음 조회가 기대됩니다.'],
-      partyReady:['파티 구성이 가능한 인원이 모였습니다.'],
-      needOneMore:['한 명만 더 모이면 더 재미있는 경쟁이 됩니다.'],
-      lonely:['아직 외로운 클래스입니다. 새 랭커를 기다립니다.']
     };
   }
 
@@ -1113,52 +1083,7 @@
   }
 
   async function getWebHallOfFame(limit, extra={}){
-    const hall = await rpc('kinojo_web_get_hall_of_fame', { p_limit:Number(limit || 300) });
-    const mvp = await rpc('kinojo_web_get_mvp_candidates', { p_limit:20 }).catch(()=>({ ok:true, items:[] }));
-    const rows = Array.isArray(hall && hall.items) ? hall.items : [];
-    const allRows = Array.isArray(hall && hall.allItems) && hall.allItems.length ? hall.allItems : rows;
-    const displayRows = rows.length ? rows : allRows;
-    const items = allRows.map((row, idx) => hallItemFromRow(row, idx + 1));
-    const mainItems = displayRows.map((row, idx) => hallItemFromRow(row, idx + 1)).filter(item => item.isMain !== false);
-    const main = mainItems.length ? mainItems : items.filter(item => item.isMain !== false);
-    const all = items.slice();
-    const serverPveTop = Array.isArray(hall && hall.pveTop) ? hall.pveTop.map((row, idx)=>hallItemFromRow(row, idx + 1)) : [];
-    const serverPvpTop = Array.isArray(hall && hall.pvpTop) ? hall.pvpTop.map((row, idx)=>hallItemFromRow(row, idx + 1)) : [];
-    const pveTop = (serverPveTop.length ? serverPveTop : items.slice().sort((a,b)=>(b.pvePower||0)-(a.pvePower||0)).slice(0,5))
-      .map((item,idx)=>Object.assign({}, item, { rank:idx+1, category:'PVE', value:item.pvePower, label:item.pvePowerLabel }));
-    const pvpTop = (serverPvpTop.length ? serverPvpTop : items.slice().sort((a,b)=>(b.pvpPower||0)-(a.pvpPower||0)).slice(0,5))
-      .map((item,idx)=>Object.assign({}, item, { rank:idx+1, category:'PVP', value:item.pvpPower, label:item.pvpPowerLabel }));
-    const mvpCandidatesTop3 = (Array.isArray(mvp && mvp.items) ? mvp.items : []).map((row, idx)=>hallItemFromRow(row, idx + 1)).slice(0,3);
-    const updatedAt = rows[0] && (rows[0].updated_at || rows[0].ranking_date || rows[0].created_at) || '';
-    const rankingView = await getWebHallRankingView(Object.assign({limit, page:1, pageSize:10, includeSubs:false, className:'전체', search:'', rankMode:'PVE'}, extra || {})).catch(()=>null);
-    return {
-      ok:true,
-      source:'supabase_035',
-      updatedAt,
-      overallMain:main,
-      overallAll:all,
-      classMain:groupByClass(main),
-      classAll:groupByClass(all),
-      classMainCount:countByClass(main),
-      classAllCount:countByClass(all),
-      pveTop,
-      pvpTop,
-      mvp:mvpCandidatesTop3[0] || null,
-      mvpCandidatesTop3,
-      mvpConfirmed:false,
-      weeklyAwards:{
-        growthKing:items.slice().sort((a,b)=>(b.itemLevelDelta||0)-(a.itemLevelDelta||0)).filter(x=>x.itemLevelDelta).slice(0,5),
-        bulkUp:items.slice().sort((a,b)=>(b.powerDelta||0)-(a.powerDelta||0)).filter(x=>x.powerDelta).slice(0,5)
-      },
-      demonFamily:main.filter(item => String(item.serverId || '').startsWith('2') && item.serverId !== '2002').slice(0,40),
-      demonFamilyAll:items.filter(item => String(item.serverId || '').startsWith('2') && item.serverId !== '2002').slice(0,80),
-      partyFriend:main.filter(item => String(item.serverId || '').startsWith('1')).slice(0,40),
-      partyFriendAll:items.filter(item => String(item.serverId || '').startsWith('1')).slice(0,80),
-      newChicks:[],
-      reactionSummary:await getHallReactionSummary(),
-      classReviewPool:defaultClassReviewPool(),
-      rankingView
-    };
+    return getWebHofSummary(Object.assign({}, extra || {}, { limit:Number(limit || 300) }));
   }
 
   async function getWebHallRankingView(extra={}){
@@ -1251,7 +1176,7 @@
     return {
       ok:data?.ok!==false,
       source:data?.source || 'supabase_049',
-      updatedAt:data?.updatedAt || data?.updated_at || new Date().toLocaleString('ko-KR'),
+      updatedAt:data?.updatedAt || data?.updated_at || '',
       includeSubs:!!(data?.includeSubs || data?.include_subs || extra.includeSubs),
       pveTop,
       pvpTop,
@@ -1269,8 +1194,7 @@
       demonFamily:[],
       demonFamilyAll:[],
       partyFriend:[],
-      partyFriendAll:[],
-      classReviewPool:defaultClassReviewPool()
+      partyFriendAll:[]
     };
   }
 
@@ -1328,42 +1252,31 @@
     return logPageView(pageKey||currentPageKey(),{eventType:'LOGIN'});
   }
 
+  const VISIT_SUMMARY_CACHE_KEY = 'kinojo_visit_summary_server_v266';
+  function readVisitSummaryCache(){
+    try{
+      const cached=JSON.parse(sessionStorage.getItem(VISIT_SUMMARY_CACHE_KEY)||'null');
+      return cached && cached.stats ? cached.stats : null;
+    }catch(_err){return null;}
+  }
+  function writeVisitSummaryCache(stats){
+    try{sessionStorage.setItem(VISIT_SUMMARY_CACHE_KEY,JSON.stringify({savedAt:Date.now(),stats}));}catch(_err){}
+    return stats;
+  }
+
   async function getVisitStatsFromServer(pageKey, shouldLog){
-    if(shouldLog) await logPageView(pageKey || currentPageKey(), {eventType:'PAGE_VIEW'}).catch(()=>{});
+    if(shouldLog) logPageView(pageKey || currentPageKey(), {eventType:'PAGE_VIEW'}).catch(()=>{});
     try{
       const data=await rpc('kinojo_public_visit_summary_266',{});
-      return data?.stats||emptyVisitStats(todayVisitKey());
+      return writeVisitSummaryCache(data?.stats||emptyVisitStats(todayVisitKey()));
     }catch(_err){
-      const rows=await request('v_kinojo_page_view_daily',{query:'select=*&order=visit_date.asc'}).catch(()=>[]);
-      const stats=emptyVisitStats(todayVisitKey());
-      (Array.isArray(rows)?rows:[]).forEach(row=>{const rowDate=String(row.visit_date||'').replace(/-/g,'').slice(2,8);const views=Number(row.view_count||0);stats.totalVisits+=views;if(rowDate===stats.date)stats.todayVisits+=Number(row.visitor_count||0);});
-      return stats;
+      return readVisitSummaryCache()||emptyVisitStats(todayVisitKey());
     }
   }
 
-
-  function reactionSummaryFromRows(rows){
-    const byName = {};
-    const likeTop = [];
-    const dislikeTop = [];
-    (Array.isArray(rows) ? rows : []).forEach(row => {
-      const name = stripServerSuffixFromCharacterName(row.character_name || row.characterName || '');
-      if(!name) return;
-      const like = Number(row.like_count || row.likeCount || 0);
-      const dislike = Number(row.dislike_count || row.dislikeCount || 0);
-      const comments = Array.isArray(row.comments) ? row.comments.filter(Boolean) : [];
-      byName[name] = { like, dislike, total:Number(row.total_count || row.totalCount || like + dislike), comments };
-      likeTop.push({ name, like, dislike, total:like + dislike, comments });
-      dislikeTop.push({ name, like, dislike, total:like + dislike, comments });
-    });
-    likeTop.sort((a,b)=>(b.like||0)-(a.like||0));
-    dislikeTop.sort((a,b)=>(b.dislike||0)-(a.dislike||0));
-    return { byName, likeTop:likeTop.slice(0,10), dislikeTop:dislikeTop.slice(0,10) };
-  }
-
   async function getHallReactionSummary(){
-    const rows = await request('v_reaction_summary', { query:'select=*&order=total_count.desc&limit=200' }).catch(()=>[]);
-    return reactionSummaryFromRows(rows);
+    const data=await getWebHofSummary({includeSubs:false});
+    return data.reactionSummary||{byName:{},likeTop:[],dislikeTop:[]};
   }
 
   async function submitHallReaction(extra={}){
@@ -1373,20 +1286,16 @@
     if(!characterName) return { ok:false, message:'캐릭터 이름이 없습니다.' };
     if(!['like','dislike'].includes(reaction)) return { ok:false, message:'반응 종류가 올바르지 않습니다.' };
     if(!comment) return { ok:false, message:'전하고 싶은 말을 입력해 주세요.' };
-    const authAccount = currentAccount();
-    const body = {
-      character_name: characterName,
-      owner: stripServerSuffixFromCharacterName(extra.owner || ''),
-      class_name: String(extra.className || extra.class_name || '').trim(),
-      reaction,
-      comment,
-      client_key: String(extra.clientKey || extra.client_key || getVisitorKey()).trim(),
-      actor_main_character: String(authAccount && (authAccount.mainCharacter || authAccount.mainCharacterName) || '').trim(),
-      session_token: String(extra.sessionToken || extra.session_token || '').trim()
-    };
-    await request('reaction_logs', { method:'POST', headers:{ Prefer:'return=minimal' }, body });
-    const summary = await getHallReactionSummary();
-    return { ok:true, message:'한마디가 전달되었어요.', summary };
+    const serverId=Number(extra.serverId || extra.server_id || 0);
+    return rpc('kinojo_web_submit_hall_reaction_v279',{
+      p_pass_key:currentPassKey(),
+      p_character_name:characterName,
+      p_server_id:Number.isFinite(serverId)&&serverId>0?serverId:null,
+      p_reaction:reaction,
+      p_comment:comment,
+      p_client_key:String(extra.clientKey || extra.client_key || getVisitorKey()).trim(),
+      p_source:String(extra.source || 'WEB').trim() || 'WEB'
+    });
   }
 
   async function submitHallSuggestion(extra={}){
@@ -2006,7 +1915,7 @@
   async function webAction(action, params){
     const name = String(action || '').trim();
     const extra = params || {};
-    if(name === 'hallOfFame') return getWebHallOfFame(extra.limit || 300, extra);
+    if(name === 'hallOfFame') return getWebHofSummary(extra);
     if(name === 'hofSummary') return getWebHofSummary(extra);
     if(name === 'hallRankingView') return getWebHallRankingView(extra);
     if(name === 'legionRanking') return getWebLegionRanking(extra);
@@ -2107,7 +2016,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.52-failed-retry-2026072803',
+    version:'1.3.1.53-server-results-2026072806',
     getConfig,
     isPreferred,
     isConfigured,

@@ -22,10 +22,11 @@
     return '<div class="'+cls+'" aria-hidden="true">'+U.escapeHtml(item.name.slice(0,1) || '?')+'</div>';
   }
   function ownerBadge(item){
-    if(item.owner && item.owner !== item.name){
+    if(item.isMain === false && item.owner){
       return '<span class="ranking-owner-note">본캐 '+U.escapeHtml(item.owner)+'</span>';
     }
-    return '<span class="ranking-main-badge">본캐</span>';
+    if(item.isMain === true) return '<span class="ranking-main-badge">본캐</span>';
+    return '';
   }
   function reactionBoxes(item){
     return '<div class="ranking-reaction-boxes">'

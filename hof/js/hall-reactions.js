@@ -13,9 +13,6 @@ function positionReactionPopover(anchor,pop){
 }
 function closeReactionModal(){hideCharacterPreview_();const pop=document.getElementById("reactionPopover");if(pop){pop.style.display="none";pop.setAttribute("aria-hidden","true")}document.body.classList.remove("reaction-popover-open");currentReactionItem=null}
 function getVisitorId(){let id=localStorage.getItem("kinojoVisitorId");if(!id){id="v_"+Date.now()+"_"+Math.random().toString(36).slice(2);localStorage.setItem("kinojoVisitorId",id)}return id}
-function todayKey(){return new Date().toLocaleDateString("ko-KR",{timeZone:"Asia/Seoul"})}
-function checkLocalReactionLimit(name,type){const day=todayKey();const sameKey="kinojo_react_"+day+"_"+name+"_"+type;const countKey="kinojo_react_count_"+day+"_"+type;if(localStorage.getItem(sameKey)==="1")return "같은 캐릭터에게 같은 반응은 하루 1번만 남길 수 있습니다.";const count=Number(localStorage.getItem(countKey)||"0");if(count>=3)return (type==="like"?"좋아요":"싫어요")+"는 하루 3번까지만 남길 수 있습니다.";return ""}
-function markLocalReaction(name,type){const day=todayKey();const sameKey="kinojo_react_"+day+"_"+name+"_"+type;const countKey="kinojo_react_count_"+day+"_"+type;localStorage.setItem(sameKey,"1");localStorage.setItem(countKey,String(Number(localStorage.getItem(countKey)||"0")+1))}
 function findHallCharacterByName(name){
   const target=String(name||"").trim();
   if(!target)return {name:""};
@@ -114,12 +111,12 @@ function openReactionModal(item,anchor){
       onSubmit:async function(payload){
         const data=await window.KinojoApi.postAction("hallReaction",{
           characterName:payload.target.name,
-          owner:payload.target.owner||"",
-          className:payload.target.className||"",
+          serverId:payload.target.serverId||"",
           reaction:payload.reaction,
           comment:payload.comment,
           clientKey:payload.clientKey,
-          sessionToken:payload.sessionToken
+          sessionToken:payload.sessionToken,
+          source:"hall"
         });
         return data;
       },
@@ -197,12 +194,6 @@ async function submitReaction(){
     updateReactionSubmitState_();
     return;
   }
-  const limitMessage=checkLocalReactionLimit(currentReactionItem.name,currentReactionType);
-  if(limitMessage){
-    if(status)status.textContent=limitMessage;else alert(limitMessage);
-    updateReactionSubmitState_();
-    return;
-  }
   try{
     if(window.KinojoAuth && !window.KinojoAuth.requireLogin('로그인 후 좋아요·싫어요를 남길 수 있습니다.', {context:'hall'})){
       updateReactionSubmitState_();
@@ -212,15 +203,14 @@ async function submitReaction(){
     updateReactionSubmitState_();
     if(status)status.textContent="전송 중...";
     const sessionToken=window.KinojoAuth?window.KinojoAuth.getToken():"";
-    const data=await window.KinojoApi.postAction("hallReaction",{characterName:currentReactionItem.name,owner:currentReactionItem.owner||"",className:currentReactionItem.className||"",reaction:currentReactionType,comment:comment,clientKey:getVisitorId(),sessionToken:sessionToken});
+    const data=await window.KinojoApi.postAction("hallReaction",{characterName:currentReactionItem.name,serverId:currentReactionItem.serverId||currentReactionItem.server_id||"",reaction:currentReactionType,comment:comment,clientKey:getVisitorId(),sessionToken:sessionToken,source:"hall"});
     if(!data.ok){
       if(data.authRequired&&window.KinojoAuth)window.KinojoAuth.openLoginModal(data.message||"로그인 후 이용할 수 있습니다.", {context:"hall"});
       if(status)status.textContent=data.message||"저장 실패";else alert(data.message||"저장 실패");
       return;
     }
-    markLocalReaction(currentReactionItem.name,currentReactionType);
     if(data.summary&&hallData)hallData.reactionSummary=data.summary;
-    if(status)status.textContent="한마디가 전달되었어요.";
+    if(status)status.textContent=data.message||"한마디가 전달되었어요.";
     setTimeout(()=>{closeReactionModal();renderReactionOnly();renderOverallOnly()},380);
   }catch(e){
     if(status)status.textContent="반응 저장 실패: "+(e.message||e);else alert("반응 저장 실패: "+(e.message||e));

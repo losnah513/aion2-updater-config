@@ -42,6 +42,12 @@
     const rank = Number(pick(row,'rank_no','rankNo',0) || 0);
     const name = stripServerSuffix(pick(row,'character_name','characterName','')) || '-';
     const owner = stripServerSuffix(pick(row,'main_character_name','mainCharacterName',name)) || name;
+    const rawIsMain = pick(row,'is_main','isMain',null);
+    const isMain = rawIsMain === true || String(rawIsMain).toLowerCase() === 'true'
+      ? true
+      : rawIsMain === false || String(rawIsMain).toLowerCase() === 'false'
+        ? false
+        : null;
     const server = text(pick(row,'server_name','serverName','지켈'),'지켈');
     const serverId = text(pick(row,'server_id','serverId',''),'');
     const className = text(pick(row,'class_name','className','-'),'-');
@@ -55,7 +61,7 @@
     const review = text(pick(row,'review_text','reviewText',''), growthLabel || 'AI 리뷰 대기 중');
     const profile = text(pick(row,'profile_image_url','profileImageUrl',''), '');
     const detailUrl = text(pick(row,'detail_url','detailUrl',''), '');
-    return { rank,name,owner,server,serverId,className,like,dislike,pvePower,pvpPower,pveItem,pvpItem,review,growthLabel,profile,detailUrl,mode };
+    return { rank,name,owner,isMain,server,serverId,className,like,dislike,pvePower,pvpPower,pveItem,pvpItem,review,growthLabel,profile,detailUrl,mode };
   }
 
   Ranking.utils = { CLASS_ORDER, $, escapeHtml, num, pick, text, stripServerSuffix, isMobileRanking, normalizeRow };

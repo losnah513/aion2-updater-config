@@ -403,8 +403,7 @@ function openSanctuaryReactionModalFromCard(card){
     target,
     onSubmit:async payload=>window.KinojoApi.postAction('hallReaction',{
       characterName:payload.target.name,
-      owner:payload.target.owner||'',
-      className:payload.target.className||'',
+      serverId:payload.target.serverId||'',
       reaction:payload.reaction,
       comment:payload.comment,
       clientKey:payload.clientKey,

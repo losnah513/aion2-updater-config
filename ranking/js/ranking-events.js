@@ -17,9 +17,6 @@
     if(!id){id='v_'+Date.now()+'_'+Math.random().toString(36).slice(2);localStorage.setItem('kinojoVisitorId',id)}
     return id;
   }
-  function rankingTodayKey(){return new Date().toLocaleDateString('ko-KR',{timeZone:'Asia/Seoul'})}
-  function rankingReactionLimit(name,type){const day=rankingTodayKey();const sameKey='kinojo_ranking_react_'+day+'_'+name+'_'+type;const countKey='kinojo_ranking_react_count_'+day+'_'+type;if(localStorage.getItem(sameKey)==='1')return '같은 캐릭터에게 같은 반응은 하루 1번만 남길 수 있습니다.';const count=Number(localStorage.getItem(countKey)||'0');if(count>=3)return (type==='like'?'좋아요':'싫어요')+'는 하루 3번까지만 남길 수 있습니다.';return ''}
-  function rankingMarkReaction(name,type){const day=rankingTodayKey();localStorage.setItem('kinojo_ranking_react_'+day+'_'+name+'_'+type,'1');const countKey='kinojo_ranking_react_count_'+day+'_'+type;localStorage.setItem(countKey,String(Number(localStorage.getItem(countKey)||'0')+1))}
   function ensureRankingReactionModal(){
     let modal=document.getElementById('rankingReactionModal');
     if(modal)return modal;
@@ -50,8 +47,7 @@
         onSubmit:async function(payload){
           return await window.KinojoApi.postAction('hallReaction',{
             characterName:payload.target.name,
-            owner:payload.target.owner||'',
-            className:payload.target.className||'',
+            serverId:payload.target.serverId||'',
             reaction:payload.reaction,
             comment:payload.comment,
             clientKey:payload.clientKey,
@@ -76,8 +72,7 @@
   async function submitRankingReaction(){
     const status=document.getElementById('rankingReactionStatus');const input=document.getElementById('rankingReactionComment');if(!rankingReactionTarget||rankingReactionSubmitting)return;const comment=(input?.value||'').trim().slice(0,20);
     if(!comment){if(status)status.textContent='전하고 싶은 말을 입력해 주세요.';updateRankingReactionSubmitState();return}
-    const limit=rankingReactionLimit(rankingReactionTarget.name,rankingReactionType);if(limit){if(status)status.textContent=limit;updateRankingReactionSubmitState();return}
-    try{if(window.KinojoAuth&&!window.KinojoAuth.requireLogin('로그인 후 좋아요·싫어요를 남길 수 있습니다.',{context:'ranking'}))return;rankingReactionSubmitting=true;updateRankingReactionSubmitState();if(status)status.textContent='전송 중...';const sessionToken=window.KinojoAuth?window.KinojoAuth.getToken():'';const data=await window.KinojoApi.postAction('hallReaction',{characterName:rankingReactionTarget.name,owner:rankingReactionTarget.owner||'',className:rankingReactionTarget.className||'',reaction:rankingReactionType,comment:comment,clientKey:rankingVisitorId(),sessionToken:sessionToken,source:'ranking'});if(!data||!data.ok){if(data&&data.authRequired&&window.KinojoAuth)window.KinojoAuth.openLoginModal(data.message||'로그인 후 이용할 수 있습니다.',{context:'ranking'});if(status)status.textContent=(data&&data.message)||'저장 실패';return}rankingMarkReaction(rankingReactionTarget.name,rankingReactionType);if(status)status.textContent='한마디가 전달되었어요.';setTimeout(closeRankingReactionModal,420)}catch(e){if(status)status.textContent='반응 저장 실패: '+(e.message||e)}finally{rankingReactionSubmitting=false;updateRankingReactionSubmitState()}
+    try{if(window.KinojoAuth&&!window.KinojoAuth.requireLogin('로그인 후 좋아요·싫어요를 남길 수 있습니다.',{context:'ranking'}))return;rankingReactionSubmitting=true;updateRankingReactionSubmitState();if(status)status.textContent='전송 중...';const sessionToken=window.KinojoAuth?window.KinojoAuth.getToken():'';const data=await window.KinojoApi.postAction('hallReaction',{characterName:rankingReactionTarget.name,serverId:rankingReactionTarget.serverId||'',reaction:rankingReactionType,comment:comment,clientKey:rankingVisitorId(),sessionToken:sessionToken,source:'ranking'});if(!data||!data.ok){if(data&&data.authRequired&&window.KinojoAuth)window.KinojoAuth.openLoginModal(data.message||'로그인 후 이용할 수 있습니다.',{context:'ranking'});if(status)status.textContent=(data&&data.message)||'저장 실패';return}if(status)status.textContent=data.message||'한마디가 전달되었어요.';setTimeout(closeRankingReactionModal,420)}catch(e){if(status)status.textContent='반응 저장 실패: '+(e.message||e)}finally{rankingReactionSubmitting=false;updateRankingReactionSubmitState()}
   }
 
   async function loadRanking(options){

@@ -77,31 +77,10 @@ function hofSessionName(){
   ];
   return candidates.map(v=>String(v||'').trim()).find(Boolean)||'';
 }
-function hofCollectMetricList(metric){
-  const s=hallData?.summarySections||{};
-  const r=hallData?.reactionSummary||{};
-  if(metric==='enhance')return [s.enhanceGod, ...(hallData?.weeklyAwards?.bulkUp||[])].filter(Boolean);
-  if(metric==='growth')return [s.growthGod, ...(hallData?.weeklyAwards?.growthKing||[])].filter(Boolean);
-  if(metric==='pve')return (s.pveTop||s.pveTop3||hallData?.pveTop||hallData?.pveTop3||[]).filter(Boolean);
-  if(metric==='pvp')return (s.pvpTop||s.pvpTop3||hallData?.pvpTop||hallData?.pvpTop3||[]).filter(Boolean);
-  if(metric==='like')return (s.likesTop||s.likeTop||r.likeTop||[]).filter(Boolean);
-  if(metric==='dislike')return (s.dislikesTop||s.dislikeTop||r.dislikeTop||[]).filter(Boolean);
-  return [];
-}
 function hofFindMyMetric(metric){
   const serverResult=hallData?.myRanking?.[metric];
   if(serverResult&&Number(serverResult.rank||0)>0)return serverResult;
-  const name=hofNormalizeName(hofSessionName());
-  if(!name)return null;
-  const list=hofCollectMetricList(metric);
-  const found=list.find(item=>{
-    const charName=hofNormalizeName(hofCharName(item));
-    const ownerName=hofNormalizeName(hofOwnerName(item));
-    return charName===name || ownerName===name;
-  });
-  if(!found)return null;
-  const rank=Number(hofFirstDefined(found.rank,found.rankNo,found.rank_no,found.position,0)) || (list.indexOf(found)+1);
-  return { item:found, rank:rank, score:hofMetricValue(found,metric)||'-' };
+  return null;
 }
 function hofRankSummaryText(item,metric){
   if(!item)return '';
@@ -156,13 +135,13 @@ function hofClassBadge(item){
   return cls?'<span class="hof-v2-class-badge">'+escapeHtml(cls)+'</span>':'';
 }
 function hofOwnerBadge(item){
-  const name=hofCharName(item);
   const owner=hofOwnerName(item);
-  if(owner && name && hofNormalizeName(owner)!==hofNormalizeName(name))return '<span class="hof-v2-owner-badge">부캐 · '+escapeHtml(owner)+'</span>';
-  return name?'<span class="hof-v2-owner-badge is-main">본캐</span>':'';
+  if(item?.isMain===true)return '<span class="hof-v2-owner-badge is-main">본캐</span>';
+  if(item?.isMain===false && owner)return '<span class="hof-v2-owner-badge">부캐 · '+escapeHtml(owner)+'</span>';
+  return '';
 }
 function hofTop3Card(item,index,metric){
-  const rank=index+1;
+  const rank=Number(hofFirstDefined(item?.rank,item?.rankNo,item?.rank_no,0))||index+1;
   if(!item){
     if(rank===1)return '<div class="hof-v2-top3-item rank-1 is-empty"><span class="hof-v2-portrait-wrap is-empty"><span class="hof-v2-empty-dot">1</span></span><span class="hof-v2-top3-info"><span class="hof-v2-top3-name">데이터 대기</span><span class="hof-v2-top3-meta">집계 준비 중</span></span><strong class="hof-v2-top3-score"><small>'+escapeHtml(hofMetricLabel(metric))+'</small>-</strong></div>';
     return '<div class="hof-v2-top3-item rank-'+rank+' is-empty is-compact-rank"><span class="hof-v2-row-medal"><span>'+rank+'</span></span><span class="hof-v2-top3-info"><span class="hof-v2-top3-name">데이터 대기</span><span class="hof-v2-top3-meta">집계 준비 중</span></span><strong class="hof-v2-top3-score"><small>'+escapeHtml(hofMetricLabel(metric))+'</small>-</strong></div>';
@@ -306,28 +285,6 @@ function hofMyRankingPanel(){
     + (isLoggedIn?'<div class="hof-v2-my-profile">'+hofRankPortrait(item,0,'my')+'<div><strong>'+escapeHtml(displayName)+'</strong><span>'+escapeHtml(profileMeta)+'</span><em>본인 카드</em></div></div><div class="hof-v2-my-current-grid">'+primaryHtml+'</div><div class="hof-v2-my-list">'+secondaryHtml+'</div>':'')
     + '</aside>';
 }
-function rankProfileHtml(item,rank){
-  const url=profileImageUrlFor(item);
-  const rankClass=rank<=3?(' top-rank rank-avatar-top-'+rank):'';
-  const cls='rank-profile-avatar'+rankClass+(url?'':' is-empty');
-  if(!url)return '<div class="'+cls+'" aria-hidden="true">'+escapeHtml((item?.name||'?').slice(0,1))+'</div>';
-  return '<img class="'+cls+'" src="'+escapeHtml(url)+'" alt="'+escapeHtml((item?.name||'캐릭터')+' 프로필')+'" loading="lazy" decoding="async">';
-}
-function rankOwnerBadgeHtml(item){
-  const owner=String(item?.owner||'').trim();
-  const name=String(item?.name||'').trim();
-  const isSub=!!(owner&&name&&owner!==name);
-  if(isSub)return '<span class="rank-owner-badge is-sub" title="본캐 '+escapeHtml(owner)+'">부캐 · '+escapeHtml(owner)+'</span>';
-  return '<span class="rank-owner-badge is-main">본캐</span>';
-}
-function rankReactionBoxHtml(type,count){
-  const icon=type==='like'?'👍':'👎';
-  return '<span class="rank-reaction-box '+type+'"><span class="rank-reaction-icon">'+icon+'</span><span>'+escapeHtml(String(count||0))+'</span></span>';
-}
-function rankInlineReactionBoxesHtml(item){
-  const r=reactionDataFor(item);
-  return '<div class="rank-reaction-boxes">'+rankReactionBoxHtml('like',r.like)+rankReactionBoxHtml('dislike',r.dislike)+'</div>';
-}
 function setHallSlot(id,html){
   const el=document.getElementById(id);
   if(!el)return;
@@ -348,17 +305,6 @@ function bindHallAfterSlot(){
 
 function compactImageList(paths){
   return [...new Set((paths||[]).filter(Boolean))];
-}
-
-function rankEmblemsForList(list,totalFallback=10){
-  const items=Array.isArray(list)?list:[];
-  const total=items.length||totalFallback;
-  return compactImageList(items.slice(0,Math.max(5,items.length)).map((_,idx)=>RANK_EMBLEMS[rankEmblemKey(idx+1,total)]));
-}
-
-function classIconsForList(list){
-  const items=Array.isArray(list)?list:[];
-  return compactImageList(items.map(item=>CLASS_ICONS[item?.className]));
 }
 
 function hallSlotTasks(){
