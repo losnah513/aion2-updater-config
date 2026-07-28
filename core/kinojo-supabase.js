@@ -1636,7 +1636,7 @@
             sheetDeferred:false,
             extensionDoesNotReadListSheet:true,
             listReadMode:'server_edge_bridge',
-            clientVersion:'KINOJO_WEB_2026072802',
+            clientVersion:'KINOJO_WEB_2026072803',
             pageUrl:location.href,
             lookupFilter,
             lookupFilterSummary
@@ -1651,11 +1651,11 @@
           action:'prepareList',
           sessionId,
           sessionToken,
-          clientVersion:'KINOJO_WEB_2026072802',
+          clientVersion:'KINOJO_WEB_2026072803',
           payload:{
             schemaVersion:'kinojo-lookup-v2',
             pageUrl:location.href,
-            clientVersion:'KINOJO_WEB_2026072802',
+            clientVersion:'KINOJO_WEB_2026072803',
             requestedSurface:'ADMIN_WEB_SERVER_QUEUE',
             lookupFilter,
             lookupFilterSummary
@@ -1704,6 +1704,84 @@
       }
     }
 
+    if(normalized==='retryfailed'){
+      const sourceSessionId=String(extra.sourceSessionId||extra.sessionId||'').trim();
+      if(!sourceSessionId)return {ok:false,code:'MISSING_SOURCE_SESSION',message:'재조회할 이전 세션 ID가 필요합니다.'};
+      let started=null;
+      try{
+        started=await runtimeStart(passKey,{
+          toolName:'KINOJO_SERVER_CHARACTER_QUEUE',
+          clientId:'ADMIN_WEB_FAILED_RETRY',
+          progressTotal:0,
+          payload:{
+            schemaVersion:'kinojo-crawl-v1',
+            tool:'KINOJO_ADMIN_WEB',
+            requestedSurface:'ADMIN_WEB_FAILED_RETRY',
+            serverQueue:true,
+            retryFailedRowsOnly:true,
+            sourceSessionId,
+            lookupOnlyPhase:false,
+            postprocessPhase:true,
+            sheetDeferred:false,
+            extensionDoesNotReadListSheet:true,
+            listReadMode:'server_failed_target_copy',
+            clientVersion:'KINOJO_WEB_2026072803',
+            pageUrl:location.href,
+            lookupFilter:{lookupMode:'retry_failed',sourceSessionId},
+            lookupFilterSummary:'실패 대상만 다시 조회'
+          }
+        });
+        if(!started||started.ok!==true)throw new Error(started?.message||started?.code||'실패 대상 재조회 세션 생성 실패');
+        const sessionId=String(started.sessionId||started.session_id||'');
+        const sessionToken=String(started.sessionToken||started.session_token||'');
+        if(!sessionId||!sessionToken)throw new Error('재조회 sessionId/sessionToken이 비어 있습니다.');
+
+        const prepared=await rpc('kinojo_admin_retry_failed_targets_v277',{
+          p_pass_key:passKey,
+          p_session_id:sessionId,
+          p_session_token:sessionToken,
+          p_source_session_id:sourceSessionId
+        });
+        if(!prepared||prepared.ok!==true)throw new Error(prepared?.message||prepared?.code||'실패 대상 Queue 준비 실패');
+
+        const queueCount=Number(prepared.queueCount||prepared.queueMeta?.queueCount||0);
+        const queueMeta=Object.assign({},prepared.queueMeta||{},{
+          queueCount,
+          lookupMode:'retry_failed',
+          lookupFilter:{lookupMode:'retry_failed',sourceSessionId},
+          lookupFilterSummary:String(prepared.queueMeta?.lookupFilterSummary||'실패 대상 재조회 '+queueCount+'명'),
+          source:'ADMIN_WEB_FAILED_RETRY',
+          sourceSessionId,
+          retryFailedRowsOnly:true,
+          batchLimit:5,
+          lookupOnlyPhase:false,
+          postprocessPhase:true,
+          sheetDeferred:false,
+          serverQueueContract:'277'
+        });
+
+        if(queueCount<=0||prepared.noTargets===true){
+          const finished=await runtimeFinish(sessionId,sessionToken,'completed','이전 세션에 재조회할 최종 실패 Target이 없습니다.',{source:'ADMIN_WEB_FAILED_RETRY',phase:'NO_TARGETS',queueMeta});
+          return {ok:true,completed:true,noTargets:true,sessionId,sourceSessionId,queueMeta,prepared,finish:finished};
+        }
+
+        const registered=await rpc('kinojo_admin_server_queue_register_v276',{
+          p_pass_key:passKey,
+          p_session_id:sessionId,
+          p_session_token:sessionToken,
+          p_queue_meta:queueMeta
+        });
+        if(!registered||registered.ok!==true)throw new Error(registered?.message||registered?.code||'실패 대상 Server Queue 등록 실패');
+
+        return {ok:true,sessionId,sessionToken,sourceSessionId,queueMeta,prepared,registered,message:'실패 대상 '+queueCount+'명의 재조회 Queue를 준비했습니다.'};
+      }catch(error){
+        if(started?.sessionId&&started?.sessionToken){
+          try{await runtimeFinish(started.sessionId,started.sessionToken,'failed',error?.message||String(error),{source:'ADMIN_WEB_FAILED_RETRY',stage:'START_FAILED',sourceSessionId});}catch(_finishErr){}
+        }
+        throw error;
+      }
+    }
+
     if(normalized==='startautonomous'){
       const sessionId=String(extra.sessionId||'');
       const sessionToken=String(extra.sessionToken||'');
@@ -1712,7 +1790,7 @@
         action:'startAutonomous',
         sessionId,
         sessionToken,
-        clientVersion:'KINOJO_WEB_2026072802'
+        clientVersion:'KINOJO_WEB_2026072803'
       });
     }
 
@@ -1725,7 +1803,7 @@
         sessionId,
         sessionToken,
         batchLimit:Math.max(1,Math.min(Number(extra.batchLimit||5),5)),
-        clientVersion:'KINOJO_WEB_2026072802'
+        clientVersion:'KINOJO_WEB_2026072803'
       });
     }
 
@@ -1856,7 +1934,7 @@
   async function getLiveCharacterProfile(action, extra={}){
     const payload=Object.assign({},extra||{},{
       action:String(action||'overview'),
-      clientVersion:'KINOJO_WEB_2026072802'
+      clientVersion:'KINOJO_WEB_2026072803'
     });
     return invokeEdgeFunction('character-profile-snapshot',payload);
   }
@@ -2005,7 +2083,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.51-plaync-rate-gate-2026072802',
+    version:'1.3.1.52-failed-retry-2026072803',
     getConfig,
     isPreferred,
     isConfigured,
