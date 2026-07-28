@@ -1,10 +1,10 @@
-/* KINOJO Admin Console v2026072801 */
+/* KINOJO Admin Console v2026072802 */
 (function(){
   'use strict';
   const $ = (s,r=document)=>r.querySelector(s);
   const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
   const state = { tab:'dashboard', subtab:'', loaded:{}, subtabs:{ members:'accounts', characters:'lookup', notices:'general', system:'server-status' }, requests:[], accounts:[], characters:[], logs:[], eventNoticeGroups:[], eventNoticeEditingId:null, meterConsole:null, meterNotices:[], sanctuarySchedules:[], sanctuaryMasters:[], sanctuaryStatusOptions:[], sanctuaryScheduleLoaded:false, sanctuaryScheduleAccess:null, sanctuaryRolePermissions:null, sanctuaryScheduleSaving:false, lastSanctuarySyncData:null, lastSanctuaryStatusData:null, lastSanctuaryId:'all', visitorDays:7, visitorPage:1, visitorTotalPages:1, visitorCanViewMemberHistory:false, lookupConsole:null, lookupSessionId:'', lookupSessionToken:'', lookupPollTimer:null, lookupHeartbeatAt:0, lookupStarting:false, lookupQueueRunning:false, lookupExitSafety:'idle', lookupHistory:[], lookupHistoryDetails:{} };
-  const CACHE = '2026072801';
+  const CACHE = '2026072802';
   const DEFAULT_SUBTABS = { members:'accounts', characters:'lookup', notices:'general', system:'server-status', logs:'activity' };
   function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
   function addLog(type,msg){
@@ -359,7 +359,7 @@
     const progressBox=data?.progress||{};
     return redactDiagnostic({
       schemaVersion:'kinojo-admin-lookup-diagnostic-v1',
-      webVersion:'2026072801',
+      webVersion:'2026072802',
       copiedAt:new Date().toISOString(),
       sessionId:data?.sessionId||null,
       source:data?.session?.raw_payload?.requestedSurface||data?.queueMeta?.source||null,
@@ -368,6 +368,7 @@
       queueMeta:data?.queueMeta||{},
       progress:progressBox.progress||progressBox,
       handoff:data?.handoff||{},
+      playncRateGate:data?.playncRateGate||{},
       postprocess:data?.postprocess||{},
       failures:data?.failurePreview||[],
       events:data?.events||[]
@@ -381,7 +382,7 @@
     const row=rows[index];if(!row)return;
     await copyText(JSON.stringify(redactDiagnostic({
       schemaVersion:'kinojo-admin-lookup-failure-v1',
-      webVersion:'2026072801',
+      webVersion:'2026072802',
       sessionId:state.lookupConsole?.sessionId||null,
       copiedAt:new Date().toISOString(),
       failure:row
@@ -433,13 +434,14 @@
     button.disabled=true;
     try{
       const detail=state.lookupHistoryDetails[sessionId]||await loadLookupHistoryDetail(sessionId);
-      if(copyId)await copyText(JSON.stringify(redactDiagnostic({schemaVersion:'kinojo-lookup-history-v1',webVersion:'2026072801',copiedAt:new Date().toISOString(),sessionId,report:detail}),null,2));
+      if(copyId)await copyText(JSON.stringify(redactDiagnostic({schemaVersion:'kinojo-lookup-history-v1',webVersion:'2026072802',copiedAt:new Date().toISOString(),sessionId,report:detail}),null,2));
     }catch(error){setStatus('#characterLookupStatus',error.message||String(error),'error');}
     finally{button.disabled=false;}
   }
 
   function lookupStatusLabel(data){
     if(!data)return '대기';
+    if(data?.playncRateGate?.rateLimited===true)return '요청 제한 대기';
     if(data.controlState==='paused')return '일시정지';
     if(data.controlState==='cancelled')return '중단';
     if(data.waitingExtension)return 'Extension 연결 대기';
@@ -490,7 +492,7 @@
     const statusLabel=lookupStatusLabel(data);
     const currentCharacter=String(progress.currentCharacter||data?.job?.current_character||data?.job?.currentCharacter||'');
     const message=String(data?.message||data?.session?.message||data?.job?.message||'조회 작업을 시작하면 이 영역에서 진행 상태를 확인할 수 있습니다.');
-    const statusEl=$('#characterLookupState'); if(statusEl){statusEl.textContent=statusLabel;statusEl.className='admin-pill '+(['완료','후처리 완료'].includes(statusLabel)?'ok':['실패','중단','후처리 실패'].includes(statusLabel)?'error':['일시정지','부분 완료','후처리 재시도'].includes(statusLabel)?'warn':'active');}
+    const statusEl=$('#characterLookupState'); if(statusEl){statusEl.textContent=statusLabel;statusEl.className='admin-pill '+(['완료','후처리 완료'].includes(statusLabel)?'ok':['실패','중단','후처리 실패'].includes(statusLabel)?'error':['일시정지','부분 완료','후처리 재시도','요청 제한 대기'].includes(statusLabel)?'warn':'active');}
     if($('#characterLookupSession'))$('#characterLookupSession').textContent=empty?'세션 없음':String(data.sessionId).slice(0,8)+'…';
     if($('#characterLookupOwner'))$('#characterLookupOwner').textContent=String(data?.session?.requested_by_character||data?.job?.requested_by_character||'-');
     if($('#characterLookupMessage'))$('#characterLookupMessage').textContent=message;
