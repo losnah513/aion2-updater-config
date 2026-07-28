@@ -663,6 +663,15 @@
       profileImageUrl: row.profile_image_url || row.profileImageUrl || '',
       isMain: row.is_main === true || row.isMain === true,
       isActive: row.is_active !== false && row.isActive !== false,
+      siteVisible: row.site_visible !== false && row.siteVisible !== false,
+      lookupExcluded: row.lookup_excluded === true || row.lookupExcluded === true,
+      visibilityExcluded: row.visibility_excluded === true || row.visibilityExcluded === true,
+      exclusionMode: row.exclusion_mode || row.exclusionMode || 'NORMAL',
+      exclusionReason: row.exclusion_reason || row.exclusionReason || '',
+      exclusionMemo: row.exclusion_memo || row.exclusionMemo || '',
+      lookupExcludedAt: row.lookup_excluded_at || row.lookupExcludedAt || '',
+      visibilityExcludedAt: row.visibility_excluded_at || row.visibilityExcludedAt || '',
+      exclusionReviewRequired: row.exclusion_review_required === true || row.exclusionReviewRequired === true,
       inactiveReason: row.inactive_reason || row.inactiveReason || '',
       inactiveMemo: row.inactive_memo || row.inactiveMemo || '',
       inactivatedAt: row.inactivated_at || row.inactivatedAt || '',
@@ -677,8 +686,12 @@
       listRow: Number(row.list_row || row.listRow || 0),
       hasPersistentKey: row.has_persistent_key === true || row.hasPersistentKey === true,
       charKeyMasked: row.char_key_masked || row.charKeyMasked || '',
-      lookupFailureCount: Number(row.lookup_failure_count || row.lookupFailureCount || 0),
-      lastLookupFailedAt: row.last_lookup_failed_at || row.lastLookupFailedAt || ''
+      lookupFailureCount: Number(row.lookup_failure_streak || row.lookupFailureStreak || row.lookup_failure_count || row.lookupFailureCount || 0),
+      lookupFailureStreak: Number(row.lookup_failure_streak || row.lookupFailureStreak || 0),
+      lookupFailureTotal: Number(row.lookup_failure_total || row.lookupFailureTotal || row.lookup_failure_count || row.lookupFailureCount || 0),
+      lastLookupFailureCode: row.last_lookup_failure_code || row.lastLookupFailureCode || '',
+      lastLookupFailedAt: row.last_lookup_failed_at || row.lastLookupFailedAt || '',
+      lastLookupSuccessAt: row.last_lookup_success_at || row.lastLookupSuccessAt || ''
     };
   }
 
@@ -690,10 +703,21 @@
         p_pass_key: currentPassKey(),
         p_search: String(extra.search || extra.characterName || ''),
         p_include_inactive: extra.includeInactive !== false,
-        p_limit: Number(extra.limit || 30)
+        p_limit: Number(extra.limit || 300)
       });
       const rows = data && (data.characters || data.items || []);
-      return { ok:data && data.ok !== false, message:data && data.message || '', identityRecoveryAllowed:data && data.identityRecoveryAllowed === true, characters:(Array.isArray(rows) ? rows : []).map(normalizeAdminCharacterRow).filter(Boolean) };
+      return { ok:data && data.ok !== false, message:data && data.message || '', databaseContract:data && data.databaseContract || '', summary:data && data.summary || {}, identityRecoveryAllowed:data && data.identityRecoveryAllowed === true, characters:(Array.isArray(rows) ? rows : []).map(normalizeAdminCharacterRow).filter(Boolean) };
+    }
+    if(normalizedCommand === 'updateExclusion'){
+      const data = await rpc('kinojo_admin_character_exclusion_update_v278', {
+        p_pass_key: currentPassKey(),
+        p_character_id: Number(extra.characterId || 0),
+        p_lookup_excluded: extra.lookupExcluded === true,
+        p_visibility_excluded: extra.visibilityExcluded === true,
+        p_reason: String(extra.reason || ''),
+        p_memo: String(extra.memo || '')
+      });
+      return data || { ok:false, message:'처리 결과를 확인하지 못했습니다.' };
     }
     if(normalizedCommand === 'deactivate'){
       const data = await rpc('kinojo_admin_character_deactivate', {
