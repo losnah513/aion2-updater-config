@@ -129,7 +129,13 @@ body.kinojo-page-ranking{
 .ranking-card{position:relative;overflow:hidden;padding:11px 12px;border-bottom:1px solid rgba(120,145,180,.16);background:rgba(255,255,255,.72)}
 .ranking-card:last-child{border-bottom:0}
 .ranking-card-main{display:grid;grid-template-columns:38px minmax(132px,.82fr) 62px 68px 78px;gap:7px;align-items:center}
-.ranking-rank{font-size:15px;font-weight:900;text-align:center;color:#1e2f4a}
+.ranking-rank{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;font-size:15px;font-weight:900;text-align:center;color:#1e2f4a}
+.ranking-rank-current{display:block;line-height:1}
+.ranking-rank-change{display:inline-flex;align-items:center;justify-content:center;min-height:15px;padding:0 3px;border-radius:5px;font-size:8px;font-weight:1000;line-height:1;white-space:nowrap}
+.ranking-rank-change.is-up{color:#c24141;background:rgba(239,68,68,.11)}
+.ranking-rank-change.is-down{color:#3566b8;background:rgba(59,130,246,.11)}
+.ranking-rank-change.is-same{color:#94a3b8;background:rgba(148,163,184,.1)}
+.ranking-rank-change.is-new{color:#9a6700;background:rgba(245,158,11,.13);letter-spacing:.02em}
 .ranking-character{display:flex;align-items:center;gap:8px;min-width:0}
 .ranking-avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;flex:0 0 auto;border:1px solid rgba(37,99,235,.24);background:#eef4ff;display:flex;align-items:center;justify-content:center;font-weight:900;color:#1d4ed8}
 .ranking-avatar.top-one,.ranking-avatar.top-two,.ranking-avatar.top-three{border-color:rgba(37,99,235,.28);box-shadow:none}
@@ -151,7 +157,13 @@ body.kinojo-page-ranking{
 .ranking-stat.pvp strong{color:var(--ranking-pvp)}
 .ranking-stat.item strong{color:#344054}
 .ranking-review{margin-top:8px;padding:8px 10px;border-radius:12px;background:#f8fbff;border:1px solid rgba(120,145,180,.16)}
-.ranking-review-badge{display:inline-flex;margin-bottom:4px;height:18px;align-items:center;padding:0 6px;border-radius:999px;background:#1e2f4a;color:#fff;font-size:10px;font-weight:900}
+.ranking-review-badges{display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:5px}
+.ranking-review-badge,.ranking-delta-badge{display:inline-flex;height:18px;align-items:center;padding:0 6px;border-radius:999px;font-size:10px;font-weight:900;white-space:nowrap}
+.ranking-review-badge{background:#1e2f4a;color:#fff}
+.ranking-delta-badge{border:1px solid rgba(120,145,180,.16);background:#fff;color:#475569}
+.ranking-delta-badge.is-positive{color:#166534;background:#f0fdf4;border-color:rgba(34,197,94,.22)}
+.ranking-delta-badge.is-negative{color:#9f3a3a;background:#fff1f2;border-color:rgba(239,68,68,.2)}
+.ranking-delta-badge.item.is-positive{color:#73510d;background:#fffbeb;border-color:rgba(245,158,11,.24)}
 .ranking-review p{margin:0;font-size:12px;line-height:1.45;color:#344054;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 
 /* TOP3 flowing border: border-line flow only, no rotating object */
