@@ -1867,7 +1867,7 @@
   async function getLiveCharacterProfile(action, extra={}){
     const payload=Object.assign({},extra||{},{
       action:String(action||'overview'),
-      clientVersion:'KINOJO_WEB_2026072803'
+      clientVersion:'KINOJO_WEB_2026072904'
     });
     return invokeEdgeFunction('character-profile-snapshot',payload);
   }
