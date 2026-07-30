@@ -46,6 +46,21 @@
     return String(value || '').replace(/"/g, '%22');
   }
 
+  function powerNumber(value){
+    const number = Number(String(value == null ? '' : value).replace(/[^0-9.-]/g, ''));
+    return Number.isFinite(number) ? number : 0;
+  }
+
+  function shortPower(value){
+    const number = powerNumber(value);
+    return number > 0 ? (number / 1000).toFixed(1) + 'K' : '-';
+  }
+
+  function fullPower(value){
+    const number = powerNumber(value);
+    return number > 0 ? Math.round(number).toLocaleString('ko-KR') : '-';
+  }
+
   const CLASS_ICON_MAP = {
     '수호성':'templar','검성':'gladiator','살성':'assassin','궁성':'ranger',
     '마도성':'sorcerer','정령성':'elementalist','치유성':'cleric','호법성':'chanter','권성':'fighter'
@@ -935,6 +950,7 @@
     classIconFor,
     candidates: characterImageCandidates
   };
+  window.KinojoPowerFormat = { short: shortPower, full: fullPower, number: powerNumber };
   window.KinojoCharacterReaction = { open, close, setType };
   window.addEventListener('kinojo:auth-changed', () => {
     liveCache.clear();

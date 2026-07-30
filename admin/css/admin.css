@@ -541,7 +541,7 @@ KINOJO Sanctuary Schedule Admin 20260713 STEP 12
 .admin-lookup-exit-safety.attention{border-color:#fca5a5;background:#fef2f2}.admin-lookup-exit-safety.attention i{background:#dc2626;box-shadow:0 0 0 5px rgba(220,38,38,.14)}.admin-lookup-exit-safety.attention strong{color:#991b1b}.admin-lookup-exit-safety.attention span{color:#991b1b}
 .admin-lookup-source-summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
 .admin-lookup-source-summary article{display:grid;gap:5px;padding:13px 14px;border:1px solid #dbe7f5;border-radius:14px;background:#f8fbff}.admin-lookup-source-summary span{font-size:10px;font-weight:800;color:#718096}.admin-lookup-source-summary strong{font-size:19px;color:#1558d6}
-.admin-lookup-overview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.admin-lookup-overview{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
 .admin-lookup-overview article{display:grid;gap:7px;min-width:0;padding:15px;border:1px solid #e0e7f0;border-radius:15px;background:#fff}
 .admin-lookup-overview article>span{font-size:11px;font-weight:800;color:#718096;text-transform:uppercase}
 .admin-lookup-overview article>strong{font-size:19px;color:#17263a;overflow-wrap:anywhere}
@@ -553,6 +553,15 @@ KINOJO Sanctuary Schedule Admin 20260713 STEP 12
 .admin-lookup-step.active{border-color:#80b2f7;background:#edf5ff}.admin-lookup-step.active strong,.admin-lookup-step.active span{color:#135bbd}
 .admin-lookup-step.done{border-color:#8cd1b4;background:#effaf5}.admin-lookup-step.done strong,.admin-lookup-step.done span{color:#17734d}
 .admin-lookup-step.error{border-color:#efaaa8;background:#fff2f2}.admin-lookup-step.error strong,.admin-lookup-step.error span{color:#b23030}
+.admin-lookup-phase-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.admin-lookup-phase{display:grid;gap:8px;padding:13px 14px;border:1px solid #dfe6ef;border-radius:14px;background:#fff}
+.admin-lookup-phase-head{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px}
+.admin-lookup-phase-head span{font-size:10px;font-weight:900;color:#8794a6}.admin-lookup-phase-head strong{font-size:13px;color:#334155}.admin-lookup-phase-head b{font-size:12px;color:#64748b}
+.admin-lookup-phase-progress{height:6px;overflow:hidden;border-radius:999px;background:#e8edf4}.admin-lookup-phase-progress i{display:block;height:100%;border-radius:inherit;background:#94a3b8;transition:width .25s ease}
+.admin-lookup-phase-meta{display:flex;justify-content:space-between;gap:10px;font-size:11px;font-weight:800;color:#64748b}.admin-lookup-phase p{margin:0;font-size:11px;line-height:1.45;color:#718096}
+.admin-lookup-phase.active{border-color:#80b2f7;background:#f5f9ff}.admin-lookup-phase.active .admin-lookup-phase-progress i{background:#2f80ed}
+.admin-lookup-phase.done{border-color:#8cd1b4;background:#f5fcf8}.admin-lookup-phase.done .admin-lookup-phase-progress i{background:#27a66d}
+.admin-lookup-phase.error{border-color:#efaaa8;background:#fff7f7}.admin-lookup-phase.error .admin-lookup-phase-progress i{background:#d9534f}
 .admin-lookup-controls{display:flex;gap:8px;flex-wrap:wrap}
 .admin-lookup-diagnostic-actions{display:flex;justify-content:flex-end;padding:10px 12px}
 .admin-lookup-events{max-height:320px;overflow:auto;border:1px solid #e0e7f0;border-radius:14px;background:#fbfcfe}
@@ -574,4 +583,4 @@ KINOJO Sanctuary Schedule Admin 20260713 STEP 12
 .admin-lookup-history-main{display:grid;gap:3px;min-width:0}.admin-lookup-history-main strong{font-size:13px;color:#263b54}.admin-lookup-history-main span,.admin-lookup-history-main time{font-size:11px;color:#718096}
 .admin-lookup-history-actions{display:flex;gap:6px}.admin-lookup-history-detail{grid-column:1/-1;max-height:280px;margin:4px 0 0;padding:12px;overflow:auto;border-radius:10px;background:#172033;color:#e5eefb;font-size:10px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
 @media(max-width:1100px){.admin-lookup-settings{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-lookup-overview{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-lookup-source-summary{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:720px){.admin-lookup-settings,.admin-lookup-overview,.admin-lookup-steps,.admin-lookup-source-summary{grid-template-columns:1fr}.admin-lookup-events article{grid-template-columns:1fr;gap:3px}.admin-lookup-start-row{align-items:stretch}.admin-lookup-start-row .admin-btn{width:100%}.admin-lookup-filter-details>summary,.admin-lookup-diagnostics>summary,.admin-lookup-history-head,.admin-lookup-failure-head{align-items:stretch;flex-direction:column}.admin-lookup-failures article,.admin-lookup-history-item{grid-template-columns:1fr}.admin-lookup-history-actions{width:100%;flex-wrap:wrap}.admin-lookup-history-actions .admin-btn,.admin-lookup-failures article .admin-btn,.admin-lookup-failure-head>.admin-btn{width:100%}}
+@media(max-width:720px){.admin-lookup-settings,.admin-lookup-overview,.admin-lookup-steps,.admin-lookup-phase-list,.admin-lookup-source-summary{grid-template-columns:1fr}.admin-lookup-events article{grid-template-columns:1fr;gap:3px}.admin-lookup-start-row{align-items:stretch}.admin-lookup-start-row .admin-btn{width:100%}.admin-lookup-filter-details>summary,.admin-lookup-diagnostics>summary,.admin-lookup-history-head,.admin-lookup-failure-head{align-items:stretch;flex-direction:column}.admin-lookup-failures article,.admin-lookup-history-item{grid-template-columns:1fr}.admin-lookup-history-actions{width:100%;flex-wrap:wrap}.admin-lookup-history-actions .admin-btn,.admin-lookup-failures article .admin-btn,.admin-lookup-failure-head>.admin-btn{width:100%}}

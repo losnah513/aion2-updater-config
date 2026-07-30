@@ -18,6 +18,18 @@ function hofNumberLike(value){
   const n=Number(String(raw).replace(/[^0-9.-]/g,''));
   return Number.isFinite(n)?n:'';
 }
+function hofPowerShort(value){
+  const formatter=window.KinojoPowerFormat;
+  if(formatter&&typeof formatter.short==='function')return formatter.short(value);
+  const n=hofNumberLike(value);
+  return n===''?'-':(n/1000).toFixed(1)+'K';
+}
+function hofPowerFull(value){
+  const formatter=window.KinojoPowerFormat;
+  if(formatter&&typeof formatter.full==='function')return formatter.full(value);
+  const n=hofNumberLike(value);
+  return n===''?'-':Math.round(n).toLocaleString('ko-KR');
+}
 function hofSignedNumber(value){
   const n=hofNumberLike(value);
   if(n==='')return '';
@@ -40,8 +52,8 @@ function hofMetricValue(item,metric){
   if(!item)return '';
   if(metric==='like')return Number(hofFirstDefined(item.like,item.likeCount,item.like_count,item.value,0)).toLocaleString('ko-KR');
   if(metric==='dislike')return Number(hofFirstDefined(item.dislike,item.dislikeCount,item.dislike_count,item.dislike_count_total,item.value,0)).toLocaleString('ko-KR');
-  if(metric==='pvp')return hofFirstDefined(item.pvpPowerLabel,item.pvp_power_label,numberOnly(hofFirstDefined(item.pvpPower,item.pvp_power,item.latest_pvp_combat_power,item.value,'')),'-');
-  if(metric==='pve')return hofFirstDefined(item.pvePowerLabel,item.pve_power_label,numberOnly(hofFirstDefined(item.pvePower,item.pve_power,item.latest_pve_combat_power,item.value,'')),'-');
+  if(metric==='pvp')return hofPowerShort(hofFirstDefined(item.pvpPower,item.pvp_power,item.latest_pvp_combat_power,item.value,item.pvpPowerLabel,item.pvp_power_label,''));
+  if(metric==='pve')return hofPowerShort(hofFirstDefined(item.pvePower,item.pve_power,item.latest_pve_combat_power,item.value,item.pvePowerLabel,item.pve_power_label,''));
   if(metric==='growth')return hofFirstDefined(item.powerLabel,item.power_label,item.label,hofSignedNumber(hofFirstDefined(item.powerDelta,item.power_delta,item.itemDelta,item.item_delta,item.valueDelta,item.value_delta,item.value,'')),'-');
   if(metric==='enhance')return hofFirstDefined(item.itemLabel,item.item_label,item.label,hofSignedNumber(hofFirstDefined(item.itemLevelDelta,item.item_level_delta,item.valueDelta,item.value_delta,item.value,'')),'-');
   return item.label||'';
@@ -150,7 +162,8 @@ function hofTop3Card(item,index,metric){
   const server=hofServerName(item)||'지켈';
   const summary=hofRankSummaryText(item,metric);
   const score=hofMetricValue(item,metric)||'-';
-  const commonAttrs=' data-character="'+escapeHtml(name)+'" data-hof-metric="'+escapeHtml(metric)+'" data-hof-rank="'+rank+'" data-hof-score="'+escapeHtml(score)+'" aria-label="'+escapeHtml(name)+' 상세 보기"';
+  const exactPower=(metric==='pve'||metric==='pvp')?hofPowerFull(hofMetricRawValue(item,metric)):'';
+  const commonAttrs=' data-character="'+escapeHtml(name)+'" data-hof-metric="'+escapeHtml(metric)+'" data-hof-rank="'+rank+'" data-hof-score="'+escapeHtml(score)+'"'+(exactPower?' title="정확한 전투력 '+escapeHtml(exactPower)+'"':'')+' aria-label="'+escapeHtml(name)+' 상세 보기"';
   if(rank===1){
     return '<button type="button" class="hof-v2-top3-item rank-1"'+commonAttrs+'>'
       + '<span class="hof-v2-portrait-wrap">'+hofRankPortrait(item,rank,'small')+hofRankMedal(rank)+'</span>'
@@ -264,11 +277,12 @@ function hofMyRankingPanel(){
     const found=foundByMetric[metric];
     const power=metric==='pve'?hofFirstDefined(item?.pvePower,item?.pve_power,''):hofFirstDefined(item?.pvpPower,item?.pvp_power,'');
     const itemLevel=metric==='pve'?hofFirstDefined(item?.pveItem,item?.pve_item,''):hofFirstDefined(item?.pvpItem,item?.pvp_item,'');
-    const powerText=power!==''?Number(power).toLocaleString('ko-KR'):'-';
+    const powerText=power!==''?hofPowerShort(power):'-';
+    const powerFull=power!==''?hofPowerFull(power):'-';
     const itemText=itemLevel!==''?Number(itemLevel).toLocaleString('ko-KR'):'-';
     return '<article class="hof-v2-my-current is-'+metric+'" data-hof-metric="'+metric+'">'
       + '<div class="hof-v2-my-current-head"><span>'+metric.toUpperCase()+'</span><strong>'+(found?Number(found.rank).toLocaleString('ko-KR')+'위':'-')+'</strong></div>'
-      + '<dl><div><dt>전투력</dt><dd>'+escapeHtml(powerText)+'</dd></div><div><dt>아이템 Lv.</dt><dd>'+escapeHtml(itemText)+'</dd></div></dl>'
+      + '<dl><div><dt>전투력</dt><dd title="정확한 전투력 '+escapeHtml(powerFull)+'">'+escapeHtml(powerText)+'</dd></div><div><dt>아이템 Lv.</dt><dd>'+escapeHtml(itemText)+'</dd></div></dl>'
       + '</article>';
   }).join('');
   const secondaryRows=[['강화의 신','enhance'],['성장의 신','growth'],['좋아요','like'],['싫어요','dislike']];

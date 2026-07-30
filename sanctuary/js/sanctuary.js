@@ -362,10 +362,13 @@ function slotHtml(s){
   const charKey=String(s.charKey||s.char_key||'').trim();
   const pvePower=s.pvePower||s.pve_power||s.latestPveCombatPower||s.latest_pve_combat_power||s.power||'';
   const pvpPower=s.pvpPower||s.pvp_power||s.latestPvpCombatPower||s.latest_pvp_combat_power||'';
+  const powerFormat=window.KinojoPowerFormat||{};
+  const powerShort=powerFormat.short?powerFormat.short(pvePower):fmt(pvePower);
+  const powerFull=powerFormat.full?powerFormat.full(pvePower):fmt(pvePower);
   const ownerBadge=isMain?'<span class="char-main-badge">본캐</span>':(mainCharacterName?'<span class="char-owner-badge" title="소유 본캐 '+esc(mainCharacterName)+'">본캐 '+esc(mainCharacterName)+'</span>':'');
   const profileHtml='<span class="char-profile is-empty" data-character-profile data-char-name="'+esc(s.name)+'" data-char-class="'+esc(className)+'" data-profile-image="'+esc(profile)+'" data-server-id="'+esc(serverId)+'" data-char-key="'+esc(charKey)+'">?</span>';
   return '<button class="char-card san-reaction-card '+(isMain?'is-main-character':'is-sub-character')+'" type="button" draggable="false" data-char-name="'+esc(s.name)+'" data-char-class="'+esc(className)+'" data-char-power="'+esc(fmt(pvePower))+'" data-pve-power="'+esc(fmt(pvePower))+'" data-pvp-power="'+esc(fmt(pvpPower))+'" data-char-owner="'+esc(mainCharacterName)+'" data-profile-image="'+esc(profile)+'" data-class-icon="'+esc(iconSrc)+'" data-server-id="'+esc(serverId)+'" data-char-key="'+esc(charKey)+'" data-detail-url="'+esc(sanctuaryDetailUrl(s))+'" aria-label="'+esc(s.name)+' 반응 남기기">'
-    +'<span class="char-text"><span class="char-name-row"><span class="char-name">'+esc(s.name)+'</span>'+ownerBadge+'</span><span class="char-meta">'+icon+esc(className)+' · '+fmt(pvePower)+'</span></span>'+profileHtml+'</button>';
+    +'<span class="char-text"><span class="char-name-row"><span class="char-name">'+esc(s.name)+'</span>'+ownerBadge+'</span><span class="char-meta" title="정확한 전투력 '+esc(powerFull)+'">'+icon+esc(className)+' · '+esc(powerShort)+'</span></span>'+profileHtml+'</button>';
 }
 function bindSanctuaryProfileImages(){
   const loader=window.KinojoCharacterProfileImage;
