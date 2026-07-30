@@ -469,6 +469,14 @@
     return data.active?'실행 중':'대기';
   }
   function lookupStepClass(value){const key=String(value||'pending');return ['done','active','error'].includes(key)?key:'pending';}
+  function lookupDuration(seconds){
+    const value=Math.max(0,Math.round(Number(seconds||0)));
+    if(!value)return '0초';
+    const hours=Math.floor(value/3600);
+    const minutes=Math.floor((value%3600)/60);
+    const secs=value%60;
+    return [hours?hours+'시간':'',minutes?minutes+'분':'',(!hours&&secs)?secs+'초':''].filter(Boolean).join(' ');
+  }
   function lookupExitSafety(data){
     const handoff=data?.handoff||{};
     const serverQueue=data?.serverQueue===true;
@@ -512,6 +520,8 @@
     if($('#characterLookupFailed'))$('#characterLookupFailed').textContent=Number(progress.finalFailedCount||0).toLocaleString('ko-KR');
     if($('#characterLookupPercent'))$('#characterLookupPercent').textContent=percent.toFixed(1)+'%';
     if($('#characterLookupProgressBar'))$('#characterLookupProgressBar').style.width=percent+'%';
+    if($('#characterLookupEta'))$('#characterLookupEta').textContent=Number(progress.etaSeconds||data?.etaSeconds||0)>0?lookupDuration(progress.etaSeconds||data?.etaSeconds):active?'계산 중':'-';
+    if($('#characterLookupPhaseLabel'))$('#characterLookupPhaseLabel').textContent=String(progress.currentPhaseLabel||'대기');
     const queueMeta=data?.queueMeta||data?.session?.raw_payload?.queueMeta||{};
     const sourceSummary=data?.sourceSummary||{};
     if($('#characterLookupListCount'))$('#characterLookupListCount').textContent=lookupCount(sourceSummary.listCount??queueMeta.rawListCount);
@@ -525,6 +535,20 @@
       {id:'characterLookupStep3',status:progress.step3Status,percent:progress.step3Percent,label:'서버 후처리'}
     ];
     steps.forEach(step=>{const el=$('#'+step.id);if(!el)return;const cls=lookupStepClass(step.status);el.className='admin-lookup-step '+cls;el.querySelector('strong').textContent=step.label;el.querySelector('span').textContent=Number(step.percent||0).toFixed(1)+'%';});
+    const phaseList=$('#characterLookupPhaseList');
+    if(phaseList){
+      const phases=Array.isArray(progress.phases)?progress.phases:(Array.isArray(data?.phases)?data.phases:[]);
+      phaseList.innerHTML=phases.length?phases.map(phase=>{
+        const cls=lookupStepClass(phase.status);
+        const phaseEta=Number(phase.etaSeconds||0);
+        return '<article class="admin-lookup-phase '+cls+'">'
+          +'<div class="admin-lookup-phase-head"><span>STEP '+Number(phase.no||0)+'</span><strong>'+esc(phase.label||phase.id||'-')+'</strong><b>'+Number(phase.percent||0).toFixed(1)+'%</b></div>'
+          +'<div class="admin-lookup-phase-progress"><i style="width:'+Math.max(0,Math.min(100,Number(phase.percent||0)))+'%"></i></div>'
+          +'<div class="admin-lookup-phase-meta"><span>'+Number(phase.current||0).toLocaleString('ko-KR')+' / '+Number(phase.total||0).toLocaleString('ko-KR')+'건</span><span>'+(cls==='done'?'완료':phaseEta>0?'남은 시간 '+lookupDuration(phaseEta):cls==='active'?'계산 중':'대기')+'</span></div>'
+          +'<p>'+esc(phase.message||'')+'</p>'
+          +'</article>';
+      }).join(''):'<div class="admin-empty">단계별 진행 정보를 기다리는 중입니다.</div>';
+    }
     const events=$('#characterLookupEvents');
     if(events){const rows=Array.isArray(data?.events)?data.events:[];events.innerHTML=rows.length?rows.map(row=>'<article><time>'+esc(formatServerTime(row.created_at||row.createdAt))+'</time><strong>'+esc(row.stage||row.event_type||row.eventType||'EVENT')+'</strong><span>'+esc(row.message||'')+'</span></article>').join(''):'<div class="admin-empty">아직 조회 이벤트가 없습니다.</div>';}
     const failures=$('#characterLookupFailures');

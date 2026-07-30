@@ -1825,7 +1825,7 @@
     }
 
     if(normalized==='status'){
-      return rpc('kinojo_admin_server_queue_status_v276',{
+      return rpc('kinojo_admin_server_queue_status_v284',{
         p_pass_key:passKey,
         p_session_id:extra.sessionId?String(extra.sessionId):null
       });

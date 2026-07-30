@@ -34,8 +34,8 @@
       + '<span class="ranking-reaction-box dislike">👎 '+U.escapeHtml(item.dislike)+'</span>'
       + '</div>';
   }
-  function statBlock(label, value, kind){
-    return '<div class="ranking-stat '+kind+'"><span>'+U.escapeHtml(label)+'</span><strong>'+U.escapeHtml(value)+'</strong></div>';
+  function statBlock(label, value, kind, title){
+    return '<div class="ranking-stat '+kind+'"'+(title?' title="'+U.escapeHtml(title)+'"':'')+'><span>'+U.escapeHtml(label)+'</span><strong>'+U.escapeHtml(value)+'</strong></div>';
   }
   function rankChangeHtml(item){
     const status = String(item.rankChangeStatus || '').toUpperCase();
@@ -71,13 +71,16 @@
     const item = U.normalizeRow(raw, mode);
     const power = mode === 'PVP' ? item.pvpPower : item.pvePower;
     const itemLevel = mode === 'PVP' ? item.pvpItem : item.pveItem;
+    const powerFormat = window.KinojoPowerFormat || {};
+    const powerShort = powerFormat.short ? powerFormat.short(power) : U.num(power);
+    const powerFull = powerFormat.full ? powerFormat.full(power) : U.num(power);
     return '<article class="ranking-card ranking-reaction-card'+topRankClass(item.rank)+'" role="button" tabindex="0" aria-haspopup="dialog" aria-label="'+U.escapeHtml(item.name)+' 상세 정보 보기" data-character="'+U.escapeHtml(item.name)+'" data-char-name="'+U.escapeHtml(item.name)+'" data-char-owner="'+U.escapeHtml(item.owner)+'" data-char-class="'+U.escapeHtml(item.className)+'" data-char-server="'+U.escapeHtml(item.server)+'" data-server-id="'+U.escapeHtml(item.serverId||'')+'" data-char-key="'+U.escapeHtml(item.charKey||'')+'" data-char-power="'+U.escapeHtml(U.num(power))+'" data-pve-power="'+U.escapeHtml(U.num(item.pvePower))+'" data-pvp-power="'+U.escapeHtml(U.num(item.pvpPower))+'" data-profile-image="'+U.escapeHtml(item.profile)+'" data-detail-url="'+U.escapeHtml(item.detailUrl||'')+'">'
       + '<div class="ranking-card-main">'
       + '<div class="ranking-rank"><span class="ranking-rank-current">'+rankIcon(item.rank)+'</span>'+rankChangeHtml(item)+'</div>'
       + '<div class="ranking-character">'+avatarHtml(item)+'<div class="ranking-character-meta"><div class="ranking-name-line"><strong>'+U.escapeHtml(item.name)+'</strong>'+ownerBadge(item)+'</div><div class="ranking-server-line">'+U.escapeHtml(item.server)+'</div>'+reactionBoxes(item)+'</div></div>'
       + '<div class="ranking-class-chip">'+U.escapeHtml(item.className)+'</div>'
       + statBlock('아이템', U.num(itemLevel), 'item')
-      + statBlock(mode, U.num(power), mode.toLowerCase())
+      + statBlock(mode, powerShort, mode.toLowerCase(), '정확한 전투력 '+powerFull)
       + '</div>'
       + '<div class="ranking-review">'+reviewBadgesHtml(item)+'<p>🤖 '+U.escapeHtml(item.review)+'</p></div>'
       + '</article>';
