@@ -1,0 +1,103 @@
+name: Apply admin lookup status patch
+
+on:
+  push:
+    branches:
+      - fix/260731-09-worker-korean-status
+    paths:
+      - .github/workflows/apply-admin-status-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/260731-09-worker-korean-status
+          fetch-depth: 0
+      - name: Apply patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+
+          js_path = Path('admin/js/admin.js')
+          desktop_path = Path('admin/index.html')
+          mobile_path = Path('m/admin/index.html')
+
+          s = js_path.read_text(encoding='utf-8')
+          s = s.replace('/* KINOJO Admin Console v2026073104 */', '/* KINOJO Admin Console v2026073105 */', 1)
+          s = s.replace("const CACHE = '2026073104';", "const CACHE = '2026073105';", 1)
+
+          needle = """  function lookupCount(value){
+            const number=Number(value);
+            return Number.isFinite(number)&&number>=0?number.toLocaleString('ko-KR'):'-';
+          }
+          """
+          insert = needle + r"""  function lookupErrorPresentation(error){
+            const raw=String(error?.rawMessage||error?.message||error||'').trim();
+            const code=String(error?.code||error?.errorCode||'').trim().toUpperCase();
+            const probe=(code+' '+raw).toLowerCase();
+            if(/failed to fetch|networkerror|cors|options/.test(probe))return{title:'조회 서버 연결에 실패했습니다.',message:'조회 대상은 보존되어 있습니다. 잠시 후 다시 시도해 주세요.',raw,code,retryable:true};
+            if(/statement timeout|canceling statement|cancelling statement/.test(probe))return{title:'서버 처리 시간이 초과되었습니다.',message:'상태 정보를 불러오는 과정이 지연되었습니다. 잠시 후 상태를 다시 확인해 주세요.',raw,code,retryable:true};
+            if(/429|rate.?limit|plaync_rate/.test(probe))return{title:'공식 사이트 요청 제한으로 잠시 대기 중입니다.',message:'서버가 제한 해제 후 자동으로 다시 시도합니다.',raw,code,retryable:true};
+            if(/http[_ ]?5\d\d|edge_function_error|server_queue_worker_failed/.test(probe))return{title:'공식 조회 서버에 일시적인 문제가 있습니다.',message:'조회 대상은 보존되어 있으며 자동 재시도 또는 다시 시작할 수 있습니다.',raw,code,retryable:true};
+            if(/timeout/.test(probe))return{title:'응답 대기 시간이 초과되었습니다.',message:'현재 상태를 다시 확인해 주세요.',raw,code,retryable:true};
+            return{title:'예상하지 못한 오류가 발생했습니다.',message:'잠시 후 다시 시도해 주세요. 문제가 계속되면 기술 정보를 관리자에게 전달해 주세요.',raw,code,retryable:error?.retryable!==false};
+          }
+          function lookupStateLabel(value){
+            const key=String(value||'').trim().toLowerCase();
+            return({queued:'조회 대기',claimed:'조회 준비 중',processing:'캐릭터 정보 조회 중',running:'진행 중',retryable:'잠시 후 자동 재시도',final_failed:'자동 조회 실패 · 확인 필요',lookup_done:'공식 조회 완료',postprocess:'Server Master 반영 중',master_sync:'Server Master 반영 중',list_sync:'Google 명단 반영 중',synced:'Google 명단 반영 완료',completed:'완료',failed:'실패',cancelled:'중단',paused:'일시정지'})[key]||String(value||'-');
+          }
+          function setLookupError(error){
+            const el=$('#characterLookupStatus');if(!el)return;
+            const info=lookupErrorPresentation(error);
+            const tech=[info.code?('오류 코드: '+info.code):'',info.raw?('원문: '+info.raw):'',state.lookupSessionId?('세션: '+state.lookupSessionId):''].filter(Boolean).join('\n');
+            el.className='admin-statusline error';
+            el.innerHTML='<strong>'+esc(info.title)+'</strong><span> '+esc(info.message)+'</span>'+(tech?'<details><summary>기술 정보 보기</summary><pre>'+esc(tech)+'</pre></details>':'');
+          }
+          """
+          if 'function lookupErrorPresentation(error)' not in s:
+              if needle not in s:
+                  raise SystemExit('lookupCount insertion point not found')
+              s = s.replace(needle, insert, 1)
+          s = s.replace("esc(row.target_status||row.targetStatus||'-')", "esc(lookupStateLabel(row.target_status||row.targetStatus||'-'))")
+          s = s.replace("catch(err){setStatus('#characterLookupStatus',err.message||String(err),'error');if(!state.lookupConsole)renderCharacterLookupConsole(null);return null;}", "catch(err){setLookupError(err);if(!state.lookupConsole)renderCharacterLookupConsole(null);return null;}", 1)
+          s = s.replace("}catch(err){setStatus('#characterLookupStatus',err.message||String(err),'error');}\n    finally{state.lookupStarting=false;state.lookupQueueRunning=false;renderCharacterLookupConsole(state.lookupConsole||null);}", "}catch(err){setLookupError(err);}\n    finally{state.lookupStarting=false;state.lookupQueueRunning=false;renderCharacterLookupConsole(state.lookupConsole||null);}", 1)
+          js_path.write_text(s, encoding='utf-8')
+
+          desktop = desktop_path.read_text(encoding='utf-8').replace('2026073104', '2026073105')
+          desktop_path.write_text(desktop, encoding='utf-8')
+
+          mobile = mobile_path.read_text(encoding='utf-8')
+          mobile = mobile.replace('admin.js?cache=2026072805', 'admin.js?cache=2026073105')
+          mobile = mobile.replace('admin.js?cache=2026073104', 'admin.js?cache=2026073105')
+          mobile_path.write_text(mobile, encoding='utf-8')
+
+          expected = {
+              js_path: 'e5731583ece17dc04c501b99a00ee5736cd0ef29f99c2657db61689d0d22a812',
+              desktop_path: 'd229c46a95096c64db7ccb98fe1281bee6a11f3206c0ebe01a449e07e5967f84',
+              mobile_path: 'e416c0c15707efa09db2a84e9783d32081f6728fdd689f65e5d0d6e02f4be0b9',
+          }
+          for path, wanted in expected.items():
+              actual = hashlib.sha256(path.read_bytes()).hexdigest()
+              if actual != wanted:
+                  raise SystemExit(f'{path}: SHA-256 mismatch {actual} != {wanted}')
+              print(path, actual)
+          PY
+      - name: Validate JavaScript
+        run: node --check admin/js/admin.js
+      - name: Commit patch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin/js/admin.js admin/index.html m/admin/index.html
+          git diff --cached --check
+          git commit -m "fix: localize admin lookup errors" 
+          git push origin HEAD:${GITHUB_REF_NAME}
