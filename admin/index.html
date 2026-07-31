@@ -12,7 +12,7 @@
 <link href="../ui/kinojo-common-ui.css?cache=2026072502" rel="stylesheet"/>
 <link href="../ui/kinojo-card-guards.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../ui/kinojo-animations.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
-<link href="./css/admin.css?cache=2026073001" rel="stylesheet"/>
+<link href="./css/admin.css?cache=2026073101" rel="stylesheet"/>
 <script src="../ui/kinojo-device-router.js?cache=2026070110" data-mobile-path="../m/admin/"></script>
 </head>
 <body class="kinojo-page-admin">
@@ -72,22 +72,47 @@
           <div class="admin-lookup-start-row"><button class="admin-btn primary" id="characterLookupServerQueueBtn" type="button">전체 조회 시작</button><span>서버 실행 인계가 확인되면 브라우저를 닫아도 계속 진행되며, 다시 접속하면 진행 중인 세션에 자동으로 연결됩니다.</span></div>
           <div id="characterLookupStatus" class="admin-statusline"></div>
           <div class="admin-lookup-exit-safety idle" id="characterLookupExitSafety" role="status" aria-live="polite"><i aria-hidden="true"></i><div><strong data-exit-safety-title>조회 대기</strong><span data-exit-safety-message>조회 작업을 시작하면 브라우저 종료 안전 상태를 여기에서 확인할 수 있습니다.</span></div></div>
-          <div class="admin-lookup-source-summary" aria-label="조회 원본 대조 결과">
-            <article><span>Google list 원본</span><strong id="characterLookupListCount">-</strong></article>
-            <article><span>Server Master 전체</span><strong id="characterLookupMasterCount">-</strong></article>
-            <article><span>list·Master 일치</span><strong id="characterLookupMatchedCount">-</strong></article>
-            <article><span>신규 캐릭터</span><strong id="characterLookupNewCount">-</strong></article>
-            <article><span>최종 조회 대상</span><strong id="characterLookupTargetCount">-</strong></article>
-          </div>
+          <section class="admin-lookup-total-progress" aria-label="전체 진행률">
+            <div class="admin-lookup-total-head">
+              <div><span>전체 진행률</span><strong id="characterLookupPercent">0.0%</strong></div>
+              <div class="admin-lookup-total-eta"><span id="characterLookupPhaseLabel">대기</span><strong id="characterLookupEta">-</strong><em>누락 재조회 발생 시 추가 소요</em></div>
+            </div>
+            <div class="admin-lookup-progress"><i id="characterLookupProgressBar"></i></div>
+          </section>
           <div class="admin-lookup-overview">
-            <article><span>상태</span><strong id="characterLookupState" class="admin-pill">대기</strong><em id="characterLookupMessage">조회 작업을 시작하면 진행 상태가 표시됩니다.</em></article>
-            <article><span>현재 캐릭터</span><strong id="characterLookupCurrent">-</strong><em>세션 <b id="characterLookupSession">없음</b> · 요청자 <b id="characterLookupOwner">-</b></em></article>
-            <article><span>처리 완료</span><strong id="characterLookupCount">0 / 0</strong><em>성공 <b id="characterLookupSuccess">0</b> · 재시도 <b id="characterLookupRetry">0</b> · 실패 <b id="characterLookupFailed">0</b></em></article>
-            <article><span>전체 진행률</span><strong id="characterLookupPercent">0.0%</strong><div class="admin-lookup-progress"><i id="characterLookupProgressBar"></i></div></article>
-            <article><span>예상 남은 시간</span><strong id="characterLookupEta">계산 중</strong><em id="characterLookupPhaseLabel">대기</em></article>
+            <article class="status"><span>상태</span><strong id="characterLookupState" class="admin-pill">대기</strong><em id="characterLookupMessage">조회 작업을 시작하면 진행 상태가 표시됩니다.</em></article>
+            <article><span>현재 캐릭터</span><strong id="characterLookupCurrent">-</strong><em>공식 정보실 조회 대상</em></article>
+            <article><span>공식 조회 완료</span><strong id="characterLookupCount">0 / 0</strong><em>성공 <b id="characterLookupSuccess">0</b> · 재시도 <b id="characterLookupRetry">0</b> · 실패 <b id="characterLookupFailed">0</b></em></article>
+            <article><span>세션 정보</span><strong id="characterLookupSession">세션 없음</strong><em>요청자 <b id="characterLookupOwner">-</b></em></article>
           </div>
-          <div class="admin-lookup-steps"><article class="admin-lookup-step pending" id="characterLookupStep1"><small>STEP 1</small><strong>원본 대조</strong><span>0.0%</span></article><article class="admin-lookup-step pending" id="characterLookupStep2"><small>STEP 2</small><strong>공식 조회</strong><span>0.0%</span></article><article class="admin-lookup-step pending" id="characterLookupStep3"><small>STEP 3</small><strong>서버 후처리</strong><span>0.0%</span></article></div>
-          <div class="admin-lookup-phase-list" id="characterLookupPhaseList" aria-label="Server Worker 7단계 상세 진행"><div class="admin-empty">단계별 진행 정보를 기다리는 중입니다.</div></div>
+          <div class="admin-lookup-workspace">
+            <div class="admin-lookup-step-stack">
+              <section class="admin-lookup-step-card pending" id="characterLookupStep1">
+                <header><div><small>STEP 1</small><strong>원본 대조</strong><em>Google list와 Server Master 비교</em></div><span>0.0%</span></header>
+                <div class="admin-lookup-source-summary" aria-label="조회 원본 대조 결과">
+                  <article><span>Google list 원본</span><strong id="characterLookupListCount">-</strong></article>
+                  <article><span>Server Master 전체</span><strong id="characterLookupMasterCount">-</strong></article>
+                  <article><span>list·Master 일치</span><strong id="characterLookupMatchedCount">-</strong></article>
+                  <article><span>신규 캐릭터</span><strong id="characterLookupNewCount">-</strong></article>
+                  <article><span>최종 조회 대상</span><strong id="characterLookupTargetCount">-</strong></article>
+                </div>
+                <div class="admin-lookup-phase-list" id="characterLookupPhaseListStep1"><div class="admin-empty">원본 대조 대기</div></div>
+              </section>
+              <section class="admin-lookup-step-card pending" id="characterLookupStep2">
+                <header><div><small>STEP 2</small><strong>PLAYNC 공식 조회</strong><em>캐릭터 정보실 조회와 누락 검산</em></div><span>0.0%</span></header>
+                <div class="admin-lookup-phase-list" id="characterLookupPhaseListStep2"><div class="admin-empty">공식 조회 대기</div></div>
+              </section>
+              <section class="admin-lookup-step-card pending" id="characterLookupStep3">
+                <header><div><small>STEP 3</small><strong>Server Master·list 반영</strong><em>Master 최신화부터 Google list readback까지</em></div><span>0.0%</span></header>
+                <div class="admin-lookup-phase-list" id="characterLookupPhaseListStep3"><div class="admin-empty">서버·시트 반영 대기</div></div>
+              </section>
+            </div>
+            <aside class="admin-lookup-target-panel is-disabled" id="characterLookupTargetPanel" aria-label="캐릭터 조회 현황">
+              <header><div><strong>캐릭터 조회 현황</strong><span id="characterLookupTargetSummary">STEP 2 시작 전</span></div><b id="characterLookupTargetBadge">0명</b></header>
+              <div class="admin-lookup-target-legend"><span class="done">조회 완료</span><span class="active">조회 중</span><span class="standby">다음 작업</span><span class="error">오류</span></div>
+              <div class="admin-lookup-target-list" id="characterLookupTargetList"><div class="admin-empty">STEP 2가 시작되면 대상별 상태가 표시됩니다.</div></div>
+            </aside>
+          </div>
           <div class="admin-lookup-controls"><button class="admin-btn" id="characterLookupPauseBtn" type="button" disabled>일시정지</button><button class="admin-btn primary" id="characterLookupResumeBtn" type="button" disabled>재개</button><button class="admin-btn danger" id="characterLookupStopBtn" type="button" disabled>작업 중단</button></div>
           <div class="admin-lookup-failures" id="characterLookupFailures" hidden></div>
           <details class="admin-lookup-diagnostics" id="characterLookupDiagnostics">
@@ -296,6 +321,6 @@
 <script src="../ui/kinojo-admin-panel.js?cache=2026071712"></script>
 <script src="../core/kinojo-supabase.js?cache=2026073001"></script>
 <script src="../core/kinojo-auth.js?cache=2026072502"></script>
-<script src="./js/admin.js?cache=2026073001"></script>
+<script src="./js/admin.js?cache=2026073101"></script>
 </body>
 </html>
