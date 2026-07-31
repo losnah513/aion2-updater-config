@@ -1584,6 +1584,10 @@ body{
   z-index:4!important;
 }
 .hof-v2-portrait-wrap,.hof-v2-god-portrait{overflow:visible!important;}
+.hof-identity-portrait{position:relative!important;display:inline-grid!important;place-items:center!important;max-width:100%!important;}
+.hof-identity-badge{position:absolute!important;left:50%!important;bottom:8px!important;z-index:3!important;max-width:calc(100% - 8px)!important;height:16px!important;padding:0 5px!important;transform:translateX(-50%)!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;border:1px solid rgba(255,255,255,.78)!important;border-radius:999px!important;background:rgba(15,23,42,.76)!important;box-shadow:0 2px 8px rgba(15,23,42,.22)!important;color:#fff!important;font-size:8px!important;font-weight:1000!important;line-height:14px!important;letter-spacing:-.02em!important;cursor:pointer!important;backdrop-filter:blur(4px)!important;-webkit-backdrop-filter:blur(4px)!important;}
+.hof-v2-portrait.small+.hof-identity-badge,.hof-v2-portrait.my+.hof-identity-badge{bottom:5px!important;max-width:48px!important;}
+.hof-identity-badge:focus-visible{outline:2px solid #2563eb!important;outline-offset:2px!important;}
 
 /* ============================================================
    KINOJO HOF 20260717 - current-only loading, weekly period, my rank

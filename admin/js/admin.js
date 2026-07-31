@@ -392,10 +392,12 @@
   function historySessionId(item){return String(item?.sessionId||item?.session_id||item?.id||'');}
   function historySummary(item){
     const summary=item?.summary||item?.result||item?.progress||{};
-    const total=Number(summary.total||item?.total||0);
-    const success=Number(summary.successCount||summary.success||item?.successCount||item?.success||0);
-    const failed=Number(summary.finalFailedCount||summary.failedCount||item?.finalFailedCount||item?.failedCount||0);
-    return{total,success,failed};
+    const counts=item?.counts||summary?.counts||{};
+    const total=Number(counts.total||summary.total||item?.total||0);
+    const success=Number(counts.lookupDone||counts.success||summary.successCount||summary.success||item?.successCount||item?.success||0);
+    const failed=Number(counts.failed||summary.finalFailedCount||summary.failedCount||item?.finalFailedCount||item?.failedCount||0);
+    const skipped=Number(counts.adminExcluded||counts.skipped||summary.adminExcludedCount||summary.skippedCount||item?.skippedCount||0);
+    return{total,success,failed,skipped};
   }
   function renderLookupHistory(){
     const root=$('#characterLookupHistoryList');if(!root)return;
@@ -409,7 +411,7 @@
       const title=String(item.displayLabel||item.title||item.lookupFilterSummary||item.startedAt||item.started_at||'조회 기록');
       const time=item.completedAt||item.finishedAt||item.startedAt||item.started_at||'';
       const detail=state.lookupHistoryDetails[sessionId];
-      return '<article class="admin-lookup-history-item"><div class="admin-lookup-history-main"><strong>'+esc(title)+'</strong><span>'+esc(status)+' · 대상 '+lookupCount(summary.total)+' · 성공 '+lookupCount(summary.success)+' · 실패 '+lookupCount(summary.failed)+'</span><time>'+esc(formatServerTime(time))+'</time></div><div class="admin-lookup-history-actions"><button class="admin-btn" type="button" data-lookup-history-detail="'+esc(sessionId)+'">상세</button><button class="admin-btn" type="button" data-lookup-history-copy="'+esc(sessionId)+'">로그 복사</button>'+(canRetry?'<button class="admin-btn primary" type="button" data-lookup-history-retry="'+esc(sessionId)+'" data-lookup-failed-count="'+summary.failed+'">실패 '+lookupCount(summary.failed)+'명 재조회</button>':'')+'</div>'+(detail?'<pre class="admin-lookup-history-detail">'+esc(JSON.stringify(redactDiagnostic(detail),null,2))+'</pre>':'')+'</article>';
+      return '<article class="admin-lookup-history-item"><div class="admin-lookup-history-main"><strong>'+esc(title)+'</strong><span>'+esc(status)+' · 대상 '+lookupCount(summary.total)+' · 성공 '+lookupCount(summary.success)+' · 실패 '+lookupCount(summary.failed)+' · 조회 제외 '+lookupCount(summary.skipped)+'</span><time>'+esc(formatServerTime(time))+'</time></div><div class="admin-lookup-history-actions"><button class="admin-btn" type="button" data-lookup-history-detail="'+esc(sessionId)+'">상세</button><button class="admin-btn" type="button" data-lookup-history-copy="'+esc(sessionId)+'">로그 복사</button>'+(canRetry?'<button class="admin-btn primary" type="button" data-lookup-history-retry="'+esc(sessionId)+'" data-lookup-failed-count="'+summary.failed+'">실패 '+lookupCount(summary.failed)+'명 재조회</button>':'')+'</div>'+(detail?'<pre class="admin-lookup-history-detail">'+esc(JSON.stringify(redactDiagnostic(detail),null,2))+'</pre>':'')+'</article>';
     }).join('');
   }
   async function loadLookupHistory(){
@@ -797,12 +799,27 @@
       const lastFailure=c.lastLookupFailedAt?formatServerTime(c.lastLookupFailedAt):'기록 없음';
       const lastSuccess=c.lastLookupSuccessAt?formatServerTime(c.lastLookupSuccessAt):'기록 없음';
       const statusPills=[
+        c.identityReview?'<span class="admin-pill warn">신원 확인 대기</span>':'',
         review?'<span class="admin-pill warn">제외 검토</span>':'',
         c.lookupExcluded?'<span class="admin-pill error">조회 제외</span>':'<span class="admin-pill ok">조회 대상</span>',
         c.visibilityExcluded?'<span class="admin-pill error">노출 제외</span>':'<span class="admin-pill ok">사이트 노출</span>'
       ].join('');
+      const identityBadge=c.identityBadge
+        ?'<span class="admin-character-identity-badge" title="'+esc(c.identityBadge.detail||c.identityBadge.label||'')+'">'+esc(c.identityBadge.label||'이전 신원')+'</span>'
+        :'';
+      const identityReview=c.identityReview;
+      const identityReviewHtml=identityReview?(()=>{
+        const current=identityReview.current||{},candidate=identityReview.candidate||{},evidence=identityReview.evidence||{};
+        const equipmentOverlap=Number(evidence.equipmentOverlapCount||evidence.equipment_overlap_count||0);
+        return '<section class="admin-character-identity-review"><div><strong>신원 변경 후보 확인</strong><span>'+esc([current.serverName,current.characterName].filter(Boolean).join(' '))+' → '+esc([candidate.serverName,candidate.characterName].filter(Boolean).join(' '))+'</span><small>기존 '+esc(current.charKeyMasked||'-')+' · 후보 '+esc(candidate.charKeyMasked||'-')+(equipmentOverlap?' · 장비 일치 '+equipmentOverlap+'부위':'')+'</small></div><div class="admin-character-identity-actions"><button class="admin-btn" type="button" data-identity-review-reject data-review-id="'+Number(identityReview.reviewId||0)+'">거절</button><button class="admin-btn primary" type="button" data-identity-review-approve data-review-id="'+Number(identityReview.reviewId||0)+'">동일 캐릭터 승인</button></div></section>';
+      })():'';
+      const identityProbeHtml=c.hasPersistentKey&&!identityReview
+        ?'<section class="admin-character-identity-probe"><div><strong>서버 이전·이름 변경 탐색</strong><span>공식 전체 서버에서 저장된 고유키와 일치하는 캐릭터를 찾습니다.</span></div><button class="admin-btn" type="button" data-identity-probe>변경 탐색</button></section>'
+        :'';
       return '<article class="admin-character-status-row '+(review?'needs-review':'')+'" data-character="'+name+'" data-character-id="'+Number(c.characterId||0)+'" data-server-id="'+esc(c.serverId||'')+'">'
-        +'<div class="admin-character-status-head"><div><strong>'+name+'</strong><span>'+server+' · '+cls+' · PVE '+Number(c.pvePower||0).toLocaleString('ko-KR')+' · PVP '+Number(c.pvpPower||0).toLocaleString('ko-KR')+'</span></div><div class="admin-character-pills">'+statusPills+'</div></div>'
+        +'<div class="admin-character-status-head"><div><strong>'+name+'</strong>'+identityBadge+'<span>'+server+' · '+cls+' · PVE '+Number(c.pvePower||0).toLocaleString('ko-KR')+' · PVP '+Number(c.pvpPower||0).toLocaleString('ko-KR')+'</span></div><div class="admin-character-pills">'+statusPills+'</div></div>'
+        +identityReviewHtml
+        +identityProbeHtml
         +(review?'<div class="admin-character-review-callout"><strong>공식 정보 미확인 '+failureStreak+'회 연속</strong><span>자동 제외하지 않았습니다. 삭제·서버 이전·이름 변경 여부를 확인한 뒤 상태를 선택하세요.</span></div>':'')
         +'<div class="admin-character-failure-meta"><span>연속 실패 <strong>'+failureStreak+'회</strong></span><span>누적 공식 미확인 <strong>'+failureTotal+'회</strong></span><span>최근 오류 <strong>'+esc(c.lastLookupFailureCode||'-')+'</strong></span><span>최근 실패 <strong>'+esc(lastFailure)+'</strong></span><span>최근 성공 <strong>'+esc(lastSuccess)+'</strong></span></div>'
         +'<details class="admin-character-status-editor" '+(review?'open':'')+'><summary>조회·노출 상태 관리</summary><div class="admin-character-status-fields">'
@@ -824,6 +841,50 @@
     btn.disabled=true;
     try{const res=await adminCharacter('updateExclusion',{characterId,lookupExcluded,visibilityExcluded,reason:mode==='normal'?'':reason,memo});if(res.ok===false)throw new Error(res.message||'처리 실패');toast(res.message||'상태 저장 완료');await searchCharacters();}
     catch(err){ setStatus('#characterStatus',err.message||String(err),'error'); btn.disabled=false; }
+  }
+
+  async function decideIdentityReview(btn,approve){
+    const reviewId=Number(btn?.dataset.reviewId||0);
+    if(!reviewId)return;
+    const promptText=approve?'이 후보를 동일 캐릭터로 확정하고 Master와 list 시트를 변경할까요?':'이 신원 후보를 거절하고 기존 정보를 유지할까요?';
+    if(!confirm(promptText))return;
+    btn.disabled=true;
+    try{
+      const res=await adminCharacter(approve?'identityReviewApprove':'identityReviewReject',{reviewId});
+      if(!res||res.ok===false)throw new Error(res?.message||'신원 검토 처리 실패');
+      if(approve&&res.listSyncOk!==true)throw new Error(res?.message||'Master 반영 후 list 시트 readback 확인이 필요합니다.');
+      toast(res.message||'신원 검토 처리 완료');
+      await Promise.all([searchCharacters(),loadLookupHistory()]);
+    }catch(err){setStatus('#characterStatus',err.message||String(err),'error');btn.disabled=false;}
+  }
+
+  async function probeCharacterIdentity(btn){
+    const row=btn.closest('[data-character]');const characterId=Number(row?.dataset.characterId||0);
+    if(!characterId)return;
+    btn.disabled=true;btn.textContent='공식 조회 중...';
+    try{
+      const probe=await adminCharacter('identityProbe',{characterId});
+      if(!probe||probe.ok===false)throw new Error(probe?.message||'신원 변경 탐색에 실패했습니다.');
+      if(!probe.found){
+        toast(probe.message||'동일 고유키 후보를 찾지 못했습니다.');
+        await searchCharacters();
+        return;
+      }
+      const current=probe.current||{},candidate=probe.candidate||{};
+      const before=[current.serverName,current.characterName].filter(Boolean).join(' ')||'현재 캐릭터';
+      const after=[candidate.serverName,candidate.characterName].filter(Boolean).join(' ')||'새 캐릭터';
+      if(!confirm(before+' → '+after+'\\n\\n동일 고유키가 확인됐습니다. Master와 list 시트를 변경할까요?'))return;
+      btn.textContent='Master·list 반영 중...';
+      const applied=await adminCharacter('identityApply',{characterId});
+      if(!applied||applied.ok===false)throw new Error(applied?.message||'신원 변경 적용에 실패했습니다.');
+      if(applied.listSyncOk!==true)throw new Error(applied?.message||'Master 반영 후 list 시트 readback 확인이 필요합니다.');
+      toast(applied.message||'캐릭터 정보와 list 시트를 반영했습니다.');
+      await Promise.all([searchCharacters(),loadLookupHistory()]);
+    }catch(err){
+      setStatus('#characterStatus',err.message||String(err),'error');
+    }finally{
+      btn.disabled=false;btn.textContent='변경 탐색';
+    }
   }
 
   function countArray(data, keys){
@@ -1701,7 +1762,12 @@
     $('#characterSearch')?.addEventListener('keydown',e=>{ if(e.key==='Enter') searchCharacters(); });
     $('#characterIncludeInactive')?.addEventListener('change',searchCharacters);
     $('#characterStateFilter')?.addEventListener('change',renderCharacters);
-    $('#characterList')?.addEventListener('click',e=>{ if(e.target.matches('[data-char-status-save]')) saveCharacterStatus(e.target); });
+    $('#characterList')?.addEventListener('click',e=>{
+      if(e.target.matches('[data-char-status-save]'))saveCharacterStatus(e.target);
+      if(e.target.matches('[data-identity-probe]'))probeCharacterIdentity(e.target);
+      if(e.target.matches('[data-identity-review-approve]'))decideIdentityReview(e.target,true);
+      if(e.target.matches('[data-identity-review-reject]'))decideIdentityReview(e.target,false);
+    });
     $('#sanctuaryPreviewBtn')?.addEventListener('click',runSanctuaryPreview);
     $('#sanctuarySyncBtn')?.addEventListener('click',runSanctuarySync);
     $('#sanctuaryScheduleReloadBtn')?.addEventListener('click',()=>loadSanctuaryScheduleConsole(true));

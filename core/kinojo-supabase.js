@@ -661,6 +661,7 @@
       serverName: row.server_name || row.serverName || getServerNameByServerId(row.server_id || row.serverId || ''),
       className: row.class_name || row.className || '',
       profileImageUrl: row.profile_image_url || row.profileImageUrl || '',
+      identityBadge: row.identity_badge || row.identityBadge || null,
       isMain: row.is_main === true || row.isMain === true,
       isActive: row.is_active !== false && row.isActive !== false,
       siteVisible: row.site_visible !== false && row.siteVisible !== false,
@@ -699,14 +700,30 @@
     assertAdmin();
     const normalizedCommand = String(command || '').trim();
     if(normalizedCommand === 'search'){
-      const data = await rpc('kinojo_admin_character_search', {
-        p_pass_key: currentPassKey(),
-        p_search: String(extra.search || extra.characterName || ''),
-        p_include_inactive: extra.includeInactive !== false,
-        p_limit: Number(extra.limit || 300)
-      });
+      const [data,reviews,badgeMap] = await Promise.all([
+        rpc('kinojo_admin_character_search', {
+          p_pass_key: currentPassKey(),
+          p_search: String(extra.search || extra.characterName || ''),
+          p_include_inactive: extra.includeInactive !== false,
+          p_limit: Number(extra.limit || 300)
+        }),
+        rpc('kinojo_admin_identity_reviews_v287', {
+          p_pass_key:currentPassKey(),
+          p_status:'pending'
+        }).catch(()=>({ok:false,items:[]})),
+        getIdentityBadges().catch(()=>new Map())
+      ]);
       const rows = data && (data.characters || data.items || []);
-      return { ok:data && data.ok !== false, message:data && data.message || '', databaseContract:data && data.databaseContract || '', summary:data && data.summary || {}, identityRecoveryAllowed:data && data.identityRecoveryAllowed === true, characters:(Array.isArray(rows) ? rows : []).map(normalizeAdminCharacterRow).filter(Boolean) };
+      const reviewMap=new Map((Array.isArray(reviews?.items)?reviews.items:[]).map(item=>[Number(item.characterId||0),item]));
+      decorateIdentityBadges(rows,badgeMap);
+      return {
+        ok:data && data.ok !== false,
+        message:data && data.message || '',
+        databaseContract:data && data.databaseContract || '',
+        summary:Object.assign({},data && data.summary || {},{identityReviewCount:reviewMap.size}),
+        identityRecoveryAllowed:data && data.identityRecoveryAllowed === true,
+        characters:(Array.isArray(rows)?rows:[]).map(normalizeAdminCharacterRow).filter(Boolean).map(item=>Object.assign(item,{identityReview:reviewMap.get(Number(item.characterId||0))||null}))
+      };
     }
     if(normalizedCommand === 'updateExclusion'){
       const data = await rpc('kinojo_admin_character_exclusion_update_v278', {
@@ -762,6 +779,15 @@
         passKey:currentPassKey(),
         characterId:Number(extra.characterId || 0),
         clientVersion:'WEB-2026072502'
+      });
+    }
+    if(normalizedCommand === 'identityReviewApprove' || normalizedCommand === 'identityReviewReject'){
+      return invokeEdgeFunction('character-identity-recovery', {
+        action:normalizedCommand === 'identityReviewApprove' ? 'reviewApprove' : 'reviewReject',
+        passKey:currentPassKey(),
+        reviewId:Number(extra.reviewId || 0),
+        memo:String(extra.memo || ''),
+        clientVersion:'WEB-2026073101'
       });
     }
     return { ok:false, message:'알 수 없는 캐릭터 관리 명령입니다.' };
@@ -1020,6 +1046,36 @@
     return fallback;
   }
 
+  let identityBadgesPromise = null;
+  function identityBadgeKey(name, serverId){
+    return String(serverId || '').trim()+'|'+String(name || '').normalize('NFKC').trim().toLocaleLowerCase('ko-KR').replace(/\s+/g,'');
+  }
+  async function getIdentityBadges(){
+    if(!identityBadgesPromise){
+      identityBadgesPromise=rpc('kinojo_web_identity_badges_v287',{}).then(data=>{
+        const map=new Map();
+        (Array.isArray(data?.items)?data.items:[]).forEach(item=>{
+          map.set(identityBadgeKey(item.characterName||item.character_name,item.serverId||item.server_id),item);
+        });
+        return map;
+      }).catch(error=>{identityBadgesPromise=null;throw error;});
+    }
+    return identityBadgesPromise;
+  }
+  function decorateIdentityBadges(value,badgeMap,depth=0){
+    if(depth>10||value===null||value===undefined)return value;
+    if(Array.isArray(value)){value.forEach(item=>decorateIdentityBadges(item,badgeMap,depth+1));return value;}
+    if(typeof value!=='object')return value;
+    const name=value.characterName||value.character_name||value.name||'';
+    const serverId=value.serverId||value.server_id||'';
+    if(name&&serverId&&!value.identityBadge&&!value.identity_badge){
+      const badge=badgeMap.get(identityBadgeKey(name,serverId));
+      if(badge){value.identityBadge=badge;value.identity_badge=badge;}
+    }
+    Object.values(value).forEach(item=>decorateIdentityBadges(item,badgeMap,depth+1));
+    return value;
+  }
+
   function numberLabel(value){
     const n = Number(value || 0);
     return Number.isFinite(n) && n > 0 ? n.toLocaleString('ko-KR') : '';
@@ -1073,6 +1129,7 @@
       growthLabel,
       profileImageUrl:snakeOrCamel(row, 'profile_image_url', 'profileImageUrl', '') || '',
       detailUrl:snakeOrCamel(row, 'detail_url', 'detailUrl', '') || '',
+      identityBadge:snakeOrCamel(row, 'identity_badge', 'identityBadge', null),
       isMain:(() => { const raw=snakeOrCamel(row, 'is_main', 'isMain', null); if(raw===true || String(raw).toLowerCase()==='true') return true; if(raw===false || String(raw).toLowerCase()==='false') return false; return null; })(),
       raw:row
     };
@@ -1087,15 +1144,19 @@
   }
 
   async function getWebHallRankingView(extra={}){
-    const data = await rpc('kinojo_web_get_hall_ranking_view', {
-      p_limit:Number(extra.limit || 300),
-      p_page:Number(extra.page || 1),
-      p_page_size:Number(extra.pageSize || extra.page_size || 10),
-      p_include_subs:!!extra.includeSubs || !!extra.include_subs,
-      p_class_name:String(extra.className || extra.class_name || '전체'),
-      p_search:String(extra.search || ''),
-      p_rank_mode:String(extra.rankMode || extra.rank_mode || 'PVE').toUpperCase()==='PVP'?'PVP':'PVE'
-    });
+    const [data,badgeMap] = await Promise.all([
+      rpc('kinojo_web_get_hall_ranking_view', {
+        p_limit:Number(extra.limit || 300),
+        p_page:Number(extra.page || 1),
+        p_page_size:Number(extra.pageSize || extra.page_size || 10),
+        p_include_subs:!!extra.includeSubs || !!extra.include_subs,
+        p_class_name:String(extra.className || extra.class_name || '전체'),
+        p_search:String(extra.search || ''),
+        p_rank_mode:String(extra.rankMode || extra.rank_mode || 'PVE').toUpperCase()==='PVP'?'PVP':'PVE'
+      }),
+      getIdentityBadges().catch(()=>new Map())
+    ]);
+    decorateIdentityBadges(data,badgeMap);
     const rows = Array.isArray(data && data.items) ? data.items : [];
     const items = rows.map((row, idx)=>hallItemFromRow(row, idx + 1));
     return Object.assign({}, data || {}, {
@@ -1114,10 +1175,14 @@
 
 
   async function getWebHofSummary(extra={}){
-    const data = await rpc('kinojo_web_get_hof_summary', {
-      p_include_subs:!!extra.includeSubs || !!extra.include_subs,
-      p_pass_key:String(extra.passKey || extra.pass_key || '').trim() || null
-    });
+    const [data,badgeMap] = await Promise.all([
+      rpc('kinojo_web_get_hof_summary', {
+        p_include_subs:!!extra.includeSubs || !!extra.include_subs,
+        p_pass_key:String(extra.passKey || extra.pass_key || '').trim() || null
+      }),
+      getIdentityBadges().catch(()=>new Map())
+    ]);
+    decorateIdentityBadges(data,badgeMap);
     const sections = data && data.sections ? data.sections : {};
     const toList = function(rows, category){
       return (Array.isArray(rows) ? rows : []).map((row, idx)=>{
@@ -1326,7 +1391,11 @@
     const session = typeof auth.getSession === 'function' ? auth.getSession() : null;
     const account = typeof auth.getAccount === 'function' ? auth.getAccount() : null;
     const passKey = String(account?.passKey || account?.passCode || session?.passKey || session?.passCode || '').trim();
-    return rpc('kinojo_web_get_sanctuary_v2', { p_sanctuary_code:String(id || '') || null, p_pass_key:passKey || null });
+    const [data,badgeMap]=await Promise.all([
+      rpc('kinojo_web_get_sanctuary_v2', { p_sanctuary_code:String(id || '') || null, p_pass_key:passKey || null }),
+      getIdentityBadges().catch(()=>new Map())
+    ]);
+    return decorateIdentityBadges(data,badgeMap);
   }
 
   async function getSanctuaryOperationOverview(extra={}){
