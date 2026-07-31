@@ -1,10 +1,10 @@
-/* KINOJO Admin Console v2026072805 */
+/* KINOJO Admin Console v2026073104 */
 (function(){
   'use strict';
   const $ = (s,r=document)=>r.querySelector(s);
   const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
-  const state = { tab:'dashboard', subtab:'', loaded:{}, subtabs:{ members:'accounts', characters:'lookup', notices:'general', system:'server-status' }, requests:[], accounts:[], characters:[], characterSummary:{}, logs:[], eventNoticeGroups:[], eventNoticeEditingId:null, meterConsole:null, meterNotices:[], sanctuarySchedules:[], sanctuaryMasters:[], sanctuaryStatusOptions:[], sanctuaryScheduleLoaded:false, sanctuaryScheduleAccess:null, sanctuaryRolePermissions:null, sanctuaryScheduleSaving:false, lastSanctuarySyncData:null, lastSanctuaryStatusData:null, lastSanctuaryId:'all', visitorDays:7, visitorPage:1, visitorTotalPages:1, visitorCanViewMemberHistory:false, lookupConsole:null, lookupSessionId:'', lookupSessionToken:'', lookupPollTimer:null, lookupHeartbeatAt:0, lookupStarting:false, lookupQueueRunning:false, lookupRetrying:false, lookupExitSafety:'idle', lookupHistory:[], lookupHistoryDetails:{}, lookupRoster:[], lookupTargetStates:{}, lookupTargetSession:'', lookupLastCurrent:'' };
-  const CACHE = '2026073101';
+  const state = { tab:'dashboard', subtab:'', loaded:{}, subtabs:{ members:'accounts', characters:'lookup', notices:'general', system:'server-status' }, requests:[], accounts:[], characters:[], characterSummary:{}, logs:[], eventNoticeGroups:[], eventNoticeEditingId:null, meterConsole:null, meterNotices:[], sanctuarySchedules:[], sanctuaryMasters:[], sanctuaryStatusOptions:[], sanctuaryScheduleLoaded:false, sanctuaryScheduleAccess:null, sanctuaryRolePermissions:null, sanctuaryScheduleSaving:false, lastSanctuarySyncData:null, lastSanctuaryStatusData:null, lastSanctuaryId:'all', visitorDays:7, visitorPage:1, visitorTotalPages:1, visitorCanViewMemberHistory:false, lookupConsole:null, lookupSessionId:'', lookupSessionToken:'', lookupPollTimer:null, lookupHeartbeatAt:0, lookupStarting:false, lookupQueueRunning:false, lookupRetrying:false, lookupExitSafety:'idle', lookupHistory:[], lookupHistoryDetails:{}, lookupTargetStates:{}, lookupTargetSession:'', lookupLastCurrent:'' };
+  const CACHE = '2026073104';
   const DEFAULT_SUBTABS = { members:'accounts', characters:'lookup', notices:'general', system:'server-status', logs:'activity' };
   function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
   function addLog(type,msg){
@@ -515,8 +515,7 @@
     const sources=[data?.targets,data?.targetPreview,data?.queueTargets,progress?.targets,progress?.targetRows,data?.session?.raw_payload?.targets];
     let rows=sources.find(Array.isArray);
     const filter=data?.lookupFilter||{};
-    const scope=String(filter.lookupMode||filter.scope||'all');
-    if(!rows||!rows.length)rows=scope==='missing_only'?[]:(state.lookupRoster||[]);
+    if(!rows||!rows.length)rows=[];
     const classSet=new Set(lookupFilterList(filter.classes||filter.classNames));
     const serverSet=new Set(lookupFilterList(filter.servers||filter.serverNames));
     const raceSet=new Set(lookupFilterList(filter.races||filter.raceNames));
@@ -573,8 +572,8 @@
     if($('#characterLookupTargetSummary'))$('#characterLookupTargetSummary').textContent=!enabled?'STEP 2 시작 전':errorCount?'조회 '+doneCount.toLocaleString('ko-KR')+' · 오류 '+errorCount.toLocaleString('ko-KR'):'조회 완료 '+Number(progress.completedCount||doneCount).toLocaleString('ko-KR')+' / '+total.toLocaleString('ko-KR');
   }
   function renderLookupPhase(phase){
-    const cls=lookupStepClass(phase.status);const phaseEta=Number(phase.etaSeconds||0);const uncertain=lookupPhaseHasUncertainEta(phase);
-    const timing=cls==='done'?'완료':uncertain?(cls==='active'?'누락 여부 확인 중':'대기'):phaseEta>0?'남은 시간 '+lookupDuration(phaseEta):cls==='active'?'계산 중':'대기';
+    const cls=lookupStepClass(phase.status);const phaseEta=Number(phase.etaSeconds||0);const uncertain=lookupPhaseHasUncertainEta(phase);const usesEta=String(phase.id||'')==='character_lookup';
+    const timing=cls==='done'?'완료':uncertain?(cls==='active'?'누락 여부 확인 중':'대기'):usesEta&&phaseEta>0?'남은 시간 '+lookupDuration(phaseEta):cls==='active'?'실행 중':'대기';
     return '<article class="admin-lookup-phase '+cls+'">'
       +'<div class="admin-lookup-phase-head"><span>'+Number(phase.no||0)+'</span><strong>'+esc(phase.label||phase.id||'-')+'</strong><b>'+Number(phase.percent||0).toFixed(1)+'%</b></div>'
       +'<div class="admin-lookup-phase-progress"><i style="width:'+Math.max(0,Math.min(100,Number(phase.percent||0)))+'%"></i></div>'
@@ -657,14 +656,10 @@
     if(state.lookupPollTimer)return;
     state.lookupPollTimer=setInterval(()=>{if(state.tab==='characters'&&state.subtab==='lookup')refreshCharacterLookupStatus({statusLine:false});},3000);
   }
-  async function loadLookupRoster(force){
-    if(state.lookupRoster.length&&!force)return;
-    try{const data=await adminCharacter('search',{search:'',includeInactive:false,limit:300});state.lookupRoster=Array.isArray(data?.characters)?data.characters:[];}catch(_err){state.lookupRoster=[];}
-  }
   async function loadCharacterLookupConsole(force){
     loadStoredLookupSession();
     if(roleLevel()<4){setStatus('#characterLookupStatus','Manager는 진행 상태만 확인할 수 있고 조회 시작·제어는 MASTER·SUB MASTER만 가능합니다.','');}
-    await Promise.all([refreshCharacterLookupStatus({statusLine:force===true}),loadLookupRoster(force===true)]);
+    await refreshCharacterLookupStatus({statusLine:force===true});
     renderCharacterLookupConsole(state.lookupConsole||null);
     await loadLookupHistory();
     startCharacterLookupPolling();
