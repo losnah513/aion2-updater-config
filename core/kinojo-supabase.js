@@ -1638,7 +1638,7 @@
             sheetDeferred:false,
             extensionDoesNotReadListSheet:true,
             listReadMode:'server_edge_bridge',
-            clientVersion:'KINOJO_WEB_2026072803',
+            clientVersion:'KINOJO_WEB_2026073104',
             pageUrl:location.href,
             lookupFilter,
             lookupFilterSummary
@@ -1653,11 +1653,11 @@
           action:'prepareList',
           sessionId,
           sessionToken,
-          clientVersion:'KINOJO_WEB_2026072803',
+          clientVersion:'KINOJO_WEB_2026073104',
           payload:{
             schemaVersion:'kinojo-lookup-v2',
             pageUrl:location.href,
-            clientVersion:'KINOJO_WEB_2026072803',
+            clientVersion:'KINOJO_WEB_2026073104',
             requestedSurface:'ADMIN_WEB_SERVER_QUEUE',
             lookupFilter,
             lookupFilterSummary
@@ -1894,7 +1894,7 @@
     }
 
     if(normalized==='status'){
-      return rpc('kinojo_admin_server_queue_status_v284',{
+      return rpc('kinojo_admin_server_queue_status_v289',{
         p_pass_key:passKey,
         p_session_id:extra.sessionId?String(extra.sessionId):null
       });
