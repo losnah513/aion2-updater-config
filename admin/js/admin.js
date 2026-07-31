@@ -512,9 +512,9 @@
   function lookupTargetRoster(data,progress){
     const sources=[data?.targets,data?.targetPreview,data?.queueTargets,progress?.targets,progress?.targetRows,data?.session?.raw_payload?.targets];
     let rows=sources.find(Array.isArray);
-    if(!rows||!rows.length)rows=state.lookupRoster||[];
     const filter=data?.lookupFilter||{};
     const scope=String(filter.lookupMode||filter.scope||'all');
+    if(!rows||!rows.length)rows=scope==='missing_only'?[]:(state.lookupRoster||[]);
     const classSet=new Set(lookupFilterList(filter.classes||filter.classNames));
     const serverSet=new Set(lookupFilterList(filter.servers||filter.serverNames));
     const raceSet=new Set(lookupFilterList(filter.races||filter.raceNames));
@@ -550,7 +550,11 @@
     const panel=$('#characterLookupTargetPanel'),root=$('#characterLookupTargetList');if(!panel||!root)return;
     const step2=lookupStepClass(progress.step2Status);const enabled=step2!=='pending';
     panel.classList.toggle('is-disabled',!enabled);
-    const rows=lookupTargetRoster(data,progress);
+    const roster=lookupTargetRoster(data,progress);
+    const rowMap=new Map(roster.map(row=>[lookupTargetName(row),row]));
+    failures.forEach(row=>{const name=lookupTargetName(row);if(name&&!rowMap.has(name))rowMap.set(name,row);});
+    if(currentCharacter&&!rowMap.has(currentCharacter))rowMap.set(currentCharacter,{characterName:currentCharacter});
+    const rows=Array.from(rowMap.values()).sort((a,b)=>lookupTargetName(a).localeCompare(lookupTargetName(b),'ko'));
     const failNames=new Set(failures.map(lookupTargetName));
     const statusLabel={done:'조회 완료',active:'조회 중',error:'오류',standby:'다음 작업',pending:'대기'};
     let doneCount=0,errorCount=0;
