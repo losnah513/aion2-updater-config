@@ -110,8 +110,31 @@ function hofRankPortrait(item,rank,size){
   const url=profileImageUrlFor(item);
   const name=hofCharName(item)||'?';
   const cls='hof-v2-portrait '+(size||'')+(url?'':' is-empty');
-  if(!url)return '<div class="'+cls+'" aria-hidden="true">'+escapeHtml(name.slice(0,1))+'</div>';
-  return '<img class="'+cls+'" src="'+escapeHtml(url)+'" alt="'+escapeHtml(name+' 프로필')+'" loading="lazy" decoding="async">';
+  const badge=item?.identityBadge||item?.identity_badge||null;
+  const detail=String(badge?.detail||'').trim();
+  const badgeHtml=badge?.label
+    ?'<span class="hof-identity-badge" role="button" tabindex="0" data-identity-detail="'+escapeHtml(detail)+'" title="'+escapeHtml(detail)+'" aria-label="'+escapeHtml(detail||badge.label)+'">'+escapeHtml(badge.label)+'</span>'
+    :'';
+  const portrait=!url
+    ?'<div class="'+cls+'" aria-hidden="true">'+escapeHtml(name.slice(0,1))+'</div>'
+    :'<img class="'+cls+'" src="'+escapeHtml(url)+'" alt="'+escapeHtml(name+' 프로필')+'" loading="lazy" decoding="async">';
+  return '<span class="hof-identity-portrait">'+portrait+badgeHtml+'</span>';
+}
+
+if(!window.__KINOJO_HOF_IDENTITY_BADGE_BOUND__){
+  window.__KINOJO_HOF_IDENTITY_BADGE_BOUND__=true;
+  document.addEventListener('click',event=>{
+    const badge=event.target.closest?.('[data-identity-detail]');
+    if(!badge)return;
+    event.preventDefault();
+    event.stopPropagation();
+    const detail=String(badge.dataset.identityDetail||badge.textContent||'').trim();
+    if(window.KinojoUI?.toast)window.KinojoUI.toast(detail);
+    else badge.setAttribute('aria-label',detail);
+  });
+  document.addEventListener('keydown',event=>{
+    if((event.key==='Enter'||event.key===' ')&&event.target?.matches?.('[data-identity-detail]'))event.target.click();
+  });
 }
 function hofBackgroundClass(metric){
   if(metric==='enhance')return 'is-enhance';
