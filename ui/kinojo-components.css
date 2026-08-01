@@ -54,3 +54,30 @@ body{
 .mini-row:hover,.award-row:hover,.relation-row:hover,.name-tag:hover{
   background:#f8fafc!important;
 }
+
+/* KINOJO filter switch · shared by Hall of Fame and Legion Ranking */
+.kinojo-filter-switch{
+  display:inline-flex;align-items:center;justify-content:space-between;gap:10px;
+  min-height:34px;padding:5px 8px 5px 11px;border:1px solid rgba(120,145,180,.26);
+  border-radius:999px;background:#fff;color:#344054;font-size:12px;font-weight:800;
+  line-height:1;white-space:nowrap;cursor:pointer;user-select:none;
+}
+.kinojo-filter-switch input{position:absolute;inline-size:1px;block-size:1px;opacity:0;pointer-events:none}
+.kinojo-filter-switch-track{
+  position:relative;display:inline-block;flex:0 0 auto;width:44px;height:24px;
+  border-radius:999px;background:#d1d5db;transition:background-color .2s ease,box-shadow .2s ease;
+}
+.kinojo-filter-switch-knob{
+  position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;
+  box-shadow:0 1px 4px rgba(15,23,42,.28);transition:transform .2s ease;
+}
+.kinojo-filter-switch input:checked + .kinojo-filter-switch-track{background:#2563eb}
+.kinojo-filter-switch input:checked + .kinojo-filter-switch-track .kinojo-filter-switch-knob{transform:translateX(20px)}
+.kinojo-filter-switch input:focus-visible + .kinojo-filter-switch-track{box-shadow:0 0 0 3px rgba(37,99,235,.2)}
+.kinojo-filter-switch:hover{border-color:rgba(37,99,235,.38)}
+
+/* Ranking scope control layout · HOF / Legion Ranking */
+.hof-filter-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px;padding:10px 12px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.94)}
+.hof-filter-copy{display:flex;flex-direction:column;gap:3px;min-width:0}.hof-filter-copy strong{font-size:12px;color:#334155}.hof-filter-copy span{font-size:11px;color:#64748b}
+.hof-filter-switches{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap}
+@media(max-width:640px){.hof-filter-bar{align-items:stretch;flex-direction:column;padding:9px}.hof-filter-copy{flex-direction:row;align-items:center;justify-content:space-between}.hof-filter-switches{display:grid;grid-template-columns:1fr 1fr}.hof-filter-switches .kinojo-filter-switch{width:100%;font-size:11px}}
