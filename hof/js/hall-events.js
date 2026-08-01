@@ -7,6 +7,22 @@ function bindHallStaticEvents(){
   if(window.__KINOJO_HALL_STATIC_EVENTS_BOUND__)return;
   window.__KINOJO_HALL_STATIC_EVENTS_BOUND__=true;
 
+  const includeSubsToggle=document.getElementById('hofIncludeSubs');
+  const includeAllLegionsToggle=document.getElementById('hofIncludeAllLegions');
+  const filterStatus=document.getElementById('hofFilterStatus');
+  const syncFilterStatus=()=>{
+    if(filterStatus)filterStatus.textContent=(includeAllLegions?'전체 레기온':'기본 레기온')+' · '+(includeSubs?'부캐 포함':'본캐만');
+  };
+  if(includeSubsToggle){
+    includeSubsToggle.checked=includeSubs;
+    includeSubsToggle.addEventListener('change',()=>{includeSubs=includeSubsToggle.checked;syncFilterStatus();load();});
+  }
+  if(includeAllLegionsToggle){
+    includeAllLegionsToggle.checked=includeAllLegions;
+    includeAllLegionsToggle.addEventListener('change',()=>{includeAllLegions=includeAllLegionsToggle.checked;syncFilterStatus();load();});
+  }
+  syncFilterStatus();
+
   const footerSuggestBtn=document.getElementById('footerSuggestBtn');
   if(footerSuggestBtn)footerSuggestBtn.addEventListener('click',function(e){
     e.preventDefault();
