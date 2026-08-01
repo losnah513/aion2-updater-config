@@ -1,7 +1,7 @@
 /* ===========================================================
-   KINOJO Ranking Character Card - 2026080103
-   역할: 레기온 순위 캐릭터 카드의 구조·프로필·지표·반응형만 관리합니다.
-   규칙: 검색/필터/패널은 ranking.css, 증감 배지는 ranking-delta.css가 소유합니다.
+   KINOJO Ranking Character Card - 2026080104
+   역할: 레기온 순위 캐릭터 카드의 구조·프로필·지표·성장 코멘트만 관리합니다.
+   규칙: 검색/필터/패널은 ranking.css, 반응형 분기는 ranking-responsive.css가 소유합니다.
 =========================================================== */
 .ranking-card-list{
   display:flex;
@@ -25,7 +25,10 @@
   box-shadow:0 5px 16px rgba(31,47,79,.045);
   isolation:isolate;
 }
-.ranking-card.pvp{--card-accent:var(--ranking-pvp);background:linear-gradient(105deg,#fff 0%,#fff 65%,#faf6ff 100%)}
+.ranking-card.pvp{
+  --card-accent:var(--ranking-pvp);
+  background:linear-gradient(105deg,#fff 0%,#fff 65%,#faf6ff 100%);
+}
 .ranking-card-main{
   display:grid;
   grid-template-columns:54px 54px minmax(0,1fr) 132px;
@@ -108,22 +111,55 @@
 }
 .ranking-main-badge{color:#1d4ed8}
 .ranking-server-line{margin-top:3px;color:var(--ranking-muted);font-size:10px;font-weight:800}
-.ranking-metrics{display:flex;align-items:center;gap:8px;min-width:0;margin-top:8px}
-.ranking-metric{display:inline-flex;align-items:center;gap:5px;min-width:0;color:#475569}
+.ranking-metrics{
+  display:grid;
+  grid-template-columns:minmax(0,1.18fr) 1px minmax(0,1fr);
+  align-items:center;
+  gap:8px;
+  min-width:0;
+  margin-top:8px;
+}
+.ranking-metric{
+  display:grid;
+  align-items:center;
+  min-width:0;
+  color:#475569;
+  font-variant-numeric:tabular-nums;
+}
+.ranking-metric.power{grid-template-columns:20px minmax(66px,1fr) 50px;gap:5px}
+.ranking-metric.item{grid-template-columns:14px minmax(42px,1fr) 42px;gap:5px;color:#b66a18}
 .ranking-metric.power.pve{color:var(--ranking-pve)}
 .ranking-metric.power.pvp{color:var(--ranking-pvp)}
-.ranking-metric.item{color:#b66a18}
-.ranking-metric-icon{
-  display:inline-block;
-  flex:0 0 auto;
-  width:17px;
-  height:17px;
-  background:currentColor;
-  -webkit-mask:var(--ranking-metric-icon) center/contain no-repeat;
-  mask:var(--ranking-metric-icon) center/contain no-repeat;
+.ranking-metric-icon{display:block;object-fit:contain;object-position:center}
+.ranking-metric.power .ranking-metric-icon{width:20px;height:20px}
+.ranking-metric.item .ranking-metric-icon{width:12px;height:18px;justify-self:center}
+.ranking-metric strong{
+  min-width:0;
+  overflow:hidden;
+  font-size:13px;
+  font-weight:1000;
+  line-height:1.1;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
-.ranking-metric strong{overflow:hidden;font-size:13px;font-weight:1000;line-height:1.1;font-variant-numeric:tabular-nums;text-overflow:ellipsis;white-space:nowrap}
-.ranking-metric-divider{width:1px;height:14px;background:rgba(120,145,180,.24)}
+.ranking-metric-delta{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:0;
+  height:18px;
+  padding:0 5px;
+  border:1px solid transparent;
+  border-radius:999px;
+  font-size:9px;
+  font-weight:1000;
+  line-height:1;
+  white-space:nowrap;
+}
+.ranking-metric-delta.is-positive{color:#166534;background:#f0fdf4;border-color:rgba(34,197,94,.22)}
+.ranking-metric-delta.is-negative{color:#9f3a3a;background:#fff1f2;border-color:rgba(239,68,68,.20)}
+.ranking-metric-delta.is-empty{visibility:hidden}
+.ranking-metric-divider{width:1px;height:18px;background:rgba(120,145,180,.24)}
 .ranking-portrait{
   position:relative;
   align-self:stretch;
@@ -150,23 +186,39 @@
   display:grid;
   grid-template-columns:auto minmax(0,1fr);
   align-items:center;
-  gap:8px;
+  gap:7px;
   min-height:34px;
   padding:5px 8px;
   border-top:1px solid rgba(120,145,180,.14);
   background:rgba(248,251,255,.94);
 }
 .ranking-card.pvp .ranking-card-footer{background:rgba(251,248,255,.94)}
-.ranking-reaction-boxes{display:flex;align-items:center;gap:4px;min-width:max-content}
-.ranking-reaction-box{display:inline-flex;align-items:center;gap:3px;height:20px;padding:0 6px;border-radius:6px;font-size:9px;font-weight:900}
-.ranking-reaction-box.like{background:rgba(232,111,113,.13);color:#b74e50}
-.ranking-reaction-box.dislike{background:rgba(100,128,217,.13);color:#5268b8}
-.ranking-review{display:flex;align-items:center;justify-content:flex-end;gap:6px;min-width:0}
-.ranking-review-badge{display:inline-flex;align-items:center;flex:0 0 auto;height:18px;padding:0 6px;border-radius:999px;background:#1e2f4a;color:#fff;font-size:9px;font-weight:900;white-space:nowrap}
-.ranking-review p{min-width:0;margin:0;overflow:hidden;color:#64748b;font-size:10px;font-weight:700;text-overflow:ellipsis;white-space:nowrap}
-.ranking-reaction-card{cursor:pointer;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,background .16s ease}
-.ranking-reaction-card:hover,.ranking-reaction-card:focus-visible{transform:translateY(-1px);border-color:rgba(56,101,176,.40);box-shadow:0 10px 24px rgba(31,47,79,.10);outline:none}
-.ranking-reaction-card:active{transform:scale(.994)}
+.ranking-review-badge{
+  display:inline-flex;
+  align-items:center;
+  flex:0 0 auto;
+  height:19px;
+  padding:0 7px;
+  border:1px solid transparent;
+  border-radius:999px;
+  font-size:9px;
+  font-weight:1000;
+  white-space:nowrap;
+}
+.ranking-review-badge.is-growth{color:#166534;background:#ecfdf3;border-color:rgba(34,197,94,.22)}
+.ranking-review-badge.is-down{color:#9f3a3a;background:#fff1f2;border-color:rgba(239,68,68,.20)}
+.ranking-review-badge.is-new{color:#9a6700;background:#fffbeb;border-color:rgba(245,158,11,.22)}
+.ranking-review-badge.is-same{color:#334155;background:#eef2f7;border-color:rgba(100,116,139,.18)}
+.ranking-card-footer p{
+  min-width:0;
+  margin:0;
+  overflow:hidden;
+  color:#64748b;
+  font-size:10px;
+  font-weight:700;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
 
 /* TOP3 flowing border: card outline only */
 .ranking-card.top-one,.ranking-card.top-two,.ranking-card.top-three{--flow-radius:16px;border-color:rgba(120,145,180,.18)}

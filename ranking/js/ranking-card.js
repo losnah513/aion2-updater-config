@@ -7,7 +7,8 @@
   'use strict';
   const Ranking = window.KinojoRanking = window.KinojoRanking || {};
   const U = Ranking.utils;
-  const METRIC_ASSET_BASE = '/assets/images/aion2/metrics/';
+  const POWER_ICON_URL = 'https://assets.playnccdn.com/static-aion2/characters/img/info/profile_power_icon_pc.png';
+  const ITEM_ICON_URL = 'https://assets.playnccdn.com/static-aion2/characters/img/info/profile_level_icon_pc.png';
   const CLASS_ICON_BASE = 'https://assets.playnccdn.com/static-aion2/characters/img/class/';
   const CLASS_ICON_KEYS = Object.freeze({
     '수호성':'templar',
@@ -23,9 +24,7 @@
   function topRankClass(rank){
     return rank === 1 ? ' top-one' : rank === 2 ? ' top-two' : rank === 3 ? ' top-three' : '';
   }
-  function rankIcon(rank){
-    return String(rank || '-');
-  }
+  function rankIcon(rank){ return String(rank || '-'); }
   function rankCrownHtml(rank){
     return rank >= 1 && rank <= 3 ? '<span class="ranking-rank-crown" aria-hidden="true">♛</span>' : '';
   }
@@ -57,57 +56,52 @@
     if(!item.actualLegion || item.actualLegion === item.rankingLegion) return '';
     return '<span class="ranking-actual-legion">현재 레기온 '+U.escapeHtml(item.actualLegion)+'</span>';
   }
-  function reactionBoxes(item){
-    return '<div class="ranking-reaction-boxes" aria-label="캐릭터 반응">'
-      + '<span class="ranking-reaction-box like">👍 '+U.escapeHtml(item.like)+'</span>'
-      + '<span class="ranking-reaction-box dislike">👎 '+U.escapeHtml(item.dislike)+'</span>'
-      + '</div>';
-  }
-  function metricHtml(label, value, kind, mode){
-    const formatted = U.num(value);
-    const icon = kind === 'power' ? 'combat-power.svg' : 'item-level.svg';
-    const tone = kind === 'power' ? ' '+String(mode || '').toLowerCase() : '';
-    return '<div class="ranking-metric '+kind+tone+'" aria-label="'+U.escapeHtml(label+' '+formatted)+'" title="'+U.escapeHtml(label+' '+formatted)+'">'
-      + '<span class="ranking-metric-icon" style="--ranking-metric-icon:url(\''+METRIC_ASSET_BASE+icon+'\')" aria-hidden="true"></span>'
-      + '<strong>'+U.escapeHtml(formatted)+'</strong>'
-      + '</div>';
-  }
   function rankChangeHtml(item){
     const status = String(item.rankChangeStatus || '').toUpperCase();
     const amount = Math.abs(Number(item.rankChange || 0));
-    if(status === 'NEW'){
-      return '<span class="ranking-rank-change is-new" aria-label="신규 진입">NEW</span>';
-    }
-    if(status === 'UP' && amount > 0){
-      return '<span class="ranking-rank-change is-up" aria-label="'+amount+'위 상승"><span aria-hidden="true">▲</span> '+amount+'</span>';
-    }
-    if(status === 'DOWN' && amount > 0){
-      return '<span class="ranking-rank-change is-down" aria-label="'+amount+'위 하락"><span aria-hidden="true">▼</span> '+amount+'</span>';
-    }
+    if(status === 'NEW') return '<span class="ranking-rank-change is-new" aria-label="신규 진입">NEW</span>';
+    if(status === 'UP' && amount > 0) return '<span class="ranking-rank-change is-up" aria-label="'+amount+'위 상승"><span aria-hidden="true">▲</span> '+amount+'</span>';
+    if(status === 'DOWN' && amount > 0) return '<span class="ranking-rank-change is-down" aria-label="'+amount+'위 하락"><span aria-hidden="true">▼</span> '+amount+'</span>';
     return '<span class="ranking-rank-change is-same" aria-label="순위 변동 없음">–</span>';
   }
   function signedValue(value){
     const number = Number(value || 0);
     return (number > 0 ? '+' : '') + number.toLocaleString('ko-KR');
   }
-  function deltaBadge(label, value, kind){
-    if(value === null || value === undefined || Number(value) === 0) return '';
-    const tone = Number(value) > 0 ? ' is-positive' : ' is-negative';
-    return '<span class="ranking-delta-badge '+kind+tone+'">'+U.escapeHtml(label)+' '+U.escapeHtml(signedValue(value))+'</span>';
+  function metricDeltaHtml(label, value){
+    const number = Number(value || 0);
+    if(!Number.isFinite(number) || number === 0){
+      return '<span class="ranking-metric-delta is-empty" aria-hidden="true">0</span>';
+    }
+    const tone = number > 0 ? ' is-positive' : ' is-negative';
+    const direction = number > 0 ? '상승' : '하락';
+    return '<span class="ranking-metric-delta'+tone+'" aria-label="'+U.escapeHtml(label+' '+Math.abs(number).toLocaleString('ko-KR')+' '+direction)+'" title="'+U.escapeHtml(label+' '+signedValue(number))+'">'
+      + U.escapeHtml(signedValue(number))
+      + '</span>';
   }
-  function reviewBadgesHtml(item){
-    return '<div class="ranking-review-badges">'
-      + '<span class="ranking-review-badge">'+U.escapeHtml(item.growthLabel)+'</span>'
-      + deltaBadge('아이템 레벨', item.itemLevelDelta, 'item')
-      + deltaBadge('전투력', item.powerDelta, 'power')
+  function metricHtml(label, value, delta, kind, mode){
+    const formatted = U.num(value);
+    const iconUrl = kind === 'power' ? POWER_ICON_URL : ITEM_ICON_URL;
+    const tone = kind === 'power' ? ' '+String(mode || '').toLowerCase() : '';
+    return '<div class="ranking-metric '+kind+tone+'" aria-label="'+U.escapeHtml(label+' '+formatted)+'">'
+      + '<img class="ranking-metric-icon" src="'+iconUrl+'" alt="" loading="lazy" decoding="async">'
+      + '<strong>'+U.escapeHtml(formatted)+'</strong>'
+      + metricDeltaHtml(label, delta)
       + '</div>';
+  }
+  function growthTone(item){
+    const status = String(item.growthStatus || '').toUpperCase();
+    if(status === 'GROWN' || status === 'UP') return ' is-growth';
+    if(status === 'DOWN') return ' is-down';
+    if(status === 'NEW') return ' is-new';
+    return ' is-same';
   }
   function cardHtml(raw, mode){
     const item = U.normalizeRow(raw, mode);
     const power = mode === 'PVP' ? item.pvpPower : item.pvePower;
     const itemLevel = mode === 'PVP' ? item.pvpItem : item.pveItem;
     const cardMode = String(mode || 'PVE').toLowerCase();
-    return '<article class="ranking-card ranking-reaction-card '+cardMode+topRankClass(item.rank)+'" role="button" tabindex="0" aria-haspopup="dialog" aria-label="'+U.escapeHtml(item.name)+' 상세 정보 보기" data-character="'+U.escapeHtml(item.name)+'" data-char-name="'+U.escapeHtml(item.name)+'" data-char-owner="'+U.escapeHtml(item.owner)+'" data-char-class="'+U.escapeHtml(item.className)+'" data-char-server="'+U.escapeHtml(item.server)+'" data-server-id="'+U.escapeHtml(item.serverId||'')+'" data-char-key="'+U.escapeHtml(item.charKey||'')+'" data-char-power="'+U.escapeHtml(String(power || ''))+'" data-pve-power="'+U.escapeHtml(String(item.pvePower || ''))+'" data-pvp-power="'+U.escapeHtml(String(item.pvpPower || ''))+'" data-profile-image="'+U.escapeHtml(item.profile)+'" data-detail-url="'+U.escapeHtml(item.detailUrl||'')+'">'
+    return '<article class="ranking-card '+cardMode+topRankClass(item.rank)+'" aria-label="'+U.escapeHtml(item.name+' 순위 카드')+'">'
       + '<div class="ranking-card-main">'
       + '<div class="ranking-rank">'+rankCrownHtml(item.rank)+'<strong class="ranking-rank-current">'+rankIcon(item.rank)+'</strong>'+rankChangeHtml(item)+'</div>'
       + '<div class="ranking-class-area">'+classIconHtml(item)+'</div>'
@@ -116,16 +110,16 @@
       + '<div class="ranking-name-line"><strong>'+U.escapeHtml(item.name)+'</strong>'+ownerBadge(item)+'</div>'
       + '<div class="ranking-server-line">'+U.escapeHtml(item.server)+' · '+U.escapeHtml(item.className)+'</div>'
       + '<div class="ranking-metrics">'
-      + metricHtml(mode+' 전투력', power, 'power', mode)
+      + metricHtml(mode+' 전투력', power, item.powerDelta, 'power', mode)
       + '<span class="ranking-metric-divider" aria-hidden="true"></span>'
-      + metricHtml(mode+' 아이템 레벨', itemLevel, 'item', mode)
+      + metricHtml(mode+' 아이템 레벨', itemLevel, item.itemLevelDelta, 'item', mode)
       + '</div>'
       + '</div>'
       + portraitHtml(item)
       + '</div>'
       + '<div class="ranking-card-footer">'
-      + reactionBoxes(item)
-      + '<div class="ranking-review">'+reviewBadgesHtml(item)+'<p>🤖 '+U.escapeHtml(item.review)+'</p></div>'
+      + '<span class="ranking-review-badge'+growthTone(item)+'">'+U.escapeHtml(item.growthLabel)+'</span>'
+      + '<p>'+U.escapeHtml(item.review)+'</p>'
       + '</div>'
       + '</article>';
   }

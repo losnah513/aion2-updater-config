@@ -63,8 +63,6 @@
       pick(row,'ranking_legion_name','rankingLegionName',actualLegion),
       actualLegion || '소속 미확인'
     );
-    const like = Number(pick(row,'like_count','likeCount',0) || 0);
-    const dislike = Number(pick(row,'dislike_count','dislikeCount',0) || 0);
     const pvePower = Number(pick(row,'pve_power_total','pvePowerTotal',0) || 0);
     const pvpPower = Number(pick(row,'pvp_power_total','pvpPowerTotal',0) || 0);
     const pveItem = Number(pick(row,'pve_item_level','pveItemLevel',0) || 0);
@@ -73,6 +71,10 @@
       pick(row,'rank_growth_label','rankGrowthLabel',pick(row,'growth_label','growthLabel','')),
       '기록 확인'
     );
+    const growthStatus = text(
+      pick(row,'rank_growth_status','rankGrowthStatus',pick(row,'growth_status','growthStatus','SAME')),
+      'SAME'
+    ).toUpperCase();
     const review = text(
       pick(row,'rank_review_text','rankReviewText',pick(row,'review_text','reviewText','')),
       growthLabel || 'AI 리뷰 대기 중'
@@ -87,8 +89,8 @@
     const detailUrl = text(pick(row,'detail_url','detailUrl',''), '');
     return {
       rank,name,owner,isMain,server,serverId,charKey,className,
-      actualLegion,rankingLegion,like,dislike,
-      pvePower,pvpPower,pveItem,pvpItem,review,growthLabel,
+      actualLegion,rankingLegion,
+      pvePower,pvpPower,pveItem,pvpItem,review,growthLabel,growthStatus,
       previousRank,rankChange,rankChangeStatus,powerDelta,itemLevelDelta,baselineDate,
       profile,detailUrl,mode
     };
