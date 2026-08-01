@@ -128,19 +128,17 @@ function applyHallData(data,{fromCache=false,initial=false,skipIfSame=false}={})
 
 async function fetchHallDataFresh(){
   let data;
-  if(!window.KinojoApi) throw new Error("KinojoApi 연결을 확인해 주세요.");
+  if(!window.KinojoSupabase || typeof window.KinojoSupabase.rpc!=='function'){
+    throw new Error("Server Engine 연결을 확인해 주세요.");
+  }
   const session=window.KinojoAuth?.getSession?.()||{};
   const account=window.KinojoAuth?.getAccount?.()||{};
   const passKey=String(account.passKey||account.passCode||session.passKey||session.passCode||'').trim();
-  if(window.KinojoSupabase && typeof window.KinojoSupabase.rpc==='function'){
-    data=await window.KinojoSupabase.rpc('kinojo_web_get_hof_display_v296',{
-      p_include_subs:!!includeSubs,
-      p_include_all_legions:!!includeAllLegions,
-      p_pass_key:passKey||null
-    });
-  }else{
-    data=await window.KinojoApi.getAction("hofSummary",{includeSubs:includeSubs,passKey});
-  }
+  data=await window.KinojoSupabase.rpc('kinojo_web_get_hof_display_v296',{
+    p_include_subs:!!includeSubs,
+    p_include_all_legions:!!includeAllLegions,
+    p_pass_key:passKey||null
+  });
   if(!data || data.ok===false)throw new Error(data?.message||data?.error||"명예의 전당 요약 응답이 실패했습니다.");
   writeHallCache(data);
   return data;

@@ -53,7 +53,9 @@
     const pageNo = Math.max(1, Number(page || 1));
     const cached = readCache(pageNo);
     if(cached) return cached;
-    if(!window.KinojoApi) throw new Error('KinojoApi 연결을 확인해 주세요.');
+    if(!window.KinojoSupabase || typeof window.KinojoSupabase.rpc !== 'function'){
+      throw new Error('Server Engine 연결을 확인해 주세요.');
+    }
     const params = {
       p_page: pageNo,
       p_page_size: state.pageSize,
@@ -62,15 +64,7 @@
       p_class_name: state.className,
       p_search: state.search
     };
-    const data = window.KinojoSupabase && typeof window.KinojoSupabase.rpc === 'function'
-      ? await window.KinojoSupabase.rpc('kinojo_web_get_legion_ranking', params)
-      : await window.KinojoApi.getAction('legionRanking', {
-          page: pageNo,
-          pageSize: state.pageSize,
-          includeSubs: state.includeSubs,
-          className: state.className,
-          search: state.search
-        });
+    const data = await window.KinojoSupabase.rpc('kinojo_web_get_legion_ranking', params);
     if(!data || data.ok === false) throw new Error(data?.message || data?.error || '레기온 순위 응답이 실패했습니다.');
     return writeCache(pageNo, data);
   }
