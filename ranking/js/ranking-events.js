@@ -1,13 +1,66 @@
 /*
  * KINOJO Ranking Events
  * 역할: 레기온 전체 순위 페이지 이벤트 바인딩만 담당합니다.
- * 규칙: 순위 계산과 캐릭터 반응 저장 로직을 포함하지 않습니다.
+ * 규칙: 순위 계산은 하지 않으며 카드 클릭은 공통 캐릭터 상세 모달만 호출합니다.
  */
 (function(){
   'use strict';
   const Ranking = window.KinojoRanking = window.KinojoRanking || {};
   const U = Ranking.utils;
   const D = Ranking.data;
+
+  function cardTarget(card){
+    return {
+      name: card.dataset.charName || card.dataset.character || '',
+      owner: card.dataset.charOwner || '',
+      className: card.dataset.charClass || '',
+      server: card.dataset.charServer || '',
+      serverId: card.dataset.serverId || '',
+      charKey: card.dataset.charKey || '',
+      profileImageUrl: card.dataset.profileImage || '',
+      detailUrl: card.dataset.detailUrl || '',
+      pvePower: card.dataset.pvePower || '',
+      pvpPower: card.dataset.pvpPower || ''
+    };
+  }
+
+  function safeDetailUrl(value){
+    const raw = String(value || '').trim();
+    if(!raw) return '';
+    try{
+      const url = new URL(raw, window.location.origin);
+      return url.protocol === 'https:' ? url.href : '';
+    }catch(_err){
+      return '';
+    }
+  }
+
+  function openCharacterDetail(card){
+    const target = cardTarget(card);
+    if(window.KinojoCharacterReaction && typeof window.KinojoCharacterReaction.open === 'function'){
+      window.KinojoCharacterReaction.open({
+        source:'ranking',
+        context:'ranking',
+        limitPrefix:'kinojo_ranking_react',
+        target,
+        onSubmit:async function(payload){
+          return await window.KinojoApi.postAction('hallReaction',{
+            characterName:payload.target.name,
+            serverId:payload.target.serverId || '',
+            reaction:payload.reaction,
+            comment:payload.comment,
+            clientKey:payload.clientKey,
+            sessionToken:payload.sessionToken,
+            source:'ranking'
+          });
+        }
+      });
+      return;
+    }
+
+    const detailUrl = safeDetailUrl(target.detailUrl);
+    if(detailUrl) window.open(detailUrl, '_blank', 'noopener,noreferrer');
+  }
 
   async function loadRanking(options){
     if(D.state.loading) return;
@@ -42,11 +95,25 @@
 
   function bindDynamicEvents(){
     const tabs = U.$('rankingClassTabs');
-    if(!tabs) return;
-    tabs.querySelectorAll('button').forEach(btn => {
-      btn.onclick = () => {
-        D.setClass(btn.dataset.class || '전체');
-        loadRanking();
+    if(tabs){
+      tabs.querySelectorAll('button').forEach(btn => {
+        btn.onclick = () => {
+          D.setClass(btn.dataset.class || '전체');
+          loadRanking();
+        };
+      });
+    }
+
+    document.querySelectorAll('.ranking-detail-card').forEach(card => {
+      card.onclick = event => {
+        event.stopPropagation();
+        openCharacterDetail(card);
+      };
+      card.onkeydown = event => {
+        if(event.key === 'Enter' || event.key === ' '){
+          event.preventDefault();
+          openCharacterDetail(card);
+        }
       };
     });
   }
@@ -70,8 +137,8 @@
       });
     }
     if(search){
-      search.addEventListener('keydown', e => {
-        if(e.key === 'Enter'){
+      search.addEventListener('keydown', event => {
+        if(event.key === 'Enter'){
           D.setSearch(search.value.trim());
           loadRanking();
         }
@@ -112,7 +179,7 @@
     document.querySelectorAll('[data-mobile-mode]').forEach(btn => {
       btn.addEventListener('click', () => {
         D.state.mobileMode = btn.dataset.mobileMode === 'PVP' ? 'PVP' : 'PVE';
-        document.querySelectorAll('[data-mobile-mode]').forEach(b => b.classList.toggle('is-active', b === btn));
+        document.querySelectorAll('[data-mobile-mode]').forEach(item => item.classList.toggle('is-active', item === btn));
         const board = U.$('rankingBoard');
         if(board) board.dataset.mobileMode = D.state.mobileMode;
         Ranking.render.updateLoadMore();
