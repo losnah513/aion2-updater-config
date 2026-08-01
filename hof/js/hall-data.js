@@ -66,13 +66,14 @@ function preloadImages(paths){
   }));
 }
 
-const HALL_CACHE_KEY="kinojo_hall_summary_cache_v2026071518";
+const HALL_CACHE_PREFIX="kinojo_hall_summary_cache_v2026080101";
+function hallCacheKey(){return HALL_CACHE_PREFIX+"::"+(includeSubs?"subs":"main")+"::"+(includeAllLegions?"all-legions":"default-legions");}
 const HALL_CACHE_TTL_MS=5*60*1000;
 let hallLoadRequestSeq=0;
 
 function readHallCache(){
   try{
-    const raw=sessionStorage.getItem(HALL_CACHE_KEY);
+    const raw=sessionStorage.getItem(hallCacheKey());
     if(!raw)return null;
     const cached=JSON.parse(raw);
     if(!cached || !cached.savedAt || !cached.data)return null;
@@ -84,7 +85,7 @@ function readHallCache(){
 function writeHallCache(data){
   try{
     if(data && data.ok!==false){
-      sessionStorage.setItem(HALL_CACHE_KEY,JSON.stringify({savedAt:Date.now(),data}));
+      sessionStorage.setItem(hallCacheKey(),JSON.stringify({savedAt:Date.now(),data}));
     }
   }catch(e){}
 }
@@ -131,7 +132,15 @@ async function fetchHallDataFresh(){
   const session=window.KinojoAuth?.getSession?.()||{};
   const account=window.KinojoAuth?.getAccount?.()||{};
   const passKey=String(account.passKey||account.passCode||session.passKey||session.passCode||'').trim();
-  data=await window.KinojoApi.getAction("hofSummary",{includeSubs:includeSubs,passKey});
+  if(window.KinojoSupabase && typeof window.KinojoSupabase.rpc==='function'){
+    data=await window.KinojoSupabase.rpc('kinojo_web_get_hof_display_v296',{
+      p_include_subs:!!includeSubs,
+      p_include_all_legions:!!includeAllLegions,
+      p_pass_key:passKey||null
+    });
+  }else{
+    data=await window.KinojoApi.getAction("hofSummary",{includeSubs:includeSubs,passKey});
+  }
   if(!data || data.ok===false)throw new Error(data?.message||data?.error||"명예의 전당 요약 응답이 실패했습니다.");
   writeHallCache(data);
   return data;
@@ -166,7 +175,7 @@ async function load(){
 
 
 async function reloadHallAfterAuthChange(){
-  try{ sessionStorage.removeItem(HALL_CACHE_KEY); }catch(_err){}
+  try{ Object.keys(sessionStorage).filter(key=>key.startsWith(HALL_CACHE_PREFIX)).forEach(key=>sessionStorage.removeItem(key)); }catch(_err){}
   return load();
 }
 window.reloadHallAfterAuthChange=reloadHallAfterAuthChange;
