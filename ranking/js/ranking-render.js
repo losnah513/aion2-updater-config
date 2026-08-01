@@ -71,7 +71,8 @@
     if(status){
       const parts = ['직업 ' + D.state.className];
       if(D.state.search) parts.push('검색 ' + D.state.search);
-      parts.push(D.state.includeSubs ? '부캐 포함' : '본캐 기준');
+      parts.push(D.state.includeSubs ? '부캐 포함' : '본캐만');
+      parts.push(D.state.includeAllLegions ? '전체 레기온' : '기본 레기온');
       status.textContent = parts.join(' · ');
     }
     renderClassTabs();

@@ -120,6 +120,7 @@
   function bindStaticEvents(){
     const search = U.$('rankingSearch');
     const include = U.$('rankingIncludeSubs');
+    const includeAllLegions = U.$('rankingIncludeAllLegions');
     const searchBtn = U.$('rankingSearchBtn');
     const resetBtn = U.$('rankingResetBtn');
     const loadMore = U.$('rankingLoadMoreBtn');
@@ -145,6 +146,9 @@
     if(include){
       include.addEventListener('change', () => { D.setIncludeSubs(include.checked); loadRanking(); });
     }
+    if(includeAllLegions){
+      includeAllLegions.addEventListener('change', () => { D.setIncludeAllLegions(includeAllLegions.checked); loadRanking(); });
+    }
     if(searchBtn){
       searchBtn.addEventListener('click', () => { D.setSearch(search?.value.trim() || ''); loadRanking(); });
     }
@@ -153,6 +157,7 @@
         D.reset();
         if(search) search.value = '';
         if(include) include.checked = false;
+        if(includeAllLegions) includeAllLegions.checked = false;
         loadRanking();
       });
     }
