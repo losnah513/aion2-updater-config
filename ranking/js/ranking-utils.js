@@ -56,7 +56,13 @@
         : null;
     const server = text(pick(row,'server_name','serverName','지켈'),'지켈');
     const serverId = text(pick(row,'server_id','serverId',''),'');
+    const charKey = text(pick(row,'char_key','charKey',''),'');
     const className = text(pick(row,'class_name','className','-'),'-');
+    const actualLegion = text(pick(row,'legion_name','legionName',''), '');
+    const rankingLegion = text(
+      pick(row,'ranking_legion_name','rankingLegionName',actualLegion),
+      actualLegion || '소속 미확인'
+    );
     const like = Number(pick(row,'like_count','likeCount',0) || 0);
     const dislike = Number(pick(row,'dislike_count','dislikeCount',0) || 0);
     const pvePower = Number(pick(row,'pve_power_total','pvePowerTotal',0) || 0);
@@ -80,7 +86,8 @@
     const profile = text(pick(row,'profile_image_url','profileImageUrl',''), '');
     const detailUrl = text(pick(row,'detail_url','detailUrl',''), '');
     return {
-      rank,name,owner,isMain,server,serverId,className,like,dislike,
+      rank,name,owner,isMain,server,serverId,charKey,className,
+      actualLegion,rankingLegion,like,dislike,
       pvePower,pvpPower,pveItem,pvpItem,review,growthLabel,
       previousRank,rankChange,rankChangeStatus,powerDelta,itemLevelDelta,baselineDate,
       profile,detailUrl,mode
