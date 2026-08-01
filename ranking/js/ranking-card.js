@@ -85,8 +85,10 @@
     const tone = kind === 'power' ? ' '+String(mode || '').toLowerCase() : '';
     return '<div class="ranking-metric '+kind+tone+'" aria-label="'+U.escapeHtml(label+' '+formatted)+'">'
       + '<img class="ranking-metric-icon" src="'+iconUrl+'" alt="" loading="lazy" decoding="async">'
-      + '<strong>'+U.escapeHtml(formatted)+'</strong>'
+      + '<span class="ranking-metric-content">'
       + metricDeltaHtml(label, delta)
+      + '<strong>'+U.escapeHtml(formatted)+'</strong>'
+      + '</span>'
       + '</div>';
   }
   function growthTone(item){
@@ -101,7 +103,7 @@
     const power = mode === 'PVP' ? item.pvpPower : item.pvePower;
     const itemLevel = mode === 'PVP' ? item.pvpItem : item.pveItem;
     const cardMode = String(mode || 'PVE').toLowerCase();
-    return '<article class="ranking-card '+cardMode+topRankClass(item.rank)+'" aria-label="'+U.escapeHtml(item.name+' 순위 카드')+'">'
+    return '<article class="ranking-card ranking-detail-card '+cardMode+topRankClass(item.rank)+'" role="button" tabindex="0" aria-haspopup="dialog" aria-label="'+U.escapeHtml(item.name+' 상세 정보 보기')+'" data-character="'+U.escapeHtml(item.name)+'" data-char-name="'+U.escapeHtml(item.name)+'" data-char-owner="'+U.escapeHtml(item.owner)+'" data-char-class="'+U.escapeHtml(item.className)+'" data-char-server="'+U.escapeHtml(item.server)+'" data-server-id="'+U.escapeHtml(item.serverId||'')+'" data-char-key="'+U.escapeHtml(item.charKey||'')+'" data-char-power="'+U.escapeHtml(String(power || ''))+'" data-pve-power="'+U.escapeHtml(String(item.pvePower || ''))+'" data-pvp-power="'+U.escapeHtml(String(item.pvpPower || ''))+'" data-profile-image="'+U.escapeHtml(item.profile)+'" data-detail-url="'+U.escapeHtml(item.detailUrl||'')+'">'
       + '<div class="ranking-card-main">'
       + '<div class="ranking-rank">'+rankCrownHtml(item.rank)+'<strong class="ranking-rank-current">'+rankIcon(item.rank)+'</strong>'+rankChangeHtml(item)+'</div>'
       + '<div class="ranking-class-area">'+classIconHtml(item)+'</div>'
