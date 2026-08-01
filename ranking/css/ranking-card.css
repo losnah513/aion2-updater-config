@@ -1,5 +1,5 @@
 /* ===========================================================
-   KINOJO Ranking Character Card - 2026080104
+   KINOJO Ranking Character Card - 2026080105
    역할: 레기온 순위 캐릭터 카드의 구조·프로필·지표·성장 코멘트만 관리합니다.
    규칙: 검색/필터/패널은 ranking.css, 반응형 분기는 ranking-responsive.css가 소유합니다.
 =========================================================== */
@@ -29,12 +29,24 @@
   --card-accent:var(--ranking-pvp);
   background:linear-gradient(105deg,#fff 0%,#fff 65%,#faf6ff 100%);
 }
+.ranking-detail-card{
+  cursor:pointer;
+  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;
+}
+.ranking-detail-card:hover,
+.ranking-detail-card:focus-visible{
+  transform:translateY(-1px);
+  border-color:rgba(56,101,176,.40);
+  box-shadow:0 10px 24px rgba(31,47,79,.10);
+  outline:none;
+}
+.ranking-detail-card:active{transform:scale(.994)}
 .ranking-card-main{
   display:grid;
   grid-template-columns:54px 54px minmax(0,1fr) 132px;
   gap:10px;
   align-items:center;
-  min-height:116px;
+  min-height:122px;
   padding:8px 0 8px 8px;
 }
 .ranking-rank{
@@ -114,25 +126,36 @@
 .ranking-metrics{
   display:grid;
   grid-template-columns:minmax(0,1.18fr) 1px minmax(0,1fr);
-  align-items:center;
+  align-items:end;
   gap:8px;
   min-width:0;
-  margin-top:8px;
+  margin-top:6px;
 }
 .ranking-metric{
   display:grid;
-  align-items:center;
+  align-items:end;
   min-width:0;
   color:#475569;
   font-variant-numeric:tabular-nums;
 }
-.ranking-metric.power{grid-template-columns:20px minmax(66px,1fr) 50px;gap:5px}
-.ranking-metric.item{grid-template-columns:14px minmax(42px,1fr) 42px;gap:5px;color:#b66a18}
+.ranking-metric.power{grid-template-columns:20px minmax(0,1fr);gap:5px}
+.ranking-metric.item{grid-template-columns:14px minmax(0,1fr);gap:5px;color:#b66a18}
 .ranking-metric.power.pve{color:var(--ranking-pve)}
 .ranking-metric.power.pvp{color:var(--ranking-pvp)}
-.ranking-metric-icon{display:block;object-fit:contain;object-position:center}
-.ranking-metric.power .ranking-metric-icon{width:20px;height:20px}
-.ranking-metric.item .ranking-metric-icon{width:12px;height:18px;justify-self:center}
+.ranking-metric-icon{
+  display:block;
+  align-self:end;
+  object-fit:contain;
+  object-position:center;
+}
+.ranking-metric.power .ranking-metric-icon{width:20px;height:20px;margin-bottom:1px}
+.ranking-metric.item .ranking-metric-icon{width:12px;height:18px;justify-self:center;margin-bottom:1px}
+.ranking-metric-content{
+  display:grid;
+  grid-template-rows:16px auto;
+  align-items:end;
+  min-width:0;
+}
 .ranking-metric strong{
   min-width:0;
   overflow:hidden;
@@ -146,20 +169,23 @@
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  min-width:0;
-  height:18px;
+  justify-self:start;
+  max-width:100%;
+  height:15px;
   padding:0 5px;
+  overflow:hidden;
   border:1px solid transparent;
   border-radius:999px;
-  font-size:9px;
+  font-size:8px;
   font-weight:1000;
   line-height:1;
+  text-overflow:ellipsis;
   white-space:nowrap;
 }
 .ranking-metric-delta.is-positive{color:#166534;background:#f0fdf4;border-color:rgba(34,197,94,.22)}
 .ranking-metric-delta.is-negative{color:#9f3a3a;background:#fff1f2;border-color:rgba(239,68,68,.20)}
 .ranking-metric-delta.is-empty{visibility:hidden}
-.ranking-metric-divider{width:1px;height:18px;background:rgba(120,145,180,.24)}
+.ranking-metric-divider{width:1px;height:24px;align-self:end;background:rgba(120,145,180,.24)}
 .ranking-portrait{
   position:relative;
   align-self:stretch;
