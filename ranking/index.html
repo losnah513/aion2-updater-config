@@ -12,7 +12,7 @@
 <meta property="og:description" content="PVE/PVP 전투력 순위를 한 화면에서 비교합니다."/>
 <meta property="og:url" content="https://kinojo.info/ranking/"/>
 <meta property="og:image" content="https://kinojo.info/assets/images/common/kinojo-og.jpg"/>
-<link href="./css/ranking.css?cache=2026080101" rel="stylesheet"/>
+<link href="./css/ranking.css?cache=2026080102" rel="stylesheet"/>
 <link href="../ui/kinojo-layout.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../ui/kinojo-components.css?cache=2026080101" rel="stylesheet"/>
 <link href="../ui/kinojo-common-ui.css?cache=2026072201" rel="stylesheet"/>
@@ -24,33 +24,30 @@
 </head>
 <body class="kinojo-page-ranking">
 <main class="ranking-wrap">
-  <section class="ranking-hero">
-    <div>
-      <p class="ranking-kicker">KINOJO LEGION RANKING</p>
-      <h1>레기온 전체 순위</h1>
-      <p>서버가 계산한 PVE / PVP 순위를 좌우로 비교합니다. 웹은 계산하지 않고 결과만 표시합니다.</p>
-    </div>
-    <a class="kinojo-btn ranking-hof-link" href="../hof/">명예의 전당</a>
-  </section>
 
   <section class="ranking-toolbar" aria-label="순위 검색 및 필터">
-    <div class="ranking-mobile-filter-head"><span>검색 · 필터</span><button class="kinojo-btn secondary" id="rankingFilterToggleBtn" type="button" aria-expanded="false">필터</button></div>
-    <div class="ranking-search-box">
-      <label for="rankingSearch">캐릭터 검색</label>
-      <input id="rankingSearch" class="kinojo-input" type="search" placeholder="캐릭터명 / 본캐명 / 서버 검색" autocomplete="off"/>
+    <div class="ranking-mobile-filter-head"><span>검색 · 상세 필터</span><button class="kinojo-btn secondary" id="rankingFilterToggleBtn" type="button" aria-expanded="false">필터</button></div>
+    <div class="ranking-filter-main">
+      <div class="ranking-search-box">
+        <label for="rankingSearch">캐릭터 검색</label>
+        <div class="ranking-search-controls">
+          <input id="rankingSearch" class="kinojo-input" type="search" placeholder="캐릭터명 / 본캐명 / 서버 검색" autocomplete="off"/>
+          <button class="kinojo-btn ranking-search-submit" id="rankingSearchBtn" type="button">조회</button>
+          <button class="kinojo-btn secondary ranking-search-reset" id="rankingResetBtn" type="button">초기화</button>
+        </div>
+      </div>
+      <div class="ranking-filter-box">
+        <span class="ranking-filter-title">클래스</span>
+        <div class="ranking-class-tabs" id="rankingClassTabs"></div>
+      </div>
     </div>
-    <div class="ranking-filter-box">
-      <span class="ranking-filter-title">직업</span>
-      <div class="ranking-class-tabs" id="rankingClassTabs"></div>
-    </div>
-    <div class="ranking-action-box">
-      <div class="ranking-switch-group" aria-label="랭킹 노출 범위">
+    <aside class="ranking-action-box" aria-label="랭킹 범위">
+      <div class="ranking-scope-heading"><strong>랭킹 범위</strong><span>기본 레기온 · 본캐</span></div>
+      <div class="ranking-switch-group">
         <label class="kinojo-filter-switch"><span>부캐 포함</span><input id="rankingIncludeSubs" type="checkbox"/><span class="kinojo-filter-switch-track" aria-hidden="true"><span class="kinojo-filter-switch-knob"></span></span></label>
         <label class="kinojo-filter-switch"><span>전체 레기온</span><input id="rankingIncludeAllLegions" type="checkbox"/><span class="kinojo-filter-switch-track" aria-hidden="true"><span class="kinojo-filter-switch-knob"></span></span></label>
       </div>
-      <button class="kinojo-btn" id="rankingSearchBtn" type="button">조회</button>
-      <button class="kinojo-btn secondary" id="rankingResetBtn" type="button">초기화</button>
-    </div>
+    </aside>
   </section>
 
   <section class="ranking-status" id="rankingStatus">데이터 준비 중...</section>
