@@ -98,7 +98,7 @@
   function reviewBadgesHtml(item){
     return '<div class="ranking-review-badges">'
       + '<span class="ranking-review-badge">'+U.escapeHtml(item.growthLabel)+'</span>'
-      + deltaBadge('아이텠 레벨', item.itemLevelDelta, 'item')
+      + deltaBadge('아이템 레벨', item.itemLevelDelta, 'item')
       + deltaBadge('전투력', item.powerDelta, 'power')
       + '</div>';
   }
