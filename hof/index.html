@@ -5,23 +5,23 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
 <title>KINOJO INFO - 명예의 전당</title>
-<meta name="description" content="아이온2 지켈 서버 깡 레기온 비공식 정보 집계 사이트입니다. 전투력과 성장 기록, 추천 데이터를 기반으로 명예의 전당을 제공합니다.">
+<meta name="description" content="아이온2 KINOJO 레기온 비공식 정보 집계 사이트입니다. 전투력과 성장 기록, 추천 데이터를 기반으로 명예의 전당을 제공합니다.">
 <link rel="canonical" href="https://kinojo.info/hof/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="KINOJO INFO">
 <meta property="og:title" content="KINOJO INFO - 명예의 전당">
-<meta property="og:description" content="아이온2 지켈 서버 깡 레기온 비공식 정보 집계 사이트입니다. 전투력과 성장 기록, 추천 데이터를 기반으로 명예의 전당을 제공합니다.">
+<meta property="og:description" content="아이온2 KINOJO 레기온 비공식 정보 집계 사이트입니다. 전투력과 성장 기록, 추천 데이터를 기반으로 명예의 전당을 제공합니다.">
 <meta property="og:url" content="https://kinojo.info/hof/">
 <meta property="og:image" content="https://kinojo.info/assets/images/common/kinojo-og.jpg">
 <meta property="og:image:width" content="1536">
 <meta property="og:image:height" content="864">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="KINOJO INFO - 명예의 전당">
-<meta name="twitter:description" content="아이온2 지켈 서버 깡 레기온 비공식 정보 집계 사이트입니다. 전투력과 성장 기록, 추천 데이터를 기반으로 명예의 전당을 제공합니다.">
+<meta name="twitter:description" content="아이온2 KINOJO 레기온 비공식 정보 집계 사이트입니다. 전투력과 성장 기록, 추천 데이터를 기반으로 명예의 전당을 제공합니다.">
 <meta name="twitter:image" content="https://kinojo.info/assets/images/common/kinojo-og.jpg">
-<link href="./css/hall.css?cache=2026073101" rel="stylesheet"/>
+<link href="./css/hall.css?cache=2026080101" rel="stylesheet"/>
 <link href="../ui/kinojo-layout.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
-<link href="../ui/kinojo-components.css?cache=26062102" rel="stylesheet"/>
+<link href="../ui/kinojo-components.css?cache=2026080101" rel="stylesheet"/>
 <link href="../ui/kinojo-common-ui.css?cache=2026072201" rel="stylesheet"/>
 <link href="../ui/kinojo-character-reaction.css?cache=2026073001" rel="stylesheet"/>
 <link href="../ui/kinojo-card-guards.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
@@ -33,6 +33,13 @@
 <main class="wrap">
 <section class="banner"><img alt="Kinojo Hall of Fame" src="./assets/hall-banner-20260622.png?cache=2026062922"/></section>
 <section class="chick-card" id="chickCard"><button aria-label="신입 병아리 접기" class="chick-close" id="chickCloseBtn" type="button">🐥</button><div class="chick-line"><div class="chick-head"><div class="chick-icon">🐥</div><div><div class="chick-title" id="chickTitle">신입 병아리</div><div class="chick-sub" id="chickSub">새로운 모험가들을 환영합니다!</div></div></div><div class="chick-tags" id="chickTags"></div></div></section>
+<section class="hof-filter-bar" aria-label="명예의 전당 노출 범위">
+  <div class="hof-filter-copy"><strong>랭킹 범위</strong><span id="hofFilterStatus">기본 레기온 · 본캐만</span></div>
+  <div class="hof-filter-switches">
+    <label class="kinojo-filter-switch"><span>부캐 포함</span><input id="hofIncludeSubs" type="checkbox"/><span class="kinojo-filter-switch-track" aria-hidden="true"><span class="kinojo-filter-switch-knob"></span></span></label>
+    <label class="kinojo-filter-switch"><span>전체 레기온</span><input id="hofIncludeAllLegions" type="checkbox"/><span class="kinojo-filter-switch-track" aria-hidden="true"><span class="kinojo-filter-switch-knob"></span></span></label>
+  </div>
+</section>
 <section class="section" id="suggestionBox" style="display:none;margin-bottom:12px"><div class="section-head"><h2>💡 아이디어 제안 및 건의</h2><span class="section-note">운영자 검토 후 반영</span></div><div class="list"><input class="search" id="suggestTitle" placeholder="항목 이름"/><input class="search" id="suggestProposer" placeholder="제안자"/><textarea class="search" id="suggestMemo" placeholder="기준 설명" rows="3"></textarea><div class="suggest-actions"><button class="btn" id="submitSuggestBtn">제안 보내기</button><button class="btn" id="cancelSuggestBtn" type="button">취소</button></div></div></section>
 <div class="loading" id="app"><div><div class="loader-ring"></div><div id="loaderText">명예의 전당 데이터를 불러오는 중...</div></div></div>
 <section aria-hidden="true" class="reaction-popover" id="reactionPopover">
@@ -59,7 +66,7 @@
 <div class="reaction-status" id="reactionStatus"></div>
 </div>
 </section>
-<footer class="footer common-footer"><div class="footer-links"><a href="../pages/about.html">사이트 소개</a><a href="../pages/terms.html">이용약관</a><a href="../pages/privacy.html">개인정보처리방침</a><button id="footerSuggestBtn" type="button">아이디어 제안 및 건의</button></div><div class="footer-powered">Powered by AION2 · 깡 레기온 지원</div></footer>
+<footer class="footer common-footer"><div class="footer-links"><a href="../pages/about.html">사이트 소개</a><a href="../pages/terms.html">이용약관</a><a href="../pages/privacy.html">개인정보처리방침</a><button id="footerSuggestBtn" type="button">아이디어 제안 및 건의</button></div><div class="footer-powered">Powered by AION2 · KINOJO 레기온 지원</div></footer>
 </main>
 <script src="../core/kinojo-api.js?cache=2026062922"></script>
 <script src="../core/kinojo-cache.js?cache=2026062922"></script>
@@ -71,16 +78,16 @@
 <script src="../core/kinojo-logger.js?cache=2026062922"></script>
 <script src="../ui/kinojo-common-ui.js?cache=2026072201"></script>
 <script src="../ui/kinojo-admin-panel.js?cache=2026071712"></script>
-<script src="../core/kinojo-supabase.js?cache=2026073101"></script>
+<script src="../core/kinojo-supabase.js?cache=2026080101"></script>
 <script src="../core/kinojo-auth.js?cache=2026071518"></script>
 <script src="../ui/kinojo-event-notice.js?cache=2026070521"></script>
 <script src="../ui/kinojo-character-reaction.js?cache=2026073001"></script>
-<script src="./js/hall-state.js?cache=2026071112"></script>
+<script src="./js/hall-state.js?cache=2026080101"></script>
 <script src="./js/hall-render.js?cache=2026073101"></script>
-<script src="./js/hall-data.js?cache=2026072806"></script>
+<script src="./js/hall-data.js?cache=2026080101"></script>
 <script src="./js/hall-reactions.js?cache=2026072806"></script>
 <script src="./js/hall-suggestions.js?cache=2026062922"></script>
-<script src="./js/hall-events.js?cache=2026071711"></script>
-<script src="./js/app.js?cache=2026071711"></script>
+<script src="./js/hall-events.js?cache=2026080101"></script>
+<script src="./js/app.js?cache=2026080101"></script>
 </body>
 </html>
