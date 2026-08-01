@@ -1,0 +1,190 @@
+/* ===========================================================
+   KINOJO Ranking Character Card - 2026080103
+   역할: 레기온 순위 캐릭터 카드의 구조·프로필·지표·반응형만 관리합니다.
+   규칙: 검색/필터/패널은 ranking.css, 증감 배지는 ranking-delta.css가 소유합니다.
+=========================================================== */
+.ranking-card-list{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  padding:7px;
+  overflow:hidden;
+  border:1px solid var(--ranking-line);
+  border-radius:20px;
+  background:rgba(255,255,255,.84);
+  box-shadow:0 12px 40px rgba(31,47,79,.06);
+}
+.ranking-card{
+  --card-accent:var(--ranking-pve);
+  position:relative;
+  min-width:0;
+  overflow:hidden;
+  border:1px solid rgba(120,145,180,.22);
+  border-radius:16px;
+  background:linear-gradient(105deg,#fff 0%,#fff 65%,#f4f8ff 100%);
+  box-shadow:0 5px 16px rgba(31,47,79,.045);
+  isolation:isolate;
+}
+.ranking-card.pvp{--card-accent:var(--ranking-pvp);background:linear-gradient(105deg,#fff 0%,#fff 65%,#faf6ff 100%)}
+.ranking-card-main{
+  display:grid;
+  grid-template-columns:54px 54px minmax(0,1fr) 132px;
+  gap:10px;
+  align-items:center;
+  min-height:116px;
+  padding:8px 0 8px 8px;
+}
+.ranking-rank{
+  align-self:stretch;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  min-width:0;
+  border-right:1px solid rgba(120,145,180,.16);
+  color:#53627a;
+  text-align:center;
+}
+.ranking-rank-crown{height:15px;color:#d29a19;font-size:17px;line-height:1}
+.ranking-rank-current{display:block;color:#314158;font-size:24px;line-height:1;font-variant-numeric:tabular-nums}
+.ranking-card.top-one .ranking-rank-current{color:#c38b10}
+.ranking-card.top-two .ranking-rank-current{color:#718096}
+.ranking-card.top-three .ranking-rank-current{color:#a26540}
+.ranking-rank-change{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:18px;
+  padding:0 5px;
+  border-radius:6px;
+  font-size:9px;
+  font-weight:1000;
+  line-height:1;
+  white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+.ranking-rank-change.is-up{color:#14835d;background:rgba(16,185,129,.11)}
+.ranking-rank-change.is-down{color:#d23e58;background:rgba(244,63,94,.10)}
+.ranking-rank-change.is-same{color:#94a3b8;background:rgba(148,163,184,.1)}
+.ranking-rank-change.is-new{color:#9a6700;background:rgba(245,158,11,.13);letter-spacing:.02em}
+.ranking-class-area{display:grid;place-items:center;min-width:0}
+.ranking-class-emblem{
+  position:relative;
+  display:grid;
+  place-items:center;
+  width:48px;
+  height:48px;
+  overflow:hidden;
+  border:1px solid rgba(120,145,180,.22);
+  border-radius:50%;
+  background:linear-gradient(145deg,#fff,#edf4ff);
+  box-shadow:0 4px 12px rgba(31,47,79,.08);
+}
+.ranking-class-emblem img{position:relative;z-index:2;width:38px;height:38px;object-fit:contain}
+.ranking-class-fallback{position:absolute;z-index:1;color:var(--card-accent);font-size:19px;font-weight:1000}
+.ranking-class-emblem:not(.is-fallback) .ranking-class-fallback{opacity:0}
+.ranking-class-emblem.is-fallback .ranking-class-fallback{opacity:1}
+.ranking-character-meta{position:relative;z-index:3;min-width:0;padding:4px 0}
+.ranking-legion-line{display:flex;align-items:center;gap:6px;min-width:0;margin-bottom:3px}
+.ranking-legion{max-width:100%;overflow:hidden;color:#2563eb;font-size:10px;font-weight:1000;text-overflow:ellipsis;white-space:nowrap}
+.ranking-card.pvp .ranking-legion{color:#7f46c2}
+.ranking-actual-legion{max-width:120px;overflow:hidden;color:#94a3b8;font-size:9px;font-weight:800;text-overflow:ellipsis;white-space:nowrap}
+.ranking-name-line{display:flex;align-items:center;gap:6px;min-width:0}
+.ranking-name-line strong{min-width:0;overflow:hidden;color:#16243a;font-size:16px;line-height:1.18;letter-spacing:-.035em;text-overflow:ellipsis;white-space:nowrap}
+.ranking-owner-note,.ranking-main-badge{
+  display:inline-flex;
+  align-items:center;
+  flex:0 0 auto;
+  min-height:18px;
+  padding:0 6px;
+  border:1px solid rgba(37,99,235,.18);
+  border-radius:999px;
+  background:#eef4ff;
+  color:#475569;
+  font-size:9px;
+  font-weight:900;
+  white-space:nowrap;
+}
+.ranking-main-badge{color:#1d4ed8}
+.ranking-server-line{margin-top:3px;color:var(--ranking-muted);font-size:10px;font-weight:800}
+.ranking-metrics{display:flex;align-items:center;gap:8px;min-width:0;margin-top:8px}
+.ranking-metric{display:inline-flex;align-items:center;gap:5px;min-width:0;color:#475569}
+.ranking-metric.power.pve{color:var(--ranking-pve)}
+.ranking-metric.power.pvp{color:var(--ranking-pvp)}
+.ranking-metric.item{color:#b66a18}
+.ranking-metric-icon{
+  display:inline-block;
+  flex:0 0 auto;
+  width:17px;
+  height:17px;
+  background:currentColor;
+  -webkit-mask:var(--ranking-metric-icon) center/contain no-repeat;
+  mask:var(--ranking-metric-icon) center/contain no-repeat;
+}
+.ranking-metric strong{overflow:hidden;font-size:13px;font-weight:1000;line-height:1.1;font-variant-numeric:tabular-nums;text-overflow:ellipsis;white-space:nowrap}
+.ranking-metric-divider{width:1px;height:14px;background:rgba(120,145,180,.24)}
+.ranking-portrait{
+  position:relative;
+  align-self:stretch;
+  min-width:0;
+  overflow:hidden;
+  border-radius:0 15px 0 0;
+  background:linear-gradient(145deg,#eef4ff,#dfe9f8);
+}
+.ranking-card.pvp .ranking-portrait{background:linear-gradient(145deg,#f2eaff,#e6dcf8)}
+.ranking-portrait::before{
+  content:"";
+  position:absolute;
+  z-index:2;
+  inset:0 auto 0 0;
+  width:38%;
+  pointer-events:none;
+  background:linear-gradient(90deg,#fff 0%,rgba(255,255,255,.78) 30%,transparent 100%);
+}
+.ranking-portrait img{width:100%;height:100%;display:block;object-fit:cover;object-position:center 16%}
+.ranking-portrait.is-empty{display:grid;place-items:center;color:var(--card-accent);font-size:34px;font-weight:1000}
+.ranking-card-footer{
+  position:relative;
+  z-index:3;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  align-items:center;
+  gap:8px;
+  min-height:34px;
+  padding:5px 8px;
+  border-top:1px solid rgba(120,145,180,.14);
+  background:rgba(248,251,255,.94);
+}
+.ranking-card.pvp .ranking-card-footer{background:rgba(251,248,255,.94)}
+.ranking-reaction-boxes{display:flex;align-items:center;gap:4px;min-width:max-content}
+.ranking-reaction-box{display:inline-flex;align-items:center;gap:3px;height:20px;padding:0 6px;border-radius:6px;font-size:9px;font-weight:900}
+.ranking-reaction-box.like{background:rgba(232,111,113,.13);color:#b74e50}
+.ranking-reaction-box.dislike{background:rgba(100,128,217,.13);color:#5268b8}
+.ranking-review{display:flex;align-items:center;justify-content:flex-end;gap:6px;min-width:0}
+.ranking-review-badge{display:inline-flex;align-items:center;flex:0 0 auto;height:18px;padding:0 6px;border-radius:999px;background:#1e2f4a;color:#fff;font-size:9px;font-weight:900;white-space:nowrap}
+.ranking-review p{min-width:0;margin:0;overflow:hidden;color:#64748b;font-size:10px;font-weight:700;text-overflow:ellipsis;white-space:nowrap}
+.ranking-reaction-card{cursor:pointer;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,background .16s ease}
+.ranking-reaction-card:hover,.ranking-reaction-card:focus-visible{transform:translateY(-1px);border-color:rgba(56,101,176,.40);box-shadow:0 10px 24px rgba(31,47,79,.10);outline:none}
+.ranking-reaction-card:active{transform:scale(.994)}
+
+/* TOP3 flowing border: card outline only */
+.ranking-card.top-one,.ranking-card.top-two,.ranking-card.top-three{--flow-radius:16px;border-color:rgba(120,145,180,.18)}
+.ranking-card.top-one::after,.ranking-card.top-two::after,.ranking-card.top-three::after{
+  content:"";
+  position:absolute;
+  z-index:6;
+  inset:0;
+  border-radius:var(--flow-radius);
+  pointer-events:none;
+  background:linear-gradient(90deg,transparent,var(--flow-color),transparent) top left/42% 2px no-repeat,
+             linear-gradient(180deg,transparent,var(--flow-color),transparent) top right/2px 42% no-repeat,
+             linear-gradient(270deg,transparent,var(--flow-color),transparent) bottom right/42% 2px no-repeat,
+             linear-gradient(0deg,transparent,var(--flow-color),transparent) bottom left/2px 42% no-repeat;
+  opacity:var(--flow-opacity,.85);
+  animation:kinojoRankingBorderFlow var(--flow-speed,3.2s) linear infinite;
+}
+.ranking-card.top-one{--flow-color:rgba(37,99,235,.95);--flow-opacity:.95;--flow-speed:3.6s}
+.ranking-card.top-two{--flow-color:rgba(96,165,250,.86);--flow-opacity:.78;--flow-speed:3.9s}
+.ranking-card.top-three{--flow-color:rgba(124,58,237,.82);--flow-opacity:.72;--flow-speed:4.2s}
+@keyframes kinojoRankingBorderFlow{0%{background-position:-42% 0,100% -42%,142% 100%,0 142%}100%{background-position:142% 0,100% 142%,-42% 100%,0 -42%}}

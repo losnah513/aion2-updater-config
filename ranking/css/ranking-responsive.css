@@ -1,0 +1,147 @@
+/* ===========================================================
+   KINOJO Ranking Responsive - 2026080103
+   역할: 랭킹 페이지와 캐릭터 카드의 태블릿·모바일 분기만 관리합니다.
+=========================================================== */
+@media (max-width:980px){
+  .ranking-wrap{width:min(100% - 20px,var(--ranking-content-max));padding-top:10px}
+  .ranking-toolbar{grid-template-columns:1fr;gap:12px}
+  .ranking-action-box{
+    display:grid;
+    grid-template-columns:150px minmax(0,1fr);
+    align-items:center;
+    gap:12px;
+    padding:12px 0 0;
+    border-left:0;
+    border-top:1px solid rgba(120,145,180,.18);
+  }
+  .ranking-switch-group{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .ranking-panel-head h2{font-size:15px}
+}
+
+@media (min-width:700px) and (max-width:980px){
+  .ranking-board{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;min-height:500px}
+  .ranking-mobile-mode-tabs{display:none!important}
+  .ranking-panel{border-radius:18px;min-width:0}
+  .ranking-panel-head{padding:11px 12px}
+  .ranking-panel-head h2{font-size:14px}
+  .ranking-panel-head p{font-size:10px}
+  .ranking-panel-chip{height:23px;padding:0 8px;font-size:11px}
+}
+
+@media (max-width:699px){
+  body.kinojo-page-ranking{overflow-x:hidden}
+  .ranking-wrap{width:calc(100% - 16px);padding-top:8px;padding-bottom:86px}
+  .ranking-mobile-mode-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;position:sticky;top:calc(var(--kinojo-common-topbar-height,92px) + 4px);z-index:30;padding:6px;border:1px solid var(--ranking-line);border-radius:16px;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);box-shadow:0 8px 20px rgba(31,47,79,.06)}
+  .ranking-mobile-mode-tabs button{height:32px;border-radius:999px;border:1px solid var(--ranking-line);background:#fff;font-size:13px;font-weight:900;color:#344054}
+  .ranking-mobile-mode-tabs button.is-active{background:#2563eb;color:#fff}
+  .ranking-mobile-filter-head{display:flex;grid-column:1/-1;align-items:center;justify-content:space-between;gap:8px;min-height:32px}
+  .ranking-mobile-filter-head span{font-size:12px;font-weight:950;color:var(--ranking-muted)}
+  .ranking-mobile-filter-head .kinojo-btn{height:28px!important;min-height:28px!important;padding:0 10px!important;font-size:11px!important}
+  .ranking-toolbar{display:grid;grid-template-columns:1fr;gap:8px;padding:10px;border-radius:18px}
+  .ranking-filter-main{display:grid;gap:8px}
+  .ranking-search-box{gap:5px}
+  .ranking-search-controls{grid-template-columns:minmax(0,1fr) 66px 66px;gap:6px}
+  .ranking-search-controls input{height:36px!important}
+  body.kinojo-page-ranking .ranking-search-controls .kinojo-btn{height:36px!important;min-height:36px!important;padding:0 6px!important;font-size:11px!important;border-radius:9px!important}
+  .ranking-filter-box,.ranking-action-box{display:none;padding-top:8px;border-top:1px solid rgba(120,145,180,.16)}
+  .ranking-toolbar.is-filter-open .ranking-filter-box{display:grid;grid-template-columns:1fr;gap:7px}
+  .ranking-toolbar.is-filter-open .ranking-action-box{display:block;padding:8px 0 0;border-left:0}
+  .ranking-filter-title{padding-top:0}
+  .ranking-class-tabs{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+  .ranking-class-tab{width:100%;height:28px;padding:0 4px;font-size:11px;border-radius:9px}
+  .ranking-scope-heading{margin-bottom:7px}
+  .ranking-switch-group{grid-template-columns:1fr;gap:6px}
+  body.kinojo-page-ranking .ranking-action-box .kinojo-filter-switch{min-height:38px;border-radius:10px;font-size:11px}
+  .ranking-status{font-size:11px;line-height:1.35;padding:0 2px}
+  .ranking-board{grid-template-columns:1fr;gap:10px;min-height:460px}
+  .ranking-board[data-mobile-mode="PVE"] .ranking-panel.pvp,.ranking-board[data-mobile-mode="PVP"] .ranking-panel.pve{display:none}
+  .ranking-panel{border-radius:18px}
+  .ranking-panel-head{position:static;margin-bottom:7px;padding:11px 12px;border-radius:15px;box-shadow:0 7px 18px rgba(31,47,79,.07)}
+  .ranking-panel-head h2{font-size:14px}
+  .ranking-panel-head p{font-size:10px}
+  .ranking-panel-chip{height:23px;padding:0 8px;font-size:11px}
+  .ranking-load-more{display:grid;justify-items:center;gap:6px;margin-top:10px}
+  .ranking-load-more .kinojo-btn{min-width:150px!important}
+  .ranking-load-more span{font-size:10px}
+}
+
+@media (max-width:520px){
+  .ranking-search-controls{grid-template-columns:1fr 1fr}
+  .ranking-search-controls input{grid-column:1/-1}
+}
+
+@media (max-width:380px){
+  .ranking-class-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+@media (min-width:700px) and (max-width:980px){
+  .ranking-card-list{gap:6px;padding:6px;border-radius:18px}
+  .ranking-card{border-radius:14px}
+  .ranking-card-main{grid-template-columns:42px 42px minmax(0,1fr) 94px;gap:6px;min-height:104px;padding-left:6px}
+  .ranking-rank-current{font-size:19px}
+  .ranking-rank-crown{font-size:14px}
+  .ranking-class-emblem{width:38px;height:38px}
+  .ranking-class-emblem img{width:31px;height:31px}
+  .ranking-name-line strong{font-size:13px}
+  .ranking-owner-note,.ranking-main-badge{max-width:74px;overflow:hidden;font-size:8px;text-overflow:ellipsis}
+  .ranking-legion{font-size:9px}
+  .ranking-actual-legion{display:none}
+  .ranking-server-line{font-size:9px}
+  .ranking-metrics{gap:5px;margin-top:6px}
+  .ranking-metric{gap:3px}
+  .ranking-metric-icon{width:14px;height:14px}
+  .ranking-metric strong{font-size:10px}
+  .ranking-metric-divider{height:12px}
+  .ranking-portrait{border-radius:0 13px 0 0}
+  .ranking-card-footer{grid-template-columns:auto minmax(0,1fr);gap:5px;min-height:30px;padding:4px 6px}
+  .ranking-review-badges .ranking-delta-badge{display:none}
+  .ranking-review p{font-size:9px}
+  .ranking-card.top-one,.ranking-card.top-two,.ranking-card.top-three{--flow-radius:14px}
+}
+
+@media (max-width:699px){
+  .ranking-card-list{gap:6px;padding:6px;border-radius:16px}
+  .ranking-card{border-radius:14px}
+  .ranking-card-main{grid-template-columns:42px 42px minmax(0,1fr) 104px;gap:7px;min-height:108px;padding-left:6px}
+  .ranking-rank-current{font-size:20px}
+  .ranking-rank-crown{font-size:14px}
+  .ranking-class-emblem{width:38px;height:38px}
+  .ranking-class-emblem img{width:31px;height:31px}
+  .ranking-name-line strong{font-size:14px}
+  .ranking-owner-note,.ranking-main-badge{font-size:8px;padding-inline:5px}
+  .ranking-actual-legion{display:none}
+  .ranking-metrics{gap:6px;margin-top:7px}
+  .ranking-metric{gap:4px}
+  .ranking-metric-icon{width:15px;height:15px}
+  .ranking-metric strong{font-size:11px}
+  .ranking-portrait{border-radius:0 13px 0 0}
+  .ranking-card-footer{gap:5px;min-height:31px;padding:4px 6px}
+  .ranking-reaction-box{height:19px;padding-inline:5px;font-size:9px}
+  .ranking-review-badges .ranking-delta-badge{display:none}
+  .ranking-review p{font-size:9px}
+  .ranking-card.top-one,.ranking-card.top-two,.ranking-card.top-three{--flow-radius:14px}
+}
+
+@media (max-width:430px){
+  .ranking-card-main{grid-template-columns:36px 38px minmax(0,1fr) 86px;gap:5px;min-height:102px;padding-left:5px}
+  .ranking-rank-current{font-size:18px}
+  .ranking-rank-change{min-height:16px;padding-inline:3px;font-size:8px}
+  .ranking-class-emblem{width:34px;height:34px}
+  .ranking-class-emblem img{width:28px;height:28px}
+  .ranking-name-line{gap:4px}
+  .ranking-name-line strong{font-size:13px}
+  .ranking-owner-note,.ranking-main-badge{max-width:66px;overflow:hidden;text-overflow:ellipsis}
+  .ranking-legion{font-size:9px}
+  .ranking-server-line{font-size:9px}
+  .ranking-metrics{gap:4px}
+  .ranking-metric-icon{width:13px;height:13px}
+  .ranking-metric strong{font-size:10px}
+  .ranking-metric-divider{height:11px}
+  .ranking-review-badges{display:none}
+  .ranking-review p{font-size:8px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .ranking-card.top-one::after,.ranking-card.top-two::after,.ranking-card.top-three::after{animation:none;background-position:0 0,100% 0,100% 100%,0 100%}
+  .ranking-reaction-card{transition:none}
+}
