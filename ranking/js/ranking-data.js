@@ -14,13 +14,14 @@
     className: '전체',
     search: '',
     includeSubs: false,
+    includeAllLegions: false,
     data: null,
     loading: false,
     mobileMode: 'PVE'
   };
 
   function cacheKey(page){
-    return ['ranking', Number(page || state.page), state.pageSize, state.className, state.search, state.includeSubs ? 'subs' : 'main'].join('::');
+    return ['ranking', Number(page || state.page), state.pageSize, state.className, state.search, state.includeSubs ? 'subs' : 'main', state.includeAllLegions ? 'all-legions' : 'default-legions'].join('::');
   }
   function readCache(page){
     if(!window.KinojoCache) return null;
@@ -53,13 +54,23 @@
     const cached = readCache(pageNo);
     if(cached) return cached;
     if(!window.KinojoApi) throw new Error('KinojoApi 연결을 확인해 주세요.');
-    const data = await window.KinojoApi.getAction('legionRanking', {
-      page: pageNo,
-      pageSize: state.pageSize,
-      includeSubs: state.includeSubs,
-      className: state.className,
-      search: state.search
-    });
+    const params = {
+      p_page: pageNo,
+      p_page_size: state.pageSize,
+      p_include_subs: state.includeSubs,
+      p_include_all_legions: state.includeAllLegions,
+      p_class_name: state.className,
+      p_search: state.search
+    };
+    const data = window.KinojoSupabase && typeof window.KinojoSupabase.rpc === 'function'
+      ? await window.KinojoSupabase.rpc('kinojo_web_get_legion_ranking', params)
+      : await window.KinojoApi.getAction('legionRanking', {
+          page: pageNo,
+          pageSize: state.pageSize,
+          includeSubs: state.includeSubs,
+          className: state.className,
+          search: state.search
+        });
     if(!data || data.ok === false) throw new Error(data?.message || data?.error || '레기온 순위 응답이 실패했습니다.');
     return writeCache(pageNo, data);
   }
@@ -84,7 +95,8 @@
   function setSearch(value){ state.search = U.text(value); resetResult(); }
   function setClass(value){ state.className = U.text(value, '전체'); resetResult(); }
   function setIncludeSubs(value){ state.includeSubs = !!value; resetResult(); }
-  function reset(){ state.className = '전체'; state.search = ''; state.includeSubs = false; resetResult(); }
+  function setIncludeAllLegions(value){ state.includeAllLegions = !!value; resetResult(); }
+  function reset(){ state.className = '전체'; state.search = ''; state.includeSubs = false; state.includeAllLegions = false; resetResult(); }
 
   Ranking.data = {
     state,
@@ -98,6 +110,7 @@
     setSearch,
     setClass,
     setIncludeSubs,
+    setIncludeAllLegions,
     reset
   };
 })();
