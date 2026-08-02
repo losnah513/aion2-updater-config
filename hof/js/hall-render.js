@@ -165,9 +165,23 @@ function hofMetricToneLabel(metric){
   return 'KINOJO HALL';
 }
 
+function hofIsPowerMetric(metric){
+  return metric==='pve'||metric==='pvp';
+}
 function hofClassBadge(item){
   const cls=hofClassName(item);
   return cls?'<span class="hof-v2-class-badge">'+escapeHtml(cls)+'</span>':'';
+}
+function hofClassIcon(item){
+  const cls=hofClassName(item);
+  const helper=window.KinojoCharacterProfileImage;
+  const icon=cls&&helper&&typeof helper.classIconFor==='function'
+    ?String(helper.classIconFor(cls)||'').trim()
+    :'';
+  if(!icon)return '';
+  return '<span class="hof-v2-class-icon" aria-label="'+escapeHtml(cls)+'" title="'+escapeHtml(cls)+'">'
+    +'<img src="'+escapeHtml(icon)+'" alt="" loading="lazy" decoding="async" onerror="this.parentElement.hidden=true">'
+    +'</span>';
 }
 function hofOwnerBadge(item){
   const owner=hofOwnerName(item);
@@ -175,32 +189,55 @@ function hofOwnerBadge(item){
   if(item?.isMain===false && owner)return '<span class="hof-v2-owner-badge">부캐 · '+escapeHtml(owner)+'</span>';
   return '';
 }
+function hofPowerScore(score){
+  const icon='https://assets.playnccdn.com/static-aion2/characters/img/info/profile_power_icon_pc.png';
+  return '<strong class="hof-v2-top3-score is-power">'
+    +'<img class="hof-v2-power-icon" src="'+icon+'" alt="" aria-hidden="true" loading="lazy" decoding="async">'
+    +'<span>'+escapeHtml(score)+'</span>'
+    +'</strong>';
+}
+function hofPowerInfo(item,name,server){
+  return '<span class="hof-v2-top3-info is-power">'
+    +'<span class="hof-v2-server-badge">'+escapeHtml(server)+'</span>'
+    +'<span class="hof-v2-top3-name-row"><span class="hof-v2-top3-name">'+escapeHtml(name)+'</span>'+hofClassIcon(item)+'</span>'
+    +'</span>';
+}
+function hofPowerAside(item,score){
+  return '<span class="hof-v2-top3-aside">'
+    +'<span class="hof-v2-owner-slot">'+hofOwnerBadge(item)+'</span>'
+    +hofPowerScore(score)
+    +'</span>';
+}
 function hofTop3Card(item,index,metric){
   const rank=Number(hofFirstDefined(item?.rank,item?.rankNo,item?.rank_no,0))||index+1;
+  const isPower=hofIsPowerMetric(metric);
   if(!item){
-    if(rank===1)return '<div class="hof-v2-top3-item rank-1 is-empty"><span class="hof-v2-portrait-wrap is-empty"><span class="hof-v2-empty-dot">1</span></span><span class="hof-v2-top3-info"><span class="hof-v2-top3-name">데이터 대기</span><span class="hof-v2-top3-meta">집계 준비 중</span></span><strong class="hof-v2-top3-score"><small>'+escapeHtml(hofMetricLabel(metric))+'</small>-</strong></div>';
-    return '<div class="hof-v2-top3-item rank-'+rank+' is-empty is-compact-rank"><span class="hof-v2-row-medal"><span>'+rank+'</span></span><span class="hof-v2-top3-info"><span class="hof-v2-top3-name">데이터 대기</span><span class="hof-v2-top3-meta">집계 준비 중</span></span><strong class="hof-v2-top3-score"><small>'+escapeHtml(hofMetricLabel(metric))+'</small>-</strong></div>';
+    const emptyScore=isPower?hofPowerScore('-'):'<strong class="hof-v2-top3-score"><small>'+escapeHtml(hofMetricLabel(metric))+'</small>-</strong>';
+    const emptyAside=isPower?'<span class="hof-v2-top3-aside"><span class="hof-v2-owner-slot"></span>'+emptyScore+'</span>':emptyScore;
+    if(rank===1)return '<div class="hof-v2-top3-item rank-1 is-empty"><span class="hof-v2-portrait-wrap is-empty"><span class="hof-v2-empty-dot">1</span></span><span class="hof-v2-top3-info"><span class="hof-v2-top3-name">데이터 대기</span><span class="hof-v2-top3-meta">집계 준비 중</span></span>'+emptyAside+'</div>';
+    return '<div class="hof-v2-top3-item rank-'+rank+' is-empty is-compact-rank"><span class="hof-v2-row-medal"><span>'+rank+'</span></span><span class="hof-v2-top3-info"><span class="hof-v2-top3-name">데이터 대기</span><span class="hof-v2-top3-meta">집계 준비 중</span></span>'+emptyAside+'</div>';
   }
   const name=hofCharName(item)||'-';
   const server=hofServerName(item)||'지켈';
   const summary=hofRankSummaryText(item,metric);
   const score=hofMetricValue(item,metric)||'-';
-  const exactPower=(metric==='pve'||metric==='pvp')?hofPowerFull(hofMetricRawValue(item,metric)):'';
+  const exactPower=isPower?hofPowerFull(hofMetricRawValue(item,metric)):'';
   const commonAttrs=' data-character="'+escapeHtml(name)+'" data-hof-metric="'+escapeHtml(metric)+'" data-hof-rank="'+rank+'" data-hof-score="'+escapeHtml(score)+'"'+(exactPower?' title="정확한 전투력 '+escapeHtml(exactPower)+'"':'')+' aria-label="'+escapeHtml(name)+' 상세 보기"';
+  const info=isPower
+    ?hofPowerInfo(item,name,server)
+    :'<span class="hof-v2-top3-info"><span class="hof-v2-top3-name">'+escapeHtml(name)+'</span><span class="hof-v2-top3-meta">'+escapeHtml(summary||server)+'</span>'+(rank===1?'<span class="hof-v2-badge-line">'+hofClassBadge(item)+hofOwnerBadge(item)+'</span>':'')+'</span>';
+  const scoreArea=isPower
+    ?hofPowerAside(item,score)
+    :'<strong class="hof-v2-top3-score"><small>'+escapeHtml(hofMetricLabel(metric))+'</small>'+escapeHtml(score)+'</strong>';
   if(rank===1){
     return '<button type="button" class="hof-v2-top3-item rank-1"'+commonAttrs+'>'
       + '<span class="hof-v2-portrait-wrap">'+hofRankPortrait(item,rank,'small')+hofRankMedal(rank)+'</span>'
-      + '<span class="hof-v2-top3-info"><span class="hof-v2-top3-name">'+escapeHtml(name)+'</span>'
-      + '<span class="hof-v2-top3-meta">'+escapeHtml(summary||server)+'</span>'
-      + '<span class="hof-v2-badge-line">'+hofClassBadge(item)+hofOwnerBadge(item)+'</span></span>'
-      + '<strong class="hof-v2-top3-score"><small>'+escapeHtml(hofMetricLabel(metric))+'</small>'+escapeHtml(score)+'</strong>'
+      + info+scoreArea
       + '</button>';
   }
   return '<button type="button" class="hof-v2-top3-item rank-'+rank+' is-compact-rank"'+commonAttrs+'>'
     + '<span class="hof-v2-row-medal hof-v2-row-medal-'+rank+'"><span>'+rank+'</span></span>'
-    + '<span class="hof-v2-top3-info"><span class="hof-v2-top3-name">'+escapeHtml(name)+'</span>'
-    + '<span class="hof-v2-top3-meta">'+escapeHtml(summary||server)+'</span></span>'
-    + '<strong class="hof-v2-top3-score"><small>'+escapeHtml(hofMetricLabel(metric))+'</small>'+escapeHtml(score)+'</strong>'
+    + info+scoreArea
     + '</button>';
 }
 function hofWidePanel(title,note,list,metric){
