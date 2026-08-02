@@ -9,17 +9,11 @@
   const U = Ranking.utils;
   const POWER_ICON_URL = 'https://assets.playnccdn.com/static-aion2/characters/img/info/profile_power_icon_pc.png';
   const ITEM_ICON_URL = 'https://assets.playnccdn.com/static-aion2/characters/img/info/profile_level_icon_pc.png';
-  const CLASS_ICON_BASE = 'https://assets.playnccdn.com/static-aion2/characters/img/class/';
-  const CLASS_ICON_KEYS = Object.freeze({
-    '수호성':'templar',
-    '검성':'gladiator',
-    '살성':'assassin',
-    '궁성':'ranger',
-    '마도성':'sorcerer',
-    '정령성':'spiritmaster',
-    '치유성':'cleric',
-    '호법성':'chanter'
-  });
+  function classIconUrl(className){
+    const helper = window.KinojoCharacterProfileImage;
+    if(!helper || typeof helper.classIconFor !== 'function') return '';
+    return String(helper.classIconFor(className) || '');
+  }
 
   function topRankClass(rank){
     return rank === 1 ? ' top-one' : rank === 2 ? ' top-two' : rank === 3 ? ' top-three' : '';
@@ -29,10 +23,10 @@
     return rank >= 1 && rank <= 3 ? '<span class="ranking-rank-crown" aria-hidden="true">♛</span>' : '';
   }
   function classIconHtml(item){
-    const iconKey = CLASS_ICON_KEYS[item.className] || '';
+    const iconUrl = classIconUrl(item.className);
     const fallback = U.escapeHtml(String(item.className || '?').slice(0,1));
-    const image = iconKey
-      ? '<img src="'+CLASS_ICON_BASE+'class_icon_'+U.escapeHtml(iconKey)+'.png" alt="" loading="lazy" decoding="async" onerror="this.hidden=true;this.parentElement.classList.add(\'is-fallback\')">'
+    const image = iconUrl
+      ? '<img src="'+U.escapeHtml(iconUrl)+'" alt="" loading="lazy" decoding="async" onerror="this.hidden=true;this.parentElement.classList.add(\'is-fallback\')">'
       : '';
     return '<span class="ranking-class-emblem'+(image?'':' is-fallback')+'" aria-label="'+U.escapeHtml(item.className)+'">'
       + '<span class="ranking-class-fallback" aria-hidden="true">'+fallback+'</span>'
