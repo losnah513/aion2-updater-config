@@ -199,8 +199,11 @@ function hofPowerScore(score){
 function hofPowerInfo(item,name,server){
   return '<span class="hof-v2-top3-info is-power">'
     +'<span class="hof-v2-server-badge">'+escapeHtml(server)+'</span>'
-    +'<span class="hof-v2-top3-name-row"><span class="hof-v2-top3-name">'+escapeHtml(name)+'</span>'+hofClassIcon(item)+'</span>'
+    +'<span class="hof-v2-top3-name">'+escapeHtml(name)+'</span>'
     +'</span>';
+}
+function hofPowerClass(item){
+  return '<span class="hof-v2-power-class-slot">'+hofClassIcon(item)+'</span>';
 }
 function hofPowerAside(item,score){
   return '<span class="hof-v2-top3-aside">'
@@ -208,14 +211,28 @@ function hofPowerAside(item,score){
     +hofPowerScore(score)
     +'</span>';
 }
+function hofPowerPortrait(item){
+  return '<span class="hof-v2-power-portrait">'+hofRankPortrait(item,0,'power-card')+'</span>';
+}
+function hofPowerRank(rank){
+  return '<span class="hof-v2-power-rank rank-'+rank+'" aria-label="'+rank+'위"><strong>'+rank+'</strong></span>';
+}
 function hofTop3Card(item,index,metric){
   const rank=Number(hofFirstDefined(item?.rank,item?.rankNo,item?.rank_no,0))||index+1;
   const isPower=hofIsPowerMetric(metric);
   if(!item){
-    const emptyScore=isPower?hofPowerScore('-'):'<strong class="hof-v2-top3-score"><small>'+escapeHtml(hofMetricLabel(metric))+'</small>-</strong>';
-    const emptyAside=isPower?'<span class="hof-v2-top3-aside"><span class="hof-v2-owner-slot"></span>'+emptyScore+'</span>':emptyScore;
-    if(rank===1)return '<div class="hof-v2-top3-item rank-1 is-empty"><span class="hof-v2-portrait-wrap is-empty"><span class="hof-v2-empty-dot">1</span></span><span class="hof-v2-top3-info"><span class="hof-v2-top3-name">데이터 대기</span><span class="hof-v2-top3-meta">집계 준비 중</span></span>'+emptyAside+'</div>';
-    return '<div class="hof-v2-top3-item rank-'+rank+' is-empty is-compact-rank"><span class="hof-v2-row-medal"><span>'+rank+'</span></span><span class="hof-v2-top3-info"><span class="hof-v2-top3-name">데이터 대기</span><span class="hof-v2-top3-meta">집계 준비 중</span></span>'+emptyAside+'</div>';
+    if(isPower){
+      return '<div class="hof-v2-top3-item rank-'+rank+' is-empty is-power-card">'
+        +hofPowerRank(rank)
+        +'<span class="hof-v2-top3-info is-power"><span class="hof-v2-server-badge">-</span><span class="hof-v2-top3-name">데이터 대기</span></span>'
+        +'<span class="hof-v2-power-class-slot"></span>'
+        +'<span class="hof-v2-top3-aside"><span class="hof-v2-owner-slot"></span>'+hofPowerScore('-')+'</span>'
+        +'<span class="hof-v2-power-portrait is-empty"><span class="hof-v2-empty-dot">-</span></span>'
+        +'</div>';
+    }
+    const emptyScore='<strong class="hof-v2-top3-score"><small>'+escapeHtml(hofMetricLabel(metric))+'</small>-</strong>';
+    if(rank===1)return '<div class="hof-v2-top3-item rank-1 is-empty"><span class="hof-v2-portrait-wrap is-empty"><span class="hof-v2-empty-dot">1</span></span><span class="hof-v2-top3-info"><span class="hof-v2-top3-name">데이터 대기</span><span class="hof-v2-top3-meta">집계 준비 중</span></span>'+emptyScore+'</div>';
+    return '<div class="hof-v2-top3-item rank-'+rank+' is-empty is-compact-rank"><span class="hof-v2-row-medal"><span>'+rank+'</span></span><span class="hof-v2-top3-info"><span class="hof-v2-top3-name">데이터 대기</span><span class="hof-v2-top3-meta">집계 준비 중</span></span>'+emptyScore+'</div>';
   }
   const name=hofCharName(item)||'-';
   const server=hofServerName(item)||'지켈';
@@ -223,12 +240,17 @@ function hofTop3Card(item,index,metric){
   const score=hofMetricValue(item,metric)||'-';
   const exactPower=isPower?hofPowerFull(hofMetricRawValue(item,metric)):'';
   const commonAttrs=' data-character="'+escapeHtml(name)+'" data-hof-metric="'+escapeHtml(metric)+'" data-hof-rank="'+rank+'" data-hof-score="'+escapeHtml(score)+'"'+(exactPower?' title="정확한 전투력 '+escapeHtml(exactPower)+'"':'')+' aria-label="'+escapeHtml(name)+' 상세 보기"';
-  const info=isPower
-    ?hofPowerInfo(item,name,server)
-    :'<span class="hof-v2-top3-info"><span class="hof-v2-top3-name">'+escapeHtml(name)+'</span><span class="hof-v2-top3-meta">'+escapeHtml(summary||server)+'</span>'+(rank===1?'<span class="hof-v2-badge-line">'+hofClassBadge(item)+hofOwnerBadge(item)+'</span>':'')+'</span>';
-  const scoreArea=isPower
-    ?hofPowerAside(item,score)
-    :'<strong class="hof-v2-top3-score"><small>'+escapeHtml(hofMetricLabel(metric))+'</small>'+escapeHtml(score)+'</strong>';
+  if(isPower){
+    return '<button type="button" class="hof-v2-top3-item rank-'+rank+' is-power-card"'+commonAttrs+'>'
+      +hofPowerRank(rank)
+      +hofPowerInfo(item,name,server)
+      +hofPowerClass(item)
+      +hofPowerAside(item,score)
+      +hofPowerPortrait(item)
+      +'</button>';
+  }
+  const info='<span class="hof-v2-top3-info"><span class="hof-v2-top3-name">'+escapeHtml(name)+'</span><span class="hof-v2-top3-meta">'+escapeHtml(summary||server)+'</span>'+(rank===1?'<span class="hof-v2-badge-line">'+hofClassBadge(item)+hofOwnerBadge(item)+'</span>':'')+'</span>';
+  const scoreArea='<strong class="hof-v2-top3-score"><small>'+escapeHtml(hofMetricLabel(metric))+'</small>'+escapeHtml(score)+'</strong>';
   if(rank===1){
     return '<button type="button" class="hof-v2-top3-item rank-1"'+commonAttrs+'>'
       + '<span class="hof-v2-portrait-wrap">'+hofRankPortrait(item,rank,'small')+hofRankMedal(rank)+'</span>'
@@ -265,9 +287,10 @@ function hofGodHeroCard(title,note,item,metric){
     + '<div class="hof-v2-panel-bg" aria-hidden="true"></div>'
     + '<div class="hof-v2-god-head is-compact"><h2><span class="hof-v2-title-icon">'+escapeHtml(hofMetricIcon(metric))+'</span>'+escapeHtml(title)+'</h2></div>'
     + '<'+bodyTag+' class="hof-v2-god-main'+(hasItem?'':' is-empty')+'"'+bodyAttrs+'>'
-    + '<span class="hof-v2-god-portrait">'+hofRankPortrait(safeItem,1,'large')+(hasItem?hofRankMedal(1):'')+'</span>'
+    + '<span class="hof-v2-god-portrait">'+hofRankPortrait(safeItem,1,'large')+'</span>'
+    + '<span class="hof-v2-god-server">'+escapeHtml(hofServerName(safeItem)||'지켈')+'</span>'
     + '<strong>'+escapeHtml(name)+'</strong>'
-    + '<span>'+escapeHtml(meta||'지켈')+'</span>'
+    + '<span class="hof-v2-god-class">'+hofClassIcon(safeItem)+'<span>'+escapeHtml(hofClassName(safeItem)||'클래스 정보 없음')+'</span></span>'
     + '</'+bodyTag+'>'
     + '<div class="hof-v2-god-score"><strong>'+escapeHtml(score)+'</strong><span>'+deltaLabel+'</span></div>'
     + '<div class="hof-v2-god-sub"><span>이번 주 합계</span><strong>'+escapeHtml(recentText)+'</strong></div>'

@@ -1814,3 +1814,277 @@ body{
 @media (max-width:430px){.hof-v2-my-current-grid,.hof-v2-my-list{grid-template-columns:1fr!important}.hof-v2-period-label{align-items:flex-start;flex-direction:column;gap:2px}}
 @media (prefers-reduced-motion:reduce){.hof-v2-loading-lines span{animation:none}}
 
+
+
+/* ============================================================
+   KINOJO HOF 20260802 - aligned TOP3 grid redesign
+   - Keeps non-power panels and surrounding layout unchanged.
+   - Power cards use fixed invisible columns: rank / identity / class / score / portrait.
+   - God cards remove redundant rank medals and center all identity content.
+   ============================================================ */
+.hof-v2-wide.is-pve .hof-v2-top3,
+.hof-v2-wide.is-pvp .hof-v2-top3{
+  grid-template-rows:repeat(3,minmax(0,1fr))!important;
+}
+.hof-v2-top3-item.is-power-card{
+  position:relative!important;
+  grid-template-columns:26px minmax(92px,1fr) 34px minmax(92px,104px) 62px!important;
+  gap:7px!important;
+  padding:0!important;
+  align-items:stretch!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+.hof-v2-power-rank{
+  display:grid!important;
+  place-items:center!important;
+  align-self:stretch!important;
+  width:26px!important;
+  min-width:26px!important;
+  border-right:1px solid rgba(15,23,42,.08)!important;
+  color:#172033!important;
+  font-variant-numeric:tabular-nums!important;
+}
+.hof-v2-power-rank strong{
+  font-size:17px!important;
+  line-height:1!important;
+  font-weight:1000!important;
+}
+.hof-v2-power-rank.rank-1{
+  background:linear-gradient(180deg,#fff3b3,#f4c84d)!important;
+  color:#6b4300!important;
+}
+.hof-v2-power-rank.rank-2{
+  background:linear-gradient(180deg,#f8fafc,#cbd5e1)!important;
+  color:#334155!important;
+}
+.hof-v2-power-rank.rank-3{
+  background:linear-gradient(180deg,#fde7d0,#d99a63)!important;
+  color:#603116!important;
+}
+.hof-v2-top3-item.is-power-card .hof-v2-top3-info.is-power{
+  align-self:center!important;
+  justify-self:stretch!important;
+  align-content:center!important;
+  gap:3px!important;
+  padding:4px 0!important;
+  overflow:hidden!important;
+}
+.hof-v2-top3-item.is-power-card .hof-v2-server-badge{
+  justify-self:start!important;
+  max-width:100%!important;
+}
+.hof-v2-top3-item.is-power-card .hof-v2-top3-name{
+  width:100%!important;
+  max-width:100%!important;
+  font-size:15px!important;
+  line-height:1.05!important;
+}
+.hof-v2-power-class-slot{
+  display:grid!important;
+  place-items:center!important;
+  align-self:center!important;
+  width:34px!important;
+  min-width:34px!important;
+}
+.hof-v2-power-class-slot .hof-v2-class-icon,
+.hof-v2-god-class .hof-v2-class-icon{
+  width:28px!important;
+  height:28px!important;
+  min-width:28px!important;
+  flex-basis:28px!important;
+  padding:4px!important;
+  border:1px solid rgba(37,99,235,.34)!important;
+  border-radius:50%!important;
+  background:#fff!important;
+  box-shadow:0 0 0 3px rgba(37,99,235,.07)!important;
+}
+.hof-v2-top3-item.is-power-card .hof-v2-top3-aside{
+  align-self:stretch!important;
+  grid-template-rows:18px minmax(0,1fr)!important;
+  align-content:center!important;
+  justify-items:end!important;
+  padding:4px 0!important;
+}
+.hof-v2-top3-item.is-power-card .hof-v2-owner-slot{
+  min-height:18px!important;
+}
+.hof-v2-top3-item.is-power-card .hof-v2-owner-badge{
+  max-width:100%!important;
+  height:16px!important;
+  padding:0 5px!important;
+  font-size:8px!important;
+}
+.hof-v2-top3-item.is-power-card .hof-v2-top3-score.is-power{
+  justify-content:flex-end!important;
+  gap:4px!important;
+  font-size:16px!important;
+}
+.hof-v2-top3-item.is-power-card .hof-v2-power-icon{
+  width:17px!important;
+  height:17px!important;
+  min-width:17px!important;
+  flex-basis:17px!important;
+}
+.hof-v2-power-portrait{
+  position:relative!important;
+  display:block!important;
+  align-self:stretch!important;
+  width:62px!important;
+  min-width:62px!important;
+  height:100%!important;
+  overflow:hidden!important;
+  border-left:1px solid rgba(15,23,42,.08)!important;
+  background:#eef4fb!important;
+}
+.hof-v2-power-portrait .hof-identity-portrait{
+  width:100%!important;
+  height:100%!important;
+  display:block!important;
+}
+.hof-v2-portrait.power-card{
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  min-height:100%!important;
+  border:0!important;
+  border-radius:0!important;
+  object-fit:cover!important;
+  object-position:50% 18%!important;
+  background:#eef4fb!important;
+}
+.hof-v2-power-portrait:before{
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  z-index:1;
+  width:14px;
+  pointer-events:none;
+  background:linear-gradient(90deg,rgba(255,255,255,.92),rgba(255,255,255,0));
+}
+.hof-v2-power-portrait .hof-identity-badge{
+  left:auto!important;
+  right:3px!important;
+  bottom:3px!important;
+  max-width:54px!important;
+  transform:none!important;
+}
+.hof-v2-power-portrait.is-empty{
+  display:grid!important;
+  place-items:center!important;
+}
+
+/* God cards: one winner only, so rank ornaments are intentionally omitted. */
+.hof-v2-god-main{
+  justify-items:center!important;
+  text-align:center!important;
+}
+.hof-v2-god-main .hof-v2-god-portrait,
+.hof-v2-god-main .hof-v2-god-server,
+.hof-v2-god-main>strong,
+.hof-v2-god-main .hof-v2-god-class{
+  justify-self:center!important;
+  text-align:center!important;
+}
+.hof-v2-god-server{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  height:19px!important;
+  padding:0 8px!important;
+  border:1px solid rgba(37,99,235,.20)!important;
+  border-radius:999px!important;
+  background:#eff6ff!important;
+  color:#1d4ed8!important;
+  font-size:9px!important;
+  font-weight:1000!important;
+}
+.hof-v2-god-main>strong{
+  margin-top:0!important;
+}
+.hof-v2-god-class{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:7px!important;
+  color:var(--hof-sub)!important;
+  font-size:11px!important;
+  font-weight:900!important;
+}
+.hof-v2-god-class>span:last-child{
+  min-width:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+.hof-v2-god-portrait .hof-v2-medal{
+  display:none!important;
+}
+
+@media (max-width:760px){
+  .hof-v2-top3-item.is-power-card{
+    grid-template-columns:22px minmax(78px,1fr) 30px minmax(76px,88px) 50px!important;
+    gap:5px!important;
+  }
+  .hof-v2-power-rank{
+    width:22px!important;
+    min-width:22px!important;
+  }
+  .hof-v2-power-rank strong{
+    font-size:15px!important;
+  }
+  .hof-v2-power-class-slot{
+    width:30px!important;
+    min-width:30px!important;
+  }
+  .hof-v2-power-class-slot .hof-v2-class-icon{
+    width:25px!important;
+    height:25px!important;
+    min-width:25px!important;
+    flex-basis:25px!important;
+    padding:3px!important;
+  }
+  .hof-v2-power-portrait{
+    width:50px!important;
+    min-width:50px!important;
+  }
+  .hof-v2-top3-item.is-power-card .hof-v2-top3-name{
+    font-size:13px!important;
+  }
+  .hof-v2-top3-item.is-power-card .hof-v2-top3-score.is-power{
+    font-size:13px!important;
+  }
+  .hof-v2-top3-item.is-power-card .hof-v2-power-icon{
+    width:15px!important;
+    height:15px!important;
+    min-width:15px!important;
+    flex-basis:15px!important;
+  }
+}
+@media (max-width:430px){
+  .hof-v2-top3-item.is-power-card{
+    grid-template-columns:20px minmax(68px,1fr) 27px minmax(68px,80px) 44px!important;
+    gap:4px!important;
+  }
+  .hof-v2-power-rank{
+    width:20px!important;
+    min-width:20px!important;
+  }
+  .hof-v2-power-class-slot{
+    width:27px!important;
+    min-width:27px!important;
+  }
+  .hof-v2-power-class-slot .hof-v2-class-icon{
+    width:23px!important;
+    height:23px!important;
+    min-width:23px!important;
+    flex-basis:23px!important;
+  }
+  .hof-v2-power-portrait{
+    width:44px!important;
+    min-width:44px!important;
+  }
+  .hof-v2-owner-slot .hof-v2-owner-badge{
+    max-width:70px!important;
+  }
+}
