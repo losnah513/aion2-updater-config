@@ -6,6 +6,8 @@ on:
     paths:
       - "ranking/**"
       - "m/ranking/**"
+      - "hof/**"
+      - "m/hof/**"
       - "admin/**"
       - "m/admin/**"
       - "core/**"
@@ -17,6 +19,8 @@ on:
     paths:
       - "ranking/**"
       - "m/ranking/**"
+      - "hof/**"
+      - "m/hof/**"
       - "admin/**"
       - "m/admin/**"
       - "core/**"
@@ -55,6 +59,10 @@ jobs:
           trap 'rm -rf "$tmp_dir"' EXIT
 
           files=(
+            "hof/index.html"
+            "m/hof/index.html"
+            "hof/css/hall.css"
+            "hof/js/hall-render.js"
             "ranking/index.html"
             "m/ranking/index.html"
             "ranking/css/ranking.css"
