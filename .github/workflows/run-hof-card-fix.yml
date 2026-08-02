@@ -4,7 +4,6 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - ".github/workflows/apply-hof-card-fix.yml"
       - ".github/workflows/run-hof-card-fix.yml"
 
 permissions:
@@ -19,13 +18,29 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
-      - name: Extract and run verified transform
+      - name: Restore verified HOF files
         shell: bash
         run: |
           set -euo pipefail
-          awk '/^[[:space:]]*python - <<'\''PY'\''$/{capture=1;next} capture && /^[[:space:]]*PY$/{exit} capture{sub(/^[[:space:]]{10}/,"");print}' .github/workflows/apply-hof-card-fix.yml > /tmp/apply_hof.py
-          python /tmp/apply_hof.py
+          cat .github/hof-payload/hall-render_js.*.txt | base64 -d | gzip -d > hof/js/hall-render.js
+          cat .github/hof-payload/hall_css.*.txt | base64 -d | gzip -d > hof/css/hall.css
+          cat .github/hof-payload/hof-index_html.*.txt | base64 -d | gzip -d > hof/index.html
+          cat .github/hof-payload/m-hof-index_html.*.txt | base64 -d | gzip -d > m/hof/index.html
           node --check hof/js/hall-render.js
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+          expected={
+            'hof/js/hall-render.js':'fedd61a4cc41d080222fe7c8652d1e26fade58b972cb66fe7e217742d576bf77',
+            'hof/css/hall.css':'835c2f3bb5053de52396eb84cea2331e3dde9ee947f9ca271f4f7d85fe0a7458',
+            'hof/index.html':'d2e6e4b1f9ecb3a0cb604e122f5d9cf6d567fa83386682e17ba30a0fcbb85a31',
+            'm/hof/index.html':'2167b9a1a77947bd8e0bdec86478993172abc1556495b8eff1ceb34edceb8330',
+          }
+          for path,want in expected.items():
+            got=hashlib.sha256(Path(path).read_bytes()).hexdigest()
+            print(path,got)
+            if got!=want: raise SystemExit(f'hash mismatch: {path}')
+          PY
       - name: Commit verified HOF files
         shell: bash
         run: |
