@@ -1,0 +1,37 @@
+name: Run HOF card fix
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/apply-hof-card-fix.yml"
+      - ".github/workflows/run-hof-card-fix.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - name: Extract and run verified transform
+        shell: bash
+        run: |
+          set -euo pipefail
+          awk '/^[[:space:]]*python - <<'\''PY'\''$/{capture=1;next} capture && /^[[:space:]]*PY$/{exit} capture{sub(/^[[:space:]]{10}/,"");print}' .github/workflows/apply-hof-card-fix.yml > /tmp/apply_hof.py
+          python /tmp/apply_hof.py
+          node --check hof/js/hall-render.js
+      - name: Commit verified HOF files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add hof/index.html m/hof/index.html hof/css/hall.css hof/js/hall-render.js
+          git commit -m "fix: 명예의 전당 전투력 카드 정보 배치 정리"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
