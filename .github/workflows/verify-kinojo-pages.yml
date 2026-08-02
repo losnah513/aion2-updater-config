@@ -1,3 +1,4 @@
+# Temporary verification trigger for HOF live readback on 2026-08-02.
 name: Verify KINOJO Pages
 
 on:
