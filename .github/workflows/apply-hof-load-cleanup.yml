@@ -1,0 +1,62 @@
+name: Apply HOF load cleanup
+on:
+  push:
+    branches: [fix/hof-load-cleanup-20260802]
+    paths: [.github/workflows/apply-hof-load-cleanup.yml]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/hof-load-cleanup-20260802
+      - name: Apply cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          css_path=Path('hof/css/hall.css')
+          css=css_path.read_text(encoding='utf-8')
+          css=css.replace('.hof-v2-top3-item.rank-1{','.hof-v2-top3-item.rank-1:not(.is-power-card){')
+          css=css.replace('.hof-v2-wide .hof-v2-top3-item.rank-1{','.hof-v2-wide .hof-v2-top3-item.rank-1:not(.is-power-card){')
+          css=css.replace('.hof-v2-wide .hof-v2-top3-item.rank-1 .hof-v2-portrait-wrap{','.hof-v2-wide .hof-v2-top3-item.rank-1:not(.is-power-card) .hof-v2-portrait-wrap{')
+          css=css.replace('.hof-v2-wide .hof-v2-top3-item.rank-1 .hof-v2-top3-score{','.hof-v2-wide .hof-v2-top3-item.rank-1:not(.is-power-card) .hof-v2-top3-score{')
+          css=css.replace('grid-template-rows:1fr .66fr .66fr!important;','grid-template-rows:repeat(3,minmax(0,1fr))!important;')
+          css=css.replace('grid-template-rows:1fr .5fr .5fr!important;','grid-template-rows:repeat(3,minmax(0,1fr))!important;')
+          marker='/* 2026-08-02 HOF cleanup: one power-card grid contract for every rank. */'
+          block='''\n/* 2026-08-02 HOF cleanup: one power-card grid contract for every rank. */\n.hof-v2-wide .hof-v2-top3-item.rank-1.is-power-card,\n.hof-v2-wide .hof-v2-top3-item.rank-2.is-power-card,\n.hof-v2-wide .hof-v2-top3-item.rank-3.is-power-card{grid-template-columns:26px minmax(92px,1fr) 34px minmax(92px,104px) 62px!important;grid-template-rows:1fr!important;gap:7px!important;padding:0!important;}\n.hof-v2-wide .hof-v2-top3{grid-template-rows:repeat(3,minmax(0,1fr))!important;}\n.hof-v2-load-error{display:grid;justify-items:center;gap:10px;padding:24px 14px;text-align:center;}\n.hof-v2-load-error button{border:1px solid rgba(37,99,235,.24);border-radius:7px;background:#2563eb;color:#fff;padding:9px 24px;font-weight:1000;cursor:pointer;}\n@media (max-width:760px){.hof-v2-wide .hof-v2-top3-item.rank-1.is-power-card,.hof-v2-wide .hof-v2-top3-item.rank-2.is-power-card,.hof-v2-wide .hof-v2-top3-item.rank-3.is-power-card{grid-template-columns:22px minmax(78px,1fr) 30px minmax(76px,88px) 50px!important;gap:5px!important;}}\n@media (max-width:430px){.hof-v2-wide .hof-v2-top3-item.rank-1.is-power-card,.hof-v2-wide .hof-v2-top3-item.rank-2.is-power-card,.hof-v2-wide .hof-v2-top3-item.rank-3.is-power-card{grid-template-columns:20px minmax(68px,1fr) 27px minmax(68px,80px) 44px!important;gap:4px!important;}}\n'''
+          if marker in css: css=css[:css.index(marker)].rstrip()+"\n"+block
+          else: css=css.rstrip()+"\n"+block
+          css_path.write_text(css,encoding='utf-8')
+
+          data_path=Path('hof/js/hall-data.js')
+          data=data_path.read_text(encoding='utf-8')
+          data=data.replace('const HALL_CACHE_PREFIX="kinojo_hall_summary_cache_v2026080101";','const HALL_CACHE_PREFIX="kinojo_hall_summary_cache_v2026080204";\nconst HALL_STALE_PREFIX="kinojo_hall_summary_stale_v2026080204";')
+          data=data.replace('const HALL_CACHE_TTL_MS=5*60*1000;\nlet hallLoadRequestSeq=0;','const HALL_CACHE_TTL_MS=5*60*1000;\nconst HALL_STALE_TTL_MS=24*60*60*1000;\nlet hallLoadRequestSeq=0;\nlet hallLoadInFlight=null;\nlet hallAuthReloadTimer=null;')
+          old_cache=re.search(r'function readHallCache\(\)\{.*?\n\}\n\nfunction writeHallCache\(data\)\{.*?\n\}',data,re.S)
+          if not old_cache: raise SystemExit('cache block not found')
+          new_cache='''function readStoredHallCache(storage,prefix,maxAge){\n  try{\n    const key=prefix+"::"+(includeSubs?"subs":"main")+"::"+(includeAllLegions?"all-legions":"default-legions");\n    const raw=storage.getItem(key);\n    if(!raw)return null;\n    const cached=JSON.parse(raw);\n    if(!cached?.savedAt||!cached?.data||Date.now()-cached.savedAt>maxAge)return null;\n    return cached.data;\n  }catch(_err){return null;}\n}\nfunction readHallCache(){return readStoredHallCache(sessionStorage,HALL_CACHE_PREFIX,HALL_CACHE_TTL_MS);}\nfunction readHallStaleCache(){return readStoredHallCache(localStorage,HALL_STALE_PREFIX,HALL_STALE_TTL_MS);}\nfunction writeHallCache(data){\n  if(!data||data.ok===false)return;\n  const wrapped=JSON.stringify({savedAt:Date.now(),data});\n  try{sessionStorage.setItem(hallCacheKey(),wrapped);}catch(_err){}\n  try{\n    const staleKey=HALL_STALE_PREFIX+"::"+(includeSubs?"subs":"main")+"::"+(includeAllLegions?"all-legions":"default-legions");\n    localStorage.setItem(staleKey,wrapped);\n  }catch(_err){}\n}'''
+          data=data[:old_cache.start()]+new_cache+data[old_cache.end():]
+          tail_start=data.find('async function fetchHallDataFresh(){')
+          if tail_start<0: raise SystemExit('load tail not found')
+          new_tail='''async function fetchHallDataFresh(){\n  if(!window.KinojoSupabase||typeof window.KinojoSupabase.rpc!=="function")throw new Error("Server Engine 연결을 확인해 주세요.");\n  const data=await window.KinojoSupabase.rpc("kinojo_web_get_hof_display_v301",{p_include_subs:!!includeSubs,p_include_all_legions:!!includeAllLegions});\n  if(!data||data.ok===false)throw new Error(data?.message||data?.error||"명예의 전당 공개 Cache 응답이 실패했습니다.");\n  return data;\n}\nfunction hallDelay(ms){return new Promise(resolve=>setTimeout(resolve,ms));}\nasync function fetchHallDataWithRetry(){\n  let lastError;\n  for(const wait of [0,600,1400]){\n    if(wait)await hallDelay(wait);\n    try{return await fetchHallDataFresh();}catch(err){lastError=err;}\n  }\n  throw lastError||new Error("명예의 전당 데이터를 불러오지 못했습니다.");\n}\nfunction hallPassKey(){\n  const session=window.KinojoAuth?.getSession?.()||{};\n  const account=window.KinojoAuth?.getAccount?.()||{};\n  return String(account.passKey||account.passCode||session.passKey||session.passCode||"").trim();\n}\nasync function refreshHallPersonalRanking(requestSeq=hallLoadRequestSeq){\n  const passKey=hallPassKey();\n  if(!passKey)return false;\n  try{\n    const personal=await window.KinojoSupabase.rpc("kinojo_web_get_hof_display_v296",{p_include_subs:!!includeSubs,p_include_all_legions:!!includeAllLegions,p_pass_key:passKey});\n    if(requestSeq!==hallLoadRequestSeq||!personal||personal.ok===false)return false;\n    applyHallData({...hallData,myRanking:personal.myRanking||{}},{skipIfSame:true});\n    return true;\n  }catch(err){console.warn("KINOJO Hall personal ranking load failed:",err);return false;}\n}\nasync function load({force=false}={}){\n  const requestSeq=++hallLoadRequestSeq;\n  const fresh=force?null:readHallCache();\n  const stale=fresh?null:readHallStaleCache();\n  const fallback=fresh||stale;\n  if(fallback)applyHallData(fallback,{fromCache:true,initial:true});\n  else{renderHallLoadingLayout();startLoadingText();}\n  const key=hallCacheKey();\n  if(!hallLoadInFlight||hallLoadInFlight.key!==key||force)hallLoadInFlight={key,promise:fetchHallDataWithRetry()};\n  try{\n    const result=await hallLoadInFlight.promise;\n    if(requestSeq!==hallLoadRequestSeq)return false;\n    writeHallCache(result);\n    applyHallData(result,{initial:!fallback,skipIfSame:!!fallback});\n    void refreshHallPersonalRanking(requestSeq);\n    return true;\n  }catch(err){\n    if(requestSeq!==hallLoadRequestSeq)return false;\n    if(fallback){console.warn("KINOJO Hall refresh failed; fallback retained:",err);return true;}\n    stopLoadingText();\n    app.className="";\n    app.innerHTML='<div class="hof-v2-load-error"><strong>명예의 전당 데이터를 불러오지 못했습니다.</strong><span>'+escapeHtml(err.message||err)+'</span><button type="button" onclick="load({force:true})">다시 불러오기</button></div>';\n    return false;\n  }finally{if(hallLoadInFlight?.key===key)hallLoadInFlight=null;}\n}\nasync function reloadHallAfterAuthChange(){\n  clearTimeout(hallAuthReloadTimer);\n  return new Promise(resolve=>{hallAuthReloadTimer=setTimeout(()=>resolve(refreshHallPersonalRanking(hallLoadRequestSeq)),250);});\n}\nwindow.reloadHallAfterAuthChange=reloadHallAfterAuthChange;\n'''
+          data=data[:tail_start]+new_tail
+          data_path.write_text(data,encoding='utf-8')
+
+          for name in ('hof/index.html','m/hof/index.html'):
+            p=Path(name); html=p.read_text(encoding='utf-8')
+            html=html.replace('hall.css?cache=2026080203','hall.css?cache=2026080204')
+            html=html.replace('hall-data.js?cache=2026080101','hall-data.js?cache=2026080204')
+            p.write_text(html,encoding='utf-8')
+          PY
+          node --check hof/js/hall-data.js
+          git config user.name kinojo-bot
+          git config user.email kinojo-bot@users.noreply.github.com
+          git add hof/css/hall.css hof/js/hall-data.js hof/index.html m/hof/index.html
+          git commit -m "fix: stabilize HOF grid and cached loading"
+          git push
