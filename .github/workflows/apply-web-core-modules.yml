@@ -1,0 +1,136 @@
+name: Apply WEB core module split
+on:
+  push:
+    branches: [refactor/web-core-modules-20260802]
+    paths: [.github/workflows/apply-web-core-modules.yml]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/web-core-modules-20260802
+      - name: Split common cores and update entrypoints
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          def find_function_span(s,name):
+              m=re.search(r'(^|\n)([ \t]*)(?:async\s+)?function\s+'+re.escape(name)+r'\s*\(',s)
+              if not m: raise ValueError(name)
+              start=m.start(2); brace=s.find('{',m.end()); depth=0; i=brace
+              quote=None; esc=False; line=False; block=False
+              while i<len(s):
+                  c=s[i]; n=s[i+1] if i+1<len(s) else ''
+                  if line:
+                      if c=='\n': line=False
+                  elif block:
+                      if c=='*' and n=='/': block=False; i+=1
+                  elif quote:
+                      if esc: esc=False
+                      elif c=='\\': esc=True
+                      elif c==quote: quote=None
+                  else:
+                      if c=='/' and n=='/': line=True; i+=1
+                      elif c=='/' and n=='*': block=True; i+=1
+                      elif c in "'\"`": quote=c
+                      elif c=='{': depth+=1
+                      elif c=='}':
+                          depth-=1
+                          if depth==0: return start,i+1
+                  i+=1
+              raise ValueError('unclosed '+name)
+
+          core=Path('core')
+          sup_path=core/'kinojo-supabase.js'
+          auth_path=core/'kinojo-auth.js'
+          sup=sup_path.read_text(encoding='utf-8')
+          auth=auth_path.read_text(encoding='utf-8')
+
+          # Supabase: client / RPC / feature bridge
+          client_start=sup.index('  const DEFAULT_CONFIG')
+          client_end=sup.index('\n\n\n  const ADMIN_ROLES')
+          client_body=sup[client_start:client_end]
+          client_exports=['normalizePassKey','normalizeRole','roleFromLevel','roleToLevel','getRoleLabel','getConfig','isPreferred','isConfigured','isConfiguredAsync','ensureReady','loadRemoteConfig','ensureConfig','headers','buildUrl','request','invokeEdgeFunction']
+          client='''/*\n * KINOJO Supabase Client Core\n * 책임: config 로드, REST/Edge 연결, 공통 정규화와 HTTP 오류 처리.\n * 페이지별 기능과 RPC 계약은 이 파일에 두지 않습니다.\n */\n(function(){\n  'use strict';\n'''+client_body+"\n  window.KinojoSupabaseClientCore=Object.freeze({\n    "+',\n    '.join(client_exports)+"\n  });\n})();\n"
+
+          rpc_start=sup.index('  function buildRpcUrl')
+          rpc_end=sup.index('\n\n  function snakeOrCamel',rpc_start)
+          rpc_body=sup[rpc_start:rpc_end]
+          rpc='''/*\n * KINOJO Supabase RPC Core\n * 책임: PostgREST RPC 호출 계약과 응답 오류 표준화.\n */\n(function(){\n  'use strict';\n  const client=window.KinojoSupabaseClientCore;\n  if(!client) throw new Error('KinojoSupabaseClientCore가 먼저 로드되어야 합니다.');\n  const {ensureConfig,headers}=client;\n'''+rpc_body+'''\n  window.KinojoSupabaseRpcCore=Object.freeze({buildRpcUrl,rpc});\n})();\n'''
+
+          alias='''  const clientCore=window.KinojoSupabaseClientCore;\n  const rpcCore=window.KinojoSupabaseRpcCore;\n  if(!clientCore||!rpcCore) throw new Error('KINOJO Supabase core modules load order error');\n  const {normalizePassKey,normalizeRole,roleFromLevel,roleToLevel,getRoleLabel,getConfig,isPreferred,isConfigured,isConfiguredAsync,ensureReady,loadRemoteConfig,ensureConfig,headers,buildUrl,request,invokeEdgeFunction}=clientCore;\n  const {buildRpcUrl,rpc}=rpcCore;\n'''
+          features=sup[:client_start]+alias+sup[client_end:]
+          r1=features.index('  function buildRpcUrl')
+          r2=features.index('\n\n  function snakeOrCamel',r1)
+          features=features[:r1]+features[r2:]
+          features=features.replace('KINOJO Supabase Web Bridge','KINOJO Supabase Feature Bridge')
+          features=features.replace("version:'1.3.1.53-server-results-2026072806'","version:'1.3.1.54-modular-core-20260802'")
+
+          (core/'kinojo-supabase-client.js').write_text(client,encoding='utf-8')
+          (core/'kinojo-supabase-rpc.js').write_text(rpc,encoding='utf-8')
+          (core/'kinojo-supabase-features.js').write_text(features,encoding='utf-8')
+
+          # Auth: session / service / UI
+          session='''/*\n * KINOJO Auth Session Core\n * 책임: 브라우저 세션 저장/복원, 권한 기본 판정, auth-changed 이벤트.\n * DOM 생성과 Server 통신은 담당하지 않습니다.\n */\n(function(){\n  'use strict';\n  const STORAGE_KEY='kinojo_login_session_v1';\n  const ACCOUNT_KEY='kinojo_login_account_v1';\n  const IDLE_LOGOUT_MS=10*60*1000;\n  const IDLE_WARNING_MS=60*1000;\n  const ACTIVITY_WRITE_THROTTLE_MS=15*1000;\n  const AUTH_SCHEMA_VERSION='supabase-passkey-v4-20260625';\n  function readJson(key){try{return JSON.parse(localStorage.getItem(key)||'null');}catch(_err){return null;}}\n  function writeJson(key,value){localStorage.setItem(key,JSON.stringify(value));}\n  function migrateAuthCacheIfNeeded(){try{const key='kinojo_auth_schema_version';if(localStorage.getItem(key)===AUTH_SCHEMA_VERSION)return;localStorage.removeItem(STORAGE_KEY);localStorage.removeItem(ACCOUNT_KEY);localStorage.setItem(key,AUTH_SCHEMA_VERSION);}catch(_err){}}\n  function emitAuthChanged(session,account){window.dispatchEvent(new CustomEvent('kinojo:auth-changed',{detail:{loggedIn:!!(session&&session.token),session:session||null,account:account||null}}));}\n  function getSession(){const session=readJson(STORAGE_KEY);if(!session||!session.token)return null;const last=Number(session.lastActivityAt||0);if(!last){if(Number(session.expiresAt||0)&&Date.now()>Number(session.expiresAt)){clearStoredSession();return null;}session.lastActivityAt=Date.now();delete session.expiresAt;writeJson(STORAGE_KEY,session);return session;}if(Date.now()-last>=IDLE_LOGOUT_MS+IDLE_WARNING_MS){clearStoredSession();return null;}return session;}\n  function getAccount(){return readJson(ACCOUNT_KEY);}\n  function setStoredSession(session,account){const next=Object.assign({},session||{},{lastActivityAt:Date.now()});delete next.expiresAt;writeJson(STORAGE_KEY,next);writeJson(ACCOUNT_KEY,account||{});emitAuthChanged(next,account);return next;}\n  function clearStoredSession(){localStorage.removeItem(STORAGE_KEY);localStorage.removeItem(ACCOUNT_KEY);emitAuthChanged(null,null);}\n  function isLoggedIn(){return !!getSession();}\n  function getToken(){return getSession()?.token||'';}\n  function roleOf(source){if(!source)return '';if(window.KinojoPermissions&&typeof window.KinojoPermissions.normalizeRole==='function'){const role=window.KinojoPermissions.normalizeRole(source);return role==='GUEST'?'':role;}const raw=String(source?.role||source?.roleLabel||source?.role_label||'').trim().toUpperCase().replace(/[\\s-]+/g,'_');if(['MASTER','SUB_MASTER','MANAGER','STAFF','MEMBER'].includes(raw))return raw;const level=Number(source?.level||0);return level>=5?'MASTER':level>=4?'SUB_MASTER':level>=3?'MANAGER':level>=2?'STAFF':level>=1?'MEMBER':'';}\n  function roleLabel(role){return ({MASTER:'Master',SUB_MASTER:'Sub Master',MANAGER:'Manager',STAFF:'Staff',MEMBER:'Member',GUEST:'Guest'}[role]||'Guest');}\n  function canOpenManage(role){if(window.KinojoPermissions&&typeof window.KinojoPermissions.canOpenAdmin==='function')return window.KinojoPermissions.canOpenAdmin(role);return ['MASTER','SUB_MASTER','MANAGER','STAFF'].includes(role);}\n  function getLevel(){const role=roleOf(getSession());return role==='MASTER'?5:role==='SUB_MASTER'?4:role==='MANAGER'?3:role==='STAFF'?2:role==='MEMBER'?1:0;}\n  function isAdmin(){return canOpenManage(roleOf(getSession()));}\n  function canManageAccounts(role){return ['MASTER','SUB_MASTER','MANAGER'].includes(String(role||''));}\n  migrateAuthCacheIfNeeded();\n  window.KinojoAuthSessionCore=Object.freeze({STORAGE_KEY,ACCOUNT_KEY,IDLE_LOGOUT_MS,IDLE_WARNING_MS,ACTIVITY_WRITE_THROTTLE_MS,readJson,writeJson,getSession,getAccount,setStoredSession,clearStoredSession,isLoggedIn,getToken,roleOf,roleLabel,canOpenManage,getLevel,isAdmin,canManageAccounts});\n})();\n'''
+          service='''/*\n * KINOJO Auth Service Core\n * 책임: PASS KEY 로그인과 회원 코드/계정 관리 Server 호출.\n */\n(function(){\n  'use strict';\n  function bridge(){const api=window.KinojoSupabase;if(!api)throw new Error('KinojoSupabase가 먼저 로드되어야 합니다.');return api;}\n  async function ensureReady(){const api=bridge();if(typeof api.ensureReady==='function')await api.ensureReady();else if(typeof api.loadRemoteConfig==='function')await api.loadRemoteConfig();return api;}\n  async function verifyPassKey(code){const api=await ensureReady();return api.verifyPassKey(code);}\n  async function publicCodeRequest(command,body){const api=await ensureReady();return api.publicCodeRequest(command,body);}\n  async function adminAccount(command,body){const api=await ensureReady();return api.adminAccount(command,body);}\n  window.KinojoAuthService=Object.freeze({ensureReady,verifyPassKey,publicCodeRequest,adminAccount});\n})();\n'''
+
+          ui=auth
+          start=ui.index('  const STORAGE_KEY')
+          perm=ui.index('  const PERMISSION_LABELS')
+          ui=ui[:start]+'''  const authSessionCore=window.KinojoAuthSessionCore;\n  if(!authSessionCore) throw new Error('KinojoAuthSessionCore가 먼저 로드되어야 합니다.');\n  const {IDLE_LOGOUT_MS,IDLE_WARNING_MS,ACTIVITY_WRITE_THROTTLE_MS,getSession,getAccount,isLoggedIn,getToken,roleOf,roleLabel,canOpenManage,getLevel,isAdmin,canManageAccounts}=authSessionCore;\n  let idleLogoutTimer=null;\n  let idleCountdownTimer=null;\n  let idleWarningOpen=false;\n  let lastActivityWriteAt=0;\n'''+ui[perm:]
+          for name in ['migrateAuthCacheIfNeeded','readJson','writeJson','getSession','getAccount','emitAuthChanged','setSession','isLoggedIn','getToken','roleOf','roleLabel','canOpenManage','getLevel','isAdmin','canManageAccounts']:
+              try:
+                  a,b=find_function_span(ui,name); ui=ui[:a]+ui[b:]
+              except ValueError: pass
+          ui=ui.replace('  migrateAuthCacheIfNeeded();\n','')
+          a,b=find_function_span(ui,'clearSession')
+          clear_new='''  function clearSession(){\n    closeIdleLogoutWarning();\n    authSessionCore.clearStoredSession();\n    const modal=document.getElementById('kinojoLoginModal');\n    if(modal){const input=modal.querySelector('#kinojoLoginCodeInput');if(input)input.value='';resetCodeRequestPanel(true);}\n    updateStatus();\n  }'''
+          ui=ui[:a]+clear_new+ui[b:]
+          pos=ui.index(clear_new)
+          ui=ui[:pos]+'''  function setSession(session,account){authSessionCore.setStoredSession(session,account);closeIdleLogoutWarning();updateStatus();}\n\n'''+ui[pos:]
+          ui=ui.replace('window.KinojoSupabase.verifyPassKey(code)','window.KinojoAuthService.verifyPassKey(code)')
+          ui=ui.replace('window.KinojoSupabase.publicCodeRequest(command, body)','window.KinojoAuthService.publicCodeRequest(command, body)')
+          ui=ui.replace('window.KinojoSupabase.adminAccount(command, body)','window.KinojoAuthService.adminAccount(command, body)')
+          ui=ui.replace('writeJson(STORAGE_KEY, session);','authSessionCore.writeJson(authSessionCore.STORAGE_KEY, session);')
+          ui=ui.replace('KINOJO Login UI Bridge','KINOJO Auth UI')
+          (core/'kinojo-auth-session.js').write_text(session,encoding='utf-8')
+          (core/'kinojo-auth-service.js').write_text(service,encoding='utf-8')
+          (core/'kinojo-auth-ui.js').write_text(ui,encoding='utf-8')
+
+          # Keep old paths as tiny compatibility loaders; active HTML uses explicit ordered modules.
+          sup_path.write_text("""/* Deprecated compatibility loader. Active pages load client/rpc/features explicitly. */\n(function(){var s=document.currentScript&&document.currentScript.src||'';var b=s.replace(/kinojo-supabase\\.js.*$/,'');var f=['kinojo-supabase-client.js','kinojo-supabase-rpc.js','kinojo-supabase-features.js'];if(document.readyState==='loading'){document.write(f.map(x=>'<script src=\"'+b+x+'?cache=2026080205\"><\\/script>').join(''));return;}var i=0;function n(){if(i>=f.length)return;var e=document.createElement('script');e.src=b+f[i++]+'?cache=2026080205';e.onload=n;document.head.appendChild(e);}n();})();\n""",encoding='utf-8')
+          auth_path.write_text("""/* Deprecated compatibility loader. Active pages load session/service/ui explicitly. */\n(function(){var s=document.currentScript&&document.currentScript.src||'';var b=s.replace(/kinojo-auth\\.js.*$/,'');var f=['kinojo-auth-session.js','kinojo-auth-service.js','kinojo-auth-ui.js'];if(document.readyState==='loading'){document.write(f.map(x=>'<script src=\"'+b+x+'?cache=2026080205\"><\\/script>').join(''));return;}var i=0;function n(){if(i>=f.length)return;var e=document.createElement('script');e.src=b+f[i++]+'?cache=2026080205';e.onload=n;document.head.appendChild(e);}n();})();\n""",encoding='utf-8')
+
+          # Update every HTML entrypoint while preserving its relative core prefix.
+          sup_re=re.compile(r'<script\s+src="([^"]*?)kinojo-supabase\.js(?:\?[^\"]*)?"\s*></script>')
+          auth_re=re.compile(r'<script\s+src="([^"]*?)kinojo-auth\.js(?:\?[^\"]*)?"\s*></script>')
+          changed=[]
+          for p in Path('.').rglob('*.html'):
+              text=p.read_text(encoding='utf-8')
+              before=text
+              text=sup_re.sub(lambda m: ''.join(f'<script src="{m.group(1)}{name}?cache=2026080205"></script>\n' for name in ['kinojo-supabase-client.js','kinojo-supabase-rpc.js','kinojo-supabase-features.js']).rstrip(),text)
+              text=auth_re.sub(lambda m: ''.join(f'<script src="{m.group(1)}{name}?cache=2026080205"></script>\n' for name in ['kinojo-auth-session.js','kinojo-auth-service.js','kinojo-auth-ui.js']).rstrip(),text)
+              if text!=before:
+                  p.write_text(text,encoding='utf-8');changed.append(str(p))
+          if not changed: raise SystemExit('No HTML entrypoints updated')
+          print('updated html',len(changed))
+          PY
+
+          for f in core/kinojo-supabase-client.js core/kinojo-supabase-rpc.js core/kinojo-supabase-features.js core/kinojo-auth-session.js core/kinojo-auth-service.js core/kinojo-auth-ui.js core/kinojo-supabase.js core/kinojo-auth.js; do node --check "$f"; done
+          if grep -R --include='*.html' -nE 'kinojo-(supabase|auth)\.js' .; then echo 'legacy core reference remains'; exit 1; fi
+          grep -R --include='*.html' -l 'kinojo-supabase-client.js' . | sort > /tmp/sup-pages.txt
+          grep -R --include='*.html' -l 'kinojo-auth-session.js' . | sort > /tmp/auth-pages.txt
+          test -s /tmp/sup-pages.txt
+          test -s /tmp/auth-pages.txt
+          git config user.name kinojo-bot
+          git config user.email kinojo-bot@users.noreply.github.com
+          git add core '*.html' '**/*.html' || true
+          git add -A
+          git commit -m 'refactor: split WEB Supabase and auth cores by responsibility'
+          git push
