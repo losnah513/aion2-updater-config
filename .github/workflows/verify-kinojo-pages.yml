@@ -1,0 +1,143 @@
+name: Verify KINOJO Pages
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "ranking/**"
+      - "m/ranking/**"
+      - "admin/**"
+      - "m/admin/**"
+      - "core/**"
+      - "ui/**"
+      - "CNAME"
+      - ".github/workflows/verify-kinojo-pages.yml"
+  push:
+    branches: [main]
+    paths:
+      - "ranking/**"
+      - "m/ranking/**"
+      - "admin/**"
+      - "m/admin/**"
+      - "core/**"
+      - "ui/**"
+      - "CNAME"
+      - ".github/workflows/verify-kinojo-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-kinojo-pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-live-readback:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      LIVE_BASE: https://kinojo.info
+    steps:
+      - name: Checkout expected source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.sha }}
+
+      - name: Verify custom domain and live files
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          expected_ref="${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.sha }}"
+          verify_key="${expected_ref:0:12}-$(date -u +%s)"
+          tmp_dir="$(mktemp -d)"
+          trap 'rm -rf "$tmp_dir"' EXIT
+
+          files=(
+            "ranking/index.html"
+            "m/ranking/index.html"
+            "ranking/css/ranking.css"
+            "ranking/css/ranking-card.css"
+            "ranking/css/ranking-responsive.css"
+            "ranking/js/ranking-utils.js"
+            "ranking/js/ranking-data.js"
+            "ranking/js/ranking-card.js"
+            "ranking/js/ranking-render.js"
+            "ranking/js/ranking-events.js"
+            "ranking/js/ranking-app.js"
+            "admin/index.html"
+            "m/admin/index.html"
+            "admin/js/admin.js"
+            "admin/js/admin-shared.js"
+            "admin/js/admin-characters.js"
+            "admin/js/admin-bootstrap.js"
+            "ui/kinojo-components.css"
+            "core/kinojo-supabase.js"
+          )
+
+          echo "Expected source: $expected_ref"
+          echo "Live domain: $LIVE_BASE"
+
+          http_code="$(curl --silent --show-error --location --output /dev/null \
+            --write-out '%{http_code}' --connect-timeout 10 --max-time 30 \
+            -H 'Cache-Control: no-cache' "$LIVE_BASE/?verify=$verify_key")"
+          if [[ "$http_code" != "200" ]]; then
+            echo "Custom domain returned HTTP $http_code" >&2
+            exit 1
+          fi
+
+          for attempt in $(seq 1 12); do
+            mismatch=0
+            : > "$tmp_dir/result.txt"
+
+            for path in "${files[@]}"; do
+              live_file="$tmp_dir/$(echo "$path" | tr '/' '_')"
+              url="$LIVE_BASE/$path?verify=$verify_key-$attempt"
+
+              if ! curl --fail --silent --show-error --location --compressed \
+                --retry 3 --retry-all-errors --connect-timeout 10 --max-time 30 \
+                -H 'Cache-Control: no-cache' "$url" -o "$live_file"; then
+                echo "FETCH_FAIL $path" >> "$tmp_dir/result.txt"
+                mismatch=1
+                continue
+              fi
+
+              if cmp -s "$path" "$live_file"; then
+                echo "MATCH $path" >> "$tmp_dir/result.txt"
+              else
+                echo "MISMATCH $path" >> "$tmp_dir/result.txt"
+                mismatch=1
+              fi
+            done
+
+            cat "$tmp_dir/result.txt"
+
+            if [[ "$mismatch" -eq 0 ]]; then
+              {
+                echo "## KINOJO Pages live readback"
+                echo
+                echo "- Domain: \`$LIVE_BASE\`"
+                echo "- Expected source: \`$expected_ref\`"
+                echo "- Verified files: \`${#files[@]}\`"
+                echo "- Result: all live files match the repository source"
+              } >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+
+            if [[ "$attempt" -lt 12 ]]; then
+              echo "Live files are not synchronized yet. Retrying..."
+              sleep 20
+            fi
+          done
+
+          echo "Live readback did not converge to repository source." >&2
+          while read -r state path; do
+            [[ "$state" == "MISMATCH" ]] || continue
+            live_file="$tmp_dir/$(echo "$path" | tr '/' '_')"
+            echo "--- $path" >&2
+            echo "source sha256: $(sha256sum "$path" | awk '{print $1}')" >&2
+            echo "live   sha256: $(sha256sum "$live_file" | awk '{print $1}')" >&2
+            diff -u "$path" "$live_file" | head -120 >&2 || true
+          done < "$tmp_dir/result.txt"
+          exit 1
