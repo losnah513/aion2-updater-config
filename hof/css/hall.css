@@ -1294,7 +1294,7 @@ body{
   height:calc(100% - 38px)!important;
   padding:9px 10px!important;
   display:grid!important;
-  grid-template-rows:1fr .5fr .5fr!important;
+  grid-template-rows:repeat(3,minmax(0,1fr))!important;
   gap:7px!important;
   min-height:0!important;
 }.hof-v2-top3-item{
@@ -1312,7 +1312,7 @@ body{
   text-align:left!important;
   overflow:hidden!important;
   cursor:pointer!important;
-}.hof-v2-top3-item:hover{background:#f8fbff!important;border-color:rgba(37,99,235,.28)!important;transform:none!important;}.hof-v2-top3-item.rank-1{
+}.hof-v2-top3-item:hover{background:#f8fbff!important;border-color:rgba(37,99,235,.28)!important;transform:none!important;}.hof-v2-top3-item.rank-1:not(.is-power-card){
   grid-template-columns:58px minmax(0,1fr) minmax(96px,auto)!important;
   gap:10px!important;
   padding:7px 10px!important;
@@ -1485,8 +1485,8 @@ body{
   .hof-v2-panel-head.is-compact,.hof-v2-god-head.is-compact{height:38px!important;min-height:38px!important;padding:7px 10px!important;}
   .hof-v2-panel-head.is-compact h2,.hof-v2-god-head.is-compact h2{font-size:18px!important;}
   .hof-v2-wide{height:220px!important;}
-  .hof-v2-top3{grid-template-rows:1fr .5fr .5fr!important;padding:8px!important;gap:6px!important;}
-  .hof-v2-top3-item.rank-1{grid-template-columns:54px minmax(0,1fr) minmax(78px,auto)!important;padding:7px 8px!important;gap:8px!important;}
+  .hof-v2-top3{grid-template-rows:repeat(3,minmax(0,1fr))!important;padding:8px!important;gap:6px!important;}
+  .hof-v2-top3-item.rank-1:not(.is-power-card){grid-template-columns:54px minmax(0,1fr) minmax(78px,auto)!important;padding:7px 8px!important;gap:8px!important;}
   .hof-v2-top3-item.is-compact-rank{grid-template-columns:30px minmax(0,1fr) minmax(78px,auto)!important;padding:5px 8px!important;gap:7px!important;}
   .hof-v2-portrait-wrap{width:54px!important;height:54px!important;min-width:54px!important;}
   .hof-v2-portrait.small{width:48px!important;height:48px!important;}
@@ -1567,14 +1567,14 @@ body{
   .hof-v2-wide .hof-v2-top3{
     padding:8px 10px!important;
     gap:6px!important;
-    grid-template-rows:1fr .66fr .66fr!important;
+    grid-template-rows:repeat(3,minmax(0,1fr))!important;
   }
-  .hof-v2-wide .hof-v2-top3-item.rank-1{
+  .hof-v2-wide .hof-v2-top3-item.rank-1:not(.is-power-card){
     grid-template-columns:66px minmax(0,1fr) 118px!important;
     gap:10px!important;
     padding:7px 10px!important;
   }
-  .hof-v2-wide .hof-v2-top3-item.rank-1 .hof-v2-portrait-wrap{
+  .hof-v2-wide .hof-v2-top3-item.rank-1:not(.is-power-card) .hof-v2-portrait-wrap{
     width:58px!important;
     height:58px!important;
     min-width:58px!important;
@@ -1583,7 +1583,7 @@ body{
     width:52px!important;
     height:52px!important;
   }
-  .hof-v2-wide .hof-v2-top3-item.rank-1 .hof-v2-top3-score{
+  .hof-v2-wide .hof-v2-top3-item.rank-1:not(.is-power-card) .hof-v2-top3-score{
     max-width:118px!important;
     font-size:18px!important;
   }
@@ -2088,3 +2088,13 @@ body{
     max-width:70px!important;
   }
 }
+
+/* 2026-08-02 HOF cleanup: one power-card grid contract for every rank. */
+.hof-v2-wide .hof-v2-top3-item.rank-1.is-power-card,
+.hof-v2-wide .hof-v2-top3-item.rank-2.is-power-card,
+.hof-v2-wide .hof-v2-top3-item.rank-3.is-power-card{grid-template-columns:26px minmax(92px,1fr) 34px minmax(92px,104px) 62px!important;grid-template-rows:1fr!important;gap:7px!important;padding:0!important;}
+.hof-v2-wide .hof-v2-top3{grid-template-rows:repeat(3,minmax(0,1fr))!important;}
+.hof-v2-load-error{display:grid;justify-items:center;gap:10px;padding:24px 14px;text-align:center;}
+.hof-v2-load-error button{border:1px solid rgba(37,99,235,.24);border-radius:7px;background:#2563eb;color:#fff;padding:9px 24px;font-weight:1000;cursor:pointer;}
+@media (max-width:760px){.hof-v2-wide .hof-v2-top3-item.rank-1.is-power-card,.hof-v2-wide .hof-v2-top3-item.rank-2.is-power-card,.hof-v2-wide .hof-v2-top3-item.rank-3.is-power-card{grid-template-columns:22px minmax(78px,1fr) 30px minmax(76px,88px) 50px!important;gap:5px!important;}}
+@media (max-width:430px){.hof-v2-wide .hof-v2-top3-item.rank-1.is-power-card,.hof-v2-wide .hof-v2-top3-item.rank-2.is-power-card,.hof-v2-wide .hof-v2-top3-item.rank-3.is-power-card{grid-template-columns:20px minmax(68px,1fr) 27px minmax(68px,80px) 44px!important;gap:4px!important;}}

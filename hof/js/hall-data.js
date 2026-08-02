@@ -66,28 +66,35 @@ function preloadImages(paths){
   }));
 }
 
-const HALL_CACHE_PREFIX="kinojo_hall_summary_cache_v2026080101";
+const HALL_CACHE_PREFIX="kinojo_hall_summary_cache_v2026080204";
+const HALL_STALE_PREFIX="kinojo_hall_summary_stale_v2026080204";
 function hallCacheKey(){return HALL_CACHE_PREFIX+"::"+(includeSubs?"subs":"main")+"::"+(includeAllLegions?"all-legions":"default-legions");}
 const HALL_CACHE_TTL_MS=5*60*1000;
+const HALL_STALE_TTL_MS=24*60*60*1000;
 let hallLoadRequestSeq=0;
+let hallLoadInFlight=null;
+let hallAuthReloadTimer=null;
 
-function readHallCache(){
+function readStoredHallCache(storage,prefix,maxAge){
   try{
-    const raw=sessionStorage.getItem(hallCacheKey());
+    const key=prefix+"::"+(includeSubs?"subs":"main")+"::"+(includeAllLegions?"all-legions":"default-legions");
+    const raw=storage.getItem(key);
     if(!raw)return null;
     const cached=JSON.parse(raw);
-    if(!cached || !cached.savedAt || !cached.data)return null;
-    if(Date.now()-cached.savedAt>HALL_CACHE_TTL_MS)return null;
+    if(!cached?.savedAt||!cached?.data||Date.now()-cached.savedAt>maxAge)return null;
     return cached.data;
-  }catch(e){return null}
+  }catch(_err){return null;}
 }
-
+function readHallCache(){return readStoredHallCache(sessionStorage,HALL_CACHE_PREFIX,HALL_CACHE_TTL_MS);}
+function readHallStaleCache(){return readStoredHallCache(localStorage,HALL_STALE_PREFIX,HALL_STALE_TTL_MS);}
 function writeHallCache(data){
+  if(!data||data.ok===false)return;
+  const wrapped=JSON.stringify({savedAt:Date.now(),data});
+  try{sessionStorage.setItem(hallCacheKey(),wrapped);}catch(_err){}
   try{
-    if(data && data.ok!==false){
-      sessionStorage.setItem(hallCacheKey(),JSON.stringify({savedAt:Date.now(),data}));
-    }
-  }catch(e){}
+    const staleKey=HALL_STALE_PREFIX+"::"+(includeSubs?"subs":"main")+"::"+(includeAllLegions?"all-legions":"default-legions");
+    localStorage.setItem(staleKey,wrapped);
+  }catch(_err){}
 }
 
 function hallDataSignature(data){
@@ -127,53 +134,62 @@ function applyHallData(data,{fromCache=false,initial=false,skipIfSame=false}={})
 }
 
 async function fetchHallDataFresh(){
-  let data;
-  if(!window.KinojoSupabase || typeof window.KinojoSupabase.rpc!=='function'){
-    throw new Error("Server Engine 연결을 확인해 주세요.");
-  }
-  const session=window.KinojoAuth?.getSession?.()||{};
-  const account=window.KinojoAuth?.getAccount?.()||{};
-  const passKey=String(account.passKey||account.passCode||session.passKey||session.passCode||'').trim();
-  data=await window.KinojoSupabase.rpc('kinojo_web_get_hof_display_v296',{
-    p_include_subs:!!includeSubs,
-    p_include_all_legions:!!includeAllLegions,
-    p_pass_key:passKey||null
-  });
-  if(!data || data.ok===false)throw new Error(data?.message||data?.error||"명예의 전당 요약 응답이 실패했습니다.");
-  writeHallCache(data);
+  if(!window.KinojoSupabase||typeof window.KinojoSupabase.rpc!=="function")throw new Error("Server Engine 연결을 확인해 주세요.");
+  const data=await window.KinojoSupabase.rpc("kinojo_web_get_hof_display_v301",{p_include_subs:!!includeSubs,p_include_all_legions:!!includeAllLegions});
+  if(!data||data.ok===false)throw new Error(data?.message||data?.error||"명예의 전당 공개 Cache 응답이 실패했습니다.");
   return data;
 }
-
-async function load(){
-  const requestSeq=++hallLoadRequestSeq;
-  const cached=readHallCache();
-  const hasCached=!!(cached && cached.ok!==false);
-  if(hasCached){
-    applyHallData(cached,{fromCache:true,initial:true});
-  }else{
-    renderHallLoadingLayout();
-    startLoadingText();
+function hallDelay(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
+async function fetchHallDataWithRetry(){
+  let lastError;
+  for(const wait of [0,600,1400]){
+    if(wait)await hallDelay(wait);
+    try{return await fetchHallDataFresh();}catch(err){lastError=err;}
   }
+  throw lastError||new Error("명예의 전당 데이터를 불러오지 못했습니다.");
+}
+function hallPassKey(){
+  const session=window.KinojoAuth?.getSession?.()||{};
+  const account=window.KinojoAuth?.getAccount?.()||{};
+  return String(account.passKey||account.passCode||session.passKey||session.passCode||"").trim();
+}
+async function refreshHallPersonalRanking(requestSeq=hallLoadRequestSeq){
+  const passKey=hallPassKey();
+  if(!passKey)return false;
   try{
-    const data=await fetchHallDataFresh();
+    const personal=await window.KinojoSupabase.rpc("kinojo_web_get_hof_display_v296",{p_include_subs:!!includeSubs,p_include_all_legions:!!includeAllLegions,p_pass_key:passKey});
+    if(requestSeq!==hallLoadRequestSeq||!personal||personal.ok===false)return false;
+    applyHallData({...hallData,myRanking:personal.myRanking||{}},{skipIfSame:true});
+    return true;
+  }catch(err){console.warn("KINOJO Hall personal ranking load failed:",err);return false;}
+}
+async function load({force=false}={}){
+  const requestSeq=++hallLoadRequestSeq;
+  const fresh=force?null:readHallCache();
+  const stale=fresh?null:readHallStaleCache();
+  const fallback=fresh||stale;
+  if(fallback)applyHallData(fallback,{fromCache:true,initial:true});
+  else{renderHallLoadingLayout();startLoadingText();}
+  const key=hallCacheKey();
+  if(!hallLoadInFlight||hallLoadInFlight.key!==key||force)hallLoadInFlight={key,promise:fetchHallDataWithRetry()};
+  try{
+    const result=await hallLoadInFlight.promise;
     if(requestSeq!==hallLoadRequestSeq)return false;
-    applyHallData(data,{initial:!hasCached,skipIfSame:hasCached});
+    writeHallCache(result);
+    applyHallData(result,{initial:!fallback,skipIfSame:!!fallback});
+    void refreshHallPersonalRanking(requestSeq);
     return true;
   }catch(err){
     if(requestSeq!==hallLoadRequestSeq)return false;
-    if(hasCached){
-      return true;
-    }
+    if(fallback){console.warn("KINOJO Hall refresh failed; fallback retained:",err);return true;}
     stopLoadingText();
     app.className="";
-    app.innerHTML='<div class="empty">명예의 전당 데이터를 불러오지 못했습니다.<br>'+escapeHtml(err.message||err)+'</div>';
+    app.innerHTML='<div class="hof-v2-load-error"><strong>명예의 전당 데이터를 불러오지 못했습니다.</strong><span>'+escapeHtml(err.message||err)+'</span><button type="button" onclick="load({force:true})">다시 불러오기</button></div>';
     return false;
-  }
+  }finally{if(hallLoadInFlight?.key===key)hallLoadInFlight=null;}
 }
-
-
 async function reloadHallAfterAuthChange(){
-  try{ Object.keys(sessionStorage).filter(key=>key.startsWith(HALL_CACHE_PREFIX)).forEach(key=>sessionStorage.removeItem(key)); }catch(_err){}
-  return load();
+  clearTimeout(hallAuthReloadTimer);
+  return new Promise(resolve=>{hallAuthReloadTimer=setTimeout(()=>resolve(refreshHallPersonalRanking(hallLoadRequestSeq)),250);});
 }
 window.reloadHallAfterAuthChange=reloadHallAfterAuthChange;
