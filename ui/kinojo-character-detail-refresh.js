@@ -6,7 +6,7 @@
 (function(){
   'use strict';
 
-  const API_VERSION = '302.2';
+  const API_VERSION = '305.1';
   const POLL_MS = 1800;
   const state = {
     currentKey:'',
@@ -173,7 +173,6 @@
       if(message) message.textContent=job.status==='failed'?(job.lastErrorMessage||'이전 갱신에 실패했습니다.'):'30분 대기시간이 끝났습니다.';
     }
     renderProgress(job);
-
   }
 
   function stopPoll(){
@@ -227,6 +226,7 @@
           profile:Object.assign({},base.profile||{},manual.profile||{}),
           baseStats:Array.isArray(manual.baseStats)?manual.baseStats:base.baseStats,
           equipment:Array.isArray(manual.equipment)?manual.equipment:base.equipment,
+          arcana:Array.isArray(manual.arcana)?manual.arcana:base.arcana,
           skills:Array.isArray(manual.skills)?manual.skills:base.skills,
           daevanion:Array.isArray(manual.daevanion)?manual.daevanion:base.daevanion,
           petwing:manual.petwing||base.petwing,
@@ -274,8 +274,22 @@
     }).join('');
   }
 
-  function renderEquipmentDetail(data,button){
-    const root=document.getElementById('kinojoLiveEquipmentDetail');if(!root) return;
+  function equipmentDetailRoot(button){
+    const id=String(button?.dataset?.detailRoot||'kinojoLiveEquipmentDetail');
+    return document.getElementById(id);
+  }
+
+  function markEquipmentSelection(button){
+    const panel=button?.closest?.('[data-kinojo-character-panel]');
+    panel?.querySelectorAll('[data-live-equipment-item]').forEach(row=>{
+      const selected=row===button;
+      row.classList.toggle('is-selected',selected);
+      row.setAttribute('aria-selected',selected?'true':'false');
+    });
+  }
+
+  function renderEquipmentDetail(data,button,root){
+    if(!root) return;
     const item=data?.item||{};
     const main=Array.isArray(item.mainStats)?item.mainStats:[];
     const sub=Array.isArray(item.subStats)?item.subStats:[];
@@ -293,9 +307,11 @@
       ['장착 제한 레벨',item.equipLevel??'-']
     ];
     root.hidden=false;
+    root.dataset.loadedEquipmentKey=String(button?.dataset?.equipmentKey||'');
     root.classList.add('kinojo-official-item-detail');
+    const closeButton=root.hasAttribute('data-persistent-detail')?'':'<button type="button" class="kinojo-character-live-detail-close" data-live-detail-close>닫기</button>';
     root.innerHTML=
-      '<button type="button" class="kinojo-character-live-detail-close" data-live-detail-close>닫기</button>'+
+      closeButton+
       '<header class="kinojo-official-item-head">'+(icon?'<img src="'+icon+'" alt="">':'')+
         '<div><span>'+(number(item.exceedLevel)?'<b>'+number(item.exceedLevel)+'</b> ':'')+(number(item.enchantLevel)?'+'+number(item.enchantLevel)+' ':'')+'</span><strong>'+esc(item.name||'선택 장비')+'</strong><small>'+esc(item.gradeName||item.grade||'')+'</small></div>'+
       '</header>'+
@@ -322,13 +338,20 @@
   }
 
   async function loadEquipmentDetail(button){
-    const root=document.getElementById('kinojoLiveEquipmentDetail');if(!root||!state.identity) return;
-    root.hidden=false;root.innerHTML='<div class="kinojo-character-live-loading">저장된 장비 상세 옵션을 불러오는 중입니다.</div>';
+    const root=equipmentDetailRoot(button);if(!root) return;
+    if(!state.identity) state.identity=modalIdentity();
+    if(!state.identity) return;
+    markEquipmentSelection(button);
+    root.hidden=false;
+    root.classList.remove('kinojo-official-item-detail');
+    root.dataset.loadedEquipmentKey='';
+    root.innerHTML='<div class="kinojo-character-live-loading">저장된 장비 상세 옵션을 불러오는 중입니다.</div>';
     try{
       const data=await invoke('equipmentItem',Object.assign({},state.identity,{itemId:number(button.dataset.itemId),slotPos:number(button.dataset.slotPos)}));
-      renderEquipmentDetail(data,button);
+      renderEquipmentDetail(data,button,root);
     }catch(error){
-      root.innerHTML='<button type="button" class="kinojo-character-live-detail-close" data-live-detail-close>닫기</button><div class="kinojo-character-live-error"><strong>장비 상세정보가 없습니다.</strong><span>'+esc(error.message||error)+'</span></div>';
+      const closeButton=root.hasAttribute('data-persistent-detail')?'':'<button type="button" class="kinojo-character-live-detail-close" data-live-detail-close>닫기</button>';
+      root.innerHTML=closeButton+'<div class="kinojo-character-live-error"><strong>장비 상세정보가 없습니다.</strong><span>'+esc(error.message||error)+'</span></div>';
     }
   }
 
@@ -368,11 +391,11 @@
     const target=event.target instanceof Element?event.target:null;if(!target) return;
     const equipment=target.closest('[data-live-equipment-item]');
     if(equipment && document.getElementById('kinojoCharacterReactionModal')?.contains(equipment)){
-      event.preventDefault();event.stopImmediatePropagation();loadEquipmentDetail(equipment);return;
+      event.preventDefault();loadEquipmentDetail(equipment);return;
     }
     const board=target.closest('[data-live-daevanion-board]');
     if(board && document.getElementById('kinojoCharacterReactionModal')?.contains(board)){
-      event.preventDefault();event.stopImmediatePropagation();loadDaevanionDetail(board);return;
+      event.preventDefault();loadDaevanionDetail(board);return;
     }
   },true);
 

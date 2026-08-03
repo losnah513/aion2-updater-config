@@ -19,9 +19,9 @@
     detailLoading: false,
     compare: null,
     compareLoading: false,
-    equipmentCategory: 'weapon',
-    equipmentPage: { weapon:0, armor:0, accessory:0, arcana:0 },
-    equipmentTouchStart: null
+    equipmentCategory: 'weaponArmor',
+    selectedEquipmentKey: '',
+    selectedArcanaKey: ''
   };
   const LIVE_CACHE_TTL = 120000;
   const liveCache = new Map();
@@ -250,6 +250,7 @@
         '<nav class="kinojo-character-live-tabs" aria-label="캐릭터 상세 탭">' +
           '<button class="active" type="button" data-kinojo-character-tab="overview">능력치</button>' +
           '<button type="button" data-kinojo-character-tab="equipment">장비</button>' +
+          '<button type="button" data-kinojo-character-tab="arcana">아르카나</button>' +
           '<button type="button" data-kinojo-character-tab="daevanion">데바니온</button>' +
           '<button type="button" data-kinojo-character-tab="compare" data-kinojo-compare-tab hidden>내 캐릭터 비교</button>' +
           '<button type="button" data-kinojo-character-tab="reaction">평가·코멘트</button>' +
@@ -258,6 +259,7 @@
         '<div class="kinojo-character-live-panels">' +
           '<section class="kinojo-character-live-panel active" data-kinojo-character-panel="overview"><div class="kinojo-character-live-loading">저장 프로필과 능력치·스킬을 불러오는 중입니다.</div></section>' +
           '<section class="kinojo-character-live-panel" data-kinojo-character-panel="equipment"></section>' +
+          '<section class="kinojo-character-live-panel" data-kinojo-character-panel="arcana"></section>' +
           '<section class="kinojo-character-live-panel" data-kinojo-character-panel="daevanion"></section>' +
           '<section class="kinojo-character-live-panel" data-kinojo-character-panel="compare"></section>' +
           '<section class="kinojo-character-live-panel" data-kinojo-character-panel="reaction">' +
@@ -280,32 +282,19 @@
     });
     modal.addEventListener('click', event => {
       const category = event.target.closest('[data-equipment-category]');
-      if(category) setEquipmentCategory(category.dataset.equipmentCategory || 'weapon');
-      const pageMove = event.target.closest('[data-equipment-page-move]');
-      if(pageMove) moveEquipmentPage(Number(pageMove.dataset.equipmentPageMove || 0));
+      if(category) setEquipmentCategory(category.dataset.equipmentCategory || 'weaponArmor');
       const item = event.target.closest('[data-live-equipment-item]');
-      if(item) loadEquipmentDetail(item);
+      if(item){
+        selectEquipmentButton(item);
+        if(!event.defaultPrevented) loadEquipmentDetail(item);
+      }
       const board = event.target.closest('[data-live-daevanion-board]');
-      if(board) loadDaevanionDetail(board);
+      if(board && !event.defaultPrevented) loadDaevanionDetail(board);
       const compareCharacter = event.target.closest('[data-compare-character-id]');
       if(compareCharacter) loadComparison(Number(compareCharacter.dataset.compareCharacterId || 0));
       const closeDetail = event.target.closest('[data-live-detail-close]');
       if(closeDetail && closeDetail.parentElement) closeDetail.parentElement.hidden = true;
     });
-    modal.addEventListener('touchstart', event => {
-      const surface = event.target.closest('[data-equipment-page-surface]');
-      const touch = surface && event.touches ? event.touches[0] : null;
-      state.equipmentTouchStart = touch ? { x:touch.clientX, y:touch.clientY } : null;
-    }, { passive:true });
-    modal.addEventListener('touchend', event => {
-      const surface = event.target.closest('[data-equipment-page-surface]');
-      const start = state.equipmentTouchStart;
-      const touch = surface && event.changedTouches ? event.changedTouches[0] : null;
-      state.equipmentTouchStart = null;
-      if(!start || !touch) return;
-      const dx = touch.clientX - start.x, dy = touch.clientY - start.y;
-      if(Math.abs(dx) >= 44 && Math.abs(dx) > Math.abs(dy) * 1.25) moveEquipmentPage(dx < 0 ? 1 : -1);
-    }, { passive:true });
     modal.querySelector('#kinojoCharacterReactionSubmitBtn')?.addEventListener('click', submit);
     modal.querySelector('#kinojoCharacterReactionComment')?.addEventListener('input', updateSubmitState);
     document.addEventListener('keydown', event => {
@@ -327,7 +316,7 @@
   }
 
   function setTab(tab){
-    const allowed = ['overview','equipment','daevanion','compare','reaction'];
+    const allowed = ['overview','equipment','arcana','daevanion','compare','reaction'];
     state.tab = allowed.includes(tab) ? tab : 'overview';
     document.querySelectorAll('#kinojoCharacterReactionModal [data-kinojo-character-tab]').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.kinojoCharacterTab === state.tab);
@@ -336,6 +325,8 @@
       panel.classList.toggle('active', panel.dataset.kinojoCharacterPanel === state.tab);
     });
     if(state.tab === 'compare' && !state.compare && !state.compareLoading) loadComparison();
+    if(state.tab === 'equipment') scheduleDefaultEquipment('equipment',state.selectedEquipmentKey);
+    if(state.tab === 'arcana') scheduleDefaultEquipment('arcana',state.selectedArcanaKey);
   }
 
   function liveIdentity(target){
@@ -371,6 +362,28 @@
       .finally(() => liveInflight.delete(key));
     liveInflight.set(key, promise);
     return promise;
+  }
+
+  async function mergeServerSkills(data){
+    const rpc=window.KinojoSupabaseRpcCore;
+    const identity=liveIdentity(state.target);
+    if(!rpc || typeof rpc.rpc!=='function' || !identity.serverId || !identity.characterName) return data;
+    try{
+      const result=await rpc.rpc('kinojo_character_skill_overview_v304',{
+        p_server_id:Number(identity.serverId||0),
+        p_character_name:String(identity.characterName||'')
+      });
+      if(result && result.ok===true && Array.isArray(result.skills)){
+        return Object.assign({},data,{
+          skills:result.skills,
+          skillSource:result.source||'KINOJO_SERVER_SKILL_NORMALIZED',
+          skillRefreshedAt:result.refreshedAt||null
+        });
+      }
+    }catch(_error){
+      // 저장된 공식 스킬 원본이 없는 캐릭터는 기존 overview 범위를 유지한다.
+    }
+    return data;
   }
 
   function livePanel(name){
@@ -508,78 +521,120 @@
   }
 
   const EQUIPMENT_CATEGORIES = [
-    { key:'weapon', label:'무기' },
-    { key:'armor', label:'방어구' },
-    { key:'accessory', label:'장신구' },
-    { key:'arcana', label:'아르카나' }
+    { key:'weaponArmor', label:'무기·방어구' },
+    { key:'accessory', label:'장신구' }
   ];
 
-  function equipmentPageSize(){
-    return window.matchMedia && window.matchMedia('(max-width: 640px)').matches ? 4 : 8;
+  function equipmentKey(item){
+    return [Number(item?.slotPos||0),Number(item?.id||0)].join(':');
   }
 
-  function equipmentGroups(items){
-    return EQUIPMENT_CATEGORIES.reduce((groups, category) => {
-      groups[category.key] = items.filter(item => item.category === category.key);
-      return groups;
-    }, {});
+  function sortedEquipment(rows){
+    return (Array.isArray(rows)?rows:[]).slice().sort((a,b)=>
+      Number(a?.slotOrder||a?.slotPos||9999)-Number(b?.slotOrder||b?.slotPos||9999)
+    );
+  }
+
+  function equipmentGroups(data){
+    const equipment=Array.isArray(data?.equipment)?data.equipment:[];
+    const legacyArcana=equipment.filter(item=>item?.category==='arcana');
+    const arcana=Array.isArray(data?.arcana)&&data.arcana.length?data.arcana:legacyArcana;
+    const normal=equipment.filter(item=>item?.category!=='arcana');
+    return {
+      weaponArmor:sortedEquipment(normal.filter(item=>item?.group==='weaponArmor'||item?.category==='weapon'||item?.category==='armor')),
+      accessory:sortedEquipment(normal.filter(item=>item?.group==='accessory'||item?.category==='accessory')),
+      arcana:sortedEquipment(arcana)
+    };
   }
 
   function setEquipmentCategory(category){
-    if(!EQUIPMENT_CATEGORIES.some(item => item.key === category)) return;
-    state.equipmentCategory = category;
+    if(!EQUIPMENT_CATEGORIES.some(item=>item.key===category)) return;
+    state.equipmentCategory=category;
+    state.selectedEquipmentKey='';
     if(state.live) renderLiveEquipment(state.live);
   }
 
-  function moveEquipmentPage(delta){
-    if(!state.live || !delta) return;
-    const items = Array.isArray(state.live.equipment) ? state.live.equipment : [];
-    const currentItems = equipmentGroups(items)[state.equipmentCategory] || [];
-    const pageCount = Math.max(1, Math.ceil(currentItems.length / equipmentPageSize()));
-    const current = Math.min(Number(state.equipmentPage[state.equipmentCategory] || 0), pageCount - 1);
-    state.equipmentPage[state.equipmentCategory] = Math.max(0, Math.min(pageCount - 1, current + delta));
-    renderLiveEquipment(state.live);
+  function selectEquipmentButton(button){
+    if(!button) return;
+    const panel=button.closest('[data-kinojo-character-panel]');
+    panel?.querySelectorAll('[data-live-equipment-item]').forEach(row=>{
+      const selected=row===button;
+      row.classList.toggle('is-selected',selected);
+      row.setAttribute('aria-selected',selected?'true':'false');
+    });
+    const key=String(button.dataset.equipmentKey||'');
+    if(panel?.dataset.kinojoCharacterPanel==='arcana') state.selectedArcanaKey=key;
+    else state.selectedEquipmentKey=key;
+  }
+
+  function gradeClass(grade){
+    return 'grade-'+String(grade||'normal').toLowerCase().replace(/[^a-z0-9_-]/g,'');
+  }
+
+  function equipmentRow(item,detailRoot,selectedKey){
+    const key=equipmentKey(item),selected=key===selectedKey;
+    const icon=safeUrl(item.icon),skinIcon=safeUrl(item.skinIcon);
+    const enchant=Number(item.enchantLevel||0),exceed=Number(item.exceedLevel||0);
+    return '<button type="button" class="kinojo-character-equipment-row '+gradeClass(item.grade)+(selected?' is-selected':'')+'" '+
+      'data-live-equipment-item data-equipment-key="'+esc(key)+'" data-item-id="'+Number(item.id||0)+'" data-slot-pos="'+Number(item.slotPos||0)+'" '+
+      'data-detail-root="'+esc(detailRoot)+'" aria-selected="'+(selected?'true':'false')+'" title="'+esc(item.slotLabel||item.slotPosName||'')+'">'+
+      '<span class="kinojo-character-equipment-main-icon">'+(icon?'<img src="'+icon+'" alt="">':'')+'</span>'+
+      (exceed?'<span class="kinojo-character-equipment-exceed" aria-label="초월 '+exceed+'"><i>'+exceed+'</i></span>':'<span class="kinojo-character-equipment-exceed is-empty" aria-hidden="true"></span>')+
+      '<span class="kinojo-character-equipment-name"><b>'+(enchant?'<em>+'+enchant+'</em> ':'')+esc(item.name||'-')+'</b><small>'+esc(item.slotLabel||item.slotPosName||'')+'</small></span>'+
+      '<span class="kinojo-character-equipment-skin '+(skinIcon?'':'is-empty')+'" title="'+esc(item.skinName||'적용 외형 없음')+'">'+(skinIcon?'<img src="'+skinIcon+'" alt="">':'')+'</span>'+
+    '</button>';
+  }
+
+  function scheduleDefaultEquipment(panelName,preferredKey){
+    requestAnimationFrame(()=>{
+      if(!state.open||state.tab!==panelName) return;
+      const panel=livePanel(panelName);
+      if(!panel) return;
+      const buttons=[...panel.querySelectorAll('[data-live-equipment-item]')];
+      const target=buttons.find(button=>button.dataset.equipmentKey===preferredKey)||buttons[0];
+      if(target){
+        const root=document.getElementById(String(target.dataset.detailRoot||''));
+        if(target.classList.contains('is-selected')&&root?.dataset.loadedEquipmentKey===String(target.dataset.equipmentKey||'')) return;
+        selectEquipmentButton(target);target.click();
+      }
+    });
   }
 
   function renderLiveEquipment(data){
-    const panel = livePanel('equipment');
+    const panel=livePanel('equipment');
     if(!panel) return;
-    const items = Array.isArray(data.equipment) ? data.equipment : [];
-    const groups = equipmentGroups(items);
-    const activeCategory = EQUIPMENT_CATEGORIES.find(category => category.key === state.equipmentCategory) || EQUIPMENT_CATEGORIES[0];
-    const currentItems = groups[activeCategory.key] || [];
-    const pageSize = equipmentPageSize();
-    const pageCount = Math.max(1, Math.ceil(currentItems.length / pageSize));
-    const page = Math.max(0, Math.min(Number(state.equipmentPage[activeCategory.key] || 0), pageCount - 1));
-    state.equipmentPage[activeCategory.key] = page;
-    const visibleItems = currentItems.slice(page * pageSize, page * pageSize + pageSize);
-    panel.innerHTML =
-      '<div class="kinojo-character-live-section-head"><div><strong>장착 장비</strong><span>분류와 페이지를 바꿔도 모달 위치는 유지됩니다.</span></div><em>총 ' + items.length + '개</em></div>' +
-      '<nav class="kinojo-character-equipment-categories" aria-label="장비 분류">' +
-        EQUIPMENT_CATEGORIES.map(category =>
-          '<button type="button" class="' + (category.key === activeCategory.key ? 'active' : '') + '" data-equipment-category="' + category.key + '">' +
-            '<span>' + esc(category.label) + '</span><strong>' + (groups[category.key] || []).length + '</strong>' +
-          '</button>'
-        ).join('') +
-      '</nav>' +
-      '<section class="kinojo-character-equipment-browser">' +
-        '<header class="kinojo-character-equipment-toolbar"><div><strong>' + esc(activeCategory.label) + '</strong><span>' + currentItems.length + '개 장착</span></div>' +
-          '<div class="kinojo-character-equipment-pager" aria-label="장비 페이지">' +
-            '<button type="button" data-equipment-page-move="-1" aria-label="이전 페이지" ' + (page <= 0 ? 'disabled' : '') + '>‹</button>' +
-            '<span><b>' + (page + 1) + '</b> / ' + pageCount + '</span>' +
-            '<button type="button" data-equipment-page-move="1" aria-label="다음 페이지" ' + (page >= pageCount - 1 ? 'disabled' : '') + '>›</button>' +
-          '</div>' +
-        '</header>' +
-        '<div class="kinojo-character-equipment-page" data-equipment-page-surface>' +
-          (visibleItems.length ?
-            '<div class="kinojo-character-equipment-grid">' +
-              visibleItems.map(item => '<button type="button" data-live-equipment-item data-item-id="' + Number(item.id || 0) + '" data-slot-pos="' + Number(item.slotPos || 0) + '"><img src="' + safeUrl(item.icon) + '" alt=""><span><small class="kinojo-character-equipment-slot">' + esc(item.slotLabel || item.slotPosName || '') + '</small><b>' + esc(item.name || '-') + '</b><small>' + esc(item.grade || '') + (Number(item.enchantLevel || 0) ? ' · +' + Number(item.enchantLevel) : '') + (Number(item.exceedLevel || 0) ? ' · 돌파 ' + Number(item.exceedLevel) : '') + '</small></span></button>').join('') +
-            '</div>' :
-            '<div class="kinojo-character-equipment-empty">장착된 ' + esc(activeCategory.label) + '가 없습니다.</div>') +
-        '</div>' +
-        '<p class="kinojo-character-equipment-hint">장비를 선택하면 이 화면 아래에서 강화·옵션·마석 상세를 확인합니다.<span>모바일은 좌우로 넘길 수 있습니다.</span></p>' +
-      '</section>' +
-      '<div class="kinojo-character-live-detail" id="kinojoLiveEquipmentDetail" hidden></div>';
+    const groups=equipmentGroups(data);
+    const activeCategory=EQUIPMENT_CATEGORIES.find(category=>category.key===state.equipmentCategory)||EQUIPMENT_CATEGORIES[0];
+    const currentItems=groups[activeCategory.key]||[];
+    const selected=currentItems.some(item=>equipmentKey(item)===state.selectedEquipmentKey)?state.selectedEquipmentKey:'';
+    state.selectedEquipmentKey=selected;
+    const total=groups.weaponArmor.length+groups.accessory.length;
+    panel.innerHTML=
+      '<div class="kinojo-character-live-section-head"><div><strong>장착 장비</strong><span>공식 슬롯 순서 · 목록에서 장비를 선택하면 오른쪽에 상세정보가 표시됩니다.</span></div><em>총 '+total+'개</em></div>'+
+      '<nav class="kinojo-character-equipment-subtabs" aria-label="장비 구분">'+
+        EQUIPMENT_CATEGORIES.map(category=>'<button type="button" class="'+(category.key===activeCategory.key?'active':'')+'" data-equipment-category="'+category.key+'"><span>'+esc(category.label)+'</span><strong>'+(groups[category.key]||[]).length+'</strong></button>').join('')+
+      '</nav>'+
+      '<section class="kinojo-character-equipment-layout">'+
+        '<aside class="kinojo-character-equipment-list-pane"><header><strong>'+esc(activeCategory.label)+'</strong><span>'+currentItems.length+'개</span></header>'+
+          '<div class="kinojo-character-equipment-list">'+(currentItems.length?currentItems.map(item=>equipmentRow(item,'kinojoLiveEquipmentDetail',selected)).join(''):'<div class="kinojo-character-equipment-empty">장착된 '+esc(activeCategory.label)+'가 없습니다.</div>')+'</div></aside>'+
+        '<div class="kinojo-character-live-detail kinojo-character-equipment-detail-pane is-persistent" id="kinojoLiveEquipmentDetail" data-persistent-detail><div class="kinojo-character-equipment-detail-empty"><strong>장비를 선택해 주세요.</strong><span>아이템 정보·옵션·영혼 각인·마석·신석을 표시합니다.</span></div></div>'+
+      '</section>';
+    if(currentItems.length) scheduleDefaultEquipment('equipment',selected);
+  }
+
+  function renderLiveArcana(data){
+    const panel=livePanel('arcana');
+    if(!panel) return;
+    const rows=equipmentGroups(data).arcana;
+    const selected=rows.some(item=>equipmentKey(item)===state.selectedArcanaKey)?state.selectedArcanaKey:'';
+    state.selectedArcanaKey=selected;
+    panel.innerHTML=
+      '<div class="kinojo-character-live-section-head"><div><strong>아르카나</strong><span>일반 장착 장비와 분리된 아르카나 8개 슬롯입니다.</span></div><em>'+rows.length+'개</em></div>'+
+      '<section class="kinojo-character-arcana-layout">'+
+        '<div class="kinojo-character-arcana-list">'+(rows.length?rows.map(item=>equipmentRow(item,'kinojoLiveArcanaDetail',selected)).join(''):'<div class="kinojo-character-equipment-empty">저장된 아르카나 정보가 없습니다.</div>')+'</div>'+
+        '<div class="kinojo-character-live-detail kinojo-character-equipment-detail-pane is-persistent" id="kinojoLiveArcanaDetail" data-persistent-detail><div class="kinojo-character-equipment-detail-empty"><strong>아르카나를 선택해 주세요.</strong><span>선택한 아르카나의 저장 상세정보를 표시합니다.</span></div></div>'+
+      '</section>';
+    if(rows.length) scheduleDefaultEquipment('arcana',selected);
   }
 
   function renderLiveDaevanion(data){
@@ -611,11 +666,12 @@
     renderTarget();
     renderLiveOverview(data);
     renderLiveEquipment(data);
+    renderLiveArcana(data);
     renderLiveDaevanion(data);
     updateCompareVisibility();
     const time = document.getElementById('kinojoCharacterLiveTime');
     if(time) time.textContent = 'PLAYNC 실시간 · ' + new Date(data.fetchedAt || Date.now()).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
-    setLiveStatus('실시간 조회 ' + Number(data.requestCount || 2) + '회 완료 · 장비와 데바니온 상세는 선택한 항목만 추가 조회합니다.','ok');
+    setLiveStatus('저장 프로필 조회 완료 · 장비·아르카나·데바니온 상세는 선택한 항목의 Server 저장값을 표시합니다.','ok');
   }
 
   async function loadLiveOverview(){
@@ -626,9 +682,10 @@
       return;
     }
     state.liveLoading = true;
-    setLiveStatus('PLAYNC에서 프로필과 장비 목록을 실시간으로 불러오고 있습니다.','loading');
+    setLiveStatus('Server에 저장된 프로필·장비·아르카나 정보를 불러오고 있습니다.','loading');
     try{
-      const data = await liveRequest('overview');
+      let data = await liveRequest('overview');
+      data = await mergeServerSkills(data);
       if(!state.open || identity !== liveIdentityKey(state.target)) return;
       applyLiveProfile(data);
     }catch(error){
@@ -850,9 +907,9 @@
     state.compare = null;
     state.compareLoading = false;
     state.tab = 'overview';
-    state.equipmentCategory = 'weapon';
-    state.equipmentPage = { weapon:0, armor:0, accessory:0, arcana:0 };
-    state.equipmentTouchStart = null;
+    state.equipmentCategory = 'weaponArmor';
+    state.selectedEquipmentKey = '';
+    state.selectedArcanaKey = '';
     state.returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
     const modal = ensureModal();
@@ -892,7 +949,8 @@
     state.detailLoading = false;
     state.compareLoading = false;
     state.compare = null;
-    state.equipmentTouchStart = null;
+    state.selectedEquipmentKey = '';
+    state.selectedArcanaKey = '';
     state.live = null;
     state.target = null;
     state.options = null;
