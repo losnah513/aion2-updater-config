@@ -1,16 +1,20 @@
 name: Run character modal stage1 source restore
 
 on:
-  push:
+  pull_request:
     branches:
       - main
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 permissions:
   contents: write
 
 jobs:
   restore-stage1:
-    if: contains(github.event.head_commit.message, 'enable character modal stage1 runner')
+    if: github.event.pull_request.head.ref == 'feature/character-modal-stage1-305'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,7 +22,16 @@ jobs:
           ref: feature/character-modal-stage1-305
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Skip when staged source is already restored
+        id: staged
+        run: |
+          if [ -d .kinojo-stage1 ]; then
+            echo 'exists=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'exists=false' >> "$GITHUB_OUTPUT"
+          fi
       - name: Restore staged source files
+        if: steps.staged.outputs.exists == 'true'
         shell: python
         run: |
           import gzip
@@ -40,6 +53,7 @@ jobs:
           shutil.rmtree('.kinojo-stage1')
           Path('.github/workflows/apply-character-modal-stage1.yml').unlink(missing_ok=True)
       - name: Verify JavaScript and cache versions
+        if: steps.staged.outputs.exists == 'true'
         run: |
           node --check ui/kinojo-character-reaction.js
           for f in hof/index.html m/hof/index.html ranking/index.html m/ranking/index.html sanctuary/index.html m/sanctuary/index.html; do
@@ -49,6 +63,7 @@ jobs:
           ! grep -q 'data-kinojo-character-tab="stats"' ui/kinojo-character-reaction.js
           grep -q 'kinojo-character-skill-icon' ui/kinojo-character-reaction.js
       - name: Commit stage1 source to feature branch
+        if: steps.staged.outputs.exists == 'true'
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
