@@ -34,6 +34,7 @@ jobs:
         if: steps.staged.outputs.exists == 'true'
         shell: python
         run: |
+          import base64
           import gzip
           import shutil
           from pathlib import Path
@@ -49,7 +50,8 @@ jobs:
               '.kinojo-stage1/m-sanctuary-index.html.gz': 'm/sanctuary/index.html',
           }
           for source, target in files.items():
-              Path(target).write_bytes(gzip.decompress(Path(source).read_bytes()))
+              encoded = Path(source).read_text(encoding='utf-8').strip()
+              Path(target).write_bytes(gzip.decompress(base64.b64decode(encoded)))
           shutil.rmtree('.kinojo-stage1')
           Path('.github/workflows/apply-character-modal-stage1.yml').unlink(missing_ok=True)
       - name: Verify JavaScript and cache versions
