@@ -54,7 +54,7 @@ jobs:
               target.write_bytes(gzip.decompress(base64.b64decode(payloads[source_name])))
 
           shutil.rmtree(stage)
-          Path('.github/workflows/apply-character-modal-stage2.yml').unlink()
+          Path('.github/workflows/apply-character-modal-stage2.yml').unlink(missing_ok=True)
           PY
 
       - name: Validate stage2 sources
