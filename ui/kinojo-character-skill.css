@@ -1,0 +1,107 @@
+/*
+ * KINOJO Character Skill UI · 305
+ * Server categoryLabel·levelTier를 표시하는 공통 캐릭터 모달 스킬 카드 전용 스타일.
+ */
+.kinojo-character-skill-list{
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:7px;
+}
+.kinojo-character-skill-card{
+  grid-template-columns:42px minmax(0,1fr);
+  gap:7px;
+  min-height:62px;
+  padding:7px;
+  border-color:#e2e8f0;
+  overflow:hidden;
+  transition:transform .16s cubic-bezier(.2,.8,.2,1),box-shadow .16s ease,background .16s ease,border-color .16s ease,filter .16s ease;
+}
+.kinojo-character-skill-card:hover{transform:translateY(-1px);filter:saturate(1.04)}
+.kinojo-character-skill-icon{
+  position:relative;
+  width:42px;
+  height:42px;
+  border-radius:10px;
+  overflow:visible;
+}
+.kinojo-character-skill-icon img{border-radius:9px}
+.kinojo-character-skill-level{
+  position:absolute;
+  right:-3px;
+  bottom:-3px;
+  z-index:2;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:25px;
+  height:17px;
+  padding:0 4px;
+  border:2px solid #fff;
+  border-radius:999px;
+  background:#1e293b;
+  color:#fff;
+  box-shadow:0 3px 8px rgba(15,23,42,.2);
+  font-size:7px;
+  font-weight:1000;
+  line-height:1;
+  box-sizing:border-box;
+  white-space:nowrap;
+}
+.kinojo-character-skill-card>span{gap:3px}
+.kinojo-character-skill-card>span b{
+  display:-webkit-box;
+  min-height:2.5em;
+  max-height:2.5em;
+  font-size:9px;
+  line-height:1.25;
+  white-space:normal;
+  word-break:keep-all;
+  overflow:hidden;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+}
+.kinojo-character-skill-card>span small{font-size:7px}
+
+/* 외곽 크기·테두리 두께를 바꾸지 않고 카드 내부 밝기만 단계적으로 높인다. */
+.kinojo-character-skill-card.is-level-tier-1{
+  background:linear-gradient(135deg,rgba(239,246,255,.96),#fff 72%);
+  box-shadow:inset 3px 0 0 #60a5fa,inset 0 0 16px rgba(59,130,246,.08);
+}
+.kinojo-character-skill-card.is-level-tier-2{
+  background:linear-gradient(135deg,rgba(238,242,255,.98),#fff 72%);
+  box-shadow:inset 3px 0 0 #6366f1,inset 0 0 18px rgba(99,102,241,.11);
+}
+.kinojo-character-skill-card.is-level-tier-3{
+  background:linear-gradient(135deg,rgba(245,243,255,.98),#fff 72%);
+  box-shadow:inset 3px 0 0 #8b5cf6,inset 0 0 20px rgba(139,92,246,.13);
+}
+.kinojo-character-skill-card.is-level-tier-4{
+  background:linear-gradient(135deg,rgba(253,242,248,.98),#fff 72%);
+  box-shadow:inset 3px 0 0 #d946ef,inset 0 0 22px rgba(217,70,239,.14);
+}
+.kinojo-character-skill-card.is-level-tier-5{
+  background:linear-gradient(135deg,rgba(255,247,237,.99),rgba(254,243,199,.7) 48%,#fff 100%);
+  box-shadow:inset 3px 0 0 #f59e0b,inset 0 0 24px rgba(245,158,11,.18);
+}
+.kinojo-character-skill-card.is-level-tier-1 .kinojo-character-skill-level{background:#2563eb}
+.kinojo-character-skill-card.is-level-tier-2 .kinojo-character-skill-level{background:#4f46e5}
+.kinojo-character-skill-card.is-level-tier-3 .kinojo-character-skill-level{background:#7c3aed}
+.kinojo-character-skill-card.is-level-tier-4 .kinojo-character-skill-level{background:#c026d3}
+.kinojo-character-skill-card.is-level-tier-5 .kinojo-character-skill-level{background:linear-gradient(135deg,#d97706,#f59e0b)}
+
+@media(max-width:900px){
+  .kinojo-character-skill-list{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .kinojo-character-skill-card>span b{font-size:10px}
+  .kinojo-character-skill-card>span small{font-size:8px}
+}
+@media(max-width:640px){
+  .kinojo-character-skill-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kinojo-character-skill-card{min-height:60px}
+}
+@media(max-width:390px){
+  .kinojo-character-skill-card{grid-template-columns:38px minmax(0,1fr);gap:6px;padding:6px}
+  .kinojo-character-skill-icon{width:38px;height:38px}
+  .kinojo-character-skill-level{right:-2px;bottom:-2px;min-width:23px;height:16px;font-size:7px}
+}
+@media(prefers-reduced-motion:reduce){
+  .kinojo-character-skill-card{transition:none!important;transform:none!important}
+}
