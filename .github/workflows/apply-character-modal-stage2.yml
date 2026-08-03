@@ -94,8 +94,8 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           for path in [Path('ui/kinojo-character-reaction.css'),Path('ui/kinojo-character-detail-refresh.css')]:
-              text = path.read_text(encoding='utf-8')
-              assert text.count('{') == text.count('}'), path
+              data = path.read_bytes()
+              assert data.count(b'{') == data.count(b'}'), path
           for path in [Path('hof/index.html'),Path('m/hof/index.html'),Path('ranking/index.html'),Path('m/ranking/index.html'),Path('sanctuary/index.html'),Path('m/sanctuary/index.html')]:
               text = path.read_text(encoding='utf-8')
               assert 'kinojo-character-reaction.js?cache=2026080305' in text, path
