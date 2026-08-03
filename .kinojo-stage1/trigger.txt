@@ -1,1 +1,2 @@
 trigger stage1 source restore
+synchronize after PR runner activation
