@@ -32,3 +32,15 @@
   .kinojo-character-live-detail.kinojo-character-equipment-detail-pane.kinojo-official-item-detail{max-height:none}
   .kinojo-character-equipment-detail-pane .kinojo-character-live-loading,.kinojo-character-equipment-detail-pane .kinojo-character-live-error{min-height:418px}
 }
+
+/* 2026-08-03 · 캐릭터 모달 모바일 장비 목록/상세 전환 3-1 */
+.kinojo-character-equipment-detail-view{display:contents;min-width:0;min-height:0}
+.kinojo-character-equipment-mobile-back{display:none}
+@media(max-width:640px){
+  .kinojo-character-equipment-layout.is-mobile-detail-view .kinojo-character-equipment-list-pane{display:none}
+  .kinojo-character-equipment-layout:not(.is-mobile-detail-view) .kinojo-character-equipment-detail-view{display:none}
+  .kinojo-character-equipment-detail-view{display:grid;grid-column:1/-1;grid-template-rows:auto minmax(0,1fr);gap:8px;min-width:0}
+  .kinojo-character-equipment-mobile-back{display:inline-flex;align-items:center;justify-content:flex-start;width:max-content;min-height:36px;padding:8px 11px;border:1px solid #bfdbfe;border-radius:10px;background:#eff6ff;color:#1d4ed8;font-size:11px;font-weight:900;cursor:pointer}
+  .kinojo-character-equipment-mobile-back:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
+  .kinojo-character-equipment-detail-view>.kinojo-character-equipment-detail-pane{width:100%;min-width:0;box-sizing:border-box}
+}
