@@ -1,0 +1,143 @@
+/*
+ * KINOJO Character Daevanion UI · 306
+ * Server가 정규화한 보드 이미지·누적 효과·활성 노드를 표시한다.
+ */
+.kinojo-character-daevanion-grid button{
+  display:grid;
+  grid-template-columns:48px minmax(0,1fr) auto;
+  align-items:center;
+  justify-content:stretch;
+  min-height:70px;
+  padding:10px;
+  overflow:hidden;
+}
+.kinojo-character-daevanion-grid button>img,
+.kinojo-character-daevanion-grid button>i{
+  display:grid;
+  place-items:center;
+  width:48px;
+  height:48px;
+  border:1px solid #bfdbfe;
+  border-radius:12px;
+  background:linear-gradient(145deg,#eff6ff,#fff);
+  object-fit:cover;
+  color:#2563eb;
+  font-size:14px;
+  font-style:normal;
+  font-weight:1000;
+  box-sizing:border-box;
+}
+.kinojo-character-daevanion-grid button>span{min-width:0}
+.kinojo-character-daevanion-grid button>span b,
+.kinojo-character-daevanion-grid button>span small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kinojo-character-daevanion-grid button>strong{
+  display:grid;
+  place-items:center;
+  min-width:46px;
+  height:32px;
+  padding:0 7px;
+  border-radius:999px;
+  background:#eff6ff;
+  box-shadow:inset 0 0 0 1px rgba(59,130,246,.12);
+}
+
+.kinojo-daevanion-detail-hero{
+  display:grid;
+  grid-template-columns:62px minmax(0,1fr) auto;
+  align-items:center;
+  gap:12px;
+  margin:-1px -1px 14px;
+  padding:16px 44px 16px 16px;
+  border:1px solid #dbeafe;
+  border-radius:14px;
+  background:linear-gradient(135deg,#eff6ff,#fff 64%);
+}
+.kinojo-daevanion-detail-hero>img,
+.kinojo-daevanion-detail-hero>i{
+  display:grid;
+  place-items:center;
+  width:62px;
+  height:62px;
+  border:1px solid #bfdbfe;
+  border-radius:15px;
+  background:#fff;
+  object-fit:cover;
+  color:#2563eb;
+  font-size:16px;
+  font-style:normal;
+  font-weight:1000;
+  box-sizing:border-box;
+}
+.kinojo-daevanion-detail-hero>div{display:grid;gap:4px;min-width:0}
+.kinojo-daevanion-detail-hero>div>span{color:#64748b;font-size:9px;font-weight:800}
+.kinojo-daevanion-detail-hero>div>strong{color:#0f172a;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kinojo-daevanion-detail-hero>div>small{color:#475569;font-size:9px;font-weight:700}
+.kinojo-daevanion-detail-hero>em{
+  display:grid;
+  place-items:center;
+  min-width:58px;
+  height:38px;
+  padding:0 8px;
+  border-radius:999px;
+  background:#2563eb;
+  color:#fff;
+  box-shadow:0 7px 18px rgba(37,99,235,.18);
+  font-size:14px;
+  font-style:normal;
+  font-weight:1000;
+}
+.kinojo-daevanion-effect-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.kinojo-daevanion-effects{
+  margin-top:0;
+  padding:11px;
+  border:1px solid #dbeafe;
+  border-radius:12px;
+  background:#f8fbff;
+}
+.kinojo-daevanion-effects.is-skill{border-color:#ddd6fe;background:#faf5ff}
+.kinojo-daevanion-effects h4{margin-bottom:9px;color:#334155}
+.kinojo-daevanion-effects p{
+  margin:5px 0;
+  padding:7px 8px;
+  border:1px solid rgba(147,197,253,.22);
+  background:#fff;
+  color:#1d4ed8;
+}
+.kinojo-daevanion-effects.is-skill p{border-color:rgba(196,181,253,.28);color:#6d28d9}
+.kinojo-daevanion-effects p.is-empty{color:#94a3b8}
+.kinojo-daevanion-nodes>h4{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.kinojo-daevanion-nodes>h4 span{color:#2563eb;font-size:9px}
+.kinojo-daevanion-nodes article{align-items:flex-start;min-height:50px;background:#fff;box-sizing:border-box}
+.kinojo-daevanion-nodes article>img,
+.kinojo-daevanion-nodes article>i{
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+  width:34px;
+  height:34px;
+  border:1px solid #dbeafe;
+  border-radius:9px;
+  background:#f8fbff;
+  object-fit:cover;
+  color:#60a5fa;
+  font-size:15px;
+  font-style:normal;
+}
+.kinojo-daevanion-nodes small:empty::after{content:"활성 효과 정보 없음";color:#94a3b8}
+.kinojo-daevanion-node-empty{grid-column:1/-1;margin:0;padding:24px;border:1px dashed #cbd5e1;border-radius:10px;color:#94a3b8;font-size:10px;text-align:center}
+
+@media(max-width:760px){
+  .kinojo-character-daevanion-grid button{grid-template-columns:44px minmax(0,1fr) auto;min-height:66px}
+  .kinojo-character-daevanion-grid button>img,.kinojo-character-daevanion-grid button>i{width:44px;height:44px}
+  .kinojo-daevanion-detail-hero{grid-template-columns:54px minmax(0,1fr) auto;padding:13px 40px 13px 13px}
+  .kinojo-daevanion-detail-hero>img,.kinojo-daevanion-detail-hero>i{width:54px;height:54px}
+  .kinojo-daevanion-effect-columns{grid-template-columns:1fr}
+}
+@media(max-width:430px){
+  .kinojo-character-daevanion-grid button{grid-template-columns:40px minmax(0,1fr) auto;gap:8px;padding:8px}
+  .kinojo-character-daevanion-grid button>img,.kinojo-character-daevanion-grid button>i{width:40px;height:40px;border-radius:10px}
+  .kinojo-character-daevanion-grid button>strong{min-width:40px;height:28px;font-size:12px}
+  .kinojo-daevanion-detail-hero{grid-template-columns:48px minmax(0,1fr);padding:12px 38px 12px 12px}
+  .kinojo-daevanion-detail-hero>img,.kinojo-daevanion-detail-hero>i{width:48px;height:48px;border-radius:12px}
+  .kinojo-daevanion-detail-hero>em{grid-column:1/-1;width:100%;height:30px;box-sizing:border-box}
+}
