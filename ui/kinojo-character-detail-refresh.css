@@ -44,3 +44,22 @@
   .kinojo-character-equipment-mobile-back:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
   .kinojo-character-equipment-detail-view>.kinojo-character-equipment-detail-pane{width:100%;min-width:0;box-sizing:border-box}
 }
+
+/* 2026-08-03 · 캐릭터 모달 모바일 긴 장비명·적용 외형 3-2 */
+.kinojo-character-equipment-skin:not(.is-empty){position:relative;border-color:#bfdbfe;border-radius:10px;background:#eff6ff;box-shadow:inset 0 0 0 1px rgba(37,99,235,.05)}
+.kinojo-character-equipment-skin:not(.is-empty)::after{content:"외형";position:absolute;right:2px;bottom:2px;min-width:22px;padding:2px 4px;border-radius:999px;background:rgba(15,23,42,.82);color:#fff;font-size:7px;font-style:normal;font-weight:900;line-height:1;text-align:center;box-sizing:border-box}
+@media(max-width:640px){
+  .kinojo-character-equipment-row{grid-template-columns:42px 20px minmax(0,1fr);min-height:68px;padding:7px 8px;align-items:center}
+  .kinojo-character-equipment-row:has(.kinojo-character-equipment-skin:not(.is-empty)){grid-template-columns:42px 20px minmax(0,1fr) 42px}
+  .kinojo-character-equipment-skin.is-empty{display:none}
+  .kinojo-character-equipment-name{gap:4px}
+  .kinojo-character-equipment-name b{display:-webkit-box;max-height:2.8em;line-height:1.4;white-space:normal;overflow:hidden;text-overflow:clip;overflow-wrap:anywhere;word-break:keep-all;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+  .kinojo-character-equipment-name small{line-height:1.3}
+  .kinojo-character-equipment-skin:not(.is-empty){width:42px;height:42px}
+}
+@media(max-width:390px){
+  .kinojo-character-equipment-row{grid-template-columns:38px 18px minmax(0,1fr);gap:6px;padding:7px 6px}
+  .kinojo-character-equipment-row:has(.kinojo-character-equipment-skin:not(.is-empty)){grid-template-columns:38px 18px minmax(0,1fr) 38px}
+  .kinojo-character-equipment-main-icon,.kinojo-character-equipment-skin:not(.is-empty){width:38px;height:38px}
+  .kinojo-character-equipment-exceed{width:18px;height:18px}
+}
