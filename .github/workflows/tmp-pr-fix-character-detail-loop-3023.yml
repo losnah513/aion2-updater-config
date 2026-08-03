@@ -1,0 +1,69 @@
+name: tmp-pr-fix-character-detail-loop-3023
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/character-detail-modal-loop-3023
+          fetch-depth: 0
+
+      - name: Patch modal completion handling
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('ui/kinojo-character-detail-refresh.js')
+          text = path.read_text(encoding='utf-8')
+          text = text.replace("const API_VERSION = '302.1';", "const API_VERSION = '302.2';", 1)
+          text = text.replace("""    starting:false,
+              lastOptions:null,
+              lastTerminalJobId:'',
+              modalRefreshBusy:false
+            };""", """    starting:false
+            };""", 1)
+          text = re.sub(r"\n  function isTerminal\(job\)\{.*?\n  \}\n", "", text, count=1, flags=re.S)
+          text = re.sub(r"\n    if\(isTerminal\(job\).*?\n    \}\n  \}\n\n  function stopPoll", "\n  }\n\n  function stopPoll", text, count=1, flags=re.S)
+          text = re.sub(r"\n  function refreshOpenModal\(\)\{.*?\n  function setupOverviewBridge", "\n  function setupOverviewBridge", text, count=1, flags=re.S)
+          text = text.replace("    setupOpenCapture();setupOverviewBridge();", "    setupOverviewBridge();")
+          text = text.replace("state.status=null;state.lastTerminalJobId='';", "state.status=null;")
+          forbidden = ('refreshOpenModal','setupOpenCapture','lastTerminalJobId','modalRefreshBusy','lastOptions','function isTerminal')
+          for token in forbidden:
+              if token in text:
+                  raise SystemExit('forbidden token remains: '+token)
+          if "const API_VERSION = '302.2';" not in text:
+              raise SystemExit('version patch failed')
+          path.write_text(text, encoding='utf-8')
+
+          pages = [Path('hof/index.html'),Path('m/hof/index.html'),Path('ranking/index.html'),Path('m/ranking/index.html'),Path('sanctuary/index.html'),Path('m/sanctuary/index.html')]
+          for page in pages:
+              html = page.read_text(encoding='utf-8')
+              old = 'kinojo-character-detail-refresh.js?cache=2026080301'
+              if html.count(old) != 1:
+                  raise SystemExit('cache marker mismatch: '+str(page))
+              page.write_text(html.replace(old,'kinojo-character-detail-refresh.js?cache=2026080302',1),encoding='utf-8')
+          PY
+
+      - name: Validate and commit
+        shell: bash
+        run: |
+          node --check ui/kinojo-character-detail-refresh.js
+          test "$(grep -R "kinojo-character-detail-refresh.js?cache=2026080302" -l hof/index.html m/hof/index.html ranking/index.html m/ranking/index.html sanctuary/index.html m/sanctuary/index.html | wc -l)" -eq 6
+          rm -f .github/workflows/tmp-fix-character-detail-loop-3023.yml .github/workflows/tmp-pr-fix-character-detail-loop-3023.yml .github/trigger-character-detail-3023.txt
+          git config user.name kinojo-bot
+          git config user.email kinojo-bot@users.noreply.github.com
+          git add -A
+          git commit -m "fix: stop character detail modal reopen loop"
+          git push origin HEAD:fix/character-detail-modal-loop-3023
