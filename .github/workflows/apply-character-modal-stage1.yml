@@ -1,0 +1,62 @@
+name: Apply character modal stage1
+
+on:
+  push:
+    branches:
+      - feature/character-modal-stage1-305
+
+permissions:
+  contents: write
+
+jobs:
+  apply-stage1:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/character-modal-stage1-305
+          fetch-depth: 0
+      - name: Restore staged source files
+        shell: python
+        run: |
+          import gzip
+          import shutil
+          from pathlib import Path
+
+          files = {
+              '.kinojo-stage1/kinojo-character-reaction.js.gz': 'ui/kinojo-character-reaction.js',
+              '.kinojo-stage1/kinojo-character-reaction.css.gz': 'ui/kinojo-character-reaction.css',
+              '.kinojo-stage1/hof-index.html.gz': 'hof/index.html',
+              '.kinojo-stage1/m-hof-index.html.gz': 'm/hof/index.html',
+              '.kinojo-stage1/ranking-index.html.gz': 'ranking/index.html',
+              '.kinojo-stage1/m-ranking-index.html.gz': 'm/ranking/index.html',
+              '.kinojo-stage1/sanctuary-index.html.gz': 'sanctuary/index.html',
+              '.kinojo-stage1/m-sanctuary-index.html.gz': 'm/sanctuary/index.html',
+          }
+          for source, target in files.items():
+              Path(target).write_bytes(gzip.decompress(Path(source).read_bytes()))
+          shutil.rmtree('.kinojo-stage1')
+          Path('.github/workflows/apply-character-modal-stage1.yml').unlink()
+      - name: Verify JavaScript and cache versions
+        run: |
+          node --check ui/kinojo-character-reaction.js
+          grep -q 'kinojo-character-reaction.css?cache=2026080304' hof/index.html
+          grep -q 'kinojo-character-reaction.js?cache=2026080304' hof/index.html
+          grep -q 'kinojo-character-reaction.css?cache=2026080304' m/hof/index.html
+          grep -q 'kinojo-character-reaction.js?cache=2026080304' m/hof/index.html
+          grep -q 'kinojo-character-reaction.css?cache=2026080304' ranking/index.html
+          grep -q 'kinojo-character-reaction.js?cache=2026080304' ranking/index.html
+          grep -q 'kinojo-character-reaction.css?cache=2026080304' m/ranking/index.html
+          grep -q 'kinojo-character-reaction.js?cache=2026080304' m/ranking/index.html
+          grep -q 'kinojo-character-reaction.css?cache=2026080304' sanctuary/index.html
+          grep -q 'kinojo-character-reaction.js?cache=2026080304' sanctuary/index.html
+          grep -q 'kinojo-character-reaction.css?cache=2026080304' m/sanctuary/index.html
+          grep -q 'kinojo-character-reaction.js?cache=2026080304' m/sanctuary/index.html
+      - name: Commit stage1 source
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'feat: redesign character modal stats and skills stage1'
+          git push origin HEAD:feature/character-modal-stage1-305
