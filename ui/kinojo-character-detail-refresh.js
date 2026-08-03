@@ -6,7 +6,7 @@
 (function(){
   'use strict';
 
-  const API_VERSION = '302.1';
+  const API_VERSION = '302.2';
   const POLL_MS = 1800;
   const state = {
     currentKey:'',
@@ -15,10 +15,7 @@
     pollTimer:null,
     tickTimer:null,
     statusLoading:false,
-    starting:false,
-    lastOptions:null,
-    lastTerminalJobId:'',
-    modalRefreshBusy:false
+    starting:false
   };
 
   function esc(value){
@@ -78,10 +75,6 @@
 
   function isActive(job){
     return !!job && ['queued','running','waiting'].includes(String(job.status||''));
-  }
-
-  function isTerminal(job){
-    return !!job && ['completed','partial_failed','failed'].includes(String(job.status||''));
   }
 
   function formatDate(value){
@@ -181,10 +174,6 @@
     }
     renderProgress(job);
 
-    if(isTerminal(job) && job.id && state.lastTerminalJobId!==String(job.id)){
-      state.lastTerminalJobId=String(job.id);
-      if(job.status==='completed' || job.status==='partial_failed') refreshOpenModal();
-    }
   }
 
   function stopPoll(){
@@ -222,29 +211,6 @@
     }finally{state.starting=false;}
   }
 
-  function refreshOpenModal(){
-    if(state.modalRefreshBusy || !state.lastOptions || !window.KinojoCharacterReaction) return;
-    state.modalRefreshBusy=true;
-    const activeTab=document.querySelector('#kinojoCharacterReactionModal [data-kinojo-character-tab].active')?.getAttribute('data-kinojo-character-tab')||'equipment';
-    const options=state.lastOptions;
-    try{window.KinojoCharacterReaction.close();}catch(_err){}
-    try{window.dispatchEvent(new CustomEvent('kinojo:auth-changed',{detail:{source:'character-detail-refresh'}}));}catch(_err){}
-    setTimeout(()=>{
-      try{
-        window.KinojoCharacterReaction.open(options);
-        setTimeout(()=>document.querySelector('#kinojoCharacterReactionModal [data-kinojo-character-tab="'+activeTab+'"]')?.click(),180);
-      }finally{state.modalRefreshBusy=false;}
-    },80);
-  }
-
-  function setupOpenCapture(){
-    const api=window.KinojoCharacterReaction;
-    if(!api || api.__detailRefreshWrapped || typeof api.open!=='function') return;
-    const originalOpen=api.open.bind(api);
-    api.open=function(options){state.lastOptions=options||null;return originalOpen(options);};
-    Object.defineProperty(api,'__detailRefreshWrapped',{value:true,configurable:false});
-  }
-
   function setupOverviewBridge(){
     const api=window.KinojoSupabase;
     if(!api || api.__manualDetailOverviewWrapped || typeof api.getLiveCharacterProfile!=='function') return;
@@ -277,13 +243,13 @@
   }
 
   function syncModal(){
-    setupOpenCapture();setupOverviewBridge();
+    setupOverviewBridge();
     const identity=modalIdentity();
     if(!identity){stopPoll();state.currentKey='';state.identity=null;return;}
     ensurePanel();
     const key=identityKey(identity);
     if(key!==state.currentKey){
-      stopPoll();state.currentKey=key;state.identity=identity;state.status=null;state.lastTerminalJobId='';
+      stopPoll();state.currentKey=key;state.identity=identity;state.status=null;
       loadStatus(false);
     }
   }
@@ -417,7 +383,7 @@
 
   const observer=new MutationObserver(()=>requestAnimationFrame(syncModal));
   const start=()=>{
-    setupOpenCapture();setupOverviewBridge();syncModal();
+    setupOverviewBridge();syncModal();
     observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','href']});
   };
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true}); else start();
