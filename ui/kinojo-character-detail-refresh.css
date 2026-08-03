@@ -1,4 +1,4 @@
-/* KINOJO manual character detail refresh · 302.1 */
+/* KINOJO manual character detail refresh · 305.1 */
 .kinojo-character-detail-refresh{margin:0 0 14px;padding:13px;border:1px solid #dbeafe;border-radius:16px;background:linear-gradient(180deg,#f8fbff,#fff);box-sizing:border-box}
 .kinojo-detail-refresh-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .kinojo-detail-refresh-head>div{display:grid;gap:3px}.kinojo-detail-refresh-head strong{font-size:12px;color:#0f172a}.kinojo-detail-refresh-head span{font-size:9px;color:#64748b}
@@ -22,3 +22,13 @@
 .kinojo-daevanion-effects,.kinojo-daevanion-nodes{margin-top:12px}.kinojo-daevanion-effects h4,.kinojo-daevanion-nodes h4{margin:0 0 8px;font-size:10px;color:#475569}.kinojo-daevanion-effects p{margin:4px 0;padding:7px 8px;border-radius:8px;background:#eff6ff;color:#1d4ed8;font-size:9px}
 .kinojo-daevanion-nodes>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.kinojo-daevanion-nodes article{display:flex;gap:7px;padding:8px;border:1px solid #e2e8f0;border-radius:9px}.kinojo-daevanion-nodes img{width:30px;height:30px}.kinojo-daevanion-nodes span{display:grid;gap:3px;min-width:0}.kinojo-daevanion-nodes b{font-size:9px;color:#334155}.kinojo-daevanion-nodes small{font-size:8px;color:#64748b;line-height:1.35}.kinojo-detail-refreshed-at{display:block;margin-top:10px;color:#94a3b8;font-size:8px}
 @media(max-width:760px){.kinojo-detail-refresh-progress{grid-template-columns:repeat(2,minmax(0,1fr))}.kinojo-detail-refresh-progress article:last-child{grid-column:1/-1}.kinojo-detail-refresh-head{align-items:flex-start}.kinojo-detail-refresh-head button{max-width:150px}.kinojo-official-item-head{padding-left:12px}.kinojo-official-item-section{padding:12px}.kinojo-official-info-list>div,.kinojo-detail-stat{grid-template-columns:88px 1fr}.kinojo-official-stones,.kinojo-daevanion-nodes>div{grid-template-columns:1fr}}
+
+/* 2026-08-03 · 캐릭터 모달 장비/아르카나 좌우 상세 2단계 */
+.kinojo-character-live-detail.kinojo-character-equipment-detail-pane.kinojo-official-item-detail{margin:0;padding:0;max-height:610px;overflow-y:auto;border-color:#dbe5f0;border-radius:15px;background:#fff}
+.kinojo-character-equipment-detail-pane.is-persistent .kinojo-official-item-head{padding-right:16px}
+.kinojo-character-equipment-detail-pane .kinojo-character-live-loading,.kinojo-character-equipment-detail-pane .kinojo-character-live-error{min-height:608px;border:0;background:transparent}
+.kinojo-character-equipment-detail-pane .kinojo-character-live-error{padding:26px;text-align:center;box-sizing:border-box}
+@media(max-width:640px){
+  .kinojo-character-live-detail.kinojo-character-equipment-detail-pane.kinojo-official-item-detail{max-height:none}
+  .kinojo-character-equipment-detail-pane .kinojo-character-live-loading,.kinojo-character-equipment-detail-pane .kinojo-character-live-error{min-height:418px}
+}
