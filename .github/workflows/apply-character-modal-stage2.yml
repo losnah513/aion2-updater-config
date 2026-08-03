@@ -105,8 +105,9 @@ jobs:
               assert 'kinojo-character-detail-refresh.css?cache=2026080302' in text, path
           reaction = Path('ui/kinojo-character-reaction.js').read_text(encoding='utf-8')
           assert 'data-kinojo-character-tab="arcana"' in reaction
-          assert 'data-equipment-category="weaponArmor"' in reaction
-          assert 'data-equipment-category="accessory"' in reaction
+          assert 'data-equipment-category' in reaction
+          assert "key:'weaponArmor'" in reaction
+          assert "key:'accessory'" in reaction
           detail = Path('ui/kinojo-character-detail-refresh.js').read_text(encoding='utf-8')
           assert "API_VERSION = '305.1'" in detail
           PY
