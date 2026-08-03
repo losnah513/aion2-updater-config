@@ -27,6 +27,11 @@ jobs:
           from pathlib import Path
           import shutil
 
+          def decode_gzip(value):
+              encoded = ''.join(str(value).split())
+              encoded += '=' * (-len(encoded) % 4)
+              return gzip.decompress(base64.b64decode(encoded))
+
           root = Path('.')
           stage = root / '.stage2'
           direct = {
@@ -36,9 +41,8 @@ jobs:
               'kinojo-character-detail-refresh.css.gz.b64': root / 'ui/kinojo-character-detail-refresh.css',
           }
           for source_name, target in direct.items():
-              encoded = (stage / source_name).read_text(encoding='utf-8').strip()
               target.parent.mkdir(parents=True, exist_ok=True)
-              target.write_bytes(gzip.decompress(base64.b64decode(encoded)))
+              target.write_bytes(decode_gzip((stage / source_name).read_text(encoding='utf-8')))
 
           html_targets = {
               'hof-index.html.gz.b64': root / 'hof/index.html',
@@ -51,7 +55,7 @@ jobs:
           payloads = json.loads((stage / 'html-payloads.json').read_text(encoding='utf-8'))
           for source_name, target in html_targets.items():
               target.parent.mkdir(parents=True, exist_ok=True)
-              target.write_bytes(gzip.decompress(base64.b64decode(payloads[source_name])))
+              target.write_bytes(decode_gzip(payloads[source_name]))
 
           shutil.rmtree(stage)
           Path('.github/workflows/apply-character-modal-stage2.yml').unlink(missing_ok=True)
