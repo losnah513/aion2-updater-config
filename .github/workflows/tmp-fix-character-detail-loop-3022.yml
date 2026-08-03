@@ -79,3 +79,5 @@ jobs:
           git add ui/kinojo-character-detail-refresh.js hof/index.html m/hof/index.html ranking/index.html m/ranking/index.html sanctuary/index.html m/sanctuary/index.html .github/workflows/tmp-fix-character-detail-loop-3022.yml
           git commit -m "fix: stop character detail modal reopen loop"
           git push origin HEAD:fix/character-detail-modal-loop-3022
+
+# trigger: 2026-08-03T10:58+09:00
