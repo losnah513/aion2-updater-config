@@ -60,9 +60,12 @@ jobs:
               'm-sanctuary-index.html': 'm/sanctuary/index.html',
           }
           for source_name, target_name in targets.items():
+              matches = [path for path in temp.rglob(source_name) if path.is_file()]
+              if len(matches) != 1:
+                  raise RuntimeError(f'expected one {source_name}, found {len(matches)}: {matches}')
               target = root / target_name
               target.parent.mkdir(parents=True, exist_ok=True)
-              target.write_bytes((temp / source_name).read_bytes())
+              target.write_bytes(matches[0].read_bytes())
 
           shutil.rmtree(temp)
           shutil.rmtree(parts)
