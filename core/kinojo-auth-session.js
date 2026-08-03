@@ -27,6 +27,17 @@
   function getLevel(){const role=roleOf(getSession());return role==='MASTER'?5:role==='SUB_MASTER'?4:role==='MANAGER'?3:role==='STAFF'?2:role==='MEMBER'?1:0;}
   function isAdmin(){return canOpenManage(roleOf(getSession()));}
   function canManageAccounts(role){return ['MASTER','SUB_MASTER','MANAGER'].includes(String(role||''));}
+  function installAuthUiCompatibility(){
+    // 2026-08-03: 코어 분리 이전 직접 참조가 남은 auth-ui가 동일 세션 코어를 사용하도록 연결한다.
+    // 저장·판정 원본은 이 모듈 하나이며 별도 세션 로직을 복제하지 않는다.
+    if(typeof window.readJson!=='function'){
+      Object.defineProperty(window,'readJson',{value:readJson,writable:false,configurable:true,enumerable:false});
+    }
+    if(typeof window.STORAGE_KEY==='undefined'){
+      Object.defineProperty(window,'STORAGE_KEY',{value:STORAGE_KEY,writable:false,configurable:true,enumerable:false});
+    }
+  }
   migrateAuthCacheIfNeeded();
+  installAuthUiCompatibility();
   window.KinojoAuthSessionCore=Object.freeze({STORAGE_KEY,ACCOUNT_KEY,IDLE_LOGOUT_MS,IDLE_WARNING_MS,ACTIVITY_WRITE_THROTTLE_MS,readJson,writeJson,getSession,getAccount,setStoredSession,clearStoredSession,isLoggedIn,getToken,roleOf,roleLabel,canOpenManage,getLevel,isAdmin,canManageAccounts});
 })();
