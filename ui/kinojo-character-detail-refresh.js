@@ -91,6 +91,86 @@
     return min+':'+String(sec).padStart(2,'0');
   }
 
+
+  function detailErrorCode(error){
+    const values=[error?.code,error?.data?.code,error?.details?.code,error?.body?.code,error?.response?.code];
+    for(const value of values){
+      const code=String(value||'').trim();
+      if(code) return code;
+    }
+    const message=String(error?.message||error||'');
+    const match=message.match(/\b(EQUIPMENT_DETAIL_NOT_STORED|DAEVANION_DETAIL_NOT_STORED)\b/);
+    if(match) return match[1];
+    if(/저장된 장비 상세정보가 없습니다|장비 상세정보.*갱신을 먼저/.test(message)) return 'EQUIPMENT_DETAIL_NOT_STORED';
+    if(/저장된 데바니온 상세정보가 없습니다|데바니온 상세정보.*갱신을 먼저/.test(message)) return 'DAEVANION_DETAIL_NOT_STORED';
+    return '';
+  }
+
+  function detailStateContext(){
+    const job=state.status?.job||null;
+    return {
+      job,
+      active:isActive(job),
+      failed:number(job?.progress?.overall?.failed),
+      remaining:cooldownRemaining(job)
+    };
+  }
+
+  function detailStateMarkup(kind,error){
+    const isEquipment=kind==='equipment';
+    const label=isEquipment?'장비':'데바니온';
+    const ctx=detailStateContext();
+    const code=detailErrorCode(error);
+    const missing=code===(isEquipment?'EQUIPMENT_DETAIL_NOT_STORED':'DAEVANION_DETAIL_NOT_STORED');
+    if(!missing){
+      return '<div class="kinojo-detail-state is-error"><i aria-hidden="true">!</i><strong>'+label+' 상세 조회 실패</strong><span>'+esc(error?.message||error||'잠시 뒤 다시 선택해 주세요.')+'</span></div>';
+    }
+    let tone='is-missing',title=label+' 상세정보 미갱신';
+    let message='기본 '+label+' 정보는 저장되어 있지만 옵션·노드 상세는 아직 수집되지 않았습니다.';
+    let action='전체 상세 갱신으로 이동';
+    if(ctx.active){
+      tone='is-running';title='상세 갱신 진행 중';
+      message='현재 전체 상세 갱신이 진행 중입니다. 저장이 완료된 뒤 다시 선택해 주세요.';
+      action='갱신 진행 상태 보기';
+    }else if(ctx.failed>0){
+      message='이번 전체 상세 갱신에서 이 항목의 상세정보가 저장되지 않았습니다. 상단 실패 수량을 확인하고 다음 갱신 가능 시 다시 실행해 주세요.';
+    }
+    return '<div class="kinojo-detail-state '+tone+'"><i aria-hidden="true">'+(ctx.active?'…':'i')+'</i><strong>'+title+'</strong><span>'+message+'</span><button type="button" data-detail-refresh-jump>'+action+'</button></div>';
+  }
+
+  function renderDetailState(root,kind,error){
+    if(!root) return;
+    const code=detailErrorCode(error);
+    const missingCodes=['EQUIPMENT_DETAIL_NOT_STORED','DAEVANION_DETAIL_NOT_STORED'];
+    root.classList.remove('kinojo-official-item-detail');
+    root.dataset.loadedEquipmentKey='';
+    if(missingCodes.includes(code)){
+      root.dataset.detailStateKind=kind;
+      root.dataset.detailStateCode=code;
+    }else{
+      delete root.dataset.detailStateKind;
+      delete root.dataset.detailStateCode;
+    }
+    const closeButton=root.hasAttribute('data-persistent-detail')?'':'<button type="button" class="kinojo-character-live-detail-close" data-live-detail-close>닫기</button>';
+    root.innerHTML=closeButton+detailStateMarkup(kind,error);
+  }
+
+  function syncVisibleDetailStates(){
+    document.querySelectorAll('[data-detail-state-kind][data-detail-state-code]').forEach(root=>{
+      renderDetailState(root,String(root.dataset.detailStateKind||'equipment'),{code:String(root.dataset.detailStateCode||'')});
+    });
+  }
+
+  function focusDetailRefreshPanel(){
+    const panel=ensurePanel();
+    if(!panel) return;
+    panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+    requestAnimationFrame(()=>{
+      const button=document.getElementById('kinojoDetailRefreshBtn');
+      try{button?.focus({preventScroll:true});}catch(_err){button?.focus();}
+    });
+  }
+
   function ensurePanel(){
     const modal=document.getElementById('kinojoCharacterReactionModal');
     const status=document.getElementById('kinojoCharacterLiveStatus');
@@ -154,7 +234,7 @@
       if(btn){btn.disabled=state.starting;btn.textContent=state.starting?'갱신 요청 중':'전체 상세 정보 갱신';}
       if(meta) meta.textContent=data?.hasStoredDetail?'저장된 일부 상세 정보 있음':'아직 상세 갱신 기록 없음';
       if(message) message.textContent=data?.message||'버튼을 누른 캐릭터만 장비·데바니온 상세를 순차 갱신합니다.';
-      renderProgress(null);return;
+      renderProgress(null);syncVisibleDetailStates();return;
     }
 
     if(isActive(job)){
@@ -175,6 +255,7 @@
       if(message) message.textContent=job.status==='failed'?(job.lastErrorMessage||'이전 갱신에 실패했습니다.'):'30분 대기시간이 끝났습니다.';
     }
     renderProgress(job);
+    syncVisibleDetailStates();
   }
 
   function stopPoll(){
@@ -418,6 +499,8 @@
       ['장착 제한 레벨',item.equipLevel??'-']
     ];
     root.hidden=false;
+    delete root.dataset.detailStateKind;
+    delete root.dataset.detailStateCode;
     root.dataset.loadedEquipmentKey=String(button?.dataset?.equipmentKey||'');
     root.classList.add('kinojo-official-item-detail');
     const closeButton=root.hasAttribute('data-persistent-detail')?'':'<button type="button" class="kinojo-character-live-detail-close" data-live-detail-close>닫기</button>';
@@ -455,14 +538,15 @@
     markEquipmentSelection(button);
     root.hidden=false;
     root.classList.remove('kinojo-official-item-detail');
+    delete root.dataset.detailStateKind;
+    delete root.dataset.detailStateCode;
     root.dataset.loadedEquipmentKey='';
     root.innerHTML='<div class="kinojo-character-live-loading">저장된 장비 상세 옵션을 불러오는 중입니다.</div>';
     try{
       const data=await invoke('equipmentItem',Object.assign({},state.identity,{itemId:number(button.dataset.itemId),slotPos:number(button.dataset.slotPos)}));
       renderEquipmentDetail(data,button,root);
     }catch(error){
-      const closeButton=root.hasAttribute('data-persistent-detail')?'':'<button type="button" class="kinojo-character-live-detail-close" data-live-detail-close>닫기</button>';
-      root.innerHTML=closeButton+'<div class="kinojo-character-live-error"><strong>장비 상세정보가 없습니다.</strong><span>'+esc(error.message||error)+'</span></div>';
+      renderDetailState(root,'equipment',error);
     }
   }
 
@@ -475,6 +559,8 @@
     const skillEffects=Array.isArray(board.openSkillEffectList)?board.openSkillEffectList:[];
     const effects=[...statEffects,...skillEffects].map(row=>row?.desc).filter(Boolean);
     root.hidden=false;
+    delete root.dataset.detailStateKind;
+    delete root.dataset.detailStateCode;
     root.innerHTML=
       '<button type="button" class="kinojo-character-live-detail-close" data-live-detail-close>닫기</button>'+
       '<div class="kinojo-daevanion-detail-head"><strong>'+esc(board.name||'데바니온 상세')+'</strong><span>활성 노드 '+openNodes.length+' / '+nodes.length+'</span></div>'+
@@ -489,12 +575,12 @@
 
   async function loadDaevanionDetail(button){
     const root=document.getElementById('kinojoLiveDaevanionDetail');if(!root||!state.identity) return;
-    root.hidden=false;root.innerHTML='<div class="kinojo-character-live-loading">저장된 데바니온 상세를 불러오는 중입니다.</div>';
+    root.hidden=false;delete root.dataset.detailStateKind;delete root.dataset.detailStateCode;root.innerHTML='<div class="kinojo-character-live-loading">저장된 데바니온 상세를 불러오는 중입니다.</div>';
     try{
       const data=await invoke('daevanionDetail',Object.assign({},state.identity,{boardId:number(button.dataset.boardId)}));
       renderDaevanionDetail(data);
     }catch(error){
-      root.innerHTML='<button type="button" class="kinojo-character-live-detail-close" data-live-detail-close>닫기</button><div class="kinojo-character-live-error"><strong>데바니온 상세정보가 없습니다.</strong><span>'+esc(error.message||error)+'</span></div>';
+      renderDetailState(root,'daevanion',error);
     }
   }
 
@@ -502,6 +588,10 @@
     const target=event.target instanceof Element?event.target:null;if(!target) return;
     const modal=document.getElementById('kinojoCharacterReactionModal');
     if(target.closest('[data-kinojo-character-reaction-close]') && modal?.contains(target)) resetClosedMobileEquipmentState();
+    const jump=target.closest('[data-detail-refresh-jump]');
+    if(jump && modal?.contains(jump)){
+      event.preventDefault();focusDetailRefreshPanel();return;
+    }
     const back=target.closest('[data-mobile-equipment-back]');
     if(back && modal?.contains(back)){
       event.preventDefault();showMobileEquipmentList();return;
