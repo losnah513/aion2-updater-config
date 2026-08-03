@@ -24,42 +24,39 @@ jobs:
           import base64
           import gzip
           import io
+          import json
           import shutil
           import tarfile
           from pathlib import Path
 
           root = Path('.')
           parts = root / '.stage2parts'
+          stage = root / '.stage2'
+
+          def decode_base64(value):
+              encoded = ''.join(str(value).split())
+              encoded += '=' * (-len(encoded) % 4)
+              return base64.b64decode(encoded)
 
           def read_parts(prefix):
               files = sorted(parts.glob(prefix + '.*.part'))
               if not files:
                   raise RuntimeError('missing parts: ' + prefix)
-              encoded = ''.join(path.read_text(encoding='utf-8').strip() for path in files)
-              encoded += '=' * (-len(encoded) % 4)
-              return base64.b64decode(encoded)
+              return decode_base64(''.join(path.read_text(encoding='utf-8').strip() for path in files))
 
-          reaction_js = gzip.decompress(read_parts('reaction-js'))
-          (root / 'ui/kinojo-character-reaction.js').write_bytes(reaction_js)
+          (root / 'ui/kinojo-character-reaction.js').write_bytes(gzip.decompress(read_parts('reaction-js')))
 
-          bundle = read_parts('bundle')
           temp = root / '.stage2-extracted'
           temp.mkdir(exist_ok=True)
-          with tarfile.open(fileobj=io.BytesIO(bundle), mode='r:gz') as archive:
+          with tarfile.open(fileobj=io.BytesIO(read_parts('bundle')), mode='r:gz') as archive:
               archive.extractall(temp)
 
-          targets = {
+          bundle_targets = {
               'kinojo-character-reaction.css': 'ui/kinojo-character-reaction.css',
               'kinojo-character-detail-refresh.js': 'ui/kinojo-character-detail-refresh.js',
               'kinojo-character-detail-refresh.css': 'ui/kinojo-character-detail-refresh.css',
-              'hof-index.html': 'hof/index.html',
-              'm-hof-index.html': 'm/hof/index.html',
-              'ranking-index.html': 'ranking/index.html',
-              'm-ranking-index.html': 'm/ranking/index.html',
-              'sanctuary-index.html': 'sanctuary/index.html',
-              'm-sanctuary-index.html': 'm/sanctuary/index.html',
           }
-          for source_name, target_name in targets.items():
+          for source_name, target_name in bundle_targets.items():
               matches = [path for path in temp.rglob(source_name) if path.is_file()]
               if len(matches) != 1:
                   raise RuntimeError(f'expected one {source_name}, found {len(matches)}: {matches}')
@@ -67,9 +64,25 @@ jobs:
               target.parent.mkdir(parents=True, exist_ok=True)
               target.write_bytes(matches[0].read_bytes())
 
+          html_payloads = json.loads((stage / 'html-payloads.json').read_text(encoding='utf-8'))
+          html_targets = {
+              'hof-index.html.gz.b64': 'hof/index.html',
+              'm-hof-index.html.gz.b64': 'm/hof/index.html',
+              'ranking-index.html.gz.b64': 'ranking/index.html',
+              'm-ranking-index.html.gz.b64': 'm/ranking/index.html',
+              'sanctuary-index.html.gz.b64': 'sanctuary/index.html',
+              'm-sanctuary-index.html.gz.b64': 'm/sanctuary/index.html',
+          }
+          for payload_name, target_name in html_targets.items():
+              if payload_name not in html_payloads:
+                  raise RuntimeError('missing html payload: ' + payload_name)
+              target = root / target_name
+              target.parent.mkdir(parents=True, exist_ok=True)
+              target.write_bytes(gzip.decompress(decode_base64(html_payloads[payload_name])))
+
           shutil.rmtree(temp)
           shutil.rmtree(parts)
-          shutil.rmtree(root / '.stage2', ignore_errors=True)
+          shutil.rmtree(stage, ignore_errors=True)
           Path('.github/workflows/apply-character-modal-stage2.yml').unlink(missing_ok=True)
           PY
 
