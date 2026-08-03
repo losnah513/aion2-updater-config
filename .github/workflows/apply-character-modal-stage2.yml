@@ -1,0 +1,96 @@
+name: Apply character modal stage2
+
+on:
+  push:
+    branches:
+      - feature/character-modal-stage2-305
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Restore stage2 sources
+        shell: bash
+        run: |
+          python - <<'PY'
+          import base64
+          import gzip
+          import json
+          from pathlib import Path
+
+          root = Path('.')
+          stage = root / '.stage2'
+
+          direct = {
+              'kinojo-character-reaction.js.gz.b64': root / 'ui/kinojo-character-reaction.js',
+              'kinojo-character-reaction.css.gz.b64': root / 'ui/kinojo-character-reaction.css',
+              'kinojo-character-detail-refresh.js.gz.b64': root / 'ui/kinojo-character-detail-refresh.js',
+              'kinojo-character-detail-refresh.css.gz.b64': root / 'ui/kinojo-character-detail-refresh.css',
+          }
+          for source_name, target in direct.items():
+              encoded = (stage / source_name).read_text(encoding='utf-8').strip()
+              target.parent.mkdir(parents=True, exist_ok=True)
+              target.write_bytes(gzip.decompress(base64.b64decode(encoded)))
+
+          html_targets = {
+              'hof-index.html.gz.b64': root / 'hof/index.html',
+              'm-hof-index.html.gz.b64': root / 'm/hof/index.html',
+              'ranking-index.html.gz.b64': root / 'ranking/index.html',
+              'm-ranking-index.html.gz.b64': root / 'm/ranking/index.html',
+              'sanctuary-index.html.gz.b64': root / 'sanctuary/index.html',
+              'm-sanctuary-index.html.gz.b64': root / 'm/sanctuary/index.html',
+          }
+          payloads = json.loads((stage / 'html-payloads.json').read_text(encoding='utf-8'))
+          for source_name, target in html_targets.items():
+              target.parent.mkdir(parents=True, exist_ok=True)
+              target.write_bytes(gzip.decompress(base64.b64decode(payloads[source_name])))
+
+          import shutil
+          shutil.rmtree(stage)
+          Path('.github/workflows/apply-character-modal-stage2.yml').unlink()
+          PY
+
+      - name: Validate stage2 sources
+        shell: bash
+        run: |
+          node --check ui/kinojo-character-reaction.js
+          node --check ui/kinojo-character-detail-refresh.js
+          python - <<'PY'
+          from pathlib import Path
+          for path in [
+              Path('ui/kinojo-character-reaction.css'),
+              Path('ui/kinojo-character-detail-refresh.css'),
+          ]:
+              text = path.read_text(encoding='utf-8')
+              assert text.count('{') == text.count('}'), path
+          for path in [
+              Path('hof/index.html'), Path('m/hof/index.html'),
+              Path('ranking/index.html'), Path('m/ranking/index.html'),
+              Path('sanctuary/index.html'), Path('m/sanctuary/index.html'),
+          ]:
+              text = path.read_text(encoding='utf-8')
+              assert 'kinojo-character-reaction.js?cache=2026080305' in text, path
+              assert 'kinojo-character-detail-refresh.js?cache=2026080303' in text, path
+              assert 'kinojo-character-detail-refresh.css?cache=2026080302' in text, path
+          reaction = Path('ui/kinojo-character-reaction.js').read_text(encoding='utf-8')
+          assert 'data-kinojo-character-tab="arcana"' in reaction
+          assert 'data-equipment-category="weaponArmor"' in reaction
+          assert 'data-equipment-category="accessory"' in reaction
+          PY
+
+      - name: Commit restored sources
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "feat: 캐릭터 모달 장비·아르카나 2단계 리디자인"
+          git push
