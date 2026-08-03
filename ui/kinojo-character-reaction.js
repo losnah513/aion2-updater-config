@@ -250,16 +250,14 @@
         '<nav class="kinojo-character-live-tabs" aria-label="캐릭터 상세 탭">' +
           '<button class="active" type="button" data-kinojo-character-tab="overview">능력치</button>' +
           '<button type="button" data-kinojo-character-tab="equipment">장비</button>' +
-          '<button type="button" data-kinojo-character-tab="stats">기본 스탯·스킬</button>' +
           '<button type="button" data-kinojo-character-tab="daevanion">데바니온</button>' +
           '<button type="button" data-kinojo-character-tab="compare" data-kinojo-compare-tab hidden>내 캐릭터 비교</button>' +
           '<button type="button" data-kinojo-character-tab="reaction">평가·코멘트</button>' +
         '</nav>' +
         '<div class="kinojo-character-live-status" id="kinojoCharacterLiveStatus">KINOJO 저장 Snapshot을 불러오고 있습니다.</div>' +
         '<div class="kinojo-character-live-panels">' +
-          '<section class="kinojo-character-live-panel active" data-kinojo-character-panel="overview"><div class="kinojo-character-live-loading">저장 프로필과 핵심 능력치를 불러오는 중입니다.</div></section>' +
+          '<section class="kinojo-character-live-panel active" data-kinojo-character-panel="overview"><div class="kinojo-character-live-loading">저장 프로필과 능력치·스킬을 불러오는 중입니다.</div></section>' +
           '<section class="kinojo-character-live-panel" data-kinojo-character-panel="equipment"></section>' +
-          '<section class="kinojo-character-live-panel" data-kinojo-character-panel="stats"></section>' +
           '<section class="kinojo-character-live-panel" data-kinojo-character-panel="daevanion"></section>' +
           '<section class="kinojo-character-live-panel" data-kinojo-character-panel="compare"></section>' +
           '<section class="kinojo-character-live-panel" data-kinojo-character-panel="reaction">' +
@@ -329,7 +327,7 @@
   }
 
   function setTab(tab){
-    const allowed = ['overview','equipment','stats','daevanion','compare','reaction'];
+    const allowed = ['overview','equipment','daevanion','compare','reaction'];
     state.tab = allowed.includes(tab) ? tab : 'overview';
     document.querySelectorAll('#kinojoCharacterReactionModal [data-kinojo-character-tab]').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.kinojoCharacterTab === state.tab);
@@ -417,18 +415,66 @@
     '</article>';
   }
 
+  function baseStatValue(row){
+    const value = row?.value;
+    if(value === undefined || value === null || String(value).trim() === '') return '—';
+    return String(value);
+  }
+
+  function renderBaseStatCard(row){
+    const effects = Array.isArray(row?.effects) ? row.effects.filter(Boolean) : [];
+    return '<article class="available kinojo-character-base-card">' +
+      '<div class="kinojo-character-stat-card-head"><span>' + esc(row?.name || row?.type || '-') + '</span><em>기본</em></div>' +
+      '<strong>' + esc(baseStatValue(row)) + '</strong>' +
+      '<small>' + esc(effects.join(' · ') || '공식 최종값') + '</small>' +
+    '</article>';
+  }
+
+  function skillCategoryKey(value){
+    const raw = String(value || '').trim().toLowerCase();
+    if(raw === 'active') return 'active';
+    if(raw === 'passive') return 'passive';
+    if(raw === 'dp') return 'dp';
+    return 'other';
+  }
+
+  function skillCategoryLabel(value){
+    return ({ active:'액티브', passive:'패시브', dp:'DP', other:'기타' })[skillCategoryKey(value)] || '기타';
+  }
+
+  function renderSkillCard(skill){
+    const icon = normalizedImageUrl(skill?.icon);
+    const level = Math.max(0, Number(skill?.level || 0));
+    return '<article class="kinojo-character-skill-card">' +
+      '<div class="kinojo-character-skill-icon ' + (icon ? '' : 'is-empty') + '">' + (icon ? '<img src="' + safeUrl(icon) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">' : '') + '</div>' +
+      '<span><b>' + esc(skill?.name || '-') + '</b><small>' + esc(skillCategoryLabel(skill?.category)) + (skill?.equip ? ' · 장착' : '') + '</small></span>' +
+      '<strong>Lv.' + level + '</strong>' +
+    '</article>';
+  }
+
   function renderLiveOverview(data){
     const panel = livePanel('overview');
     if(!panel) return;
     const profile = data.profile || {};
     const stats = Array.isArray(data.coreStats) ? data.coreStats : [];
+    const base = (Array.isArray(data.baseStats) ? data.baseStats : []).filter(row => String(row?.type || '').toLowerCase() !== 'itemlevel');
+    const skills = (Array.isArray(data.skills) ? data.skills : []).filter(skill => skill?.acquired === true || Number(skill?.acquired || 0) === 1);
+    const primaryTypes = new Set(['STR','DEX','AGI','WIS','INT','CON']);
+    const primary = base.filter(row => primaryTypes.has(String(row.type || '')));
+    const secondary = base.filter(row => !primaryTypes.has(String(row.type || '')));
     const groups = [
       { key:'basic', label:'기본 공격', description:'공격력 · 치명타 · 명중 · 전투속도' },
       { key:'amplify', label:'피해 증폭', description:'피해 유형별 증폭값을 서로 분리' },
       { key:'combat', label:'전투 효과', description:'완벽 · 강타 · 다단 히트 · 재사용시간' }
     ];
+    const skillGroups = ['active','passive','dp','other'].map(key => ({
+      key,
+      label:skillCategoryLabel(key),
+      rows:skills.filter(skill => skillCategoryKey(skill.category) === key)
+    })).filter(group => group.rows.length);
+
     panel.innerHTML =
-      '<div class="kinojo-character-live-section-head"><div><strong>핵심 능력치</strong><span>공식 능력 축에서 같은 효과와 같은 단위만 합산합니다.</span></div><em>KINOJO 저장값</em></div>' +
+      '<div class="kinojo-character-live-section-head"><div><strong>능력치</strong><span>핵심 능력치와 공식 기본 스탯을 같은 규격으로 표시합니다.</span></div><em>KINOJO 저장값</em></div>' +
       '<div class="kinojo-character-stat-method">' +
         '<span><b>합산</b> 같은 능력치·같은 단위</span>' +
         '<span><b>분리</b> 고정 수치와 %</span>' +
@@ -441,7 +487,17 @@
             '<div class="kinojo-character-core-stats">' + stats.filter(stat => stat.group === group.key).map(renderCoreStatCard).join('') + '</div>' +
           '</section>'
         ).join('') +
+        '<section class="kinojo-character-stat-group is-base">' +
+          '<header><div><strong>기본 스탯</strong><span>공식 정보실 최종 능력 축</span></div><em>' + base.length + '개</em></header>' +
+          '<div class="kinojo-character-core-stats kinojo-character-base-stats-grid">' + primary.concat(secondary).map(renderBaseStatCard).join('') + '</div>' +
+        '</section>' +
       '</div>' +
+      '<section class="kinojo-character-skill-section">' +
+        '<div class="kinojo-character-live-section-head"><div><strong>스킬</strong><span>공식 아이콘과 현재 습득·장착 레벨</span></div><em>' + skills.length + '개</em></div>' +
+        '<div class="kinojo-character-skill-groups">' + skillGroups.map(group =>
+          '<section><header><strong>' + esc(group.label) + '</strong><em>' + group.rows.length + '개</em></header><div class="kinojo-character-skill-list">' + group.rows.map(renderSkillCard).join('') + '</div></section>'
+        ).join('') + '</div>' +
+      '</section>' +
       '<div class="kinojo-character-live-facts">' +
         [
           ['레벨',profile.level || '-'],['종족',profile.raceName || '-'],['성별',profile.genderName || '-'],
@@ -521,33 +577,9 @@
             '</div>' :
             '<div class="kinojo-character-equipment-empty">장착된 ' + esc(activeCategory.label) + '가 없습니다.</div>') +
         '</div>' +
-        '<p class="kinojo-character-equipment-hint">장비를 선택하면 저장된 공식 상세 범위를 이 화면 아래에서 확인합니다.<span>모바일은 좌우로 넘길 수 있습니다.</span></p>' +
+        '<p class="kinojo-character-equipment-hint">장비를 선택하면 이 화면 아래에서 강화·옵션·마석 상세를 확인합니다.<span>모바일은 좌우로 넘길 수 있습니다.</span></p>' +
       '</section>' +
       '<div class="kinojo-character-live-detail" id="kinojoLiveEquipmentDetail" hidden></div>';
-  }
-
-  function renderLiveStats(data){
-    const panel = livePanel('stats');
-    if(!panel) return;
-    const base = Array.isArray(data.baseStats) ? data.baseStats : [];
-    const skills = Array.isArray(data.skills) ? data.skills : [];
-    const primaryTypes = new Set(['STR','DEX','AGI','WIS','INT','CON']);
-    const primary = base.filter(row => primaryTypes.has(String(row.type || '')));
-    const secondary = base.filter(row => !primaryTypes.has(String(row.type || '')) && String(row.type || '').toLowerCase() !== 'itemlevel');
-    const statRows = rows => rows.map(row =>
-      '<article><span>' + esc(row.name || row.type || '-') + '</span><strong>' + esc(row.value ?? '-') + '</strong><small>' + esc((row.effects || []).join(' · ')) + '</small></article>'
-    ).join('');
-    panel.innerHTML =
-      '<div class="kinojo-character-live-split">' +
-        '<section><div class="kinojo-character-live-section-head"><div><strong>주요 능력치</strong><span>공식 최종 능력 축</span></div><em>' + primary.length + '개</em></div><div class="kinojo-character-base-stat-list">' +
-          statRows(primary) +
-        '</div><div class="kinojo-character-live-section-head"><div><strong>세부 능력 축</strong><span>신성력·판정 스탯 원본</span></div><em>' + secondary.length + '개</em></div><div class="kinojo-character-base-stat-list">' +
-          statRows(secondary) +
-        '</div></section>' +
-        '<section><div class="kinojo-character-live-section-head"><div><strong>스킬</strong><span>현재 습득·장착 정보</span></div><em>' + skills.length + '개</em></div><div class="kinojo-character-skill-list">' +
-          skills.map(skill => '<article><span>' + esc(skill.name || '-') + '</span><small>' + esc(skill.category || '') + ' · Lv.' + Number(skill.level || 0) + (skill.equip ? ' · 장착' : '') + '</small></article>').join('') +
-        '</div></section>' +
-      '</div>';
   }
 
   function renderLiveDaevanion(data){
@@ -579,28 +611,22 @@
     renderTarget();
     renderLiveOverview(data);
     renderLiveEquipment(data);
-    renderLiveStats(data);
     renderLiveDaevanion(data);
     updateCompareVisibility();
     const time = document.getElementById('kinojoCharacterLiveTime');
-    if(time) time.textContent = '상세 저장 ' + new Date(data.detailSnapshot?.createdAt || data.fetchedAt || Date.now()).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
-    const merged = data.detailSource === 'PREVIOUS_OFFICIAL_RAW';
-    setLiveStatus(
-      merged ? '최신 기본정보와 최근 공식 상세정보를 병합했습니다.' :
-        (data.detailAvailable ? '최신 공식 상세정보를 표시합니다.' : '상세정보 수집 전입니다.'),
-      data.detailAvailable ? 'ok' : ''
-    );
+    if(time) time.textContent = 'PLAYNC 실시간 · ' + new Date(data.fetchedAt || Date.now()).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+    setLiveStatus('실시간 조회 ' + Number(data.requestCount || 2) + '회 완료 · 장비와 데바니온 상세는 선택한 항목만 추가 조회합니다.','ok');
   }
 
   async function loadLiveOverview(){
     if(state.liveLoading) return;
     const identity = liveIdentityKey(state.target);
     if(!state.target?.name || !state.target?.serverId){
-      setLiveStatus('캐릭터 서버 정보를 확인한 뒤 저장 정보를 조회합니다.','');
+      setLiveStatus('캐릭터 서버 정보를 확인한 뒤 실시간 조회합니다.','');
       return;
     }
     state.liveLoading = true;
-    setLiveStatus('KINOJO 저장 Snapshot을 불러오고 있습니다.','loading');
+    setLiveStatus('PLAYNC에서 프로필과 장비 목록을 실시간으로 불러오고 있습니다.','loading');
     try{
       const data = await liveRequest('overview');
       if(!state.open || identity !== liveIdentityKey(state.target)) return;
@@ -608,7 +634,7 @@
     }catch(error){
       setLiveStatus((error.message || String(error)) + ' · 잠시 뒤 다시 열어 주세요.','error');
       const panel = livePanel('overview');
-      if(panel) panel.innerHTML = '<div class="kinojo-character-live-error"><strong>저장 정보를 불러오지 못했습니다.</strong><span>' + esc(error.message || error) + '</span></div>';
+      if(panel) panel.innerHTML = '<div class="kinojo-character-live-error"><strong>실시간 정보를 불러오지 못했습니다.</strong><span>' + esc(error.message || error) + '</span></div>';
     }finally{
       state.liveLoading = false;
     }
@@ -635,20 +661,10 @@
     try{
       const data = await liveRequest('equipmentItem',{ itemId, slotPos },itemId + ':' + slotPos);
       const main = detailArrays(data.item,['mainStats'],0), sub = detailArrays(data.item,['subStats'],0), magic = detailArrays(data.item,['magicStoneStat'],0);
-      const item = data.item || {};
-      const summary = [
-        ['슬롯',item.slotLabel || item.slotPosName],
-        ['등급',item.grade],
-        ['강화',Number(item.enchantLevel || 0) ? '+' + Number(item.enchantLevel) : '0'],
-        ['돌파',Number(item.exceedLevel || 0)]
-      ];
-      const detailed = [...main,...sub,...magic];
-      root.innerHTML = '<button type="button" class="kinojo-character-live-detail-close" data-live-detail-close>닫기</button><strong>' + esc(item.name || button.querySelector('b')?.textContent || '선택 장비') + '</strong>' +
+      root.innerHTML = '<button type="button" class="kinojo-character-live-detail-close" data-live-detail-close>닫기</button><strong>' + esc(button.querySelector('b')?.textContent || '선택 장비') + '</strong>' +
         '<div class="kinojo-character-live-detail-stats">' +
-          summary.map(row => '<span><b>' + esc(row[0]) + '</b><em>' + esc(row[1] ?? '-') + '</em></span>').join('') +
-          detailed.map(row => '<span><b>' + esc(row.name || row.id || '-') + '</b><em>' + esc(row.value ?? row.extra ?? '-') + '</em></span>').join('') +
-        '</div>' +
-        (!detailed.length ? '<p class="kinojo-character-live-note">' + esc(data.message || '옵션·마석 상세는 아직 저장되지 않았습니다.') + '</p>' : '');
+          [...main,...sub,...magic].map(row => '<span><b>' + esc(row.name || row.id || '-') + '</b><em>' + esc(row.value ?? row.extra ?? '-') + '</em></span>').join('') +
+        '</div>';
     }catch(error){
       root.innerHTML = '<strong>장비 상세 조회 실패</strong><span>' + esc(error.message || error) + '</span>';
     }finally{ state.detailLoading = false; }
