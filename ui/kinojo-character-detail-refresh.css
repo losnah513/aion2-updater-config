@@ -63,3 +63,23 @@
   .kinojo-character-equipment-main-icon,.kinojo-character-equipment-skin:not(.is-empty){width:38px;height:38px}
   .kinojo-character-equipment-exceed{width:18px;height:18px}
 }
+
+/* 2026-08-03 · 캐릭터 모달 상세 미갱신 상태 3-3 */
+.kinojo-detail-state{display:grid;place-items:center;align-content:center;gap:8px;min-height:180px;padding:28px;text-align:center;box-sizing:border-box}
+.kinojo-character-equipment-detail-pane .kinojo-detail-state{min-height:608px}
+.kinojo-detail-state>i{display:grid;place-items:center;width:32px;height:32px;border-radius:999px;background:#e0f2fe;color:#0369a1;font-size:13px;font-style:normal;font-weight:1000}
+.kinojo-detail-state>strong{font-size:14px;color:#0f172a}
+.kinojo-detail-state>span{max-width:420px;color:#64748b;font-size:10px;font-weight:700;line-height:1.6;word-break:keep-all}
+.kinojo-detail-state>button{min-height:36px;margin-top:2px;padding:8px 12px;border:1px solid #93c5fd;border-radius:10px;background:#eff6ff;color:#1d4ed8;font-size:10px;font-weight:900;cursor:pointer}
+.kinojo-detail-state>button:hover{border-color:#60a5fa;background:#dbeafe}
+.kinojo-detail-state>button:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
+.kinojo-detail-state.is-running>i{background:#fff7ed;color:#c2410c}
+.kinojo-detail-state.is-running>strong{color:#9a3412}
+.kinojo-detail-state.is-error>i{background:#fee2e2;color:#b91c1c}
+.kinojo-detail-state.is-error>strong{color:#991b1b}
+@media(max-width:640px){
+  .kinojo-detail-state{padding:24px 18px}
+  .kinojo-character-equipment-detail-pane .kinojo-detail-state{min-height:418px}
+  .kinojo-detail-state>span{max-width:300px}
+}
+
