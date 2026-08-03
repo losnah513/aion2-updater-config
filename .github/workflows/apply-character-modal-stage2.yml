@@ -23,41 +23,50 @@ jobs:
           python - <<'PY'
           import base64
           import gzip
-          import json
-          from pathlib import Path
+          import io
           import shutil
-
-          def decode_gzip(value):
-              encoded = ''.join(str(value).split())
-              encoded += '=' * (-len(encoded) % 4)
-              return gzip.decompress(base64.b64decode(encoded))
+          import tarfile
+          from pathlib import Path
 
           root = Path('.')
-          stage = root / '.stage2'
-          direct = {
-              'kinojo-character-reaction.js.gz.b64': root / 'ui/kinojo-character-reaction.js',
-              'kinojo-character-reaction.css.gz.b64': root / 'ui/kinojo-character-reaction.css',
-              'kinojo-character-detail-refresh.js.gz.b64': root / 'ui/kinojo-character-detail-refresh.js',
-              'kinojo-character-detail-refresh.css.gz.b64': root / 'ui/kinojo-character-detail-refresh.css',
-          }
-          for source_name, target in direct.items():
-              target.parent.mkdir(parents=True, exist_ok=True)
-              target.write_bytes(decode_gzip((stage / source_name).read_text(encoding='utf-8')))
+          parts = root / '.stage2parts'
 
-          html_targets = {
-              'hof-index.html.gz.b64': root / 'hof/index.html',
-              'm-hof-index.html.gz.b64': root / 'm/hof/index.html',
-              'ranking-index.html.gz.b64': root / 'ranking/index.html',
-              'm-ranking-index.html.gz.b64': root / 'm/ranking/index.html',
-              'sanctuary-index.html.gz.b64': root / 'sanctuary/index.html',
-              'm-sanctuary-index.html.gz.b64': root / 'm/sanctuary/index.html',
-          }
-          payloads = json.loads((stage / 'html-payloads.json').read_text(encoding='utf-8'))
-          for source_name, target in html_targets.items():
-              target.parent.mkdir(parents=True, exist_ok=True)
-              target.write_bytes(decode_gzip(payloads[source_name]))
+          def read_parts(prefix):
+              files = sorted(parts.glob(prefix + '.*.part'))
+              if not files:
+                  raise RuntimeError('missing parts: ' + prefix)
+              encoded = ''.join(path.read_text(encoding='utf-8').strip() for path in files)
+              encoded += '=' * (-len(encoded) % 4)
+              return base64.b64decode(encoded)
 
-          shutil.rmtree(stage)
+          reaction_js = gzip.decompress(read_parts('reaction-js'))
+          (root / 'ui/kinojo-character-reaction.js').write_bytes(reaction_js)
+
+          bundle = read_parts('bundle')
+          temp = root / '.stage2-extracted'
+          temp.mkdir(exist_ok=True)
+          with tarfile.open(fileobj=io.BytesIO(bundle), mode='r:gz') as archive:
+              archive.extractall(temp)
+
+          targets = {
+              'kinojo-character-reaction.css': 'ui/kinojo-character-reaction.css',
+              'kinojo-character-detail-refresh.js': 'ui/kinojo-character-detail-refresh.js',
+              'kinojo-character-detail-refresh.css': 'ui/kinojo-character-detail-refresh.css',
+              'hof-index.html': 'hof/index.html',
+              'm-hof-index.html': 'm/hof/index.html',
+              'ranking-index.html': 'ranking/index.html',
+              'm-ranking-index.html': 'm/ranking/index.html',
+              'sanctuary-index.html': 'sanctuary/index.html',
+              'm-sanctuary-index.html': 'm/sanctuary/index.html',
+          }
+          for source_name, target_name in targets.items():
+              target = root / target_name
+              target.parent.mkdir(parents=True, exist_ok=True)
+              target.write_bytes((temp / source_name).read_bytes())
+
+          shutil.rmtree(temp)
+          shutil.rmtree(parts)
+          shutil.rmtree(root / '.stage2', ignore_errors=True)
           Path('.github/workflows/apply-character-modal-stage2.yml').unlink(missing_ok=True)
           PY
 
@@ -80,6 +89,8 @@ jobs:
           assert 'data-kinojo-character-tab="arcana"' in reaction
           assert 'data-equipment-category="weaponArmor"' in reaction
           assert 'data-equipment-category="accessory"' in reaction
+          detail = Path('ui/kinojo-character-detail-refresh.js').read_text(encoding='utf-8')
+          assert "API_VERSION = '305.1'" in detail
           PY
 
       - name: Commit restored sources
