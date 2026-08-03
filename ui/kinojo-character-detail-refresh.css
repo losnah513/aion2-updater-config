@@ -23,5 +23,24 @@
 .kinojo-daevanion-nodes>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.kinojo-daevanion-nodes article{display:flex;gap:7px;padding:8px;border:1px solid #e2e8f0;border-radius:9px}.kinojo-daevanion-nodes img{width:30px;height:30px}.kinojo-daevanion-nodes span{display:grid;gap:3px;min-width:0}.kinojo-daevanion-nodes b{font-size:9px;color:#334155}.kinojo-daevanion-nodes small{font-size:8px;color:#64748b;line-height:1.35}.kinojo-detail-refreshed-at{display:block;margin-top:10px;color:#94a3b8;font-size:8px}
 @media(max-width:760px){.kinojo-detail-refresh-progress{grid-template-columns:repeat(2,minmax(0,1fr))}.kinojo-detail-refresh-progress article:last-child{grid-column:1/-1}.kinojo-detail-refresh-head{align-items:flex-start}.kinojo-detail-refresh-head button{max-width:150px}.kinojo-official-item-head{padding-left:12px}.kinojo-official-item-section{padding:12px}.kinojo-official-info-list>div,.kinojo-detail-stat{grid-template-columns:88px 1fr}.kinojo-official-stones,.kinojo-daevanion-nodes>div{grid-template-columns:1fr}}
 
-/* 2026-08-03 Â· ìºë¦­í„° ëª¨ë‹¬ ìž¥ë¹„/ì•„ë¥´ì¹´ë‚˜ ì¢Œìš° ìƒì„¸€ËªÎ®. ƒªÂs²€¨¼(¹­¥¹½©¼µ¡…É…Ñ•Èµ±¥Ù”µ‘•Ñ…¥°¹­¥¹½©¼µ¡…É…Ñ•Èµ•ÅÕ¥Áµ•¹Ðµ‘•Ñ…¥°µÁ…¹”¹­¥¹½©¼µ½™™¥¥…°µ¥Ñ•´µ‘•Ñ…¥±íµ…É¥¸èÀíÁ…‘‘¥¹œèÀíµ…àµ¡•¥¡ÐèØÄÁÁàí½Ù•É™±½Üµäé…ÕÑ¼í‰½É‘•Èµ½±½Èè‘‰”Õ˜Àí‰½É‘•ÈµÉ…‘¥ÕÌèÄÕÁàí‰…­É½Õ¹è™™™ô(¹­¥¹½©¼µ¡…É…Ñ•Èµ•ÅÕ¥Áµ•¹Ðµ‘•Ñ…¥°µÁ…¹”¹¥ÌµÁ•ÉÍ¥ÍÑ•¹Ð€¹­¥¹½©¼µ½™™¥¥…°µ¥Ñ•´µ¡•…‘íÁ…‘‘¥¹œµÉ¥¡ÐèÄÙÁáô(¹­¥¹½©¼µ¡…É…Ñ•Èµ•ÅÕ¥Áµ•¹Ðµ‘•Ñ…¥°µÁ…¹”€¹­¥¹½©¼µ¡…É…Ñ•Èµ±¥Ù”µ±½…‘¥¹œ°¹­¥¹½©¼µ¡…É…Ñ•Èµ•ÅÕ¥Áµ•¹Ðµ‘•Ñ…¥°µÁ…¹”€¹­¥¹½©¼µ¡…É…Ñ•Èµ±¥Ù”µ•ÉÉ½Éíµ¥¸µ¡•¥¡ÐèØÀáÁàí‰½É‘•ÈèÀí‰…­É½Õ¹éÑÉ…¹ÍÁ…É•¹Ñô(¹­¥¹½©¼µ¡…É…Ñ•Èµ•ÅÕ¥Áµ•¹Ðµ‘•Ñ…¥°µÁ…¹”€¹­¥¹½©¼µ¡…É…Ñ•Èµ±¥Ù”µ•ÉÉ½ÉíÁ…‘‘¥¹œèÈÙÁàíÑ•áÐµ…±¥¸é•¹Ñ•Èí‰½àµÍ¥é¥¹œé‰½É‘•Èµ‰½áô)µ•‘¥„¡µ…àµÝ¥‘Ñ èØÐÁÁà¥ì(€€¹­¥¹½©¼µ¡…É…Ñ•Èµ±¥Ù”µ‘•Ñ…¥°¹­¥¹½©¼µ¡…É…Ñ•Èµ•ÅÕ¥Áµ•¹Ðµ‘•Ñ…¥°µÁ…¹”¹­¥¹½©¼µ½™™¥¥…°µ¥Ñ•´µ‘•Ñ…¥±íµ…àµ¡•¥¡Ðé¹½¹•ô(€€¹­¥¹½©¼µ¡…É…Ñ•Èµ•ÅÕ¥Áµ•¹Ðµ‘•Ñ…¥°µÁ…¹”€¹­¥¹½©¼µ¡…É…Ñ•Èµ±¥Ù”µ±½…‘¥¹œ°¹­¥¹½©¼µ¡…É…Ñ•Èµ•ÅÕ¥Áµ•¹Ðµ‘•Ñ…¥°µÁ…¹”€¹­¥¹½©¼µ¡…É…Ñ•Èµ±¥Ù”µ•ÉÉ½Éíµ¥¸µ¡•¥¡ÐèÐÄáÁáô)ô((¼¨€ÈÀÈØ´Àà´ÀÌƒ
-Üƒ²êC®š·¶Àƒ®ª£®.°ƒ²z—®æƒ®ª£®†t¿²²àƒ²‚¶fb2Ó¢ð¢æ¶–æö¦òÖ6†&7FW"ÖWV—ÖVçBÖFWF–Â×f–Ww¶F—7Æ“¦6öçFVçG3¶Ö–â×v–GFƒ£¶Ö–âÖ†V–v‡C£Ð¢æ¶–æö¦òÖ6†&7FW"ÖWV—ÖVçBÖÖö&–ÆRÖ&6·¶F—7Æ“¦æöæWÐ¤ÖVF–†Ö‚×v–GFƒ£cC‚—°¢æ¶–æö¦òÖ6†&7FW"ÖWV—ÖVçBÖÆ–÷WBæ—2ÖÖö&–ÆRÖFWF–Â×f–Wræ¶–æö¦òÖ6†&7FW"ÖWV—ÖVçBÖÆ—7B×æW¶F—7Æ“¦æöæWÐ¢æ¶–æö¦òÖ6†&7FW"ÖWV—ÖVçBÖÆ–÷WC¦æ÷B‚æ—2ÖÖö&–ÆRÖFWF–Â×f–Wr’æ¶–æö¦òÖ6†&7FW"ÖWV—ÖVçBÖFWF–Â×f–Ww¶F—7Æ“¦æöæWÐ¢æ¶–æö¦òÖ6†&7FW"ÖWV—ÖVçBÖFWF–Â×f–Ww¶F—7Æ“¦w&–C¶w&–BÖ6öÇVÖã£òÓ¶w&–B×FV×ÆFR×&÷w3¦WFòÖ–æÖ‚ƒÃg"“¶v£‡ƒ¶Ö–â×v–GFƒ£Ð¢æ¶–æö¦òÖ6†&7FW"ÖWV—ÖVçBÖÖö&–ÆRÖ&6·¶F—7Æ“¦–æÆ–æRÖfÆWƒ¶Æ–vâÖ—FV×3¦6VçFW#¶§W7F–g’Ö6öçFVçC¦fÆW‚×7F'C·v–GFƒ¦Ö‚Ö6öçFVçC¶Ö–âÖ†V–v‡C£3gƒ·FF–æs£‡‚ƒ¶&÷&FW#£‚6öÆ–B6&fF&fS¶&÷&FW"×&F—W3£ƒ¶&6¶w&÷VæC¢6Vfcffc¶6öÆ÷#¢3CFVCƒ¶föçB×6—¦S£ƒ¶föçB×vV–v‡C£“¶7W'6÷#§ö–çFW'Ð¢æ¶–æö¦òÖ6†&7FW"ÖWV—ÖVçBÖÖö&–ÆRÖ&6³¦fö7W2×f—6–&ÆW¶÷WFÆ–æS£'‚6öÆ–B3#Sc6V#¶÷WFÆ–æRÖöfg6WC£'‡Ð¢æ¶–æö¦òÖ6†&7FW"ÖWV—ÖVçBÖFWF–Â×f–Wsâæ¶–æö¦òÖ6†&7FW"ÖWV—ÖVçBÖFWF–Â×æW·v–GFƒ£S¶Ö–â×v–GFƒ£¶&÷‚×6—¦–æs¦&÷&FW"Ö&÷‡Ð§Ð 
+/* 2026-08-03 Â· ìºë¦­í„° ëª¨ë‹¬ ìž¥ë¹„/ì•„ë¥´ì¹´ë‚˜ ì¢Œìš° ìƒì„¸ 2ë‹¨ê³„ */
+.kinojo-character-live-detail.kinojo-character-equipment-detail-pane.kinojo-official-item-detail{margin:0;padding:0;max-height:610px;overflow-y:auto;border-color:#dbe5f0;border-radius:15px;background:#fff}
+.kinojo-character-equipment-detail-pane.is-persistent .kinojo-official-item-head{padding-right:16px}
+.kinojo-character-equipment-detail-pane .kinojo-character-live-loading,.kinojo-character-equipment-detail-pane .kinojo-character-live-error{min-height:608px;border:0;background:transparent}
+.kinojo-character-equipment-detail-pane .kinojo-character-live-error{padding:26px;text-align:center;box-sizing:border-box}
+@media(max-width:640px){
+  .kinojo-character-live-detail.kinojo-character-equipment-detail-pane.kinojo-official-item-detail{max-height:none}
+  .kinojo-character-equipment-detail-pane .kinojo-character-live-loading,.kinojo-character-equipment-detail-pane .kinojo-character-live-error{min-height:418px}
+}
+
+/* 2026-08-03 Â· ìºë¦­í„° ëª¨ë‹¬ ëª¨ë°”ì¼ ìž¥ë¹„ ëª©ë¡/ìƒì„¸ ì „í™˜ 3-1 */
+.kinojo-character-equipment-detail-view{display:contents;min-width:0;min-height:0}
+.kinojo-character-equipment-mobile-back{display:none}
+@media(max-width:640px){
+  .kinojo-character-equipment-layout.is-mobile-detail-view .kinojo-character-equipment-list-pane{display:none}
+  .kinojo-character-equipment-layout:not(.is-mobile-detail-view) .kinojo-character-equipment-detail-view{display:none}
+  .kinojo-character-equipment-detail-view{display:grid;grid-column:1/-1;grid-template-rows:auto minmax(0,1fr);gap:8px;min-width:0}
+  .kinojo-character-equipment-mobile-back{display:inline-flex;align-items:center;justify-content:flex-start;width:max-content;min-height:36px;padding:8px 11px;border:1px solid #bfdbfe;border-radius:10px;background:#eff6ff;color:#1d4ed8;font-size:11px;font-weight:900;cursor:pointer}
+  .kinojo-character-equipment-mobile-back:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
+  .kinojo-character-equipment-detail-view>.kinojo-character-equipment-detail-pane{width:100%;min-width:0;box-sizing:border-box}
+}
