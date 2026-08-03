@@ -39,3 +39,137 @@
   .mini-row{grid-template-columns:46px minmax(0,1fr) 62px 82px!important;}
   .rank-table{min-width:980px!important;}
 }
+
+/* 2026-08-04 · 캐릭터 모달 공통 상호작용·탭 이동·스크롤 4-1 */
+.kinojo-character-reaction-dialog,
+.kinojo-character-equipment-list,
+.kinojo-character-equipment-detail-pane,
+.kinojo-character-arcana-list,
+.kinojo-character-compare-selector{
+  scrollbar-width:thin;
+  scrollbar-color:#60a5fa transparent;
+}
+.kinojo-character-reaction-dialog{
+  overflow-x:hidden;
+  scrollbar-gutter:stable;
+  background-clip:padding-box;
+}
+.kinojo-character-reaction-dialog::-webkit-scrollbar,
+.kinojo-character-equipment-list::-webkit-scrollbar,
+.kinojo-character-equipment-detail-pane::-webkit-scrollbar,
+.kinojo-character-arcana-list::-webkit-scrollbar,
+.kinojo-character-compare-selector::-webkit-scrollbar{width:8px;height:8px}
+.kinojo-character-reaction-dialog::-webkit-scrollbar-track,
+.kinojo-character-equipment-list::-webkit-scrollbar-track,
+.kinojo-character-equipment-detail-pane::-webkit-scrollbar-track,
+.kinojo-character-arcana-list::-webkit-scrollbar-track,
+.kinojo-character-compare-selector::-webkit-scrollbar-track{margin:12px 0;background:transparent}
+.kinojo-character-reaction-dialog::-webkit-scrollbar-thumb,
+.kinojo-character-equipment-list::-webkit-scrollbar-thumb,
+.kinojo-character-equipment-detail-pane::-webkit-scrollbar-thumb,
+.kinojo-character-arcana-list::-webkit-scrollbar-thumb,
+.kinojo-character-compare-selector::-webkit-scrollbar-thumb{
+  min-height:44px;
+  border:2px solid transparent;
+  border-radius:999px;
+  background:linear-gradient(180deg,#93c5fd,#3b82f6) padding-box;
+}
+.kinojo-character-reaction-dialog::-webkit-scrollbar-thumb:hover,
+.kinojo-character-equipment-list::-webkit-scrollbar-thumb:hover,
+.kinojo-character-equipment-detail-pane::-webkit-scrollbar-thumb:hover,
+.kinojo-character-arcana-list::-webkit-scrollbar-thumb:hover,
+.kinojo-character-compare-selector::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#60a5fa,#2563eb) padding-box}
+
+/* 탭 버튼 폭을 동일하게 유지해 선택 배경이 버튼 사이를 미끄러지듯 이동한다. */
+.kinojo-character-live-tabs{
+  position:relative;
+  isolation:isolate;
+  --kinojo-tab-width:calc((100% - 30px) / 5);
+  --kinojo-tab-x:0;
+}
+.kinojo-character-live-tabs:has([data-kinojo-compare-tab]:not([hidden])){--kinojo-tab-width:calc((100% - 35px) / 6)}
+.kinojo-character-live-tabs:has([data-kinojo-character-tab="overview"].active){--kinojo-tab-x:0}
+.kinojo-character-live-tabs:has([data-kinojo-character-tab="equipment"].active){--kinojo-tab-x:calc(100% + 5px)}
+.kinojo-character-live-tabs:has([data-kinojo-character-tab="arcana"].active){--kinojo-tab-x:calc(200% + 10px)}
+.kinojo-character-live-tabs:has([data-kinojo-character-tab="daevanion"].active){--kinojo-tab-x:calc(300% + 15px)}
+.kinojo-character-live-tabs:has([data-kinojo-character-tab="compare"].active){--kinojo-tab-x:calc(400% + 20px)}
+.kinojo-character-live-tabs:has([data-kinojo-character-tab="reaction"].active){--kinojo-tab-x:calc(400% + 20px)}
+.kinojo-character-live-tabs:has([data-kinojo-compare-tab]:not([hidden])):has([data-kinojo-character-tab="reaction"].active){--kinojo-tab-x:calc(500% + 25px)}
+.kinojo-character-live-tabs::before{
+  content:"";
+  position:absolute;
+  top:5px;
+  left:5px;
+  z-index:0;
+  width:var(--kinojo-tab-width);
+  height:38px;
+  border-radius:11px;
+  background:linear-gradient(180deg,#fff,#f8fbff);
+  box-shadow:0 5px 14px rgba(15,23,42,.09),inset 0 0 0 1px rgba(147,197,253,.18);
+  transform:translate3d(var(--kinojo-tab-x),0,0);
+  transition:width .24s cubic-bezier(.2,.8,.2,1),transform .24s cubic-bezier(.2,.8,.2,1);
+  pointer-events:none;
+}
+.kinojo-character-live-tabs button{
+  position:relative;
+  z-index:1;
+  flex:1 1 0;
+  min-width:0;
+  transition:color .18s ease,transform .16s ease;
+}
+.kinojo-character-live-tabs button.active{background:transparent;box-shadow:none;color:#1d4ed8}
+.kinojo-character-live-tabs button:hover:not(.active){color:#334155}
+.kinojo-character-live-panel.active{animation:kinojoCharacterPanelIn .22s cubic-bezier(.2,.8,.2,1)}
+@keyframes kinojoCharacterPanelIn{from{opacity:.28;transform:translateX(8px)}to{opacity:1;transform:translateX(0)}}
+
+/* 동작 가능한 모달 요소에 동일한 롤오버·클릭 감각을 적용한다. */
+.kinojo-character-reaction-dialog button:not(:disabled),
+.kinojo-character-reaction-detail,
+.kinojo-character-equipment-row,
+.kinojo-character-daevanion-grid button,
+.kinojo-character-compare-selector button,
+.kinojo-detail-state>button{
+  transition:transform .16s cubic-bezier(.2,.8,.2,1),box-shadow .16s ease,background-color .16s ease,border-color .16s ease,filter .16s ease;
+  transform-origin:center;
+  -webkit-tap-highlight-color:transparent;
+}
+.kinojo-character-reaction-dialog button:not(:disabled):hover,
+.kinojo-character-reaction-detail:hover,
+.kinojo-character-equipment-row:hover,
+.kinojo-character-daevanion-grid button:hover,
+.kinojo-character-compare-selector button:hover,
+.kinojo-detail-state>button:hover{transform:translateY(-1px);filter:saturate(1.04)}
+.kinojo-character-reaction-dialog button:not(:disabled):active,
+.kinojo-character-reaction-detail:active,
+.kinojo-character-equipment-row:active,
+.kinojo-character-daevanion-grid button:active,
+.kinojo-character-compare-selector button:active,
+.kinojo-detail-state>button:active{transform:translateY(0) scale(.975);filter:saturate(.98)}
+.kinojo-character-equipment-row.is-selected,
+.kinojo-character-compare-selector button.active{
+  box-shadow:inset 3px 0 0 #2563eb,inset 0 0 18px rgba(59,130,246,.08);
+}
+.kinojo-character-reaction-dialog :is(button,a,[tabindex]):focus-visible{outline:2px solid #2563eb;outline-offset:2px}
+
+@media(max-width:640px){
+  .kinojo-character-reaction-dialog{scrollbar-gutter:auto}
+  .kinojo-character-live-tabs{--kinojo-tab-width:82px}
+  .kinojo-character-live-tabs:has([data-kinojo-character-tab="overview"].active){--kinojo-tab-x:0}
+  .kinojo-character-live-tabs:has([data-kinojo-character-tab="equipment"].active){--kinojo-tab-x:87px}
+  .kinojo-character-live-tabs:has([data-kinojo-character-tab="arcana"].active){--kinojo-tab-x:174px}
+  .kinojo-character-live-tabs:has([data-kinojo-character-tab="daevanion"].active){--kinojo-tab-x:261px}
+  .kinojo-character-live-tabs:has([data-kinojo-character-tab="compare"].active){--kinojo-tab-x:348px}
+  .kinojo-character-live-tabs:has([data-kinojo-character-tab="reaction"].active){--kinojo-tab-x:348px}
+  .kinojo-character-live-tabs:has([data-kinojo-compare-tab]:not([hidden])):has([data-kinojo-character-tab="reaction"].active){--kinojo-tab-x:435px}
+  .kinojo-character-live-tabs button{flex:0 0 82px;min-width:82px}
+}
+@media(prefers-reduced-motion:reduce){
+  .kinojo-character-live-tabs::before,
+  .kinojo-character-live-panel.active,
+  .kinojo-character-reaction-dialog button,
+  .kinojo-character-reaction-detail,
+  .kinojo-character-equipment-row,
+  .kinojo-character-daevanion-grid button,
+  .kinojo-character-compare-selector button,
+  .kinojo-detail-state>button{animation:none!important;transition:none!important;transform:none!important}
+}
