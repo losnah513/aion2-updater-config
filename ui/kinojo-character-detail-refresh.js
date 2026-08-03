@@ -15,7 +15,9 @@
     pollTimer:null,
     tickTimer:null,
     statusLoading:false,
-    starting:false
+    starting:false,
+    mobileEquipmentView:'list',
+    mobileEquipmentScrollTop:{weaponArmor:0,accessory:0}
   };
 
   function esc(value){
@@ -242,16 +244,125 @@
     Object.defineProperty(api,'__manualDetailOverviewWrapped',{value:true,configurable:false});
   }
 
+  function isMobileEquipmentViewport(){
+    if(typeof window.matchMedia==='function') return window.matchMedia('(max-width: 640px)').matches;
+    return number(window.innerWidth)<=640;
+  }
+
+  function equipmentPanel(){
+    return document.querySelector('[data-kinojo-character-panel="equipment"]');
+  }
+
+  function equipmentLayout(){
+    return equipmentPanel()?.querySelector('.kinojo-character-equipment-layout')||null;
+  }
+
+  function activeEquipmentCategory(){
+    const active=equipmentPanel()?.querySelector('[data-equipment-category].active');
+    return String(active?.dataset?.equipmentCategory||'weaponArmor');
+  }
+
+  function resetMobileEquipmentState(){
+    state.mobileEquipmentView='list';
+    state.mobileEquipmentScrollTop={weaponArmor:0,accessory:0};
+  }
+
+  function resetClosedMobileEquipmentState(){
+    resetMobileEquipmentState();
+    state.currentKey='';
+    state.identity=null;
+  }
+
+  function observeModalState(){
+    const modal=document.getElementById('kinojoCharacterReactionModal');
+    if(!modal || modal.dataset.mobileEquipmentObserver==='ready') return;
+    modal.dataset.mobileEquipmentObserver='ready';
+    new MutationObserver(()=>{
+      if(!modal.classList.contains('open')) resetClosedMobileEquipmentState();
+    }).observe(modal,{attributes:true,attributeFilter:['class','aria-hidden']});
+  }
+
+  function rememberMobileEquipmentScroll(){
+    if(!isMobileEquipmentViewport()) return;
+    const list=equipmentPanel()?.querySelector('.kinojo-character-equipment-list');
+    if(!list) return;
+    state.mobileEquipmentScrollTop[activeEquipmentCategory()]=number(list.scrollTop);
+  }
+
+  function ensureMobileEquipmentDetailView(root){
+    if(!root) return null;
+    const current=root.closest('.kinojo-character-equipment-detail-view');
+    if(current) return current;
+    const parent=root.parentNode;
+    if(!parent) return null;
+    const wrapper=document.createElement('section');
+    wrapper.className='kinojo-character-equipment-detail-view';
+    const back=document.createElement('button');
+    back.type='button';
+    back.className='kinojo-character-equipment-mobile-back';
+    back.dataset.mobileEquipmentBack='';
+    back.textContent='← 장비 목록';
+    parent.insertBefore(wrapper,root);
+    wrapper.append(back,root);
+    return wrapper;
+  }
+
+  function syncMobileEquipmentView(options){
+    const layout=equipmentLayout();
+    if(!layout) return;
+    const root=document.getElementById('kinojoLiveEquipmentDetail');
+    ensureMobileEquipmentDetailView(root);
+    const detail=isMobileEquipmentViewport()&&state.mobileEquipmentView==='detail';
+    layout.classList.toggle('is-mobile-detail-view',detail);
+    layout.dataset.mobileEquipmentView=detail?'detail':'list';
+    if(!detail&&options?.restoreScroll){
+      requestAnimationFrame(()=>{
+        const currentLayout=equipmentLayout();
+        const list=currentLayout?.querySelector('.kinojo-character-equipment-list');
+        if(list) list.scrollTop=number(state.mobileEquipmentScrollTop[activeEquipmentCategory()]);
+        const selected=currentLayout?.querySelector('[data-live-equipment-item].is-selected');
+        try{selected?.focus({preventScroll:true});}catch(_err){selected?.focus();}
+      });
+    }
+  }
+
+  function showMobileEquipmentDetail(button){
+    if(!isMobileEquipmentViewport()) return;
+    const panel=button?.closest?.('[data-kinojo-character-panel]');
+    if(panel?.dataset?.kinojoCharacterPanel!=='equipment') return;
+    rememberMobileEquipmentScroll();
+    state.mobileEquipmentView='detail';
+    syncMobileEquipmentView();
+    requestAnimationFrame(()=>{
+      const detail=equipmentLayout()?.querySelector('.kinojo-character-equipment-detail-pane');
+      if(detail) detail.scrollTop=0;
+      const back=equipmentLayout()?.querySelector('[data-mobile-equipment-back]');
+      try{back?.focus({preventScroll:true});}catch(_err){back?.focus();}
+    });
+  }
+
+  function showMobileEquipmentList(){
+    if(!isMobileEquipmentViewport()) return;
+    state.mobileEquipmentView='list';
+    syncMobileEquipmentView({restoreScroll:true});
+  }
+
   function syncModal(){
     setupOverviewBridge();
     const identity=modalIdentity();
-    if(!identity){stopPoll();state.currentKey='';state.identity=null;return;}
+    if(!identity){
+      stopPoll();
+      if(state.currentKey) resetClosedMobileEquipmentState();
+      return;
+    }
     ensurePanel();
+    observeModalState();
     const key=identityKey(identity);
     if(key!==state.currentKey){
-      stopPoll();state.currentKey=key;state.identity=identity;state.status=null;
+      stopPoll();resetMobileEquipmentState();state.currentKey=key;state.identity=identity;state.status=null;
       loadStatus(false);
     }
+    syncMobileEquipmentView();
   }
 
   function itemValue(row){
@@ -389,14 +500,34 @@
 
   document.addEventListener('click',event=>{
     const target=event.target instanceof Element?event.target:null;if(!target) return;
+    const modal=document.getElementById('kinojoCharacterReactionModal');
+    if(target.closest('[data-kinojo-character-reaction-close]') && modal?.contains(target)) resetClosedMobileEquipmentState();
+    const back=target.closest('[data-mobile-equipment-back]');
+    if(back && modal?.contains(back)){
+      event.preventDefault();showMobileEquipmentList();return;
+    }
+    const category=target.closest('[data-equipment-category]');
+    if(category && modal?.contains(category)){
+      rememberMobileEquipmentScroll();
+      state.mobileEquipmentView='list';
+      requestAnimationFrame(()=>syncMobileEquipmentView({restoreScroll:true}));
+    }
     const equipment=target.closest('[data-live-equipment-item]');
-    if(equipment && document.getElementById('kinojoCharacterReactionModal')?.contains(equipment)){
-      event.preventDefault();loadEquipmentDetail(equipment);return;
+    if(equipment && modal?.contains(equipment)){
+      event.preventDefault();
+      loadEquipmentDetail(equipment);
+      if(event.isTrusted) showMobileEquipmentDetail(equipment);
+      return;
     }
     const board=target.closest('[data-live-daevanion-board]');
     if(board && document.getElementById('kinojoCharacterReactionModal')?.contains(board)){
       event.preventDefault();loadDaevanionDetail(board);return;
     }
+  },true);
+
+  window.addEventListener('resize',()=>requestAnimationFrame(()=>syncMobileEquipmentView()));
+  document.addEventListener('keydown',event=>{
+    if(event.key==='Escape' && document.getElementById('kinojoCharacterReactionModal')?.classList.contains('open')) resetClosedMobileEquipmentState();
   },true);
 
   state.tickTimer=setInterval(()=>{
