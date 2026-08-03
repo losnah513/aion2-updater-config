@@ -87,7 +87,6 @@ body.kinojo-character-reaction-open{overflow:hidden}
 .kinojo-character-live-tabs{display:flex;gap:5px;margin-top:22px;padding:5px;border:1px solid #dbe5f0;border-radius:15px;background:#f1f5f9;overflow-x:auto;scrollbar-width:none}
 .kinojo-character-live-tabs::-webkit-scrollbar{display:none}
 .kinojo-character-live-tabs button{flex:1 0 max-content;min-width:104px;height:38px;padding:0 13px;border:0;border-radius:11px;background:transparent;color:#64748b;font-size:12px;font-weight:900;cursor:pointer}
-.kinojo-character-live-tabs button[hidden]{display:none!important}
 .kinojo-character-live-tabs button.active{background:#fff;color:#1d4ed8;box-shadow:0 5px 14px rgba(15,23,42,.09)}
 .kinojo-character-live-status{margin:12px 2px 0;padding:10px 12px;border-radius:11px;background:#f8fafc;color:#64748b;font-size:11px;font-weight:800;line-height:1.45}
 .kinojo-character-live-status.ok{background:#eff6ff;color:#1d4ed8}.kinojo-character-live-status.error{background:#fef2f2;color:#b91c1c}.kinojo-character-live-status.loading{background:#fff7ed;color:#9a3412}
@@ -105,16 +104,15 @@ body.kinojo-character-reaction-open{overflow:hidden}
 .kinojo-character-stat-group.is-amplify{border-color:#bfdbfe;background:linear-gradient(180deg,#f8fbff,#fff)}
 .kinojo-character-stat-group>header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:9px}
 .kinojo-character-stat-group>header>div{display:grid;gap:2px}.kinojo-character-stat-group>header strong{font-size:12px;color:#0f172a}.kinojo-character-stat-group>header span{font-size:9px;color:#64748b}.kinojo-character-stat-group>header>em{font-size:9px;font-style:normal;font-weight:900;color:#2563eb}
-.kinojo-character-core-stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
-.kinojo-character-stat-group.is-basic .kinojo-character-core-stats,.kinojo-character-stat-group.is-combat .kinojo-character-core-stats{grid-template-columns:repeat(4,minmax(0,1fr))}
-.kinojo-character-core-stats article{display:grid;grid-template-rows:auto 1fr auto;gap:7px;min-height:92px;padding:11px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;box-sizing:border-box}
+.kinojo-character-core-stats{display:grid;grid-template-columns:repeat(auto-fill,142px);grid-auto-rows:78px;justify-content:start;gap:7px}
+.kinojo-character-core-stats article{display:grid;grid-template-rows:auto 1fr auto;gap:5px;width:142px;height:78px;min-width:0;padding:9px 10px;border:1px solid #e2e8f0;border-radius:11px;background:#fff;box-sizing:border-box;overflow:hidden}
 .kinojo-character-stat-card-head{display:flex;align-items:center;justify-content:space-between;gap:5px;min-width:0}
 .kinojo-character-stat-card-head>span{min-width:0;color:#475569;font-size:9px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .kinojo-character-stat-card-head>em{flex:0 0 auto;padding:3px 5px;border-radius:999px;background:#eff6ff;color:#2563eb;font-size:7px;font-style:normal;font-weight:900}
-.kinojo-character-core-stats article>strong{align-self:center;color:#0f172a;font-size:18px;line-height:1.1;letter-spacing:-.03em;overflow-wrap:anywhere}
-.kinojo-character-core-stats article>small{color:#94a3b8;font-size:8px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kinojo-character-core-stats article>strong{align-self:center;color:#0f172a;font-size:15px;line-height:1.05;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kinojo-character-core-stats article>small{color:#94a3b8;font-size:7px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .kinojo-character-core-stats article.unavailable{border-style:dashed;background:#f8fafc;box-shadow:none}.kinojo-character-core-stats article.unavailable>strong{color:#cbd5e1}.kinojo-character-core-stats article.unavailable .kinojo-character-stat-card-head>em{background:#f1f5f9;color:#94a3b8}
-.kinojo-character-live-facts{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-top:11px}
+.kinojo-character-live-facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:12px}
 .kinojo-character-live-facts article{display:grid;gap:5px;padding:10px 11px;border-radius:12px;background:#f1f5f9}.kinojo-character-live-facts span{font-size:9px;font-weight:900;color:#64748b}.kinojo-character-live-facts strong{font-size:11px;color:#0f172a;overflow-wrap:anywhere}
 .kinojo-character-live-note{margin:11px 2px 0;color:#64748b;font-size:10px;font-weight:700;line-height:1.55}
 .kinojo-character-equipment-categories{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-bottom:10px}
@@ -138,9 +136,19 @@ body.kinojo-character-reaction-open{overflow:hidden}
 .kinojo-character-live-detail-close{position:absolute;top:10px;right:10px;height:28px;padding:0 10px;border:0;border-radius:999px;background:#dbeafe;color:#1d4ed8;font-size:10px;font-weight:900;cursor:pointer}
 .kinojo-character-live-detail-stats{display:flex;flex-wrap:wrap;gap:6px}.kinojo-character-live-detail-stats span{display:inline-flex;align-items:center;gap:5px;padding:6px 8px;border-radius:9px;background:#fff;border:1px solid #dbe5f0}.kinojo-character-live-detail-stats b{font-size:10px;color:#334155}.kinojo-character-live-detail-stats em{font-size:10px;font-style:normal;font-weight:900;color:#2563eb}
 .kinojo-character-live-split{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.kinojo-character-base-stat-list,.kinojo-character-skill-list{display:grid;gap:6px;max-height:420px;overflow:auto;padding-right:4px}
-.kinojo-character-base-stat-list article,.kinojo-character-skill-list article{display:grid;grid-template-columns:minmax(80px,auto) auto 1fr;gap:8px;align-items:center;padding:9px 10px;border:1px solid #e2e8f0;border-radius:10px;background:#fff}.kinojo-character-base-stat-list span,.kinojo-character-skill-list span{font-size:11px;font-weight:900;color:#334155}.kinojo-character-base-stat-list strong{font-size:11px;color:#2563eb}.kinojo-character-base-stat-list small,.kinojo-character-skill-list small{font-size:9px;color:#64748b;line-height:1.4}
-.kinojo-character-skill-list article{grid-template-columns:minmax(0,1fr) auto}
+.kinojo-character-stat-group.is-base{border-color:#dbeafe;background:linear-gradient(180deg,#fbfdff,#fff)}
+.kinojo-character-base-card .kinojo-character-stat-card-head>em{background:#ecfdf5;color:#047857}
+.kinojo-character-skill-section{margin-top:12px;padding:13px;border:1px solid #dbe5f0;border-radius:16px;background:#fff;box-shadow:0 8px 22px rgba(15,23,42,.035)}
+.kinojo-character-skill-section>.kinojo-character-live-section-head{margin-top:0}
+.kinojo-character-skill-groups{display:grid;gap:12px}
+.kinojo-character-skill-groups>section{display:grid;gap:7px}
+.kinojo-character-skill-groups>section>header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 2px}
+.kinojo-character-skill-groups>section>header strong{font-size:11px;color:#334155}.kinojo-character-skill-groups>section>header em{font-size:9px;font-style:normal;font-weight:900;color:#2563eb}
+.kinojo-character-skill-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.kinojo-character-skill-card{display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:8px;min-height:56px;padding:8px 9px;border:1px solid #e2e8f0;border-radius:11px;background:#fff;box-sizing:border-box}
+.kinojo-character-skill-icon{display:grid;place-items:center;width:38px;height:38px;border:1px solid #dbe5f0;border-radius:9px;background:#f8fafc;overflow:hidden}.kinojo-character-skill-icon img{display:block;width:100%;height:100%;object-fit:cover}.kinojo-character-skill-icon.is-empty::after{content:"SK";color:#94a3b8;font-size:8px;font-weight:900}
+.kinojo-character-skill-card>span{display:grid;gap:3px;min-width:0}.kinojo-character-skill-card>span b{font-size:10px;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.kinojo-character-skill-card>span small{font-size:8px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kinojo-character-skill-card>strong{padding:4px 6px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-size:9px;white-space:nowrap}
 .kinojo-character-daevanion-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
 .kinojo-character-daevanion-grid button{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px;border:1px solid #dbe5f0;border-radius:13px;background:#fff;text-align:left;cursor:pointer}.kinojo-character-daevanion-grid button:hover{border-color:#93c5fd;background:#eff6ff}.kinojo-character-daevanion-grid button>span{display:grid;gap:4px}.kinojo-character-daevanion-grid b{font-size:12px;color:#0f172a}.kinojo-character-daevanion-grid small{font-size:9px;color:#64748b}.kinojo-character-daevanion-grid button>strong{font-size:14px;color:#2563eb}
 .kinojo-character-compare-selector{display:flex;gap:7px;margin:0 0 12px;padding-bottom:4px;overflow-x:auto;scrollbar-width:thin}
@@ -159,7 +167,7 @@ body.kinojo-character-reaction-open{overflow:hidden}
 .kinojo-character-live-panel[data-kinojo-character-panel="reaction"]{max-width:560px;margin:0 auto;padding:4px 0 2px}
 .kinojo-character-live-panel[data-kinojo-character-panel="reaction"] .kinojo-character-reaction-actions{margin-top:0}
 @media(max-width:820px){
-  .kinojo-character-core-stats,.kinojo-character-stat-group.is-basic .kinojo-character-core-stats,.kinojo-character-stat-group.is-combat .kinojo-character-core-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kinojo-character-skill-list{grid-template-columns:repeat(2,minmax(0,1fr))}
   .kinojo-character-live-facts{grid-template-columns:repeat(3,minmax(0,1fr))}
   .kinojo-character-equipment-grid,.kinojo-character-daevanion-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
@@ -173,10 +181,10 @@ body.kinojo-character-reaction-open{overflow:hidden}
   .kinojo-character-live-tabs button{min-width:82px;font-size:11px}
   .kinojo-character-stat-method{display:grid;grid-template-columns:1fr 1fr}.kinojo-character-stat-method>span:last-child{grid-column:1/-1}
   .kinojo-character-stat-group{padding:11px}.kinojo-character-stat-group>header span{display:none}
-  .kinojo-character-core-stats,.kinojo-character-stat-group.is-basic .kinojo-character-core-stats,.kinojo-character-stat-group.is-combat .kinojo-character-core-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .kinojo-character-core-stats article{min-height:86px;padding:10px}.kinojo-character-core-stats article>strong{font-size:16px}
+  .kinojo-character-core-stats{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:74px}
+  .kinojo-character-core-stats article{width:auto;height:74px;min-height:0;padding:8px 9px}.kinojo-character-core-stats article>strong{font-size:14px}
+  .kinojo-character-skill-section{padding:11px}.kinojo-character-skill-list{grid-template-columns:1fr}
   .kinojo-character-live-facts{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .kinojo-character-live-split{grid-template-columns:1fr}
   .kinojo-character-equipment-categories button{height:39px}.kinojo-character-equipment-browser{padding:11px}.kinojo-character-equipment-page{min-height:136px}
   .kinojo-character-equipment-grid{grid-template-columns:1fr 1fr}.kinojo-character-equipment-grid button{grid-template-columns:42px minmax(0,1fr);min-height:64px}.kinojo-character-equipment-grid img{width:42px;height:42px}
   .kinojo-character-equipment-hint{display:block}.kinojo-character-equipment-hint span{display:block;margin-top:3px}
