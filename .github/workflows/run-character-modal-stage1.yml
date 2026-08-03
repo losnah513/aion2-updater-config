@@ -22,16 +22,7 @@ jobs:
           ref: feature/character-modal-stage1-305
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Skip when staged source is already restored
-        id: staged
-        run: |
-          if [ -d .kinojo-stage1 ]; then
-            echo 'exists=true' >> "$GITHUB_OUTPUT"
-          else
-            echo 'exists=false' >> "$GITHUB_OUTPUT"
-          fi
-      - name: Restore staged source files
-        if: steps.staged.outputs.exists == 'true'
+      - name: Restore staged source files when present
         shell: python
         run: |
           import base64
@@ -39,23 +30,72 @@ jobs:
           import shutil
           from pathlib import Path
 
-          files = {
-              '.kinojo-stage1/kinojo-character-reaction.js.gz': 'ui/kinojo-character-reaction.js',
-              '.kinojo-stage1/kinojo-character-reaction.css.gz': 'ui/kinojo-character-reaction.css',
-              '.kinojo-stage1/hof-index.html.gz': 'hof/index.html',
-              '.kinojo-stage1/m-hof-index.html.gz': 'm/hof/index.html',
-              '.kinojo-stage1/ranking-index.html.gz': 'ranking/index.html',
-              '.kinojo-stage1/m-ranking-index.html.gz': 'm/ranking/index.html',
-              '.kinojo-stage1/sanctuary-index.html.gz': 'sanctuary/index.html',
-              '.kinojo-stage1/m-sanctuary-index.html.gz': 'm/sanctuary/index.html',
-          }
-          for source, target in files.items():
-              encoded = Path(source).read_text(encoding='utf-8').strip()
-              Path(target).write_bytes(gzip.decompress(base64.b64decode(encoded)))
-          shutil.rmtree('.kinojo-stage1')
+          stage = Path('.kinojo-stage1')
+          if stage.is_dir():
+              files = {
+                  '.kinojo-stage1/kinojo-character-reaction.js.gz': 'ui/kinojo-character-reaction.js',
+                  '.kinojo-stage1/kinojo-character-reaction.css.gz': 'ui/kinojo-character-reaction.css',
+                  '.kinojo-stage1/hof-index.html.gz': 'hof/index.html',
+                  '.kinojo-stage1/m-hof-index.html.gz': 'm/hof/index.html',
+                  '.kinojo-stage1/ranking-index.html.gz': 'ranking/index.html',
+                  '.kinojo-stage1/m-ranking-index.html.gz': 'm/ranking/index.html',
+                  '.kinojo-stage1/sanctuary-index.html.gz': 'sanctuary/index.html',
+                  '.kinojo-stage1/m-sanctuary-index.html.gz': 'm/sanctuary/index.html',
+              }
+              for source, target in files.items():
+                  encoded = Path(source).read_text(encoding='utf-8').strip()
+                  Path(target).write_bytes(gzip.decompress(base64.b64decode(encoded)))
+              shutil.rmtree(stage)
           Path('.github/workflows/apply-character-modal-stage1.yml').unlink(missing_ok=True)
+      - name: Finalize Server-normalized skill bridge and preserve page versions
+        shell: python
+        run: |
+          from pathlib import Path
+
+          target = Path('ui/kinojo-character-reaction.js')
+          source = target.read_text(encoding='utf-8')
+          marker = "  function livePanel(name){\n    return document.querySelector('#kinojoCharacterReactionModal [data-kinojo-character-panel=\"' + name + '\"]');\n  }\n"
+          bridge = """  async function mergeServerSkills(data){
+            const rpc=window.KinojoSupabaseRpcCore;
+            const identity=liveIdentity(state.target);
+            if(!rpc || typeof rpc.rpc!=='function' || !identity.serverId || !identity.characterName) return data;
+            try{
+              const result=await rpc.rpc('kinojo_character_skill_overview_v304',{
+                p_server_id:Number(identity.serverId||0),
+                p_character_name:String(identity.characterName||'')
+              });
+              if(result && result.ok===true && Array.isArray(result.skills)){
+                return Object.assign({},data,{
+                  skills:result.skills,
+                  skillSource:result.source||'KINOJO_SERVER_SKILL_NORMALIZED',
+                  skillRefreshedAt:result.refreshedAt||null
+                });
+              }
+            }catch(_error){
+              // 저장된 공식 스킬 원본이 없는 캐릭터는 기존 overview 범위를 유지한다.
+            }
+            return data;
+          }
+
+""" + marker
+          if 'async function mergeServerSkills' not in source:
+              if marker not in source:
+                  raise SystemExit('livePanel marker not found')
+              source = source.replace(marker, bridge)
+          old = "      const data = await liveRequest('overview');\n      if(!state.open || identity !== liveIdentityKey(state.target)) return;\n      applyLiveProfile(data);"
+          new = "      let data = await liveRequest('overview');\n      data = await mergeServerSkills(data);\n      if(!state.open || identity !== liveIdentityKey(state.target)) return;\n      applyLiveProfile(data);"
+          if old in source:
+              source = source.replace(old, new)
+          target.write_text(source, encoding='utf-8')
+
+          mobile_sanctuary = Path('m/sanctuary/index.html')
+          html = mobile_sanctuary.read_text(encoding='utf-8')
+          html = html.replace('../../sanctuary/js/sanctuary.js?cache=2026072806','../../sanctuary/js/sanctuary.js?cache=2026073001')
+          mobile_sanctuary.write_text(html, encoding='utf-8')
+
+          Path('ui/kinojo-character-skill-bridge.js').unlink(missing_ok=True)
+          Path('.kinojo-stage1-trigger.txt').unlink(missing_ok=True)
       - name: Verify JavaScript and cache versions
-        if: steps.staged.outputs.exists == 'true'
         run: |
           node --check ui/kinojo-character-reaction.js
           for f in hof/index.html m/hof/index.html ranking/index.html m/ranking/index.html sanctuary/index.html m/sanctuary/index.html; do
@@ -64,11 +104,16 @@ jobs:
           done
           ! grep -q 'data-kinojo-character-tab="stats"' ui/kinojo-character-reaction.js
           grep -q 'kinojo-character-skill-icon' ui/kinojo-character-reaction.js
-      - name: Commit stage1 source to feature branch
-        if: steps.staged.outputs.exists == 'true'
+          grep -q 'kinojo_character_skill_overview_v304' ui/kinojo-character-reaction.js
+          grep -q '../../sanctuary/js/sanctuary.js?cache=2026073001' m/sanctuary/index.html
+          test ! -e ui/kinojo-character-skill-bridge.js
+      - name: Commit finalized stage1 source to feature branch
         run: |
+          if git diff --quiet && git diff --cached --quiet; then
+            exit 0
+          fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
-          git commit -m 'feat: redesign character modal stats and skills stage1'
+          git commit -m 'fix: finalize character modal stage1 skill data flow'
           git push origin HEAD:feature/character-modal-stage1-305
