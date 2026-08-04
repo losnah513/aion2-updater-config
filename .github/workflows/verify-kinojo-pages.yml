@@ -8,6 +8,8 @@ on:
       - "m/ranking/**"
       - "hof/**"
       - "m/hof/**"
+      - "sanctuary/**"
+      - "m/sanctuary/**"
       - "admin/**"
       - "m/admin/**"
       - "core/**"
@@ -21,6 +23,8 @@ on:
       - "m/ranking/**"
       - "hof/**"
       - "m/hof/**"
+      - "sanctuary/**"
+      - "m/sanctuary/**"
       - "admin/**"
       - "m/admin/**"
       - "core/**"
@@ -37,23 +41,174 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  verify-live-readback:
+  verify-source:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 8
+    steps:
+      - name: Checkout PR head or current commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+      - name: Verify JavaScript syntax and modal contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          js_files=(
+            "ui/kinojo-character-reaction.js"
+            "ui/kinojo-character-detail-refresh.js"
+            "ui/kinojo-character-skill-bridge.js"
+            "ui/kinojo-character-daevanion-bridge.js"
+            "core/kinojo-supabase-client.js"
+            "core/kinojo-supabase-rpc.js"
+            "core/kinojo-supabase-features.js"
+          )
+
+          for path in "${js_files[@]}"; do
+            node --check "$path"
+          done
+
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          pages = [
+              Path("hof/index.html"),
+              Path("m/hof/index.html"),
+              Path("ranking/index.html"),
+              Path("m/ranking/index.html"),
+              Path("sanctuary/index.html"),
+              Path("m/sanctuary/index.html"),
+          ]
+          required_assets = [
+              "kinojo-character-skill.css?cache=2026080401",
+              "kinojo-character-daevanion.css?cache=2026080402",
+              "kinojo-animations.css?cache=2026080402",
+              "kinojo-character-skill-bridge.js?cache=2026080402",
+              "kinojo-character-daevanion-bridge.js?cache=2026080402",
+          ]
+          for page in pages:
+              text = page.read_text(encoding="utf-8")
+              for asset in required_assets:
+                  count = text.count(asset)
+                  if count != 1:
+                      raise SystemExit(f"{page}: {asset} include count={count}, expected=1")
+
+          skill = Path("ui/kinojo-character-skill-bridge.js").read_text(encoding="utf-8")
+          daev = Path("ui/kinojo-character-daevanion-bridge.js").read_text(encoding="utf-8")
+          animations = Path("ui/kinojo-animations.css").read_text(encoding="utf-8")
+          daev_css = Path("ui/kinojo-character-daevanion.css").read_text(encoding="utf-8")
+
+          forbidden = {
+              "skill rpc monkey patch": (skill, r"\brpc\.rpc\s*="),
+              "daev edge monkey patch": (daev, r"\bcore\.invokeEdgeFunction\s*="),
+              "daev overview monkey patch": (daev, r"\bapi\.getLiveCharacterProfile\s*="),
+          }
+          for label, (text, pattern) in forbidden.items():
+              if re.search(pattern, text):
+                  raise SystemExit(f"Forbidden frozen-core mutation detected: {label}")
+
+          required_tokens = {
+              "skill SQL 305": (skill, "kinojo_character_skill_overview_v305"),
+              "skill Server category": (skill, "categoryLabel"),
+              "skill Server tier": (skill, "levelTier"),
+              "skill stigma": (skill, "스티그마"),
+              "skill tier class": (skill, "is-level-tier-"),
+              "daev SQL 306": (daev, "kinojo_character_daevanion_detail_v306"),
+              "daev active nodes": (daev, "activeNodes"),
+              "daev stat effects": (daev, "statEffects"),
+              "daev skill effects": (daev, "skillEffects"),
+              "daev board map": (daev + daev_css, "kinojo-daevanion-board-map"),
+              "inner modal scroll": (animations, "kinojo-character-reaction-scroll"),
+              "outer modal overflow lock": (animations, "overflow:hidden!important"),
+          }
+          for label, (text, token) in required_tokens.items():
+              if token not in text:
+                  raise SystemExit(f"Required contract missing: {label}")
+
+          checked = pages + [
+              Path("ui/kinojo-character-skill.css"),
+              Path("ui/kinojo-character-daevanion.css"),
+              Path("ui/kinojo-animations.css"),
+              Path("ui/kinojo-character-detail-refresh.css"),
+          ]
+          for path in checked:
+              data = path.read_bytes()
+              if b"\x00" in data:
+                  raise SystemExit(f"NUL byte detected: {path}")
+              if path.suffix == ".css":
+                  text = data.decode("utf-8")
+                  if text.count("{") != text.count("}"):
+                      raise SystemExit(f"CSS brace mismatch: {path}")
+
+          print("KINOJO modal source contracts: PASS")
+          PY
+
+      - name: Verify bridge startup with frozen cores
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('node:fs');
+          const vm = require('node:vm');
+
+          const rpc = async () => ({ ok: true, apiVersion: '305', skills: [] });
+          const invokeEdgeFunction = async () => ({ ok: true });
+          const rpcCore = Object.freeze({ rpc });
+          const clientCore = Object.freeze({ invokeEdgeFunction });
+          const readyCallbacks = [];
+
+          global.window = {
+            KinojoSupabaseRpcCore: rpcCore,
+            KinojoSupabaseClientCore: clientCore,
+          };
+          global.document = {
+            readyState: 'loading',
+            body: {},
+            addEventListener(name, callback) {
+              if (name === 'DOMContentLoaded') readyCallbacks.push(callback);
+            },
+            getElementById() { return null; },
+            contains() { return true; },
+          };
+          global.MutationObserver = class { observe() {} disconnect() {} };
+          global.requestAnimationFrame = callback => { callback(); return 1; };
+
+          for (const path of [
+            'ui/kinojo-character-skill-bridge.js',
+            'ui/kinojo-character-daevanion-bridge.js',
+          ]) {
+            vm.runInThisContext(fs.readFileSync(path, 'utf8'), { filename: path });
+          }
+          for (const callback of readyCallbacks) callback();
+
+          if (!Object.isFrozen(window.KinojoSupabaseRpcCore)) throw new Error('RPC core freeze lost');
+          if (!Object.isFrozen(window.KinojoSupabaseClientCore)) throw new Error('Client core freeze lost');
+          if (window.KinojoSupabaseRpcCore.rpc !== rpc) throw new Error('RPC core method mutated');
+          if (window.KinojoSupabaseClientCore.invokeEdgeFunction !== invokeEdgeFunction) throw new Error('Client core method mutated');
+          console.log('Frozen core startup smoke: PASS');
+          NODE
+
+  verify-live-readback:
+    if: github.event_name != 'pull_request'
+    needs: verify-source
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
     env:
       LIVE_BASE: https://kinojo.info
     steps:
-      - name: Checkout expected source
+      - name: Checkout deployed main source
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.sha }}
+          ref: ${{ github.sha }}
 
       - name: Verify custom domain and live files
         shell: bash
         run: |
           set -euo pipefail
 
-          expected_ref="${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.sha }}"
+          expected_ref="${{ github.sha }}"
           verify_key="${expected_ref:0:12}-$(date -u +%s)"
           tmp_dir="$(mktemp -d)"
           trap 'rm -rf "$tmp_dir"' EXIT
@@ -74,6 +229,8 @@ jobs:
             "ranking/js/ranking-render.js"
             "ranking/js/ranking-events.js"
             "ranking/js/ranking-app.js"
+            "sanctuary/index.html"
+            "m/sanctuary/index.html"
             "admin/index.html"
             "m/admin/index.html"
             "admin/js/admin.js"
@@ -81,6 +238,18 @@ jobs:
             "admin/js/admin-characters.js"
             "admin/js/admin-bootstrap.js"
             "ui/kinojo-components.css"
+            "ui/kinojo-character-reaction.js"
+            "ui/kinojo-character-reaction.css"
+            "ui/kinojo-character-detail-refresh.js"
+            "ui/kinojo-character-detail-refresh.css"
+            "ui/kinojo-character-skill-bridge.js"
+            "ui/kinojo-character-skill.css"
+            "ui/kinojo-character-daevanion-bridge.js"
+            "ui/kinojo-character-daevanion.css"
+            "ui/kinojo-animations.css"
+            "core/kinojo-supabase-client.js"
+            "core/kinojo-supabase-rpc.js"
+            "core/kinojo-supabase-features.js"
             "core/kinojo-supabase.js"
           )
 
@@ -95,7 +264,7 @@ jobs:
             exit 1
           fi
 
-          for attempt in $(seq 1 12); do
+          for attempt in $(seq 1 15); do
             mismatch=0
             : > "$tmp_dir/result.txt"
 
@@ -133,7 +302,7 @@ jobs:
               exit 0
             fi
 
-            if [[ "$attempt" -lt 12 ]]; then
+            if [[ "$attempt" -lt 15 ]]; then
               echo "Live files are not synchronized yet. Retrying..."
               sleep 20
             fi
