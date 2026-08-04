@@ -35,6 +35,7 @@ on:
 
 permissions:
   contents: read
+  statuses: write
 
 concurrency:
   group: verify-kinojo-pages-${{ github.ref }}
@@ -203,6 +204,31 @@ jobs:
         with:
           ref: ${{ github.sha }}
 
+      - name: Publish live readback pending status
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STATUS_STATE: pending
+          STATUS_DESCRIPTION: KINOJO 운영 파일 동기화 확인 중
+        run: |
+          set -euo pipefail
+          python3 <<'PY' > /tmp/kinojo-status.json
+          import json, os
+          print(json.dumps({
+              "state": os.environ["STATUS_STATE"],
+              "context": "kinojo/live-readback",
+              "description": os.environ["STATUS_DESCRIPTION"],
+              "target_url": f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
+          }, ensure_ascii=False))
+          PY
+          curl --fail --silent --show-error --location \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            --data-binary @/tmp/kinojo-status.json >/dev/null
+
       - name: Verify custom domain and live files
         shell: bash
         run: |
@@ -318,3 +344,55 @@ jobs:
             diff -u "$path" "$live_file" | head -120 >&2 || true
           done < "$tmp_dir/result.txt"
           exit 1
+
+      - name: Publish live readback success status
+        if: success()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STATUS_STATE: success
+          STATUS_DESCRIPTION: KINOJO 운영 파일 37개가 main과 일치
+        run: |
+          set -euo pipefail
+          python3 <<'PY' > /tmp/kinojo-status.json
+          import json, os
+          print(json.dumps({
+              "state": os.environ["STATUS_STATE"],
+              "context": "kinojo/live-readback",
+              "description": os.environ["STATUS_DESCRIPTION"],
+              "target_url": f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
+          }, ensure_ascii=False))
+          PY
+          curl --fail --silent --show-error --location \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            --data-binary @/tmp/kinojo-status.json >/dev/null
+
+      - name: Publish live readback failure status
+        if: failure()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STATUS_STATE: failure
+          STATUS_DESCRIPTION: KINOJO 운영 파일 readback 실패
+        run: |
+          set -euo pipefail
+          python3 <<'PY' > /tmp/kinojo-status.json
+          import json, os
+          print(json.dumps({
+              "state": os.environ["STATUS_STATE"],
+              "context": "kinojo/live-readback",
+              "description": os.environ["STATUS_DESCRIPTION"],
+              "target_url": f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
+          }, ensure_ascii=False))
+          PY
+          curl --fail --silent --show-error --location \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            --data-binary @/tmp/kinojo-status.json >/dev/null
