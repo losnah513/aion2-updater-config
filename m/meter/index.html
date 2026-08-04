@@ -15,7 +15,7 @@
 <link href="../../ui/kinojo-layout.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../../ui/kinojo-components.css?cache=2026072201" rel="stylesheet"/>
 <link href="../../ui/kinojo-common-ui.css?cache=2026072201" rel="stylesheet"/>
-<link href="../../meter/css/meter.css?cache=2026072409" rel="stylesheet"/>
+<link href="../../meter/css/meter.css?cache=2026080401" rel="stylesheet"/>
 </head>
 <body class="kinojo-meter-page">
 <main class="meter-wrap">
@@ -159,6 +159,16 @@
       </div>
     </article>
       </section>
+
+      <section class="meter-observed" aria-labelledby="meterObservedTitle">
+        <header>
+          <div><span>RECENT CAPTURES · OWNER ONLY</span><h2 id="meterObservedTitle">최근 수집 기록</h2></div>
+          <button class="kinojo-btn meter-secondary" id="meterObservedRefreshBtn" type="button">새로고침</button>
+        </header>
+        <div class="meter-observed-policy"><strong>검증 전 실제 수집 데이터</strong><span>현재 Decoder가 읽은 범위만 표시하며 공개 통계·랭킹에는 포함하지 않습니다.</span></div>
+        <p class="meter-observed-status" id="meterObservedStatus" role="status">PASS KEY 로그인 후 이 계정에서 업로드한 기록을 확인할 수 있습니다.</p>
+        <div class="meter-observed-list" id="meterObservedList"><div class="meter-empty">아직 불러온 수집 기록이 없습니다.</div></div>
+      </section>
     </div>
   </section>
 
@@ -220,6 +230,6 @@
 <script src="../../core/kinojo-auth-session.js?cache=2026080205"></script>
 <script src="../../core/kinojo-auth-service.js?cache=2026080205"></script>
 <script src="../../core/kinojo-auth-ui.js?cache=2026080205"></script>
-<script src="../../meter/js/meter-app.js?cache=2026072413"></script>
+<script src="../../meter/js/meter-app.js?cache=2026080401"></script>
 </body>
 </html>
