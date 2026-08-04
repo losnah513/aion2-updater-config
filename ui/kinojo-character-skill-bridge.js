@@ -1,119 +1,129 @@
 /*
- * KINOJO Character Skill Bridge
- * 역할: Server가 정규화한 스킬 유형·레벨 강조 단계를 공통 캐릭터 모달에 연결한다.
- * 규칙: WEB은 스킬 유형이나 레벨 구간을 계산하지 않고 Server categoryLabel·levelTier만 표시한다.
+ * KINOJO Character Skill Bridge · 4-4
+ * 역할: SQL 305의 스킬 분류·레벨 강조 결과를 공통 캐릭터 모달에 표시하고 모달 내부 스크롤 viewport를 구성한다.
+ * 규칙: frozen 공통 Core를 덮어쓰지 않으며 WEB은 Server categoryLabel·levelTier만 표시한다.
  */
 (function(){
   'use strict';
 
-  const RPC_V304='kinojo_character_skill_overview_v304';
-  const RPC_V305='kinojo_character_skill_overview_v305';
-  const skillByName=new Map();
+  const RPC='kinojo_character_skill_overview_v305';
   let observer=null;
-  let enhanceFrame=0;
+  let requestSerial=0;
+  let scheduled=false;
 
-  function normalizedName(value){
-    return String(value||'').replace(/[\s\u200B-\u200D\uFEFF]+/g,'').trim();
+  function esc(value){
+    return String(value==null?'':value).replace(/[&<>"']/g,ch=>({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[ch]));
   }
 
-  function rememberSkills(rows){
-    skillByName.clear();
-    (Array.isArray(rows)?rows:[]).forEach(skill=>{
-      const key=normalizedName(skill?.name);
-      if(key) skillByName.set(key,skill);
+  function safeUrl(value){
+    const raw=String(value||'').trim();
+    if(!raw) return '';
+    if(raw.startsWith('//')) return 'https:'+raw;
+    if(raw.startsWith('/') || /^https:\/\//i.test(raw) || /^data:image\//i.test(raw)) return raw.replace(/"/g,'%22');
+    return '';
+  }
+
+  function ensureScrollViewport(root){
+    const dialog=root?.querySelector('.kinojo-character-reaction-dialog');
+    if(!dialog || dialog.querySelector(':scope > .kinojo-character-reaction-scroll')) return;
+    const viewport=document.createElement('div');
+    viewport.className='kinojo-character-reaction-scroll';
+    Array.from(dialog.children).forEach(child=>{
+      if(child.classList.contains('kinojo-character-reaction-close')) return;
+      viewport.appendChild(child);
     });
+    dialog.appendChild(viewport);
   }
 
-  function compatibleResult(result){
-    if(!result || result.ok!==true || !Array.isArray(result.skills)) return result;
-    rememberSkills(result.skills);
-    const skills=result.skills.map(skill=>Object.assign({},skill,{
-      category:skill?.legacyCategory || (skill?.category==='stigma'?'dp':skill?.category)
-    }));
-    scheduleEnhance();
-    return Object.assign({},result,{skills});
+  function identity(root){
+    const name=String(root?.querySelector('#kinojoCharacterReactionTitle')?.textContent||'').trim();
+    const href=String(root?.querySelector('#kinojoCharacterReactionDetail')?.href||'');
+    const serverMatch=href.match(/\/characters\/(\d+)\//i);
+    const serverId=serverMatch?Number(serverMatch[1]):0;
+    return {name,serverId,key:serverId+'|'+name};
   }
 
-  function enhanceCards(){
-    enhanceFrame=0;
+  function categoryLabel(category,serverLabel){
+    const explicit=String(serverLabel||'').trim();
+    if(explicit) return explicit;
+    return ({active:'액티브',passive:'패시브',stigma:'스티그마',other:'기타'})[String(category||'').toLowerCase()]||'기타';
+  }
+
+  function skillCard(skill){
+    const icon=safeUrl(skill?.icon);
+    const level=Math.max(0,Number(skill?.level||0));
+    const tier=Math.max(0,Math.min(5,Number(skill?.levelTier||0)));
+    const category=String(skill?.category||'other').toLowerCase();
+    const classes=['kinojo-character-skill-card','is-level-tier-'+tier];
+    if(category==='stigma') classes.push('is-skill-stigma');
+    return '<article class="'+classes.join(' ')+'" data-kinojo-skill-v305="true" data-level-band="'+esc(skill?.levelBand||'normal')+'">'+
+      '<div class="kinojo-character-skill-icon '+(icon?'':'is-empty')+'">'+
+        (icon?'<img src="'+icon+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">':'')+
+        '<strong class="kinojo-character-skill-level">Lv.'+level+'</strong>'+
+      '</div>'+
+      '<span><b>'+esc(skill?.name||'-')+'</b><small>'+esc(categoryLabel(category,skill?.categoryLabel))+(skill?.equip?' · 장착':'')+'</small></span>'+
+    '</article>';
+  }
+
+  function render(section,result,key){
+    const skills=(Array.isArray(result?.skills)?result.skills:[]).filter(skill=>skill?.acquired===true || Number(skill?.acquired||0)===1);
+    const order=['active','passive','stigma','other'];
+    const groups=order.map(category=>{
+      const rows=skills.filter(skill=>String(skill?.category||'other').toLowerCase()===category);
+      return {category,rows,label:rows.length?categoryLabel(category,rows[0]?.categoryLabel):categoryLabel(category,'')};
+    }).filter(group=>group.rows.length);
+    section.innerHTML=
+      '<div class="kinojo-character-live-section-head"><div><strong>스킬</strong><span>Server가 정규화한 현재 습득·장착 레벨</span></div><em>'+skills.length+'개</em></div>'+
+      '<div class="kinojo-character-skill-groups">'+groups.map(group=>
+        '<section><header><strong>'+esc(group.label)+'</strong><em>'+group.rows.length+'개</em></header><div class="kinojo-character-skill-list">'+group.rows.map(skillCard).join('')+'</div></section>'
+      ).join('')+'</div>';
+    section.dataset.kinojoSkillKey=key;
+    section.dataset.kinojoSkillApiVersion=String(result?.apiVersion||'305');
+  }
+
+  async function refresh(){
+    scheduled=false;
     const root=document.getElementById('kinojoCharacterReactionModal');
     if(!root) return;
-
-    root.querySelectorAll('.kinojo-character-skill-card').forEach(card=>{
-      const name=normalizedName(card.querySelector(':scope > span > b')?.textContent);
-      const skill=skillByName.get(name);
-      if(!skill) return;
-
-      const tier=Math.max(0,Math.min(5,Number(skill.levelTier||0)));
-      card.classList.remove('is-level-tier-0','is-level-tier-1','is-level-tier-2','is-level-tier-3','is-level-tier-4','is-level-tier-5','is-skill-stigma');
-      card.classList.add('is-level-tier-'+tier);
-      if(String(skill.category||'')==='stigma') card.classList.add('is-skill-stigma');
-      card.dataset.kinojoSkillV305='true';
-      card.dataset.levelBand=String(skill.levelBand||'normal');
-
-      const icon=card.querySelector(':scope > .kinojo-character-skill-icon');
-      const level=card.querySelector(':scope > strong');
-      if(icon && level){
-        level.className='kinojo-character-skill-level';
-        icon.appendChild(level);
-      }
-
-      const detail=card.querySelector(':scope > span > small');
-      if(detail){
-        const label=String(skill.categoryLabel||'기타');
-        detail.textContent=label+(skill.equip?' · 장착':'');
-      }
-    });
-
-    root.querySelectorAll('.kinojo-character-skill-groups > section').forEach(section=>{
-      if(!section.querySelector('.kinojo-character-skill-card.is-skill-stigma')) return;
-      const title=section.querySelector(':scope > header > strong');
-      if(title) title.textContent='스티그마';
-    });
-  }
-
-  function scheduleEnhance(){
-    if(enhanceFrame) return;
-    enhanceFrame=requestAnimationFrame(enhanceCards);
-  }
-
-  function installObserver(){
-    if(observer || !document.body) return;
-    observer=new MutationObserver(records=>{
-      if(records.some(record=>{
-        if(record.type==='characterData') return false;
-        return Array.from(record.addedNodes||[]).some(node=>
-          node.nodeType===1 && (node.matches?.('.kinojo-character-skill-card,.kinojo-character-skill-list,.kinojo-character-live-panel') || node.querySelector?.('.kinojo-character-skill-card'))
-        );
-      })) scheduleEnhance();
-    });
-    observer.observe(document.body,{childList:true,subtree:true});
-  }
-
-  function install(){
+    ensureScrollViewport(root);
+    const section=root.querySelector('.kinojo-character-skill-section');
+    if(!section) return;
+    const target=identity(root);
+    if(!target.name || !target.serverId || section.dataset.kinojoSkillKey===target.key) return;
     const rpc=window.KinojoSupabaseRpcCore;
-    if(!rpc || typeof rpc.rpc!=='function') return false;
-    if(rpc.__characterSkillBridgeV305) return true;
+    if(!rpc || typeof rpc.rpc!=='function') return;
+    const serial=++requestSerial;
+    try{
+      const result=await rpc.rpc(RPC,{p_server_id:target.serverId,p_character_name:target.name});
+      if(serial!==requestSerial || !document.contains(section)) return;
+      if(!result || result.ok!==true || !Array.isArray(result.skills)) throw new Error(result?.message||'SQL 305 스킬 정보를 불러오지 못했습니다.');
+      render(section,result,target.key);
+    }catch(error){
+      section.dataset.kinojoSkillError=String(error?.message||error);
+      console.error('[KINOJO skill 4-4]',error);
+    }
+  }
 
-    const originalRpc=rpc.rpc.bind(rpc);
-    rpc.rpc=async function(name,payload){
-      const requested=String(name||'')===RPC_V304?RPC_V305:String(name||'');
-      const result=await originalRpc(requested,payload);
-      return requested===RPC_V305?compatibleResult(result):result;
-    };
-    Object.defineProperty(rpc,'__characterSkillBridgeV305',{value:true,configurable:false});
-    installObserver();
-    return true;
+  function schedule(){
+    if(scheduled) return;
+    scheduled=true;
+    requestAnimationFrame(refresh);
   }
 
   function start(){
-    installObserver();
-    if(install()) return;
-    let attempts=0;
-    const timer=setInterval(()=>{
-      attempts+=1;
-      if(install() || attempts>=40) clearInterval(timer);
-    },100);
+    const root=document.getElementById('kinojoCharacterReactionModal');
+    if(root) ensureScrollViewport(root);
+    if(!observer && document.body){
+      observer=new MutationObserver(records=>{
+        if(records.some(record=>Array.from(record.addedNodes||[]).some(node=>
+          node.nodeType===1 && (node.matches?.('#kinojoCharacterReactionModal,.kinojo-character-skill-section,.kinojo-character-skill-card') || node.querySelector?.('#kinojoCharacterReactionModal,.kinojo-character-skill-section,.kinojo-character-skill-card'))
+        ))) schedule();
+      });
+      observer.observe(document.body,{childList:true,subtree:true});
+    }
+    schedule();
   }
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true});
