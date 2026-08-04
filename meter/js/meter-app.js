@@ -17,7 +17,7 @@
   let meterConfig = {
     edgeFunctionName: 'meter-ingest',
     releaseChannel: 'stable',
-    webClientVersion: 'WEB_50013'
+    webClientVersion: 'WEB_50015'
   };
   let desktopRelease = null;
   let meterOperation = null;
@@ -933,6 +933,92 @@
     return Number.isFinite(number) && number > 0 ? Math.trunc(number).toLocaleString('ko-KR') : '미확인';
   }
 
+  function observedParticipantMarkup(participant) {
+    const server = participant.serverName || participant.serverId || '서버 미확인';
+    const className = participant.className || '클래스 미확인';
+    const power = formatPower(participant.pveCombatPower);
+    const share = Number(participant.damageShare || 0);
+    const profileResolved = Number(participant.meterCharacterId || 0) > 0;
+    return `<li>
+      <div class="meter-observed-participant-main">
+        <strong>${escapeHtml(participant.characterName || '이름 미확인')}<small>[${escapeHtml(server)}]</small></strong>
+        <span>${escapeHtml(className)} · 전투력 ${power}${profileResolved ? '' : ' · 프로필 확인 중'}</span>
+      </div>
+      <div class="meter-observed-participant-damage">
+        <strong>${formatCount(participant.damage, '0')}</strong>
+        <span>${Number.isFinite(share) ? share.toFixed(1) : '0.0'}% · DPS ${formatDps(participant.dps)}</span>
+      </div>
+    </li>`;
+  }
+
+  function observedRecordMarkup(record) {
+    const participants = asArray(record.participants);
+    const resolvedCount = participants.filter((row) => Number(row.meterCharacterId || 0) > 0).length;
+    const completeness = Number(record.damageCompleteness || 0);
+    const completenessLabel = Number.isFinite(completeness) && completeness > 0
+      ? `${Math.min(100, Math.max(0, completeness * 100)).toFixed(1)}% 판독`
+      : '판독률 계산 대기';
+    const dungeon = record.dungeonName || record.dungeonKey || '던전 미확인';
+    const difficulty = record.difficultyName || record.variantName || record.difficultyKey || record.variantKey || '난이도 미확인';
+    const bossOrder = Number(record.bossOrder || 0) > 0 ? `${Math.trunc(Number(record.bossOrder))}보스 · ` : '';
+    const occurred = serverTime(record.occurredAt);
+    return `<article class="meter-observed-card">
+      <header>
+        <div><span>${escapeHtml(dungeon)} · ${escapeHtml(difficulty)}</span><h3>${bossOrder}${escapeHtml(record.bossName || '보스 미확인')}</h3></div>
+        <b>공개 통계 제외</b>
+      </header>
+      <div class="meter-observed-summary">
+        <div><span>판독 파티 피해</span><strong>${formatCount(record.partyTotalDamage, '0')}</strong></div>
+        <div><span>전투 시간</span><strong>${Number(record.durationSeconds || 0).toFixed(1)}초</strong></div>
+        <div><span>참가자 프로필</span><strong>${resolvedCount}/${participants.length}</strong></div>
+        <div><span>Decoder 범위</span><strong>${completenessLabel}</strong></div>
+      </div>
+      <p>${occurred ? `${escapeHtml(occurred)} KST` : '수집 시각 미확인'} · ${escapeHtml(record.decoderType || 'Decoder 미확인')} ${escapeHtml(record.decoderVersion || '')}</p>
+      <details>
+        <summary>파티원별 판독 피해 보기</summary>
+        <ul>${participants.length ? participants.map(observedParticipantMarkup).join('') : '<li class="meter-empty">판독된 참가자가 없습니다.</li>'}</ul>
+      </details>
+    </article>`;
+  }
+
+  function resetObserved(message) {
+    const status = $('meterObservedStatus');
+    const list = $('meterObservedList');
+    if (status) status.textContent = message || 'PASS KEY 로그인 후 이 계정에서 업로드한 기록을 확인할 수 있습니다.';
+    if (list) list.innerHTML = '<div class="meter-empty">아직 불러온 수집 기록이 없습니다.</div>';
+  }
+
+  async function loadRecentObserved() {
+    const button = $('meterObservedRefreshBtn');
+    if (!meterSessionToken) {
+      resetObserved();
+      return;
+    }
+    if (button) {
+      button.disabled = true;
+      button.textContent = '불러오는 중...';
+    }
+    $('meterObservedStatus').textContent = '이 계정에서 Server에 저장한 최근 실제 수집 기록을 확인하는 중입니다.';
+    try {
+      const result = await callMeter('recentObserved', { sessionToken: meterSessionToken, limit: 20 });
+      const records = asArray(result.records);
+      $('meterObservedList').innerHTML = records.length
+        ? records.map(observedRecordMarkup).join('')
+        : '<div class="meter-empty">아직 Server에 저장된 실제 수집 기록이 없습니다. Desktop 0.2.33 이상에서 보스 전투가 끝나면 여기에 표시됩니다.</div>';
+      $('meterObservedStatus').textContent = records.length
+        ? `최근 ${records.length.toLocaleString('ko-KR')}건 · 소유자 전용 · Decoder 검증 전 · 공개 통계 제외`
+        : (result.message || '저장된 수집 기록이 없습니다.');
+    } catch (error) {
+      $('meterObservedStatus').textContent = error.message || '최근 수집 기록을 불러오지 못했습니다.';
+      $('meterObservedList').innerHTML = '<div class="meter-empty">Server 연결 또는 Meter 세션을 확인해 주세요.</div>';
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = '새로고침';
+      }
+    }
+  }
+
   function safeImageUrl(value) {
     const url = String(value || '').trim();
     return /^https:\/\//i.test(url) ? url : '';
@@ -1089,6 +1175,7 @@
       renderMeterAccessState();
       renderCharacterPicker();
       setMyPanels('picker');
+      await loadRecentObserved();
     } catch (error) {
       errorBox.textContent = error.message || 'KINOJO 로그인 계정을 Meter에 연결하지 못했습니다.';
     } finally {
@@ -1227,6 +1314,7 @@
     $('meterPassError').textContent = '';
     $('meterCharacterError').textContent = '';
     resetMineResult('');
+    resetObserved();
     setMyPanels('login');
     renderCommonLoginState();
     if (token) {
@@ -1288,6 +1376,7 @@
     $('meterOpenLoginBtn').addEventListener('click', openCommonLoginForMine);
     $('meterStatsLoginBtn').addEventListener('click', openCommonLoginForMine);
     $('meterMyCompareBtn').addEventListener('click', loadMineSession);
+    $('meterObservedRefreshBtn').addEventListener('click', loadRecentObserved);
     $('meterChangeCharacterBtn').addEventListener('click', showCharacterPicker);
     $('meterMyLogoutBtn').addEventListener('click', () => logoutMine(false, true));
     $('meterDirectDownload').addEventListener('click', requestDownload);
@@ -1319,6 +1408,7 @@
       await Promise.all([loadPublicConsole(), loadDesktopRelease(), loadConsentDocument(), loadCatalog()]);
       if (!meterSessionToken) await connectMineFromCommonAuth();
       if (meterSessionToken) await refreshConsentStatus();
+      if (meterSessionToken) await loadRecentObserved();
       await loadStats();
     } catch (error) {
       setControlsEnabled(false);
