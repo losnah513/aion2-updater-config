@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-08-06T14:00:00+09:00",
+  "items": [
+    {
+      "id": "meter-launcher-1-0-0-prepare",
+      "type": "update",
+      "channel": "all",
+      "pinned": true,
+      "title": "KINOJO Meter Launcher 1.0.0 준비 안내",
+      "summary": "PASS KEY 로그인과 안전한 Core 업데이트·검증·자동 복구 기능을 갖춘 새 런처를 준비하고 있습니다.",
+      "publishedAt": "2026-08-06T14:00:00+09:00",
+      "version": "1.0.0",
+      "url": "https://kinojo.info/meter/"
+    },
+    {
+      "id": "meter-download-maintenance-20260806",
+      "type": "notice",
+      "channel": "all",
+      "pinned": true,
+      "title": "KINOJO Meter 다운로드 점검 안내",
+      "summary": "실제 Windows 설치·업데이트 검증이 끝날 때까지 운영 다운로드는 점검 상태로 유지됩니다.",
+      "publishedAt": "2026-08-06T13:30:00+09:00",
+      "version": "",
+      "url": "https://kinojo.info/meter/"
+    }
+  ]
+}
