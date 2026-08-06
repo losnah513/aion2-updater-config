@@ -27,7 +27,7 @@
 <main class="mobile-wrap mobile-home-wrap">
   <section class="mobile-home-stack" aria-label="KINOJO 모바일 메뉴">
     <a class="mobile-og-banner" href="hof/" aria-label="KINOJO INFO 대표 배너">
-      <img src="../assets/images/common/kinojo-og.jpg?cache=26062218" alt="KINOJO INFO 깡 레기온 대표 배너">
+      <img id="kinojo-main-banner-image" src="../assets/images/common/kinojo-og.jpg?cache=26062218" alt="KINOJO INFO 깡 레기온 대표 배너">
     </a>
     <a class="mobile-feature-card mobile-feature-hall" href="hof/" aria-label="명예의 전당 열기">
       <span class="mobile-card-bg" aria-hidden="true"></span>
@@ -93,5 +93,16 @@
 <script src="../ui/kinojo-event-notice.js?cache=2026070521"></script>
 <script src="mobile-sanctuary-carousel.js?cache=2026071301"></script>
 <script src="mobile-home.js?cache=2026062610"></script>
+<script>
+  (() => {
+    const banner = document.getElementById('kinojo-main-banner-image');
+    const summerBannerEndsAt = Date.parse('2026-08-31T23:59:59.999+09:00');
+
+    if (banner && Date.now() <= summerBannerEndsAt) {
+      banner.src = '../assets/images/common/kinojo_banner_summer.png?cache=20260806';
+      banner.alt = 'KINOJO INFO 여름 휴가 배너';
+    }
+  })();
+</script>
 </body>
 </html>
