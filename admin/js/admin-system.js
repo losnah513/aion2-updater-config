@@ -1,4 +1,4 @@
-/* KINOJO Admin Meter administration, server status, environment, and visitors v2026080101 */
+/* KINOJO Admin Meter administration, server status, environment, and visitors v2026080601 */
 (function(A){
   'use strict';
   if(!A) throw new Error('KINOJO Admin shared module is required.');
@@ -16,6 +16,7 @@
   const toast=(...args)=>A.toast(...args);
 
   const METER_NOTICE_LABELS={INFO:'안내',UPDATE:'업데이트',MAINTENANCE:'점검',WARNING:'주의'};
+  const METER_MODE_LABELS={CLOSED:'다운로드 닫힘',ALL:'전체 등급',RANK_ALLOWLIST:'선택 등급'};
 
   function meterDateInput(value){
     const date=value?new Date(value):new Date();
@@ -34,7 +35,19 @@
   function meterFileSize(value){
     const bytes=Number(value||0);
     if(!Number.isFinite(bytes)||bytes<=0)return '-';
-    return bytes>=1048576?(bytes/1048576).toFixed(2)+' MB':Math.trunc(bytes).toLocaleString('ko-KR')+' bytes';
+    return (bytes/1048576).toFixed(1)+' MB';
+  }
+
+  function selectedMeterLevels(){
+    return $$('[data-meter-level]:checked').map(input=>Number(input.value)).filter(level=>level>=1&&level<=5);
+  }
+
+  function setMeterModeControls(){
+    const mode=String($('#meterAdminDownloadMode')?.value||'CLOSED').toUpperCase();
+    const ranks=$('#meterAdminAllowedLevels');
+    if(ranks)ranks.hidden=mode!=='RANK_ALLOWLIST';
+    const resume=$('#meterAdminResumeAt');
+    if(resume)resume.disabled=mode!=='CLOSED';
   }
 
   function normalizeMeterNotice(row){
@@ -86,19 +99,25 @@
     state.meterConsole=data||{};
     const operation=data?.operation||{};
     state.meterNotices=(Array.isArray(data?.notices)?data.notices:[]).map(normalizeMeterNotice);
-    const enabled=operation.downloadEnabled===true;
-    $('#meterAdminDownloadEnabled').checked=enabled;
+    const mode=String(operation.downloadMode||(operation.downloadEnabled===true?'ALL':'CLOSED')).toUpperCase();
+    $('#meterAdminDownloadMode').value=METER_MODE_LABELS[mode]?mode:'CLOSED';
+    const allowedLevels=Array.isArray(operation.allowedLevels)?operation.allowedLevels.map(Number):[];
+    $$('[data-meter-level]').forEach(input=>{input.checked=allowedLevels.includes(Number(input.value));});
+    setMeterModeControls();
     $('#meterAdminDisabledMessage').value=String(operation.disabledMessage||'키노조 미터 다운로드를 점검하고 있습니다. 잠시 후 다시 시도해 주세요.');
     $('#meterAdminResumeAt').value=operation.resumeAt?meterDateInput(operation.resumeAt):'';
     const badge=$('#meterAdminOperationBadge');
-    badge.textContent=enabled?'다운로드 ON':'점검 중 · OFF';
-    badge.classList.toggle('is-off',!enabled);
-    const release=data?.release?.desktopUpdate||null;
-    $('#meterAdminReleaseVersion').textContent=release?.version||'-';
-    $('#meterAdminReleaseFile').textContent=release?.fileName||'-';
-    $('#meterAdminReleaseSize').textContent=meterFileSize(release?.fileSize);
-    $('#meterAdminReleasePublished').textContent=formatServerTime(release?.publishedAt);
-    $('#meterAdminReleaseState').textContent=data?.release?.releaseAvailable===true?(enabled?'다운로드 가능':'운영 점검 중'):'활성 릴리스 없음';
+    badge.textContent=METER_MODE_LABELS[mode]||METER_MODE_LABELS.CLOSED;
+    badge.classList.toggle('is-off',mode==='CLOSED');
+    const distribution=data?.distribution||{};
+    const launcher=distribution.launcher||null;
+    const core=distribution.core||null;
+    $('#meterAdminLauncherVersion').textContent=launcher?.version||'-';
+    $('#meterAdminLauncherFile').textContent=launcher?.fileName||'-';
+    $('#meterAdminLauncherSize').textContent=meterFileSize(launcher?.fileSize);
+    $('#meterAdminCoreVersion').textContent=core?.version||'-';
+    $('#meterAdminCombinedSize').textContent=meterFileSize(distribution.combinedFileSize);
+    $('#meterAdminReleaseState').textContent=distribution.releaseAvailable!==true?'Launcher/Core 배포 준비 중':mode==='CLOSED'?'배포 준비 완료 · 다운로드 닫힘':mode==='RANK_ALLOWLIST'?'선택 등급 다운로드':'전체 등급 다운로드';
     renderMeterNotices();
   }
 
@@ -116,10 +135,13 @@
 
   async function saveMeterOperation(){
     if(!isMaster())return;
-    const enabled=$('#meterAdminDownloadEnabled').checked;
+    const mode=String($('#meterAdminDownloadMode').value||'CLOSED').toUpperCase();
+    const allowedLevels=selectedMeterLevels();
+    if(mode==='RANK_ALLOWLIST'&&!allowedLevels.length){setStatus('#meterAdminOperationStatus','허용할 등급을 하나 이상 선택하세요.','error');return;}
+    const enabled=mode!=='CLOSED';
     const disabledMessage=$('#meterAdminDisabledMessage').value.trim();
     if(!disabledMessage){setStatus('#meterAdminOperationStatus','비활성화 안내 문구를 입력하세요.','error');return;}
-    const prompt=enabled?'키노조 미터 다운로드를 활성화할까요?':'다운로드를 즉시 점검 중으로 전환하고 Server 승인을 차단할까요?';
+    const prompt=mode==='CLOSED'?'다운로드를 즉시 닫고 Server 승인을 차단할까요?':mode==='ALL'?'모든 등급에 다운로드를 허용할까요?':'선택한 등급에만 다운로드를 허용할까요?';
     if(!confirm(prompt))return;
     const button=$('#meterAdminOperationSaveBtn');button.disabled=true;
     setStatus('#meterAdminOperationStatus','운영 상태를 저장하는 중...','');
@@ -127,14 +149,16 @@
       const data=await adminMeter('saveOperation',{
         channel:'stable',
         downloadEnabled:enabled,
+        downloadMode:mode,
+        allowedLevels:mode==='RANK_ALLOWLIST'?allowedLevels:[],
         disabledMessage,
-        resumeAt:enabled?null:meterIsoFromInput($('#meterAdminResumeAt').value)
+        resumeAt:mode==='CLOSED'?meterIsoFromInput($('#meterAdminResumeAt').value):null
       });
       if(!data||data.ok===false)throw new Error(data?.message||'운영 상태 저장 실패');
       renderMeterAdminConsole(data);
       setStatus('#meterAdminOperationStatus',data.message||'운영 상태를 저장했습니다.','ok');
       toast(data.message||'키노조 미터 운영 상태 저장 완료');
-      addLog('METER',enabled?'다운로드 활성화':'다운로드 점검 전환');
+      addLog('METER',METER_MODE_LABELS[mode]||mode);
     }catch(err){setStatus('#meterAdminOperationStatus',err.message||String(err),'error');}
     finally{button.disabled=false;}
   }
@@ -259,5 +283,5 @@
     }catch(err){setStatus('#visitorHistoryStatus',err.message||String(err),'error');}
   }
 
-  Object.assign(A,{METER_NOTICE_LABELS,meterDateInput,meterIsoFromInput,meterFileSize,normalizeMeterNotice,meterNoticeById,resetMeterNoticeEditor,renderMeterNotices,renderMeterAdminConsole,loadMeterAdminConsole,saveMeterOperation,saveMeterNotice,deleteMeterNotice,refreshServerStatus,renderServerBox,refreshSystemSettings,visitorDate,visitorNumber,renderVisitorTrend,renderVisitorPages,loadVisitorDashboard,loadVisitorHistory});
+  Object.assign(A,{METER_NOTICE_LABELS,METER_MODE_LABELS,meterDateInput,meterIsoFromInput,meterFileSize,selectedMeterLevels,setMeterModeControls,normalizeMeterNotice,meterNoticeById,resetMeterNoticeEditor,renderMeterNotices,renderMeterAdminConsole,loadMeterAdminConsole,saveMeterOperation,saveMeterNotice,deleteMeterNotice,refreshServerStatus,renderServerBox,refreshSystemSettings,visitorDate,visitorNumber,renderVisitorTrend,renderVisitorPages,loadVisitorDashboard,loadVisitorHistory});
 })(window.KinojoAdmin);

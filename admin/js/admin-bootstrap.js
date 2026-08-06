@@ -1,4 +1,4 @@
-/* KINOJO Admin Navigation, dashboard, event binding, and bootstrap v2026080101 */
+/* KINOJO Admin Navigation, dashboard, event binding, and bootstrap v2026080601 */
 (function(A){
   'use strict';
   if(!A) throw new Error('KINOJO Admin shared module is required.');
@@ -71,6 +71,7 @@
   const saveEventNoticeEditor=(...args)=>A.saveEventNoticeEditor(...args);
   const saveMeterNotice=(...args)=>A.saveMeterNotice(...args);
   const saveMeterOperation=(...args)=>A.saveMeterOperation(...args);
+  const setMeterModeControls=(...args)=>A.setMeterModeControls(...args);
   const saveNotice=(...args)=>A.saveNotice(...args);
   const saveSanctuarySchedule=(...args)=>A.saveSanctuarySchedule(...args);
   const searchCharacters=(...args)=>A.searchCharacters(...args);
@@ -238,6 +239,7 @@
     $('#noticeReloadBtn')?.addEventListener('click',loadNotices); $('#noticeSaveBtn')?.addEventListener('click',saveNotice);
     $('#meterAdminReloadBtn')?.addEventListener('click',loadMeterAdminConsole);
     $('#meterAdminOperationSaveBtn')?.addEventListener('click',saveMeterOperation);
+    $('#meterAdminDownloadMode')?.addEventListener('change',setMeterModeControls);
     $('#meterAdminNoticeNewBtn')?.addEventListener('click',()=>resetMeterNoticeEditor(null));
     $('#meterAdminNoticeCancelBtn')?.addEventListener('click',()=>resetMeterNoticeEditor(null));
     $('#meterAdminNoticeSaveBtn')?.addEventListener('click',saveMeterNotice);

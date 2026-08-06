@@ -12,7 +12,7 @@
 <link href="../ui/kinojo-common-ui.css?cache=2026072502" rel="stylesheet"/>
 <link href="../ui/kinojo-card-guards.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../ui/kinojo-animations.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
-<link href="./css/admin.css?cache=2026073104" rel="stylesheet"/>
+<link href="./css/admin.css?cache=2026080601" rel="stylesheet"/>
 <script src="../ui/kinojo-device-router.js?cache=2026070110" data-mobile-path="../m/admin/"></script>
 </head>
 <body class="kinojo-page-admin">
@@ -191,11 +191,12 @@
     <section class="admin-pane" data-admin-pane="meter" data-admin-master-only>
       <div class="admin-meter-grid">
         <section class="admin-card admin-meter-operation-card">
-          <div class="admin-card-head"><div><h2>다운로드 운영 상태</h2><p>OFF 시 사용자 버튼은 `점검 중`으로 비활성화되고 Server 승인도 차단됩니다.</p></div><button class="admin-btn" id="meterAdminReloadBtn" type="button">새로고침</button></div>
+          <div class="admin-card-head"><div><h2>다운로드 운영 상태</h2><p>닫힘, 전체 등급, 선택 등급 중 하나로 Server 승인을 제어합니다.</p></div><button class="admin-btn" id="meterAdminReloadBtn" type="button">새로고침</button></div>
           <div class="admin-meter-operation-head">
             <div><span>현재 상태</span><strong id="meterAdminOperationBadge">확인 중</strong></div>
-            <label class="admin-meter-switch"><input id="meterAdminDownloadEnabled" type="checkbox"/><span aria-hidden="true"></span><b>다운로드 활성화</b></label>
+            <label class="admin-meter-mode">다운로드 대상<select class="admin-select" id="meterAdminDownloadMode"><option value="CLOSED">닫힘</option><option value="ALL">전체 등급</option><option value="RANK_ALLOWLIST">선택 등급</option></select></label>
           </div>
+          <fieldset class="admin-meter-ranks" id="meterAdminAllowedLevels" hidden><legend>다운로드 허용 등급</legend><label><input data-meter-level type="checkbox" value="1"/>Member</label><label><input data-meter-level type="checkbox" value="2"/>Staff</label><label><input data-meter-level type="checkbox" value="3"/>Manager</label><label><input data-meter-level type="checkbox" value="4"/>Sub Master</label><label><input data-meter-level type="checkbox" value="5"/>Master</label></fieldset>
           <label class="admin-meter-field">비활성화 안내 문구<textarea class="admin-textarea" id="meterAdminDisabledMessage" rows="3" maxlength="300" placeholder="점검 사유와 이용자 안내를 입력하세요."></textarea></label>
           <label class="admin-meter-field">재개 예정 시각 <small>선택 입력</small><input class="admin-input" id="meterAdminResumeAt" type="datetime-local"/></label>
           <div class="admin-form-row"><button class="admin-btn primary" id="meterAdminOperationSaveBtn" type="button">운영 상태 저장</button></div>
@@ -205,10 +206,11 @@
         <section class="admin-card admin-meter-release-card">
           <div class="admin-card-head"><div><h2>현재 배포 정보</h2><p>Server Release Master의 활성 릴리스를 읽기 전용으로 표시합니다.</p></div></div>
           <dl class="admin-meter-release">
-            <div><dt>현재 버전</dt><dd id="meterAdminReleaseVersion">-</dd></div>
-            <div><dt>설치 파일</dt><dd id="meterAdminReleaseFile">-</dd></div>
-            <div><dt>파일 크기</dt><dd id="meterAdminReleaseSize">-</dd></div>
-            <div><dt>게시 시각</dt><dd id="meterAdminReleasePublished">-</dd></div>
+            <div><dt>Launcher 버전</dt><dd id="meterAdminLauncherVersion">-</dd></div>
+            <div><dt>Launcher 파일</dt><dd id="meterAdminLauncherFile">-</dd></div>
+            <div><dt>Launcher 용량</dt><dd id="meterAdminLauncherSize">-</dd></div>
+            <div><dt>Core 버전</dt><dd id="meterAdminCoreVersion">-</dd></div>
+            <div><dt>설치 후 합계</dt><dd id="meterAdminCombinedSize">-</dd></div>
             <div><dt>다운로드 상태</dt><dd id="meterAdminReleaseState">-</dd></div>
           </dl>
         </section>
@@ -325,6 +327,6 @@
 <script src="../core/kinojo-auth-session.js?cache=2026080205"></script>
 <script src="../core/kinojo-auth-service.js?cache=2026080205"></script>
 <script src="../core/kinojo-auth-ui.js?cache=2026080205"></script>
-<script src="./js/admin.js?cache=2026073104"></script>
+<script src="./js/admin.js?cache=2026080601"></script>
 </body>
 </html>

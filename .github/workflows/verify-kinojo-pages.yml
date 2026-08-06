@@ -12,6 +12,8 @@ on:
       - "m/sanctuary/**"
       - "admin/**"
       - "m/admin/**"
+      - "meter/**"
+      - "m/meter/**"
       - "core/**"
       - "ui/**"
       - "launcher-content.json"
@@ -28,6 +30,8 @@ on:
       - "m/sanctuary/**"
       - "admin/**"
       - "m/admin/**"
+      - "meter/**"
+      - "m/meter/**"
       - "core/**"
       - "ui/**"
       - "launcher-content.json"
@@ -66,6 +70,9 @@ jobs:
             "core/kinojo-supabase-client.js"
             "core/kinojo-supabase-rpc.js"
             "core/kinojo-supabase-features.js"
+            "admin/js/admin-system.js"
+            "admin/js/admin-bootstrap.js"
+            "meter/js/meter-app.js"
           )
 
           for path in "${js_files[@]}"; do
@@ -144,6 +151,31 @@ jobs:
                   text = data.decode("utf-8")
                   if text.count("{") != text.count("}"):
                       raise SystemExit(f"CSS brace mismatch: {path}")
+
+          meter_pages = [Path("meter/index.html"), Path("m/meter/index.html")]
+          for page in meter_pages:
+              text = page.read_text(encoding="utf-8")
+              for token in ["meterInstallerSize", "다운로드 용량", "meter-app.js?cache=2026080601"]:
+                  if token not in text:
+                      raise SystemExit(f"{page}: Meter distribution contract missing: {token}")
+
+          admin_pages = [Path("admin/index.html"), Path("m/admin/index.html")]
+          for page in admin_pages:
+              text = page.read_text(encoding="utf-8")
+              for token in ["meterAdminDownloadMode", "meterAdminAllowedLevels", "meterAdminCombinedSize"]:
+                  if token not in text:
+                      raise SystemExit(f"{page}: Meter admin contract missing: {token}")
+
+          meter_app = Path("meter/js/meter-app.js").read_text(encoding="utf-8")
+          admin_system = Path("admin/js/admin-system.js").read_text(encoding="utf-8")
+          for token in ["launcherDownloadAuthorization", "renderDistribution", "미터기 포함"]:
+              if token not in meter_app:
+                  raise SystemExit(f"Meter WEB contract missing: {token}")
+          if "desktopDownloadAuthorization" in meter_app:
+              raise SystemExit("Meter WEB must authorize the Launcher, not the legacy desktop installer")
+          for token in ["RANK_ALLOWLIST", "allowedLevels", "combinedFileSize"]:
+              if token not in admin_system:
+                  raise SystemExit(f"Meter admin contract missing: {token}")
 
           print("KINOJO modal source contracts: PASS")
           PY
@@ -263,9 +295,16 @@ jobs:
             "admin/index.html"
             "m/admin/index.html"
             "admin/js/admin.js"
+            "admin/js/admin-system.js"
             "admin/js/admin-shared.js"
             "admin/js/admin-characters.js"
             "admin/js/admin-bootstrap.js"
+            "admin/css/admin.css"
+            "meter/index.html"
+            "m/meter/index.html"
+            "meter/meter-config.json"
+            "meter/js/meter-app.js"
+            "meter/css/meter.css"
             "ui/kinojo-components.css"
             "ui/kinojo-character-reaction.js"
             "ui/kinojo-character-reaction.css"
@@ -354,7 +393,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           STATUS_STATE: success
-          STATUS_DESCRIPTION: KINOJO 운영 파일 38개가 main과 일치
+          STATUS_DESCRIPTION: KINOJO 운영 파일이 main과 일치
         run: |
           set -euo pipefail
           python3 <<'PY' > /tmp/kinojo-status.json
