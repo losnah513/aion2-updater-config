@@ -14,6 +14,7 @@ on:
       - "m/admin/**"
       - "core/**"
       - "ui/**"
+      - "launcher-content.json"
       - "CNAME"
       - ".github/workflows/verify-kinojo-pages.yml"
   push:
@@ -29,6 +30,7 @@ on:
       - "m/admin/**"
       - "core/**"
       - "ui/**"
+      - "launcher-content.json"
       - "CNAME"
       - ".github/workflows/verify-kinojo-pages.yml"
   workflow_dispatch:
@@ -240,6 +242,7 @@ jobs:
           trap 'rm -rf "$tmp_dir"' EXIT
 
           files=(
+            "launcher-content.json"
             "hof/index.html"
             "m/hof/index.html"
             "hof/css/hall.css"
@@ -351,7 +354,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           STATUS_STATE: success
-          STATUS_DESCRIPTION: KINOJO 운영 파일 37개가 main과 일치
+          STATUS_DESCRIPTION: KINOJO 운영 파일 38개가 main과 일치
         run: |
           set -euo pipefail
           python3 <<'PY' > /tmp/kinojo-status.json
