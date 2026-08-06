@@ -17,9 +17,9 @@
   let meterConfig = {
     edgeFunctionName: 'meter-ingest',
     releaseChannel: 'stable',
-    webClientVersion: 'WEB_50015'
+    webClientVersion: 'WEB_50021'
   };
-  let desktopRelease = null;
+  let launcherRelease = null;
   let meterOperation = null;
   let meterNotices = [];
   let consentDocument = null;
@@ -57,10 +57,7 @@
   function formatFileSize(value) {
     const bytes = Number(value);
     if (!Number.isFinite(bytes) || bytes <= 0) return '-';
-    const formattedBytes = Math.trunc(bytes).toLocaleString('ko-KR');
-    if (bytes >= 1048576) return `${(bytes / 1048576).toFixed(2)} MB (${formattedBytes} bytes)`;
-    if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} KB (${formattedBytes} bytes)`;
-    return `${formattedBytes} bytes`;
+    return `${(bytes / 1048576).toFixed(1)} MB`;
   }
 
   function escapeHtml(value) {
@@ -244,8 +241,8 @@
 
   async function loadConfiguration() {
     const [local, site] = await Promise.all([
-      readJson('/meter/meter-config.json?build=2026072403'),
-      readJson('/config.json?meter=2026072403')
+      readJson('/meter/meter-config.json?build=2026080601'),
+      readJson('/config.json?meter=2026080601')
     ]);
     meterConfig = Object.assign(meterConfig, local || {});
     const supabase = site && site.supabase ? site.supabase : {};
@@ -273,6 +270,13 @@
 
   function downloadEnabled() {
     return Boolean(meterOperation && meterOperation.downloadEnabled === true);
+  }
+
+  function rankAllowedForDownload() {
+    if (String(meterOperation && meterOperation.downloadMode || '').toUpperCase() !== 'RANK_ALLOWLIST') return true;
+    const level = Number(meterAccount && meterAccount.level || 0);
+    const allowed = asArray(meterOperation && meterOperation.allowedLevels).map(Number);
+    return level <= 0 || allowed.includes(level);
   }
 
   function renderDownloadAccess() {
@@ -304,7 +308,15 @@
       return;
     }
 
-    if (!desktopRelease) return;
+    if (!launcherRelease) return;
+
+    if (loggedIn && !rankAllowedForDownload()) {
+      direct.textContent = '현재 등급 다운로드 제한';
+      direct.setAttribute('aria-disabled', 'true');
+      state.textContent = '현재 PASS KEY 등급은 다운로드 대상이 아닙니다.';
+      state.classList.add('is-error');
+      return;
+    }
     direct.removeAttribute('aria-disabled');
 
     if (loggedIn && consentAccepted) {
@@ -444,26 +456,27 @@
   }
 
   async function authorizeAndDownload() {
-    if (!meterSessionToken || !consentDocument || !desktopRelease || !downloadEnabled()) return;
+    if (!meterSessionToken || !consentDocument || !launcherRelease || !downloadEnabled() || !rankAllowedForDownload()) return;
     const direct = $('meterDirectDownload');
     let failureMessage = '';
     direct.setAttribute('aria-disabled', 'true');
     direct.textContent = 'Server 다운로드 승인 확인 중';
     try {
-      const result = await callMeter('desktopDownloadAuthorization', {
+      const result = await callMeter('launcherDownloadAuthorization', {
         sessionToken: meterSessionToken,
         documentVersion: consentDocument.documentVersion,
         channel: String(meterConfig.releaseChannel || 'stable'),
-        clientVersion: String(meterConfig.webClientVersion || 'WEB_50013')
+        launcherVersion: null
       });
-      const release = result && result.desktopUpdate && typeof result.desktopUpdate === 'object'
-        ? result.desktopUpdate
+      const release = result && result.launcherUpdate && typeof result.launcherUpdate === 'object'
+        ? result.launcherUpdate
         : null;
       if (result && result.operation && typeof result.operation === 'object') {
         meterOperation = result.operation;
       }
       const downloadUrl = release ? safeReleaseUrl(release.downloadUrl) : '';
-      if (result.authorized !== true || !downloadUrl) {
+      const sha256 = String(release && release.sha256 || '').trim();
+      if (result.authorized !== true || !downloadUrl || !/^[0-9a-f]{64}$/i.test(sha256)) {
         const denied = new Error(result.message || 'Server가 다운로드를 승인하지 않았습니다.');
         denied.code = String(result.code || 'DOWNLOAD_NOT_AUTHORIZED');
         throw denied;
@@ -497,7 +510,7 @@
         serviceRiskAccepted: $('meterConsentRiskCheck').checked,
         statisticsAccepted: $('meterConsentStatsCheck').checked,
         clientSurface: 'WEB',
-        clientVersion: String(meterConfig.webClientVersion || 'WEB_50013')
+        clientVersion: String(meterConfig.webClientVersion || 'WEB_50021')
       });
       if (result.accepted !== true) throw new Error(result.message || '필수 동의를 기록하지 못했습니다.');
       consentAccepted = true;
@@ -519,7 +532,7 @@
       renderDownloadAccess();
       return;
     }
-    if (!desktopRelease) return;
+    if (!launcherRelease || !rankAllowedForDownload()) return;
     if (!meterSessionToken) {
       openCommonLoginForMine();
       return;
@@ -547,58 +560,44 @@
     );
   }
 
-  function setReleaseUnavailable(message) {
-    desktopRelease = null;
+  function setDistributionUnavailable(message) {
+    launcherRelease = null;
     $('meterVersion').textContent = '배포 대기';
     $('meterInstallerSize').textContent = '-';
     $('meterDirectDownload').href = '#download';
     $('meterDirectDownload').textContent = '다운로드 준비 중';
     $('meterDirectDownload').setAttribute('aria-disabled', 'true');
-    $('meterConsentState').textContent = '활성 릴리스가 등록될 때까지 다운로드할 수 없습니다.';
+    $('meterConsentState').textContent = 'Launcher와 Meter Core가 모두 등록될 때까지 다운로드할 수 없습니다.';
     $('meterConsentState').classList.remove('is-accepted');
     $('meterConsentState').classList.add('is-error');
-    $('meterDownloadNote').textContent = message || 'Server에 활성 릴리스가 등록되지 않았습니다.';
+    $('meterDownloadNote').textContent = message || 'Server에 Launcher/Core 릴리스가 모두 등록되지 않았습니다.';
     $('meterReleaseNote').textContent = '배포 정보는 Server Release Master에서 관리합니다.';
   }
 
-  function renderDesktopRelease(data) {
-    const release = data && data.desktopUpdate && typeof data.desktopUpdate === 'object'
-      ? data.desktopUpdate
-      : null;
-    if (!data || data.releaseAvailable !== true || !release) {
-      setReleaseUnavailable('현재 다운로드 가능한 활성 릴리스가 없습니다.');
+  function renderDistribution(data) {
+    const launcher = data && data.launcher && typeof data.launcher === 'object' ? data.launcher : null;
+    const core = data && data.core && typeof data.core === 'object' ? data.core : null;
+    if (!data || data.releaseAvailable !== true || !launcher || !core) {
+      setDistributionUnavailable(String(data && data.message || '현재 다운로드 가능한 Launcher/Core 릴리스가 없습니다.'));
       return;
     }
 
-    const downloadUrl = safeReleaseUrl(release.downloadUrl);
-    const version = String(release.version || '').trim();
-    const sha256 = String(release.sha256 || '').trim().toUpperCase();
-    const fileName = String(release.fileName || '').trim();
-    if (!downloadUrl || !version || !/^[0-9A-F]{64}$/.test(sha256)) {
-      throw new Error('Server 릴리스 정보가 다운로드 안전 기준을 충족하지 않습니다.');
+    const launcherVersion = String(launcher.version || '').trim();
+    const coreVersion = String(core.version || '').trim();
+    const launcherFileName = String(launcher.fileName || '').trim();
+    const coreFileName = String(core.fileName || '').trim();
+    const launcherSize = Number(launcher.fileSize || 0);
+    const combinedSize = Number(data.combinedFileSize || 0);
+    if (!launcherVersion || !coreVersion || !launcherFileName || !coreFileName || launcherSize <= 0 || combinedSize <= 0) {
+      throw new Error('Server 배포 정보가 표시 기준을 충족하지 않습니다.');
     }
 
-    $('meterVersion').textContent = version;
-    $('meterInstallerSize').textContent = formatFileSize(release.fileSize);
-    desktopRelease = { version, fileName, sha256 };
-    $('meterDownloadNote').textContent = `${fileName || `KINOJO Meter ${version}`} · SHA-256 ${sha256}`;
-    $('meterReleaseNote').textContent = String(release.releaseNote || 'Server에서 검증된 활성 릴리스입니다.');
+    $('meterVersion').textContent = `Launcher ${launcherVersion} · Core ${coreVersion}`;
+    $('meterInstallerSize').textContent = `${formatFileSize(launcherSize)} (미터기 포함 ${formatFileSize(combinedSize)})`;
+    launcherRelease = { version: launcherVersion, fileName: launcherFileName };
+    $('meterDownloadNote').textContent = `${launcherFileName} · ${coreFileName}`;
+    $('meterReleaseNote').textContent = String(launcher.releaseNote || core.releaseNote || 'Server에서 검증된 최신 배포입니다.');
     renderDownloadAccess();
-  }
-
-  async function loadDesktopRelease() {
-    $('meterVersion').textContent = 'Server 확인 중';
-    $('meterInstallerSize').textContent = 'Server 확인 중';
-    $('meterDownloadNote').textContent = 'Server Release Master를 확인하고 있습니다.';
-    $('meterReleaseNote').textContent = '최신 배포 메모를 불러오는 중입니다.';
-    try {
-      const data = await callMeter('desktopUpdate', {
-        channel: String(meterConfig.releaseChannel || 'stable')
-      });
-      renderDesktopRelease(data);
-    } catch (error) {
-      setReleaseUnavailable(error.message || '다운로드 정보를 불러오지 못했습니다.');
-    }
   }
 
   async function callMeter(action, payload) {
@@ -630,7 +629,7 @@
   function renderPublicConsole(data) {
     meterOperation = data && data.operation && typeof data.operation === 'object'
       ? data.operation
-      : { downloadEnabled: false, disabledMessage: '다운로드 운영 상태를 확인하지 못했습니다.' };
+      : { downloadEnabled: false, downloadMode: 'CLOSED', allowedLevels: [], disabledMessage: '다운로드 운영 상태를 확인하지 못했습니다.' };
     meterNotices = asArray(data && data.notices);
     const notice = meterNotices[0] || {
       noticeType: 'INFO',
@@ -647,6 +646,7 @@
     $('meterNoticeTime').textContent = serverTime(notice.updatedAt || notice.startsAt || data.serverTime)
       ? `${serverTime(notice.updatedAt || notice.startsAt || data.serverTime)} KST`
       : 'Server 공지';
+    renderDistribution(data && data.distribution);
     renderDownloadAccess();
   }
 
@@ -1160,7 +1160,7 @@
       if (!edgeUrl || !publishableKey) await loadConfiguration();
       const result = await callMeter('login', {
         passKey,
-        clientVersion: String(meterConfig.webClientVersion || 'WEB_50011')
+        clientVersion: String(meterConfig.webClientVersion || 'WEB_50021')
       });
       if (!result.sessionToken || !Array.isArray(result.characters) || result.characters.length === 0) {
         throw new Error(result.message || '계정에 연결된 활성 캐릭터가 없습니다.');
@@ -1405,7 +1405,7 @@
     bind();
     try {
       await loadConfiguration();
-      await Promise.all([loadPublicConsole(), loadDesktopRelease(), loadConsentDocument(), loadCatalog()]);
+      await Promise.all([loadPublicConsole(), loadConsentDocument(), loadCatalog()]);
       if (!meterSessionToken) await connectMineFromCommonAuth();
       if (meterSessionToken) await refreshConsentStatus();
       if (meterSessionToken) await loadRecentObserved();
