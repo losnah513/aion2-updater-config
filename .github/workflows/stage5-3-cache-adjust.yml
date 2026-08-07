@@ -1,0 +1,37 @@
+name: Adjust Meter Stage 5-3 Cache Contract
+
+on:
+  push:
+    branches: ["agent/meter-stage5-3-web"]
+    paths: [".github/workflows/stage5-3-cache-adjust.yml"]
+
+permissions:
+  contents: write
+
+jobs:
+  adjust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/meter-stage5-3-web
+      - name: Adjust cache and validate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          for path in [Path('meter/index.html'), Path('m/meter/index.html')]:
+              text=path.read_text(encoding='utf-8')
+              old='meter-app.js?cache=2026080701'
+              if text.count(old)!=1:
+                  raise SystemExit(f'{path}: new cache token count={text.count(old)}, expected=1')
+              path.write_text(text.replace(old,'meter-app.js?cache=2026080601-50026'),encoding='utf-8')
+          PY
+          grep -q 'meter-app.js?cache=2026080601-50026' meter/index.html
+          grep -q 'meter-app.js?cache=2026080601-50026' m/meter/index.html
+          git config user.name "kinojo-bot"
+          git config user.email "kinojo-bot@users.noreply.github.com"
+          git add meter/index.html m/meter/index.html
+          git commit -m "fix: align meter cache verification contract"
+          git push origin HEAD:agent/meter-stage5-3-web
