@@ -671,6 +671,7 @@
     const actions = {
       console:'adminMeterConsole',
       saveOperation:'adminMeterOperationSave',
+      saveStatistics:'adminMeterStatisticsSave',
       saveNotice:'adminMeterNoticeSave',
       deleteNotice:'adminMeterNoticeDelete'
     };
