@@ -1,4 +1,4 @@
-# stage5-3 patch runner v6
+# stage5-3 patch runner v7
 name: Apply Meter Stage 5-3 Web Patch
 
 on:
@@ -30,12 +30,12 @@ jobs:
           node --check admin/js/admin-system.js
           node --check admin/js/admin-bootstrap.js
           node --check admin/js/admin.js
-      - name: Commit patched product files
+      - name: Commit product files only
         run: |
           set -euo pipefail
-          git rm -f .github/workflows/stage5-3-meter-web-patch.yml tools/stage5_3_patch.py tools/stage5_3_fix_mobile.py
+          git restore .github/workflows/verify-kinojo-pages.yml
           git config user.name "kinojo-bot"
           git config user.email "kinojo-bot@users.noreply.github.com"
-          git add .github/workflows/verify-kinojo-pages.yml meter m/meter admin m/admin core/kinojo-supabase-features.js
+          git add meter m/meter admin m/admin core/kinojo-supabase-features.js
           git commit -m "feat: connect meter combat stats control"
           git push origin HEAD:agent/meter-stage5-3-web
