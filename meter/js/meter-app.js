@@ -17,10 +17,11 @@
   let meterConfig = {
     edgeFunctionName: 'meter-ingest',
     releaseChannel: 'stable',
-    webClientVersion: 'WEB_50021'
+    webClientVersion: 'WEB_50026'
   };
   let launcherRelease = null;
   let meterOperation = null;
+  let statisticsOperation = null;
   let meterNotices = [];
   let consentDocument = null;
   let consentAccepted = false;
@@ -241,8 +242,8 @@
 
   async function loadConfiguration() {
     const [local, site] = await Promise.all([
-      readJson('/meter/meter-config.json?build=2026080601'),
-      readJson('/config.json?meter=2026080601')
+      readJson('/meter/meter-config.json?build=2026080701'),
+      readJson('/config.json?meter=2026080701')
     ]);
     meterConfig = Object.assign(meterConfig, local || {});
     const supabase = site && site.supabase ? site.supabase : {};
@@ -510,7 +511,7 @@
         serviceRiskAccepted: $('meterConsentRiskCheck').checked,
         statisticsAccepted: $('meterConsentStatsCheck').checked,
         clientSurface: 'WEB',
-        clientVersion: String(meterConfig.webClientVersion || 'WEB_50021')
+        clientVersion: String(meterConfig.webClientVersion || 'WEB_50026')
       });
       if (result.accepted !== true) throw new Error(result.message || '필수 동의를 기록하지 못했습니다.');
       consentAccepted = true;
@@ -630,6 +631,9 @@
     meterOperation = data && data.operation && typeof data.operation === 'object'
       ? data.operation
       : { downloadEnabled: false, downloadMode: 'CLOSED', allowedLevels: [], disabledMessage: '다운로드 운영 상태를 확인하지 못했습니다.' };
+    statisticsOperation = data && data.statisticsOperation && typeof data.statisticsOperation === 'object'
+      ? data.statisticsOperation
+      : { publicEnabled: false, publicMessage: '전투 통계 준비 중입니다.' };
     meterNotices = asArray(data && data.notices);
     const notice = meterNotices[0] || {
       noticeType: 'INFO',
@@ -671,6 +675,12 @@
     if (state === 'PUBLISHED') {
       badge.textContent = '공개 완료';
       badge.classList.add('is-published');
+    } else if (state === 'ADMIN_HIDDEN') {
+      badge.textContent = '관리자 비공개';
+      badge.classList.add('is-waiting');
+    } else if (state === 'INSUFFICIENT_SAMPLE') {
+      badge.textContent = '표본 집계 중';
+      badge.classList.add('is-suppressed');
     } else if (state === 'NO_DATA') {
       badge.textContent = '수집 대기';
       badge.classList.add('is-no-data');
@@ -827,7 +837,7 @@
         setSystemNotice('전투 데이터 준비 중', '현재 참여 횟수는 0건이며 Server 연결은 정상입니다. 검증 완료 전투가 수집되면 자동으로 통계가 표시됩니다.');
       } else {
         resetSummary('비공개');
-        setSystemNotice('공개 기준 집계 중', data.publicMessage || 'Server 공개 기준을 충족할 때까지 정확한 통계값을 보호합니다.');
+        setSystemNotice(data.publicState === 'ADMIN_HIDDEN' ? '전투 통계 비공개' : '공개 기준 집계 중', data.publicMessage || 'Server 공개 기준을 충족할 때까지 정확한 통계값을 보호합니다.');
       }
       setStatsState(data.publicState, data.publicMessage || 'Server 공개 기준을 충족하지 못했습니다.');
       renderBreakdown(data);
@@ -878,7 +888,9 @@
       const message = data.publicMessage || (minimum ? `${minimum}건 이상 수집되면 공개합니다.` : '공개 가능한 표본이 없습니다.');
       const guide = data.publicState === 'NO_DATA'
         ? 'Server 연결은 정상입니다. 검증 완료 전투가 수집되면 이 영역에 자동으로 통계가 표시됩니다.'
-        : '정확한 표본 수와 DPS 값은 공개 기준 미달 시 표시하지 않습니다.';
+        : data.publicState === 'ADMIN_HIDDEN'
+          ? '관리자 공개 설정이 켜지기 전까지 Server가 통계값을 반환하지 않습니다.'
+          : '정확한 표본 수와 DPS 값은 공개 기준 미달 시 표시하지 않습니다.';
       $('meterBucketChart').innerHTML = `<div class="meter-empty"><strong>${escapeHtml(message)}</strong><span>${escapeHtml(guide)}</span></div>`;
       return;
     }
@@ -938,7 +950,8 @@
     const className = participant.className || '클래스 미확인';
     const power = formatPower(participant.pveCombatPower);
     const share = Number(participant.damageShare || 0);
-    const profileResolved = Number(participant.meterCharacterId || 0) > 0;
+    const profileStatus = String(participant.profileStatus || '').toUpperCase();
+    const profileResolved = profileStatus && !['PENDING','UNRESOLVED'].includes(profileStatus);
     return `<li>
       <div class="meter-observed-participant-main">
         <strong>${escapeHtml(participant.characterName || '이름 미확인')}<small>[${escapeHtml(server)}]</small></strong>
@@ -953,30 +966,39 @@
 
   function observedRecordMarkup(record) {
     const participants = asArray(record.participants);
-    const resolvedCount = participants.filter((row) => Number(row.meterCharacterId || 0) > 0).length;
-    const completeness = Number(record.damageCompleteness || 0);
-    const completenessLabel = Number.isFinite(completeness) && completeness > 0
-      ? `${Math.min(100, Math.max(0, completeness * 100)).toFixed(1)}% 판독`
-      : '판독률 계산 대기';
+    const resolvedCount = participants.filter((row) => {
+      const status = String(row.profileStatus || '').toUpperCase();
+      return status && !['PENDING','UNRESOLVED'].includes(status);
+    }).length;
+    const validation = String(record.validationStatus || 'OBSERVED').toUpperCase();
+    const validationLabels = {
+      VALIDATED: record.statisticsEligible === true ? '통계 적격' : '검증 완료',
+      REVIEW_REQUIRED: '검토 필요',
+      INVALID: '제외',
+      OBSERVED: '검증 대기'
+    };
+    const validationLabel = validationLabels[validation] || '검증 대기';
     const dungeon = record.dungeonName || record.dungeonKey || '던전 미확인';
     const difficulty = record.difficultyName || record.variantName || record.difficultyKey || record.variantKey || '난이도 미확인';
     const bossOrder = Number(record.bossOrder || 0) > 0 ? `${Math.trunc(Number(record.bossOrder))}보스 · ` : '';
     const occurred = serverTime(record.occurredAt);
+    const reason = String(record.validationReason || '').trim();
+    const integrity = String(record.damageIntegrityStatus || 'UNKNOWN').toUpperCase();
     return `<article class="meter-observed-card">
       <header>
         <div><span>${escapeHtml(dungeon)} · ${escapeHtml(difficulty)}</span><h3>${bossOrder}${escapeHtml(record.bossName || '보스 미확인')}</h3></div>
-        <b>공개 통계 제외</b>
+        <b>${escapeHtml(validationLabel)}</b>
       </header>
       <div class="meter-observed-summary">
-        <div><span>판독 파티 피해</span><strong>${formatCount(record.partyTotalDamage, '0')}</strong></div>
+        <div><span>파티 피해</span><strong>${formatCount(record.partyTotalDamage, '0')}</strong></div>
         <div><span>전투 시간</span><strong>${Number(record.durationSeconds || 0).toFixed(1)}초</strong></div>
         <div><span>참가자 프로필</span><strong>${resolvedCount}/${participants.length}</strong></div>
-        <div><span>Decoder 범위</span><strong>${completenessLabel}</strong></div>
+        <div><span>Server 무결성</span><strong>${escapeHtml(integrity)}</strong></div>
       </div>
-      <p>${occurred ? `${escapeHtml(occurred)} KST` : '수집 시각 미확인'} · ${escapeHtml(record.decoderType || 'Decoder 미확인')} ${escapeHtml(record.decoderVersion || '')}</p>
+      <p>${occurred ? `${escapeHtml(occurred)} KST` : '수집 시각 미확인'} · ${escapeHtml(record.decoderType || 'Decoder 미확인')} ${escapeHtml(record.decoderVersion || '')}${reason ? ` · ${escapeHtml(reason)}` : ''}</p>
       <details>
-        <summary>파티원별 판독 피해 보기</summary>
-        <ul>${participants.length ? participants.map(observedParticipantMarkup).join('') : '<li class="meter-empty">판독된 참가자가 없습니다.</li>'}</ul>
+        <summary>파티원별 피해 보기</summary>
+        <ul>${participants.length ? participants.map(observedParticipantMarkup).join('') : '<li class="meter-empty">저장된 참가자가 없습니다.</li>'}</ul>
       </details>
     </article>`;
   }
@@ -998,15 +1020,15 @@
       button.disabled = true;
       button.textContent = '불러오는 중...';
     }
-    $('meterObservedStatus').textContent = '이 계정에서 Server에 저장한 최근 실제 수집 기록을 확인하는 중입니다.';
+    $('meterObservedStatus').textContent = '이 계정에서 Server에 저장한 최근 전투 기록과 검증 상태를 확인하는 중입니다.';
     try {
-      const result = await callMeter('recentObserved', { sessionToken: meterSessionToken, limit: 20 });
+      const result = await callMeter('recentCombatRecords', { sessionToken: meterSessionToken, limit: 20 });
       const records = asArray(result.records);
       $('meterObservedList').innerHTML = records.length
         ? records.map(observedRecordMarkup).join('')
-        : '<div class="meter-empty">아직 Server에 저장된 실제 수집 기록이 없습니다. Desktop 0.2.33 이상에서 보스 전투가 끝나면 여기에 표시됩니다.</div>';
+        : '<div class="meter-empty">아직 Server에 저장된 전투 기록이 없습니다. 새 Core에서 보스 전투가 끝나면 검증 상태와 함께 여기에 표시됩니다.</div>';
       $('meterObservedStatus').textContent = records.length
-        ? `최근 ${records.length.toLocaleString('ko-KR')}건 · 소유자 전용 · Decoder 검증 전 · 공개 통계 제외`
+        ? `최근 ${records.length.toLocaleString('ko-KR')}건 · 소유자 전용 · Server 검증 상태 표시`
         : (result.message || '저장된 수집 기록이 없습니다.');
     } catch (error) {
       $('meterObservedStatus').textContent = error.message || '최근 수집 기록을 불러오지 못했습니다.';
@@ -1160,7 +1182,7 @@
       if (!edgeUrl || !publishableKey) await loadConfiguration();
       const result = await callMeter('login', {
         passKey,
-        clientVersion: String(meterConfig.webClientVersion || 'WEB_50021')
+        clientVersion: String(meterConfig.webClientVersion || 'WEB_50026')
       });
       if (!result.sessionToken || !Array.isArray(result.characters) || result.characters.length === 0) {
         throw new Error(result.message || '계정에 연결된 활성 캐릭터가 없습니다.');

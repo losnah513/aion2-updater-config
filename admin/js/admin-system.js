@@ -1,4 +1,4 @@
-/* KINOJO Admin Meter administration, server status, environment, and visitors v2026080601 */
+/* KINOJO Admin Meter administration, server status, environment, and visitors v2026080701 */
 (function(A){
   'use strict';
   if(!A) throw new Error('KINOJO Admin shared module is required.');
@@ -109,6 +109,23 @@
     const badge=$('#meterAdminOperationBadge');
     badge.textContent=METER_MODE_LABELS[mode]||METER_MODE_LABELS.CLOSED;
     badge.classList.toggle('is-off',mode==='CLOSED');
+    const statistics=data?.statisticsOperation||{};
+    const overview=data?.combatOverview||{};
+    $('#meterAdminStatisticsEnabled').checked=statistics.publicEnabled===true;
+    $('#meterAdminStatisticsMessage').value=String(statistics.publicMessage||'전투 통계 준비 중입니다.');
+    const statisticsBadge=$('#meterAdminStatisticsBadge');
+    statisticsBadge.textContent=statistics.publicEnabled===true?'통계 공개':'통계 비공개';
+    statisticsBadge.classList.toggle('is-off',statistics.publicEnabled!==true);
+    const count=(id,value)=>{$(id).textContent=Number(value||0).toLocaleString('ko-KR');};
+    count('#meterAdminCombatTotal',overview.totalRecords);
+    count('#meterAdminCombatCurrent',overview.currentPipelineRecords);
+    count('#meterAdminCombatValidated',overview.validatedRecords);
+    count('#meterAdminCombatObserved',overview.observedRecords);
+    count('#meterAdminCombatReview',overview.reviewRequiredRecords);
+    count('#meterAdminCombatInvalid',overview.invalidRecords);
+    count('#meterAdminCombatEligible',overview.statisticsEligibleRecords);
+    count('#meterAdminCombatParticipants',overview.participantRows);
+    count('#meterAdminCombatTargetLedger',overview.targetLedgerRecords);
     const distribution=data?.distribution||{};
     const launcher=distribution.launcher||null;
     const core=distribution.core||null;
@@ -160,6 +177,25 @@
       toast(data.message||'키노조 미터 운영 상태 저장 완료');
       addLog('METER',METER_MODE_LABELS[mode]||mode);
     }catch(err){setStatus('#meterAdminOperationStatus',err.message||String(err),'error');}
+    finally{button.disabled=false;}
+  }
+
+  async function saveMeterStatistics(){
+    if(!isMaster())return;
+    const publicEnabled=$('#meterAdminStatisticsEnabled').checked;
+    const publicMessage=$('#meterAdminStatisticsMessage').value.trim();
+    if(!publicMessage){setStatus('#meterAdminStatisticsStatus','통계 안내 문구를 입력하세요.','error');return;}
+    if(!confirm(publicEnabled?'검증·통계 적격 전투를 사용자에게 공개할까요?':'전투 통계를 사용자에게 비공개로 전환할까요?'))return;
+    const button=$('#meterAdminStatisticsSaveBtn');button.disabled=true;
+    setStatus('#meterAdminStatisticsStatus','통계 공개 설정을 저장하는 중...','');
+    try{
+      const data=await adminMeter('saveStatistics',{channel:'stable',publicEnabled,publicMessage});
+      if(!data||data.ok===false)throw new Error(data?.message||'통계 공개 설정 저장 실패');
+      renderMeterAdminConsole(data);
+      setStatus('#meterAdminStatisticsStatus',data.message||'통계 공개 설정을 저장했습니다.','ok');
+      toast(data.message||'전투 통계 공개 설정 저장 완료');
+      addLog('METER',publicEnabled?'전투 통계 공개':'전투 통계 비공개');
+    }catch(err){setStatus('#meterAdminStatisticsStatus',err.message||String(err),'error');}
     finally{button.disabled=false;}
   }
 
@@ -283,5 +319,5 @@
     }catch(err){setStatus('#visitorHistoryStatus',err.message||String(err),'error');}
   }
 
-  Object.assign(A,{METER_NOTICE_LABELS,METER_MODE_LABELS,meterDateInput,meterIsoFromInput,meterFileSize,selectedMeterLevels,setMeterModeControls,normalizeMeterNotice,meterNoticeById,resetMeterNoticeEditor,renderMeterNotices,renderMeterAdminConsole,loadMeterAdminConsole,saveMeterOperation,saveMeterNotice,deleteMeterNotice,refreshServerStatus,renderServerBox,refreshSystemSettings,visitorDate,visitorNumber,renderVisitorTrend,renderVisitorPages,loadVisitorDashboard,loadVisitorHistory});
+  Object.assign(A,{METER_NOTICE_LABELS,METER_MODE_LABELS,meterDateInput,meterIsoFromInput,meterFileSize,selectedMeterLevels,setMeterModeControls,normalizeMeterNotice,meterNoticeById,resetMeterNoticeEditor,renderMeterNotices,renderMeterAdminConsole,loadMeterAdminConsole,saveMeterOperation,saveMeterStatistics,saveMeterNotice,deleteMeterNotice,refreshServerStatus,renderServerBox,refreshSystemSettings,visitorDate,visitorNumber,renderVisitorTrend,renderVisitorPages,loadVisitorDashboard,loadVisitorHistory});
 })(window.KinojoAdmin);
