@@ -21,6 +21,7 @@ jobs:
       - name: Apply and validate
         run: |
           set -euo pipefail
+          python3 tools/stage5_3_fix_mobile.py
           python3 -m py_compile tools/stage5_3_patch.py
           python3 tools/stage5_3_patch.py
           node --check meter/js/meter-app.js
@@ -31,7 +32,7 @@ jobs:
       - name: Commit patched product files
         run: |
           set -euo pipefail
-          git rm .github/workflows/stage5-3-meter-web-patch.yml tools/stage5_3_patch.py
+          git rm .github/workflows/stage5-3-meter-web-patch.yml tools/stage5_3_patch.py tools/stage5_3_fix_mobile.py
           git config user.name "kinojo-bot"
           git config user.email "kinojo-bot@users.noreply.github.com"
           git add .github/workflows/verify-kinojo-pages.yml meter m/meter admin m/admin core/kinojo-supabase-features.js
