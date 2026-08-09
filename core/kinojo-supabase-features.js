@@ -678,7 +678,7 @@
     };
     const action = actions[String(command || '').trim()];
     if(!action) return { ok:false, message:'알 수 없는 키노조 미터 관리자 명령입니다.' };
-    return invokeEdgeFunction('meter-ingest', Object.assign({
+    return invokeEdgeFunction('meter-admin-control', Object.assign({
       action,
       passKey:currentPassKey(),
       channel:String(extra.channel || 'stable')
