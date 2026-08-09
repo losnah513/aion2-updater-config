@@ -71,6 +71,7 @@
   const saveEventNoticeEditor=(...args)=>A.saveEventNoticeEditor(...args);
   const saveMeterNotice=(...args)=>A.saveMeterNotice(...args);
   const saveMeterOperation=(...args)=>A.saveMeterOperation(...args);
+  const saveMeterLaunch=(...args)=>A.saveMeterLaunch(...args);
   const saveMeterStatistics=(...args)=>A.saveMeterStatistics(...args);
   const setMeterModeControls=(...args)=>A.setMeterModeControls(...args);
   const saveNotice=(...args)=>A.saveNotice(...args);
@@ -239,7 +240,9 @@
     });
     $('#noticeReloadBtn')?.addEventListener('click',loadNotices); $('#noticeSaveBtn')?.addEventListener('click',saveNotice);
     $('#meterAdminReloadBtn')?.addEventListener('click',loadMeterAdminConsole);
+    $('#meterAdminChannel')?.addEventListener('change',()=>loadMeterAdminConsole());
     $('#meterAdminOperationSaveBtn')?.addEventListener('click',saveMeterOperation);
+    $('#meterAdminLaunchSaveBtn')?.addEventListener('click',saveMeterLaunch);
     $('#meterAdminStatisticsSaveBtn')?.addEventListener('click',saveMeterStatistics);
     $('#meterAdminDownloadMode')?.addEventListener('change',setMeterModeControls);
     $('#meterAdminNoticeNewBtn')?.addEventListener('click',()=>resetMeterNoticeEditor(null));
