@@ -1,0 +1,28 @@
+name: Prepare WEB Meter Drive sync artifact
+
+'on':
+  push:
+    branches:
+      - ops/drive-sync-web-meter-260809
+    paths:
+      - '.github/workflows/drive-sync-web-meter-260809.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/upload-artifact@v4
+        with:
+          name: drive-sync-web-meter
+          retention-days: 1
+          if-no-files-found: error
+          path: |
+            admin/index.html
+            m/admin/index.html
+            admin/js/admin-system.js
+            admin/js/admin-bootstrap.js
+            core/kinojo-supabase-features.js
