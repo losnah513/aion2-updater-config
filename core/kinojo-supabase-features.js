@@ -672,6 +672,7 @@
       console:'adminMeterConsole',
       saveOperation:'adminMeterOperationSave',
       saveStatistics:'adminMeterStatisticsSave',
+      saveLaunch:'adminMeterLaunchSave',
       saveNotice:'adminMeterNoticeSave',
       deleteNotice:'adminMeterNoticeDelete'
     };
