@@ -205,3 +205,52 @@ body.kinojo-character-reaction-open{overflow:hidden}
   .kinojo-character-equipment-subtabs button{gap:5px;font-size:10px}.kinojo-character-equipment-subtabs button strong{min-width:20px;height:20px}
   .kinojo-character-daevanion-grid{grid-template-columns:1fr}
 }
+
+/* 2026-08-10 · 상단 상세 갱신 카드와 능력치/스킬 좌우 탭 레이아웃 */
+.kinojo-character-reaction-profile{
+  grid-template-columns:112px minmax(250px,.86fr) minmax(340px,1.14fr);
+  align-items:stretch;
+}
+.kinojo-character-reaction-visual{align-self:center}
+.kinojo-character-reaction-info{align-self:center}
+.kinojo-character-reaction-refresh-slot{min-width:0;align-self:stretch}
+.kinojo-character-overview-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+.kinojo-character-overview-column{min-width:0;padding:13px;border:1px solid #dbe5f0;border-radius:17px;background:linear-gradient(180deg,#fbfdff,#fff);box-shadow:0 8px 22px rgba(15,23,42,.035);box-sizing:border-box}
+.kinojo-character-overview-column>.kinojo-character-live-section-head{margin-top:0}
+.kinojo-character-overview-column.kinojo-character-skill-section{margin-top:0}
+.kinojo-character-overview-subtabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 11px;padding:4px;border:1px solid #dbe5f0;border-radius:13px;background:#f1f5f9}
+.kinojo-character-overview-subtabs button{display:flex;align-items:center;justify-content:center;gap:5px;min-width:0;height:34px;padding:0 7px;border:0;border-radius:9px;background:transparent;color:#64748b;font-size:10px;font-weight:900;cursor:pointer;transition:transform .16s ease,box-shadow .16s ease,background .16s ease,color .16s ease}
+.kinojo-character-overview-subtabs button em{display:grid;place-items:center;min-width:19px;height:19px;padding:0 5px;border-radius:999px;background:rgba(148,163,184,.16);font-size:8px;font-style:normal;box-sizing:border-box}
+.kinojo-character-overview-subtabs button.active{background:linear-gradient(135deg,#2563eb,#60a5fa 62%,#818cf8);color:#fff;box-shadow:0 6px 14px rgba(37,99,235,.22)}
+.kinojo-character-overview-subtabs button.active em{background:rgba(255,255,255,.2);color:#fff}
+.kinojo-character-overview-subtabs button:hover{transform:translateY(-1px)}
+.kinojo-character-overview-tab-panel[hidden],.kinojo-character-skill-groups>section[hidden]{display:none}
+.kinojo-character-overview-column .kinojo-character-core-stats{grid-template-columns:repeat(3,minmax(0,1fr));justify-content:stretch}
+.kinojo-character-overview-column .kinojo-character-core-stats article{width:auto}
+.kinojo-character-overview-column .kinojo-character-stat-method{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.kinojo-character-overview-column .kinojo-character-stat-method>span{justify-content:center;min-width:0;padding:6px;font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kinojo-character-overview-empty{display:grid;place-items:center;min-height:132px;margin:0;border:1px dashed #dbe5f0;border-radius:12px;background:#f8fafc;color:#94a3b8;font-size:10px;font-weight:800;text-align:center}
+
+@media(max-width:900px){
+  .kinojo-character-reaction-profile{grid-template-columns:96px minmax(210px,.8fr) minmax(290px,1.2fr);gap:18px}
+  .kinojo-character-reaction-visual,.kinojo-character-reaction-avatar{width:96px;height:96px}
+  .kinojo-character-overview-layout{grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr)}
+  .kinojo-character-overview-column .kinojo-character-core-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:760px){
+  .kinojo-character-reaction-profile{grid-template-columns:78px minmax(0,1fr);align-items:center;gap:14px;padding-right:26px}
+  .kinojo-character-reaction-refresh-slot{grid-column:1/-1;width:100%}
+  .kinojo-character-overview-layout{grid-template-columns:1fr}
+}
+@media(max-width:640px){
+  .kinojo-character-overview-column{padding:11px}
+  .kinojo-character-overview-column .kinojo-character-stat-method{grid-template-columns:1fr 1fr}
+  .kinojo-character-overview-column .kinojo-character-stat-method>span:last-child{grid-column:1/-1}
+}
+@media(max-width:390px){
+  .kinojo-character-overview-subtabs button{gap:3px;padding:0 4px;font-size:9px}
+  .kinojo-character-overview-subtabs button em{min-width:17px;height:17px;padding:0 4px;font-size:7px}
+}
+@media(prefers-reduced-motion:reduce){
+  .kinojo-character-overview-subtabs button{transition:none!important;transform:none!important}
+}

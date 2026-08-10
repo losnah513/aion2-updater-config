@@ -175,8 +175,12 @@
     const modal=document.getElementById('kinojoCharacterReactionModal');
     const status=document.getElementById('kinojoCharacterLiveStatus');
     if(!modal || !status) return null;
+    const slot=document.getElementById('kinojoCharacterDetailRefreshSlot');
     let panel=document.getElementById('kinojoCharacterDetailRefresh');
-    if(panel) return panel;
+    if(panel){
+      if(slot && panel.parentElement!==slot) slot.appendChild(panel);
+      return panel;
+    }
     panel=document.createElement('section');
     panel.id='kinojoCharacterDetailRefresh';
     panel.className='kinojo-character-detail-refresh';
@@ -187,7 +191,8 @@
       '</header>'+
       '<p class="kinojo-detail-refresh-message" id="kinojoDetailRefreshMessage">기본 조회 외 장비 옵션·마석·신석·데바니온 상세를 사용자가 요청할 때만 갱신합니다.</p>'+
       '<div class="kinojo-detail-refresh-progress" id="kinojoDetailRefreshProgress" hidden></div>';
-    status.insertAdjacentElement('afterend',panel);
+    if(slot) slot.appendChild(panel);
+    else status.insertAdjacentElement('afterend',panel);
     panel.querySelector('#kinojoDetailRefreshBtn')?.addEventListener('click',startRefresh);
     return panel;
   }

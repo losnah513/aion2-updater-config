@@ -19,6 +19,8 @@
     detailLoading: false,
     compare: null,
     compareLoading: false,
+    statTab: 'basic',
+    skillTab: 'active',
     equipmentCategory: 'weaponArmor',
     selectedEquipmentKey: '',
     selectedArcanaKey: ''
@@ -216,6 +218,7 @@
       if(!row || !state.open || identity !== activeIdentity) return;
       state.target = mergeMasterRow(active, row);
       renderTarget();
+      updateCompareVisibility();
       if(!state.live && !state.liveLoading) loadLiveOverview();
     }catch(_err){
       // 서버 상세 조회 실패 시 페이지 카드 데이터로 표시한다.
@@ -246,6 +249,7 @@
             '</div>' +
             '<div class="kinojo-character-live-meta"><span id="kinojoCharacterLiveTime">저장 정보 확인 중</span><a class="kinojo-character-reaction-detail" id="kinojoCharacterReactionDetail" href="#" target="_blank" rel="noopener noreferrer">PLAYNC 정보실 ↗</a></div>' +
           '</div>' +
+          '<aside class="kinojo-character-reaction-refresh-slot" id="kinojoCharacterDetailRefreshSlot" aria-label="전체 상세 정보"></aside>' +
         '</header>' +
         '<nav class="kinojo-character-live-tabs" aria-label="캐릭터 상세 탭">' +
           '<button class="active" type="button" data-kinojo-character-tab="overview">능력치</button>' +
@@ -292,6 +296,10 @@
       if(board && !event.defaultPrevented) loadDaevanionDetail(board);
       const compareCharacter = event.target.closest('[data-compare-character-id]');
       if(compareCharacter) loadComparison(Number(compareCharacter.dataset.compareCharacterId || 0));
+      const statTab = event.target.closest('[data-kinojo-stat-tab]');
+      if(statTab) setOverviewStatTab(statTab.dataset.kinojoStatTab || 'basic');
+      const skillTab = event.target.closest('[data-kinojo-skill-tab]');
+      if(skillTab) setOverviewSkillTab(skillTab.dataset.kinojoSkillTab || 'active');
       const closeDetail = event.target.closest('[data-live-detail-close]');
       if(closeDetail && closeDetail.parentElement) closeDetail.parentElement.hidden = true;
     });
@@ -327,6 +335,36 @@
     if(state.tab === 'compare' && !state.compare && !state.compareLoading) loadComparison();
     if(state.tab === 'equipment') scheduleDefaultEquipment('equipment',state.selectedEquipmentKey);
     if(state.tab === 'arcana') scheduleDefaultEquipment('arcana',state.selectedArcanaKey);
+  }
+
+  function setOverviewStatTab(tab){
+    const allowed = ['basic','combat','base'];
+    state.statTab = allowed.includes(tab) ? tab : 'basic';
+    const panel = livePanel('overview');
+    if(!panel) return;
+    panel.querySelectorAll('[data-kinojo-stat-tab]').forEach(button => {
+      const active = button.dataset.kinojoStatTab === state.statTab;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-selected', String(active));
+    });
+    panel.querySelectorAll('[data-kinojo-stat-panel]').forEach(section => {
+      section.hidden = section.dataset.kinojoStatPanel !== state.statTab;
+    });
+  }
+
+  function setOverviewSkillTab(tab){
+    const allowed = ['active','passive','stigma'];
+    state.skillTab = allowed.includes(tab) ? tab : 'active';
+    const panel = livePanel('overview');
+    if(!panel) return;
+    panel.querySelectorAll('[data-kinojo-skill-tab]').forEach(button => {
+      const active = button.dataset.kinojoSkillTab === state.skillTab;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-selected', String(active));
+    });
+    panel.querySelectorAll('[data-kinojo-skill-panel]').forEach(section => {
+      section.hidden = section.dataset.kinojoSkillPanel !== state.skillTab;
+    });
   }
 
   function liveIdentity(target){
@@ -397,9 +435,29 @@
     return account && (account.passKey || account.passCode) ? account : null;
   }
 
+  function normalizedCharacterName(value){
+    return stripServerSuffix(value).replace(/[\s\u200B-\u200D\uFEFF]+/g, '').toLowerCase();
+  }
+
+  function isOwnCharacterTarget(account){
+    if(!account || !state.target) return false;
+    const accountNames = [account.mainCharacter,account.mainCharacterName,account.characterName]
+      .map(normalizedCharacterName).filter(Boolean);
+    const targetNames = [state.target.name,state.target.owner]
+      .map(normalizedCharacterName).filter(Boolean);
+    if(accountNames.some(name => targetNames.includes(name))) return true;
+
+    const accountIds = [account.characterId,account.character_id,account.charKey,account.char_key]
+      .map(value => String(value || '').trim()).filter(Boolean);
+    const targetIds = [state.target.characterId,state.target.charKey]
+      .map(value => String(value || '').trim()).filter(Boolean);
+    return accountIds.some(id => targetIds.includes(id));
+  }
+
   function updateCompareVisibility(){
     const button = document.querySelector('#kinojoCharacterReactionModal [data-kinojo-compare-tab]');
-    const visible = !!compareAccount();
+    const account = compareAccount();
+    const visible = !!account && !isOwnCharacterTarget(account);
     if(button) button.hidden = !visible;
     if(!visible && state.tab === 'compare') setTab('overview');
   }
@@ -445,23 +503,28 @@
 
   function skillCategoryKey(value){
     const raw = String(value || '').trim().toLowerCase();
-    if(raw === 'active') return 'active';
     if(raw === 'passive') return 'passive';
-    if(raw === 'dp') return 'dp';
-    return 'other';
+    if(raw === 'dp' || raw === 'stigma') return 'stigma';
+    return 'active';
   }
 
   function skillCategoryLabel(value){
-    return ({ active:'액티브', passive:'패시브', dp:'DP', other:'기타' })[skillCategoryKey(value)] || '기타';
+    return ({ active:'액티브', passive:'패시브', stigma:'스티그마' })[skillCategoryKey(value)] || '액티브';
+  }
+
+  function skillLevelClass(level){
+    if(level >= 30) return 'is-level-30';
+    if(level >= 25) return 'is-level-25';
+    if(level >= 20) return 'is-level-20';
+    return '';
   }
 
   function renderSkillCard(skill){
     const icon = normalizedImageUrl(skill?.icon);
     const level = Math.max(0, Number(skill?.level || 0));
-    return '<article class="kinojo-character-skill-card">' +
-      '<div class="kinojo-character-skill-icon ' + (icon ? '' : 'is-empty') + '">' + (icon ? '<img src="' + safeUrl(icon) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">' : '') + '</div>' +
+    return '<article class="kinojo-character-skill-card ' + skillLevelClass(level) + '">' +
+      '<div class="kinojo-character-skill-icon ' + (icon ? '' : 'is-empty') + '">' + (icon ? '<img src="' + safeUrl(icon) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">' : '') + '<strong class="kinojo-character-skill-level">Lv.' + level + '</strong></div>' +
       '<span><b>' + esc(skill?.name || '-') + '</b><small>' + esc(skillCategoryLabel(skill?.category)) + (skill?.equip ? ' · 장착' : '') + '</small></span>' +
-      '<strong>Lv.' + level + '</strong>' +
     '</article>';
   }
 
@@ -480,37 +543,42 @@
       { key:'amplify', label:'피해 증폭', description:'피해 유형별 증폭값을 서로 분리' },
       { key:'combat', label:'전투 효과', description:'완벽 · 강타 · 다단 히트 · 재사용시간' }
     ];
-    const skillGroups = ['active','passive','dp','other'].map(key => ({
+    const skillGroups = ['active','passive','stigma'].map(key => ({
       key,
       label:skillCategoryLabel(key),
       rows:skills.filter(skill => skillCategoryKey(skill.category) === key)
-    })).filter(group => group.rows.length);
+    }));
+    const renderStatGroup = group =>
+      '<section class="kinojo-character-stat-group is-' + group.key + '">' +
+        '<header><div><strong>' + esc(group.label) + '</strong><span>' + esc(group.description) + '</span></div><em>' + stats.filter(stat => stat.group === group.key && stat.available).length + ' / ' + stats.filter(stat => stat.group === group.key).length + '</em></header>' +
+        '<div class="kinojo-character-core-stats">' + stats.filter(stat => stat.group === group.key).map(renderCoreStatCard).join('') + '</div>' +
+      '</section>';
+    const tabButton = (kind,key,label,count) => '<button type="button" class="' + (state[kind + 'Tab'] === key ? 'active' : '') + '" role="tab" aria-selected="' + String(state[kind + 'Tab'] === key) + '" data-kinojo-' + kind + '-tab="' + key + '"><span>' + esc(label) + '</span><em>' + count + '</em></button>';
 
     panel.innerHTML =
-      '<div class="kinojo-character-live-section-head"><div><strong>능력치</strong><span>핵심 능력치와 공식 기본 스탯을 같은 규격으로 표시합니다.</span></div><em>KINOJO 저장값</em></div>' +
-      '<div class="kinojo-character-stat-method">' +
-        '<span><b>합산</b> 같은 능력치·같은 단위</span>' +
-        '<span><b>분리</b> 고정 수치와 %</span>' +
-        '<span><b>제외</b> 검증되지 않은 추정 공식</span>' +
-      '</div>' +
-      '<div class="kinojo-character-stat-groups">' +
-        groups.map(group =>
-          '<section class="kinojo-character-stat-group is-' + group.key + '">' +
-            '<header><div><strong>' + esc(group.label) + '</strong><span>' + esc(group.description) + '</span></div><em>' + stats.filter(stat => stat.group === group.key && stat.available).length + ' / ' + stats.filter(stat => stat.group === group.key).length + '</em></header>' +
-            '<div class="kinojo-character-core-stats">' + stats.filter(stat => stat.group === group.key).map(renderCoreStatCard).join('') + '</div>' +
-          '</section>'
-        ).join('') +
-        '<section class="kinojo-character-stat-group is-base">' +
-          '<header><div><strong>기본 스탯</strong><span>공식 정보실 최종 능력 축</span></div><em>' + base.length + '개</em></header>' +
-          '<div class="kinojo-character-core-stats kinojo-character-base-stats-grid">' + primary.concat(secondary).map(renderBaseStatCard).join('') + '</div>' +
+      '<div class="kinojo-character-overview-layout">' +
+        '<section class="kinojo-character-overview-column is-stats">' +
+          '<div class="kinojo-character-live-section-head"><div><strong>능력치 종합</strong><span>핵심 능력치와 공식 기본 스탯</span></div><em>KINOJO 저장값</em></div>' +
+          '<div class="kinojo-character-overview-subtabs is-stat" role="tablist" aria-label="능력치 분류">' +
+            tabButton('stat','basic','기본',stats.filter(stat => stat.group === 'basic').length) +
+            tabButton('stat','combat','전투효과',stats.filter(stat => stat.group === 'amplify' || stat.group === 'combat').length) +
+            tabButton('stat','base','기본스탯',base.length) +
+          '</div>' +
+          '<div class="kinojo-character-stat-method"><span><b>합산</b> 같은 능력치·단위</span><span><b>분리</b> 고정 수치와 %</span><span><b>제외</b> 미검증 추정 공식</span></div>' +
+          '<div class="kinojo-character-overview-tab-panel" data-kinojo-stat-panel="basic" ' + (state.statTab === 'basic' ? '' : 'hidden') + '><div class="kinojo-character-stat-groups">' + groups.filter(group => group.key === 'basic').map(renderStatGroup).join('') + '</div></div>' +
+          '<div class="kinojo-character-overview-tab-panel" data-kinojo-stat-panel="combat" ' + (state.statTab === 'combat' ? '' : 'hidden') + '><div class="kinojo-character-stat-groups">' + groups.filter(group => group.key === 'amplify' || group.key === 'combat').map(renderStatGroup).join('') + '</div></div>' +
+          '<div class="kinojo-character-overview-tab-panel" data-kinojo-stat-panel="base" ' + (state.statTab === 'base' ? '' : 'hidden') + '>' +
+            '<section class="kinojo-character-stat-group is-base"><header><div><strong>기본 스탯</strong><span>공식 정보실 최종 능력 축</span></div><em>' + base.length + '개</em></header><div class="kinojo-character-core-stats kinojo-character-base-stats-grid">' + primary.concat(secondary).map(renderBaseStatCard).join('') + '</div></section>' +
+          '</div>' +
+        '</section>' +
+        '<section class="kinojo-character-overview-column kinojo-character-skill-section">' +
+          '<div class="kinojo-character-live-section-head"><div><strong>스킬</strong><span>공식 아이콘과 현재 습득·장착 레벨</span></div><em>' + skills.length + '개</em></div>' +
+          '<div class="kinojo-character-overview-subtabs is-skill" role="tablist" aria-label="스킬 분류">' + skillGroups.map(group => tabButton('skill',group.key,group.label,group.rows.length)).join('') + '</div>' +
+          '<div class="kinojo-character-skill-groups">' + skillGroups.map(group =>
+            '<section data-kinojo-skill-panel="' + group.key + '" ' + (state.skillTab === group.key ? '' : 'hidden') + '><header><strong>' + esc(group.label) + '</strong><em>' + group.rows.length + '개</em></header>' + (group.rows.length ? '<div class="kinojo-character-skill-list">' + group.rows.map(renderSkillCard).join('') + '</div>' : '<p class="kinojo-character-overview-empty">표시할 ' + esc(group.label) + ' 스킬이 없습니다.</p>') + '</section>'
+          ).join('') + '</div>' +
         '</section>' +
       '</div>' +
-      '<section class="kinojo-character-skill-section">' +
-        '<div class="kinojo-character-live-section-head"><div><strong>스킬</strong><span>공식 아이콘과 현재 습득·장착 레벨</span></div><em>' + skills.length + '개</em></div>' +
-        '<div class="kinojo-character-skill-groups">' + skillGroups.map(group =>
-          '<section><header><strong>' + esc(group.label) + '</strong><em>' + group.rows.length + '개</em></header><div class="kinojo-character-skill-list">' + group.rows.map(renderSkillCard).join('') + '</div></section>'
-        ).join('') + '</div>' +
-      '</section>' +
       '<div class="kinojo-character-live-facts">' +
         [
           ['레벨',profile.level || '-'],['종족',profile.raceName || '-'],['성별',profile.genderName || '-'],
@@ -518,6 +586,8 @@
         ].map(row => '<article><span>' + esc(row[0]) + '</span><strong>' + esc(row[1]) + '</strong></article>').join('') +
       '</div>' +
       '<p class="kinojo-character-live-note">' + esc(data.note || '저장된 공식 상세정보가 없습니다.') + '</p>';
+    setOverviewStatTab(state.statTab);
+    setOverviewSkillTab(state.skillTab);
   }
 
   const EQUIPMENT_CATEGORIES = [
@@ -906,6 +976,8 @@
     state.detailLoading = false;
     state.compare = null;
     state.compareLoading = false;
+    state.statTab = 'basic';
+    state.skillTab = 'active';
     state.tab = 'overview';
     state.equipmentCategory = 'weaponArmor';
     state.selectedEquipmentKey = '';
@@ -930,6 +1002,9 @@
     loadLiveOverview();
 
     const dialog = modal.querySelector('.kinojo-character-reaction-dialog');
+    if(dialog) dialog.scrollTop = 0;
+    const scrollViewport = modal.querySelector('.kinojo-character-reaction-scroll');
+    if(scrollViewport) scrollViewport.scrollTop = 0;
     requestAnimationFrame(() => {
       try{ dialog?.focus({ preventScroll:true }); }catch(_err){ dialog?.focus(); }
     });

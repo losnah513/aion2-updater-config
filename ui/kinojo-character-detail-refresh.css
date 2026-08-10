@@ -139,3 +139,56 @@
 @media(prefers-reduced-motion:reduce){
   .kinojo-detail-refresh-head button{transition:none!important;transform:none!important}
 }
+
+/* 2026-08-10 · 캐릭터 요약 우측 전체 상세 정보 카드 */
+.kinojo-character-reaction-refresh-slot .kinojo-character-detail-refresh{
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:auto 1fr auto;
+  align-content:center;
+  height:100%;
+  min-height:112px;
+  margin:0;
+  padding:13px 14px;
+  border-color:#bfdbfe;
+  border-radius:17px;
+  background:linear-gradient(135deg,#eff6ff 0%,#fff 54%,#f5f3ff 100%);
+  box-shadow:0 10px 26px rgba(37,99,235,.09);
+}
+.kinojo-character-reaction-refresh-slot .kinojo-detail-refresh-head{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+}
+.kinojo-character-reaction-refresh-slot .kinojo-detail-refresh-head>div{display:grid;gap:5px;min-width:0}
+.kinojo-character-reaction-refresh-slot .kinojo-detail-refresh-head strong{font-size:14px}
+.kinojo-character-reaction-refresh-slot .kinojo-detail-refresh-head span{width:max-content;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.kinojo-character-reaction-refresh-slot .kinojo-detail-refresh-head button{
+  min-height:38px;
+  padding:8px 13px;
+  background:linear-gradient(135deg,#1d4ed8,#3b82f6 58%,#8b5cf6);
+  box-shadow:0 8px 18px rgba(37,99,235,.2);
+}
+.kinojo-character-reaction-refresh-slot .kinojo-detail-refresh-head button:disabled{
+  background:linear-gradient(135deg,#cbd5e1,#94a3b8);
+  box-shadow:none;
+}
+.kinojo-character-reaction-refresh-slot .kinojo-detail-refresh-message{
+  display:-webkit-box;
+  margin:8px 0 0;
+  white-space:normal;
+  line-height:1.5;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+}
+.kinojo-character-reaction-refresh-slot .kinojo-detail-refresh-progress{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:9px}
+.kinojo-character-reaction-refresh-slot .kinojo-detail-refresh-progress article:last-child{grid-column:1/-1}
+
+@media(max-width:760px){
+  .kinojo-character-reaction-refresh-slot .kinojo-character-detail-refresh{height:auto;min-height:96px}
+  .kinojo-character-reaction-refresh-slot .kinojo-detail-refresh-message{display:-webkit-box}
+}
+@media(max-width:430px){
+  .kinojo-character-reaction-refresh-slot .kinojo-detail-refresh-head{grid-template-columns:1fr}
+  .kinojo-character-reaction-refresh-slot .kinojo-detail-refresh-head button{width:100%;max-width:none}
+}
