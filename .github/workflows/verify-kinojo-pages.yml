@@ -92,11 +92,11 @@ jobs:
               Path("m/sanctuary/index.html"),
           ]
           required_assets = [
-              "kinojo-character-skill.css?cache=2026080401",
-              "kinojo-character-daevanion.css?cache=2026080402",
+              "kinojo-character-skill.css?cache=2026081001",
+              "kinojo-character-daevanion.css?cache=2026081002",
               "kinojo-animations.css?cache=2026080402",
-              "kinojo-character-skill-bridge.js?cache=2026080402",
-              "kinojo-character-daevanion-bridge.js?cache=2026080402",
+              "kinojo-character-skill-bridge.js?cache=2026081001",
+              "kinojo-character-daevanion-bridge.js?cache=2026081002",
           ]
           for page in pages:
               text = page.read_text(encoding="utf-8")
