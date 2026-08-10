@@ -1,4 +1,4 @@
-/* KINOJO Admin Meter administration, server status, environment, and visitors v2026080801 */
+/* KINOJO Admin Meter administration, server status, environment, and visitors v2026081003 */
 (function(A){
   'use strict';
   if(!A) throw new Error('KINOJO Admin shared module is required.');
@@ -16,8 +16,8 @@
   const toast=(...args)=>A.toast(...args);
 
   const METER_NOTICE_LABELS={INFO:'안내',UPDATE:'업데이트',MAINTENANCE:'점검',WARNING:'주의'};
-  const METER_MODE_LABELS={CLOSED:'다운로드 닫힘',ALL:'전체 등급',RANK_ALLOWLIST:'선택 등급'};
-  const METER_STATISTICS_MODE_LABELS={OFF:'OFF · 비공개',ON:'ON · 공개'};
+  const METER_CHANNELS=['stable','staging'];
+  const METER_LEVELS=[1,2,3,4,5];
 
   function meterDateInput(value){
     const date=value?new Date(value):new Date();
@@ -39,54 +39,28 @@
     return (bytes/1048576).toFixed(1)+' MB';
   }
 
-  function selectedMeterLevels(){
-    return $$('[data-meter-level]:checked').map(input=>Number(input.value)).filter(level=>level>=1&&level<=5);
+  function meterChannel(value){return String(value||'stable').toLowerCase()==='staging'?'staging':'stable';}
+
+  function meterCard(channel,kind){return $('[data-meter-'+kind+'-card][data-meter-channel="'+meterChannel(channel)+'"]');}
+
+  function selectedMeterLevels(root,selector){
+    return $$(selector+':checked',root).map(input=>Number(input.value)).filter(level=>METER_LEVELS.includes(level));
   }
 
-  function selectedMeterChannel(){
-    return String($('#meterAdminChannel')?.value||'stable').toLowerCase()==='staging'?'staging':'stable';
+  function setMeterCardStatus(root,selector,message,kind){
+    const target=$(selector,root);if(!target)return;
+    target.textContent=message||'';
+    target.className='admin-statusline '+(kind||'');
   }
 
-  function setMeterModeControls(){
-    const mode=String($('#meterAdminDownloadMode')?.value||'CLOSED').toUpperCase();
-    const ranks=$('#meterAdminAllowedLevels');
-    if(ranks)ranks.hidden=mode!=='RANK_ALLOWLIST';
-    const resume=$('#meterAdminResumeAt');
-    if(resume)resume.disabled=mode!=='CLOSED';
+  function setMeterBadge(root,selector,label,off){
+    const badge=$(selector,root);if(!badge)return;
+    badge.textContent=label;
+    badge.classList.toggle('is-off',off===true);
   }
 
-  function ensureMeterStatisticsModeControl(){
-    const existing=$('#meterAdminStatisticsMode');
-    if(existing)return existing;
-    const legacy=$('#meterAdminStatisticsEnabled');
-    if(!legacy)return null;
-    const wrap=legacy.closest('.admin-meter-checks');
-    const oldLabel=legacy.closest('label');
-    const modeLabel=document.createElement('label');
-    modeLabel.className='admin-meter-mode';
-    modeLabel.append(document.createTextNode('통계 노출'));
-    const select=document.createElement('select');
-    select.className='admin-select';
-    select.id='meterAdminStatisticsMode';
-    select.setAttribute('aria-label','전투 통계 노출 상태');
-    select.innerHTML='<option value="OFF">OFF · 비공개</option><option value="ON">ON · 공개</option>';
-    select.value=legacy.checked?'ON':'OFF';
-    select.addEventListener('change',()=>{legacy.checked=select.value==='ON';});
-    modeLabel.appendChild(select);
-    legacy.hidden=true;
-    legacy.setAttribute('aria-hidden','true');
-    legacy.tabIndex=-1;
-    if(wrap){
-      wrap.classList.remove('admin-meter-checks');
-      wrap.replaceChildren(modeLabel,legacy);
-    }else if(oldLabel){
-      oldLabel.replaceWith(modeLabel,legacy);
-    }else{
-      legacy.insertAdjacentElement('beforebegin',modeLabel);
-    }
-    const saveButton=$('#meterAdminStatisticsSaveBtn');
-    if(saveButton)saveButton.textContent='통계 노출 상태 저장';
-    return select;
+  function setMeterLevelsEnabled(root,fieldsetSelector,enabled){
+    const fieldset=$(fieldsetSelector,root);if(fieldset)fieldset.disabled=!enabled;
   }
 
   function meterAdminErrorMessage(error,fallback){
@@ -143,143 +117,176 @@
     }).join('');
   }
 
-  function renderMeterAdminConsole(data){
-    state.meterConsole=data||{};
+  function renderMeterDownload(channel,data){
     const operation=data?.operation||{};
-    state.meterNotices=(Array.isArray(data?.notices)?data.notices:[]).map(normalizeMeterNotice);
     const mode=String(operation.downloadMode||(operation.downloadEnabled===true?'ALL':'CLOSED')).toUpperCase();
-    $('#meterAdminDownloadMode').value=METER_MODE_LABELS[mode]?mode:'CLOSED';
-    const allowedLevels=Array.isArray(operation.allowedLevels)?operation.allowedLevels.map(Number):[];
-    $$('[data-meter-level]').forEach(input=>{input.checked=allowedLevels.includes(Number(input.value));});
-    setMeterModeControls();
-    $('#meterAdminDisabledMessage').value=String(operation.disabledMessage||'키노조 미터 다운로드를 점검하고 있습니다. 잠시 후 다시 시도해 주세요.');
-    $('#meterAdminResumeAt').value=operation.resumeAt?meterDateInput(operation.resumeAt):'';
-    const badge=$('#meterAdminOperationBadge');
-    badge.textContent=METER_MODE_LABELS[mode]||METER_MODE_LABELS.CLOSED;
-    badge.classList.toggle('is-off',mode==='CLOSED');
-    const channel=String(operation.channel||selectedMeterChannel()).toLowerCase()==='staging'?'staging':'stable';
-    const channelSelect=$('#meterAdminChannel'); if(channelSelect)channelSelect.value=channel;
-    const channelBadge=$('#meterAdminChannelBadge'); if(channelBadge)channelBadge.textContent=channel==='staging'?'Staging':'Stable';
-    setStatus('#meterAdminChannelStatus',(channel==='staging'?'Staging 테스트':'Stable 사용자')+' 채널을 관리하고 있습니다.','ok');
+    const enabled=mode!=='CLOSED';
+    const root=meterCard(channel,'download');if(!root)return;
+    const toggle=$('[data-meter-download-enabled]',root);if(toggle)toggle.checked=enabled;
+    const rawLevels=Array.isArray(operation.allowedLevels)?operation.allowedLevels.map(Number):[];
+    const levels=mode==='ALL'?METER_LEVELS:rawLevels;
+    $$('[data-meter-download-level]',root).forEach(input=>{input.checked=levels.includes(Number(input.value));});
+    setMeterLevelsEnabled(root,'[data-meter-download-levels]',enabled);
+    const message=$('[data-meter-download-message]',root);if(message)message.value=String(operation.disabledMessage||'키노조 미터 다운로드를 점검하고 있습니다. 잠시 후 다시 시도해 주세요.');
+    const resume=$('[data-meter-resume-at]',root);if(resume){resume.value=operation.resumeAt?meterDateInput(operation.resumeAt):'';resume.disabled=enabled;}
+    setMeterBadge(root,'[data-meter-download-badge]',enabled?(mode==='ALL'?'ON · 전체 등급':'ON · 선택 등급'):'OFF · 다운로드 닫힘',!enabled);
+  }
+
+  function renderMeterLaunch(channel,data){
+    const operation=data?.operation||{};
     const launchEnabled=operation.launchEnabled===true;
-    const launchMode=$('#meterAdminLaunchMode'); if(launchMode)launchMode.value=launchEnabled?'ON':'OFF';
-    const launchMessage=$('#meterAdminLaunchMessage'); if(launchMessage)launchMessage.value=String(operation.launchMessage||'키노조 미터 실행이 일시 중지되어 있습니다. 잠시 후 다시 시도해 주세요.');
-    const launchBadge=$('#meterAdminLaunchBadge');
-    if(launchBadge){launchBadge.textContent=launchEnabled?'실행 허용':'실행 차단';launchBadge.classList.toggle('is-off',!launchEnabled);}
+    const root=meterCard(channel,'launch');if(!root)return;
+    const toggle=$('[data-meter-launch-enabled]',root);if(toggle)toggle.checked=launchEnabled;
+    const fallback=Array.isArray(operation.allowedLevels)?operation.allowedLevels:[];
+    const allowedLevels=Array.isArray(operation.launchAllowedLevels)?operation.launchAllowedLevels.map(Number):fallback.map(Number);
+    $$('[data-meter-launch-level]',root).forEach(input=>{input.checked=allowedLevels.includes(Number(input.value));});
+    setMeterLevelsEnabled(root,'[data-meter-launch-levels]',launchEnabled);
+    const launchMessage=$('[data-meter-launch-message]',root);if(launchMessage)launchMessage.value=String(operation.launchMessage||'키노조 미터 실행이 일시 중지되어 있습니다. 잠시 후 다시 시도해 주세요.');
+    setMeterBadge(root,'[data-meter-launch-badge]',launchEnabled?'ON · 선택 등급 실행':'OFF · 실행 차단',!launchEnabled);
+  }
+
+  function renderMeterStatistics(channel,data){
     const statistics=data?.statisticsOperation||{};
     const overview=data?.combatOverview||{};
     const statisticsEnabled=statistics.publicEnabled===true;
-    const statisticsMode=ensureMeterStatisticsModeControl();
-    if(statisticsMode)statisticsMode.value=statisticsEnabled?'ON':'OFF';
-    const statisticsLegacy=$('#meterAdminStatisticsEnabled');
-    if(statisticsLegacy)statisticsLegacy.checked=statisticsEnabled;
-    $('#meterAdminStatisticsMessage').value=String(statistics.publicMessage||'전투 통계 준비 중입니다.');
-    const statisticsBadge=$('#meterAdminStatisticsBadge');
-    statisticsBadge.textContent=statisticsEnabled?'통계 공개':'통계 비공개';
-    statisticsBadge.classList.toggle('is-off',!statisticsEnabled);
-    const count=(id,value)=>{$(id).textContent=Number(value||0).toLocaleString('ko-KR');};
-    count('#meterAdminCombatTotal',overview.totalRecords);
-    count('#meterAdminCombatCurrent',overview.currentPipelineRecords);
-    count('#meterAdminCombatValidated',overview.validatedRecords);
-    count('#meterAdminCombatObserved',overview.observedRecords);
-    count('#meterAdminCombatReview',overview.reviewRequiredRecords);
-    count('#meterAdminCombatInvalid',overview.invalidRecords);
-    count('#meterAdminCombatEligible',overview.statisticsEligibleRecords);
-    count('#meterAdminCombatParticipants',overview.participantRows);
-    count('#meterAdminCombatTargetLedger',overview.targetLedgerRecords);
+    const root=meterCard(channel,'statistics');if(!root)return;
+    const toggle=$('[data-meter-statistics-enabled]',root);if(toggle)toggle.checked=statisticsEnabled;
+    const message=$('[data-meter-statistics-message]',root);if(message)message.value=String(statistics.publicMessage||'전투 통계 준비 중입니다.');
+    setMeterBadge(root,'[data-meter-statistics-badge]',statisticsEnabled?'ON · 통계 공개':'OFF · 통계 비공개',!statisticsEnabled);
+    $$('[data-meter-metric]',root).forEach(target=>{target.textContent=Number(overview[target.dataset.meterMetric]||0).toLocaleString('ko-KR');});
+  }
+
+  function renderMeterRelease(channel,data){
+    const operation=data?.operation||{};
     const distribution=data?.distribution||{};
     const launcher=distribution.launcher||null;
     const core=distribution.core||null;
-    $('#meterAdminLauncherVersion').textContent=launcher?.version||'-';
-    $('#meterAdminLauncherFile').textContent=launcher?.fileName||'-';
-    $('#meterAdminLauncherSize').textContent=meterFileSize(launcher?.fileSize);
-    $('#meterAdminCoreVersion').textContent=core?.version||'-';
-    $('#meterAdminCombinedSize').textContent=meterFileSize(distribution.combinedFileSize);
-    $('#meterAdminReleaseState').textContent=distribution.releaseAvailable!==true?'Launcher/Core 배포 준비 중':mode==='CLOSED'?'배포 준비 완료 · 다운로드 닫힘':mode==='RANK_ALLOWLIST'?'선택 등급 다운로드':'전체 등급 다운로드';
-    renderMeterNotices();
+    const root=$('[data-meter-release-card][data-meter-channel="'+meterChannel(channel)+'"]');if(!root)return;
+    const values={launcherVersion:launcher?.version||'-',launcherFile:launcher?.fileName||'-',launcherSize:meterFileSize(launcher?.fileSize),coreVersion:core?.version||'-',combinedSize:meterFileSize(distribution.combinedFileSize)};
+    $$('[data-meter-release]',root).forEach(target=>{target.textContent=values[target.dataset.meterRelease]||'-';});
+    const stateLabel=distribution.releaseAvailable===true?(operation.launchEnabled===true?'배포 준비 · Core ON':'배포 준비 · Core OFF'):'Launcher/Core 준비 중';
+    setMeterBadge(root,'[data-meter-release-state]',stateLabel,distribution.releaseAvailable!==true||operation.launchEnabled!==true);
+  }
+
+  function renderMeterAdminConsole(channel,data){
+    const key=meterChannel(channel);
+    state.meterConsoles=state.meterConsoles||{};
+    const previous=state.meterConsoles[key]||{};
+    const next=Object.assign({},previous,data||{},
+      {statisticsOperation:data?.statisticsOperation||previous.statisticsOperation||{},combatOverview:data?.combatOverview||previous.combatOverview||{}});
+    state.meterConsoles[key]=next;
+    renderMeterDownload(key,next);
+    renderMeterLaunch(key,next);
+    renderMeterStatistics(key,next);
+    renderMeterRelease(key,next);
+    if(Array.isArray(next.notices)){
+      state.meterNotices=next.notices.map(normalizeMeterNotice);
+      renderMeterNotices();
+    }
   }
 
   async function loadMeterAdminConsole(){
     if(!isMaster())return;
-    setStatus('#meterAdminOperationStatus','키노조 미터 운영 정보를 불러오는 중...','');
-    try{
-      const data=await adminMeter('console',{channel:selectedMeterChannel()});
-      if(!data||data.ok===false)throw new Error(data?.message||'키노조 미터 운영 정보 조회 실패');
-      renderMeterAdminConsole(data);
-      if(!$('#meterAdminNoticeId').value)resetMeterNoticeEditor(null);
-      setStatus('#meterAdminOperationStatus','Server 운영 정보를 불러왔습니다.','ok');
-    }catch(err){setStatus('#meterAdminOperationStatus',meterAdminErrorMessage(err,'키노조 미터 운영 정보를 불러오지 못했습니다.'),'error');}
+    $$('[data-meter-load-status]').forEach(target=>{target.textContent='Stable·Staging Server 운영 정보를 불러오는 중...';target.className='admin-statusline';});
+    const results=await Promise.allSettled(METER_CHANNELS.map(channel=>adminMeter('console',{channel})));
+    const failed=[];
+    results.forEach((result,index)=>{
+      const channel=METER_CHANNELS[index];
+      if(result.status==='fulfilled'&&result.value&&result.value.ok!==false)renderMeterAdminConsole(channel,result.value);
+      else failed.push(channel==='stable'?'Stable':'Staging');
+    });
+    if(!$('#meterAdminNoticeId')?.value)resetMeterNoticeEditor(null);
+    const message=failed.length?failed.join('·')+' 정보를 불러오지 못했습니다.':'Stable·Staging Server 운영 정보를 불러왔습니다.';
+    $$('[data-meter-load-status]').forEach(target=>{target.textContent=message;target.className='admin-statusline '+(failed.length?'error':'ok');});
   }
 
-  async function saveMeterOperation(){
+  async function saveMeterOperation(channel,intent,button){
     if(!isMaster())return;
-    const mode=String($('#meterAdminDownloadMode').value||'CLOSED').toUpperCase();
-    const allowedLevels=selectedMeterLevels();
-    if(mode==='RANK_ALLOWLIST'&&!allowedLevels.length){setStatus('#meterAdminOperationStatus','허용할 등급을 하나 이상 선택하세요.','error');return;}
-    const enabled=mode!=='CLOSED';
-    const disabledMessage=$('#meterAdminDisabledMessage').value.trim();
-    if(!disabledMessage){setStatus('#meterAdminOperationStatus','비활성화 안내 문구를 입력하세요.','error');return;}
-    const prompt=mode==='CLOSED'?'다운로드를 즉시 닫고 Server 승인을 차단할까요?':mode==='ALL'?'모든 등급에 다운로드를 허용할까요?':'선택한 등급에만 다운로드를 허용할까요?';
-    if(!confirm(prompt))return;
-    const button=$('#meterAdminOperationSaveBtn');button.disabled=true;
-    setStatus('#meterAdminOperationStatus','운영 상태를 저장하는 중...','');
+    const key=meterChannel(channel),root=meterCard(key,'download');if(!root)return;
+    const enabled=$('[data-meter-download-enabled]',root)?.checked===true;
+    const allowedLevels=selectedMeterLevels(root,'[data-meter-download-level]');
+    if(enabled&&!allowedLevels.length){setMeterCardStatus(root,'[data-meter-download-status]','허용할 KINOJO 등급을 하나 이상 선택하세요.','error');return;}
+    const mode=enabled?(allowedLevels.length===METER_LEVELS.length?'ALL':'RANK_ALLOWLIST'):'CLOSED';
+    const disabledMessage=$('[data-meter-download-message]',root)?.value.trim()||'';
+    if(!disabledMessage){setMeterCardStatus(root,'[data-meter-download-status]','이용자 안내 문구를 입력하세요.','error');return;}
+    const channelLabel=key==='staging'?'Staging':'Stable';
+    if(intent!=='message'&&!confirm(channelLabel+' 다운로드를 '+(enabled?'선택한 등급에 허용':'OFF로 차단')+'할까요?'))return;
+    if(button)button.disabled=true;
+    setMeterCardStatus(root,'[data-meter-download-status]',intent==='message'?'안내 문구를 저장하는 중...':'다운로드 설정을 저장하는 중...','');
     try{
       const data=await adminMeter('saveOperation',{
-        channel:selectedMeterChannel(),
+        channel:key,
         downloadEnabled:enabled,
         downloadMode:mode,
-        allowedLevels:mode==='RANK_ALLOWLIST'?allowedLevels:[],
+        allowedLevels:enabled?allowedLevels:[],
         disabledMessage,
-        resumeAt:mode==='CLOSED'?meterIsoFromInput($('#meterAdminResumeAt').value):null
+        resumeAt:enabled?null:meterIsoFromInput($('[data-meter-resume-at]',root)?.value)
       });
       if(!data||data.ok===false)throw new Error(data?.message||'운영 상태 저장 실패');
-      renderMeterAdminConsole(data);
-      setStatus('#meterAdminOperationStatus',data.message||'운영 상태를 저장했습니다.','ok');
-      toast(data.message||'키노조 미터 운영 상태 저장 완료');
-      addLog('METER',METER_MODE_LABELS[mode]||mode);
-    }catch(err){setStatus('#meterAdminOperationStatus',meterAdminErrorMessage(err,'다운로드 운영 상태를 저장하지 못했습니다.'),'error');}
-    finally{button.disabled=false;}
-  }
-
-  async function saveMeterLaunch(){
-    if(!isMaster())return;
-    const launchEnabled=$('#meterAdminLaunchMode')?.value==='ON';
-    const launchMessage=$('#meterAdminLaunchMessage')?.value.trim()||'';
-    if(!launchMessage){setStatus('#meterAdminLaunchStatus','실행 상태 안내 문구를 입력하세요.','error');return;}
-    const channel=selectedMeterChannel();
-    const channelLabel=channel==='staging'?'Staging':'Stable';
-    if(!confirm(launchEnabled?channelLabel+' 미터기 실행을 허용할까요?':channelLabel+' 런처의 실제 미터기 실행만 차단할까요?'))return;
-    const button=$('#meterAdminLaunchSaveBtn'); if(button)button.disabled=true;
-    setStatus('#meterAdminLaunchStatus','미터기 실행 상태를 저장하는 중...','');
-    try{
-      const data=await adminMeter('saveLaunch',{channel,launchEnabled,launchMessage});
-      if(!data||data.ok===false)throw new Error(data?.message||'미터기 실행 상태 저장 실패');
-      renderMeterAdminConsole(data);
-      setStatus('#meterAdminLaunchStatus',data.message||'미터기 실행 상태를 저장했습니다.','ok');
-      toast(data.message||'미터기 실행 상태 저장 완료');
-      addLog('METER',channelLabel+' '+(launchEnabled?'미터기 실행 허용':'미터기 실행 차단'));
-    }catch(err){setStatus('#meterAdminLaunchStatus',meterAdminErrorMessage(err,'미터기 실행 상태를 저장하지 못했습니다.'),'error');}
+      renderMeterAdminConsole(key,data);
+      const done=intent==='message'?'안내 문구를 저장했습니다.':'다운로드 설정을 저장했습니다.';
+      setMeterCardStatus(root,'[data-meter-download-status]',done,'ok');toast(channelLabel+' '+done);addLog('METER',channelLabel+' 다운로드 '+mode);
+    }catch(err){setMeterCardStatus(root,'[data-meter-download-status]',meterAdminErrorMessage(err,'다운로드 운영 상태를 저장하지 못했습니다.'),'error');}
     finally{if(button)button.disabled=false;}
   }
 
-  async function saveMeterStatistics(){
+  async function saveMeterLaunch(channel,intent,button){
     if(!isMaster())return;
-    const statisticsMode=ensureMeterStatisticsModeControl();
-    const publicEnabled=statisticsMode?statisticsMode.value==='ON':$('#meterAdminStatisticsEnabled')?.checked===true;
-    const publicMessage=$('#meterAdminStatisticsMessage').value.trim();
-    if(!publicMessage){setStatus('#meterAdminStatisticsStatus','통계 안내 문구를 입력하세요.','error');return;}
-    if(!confirm(publicEnabled?'검증·통계 적격 전투를 사용자에게 공개할까요?':'전투 통계를 사용자에게 비공개로 전환할까요?'))return;
-    const button=$('#meterAdminStatisticsSaveBtn');button.disabled=true;
-    setStatus('#meterAdminStatisticsStatus','통계 노출 상태를 저장하는 중...','');
+    const key=meterChannel(channel),root=meterCard(key,'launch');if(!root)return;
+    const launchEnabled=$('[data-meter-launch-enabled]',root)?.checked===true;
+    const allowedLevels=selectedMeterLevels(root,'[data-meter-launch-level]');
+    if(launchEnabled&&!allowedLevels.length){setMeterCardStatus(root,'[data-meter-launch-status]','Core 실행을 허용할 KINOJO 등급을 하나 이상 선택하세요.','error');return;}
+    const launchMessage=$('[data-meter-launch-message]',root)?.value.trim()||'';
+    if(!launchMessage){setMeterCardStatus(root,'[data-meter-launch-status]','실행 상태 안내 문구를 입력하세요.','error');return;}
+    const channelLabel=key==='staging'?'Staging':'Stable';
+    if(intent!=='message'&&!confirm(channelLabel+' Core 실행을 '+(launchEnabled?'선택한 등급에 허용':'OFF로 차단')+'할까요?'))return;
+    if(button)button.disabled=true;
+    setMeterCardStatus(root,'[data-meter-launch-status]',intent==='message'?'안내 문구를 저장하는 중...':'Core 실행 설정을 저장하는 중...','');
     try{
-      const data=await adminMeter('saveStatistics',{channel:selectedMeterChannel(),publicEnabled,publicMessage});
+      const data=await adminMeter('saveLaunch',{channel:key,launchEnabled,launchAllowedLevels:launchEnabled?allowedLevels:[],launchMessage});
+      if(!data||data.ok===false)throw new Error(data?.message||'미터기 실행 상태 저장 실패');
+      renderMeterAdminConsole(key,data);
+      const done=intent==='message'?'안내 문구를 저장했습니다.':'Core 실행 설정을 저장했습니다.';
+      setMeterCardStatus(root,'[data-meter-launch-status]',done,'ok');toast(channelLabel+' '+done);addLog('METER',channelLabel+' Core '+(launchEnabled?'ON':'OFF'));
+    }catch(err){setMeterCardStatus(root,'[data-meter-launch-status]',meterAdminErrorMessage(err,'미터기 실행 상태를 저장하지 못했습니다.'),'error');}
+    finally{if(button)button.disabled=false;}
+  }
+
+  async function saveMeterStatistics(channel,button){
+    if(!isMaster())return;
+    const key=meterChannel(channel),root=meterCard(key,'statistics');if(!root)return;
+    const publicEnabled=$('[data-meter-statistics-enabled]',root)?.checked===true;
+    const publicMessage=$('[data-meter-statistics-message]',root)?.value.trim()||'';
+    if(!publicMessage){setMeterCardStatus(root,'[data-meter-statistics-status]','통계 안내 문구를 입력하세요.','error');return;}
+    if(!confirm(publicEnabled?'검증·통계 적격 전투를 사용자에게 공개할까요?':'전투 통계를 사용자에게 비공개로 전환할까요?'))return;
+    if(button)button.disabled=true;
+    setMeterCardStatus(root,'[data-meter-statistics-status]','통계 공개 설정을 저장하는 중...','');
+    try{
+      const data=await adminMeter('saveStatistics',{channel:key,publicEnabled,publicMessage});
       if(!data||data.ok===false)throw new Error(data?.message||'통계 노출 상태 저장 실패');
-      renderMeterAdminConsole(data);
-      setStatus('#meterAdminStatisticsStatus',data.message||'통계 노출 상태를 저장했습니다.','ok');
-      toast(data.message||'전투 통계 노출 상태 저장 완료');
-      addLog('METER',publicEnabled?'전투 통계 공개':'전투 통계 비공개');
-    }catch(err){setStatus('#meterAdminStatisticsStatus',meterAdminErrorMessage(err,'통계 노출 상태를 저장하지 못했습니다.'),'error');}
-    finally{button.disabled=false;}
+      renderMeterAdminConsole(key,data);
+      setMeterCardStatus(root,'[data-meter-statistics-status]','통계 공개 설정을 저장했습니다.','ok');toast((key==='staging'?'Staging':'Stable')+' 통계 공개 설정 저장 완료');addLog('METER',(key==='staging'?'Staging':'Stable')+' '+(publicEnabled?'통계 공개':'통계 비공개'));
+    }catch(err){setMeterCardStatus(root,'[data-meter-statistics-status]',meterAdminErrorMessage(err,'통계 노출 상태를 저장하지 못했습니다.'),'error');}
+    finally{if(button)button.disabled=false;}
+  }
+
+  function handleMeterAdminChange(event){
+    const download=event.target.closest('[data-meter-download-enabled]');
+    if(download){const root=download.closest('[data-meter-download-card]');setMeterLevelsEnabled(root,'[data-meter-download-levels]',download.checked);const resume=$('[data-meter-resume-at]',root);if(resume)resume.disabled=download.checked;return;}
+    const launch=event.target.closest('[data-meter-launch-enabled]');
+    if(launch){setMeterLevelsEnabled(launch.closest('[data-meter-launch-card]'),'[data-meter-launch-levels]',launch.checked);}
+  }
+
+  function handleMeterAdminClick(event){
+    const button=event.target.closest('[data-meter-reload],[data-meter-download-save],[data-meter-download-message-save],[data-meter-launch-save],[data-meter-launch-message-save],[data-meter-statistics-save]');
+    if(!button)return;
+    if(button.matches('[data-meter-reload]')){loadMeterAdminConsole();return;}
+    const root=button.closest('[data-meter-channel]');const channel=root?.dataset.meterChannel||'stable';
+    if(button.matches('[data-meter-download-save]'))saveMeterOperation(channel,'state',button);
+    if(button.matches('[data-meter-download-message-save]'))saveMeterOperation(channel,'message',button);
+    if(button.matches('[data-meter-launch-save]'))saveMeterLaunch(channel,'state',button);
+    if(button.matches('[data-meter-launch-message-save]'))saveMeterLaunch(channel,'message',button);
+    if(button.matches('[data-meter-statistics-save]'))saveMeterStatistics(channel,button);
   }
 
   async function saveMeterNotice(){
@@ -305,7 +312,7 @@
         endsAt
       });
       if(!data||data.ok===false)throw new Error(data?.message||'Meter 공지 저장 실패');
-      renderMeterAdminConsole(data);
+      renderMeterAdminConsole('stable',data);
       resetMeterNoticeEditor(null);
       setStatus('#meterAdminNoticeStatus',data.message||'키노조 미터 공지를 저장했습니다.','ok');
       toast('키노조 미터 공지 저장 완료');
@@ -320,7 +327,7 @@
     try{
       const data=await adminMeter('deleteNotice',{noticeId:item.noticeId});
       if(!data||data.ok===false)throw new Error(data?.message||'Meter 공지 삭제 실패');
-      renderMeterAdminConsole(data);
+      renderMeterAdminConsole('stable',data);
       resetMeterNoticeEditor(null);
       setStatus('#meterAdminNoticeStatus',data.message||'공지를 삭제했습니다.','ok');
     }catch(err){setStatus('#meterAdminNoticeStatus',err.message||String(err),'error');}
@@ -402,5 +409,5 @@
     }catch(err){setStatus('#visitorHistoryStatus',err.message||String(err),'error');}
   }
 
-  Object.assign(A,{METER_NOTICE_LABELS,METER_MODE_LABELS,METER_STATISTICS_MODE_LABELS,meterDateInput,meterIsoFromInput,meterFileSize,selectedMeterLevels,selectedMeterChannel,setMeterModeControls,ensureMeterStatisticsModeControl,meterAdminErrorMessage,normalizeMeterNotice,meterNoticeById,resetMeterNoticeEditor,renderMeterNotices,renderMeterAdminConsole,loadMeterAdminConsole,saveMeterOperation,saveMeterLaunch,saveMeterStatistics,saveMeterNotice,deleteMeterNotice,refreshServerStatus,renderServerBox,refreshSystemSettings,visitorDate,visitorNumber,renderVisitorTrend,renderVisitorPages,loadVisitorDashboard,loadVisitorHistory});
+  Object.assign(A,{METER_NOTICE_LABELS,METER_CHANNELS,METER_LEVELS,meterDateInput,meterIsoFromInput,meterFileSize,meterChannel,meterCard,selectedMeterLevels,meterAdminErrorMessage,normalizeMeterNotice,meterNoticeById,resetMeterNoticeEditor,renderMeterNotices,renderMeterAdminConsole,loadMeterAdminConsole,saveMeterOperation,saveMeterLaunch,saveMeterStatistics,handleMeterAdminChange,handleMeterAdminClick,saveMeterNotice,deleteMeterNotice,refreshServerStatus,renderServerBox,refreshSystemSettings,visitorDate,visitorNumber,renderVisitorTrend,renderVisitorPages,loadVisitorDashboard,loadVisitorHistory});
 })(window.KinojoAdmin);
