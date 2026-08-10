@@ -341,11 +341,20 @@
   }
 
   function renderServerBox(data,syncData={}){
-    const roots=$$('[data-server-status-box]'); if(!roots.length)return;
+    const roots=$$('[data-server-status-box]').filter(root=>root.id!=='serverStatusOverview'); if(!roots.length)return;
     const queue=syncData.queue||{};
     const recent=syncData.recentSync||syncData.recent_sync||{};
     const queueTotal=Number(queue.updaterActive||queue.updater_active||0)+Number(queue.listPending||queue.list_pending||0)+Number(queue.sanctuaryPending||queue.sanctuary_pending||0);
-    const html='<div class="admin-system-list"><div class="admin-system-item"><span><i class="admin-dot"></i>Supabase DB</span><strong>'+(syncData?.ok===false?'확인 필요':'정상')+'</strong></div><div class="admin-system-item"><span><i class="admin-dot"></i>RPC / Edge Functions</span><strong>'+(data?.ok===false?'확인 필요':'정상')+'</strong></div><div class="admin-system-item"><span><i class="admin-dot"></i>Updater Runtime</span><strong>'+esc(data?.message||'정상')+'</strong></div><div class="admin-system-item"><span><i class="admin-dot"></i>Queue 상태</span><strong>'+queueTotal.toLocaleString('ko-KR')+'건 처리 중/대기</strong></div><div class="admin-system-item"><span><i class="admin-dot"></i>Apps Script Bridge</span><strong>Edge Secret으로 관리</strong></div><div class="admin-system-item"><span><i class="admin-dot"></i>최근 성역 동기화</span><strong>'+esc(formatServerTime(recent.completedAt||recent.completed_at))+'</strong></div></div>';
+    const dbOk=syncData?.ok!==false,rpcOk=data?.ok!==false,syncOk=String(recent.status||'').toLowerCase()!=='failed';
+    const row=(label,value,state)=>'<div class="admin-system-item is-'+state+'"><span><i class="admin-dot"></i>'+label+'</span><strong>'+esc(value)+'</strong></div>';
+    const html='<div class="admin-system-list">'
+      +row('Supabase DB',dbOk?'정상':'확인 필요',dbOk?'ok':'error')
+      +row('RPC / Edge Functions',rpcOk?'정상':'확인 필요',rpcOk?'ok':'error')
+      +row('Updater Runtime',rpcOk?'실행 중':'확인 필요',rpcOk?'ok':'error')
+      +row('Queue',queueTotal.toLocaleString('ko-KR')+'건',queueTotal?'warn':'ok')
+      +row('Apps Script Bridge','Secret 연결','ok')
+      +row('최근 성역 동기화',formatServerTime(recent.completedAt||recent.completed_at),syncOk?'ok':'error')
+      +'</div>';
     roots.forEach(root=>{root.innerHTML=html;});
   }
 

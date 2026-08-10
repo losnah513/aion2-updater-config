@@ -1,4 +1,4 @@
-/* KINOJO common UI v1.c2.04 / work 260607_00 */
+/* KINOJO common UI v20260810.04 */
 (function(){
   if(window.__KINOJO_COMMON_UI_INIT_DONE__) return;
   window.__KINOJO_COMMON_UI_INIT_DONE__ = true;
@@ -49,9 +49,11 @@
       +'<span class="visit-side visit-today"><span class="visit-text"><b>오늘</b><strong data-visit-today>확인중</strong></span><span class="visit-icon">📅</span></span>';
     return el;
   }
-  const KINOJO_NOTICE_ROTATE_SECONDS = 10;
-  const KINOJO_NOTICE_MARQUEE_DELAY_SECONDS = 5;
-  let kinojoNoticeState = { items: [], index: 0, timer: null };
+  const KINOJO_NOTICE_MARQUEE_DELAY_MS = 1200;
+  const KINOJO_NOTICE_MARQUEE_SPEED = 38;
+  const KINOJO_NOTICE_END_HOLD_MS = 1800;
+  const KINOJO_NOTICE_SHORT_HOLD_MS = 7200;
+  let kinojoNoticeState = { items: [], index: 0, timer: null, paused: false };
 
   function createNoticeStrip(info){
     const strip=document.createElement('section');
@@ -59,14 +61,25 @@
     strip.id='kinojoNoticeStrip';
     strip.setAttribute('aria-label','최근 공지사항');
     strip.innerHTML=''
+      +'<div class="kinojo-notice-shell">'
+      +'<span class="kinojo-notice-label"><i aria-hidden="true"></i>NOTICE</span>'
+      +'<button class="kinojo-notice-step" id="kinojoNoticePrevBtn" type="button" aria-label="이전 공지">‹</button>'
       +'<div class="kinojo-notice-list" id="kinojoNoticeList"><span class="kinojo-notice-empty">최근 공지를 불러오는 중입니다.</span></div>'
-      +'<button class="kinojo-notice-detail-btn" id="kinojoNoticeDetailBtn" type="button" aria-label="공지사항 상세 보기">상세 보기</button>';
+      +'<button class="kinojo-notice-step" id="kinojoNoticeNextBtn" type="button" aria-label="다음 공지">›</button>'
+      +'<button class="kinojo-notice-detail-btn" id="kinojoNoticeDetailBtn" type="button" aria-label="공지사항 전체 보기">전체</button>'
+      +'</div>';
     setTimeout(()=>{
       const btn=document.getElementById('kinojoNoticeDetailBtn');
       if(btn&&!btn.dataset.bound){
         btn.dataset.bound='1';
         btn.addEventListener('click',()=>showNoticeBoardModal());
       }
+      document.getElementById('kinojoNoticePrevBtn')?.addEventListener('click',()=>showNoticeAt_(kinojoNoticeState.index-1,true));
+      document.getElementById('kinojoNoticeNextBtn')?.addEventListener('click',()=>showNoticeAt_(kinojoNoticeState.index+1,true));
+      strip.addEventListener('mouseenter',()=>{kinojoNoticeState.paused=true;clearNoticeTimer_();});
+      strip.addEventListener('mouseleave',()=>{kinojoNoticeState.paused=false;scheduleNextNotice_();});
+      strip.addEventListener('focusin',()=>{kinojoNoticeState.paused=true;clearNoticeTimer_();});
+      strip.addEventListener('focusout',()=>{kinojoNoticeState.paused=false;scheduleNextNotice_();});
     },0);
     return strip;
   }
@@ -98,7 +111,7 @@
   }
   function clearNoticeTimer_(){
     if(kinojoNoticeState.timer){
-      clearInterval(kinojoNoticeState.timer);
+      clearTimeout(kinojoNoticeState.timer);
       kinojoNoticeState.timer=null;
     }
   }
@@ -109,20 +122,35 @@
     if(!textBox||!inner)return;
     inner.classList.remove('is-marquee-active');
     inner.style.removeProperty('--notice-marquee-distance');
-    setTimeout(()=>{
+    kinojoNoticeState.timer=setTimeout(()=>{
+      kinojoNoticeState.timer=null;
       const overflow=Math.max(0, inner.scrollWidth - textBox.clientWidth);
       if(overflow>8){
+        const duration=Math.max(2.6,overflow/KINOJO_NOTICE_MARQUEE_SPEED);
         inner.style.setProperty('--notice-marquee-distance', '-'+(overflow+28)+'px');
+        inner.style.setProperty('--notice-marquee-duration',duration+'s');
         inner.classList.add('is-marquee-active');
+        if(kinojoNoticeState.items.length>1&&!kinojoNoticeState.paused){
+          kinojoNoticeState.timer=setTimeout(()=>showNoticeAt_(kinojoNoticeState.index+1),duration*1000+KINOJO_NOTICE_END_HOLD_MS);
+        }
+      }else if(kinojoNoticeState.items.length>1&&!kinojoNoticeState.paused){
+        kinojoNoticeState.timer=setTimeout(()=>showNoticeAt_(kinojoNoticeState.index+1),KINOJO_NOTICE_SHORT_HOLD_MS);
       }
-    }, KINOJO_NOTICE_MARQUEE_DELAY_SECONDS*1000);
+    }, KINOJO_NOTICE_MARQUEE_DELAY_MS);
   }
-  function showNoticeAt_(index){
+  function scheduleNextNotice_(){
+    clearNoticeTimer_();
+    const item=document.querySelector('#kinojoNoticeList .kinojo-notice-item');
+    if(item)applyNoticeMarqueeIfNeeded_(item);
+  }
+  function showNoticeAt_(index,manual){
     const list=document.getElementById('kinojoNoticeList');
     const items=kinojoNoticeState.items||[];
     if(!list||!items.length)return;
     const safeIndex=((index%items.length)+items.length)%items.length;
     kinojoNoticeState.index=safeIndex;
+    if(manual)kinojoNoticeState.paused=false;
+    clearNoticeTimer_();
     list.classList.remove('is-entering');
     list.classList.add('is-leaving');
     setTimeout(()=>{
@@ -135,11 +163,7 @@
   }
   function startNoticeRotation_(){
     clearNoticeTimer_();
-    const items=kinojoNoticeState.items||[];
-    if(items.length<=1)return;
-    kinojoNoticeState.timer=setInterval(()=>{
-      showNoticeAt_(kinojoNoticeState.index+1);
-    }, KINOJO_NOTICE_ROTATE_SECONDS*1000);
+    scheduleNextNotice_();
   }
   async function fetchNotices_(limit){
     return window.KinojoApi
@@ -157,7 +181,6 @@
       kinojoNoticeState.items=notices;
       kinojoNoticeState.index=0;
       list.innerHTML=renderNoticeItemHtml_(notices[0]);
-      applyNoticeMarqueeIfNeeded_(list.querySelector('.kinojo-notice-item'));
       startNoticeRotation_();
     }catch(_e){
       list.innerHTML='<span class="kinojo-notice-empty">공지사항을 불러오지 못했습니다.</span>';
@@ -277,6 +300,8 @@
         ? await window.KinojoApi.getAction('hallVisit', { mode:'visit', pageKey })
         : await (await fetch(commonApiUrl()+(commonApiUrl().includes('?')?'&':'?')+new URLSearchParams({action:'hallVisit',mode:'visit',pageKey,t:String(Date.now())}).toString(),{cache:'no-store'})).json();
       if(data?.ok&&data.stats)renderCommonVisits(data.stats);
+      const serverTime=data?.serverTime||data?.generatedAt||data?.stats?.serverTime;
+      if(serverTime&&['home','meter','schedule'].includes(pageKey))setPageTime({value:serverTime});
     }catch(_err){
       setVisitServerLight('is-error','서버 연결 오류');
       const t=el.querySelector('[data-visit-today]');
@@ -379,6 +404,35 @@
     return 'topbarUpdateTime';
   }
 
+  const PAGE_TIME_LABELS={home:'접속',hall:'최종 조회',ranking:'최종 조회',meter:'접속',sanctuary:'동기화',schedule:'조회',arcana:'콘텐츠'};
+  function formatPageTime_(value){
+    const date=value instanceof Date?value:new Date(value);
+    if(!Number.isFinite(date.getTime()))return '';
+    const part=n=>String(n).padStart(2,'0');
+    const hour=date.getHours();
+    return part(date.getFullYear()%100)+'/'+part(date.getMonth()+1)+'/'+part(date.getDate())+'-'+(hour<12?'오전':'오후')+'-'+part(hour%12||12)+':'+part(date.getMinutes())+':'+part(date.getSeconds());
+  }
+  function setPageTime(detail){
+    const info=pageInfo();
+    const value=detail?.value||detail?.updatedAt||detail?.serverTime||detail;
+    const text=formatPageTime_(value);
+    if(!text)return false;
+    const target=document.getElementById(pageTimeId(info));
+    if(!target)return false;
+    target.textContent=(detail?.label||PAGE_TIME_LABELS[info.key]||'업데이트')+' · '+text;
+    target.dataset.serverTime=String(value);
+    return true;
+  }
+  async function loadDocumentServerTime_(info){
+    const target=document.getElementById(pageTimeId(info));
+    if(!target||target.dataset.serverTime)return;
+    try{
+      const response=await fetch(location.href,{method:'HEAD',cache:'no-store'});
+      const value=info.key==='arcana'?(response.headers.get('last-modified')||response.headers.get('date')):response.headers.get('date');
+      if(!target.dataset.serverTime&&value)setPageTime({value});
+    }catch(_err){}
+  }
+
   function syncAuthRequiredUi_(){
     const loggedIn=!!window.KinojoAuth?.getSession?.();
     document.querySelectorAll('[data-kinojo-auth-required]').forEach(element=>{
@@ -392,7 +446,7 @@
     const adminConsoleHref=(info&&info.mobile)?'/m/admin/':'/admin/';
     bar.className='kinojo-topbar';
     bar.setAttribute('aria-label','KINOJO INFO 공통 상단 메뉴');
-    const timeText=info.key==='home'?'정보 허브':(info.key==='hall'?'업데이트 확인 중':'업데이트 확인 중');
+    const timeText=(PAGE_TIME_LABELS[info.key]||'업데이트')+' 시간 확인 중';
     const base=info.mobile?'/m/':'/';
     const navItems=[
       {key:'home',label:'HOME',href:base},
@@ -412,7 +466,7 @@
       }
       return '<a class="kinojo-top-nav-link'+(active?' active':'')+(item.adminOnly?' kinojo-admin-only-link':'')+'" href="'+href+'"'+(active?' aria-current="page"':'')+(item.authRequired?' data-kinojo-auth-required="true"':'')+'>'+item.label+'</a>';
     }).join('');
-    bar.innerHTML=`
+    bar.innerHTML=`<div class="kinojo-topbar-shell">
       <div class="kinojo-top-left">
         <button class="kinojo-menu-toggle" id="drawerToggleBtn" type="button" aria-label="메뉴 열기" aria-expanded="false">
           <svg class="kinojo-menu-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -431,7 +485,7 @@
       <div class="kinojo-top-tools" id="kinojoTopTools"></div>
       <div class="kinojo-top-visitor-row" id="kinojoTopVisitorRow">
         <a class="kinojo-sanctuary-alert" id="kinojoSanctuaryAlert" hidden></a>
-      </div>`;
+      </div></div>`;
     const tools=q('#kinojoTopTools',bar);
     const auth=q('#kinojoUserStatus',bar);
     const admin=rescued.admin||createAdminMenu(info);
@@ -466,6 +520,7 @@
     document.body.appendChild(notice);
     setTimeout(loadCommonNotices,0);
     setTimeout(()=>loadCommonVisits(info),40);
+    setTimeout(()=>loadDocumentServerTime_(info),1200);
   }
   function toggleAdminMenu(){
     const btn=q('#adminMenuBtn');
@@ -695,6 +750,19 @@
   document.body.classList.add('kinojo-page-' + info.key);
   if(info.mobile) document.body.classList.add('kinojo-page-mobile');
   document.body.dataset.kinojoPage = info.key;
+  window.addEventListener('kinojo:page-time',event=>setPageTime(event.detail||{}));
+  document.addEventListener('visibilitychange',()=>{
+    if(info.key==='admin')return;
+    kinojoNoticeState.paused=document.hidden;
+    if(document.hidden)clearNoticeTimer_();else scheduleNextNotice_();
+  });
+  if(info.key==='admin'){
+    bindModalScrollChain();
+    bindImageGuards();
+    window.KinojoCommonUI={toast,showSafeError,reportError:showSafeError,setPageTime};
+    window.KinojoSafeError={show:showSafeError,report:showSafeError};
+    return;
+  }
   makeTopbar(rescued,info);
   makeDrawer(info);
   syncAuthRequiredUi_();
@@ -706,7 +774,7 @@
   bindCommonAdmin(info);
   bindImageGuards();
   loadSanctuaryMasterRenderer();
-  window.KinojoCommonUI={toast,showSafeError,reportError:showSafeError,openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel,toggleAdminMenu,closeAdminMenuCommon,reloadNotices:loadCommonNotices,reloadSanctuaryAlert:()=>{const result=loadSanctuaryAlert_(info,0);setTimeout(measureSafeAreas,50);return result;},syncAuthRequiredUi:syncAuthRequiredUi_,renderVisits:renderCommonVisits,loadVisits:loadCommonVisits};
+  window.KinojoCommonUI={toast,showSafeError,reportError:showSafeError,setPageTime,openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel,toggleAdminMenu,closeAdminMenuCommon,reloadNotices:loadCommonNotices,reloadSanctuaryAlert:()=>{const result=loadSanctuaryAlert_(info,0);setTimeout(measureSafeAreas,50);return result;},syncAuthRequiredUi:syncAuthRequiredUi_,renderVisits:renderCommonVisits,loadVisits:loadCommonVisits};
   window.KinojoSafeError={show:showSafeError,report:showSafeError};
   window.openAdminDropdown=toggleAdminMenu;
   window.closeAdminMenu=closeAdminMenuCommon;

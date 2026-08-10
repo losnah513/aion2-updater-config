@@ -38,7 +38,7 @@ function validateSanctuaryPayload(data){
   if(expectedTeamCount>0&&!groups.length){const error=new Error('성역 팀 데이터가 완전히 도착하지 않았습니다.');error.code='SANCTUARY_TEAM_DATA_INCOMPLETE';throw error}
   return data;
 }
-function applySanctuaryData(data,{fromCache=false}={}){sanctuaryData=data;sanctuaryHasRenderedData=true;masterInfo=data?.info||data?.master||masterInfo;currentId=String(masterInfo?.sanctuaryId||masterInfo?.code||currentId||"").trim().toLowerCase();window.KinojoSanctuaryCurrentId=currentId;if(currentId&&!params.get("id")){const next=new URL(location.href);next.searchParams.set("id",currentId);history.replaceState(null,"",next)}render(data);ensureSanctuaryOperation();setSanctuarySyncState(data.generatedAt||"완료",{fromCache})}
+function applySanctuaryData(data,{fromCache=false}={}){sanctuaryData=data;sanctuaryHasRenderedData=true;masterInfo=data?.info||data?.master||masterInfo;currentId=String(masterInfo?.sanctuaryId||masterInfo?.code||currentId||"").trim().toLowerCase();window.KinojoSanctuaryCurrentId=currentId;if(currentId&&!params.get("id")){const next=new URL(location.href);next.searchParams.set("id",currentId);history.replaceState(null,"",next)}render(data);ensureSanctuaryOperation();setSanctuarySyncState(data.generatedAt||"완료",{fromCache});if(data?.generatedAt)window.dispatchEvent(new CustomEvent('kinojo:page-time',{detail:{value:data.generatedAt,label:fromCache?'동기화(캐시)':'동기화'}}))}
 async function fetchSanctuaryFresh(){
   if(!window.KinojoApi)throw new Error('KinojoApi 연결을 확인해 주세요.');
   const data=await withRequestTimeout(window.KinojoApi.getAction('sanctuary',{id:currentId||''}),SANCTUARY_REQUEST_TIMEOUT_MS,'성역 팀 데이터 응답 시간이 초과되었습니다.');
