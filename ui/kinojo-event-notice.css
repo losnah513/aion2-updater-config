@@ -33,7 +33,7 @@ STEP : Visual Patch / 카드 레이어 분리 / 버튼 시인성 개선
   gap:18px;
   padding:0;
   overflow:visible;
-  overscroll-behavior:contain;
+  overscroll-behavior-y:auto;
 }
 
 .kinojo-event-notice-group{

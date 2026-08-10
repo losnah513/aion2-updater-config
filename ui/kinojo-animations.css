@@ -176,7 +176,7 @@
 
 /* 2026-08-04 · 4-4 통합 복구: 외곽 dialog와 내부 scroll viewport 분리 */
 .kinojo-character-reaction-dialog{overflow:hidden!important;padding:0!important}
-.kinojo-character-reaction-scroll{max-height:inherit;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;padding:28px;scrollbar-width:thin;scrollbar-color:#60a5fa transparent;scrollbar-gutter:stable;box-sizing:border-box}
+.kinojo-character-reaction-scroll{max-height:inherit;overflow-x:hidden;overflow-y:auto;overscroll-behavior-y:auto;padding:28px;scrollbar-width:thin;scrollbar-color:#60a5fa transparent;scrollbar-gutter:stable;box-sizing:border-box}
 .kinojo-character-reaction-scroll::-webkit-scrollbar{width:8px;height:8px}
 .kinojo-character-reaction-scroll::-webkit-scrollbar-track{margin:12px 0;background:transparent}
 .kinojo-character-reaction-scroll::-webkit-scrollbar-thumb{min-height:44px;border:2px solid transparent;border-radius:999px;background:linear-gradient(180deg,#93c5fd,#3b82f6) padding-box}

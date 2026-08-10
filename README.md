@@ -18,6 +18,9 @@ KINOJO INFO GitHub Pages upload package.
 - The character header uses the original square profile image and groups class, server, level, legion, and title without repeating those facts below the stats.
 - Manual full-detail refresh is mounted in the right side of the character header on desktop and stacks below the profile on mobile. Refresh completion appears as a temporary toast at the top of the modal.
 - Daevanion uses eight compact board cards in one desktop row. The selected board opens a 3:7 workspace with cumulative effects in a two-column list and a normalized 15×15 node map supplied by `kinojo_character_daevanion_detail_v307`.
+- Equipment rows use the official grade color family, match applied appearances by the official slot name, and keep enhancement separate from breakthrough. Item information, stats, soul engraving stats, and soul engraving skill options use compact two-column layouts on desktop.
+- The Arcana tab groups equipped Arcana by official set data and shows the 2-set and 4-set effects with their current applied state.
+- Nested modal scroll areas hand wheel scrolling back to the outer modal when the inner area reaches its top or bottom boundary.
 - Passkey users do not see the comparison tab while viewing a character owned by their own account.
 
 ## KINOJO Meter admin
