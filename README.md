@@ -19,3 +19,10 @@ KINOJO INFO GitHub Pages upload package.
 - Manual full-detail refresh is mounted in the right side of the character header on desktop and stacks below the profile on mobile. Refresh completion appears as a temporary toast at the top of the modal.
 - Daevanion uses eight compact board cards in one desktop row. The selected board opens a 3:7 workspace with cumulative effects in a two-column list and a normalized 15×15 node map supplied by `kinojo_character_daevanion_detail_v307`.
 - Passkey users do not see the comparison tab while viewing a character owned by their own account.
+
+## KINOJO Meter admin
+
+- The MASTER-only Meter console is divided into Download, Meter, Statistics, and Notice management tabs on desktop and mobile.
+- Stable and Staging controls are shown side by side on desktop and stack on mobile. Download, Core launch, statistics visibility, notice publication, and notice pinning all reuse the shared ranking slider switch.
+- Download and private Core authorization keep independent KINOJO level allowlists. Current Launcher/Core release data is read-only at the top of Meter management.
+- Statistics management groups Server-owned collection flow, validation quality, and publication readiness without recalculating Server metrics in the browser.

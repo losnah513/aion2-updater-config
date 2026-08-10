@@ -1,4 +1,4 @@
-/* KINOJO Admin Navigation, dashboard, event binding, and bootstrap v2026080701 */
+/* KINOJO Admin Navigation, dashboard, event binding, and bootstrap v2026081003 */
 (function(A){
   'use strict';
   if(!A) throw new Error('KINOJO Admin shared module is required.');
@@ -28,6 +28,8 @@
   const getEventNoticeGroupById=(...args)=>A.getEventNoticeGroupById(...args);
   const handleLookupHistoryClick=(...args)=>A.handleLookupHistoryClick(...args);
   const handleMemberAction=(...args)=>A.handleMemberAction(...args);
+  const handleMeterAdminChange=(...args)=>A.handleMeterAdminChange(...args);
+  const handleMeterAdminClick=(...args)=>A.handleMeterAdminClick(...args);
   const isAdmin=(...args)=>A.isAdmin(...args);
   const isMaster=(...args)=>A.isMaster(...args);
   const isStaffConsole=(...args)=>A.isStaffConsole(...args);
@@ -70,10 +72,6 @@
   const saveCharacterStatus=(...args)=>A.saveCharacterStatus(...args);
   const saveEventNoticeEditor=(...args)=>A.saveEventNoticeEditor(...args);
   const saveMeterNotice=(...args)=>A.saveMeterNotice(...args);
-  const saveMeterOperation=(...args)=>A.saveMeterOperation(...args);
-  const saveMeterLaunch=(...args)=>A.saveMeterLaunch(...args);
-  const saveMeterStatistics=(...args)=>A.saveMeterStatistics(...args);
-  const setMeterModeControls=(...args)=>A.setMeterModeControls(...args);
   const saveNotice=(...args)=>A.saveNotice(...args);
   const saveSanctuarySchedule=(...args)=>A.saveSanctuarySchedule(...args);
   const searchCharacters=(...args)=>A.searchCharacters(...args);
@@ -239,12 +237,9 @@
       if(e.target.matches('[data-schedule-status]'))changeSanctuaryScheduleStatus(id,e.target.dataset.scheduleStatus);
     });
     $('#noticeReloadBtn')?.addEventListener('click',loadNotices); $('#noticeSaveBtn')?.addEventListener('click',saveNotice);
-    $('#meterAdminReloadBtn')?.addEventListener('click',loadMeterAdminConsole);
-    $('#meterAdminChannel')?.addEventListener('change',()=>loadMeterAdminConsole());
-    $('#meterAdminOperationSaveBtn')?.addEventListener('click',saveMeterOperation);
-    $('#meterAdminLaunchSaveBtn')?.addEventListener('click',saveMeterLaunch);
-    $('#meterAdminStatisticsSaveBtn')?.addEventListener('click',saveMeterStatistics);
-    $('#meterAdminDownloadMode')?.addEventListener('change',setMeterModeControls);
+    const meterPane=$('[data-admin-pane="meter"]');
+    meterPane?.addEventListener('click',handleMeterAdminClick);
+    meterPane?.addEventListener('change',handleMeterAdminChange);
     $('#meterAdminNoticeNewBtn')?.addEventListener('click',()=>resetMeterNoticeEditor(null));
     $('#meterAdminNoticeCancelBtn')?.addEventListener('click',()=>resetMeterNoticeEditor(null));
     $('#meterAdminNoticeSaveBtn')?.addEventListener('click',saveMeterNotice);

@@ -92,11 +92,11 @@ jobs:
               Path("m/sanctuary/index.html"),
           ]
           required_assets = [
-              "kinojo-character-skill.css?cache=2026080401",
-              "kinojo-character-daevanion.css?cache=2026080402",
+              "kinojo-character-skill.css?cache=2026081001",
+              "kinojo-character-daevanion.css?cache=2026081002",
               "kinojo-animations.css?cache=2026080402",
-              "kinojo-character-skill-bridge.js?cache=2026080402",
-              "kinojo-character-daevanion-bridge.js?cache=2026080402",
+              "kinojo-character-skill-bridge.js?cache=2026081001",
+              "kinojo-character-daevanion-bridge.js?cache=2026081002",
           ]
           for page in pages:
               text = page.read_text(encoding="utf-8")
@@ -122,10 +122,10 @@ jobs:
           required_tokens = {
               "skill SQL 305": (skill, "kinojo_character_skill_overview_v305"),
               "skill Server category": (skill, "categoryLabel"),
-              "skill Server tier": (skill, "levelTier"),
+              "skill Server tier": (skill, "levelBand"),
               "skill stigma": (skill, "스티그마"),
-              "skill tier class": (skill, "is-level-tier-"),
-              "daev SQL 306": (daev, "kinojo_character_daevanion_detail_v306"),
+              "skill tier class": (skill, "is-level-30"),
+              "daev SQL 307": (daev, "kinojo_character_daevanion_detail_v307"),
               "daev active nodes": (daev, "activeNodes"),
               "daev stat effects": (daev, "statEffects"),
               "daev skill effects": (daev, "skillEffects"),
@@ -162,7 +162,7 @@ jobs:
           admin_pages = [Path("admin/index.html"), Path("m/admin/index.html")]
           for page in admin_pages:
               text = page.read_text(encoding="utf-8")
-              for token in ["meterAdminDownloadMode", "meterAdminAllowedLevels", "meterAdminCombinedSize"]:
+              for token in ["data-admin-subtab=\"downloads\"", "data-admin-subtab=\"runtime\"", "data-admin-subtab=\"statistics\"", "data-admin-subtab=\"notices\"", "data-meter-download-enabled", "data-meter-launch-enabled", "data-meter-statistics-enabled", "kinojo-filter-switch"]:
                   if token not in text:
                       raise SystemExit(f"{page}: Meter admin contract missing: {token}")
 
@@ -173,7 +173,7 @@ jobs:
                   raise SystemExit(f"Meter WEB contract missing: {token}")
           if "desktopDownloadAuthorization" in meter_app:
               raise SystemExit("Meter WEB must authorize the Launcher, not the legacy desktop installer")
-          for token in ["RANK_ALLOWLIST", "allowedLevels", "combinedFileSize"]:
+          for token in ["RANK_ALLOWLIST", "allowedLevels", "launchAllowedLevels", "combinedFileSize"]:
               if token not in admin_system:
                   raise SystemExit(f"Meter admin contract missing: {token}")
 
