@@ -824,6 +824,8 @@
 
   function renderStats(data) {
     latestStats = data;
+    const pageServerTime=data.serverTime||data.generatedAt||data.updatedAt;
+    if(pageServerTime)window.dispatchEvent(new CustomEvent('kinojo:page-time',{detail:{value:pageServerTime,label:'접속'}}));
     renderAppliedFilters(data);
     updatePolicyFootnote(data.statisticsPolicy);
     $('meterUpdatedAt').textContent = data.generatedAt || data.updatedAt

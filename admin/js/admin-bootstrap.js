@@ -1,4 +1,4 @@
-/* KINOJO Admin Navigation, dashboard, event binding, and bootstrap v2026081003 */
+/* KINOJO Admin Navigation, dashboard, event binding, and bootstrap v2026081004 */
 (function(A){
   'use strict';
   if(!A) throw new Error('KINOJO Admin shared module is required.');
@@ -82,6 +82,7 @@
   const testWebAppConnection=(...args)=>A.testWebAppConnection(...args);
   const todayDateInputValue=(...args)=>A.todayDateInputValue(...args);
   const updateSanctuaryScheduleSaveState=(...args)=>A.updateSanctuaryScheduleSaveState(...args);
+  const TAB_LABELS={dashboard:'대시보드',requests:'코드 요청',members:'회원 관리',characters:'캐릭터 관리',sanctuary:'성역 관리',notices:'공지 관리',meter:'키노조 미터',system:'시스템 설정',logs:'로그 관리'};
 
   function adminRoute(){
     const raw=decodeURIComponent(String(location.hash||'').replace(/^#/,''));
@@ -128,6 +129,7 @@
     $$('[data-admin-subpane]',pane).forEach(subpane=>subpane.classList.toggle('active',subpane.dataset.adminSubpane===next));
     if(options.updateRoute!==false)writeAdminRoute(tab,next);
     loadFeature(tab,next,options.force===true);
+    if(state.tab===tab)syncAdminChrome(tab);
   }
 
   function switchTab(tab,options={}){
@@ -136,10 +138,8 @@
     if(isStaffConsole() && tab!=='sanctuary') tab='sanctuary';
     if(!document.querySelector('[data-admin-pane="'+tab+'"]'))tab=isStaffConsole()?'sanctuary':'dashboard';
     state.tab = tab;
-    $$('.admin-nav button').forEach(b=>b.classList.toggle('active', b.dataset.adminTab===tab));
-    $$('.admin-bottom-actions button').forEach(b=>b.classList.toggle('active', b.dataset.adminTab===tab));
+    $$('.admin-nav [data-admin-tab],.admin-mobile-launcher [data-admin-tab]').forEach(b=>b.classList.toggle('active', b.dataset.adminTab===tab));
     $$('.admin-pane').forEach(p=>p.classList.toggle('active', p.dataset.adminPane===tab));
-    const sel=$('#adminMobileSelect'); if(sel) sel.value=tab;
     const subnav=$('[data-admin-subnav="'+tab+'"]',document);
     if(subnav){
       switchSubtab(tab,options.subtab||state.subtabs[tab]||DEFAULT_SUBTABS[tab],options);
@@ -148,6 +148,48 @@
       if(options.updateRoute!==false)writeAdminRoute(tab,'');
       loadFeature(tab,'',options.force===true);
     }
+    syncAdminChrome(tab);
+  }
+
+  function syncAdminChrome(tab){
+    const locationLabel=$('#adminCurrentLocation');
+    if(locationLabel)locationLabel.textContent='['+(TAB_LABELS[tab]||'관리')+']';
+    document.body.classList.toggle('admin-dashboard-active',tab==='dashboard');
+    const slot=$('#adminTopSubnav');
+    if(!slot)return;
+    slot.replaceChildren();
+    const source=$('[data-admin-subnav="'+tab+'"]');
+    if(!source){slot.hidden=true;return;}
+    slot.hidden=false;
+    $$('[data-admin-subtab]',source).filter(button=>!button.hidden).forEach(button=>{
+      const clone=button.cloneNode(true);
+      clone.addEventListener('click',()=>switchSubtab(tab,button.dataset.adminSubtab));
+      slot.appendChild(clone);
+    });
+  }
+
+  function buildMobileLauncher(){
+    const root=$('.admin-mobile-launcher');if(!root)return;
+    root.replaceChildren();
+    $$('.admin-nav [data-admin-tab]').filter(button=>!button.hidden).forEach(button=>{
+      const clone=document.createElement('button');
+      clone.type='button';clone.dataset.adminTab=button.dataset.adminTab;
+      clone.innerHTML='<span>'+button.textContent.trim().split(/\s+/)[0]+'</span><strong>'+String(button.textContent).replace(/^\S+\s*/,'').replace(/\d+$/,'').trim()+'</strong>';
+      clone.addEventListener('click',()=>switchTab(clone.dataset.adminTab));
+      root.appendChild(clone);
+    });
+  }
+
+  function renderDashboardServerOverview(runtimeData,syncData){
+    const root=$('#serverStatusOverview');if(!root)return;
+    const queue=runtimeData.queue||runtimeData.queueStatus||{};
+    const recentSync=syncData.recentSync||syncData.recent_sync||{};
+    const entries=[
+      ['RPC',runtimeData.ok!==false],
+      ['작업 큐',queue.ok!==false&&String(queue.status||'').toLowerCase()!=='failed'],
+      ['성역 동기화',String(recentSync.status||'').toLowerCase()!=='failed']
+    ];
+    root.innerHTML='<div class="admin-server-chips">'+entries.map(([label,ok])=>'<span class="'+(ok?'ok':'error')+'"><i></i>'+label+'</span>').join('')+'</div>';
   }
 
   function renderAccessBlocked(){
@@ -176,10 +218,9 @@
       $('#statSanctuary').textContent = recentSync.status==='failed' ? '확인' : recentSync.completedAt||recentSync.completed_at ? '정상' : '대기';
       $('#statSanctuarySub').textContent = formatServerTime(recentSync.completedAt||recentSync.completed_at);
       $('#statServer').textContent = runtimeData.ok === false ? '점검' : '정상';
-      $('#statServerSub').textContent = runtimeData.message || '모든 시스템 확인';
+      $('#statServerSub').textContent = runtimeData.ok === false ? '확인이 필요한 항목이 있습니다.' : '핵심 서비스가 정상입니다.';
       state.requests=requests;
-      renderRequestPreview(requests.slice(0,3));
-      renderServerBox(runtimeData,syncData);
+      renderDashboardServerOverview(runtimeData,syncData);
       $('#adminPendingBadge').textContent=String(requests.length||0);
       addLog('INFO','대시보드 새로고침 완료');
     }catch(err){ addLog('ERROR',err.message||err); }
@@ -188,15 +229,22 @@
   function renderLogs(){ const root=$('#adminLogBox'); if(root) root.textContent=state.logs.length?state.logs.join('\n'):'아직 로그가 없습니다.'; }
 
   function bind(){
-    $$('.admin-nav button,.admin-bottom-actions button').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.adminTab)));
+    $$('.admin-nav [data-admin-tab]').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.adminTab)));
     $$('.admin-subnav').forEach(nav=>nav.addEventListener('click',event=>{
       const button=event.target.closest('[data-admin-subtab]');
       if(!button)return;
       switchSubtab(nav.dataset.adminSubnav,button.dataset.adminSubtab);
     }));
-    $('#adminMobileSelect')?.addEventListener('change',e=>switchTab(e.target.value));
     const logout=()=>{window.KinojoAuth?.clearSession?.(); location.href='../';};
-    $('#adminLogoutBtn')?.addEventListener('click',logout); $('#adminMobileLogoutBtn')?.addEventListener('click',logout);
+    $('#adminLogoutBtn')?.addEventListener('click',logout);
+    $('#adminBackBtn')?.addEventListener('click',()=>{
+      const defaultSub=DEFAULT_SUBTABS[state.tab]||'';
+      if(state.subtab&&defaultSub&&state.subtab!==defaultSub)return switchSubtab(state.tab,defaultSub);
+      if(state.tab!=='dashboard')return switchTab('dashboard');
+      if(history.length>1)history.back();else location.href=location.pathname.startsWith('/m/')?'/m/':'/';
+    });
+    $('#adminCloseBtn')?.addEventListener('click',()=>{window.close();setTimeout(()=>{location.href=location.pathname.startsWith('/m/')?'/m/':'/';},120);});
+    $$('[data-admin-jump]').forEach(button=>button.addEventListener('click',()=>{const [tab,subtab]=button.dataset.adminJump.split('/');switchTab(tab,{subtab});}));
     $('#requestReloadBtn')?.addEventListener('click',loadCodeRequests);
     $('#requestList')?.addEventListener('click',e=>{ if(e.target.matches('[data-approve-request]')) processRequest(e.target,'approveCodeRequest'); if(e.target.matches('[data-reject-request]')) processRequest(e.target,'rejectCodeRequest'); });
     $('#memberReloadBtn')?.addEventListener('click',loadAccounts); $('#sanctuaryRolePermissionReloadBtn')?.addEventListener('click',loadSanctuaryRolePermissions); $('#sanctuaryRolePermissionMatrix')?.addEventListener('change',e=>{if(e.target.matches('[data-sanctuary-role-permission]'))setSanctuaryRolePermission(e.target);}); $('#memberSearch')?.addEventListener('input',applyMemberFilters); $('#memberRoleFilter')?.addEventListener('change',applyMemberFilters); $('#memberList')?.addEventListener('click',e=>{ if(e.target.matches('[data-member-role-open],[data-member-role-save],[data-member-role-cancel],[data-member-disable],[data-member-delete]')) handleMemberAction(e.target); });
@@ -280,7 +328,6 @@
       event.preventDefault();
       event.returnValue='';
     });
-    $('#quickCodeBtn')?.addEventListener('click',()=>switchTab('requests')); $('#quickSanctuaryBtn')?.addEventListener('click',()=>switchTab('system',{subtab:'sheet-sync'})); $('#quickMemberBtn')?.addEventListener('click',()=>switchTab('members',{subtab:'accounts'})); $('#quickNoticeBtn')?.addEventListener('click',()=>switchTab('notices',{subtab:'general'}));
   }
 
   async function init(){
@@ -293,13 +340,12 @@
     if(isStaffConsole()){
       document.body.classList.add('kinojo-staff-console');
       $$('[data-admin-full-only]').forEach(el=>el.hidden=true);
-      $$('.admin-nav [data-admin-tab],.admin-bottom-actions [data-admin-tab]').forEach(el=>{if(el.dataset.adminTab!=='sanctuary')el.hidden=true;});
-      const mobile=$('#adminMobileSelect'); if(mobile)Array.from(mobile.options).forEach(option=>{if(option.value!=='sanctuary')option.remove();});
+      $$('.admin-nav [data-admin-tab]').forEach(el=>{if(el.dataset.adminTab!=='sanctuary')el.hidden=true;});
     }
     const permissionCard=$('#sanctuaryRolePermissionCard'); if(permissionCard)permissionCard.hidden=!isMaster();
     const permissionTab=$('[data-admin-subnav="members"] [data-admin-subtab="permissions"]'); if(permissionTab)permissionTab.hidden=!isMaster();
     $$('[data-admin-master-only]').forEach(element=>{element.hidden=!isMaster();});
-    bind(); renderLogs();
+    buildMobileLauncher();bind();renderLogs();
     const route=adminRoute();
     switchTab(isStaffConsole()?'sanctuary':route.tab,{subtab:isStaffConsole()?'':route.subtab,updateRoute:true});
   }

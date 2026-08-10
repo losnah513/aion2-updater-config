@@ -114,20 +114,13 @@ function applyHallData(data,{fromCache=false,initial=false,skipIfSame=false}={})
 
   if(skipIfSame && previousSignature===nextSignature){
     hallData=data;
-    const topbarUpdate=document.getElementById("topbarUpdateTime");
-    if(topbarUpdate && hallData?.updatedAt){
-      topbarUpdate.textContent="업데이트 "+hallData.updatedAt;
-    }
+    if(hallData?.updatedAt)window.dispatchEvent(new CustomEvent('kinojo:page-time',{detail:{value:hallData.updatedAt,label:'최종 조회'}}));
     return false;
   }
 
   hallData=data;
   // Hall 응답의 visitStats는 공통 방문자바를 덮어쓰지 않는다.
-  const topbarUpdate=document.getElementById("topbarUpdateTime");
-  if(topbarUpdate){
-    const suffix=fromCache?" · 캐시":"";
-    topbarUpdate.textContent=hallData?.updatedAt?"업데이트 "+hallData.updatedAt+suffix:"업데이트 완료"+suffix;
-  }
+  if(hallData?.updatedAt)window.dispatchEvent(new CustomEvent('kinojo:page-time',{detail:{value:hallData.updatedAt,label:fromCache?'최종 조회(캐시)':'최종 조회'}}));
   stopLoadingText();
   render({initial:initial,showSpinners:initial});
   return true;

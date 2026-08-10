@@ -49,10 +49,18 @@
       classCounts: next?.classCounts || current?.classCounts || {}
     });
   }
+  function publishServerTime(data){
+    const candidates=[].concat(rows(data,'PVE'),rows(data,'PVP'))
+      .map(item=>item?.updated_at||item?.updatedAt||item?.last_synced_at||item?.lastSyncedAt)
+      .filter(Boolean)
+      .sort((a,b)=>new Date(b)-new Date(a));
+    const value=data?.updatedAt||data?.generatedAt||candidates[0];
+    if(value)window.dispatchEvent(new CustomEvent('kinojo:page-time',{detail:{value,label:'최종 조회'}}));
+  }
   async function fetchPage(page){
     const pageNo = Math.max(1, Number(page || 1));
     const cached = readCache(pageNo);
-    if(cached) return cached;
+    if(cached){publishServerTime(cached);return cached;}
     if(!window.KinojoSupabase || typeof window.KinojoSupabase.rpc !== 'function'){
       throw new Error('Server Engine 연결을 확인해 주세요.');
     }
@@ -66,6 +74,7 @@
     };
     const data = await window.KinojoSupabase.rpc('kinojo_web_get_legion_ranking', params);
     if(!data || data.ok === false) throw new Error(data?.message || data?.error || '레기온 순위 응답이 실패했습니다.');
+    publishServerTime(data);
     return writeCache(pageNo, data);
   }
   async function fetchRanking(options){
