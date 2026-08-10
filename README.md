@@ -15,5 +15,7 @@ KINOJO INFO GitHub Pages upload package.
 - The shared modal lives in `ui/kinojo-character-reaction.*` and is used by Hall of Fame, ranking, and sanctuary pages on PC and mobile.
 - The overview keeps stats and skills side by side on desktop, with independent category tabs to reduce vertical scrolling.
 - Skill cards highlight levels 20+, 25+, and 30+ with yellow, orange, and red gradient borders and badges.
-- Manual full-detail refresh is mounted in the right side of the character header on desktop and stacks below the profile on mobile.
+- The character header uses the original square profile image and groups class, server, level, legion, and title without repeating those facts below the stats.
+- Manual full-detail refresh is mounted in the right side of the character header on desktop and stacks below the profile on mobile. Refresh completion appears as a temporary toast at the top of the modal.
+- Daevanion uses eight compact board cards in one desktop row. The selected board opens a 3:7 workspace with cumulative effects in a two-column list and a normalized 15×15 node map supplied by `kinojo_character_daevanion_detail_v307`.
 - Passkey users do not see the comparison tab while viewing a character owned by their own account.

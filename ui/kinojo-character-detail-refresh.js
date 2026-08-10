@@ -555,40 +555,6 @@
     }
   }
 
-  function renderDaevanionDetail(data){
-    const root=document.getElementById('kinojoLiveDaevanionDetail');if(!root) return;
-    const board=data?.board||{};
-    const nodes=Array.isArray(board.nodeList)?board.nodeList:[];
-    const openNodes=nodes.filter(row=>number(row.open)===1);
-    const statEffects=Array.isArray(board.openStatEffectList)?board.openStatEffectList:[];
-    const skillEffects=Array.isArray(board.openSkillEffectList)?board.openSkillEffectList:[];
-    const effects=[...statEffects,...skillEffects].map(row=>row?.desc).filter(Boolean);
-    root.hidden=false;
-    delete root.dataset.detailStateKind;
-    delete root.dataset.detailStateCode;
-    root.innerHTML=
-      '<button type="button" class="kinojo-character-live-detail-close" data-live-detail-close>닫기</button>'+
-      '<div class="kinojo-daevanion-detail-head"><strong>'+esc(board.name||'데바니온 상세')+'</strong><span>활성 노드 '+openNodes.length+' / '+nodes.length+'</span></div>'+
-      '<section class="kinojo-daevanion-effects"><h4>활성 누적 효과</h4>'+
-        (effects.length?effects.map(value=>'<p>'+esc(value)+'</p>').join(''):'<p>활성 누적 효과가 없습니다.</p>')+
-      '</section>'+
-      '<section class="kinojo-daevanion-nodes"><h4>활성 노드</h4><div>'+openNodes.slice(0,225).map(node=>
-        '<article>'+(safeUrl(node.icon)?'<img src="'+safeUrl(node.icon)+'" alt="">':'')+'<span><b>'+esc(node.name||'-')+'</b><small>'+esc((node.effectList||[]).map(row=>row?.desc).filter(Boolean).join(' · '))+'</small></span></article>'
-      ).join('')+'</div></section>'+
-      '<small class="kinojo-detail-refreshed-at">상세 갱신 '+esc(formatDate(data.refreshedAt))+'</small>';
-  }
-
-  async function loadDaevanionDetail(button){
-    const root=document.getElementById('kinojoLiveDaevanionDetail');if(!root||!state.identity) return;
-    root.hidden=false;delete root.dataset.detailStateKind;delete root.dataset.detailStateCode;root.innerHTML='<div class="kinojo-character-live-loading">저장된 데바니온 상세를 불러오는 중입니다.</div>';
-    try{
-      const data=await invoke('daevanionDetail',Object.assign({},state.identity,{boardId:number(button.dataset.boardId)}));
-      renderDaevanionDetail(data);
-    }catch(error){
-      renderDetailState(root,'daevanion',error);
-    }
-  }
-
   document.addEventListener('click',event=>{
     const target=event.target instanceof Element?event.target:null;if(!target) return;
     const modal=document.getElementById('kinojoCharacterReactionModal');
@@ -613,10 +579,6 @@
       loadEquipmentDetail(equipment);
       if(event.isTrusted) showMobileEquipmentDetail(equipment);
       return;
-    }
-    const board=target.closest('[data-live-daevanion-board]');
-    if(board && document.getElementById('kinojoCharacterReactionModal')?.contains(board)){
-      event.preventDefault();loadDaevanionDetail(board);return;
     }
   },true);
 
