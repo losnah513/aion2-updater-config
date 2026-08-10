@@ -1,6 +1,6 @@
 /*
  * KINOJO Character Skill UI · 305
- * Server categoryLabel·levelTier를 표시하는 공통 캐릭터 모달 스킬 카드 전용 스타일.
+ * Server categoryLabel과 레벨 20/25/30 구간을 표시하는 공통 캐릭터 모달 스킬 카드 전용 스타일.
  */
 .kinojo-character-skill-list{
   grid-template-columns:repeat(6,minmax(0,1fr));
@@ -37,7 +37,7 @@
   padding:0 4px;
   border:2px solid #fff;
   border-radius:999px;
-  background:#1e293b;
+  background:linear-gradient(135deg,#475569,#0f172a);
   color:#fff;
   box-shadow:0 3px 8px rgba(15,23,42,.2);
   font-size:7px;
@@ -61,40 +61,39 @@
 }
 .kinojo-character-skill-card>span small{font-size:7px}
 
-/* 외곽 크기·테두리 두께를 바꾸지 않고 카드 내부 밝기만 단계적으로 높인다. */
-.kinojo-character-skill-card.is-level-tier-1{
-  background:linear-gradient(135deg,rgba(239,246,255,.96),#fff 72%);
-  box-shadow:inset 3px 0 0 #60a5fa,inset 0 0 16px rgba(59,130,246,.08);
+/* 레벨 20/25/30 구간은 배지가 아니라 카드 테두리 전체를 함께 강조한다. */
+.kinojo-character-skill-card.is-level-20{
+  border:2px solid transparent;
+  padding:6px;
+  background:linear-gradient(135deg,#fffdf2,#fff 76%) padding-box,linear-gradient(135deg,#fde047,#f59e0b) border-box;
+  box-shadow:0 7px 16px rgba(234,179,8,.12);
 }
-.kinojo-character-skill-card.is-level-tier-2{
-  background:linear-gradient(135deg,rgba(238,242,255,.98),#fff 72%);
-  box-shadow:inset 3px 0 0 #6366f1,inset 0 0 18px rgba(99,102,241,.11);
+.kinojo-character-skill-card.is-level-25{
+  border:2px solid transparent;
+  padding:6px;
+  background:linear-gradient(135deg,#fff7ed,#fff 76%) padding-box,linear-gradient(135deg,#fb923c,#ea580c) border-box;
+  box-shadow:0 7px 18px rgba(234,88,12,.15);
 }
-.kinojo-character-skill-card.is-level-tier-3{
-  background:linear-gradient(135deg,rgba(245,243,255,.98),#fff 72%);
-  box-shadow:inset 3px 0 0 #8b5cf6,inset 0 0 20px rgba(139,92,246,.13);
+.kinojo-character-skill-card.is-level-30{
+  border:2px solid transparent;
+  padding:6px;
+  background:linear-gradient(135deg,#fff1f2,#fff 76%) padding-box,linear-gradient(135deg,#f87171,#dc2626) border-box;
+  box-shadow:0 8px 20px rgba(220,38,38,.17);
 }
-.kinojo-character-skill-card.is-level-tier-4{
-  background:linear-gradient(135deg,rgba(253,242,248,.98),#fff 72%);
-  box-shadow:inset 3px 0 0 #d946ef,inset 0 0 22px rgba(217,70,239,.14);
-}
-.kinojo-character-skill-card.is-level-tier-5{
-  background:linear-gradient(135deg,rgba(255,247,237,.99),rgba(254,243,199,.7) 48%,#fff 100%);
-  box-shadow:inset 3px 0 0 #f59e0b,inset 0 0 24px rgba(245,158,11,.18);
-}
-.kinojo-character-skill-card.is-level-tier-1 .kinojo-character-skill-level{background:#2563eb}
-.kinojo-character-skill-card.is-level-tier-2 .kinojo-character-skill-level{background:#4f46e5}
-.kinojo-character-skill-card.is-level-tier-3 .kinojo-character-skill-level{background:#7c3aed}
-.kinojo-character-skill-card.is-level-tier-4 .kinojo-character-skill-level{background:#c026d3}
-.kinojo-character-skill-card.is-level-tier-5 .kinojo-character-skill-level{background:linear-gradient(135deg,#d97706,#f59e0b)}
+.kinojo-character-skill-card.is-level-20 .kinojo-character-skill-level{background:linear-gradient(135deg,#fde047,#f59e0b);color:#422006}
+.kinojo-character-skill-card.is-level-25 .kinojo-character-skill-level{background:linear-gradient(135deg,#fb923c,#ea580c)}
+.kinojo-character-skill-card.is-level-30 .kinojo-character-skill-level{background:linear-gradient(135deg,#f87171,#dc2626)}
+.kinojo-character-overview-layout .kinojo-character-skill-list{grid-template-columns:repeat(3,minmax(0,1fr))}
 
 @media(max-width:900px){
   .kinojo-character-skill-list{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .kinojo-character-overview-layout .kinojo-character-skill-list{grid-template-columns:repeat(2,minmax(0,1fr))}
   .kinojo-character-skill-card>span b{font-size:10px}
   .kinojo-character-skill-card>span small{font-size:8px}
 }
 @media(max-width:640px){
   .kinojo-character-skill-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kinojo-character-overview-layout .kinojo-character-skill-list{grid-template-columns:repeat(2,minmax(0,1fr))}
   .kinojo-character-skill-card{min-height:60px}
 }
 @media(max-width:390px){
