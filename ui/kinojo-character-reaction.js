@@ -23,7 +23,8 @@
     skillTab: 'active',
     equipmentCategory: 'weaponArmor',
     selectedEquipmentKey: '',
-    selectedArcanaKey: ''
+    selectedArcanaKey: '',
+    liveStatusTimer: null
   };
   const LIVE_CACHE_TTL = 120000;
   const liveCache = new Map();
@@ -237,12 +238,19 @@
       '<div class="kinojo-character-reaction-backdrop" data-kinojo-character-reaction-close></div>' +
       '<div class="kinojo-character-reaction-dialog" role="dialog" aria-modal="true" aria-labelledby="kinojoCharacterReactionTitle" tabindex="-1">' +
         '<button class="kinojo-character-reaction-close" type="button" aria-label="닫기" data-kinojo-character-reaction-close>×</button>' +
+        '<div class="kinojo-character-live-status" id="kinojoCharacterLiveStatus" role="status" aria-live="polite"></div>' +
         '<header class="kinojo-character-reaction-profile">' +
           '<div class="kinojo-character-reaction-visual" aria-hidden="true"><div class="kinojo-character-reaction-avatar is-empty" id="kinojoCharacterReactionAvatar"></div><div class="kinojo-character-reaction-class" id="kinojoCharacterReactionClass"></div></div>' +
           '<div class="kinojo-character-reaction-info">' +
             '<div class="kinojo-character-reaction-kicker">CHARACTER SNAPSHOT</div>' +
             '<h2 class="kinojo-character-reaction-title" id="kinojoCharacterReactionTitle">캐릭터</h2>' +
-            '<p class="kinojo-character-reaction-sub" id="kinojoCharacterReactionSub">KINOJO 최신 저장 정보를 불러오는 중입니다.</p>' +
+            '<div class="kinojo-character-reaction-identity" aria-label="캐릭터 기본 정보">' +
+              '<span><b>클래스</b><strong id="kinojoCharacterReactionClassName">-</strong></span>' +
+              '<span><b>서버</b><strong id="kinojoCharacterReactionServerName">-</strong></span>' +
+              '<span><b>레벨</b><strong id="kinojoCharacterReactionLevel">-</strong></span>' +
+              '<span><b>레기온</b><strong id="kinojoCharacterReactionLegion">-</strong></span>' +
+              '<span class="is-title"><b>칭호</b><strong id="kinojoCharacterReactionTitleName">-</strong></span>' +
+            '</div>' +
             '<div class="kinojo-character-reaction-powers" aria-label="캐릭터 핵심 정보">' +
               '<span class="kinojo-character-reaction-power is-pve"><b>전투력</b><strong id="kinojoCharacterReactionPvePower">-</strong></span>' +
               '<span class="kinojo-character-reaction-power is-pvp"><b>아이템 레벨</b><strong id="kinojoCharacterReactionPvpPower">-</strong></span>' +
@@ -259,7 +267,6 @@
           '<button type="button" data-kinojo-character-tab="compare" data-kinojo-compare-tab hidden>내 캐릭터 비교</button>' +
           '<button type="button" data-kinojo-character-tab="reaction">평가·코멘트</button>' +
         '</nav>' +
-        '<div class="kinojo-character-live-status" id="kinojoCharacterLiveStatus">KINOJO 저장 Snapshot을 불러오고 있습니다.</div>' +
         '<div class="kinojo-character-live-panels">' +
           '<section class="kinojo-character-live-panel active" data-kinojo-character-panel="overview"><div class="kinojo-character-live-loading">저장 프로필과 능력치·스킬을 불러오는 중입니다.</div></section>' +
           '<section class="kinojo-character-live-panel" data-kinojo-character-panel="equipment"></section>' +
@@ -319,8 +326,18 @@
   function setLiveStatus(message, kind){
     const status = document.getElementById('kinojoCharacterLiveStatus');
     if(!status) return;
+    if(state.liveStatusTimer){
+      clearTimeout(state.liveStatusTimer);
+      state.liveStatusTimer = null;
+    }
     status.textContent = message || '';
-    status.className = 'kinojo-character-live-status ' + (kind || '');
+    status.className = 'kinojo-character-live-status ' + (kind || '') + (message ? ' is-visible' : '');
+    if(message && kind === 'ok'){
+      state.liveStatusTimer = setTimeout(() => {
+        status.classList.remove('is-visible');
+        state.liveStatusTimer = null;
+      },2600);
+    }
   }
 
   function setTab(tab){
@@ -531,7 +548,6 @@
   function renderLiveOverview(data){
     const panel = livePanel('overview');
     if(!panel) return;
-    const profile = data.profile || {};
     const stats = Array.isArray(data.coreStats) ? data.coreStats : [];
     const base = (Array.isArray(data.baseStats) ? data.baseStats : []).filter(row => String(row?.type || '').toLowerCase() !== 'itemlevel');
     const skills = (Array.isArray(data.skills) ? data.skills : []).filter(skill => skill?.acquired === true || Number(skill?.acquired || 0) === 1);
@@ -578,12 +594,6 @@
             '<section data-kinojo-skill-panel="' + group.key + '" ' + (state.skillTab === group.key ? '' : 'hidden') + '><header><strong>' + esc(group.label) + '</strong><em>' + group.rows.length + '개</em></header>' + (group.rows.length ? '<div class="kinojo-character-skill-list">' + group.rows.map(renderSkillCard).join('') + '</div>' : '<p class="kinojo-character-overview-empty">표시할 ' + esc(group.label) + ' 스킬이 없습니다.</p>') + '</section>'
           ).join('') + '</div>' +
         '</section>' +
-      '</div>' +
-      '<div class="kinojo-character-live-facts">' +
-        [
-          ['레벨',profile.level || '-'],['종족',profile.raceName || '-'],['성별',profile.genderName || '-'],
-          ['레기온',profile.regionName || '-'],['칭호',profile.titleName || '-'],['클래스',profile.className || '-']
-        ].map(row => '<article><span>' + esc(row[0]) + '</span><strong>' + esc(row[1]) + '</strong></article>').join('') +
       '</div>' +
       '<p class="kinojo-character-live-note">' + esc(data.note || '저장된 공식 상세정보가 없습니다.') + '</p>';
     setOverviewStatTab(state.statTab);
@@ -714,7 +724,14 @@
     panel.innerHTML =
       '<div class="kinojo-character-live-section-head"><div><strong>데바니온 보드</strong><span>보드를 누를 때만 해당 노드 정보를 1회 추가 조회합니다.</span></div><em>' + boards.length + '개</em></div>' +
       '<div class="kinojo-character-daevanion-grid">' +
-        boards.map(board => '<button type="button" data-live-daevanion-board data-board-id="' + Number(board.id || 0) + '"><span><b>' + esc(board.name || '-') + '</b><small>' + Number(board.openNodeCount || 0) + ' / ' + Number(board.totalNodeCount || 0) + '</small></span><strong>' + Number(board.openPercent || 0) + '%</strong></button>').join('') +
+        boards.map(board => {
+          const icon = normalizedImageUrl(board?.icon);
+          return '<button type="button" data-live-daevanion-board data-board-id="' + Number(board.id || 0) + '">' +
+            (icon ? '<img class="kinojo-daevanion-board-visual" src="' + safeUrl(icon) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">' : '') +
+            '<span><b>' + esc(board.name || '-') + '</b></span>' +
+            '<strong><span>' + Number(board.openNodeCount || 0) + ' / ' + Number(board.totalNodeCount || 0) + '</span><small>' + Number(board.openPercent || 0) + '%</small></strong>' +
+          '</button>';
+        }).join('') +
       '</div><div class="kinojo-character-live-detail" id="kinojoLiveDaevanionDetail" hidden></div>';
   }
 
@@ -730,9 +747,11 @@
       characterId:data.identity?.characterId || state.target?.characterId,
       profileImageUrl:profile.profileImageUrl || state.target?.profileImageUrl,
       pvePower:profile.combatPower || state.target?.pvePower,
-      pvpPower:profile.itemLevel || state.target?.pvpPower
+      pvpPower:profile.itemLevel || state.target?.pvpPower,
+      level:profile.level || state.target?.level,
+      legionName:profile.regionName || state.target?.legionName,
+      titleName:profile.titleName || state.target?.titleName
     }));
-    state.target.sub = [profile.className,profile.serverName,profile.level ? 'Lv.' + profile.level : '',profile.regionName].filter(Boolean).join(' · ');
     renderTarget();
     renderLiveOverview(data);
     renderLiveEquipment(data);
@@ -741,7 +760,7 @@
     updateCompareVisibility();
     const time = document.getElementById('kinojoCharacterLiveTime');
     if(time) time.textContent = 'PLAYNC 실시간 · ' + new Date(data.fetchedAt || Date.now()).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
-    setLiveStatus('저장 프로필 조회 완료 · 장비·아르카나·데바니온 상세는 선택한 항목의 Server 저장값을 표시합니다.','ok');
+    setLiveStatus('저장 프로필 조회 완료','ok');
   }
 
   async function loadLiveOverview(){
@@ -915,8 +934,10 @@
     const classIconUrl = t.classIconUrl || t.classIcon || t.iconUrl || classIconFor(className);
     const pvePower = numText(firstValue(t.pvePower, t.pve_power, t.pvePowerTotal, t.latestPveCombatPower, t.latest_pve_combat_power));
     const pvpPower = numText(firstValue(t.pvpPower, t.pvp_power, t.pvpPowerTotal, t.latestPvpCombatPower, t.latest_pvp_combat_power));
-    const sub = [className, server].filter(Boolean).join(' · ');
-    return { name, className, server, serverId, charKey, characterId, owner, profileImageUrl, detailUrl, classIconUrl, pvePower, pvpPower, sub };
+    const level = firstValue(t.level,t.characterLevel,t.character_level);
+    const legionName = firstValue(t.legionName,t.regionName,t.legion,t.guildName,t.guild_name);
+    const titleName = firstValue(t.titleName,t.title,t.characterTitle,t.character_title);
+    return { name, className, server, serverId, charKey, characterId, owner, profileImageUrl, detailUrl, classIconUrl, pvePower, pvpPower, level, legionName, titleName };
   }
 
   function renderTarget(){
@@ -924,13 +945,21 @@
     const avatar = document.getElementById('kinojoCharacterReactionAvatar');
     const classIcon = document.getElementById('kinojoCharacterReactionClass');
     const title = document.getElementById('kinojoCharacterReactionTitle');
-    const sub = document.getElementById('kinojoCharacterReactionSub');
+    const className = document.getElementById('kinojoCharacterReactionClassName');
+    const serverName = document.getElementById('kinojoCharacterReactionServerName');
+    const level = document.getElementById('kinojoCharacterReactionLevel');
+    const legion = document.getElementById('kinojoCharacterReactionLegion');
+    const titleName = document.getElementById('kinojoCharacterReactionTitleName');
     const detail = document.getElementById('kinojoCharacterReactionDetail');
     const pvePower = document.getElementById('kinojoCharacterReactionPvePower');
     const pvpPower = document.getElementById('kinojoCharacterReactionPvpPower');
 
     if(title) title.textContent = target.name || '캐릭터';
-    if(sub) sub.textContent = target.sub || '좋아요·싫어요와 코멘트를 남겨보세요.';
+    if(className) className.textContent = target.className || '-';
+    if(serverName) serverName.textContent = target.server || '-';
+    if(level) level.textContent = target.level ? 'Lv.' + target.level : '-';
+    if(legion) legion.textContent = target.legionName || '-';
+    if(titleName) titleName.textContent = target.titleName || '-';
     if(pvePower) pvePower.textContent = target.pvePower || '-';
     if(pvpPower) pvpPower.textContent = target.pvpPower || '-';
     if(classIcon){
@@ -982,6 +1011,7 @@
     state.equipmentCategory = 'weaponArmor';
     state.selectedEquipmentKey = '';
     state.selectedArcanaKey = '';
+    if(state.liveStatusTimer){clearTimeout(state.liveStatusTimer);state.liveStatusTimer=null;}
     state.returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
     const modal = ensureModal();
@@ -1029,6 +1059,7 @@
     state.live = null;
     state.target = null;
     state.options = null;
+    if(state.liveStatusTimer){clearTimeout(state.liveStatusTimer);state.liveStatusTimer=null;}
     const returnFocus = state.returnFocus;
     state.returnFocus = null;
     if(returnFocus && document.contains(returnFocus)){
