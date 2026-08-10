@@ -707,9 +707,14 @@
     if(!panel) return;
     const rows=equipmentGroups(data).arcana;
     const selected=rows.some(item=>equipmentKey(item)===state.selectedArcanaKey)?state.selectedArcanaKey:'';
+    const setEffects=Array.isArray(data?.arcanaSetEffects)?data.arcanaSetEffects:[];
     state.selectedArcanaKey=selected;
     panel.innerHTML=
       '<div class="kinojo-character-live-section-head"><div><strong>아르카나</strong><span>일반 장착 장비와 분리된 아르카나 8개 슬롯입니다.</span></div><em>'+rows.length+'개</em></div>'+
+      (setEffects.length?'<section class="kinojo-character-arcana-sets" aria-label="장착 아르카나 세트 효과">'+setEffects.map(set=>
+        '<article><header><div><span>장착 세트</span><strong>'+esc(set.name||'-')+'</strong></div><em>'+Number(set.equippedCount||0)+'세트</em></header><div>'+
+          (Array.isArray(set.bonuses)?set.bonuses:[]).map(bonus=>'<section class="'+(bonus.active?'is-active':'is-inactive')+'"><b>'+Number(bonus.degree||0)+'세트 효과</b><p>'+((Array.isArray(bonus.descriptions)?bonus.descriptions:[]).map(text=>esc(text)).join('<br>')||'-')+'</p><i>'+(bonus.active?'적용 중':'미적용')+'</i></section>').join('')+
+        '</div></article>').join('')+'</section>':'')+
       '<section class="kinojo-character-arcana-layout">'+
         '<div class="kinojo-character-arcana-list">'+(rows.length?rows.map(item=>equipmentRow(item,'kinojoLiveArcanaDetail',selected)).join(''):'<div class="kinojo-character-equipment-empty">저장된 아르카나 정보가 없습니다.</div>')+'</div>'+
         '<div class="kinojo-character-live-detail kinojo-character-equipment-detail-pane is-persistent" id="kinojoLiveArcanaDetail" data-persistent-detail><div class="kinojo-character-equipment-detail-empty"><strong>아르카나를 선택해 주세요.</strong><span>선택한 아르카나의 저장 상세정보를 표시합니다.</span></div></div>'+

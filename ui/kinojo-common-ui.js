@@ -625,6 +625,34 @@
     setTimeout(measureSafeAreas,80);
     setTimeout(measureSafeAreas,500);
   }
+  function canScrollY(element,delta){
+    if(!(element instanceof Element))return false;
+    const style=getComputedStyle(element);
+    if(!/(auto|scroll)/.test(style.overflowY)||element.scrollHeight<=element.clientHeight+1)return false;
+    return delta<0?element.scrollTop>1:element.scrollTop+element.clientHeight<element.scrollHeight-1;
+  }
+  function bindModalScrollChain(){
+    const modalSelector='[role="dialog"],[aria-modal="true"],.kinojo-character-reaction-modal,.kinojo-safe-overlay,.kinojo-login-modal,.kinojo-notice-board-overlay,.kinojo-safe-error-overlay,.meter-consent-modal,.sanctuary-editor-overlay,.kinojo-event-notice-overlay,.admin-panel-modal';
+    document.addEventListener('wheel',event=>{
+      if(event.defaultPrevented||event.ctrlKey||!event.deltaY||Math.abs(event.deltaY)<=Math.abs(event.deltaX))return;
+      const origin=event.target instanceof Element?event.target:event.target?.parentElement;
+      const modal=origin?.closest?.(modalSelector);if(!origin||!modal)return;
+      const scrollables=[];let node=origin;
+      while(node instanceof Element){
+        const style=getComputedStyle(node);
+        if(/(auto|scroll)/.test(style.overflowY)&&node.scrollHeight>node.clientHeight+1)scrollables.push(node);
+        if(node===modal)break;
+        node=node.parentElement;
+      }
+      if(scrollables.length<2)return;
+      const inner=scrollables[0];
+      if(canScrollY(inner,event.deltaY))return;
+      const outer=scrollables.slice(1).find(element=>canScrollY(element,event.deltaY));
+      if(!outer)return;
+      event.preventDefault();
+      outer.scrollTop+=event.deltaY;
+    },{capture:true,passive:false});
+  }
   function bind(){
     q('#drawerToggleBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openSideDrawer();});
     q('#drawerCloseBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeSideDrawer();});
@@ -673,6 +701,7 @@
   setTimeout(syncAuthRequiredUi_,120);
   setTimeout(syncAuthRequiredUi_,600);
   bindSafeAreas();
+  bindModalScrollChain();
   bind();
   bindCommonAdmin(info);
   bindImageGuards();

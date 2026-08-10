@@ -94,7 +94,7 @@ jobs:
           required_assets = [
               "kinojo-character-skill.css?cache=2026081001",
               "kinojo-character-daevanion.css?cache=2026081002",
-              "kinojo-animations.css?cache=2026080402",
+              "kinojo-animations.css?cache=2026081003",
               "kinojo-character-skill-bridge.js?cache=2026081001",
               "kinojo-character-daevanion-bridge.js?cache=2026081002",
           ]

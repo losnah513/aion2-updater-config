@@ -315,6 +315,7 @@
           baseStats:Array.isArray(manual.baseStats)?manual.baseStats:base.baseStats,
           equipment:Array.isArray(manual.equipment)?manual.equipment:base.equipment,
           arcana:Array.isArray(manual.arcana)?manual.arcana:base.arcana,
+          arcanaSetEffects:Array.isArray(manual.arcanaSetEffects)?manual.arcanaSetEffects:base.arcanaSetEffects,
           skills:Array.isArray(manual.skills)?manual.skills:base.skills,
           daevanion:Array.isArray(manual.daevanion)?manual.daevanion:base.daevanion,
           petwing:manual.petwing||base.petwing,
@@ -471,6 +472,18 @@
     }).join('');
   }
 
+  function gradeToken(value){
+    return String(value||'normal').toLowerCase().replace(/[^a-z0-9_-]/g,'');
+  }
+
+  function optionSkillRows(rows){
+    return (Array.isArray(rows)?rows:[]).map(row=>{
+      const icon=safeUrl(row?.icon);
+      return '<div class="kinojo-detail-skill">'+(icon?'<img src="'+icon+'" alt="">':'<i aria-hidden="true">SK</i>')+
+        '<span>'+esc(row?.name||'스킬 옵션')+'</span><strong>Lv. '+number(row?.level)+'</strong></div>';
+    }).join('');
+  }
+
   function equipmentDetailRoot(button){
     const id=String(button?.dataset?.detailRoot||'kinojoLiveEquipmentDetail');
     return document.getElementById(id);
@@ -490,6 +503,7 @@
     const item=data?.item||{};
     const main=Array.isArray(item.mainStats)?item.mainStats:[];
     const sub=Array.isArray(item.subStats)?item.subStats:[];
+    const subSkills=Array.isArray(item.subSkills)?item.subSkills:[];
     const stones=Array.isArray(item.magicStoneStat)?item.magicStoneStat:[];
     const godstones=Array.isArray(item.godStoneStat)?item.godStoneStat:[];
     const sources=Array.isArray(item.sources)?item.sources:[];
@@ -512,7 +526,7 @@
     root.innerHTML=
       closeButton+
       '<header class="kinojo-official-item-head">'+(icon?'<img src="'+icon+'" alt="">':'')+
-        '<div><span>'+(number(item.exceedLevel)?'<b>'+number(item.exceedLevel)+'</b> ':'')+(number(item.enchantLevel)?'+'+number(item.enchantLevel)+' ':'')+'</span><strong>'+esc(item.name||'선택 장비')+'</strong><small>'+esc(item.gradeName||item.grade||'')+'</small></div>'+
+        '<div><span>'+(number(item.exceedLevel)?'<b aria-label="돌파 '+number(item.exceedLevel)+'">'+number(item.exceedLevel)+'</b> ':'')+(number(item.enchantLevel)?'+'+number(item.enchantLevel)+' ':'')+'</span><strong>'+esc(item.name||'선택 장비')+'</strong><small class="kinojo-official-grade-badge grade-'+gradeToken(item.grade)+'">'+esc(item.gradeName||item.grade||'등급 미확인')+'</small></div>'+
       '</header>'+
       '<section class="kinojo-official-item-section"><h4>아이템 정보</h4><div class="kinojo-official-info-list">'+
         info.map(row=>'<div><span>'+esc(row[0])+'</span><strong>'+row[1]+'</strong></div>').join('')+
@@ -520,8 +534,9 @@
       '<section class="kinojo-official-item-section"><h4>옵션</h4><div class="kinojo-official-stat-list">'+
         statRows(main,false)+statRows(main,true)+
       '</div></section>'+
-      (item.soulBindRate!==undefined&&String(item.soulBindRate)!==''?'<section class="kinojo-official-item-section"><div class="kinojo-official-soul"><span>영혼 각인</span><strong>'+esc(item.soulBindRate)+'%</strong></div><div class="kinojo-official-stat-list">'+statRows(sub,false)+'</div></section>':
-        (sub.length?'<section class="kinojo-official-item-section"><h4>추가 옵션</h4><div class="kinojo-official-stat-list">'+statRows(sub,false)+'</div></section>':''))+
+      (item.soulBindRate!==undefined&&String(item.soulBindRate)!==''?'<section class="kinojo-official-item-section"><div class="kinojo-official-soul"><span>영혼 각인</span><strong>'+esc(item.soulBindRate)+'%</strong></div>'+
+        ((sub.length||subSkills.length)?'<div class="kinojo-official-soul-options">'+statRows(sub,false)+statRows(sub,true)+optionSkillRows(subSkills)+'</div>':'<p class="kinojo-official-empty-option">적용된 영혼 각인 옵션이 없습니다.</p>')+'</section>':
+        ((sub.length||subSkills.length)?'<section class="kinojo-official-item-section"><h4>추가 옵션</h4><div class="kinojo-official-soul-options">'+statRows(sub,false)+statRows(sub,true)+optionSkillRows(subSkills)+'</div></section>':''))+
       (stones.length?'<section class="kinojo-official-item-section"><h4>마석</h4><div class="kinojo-official-stones">'+stones.map(stone=>
         '<div class="grade-'+esc(String(stone.grade||'').toLowerCase())+'">'+(safeUrl(stone.icon)?'<img src="'+safeUrl(stone.icon)+'" alt="">':'')+'<span>'+esc(stone.name||stone.id||'-')+'</span><strong>'+esc(stone.value||'-')+'</strong></div>'
       ).join('')+'</div></section>':'')+
