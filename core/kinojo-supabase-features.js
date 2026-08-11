@@ -1281,6 +1281,17 @@
     return rpc('kinojo_web_save_sanctuary', { p_payload:extra || {} });
   }
 
+  async function sanctuaryRosterAction(command, extra={}){
+    const passKey=currentPassKey();
+    if(!passKey) throw new Error('로그인 세션을 확인할 수 없습니다. 다시 로그인해 주세요.');
+    return invokeEdgeFunction('lookup-sheet-bridge', Object.assign({}, extra || {}, {
+      action:'webSanctuaryRosterV312',
+      command:String(command || extra.command || '').trim().toUpperCase(),
+      passKey,
+      clientVersion:'kinojo-web-sanctuary-roster-v312'
+    }));
+  }
+
 
 
   function getClientId(){
@@ -1790,6 +1801,7 @@
     if(name === 'adminSanctuarySheetSync') return adminSanctuarySheetSync(extra.mode || extra.command || 'status', extra);
     if(name === 'adminSanctuaryProfileDiagnostic') return adminSanctuaryProfileDiagnostic(extra);
     if(name === 'sanctuaryAdmin') return saveSanctuaryData(extra);
+    if(name === 'sanctuaryRoster') return sanctuaryRosterAction(extra.command, extra);
     if(name === 'notices') return { ok:true, notices:(await getLatestAnnouncements(extra.limit || 5)).map(noticeFromRow).filter(Boolean) };
     if(name === 'hallVisit'){
       const mode = String(extra.mode || 'stats');
@@ -1902,6 +1914,7 @@
     getSanctuaryRolePermissions,
     setSanctuaryRolePermission,
     saveSanctuaryData,
+    sanctuaryRosterAction,
     logPageView,
     logLoginVisit,
     verifyPassKey,

@@ -214,7 +214,13 @@
     const text=await res.text();
     let data=null;
     if(text){try{data=JSON.parse(text);}catch(_err){data={ok:false,message:text};}}
-    if(!res.ok||data?.ok===false)throw new Error(data?.message||data?.error||text||('Edge Function HTTP '+res.status));
+    if(!res.ok||data?.ok===false){
+      const error=new Error(data?.message||data?.error||text||('Edge Function HTTP '+res.status));
+      error.status=res.status;
+      error.code=data?.code||'';
+      error.data=data;
+      throw error;
+    }
     return data||{ok:true};
   }
   window.KinojoSupabaseClientCore=Object.freeze({

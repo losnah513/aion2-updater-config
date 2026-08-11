@@ -70,6 +70,8 @@ jobs:
             "core/kinojo-supabase-client.js"
             "core/kinojo-supabase-rpc.js"
             "core/kinojo-supabase-features.js"
+            "sanctuary/js/sanctuary.js"
+            "sanctuary/js/sanctuary-editor.js"
             "admin/js/admin-system.js"
             "admin/js/admin-bootstrap.js"
             "meter/js/meter-app.js"
@@ -142,6 +144,7 @@ jobs:
               Path("ui/kinojo-character-daevanion.css"),
               Path("ui/kinojo-animations.css"),
               Path("ui/kinojo-character-detail-refresh.css"),
+              Path("sanctuary/css/sanctuary.css"),
           ]
           for path in checked:
               data = path.read_bytes()
@@ -292,6 +295,9 @@ jobs:
             "ranking/js/ranking-app.js"
             "sanctuary/index.html"
             "m/sanctuary/index.html"
+            "sanctuary/css/sanctuary.css"
+            "sanctuary/js/sanctuary.js"
+            "sanctuary/js/sanctuary-editor.js"
             "admin/index.html"
             "m/admin/index.html"
             "admin/js/admin.js"
