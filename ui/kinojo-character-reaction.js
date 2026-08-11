@@ -103,7 +103,7 @@
     return [
       profile ? { url: profile, kind: 'profile' } : null,
       classIcon ? { url: classIcon, kind: 'class' } : null
-    ].filter((candidate, index, list) => candidate && list.findIndex(other => other.url === candidate.url) === index);
+    ].filter((candidate, index, list) => candidate && list.findIndex(other => other && other.url === candidate.url) === index);
   }
 
   function mountCharacterImage(container, target, options){
