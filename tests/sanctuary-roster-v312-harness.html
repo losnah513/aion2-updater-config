@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Sanctuary roster v312 browser harness</title>
+  <link rel="stylesheet" href="/sanctuary/css/sanctuary.css">
+  <style>
+    body{padding:24px;background:#f3f7fc}
+    .harness-shell{width:min(920px,100%);margin:0 auto}
+    .force-card{overflow:hidden;border:1px solid #d7e0ec;border-radius:18px;background:#fff}
+    .team-head{align-items:center}
+    .harness-test-controls{position:fixed;right:8px;top:8px;z-index:10200;display:flex;gap:5px;padding:6px;border-radius:10px;background:#fff;box-shadow:0 4px 18px #0003}.harness-test-controls button{padding:6px 8px;border:1px solid #aac0db;border-radius:7px;background:#eef5ff;color:#173b67;font-size:11px;font-weight:800}.harness-test-controls output{align-self:center;color:#173b67;font-size:10px}
+  </style>
+  <script>
+    const rosterByTeam = {
+      301:[
+        {partyNo:1,slotNo:1,characterMasterId:101,name:'테스트수호',className:'수호성',serverName:'이스라펠',isMain:true,isTeamLeader:true},
+        {partyNo:1,slotNo:2,characterMasterId:102,name:'테스트치유',className:'치유성',serverName:'이스라펠',isMain:true}
+      ],
+      302:[{partyNo:1,slotNo:1,characterMasterId:201,name:'두번째검성',className:'검성',serverName:'시엘',isMain:true}],
+      401:[{partyNo:2,slotNo:5,characterMasterId:301,name:'다른팀궁성',className:'궁성',serverName:'시엘',isMain:true}]
+    };
+    const forceMeta={301:{teamGroupNo:3,forceName:'1포스'},302:{teamGroupNo:3,forceName:'2포스'},401:{teamGroupNo:4,forceName:'1포스'}};
+    let groupActive=false;
+    window.harnessCalls=[];
+    function completeSlots(teamNo){
+      const existing=rosterByTeam[teamNo]||[];
+      const all=[];
+      for(let partyNo=1;partyNo<=2;partyNo++)for(let slotNo=1;slotNo<=5;slotNo++){
+        all.push({...existing.find(item=>item.partyNo===partyNo&&item.slotNo===slotNo)||{partyNo,slotNo,name:''}});
+      }
+      return all;
+    }
+    function editorSnapshot(teamNo=301){
+      return {
+        ok:true,
+        force:{sanctuaryId:'kaldrix',teamNo,teamGroupNo:forceMeta[teamNo].teamGroupNo,forceName:forceMeta[teamNo].forceName,sheetName:'칼드릭스팟',rosterRevision:8,slots:completeSlots(teamNo)},
+        lease:{editSessionId:'test-v313-session-'+teamNo,expiresAt:new Date(Date.now()+75000).toISOString(),ttlSeconds:75},
+        activeServers:[{serverId:1001,serverName:'시엘',raceId:1},{serverId:2001,serverName:'이스라펠',raceId:2}],
+        classOptions:['검성','수호성','살성','궁성','마도성','정령성','치유성','호법성']
+      };
+    }
+    window.KinojoAuth={
+      getAccount(){return {level:5,role:'MASTER',permissions:['sanctuary_roster_manage_all']};},
+      getSession(){return this.getAccount();},
+      getToken(){return 'browser-harness-only';}
+    };
+    window.confirm=()=>true;
+    window.KinojoApi={
+      async postAction(_name,payload){
+        window.harnessCalls.push(JSON.parse(JSON.stringify(payload)));
+        if(payload.command==='OPEN')return editorSnapshot(Number(payload.teamNo||301));
+        if(payload.command==='TARGET_OPEN'){
+          groupActive=true;
+          return {ok:true,editGroupId:'test-v313-group',expiresAt:new Date(Date.now()+75000).toISOString(),leases:[301,Number(payload.targetTeamNo)].map(teamNo=>({teamNo,editSessionId:'test-v313-session-'+teamNo})),editor:editorSnapshot(Number(payload.targetTeamNo))};
+        }
+        if(payload.command==='HEARTBEAT')return groupActive?{ok:true,editGroupId:'test-v313-group',expiresAt:new Date(Date.now()+75000).toISOString()}:{editor:editorSnapshot(),expiresAt:new Date(Date.now()+75000).toISOString()};
+        if(payload.command==='RELEASE'){groupActive=false;return {ok:true};}
+        if(payload.command==='DRAFT_RESET'){groupActive=false;return {...editorSnapshot(301),draftReset:true,editGroupId:null};}
+        if(payload.command==='DRAFT_SAVE'){
+          const catalog=new Map(Object.values(rosterByTeam).flat().filter(item=>item.characterMasterId).map(item=>[item.characterMasterId,{...item}]));
+          (payload.slotChanges||[]).forEach(change=>{
+            const list=rosterByTeam[change.teamNo]||(rosterByTeam[change.teamNo]=[]);
+            const index=list.findIndex(item=>item.partyNo===change.partyNo&&item.slotNo===change.slotNo);
+            if(index>=0)list.splice(index,1);
+            const source=catalog.get(change.newCharacterMasterId);
+            if(source)list.push({...source,partyNo:change.partyNo,slotNo:change.slotNo});
+          });
+          groupActive=false;
+          return {ok:true,draftSaved:true,message:(payload.slotChanges||[]).length+'개 슬롯 변경을 저장했습니다.',editor:editorSnapshot(301)};
+        }
+        if(payload.command==='SEARCH')return {
+          ok:true,resultCount:2,results:[
+            {characterMasterId:401,characterName:'검색수호',className:'수호성',serverName:'이스라펠',isMain:true,addExistingAllowed:true,addNewAllowed:false},
+            {characterMasterId:202,characterName:'편성된치유',className:'치유성',serverName:'이스라펠',isMain:true,alreadyAssigned:true,addExistingAllowed:false,addNewAllowed:false,rosterLocation:{teamGroupNo:3,forceNo:2,partyNo:1,slotNo:4}}
+          ]
+        };
+        if(payload.command==='OFFICIAL_LOOKUP')return {
+          ok:true,candidateId:'test-official-candidate',message:'공식 캐릭터가 확인되었습니다.',alreadyRegistered:false,
+          character:{characterName:payload.characterName,className:'정령성',serverName:'시엘',raceId:1}
+        };
+        if(payload.command==='MUTATE'){
+          const list=rosterByTeam[301];
+          const index=list.findIndex(item=>Number(item.partyNo)===Number(payload.partyNo)&&Number(item.slotNo)===Number(payload.slotNo));
+          if(payload.operation==='REMOVE'){
+            if(index>=0)list.splice(index,1);
+          }else{
+            let open=index>=0?list[index]:null;
+            if(!open){open={partyNo:Number(payload.partyNo),slotNo:Number(payload.slotNo)};list.push(open);}
+            const official=Boolean(payload.officialCandidateId);
+            Object.assign(open,{characterMasterId:official?501:Number(payload.characterMasterId||401),name:official?'공식신규':'검색수호',className:official?'정령성':'수호성',serverName:official?'시엘':'이스라펠',isMain:true});
+          }
+          return {ok:true,message:'테스트 편성에 반영했습니다.',editor:editorSnapshot(301)};
+        }
+        throw new Error('지원하지 않는 테스트 명령입니다.');
+      }
+    };
+    async function runPointerHarness(pointerType,{scrollCancel=false}={}){
+      const source=document.querySelector('#sanctuaryRosterEditorModal [data-roster-draggable]');
+      const target=document.querySelector('#sanctuaryRosterEditorModal [data-roster-slot].is-empty');
+      const output=document.getElementById('harnessPointerResult');
+      if(!source||!target){output.value='source/target 없음';return;}
+      const a=source.getBoundingClientRect(),b=target.getBoundingClientRect();
+      const pointerId=pointerType==='touch'?91:81;
+      source.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId,pointerType,button:0,clientX:a.left+a.width/2,clientY:a.top+a.height/2}));
+      if(scrollCancel){
+        document.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,pointerId,pointerType,clientX:a.left+a.width/2,clientY:a.top+a.height/2+22}));
+        document.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId,pointerType,clientX:a.left+a.width/2,clientY:a.top+a.height/2+22}));
+      }else{
+        if(pointerType==='touch')await new Promise(resolve=>setTimeout(resolve,410));
+        document.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,cancelable:true,pointerId,pointerType,clientX:b.left+b.width/2,clientY:b.top+b.height/2}));
+        document.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId,pointerType,clientX:b.left+b.width/2,clientY:b.top+b.height/2}));
+      }
+      await new Promise(resolve=>setTimeout(resolve,30));
+      output.value=(document.getElementById('sanctuaryRosterDraftCount')?.textContent||'Draft 없음')+(scrollCancel?' · 스크롤 구분':'');
+    }
+    async function runDwellHarness(){
+      const source=document.querySelector('#sanctuaryRosterEditorModal [data-roster-draggable]');
+      const target=document.querySelector('#sanctuaryRosterForceNav [data-target-team-no="302"]');
+      const output=document.getElementById('harnessPointerResult');
+      if(!source||!target){output.value='dwell 대상 없음';return;}
+      const a=source.getBoundingClientRect(),b=target.getBoundingClientRect(),pointerId=82;
+      source.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId,pointerType:'mouse',button:0,clientX:a.left+a.width/2,clientY:a.top+a.height/2}));
+      document.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,cancelable:true,pointerId,pointerType:'mouse',clientX:b.left+b.width/2,clientY:b.top+b.height/2}));
+      await new Promise(resolve=>setTimeout(resolve,700));
+      const empty=document.querySelector('#sanctuaryRosterEditorModal [data-roster-slot].is-empty');
+      if(empty){
+        const c=empty.getBoundingClientRect();
+        document.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,cancelable:true,pointerId,pointerType:'mouse',clientX:c.left+c.width/2,clientY:c.top+c.height/2}));
+        document.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId,pointerType:'mouse',clientX:c.left+c.width/2,clientY:c.top+c.height/2}));
+      }else{
+        document.dispatchEvent(new PointerEvent('pointercancel',{bubbles:true,pointerId,pointerType:'mouse',clientX:b.left+b.width/2,clientY:b.top+b.height/2}));
+      }
+      await new Promise(resolve=>setTimeout(resolve,30));
+      output.value=(document.getElementById('sanctuaryRosterTitle')?.textContent||'전환 실패')+' · '+(document.getElementById('sanctuaryRosterDraftCount')?.textContent||'Draft 없음');
+    }
+    async function runSwapHarness(){
+      const slots=[...document.querySelectorAll('#sanctuaryRosterEditorModal [data-roster-draggable]')];
+      const output=document.getElementById('harnessPointerResult');
+      if(slots.length<2){output.value='swap 대상 없음';return;}
+      const source=slots[0],target=slots[1],a=source.getBoundingClientRect(),b=target.getBoundingClientRect(),pointerId=83;
+      source.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId,pointerType:'mouse',button:0,clientX:a.left+a.width/2,clientY:a.top+a.height/2}));
+      document.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,cancelable:true,pointerId,pointerType:'mouse',clientX:b.left+b.width/2,clientY:b.top+b.height/2}));
+      document.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId,pointerType:'mouse',clientX:b.left+b.width/2,clientY:b.top+b.height/2}));
+      await new Promise(resolve=>setTimeout(resolve,30));
+      output.value=(document.getElementById('sanctuaryRosterDraftCount')?.textContent||'Draft 없음')+' · 맞교환';
+    }
+    async function runAutoScrollHarness(){
+      const source=document.querySelector('#sanctuaryRosterEditorModal [data-roster-draggable]');
+      const content=document.getElementById('sanctuaryRosterContent');
+      const output=document.getElementById('harnessPointerResult');
+      if(!source||!content){output.value='auto-scroll 대상 없음';return;}
+      content.scrollTop=0;
+      const a=source.getBoundingClientRect(),c=content.getBoundingClientRect(),pointerId=92;
+      source.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId,pointerType:'touch',button:0,clientX:a.left+a.width/2,clientY:a.top+a.height/2}));
+      await new Promise(resolve=>setTimeout(resolve,410));
+      document.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,cancelable:true,pointerId,pointerType:'touch',clientX:c.left+c.width/2,clientY:c.bottom-2}));
+      await new Promise(resolve=>setTimeout(resolve,40));
+      document.dispatchEvent(new PointerEvent('pointercancel',{bubbles:true,pointerId,pointerType:'touch',clientX:c.left+c.width/2,clientY:c.bottom-2}));
+      output.value='터치 자동 스크롤 '+(content.scrollTop>0?'성공':'미발생');
+    }
+  </script>
+</head>
+<body>
+  <div class="harness-test-controls" aria-label="포인터 테스트 도구"><button type="button" onclick="runPointerHarness('mouse')">마우스 시나리오</button><button type="button" onclick="runSwapHarness()">마우스 맞교환</button><button type="button" onclick="runPointerHarness('touch')">터치 길게 누르기</button><button type="button" onclick="runPointerHarness('touch',{scrollCancel:true})">터치 스크롤</button><button type="button" onclick="runAutoScrollHarness()">터치 자동 스크롤</button><button type="button" onclick="runDwellHarness()">드래그 포스 전환</button><output id="harnessPointerResult">대기</output></div>
+  <main class="harness-shell">
+    <section class="san-team-group" data-team-group="3"><h2>3팀</h2>
+      <article class="force-card" data-team-no="301" data-team-group-no="3" data-force-name="1포스"><header class="team-head"><div class="team-title-wrap"><div class="team-name"><span>1포스</span></div><div class="team-meta">v313 · 실제 서버/시트 변경 없음</div></div><button class="sanctuary-roster-edit-btn" type="button" hidden data-sanctuary-roster-edit data-sanctuary-id="kaldrix" data-team-no="301" data-team-group-no="3" data-force-name="1포스">파티 정보 수정</button></header></article>
+      <article class="force-card" data-team-no="302" data-team-group-no="3" data-force-name="2포스"><header class="team-head"><div class="team-title-wrap"><div class="team-name"><span>2포스</span></div></div><button class="sanctuary-roster-edit-btn" type="button" hidden data-sanctuary-roster-edit data-sanctuary-id="kaldrix" data-team-no="302" data-team-group-no="3" data-force-name="2포스">파티 정보 수정</button></header></article>
+    </section>
+    <section class="san-team-group" data-team-group="4"><h2>4팀</h2><article class="force-card" data-team-no="401" data-team-group-no="4" data-force-name="1포스"><header class="team-head"><div class="team-title-wrap"><div class="team-name"><span>1포스</span></div></div><button class="sanctuary-roster-edit-btn" type="button" hidden data-sanctuary-roster-edit data-sanctuary-id="kaldrix" data-team-no="401" data-team-group-no="4" data-force-name="1포스">파티 정보 수정</button></header></article></section>
+  </main>
+  <script src="/sanctuary/js/sanctuary-editor.js"></script>
+</body>
+</html>
