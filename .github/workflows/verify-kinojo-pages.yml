@@ -183,6 +183,23 @@ jobs:
           print("KINOJO modal source contracts: PASS")
           PY
 
+          node <<'NODE'
+          const fs = require('node:fs');
+          const vm = require('node:vm');
+
+          global.window = { addEventListener() {} };
+          global.document = {};
+          vm.runInThisContext(fs.readFileSync('ui/kinojo-character-reaction.js', 'utf8'), {
+            filename: 'ui/kinojo-character-reaction.js',
+          });
+
+          const candidates = window.KinojoCharacterProfileImage.candidates({ className: '수호성' });
+          if (candidates.length !== 1 || candidates[0].kind !== 'class') {
+            throw new Error('Character image fallback candidate contract failed');
+          }
+          console.log('Character image fallback candidate: PASS');
+          NODE
+
       - name: Verify bridge startup with frozen cores
         shell: bash
         run: |
