@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sanctuary schedule manager harness</title>
+  <link rel="stylesheet" href="../sanctuary-schedule/css/sanctuary-schedule.css">
+</head>
+<body class="kinojo-sanctuary-schedule-page">
+  <main class="schedule-wrap">
+    <section class="schedule-toolbar">
+      <div class="schedule-integrated-label"><strong>전체 성역 통합</strong><span id="scheduleIntegratedScopeLabel">내 팀 일정</span></div>
+      <div class="schedule-view-switch"><button type="button" class="is-active" data-schedule-view="month">월간</button><button type="button" data-schedule-view="week">주간</button></div>
+      <div class="schedule-scope-switch" id="scheduleScopeSwitch" hidden><button type="button" class="is-active" data-schedule-scope="mine">내 팀</button><button type="button" data-schedule-scope="all">모든 팀</button></div>
+      <button type="button" class="schedule-today-btn" id="scheduleTodayBtn">오늘</button>
+      <div class="schedule-sync" id="scheduleSyncState">테스트 준비</div>
+    </section>
+    <section class="schedule-layout">
+      <section class="schedule-calendar-shell"><div class="schedule-week-head" id="scheduleWeekHead"></div><div class="schedule-calendar-viewport" id="scheduleCalendarViewport"></div><nav class="schedule-calendar-rail"><button id="schedulePrevBtn">▲</button><button id="scheduleNextBtn">▼</button></nav></section>
+      <aside class="schedule-detail" id="scheduleDetail"></aside>
+    </section>
+  </main>
+  <script>
+    const targetDate = '2026-08-12';
+    const days = Array.from({ length: 35 }, (_, index) => {
+      const date = new Date('2026-08-01T00:00:00+09:00');
+      date.setDate(date.getDate() + index);
+      const iso = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      return { date: iso, dayNo: date.getDate(), dayName: ['일','월','화','수','목','금','토'][date.getDay()], isInAnchorMonth: true, isToday: iso === targetDate, items: iso === targetDate ? [{ id: 101, sanctuaryCode: 'kaldrix', sanctuaryName: '칼드릭스', sanctuaryShortName: '칼드릭스', startsAt: '2026-08-12T12:00:00.000Z', startTime: '21:00', targetDate, dateLabel: '8월 12일 수요일', scheduleMode: 'fixed', scheduleModeLabel: '일정 확정', status: 'confirmed', effectiveStatus: 'confirmed', requiresResponse: false, location: '디스코드', description: '출발 10분 전 집결', teams: [{ teamNo: 301, teamName: '301팀' }] }] : [] };
+    });
+    const schedule = days.find(day => day.date === targetDate).items[0];
+    window.KinojoAuth = { getSession: () => ({ token: 'test', passKey: '000000' }), getLevel: () => 2 };
+    window.KinojoToast = { show: console.log, success: console.log, error: console.error };
+    window.KinojoCommonUI = { reloadSanctuaryAlert() {} };
+    window.KinojoApi = { getAction: async (action) => {
+      if (action === 'sanctuaryScheduleCalendar') return { ok: true, today: targetDate, anchor: targetDate, generatedAt: new Date().toISOString(), currentPanelIndex: 1, dayOrder: ['일','월','화','수','목','금','토'], panels: [{ label: '이전', calendarStart: '', calendarEnd: '', days: [] }, { label: '2026년 8월', calendarStart: '8월 1일', calendarEnd: '9월 4일', days, previousAnchor: '2026-07-01', nextAnchor: '2026-09-01' }, { label: '다음', calendarStart: '', calendarEnd: '', days: [] }] };
+      if (action === 'sanctuaryScheduleDay') return { ok: true, targetDate, dateLabel: '8월 12일 수요일', appliedScope: 'mine', selectedScheduleId: 101, schedules: [schedule], user: { authenticated: true, mainCharacterName: '테스트', canRespond: false }, responseOptions: [] };
+      if (action === 'adminSanctuaryScheduleConsole') return { ok: true, access: { canManageAll: false }, sanctuaries: [{ code: 'kaldrix', name: '칼드릭스', teams: [{ teamNo: 301, teamName: '301팀' }, { teamNo: 302, teamName: '302팀' }] }, { code: 'rudra', name: '루드라', teams: [{ teamNo: 101, teamName: '101팀' }] }], schedules: [schedule] };
+      if (action === 'adminSanctuaryScheduleSave') return { ok: true };
+      return { ok: true };
+    }};
+  </script>
+  <script src="../sanctuary-schedule/js/sanctuary-schedule.js"></script>
+</body>
+</html>

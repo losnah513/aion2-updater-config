@@ -4,36 +4,60 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - "index.html"
+      - "home.html"
+      - "m/index.html"
+      - "arcana/**"
+      - "m/arcana/**"
+      - "hall-of-fame/**"
+      - "pages/**"
+      - "m/pages/**"
+      - "desktop/**"
       - "ranking/**"
       - "m/ranking/**"
       - "hof/**"
       - "m/hof/**"
       - "sanctuary/**"
       - "m/sanctuary/**"
+      - "sanctuary-schedule/**"
+      - "m/sanctuary-schedule/**"
       - "admin/**"
       - "m/admin/**"
       - "meter/**"
       - "m/meter/**"
       - "core/**"
       - "ui/**"
+      - "tests/**"
       - "launcher-content.json"
       - "CNAME"
       - ".github/workflows/verify-kinojo-pages.yml"
   push:
     branches: [main]
     paths:
+      - "index.html"
+      - "home.html"
+      - "m/index.html"
+      - "arcana/**"
+      - "m/arcana/**"
+      - "hall-of-fame/**"
+      - "pages/**"
+      - "m/pages/**"
+      - "desktop/**"
       - "ranking/**"
       - "m/ranking/**"
       - "hof/**"
       - "m/hof/**"
       - "sanctuary/**"
       - "m/sanctuary/**"
+      - "sanctuary-schedule/**"
+      - "m/sanctuary-schedule/**"
       - "admin/**"
       - "m/admin/**"
       - "meter/**"
       - "m/meter/**"
       - "core/**"
       - "ui/**"
+      - "tests/**"
       - "launcher-content.json"
       - "CNAME"
       - ".github/workflows/verify-kinojo-pages.yml"
@@ -70,8 +94,11 @@ jobs:
             "core/kinojo-supabase-client.js"
             "core/kinojo-supabase-rpc.js"
             "core/kinojo-supabase-features.js"
+            "core/kinojo-auth-session.js"
+            "core/kinojo-auth-ui.js"
             "sanctuary/js/sanctuary.js"
             "sanctuary/js/sanctuary-editor.js"
+            "sanctuary-schedule/js/sanctuary-schedule.js"
             "admin/js/admin-system.js"
             "admin/js/admin-bootstrap.js"
             "meter/js/meter-app.js"
@@ -80,6 +107,8 @@ jobs:
           for path in "${js_files[@]}"; do
             node --check "$path"
           done
+
+          node tests/web-shell-auth-contract.test.js
 
           python3 <<'PY'
           from pathlib import Path
@@ -145,6 +174,7 @@ jobs:
               Path("ui/kinojo-animations.css"),
               Path("ui/kinojo-character-detail-refresh.css"),
               Path("sanctuary/css/sanctuary.css"),
+              Path("sanctuary-schedule/css/sanctuary-schedule.css"),
           ]
           for path in checked:
               data = path.read_bytes()
@@ -294,7 +324,11 @@ jobs:
           trap 'rm -rf "$tmp_dir"' EXIT
 
           files=(
+            "index.html"
+            "home.html"
+            "m/index.html"
             "launcher-content.json"
+            "hall-of-fame/index.html"
             "hof/index.html"
             "m/hof/index.html"
             "hof/css/hall.css"
@@ -315,6 +349,12 @@ jobs:
             "sanctuary/css/sanctuary.css"
             "sanctuary/js/sanctuary.js"
             "sanctuary/js/sanctuary-editor.js"
+            "sanctuary-schedule/index.html"
+            "m/sanctuary-schedule/index.html"
+            "sanctuary-schedule/css/sanctuary-schedule.css"
+            "sanctuary-schedule/js/sanctuary-schedule.js"
+            "arcana/index.html"
+            "m/arcana/index.html"
             "admin/index.html"
             "m/admin/index.html"
             "admin/js/admin.js"
@@ -328,7 +368,28 @@ jobs:
             "meter/meter-config.json"
             "meter/js/meter-app.js"
             "meter/css/meter.css"
+            "pages/about.html"
+            "pages/contact.html"
+            "pages/privacy.html"
+            "pages/terms.html"
+            "m/pages/about.html"
+            "m/pages/contact.html"
+            "m/pages/privacy.html"
+            "m/pages/terms.html"
+            "desktop/index.html"
+            "desktop/arcana/index.html"
+            "desktop/hall-of-fame/index.html"
+            "desktop/sanctuary/index.html"
+            "desktop/pages/about.html"
+            "desktop/pages/contact.html"
+            "desktop/pages/privacy.html"
+            "desktop/pages/terms.html"
             "ui/kinojo-components.css"
+            "ui/kinojo-common-ui.css"
+            "ui/kinojo-common-ui.js"
+            "ui/kinojo-public-shell.css"
+            "ui/kinojo-event-notice.css"
+            "ui/kinojo-event-notice.js"
             "ui/kinojo-character-reaction.js"
             "ui/kinojo-character-reaction.css"
             "ui/kinojo-character-detail-refresh.js"
@@ -342,6 +403,9 @@ jobs:
             "core/kinojo-supabase-rpc.js"
             "core/kinojo-supabase-features.js"
             "core/kinojo-supabase.js"
+            "core/kinojo-auth-session.js"
+            "core/kinojo-auth-service.js"
+            "core/kinojo-auth-ui.js"
           )
 
           echo "Expected source: $expected_ref"
