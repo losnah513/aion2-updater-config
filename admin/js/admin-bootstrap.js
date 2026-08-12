@@ -42,6 +42,8 @@
   const loadNotices=(...args)=>A.loadNotices(...args);
   const loadSanctuaryRolePermissions=(...args)=>A.loadSanctuaryRolePermissions(...args);
   const loadSanctuaryScheduleConsole=(...args)=>A.loadSanctuaryScheduleConsole(...args);
+  const loadSanctuarySupportRequests=(...args)=>A.loadSanctuarySupportRequests(...args);
+  const handleSanctuarySupportRequest=(...args)=>A.handleSanctuarySupportRequest(...args);
   const loadSanctuarySyncConsole=(...args)=>A.loadSanctuarySyncConsole(...args);
   const loadVisitorDashboard=(...args)=>A.loadVisitorDashboard(...args);
   const loadVisitorHistory=(...args)=>A.loadVisitorHistory(...args);
@@ -108,7 +110,8 @@
     if(tab==='members'&&subtab==='permissions'&&isMaster()) loadSanctuaryRolePermissions();
     if(tab==='characters'&&subtab==='lookup') loadCharacterLookupConsole(force===true);
     if(tab==='characters'&&subtab==='records') searchCharacters();
-    if(tab==='sanctuary') loadSanctuaryScheduleConsole(force===true);
+    if(tab==='sanctuary'&&subtab==='schedule') loadSanctuaryScheduleConsole(force===true);
+    if(tab==='sanctuary'&&subtab==='requests') loadSanctuarySupportRequests(force===true);
     if(tab==='notices'&&subtab==='general') loadNotices();
     if(tab==='notices'&&subtab==='event') loadEventNoticeGroups();
     if(tab==='meter'&&isMaster()) loadMeterAdminConsole();
@@ -199,16 +202,18 @@
 
   async function refreshDashboard(){
     try{
-      const [visit, req, runtime, sync] = await Promise.allSettled([
+      const [visit, req, runtime, sync, pending] = await Promise.allSettled([
         action('hallVisit',{ mode:'stats', pageKey:'admin' }),
         adminAccount('listCodeRequests',{ status:'PENDING', limit:20 }),
         action('runtimeStatus',{}),
-        action('adminSanctuarySheetSync',{mode:'status'})
+        action('adminSanctuarySheetSync',{mode:'status'}),
+        action('notificationSummary',{})
       ]);
       const stats = visit.status==='fulfilled' ? (visit.value.stats || visit.value || {}) : {};
       const requests = req.status==='fulfilled' ? (req.value.requests || []) : [];
       const runtimeData = runtime.status==='fulfilled' ? runtime.value : {};
       const syncData = sync.status==='fulfilled' ? sync.value : {};
+      const pendingSummary=pending.status==='fulfilled'?pending.value:{};
       $('#statVisitors').textContent = Number(stats.todayVisits ?? stats.today ?? stats.daily ?? 0).toLocaleString('ko-KR');
       const anonymous=Number(stats.todayAnonymous ?? 0), logged=Number(stats.todayLoggedIn ?? 0), views=Number(stats.todayPageViews ?? 0);
       $('#statVisitorsSub').textContent = '비로그인 '+anonymous.toLocaleString('ko-KR')+' · 로그인 '+logged.toLocaleString('ko-KR')+(views?' · 조회 '+views.toLocaleString('ko-KR'):'');
@@ -222,6 +227,9 @@
       state.requests=requests;
       renderDashboardServerOverview(runtimeData,syncData);
       $('#adminPendingBadge').textContent=String(requests.length||0);
+      const supportCount=Number(pendingSummary.supportRequestCount||0);
+      if($('#adminSanctuaryRequestBadge'))$('#adminSanctuaryRequestBadge').textContent=String(supportCount);
+      if($('#adminSanctuarySubBadge'))$('#adminSanctuarySubBadge').textContent=String(supportCount);
       addLog('INFO','대시보드 새로고침 완료');
     }catch(err){ addLog('ERROR',err.message||err); }
   }
@@ -271,6 +279,9 @@
     $('#sanctuaryPreviewBtn')?.addEventListener('click',runSanctuaryPreview);
     $('#sanctuarySyncBtn')?.addEventListener('click',runSanctuarySync);
     $('#sanctuaryScheduleReloadBtn')?.addEventListener('click',()=>loadSanctuaryScheduleConsole(true));
+    $('#sanctuaryRequestReloadBtn')?.addEventListener('click',()=>loadSanctuarySupportRequests(true));
+    $('#sanctuaryRequestStatusFilter')?.addEventListener('change',()=>loadSanctuarySupportRequests(true));
+    $('#sanctuaryRequestList')?.addEventListener('click',e=>{const button=e.target.closest('[data-sanctuary-request-approve],[data-sanctuary-request-reject]');if(button)handleSanctuarySupportRequest(button);});
     $('#sanctuaryScheduleNewBtn')?.addEventListener('click',()=>resetSanctuaryScheduleEditor(null));
     $('#sanctuaryScheduleEditorResetBtn')?.addEventListener('click',()=>resetSanctuaryScheduleEditor(null));
     $('#sanctuaryScheduleCancelEditBtn')?.addEventListener('click',()=>resetSanctuaryScheduleEditor(null));

@@ -1190,6 +1190,52 @@
     });
   }
 
+  async function getSanctuaryWaitlistSlotDetail(extra={}){
+    const characterMasterId=Number(extra.characterMasterId||extra.character_master_id||0);
+    const teamNo=Number(extra.teamNo||extra.team_no||0);
+    if(!Number.isFinite(characterMasterId)||characterMasterId<=0||!Number.isFinite(teamNo)||teamNo<=0)return {ok:false,message:'캐릭터와 포스를 다시 선택해 주세요.'};
+    let passKey='';try{passKey=currentPassKey();}catch(_err){}
+    return rpc('kinojo_sanctuary_waitlist_slot_detail_v316',{
+      p_character_master_id:characterMasterId,
+      p_sanctuary_code:String(extra.id||extra.sanctuaryId||extra.sanctuaryCode||'').trim(),
+      p_team_no:teamNo,
+      p_pass_key:passKey||null
+    });
+  }
+
+  async function submitSanctuarySupportRequest(extra={}){
+    return rpc('kinojo_sanctuary_support_request_submit_v316',{
+      p_pass_key:currentPassKey(),
+      p_character_master_id:Number(extra.characterMasterId||extra.character_master_id||0),
+      p_sanctuary_code:String(extra.id||extra.sanctuaryId||extra.sanctuaryCode||'').trim(),
+      p_team_no:Number(extra.teamNo||extra.team_no||0),
+      p_party_no:Number(extra.partyNo||extra.party_no||0),
+      p_slot_no:Number(extra.slotNo||extra.slot_no||0),
+      p_request_key:String(extra.requestKey||extra.request_key||'').trim()
+    });
+  }
+
+  async function getSanctuaryRequestConsole(extra={}){
+    return rpc('kinojo_sanctuary_request_console_v316',{
+      p_pass_key:currentPassKey(),
+      p_status:String(extra.status||'PENDING').trim().toUpperCase(),
+      p_limit:Math.min(200,Math.max(1,Number(extra.limit||100)))
+    });
+  }
+
+  async function rejectSanctuarySupportRequest(extra={}){
+    return rpc('kinojo_sanctuary_support_request_reject_v316',{
+      p_pass_key:currentPassKey(),
+      p_request_id:Number(extra.requestId||extra.request_id||0),
+      p_reason:String(extra.reason||'').trim()||null
+    });
+  }
+
+  async function getNotificationSummary(){
+    let passKey='';try{passKey=currentPassKey();}catch(_err){return {ok:false,totalCount:0};}
+    return rpc('kinojo_web_notification_summary_v316',{p_pass_key:passKey});
+  }
+
   async function getSanctuaryOperationOverview(extra={}){
     const params = {
       p_sanctuary_code:String(extra.id || extra.sanctuaryId || extra.sanctuaryCode || '') || null,
@@ -1804,6 +1850,11 @@
     if(name === 'sanctuaryMaster') return getSanctuaryMaster();
     if(name === 'sanctuary') return getSanctuaryData(extra.id || extra.sanctuaryId || '');
     if(name === 'sanctuaryWaitlistRecommendations') return getSanctuaryWaitlistRecommendations(extra);
+    if(name === 'sanctuaryWaitlistSlotDetail') return getSanctuaryWaitlistSlotDetail(extra);
+    if(name === 'sanctuarySupportRequest') return submitSanctuarySupportRequest(extra);
+    if(name === 'sanctuaryRequestConsole') return getSanctuaryRequestConsole(extra);
+    if(name === 'sanctuaryRequestReject') return rejectSanctuarySupportRequest(extra);
+    if(name === 'notificationSummary') return getNotificationSummary();
     if(name === 'sanctuaryOperation') return getSanctuaryOperationOverview(extra);
     if(name === 'sanctuaryScheduleCalendar') return getSanctuaryScheduleCalendar(extra);
     if(name === 'sanctuaryScheduleDay') return getSanctuaryScheduleDay(extra);
@@ -1920,6 +1971,11 @@
     getSanctuaryMaster,
     getSanctuaryData,
     getSanctuaryWaitlistRecommendations,
+    getSanctuaryWaitlistSlotDetail,
+    submitSanctuarySupportRequest,
+    getSanctuaryRequestConsole,
+    rejectSanctuarySupportRequest,
+    getNotificationSummary,
     getSanctuaryOperationOverview,
     getSanctuaryScheduleCalendar,
     getSanctuaryScheduleDay,

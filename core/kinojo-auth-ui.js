@@ -22,6 +22,7 @@
   let codeRequestLookupCharacter = null;
   let codeRequestSubmitted = false;
   let codeRequestNoticeChecking = false;
+  let sanctuaryRequestNoticeChecking = false;
   const AUTH_SCHEMA_VERSION = 'supabase-passkey-v4-20260625';
 
 
@@ -144,6 +145,7 @@
       document.body.classList.toggle('kinojo-admin-user', canOpenManage(role));
       document.body.dataset.kinojoRole = role;
       if(canManageAccounts(role)) setTimeout(checkPendingCodeRequests, 120);
+      if(canOpenManage(role)) setTimeout(checkPendingSanctuaryRequests, 240);
       resetIdleLogoutTimer();
     }else{
       if(label) label.textContent = '비회원 · 열람만 가능';
@@ -651,6 +653,32 @@
     }catch(_err){}
     finally{ codeRequestNoticeChecking = false; }
   }
+
+  async function checkPendingSanctuaryRequests(){
+    if(sanctuaryRequestNoticeChecking || !isLoggedIn() || !canOpenManage(roleOf(getSession())||roleOf(getAccount()))) return;
+    if(document.getElementById('kinojoCodeRequestNoticeModal')?.classList.contains('open')){setTimeout(checkPendingSanctuaryRequests,900);return;}
+    sanctuaryRequestNoticeChecking=true;
+    try{
+      if(!window.KinojoApi?.getAction)return;
+      const data=await window.KinojoApi.getAction('sanctuaryRequestConsole',{status:'PENDING',limit:20});
+      const requests=Array.isArray(data?.requests)?data.requests:[];
+      if(data?.ok===false||!requests.length)return;
+      openSanctuaryRequestNotice_(requests);
+    }catch(_err){}
+    finally{sanctuaryRequestNoticeChecking=false;}
+  }
+
+  function openSanctuaryRequestNotice_(requests){
+    const list=Array.isArray(requests)?requests:[];if(!list.length)return;
+    const latest=list[0];try{sessionStorage.setItem('kinojo_support_notice_seen_v316',String(latest.id||''));}catch(_err){}
+    let modal=document.getElementById('kinojoSanctuaryRequestNoticeModal');
+    if(!modal){modal=document.createElement('section');modal.id='kinojoSanctuaryRequestNoticeModal';modal.className='kinojo-login-modal kinojo-code-request-notice-modal';modal.setAttribute('aria-hidden','true');document.body.appendChild(modal);modal.addEventListener('click',event=>{if(event.target===modal)closeSanctuaryRequestNotice_()});}
+    modal.innerHTML='<div class="kinojo-login-card kinojo-code-request-notice-card" role="dialog" aria-modal="true" aria-labelledby="kinojoSanctuaryRequestNoticeTitle"><button class="kinojo-login-close" data-sanctuary-request-notice-close type="button" aria-label="닫기">×</button><div class="kinojo-login-kicker">FORCE SUPPORT</div><h2 id="kinojoSanctuaryRequestNoticeTitle">포스 지원 요청 '+list.length+'건</h2><p class="kinojo-code-request-notice-lead">담당 팀 또는 관리자 권한으로 처리할 수 있는 요청입니다.</p><div class="kinojo-code-request-notice-list">'+list.slice(0,8).map(item=>'<article class="kinojo-code-request-notice-item"><div class="kinojo-code-request-notice-main"><strong class="kinojo-code-request-notice-name">'+safeText(item.characterName||'캐릭터')+'</strong><code class="kinojo-code-request-notice-code">'+safeText(item.teamGroupName||item.teamGroupNo+'팀')+' · '+safeText(item.forceName||item.forceNo+'포스')+'</code><span class="kinojo-code-request-notice-time">'+safeText(item.partyNo)+'파티 '+safeText(item.slotNo)+'번 · '+safeText(item.className||'직업 미확인')+'</span></div></article>').join('')+'</div><div class="kinojo-code-request-notice-actions"><button class="kinojo-modal-action-btn kinojo-modal-action-btn--ghost" data-sanctuary-request-notice-close type="button">나중에</button><button class="kinojo-modal-action-btn kinojo-modal-action-btn--primary" data-sanctuary-request-notice-open type="button">요청 관리</button></div></div>';
+    modal.querySelectorAll('[data-sanctuary-request-notice-close]').forEach(button=>button.addEventListener('click',closeSanctuaryRequestNotice_));
+    modal.querySelector('[data-sanctuary-request-notice-open]')?.addEventListener('click',()=>{location.href=(location.pathname.startsWith('/m/')?'/m/admin/':'/admin/')+'#sanctuary/requests'});
+    modal.classList.add('open');modal.setAttribute('aria-hidden','false');modal.querySelector('[data-sanctuary-request-notice-open]')?.focus({preventScroll:true});
+  }
+  function closeSanctuaryRequestNotice_(){const modal=document.getElementById('kinojoSanctuaryRequestNoticeModal');if(!modal)return;modal.classList.remove('open');modal.setAttribute('aria-hidden','true');}
 
   function requestNoticeItemMarkup_(request){
     const requestId = safeText(request.requestId || '');

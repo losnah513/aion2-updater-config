@@ -386,5 +386,39 @@
     }catch(err){setStatus('#sanctuaryScheduleAdminStatus',err.message||String(err),'error');}
   }
 
-  Object.assign(A,{countArray,summarizeSanctuary,profileCharacterKey,profileDiagnosticStats,profileDiagnosticFailure,requestProfileDiagnostic,renderProfileDiagnostic,renderSyncReport,retryProfileDiagnostic,testWebAppConnection,setSyncStep,formatServerTime,renderSanctuarySyncStatus,loadSanctuarySyncConsole,runSanctuaryPreview,runSanctuarySync,dateTimeLocalValue,selectedSanctuaryMaster,selectedScheduleMode,fillSanctuaryScheduleSelects,renderSanctuaryTeamSelect,applySanctuaryScheduleMode,updateSanctuaryScheduleSaveState,resetSanctuaryScheduleEditor,sanctuaryScheduleRowHtml,renderSanctuaryScheduleList,loadSanctuaryScheduleConsole,sanctuaryScheduleById,collectSanctuarySchedulePayload,saveSanctuarySchedule,changeSanctuaryScheduleStatus});
+  function sanctuaryRequestStatusLabel(value){return {PENDING:'처리 대기',PROCESSING:'처리 중',APPROVED:'승인 완료',REJECTED:'거절',STALE:'자리 변경',CANCELLED:'취소'}[String(value||'').toUpperCase()]||String(value||'미확인')}
+  function sanctuaryRequestRowHtml(item){
+    const pending=item.status==='PENDING'||item.status==='STALE';
+    return '<article class="admin-sanctuary-request-row" data-sanctuary-request-id="'+esc(item.id)+'"><header><div><span class="admin-pill">'+esc(sanctuaryRequestStatusLabel(item.status))+'</span><strong>'+esc(item.characterName||'캐릭터')+'</strong><small>'+esc(item.className||'직업 미확인')+' · 아이템레벨 '+Number(item.itemLevel||0).toLocaleString('ko-KR')+' · 전투력 '+Number(item.combatPower||0).toLocaleString('ko-KR')+'</small></div><time>'+esc(A.formatDateTime?.(item.createdAt)||String(item.createdAt||''))+'</time></header><div class="admin-sanctuary-request-target"><strong>'+esc(item.sanctuaryName||item.sanctuaryCode)+'</strong><span>'+esc(item.teamGroupName||item.teamGroupNo+'팀')+' · '+esc(item.forceName||item.forceNo+'포스')+' · '+esc(item.partyNo)+'파티 '+esc(item.slotNo)+'번</span><small>신청자 '+esc(item.requesterName||'-')+'</small></div>'+(item.lastErrorMessage?'<p class="admin-sanctuary-request-error">'+esc(item.lastErrorMessage)+'</p>':'')+(pending?'<footer><button class="admin-btn primary" type="button" data-sanctuary-request-approve>승인·편성</button><button class="admin-btn danger" type="button" data-sanctuary-request-reject>거절</button></footer>':'')+'</article>';
+  }
+  function setSanctuaryRequestBadges(count){
+    ['#adminSanctuaryRequestBadge','#adminSanctuarySubBadge'].forEach(selector=>{const target=$(selector);if(target)target.textContent=String(Number(count||0));});
+  }
+  async function loadSanctuarySupportRequests(force=false){
+    const root=$('#sanctuaryRequestList');if(!root)return;
+    const filter=$('#sanctuaryRequestStatusFilter')?.value||'PENDING';
+    setStatus('#sanctuaryRequestStatus','포스 지원 요청을 불러오는 중...','');
+    try{
+      const [data,summary]=await Promise.all([action('sanctuaryRequestConsole',{status:filter,limit:100}),action('notificationSummary',{})]);
+      if(!data||data.ok===false)throw new Error(data?.message||'지원 요청을 불러오지 못했습니다.');
+      state.sanctuarySupportRequests=Array.isArray(data.requests)?data.requests:[];
+      root.innerHTML=state.sanctuarySupportRequests.length?state.sanctuarySupportRequests.map(sanctuaryRequestRowHtml).join(''):'<div class="admin-empty">해당 상태의 포스 지원 요청이 없습니다.</div>';
+      setSanctuaryRequestBadges(summary?.supportRequestCount||0);
+      setStatus('#sanctuaryRequestStatus','지원 요청 '+state.sanctuarySupportRequests.length+'건 · 담당 권한 범위','ok');
+    }catch(error){setStatus('#sanctuaryRequestStatus',error.message||String(error),'error');root.innerHTML='<div class="admin-empty">지원 요청을 불러오지 못했습니다.</div>';}
+  }
+  async function handleSanctuarySupportRequest(button){
+    const row=button.closest('[data-sanctuary-request-id]');const requestId=Number(row?.dataset.sanctuaryRequestId||0);const item=state.sanctuarySupportRequests.find(value=>Number(value.id)===requestId);if(!item)return;
+    const approve=button.hasAttribute('data-sanctuary-request-approve');
+    const question=approve?'['+item.characterName+'] 캐릭터를 '+item.teamGroupName+' '+item.forceName+' '+item.partyNo+'파티 '+item.slotNo+'번에 편성하시겠습니까?':'['+item.characterName+'] 캐릭터의 포스 지원을 거절하시겠습니까?';
+    if(!window.confirm(question))return;
+    row.querySelectorAll('button').forEach(control=>control.disabled=true);
+    try{
+      const result=approve?await window.KinojoApi.postAction('sanctuaryRoster',{command:'SUPPORT_APPROVE',requestId}):await action('sanctuaryRequestReject',{requestId,reason:'관리자 거절'});
+      if(!result||result.ok===false)throw new Error(result?.message||'요청 처리에 실패했습니다.');
+      A.toast(result.message||'포스 지원 요청을 처리했습니다.');await loadSanctuarySupportRequests(true);
+    }catch(error){setStatus('#sanctuaryRequestStatus',error.message||String(error),'error');row.querySelectorAll('button').forEach(control=>control.disabled=false);}
+  }
+
+  Object.assign(A,{countArray,summarizeSanctuary,profileCharacterKey,profileDiagnosticStats,profileDiagnosticFailure,requestProfileDiagnostic,renderProfileDiagnostic,renderSyncReport,retryProfileDiagnostic,testWebAppConnection,setSyncStep,formatServerTime,renderSanctuarySyncStatus,loadSanctuarySyncConsole,runSanctuaryPreview,runSanctuarySync,dateTimeLocalValue,selectedSanctuaryMaster,selectedScheduleMode,fillSanctuaryScheduleSelects,renderSanctuaryTeamSelect,applySanctuaryScheduleMode,updateSanctuaryScheduleSaveState,resetSanctuaryScheduleEditor,sanctuaryScheduleRowHtml,renderSanctuaryScheduleList,loadSanctuaryScheduleConsole,sanctuaryScheduleById,collectSanctuarySchedulePayload,saveSanctuarySchedule,changeSanctuaryScheduleStatus,sanctuaryRequestStatusLabel,sanctuaryRequestRowHtml,loadSanctuarySupportRequests,handleSanctuarySupportRequest});
 })(window.KinojoAdmin);
