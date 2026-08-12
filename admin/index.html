@@ -9,10 +9,10 @@
 <link rel="canonical" href="https://kinojo.info/admin/"/>
 <link href="../ui/kinojo-layout.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../ui/kinojo-components.css?cache=26062102" rel="stylesheet"/>
-<link href="../ui/kinojo-common-ui.css?cache=2026081003" rel="stylesheet"/>
+<link href="../ui/kinojo-common-ui.css?cache=2026081205" rel="stylesheet"/>
 <link href="../ui/kinojo-card-guards.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../ui/kinojo-animations.css?cache=2026081003" rel="stylesheet"/>
-<link href="./css/admin.css?cache=2026081004" rel="stylesheet"/>
+<link href="./css/admin.css?cache=2026081205" rel="stylesheet"/>
 <script src="../ui/kinojo-device-router.js?cache=2026070110" data-mobile-path="../m/admin/"></script>
 </head>
 <body class="kinojo-page-admin">
@@ -23,7 +23,7 @@
       <button data-admin-tab="requests" type="button">🧾 코드 요청 <span class="badge" id="adminPendingBadge">0</span></button>
       <button data-admin-tab="members" type="button">👥 회원 관리</button>
       <button data-admin-tab="characters" type="button">🧍 캐릭터 관리</button>
-      <button data-admin-tab="sanctuary" type="button">🏰 성역 관리</button>
+      <button data-admin-tab="sanctuary" type="button">🏰 성역 관리 <span class="badge" id="adminSanctuaryRequestBadge">0</span></button>
       <button data-admin-tab="notices" type="button">📢 공지 관리</button>
       <button data-admin-tab="meter" data-admin-master-only type="button">📊 키노조 미터</button>
       <button data-admin-tab="system" type="button">⚙ 시스템 설정</button>
@@ -146,7 +146,8 @@
       </div>
     </section>
     <section class="admin-pane" data-admin-pane="sanctuary">
-      <section class="admin-card admin-sanctuary-schedule-card">
+      <nav class="admin-subnav" data-admin-subnav="sanctuary" aria-label="성역 관리 하위 기능"><button class="active" data-admin-subtab="schedule" type="button">일정 관리</button><button data-admin-subtab="requests" type="button">포스 지원 <span class="badge" id="adminSanctuarySubBadge">0</span></button></nav>
+      <div class="admin-subpane active" data-admin-subpane="schedule"><section class="admin-card admin-sanctuary-schedule-card">
         <div class="admin-card-head"><div><h2>성역 일정 관리</h2><p>성역과 팀 하나를 선택해 투표 일정 또는 확정 일정을 등록합니다.</p></div><div class="admin-row-actions"><button class="admin-btn" id="sanctuaryScheduleReloadBtn" type="button">새로고침</button><button class="admin-btn primary" id="sanctuaryScheduleNewBtn" type="button">새 일정</button></div></div>
         <div class="admin-schedule-auto-range"><strong>현재 아이온 주간 자동 조회</strong><span>수요일~화요일 · 모든 활성 성역</span></div>
         <div id="sanctuaryScheduleAdminStatus" class="admin-statusline"></div>
@@ -173,7 +174,8 @@
           </div>
           <div class="admin-schedule-list" id="sanctuaryScheduleList"><div class="admin-empty">일정을 불러오는 중입니다.</div></div>
         </div>
-      </section>
+      </section></div>
+      <div class="admin-subpane" data-admin-subpane="requests"><section class="admin-card admin-sanctuary-request-card"><div class="admin-card-head"><div><h2>포스 지원 요청</h2><p>담당 팀 또는 관리자 권한 범위의 요청만 표시됩니다. 승인 시 Google Sheet와 Server 편성이 함께 반영됩니다.</p></div><div class="admin-row-actions"><select class="admin-select" id="sanctuaryRequestStatusFilter"><option value="PENDING">처리 대기</option><option value="STALE">자리 변경</option><option value="APPROVED">승인 완료</option><option value="REJECTED">거절</option><option value="ALL">전체</option></select><button class="admin-btn" id="sanctuaryRequestReloadBtn" type="button">새로고침</button></div></div><div id="sanctuaryRequestStatus" class="admin-statusline"></div><div id="sanctuaryRequestList" class="admin-list admin-sanctuary-request-list"><div class="admin-empty">지원 요청을 불러오는 중입니다.</div></div></section></div>
     </section>
     <section class="admin-pane" data-admin-pane="notices">
       <nav class="admin-subnav" data-admin-subnav="notices" aria-label="공지 관리 하위 기능"><button class="active" data-admin-subtab="general" type="button">일반 공지</button><button data-admin-subtab="event" type="button">이벤트 공지</button></nav>
@@ -363,14 +365,14 @@
 <script src="../core/kinojo-route-guard.js?cache=2026070110"></script>
 <script src="../core/kinojo-debug.js?cache=2026070110"></script>
 <script src="../core/kinojo-logger.js?cache=2026070110"></script>
-<script src="../ui/kinojo-common-ui.js?cache=2026081202"></script>
+<script src="../ui/kinojo-common-ui.js?cache=2026081204"></script>
 <script src="../ui/kinojo-admin-panel.js?cache=2026071712"></script>
 <script src="../core/kinojo-supabase-client.js?cache=2026080205"></script>
 <script src="../core/kinojo-supabase-rpc.js?cache=2026080205"></script>
-<script src="../core/kinojo-supabase-features.js?cache=2026080701"></script>
+<script src="../core/kinojo-supabase-features.js?cache=2026081204"></script>
 <script src="../core/kinojo-auth-session.js?cache=2026081201"></script>
 <script src="../core/kinojo-auth-service.js?cache=2026080205"></script>
-<script src="../core/kinojo-auth-ui.js?cache=2026081201"></script>
-<script src="./js/admin.js?cache=2026081004"></script>
+<script src="../core/kinojo-auth-ui.js?cache=2026081204"></script>
+<script src="./js/admin.js?cache=2026081205"></script>
 </body>
 </html>

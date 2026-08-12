@@ -427,11 +427,13 @@
     const adminBase=info?.mobile?'/m/':'/';
     const adminConsoleHref=adminBase+'admin/';
     wrap.className='admin-menu-wrap';
-    wrap.innerHTML='<button aria-label="관리자 콘솔 새 창 열기" class="admin-menu-btn" id="adminMenuBtn" type="button">관리</button>';
+    wrap.innerHTML='<button aria-label="관리자 콘솔 새 창 열기" class="admin-menu-btn" id="adminMenuBtn" type="button">관리<span class="kinojo-admin-pending-badge" id="kinojoAdminPendingBadge" hidden>0</span></button>';
     wrap.querySelector('#adminMenuBtn').dataset.adminHref=adminConsoleHref;
     return wrap;
   }
   let sanctuaryAlertRequestSeq=0;
+  let commonNotificationSeq=0;
+  let commonNotificationTimer=0;
   function commonPassKey_(){
     const auth=window.KinojoAuth||{};
     const account=typeof auth.getAccount==='function'?auth.getAccount():null;
@@ -487,6 +489,35 @@
     }catch(_err){
       if(seq===sanctuaryAlertRequestSeq)clearSanctuaryAlert_();
     }
+  }
+  function renderCommonNotificationToast_(summary,info){
+    const latest=summary?.latestSupportRequest;
+    if(!latest?.id)return;
+    const storageKey='kinojo_support_notice_seen_v316';
+    let seen='';try{seen=sessionStorage.getItem(storageKey)||'';}catch(_err){}
+    if(seen===String(latest.id))return;
+    try{sessionStorage.setItem(storageKey,String(latest.id));}catch(_err){}
+    let host=document.getElementById('kinojoRequestToastHost');
+    if(!host){host=document.createElement('div');host.id='kinojoRequestToastHost';host.className='kinojo-request-toast-host';document.body.appendChild(host);}
+    const item=document.createElement('button');item.type='button';item.className='kinojo-request-toast';
+    item.innerHTML='<span class="kinojo-request-toast-icon">!</span><span><strong>새 포스 지원 요청</strong><small>'+escapeHtml(latest.characterName||'캐릭터')+' · '+escapeHtml(String(latest.partyNo||''))+'파티 '+escapeHtml(String(latest.slotNo||''))+'번</small></span><i aria-hidden="true">›</i>';
+    item.addEventListener('click',()=>{location.href=(info?.mobile?'/m/admin/':'/admin/')+'#sanctuary/requests'});
+    host.appendChild(item);requestAnimationFrame(()=>item.classList.add('show'));setTimeout(()=>{item.classList.remove('show');setTimeout(()=>item.remove(),260)},7000);
+  }
+  async function loadCommonNotificationSummary_(info,{notify=true}={}){
+    const passKey=commonPassKey_();const badge=q('#kinojoAdminPendingBadge');
+    if(!passKey||!window.KinojoApi?.getAction){if(badge)badge.hidden=true;return;}
+    const seq=++commonNotificationSeq;
+    try{
+      const summary=await window.KinojoApi.getAction('notificationSummary',{passKey});if(seq!==commonNotificationSeq)return;
+      const total=Math.max(0,Number(summary?.totalCount||0));if(badge){badge.textContent=total>99?'99+':String(total);badge.hidden=total<1;}
+      if(notify&&summary?.supportRequestCount>0)renderCommonNotificationToast_(summary,info);
+    }catch(_err){if(seq===commonNotificationSeq&&badge)badge.hidden=true;}
+  }
+  function scheduleCommonNotifications_(info){
+    if(commonNotificationTimer)clearInterval(commonNotificationTimer);
+    setTimeout(()=>loadCommonNotificationSummary_(info,{notify:true}),420);
+    commonNotificationTimer=setInterval(()=>{if(document.visibilityState==='visible')loadCommonNotificationSummary_(info,{notify:true})},30000);
   }
   function pageTimeId(info){
     if(info.key==='sanctuary')return 'syncChip';
@@ -605,7 +636,9 @@
     document.addEventListener('click',event=>{if(!event.target.closest('.kinojo-top-sanctuary-wrap'))closeSanctuaryMenu();});
     document.addEventListener('keydown',event=>{if(event.key==='Escape')closeSanctuaryMenu();});
     setTimeout(()=>loadSanctuaryAlert_(info,0),220);
-    window.addEventListener('kinojo:auth-changed',()=>{syncAuthRequiredUi_();setTimeout(()=>loadSanctuaryAlert_(info,0),20);});
+    scheduleCommonNotifications_(info);
+    window.addEventListener('kinojo:auth-changed',()=>{syncAuthRequiredUi_();setTimeout(()=>loadSanctuaryAlert_(info,0),20);scheduleCommonNotifications_(info);});
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')loadCommonNotificationSummary_(info,{notify:true})});
     const notice=createNoticeStrip(info);
     document.body.appendChild(notice);
     setTimeout(loadCommonNotices,0);

@@ -9,11 +9,11 @@
 
   const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
 
-  const state = { tab:'dashboard', subtab:'', loaded:{}, subtabs:{ members:'accounts', characters:'lookup', notices:'general', meter:'downloads', system:'server-status' }, requests:[], accounts:[], characters:[], characterSummary:{}, logs:[], eventNoticeGroups:[], eventNoticeEditingId:null, meterConsoles:{stable:null,staging:null}, meterNotices:[], sanctuarySchedules:[], sanctuaryMasters:[], sanctuaryStatusOptions:[], sanctuaryScheduleLoaded:false, sanctuaryScheduleAccess:null, sanctuaryRolePermissions:null, sanctuaryScheduleSaving:false, lastSanctuarySyncData:null, lastSanctuaryStatusData:null, lastSanctuaryId:'all', visitorDays:7, visitorPage:1, visitorTotalPages:1, visitorCanViewMemberHistory:false, lookupConsole:null, lookupSessionId:'', lookupSessionToken:'', lookupPollTimer:null, lookupHeartbeatAt:0, lookupStarting:false, lookupQueueRunning:false, lookupRetrying:false, lookupExitSafety:'idle', lookupHistory:[], lookupHistoryDetails:{}, lookupTargetStates:{}, lookupTargetSession:'', lookupLastCurrent:'' };
+  const state = { tab:'dashboard', subtab:'', loaded:{}, subtabs:{ members:'accounts', characters:'lookup', sanctuary:'schedule', notices:'general', meter:'downloads', system:'server-status' }, requests:[], accounts:[], characters:[], characterSummary:{}, logs:[], eventNoticeGroups:[], eventNoticeEditingId:null, meterConsoles:{stable:null,staging:null}, meterNotices:[], sanctuarySchedules:[], sanctuaryMasters:[], sanctuaryStatusOptions:[], sanctuaryScheduleLoaded:false, sanctuaryScheduleAccess:null, sanctuaryRolePermissions:null, sanctuaryScheduleSaving:false, sanctuarySupportRequests:[], lastSanctuarySyncData:null, lastSanctuaryStatusData:null, lastSanctuaryId:'all', visitorDays:7, visitorPage:1, visitorTotalPages:1, visitorCanViewMemberHistory:false, lookupConsole:null, lookupSessionId:'', lookupSessionToken:'', lookupPollTimer:null, lookupHeartbeatAt:0, lookupStarting:false, lookupQueueRunning:false, lookupRetrying:false, lookupExitSafety:'idle', lookupHistory:[], lookupHistoryDetails:{}, lookupTargetStates:{}, lookupTargetSession:'', lookupLastCurrent:'' };
 
   const CACHE = '2026073105';
 
-  const DEFAULT_SUBTABS = { members:'accounts', characters:'lookup', notices:'general', meter:'downloads', system:'server-status', logs:'activity' };
+  const DEFAULT_SUBTABS = { members:'accounts', characters:'lookup', sanctuary:'schedule', notices:'general', meter:'downloads', system:'server-status', logs:'activity' };
 
   function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
 

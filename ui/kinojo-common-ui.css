@@ -175,6 +175,7 @@
   transition:transform .16s ease,border-color .16s ease,background .16s ease;
 }.kinojo-login-submit:hover:not(:disabled){transform:translateY(-1px);border-color:rgba(37,99,235,.38);background:#f8fbff;}.kinojo-login-submit:disabled{cursor:wait;opacity:.82;}.kinojo-login-status{min-height:18px;font-size:12px;font-weight:900;color:#2563eb;text-align:center;}/* 공통 관리 패널: body 직속 중앙 모달 */
 .admin-menu-wrap{display:inline-flex;align-items:center;}.admin-menu-btn{
+  position:relative;
   appearance:none;
   border:1px solid rgba(37,99,235,.22);
   background:#fff;
@@ -639,6 +640,7 @@ img,picture,canvas,svg,.sanctuary-hero,.hero-bg,.mvp-profile-image,.character-pr
   transition:opacity .18s ease,transform .18s ease;
   pointer-events:none;
 }.kinojo-common-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}/* 20260623_20: login code uses one natural input plus six preview cells. */
+.kinojo-admin-pending-badge{position:absolute;top:-7px;right:-7px;min-width:19px;height:19px;display:grid;place-items:center;padding:0 5px;border:2px solid #fff;border-radius:999px;background:#ef4444;color:#fff;font-size:8px;font-weight:1000;line-height:1;box-shadow:0 4px 10px rgba(239,68,68,.28)}.kinojo-admin-pending-badge[hidden]{display:none}.kinojo-request-toast-host{position:fixed;z-index:2147483000;right:16px;bottom:calc(var(--kinojo-safe-bottom,0px) + 76px);display:grid;gap:8px;pointer-events:none}.kinojo-request-toast{appearance:none;width:min(360px,calc(100vw - 28px));display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:10px;padding:11px 12px;border:1px solid rgba(255,255,255,.18);border-radius:14px;background:linear-gradient(135deg,rgba(15,30,57,.97),rgba(38,32,97,.97));color:#fff;text-align:left;box-shadow:0 18px 50px rgba(15,23,42,.38);opacity:0;transform:translateY(24px);transition:opacity .24s ease,transform .24s ease;pointer-events:auto;cursor:pointer}.kinojo-request-toast.show{opacity:1;transform:translateY(0)}.kinojo-request-toast-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:#ef4444;color:#fff;font-size:16px;font-weight:1000}.kinojo-request-toast>span:nth-child(2){min-width:0;display:grid;gap:3px}.kinojo-request-toast strong{font-size:12px}.kinojo-request-toast small{overflow:hidden;color:#cbd5e1;font-size:9px;font-weight:800;text-overflow:ellipsis;white-space:nowrap}.kinojo-request-toast i{font-size:22px;font-style:normal}.kinojo-request-toast-host:has(.kinojo-request-toast:nth-child(3)) .kinojo-request-toast:nth-child(n+4){display:none}@media(max-width:720px){.kinojo-request-toast-host{left:12px;right:12px;bottom:calc(var(--kinojo-safe-bottom,0px) + 70px)}.kinojo-request-toast{width:100%}}
 .kinojo-login-text-input{
   width:100%;
   min-height:42px;
