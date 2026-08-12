@@ -283,19 +283,21 @@ function hofGodHeroCard(title,note,item,metric){
   const compare=hofFirstDefined(safeItem?.growthRateLabel,safeItem?.growth_rate_label,safeItem?.rateLabel,safeItem?.rate_label,safeItem?.weekCompareLabel,safeItem?.week_compare_label,'');
   const bodyTag=hasItem?'button':'div';
   const bodyAttrs=hasItem?' type="button" data-character="'+escapeHtml(name)+'" data-hof-metric="'+escapeHtml(metric)+'" data-hof-rank="1" data-hof-score="'+escapeHtml(score)+'" aria-label="'+escapeHtml(name)+' 상세 보기"':'';
+  const criterionId='hofCriterion-'+metric;
+  const period=hallData?.rankingPeriod||hallData?.weeklyPeriod||{};
+  const start=hofFormatKstDate(period.startAt||period.start_at);const end=hofFormatKstDate(period.endAt||period.end_at);
+  const criterion=start&&end?start+' ~ '+end+' 직전':'매주 수요일 새 집계를 시작합니다.';
   return '<section class="hof-v2-panel hof-v2-god '+hofBackgroundClass(metric)+'" data-hof-panel="'+escapeHtml(metric)+'">'
     + '<div class="hof-v2-panel-bg" aria-hidden="true"></div>'
-    + '<div class="hof-v2-god-head is-compact"><h2><span class="hof-v2-title-icon">'+escapeHtml(hofMetricIcon(metric))+'</span>'+escapeHtml(title)+'</h2></div>'
+    + '<div class="hof-v2-god-head is-compact"><h2><span class="hof-v2-title-icon">'+escapeHtml(hofMetricIcon(metric))+'</span>'+escapeHtml(title)+'</h2><button type="button" class="hof-v2-card-info" data-hof-period-toggle data-hof-period-target="'+criterionId+'" aria-controls="'+criterionId+'" aria-expanded="false">i</button><div class="hof-v2-card-info-popover" id="'+criterionId+'" hidden aria-hidden="true"><strong>집계 기준</strong><span>'+escapeHtml(criterion)+'</span><small>Asia/Seoul · 시작 포함, 종료 미포함</small></div></div>'
     + '<'+bodyTag+' class="hof-v2-god-main'+(hasItem?'':' is-empty')+'"'+bodyAttrs+'>'
-    + '<span class="hof-v2-god-portrait">'+hofRankPortrait(safeItem,1,'large')+'</span>'
-    + '<span class="hof-v2-god-server">'+escapeHtml(hofServerName(safeItem)||'지켈')+'</span>'
-    + '<strong>'+escapeHtml(name)+'</strong>'
-    + '<span class="hof-v2-god-class">'+hofClassIcon(safeItem)+'<span>'+escapeHtml(hofClassName(safeItem)||'클래스 정보 없음')+'</span></span>'
+    + (hasItem?'<span class="hof-v2-god-portrait">'+hofRankPortrait(safeItem,1,'large')+'</span><span class="hof-v2-god-server">'+escapeHtml(hofServerName(safeItem)||'지켈')+'</span><strong>'+escapeHtml(name)+'</strong><span class="hof-v2-god-class">'+hofClassIcon(safeItem)+'<span>'+escapeHtml(hofClassName(safeItem)||'클래스 정보 없음')+'</span></span>':'<strong class="hof-v2-waiting-copy">집계 대기</strong>')
     + '</'+bodyTag+'>'
-    + '<div class="hof-v2-god-score"><strong>'+escapeHtml(score)+'</strong><span>'+deltaLabel+'</span></div>'
-    + '<div class="hof-v2-god-sub"><span>이번 주 합계</span><strong>'+escapeHtml(recentText)+'</strong></div>'
-    + (compare?'<div class="hof-v2-god-compare"><span>전주 대비</span><strong>'+escapeHtml(compare)+'</strong></div>':'')
+    + (hasItem?'<div class="hof-v2-god-score"><strong>'+escapeHtml(score)+'</strong><span>'+deltaLabel+'</span></div><div class="hof-v2-god-sub"><span>이번 주 합계</span><strong>'+escapeHtml(recentText)+'</strong></div>'+(compare?'<div class="hof-v2-god-compare"><span>전주 대비</span><strong>'+escapeHtml(compare)+'</strong></div>':''):'')
     + '</section>';
+}
+function hofMeterDpsPanel(){
+  return '<section class="hof-v2-panel hof-v2-meter-foundation" data-hof-panel="meter-dps"><div class="hof-v2-panel-head is-compact"><h2><span class="hof-v2-title-icon">DPS</span>키노조미터 DPS</h2></div><div class="hof-v2-meter-wait"><strong>집계 대기</strong><span>미터기 사용 시작 후 DPS TOP3를 표시합니다.</span><small>Server Engine 집계 계약 준비 완료</small></div></section>';
 }
 function hofRankingLinkCard(){
   return '<section class="hof-v2-panel hof-v2-ranking-link" aria-label="레기온 랭킹 페이지 이동">'
@@ -333,15 +335,14 @@ function hofV2Layout(){
   const s=hallData?.summarySections||{};
   const pveList=s.pveTop||s.pveTop3||hallData?.pveTop||hallData?.pveTop3||[];
   const pvpList=s.pvpTop||s.pvpTop3||hallData?.pvpTop||hallData?.pvpTop3||[];
-  const likeList=s.likesTop||s.likeTop||hallData?.reactionSummary?.likeTop||[];
-  return hofCollectionPeriodBar()+'<div class="hof-v2-layout">'
+  return '<div class="hof-v2-layout">'
     + '<div class="hof-v2-board">'
     + '<div class="hof-v2-area hof-v2-area-enhance">'+hofGodHeroCard('강화의 신','최고 강화 기록',s.enhanceGod || hallData?.weeklyAwards?.bulkUp?.[0], 'enhance')+'</div>'
-    + '<div class="hof-v2-area hof-v2-area-pve">'+hofWidePanel('PVE 랭킹','PVE TOP 3',pveList,'pve')+'</div>'
-    + '<div class="hof-v2-area hof-v2-area-pvp">'+hofWidePanel('PVP 랭킹','PVP TOP 3',pvpList,'pvp')+'</div>'
+    + '<div class="hof-v2-area hof-v2-area-pve">'+hofMeterDpsPanel()+'</div>'
+    + '<div class="hof-v2-area hof-v2-area-pvp">'+hofRankingLinkCard()+'</div>'
     + '<div class="hof-v2-area hof-v2-area-growth">'+hofGodHeroCard('성장의 신','이번주 성장량',s.growthGod || hallData?.weeklyAwards?.growthKing?.[0], 'growth')+'</div>'
-    + '<div class="hof-v2-area hof-v2-area-like">'+hofWidePanel('좋아요 랭킹','좋아요 TOP 3',likeList,'like')+'</div>'
-    + '<div class="hof-v2-area hof-v2-area-ranking-link">'+hofRankingLinkCard()+'</div>'
+    + '<div class="hof-v2-area hof-v2-area-like">'+hofWidePanel('PVE 랭킹','PVE TOP 3',pveList,'pve')+'</div>'
+    + '<div class="hof-v2-area hof-v2-area-ranking-link">'+hofWidePanel('PVP 랭킹','PVP TOP 3',pvpList,'pvp')+'</div>'
     + '</div>'
     + '<div class="hof-v2-right">'+hofMyRankingPanel()+'</div>'
     + '</div>';
@@ -377,7 +378,7 @@ function hofMyRankingPanel(){
       + '</div>';
   }).join('');
   return '<aside class="hof-v2-panel hof-v2-my-rank">'
-    + '<div class="hof-v2-my-head"><span class="hof-v2-kicker">MY KINOJO</span><h2><span class="hof-v2-title-icon">◎</span>내 랭킹</h2><p>현재 서버 랭킹 기준</p></div>'
+    + '<div class="hof-v2-my-head"><span class="hof-v2-kicker">MY KINOJO</span><h2><span class="hof-v2-title-icon">◎</span>내 랭킹</h2><p>'+escapeHtml(hallData?.myRanking?.scopeLabel||(includeAllLegions?'전체 레기온':'기본 레기온')+' · '+(includeSubs?'부캐 포함':'본캐만'))+'</p></div>'
     + (!isLoggedIn?'<div class="hof-v2-login-guide"><span>🔒</span><strong>로그인 후 나의 랭킹을 확인하세요.</strong><button id="hofMyRankingLoginBtn" type="button">로그인</button></div>':'')
     + (isLoggedIn?'<div class="hof-v2-my-profile">'+hofRankPortrait(item,0,'my')+'<div><strong>'+escapeHtml(displayName)+'</strong><span>'+escapeHtml(profileMeta)+'</span><em>본인 카드</em></div></div><div class="hof-v2-my-current-grid">'+primaryHtml+'</div><div class="hof-v2-my-list">'+secondaryHtml+'</div>':'')
     + '</aside>';
@@ -388,6 +389,7 @@ function setHallSlot(id,html){
   el.classList.remove('is-ready','is-pending');
   el.classList.add('is-rendering');
   el.innerHTML=html;
+  window.KinojoStagedLoading?.ready?.(el);
   requestAnimationFrame(()=>{
     el.classList.remove('is-rendering');
     el.classList.add('is-ready');
@@ -411,19 +413,36 @@ function hallSlotTasks(){
     (s[key]||[]).forEach(item=>{ if(item?.profileImageUrl)images.push(item.profileImageUrl); });
   });
   [s.growthGod,s.enhanceGod].forEach(item=>{ if(item?.profileImageUrl)images.push(item.profileImageUrl); });
+  const pveList=s.pveTop||s.pveTop3||hallData?.pveTop||hallData?.pveTop3||[];
+  const pvpList=s.pvpTop||s.pvpTop3||hallData?.pvpTop||hallData?.pvpTop3||[];
   return [
-    {id:'hallSlotV2Layout',images:compactImageList(images),render:()=>hofV2Layout()}
+    {id:'hallSlotEnhance',images:compactImageList([s.enhanceGod?.profileImageUrl]),render:()=>hofGodHeroCard('강화의 신','최고 강화 기록',s.enhanceGod || hallData?.weeklyAwards?.bulkUp?.[0], 'enhance')},
+    {id:'hallSlotMeter',images:[],render:()=>hofMeterDpsPanel()},
+    {id:'hallSlotRankingLink',images:[],render:()=>hofRankingLinkCard()},
+    {id:'hallSlotGrowth',images:compactImageList([s.growthGod?.profileImageUrl]),render:()=>hofGodHeroCard('성장의 신','이번주 성장량',s.growthGod || hallData?.weeklyAwards?.growthKing?.[0], 'growth')},
+    {id:'hallSlotPve',images:compactImageList(pveList.map(item=>item?.profileImageUrl)),render:()=>hofWidePanel('PVE 랭킹','PVE TOP 3',pveList,'pve')},
+    {id:'hallSlotPvp',images:compactImageList(pvpList.map(item=>item?.profileImageUrl)),render:()=>hofWidePanel('PVP 랭킹','PVP TOP 3',pvpList,'pvp')},
+    {id:'hallSlotMyRank',images:compactImageList(images),render:()=>hofMyRankingPanel()}
   ];
 }
 
 function hallShellExists(){
-  return !!document.getElementById('hallSlotV2Layout');
+  return !!document.getElementById('hallSlotEnhance');
 }
 
 function renderHallShell(showSpinners){
   app.className='';
   const slotClass='hall-slot is-pending';
-  app.innerHTML='<div class="hof-v2-shell"><div id="hallSlotV2Layout" class="'+slotClass+'">'+(showSpinners?kinojoCardSpinner('명예의 전당 v2 레이아웃 준비 중'):'')+'</div></div>';
+  const spinner=showSpinners?kinojoCardSpinner('영역 불러오는 중'):'';
+  app.innerHTML='<div class="hof-v2-shell"><div class="hof-v2-layout"><div class="hof-v2-board">'
+    +'<div id="hallSlotEnhance" class="hof-v2-area hof-v2-area-enhance '+slotClass+'">'+spinner+'</div>'
+    +'<div id="hallSlotMeter" class="hof-v2-area hof-v2-area-pve '+slotClass+'">'+spinner+'</div>'
+    +'<div id="hallSlotRankingLink" class="hof-v2-area hof-v2-area-pvp '+slotClass+'">'+spinner+'</div>'
+    +'<div id="hallSlotGrowth" class="hof-v2-area hof-v2-area-growth '+slotClass+'">'+spinner+'</div>'
+    +'<div id="hallSlotPve" class="hof-v2-area hof-v2-area-like '+slotClass+'">'+spinner+'</div>'
+    +'<div id="hallSlotPvp" class="hof-v2-area hof-v2-area-ranking-link '+slotClass+'">'+spinner+'</div>'
+    +'</div><div class="hof-v2-right"><div id="hallSlotMyRank" class="'+slotClass+'">'+spinner+'</div></div></div></div>';
+  hallSlotTasks().forEach(task=>window.KinojoStagedLoading?.region?.('#'+task.id,task.id));
 }
 
 function renderHallSlots(options={}){
@@ -454,8 +473,7 @@ function renderHallSlots(options={}){
 function renderReactionOnly(){
   if(!hallData)return;
   if(!hallShellExists())return render({initial:false});
-  setHallSlot('hallSlotV2Layout',hofV2Layout());
-  bindHallAfterSlot();
+  renderHallSlots({progressive:false});
 }
 
 function render(options={}){

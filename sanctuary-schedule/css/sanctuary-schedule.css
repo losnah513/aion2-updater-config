@@ -27,3 +27,13 @@
 /* 20260720_01: Staff 이상 내 팀/모든 팀 전환. 기본값은 항상 내 팀 */
 .schedule-scope-switch[hidden]{display:none!important}
 @media(max-width:430px){.schedule-scope-switch{order:3}.schedule-today-btn{order:4}.schedule-sync{order:5}}
+
+/* 20260812_18: 제목과 보기 설정을 공통 탑바에 붙는 하나의 페이지 바처럼 표시 */
+.schedule-page-bar{position:sticky;top:var(--kinojo-topbar-actual-height,var(--kinojo-shell-top,68px));z-index:82;margin:0 0 14px;border:1px solid var(--schedule-line);border-radius:0 0 20px 20px;background:rgba(255,255,255,.96);box-shadow:0 12px 28px rgba(35,54,86,.10);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);overflow:hidden}
+.schedule-page-bar .schedule-hero,.schedule-page-bar .schedule-toolbar{margin:0;border:0;border-radius:0;background:transparent;box-shadow:none}
+.schedule-page-bar .schedule-hero{padding:12px 17px 9px;border-bottom:1px solid rgba(111,137,176,.13)}
+.schedule-page-bar .schedule-hero h1{margin:2px 0;font-size:20px}.schedule-page-bar .schedule-hero p{font-size:10px}
+.schedule-page-bar .schedule-kicker{font-size:9px}.schedule-page-bar .schedule-toolbar{padding:8px 12px}
+.schedule-layout{margin-top:0}
+@media(max-width:760px){.schedule-page-bar{border-radius:0 0 16px 16px;margin-bottom:10px}.schedule-page-bar .schedule-hero{padding:9px 10px 7px}.schedule-page-bar .schedule-hero h1{font-size:18px}.schedule-page-bar .schedule-hero p{display:none}.schedule-page-bar .schedule-toolbar{padding:7px}.schedule-page-bar .schedule-integrated-label{width:auto;flex:1}.schedule-page-bar .schedule-sync{width:auto;margin-left:auto}}
+@media(max-width:520px){.schedule-page-bar{position:relative;top:auto}.schedule-page-bar .schedule-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px}.schedule-page-bar .schedule-integrated-label{grid-column:1/-1}.schedule-page-bar .schedule-scope-switch{grid-column:1/-1;order:initial}.schedule-page-bar .schedule-sync{grid-column:1/-1;width:100%;order:initial}}

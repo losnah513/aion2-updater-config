@@ -54,3 +54,16 @@
 }
 .sanctuary-master-mobile-slide{background:var(--sanctuary-master-bg,linear-gradient(135deg,#172033,#0b1220))}
 .sanctuary-master-mobile-bg{background:var(--sanctuary-master-bg,linear-gradient(135deg,#172033,#0b1220));background-position:center;background-size:cover;background-repeat:no-repeat}
+
+/* HOME sanctuary assets and interaction 318 */
+.sanctuary-row[data-sanctuary-master-list="desktop"]{display:flex!important;gap:14px!important;align-items:stretch!important}
+.sanctuary-row[data-sanctuary-master-list="desktop"]>.sanctuary-home-card{flex:1 1 0;min-width:0;overflow:visible!important;isolation:isolate;transition:flex-grow .45s cubic-bezier(.16,1,.3,1),transform .45s cubic-bezier(.16,1,.3,1),filter .3s ease!important}
+.sanctuary-home-background,.sanctuary-home-boss,.sanctuary-home-vignette{position:absolute;inset:0;border-radius:inherit;pointer-events:none;background-position:center;background-size:cover;background-repeat:no-repeat}
+.sanctuary-home-background{z-index:1;overflow:hidden;filter:saturate(.92) brightness(.72);clip-path:inset(0 round inherit);transition:filter .35s ease,transform .5s ease}
+.sanctuary-home-boss{z-index:5;inset:-8% -8% -2% 24%;background-size:contain;background-position:right bottom;opacity:.96;filter:drop-shadow(0 16px 18px rgba(0,0,0,.38));transform:translate3d(8%,5%,0) scale(.9);transform-origin:right bottom;transition:transform .5s cubic-bezier(.16,1,.3,1),filter .4s ease}
+.sanctuary-home-vignette{z-index:6;background:linear-gradient(90deg,rgba(3,8,18,.9),rgba(3,8,18,.2) 55%,rgba(3,8,18,.5)),linear-gradient(0deg,rgba(2,6,14,.9),transparent 65%);clip-path:inset(0 round inherit)}
+.sanctuary-home-card .sanctuary-symbol,.sanctuary-home-card .sanctuary-master-layer{display:none!important}.sanctuary-home-card .sanctuary-master-content{left:18px;right:18px;bottom:18px;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.7)}
+@media(hover:hover) and (pointer:fine){.sanctuary-row[data-sanctuary-master-list="desktop"]>.sanctuary-home-card:hover,.sanctuary-row[data-sanctuary-master-list="desktop"]>.sanctuary-home-card:focus-visible{flex-grow:1.55;z-index:20;transform:translateY(-8px);outline:none}.sanctuary-row[data-sanctuary-master-list="desktop"]:has(>.sanctuary-home-card:hover)>.sanctuary-home-card:not(:hover){filter:saturate(.65) brightness(.78)}.sanctuary-home-card:hover .sanctuary-home-background,.sanctuary-home-card:focus-visible .sanctuary-home-background{filter:saturate(1.08) brightness(.9);transform:scale(1.035)}.sanctuary-home-card:hover .sanctuary-home-boss,.sanctuary-home-card:focus-visible .sanctuary-home-boss{transform:translate3d(2%,-7%,0) scale(1.14);filter:drop-shadow(0 25px 22px rgba(0,0,0,.5))}}
+.mobile-sanctuary-boss{position:absolute;z-index:2;inset:-5% -8% 0 28%;background-position:right bottom;background-size:contain;background-repeat:no-repeat;filter:drop-shadow(0 18px 18px rgba(0,0,0,.38));transform:translateY(6%) scale(.92);transition:transform .34s cubic-bezier(.16,1,.3,1)}
+.sanctuary-master-mobile-slide.is-activating .mobile-sanctuary-boss{transform:translateY(-6%) scale(1.12)}
+@media(max-width:720px){.sanctuary-row[data-sanctuary-master-list="desktop"]{display:grid!important;grid-template-columns:1fr!important}.sanctuary-home-boss{inset:-4% -3% 0 28%}}

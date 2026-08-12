@@ -41,12 +41,7 @@ function kinojoCardSpinner(label){
   return '<div class="kinojo-card-loading"><span class="kinojo-spinner" aria-hidden="true"><span></span></span><span>'+escapeHtml(label||'불러오는 중')+'</span></div>';
 }
 function renderHallLoadingLayout(){
-  app.className='';
-  app.innerHTML='<section class="hof-v2-loading" aria-live="polite" aria-busy="true">'
-    + '<div class="hof-v2-loading-mark">'+kinojoCardSpinner('명예의 전당 불러오는 중')+'</div>'
-    + '<div class="hof-v2-loading-lines" aria-hidden="true"><span></span><span></span><span></span></div>'
-    + '<p id="loaderText">서버가 최신 순위와 주간 집계를 준비하고 있습니다.</p>'
-    + '</section>';
+  renderHallShell(true);
 }
 
 const HALL_PRELOADED_IMAGES=new Map();
@@ -149,12 +144,28 @@ function hallPassKey(){
 async function refreshHallPersonalRanking(requestSeq=hallLoadRequestSeq){
   const passKey=hallPassKey();
   if(!passKey)return false;
+  window.KinojoStagedLoading?.region?.('#hallSlotMyRank','내 랭킹');
+  let lastError=null;
   try{
-    const personal=await window.KinojoSupabase.rpc("kinojo_web_get_hof_display_v296",{p_include_subs:!!includeSubs,p_include_all_legions:!!includeAllLegions,p_pass_key:passKey});
-    if(requestSeq!==hallLoadRequestSeq||!personal||personal.ok===false)return false;
-    applyHallData({...hallData,myRanking:personal.myRanking||{}},{skipIfSame:true});
+    let personal=null;
+    for(const wait of [0,450,1100]){
+      if(wait)await hallDelay(wait);
+      try{
+        personal=await window.KinojoSupabase.rpc("kinojo_web_get_my_hof_ranking_v319",{p_pass_key:passKey,p_include_subs:!!includeSubs,p_include_all_legions:!!includeAllLegions});
+        if(personal&&personal.ok!==false)break;
+        lastError=new Error(personal?.message||"내 랭킹 응답을 확인하지 못했습니다.");
+      }catch(error){lastError=error;}
+    }
+    if(requestSeq!==hallLoadRequestSeq)return false;
+    if(!personal||personal.ok===false)throw lastError||new Error(personal?.message||"내 랭킹을 불러오지 못했습니다.");
+    hallData={...hallData,myRanking:personal};
+    setHallSlot('hallSlotMyRank',hofMyRankingPanel());
+    bindHallAfterSlot();
     return true;
-  }catch(err){console.warn("KINOJO Hall personal ranking load failed:",err);return false;}
+  }catch(err){lastError=err;}
+  window.KinojoStagedLoading?.failed?.('#hallSlotMyRank');
+  console.warn("KINOJO Hall personal ranking load failed:",lastError);
+  return false;
 }
 async function load({force=false}={}){
   const requestSeq=++hallLoadRequestSeq;

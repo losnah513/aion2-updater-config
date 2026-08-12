@@ -30,15 +30,24 @@ body.kinojo-page-ranking{
 
 /* Search / filter card */
 .ranking-toolbar{
+  position:sticky;
+  top:var(--kinojo-topbar-actual-height,var(--kinojo-shell-top,68px));
+  z-index:82;
   display:grid;
   grid-template-columns:minmax(0,1fr) 210px;
   gap:16px;
   align-items:stretch;
   padding:16px;
-  margin-bottom:8px;
+  margin:0 calc(50% - 50vw) 8px;
+  padding-left:max(16px,calc((100vw - var(--ranking-content-max)) / 2 + 16px));
+  padding-right:max(16px,calc((100vw - var(--ranking-content-max)) / 2 + 16px));
   border:1px solid var(--ranking-line);
-  border-radius:20px;
+  border-width:1px 0;
+  border-radius:0;
   background:rgba(255,255,255,.96);
+  box-shadow:0 10px 24px rgba(31,47,79,.08);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
 }
 .ranking-mobile-filter-head{display:none}
 .ranking-filter-main{display:grid;gap:14px;min-width:0}

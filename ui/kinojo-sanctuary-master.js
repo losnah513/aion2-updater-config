@@ -137,6 +137,12 @@
       return '<span class="sanctuary-master-layer'+className+'" aria-hidden="true" style="background-image:url(&quot;'+esc(layer.url)+'&quot;)"></span>';
     }).join('');
   }
+  function canonicalHomeLayers(item){
+    const code=safeCode(item.code);if(!['rudra','bagot','kaldrix'].includes(code))return '';
+    return '<span class="sanctuary-home-background" aria-hidden="true" style="background-image:url(&quot;/assets/images/sanctuary/backgrounds/'+code+'.webp&quot;)"></span>'+
+      '<span class="sanctuary-home-boss" aria-hidden="true" style="background-image:url(&quot;/assets/images/sanctuary/bosses/'+code+'.webp&quot;)"></span>'+
+      '<span class="sanctuary-home-vignette" aria-hidden="true"></span>';
+  }
 
   function desktopCardHtml(item, basePath){
     const href = String(basePath || 'sanctuary/') + '?id=' + encodeURIComponent(item.code);
@@ -145,14 +151,14 @@
     const aria = '성역 ' + item.order + ' ' + (item.shortName || item.name) + ' 파티 확인';
 
     if(item.cardLayout === 'layered'){
-      return '<a class="card sanctuary-master-card sanctuary-master-card-layered'+cardClass+'" href="'+esc(href)+'" aria-label="'+esc(aria)+'"'+bgStyle+'>'+
-        layerHtml(item)+
+      return '<a class="card sanctuary-master-card sanctuary-master-card-layered sanctuary-home-card sanctuary-home-'+esc(item.code)+cardClass+'" data-sanctuary-home-card href="'+esc(href)+'" aria-label="'+esc(aria)+'"'+bgStyle+'>'+
+        canonicalHomeLayers(item)+layerHtml(item)+
         '<div class="rudra-content sanctuary-master-content"><div><div class="rudra-title sanctuary-master-title">성역 '+esc(item.order)+'</div><div class="rudra-sub sanctuary-master-sub">'+esc(item.name)+'</div></div><div class="rudra-enter sanctuary-master-enter">›</div></div>'+
       '</a>';
     }
 
-    return '<a class="card sanctuary-master-card sanctuary-master-card-symbol'+cardClass+'" href="'+esc(href)+'" aria-label="'+esc(aria)+'"'+bgStyle+'>'+
-      '<span class="sanctuary-symbol" aria-hidden="true">'+esc(item.cardSymbol || '✦')+'</span>'+
+    return '<a class="card sanctuary-master-card sanctuary-master-card-symbol sanctuary-home-card sanctuary-home-'+esc(item.code)+cardClass+'" data-sanctuary-home-card href="'+esc(href)+'" aria-label="'+esc(aria)+'"'+bgStyle+'>'+
+      canonicalHomeLayers(item)+'<span class="sanctuary-symbol" aria-hidden="true">'+esc(item.cardSymbol || '✦')+'</span>'+
       '<div class="sanctuary-card-content sanctuary-master-content"><div><div class="sanctuary-title sanctuary-master-title">성역 '+esc(item.order)+'</div><div class="sanctuary-sub sanctuary-master-sub">'+esc(item.name)+(item.bossName?' · '+esc(item.bossName):'')+'</div></div><div class="sanctuary-enter sanctuary-master-enter">›</div></div>'+
     '</a>';
   }
@@ -162,8 +168,9 @@
     const mobileClass = item.mobileCardClass ? ' ' + item.mobileCardClass : '';
     const bg = item.bannerImage ? 'url("'+item.bannerImage+'")' : item.cardBackground;
     const style = bg ? ' style="--sanctuary-master-bg:'+esc(bg)+';'+(item.accentColor?'--sanctuary-master-accent:'+esc(item.accentColor)+';':'')+'"' : '';
-    return '<a class="mobile-sanctuary-slide sanctuary-master-mobile-slide'+mobileClass+(index===0?' is-active':'')+'" data-sanctuary-slide data-arrow-name="'+esc(item.order+'성역')+'" href="'+esc(href)+'" aria-label="'+esc(item.order+'성역 파티 정보 확인')+'"'+style+'>'+
-      '<span class="mobile-card-bg sanctuary-master-mobile-bg" aria-hidden="true"></span>'+
+    return '<a class="mobile-sanctuary-slide sanctuary-master-mobile-slide sanctuary-home-mobile-'+esc(item.code)+mobileClass+(index===0?' is-active':'')+'" data-sanctuary-slide data-sanctuary-home-mobile data-arrow-name="'+esc(item.order+'성역')+'" href="'+esc(href)+'" aria-label="'+esc(item.order+'성역 파티 정보 확인')+'"'+style+'>'+
+      '<span class="mobile-card-bg sanctuary-master-mobile-bg" aria-hidden="true" style="background-image:url(&quot;/assets/images/sanctuary/backgrounds/'+esc(item.code)+'.webp&quot;)"></span>'+
+      '<span class="mobile-sanctuary-boss" aria-hidden="true" style="background-image:url(&quot;/assets/images/sanctuary/bosses/'+esc(item.code)+'.webp&quot;)"></span>'+
       '<span class="mobile-card-shade" aria-hidden="true"></span>'+
       '<span class="mobile-card-copy"><strong>성역 '+esc(item.order)+'</strong><span>'+esc(item.name)+'</span></span>'+
     '</a>';
