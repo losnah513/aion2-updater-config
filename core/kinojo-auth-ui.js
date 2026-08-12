@@ -6,10 +6,12 @@
 (function(){
   const authSessionCore=window.KinojoAuthSessionCore;
   if(!authSessionCore) throw new Error('KinojoAuthSessionCore가 먼저 로드되어야 합니다.');
-  const {IDLE_LOGOUT_MS,IDLE_WARNING_MS,ACTIVITY_WRITE_THROTTLE_MS,getSession,getAccount,isLoggedIn,getToken,roleOf,roleLabel,canOpenManage,getLevel,isAdmin,canManageAccounts}=authSessionCore;
+  const {ACTIVITY_WRITE_THROTTLE_MS,getIdleState,getSession,getAccount,isLoggedIn,getToken,roleOf,roleLabel,canOpenManage,getLevel,isAdmin,canManageAccounts}=authSessionCore;
   let idleLogoutTimer=null;
   let idleCountdownTimer=null;
   let idleWarningOpen=false;
+  let idleWarningDeadlineAt=0;
+  let idleExtendPending=false;
   let lastActivityWriteAt=0;
   const PERMISSION_LABELS = {
     sanctuary_edit: '성역 관리',
@@ -1161,16 +1163,12 @@
     modal.innerHTML = '<div class="kinojo-idle-card" role="alertdialog" aria-modal="true" aria-labelledby="kinojoIdleTitle" aria-describedby="kinojoIdleMessage">'
       + '<div class="kinojo-idle-kicker">SESSION NOTICE</div>'
       + '<h2 id="kinojoIdleTitle">자동 로그아웃 안내</h2>'
-      + '<p id="kinojoIdleMessage">일정 시간 조작이 없어 자동 로그아웃됩니다.</p>'
-      + '<div class="kinojo-idle-count"><strong id="kinojoIdleCountdown">60</strong><span>초 후 로그아웃</span></div>'
+      + '<p id="kinojoIdleMessage">30분 동안 조작이 없으면 자동 로그아웃됩니다. 계속 사용하려면 로그인 시간을 연장해 주세요.</p>'
+      + '<div class="kinojo-idle-count"><strong id="kinojoIdleCountdown">5:00</strong><span>후 로그아웃</span></div>'
       + '<div class="kinojo-idle-actions"><button type="button" id="kinojoIdleExtendBtn">로그인 연장</button><button type="button" id="kinojoIdleLogoutBtn">로그아웃</button></div>'
       + '</div>';
     document.body.appendChild(modal);
-    modal.querySelector('#kinojoIdleExtendBtn')?.addEventListener('click', ()=>{
-      closeIdleLogoutWarning();
-      markActivity(true);
-      toast('로그인 시간이 연장되었습니다.');
-    });
+    modal.querySelector('#kinojoIdleExtendBtn')?.addEventListener('click', event=>extendIdleSession(event.currentTarget));
     modal.querySelector('#kinojoIdleLogoutBtn')?.addEventListener('click', ()=>{
       closeIdleLogoutWarning();
       clearSession();
@@ -1181,6 +1179,7 @@
 
   function closeIdleLogoutWarning(){
     idleWarningOpen = false;
+    idleWarningDeadlineAt = 0;
     if(idleCountdownTimer){ clearInterval(idleCountdownTimer); idleCountdownTimer = null; }
     const modal = document.getElementById('kinojoIdleLogoutModal');
     if(modal){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); }
@@ -1192,17 +1191,24 @@
     toast('일정 시간 조작이 없어 자동 로그아웃되었습니다.');
   }
 
-  function openIdleLogoutWarning(remainingMs){
-    if(!getSession()) return;
+  function idleCountdownText(remainingMs){
+    const seconds=Math.max(0,Math.ceil(Number(remainingMs||0)/1000));
+    const minutes=Math.floor(seconds/60);
+    return minutes+':'+String(seconds%60).padStart(2,'0');
+  }
+
+  function openIdleLogoutWarning(deadlineAt){
+    const session=readJson(STORAGE_KEY);
+    if(!session?.token) return;
     const modal = ensureIdleLogoutModal();
     idleWarningOpen = true;
+    idleWarningDeadlineAt = Number(deadlineAt||getIdleState(session).expiresAt);
     modal.classList.add('open');
     modal.setAttribute('aria-hidden','false');
     const countdown = modal.querySelector('#kinojoIdleCountdown');
-    const deadline = Date.now() + Math.max(0, Number(remainingMs || IDLE_WARNING_MS));
     const tick = ()=>{
-      const remaining = Math.max(0, deadline - Date.now());
-      if(countdown) countdown.textContent = String(Math.max(0, Math.ceil(remaining / 1000)));
+      const remaining = Math.max(0, idleWarningDeadlineAt - Date.now());
+      if(countdown) countdown.textContent = idleCountdownText(remaining);
       if(remaining <= 0) forceIdleLogout();
     };
     tick();
@@ -1212,18 +1218,20 @@
 
   function scheduleIdleLogoutCheck(){
     clearIdleLogoutTimer();
-    const session = getSession();
-    if(!session) return;
-    const elapsed = Date.now() - Number(session.lastActivityAt || Date.now());
-    if(elapsed >= IDLE_LOGOUT_MS + IDLE_WARNING_MS){ forceIdleLogout(); return; }
-    if(elapsed >= IDLE_LOGOUT_MS){ openIdleLogoutWarning(IDLE_LOGOUT_MS + IDLE_WARNING_MS - elapsed); return; }
-    idleLogoutTimer = setTimeout(scheduleIdleLogoutCheck, Math.max(250, IDLE_LOGOUT_MS - elapsed));
+    const session = readJson(STORAGE_KEY);
+    if(!session?.token){ closeIdleLogoutWarning(); return; }
+    const idle = getIdleState(session);
+    if(idle.expired){ forceIdleLogout(); return; }
+    if(idle.warning){ openIdleLogoutWarning(idle.expiresAt); return; }
+    closeIdleLogoutWarning();
+    idleLogoutTimer = setTimeout(scheduleIdleLogoutCheck, Math.max(250, idle.warningAt-Date.now()));
   }
 
   function markActivity(forceWrite){
-    if(idleWarningOpen) return;
     const session = readJson(STORAGE_KEY);
     if(!session || !session.token) return;
+    if(getIdleState(session).expired){ forceIdleLogout(); return; }
+    if(idleWarningOpen&&!forceWrite) return;
     const now = Date.now();
     if(forceWrite || now - lastActivityWriteAt >= ACTIVITY_WRITE_THROTTLE_MS){
       session.lastActivityAt = now;
@@ -1236,13 +1244,39 @@
 
   function resetIdleLogoutTimer(){ markActivity(false); }
 
+  async function extendIdleSession(button){
+    if(idleExtendPending) return;
+    const session=readJson(STORAGE_KEY);
+    if(!session?.token||getIdleState(session).expired){forceIdleLogout();return;}
+    const account=getAccount()||{};
+    const passKey=String(account.passKey||account.passCode||session.passKey||session.passCode||'').trim();
+    if(!passKey){clearSession();toast('로그인 정보를 다시 확인해 주세요.');return;}
+    idleExtendPending=true;
+    if(button){button.disabled=true;button.setAttribute('aria-busy','true');button.textContent='확인 중...';}
+    try{
+      const data=await window.KinojoAuthService?.verifyPassKey?.(passKey);
+      if(!data||data.ok===false||!data.session)throw new Error(data?.message||'로그인 상태를 확인하지 못했습니다.');
+      setSession(data.session,data.account||account);
+      toast('Server 확인 후 로그인 시간이 30분 연장되었습니다.');
+    }catch(error){
+      const current=readJson(STORAGE_KEY);
+      if(!current?.token||getIdleState(current).expired)forceIdleLogout();
+      else toast('로그인 연장에 실패했습니다. '+(error?.message||String(error)));
+    }finally{
+      idleExtendPending=false;
+      if(button){button.disabled=false;button.removeAttribute('aria-busy');button.textContent='로그인 연장';}
+    }
+  }
+
   function bindIdleLogout(){
     ['click','keydown','scroll','touchstart','pointerdown'].forEach(type=>{
       window.addEventListener(type, resetIdleLogoutTimer, { passive:true });
     });
     document.addEventListener('visibilitychange', ()=>{
-      if(document.visibilityState === 'visible') scheduleIdleLogoutCheck();
+      if(document.visibilityState === 'visible'){ updateStatus(); scheduleIdleLogoutCheck(); }
     });
+    window.addEventListener('focus', scheduleIdleLogoutCheck);
+    window.addEventListener('pageshow', scheduleIdleLogoutCheck);
     window.addEventListener('storage', event=>{
       if(event.key === STORAGE_KEY){ updateStatus(); scheduleIdleLogoutCheck(); }
     });

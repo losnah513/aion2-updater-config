@@ -15,6 +15,11 @@
     requestSeq: 0,
     daySeq: 0,
     saving: false,
+    scheduleAdmin: null,
+    scheduleAdminError: '',
+    scheduleEditorOpen: false,
+    scheduleEditingId: null,
+    scheduleAdminSaving: false,
     navigating: false
   };
 
@@ -33,6 +38,7 @@
     return String(session?.passKey || session?.passCode || '').trim();
   }
   function isLoggedIn(){ return !!window.KinojoAuth?.getSession?.(); }
+  function canAttemptScheduleManage(){ return Number(window.KinojoAuth?.getLevel?.() || 0) >= 2; }
   function ensureAuthGate(){
     let gate = document.getElementById('scheduleAuthGate');
     if(gate) return gate;
@@ -56,6 +62,10 @@
       state.canViewAllTeams = false;
       state.calendar = null;
       state.day = null;
+      state.scheduleAdmin = null;
+      state.scheduleAdminError = '';
+      state.scheduleEditorOpen = false;
+      state.scheduleEditingId = null;
       renderToolbar();
       setSync('로그인 후 이용 가능');
       return false;
@@ -142,6 +152,10 @@
     state.canViewAllTeams = false;
     state.calendar = null;
     state.day = null;
+    state.scheduleAdmin = null;
+    state.scheduleAdminError = '';
+    state.scheduleEditorOpen = false;
+    state.scheduleEditingId = null;
     state.selectedDate = '';
     state.selectedScheduleId = null;
     const calendar = $('#scheduleCalendarViewport');
@@ -222,6 +236,53 @@
       + '<div class="schedule-item-head"><strong>'+esc(sanctuary)+(team?' · '+esc(team):'')+'</strong><span class="schedule-status status-'+status+'">'+esc(mode)+'</span></div>'
       + '<p>'+esc(info)+'</p></button>';
   }
+  function dateTimeLocalValue(value){
+    if(!value) return '';
+    const date = new Date(value);
+    if(Number.isNaN(date.getTime())) return '';
+    const local = new Date(date.getTime() - date.getTimezoneOffset()*60000);
+    return local.toISOString().slice(0,16);
+  }
+  function scheduleAdminItem(id){
+    const rows = Array.isArray(state.scheduleAdmin?.schedules) ? state.scheduleAdmin.schedules : [];
+    return rows.find(item => Number(item.id) === Number(id)) || null;
+  }
+  function scheduleAdminMaster(code){
+    const rows = Array.isArray(state.scheduleAdmin?.sanctuaries) ? state.scheduleAdmin.sanctuaries : [];
+    return rows.find(item => String(item.code || '').toLowerCase() === String(code || '').toLowerCase()) || null;
+  }
+  function scheduleManagerEditorHtml(){
+    const editing = Number(state.scheduleEditingId || 0) > 0;
+    const item = editing ? scheduleAdminItem(state.scheduleEditingId) : null;
+    const sanctuaries = Array.isArray(state.scheduleAdmin?.sanctuaries) ? state.scheduleAdmin.sanctuaries : [];
+    const selectedCode = String(item?.sanctuaryCode || '');
+    const selectedMaster = scheduleAdminMaster(selectedCode);
+    const teams = Array.isArray(selectedMaster?.teams) ? selectedMaster.teams : [];
+    const selectedTeamNo = Number(item?.teams?.[0]?.teamNo || item?.teams?.[0]?.operatingTeamNo || 0);
+    const mode = String(item?.scheduleMode || ((item?.requiresResponse || ['survey','coordinating'].includes(String(item?.status || ''))) ? 'vote' : 'fixed'));
+    const defaultStart = state.selectedDate ? state.selectedDate+'T21:00' : '';
+    return '<div class="schedule-manager-editor" id="scheduleManagerEditor">'
+      + '<div class="schedule-manager-editor-head"><div><span>SERVER AUTHORIZED</span><strong>'+(editing?'일정 변경':'새 일정 추가')+'</strong></div><button type="button" data-schedule-manager-cancel aria-label="일정 편집 닫기">×</button></div>'
+      + '<div class="schedule-manager-grid">'
+      + '<label>성역<select id="scheduleManagerSanctuary" '+(editing?'disabled':'')+'><option value="">성역 선택</option>'+sanctuaries.map(row => '<option value="'+esc(row.code)+'"'+(String(row.code)===selectedCode?' selected':'')+'>'+esc(row.name || row.shortName || row.code)+'</option>').join('')+'</select></label>'
+      + '<label>팀<select id="scheduleManagerTeam"><option value="">팀 선택</option>'+teams.map(team => '<option value="'+esc(team.teamNo)+'"'+(Number(team.teamNo)===selectedTeamNo?' selected':'')+'>'+esc(team.teamName || team.teamNo+'팀')+'</option>').join('')+'</select></label>'
+      + '<fieldset class="schedule-manager-mode"><legend>일정 방식</legend><label><input type="radio" name="scheduleManagerMode" value="fixed"'+(mode!=='vote'?' checked':'')+'><span>일정 확정</span></label><label><input type="radio" name="scheduleManagerMode" value="vote"'+(mode==='vote'?' checked':'')+'><span>투표 필요</span></label></fieldset>'
+      + '<label class="is-wide">날짜 및 시작 시간<input id="scheduleManagerStartsAt" type="datetime-local" value="'+esc(dateTimeLocalValue(item?.startsAt) || defaultStart)+'"></label>'
+      + '<label class="is-wide schedule-manager-deadline" '+(mode==='vote'?'':'hidden')+'>응답 마감<input id="scheduleManagerDeadline" type="datetime-local" value="'+esc(dateTimeLocalValue(item?.responseDeadline))+'" '+(mode==='vote'?'':'disabled')+'></label>'
+      + '<label class="is-wide">장소<input id="scheduleManagerLocation" type="text" maxlength="80" value="'+esc(item?.location || '')+'" placeholder="디스코드 / 집결 위치"></label>'
+      + '<label class="is-wide">안내<textarea id="scheduleManagerDescription" rows="3" maxlength="500" placeholder="일정 안내 또는 조율 메모">'+esc(item?.description || '')+'</textarea></label>'
+      + '</div><div class="schedule-manager-actions"><button type="button" class="is-secondary" data-schedule-manager-cancel>취소</button><button type="button" class="is-primary" id="scheduleManagerSaveBtn">'+(editing?'변경 저장':'일정 추가')+'</button></div></div>';
+  }
+  function scheduleManagerSectionHtml(item){
+    if(!state.scheduleAdmin || state.scheduleAdmin.ok === false) return '';
+    const sanctuaries = Array.isArray(state.scheduleAdmin.sanctuaries) ? state.scheduleAdmin.sanctuaries : [];
+    if(!sanctuaries.length) return '';
+    const editable = !!scheduleAdminItem(item?.id);
+    const accessLabel = state.scheduleAdmin.access?.canManageAll ? '전체 팀 관리' : '담당 팀 관리';
+    return '<section class="schedule-section schedule-manager-section"><div class="schedule-section-title"><h3>일정 관리</h3><span>'+esc(accessLabel)+'</span></div>'
+      + (state.scheduleEditorOpen ? scheduleManagerEditorHtml() : '<div class="schedule-manager-launch"><div><strong>이 날짜의 일정을 바로 관리합니다.</strong><span>저장 시 Server가 권한과 대상 팀을 다시 확인합니다.</span></div><div><button type="button" data-schedule-manager-new>일정 추가</button>'+(editable?'<button type="button" data-schedule-manager-edit="'+esc(item.id)+'">선택 일정 변경</button>':'')+'</div></div>')
+      + '</section>';
+  }
   function summaryHtml(summary){
     if(!summary || typeof summary !== 'object') return '';
     const recommended = summary.recommendedTime || summary.recommendedWindow || '';
@@ -270,6 +331,7 @@
     const scopeTitle = String(day.appliedScope || state.scope) === 'all' ? '모든 팀 일정' : '내 팀 일정';
     root.innerHTML = '<header class="schedule-detail-head"><div><span class="schedule-detail-kicker">'+scopeTitle+'</span><h2>'+esc(day.dateLabel || day.targetDate)+'</h2><p>'+esc(detailMeta || '등록된 일정을 선택해 주세요.')+'</p></div><span class="schedule-detail-badge">'+rows.length+'개 일정</span></header>'
       + '<section class="schedule-section"><div class="schedule-section-title"><h3>등록 일정</h3><span>'+scopeTitle+'</span></div><div class="schedule-list">'+(rows.length?rows.map(scheduleItemHtml).join(''):'<div class="schedule-empty">이 날짜에는 표시할 성역 일정이 없습니다.</div>')+'</div></section>'
+      + scheduleManagerSectionHtml(item)
       + (item ? '<section class="schedule-section schedule-info-card"><div class="schedule-section-title"><h3>일정 안내</h3><span>'+esc(item.scheduleModeLabel || (item.requiresResponse?'투표 필요':'일정 확정'))+'</span></div>'
         + '<dl class="schedule-info-list"><div><dt>성역</dt><dd>'+esc(item.sanctuaryName || item.sanctuaryShortName || '')+'</dd></div><div><dt>팀</dt><dd>'+esc(team || '팀 미확인')+'</dd></div><div><dt>시작</dt><dd>'+esc(item.dateLabel || item.targetDate)+' '+esc(item.startTime || '시간 미정')+'</dd></div>'+(item.location?'<div><dt>장소</dt><dd>'+esc(item.location)+'</dd></div>':'')+(item.description?'<div><dt>안내</dt><dd>'+esc(item.description)+'</dd></div>':'')+'</dl></section>' : '')
       + (item ? '<section class="schedule-section"><div class="schedule-section-title"><h3>'+(item.requiresResponse?'투표 참여':'일정 상태')+'</h3><span>'+esc(day.user?.mainCharacterName || '')+'</span></div>'+responseFormHtml(day,item)+'</section>' : '')
@@ -287,7 +349,114 @@
     }));
     $('#scheduleLoginBtn')?.addEventListener('click', () => window.KinojoAuth?.openLoginModal?.('성역 스케줄 투표는 PASS KEY 로그인이 필요합니다.', {context:'sanctuary-schedule'}));
     $('#scheduleSaveBtn')?.addEventListener('click', saveAvailability);
+    bindScheduleManager();
     applyResponseStatusUi();
+  }
+  function updateScheduleManagerTeams(){
+    const sanctuary = $('#scheduleManagerSanctuary');
+    const team = $('#scheduleManagerTeam');
+    if(!sanctuary || !team) return;
+    const teams = Array.isArray(scheduleAdminMaster(sanctuary.value)?.teams) ? scheduleAdminMaster(sanctuary.value).teams : [];
+    team.innerHTML = '<option value="">팀 선택</option>'+teams.map(row => '<option value="'+esc(row.teamNo)+'">'+esc(row.teamName || row.teamNo+'팀')+'</option>').join('');
+    updateScheduleManagerSaveState();
+  }
+  function applyScheduleManagerMode(){
+    const vote = $('input[name="scheduleManagerMode"]:checked')?.value === 'vote';
+    const field = $('.schedule-manager-deadline');
+    const input = $('#scheduleManagerDeadline');
+    if(field) field.hidden = !vote;
+    if(input){input.disabled=!vote;if(!vote)input.value='';}
+  }
+  function updateScheduleManagerSaveState(){
+    const button = $('#scheduleManagerSaveBtn');
+    if(!button) return;
+    const ready = !!String($('#scheduleManagerSanctuary')?.value || '').trim()
+      && !!Number($('#scheduleManagerTeam')?.value || 0)
+      && !!String($('#scheduleManagerStartsAt')?.value || '').trim();
+    button.disabled = !ready || state.scheduleAdminSaving;
+  }
+  function closeScheduleManagerEditor(){
+    state.scheduleEditorOpen = false;
+    state.scheduleEditingId = null;
+    renderDay();
+  }
+  function bindScheduleManager(){
+    $('[data-schedule-manager-new]')?.addEventListener('click', () => {
+      state.scheduleEditorOpen = true;
+      state.scheduleEditingId = null;
+      renderDay();
+      $('#scheduleManagerSanctuary')?.focus();
+    });
+    $('[data-schedule-manager-edit]')?.addEventListener('click', event => {
+      const id = Number(event.currentTarget.dataset.scheduleManagerEdit || 0);
+      if(!scheduleAdminItem(id)) return;
+      state.scheduleEditorOpen = true;
+      state.scheduleEditingId = id;
+      renderDay();
+      $('#scheduleManagerStartsAt')?.focus();
+    });
+    $$('[data-schedule-manager-cancel]').forEach(button => button.addEventListener('click', closeScheduleManagerEditor));
+    $('#scheduleManagerSanctuary')?.addEventListener('change', updateScheduleManagerTeams);
+    $$('input[name="scheduleManagerMode"]').forEach(input => input.addEventListener('change', () => {applyScheduleManagerMode();updateScheduleManagerSaveState();}));
+    ['#scheduleManagerTeam','#scheduleManagerStartsAt','#scheduleManagerDeadline','#scheduleManagerLocation','#scheduleManagerDescription'].forEach(selector => {
+      $(selector)?.addEventListener('input', updateScheduleManagerSaveState);
+      $(selector)?.addEventListener('change', updateScheduleManagerSaveState);
+    });
+    $('#scheduleManagerSaveBtn')?.addEventListener('click', saveManagedSchedule);
+    applyScheduleManagerMode();
+    updateScheduleManagerSaveState();
+  }
+  function collectManagedSchedule(){
+    const mode = $('input[name="scheduleManagerMode"]:checked')?.value === 'vote' ? 'vote' : 'fixed';
+    const startsAt = String($('#scheduleManagerStartsAt')?.value || '');
+    const deadline = String($('#scheduleManagerDeadline')?.value || '');
+    const startsDate = startsAt ? new Date(startsAt) : null;
+    const deadlineDate = deadline ? new Date(deadline) : null;
+    return {
+      sanctuaryCode:String($('#scheduleManagerSanctuary')?.value || ''),
+      scheduleMode:mode,
+      startsAt:startsDate&&!Number.isNaN(startsDate.getTime())?startsDate.toISOString():null,
+      responseDeadline:mode==='vote'&&deadlineDate&&!Number.isNaN(deadlineDate.getTime())?deadlineDate.toISOString():null,
+      description:String($('#scheduleManagerDescription')?.value || ''),
+      location:String($('#scheduleManagerLocation')?.value || ''),
+      teams:Number($('#scheduleManagerTeam')?.value || 0)?[{teamNo:Number($('#scheduleManagerTeam').value)}]:[]
+    };
+  }
+  async function saveManagedSchedule(){
+    if(state.scheduleAdminSaving) return;
+    const payload = collectManagedSchedule();
+    if(!payload.sanctuaryCode || payload.teams.length !== 1 || !payload.startsAt){toast('성역, 팀, 날짜 및 시작 시간을 모두 선택해 주세요.','error');return;}
+    const button = $('#scheduleManagerSaveBtn');
+    state.scheduleAdminSaving = true;
+    updateScheduleManagerSaveState();
+    if(button) button.textContent = '저장 중...';
+    try{
+      const scheduleId = Number(state.scheduleEditingId || 0) || null;
+      const data = await window.KinojoApi.getAction('adminSanctuaryScheduleSave', {scheduleId,payload});
+      if(!data || data.ok === false) throw new Error(data?.message || '일정 저장 실패');
+      state.scheduleEditorOpen = false;
+      state.scheduleEditingId = null;
+      toast(scheduleId ? '성역 일정이 변경되었습니다.' : '성역 일정이 추가되었습니다.','success');
+      window.KinojoCommonUI?.reloadSanctuaryAlert?.();
+      await loadCalendar({silent:true});
+    }catch(error){
+      toast(error?.message || String(error),'error');
+    }finally{
+      state.scheduleAdminSaving = false;
+      updateScheduleManagerSaveState();
+      if(button) button.textContent = state.scheduleEditingId ? '변경 저장' : '일정 추가';
+    }
+  }
+  async function loadScheduleAdminContext(targetDate){
+    if(!canAttemptScheduleManage()) return null;
+    try{
+      const data = await window.KinojoApi.getAction('adminSanctuaryScheduleConsole', {from:targetDate,to:targetDate});
+      if(!data || data.ok === false) throw new Error(data?.message || '일정 관리 권한 확인 실패');
+      return data;
+    }catch(error){
+      state.scheduleAdminError = error?.message || String(error);
+      return null;
+    }
   }
   async function loadDay(){
     if(!state.selectedDate) return;
@@ -295,15 +464,23 @@
     const root = $('#scheduleDetail');
     if(root) root.innerHTML = '<div class="schedule-detail-loading"><span class="kinojo-spinner" aria-hidden="true"></span><strong>날짜 상세를 불러오는 중...</strong></div>';
     try{
-      const data = await window.KinojoApi.getAction('sanctuaryScheduleDay', {
+      const dayRequest = window.KinojoApi.getAction('sanctuaryScheduleDay', {
         targetDate:state.selectedDate,
         scheduleId:state.selectedScheduleId,
         passKey:currentPassKey(),
         scope:state.scope
       });
+      const adminRequest = loadScheduleAdminContext(state.selectedDate);
+      const [data,admin] = await Promise.all([dayRequest,adminRequest]);
       if(seq !== state.daySeq) return;
       if(!data || data.ok === false) throw new Error(data?.message || '날짜 상세 조회 실패');
       state.day = data;
+      state.scheduleAdmin = admin;
+      state.scheduleAdminError = admin ? '' : state.scheduleAdminError;
+      if(state.scheduleEditingId && !scheduleAdminItem(state.scheduleEditingId)){
+        state.scheduleEditorOpen = false;
+        state.scheduleEditingId = null;
+      }
       if(!state.selectedScheduleId) state.selectedScheduleId = Number(data.selectedScheduleId || data.schedules?.[0]?.id || 0) || null;
       renderDay();
       updateUrl();
@@ -349,7 +526,7 @@
     if(!silent){
       setSync('Server Engine 연결 중');
       if(root) root.innerHTML = '<div class="schedule-calendar-loading"><span class="kinojo-spinner" aria-hidden="true"></span><strong>성역 일정을 불러오는 중...</strong></div>';
-    }else setSync(direction==='prev'?'이전 기간으로 이동 중':'다음 기간으로 이동 중');
+    }else setSync(direction==='prev'?'이전 기간으로 이동 중':direction==='next'?'다음 기간으로 이동 중':'일정을 새로고침하는 중');
     try{
       if(!window.KinojoApi) throw new Error('KinojoApi 연결을 확인해 주세요.');
       const data = await window.KinojoApi.getAction('sanctuaryScheduleCalendar', {

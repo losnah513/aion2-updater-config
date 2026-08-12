@@ -7,15 +7,44 @@
   'use strict';
   const STORAGE_KEY='kinojo_login_session_v1';
   const ACCOUNT_KEY='kinojo_login_account_v1';
-  const IDLE_LOGOUT_MS=10*60*1000;
-  const IDLE_WARNING_MS=60*1000;
+  const IDLE_TIMEOUT_MS=30*60*1000;
+  const IDLE_WARNING_MS=5*60*1000;
+  const IDLE_LOGOUT_MS=IDLE_TIMEOUT_MS;
   const ACTIVITY_WRITE_THROTTLE_MS=15*1000;
   const AUTH_SCHEMA_VERSION='supabase-passkey-v4-20260625';
   function readJson(key){try{return JSON.parse(localStorage.getItem(key)||'null');}catch(_err){return null;}}
   function writeJson(key,value){localStorage.setItem(key,JSON.stringify(value));}
   function migrateAuthCacheIfNeeded(){try{const key='kinojo_auth_schema_version';if(localStorage.getItem(key)===AUTH_SCHEMA_VERSION)return;localStorage.removeItem(STORAGE_KEY);localStorage.removeItem(ACCOUNT_KEY);localStorage.setItem(key,AUTH_SCHEMA_VERSION);}catch(_err){}}
   function emitAuthChanged(session,account){window.dispatchEvent(new CustomEvent('kinojo:auth-changed',{detail:{loggedIn:!!(session&&session.token),session:session||null,account:account||null}}));}
-  function getSession(){const session=readJson(STORAGE_KEY);if(!session||!session.token)return null;const last=Number(session.lastActivityAt||0);if(!last){if(Number(session.expiresAt||0)&&Date.now()>Number(session.expiresAt)){clearStoredSession();return null;}session.lastActivityAt=Date.now();delete session.expiresAt;writeJson(STORAGE_KEY,session);return session;}if(Date.now()-last>=IDLE_LOGOUT_MS+IDLE_WARNING_MS){clearStoredSession();return null;}return session;}
+  function getIdleState(session,at){
+    const now=Number.isFinite(Number(at))?Number(at):Date.now();
+    const last=Number(session?.lastActivityAt||0)||now;
+    const idleForMs=Math.max(0,now-last);
+    const remainingMs=Math.max(0,IDLE_TIMEOUT_MS-idleForMs);
+    return {
+      lastActivityAt:last,
+      warningAt:last+IDLE_TIMEOUT_MS-IDLE_WARNING_MS,
+      expiresAt:last+IDLE_TIMEOUT_MS,
+      idleForMs,
+      remainingMs,
+      warning:remainingMs>0&&remainingMs<=IDLE_WARNING_MS,
+      expired:remainingMs<=0
+    };
+  }
+  function getSession(){
+    const session=readJson(STORAGE_KEY);
+    if(!session||!session.token)return null;
+    const last=Number(session.lastActivityAt||0);
+    if(!last){
+      if(Number(session.expiresAt||0)&&Date.now()>Number(session.expiresAt)){clearStoredSession();return null;}
+      session.lastActivityAt=Date.now();
+      delete session.expiresAt;
+      writeJson(STORAGE_KEY,session);
+      return session;
+    }
+    if(getIdleState(session).expired){clearStoredSession();return null;}
+    return session;
+  }
   function getAccount(){return readJson(ACCOUNT_KEY);}
   function setStoredSession(session,account){const next=Object.assign({},session||{},{lastActivityAt:Date.now()});delete next.expiresAt;writeJson(STORAGE_KEY,next);writeJson(ACCOUNT_KEY,account||{});emitAuthChanged(next,account);return next;}
   function clearStoredSession(){localStorage.removeItem(STORAGE_KEY);localStorage.removeItem(ACCOUNT_KEY);emitAuthChanged(null,null);}
@@ -39,5 +68,5 @@
   }
   migrateAuthCacheIfNeeded();
   installAuthUiCompatibility();
-  window.KinojoAuthSessionCore=Object.freeze({STORAGE_KEY,ACCOUNT_KEY,IDLE_LOGOUT_MS,IDLE_WARNING_MS,ACTIVITY_WRITE_THROTTLE_MS,readJson,writeJson,getSession,getAccount,setStoredSession,clearStoredSession,isLoggedIn,getToken,roleOf,roleLabel,canOpenManage,getLevel,isAdmin,canManageAccounts});
+  window.KinojoAuthSessionCore=Object.freeze({STORAGE_KEY,ACCOUNT_KEY,IDLE_TIMEOUT_MS,IDLE_LOGOUT_MS,IDLE_WARNING_MS,ACTIVITY_WRITE_THROTTLE_MS,readJson,writeJson,getIdleState,getSession,getAccount,setStoredSession,clearStoredSession,isLoggedIn,getToken,roleOf,roleLabel,canOpenManage,getLevel,isAdmin,canManageAccounts});
 })();

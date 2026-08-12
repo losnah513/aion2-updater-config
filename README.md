@@ -29,3 +29,19 @@ KINOJO INFO GitHub Pages upload package.
 - Stable and Staging controls are shown side by side on desktop and stack on mobile. Download, Core launch, statistics visibility, notice publication, and notice pinning all reuse the shared ranking slider switch.
 - Download and private Core authorization keep independent KINOJO level allowlists. Current Launcher/Core release data is read-only at the top of Meter management.
 - Statistics management groups Server-owned collection flow, validation quality, and publication readiness without recalculating Server metrics in the browser.
+
+## Authentication session
+
+- PASS KEY login uses an absolute browser inactivity deadline of 30 minutes. The shared warning modal opens at the 25-minute mark and displays the final five minutes.
+- Background tabs do not trust delayed interval ticks: focus, visibility, page-show, and cross-tab storage events recalculate the remaining time from `lastActivityAt`.
+- Extending an idle session is accepted only before the absolute deadline and after `kinojo-auth-service.js` revalidates the saved PASS KEY with Server. Privileged actions continue to be authorized by Server on every request.
+
+## Sanctuary schedule
+
+- The public PC and mobile schedule pages share the same calendar/detail module and public topbar/notice shell.
+- STAFF or higher users see a Server-authorized schedule manager inside the selected date detail panel. It reuses `adminSanctuaryScheduleConsole` and `adminSanctuaryScheduleSave` for add/edit operations, so Server remains the source of permission and team validation.
+
+## Public page shell verification
+
+- `tests/web-shell-auth-contract.test.js` audits the active PC/mobile entrypoints for shared topbar, notice, authentication modules, and current cache keys.
+- `.github/workflows/verify-kinojo-pages.yml` validates the full deployed page set and performs exact live readback against `https://kinojo.info` after main deployment.
