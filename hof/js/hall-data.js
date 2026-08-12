@@ -142,14 +142,14 @@ function hallPassKey(){
   return String(account.passKey||account.passCode||session.passKey||session.passCode||"").trim();
 }
 async function refreshHallPersonalRanking(requestSeq=hallLoadRequestSeq){
-  const passKey=hallPassKey();
-  if(!passKey)return false;
   window.KinojoStagedLoading?.region?.('#hallSlotMyRank','내 랭킹');
   let lastError=null;
   try{
     let personal=null;
-    for(const wait of [0,450,1100]){
+    for(const wait of [0,350,800,1600,2800]){
       if(wait)await hallDelay(wait);
+      const passKey=hallPassKey();
+      if(!passKey){lastError=new Error('로그인 정보를 불러오는 중입니다.');continue;}
       try{
         personal=await window.KinojoSupabase.rpc("kinojo_web_get_my_hof_ranking_v319",{p_pass_key:passKey,p_include_subs:!!includeSubs,p_include_all_legions:!!includeAllLegions});
         if(personal&&personal.ok!==false)break;
@@ -163,6 +163,7 @@ async function refreshHallPersonalRanking(requestSeq=hallLoadRequestSeq){
     bindHallAfterSlot();
     return true;
   }catch(err){lastError=err;}
+  if(requestSeq===hallLoadRequestSeq)setHallSlot('hallSlotMyRank',hofMyRankingPanel());
   window.KinojoStagedLoading?.failed?.('#hallSlotMyRank');
   console.warn("KINOJO Hall personal ranking load failed:",lastError);
   return false;
@@ -194,6 +195,6 @@ async function load({force=false}={}){
 }
 async function reloadHallAfterAuthChange(){
   clearTimeout(hallAuthReloadTimer);
-  return new Promise(resolve=>{hallAuthReloadTimer=setTimeout(()=>resolve(refreshHallPersonalRanking(hallLoadRequestSeq)),250);});
+  return new Promise(resolve=>{hallAuthReloadTimer=setTimeout(()=>resolve(refreshHallPersonalRanking(hallLoadRequestSeq)),350);});
 }
 window.reloadHallAfterAuthChange=reloadHallAfterAuthChange;

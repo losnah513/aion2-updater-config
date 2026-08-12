@@ -280,6 +280,7 @@ function renderSummary(data){
     summaryCard(fmt(s.waitingCount),'대기자',true)
   ];
   document.getElementById('summaryGrid').innerHTML=cards.join('');
+  const railCount=document.getElementById('sanctuaryRailWaitCount');if(railCount)railCount.textContent=fmt(s.waitingCount);
   bindWaitlistOpeners();
 }
 function summaryCard(num,label,action=false){const tag=action?'button':'div';const attrs=action?' type="button" data-waitlist-open aria-label="대기자 '+esc(num)+'명 추천 배치 보기"':'';return '<'+tag+' class="summary-card'+(action?' summary-card-action':'')+'"'+attrs+'><div class="summary-num">'+esc(num)+'</div><div class="summary-label">'+esc(label)+(action?'<span class="summary-action-mark" aria-hidden="true">›</span>':'')+'</div></'+tag+'>';}
@@ -430,10 +431,13 @@ function renderWaiting(waiting){
 }
 function bindWaitlistOpeners(){document.querySelectorAll('[data-waitlist-open]').forEach(button=>{button.onclick=()=>openWaitlistModal(button)});}
 function isCompactWaitlistPhone(){return location.pathname.startsWith('/m/')&&Math.min(window.innerWidth,window.innerHeight)<=600}
+function isSplitWaitlistMobile(){return location.pathname.startsWith('/m/')&&!isCompactWaitlistPhone()&&window.innerWidth<=1366}
+function syncWaitlistResponsiveMode(modal){modal.classList.toggle('is-compact-phone',isCompactWaitlistPhone());modal.classList.toggle('is-split-mobile',isSplitWaitlistMobile())}
 function waitlistSetStep(step,{focus=true}={}){
   const modal=ensureWaitlistModal();
   sanctuaryWaitlistStep=Math.max(1,Math.min(4,Number(step)||1));
   modal.dataset.waitlistStep=String(sanctuaryWaitlistStep);
+  modal.classList.toggle('is-recommendation-stage',sanctuaryWaitlistStep>=3);
   modal.querySelectorAll('[data-waitlist-step-go]').forEach(button=>{
     const target=Number(button.dataset.waitlistStepGo);
     const enabled=target===1||(target===2&&!!sanctuaryWaitlistSelectionId)||(target===3&&!!sanctuaryWaitlistRecommendationData)||(target===4&&!!sanctuaryWaitlistSelectedTeamNo);
@@ -472,13 +476,13 @@ function ensureWaitlistModal(){
   modal.querySelectorAll('[data-waitlist-step-go]').forEach(button=>button.addEventListener('click',()=>{if(!button.disabled)waitlistSetStep(Number(button.dataset.waitlistStepGo))}));
   modal.querySelectorAll('[data-waitlist-view]').forEach(button=>button.addEventListener('click',()=>{sanctuaryWaitlistView=button.dataset.waitlistView||'all';if(sanctuaryWaitlistView==='class'&&!sanctuaryWaitlistClass)sanctuaryWaitlistClass=SANCTUARY_WAITLIST_CLASSES[0];renderWaitlistPersonControls();renderWaitlistPersonList()}));
   modal.querySelectorAll('[data-waitlist-sort]').forEach(button=>button.addEventListener('click',()=>{const next=button.dataset.waitlistSort||'name';if(next===sanctuaryWaitlistSort){sanctuaryWaitlistSortDirection=sanctuaryWaitlistSortDirection==='asc'?'desc':'asc'}else{sanctuaryWaitlistSort=next;sanctuaryWaitlistSortDirection='asc'}renderWaitlistPersonControls();renderWaitlistPersonList()}));
-  window.addEventListener('resize',()=>modal.classList.toggle('is-compact-phone',isCompactWaitlistPhone()),{passive:true});
+  window.addEventListener('resize',()=>syncWaitlistResponsiveMode(modal),{passive:true});
   return modal;
 }
 function openWaitlistModal(trigger){
   const modal=ensureWaitlistModal();
   sanctuaryWaitlistReturnFocus=trigger instanceof HTMLElement?trigger:document.activeElement;
-  modal.classList.toggle('is-compact-phone',isCompactWaitlistPhone());
+  syncWaitlistResponsiveMode(modal);
   modal.classList.add('open');
   modal.setAttribute('aria-hidden','false');
   document.body.classList.add('sanctuary-waitlist-open');
@@ -548,10 +552,13 @@ function renderWaitlistPersonList(){
 function selectWaitlistCandidate(characterMasterId,{focus=false}={}){
   const candidate=waitlistCandidates().find(item=>Number(item.characterMasterId)===Number(characterMasterId));
   if(!candidate)return;
+  sanctuaryWaitlistRecommendationSeq+=1;
+  sanctuaryWaitlistSlotSeq+=1;
   sanctuaryWaitlistSelectionId=Number(candidate.characterMasterId);
   sanctuaryWaitlistSelectedSanctuary='';
   sanctuaryWaitlistSelectedTeamNo=0;
   sanctuaryWaitlistRecommendationData=null;
+  resetWaitlistFollowingSteps();
   renderWaitlistPersonList();
   const modal=ensureWaitlistModal();
   const selected=modal.querySelector('#waitlistSelectedPerson');

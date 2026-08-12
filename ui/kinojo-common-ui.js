@@ -886,7 +886,7 @@
   function loadSanctuaryMasterRenderer(){
     if(document.querySelector('script[data-kinojo-sanctuary-master-loader]')) return;
     const script=document.createElement('script');
-    script.src='/ui/kinojo-sanctuary-master.js?cache=2026071517';
+    script.src='/ui/kinojo-sanctuary-master.js?cache=2026081222';
     script.async=true;
     script.dataset.kinojoSanctuaryMasterLoader='true';
     document.head.appendChild(script);

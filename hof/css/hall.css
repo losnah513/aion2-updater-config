@@ -1822,6 +1822,41 @@ body{
 @media (max-width:430px){.hof-v2-my-current-grid,.hof-v2-my-list{grid-template-columns:1fr!important}.hof-v2-period-label{align-items:flex-start;flex-direction:column;gap:2px}}
 @media (prefers-reduced-motion:reduce){.hof-v2-loading-lines span{animation:none}}
 
+/* 20260812_20: aligned TOP3 cards and compact attached scope bar */
+body>.hof-filter-bar{min-height:50px;padding:7px max(14px,calc((100% - 1480px)/2 + 14px))!important}
+body>.hof-filter-bar .hof-filter-copy{flex-direction:row;align-items:center;gap:8px}
+body>.hof-filter-bar .hof-filter-copy strong{font-size:13px}
+body>.hof-filter-bar .hof-filter-switches{flex-wrap:nowrap}
+body>.hof-filter-bar .kinojo-filter-switch{min-height:34px!important;width:auto!important;gap:7px!important;padding-inline:9px!important;white-space:nowrap}
+.hof-v2-card-info{flex:0 0 auto;width:19px!important;height:19px!important;margin-left:auto;border-color:rgba(37,99,235,.20);background:#fff;font-size:9px!important}
+@media (min-width:761px){
+  .hof-v2-board{grid-template-columns:repeat(4,minmax(0,1fr))!important;grid-template-rows:220px 220px!important;grid-template-areas:"enhance pve pvp growth" "enhance like ranking growth"!important}
+  .hof-v2-area-pve,.hof-v2-area-pvp,.hof-v2-area-like,.hof-v2-area-ranking-link{min-height:220px!important;height:220px!important}
+  .hof-v2-area-pve .hof-v2-panel,.hof-v2-area-pvp .hof-v2-panel,.hof-v2-area-like .hof-v2-panel,.hof-v2-area-ranking-link .hof-v2-panel{height:220px!important}
+  .hof-v2-wide{grid-template-columns:1fr!important;grid-template-rows:38px minmax(0,1fr)!important}
+  .hof-v2-wide .hof-v2-panel-head.is-compact{width:100%!important;height:38px!important;padding:7px 10px!important}
+  .hof-v2-wide .hof-v2-panel-head.is-compact h2{flex-direction:row!important;gap:7px!important;font-size:16px!important;writing-mode:horizontal-tb!important}
+  .hof-v2-ranking-link-inner{position:relative;align-content:start!important;padding:24px!important}
+  .hof-v2-ranking-link-inner em{position:absolute;right:22px;bottom:18px;margin:0!important}
+}
+@media (min-width:761px) and (max-width:1180px){
+  .hof-v2-board{grid-template-rows:210px 210px!important}
+  .hof-v2-area-pve,.hof-v2-area-pvp,.hof-v2-area-like,.hof-v2-area-ranking-link,.hof-v2-area-pve .hof-v2-panel,.hof-v2-area-pvp .hof-v2-panel,.hof-v2-area-like .hof-v2-panel,.hof-v2-area-ranking-link .hof-v2-panel{height:210px!important;min-height:210px!important}
+}
+.hof-v2-top3-name-row{display:flex!important;align-items:center!important;gap:6px!important}
+.hof-v2-top3-name-row .hof-v2-class-icon{order:-1}
+.hof-v2-top3-item.is-power-card{grid-template-columns:24px minmax(0,1fr) 46px!important;grid-template-rows:minmax(0,1fr) minmax(0,1fr)!important;column-gap:7px!important;row-gap:0!important}
+.hof-v2-top3-item.is-power-card .hof-v2-power-rank{grid-column:1;grid-row:1/3}
+.hof-v2-top3-item.is-power-card .hof-v2-top3-info{grid-column:2;grid-row:1;align-self:end!important}
+.hof-v2-top3-item.is-power-card .hof-v2-server-badge{display:none!important}
+.hof-v2-top3-item.is-power-card .hof-v2-top3-aside{grid-column:2;grid-row:2;display:flex!important;align-items:center!important;gap:5px!important;min-width:0!important;justify-self:stretch!important}
+.hof-v2-top3-item.is-power-card .hof-v2-owner-slot{flex:0 0 auto!important}
+.hof-v2-top3-item.is-power-card .hof-v2-top3-score{min-width:0!important;font-size:12px!important}
+.hof-v2-top3-item.is-power-card .hof-v2-power-portrait{grid-column:3;grid-row:1/3;width:46px!important}
+.hof-v2-top3-item.is-power-card .hof-v2-class-icon{width:24px!important;height:24px!important;min-width:24px!important;flex-basis:24px!important;padding:3px!important;border:1px solid rgba(37,99,235,.28)!important;border-radius:50%!important;background:#fff!important}
+.hof-v2-top3-item:not(.is-power-card) .hof-v2-class-icon{width:22px!important;height:22px!important;min-width:22px!important;flex-basis:22px!important;padding:3px!important;border:1px solid rgba(37,99,235,.22)!important;border-radius:50%!important;background:#fff!important}
+@media(max-width:760px){body>.hof-filter-bar{min-height:0;padding:7px 10px!important}body>.hof-filter-bar .hof-filter-copy{justify-content:space-between}.hof-v2-top3-item.is-power-card{grid-template-columns:22px minmax(0,1fr) 44px!important}.hof-v2-top3-item.is-power-card .hof-v2-power-portrait{width:44px!important}}
+
 
 
 /* ============================================================
@@ -2106,3 +2141,32 @@ body{
 .hof-v2-load-error button{border:1px solid rgba(37,99,235,.24);border-radius:7px;background:#2563eb;color:#fff;padding:9px 24px;font-weight:1000;cursor:pointer;}
 @media (max-width:760px){.hof-v2-wide .hof-v2-top3-item.rank-1.is-power-card,.hof-v2-wide .hof-v2-top3-item.rank-2.is-power-card,.hof-v2-wide .hof-v2-top3-item.rank-3.is-power-card{grid-template-columns:22px minmax(78px,1fr) 30px minmax(76px,88px) 50px!important;gap:5px!important;}}
 @media (max-width:430px){.hof-v2-wide .hof-v2-top3-item.rank-1.is-power-card,.hof-v2-wide .hof-v2-top3-item.rank-2.is-power-card,.hof-v2-wide .hof-v2-top3-item.rank-3.is-power-card{grid-template-columns:20px minmax(68px,1fr) 27px minmax(68px,80px) 44px!important;gap:4px!important;}}
+
+/* 20260812_20 final precedence: old cleanup declarations above still include a class column. */
+.hof-v2-wide .hof-v2-top3-item.rank-1.is-power-card,
+.hof-v2-wide .hof-v2-top3-item.rank-2.is-power-card,
+.hof-v2-wide .hof-v2-top3-item.rank-3.is-power-card{grid-template-columns:24px minmax(0,1fr) minmax(66px,74px) 52px!important}
+@media (max-width:760px){.hof-v2-wide .hof-v2-top3-item.rank-1.is-power-card,.hof-v2-wide .hof-v2-top3-item.rank-2.is-power-card,.hof-v2-wide .hof-v2-top3-item.rank-3.is-power-card{grid-template-columns:22px minmax(0,1fr) minmax(62px,70px) 48px!important}}
+@media (max-width:430px){.hof-v2-wide .hof-v2-top3-item.rank-1.is-power-card,.hof-v2-wide .hof-v2-top3-item.rank-2.is-power-card,.hof-v2-wide .hof-v2-top3-item.rank-3.is-power-card{grid-template-columns:20px minmax(0,1fr) minmax(56px,64px) 42px!important}}
+
+/* 20260812_22: compact TOP3 identity contract for four equal summary cards. */
+.hof-v2-wide .hof-v2-top3-item.rank-1.is-power-card,
+.hof-v2-wide .hof-v2-top3-item.rank-2.is-power-card,
+.hof-v2-wide .hof-v2-top3-item.rank-3.is-power-card{
+  grid-template-columns:24px minmax(0,1fr) 46px!important;
+  grid-template-rows:minmax(0,1fr) minmax(0,1fr)!important;
+  column-gap:7px!important;
+  row-gap:0!important;
+}
+.hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power-rank{grid-column:1!important;grid-row:1/3!important}
+.hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-top3-info{grid-column:2!important;grid-row:1!important;align-self:end!important}
+.hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-server-badge{display:none!important}
+.hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-top3-aside{grid-column:2!important;grid-row:2!important;display:flex!important;align-items:center!important;align-self:start!important;justify-content:flex-start!important;gap:5px!important;padding:0!important;min-width:0!important}
+.hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-owner-slot{display:none!important}
+.hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-top3-score.is-power{display:flex!important;min-width:0!important;width:auto!important;max-width:100%!important;font-size:11px!important;justify-content:flex-start!important}
+.hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power-icon{width:13px!important;height:13px!important;min-width:13px!important;flex-basis:13px!important}
+.hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power-portrait{grid-column:3!important;grid-row:1/3!important;width:46px!important;min-width:46px!important}
+@media(max-width:760px){
+  .hof-v2-wide .hof-v2-top3-item.rank-1.is-power-card,.hof-v2-wide .hof-v2-top3-item.rank-2.is-power-card,.hof-v2-wide .hof-v2-top3-item.rank-3.is-power-card{grid-template-columns:22px minmax(0,1fr) 44px!important}
+  .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power-portrait{width:44px!important;min-width:44px!important}
+}

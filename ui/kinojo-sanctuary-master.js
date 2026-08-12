@@ -140,7 +140,7 @@
   function canonicalHomeLayers(item){
     const code=safeCode(item.code);if(!['rudra','bagot','kaldrix'].includes(code))return '';
     return '<span class="sanctuary-home-background" aria-hidden="true" style="background-image:url(&quot;/assets/images/sanctuary/backgrounds/'+code+'.webp&quot;)"></span>'+
-      '<span class="sanctuary-home-boss" aria-hidden="true" style="background-image:url(&quot;/assets/images/sanctuary/bosses/'+code+'.webp&quot;)"></span>'+
+      '<span class="sanctuary-home-boss" aria-hidden="true" style="background-image:url(&quot;/assets/images/sanctuary/bosses-v2/'+code+'.webp&quot;)"></span>'+
       '<span class="sanctuary-home-vignette" aria-hidden="true"></span>';
   }
 
@@ -170,7 +170,7 @@
     const style = bg ? ' style="--sanctuary-master-bg:'+esc(bg)+';'+(item.accentColor?'--sanctuary-master-accent:'+esc(item.accentColor)+';':'')+'"' : '';
     return '<a class="mobile-sanctuary-slide sanctuary-master-mobile-slide sanctuary-home-mobile-'+esc(item.code)+mobileClass+(index===0?' is-active':'')+'" data-sanctuary-slide data-sanctuary-home-mobile data-arrow-name="'+esc(item.order+'성역')+'" href="'+esc(href)+'" aria-label="'+esc(item.order+'성역 파티 정보 확인')+'"'+style+'>'+
       '<span class="mobile-card-bg sanctuary-master-mobile-bg" aria-hidden="true" style="background-image:url(&quot;/assets/images/sanctuary/backgrounds/'+esc(item.code)+'.webp&quot;)"></span>'+
-      '<span class="mobile-sanctuary-boss" aria-hidden="true" style="background-image:url(&quot;/assets/images/sanctuary/bosses/'+esc(item.code)+'.webp&quot;)"></span>'+
+      '<span class="mobile-sanctuary-boss" aria-hidden="true" style="background-image:url(&quot;/assets/images/sanctuary/bosses-v2/'+esc(item.code)+'.webp&quot;)"></span>'+
       '<span class="mobile-card-shade" aria-hidden="true"></span>'+
       '<span class="mobile-card-copy"><strong>성역 '+esc(item.order)+'</strong><span>'+esc(item.name)+'</span></span>'+
     '</a>';
