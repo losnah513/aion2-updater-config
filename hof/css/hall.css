@@ -1756,6 +1756,14 @@ body{
   transform:translate(-35%,-50%) rotate(45deg)!important;
   z-index:4!important;
 }
+
+/* HOF 318: in-card criteria, clean waiting state, future meter DPS foundation. */
+.hof-v2-god-head{position:relative;justify-content:space-between!important}
+.hof-v2-card-info{width:25px;height:25px;display:grid;place-items:center;border:1px solid rgba(37,99,235,.25);border-radius:50%;background:#eef4ff;color:#1d4ed8;font-size:12px;font-weight:1000;cursor:pointer}
+.hof-v2-card-info-popover{position:absolute;z-index:30;right:8px;top:34px;width:min(245px,calc(100vw - 40px));display:grid;gap:5px;padding:11px;border:1px solid rgba(37,99,235,.22);border-radius:10px;background:#fff;box-shadow:0 14px 35px rgba(15,23,42,.16);color:#526581}
+.hof-v2-card-info-popover[hidden]{display:none}.hof-v2-card-info-popover strong{font-size:11px;color:#17233a}.hof-v2-card-info-popover span{font-size:9px;font-weight:900;line-height:1.5}.hof-v2-card-info-popover small{font-size:8px;font-weight:900;color:#8390a3}
+.hof-v2-god-main.is-empty{display:grid!important;place-items:center!important;min-height:calc(100% - 38px)!important}.hof-v2-god-main.is-empty .hof-v2-waiting-copy{font-size:22px!important;color:#64748b!important}
+.hof-v2-meter-foundation{display:grid!important;grid-template-rows:auto minmax(0,1fr)!important}.hof-v2-meter-wait{display:grid;place-items:center;align-content:center;gap:8px;padding:18px;text-align:center;background:linear-gradient(135deg,#f8fafc,#eef4ff)}.hof-v2-meter-wait strong{font-size:22px;color:#17233a}.hof-v2-meter-wait span{font-size:11px;font-weight:900;color:#526581}.hof-v2-meter-wait small{font-size:9px;font-weight:1000;color:#2563eb}
 .hof-v2-god-portrait .hof-v2-medal{
   left:0!important;
   top:50%!important;

@@ -60,7 +60,7 @@ function bindHallStaticEvents(){
     const toggle=e.target.closest('[data-hof-period-toggle]');
     if(toggle){
       e.preventDefault();
-      const popover=document.getElementById('hofPeriodPopover');
+      const popover=document.getElementById(toggle.dataset.hofPeriodTarget||'hofPeriodPopover');
       if(!popover)return;
       const willOpen=popover.hidden;
       closeHallPeriodPopover();
@@ -86,10 +86,8 @@ function bindHallStaticEvents(){
 }
 
 function closeHallPeriodPopover(){
-  const popover=document.getElementById('hofPeriodPopover');
-  const toggle=document.querySelector('[data-hof-period-toggle]');
-  if(popover){popover.hidden=true;popover.setAttribute('aria-hidden','true');}
-  if(toggle)toggle.setAttribute('aria-expanded','false');
+  document.querySelectorAll('.hof-v2-period-popover,.hof-v2-card-info-popover').forEach(popover=>{popover.hidden=true;popover.setAttribute('aria-hidden','true')});
+  document.querySelectorAll('[data-hof-period-toggle]').forEach(toggle=>toggle.setAttribute('aria-expanded','false'));
 }
 
 function bindHallDynamicEvents(){

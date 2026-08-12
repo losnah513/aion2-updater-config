@@ -112,6 +112,7 @@ jobs:
 
           node tests/web-shell-auth-contract.test.js
           node tests/sanctuary-waitlist-contract.test.js
+          node tests/staged-page-contract.test.js
 
           python3 <<'PY'
           from pathlib import Path

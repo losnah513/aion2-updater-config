@@ -66,6 +66,7 @@
     const d = D.state.data || {};
     board.innerHTML = panelHtml('PVE', d.pveItems || [], d.pveTotalCount || 0) + panelHtml('PVP', d.pvpItems || [], d.pvpTotalCount || 0);
     board.dataset.mobileMode = D.state.mobileMode;
+    window.KinojoStagedLoading?.ready?.('#rankingBoard');
 
     const status = U.$('rankingStatus');
     if(status){
@@ -81,6 +82,7 @@
   function renderLoading(){
     const board = U.$('rankingBoard');
     if(board) board.innerHTML = '<div class="ranking-loading"><span class="kinojo-spinner"><span></span></span><span>레기온 전체 순위를 불러오는 중...</span></div>';
+    window.KinojoStagedLoading?.region?.('#rankingBoard','레기온 순위');
     const status = U.$('rankingStatus');
     if(status) status.textContent = '서버 순위 계산 결과를 요청하는 중...';
     const shell = U.$('rankingLoadMore');
@@ -89,6 +91,7 @@
   function renderError(err){
     const board = U.$('rankingBoard');
     if(board) board.innerHTML = '<div class="ranking-empty error">레기온 전체 순위를 불러오지 못했습니다.<br>'+U.escapeHtml(err.message || err)+'</div>';
+    window.KinojoStagedLoading?.failed?.('#rankingBoard');
     const status = U.$('rankingStatus');
     if(status) status.textContent = '순위 로딩 실패';
     const shell = U.$('rankingLoadMore');

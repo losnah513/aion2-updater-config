@@ -46,7 +46,8 @@
     gate.id = 'scheduleAuthGate';
     gate.className = 'schedule-auth-gate';
     gate.innerHTML = '<span aria-hidden="true">🔒</span><strong>로그인 후 성역 스케줄을 확인할 수 있습니다.</strong><p>PASS KEY 로그인 시 본인 팀 일정과 투표 기능이 활성화됩니다.</p><button type="button" id="scheduleAuthLoginBtn">로그인</button>';
-    document.querySelector('.schedule-wrap')?.insertBefore(gate, document.querySelector('.schedule-toolbar'));
+    const wrap=document.querySelector('.schedule-wrap');
+    if(wrap){const pageBar=wrap.querySelector('.schedule-page-bar');wrap.insertBefore(gate,pageBar?.nextSibling||wrap.firstChild);}
     gate.querySelector('#scheduleAuthLoginBtn')?.addEventListener('click', ()=>window.KinojoAuth?.openLoginModal?.('성역 스케줄은 PASS KEY 로그인이 필요합니다.', {context:'sanctuary-schedule'}));
     return gate;
   }
@@ -463,6 +464,7 @@
     const seq = ++state.daySeq;
     const root = $('#scheduleDetail');
     if(root) root.innerHTML = '<div class="schedule-detail-loading"><span class="kinojo-spinner" aria-hidden="true"></span><strong>날짜 상세를 불러오는 중...</strong></div>';
+    window.KinojoStagedLoading?.region?.('#scheduleDetail','날짜 상세');
     try{
       const dayRequest = window.KinojoApi.getAction('sanctuaryScheduleDay', {
         targetDate:state.selectedDate,
@@ -471,23 +473,24 @@
         scope:state.scope
       });
       const adminRequest = loadScheduleAdminContext(state.selectedDate);
-      const [data,admin] = await Promise.all([dayRequest,adminRequest]);
+      const data = await dayRequest;
       if(seq !== state.daySeq) return;
       if(!data || data.ok === false) throw new Error(data?.message || '날짜 상세 조회 실패');
       state.day = data;
-      state.scheduleAdmin = admin;
-      state.scheduleAdminError = admin ? '' : state.scheduleAdminError;
       if(state.scheduleEditingId && !scheduleAdminItem(state.scheduleEditingId)){
         state.scheduleEditorOpen = false;
         state.scheduleEditingId = null;
       }
       if(!state.selectedScheduleId) state.selectedScheduleId = Number(data.selectedScheduleId || data.schedules?.[0]?.id || 0) || null;
       renderDay();
+      window.KinojoStagedLoading?.ready?.('#scheduleDetail');
       updateUrl();
+      adminRequest.then(admin=>{if(seq!==state.daySeq)return;state.scheduleAdmin=admin;state.scheduleAdminError=admin?'':state.scheduleAdminError;if(state.scheduleEditingId&&!scheduleAdminItem(state.scheduleEditingId)){state.scheduleEditorOpen=false;state.scheduleEditingId=null}renderDay()});
     }catch(error){
       if(seq !== state.daySeq) return;
       state.day = {ok:false,message:error?.message || String(error)};
       renderDay();
+      window.KinojoStagedLoading?.failed?.('#scheduleDetail');
     }
   }
   async function saveAvailability(){
@@ -526,6 +529,7 @@
     if(!silent){
       setSync('Server Engine 연결 중');
       if(root) root.innerHTML = '<div class="schedule-calendar-loading"><span class="kinojo-spinner" aria-hidden="true"></span><strong>성역 일정을 불러오는 중...</strong></div>';
+      window.KinojoStagedLoading?.region?.('#scheduleCalendarViewport','성역 달력');
     }else setSync(direction==='prev'?'이전 기간으로 이동 중':direction==='next'?'다음 기간으로 이동 중':'일정을 새로고침하는 중');
     try{
       if(!window.KinojoApi) throw new Error('KinojoApi 연결을 확인해 주세요.');
@@ -547,6 +551,7 @@
       renderWeekHead();
       clearNavigationClasses(root);
       renderCalendar();
+      window.KinojoStagedLoading?.ready?.('#scheduleCalendarViewport');
       if(direction&&root){
         root.classList.add('is-entering-'+direction);
         void root.offsetWidth;
@@ -560,6 +565,7 @@
       clearNavigationClasses(root);
       setSync(error?.message || '일정 조회 실패', true);
       if(!silent&&root) root.innerHTML = '<div class="schedule-error">'+esc(error?.message || String(error))+'</div>';
+      if(!silent)window.KinojoStagedLoading?.failed?.('#scheduleCalendarViewport');
       else toast(error?.message || String(error),'error');
     }finally{
       if(direction){clearNavigationClasses(root);setNavigationBusy(false);}

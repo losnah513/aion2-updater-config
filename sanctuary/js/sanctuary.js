@@ -2,7 +2,7 @@ const SANCTUARY_API_PARAM=new URLSearchParams(location.search).get("api")||"";
 const params=new URLSearchParams(location.search);
 let currentId=String(params.get("id")||"").trim().toLowerCase();
 let masterInfo=null;
-function classIconSrc(className){return window.KinojoCharacterProfileImage?.classIconFor?.(className)||''}
+function classIconSrc(className){return window.KinojoCharacterReaction?.classIconFor?.(className)||window.KinojoCharacterProfileImage?.classIconFor?.(className)||''}
 let sanctuaryData=null;
 let sanctuaryWaitlistSelectionId=0;
 let sanctuaryWaitlistRecommendationSeq=0;
@@ -51,10 +51,11 @@ function validateSanctuaryPayload(data){
   if(expectedTeamCount>0&&!groups.length){const error=new Error('성역 팀 데이터가 완전히 도착하지 않았습니다.');error.code='SANCTUARY_TEAM_DATA_INCOMPLETE';throw error}
   return data;
 }
-function applySanctuaryData(data,{fromCache=false}={}){sanctuaryData=data;sanctuaryHasRenderedData=true;masterInfo=data?.info||data?.master||masterInfo;currentId=String(masterInfo?.sanctuaryId||masterInfo?.code||currentId||"").trim().toLowerCase();window.KinojoSanctuaryCurrentId=currentId;if(currentId&&!params.get("id")){const next=new URL(location.href);next.searchParams.set("id",currentId);history.replaceState(null,"",next)}render(data);ensureSanctuaryOperation();setSanctuarySyncState(data.generatedAt||"완료",{fromCache});if(data?.generatedAt)window.dispatchEvent(new CustomEvent('kinojo:page-time',{detail:{value:data.generatedAt,label:fromCache?'동기화(캐시)':'동기화'}}))}
+function applySanctuaryData(data,{fromCache=false}={}){const existingWaitlist=sanctuaryData?.waitlist;const existingWaiting=sanctuaryData?.waiting;sanctuaryData=Object.assign({},sanctuaryData||{},data||{});if(existingWaitlist){sanctuaryData.waitlist=existingWaitlist;sanctuaryData.waiting=Array.isArray(existingWaiting)?existingWaiting:[];sanctuaryData.summary=Object.assign({},sanctuaryData.summary||{},{waitingCount:Number(existingWaitlist.waitingCount||sanctuaryData.waiting.length||0)})}sanctuaryHasRenderedData=true;masterInfo=sanctuaryData?.info||sanctuaryData?.master||masterInfo;currentId=String(masterInfo?.sanctuaryId||masterInfo?.code||currentId||"").trim().toLowerCase();window.KinojoSanctuaryCurrentId=currentId;if(currentId&&!params.get("id")){const next=new URL(location.href);next.searchParams.set("id",currentId);history.replaceState(null,"",next)}render(sanctuaryData);ensureSanctuaryOperation();setSanctuarySyncState(sanctuaryData.generatedAt||"완료",{fromCache});if(sanctuaryData?.generatedAt)window.dispatchEvent(new CustomEvent('kinojo:page-time',{detail:{value:sanctuaryData.generatedAt,label:fromCache?'동기화(캐시)':'동기화'}}))}
+function applySanctuaryWaitlist(waitlist){if(!waitlist||waitlist.ok===false)throw new Error(waitlist?.message||'대기자 조회 실패');sanctuaryData=Object.assign({},sanctuaryData||{}, {waiting:Array.isArray(waitlist.waiting)?waitlist.waiting:[],waitlist});sanctuaryData.summary=Object.assign({},sanctuaryData.summary||{},{waitingCount:Number(waitlist.waitingCount||0)});renderWaiting(sanctuaryData.waiting);renderSummary(sanctuaryData);window.KinojoStagedLoading?.ready?.('#waitingSection');window.KinojoStagedLoading?.ready?.('#summaryGrid');refreshWaitlistModalIfOpen();writeSanctuaryCache(sanctuaryData)}
 async function fetchSanctuaryFresh(){
   if(!window.KinojoApi)throw new Error('KinojoApi 연결을 확인해 주세요.');
-  const data=await withRequestTimeout(window.KinojoApi.getAction('sanctuary',{id:currentId||''}),SANCTUARY_REQUEST_TIMEOUT_MS,'성역 팀 데이터 응답 시간이 초과되었습니다.');
+  const data=await withRequestTimeout(window.KinojoApi.getAction('sanctuaryRosterData',{id:currentId||''}),SANCTUARY_REQUEST_TIMEOUT_MS,'성역 팀 데이터 응답 시간이 초과되었습니다.');
   validateSanctuaryPayload(data);
   writeSanctuaryCache(data);
   return data;
@@ -92,8 +93,9 @@ async function loadData({force=false,preserveRendered=false}={}){
   if(cached&&!sanctuaryHasRenderedData){try{validateSanctuaryPayload(cached);applySanctuaryData(cached,{fromCache:true})}catch(_error){}}
   const seq=++sanctuaryRequestSeq;
   sanctuaryLoadPromise=(async()=>{
-    try{const data=await fetchSanctuaryFreshWithRetry(seq);if(data&&seq===sanctuaryRequestSeq)applySanctuaryData(data)}
-    catch(err){if(seq!==sanctuaryRequestSeq)return;if(sanctuaryHasRenderedData){setSanctuarySyncState(err?.message||'최신 성역 데이터 확인 실패',{error:true})}else{renderSanctuaryLoadError(err);setSanctuarySyncState(err?.message||'성역 데이터를 불러오지 못했습니다.',{error:true})}}
+    const rosterTask=(async()=>{try{const data=await fetchSanctuaryFreshWithRetry(seq);if(data&&seq===sanctuaryRequestSeq)applySanctuaryData(data)}catch(err){if(seq!==sanctuaryRequestSeq)return;if(sanctuaryHasRenderedData){setSanctuarySyncState(err?.message||'최신 성역 데이터 확인 실패',{error:true})}else{renderSanctuaryLoadError(err);setSanctuarySyncState(err?.message||'성역 데이터를 불러오지 못했습니다.',{error:true})}}})();
+    const waitlistTask=(async()=>{try{const data=await withRequestTimeout(window.KinojoApi.getAction('sanctuaryWaitlistData',{id:currentId||''}),SANCTUARY_REQUEST_TIMEOUT_MS,'대기자 데이터 응답 시간이 초과되었습니다.');if(seq===sanctuaryRequestSeq)applySanctuaryWaitlist(data)}catch(err){if(seq!==sanctuaryRequestSeq)return;const waiting=document.getElementById('waitingSection');if(waiting)waiting.innerHTML='<h2 class="waiting-title">대기자 추천 배치</h2><div class="sanctuary-load-inline-error">'+esc(err?.message||'대기자를 불러오지 못했습니다.')+'</div>';window.KinojoStagedLoading?.failed?.('#waitingSection')}})();
+    await Promise.allSettled([rosterTask,waitlistTask]);
   })().finally(()=>{sanctuaryLoadPromise=null;if(sanctuaryRefreshQueued){sanctuaryRefreshQueued=false;loadData({force:true,preserveRendered:true})}});
   return sanctuaryLoadPromise;
 }
@@ -108,6 +110,10 @@ function renderSkeleton(){
   if(waiting)waiting.innerHTML='<h2 class="waiting-title">대기자 명단</h2>'+sanctuarySpinner('대기자 확인 중');
   if(tip)tip.innerHTML=sanctuarySpinner('공략 팁 불러오는 중');
   renderOperationSkeleton();
+  window.KinojoStagedLoading?.region?.('#summaryGrid','성역 요약');
+  window.KinojoStagedLoading?.region?.('#teamList','포스 구성');
+  window.KinojoStagedLoading?.region?.('#waitingSection','대기자');
+  window.KinojoStagedLoading?.region?.('#sanctuaryOperation','성역 일정');
 }
 
 function readStoredSanctuaryAuth(key){
@@ -146,6 +152,7 @@ function renderOperationLoginRequired(){
   if(week)week.textContent='아이온 주간 · 수요일부터 화요일까지';
   if(auth){auth.textContent='로그인 필요';auth.classList.remove('is-logged-in')}
   if(schedules)schedules.innerHTML='<div class="sanctuary-operation-empty"><strong>로그인하시면 성역 일정을 확인할 수 있습니다</strong></div>';
+  window.KinojoStagedLoading?.ready?.('#sanctuaryOperation');
 }
 function renderOperationAuthUnavailable(){
   const week=document.getElementById('operationWeekLabel');
@@ -154,6 +161,7 @@ function renderOperationAuthUnavailable(){
   if(week)week.textContent='아이온 주간 · 수요일부터 화요일까지';
   if(auth){auth.textContent='로그인 인증 확인 필요';auth.classList.remove('is-logged-in')}
   if(schedules)schedules.innerHTML='<div class="sanctuary-operation-empty"><strong>로그인 상태를 다시 확인해 주세요.</strong><span>로그아웃 후 다시 로그인하면 일정을 불러옵니다.</span></div>';
+  window.KinojoStagedLoading?.ready?.('#sanctuaryOperation');
 }
 function ensureSanctuaryOperation(force=false){
   if(!currentId)return Promise.resolve();
@@ -180,6 +188,7 @@ function renderOperationLoadError(error){
   const schedules=document.getElementById('operationScheduleList');
   if(auth)auth.textContent='운영 정보 연결 실패';
   if(schedules){schedules.innerHTML='<div class="sanctuary-operation-empty"><strong>성역 일정을 불러오지 못했습니다.</strong><span>'+esc(error?.message||'일정 조회 실패')+'</span><button class="sanctuary-retry-btn" type="button" data-operation-retry>다시 불러오기</button></div>';schedules.querySelector('[data-operation-retry]')?.addEventListener('click',()=>ensureSanctuaryOperation(true))}
+  window.KinojoStagedLoading?.failed?.('#sanctuaryOperation');
 }
 async function loadSanctuaryOperation(key){
   const seq=++operationRequestSeq;
@@ -215,6 +224,7 @@ function renderSanctuaryOperation(data){
     auth.classList.toggle('is-logged-in',!!data.authenticated);
   }
   if(!schedules)return;
+  window.KinojoStagedLoading?.ready?.('#sanctuaryOperation');
   if(!items.length){
     schedules.innerHTML='<div class="sanctuary-operation-empty"><strong>등록된 예정 일정이 없습니다.</strong><span>성역 스케줄에서 일정을 확인할 수 있습니다.</span></div>';
     return;
@@ -260,7 +270,7 @@ function openOperationScheduleModal(item){
 }
 function closeOperationScheduleModal(){const modal=document.getElementById('sanctuaryScheduleDetailModal');if(modal){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');}document.body.classList.remove('kinojo-modal-open');}
 function applyHeroVisual(info){const bg=document.getElementById("heroBg");if(!bg)return;const image=String(info?.bannerImage||"").trim();const background=String(info?.cardBackground||"").trim();bg.style.background="";bg.style.backgroundImage="";if(image&&(image.startsWith("/")||image.startsWith("https://"))){bg.style.backgroundImage="url(\""+image.replace(/[\"()]/g,encodeURIComponent)+"\")";return}if(/^(radial-gradient|linear-gradient)\(/i.test(background)&&!/[;{}]/.test(background))bg.style.background=background}
-function render(data){const info=data.info||currentFallback().info;const hero=document.getElementById("sanctuaryHero");hero.className="sanctuary-hero";applyHeroVisual(info);document.getElementById("heroKicker").textContent="성역 "+(info.sanctuaryNo||"");document.getElementById("heroTitle").textContent=info.sanctuaryName||info.shortName||"성역";document.getElementById("heroSub").textContent="Boss. "+(info.bossName||"-")+" · "+(info.shortName||"");renderSummary(data);const teamGroups=normalizeSanctuaryTeamGroups(data);renderTeamQuickNav(teamGroups);renderTeamGroups(teamGroups);renderWaiting(data.waiting||[]);refreshWaitlistModalIfOpen();document.getElementById('tipTitle').textContent=(info.shortName||'성역')+' 공략 팁';document.getElementById('tipBody').innerHTML=(data.tips||[]).map(t=>'<div class="tip-line">'+esc(t)+'</div>').join('')||'<div class="tip-line">공략 팁이 준비 중입니다.</div>';bindSanctuaryProfileImages();setupSliders();bindForceSwitchers();bindSanctuaryReactionCards();verifyTeamRender(teamGroups);window.KinojoSanctuaryEditor?.refreshRosterButtons?.();window.KinojoSanctuaryCapture?.bind?.()}
+function render(data){const info=data.info||currentFallback().info;const hero=document.getElementById("sanctuaryHero");hero.className="sanctuary-hero";applyHeroVisual(info);document.getElementById("heroKicker").textContent="성역 "+(info.sanctuaryNo||"");document.getElementById("heroTitle").textContent=info.sanctuaryName||info.shortName||"성역";document.getElementById("heroSub").textContent="Boss. "+(info.bossName||"-")+" · "+(info.shortName||"");renderSummary(data);window.KinojoStagedLoading?.ready?.('#summaryGrid');const teamGroups=normalizeSanctuaryTeamGroups(data);renderTeamQuickNav(teamGroups);renderTeamGroups(teamGroups);window.KinojoStagedLoading?.ready?.('#teamList');if(data.waitlist||Array.isArray(data.waiting)){renderWaiting(data.waiting||[]);window.KinojoStagedLoading?.ready?.('#waitingSection');refreshWaitlistModalIfOpen()}document.getElementById('tipTitle').textContent=(info.shortName||'성역')+' 공략 팁';document.getElementById('tipBody').innerHTML=(data.tips||[]).map(t=>'<div class="tip-line">'+esc(t)+'</div>').join('')||'<div class="tip-line">공략 팁이 준비 중입니다.</div>';bindSanctuaryProfileImages();setupSliders();bindForceSwitchers();bindSanctuaryReactionCards();verifyTeamRender(teamGroups);window.KinojoSanctuaryEditor?.refreshRosterButtons?.();window.KinojoSanctuaryCapture?.bind?.()}
 function renderSummary(data){
   const s=data.summary||{};
   const cards=[
@@ -477,6 +487,11 @@ function openWaitlistModal(trigger){
   sanctuaryWaitlistSelectedTeamNo=0;
   sanctuaryWaitlistRecommendationData=null;
   sanctuaryWaitlistStep=1;
+  sanctuaryWaitlistView='all';
+  sanctuaryWaitlistClass='';
+  sanctuaryWaitlistSort='name';
+  sanctuaryWaitlistSortDirection='asc';
+  const search=modal.querySelector('#waitlistSearchInput');if(search)search.value='';
   renderWaitlistPersonControls();
   renderWaitlistPersonList();
   resetWaitlistFollowingSteps();
@@ -490,6 +505,9 @@ function closeWaitlistModal(){
   modal.classList.remove('open');
   modal.setAttribute('aria-hidden','true');
   document.body.classList.remove('sanctuary-waitlist-open');
+  sanctuaryWaitlistSelectionId=0;sanctuaryWaitlistSelectedSanctuary='';sanctuaryWaitlistSelectedTeamNo=0;sanctuaryWaitlistRecommendationData=null;sanctuaryWaitlistStep=1;
+  const search=modal.querySelector('#waitlistSearchInput');if(search)search.value='';
+  resetWaitlistFollowingSteps();
   if(sanctuaryWaitlistReturnFocus?.isConnected)sanctuaryWaitlistReturnFocus.focus({preventScroll:true});
 }
 function renderWaitlistEmptyModal(){
@@ -509,7 +527,7 @@ function renderWaitlistPersonControls(){
   modal.querySelectorAll('[data-waitlist-view]').forEach(button=>button.classList.toggle('is-active',button.dataset.waitlistView===sanctuaryWaitlistView));
   modal.querySelectorAll('[data-waitlist-sort]').forEach(button=>{const active=button.dataset.waitlistSort===sanctuaryWaitlistSort;const label=button.dataset.waitlistSortLabel||button.textContent.trim();button.classList.toggle('is-active',active);button.setAttribute('aria-pressed',active?'true':'false');button.setAttribute('aria-label',active?label+' '+(sanctuaryWaitlistSortDirection==='asc'?'오름차순':'내림차순'):label+' 정렬');const arrow=button.querySelector('.waitlist-sort-arrow');if(arrow)arrow.textContent=active?(sanctuaryWaitlistSortDirection==='asc'?'↑':'↓'):'↕'});
   const root=modal.querySelector('#waitlistClassTabs');
-  if(root){root.hidden=sanctuaryWaitlistView!=='class';root.innerHTML=SANCTUARY_WAITLIST_CLASSES.map(name=>'<button type="button" class="'+(name===sanctuaryWaitlistClass?'is-active':'')+'" data-waitlist-class="'+esc(name)+'">'+esc(name)+'</button>').join('');root.querySelectorAll('[data-waitlist-class]').forEach(button=>button.addEventListener('click',()=>{sanctuaryWaitlistClass=button.dataset.waitlistClass||'';renderWaitlistPersonControls();renderWaitlistPersonList()}));}
+  if(root){root.hidden=sanctuaryWaitlistView!=='class';root.innerHTML=SANCTUARY_WAITLIST_CLASSES.map(name=>{const icon=classIconSrc(name);return '<button type="button" class="'+(name===sanctuaryWaitlistClass?'is-active':'')+'" data-waitlist-class="'+esc(name)+'">'+(icon?'<img src="'+esc(icon)+'" alt="" loading="lazy">':'<span class="waitlist-class-icon-fallback" aria-hidden="true">✦</span>')+'<span>'+esc(name)+'</span></button>'}).join('');root.querySelectorAll('[data-waitlist-class]').forEach(button=>button.addEventListener('click',()=>{sanctuaryWaitlistClass=button.dataset.waitlistClass||'';renderWaitlistPersonControls();renderWaitlistPersonList()}));}
 }
 function renderWaitlistPersonList(){
   const modal=ensureWaitlistModal();
@@ -522,7 +540,8 @@ function renderWaitlistPersonList(){
   if(count)count.textContent=fmt(items.length)+'명';
   root.innerHTML=items.length?items.map(item=>{
     const selected=Number(item.characterMasterId)===sanctuaryWaitlistSelectionId;
-    return '<button class="waitlist-person-card'+(selected?' is-selected':'')+'" type="button" data-waitlist-person="'+esc(item.characterMasterId)+'" aria-pressed="'+(selected?'true':'false')+'"><strong>'+esc(item.name||'이름 미확인')+'</strong><span><em>'+esc(item.className||'직업 미확인')+'</em><em>전투력 '+esc(waitlistPower(item.combatPower))+'</em></span><small>아이템레벨 '+fmt(item.itemLevel)+'</small></button>';
+    const server=String(item.serverName||'').trim();
+    return '<button class="waitlist-person-card'+(selected?' is-selected':'')+'" type="button" data-waitlist-person="'+esc(item.characterMasterId)+'" aria-pressed="'+(selected?'true':'false')+'"><strong>'+esc(item.name||'이름 미확인')+'</strong><span><em>'+esc(item.className||'직업 미확인')+'</em><em>전투력 '+esc(waitlistPower(item.combatPower))+'</em></span><small>아이템레벨 '+fmt(item.itemLevel)+(server&&server!=='지켈'?' · '+esc(server):'')+'</small></button>';
   }).join(''):'<div class="waitlist-pane-empty">검색 결과가 없습니다.</div>';
   root.querySelectorAll('[data-waitlist-person]').forEach(button=>button.addEventListener('click',()=>selectWaitlistCandidate(Number(button.dataset.waitlistPerson),{focus:true})));
 }
@@ -595,8 +614,9 @@ function waitlistRecommendationHtml(item,index){
   const safe=item.hasClassSafeParty===true;
   const completionReady=item.completionReady===true||Number(item.totalVacancies||0)===1;
   const parties=Array.isArray(item.parties)?item.parties:[];
-  const partySummary=parties.map(party=>'<span><b>'+esc(party.partyName||party.partyNo+'파티')+'</b><i>'+fmt(party.filled)+' / '+fmt(party.capacity)+'</i></span>').join('');
-  return '<button class="waitlist-force-card'+(safe?' is-class-safe':'')+(completionReady?' is-completion-ready':'')+'" type="button" data-waitlist-force="'+esc(item.teamNo)+'"><span class="waitlist-force-card-head"><span class="waitlist-force-rank">추천 '+(index+1)+(completionReady?' · 합류 시 완성':'')+'</span><span class="waitlist-force-score">공석 '+fmt(item.totalVacancies)+'</span></span><span class="waitlist-force-main"><small>'+esc(item.teamGroupName||item.teamGroupNo+'팀')+'</small><strong>'+esc(item.forceName||item.forceNo+'포스')+'</strong><em class="waitlist-force-party-summary">'+partySummary+'</em></span><span class="waitlist-force-arrow" aria-hidden="true">›</span></button>';
+  const bestParty=parties.slice().sort((a,b)=>Number(a.classOverlapCount||0)-Number(b.classOverlapCount||0)||Number(a.vacancies||0)-Number(b.vacancies||0)||Number(a.partyNo||0)-Number(b.partyNo||0))[0]||{};
+  const forceName=item.forceName||item.forceNo+'포스';const partyName=bestParty.partyName||bestParty.partyNo+'파티';
+  return '<button class="waitlist-force-card'+(safe?' is-class-safe':'')+(completionReady?' is-completion-ready':'')+'" type="button" data-waitlist-force="'+esc(item.teamNo)+'"><span class="waitlist-force-card-head"><span class="waitlist-force-rank">추천 '+(index+1)+(completionReady?' · 합류 시 완성':'')+'</span><span class="waitlist-force-score">공석 '+fmt(item.totalVacancies)+'</span></span><span class="waitlist-force-main"><strong>['+esc(forceName)+']['+esc(partyName)+'] '+fmt(item.filled)+' / '+fmt(item.capacity)+'</strong><em>'+esc(item.teamGroupName||item.teamGroupNo+'팀')+' · 클래스 중복 '+fmt(item.bestClassOverlapCount||0)+'명</em></span><span class="waitlist-force-arrow" aria-hidden="true">›</span></button>';
 }
 async function selectWaitlistForce(teamNo,button){
   const candidate=waitlistCandidates().find(item=>Number(item.characterMasterId)===sanctuaryWaitlistSelectionId);
@@ -624,7 +644,8 @@ function renderWaitlistPartyDetail(data){
   const force=data.force||{};
   const slots=Array.isArray(data.slots)?data.slots:[];
   const parties=Array.isArray(data.parties)?data.parties:[];
-  root.innerHTML='<header class="waitlist-party-detail-head"><div><small>'+esc(force.teamGroupName||force.teamGroupNo+'팀')+'</small><strong>'+esc(force.forceName||force.forceNo+'포스')+'</strong></div><span>빈자리를 눌러 편성·지원</span></header><div class="waitlist-party-columns">'+parties.map(party=>waitlistPartyColumnHtml(party,slots,data)).join('')+'</div>';
+  const conflicts=Array.isArray(data.conflictingCharacters)?data.conflictingCharacters:[];
+  root.innerHTML='<header class="waitlist-party-detail-head"><div><small>'+esc(force.teamGroupName||force.teamGroupNo+'팀')+'</small><strong>'+esc(force.forceName||force.forceNo+'포스')+'</strong></div><span>빈자리를 눌러 편성·지원</span></header>'+(conflicts.length?'<div class="waitlist-owner-conflict"><strong>동일 사용자 중복 편성 불가</strong><span>'+esc(conflicts.map(item=>item.name).join(', '))+' 캐릭터가 이미 이 포스에 있습니다.</span></div>':'')+'<div class="waitlist-party-columns">'+parties.map(party=>waitlistPartyColumnHtml(party,slots,data)).join('')+'</div>';
   root.querySelectorAll('[data-waitlist-empty-slot]').forEach(button=>button.addEventListener('click',()=>handleWaitlistEmptySlot(button,data)));
   waitlistSetStep(4,{focus:isCompactWaitlistPhone()});
 }
@@ -634,11 +655,14 @@ function waitlistPartyColumnHtml(party,slots,data){
   return '<section class="waitlist-party-column"><header><strong>'+esc(party.partyName||party.partyNo+'파티')+'</strong><span>'+fmt(party.filled)+' / '+fmt(capacity)+'</span></header><div>'+rows.map(slot=>waitlistSlotHtml(slot,data)).join('')+'</div></section>';
 }
 function waitlistSlotHtml(slot,data){
-  if(slot.occupied){return '<article class="waitlist-slot is-filled"><span class="waitlist-slot-number">'+fmt(slot.slotNo)+'</span><div><strong>'+esc(slot.name||'구성원')+'</strong><small>'+esc(slot.className||'직업 미확인')+' · 전투력 '+esc(waitlistPower(slot.combatPower))+'</small></div></article>';}
+  const sameClass=slot.sameClassAsCandidate===true;
+  if(slot.occupied){const icon=classIconSrc(slot.className);const server=String(slot.serverName||'').trim();return '<article class="waitlist-slot is-filled'+(sameClass?' is-same-class':'')+'"><span class="waitlist-slot-class-icon">'+(icon?'<img src="'+esc(icon)+'" alt="'+esc(slot.className||'클래스')+'">':'?')+'</span><div><strong>'+esc(slot.name||'구성원')+'</strong>'+(server&&server!=='지켈'?'<small>'+esc(server)+'</small>':'')+'</div><span class="waitlist-slot-number">'+fmt(slot.slotNo)+'</span></article>';}
   const mode=String(data.actor?.actionMode||'LOGIN');
   const pending=slot.myPending===true;
-  const label=pending?'지원 요청 대기 중':mode==='MANAGE'?'+ 바로 편성':mode==='SUPPORT'?'+ 지원하기':mode==='LOGIN'?'+ 로그인 후 선택':'+ 빈자리';
-  return '<button class="waitlist-slot is-empty'+(pending?' is-pending':'')+'" type="button" data-waitlist-empty-slot data-party-no="'+esc(slot.partyNo)+'" data-slot-no="'+esc(slot.slotNo)+'" '+(pending?'disabled':'')+'><span class="waitlist-slot-number">'+fmt(slot.slotNo)+'</span><strong>'+label+'</strong></button>';
+  const samePartyClass=(Array.isArray(data.slots)?data.slots:[]).some(item=>Number(item.partyNo)===Number(slot.partyNo)&&item.sameClassAsCandidate===true);
+  const blocked=data.forceOwnerConflict===true||mode==='BLOCKED';
+  const label=pending?'지원 요청 대기 중':blocked?'동일 사용자 캐릭터 편성 불가':mode==='MANAGE'?'+ 바로 편성':mode==='SUPPORT'?'+ 지원하기':mode==='LOGIN'?'+ 로그인 후 선택':'+ 빈자리';
+  return '<button class="waitlist-slot is-empty'+(pending?' is-pending':'')+(samePartyClass?' has-same-class':'')+'" type="button" data-waitlist-empty-slot data-party-no="'+esc(slot.partyNo)+'" data-slot-no="'+esc(slot.slotNo)+'" '+(pending||blocked?'disabled':'')+'><span class="waitlist-slot-number">'+fmt(slot.slotNo)+'</span><strong>'+label+'</strong>'+(samePartyClass?'<small>해당 파티에 같은 클래스가 이미 있습니다</small>':'')+'</button>';
 }
 function ensureWaitlistConfirm(){
   let modal=document.getElementById('sanctuaryWaitlistConfirm');if(modal)return modal;
@@ -646,8 +670,8 @@ function ensureWaitlistConfirm(){
   modal.innerHTML='<div class="waitlist-confirm-card" role="alertdialog" aria-modal="true" aria-labelledby="waitlistConfirmTitle"><div class="waitlist-confirm-icon">✓</div><h3 id="waitlistConfirmTitle">포스 배치 확인</h3><p id="waitlistConfirmMessage"></p><div><button type="button" data-waitlist-confirm-cancel>취소</button><button type="button" class="primary" data-waitlist-confirm-ok>저장</button></div></div>';
   document.body.appendChild(modal);return modal;
 }
-function askWaitlistConfirm(message,okLabel){
-  const modal=ensureWaitlistConfirm();modal.querySelector('#waitlistConfirmMessage').textContent=message;modal.querySelector('[data-waitlist-confirm-ok]').textContent=okLabel||'저장';modal.classList.add('open');modal.setAttribute('aria-hidden','false');
+function askWaitlistConfirm(message,okLabel,warning=''){
+  const modal=ensureWaitlistConfirm();modal.querySelector('#waitlistConfirmMessage').innerHTML='<span>'+esc(message)+'</span>'+(warning?'<strong class="waitlist-confirm-warning">'+esc(warning)+'</strong>':'');modal.querySelector('[data-waitlist-confirm-ok]').textContent=okLabel||'저장';modal.classList.add('open');modal.setAttribute('aria-hidden','false');
   return new Promise(resolve=>{const finish=value=>{modal.classList.remove('open');modal.setAttribute('aria-hidden','true');ok.onclick=null;cancel.onclick=null;resolve(value)};const ok=modal.querySelector('[data-waitlist-confirm-ok]');const cancel=modal.querySelector('[data-waitlist-confirm-cancel]');ok.onclick=()=>finish(true);cancel.onclick=()=>finish(false);cancel.focus();});
 }
 async function handleWaitlistEmptySlot(button,data){
@@ -657,12 +681,14 @@ async function handleWaitlistEmptySlot(button,data){
   const candidate=data.candidate||{};const force=data.force||{};const partyNo=Number(button.dataset.partyNo);const slotNo=Number(button.dataset.slotNo);
   const location='['+String(force.teamGroupName||force.teamGroupNo+'팀')+']['+String(force.forceName||force.forceNo+'포스')+']['+partyNo+'파티]';
   const manage=mode==='MANAGE';const message=manage?'['+candidate.name+'] 캐릭터를 해당 '+location+' 구성원에 포함시키겠습니까?':'['+candidate.name+'] 캐릭터를 해당 '+location+'에 지원하시겠습니까?';
-  if(!await askWaitlistConfirm(message,manage?'저장':'지원'))return;
+  const duplicate=(Array.isArray(data.slots)?data.slots:[]).find(slot=>Number(slot.partyNo)===partyNo&&slot.sameClassAsCandidate===true);
+  const warning=duplicate?'해당 파티에는 이미 ['+String(duplicate.name||'구성원')+']와 같은 ['+String(candidate.className||duplicate.className||'동일')+'] 클래스가 있습니다.':'';
+  if(!await askWaitlistConfirm(message,manage?'저장':'지원',warning))return;
   button.disabled=true;button.classList.add('is-busy');
   try{
     const result=manage
-      ?await window.KinojoApi.postAction('sanctuaryRoster',{command:'DIRECT_ASSIGN',characterMasterId:candidate.characterMasterId,sanctuaryId:force.sanctuaryCode,teamNo:force.teamNo,partyNo,slotNo,requestKey:'waitlist-v316-'+(crypto.randomUUID?.()||Date.now())})
-      :await window.KinojoApi.postAction('sanctuarySupportRequest',{characterMasterId:candidate.characterMasterId,sanctuaryId:force.sanctuaryCode,teamNo:force.teamNo,partyNo,slotNo,requestKey:'support-v316-'+(crypto.randomUUID?.()||Date.now())});
+      ?await window.KinojoApi.postAction('sanctuaryRoster',{command:'DIRECT_ASSIGN',characterMasterId:candidate.characterMasterId,sanctuaryId:force.sanctuaryCode,teamNo:force.teamNo,partyNo,slotNo,requestKey:'waitlist-v318-'+(crypto.randomUUID?.()||Date.now())})
+      :await window.KinojoApi.postAction('sanctuarySupportRequest',{characterMasterId:candidate.characterMasterId,sanctuaryId:force.sanctuaryCode,teamNo:force.teamNo,partyNo,slotNo,requestKey:'support-v318-'+(crypto.randomUUID?.()||Date.now())});
     if(!result||result.ok===false)throw new Error(result?.message||'요청을 처리하지 못했습니다.');
     window.KinojoToast?.show?.(result.message||(manage?'편성을 완료했습니다.':'지원 요청을 보냈습니다.'));
     await loadWaitlistSlotDetail(candidate,force.sanctuaryCode,force.teamNo);

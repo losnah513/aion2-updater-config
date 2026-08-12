@@ -1163,28 +1163,44 @@
     return rpc('kinojo_web_get_sanctuary_master', {});
   }
 
-  async function getSanctuaryData(id){
+  function decorateSanctuaryWaitlist(data){
+    if(!data || data.ok === false) return data;
+    data.waiting = (Array.isArray(data.waiting) ? data.waiting : []).map(item => Object.assign({}, item, {
+      serverName:String(item?.serverName || getServerNameByServerId(item?.serverId || '') || '').trim()
+    }));
+    return data;
+  }
+
+  async function getSanctuaryRosterData(id){
     const auth = window.KinojoAuth || {};
     const session = typeof auth.getSession === 'function' ? auth.getSession() : null;
     const account = typeof auth.getAccount === 'function' ? auth.getAccount() : null;
     const passKey = String(account?.passKey || account?.passCode || session?.passKey || session?.passCode || '').trim();
-    const [data,waitlist,badgeMap]=await Promise.all([
+    const [data,badgeMap]=await Promise.all([
       rpc('kinojo_web_get_sanctuary_v317', { p_sanctuary_code:String(id || '') || null, p_pass_key:passKey || null }),
-      rpc('kinojo_web_get_sanctuary_waitlist_v315', { p_sanctuary_code:String(id || '') || null }),
       getIdentityBadges().catch(()=>new Map())
     ]);
+    return decorateIdentityBadges(data,badgeMap);
+  }
+
+  async function getSanctuaryWaitlistData(id){
+    return decorateSanctuaryWaitlist(await rpc('kinojo_web_get_sanctuary_waitlist_v315', { p_sanctuary_code:String(id || '') || null }));
+  }
+
+  async function getSanctuaryData(id){
+    const [data,waitlist]=await Promise.all([getSanctuaryRosterData(id),getSanctuaryWaitlistData(id)]);
     if(waitlist?.ok!==false){
       data.waiting=Array.isArray(waitlist?.waiting)?waitlist.waiting:[];
       data.waitlist=waitlist;
       data.summary=Object.assign({},data.summary||{},{waitingCount:Number(waitlist?.waitingCount||0)});
     }
-    return decorateIdentityBadges(data,badgeMap);
+    return data;
   }
 
   async function getSanctuaryWaitlistRecommendations(extra={}){
     const characterMasterId=Number(extra.characterMasterId||extra.character_master_id||0);
     if(!Number.isFinite(characterMasterId)||characterMasterId<=0)return {ok:false,message:'대기자 캐릭터를 다시 선택해 주세요.'};
-    return rpc('kinojo_web_get_sanctuary_waitlist_recommendations_v317',{
+    return rpc('kinojo_web_get_sanctuary_waitlist_recommendations_v318',{
       p_character_master_id:characterMasterId,
       p_sanctuary_code:String(extra.id||extra.sanctuaryId||extra.sanctuaryCode||'').trim()
     });
@@ -1195,7 +1211,7 @@
     const teamNo=Number(extra.teamNo||extra.team_no||0);
     if(!Number.isFinite(characterMasterId)||characterMasterId<=0||!Number.isFinite(teamNo)||teamNo<=0)return {ok:false,message:'캐릭터와 포스를 다시 선택해 주세요.'};
     let passKey='';try{passKey=currentPassKey();}catch(_err){}
-    return rpc('kinojo_sanctuary_waitlist_slot_detail_v316',{
+    return rpc('kinojo_sanctuary_waitlist_slot_detail_v318',{
       p_character_master_id:characterMasterId,
       p_sanctuary_code:String(extra.id||extra.sanctuaryId||extra.sanctuaryCode||'').trim(),
       p_team_no:teamNo,
@@ -1204,7 +1220,7 @@
   }
 
   async function submitSanctuarySupportRequest(extra={}){
-    return rpc('kinojo_sanctuary_support_request_submit_v316',{
+    return rpc('kinojo_sanctuary_support_request_submit_v318',{
       p_pass_key:currentPassKey(),
       p_character_master_id:Number(extra.characterMasterId||extra.character_master_id||0),
       p_sanctuary_code:String(extra.id||extra.sanctuaryId||extra.sanctuaryCode||'').trim(),
@@ -1849,6 +1865,8 @@
     if(name === 'hallSuggestion') return submitHallSuggestion(extra);
     if(name === 'sanctuaryMaster') return getSanctuaryMaster();
     if(name === 'sanctuary') return getSanctuaryData(extra.id || extra.sanctuaryId || '');
+    if(name === 'sanctuaryRosterData') return getSanctuaryRosterData(extra.id || extra.sanctuaryId || '');
+    if(name === 'sanctuaryWaitlistData') return getSanctuaryWaitlistData(extra.id || extra.sanctuaryId || '');
     if(name === 'sanctuaryWaitlistRecommendations') return getSanctuaryWaitlistRecommendations(extra);
     if(name === 'sanctuaryWaitlistSlotDetail') return getSanctuaryWaitlistSlotDetail(extra);
     if(name === 'sanctuarySupportRequest') return submitSanctuarySupportRequest(extra);
@@ -1970,6 +1988,8 @@
     submitHallSuggestion,
     getSanctuaryMaster,
     getSanctuaryData,
+    getSanctuaryRosterData,
+    getSanctuaryWaitlistData,
     getSanctuaryWaitlistRecommendations,
     getSanctuaryWaitlistSlotDetail,
     submitSanctuarySupportRequest,

@@ -103,8 +103,8 @@ for (const token of ['--kinojo-drawer-width', 'scrollbar-color:#6d5ee7', '.kinoj
 
 for (const page of ['sanctuary-schedule/index.html', 'm/sanctuary-schedule/index.html']) {
   const html = read(page);
-  assert.ok(html.includes('sanctuary-schedule.css?cache=2026081201'), `${page}: schedule CSS cache missing`);
-  assert.ok(html.includes('sanctuary-schedule.js?cache=2026081201'), `${page}: schedule JS cache missing`);
+  assert.ok(html.includes('sanctuary-schedule.css?cache=2026081218'), `${page}: schedule CSS cache missing`);
+  assert.ok(html.includes('sanctuary-schedule.js?cache=2026081218'), `${page}: schedule JS cache missing`);
 }
 
 const schedule = read('sanctuary-schedule/js/sanctuary-schedule.js');

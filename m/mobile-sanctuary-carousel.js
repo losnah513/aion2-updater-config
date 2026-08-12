@@ -90,6 +90,10 @@
     slides.forEach(slide=>{
       slide.addEventListener('click',e=>{
         if(dragMoved){e.preventDefault();e.stopPropagation();}
+        else if(!slide.classList.contains('is-activating')){
+          e.preventDefault();e.stopPropagation();slide.classList.add('is-activating');
+          const href=slide.href;setTimeout(()=>{if(href)location.href=href},280);
+        }
       },{signal});
     });
 
