@@ -11,7 +11,8 @@ const style = read('sanctuary/css/sanctuary.css');
 
 for (const token of [
   'kinojo_web_get_sanctuary_waitlist_v315',
-  'kinojo_web_get_sanctuary_waitlist_recommendations_v315',
+  'kinojo_web_get_sanctuary_v317',
+  'kinojo_web_get_sanctuary_waitlist_recommendations_v317',
   'kinojo_sanctuary_waitlist_slot_detail_v316',
   'kinojo_sanctuary_support_request_submit_v316',
   'kinojo_web_notification_summary_v316',
@@ -28,6 +29,11 @@ for (const token of [
   'waitlist-sanctuary-card',
   'waitlist-force-card',
   'SANCTUARY_WAITLIST_CLASSES',
+  'sanctuaryForceHasMembers',
+  'sanctuaryWaitlistSortDirection',
+  'waitlist-sort-arrow',
+  'completionReady',
+  '클래스 중복 없음 → 합류하면 완성되는 포스 → 공석 적은 순',
   'data-waitlist-step-go="4"',
   'data-waitlist-empty-slot',
   'DIRECT_ASSIGN',
@@ -39,6 +45,10 @@ for (const token of [
 assert.equal(/\b(2700|3500|4300|4500)\b/.test(page), false, 'WEB must not own sanctuary item-level thresholds');
 assert.ok(style.includes('grid-template-columns:minmax(250px,.78fr) minmax(330px,1fr) minmax(390px,1.25fr)'), 'Desktop modal must keep three panes');
 assert.ok(style.includes('.sanctuary-waitlist-modal.is-compact-phone'), 'Compact phone page-flow contract is missing');
+assert.ok(style.includes('.waitlist-people-pane.is-class-view .waitlist-people-browser'), 'Class view must use a vertical side tab rail');
+assert.ok(style.includes('min-height:92px'), 'Force recommendation cards must provide doubled readable height');
+assert.ok(style.includes('.waitlist-sort-arrow'), 'Waitlist sorting direction arrow is missing');
+assert.equal(page.includes('공석 많은 순'), false, 'Recommendation copy must never advertise vacancy-descending ranking');
 assert.ok(style.includes('[data-waitlist-step="4"]'), 'Compact phone party step is missing');
 assert.ok(style.includes('.kinojo-scrollbar::-webkit-scrollbar'), 'KINOJO modal scrollbar contract is missing');
 assert.ok(style.includes('top:var(--kinojo-safe-top,0px)'), 'Modal must respect the fixed top safe area');
@@ -46,9 +56,9 @@ assert.ok(style.includes('bottom:var(--kinojo-safe-bottom,0px)'), 'Modal must re
 
 for (const entry of ['sanctuary/index.html', 'm/sanctuary/index.html']) {
   const html = read(entry);
-  assert.ok(html.includes('sanctuary.css?cache=2026081204'), `${entry}: waitlist CSS cache missing`);
-  assert.ok(html.includes('sanctuary.js?cache=2026081204'), `${entry}: waitlist JS cache missing`);
-  assert.ok(html.includes('kinojo-supabase-features.js?cache=2026081204'), `${entry}: feature bridge cache missing`);
+  assert.ok(html.includes('sanctuary.css?cache=2026081207'), `${entry}: waitlist CSS cache missing`);
+  assert.ok(html.includes('sanctuary.js?cache=2026081207'), `${entry}: waitlist JS cache missing`);
+  assert.ok(html.includes('kinojo-supabase-features.js?cache=2026081207'), `${entry}: feature bridge cache missing`);
 }
 
 for (const type of ['backgrounds', 'bosses']) {

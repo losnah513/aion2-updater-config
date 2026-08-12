@@ -10,6 +10,7 @@ let sanctuaryWaitlistReturnFocus=null;
 let sanctuaryWaitlistView='all';
 let sanctuaryWaitlistClass='';
 let sanctuaryWaitlistSort='name';
+let sanctuaryWaitlistSortDirection='asc';
 let sanctuaryWaitlistStep=1;
 let sanctuaryWaitlistRecommendationData=null;
 let sanctuaryWaitlistSelectedSanctuary='';
@@ -301,11 +302,11 @@ function normalizeSanctuaryTeamGroups(data){
       teamGroupNo:group.teamGroupNo||index+1,
       teamGroupName:group.teamGroupName||group.operatingTeamName||((group.teamGroupNo||index+1)+'팀'),
       forces:[]
-    },group,{forces:Array.isArray(group.forces)?group.forces:[]}));
+    },group,{forces:(Array.isArray(group.forces)?group.forces:[]).filter(sanctuaryForceHasMembers)})).filter(group=>group.forces.length>0);
   }
   const forces=Array.isArray(data&&data.teams)?data.teams:[];
   const groups=[];
-  forces.forEach(force=>{
+  forces.filter(sanctuaryForceHasMembers).forEach(force=>{
     const groupNo=force.teamGroupNo||force.operatingTeamNo||force.groupNo||1;
     let group=groups.find(item=>String(item.teamGroupNo)===String(groupNo));
     if(!group){
@@ -323,6 +324,10 @@ function normalizeSanctuaryTeamGroups(data){
     group.forces.push(force);
   });
   return groups;
+}
+function sanctuaryForceHasMembers(force){
+  if(Number(force?.characterCount||0)>0)return true;
+  return (Array.isArray(force?.parties)?force.parties:[]).some(party=>(Array.isArray(party?.slots)?party.slots:[]).some(slot=>String(slot?.name||slot?.characterName||'').trim()));
 }
 function renderTeamGroups(groups){const root=document.getElementById('teamList');if(!groups.length){root.innerHTML='<div class="empty-main">아직 표시할 성역 편성 데이터가 없습니다.<br>MASTER 성역 시트 동기화 상태를 확인해 주세요.</div>';return}root.innerHTML=groups.map(teamGroupHtml).join('')}
 function serverOrderedForces(forces){return Array.isArray(forces)?forces:[]}
@@ -442,11 +447,11 @@ function ensureWaitlistModal(){
     +'<nav class="waitlist-step-nav" aria-label="추천 배치 단계"><button type="button" data-waitlist-step-go="1"><span>1</span>캐릭터</button><button type="button" data-waitlist-step-go="2" disabled><span>2</span>성역</button><button type="button" data-waitlist-step-go="3" disabled><span>3</span>팀·포스</button><button type="button" data-waitlist-step-go="4" disabled><span>4</span>파티</button></nav>'
     +'<div class="sanctuary-waitlist-grid">'
     +'<section class="sanctuary-waitlist-pane waitlist-people-pane" data-waitlist-mobile-pane="1" aria-label="대기자 리스트"><header><span>1</span><div><strong>대기자</strong><small id="waitlistPeopleCount">0명</small></div></header>'
-    +'<div class="waitlist-people-controls"><div class="waitlist-view-tabs" role="tablist"><button type="button" data-waitlist-view="all" class="is-active">전체 보기</button><button type="button" data-waitlist-view="class">클래스별</button></div><div class="waitlist-class-tabs" id="waitlistClassTabs" hidden></div><div class="waitlist-sort-row"><span>정렬</span><button type="button" data-waitlist-sort="name" class="is-active">이름순</button><button type="button" data-waitlist-sort="power">전투력순</button></div><label class="waitlist-search"><span class="sr-only">대기자 검색</span><input id="waitlistSearchInput" type="search" autocomplete="off" placeholder="이름 또는 클래스 검색"></label></div>'
-    +'<div class="waitlist-person-list kinojo-scrollbar" id="waitlistPersonList"></div></section>'
+    +'<div class="waitlist-people-controls"><div class="waitlist-view-tabs" role="tablist"><button type="button" data-waitlist-view="all" class="is-active">전체 보기</button><button type="button" data-waitlist-view="class">클래스별</button></div><div class="waitlist-sort-row"><span>정렬</span><button type="button" data-waitlist-sort="name" data-waitlist-sort-label="이름순" class="is-active" aria-pressed="true">이름순 <span class="waitlist-sort-arrow" aria-hidden="true">↑</span></button><button type="button" data-waitlist-sort="power" data-waitlist-sort-label="전투력순" aria-pressed="false">전투력순 <span class="waitlist-sort-arrow" aria-hidden="true">↕</span></button></div><label class="waitlist-search"><span class="sr-only">대기자 검색</span><input id="waitlistSearchInput" type="search" autocomplete="off" placeholder="이름 또는 클래스 검색"></label></div>'
+    +'<div class="waitlist-people-browser"><nav class="waitlist-class-tabs kinojo-scrollbar" id="waitlistClassTabs" hidden aria-label="클래스 선택"></nav><div class="waitlist-person-list kinojo-scrollbar" id="waitlistPersonList"></div></div></section>'
     +'<section class="sanctuary-waitlist-pane waitlist-sanctuary-pane" data-waitlist-mobile-pane="2" aria-label="입장 가능 성역"><header><span>2</span><div><strong>입장 가능 성역</strong><small id="waitlistSelectedPerson">대기자를 선택하세요</small></div></header><div class="waitlist-sanctuary-list kinojo-scrollbar" id="waitlistSanctuaryList"><div class="waitlist-pane-empty">캐릭터를 선택하면 입장 가능한 성역이 표시됩니다.</div></div></section>'
     +'<section class="sanctuary-waitlist-pane waitlist-recommendation-pane" aria-label="추천 포스와 파티"><header><span>3</span><div><strong>추천 포스·파티</strong><small id="waitlistSelectedSanctuary">성역 카드를 선택하세요</small></div></header><div class="waitlist-recommendation-workspace">'
-    +'<section class="waitlist-force-panel" data-waitlist-mobile-pane="3"><div class="waitlist-ranking-note"><strong>추천 기준</strong><span>클래스가 겹치지 않는 파티가 있는 포스 우선 · 이후 공석 많은 순</span></div><div class="waitlist-force-list kinojo-scrollbar" id="waitlistForceList"><div class="waitlist-pane-empty">성역을 선택하면 추천 포스가 표시됩니다.</div></div></section>'
+    +'<section class="waitlist-force-panel" data-waitlist-mobile-pane="3"><div class="waitlist-ranking-note"><strong>추천 기준</strong><span>클래스 중복 없음 → 합류하면 완성되는 포스 → 공석 적은 순</span></div><div class="waitlist-force-list kinojo-scrollbar" id="waitlistForceList"><div class="waitlist-pane-empty">성역을 선택하면 추천 포스가 표시됩니다.</div></div></section>'
     +'<section class="waitlist-party-panel" data-waitlist-mobile-pane="4"><div class="waitlist-party-detail kinojo-scrollbar" id="waitlistPartyDetail"><div class="waitlist-pane-empty">추천 포스를 선택하면 1·2파티의 10개 자리를 확인할 수 있습니다.</div></div></section>'
     +'</div></section></div></div>';
   document.body.appendChild(modal);
@@ -456,7 +461,7 @@ function ensureWaitlistModal(){
   modal.querySelector('[data-waitlist-back]')?.addEventListener('click',()=>waitlistSetStep(sanctuaryWaitlistStep-1));
   modal.querySelectorAll('[data-waitlist-step-go]').forEach(button=>button.addEventListener('click',()=>{if(!button.disabled)waitlistSetStep(Number(button.dataset.waitlistStepGo))}));
   modal.querySelectorAll('[data-waitlist-view]').forEach(button=>button.addEventListener('click',()=>{sanctuaryWaitlistView=button.dataset.waitlistView||'all';if(sanctuaryWaitlistView==='class'&&!sanctuaryWaitlistClass)sanctuaryWaitlistClass=SANCTUARY_WAITLIST_CLASSES[0];renderWaitlistPersonControls();renderWaitlistPersonList()}));
-  modal.querySelectorAll('[data-waitlist-sort]').forEach(button=>button.addEventListener('click',()=>{sanctuaryWaitlistSort=button.dataset.waitlistSort||'name';renderWaitlistPersonControls();renderWaitlistPersonList()}));
+  modal.querySelectorAll('[data-waitlist-sort]').forEach(button=>button.addEventListener('click',()=>{const next=button.dataset.waitlistSort||'name';if(next===sanctuaryWaitlistSort){sanctuaryWaitlistSortDirection=sanctuaryWaitlistSortDirection==='asc'?'desc':'asc'}else{sanctuaryWaitlistSort=next;sanctuaryWaitlistSortDirection='asc'}renderWaitlistPersonControls();renderWaitlistPersonList()}));
   window.addEventListener('resize',()=>modal.classList.toggle('is-compact-phone',isCompactWaitlistPhone()),{passive:true});
   return modal;
 }
@@ -500,8 +505,9 @@ function renderWaitlistEmptyModal(){
 }
 function renderWaitlistPersonControls(){
   const modal=ensureWaitlistModal();
+  modal.querySelector('.waitlist-people-pane')?.classList.toggle('is-class-view',sanctuaryWaitlistView==='class');
   modal.querySelectorAll('[data-waitlist-view]').forEach(button=>button.classList.toggle('is-active',button.dataset.waitlistView===sanctuaryWaitlistView));
-  modal.querySelectorAll('[data-waitlist-sort]').forEach(button=>button.classList.toggle('is-active',button.dataset.waitlistSort===sanctuaryWaitlistSort));
+  modal.querySelectorAll('[data-waitlist-sort]').forEach(button=>{const active=button.dataset.waitlistSort===sanctuaryWaitlistSort;const label=button.dataset.waitlistSortLabel||button.textContent.trim();button.classList.toggle('is-active',active);button.setAttribute('aria-pressed',active?'true':'false');button.setAttribute('aria-label',active?label+' '+(sanctuaryWaitlistSortDirection==='asc'?'오름차순':'내림차순'):label+' 정렬');const arrow=button.querySelector('.waitlist-sort-arrow');if(arrow)arrow.textContent=active?(sanctuaryWaitlistSortDirection==='asc'?'↑':'↓'):'↕'});
   const root=modal.querySelector('#waitlistClassTabs');
   if(root){root.hidden=sanctuaryWaitlistView!=='class';root.innerHTML=SANCTUARY_WAITLIST_CLASSES.map(name=>'<button type="button" class="'+(name===sanctuaryWaitlistClass?'is-active':'')+'" data-waitlist-class="'+esc(name)+'">'+esc(name)+'</button>').join('');root.querySelectorAll('[data-waitlist-class]').forEach(button=>button.addEventListener('click',()=>{sanctuaryWaitlistClass=button.dataset.waitlistClass||'';renderWaitlistPersonControls();renderWaitlistPersonList()}));}
 }
@@ -511,7 +517,8 @@ function renderWaitlistPersonList(){
   const count=modal.querySelector('#waitlistPeopleCount');
   if(!root)return;
   const query=String(modal.querySelector('#waitlistSearchInput')?.value||'').trim().toLowerCase();
-  const items=waitlistCandidates().filter(item=>(sanctuaryWaitlistView!=='class'||String(item.className||'')===sanctuaryWaitlistClass)&&(!query||String(item.name||'').toLowerCase().includes(query)||String(item.className||'').toLowerCase().includes(query))).sort((a,b)=>sanctuaryWaitlistSort==='power'?(Number(b.combatPower||0)-Number(a.combatPower||0)||String(a.name||'').localeCompare(String(b.name||''),'ko')):String(a.name||'').localeCompare(String(b.name||''),'ko'));
+  const direction=sanctuaryWaitlistSortDirection==='desc'?-1:1;
+  const items=waitlistCandidates().filter(item=>(sanctuaryWaitlistView!=='class'||String(item.className||'')===sanctuaryWaitlistClass)&&(!query||String(item.name||'').toLowerCase().includes(query)||String(item.className||'').toLowerCase().includes(query))).sort((a,b)=>{const byName=String(a.name||'').localeCompare(String(b.name||''),'ko');if(sanctuaryWaitlistSort==='power'){const byPower=(Number(a.combatPower||0)-Number(b.combatPower||0))*direction;return byPower||byName}return byName*direction});
   if(count)count.textContent=fmt(items.length)+'명';
   root.innerHTML=items.length?items.map(item=>{
     const selected=Number(item.characterMasterId)===sanctuaryWaitlistSelectionId;
@@ -586,9 +593,10 @@ function renderWaitlistRecommendations(data){
 }
 function waitlistRecommendationHtml(item,index){
   const safe=item.hasClassSafeParty===true;
+  const completionReady=item.completionReady===true||Number(item.totalVacancies||0)===1;
   const parties=Array.isArray(item.parties)?item.parties:[];
-  const partySummary=parties.map(party=>esc(party.partyName||party.partyNo+'파티')+' '+fmt(party.filled)+'/'+fmt(party.capacity)).join(' · ');
-  return '<button class="waitlist-force-card'+(safe?' is-class-safe':'')+'" type="button" data-waitlist-force="'+esc(item.teamNo)+'"><span class="waitlist-force-rank">추천 '+(index+1)+'</span><span class="waitlist-force-main"><small>'+esc(item.teamGroupName||item.teamGroupNo+'팀')+'</small><strong>'+esc(item.forceName||item.forceNo+'포스')+'</strong><em>'+partySummary+'</em></span><span class="waitlist-force-score">공석 '+fmt(item.totalVacancies)+'</span><span class="waitlist-force-arrow" aria-hidden="true">›</span></button>';
+  const partySummary=parties.map(party=>'<span><b>'+esc(party.partyName||party.partyNo+'파티')+'</b><i>'+fmt(party.filled)+' / '+fmt(party.capacity)+'</i></span>').join('');
+  return '<button class="waitlist-force-card'+(safe?' is-class-safe':'')+(completionReady?' is-completion-ready':'')+'" type="button" data-waitlist-force="'+esc(item.teamNo)+'"><span class="waitlist-force-card-head"><span class="waitlist-force-rank">추천 '+(index+1)+(completionReady?' · 합류 시 완성':'')+'</span><span class="waitlist-force-score">공석 '+fmt(item.totalVacancies)+'</span></span><span class="waitlist-force-main"><small>'+esc(item.teamGroupName||item.teamGroupNo+'팀')+'</small><strong>'+esc(item.forceName||item.forceNo+'포스')+'</strong><em class="waitlist-force-party-summary">'+partySummary+'</em></span><span class="waitlist-force-arrow" aria-hidden="true">›</span></button>';
 }
 async function selectWaitlistForce(teamNo,button){
   const candidate=waitlistCandidates().find(item=>Number(item.characterMasterId)===sanctuaryWaitlistSelectionId);
