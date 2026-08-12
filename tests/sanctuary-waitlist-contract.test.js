@@ -62,10 +62,14 @@ assert.ok(style.includes('bottom:var(--kinojo-safe-bottom,0px)'), 'Modal must re
 
 for (const entry of ['sanctuary/index.html', 'm/sanctuary/index.html']) {
   const html = read(entry);
-  assert.ok(html.includes('sanctuary.css?cache=2026081218'), `${entry}: waitlist CSS cache missing`);
-  assert.ok(html.includes('sanctuary.js?cache=2026081218'), `${entry}: waitlist JS cache missing`);
+  assert.ok(html.includes('sanctuary.css?cache=2026081222'), `${entry}: waitlist CSS cache missing`);
+  assert.ok(html.includes('sanctuary.js?cache=2026081222'), `${entry}: waitlist JS cache missing`);
   assert.ok(html.includes('kinojo-supabase-features.js?cache=2026081218'), `${entry}: feature bridge cache missing`);
 }
+
+assert.ok(style.includes('.sanctuary-waitlist-modal.is-split-mobile'), 'Fold/tablet split-flow contract is missing');
+assert.ok(style.includes('.is-recommendation-stage'), 'Fold/tablet sanctuary-to-recommendation slide is missing');
+assert.ok(style.includes('grid-template-columns:minmax(0,1fr) minmax(0,1fr)'), 'Fold recommendation workspace must split force and party evenly');
 
 for (const type of ['backgrounds', 'bosses']) {
   for (const code of ['rudra', 'bagot', 'kaldrix']) {

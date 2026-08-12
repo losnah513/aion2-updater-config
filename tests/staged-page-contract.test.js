@@ -29,11 +29,11 @@ assert.ok(schedule.includes('adminRequest.then'), 'Schedule admin context must h
 const scheduleCss = read('sanctuary-schedule/css/sanctuary-schedule.css');
 assert.ok(scheduleCss.includes('.schedule-page-bar{position:sticky'), 'Schedule attached page bar is missing');
 assert.ok(read('ui/kinojo-components.css').includes('.hof-filter-bar{position:sticky'), 'HOF attached filter bar is missing');
-assert.ok(read('ranking/css/ranking.css').includes('top:var(--kinojo-topbar-actual-height'), 'Ranking attached toolbar is missing');
+assert.ok(read('ranking/css/ranking.css').includes('var(--kinojo-attached-subbar-height'), 'Ranking attached toolbar is missing');
 
 const hallData = read('hof/js/hall-data.js');
 assert.ok(hallData.includes('kinojo_web_get_my_hof_ranking_v319'), 'Scope-aware personal ranking RPC missing');
-assert.ok(hallData.includes('for(const wait of [0,450,1100])'), 'Personal ranking retry contract missing');
+assert.ok(hallData.includes('for(const wait of [0,350,800,1600,2800])'), 'Personal ranking retry contract missing');
 
 const hallRender = read('hof/js/hall-render.js');
 assert.ok(hallRender.includes('집계 대기'), 'HOF pending aggregation state missing');

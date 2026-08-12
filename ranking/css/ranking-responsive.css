@@ -18,6 +18,14 @@
   .ranking-panel-head h2{font-size:15px}
 }
 
+@media (min-width:700px) and (max-width:1220px){
+  body.kinojo-page-ranking>.ranking-toolbar{grid-template-columns:minmax(0,1fr) auto;gap:8px}
+  body.kinojo-page-ranking>.ranking-toolbar .ranking-filter-main{display:flex;gap:8px}
+  body.kinojo-page-ranking>.ranking-toolbar .ranking-search-box{flex-basis:300px}
+  body.kinojo-page-ranking>.ranking-toolbar .ranking-action-box{padding:0 0 0 8px;border-left:1px solid rgba(120,145,180,.18);border-top:0;justify-content:flex-end}
+  body.kinojo-page-ranking>.ranking-toolbar .ranking-scope-heading{display:none}
+}
+
 @media (min-width:700px) and (max-width:980px){
   .ranking-board{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;min-height:500px}
   .ranking-mobile-mode-tabs{display:none!important}
@@ -37,7 +45,12 @@
   .ranking-mobile-filter-head{display:flex;grid-column:1/-1;align-items:center;justify-content:space-between;gap:8px;min-height:32px}
   .ranking-mobile-filter-head span{font-size:12px;font-weight:950;color:var(--ranking-muted)}
   .ranking-mobile-filter-head .kinojo-btn{height:28px!important;min-height:28px!important;padding:0 10px!important;font-size:11px!important}
-  .ranking-toolbar{display:grid;grid-template-columns:1fr;gap:8px;padding:10px;border-radius:18px}
+  .ranking-toolbar{display:grid!important;grid-template-columns:1fr!important;gap:8px!important;padding:8px 10px!important;border-radius:0 0 14px 14px!important}
+  body.kinojo-page-ranking>.ranking-toolbar .ranking-filter-main{display:grid;grid-template-columns:1fr;gap:8px}
+  body.kinojo-page-ranking>.ranking-toolbar .ranking-search-box{display:grid;grid-template-columns:1fr;gap:5px}
+  body.kinojo-page-ranking>.ranking-toolbar .ranking-action-box{display:none;flex-direction:column;align-items:stretch;padding:8px 0 0;border-left:0}
+  body.kinojo-page-ranking>.ranking-toolbar.is-filter-open .ranking-action-box{display:flex}
+  body.kinojo-page-ranking>.ranking-toolbar .ranking-switch-group{display:grid;grid-template-columns:1fr 1fr}
   .ranking-filter-main{display:grid;gap:8px}
   .ranking-search-box{gap:5px}
   .ranking-search-controls{grid-template-columns:minmax(0,1fr) 66px 66px;gap:6px}

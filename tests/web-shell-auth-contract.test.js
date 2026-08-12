@@ -62,13 +62,13 @@ for (const page of publicShellPages) {
   for (const token of [
     'kinojo-common-ui.css',
     'kinojo-public-shell.css?cache=2026081202',
-    'kinojo-common-ui.js?cache=2026081204',
     'kinojo-auth-session.js?cache=2026081201',
     'kinojo-auth-service.js',
     'kinojo-auth-ui.js?cache=2026081204',
   ]) {
     assert.ok(html.includes(token), `${page}: missing ${token}`);
   }
+  assert.match(html, /kinojo-common-ui\.js\?cache=20260812(?:04|22)/, `${page}: common UI cache missing`);
 }
 
 for (const page of ['admin/index.html', 'm/admin/index.html']) {

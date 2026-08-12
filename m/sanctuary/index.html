@@ -19,7 +19,7 @@
 <meta name="twitter:title" content="KINOJO INFO - 성역">
 <meta name="twitter:description" content="아이온2 지켈 서버 깡 레기온의 성역 포스 정보와 구성 현황을 확인할 수 있습니다.">
 <meta name="twitter:image" content="https://kinojo.info/assets/images/common/kinojo-og.jpg">
-<link href="../../sanctuary/css/sanctuary.css?cache=2026081218" rel="stylesheet"/>
+<link href="../../sanctuary/css/sanctuary.css?cache=2026081222" rel="stylesheet"/>
 <link href="../../ui/kinojo-common-ui.css?cache=2026081205" rel="stylesheet"/>
 <link href="../../ui/kinojo-public-shell.css?cache=2026081202" rel="stylesheet"/>
 <link href="../../ui/kinojo-character-reaction.css?cache=2026081003" rel="stylesheet"/>
@@ -27,7 +27,7 @@
 <link href="../../ui/kinojo-character-skill.css?cache=2026081001" rel="stylesheet"/>
 <link href="../../ui/kinojo-character-daevanion.css?cache=2026081002" rel="stylesheet"/>
 <link href="../../ui/kinojo-animations.css?cache=2026081003" rel="stylesheet"/>
-<link href="../../ui/kinojo-staged-loading.css?cache=2026081208" rel="stylesheet"/>
+<link href="../../ui/kinojo-staged-loading.css?cache=2026081222" rel="stylesheet"/>
 <link href="../mobile.css?cache=2026071906" rel="stylesheet"/>
 <link rel="stylesheet" href="../../ui/kinojo-event-notice.css?cache=2026081003">
 </head>
@@ -44,6 +44,7 @@
 <p id="heroSub">Server Engine Sanctuary Data</p>
 </div>
 </section>
+<div class="sanctuary-page-bar">
 <section aria-label="이번 주 성역 운영" class="sanctuary-operation" id="sanctuaryOperation">
 <header class="sanctuary-operation-head">
 <div>
@@ -55,8 +56,14 @@
 </header>
 <div class="sanctuary-operation-schedules" id="operationScheduleList"></div>
 </section>
-<section aria-label="팀 바로가기" class="sanctuary-party-nav" id="partyQuickNav"></section>
 <section aria-label="성역 요약" class="summary-grid" id="summaryGrid"></section>
+</div>
+<div class="sanctuary-content-layout">
+<aside class="sanctuary-side-rail" aria-label="팀과 대기자 바로가기">
+<section aria-label="팀 바로가기" class="sanctuary-party-nav" id="partyQuickNav"></section>
+<button class="sanctuary-rail-waitlist" type="button" data-waitlist-open><span>대기자</span><strong id="sanctuaryRailWaitCount">0</strong><em>추천 배치 ›</em></button>
+</aside>
+<div class="sanctuary-content-main">
 <section aria-hidden="true" class="tip-panel" id="tipPanel">
 <div class="tip-card">
 <button aria-label="공략 팁 닫기" class="tip-close" id="tipCloseBtn" type="button">×</button>
@@ -73,6 +80,8 @@
 </section>
 <section class="team-list" id="teamList"></section>
 <section class="waiting-section" id="waitingSection"></section>
+</div>
+</div>
 <footer class="footer common-footer"><div class="footer-links"><a href="../../pages/about.html">사이트 소개</a><a href="../../pages/terms.html">이용약관</a><a href="../../pages/privacy.html">개인정보처리방침</a><a href="../../pages/contact.html">아이디어 제안 및 건의</a></div><div class="footer-powered">Powered by AION2 · 깡 레기온 지원</div></footer>
 </main>
 <script src="../../core/kinojo-api.js?cache=2026070115"></script>
@@ -83,8 +92,8 @@
 <script src="../../core/kinojo-route-guard.js?cache=2026070115"></script>
 <script src="../../core/kinojo-debug.js?cache=2026070115"></script>
 <script src="../../core/kinojo-logger.js?cache=2026070115"></script>
-<script src="../../ui/kinojo-common-ui.js?cache=2026081204"></script>
-<script src="../../ui/kinojo-staged-loading.js?cache=2026081208"></script>
+<script src="../../ui/kinojo-common-ui.js?cache=2026081222"></script>
+<script src="../../ui/kinojo-staged-loading.js?cache=2026081222"></script>
 <script src="../../ui/kinojo-admin-panel.js?cache=2026071712"></script>
 <script src="../../core/kinojo-supabase-client.js?cache=2026081106"></script>
 <script src="../../core/kinojo-supabase-rpc.js?cache=2026080205"></script>
@@ -98,7 +107,7 @@
 <script src="../../ui/kinojo-character-skill-bridge.js?cache=2026081001"></script>
 <script src="../../ui/kinojo-character-daevanion-bridge.js?cache=2026081002"></script>
 <script src="../../sanctuary/js/sanctuary-capture.js?cache=2026071518"></script>
-<script src="../../sanctuary/js/sanctuary.js?cache=2026081218"></script>
+<script src="../../sanctuary/js/sanctuary.js?cache=2026081222"></script>
 <script src="../../sanctuary/js/sanctuary-editor.js?cache=2026081107"></script>
 </body>
 </html>
