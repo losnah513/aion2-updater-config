@@ -61,8 +61,8 @@ for (const page of publicShellPages) {
   const html = read(page);
   for (const token of [
     'kinojo-common-ui.css',
-    'kinojo-public-shell.css',
-    'kinojo-common-ui.js',
+    'kinojo-public-shell.css?cache=2026081202',
+    'kinojo-common-ui.js?cache=2026081202',
     'kinojo-auth-session.js?cache=2026081201',
     'kinojo-auth-service.js',
     'kinojo-auth-ui.js?cache=2026081201',
@@ -73,14 +73,32 @@ for (const page of publicShellPages) {
 
 for (const page of ['admin/index.html', 'm/admin/index.html']) {
   const html = read(page);
+  assert.ok(html.includes('kinojo-common-ui.js?cache=2026081202'), `${page}: common UI cache missing`);
   assert.ok(html.includes('kinojo-auth-session.js?cache=2026081201'), `${page}: stale auth session cache`);
   assert.ok(html.includes('kinojo-auth-ui.js?cache=2026081201'), `${page}: stale auth UI cache`);
 }
 
 for (const page of publicShellPages.concat(['admin/index.html', 'm/admin/index.html'])) {
   const html = read(page);
+  assert.equal(html.includes('kinojo-common-ui.js?cache=2026081004'), false, `${page}: old common UI cache remains`);
   assert.equal(html.includes('kinojo-auth-session.js?cache=2026080205'), false, `${page}: old auth session cache remains`);
   assert.equal(html.includes('kinojo-auth-ui.js?cache=2026080205'), false, `${page}: old auth UI cache remains`);
+}
+
+for (const page of publicShellPages) {
+  const html = read(page);
+  assert.equal(html.includes('kinojo-public-shell.css?cache=2026081005'), false, `${page}: old public shell cache remains`);
+}
+
+const commonUi = read('ui/kinojo-common-ui.js');
+for (const token of ['kinojo_common_notices_v1', 'KINOJO_NOTICE_RETRY_DELAYS_MS', 'data-kinojo-notice-retry', 'navigator.onLine===false', 'kinojo:sanctuary-master-rendered']) {
+  assert.ok(commonUi.includes(token), `common UI reliability contract missing: ${token}`);
+}
+assert.ok(commonUi.includes('<circle cx="12" cy="6"'), 'menu dots must be vertical');
+
+const publicShell = read('ui/kinojo-public-shell.css');
+for (const token of ['--kinojo-drawer-width', 'scrollbar-color:#6d5ee7', '.kinojo-drawer-nav::-webkit-scrollbar', '.kinojo-notice-retry']) {
+  assert.ok(publicShell.includes(token), `public shell mobile contract missing: ${token}`);
 }
 
 for (const page of ['sanctuary-schedule/index.html', 'm/sanctuary-schedule/index.html']) {

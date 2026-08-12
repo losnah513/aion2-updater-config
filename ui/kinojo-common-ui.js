@@ -1,4 +1,4 @@
-/* KINOJO common UI v20260810.04 */
+/* KINOJO common UI v20260812.02 */
 (function(){
   if(window.__KINOJO_COMMON_UI_INIT_DONE__) return;
   window.__KINOJO_COMMON_UI_INIT_DONE__ = true;
@@ -53,7 +53,10 @@
   const KINOJO_NOTICE_MARQUEE_SPEED = 38;
   const KINOJO_NOTICE_END_HOLD_MS = 1800;
   const KINOJO_NOTICE_SHORT_HOLD_MS = 7200;
-  let kinojoNoticeState = { items: [], index: 0, timer: null, paused: false };
+  const KINOJO_NOTICE_CACHE_KEY = 'kinojo_common_notices_v1';
+  const KINOJO_NOTICE_CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+  const KINOJO_NOTICE_RETRY_DELAYS_MS = [0, 420, 1200];
+  let kinojoNoticeState = { items: [], index: 0, timer: null, paused: false, loadPromise: null, lastFailureAt: 0 };
 
   function createNoticeStrip(info){
     const strip=document.createElement('section');
@@ -76,6 +79,12 @@
       }
       document.getElementById('kinojoNoticePrevBtn')?.addEventListener('click',()=>showNoticeAt_(kinojoNoticeState.index-1,true));
       document.getElementById('kinojoNoticeNextBtn')?.addEventListener('click',()=>showNoticeAt_(kinojoNoticeState.index+1,true));
+      strip.addEventListener('click',event=>{
+        const retry=event.target.closest('[data-kinojo-notice-retry]');
+        if(!retry)return;
+        retry.disabled=true;
+        loadCommonNotices({force:true});
+      });
       strip.addEventListener('mouseenter',()=>{kinojoNoticeState.paused=true;clearNoticeTimer_();});
       strip.addEventListener('mouseleave',()=>{kinojoNoticeState.paused=false;scheduleNextNotice_();});
       strip.addEventListener('focusin',()=>{kinojoNoticeState.paused=true;clearNoticeTimer_();});
@@ -165,35 +174,116 @@
     clearNoticeTimer_();
     scheduleNextNotice_();
   }
-  async function fetchNotices_(limit){
-    return window.KinojoApi
-      ? await window.KinojoApi.getAction('notices', { limit:limit })
-      : await (await fetch(commonApiUrl()+(commonApiUrl().includes('?')?'&':'?')+'action=notices&limit='+encodeURIComponent(limit)+'&t='+Date.now(),{cache:'no-store'})).json();
+  function waitNoticeRetry_(delay){
+    return new Promise(resolve=>setTimeout(resolve,delay));
   }
-  async function loadCommonNotices(){
+  function noticeRequestWithTimeout_(promise,timeoutMs){
+    let timeoutId=0;
+    const timeout=new Promise((_,reject)=>{timeoutId=setTimeout(()=>reject(new Error('공지 서버 응답 시간이 초과되었습니다.')),timeoutMs);});
+    return Promise.race([promise,timeout]).finally(()=>clearTimeout(timeoutId));
+  }
+  async function requestNoticesOnce_(limit){
+    let request;
+    if(window.KinojoApi?.getAction){
+      request=window.KinojoApi.getAction('notices',{limit});
+    }else{
+      const base=commonApiUrl();
+      if(!base)throw new Error('공지 서버 모듈을 준비하는 중입니다.');
+      const url=base+(base.includes('?')?'&':'?')+'action=notices&limit='+encodeURIComponent(limit)+'&t='+Date.now();
+      request=fetch(url,{cache:'no-store'}).then(async response=>{
+        if(!response.ok)throw new Error('공지 서버 HTTP '+response.status);
+        return response.json();
+      });
+    }
+    const data=await noticeRequestWithTimeout_(request,8000);
+    if(!data||data.ok!==true||!Array.isArray(data.notices))throw new Error(data?.message||'공지 응답 형식이 올바르지 않습니다.');
+    return data;
+  }
+  async function fetchNotices_(limit){
+    let lastError=null;
+    for(let attempt=0;attempt<KINOJO_NOTICE_RETRY_DELAYS_MS.length;attempt+=1){
+      const delay=KINOJO_NOTICE_RETRY_DELAYS_MS[attempt];
+      if(delay)await waitNoticeRetry_(delay);
+      try{return await requestNoticesOnce_(limit);}
+      catch(error){lastError=error;if(navigator.onLine===false)break;}
+    }
+    throw lastError||new Error('공지사항을 불러오지 못했습니다.');
+  }
+  function readNoticeCache_(){
+    try{
+      const cached=JSON.parse(localStorage.getItem(KINOJO_NOTICE_CACHE_KEY)||'null');
+      if(!cached||!Array.isArray(cached.items)||!Number.isFinite(Number(cached.savedAt)))return null;
+      if(Date.now()-Number(cached.savedAt)>KINOJO_NOTICE_CACHE_MAX_AGE_MS)return null;
+      return {items:cached.items,savedAt:Number(cached.savedAt)};
+    }catch(_error){return null;}
+  }
+  function writeNoticeCache_(items){
+    try{localStorage.setItem(KINOJO_NOTICE_CACHE_KEY,JSON.stringify({savedAt:Date.now(),items:Array.isArray(items)?items:[]}));}
+    catch(_error){}
+  }
+  function renderNoticeList_(notices,source){
+    const list=document.getElementById('kinojoNoticeList');
+    if(!list)return false;
+    clearNoticeTimer_();
+    list.dataset.noticeSource=source||'network';
+    if(source==='cache')list.title='공지 서버 연결이 지연되어 마지막으로 확인한 공지를 표시합니다.';
+    else list.removeAttribute('title');
+    if(!notices.length){
+      kinojoNoticeState.items=[];
+      list.innerHTML='<span class="kinojo-notice-empty">등록된 공지가 없습니다.</span>';
+      return true;
+    }
+    kinojoNoticeState.items=notices;
+    kinojoNoticeState.index=0;
+    list.innerHTML=renderNoticeItemHtml_(notices[0]);
+    startNoticeRotation_();
+    return true;
+  }
+  function renderNoticeLoadError_(){
     const list=document.getElementById('kinojoNoticeList');
     if(!list)return;
+    list.dataset.noticeSource='error';
+    list.innerHTML='<div class="kinojo-notice-load-error"><span>공지 연결이 지연되고 있습니다.</span><button class="kinojo-notice-retry" type="button" data-kinojo-notice-retry>다시 시도</button></div>';
+  }
+  async function loadCommonNotices(options){
+    const list=document.getElementById('kinojoNoticeList');
+    if(!list)return;
+    if(kinojoNoticeState.loadPromise)return kinojoNoticeState.loadPromise;
     clearNoticeTimer_();
-    try{
-      const data=await fetchNotices_(5);
-      const notices=(data&&data.ok&&Array.isArray(data.notices))?data.notices.slice(0,5):[];
-      if(!notices.length){list.innerHTML='<span class="kinojo-notice-empty">등록된 공지가 없습니다.</span>';return;}
-      kinojoNoticeState.items=notices;
-      kinojoNoticeState.index=0;
-      list.innerHTML=renderNoticeItemHtml_(notices[0]);
-      startNoticeRotation_();
-    }catch(_e){
-      list.innerHTML='<span class="kinojo-notice-empty">공지사항을 불러오지 못했습니다.</span>';
-    }
+    const cached=readNoticeCache_();
+    if(!kinojoNoticeState.items.length&&cached?.items?.length)renderNoticeList_(cached.items.slice(0,5),'cache');
+    kinojoNoticeState.loadPromise=(async()=>{
+      try{
+        const data=await fetchNotices_(5);
+        const notices=data.notices.slice(0,5);
+        writeNoticeCache_(notices);
+        kinojoNoticeState.lastFailureAt=0;
+        renderNoticeList_(notices,'network');
+      }catch(_error){
+        kinojoNoticeState.lastFailureAt=Date.now();
+        const fallback=readNoticeCache_();
+        if(fallback?.items?.length)renderNoticeList_(fallback.items.slice(0,5),'cache');
+        else renderNoticeLoadError_();
+      }finally{
+        kinojoNoticeState.loadPromise=null;
+      }
+    })();
+    return kinojoNoticeState.loadPromise;
   }
   async function showNoticeBoardModal(){
     let notices=[];
+    let cached=false;
     try{
       const data=await fetchNotices_(50);
-      notices=(data&&data.ok&&Array.isArray(data.notices))?data.notices:[];
+      notices=data.notices;
+      writeNoticeCache_(notices.slice(0,50));
     }catch(e){
-      showSafeError?.(e,{feature:'공지사항 상세 보기',title:'공지사항을 불러오지 못했습니다.',message:'잠시 후 다시 시도해 주세요.'});
-      return;
+      const fallback=readNoticeCache_();
+      if(fallback?.items?.length){notices=fallback.items;cached=true;}
+      else{
+        showSafeError?.(e,{feature:'공지사항 상세 보기',title:'공지사항을 불러오지 못했습니다.',message:'잠시 후 다시 시도해 주세요.'});
+        return;
+      }
     }
     const overlay=document.createElement('div');
     overlay.className='kinojo-notice-board-overlay';
@@ -209,7 +299,7 @@
       +'<button class="kinojo-notice-board-close" type="button" aria-label="닫기">×</button>'
       +'<div class="kinojo-notice-board-kicker">KINOJO NOTICE</div>'
       +'<h3>공지사항</h3>'
-      +'<p class="kinojo-notice-board-desc">최근 등록된 공지, 알림, 이벤트를 최신순으로 확인합니다.</p>'
+      +'<p class="kinojo-notice-board-desc">'+(cached?'서버 연결이 지연되어 마지막으로 확인한 공지를 표시합니다.':'최근 등록된 공지, 알림, 이벤트를 최신순으로 확인합니다.')+'</p>'
       +'<div class="kinojo-notice-board-list">'+rows+'</div>'
       +'</section>';
     const close=()=>overlay.remove();
@@ -470,7 +560,7 @@
       <div class="kinojo-top-left">
         <button class="kinojo-menu-toggle" id="drawerToggleBtn" type="button" aria-label="메뉴 열기" aria-expanded="false">
           <svg class="kinojo-menu-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <g class="menu-dots"><circle cx="6" cy="12" r="1.9"></circle><circle cx="12" cy="12" r="1.9"></circle><circle cx="18" cy="12" r="1.9"></circle></g>
+            <g class="menu-dots"><circle cx="12" cy="6" r="1.9"></circle><circle cx="12" cy="12" r="1.9"></circle><circle cx="12" cy="18" r="1.9"></circle></g>
             <g class="menu-lines"><path d="M5 7.5H19"></path><path d="M5 12H19"></path><path d="M5 16.5H19"></path></g>
           </svg>
         </button>
@@ -595,9 +685,32 @@
       </aside>`;
     document.body.appendChild(drawer);
   }
+  function measureDrawerTextWidth_(element){
+    if(!element||element.hidden)return 0;
+    try{
+      const range=document.createRange();
+      range.selectNodeContents(element);
+      const width=range.getBoundingClientRect().width;
+      range.detach?.();
+      return width;
+    }catch(_error){return 0;}
+  }
+  function syncDrawerWidth_(){
+    const panel=q('.kinojo-drawer-panel');
+    if(!panel)return;
+    const textNodes=panel.querySelectorAll('.kinojo-drawer-title,.kinojo-drawer-category,.kinojo-drawer-nav a,.kinojo-drawer-link,.kinojo-drawer-action');
+    const widest=Array.from(textNodes).reduce((max,element)=>Math.max(max,measureDrawerTextWidth_(element)),0);
+    const titleWidth=measureDrawerTextWidth_(q('.kinojo-drawer-title',panel));
+    const available=Math.max(0,window.innerWidth-16);
+    const minimum=Math.min(238,available);
+    const natural=Math.max(minimum,Math.ceil(widest+40),Math.ceil(titleWidth+78));
+    const width=Math.min(330,available,natural);
+    if(width>0)document.documentElement.style.setProperty('--kinojo-drawer-width',width+'px');
+  }
   function openSideDrawer(){
     const drawer=q('#sideDrawer');const btn=q('#drawerToggleBtn');
     if(!drawer)return;
+    syncDrawerWidth_();
     drawer.classList.add('open');drawer.setAttribute('aria-hidden','false');
     document.body.classList.add('kinojo-drawer-open','drawer-open');
     if(btn)btn.setAttribute('aria-expanded','true');
@@ -754,8 +867,19 @@
   document.addEventListener('visibilitychange',()=>{
     if(info.key==='admin')return;
     kinojoNoticeState.paused=document.hidden;
-    if(document.hidden)clearNoticeTimer_();else scheduleNextNotice_();
+    if(document.hidden)clearNoticeTimer_();
+    else{
+      scheduleNextNotice_();
+      if(kinojoNoticeState.lastFailureAt||!kinojoNoticeState.items.length)loadCommonNotices();
+    }
   });
+  const retryCommonNoticesIfNeeded_=()=>{
+    if(info.key==='admin'||document.hidden)return;
+    if(kinojoNoticeState.lastFailureAt||!kinojoNoticeState.items.length)loadCommonNotices();
+  };
+  window.addEventListener('focus',retryCommonNoticesIfNeeded_);
+  window.addEventListener('pageshow',retryCommonNoticesIfNeeded_);
+  window.addEventListener('online',()=>{if(info.key!=='admin')loadCommonNotices({force:true});});
   if(info.key==='admin'){
     bindModalScrollChain();
     bindImageGuards();
@@ -765,6 +889,12 @@
   }
   makeTopbar(rescued,info);
   makeDrawer(info);
+  syncDrawerWidth_();
+  window.addEventListener('resize',syncDrawerWidth_,{passive:true});
+  window.addEventListener('orientationchange',syncDrawerWidth_,{passive:true});
+  window.addEventListener('kinojo:sanctuary-master-rendered',syncDrawerWidth_);
+  setTimeout(syncDrawerWidth_,300);
+  setTimeout(syncDrawerWidth_,1200);
   syncAuthRequiredUi_();
   setTimeout(syncAuthRequiredUi_,120);
   setTimeout(syncAuthRequiredUi_,600);
