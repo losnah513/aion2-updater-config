@@ -1168,11 +1168,26 @@
     const session = typeof auth.getSession === 'function' ? auth.getSession() : null;
     const account = typeof auth.getAccount === 'function' ? auth.getAccount() : null;
     const passKey = String(account?.passKey || account?.passCode || session?.passKey || session?.passCode || '').trim();
-    const [data,badgeMap]=await Promise.all([
+    const [data,waitlist,badgeMap]=await Promise.all([
       rpc('kinojo_web_get_sanctuary_v2', { p_sanctuary_code:String(id || '') || null, p_pass_key:passKey || null }),
+      rpc('kinojo_web_get_sanctuary_waitlist_v315', { p_sanctuary_code:String(id || '') || null }),
       getIdentityBadges().catch(()=>new Map())
     ]);
+    if(waitlist?.ok!==false){
+      data.waiting=Array.isArray(waitlist?.waiting)?waitlist.waiting:[];
+      data.waitlist=waitlist;
+      data.summary=Object.assign({},data.summary||{},{waitingCount:Number(waitlist?.waitingCount||0)});
+    }
     return decorateIdentityBadges(data,badgeMap);
+  }
+
+  async function getSanctuaryWaitlistRecommendations(extra={}){
+    const characterMasterId=Number(extra.characterMasterId||extra.character_master_id||0);
+    if(!Number.isFinite(characterMasterId)||characterMasterId<=0)return {ok:false,message:'대기자 캐릭터를 다시 선택해 주세요.'};
+    return rpc('kinojo_web_get_sanctuary_waitlist_recommendations_v315',{
+      p_character_master_id:characterMasterId,
+      p_sanctuary_code:String(extra.id||extra.sanctuaryId||extra.sanctuaryCode||'').trim()
+    });
   }
 
   async function getSanctuaryOperationOverview(extra={}){
@@ -1788,6 +1803,7 @@
     if(name === 'hallSuggestion') return submitHallSuggestion(extra);
     if(name === 'sanctuaryMaster') return getSanctuaryMaster();
     if(name === 'sanctuary') return getSanctuaryData(extra.id || extra.sanctuaryId || '');
+    if(name === 'sanctuaryWaitlistRecommendations') return getSanctuaryWaitlistRecommendations(extra);
     if(name === 'sanctuaryOperation') return getSanctuaryOperationOverview(extra);
     if(name === 'sanctuaryScheduleCalendar') return getSanctuaryScheduleCalendar(extra);
     if(name === 'sanctuaryScheduleDay') return getSanctuaryScheduleDay(extra);
@@ -1903,6 +1919,7 @@
     submitHallSuggestion,
     getSanctuaryMaster,
     getSanctuaryData,
+    getSanctuaryWaitlistRecommendations,
     getSanctuaryOperationOverview,
     getSanctuaryScheduleCalendar,
     getSanctuaryScheduleDay,
