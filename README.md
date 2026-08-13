@@ -26,7 +26,7 @@ KINOJO INFO GitHub Pages upload package.
 ## Class icon assets
 
 - All WEB class icons use the shared `assets/images/classes/class_icon_<class>.png` paths. Hall of Fame, ranking, sanctuary, Arcana, authentication, character detail, and Daevanion boards must reuse these paths instead of adding page-specific class icon files.
-- The active nine icons are the 256×256 transparent PNG emblems whose colors were sampled from the in-game class icons.
+- The active nine icons are the 256×256 transparent PNG emblems built from the user-provided in-game diamond interiors, frames, and class artwork without glyph-threshold extraction or recoloring. The level text and outer screenshot background are removed; fine class lines and the original in-game colors remain intact.
 - The previous PLAYNC originals are preserved unchanged under `assets/images/classes/original/` with the same file names for rollback and comparison only. Runtime code must not reference the `original` folder.
 
 ## KINOJO Meter admin
