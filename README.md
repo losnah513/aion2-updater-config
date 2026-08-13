@@ -23,6 +23,12 @@ KINOJO INFO GitHub Pages upload package.
 - Nested modal scroll areas hand wheel scrolling back to the outer modal when the inner area reaches its top or bottom boundary.
 - Passkey users do not see the comparison tab while viewing a character owned by their own account.
 
+## Class icon assets
+
+- All WEB class icons use the shared `assets/images/classes/class_icon_<class>.png` paths. Hall of Fame, ranking, sanctuary, Arcana, authentication, character detail, and Daevanion boards must reuse these paths instead of adding page-specific class icon files.
+- The active nine icons are the 256×256 transparent PNG emblems whose colors were sampled from the in-game class icons.
+- The previous PLAYNC originals are preserved unchanged under `assets/images/classes/original/` with the same file names for rollback and comparison only. Runtime code must not reference the `original` folder.
+
 ## KINOJO Meter admin
 
 - The MASTER-only Meter console is divided into Download, Meter, Statistics, and Notice management tabs on desktop and mobile.
