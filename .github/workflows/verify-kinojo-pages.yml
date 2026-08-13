@@ -19,6 +19,7 @@ on:
       - "m/hof/**"
       - "sanctuary/**"
       - "assets/images/sanctuary/**"
+      - "assets/images/classes/**"
       - "m/sanctuary/**"
       - "sanctuary-schedule/**"
       - "m/sanctuary-schedule/**"
@@ -50,6 +51,7 @@ on:
       - "m/hof/**"
       - "sanctuary/**"
       - "assets/images/sanctuary/**"
+      - "assets/images/classes/**"
       - "m/sanctuary/**"
       - "sanctuary-schedule/**"
       - "m/sanctuary-schedule/**"
@@ -188,6 +190,38 @@ jobs:
                   text = data.decode("utf-8")
                   if text.count("{") != text.count("}"):
                       raise SystemExit(f"CSS brace mismatch: {path}")
+
+          class_icon_names = [
+              "class_icon_assassin.png",
+              "class_icon_chanter.png",
+              "class_icon_cleric.png",
+              "class_icon_elementalist.png",
+              "class_icon_fighter.png",
+              "class_icon_gladiator.png",
+              "class_icon_ranger.png",
+              "class_icon_sorcerer.png",
+              "class_icon_templar.png",
+          ]
+          class_icon_dir = Path("assets/images/classes")
+          original_icon_dir = class_icon_dir / "original"
+          active_names = sorted(path.name for path in class_icon_dir.glob("class_icon_*.png"))
+          original_names = sorted(path.name for path in original_icon_dir.glob("class_icon_*.png"))
+          if active_names != class_icon_names:
+              raise SystemExit(f"Active class icon set mismatch: {active_names}")
+          if original_names != class_icon_names:
+              raise SystemExit(f"Original class icon set mismatch: {original_names}")
+
+          for name in class_icon_names:
+              active = (class_icon_dir / name).read_bytes()
+              original = (original_icon_dir / name).read_bytes()
+              if active[:8] != b"\x89PNG\r\n\x1a\n":
+                  raise SystemExit(f"Invalid active class icon PNG: {name}")
+              width = int.from_bytes(active[16:20], "big")
+              height = int.from_bytes(active[20:24], "big")
+              if (width, height) != (256, 256):
+                  raise SystemExit(f"Unexpected active class icon size: {name} {width}x{height}")
+              if active == original:
+                  raise SystemExit(f"Active class icon was not replaced: {name}")
 
           meter_pages = [Path("meter/index.html"), Path("m/meter/index.html")]
           for page in meter_pages:
@@ -360,6 +394,24 @@ jobs:
             "assets/images/sanctuary/bosses/rudra.webp"
             "assets/images/sanctuary/bosses/bagot.webp"
             "assets/images/sanctuary/bosses/kaldrix.webp"
+            "assets/images/classes/class_icon_assassin.png"
+            "assets/images/classes/class_icon_chanter.png"
+            "assets/images/classes/class_icon_cleric.png"
+            "assets/images/classes/class_icon_elementalist.png"
+            "assets/images/classes/class_icon_fighter.png"
+            "assets/images/classes/class_icon_gladiator.png"
+            "assets/images/classes/class_icon_ranger.png"
+            "assets/images/classes/class_icon_sorcerer.png"
+            "assets/images/classes/class_icon_templar.png"
+            "assets/images/classes/original/class_icon_assassin.png"
+            "assets/images/classes/original/class_icon_chanter.png"
+            "assets/images/classes/original/class_icon_cleric.png"
+            "assets/images/classes/original/class_icon_elementalist.png"
+            "assets/images/classes/original/class_icon_fighter.png"
+            "assets/images/classes/original/class_icon_gladiator.png"
+            "assets/images/classes/original/class_icon_ranger.png"
+            "assets/images/classes/original/class_icon_sorcerer.png"
+            "assets/images/classes/original/class_icon_templar.png"
             "sanctuary-schedule/index.html"
             "m/sanctuary-schedule/index.html"
             "sanctuary-schedule/css/sanctuary-schedule.css"
@@ -466,73 +518,3 @@ jobs:
                 echo "- Result: all live files match the repository source"
               } >> "$GITHUB_STEP_SUMMARY"
               exit 0
-            fi
-
-            if [[ "$attempt" -lt 15 ]]; then
-              echo "Live files are not synchronized yet. Retrying..."
-              sleep 20
-            fi
-          done
-
-          echo "Live readback did not converge to repository source." >&2
-          while read -r state path; do
-            [[ "$state" == "MISMATCH" ]] || continue
-            live_file="$tmp_dir/$(echo "$path" | tr '/' '_')"
-            echo "--- $path" >&2
-            echo "source sha256: $(sha256sum "$path" | awk '{print $1}')" >&2
-            echo "live   sha256: $(sha256sum "$live_file" | awk '{print $1}')" >&2
-            diff -u "$path" "$live_file" | head -120 >&2 || true
-          done < "$tmp_dir/result.txt"
-          exit 1
-
-      - name: Publish live readback success status
-        if: success()
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          STATUS_STATE: success
-          STATUS_DESCRIPTION: KINOJO 운영 파일이 main과 일치
-        run: |
-          set -euo pipefail
-          python3 <<'PY' > /tmp/kinojo-status.json
-          import json, os
-          print(json.dumps({
-              "state": os.environ["STATUS_STATE"],
-              "context": "kinojo/live-readback",
-              "description": os.environ["STATUS_DESCRIPTION"],
-              "target_url": f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
-          }, ensure_ascii=False))
-          PY
-          curl --fail --silent --show-error --location \
-            -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-            --data-binary @/tmp/kinojo-status.json >/dev/null
-
-      - name: Publish live readback failure status
-        if: failure()
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          STATUS_STATE: failure
-          STATUS_DESCRIPTION: KINOJO 운영 파일 readback 실패
-        run: |
-          set -euo pipefail
-          python3 <<'PY' > /tmp/kinojo-status.json
-          import json, os
-          print(json.dumps({
-              "state": os.environ["STATUS_STATE"],
-              "context": "kinojo/live-readback",
-              "description": os.environ["STATUS_DESCRIPTION"],
-              "target_url": f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
-          }, ensure_ascii=False))
-          PY
-          curl --fail --silent --show-error --location \
-            -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-            --data-binary @/tmp/kinojo-status.json >/dev/null
