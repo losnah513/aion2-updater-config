@@ -49,6 +49,7 @@ KINOJO INFO GitHub Pages upload package.
 - PASS KEY login uses an absolute browser inactivity deadline of 30 minutes. The shared warning modal opens at the 25-minute mark and displays the final five minutes.
 - Background tabs do not trust delayed interval ticks: focus, visibility, page-show, and cross-tab storage events recalculate the remaining time from `lastActivityAt`.
 - Extending an idle session is accepted only before the absolute deadline and after `kinojo-auth-service.js` revalidates the saved PASS KEY with Server. Privileged actions continue to be authorized by Server on every request.
+- DB `50041` keeps PASS KEY rows when a main character leaves Google list and disables them instead of deleting them. An administrator can reactivate an inactive key from Member Management; this explicit override permits common PASS KEY features, Meter download, roster-inactive owned-character selection, and Core launch while the character remains excluded from list lookup and public roster display.
 
 ## Sanctuary schedule
 

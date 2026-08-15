@@ -26,13 +26,21 @@ assert.ok(stagedLoading.includes('.meter-live-subbar'), 'Meter live users must b
 
 for (const entry of ['admin/index.html', 'm/admin/index.html']) {
   const html = read(entry);
-  for (const token of ['data-admin-subtab="logs"', 'id="meterDungeonLogRows"', 'id="meterDungeonLogChannel"', 'id="meterDungeonLogQuery"', 'METER RUNTIME LOG', '미터기 실행', '미터기 종료', 'admin.js?cache=2026081503']) {
+  for (const token of ['data-admin-subtab="logs"', 'id="meterDungeonLogRows"', 'id="meterDungeonLogChannel"', 'id="meterDungeonLogQuery"', 'METER RUNTIME LOG', '미터기 실행', '미터기 종료', 'kinojo-supabase-features.js?cache=2026081504', 'admin.js?cache=2026081504']) {
     assert.ok(html.includes(token), `${entry}: Meter dungeon log UI missing ${token}`);
   }
 }
 
 const features = read('core/kinojo-supabase-features.js');
 assert.ok(features.includes("logs:'adminMeterDungeonLogs'"), 'Admin Meter dungeon log action mapping missing');
+for (const token of ["normalizedCommand === 'enableCode'", "p_action:normalizedCommand === 'deleteCode' ? 'delete' : (normalizedCommand === 'enableCode' ? 'enable' : 'disable')", 'Google list 조회 대상 여부와 무관하게 PASS KEY 기능을 사용할 수 있습니다.']) {
+  assert.ok(features.includes(token), `PASS KEY administrative reactivation contract missing ${token}`);
+}
+
+const adminMembers = read('admin/js/admin-members.js');
+for (const token of ['data-member-enable', "adminAccount('enableCode'", '웹 로그인, 미터기 다운로드·실행을 포함한 PASS KEY 기능']) {
+  assert.ok(adminMembers.includes(token), `Admin member activation UI contract missing ${token}`);
+}
 
 const adminSystem = read('admin/js/admin-system.js');
 for (const token of ['loadMeterDungeonLogs', 'formatMeterLogTime', "timeZone:'Asia/Seoul'", 'staleSessionsClosed', 'state.meterDungeonLogTotalPages', 'archivedCombatTotal', 'expeditionCount', 'transcendenceCount', 'sanctuaryCount', '과거 보스 전투']) {

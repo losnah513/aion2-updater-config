@@ -99,7 +99,7 @@
       const allowed=getAccountAllowedRoles(a);
       const options=allowed.map(option=>'<option value="'+option+'" '+(option===roleKey?'selected':'')+'>'+esc(MEMBER_ROLE_LABELS[option])+'</option>').join('');
       const controls=canEdit
-        ? '<button class="admin-btn admin-member-role-open" data-member-role-open type="button">등급 변경</button><button class="admin-btn danger" data-member-disable type="button">비활성</button><button class="admin-btn" data-member-delete type="button">삭제</button>'
+        ? '<button class="admin-btn admin-member-role-open" data-member-role-open type="button">등급 변경</button>'+(active?'<button class="admin-btn danger" data-member-disable type="button">비활성</button>':'<button class="admin-btn primary" data-member-enable type="button">활성화</button>')+'<button class="admin-btn" data-member-delete type="button">삭제</button>'
         : '<span class="admin-member-locked">변경 권한 없음</span>';
       const editor=canEdit&&options
         ? '<div class="admin-member-role-editor" data-member-role-editor hidden><span><b>현재 '+roleName+'</b>에서 변경</span><select class="admin-select compact" data-member-role-select>'+options+'</select><button class="admin-btn primary" data-member-role-save type="button">적용</button><button class="admin-btn ghost" data-member-role-cancel type="button">취소</button></div>'
@@ -135,6 +135,10 @@
       else if(target.matches('[data-member-disable]')){
         if(!confirm(memberName+' 회원 코드를 비활성화할까요?')){target.disabled=false;return;}
         res=await adminAccount('disableCode',{memberId});
+      }
+      else if(target.matches('[data-member-enable]')){
+        if(!confirm(memberName+' 회원 코드를 활성화할까요?\n\nGoogle list 조회 대상에서 제외된 캐릭터라도 웹 로그인, 미터기 다운로드·실행을 포함한 PASS KEY 기능을 사용할 수 있게 됩니다.')){target.disabled=false;return;}
+        res=await adminAccount('enableCode',{memberId});
       }
       else if(target.matches('[data-member-delete]')){
         if(!confirm(memberName+' 회원 코드를 삭제할까요? 이 작업은 되돌릴 수 없습니다.')){target.disabled=false;return;}

@@ -411,14 +411,22 @@
       return { ok:true, message:'권한이 수정되었습니다.', memberId, account:accountFromRow(data?.member) };
     }
 
-    if(normalizedCommand === 'deleteCode' || normalizedCommand === 'disableCode'){
+    if(normalizedCommand === 'deleteCode' || normalizedCommand === 'disableCode' || normalizedCommand === 'enableCode'){
       const memberId = Number(extra.memberId || extra.member_id || 0);
       if(!Number.isInteger(memberId) || memberId <= 0) return { ok:false, message:'변경할 회원을 찾지 못했습니다.' };
       await rpc('kinojo_admin_member_manage_264', {
         p_pass_key:currentPassKey(), p_target_member_id:memberId,
-        p_action:normalizedCommand === 'deleteCode' ? 'delete' : 'disable', p_payload:{}
+        p_action:normalizedCommand === 'deleteCode' ? 'delete' : (normalizedCommand === 'enableCode' ? 'enable' : 'disable'), p_payload:{}
       });
-      return { ok:true, message:normalizedCommand === 'deleteCode' ? '회원 코드가 삭제되었습니다.' : '회원 코드가 비활성화되었습니다.', memberId };
+      return {
+        ok:true,
+        message:normalizedCommand === 'deleteCode'
+          ? '회원 코드가 삭제되었습니다.'
+          : (normalizedCommand === 'enableCode'
+            ? '회원 코드가 활성화되었습니다. Google list 조회 대상 여부와 무관하게 PASS KEY 기능을 사용할 수 있습니다.'
+            : '회원 코드가 비활성화되었습니다.'),
+        memberId
+      };
     }
 
     if(normalizedCommand === 'permissionOptions'){
