@@ -39,6 +39,7 @@
   const loadEventNoticeGroups=(...args)=>A.loadEventNoticeGroups(...args);
   const loadLookupHistory=(...args)=>A.loadLookupHistory(...args);
   const loadMeterAdminConsole=(...args)=>A.loadMeterAdminConsole(...args);
+  const loadMeterDungeonLogs=(...args)=>A.loadMeterDungeonLogs(...args);
   const loadNotices=(...args)=>A.loadNotices(...args);
   const loadSanctuaryRolePermissions=(...args)=>A.loadSanctuaryRolePermissions(...args);
   const loadSanctuaryScheduleConsole=(...args)=>A.loadSanctuaryScheduleConsole(...args);
@@ -114,7 +115,8 @@
     if(tab==='sanctuary'&&subtab==='requests') loadSanctuarySupportRequests(force===true);
     if(tab==='notices'&&subtab==='general') loadNotices();
     if(tab==='notices'&&subtab==='event') loadEventNoticeGroups();
-    if(tab==='meter'&&isMaster()) loadMeterAdminConsole();
+    if(tab==='meter'&&isMaster()&&subtab==='logs') loadMeterDungeonLogs(1);
+    if(tab==='meter'&&isMaster()&&subtab!=='logs') loadMeterAdminConsole();
     if(tab==='system'&&subtab==='server-status') refreshServerStatus();
     if(tab==='system'&&subtab==='sheet-sync') loadSanctuarySyncConsole(force===true);
     if(tab==='system'&&subtab==='environment') refreshSystemSettings();
@@ -299,6 +301,7 @@
     const meterPane=$('[data-admin-pane="meter"]');
     meterPane?.addEventListener('click',handleMeterAdminClick);
     meterPane?.addEventListener('change',handleMeterAdminChange);
+    $('#meterDungeonLogQuery')?.addEventListener('keydown',event=>{if(event.key==='Enter')loadMeterDungeonLogs(1);});
     $('#meterAdminNoticeNewBtn')?.addEventListener('click',()=>resetMeterNoticeEditor(null));
     $('#meterAdminNoticeCancelBtn')?.addEventListener('click',()=>resetMeterNoticeEditor(null));
     $('#meterAdminNoticeSaveBtn')?.addEventListener('click',saveMeterNotice);

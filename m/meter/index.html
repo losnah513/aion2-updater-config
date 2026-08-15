@@ -16,7 +16,7 @@
 <link href="../../ui/kinojo-components.css?cache=2026072201" rel="stylesheet"/>
 <link href="../../ui/kinojo-common-ui.css?cache=2026081205" rel="stylesheet"/>
 <link href="../../ui/kinojo-public-shell.css?cache=2026081202" rel="stylesheet"/>
-<link href="../../meter/css/meter.css?cache=2026081003" rel="stylesheet"/>
+<link href="../../meter/css/meter.css?cache=2026081501" rel="stylesheet"/>
 </head>
 <body class="kinojo-meter-page">
 <main class="meter-wrap">
@@ -48,6 +48,12 @@
       <small id="meterDownloadNote">Server Release Master를 확인하고 있습니다.</small>
       <div class="meter-release-note" id="meterReleaseNote">최신 배포 메모를 불러오는 중입니다.</div>
     </aside>
+  </section>
+
+  <section class="meter-live-subbar" id="meterLiveUsers" aria-live="polite" aria-label="현재 키노조 미터 사용 중인 이용자">
+    <div class="meter-live-title"><span aria-hidden="true"></span><strong>현재 미터 사용 중</strong><b id="meterLiveCount">0명</b></div>
+    <div class="meter-live-names" id="meterLiveNames"><em>실행 상태를 확인하고 있습니다.</em></div>
+    <small>미터기 설정에서 공개 표시를 켠 캐릭터만 나타납니다.</small>
   </section>
 
   <section class="meter-system-notice" id="meterSystemNotice" hidden><strong>SERVER</strong><span>Server 연결 상태를 확인하고 있습니다.</span></section>
@@ -231,6 +237,6 @@
 <script src="../../core/kinojo-auth-session.js?cache=2026081201"></script>
 <script src="../../core/kinojo-auth-service.js?cache=2026080205"></script>
 <script src="../../core/kinojo-auth-ui.js?cache=2026081204"></script>
-<script src="../../meter/js/meter-app.js?cache=2026080601-50026"></script>
+<script src="../../meter/js/meter-app.js?cache=2026081501-50037"></script>
 </body>
 </html>

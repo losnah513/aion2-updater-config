@@ -39,6 +39,7 @@
   let selectedMeterCharacter = null;
   let meterAuthConnecting = false;
   let meterSessionExpiryTimer = 0;
+  let meterPresenceTimer = 0;
 
   function formatDps(value) {
     if (value === null || value === undefined || value === '') return '-';
@@ -618,6 +619,54 @@
     catch { data = { ok: false, message: raw || `HTTP ${response.status}` }; }
     if (!response.ok || data.ok === false) throw new Error(data.message || `HTTP ${response.status}`);
     return data;
+  }
+
+  function renderPublicPresence(data, failed) {
+    const root = $('meterLiveUsers');
+    const names = $('meterLiveNames');
+    const count = $('meterLiveCount');
+    if (!root || !names || !count) return;
+    const characters = failed ? [] : asArray(data && data.characters)
+      .map((item) => String(item && item.characterName || '').trim())
+      .filter(Boolean);
+    root.classList.toggle('is-error', failed === true);
+    count.textContent = `${characters.length}명`;
+    names.replaceChildren();
+    if (failed) {
+      const message = document.createElement('em');
+      message.textContent = '현재 실행 목록을 불러오지 못했습니다.';
+      names.appendChild(message);
+      return;
+    }
+    if (!characters.length) {
+      const empty = document.createElement('em');
+      empty.textContent = '현재 공개 표시 중인 이용자가 없습니다.';
+      names.appendChild(empty);
+      return;
+    }
+    characters.forEach((characterName) => {
+      const chip = document.createElement('span');
+      chip.textContent = characterName;
+      names.appendChild(chip);
+    });
+  }
+
+  async function loadPublicPresence() {
+    try {
+      const data = await callMeter('publicPresence', {
+        channel: String(meterConfig.releaseChannel || 'stable')
+      });
+      renderPublicPresence(data, false);
+    } catch (error) {
+      renderPublicPresence(null, true);
+    }
+  }
+
+  function startPublicPresencePolling() {
+    if (meterPresenceTimer) window.clearInterval(meterPresenceTimer);
+    meterPresenceTimer = window.setInterval(() => {
+      if (!document.hidden) loadPublicPresence();
+    }, 15000);
   }
 
   function setSystemNotice(title, message, visible = true) {
@@ -1422,14 +1471,22 @@
         await logoutMine(true, false);
       }
     });
-    window.addEventListener('pagehide', logoutMineKeepalive);
+    window.addEventListener('pagehide', () => {
+      if (meterPresenceTimer) window.clearInterval(meterPresenceTimer);
+      meterPresenceTimer = 0;
+      logoutMineKeepalive();
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) loadPublicPresence();
+    });
   }
 
   document.addEventListener('DOMContentLoaded', async () => {
     bind();
     try {
       await loadConfiguration();
-      await Promise.all([loadPublicConsole(), loadConsentDocument(), loadCatalog()]);
+      await Promise.all([loadPublicConsole(), loadConsentDocument(), loadCatalog(), loadPublicPresence()]);
+      startPublicPresencePolling();
       if (!meterSessionToken) await connectMineFromCommonAuth();
       if (meterSessionToken) await refreshConsentStatus();
       if (meterSessionToken) await loadRecentObserved();

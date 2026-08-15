@@ -12,7 +12,7 @@
 <link href="../ui/kinojo-common-ui.css?cache=2026081205" rel="stylesheet"/>
 <link href="../ui/kinojo-card-guards.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../ui/kinojo-animations.css?cache=2026081003" rel="stylesheet"/>
-<link href="./css/admin.css?cache=2026081205" rel="stylesheet"/>
+<link href="./css/admin.css?cache=2026081501" rel="stylesheet"/>
 <script src="../ui/kinojo-device-router.js?cache=2026070110" data-mobile-path="../m/admin/"></script>
 </head>
 <body class="kinojo-page-admin">
@@ -183,7 +183,7 @@
       <div class="admin-subpane" data-admin-subpane="event"><section class="admin-card admin-event-notice-card"><div class="admin-card-head"><div><h2>이벤트 공지 관리</h2><p>페이지 진입 팝업에 표시할 이벤트 공지 묶음 목록입니다.</p></div><div class="admin-row-actions"><button class="admin-btn" id="eventNoticeReloadBtn" type="button">목록 새로고침</button><button class="admin-btn primary" id="eventNoticeCreateBtn" type="button">이벤트 공지 등록</button></div></div><div class="admin-form-row admin-event-notice-tools"><select class="admin-select" id="eventNoticeStatusFilter"><option value="ALL">전체 상태</option><option value="DRAFT">작성중</option><option value="SCHEDULED">예정</option><option value="ACTIVE">진행중</option><option value="PAUSED">일시중지</option><option value="EXPIRED">종료</option><option value="DELETED">삭제됨</option></select></div><div id="eventNoticeStatus" class="admin-statusline"></div><div class="admin-list admin-event-notice-list" id="eventNoticeList"><div class="admin-empty">이벤트 공지 목록을 불러오세요.</div></div></section></div>
     </section>
     <section class="admin-pane" data-admin-pane="meter" data-admin-master-only>
-      <nav class="admin-subnav admin-meter-subnav" data-admin-subnav="meter" aria-label="키노조 미터 관리 하위 기능"><button class="active" data-admin-subtab="downloads" type="button">다운로드 관리</button><button data-admin-subtab="runtime" type="button">미터기 관리</button><button data-admin-subtab="statistics" type="button">통계 관리</button><button data-admin-subtab="notices" type="button">공지 관리</button></nav>
+      <nav class="admin-subnav admin-meter-subnav" data-admin-subnav="meter" aria-label="키노조 미터 관리 하위 기능"><button class="active" data-admin-subtab="downloads" type="button">다운로드 관리</button><button data-admin-subtab="runtime" type="button">미터기 관리</button><button data-admin-subtab="statistics" type="button">통계 관리</button><button data-admin-subtab="notices" type="button">공지 관리</button><button data-admin-subtab="logs" type="button">로그 관리</button></nav>
 
       <div class="admin-subpane active" data-admin-subpane="downloads">
         <section class="admin-card admin-meter-hero">
@@ -287,6 +287,25 @@
         </div>
       </section>
       </div>
+
+      <div class="admin-subpane" data-admin-subpane="logs">
+        <section class="admin-card admin-meter-log-card">
+          <div class="admin-card-head"><div><span class="admin-meter-eyebrow">DUNGEON SESSION LOG</span><h2>미터기 던전 이용 로그</h2><p>던전 퇴장 시간을 기준으로 최신 기록부터 표시합니다.</p></div><button class="admin-btn" id="meterDungeonLogReloadBtn" type="button">새로고침</button></div>
+          <div class="admin-meter-log-tools">
+            <select class="admin-select" id="meterDungeonLogChannel" aria-label="미터기 채널"><option value="stable">Stable</option><option value="staging">Staging</option></select>
+            <input class="admin-input" id="meterDungeonLogQuery" maxlength="120" placeholder="캐릭터·던전·분류 검색"/>
+            <button class="admin-btn primary" id="meterDungeonLogSearchBtn" type="button">검색</button>
+          </div>
+          <div class="admin-statusline" id="meterDungeonLogStatus">로그를 불러오세요.</div>
+          <div class="admin-meter-log-table-wrap">
+            <table class="admin-meter-log-table">
+              <thead><tr><th>캐릭터 이름</th><th>던전 정보</th><th>던전 입장 시간</th><th>던전 퇴장 시간</th></tr></thead>
+              <tbody id="meterDungeonLogRows"><tr><td colspan="4">아직 불러온 로그가 없습니다.</td></tr></tbody>
+            </table>
+          </div>
+          <div class="admin-meter-log-pagination"><button class="admin-btn" id="meterDungeonLogPrevBtn" type="button">이전</button><span id="meterDungeonLogPageInfo">1 / 1</span><button class="admin-btn" id="meterDungeonLogNextBtn" type="button">다음</button></div>
+        </section>
+      </div>
     </section>
     <section class="admin-pane" data-admin-pane="system">
       <nav class="admin-subnav" data-admin-subnav="system" aria-label="시스템 설정 하위 기능"><button class="active" data-admin-subtab="server-status" type="button">서버 상태</button><button data-admin-subtab="sheet-sync" type="button">시트 동기화</button><button data-admin-subtab="environment" type="button">권한·환경 설정</button></nav>
@@ -369,10 +388,10 @@
 <script src="../ui/kinojo-admin-panel.js?cache=2026071712"></script>
 <script src="../core/kinojo-supabase-client.js?cache=2026080205"></script>
 <script src="../core/kinojo-supabase-rpc.js?cache=2026080205"></script>
-<script src="../core/kinojo-supabase-features.js?cache=2026081204"></script>
+<script src="../core/kinojo-supabase-features.js?cache=2026081501"></script>
 <script src="../core/kinojo-auth-session.js?cache=2026081201"></script>
 <script src="../core/kinojo-auth-service.js?cache=2026080205"></script>
 <script src="../core/kinojo-auth-ui.js?cache=2026081204"></script>
-<script src="./js/admin.js?cache=2026081205"></script>
+<script src="./js/admin.js?cache=2026081501"></script>
 </body>
 </html>

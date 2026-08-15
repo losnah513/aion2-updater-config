@@ -32,10 +32,17 @@ KINOJO INFO GitHub Pages upload package.
 
 ## KINOJO Meter admin
 
-- The MASTER-only Meter console is divided into Download, Meter, Statistics, and Notice management tabs on desktop and mobile.
+- The MASTER-only Meter console is divided into Download, Meter, Statistics, Notice, and Dungeon Log management tabs on desktop and mobile.
 - Stable and Staging controls are shown side by side on desktop and stack on mobile. Download, Core launch, statistics visibility, notice publication, and notice pinning all reuse the shared ranking slider switch.
 - Download and private Core authorization keep independent KINOJO level allowlists. Current Launcher/Core release data is read-only at the top of Meter management.
 - Statistics management groups Server-owned collection flow, validation quality, and publication readiness without recalculating Server metrics in the browser.
+- Dungeon logs reuse the existing selected-character session and Server Catalog; only one lifecycle row is retained per dungeon visit and the list is ordered by exit time. Per-packet log duplication is forbidden.
+
+## KINOJO Meter presence and party-card profile source
+
+- The public desktop/mobile Meter page lists only active users who explicitly enabled public presence. The list refreshes every 15 seconds and Server expires stale presence after 45 seconds.
+- Party-card class, combat power, emblem key, and profile image are accepted only from a successful official PLAYNC AION2 public profile response. Server-stored character profiles, prior observations, packet class, and HUD class must never be display fallbacks.
+- A failed official lookup remains unresolved. Runtime packet/HUD values may identify the lookup target and damage participant, but cannot populate party-card profile metadata.
 
 ## Authentication session
 
