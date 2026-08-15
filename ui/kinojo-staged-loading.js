@@ -2,7 +2,7 @@
   'use strict';
   function node(target){return typeof target==='string'?document.querySelector(target):target}
   function attachPageSubbar(){
-    const bar=document.querySelector('.hof-filter-bar,.ranking-toolbar,.schedule-page-bar,.sanctuary-page-bar');
+    const bar=document.querySelector('.hof-filter-bar,.ranking-toolbar,.schedule-page-bar,.sanctuary-page-bar,.meter-live-subbar');
     const topbar=document.querySelector('.kinojo-topbar');
     if(!bar||!topbar)return false;
     if(topbar.nextElementSibling!==bar)topbar.insertAdjacentElement('afterend',bar);

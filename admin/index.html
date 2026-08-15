@@ -12,7 +12,7 @@
 <link href="../ui/kinojo-common-ui.css?cache=2026081205" rel="stylesheet"/>
 <link href="../ui/kinojo-card-guards.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../ui/kinojo-animations.css?cache=2026081003" rel="stylesheet"/>
-<link href="./css/admin.css?cache=2026081501" rel="stylesheet"/>
+<link href="./css/admin.css?cache=2026081502" rel="stylesheet"/>
 <script src="../ui/kinojo-device-router.js?cache=2026070110" data-mobile-path="../m/admin/"></script>
 </head>
 <body class="kinojo-page-admin">
@@ -290,7 +290,7 @@
 
       <div class="admin-subpane" data-admin-subpane="logs">
         <section class="admin-card admin-meter-log-card">
-          <div class="admin-card-head"><div><span class="admin-meter-eyebrow">DUNGEON SESSION LOG</span><h2>미터기 던전 이용 로그</h2><p>던전 퇴장 시간을 기준으로 최신 기록부터 표시합니다.</p></div><button class="admin-btn" id="meterDungeonLogReloadBtn" type="button">새로고침</button></div>
+          <div class="admin-card-head"><div><span class="admin-meter-eyebrow">DUNGEON SESSION LOG</span><h2>미터기 던전 이용 로그</h2><p>새 로그는 정확한 던전 입·퇴장, 기존 데이터는 전투 시작·종료 시각으로 구분해 표시합니다.</p></div><button class="admin-btn" id="meterDungeonLogReloadBtn" type="button">새로고침</button></div>
           <div class="admin-meter-log-tools">
             <select class="admin-select" id="meterDungeonLogChannel" aria-label="미터기 채널"><option value="stable">Stable</option><option value="staging">Staging</option></select>
             <input class="admin-input" id="meterDungeonLogQuery" maxlength="120" placeholder="캐릭터·던전·분류 검색"/>
@@ -299,7 +299,7 @@
           <div class="admin-statusline" id="meterDungeonLogStatus">로그를 불러오세요.</div>
           <div class="admin-meter-log-table-wrap">
             <table class="admin-meter-log-table">
-              <thead><tr><th>캐릭터 이름</th><th>던전 정보</th><th>던전 입장 시간</th><th>던전 퇴장 시간</th></tr></thead>
+              <thead><tr><th>캐릭터 이름</th><th>던전 정보</th><th>입장·전투 시작</th><th>퇴장·전투 종료</th></tr></thead>
               <tbody id="meterDungeonLogRows"><tr><td colspan="4">아직 불러온 로그가 없습니다.</td></tr></tbody>
             </table>
           </div>
@@ -392,6 +392,6 @@
 <script src="../core/kinojo-auth-session.js?cache=2026081201"></script>
 <script src="../core/kinojo-auth-service.js?cache=2026080205"></script>
 <script src="../core/kinojo-auth-ui.js?cache=2026081204"></script>
-<script src="./js/admin.js?cache=2026081501"></script>
+<script src="./js/admin.js?cache=2026081502"></script>
 </body>
 </html>
