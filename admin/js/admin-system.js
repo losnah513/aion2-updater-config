@@ -221,24 +221,26 @@
       rows.innerHTML='<tr><td colspan="4">조건에 맞는 로그가 없습니다.</td></tr>';
     }else{
       rows.innerHTML=items.map(item=>{
-        const type=String(item?.dungeonType||'').trim();
-        const classification=String(item?.classification||'').trim();
-        const difficulty=String(item?.difficultyName||'').trim();
-        const name=String(item?.dungeonName||'알 수 없는 던전').trim();
-        const badges=[type,classification,difficulty].filter(Boolean).map(value=>'<span class="'+(value==='어려움'?'hard':'')+'">'+esc(value)+'</span>').join('');
-        const historical=String(item?.sourceType||'').toUpperCase()==='HISTORICAL_COMBAT';
-        const bossName=String(item?.bossName||'').trim();
-        const result=historical?('기존 전투 기록'+(bossName?' · '+esc(bossName):'')):(String(item?.status||'').toUpperCase()==='COMPLETED'?'정상 종료':'비정상 종료');
-        return '<tr><td>'+esc(item?.characterName||'-')+'</td><td><div class="admin-meter-log-dungeon">'+badges+'<b>'+esc(name)+'</b></div><small class="admin-meter-log-result'+(historical?' historical':'')+'">'+result+'</small></td><td>'+esc(formatMeterLogTime(item?.enteredAt))+'</td><td>'+esc(formatMeterLogTime(item?.exitedAt))+'</td></tr>';
+        const expedition=Math.max(0,Number(item?.expeditionCount||0));
+        const transcendence=Math.max(0,Number(item?.transcendenceCount||0));
+        const sanctuary=Math.max(0,Number(item?.sanctuaryCount||0));
+        const dungeonTotal=Math.max(0,Number(item?.dungeonRunTotal||0));
+        const badges=[['원정',expedition],['초월',transcendence],['성역',sanctuary]]
+          .filter(([,count])=>count>0)
+          .map(([label,count])=>'<span>'+esc(label)+' '+count.toLocaleString('ko-KR')+'회</span>').join('');
+        const summary=badges||'<span>던전 방문 0회</span>';
+        const status=String(item?.status||'').toUpperCase();
+        const result=status==='ACTIVE'?'실행 중':(status==='COMPLETED'?'정상 종료':'비정상 종료');
+        const endedAt=status==='ACTIVE'?'실행 중':formatMeterLogTime(item?.endedAt);
+        return '<tr><td>'+esc(item?.characterName||'-')+'</td><td><div class="admin-meter-log-dungeon">'+summary+'</div><small class="admin-meter-log-result">총 '+dungeonTotal.toLocaleString('ko-KR')+'회 · '+result+'</small></td><td>'+esc(formatMeterLogTime(item?.startedAt))+'</td><td>'+esc(endedAt)+'</td></tr>';
       }).join('');
     }
     const info=$('#meterDungeonLogPageInfo');if(info)info.textContent=state.meterDungeonLogPage+' / '+state.meterDungeonLogTotalPages;
     const prev=$('#meterDungeonLogPrevBtn');if(prev)prev.disabled=state.meterDungeonLogPage<=1;
     const next=$('#meterDungeonLogNextBtn');if(next)next.disabled=state.meterDungeonLogPage>=state.meterDungeonLogTotalPages;
-    const stale=Math.max(0,Number(data?.staleRunsClosed||0));
-    const sessionTotal=Math.max(0,Number(data?.sessionTotal||0));
-    const historicalTotal=Math.max(0,Number(data?.historicalCombatTotal||0));
-    const summary='총 '+total.toLocaleString('ko-KR')+'건 · 던전 세션 '+sessionTotal.toLocaleString('ko-KR')+'건 · 기존 전투 '+historicalTotal.toLocaleString('ko-KR')+'건';
+    const stale=Math.max(0,Number(data?.staleSessionsClosed||0));
+    const archived=Math.max(0,Number(data?.archivedCombatTotal||0));
+    const summary='미터기 실행 세션 '+total.toLocaleString('ko-KR')+'건'+(archived?' · 과거 보스 전투 '+archived.toLocaleString('ko-KR')+'건은 원본만 보관(목록 제외)':'');
     setStatus('#meterDungeonLogStatus',summary+(stale?' · 종료 신호가 끊긴 '+stale+'건을 마지막 확인 시각으로 정리했습니다.':''),'ok');
   }
 
@@ -248,13 +250,13 @@
     const requested=Math.max(1,Number(page||1));
     const channel=$('#meterDungeonLogChannel')?.value||'stable';
     const query=$('#meterDungeonLogQuery')?.value.trim()||'';
-    setStatus('#meterDungeonLogStatus','던전 이용 로그를 불러오는 중...','');
+    setStatus('#meterDungeonLogStatus','미터기 이용 로그를 불러오는 중...','');
     try{
       const data=await adminMeter('logs',{channel,limit,offset:(requested-1)*limit,query});
-      if(!data||data.ok===false)throw new Error(data?.message||'던전 이용 로그 조회 실패');
+      if(!data||data.ok===false)throw new Error(data?.message||'미터기 이용 로그 조회 실패');
       renderMeterDungeonLogs(data);
     }catch(err){
-      setStatus('#meterDungeonLogStatus',meterAdminErrorMessage(err,'던전 이용 로그를 불러오지 못했습니다.'),'error');
+      setStatus('#meterDungeonLogStatus',meterAdminErrorMessage(err,'미터기 이용 로그를 불러오지 못했습니다.'),'error');
     }
   }
 

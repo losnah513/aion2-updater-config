@@ -22,7 +22,7 @@ assert.ok(stagedLoading.includes('.meter-live-subbar'), 'Meter live users must b
 
 for (const entry of ['admin/index.html', 'm/admin/index.html']) {
   const html = read(entry);
-  for (const token of ['data-admin-subtab="logs"', 'id="meterDungeonLogRows"', 'id="meterDungeonLogChannel"', 'id="meterDungeonLogQuery"']) {
+  for (const token of ['data-admin-subtab="logs"', 'id="meterDungeonLogRows"', 'id="meterDungeonLogChannel"', 'id="meterDungeonLogQuery"', 'METER RUNTIME LOG', '미터기 실행', '미터기 종료', 'admin.js?cache=2026081503']) {
     assert.ok(html.includes(token), `${entry}: Meter dungeon log UI missing ${token}`);
   }
 }
@@ -31,10 +31,10 @@ const features = read('core/kinojo-supabase-features.js');
 assert.ok(features.includes("logs:'adminMeterDungeonLogs'"), 'Admin Meter dungeon log action mapping missing');
 
 const adminSystem = read('admin/js/admin-system.js');
-for (const token of ['loadMeterDungeonLogs', 'formatMeterLogTime', "timeZone:'Asia/Seoul'", 'staleRunsClosed', 'state.meterDungeonLogTotalPages', 'sourceType', 'historicalCombatTotal', '기존 전투 기록']) {
+for (const token of ['loadMeterDungeonLogs', 'formatMeterLogTime', "timeZone:'Asia/Seoul'", 'staleSessionsClosed', 'state.meterDungeonLogTotalPages', 'archivedCombatTotal', 'expeditionCount', 'transcendenceCount', 'sanctuaryCount', '과거 보스 전투']) {
   assert.ok(adminSystem.includes(token), `Admin Meter dungeon log implementation missing ${token}`);
 }
 assert.ok(adminSystem.includes("esc(item?.characterName||'-')"), 'Dungeon log character name must be escaped before HTML rendering');
-assert.ok(adminSystem.includes("esc(name)"), 'Dungeon name must be escaped before HTML rendering');
+assert.ok(adminSystem.includes("esc(label)"), 'Runtime content labels must be escaped before HTML rendering');
 
 console.log('KINOJO Meter public presence and dungeon log contract: PASS');
