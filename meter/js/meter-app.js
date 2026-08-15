@@ -629,8 +629,10 @@
     const characters = failed ? [] : asArray(data && data.characters)
       .map((item) => String(item && item.characterName || '').trim())
       .filter(Boolean);
+    const anonymousCount = failed ? 0 : Math.max(0, Math.trunc(Number(data && data.anonymousCount) || 0));
+    const activeCount = failed ? 0 : Math.max(characters.length + anonymousCount, Math.trunc(Number(data && data.activeCount) || 0));
     root.classList.toggle('is-error', failed === true);
-    count.textContent = `${characters.length}명`;
+    count.textContent = `${activeCount}명`;
     names.replaceChildren();
     if (failed) {
       const message = document.createElement('em');
@@ -638,9 +640,9 @@
       names.appendChild(message);
       return;
     }
-    if (!characters.length) {
+    if (!activeCount) {
       const empty = document.createElement('em');
-      empty.textContent = '현재 공개 표시 중인 이용자가 없습니다.';
+      empty.textContent = '현재 미터를 실행 중인 이용자가 없습니다.';
       names.appendChild(empty);
       return;
     }
@@ -649,6 +651,12 @@
       chip.textContent = characterName;
       names.appendChild(chip);
     });
+    if (anonymousCount > 0) {
+      const anonymous = document.createElement('span');
+      anonymous.className = 'is-anonymous';
+      anonymous.textContent = anonymousCount === 1 ? '익명 사용자' : `익명 사용자 ${anonymousCount}명`;
+      names.appendChild(anonymous);
+    }
   }
 
   async function loadPublicPresence() {

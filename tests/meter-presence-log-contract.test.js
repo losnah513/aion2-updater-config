@@ -7,15 +7,19 @@ const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
 for (const entry of ['meter/index.html', 'm/meter/index.html']) {
   const html = read(entry);
-  for (const token of ['id="meterLiveUsers"', 'id="meterLiveCount"', 'id="meterLiveNames"', 'kinojo-page-booting', 'kinojo-staged-loading.css?cache=2026081502', 'kinojo-staged-loading.js?cache=2026081502', 'meter-app.js?cache=2026081501-50037']) {
+  for (const token of ['id="meterLiveUsers"', 'id="meterLiveCount"', 'id="meterLiveNames"', 'kinojo-page-booting', '이름 공개를 끈 이용자는 웹에 익명 사용자로 표시됩니다.', 'kinojo-staged-loading.css?cache=2026081502', 'kinojo-staged-loading.js?cache=2026081502', 'meter-app.js?cache=2026081502-50040']) {
     assert.ok(html.includes(token), `${entry}: public presence contract missing ${token}`);
   }
 }
 
 const meterApp = read('meter/js/meter-app.js');
-for (const token of ["callMeter('publicPresence'", 'setInterval', '15000', 'replaceChildren()', 'textContent = characterName']) {
+for (const token of ["callMeter('publicPresence'", 'setInterval', '15000', 'replaceChildren()', 'textContent = characterName', 'anonymousCount', "anonymous.className = 'is-anonymous'", "'익명 사용자'"]) {
   assert.ok(meterApp.includes(token), `Meter public presence implementation missing ${token}`);
 }
+assert.ok(meterApp.includes('characters.length + anonymousCount'), 'Meter live count must include named and anonymous users');
+
+const meterCss = read('meter/css/meter.css');
+assert.ok(meterCss.includes('.meter-live-names span.is-anonymous'), 'Anonymous live-user chip style missing');
 
 const stagedLoading = read('ui/kinojo-staged-loading.js');
 assert.ok(stagedLoading.includes('.meter-live-subbar'), 'Meter live users must be attached directly below the common topbar');

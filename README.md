@@ -40,7 +40,7 @@ KINOJO INFO GitHub Pages upload package.
 
 ## KINOJO Meter presence and party-card profile source
 
-- The public desktop/mobile Meter page lists only active users who explicitly enabled public presence. The list refreshes every 15 seconds and Server expires stale presence after 45 seconds.
+- The public desktop/mobile Meter page counts every active Meter user. Name publication defaults to ON; users who turn it OFF remain in the active count and appear only as an anonymous-user aggregate. The list refreshes every 15 seconds and Server expires stale presence after 45 seconds. Party Meter-user markers do not depend on WEB name publication.
 - Party-card class, combat power, emblem key, and profile image are accepted only from a successful official PLAYNC AION2 public profile response. Server-stored character profiles, prior observations, packet class, and HUD class must never be display fallbacks.
 - A failed official lookup remains unresolved. Runtime packet/HUD values may identify the lookup target and damage participant, but cannot populate party-card profile metadata.
 
