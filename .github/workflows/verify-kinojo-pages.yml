@@ -452,6 +452,8 @@ jobs:
             "ui/kinojo-common-ui.css"
             "ui/kinojo-common-ui.js"
             "ui/kinojo-public-shell.css"
+            "ui/kinojo-staged-loading.css"
+            "ui/kinojo-staged-loading.js"
             "ui/kinojo-event-notice.css"
             "ui/kinojo-event-notice.js"
             "ui/kinojo-character-reaction.js"

@@ -218,7 +218,7 @@
     state.meterDungeonLogPage=Math.floor(offset/limit)+1;
     state.meterDungeonLogTotalPages=Math.max(1,Math.ceil(total/limit));
     if(!items.length){
-      rows.innerHTML='<tr><td colspan="4">조건에 맞는 종료 로그가 없습니다.</td></tr>';
+      rows.innerHTML='<tr><td colspan="4">조건에 맞는 로그가 없습니다.</td></tr>';
     }else{
       rows.innerHTML=items.map(item=>{
         const type=String(item?.dungeonType||'').trim();
@@ -226,15 +226,20 @@
         const difficulty=String(item?.difficultyName||'').trim();
         const name=String(item?.dungeonName||'알 수 없는 던전').trim();
         const badges=[type,classification,difficulty].filter(Boolean).map(value=>'<span class="'+(value==='어려움'?'hard':'')+'">'+esc(value)+'</span>').join('');
-        const result=String(item?.status||'').toUpperCase()==='COMPLETED'?'정상 종료':'비정상 종료';
-        return '<tr><td>'+esc(item?.characterName||'-')+'</td><td><div class="admin-meter-log-dungeon">'+badges+'<b>'+esc(name)+'</b></div><small class="admin-meter-log-result">'+result+'</small></td><td>'+esc(formatMeterLogTime(item?.enteredAt))+'</td><td>'+esc(formatMeterLogTime(item?.exitedAt))+'</td></tr>';
+        const historical=String(item?.sourceType||'').toUpperCase()==='HISTORICAL_COMBAT';
+        const bossName=String(item?.bossName||'').trim();
+        const result=historical?('기존 전투 기록'+(bossName?' · '+esc(bossName):'')):(String(item?.status||'').toUpperCase()==='COMPLETED'?'정상 종료':'비정상 종료');
+        return '<tr><td>'+esc(item?.characterName||'-')+'</td><td><div class="admin-meter-log-dungeon">'+badges+'<b>'+esc(name)+'</b></div><small class="admin-meter-log-result'+(historical?' historical':'')+'">'+result+'</small></td><td>'+esc(formatMeterLogTime(item?.enteredAt))+'</td><td>'+esc(formatMeterLogTime(item?.exitedAt))+'</td></tr>';
       }).join('');
     }
     const info=$('#meterDungeonLogPageInfo');if(info)info.textContent=state.meterDungeonLogPage+' / '+state.meterDungeonLogTotalPages;
     const prev=$('#meterDungeonLogPrevBtn');if(prev)prev.disabled=state.meterDungeonLogPage<=1;
     const next=$('#meterDungeonLogNextBtn');if(next)next.disabled=state.meterDungeonLogPage>=state.meterDungeonLogTotalPages;
     const stale=Math.max(0,Number(data?.staleRunsClosed||0));
-    setStatus('#meterDungeonLogStatus','총 '+total.toLocaleString('ko-KR')+'건'+(stale?' · 종료 신호가 끊긴 '+stale+'건을 마지막 확인 시각으로 정리했습니다.':''),'ok');
+    const sessionTotal=Math.max(0,Number(data?.sessionTotal||0));
+    const historicalTotal=Math.max(0,Number(data?.historicalCombatTotal||0));
+    const summary='총 '+total.toLocaleString('ko-KR')+'건 · 던전 세션 '+sessionTotal.toLocaleString('ko-KR')+'건 · 기존 전투 '+historicalTotal.toLocaleString('ko-KR')+'건';
+    setStatus('#meterDungeonLogStatus',summary+(stale?' · 종료 신호가 끊긴 '+stale+'건을 마지막 확인 시각으로 정리했습니다.':''),'ok');
   }
 
   async function loadMeterDungeonLogs(page=1){
