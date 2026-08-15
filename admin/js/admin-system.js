@@ -200,6 +200,59 @@
     $$('[data-meter-load-status]').forEach(target=>{target.textContent=message;target.className='admin-statusline '+(failed.length?'error':'ok');});
   }
 
+  function formatMeterLogTime(value){
+    const date=value?new Date(value):null;
+    if(!date||Number.isNaN(date.getTime()))return '-';
+    return new Intl.DateTimeFormat('ko-KR',{
+      timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit',
+      hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'
+    }).format(date);
+  }
+
+  function renderMeterDungeonLogs(data){
+    const rows=$('#meterDungeonLogRows');if(!rows)return;
+    const items=Array.isArray(data?.items)?data.items:[];
+    const total=Math.max(0,Number(data?.total||0));
+    const limit=Math.max(1,Number(data?.limit||50));
+    const offset=Math.max(0,Number(data?.offset||0));
+    state.meterDungeonLogPage=Math.floor(offset/limit)+1;
+    state.meterDungeonLogTotalPages=Math.max(1,Math.ceil(total/limit));
+    if(!items.length){
+      rows.innerHTML='<tr><td colspan="4">조건에 맞는 종료 로그가 없습니다.</td></tr>';
+    }else{
+      rows.innerHTML=items.map(item=>{
+        const type=String(item?.dungeonType||'').trim();
+        const classification=String(item?.classification||'').trim();
+        const difficulty=String(item?.difficultyName||'').trim();
+        const name=String(item?.dungeonName||'알 수 없는 던전').trim();
+        const badges=[type,classification,difficulty].filter(Boolean).map(value=>'<span class="'+(value==='어려움'?'hard':'')+'">'+esc(value)+'</span>').join('');
+        const result=String(item?.status||'').toUpperCase()==='COMPLETED'?'정상 종료':'비정상 종료';
+        return '<tr><td>'+esc(item?.characterName||'-')+'</td><td><div class="admin-meter-log-dungeon">'+badges+'<b>'+esc(name)+'</b></div><small class="admin-meter-log-result">'+result+'</small></td><td>'+esc(formatMeterLogTime(item?.enteredAt))+'</td><td>'+esc(formatMeterLogTime(item?.exitedAt))+'</td></tr>';
+      }).join('');
+    }
+    const info=$('#meterDungeonLogPageInfo');if(info)info.textContent=state.meterDungeonLogPage+' / '+state.meterDungeonLogTotalPages;
+    const prev=$('#meterDungeonLogPrevBtn');if(prev)prev.disabled=state.meterDungeonLogPage<=1;
+    const next=$('#meterDungeonLogNextBtn');if(next)next.disabled=state.meterDungeonLogPage>=state.meterDungeonLogTotalPages;
+    const stale=Math.max(0,Number(data?.staleRunsClosed||0));
+    setStatus('#meterDungeonLogStatus','총 '+total.toLocaleString('ko-KR')+'건'+(stale?' · 종료 신호가 끊긴 '+stale+'건을 마지막 확인 시각으로 정리했습니다.':''),'ok');
+  }
+
+  async function loadMeterDungeonLogs(page=1){
+    if(!isMaster())return;
+    const limit=50;
+    const requested=Math.max(1,Number(page||1));
+    const channel=$('#meterDungeonLogChannel')?.value||'stable';
+    const query=$('#meterDungeonLogQuery')?.value.trim()||'';
+    setStatus('#meterDungeonLogStatus','던전 이용 로그를 불러오는 중...','');
+    try{
+      const data=await adminMeter('logs',{channel,limit,offset:(requested-1)*limit,query});
+      if(!data||data.ok===false)throw new Error(data?.message||'던전 이용 로그 조회 실패');
+      renderMeterDungeonLogs(data);
+    }catch(err){
+      setStatus('#meterDungeonLogStatus',meterAdminErrorMessage(err,'던전 이용 로그를 불러오지 못했습니다.'),'error');
+    }
+  }
+
   async function saveMeterOperation(channel,intent,button){
     if(!isMaster())return;
     const key=meterChannel(channel),root=meterCard(key,'download');if(!root)return;
@@ -271,6 +324,7 @@
   }
 
   function handleMeterAdminChange(event){
+    if(event.target.matches('#meterDungeonLogChannel')){loadMeterDungeonLogs(1);return;}
     const download=event.target.closest('[data-meter-download-enabled]');
     if(download){const root=download.closest('[data-meter-download-card]');setMeterLevelsEnabled(root,'[data-meter-download-levels]',download.checked);const resume=$('[data-meter-resume-at]',root);if(resume)resume.disabled=download.checked;return;}
     const launch=event.target.closest('[data-meter-launch-enabled]');
@@ -278,8 +332,11 @@
   }
 
   function handleMeterAdminClick(event){
-    const button=event.target.closest('[data-meter-reload],[data-meter-download-save],[data-meter-download-message-save],[data-meter-launch-save],[data-meter-launch-message-save],[data-meter-statistics-save]');
+    const button=event.target.closest('[data-meter-reload],[data-meter-download-save],[data-meter-download-message-save],[data-meter-launch-save],[data-meter-launch-message-save],[data-meter-statistics-save],#meterDungeonLogReloadBtn,#meterDungeonLogSearchBtn,#meterDungeonLogPrevBtn,#meterDungeonLogNextBtn');
     if(!button)return;
+    if(button.matches('#meterDungeonLogReloadBtn,#meterDungeonLogSearchBtn')){loadMeterDungeonLogs(1);return;}
+    if(button.matches('#meterDungeonLogPrevBtn')){loadMeterDungeonLogs(state.meterDungeonLogPage-1);return;}
+    if(button.matches('#meterDungeonLogNextBtn')){loadMeterDungeonLogs(state.meterDungeonLogPage+1);return;}
     if(button.matches('[data-meter-reload]')){loadMeterAdminConsole();return;}
     const root=button.closest('[data-meter-channel]');const channel=root?.dataset.meterChannel||'stable';
     if(button.matches('[data-meter-download-save]'))saveMeterOperation(channel,'state',button);
@@ -418,5 +475,5 @@
     }catch(err){setStatus('#visitorHistoryStatus',err.message||String(err),'error');}
   }
 
-  Object.assign(A,{METER_NOTICE_LABELS,METER_CHANNELS,METER_LEVELS,meterDateInput,meterIsoFromInput,meterFileSize,meterChannel,meterCard,selectedMeterLevels,meterAdminErrorMessage,normalizeMeterNotice,meterNoticeById,resetMeterNoticeEditor,renderMeterNotices,renderMeterAdminConsole,loadMeterAdminConsole,saveMeterOperation,saveMeterLaunch,saveMeterStatistics,handleMeterAdminChange,handleMeterAdminClick,saveMeterNotice,deleteMeterNotice,refreshServerStatus,renderServerBox,refreshSystemSettings,visitorDate,visitorNumber,renderVisitorTrend,renderVisitorPages,loadVisitorDashboard,loadVisitorHistory});
+  Object.assign(A,{METER_NOTICE_LABELS,METER_CHANNELS,METER_LEVELS,meterDateInput,meterIsoFromInput,meterFileSize,meterChannel,meterCard,selectedMeterLevels,meterAdminErrorMessage,normalizeMeterNotice,meterNoticeById,resetMeterNoticeEditor,renderMeterNotices,renderMeterAdminConsole,loadMeterAdminConsole,formatMeterLogTime,renderMeterDungeonLogs,loadMeterDungeonLogs,saveMeterOperation,saveMeterLaunch,saveMeterStatistics,handleMeterAdminChange,handleMeterAdminClick,saveMeterNotice,deleteMeterNotice,refreshServerStatus,renderServerBox,refreshSystemSettings,visitorDate,visitorNumber,renderVisitorTrend,renderVisitorPages,loadVisitorDashboard,loadVisitorHistory});
 })(window.KinojoAdmin);

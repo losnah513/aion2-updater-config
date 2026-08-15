@@ -115,6 +115,7 @@ jobs:
           node tests/web-shell-auth-contract.test.js
           node tests/sanctuary-waitlist-contract.test.js
           node tests/staged-page-contract.test.js
+          node tests/meter-presence-log-contract.test.js
 
           python3 <<'PY'
           from pathlib import Path
@@ -226,14 +227,14 @@ jobs:
           meter_pages = [Path("meter/index.html"), Path("m/meter/index.html")]
           for page in meter_pages:
               text = page.read_text(encoding="utf-8")
-              for token in ["meterInstallerSize", "다운로드 용량", "meter-app.js?cache=2026080601"]:
+              for token in ["meterInstallerSize", "다운로드 용량", "meter-app.js?cache=2026081501-50037", "meterLiveUsers", "meterLiveNames"]:
                   if token not in text:
                       raise SystemExit(f"{page}: Meter distribution contract missing: {token}")
 
           admin_pages = [Path("admin/index.html"), Path("m/admin/index.html")]
           for page in admin_pages:
               text = page.read_text(encoding="utf-8")
-              for token in ["data-admin-subtab=\"downloads\"", "data-admin-subtab=\"runtime\"", "data-admin-subtab=\"statistics\"", "data-admin-subtab=\"notices\"", "data-meter-download-enabled", "data-meter-launch-enabled", "data-meter-statistics-enabled", "kinojo-filter-switch"]:
+              for token in ["data-admin-subtab=\"downloads\"", "data-admin-subtab=\"runtime\"", "data-admin-subtab=\"statistics\"", "data-admin-subtab=\"notices\"", "data-admin-subtab=\"logs\"", "data-meter-download-enabled", "data-meter-launch-enabled", "data-meter-statistics-enabled", "kinojo-filter-switch", "meterDungeonLogRows"]:
                   if token not in text:
                       raise SystemExit(f"{page}: Meter admin contract missing: {token}")
 
