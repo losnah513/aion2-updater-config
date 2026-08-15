@@ -227,7 +227,7 @@ jobs:
           meter_pages = [Path("meter/index.html"), Path("m/meter/index.html")]
           for page in meter_pages:
               text = page.read_text(encoding="utf-8")
-              for token in ["meterInstallerSize", "다운로드 용량", "meter-app.js?cache=2026081501-50037", "meterLiveUsers", "meterLiveNames"]:
+              for token in ["meterInstallerSize", "다운로드 용량", "meter-app.js?cache=2026081502-50040", "meterLiveUsers", "meterLiveNames"]:
                   if token not in text:
                       raise SystemExit(f"{page}: Meter distribution contract missing: {token}")
 
