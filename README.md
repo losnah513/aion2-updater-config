@@ -76,6 +76,7 @@ KINOJO INFO GitHub Pages upload package.
 - The closed menu icon uses three vertical dots and transitions to three horizontal menu lines on hover or while the drawer is open.
 - Public notices use bounded retries, an eight-second request timeout, a seven-day last-success cache, explicit retry UI, and recovery on visibility, focus, page-show, and online events.
 
+
 ## PASS KEY authentication Edge boundary
 
 - `core/kinojo-auth-service.js` sends WEB PASS KEY authentication only to the dedicated `kinojo-member-auth` Edge Function. The browser auth service must not call `kinojo_member_verify_session_264` directly.
@@ -85,3 +86,11 @@ KINOJO INFO GitHub Pages upload package.
 - `core/kinojo-auth-ui.js` validates the Server session when restoring a page, touches it at a five-minute bounded cadence during activity, performs a Server touch for manual extension, and hands logout/timeout revocation to the auth service.
 - `tests/web-shell-auth-contract.test.js` verifies the static and runtime session boundary and, in GitHub CI, checks the deployed Edge `2.0` health/CORS/header contract.
 - All 16 active PC/mobile entrypoints pin `kinojo-auth-session.js`, `kinojo-auth-service.js`, and `kinojo-auth-ui.js` to `cache=2026081602`; the contract test rejects all prior authentication cache keys.
+
+## Sheet bridge workload split
+
+- Active WEB routes sanctuary roster editing to `sanctuary-roster-bridge`, sanctuary source/admin sync to `sanctuary-sheet-bridge`, and list comparison/Queue preparation to `lookup-list-prepare`.
+- Server list export, Apps Script write, and row-level readback are isolated in `lookup-list-sync`.
+- `lookup-sheet-bridge` version `51` is a compatibility router only. It contains no roster, Queue preparation, or list-write implementation and forwards legacy Extension/Worker actions to the dedicated boundaries.
+- Current WEB must not invoke `lookup-sheet-bridge` directly. Older Extension builds and the current modular character worker may continue through the compatibility router until their next source-specific release, but the heavy work executes only in the dedicated function.
+- `tests/web-shell-auth-contract.test.js` checks all four deployed boundaries, response headers, legacy router forwarding, and the `kinojo-supabase-features.js?cache=2026081603` cutover across 16 active PC/mobile entrypoints.

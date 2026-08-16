@@ -411,22 +411,14 @@
       return { ok:true, message:'권한이 수정되었습니다.', memberId, account:accountFromRow(data?.member) };
     }
 
-    if(normalizedCommand === 'deleteCode' || normalizedCommand === 'disableCode' || normalizedCommand === 'enableCode'){
+    if(normalizedCommand === 'deleteCode' || normalizedCommand === 'disableCode'){
       const memberId = Number(extra.memberId || extra.member_id || 0);
       if(!Number.isInteger(memberId) || memberId <= 0) return { ok:false, message:'변경할 회원을 찾지 못했습니다.' };
       await rpc('kinojo_admin_member_manage_264', {
         p_pass_key:currentPassKey(), p_target_member_id:memberId,
-        p_action:normalizedCommand === 'deleteCode' ? 'delete' : (normalizedCommand === 'enableCode' ? 'enable' : 'disable'), p_payload:{}
+        p_action:normalizedCommand === 'deleteCode' ? 'delete' : 'disable', p_payload:{}
       });
-      return {
-        ok:true,
-        message:normalizedCommand === 'deleteCode'
-          ? '회원 코드가 삭제되었습니다.'
-          : (normalizedCommand === 'enableCode'
-            ? '회원 코드가 활성화되었습니다. Google list 조회 대상 여부와 무관하게 PASS KEY 기능을 사용할 수 있습니다.'
-            : '회원 코드가 비활성화되었습니다.'),
-        memberId
-      };
+      return { ok:true, message:normalizedCommand === 'deleteCode' ? '회원 코드가 삭제되었습니다.' : '회원 코드가 비활성화되었습니다.', memberId };
     }
 
     if(normalizedCommand === 'permissionOptions'){
@@ -682,8 +674,7 @@
       saveStatistics:'adminMeterStatisticsSave',
       saveLaunch:'adminMeterLaunchSave',
       saveNotice:'adminMeterNoticeSave',
-      deleteNotice:'adminMeterNoticeDelete',
-      logs:'adminMeterDungeonLogs'
+      deleteNotice:'adminMeterNoticeDelete'
     };
     const action = actions[String(command || '').trim()];
     if(!action) return { ok:false, message:'알 수 없는 키노조 미터 관리자 명령입니다.' };
@@ -1370,7 +1361,7 @@
   async function sanctuaryRosterAction(command, extra={}){
     const passKey=currentPassKey();
     if(!passKey) throw new Error('로그인 세션을 확인할 수 없습니다. 다시 로그인해 주세요.');
-    return invokeEdgeFunction('lookup-sheet-bridge', Object.assign({}, extra || {}, {
+    return invokeEdgeFunction('sanctuary-roster-bridge', Object.assign({}, extra || {}, {
       action:'webSanctuaryRosterV312',
       command:String(command || extra.command || '').trim().toUpperCase(),
       passKey,
@@ -1523,7 +1514,7 @@
         const sessionToken=String(started.sessionToken||started.session_token||'');
         if(!sessionId||!sessionToken)throw new Error('Server Queue sessionId/sessionToken이 비어 있습니다.');
 
-        const prepared=await invokeEdgeFunction('lookup-sheet-bridge',{
+        const prepared=await invokeEdgeFunction('lookup-list-prepare',{
           action:'prepareList',
           sessionId,
           sessionToken,
@@ -1710,7 +1701,7 @@
         const sessionToken=String(started.sessionToken||started.session_token||'');
         if(!sessionId||!sessionToken)throw new Error('Server Engine sessionId/sessionToken이 비어 있습니다.');
 
-        const prepared=await invokeEdgeFunction('lookup-sheet-bridge',{
+        const prepared=await invokeEdgeFunction('lookup-list-prepare',{
           action:'prepareList',
           sessionId,
           sessionToken,
@@ -1823,14 +1814,14 @@
       return rpc('kinojo_admin_sanctuary_sheet_sync_status',{p_pass_key:passKey});
     }
     if(normalized==='ping'){
-      return invokeEdgeFunction('lookup-sheet-bridge',{
+      return invokeEdgeFunction('sanctuary-sheet-bridge',{
         action:'adminBridgePing',
         passKey,
         clientVersion:'kinojo-web-2026071819'
       });
     }
     if(normalized!=='preview'&&normalized!=='apply')return {ok:false,message:'알 수 없는 성역 시트 동기화 명령입니다.'};
-    return invokeEdgeFunction('lookup-sheet-bridge',{
+    return invokeEdgeFunction('sanctuary-sheet-bridge',{
       action:'adminSanctuarySheetSync',
       passKey,
       sanctuaryId:String(extra.sanctuaryId||extra.id||'all'),
