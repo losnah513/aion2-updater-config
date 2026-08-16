@@ -203,9 +203,29 @@
     return data;
   }
 
+  const EDGE_FUNCTION_ROUTE_ALIASES=Object.freeze({
+    prepareList:'lookup-list-prepare',
+    syncList:'lookup-list-sync',
+    adminBridgePing:'sanctuary-sheet-bridge',
+    adminSanctuarySheetSync:'sanctuary-sheet-bridge',
+    readSanctuarySheet:'sanctuary-sheet-bridge',
+    webSanctuaryRosterV312:'sanctuary-roster-bridge',
+    serverSanctuaryRosterMutationV309:'sanctuary-roster-bridge',
+    serverSanctuaryRosterMutationV310:'sanctuary-roster-bridge',
+    serverSanctuaryRosterMembershipV311:'sanctuary-roster-bridge'
+  });
+
+  function resolveEdgeFunctionName(functionName, body){
+    const requested=String(functionName||'').replace(/^\//,'');
+    if(requested!=='lookup-sheet-bridge')return requested;
+    const action=String(body&&body.action||'').trim();
+    return EDGE_FUNCTION_ROUTE_ALIASES[action]||requested;
+  }
+
   async function invokeEdgeFunction(functionName, body){
     const cfg=await ensureConfig();
-    const res=await fetch(cfg.url+'/functions/v1/'+String(functionName||'').replace(/^\//,''),{
+    const resolvedName=resolveEdgeFunctionName(functionName,body);
+    const res=await fetch(cfg.url+'/functions/v1/'+resolvedName,{
       method:'POST',
       headers:headers(cfg),
       body:JSON.stringify(body||{}),
@@ -239,6 +259,7 @@
     headers,
     buildUrl,
     request,
+    resolveEdgeFunctionName,
     invokeEdgeFunction
   });
 })();
