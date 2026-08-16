@@ -137,6 +137,36 @@ for (const token of ['SERVER_TOUCH_THROTTLE_MS', 'touchServerSession_', 'restore
   assert.ok(authUiSource.includes(token), `auth UI server session contract missing ${token}`);
 }
 
+const supabaseClientSource = read('core/kinojo-supabase-client.js');
+const edgeRouteContext = {
+  window: {},
+  location: { origin: 'https://kinojo.info' },
+  fetch: async () => { throw new Error('routing contract must not call fetch'); },
+  URL,
+  URLSearchParams,
+  Object,
+  Number,
+  String,
+  JSON,
+  Math,
+  Array,
+  Error,
+  RegExp,
+  Promise,
+};
+vm.runInNewContext(supabaseClientSource, edgeRouteContext, { filename: 'core/kinojo-supabase-client.js' });
+const resolveEdgeFunctionName = edgeRouteContext.window.KinojoSupabaseClientCore.resolveEdgeFunctionName;
+for (const [functionName, action, expected] of [
+  ['lookup-sheet-bridge', 'prepareList', 'lookup-list-prepare'],
+  ['lookup-sheet-bridge', 'syncList', 'lookup-list-sync'],
+  ['lookup-sheet-bridge', 'adminBridgePing', 'sanctuary-sheet-bridge'],
+  ['lookup-sheet-bridge', 'webSanctuaryRosterV312', 'sanctuary-roster-bridge'],
+  ['lookup-sheet-bridge', 'unknown', 'lookup-sheet-bridge'],
+  ['meter-admin-control', 'adminMeterConsole', 'meter-admin-control'],
+]) {
+  assert.equal(resolveEdgeFunctionName(functionName, { action }), expected, `${functionName}/${action}: direct Edge route mismatch`);
+}
+
 async function verifyAuthEdgeContract() {
   const calls = [];
   const listeners = new Map();
