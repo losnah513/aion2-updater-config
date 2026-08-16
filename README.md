@@ -78,8 +78,10 @@ KINOJO INFO GitHub Pages upload package.
 
 ## PASS KEY authentication Edge boundary
 
-- `core/kinojo-auth-service.js` sends the initial WEB PASS KEY verification only to the dedicated `kinojo-member-auth` Edge Function. The browser auth service must not call `kinojo_member_verify_session_264` directly.
-- The Edge fixes the tool scope to `KINOJO_WEB`, calls the canonical verifier with Server credentials, and returns only the normalized profile contract required by WEB.
-- Phase 1 intentionally preserves the existing 30-minute idle session object, compatibility token, and downstream PASS KEY fields so the rest of WEB does not regress. Removing raw PASS KEY persistence and replacing the compatibility token with a scoped Server session is a later phase.
-- `tests/web-shell-auth-contract.test.js` verifies the static and runtime call boundary and, in GitHub CI, performs a live health/CORS/header request against the deployed auth Edge.
-- All 16 active PC/mobile entrypoints pin `kinojo-auth-service.js?cache=2026081601`; the same contract test requires this cache key and rejects the former `2026080205` key so cached direct-RPC clients cannot persist after deployment.
+- `core/kinojo-auth-service.js` sends WEB PASS KEY authentication only to the dedicated `kinojo-member-auth` Edge Function. The browser auth service must not call `kinojo_member_verify_session_264` directly.
+- Edge API `2.0` fixes the tool scope to `KINOJO_WEB` and uses Server Engine contract `320` to issue, validate, touch, and revoke a random opaque WEB session. The browser-generated `supabase:<id>:<time>` compatibility token is forbidden.
+- Server stores only the SHA-256 hash of each `kws_` session token in `private.kinojo_web_sessions`; the raw session token and PASS KEY are not stored in the session table. Sessions use a 30-minute idle expiry and are revoked on logout, local timeout, account deactivation, or permission removal.
+- Phase 1-B preserves `passKey`/`passCode` only inside the existing browser session/account objects because downstream legacy RPC and Edge contracts still require `p_pass_key`. Those compatibility fields are removed only after the affected operations move to the scoped WEB session in Phase 1-C.
+- `core/kinojo-auth-ui.js` validates the Server session when restoring a page, touches it at a five-minute bounded cadence during activity, performs a Server touch for manual extension, and hands logout/timeout revocation to the auth service.
+- `tests/web-shell-auth-contract.test.js` verifies the static and runtime session boundary and, in GitHub CI, checks the deployed Edge `2.0` health/CORS/header contract.
+- All 16 active PC/mobile entrypoints pin `kinojo-auth-session.js`, `kinojo-auth-service.js`, and `kinojo-auth-ui.js` to `cache=2026081602`; the contract test rejects all prior authentication cache keys.

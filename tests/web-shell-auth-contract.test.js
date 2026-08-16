@@ -18,8 +18,9 @@ class TestDate extends Date {
   static now() { return now; }
 }
 const localStorage = new MemoryStorage();
+const dispatchedEvents = [];
 const context = {
-  window: { dispatchEvent() {} },
+  window: { dispatchEvent(event) { dispatchedEvents.push(event); } },
   localStorage,
   CustomEvent: class CustomEvent { constructor(type, init) { this.type = type; this.detail = init?.detail; } },
   Date: TestDate,
@@ -34,6 +35,7 @@ vm.runInNewContext(read('core/kinojo-auth-session.js'), context, { filename: 'co
 const auth = context.window.KinojoAuthSessionCore;
 assert.equal(auth.IDLE_TIMEOUT_MS, 30 * 60 * 1000, 'idle timeout must be 30 minutes');
 assert.equal(auth.IDLE_WARNING_MS, 5 * 60 * 1000, 'idle warning must start five minutes before logout');
+assert.equal(auth.SERVER_TOUCH_THROTTLE_MS, 5 * 60 * 1000, 'server session touch throttle must be five minutes');
 
 const base = now;
 assert.equal(auth.getIdleState({ lastActivityAt: base }, base + 24 * 60 * 1000 + 59_000).warning, false);
@@ -41,12 +43,17 @@ assert.equal(auth.getIdleState({ lastActivityAt: base }, base + 25 * 60 * 1000).
 assert.equal(auth.getIdleState({ lastActivityAt: base }, base + 29 * 60 * 1000).remainingMs, 60_000);
 assert.equal(auth.getIdleState({ lastActivityAt: base }, base + 30 * 60 * 1000).expired, true);
 
-auth.setStoredSession({ token: 'test', passKey: '000000' }, { passKey: '000000' });
+const serverToken = 'kws_' + 'A'.repeat(43);
+auth.setStoredSession({ token: serverToken, passKey: '000000' }, { passKey: '000000' });
 now = base + 29 * 60 * 1000 + 59_000;
 assert.ok(auth.getSession(), 'session must remain available before the absolute deadline');
 now = base + 30 * 60 * 1000;
 assert.equal(auth.getSession(), null, 'session must be cleared at the absolute deadline');
 assert.equal(localStorage.getItem(auth.STORAGE_KEY), null, 'expired session storage must be removed');
+const clearingEvent = dispatchedEvents.find(event => event.type === 'kinojo:auth-clearing');
+assert.ok(clearingEvent, 'server session clear must emit a revoke handoff event');
+assert.equal(clearingEvent.detail.session.token, serverToken);
+assert.equal(clearingEvent.detail.reason, 'idle_expired_local');
 
 const publicShellPages = [
   'home.html', 'm/index.html',
@@ -62,9 +69,9 @@ for (const page of publicShellPages) {
   for (const token of [
     'kinojo-common-ui.css',
     'kinojo-public-shell.css?cache=2026081202',
-    'kinojo-auth-session.js?cache=2026081201',
-    'kinojo-auth-service.js?cache=2026081601',
-    'kinojo-auth-ui.js?cache=2026081204',
+    'kinojo-auth-session.js?cache=2026081602',
+    'kinojo-auth-service.js?cache=2026081602',
+    'kinojo-auth-ui.js?cache=2026081602',
   ]) {
     assert.ok(html.includes(token), `${page}: missing ${token}`);
   }
@@ -74,16 +81,18 @@ for (const page of publicShellPages) {
 for (const page of ['admin/index.html', 'm/admin/index.html']) {
   const html = read(page);
   assert.ok(html.includes('kinojo-common-ui.js?cache=2026081204'), `${page}: common UI cache missing`);
-  assert.ok(html.includes('kinojo-auth-session.js?cache=2026081201'), `${page}: stale auth session cache`);
-  assert.ok(html.includes('kinojo-auth-ui.js?cache=2026081204'), `${page}: stale auth UI cache`);
+  assert.ok(html.includes('kinojo-auth-session.js?cache=2026081602'), `${page}: stale auth session cache`);
+  assert.ok(html.includes('kinojo-auth-ui.js?cache=2026081602'), `${page}: stale auth UI cache`);
 }
 
 for (const page of publicShellPages.concat(['admin/index.html', 'm/admin/index.html'])) {
   const html = read(page);
   assert.equal(html.includes('kinojo-common-ui.js?cache=2026081004'), false, `${page}: old common UI cache remains`);
-  assert.equal(html.includes('kinojo-auth-session.js?cache=2026080205'), false, `${page}: old auth session cache remains`);
-  assert.equal(html.includes('kinojo-auth-service.js?cache=2026080205'), false, `${page}: old auth service cache remains`);
-  assert.equal(html.includes('kinojo-auth-ui.js?cache=2026080205'), false, `${page}: old auth UI cache remains`);
+  for (const stale of [
+    'kinojo-auth-session.js?cache=2026080205', 'kinojo-auth-session.js?cache=2026081201',
+    'kinojo-auth-service.js?cache=2026080205', 'kinojo-auth-service.js?cache=2026081601',
+    'kinojo-auth-ui.js?cache=2026080205', 'kinojo-auth-ui.js?cache=2026081204',
+  ]) assert.equal(html.includes(stale), false, `${page}: stale auth cache remains ${stale}`);
 }
 
 for (const page of publicShellPages) {
@@ -116,13 +125,25 @@ for (const token of ['adminSanctuaryScheduleConsole', 'adminSanctuaryScheduleSav
 const authServiceSource = read('core/kinojo-auth-service.js');
 assert.ok(authServiceSource.includes("invokeEdgeFunction(AUTH_EDGE_NAME"), 'WEB PASS KEY login must call the dedicated auth Edge');
 assert.ok(authServiceSource.includes("const AUTH_EDGE_NAME='kinojo-member-auth'"), 'dedicated auth Edge name is missing');
+for (const token of ['KINOJO_WEB_AUTH_EDGE_V2', 'supabase-web-session-320', 'validateSession', 'touchSession', 'revokeSession', 'kinojo:auth-clearing']) {
+  assert.ok(authServiceSource.includes(token), `server session auth contract missing ${token}`);
+}
 assert.equal(authServiceSource.includes('api.verifyPassKey(code)'), false, 'WEB login must not call the legacy direct verifier bridge');
 assert.equal(authServiceSource.includes("rpc('kinojo_member_verify_session_264'"), false, 'WEB auth service must not call the verifier RPC directly');
+assert.equal(authServiceSource.includes("token:'supabase:'"), false, 'browser-generated compatibility token must be removed');
+
+const authUiSource = read('core/kinojo-auth-ui.js');
+for (const token of ['SERVER_TOUCH_THROTTLE_MS', 'touchServerSession_', 'restoreServerSession_', '.touchSession?.(token)']) {
+  assert.ok(authUiSource.includes(token), `auth UI server session contract missing ${token}`);
+}
 
 async function verifyAuthEdgeContract() {
   const calls = [];
+  const listeners = new Map();
+  const opaqueToken = 'kws_' + 'B'.repeat(43);
   const serviceContext = {
     window: {
+      addEventListener(name, callback) { listeners.set(name, callback); },
       KinojoSupabase: {
         async ensureReady() {},
         normalizePassKey(value) { return String(value || '').replace(/\s+/g, '').toUpperCase(); },
@@ -133,12 +154,19 @@ async function verifyAuthEdgeContract() {
         publicCodeRequest() {},
         adminAccount() {},
       },
+      KinojoAuthSessionCore: {
+        STORAGE_KEY: 'kinojo_login_session_v1',
+        readJson() { return null; },
+        getAccount() { return null; },
+      },
       KinojoSupabaseClientCore: {
         async invokeEdgeFunction(name, body) {
           calls.push({ name, body });
+          if (body.action === 'logout') return { ok: true, revoked: true, code: 'SESSION_REVOKED' };
           return {
             ok: true,
             tool: 'KINOJO_WEB',
+            databaseContract: '320',
             profile: {
               id: 7,
               mainCharacter: '청소기',
@@ -150,6 +178,15 @@ async function verifyAuthEdgeContract() {
               canManage: true,
               canLike: true,
               canSuggest: true,
+            },
+            session: {
+              token: opaqueToken,
+              issuedAt: '2026-08-16T10:00:00Z',
+              lastActivityAt: '2026-08-16T10:00:00Z',
+              expiresAt: '2026-08-16T10:30:00Z',
+              idleTimeoutSeconds: 1800,
+              serverSession: true,
+              contractVersion: '320',
             },
           };
         },
@@ -163,18 +200,32 @@ async function verifyAuthEdgeContract() {
     Math,
     Array,
     Error,
+    RegExp,
   };
   vm.runInNewContext(authServiceSource, serviceContext, { filename: 'core/kinojo-auth-service.js' });
-  const result = await serviceContext.window.KinojoAuthService.verifyPassKey(' ab 12 ');
-  assert.equal(calls.length, 1, 'auth Edge must be invoked exactly once');
+  const service = serviceContext.window.KinojoAuthService;
+  const result = await service.verifyPassKey(' ab 12 ');
+  assert.equal(calls.length, 1, 'auth Edge login must be invoked exactly once');
   assert.equal(calls[0].name, 'kinojo-member-auth');
-  assert.equal(calls[0].body.action, 'verifyPassKey');
+  assert.equal(calls[0].body.action, 'login');
   assert.equal(calls[0].body.passKey, 'AB12');
-  assert.equal(calls[0].body.clientVersion, 'KINOJO_WEB_AUTH_EDGE_V1');
+  assert.equal(calls[0].body.clientVersion, 'KINOJO_WEB_AUTH_EDGE_V2');
   assert.equal(result.ok, true);
-  assert.equal(result.account.source, 'supabase-edge-auth');
-  assert.equal(result.session.source, 'supabase-edge-auth');
-  assert.equal(result.session.passKey, 'AB12', 'Phase 1 must preserve the existing downstream PASS KEY session contract');
+  assert.equal(result.account.source, 'supabase-web-session-320');
+  assert.equal(result.session.source, 'supabase-web-session-320');
+  assert.equal(result.session.token, opaqueToken, 'Server-issued opaque token must be stored');
+  assert.equal(result.session.passKey, 'AB12', 'Phase 1-B must preserve downstream PASS KEY compatibility');
+  assert.equal(service.isServerSessionToken(opaqueToken), true);
+  assert.equal(service.isServerSessionToken('supabase:7:123'), false);
+
+  await service.validateSession(opaqueToken);
+  await service.touchSession(opaqueToken);
+  await service.revokeSession(opaqueToken, 'test_logout');
+  assert.deepEqual(calls.slice(1).map(call => call.body.action), ['validate', 'touch', 'logout']);
+  assert.equal(calls[1].body.sessionToken, opaqueToken);
+  assert.equal(calls[2].body.sessionToken, opaqueToken);
+  assert.equal(calls[3].body.reason, 'test_logout');
+  assert.ok(listeners.has('kinojo:auth-clearing'), 'auth clearing revoke listener must be installed');
 
   if (process.env.CI === 'true') {
     const response = await fetch('https://josvoltpktvwysrasffq.supabase.co/functions/v1/kinojo-member-auth', {
@@ -189,16 +240,20 @@ async function verifyAuthEdgeContract() {
     assert.equal(response.status, 200, `auth Edge health HTTP ${response.status}`);
     assert.equal(data.ok, true);
     assert.equal(data.service, 'kinojo-member-auth');
-    assert.equal(data.authBoundary, 'SERVER_EDGE');
+    assert.equal(data.apiVersion, '2.0');
+    assert.equal(data.databaseContract, '320');
+    assert.equal(data.authBoundary, 'SERVER_EDGE_SESSION');
     assert.equal(data.tool, 'KINOJO_WEB');
-    assert.equal(response.headers.get('x-kinojo-auth-boundary'), 'KINOJO_MEMBER_AUTH_EDGE_V1');
+    assert.deepEqual(data.actions, ['login', 'validate', 'touch', 'logout']);
+    assert.equal(response.headers.get('x-kinojo-auth-boundary'), 'KINOJO_MEMBER_AUTH_EDGE_V2');
+    assert.equal(response.headers.get('x-kinojo-auth-contract'), '320');
     assert.equal(response.headers.get('access-control-allow-origin'), 'https://kinojo.info');
-    console.log('KINOJO member auth Edge live health: PASS');
+    console.log('KINOJO member auth Edge live server-session health: PASS');
   }
 }
 
 verifyAuthEdgeContract()
-  .then(() => console.log('KINOJO auth timing, Edge boundary and public shell entrypoints: PASS'))
+  .then(() => console.log('KINOJO auth timing, opaque Server session and public shell entrypoints: PASS'))
   .catch(error => {
     console.error(error);
     process.exitCode = 1;
