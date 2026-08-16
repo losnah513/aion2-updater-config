@@ -112,4 +112,93 @@ for (const token of ['adminSanctuaryScheduleConsole', 'adminSanctuaryScheduleSav
   assert.ok(schedule.includes(token), `schedule manager contract missing: ${token}`);
 }
 
-console.log('KINOJO auth timing and public shell entrypoints: PASS');
+const authServiceSource = read('core/kinojo-auth-service.js');
+assert.ok(authServiceSource.includes("invokeEdgeFunction(AUTH_EDGE_NAME"), 'WEB PASS KEY login must call the dedicated auth Edge');
+assert.ok(authServiceSource.includes("const AUTH_EDGE_NAME='kinojo-member-auth'"), 'dedicated auth Edge name is missing');
+assert.equal(authServiceSource.includes('api.verifyPassKey(code)'), false, 'WEB login must not call the legacy direct verifier bridge');
+assert.equal(authServiceSource.includes("rpc('kinojo_member_verify_session_264'"), false, 'WEB auth service must not call the verifier RPC directly');
+
+async function verifyAuthEdgeContract() {
+  const calls = [];
+  const serviceContext = {
+    window: {
+      KinojoSupabase: {
+        async ensureReady() {},
+        normalizePassKey(value) { return String(value || '').replace(/\s+/g, '').toUpperCase(); },
+        normalizeRole(value) { return String(value || '').toUpperCase(); },
+        roleToLevel(_role, fallback) { return Number(fallback || 0); },
+        getRoleLabel(role) { return role; },
+        normalizePermissions(value) { return Array.isArray(value) ? value : []; },
+        publicCodeRequest() {},
+        adminAccount() {},
+      },
+      KinojoSupabaseClientCore: {
+        async invokeEdgeFunction(name, body) {
+          calls.push({ name, body });
+          return {
+            ok: true,
+            tool: 'KINOJO_WEB',
+            profile: {
+              id: 7,
+              mainCharacter: '청소기',
+              mainCharacterName: '청소기',
+              role: 'MASTER',
+              roleLabel: 'Master',
+              level: 5,
+              permissions: ['all'],
+              canManage: true,
+              canLike: true,
+              canSuggest: true,
+            },
+          };
+        },
+      },
+    },
+    Date: TestDate,
+    Object,
+    Number,
+    String,
+    JSON,
+    Math,
+    Array,
+    Error,
+  };
+  vm.runInNewContext(authServiceSource, serviceContext, { filename: 'core/kinojo-auth-service.js' });
+  const result = await serviceContext.window.KinojoAuthService.verifyPassKey(' ab 12 ');
+  assert.equal(calls.length, 1, 'auth Edge must be invoked exactly once');
+  assert.equal(calls[0].name, 'kinojo-member-auth');
+  assert.equal(calls[0].body.action, 'verifyPassKey');
+  assert.equal(calls[0].body.passKey, 'AB12');
+  assert.equal(calls[0].body.clientVersion, 'KINOJO_WEB_AUTH_EDGE_V1');
+  assert.equal(result.ok, true);
+  assert.equal(result.account.source, 'supabase-edge-auth');
+  assert.equal(result.session.source, 'supabase-edge-auth');
+  assert.equal(result.session.passKey, 'AB12', 'Phase 1 must preserve the existing downstream PASS KEY session contract');
+
+  if (process.env.CI === 'true') {
+    const response = await fetch('https://josvoltpktvwysrasffq.supabase.co/functions/v1/kinojo-member-auth', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        origin: 'https://kinojo.info',
+      },
+      body: JSON.stringify({ action: 'health' }),
+    });
+    const data = await response.json();
+    assert.equal(response.status, 200, `auth Edge health HTTP ${response.status}`);
+    assert.equal(data.ok, true);
+    assert.equal(data.service, 'kinojo-member-auth');
+    assert.equal(data.authBoundary, 'SERVER_EDGE');
+    assert.equal(data.tool, 'KINOJO_WEB');
+    assert.equal(response.headers.get('x-kinojo-auth-boundary'), 'KINOJO_MEMBER_AUTH_EDGE_V1');
+    assert.equal(response.headers.get('access-control-allow-origin'), 'https://kinojo.info');
+    console.log('KINOJO member auth Edge live health: PASS');
+  }
+}
+
+verifyAuthEdgeContract()
+  .then(() => console.log('KINOJO auth timing, Edge boundary and public shell entrypoints: PASS'))
+  .catch(error => {
+    console.error(error);
+    process.exitCode = 1;
+  });
