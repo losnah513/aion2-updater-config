@@ -31,6 +31,7 @@ jobs:
 
           python3 <<'PY'
           from pathlib import Path
+          import re
 
           pages = [
               'home.html', 'm/index.html',
@@ -42,15 +43,15 @@ jobs:
               'arcana/index.html', 'm/arcana/index.html',
               'admin/index.html', 'm/admin/index.html',
           ]
-          old = 'kinojo-supabase-features.js?cache=2026081218'
+          pattern = re.compile(r'kinojo-supabase-features\.js\?cache=\d+')
           new = 'kinojo-supabase-features.js?cache=2026081603'
           for value in pages:
               path = Path(value)
               text = path.read_text(encoding='utf-8')
-              count = text.count(old)
+              replaced, count = pattern.subn(new, text)
               if count != 1:
-                  raise SystemExit(f'{value}: old feature cache count={count}, expected=1')
-              path.write_text(text.replace(old, new, 1), encoding='utf-8', newline='\n')
+                  raise SystemExit(f'{value}: feature cache include count={count}, expected=1')
+              path.write_text(replaced, encoding='utf-8', newline='\n')
           PY
 
           rm -rf .bridge-payload
