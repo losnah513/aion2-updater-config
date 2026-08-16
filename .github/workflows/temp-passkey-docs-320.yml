@@ -1,0 +1,45 @@
+name: TEMP PASS KEY session 320 docs
+
+on:
+  push:
+    branches:
+      - agent/passkey-web-session-docs-320-20260816
+
+permissions:
+  contents: write
+
+jobs:
+  update-readme:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - name: Correct Server session extension documentation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          path=Path('README.md')
+          text=path.read_text(encoding='utf-8')
+          old='- Extending an idle session is accepted only before the absolute deadline and after `kinojo-auth-service.js` revalidates the saved PASS KEY with Server. Privileged actions continue to be authorized by Server on every request.'
+          new='- Extending an idle session is accepted only before the absolute deadline and after `kinojo-auth-service.js` touches the existing Server-issued `kws_` session. The extension path does not re-submit the saved PASS KEY; privileged actions continue to be authorized by Server on every request.'
+          if text.count(old) != 1:
+              raise SystemExit(f'anchor count={text.count(old)}')
+          path.write_text(text.replace(old,new,1),encoding='utf-8',newline='\n')
+          PY
+          git diff --check
+          grep -F 'touches the existing Server-issued `kws_` session' README.md
+      - name: Commit documentation correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "Correct WEB session extension documentation"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
