@@ -6,13 +6,16 @@
 (function(){
   const authSessionCore=window.KinojoAuthSessionCore;
   if(!authSessionCore) throw new Error('KinojoAuthSessionCore가 먼저 로드되어야 합니다.');
-  const {ACTIVITY_WRITE_THROTTLE_MS,getIdleState,getSession,getAccount,isLoggedIn,getToken,roleOf,roleLabel,canOpenManage,getLevel,isAdmin,canManageAccounts}=authSessionCore;
+  const {ACTIVITY_WRITE_THROTTLE_MS,SERVER_TOUCH_THROTTLE_MS,getIdleState,getSession,getAccount,isLoggedIn,getToken,roleOf,roleLabel,canOpenManage,getLevel,isAdmin,canManageAccounts}=authSessionCore;
   let idleLogoutTimer=null;
   let idleCountdownTimer=null;
   let idleWarningOpen=false;
   let idleWarningDeadlineAt=0;
   let idleExtendPending=false;
   let lastActivityWriteAt=0;
+  let lastServerTouchAt=0;
+  let serverTouchPending=false;
+  let serverRestorePending=false;
   const PERMISSION_LABELS = {
     sanctuary_edit: '성역 관리',
     visit_manage: '방문자수 조정',
@@ -23,7 +26,7 @@
   let codeRequestSubmitted = false;
   let codeRequestNoticeChecking = false;
   let sanctuaryRequestNoticeChecking = false;
-  const AUTH_SCHEMA_VERSION = 'supabase-passkey-v4-20260625';
+  const AUTH_SCHEMA_VERSION = 'supabase-passkey-v5-server-session-320-20260816';
 
 
 
@@ -47,11 +50,16 @@
 
 
 
-  function setSession(session,account){authSessionCore.setStoredSession(session,account);closeIdleLogoutWarning();updateStatus();}
-
-  function clearSession(){
+  function setSession(session,account){
+    authSessionCore.setStoredSession(session,account);
+    if(window.KinojoAuthService?.isServerSessionToken?.(session?.token)) lastServerTouchAt=Date.now();
     closeIdleLogoutWarning();
-    authSessionCore.clearStoredSession();
+    updateStatus();
+  }
+
+  function clearSession(reason){
+    closeIdleLogoutWarning();
+    authSessionCore.clearStoredSession(reason||'user_logout');
     const modal=document.getElementById('kinojoLoginModal');
     if(modal){const input=modal.querySelector('#kinojoLoginCodeInput');if(input)input.value='';resetCodeRequestPanel(true);}
     updateStatus();
@@ -126,6 +134,7 @@
     const account = getAccount();
 
     if(session){
+      if(isServerSessionToken_(session.token)&&!lastServerTouchAt) lastServerTouchAt=Date.now();
       const name = account?.mainCharacter || session.mainCharacter || '회원';
       const role = roleOf(session) || roleOf(account) || '';
       const className = account?.className || session.className || '';
@@ -1176,6 +1185,65 @@
     }catch(err){ setAccountStatus(err.message || String(err), true); }
   }
 
+  function isServerSessionToken_(token){
+    return window.KinojoAuthService?.isServerSessionToken?.(token)===true;
+  }
+
+  function sessionErrorCode_(error){
+    return String(error?.code||error?.data?.code||'').trim().toUpperCase();
+  }
+
+  function isSessionRejected_(error){
+    return [
+      'SESSION_TOKEN_REQUIRED','SESSION_TOKEN_INVALID','SESSION_NOT_FOUND','SESSION_REVOKED',
+      'SESSION_EXPIRED','MEMBER_INACTIVE','NO_LOOKUP_PERMISSION'
+    ].includes(sessionErrorCode_(error));
+  }
+
+  async function touchServerSession_(force){
+    if(serverTouchPending) return null;
+    const session=readJson(STORAGE_KEY);
+    const token=String(session?.token||'').trim();
+    if(!isServerSessionToken_(token)) return null;
+    const now=Date.now();
+    if(!force&&now-lastServerTouchAt<Number(SERVER_TOUCH_THROTTLE_MS||300000)) return null;
+
+    serverTouchPending=true;
+    lastServerTouchAt=now;
+    try{
+      const data=await window.KinojoAuthService?.touchSession?.(token);
+      if(!data||data.ok===false||!data.session) throw new Error(data?.message||'Server 로그인 세션을 연장하지 못했습니다.');
+      setSession(data.session,data.account||getAccount()||{});
+      return data;
+    }catch(error){
+      if(isSessionRejected_(error)) clearSession('server_session_rejected');
+      throw error;
+    }finally{
+      serverTouchPending=false;
+    }
+  }
+
+  async function restoreServerSession_(){
+    if(serverRestorePending) return null;
+    const session=readJson(STORAGE_KEY);
+    const token=String(session?.token||'').trim();
+    if(!isServerSessionToken_(token)) return null;
+
+    serverRestorePending=true;
+    try{
+      const data=await window.KinojoAuthService?.touchSession?.(token);
+      if(!data||data.ok===false||!data.session) throw new Error(data?.message||'Server 로그인 세션을 확인하지 못했습니다.');
+      lastServerTouchAt=Date.now();
+      setSession(data.session,data.account||getAccount()||{});
+      return data;
+    }catch(error){
+      if(isSessionRejected_(error)) clearSession('server_session_restore_rejected');
+      return null;
+    }finally{
+      serverRestorePending=false;
+    }
+  }
+
   function clearIdleLogoutTimer(){
     if(idleLogoutTimer){ clearTimeout(idleLogoutTimer); idleLogoutTimer = null; }
     if(idleCountdownTimer){ clearInterval(idleCountdownTimer); idleCountdownTimer = null; }
@@ -1215,7 +1283,7 @@
 
   function forceIdleLogout(){
     closeIdleLogoutWarning();
-    clearSession();
+    clearSession('idle_timeout');
     toast('일정 시간 조작이 없어 자동 로그아웃되었습니다.');
   }
 
@@ -1268,6 +1336,9 @@
       lastActivityWriteAt = now;
     }
     scheduleIdleLogoutCheck();
+    if(isServerSessionToken_(session.token)&&!serverTouchPending&&now-lastServerTouchAt>=Number(SERVER_TOUCH_THROTTLE_MS||300000)){
+      touchServerSession_(false).catch(()=>{});
+    }
   }
 
   function resetIdleLogoutTimer(){ markActivity(false); }
@@ -1277,18 +1348,23 @@
     const session=readJson(STORAGE_KEY);
     if(!session?.token||getIdleState(session).expired){forceIdleLogout();return;}
     const account=getAccount()||{};
-    const passKey=String(account.passKey||account.passCode||session.passKey||session.passCode||'').trim();
-    if(!passKey){clearSession();toast('로그인 정보를 다시 확인해 주세요.');return;}
     idleExtendPending=true;
     if(button){button.disabled=true;button.setAttribute('aria-busy','true');button.textContent='확인 중...';}
     try{
-      const data=await window.KinojoAuthService?.verifyPassKey?.(passKey);
+      let data=null;
+      if(isServerSessionToken_(session.token)){
+        data=await touchServerSession_(true);
+      }else{
+        const passKey=String(account.passKey||account.passCode||session.passKey||session.passCode||'').trim();
+        if(!passKey){clearSession('compatibility_data_missing');toast('로그인 정보를 다시 확인해 주세요.');return;}
+        data=await window.KinojoAuthService?.verifyPassKey?.(passKey);
+        if(data?.session) setSession(data.session,data.account||account);
+      }
       if(!data||data.ok===false||!data.session)throw new Error(data?.message||'로그인 상태를 확인하지 못했습니다.');
-      setSession(data.session,data.account||account);
-      toast('Server 확인 후 로그인 시간이 30분 연장되었습니다.');
+      toast('Server 세션 확인 후 로그인 시간이 30분 연장되었습니다.');
     }catch(error){
       const current=readJson(STORAGE_KEY);
-      if(!current?.token||getIdleState(current).expired)forceIdleLogout();
+      if(!current?.token||getIdleState(current).expired||isSessionRejected_(error))forceIdleLogout();
       else toast('로그인 연장에 실패했습니다. '+(error?.message||String(error)));
     }finally{
       idleExtendPending=false;
@@ -1322,6 +1398,7 @@
     });
     bindIdleLogout();
     updateStatus();
+    restoreServerSession_().catch(()=>{});
   }
 
   window.KinojoAuth = {
