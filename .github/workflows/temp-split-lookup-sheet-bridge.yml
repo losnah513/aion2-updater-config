@@ -48,6 +48,13 @@ jobs:
               if count != 1:
                   raise SystemExit(f'{value}: feature cache include count={count}, expected=1')
               path.write_text(replaced, encoding='utf-8', newline='\n')
+
+          waitlist = Path('tests/sanctuary-waitlist-contract.test.js')
+          waitlist_text = waitlist.read_text(encoding='utf-8')
+          old_contract = "kinojo-supabase-features.js?cache=2026081218"
+          if waitlist_text.count(old_contract) != 1:
+              raise SystemExit('sanctuary waitlist feature cache contract anchor mismatch')
+          waitlist.write_text(waitlist_text.replace(old_contract, new, 1), encoding='utf-8', newline='\n')
           PY
           rm -rf .bridge-payload
           rm -f .github/workflows/temp-split-lookup-sheet-bridge.yml
@@ -58,6 +65,7 @@ jobs:
           set -euo pipefail
           node --check core/kinojo-supabase-features.js
           node --check tests/web-shell-auth-contract.test.js
+          node --check tests/sanctuary-waitlist-contract.test.js
 
       - name: Verify split bridge source and live routing
         shell: bash
@@ -83,7 +91,8 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add README.md core/kinojo-supabase-features.js tests/web-shell-auth-contract.test.js \
+          git add README.md core/kinojo-supabase-features.js \
+            tests/web-shell-auth-contract.test.js tests/sanctuary-waitlist-contract.test.js \
             home.html m/index.html hof/index.html m/hof/index.html \
             ranking/index.html m/ranking/index.html sanctuary/index.html m/sanctuary/index.html \
             sanctuary-schedule/index.html m/sanctuary-schedule/index.html \
