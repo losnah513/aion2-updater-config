@@ -1,0 +1,55 @@
+name: TEMP PASS KEY WEB session 320 cutover
+
+on:
+  push:
+    branches:
+      - agent/passkey-web-session-320-20260816
+
+permissions:
+  contents: write
+
+jobs:
+  apply-session-cutover:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout working branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Apply and verify opaque WEB session cutover
+        shell: bash
+        env:
+          CUTOVER_PATCH_SHA256: dab0201a7dc42c489a525459527d8bc2ca9552418109fd749c4480c7a90fd366
+        run: |
+          set -euo pipefail
+          cat > /tmp/web-cutover.patch.gz.b64 <<'PATCH_B64'
+          H4sICNCWgWoCA3dlYi1jdXRvdmVyLnBhdGNoAO1cfW8bR3r/359icgFCEiRXy3cqMu3ICnPmWZZUSU4aFAU5uzuUNl7u8naXknWmgSviFkFzQH1oneQuL8ihufauuAI+NG0D1J8oor9Dn2dmltxd7uolJg6xzdihyNmZZ5633/MyHNkw+31SLB6YPqEru+31t2+3lYFBtNn7K6ZtsHtkVavX9NWmohhVlTZrOimpar1avVIsFsMrr+Tz+cjqt94ixcZqoUny8FpSCXy+1dna/tk26Wy9s01+avo3RxrZoQfMI6Oh5VCDDKl+Fz4rV8gV8vrrZGd9b4/car9P6Mg/ZLZv6tQ3HZu0jQNGNGdkG9Q9gbnASE93XLZy17SdD5wiTi96zD0ydaZ84PWIx2zDI0CDmLbpm9Qi77VvzMgfMdfsB8Qd2zohvsNnG8zAYWaQniQ9YAONuXyHnuDjnZGt40KF7MMKzXWOYWfOMZEskMHI84nt+ESnlhWQ6gpSXb75SddjngdUuuV6tUcM02W6b50oKBqS5Tv1zXtMSOE7jkU83RniW9ITau2CTL0C30PM0qnt2MC/JQUEto5NYGsP2IL3ussMVCq1vAKhtkFc5o9c25MaAAK24w6oZf4C5B+6Tt+0gKZj+y7VfZj88xFwCQ5zgsrknO4cUo+REijZR8KODaycwFKGipCss3um55v2AamoxYFpj3ywiQGEpfzE0T4A0UEMZzAEg2imZfpoj7vMFlwazrHt+S6jg5kBQTYLDOwJq8F+PnH63MaGA/ui6l12AOOeQnbZwDlCBlx6PKMwZK4HjDEbzCV0MbSojtO4JueZEaqkwgpGoNNACtODRxZ4jkuGqBSunp4PjHkrx0wreofMsoSfBhpV8Cn3VmktoS/Ph411wdMIlDpgwosC98cnBdB4gKeNTgGF6YPpOA/mESOHjFr+4crG9u7eCrw3gCs0H6qJHlAT1Cm9HVB4AsJw50WX42yvw26lOgEWkdbOxsrA0dAVwMTuydABY3tkCAz0ktF3Xaf6IWuV1XJdbZbqaqm3JgSjg5A7ofCBT6HgoEC+jtxlJ9Ig6BdCJygcyNATNNWyWuvxeWB/vsiQACru7mwQ3TIZsghoQD+Qhia0j8YRIg9ggnIlf7EoEokcscD044odIBDfZX2nA7pS1N6FIgjX9ghIBj7dtg9MO2SqXqUMpGCV6XkjViBHECIMELQAYyP9MIglR4AScEAXPjkD4gwpOBxXnuQ2InPxgNnMFdryRkOqAWbevGoa1968ii5/rZcIQXAScAXNNCCOcXEDFPoOetE0ju3dXC+Wa3UCSDzEwMDASUCVx163N0WspAhuPHTNI+BEkaoGuAYK9qTrYuSIrkORZ07hMm4xzoaBNLm/BwuoZjEFWBUkUdWgplg0ZPeGpsA2pya0aYBExHIOnBHER8vBwI7K4R+prkNA8MHrOE65OxaI46K/D0yxs4uRj1pcUzJUF2+EwnNvSD3vFjvprfB3G47BekKJECJMg0Xjd+CtUq6VgAMRwD2iMZ2ibKF4bbEDqp8QRCVKxp0zcCuI3r4JHi5jADDTRSa6gOseuorjxcOwDPpCPyAZ1w8wK5CNvNJ+H1jB8SE6F1c3TgwgKmN3yCnRWIFqNlJCwsgUUVq6vcBTLP4fQ1TgechxUVcUKpuDACCwAmsu+AsiHLHA7jygAzc6xGfMQsZILEVzgriRqC534+QQAmRA7RG4A7sHGczjpkcFH1IMWMJjVqSrcF+S4UqqIRxvhMwLSlSBNs7KVaAP/a4XzT/cMUTESkhdUz6Q1R+YnEQEAhkKaWmrJ1TYS7A8BsxYUivLyBDPZwIKGLkhqjhuPF9MU5ynXDHC9Tg1wCtWeP2tHPoDSPdzQ7I6r2oQLKmmKLTWKK/W1Wh1PrdIFOlzw1irV5qrhVWSFz/eeusKuerprjmEOObqrZ8oykoYCUGQLor0Gs/zmJN/cu3qiqBw7YK03KG+GEJ9RqGUZd5c+VFTq2FqxbOoxVwlSqisli5LKLUguhwh7oRxZiJS5X+wVODIlyWUJtUlCSVIFaMRs/zKB55w4/NsTK6uaI5xwt+gr1+LIc2FwpDGoBYfk1gzKoahaoaiVBvNPms0YlibWyXBNjeOaCvV64g28eMlRVt5ibaXBG3KysgMKLAjcMEiFLjzrDTUWjmiYEKihAC0WCfgunOmQSbtmwexeRHkJksFgEt+IDFcq9YrjSZVlL7KVmlpNYrhlKUCyCkPEc31QqlC8vBa51jO9mVjl83dR+FAGGw5YY0s+zeAVOsYOHKOlVuc4nr04RouM/vZ12KLclBmQOFNbHZM2q7ruNlM4vrvn/ySnP7h6eRr+PG7L07/+YvTR59NPvl28vgpefb4j6cff3T68TdKJrd2pRhwd399Y7/zbmf//e57u539dnf/5u72/v5mu3t7r3DA/A60JXtoOvwgN8K366LsL5jepnNwwIwOH93n5zWuY7HtPv+xSTVmFSAQbg+ZfRvi4QEntAnOZMHadYzk+Fg8kkS9By0aV0v+IvzutXffbe9297fvbNz8sQoC9rWYz9u9TV6h70PJ7LbskWVFHm4gAWyiUp6/R10bGgVkp9WnlseSnr4NpbMFXfy631Ijz9vYMRg78D/Miq23qAdaEe3He67py9X52VPRh+xjGxJ55s3GY6QjE3Z5g8TmdxcW3mnv3u7s7XW2t7qb6zfam3ukRTicCPEo4GsELUWXGab/JslMHv558ul/ku+//eXpv/0pUxCzjkzP9LsDbgmYc/rkj6d/+m7y1aPJR5+Rye+eTL5+DDMRvuVKoUHy5Tq8InwFjzr0v7vimGxvpA1MHzvJFonqKDRpi0fEDexnsHGLz5yyfM70KSDX7+zf7O5t3GzfXu+CN6MeYFZmmnaxPYbWoXhULfLgWy/XMiF8XHh5rSisEeSpYqWsFoOsABQJ/4NqqjYKpRLJ19QgzvE/wHAQ7sCuAaSyklpBngvk7scQoOBcfkKStmJNt6Dr70wBIn05m1sbDbHzRhSPPPj4AKW+EA84kZDLcyLWQTxOiNk8J19XTE+gQdLggeO6EpC6rvCDolwuATdvY0K0neNssE+q3OJxTHocfBCzg24xGnCSFWInP3MZ9Rw7J2GVvnExSW+CUkRzAY8XmCq2Ho8zI/C/rjilwIwkOOE+PHAMarUMRx/xI1qIs22L4dsbJx0jmxG5GHg17ds4c7oaDMWX5u4LOqY9HPktPqQA+NyTPWZBZ47Z8/UQETzx6uBUIAQk+Kocf1WOqDVirUxmDU/L/I0Z6neozays744Y+iFJsg8v9yG41KHcr1SnMWZaFsiDsxaZZSFcRqaySB8K3JePJblbN5gpne2NN16b87bzHFBsIFmz8Yy+FXB4XRlQUNIhxRMO5pLxeHqWO/cg8+y3v5p8/igTI4gZFAiKfDqVCxfIoQBxnEZ8tQ6se1sxnmaDIX4ig0iH26DUEEYoNWuFem1qhgc69fXDLHPd3H2MHtIG0oAwrAyALOQQJLbn47Ecn1wgwuyE2x0hGIZZsoGEYaQhxRdu5NIxRRBptVq4v8R/PhYD+QJeIaKzdpFhx41tPJPFcUGRMG88lh/Ag2kwlMnkFJg5yMIP585wyNwNSCDTyJOfE5vvvcsPv5iRvPXfBK6c2WuLFL+/fau91d1t/9Wdzm777Uwh9qCz9e76Zic8vrW9331n+85WeGy3/S7MhpE58u2/3pF0b7dv34DisLPFC8g2jGxtdze3t2/d2enOSo6MoPC3imnr1shgXjZNpxE9UO/E1mfa4Ce0ERt2s33H1VmgDo7ueLGUC7Qkir38DAGShxbETuNnED2ze/vbu+s/bXdvtd/PRWZyH2lJC0eTUNiis8z22lkOm84RhI35BIbkuJhvvAHDxbmIc3VrhN9fZdPq9PG4ouJ/c/sK8gnl5RQJJCG+AQ/yme+eTIOo4B8dvUWPKbSU6TiUZpRKlDpZC0Xj15DMeIyvinMXkMmLufGYjyvTOBfv3QTKZHQBs8hzfejYvv/f7yZffkcmD7+b/P1nky8fksmnTyZf/f7Z488m/w4t3X/837NPPpr843+HGjnJTKj6Ce9d4B9k0ByPw5lmPL7/YLZe6huny7FZeJyheJqCEqGei9YYGWGv6deUrpwe4loohq8Odu2b/PrA/ZlgZ/QUHH9pIBTfw7AYDOcQGO1GfvwYDGMh1kmF0PDievyz3zyGgfM9/gIF9QsCC27DJHjMu2IKPJI76ihASLwX6ESPILJBN4CyRB9BfcRX7IvvEucer8WPM6BQ40yTBxGS0TONgGrHhuIRCu2kKWsJZyEh4qLELtWwjS+VmxVZZEdk5QlpJmv2gk1PtJWadmhhQyJrXfn96rQH8R3wy2xm8uXTydePyeTjL75/8pCfOnz168mX30I8/4fJJ/Djq0en//SbwP8fP5x8/iGe1H0ac3VZX8pOoilaiUrw1cEMB7HjGtQQ5j5R5sqjE7wgM7JCEvMziHAYumBvMR+RU9L9tdaF8/3UnxMrJ3TnnCKAl821rs0QOi3Bwxbnvdq8d5MBde8GmpJEZ07UaBRKTd6pNQvlSqxXOyf2T4NjPNiHzx2nbY/Cb3kwI3d/zjXXBOKDjjLSKLbiUSpwVD5J3uEIso5co8jh8Tg8sMHL+8Cu0ynhgY1YByD3QhnlfOixowiRjh8K6V8/Pv2vb09//5SAOwMQppEd3P9fn2LA/+2/oJdHZZ4/nRRZLdCxNvJ97InFT8UwPbxYY4hZchCbOR8Yh48sm6GuSYvayDuBkh9nwZZyns/uQU/Pby22MoI7Mvnm14qiZAJ2eB4tXjqPihtaO0JVkEgDpc2yF5OUQsH9wiCcwYWE2UnCjmhVg+kPGDh9aPFfyHem+6X7TyZyyaeLUnX5BSb7ILMI30rS13OYj4siipppzXOxWiN2tjiNz5eors4rrkJq+vDvnn34Barp3KqqeJmCaSZEkYSznizrJJSeff4wXOHxVIg5sKKe/k/Q2SRlvXwSTVEgPi9pklDCRc+aRq6L4SAl0hdnppIzk2O9fDiL9fOhPlxUX4rWeJxeaiZsI8VD5JN5HHFNTT59BDr85tmv/hBxC5LJB4dEU+cKnx3lclONTsvSwJfTvmPiybZSLotSZrUZOhZ9EFDTAJcJMiScf5O0Ji9eLMyqhDnQ82+XIt8wHzr96MWQ6ID8RrlRa1CN6oqiNRu0r5Wi3yjHlohvkmODqItmA6+D8NeX9TZIqbm8DfJq3wZJJ6MHXx4UXX6DOUFBqlq5NDGD+dS0gGYfPPLwPJIx8A/YDPfyvYS8Xqk39EZNUUr12qrarMYhH8wO0B585ldFSgh0/joH9IWhfDEQXyC+FwPuxSD7uWG9GEwvBtDPjebngzK/uwXplbSuxbPnIOkW8yDtHrPeKDHWp4pSK9Mqq8Z+y3CQdpN5kHKXuV7ld5n5j6R8uuCUusisuvBLzYvMrYtMrwvKsItMsovMswtKtfBXuPiCLjwPEq88D1IvPdcahl7TVEXRq6VSQ23OATPl2vMg5eIzlPxNkuevLzswy0tgvtzA/KG5UwA0BZ5zXecgpe/s02Zdh4xZramGVq3FgZnYeQ5+QO/5UkHynCZ0CclXFJJnUVpAc7r4/nQQDxIJAYI1tdqqojSb1b5aXY0HiITgEA8MTR4YmstDqeWh1KtxKCV+fbg4vaxf1KnrjDxmnec5iWT4yU90Yb1cL6lngHrAIC7EoR0fDH73t1Gp1ZsA8IZWpSprxAE+tyyA+dwD8UsQ/DcSy5X6q1AHLEvzl7sOEC4OPTN/U6TDYULfXC7WVLWqXqp7dqmNv7ATh+j8sASpWmnWNaOiKPWKVmuUynGQJiwMYJrwiP+jWmXEKX9dlutLmC7L9RejXJ/VFMEVvHgMOXOGDCes3NCpUVUUraTWtPLcOfnZNILIcvYsXvrXeOlfWwaZZZBZBpmAUgJu8J80mBs9v1uQVUZajEgNDfMRgRqlxmoZIkJfr9SqZSM1IpwZCOL4X+Wt/2pzIfgvldT6Ev9L/L9aRUZJbf6li4yEw4PkowNVU1lfX1WUkm7oVGOxoJFycJB8bNAQxwaN5T9ktDwlfBH+2bDFnggkngekngb060xrNJmiGGpZqwOZCO5SzwJSTgKaKi/S1eX5/BJ5y0ujP4JLo+f1+Bfp8Otlo6kbdajnDVo36rH75Bfp75+7u18GjmXgeNECxzlYX2CbntKkn9GiG7Ua7fdVRQFol3RaT4H0GUi+ZHu+yN58CeAlgF/AzH9e9/38mf//AabiZulCZwAA
+          PATCH_B64
+          sed -i 's/^          //' /tmp/web-cutover.patch.gz.b64
+          base64 --decode /tmp/web-cutover.patch.gz.b64 | gzip --decompress > /tmp/web-cutover.patch
+          echo "$CUTOVER_PATCH_SHA256  /tmp/web-cutover.patch" | sha256sum --check -
+          git apply --check /tmp/web-cutover.patch
+          git apply /tmp/web-cutover.patch
+          node --check core/kinojo-auth-service.js
+          node --check core/kinojo-auth-session.js
+          node --check core/kinojo-auth-ui.js
+          node --check tests/web-shell-auth-contract.test.js
+          CI=false node tests/web-shell-auth-contract.test.js
+
+      - name: Commit generated WEB session cutover
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md core/kinojo-auth-ui.js \
+            home.html m/index.html hof/index.html m/hof/index.html ranking/index.html m/ranking/index.html \
+            sanctuary/index.html m/sanctuary/index.html sanctuary-schedule/index.html m/sanctuary-schedule/index.html \
+            meter/index.html m/meter/index.html arcana/index.html m/arcana/index.html admin/index.html m/admin/index.html
+          git diff --cached --check
+          git commit -m "Complete opaque WEB session client cutover"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
