@@ -1,0 +1,93 @@
+name: TEMP PASS KEY auth cache cutover
+
+on:
+  push:
+    branches:
+      - agent/passkey-auth-cache-20260816
+
+permissions:
+  contents: write
+
+jobs:
+  apply-cache-key:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout working branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Apply and verify auth service cache key
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          pages = [
+              'home.html', 'm/index.html',
+              'hof/index.html', 'm/hof/index.html',
+              'ranking/index.html', 'm/ranking/index.html',
+              'sanctuary/index.html', 'm/sanctuary/index.html',
+              'sanctuary-schedule/index.html', 'm/sanctuary-schedule/index.html',
+              'meter/index.html', 'm/meter/index.html',
+              'arcana/index.html', 'm/arcana/index.html',
+              'admin/index.html', 'm/admin/index.html',
+          ]
+          target = 'kinojo-auth-service.js?cache=2026081601'
+          pattern = re.compile(r'kinojo-auth-service\.js(?:\?cache=[^\"\'<>\s]+)?')
+
+          for relative in pages:
+              path = Path(relative)
+              text = path.read_text(encoding='utf-8')
+              updated, count = pattern.subn(target, text)
+              if count != 1:
+                  raise SystemExit(f'{relative}: auth service include count={count}, expected=1')
+              if updated.count(target) != 1:
+                  raise SystemExit(f'{relative}: new auth service cache key count mismatch')
+              path.write_text(updated, encoding='utf-8', newline='\n')
+
+          test_path = Path('tests/web-shell-auth-contract.test.js')
+          test = test_path.read_text(encoding='utf-8')
+          old_required = "    'kinojo-auth-service.js',"
+          new_required = "    'kinojo-auth-service.js?cache=2026081601',"
+          if test.count(old_required) != 1:
+              raise SystemExit('auth service required-token contract anchor mismatch')
+          test = test.replace(old_required, new_required, 1)
+
+          stale_anchor = "  assert.equal(html.includes('kinojo-auth-ui.js?cache=2026080205'), false, `${page}: old auth UI cache remains`);"
+          stale_line = "  assert.equal(html.includes('kinojo-auth-service.js?cache=2026080205'), false, `${page}: old auth service cache remains`);"
+          if stale_line not in test:
+              if test.count(stale_anchor) != 1:
+                  raise SystemExit('auth service stale-cache contract anchor mismatch')
+              test = test.replace(stale_anchor, stale_line + '\n' + stale_anchor, 1)
+          test_path.write_text(test, encoding='utf-8', newline='\n')
+
+          for relative in pages:
+              text = Path(relative).read_text(encoding='utf-8')
+              if text.count(target) != 1 or 'kinojo-auth-service.js?cache=2026080205' in text:
+                  raise SystemExit(f'{relative}: final cache contract failed')
+          print(f'PASS: {len(pages)} WEB entrypoints use {target}')
+          PY
+
+          node --check core/kinojo-auth-service.js
+          node --check tests/web-shell-auth-contract.test.js
+          node tests/web-shell-auth-contract.test.js
+
+      - name: Commit generated cache-key cutover
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add home.html m/index.html hof/index.html m/hof/index.html ranking/index.html m/ranking/index.html \
+            sanctuary/index.html m/sanctuary/index.html sanctuary-schedule/index.html m/sanctuary-schedule/index.html \
+            meter/index.html m/meter/index.html arcana/index.html m/arcana/index.html admin/index.html m/admin/index.html \
+            tests/web-shell-auth-contract.test.js
+          git diff --cached --check
+          git commit -m "Bump PASS KEY auth service cache key"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
