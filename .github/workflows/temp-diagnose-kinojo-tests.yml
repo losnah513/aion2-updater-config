@@ -1,0 +1,45 @@
+name: TEMP diagnose KINOJO tests
+
+on:
+  push:
+    branches:
+      - agent/split-lookup-sheet-bridge-20260816
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - name: JavaScript syntax
+        run: |
+          set -euo pipefail
+          for path in \
+            ui/kinojo-character-reaction.js \
+            ui/kinojo-character-detail-refresh.js \
+            ui/kinojo-character-skill-bridge.js \
+            ui/kinojo-character-daevanion-bridge.js \
+            core/kinojo-supabase-client.js \
+            core/kinojo-supabase-rpc.js \
+            core/kinojo-supabase-features.js \
+            core/kinojo-auth-session.js \
+            core/kinojo-auth-ui.js \
+            sanctuary/js/sanctuary.js \
+            sanctuary/js/sanctuary-editor.js \
+            sanctuary-schedule/js/sanctuary-schedule.js \
+            admin/js/admin-system.js \
+            admin/js/admin-bootstrap.js \
+            meter/js/meter-app.js; do node --check "$path"; done
+      - name: Web shell auth contract
+        run: node tests/web-shell-auth-contract.test.js
+      - name: Sanctuary waitlist contract
+        run: node tests/sanctuary-waitlist-contract.test.js
+      - name: Staged page contract
+        run: node tests/staged-page-contract.test.js
+      - name: Meter presence log contract
+        run: node tests/meter-presence-log-contract.test.js
