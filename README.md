@@ -82,3 +82,4 @@ KINOJO INFO GitHub Pages upload package.
 - The Edge fixes the tool scope to `KINOJO_WEB`, calls the canonical verifier with Server credentials, and returns only the normalized profile contract required by WEB.
 - Phase 1 intentionally preserves the existing 30-minute idle session object, compatibility token, and downstream PASS KEY fields so the rest of WEB does not regress. Removing raw PASS KEY persistence and replacing the compatibility token with a scoped Server session is a later phase.
 - `tests/web-shell-auth-contract.test.js` verifies the static and runtime call boundary and, in GitHub CI, performs a live health/CORS/header request against the deployed auth Edge.
+- All 16 active PC/mobile entrypoints pin `kinojo-auth-service.js?cache=2026081601`; the same contract test requires this cache key and rejects the former `2026080205` key so cached direct-RPC clients cannot persist after deployment.
