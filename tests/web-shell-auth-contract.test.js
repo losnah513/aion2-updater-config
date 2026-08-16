@@ -72,6 +72,7 @@ for (const page of publicShellPages) {
     'kinojo-auth-session.js?cache=2026081602',
     'kinojo-auth-service.js?cache=2026081602',
     'kinojo-auth-ui.js?cache=2026081602',
+    'kinojo-supabase-features.js?cache=2026081603',
   ]) {
     assert.ok(html.includes(token), `${page}: missing ${token}`);
   }
@@ -83,6 +84,7 @@ for (const page of ['admin/index.html', 'm/admin/index.html']) {
   assert.ok(html.includes('kinojo-common-ui.js?cache=2026081204'), `${page}: common UI cache missing`);
   assert.ok(html.includes('kinojo-auth-session.js?cache=2026081602'), `${page}: stale auth session cache`);
   assert.ok(html.includes('kinojo-auth-ui.js?cache=2026081602'), `${page}: stale auth UI cache`);
+  assert.ok(html.includes('kinojo-supabase-features.js?cache=2026081603'), `${page}: stale Supabase feature bridge cache`);
 }
 
 for (const page of publicShellPages.concat(['admin/index.html', 'm/admin/index.html'])) {
@@ -93,6 +95,7 @@ for (const page of publicShellPages.concat(['admin/index.html', 'm/admin/index.h
     'kinojo-auth-service.js?cache=2026080205', 'kinojo-auth-service.js?cache=2026081601',
     'kinojo-auth-ui.js?cache=2026080205', 'kinojo-auth-ui.js?cache=2026081204',
   ]) assert.equal(html.includes(stale), false, `${page}: stale auth cache remains ${stale}`);
+  assert.equal(html.includes('kinojo-supabase-features.js?cache=2026081218'), false, `${page}: legacy unified sheet bridge cache remains`);
 }
 
 for (const page of publicShellPages) {
@@ -122,6 +125,16 @@ for (const token of ['adminSanctuaryScheduleConsole', 'adminSanctuaryScheduleSav
   assert.ok(schedule.includes(token), `schedule manager contract missing: ${token}`);
 }
 
+const featureBridgeSource = read('core/kinojo-supabase-features.js');
+for (const edgeName of [
+  'sanctuary-roster-bridge',
+  'sanctuary-sheet-bridge',
+  'lookup-list-prepare',
+]) {
+  assert.ok(featureBridgeSource.includes(`invokeEdgeFunction('${edgeName}'`), `WEB feature bridge must call ${edgeName}`);
+}
+assert.equal(featureBridgeSource.includes("invokeEdgeFunction('lookup-sheet-bridge'"), false, 'active WEB must not invoke the legacy unified lookup-sheet-bridge');
+
 const authServiceSource = read('core/kinojo-auth-service.js');
 assert.ok(authServiceSource.includes("invokeEdgeFunction(AUTH_EDGE_NAME"), 'WEB PASS KEY login must call the dedicated auth Edge');
 assert.ok(authServiceSource.includes("const AUTH_EDGE_NAME='kinojo-member-auth'"), 'dedicated auth Edge name is missing');
@@ -135,6 +148,64 @@ assert.equal(authServiceSource.includes("token:'supabase:'"), false, 'browser-ge
 const authUiSource = read('core/kinojo-auth-ui.js');
 for (const token of ['SERVER_TOUCH_THROTTLE_MS', 'touchServerSession_', 'restoreServerSession_', '.touchSession?.(token)']) {
   assert.ok(authUiSource.includes(token), `auth UI server session contract missing ${token}`);
+}
+
+async function verifySheetBridgeSplitContract() {
+  if (process.env.CI !== 'true') return;
+  const base = 'https://josvoltpktvwysrasffq.supabase.co/functions/v1';
+  const direct = [
+    ['lookup-list-prepare', 'LOOKUP_LIST_PREPARE_V1'],
+    ['lookup-list-sync', 'LOOKUP_LIST_SYNC_V1'],
+    ['sanctuary-sheet-bridge', 'SANCTUARY_SHEET_BRIDGE_V1'],
+    ['sanctuary-roster-bridge', 'SANCTUARY_ROSTER_BRIDGE_V1'],
+  ];
+  for (const [name, boundary] of direct) {
+    const response = await fetch(`${base}/${name}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', origin: 'https://kinojo.info' },
+      body: JSON.stringify({ action: 'health' }),
+    });
+    const data = await response.json();
+    assert.equal(response.status, 200, `${name} health HTTP ${response.status}`);
+    assert.equal(data.ok, true, `${name} health failed`);
+    assert.equal(data.service, name, `${name} service mismatch`);
+    assert.equal(data.apiVersion, '1.0', `${name} API version mismatch`);
+    assert.equal(data.boundary, boundary, `${name} boundary mismatch`);
+    assert.equal(response.headers.get('x-kinojo-sheet-boundary'), boundary, `${name} response boundary header mismatch`);
+    assert.equal(response.headers.get('x-kinojo-sheet-api'), '1.0', `${name} response API header mismatch`);
+  }
+
+  const routerHealth = await fetch(`${base}/lookup-sheet-bridge`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', origin: 'https://kinojo.info' },
+    body: JSON.stringify({ action: 'health' }),
+  });
+  const routerData = await routerHealth.json();
+  assert.equal(routerHealth.status, 200);
+  assert.equal(routerData.ok, true);
+  assert.equal(routerData.mode, 'COMPATIBILITY_ROUTER_ONLY');
+  assert.equal(routerData.heavyWorkloads, false);
+  assert.equal(routerHealth.headers.get('x-kinojo-bridge-router'), 'LOOKUP_SHEET_BRIDGE_COMPAT_V51');
+
+  const forwardingCases = [
+    [{ action: 'prepareList' }, 'lookup-list-prepare', 400, 'MISSING_SESSION'],
+    [{ action: 'syncList' }, 'lookup-list-sync', 400, 'MISSING_SESSION'],
+    [{ action: 'adminBridgePing' }, 'sanctuary-sheet-bridge', 401, 'ADMIN_PASS_KEY_REQUIRED'],
+    [{ action: 'webSanctuaryRosterV312', command: 'OPEN' }, 'sanctuary-roster-bridge', 401, 'PASS_KEY_REQUIRED'],
+  ];
+  for (const [payload, target, expectedStatus, expectedCode] of forwardingCases) {
+    const action = payload.action;
+    const response = await fetch(`${base}/lookup-sheet-bridge`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', origin: 'https://kinojo.info' },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json();
+    assert.equal(response.status, expectedStatus, `${action} router HTTP mismatch`);
+    assert.equal(response.headers.get('x-kinojo-bridge-target'), target, `${action} router target mismatch`);
+    assert.equal(data.code, expectedCode, `${action} forwarded code mismatch`);
+  }
+  console.log('KINOJO sheet bridge split live health and compatibility routing: PASS');
 }
 
 async function verifyAuthEdgeContract() {
@@ -252,8 +323,8 @@ async function verifyAuthEdgeContract() {
   }
 }
 
-verifyAuthEdgeContract()
-  .then(() => console.log('KINOJO auth timing, opaque Server session and public shell entrypoints: PASS'))
+Promise.all([verifyAuthEdgeContract(), verifySheetBridgeSplitContract()])
+  .then(() => console.log('KINOJO auth timing, opaque Server session, split sheet bridges and public shell entrypoints: PASS'))
   .catch(error => {
     console.error(error);
     process.exitCode = 1;
