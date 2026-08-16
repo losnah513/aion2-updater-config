@@ -75,3 +75,10 @@ KINOJO INFO GitHub Pages upload package.
 - Drawer links keep their readable font size, grow with wrapped text, and scroll inside a KINOJO-styled scrollbar without clipping in mobile landscape or enlarged-text modes.
 - The closed menu icon uses three vertical dots and transitions to three horizontal menu lines on hover or while the drawer is open.
 - Public notices use bounded retries, an eight-second request timeout, a seven-day last-success cache, explicit retry UI, and recovery on visibility, focus, page-show, and online events.
+
+## PASS KEY authentication Edge boundary
+
+- `core/kinojo-auth-service.js` sends the initial WEB PASS KEY verification only to the dedicated `kinojo-member-auth` Edge Function. The browser auth service must not call `kinojo_member_verify_session_264` directly.
+- The Edge fixes the tool scope to `KINOJO_WEB`, calls the canonical verifier with Server credentials, and returns only the normalized profile contract required by WEB.
+- Phase 1 intentionally preserves the existing 30-minute idle session object, compatibility token, and downstream PASS KEY fields so the rest of WEB does not regress. Removing raw PASS KEY persistence and replacing the compatibility token with a scoped Server session is a later phase.
+- `tests/web-shell-auth-contract.test.js` verifies the static and runtime call boundary and, in GitHub CI, performs a live health/CORS/header request against the deployed auth Edge.
