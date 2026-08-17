@@ -3,6 +3,7 @@
  * 책임: PostgREST RPC 호출 계약과 응답 오류 표준화.
  * Phase 1-C-2: 323 관리자 Actor 경계를 사용하는 RPC는 브라우저 원문 PASS KEY 대신 현재 Server-issued kws_ 세션을 전송합니다.
  * Phase 1-C-3: SQL 324 회원관리 RPC 3개도 동일한 kws_ 세션 경계를 사용합니다.
+ * Phase 1-C-4: SQL 325 캐릭터 관리·신원 검토 RPC도 동일한 kws_ 세션 경계를 사용합니다.
  */
 (function(){
   'use strict';
@@ -18,6 +19,12 @@
     'kinojo_admin_member_create_264',
     'kinojo_admin_member_list_264',
     'kinojo_admin_member_manage_264',
+    'kinojo_admin_character_deactivate',
+    'kinojo_admin_character_exclusion_update_v278',
+    'kinojo_admin_character_mark_renamed',
+    'kinojo_admin_character_restore',
+    'kinojo_admin_character_search',
+    'kinojo_admin_identity_reviews_v287',
     'kinojo_admin_notice_create',
     'kinojo_admin_notice_disable',
     'kinojo_admin_notice_list',
