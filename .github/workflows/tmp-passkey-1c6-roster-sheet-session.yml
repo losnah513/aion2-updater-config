@@ -37,11 +37,11 @@ jobs:
           start=text.index('  async function adminSanctuarySheetSync(')
           end=text.index('\n\n  async function adminSanctuaryProfileDiagnostic(', start)
           seg=text[start:end]
-          if seg.count('const passKey=currentPassKey();') != 1 or seg.count('p_pass_key:passKey') != 1 or seg.count('        passKey,') != 2:
+          if seg.count('const passKey=currentPassKey();') != 1 or seg.count('p_pass_key:passKey') != 1 or seg.count('passKey,') != 2:
               raise SystemExit('sheet sync credential anchor mismatch')
           seg=seg.replace('const passKey=currentPassKey();','const sessionToken=currentAdminSessionCredential();',1)
           seg=seg.replace('p_pass_key:passKey','p_pass_key:sessionToken',1)
-          seg=seg.replace('        passKey,','        sessionToken,')
+          seg=seg.replace('passKey,','sessionToken,')
           text=text[:start]+seg+text[end:]
           p.write_text(text,encoding='utf-8',newline='')
 
