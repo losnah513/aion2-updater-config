@@ -1,0 +1,134 @@
+name: Temporary PASS KEY 1-C-5 sanctuary session
+
+on:
+  push:
+    branches:
+      - agent/passkey-1c5-sanctuary-session
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/passkey-1c5-sanctuary-session
+      - name: Patch sanctuary session routing
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('core/kinojo-supabase-features.js')
+          text = p.read_text(encoding='utf-8')
+          old = (
+              "  function currentAdminSessionCredential(){\n"
+              "    const account = currentAccount();\n"
+              "    const token = String(account && (account.token || account.sessionToken || account.session_token) || '').trim();\n"
+              "    if(!/^kws_[A-Za-z0-9_-]{40,80}$/.test(token)){\n"
+              "      const err = new Error('관리자 로그인 세션을 확인할 수 없습니다. 다시 로그인해 주세요.');\n"
+              "      err.kinojoAdminAuthError = true;\n"
+              "      throw err;\n"
+              "    }\n"
+              "    return token;\n"
+              "  }\n"
+          )
+          new = (
+              "  function currentServerSessionCredential(){\n"
+              "    const account = currentAccount();\n"
+              "    const token = String(account && (account.token || account.sessionToken || account.session_token) || '').trim();\n"
+              "    if(!/^kws_[A-Za-z0-9_-]{40,80}$/.test(token)){\n"
+              "      const err = new Error('로그인 세션을 확인할 수 없습니다. 다시 로그인해 주세요.');\n"
+              "      err.kinojoAdminAuthError = true;\n"
+              "      throw err;\n"
+              "    }\n"
+              "    return token;\n"
+              "  }\n\n"
+              "  function currentAdminSessionCredential(){\n"
+              "    return currentServerSessionCredential();\n"
+              "  }\n\n"
+              "  function optionalServerSessionCredential(){\n"
+              "    try{return currentServerSessionCredential();}catch(_err){return '';}\n"
+              "  }\n"
+          )
+          if text.count(old) != 1:
+              raise SystemExit('session helper anchor mismatch')
+          text = text.replace(old, new, 1)
+
+          old_roster = (
+              "    const auth = window.KinojoAuth || {};\n"
+              "    const session = typeof auth.getSession === 'function' ? auth.getSession() : null;\n"
+              "    const account = typeof auth.getAccount === 'function' ? auth.getAccount() : null;\n"
+              "    const passKey = String(account?.passKey || account?.passCode || session?.passKey || session?.passCode || '').trim();\n"
+          )
+          if text.count(old_roster) != 1:
+              raise SystemExit('sanctuary roster credential anchor mismatch')
+          text = text.replace(old_roster, "    const passKey = optionalServerSessionCredential();\n", 1)
+
+          start = text.index('  async function getSanctuaryRosterData(')
+          end = text.index('\n  async function sanctuaryRosterAction(', start)
+          segment = text[start:end]
+          if segment.count("let passKey='';try{passKey=currentPassKey();}catch(_err){}") != 1:
+              raise SystemExit('slot optional credential mismatch')
+          segment = segment.replace("let passKey='';try{passKey=currentPassKey();}catch(_err){}", "const passKey=optionalServerSessionCredential()", 1)
+          if segment.count("let passKey='';try{passKey=currentPassKey();}catch(_err){return {ok:false,totalCount:0};}") != 1:
+              raise SystemExit('notification credential mismatch')
+          segment = segment.replace("let passKey='';try{passKey=currentPassKey();}catch(_err){return {ok:false,totalCount:0};}", "const passKey=optionalServerSessionCredential();if(!passKey)return {ok:false,totalCount:0};", 1)
+          if segment.count('p_pass_key:currentPassKey()') != 8:
+              raise SystemExit('required sanctuary credential count mismatch: ' + str(segment.count('p_pass_key:currentPassKey()')))
+          segment = segment.replace('p_pass_key:currentPassKey()', 'p_pass_key:currentServerSessionCredential()')
+          optional_extra = "p_pass_key:normalizePassKey(extra.passKey || extra.passCode || '') || null"
+          if segment.count(optional_extra) != 3:
+              raise SystemExit('optional extra credential count mismatch: ' + str(segment.count(optional_extra)))
+          segment = segment.replace(optional_extra, 'p_pass_key:optionalServerSessionCredential() || null')
+          required_extra = "p_pass_key:normalizePassKey(extra.passKey || extra.passCode || '')"
+          if segment.count(required_extra) != 2:
+              raise SystemExit('required extra credential count mismatch: ' + str(segment.count(required_extra)))
+          segment = segment.replace(required_extra, 'p_pass_key:currentServerSessionCredential()')
+          text = text[:start] + segment + text[end:]
+
+          old_diag = (
+              "  async function adminSanctuaryProfileDiagnostic(extra={}){\n"
+              "    assertAdmin();\n"
+              "    return rpc('kinojo_admin_sanctuary_profile_diagnostic_252', {\n"
+              "      p_pass_key:currentPassKey(),\n"
+          )
+          new_diag = old_diag.replace('p_pass_key:currentPassKey()', 'p_pass_key:currentAdminSessionCredential()')
+          if text.count(old_diag) != 1:
+              raise SystemExit('profile diagnostic credential anchor mismatch')
+          text = text.replace(old_diag, new_diag, 1)
+          p.write_text(text, encoding='utf-8', newline='')
+
+          cache_updates = {
+              Path('admin/index.html'): ('kinojo-supabase-features.js?cache=2026081704', 'kinojo-supabase-features.js?cache=2026081705'),
+              Path('m/admin/index.html'): ('kinojo-supabase-features.js?cache=2026081704', 'kinojo-supabase-features.js?cache=2026081705'),
+              Path('sanctuary/index.html'): ('kinojo-supabase-features.js?cache=2026081218', 'kinojo-supabase-features.js?cache=2026081705'),
+              Path('m/sanctuary/index.html'): ('kinojo-supabase-features.js?cache=2026081218', 'kinojo-supabase-features.js?cache=2026081705'),
+              Path('sanctuary-schedule/index.html'): ('kinojo-supabase-features.js?cache=2026081218', 'kinojo-supabase-features.js?cache=2026081705'),
+              Path('m/sanctuary-schedule/index.html'): ('kinojo-supabase-features.js?cache=2026081218', 'kinojo-supabase-features.js?cache=2026081705'),
+          }
+          for path, (old_cache, new_cache) in cache_updates.items():
+              page = path.read_text(encoding='utf-8')
+              if page.count(old_cache) != 1:
+                  raise SystemExit(str(path) + ': feature cache mismatch ' + str(page.count(old_cache)))
+              path.write_text(page.replace(old_cache, new_cache, 1), encoding='utf-8', newline='')
+
+          test_updates = {
+              Path('tests/sanctuary-waitlist-contract.test.js'): ('kinojo-supabase-features.js?cache=2026081218', 'kinojo-supabase-features.js?cache=2026081705'),
+              Path('tests/meter-presence-log-contract.test.js'): ('kinojo-supabase-features.js?cache=2026081704', 'kinojo-supabase-features.js?cache=2026081705'),
+          }
+          for path, (old_cache, new_cache) in test_updates.items():
+              source = path.read_text(encoding='utf-8')
+              if source.count(old_cache) != 1:
+                  raise SystemExit(str(path) + ': test cache mismatch ' + str(source.count(old_cache)))
+              path.write_text(source.replace(old_cache, new_cache, 1), encoding='utf-8', newline='')
+          PY
+          node --check core/kinojo-supabase-features.js
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add core/kinojo-supabase-features.js admin/index.html m/admin/index.html sanctuary/index.html m/sanctuary/index.html sanctuary-schedule/index.html m/sanctuary-schedule/index.html tests/sanctuary-waitlist-contract.test.js tests/meter-presence-log-contract.test.js
+          git commit -m 'PASS KEY 1-C-5: route sanctuary through server session'
+          git push origin HEAD:agent/passkey-1c5-sanctuary-session
