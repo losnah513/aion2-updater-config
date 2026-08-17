@@ -33,9 +33,9 @@
     const key = String(value || 'survey').toLowerCase();
     return ['survey','coordinating','confirmed','canceled','completed'].includes(key) ? key : 'survey';
   }
-  function currentPassKey(){
+  function currentSessionCredential(){
     const session = window.KinojoAuth?.getSession?.();
-    return String(session?.passKey || session?.passCode || '').trim();
+    return String(session?.token || '').trim();
   }
   function isLoggedIn(){ return !!window.KinojoAuth?.getSession?.(); }
   function canAttemptScheduleManage(){ return Number(window.KinojoAuth?.getLevel?.() || 0) >= 2; }
@@ -469,7 +469,7 @@
       const dayRequest = window.KinojoApi.getAction('sanctuaryScheduleDay', {
         targetDate:state.selectedDate,
         scheduleId:state.selectedScheduleId,
-        passKey:currentPassKey(),
+        passKey:currentSessionCredential(),
         scope:state.scope
       });
       const adminRequest = loadScheduleAdminContext(state.selectedDate);
@@ -505,7 +505,7 @@
         id:item.sanctuaryCode,
         targetDate:state.selectedDate,
         scheduleId:item.id,
-        passKey:currentPassKey(),
+        passKey:currentSessionCredential(),
         status:state.responseStatus,
         timeText:$('#scheduleTimeText')?.value || '',
         note:$('#scheduleResponseNote')?.value || ''
@@ -536,7 +536,7 @@
       const data = await window.KinojoApi.getAction('sanctuaryScheduleCalendar', {
         view:state.view,
         anchor:state.anchor,
-        passKey:currentPassKey(),
+        passKey:currentSessionCredential(),
         scope:state.scope
       });
       if(direction){const remain=260-(Date.now()-started);if(remain>0)await sleep(remain);}

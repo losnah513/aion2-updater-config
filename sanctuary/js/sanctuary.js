@@ -122,22 +122,17 @@ function readStoredSanctuaryAuth(key){
 function currentSanctuaryAuthState(){
   const auth=window.KinojoAuth||{};
   const session=typeof auth.getSession==='function'?auth.getSession():null;
-  const account=typeof auth.getAccount==='function'?auth.getAccount():null;
   const storedSession=readStoredSanctuaryAuth('kinojo_login_session_v1');
-  const storedAccount=readStoredSanctuaryAuth('kinojo_login_account_v1');
-  const merged=Object.assign({},storedSession||{},storedAccount||{},session||{},account||{});
-  const passKey=String(merged.passKey||merged.passCode||merged.pass_key||merged.pass_code||'').trim();
-  const loggedIn=Boolean(session?.token||storedSession?.token);
-  return {passKey,loggedIn};
+  const credential=String(session?.token||storedSession?.token||'').trim();
+  return {credential,loggedIn:Boolean(credential)};
 }
-function currentSanctuaryPassKey(){return currentSanctuaryAuthState().passKey}
 function operationStatusClass(value){
   const state=String(value||'').toLowerCase();
   return ['today','survey','coordinating','confirmed','canceled','completed'].includes(state)?state:'survey';
 }
 function renderOperationSkeleton(){
   const authState=currentSanctuaryAuthState();
-  if(!authState.passKey){if(authState.loggedIn)renderOperationAuthUnavailable();else renderOperationLoginRequired();return}
+  if(!authState.credential){if(authState.loggedIn)renderOperationAuthUnavailable();else renderOperationLoginRequired();return}
   const week=document.getElementById('operationWeekLabel');
   const auth=document.getElementById('operationAuthState');
   const schedules=document.getElementById('operationScheduleList');
@@ -168,9 +163,9 @@ function ensureSanctuaryOperation(force=false){
   const scheduleLink=document.getElementById('operationSchedulePageLink');
   if(scheduleLink){const mobile=/(^|\/)m(\/|$)/.test(location.pathname);scheduleLink.href=(mobile?'/m/sanctuary-schedule/':'/sanctuary-schedule/')}
   const authState=currentSanctuaryAuthState();
-  const passKey=authState.passKey;
-  const key=currentId+'|'+passKey;
-  if(!passKey){operationRequestSeq+=1;operationLoadedKey=key;operationLoadKey=key;operationRefreshQueued=false;if(authState.loggedIn)renderOperationAuthUnavailable();else renderOperationLoginRequired();return Promise.resolve()}
+  const credential=authState.credential;
+  const key=currentId+'|'+credential;
+  if(!credential){operationRequestSeq+=1;operationLoadedKey=key;operationLoadKey=key;operationRefreshQueued=false;if(authState.loggedIn)renderOperationAuthUnavailable();else renderOperationLoginRequired();return Promise.resolve()}
   if(operationLoadPromise){if(force)operationRefreshQueued=true;return operationLoadPromise}
   if(!force&&operationLoadedKey===key)return Promise.resolve();
   operationLoadKey=key;
@@ -197,7 +192,7 @@ async function loadSanctuaryOperation(key){
   for(let attempt=1;attempt<=OPERATION_AUTO_RETRY_LIMIT;attempt+=1){
     try{
       if(!window.KinojoApi)throw new Error('KinojoApi 연결을 확인해 주세요.');
-      const data=await withRequestTimeout(window.KinojoApi.getAction('sanctuaryOperation',{id:currentId,passKey:currentSanctuaryPassKey()}),OPERATION_REQUEST_TIMEOUT_MS,'성역 일정 응답 시간이 초과되었습니다.');
+      const data=await withRequestTimeout(window.KinojoApi.getAction('sanctuaryOperation',{id:currentId}),OPERATION_REQUEST_TIMEOUT_MS,'성역 일정 응답 시간이 초과되었습니다.');
       if(seq!==operationRequestSeq||key!==operationLoadKey)return;
       if(!data||data.ok===false)throw new Error(data?.message||'성역 운영 정보 로드 실패');
       if(data.authRequired===true||data.authenticated===false){renderOperationLoginRequired();operationLoadedKey=key;return}

@@ -1206,11 +1206,8 @@
     const storedAccount = readStoredCommonAuth('kinojo_login_account_v1');
     const session = source.session || (typeof auth.getSession === 'function' ? auth.getSession() : null) || storedSession;
     const account = source.account || (typeof auth.getAccount === 'function' ? auth.getAccount() : null) || storedAccount;
-    const passKey = String(
-      (account && (account.passKey || account.passCode || account.pass_key || account.pass_code)) ||
-      (session && (session.passKey || session.passCode || session.pass_key || session.pass_code)) || ''
-    ).trim();
-    return { session, account, passKey, loggedIn: Boolean(source.loggedIn || (session && session.token) || (storedSession && storedSession.token)) };
+    const sessionToken = String((session && session.token) || (storedSession && storedSession.token) || '').trim();
+    return { session, account, sessionToken, loggedIn: Boolean(source.loggedIn || sessionToken) };
   }
 
   function renderCommonLoginState(detail) {
@@ -1218,7 +1215,7 @@
     const button = $('meterOpenLoginBtn');
     const guide = $('meterLoginGuide');
     if (!button || !guide) return;
-    if (state.loggedIn && state.passKey) {
+    if (state.loggedIn && state.sessionToken) {
       const name = state.account && (state.account.mainCharacterName || state.account.mainCharacter);
       button.textContent = meterAuthConnecting ? '계정 연결 중...' : '로그인 계정으로 연결';
       guide.textContent = name ? `${name} 계정으로 캐릭터 목록을 불러옵니다.` : '현재 로그인 계정으로 캐릭터 목록을 불러옵니다.';
@@ -1229,7 +1226,7 @@
     button.disabled = meterAuthConnecting;
   }
 
-  async function loginMine(passKey, authDetail) {
+  async function loginMine(credential, authDetail) {
     const button = $('meterOpenLoginBtn');
     const errorBox = $('meterPassError');
     if (meterAuthConnecting || meterSessionToken) return;
@@ -1240,7 +1237,7 @@
     try {
       if (!edgeUrl || !publishableKey) await loadConfiguration();
       const result = await callMeter('login', {
-        passKey,
+        passKey: credential,
         clientVersion: String(meterConfig.webClientVersion || 'WEB_50026')
       });
       if (!result.sessionToken || !Array.isArray(result.characters) || result.characters.length === 0) {
@@ -1267,18 +1264,18 @@
 
   async function connectMineFromCommonAuth(detail) {
     const state = commonAuthState(detail);
-    if (!state.loggedIn || !state.passKey) {
+    if (!state.loggedIn || !state.sessionToken) {
       renderCommonLoginState(detail);
       return false;
     }
-    await loginMine(state.passKey, detail);
+    await loginMine(state.sessionToken, detail);
     return Boolean(meterSessionToken);
   }
 
   async function openCommonLoginForMine() {
     $('meterPassError').textContent = '';
     const state = commonAuthState();
-    if (state.loggedIn && state.passKey) {
+    if (state.loggedIn && state.sessionToken) {
       await connectMineFromCommonAuth({ loggedIn: true, session: state.session, account: state.account });
       return;
     }

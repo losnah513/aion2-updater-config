@@ -448,8 +448,10 @@
   function compareAccount(){
     const auth = window.KinojoAuth;
     if(!auth || typeof auth.isLoggedIn !== 'function' || !auth.isLoggedIn()) return null;
-    const account = typeof auth.getAccount === 'function' ? auth.getAccount() : null;
-    return account && (account.passKey || account.passCode) ? account : null;
+    const account = typeof auth.getAccount === 'function' ? (auth.getAccount() || {}) : {};
+    const session = typeof auth.getSession === 'function' ? (auth.getSession() || {}) : {};
+    const sessionToken = String(session.token || '').trim();
+    return sessionToken ? Object.assign({}, account, { sessionToken }) : null;
   }
 
   function normalizedCharacterName(value){
@@ -880,7 +882,7 @@
     panel.innerHTML = '<div class="kinojo-character-live-loading">내 캐릭터 연결을 확인하고 Server에서 비교 중입니다.</div>';
     try{
       const data = await liveRequest('comparison',{
-        passKey:account.passKey || account.passCode,
+        passKey:account.sessionToken,
         ownCharacterId:ownCharacterId || undefined
       },String(ownCharacterId || 'default'));
       state.compare = data;
