@@ -44,7 +44,9 @@ assert.equal(auth.getIdleState({ lastActivityAt: base }, base + 29 * 60 * 1000).
 assert.equal(auth.getIdleState({ lastActivityAt: base }, base + 30 * 60 * 1000).expired, true);
 
 const serverToken = 'kws_' + 'A'.repeat(43);
-auth.setStoredSession({ token: serverToken, passKey: '000000' }, { passKey: '000000' });
+auth.setStoredSession({ token: serverToken, passKey: '000000', passCode: '000000' }, { passKey: '000000', passCode: '000000' });
+assert.equal(JSON.parse(localStorage.getItem(auth.STORAGE_KEY)).passKey, undefined, 'stored session must not retain PASS KEY');
+assert.equal(JSON.parse(localStorage.getItem(auth.ACCOUNT_KEY)).passCode, undefined, 'stored account must not retain PASS KEY');
 now = base + 29 * 60 * 1000 + 59_000;
 assert.ok(auth.getSession(), 'session must remain available before the absolute deadline');
 now = base + 30 * 60 * 1000;
@@ -69,20 +71,20 @@ for (const page of publicShellPages) {
   for (const token of [
     'kinojo-common-ui.css',
     'kinojo-public-shell.css?cache=2026081202',
-    'kinojo-auth-session.js?cache=2026081602',
-    'kinojo-auth-service.js?cache=2026081602',
-    'kinojo-auth-ui.js?cache=2026081602',
+    'kinojo-auth-session.js?cache=2026081801',
+    'kinojo-auth-service.js?cache=2026081801',
+    'kinojo-auth-ui.js?cache=2026081801',
   ]) {
     assert.ok(html.includes(token), `${page}: missing ${token}`);
   }
-  assert.match(html, /kinojo-common-ui\.js\?cache=20260812(?:04|22)/, `${page}: common UI cache missing`);
+  assert.ok(html.includes('kinojo-common-ui.js?cache=2026081801'), `${page}: common UI cache missing`);
 }
 
 for (const page of ['admin/index.html', 'm/admin/index.html']) {
   const html = read(page);
-  assert.ok(html.includes('kinojo-common-ui.js?cache=2026081204'), `${page}: common UI cache missing`);
-  assert.ok(html.includes('kinojo-auth-session.js?cache=2026081602'), `${page}: stale auth session cache`);
-  assert.ok(html.includes('kinojo-auth-ui.js?cache=2026081602'), `${page}: stale auth UI cache`);
+  assert.ok(html.includes('kinojo-common-ui.js?cache=2026081801'), `${page}: common UI cache missing`);
+  assert.ok(html.includes('kinojo-auth-session.js?cache=2026081801'), `${page}: stale auth session cache`);
+  assert.ok(html.includes('kinojo-auth-ui.js?cache=2026081801'), `${page}: stale auth UI cache`);
 }
 
 for (const page of publicShellPages.concat(['admin/index.html', 'm/admin/index.html'])) {
@@ -114,7 +116,7 @@ for (const token of ['--kinojo-drawer-width', 'scrollbar-color:#6d5ee7', '.kinoj
 for (const page of ['sanctuary-schedule/index.html', 'm/sanctuary-schedule/index.html']) {
   const html = read(page);
   assert.ok(html.includes('sanctuary-schedule.css?cache=2026081218'), `${page}: schedule CSS cache missing`);
-  assert.ok(html.includes('sanctuary-schedule.js?cache=2026081218'), `${page}: schedule JS cache missing`);
+  assert.ok(html.includes('sanctuary-schedule.js?cache=2026081801'), `${page}: schedule JS cache missing`);
 }
 
 const schedule = read('sanctuary-schedule/js/sanctuary-schedule.js');
@@ -244,7 +246,9 @@ async function verifyAuthEdgeContract() {
   assert.equal(result.account.source, 'supabase-web-session-320');
   assert.equal(result.session.source, 'supabase-web-session-320');
   assert.equal(result.session.token, opaqueToken, 'Server-issued opaque token must be stored');
-  assert.equal(result.session.passKey, 'AB12', 'Phase 1-B must preserve downstream PASS KEY compatibility');
+  assert.equal(result.session.passKey, undefined, 'Server session must not persist PASS KEY');
+  assert.equal(result.session.passCode, undefined, 'Server session must not persist PASS CODE');
+  assert.equal(result.account.passKey, undefined, 'Account cache must not persist PASS KEY');
   assert.equal(service.isServerSessionToken(opaqueToken), true);
   assert.equal(service.isServerSessionToken('supabase:7:123'), false);
 

@@ -1355,10 +1355,9 @@
       if(isServerSessionToken_(session.token)){
         data=await touchServerSession_(true);
       }else{
-        const passKey=String(account.passKey||account.passCode||session.passKey||session.passCode||'').trim();
-        if(!passKey){clearSession('compatibility_data_missing');toast('로그인 정보를 다시 확인해 주세요.');return;}
-        data=await window.KinojoAuthService?.verifyPassKey?.(passKey);
-        if(data?.session) setSession(data.session,data.account||account);
+        clearSession('legacy_session_unsupported');
+        toast('로그인 방식을 갱신했습니다. 다시 로그인해 주세요.');
+        return;
       }
       if(!data||data.ok===false||!data.session)throw new Error(data?.message||'로그인 상태를 확인하지 못했습니다.');
       toast('Server 세션 확인 후 로그인 시간이 30분 연장되었습니다.');

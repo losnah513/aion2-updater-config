@@ -121,17 +121,7 @@
   }
 
 
-  function currentPassKey(){
-    const account = currentAccount();
-    const raw = account && (account.passCode || account.pass_code || account.passKey || account.pass_key || account.code);
-    const normalized = normalizePassKey(raw || '');
-    if(!normalized){
-      const err = new Error('관리자 PASS KEY 확인이 필요합니다. 다시 로그인 후 시도해 주세요.');
-      err.kinojoAdminAuthError = true;
-      throw err;
-    }
-    return normalized;
-  }
+
 
   function currentServerSessionCredential(){
     const account = currentAccount();
@@ -353,7 +343,7 @@
       if(await findMemberByMainCharacter(lookup.character.mainCharacter)) return { ok:false, message:'이미 활성화된 코드가 있습니다.' };
       const permissions = normalizePermissions(extra.permissions);
       const data = await rpc('kinojo_admin_member_create_264', {
-        p_pass_key:currentPassKey(),
+        p_pass_key:currentAdminSessionCredential(),
         p_main_character_name:lookup.character.mainCharacter,
         p_member_code:code,
         p_permissions:permissions
@@ -362,7 +352,7 @@
     }
 
     if(normalizedCommand === 'listCodes'){
-      const data = await rpc('kinojo_admin_member_list_264', { p_pass_key:currentPassKey() });
+      const data = await rpc('kinojo_admin_member_list_264', { p_pass_key:currentAdminSessionCredential() });
       const source = Array.isArray(data?.accounts) ? data.accounts : [];
       return {
         ok:true,
@@ -374,7 +364,7 @@
 
     if(normalizedCommand === 'listCodeRequests'){
       const data = await rpc('kinojo_code_request_list', {
-        p_pass_key: currentPassKey(),
+        p_pass_key: currentAdminSessionCredential(),
         p_status: String(extra.status || 'PENDING'),
         p_limit: Number(extra.limit || 100)
       });
@@ -386,7 +376,7 @@
       const requestId = String(extra.requestId || '').trim();
       if(!requestId) return { ok:false, message:'처리할 코드 요청을 찾지 못했습니다.' };
       const data = await rpc('kinojo_code_request_approve', {
-        p_pass_key: currentPassKey(),
+        p_pass_key: currentAdminSessionCredential(),
         p_request_id: requestId,
         p_level: Number(extra.level || 1),
         p_role: String(extra.role || 'MEMBER'),
@@ -403,7 +393,7 @@
       const requestId = String(extra.requestId || '').trim();
       if(!requestId) return { ok:false, message:'처리할 코드 요청을 찾지 못했습니다.' };
       const data = await rpc('kinojo_code_request_reject', {
-        p_pass_key: currentPassKey(),
+        p_pass_key: currentAdminSessionCredential(),
         p_request_id: requestId,
         p_reason: String(extra.reason || extra.memo || '')
       });
@@ -414,7 +404,7 @@
       const memberId = Number(extra.memberId || extra.member_id || 0);
       if(!Number.isInteger(memberId) || memberId <= 0) return { ok:false, message:'변경할 회원을 찾지 못했습니다.' };
       const data = await rpc('kinojo_admin_member_manage_264', {
-        p_pass_key:currentPassKey(), p_target_member_id:memberId, p_action:'update_role',
+        p_pass_key:currentAdminSessionCredential(), p_target_member_id:memberId, p_action:'update_role',
         p_payload:{ role:normalizeRole(extra.role,1) }
       });
       return { ok:true, message:'등급이 수정되었습니다.', memberId, account:accountFromRow(data?.member) };
@@ -424,7 +414,7 @@
       const memberId = Number(extra.memberId || extra.member_id || 0);
       if(!Number.isInteger(memberId) || memberId <= 0) return { ok:false, message:'변경할 회원을 찾지 못했습니다.' };
       const data = await rpc('kinojo_admin_member_manage_264', {
-        p_pass_key:currentPassKey(), p_target_member_id:memberId, p_action:'update_permissions',
+        p_pass_key:currentAdminSessionCredential(), p_target_member_id:memberId, p_action:'update_permissions',
         p_payload:{ permissions:normalizePermissions(extra.permissions) }
       });
       return { ok:true, message:'권한이 수정되었습니다.', memberId, account:accountFromRow(data?.member) };
@@ -434,7 +424,7 @@
       const memberId = Number(extra.memberId || extra.member_id || 0);
       if(!Number.isInteger(memberId) || memberId <= 0) return { ok:false, message:'변경할 회원을 찾지 못했습니다.' };
       await rpc('kinojo_admin_member_manage_264', {
-        p_pass_key:currentPassKey(), p_target_member_id:memberId,
+        p_pass_key:currentAdminSessionCredential(), p_target_member_id:memberId,
         p_action:normalizedCommand === 'deleteCode' ? 'delete' : (normalizedCommand === 'enableCode' ? 'enable' : 'disable'), p_payload:{}
       });
       return {
@@ -523,13 +513,13 @@
     if(normalizedCommand === 'search'){
       const [data,reviews,badgeMap] = await Promise.all([
         rpc('kinojo_admin_character_search', {
-          p_pass_key: currentPassKey(),
+          p_pass_key: currentAdminSessionCredential(),
           p_search: String(extra.search || extra.characterName || ''),
           p_include_inactive: extra.includeInactive !== false,
           p_limit: Number(extra.limit || 300)
         }),
         rpc('kinojo_admin_identity_reviews_v287', {
-          p_pass_key:currentPassKey(),
+          p_pass_key:currentAdminSessionCredential(),
           p_status:'pending'
         }).catch(()=>({ok:false,items:[]})),
         getIdentityBadges().catch(()=>new Map())
@@ -548,7 +538,7 @@
     }
     if(normalizedCommand === 'updateExclusion'){
       const data = await rpc('kinojo_admin_character_exclusion_update_v278', {
-        p_pass_key: currentPassKey(),
+        p_pass_key: currentAdminSessionCredential(),
         p_character_id: Number(extra.characterId || 0),
         p_lookup_excluded: extra.lookupExcluded === true,
         p_visibility_excluded: extra.visibilityExcluded === true,
@@ -559,7 +549,7 @@
     }
     if(normalizedCommand === 'deactivate'){
       const data = await rpc('kinojo_admin_character_deactivate', {
-        p_pass_key: currentPassKey(),
+        p_pass_key: currentAdminSessionCredential(),
         p_character_name: String(extra.characterName || ''),
         p_server_id: extra.serverId ? Number(extra.serverId) : null,
         p_reason: String(extra.reason || '탈퇴'),
@@ -569,7 +559,7 @@
     }
     if(normalizedCommand === 'restore'){
       const data = await rpc('kinojo_admin_character_restore', {
-        p_pass_key: currentPassKey(),
+        p_pass_key: currentAdminSessionCredential(),
         p_character_name: String(extra.characterName || ''),
         p_server_id: extra.serverId ? Number(extra.serverId) : null,
         p_memo: String(extra.memo || '')
@@ -578,7 +568,7 @@
     }
     if(normalizedCommand === 'markRenamed'){
       const data = await rpc('kinojo_admin_character_mark_renamed', {
-        p_pass_key: currentPassKey(),
+        p_pass_key: currentAdminSessionCredential(),
         p_previous_name: String(extra.previousName || extra.characterName || ''),
         p_new_name: String(extra.newName || extra.renamedTo || ''),
         p_server_id: extra.serverId ? Number(extra.serverId) : null,
@@ -653,7 +643,7 @@
   async function adminEventNotice(command, extra={}){
     assertAdmin();
     const normalizedCommand = String(command || '').trim();
-    const passKey = currentPassKey();
+    const passKey = currentAdminSessionCredential();
 
     if(normalizedCommand === 'listGroups' || normalizedCommand === 'listEventNotices'){
       const data = await rpc('kinojo_admin_event_notice_list', {
@@ -708,7 +698,7 @@
     if(!action) return { ok:false, message:'알 수 없는 키노조 미터 관리자 명령입니다.' };
     return invokeEdgeFunction('meter-admin-control', Object.assign({
       action,
-      passKey:currentPassKey(),
+      passKey:currentAdminSessionCredential(),
       channel:String(extra.channel || 'stable')
     }, extra || {}));
   }
@@ -1099,16 +1089,14 @@
     if(path.includes('/pages/'))return 'pages';
     return 'home';
   }
-  function optionalPassKey(){
-    try{return currentPassKey();}catch(_err){return '';}
-  }
+
 
   async function logPageView(pageKey, payload){
     const body=Object.assign({},payload||{});
-    const passKey=optionalPassKey();
-    if(passKey)body.authPassKey=passKey;
+    const credential=optionalServerSessionCredential();
+    if(credential)body.authCredential=credential;
     body.eventType=body.eventType||'PAGE_VIEW';
-    return rpc('kinojo_log_page_view', {
+    return rpc('kinojo_log_page_view_v329', {
       p_page_key:String(pageKey || currentPageKey()),
       p_page_url:String(location.href || ''),
       p_visitor_key:getVisitorKey(),
@@ -1157,8 +1145,8 @@
     if(!['like','dislike'].includes(reaction)) return { ok:false, message:'반응 종류가 올바르지 않습니다.' };
     if(!comment) return { ok:false, message:'전하고 싶은 말을 입력해 주세요.' };
     const serverId=Number(extra.serverId || extra.server_id || 0);
-    return rpc('kinojo_web_submit_hall_reaction_v279',{
-      p_pass_key:currentPassKey(),
+    return rpc('kinojo_web_submit_hall_reaction_v329',{
+      p_credential:currentServerSessionCredential(),
       p_character_name:characterName,
       p_server_id:Number.isFinite(serverId)&&serverId>0?serverId:null,
       p_reaction:reaction,
@@ -1493,18 +1481,18 @@
   async function adminLookup(command, extra={}){
     assertAdmin();
     const normalized=String(command||'status').trim().toLowerCase();
-    const passKey=currentPassKey();
+    const credential=currentAdminSessionCredential();
 
     if(normalized==='history'){
       return rpc('kinojo_updater_get_run_reports',{
-        p_pass_code:passKey,
+        p_pass_code:credential,
         p_limit:Math.max(1,Math.min(100,Number(extra.limit||40)))
       });
     }
 
     if(normalized==='historydetail'){
       return rpc('kinojo_updater_get_run_report_detail',{
-        p_pass_code:passKey,
+        p_pass_code:credential,
         p_session_id:String(extra.sessionId||'')
       });
     }
@@ -1514,7 +1502,7 @@
       const lookupFilterSummary=String(extra.lookupFilterSummary||adminLookupFilterSummary(lookupFilter));
       let started=null;
       try{
-        started=await runtimeStart(passKey,{
+        started=await runtimeStart(credential,{
           toolName:'KINOJO_SERVER_CHARACTER_QUEUE',
           clientId:'ADMIN_WEB_SERVER_QUEUE',
           progressTotal:0,
@@ -1580,7 +1568,7 @@
         }
 
         const registered=await rpc('kinojo_admin_server_queue_register_v276',{
-          p_pass_key:passKey,
+          p_pass_key:credential,
           p_session_id:sessionId,
           p_session_token:sessionToken,
           p_queue_meta:queueMeta
@@ -1601,7 +1589,7 @@
       if(!sourceSessionId)return {ok:false,code:'MISSING_SOURCE_SESSION',message:'재조회할 이전 세션 ID가 필요합니다.'};
       let started=null;
       try{
-        started=await runtimeStart(passKey,{
+        started=await runtimeStart(credential,{
           toolName:'KINOJO_SERVER_CHARACTER_QUEUE',
           clientId:'ADMIN_WEB_FAILED_RETRY',
           progressTotal:0,
@@ -1629,7 +1617,7 @@
         if(!sessionId||!sessionToken)throw new Error('재조회 sessionId/sessionToken이 비어 있습니다.');
 
         const prepared=await rpc('kinojo_admin_retry_failed_targets_v277',{
-          p_pass_key:passKey,
+          p_pass_key:credential,
           p_session_id:sessionId,
           p_session_token:sessionToken,
           p_source_session_id:sourceSessionId
@@ -1658,7 +1646,7 @@
         }
 
         const registered=await rpc('kinojo_admin_server_queue_register_v276',{
-          p_pass_key:passKey,
+          p_pass_key:credential,
           p_session_id:sessionId,
           p_session_token:sessionToken,
           p_queue_meta:queueMeta
@@ -1704,7 +1692,7 @@
       const lookupFilterSummary=String(extra.lookupFilterSummary||adminLookupFilterSummary(lookupFilter));
       let started=null;
       try{
-        started=await runtimeStart(passKey,{
+        started=await runtimeStart(credential,{
           toolName:'KINOJO_EXTENSION',
           clientId:getClientId(),
           progressTotal:0,
@@ -1768,7 +1756,7 @@
         });
 
         const registered=await rpc('kinojo_admin_lookup_register_v268',{
-          p_pass_key:passKey,
+          p_pass_key:credential,
           p_session_id:sessionId,
           p_queue_meta:queueMeta
         });
@@ -1785,14 +1773,14 @@
 
     if(normalized==='status'){
       return rpc('kinojo_admin_server_queue_status_v289',{
-        p_pass_key:passKey,
+        p_pass_key:credential,
         p_session_id:extra.sessionId?String(extra.sessionId):null
       });
     }
 
     if(normalized==='control'){
       return rpc('kinojo_admin_server_queue_control_v276',{
-        p_pass_key:passKey,
+        p_pass_key:credential,
         p_session_id:String(extra.sessionId||''),
         p_command:String(extra.command||extra.control||'')
       });
@@ -1923,9 +1911,9 @@
 
   async function adminVisitor(cmd, extra={}){
     assertAdmin();
-    if(cmd==='dashboard') return rpc('kinojo_admin_visitor_dashboard_266',{p_pass_key:currentPassKey(),p_days:Number(extra.days||7)});
+    if(cmd==='dashboard') return rpc('kinojo_admin_visitor_dashboard_266',{p_pass_key:currentAdminSessionCredential(),p_days:Number(extra.days||7)});
     if(cmd==='history') return rpc('kinojo_admin_visitor_history_266',{
-      p_pass_key:currentPassKey(),p_date_from:extra.dateFrom||null,p_date_to:extra.dateTo||null,p_member_search:extra.memberSearch||null,
+      p_pass_key:currentAdminSessionCredential(),p_date_from:extra.dateFrom||null,p_date_to:extra.dateTo||null,p_member_search:extra.memberSearch||null,
       p_login_filter:extra.loginFilter||'ALL',p_page_key:extra.pageKey||null,p_page:Number(extra.page||1),p_page_size:Number(extra.pageSize||20)
     });
     return {ok:false,message:'지원하지 않는 방문자 관리 명령입니다.'};

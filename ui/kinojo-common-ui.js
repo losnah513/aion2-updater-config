@@ -434,11 +434,10 @@
   let sanctuaryAlertRequestSeq=0;
   let commonNotificationSeq=0;
   let commonNotificationTimer=0;
-  function commonPassKey_(){
+  function commonSessionCredential_(){
     const auth=window.KinojoAuth||{};
-    const account=typeof auth.getAccount==='function'?auth.getAccount():null;
     const session=typeof auth.getSession==='function'?auth.getSession():null;
-    return String(account?.passKey||account?.passCode||session?.passKey||session?.passCode||'').trim();
+    return String(session?.token||'').trim();
   }
   function clearSanctuaryAlert_(){
     const alert=q('#kinojoSanctuaryAlert');
@@ -475,15 +474,15 @@
       if((retry||0)<20)setTimeout(()=>loadSanctuaryAlert_(info,(retry||0)+1),120);
       return;
     }
-    const passKey=commonPassKey_();
-    if(!passKey){clearSanctuaryAlert_();return;}
+    const credential=commonSessionCredential_();
+    if(!credential){clearSanctuaryAlert_();return;}
     if(!window.KinojoApi?.getAction||!window.KinojoSupabase?.webAction){
       if((retry||0)<20)setTimeout(()=>loadSanctuaryAlert_(info,(retry||0)+1),120);
       return;
     }
     const seq=++sanctuaryAlertRequestSeq;
     try{
-      const data=await window.KinojoApi.getAction('mySanctuaryTopbar',{passKey});
+      const data=await window.KinojoApi.getAction('mySanctuaryTopbar',{});
       if(seq!==sanctuaryAlertRequestSeq)return;
       renderSanctuaryAlert_(data,info);
     }catch(_err){
@@ -505,11 +504,11 @@
     host.appendChild(item);requestAnimationFrame(()=>item.classList.add('show'));setTimeout(()=>{item.classList.remove('show');setTimeout(()=>item.remove(),260)},7000);
   }
   async function loadCommonNotificationSummary_(info,{notify=true}={}){
-    const passKey=commonPassKey_();const badge=q('#kinojoAdminPendingBadge');
-    if(!passKey||!window.KinojoApi?.getAction){if(badge)badge.hidden=true;return;}
+    const credential=commonSessionCredential_();const badge=q('#kinojoAdminPendingBadge');
+    if(!credential||!window.KinojoApi?.getAction){if(badge)badge.hidden=true;return;}
     const seq=++commonNotificationSeq;
     try{
-      const summary=await window.KinojoApi.getAction('notificationSummary',{passKey});if(seq!==commonNotificationSeq)return;
+      const summary=await window.KinojoApi.getAction('notificationSummary',{});if(seq!==commonNotificationSeq)return;
       const total=Math.max(0,Number(summary?.totalCount||0));if(badge){badge.textContent=total>99?'99+':String(total);badge.hidden=total<1;}
       if(notify&&summary?.supportRequestCount>0)renderCommonNotificationToast_(summary,info);
     }catch(_err){if(seq===commonNotificationSeq&&badge)badge.hidden=true;}

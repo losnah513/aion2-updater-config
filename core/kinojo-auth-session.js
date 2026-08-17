@@ -12,7 +12,7 @@
   const IDLE_LOGOUT_MS=IDLE_TIMEOUT_MS;
   const ACTIVITY_WRITE_THROTTLE_MS=15*1000;
   const SERVER_TOUCH_THROTTLE_MS=5*60*1000;
-  const AUTH_SCHEMA_VERSION='supabase-passkey-v5-server-session-320-20260816';
+  const AUTH_SCHEMA_VERSION='supabase-passkey-v6-session-only-329-20260818';
   function readJson(key){try{return JSON.parse(localStorage.getItem(key)||'null');}catch(_err){return null;}}
   function writeJson(key,value){localStorage.setItem(key,JSON.stringify(value));}
   function migrateAuthCacheIfNeeded(){try{const key='kinojo_auth_schema_version';if(localStorage.getItem(key)===AUTH_SCHEMA_VERSION)return;localStorage.removeItem(STORAGE_KEY);localStorage.removeItem(ACCOUNT_KEY);localStorage.setItem(key,AUTH_SCHEMA_VERSION);}catch(_err){}}
@@ -51,7 +51,8 @@
     return session;
   }
   function getAccount(){return readJson(ACCOUNT_KEY);}
-  function setStoredSession(session,account){const next=Object.assign({},session||{},{lastActivityAt:Date.now()});delete next.expiresAt;writeJson(STORAGE_KEY,next);writeJson(ACCOUNT_KEY,account||{});emitAuthChanged(next,account);return next;}
+  function stripStoredCredentialFields(value){const next=Object.assign({},value||{});for(const key of ['passKey','passCode','pass_key','pass_code'])delete next[key];return next;}
+  function setStoredSession(session,account){const next=stripStoredCredentialFields(Object.assign({},session||{},{lastActivityAt:Date.now()}));const nextAccount=stripStoredCredentialFields(account);delete next.expiresAt;writeJson(STORAGE_KEY,next);writeJson(ACCOUNT_KEY,nextAccount);emitAuthChanged(next,nextAccount);return next;}
   function clearStoredSession(reason){const session=readJson(STORAGE_KEY);const account=readJson(ACCOUNT_KEY);emitAuthClearing(session,account,reason);localStorage.removeItem(STORAGE_KEY);localStorage.removeItem(ACCOUNT_KEY);emitAuthChanged(null,null);}
   function isLoggedIn(){return !!getSession();}
   function getToken(){return getSession()?.token||'';}

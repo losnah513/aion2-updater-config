@@ -136,10 +136,9 @@ async function fetchHallDataWithRetry(){
   }
   throw lastError||new Error("명예의 전당 데이터를 불러오지 못했습니다.");
 }
-function hallPassKey(){
+function hallSessionCredential(){
   const session=window.KinojoAuth?.getSession?.()||{};
-  const account=window.KinojoAuth?.getAccount?.()||{};
-  return String(account.passKey||account.passCode||session.passKey||session.passCode||"").trim();
+  return String(session.token||"").trim();
 }
 async function refreshHallPersonalRanking(requestSeq=hallLoadRequestSeq){
   window.KinojoStagedLoading?.region?.('#hallSlotMyRank','내 랭킹');
@@ -148,10 +147,10 @@ async function refreshHallPersonalRanking(requestSeq=hallLoadRequestSeq){
     let personal=null;
     for(const wait of [0,350,800,1600,2800]){
       if(wait)await hallDelay(wait);
-      const passKey=hallPassKey();
-      if(!passKey){lastError=new Error('로그인 정보를 불러오는 중입니다.');continue;}
+      const credential=hallSessionCredential();
+      if(!credential){lastError=new Error('로그인 정보를 불러오는 중입니다.');continue;}
       try{
-        personal=await window.KinojoSupabase.rpc("kinojo_web_get_my_hof_ranking_v319",{p_pass_key:passKey,p_include_subs:!!includeSubs,p_include_all_legions:!!includeAllLegions});
+        personal=await window.KinojoSupabase.rpc("kinojo_web_get_my_hof_ranking_v329",{p_credential:credential,p_include_subs:!!includeSubs,p_include_all_legions:!!includeAllLegions});
         if(personal&&personal.ok!==false)break;
         lastError=new Error(personal?.message||"내 랭킹 응답을 확인하지 못했습니다.");
       }catch(error){lastError=error;}

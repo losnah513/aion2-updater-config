@@ -50,12 +50,7 @@
     return isServerSessionToken(token)?token:'';
   }
 
-  function currentCompatibilityPassKey(api){
-    const session=storedSession()||{};
-    const account=storedAccount()||{};
-    const raw=account.passKey||account.passCode||account.pass_key||account.pass_code||session.passKey||session.passCode||session.pass_key||session.pass_code||'';
-    return api.normalizePassKey(raw||'');
-  }
+
 
   async function ensureReady(){
     const api=bridge();
@@ -72,7 +67,7 @@
     },body||{}));
   }
 
-  function normalizeAuthResult(api,data,compatibilityPassKey,tokenOverride){
+  function normalizeAuthResult(api,data,tokenOverride){
     if(!data||data.ok===false)throw new Error(data&&data.message||'로그인 상태를 확인하지 못했습니다.');
     const row=data.profile||{};
     const serverSession=data.session||{};
@@ -86,7 +81,6 @@
 
     const now=Date.now();
     const permissions=api.normalizePermissions(row.permissions);
-    const passKey=api.normalizePassKey(compatibilityPassKey||'');
     const profile={
       id:row.id,
       mainCharacter:row.mainCharacter||row.main_character_name||'',
@@ -116,14 +110,6 @@
       lastActivityAt:now
     };
 
-    // 1-B 호환 구간: 후속 RPC/Edge가 아직 p_pass_key를 요구하므로 원문 필드를 유지한다.
-    // Server session 전환이 끝난 기능부터 제거하고 1-C에서 완전히 삭제한다.
-    if(passKey){
-      profile.passCode=passKey;
-      profile.passKey=passKey;
-      session.passCode=passKey;
-      session.passKey=passKey;
-    }
 
     return {ok:true,session,account:profile,profile};
   }
@@ -137,7 +123,7 @@
       passKey:normalized,
       replaceSessionToken:currentServerSessionToken()||null
     });
-    return normalizeAuthResult(api,data,normalized);
+    return normalizeAuthResult(api,data);
   }
 
   async function validateSession(sessionToken){
@@ -145,7 +131,7 @@
     const token=String(sessionToken||'').trim();
     if(!isServerSessionToken(token))throw new Error('Server 로그인 세션을 확인할 수 없습니다.');
     const data=await invokeAuthAction('validate',{sessionToken:token});
-    return normalizeAuthResult(api,data,currentCompatibilityPassKey(api),token);
+    return normalizeAuthResult(api,data,token);
   }
 
   async function touchSession(sessionToken){
@@ -153,7 +139,7 @@
     const token=String(sessionToken||'').trim();
     if(!isServerSessionToken(token))throw new Error('Server 로그인 세션을 확인할 수 없습니다.');
     const data=await invokeAuthAction('touch',{sessionToken:token});
-    return normalizeAuthResult(api,data,currentCompatibilityPassKey(api),token);
+    return normalizeAuthResult(api,data,token);
   }
 
   async function revokeSession(sessionToken,reason){
