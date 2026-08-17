@@ -2,6 +2,7 @@
  * KINOJO Supabase RPC Core
  * 책임: PostgREST RPC 호출 계약과 응답 오류 표준화.
  * Phase 1-C-2: 323 관리자 Actor 경계를 사용하는 RPC는 브라우저 원문 PASS KEY 대신 현재 Server-issued kws_ 세션을 전송합니다.
+ * Phase 1-C-3: SQL 324 회원관리 RPC 3개도 동일한 kws_ 세션 경계를 사용합니다.
  */
 (function(){
   'use strict';
@@ -14,6 +15,9 @@
     'kinojo_admin_event_notice_delete',
     'kinojo_admin_event_notice_list',
     'kinojo_admin_event_notice_save',
+    'kinojo_admin_member_create_264',
+    'kinojo_admin_member_list_264',
+    'kinojo_admin_member_manage_264',
     'kinojo_admin_notice_create',
     'kinojo_admin_notice_disable',
     'kinojo_admin_notice_list',
