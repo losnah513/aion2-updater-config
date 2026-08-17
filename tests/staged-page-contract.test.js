@@ -32,7 +32,7 @@ assert.ok(read('ui/kinojo-components.css').includes('.hof-filter-bar{position:st
 assert.ok(read('ranking/css/ranking.css').includes('var(--kinojo-attached-subbar-height'), 'Ranking attached toolbar is missing');
 
 const hallData = read('hof/js/hall-data.js');
-assert.ok(hallData.includes('kinojo_web_get_my_hof_ranking_v319'), 'Scope-aware personal ranking RPC missing');
+assert.ok(hallData.includes('kinojo_web_get_my_hof_ranking_v329'), 'Session-aware scope personal ranking RPC missing');
 assert.ok(hallData.includes('for(const wait of [0,350,800,1600,2800])'), 'Personal ranking retry contract missing');
 
 const hallRender = read('hof/js/hall-render.js');
