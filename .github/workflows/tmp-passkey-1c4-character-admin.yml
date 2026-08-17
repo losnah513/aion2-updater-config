@@ -37,29 +37,29 @@ jobs:
               'kinojo_admin_character_search',
               'kinojo_admin_identity_reviews_v287',
           ]
-          block = anchor + ''.join(f"    '{name}',\n" for name in rpc_names)
+          block = anchor + ''.join("    '" + name + "',\n" for name in rpc_names)
           if text.count(anchor) != 1:
               raise SystemExit('RPC whitelist anchor mismatch')
           for name in rpc_names:
-              if f"'{name}'" in text:
-                  raise SystemExit(f'RPC already contains {name}')
+              if ("'" + name + "'") in text:
+                  raise SystemExit('RPC already contains ' + name)
           rpc.write_text(text.replace(anchor, block, 1), encoding='utf-8', newline='')
 
           features = Path('core/kinojo-supabase-features.js')
           text = features.read_text(encoding='utf-8')
           marker = '  function normalizeCodeRequestRow(row){\n'
-          helper = """  function currentAdminSessionCredential(){
-    const account = currentAccount();
-    const token = String(account && (account.token || account.sessionToken || account.session_token) || '').trim();
-    if(!/^kws_[A-Za-z0-9_-]{40,80}$/.test(token)){
-      const err = new Error('관리자 로그인 세션을 확인할 수 없습니다. 다시 로그인해 주세요.');
-      err.kinojoAdminAuthError = true;
-      throw err;
-    }
-    return token;
-  }
-
-"""
+          helper = (
+              "  function currentAdminSessionCredential(){\n"
+              "    const account = currentAccount();\n"
+              "    const token = String(account && (account.token || account.sessionToken || account.session_token) || '').trim();\n"
+              "    if(!/^kws_[A-Za-z0-9_-]{40,80}$/.test(token)){\n"
+              "      const err = new Error('관리자 로그인 세션을 확인할 수 없습니다. 다시 로그인해 주세요.');\n"
+              "      err.kinojoAdminAuthError = true;\n"
+              "      throw err;\n"
+              "    }\n"
+              "    return token;\n"
+              "  }\n\n"
+          )
           if text.count(marker) != 1:
               raise SystemExit('feature helper anchor mismatch')
           if 'function currentAdminSessionCredential()' in text:
@@ -73,7 +73,7 @@ jobs:
           segment = text[start:end]
           old = 'passKey:currentPassKey(),'
           if segment.count(old) != 3:
-              raise SystemExit(f'identity edge credential count mismatch: {segment.count(old)}')
+              raise SystemExit('identity edge credential count mismatch: ' + str(segment.count(old)))
           segment = segment.replace(old, 'passKey:currentAdminSessionCredential(),')
           text = text[:start] + segment + text[end:]
           features.write_text(text, encoding='utf-8', newline='')
@@ -85,7 +85,7 @@ jobs:
               old_features = 'kinojo-supabase-features.js?cache=2026081504'
               new_features = 'kinojo-supabase-features.js?cache=2026081704'
               if text.count(old_rpc) != 1 or text.count(old_features) != 1:
-                  raise SystemExit(f'{path}: cache marker mismatch')
+                  raise SystemExit(str(path) + ': cache marker mismatch')
               text = text.replace(old_rpc, new_rpc, 1).replace(old_features, new_features, 1)
               path.write_text(text, encoding='utf-8', newline='')
           PY
