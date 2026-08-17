@@ -43,7 +43,12 @@ jobs:
           text = text[:start] + seg + text[end:]"""
           if old not in src:
               raise SystemExit('temporary common UI patch anchor missing')
-          Path('/tmp/passkey_1c7_patch.py').write_text(src.replace(old,new,1),encoding='utf-8')
+          src=src.replace(old,new,1)
+          redundant="text = once(text, 'if (state.loggedIn && state.passKey) {', 'if (state.loggedIn && state.sessionToken) {', 'meter open login gate')\n"
+          if redundant not in src:
+              raise SystemExit('meter redundant anchor missing')
+          src=src.replace(redundant,'',1)
+          Path('/tmp/passkey_1c7_patch.py').write_text(src,encoding='utf-8')
           PY
           python /tmp/passkey_1c7_patch.py
       - name: Verify syntax and contracts
