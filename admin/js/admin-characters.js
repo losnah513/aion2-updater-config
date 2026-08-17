@@ -111,6 +111,7 @@
       handoff:data?.handoff||{},
       playncRateGate:data?.playncRateGate||{},
       postprocess:data?.postprocess||{},
+      performanceProfile:data?.performanceProfile||{},
       failures:data?.failurePreview||[],
       events:data?.events||[]
     });
@@ -342,6 +343,51 @@
       +'<p>'+esc(phase.message||'')+'</p></article>';
   }
 
+
+  function lookupMetricDuration(value){
+    const ms=Math.max(0,Number(value||0));
+    if(!ms)return '-';
+    if(ms<1000)return Math.round(ms)+'ms';
+    if(ms<60000)return (ms/1000).toFixed(ms<10000?1:0)+'초';
+    const minutes=Math.floor(ms/60000),seconds=Math.round((ms%60000)/1000);
+    return minutes+'분 '+String(seconds).padStart(2,'0')+'초';
+  }
+
+  function lookupMetricStageRows(profile){
+    const fine=Array.isArray(profile?.fineStages)?profile.fineStages:[];
+    if(fine.length)return fine.slice(0,8).map(row=>({label:row.label||row.key||'-',durationMs:Number(row.totalMs||0),meta:'평균 '+lookupMetricDuration(row.avgMs)+' · 최대 '+lookupMetricDuration(row.maxMs)+' · '+lookupCount(row.count)+'건',source:row.source||profile?.measurementSource||''}));
+    const phases=Array.isArray(profile?.phases)?profile.phases:[];
+    return phases.filter(row=>Number(row.durationMs||0)>0).sort((a,b)=>Number(b.durationMs||0)-Number(a.durationMs||0)).slice(0,8).map(row=>({label:row.label||row.key||'-',durationMs:Number(row.durationMs||0),meta:profile?.coarseOnly===true?'기존 STEP 기록 기준':'Server 실측'}));
+  }
+
+  function renderLookupPerformance(profile){
+    const panel=$('#characterLookupPerformancePanel');if(!panel)return;
+    const available=profile?.ok===true&&profile?.available!==false;
+    const stateEl=$('#characterLookupPerformanceState');
+    if(!available){
+      panel.className='admin-lookup-history admin-lookup-profile is-disabled';
+      if(stateEl)stateEl.textContent='조회 세션을 시작하면 단계별 시간이 표시됩니다.';
+      ['Total','Bottleneck','Official','Cache','Retry','Sheet','Integrity'].forEach(key=>{const el=$('#characterLookupPerformance'+key);if(el)el.textContent='-';});
+      const stages=$('#characterLookupPerformanceStages');if(stages)stages.innerHTML='<div class="admin-empty">성능·정확도 계측 대기</div>';
+      return;
+    }
+    panel.className='admin-lookup-history admin-lookup-profile';
+    const measurementSource=String(profile.measurementSource||'');
+    if(stateEl)stateEl.textContent=measurementSource==='worker_batch_telemetry'?'Worker Batch 정밀 계측 · Contract 321':measurementSource==='runtime_events_inferred'?'기존 Server Runtime Event 재사용 · 추가 처리량 0':profile.coarseOnly===true?'기존 STEP 기록 기준':'Server 성능 계측 · Contract 321';
+    const bottleneck=profile.bottleneck||{},official=profile.official||{},targets=profile.targets||{},sheet=profile.sheet||{},integrity=profile.integrity||{};
+    const set=(id,value)=>{const el=$(id);if(el)el.textContent=value;};
+    set('#characterLookupPerformanceTotal',lookupMetricDuration(profile.totalDurationMs));
+    set('#characterLookupPerformanceBottleneck',(bottleneck.label||'-')+(Number(bottleneck.durationMs||0)>0?' · '+lookupMetricDuration(bottleneck.durationMs):''));
+    set('#characterLookupPerformanceOfficial',lookupMetricDuration(official.targetAvgMs)+' / '+lookupMetricDuration(official.targetMaxMs));
+    set('#characterLookupPerformanceCache',lookupCount(official.cacheReuseCount)+' / '+lookupCount(targets.total));
+    set('#characterLookupPerformanceRetry',lookupCount(targets.retryTargets)+'명 · '+lookupCount(targets.retryAttempts)+'회');
+    set('#characterLookupPerformanceSheet',lookupMetricDuration(sheet.durationMs)+' · '+lookupCount(sheet.readbackVerifiedCount)+'/'+lookupCount(sheet.expectedCount));
+    const integrityOk=integrity.ok===true;
+    set('#characterLookupPerformanceIntegrity',integrityOk?'연결·readback 정상':'확인 필요 '+lookupCount(Number(integrity.targetLinkFailureCount||0)+Number(integrity.snapshotLinkFailureCount||0)+Number(integrity.sheetFailedCount||0)+Number(integrity.sheetPendingCount||0))+'건');
+    const stages=$('#characterLookupPerformanceStages');
+    if(stages){const rows=lookupMetricStageRows(profile);stages.innerHTML=rows.length?rows.map((row,index)=>{const sourceLabel=row.source==='runtime_events_inferred'?'Runtime Event':row.source==='worker_batch_telemetry'?'Worker 실측':profile.coarseOnly===true?'STEP 기록':'Server 계측';return '<article class="admin-lookup-phase '+(index===0?'active':'done')+'"><div class="admin-lookup-phase-head"><span>'+(index+1)+'</span><strong>'+esc(row.label)+'</strong><b>'+esc(lookupMetricDuration(row.durationMs))+'</b></div><div class="admin-lookup-phase-meta"><span>'+esc(row.meta)+'</span><span>'+esc(sourceLabel)+'</span></div></article>';}).join(''):'<div class="admin-empty">세부 계측 자료를 기다리는 중입니다.</div>';}
+  }
+
   function renderCharacterLookupConsole(data){
     state.lookupConsole=data||null;
     const empty=!data||!data.sessionId;
@@ -354,6 +400,7 @@
     const statusLabel=lookupStatusLabel(data);
     const currentCharacter=String(progress.currentCharacter||data?.job?.current_character||data?.job?.currentCharacter||'');
     const message=String(data?.message||data?.session?.message||data?.job?.message||'조회 작업을 시작하면 이 영역에서 진행 상태를 확인할 수 있습니다.');
+    renderLookupPerformance(data?.performanceProfile||null);
     const statusEl=$('#characterLookupState');if(statusEl){statusEl.textContent=statusLabel;statusEl.className='admin-pill '+(['완료','후처리 완료'].includes(statusLabel)?'ok':['실패','중단','후처리 실패'].includes(statusLabel)?'error':['일시정지','부분 완료','후처리 재시도','요청 제한 대기'].includes(statusLabel)?'warn':'active');}
     if($('#characterLookupSession'))$('#characterLookupSession').textContent=empty?'세션 없음':String(data.sessionId).slice(0,8)+'…';
     if($('#characterLookupOwner'))$('#characterLookupOwner').textContent=String(data?.session?.requested_by_character||data?.job?.requested_by_character||'-');
@@ -653,5 +700,5 @@
     }
   }
 
-  Object.assign(A,{lookupSplit,lookupSessionStorageKey,lookupTokenStorageKey,loadStoredLookupSession,storeLookupSession,readLookupFilter,lookupCount,lookupErrorPresentation,lookupStateLabel,setLookupError,redactDiagnostic,copyText,diagnosticPayload,copyLookupDiagnostics,copyLookupFailure,historySessionId,historySummary,renderLookupHistory,loadLookupHistory,loadLookupHistoryDetail,handleLookupHistoryClick,lookupStatusLabel,lookupStepClass,lookupDuration,lookupExitSafety,renderLookupExitSafety,lookupPhaseStep,lookupPhaseHasUncertainEta,lookupTargetName,lookupFilterList,lookupTargetRoster,saveLookupTargetStates,prepareLookupTargetStates,renderLookupTargets,renderLookupPhase,renderCharacterLookupConsole,refreshCharacterLookupStatus,startCharacterLookupPolling,loadCharacterLookupConsole,startCharacterServerQueue,retryFailedCharacterLookup,controlCharacterLookup,searchCharacters,renderCharacterSummary,characterMode,filteredCharacters,option,renderCharacters,saveCharacterStatus,decideIdentityReview,probeCharacterIdentity});
+  Object.assign(A,{lookupSplit,lookupSessionStorageKey,lookupTokenStorageKey,loadStoredLookupSession,storeLookupSession,readLookupFilter,lookupCount,lookupErrorPresentation,lookupStateLabel,setLookupError,redactDiagnostic,copyText,diagnosticPayload,copyLookupDiagnostics,copyLookupFailure,historySessionId,historySummary,renderLookupHistory,loadLookupHistory,loadLookupHistoryDetail,handleLookupHistoryClick,lookupStatusLabel,lookupStepClass,lookupDuration,lookupExitSafety,renderLookupExitSafety,lookupPhaseStep,lookupPhaseHasUncertainEta,lookupTargetName,lookupFilterList,lookupTargetRoster,saveLookupTargetStates,prepareLookupTargetStates,renderLookupTargets,renderLookupPhase,lookupMetricDuration,lookupMetricStageRows,renderLookupPerformance,renderCharacterLookupConsole,refreshCharacterLookupStatus,startCharacterLookupPolling,loadCharacterLookupConsole,startCharacterServerQueue,retryFailedCharacterLookup,controlCharacterLookup,searchCharacters,renderCharacterSummary,characterMode,filteredCharacters,option,renderCharacters,saveCharacterStatus,decideIdentityReview,probeCharacterIdentity});
 })(window.KinojoAdmin);
