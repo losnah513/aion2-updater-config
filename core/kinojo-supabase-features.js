@@ -1384,12 +1384,12 @@
   }
 
   async function sanctuaryRosterAction(command, extra={}){
-    const passKey=currentPassKey();
-    if(!passKey) throw new Error('로그인 세션을 확인할 수 없습니다. 다시 로그인해 주세요.');
+    const sessionToken=currentServerSessionCredential();
+    if(!sessionToken) throw new Error('로그인 세션을 확인할 수 없습니다. 다시 로그인해 주세요.');
     return invokeEdgeFunction('lookup-sheet-bridge', Object.assign({}, extra || {}, {
       action:'webSanctuaryRosterV312',
       command:String(command || extra.command || '').trim().toUpperCase(),
-      passKey,
+      passKey:sessionToken,
       clientVersion:'kinojo-web-sanctuary-roster-v312'
     }));
   }
@@ -1833,22 +1833,22 @@
 
   async function adminSanctuarySheetSync(command, extra={}){
     assertAdmin();
-    const passKey=currentPassKey();
+    const sessionToken=currentAdminSessionCredential();
     const normalized=String(command||'status').trim().toLowerCase();
     if(normalized==='status'){
-      return rpc('kinojo_admin_sanctuary_sheet_sync_status',{p_pass_key:passKey});
+      return rpc('kinojo_admin_sanctuary_sheet_sync_status',{p_pass_key:sessionToken});
     }
     if(normalized==='ping'){
       return invokeEdgeFunction('lookup-sheet-bridge',{
         action:'adminBridgePing',
-        passKey,
+        sessionToken,
         clientVersion:'kinojo-web-2026071819'
       });
     }
     if(normalized!=='preview'&&normalized!=='apply')return {ok:false,message:'알 수 없는 성역 시트 동기화 명령입니다.'};
     return invokeEdgeFunction('lookup-sheet-bridge',{
       action:'adminSanctuarySheetSync',
-      passKey,
+      sessionToken,
       sanctuaryId:String(extra.sanctuaryId||extra.id||'all'),
       mode:normalized,
       clientVersion:'kinojo-web-2026071819'
