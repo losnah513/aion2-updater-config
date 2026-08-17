@@ -133,6 +133,17 @@
     return normalized;
   }
 
+  function currentAdminSessionCredential(){
+    const account = currentAccount();
+    const token = String(account && (account.token || account.sessionToken || account.session_token) || '').trim();
+    if(!/^kws_[A-Za-z0-9_-]{40,80}$/.test(token)){
+      const err = new Error('관리자 로그인 세션을 확인할 수 없습니다. 다시 로그인해 주세요.');
+      err.kinojoAdminAuthError = true;
+      throw err;
+    }
+    return token;
+  }
+
   function normalizeCodeRequestRow(row){
     if(!row) return null;
     return {
@@ -570,7 +581,7 @@
     if(normalizedCommand === 'identityProbe'){
       return invokeEdgeFunction('character-identity-recovery', {
         action:'adminProbe',
-        passKey:currentPassKey(),
+        passKey:currentAdminSessionCredential(),
         characterId:Number(extra.characterId || 0),
         clientVersion:'WEB-2026072502'
       });
@@ -578,7 +589,7 @@
     if(normalizedCommand === 'identityApply'){
       return invokeEdgeFunction('character-identity-recovery', {
         action:'adminApply',
-        passKey:currentPassKey(),
+        passKey:currentAdminSessionCredential(),
         characterId:Number(extra.characterId || 0),
         clientVersion:'WEB-2026072502'
       });
@@ -586,7 +597,7 @@
     if(normalizedCommand === 'identityReviewApprove' || normalizedCommand === 'identityReviewReject'){
       return invokeEdgeFunction('character-identity-recovery', {
         action:normalizedCommand === 'identityReviewApprove' ? 'reviewApprove' : 'reviewReject',
-        passKey:currentPassKey(),
+        passKey:currentAdminSessionCredential(),
         reviewId:Number(extra.reviewId || 0),
         memo:String(extra.memo || ''),
         clientVersion:'WEB-2026073101'
