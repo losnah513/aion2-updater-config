@@ -66,10 +66,7 @@ jobs:
               raise SystemExit('feature helper already exists')
           text = text.replace(marker, helper + marker, 1)
           start = text.index('  async function adminCharacter(')
-          try:
-              end = text.index('\n  async function adminLookup(', start)
-          except ValueError:
-              end = text.index('\n  async function adminNotice(', start)
+          end = text.index('\n  function noticeAuthorLabel(', start)
           segment = text[start:end]
           old = 'passKey:currentPassKey(),'
           if segment.count(old) != 3:
