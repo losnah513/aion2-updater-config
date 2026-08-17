@@ -7,7 +7,7 @@ const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
 for (const entry of ['meter/index.html', 'm/meter/index.html']) {
   const html = read(entry);
-  for (const token of ['id="meterLiveUsers"', 'id="meterLiveCount"', 'id="meterLiveNames"', 'kinojo-page-booting', '이름 공개를 끈 이용자는 웹에 익명 사용자로 표시됩니다.', 'kinojo-staged-loading.css?cache=2026081502', 'kinojo-staged-loading.js?cache=2026081502', 'meter-app.js?cache=2026081801']) {
+  for (const token of ['id="meterLiveUsers"', 'id="meterLiveCount"', 'id="meterLiveNames"', 'kinojo-page-booting', '이름 공개를 끈 이용자는 웹에 익명 사용자로 표시됩니다.', 'kinojo-staged-loading.css?cache=2026081502', 'kinojo-staged-loading.js?cache=2026081502', 'meter-app.js?cache=2026081502-50040&auth=2026081801']) {
     assert.ok(html.includes(token), `${entry}: public presence contract missing ${token}`);
   }
 }
