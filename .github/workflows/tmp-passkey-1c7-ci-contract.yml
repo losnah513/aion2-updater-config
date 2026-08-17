@@ -16,22 +16,23 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: agent/passkey-1c7-session-only-web
-      - name: Update Meter cache contract
+      - name: Preserve Meter cache contract with auth bust
         run: |
           python - <<'PY'
           from pathlib import Path
-          p=Path('.github/workflows/verify-kinojo-pages.yml')
-          text=p.read_text(encoding='utf-8')
-          old='meter-app.js?cache=2026081502-50040'
-          new='meter-app.js?cache=2026081801'
-          if text.count(old)!=1:
-              raise SystemExit(f'Meter cache contract anchor count={text.count(old)}')
-          p.write_text(text.replace(old,new,1),encoding='utf-8',newline='')
+          old='meter-app.js?cache=2026081801'
+          new='meter-app.js?cache=2026081502-50040&auth=2026081801'
+          for name in ['meter/index.html','m/meter/index.html','tests/meter-presence-log-contract.test.js']:
+              p=Path(name)
+              text=p.read_text(encoding='utf-8')
+              if text.count(old)!=1:
+                  raise SystemExit(f'{name}: Meter cache anchor count={text.count(old)}')
+              p.write_text(text.replace(old,new,1),encoding='utf-8',newline='')
           PY
-          rm .github/workflows/tmp-passkey-1c7-ci-contract.yml
+          node tests/meter-presence-log-contract.test.js
           git diff --check
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add .github/workflows/verify-kinojo-pages.yml .github/workflows/tmp-passkey-1c7-ci-contract.yml
-          git commit -m 'PASS KEY 1-C-7: update Meter cache CI contract'
+          git add meter/index.html m/meter/index.html tests/meter-presence-log-contract.test.js
+          git commit -m 'PASS KEY 1-C-7: preserve Meter cache contract with auth bust'
           git push origin HEAD:agent/passkey-1c7-session-only-web
