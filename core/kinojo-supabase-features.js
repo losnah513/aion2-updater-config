@@ -133,15 +133,23 @@
     return normalized;
   }
 
-  function currentAdminSessionCredential(){
+  function currentServerSessionCredential(){
     const account = currentAccount();
     const token = String(account && (account.token || account.sessionToken || account.session_token) || '').trim();
     if(!/^kws_[A-Za-z0-9_-]{40,80}$/.test(token)){
-      const err = new Error('관리자 로그인 세션을 확인할 수 없습니다. 다시 로그인해 주세요.');
+      const err = new Error('로그인 세션을 확인할 수 없습니다. 다시 로그인해 주세요.');
       err.kinojoAdminAuthError = true;
       throw err;
     }
     return token;
+  }
+
+  function currentAdminSessionCredential(){
+    return currentServerSessionCredential();
+  }
+
+  function optionalServerSessionCredential(){
+    try{return currentServerSessionCredential();}catch(_err){return '';}
   }
 
   function normalizeCodeRequestRow(row){
@@ -1192,10 +1200,7 @@
   }
 
   async function getSanctuaryRosterData(id){
-    const auth = window.KinojoAuth || {};
-    const session = typeof auth.getSession === 'function' ? auth.getSession() : null;
-    const account = typeof auth.getAccount === 'function' ? auth.getAccount() : null;
-    const passKey = String(account?.passKey || account?.passCode || session?.passKey || session?.passCode || '').trim();
+    const passKey = optionalServerSessionCredential();
     const [data,badgeMap]=await Promise.all([
       rpc('kinojo_web_get_sanctuary_v317', { p_sanctuary_code:String(id || '') || null, p_pass_key:passKey || null }),
       getIdentityBadges().catch(()=>new Map())
@@ -1230,7 +1235,7 @@
     const characterMasterId=Number(extra.characterMasterId||extra.character_master_id||0);
     const teamNo=Number(extra.teamNo||extra.team_no||0);
     if(!Number.isFinite(characterMasterId)||characterMasterId<=0||!Number.isFinite(teamNo)||teamNo<=0)return {ok:false,message:'캐릭터와 포스를 다시 선택해 주세요.'};
-    let passKey='';try{passKey=currentPassKey();}catch(_err){}
+    const passKey=optionalServerSessionCredential()
     return rpc('kinojo_sanctuary_waitlist_slot_detail_v318',{
       p_character_master_id:characterMasterId,
       p_sanctuary_code:String(extra.id||extra.sanctuaryId||extra.sanctuaryCode||'').trim(),
@@ -1241,7 +1246,7 @@
 
   async function submitSanctuarySupportRequest(extra={}){
     return rpc('kinojo_sanctuary_support_request_submit_v318',{
-      p_pass_key:currentPassKey(),
+      p_pass_key:currentServerSessionCredential(),
       p_character_master_id:Number(extra.characterMasterId||extra.character_master_id||0),
       p_sanctuary_code:String(extra.id||extra.sanctuaryId||extra.sanctuaryCode||'').trim(),
       p_team_no:Number(extra.teamNo||extra.team_no||0),
@@ -1253,7 +1258,7 @@
 
   async function getSanctuaryRequestConsole(extra={}){
     return rpc('kinojo_sanctuary_request_console_v316',{
-      p_pass_key:currentPassKey(),
+      p_pass_key:currentServerSessionCredential(),
       p_status:String(extra.status||'PENDING').trim().toUpperCase(),
       p_limit:Math.min(200,Math.max(1,Number(extra.limit||100)))
     });
@@ -1261,21 +1266,21 @@
 
   async function rejectSanctuarySupportRequest(extra={}){
     return rpc('kinojo_sanctuary_support_request_reject_v316',{
-      p_pass_key:currentPassKey(),
+      p_pass_key:currentServerSessionCredential(),
       p_request_id:Number(extra.requestId||extra.request_id||0),
       p_reason:String(extra.reason||'').trim()||null
     });
   }
 
   async function getNotificationSummary(){
-    let passKey='';try{passKey=currentPassKey();}catch(_err){return {ok:false,totalCount:0};}
+    const passKey=optionalServerSessionCredential();if(!passKey)return {ok:false,totalCount:0};
     return rpc('kinojo_web_notification_summary_v316',{p_pass_key:passKey});
   }
 
   async function getSanctuaryOperationOverview(extra={}){
     const params = {
       p_sanctuary_code:String(extra.id || extra.sanctuaryId || extra.sanctuaryCode || '') || null,
-      p_pass_key:normalizePassKey(extra.passKey || extra.passCode || '') || null
+      p_pass_key:optionalServerSessionCredential() || null
     };
     if(extra.now) params.p_now = extra.now;
     return rpc('kinojo_web_get_sanctuary_operation_overview_member_251', params);
@@ -1290,7 +1295,7 @@
       p_view:String(extra.view || 'month').toLowerCase() === 'week' ? 'week' : 'month',
       p_anchor:String(extra.anchor || '').trim() || null,
       p_sanctuary_code:String(extra.id || extra.sanctuaryId || extra.sanctuaryCode || '').trim() || null,
-      p_pass_key:normalizePassKey(extra.passKey || extra.passCode || '') || null,
+      p_pass_key:optionalServerSessionCredential() || null,
       p_scope:normalizeSanctuaryScheduleScope(extra.scope || extra.teamScope || extra.team_scope)
     });
   }
@@ -1300,7 +1305,7 @@
     return rpc('kinojo_web_get_sanctuary_schedule_day_262', {
       p_sanctuary_code:String(extra.id || extra.sanctuaryId || extra.sanctuaryCode || '').trim() || null,
       p_target_date:String(extra.targetDate || extra.target_date || '').trim() || null,
-      p_pass_key:normalizePassKey(extra.passKey || extra.passCode || '') || null,
+      p_pass_key:optionalServerSessionCredential() || null,
       p_schedule_id:Number.isFinite(scheduleId) && scheduleId > 0 ? scheduleId : null,
       p_scope:normalizeSanctuaryScheduleScope(extra.scope || extra.teamScope || extra.team_scope)
     });
@@ -1309,7 +1314,7 @@
   async function saveSanctuaryAvailability(extra={}){
     const scheduleId = Number(extra.scheduleId || extra.schedule_id || 0);
     return rpc('kinojo_sanctuary_save_availability', {
-      p_pass_key:normalizePassKey(extra.passKey || extra.passCode || ''),
+      p_pass_key:currentServerSessionCredential(),
       p_sanctuary_code:String(extra.id || extra.sanctuaryId || extra.sanctuaryCode || '').trim() || null,
       p_target_date:String(extra.targetDate || extra.target_date || '').trim() || null,
       p_response_status:String(extra.status || extra.responseStatus || extra.response_status || 'unknown').trim().toLowerCase(),
@@ -1321,7 +1326,7 @@
 
   async function getMySanctuaryTopbar(extra={}){
     return rpc('kinojo_web_get_my_sanctuary_topbar', {
-      p_pass_key:normalizePassKey(extra.passKey || extra.passCode || ''),
+      p_pass_key:currentServerSessionCredential(),
       p_now:String(extra.now || new Date().toISOString())
     });
   }
@@ -1329,7 +1334,7 @@
   async function getAdminSanctuaryScheduleConsole(extra={}){
     assertScheduleManager();
     return rpc('kinojo_admin_sanctuary_schedule_console', {
-      p_pass_key:currentPassKey(),
+      p_pass_key:currentServerSessionCredential(),
       p_from:String(extra.from || extra.dateFrom || '').trim() || null,
       p_to:String(extra.to || extra.dateTo || '').trim() || null,
       p_sanctuary_code:String(extra.sanctuaryCode || extra.id || '').trim().toLowerCase() || null
@@ -1340,7 +1345,7 @@
     assertScheduleManager();
     const scheduleId = Number(extra.scheduleId || extra.schedule_id || 0);
     return rpc('kinojo_admin_sanctuary_schedule_save', {
-      p_pass_key:currentPassKey(),
+      p_pass_key:currentServerSessionCredential(),
       p_schedule_id:Number.isFinite(scheduleId) && scheduleId > 0 ? scheduleId : null,
       p_payload:extra.payload && typeof extra.payload === 'object' ? extra.payload : extra
     });
@@ -1351,7 +1356,7 @@
     const scheduleId = Number(extra.scheduleId || extra.schedule_id || 0);
     if(!Number.isFinite(scheduleId) || scheduleId <= 0) throw new Error('변경할 성역 일정을 찾지 못했습니다.');
     return rpc('kinojo_admin_sanctuary_schedule_set_status', {
-      p_pass_key:currentPassKey(),
+      p_pass_key:currentServerSessionCredential(),
       p_schedule_id:scheduleId,
       p_status:String(extra.status || '').trim().toLowerCase(),
       p_reason:String(extra.reason || '').trim() || null
@@ -1360,13 +1365,13 @@
 
   async function getSanctuaryRolePermissions(){
     assertAdmin();
-    return rpc('kinojo_admin_sanctuary_role_permissions', { p_pass_key:currentPassKey() });
+    return rpc('kinojo_admin_sanctuary_role_permissions', { p_pass_key:currentServerSessionCredential() });
   }
 
   async function setSanctuaryRolePermission(extra={}){
     assertAdmin();
     return rpc('kinojo_admin_sanctuary_role_permission_set', {
-      p_pass_key:currentPassKey(),
+      p_pass_key:currentServerSessionCredential(),
       p_role_key:String(extra.role || extra.roleKey || '').trim().toUpperCase(),
       p_permission_key:String(extra.permissionKey || extra.permission || '').trim(),
       p_enabled:extra.enabled === true
@@ -1853,7 +1858,7 @@
   async function adminSanctuaryProfileDiagnostic(extra={}){
     assertAdmin();
     return rpc('kinojo_admin_sanctuary_profile_diagnostic_252', {
-      p_pass_key:currentPassKey(),
+      p_pass_key:currentAdminSessionCredential(),
       p_sanctuary_id:String(extra.sanctuaryId || extra.id || 'all').trim().toLowerCase() || 'all'
     });
   }
