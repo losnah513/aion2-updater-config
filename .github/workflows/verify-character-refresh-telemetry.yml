@@ -1,0 +1,102 @@
+name: Verify Character Refresh Telemetry
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/verify-character-refresh-telemetry.yml"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/verify-character-refresh-telemetry.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-character-refresh-telemetry-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-live-telemetry-boundary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Load public Supabase config
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY' >> "$GITHUB_ENV"
+          import json
+          from pathlib import Path
+          config = json.loads(Path('config.json').read_text(encoding='utf-8'))
+          supabase = config.get('supabase') or {}
+          url = str(supabase.get('url') or '').rstrip('/')
+          key = str(supabase.get('publishableKey') or supabase.get('anonKey') or '')
+          if not url or not key:
+              raise SystemExit('config.json Supabase public config missing')
+          print(f'SUPABASE_URL={url}')
+          print(f'SUPABASE_KEY={key}')
+          PY
+
+      - name: Verify Worker telemetry and accuracy contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp_dir="$(mktemp -d)"
+          trap 'rm -rf "$tmp_dir"' EXIT
+          edge_headers=(-H "apikey: $SUPABASE_KEY" -H "Authorization: Bearer $SUPABASE_KEY" -H 'content-type: application/json')
+          curl --fail --silent --show-error --location -X POST "$SUPABASE_URL/functions/v1/character-refresh-worker" "${edge_headers[@]}" --data '{"action":"health"}' > "$tmp_dir/worker-health.json"
+          python3 - "$tmp_dir/worker-health.json" <<'PY'
+          import json, sys
+          data = json.load(open(sys.argv[1], encoding='utf-8'))
+          expected = {'ok':True,'service':'character-refresh-worker','apiVersion':'295.2','databaseContract':'295','listSyncEdge':'lookup-list-sync','telemetryContract':'321','telemetryCommitRpc':'kinojo_character_refresh_telemetry_commit_v321','telemetrySummaryRpc':'kinojo_character_refresh_telemetry_summary_v321','telemetryFlushMode':'per-batch','telemetryFailureMode':'best-effort','accuracyMismatchMode':'hard-stop','accuracyHandoffSource':'lookup_session_targets'}
+          for key, value in expected.items():
+              if data.get(key) != value: raise SystemExit(f'Worker telemetry contract mismatch: {key}={data.get(key)!r}, expected={value!r}')
+          PY
+          options_code="$(curl --silent --show-error --output "$tmp_dir/worker-options.txt" --dump-header "$tmp_dir/worker-options.headers" --write-out '%{http_code}' -X OPTIONS "$SUPABASE_URL/functions/v1/character-refresh-worker" -H 'Origin: https://kinojo.info' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: apikey,authorization,content-type')"
+          [[ "$options_code" == "204" ]]
+          grep -iq '^access-control-allow-origin: \*' "$tmp_dir/worker-options.headers"
+          missing_code="$(curl --silent --show-error --output "$tmp_dir/worker-missing.json" --write-out '%{http_code}' -X POST "$SUPABASE_URL/functions/v1/character-refresh-worker" "${edge_headers[@]}" --data '{"action":"runQueue"}')"
+          [[ "$missing_code" == "400" ]]
+          python3 - "$tmp_dir/worker-missing.json" <<'PY'
+          import json, sys
+          data=json.load(open(sys.argv[1])); assert data.get('ok') is False and data.get('code')=='MISSING_SESSION', data
+          PY
+          unknown_code="$(curl --silent --show-error --output "$tmp_dir/worker-unknown.json" --write-out '%{http_code}' -X POST "$SUPABASE_URL/functions/v1/character-refresh-worker" "${edge_headers[@]}" --data '{"action":"telemetryContractProbeUnknown"}')"
+          [[ "$unknown_code" == "400" ]]
+          python3 - "$tmp_dir/worker-unknown.json" <<'PY'
+          import json, sys
+          data=json.load(open(sys.argv[1])); assert data.get('ok') is False and data.get('code')=='UNKNOWN_ACTION', data
+          PY
+
+      - name: Verify list-sync specialist and telemetry RPC isolation
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp_dir="$(mktemp -d)"; trap 'rm -rf "$tmp_dir"' EXIT
+          edge_headers=(-H "apikey: $SUPABASE_KEY" -H "Authorization: Bearer $SUPABASE_KEY" -H 'content-type: application/json')
+          curl --fail --silent --show-error --location -X POST "$SUPABASE_URL/functions/v1/lookup-list-sync" "${edge_headers[@]}" --data '{"action":"health"}' > "$tmp_dir/list-sync-health.json"
+          python3 - "$tmp_dir/list-sync-health.json" <<'PY'
+          import json, sys
+          data=json.load(open(sys.argv[1])); expected={'ok':True,'service':'lookup-list-sync','boundary':'LOOKUP_LIST_SYNC_V1','serverWorkerCaller':'character-refresh-worker'}
+          for key,value in expected.items():
+              if data.get(key)!=value: raise SystemExit(f'list-sync contract mismatch: {key}={data.get(key)!r}, expected={value!r}')
+          PY
+          sync_missing_code="$(curl --silent --show-error --output "$tmp_dir/list-sync-missing.json" --write-out '%{http_code}' -X POST "$SUPABASE_URL/functions/v1/lookup-list-sync" "${edge_headers[@]}" --data '{"action":"syncList"}')"
+          [[ "$sync_missing_code" == "400" ]]
+          python3 - "$tmp_dir/list-sync-missing.json" <<'PY'
+          import json, sys
+          data=json.load(open(sys.argv[1])); assert data.get('ok') is False and data.get('code')=='MISSING_SESSION', data
+          PY
+          declare -A bodies
+          bodies[kinojo_character_refresh_telemetry_commit_v321]='{"p_session_id":"public-probe","p_session_token":"public-probe","p_batch":{}}'
+          bodies[kinojo_character_refresh_telemetry_summary_v321]='{"p_session_id":"public-probe","p_session_token":"public-probe"}'
+          for rpc in "${!bodies[@]}"; do
+            code="$(curl --silent --show-error --output "$tmp_dir/$rpc.json" --write-out '%{http_code}' -X POST "$SUPABASE_URL/rest/v1/rpc/$rpc" "${edge_headers[@]}" --data "${bodies[$rpc]}")"
+            case "$code" in 200|201|202|204) echo "Telemetry RPC unexpectedly public: $rpc HTTP $code" >&2; cat "$tmp_dir/$rpc.json" >&2; exit 1;; esac
+          done
