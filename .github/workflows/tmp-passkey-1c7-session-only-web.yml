@@ -17,7 +17,35 @@ jobs:
         with:
           ref: agent/passkey-1c7-session-only-web
       - name: Apply session-only patch
-        run: python .github/scripts/tmp_passkey_1c7_patch.py
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('.github/scripts/tmp_passkey_1c7_patch.py').read_text(encoding='utf-8')
+          old="""text = once(text, '    const passKey=commonPassKey_();', '    const credential=commonSessionCredential_();', 'topbar sanctuary credential')
+          text = once(text, '    if(!passKey){clearSanctuaryAlert_();return;}', '    if(!credential){clearSanctuaryAlert_();return;}', 'topbar sanctuary gate')
+          text = once(text, \"window.KinojoApi.getAction('mySanctuaryTopbar',{passKey})\", \"window.KinojoApi.getAction('mySanctuaryTopbar',{})\", 'topbar sanctuary call')
+          text = once(text, \"    const passKey=commonPassKey_();const badge=q('#kinojoAdminPendingBadge');\", \"    const credential=commonSessionCredential_();const badge=q('#kinojoAdminPendingBadge');\", 'notification credential')
+          text = once(text, '    if(!passKey||!window.KinojoApi?.getAction){if(badge)badge.hidden=true;return;}', '    if(!credential||!window.KinojoApi?.getAction){if(badge)badge.hidden=true;return;}', 'notification gate')
+          text = once(text, \"window.KinojoApi.getAction('notificationSummary',{passKey})\", \"window.KinojoApi.getAction('notificationSummary',{})\", 'notification call')"""
+          new="""start = text.index('  async function loadSanctuaryAlert_(')
+          end = text.index('\\n  function renderCommonNotificationToast_(', start)
+          seg = text[start:end]
+          seg = once(seg, '    const passKey=commonPassKey_();', '    const credential=commonSessionCredential_();', 'topbar sanctuary credential')
+          seg = once(seg, '    if(!passKey){clearSanctuaryAlert_();return;}', '    if(!credential){clearSanctuaryAlert_();return;}', 'topbar sanctuary gate')
+          seg = once(seg, \"window.KinojoApi.getAction('mySanctuaryTopbar',{passKey})\", \"window.KinojoApi.getAction('mySanctuaryTopbar',{})\", 'topbar sanctuary call')
+          text = text[:start] + seg + text[end:]
+          start = text.index('  async function loadCommonNotificationSummary_(')
+          end = text.index('\\n  function startCommonNotificationPolling_(', start)
+          seg = text[start:end]
+          seg = once(seg, \"    const passKey=commonPassKey_();const badge=q('#kinojoAdminPendingBadge');\", \"    const credential=commonSessionCredential_();const badge=q('#kinojoAdminPendingBadge');\", 'notification credential')
+          seg = once(seg, '    if(!passKey||!window.KinojoApi?.getAction){if(badge)badge.hidden=true;return;}', '    if(!credential||!window.KinojoApi?.getAction){if(badge)badge.hidden=true;return;}', 'notification gate')
+          seg = once(seg, \"window.KinojoApi.getAction('notificationSummary',{passKey})\", \"window.KinojoApi.getAction('notificationSummary',{})\", 'notification call')
+          text = text[:start] + seg + text[end:]"""
+          if old not in src:
+              raise SystemExit('temporary common UI patch anchor missing')
+          Path('/tmp/passkey_1c7_patch.py').write_text(src.replace(old,new,1),encoding='utf-8')
+          PY
+          python /tmp/passkey_1c7_patch.py
       - name: Verify syntax and contracts
         run: |
           node --check core/kinojo-auth-session.js
