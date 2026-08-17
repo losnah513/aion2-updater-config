@@ -1,0 +1,162 @@
+name: Verify Character Refresh Worker
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/verify-character-refresh-worker.yml"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/verify-character-refresh-worker.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-character-refresh-worker-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-live-worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Load public Supabase config
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          config = json.loads(Path("config.json").read_text(encoding="utf-8"))
+          supabase = config.get("supabase") or {}
+          url = str(supabase.get("url") or "").rstrip("/")
+          key = str(supabase.get("publishableKey") or supabase.get("anonKey") or "").strip()
+          if not url or not key:
+              raise SystemExit("config.json Supabase public configuration is incomplete")
+
+          print(f"::add-mask::{key}")
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as output:
+              output.write(f"SUPABASE_URL={url}\n")
+              output.write(f"SUPABASE_KEY={key}\n")
+          PY
+
+      - name: Verify Worker and list-sync live boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp_dir="$(mktemp -d)"
+          trap 'rm -rf "$tmp_dir"' EXIT
+
+          request_json() {
+            local name="$1"
+            local function_name="$2"
+            local payload="$3"
+            local expected_status="$4"
+            local url="$SUPABASE_URL/functions/v1/$function_name"
+            local status
+
+            status="$(curl --silent --show-error --location \
+              --connect-timeout 10 --max-time 30 \
+              --output "$tmp_dir/$name.json" \
+              --write-out '%{http_code}' \
+              -X POST "$url" \
+              -H "apikey: $SUPABASE_KEY" \
+              -H "Authorization: Bearer $SUPABASE_KEY" \
+              -H 'content-type: application/json' \
+              --data "$payload")"
+
+            if [[ "$status" != "$expected_status" ]]; then
+              echo "$name returned HTTP $status, expected $expected_status" >&2
+              cat "$tmp_dir/$name.json" >&2 || true
+              exit 1
+            fi
+          }
+
+          request_json worker_health character-refresh-worker '{"action":"health"}' 200
+          request_json worker_missing character-refresh-worker '{"action":"runQueue"}' 400
+          request_json worker_unknown character-refresh-worker '{"action":"__contract_probe__"}' 400
+          request_json sync_health lookup-list-sync '{"action":"health"}' 200
+          request_json sync_missing lookup-list-sync '{"action":"syncList"}' 400
+
+          options_status="$(curl --silent --show-error --location \
+            --connect-timeout 10 --max-time 30 \
+            --dump-header "$tmp_dir/options.headers" \
+            --output /dev/null \
+            --write-out '%{http_code}' \
+            -X OPTIONS "$SUPABASE_URL/functions/v1/character-refresh-worker" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
+            -H 'Origin: https://kinojo.info' \
+            -H 'Access-Control-Request-Method: POST' \
+            -H 'Access-Control-Request-Headers: authorization,apikey,content-type')"
+          if [[ "$options_status" != "204" ]]; then
+            echo "Worker OPTIONS returned HTTP $options_status, expected 204" >&2
+            cat "$tmp_dir/options.headers" >&2 || true
+            exit 1
+          fi
+
+          python3 - "$tmp_dir" <<'PY'
+          import json
+          import pathlib
+          import sys
+
+          root = pathlib.Path(sys.argv[1])
+
+          def load(name):
+              return json.loads((root / f"{name}.json").read_text(encoding="utf-8"))
+
+          worker = load("worker_health")
+          assert worker.get("ok") is True, worker
+          assert worker.get("service") == "character-refresh-worker", worker
+          assert worker.get("apiVersion") == "295.2", worker
+          assert worker.get("databaseContract") == "295", worker
+          assert worker.get("listSyncEdge") == "lookup-list-sync", worker
+          assert worker.get("sheetReadbackRequired") is True, worker
+          assert worker.get("listSyncSingleWorkerLease") is True, worker
+          assert worker.get("listSyncCompletionAtomic") is True, worker
+          assert set(worker.get("modes") or []) == {
+              "startAutonomous", "autonomousTick", "runQueue", "runPostprocess"
+          }, worker
+
+          missing = load("worker_missing")
+          assert missing.get("ok") is False, missing
+          assert missing.get("code") == "MISSING_SESSION", missing
+
+          unknown = load("worker_unknown")
+          assert unknown.get("ok") is False, unknown
+          assert unknown.get("code") == "UNKNOWN_ACTION", unknown
+
+          sync = load("sync_health")
+          assert sync.get("ok") is True, sync
+          assert sync.get("service") == "lookup-list-sync", sync
+          assert sync.get("boundary") == "LOOKUP_LIST_SYNC_V1", sync
+          assert sync.get("serverWorkerCaller") == "character-refresh-worker", sync
+
+          sync_missing = load("sync_missing")
+          assert sync_missing.get("ok") is False, sync_missing
+          assert sync_missing.get("code") == "MISSING_SESSION", sync_missing
+
+          headers = (root / "options.headers").read_text(encoding="utf-8").lower()
+          assert "access-control-allow-origin: *" in headers, headers
+          assert "access-control-allow-methods: post, options" in headers, headers
+
+          print("Character Refresh Worker live boundary: PASS")
+          PY
+
+          {
+            echo "## Character Refresh Worker live boundary"
+            echo
+            echo "- Worker API: \`295.2\`"
+            echo "- Worker list sync target: \`lookup-list-sync\`"
+            echo "- Dedicated sync boundary: \`LOOKUP_LIST_SYNC_V1\`"
+            echo "- Health, CORS, missing-session, unknown-action: PASS"
+            echo "- Business data mutations: none"
+          } >> "$GITHUB_STEP_SUMMARY"
