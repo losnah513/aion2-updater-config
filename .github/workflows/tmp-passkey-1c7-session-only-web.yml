@@ -21,6 +21,7 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           src=Path('.github/scripts/tmp_passkey_1c7_patch.py').read_text(encoding='utf-8')
+
           old="""text = once(text, '    const passKey=commonPassKey_();', '    const credential=commonSessionCredential_();', 'topbar sanctuary credential')
           text = once(text, '    if(!passKey){clearSanctuaryAlert_();return;}', '    if(!credential){clearSanctuaryAlert_();return;}', 'topbar sanctuary gate')
           text = once(text, \"window.KinojoApi.getAction('mySanctuaryTopbar',{passKey})\", \"window.KinojoApi.getAction('mySanctuaryTopbar',{})\", 'topbar sanctuary call')
@@ -41,13 +42,37 @@ jobs:
           seg = once(seg, '    if(!passKey||!window.KinojoApi?.getAction){if(badge)badge.hidden=true;return;}', '    if(!credential||!window.KinojoApi?.getAction){if(badge)badge.hidden=true;return;}', 'notification gate')
           seg = once(seg, \"window.KinojoApi.getAction('notificationSummary',{passKey})\", \"window.KinojoApi.getAction('notificationSummary',{})\", 'notification call')
           text = text[:start] + seg + text[end:]"""
-          if old not in src:
-              raise SystemExit('temporary common UI patch anchor missing')
+          if old not in src: raise SystemExit('temporary common UI patch anchor missing')
           src=src.replace(old,new,1)
+
           redundant="text = once(text, 'if (state.loggedIn && state.passKey) {', 'if (state.loggedIn && state.sessionToken) {', 'meter open login gate')\n"
-          if redundant not in src:
-              raise SystemExit('meter redundant anchor missing')
+          if redundant not in src: raise SystemExit('meter redundant anchor missing')
           src=src.replace(redundant,'',1)
+
+          old_loop="if not path.is_file() or path.suffix.lower() not in {'.html', '.js'}:"
+          new_loop="if not path.is_file() or path.suffix.lower() != '.html':"
+          if old_loop not in src: raise SystemExit('cache loop anchor missing')
+          src=src.replace(old_loop,new_loop,1)
+
+          src += """
+
+# Positive cache expectations only; stale-version assertions remain untouched.
+for test_name, replacements in {
+    'tests/meter-presence-log-contract.test.js': [
+        ('meter-app.js?cache=2026081502-50040','meter-app.js?cache=2026081801'),
+        ('kinojo-supabase-features.js?cache=2026081706','kinojo-supabase-features.js?cache=2026081801'),
+    ],
+    'tests/sanctuary-waitlist-contract.test.js': [
+        ('sanctuary.js?cache=2026081222','sanctuary.js?cache=2026081801'),
+        ('kinojo-supabase-features.js?cache=2026081706','kinojo-supabase-features.js?cache=2026081801'),
+    ],
+}.items():
+    path=Path(test_name); text=path.read_text(encoding='utf-8')
+    for old,new in replacements:
+        if old not in text: raise SystemExit(f'{test_name}: cache expectation missing {old}')
+        text=text.replace(old,new)
+    path.write_text(text,encoding='utf-8',newline='')
+"""
           Path('/tmp/passkey_1c7_patch.py').write_text(src,encoding='utf-8')
           PY
           python /tmp/passkey_1c7_patch.py
