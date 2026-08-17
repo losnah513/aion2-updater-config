@@ -1,0 +1,108 @@
+name: Verify Character Refresh Profile
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'admin/index.html'
+      - 'm/admin/index.html'
+      - 'admin/js/admin.js'
+      - 'admin/js/admin-characters.js'
+      - '.github/workflows/verify-character-refresh-profile.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'admin/index.html'
+      - 'm/admin/index.html'
+      - 'admin/js/admin.js'
+      - 'admin/js/admin-characters.js'
+      - '.github/workflows/verify-character-refresh-profile.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify profile source contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check admin/js/admin.js
+          node --check admin/js/admin-characters.js
+          python3 <<'PY'
+          from pathlib import Path
+          pages = [Path('admin/index.html'), Path('m/admin/index.html')]
+          ids = [
+              'characterLookupPerformancePanel',
+              'characterLookupPerformanceState',
+              'characterLookupPerformanceTotal',
+              'characterLookupPerformanceBottleneck',
+              'characterLookupPerformanceOfficial',
+              'characterLookupPerformanceCache',
+              'characterLookupPerformanceRetry',
+              'characterLookupPerformanceSheet',
+              'characterLookupPerformanceIntegrity',
+              'characterLookupPerformanceStages',
+          ]
+          for page in pages:
+              text = page.read_text(encoding='utf-8')
+              for item_id in ids:
+                  count = text.count(f'id="{item_id}"')
+                  if count != 1:
+                      raise SystemExit(f'{page}: {item_id} count={count}')
+              if 'admin.js?cache=2026081701' not in text:
+                  raise SystemExit(f'{page}: stale admin cache')
+          source = Path('admin/js/admin-characters.js').read_text(encoding='utf-8')
+          for token in [
+              'performanceProfile:data?.performanceProfile||{}',
+              'function renderLookupPerformance(profile)',
+              'runtime_events_inferred',
+              'characterLookupPerformanceIntegrity',
+              '기존 Server Runtime Event 재사용 · 추가 처리량 0',
+          ]:
+              if token not in source:
+                  raise SystemExit(f'profile contract missing {token}')
+          loader = Path('admin/js/admin.js').read_text(encoding='utf-8')
+          if 'v2026081701' not in loader or "name+'?cache=2026081701'" not in loader:
+              raise SystemExit('admin loader cache contract missing')
+          print('Character refresh profile source contracts: PASS')
+          PY
+
+  verify-live-readback:
+    if: github.event_name == 'push'
+    needs: verify-source
+    runs-on: ubuntu-latest
+    env:
+      LIVE_BASE: https://kinojo.info
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify deployed profile files
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp_dir="$(mktemp -d)"
+          trap 'rm -rf "$tmp_dir"' EXIT
+          files=(admin/index.html m/admin/index.html admin/js/admin.js admin/js/admin-characters.js)
+          verify_key="${GITHUB_SHA:0:12}-$(date -u +%s)"
+          for attempt in $(seq 1 15); do
+            mismatch=0
+            for path in "${files[@]}"; do
+              live="$tmp_dir/$(echo "$path" | tr '/' '_')"
+              if ! curl --fail --silent --show-error --location --compressed --retry 3 --retry-all-errors --connect-timeout 10 --max-time 30 -H 'Cache-Control: no-cache' "$LIVE_BASE/$path?verify=$verify_key-$attempt" -o "$live"; then
+                mismatch=1
+                continue
+              fi
+              cmp -s "$path" "$live" || mismatch=1
+            done
+            if [[ "$mismatch" -eq 0 ]]; then
+              echo 'Character refresh profile live readback: PASS'
+              exit 0
+            fi
+            [[ "$attempt" -lt 15 ]] && sleep 20
+          done
+          echo 'Character refresh profile live readback did not converge.' >&2
+          exit 1
