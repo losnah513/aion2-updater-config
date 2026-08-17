@@ -35,7 +35,7 @@ jobs:
           seg = once(seg, \"window.KinojoApi.getAction('mySanctuaryTopbar',{passKey})\", \"window.KinojoApi.getAction('mySanctuaryTopbar',{})\", 'topbar sanctuary call')
           text = text[:start] + seg + text[end:]
           start = text.index('  async function loadCommonNotificationSummary_(')
-          end = text.index('\\n  function startCommonNotificationPolling_(', start)
+          end = text.index('\\n  function scheduleCommonNotifications_(', start)
           seg = text[start:end]
           seg = once(seg, \"    const passKey=commonPassKey_();const badge=q('#kinojoAdminPendingBadge');\", \"    const credential=commonSessionCredential_();const badge=q('#kinojoAdminPendingBadge');\", 'notification credential')
           seg = once(seg, '    if(!passKey||!window.KinojoApi?.getAction){if(badge)badge.hidden=true;return;}', '    if(!credential||!window.KinojoApi?.getAction){if(badge)badge.hidden=true;return;}', 'notification gate')
