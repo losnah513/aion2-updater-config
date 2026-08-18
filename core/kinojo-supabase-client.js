@@ -37,7 +37,9 @@
   };
 
   function normalizePassKey(value){
-    return Array.from(String(value || '').replace(/[a-z]/g, ch => ch.toUpperCase()).replace(/\s+/g, '')).join('');
+    const raw=String(value||'').trim();
+    if(/^kws_[A-Za-z0-9_-]{40,80}$/.test(raw)) return raw;
+    return Array.from(raw.replace(/[a-z]/g, ch => ch.toUpperCase()).replace(/\s+/g, '')).join('');
   }
 
   function normalizeRole(value, fallbackLevel){
