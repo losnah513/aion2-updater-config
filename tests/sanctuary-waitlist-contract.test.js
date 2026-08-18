@@ -62,7 +62,7 @@ assert.ok(style.includes('bottom:var(--kinojo-safe-bottom,0px)'), 'Modal must re
 
 for (const entry of ['sanctuary/index.html', 'm/sanctuary/index.html']) {
   const html = read(entry);
-  assert.ok(html.includes('sanctuary.css?cache=2026081222'), `${entry}: waitlist CSS cache missing`);
+  assert.ok(html.includes('sanctuary.css?cache=2026081818'), `${entry}: waitlist CSS cache missing`);
   assert.ok(html.includes('sanctuary.js?cache=2026081801'), `${entry}: waitlist JS cache missing`);
   assert.ok(html.includes('kinojo-supabase-features.js?cache=2026081801'), `${entry}: feature bridge cache missing`);
 }
