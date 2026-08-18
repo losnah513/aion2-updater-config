@@ -600,6 +600,7 @@
       <div class="kinojo-top-center kinojo-auth-status" id="kinojoUserStatus">
         <button class="kinojo-login-btn" id="kinojoLoginBtn" type="button">로그인</button>
         <span class="kinojo-auth-label" id="kinojoAuthLabel">비회원 · 열람만 가능</span>
+        <button class="kinojo-logout-btn kinojo-my-info-btn" id="kinojoMyInfoBtn" type="button" data-kinojo-auth-required="true" hidden>내 정보</button>
         <button class="kinojo-logout-btn" id="kinojoLogoutBtn" type="button" style="display:none">로그아웃</button>
       </div>
       <div class="kinojo-top-tools" id="kinojoTopTools"></div>
