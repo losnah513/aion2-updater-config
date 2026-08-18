@@ -666,15 +666,45 @@
           <strong class="kinojo-panel-title" id="kinojoMyInfoTitle">내 정보</strong>
           <button class="kinojo-common-close kinojo-panel-close" id="kinojoMyInfoCloseBtn" type="button" aria-label="내 정보 닫기">×</button>
         </div>
-        <div class="kinojo-panel-body" id="kinojoMyInfoPanelBody"></div>
+        <div class="kinojo-panel-body kinojo-my-info-body" id="kinojoMyInfoPanelBody">
+          <button class="kinojo-my-info-menu-btn is-active" id="kinojoMyInfoMenuBtn" type="button" data-my-info-target="profile" aria-controls="kinojoMyInfoProfileView" aria-current="page">
+            <span>내 정보</span><small>이미지 관리 Preview</small>
+          </button>
+          <section class="kinojo-my-info-view is-active" id="kinojoMyInfoProfileView" data-my-info-view="profile" aria-labelledby="kinojoMyInfoMenuBtn">
+            <div class="kinojo-my-info-preview-state">
+              <span class="kinojo-my-info-preview-badge">PREVIEW</span>
+              <strong>내 정보</strong>
+              <p>프로필·캐릭터 이미지 관리 화면을 준비 중입니다.</p>
+            </div>
+          </section>
+          <section class="kinojo-my-info-characters" aria-labelledby="kinojoMyCharactersTitle">
+            <div class="kinojo-my-info-section-title" id="kinojoMyCharactersTitle">내 캐릭터</div>
+            <div class="kinojo-my-info-character-pending" aria-live="polite">캐릭터 연동 준비 중</div>
+          </section>
+        </div>
       </aside>`;
     document.body.appendChild(layer);
+  }
+  function activateMyInfoView_(target){
+    const key=String(target||'profile');
+    document.querySelectorAll('[data-my-info-view]').forEach(view=>{
+      const active=view.dataset.myInfoView===key;
+      view.classList.toggle('is-active',active);
+      view.hidden=!active;
+    });
+    document.querySelectorAll('[data-my-info-target]').forEach(button=>{
+      const active=button.dataset.myInfoTarget===key;
+      button.classList.toggle('is-active',active);
+      if(active)button.setAttribute('aria-current','page');
+      else button.removeAttribute('aria-current');
+    });
   }
   function openMyInfoPanel(){
     const layer=q('#kinojoMyInfoLayer');
     const btn=q('#kinojoMyInfoBtn');
     if(!layer||!window.KinojoAuth?.getSession?.())return;
     closeSideDrawer();
+    activateMyInfoView_('profile');
     layer.classList.add('open');
     layer.setAttribute('aria-hidden','false');
     document.body.classList.add('kinojo-my-info-open');
@@ -900,6 +930,7 @@
   }
   function bind(){
     q('#kinojoMyInfoBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openMyInfoPanel();});
+    q('#kinojoMyInfoMenuBtn')?.addEventListener('click',e=>{e.preventDefault();activateMyInfoView_(e.currentTarget.dataset.myInfoTarget);});
     q('#kinojoMyInfoCloseBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeMyInfoPanel();});
     q('#kinojoMyInfoLayer')?.addEventListener('click',e=>{if(e.target.id==='kinojoMyInfoLayer')closeMyInfoPanel();});
     q('#drawerToggleBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openSideDrawer();});
