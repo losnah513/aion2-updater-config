@@ -1,0 +1,34 @@
+name: Apply My Info 2-G Minimal
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.event.issue.title == 'KINOJO_MY_INFO_2G_MIN_20260819'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Apply patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git apply --check .kinojo-temp/my-info-2g.patch
+          git apply .kinojo-temp/my-info-2g.patch
+          node --check ui/kinojo-common-ui.js
+          grep -q "window.KinojoCharacterReaction.open" ui/kinojo-common-ui.js
+          grep -q "2-G existing character detail modal trigger" ui/kinojo-my-info.css
+          git diff --check
+          git config user.name "losnah513"
+          git config user.email "losnah513@gmail.com"
+          git add ui/kinojo-common-ui.js ui/kinojo-my-info.css
+          git commit -m "Open existing character detail from My Info"
+          git push origin main
