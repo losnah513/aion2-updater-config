@@ -1,16 +1,15 @@
 name: Fix My Info Startup Flash
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/fix-my-info-fouc.yml"
+  issues:
+    types: [opened]
 
 permissions:
   contents: write
 
 jobs:
   fix:
+    if: github.event.issue.title == 'KINOJO_MY_INFO_FOUC_FIX_20260819'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -84,4 +83,3 @@ jobs:
           git add -u .github/workflows/fix-my-info-fouc.yml
           git commit -m "Prevent My Info panel startup flash"
           git push origin main
-# trigger: 20260819-1137-kst
