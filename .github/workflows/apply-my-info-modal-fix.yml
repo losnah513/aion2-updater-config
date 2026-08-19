@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "ui/.my-info-modal-fix-trigger"
+      - "ui/my-info-modal-fix-trigger.txt"
 
 permissions:
   contents: write
@@ -131,10 +131,10 @@ body.kinojo-my-info-modal-open{overflow:hidden}
         shell: bash
         run: |
           set -euo pipefail
-          rm -f ui/.my-info-modal-fix-trigger .github/workflows/apply-my-info-modal-fix.yml
+          rm -f ui/my-info-modal-fix-trigger.txt ui/.my-info-modal-fix-trigger .github/workflows/apply-my-info-modal-fix.yml
           git config user.name "losnah513"
           git config user.email "losnah513@gmail.com"
           git add ui/kinojo-common-ui.js ui/kinojo-my-info.css
-          git add -u ui/.my-info-modal-fix-trigger .github/workflows/apply-my-info-modal-fix.yml || true
+          git add -u ui/my-info-modal-fix-trigger.txt ui/.my-info-modal-fix-trigger .github/workflows/apply-my-info-modal-fix.yml || true
           git commit -m "Open my info as standalone modal"
           git push origin main
