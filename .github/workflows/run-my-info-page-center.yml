@@ -1,0 +1,48 @@
+name: Prepared My Info FOUC Fix
+
+on:
+  workflow_dispatch:
+
+jobs:
+  prepared:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Prepared source transform
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          path=Path('ui/kinojo-common-ui.js')
+          text=path.read_text(encoding='utf-8')
+          old="""  function ensureMyInfoStyles(){
+    if(document.querySelector('link[data-kinojo-my-info-styles]'))return;
+    const link=document.createElement('link');
+    link.rel='stylesheet';
+    link.href='/ui/kinojo-my-info.css?cache=2026081901';
+    link.dataset.kinojoMyInfoStyles='true';
+    document.head.appendChild(link);
+  }
+"""
+          new="""  function ensureMyInfoStyles(){
+    const existing=document.querySelector('link[data-kinojo-my-info-styles]');
+    if(existing)return;
+    let guard=document.querySelector('style[data-kinojo-my-info-critical]');
+    if(!guard){
+      guard=document.createElement('style');
+      guard.dataset.kinojoMyInfoCritical='true';
+      guard.textContent='.kinojo-my-info-layer,.kinojo-my-info-modal{visibility:hidden!important;opacity:0!important;pointer-events:none!important}';
+      document.head.appendChild(guard);
+    }
+    const link=document.createElement('link');
+    link.rel='stylesheet';
+    link.href='/ui/kinojo-my-info.css?cache=2026081901';
+    link.dataset.kinojoMyInfoStyles='true';
+    link.addEventListener('load',()=>guard?.remove(),{once:true});
+    document.head.appendChild(link);
+  }
+"""
+          if old not in text:
+              raise SystemExit('expected ensureMyInfoStyles contract not found')
+          text=text.replace(old,new,1)
+          path.write_text(text,encoding='utf-8')
+          PY
