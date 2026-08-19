@@ -5,12 +5,15 @@ on:
     branches: [main]
     paths:
       - "ui/.my-info-2g-trigger"
+  issues:
+    types: [opened]
 
 permissions:
   contents: write
 
 jobs:
   apply:
+    if: github.event_name == 'push' || github.event.issue.title == 'KINOJO_MY_INFO_2G_20260819'
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
