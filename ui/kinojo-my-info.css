@@ -230,3 +230,40 @@ body.kinojo-my-info-modal-open{overflow:hidden}
   .kinojo-my-info-modal-close{top:11px;right:11px;width:32px;height:32px;font-size:20px}
 }
 @media(max-width:370px){.kinojo-my-info-modal-dialog{padding:18px 16px}}
+
+/* 20260819_07: 1-G PC layout finish — KINOJO scrollbars stay inside the UI surface */
+.kinojo-my-info-body,
+.kinojo-my-info-modal-dialog{
+  scrollbar-width:thin;
+  scrollbar-color:rgba(37,99,235,.42) transparent;
+  scrollbar-gutter:stable;
+}
+.kinojo-my-info-body::-webkit-scrollbar,
+.kinojo-my-info-modal-dialog::-webkit-scrollbar{width:8px;height:8px}
+.kinojo-my-info-body::-webkit-scrollbar-track,
+.kinojo-my-info-modal-dialog::-webkit-scrollbar-track{background:transparent}
+.kinojo-my-info-body::-webkit-scrollbar-track{margin-block:8px}
+.kinojo-my-info-modal-dialog::-webkit-scrollbar-track{margin-block:18px}
+.kinojo-my-info-body::-webkit-scrollbar-thumb,
+.kinojo-my-info-modal-dialog::-webkit-scrollbar-thumb{
+  min-height:42px;
+  border:2px solid transparent;
+  border-radius:999px;
+  background:linear-gradient(180deg,rgba(96,165,250,.78),rgba(37,99,235,.62)) padding-box;
+}
+.kinojo-my-info-body::-webkit-scrollbar-thumb:hover,
+.kinojo-my-info-modal-dialog::-webkit-scrollbar-thumb:hover{
+  background:linear-gradient(180deg,rgba(59,130,246,.9),rgba(37,99,235,.78)) padding-box;
+}
+.kinojo-my-info-modal-dialog{overflow-x:hidden;overscroll-behavior:contain;background-clip:padding-box}
+@media(min-width:761px){
+  .kinojo-my-info-modal{padding:24px}
+  .kinojo-my-info-modal-dialog{
+    width:min(720px,calc(100vw - 64px));
+    max-height:min(720px,calc(100vh - 48px));
+    max-height:min(720px,calc(100dvh - 48px));
+    padding:28px 30px 32px;
+  }
+  .kinojo-my-info-modal .kinojo-my-info-preview-state{border-radius:16px}
+  .kinojo-my-info-body{padding:16px!important}
+}
