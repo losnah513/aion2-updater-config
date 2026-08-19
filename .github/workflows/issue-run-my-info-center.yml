@@ -1,0 +1,57 @@
+name: Issue Run My Info Center Fix
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.event.issue.title == 'KINOJO_MY_INFO_PAGE_CENTER_FIX_20260819'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Execute prepared focused correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          source=Path('.github/workflows/run-my-info-page-center.yml').read_text(encoding='utf-8')
+          marker="          python3 <<'PY'\n"
+          start=source.index(marker)+len(marker)
+          end=source.index("\n          PY",start)
+          block=source[start:end]
+          lines=[]
+          for line in block.splitlines():
+              lines.append(line[10:] if line.startswith('          ') else line)
+          code='\n'.join(lines)
+          exec(compile(code,'prepared-my-info-fix','exec'),{})
+          PY
+          node --check ui/kinojo-common-ui.js
+          git diff --check
+          grep -q "position:fixed!important;" ui/kinojo-my-info.css
+          grep -q "inset:0!important;" ui/kinojo-my-info.css
+          ! grep -q "kinojoMyInfoProfileView" ui/kinojo-common-ui.js
+
+      - name: Commit final source and remove helpers
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f ui/.my-info-page-center-trigger \
+            .github/workflows/fix-my-info-page-center.yml \
+            .github/workflows/run-my-info-page-center.yml \
+            .github/workflows/issue-run-my-info-center.yml
+          git config user.name "losnah513"
+          git config user.email "losnah513@gmail.com"
+          git add ui/kinojo-common-ui.js ui/kinojo-my-info.css
+          git add -u ui/.my-info-page-center-trigger .github/workflows/fix-my-info-page-center.yml .github/workflows/run-my-info-page-center.yml .github/workflows/issue-run-my-info-center.yml || true
+          git commit -m "Center My Info modal on page"
+          git push origin main
