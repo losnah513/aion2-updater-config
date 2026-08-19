@@ -670,7 +670,7 @@
     }
     const link=document.createElement('link');
     link.rel='stylesheet';
-    link.href='/ui/kinojo-my-info.css?cache=2026081904';
+    link.href='/ui/kinojo-my-info.css?cache=2026081905';
     link.dataset.kinojoMyInfoStyles='true';
     link.addEventListener('load',()=>guard?.remove(),{once:true});
     document.head.appendChild(link);
@@ -718,6 +718,10 @@
     kinojoMyCharactersState.retryTimer=0;
     setMyInfoCharacterStatus_('캐릭터 불러오는 중','idle');
   }
+  function myInfoStatNumber_(value){
+    const number=Number(value);
+    return Number.isFinite(number)&&number>0?Math.round(number).toLocaleString('ko-KR'):'-';
+  }
   function renderMyInfoCharacters_(data){
     const host=q('#kinojoMyInfoCharacterList');
     if(!host)return;
@@ -742,10 +746,18 @@
       const isMain=row.isMain===true;
       const kind=isMain?'본캐':'부캐';
       const classIcon=classIconFor_(row.className);
-      return '<article class="kinojo-my-info-character-row '+(isMain?'is-main':'is-alt')+'" data-character-id="'+characterId+'" data-server-id="'+(Number.isFinite(serverId)?serverId:'')+'" data-character-name="'+escapeHtml(characterName)+'" aria-label="'+escapeHtml(characterName+' · '+kind)+'">'
+      const itemLevel=myInfoStatNumber_(row.displayItemLevel);
+      const combatPower=myInfoStatNumber_(row.displayCombatPower);
+      const statBasis=String(row.displayStatBasis||data.displayStatBasis||'').trim();
+      const statLabel=(statBasis?statBasis+' 기준 · ':'')+'아이템 레벨 '+itemLevel+' · 전투력 '+combatPower;
+      return '<article class="kinojo-my-info-character-row '+(isMain?'is-main':'is-alt')+'" data-character-id="'+characterId+'" data-server-id="'+(Number.isFinite(serverId)?serverId:'')+'" data-character-name="'+escapeHtml(characterName)+'" aria-label="'+escapeHtml(characterName+' · '+kind+' · '+statLabel)+'">'
         +(classIcon?'<img class="kinojo-my-info-character-icon" src="'+escapeHtml(classIcon)+'" alt="" aria-hidden="true">':'<span class="kinojo-my-info-character-icon is-empty" aria-hidden="true"></span>')
-        +'<span class="kinojo-my-info-character-kind">'+kind+'</span>'
-        +'<strong class="kinojo-my-info-character-name">'+escapeHtml(characterName||'이름 없음')+'</strong>'
+        +'<span class="kinojo-my-info-character-identity"><span class="kinojo-my-info-character-kind">'+kind+'</span><strong class="kinojo-my-info-character-name">'+escapeHtml(characterName||'이름 없음')+'</strong></span>'
+        +'<span class="kinojo-my-info-character-stats" title="'+escapeHtml(statLabel)+'">'
+          +'<span class="kinojo-my-info-character-stat is-il"><i aria-hidden="true">IL</i><b>'+itemLevel+'</b></span>'
+          +'<span class="kinojo-my-info-character-stat-sep" aria-hidden="true"></span>'
+          +'<span class="kinojo-my-info-character-stat is-power"><i aria-hidden="true">✦</i><b>'+combatPower+'</b></span>'
+        +'</span>'
         +'</article>';
     }).join('');
   }
