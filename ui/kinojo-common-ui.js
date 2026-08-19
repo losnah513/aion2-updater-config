@@ -559,7 +559,8 @@
       element.hidden=!loggedIn;
       element.setAttribute('aria-hidden',loggedIn?'false':'true');
     });
-    if(!loggedIn){closeMyInfoPanel();closeMyInfoModal();}
+    if(!loggedIn){resetMyInfoCharacters_();closeMyInfoPanel();closeMyInfoModal();}
+    else setTimeout(()=>loadMyInfoCharacters_().catch(()=>{}),0);
   }
 
   function makeTopbar(rescued,info){
@@ -658,7 +659,7 @@
     }
     const link=document.createElement('link');
     link.rel='stylesheet';
-    link.href='/ui/kinojo-my-info.css?cache=2026081902';
+    link.href='/ui/kinojo-my-info.css?cache=2026081903';
     link.dataset.kinojoMyInfoStyles='true';
     link.addEventListener('load',()=>guard?.remove(),{once:true});
     document.head.appendChild(link);
@@ -681,11 +682,103 @@
           </button>
           <section class="kinojo-my-info-characters" aria-labelledby="kinojoMyCharactersTitle">
             <div class="kinojo-my-info-section-title" id="kinojoMyCharactersTitle">내 캐릭터</div>
-            <div class="kinojo-my-info-character-pending" aria-live="polite">캐릭터 연동 준비 중</div>
+            <div class="kinojo-my-info-character-list" id="kinojoMyInfoCharacterList" aria-live="polite"><div class="kinojo-my-info-character-status">캐릭터 불러오는 중</div></div>
           </section>
         </div>
       </aside>`;
     document.body.appendChild(layer);
+  }
+  const kinojoMyCharactersState={token:'',data:null,promise:null,retryTimer:0};
+  function myInfoSessionToken_(){
+    const token=String(window.KinojoAuth?.getSession?.()?.token||'').trim();
+    return /^kws_[A-Za-z0-9_-]{40,80}$/.test(token)?token:'';
+  }
+  function setMyInfoCharacterStatus_(message,code=''){
+    const host=q('#kinojoMyInfoCharacterList');
+    if(!host)return;
+    host.dataset.state=code||'status';
+    host.innerHTML='<div class="kinojo-my-info-character-status">'+escapeHtml(message||'캐릭터 정보를 확인 중입니다.')+'</div>';
+  }
+  function resetMyInfoCharacters_(){
+    if(kinojoMyCharactersState.retryTimer)clearTimeout(kinojoMyCharactersState.retryTimer);
+    kinojoMyCharactersState.token='';
+    kinojoMyCharactersState.data=null;
+    kinojoMyCharactersState.promise=null;
+    kinojoMyCharactersState.retryTimer=0;
+    setMyInfoCharacterStatus_('캐릭터 불러오는 중','idle');
+  }
+  function renderMyInfoCharacters_(data){
+    const host=q('#kinojoMyInfoCharacterList');
+    if(!host)return;
+    if(!data||data.ok!==true){
+      setMyInfoCharacterStatus_('캐릭터 정보를 불러오지 못했습니다.','error');
+      return;
+    }
+    if(data.ownerResolved!==true){
+      setMyInfoCharacterStatus_('등록된 본캐 연결 정보를 확인할 수 없습니다.',String(data.code||'OWNER_NOT_RESOLVED'));
+      return;
+    }
+    const characters=Array.isArray(data.characters)?data.characters.filter(row=>Number(row?.characterId||0)>0):[];
+    if(!characters.length){
+      setMyInfoCharacterStatus_('연결된 캐릭터가 없습니다.','empty');
+      return;
+    }
+    host.dataset.state='ready';
+    host.innerHTML=characters.map(row=>{
+      const characterId=Number(row.characterId||0);
+      const serverId=Number(row.serverId||0);
+      const characterName=String(row.characterName||'').trim();
+      const isMain=row.isMain===true;
+      const kind=isMain?'본캐':'부캐';
+      return '<article class="kinojo-my-info-character-row '+(isMain?'is-main':'is-alt')+'" data-character-id="'+characterId+'" data-server-id="'+(Number.isFinite(serverId)?serverId:'')+'" data-character-name="'+escapeHtml(characterName)+'" aria-label="'+escapeHtml(characterName+' · '+kind)+'">'
+        +'<span class="kinojo-my-info-character-kind">'+kind+'</span>'
+        +'<strong class="kinojo-my-info-character-name">'+escapeHtml(characterName||'이름 없음')+'</strong>'
+        +'</article>';
+    }).join('');
+  }
+  async function loadMyInfoCharacters_(force=false){
+    const token=myInfoSessionToken_();
+    if(!token){resetMyInfoCharacters_();return null;}
+    if(!force&&kinojoMyCharactersState.token===token&&kinojoMyCharactersState.data){
+      renderMyInfoCharacters_(kinojoMyCharactersState.data);
+      return kinojoMyCharactersState.data;
+    }
+    if(kinojoMyCharactersState.token!==token){
+      if(kinojoMyCharactersState.retryTimer)clearTimeout(kinojoMyCharactersState.retryTimer);
+      kinojoMyCharactersState.token=token;
+      kinojoMyCharactersState.data=null;
+      kinojoMyCharactersState.promise=null;
+      kinojoMyCharactersState.retryTimer=0;
+    }
+    if(kinojoMyCharactersState.promise)return kinojoMyCharactersState.promise;
+    const client=window.KinojoSupabaseClientCore;
+    if(!client||typeof client.invokeEdgeFunction!=='function'){
+      setMyInfoCharacterStatus_('서버 연결을 준비하는 중입니다.','waiting');
+      if(kinojoMyCharactersState.retryTimer)clearTimeout(kinojoMyCharactersState.retryTimer);
+      kinojoMyCharactersState.retryTimer=setTimeout(()=>{
+        kinojoMyCharactersState.retryTimer=0;
+        if(myInfoSessionToken_()===token)loadMyInfoCharacters_(force).catch(()=>{});
+      },180);
+      return null;
+    }
+    setMyInfoCharacterStatus_('캐릭터 불러오는 중','loading');
+    kinojoMyCharactersState.promise=(async()=>{
+      const data=await client.invokeEdgeFunction('kinojo-member-profile',{action:'characters',sessionToken:token});
+      if(myInfoSessionToken_()!==token)return null;
+      if(!data||data.ok!==true)throw new Error(data?.message||data?.code||'CHARACTER_LIST_FAILED');
+      kinojoMyCharactersState.data=data;
+      renderMyInfoCharacters_(data);
+      return data;
+    })().catch(error=>{
+      if(myInfoSessionToken_()===token){
+        kinojoMyCharactersState.data=null;
+        setMyInfoCharacterStatus_('캐릭터 정보를 불러오지 못했습니다.',String(error?.message||'error').slice(0,80));
+      }
+      return null;
+    }).finally(()=>{
+      if(kinojoMyCharactersState.token===token)kinojoMyCharactersState.promise=null;
+    });
+    return kinojoMyCharactersState.promise;
   }
   function makeMyInfoModal(){
     const modal=document.createElement('section');
@@ -734,6 +827,7 @@
     layer.setAttribute('aria-hidden','false');
     document.body.classList.add('kinojo-my-info-open');
     if(btn)btn.setAttribute('aria-expanded','true');
+    loadMyInfoCharacters_().catch(()=>{});
   }
   function closeMyInfoPanel(){
     const layer=q('#kinojoMyInfoLayer');
