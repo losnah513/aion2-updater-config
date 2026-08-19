@@ -1,17 +1,21 @@
-# trigger: 2026-08-19 stage-4d
 name: KINOJO temporary 4-D apply
+
 on:
-  push:
-    paths:
-      - .github/workflows/kinojo-temp-4d.yml
+  issues:
+    types: [opened]
+
 permissions:
   contents: write
+
 jobs:
   apply:
+    if: github.event.issue.title == 'KINOJO_MY_INFO_4D_20260819'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
       - name: Apply validated 4-D patch
         shell: bash
@@ -25,9 +29,10 @@ jobs:
           ! grep -q "profile-upload-complete" ui/kinojo-common-ui.js
           test "$(git hash-object ui/kinojo-common-ui.js)" = "bc43d7e63172179873aebc97f97e69125440cd42"
           test "$(git hash-object ui/kinojo-my-info.css)" = "01508eb48960f1483165023edd64e08392dafb20"
-          git config user.name "kinojo-automation"
-          git config user.email "actions@users.noreply.github.com"
+          git diff --check
+          git config user.name "losnah513"
+          git config user.email "losnah513@gmail.com"
           git rm -r .kinojo-tmp .github/workflows/kinojo-temp-4d.yml
           git add ui/kinojo-common-ui.js ui/kinojo-my-info.css
           git commit -m "Add local profile image preview in My Info"
-          git push origin HEAD:main
+          git push origin main
