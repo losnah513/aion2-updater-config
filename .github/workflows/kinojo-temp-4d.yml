@@ -32,7 +32,7 @@ jobs:
           git diff --check
           git config user.name "losnah513"
           git config user.email "losnah513@gmail.com"
-          git rm -r .kinojo-tmp .github/workflows/kinojo-temp-4d.yml
+          git rm -r .kinojo-tmp .github/workflows/kinojo-temp-4d.yml ui/.my-info-4d-issue-trigger
           git add ui/kinojo-common-ui.js ui/kinojo-my-info.css
           git commit -m "Add local profile image preview in My Info"
           git push origin main
