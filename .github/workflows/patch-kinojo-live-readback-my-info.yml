@@ -26,8 +26,8 @@ jobs:
           from pathlib import Path
           path=Path('.github/workflows/verify-kinojo-pages.yml')
           text=path.read_text(encoding='utf-8')
-          old='''  "ui/kinojo-common-ui.js"\n  "ui/kinojo-public-shell.css"'''
-          new='''  "ui/kinojo-common-ui.js"\n  "ui/kinojo-my-info.css"\n  "ui/kinojo-public-shell.css"'''
+          old='''            "ui/kinojo-common-ui.js"\n            "ui/kinojo-public-shell.css"'''
+          new='''            "ui/kinojo-common-ui.js"\n            "ui/kinojo-my-info.css"\n            "ui/kinojo-public-shell.css"'''
           if text.count(old) != 1:
               raise SystemExit(f'expected live files insertion point once, found {text.count(old)}')
           text=text.replace(old,new,1)
