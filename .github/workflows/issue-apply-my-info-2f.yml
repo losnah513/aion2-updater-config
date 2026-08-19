@@ -1,0 +1,51 @@
+name: Issue Apply My Info 2-F
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.event.issue.title == 'KINOJO_MY_INFO_2F_20260819'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Apply prepared product patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git apply --check .kinojo-temp/my-info-2f.patch
+          git apply .kinojo-temp/my-info-2f.patch
+          node --check ui/kinojo-common-ui.js
+          grep -q 'row.displayItemLevel' ui/kinojo-common-ui.js
+          grep -q 'row.displayCombatPower' ui/kinojo-common-ui.js
+          ! grep -q 'row.latestPveItemLevel' ui/kinojo-common-ui.js
+          ! grep -q 'row.latestPveCombatPower' ui/kinojo-common-ui.js
+          grep -q 'kinojo-my-info-character-stats' ui/kinojo-my-info.css
+          python3 - <<'PY'
+          from pathlib import Path
+          css=Path('ui/kinojo-my-info.css').read_text(encoding='utf-8')
+          if css.count('{') != css.count('}'):
+              raise SystemExit('CSS brace mismatch')
+          PY
+          node tests/web-shell-auth-contract.test.js
+          git diff --check
+
+      - name: Commit product files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "losnah513"
+          git config user.email "losnah513@gmail.com"
+          git add ui/kinojo-common-ui.js ui/kinojo-my-info.css
+          git commit -m "Show My Info item level and combat power"
+          git push origin main
