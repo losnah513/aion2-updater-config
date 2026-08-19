@@ -55,11 +55,11 @@ body.kinojo-my-info-open{overflow:hidden}
 .kinojo-my-info-character-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#17233a;font-size:12px;font-weight:950;line-height:1.2}
 .kinojo-my-info-character-stats{display:flex;align-items:center;justify-content:flex-end;gap:7px;min-width:0;font-variant-numeric:tabular-nums}
 .kinojo-my-info-character-stat{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;color:#334155}
-.kinojo-my-info-character-stat i{width:18px;height:18px;display:grid;place-items:center;border-radius:6px;font-style:normal;font-size:7px;font-weight:1000;line-height:1}
+.kinojo-my-info-character-stat i{display:block;flex:0 0 auto;background-repeat:no-repeat;background-position:center;background-size:contain;color:transparent;font-size:0;line-height:0;text-indent:-9999px;overflow:hidden}
 .kinojo-my-info-character-stat b{font-size:10px;font-weight:950;line-height:1}
-.kinojo-my-info-character-stat.is-il i{background:#fff7ed;color:#c2410c}
+.kinojo-my-info-character-stat.is-il i{width:12px;height:18px;background-image:url("https://assets.playnccdn.com/static-aion2/characters/img/info/profile_level_icon_pc.png")}
 .kinojo-my-info-character-stat.is-il b{color:#9a3412}
-.kinojo-my-info-character-stat.is-power i{background:#eff6ff;color:#2563eb;font-size:10px}
+.kinojo-my-info-character-stat.is-power i{width:20px;height:20px;background-image:url("https://assets.playnccdn.com/static-aion2/characters/img/info/profile_power_icon_pc.png")}
 .kinojo-my-info-character-stat.is-power b{color:#1d4ed8}
 .kinojo-my-info-character-stat-sep{width:1px;height:18px;background:rgba(122,146,180,.22)}
 
