@@ -1,4 +1,4 @@
-/* KINOJO My Info panel shell v20260819.01 */
+/* KINOJO My Info panel shell v20260819.02 */
 body.kinojo-my-info-open{overflow:hidden}
 .kinojo-my-info-layer{
   position:fixed!important;
@@ -41,67 +41,29 @@ body.kinojo-my-info-open{overflow:hidden}
 .kinojo-my-info-characters{margin-top:16px;padding-top:14px;border-top:1px solid rgba(122,146,180,.16)}.kinojo-my-info-section-title{margin-bottom:8px;color:#17233a;font-size:12px;font-weight:1000}.kinojo-my-info-character-pending{min-height:58px;display:grid;place-items:center;border:1px dashed rgba(122,146,180,.24);border-radius:12px;background:#f8fafc;color:#94a3b8;font-size:10px;font-weight:900}
 
 /* 20260819_03: 1-E character row preview; visual skeleton only, no live character data */
-.kinojo-my-info-character-pending{
-  position:relative;
-  min-height:146px;
-  padding:126px 10px 8px;
-  display:block;
-  border:0;
-  border-radius:0;
-  background:transparent;
-  color:#94a3b8;
-  text-align:center;
-  font-size:9px;
-  font-weight:900;
-  line-height:1.35;
-}
-.kinojo-my-info-character-pending::before,
-.kinojo-my-info-character-pending::after{
-  position:absolute;
-  left:0;
-  right:0;
-  height:58px;
-  box-sizing:border-box;
-  padding:35px 0 0 58px;
-  border:1px solid rgba(122,146,180,.18);
-  border-radius:12px;
-  background-color:#fff;
-  background-repeat:no-repeat;
-  color:#2563eb;
-  text-align:left;
-  font-size:8px;
-  font-weight:950;
-  line-height:1;
-  pointer-events:none;
-}
-.kinojo-my-info-character-pending::before{
-  content:"본캐";
-  top:0;
-  border-left:3px solid #2563eb;
-  background-image:
-    linear-gradient(135deg,#e8eef7,#f7f9fc),
-    linear-gradient(90deg,#e5ebf3,#f3f6fa),
-    linear-gradient(90deg,#e8edf4,#f5f7fa),
-    linear-gradient(135deg,#f1f5f9,#fff),
-    linear-gradient(90deg,#e8edf4,#f5f7fa),
-    linear-gradient(135deg,#f1f5f9,#fff),
-    linear-gradient(90deg,#e8edf4,#f5f7fa);
-  background-size:34px 34px,82px 10px,30px 14px,22px 22px,25px 8px,22px 22px,36px 8px;
-  background-position:10px 12px,56px 15px,54px 32px,calc(100% - 122px) 18px,calc(100% - 94px) 25px,calc(100% - 58px) 18px,calc(100% - 18px) 25px;
-}
-.kinojo-my-info-character-pending::after{
-  content:"부캐";
-  top:64px;
-  border-left:3px solid #94a3b8;
-  background-image:
-    linear-gradient(135deg,#edf1f6,#fafbfc),
-    linear-gradient(90deg,#e7ecf2,#f5f7fa),
-    linear-gradient(90deg,#edf0f4,#f8f9fb),
-    linear-gradient(135deg,#f1f5f9,#fff),
-    linear-gradient(90deg,#e8edf4,#f5f7fa),
-    linear-gradient(135deg,#f1f5f9,#fff),
-    linear-gradient(90deg,#e8edf4,#f5f7fa);
-  background-size:34px 34px,66px 10px,30px 14px,22px 22px,25px 8px,22px 22px,36px 8px;
-  background-position:10px 12px,56px 15px,54px 32px,calc(100% - 122px) 18px,calc(100% - 94px) 25px,calc(100% - 58px) 18px,calc(100% - 18px) 25px;
-  color:#64748b;
-}
+.kinojo-my-info-character-pending{position:relative;min-height:146px;padding:126px 10px 8px;display:block;border:0;border-radius:0;background:transparent;color:#94a3b8;text-align:center;font-size:9px;font-weight:900;line-height:1.35}
+.kinojo-my-info-character-pending::before,.kinojo-my-info-character-pending::after{position:absolute;left:0;right:0;height:58px;box-sizing:border-box;padding:35px 0 0 58px;border:1px solid rgba(122,146,180,.18);border-radius:12px;background-color:#fff;background-repeat:no-repeat;color:#2563eb;text-align:left;font-size:8px;font-weight:950;line-height:1;pointer-events:none}
+.kinojo-my-info-character-pending::before{content:"본캐";top:0;border-left:3px solid #2563eb;background-image:linear-gradient(135deg,#e8eef7,#f7f9fc),linear-gradient(90deg,#e5ebf3,#f3f6fa),linear-gradient(90deg,#e8edf4,#f5f7fa),linear-gradient(135deg,#f1f5f9,#fff),linear-gradient(90deg,#e8edf4,#f5f7fa),linear-gradient(135deg,#f1f5f9,#fff),linear-gradient(90deg,#e8edf4,#f5f7fa);background-size:34px 34px,82px 10px,30px 14px,22px 22px,25px 8px,22px 22px,36px 8px;background-position:10px 12px,56px 15px,54px 32px,calc(100% - 122px) 18px,calc(100% - 94px) 25px,calc(100% - 58px) 18px,calc(100% - 18px) 25px}
+.kinojo-my-info-character-pending::after{content:"부캐";top:64px;border-left:3px solid #94a3b8;background-image:linear-gradient(135deg,#edf1f6,#fafbfc),linear-gradient(90deg,#e7ecf2,#f5f7fa),linear-gradient(90deg,#edf0f4,#f8f9fb),linear-gradient(135deg,#f1f5f9,#fff),linear-gradient(90deg,#e8edf4,#f5f7fa),linear-gradient(135deg,#f1f5f9,#fff),linear-gradient(90deg,#e8edf4,#f5f7fa);background-size:34px 34px,66px 10px,30px 14px,22px 22px,25px 8px,22px 22px,36px 8px;background-position:10px 12px,56px 15px,54px 32px,calc(100% - 122px) 18px,calc(100% - 94px) 25px,calc(100% - 58px) 18px,calc(100% - 18px) 25px;color:#64748b}
+
+
+/* 20260819_04: 1-F image management preview; all controls remain disabled */
+.kinojo-my-info-profile-preview,.kinojo-my-info-reference-preview{margin-top:10px;padding:12px;border:1px solid rgba(122,146,180,.16);border-radius:14px;background:#fff}
+.kinojo-my-info-subhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.kinojo-my-info-subhead>div{min-width:0;display:grid;gap:2px}.kinojo-my-info-subhead strong{color:#17233a;font-size:12px;font-weight:1000}.kinojo-my-info-subhead small{color:#8491a5;font-size:9px;font-weight:800}.kinojo-my-info-ready-badge{flex:0 0 auto;padding:3px 7px;border:1px solid rgba(148,163,184,.24);border-radius:999px;background:#f8fafc;color:#7c8ba1;font-size:8px;font-weight:950}
+.kinojo-my-info-profile-card{display:grid;grid-template-columns:54px minmax(0,1fr);align-items:center;gap:10px;padding:10px;border:1px dashed rgba(122,146,180,.22);border-radius:12px;background:#f8fafc}.kinojo-my-info-profile-placeholder{width:54px;height:54px;border-radius:14px;background:linear-gradient(135deg,#e8eef7,#f8fafc);box-shadow:inset 0 0 0 1px rgba(122,146,180,.1)}.kinojo-my-info-profile-copy{min-width:0;display:grid;gap:4px}.kinojo-my-info-profile-copy strong{color:#334155;font-size:11px;font-weight:950}.kinojo-my-info-profile-copy small{color:#94a3b8;font-size:9px;font-weight:800;line-height:1.4}
+.kinojo-my-info-preview-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.kinojo-my-info-preview-actions button,.kinojo-my-info-reference-card button{min-height:32px;border:1px solid #dfe5ee;border-radius:9px;background:#f4f6f9;color:#94a3b8;font-family:inherit;font-size:9px;font-weight:900;cursor:not-allowed;opacity:1}
+.kinojo-my-info-reference-guide{margin:0 0 10px;color:#64748b;font-size:9px;font-weight:800;line-height:1.5}.kinojo-my-info-reference-grid{display:grid;gap:8px}.kinojo-my-info-reference-card{display:grid;grid-template-columns:62px minmax(0,1fr) 92px;align-items:center;gap:9px;padding:8px;border:1px solid rgba(122,146,180,.16);border-radius:12px;background:#fbfcfe}.kinojo-my-info-reference-card>div:nth-child(2){min-width:0;display:grid;gap:3px}.kinojo-my-info-reference-card strong{color:#334155;font-size:10px;font-weight:950}.kinojo-my-info-reference-card small{color:#94a3b8;font-size:8px;font-weight:800}.kinojo-my-info-reference-placeholder{width:62px;height:48px;display:grid;place-items:center;border:1px dashed rgba(96,165,250,.26);border-radius:9px;background:linear-gradient(135deg,#f1f6ff,#fafcff);color:#7d91ad;overflow:hidden}.kinojo-my-info-reference-placeholder span{max-width:54px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:7px;font-weight:1000;letter-spacing:.04em}
+@media(max-width:360px){.kinojo-my-info-preview-actions{grid-template-columns:1fr}.kinojo-my-info-reference-card{grid-template-columns:54px minmax(0,1fr)}.kinojo-my-info-reference-placeholder{width:54px}.kinojo-my-info-reference-card button{grid-column:1/-1}}
+
+
+/* 20260819_04: 1-F image management Preview only; no file input, upload, delete or server action */
+.kinojo-my-info-preview-state{min-height:566px;padding-bottom:500px;overflow:hidden}
+.kinojo-my-info-preview-state>strong::after,.kinojo-my-info-preview-state>p::after,.kinojo-my-info-preview-badge::after,.kinojo-my-info-preview-state>strong::before,.kinojo-my-info-preview-state>p::before,.kinojo-my-info-preview-badge::before{position:absolute;left:14px;right:14px;box-sizing:border-box;pointer-events:none}
+.kinojo-my-info-preview-state>strong::after{content:"프로필 이미지  ·  현재 이미지 연동 전\A\A현재 프로필 이미지      실제 캐릭터 이미지 연결 후 표시됩니다.";top:82px;min-height:92px;padding:15px 12px 12px 78px;border:1px dashed rgba(122,146,180,.22);border-radius:12px;background:linear-gradient(135deg,#e8eef7,#f8fafc) 12px 18px/50px 50px no-repeat,#f8fafc;color:#475569;white-space:pre-line;font-size:9px;line-height:1.45;font-weight:850}
+.kinojo-my-info-preview-state>p::after{content:"이미지 변경 준비중     ·     기본 이미지로 복원 준비중";top:182px;min-height:34px;padding:9px 8px;border:1px solid #dfe5ee;border-radius:9px;background:#f4f6f9;color:#94a3b8;text-align:center;white-space:nowrap;font-size:8px;line-height:1.8;font-weight:900}
+.kinojo-my-info-preview-badge::after{content:"참고 이미지  ·  캐릭터별 선택 사항 · 최대 3장\A JPEG · PNG · WebP / 장당 5MB 이하 · 관리자 확인용 비공개 자료";top:234px;padding:0;color:#64748b;white-space:pre-line;font-size:9px;line-height:1.55;font-weight:850;letter-spacing:0}
+.kinojo-my-info-preview-state>strong::before,.kinojo-my-info-preview-state>p::before,.kinojo-my-info-preview-badge::before{min-height:62px;padding:13px 10px 10px 78px;border:1px solid rgba(122,146,180,.16);border-radius:12px;background:linear-gradient(135deg,#f1f6ff,#fafcff) 10px 9px/56px 44px no-repeat,#fbfcfe;color:#64748b;white-space:pre-line;text-align:left;font-size:9px;line-height:1.45;font-weight:850;letter-spacing:0}
+.kinojo-my-info-preview-state>strong::before{content:"FRONT  ·  정면\A캐릭터 정면이 보이게                 업로드 준비중";top:294px}
+.kinojo-my-info-preview-state>p::before{content:"BACK  ·  후면\A캐릭터 후면이 보이게                 업로드 준비중";top:364px}
+.kinojo-my-info-preview-badge::before{content:"UPPER_BODY  ·  상반신\A얼굴이 잘 보이게                      업로드 준비중";top:434px}
+@media(max-width:360px){.kinojo-my-info-preview-state{min-height:590px;padding-bottom:524px}.kinojo-my-info-preview-state>p::after{white-space:normal}.kinojo-my-info-preview-state>strong::before,.kinojo-my-info-preview-state>p::before,.kinojo-my-info-preview-badge::before{padding-left:70px;font-size:8px}}
