@@ -1,0 +1,52 @@
+name: Finalize My Info Stage 1 Preview
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: github.event.issue.title == 'KINOJO_MY_INFO_STAGE1_FINAL_20260819'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Bump My Info preview cache contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          path=Path('ui/kinojo-common-ui.js')
+          text=path.read_text(encoding='utf-8')
+          old="link.href='/ui/kinojo-my-info.css?cache=2026081901';"
+          new="link.href='/ui/kinojo-my-info.css?cache=2026081902';"
+          if text.count(old) != 1:
+              raise SystemExit(f'expected exactly one My Info cache key, found {text.count(old)}')
+          text=text.replace(old,new,1)
+          path.write_text(text,encoding='utf-8')
+          PY
+          node --check ui/kinojo-common-ui.js
+          node tests/web-shell-auth-contract.test.js
+          git diff --check
+          grep -q "kinojo-my-info.css?cache=2026081902" ui/kinojo-common-ui.js
+          ! grep -q "kinojo-my-info.css?cache=2026081901" ui/kinojo-common-ui.js
+
+      - name: Commit final Stage 1 preview source
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/issue-run-my-info-stage1-final.yml
+          git config user.name "losnah513"
+          git config user.email "losnah513@gmail.com"
+          git add ui/kinojo-common-ui.js
+          git add -u .github/workflows/issue-run-my-info-stage1-final.yml
+          git commit -m "Finalize My Info Stage 1 preview cache"
+          git push origin main
