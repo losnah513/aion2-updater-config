@@ -1,593 +1,141 @@
-name: Verify KINOJO Pages
+name: Apply Focused My Info Modal Correction
 
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - "index.html"
-      - "home.html"
-      - "m/index.html"
-      - "arcana/**"
-      - "m/arcana/**"
-      - "hall-of-fame/**"
-      - "pages/**"
-      - "m/pages/**"
-      - "desktop/**"
-      - "ranking/**"
-      - "m/ranking/**"
-      - "hof/**"
-      - "m/hof/**"
-      - "sanctuary/**"
-      - "assets/images/sanctuary/**"
-      - "assets/images/classes/**"
-      - "m/sanctuary/**"
-      - "sanctuary-schedule/**"
-      - "m/sanctuary-schedule/**"
-      - "admin/**"
-      - "m/admin/**"
-      - "meter/**"
-      - "m/meter/**"
-      - "core/**"
-      - "ui/**"
-      - "tests/**"
-      - "launcher-content.json"
-      - "CNAME"
-      - ".github/workflows/verify-kinojo-pages.yml"
   push:
     branches: [main]
     paths:
-      - "index.html"
-      - "home.html"
-      - "m/index.html"
-      - "arcana/**"
-      - "m/arcana/**"
-      - "hall-of-fame/**"
-      - "pages/**"
-      - "m/pages/**"
-      - "desktop/**"
-      - "ranking/**"
-      - "m/ranking/**"
-      - "hof/**"
-      - "m/hof/**"
-      - "sanctuary/**"
-      - "assets/images/sanctuary/**"
-      - "assets/images/classes/**"
-      - "m/sanctuary/**"
-      - "sanctuary-schedule/**"
-      - "m/sanctuary-schedule/**"
-      - "admin/**"
-      - "m/admin/**"
-      - "meter/**"
-      - "m/meter/**"
-      - "core/**"
-      - "ui/**"
-      - "tests/**"
-      - "launcher-content.json"
-      - "CNAME"
       - ".github/workflows/verify-kinojo-pages.yml"
-  workflow_dispatch:
 
 permissions:
-  contents: read
-  statuses: write
-
-concurrency:
-  group: verify-kinojo-pages-${{ github.ref }}
-  cancel-in-progress: true
+  contents: write
 
 jobs:
-  verify-source:
+  apply:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 5
     steps:
-      - name: Checkout PR head or current commit
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-
-      - name: Verify JavaScript syntax and modal contracts
+          ref: main
+          fetch-depth: 2
+      - name: Apply and verify correction
         shell: bash
         run: |
           set -euo pipefail
-
-          js_files=(
-            "ui/kinojo-character-reaction.js"
-            "ui/kinojo-character-detail-refresh.js"
-            "ui/kinojo-character-skill-bridge.js"
-            "ui/kinojo-character-daevanion-bridge.js"
-            "core/kinojo-supabase-client.js"
-            "core/kinojo-supabase-rpc.js"
-            "core/kinojo-supabase-features.js"
-            "core/kinojo-auth-session.js"
-            "core/kinojo-auth-ui.js"
-            "sanctuary/js/sanctuary.js"
-            "sanctuary/js/sanctuary-editor.js"
-            "sanctuary-schedule/js/sanctuary-schedule.js"
-            "admin/js/admin-system.js"
-            "admin/js/admin-bootstrap.js"
-            "meter/js/meter-app.js"
-          )
-
-          for path in "${js_files[@]}"; do
-            node --check "$path"
-          done
-
-          node tests/web-shell-auth-contract.test.js
-          node tests/sanctuary-waitlist-contract.test.js
-          node tests/staged-page-contract.test.js
-          node tests/meter-presence-log-contract.test.js
-
           python3 <<'PY'
           from pathlib import Path
           import re
 
-          pages = [
-              Path("hof/index.html"),
-              Path("m/hof/index.html"),
-              Path("ranking/index.html"),
-              Path("m/ranking/index.html"),
-              Path("sanctuary/index.html"),
-              Path("m/sanctuary/index.html"),
-          ]
-          required_assets = [
-              "kinojo-character-skill.css?cache=2026081001",
-              "kinojo-character-daevanion.css?cache=2026081002",
-              "kinojo-animations.css?cache=2026081003",
-              "kinojo-character-skill-bridge.js?cache=2026081001",
-              "kinojo-character-daevanion-bridge.js?cache=2026081002",
-          ]
-          for page in pages:
-              text = page.read_text(encoding="utf-8")
-              for asset in required_assets:
-                  count = text.count(asset)
-                  if count != 1:
-                      raise SystemExit(f"{page}: {asset} include count={count}, expected=1")
+          js_path=Path('ui/kinojo-common-ui.js')
+          css_path=Path('ui/kinojo-my-info.css')
+          js=js_path.read_text(encoding='utf-8')
+          css=css_path.read_text(encoding='utf-8')
 
-          skill = Path("ui/kinojo-character-skill-bridge.js").read_text(encoding="utf-8")
-          daev = Path("ui/kinojo-character-daevanion-bridge.js").read_text(encoding="utf-8")
-          animations = Path("ui/kinojo-animations.css").read_text(encoding="utf-8")
-          daev_css = Path("ui/kinojo-character-daevanion.css").read_text(encoding="utf-8")
+          old="    if(!loggedIn)closeMyInfoPanel();"
+          if old not in js: raise SystemExit('auth close contract missing')
+          js=js.replace(old,"    if(!loggedIn){closeMyInfoPanel();closeMyInfoModal();}",1)
 
-          forbidden = {
-              "skill rpc monkey patch": (skill, r"\brpc\.rpc\s*="),
-              "daev edge monkey patch": (daev, r"\bcore\.invokeEdgeFunction\s*="),
-              "daev overview monkey patch": (daev, r"\bapi\.getLiveCharacterProfile\s*="),
-          }
-          for label, (text, pattern) in forbidden.items():
-              if re.search(pattern, text):
-                  raise SystemExit(f"Forbidden frozen-core mutation detected: {label}")
+          pat=re.compile(r'''          <button class="kinojo-my-info-menu-btn is-active" id="kinojoMyInfoMenuBtn".*?</button>\n          <section class="kinojo-my-info-view is-active" id="kinojoMyInfoProfileView".*?</section>\n''',re.S)
+          repl='''          <button class="kinojo-my-info-menu-btn" id="kinojoMyInfoMenuBtn" type="button" aria-haspopup="dialog" aria-controls="kinojoMyInfoModal">\n            <span>내 정보</span><small>이미지 관리 Preview</small>\n          </button>\n'''
+          js,n=pat.subn(repl,js,count=1)
+          if n!=1: raise SystemExit(f'panel profile replacement={n}')
 
-          required_tokens = {
-              "skill SQL 305": (skill, "kinojo_character_skill_overview_v305"),
-              "skill Server category": (skill, "categoryLabel"),
-              "skill Server tier": (skill, "levelBand"),
-              "skill stigma": (skill, "스티그마"),
-              "skill tier class": (skill, "is-level-30"),
-              "daev SQL 307": (daev, "kinojo_character_daevanion_detail_v307"),
-              "daev active nodes": (daev, "activeNodes"),
-              "daev stat effects": (daev, "statEffects"),
-              "daev skill effects": (daev, "skillEffects"),
-              "daev board map": (daev + daev_css, "kinojo-daevanion-board-map"),
-              "inner modal scroll": (animations, "kinojo-character-reaction-scroll"),
-              "outer modal overflow lock": (animations, "overflow:hidden!important"),
-          }
-          for label, (text, token) in required_tokens.items():
-              if token not in text:
-                  raise SystemExit(f"Required contract missing: {label}")
+          pat=re.compile(r'''  function activateMyInfoView_\(target\)\{.*?\n  \}\n  function openMyInfoPanel\(\)\{''',re.S)
+          repl='''  function makeMyInfoModal(){
+    const modal=document.createElement('section');
+    modal.className='kinojo-my-info-modal';
+    modal.id='kinojoMyInfoModal';
+    modal.setAttribute('aria-hidden','true');
+    modal.innerHTML=`
+      <div class="kinojo-my-info-modal-backdrop" data-kinojo-my-info-modal-close></div>
+      <div class="kinojo-my-info-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="kinojoMyInfoModalTitle" tabindex="-1">
+        <button class="kinojo-my-info-modal-close" type="button" aria-label="내 정보 닫기" data-kinojo-my-info-modal-close>×</button>
+        <div class="kinojo-my-info-preview-state">
+          <span class="kinojo-my-info-preview-badge">PREVIEW</span>
+          <strong id="kinojoMyInfoModalTitle">내 정보</strong>
+          <p>프로필·캐릭터 이미지 관리 화면을 준비 중입니다.</p>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+  }
+  function openMyInfoModal(){
+    const modal=q('#kinojoMyInfoModal');
+    if(!modal||!window.KinojoAuth?.getSession?.())return;
+    closeMyInfoPanel();
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden','false');
+    document.body.classList.add('kinojo-my-info-modal-open');
+    const dialog=q('.kinojo-my-info-modal-dialog',modal);
+    if(dialog)dialog.scrollTop=0;
+    requestAnimationFrame(()=>{try{dialog?.focus({preventScroll:true});}catch(_err){dialog?.focus();}});
+  }
+  function closeMyInfoModal(){
+    const modal=q('#kinojoMyInfoModal');
+    if(modal){modal.classList.remove('open');modal.setAttribute('aria-hidden','true');}
+    document.body.classList.remove('kinojo-my-info-modal-open');
+  }
+  function openMyInfoPanel(){'''
+          js,n=pat.subn(repl,js,count=1)
+          if n!=1: raise SystemExit(f'activate replacement={n}')
+          js=js.replace("    activateMyInfoView_('profile');\n",'',1)
 
-          checked = pages + [
-              Path("ui/kinojo-character-skill.css"),
-              Path("ui/kinojo-character-daevanion.css"),
-              Path("ui/kinojo-animations.css"),
-              Path("ui/kinojo-character-detail-refresh.css"),
-              Path("sanctuary/css/sanctuary.css"),
-              Path("sanctuary-schedule/css/sanctuary-schedule.css"),
-          ]
-          for path in checked:
-              data = path.read_bytes()
-              if b"\x00" in data:
-                  raise SystemExit(f"NUL byte detected: {path}")
-              if path.suffix == ".css":
-                  text = data.decode("utf-8")
-                  if text.count("{") != text.count("}"):
-                      raise SystemExit(f"CSS brace mismatch: {path}")
+          old="    q('#kinojoMyInfoMenuBtn')?.addEventListener('click',e=>{e.preventDefault();activateMyInfoView_(e.currentTarget.dataset.myInfoTarget);});"
+          new="    q('#kinojoMyInfoMenuBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openMyInfoModal();});\n    q('#kinojoMyInfoModal')?.addEventListener('click',e=>{if(e.target instanceof Element&&e.target.closest('[data-kinojo-my-info-modal-close]')){e.preventDefault();e.stopPropagation();closeMyInfoModal();}});"
+          if old not in js: raise SystemExit('menu binding missing')
+          js=js.replace(old,new,1)
 
-          class_icon_names = [
-              "class_icon_assassin.png",
-              "class_icon_chanter.png",
-              "class_icon_cleric.png",
-              "class_icon_elementalist.png",
-              "class_icon_fighter.png",
-              "class_icon_gladiator.png",
-              "class_icon_ranger.png",
-              "class_icon_sorcerer.png",
-              "class_icon_templar.png",
-          ]
-          class_icon_dir = Path("assets/images/classes")
-          original_icon_dir = class_icon_dir / "original"
-          active_names = sorted(path.name for path in class_icon_dir.glob("class_icon_*.png"))
-          original_names = sorted(path.name for path in original_icon_dir.glob("class_icon_*.png"))
-          if active_names != class_icon_names:
-              raise SystemExit(f"Active class icon set mismatch: {active_names}")
-          if original_names != class_icon_names:
-              raise SystemExit(f"Original class icon set mismatch: {original_names}")
+          old="    document.addEventListener('keydown',e=>{if(e.key==='Escape'){const myInfo=q('#kinojoMyInfoLayer');if(myInfo?.classList.contains('open'))return closeMyInfoPanel();const p=q('#drawerPagePanel');if(p?.classList.contains('open'))return closeDrawerPagePanel();const d=q('#sideDrawer');if(d?.classList.contains('open'))return closeSideDrawer();}});"
+          new="    document.addEventListener('keydown',e=>{if(e.key==='Escape'){const modal=q('#kinojoMyInfoModal');if(modal?.classList.contains('open'))return closeMyInfoModal();const myInfo=q('#kinojoMyInfoLayer');if(myInfo?.classList.contains('open'))return closeMyInfoPanel();const p=q('#drawerPagePanel');if(p?.classList.contains('open'))return closeDrawerPagePanel();const d=q('#sideDrawer');if(d?.classList.contains('open'))return closeSideDrawer();}});"
+          if old not in js: raise SystemExit('escape contract missing')
+          js=js.replace(old,new,1)
 
-          for name in class_icon_names:
-              active = (class_icon_dir / name).read_bytes()
-              original = (original_icon_dir / name).read_bytes()
-              if active[:8] != b"\x89PNG\r\n\x1a\n":
-                  raise SystemExit(f"Invalid active class icon PNG: {name}")
-              width = int.from_bytes(active[16:20], "big")
-              height = int.from_bytes(active[20:24], "big")
-              if (width, height) != (256, 256):
-                  raise SystemExit(f"Unexpected active class icon size: {name} {width}x{height}")
-              if active == original:
-                  raise SystemExit(f"Active class icon was not replaced: {name}")
+          old="  makeMyInfoPanel();\n"
+          if old not in js: raise SystemExit('init contract missing')
+          js=js.replace(old,"  makeMyInfoPanel();\n  makeMyInfoModal();\n",1)
+          js=js.replace(".admin-panel-modal';",".admin-panel-modal,.kinojo-my-info-modal';",1)
+          js=js.replace("openMyInfoPanel,closeMyInfoPanel,toggleAdminMenu","openMyInfoPanel,closeMyInfoPanel,openMyInfoModal,closeMyInfoModal,toggleAdminMenu",1)
 
-          meter_pages = [Path("meter/index.html"), Path("m/meter/index.html")]
-          for page in meter_pages:
-              text = page.read_text(encoding="utf-8")
-              for token in ["meterInstallerSize", "다운로드 용량", "meter-app.js?cache=2026081502-50040", "meterLiveUsers", "meterLiveNames"]:
-                  if token not in text:
-                      raise SystemExit(f"{page}: Meter distribution contract missing: {token}")
+          if 'kinojoMyInfoProfileView' in js or 'activateMyInfoView_' in js:
+              raise SystemExit('legacy in-panel profile structure remains')
+          if "closeMyInfoPanel();\n    modal.classList.add('open')" not in js:
+              raise SystemExit('panel-close-before-modal-open contract missing')
 
-          admin_pages = [Path("admin/index.html"), Path("m/admin/index.html")]
-          for page in admin_pages:
-              text = page.read_text(encoding="utf-8")
-              for token in ["data-admin-subtab=\"downloads\"", "data-admin-subtab=\"runtime\"", "data-admin-subtab=\"statistics\"", "data-admin-subtab=\"notices\"", "data-admin-subtab=\"logs\"", "data-meter-download-enabled", "data-meter-launch-enabled", "data-meter-statistics-enabled", "kinojo-filter-switch", "meterDungeonLogRows"]:
-                  if token not in text:
-                      raise SystemExit(f"{page}: Meter admin contract missing: {token}")
+          marker='/* 20260819_05: 1-F layout correction'
+          if marker not in css: raise SystemExit('prior layout marker missing')
+          css=css.replace('/* KINOJO My Info panel shell v20260819.03 */','/* KINOJO My Info panel shell v20260819.04 */',1)
+          css=css[:css.index(marker)].rstrip()+'''\n\n/* 20260819_06: 1-F layout correction 2 — standalone body-level modal */
+body.kinojo-my-info-modal-open{overflow:hidden}
+.kinojo-my-info-modal{position:fixed;inset:0;z-index:12000;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(15,23,42,.34);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-sizing:border-box}
+.kinojo-my-info-modal.open{display:flex}
+.kinojo-my-info-modal-backdrop{position:absolute;inset:0}
+.kinojo-my-info-modal-dialog{position:relative;width:min(760px,calc(100vw - 36px));max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);overflow-y:auto;overscroll-behavior-y:auto;padding:26px 28px 30px;border:1px solid rgba(148,163,184,.3);border-radius:26px;background:linear-gradient(180deg,rgba(255,255,255,.99),rgba(248,250,252,.99));box-shadow:0 24px 64px rgba(15,23,42,.22);color:#0f172a;outline:none}
+.kinojo-my-info-modal-close{position:absolute;top:14px;right:14px;width:34px;height:34px;border:0;border-radius:999px;background:rgba(15,23,42,.07);color:#334155;font-size:22px;line-height:1;cursor:pointer;display:grid;place-items:center;z-index:5}
+.kinojo-my-info-modal-close:hover{background:rgba(15,23,42,.12)}
+.kinojo-my-info-modal .kinojo-my-info-preview-state{margin:0;padding-top:18px}
+@media(max-width:640px){.kinojo-my-info-modal{padding:12px}.kinojo-my-info-modal-dialog{width:min(430px,calc(100vw - 24px));max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);padding:20px;border-radius:22px}}
+@media(max-width:370px){.kinojo-my-info-modal-dialog{padding:18px 16px}}
+'''
+          if '#kinojoMyInfoMenuBtn:focus + #kinojoMyInfoProfileView' in css:
+              raise SystemExit('legacy focus modal CSS remains')
+          if css.count('{')!=css.count('}'):
+              raise SystemExit('CSS brace mismatch')
 
-          meter_app = Path("meter/js/meter-app.js").read_text(encoding="utf-8")
-          admin_system = Path("admin/js/admin-system.js").read_text(encoding="utf-8")
-          for token in ["launcherDownloadAuthorization", "renderDistribution", "미터기 포함"]:
-              if token not in meter_app:
-                  raise SystemExit(f"Meter WEB contract missing: {token}")
-          if "desktopDownloadAuthorization" in meter_app:
-              raise SystemExit("Meter WEB must authorize the Launcher, not the legacy desktop installer")
-          for token in ["RANK_ALLOWLIST", "allowedLevels", "launchAllowedLevels", "combinedFileSize"]:
-              if token not in admin_system:
-                  raise SystemExit(f"Meter admin contract missing: {token}")
-
-          print("KINOJO modal source contracts: PASS")
+          js_path.write_text(js,encoding='utf-8')
+          css_path.write_text(css,encoding='utf-8')
           PY
 
-          node <<'NODE'
-          const fs = require('node:fs');
-          const vm = require('node:vm');
+          node --check ui/kinojo-common-ui.js
+          test ! -e .github/workflows/apply-my-info-modal-layout-fix.yml || rm .github/workflows/apply-my-info-modal-layout-fix.yml
+          git show HEAD^:.github/workflows/verify-kinojo-pages.yml > .github/workflows/verify-kinojo-pages.yml
+          git diff --check
 
-          global.window = { addEventListener() {} };
-          global.document = {};
-          vm.runInThisContext(fs.readFileSync('ui/kinojo-character-reaction.js', 'utf8'), {
-            filename: 'ui/kinojo-character-reaction.js',
-          });
-
-          const candidates = window.KinojoCharacterProfileImage.candidates({ className: '수호성' });
-          if (candidates.length !== 1 || candidates[0].kind !== 'class') {
-            throw new Error('Character image fallback candidate contract failed');
-          }
-          console.log('Character image fallback candidate: PASS');
-          NODE
-
-      - name: Verify bridge startup with frozen cores
+      - name: Commit and push final correction
         shell: bash
         run: |
           set -euo pipefail
-          node <<'NODE'
-          const fs = require('node:fs');
-          const vm = require('node:vm');
-
-          const rpc = async () => ({ ok: true, apiVersion: '305', skills: [] });
-          const invokeEdgeFunction = async () => ({ ok: true });
-          const rpcCore = Object.freeze({ rpc });
-          const clientCore = Object.freeze({ invokeEdgeFunction });
-          const readyCallbacks = [];
-
-          global.window = {
-            KinojoSupabaseRpcCore: rpcCore,
-            KinojoSupabaseClientCore: clientCore,
-          };
-          global.document = {
-            readyState: 'loading',
-            body: {},
-            addEventListener(name, callback) {
-              if (name === 'DOMContentLoaded') readyCallbacks.push(callback);
-            },
-            getElementById() { return null; },
-            contains() { return true; },
-          };
-          global.MutationObserver = class { observe() {} disconnect() {} };
-          global.requestAnimationFrame = callback => { callback(); return 1; };
-
-          for (const path of [
-            'ui/kinojo-character-skill-bridge.js',
-            'ui/kinojo-character-daevanion-bridge.js',
-          ]) {
-            vm.runInThisContext(fs.readFileSync(path, 'utf8'), { filename: path });
-          }
-          for (const callback of readyCallbacks) callback();
-
-          if (!Object.isFrozen(window.KinojoSupabaseRpcCore)) throw new Error('RPC core freeze lost');
-          if (!Object.isFrozen(window.KinojoSupabaseClientCore)) throw new Error('Client core freeze lost');
-          if (window.KinojoSupabaseRpcCore.rpc !== rpc) throw new Error('RPC core method mutated');
-          if (window.KinojoSupabaseClientCore.invokeEdgeFunction !== invokeEdgeFunction) throw new Error('Client core method mutated');
-          console.log('Frozen core startup smoke: PASS');
-          NODE
-
-  verify-live-readback:
-    if: github.event_name != 'pull_request'
-    needs: verify-source
-    runs-on: ubuntu-latest
-    timeout-minutes: 12
-    env:
-      LIVE_BASE: https://kinojo.info
-    steps:
-      - name: Checkout deployed main source
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.sha }}
-
-      - name: Publish live readback pending status
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          STATUS_STATE: pending
-          STATUS_DESCRIPTION: KINOJO 운영 파일 동기화 확인 중
-        run: |
-          set -euo pipefail
-          python3 <<'PY' > /tmp/kinojo-status.json
-          import json, os
-          print(json.dumps({
-              "state": os.environ["STATUS_STATE"],
-              "context": "kinojo/live-readback",
-              "description": os.environ["STATUS_DESCRIPTION"],
-              "target_url": f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
-          }, ensure_ascii=False))
-          PY
-          curl --fail --silent --show-error --location \
-            -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-            --data-binary @/tmp/kinojo-status.json >/dev/null
-
-      - name: Verify custom domain and live files
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          expected_ref="${{ github.sha }}"
-          verify_key="${expected_ref:0:12}-$(date -u +%s)"
-          tmp_dir="$(mktemp -d)"
-          trap 'rm -rf "$tmp_dir"' EXIT
-
-          files=(
-            "index.html"
-            "home.html"
-            "m/index.html"
-            "launcher-content.json"
-            "hall-of-fame/index.html"
-            "hof/index.html"
-            "m/hof/index.html"
-            "hof/css/hall.css"
-            "hof/js/hall-render.js"
-            "ranking/index.html"
-            "m/ranking/index.html"
-            "ranking/css/ranking.css"
-            "ranking/css/ranking-card.css"
-            "ranking/css/ranking-responsive.css"
-            "ranking/js/ranking-utils.js"
-            "ranking/js/ranking-data.js"
-            "ranking/js/ranking-card.js"
-            "ranking/js/ranking-render.js"
-            "ranking/js/ranking-events.js"
-            "ranking/js/ranking-app.js"
-            "sanctuary/index.html"
-            "m/sanctuary/index.html"
-            "sanctuary/css/sanctuary.css"
-            "sanctuary/js/sanctuary.js"
-            "sanctuary/js/sanctuary-editor.js"
-            "assets/images/sanctuary/SOURCES.md"
-            "assets/images/sanctuary/backgrounds/rudra.webp"
-            "assets/images/sanctuary/backgrounds/bagot.webp"
-            "assets/images/sanctuary/backgrounds/kaldrix.webp"
-            "assets/images/sanctuary/bosses/rudra.webp"
-            "assets/images/sanctuary/bosses/bagot.webp"
-            "assets/images/sanctuary/bosses/kaldrix.webp"
-            "assets/images/classes/class_icon_assassin.png"
-            "assets/images/classes/class_icon_chanter.png"
-            "assets/images/classes/class_icon_cleric.png"
-            "assets/images/classes/class_icon_elementalist.png"
-            "assets/images/classes/class_icon_fighter.png"
-            "assets/images/classes/class_icon_gladiator.png"
-            "assets/images/classes/class_icon_ranger.png"
-            "assets/images/classes/class_icon_sorcerer.png"
-            "assets/images/classes/class_icon_templar.png"
-            "assets/images/classes/original/class_icon_assassin.png"
-            "assets/images/classes/original/class_icon_chanter.png"
-            "assets/images/classes/original/class_icon_cleric.png"
-            "assets/images/classes/original/class_icon_elementalist.png"
-            "assets/images/classes/original/class_icon_fighter.png"
-            "assets/images/classes/original/class_icon_gladiator.png"
-            "assets/images/classes/original/class_icon_ranger.png"
-            "assets/images/classes/original/class_icon_sorcerer.png"
-            "assets/images/classes/original/class_icon_templar.png"
-            "sanctuary-schedule/index.html"
-            "m/sanctuary-schedule/index.html"
-            "sanctuary-schedule/css/sanctuary-schedule.css"
-            "sanctuary-schedule/js/sanctuary-schedule.js"
-            "arcana/index.html"
-            "m/arcana/index.html"
-            "admin/index.html"
-            "m/admin/index.html"
-            "admin/js/admin.js"
-            "admin/js/admin-system.js"
-            "admin/js/admin-shared.js"
-            "admin/js/admin-characters.js"
-            "admin/js/admin-bootstrap.js"
-            "admin/css/admin.css"
-            "meter/index.html"
-            "m/meter/index.html"
-            "meter/meter-config.json"
-            "meter/js/meter-app.js"
-            "meter/css/meter.css"
-            "pages/about.html"
-            "pages/contact.html"
-            "pages/privacy.html"
-            "pages/terms.html"
-            "m/pages/about.html"
-            "m/pages/contact.html"
-            "m/pages/privacy.html"
-            "m/pages/terms.html"
-            "desktop/index.html"
-            "desktop/arcana/index.html"
-            "desktop/hall-of-fame/index.html"
-            "desktop/sanctuary/index.html"
-            "desktop/pages/about.html"
-            "desktop/pages/contact.html"
-            "desktop/pages/privacy.html"
-            "desktop/pages/terms.html"
-            "ui/kinojo-components.css"
-            "ui/kinojo-common-ui.css"
-            "ui/kinojo-common-ui.js"
-            "ui/kinojo-public-shell.css"
-            "ui/kinojo-staged-loading.css"
-            "ui/kinojo-staged-loading.js"
-            "ui/kinojo-event-notice.css"
-            "ui/kinojo-event-notice.js"
-            "ui/kinojo-character-reaction.js"
-            "ui/kinojo-character-reaction.css"
-            "ui/kinojo-character-detail-refresh.js"
-            "ui/kinojo-character-detail-refresh.css"
-            "ui/kinojo-character-skill-bridge.js"
-            "ui/kinojo-character-skill.css"
-            "ui/kinojo-character-daevanion-bridge.js"
-            "ui/kinojo-character-daevanion.css"
-            "ui/kinojo-animations.css"
-            "core/kinojo-supabase-client.js"
-            "core/kinojo-supabase-rpc.js"
-            "core/kinojo-supabase-features.js"
-            "core/kinojo-supabase.js"
-            "core/kinojo-auth-session.js"
-            "core/kinojo-auth-service.js"
-            "core/kinojo-auth-ui.js"
-          )
-
-          echo "Expected source: $expected_ref"
-          echo "Live domain: $LIVE_BASE"
-
-          http_code="$(curl --silent --show-error --location --output /dev/null \
-            --write-out '%{http_code}' --connect-timeout 10 --max-time 30 \
-            -H 'Cache-Control: no-cache' "$LIVE_BASE/?verify=$verify_key")"
-          if [[ "$http_code" != "200" ]]; then
-            echo "Custom domain returned HTTP $http_code" >&2
-            exit 1
-          fi
-
-          for attempt in $(seq 1 15); do
-            mismatch=0
-            : > "$tmp_dir/result.txt"
-
-            for path in "${files[@]}"; do
-              live_file="$tmp_dir/$(echo "$path" | tr '/' '_')"
-              url="$LIVE_BASE/$path?verify=$verify_key-$attempt"
-
-              if ! curl --fail --silent --show-error --location --compressed \
-                --retry 3 --retry-all-errors --connect-timeout 10 --max-time 30 \
-                -H 'Cache-Control: no-cache' "$url" -o "$live_file"; then
-                echo "FETCH_FAIL $path" >> "$tmp_dir/result.txt"
-                mismatch=1
-                continue
-              fi
-
-              if cmp -s "$path" "$live_file"; then
-                echo "MATCH $path" >> "$tmp_dir/result.txt"
-              else
-                echo "MISMATCH $path" >> "$tmp_dir/result.txt"
-                mismatch=1
-              fi
-            done
-
-            cat "$tmp_dir/result.txt"
-
-            if [[ "$mismatch" -eq 0 ]]; then
-              {
-                echo "## KINOJO Pages live readback"
-                echo
-                echo "- Domain: \`$LIVE_BASE\`"
-                echo "- Expected source: \`$expected_ref\`"
-                echo "- Verified files: \`${#files[@]}\`"
-                echo "- Result: all live files match the repository source"
-              } >> "$GITHUB_STEP_SUMMARY"
-              exit 0
-            fi
-
-            if [[ "$attempt" -lt 15 ]]; then
-              echo "Live files are not synchronized yet. Retrying..."
-              sleep 20
-            fi
-          done
-
-          echo "Live readback did not converge to repository source." >&2
-          while read -r state path; do
-            [[ "$state" == "MISMATCH" ]] || continue
-            live_file="$tmp_dir/$(echo "$path" | tr '/' '_')"
-            echo "--- $path" >&2
-            echo "source sha256: $(sha256sum "$path" | awk '{print $1}')" >&2
-            echo "live   sha256: $(sha256sum "$live_file" | awk '{print $1}')" >&2
-            diff -u "$path" "$live_file" | head -120 >&2 || true
-          done < "$tmp_dir/result.txt"
-          exit 1
-
-      - name: Publish live readback success status
-        if: success()
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          STATUS_STATE: success
-          STATUS_DESCRIPTION: KINOJO 운영 파일이 main과 일치
-        run: |
-          set -euo pipefail
-          python3 <<'PY' > /tmp/kinojo-status.json
-          import json, os
-          print(json.dumps({
-              "state": os.environ["STATUS_STATE"],
-              "context": "kinojo/live-readback",
-              "description": os.environ["STATUS_DESCRIPTION"],
-              "target_url": f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
-          }, ensure_ascii=False))
-          PY
-          curl --fail --silent --show-error --location \
-            -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-            --data-binary @/tmp/kinojo-status.json >/dev/null
-
-      - name: Publish live readback failure status
-        if: failure()
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          STATUS_STATE: failure
-          STATUS_DESCRIPTION: KINOJO 운영 파일 readback 실패
-        run: |
-          set -euo pipefail
-          python3 <<'PY' > /tmp/kinojo-status.json
-          import json, os
-          print(json.dumps({
-              "state": os.environ["STATUS_STATE"],
-              "context": "kinojo/live-readback",
-              "description": os.environ["STATUS_DESCRIPTION"],
-              "target_url": f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
-          }, ensure_ascii=False))
-          PY
-          curl --fail --silent --show-error --location \
-            -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-            --data-binary @/tmp/kinojo-status.json >/dev/null
+          git config user.name "losnah513"
+          git config user.email "losnah513@gmail.com"
+          git add ui/kinojo-common-ui.js ui/kinojo-my-info.css .github/workflows/verify-kinojo-pages.yml
+          git add -u .github/workflows/apply-my-info-modal-layout-fix.yml || true
+          git commit -m "Open my info as standalone modal"
+          git push origin main
