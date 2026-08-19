@@ -1,0 +1,118 @@
+name: Apply My Info 2-E
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ui/.my-info-2e-trigger"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Connect canonical class icons
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          def replace_once(text, old, new, label):
+              count=text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected 1 match, got {count}')
+              return text.replace(old,new,1)
+
+          common_path=Path('ui/kinojo-common-ui.js')
+          common=common_path.read_text(encoding='utf-8')
+          common=replace_once(
+              common,
+              "  function escapeHtml(value){return String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('\\\"','&quot;').replaceAll(\"'\",'&#39;')}\n",
+              "  function escapeHtml(value){return String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('\\\"','&quot;').replaceAll(\"'\",'&#39;')}\n  function classIconFor_(className){\n    const key=String(className||'').trim();\n    const map={\n      '검성':'gladiator','수호성':'templar','궁성':'ranger','살성':'assassin',\n      '마도성':'sorcerer','정령성':'elementalist','치유성':'cleric','호법성':'chanter','권성':'fighter',\n      'gladiator':'gladiator','templar':'templar','ranger':'ranger','assassin':'assassin',\n      'sorcerer':'sorcerer','elementalist':'elementalist','cleric':'cleric','chanter':'chanter','fighter':'fighter','brawler':'fighter'\n    };\n    const file=map[key];\n    return file?'/assets/images/classes/class_icon_'+file+'.png':'';\n  }\n",
+              'common class icon helper'
+          )
+          common=replace_once(common,"link.href='/ui/kinojo-my-info.css?cache=2026081903';","link.href='/ui/kinojo-my-info.css?cache=2026081904';",'my info css cache')
+          common=replace_once(
+              common,
+              "      const isMain=row.isMain===true;\n      const kind=isMain?'본캐':'부캐';\n",
+              "      const isMain=row.isMain===true;\n      const kind=isMain?'본캐':'부캐';\n      const classIcon=classIconFor_(row.className);\n",
+              'row class icon value'
+          )
+          common=replace_once(
+              common,
+              "        +'<span class=\"kinojo-my-info-character-kind\">'+kind+'</span>'\n        +'<strong class=\"kinojo-my-info-character-name\">'+escapeHtml(characterName||'이름 없음')+'</strong>'\n",
+              "        +(classIcon?'<img class=\"kinojo-my-info-character-icon\" src=\"'+escapeHtml(classIcon)+'\" alt=\"\" aria-hidden=\"true\">':'<span class=\"kinojo-my-info-character-icon is-empty\" aria-hidden=\"true\"></span>')\n        +'<span class=\"kinojo-my-info-character-kind\">'+kind+'</span>'\n        +'<strong class=\"kinojo-my-info-character-name\">'+escapeHtml(characterName||'이름 없음')+'</strong>'\n",
+              'row class icon markup'
+          )
+          common=replace_once(
+              common,
+              "window.KinojoCommonUI={toast,showSafeError,reportError:showSafeError,setPageTime,openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel,openMyInfoPanel,closeMyInfoPanel,openMyInfoModal,closeMyInfoModal,toggleAdminMenu,closeAdminMenuCommon,reloadNotices:loadCommonNotices,reloadSanctuaryAlert:()=>{const result=loadSanctuaryAlert_(info,0);setTimeout(measureSafeAreas,50);return result;},syncAuthRequiredUi:syncAuthRequiredUi_,renderVisits:renderCommonVisits,loadVisits:loadCommonVisits};",
+              "window.KinojoCommonUI={toast,showSafeError,reportError:showSafeError,setPageTime,classIconFor:classIconFor_,openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel,openMyInfoPanel,closeMyInfoPanel,openMyInfoModal,closeMyInfoModal,toggleAdminMenu,closeAdminMenuCommon,reloadNotices:loadCommonNotices,reloadSanctuaryAlert:()=>{const result=loadSanctuaryAlert_(info,0);setTimeout(measureSafeAreas,50);return result;},syncAuthRequiredUi:syncAuthRequiredUi_,renderVisits:renderCommonVisits,loadVisits:loadCommonVisits};",
+              'common export class icon'
+          )
+          common_path.write_text(common,encoding='utf-8')
+
+          auth_path=Path('core/kinojo-auth-ui.js')
+          auth=auth_path.read_text(encoding='utf-8')
+          pattern=r"  function classIconFor\(className\)\{.*?\n  \}\n\n  function updateStatus\(\)\{"
+          repl="  function classIconFor(className){\n    return window.KinojoCommonUI?.classIconFor?.(className) || '';\n  }\n\n  function updateStatus(){"
+          auth,count=re.subn(pattern,repl,auth,count=1,flags=re.S)
+          if count != 1:
+              raise SystemExit(f'auth class icon delegation: expected 1 match, got {count}')
+          auth_path.write_text(auth,encoding='utf-8')
+
+          css_path=Path('ui/kinojo-my-info.css')
+          css=css_path.read_text(encoding='utf-8')
+          css=replace_once(css,'/* KINOJO My Info panel shell v20260819.05 */','/* KINOJO My Info panel shell v20260819.06 */','css version')
+          marker=".kinojo-my-info-character-row.is-alt{border-left:3px solid #cbd5e1}\n"
+          addition=marker+".kinojo-my-info-character-icon{flex:0 0 34px;width:34px;height:34px;display:block;object-fit:contain;border-radius:9px;background:#f8fafc}\n.kinojo-my-info-character-icon.is-empty{border:1px dashed rgba(122,146,180,.22);box-sizing:border-box}\n"
+          css=replace_once(css,marker,addition,'class icon css')
+          css_path.write_text(css,encoding='utf-8')
+          PY
+
+      - name: Validate 2-E contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check ui/kinojo-common-ui.js
+          node --check core/kinojo-auth-ui.js
+          grep -q "classIconFor:classIconFor_" ui/kinojo-common-ui.js
+          grep -q "kinojo-my-info-character-icon" ui/kinojo-common-ui.js
+          grep -q "window.KinojoCommonUI?.classIconFor" core/kinojo-auth-ui.js
+          ! grep -q "'검성':'gladiator'" core/kinojo-auth-ui.js
+          grep -q "2-D real member character rows" ui/kinojo-my-info.css
+          grep -q "kinojo-my-info-character-icon" ui/kinojo-my-info.css
+          node tests/web-shell-auth-contract.test.js
+          git diff --check
+
+      - name: Commit product files only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "losnah513"
+          git config user.email "losnah513@gmail.com"
+          git add ui/kinojo-common-ui.js ui/kinojo-my-info.css core/kinojo-auth-ui.js
+          git commit -m "Show class icons in My Info"
+          git push origin main
+
+      - name: Upload exact source
+        uses: actions/upload-artifact@v4
+        with:
+          name: kinojo-my-info-2e-source
+          path: |
+            ui/kinojo-common-ui.js
+            ui/kinojo-my-info.css
+            core/kinojo-auth-ui.js
+          if-no-files-found: error
+          retention-days: 1
