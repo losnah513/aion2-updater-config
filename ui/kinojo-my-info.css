@@ -1,4 +1,4 @@
-/* KINOJO My Info panel shell v20260819.06 */
+/* KINOJO My Info panel shell v20260819.07 */
 body.kinojo-my-info-open{overflow:hidden}
 .kinojo-my-info-layer{
   position:fixed!important;
@@ -62,6 +62,12 @@ body.kinojo-my-info-open{overflow:hidden}
 .kinojo-my-info-character-stat.is-power i{background:#eff6ff;color:#2563eb;font-size:10px}
 .kinojo-my-info-character-stat.is-power b{color:#1d4ed8}
 .kinojo-my-info-character-stat-sep{width:1px;height:18px;background:rgba(122,146,180,.22)}
+
+/* 20260819_11: 2-G existing character detail modal trigger */
+.kinojo-my-info-character-row[role="button"]{cursor:pointer;transition:border-color .16s ease,box-shadow .16s ease,transform .16s ease,background-color .16s ease}
+.kinojo-my-info-character-row[role="button"]:hover{border-color:rgba(37,99,235,.28);box-shadow:0 7px 18px rgba(15,23,42,.07);transform:translateY(-1px)}
+.kinojo-my-info-character-row[role="button"]:focus-visible{outline:2px solid rgba(37,99,235,.42);outline-offset:2px;border-color:rgba(37,99,235,.34)}
+.kinojo-my-info-character-row[role="button"]:active{transform:translateY(0);box-shadow:0 3px 10px rgba(15,23,42,.06)}
 @media(max-width:380px){
   .kinojo-my-info-character-row{grid-template-columns:32px minmax(0,1fr);gap:8px}
   .kinojo-my-info-character-icon{width:32px;height:32px}

@@ -670,7 +670,7 @@
     }
     const link=document.createElement('link');
     link.rel='stylesheet';
-    link.href='/ui/kinojo-my-info.css?cache=2026081905';
+    link.href='/ui/kinojo-my-info.css?cache=2026081906';
     link.dataset.kinojoMyInfoStyles='true';
     link.addEventListener('load',()=>guard?.remove(),{once:true});
     document.head.appendChild(link);
@@ -750,7 +750,7 @@
       const combatPower=myInfoStatNumber_(row.displayCombatPower);
       const statBasis=String(row.displayStatBasis||data.displayStatBasis||'').trim();
       const statLabel=(statBasis?statBasis+' 기준 · ':'')+'아이템 레벨 '+itemLevel+' · 전투력 '+combatPower;
-      return '<article class="kinojo-my-info-character-row '+(isMain?'is-main':'is-alt')+'" data-character-id="'+characterId+'" data-server-id="'+(Number.isFinite(serverId)?serverId:'')+'" data-character-name="'+escapeHtml(characterName)+'" aria-label="'+escapeHtml(characterName+' · '+kind+' · '+statLabel)+'">'
+      return '<article class="kinojo-my-info-character-row '+(isMain?'is-main':'is-alt')+'" role="button" tabindex="0" data-character-id="'+characterId+'" data-server-id="'+(Number.isFinite(serverId)?serverId:'')+'" data-character-name="'+escapeHtml(characterName)+'" aria-label="'+escapeHtml(characterName+' · '+kind+' · '+statLabel+' · 상세 정보 보기')+'" title="캐릭터 상세 정보 보기">'
         +(classIcon?'<img class="kinojo-my-info-character-icon" src="'+escapeHtml(classIcon)+'" alt="" aria-hidden="true">':'<span class="kinojo-my-info-character-icon is-empty" aria-hidden="true"></span>')
         +'<span class="kinojo-my-info-character-identity"><span class="kinojo-my-info-character-kind">'+kind+'</span><strong class="kinojo-my-info-character-name">'+escapeHtml(characterName||'이름 없음')+'</strong></span>'
         +'<span class="kinojo-my-info-character-stats" title="'+escapeHtml(statLabel)+'">'
@@ -804,6 +804,109 @@
       if(kinojoMyCharactersState.token===token)kinojoMyCharactersState.promise=null;
     });
     return kinojoMyCharactersState.promise;
+  }
+
+  let kinojoCharacterDetailLoaderPromise=null;
+  function ensureCharacterDetailStyle_(href,key){
+    if(document.querySelector('link[data-kinojo-character-detail-style="'+key+'"],link[href*="'+href.split('/').pop().split('?')[0]+'"]'))return Promise.resolve(true);
+    return new Promise((resolve,reject)=>{
+      const link=document.createElement('link');
+      link.rel='stylesheet';
+      link.href=href;
+      link.dataset.kinojoCharacterDetailStyle=key;
+      link.addEventListener('load',()=>resolve(true),{once:true});
+      link.addEventListener('error',()=>reject(new Error('CHARACTER_DETAIL_STYLE_LOAD_FAILED:'+key)),{once:true});
+      document.head.appendChild(link);
+    });
+  }
+  function ensureCharacterDetailScript_(src,key,ready){
+    if(typeof ready==='function'&&ready())return Promise.resolve(true);
+    const file=src.split('/').pop().split('?')[0];
+    const existing=Array.from(document.scripts).find(script=>String(script.src||'').includes('/ui/'+file));
+    if(existing){
+      if(typeof ready!=='function')return Promise.resolve(true);
+      return new Promise((resolve,reject)=>{
+        if(typeof ready==='function'&&ready())return resolve(true);
+        let settled=false;
+        const finish=()=>{if(settled)return;settled=true;clearTimeout(timer);if(typeof ready!=='function'||ready())resolve(true);else reject(new Error('CHARACTER_DETAIL_SCRIPT_NOT_READY:'+key));};
+        const fail=()=>{if(settled)return;settled=true;clearTimeout(timer);reject(new Error('CHARACTER_DETAIL_SCRIPT_LOAD_FAILED:'+key));};
+        const timer=setTimeout(finish,1200);
+        existing.addEventListener('load',finish,{once:true});
+        existing.addEventListener('error',fail,{once:true});
+      });
+    }
+    return new Promise((resolve,reject)=>{
+      const script=document.createElement('script');
+      script.src=src;
+      script.async=false;
+      script.dataset.kinojoCharacterDetailScript=key;
+      script.addEventListener('load',()=>{
+        if(typeof ready==='function'&&!ready())return reject(new Error('CHARACTER_DETAIL_SCRIPT_NOT_READY:'+key));
+        resolve(true);
+      },{once:true});
+      script.addEventListener('error',()=>reject(new Error('CHARACTER_DETAIL_SCRIPT_LOAD_FAILED:'+key)),{once:true});
+      document.head.appendChild(script);
+    });
+  }
+  function ensureCharacterDetailModal_(){
+    if(window.KinojoCharacterReaction?.open)return Promise.resolve(true);
+    if(kinojoCharacterDetailLoaderPromise)return kinojoCharacterDetailLoaderPromise;
+    kinojoCharacterDetailLoaderPromise=(async()=>{
+      await Promise.all([
+        ensureCharacterDetailStyle_('/ui/kinojo-character-reaction.css?cache=2026081003','reaction'),
+        ensureCharacterDetailStyle_('/ui/kinojo-character-detail-refresh.css?cache=2026081003','detail-refresh'),
+        ensureCharacterDetailStyle_('/ui/kinojo-character-skill.css?cache=2026081001','skill'),
+        ensureCharacterDetailStyle_('/ui/kinojo-character-daevanion.css?cache=2026081002','daevanion')
+      ]);
+      await ensureCharacterDetailScript_('/ui/kinojo-character-reaction.js?cache=2026081801','reaction',()=>!!window.KinojoCharacterReaction?.open);
+      await ensureCharacterDetailScript_('/ui/kinojo-character-detail-refresh.js?cache=2026081003','detail-refresh');
+      await ensureCharacterDetailScript_('/ui/kinojo-character-skill-bridge.js?cache=2026081001','skill');
+      await ensureCharacterDetailScript_('/ui/kinojo-character-daevanion-bridge.js?cache=2026081002','daevanion');
+      if(!window.KinojoCharacterReaction?.open)throw new Error('CHARACTER_DETAIL_MODAL_UNAVAILABLE');
+      return true;
+    })().catch(error=>{kinojoCharacterDetailLoaderPromise=null;throw error;});
+    return kinojoCharacterDetailLoaderPromise;
+  }
+  function myInfoCharacterRowData_(row){
+    const characterId=Number(row?.dataset?.characterId||0);
+    const characters=Array.isArray(kinojoMyCharactersState.data?.characters)?kinojoMyCharactersState.data.characters:[];
+    return characters.find(item=>Number(item?.characterId||0)===characterId)||null;
+  }
+  async function openMyInfoCharacterDetail_(row){
+    if(!row||!window.KinojoAuth?.getSession?.())return false;
+    let item=myInfoCharacterRowData_(row);
+    if(!item){
+      await loadMyInfoCharacters_(true);
+      item=myInfoCharacterRowData_(row);
+    }
+    if(!item)return false;
+    closeMyInfoPanel();
+    try{
+      await ensureCharacterDetailModal_();
+      const ownerName=item.isMain===true?String(item.characterName||''):String(kinojoMyCharactersState.data?.owner?.mainCharacterName||'');
+      const classIcon=classIconFor_(item.className);
+      window.KinojoCharacterReaction.open({
+        source:'hall',
+        context:'my-info',
+        target:{
+          name:String(item.characterName||''),
+          owner:ownerName,
+          className:String(item.className||''),
+          server:String(item.serverName||''),
+          serverId:item.serverId||'',
+          pvePower:item.displayCombatPower??'',
+          pvpPower:item.displayItemLevel??'',
+          profileImageUrl:String(item.officialProfileImageUrl||''),
+          classIconUrl:classIcon,
+          detailUrl:String(item.detailUrl||'')
+        }
+      });
+      return true;
+    }catch(error){
+      console.warn('KINOJO My Info character detail open failed:',error);
+      toast('캐릭터 상세 정보를 불러오지 못했습니다.');
+      return false;
+    }
   }
   function makeMyInfoModal(){
     const modal=document.createElement('section');
@@ -1078,6 +1181,19 @@
     q('#kinojoMyInfoModal')?.addEventListener('click',e=>{if(e.target instanceof Element&&e.target.closest('[data-kinojo-my-info-modal-close]')){e.preventDefault();e.stopPropagation();closeMyInfoModal();}});
     q('#kinojoMyInfoCloseBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeMyInfoPanel();});
     q('#kinojoMyInfoLayer')?.addEventListener('click',e=>{if(e.target.id==='kinojoMyInfoLayer')closeMyInfoPanel();});
+    q('#kinojoMyInfoCharacterList')?.addEventListener('click',e=>{
+      const row=e.target instanceof Element?e.target.closest('.kinojo-my-info-character-row'):null;
+      if(!row)return;
+      e.preventDefault();e.stopPropagation();
+      openMyInfoCharacterDetail_(row);
+    });
+    q('#kinojoMyInfoCharacterList')?.addEventListener('keydown',e=>{
+      if(e.key!=='Enter'&&e.key!==' ')return;
+      const row=e.target instanceof Element?e.target.closest('.kinojo-my-info-character-row'):null;
+      if(!row)return;
+      e.preventDefault();e.stopPropagation();
+      openMyInfoCharacterDetail_(row);
+    });
     q('#drawerToggleBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openSideDrawer();});
     q('#drawerCloseBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeSideDrawer();});
     q('#drawerPageCloseBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeDrawerPagePanel();});
