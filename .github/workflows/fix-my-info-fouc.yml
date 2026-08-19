@@ -84,3 +84,4 @@ jobs:
           git add -u .github/workflows/fix-my-info-fouc.yml
           git commit -m "Prevent My Info panel startup flash"
           git push origin main
+# trigger: 20260819-1137-kst
