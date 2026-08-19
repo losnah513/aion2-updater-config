@@ -647,11 +647,20 @@
     setTimeout(()=>loadDocumentServerTime_(info),1200);
   }
   function ensureMyInfoStyles(){
-    if(document.querySelector('link[data-kinojo-my-info-styles]'))return;
+    const existing=document.querySelector('link[data-kinojo-my-info-styles]');
+    if(existing)return;
+    let guard=document.querySelector('style[data-kinojo-my-info-critical]');
+    if(!guard){
+      guard=document.createElement('style');
+      guard.dataset.kinojoMyInfoCritical='true';
+      guard.textContent='.kinojo-my-info-layer,.kinojo-my-info-modal{visibility:hidden!important;opacity:0!important;pointer-events:none!important}';
+      document.head.appendChild(guard);
+    }
     const link=document.createElement('link');
     link.rel='stylesheet';
     link.href='/ui/kinojo-my-info.css?cache=2026081901';
     link.dataset.kinojoMyInfoStyles='true';
+    link.addEventListener('load',()=>guard?.remove(),{once:true});
     document.head.appendChild(link);
   }
   function makeMyInfoPanel(){
