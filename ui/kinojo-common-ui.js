@@ -559,7 +559,7 @@
       element.hidden=!loggedIn;
       element.setAttribute('aria-hidden',loggedIn?'false':'true');
     });
-    if(!loggedIn)closeMyInfoPanel();
+    if(!loggedIn){closeMyInfoPanel();closeMyInfoModal();}
   }
 
   function makeTopbar(rescued,info){
@@ -667,16 +667,9 @@
           <button class="kinojo-common-close kinojo-panel-close" id="kinojoMyInfoCloseBtn" type="button" aria-label="내 정보 닫기">×</button>
         </div>
         <div class="kinojo-panel-body kinojo-my-info-body" id="kinojoMyInfoPanelBody">
-          <button class="kinojo-my-info-menu-btn is-active" id="kinojoMyInfoMenuBtn" type="button" data-my-info-target="profile" aria-controls="kinojoMyInfoProfileView" aria-current="page">
+          <button class="kinojo-my-info-menu-btn" id="kinojoMyInfoMenuBtn" type="button" aria-haspopup="dialog" aria-controls="kinojoMyInfoModal">
             <span>내 정보</span><small>이미지 관리 Preview</small>
           </button>
-          <section class="kinojo-my-info-view is-active" id="kinojoMyInfoProfileView" data-my-info-view="profile" aria-labelledby="kinojoMyInfoMenuBtn">
-            <div class="kinojo-my-info-preview-state">
-              <span class="kinojo-my-info-preview-badge">PREVIEW</span>
-              <strong>내 정보</strong>
-              <p>프로필·캐릭터 이미지 관리 화면을 준비 중입니다.</p>
-            </div>
-          </section>
           <section class="kinojo-my-info-characters" aria-labelledby="kinojoMyCharactersTitle">
             <div class="kinojo-my-info-section-title" id="kinojoMyCharactersTitle">내 캐릭터</div>
             <div class="kinojo-my-info-character-pending" aria-live="polite">캐릭터 연동 준비 중</div>
@@ -685,26 +678,49 @@
       </aside>`;
     document.body.appendChild(layer);
   }
-  function activateMyInfoView_(target){
-    const key=String(target||'profile');
-    document.querySelectorAll('[data-my-info-view]').forEach(view=>{
-      const active=view.dataset.myInfoView===key;
-      view.classList.toggle('is-active',active);
-      view.hidden=!active;
-    });
-    document.querySelectorAll('[data-my-info-target]').forEach(button=>{
-      const active=button.dataset.myInfoTarget===key;
-      button.classList.toggle('is-active',active);
-      if(active)button.setAttribute('aria-current','page');
-      else button.removeAttribute('aria-current');
-    });
+  function makeMyInfoModal(){
+    const modal=document.createElement('section');
+    modal.className='kinojo-my-info-modal';
+    modal.id='kinojoMyInfoModal';
+    modal.setAttribute('aria-hidden','true');
+    modal.innerHTML=`
+      <div class="kinojo-my-info-modal-backdrop" data-kinojo-my-info-modal-close></div>
+      <div class="kinojo-my-info-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="kinojoMyInfoModalTitle" tabindex="-1">
+        <button class="kinojo-my-info-modal-close" type="button" aria-label="내 정보 닫기" data-kinojo-my-info-modal-close>×</button>
+        <div class="kinojo-my-info-preview-state">
+<span class="kinojo-my-info-preview-badge">PREVIEW</span>
+<strong id="kinojoMyInfoModalTitle">내 정보</strong>
+<p>프로필·캐릭터 이미지 관리 화면을 준비 중입니다.</p>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+  }
+  function openMyInfoModal(){
+    const modal=q('#kinojoMyInfoModal');
+    if(!modal||!window.KinojoAuth?.getSession?.())return;
+    closeMyInfoPanel();
+    const show=()=>{
+      if(!window.KinojoAuth?.getSession?.())return;
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden','false');
+      document.body.classList.add('kinojo-my-info-modal-open');
+      const dialog=q('.kinojo-my-info-modal-dialog',modal);
+      if(dialog)dialog.scrollTop=0;
+      requestAnimationFrame(()=>{try{dialog?.focus({preventScroll:true});}catch(_err){dialog?.focus();}});
+    };
+    if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)show();
+    else setTimeout(show,300);
+  }
+  function closeMyInfoModal(){
+    const modal=q('#kinojoMyInfoModal');
+    if(modal){modal.classList.remove('open');modal.setAttribute('aria-hidden','true');}
+    document.body.classList.remove('kinojo-my-info-modal-open');
   }
   function openMyInfoPanel(){
     const layer=q('#kinojoMyInfoLayer');
     const btn=q('#kinojoMyInfoBtn');
     if(!layer||!window.KinojoAuth?.getSession?.())return;
     closeSideDrawer();
-    activateMyInfoView_('profile');
     layer.classList.add('open');
     layer.setAttribute('aria-hidden','false');
     document.body.classList.add('kinojo-my-info-open');
@@ -907,7 +923,7 @@
     return delta<0?element.scrollTop>1:element.scrollTop+element.clientHeight<element.scrollHeight-1;
   }
   function bindModalScrollChain(){
-    const modalSelector='[role="dialog"],[aria-modal="true"],.kinojo-character-reaction-modal,.kinojo-safe-overlay,.kinojo-login-modal,.kinojo-notice-board-overlay,.kinojo-safe-error-overlay,.meter-consent-modal,.sanctuary-editor-overlay,.kinojo-event-notice-overlay,.admin-panel-modal';
+    const modalSelector='[role="dialog"],[aria-modal="true"],.kinojo-character-reaction-modal,.kinojo-safe-overlay,.kinojo-login-modal,.kinojo-notice-board-overlay,.kinojo-safe-error-overlay,.meter-consent-modal,.sanctuary-editor-overlay,.kinojo-event-notice-overlay,.admin-panel-modal,.kinojo-my-info-modal';
     document.addEventListener('wheel',event=>{
       if(event.defaultPrevented||event.ctrlKey||!event.deltaY||Math.abs(event.deltaY)<=Math.abs(event.deltaX))return;
       const origin=event.target instanceof Element?event.target:event.target?.parentElement;
@@ -930,7 +946,8 @@
   }
   function bind(){
     q('#kinojoMyInfoBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openMyInfoPanel();});
-    q('#kinojoMyInfoMenuBtn')?.addEventListener('click',e=>{e.preventDefault();activateMyInfoView_(e.currentTarget.dataset.myInfoTarget);});
+    q('#kinojoMyInfoMenuBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openMyInfoModal();});
+    q('#kinojoMyInfoModal')?.addEventListener('click',e=>{if(e.target instanceof Element&&e.target.closest('[data-kinojo-my-info-modal-close]')){e.preventDefault();e.stopPropagation();closeMyInfoModal();}});
     q('#kinojoMyInfoCloseBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeMyInfoPanel();});
     q('#kinojoMyInfoLayer')?.addEventListener('click',e=>{if(e.target.id==='kinojoMyInfoLayer')closeMyInfoPanel();});
     q('#drawerToggleBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openSideDrawer();});
@@ -959,7 +976,7 @@
         a.setAttribute('href','#');a.dataset.pagePanel=type;a.dataset.guideMode='standalone';
       });
     });
-    document.addEventListener('keydown',e=>{if(e.key==='Escape'){const myInfo=q('#kinojoMyInfoLayer');if(myInfo?.classList.contains('open'))return closeMyInfoPanel();const p=q('#drawerPagePanel');if(p?.classList.contains('open'))return closeDrawerPagePanel();const d=q('#sideDrawer');if(d?.classList.contains('open'))return closeSideDrawer();}});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'){const myInfoModal=q('#kinojoMyInfoModal');if(myInfoModal?.classList.contains('open'))return closeMyInfoModal();const myInfo=q('#kinojoMyInfoLayer');if(myInfo?.classList.contains('open'))return closeMyInfoPanel();const p=q('#drawerPagePanel');if(p?.classList.contains('open'))return closeDrawerPagePanel();const d=q('#sideDrawer');if(d?.classList.contains('open'))return closeSideDrawer();}});
   }
   function loadSanctuaryMasterRenderer(){
     if(document.querySelector('script[data-kinojo-sanctuary-master-loader]')) return;
@@ -1001,6 +1018,7 @@
   makeTopbar(rescued,info);
   makeDrawer(info);
   makeMyInfoPanel();
+  makeMyInfoModal();
   syncDrawerWidth_();
   window.addEventListener('resize',syncDrawerWidth_,{passive:true});
   window.addEventListener('orientationchange',syncDrawerWidth_,{passive:true});
@@ -1016,7 +1034,7 @@
   bindCommonAdmin(info);
   bindImageGuards();
   loadSanctuaryMasterRenderer();
-  window.KinojoCommonUI={toast,showSafeError,reportError:showSafeError,setPageTime,openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel,openMyInfoPanel,closeMyInfoPanel,toggleAdminMenu,closeAdminMenuCommon,reloadNotices:loadCommonNotices,reloadSanctuaryAlert:()=>{const result=loadSanctuaryAlert_(info,0);setTimeout(measureSafeAreas,50);return result;},syncAuthRequiredUi:syncAuthRequiredUi_,renderVisits:renderCommonVisits,loadVisits:loadCommonVisits};
+  window.KinojoCommonUI={toast,showSafeError,reportError:showSafeError,setPageTime,openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel,openMyInfoPanel,closeMyInfoPanel,openMyInfoModal,closeMyInfoModal,toggleAdminMenu,closeAdminMenuCommon,reloadNotices:loadCommonNotices,reloadSanctuaryAlert:()=>{const result=loadSanctuaryAlert_(info,0);setTimeout(measureSafeAreas,50);return result;},syncAuthRequiredUi:syncAuthRequiredUi_,renderVisits:renderCommonVisits,loadVisits:loadCommonVisits};
   window.KinojoSafeError={show:showSafeError,report:showSafeError};
   window.openAdminDropdown=toggleAdminMenu;
   window.closeAdminMenu=closeAdminMenuCommon;
