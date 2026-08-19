@@ -1,3 +1,4 @@
+# trigger: 2026-08-19 stage-4d
 name: KINOJO temporary 4-D apply
 on:
   push:
