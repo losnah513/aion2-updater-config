@@ -3,13 +3,17 @@ name: Apply My Info 2-D
 on:
   issues:
     types: [opened]
+  push:
+    branches: [main]
+    paths:
+      - "ui/.my-info-2d-trigger"
 
 permissions:
   contents: write
 
 jobs:
   apply:
-    if: github.event.issue.title == 'KINOJO_MY_INFO_2D_20260819'
+    if: github.event_name == 'push' || github.event.issue.title == 'KINOJO_MY_INFO_2D_20260819'
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
@@ -221,11 +225,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -f .github/workflows/issue-run-my-info-2d.yml
+          rm -f .github/workflows/issue-run-my-info-2d.yml ui/.my-info-2d-trigger
           git config user.name "losnah513"
           git config user.email "losnah513@gmail.com"
           git add ui/kinojo-common-ui.js ui/kinojo-my-info.css
-          git add -u .github/workflows/issue-run-my-info-2d.yml || true
+          git add -u .github/workflows/issue-run-my-info-2d.yml ui/.my-info-2d-trigger || true
           git commit -m "Connect My Info character list"
           git push origin main
 
