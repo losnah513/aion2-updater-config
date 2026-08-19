@@ -1,4 +1,4 @@
-name: KINOJO temporary 4-D apply
+name: KINOJO temporary 4-D probe
 
 on:
   issues:
@@ -8,31 +8,18 @@ permissions:
   contents: write
 
 jobs:
-  apply:
-    if: github.event.issue.title == 'KINOJO_MY_INFO_4D_20260819'
+  probe:
+    if: github.event.issue.title == 'KINOJO_MY_INFO_4D_PROBE_20260819'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
           ref: main
-          fetch-depth: 0
-      - name: Apply validated 4-D patch
-        shell: bash
+      - name: Prove issue event
         run: |
-          set -euo pipefail
-          cat .kinojo-tmp/4d.part1 .kinojo-tmp/4d.part2 .kinojo-tmp/4d.part3 .kinojo-tmp/4d.part4 | base64 -d > /tmp/4d.patch
-          git apply --check /tmp/4d.patch
-          git apply /tmp/4d.patch
-          node --check ui/kinojo-common-ui.js
-          ! grep -q "profile-upload-prepare" ui/kinojo-common-ui.js
-          ! grep -q "profile-upload-complete" ui/kinojo-common-ui.js
-          test "$(git hash-object ui/kinojo-common-ui.js)" = "bc43d7e63172179873aebc97f97e69125440cd42"
-          test "$(git hash-object ui/kinojo-my-info.css)" = "01508eb48960f1483165023edd64e08392dafb20"
-          git diff --check
+          echo "probe-ok" > ui/.my-info-4d-probe-ok
           git config user.name "losnah513"
           git config user.email "losnah513@gmail.com"
-          git rm -r .kinojo-tmp .github/workflows/kinojo-temp-4d.yml ui/.my-info-4d-issue-trigger
-          git add ui/kinojo-common-ui.js ui/kinojo-my-info.css
-          git commit -m "Add local profile image preview in My Info"
+          git add ui/.my-info-4d-probe-ok
+          git commit -m "Probe Stage 4-D issue event"
           git push origin main
