@@ -221,15 +221,15 @@ jobs:
           node tests/web-shell-auth-contract.test.js
           git diff --check
 
-      - name: Remove helper and commit
+      - name: Commit product changes
         shell: bash
         run: |
           set -euo pipefail
-          rm -f .github/workflows/issue-run-my-info-2d.yml ui/.my-info-2d-trigger
+          rm -f ui/.my-info-2d-trigger
           git config user.name "losnah513"
           git config user.email "losnah513@gmail.com"
           git add ui/kinojo-common-ui.js ui/kinojo-my-info.css
-          git add -u .github/workflows/issue-run-my-info-2d.yml ui/.my-info-2d-trigger || true
+          git add -u ui/.my-info-2d-trigger || true
           git commit -m "Connect My Info character list"
           git push origin main
 
