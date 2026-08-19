@@ -1,4 +1,4 @@
-name: Issue Run My Info Startup Flash Fix
+name: Issue Run My Info Center Fix
 
 on:
   issues:
@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   fix:
-    if: github.event.issue.title == 'KINOJO_MY_INFO_FOUC_FINAL_20260819'
+    if: github.event.issue.title == 'KINOJO_MY_INFO_PAGE_CENTER_FIX_20260819'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -18,60 +18,38 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Prevent My Info startup flash
+      - name: Execute prepared focused correction
         shell: bash
         run: |
           set -euo pipefail
           python3 <<'PY'
           from pathlib import Path
-          path=Path('ui/kinojo-common-ui.js')
-          text=path.read_text(encoding='utf-8')
-          old="""  function ensureMyInfoStyles(){
-    if(document.querySelector('link[data-kinojo-my-info-styles]'))return;
-    const link=document.createElement('link');
-    link.rel='stylesheet';
-    link.href='/ui/kinojo-my-info.css?cache=2026081901';
-    link.dataset.kinojoMyInfoStyles='true';
-    document.head.appendChild(link);
-  }
-"""
-          new="""  function ensureMyInfoStyles(){
-    const existing=document.querySelector('link[data-kinojo-my-info-styles]');
-    if(existing)return;
-    let guard=document.querySelector('style[data-kinojo-my-info-critical]');
-    if(!guard){
-      guard=document.createElement('style');
-      guard.dataset.kinojoMyInfoCritical='true';
-      guard.textContent='.kinojo-my-info-layer,.kinojo-my-info-modal{visibility:hidden!important;opacity:0!important;pointer-events:none!important}';
-      document.head.appendChild(guard);
-    }
-    const link=document.createElement('link');
-    link.rel='stylesheet';
-    link.href='/ui/kinojo-my-info.css?cache=2026081901';
-    link.dataset.kinojoMyInfoStyles='true';
-    link.addEventListener('load',()=>guard?.remove(),{once:true});
-    document.head.appendChild(link);
-  }
-"""
-          if old not in text:
-              raise SystemExit('expected ensureMyInfoStyles contract not found')
-          text=text.replace(old,new,1)
-          path.write_text(text,encoding='utf-8')
+          source=Path('.github/workflows/run-my-info-page-center.yml').read_text(encoding='utf-8')
+          marker="          python3 <<'PY'\n"
+          start=source.index(marker)+len(marker)
+          end=source.index("\n          PY",start)
+          block=source[start:end]
+          lines=[]
+          for line in block.splitlines():
+              lines.append(line[10:] if line.startswith('          ') else line)
+          code='\n'.join(lines)
+          exec(compile(code,'prepared-my-info-fix','exec'),{})
           PY
           node --check ui/kinojo-common-ui.js
           git diff --check
-          grep -q 'data-kinojo-my-info-critical' ui/kinojo-common-ui.js
+          grep -q "data-kinojo-my-info-critical" ui/kinojo-common-ui.js
 
       - name: Commit final source and remove helpers
         shell: bash
         run: |
           set -euo pipefail
-          rm -f .github/workflows/issue-run-my-info-center.yml \
-                .github/workflows/fix-my-info-fouc.yml \
-                ui/.my-info-fouc-trigger
+          rm -f ui/.my-info-page-center-trigger \
+            .github/workflows/fix-my-info-page-center.yml \
+            .github/workflows/run-my-info-page-center.yml \
+            .github/workflows/issue-run-my-info-center.yml
           git config user.name "losnah513"
           git config user.email "losnah513@gmail.com"
           git add ui/kinojo-common-ui.js
-          git add -u .github/workflows/issue-run-my-info-center.yml .github/workflows/fix-my-info-fouc.yml ui/.my-info-fouc-trigger || true
+          git add -u ui/.my-info-page-center-trigger .github/workflows/fix-my-info-page-center.yml .github/workflows/run-my-info-page-center.yml .github/workflows/issue-run-my-info-center.yml || true
           git commit -m "Prevent My Info panel startup flash"
           git push origin main
