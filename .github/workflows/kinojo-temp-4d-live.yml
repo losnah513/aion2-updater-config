@@ -1,0 +1,51 @@
+name: KINOJO temporary 4-D live readback
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    if: github.event.issue.title == 'KINOJO_MY_INFO_4D_LIVE_20260820'
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Verify source and live bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check ui/kinojo-common-ui.js
+          grep -q "URL.createObjectURL" ui/kinojo-common-ui.js
+          grep -q "profile-bootstrap" ui/kinojo-common-ui.js
+          ! grep -q "profile-upload-prepare" ui/kinojo-common-ui.js
+          ! grep -q "profile-upload-complete" ui/kinojo-common-ui.js
+          grep -q "4-D profile file select/preview" ui/kinojo-my-info.css
+          expected_js='bc43d7e02e1af6c3807a211ca567fba7d5c9e14c'
+          expected_css='01508e7c0495b0f88e21fc87a54a9c521db2b011'
+          ok=0
+          for attempt in $(seq 1 18); do
+            stamp="${{ github.run_id }}-${attempt}"
+            if curl -fsSL --retry 2 --connect-timeout 10 "https://kinojo.info/ui/kinojo-common-ui.js?kinojo4d=${stamp}" -o /tmp/live.js \
+              && curl -fsSL --retry 2 --connect-timeout 10 "https://kinojo.info/ui/kinojo-my-info.css?kinojo4d=${stamp}" -o /tmp/live.css; then
+              live_js="$(git hash-object /tmp/live.js)"
+              live_css="$(git hash-object /tmp/live.css)"
+              echo "attempt=${attempt} js=${live_js} css=${live_css}"
+              if [ "$live_js" = "$expected_js" ] && [ "$live_css" = "$expected_css" ]; then ok=1; break; fi
+            fi
+            sleep 10
+          done
+          test "$ok" = 1
+          mkdir -p .kinojo-live
+          printf 'PASS\nrun_id=%s\njs=%s\ncss=%s\n' '${{ github.run_id }}' "$live_js" "$live_css" > .kinojo-live/4d.txt
+          git config user.name "losnah513"
+          git config user.email "losnah513@gmail.com"
+          git add .kinojo-live/4d.txt
+          git commit -m "Record Stage 4-D live readback"
+          git push origin HEAD:main
