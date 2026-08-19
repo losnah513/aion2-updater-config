@@ -24,6 +24,17 @@
   }
   function q(s,root=document){return root.querySelector(s)}
   function escapeHtml(value){return String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('\"','&quot;').replaceAll("'",'&#39;')}
+  function classIconFor_(className){
+    const key=String(className||'').trim();
+    const map={
+      '검성':'gladiator','수호성':'templar','궁성':'ranger','살성':'assassin',
+      '마도성':'sorcerer','정령성':'elementalist','치유성':'cleric','호법성':'chanter','권성':'fighter',
+      'gladiator':'gladiator','templar':'templar','ranger':'ranger','assassin':'assassin',
+      'sorcerer':'sorcerer','elementalist':'elementalist','cleric':'cleric','chanter':'chanter','fighter':'fighter','brawler':'fighter'
+    };
+    const file=map[key];
+    return file?'/assets/images/classes/class_icon_'+file+'.png':'';
+  }
   function detach(el){if(el&&el.parentNode)el.parentNode.removeChild(el);return el}
   function removeLegacy(){
     const legacyTop=q('.top-utility');
@@ -659,7 +670,7 @@
     }
     const link=document.createElement('link');
     link.rel='stylesheet';
-    link.href='/ui/kinojo-my-info.css?cache=2026081903';
+    link.href='/ui/kinojo-my-info.css?cache=2026081904';
     link.dataset.kinojoMyInfoStyles='true';
     link.addEventListener('load',()=>guard?.remove(),{once:true});
     document.head.appendChild(link);
@@ -730,7 +741,9 @@
       const characterName=String(row.characterName||'').trim();
       const isMain=row.isMain===true;
       const kind=isMain?'본캐':'부캐';
+      const classIcon=classIconFor_(row.className);
       return '<article class="kinojo-my-info-character-row '+(isMain?'is-main':'is-alt')+'" data-character-id="'+characterId+'" data-server-id="'+(Number.isFinite(serverId)?serverId:'')+'" data-character-name="'+escapeHtml(characterName)+'" aria-label="'+escapeHtml(characterName+' · '+kind)+'">'
+        +(classIcon?'<img class="kinojo-my-info-character-icon" src="'+escapeHtml(classIcon)+'" alt="" aria-hidden="true">':'<span class="kinojo-my-info-character-icon is-empty" aria-hidden="true"></span>')
         +'<span class="kinojo-my-info-character-kind">'+kind+'</span>'
         +'<strong class="kinojo-my-info-character-name">'+escapeHtml(characterName||'이름 없음')+'</strong>'
         +'</article>';
@@ -1137,7 +1150,7 @@
   bindCommonAdmin(info);
   bindImageGuards();
   loadSanctuaryMasterRenderer();
-  window.KinojoCommonUI={toast,showSafeError,reportError:showSafeError,setPageTime,openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel,openMyInfoPanel,closeMyInfoPanel,openMyInfoModal,closeMyInfoModal,toggleAdminMenu,closeAdminMenuCommon,reloadNotices:loadCommonNotices,reloadSanctuaryAlert:()=>{const result=loadSanctuaryAlert_(info,0);setTimeout(measureSafeAreas,50);return result;},syncAuthRequiredUi:syncAuthRequiredUi_,renderVisits:renderCommonVisits,loadVisits:loadCommonVisits};
+  window.KinojoCommonUI={toast,showSafeError,reportError:showSafeError,setPageTime,classIconFor:classIconFor_,openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel,openMyInfoPanel,closeMyInfoPanel,openMyInfoModal,closeMyInfoModal,toggleAdminMenu,closeAdminMenuCommon,reloadNotices:loadCommonNotices,reloadSanctuaryAlert:()=>{const result=loadSanctuaryAlert_(info,0);setTimeout(measureSafeAreas,50);return result;},syncAuthRequiredUi:syncAuthRequiredUi_,renderVisits:renderCommonVisits,loadVisits:loadCommonVisits};
   window.KinojoSafeError={show:showSafeError,report:showSafeError};
   window.openAdminDropdown=toggleAdminMenu;
   window.closeAdminMenu=closeAdminMenuCommon;

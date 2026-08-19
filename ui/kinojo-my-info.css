@@ -1,4 +1,4 @@
-/* KINOJO My Info panel shell v20260819.05 */
+/* KINOJO My Info panel shell v20260819.06 */
 body.kinojo-my-info-open{overflow:hidden}
 .kinojo-my-info-layer{
   position:fixed!important;
@@ -47,6 +47,8 @@ body.kinojo-my-info-open{overflow:hidden}
 .kinojo-my-info-character-row{min-width:0;min-height:52px;display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid rgba(122,146,180,.18);border-radius:12px;background:#fff;box-sizing:border-box}
 .kinojo-my-info-character-row.is-main{border-left:3px solid #2563eb;background:linear-gradient(90deg,#f7fbff,#fff 28%)}
 .kinojo-my-info-character-row.is-alt{border-left:3px solid #cbd5e1}
+.kinojo-my-info-character-icon{flex:0 0 34px;width:34px;height:34px;display:block;object-fit:contain;border-radius:9px;background:#f8fafc}
+.kinojo-my-info-character-icon.is-empty{border:1px dashed rgba(122,146,180,.22);box-sizing:border-box}
 .kinojo-my-info-character-kind{flex:0 0 auto;min-width:34px;padding:4px 7px;border-radius:999px;background:#f1f5f9;color:#64748b;text-align:center;font-size:8px;font-weight:1000;line-height:1}
 .kinojo-my-info-character-row.is-main .kinojo-my-info-character-kind{background:#eaf2ff;color:#2563eb}
 .kinojo-my-info-character-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#17233a;font-size:12px;font-weight:950;line-height:1.25}

@@ -113,16 +113,7 @@
   }
 
   function classIconFor(className){
-    const key = String(className || '').trim();
-    const map = {
-      '검성':'gladiator', '수호성':'templar', '궁성':'ranger', '살성':'assassin',
-      '마도성':'sorcerer', '정령성':'elementalist', '치유성':'cleric', '호법성':'chanter', '권성':'fighter',
-      'gladiator':'gladiator', 'templar':'templar', 'ranger':'ranger', 'assassin':'assassin',
-      'sorcerer':'sorcerer', 'elementalist':'elementalist', 'cleric':'cleric', 'chanter':'chanter', 'fighter':'fighter', 'brawler':'fighter'
-    };
-    const file = map[key];
-    if(!file) return '';
-    return '/assets/images/classes/class_icon_' + file + '.png';
+    return window.KinojoCommonUI?.classIconFor?.(className) || '';
   }
 
   function updateStatus(){
