@@ -1,15 +1,16 @@
 name: Fix My Info Startup Flash
 
 on:
-  issues:
-    types: [opened]
+  push:
+    branches: [main]
+    paths:
+      - "ui/.my-info-fouc-trigger"
 
 permissions:
   contents: write
 
 jobs:
   fix:
-    if: github.event.issue.title == 'KINOJO_MY_INFO_FOUC_FIX_20260819'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -72,14 +73,14 @@ jobs:
           print('My Info startup flash guard: PASS')
           PY
 
-      - name: Commit source and remove helper
+      - name: Commit source and remove helpers
         shell: bash
         run: |
           set -euo pipefail
-          rm .github/workflows/fix-my-info-fouc.yml
+          rm -f .github/workflows/fix-my-info-fouc.yml ui/.my-info-fouc-trigger
           git config user.name "losnah513"
           git config user.email "losnah513@gmail.com"
           git add ui/kinojo-common-ui.js
-          git add -u .github/workflows/fix-my-info-fouc.yml
+          git add -u .github/workflows/fix-my-info-fouc.yml ui/.my-info-fouc-trigger || true
           git commit -m "Prevent My Info panel startup flash"
           git push origin main
