@@ -47,7 +47,30 @@
 </section>
 <section class="section" id="suggestionBox" style="display:none;margin-bottom:12px"><div class="section-head"><h2>💡 아이디어 제안 및 건의</h2><span class="section-note">운영자 검토 후 반영</span></div><div class="list"><input class="search" id="suggestTitle" placeholder="항목 이름"/><input class="search" id="suggestProposer" placeholder="제안자"/><textarea class="search" id="suggestMemo" placeholder="기준 설명" rows="3"></textarea><div class="suggest-actions"><button class="btn" id="submitSuggestBtn">제안 보내기</button><button class="btn" id="cancelSuggestBtn" type="button">취소</button></div></div></section>
 <div class="loading" id="app"><div><div class="loader-ring"></div><div id="loaderText">명예의 전당 데이터를 불러오는 중...</div></div></div>
-<section aria-hidden="true" class="reaction-popover" id="reactionPopover"><div class="reaction-popover-body"><button aria-label="닫기" class="reaction-close" id="reactionCloseBtn" type="button">×</button><div class="reaction-profile-row" id="reactionProfileRow"><div class="reaction-profile-image is-empty" id="reactionProfileImage" aria-hidden="true">PROFILE</div><div class="reaction-profile-meta"><div class="reaction-kicker">REACTION</div><div class="reaction-profile-name" id="reactionProfileName">캐릭터</div><div class="reaction-profile-sub" id="reactionProfileSub">좋아요·싫어요를 남겨보세요</div><a class="reaction-detail-link" id="reactionDetailLink" href="#" target="_blank" rel="noopener noreferrer" style="display:none" aria-label="아이온2 캐릭터 정보실 열기"><img src="../../assets/images/common/aion2_logo.png" alt="" aria-hidden="true"/><span>정보실</span><span class="reaction-detail-arrow" aria-hidden="true">↗</span></a></div></div><div class="reaction-choice"><button id="reactionLikeBtn" type="button"><span aria-hidden="true" class="reaction-icon like-icon"></span><span>좋아요</span></button><button id="reactionDislikeBtn" type="button"><span aria-hidden="true" class="reaction-icon dislike-icon"></span><span>싫어요</span></button></div><div class="reaction-input-row"><label class="reaction-comment-label" for="reactionComment">코멘트 · 20자 이내로 한마디</label><textarea class="reaction-comment" id="reactionComment" maxlength="20" rows="3" placeholder="전하고 싶은 말을 남겨주세요"></textarea><button aria-label="코멘트 전달" class="send-btn" id="reactionSubmitBtn" type="button">전송</button></div><div class="reaction-status" id="reactionStatus"></div></div></section>
+<section aria-hidden="true" class="reaction-popover" id="reactionPopover">
+<div class="reaction-popover-body">
+<button aria-label="닫기" class="reaction-close" id="reactionCloseBtn" type="button">×</button>
+<div class="reaction-profile-row" id="reactionProfileRow">
+<div class="reaction-profile-image is-empty" id="reactionProfileImage" aria-hidden="true">PROFILE</div>
+<div class="reaction-profile-meta">
+<div class="reaction-kicker">REACTION</div>
+<div class="reaction-profile-name" id="reactionProfileName">캐릭터</div>
+<div class="reaction-profile-sub" id="reactionProfileSub">좋아요·싫어요를 남겨보세요</div>
+<a class="reaction-detail-link" id="reactionDetailLink" href="#" target="_blank" rel="noopener noreferrer" style="display:none" aria-label="아이온2 캐릭터 정보실 열기"><img src="../../assets/images/common/aion2_logo.png" alt="" aria-hidden="true"/><span>정보실</span><span class="reaction-detail-arrow" aria-hidden="true">↗</span></a>
+</div>
+</div>
+<div class="reaction-choice">
+<button id="reactionLikeBtn" type="button"><span aria-hidden="true" class="reaction-icon like-icon"></span><span>좋아요</span></button>
+<button id="reactionDislikeBtn" type="button"><span aria-hidden="true" class="reaction-icon dislike-icon"></span><span>싫어요</span></button>
+</div>
+<div class="reaction-input-row">
+<label class="reaction-comment-label" for="reactionComment">코멘트 · 20자 이내로 한마디</label>
+<textarea class="reaction-comment" id="reactionComment" maxlength="20" rows="3" placeholder="전하고 싶은 말을 남겨주세요"></textarea>
+<button aria-label="코멘트 전달" class="send-btn" id="reactionSubmitBtn" type="button">전송</button>
+</div>
+<div class="reaction-status" id="reactionStatus"></div>
+</div>
+</section>
 <footer class="footer common-footer"><div class="footer-links"><a href="../../pages/about.html">사이트 소개</a><a href="../../pages/terms.html">이용약관</a><a href="../../pages/privacy.html">개인정보처리방침</a><button id="footerSuggestBtn" type="button">아이디어 제안 및 건의</button></div><div class="footer-powered">Powered by AION2 · KINOJO 레기온 지원</div></footer>
 </main>
 <script src="../../core/kinojo-api.js?cache=2026062925"></script>
@@ -59,7 +82,6 @@
 <script src="../../core/kinojo-debug.js?cache=2026062925"></script>
 <script src="../../core/kinojo-logger.js?cache=2026062925"></script>
 <script src="../../ui/kinojo-common-ui.js?cache=2026081801"></script>
-<script src="../../ui/kinojo-common-navigation.js?cache=2026082003"></script>
 <script src="../../ui/kinojo-staged-loading.js?cache=2026081222"></script>
 <script src="../../ui/kinojo-admin-panel.js?cache=2026071712"></script>
 <script src="../../core/kinojo-supabase-client.js?cache=2026080205"></script>
@@ -68,7 +90,7 @@
 <script src="../../core/kinojo-auth-session.js?cache=2026081801"></script>
 <script src="../../core/kinojo-auth-service.js?cache=2026081801"></script>
 <script src="../../core/kinojo-auth-ui.js?cache=2026081801"></script>
-<script src="../../ui/kinojo-event-notice.js?cache=2026081003"></script>
+<script src="../../ui/kinojo-event-notice.js?cache=2026070521"></script>
 <script src="../../ui/kinojo-character-reaction.js?cache=2026081801"></script>
 <script src="../../ui/kinojo-character-detail-refresh.js?cache=2026081003"></script>
 <script src="../../ui/kinojo-character-skill-bridge.js?cache=2026081001"></script>

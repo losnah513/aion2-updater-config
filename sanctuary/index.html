@@ -34,14 +34,82 @@
 </head>
 <body class="kinojo-page-booting">
 <main class="wrap">
-<section class="sanctuary-hero" id="sanctuaryHero"><div class="hero-bg" id="heroBg"></div><div class="hero-fade"></div><div class="hero-text"><div class="hero-kicker" id="heroKicker">성역</div><h1 id="heroTitle">성역 데이터를 불러오는 중...</h1><p id="heroSub">Server Engine Sanctuary Data</p></div></section>
-<div class="sanctuary-page-bar"><section aria-label="이번 주 성역 운영" class="sanctuary-operation" id="sanctuaryOperation"><header class="sanctuary-operation-head"><div><div class="sanctuary-operation-kicker">SANCTUARY OPERATION</div><h2>성역 일정</h2><p id="operationWeekLabel">아이온 주간 일정을 불러오는 중...</p></div><div class="sanctuary-operation-head-actions"><div class="sanctuary-operation-auth" id="operationAuthState">Server Engine 확인 중</div><a class="sanctuary-operation-schedule-link" id="operationSchedulePageLink" href="../sanctuary-schedule/">성역 스케줄</a></div></header><div class="sanctuary-operation-schedules" id="operationScheduleList"></div></section><section aria-label="성역 요약" class="summary-grid" id="summaryGrid"></section></div>
-<div class="sanctuary-content-layout"><aside class="sanctuary-side-rail" aria-label="팀과 대기자 바로가기"><section aria-label="팀 바로가기" class="sanctuary-party-nav" id="partyQuickNav"></section><button class="sanctuary-rail-waitlist" type="button" data-waitlist-open><span>대기자</span><strong id="sanctuaryRailWaitCount">0</strong><em>추천 배치 ›</em></button></aside><div class="sanctuary-content-main"><section aria-hidden="true" class="tip-panel" id="tipPanel"><div class="tip-card"><button aria-label="공략 팁 닫기" class="tip-close" id="tipCloseBtn" type="button">×</button><div class="tip-kicker">공략 팁</div><h2 id="tipTitle">공략 팁</h2><div class="tip-body" id="tipBody"></div></div></section><section aria-label="성역 도구" class="edit-shell"><button class="edit-btn summary-tip-action" id="tipOpenBtn" type="button">공략 팁</button><button class="edit-btn" id="editModeBtn" type="button">성역 정보 수정</button><span class="edit-note" id="sanctuarySyncChip">Server Engine 연결 확인 중</span><span class="edit-note">팀을 선택해 팀 이름과 대표자를 수정합니다.</span></section><section class="team-list" id="teamList"></section><section class="waiting-section" id="waitingSection"></section></div></div>
+
+
+<section class="sanctuary-hero" id="sanctuaryHero">
+<div class="hero-bg" id="heroBg"></div>
+<div class="hero-fade"></div>
+<div class="hero-text">
+<div class="hero-kicker" id="heroKicker">성역</div>
+<h1 id="heroTitle">성역 데이터를 불러오는 중...</h1>
+<p id="heroSub">Server Engine Sanctuary Data</p>
+</div>
+</section>
+<div class="sanctuary-page-bar">
+<section aria-label="이번 주 성역 운영" class="sanctuary-operation" id="sanctuaryOperation">
+<header class="sanctuary-operation-head">
+<div>
+<div class="sanctuary-operation-kicker">SANCTUARY OPERATION</div>
+<h2>성역 일정</h2>
+<p id="operationWeekLabel">아이온 주간 일정을 불러오는 중...</p>
+</div>
+<div class="sanctuary-operation-head-actions"><div class="sanctuary-operation-auth" id="operationAuthState">Server Engine 확인 중</div><a class="sanctuary-operation-schedule-link" id="operationSchedulePageLink" href="../sanctuary-schedule/">성역 스케줄</a></div>
+</header>
+<div class="sanctuary-operation-schedules" id="operationScheduleList"></div>
+</section>
+<section aria-label="성역 요약" class="summary-grid" id="summaryGrid"></section>
+</div>
+<div class="sanctuary-content-layout">
+<aside class="sanctuary-side-rail" aria-label="팀과 대기자 바로가기">
+<section aria-label="팀 바로가기" class="sanctuary-party-nav" id="partyQuickNav"></section>
+<button class="sanctuary-rail-waitlist" type="button" data-waitlist-open><span>대기자</span><strong id="sanctuaryRailWaitCount">0</strong><em>추천 배치 ›</em></button>
+</aside>
+<div class="sanctuary-content-main">
+<section aria-hidden="true" class="tip-panel" id="tipPanel">
+<div class="tip-card">
+<button aria-label="공략 팁 닫기" class="tip-close" id="tipCloseBtn" type="button">×</button>
+<div class="tip-kicker">공략 팁</div>
+<h2 id="tipTitle">공략 팁</h2>
+<div class="tip-body" id="tipBody"></div>
+</div>
+</section>
+<section aria-label="성역 도구" class="edit-shell">
+<button class="edit-btn summary-tip-action" id="tipOpenBtn" type="button">공략 팁</button>
+<button class="edit-btn" id="editModeBtn" type="button">성역 정보 수정</button>
+<span class="edit-note" id="sanctuarySyncChip">Server Engine 연결 확인 중</span>
+<span class="edit-note">팀을 선택해 팀 이름과 대표자를 수정합니다.</span>
+</section>
+<section class="team-list" id="teamList"></section>
+<section class="waiting-section" id="waitingSection"></section>
+</div>
+</div>
 <footer class="footer common-footer"><div class="footer-links"><a href="../pages/about.html">사이트 소개</a><a href="../pages/terms.html">이용약관</a><a href="../pages/privacy.html">개인정보처리방침</a><a href="../pages/contact.html">아이디어 제안 및 건의</a></div><div class="footer-powered">Powered by AION2 · 깡 레기온 지원</div></footer>
 </main>
-<script src="../core/kinojo-api.js?cache=2026070115"></script><script src="../core/kinojo-cache.js?cache=2026070115"></script><script src="../core/kinojo-permissions.js?cache=2026071517"></script><script src="../core/kinojo-toast.js?cache=2026070115"></script><script src="../core/kinojo-modal.js?cache=2026070115"></script><script src="../core/kinojo-route-guard.js?cache=2026070115"></script><script src="../core/kinojo-debug.js?cache=2026070115"></script><script src="../core/kinojo-logger.js?cache=2026070115"></script>
+<script src="../core/kinojo-api.js?cache=2026070115"></script>
+<script src="../core/kinojo-cache.js?cache=2026070115"></script>
+<script src="../core/kinojo-permissions.js?cache=2026071517"></script>
+<script src="../core/kinojo-toast.js?cache=2026070115"></script>
+<script src="../core/kinojo-modal.js?cache=2026070115"></script>
+<script src="../core/kinojo-route-guard.js?cache=2026070115"></script>
+<script src="../core/kinojo-debug.js?cache=2026070115"></script>
+<script src="../core/kinojo-logger.js?cache=2026070115"></script>
 <script src="../ui/kinojo-common-ui.js?cache=2026081801"></script>
-<script src="../ui/kinojo-common-navigation.js?cache=2026082003"></script>
-<script src="../ui/kinojo-staged-loading.js?cache=2026081222"></script><script src="../ui/kinojo-admin-panel.js?cache=2026071712"></script><script src="../core/kinojo-supabase-client.js?cache=2026081106"></script><script src="../core/kinojo-supabase-rpc.js?cache=2026080205"></script><script src="../core/kinojo-supabase-features.js?cache=2026081801"></script><script src="../core/kinojo-auth-session.js?cache=2026081801"></script><script src="../core/kinojo-auth-service.js?cache=2026081801"></script><script src="../core/kinojo-auth-ui.js?cache=2026081801"></script><script src="../ui/kinojo-event-notice.js?cache=2026081003"></script><script src="../ui/kinojo-character-reaction.js?cache=2026081801"></script><script src="../ui/kinojo-character-detail-refresh.js?cache=2026081003"></script><script src="../ui/kinojo-character-skill-bridge.js?cache=2026081001"></script><script src="../ui/kinojo-character-daevanion-bridge.js?cache=2026081002"></script><script src="js/sanctuary-capture.js?cache=2026071518"></script><script src="js/sanctuary.js?cache=2026081801"></script><script src="js/sanctuary-card-layout.js?cache=2026082001"></script><script src="js/sanctuary-editor.js?cache=2026081107"></script>
+<script src="../ui/kinojo-staged-loading.js?cache=2026081222"></script>
+<script src="../ui/kinojo-admin-panel.js?cache=2026071712"></script>
+<script src="../core/kinojo-supabase-client.js?cache=2026081106"></script>
+<script src="../core/kinojo-supabase-rpc.js?cache=2026080205"></script>
+<script src="../core/kinojo-supabase-features.js?cache=2026081801"></script>
+<script src="../core/kinojo-auth-session.js?cache=2026081801"></script>
+<script src="../core/kinojo-auth-service.js?cache=2026081801"></script>
+<script src="../core/kinojo-auth-ui.js?cache=2026081801"></script>
+<script src="../ui/kinojo-event-notice.js?cache=2026070521"></script>
+<script src="../ui/kinojo-character-reaction.js?cache=2026081801"></script>
+<script src="../ui/kinojo-character-detail-refresh.js?cache=2026081003"></script>
+<script src="../ui/kinojo-character-skill-bridge.js?cache=2026081001"></script>
+<script src="../ui/kinojo-character-daevanion-bridge.js?cache=2026081002"></script>
+<script src="js/sanctuary-capture.js?cache=2026071518"></script>
+<script src="js/sanctuary.js?cache=2026081801"></script>
+<script src="js/sanctuary-card-layout.js?cache=2026082001"></script>
+<script src="js/sanctuary-editor.js?cache=2026081107"></script>
 </body>
 </html>

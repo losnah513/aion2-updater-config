@@ -23,15 +23,72 @@
 <body class="kinojo-mobile-detail-page kinojo-sanctuary-schedule-page kinojo-mobile-sanctuary-schedule-page kinojo-page-booting">
 <main class="schedule-wrap">
   <div class="schedule-page-bar">
-  <section class="schedule-hero" aria-labelledby="scheduleTitle"><div><div class="schedule-kicker">SANCTUARY OPERATION</div><h1 id="scheduleTitle">성역 스케줄</h1><p>월간 또는 주간으로 내 팀 성역 일정을 확인합니다. 관리 권한 계정은 필요할 때 모든 팀으로 전환할 수 있습니다.</p></div><a class="schedule-back-link" id="scheduleSanctuaryLink" href="../sanctuary/">성역 파티 보기</a></section>
-  <section class="schedule-toolbar" aria-label="스케줄 보기 설정"><div class="schedule-integrated-label" aria-label="전체 성역 통합 보기"><strong>전체 성역 통합</strong><span id="scheduleIntegratedScopeLabel">내 팀 일정</span></div><div class="schedule-view-switch" role="group" aria-label="월간 또는 주간 보기"><button type="button" class="is-active" data-schedule-view="month">월간</button><button type="button" data-schedule-view="week">주간</button></div><div class="schedule-scope-switch" id="scheduleScopeSwitch" role="group" aria-label="내 팀 또는 모든 팀 보기" hidden><button type="button" class="is-active" data-schedule-scope="mine">내 팀</button><button type="button" data-schedule-scope="all">모든 팀</button></div><button type="button" class="schedule-today-btn" id="scheduleTodayBtn">오늘</button><div class="schedule-sync" id="scheduleSyncState">Server Engine 연결 중</div></section>
+  <section class="schedule-hero" aria-labelledby="scheduleTitle">
+    <div>
+      <div class="schedule-kicker">SANCTUARY OPERATION</div>
+      <h1 id="scheduleTitle">성역 스케줄</h1>
+      <p>월간 또는 주간으로 내 팀 성역 일정을 확인합니다. 관리 권한 계정은 필요할 때 모든 팀으로 전환할 수 있습니다.</p>
+    </div>
+    <a class="schedule-back-link" id="scheduleSanctuaryLink" href="../sanctuary/">성역 파티 보기</a>
+  </section>
+
+  <section class="schedule-toolbar" aria-label="스케줄 보기 설정">
+    <div class="schedule-integrated-label" aria-label="전체 성역 통합 보기">
+      <strong>전체 성역 통합</strong><span id="scheduleIntegratedScopeLabel">내 팀 일정</span>
+    </div>
+    <div class="schedule-view-switch" role="group" aria-label="월간 또는 주간 보기">
+      <button type="button" class="is-active" data-schedule-view="month">월간</button>
+      <button type="button" data-schedule-view="week">주간</button>
+    </div>
+    <div class="schedule-scope-switch" id="scheduleScopeSwitch" role="group" aria-label="내 팀 또는 모든 팀 보기" hidden>
+      <button type="button" class="is-active" data-schedule-scope="mine">내 팀</button>
+      <button type="button" data-schedule-scope="all">모든 팀</button>
+    </div>
+    <button type="button" class="schedule-today-btn" id="scheduleTodayBtn">오늘</button>
+    <div class="schedule-sync" id="scheduleSyncState">Server Engine 연결 중</div>
+  </section>
   </div>
-  <section class="schedule-layout"><section class="schedule-calendar-shell" aria-label="성역 달력"><div class="schedule-week-head" id="scheduleWeekHead"></div><div class="schedule-calendar-viewport" id="scheduleCalendarViewport"><div class="schedule-calendar-loading"><span class="kinojo-spinner" aria-hidden="true"></span><strong>일정을 불러오는 중...</strong></div></div><nav class="schedule-calendar-rail" aria-label="이전 또는 다음 기간"><button type="button" id="schedulePrevBtn" aria-label="이전 기간">▲</button><button type="button" id="scheduleNextBtn" aria-label="다음 기간">▼</button></nav></section><aside class="schedule-detail" id="scheduleDetail" aria-live="polite"><div class="schedule-detail-loading"><span class="kinojo-spinner" aria-hidden="true"></span><strong>날짜를 선택해 주세요.</strong></div></aside></section>
-  <footer class="footer common-footer"><div class="footer-links"><a href="../../pages/about.html">사이트 소개</a><a href="../../pages/terms.html">이용약관</a><a href="../../pages/privacy.html">개인정보처리방침</a><a href="../../pages/contact.html">아이디어 제안 및 건의</a></div><div class="footer-powered">Powered by AION2 · 깡 레기온 지원</div></footer>
+
+  <section class="schedule-layout">
+    <section class="schedule-calendar-shell" aria-label="성역 달력">
+      <div class="schedule-week-head" id="scheduleWeekHead"></div>
+      <div class="schedule-calendar-viewport" id="scheduleCalendarViewport">
+        <div class="schedule-calendar-loading"><span class="kinojo-spinner" aria-hidden="true"></span><strong>일정을 불러오는 중...</strong></div>
+      </div>
+      <nav class="schedule-calendar-rail" aria-label="이전 또는 다음 기간">
+        <button type="button" id="schedulePrevBtn" aria-label="이전 기간">▲</button>
+        <button type="button" id="scheduleNextBtn" aria-label="다음 기간">▼</button>
+      </nav>
+    </section>
+
+    <aside class="schedule-detail" id="scheduleDetail" aria-live="polite">
+      <div class="schedule-detail-loading"><span class="kinojo-spinner" aria-hidden="true"></span><strong>날짜를 선택해 주세요.</strong></div>
+    </aside>
+  </section>
+
+  <footer class="footer common-footer">
+    <div class="footer-links"><a href="../../pages/about.html">사이트 소개</a><a href="../../pages/terms.html">이용약관</a><a href="../../pages/privacy.html">개인정보처리방침</a><a href="../../pages/contact.html">아이디어 제안 및 건의</a></div>
+    <div class="footer-powered">Powered by AION2 · 깡 레기온 지원</div>
+  </footer>
 </main>
-<script src="../../core/kinojo-api.js?cache=2026070115"></script><script src="../../core/kinojo-cache.js?cache=2026070115"></script><script src="../../core/kinojo-permissions.js?cache=2026071517"></script><script src="../../core/kinojo-toast.js?cache=2026070115"></script><script src="../../core/kinojo-modal.js?cache=2026070115"></script><script src="../../core/kinojo-route-guard.js?cache=2026070115"></script><script src="../../core/kinojo-debug.js?cache=2026070115"></script><script src="../../core/kinojo-logger.js?cache=2026070115"></script>
+<script src="../../core/kinojo-api.js?cache=2026070115"></script>
+<script src="../../core/kinojo-cache.js?cache=2026070115"></script>
+<script src="../../core/kinojo-permissions.js?cache=2026071517"></script>
+<script src="../../core/kinojo-toast.js?cache=2026070115"></script>
+<script src="../../core/kinojo-modal.js?cache=2026070115"></script>
+<script src="../../core/kinojo-route-guard.js?cache=2026070115"></script>
+<script src="../../core/kinojo-debug.js?cache=2026070115"></script>
+<script src="../../core/kinojo-logger.js?cache=2026070115"></script>
 <script src="../../ui/kinojo-common-ui.js?cache=2026081801"></script>
-<script src="../../ui/kinojo-common-navigation.js?cache=2026082003"></script>
-<script src="../../ui/kinojo-staged-loading.js?cache=2026081222"></script><script src="../../ui/kinojo-admin-panel.js?cache=2026071712"></script><script src="../../core/kinojo-supabase-client.js?cache=2026080205"></script><script src="../../core/kinojo-supabase-rpc.js?cache=2026080205"></script><script src="../../core/kinojo-supabase-features.js?cache=2026081801"></script><script src="../../core/kinojo-auth-session.js?cache=2026081801"></script><script src="../../core/kinojo-auth-service.js?cache=2026081801"></script><script src="../../core/kinojo-auth-ui.js?cache=2026081801"></script><script src="../../ui/kinojo-event-notice.js?cache=2026081003"></script><script src="../../sanctuary-schedule/js/sanctuary-schedule.js?cache=2026081801"></script>
+<script src="../../ui/kinojo-staged-loading.js?cache=2026081222"></script>
+<script src="../../ui/kinojo-admin-panel.js?cache=2026071712"></script>
+<script src="../../core/kinojo-supabase-client.js?cache=2026080205"></script>
+<script src="../../core/kinojo-supabase-rpc.js?cache=2026080205"></script>
+<script src="../../core/kinojo-supabase-features.js?cache=2026081801"></script>
+<script src="../../core/kinojo-auth-session.js?cache=2026081801"></script>
+<script src="../../core/kinojo-auth-service.js?cache=2026081801"></script>
+<script src="../../core/kinojo-auth-ui.js?cache=2026081801"></script>
+<script src="../../ui/kinojo-event-notice.js?cache=2026070521"></script>
+<script src="../../sanctuary-schedule/js/sanctuary-schedule.js?cache=2026081801"></script>
 </body>
 </html>
