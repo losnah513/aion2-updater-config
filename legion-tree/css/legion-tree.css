@@ -15,10 +15,17 @@ body.kinojo-page-legion-tree{margin:0;background:linear-gradient(180deg,#f8fbff 
 .legion-tree-hero p{margin:0;color:var(--legion-tree-muted);font-size:14px}
 .legion-tree-preview-badge{flex:none;border:1px solid rgba(76,111,174,.22);background:linear-gradient(135deg,rgba(240,247,255,.95),rgba(239,239,255,.95));color:#6076a0;border-radius:7px;padding:8px 10px;font-size:10px;font-weight:800;letter-spacing:.11em}
 
-/* Subbar: outer geometry is the existing shared .hof-filter-bar contract. */
+/* Subbar outer geometry is the existing shared .hof-filter-bar contract. */
 .legion-tree-subbar-fields{flex:1 1 620px;display:grid;grid-template-columns:minmax(150px,1fr) minmax(150px,1fr) 132px;gap:8px;align-items:end;min-width:0}
-.legion-tree-subbar-field{display:grid;gap:4px;min-width:0}.legion-tree-subbar-field>span{font-size:10px;font-weight:850;color:#64748b}.legion-tree-subbar-field .kinojo-input{width:100%;min-width:0}
-.legion-tree-subbar-actions{flex:0 1 auto;display:flex;align-items:flex-end;justify-content:flex-end;gap:7px;flex-wrap:wrap}.legion-tree-subbar-actions .kinojo-btn{white-space:nowrap}.legion-tree-subbar-status{flex-basis:100%;text-align:right;color:#73839b;font-size:10px;font-weight:800;line-height:1.2}
+.legion-tree-subbar-field{display:grid;gap:4px;min-width:0}
+.legion-tree-subbar-field>span{font-size:10px;font-weight:850;color:#64748b}
+.legion-tree-subbar-field .kinojo-input{width:100%;min-width:0;height:38px;padding:0 12px;border:1px solid rgba(120,145,180,.28);border-radius:10px;background:#fff;color:#17233a;font-size:13px;font-weight:700;outline:none}
+.legion-tree-subbar-field .kinojo-input:focus{border-color:rgba(37,99,235,.48);box-shadow:0 0 0 3px rgba(37,99,235,.10)}
+.legion-tree-subbar-actions{flex:0 1 auto;display:flex;align-items:flex-end;justify-content:flex-end;gap:7px;flex-wrap:wrap}
+.legion-tree-subbar-actions .kinojo-btn{min-height:38px;height:38px;padding:0 12px;border:1px solid rgba(120,145,180,.34);border-radius:10px;background:#fff;color:#475569;font-size:12px;font-weight:900;white-space:nowrap;cursor:pointer}
+.legion-tree-subbar-actions #legionTreeAddBtn{border-color:#2563eb;background:#2563eb;color:#fff}
+.legion-tree-subbar-actions .kinojo-btn:disabled{opacity:.48;cursor:not-allowed}
+.legion-tree-subbar-status{flex-basis:100%;text-align:right;color:#73839b;font-size:10px;font-weight:800;line-height:1.2}
 
 .legion-tree-legion,.legion-tree-satellites{border:1px solid #e1e6ef;border-radius:12px;background:var(--legion-tree-surface);box-shadow:var(--legion-tree-shadow)}
 .legion-tree-legion{padding:20px 20px 24px}.legion-tree-legion-head,.legion-tree-section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;border-bottom:1px solid #edf0f5;padding-bottom:13px}.legion-tree-legion-head h2,.legion-tree-section-head h2{margin:4px 0 0;font-size:22px;letter-spacing:-.035em}.legion-tree-legion-head small,.legion-tree-section-head p{margin:0;color:#8792a6;font-size:12px}
