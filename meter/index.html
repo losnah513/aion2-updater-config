@@ -32,47 +32,25 @@
         <strong id="meterNoticeTitle">키노조 미터 공지를 불러오는 중입니다.</strong>
         <p id="meterNoticeContent">업데이트와 점검 안내를 Server에서 확인하고 있습니다.</p>
       </section>
-      <div class="meter-hero-trust" aria-label="KINOJO Meter 처리 원칙">
-        <span>PASS KEY 미저장</span><span>AI Engine 집계</span><span>완료 전투만 반영</span>
-      </div>
+      <div class="meter-hero-trust" aria-label="KINOJO Meter 처리 원칙"><span>PASS KEY 미저장</span><span>AI Engine 집계</span><span>완료 전투만 반영</span></div>
     </div>
     <aside class="meter-download-card" id="download">
       <div class="meter-download-head"><span class="meter-beta">TEST BUILD</span><span class="meter-platform">WINDOWS</span></div>
-      <h2>KINOJO Meter</h2>
-      <p>PASS KEY 인증 · 캐릭터 선택 · 전투 오버레이</p>
-      <dl>
-        <div><dt>버전</dt><dd id="meterVersion">Server 확인 중</dd></div>
-        <div><dt>다운로드 용량</dt><dd id="meterInstallerSize">Server 확인 중</dd></div>
-        <div><dt>지원 환경</dt><dd>Windows 10/11 x64</dd></div>
-      </dl>
+      <h2>KINOJO Meter</h2><p>PASS KEY 인증 · 캐릭터 선택 · 전투 오버레이</p>
+      <dl><div><dt>버전</dt><dd id="meterVersion">Server 확인 중</dd></div><div><dt>다운로드 용량</dt><dd id="meterInstallerSize">Server 확인 중</dd></div><div><dt>지원 환경</dt><dd>Windows 10/11 x64</dd></div></dl>
       <a class="kinojo-btn meter-download-full" id="meterDirectDownload" href="#download" aria-disabled="true">다운로드 정보 확인 중</a>
       <div class="meter-consent-state" id="meterConsentState">PASS KEY 로그인과 필수 동의가 필요합니다.</div>
-      <small id="meterDownloadNote">Server Release Master를 확인하고 있습니다.</small>
-      <div class="meter-release-note" id="meterReleaseNote">최신 배포 메모를 불러오는 중입니다.</div>
+      <small id="meterDownloadNote">Server Release Master를 확인하고 있습니다.</small><div class="meter-release-note" id="meterReleaseNote">최신 배포 메모를 불러오는 중입니다.</div>
     </aside>
   </section>
 
-  <section class="meter-live-subbar" id="meterLiveUsers" aria-live="polite" aria-label="현재 키노조 미터 사용 중인 이용자">
-    <div class="meter-live-title"><span aria-hidden="true"></span><strong>현재 미터 사용 중</strong><b id="meterLiveCount">0명</b></div>
-    <div class="meter-live-names" id="meterLiveNames"><em>실행 상태를 확인하고 있습니다.</em></div>
-    <small>이름 공개를 끈 이용자는 웹에 익명 사용자로 표시됩니다.</small>
-  </section>
-
+  <section class="meter-live-subbar" id="meterLiveUsers" aria-live="polite" aria-label="현재 키노조 미터 사용 중인 이용자"><div class="meter-live-title"><span aria-hidden="true"></span><strong>현재 미터 사용 중</strong><b id="meterLiveCount">0명</b></div><div class="meter-live-names" id="meterLiveNames"><em>실행 상태를 확인하고 있습니다.</em></div><small>이름 공개를 끈 이용자는 웹에 익명 사용자로 표시됩니다.</small></section>
   <section class="meter-system-notice" id="meterSystemNotice" hidden><strong>SERVER</strong><span>Server 연결 상태를 확인하고 있습니다.</span></section>
 
   <section class="meter-stats-access is-locked" id="meterStatsAccess" aria-label="전투 통계 접근">
-    <div class="meter-stats-lock" id="meterStatsLock" role="status">
-      <span class="meter-stats-lock-icon" aria-hidden="true">K</span>
-      <strong>PASS KEY 로그인 후 전투 통계를 확인할 수 있습니다.</strong>
-      <p>로그인 정보는 저장하지 않으며, 현재 페이지의 Meter 세션에서만 사용합니다.</p>
-      <button class="kinojo-btn meter-primary" id="meterStatsLoginBtn" type="button">PASS KEY 로그인</button>
-    </div>
+    <div class="meter-stats-lock" id="meterStatsLock" role="status"><span class="meter-stats-lock-icon" aria-hidden="true">K</span><strong>PASS KEY 로그인 후 전투 통계를 확인할 수 있습니다.</strong><p>로그인 정보는 저장하지 않으며, 현재 페이지의 Meter 세션에서만 사용합니다.</p><button class="kinojo-btn meter-primary" id="meterStatsLoginBtn" type="button">PASS KEY 로그인</button></div>
     <div class="meter-stats-content" id="meterStatsContent" aria-hidden="true" inert>
-      <section class="meter-section-head" id="stats">
-        <div><span>COMBAT STATISTICS</span><h2>전투 통계</h2></div>
-        <p>조건을 선택하면 키노조 AI Engine이 집계한 공개 통계를 불러옵니다.</p>
-      </section>
-
+      <section class="meter-section-head" id="stats"><div><span>COMBAT STATISTICS</span><h2>전투 통계</h2></div><p>조건을 선택하면 키노조 AI Engine이 집계한 공개 통계를 불러옵니다.</p></section>
       <section class="meter-filter-card" aria-label="미터기 통계 필터">
         <div><label for="meterClass">클래스</label><select id="meterClass" disabled><option>Server 카탈로그 로딩 중</option></select></div>
         <div><label for="meterContent">콘텐츠</label><select id="meterContent" disabled><option>Server 카탈로그 로딩 중</option></select></div>
@@ -83,148 +61,29 @@
         <div><label for="meterPeriod">집계 기간</label><select id="meterPeriod" disabled><option>Server 카탈로그 로딩 중</option></select></div>
         <button class="kinojo-btn meter-query" id="meterQueryBtn" type="button" disabled>통계 조회</button>
       </section>
-
-      <section class="meter-stats-meta" id="meterStatsMeta" aria-live="polite">
-    <div class="meter-stats-state"><span id="meterStatsState">조회 대기</span><strong id="meterStatsMessage">Server 공개 통계를 불러오는 중입니다.</strong></div>
-    <div class="meter-applied-filters" id="meterAppliedFilters"><span>필터 확인 중</span></div>
-    <small id="meterPeriodRange">Server 집계 기간 확인 중</small>
-      </section>
-
-      <section class="meter-summary" aria-label="통계 요약">
-    <article><span>참여 횟수</span><strong id="meterEncounterCount">-</strong><small>완료·검증 전투</small></article>
-    <article><span>참여 캐릭터</span><strong id="meterCharacterCount">-</strong><small>중복 제외 인원</small></article>
-    <article><span>평균 DPS</span><strong id="meterAverageDps">-</strong><small>전체 전투 평균</small></article>
-    <article><span>전체 상위 10% DPS</span><strong id="meterOverallP90Dps">-</strong><small>전체 90 percentile</small></article>
-    <article><span>클래스 상위 10% DPS</span><strong id="meterClassP90Dps">-</strong><small id="meterClassP90Note">클래스 선택 시 표시</small></article>
-      </section>
+      <section class="meter-stats-meta" id="meterStatsMeta" aria-live="polite"><div class="meter-stats-state"><span id="meterStatsState">조회 대기</span><strong id="meterStatsMessage">Server 공개 통계를 불러오는 중입니다.</strong></div><div class="meter-applied-filters" id="meterAppliedFilters"><span>필터 확인 중</span></div><small id="meterPeriodRange">Server 집계 기간 확인 중</small></section>
+      <section class="meter-summary" aria-label="통계 요약"><article><span>참여 횟수</span><strong id="meterEncounterCount">-</strong><small>완료·검증 전투</small></article><article><span>참여 캐릭터</span><strong id="meterCharacterCount">-</strong><small>중복 제외 인원</small></article><article><span>평균 DPS</span><strong id="meterAverageDps">-</strong><small>전체 전투 평균</small></article><article><span>전체 상위 10% DPS</span><strong id="meterOverallP90Dps">-</strong><small>전체 90 percentile</small></article><article><span>클래스 상위 10% DPS</span><strong id="meterClassP90Dps">-</strong><small id="meterClassP90Note">클래스 선택 시 표시</small></article></section>
 
       <section class="meter-grid">
-    <article class="meter-panel meter-distribution-panel">
-      <header>
-        <div><span>SERVER DISTRIBUTION</span><h2 id="meterChartTitle">전투력 구간별 DPS</h2></div>
-        <div class="meter-panel-tools">
-          <div class="meter-view-toggle" role="group" aria-label="통계 분류 선택">
-            <button id="meterViewPower" class="is-active" type="button" aria-pressed="true">전투력</button>
-            <button id="meterViewClass" type="button" aria-pressed="false">클래스</button>
-          </div>
-          <small id="meterUpdatedAt">업데이트 대기</small>
-        </div>
-      </header>
-      <div class="meter-chart-head"><span id="meterChartAxisLabel">전투력</span><span>평균 / 중앙값 / 상위 10%</span></div>
-      <div class="meter-bucket-chart" id="meterBucketChart"><div class="meter-loading">통계를 불러오는 중...</div></div>
-      <p class="meter-footnote" id="meterStatsFootnote">Server 공개 기준을 충족한 분류만 표시합니다.</p>
-    </article>
+    <article class="meter-panel meter-distribution-panel"><header><div><span>SERVER DISTRIBUTION</span><h2 id="meterChartTitle">전투력 구간별 DPS</h2></div><div class="meter-panel-tools"><div class="meter-view-toggle" role="group" aria-label="통계 분류 선택"><button id="meterViewPower" class="is-active" type="button" aria-pressed="true">전투력</button><button id="meterViewClass" type="button" aria-pressed="false">클래스</button></div><small id="meterUpdatedAt">업데이트 대기</small></div></header><div class="meter-chart-head"><span id="meterChartAxisLabel">전투력</span><span>평균 / 중앙값 / 상위 10%</span></div><div class="meter-bucket-chart" id="meterBucketChart"><div class="meter-loading">통계를 불러오는 중...</div></div><p class="meter-footnote" id="meterStatsFootnote">Server 공개 기준을 충족한 분류만 표시합니다.</p></article>
 
     <article class="meter-panel meter-my-panel">
-      <header>
-        <div><span>MY PERFORMANCE</span><h2>내 DPS 분석</h2></div>
-        <button class="meter-my-logout" id="meterMyLogoutBtn" type="button" hidden>로그아웃</button>
-      </header>
-
-      <div id="meterMyLogin" class="meter-my-empty">
-        <div class="meter-my-icon" aria-hidden="true">%</div>
-        <strong>내 DPS 분석 연결</strong>
-        <p>KINOJO 공통 로그인 창에서 PASS KEY를 확인한 뒤 비교할 캐릭터를 선택합니다.</p>
-        <div class="meter-login-action">
-          <button class="kinojo-btn meter-secondary" id="meterOpenLoginBtn" type="button">PASS KEY 입력하기</button>
-          <small id="meterLoginGuide">로그인 완료 후 연결 캐릭터 목록을 불러옵니다.</small>
-          <p class="meter-pass-error" id="meterPassError" role="status"></p>
-        </div>
-      </div>
-
-      <div id="meterCharacterPicker" class="meter-character-picker" hidden>
-        <div class="meter-account-row">
-          <div><span>로그인 계정</span><strong id="meterAccountName">-</strong></div>
-          <small id="meterSessionExpiry">세션 확인 중</small>
-        </div>
-        <p class="meter-picker-guide">비교할 캐릭터를 선택하세요. 본캐와 연결된 활성 캐릭터만 표시됩니다.</p>
-        <div class="meter-character-list" id="meterCharacterList"></div>
-        <p class="meter-pass-error" id="meterCharacterError" role="status"></p>
-      </div>
-
-      <div id="meterMyWorkspace" class="meter-my-workspace" hidden>
-        <div class="meter-selected-character" id="meterSelectedCharacter"></div>
-        <div class="meter-my-condition">
-          <strong>현재 조건으로 비교</strong>
-          <span id="meterMyConditionText">콘텐츠·던전·보스·기간 조건을 사용합니다.</span>
-        </div>
-        <button class="kinojo-btn meter-secondary meter-my-compare" id="meterMyCompareBtn" type="button">내 기록 비교</button>
-        <p class="meter-my-status" id="meterMyStatus" role="status"></p>
-
-        <div id="meterMyResult" class="meter-my-result" hidden>
-          <div class="meter-percentile">
-            <span id="meterMyResultLabel">동일 조건</span>
-            <strong id="meterMyTop">상위 -%</strong>
-            <small id="meterMySample">표본 확인 중</small>
-          </div>
-          <dl>
-            <div><dt>내 DPS</dt><dd id="meterMyDps">-</dd></div>
-            <div><dt>구간 중앙값</dt><dd id="meterMyMedian">-</dd></div>
-            <div><dt>중앙값 대비</dt><dd id="meterMyDiff">-</dd></div>
-          </dl>
-          <p class="meter-my-record-meta" id="meterMyRecordMeta"></p>
-          <button class="meter-my-reset" id="meterChangeCharacterBtn" type="button">다른 캐릭터 선택</button>
-        </div>
-      </div>
+      <header><div><span>MY PERFORMANCE</span><h2>내 DPS 분석</h2></div><button class="meter-my-logout" id="meterMyLogoutBtn" type="button" hidden>로그아웃</button></header>
+      <div id="meterMyLogin" class="meter-my-empty"><div class="meter-my-icon" aria-hidden="true">%</div><strong>내 DPS 분석 연결</strong><p>KINOJO 공통 로그인 창에서 PASS KEY를 확인한 뒤 비교할 캐릭터를 선택합니다.</p><div class="meter-login-action"><button class="kinojo-btn meter-secondary" id="meterOpenLoginBtn" type="button">PASS KEY 입력하기</button><small id="meterLoginGuide">로그인 완료 후 연결 캐릭터 목록을 불러옵니다.</small><p class="meter-pass-error" id="meterPassError" role="status"></p></div></div>
+      <div id="meterCharacterPicker" class="meter-character-picker" hidden><div class="meter-account-row"><div><span>로그인 계정</span><strong id="meterAccountName">-</strong></div><small id="meterSessionExpiry">세션 확인 중</small></div><p class="meter-picker-guide">비교할 캐릭터를 선택하세요. 본캐와 연결된 활성 캐릭터만 표시됩니다.</p><div class="meter-character-list" id="meterCharacterList"></div><p class="meter-pass-error" id="meterCharacterError" role="status"></p></div>
+      <div id="meterMyWorkspace" class="meter-my-workspace" hidden><div class="meter-selected-character" id="meterSelectedCharacter"></div><div class="meter-my-condition"><strong>현재 조건으로 비교</strong><span id="meterMyConditionText">콘텐츠·던전·보스·기간 조건을 사용합니다.</span></div><button class="kinojo-btn meter-secondary meter-my-compare" id="meterMyCompareBtn" type="button">내 기록 비교</button><p class="meter-my-status" id="meterMyStatus" role="status"></p><div id="meterMyResult" class="meter-my-result" hidden><div class="meter-percentile"><span id="meterMyResultLabel">동일 조건</span><strong id="meterMyTop">상위 -%</strong><small id="meterMySample">표본 확인 중</small></div><dl><div><dt>내 DPS</dt><dd id="meterMyDps">-</dd></div><div><dt>구간 중앙값</dt><dd id="meterMyMedian">-</dd></div><div><dt>중앙값 대비</dt><dd id="meterMyDiff">-</dd></div></dl><p class="meter-my-record-meta" id="meterMyRecordMeta"></p><button class="meter-my-reset" id="meterChangeCharacterBtn" type="button">다른 캐릭터 선택</button></div></div>
     </article>
       </section>
-
-      <section class="meter-observed" aria-labelledby="meterObservedTitle">
-        <header>
-          <div><span>RECENT COMBAT · OWNER ONLY</span><h2 id="meterObservedTitle">최근 전투 기록</h2></div>
-          <button class="kinojo-btn meter-secondary" id="meterObservedRefreshBtn" type="button">새로고침</button>
-        </header>
-        <div class="meter-observed-policy"><strong>Server 저장·검증 상태</strong><span>모든 실제 전투를 보존하고 검증 상태를 표시합니다. 공개 통계는 Server 적격 판정과 관리자 공개 설정을 모두 충족한 기록만 사용합니다.</span></div>
-        <p class="meter-observed-status" id="meterObservedStatus" role="status">PASS KEY 로그인 후 이 계정에서 업로드한 최근 전투와 Server 검증 상태를 확인할 수 있습니다.</p>
-        <div class="meter-observed-list" id="meterObservedList"><div class="meter-empty">아직 불러온 수집 기록이 없습니다.</div></div>
-      </section>
+      <section class="meter-observed" aria-labelledby="meterObservedTitle"><header><div><span>RECENT COMBAT · OWNER ONLY</span><h2 id="meterObservedTitle">최근 전투 기록</h2></div><button class="kinojo-btn meter-secondary" id="meterObservedRefreshBtn" type="button">새로고침</button></header><div class="meter-observed-policy"><strong>Server 저장·검증 상태</strong><span>모든 실제 전투를 보존하고 검증 상태를 표시합니다. 공개 통계는 Server 적격 판정과 관리자 공개 설정을 모두 충족한 기록만 사용합니다.</span></div><p class="meter-observed-status" id="meterObservedStatus" role="status">PASS KEY 로그인 후 이 계정에서 업로드한 최근 전투와 Server 검증 상태를 확인할 수 있습니다.</p><div class="meter-observed-list" id="meterObservedList"><div class="meter-empty">아직 불러온 수집 기록이 없습니다.</div></div></section>
     </div>
   </section>
 
-  <section class="meter-method" aria-label="KINOJO Meter 처리 과정">
-    <div><span>01</span><strong>미터기 수집</strong><p>보스 처치까지 전투 이벤트를 누적하고 완료 기록을 확정합니다.</p></div>
-    <div><span>02</span><strong>서버 검증</strong><p>중복·비정상 기록을 차단하고 클래스와 전투력 구간을 계산합니다.</p></div>
-    <div><span>03</span><strong>WEB 비교</strong><p>중앙값·상위 10%·백분위 결과만 안전하게 공개합니다.</p></div>
-  </section>
-
+  <section class="meter-method" aria-label="KINOJO Meter 처리 과정"><div><span>01</span><strong>미터기 수집</strong><p>보스 처치까지 전투 이벤트를 누적하고 완료 기록을 확정합니다.</p></div><div><span>02</span><strong>서버 검증</strong><p>중복·비정상 기록을 차단하고 클래스와 전투력 구간을 계산합니다.</p></div><div><span>03</span><strong>WEB 비교</strong><p>중앙값·상위 10%·백분위 결과만 안전하게 공개합니다.</p></div></section>
   <footer class="footer common-footer"><div class="footer-links"><a href="../pages/about.html">사이트 소개</a><a href="../pages/terms.html">이용약관</a><a href="../pages/privacy.html">개인정보처리방침</a><a href="../pages/contact.html">아이디어 제안 및 건의</a></div><div class="footer-powered">Powered by KINOJO INFO · AION2 비공식 도구</div></footer>
 </main>
 <div class="meter-consent-modal" id="meterConsentModal" hidden>
   <div class="meter-consent-backdrop" data-consent-close></div>
-  <section class="meter-consent-dialog" role="dialog" aria-modal="true" aria-labelledby="meterConsentTitle">
-    <header>
-      <div><span>REQUIRED CONSENT</span><h2 id="meterConsentTitle">KINOJO Meter 필수 이용 동의</h2></div>
-      <button class="meter-consent-close" type="button" aria-label="동의 창 닫기" data-consent-close>×</button>
-    </header>
-    <div class="meter-consent-version" id="meterConsentVersion">Server 동의 문서를 확인하는 중입니다.</div>
-    <div class="meter-consent-scroll">
-      <article>
-        <h3>1. 비공식 외부 프로그램 이용 위험</h3>
-        <p id="meterConsentRiskText">동의 내용을 불러오는 중입니다.</p>
-        <a id="meterConsentPolicyLink" href="https://www.plaync.com/policy/operation/aion2" target="_blank" rel="noopener noreferrer">AION2 운영정책 확인</a>
-      </article>
-      <article>
-        <h3>2. 전투 통계 수집·이용</h3>
-        <p id="meterConsentStatsText">동의 내용을 불러오는 중입니다.</p>
-        <div class="meter-consent-columns">
-          <div><strong>수집 항목</strong><ul id="meterConsentCollection"><li>Server 확인 중</li></ul></div>
-          <div><strong>이용 목적</strong><ul id="meterConsentPurposes"><li>Server 확인 중</li></ul></div>
-        </div>
-        <p><strong>보유 기간</strong><span id="meterConsentRetention">Server 확인 중</span></p>
-        <p><strong>거부·철회</strong><span id="meterConsentWithdrawal">Server 확인 중</span></p>
-        <a id="meterConsentPrivacyLink" href="../pages/privacy.html" target="_blank" rel="noopener noreferrer">개인정보처리방침 확인</a>
-      </article>
-    </div>
-    <div class="meter-consent-checks">
-      <label><input id="meterConsentRiskCheck" type="checkbox"/> <span><b>[필수]</b> 비공식 외부 프로그램 사용에 따른 위험과 서비스 변경·종료 가능성을 확인했습니다.</span></label>
-      <label><input id="meterConsentStatsCheck" type="checkbox"/> <span><b>[필수]</b> 전투 통계 수집·이용 항목, 목적, 보유 기간과 철회 방법을 확인하고 동의합니다.</span></label>
-    </div>
-    <p class="meter-consent-error" id="meterConsentError" role="status"></p>
-    <footer>
-      <button class="kinojo-btn meter-secondary" type="button" data-consent-close>취소</button>
-      <button class="kinojo-btn meter-primary" id="meterConsentConfirmBtn" type="button" disabled>동의하고 다운로드</button>
-    </footer>
-  </section>
+  <section class="meter-consent-dialog" role="dialog" aria-modal="true" aria-labelledby="meterConsentTitle"><header><div><span>REQUIRED CONSENT</span><h2 id="meterConsentTitle">KINOJO Meter 필수 이용 동의</h2></div><button class="meter-consent-close" type="button" aria-label="동의 창 닫기" data-consent-close>×</button></header><div class="meter-consent-version" id="meterConsentVersion">Server 동의 문서를 확인하는 중입니다.</div><div class="meter-consent-scroll"><article><h3>1. 비공식 외부 프로그램 이용 위험</h3><p id="meterConsentRiskText">동의 내용을 불러오는 중입니다.</p><a id="meterConsentPolicyLink" href="https://www.plaync.com/policy/operation/aion2" target="_blank" rel="noopener noreferrer">AION2 운영정책 확인</a></article><article><h3>2. 전투 통계 수집·이용</h3><p id="meterConsentStatsText">동의 내용을 불러오는 중입니다.</p><div class="meter-consent-columns"><div><strong>수집 항목</strong><ul id="meterConsentCollection"><li>Server 확인 중</li></ul></div><div><strong>이용 목적</strong><ul id="meterConsentPurposes"><li>Server 확인 중</li></ul></div></div><p><strong>보유 기간</strong><span id="meterConsentRetention">Server 확인 중</span></p><p><strong>거부·철회</strong><span id="meterConsentWithdrawal">Server 확인 중</span></p><a id="meterConsentPrivacyLink" href="../pages/privacy.html" target="_blank" rel="noopener noreferrer">개인정보처리방침 확인</a></article></div><div class="meter-consent-checks"><label><input id="meterConsentRiskCheck" type="checkbox"/> <span><b>[필수]</b> 비공식 외부 프로그램 사용에 따른 위험과 서비스 변경·종료 가능성을 확인했습니다.</span></label><label><input id="meterConsentStatsCheck" type="checkbox"/> <span><b>[필수]</b> 전투 통계 수집·이용 항목, 목적, 보유 기간과 철회 방법을 확인하고 동의합니다.</span></label></div><p class="meter-consent-error" id="meterConsentError" role="status"></p><footer><button class="kinojo-btn meter-secondary" type="button" data-consent-close>취소</button><button class="kinojo-btn meter-primary" id="meterConsentConfirmBtn" type="button" disabled>동의하고 다운로드</button></footer></section>
 </div>
 <script src="../core/kinojo-api.js?cache=2026072201"></script>
 <script src="../core/kinojo-cache.js?cache=2026072201"></script>
@@ -233,6 +92,7 @@
 <script src="../core/kinojo-modal.js?cache=2026072201"></script>
 <script src="../core/kinojo-route-guard.js?cache=2026072201"></script>
 <script src="../ui/kinojo-common-ui.js?cache=2026081801"></script>
+<script src="../ui/kinojo-common-navigation.js?cache=2026082003"></script>
 <script src="../ui/kinojo-staged-loading.js?cache=2026081502"></script>
 <script src="../core/kinojo-supabase-client.js?cache=2026080205"></script>
 <script src="../core/kinojo-supabase-rpc.js?cache=2026080205"></script>
