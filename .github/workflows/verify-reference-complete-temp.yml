@@ -56,3 +56,6 @@ jobs:
 
           call "{\"action\":\"reference-upload-complete\",\"sessionToken\":\"$TEST_TOKEN\",\"characterId\":111,\"slot\":\"FRONT\",\"objectPath\":\"$MISSING\",\"mimeType\":\"image/png\",\"sizeBytes\":1234,\"passKey\":\"TEST\"}" 400
           jq -e '.code=="RAW_CREDENTIAL_FORBIDDEN"' "$CALL_OUT"
+
+          call '{"action":"health"}' 200
+          jq -e '.ok==true and .apiVersion=="1.9" and .databaseContract=="349"' "$CALL_OUT"
