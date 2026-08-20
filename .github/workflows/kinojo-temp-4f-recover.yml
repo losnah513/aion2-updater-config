@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   recover:
-    if: github.event.issue.title == 'KINOJO_MY_INFO_4F_RECOVER_20260820'
+    if: github.event.issue.title == 'KINOJO_MY_INFO_4F_RECOVER2_20260820'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -17,7 +17,7 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
-      - name: Recover full 4-F common UI and self-clean
+      - name: Apply full Stage 4-F patch and self-clean
         shell: bash
         run: |
           set -euo pipefail
@@ -28,11 +28,11 @@ jobs:
           git apply /tmp/4f.patch
           node --check ui/kinojo-common-ui.js
           git diff --check
-          test "$(git hash-object ui/kinojo-common-ui.js)" = "557db7df033117dd0e83665f36f24210f032ccda"
           grep -q "profile-upload-replace-complete" ui/kinojo-common-ui.js
+          ! grep -q "4-F에서 활성화" ui/kinojo-common-ui.js
           git config user.name "losnah513"
           git config user.email "losnah513@gmail.com"
           git rm -r -f --ignore-unmatch .kinojo-recover .github/workflows/kinojo-temp-4f-recover.yml .github/workflows/kinojo-temp-4f-export.yml .github/workflows/kinojo-temp-4f-live.yml .kinojo-transfer .kinojo-live
           git add ui/kinojo-common-ui.js
-          git commit -m "Recover full safe profile replacement UI"
+          git commit -m "Apply safe profile image replacement UI"
           git push origin HEAD:main
