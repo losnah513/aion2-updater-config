@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   recover:
-    if: github.event.issue.title == 'KINOJO_MY_INFO_4F_RECOVER3_20260820'
+    if: github.event.issue.title == 'KINOJO_MY_INFO_4F_FINAL_20260820'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -17,32 +17,23 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
-      - name: Apply or record exact recovery failure
+      - name: Apply validated Stage 4-F patch and self-clean
         shell: bash
         run: |
-          set +e
-          git pull --ff-only origin main; s_pull=$?
-          git show 42123403e41b1dab6add4a6d6ee6dadee592c918:ui/kinojo-common-ui.js > ui/kinojo-common-ui.js; s_base=$?
-          base64 -d .kinojo-recover/4f.patch.b64 > /tmp/4f.patch; s_decode=$?
-          git apply --check /tmp/4f.patch; s_check=$?
-          s_apply=99
-          if [ "$s_check" = 0 ]; then git apply /tmp/4f.patch; s_apply=$?; fi
-          node --check ui/kinojo-common-ui.js; s_node=$?
-          git diff --check; s_diff=$?
-          hash="$(git hash-object ui/kinojo-common-ui.js 2>/dev/null)"
-          has_replace=1; grep -q "profile-upload-replace-complete" ui/kinojo-common-ui.js || has_replace=0
-          stale=0; grep -q "4-F에서 활성화" ui/kinojo-common-ui.js && stale=1
-          mkdir -p .kinojo-recovery
-          printf 'pull=%s\nbase=%s\ndecode=%s\ncheck=%s\napply=%s\nnode=%s\ndiff=%s\nhash=%s\nhas_replace=%s\nstale=%s\n' "$s_pull" "$s_base" "$s_decode" "$s_check" "$s_apply" "$s_node" "$s_diff" "$hash" "$has_replace" "$stale" > .kinojo-recovery/diag.txt
+          set -euo pipefail
+          git pull --ff-only origin main
+          git show 42123403e41b1dab6add4a6d6ee6dadee592c918:ui/kinojo-common-ui.js > ui/kinojo-common-ui.js
+          git apply --check .kinojo-recover/4f.patch
+          git apply .kinojo-recover/4f.patch
+          node --check ui/kinojo-common-ui.js
+          git diff --check
+          test "$(git hash-object ui/kinojo-common-ui.js)" = "557db7df033117dd0e83665f36f24210f032ccda"
+          grep -q "profile-upload-replace-complete" ui/kinojo-common-ui.js
+          ! grep -q "4-F에서 활성화" ui/kinojo-common-ui.js
+          ! grep -q "service_role" ui/kinojo-common-ui.js
           git config user.name "losnah513"
           git config user.email "losnah513@gmail.com"
-          if [ "$s_pull" = 0 ] && [ "$s_base" = 0 ] && [ "$s_decode" = 0 ] && [ "$s_check" = 0 ] && [ "$s_apply" = 0 ] && [ "$s_node" = 0 ] && [ "$s_diff" = 0 ] && [ "$has_replace" = 1 ] && [ "$stale" = 0 ]; then
-            git rm -r -f --ignore-unmatch .kinojo-recover .github/workflows/kinojo-temp-4f-recover.yml .github/workflows/kinojo-temp-4f-export.yml .github/workflows/kinojo-temp-4f-live.yml .kinojo-transfer .kinojo-live .kinojo-recovery
-            git add ui/kinojo-common-ui.js
-            git commit -m "Apply safe profile image replacement UI"
-          else
-            git restore ui/kinojo-common-ui.js
-            git add .kinojo-recovery/diag.txt
-            git commit -m "Record Stage 4-F recovery diagnostic"
-          fi
+          git rm -r -f --ignore-unmatch .kinojo-recover .kinojo-recovery .github/workflows/kinojo-temp-4f-recover.yml .github/workflows/kinojo-temp-4f-export.yml .github/workflows/kinojo-temp-4f-live.yml .kinojo-transfer .kinojo-live
+          git add ui/kinojo-common-ui.js
+          git commit -m "Apply safe profile image replacement UI"
           git push origin HEAD:main
