@@ -1,4 +1,4 @@
-/* KINOJO Admin Code requests, members, and role permissions v2026080101 */
+/* KINOJO Admin Code requests, members, and role permissions v2026082001 */
 (function(A){
   'use strict';
   if(!A) throw new Error('KINOJO Admin shared module is required.');
@@ -98,13 +98,16 @@
       const canEdit=getAccountCanEdit(a);
       const allowed=getAccountAllowedRoles(a);
       const options=allowed.map(option=>'<option value="'+option+'" '+(option===roleKey?'selected':'')+'>'+esc(MEMBER_ROLE_LABELS[option])+'</option>').join('');
+      const imageButton=isMaster()
+        ? '<button class="admin-btn" data-member-image-view type="button" aria-label="'+name+' 캐릭터 이미지 보기">캐릭터 이미지 보기</button>'
+        : '';
       const controls=canEdit
         ? '<button class="admin-btn admin-member-role-open" data-member-role-open type="button">등급 변경</button>'+(active?'<button class="admin-btn danger" data-member-disable type="button">비활성</button>':'<button class="admin-btn primary" data-member-enable type="button">활성화</button>')+'<button class="admin-btn" data-member-delete type="button">삭제</button>'
         : '<span class="admin-member-locked">변경 권한 없음</span>';
       const editor=canEdit&&options
         ? '<div class="admin-member-role-editor" data-member-role-editor hidden><span><b>현재 '+roleName+'</b>에서 변경</span><select class="admin-select compact" data-member-role-select>'+options+'</select><button class="admin-btn primary" data-member-role-save type="button">적용</button><button class="admin-btn ghost" data-member-role-cancel type="button">취소</button></div>'
         : '';
-      return '<article class="admin-row admin-member-row" data-member-id="'+memberId+'" data-member-name="'+name+'" data-member-role="'+role+'"><div class="admin-member-summary"><div class="admin-row-main"><strong>'+name+'</strong><div class="admin-member-meta"><span class="admin-member-code '+(masked?'is-masked':'')+'">회원 코드 <b>'+code+'</b></span><span class="admin-member-role-badge role-'+role.toLowerCase()+'">'+roleName+'</span></div></div><div class="admin-row-actions"><span class="admin-pill '+(active?'ok':'error')+'">'+(active?'활성':'비활성')+'</span>'+controls+'</div></div>'+editor+'</article>';
+      return '<article class="admin-row admin-member-row" data-member-id="'+memberId+'" data-member-name="'+name+'" data-member-role="'+role+'"><div class="admin-member-summary"><div class="admin-row-main"><strong>'+name+'</strong><div class="admin-member-meta"><span class="admin-member-code '+(masked?'is-masked':'')+'">회원 코드 <b>'+code+'</b></span><span class="admin-member-role-badge role-'+role.toLowerCase()+'">'+roleName+'</span></div></div><div class="admin-row-actions"><span class="admin-pill '+(active?'ok':'error')+'">'+(active?'활성':'비활성')+'</span>'+imageButton+controls+'</div></div>'+editor+'</article>';
     }).join(''):'<div class="admin-empty">회원 코드가 없습니다.</div>';
   }
 
