@@ -1,0 +1,152 @@
+name: Apply Reference DnD 6-E Temp
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/apply-reference-dnd-6e-temp.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 2
+      - name: Patch reference DnD only
+        env:
+          EXPECTED_PARENT: b4e4f6ad8c6c29355b775a0fe1646fc1f1400865
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_PARENT"
+          python3 <<'PY'
+          from pathlib import Path
+
+          js=Path('ui/kinojo-common-ui.js')
+          s=js.read_text(encoding='utf-8')
+          def once(old,new,label):
+              global s
+              if s.count(old)!=1:
+                  raise SystemExit(f'{label}: expected 1 match, got {s.count(old)}')
+              s=s.replace(old,new,1)
+
+          once(
+          "  function handleMyInfoReferenceFile_(file){\n"
+          "    const slot=String(kinojoMyReferencePickerState.activeSlot||'');\n"
+          "    const characterId=Number(kinojoMyProfileUiState.selectedCharacterId||0);\n"
+          "    if(!KINOJO_REFERENCE_IMAGE_SLOTS.includes(slot)||kinojoMyReferencePickerState.characterId!==characterId)return false;\n"
+          "    if(!file){\n"
+          "      setMyInfoReferenceStatus_(slot+' 이미지 선택을 취소했습니다.','info');\n"
+          "      return false;\n"
+          "    }\n"
+          "    kinojoMyReferencePickerState.filesBySlot[slot]=file;\n"
+          "    renderMyInfoReferencePicker_();\n"
+          "    const name=String(file.name||'선택한 파일').slice(0,80);\n"
+          "    setMyInfoReferenceStatus_(slot+' · '+name+' 파일을 선택했습니다. 파일 검증과 미리보기는 다음 단계에서 적용됩니다.','ready');\n"
+          "    return true;\n"
+          "  }\n",
+          "  function handleMyInfoReferenceFile_(file){\n"
+          "    const slot=String(kinojoMyReferencePickerState.activeSlot||'');\n"
+          "    const characterId=Number(kinojoMyProfileUiState.selectedCharacterId||0);\n"
+          "    if(!KINOJO_REFERENCE_IMAGE_SLOTS.includes(slot)||kinojoMyReferencePickerState.characterId!==characterId)return false;\n"
+          "    if(!file){\n"
+          "      setMyInfoReferenceStatus_(slot+' 이미지 선택을 취소했습니다.','info');\n"
+          "      return false;\n"
+          "    }\n"
+          "    kinojoMyReferencePickerState.filesBySlot[slot]=file;\n"
+          "    renderMyInfoReferencePicker_();\n"
+          "    const name=String(file.name||'선택한 파일').slice(0,80);\n"
+          "    setMyInfoReferenceStatus_(slot+' · '+name+' 파일을 선택했습니다. 파일 검증과 미리보기는 다음 단계에서 적용됩니다.','ready');\n"
+          "    return true;\n"
+          "  }\n"
+          "  function clearMyInfoReferenceDragState_(except=null){\n"
+          "    document.querySelectorAll('#kinojoMyInfoReferenceGrid [data-reference-slot].is-drag-over').forEach(button=>{\n"
+          "      if(button!==except)button.classList.remove('is-drag-over');\n"
+          "    });\n"
+          "  }\n"
+          "  function handleMyInfoReferenceDrag_(event){\n"
+          "    if(!(event?.target instanceof Element))return false;\n"
+          "    const button=event.target.closest('#kinojoMyInfoReferenceGrid [data-reference-slot]');\n"
+          "    if(!button||button.disabled)return false;\n"
+          "    const slot=String(button.dataset.referenceSlot||'').trim();\n"
+          "    const characterId=Number(kinojoMyProfileUiState.selectedCharacterId||0);\n"
+          "    if(!KINOJO_REFERENCE_IMAGE_SLOTS.includes(slot)||kinojoMyReferencePickerState.characterId!==characterId)return false;\n"
+          "    if(event.type==='dragleave'){\n"
+          "      const next=event.relatedTarget;\n"
+          "      if(next instanceof Node&&button.contains(next))return true;\n"
+          "      button.classList.remove('is-drag-over');\n"
+          "      return true;\n"
+          "    }\n"
+          "    event.preventDefault();\n"
+          "    event.stopPropagation();\n"
+          "    if(event.type==='dragenter'||event.type==='dragover'){\n"
+          "      clearMyInfoReferenceDragState_(button);\n"
+          "      button.classList.add('is-drag-over');\n"
+          "      if(event.dataTransfer)event.dataTransfer.dropEffect='copy';\n"
+          "      setMyInfoReferenceStatus_(slot+' 슬롯에 이미지를 놓아 주세요.','info');\n"
+          "      return true;\n"
+          "    }\n"
+          "    if(event.type==='drop'){\n"
+          "      clearMyInfoReferenceDragState_();\n"
+          "      kinojoMyReferencePickerState.activeSlot=slot;\n"
+          "      const file=event.dataTransfer?.files?.[0]||null;\n"
+          "      if(!file){\n"
+          "        setMyInfoReferenceStatus_(slot+' 슬롯에 놓인 파일을 확인하지 못했습니다.','info');\n"
+          "        return false;\n"
+          "      }\n"
+          "      return handleMyInfoReferenceFile_(file);\n"
+          "    }\n"
+          "    return false;\n"
+          "  }\n",
+          'insert reference dnd')
+
+          once(
+          "    if(input)input.value='';\n    renderMyInfoReferencePicker_();\n",
+          "    if(input)input.value='';\n    clearMyInfoReferenceDragState_();\n    renderMyInfoReferencePicker_();\n",
+          'clear drag state on reference reset')
+
+          once(
+          "    q('#kinojoMyInfoProfileFileInput')?.addEventListener('change',e=>{handleMyInfoProfileFile_(e.target?.files?.[0]||null);});\n    q('#kinojoMyInfoReferenceFileInput')?.addEventListener('change',e=>{handleMyInfoReferenceFile_(e.target?.files?.[0]||null);});\n",
+          "    q('#kinojoMyInfoProfileFileInput')?.addEventListener('change',e=>{handleMyInfoProfileFile_(e.target?.files?.[0]||null);});\n    q('#kinojoMyInfoReferenceFileInput')?.addEventListener('change',e=>{handleMyInfoReferenceFile_(e.target?.files?.[0]||null);});\n    const referenceGrid=q('#kinojoMyInfoReferenceGrid');\n    ['dragenter','dragover','dragleave','drop'].forEach(type=>referenceGrid?.addEventListener(type,handleMyInfoReferenceDrag_));\n",
+          'bind reference dnd events')
+
+          js.write_text(s,encoding='utf-8')
+
+          css=Path('ui/kinojo-my-info.css')
+          c=css.read_text(encoding='utf-8')
+          old=".kinojo-my-info-reference-slot.is-selected small{color:#2563eb}\n.kinojo-my-info-reference-status{margin-top:9px;padding:8px 10px;border-radius:9px;background:#f8fafc;color:#64748b;font-size:8px;font-weight:850;line-height:1.45}\n"
+          new=".kinojo-my-info-reference-slot.is-selected small{color:#2563eb}\n/* 20260820_15: 6-E reference-image drag and drop target state only */\n.kinojo-my-info-reference-slot.is-drag-over{border-color:rgba(37,99,235,.72);border-style:dashed;background:linear-gradient(135deg,#eaf2ff,#f8fbff);box-shadow:0 0 0 2px rgba(37,99,235,.12),0 8px 18px rgba(37,99,235,.08);transform:translateY(-1px)}\n.kinojo-my-info-reference-slot.is-drag-over b,.kinojo-my-info-reference-slot.is-drag-over small{color:#1d4ed8}\n.kinojo-my-info-reference-status{margin-top:9px;padding:8px 10px;border-radius:9px;background:#f8fafc;color:#64748b;font-size:8px;font-weight:850;line-height:1.45}\n"
+          if c.count(old)!=1:
+              raise SystemExit(f'css dnd insertion: expected 1 match, got {c.count(old)}')
+          c=c.replace(old,new,1)
+          css.write_text(c,encoding='utf-8')
+          PY
+          node --check ui/kinojo-common-ui.js
+          git diff --check
+          python3 <<'PY'
+          from pathlib import Path
+          s=Path('ui/kinojo-common-ui.js').read_text(encoding='utf-8')
+          c=Path('ui/kinojo-my-info.css').read_text(encoding='utf-8')
+          required=[
+            "function handleMyInfoReferenceDrag_(event)",
+            "['dragenter','dragover','dragleave','drop']",
+            "event.dataTransfer?.files?.[0]",
+            "clearMyInfoReferenceDragState_",
+          ]
+          for item in required: assert item in s,item
+          assert '.kinojo-my-info-reference-slot.is-drag-over' in c
+          start=s.index('function handleMyInfoReferenceDrag_')
+          end=s.index('function myInfoProfileFileSize_',start)
+          block=s[start:end]
+          for forbidden in ['file.type','file.size','URL.createObjectURL','reference-upload-prepare','reference-upload-complete','invokeEdgeFunction']:
+              assert forbidden not in block,forbidden
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ui/kinojo-common-ui.js ui/kinojo-my-info.css
+          git commit -m "Add reference image drag and drop"
+          git push origin HEAD:main
