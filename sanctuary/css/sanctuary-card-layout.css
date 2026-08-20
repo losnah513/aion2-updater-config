@@ -1,0 +1,191 @@
+/*
+ * KINOJO Sanctuary Character Card Layout - Stage 5-FB
+ * 기존 .char-card 외곽 크기/최소 높이/폭은 변경하지 않고 내부 배치만 재정의합니다.
+ */
+.char-card.san-reaction-card[data-san-card-layout="5fb"]{
+  position:relative;
+  display:block;
+  overflow:hidden;
+  isolation:isolate;
+}
+
+.char-card.san-reaction-card[data-san-card-layout="5fb"] .san-char-class-emblem{
+  position:absolute;
+  z-index:4;
+  left:6px;
+  top:50%;
+  width:34px;
+  height:34px;
+  transform:translateY(-50%);
+  display:grid;
+  place-items:center;
+  pointer-events:none;
+}
+.char-card.san-reaction-card[data-san-card-layout="5fb"] .san-char-class-emblem img{
+  display:block;
+  width:34px;
+  height:34px;
+  object-fit:contain;
+}
+.char-card.san-reaction-card[data-san-card-layout="5fb"] .san-char-class-fallback{
+  display:grid;
+  place-items:center;
+  width:32px;
+  height:32px;
+  border-radius:50%;
+  background:#eef4ff;
+  color:#3865b0;
+  font-size:15px;
+  font-weight:1000;
+}
+
+.char-card.san-reaction-card[data-san-card-layout="5fb"] .san-char-card-content{
+  position:relative;
+  z-index:4;
+  min-width:0;
+  min-height:30px;
+  margin-left:38px;
+  padding-right:36%;
+  display:grid;
+  align-content:center;
+  gap:3px;
+  text-align:left;
+}
+.char-card.san-reaction-card[data-san-card-layout="5fb"] .san-char-name-row{
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:4px;
+}
+.char-card.san-reaction-card[data-san-card-layout="5fb"] .san-char-name-row .char-name{
+  min-width:0;
+  flex:0 1 auto;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.char-card.san-reaction-card[data-san-card-layout="5fb"] .san-char-main-badge,
+.char-card.san-reaction-card[data-san-card-layout="5fb"] .san-char-sub-badge{
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  height:15px;
+  padding:0 4px;
+  border:1px solid rgba(56,101,176,.20);
+  border-radius:999px;
+  background:#eef4ff;
+  color:#3865b0;
+  font-size:7px;
+  font-weight:1000;
+  line-height:1;
+  white-space:nowrap;
+}
+.char-card.san-reaction-card[data-san-card-layout="5fb"] .san-char-main-badge{
+  border-color:rgba(197,139,36,.28);
+  background:#fff7e8;
+  color:#9a6700;
+}
+
+.char-card.san-reaction-card[data-san-card-layout="5fb"] .san-char-power-row{
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:3px;
+  color:#667085;
+  font-size:10px;
+  font-weight:1000;
+  line-height:1;
+  white-space:nowrap;
+}
+.char-card.san-reaction-card[data-san-card-layout="5fb"] .san-char-power-icon{
+  flex:0 0 auto;
+  display:block;
+  width:15px;
+  height:15px;
+  object-fit:contain;
+}
+.char-card.san-reaction-card[data-san-card-layout="5fb"] .san-char-power-value{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.char-card.san-reaction-card[data-san-card-layout="5fb"] .san-char-profile-stage{
+  position:absolute;
+  z-index:1;
+  inset:0 0 0 auto;
+  width:36%;
+  overflow:hidden;
+  display:flex;
+  justify-content:flex-end;
+  align-items:stretch;
+  pointer-events:none;
+  background:linear-gradient(145deg,#eef4ff,#dfe9f8);
+}
+.char-card.san-reaction-card[data-san-card-layout="5fb"] .san-char-profile-stage::before{
+  content:"";
+  position:absolute;
+  z-index:2;
+  inset:0 auto 0 0;
+  width:48%;
+  pointer-events:none;
+  background:linear-gradient(90deg,#fff 0%,rgba(255,255,255,.82) 34%,rgba(255,255,255,.30) 72%,transparent 100%);
+}
+.char-card.san-reaction-card.is-main-character[data-san-card-layout="5fb"] .san-char-profile-stage::before{
+  background:linear-gradient(90deg,#fffaf0 0%,rgba(255,250,240,.84) 34%,rgba(255,250,240,.30) 72%,transparent 100%);
+}
+.char-card.san-reaction-card[data-san-card-layout="5fb"] .san-char-profile-image{
+  position:relative;
+  z-index:1;
+  display:block;
+  height:100%;
+  width:auto;
+  max-width:none;
+  object-fit:contain;
+  object-position:right center;
+}
+.char-card.san-reaction-card[data-san-card-layout="5fb"] .san-char-profile-stage.is-empty{
+  background:linear-gradient(90deg,rgba(255,255,255,0),#f3f7ff);
+}
+.char-card.san-reaction-card[data-san-card-layout="5fb"] .san-char-identity-badge{
+  position:absolute;
+  z-index:3;
+  right:3px;
+  bottom:2px;
+  max-width:52px;
+  height:13px;
+  padding:0 4px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.78);
+  border-radius:999px;
+  background:rgba(15,23,42,.72);
+  color:#fff;
+  font-size:7px;
+  font-weight:1000;
+  line-height:11px;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+@media(max-width:760px){
+  .kinojo-mobile-sanctuary-detail-page .char-card.san-reaction-card[data-san-card-layout="5fb"] .san-char-class-emblem{
+    left:5px;
+    width:30px;
+    height:30px;
+  }
+  .kinojo-mobile-sanctuary-detail-page .char-card.san-reaction-card[data-san-card-layout="5fb"] .san-char-class-emblem img{
+    width:30px;
+    height:30px;
+  }
+  .kinojo-mobile-sanctuary-detail-page .char-card.san-reaction-card[data-san-card-layout="5fb"] .san-char-card-content{
+    margin-left:33px;
+    padding-right:34%;
+    gap:2px;
+  }
+  .kinojo-mobile-sanctuary-detail-page .char-card.san-reaction-card[data-san-card-layout="5fb"] .san-char-profile-stage{width:34%}
+  .kinojo-mobile-sanctuary-detail-page .char-card.san-reaction-card[data-san-card-layout="5fb"] .san-char-power-row{font-size:9px;gap:2px}
+  .kinojo-mobile-sanctuary-detail-page .char-card.san-reaction-card[data-san-card-layout="5fb"] .san-char-power-icon{width:13px;height:13px}
+  .kinojo-mobile-sanctuary-detail-page .char-card.san-reaction-card[data-san-card-layout="5fb"] .san-char-main-badge,
+  .kinojo-mobile-sanctuary-detail-page .char-card.san-reaction-card[data-san-card-layout="5fb"] .san-char-sub-badge{height:13px;padding:0 3px;font-size:6.5px}
+}
