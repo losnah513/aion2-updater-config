@@ -1,4 +1,4 @@
-/* KINOJO Admin Code requests, members, and role permissions v2026082002 */
+/* KINOJO Admin Code requests, members, and role permissions v2026082003 */
 (function(A){
   'use strict';
   if(!A) throw new Error('KINOJO Admin shared module is required.');
@@ -74,10 +74,93 @@
     return source.map(normalizeMemberRole).filter(role=>MEMBER_ROLE_LABELS[role]);
   }
 
+  let memberImageModalRequestId=0;
+  const ADMIN_IMAGE_SLOTS=['FRONT','BACK','UPPER_BODY'];
+  const ADMIN_IMAGE_SLOT_LABELS={FRONT:'정면',BACK:'후면',UPPER_BODY:'상반신'};
+
+  function memberImageSessionToken_(){
+    const token=String(window.KinojoAuth?.getSession?.()?.token||'').trim();
+    return /^kws_[A-Za-z0-9_-]{40,80}$/.test(token)?token:'';
+  }
+
+  function formatAdminImageBytes_(value){
+    const bytes=Number(value||0);
+    if(!Number.isFinite(bytes)||bytes<=0)return '-';
+    if(bytes<1024)return Math.round(bytes)+' B';
+    if(bytes<1024*1024)return (bytes/1024).toFixed(bytes<10240?1:0)+' KB';
+    return (bytes/(1024*1024)).toFixed(1)+' MB';
+  }
+
+  function formatAdminImageTime_(value){
+    const text=String(value||'').trim();
+    if(!text)return '-';
+    const date=new Date(text);
+    return Number.isNaN(date.getTime())?text:date.toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+  }
+
+  function renderAdminReferenceSlot_(slot,reference){
+    const label=ADMIN_IMAGE_SLOT_LABELS[slot]||slot;
+    if(!reference){
+      return '<div class="admin-row" data-admin-image-slot="'+esc(slot)+'"><div class="admin-row-main"><strong>'+esc(label)+'</strong><span>등록된 참고 이미지 없음</span></div><span class="admin-pill">미등록</span></div>';
+    }
+    const mime=esc(reference.mimeType||'-');
+    const size=esc(formatAdminImageBytes_(reference.sizeBytes));
+    const expires=esc(formatAdminImageTime_(reference.expiresAt));
+    return '<div class="admin-row" data-admin-image-slot="'+esc(slot)+'"><div class="admin-row-main"><strong>'+esc(label)+'</strong><span>'+mime+' · '+size+' · 만료 '+expires+'</span></div><span class="admin-pill ok">등록됨</span></div>';
+  }
+
+  function renderAdminCharacterImageGroup_(character){
+    const id=Number(character?.characterId||0);
+    const name=esc(character?.characterName||'이름 없음');
+    const server=esc(character?.serverName||'-');
+    const className=esc(character?.className||'-');
+    const isMain=character?.isMain===true;
+    const profile=character?.profile&&typeof character.profile==='object'?character.profile:{};
+    const override=profile.override&&typeof profile.override==='object'?profile.override:null;
+    const hasOverride=profile.hasOverride===true&&override;
+    const profileMeta=hasOverride
+      ? esc(override.mimeType||'-')+' · '+esc(formatAdminImageBytes_(override.sizeBytes))+' · 등록 '+esc(formatAdminImageTime_(override.uploadedAt))
+      : '등록된 사용자 프로필 이미지 없음 · 공식 이미지 사용';
+    const refs=Array.isArray(character?.references)?character.references:[];
+    const bySlot={};
+    refs.forEach(reference=>{const slot=String(reference?.slot||'');if(ADMIN_IMAGE_SLOTS.includes(slot)&&reference?.active===true)bySlot[slot]=reference;});
+    return '<section class="admin-card" data-admin-member-image-character="'+(Number.isInteger(id)&&id>0?id:'')+'">'
+      +'<div class="admin-card-head"><div><h2>'+name+'</h2><p>'+server+' · '+className+'</p></div><span class="admin-pill '+(isMain?'info':'')+'">'+(isMain?'본캐':'부캐')+'</span></div>'
+      +'<div class="admin-list"><div class="admin-row" data-admin-image-slot="PROFILE"><div class="admin-row-main"><strong>프로필 이미지</strong><span>'+profileMeta+'</span></div><span class="admin-pill '+(hasOverride?'ok':'info')+'">'+(hasOverride?'사용자 이미지':'공식 이미지')+'</span></div></div>'
+      +'<div class="admin-list" style="margin-top:8px">'+ADMIN_IMAGE_SLOTS.map(slot=>renderAdminReferenceSlot_(slot,bySlot[slot]||null)).join('')+'</div>'
+      +'</section>';
+  }
+
+  function renderMemberImageGroups_(data){
+    const characters=Array.isArray(data?.characters)?data.characters:[];
+    if(!characters.length){
+      const reason=data?.ownerResolved===false?'회원 소유 캐릭터를 확정하지 못했습니다.':'등록된 보유 캐릭터가 없습니다.';
+      return '<div class="admin-empty">'+esc(reason)+'</div>';
+    }
+    const summary='<div class="admin-statusline ok">캐릭터 '+characters.length+'명 · 사용자 프로필 '+Number(data?.profileOverrideCount||0)+'건 · 활성 참고 이미지 '+Number(data?.referenceCount||0)+'건</div>';
+    return summary+'<div class="admin-list">'+characters.map(renderAdminCharacterImageGroup_).join('')+'</div>';
+  }
+
+  async function loadMemberImageGroups_(memberId,requestId){
+    const modal=$('#adminMemberImageModal');
+    const body=$('#adminMemberImageModalBody',modal||document);
+    const token=memberImageSessionToken_();
+    const client=window.KinojoSupabaseClientCore;
+    if(!token)throw new Error('관리자 세션이 만료되었습니다. 다시 로그인해 주세요.');
+    if(!client||typeof client.invokeEdgeFunction!=='function')throw new Error('회원 이미지 조회 모듈을 준비하지 못했습니다.');
+    const data=await client.invokeEdgeFunction('kinojo-member-profile',{action:'admin-image-list',sessionToken:token,memberId:Number(memberId)});
+    if(requestId!==memberImageModalRequestId||!modal?.classList.contains('active')||modal.dataset.memberId!==String(memberId))return null;
+    if(!data||data.ok!==true)throw new Error(data?.message||data?.code||'ADMIN_MEMBER_IMAGE_LIST_FAILED');
+    if(Number(data?.targetMember?.id)!==Number(memberId))throw new Error('ADMIN_MEMBER_IMAGE_LIST_BINDING_MISMATCH');
+    if(String(data?.privacy||'')!=='NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS')throw new Error('ADMIN_MEMBER_IMAGE_PRIVACY_CONTRACT_MISMATCH');
+    if(body)body.innerHTML=renderMemberImageGroups_(data);
+    return data;
+  }
+
   function ensureMemberImageModal(){
     let modal=$('#adminMemberImageModal');
     if(modal)return modal;
-    document.body.insertAdjacentHTML('beforeend','<div class="admin-event-preview-modal" id="adminMemberImageModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="adminMemberImageModalTitle"><div class="admin-event-preview-backdrop" data-member-image-modal-close></div><section class="admin-event-preview-panel"><header class="admin-event-preview-head"><div><h2 id="adminMemberImageModalTitle">캐릭터 이미지 보기</h2><p id="adminMemberImageModalMember">회원 선택 대기</p></div><button class="admin-icon-btn" data-member-image-modal-close type="button" aria-label="캐릭터 이미지 모달 닫기">×</button></header><div class="admin-event-preview-body" id="adminMemberImageModalBody"><div class="admin-empty">회원의 캐릭터 이미지 목록을 표시할 준비가 되었습니다.</div></div><footer class="admin-event-preview-actions"><button class="admin-btn" data-member-image-modal-close type="button">닫기</button></footer></section></div>');
+    document.body.insertAdjacentHTML('beforeend','<div class="admin-event-preview-modal" id="adminMemberImageModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="adminMemberImageModalTitle"><div class="admin-event-preview-backdrop" data-member-image-modal-close></div><section class="admin-event-preview-panel"><header class="admin-event-preview-head"><div><h2 id="adminMemberImageModalTitle">캐릭터 이미지 보기</h2><p id="adminMemberImageModalMember">회원 선택 대기</p></div><button class="admin-icon-btn" data-member-image-modal-close type="button" aria-label="캐릭터 이미지 모달 닫기">×</button></header><div class="admin-event-preview-body" id="adminMemberImageModalBody"><div class="admin-empty">회원의 캐릭터 이미지 목록을 불러올 준비가 되었습니다.</div></div><footer class="admin-event-preview-actions"><button class="admin-btn" data-member-image-modal-close type="button">닫기</button></footer></section></div>');
     modal=$('#adminMemberImageModal');
     modal?.addEventListener('click',event=>{if(event.target.matches('[data-member-image-modal-close]'))closeMemberImageModal();});
     document.addEventListener('keydown',event=>{if(event.key==='Escape'&&modal?.classList.contains('active'))closeMemberImageModal();});
@@ -85,6 +168,7 @@
   }
 
   function closeMemberImageModal(){
+    memberImageModalRequestId+=1;
     const modal=$('#adminMemberImageModal');
     if(!modal)return;
     modal.classList.remove('active');
@@ -103,15 +187,20 @@
     const memberName=String(row?.dataset.memberName||'회원').trim()||'회원';
     const modal=ensureMemberImageModal();
     if(!modal)return;
+    const requestId=++memberImageModalRequestId;
     modal.dataset.memberId=memberId;
     modal._kinojoTrigger=target;
     const label=$('#adminMemberImageModalMember',modal);
     if(label)label.textContent=memberName+' · 회원 #'+memberId;
     const body=$('#adminMemberImageModalBody',modal);
-    if(body)body.innerHTML='<div class="admin-empty">선택한 회원의 캐릭터 이미지 목록을 표시할 준비가 되었습니다.<br/>현재 단계에서는 목록 조회나 이미지 다운로드를 실행하지 않습니다.</div>';
+    if(body)body.innerHTML='<div class="admin-empty">캐릭터 이미지 상태를 불러오는 중입니다.</div>';
     modal.setAttribute('aria-hidden','false');
     modal.classList.add('active');
     modal.querySelector('[data-member-image-modal-close]')?.focus();
+    loadMemberImageGroups_(memberId,requestId).catch(error=>{
+      if(requestId!==memberImageModalRequestId||!modal.classList.contains('active')||modal.dataset.memberId!==memberId)return;
+      if(body)body.innerHTML='<div class="admin-callout error"><strong>이미지 목록을 불러오지 못했습니다.</strong><span>'+esc(error?.message||error)+'</span></div>';
+    });
   }
 
   function applyMemberFilters(){
@@ -235,5 +324,5 @@
     }
   }
 
-  Object.assign(A,{renderRequestPreview,requestRowHtml,loadCodeRequests,processRequest,loadAccounts,MEMBER_ROLE_LABELS,normalizeMemberRole,getAccountId,getAccountCode,getAccountName,getAccountRole,getAccountRoleLabel,getAccountCanEdit,getAccountAllowedRoles,ensureMemberImageModal,openMemberImageModal,closeMemberImageModal,applyMemberFilters,renderAccounts,handleMemberAction,SANCTUARY_ROLE_LABELS,renderSanctuaryRolePermissions,loadSanctuaryRolePermissions,setSanctuaryRolePermission});
+  Object.assign(A,{renderRequestPreview,requestRowHtml,loadCodeRequests,processRequest,loadAccounts,MEMBER_ROLE_LABELS,normalizeMemberRole,getAccountId,getAccountCode,getAccountName,getAccountRole,getAccountRoleLabel,getAccountCanEdit,getAccountAllowedRoles,memberImageSessionToken_,renderMemberImageGroups_,loadMemberImageGroups_,ensureMemberImageModal,openMemberImageModal,closeMemberImageModal,applyMemberFilters,renderAccounts,handleMemberAction,SANCTUARY_ROLE_LABELS,renderSanctuaryRolePermissions,loadSanctuaryRolePermissions,setSanctuaryRolePermission});
 })(window.KinojoAdmin);
