@@ -73,6 +73,12 @@ jobs:
           for token in [
               'function memberImageSessionToken_()',
               'function renderMemberImageGroups_(data)',
+              'function showAdminImagePreview_(button)',
+              "action:'admin-image-preview'",
+              'SIGNED_PREVIEW_URL_ONLY_NO_OBJECT_PATH',
+              'INLINE_PREVIEW_ONLY',
+              'data-admin-image-preview',
+              '다운로드 기능은 7-F에서 별도로 처리합니다.',
               'function loadMemberImageGroups_(memberId,requestId)',
               "action:'admin-image-list'",
               'NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS',
@@ -90,7 +96,7 @@ jobs:
               if forbidden in members:
                   raise SystemExit(f'admin member image client leaked private storage field {forbidden}')
           loader = Path('admin/js/admin.js').read_text(encoding='utf-8')
-          if 'v2026082004' not in loader or "name+'?cache=2026082004'" not in loader:
+          if 'v2026082101' not in loader or "name+'?cache=2026082101'" not in loader:
               raise SystemExit('admin loader cache contract missing')
           print('Character refresh profile source contracts: PASS')
           PY
