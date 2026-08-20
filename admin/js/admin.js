@@ -6,6 +6,7 @@
   const modules=[
     'admin-shared.js',
     'admin-members.js',
+    'admin-member-image-download.js',
     'admin-characters.js',
     'admin-sanctuary.js',
     'admin-notices.js',
