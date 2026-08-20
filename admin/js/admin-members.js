@@ -1,4 +1,4 @@
-/* KINOJO Admin Code requests, members, and role permissions v2026082003 */
+/* KINOJO Admin Code requests, members, and role permissions v2026082101 */
 (function(A){
   'use strict';
   if(!A) throw new Error('KINOJO Admin shared module is required.');
@@ -75,6 +75,7 @@
   }
 
   let memberImageModalRequestId=0;
+  let memberImagePreviewRequestId=0;
   const ADMIN_IMAGE_SLOTS=['FRONT','BACK','UPPER_BODY'];
   const ADMIN_IMAGE_SLOT_LABELS={FRONT:'정면',BACK:'후면',UPPER_BODY:'상반신'};
 
@@ -106,7 +107,7 @@
     const mime=esc(reference.mimeType||'-');
     const size=esc(formatAdminImageBytes_(reference.sizeBytes));
     const expires=esc(formatAdminImageTime_(reference.expiresAt));
-    return '<div class="admin-row" data-admin-image-slot="'+esc(slot)+'"><div class="admin-row-main"><strong>'+esc(label)+'</strong><span>'+mime+' · '+size+' · 만료 '+expires+'</span></div><span class="admin-pill ok">등록됨</span></div>';
+    return '<div class="admin-row" data-admin-image-slot="'+esc(slot)+'"><div class="admin-row-main"><strong>'+esc(label)+'</strong><span>'+mime+' · '+size+' · 만료 '+expires+'</span></div><div class="admin-row-actions"><span class="admin-pill ok">등록됨</span><button class="admin-btn" data-admin-image-preview type="button">미리보기</button></div></div>';
   }
 
   function renderAdminCharacterImageGroup_(character){
@@ -126,7 +127,7 @@
     refs.forEach(reference=>{const slot=String(reference?.slot||'');if(ADMIN_IMAGE_SLOTS.includes(slot)&&reference?.active===true)bySlot[slot]=reference;});
     return '<section class="admin-card" data-admin-member-image-character="'+(Number.isInteger(id)&&id>0?id:'')+'">'
       +'<div class="admin-card-head"><div><h2>'+name+'</h2><p>'+server+' · '+className+'</p></div><span class="admin-pill '+(isMain?'info':'')+'">'+(isMain?'본캐':'부캐')+'</span></div>'
-      +'<div class="admin-list"><div class="admin-row" data-admin-image-slot="PROFILE"><div class="admin-row-main"><strong>프로필 이미지</strong><span>'+profileMeta+'</span></div><span class="admin-pill '+(hasOverride?'ok':'info')+'">'+(hasOverride?'사용자 이미지':'공식 이미지')+'</span></div></div>'
+      +'<div class="admin-list"><div class="admin-row" data-admin-image-slot="PROFILE"><div class="admin-row-main"><strong>프로필 이미지</strong><span>'+profileMeta+'</span></div><div class="admin-row-actions"><span class="admin-pill '+(hasOverride?'ok':'info')+'">'+(hasOverride?'사용자 이미지':'공식 이미지')+'</span>'+(hasOverride?'<button class="admin-btn" data-admin-image-preview type="button">미리보기</button>':'')+'</div></div></div>'
       +'<div class="admin-list" style="margin-top:8px">'+ADMIN_IMAGE_SLOTS.map(slot=>renderAdminReferenceSlot_(slot,bySlot[slot]||null)).join('')+'</div>'
       +'</section>';
   }
@@ -138,7 +139,50 @@
       return '<div class="admin-empty">'+esc(reason)+'</div>';
     }
     const summary='<div class="admin-statusline ok">캐릭터 '+characters.length+'명 · 사용자 프로필 '+Number(data?.profileOverrideCount||0)+'건 · 활성 참고 이미지 '+Number(data?.referenceCount||0)+'건</div>';
-    return summary+'<div class="admin-list">'+characters.map(renderAdminCharacterImageGroup_).join('')+'</div>';
+    const preview='<section class="admin-card" id="adminMemberImagePreview" hidden aria-live="polite"></section>';
+    return summary+preview+'<div class="admin-list">'+characters.map(renderAdminCharacterImageGroup_).join('')+'</div>';
+  }
+
+  function clearAdminImagePreview_(){
+    memberImagePreviewRequestId+=1;
+    const host=$('#adminMemberImagePreview');
+    if(!host)return;
+    const img=host.querySelector('img');
+    if(img)img.removeAttribute('src');
+    host.innerHTML='';
+    host.hidden=true;
+  }
+
+  async function showAdminImagePreview_(button){
+    if(!isMaster())return;
+    const modal=$('#adminMemberImageModal');
+    const host=$('#adminMemberImagePreview',modal||document);
+    const character=button?.closest?.('[data-admin-member-image-character]');
+    const slotRow=button?.closest?.('[data-admin-image-slot]');
+    const memberId=String(modal?.dataset.memberId||'').trim();
+    const characterId=String(character?.dataset.adminMemberImageCharacter||'').trim();
+    const slot=String(slotRow?.dataset.adminImageSlot||'').trim().toUpperCase();
+    if(!modal?.classList.contains('active')||!/^\d+$/.test(memberId)||!/^\d+$/.test(characterId)||!['PROFILE',...ADMIN_IMAGE_SLOTS].includes(slot)||!host)return;
+    const token=memberImageSessionToken_();
+    const client=window.KinojoSupabaseClientCore;
+    if(!token||!client||typeof client.invokeEdgeFunction!=='function')throw new Error('회원 이미지 미리보기 모듈을 준비하지 못했습니다.');
+    const requestId=++memberImagePreviewRequestId;
+    host.hidden=false;
+    host.innerHTML='<div class="admin-empty">안전한 미리보기 주소를 발급하는 중입니다.</div>';
+    const data=await client.invokeEdgeFunction('kinojo-member-profile',{action:'admin-image-preview',sessionToken:token,memberId:Number(memberId),characterId:Number(characterId),slot});
+    if(requestId!==memberImagePreviewRequestId||!modal.classList.contains('active')||modal.dataset.memberId!==memberId)return null;
+    if(!data||data.ok!==true)throw new Error(data?.message||data?.code||'ADMIN_MEMBER_IMAGE_PREVIEW_FAILED');
+    if(Number(data.targetMemberId)!==Number(memberId)||Number(data.characterId)!==Number(characterId)||String(data.slot||'')!==slot)throw new Error('ADMIN_MEMBER_IMAGE_PREVIEW_BINDING_MISMATCH');
+    if(String(data.privacy||'')!=='SIGNED_PREVIEW_URL_ONLY_NO_OBJECT_PATH'||String(data.purpose||'')!=='INLINE_PREVIEW_ONLY'||data.preview?.download!==false)throw new Error('ADMIN_MEMBER_IMAGE_PREVIEW_PRIVACY_MISMATCH');
+    const cfg=await client.ensureConfig();
+    const previewUrl=new URL(String(data.preview?.url||''));
+    const expected=new URL(String(cfg.url||''));
+    if(previewUrl.origin!==expected.origin||!previewUrl.pathname.startsWith('/storage/v1/object/sign/')||!previewUrl.searchParams.get('token')||previewUrl.searchParams.has('download'))throw new Error('ADMIN_MEMBER_IMAGE_PREVIEW_URL_INVALID');
+    const ttl=Math.max(1,Math.min(60,Number(data.preview?.expiresInSeconds||0)));
+    const label=slot==='PROFILE'?'프로필 이미지':(ADMIN_IMAGE_SLOT_LABELS[slot]||slot);
+    host.innerHTML='<div class="admin-card-head"><div><h2>'+esc(label)+' 미리보기</h2><p>최대 '+ttl+'초 동안만 유효한 관리자용 미리보기입니다. 다운로드 기능은 7-F에서 별도로 처리합니다.</p></div><button class="admin-btn" data-admin-image-preview-close type="button">미리보기 닫기</button></div><img src="'+esc(previewUrl.toString())+'" alt="'+esc(label)+' 미리보기" style="display:block;max-width:100%;max-height:60vh;object-fit:contain;margin:12px auto 0" referrerpolicy="no-referrer" />';
+    host.scrollIntoView({block:'nearest'});
+    return data;
   }
 
   async function loadMemberImageGroups_(memberId,requestId){
@@ -162,12 +206,13 @@
     if(modal)return modal;
     document.body.insertAdjacentHTML('beforeend','<div class="admin-event-preview-modal" id="adminMemberImageModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="adminMemberImageModalTitle"><div class="admin-event-preview-backdrop" data-member-image-modal-close></div><section class="admin-event-preview-panel"><header class="admin-event-preview-head"><div><h2 id="adminMemberImageModalTitle">캐릭터 이미지 보기</h2><p id="adminMemberImageModalMember">회원 선택 대기</p></div><button class="admin-icon-btn" data-member-image-modal-close type="button" aria-label="캐릭터 이미지 모달 닫기">×</button></header><div class="admin-event-preview-body" id="adminMemberImageModalBody"><div class="admin-empty">회원의 캐릭터 이미지 목록을 불러올 준비가 되었습니다.</div></div><footer class="admin-event-preview-actions"><button class="admin-btn" data-member-image-modal-close type="button">닫기</button></footer></section></div>');
     modal=$('#adminMemberImageModal');
-    modal?.addEventListener('click',event=>{if(event.target.matches('[data-member-image-modal-close]'))closeMemberImageModal();});
+    modal?.addEventListener('click',event=>{const close=event.target.closest('[data-member-image-modal-close]');if(close){closeMemberImageModal();return;}const previewClose=event.target.closest('[data-admin-image-preview-close]');if(previewClose){clearAdminImagePreview_();return;}const preview=event.target.closest('[data-admin-image-preview]');if(preview)showAdminImagePreview_(preview).catch(error=>{const host=$('#adminMemberImagePreview',modal);if(host){host.hidden=false;host.innerHTML='<div class="admin-callout error"><strong>미리보기를 열지 못했습니다.</strong><span>'+esc(error?.message||error)+'</span></div>';}});});
     document.addEventListener('keydown',event=>{if(event.key==='Escape'&&modal?.classList.contains('active'))closeMemberImageModal();});
     return modal;
   }
 
   function closeMemberImageModal(){
+    clearAdminImagePreview_();
     memberImageModalRequestId+=1;
     const modal=$('#adminMemberImageModal');
     if(!modal)return;
@@ -324,5 +369,5 @@
     }
   }
 
-  Object.assign(A,{renderRequestPreview,requestRowHtml,loadCodeRequests,processRequest,loadAccounts,MEMBER_ROLE_LABELS,normalizeMemberRole,getAccountId,getAccountCode,getAccountName,getAccountRole,getAccountRoleLabel,getAccountCanEdit,getAccountAllowedRoles,memberImageSessionToken_,renderMemberImageGroups_,loadMemberImageGroups_,ensureMemberImageModal,openMemberImageModal,closeMemberImageModal,applyMemberFilters,renderAccounts,handleMemberAction,SANCTUARY_ROLE_LABELS,renderSanctuaryRolePermissions,loadSanctuaryRolePermissions,setSanctuaryRolePermission});
+  Object.assign(A,{renderRequestPreview,requestRowHtml,loadCodeRequests,processRequest,loadAccounts,MEMBER_ROLE_LABELS,normalizeMemberRole,getAccountId,getAccountCode,getAccountName,getAccountRole,getAccountRoleLabel,getAccountCanEdit,getAccountAllowedRoles,memberImageSessionToken_,renderMemberImageGroups_,loadMemberImageGroups_,clearAdminImagePreview_,showAdminImagePreview_,ensureMemberImageModal,openMemberImageModal,closeMemberImageModal,applyMemberFilters,renderAccounts,handleMemberAction,SANCTUARY_ROLE_LABELS,renderSanctuaryRolePermissions,loadSanctuaryRolePermissions,setSanctuaryRolePermission});
 })(window.KinojoAdmin);
