@@ -71,16 +71,26 @@ jobs:
                   raise SystemExit(f'profile contract missing {token}')
           members = Path('admin/js/admin-members.js').read_text(encoding='utf-8')
           for token in [
+              'function memberImageSessionToken_()',
+              'function renderMemberImageGroups_(data)',
+              'function loadMemberImageGroups_(memberId,requestId)',
+              "action:'admin-image-list'",
+              'NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS',
+              '등록된 사용자 프로필 이미지 없음',
+              '등록된 참고 이미지 없음',
               'function ensureMemberImageModal()',
               'function openMemberImageModal(target)',
               'data-member-image-modal-close',
               'data-member-image-view',
-              '현재 단계에서는 목록 조회나 이미지 다운로드를 실행하지 않습니다.',
+              '캐릭터 이미지 상태를 불러오는 중입니다.',
           ]:
               if token not in members:
                   raise SystemExit(f'admin member image modal shell missing {token}')
+          for forbidden in ['objectPath','signedUrl','signedURL','uploadUrl']:
+              if forbidden in members:
+                  raise SystemExit(f'admin member image client leaked private storage field {forbidden}')
           loader = Path('admin/js/admin.js').read_text(encoding='utf-8')
-          if 'v2026082003' not in loader or "name+'?cache=2026082003'" not in loader:
+          if 'v2026082004' not in loader or "name+'?cache=2026082004'" not in loader:
               raise SystemExit('admin loader cache contract missing')
           print('Character refresh profile source contracts: PASS')
           PY
