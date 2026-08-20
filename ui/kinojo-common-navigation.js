@@ -60,14 +60,15 @@
       placeAfterRanking_(nav,link);
     }
     dedupeTreeLinks_(nav,link);
-    link.href=treeHref_();
+    const href=treeHref_();
+    if(link.getAttribute('href')!==href) link.setAttribute('href',href);
     if(tree_()){
       nav.querySelectorAll('.kinojo-top-nav-link.active').forEach(item=>{if(item!==link){item.classList.remove('active');item.removeAttribute('aria-current');}});
-      link.classList.add('active');
-      link.setAttribute('aria-current','page');
+      if(!link.classList.contains('active')) link.classList.add('active');
+      if(link.getAttribute('aria-current')!=='page') link.setAttribute('aria-current','page');
     }else{
-      link.classList.remove('active');
-      link.removeAttribute('aria-current');
+      if(link.classList.contains('active')) link.classList.remove('active');
+      if(link.hasAttribute('aria-current')) link.removeAttribute('aria-current');
     }
     return true;
   }
@@ -83,16 +84,17 @@
       placeAfterRanking_(nav,link);
     }
     dedupeTreeLinks_(nav,link);
-    link.href=treeHref_();
+    const href=treeHref_();
+    if(link.getAttribute('href')!==href) link.setAttribute('href',href);
     if(tree_()){
       nav.querySelectorAll('a.active').forEach(item=>{if(item!==link){item.classList.remove('active');item.removeAttribute('aria-current');item.removeAttribute('aria-disabled');}});
-      link.classList.add('active');
-      link.setAttribute('aria-current','page');
-      link.setAttribute('aria-disabled','true');
+      if(!link.classList.contains('active')) link.classList.add('active');
+      if(link.getAttribute('aria-current')!=='page') link.setAttribute('aria-current','page');
+      if(link.getAttribute('aria-disabled')!=='true') link.setAttribute('aria-disabled','true');
     }else{
-      link.classList.remove('active');
-      link.removeAttribute('aria-current');
-      link.removeAttribute('aria-disabled');
+      if(link.classList.contains('active')) link.classList.remove('active');
+      if(link.hasAttribute('aria-current')) link.removeAttribute('aria-current');
+      if(link.hasAttribute('aria-disabled')) link.removeAttribute('aria-disabled');
     }
     return true;
   }
@@ -101,9 +103,9 @@
     if(!tree_()) return;
     document.body.classList.remove('kinojo-page-home');
     document.body.classList.add('kinojo-page-legion-tree');
-    document.body.dataset.kinojoPage='legion-tree';
+    if(document.body.dataset.kinojoPage!=='legion-tree') document.body.dataset.kinojoPage='legion-tree';
     const label=document.querySelector('.kinojo-top-page strong');
-    if(label) label.textContent='레기온 트리';
+    if(label&&label.textContent!=='레기온 트리') label.textContent='레기온 트리';
   }
 
   function sync(){
