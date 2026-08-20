@@ -1,0 +1,150 @@
+name: Verify Legion Tree Pages
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "legion-tree/**"
+      - "m/legion-tree/**"
+      - "ui/kinojo-common-navigation.js"
+      - "core/kinojo-route-guard.js"
+      - ".github/workflows/verify-legion-tree-pages.yml"
+  push:
+    branches: [main]
+    paths:
+      - "legion-tree/**"
+      - "m/legion-tree/**"
+      - "ui/kinojo-common-navigation.js"
+      - "core/kinojo-route-guard.js"
+      - ".github/workflows/verify-legion-tree-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-legion-tree-pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Checkout PR head or current commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+      - name: Verify Legion Tree source contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check ui/kinojo-common-navigation.js
+          node --check core/kinojo-route-guard.js
+          node --check legion-tree/js/legion-tree.js
+
+          python3 <<'PY'
+          from pathlib import Path
+
+          pc = Path('legion-tree/index.html').read_text(encoding='utf-8')
+          mobile = Path('m/legion-tree/index.html').read_text(encoding='utf-8')
+          css = Path('legion-tree/css/legion-tree.css').read_text(encoding='utf-8')
+          page_js = Path('legion-tree/js/legion-tree.js').read_text(encoding='utf-8')
+          nav = Path('ui/kinojo-common-navigation.js').read_text(encoding='utf-8')
+          route = Path('core/kinojo-route-guard.js').read_text(encoding='utf-8')
+          notice = Path('ui/kinojo-event-notice.js').read_text(encoding='utf-8')
+
+          for label, text in [('PC', pc), ('mobile', mobile)]:
+              for token in ['kinojo-layout.css', 'kinojo-components.css', 'kinojo-public-shell.css', 'hof-filter-bar', '레기온 트리']:
+                  if token not in text:
+                      raise SystemExit(f'{label}: shared shell contract missing: {token}')
+              if 'legion-tree-toolbar' in text or 'legion-tree-action' in text:
+                  raise SystemExit(f'{label}: legacy standalone subbar contract returned')
+
+          for token in ['data-kinojo-nav-key="legion-tree"', 'dedupeTreeLinks_', '레기온 순위']:
+              if token not in nav:
+                  raise SystemExit(f'common navigation contract missing: {token}')
+          for forbidden in ['installPreviewNavigation', 'markPageIdentity']:
+              if forbidden in page_js:
+                  raise SystemExit(f'page JS must not own common navigation: {forbidden}')
+          if 'data-kinojo-legion-tree-nav' in notice or 'installLegionTreeNavigation' in notice:
+              raise SystemExit('event notice must not inject Legion Tree navigation')
+          if 'kinojo-common-navigation.js' not in route:
+              raise SystemExit('route guard common navigation bootstrap missing')
+          if css.count('{') != css.count('}'):
+              raise SystemExit('Legion Tree CSS brace mismatch')
+          if '.hof-filter-bar{' in css:
+              raise SystemExit('Legion Tree CSS must not redefine shared subbar outer geometry')
+
+          print('Legion Tree shared shell source contract: PASS')
+          PY
+
+  verify-live-readback:
+    if: github.event_name != 'pull_request'
+    needs: verify-source
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      LIVE_BASE: https://kinojo.info
+    steps:
+      - name: Checkout deployed main source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Verify Legion Tree live files
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_ref="${{ github.sha }}"
+          verify_key="${expected_ref:0:12}-$(date -u +%s)"
+          tmp_dir="$(mktemp -d)"
+          trap 'rm -rf "$tmp_dir"' EXIT
+
+          files=(
+            "legion-tree/index.html"
+            "m/legion-tree/index.html"
+            "legion-tree/css/legion-tree.css"
+            "legion-tree/js/legion-tree.js"
+            "ui/kinojo-common-navigation.js"
+            "core/kinojo-route-guard.js"
+            "ui/kinojo-event-notice.js"
+            "home.html"
+            "m/index.html"
+          )
+
+          http_code="$(curl --silent --show-error --location --output /dev/null --write-out '%{http_code}' --connect-timeout 10 --max-time 30 -H 'Cache-Control: no-cache' "$LIVE_BASE/legion-tree/?verify=$verify_key")"
+          if [[ "$http_code" != "200" ]]; then
+            echo "Legion Tree live page returned HTTP $http_code" >&2
+            exit 1
+          fi
+
+          for attempt in $(seq 1 15); do
+            mismatch=0
+            : > "$tmp_dir/result.txt"
+            for path in "${files[@]}"; do
+              live_file="$tmp_dir/$(echo "$path" | tr '/' '_')"
+              url="$LIVE_BASE/$path?verify=$verify_key-$attempt"
+              if ! curl --fail --silent --show-error --location --compressed --retry 3 --retry-all-errors --connect-timeout 10 --max-time 30 -H 'Cache-Control: no-cache' "$url" -o "$live_file"; then
+                echo "FETCH_FAIL $path" >> "$tmp_dir/result.txt"
+                mismatch=1
+                continue
+              fi
+              if cmp -s "$path" "$live_file"; then
+                echo "MATCH $path" >> "$tmp_dir/result.txt"
+              else
+                echo "MISMATCH $path" >> "$tmp_dir/result.txt"
+                mismatch=1
+              fi
+            done
+            cat "$tmp_dir/result.txt"
+            if [[ "$mismatch" -eq 0 ]]; then
+              echo "Legion Tree live readback: PASS"
+              exit 0
+            fi
+            if [[ "$attempt" -lt 15 ]]; then sleep 15; fi
+          done
+
+          echo "Legion Tree live readback did not converge to repository source." >&2
+          exit 1
