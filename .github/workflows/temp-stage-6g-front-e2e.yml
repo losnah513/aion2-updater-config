@@ -1,4 +1,4 @@
-name: Temp Stage 6-G FRONT E2E
+name: Temp Stage 6-G FRONT E2E Cleanup
 
 on:
   push:
@@ -10,10 +10,10 @@ permissions:
   contents: read
 
 jobs:
-  front-e2e:
+  cleanup:
     runs-on: ubuntu-latest
     steps:
-      - name: Run FRONT signed-upload complete flow
+      - name: Delete temporary FRONT object through existing duplicate-complete cleanup path
         shell: bash
         env:
           SUPABASE_URL: "https://josvoltpktvwysrasffq.supabase.co"
@@ -21,55 +21,17 @@ jobs:
           SESSION_TOKEN: "kws_a314e1da6c07c6f6db3a4840fe66c7cd1bf2638f555823db93ff00dff43595fa412b4daa"
         run: |
           set -euo pipefail
-          python - <<'PY'
-          import base64
-          data=base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Zl1sAAAAASUVORK5CYII=')
-          open('/tmp/front.png','wb').write(data)
-          print(len(data))
-          PY
-          SIZE=$(wc -c </tmp/front.png | tr -d ' ')
           ENDPOINT="$SUPABASE_URL/functions/v1/kinojo-member-profile"
-          PREP=$(curl --fail-with-body -sS "$ENDPOINT" \
+          HTTP=$(curl -sS -o /tmp/response.json -w '%{http_code}' "$ENDPOINT" \
             -H "apikey: $PUBLISHABLE_KEY" \
             -H "Authorization: Bearer $PUBLISHABLE_KEY" \
             -H 'Content-Type: application/json' \
-            --data "{\"action\":\"reference-upload-prepare\",\"sessionToken\":\"$SESSION_TOKEN\",\"characterId\":111,\"slot\":\"FRONT\",\"mimeType\":\"image/png\",\"sizeBytes\":$SIZE}")
-          echo "$PREP" >/tmp/prep.json
+            --data '{"action":"reference-upload-complete","sessionToken":"'$SESSION_TOKEN'","characterId":111,"slot":"FRONT","objectPath":"characters/111/FRONT/710114f2d80643588580c079519eb12b.png","mimeType":"image/png","sizeBytes":68}')
+          cat /tmp/response.json
+          test "$HTTP" = "409"
           python - <<'PY'
           import json
-          d=json.load(open('/tmp/prep.json'))
-          assert d.get('ok') is True, d
-          u=d['upload']
-          assert u['bucket']=='kinojo-member-reference', u
-          assert u['upsert'] is False, u
-          assert d['reference']['slot']=='FRONT', d
-          open('/tmp/upload_url','w').write(u['uploadUrl'])
-          open('/tmp/object_path','w').write(u['objectPath'])
-          print('PREP_OK',u['objectPath'])
-          PY
-          UPLOAD_URL=$(cat /tmp/upload_url)
-          OBJECT_PATH=$(cat /tmp/object_path)
-          curl --fail-with-body -sS -X PUT "$UPLOAD_URL" \
-            -H "apikey: $PUBLISHABLE_KEY" \
-            -H "Authorization: Bearer $PUBLISHABLE_KEY" \
-            -H 'x-upsert: false' \
-            -F 'cacheControl=3600' \
-            -F '=@/tmp/front.png;type=image/png' >/tmp/upload.json
-          COMPLETE=$(curl --fail-with-body -sS "$ENDPOINT" \
-            -H "apikey: $PUBLISHABLE_KEY" \
-            -H "Authorization: Bearer $PUBLISHABLE_KEY" \
-            -H 'Content-Type: application/json' \
-            --data "{\"action\":\"reference-upload-complete\",\"sessionToken\":\"$SESSION_TOKEN\",\"characterId\":111,\"slot\":\"FRONT\",\"objectPath\":\"$OBJECT_PATH\",\"mimeType\":\"image/png\",\"sizeBytes\":$SIZE}")
-          echo "$COMPLETE" >/tmp/complete.json
-          python - <<'PY'
-          import json,datetime
-          d=json.load(open('/tmp/complete.json'))
-          assert d.get('ok') is True, d
-          r=d['reference']
-          assert r['slot']=='FRONT',r
-          assert r['active'] is True,r
-          assert r['retentionDays']==7,r
-          assert d['upload']['storageVerified'] is True,d
-          assert d['upload']['activated'] is True,d
-          print('COMPLETE_OK',r['objectPath'],r['uploadedAt'],r['expiresAt'])
+          d=json.load(open('/tmp/response.json'))
+          assert d.get('code')=='REFERENCE_SLOT_EXISTS',d
+          print('EXPECTED_DUPLICATE_COMPLETE_CLEANUP_PATH')
           PY
