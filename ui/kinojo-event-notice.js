@@ -36,7 +36,7 @@ STEP : 5 운영 QA / 닫기 라이프사이클 정리
   }
 
   function esc(value){
-    return String(value ?? '').replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+    return String(value ?? '').replace(/[&<>\"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[ch]));
   }
 
   function normalizeType(type){
@@ -170,7 +170,6 @@ STEP : 5 운영 QA / 닫기 라이프사이클 정리
     }, 190);
   }
 
-
   function hasPreviewFlag(){
     try{
       const params = new URLSearchParams(window.location.search || '');
@@ -195,7 +194,6 @@ STEP : 5 운영 QA / 닫기 라이프사이클 정리
     ];
     return [{ groupId:'preview', popupVersion:'preview', groupTitle:'이벤트 공지 미리보기', items }];
   }
-
 
   async function loadGroups(){
     if(!window.KinojoSupabase || typeof window.KinojoSupabase.getWebEventNoticeGroups !== 'function') return [];
@@ -254,4 +252,81 @@ STEP : 5 운영 QA / 닫기 라이프사이클 정리
 
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once:true }); else init();
   window.KinojoEventNotice = { init, buildPreviewGroups };
+})();
+
+/* ===========================================================
+KINOJO Legion Tree · Foundation navigation hook · 가-0
+- 기존 공통 Topbar / 햄버거 메뉴 구조를 건드리지 않고 레기온 트리 진입점만 추가
+- 후속 정식 단계에서 kinojo-common-ui.js 계약으로 흡수 예정
+=========================================================== */
+(function(){
+  'use strict';
+
+  function isMobilePath(){ return /(^|\/)m(\/|$)/.test(location.pathname.replace(/\\/g,'/')); }
+  function isLegionTreePath(){ return location.pathname.replace(/\\/g,'/').includes('/legion-tree/'); }
+
+  function ensureTopbarLink(){
+    const nav=document.getElementById('kinojoTopNav');
+    if(!nav||nav.querySelector('[data-kinojo-legion-tree-nav]'))return !!nav;
+    const base=isMobilePath()?'/m/':'/';
+    const link=document.createElement('a');
+    link.className='kinojo-top-nav-link'+(isLegionTreePath()?' active':'');
+    link.href=isLegionTreePath()?'./':base+'legion-tree/';
+    link.textContent='레기온 트리';
+    link.dataset.kinojoLegionTreeNav='top';
+    if(isLegionTreePath())link.setAttribute('aria-current','page');
+    const ranking=Array.from(nav.querySelectorAll('a')).find(item=>String(item.getAttribute('href')||'').includes('/ranking/')||String(item.textContent||'').trim()==='레기온 순위');
+    if(ranking?.nextSibling)nav.insertBefore(link,ranking.nextSibling);
+    else if(ranking)ranking.after(link);
+    else nav.appendChild(link);
+    return true;
+  }
+
+  function ensureDrawerLink(){
+    const nav=document.querySelector('#sideDrawer .kinojo-drawer-nav');
+    if(!nav||nav.querySelector('[data-kinojo-legion-tree-nav]'))return !!nav;
+    const base=isMobilePath()?'/m/':'/';
+    const link=document.createElement('a');
+    link.href=isLegionTreePath()?'./':base+'legion-tree/';
+    link.textContent='레기온 트리';
+    link.dataset.kinojoLegionTreeNav='drawer';
+    if(isLegionTreePath()){
+      link.className='active';
+      link.setAttribute('aria-disabled','true');
+      link.setAttribute('aria-current','page');
+    }
+    const ranking=Array.from(nav.querySelectorAll('a')).find(item=>String(item.getAttribute('href')||'').includes('/ranking/')||String(item.textContent||'').trim()==='레기온 순위');
+    if(ranking?.nextSibling)nav.insertBefore(link,ranking.nextSibling);
+    else if(ranking)ranking.after(link);
+    else nav.prepend(link);
+    return true;
+  }
+
+  function normalizeLegionTreePageIdentity(){
+    if(!isLegionTreePath())return;
+    document.body.classList.remove('kinojo-page-home');
+    document.body.classList.add('kinojo-page-legion-tree');
+    document.body.dataset.kinojoPage='legion-tree';
+    const label=document.querySelector('.kinojo-top-page strong');
+    if(label)label.textContent='레기온 트리';
+  }
+
+  function sync(){
+    const top=ensureTopbarLink();
+    const drawer=ensureDrawerLink();
+    normalizeLegionTreePageIdentity();
+    return top&&drawer;
+  }
+
+  function start(){
+    if(sync())return;
+    let tries=0;
+    const timer=setInterval(()=>{
+      tries+=1;
+      if(sync()||tries>=40)clearInterval(timer);
+    },100);
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
 })();
