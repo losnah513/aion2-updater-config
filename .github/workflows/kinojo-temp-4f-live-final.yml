@@ -1,0 +1,44 @@
+name: KINOJO temporary 4-F final live readback
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    if: github.event.issue.title == 'KINOJO_MY_INFO_4F_LIVE_FINAL_20260820'
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Verify deployed Stage 4-F bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected='557db7df033117dd0e83665f36f24210f032ccda'
+          node --check ui/kinojo-common-ui.js
+          test "$(git hash-object ui/kinojo-common-ui.js)" = "$expected"
+          ok=0
+          for attempt in $(seq 1 18); do
+            stamp="${{ github.run_id }}-${attempt}"
+            if curl -fsSL --retry 2 --connect-timeout 10 "https://kinojo.info/ui/kinojo-common-ui.js?kinojo4f=${stamp}" -o /tmp/live.js; then
+              live="$(git hash-object /tmp/live.js)"
+              echo "attempt=${attempt} live=${live}"
+              if [ "$live" = "$expected" ]; then ok=1; break; fi
+            fi
+            sleep 10
+          done
+          test "$ok" = 1
+          mkdir -p .kinojo-live
+          printf 'PASS\nrun_id=%s\njs=%s\n' '${{ github.run_id }}' "$live" > .kinojo-live/4f-final.txt
+          git config user.name "losnah513"
+          git config user.email "losnah513@gmail.com"
+          git add .kinojo-live/4f-final.txt
+          git commit -m "Record Stage 4-F final live readback"
+          git push origin HEAD:main
