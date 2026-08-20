@@ -1,4 +1,4 @@
-/* KINOJO Admin modular loader v2026082003 */
+/* KINOJO Admin modular loader v2026082004 */
 (function(){
   'use strict';
   const current=document.currentScript;
@@ -15,7 +15,7 @@
   function loadScript(name){
     return new Promise((resolve,reject)=>{
       const script=document.createElement('script');
-      script.src=new URL(name+'?cache=2026082003',base).href;
+      script.src=new URL(name+'?cache=2026082004',base).href;
       script.async=false;
       script.onload=resolve;
       script.onerror=()=>reject(new Error('관리자 모듈을 불러오지 못했습니다: '+name));
