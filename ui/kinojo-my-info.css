@@ -1,4 +1,4 @@
-/* KINOJO My Info panel shell v20260819.12 */
+/* KINOJO My Info panel shell v20260820.14 */
 body.kinojo-my-info-open{overflow:hidden}
 .kinojo-my-info-layer{
   position:fixed!important;
@@ -104,7 +104,26 @@ body.kinojo-my-info-open{overflow:hidden}
 .kinojo-my-info-action-btn.is-primary{border-color:#2563eb;background:#2563eb;color:#fff}.kinojo-my-info-action-btn:hover:not(:disabled){filter:brightness(.98)}.kinojo-my-info-action-btn:focus-visible{outline:2px solid rgba(37,99,235,.38);outline-offset:2px}.kinojo-my-info-action-btn:disabled{cursor:not-allowed;opacity:.45;filter:none}
 .kinojo-my-info-profile-status{margin-top:9px;padding:8px 10px;border-radius:9px;background:#f8fafc;color:#64748b;font-size:8px;font-weight:850;line-height:1.45}
 .kinojo-my-info-profile-status[data-state="error"]{background:#fff1f2;color:#be123c}.kinojo-my-info-profile-status[data-state="preview"]{background:#eff6ff;color:#1d4ed8}.kinojo-my-info-profile-status[data-state="ready"]{background:#f0fdf4;color:#15803d}.kinojo-my-info-profile-status[data-state="loading"]{background:#f8fafc;color:#64748b}
-.kinojo-my-info-reference-preview{background:#fbfcfe}.kinojo-my-info-reference-preview-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.kinojo-my-info-reference-preview-grid article{min-width:0;min-height:68px;padding:10px;display:grid;align-content:center;gap:4px;border:1px dashed rgba(122,146,180,.2);border-radius:11px;background:#f8fafc;color:#94a3b8}.kinojo-my-info-reference-preview-grid b{color:#64748b;font-size:9px;font-weight:1000}.kinojo-my-info-reference-preview-grid span{font-size:8px;font-weight:850}.kinojo-my-info-reference-preview-grid small{font-size:7px;font-weight:900;color:#94a3b8}
+/* 20260820_14: 6-A reference-image 3-slot UI prep — visual scaffold only; no picker/upload */
+.kinojo-my-info-reference-preview{background:#fbfcfe;border-color:rgba(37,99,235,.16)}
+.kinojo-my-info-reference-preview[aria-disabled="true"] .kinojo-my-info-manager-section-head>small{font-size:0}
+.kinojo-my-info-reference-preview[aria-disabled="true"] .kinojo-my-info-manager-section-head>small::after{content:"FRONT · BACK · UPPER_BODY";font-size:8px;color:#2563eb;font-weight:950;letter-spacing:.02em}
+.kinojo-my-info-reference-preview-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.kinojo-my-info-reference-preview-grid article,.kinojo-my-info-reference-slot{appearance:none;min-width:0;min-height:74px;padding:10px;display:grid;align-content:center;gap:4px;border:1px solid rgba(122,146,180,.22);border-radius:11px;background:linear-gradient(135deg,#fff,#f8fafc);color:#64748b;font-family:inherit;text-align:left;box-sizing:border-box}
+.kinojo-my-info-reference-preview-grid article{cursor:default}
+.kinojo-my-info-reference-preview-grid article b,.kinojo-my-info-reference-slot b{color:#334155;font-size:9px;font-weight:1000}
+.kinojo-my-info-reference-preview-grid article span,.kinojo-my-info-reference-slot span{font-size:8px;font-weight:850}
+.kinojo-my-info-reference-preview-grid article small,.kinojo-my-info-reference-slot small{font-size:7px;font-weight:900;color:#2563eb}
+.kinojo-my-info-reference-preview[aria-disabled="true"] .kinojo-my-info-reference-preview-grid article small{font-size:0}
+.kinojo-my-info-reference-preview[aria-disabled="true"] .kinojo-my-info-reference-preview-grid article small::after{content:"슬롯 UI 준비됨";font-size:7px}
+.kinojo-my-info-reference-slot{cursor:pointer;transition:border-color .16s ease,background-color .16s ease,box-shadow .16s ease,transform .16s ease}
+.kinojo-my-info-reference-slot:hover{border-color:rgba(37,99,235,.28);background:#f6f9ff;transform:translateY(-1px)}
+.kinojo-my-info-reference-slot:focus-visible{outline:2px solid rgba(37,99,235,.38);outline-offset:2px}
+.kinojo-my-info-reference-slot.is-selected{border-color:rgba(37,99,235,.42);background:linear-gradient(135deg,#eef5ff,#f8fbff);box-shadow:0 0 0 1px rgba(37,99,235,.08)}
+.kinojo-my-info-reference-slot.is-selected b{color:#1d4ed8}
+.kinojo-my-info-reference-slot.is-selected small{color:#2563eb}
+.kinojo-my-info-reference-status{margin-top:9px;padding:8px 10px;border-radius:9px;background:#f8fafc;color:#64748b;font-size:8px;font-weight:850;line-height:1.45}
+.kinojo-my-info-reference-status[data-state="ready"]{background:#eff6ff;color:#1d4ed8}
 @media(max-width:620px){.kinojo-my-info-profile-images{grid-template-columns:1fr}.kinojo-my-info-profile-card{grid-template-columns:76px minmax(0,1fr)}.kinojo-my-info-profile-image-frame{width:76px;height:76px}.kinojo-my-info-reference-preview-grid{grid-template-columns:1fr}}
 
 /* 20260819_06: 1-F layout correction 2 — page-centered body-level modal */
