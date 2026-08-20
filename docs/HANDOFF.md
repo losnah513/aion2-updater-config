@@ -6,7 +6,7 @@
 
 - GitHub: `losnah513/aion2-updater-config`
 - 운영 브랜치: `main`
-- 레기온 트리 운영 exact-readback 검증 commit: `51540e7714a08565c8ec6854512c27a05a0dcd82`
+- 레기온 트리 최신 운영 exact-readback 검증 commit: `acac532aaa8bb9b501404bcaa46e86f3f7e29b92`
 - 레기온 트리 전용 live readback: `legion-tree/live-readback = success`
 - 검증 Actions run: `32342372751`
 - Drive 활성 WEB source 동기화 시 fresh main snapshot: `8f9755d55ec3c2cf4ef10144bef23dd26a0d3e9c`
@@ -64,8 +64,14 @@
 
 ## 다음 행동
 
-- 레기온 트리 입력 UI 후속 기능 계획: 현재 미리보기인 `천족 / 마족` 선택을 실제로 연결할 때, 천족 선택 시 천족 서버만 서버 선택 목록에 노출하고 마족 선택 시 마족 서버만 노출한다. 종족 전환으로 기존 서버 선택이 유효하지 않게 되면 서버 선택을 초기화한다. 공식 캐릭터 존재 여부와 최종 서버 검증은 기존 원칙대로 Server가 담당한다.
-- 이번 보정에서는 위 기능을 구현하지 않고 종족 선택 버튼 UI만 추가한다.
+- 레기온 트리 서브바 후속 보정은 운영 반영 완료: PR `#142`, main `acac532aaa8bb9b501404bcaa46e86f3f7e29b92`, live readback run `32347248451` success.
+- `천족 / 마족` 선택은 현재 `disabled` 미리보기 UI만 존재한다. 실제 기능 단계에서는 천족 선택 시 천족 서버만, 마족 선택 시 마족 서버만 노출하고, 종족 전환으로 기존 서버 선택이 유효하지 않게 되면 서버 선택을 초기화한다. 공식 캐릭터 존재 여부와 최종 서버 검증은 Server가 담당한다.
 - 다음 작업은 **`가-1`만** 진행한다.
 - 작업 시작 전 Drive/GitHub/Supabase 현재 상태를 fresh readback하고, 병행 작업과 충돌하지 않는지 확인한다.
 - 가-1 이후도 한 번에 한 하위 작업씩 진행한다.
+
+## 2026-08-20 서브바 후속 보정 마감
+
+- 운영 main: `acac532aaa8bb9b501404bcaa46e86f3f7e29b92`
+- live readback: `Verify Legion Tree Pages` run `32347248451` success.
+- Drive source exact blobs: PC HTML `74ff944d4ad4e472835491267ad56448b4db8338`, mobile HTML `854e2d25f7cbfd21c772e095898d710057c64829`, CSS `e086ec4d28062200113ef41bd57c0cd7ccc88d8e`.
