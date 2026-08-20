@@ -944,6 +944,7 @@
     kinojoMyReferencePickerState.filesBySlot=Object.create(null);
     const input=q('#kinojoMyInfoReferenceFileInput');
     if(input)input.value='';
+    clearMyInfoReferenceDragState_();
     renderMyInfoReferencePicker_();
     if(kinojoMyReferencePickerState.characterId>0){
       const row=myInfoProfileCharacters_().find(item=>Number(item?.characterId||0)===kinojoMyReferencePickerState.characterId);
@@ -981,6 +982,45 @@
     const name=String(file.name||'선택한 파일').slice(0,80);
     setMyInfoReferenceStatus_(slot+' · '+name+' 파일을 선택했습니다. 파일 검증과 미리보기는 다음 단계에서 적용됩니다.','ready');
     return true;
+  }
+  function clearMyInfoReferenceDragState_(except=null){
+    document.querySelectorAll('#kinojoMyInfoReferenceGrid [data-reference-slot].is-drag-over').forEach(button=>{
+      if(button!==except)button.classList.remove('is-drag-over');
+    });
+  }
+  function handleMyInfoReferenceDrag_(event){
+    if(!(event?.target instanceof Element))return false;
+    const button=event.target.closest('#kinojoMyInfoReferenceGrid [data-reference-slot]');
+    if(!button||button.disabled)return false;
+    const slot=String(button.dataset.referenceSlot||'').trim();
+    const characterId=Number(kinojoMyProfileUiState.selectedCharacterId||0);
+    if(!KINOJO_REFERENCE_IMAGE_SLOTS.includes(slot)||kinojoMyReferencePickerState.characterId!==characterId)return false;
+    if(event.type==='dragleave'){
+      const next=event.relatedTarget;
+      if(next instanceof Node&&button.contains(next))return true;
+      button.classList.remove('is-drag-over');
+      return true;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    if(event.type==='dragenter'||event.type==='dragover'){
+      clearMyInfoReferenceDragState_(button);
+      button.classList.add('is-drag-over');
+      if(event.dataTransfer)event.dataTransfer.dropEffect='copy';
+      setMyInfoReferenceStatus_(slot+' 슬롯에 이미지를 놓아 주세요.','info');
+      return true;
+    }
+    if(event.type==='drop'){
+      clearMyInfoReferenceDragState_();
+      kinojoMyReferencePickerState.activeSlot=slot;
+      const file=event.dataTransfer?.files?.[0]||null;
+      if(!file){
+        setMyInfoReferenceStatus_(slot+' 슬롯에 놓인 파일을 확인하지 못했습니다.','info');
+        return false;
+      }
+      return handleMyInfoReferenceFile_(file);
+    }
+    return false;
   }
   function myInfoProfileFileSize_(bytes){
     const value=Number(bytes||0);
@@ -1740,6 +1780,8 @@
     });
     q('#kinojoMyInfoProfileFileInput')?.addEventListener('change',e=>{handleMyInfoProfileFile_(e.target?.files?.[0]||null);});
     q('#kinojoMyInfoReferenceFileInput')?.addEventListener('change',e=>{handleMyInfoReferenceFile_(e.target?.files?.[0]||null);});
+    const referenceGrid=q('#kinojoMyInfoReferenceGrid');
+    ['dragenter','dragover','dragleave','drop'].forEach(type=>referenceGrid?.addEventListener(type,handleMyInfoReferenceDrag_));
     q('#kinojoMyInfoCloseBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeMyInfoPanel();});
     q('#kinojoMyInfoLayer')?.addEventListener('click',e=>{if(e.target.id==='kinojoMyInfoLayer')closeMyInfoPanel();});
     q('#kinojoMyInfoCharacterList')?.addEventListener('click',e=>{

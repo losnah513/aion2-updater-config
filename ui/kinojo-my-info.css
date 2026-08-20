@@ -122,6 +122,9 @@ body.kinojo-my-info-open{overflow:hidden}
 .kinojo-my-info-reference-slot.is-selected{border-color:rgba(37,99,235,.42);background:linear-gradient(135deg,#eef5ff,#f8fbff);box-shadow:0 0 0 1px rgba(37,99,235,.08)}
 .kinojo-my-info-reference-slot.is-selected b{color:#1d4ed8}
 .kinojo-my-info-reference-slot.is-selected small{color:#2563eb}
+/* 20260820_15: 6-E reference-image drag and drop target state only */
+.kinojo-my-info-reference-slot.is-drag-over{border-color:rgba(37,99,235,.72);border-style:dashed;background:linear-gradient(135deg,#eaf2ff,#f8fbff);box-shadow:0 0 0 2px rgba(37,99,235,.12),0 8px 18px rgba(37,99,235,.08);transform:translateY(-1px)}
+.kinojo-my-info-reference-slot.is-drag-over b,.kinojo-my-info-reference-slot.is-drag-over small{color:#1d4ed8}
 .kinojo-my-info-reference-status{margin-top:9px;padding:8px 10px;border-radius:9px;background:#f8fafc;color:#64748b;font-size:8px;font-weight:850;line-height:1.45}
 .kinojo-my-info-reference-status[data-state="ready"]{background:#eff6ff;color:#1d4ed8}
 @media(max-width:620px){.kinojo-my-info-profile-images{grid-template-columns:1fr}.kinojo-my-info-profile-card{grid-template-columns:76px minmax(0,1fr)}.kinojo-my-info-profile-image-frame{width:76px;height:76px}.kinojo-my-info-reference-preview-grid{grid-template-columns:1fr}}
