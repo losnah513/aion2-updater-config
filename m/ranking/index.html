@@ -25,66 +25,20 @@
 </head>
 <body class="kinojo-page-ranking is-mobile-ranking kinojo-page-booting">
 <main class="ranking-wrap">
-  <section class="ranking-mobile-mode-tabs" aria-label="전투력 기준 선택">
-    <button class="is-active" data-mobile-mode="PVE" type="button">PVE</button>
-    <button data-mobile-mode="PVP" type="button">PVP</button>
-  </section>
+  <section class="ranking-mobile-mode-tabs" aria-label="전투력 기준 선택"><button class="is-active" data-mobile-mode="PVE" type="button">PVE</button><button data-mobile-mode="PVP" type="button">PVP</button></section>
   <section class="ranking-toolbar" aria-label="순위 검색 및 필터">
     <div class="ranking-mobile-filter-head"><span>검색 · 상세 필터</span><button class="kinojo-btn secondary" id="rankingFilterToggleBtn" type="button" aria-expanded="false">필터</button></div>
-    <div class="ranking-filter-main">
-      <div class="ranking-search-box">
-        <label for="rankingSearch">캐릭터 검색</label>
-        <div class="ranking-search-controls">
-          <input id="rankingSearch" class="kinojo-input" type="search" placeholder="캐릭터명 / 본캐명 / 서버 검색" autocomplete="off"/>
-          <button class="kinojo-btn ranking-search-submit" id="rankingSearchBtn" type="button">조회</button>
-          <button class="kinojo-btn secondary ranking-search-reset" id="rankingResetBtn" type="button">초기화</button>
-        </div>
-      </div>
-      <div class="ranking-filter-box">
-        <span class="ranking-filter-title">클래스</span>
-        <div class="ranking-class-tabs" id="rankingClassTabs"></div>
-      </div>
-    </div>
-    <aside class="ranking-action-box" aria-label="랭킹 범위">
-      <div class="ranking-scope-heading"><strong>랭킹 범위</strong><span>기본 레기온 · 본캐</span></div>
-      <div class="ranking-switch-group">
-        <label class="kinojo-filter-switch"><span>부캐 포함</span><input id="rankingIncludeSubs" type="checkbox"/><span class="kinojo-filter-switch-track" aria-hidden="true"><span class="kinojo-filter-switch-knob"></span></span></label>
-        <label class="kinojo-filter-switch"><span>전체 레기온</span><input id="rankingIncludeAllLegions" type="checkbox"/><span class="kinojo-filter-switch-track" aria-hidden="true"><span class="kinojo-filter-switch-knob"></span></span></label>
-      </div>
-    </aside>
+    <div class="ranking-filter-main"><div class="ranking-search-box"><label for="rankingSearch">캐릭터 검색</label><div class="ranking-search-controls"><input id="rankingSearch" class="kinojo-input" type="search" placeholder="캐릭터명 / 본캐명 / 서버 검색" autocomplete="off"/><button class="kinojo-btn ranking-search-submit" id="rankingSearchBtn" type="button">조회</button><button class="kinojo-btn secondary ranking-search-reset" id="rankingResetBtn" type="button">초기화</button></div></div><div class="ranking-filter-box"><span class="ranking-filter-title">클래스</span><div class="ranking-class-tabs" id="rankingClassTabs"></div></div></div>
+    <aside class="ranking-action-box" aria-label="랭킹 범위"><div class="ranking-scope-heading"><strong>랭킹 범위</strong><span>기본 레기온 · 본캐</span></div><div class="ranking-switch-group"><label class="kinojo-filter-switch"><span>부캐 포함</span><input id="rankingIncludeSubs" type="checkbox"/><span class="kinojo-filter-switch-track" aria-hidden="true"><span class="kinojo-filter-switch-knob"></span></span></label><label class="kinojo-filter-switch"><span>전체 레기온</span><input id="rankingIncludeAllLegions" type="checkbox"/><span class="kinojo-filter-switch-track" aria-hidden="true"><span class="kinojo-filter-switch-knob"></span></span></label></div></aside>
   </section>
   <section class="ranking-status" id="rankingStatus">데이터 준비 중...</section>
   <section class="ranking-board" id="rankingBoard" aria-live="polite"><div class="ranking-loading"><span class="kinojo-spinner"><span></span></span><span>레기온 전체 순위를 불러오는 중...</span></div></section>
   <section class="ranking-load-more" id="rankingLoadMore" aria-label="순위 더보기" hidden><button class="kinojo-btn secondary" id="rankingLoadMoreBtn" type="button">20명 더보기</button><span id="rankingLoadMoreInfo" aria-live="polite"></span></section>
   <footer class="footer common-footer"><div class="footer-links"><a href="../../pages/about.html">사이트 소개</a><a href="../../pages/terms.html">이용약관</a><a href="../../pages/privacy.html">개인정보처리방침</a><a href="../../pages/contact.html">아이디어 제안 및 건의</a></div><div class="footer-powered">Powered by AION2 · KINOJO 레기온 지원</div></footer>
 </main>
-<script src="../../core/kinojo-api.js?cache=2026062925"></script>
-<script src="../../core/kinojo-cache.js?cache=2026062925"></script>
-<script src="../../core/kinojo-permissions.js?cache=2026071517"></script>
-<script src="../../core/kinojo-toast.js?cache=2026062925"></script>
-<script src="../../core/kinojo-modal.js?cache=2026062925"></script>
-<script src="../../core/kinojo-route-guard.js?cache=2026062925"></script>
-<script src="../../core/kinojo-debug.js?cache=2026062925"></script>
-<script src="../../core/kinojo-logger.js?cache=2026062925"></script>
+<script src="../../core/kinojo-api.js?cache=2026062925"></script><script src="../../core/kinojo-cache.js?cache=2026062925"></script><script src="../../core/kinojo-permissions.js?cache=2026071517"></script><script src="../../core/kinojo-toast.js?cache=2026062925"></script><script src="../../core/kinojo-modal.js?cache=2026062925"></script><script src="../../core/kinojo-route-guard.js?cache=2026062925"></script><script src="../../core/kinojo-debug.js?cache=2026062925"></script><script src="../../core/kinojo-logger.js?cache=2026062925"></script>
 <script src="../../ui/kinojo-common-ui.js?cache=2026081801"></script>
-<script src="../../ui/kinojo-staged-loading.js?cache=2026081222"></script>
-<script src="../../ui/kinojo-admin-panel.js?cache=2026071712"></script>
-<script src="../../core/kinojo-supabase-client.js?cache=2026080205"></script>
-<script src="../../core/kinojo-supabase-rpc.js?cache=2026080205"></script>
-<script src="../../core/kinojo-supabase-features.js?cache=2026081801"></script>
-<script src="../../core/kinojo-auth-session.js?cache=2026081801"></script>
-<script src="../../core/kinojo-auth-service.js?cache=2026081801"></script>
-<script src="../../core/kinojo-auth-ui.js?cache=2026081801"></script>
-<script src="../../ui/kinojo-event-notice.js?cache=2026070521"></script>
-<script src="../../ui/kinojo-character-reaction.js?cache=2026081801"></script>
-<script src="../../ui/kinojo-character-detail-refresh.js?cache=2026081003"></script>
-<script src="../../ui/kinojo-character-skill-bridge.js?cache=2026081001"></script>
-<script src="../../ui/kinojo-character-daevanion-bridge.js?cache=2026081002"></script>
-<script src="../../ranking/js/ranking-utils.js?cache=2026080104"></script>
-<script src="../../ranking/js/ranking-data.js?cache=2026080101"></script>
-<script src="../../ranking/js/ranking-card.js?cache=2026080201"></script>
-<script src="../../ranking/js/ranking-render.js?cache=2026081218"></script>
-<script src="../../ranking/js/ranking-events.js?cache=2026080105"></script>
-<script src="../../ranking/js/ranking-app.js?cache=2026080105"></script>
+<script src="../../ui/kinojo-common-navigation.js?cache=2026082003"></script>
+<script src="../../ui/kinojo-staged-loading.js?cache=2026081222"></script><script src="../../ui/kinojo-admin-panel.js?cache=2026071712"></script><script src="../../core/kinojo-supabase-client.js?cache=2026080205"></script><script src="../../core/kinojo-supabase-rpc.js?cache=2026080205"></script><script src="../../core/kinojo-supabase-features.js?cache=2026081801"></script><script src="../../core/kinojo-auth-session.js?cache=2026081801"></script><script src="../../core/kinojo-auth-service.js?cache=2026081801"></script><script src="../../core/kinojo-auth-ui.js?cache=2026081801"></script><script src="../../ui/kinojo-event-notice.js?cache=2026081003"></script><script src="../../ui/kinojo-character-reaction.js?cache=2026081801"></script><script src="../../ui/kinojo-character-detail-refresh.js?cache=2026081003"></script><script src="../../ui/kinojo-character-skill-bridge.js?cache=2026081001"></script><script src="../../ui/kinojo-character-daevanion-bridge.js?cache=2026081002"></script><script src="../../ranking/js/ranking-utils.js?cache=2026080104"></script><script src="../../ranking/js/ranking-data.js?cache=2026080101"></script><script src="../../ranking/js/ranking-card.js?cache=2026080201"></script><script src="../../ranking/js/ranking-render.js?cache=2026081218"></script><script src="../../ranking/js/ranking-events.js?cache=2026080105"></script><script src="../../ranking/js/ranking-app.js?cache=2026080105"></script>
 </body>
 </html>
