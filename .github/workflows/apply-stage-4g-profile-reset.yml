@@ -1,15 +1,15 @@
 name: Apply Stage 4-G profile reset UI
 
 on:
-  issues:
-    types: [opened]
+  issue_comment:
+    types: [created]
 
 permissions:
   contents: write
 
 jobs:
   apply:
-    if: github.event.issue.title == 'KINOJO_MY_INFO_4G_APPLY_20260820'
+    if: github.event.comment.body == 'KINOJO_MY_INFO_4G_APPLY_20260820'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
