@@ -912,7 +912,7 @@
   const KINOJO_PROFILE_IMAGE_MIME_TYPES=new Set(['image/jpeg','image/png','image/webp']);
   const kinojoMyProfileUiState={token:'',selectedCharacterId:0,bootstrapByCharacter:Object.create(null),requestId:0,file:null,previewUrl:'',uploading:false};
   const KINOJO_REFERENCE_IMAGE_SLOTS=['FRONT','BACK','UPPER_BODY'];
-  const kinojoMyReferencePickerState={characterId:0,activeSlot:'',filesBySlot:Object.create(null)};
+  const kinojoMyReferencePickerState={characterId:0,activeSlot:'',filesBySlot:Object.create(null),previewUrlsBySlot:Object.create(null)};
   function setMyInfoReferenceStatus_(message,state='info'){
     const host=q('#kinojoMyInfoReferenceStatus');
     if(!host)return;
@@ -933,15 +933,35 @@
       button.classList.toggle('is-selected',!!file);
       button.setAttribute('aria-pressed',file?'true':'false');
       button.title=file?String(file.name||slot+' 이미지 선택됨'):slot+' 이미지 선택';
+      let preview=button.querySelector('[data-reference-preview]');
+      const previewUrl=String(kinojoMyReferencePickerState.previewUrlsBySlot[slot]||'');
+      if(previewUrl){
+        if(!preview){
+          preview=document.createElement('img');
+          preview.setAttribute('data-reference-preview','');
+          preview.className='kinojo-my-info-reference-preview-image';
+          button.prepend(preview);
+        }
+        preview.src=previewUrl;
+        preview.alt=slot+' 참고 이미지 로컬 미리보기';
+        preview.hidden=false;
+      }else if(preview){
+        preview.removeAttribute('src');
+        preview.hidden=true;
+      }
       const status=button.querySelector('[data-reference-file-status]');
-      if(status)status.textContent=file?'파일 선택됨':'이미지 선택';
+      if(status)status.textContent=file?(String(file.type||'').replace('image/','').toUpperCase()+' · '+myInfoProfileFileSize_(file.size)):'이미지 선택';
     });
   }
   function resetMyInfoReferencePicker_(characterId=0){
     const id=Number(characterId||0);
     kinojoMyReferencePickerState.characterId=Number.isInteger(id)&&id>0?id:0;
     kinojoMyReferencePickerState.activeSlot='';
+    Object.values(kinojoMyReferencePickerState.previewUrlsBySlot||{}).forEach(url=>{
+      if(url){try{URL.revokeObjectURL(url);}catch(_err){}}
+    });
     kinojoMyReferencePickerState.filesBySlot=Object.create(null);
+    kinojoMyReferencePickerState.previewUrlsBySlot=Object.create(null);
     const input=q('#kinojoMyInfoReferenceFileInput');
     if(input)input.value='';
     clearMyInfoReferenceDragState_();
@@ -977,10 +997,23 @@
       setMyInfoReferenceStatus_(slot+' 이미지 선택을 취소했습니다.','info');
       return false;
     }
+    const mime=String(file.type||'').trim().toLowerCase();
+    if(!KINOJO_PROFILE_IMAGE_MIME_TYPES.has(mime)){
+      setMyInfoReferenceStatus_(slot+' · JPEG, PNG, WebP 이미지만 선택할 수 있습니다.','error');
+      return false;
+    }
+    if(!Number.isFinite(file.size)||file.size<1||file.size>KINOJO_PROFILE_IMAGE_MAX_BYTES){
+      setMyInfoReferenceStatus_(slot+' · 참고 이미지는 5MB 이하만 선택할 수 있습니다.','error');
+      return false;
+    }
+    const oldUrl=String(kinojoMyReferencePickerState.previewUrlsBySlot[slot]||'');
+    if(oldUrl){try{URL.revokeObjectURL(oldUrl);}catch(_err){}}
+    const previewUrl=URL.createObjectURL(file);
     kinojoMyReferencePickerState.filesBySlot[slot]=file;
+    kinojoMyReferencePickerState.previewUrlsBySlot[slot]=previewUrl;
     renderMyInfoReferencePicker_();
     const name=String(file.name||'선택한 파일').slice(0,80);
-    setMyInfoReferenceStatus_(slot+' · '+name+' 파일을 선택했습니다. 파일 검증과 미리보기는 다음 단계에서 적용됩니다.','ready');
+    setMyInfoReferenceStatus_(slot+' · '+name+' · '+mime.replace('image/','').toUpperCase()+' · '+myInfoProfileFileSize_(file.size)+' 미리보기를 확인해 주세요.','preview');
     return true;
   }
   function clearMyInfoReferenceDragState_(except=null){
