@@ -986,6 +986,7 @@
     const source=q('#kinojoMyInfoProfileCurrentSource');
     const meta=q('#kinojoMyInfoProfileCurrentMeta');
     const select=q('#kinojoMyInfoProfileSelectBtn');
+    const reset=q('#kinojoMyInfoProfileResetBtn');
     const profile=data?.ok===true?data.profile:null;
     const character=data?.ok===true?data.character:null;
     const url=String(profile?.effectiveProfileImageUrl||character?.officialProfileImageUrl||'').trim();
@@ -1006,9 +1007,16 @@
     }
     if(select){
       const blocked=data?.ok!==true;
-      select.disabled=blocked;
+      select.disabled=blocked||kinojoMyProfileUiState.uploading;
       select.textContent=profile?.hasOverride===true?'교체 이미지 선택':'이미지 선택';
       select.title=profile?.hasOverride===true?'새 이미지를 선택하면 기존 사용자 이미지를 안전하게 교체합니다.':'';
+    }
+    if(reset){
+      const canReset=data?.ok===true&&profile?.hasOverride===true;
+      reset.hidden=!canReset;
+      reset.disabled=!canReset||kinojoMyProfileUiState.uploading;
+      reset.textContent=kinojoMyProfileUiState.uploading?'처리 중...':'공식 이미지로 복원';
+      reset.title=canReset?'사용자 Override만 제거하고 현재 공식 프로필 이미지로 돌아갑니다.':'';
     }
   }
   async function loadMyInfoProfileBootstrap_(characterId,force=false){
@@ -1040,7 +1048,7 @@
       if(!data||data.ok!==true)throw new Error(data?.message||data?.code||'PROFILE_BOOTSTRAP_FAILED');
       kinojoMyProfileUiState.bootstrapByCharacter[id]=data;
       renderMyInfoProfileCurrent_(data);
-      if(data.profile?.hasOverride===true)setMyInfoProfileStatus_('현재 사용자 이미지가 적용 중입니다. 새 이미지를 선택하면 안전하게 교체할 수 있습니다.','ready');
+      if(data.profile?.hasOverride===true)setMyInfoProfileStatus_('현재 사용자 이미지가 적용 중입니다. 교체하거나 공식 이미지로 복원할 수 있습니다.','ready');
       else setMyInfoProfileStatus_('JPEG · PNG · WebP / 5MB 이하 이미지를 선택해 미리볼 수 있습니다.','ready');
       return data;
     }catch(error){
@@ -1135,7 +1143,9 @@
     const cancel=q('#kinojoMyInfoProfileCancelBtn');
     if(cancel)cancel.disabled=uploading;
     const select=q('#kinojoMyInfoProfileSelectBtn');
-    if(uploading&&select)select.disabled=true;
+    if(select)select.disabled=uploading||select.disabled;
+    const reset=q('#kinojoMyInfoProfileResetBtn');
+    if(reset)reset.disabled=uploading||reset.disabled;
     document.querySelectorAll('#kinojoMyInfoProfileCharacters [data-profile-character-id]').forEach(button=>{button.disabled=uploading;});
     if(!uploading){
       renderMyInfoProfileCharacterButtons_();
@@ -1262,6 +1272,59 @@
       setMyInfoProfileUploading_(false);
     }
   }
+  async function resetMyInfoProfileOfficial_(){
+    if(kinojoMyProfileUiState.uploading)return false;
+    const token=myInfoSessionToken_();
+    const characterId=Number(kinojoMyProfileUiState.selectedCharacterId||0);
+    if(!token||!Number.isInteger(characterId)||characterId<=0){
+      setMyInfoProfileStatus_('복원할 캐릭터를 확인하지 못했습니다.','error');
+      return false;
+    }
+    const client=window.KinojoSupabaseClientCore;
+    if(!client||typeof client.invokeEdgeFunction!=='function'){
+      setMyInfoProfileStatus_('서버 연결을 준비하는 중입니다.','error');
+      return false;
+    }
+    const current=kinojoMyProfileUiState.bootstrapByCharacter[characterId]||await loadMyInfoProfileBootstrap_(characterId,true);
+    if(!current||current.ok!==true)return false;
+    if(current.profile?.hasOverride!==true){
+      renderMyInfoProfileCurrent_(current);
+      setMyInfoProfileStatus_('이미 현재 공식 프로필 이미지가 적용 중입니다.','ready');
+      return true;
+    }
+    if(!window.confirm('사용자 프로필 이미지를 제거하고 현재 공식 이미지로 복원할까요?'))return false;
+    clearMyInfoProfilePreview_();
+    setMyInfoProfileUploading_(true);
+    try{
+      setMyInfoProfileStatus_('현재 프로필 상태를 다시 확인하는 중입니다.','loading');
+      const latest=await loadMyInfoProfileBootstrap_(characterId,true);
+      if(!latest||latest.ok!==true)throw new Error('PROFILE_BOOTSTRAP_FAILED');
+      if(latest.profile?.hasOverride!==true){
+        kinojoMyProfileUiState.bootstrapByCharacter[characterId]=latest;
+        renderMyInfoProfileCurrent_(latest);
+        setMyInfoProfileStatus_('이미 현재 공식 프로필 이미지가 적용 중입니다.','ready');
+        return true;
+      }
+      setMyInfoProfileStatus_('사용자 이미지를 해제하고 공식 이미지로 복원하는 중입니다.','loading');
+      const result=await client.invokeEdgeFunction('kinojo-member-profile',{
+        action:'profile-reset-official',sessionToken:token,characterId
+      });
+      if(!result||result.ok!==true||result.profile?.hasOverride===true||String(result.profile?.effectiveSource||'')!=='OFFICIAL')throw new Error('PROFILE_RESET_INVALID');
+      kinojoMyProfileUiState.bootstrapByCharacter[characterId]=result;
+      renderMyInfoProfileCurrent_(result);
+      if(result.reset?.cleanupRequired===true)setMyInfoProfileStatus_('공식 프로필 이미지로 복원되었습니다. 이전 사용자 이미지 파일 정리는 서버에서 계속 처리합니다.','info');
+      else if(result.reset?.alreadyOfficial===true)setMyInfoProfileStatus_('이미 현재 공식 프로필 이미지가 적용 중입니다.','ready');
+      else setMyInfoProfileStatus_('공식 프로필 이미지로 복원되었습니다.','ready');
+      return true;
+    }catch(error){
+      delete kinojoMyProfileUiState.bootstrapByCharacter[characterId];
+      const latestState=await loadMyInfoProfileBootstrap_(characterId,true).catch(()=>null);
+      if(latestState)renderMyInfoProfileCurrent_(latestState);
+      setMyInfoProfileStatus_('공식 이미지 복원에 실패했습니다. 현재 적용 상태를 다시 확인했습니다.','error');
+      console.warn('KINOJO My Info profile reset failed:',error);
+      return false;
+    }finally{setMyInfoProfileUploading_(false);}
+  }
   function makeMyInfoModal(){
     const modal=document.createElement('section');
     modal.className='kinojo-my-info-modal';
@@ -1309,6 +1372,7 @@
             <div class="kinojo-my-info-profile-actions">
               <input id="kinojoMyInfoProfileFileInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
               <button class="kinojo-my-info-action-btn is-primary" id="kinojoMyInfoProfileSelectBtn" type="button" disabled>이미지 선택</button>
+              <button class="kinojo-my-info-action-btn" id="kinojoMyInfoProfileResetBtn" type="button" hidden>공식 이미지로 복원</button>
               <button class="kinojo-my-info-action-btn is-primary" id="kinojoMyInfoProfileUploadBtn" type="button" hidden>업로드</button>
               <button class="kinojo-my-info-action-btn" id="kinojoMyInfoProfileCancelBtn" type="button" hidden>선택 취소</button>
             </div>
@@ -1590,6 +1654,7 @@
       const characterButton=e.target.closest('[data-profile-character-id]');
       if(characterButton){e.preventDefault();e.stopPropagation();selectMyInfoProfileCharacter_(characterButton.dataset.profileCharacterId);return;}
       if(e.target.closest('#kinojoMyInfoProfileSelectBtn')){e.preventDefault();e.stopPropagation();q('#kinojoMyInfoProfileFileInput')?.click();return;}
+      if(e.target.closest('#kinojoMyInfoProfileResetBtn')){e.preventDefault();e.stopPropagation();resetMyInfoProfileOfficial_().catch(()=>{});return;}
       if(e.target.closest('#kinojoMyInfoProfileUploadBtn')){e.preventDefault();e.stopPropagation();uploadMyInfoProfile_().catch(()=>{});return;}
       if(e.target.closest('#kinojoMyInfoProfileCancelBtn')){e.preventDefault();e.stopPropagation();clearMyInfoProfilePreview_('선택한 이미지를 취소했습니다.');}
     });
