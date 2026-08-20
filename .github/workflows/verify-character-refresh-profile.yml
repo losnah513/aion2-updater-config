@@ -8,6 +8,7 @@ on:
       - 'm/admin/index.html'
       - 'admin/js/admin.js'
       - 'admin/js/admin-members.js'
+      - 'admin/js/admin-member-image-download.js'
       - 'admin/js/admin-characters.js'
       - '.github/workflows/verify-character-refresh-profile.yml'
   push:
@@ -17,6 +18,7 @@ on:
       - 'm/admin/index.html'
       - 'admin/js/admin.js'
       - 'admin/js/admin-members.js'
+      - 'admin/js/admin-member-image-download.js'
       - 'admin/js/admin-characters.js'
       - '.github/workflows/verify-character-refresh-profile.yml'
   workflow_dispatch:
@@ -35,6 +37,7 @@ jobs:
           set -euo pipefail
           node --check admin/js/admin.js
           node --check admin/js/admin-members.js
+          node --check admin/js/admin-member-image-download.js
           node --check admin/js/admin-characters.js
           python3 <<'PY'
           from pathlib import Path
@@ -95,9 +98,24 @@ jobs:
           for forbidden in ['objectPath','signedUrl','signedURL','uploadUrl']:
               if forbidden in members:
                   raise SystemExit(f'admin member image client leaked private storage field {forbidden}')
+          download = Path('admin/js/admin-member-image-download.js').read_text(encoding='utf-8')
+          for token in [
+              'kinojo-member-image-download',
+              "action:'admin-image-download'",
+              'SIGNED_DOWNLOAD_URL_ONLY_NO_OBJECT_PATH',
+              'EXPLICIT_DOWNLOAD_ONLY',
+              'data-admin-image-download',
+              "button.textContent='다운로드'",
+              "url.searchParams.get('download')!==filename",
+          ]:
+              if token not in download:
+                  raise SystemExit(f'admin member image download contract missing {token}')
+          for forbidden in ['objectPath','passKey','passCode']:
+              if forbidden in download:
+                  raise SystemExit(f'admin member image download leaked forbidden field {forbidden}')
           loader = Path('admin/js/admin.js').read_text(encoding='utf-8')
-          if 'v2026082101' not in loader or "name+'?cache=2026082101'" not in loader:
-              raise SystemExit('admin loader cache contract missing')
+          if 'v2026082102' not in loader or "name+'?cache=2026082102'" not in loader or "'admin-member-image-download.js'" not in loader:
+              raise SystemExit('admin loader/download module contract missing')
           print('Character refresh profile source contracts: PASS')
           PY
 
@@ -115,7 +133,7 @@ jobs:
           set -euo pipefail
           tmp_dir="$(mktemp -d)"
           trap 'rm -rf "$tmp_dir"' EXIT
-          files=(admin/index.html m/admin/index.html admin/js/admin.js admin/js/admin-members.js admin/js/admin-characters.js)
+          files=(admin/index.html m/admin/index.html admin/js/admin.js admin/js/admin-members.js admin/js/admin-member-image-download.js admin/js/admin-characters.js)
           verify_key="${GITHUB_SHA:0:12}-$(date -u +%s)"
           for attempt in $(seq 1 15); do
             mismatch=0
