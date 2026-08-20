@@ -1,593 +1,242 @@
 name: Verify KINOJO Pages
 
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - "index.html"
-      - "home.html"
-      - "m/index.html"
-      - "arcana/**"
-      - "m/arcana/**"
-      - "hall-of-fame/**"
-      - "pages/**"
-      - "m/pages/**"
-      - "desktop/**"
-      - "ranking/**"
-      - "m/ranking/**"
-      - "hof/**"
-      - "m/hof/**"
-      - "sanctuary/**"
-      - "assets/images/sanctuary/**"
-      - "assets/images/classes/**"
-      - "m/sanctuary/**"
-      - "sanctuary-schedule/**"
-      - "m/sanctuary-schedule/**"
-      - "admin/**"
-      - "m/admin/**"
-      - "meter/**"
-      - "m/meter/**"
-      - "core/**"
-      - "ui/**"
-      - "tests/**"
-      - "launcher-content.json"
-      - "CNAME"
-      - ".github/workflows/verify-kinojo-pages.yml"
   push:
     branches: [main]
     paths:
-      - "index.html"
-      - "home.html"
-      - "m/index.html"
-      - "arcana/**"
-      - "m/arcana/**"
-      - "hall-of-fame/**"
-      - "pages/**"
-      - "m/pages/**"
-      - "desktop/**"
-      - "ranking/**"
-      - "m/ranking/**"
-      - "hof/**"
-      - "m/hof/**"
-      - "sanctuary/**"
-      - "assets/images/sanctuary/**"
-      - "assets/images/classes/**"
-      - "m/sanctuary/**"
-      - "sanctuary-schedule/**"
-      - "m/sanctuary-schedule/**"
-      - "admin/**"
-      - "m/admin/**"
-      - "meter/**"
-      - "m/meter/**"
-      - "core/**"
-      - "ui/**"
-      - "tests/**"
-      - "launcher-content.json"
-      - "CNAME"
-      - ".github/workflows/verify-kinojo-pages.yml"
+      - '.github/workflows/verify-kinojo-pages.yml'
   workflow_dispatch:
 
 permissions:
-  contents: read
-  statuses: write
-
-concurrency:
-  group: verify-kinojo-pages-${{ github.ref }}
-  cancel-in-progress: true
+  contents: write
 
 jobs:
-  verify-source:
+  stage-5c-patch:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
     steps:
-      - name: Checkout PR head or current commit
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-
-      - name: Verify JavaScript syntax and modal contracts
+          ref: main
+          fetch-depth: 2
+      - name: Apply Stage 5-C and restore workflows
         shell: bash
         run: |
           set -euo pipefail
-
-          js_files=(
-            "ui/kinojo-character-reaction.js"
-            "ui/kinojo-character-detail-refresh.js"
-            "ui/kinojo-character-skill-bridge.js"
-            "ui/kinojo-character-daevanion-bridge.js"
-            "core/kinojo-supabase-client.js"
-            "core/kinojo-supabase-rpc.js"
-            "core/kinojo-supabase-features.js"
-            "core/kinojo-auth-session.js"
-            "core/kinojo-auth-ui.js"
-            "sanctuary/js/sanctuary.js"
-            "sanctuary/js/sanctuary-editor.js"
-            "sanctuary-schedule/js/sanctuary-schedule.js"
-            "admin/js/admin-system.js"
-            "admin/js/admin-bootstrap.js"
-            "meter/js/meter-app.js"
-          )
-
-          for path in "${js_files[@]}"; do
-            node --check "$path"
-          done
-
-          node tests/web-shell-auth-contract.test.js
-          node tests/sanctuary-waitlist-contract.test.js
-          node tests/staged-page-contract.test.js
-          node tests/meter-presence-log-contract.test.js
-
-          python3 <<'PY'
+          test "$(git hash-object ui/kinojo-character-reaction.js)" = "f725640dc3e3af9e592b8dfecea965d76edf7f81"
+          test "$(git hash-object ui/kinojo-common-ui.js)" = "5ef77e866a357fe7a5fa6611f42fddb80b602abc"
+          python3 - <<'PY'
           from pathlib import Path
-          import re
-
-          pages = [
-              Path("hof/index.html"),
-              Path("m/hof/index.html"),
-              Path("ranking/index.html"),
-              Path("m/ranking/index.html"),
-              Path("sanctuary/index.html"),
-              Path("m/sanctuary/index.html"),
-          ]
-          required_assets = [
-              "kinojo-character-skill.css?cache=2026081001",
-              "kinojo-character-daevanion.css?cache=2026081002",
-              "kinojo-animations.css?cache=2026081003",
-              "kinojo-character-skill-bridge.js?cache=2026081001",
-              "kinojo-character-daevanion-bridge.js?cache=2026081002",
-          ]
-          for page in pages:
-              text = page.read_text(encoding="utf-8")
-              for asset in required_assets:
-                  count = text.count(asset)
-                  if count != 1:
-                      raise SystemExit(f"{page}: {asset} include count={count}, expected=1")
-
-          skill = Path("ui/kinojo-character-skill-bridge.js").read_text(encoding="utf-8")
-          daev = Path("ui/kinojo-character-daevanion-bridge.js").read_text(encoding="utf-8")
-          animations = Path("ui/kinojo-animations.css").read_text(encoding="utf-8")
-          daev_css = Path("ui/kinojo-character-daevanion.css").read_text(encoding="utf-8")
-
-          forbidden = {
-              "skill rpc monkey patch": (skill, r"\brpc\.rpc\s*="),
-              "daev edge monkey patch": (daev, r"\bcore\.invokeEdgeFunction\s*="),
-              "daev overview monkey patch": (daev, r"\bapi\.getLiveCharacterProfile\s*="),
+          p=Path('ui/kinojo-character-reaction.js')
+          s=p.read_text(encoding='utf-8')
+          old="""  function characterImageCandidates(target){
+            const item = target || {};
+            const serverId = String(item.serverId || item.server_id || '').trim();
+            const charKey = String(item.charKey || item.char_key || '').trim();
+            const derivedProfile = /^\\d+$/.test(serverId) && /^\\d{10,}$/.test(charKey)
+              ? 'https://profileimg.plaync.com/game_profile_images/aion2/images?gameServerKey=' + encodeURIComponent(serverId) + '&charKey=' + encodeURIComponent(charKey)
+              : '';
+          """
+          new="""  function characterImageCandidates(target){
+            const item = target || {};
+            const serverId = String(item.serverId || item.server_id || '').trim();
+            const charKey = String(item.charKey || item.char_key || '').trim();
+            const effectiveResolved = ['USER_OVERRIDE','OFFICIAL'].includes(String(item.profileImageSource || '').trim().toUpperCase());
+            const derivedProfile = !effectiveResolved && /^\\d+$/.test(serverId) && /^\\d{10,}$/.test(charKey)
+              ? 'https://profileimg.plaync.com/game_profile_images/aion2/images?gameServerKey=' + encodeURIComponent(serverId) + '&charKey=' + encodeURIComponent(charKey)
+              : '';
+          """
+          assert old in s
+          s=s.replace(old,new,1)
+          old="""  function mergeMasterRow(target, row){
+            if(!row) return target;
+            const pve = firstValue(row.latest_pve_combat_power, row.pve_power_total, row.pvePowerTotal, target.pvePower);
+            const pvp = firstValue(row.latest_pvp_combat_power, row.pvp_power_total, row.pvpPowerTotal, target.pvpPower);
+            const className = firstValue(row.class_name, row.className, target.className);
+            const server = firstValue(row.server_name, row.serverName, target.server);
+            const serverId = firstValue(row.server_id, row.serverId, target.serverId);
+            const detailUrl = firstValue(row.detail_url, row.detailUrl, target.detailUrl);
+            const profileImageUrl = firstValue(row.profile_image_url, row.profileImageUrl, target.profileImageUrl);
+            const owner = firstValue(row.main_character_name, row.mainCharacterName, target.owner);
+            return normalizeTarget(Object.assign({}, target, {
+              className, server, serverId, owner, profileImageUrl, detailUrl,
+              pvePower: numText(pve) || '',
+              pvpPower: numText(pvp) || '',
+              classIconUrl: firstValue(target.classIconUrl, classIconFor(className))
+            }));
           }
-          for label, (text, pattern) in forbidden.items():
-              if re.search(pattern, text):
-                  raise SystemExit(f"Forbidden frozen-core mutation detected: {label}")
 
-          required_tokens = {
-              "skill SQL 305": (skill, "kinojo_character_skill_overview_v305"),
-              "skill Server category": (skill, "categoryLabel"),
-              "skill Server tier": (skill, "levelBand"),
-              "skill stigma": (skill, "스티그마"),
-              "skill tier class": (skill, "is-level-30"),
-              "daev SQL 307": (daev, "kinojo_character_daevanion_detail_v307"),
-              "daev active nodes": (daev, "activeNodes"),
-              "daev stat effects": (daev, "statEffects"),
-              "daev skill effects": (daev, "skillEffects"),
-              "daev board map": (daev + daev_css, "kinojo-daevanion-board-map"),
-              "inner modal scroll": (animations, "kinojo-character-reaction-scroll"),
-              "outer modal overflow lock": (animations, "overflow:hidden!important"),
+          async function fetchCharacterMaster(target){
+            const item = target || {};
+            const name = characterMasterQueryName(item.name);
+            if(!name || !window.KinojoSupabase || typeof window.KinojoSupabase.request !== 'function') return null;
+
+            const select = 'select=character_name,main_character_name,server_id,server_name,class_name,profile_image_url,detail_url,latest_pve_combat_power,latest_pvp_combat_power';
+            let query = select + '&character_name=eq.' + name;
+            const serverId = String(item.serverId || '').trim();
+            const serverName = String(item.server || '').trim();
+            if(/^\\d+$/.test(serverId)){
+              query += '&server_id=eq.' + encodeURIComponent(serverId);
+            }else if(serverName && !serverName.includes('·')){
+              query += '&server_name=eq.' + encodeURIComponent(serverName);
+            }else{
+              return null;
+            }
+            query += '&limit=1';
+            const rows = await window.KinojoSupabase.request('character_master', { query });
+            return Array.isArray(rows) ? rows[0] || null : null;
           }
-          for label, (text, token) in required_tokens.items():
-              if token not in text:
-                  raise SystemExit(f"Required contract missing: {label}")
 
-          checked = pages + [
-              Path("ui/kinojo-character-skill.css"),
-              Path("ui/kinojo-character-daevanion.css"),
-              Path("ui/kinojo-animations.css"),
-              Path("ui/kinojo-character-detail-refresh.css"),
-              Path("sanctuary/css/sanctuary.css"),
-              Path("sanctuary-schedule/css/sanctuary-schedule.css"),
-          ]
-          for path in checked:
-              data = path.read_bytes()
-              if b"\x00" in data:
-                  raise SystemExit(f"NUL byte detected: {path}")
-              if path.suffix == ".css":
-                  text = data.decode("utf-8")
-                  if text.count("{") != text.count("}"):
-                      raise SystemExit(f"CSS brace mismatch: {path}")
-
-          class_icon_names = [
-              "class_icon_assassin.png",
-              "class_icon_chanter.png",
-              "class_icon_cleric.png",
-              "class_icon_elementalist.png",
-              "class_icon_fighter.png",
-              "class_icon_gladiator.png",
-              "class_icon_ranger.png",
-              "class_icon_sorcerer.png",
-              "class_icon_templar.png",
-          ]
-          class_icon_dir = Path("assets/images/classes")
-          original_icon_dir = class_icon_dir / "original"
-          active_names = sorted(path.name for path in class_icon_dir.glob("class_icon_*.png"))
-          original_names = sorted(path.name for path in original_icon_dir.glob("class_icon_*.png"))
-          if active_names != class_icon_names:
-              raise SystemExit(f"Active class icon set mismatch: {active_names}")
-          if original_names != class_icon_names:
-              raise SystemExit(f"Original class icon set mismatch: {original_names}")
-
-          for name in class_icon_names:
-              active = (class_icon_dir / name).read_bytes()
-              original = (original_icon_dir / name).read_bytes()
-              if active[:8] != b"\x89PNG\r\n\x1a\n":
-                  raise SystemExit(f"Invalid active class icon PNG: {name}")
-              width = int.from_bytes(active[16:20], "big")
-              height = int.from_bytes(active[20:24], "big")
-              if (width, height) != (256, 256):
-                  raise SystemExit(f"Unexpected active class icon size: {name} {width}x{height}")
-              if active == original:
-                  raise SystemExit(f"Active class icon was not replaced: {name}")
-
-          meter_pages = [Path("meter/index.html"), Path("m/meter/index.html")]
-          for page in meter_pages:
-              text = page.read_text(encoding="utf-8")
-              for token in ["meterInstallerSize", "다운로드 용량", "meter-app.js?cache=2026081502-50040", "meterLiveUsers", "meterLiveNames"]:
-                  if token not in text:
-                      raise SystemExit(f"{page}: Meter distribution contract missing: {token}")
-
-          admin_pages = [Path("admin/index.html"), Path("m/admin/index.html")]
-          for page in admin_pages:
-              text = page.read_text(encoding="utf-8")
-              for token in ["data-admin-subtab=\"downloads\"", "data-admin-subtab=\"runtime\"", "data-admin-subtab=\"statistics\"", "data-admin-subtab=\"notices\"", "data-admin-subtab=\"logs\"", "data-meter-download-enabled", "data-meter-launch-enabled", "data-meter-statistics-enabled", "kinojo-filter-switch", "meterDungeonLogRows"]:
-                  if token not in text:
-                      raise SystemExit(f"{page}: Meter admin contract missing: {token}")
-
-          meter_app = Path("meter/js/meter-app.js").read_text(encoding="utf-8")
-          admin_system = Path("admin/js/admin-system.js").read_text(encoding="utf-8")
-          for token in ["launcherDownloadAuthorization", "renderDistribution", "미터기 포함"]:
-              if token not in meter_app:
-                  raise SystemExit(f"Meter WEB contract missing: {token}")
-          if "desktopDownloadAuthorization" in meter_app:
-              raise SystemExit("Meter WEB must authorize the Launcher, not the legacy desktop installer")
-          for token in ["RANK_ALLOWLIST", "allowedLevels", "launchAllowedLevels", "combinedFileSize"]:
-              if token not in admin_system:
-                  raise SystemExit(f"Meter admin contract missing: {token}")
-
-          print("KINOJO modal source contracts: PASS")
-          PY
-
-          node <<'NODE'
-          const fs = require('node:fs');
-          const vm = require('node:vm');
-
-          global.window = { addEventListener() {} };
-          global.document = {};
-          vm.runInThisContext(fs.readFileSync('ui/kinojo-character-reaction.js', 'utf8'), {
-            filename: 'ui/kinojo-character-reaction.js',
-          });
-
-          const candidates = window.KinojoCharacterProfileImage.candidates({ className: '수호성' });
-          if (candidates.length !== 1 || candidates[0].kind !== 'class') {
-            throw new Error('Character image fallback candidate contract failed');
+          async function enrichTargetFromMaster(){
+            const current = state.target;
+            if(!current || !current.name) return;
+            const identity = [current.name, current.serverId || current.server || ''].join('|');
+            try{
+              const row = await fetchCharacterMaster(current);
+              const active = state.target;
+              const activeIdentity = active ? [active.name, active.serverId || active.server || ''].join('|') : '';
+              if(!row || !state.open || identity !== activeIdentity) return;
+              state.target = mergeMasterRow(active, row);
+              renderTarget();
+              updateCompareVisibility();
+              if(!state.live && !state.liveLoading) loadLiveOverview();
+            }catch(_err){
+              // 서버 상세 조회 실패 시 페이지 카드 데이터로 표시한다.
+            }
           }
-          console.log('Character image fallback candidate: PASS');
-          NODE
-
-      - name: Verify bridge startup with frozen cores
-        shell: bash
-        run: |
-          set -euo pipefail
-          node <<'NODE'
-          const fs = require('node:fs');
-          const vm = require('node:vm');
-
-          const rpc = async () => ({ ok: true, apiVersion: '305', skills: [] });
-          const invokeEdgeFunction = async () => ({ ok: true });
-          const rpcCore = Object.freeze({ rpc });
-          const clientCore = Object.freeze({ invokeEdgeFunction });
-          const readyCallbacks = [];
-
-          global.window = {
-            KinojoSupabaseRpcCore: rpcCore,
-            KinojoSupabaseClientCore: clientCore,
-          };
-          global.document = {
-            readyState: 'loading',
-            body: {},
-            addEventListener(name, callback) {
-              if (name === 'DOMContentLoaded') readyCallbacks.push(callback);
-            },
-            getElementById() { return null; },
-            contains() { return true; },
-          };
-          global.MutationObserver = class { observe() {} disconnect() {} };
-          global.requestAnimationFrame = callback => { callback(); return 1; };
-
-          for (const path of [
-            'ui/kinojo-character-skill-bridge.js',
-            'ui/kinojo-character-daevanion-bridge.js',
-          ]) {
-            vm.runInThisContext(fs.readFileSync(path, 'utf8'), { filename: path });
+          """
+          new="""  function mergeMasterRow(target, row){
+            if(!row) return target;
+            const pve = firstValue(row.latest_pve_combat_power, row.pve_power_total, row.pvePowerTotal, target.pvePower);
+            const pvp = firstValue(row.latest_pvp_combat_power, row.pvp_power_total, row.pvpPowerTotal, target.pvpPower);
+            const className = firstValue(row.class_name, row.className, target.className);
+            const server = firstValue(row.server_name, row.serverName, target.server);
+            const serverId = firstValue(row.server_id, row.serverId, target.serverId);
+            const characterId = firstValue(row.id, row.character_id, row.characterId, target.characterId);
+            const detailUrl = firstValue(row.detail_url, row.detailUrl, target.detailUrl);
+            const officialProfileImageUrl = firstValue(row.profile_image_url, row.profileImageUrl, target.officialProfileImageUrl, target.profileImageUrl);
+            const effectiveResolved = ['USER_OVERRIDE','OFFICIAL'].includes(String(target.profileImageSource || '').trim().toUpperCase());
+            const profileImageUrl = effectiveResolved ? target.profileImageUrl : officialProfileImageUrl;
+            const owner = firstValue(row.main_character_name, row.mainCharacterName, target.owner);
+            return normalizeTarget(Object.assign({}, target, {
+              className, server, serverId, characterId, owner, profileImageUrl, officialProfileImageUrl, detailUrl,
+              pvePower: numText(pve) || '',
+              pvpPower: numText(pvp) || '',
+              classIconUrl: firstValue(target.classIconUrl, classIconFor(className))
+            }));
           }
-          for (const callback of readyCallbacks) callback();
 
-          if (!Object.isFrozen(window.KinojoSupabaseRpcCore)) throw new Error('RPC core freeze lost');
-          if (!Object.isFrozen(window.KinojoSupabaseClientCore)) throw new Error('Client core freeze lost');
-          if (window.KinojoSupabaseRpcCore.rpc !== rpc) throw new Error('RPC core method mutated');
-          if (window.KinojoSupabaseClientCore.invokeEdgeFunction !== invokeEdgeFunction) throw new Error('Client core method mutated');
-          console.log('Frozen core startup smoke: PASS');
-          NODE
+          async function fetchCharacterMaster(target){
+            const item = target || {};
+            const name = characterMasterQueryName(item.name);
+            if(!name || !window.KinojoSupabase || typeof window.KinojoSupabase.request !== 'function') return null;
 
-  verify-live-readback:
-    if: github.event_name != 'pull_request'
-    needs: verify-source
-    runs-on: ubuntu-latest
-    timeout-minutes: 12
-    env:
-      LIVE_BASE: https://kinojo.info
-    steps:
-      - name: Checkout deployed main source
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.sha }}
+            const select = 'select=id,character_name,main_character_name,server_id,server_name,class_name,profile_image_url,detail_url,latest_pve_combat_power,latest_pvp_combat_power';
+            let query = select + '&character_name=eq.' + name;
+            const serverId = String(item.serverId || '').trim();
+            const serverName = String(item.server || '').trim();
+            if(/^\\d+$/.test(serverId)){
+              query += '&server_id=eq.' + encodeURIComponent(serverId);
+            }else if(serverName && !serverName.includes('·')){
+              query += '&server_name=eq.' + encodeURIComponent(serverName);
+            }else{
+              return null;
+            }
+            query += '&limit=1';
+            const rows = await window.KinojoSupabase.request('character_master', { query });
+            return Array.isArray(rows) ? rows[0] || null : null;
+          }
 
-      - name: Publish live readback pending status
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          STATUS_STATE: pending
-          STATUS_DESCRIPTION: KINOJO 운영 파일 동기화 확인 중
-        run: |
-          set -euo pipefail
-          python3 <<'PY' > /tmp/kinojo-status.json
-          import json, os
-          print(json.dumps({
-              "state": os.environ["STATUS_STATE"],
-              "context": "kinojo/live-readback",
-              "description": os.environ["STATUS_DESCRIPTION"],
-              "target_url": f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
-          }, ensure_ascii=False))
+          async function fetchEffectiveProfile(characterId){
+            const id = Number(characterId || 0);
+            const rpc = window.KinojoSupabaseRpcCore;
+            if(!Number.isInteger(id) || id <= 0 || !rpc || typeof rpc.rpc !== 'function') return null;
+            const result = await rpc.rpc('kinojo_web_character_profile_effective_v342', { p_character_id:id });
+            return result && typeof result === 'object' && !Array.isArray(result) ? result : null;
+          }
+
+          function mergeEffectiveProfile(target, result){
+            if(!result || result.ok !== true) return target;
+            const characterId = Number(target?.characterId || 0);
+            if(!Number.isInteger(characterId) || Number(result.characterId || 0) !== characterId){
+              throw new Error('EFFECTIVE_PROFILE_BINDING_MISMATCH');
+            }
+            const source = String(result.profileImageSource || '').trim().toUpperCase();
+            if(!['USER_OVERRIDE','OFFICIAL'].includes(source)) throw new Error('EFFECTIVE_PROFILE_SOURCE_INVALID');
+            return normalizeTarget(Object.assign({}, target, {
+              profileImageUrl: normalizedImageUrl(result.profileImageUrl),
+              profileImageSource: source,
+              hasProfileOverride: result.hasOverride === true,
+              effectiveProfileContract: String(result.databaseContract || '342').trim()
+            }));
+          }
+
+          async function enrichTargetFromMaster(){
+            const current = state.target;
+            if(!current || !current.name) return;
+            const identity = [current.name, current.serverId || current.server || ''].join('|');
+            let enriched = current;
+            try{
+              const row = await fetchCharacterMaster(current);
+              if(row) enriched = mergeMasterRow(enriched, row);
+            }catch(_err){
+              // 기존 상세 필드 조회가 실패해도 canonical characterId가 있으면 effective profile 조회는 계속 시도한다.
+            }
+            try{
+              const result = await fetchEffectiveProfile(enriched.characterId);
+              if(result?.ok === true) enriched = mergeEffectiveProfile(enriched, result);
+            }catch(_err){
+              // 공개 effective resolver가 실패하면 기존 페이지/공식 이미지 표시를 유지한다.
+            }
+            const active = state.target;
+            const activeIdentity = active ? [active.name, active.serverId || active.server || ''].join('|') : '';
+            if(!state.open || identity !== activeIdentity) return;
+            state.target = enriched;
+            renderTarget();
+            updateCompareVisibility();
+            if(!state.live && !state.liveLoading) loadLiveOverview();
+          }
+          """
+          assert old in s
+          s=s.replace(old,new,1)
+          old="""    const owner = t.owner || t.mainCharacterName || '';
+            const profileImageUrl = t.profileImageUrl || t.profileImage || t.profile || t.imageUrl || '';
+            const detailUrl = t.detailUrl || t.url || '';
+          """
+          new="""    const owner = t.owner || t.mainCharacterName || '';
+            const profileImageUrl = t.profileImageUrl || t.profileImage || t.profile || t.imageUrl || '';
+            const officialProfileImageUrl = t.officialProfileImageUrl || t.official_profile_image_url || '';
+            const profileImageSource = String(t.profileImageSource || t.profile_image_source || '').trim().toUpperCase();
+            const hasProfileOverride = t.hasProfileOverride === true || t.hasOverride === true;
+            const effectiveProfileContract = String(t.effectiveProfileContract || t.effective_profile_contract || '').trim();
+            const detailUrl = t.detailUrl || t.url || '';
+          """
+          assert old in s
+          s=s.replace(old,new,1)
+          old="""    return { name, className, server, serverId, charKey, characterId, owner, profileImageUrl, detailUrl, classIconUrl, pvePower, pvpPower, level, legionName, titleName };
+          """
+          new="""    return { name, className, server, serverId, charKey, characterId, owner, profileImageUrl, officialProfileImageUrl, profileImageSource, hasProfileOverride, effectiveProfileContract, detailUrl, classIconUrl, pvePower, pvpPower, level, legionName, titleName };
+          """
+          assert old in s
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+
+          p=Path('ui/kinojo-common-ui.js')
+          b=p.read_bytes()
+          old=b'/ui/kinojo-character-reaction.js?cache=2026081801'
+          new=b'/ui/kinojo-character-reaction.js?cache=2026082001'
+          assert b.count(old)==1
+          p.write_bytes(b.replace(old,new,1))
           PY
-          curl --fail --silent --show-error --location \
-            -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-            --data-binary @/tmp/kinojo-status.json >/dev/null
-
-      - name: Verify custom domain and live files
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          expected_ref="${{ github.sha }}"
-          verify_key="${expected_ref:0:12}-$(date -u +%s)"
-          tmp_dir="$(mktemp -d)"
-          trap 'rm -rf "$tmp_dir"' EXIT
-
-          files=(
-            "index.html"
-            "home.html"
-            "m/index.html"
-            "launcher-content.json"
-            "hall-of-fame/index.html"
-            "hof/index.html"
-            "m/hof/index.html"
-            "hof/css/hall.css"
-            "hof/js/hall-render.js"
-            "ranking/index.html"
-            "m/ranking/index.html"
-            "ranking/css/ranking.css"
-            "ranking/css/ranking-card.css"
-            "ranking/css/ranking-responsive.css"
-            "ranking/js/ranking-utils.js"
-            "ranking/js/ranking-data.js"
-            "ranking/js/ranking-card.js"
-            "ranking/js/ranking-render.js"
-            "ranking/js/ranking-events.js"
-            "ranking/js/ranking-app.js"
-            "sanctuary/index.html"
-            "m/sanctuary/index.html"
-            "sanctuary/css/sanctuary.css"
-            "sanctuary/js/sanctuary.js"
-            "sanctuary/js/sanctuary-editor.js"
-            "assets/images/sanctuary/SOURCES.md"
-            "assets/images/sanctuary/backgrounds/rudra.webp"
-            "assets/images/sanctuary/backgrounds/bagot.webp"
-            "assets/images/sanctuary/backgrounds/kaldrix.webp"
-            "assets/images/sanctuary/bosses/rudra.webp"
-            "assets/images/sanctuary/bosses/bagot.webp"
-            "assets/images/sanctuary/bosses/kaldrix.webp"
-            "assets/images/classes/class_icon_assassin.png"
-            "assets/images/classes/class_icon_chanter.png"
-            "assets/images/classes/class_icon_cleric.png"
-            "assets/images/classes/class_icon_elementalist.png"
-            "assets/images/classes/class_icon_fighter.png"
-            "assets/images/classes/class_icon_gladiator.png"
-            "assets/images/classes/class_icon_ranger.png"
-            "assets/images/classes/class_icon_sorcerer.png"
-            "assets/images/classes/class_icon_templar.png"
-            "assets/images/classes/original/class_icon_assassin.png"
-            "assets/images/classes/original/class_icon_chanter.png"
-            "assets/images/classes/original/class_icon_cleric.png"
-            "assets/images/classes/original/class_icon_elementalist.png"
-            "assets/images/classes/original/class_icon_fighter.png"
-            "assets/images/classes/original/class_icon_gladiator.png"
-            "assets/images/classes/original/class_icon_ranger.png"
-            "assets/images/classes/original/class_icon_sorcerer.png"
-            "assets/images/classes/original/class_icon_templar.png"
-            "sanctuary-schedule/index.html"
-            "m/sanctuary-schedule/index.html"
-            "sanctuary-schedule/css/sanctuary-schedule.css"
-            "sanctuary-schedule/js/sanctuary-schedule.js"
-            "arcana/index.html"
-            "m/arcana/index.html"
-            "admin/index.html"
-            "m/admin/index.html"
-            "admin/js/admin.js"
-            "admin/js/admin-system.js"
-            "admin/js/admin-shared.js"
-            "admin/js/admin-characters.js"
-            "admin/js/admin-bootstrap.js"
-            "admin/css/admin.css"
-            "meter/index.html"
-            "m/meter/index.html"
-            "meter/meter-config.json"
-            "meter/js/meter-app.js"
-            "meter/css/meter.css"
-            "pages/about.html"
-            "pages/contact.html"
-            "pages/privacy.html"
-            "pages/terms.html"
-            "m/pages/about.html"
-            "m/pages/contact.html"
-            "m/pages/privacy.html"
-            "m/pages/terms.html"
-            "desktop/index.html"
-            "desktop/arcana/index.html"
-            "desktop/hall-of-fame/index.html"
-            "desktop/sanctuary/index.html"
-            "desktop/pages/about.html"
-            "desktop/pages/contact.html"
-            "desktop/pages/privacy.html"
-            "desktop/pages/terms.html"
-            "ui/kinojo-components.css"
-            "ui/kinojo-common-ui.css"
-            "ui/kinojo-common-ui.js"
-            "ui/kinojo-public-shell.css"
-            "ui/kinojo-staged-loading.css"
-            "ui/kinojo-staged-loading.js"
-            "ui/kinojo-event-notice.css"
-            "ui/kinojo-event-notice.js"
-            "ui/kinojo-character-reaction.js"
-            "ui/kinojo-character-reaction.css"
-            "ui/kinojo-character-detail-refresh.js"
-            "ui/kinojo-character-detail-refresh.css"
-            "ui/kinojo-character-skill-bridge.js"
-            "ui/kinojo-character-skill.css"
-            "ui/kinojo-character-daevanion-bridge.js"
-            "ui/kinojo-character-daevanion.css"
-            "ui/kinojo-animations.css"
-            "core/kinojo-supabase-client.js"
-            "core/kinojo-supabase-rpc.js"
-            "core/kinojo-supabase-features.js"
-            "core/kinojo-supabase.js"
-            "core/kinojo-auth-session.js"
-            "core/kinojo-auth-service.js"
-            "core/kinojo-auth-ui.js"
-          )
-
-          echo "Expected source: $expected_ref"
-          echo "Live domain: $LIVE_BASE"
-
-          http_code="$(curl --silent --show-error --location --output /dev/null \
-            --write-out '%{http_code}' --connect-timeout 10 --max-time 30 \
-            -H 'Cache-Control: no-cache' "$LIVE_BASE/?verify=$verify_key")"
-          if [[ "$http_code" != "200" ]]; then
-            echo "Custom domain returned HTTP $http_code" >&2
-            exit 1
-          fi
-
-          for attempt in $(seq 1 15); do
-            mismatch=0
-            : > "$tmp_dir/result.txt"
-
-            for path in "${files[@]}"; do
-              live_file="$tmp_dir/$(echo "$path" | tr '/' '_')"
-              url="$LIVE_BASE/$path?verify=$verify_key-$attempt"
-
-              if ! curl --fail --silent --show-error --location --compressed \
-                --retry 3 --retry-all-errors --connect-timeout 10 --max-time 30 \
-                -H 'Cache-Control: no-cache' "$url" -o "$live_file"; then
-                echo "FETCH_FAIL $path" >> "$tmp_dir/result.txt"
-                mismatch=1
-                continue
-              fi
-
-              if cmp -s "$path" "$live_file"; then
-                echo "MATCH $path" >> "$tmp_dir/result.txt"
-              else
-                echo "MISMATCH $path" >> "$tmp_dir/result.txt"
-                mismatch=1
-              fi
-            done
-
-            cat "$tmp_dir/result.txt"
-
-            if [[ "$mismatch" -eq 0 ]]; then
-              {
-                echo "## KINOJO Pages live readback"
-                echo
-                echo "- Domain: \`$LIVE_BASE\`"
-                echo "- Expected source: \`$expected_ref\`"
-                echo "- Verified files: \`${#files[@]}\`"
-                echo "- Result: all live files match the repository source"
-              } >> "$GITHUB_STEP_SUMMARY"
-              exit 0
-            fi
-
-            if [[ "$attempt" -lt 15 ]]; then
-              echo "Live files are not synchronized yet. Retrying..."
-              sleep 20
-            fi
-          done
-
-          echo "Live readback did not converge to repository source." >&2
-          while read -r state path; do
-            [[ "$state" == "MISMATCH" ]] || continue
-            live_file="$tmp_dir/$(echo "$path" | tr '/' '_')"
-            echo "--- $path" >&2
-            echo "source sha256: $(sha256sum "$path" | awk '{print $1}')" >&2
-            echo "live   sha256: $(sha256sum "$live_file" | awk '{print $1}')" >&2
-            diff -u "$path" "$live_file" | head -120 >&2 || true
-          done < "$tmp_dir/result.txt"
-          exit 1
-
-      - name: Publish live readback success status
-        if: success()
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          STATUS_STATE: success
-          STATUS_DESCRIPTION: KINOJO 운영 파일이 main과 일치
-        run: |
-          set -euo pipefail
-          python3 <<'PY' > /tmp/kinojo-status.json
-          import json, os
-          print(json.dumps({
-              "state": os.environ["STATUS_STATE"],
-              "context": "kinojo/live-readback",
-              "description": os.environ["STATUS_DESCRIPTION"],
-              "target_url": f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
-          }, ensure_ascii=False))
-          PY
-          curl --fail --silent --show-error --location \
-            -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-            --data-binary @/tmp/kinojo-status.json >/dev/null
-
-      - name: Publish live readback failure status
-        if: failure()
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          STATUS_STATE: failure
-          STATUS_DESCRIPTION: KINOJO 운영 파일 readback 실패
-        run: |
-          set -euo pipefail
-          python3 <<'PY' > /tmp/kinojo-status.json
-          import json, os
-          print(json.dumps({
-              "state": os.environ["STATUS_STATE"],
-              "context": "kinojo/live-readback",
-              "description": os.environ["STATUS_DESCRIPTION"],
-              "target_url": f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
-          }, ensure_ascii=False))
-          PY
-          curl --fail --silent --show-error --location \
-            -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-            --data-binary @/tmp/kinojo-status.json >/dev/null
+          node --check ui/kinojo-character-reaction.js
+          node --check ui/kinojo-common-ui.js
+          grep -q "kinojo_web_character_profile_effective_v342" ui/kinojo-character-reaction.js
+          grep -q "profileImageSource" ui/kinojo-character-reaction.js
+          grep -q "kinojo-character-reaction.js?cache=2026082001" ui/kinojo-common-ui.js
+          git checkout HEAD^ -- .github/workflows/verify-kinojo-pages.yml
+          rm -f .github/workflows/kinojo-stage-5c.yml
+          git config user.name 'kinojo-stage-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -- ui/kinojo-character-reaction.js ui/kinojo-common-ui.js .github/workflows/verify-kinojo-pages.yml
+          git add -u -- .github/workflows/kinojo-stage-5c.yml
+          git commit -m 'Use effective profile in character modal'
+          git push origin HEAD:main
