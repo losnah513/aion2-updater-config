@@ -7,6 +7,7 @@ on:
       - 'admin/index.html'
       - 'm/admin/index.html'
       - 'admin/js/admin.js'
+      - 'admin/js/admin-members.js'
       - 'admin/js/admin-characters.js'
       - '.github/workflows/verify-character-refresh-profile.yml'
   push:
@@ -15,6 +16,7 @@ on:
       - 'admin/index.html'
       - 'm/admin/index.html'
       - 'admin/js/admin.js'
+      - 'admin/js/admin-members.js'
       - 'admin/js/admin-characters.js'
       - '.github/workflows/verify-character-refresh-profile.yml'
   workflow_dispatch:
@@ -32,6 +34,7 @@ jobs:
         run: |
           set -euo pipefail
           node --check admin/js/admin.js
+          node --check admin/js/admin-members.js
           node --check admin/js/admin-characters.js
           python3 <<'PY'
           from pathlib import Path
@@ -66,8 +69,18 @@ jobs:
           ]:
               if token not in source:
                   raise SystemExit(f'profile contract missing {token}')
+          members = Path('admin/js/admin-members.js').read_text(encoding='utf-8')
+          for token in [
+              'function ensureMemberImageModal()',
+              'function openMemberImageModal(target)',
+              'data-member-image-modal-close',
+              'data-member-image-view',
+              '현재 단계에서는 목록 조회나 이미지 다운로드를 실행하지 않습니다.',
+          ]:
+              if token not in members:
+                  raise SystemExit(f'admin member image modal shell missing {token}')
           loader = Path('admin/js/admin.js').read_text(encoding='utf-8')
-          if 'v2026082002' not in loader or "name+'?cache=2026082002'" not in loader:
+          if 'v2026082003' not in loader or "name+'?cache=2026082003'" not in loader:
               raise SystemExit('admin loader cache contract missing')
           print('Character refresh profile source contracts: PASS')
           PY
@@ -86,7 +99,7 @@ jobs:
           set -euo pipefail
           tmp_dir="$(mktemp -d)"
           trap 'rm -rf "$tmp_dir"' EXIT
-          files=(admin/index.html m/admin/index.html admin/js/admin.js admin/js/admin-characters.js)
+          files=(admin/index.html m/admin/index.html admin/js/admin.js admin/js/admin-members.js admin/js/admin-characters.js)
           verify_key="${GITHUB_SHA:0:12}-$(date -u +%s)"
           for attempt in $(seq 1 15); do
             mismatch=0
