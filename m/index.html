@@ -33,55 +33,19 @@
     <a class="mobile-feature-card mobile-feature-hall" href="hof/" aria-label="명예의 전당 열기">
       <span class="mobile-card-bg" aria-hidden="true"></span>
       <span class="mobile-card-shade" aria-hidden="true"></span>
-      <span class="mobile-card-copy">
-        <strong>명예의 전당</strong>
-        <span>깡 레기온 랭킹 조회 등</span>
-      </span>
-      <span class="mobile-card-enter" aria-hidden="true">›</span>
-    </a>
-
-    <a class="mobile-feature-card" href="legion-tree/" aria-label="레기온 트리 프리뷰 열기">
-      <span class="mobile-card-bg" aria-hidden="true" style="background:radial-gradient(circle at 74% 30%,rgba(99,179,237,.38),transparent 28%),radial-gradient(circle at 25% 72%,rgba(129,140,248,.28),transparent 32%),linear-gradient(135deg,#0b1930 0%,#163765 48%,#12162f 100%)"></span>
-      <span class="mobile-card-shade" aria-hidden="true"></span>
-      <span class="mobile-card-copy">
-        <strong>레기온 트리</strong>
-        <span>깡 · 위성 레기온 조직도 미리보기</span>
-      </span>
+      <span class="mobile-card-copy"><strong>명예의 전당</strong><span>깡 레기온 랭킹 조회 등</span></span>
       <span class="mobile-card-enter" aria-hidden="true">›</span>
     </a>
 
     <section class="mobile-feature-card mobile-sanctuary-carousel" data-mobile-sanctuary-carousel aria-label="성역 파티 카드">
-      <div class="mobile-sanctuary-track" id="mobileSanctuaryTrack" data-sanctuary-track data-sanctuary-master-list="mobile" data-sanctuary-base="sanctuary/">
-        <div class="sanctuary-master-loading">성역 목록을 불러오는 중입니다.</div>
-      </div>
-      <button class="mobile-sanctuary-arrow mobile-sanctuary-prev" id="mobileSanctuaryPrev" data-sanctuary-prev type="button" aria-label="이전 성역 보기">
-        <span class="arrow-mark">‹</span><span class="arrow-label">1성역</span>
-      </button>
-      <button class="mobile-sanctuary-arrow mobile-sanctuary-next" id="mobileSanctuaryNext" data-sanctuary-next type="button" aria-label="다음 성역 보기">
-        <span class="arrow-label">2성역</span><span class="arrow-mark">›</span>
-      </button>
+      <div class="mobile-sanctuary-track" id="mobileSanctuaryTrack" data-sanctuary-track data-sanctuary-master-list="mobile" data-sanctuary-base="sanctuary/"><div class="sanctuary-master-loading">성역 목록을 불러오는 중입니다.</div></div>
+      <button class="mobile-sanctuary-arrow mobile-sanctuary-prev" id="mobileSanctuaryPrev" data-sanctuary-prev type="button" aria-label="이전 성역 보기"><span class="arrow-mark">‹</span><span class="arrow-label">1성역</span></button>
+      <button class="mobile-sanctuary-arrow mobile-sanctuary-next" id="mobileSanctuaryNext" data-sanctuary-next type="button" aria-label="다음 성역 보기"><span class="arrow-label">2성역</span><span class="arrow-mark">›</span></button>
       <div class="mobile-sanctuary-dots" id="mobileSanctuaryDots" data-sanctuary-master-dots aria-hidden="true"></div>
     </section>
 
-    <a class="mobile-feature-card mobile-feature-meter" href="meter/" aria-label="키노조 미터 열기">
-      <span class="mobile-card-bg" aria-hidden="true"></span>
-      <span class="mobile-card-shade" aria-hidden="true"></span>
-      <span class="mobile-card-copy">
-        <strong>KINOJO METER</strong>
-        <span>DPS 통계 · 내 기록 비교</span>
-      </span>
-      <span class="mobile-card-enter" aria-hidden="true">›</span>
-    </a>
-
-    <a class="mobile-feature-card mobile-feature-arcana" href="arcana/" aria-label="아르카나 열기">
-      <span class="mobile-card-bg" aria-hidden="true"></span>
-      <span class="mobile-card-shade" aria-hidden="true"></span>
-      <span class="mobile-card-copy">
-        <strong>ARCANA</strong>
-        <span>조합 시뮬레이터</span>
-      </span>
-      <span class="mobile-card-enter" aria-hidden="true">›</span>
-    </a>
+    <a class="mobile-feature-card mobile-feature-meter" href="meter/" aria-label="키노조 미터 열기"><span class="mobile-card-bg" aria-hidden="true"></span><span class="mobile-card-shade" aria-hidden="true"></span><span class="mobile-card-copy"><strong>KINOJO METER</strong><span>DPS 통계 · 내 기록 비교</span></span><span class="mobile-card-enter" aria-hidden="true">›</span></a>
+    <a class="mobile-feature-card mobile-feature-arcana" href="arcana/" aria-label="아르카나 열기"><span class="mobile-card-bg" aria-hidden="true"></span><span class="mobile-card-shade" aria-hidden="true"></span><span class="mobile-card-copy"><strong>ARCANA</strong><span>조합 시뮬레이터</span></span><span class="mobile-card-enter" aria-hidden="true">›</span></a>
   </section>
 </main>
 <nav class="mobile-bottom-nav" aria-label="모바일 하단 메뉴"><a class="is-active" href="index.html">메인</a><a href="hof/">명예</a><a href="sanctuary/">성역</a><a href="arcana/">아르카나</a></nav>
@@ -94,6 +58,7 @@
 <script src="../core/kinojo-debug.js?cache=2026062610"></script>
 <script src="../core/kinojo-logger.js?cache=2026062610"></script>
 <script src="../ui/kinojo-common-ui.js?cache=2026081801"></script>
+<script src="../ui/kinojo-common-navigation.js?cache=2026082003"></script>
 <script src="../ui/kinojo-admin-panel.js?cache=2026071712"></script>
 <script src="../core/kinojo-supabase-client.js?cache=2026080205"></script>
 <script src="../core/kinojo-supabase-rpc.js?cache=2026080205"></script>
@@ -101,19 +66,9 @@
 <script src="../core/kinojo-auth-session.js?cache=2026081801"></script>
 <script src="../core/kinojo-auth-service.js?cache=2026081801"></script>
 <script src="../core/kinojo-auth-ui.js?cache=2026081801"></script>
-<script src="../ui/kinojo-event-notice.js?cache=2026070521"></script>
+<script src="../ui/kinojo-event-notice.js?cache=2026081003"></script>
 <script src="mobile-sanctuary-carousel.js?cache=2026081218"></script>
 <script src="mobile-home.js?cache=2026062610"></script>
-<script>
-  (() => {
-    const banner = document.getElementById('kinojo-main-banner-image');
-    const summerBannerEndsAt = Date.parse('2026-08-31T23:59:59.999+09:00');
-
-    if (banner && Date.now() <= summerBannerEndsAt) {
-      banner.src = '../assets/images/common/kinojo_banner_summer.png?cache=2026080602';
-      banner.alt = 'KINOJO INFO 여름 휴가 배너';
-    }
-  })();
-</script>
+<script>(()=>{const banner=document.getElementById('kinojo-main-banner-image');const summerBannerEndsAt=Date.parse('2026-08-31T23:59:59.999+09:00');if(banner&&Date.now()<=summerBannerEndsAt){banner.src='../assets/images/common/kinojo_banner_summer.png?cache=2026080602';banner.alt='KINOJO INFO 여름 휴가 배너';}})();</script>
 </body>
 </html>
