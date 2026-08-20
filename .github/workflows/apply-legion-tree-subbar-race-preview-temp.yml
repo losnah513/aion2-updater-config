@@ -1,0 +1,120 @@
+name: Apply Legion Tree Attached Subbar Race Preview Temp
+
+on:
+  push:
+    branches: [fix/legion-tree-attached-subbar-race-preview-20260820]
+    paths:
+      - ".github/workflows/apply-legion-tree-subbar-race-preview-temp.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/legion-tree-attached-subbar-race-preview-20260820
+          fetch-depth: 2
+
+      - name: Patch Legion Tree attached subbar and race preview only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          html_paths=[Path('legion-tree/index.html'),Path('m/legion-tree/index.html')]
+          for p in html_paths:
+              s=p.read_text(encoding='utf-8')
+              old_css='legion-tree.css?cache=2026082003'
+              if s.count(old_css)!=1:
+                  raise SystemExit(f'{p}: css cache marker mismatch')
+              s=s.replace(old_css,'legion-tree.css?cache=2026082004',1)
+
+              marker='  <section class="hof-filter-bar" aria-label="레기온 구성원 도구">'
+              if s.count(marker)!=1:
+                  raise SystemExit(f'{p}: subbar marker mismatch')
+              start=s.index(marker)
+              end_marker='  </section>\n\n  <section class="legion-tree-legion is-main-legion"'
+              end=s.index(end_marker,start)+len('  </section>\n')
+              block=s[start:end]
+              s=s[:start]+s[end:]
+              block=block.replace(
+                  '<section class="hof-filter-bar" aria-label="레기온 구성원 도구">',
+                  '<section class="hof-filter-bar legion-tree-subbar" aria-label="레기온 구성원 도구">',1)
+
+              alt_line='      <label class="legion-tree-subbar-field" for="legionTreeAltName"><span>부캐 이름</span><input class="kinojo-input" id="legionTreeAltName" type="text" placeholder="부캐 이름" autocomplete="off"/></label>\n'
+              race='''      <div class="legion-tree-subbar-field legion-tree-race-field">\n        <span>종족</span>\n        <div class="legion-tree-race-switch" role="group" aria-label="종족 선택 미리보기">\n          <button class="legion-tree-race-btn" id="legionTreeRaceElyos" type="button" aria-pressed="false" disabled>천족</button>\n          <button class="legion-tree-race-btn" id="legionTreeRaceAsmodian" type="button" aria-pressed="false" disabled>마족</button>\n        </div>\n      </div>\n'''
+              if block.count(alt_line)!=1:
+                  raise SystemExit(f'{p}: alt field marker mismatch')
+              block=block.replace(alt_line,alt_line+race,1)
+
+              body_marker='<body class="kinojo-page-legion-tree">\n'
+              if s.count(body_marker)!=1:
+                  raise SystemExit(f'{p}: body marker mismatch')
+              s=s.replace(body_marker,body_marker+block+'\n',1)
+              p.write_text(s,encoding='utf-8')
+
+          css=Path('legion-tree/css/legion-tree.css')
+          c=css.read_text(encoding='utf-8')
+          old='''.legion-tree-wrap{width:min(var(--legion-tree-max),calc(100% - 32px));margin:0 auto;padding:clamp(10px,1.5vw,18px) 0 74px}\n.legion-tree-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:12px;padding:0 4px}\n'''
+          new='''.legion-tree-wrap{width:min(var(--legion-tree-max),calc(100% - 32px));margin:0 auto;padding:10px 0 74px}\n.legion-tree-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:12px;padding:0 4px}\n/* 20260820: attach Legion Tree subbar to the common topbar using the same compact page-bar geometry as Ranking. */\nbody.kinojo-page-legion-tree>.legion-tree-subbar{\n  position:sticky;\n  top:var(--kinojo-topbar-actual-height,var(--kinojo-shell-top,68px));\n  z-index:82;\n  width:100%;\n  min-height:52px;\n  margin:-12px 0 0;\n  padding:7px max(14px,calc((100% - 1480px)/2 + 14px));\n  border-radius:0 0 16px 16px;\n  background:rgba(255,255,255,.96);\n  box-shadow:0 10px 24px rgba(31,47,79,.08);\n  backdrop-filter:blur(18px);\n  -webkit-backdrop-filter:blur(18px);\n}\n'''
+          if c.count(old)!=1:
+              raise SystemExit('css wrap marker mismatch')
+          c=c.replace(old,new,1)
+
+          old='''.legion-tree-subbar-fields{flex:1 1 620px;display:grid;grid-template-columns:minmax(150px,1fr) minmax(150px,1fr) 132px;gap:8px;align-items:end;min-width:0}\n.legion-tree-subbar-field{display:grid;gap:4px;min-width:0}\n.legion-tree-subbar-field>span{font-size:10px;font-weight:850;color:#64748b}\n.legion-tree-subbar-field .kinojo-input{width:100%;min-width:0;height:38px;padding:0 12px;border:1px solid rgba(120,145,180,.28);border-radius:10px;background:#fff;color:#17233a;font-size:13px;font-weight:700;outline:none}\n.legion-tree-subbar-field .kinojo-input:focus{border-color:rgba(37,99,235,.48);box-shadow:0 0 0 3px rgba(37,99,235,.10)}\n.legion-tree-subbar-actions{flex:0 1 auto;display:flex;align-items:flex-end;justify-content:flex-end;gap:7px;flex-wrap:wrap}\n.legion-tree-subbar-actions .kinojo-btn{min-height:38px;height:38px;padding:0 12px;border:1px solid rgba(120,145,180,.34);border-radius:10px;background:#fff;color:#475569;font-size:12px;font-weight:900;white-space:nowrap;cursor:pointer}\n.legion-tree-subbar-actions #legionTreeAddBtn{border-color:#2563eb;background:#2563eb;color:#fff}\n.legion-tree-subbar-actions .kinojo-btn:disabled{opacity:.48;cursor:not-allowed}\n.legion-tree-subbar-status{flex-basis:100%;text-align:right;color:#73839b;font-size:10px;font-weight:800;line-height:1.2}\n'''
+          new='''.legion-tree-subbar-fields{flex:1 1 760px;display:grid;grid-template-columns:minmax(150px,1fr) minmax(150px,1fr) 116px 132px;gap:8px;align-items:end;min-width:0}\n.legion-tree-subbar-field{display:grid;gap:3px;min-width:0}\n.legion-tree-subbar-field>span{font-size:9px;font-weight:850;color:#64748b;line-height:1}\n.legion-tree-subbar-field .kinojo-input{width:100%;min-width:0;height:38px;padding:0 12px;border:1px solid rgba(120,145,180,.28);border-radius:10px;background:#fff;color:#17233a;font-size:13px;font-weight:700;outline:none}\n.legion-tree-subbar-field .kinojo-input:focus{border-color:rgba(37,99,235,.48);box-shadow:0 0 0 3px rgba(37,99,235,.10)}\n.legion-tree-race-switch{height:38px;display:grid;grid-template-columns:1fr 1fr;overflow:hidden;border:1px solid rgba(120,145,180,.28);border-radius:10px;background:#fff}\n.legion-tree-race-btn{min-width:0;border:0;border-right:1px solid rgba(120,145,180,.22);background:#fff;color:#475569;font:inherit;font-size:11px;font-weight:900;opacity:1;cursor:default}\n.legion-tree-race-btn:last-child{border-right:0}\n.legion-tree-race-btn:first-child{background:linear-gradient(135deg,#f7fbff,#eef5ff);color:#3c6498}\n.legion-tree-race-btn:last-child{background:linear-gradient(135deg,#fbf8ff,#f3effb);color:#675989}\n.legion-tree-race-btn:disabled{opacity:1;filter:none}\n.legion-tree-subbar-actions{flex:0 1 auto;display:flex;align-items:flex-end;justify-content:flex-end;gap:7px;flex-wrap:wrap}\n.legion-tree-subbar-actions .kinojo-btn{min-height:38px;height:38px;padding:0 12px;border:1px solid rgba(120,145,180,.34);border-radius:10px;background:#fff;color:#475569;font-size:12px;font-weight:900;white-space:nowrap;cursor:pointer}\n.legion-tree-subbar-actions #legionTreeAddBtn{border-color:#2563eb;background:#2563eb;color:#fff}\n.legion-tree-subbar-actions .kinojo-btn:disabled{opacity:.48;cursor:not-allowed}\n.legion-tree-subbar-status{flex-basis:100%;text-align:right;color:#73839b;font-size:10px;font-weight:800;line-height:1.2}\n'''
+          if c.count(old)!=1:
+              raise SystemExit('css subbar field marker mismatch')
+          c=c.replace(old,new,1)
+
+          old='''@media(max-width:900px){.legion-tree-subbar-fields{grid-template-columns:1fr 1fr 128px;flex-basis:100%}.legion-tree-subbar-actions{flex:1 1 100%;justify-content:flex-end}.legion-tree-member-grid[data-branch-count="1"]{grid-template-columns:repeat(4,minmax(0,124px))}.legion-tree-member-grid[data-branch-count="2"]{grid-template-columns:repeat(3,minmax(0,124px))}.legion-tree-member-grid[data-branch-count="3"],.legion-tree-member-grid[data-branch-count="4"],.legion-tree-member-grid[data-branch-count="5"]{grid-template-columns:repeat(2,minmax(0,124px))}.legion-tree-satellite-grid{grid-template-columns:1fr 1fr}.legion-tree-mini-legion:last-child{grid-column:1/-1}}\n@media(max-width:640px){.legion-tree-wrap{width:min(100% - 20px,640px);padding-bottom:64px}.legion-tree-hero{align-items:flex-start}.legion-tree-hero h1{font-size:25px}.legion-tree-hero p{font-size:12px}.legion-tree-preview-badge{font-size:8px;padding:6px 7px}.legion-tree-subbar-fields{grid-template-columns:1fr 1fr}.legion-tree-subbar-field.is-server{grid-column:1/-1}.legion-tree-subbar-actions{display:grid;grid-template-columns:1fr 1fr 1.25fr;width:100%;gap:6px}.legion-tree-subbar-actions .kinojo-btn{width:100%}.legion-tree-subbar-status{grid-column:1/-1;text-align:left}.legion-tree-legion,.legion-tree-satellites{border-radius:9px}.legion-tree-legion{padding:15px 10px 18px}.legion-tree-legion-head,.legion-tree-section-head{align-items:flex-start}.legion-tree-legion-head{padding:0 4px 11px}.legion-tree-legion-head h2,.legion-tree-section-head h2{font-size:18px}.legion-tree-legion-head small{font-size:10px}.legion-tree-stage-list{padding-top:18px}.legion-tree-role-plate{min-width:126px}.legion-tree-member-grid[data-branch-count="1"],.legion-tree-member-grid[data-branch-count="2"]{grid-template-columns:repeat(2,124px);gap:13px 7px}.legion-tree-member-grid[data-branch-count="3"],.legion-tree-member-grid[data-branch-count="4"],.legion-tree-member-grid[data-branch-count="5"]{grid-template-columns:124px;gap:13px}.legion-tree-satellites{padding:15px 10px}.legion-tree-section-head{display:block;padding:0 4px 11px}.legion-tree-section-head p{margin-top:5px;text-align:left;font-size:10px}.legion-tree-satellite-grid{grid-template-columns:1fr;gap:9px}.legion-tree-mini-legion{padding:11px}}\n@media(max-width:300px){.legion-tree-member-grid{grid-template-columns:124px!important}.legion-tree-subbar-fields{grid-template-columns:1fr}.legion-tree-subbar-field.is-server{grid-column:1}.legion-tree-subbar-actions{grid-template-columns:1fr 1fr}.legion-tree-subbar-actions #legionTreeEditBtn{grid-column:1/-1}}\n'''
+          new='''@media(max-width:900px){body.kinojo-page-legion-tree>.legion-tree-subbar{padding-inline:12px}.legion-tree-subbar-fields{grid-template-columns:1fr 1fr 110px 128px;flex-basis:100%}.legion-tree-subbar-actions{flex:1 1 100%;justify-content:flex-end}.legion-tree-member-grid[data-branch-count="1"]{grid-template-columns:repeat(4,minmax(0,124px))}.legion-tree-member-grid[data-branch-count="2"]{grid-template-columns:repeat(3,minmax(0,124px))}.legion-tree-member-grid[data-branch-count="3"],.legion-tree-member-grid[data-branch-count="4"],.legion-tree-member-grid[data-branch-count="5"]{grid-template-columns:repeat(2,minmax(0,124px))}.legion-tree-satellite-grid{grid-template-columns:1fr 1fr}.legion-tree-mini-legion:last-child{grid-column:1/-1}}\n@media(max-width:640px){body.kinojo-page-legion-tree>.legion-tree-subbar{align-items:stretch;flex-direction:column;padding:7px 10px}.legion-tree-wrap{width:min(100% - 20px,640px);padding-bottom:64px}.legion-tree-hero{align-items:flex-start}.legion-tree-hero h1{font-size:25px}.legion-tree-hero p{font-size:12px}.legion-tree-preview-badge{font-size:8px;padding:6px 7px}.legion-tree-subbar-fields{grid-template-columns:1fr 1fr;gap:6px}.legion-tree-race-field,.legion-tree-subbar-field.is-server{grid-column:auto}.legion-tree-subbar-actions{display:grid;grid-template-columns:1fr 1fr 1.25fr;width:100%;gap:6px}.legion-tree-subbar-actions .kinojo-btn{width:100%}.legion-tree-subbar-status{grid-column:1/-1;text-align:left}.legion-tree-legion,.legion-tree-satellites{border-radius:9px}.legion-tree-legion{padding:15px 10px 18px}.legion-tree-legion-head,.legion-tree-section-head{align-items:flex-start}.legion-tree-legion-head{padding:0 4px 11px}.legion-tree-legion-head h2,.legion-tree-section-head h2{font-size:18px}.legion-tree-legion-head small{font-size:10px}.legion-tree-stage-list{padding-top:18px}.legion-tree-role-plate{min-width:126px}.legion-tree-member-grid[data-branch-count="1"],.legion-tree-member-grid[data-branch-count="2"]{grid-template-columns:repeat(2,124px);gap:13px 7px}.legion-tree-member-grid[data-branch-count="3"],.legion-tree-member-grid[data-branch-count="4"],.legion-tree-member-grid[data-branch-count="5"]{grid-template-columns:124px;gap:13px}.legion-tree-satellites{padding:15px 10px}.legion-tree-section-head{display:block;padding:0 4px 11px}.legion-tree-section-head p{margin-top:5px;text-align:left;font-size:10px}.legion-tree-satellite-grid{grid-template-columns:1fr;gap:9px}.legion-tree-mini-legion{padding:11px}}\n@media(max-width:300px){.legion-tree-member-grid{grid-template-columns:124px!important}.legion-tree-subbar-fields{grid-template-columns:1fr}.legion-tree-race-field,.legion-tree-subbar-field.is-server{grid-column:1}.legion-tree-subbar-actions{grid-template-columns:1fr 1fr}.legion-tree-subbar-actions #legionTreeEditBtn{grid-column:1/-1}}\n'''
+          if c.count(old)!=1:
+              raise SystemExit('css responsive marker mismatch')
+          c=c.replace(old,new,1)
+          css.write_text(c,encoding='utf-8')
+
+          handoff=Path('docs/HANDOFF.md')
+          h=handoff.read_text(encoding='utf-8')
+          marker='''## 다음 행동\n\n- 다음 작업은 **`가-1`만** 진행한다.\n'''
+          replacement='''## 다음 행동\n\n- 레기온 트리 입력 UI 후속 기능 계획: 현재 미리보기인 `천족 / 마족` 선택을 실제로 연결할 때, 천족 선택 시 천족 서버만 서버 선택 목록에 노출하고 마족 선택 시 마족 서버만 노출한다. 종족 전환으로 기존 서버 선택이 유효하지 않게 되면 서버 선택을 초기화한다. 공식 캐릭터 존재 여부와 최종 서버 검증은 기존 원칙대로 Server가 담당한다.\n- 이번 보정에서는 위 기능을 구현하지 않고 종족 선택 버튼 UI만 추가한다.\n- 다음 작업은 **`가-1`만** 진행한다.\n'''
+          if h.count(marker)!=1:
+              raise SystemExit('HANDOFF next action marker mismatch')
+          h=h.replace(marker,replacement,1)
+          handoff.write_text(h,encoding='utf-8')
+          PY
+
+          python3 <<'PY'
+          from pathlib import Path
+          for p in [Path('legion-tree/index.html'),Path('m/legion-tree/index.html')]:
+              s=p.read_text(encoding='utf-8')
+              assert s.index('hof-filter-bar legion-tree-subbar') < s.index('<main class="legion-tree-wrap">'), p
+              assert s.count('id="legionTreeRaceElyos"')==1, p
+              assert s.count('id="legionTreeRaceAsmodian"')==1, p
+              assert '<button class="legion-tree-race-btn" id="legionTreeRaceElyos" type="button" aria-pressed="false" disabled>천족</button>' in s, p
+              assert '<button class="legion-tree-race-btn" id="legionTreeRaceAsmodian" type="button" aria-pressed="false" disabled>마족</button>' in s, p
+              assert 'legion-tree.css?cache=2026082004' in s, p
+          css=Path('legion-tree/css/legion-tree.css').read_text(encoding='utf-8')
+          assert 'body.kinojo-page-legion-tree>.legion-tree-subbar{' in css
+          assert 'margin:-12px 0 0' in css
+          assert 'grid-template-columns:minmax(150px,1fr) minmax(150px,1fr) 116px 132px' in css
+          assert '.hof-filter-bar{' not in css
+          assert css.count('{')==css.count('}')
+          js=Path('legion-tree/js/legion-tree.js').read_text(encoding='utf-8')
+          for forbidden in ['RaceElyos','RaceAsmodian','race-filter','raceFilter','천족 서버','마족 서버']:
+              assert forbidden not in js, forbidden
+          h=Path('docs/HANDOFF.md').read_text(encoding='utf-8')
+          assert '천족 선택 시 천족 서버만' in h and '마족 선택 시 마족 서버만' in h
+          print('Legion Tree attached subbar + race preview contract: PASS')
+          PY
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- legion-tree/index.html m/legion-tree/index.html legion-tree/css/legion-tree.css docs/HANDOFF.md
+          git commit -m "Attach Legion Tree subbar and add race preview"
+          git push origin HEAD:fix/legion-tree-attached-subbar-race-preview-20260820
