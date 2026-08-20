@@ -6,9 +6,9 @@
 
 - GitHub: `losnah513/aion2-updater-config`
 - 운영 브랜치: `main`
-- 레기온 트리 최신 운영 exact-readback 검증 commit: `acac532aaa8bb9b501404bcaa46e86f3f7e29b92`
+- 레기온 트리 최신 운영 exact-readback 검증 commit: `9e4006a12e8e7295add7f1e8bef5b656739ac7df`
 - 레기온 트리 전용 live readback: `legion-tree/live-readback = success`
-- 검증 Actions run: `32342372751`
+- 검증 Actions run: `32349542958`
 - Drive 활성 WEB source 동기화 시 fresh main snapshot: `8f9755d55ec3c2cf4ef10144bef23dd26a0d3e9c`
 - 위 snapshot의 후속 병행 커밋은 reference 이미지 프로젝트의 임시 검증 workflow 정리이며 레기온 트리 대상 source를 변경하지 않았다.
 - Drive source 동기화 후 문서 마감 직전 fresh main `14dd3f0385768cdcfe0935ce1e2bf7107a578faa`까지 재확인했다. 이 후속 변경도 병행 내 정보 6-D 임시 workflow 제거로 레기온 트리 대상 source와 무관했다.
@@ -18,8 +18,8 @@
 - **완료**.
 - 공식 경로: PC `/legion-tree/`, 모바일 `/m/legion-tree/`.
 - Topbar·Drawer·서브바의 레이아웃 구조와 형태는 기존 KINOJO 공통 프레임을 그대로 재사용한다.
-- 서브바 내부 기능은 본캐 이름 / 부캐 이름 / 서버 / 추가 / 초기화 / 조직도 편집 자리만 준비된 scaffold이며 실제 Server 작업은 후속 단계다.
-- 새 디자인은 조직 단계, 역할 명패, 구성원 카드, 트리 분기 등 레기온 트리 본문에 한정한다.
+- 서브바 내부 기능은 본캐 이름 / 부캐 이름 / 천족·마족 미리보기 / 서버 / 추가 / 초기화 / 조직도 편집 자리만 준비된 scaffold이며 실제 Server 작업은 후속 단계다.
+- 새 디자인은 조직 단계, 역할 명패, 구성원 카드, 트리 분기 등 레기온 트리 본문에 한정한다. Topbar에 페이지명이 있으므로 본문의 중복 `레기온 트리` hero 제목/설명은 제거했다.
 
 ## 가-0에서 보정한 문제
 
@@ -45,10 +45,10 @@
 - common navigation / route guard / home / mobile home / 전용 verify workflow 동기화 완료.
 - `ui/kinojo-event-notice.js`는 기존 Drive source가 이미 main과 exact라 유지했다.
 - Drive raw readback Git blob exact match:
-  - PC index `d5d5aa21e604d70811372ec647b07ac54f6f4237`
-  - CSS `a63be124f2dc0356fcd6090f90eb0bd82e740a93`
+  - PC index `af729f323236a93b27d867bcd882794b1b1c73d0`
+  - CSS `0b4e64ff291c65ec6e91bee2eef5e678971cb1d7`
   - JS `5b5fc0a4236c5705544961f8afffe7d26e3434f0`
-  - mobile index `cbe790f49b6a49b1b30af02751887196297c4748`
+  - mobile index `befb77ce15cc096df58350804447063a11cc981b`
   - common navigation `3c7d2ae55de9bfa16c7cf7c32f109fdb2df7c533`
   - route guard `321071dd34195d27fc96065e4c9a936d58ecccb7`
   - event notice `62a32bc07e7a2a8e98d653b23b93c6ee1f83f67d`
@@ -64,7 +64,8 @@
 
 ## 다음 행동
 
-- 레기온 트리 서브바 후속 보정은 운영 반영 완료: PR `#142`, main `acac532aaa8bb9b501404bcaa46e86f3f7e29b92`, live readback run `32347248451` success.
+- 서브바 후속 보정은 PR `#142`, compact 정렬 PR `#144`, 중앙 정렬/중복 hero 제거 PR `#145`까지 운영 반영 완료했다. 최신 main `9e4006a12e8e7295add7f1e8bef5b656739ac7df`, live readback run `32349542958` success.
+- PC 기준 본캐/부캐 입력은 각각 110px이며, `본캐 → 부캐 → 천족/마족 → 서버 → 추가 → 초기화 → 조직도 편집` 순서로 중앙 정렬된다.
 - `천족 / 마족` 선택은 현재 `disabled` 미리보기 UI만 존재한다. 실제 기능 단계에서는 천족 선택 시 천족 서버만, 마족 선택 시 마족 서버만 노출하고, 종족 전환으로 기존 서버 선택이 유효하지 않게 되면 서버 선택을 초기화한다. 공식 캐릭터 존재 여부와 최종 서버 검증은 Server가 담당한다.
 - 다음 작업은 **`가-1`만** 진행한다.
 - 작업 시작 전 Drive/GitHub/Supabase 현재 상태를 fresh readback하고, 병행 작업과 충돌하지 않는지 확인한다.
@@ -72,6 +73,9 @@
 
 ## 2026-08-20 서브바 후속 보정 마감
 
-- 운영 main: `acac532aaa8bb9b501404bcaa46e86f3f7e29b92`
-- live readback: `Verify Legion Tree Pages` run `32347248451` success.
-- Drive source exact blobs: PC HTML `74ff944d4ad4e472835491267ad56448b4db8338`, mobile HTML `854e2d25f7cbfd21c772e095898d710057c64829`, CSS `e086ec4d28062200113ef41bd57c0cd7ccc88d8e`.
+- PR `#142`: Topbar-attached subbar + 천족/마족 preview.
+- PR `#144`: 본캐/부캐 110px compact + 서버 옆 액션 정렬.
+- PR `#145`: 서브바 전체/세로 중앙 정렬 + 본문 중복 hero 제거.
+- 최신 운영 main: `9e4006a12e8e7295add7f1e8bef5b656739ac7df`.
+- live readback: `legion-tree/live-readback=success`, run `32349542958`.
+- Drive source exact blobs: PC HTML `af729f323236a93b27d867bcd882794b1b1c73d0`, mobile HTML `befb77ce15cc096df58350804447063a11cc981b`, CSS `0b4e64ff291c65ec6e91bee2eef5e678971cb1d7`.
