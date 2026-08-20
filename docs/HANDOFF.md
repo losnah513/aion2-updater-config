@@ -2,68 +2,68 @@
 
 기준일: 2026-08-20 KST
 
-## 저장소
+## 저장소 / 현재 기준
 
 - GitHub: `losnah513/aion2-updater-config`
 - 운영 브랜치: `main`
-- HANDOFF 동기화 시 main 기준 SHA: `8dad5053012d893b9e8bd76093ffc08e6cf73743`
-- 현재 작업 브랜치: `fix/legion-tree-foundation-shell-20260820`
-- 검증된 구현 head (HANDOFF 문서 추가 전): `aec3fd0bc621224f11291ff861ef5ffc5396e95c`
-- 현재 작업 브랜치 head는 `fix/legion-tree-foundation-shell-20260820` ref를 fresh readback해 확인한다. HANDOFF 자체 커밋 때문에 숫자 SHA를 이 줄에 고정하지 않는다.
+- 레기온 트리 운영 exact-readback 검증 commit: `51540e7714a08565c8ec6854512c27a05a0dcd82`
+- 레기온 트리 전용 live readback: `legion-tree/live-readback = success`
+- 검증 Actions run: `32342372751`
+- Drive 활성 WEB source 동기화 시 fresh main snapshot: `8f9755d55ec3c2cf4ef10144bef23dd26a0d3e9c`
+- 위 snapshot의 후속 병행 커밋은 reference 이미지 프로젝트의 임시 검증 workflow 정리이며 레기온 트리 대상 source를 변경하지 않았다.
+- Drive source 동기화 후 문서 마감 직전 fresh main `14dd3f0385768cdcfe0935ce1e2bf7107a578faa`까지 재확인했다. 이 후속 변경도 병행 내 정보 6-D 임시 workflow 제거로 레기온 트리 대상 source와 무관했다.
 
-## 현재 상태
+## 레기온 트리 가-0 상태
 
-- `레기온 트리` 가-0 최초 구현은 운영 main에 들어갔지만 공통 프레임 규칙 위반이 확인되어 완료 판정을 취소했다.
-- 확정 문제:
-  1. `ui/kinojo-event-notice.js`와 `legion-tree/js/legion-tree.js`가 Topbar/Drawer의 `레기온 트리`를 각각 삽입해 중복될 수 있었다.
-  2. 레기온 트리 서브바를 기존 KINOJO bar/control 대신 독자 `legion-tree-toolbar/field/action` 구조로 만들었다.
-  3. 메인/모바일 본문에 별도 `레기온 트리 미리보기` 진입 카드가 추가되어 기존 페이지 레이아웃을 불필요하게 변경했다.
-  4. 루트 `LEGION_TREE_FOUNDATION.md`는 작업별 별도 문서라 Workflow 규칙과 맞지 않았다.
+- **완료**.
+- 공식 경로: PC `/legion-tree/`, 모바일 `/m/legion-tree/`.
+- Topbar·Drawer·서브바의 레이아웃 구조와 형태는 기존 KINOJO 공통 프레임을 그대로 재사용한다.
+- 서브바 내부 기능은 본캐 이름 / 부캐 이름 / 서버 / 추가 / 초기화 / 조직도 편집 자리만 준비된 scaffold이며 실제 Server 작업은 후속 단계다.
+- 새 디자인은 조직 단계, 역할 명패, 구성원 카드, 트리 분기 등 레기온 트리 본문에 한정한다.
 
-## 사용자 확정 UI 원칙
+## 가-0에서 보정한 문제
 
-- Topbar·Drawer·서브바의 **레이아웃 구조와 형태는 기존 KINOJO 공통 구조를 그대로 사용**한다.
-- 서브바 내부 기능은 레기온 트리 전용 기능을 사용할 수 있다.
-- 새 디자인·레이아웃은 레기온 트리 본문(조직 단계, 역할, 구성원 카드, 트리 분기, 편집 UI)에 한정한다.
+1. `ui/kinojo-event-notice.js`와 `legion-tree/js/legion-tree.js`의 이중 Topbar/Drawer 삽입을 제거했다.
+2. `ui/kinojo-common-navigation.js`가 기존 공통 DOM/class를 사용해 `레기온 순위 → 레기온 트리 → 미터기` 순서로 항목 하나만 등록하고 legacy duplicate를 제거한다.
+3. `core/kinojo-route-guard.js`가 공개 페이지에서 공통 navigation 모듈을 bootstrap하며 `/admin/`은 제외한다.
+4. 레기온 트리 서브바 outer는 기존 `.hof-filter-bar`, 입력·버튼은 기존 control 규격을 사용한다.
+5. `home.html` / `m/index.html`의 임시 별도 미리보기 카드는 제거했다.
+6. 작업별 루트 `LEGION_TREE_FOUNDATION.md`는 삭제하고 저장소 단일 `docs/HANDOFF.md`만 유지한다.
 
-## 보정 브랜치 구현
+## 운영 검증
 
-- `ui/kinojo-event-notice.js`: 레기온 트리 menu hook 제거.
-- `legion-tree/js/legion-tree.js`: menu/page-identity 삽입 제거, 페이지 이벤트만 유지.
-- `ui/kinojo-common-navigation.js`: 기존 `#kinojoTopNav` / `#sideDrawer` DOM과 기존 class를 사용해 `레기온 순위` 다음에 `레기온 트리` 한 항목만 등록하고 legacy duplicate를 제거한다.
-- `core/kinojo-route-guard.js`: 공개 페이지에서 공통 navigation 모듈을 bootstrap하며 `/admin/`은 제외한다.
-- `legion-tree/index.html`, `m/legion-tree/index.html`: 공통 layout/components/public-shell을 로드하고 서브바 outer를 기존 `.hof-filter-bar`로 변경.
-- `legion-tree/css/legion-tree.css`: 서브바 outer geometry는 소유하지 않고 내부 신규 기능 배치 + 본문 트리/카드만 소유한다.
-- `home.html`, `m/index.html`: 최초 가-0의 별도 미리보기 진입 카드 제거, route guard cache-bust.
-- `LEGION_TREE_FOUNDATION.md`: 삭제.
+- PR `#138`: 제품 공통 프레임 보정 squash merge.
+- PR `#139`: Legion Tree source + live exact-readback workflow 추가.
+- PR `#140`: `legion-tree/live-readback` commit status 추가.
+- Chromium/Playwright DOM 회귀검증 PASS: 과거 두 legacy hook을 늦게 재삽입해도 Topbar/Drawer `레기온 트리`는 각각 1개만 유지한다.
+- 운영 commit `51540e7714a08565c8ec6854512c27a05a0dcd82`에서 `legion-tree/live-readback=success`; run `32342372751`.
+- live exact 대상: `legion-tree/index.html`, `m/legion-tree/index.html`, `legion-tree/css/legion-tree.css`, `legion-tree/js/legion-tree.js`, `ui/kinojo-common-navigation.js`, `core/kinojo-route-guard.js`, `ui/kinojo-event-notice.js`, `home.html`, `m/index.html`.
 
-## 검증
+## Drive 활성 source
 
-- Chromium/Playwright DOM 회귀검증 PASS.
-- 레기온 트리 페이지에서 과거 두 종류의 legacy hook을 250ms 지연 삽입해도 Topbar/Drawer의 `레기온 트리`는 각각 1개만 유지.
-- 메뉴 순서: `명예의 전당 → 레기온 순위 → 레기온 트리 → 미터기`.
-- 레기온 트리 활성 상태, 페이지 제목/identity PASS.
-- 일반 페이지 기존 active 메뉴 보존, 임시 preview entry 제거 PASS.
-- 초기 persistent MutationObserver 방식의 self-loop 가능성을 브라우저 테스트로 발견해 제거했다. 최종안은 bounded stabilization만 사용한다.
-- main 대비 최종 변경 범위는 레기온 트리/공통 bootstrap/잘못된 초기 가-0 제거에 한정하며 다른 기존 페이지 본문 변경은 0건이다.
-
-## Drive 상태
-
-- `00_README_FIRST.md`, `01_WEB/GitHub_Pages/README.md`, `00_RULES/KINOJO_COMPONENT_RULES.md`, `04_DOCS/PROJECT_LOG/260820.md`는 현재 브랜치 보정 상태와 운영 반영 대기 상태를 기록했다.
-- Drive `01_WEB/GitHub_Pages` 활성 source는 아직 보정 브랜치로 덮어쓰지 않았다. 운영 `main` 병합 전에는 GitHub main과 다른 브랜치 source를 Drive 활성 기준본으로 만들지 않는다.
-
-## 다음 행동
-
-1. 사용자에게 GitHub publication(PR/merge) 명시 승인을 받는다.
-2. `fix/legion-tree-foundation-shell-20260820` → `main` PR 생성 후 Verify KINOJO Pages를 확인한다.
-3. 승인된 방식으로 main 병합 후 GitHub Pages 배포를 확인한다.
-4. `kinojo.info`에서 cache-bust live readback으로 Topbar/Drawer 단일 항목, PC/mobile 레기온 트리, 서브바 공통 프레임을 확인한다.
-5. 그 main exact source를 Drive `01_WEB/GitHub_Pages`에 동기화하고 각 파일 readback을 Git blob과 대조한다.
-6. 본 HANDOFF의 main SHA/상태를 갱신하고 당일 로그에서 가-0을 완료 처리한다.
-7. 그 전에는 `가-1`로 넘어가지 않는다.
+- `01_WEB/GitHub_Pages/legion-tree/`, `m/legion-tree/` 추가 완료.
+- common navigation / route guard / home / mobile home / 전용 verify workflow 동기화 완료.
+- `ui/kinojo-event-notice.js`는 기존 Drive source가 이미 main과 exact라 유지했다.
+- Drive raw readback Git blob exact match:
+  - PC index `d5d5aa21e604d70811372ec647b07ac54f6f4237`
+  - CSS `a63be124f2dc0356fcd6090f90eb0bd82e740a93`
+  - JS `5b5fc0a4236c5705544961f8afffe7d26e3434f0`
+  - mobile index `cbe790f49b6a49b1b30af02751887196297c4748`
+  - common navigation `3c7d2ae55de9bfa16c7cf7c32f109fdb2df7c533`
+  - route guard `321071dd34195d27fc96065e4c9a936d58ecccb7`
+  - event notice `62a32bc07e7a2a8e98d653b23b93c6ee1f83f67d`
+  - home `b5b0261910726ef334bed35f4bcaf01b0beca82a`
+  - mobile home `4f017e9287c121a8a1ee2c062fc978852fd3cd98`
+  - verify workflow `90cde644f8c88364b25b8a50088ad753a90d1d3c`
 
 ## 변경하지 않은 영역
 
 - Supabase SQL/Edge/Storage 변경 없음.
 - Google `list` / AppsScript_MASTER 변경 없음.
-- 캐릭터 추가·조직도 편집의 실제 Server 기능은 아직 시작하지 않았다.
+- 캐릭터 추가·공식 조회·조직도 저장/편집 Server 기능은 아직 시작하지 않았다.
+
+## 다음 행동
+
+- 다음 작업은 **`가-1`만** 진행한다.
+- 작업 시작 전 Drive/GitHub/Supabase 현재 상태를 fresh readback하고, 병행 작업과 충돌하지 않는지 확인한다.
+- 가-1 이후도 한 번에 한 하위 작업씩 진행한다.
