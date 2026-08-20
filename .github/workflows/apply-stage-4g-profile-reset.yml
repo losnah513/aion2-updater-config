@@ -1,19 +1,20 @@
 name: Apply Stage 4-G profile reset UI
 
 on:
-  push:
-    paths:
-      - '.github/workflows/apply-stage-4g-profile-reset.yml'
+  issues:
+    types: [opened]
 
 permissions:
   contents: write
 
 jobs:
   apply:
+    if: github.event.issue.title == 'KINOJO_MY_INFO_4G_APPLY_20260820'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
 
       - name: Patch common UI
@@ -171,5 +172,3 @@ jobs:
           git rm -- .github/workflows/apply-stage-4g-profile-reset.yml
           git commit -m "Add official profile image reset"
           git push origin HEAD:main
-
-# trigger-2
