@@ -12,12 +12,14 @@
 <meta property="og:description" content="깡 레기온과 위성 레기온의 조직 구조를 한눈에 확인합니다."/>
 <meta property="og:url" content="https://kinojo.info/m/legion-tree/"/>
 <meta property="og:image" content="https://kinojo.info/assets/images/common/kinojo-og.jpg"/>
+<link href="../../ui/kinojo-layout.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
+<link href="../../ui/kinojo-components.css?cache=2026081219" rel="stylesheet"/>
 <link href="../../ui/kinojo-common-ui.css?cache=2026081205" rel="stylesheet"/>
 <link href="../../ui/kinojo-public-shell.css?cache=2026081202" rel="stylesheet"/>
-<link href="../../legion-tree/css/legion-tree.css?cache=2026082001" rel="stylesheet"/>
+<link href="../../legion-tree/css/legion-tree.css?cache=2026082003" rel="stylesheet"/>
 <link rel="stylesheet" href="../../ui/kinojo-event-notice.css?cache=2026081003"/>
 </head>
-<body>
+<body class="kinojo-page-legion-tree">
 <main class="legion-tree-wrap">
   <header class="legion-tree-hero">
     <div>
@@ -28,16 +30,18 @@
     <span class="legion-tree-preview-badge">FOUNDATION PREVIEW</span>
   </header>
 
-  <section class="legion-tree-toolbar" aria-label="레기온 구성원 도구">
-    <label class="legion-tree-field"><span>본캐 이름</span><input id="legionTreeMainName" type="text" placeholder="본캐 이름" autocomplete="off"/></label>
-    <label class="legion-tree-field"><span>부캐 이름</span><input id="legionTreeAltName" type="text" placeholder="부캐 이름" autocomplete="off"/></label>
-    <label class="legion-tree-field is-server"><span>서버</span><select id="legionTreeServer" aria-label="서버 선택"><option value="">서버 선택</option></select></label>
-    <div class="legion-tree-toolbar-actions">
-      <button class="legion-tree-action is-primary" id="legionTreeAddBtn" type="button" disabled>추가</button>
-      <button class="legion-tree-action" id="legionTreeResetBtn" type="button">초기화</button>
-      <button class="legion-tree-action is-edit" id="legionTreeEditBtn" type="button" disabled>조직도 편집</button>
+  <section class="hof-filter-bar" aria-label="레기온 구성원 도구">
+    <div class="legion-tree-subbar-fields">
+      <label class="legion-tree-subbar-field" for="legionTreeMainName"><span>본캐 이름</span><input class="kinojo-input" id="legionTreeMainName" type="text" placeholder="본캐 이름" autocomplete="off"/></label>
+      <label class="legion-tree-subbar-field" for="legionTreeAltName"><span>부캐 이름</span><input class="kinojo-input" id="legionTreeAltName" type="text" placeholder="부캐 이름" autocomplete="off"/></label>
+      <label class="legion-tree-subbar-field is-server" for="legionTreeServer"><span>서버</span><select class="kinojo-input" id="legionTreeServer" aria-label="서버 선택"><option value="">서버 선택</option></select></label>
     </div>
-    <div class="legion-tree-toolbar-status" id="legionTreeStatus" aria-live="polite"><i></i><span>가-0 프리뷰 · 데이터/편집 기능 연결 전</span></div>
+    <div class="legion-tree-subbar-actions">
+      <button class="kinojo-btn" id="legionTreeAddBtn" type="button" disabled>추가</button>
+      <button class="kinojo-btn secondary" id="legionTreeResetBtn" type="button">초기화</button>
+      <button class="kinojo-btn secondary" id="legionTreeEditBtn" type="button" disabled>조직도 편집</button>
+      <span class="legion-tree-subbar-status" id="legionTreeStatus" aria-live="polite">가-0 프리뷰 · 데이터/편집 기능 연결 전</span>
+    </div>
   </section>
 
   <section class="legion-tree-legion is-main-legion" aria-labelledby="legionTreeMainTitle">
@@ -50,10 +54,10 @@
       <section class="legion-tree-stage is-members" data-stage="3">
         <div class="legion-tree-role-plate"><small>3단계</small><strong>군단병</strong></div>
         <div class="legion-tree-member-grid" data-branch-count="1" aria-label="군단병 카드 프리뷰">
-          <button class="legion-tree-character is-main" type="button" data-preview-card aria-label="본캐 카드 예시 · 검성 · 본캐예시"><span class="legion-tree-kind">본캐</span><img src="../../assets/images/classes/class_icon_gladiator.png" alt=""/><span class="legion-tree-name">본캐예시</span></button>
-          <button class="legion-tree-character is-alt" type="button" data-preview-card aria-label="부캐 카드 예시 · 치유성 · 부캐예시"><span class="legion-tree-kind">부캐</span><img src="../../assets/images/classes/class_icon_cleric.png" alt=""/><span class="legion-tree-name">부캐예시</span></button>
-          <button class="legion-tree-character is-main" type="button" data-preview-card aria-label="긴 이름 fade 예시 · 권성 · 아주긴캐릭터이름"><span class="legion-tree-kind">본캐</span><img src="../../assets/images/classes/class_icon_fighter.png" alt=""/><span class="legion-tree-name">아주긴캐릭터이름</span></button>
-          <button class="legion-tree-character is-alt" type="button" data-preview-card aria-label="부캐 카드 예시 · 궁성 · 구성원04"><span class="legion-tree-kind">부캐</span><img src="../../assets/images/classes/class_icon_ranger.png" alt=""/><span class="legion-tree-name">구성원04</span></button>
+          <button class="legion-tree-character is-main" type="button" data-preview-card title="본캐예시" aria-label="본캐 카드 예시 · 검성 · 본캐예시"><span class="legion-tree-kind">본캐</span><img src="../../assets/images/classes/class_icon_gladiator.png" alt=""/><span class="legion-tree-name">본캐예시</span></button>
+          <button class="legion-tree-character is-alt" type="button" data-preview-card title="부캐예시" aria-label="부캐 카드 예시 · 치유성 · 부캐예시"><span class="legion-tree-kind">부캐</span><img src="../../assets/images/classes/class_icon_cleric.png" alt=""/><span class="legion-tree-name">부캐예시</span></button>
+          <button class="legion-tree-character is-main" type="button" data-preview-card title="아주긴캐릭터이름" aria-label="긴 이름 fade 예시 · 권성 · 아주긴캐릭터이름"><span class="legion-tree-kind">본캐</span><img src="../../assets/images/classes/class_icon_fighter.png" alt=""/><span class="legion-tree-name">아주긴캐릭터이름</span></button>
+          <button class="legion-tree-character is-alt" type="button" data-preview-card title="구성원04" aria-label="부캐 카드 예시 · 궁성 · 구성원04"><span class="legion-tree-kind">부캐</span><img src="../../assets/images/classes/class_icon_ranger.png" alt=""/><span class="legion-tree-name">구성원04</span></button>
         </div>
       </section>
     </div>
@@ -78,7 +82,8 @@
 <script src="../../core/kinojo-route-guard.js?cache=2026070115"></script>
 <script src="../../core/kinojo-debug.js?cache=2026070115"></script>
 <script src="../../core/kinojo-logger.js?cache=2026070115"></script>
-<script src="../../ui/kinojo-common-ui.js?cache=2026082002"></script>
+<script src="../../ui/kinojo-common-ui.js?cache=2026081801"></script>
+<script src="../../ui/kinojo-common-navigation.js?cache=2026082003"></script>
 <script src="../../ui/kinojo-admin-panel.js?cache=2026071712"></script>
 <script src="../../core/kinojo-supabase-client.js?cache=2026081106"></script>
 <script src="../../core/kinojo-supabase-rpc.js?cache=2026080205"></script>
@@ -86,7 +91,7 @@
 <script src="../../core/kinojo-auth-session.js?cache=2026081801"></script>
 <script src="../../core/kinojo-auth-service.js?cache=2026081801"></script>
 <script src="../../core/kinojo-auth-ui.js?cache=2026081801"></script>
-<script src="../../ui/kinojo-event-notice.js?cache=2026070521"></script>
-<script src="../../legion-tree/js/legion-tree.js?cache=2026082001"></script>
+<script src="../../ui/kinojo-event-notice.js?cache=2026081003"></script>
+<script src="../../legion-tree/js/legion-tree.js?cache=2026082003"></script>
 </body>
 </html>
