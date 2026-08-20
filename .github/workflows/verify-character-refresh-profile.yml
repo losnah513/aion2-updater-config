@@ -67,7 +67,7 @@ jobs:
               if token not in source:
                   raise SystemExit(f'profile contract missing {token}')
           loader = Path('admin/js/admin.js').read_text(encoding='utf-8')
-          if 'v2026081701' not in loader or "name+'?cache=2026081701'" not in loader:
+          if 'v2026082002' not in loader or "name+'?cache=2026082002'" not in loader:
               raise SystemExit('admin loader cache contract missing')
           print('Character refresh profile source contracts: PASS')
           PY
