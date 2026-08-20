@@ -1,4 +1,4 @@
-/* KINOJO Admin Code requests, members, and role permissions v2026082001 */
+/* KINOJO Admin Code requests, members, and role permissions v2026082002 */
 (function(A){
   'use strict';
   if(!A) throw new Error('KINOJO Admin shared module is required.');
@@ -74,6 +74,46 @@
     return source.map(normalizeMemberRole).filter(role=>MEMBER_ROLE_LABELS[role]);
   }
 
+  function ensureMemberImageModal(){
+    let modal=$('#adminMemberImageModal');
+    if(modal)return modal;
+    document.body.insertAdjacentHTML('beforeend','<div class="admin-event-preview-modal" id="adminMemberImageModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="adminMemberImageModalTitle"><div class="admin-event-preview-backdrop" data-member-image-modal-close></div><section class="admin-event-preview-panel"><header class="admin-event-preview-head"><div><h2 id="adminMemberImageModalTitle">캐릭터 이미지 보기</h2><p id="adminMemberImageModalMember">회원 선택 대기</p></div><button class="admin-icon-btn" data-member-image-modal-close type="button" aria-label="캐릭터 이미지 모달 닫기">×</button></header><div class="admin-event-preview-body" id="adminMemberImageModalBody"><div class="admin-empty">회원의 캐릭터 이미지 목록을 표시할 준비가 되었습니다.</div></div><footer class="admin-event-preview-actions"><button class="admin-btn" data-member-image-modal-close type="button">닫기</button></footer></section></div>');
+    modal=$('#adminMemberImageModal');
+    modal?.addEventListener('click',event=>{if(event.target.matches('[data-member-image-modal-close]'))closeMemberImageModal();});
+    document.addEventListener('keydown',event=>{if(event.key==='Escape'&&modal?.classList.contains('active'))closeMemberImageModal();});
+    return modal;
+  }
+
+  function closeMemberImageModal(){
+    const modal=$('#adminMemberImageModal');
+    if(!modal)return;
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden','true');
+    delete modal.dataset.memberId;
+    const trigger=modal._kinojoTrigger;
+    modal._kinojoTrigger=null;
+    if(trigger?.isConnected)trigger.focus();
+  }
+
+  function openMemberImageModal(target){
+    if(!isMaster())return;
+    const row=target?.closest?.('[data-member-id]');
+    const memberId=String(row?.dataset.memberId||'').trim();
+    if(!/^\d+$/.test(memberId))return;
+    const memberName=String(row?.dataset.memberName||'회원').trim()||'회원';
+    const modal=ensureMemberImageModal();
+    if(!modal)return;
+    modal.dataset.memberId=memberId;
+    modal._kinojoTrigger=target;
+    const label=$('#adminMemberImageModalMember',modal);
+    if(label)label.textContent=memberName+' · 회원 #'+memberId;
+    const body=$('#adminMemberImageModalBody',modal);
+    if(body)body.innerHTML='<div class="admin-empty">선택한 회원의 캐릭터 이미지 목록을 표시할 준비가 되었습니다.<br/>현재 단계에서는 목록 조회나 이미지 다운로드를 실행하지 않습니다.</div>';
+    modal.setAttribute('aria-hidden','false');
+    modal.classList.add('active');
+    modal.querySelector('[data-member-image-modal-close]')?.focus();
+  }
+
   function applyMemberFilters(){
     const q = String($('#memberSearch')?.value || '').trim().toLowerCase();
     const role = String($('#memberRoleFilter')?.value || '').trim();
@@ -109,6 +149,7 @@
         : '';
       return '<article class="admin-row admin-member-row" data-member-id="'+memberId+'" data-member-name="'+name+'" data-member-role="'+role+'"><div class="admin-member-summary"><div class="admin-row-main"><strong>'+name+'</strong><div class="admin-member-meta"><span class="admin-member-code '+(masked?'is-masked':'')+'">회원 코드 <b>'+code+'</b></span><span class="admin-member-role-badge role-'+role.toLowerCase()+'">'+roleName+'</span></div></div><div class="admin-row-actions"><span class="admin-pill '+(active?'ok':'error')+'">'+(active?'활성':'비활성')+'</span>'+imageButton+controls+'</div></div>'+editor+'</article>';
     }).join(''):'<div class="admin-empty">회원 코드가 없습니다.</div>';
+    root.querySelectorAll('[data-member-image-view]').forEach(button=>button.addEventListener('click',()=>openMemberImageModal(button)));
   }
 
   async function handleMemberAction(target){
@@ -194,5 +235,5 @@
     }
   }
 
-  Object.assign(A,{renderRequestPreview,requestRowHtml,loadCodeRequests,processRequest,loadAccounts,MEMBER_ROLE_LABELS,normalizeMemberRole,getAccountId,getAccountCode,getAccountName,getAccountRole,getAccountRoleLabel,getAccountCanEdit,getAccountAllowedRoles,applyMemberFilters,renderAccounts,handleMemberAction,SANCTUARY_ROLE_LABELS,renderSanctuaryRolePermissions,loadSanctuaryRolePermissions,setSanctuaryRolePermission});
+  Object.assign(A,{renderRequestPreview,requestRowHtml,loadCodeRequests,processRequest,loadAccounts,MEMBER_ROLE_LABELS,normalizeMemberRole,getAccountId,getAccountCode,getAccountName,getAccountRole,getAccountRoleLabel,getAccountCanEdit,getAccountAllowedRoles,ensureMemberImageModal,openMemberImageModal,closeMemberImageModal,applyMemberFilters,renderAccounts,handleMemberAction,SANCTUARY_ROLE_LABELS,renderSanctuaryRolePermissions,loadSanctuaryRolePermissions,setSanctuaryRolePermission});
 })(window.KinojoAdmin);
