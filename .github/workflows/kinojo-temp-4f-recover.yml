@@ -1,0 +1,38 @@
+name: KINOJO temporary 4-F recovery
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+
+jobs:
+  recover:
+    if: github.event.issue.title == 'KINOJO_MY_INFO_4F_RECOVER_20260820'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Recover full 4-F common UI and self-clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin main
+          git show 42123403e41b1dab6add4a6d6ee6dadee592c918:ui/kinojo-common-ui.js > ui/kinojo-common-ui.js
+          base64 -d .kinojo-recover/4f.patch.b64 > /tmp/4f.patch
+          git apply --check /tmp/4f.patch
+          git apply /tmp/4f.patch
+          node --check ui/kinojo-common-ui.js
+          git diff --check
+          test "$(git hash-object ui/kinojo-common-ui.js)" = "557db7df033117dd0e83665f36f24210f032ccda"
+          grep -q "profile-upload-replace-complete" ui/kinojo-common-ui.js
+          git config user.name "losnah513"
+          git config user.email "losnah513@gmail.com"
+          git rm -r -f --ignore-unmatch .kinojo-recover .github/workflows/kinojo-temp-4f-recover.yml .github/workflows/kinojo-temp-4f-export.yml .github/workflows/kinojo-temp-4f-live.yml .kinojo-transfer .kinojo-live
+          git add ui/kinojo-common-ui.js
+          git commit -m "Recover full safe profile replacement UI"
+          git push origin HEAD:main
