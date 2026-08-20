@@ -1,0 +1,39 @@
+name: KINOJO temporary 4-F apply
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.event.issue.title == 'KINOJO_MY_INFO_4F_APPLY_20260820'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Apply Stage 4-F and self-clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin main
+          base64 -d .kinojo-tmp/4f.patch.b64 > /tmp/4f.patch
+          git apply --check /tmp/4f.patch
+          git apply /tmp/4f.patch
+          node --check ui/kinojo-common-ui.js
+          git diff --check
+          grep -q "profile-upload-replace-complete" ui/kinojo-common-ui.js
+          grep -q "profile-upload-complete" ui/kinojo-common-ui.js
+          ! grep -q "4-F에서 활성화" ui/kinojo-common-ui.js
+          ! grep -q "service_role" ui/kinojo-common-ui.js
+          git config user.name "losnah513"
+          git config user.email "losnah513@gmail.com"
+          git rm -r -f --ignore-unmatch .kinojo-tmp .github/workflows/kinojo-temp-4f.yml
+          git add ui/kinojo-common-ui.js
+          git commit -m "Add safe profile image replacement"
+          git push origin HEAD:main
