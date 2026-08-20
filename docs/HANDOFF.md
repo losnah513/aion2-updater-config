@@ -8,7 +8,8 @@
 - 운영 브랜치: `main`
 - 현재 운영 main 기준 SHA: `3d62c4dc9bb79f12b4b6525cf301ace3e9fcfbaa`
 - 현재 작업 브랜치: `fix/legion-tree-foundation-shell-20260820`
-- 작업 브랜치 head: `aec3fd0bc621224f11291ff861ef5ffc5396e95c`
+- 검증된 구현 head (HANDOFF 문서 추가 전): `aec3fd0bc621224f11291ff861ef5ffc5396e95c`
+- 현재 작업 브랜치 head는 `fix/legion-tree-foundation-shell-20260820` ref를 fresh readback해 확인한다. HANDOFF 자체 커밋 때문에 숫자 SHA를 이 줄에 고정하지 않는다.
 
 ## 현재 상태
 
