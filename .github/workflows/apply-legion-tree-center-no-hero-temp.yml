@@ -1,0 +1,86 @@
+name: Apply Legion Tree Center No Hero Temp
+
+on:
+  push:
+    branches: [fix/legion-tree-subbar-centered-no-hero-20260820]
+    paths:
+      - ".github/workflows/apply-legion-tree-center-no-hero-temp.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/legion-tree-subbar-centered-no-hero-20260820
+          fetch-depth: 2
+      - name: Center subbar and remove duplicate page hero
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          hero='''  <header class="legion-tree-hero">\n    <div>\n      <span class="legion-tree-kicker">KINOJO LEGION TREE</span>\n      <h1>레기온 트리</h1>\n      <p>깡 레기온과 위성 레기온의 조직 구조를 한눈에 확인합니다.</p>\n    </div>\n    <span class="legion-tree-preview-badge">FOUNDATION PREVIEW</span>\n  </header>\n\n'''
+          for p in [Path('legion-tree/index.html'), Path('m/legion-tree/index.html')]:
+              s=p.read_text(encoding='utf-8')
+              if s.count(hero)!=1: raise SystemExit(f'{p}: hero marker mismatch')
+              s=s.replace(hero,'',1)
+              if s.count('legion-tree.css?cache=2026082005')!=1: raise SystemExit(f'{p}: css cache marker mismatch')
+              s=s.replace('legion-tree.css?cache=2026082005','legion-tree.css?cache=2026082006',1)
+              p.write_text(s,encoding='utf-8')
+
+          p=Path('legion-tree/css/legion-tree.css')
+          s=p.read_text(encoding='utf-8')
+          old='''  justify-content:flex-start;\n  align-items:flex-end;\n  gap:8px;\n  flex-wrap:wrap;'''
+          new='''  justify-content:center;\n  align-items:center;\n  gap:8px;\n  flex-wrap:wrap;'''
+          if s.count(old)!=1: raise SystemExit('outer center marker mismatch')
+          s=s.replace(old,new,1)
+          old='.legion-tree-subbar-actions{flex:0 0 auto;display:flex;align-items:flex-end;justify-content:flex-start;gap:7px;flex-wrap:wrap}'
+          new='.legion-tree-subbar-actions{flex:0 0 auto;display:flex;align-items:center;justify-content:flex-start;gap:7px;flex-wrap:wrap;padding-top:12px}'
+          if s.count(old)!=1: raise SystemExit('action center marker mismatch')
+          s=s.replace(old,new,1)
+          old='.legion-tree-subbar-status{flex-basis:100%;text-align:right;color:#73839b;font-size:10px;font-weight:800;line-height:1.2}'
+          new='.legion-tree-subbar-status{flex:0 0 auto;align-self:center;text-align:left;color:#73839b;font-size:10px;font-weight:800;line-height:1.2}'
+          if s.count(old)!=1: raise SystemExit('status marker mismatch')
+          s=s.replace(old,new,1)
+          old='@media(max-width:640px){body.kinojo-page-legion-tree>.legion-tree-subbar{align-items:stretch;flex-direction:column;padding:7px 10px}'
+          new='@media(max-width:640px){body.kinojo-page-legion-tree>.legion-tree-subbar{align-items:center;flex-direction:column;padding:7px 10px}'
+          if s.count(old)!=1: raise SystemExit('mobile outer marker mismatch')
+          s=s.replace(old,new,1)
+          old='.legion-tree-subbar-fields{grid-template-columns:1fr 1fr;gap:6px}'
+          new='.legion-tree-subbar-fields{grid-template-columns:1fr 1fr;gap:6px;width:100%}'
+          if s.count(old)!=1: raise SystemExit('mobile fields marker mismatch')
+          s=s.replace(old,new,1)
+          old='.legion-tree-subbar-actions{display:grid;grid-template-columns:1fr 1fr 1.25fr;width:100%;gap:6px}'
+          new='.legion-tree-subbar-actions{display:grid;grid-template-columns:1fr 1fr 1.25fr;width:100%;gap:6px;padding-top:0}'
+          if s.count(old)!=1: raise SystemExit('mobile actions marker mismatch')
+          s=s.replace(old,new,1)
+          old='.legion-tree-subbar-status{grid-column:1/-1;text-align:left}'
+          new='.legion-tree-subbar-status{grid-column:1/-1;width:100%;text-align:center}'
+          if s.count(old)!=1: raise SystemExit('mobile status marker mismatch')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git diff --check
+          python3 <<'PY'
+          from pathlib import Path
+          pc=Path('legion-tree/index.html').read_text(encoding='utf-8')
+          mob=Path('m/legion-tree/index.html').read_text(encoding='utf-8')
+          css=Path('legion-tree/css/legion-tree.css').read_text(encoding='utf-8')
+          for s in (pc,mob):
+              assert '<header class="legion-tree-hero">' not in s
+              assert 'FOUNDATION PREVIEW' not in s
+              assert 'legion-tree.css?cache=2026082006' in s
+          assert 'justify-content:center' in css
+          assert 'align-items:center' in css
+          assert 'padding-top:12px' in css
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add legion-tree/index.html m/legion-tree/index.html legion-tree/css/legion-tree.css
+          git commit -m "Center Legion Tree subbar and remove duplicate hero"
+          git push origin HEAD:fix/legion-tree-subbar-centered-no-hero-20260820
