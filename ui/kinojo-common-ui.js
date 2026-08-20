@@ -911,6 +911,77 @@
   const KINOJO_PROFILE_IMAGE_MAX_BYTES=5*1024*1024;
   const KINOJO_PROFILE_IMAGE_MIME_TYPES=new Set(['image/jpeg','image/png','image/webp']);
   const kinojoMyProfileUiState={token:'',selectedCharacterId:0,bootstrapByCharacter:Object.create(null),requestId:0,file:null,previewUrl:'',uploading:false};
+  const KINOJO_REFERENCE_IMAGE_SLOTS=['FRONT','BACK','UPPER_BODY'];
+  const kinojoMyReferencePickerState={characterId:0,activeSlot:'',filesBySlot:Object.create(null)};
+  function setMyInfoReferenceStatus_(message,state='info'){
+    const host=q('#kinojoMyInfoReferenceStatus');
+    if(!host)return;
+    host.dataset.state=state;
+    host.textContent=message||'';
+  }
+  function renderMyInfoReferencePicker_(){
+    const characterId=Number(kinojoMyProfileUiState.selectedCharacterId||0);
+    const ready=Number.isInteger(characterId)&&characterId>0&&!!myInfoSessionToken_()&&kinojoMyReferencePickerState.characterId===characterId;
+    const section=q('#kinojoMyInfoReferenceSection');
+    const head=q('#kinojoMyInfoReferenceHeadMeta');
+    if(section)section.setAttribute('aria-disabled',ready?'false':'true');
+    if(head)head.textContent=ready?'슬롯을 눌러 이미지 선택':'캐릭터 선택 후 슬롯 선택';
+    document.querySelectorAll('#kinojoMyInfoReferenceGrid [data-reference-slot]').forEach(button=>{
+      const slot=String(button.dataset.referenceSlot||'');
+      const file=kinojoMyReferencePickerState.filesBySlot[slot]||null;
+      button.disabled=!ready;
+      button.classList.toggle('is-selected',!!file);
+      button.setAttribute('aria-pressed',file?'true':'false');
+      button.title=file?String(file.name||slot+' 이미지 선택됨'):slot+' 이미지 선택';
+      const status=button.querySelector('[data-reference-file-status]');
+      if(status)status.textContent=file?'파일 선택됨':'이미지 선택';
+    });
+  }
+  function resetMyInfoReferencePicker_(characterId=0){
+    const id=Number(characterId||0);
+    kinojoMyReferencePickerState.characterId=Number.isInteger(id)&&id>0?id:0;
+    kinojoMyReferencePickerState.activeSlot='';
+    kinojoMyReferencePickerState.filesBySlot=Object.create(null);
+    const input=q('#kinojoMyInfoReferenceFileInput');
+    if(input)input.value='';
+    renderMyInfoReferencePicker_();
+    if(kinojoMyReferencePickerState.characterId>0){
+      const row=myInfoProfileCharacters_().find(item=>Number(item?.characterId||0)===kinojoMyReferencePickerState.characterId);
+      setMyInfoReferenceStatus_((row?.characterName?String(row.characterName)+' · ':'')+'FRONT / BACK / UPPER_BODY 슬롯을 눌러 이미지를 선택해 주세요.','ready');
+    }else setMyInfoReferenceStatus_('캐릭터를 선택하면 슬롯별 이미지를 고를 수 있습니다.','info');
+  }
+  function syncMyInfoReferenceCharacter_(characterId){
+    const id=Number(characterId||0);
+    if(!Number.isInteger(id)||id<=0){resetMyInfoReferencePicker_(0);return;}
+    if(kinojoMyReferencePickerState.characterId!==id){resetMyInfoReferencePicker_(id);return;}
+    renderMyInfoReferencePicker_();
+  }
+  function selectMyInfoReferenceSlot_(slot){
+    const key=String(slot||'').trim();
+    const characterId=Number(kinojoMyProfileUiState.selectedCharacterId||0);
+    if(!KINOJO_REFERENCE_IMAGE_SLOTS.includes(key)||!Number.isInteger(characterId)||characterId<=0||kinojoMyReferencePickerState.characterId!==characterId)return false;
+    const input=q('#kinojoMyInfoReferenceFileInput');
+    if(!input)return false;
+    kinojoMyReferencePickerState.activeSlot=key;
+    input.value='';
+    setMyInfoReferenceStatus_(key+' 슬롯에 넣을 이미지 파일을 선택해 주세요.','info');
+    input.click();
+    return true;
+  }
+  function handleMyInfoReferenceFile_(file){
+    const slot=String(kinojoMyReferencePickerState.activeSlot||'');
+    const characterId=Number(kinojoMyProfileUiState.selectedCharacterId||0);
+    if(!KINOJO_REFERENCE_IMAGE_SLOTS.includes(slot)||kinojoMyReferencePickerState.characterId!==characterId)return false;
+    if(!file){
+      setMyInfoReferenceStatus_(slot+' 이미지 선택을 취소했습니다.','info');
+      return false;
+    }
+    kinojoMyReferencePickerState.filesBySlot[slot]=file;
+    renderMyInfoReferencePicker_();
+    const name=String(file.name||'선택한 파일').slice(0,80);
+    setMyInfoReferenceStatus_(slot+' · '+name+' 파일을 선택했습니다. 파일 검증과 미리보기는 다음 단계에서 적용됩니다.','ready');
+    return true;
+  }
   function myInfoProfileFileSize_(bytes){
     const value=Number(bytes||0);
     if(!Number.isFinite(value)||value<=0)return '0 B';
@@ -956,6 +1027,7 @@
     const picker=q('#kinojoMyInfoProfileCharacters');
     if(picker)picker.innerHTML='<span class="kinojo-my-info-profile-empty">캐릭터 정보를 불러오는 중입니다.</span>';
     renderMyInfoProfileCurrent_(null);
+    resetMyInfoReferencePicker_(0);
   }
   function myInfoProfileCharacters_(){
     return Array.isArray(kinojoMyCharactersState.data?.characters)
@@ -1075,6 +1147,7 @@
       kinojoMyProfileUiState.selectedCharacterId=0;
       renderMyInfoProfileCharacterButtons_();
       renderMyInfoProfileCurrent_(null);
+      resetMyInfoReferencePicker_(0);
       setMyInfoProfileStatus_('연결된 캐릭터가 없습니다.','error');
       return null;
     }
@@ -1085,6 +1158,7 @@
     const current=Number(kinojoMyProfileUiState.selectedCharacterId||0);
     const selected=characters.find(row=>Number(row.characterId)===current)||characters.find(row=>row.isMain===true)||characters[0];
     kinojoMyProfileUiState.selectedCharacterId=Number(selected.characterId);
+    syncMyInfoReferenceCharacter_(selected.characterId);
     renderMyInfoProfileCharacterButtons_();
     return loadMyInfoProfileBootstrap_(selected.characterId);
   }
@@ -1093,6 +1167,7 @@
     if(!myInfoProfileCharacters_().some(row=>Number(row.characterId)===id))return;
     kinojoMyProfileUiState.selectedCharacterId=id;
     clearMyInfoProfilePreview_();
+    syncMyInfoReferenceCharacter_(id);
     renderMyInfoProfileCharacterButtons_();
     loadMyInfoProfileBootstrap_(id).catch(()=>{});
   }
@@ -1378,16 +1453,18 @@
             </div>
             <div class="kinojo-my-info-profile-status" id="kinojoMyInfoProfileStatus" data-state="loading" aria-live="polite">현재 프로필 이미지를 확인하는 중입니다.</div>
           </section>
-          <section class="kinojo-my-info-reference-preview" aria-disabled="true">
+          <section class="kinojo-my-info-reference-preview" id="kinojoMyInfoReferenceSection" aria-disabled="true">
             <div class="kinojo-my-info-manager-section-head">
               <div><strong>참고 이미지</strong><span>관리자 확인용 비공개 자료</span></div>
-              <small>Stage 6에서 활성화</small>
+              <small id="kinojoMyInfoReferenceHeadMeta">캐릭터 선택 후 슬롯 선택</small>
             </div>
-            <div class="kinojo-my-info-reference-preview-grid">
-              <article><b>FRONT</b><span>정면</span><small>준비 중</small></article>
-              <article><b>BACK</b><span>후면</span><small>준비 중</small></article>
-              <article><b>UPPER_BODY</b><span>얼굴이 잘 보이는 상반신</span><small>준비 중</small></article>
+            <input id="kinojoMyInfoReferenceFileInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+            <div class="kinojo-my-info-reference-preview-grid" id="kinojoMyInfoReferenceGrid">
+              <button class="kinojo-my-info-reference-slot" type="button" data-reference-slot="FRONT" aria-pressed="false" disabled><b>FRONT</b><span>정면</span><small data-reference-file-status>이미지 선택</small></button>
+              <button class="kinojo-my-info-reference-slot" type="button" data-reference-slot="BACK" aria-pressed="false" disabled><b>BACK</b><span>후면</span><small data-reference-file-status>이미지 선택</small></button>
+              <button class="kinojo-my-info-reference-slot" type="button" data-reference-slot="UPPER_BODY" aria-pressed="false" disabled><b>UPPER_BODY</b><span>얼굴이 잘 보이는 상반신</span><small data-reference-file-status>이미지 선택</small></button>
             </div>
+            <div class="kinojo-my-info-reference-status" id="kinojoMyInfoReferenceStatus" data-state="info" aria-live="polite">캐릭터를 선택하면 슬롯별 이미지를 고를 수 있습니다.</div>
           </section>
         </div>
       </div>`;
@@ -1414,6 +1491,7 @@
     const modal=q('#kinojoMyInfoModal');
     if(modal){modal.classList.remove('open');modal.setAttribute('aria-hidden','true');}
     clearMyInfoProfilePreview_();
+    resetMyInfoReferencePicker_(kinojoMyProfileUiState.selectedCharacterId);
     document.body.classList.remove('kinojo-my-info-modal-open');
   }
   function openMyInfoPanel(){
@@ -1653,12 +1731,15 @@
       if(e.target.closest('[data-kinojo-my-info-modal-close]')){e.preventDefault();e.stopPropagation();closeMyInfoModal();return;}
       const characterButton=e.target.closest('[data-profile-character-id]');
       if(characterButton){e.preventDefault();e.stopPropagation();selectMyInfoProfileCharacter_(characterButton.dataset.profileCharacterId);return;}
+      const referenceSlot=e.target.closest('[data-reference-slot]');
+      if(referenceSlot){e.preventDefault();e.stopPropagation();selectMyInfoReferenceSlot_(referenceSlot.dataset.referenceSlot);return;}
       if(e.target.closest('#kinojoMyInfoProfileSelectBtn')){e.preventDefault();e.stopPropagation();q('#kinojoMyInfoProfileFileInput')?.click();return;}
       if(e.target.closest('#kinojoMyInfoProfileResetBtn')){e.preventDefault();e.stopPropagation();resetMyInfoProfileOfficial_().catch(()=>{});return;}
       if(e.target.closest('#kinojoMyInfoProfileUploadBtn')){e.preventDefault();e.stopPropagation();uploadMyInfoProfile_().catch(()=>{});return;}
       if(e.target.closest('#kinojoMyInfoProfileCancelBtn')){e.preventDefault();e.stopPropagation();clearMyInfoProfilePreview_('선택한 이미지를 취소했습니다.');}
     });
     q('#kinojoMyInfoProfileFileInput')?.addEventListener('change',e=>{handleMyInfoProfileFile_(e.target?.files?.[0]||null);});
+    q('#kinojoMyInfoReferenceFileInput')?.addEventListener('change',e=>{handleMyInfoReferenceFile_(e.target?.files?.[0]||null);});
     q('#kinojoMyInfoCloseBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeMyInfoPanel();});
     q('#kinojoMyInfoLayer')?.addEventListener('click',e=>{if(e.target.id==='kinojoMyInfoLayer')closeMyInfoPanel();});
     q('#kinojoMyInfoCharacterList')?.addEventListener('click',e=>{
