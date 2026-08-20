@@ -1,0 +1,129 @@
+--- a/ui/kinojo-common-ui.js
++++ b/ui/kinojo-common-ui.js
+@@ -1001,13 +1001,14 @@
+     if(meta){
+       if(data?.ok===true){
+         const kind=data.isMain===true?'본캐':'부캐';
+-        meta.textContent=String(character?.characterName||'')+' · '+kind+(profile?.hasOverride===true?' · 교체는 4-F에서 활성화':'');
++        meta.textContent=String(character?.characterName||'')+' · '+kind+(profile?.hasOverride===true?' · 사용자 이미지 적용 중':'');
+       }else meta.textContent='Server에서 현재 적용 이미지를 확인합니다.';
+     }
+     if(select){
+-      const blocked=data?.ok!==true||profile?.hasOverride===true;
++      const blocked=data?.ok!==true;
+       select.disabled=blocked;
+-      select.title=profile?.hasOverride===true?'기존 사용자 이미지 교체는 4-F에서 활성화됩니다.':'';
++      select.textContent=profile?.hasOverride===true?'교체 이미지 선택':'이미지 선택';
++      select.title=profile?.hasOverride===true?'새 이미지를 선택하면 기존 사용자 이미지를 안전하게 교체합니다.':'';
+     }
+   }
+   async function loadMyInfoProfileBootstrap_(characterId,force=false){
+@@ -1039,7 +1040,7 @@
+       if(!data||data.ok!==true)throw new Error(data?.message||data?.code||'PROFILE_BOOTSTRAP_FAILED');
+       kinojoMyProfileUiState.bootstrapByCharacter[id]=data;
+       renderMyInfoProfileCurrent_(data);
+-      if(data.profile?.hasOverride===true)setMyInfoProfileStatus_('현재 사용자 이미지가 적용 중입니다. 새 이미지 교체는 4-F에서 활성화됩니다.','info');
++      if(data.profile?.hasOverride===true)setMyInfoProfileStatus_('현재 사용자 이미지가 적용 중입니다. 새 이미지를 선택하면 안전하게 교체할 수 있습니다.','ready');
+       else setMyInfoProfileStatus_('JPEG · PNG · WebP / 5MB 이하 이미지를 선택해 미리볼 수 있습니다.','ready');
+       return data;
+     }catch(error){
+@@ -1115,15 +1116,22 @@
+     const cancel=q('#kinojoMyInfoProfileCancelBtn');
+     if(cancel){cancel.hidden=false;cancel.disabled=false;}
+     const upload=q('#kinojoMyInfoProfileUploadBtn');
+-    if(upload){upload.hidden=false;upload.disabled=false;upload.textContent='업로드';}
+-    setMyInfoProfileStatus_('미리보기를 확인한 뒤 업로드할 수 있습니다.','preview');
++    const current=kinojoMyProfileUiState.bootstrapByCharacter[Number(kinojoMyProfileUiState.selectedCharacterId||0)]||null;
++    const replacing=current?.profile?.hasOverride===true;
++    if(upload){upload.hidden=false;upload.disabled=false;upload.textContent=replacing?'교체':'업로드';}
++    setMyInfoProfileStatus_(replacing?'미리보기를 확인한 뒤 기존 이미지를 안전하게 교체할 수 있습니다.':'미리보기를 확인한 뒤 업로드할 수 있습니다.','preview');
+     return true;
+   }
+   function setMyInfoProfileUploading_(value){
+     const uploading=value===true;
+     kinojoMyProfileUiState.uploading=uploading;
+     const upload=q('#kinojoMyInfoProfileUploadBtn');
+-    if(upload){upload.disabled=uploading;upload.textContent=uploading?'업로드 중...':'업로드';}
++    if(upload){
++      const current=kinojoMyProfileUiState.bootstrapByCharacter[Number(kinojoMyProfileUiState.selectedCharacterId||0)]||null;
++      const replacing=current?.profile?.hasOverride===true;
++      upload.disabled=uploading;
++      upload.textContent=uploading?(replacing?'교체 중...':'업로드 중...'):(replacing?'교체':'업로드');
++    }
+     const cancel=q('#kinojoMyInfoProfileCancelBtn');
+     if(cancel)cancel.disabled=uploading;
+     const select=q('#kinojoMyInfoProfileSelectBtn');
+@@ -1189,13 +1197,9 @@
+       setMyInfoProfileStatus_('현재 프로필 상태를 다시 확인하는 중입니다.','loading');
+       const latest=await loadMyInfoProfileBootstrap_(characterId,true);
+       if(!latest||latest.ok!==true)throw new Error('PROFILE_BOOTSTRAP_FAILED');
+-      if(latest.profile?.hasOverride===true){
+-        clearMyInfoProfilePreview_();
+-        renderMyInfoProfileCurrent_(latest);
+-        setMyInfoProfileStatus_('이미 사용자 이미지가 적용 중입니다. 이미지 교체는 4-F에서 활성화됩니다.','info');
+-        return false;
+-      }
+-      setMyInfoProfileStatus_('안전한 업로드 주소를 준비하는 중입니다.','loading');
++      const replacing=latest.profile?.hasOverride===true;
++      renderMyInfoProfileCurrent_(latest);
++      setMyInfoProfileStatus_(replacing?'교체용 안전 업로드 주소를 준비하는 중입니다.':'안전한 업로드 주소를 준비하는 중입니다.','loading');
+       const prepared=await client.invokeEdgeFunction('kinojo-member-profile',{
+         action:'profile-upload-prepare',
+         sessionToken:token,
+@@ -1211,11 +1215,12 @@
+       if(!prepared||prepared.ok!==true||upload?.bucket!=='kinojo-member-profile'||upload?.upsert!==false||upload?.mimeType!==mime||Number(upload?.sizeBytes)!==Number(file.size)||!objectPattern.test(objectPath)||!uploadUrl){
+         throw new Error('PROFILE_UPLOAD_PREPARE_INVALID');
+       }
+-      setMyInfoProfileStatus_('프로필 이미지를 업로드하는 중입니다.','loading');
++      setMyInfoProfileStatus_(replacing?'새 프로필 이미지를 업로드하는 중입니다. 기존 이미지는 아직 유지됩니다.':'프로필 이미지를 업로드하는 중입니다.','loading');
+       await uploadMyInfoProfileObject_(uploadUrl,file);
+-      setMyInfoProfileStatus_('업로드된 이미지를 확인하고 적용하는 중입니다.','loading');
++      setMyInfoProfileStatus_(replacing?'새 이미지를 검증한 뒤 안전하게 교체하는 중입니다.':'업로드된 이미지를 확인하고 적용하는 중입니다.','loading');
++      const completeAction=replacing?'profile-upload-replace-complete':'profile-upload-complete';
+       const completed=await client.invokeEdgeFunction('kinojo-member-profile',{
+-        action:'profile-upload-complete',
++        action:completeAction,
+         sessionToken:token,
+         characterId,
+         objectPath,
+@@ -1223,23 +1228,33 @@
+         sizeBytes:file.size
+       });
+       if(!completed||completed.ok!==true||String(completed.upload?.objectPath||'')!==objectPath||completed.upload?.activated!==true){
+-        throw new Error('PROFILE_UPLOAD_COMPLETE_INVALID');
++        throw new Error(replacing?'PROFILE_UPLOAD_REPLACE_INVALID':'PROFILE_UPLOAD_COMPLETE_INVALID');
++      }
++      if(replacing){
++        const replacement=completed.replacement||null;
++        if(replacement?.replaced!==true||String(replacement?.newObjectPath||'')!==objectPath){
++          throw new Error('PROFILE_UPLOAD_REPLACE_INVALID');
++        }
+       }
+       kinojoMyProfileUiState.bootstrapByCharacter[characterId]=completed;
+       clearMyInfoProfilePreview_();
+       renderMyInfoProfileCurrent_(completed);
+-      setMyInfoProfileStatus_('프로필 이미지가 적용되었습니다.','ready');
++      if(replacing&&completed.replacement?.cleanupRequired===true){
++        setMyInfoProfileStatus_('새 프로필 이미지로 교체되었습니다. 이전 이미지 정리는 서버에서 계속 처리합니다.','info');
++      }else{
++        setMyInfoProfileStatus_(replacing?'프로필 이미지가 안전하게 교체되었습니다.':'프로필 이미지가 적용되었습니다.','ready');
++      }
+       return true;
+     }catch(error){
+       const code=String(error?.code||error?.data?.code||error?.message||'');
+-      if(code.includes('PROFILE_OVERRIDE_EXISTS')){
++      if(code.includes('PROFILE_OVERRIDE_EXISTS')||code.includes('PROFILE_OVERRIDE_NOT_FOUND')){
+         delete kinojoMyProfileUiState.bootstrapByCharacter[characterId];
+-        const latest=await loadMyInfoProfileBootstrap_(characterId,true).catch(()=>null);
++        const latestState=await loadMyInfoProfileBootstrap_(characterId,true).catch(()=>null);
+         clearMyInfoProfilePreview_();
+-        if(latest)renderMyInfoProfileCurrent_(latest);
+-        setMyInfoProfileStatus_('이미 사용자 이미지가 적용 중입니다. 이미지 교체는 4-F에서 활성화됩니다.','info');
++        if(latestState)renderMyInfoProfileCurrent_(latestState);
++        setMyInfoProfileStatus_('다른 작업에서 프로필 상태가 변경되었습니다. 현재 상태를 다시 확인했으니 이미지를 다시 선택해 주세요.','info');
+       }else{
+-        setMyInfoProfileStatus_('이미지 업로드에 실패했습니다. 선택한 이미지는 그대로 유지됩니다. 다시 시도해 주세요.','error');
++        setMyInfoProfileStatus_('이미지 업로드 또는 교체에 실패했습니다. 현재 적용 이미지는 유지됩니다. 다시 시도해 주세요.','error');
+       }
+       console.warn('KINOJO My Info profile upload failed:',error);
+       return false;
