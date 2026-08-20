@@ -9,12 +9,20 @@
   if(window.__KINOJO_COMMON_NAVIGATION_INIT_DONE__) return;
   window.__KINOJO_COMMON_NAVIGATION_INIT_DONE__ = true;
 
+  let observer=null;
+  let syncing=false;
   function path_(){ return location.pathname.replace(/\\/g,'/'); }
   function mobile_(){ return /(^|\/)m(\/|$)/.test(path_()); }
   function tree_(){ return path_().includes('/legion-tree/'); }
   function base_(){ return mobile_()?'/m/':'/'; }
-
   function treeHref_(){ return tree_()?'./':base_()+'legion-tree/'; }
+
+  function isTreeLink_(item){
+    if(!(item instanceof HTMLAnchorElement)) return false;
+    const href=String(item.getAttribute('href')||'');
+    const text=String(item.textContent||'').trim();
+    return text==='레기온 트리'||href.includes('/legion-tree/')||href==='legion-tree/';
+  }
 
   function placeAfterRanking_(container,link){
     const anchors=Array.from(container.querySelectorAll('a'));
@@ -24,6 +32,20 @@
     });
     if(ranking) ranking.insertAdjacentElement('afterend',link);
     else container.appendChild(link);
+  }
+
+  function removeLegacyPreviewEntries_(){
+    if(tree_()) return;
+    document.querySelectorAll('a[href*="legion-tree/"]').forEach(item=>{
+      if(item.closest('#kinojoTopNav,#sideDrawer')) return;
+      if(item.classList.contains('mobile-feature-card')||item.classList.contains('eyebrow')||String(item.getAttribute('aria-label')||'').includes('레기온 트리 프리뷰')) item.remove();
+    });
+  }
+
+  function dedupeTreeLinks_(container,canonical){
+    Array.from(container.querySelectorAll('a')).filter(isTreeLink_).forEach(item=>{
+      if(item!==canonical) item.remove();
+    });
   }
 
   function ensureTopbarTree_(){
@@ -37,11 +59,10 @@
       link.textContent='레기온 트리';
       placeAfterRanking_(nav,link);
     }
+    dedupeTreeLinks_(nav,link);
     link.href=treeHref_();
     if(tree_()){
-      nav.querySelectorAll('.kinojo-top-nav-link.active').forEach(item=>{
-        if(item!==link){item.classList.remove('active');item.removeAttribute('aria-current');}
-      });
+      nav.querySelectorAll('.kinojo-top-nav-link.active').forEach(item=>{if(item!==link){item.classList.remove('active');item.removeAttribute('aria-current');}});
       link.classList.add('active');
       link.setAttribute('aria-current','page');
     }else{
@@ -61,6 +82,7 @@
       link.textContent='레기온 트리';
       placeAfterRanking_(nav,link);
     }
+    dedupeTreeLinks_(nav,link);
     link.href=treeHref_();
     if(tree_()){
       nav.querySelectorAll('a.active').forEach(item=>{if(item!==link){item.classList.remove('active');item.removeAttribute('aria-current');item.removeAttribute('aria-disabled');}});
@@ -85,18 +107,30 @@
   }
 
   function sync(){
-    const top=ensureTopbarTree_();
-    const drawer=ensureDrawerTree_();
-    syncTreeIdentity_();
-    return top&&drawer;
+    if(syncing) return false;
+    syncing=true;
+    try{
+      removeLegacyPreviewEntries_();
+      const top=ensureTopbarTree_();
+      const drawer=ensureDrawerTree_();
+      syncTreeIdentity_();
+      return top&&drawer;
+    }finally{syncing=false;}
+  }
+
+  function observeLateLegacyHooks_(){
+    if(observer||!document.body||!('MutationObserver' in window)) return;
+    observer=new MutationObserver(()=>sync());
+    observer.observe(document.body,{childList:true,subtree:true});
   }
 
   function start(){
-    if(sync()) return;
+    sync();
+    observeLateLegacyHooks_();
     let tries=0;
     const timer=setInterval(()=>{
       tries+=1;
-      if(sync()||tries>=20) clearInterval(timer);
+      if(sync()||tries>=30) clearInterval(timer);
     },100);
   }
 
