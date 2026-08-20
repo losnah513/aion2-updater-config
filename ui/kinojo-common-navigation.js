@@ -9,7 +9,6 @@
   if(window.__KINOJO_COMMON_NAVIGATION_INIT_DONE__) return;
   window.__KINOJO_COMMON_NAVIGATION_INIT_DONE__ = true;
 
-  let observer=null;
   let syncing=false;
   function path_(){ return location.pathname.replace(/\\/g,'/'); }
   function mobile_(){ return /(^|\/)m(\/|$)/.test(path_()); }
@@ -120,19 +119,15 @@
     }finally{syncing=false;}
   }
 
-  function observeLateLegacyHooks_(){
-    if(observer||!document.body||!('MutationObserver' in window)) return;
-    observer=new MutationObserver(()=>sync());
-    observer.observe(document.body,{childList:true,subtree:true});
-  }
-
   function start(){
     sync();
-    observeLateLegacyHooks_();
-    let tries=0;
+    let ticks=0;
+    let successTicks=0;
     const timer=setInterval(()=>{
-      tries+=1;
-      if(sync()||tries>=30) clearInterval(timer);
+      ticks+=1;
+      if(sync()) successTicks+=1;
+      else successTicks=0;
+      if(successTicks>=20||ticks>=80) clearInterval(timer);
     },100);
   }
 
