@@ -1,0 +1,47 @@
+name: KINOJO temporary Stage 4-G live readback
+
+on:
+  push:
+    paths:
+      - '.kinojo-stage4g-live'
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Verify source and deployed bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected='5ef77e866a357fe7a5fa6611f42fddb80b602abc'
+          node --check ui/kinojo-common-ui.js
+          test "$(git hash-object ui/kinojo-common-ui.js)" = "$expected"
+          ok=0
+          for attempt in $(seq 1 18); do
+            stamp="${{ github.run_id }}-${attempt}"
+            if curl -fsSL --retry 2 --connect-timeout 10 "https://kinojo.info/ui/kinojo-common-ui.js?kinojo4g=${stamp}" -o /tmp/live.js; then
+              live="$(git hash-object /tmp/live.js)"
+              echo "attempt=${attempt} live=${live}"
+              if [ "$live" = "$expected" ]; then ok=1; break; fi
+            fi
+            sleep 10
+          done
+          test "$ok" = 1
+          grep -q "profile-reset-official" /tmp/live.js
+          grep -q "kinojoMyInfoProfileResetBtn" /tmp/live.js
+      - name: Cleanup temporary live workflow
+        shell: bash
+        run: |
+          git config user.name "kinojo-stage-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git rm -- .github/workflows/kinojo-temp-4g-live.yml .kinojo-stage4g-live
+          git commit -m "Remove Stage 4-G live check"
+          git push origin HEAD:main
