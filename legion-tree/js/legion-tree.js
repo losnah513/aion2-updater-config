@@ -24,16 +24,22 @@
   function installPreviewNavigation(){
     const href=previewHref();
     const nav=q('#kinojoTopNav');
-    if(nav&&!nav.querySelector('[data-legion-tree-nav]')){
-      const link=document.createElement('a');
-      link.className='kinojo-top-nav-link active';
-      link.href='./';
-      link.setAttribute('aria-current','page');
-      link.dataset.legionTreeNav='true';
-      link.textContent='레기온 트리';
-      const ranking=Array.from(nav.querySelectorAll('a')).find(item=>/\/ranking\//.test(item.getAttribute('href')||''));
-      if(ranking)ranking.insertAdjacentElement('afterend',link);
-      else nav.appendChild(link);
+    if(nav){
+      nav.querySelectorAll('.kinojo-top-nav-link.active').forEach(item=>{
+        item.classList.remove('active');
+        item.removeAttribute('aria-current');
+      });
+      if(!nav.querySelector('[data-legion-tree-nav]')){
+        const link=document.createElement('a');
+        link.className='kinojo-top-nav-link active';
+        link.href='./';
+        link.setAttribute('aria-current','page');
+        link.dataset.legionTreeNav='true';
+        link.textContent='레기온 트리';
+        const ranking=Array.from(nav.querySelectorAll('a')).find(item=>/\/ranking\//.test(item.getAttribute('href')||''));
+        if(ranking)ranking.insertAdjacentElement('afterend',link);
+        else nav.appendChild(link);
+      }
     }
 
     const drawer=q('.kinojo-drawer-nav');
