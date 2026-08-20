@@ -1,0 +1,63 @@
+name: Verify Reference Prepare Temp
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/verify-reference-prepare-temp.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify kinojo-member-profile reference prepare
+        env:
+          EDGE_URL: https://josvoltpktvwysrasffq.supabase.co/functions/v1/kinojo-member-profile
+          PUBLISHABLE_KEY: sb_publishable__v26JGbKRFKGbU0SseU5Iw_qwIoHUAC
+          TEST_TOKEN: kws_6BPrepTest20260820_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+        run: |
+          set -euo pipefail
+          call() {
+            local body="$1" expected="$2" out code
+            out="$(mktemp)"
+            code="$(curl --silent --show-error --location --output "$out" --write-out '%{http_code}' \
+              --connect-timeout 10 --max-time 30 \
+              -H 'Content-Type: application/json' \
+              -H "apikey: $PUBLISHABLE_KEY" \
+              -H "Authorization: Bearer $PUBLISHABLE_KEY" \
+              --data "$body" "$EDGE_URL")"
+            jq 'if .upload then .upload.uploadUrl="<redacted>" else . end' "$out"
+            if [[ "$code" != "$expected" ]]; then
+              echo "Expected HTTP $expected, got $code" >&2
+              cat "$out" >&2
+              exit 1
+            fi
+            CALL_OUT="$out"
+          }
+
+          call '{"action":"health"}' 200
+          jq -e '.ok==true and .apiVersion=="1.8" and .referenceUploadPrepareContract=="1" and (.actions|index("reference-upload-prepare"))!=null and .image.referenceBucket=="kinojo-member-reference" and .image.referenceRetentionDays==7' "$CALL_OUT"
+
+          call "{\"action\":\"reference-upload-prepare\",\"sessionToken\":\"$TEST_TOKEN\",\"characterId\":111,\"slot\":\"FRONT\",\"mimeType\":\"image/png\",\"sizeBytes\":1234}" 200
+          jq -e '.ok==true and .contract=="member-reference-upload-prepare-api-v1" and .referenceUploadPrepareContract=="1" and .characterId==111 and .reference.slot=="FRONT" and .reference.retentionDays==7 and .upload.bucket=="kinojo-member-reference" and .upload.mimeType=="image/png" and .upload.sizeBytes==1234 and .upload.upsert==false and .upload.activation=="REFERENCE_UPLOAD_COMPLETE_REQUIRED" and (.upload.objectPath|test("^characters/111/FRONT/[0-9a-f]{32}\\.png$")) and (.upload.uploadUrl|test("/storage/v1/object/upload/sign/kinojo-member-reference/"))' "$CALL_OUT"
+
+          call "{\"action\":\"reference-upload-prepare\",\"sessionToken\":\"$TEST_TOKEN\",\"characterId\":111,\"slot\":\"SIDE\",\"mimeType\":\"image/png\",\"sizeBytes\":1234}" 400
+          jq -e '.code=="REFERENCE_SLOT_INVALID"' "$CALL_OUT"
+
+          call "{\"action\":\"reference-upload-prepare\",\"sessionToken\":\"$TEST_TOKEN\",\"characterId\":111,\"slot\":\"FRONT\",\"mimeType\":\"image/png\",\"sizeBytes\":5242881}" 400
+          jq -e '.code=="IMAGE_SIZE_INVALID"' "$CALL_OUT"
+
+          call "{\"action\":\"reference-upload-prepare\",\"sessionToken\":\"$TEST_TOKEN\",\"characterId\":111,\"slot\":\"FRONT\",\"mimeType\":\"image/gif\",\"sizeBytes\":1234}" 400
+          jq -e '.code=="IMAGE_MIME_TYPE_INVALID"' "$CALL_OUT"
+
+          call "{\"action\":\"reference-upload-prepare\",\"sessionToken\":\"$TEST_TOKEN\",\"characterId\":111,\"slot\":\"FRONT\",\"mimeType\":\"image/png\",\"sizeBytes\":1234,\"bucket\":\"meter-core-private\"}" 400
+          jq -e '.code=="CLIENT_STORAGE_SELECTOR_FORBIDDEN"' "$CALL_OUT"
+
+          call "{\"action\":\"reference-upload-prepare\",\"sessionToken\":\"$TEST_TOKEN\",\"characterId\":130,\"slot\":\"FRONT\",\"mimeType\":\"image/png\",\"sizeBytes\":1234}" 403
+          jq -e '.code=="CHARACTER_NOT_OWNED"' "$CALL_OUT"
+
+          call "{\"action\":\"reference-upload-prepare\",\"sessionToken\":\"$TEST_TOKEN\",\"characterId\":111,\"slot\":\"FRONT\",\"mimeType\":\"image/png\",\"sizeBytes\":1234,\"passKey\":\"TEST\"}" 400
+          jq -e '.code=="RAW_CREDENTIAL_FORBIDDEN"' "$CALL_OUT"
