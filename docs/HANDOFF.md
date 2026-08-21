@@ -6,8 +6,9 @@
 
 - GitHub: `losnah513/aion2-updater-config`
 - 운영 브랜치: `main`
-- 작업 시작 기준 운영 commit: `ec52d8d93c02a9645ab01b27ad163f6f1a2e177c`
-- 후속 작업 브랜치: `codex/my-info-modal-followup-b2`
+- 작업 시작 기준 운영 commit: `1e74b3cee933f0399824458c744b588c67b39667`
+- 내 정보 후속 작업 기록 브랜치: `codex/my-info-modal-followup-b2`
+- 현재 레기온 순위 작업 브랜치: `codex/legion-ranking-ui-20260821`
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 최신 일일 로그를 작업 규칙 원본으로 사용한다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
 
@@ -27,6 +28,15 @@
 - `kinojo-member-profile` 버킷은 공개, `kinojo-member-reference` 버킷은 비공개다.
 - 참고 이미지는 최대 7일 보존하며 cleanup cron은 `*/15 * * * *`로 활성화되어 있다.
 - 관리자 이미지 SQL 367/371은 `service_role` 전용이다.
+
+## 레기온 순위 통합 패널 UI
+
+- 이 작업은 WEB 표시·상호작용 변경이며 신규 SQL/RPC/Edge 계약을 추가하지 않는다. 순위는 기존 `kinojo_web_get_legion_ranking`, 로그인 캐릭터는 기존 `kinojo-member-profile`의 `characters` action을 재사용한다.
+- 데스크톱 PVE/PVP는 하나의 외곽 카드 안에서 좌우 분할되고 목록만 각각 독립 스크롤된다. 스크롤바는 숨기며, 하단의 비대화형 그라데이션은 남은 내용이 있을 때만 보이고 끝에서는 사라진다.
+- 모바일은 같은 패널을 PVE/PVP 탭으로 전환하고 각 목록의 스크롤 위치를 별도로 보존한다. 390×844와 320×800에서 가로 overflow 0을 확인했다.
+- 컴팩트 카드는 직업 텍스트를 제거하고 공통 직업 아이콘만 사용한다. 서버는 레기온 옆 `[지켈]` 형식이며, 전투력/아이템 레벨은 위아래 두 줄이다.
+- `내 캐릭터 순위 보기`는 Server가 반환한 소유 캐릭터를 정확한 `server_id + character_name`으로만 대조하고, 현재 20명 밖이면 기존 순위 페이지를 추가로 받아 해당 카드로 부드럽게 이동한다.
+- 1920×1080과 390×844 모두 카드 4장 전체와 5번째 카드 일부가 보이고, 고정 공지바가 목록을 덮지 않는다.
 
 ## 후속 12개 작업
 
@@ -100,5 +110,6 @@
 - 편집기 기본 검증: `node tests/my-info-image-editor.test.js`
 - 성역 이전 회귀: `node tests/sanctuary-roster-quick-edit-contract.test.js`
 - 공통 회귀: `node tests/web-shell-auth-contract.test.js`
+- 레기온 순위 UI 회귀: `node tests/ranking-ui-contract.test.js`
 - GitHub workflow는 공통 슬라이더·이미지 편집기 모듈의 구문 검사, 계약 테스트, Pages exact live readback을 포함한다.
 - 다음 작업은 **B-3 안전 업로드 연결만** 진행한다.

@@ -102,14 +102,12 @@
       + '<div class="ranking-rank">'+rankCrownHtml(item.rank)+'<strong class="ranking-rank-current">'+rankIcon(item.rank)+'</strong>'+rankChangeHtml(item)+'</div>'
       + '<div class="ranking-class-area">'+classIconHtml(item)+'</div>'
       + '<div class="ranking-character-meta">'
-      + '<div class="ranking-legion-line"><span class="ranking-legion">&lt;'+U.escapeHtml(item.rankingLegion)+'&gt;</span>'+actualLegionHtml(item)+'</div>'
+      + '<div class="ranking-legion-line"><span class="ranking-legion">&lt;'+U.escapeHtml(item.rankingLegion)+'&gt;</span><span class="ranking-server-tag">['+U.escapeHtml(item.server)+']</span>'+actualLegionHtml(item)+'</div>'
       + '<div class="ranking-name-line"><strong>'+U.escapeHtml(item.name)+'</strong>'+ownerBadge(item)+'</div>'
-      + '<div class="ranking-server-line">'+U.escapeHtml(item.server)+' · '+U.escapeHtml(item.className)+'</div>'
+      + '</div>'
       + '<div class="ranking-metrics">'
       + metricHtml(mode+' 전투력', power, item.powerDelta, 'power', mode)
-      + '<span class="ranking-metric-divider" aria-hidden="true"></span>'
       + metricHtml(mode+' 아이템 레벨', itemLevel, item.itemLevelDelta, 'item', mode)
-      + '</div>'
       + '</div>'
       + portraitHtml(item)
       + '</div>'

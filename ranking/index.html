@@ -12,9 +12,9 @@
 <meta property="og:description" content="PVE/PVP 전투력 순위를 한 화면에서 비교합니다."/>
 <meta property="og:url" content="https://kinojo.info/ranking/"/>
 <meta property="og:image" content="https://kinojo.info/assets/images/common/kinojo-og.jpg"/>
-<link href="./css/ranking.css?cache=2026081222" rel="stylesheet"/>
-<link href="./css/ranking-card.css?cache=2026080105" rel="stylesheet"/>
-<link href="./css/ranking-responsive.css?cache=2026081222" rel="stylesheet"/>
+<link href="./css/ranking.css?cache=2026082122" rel="stylesheet"/>
+<link href="./css/ranking-card.css?cache=2026082122" rel="stylesheet"/>
+<link href="./css/ranking-responsive.css?cache=2026082122" rel="stylesheet"/>
 <link href="../ui/kinojo-layout.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../ui/kinojo-components.css?cache=2026081218" rel="stylesheet"/>
 <link href="../ui/kinojo-common-ui.css?cache=2026081205" rel="stylesheet"/>
@@ -56,13 +56,14 @@
     </aside>
   </section>
 
-  <section class="ranking-status" id="rankingStatus">데이터 준비 중...</section>
+  <section class="ranking-mobile-mode-tabs" aria-label="전투력 기준 선택">
+    <button class="is-active" data-mobile-mode="PVE" type="button">PVE</button>
+    <button data-mobile-mode="PVP" type="button">PVP</button>
+  </section>
 
   <section class="ranking-board" id="rankingBoard" aria-live="polite">
     <div class="ranking-loading"><span class="kinojo-spinner"><span></span></span><span>레기온 전체 순위를 불러오는 중...</span></div>
   </section>
-
-  <section class="ranking-load-more" id="rankingLoadMore" aria-label="순위 더보기" hidden><button class="kinojo-btn secondary" id="rankingLoadMoreBtn" type="button">20명 더보기</button><span id="rankingLoadMoreInfo" aria-live="polite"></span></section>
 
   <footer class="footer common-footer"><div class="footer-links"><a href="../pages/about.html">사이트 소개</a><a href="../pages/terms.html">이용약관</a><a href="../pages/privacy.html">개인정보처리방침</a><a href="../pages/contact.html">아이디어 제안 및 건의</a></div><div class="footer-powered">Powered by AION2 · KINOJO 레기온 지원</div></footer>
 </main>
@@ -90,9 +91,9 @@
 <script src="../ui/kinojo-character-daevanion-bridge.js?cache=2026081002"></script>
 <script src="./js/ranking-utils.js?cache=2026080104"></script>
 <script src="./js/ranking-data.js?cache=2026080101"></script>
-<script src="./js/ranking-card.js?cache=2026080201"></script>
-<script src="./js/ranking-render.js?cache=2026081218"></script>
-<script src="./js/ranking-events.js?cache=2026080105"></script>
-<script src="./js/ranking-app.js?cache=2026080105"></script>
+<script src="./js/ranking-card.js?cache=2026082122"></script>
+<script src="./js/ranking-render.js?cache=2026082122"></script>
+<script src="./js/ranking-events.js?cache=2026082122"></script>
+<script src="./js/ranking-app.js?cache=2026082122"></script>
 </body>
 </html>
