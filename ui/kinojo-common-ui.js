@@ -670,7 +670,7 @@
     }
     const link=document.createElement('link');
     link.rel='stylesheet';
-    link.href='/ui/kinojo-my-info.css?cache=2026082105';
+    link.href='/ui/kinojo-my-info.css?cache=2026082106';
     link.dataset.kinojoMyInfoStyles='true';
     link.addEventListener('load',()=>guard?.remove(),{once:true});
     document.head.appendChild(link);
@@ -700,6 +700,8 @@
     document.body.appendChild(layer);
   }
   const kinojoMyCharactersState={token:'',data:null,promise:null,retryTimer:0};
+  const KINOJO_MY_INFO_PANEL_WIDTH=Object.freeze({min:352,max:420,fixed:228});
+  const kinojoMyInfoPanelWidthState={key:'',width:KINOJO_MY_INFO_PANEL_WIDTH.min,context:null};
   function myInfoSessionToken_(){
     const token=String(window.KinojoAuth?.getSession?.()?.token||'').trim();
     return /^kws_[A-Za-z0-9_-]{40,80}$/.test(token)?token:'';
@@ -716,25 +718,64 @@
     kinojoMyCharactersState.data=null;
     kinojoMyCharactersState.promise=null;
     kinojoMyCharactersState.retryTimer=0;
+    syncMyInfoPanelWidth_([]);
     setMyInfoCharacterStatus_('캐릭터 불러오는 중','idle');
   }
   function myInfoStatNumber_(value){
     const number=Number(value);
     return Number.isFinite(number)&&number>0?Math.round(number).toLocaleString('ko-KR'):'-';
   }
+  function fallbackMyInfoCharacterNameWidth_(value){
+    return Array.from(String(value||'')).reduce((width,character)=>{
+      const code=character.codePointAt(0)||0;
+      if((code>=0x1100&&code<=0x11ff)||(code>=0x2e80&&code<=0x9fff)||(code>=0xac00&&code<=0xd7af))return width+12;
+      if(/\s/u.test(character))return width+4;
+      return width+(/[A-Z0-9]/u.test(character)?7.5:7);
+    },0);
+  }
+  function syncMyInfoPanelWidth_(characters){
+    const names=(Array.isArray(characters)?characters:[])
+      .map(row=>String(row?.characterName||'').trim())
+      .filter(Boolean);
+    const key=names.join('\u001f');
+    const panel=q('#kinojoMyInfoPanel');
+    if(!panel)return KINOJO_MY_INFO_PANEL_WIDTH.min;
+    if(kinojoMyInfoPanelWidthState.key===key){
+      panel.style.setProperty('--kinojo-my-info-panel-width',kinojoMyInfoPanelWidthState.width+'px');
+      return kinojoMyInfoPanelWidthState.width;
+    }
+    let context=kinojoMyInfoPanelWidthState.context;
+    if(!context){
+      try{context=document.createElement('canvas').getContext('2d');}catch(_error){context=null;}
+      kinojoMyInfoPanelWidthState.context=context;
+    }
+    if(context)context.font='normal 950 12px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    const longest=names.reduce((width,name)=>Math.max(width,context?context.measureText(name).width:fallbackMyInfoCharacterNameWidth_(name)),0);
+    const measured=Math.ceil(KINOJO_MY_INFO_PANEL_WIDTH.fixed+longest);
+    const width=Math.min(KINOJO_MY_INFO_PANEL_WIDTH.max,Math.max(KINOJO_MY_INFO_PANEL_WIDTH.min,measured));
+    kinojoMyInfoPanelWidthState.key=key;
+    kinojoMyInfoPanelWidthState.width=width;
+    panel.style.setProperty('--kinojo-my-info-panel-width',width+'px');
+    panel.dataset.panelWidth=String(width);
+    panel.dataset.panelWidthSource=names.length?'character-name':'default';
+    return width;
+  }
   function renderMyInfoCharacters_(data){
     const host=q('#kinojoMyInfoCharacterList');
     if(!host)return;
     if(!data||data.ok!==true){
+      syncMyInfoPanelWidth_([]);
       setMyInfoCharacterStatus_('캐릭터 정보를 불러오지 못했습니다.','error');
       return;
     }
     if(data.ownerResolved!==true){
+      syncMyInfoPanelWidth_([]);
       setMyInfoCharacterStatus_('등록된 본캐 연결 정보를 확인할 수 없습니다.',String(data.code||'OWNER_NOT_RESOLVED'));
       return;
     }
     const characters=Array.isArray(data.characters)?data.characters.filter(row=>Number(row?.characterId||0)>0):[];
     if(!characters.length){
+      syncMyInfoPanelWidth_([]);
       setMyInfoCharacterStatus_('연결된 캐릭터가 없습니다.','empty');
       return;
     }
@@ -760,6 +801,7 @@
         +'</span>'
         +'</article>';
     }).join('');
+    syncMyInfoPanelWidth_(characters);
   }
   async function loadMyInfoCharacters_(force=false){
     const token=myInfoSessionToken_();

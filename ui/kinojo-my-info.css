@@ -1,4 +1,4 @@
-/* KINOJO My Info panel shell v20260820.14 */
+/* KINOJO My Info panel shell v20260821.15 */
 body.kinojo-my-info-open{overflow:hidden}
 .kinojo-my-info-layer{
   position:fixed!important;
@@ -14,9 +14,10 @@ body.kinojo-my-info-open{overflow:hidden}
 }
 .kinojo-my-info-layer.open{visibility:visible;opacity:1;pointer-events:auto;transition-delay:0s}
 .kinojo-my-info-panel{
+  --kinojo-my-info-panel-width:352px;
   position:absolute!important;
   inset:0 0 0 auto!important;
-  width:min(420px,92vw)!important;
+  width:min(var(--kinojo-my-info-panel-width),92vw)!important;
   height:auto!important;
   display:flex!important;
   flex-direction:column!important;
