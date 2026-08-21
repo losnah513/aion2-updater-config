@@ -1020,18 +1020,9 @@ body>.sanctuary-page-bar .summary-label{font-size:8.5px;line-height:1}
 .sanctuary-quick-add-card>header>div{gap:2px}.sanctuary-quick-add-card>header small{color:#2563eb;font-size:9px;letter-spacing:1px}.sanctuary-quick-add-card>header strong{color:#17233a;font-size:18px}.sanctuary-quick-add-card>header button{width:32px;height:32px;border:1px solid rgba(120,145,180,.28);border-radius:3px;background:#fff;color:#475569;font-size:22px}
 #sanctuaryQuickAddBody{gap:10px;padding:12px 16px 14px}.sanctuary-quick-target{color:#667085;font-size:10px}
 .sanctuary-quick-controls{display:grid;grid-template-columns:216px minmax(0,1fr);grid-template-rows:42px 42px;gap:10px 12px;align-items:center}
-.sanctuary-quick-scope{grid-row:1/3;align-self:stretch;width:clamp(180px,42vw,216px);display:grid;grid-template-rows:auto 44px auto;align-content:center;gap:2px;padding:8px 12px;border:1px solid rgba(120,145,180,.22);border-radius:10px;background:#f8fbff;box-sizing:border-box}
+.sanctuary-quick-scope{grid-row:1/3;align-self:stretch;width:clamp(180px,42vw,216px);grid-template-rows:auto 44px auto;align-content:center;gap:2px;padding:8px 12px;border:1px solid rgba(120,145,180,.22);border-radius:10px;background:#f8fbff;box-sizing:border-box}
 .sanctuary-quick-scope>strong{color:#334155;font-size:11px;font-weight:1000}
-#sanctuaryQuickScope{--quick-scope-progress:100%;appearance:none;-webkit-appearance:none;width:100%;height:44px;margin:0;background:transparent;cursor:grab;touch-action:none}
-#sanctuaryQuickScope:active{cursor:grabbing}
-#sanctuaryQuickScope::-webkit-slider-runnable-track{height:6px;border-radius:999px;background:linear-gradient(90deg,#2563eb 0 var(--quick-scope-progress),#e5e7eb var(--quick-scope-progress) 100%)}
-#sanctuaryQuickScope::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:-8px;border:3px solid #fff;border-radius:50%;background:#2563eb;box-shadow:0 1px 5px rgba(30,64,175,.32)}
-#sanctuaryQuickScope::-moz-range-track{height:6px;border:0;border-radius:999px;background:linear-gradient(90deg,#2563eb 0 var(--quick-scope-progress),#e5e7eb var(--quick-scope-progress) 100%)}
-#sanctuaryQuickScope::-moz-range-thumb{width:18px;height:18px;border:3px solid #fff;border-radius:50%;background:#2563eb;box-shadow:0 1px 5px rgba(30,64,175,.32)}
-#sanctuaryQuickScope:focus-visible{outline:0}#sanctuaryQuickScope:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 4px rgba(37,99,235,.18),0 1px 5px rgba(30,64,175,.32)}
-#sanctuaryQuickScope.is-snapping::-webkit-slider-runnable-track,#sanctuaryQuickScope.is-snapping::-moz-range-track{transition:background .16s ease}
-.sanctuary-quick-scope>div{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:-2px}
-.sanctuary-quick-scope>div button{min-height:22px;padding:0;border:0;border-radius:3px;background:transparent;color:#94a3b8;font-size:10px;font-weight:900;cursor:pointer}.sanctuary-quick-scope>div button.is-active{background:#eaf2ff;color:#1d4ed8}.sanctuary-quick-scope>div button:focus-visible{outline:2px solid rgba(37,99,235,.35);outline-offset:1px}
+.sanctuary-quick-scope>.kinojo-range__control{width:100%}
 .sanctuary-quick-row{grid-template-columns:180px minmax(128px,1fr) 60px;gap:8px;height:42px}
 .sanctuary-quick-row.is-disabled{opacity:.46;filter:saturate(.55)}
 .sanctuary-quick-row>input,.sanctuary-quick-row>select{width:180px;height:42px;border:1px solid rgba(120,145,180,.3);border-radius:3px;background:#fff;color:#1e2f4a;padding:0 11px;font-size:12px;font-weight:850}
@@ -1077,4 +1068,4 @@ body>.sanctuary-page-bar .summary-label{font-size:8.5px;line-height:1}
 @media(max-width:520px){
   .sanctuary-quick-add-card{width:calc(100vw - 12px)}#sanctuaryQuickAddBody{padding:10px 12px 12px}.sanctuary-quick-controls{grid-template-rows:auto 42px 42px}.sanctuary-quick-row{height:42px;grid-template-columns:minmax(100px,180px) minmax(112px,1fr) 54px;grid-template-rows:42px;gap:6px}.sanctuary-quick-row>input,.sanctuary-quick-row>select{grid-column:auto;grid-row:auto;width:100%;min-width:0}.sanctuary-quick-row>button,.sanctuary-quick-row>button:last-child{grid-column:auto;grid-row:auto;min-width:0;padding:0 6px;font-size:10px}
 }
-@media(prefers-reduced-motion:reduce){.sanctuary-roster-force-card.is-owner-conflict{animation:none}.sanctuary-roster-modal.is-dragging .sanctuary-roster-slot,.sanctuary-roster-drag-ghost,#sanctuaryQuickScope.is-snapping{transition:none}}
+@media(prefers-reduced-motion:reduce){.sanctuary-roster-force-card.is-owner-conflict{animation:none}.sanctuary-roster-modal.is-dragging .sanctuary-roster-slot,.sanctuary-roster-drag-ghost{transition:none}}

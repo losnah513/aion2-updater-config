@@ -21,6 +21,13 @@ KINOJO INFO GitHub Pages upload package.
 - A-2 provides three original, text-free SVG reference guides under `assets/images/my-info/guides/`: FRONT and BACK use the 2:3 output frame, and UPPER_BODY uses the 4:5 output frame. The SVGs expose accessible titles/descriptions and contain no script, external reference, or embedded raster data.
 - `guideAssetPath` in the shared image contract owns each reference slot's asset path. PROFILE intentionally has no pre-attachment reference asset in this three-guide set.
 
+## KINOJO shared range control
+
+- `ui/kinojo-range-control.js` owns the shared continuous, stepped, thin, and interval range behavior. `ui/kinojo-components.css` owns the track, active segment, thumb, focus, disabled, forced-colors, reduced-motion, and mobile hit-area visuals.
+- Controls use a `[data-kinojo-range]` root and `[data-kinojo-range-input]` native range inputs. Stepped controls declare stops and accessible labels with `data-kinojo-range-stops` and `data-kinojo-range-labels`; interval controls use `from` and `to` handles.
+- The controller exposes `enhance`, `enhanceAll`, `sync`, `setValue`, and `setValues`, and emits bubbling `kinojo-range-input` and `kinojo-range-change` events. Page code consumes those events and owns only feature state and layout.
+- The Sanctuary quick-add search scope is the first migrated consumer. Its former track, thumb, snapping, button-state, and keyboard implementations were removed from page CSS/JS.
+
 ## Character detail modal
 
 - The shared modal lives in `ui/kinojo-character-reaction.*` and is used by Hall of Fame, ranking, and sanctuary pages on PC and mobile.

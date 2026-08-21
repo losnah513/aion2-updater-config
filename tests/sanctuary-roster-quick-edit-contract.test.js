@@ -18,7 +18,8 @@ for (const token of [
   'sanctuaryQuickScope',
   "const QUICK_SCOPES=['WAITLIST','LEGION','ALL']",
   'commitQuickScope',
-  'quick-scope-progress',
+  'data-kinojo-range-mode="steps"',
+  'window.KinojoRangeControl?.setValue',
   '해당 캐릭터로 검색',
   '이 조건으로 검색',
   "rosterAction('SEARCH'",
@@ -43,9 +44,7 @@ for (const token of [
   'background:rgba(255,255,255,.97)',
   'width:clamp(180px,42vw,216px)',
   'grid-template-columns:minmax(100px,180px) minmax(112px,1fr) 54px',
-  '#sanctuaryQuickScope{--quick-scope-progress:100%',
-  'height:44px',
-  'width:22px;height:22px',
+  '.sanctuary-quick-scope>.kinojo-range__control{width:100%}',
   '.sanctuary-roster-force-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))',
   '@media(max-width:1180px){.sanctuary-roster-force-grid{grid-template-columns:repeat(2,minmax(0,1fr))',
   '.sanctuary-roster-force-card.is-owner-conflict',
@@ -64,12 +63,17 @@ for (const token of [
 for (const entry of ['sanctuary/index.html', 'm/sanctuary/index.html']) {
   const html = read(entry);
   assert.ok(html.includes('id="forceEditBtn"'), `${entry}: global force editor button is missing`);
-  assert.ok(html.includes('sanctuary.css?cache=2026082102'), `${entry}: sanctuary CSS cache key is stale`);
-  assert.ok(html.includes('sanctuary-editor.js?cache=2026082102'), `${entry}: editor cache key is stale`);
+  assert.ok(html.includes('sanctuary.css?cache=2026082103'), `${entry}: sanctuary CSS cache key is stale`);
+  assert.ok(html.includes('kinojo-components.css?cache=2026082103'), `${entry}: shared component CSS is missing`);
+  assert.ok(html.includes('kinojo-range-control.js?cache=2026082103'), `${entry}: shared range controller is missing`);
+  assert.ok(html.includes('sanctuary-editor.js?cache=2026082103'), `${entry}: editor cache key is stale`);
 }
 
 assert.equal(editor.includes('sanctuaryQuickLegionOnly'), false, 'Legacy legion checkbox must be retired');
 assert.equal(editor.includes('sanctuaryQuickWaitlistOnly'), false, 'Legacy waitlist checkbox must be retired');
+assert.equal(editor.includes('--quick-scope-progress'), false, 'Page editor must not own shared range visuals');
+assert.equal(editor.includes('updateQuickScopeSlider'), false, 'Page editor must not duplicate shared range behavior');
+assert.equal(style.includes('::-webkit-slider-thumb'), false, 'Page CSS must not own shared range thumb visuals');
 assert.ok(style.lastIndexOf('background:rgba(255,255,255,.97)') > style.indexOf('background:linear-gradient(145deg,rgba(13,31,31,.92),rgba(11,22,35,.88))'), 'KINOJO white quick-add override must win over the retired dark surface');
 
 console.log('KINOJO sanctuary roster quick-add and global force editor contract: PASS');
