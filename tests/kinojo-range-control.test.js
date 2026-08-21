@@ -62,7 +62,7 @@ for(const entry of ['sanctuary/index.html', 'm/sanctuary/index.html']){
   const html = read(entry);
   assert.ok(html.includes('kinojo-components.css?cache=2026082103'), `${entry}: component CSS is not pinned`);
   assert.ok(html.includes('kinojo-range-control.js?cache=2026082103'), `${entry}: range controller is not pinned`);
-  assert.ok(html.indexOf('kinojo-range-control.js?cache=2026082103') < html.indexOf('sanctuary-editor.js?cache=2026082103'), `${entry}: range controller must load before its consumer`);
+  assert.ok(html.indexOf('kinojo-range-control.js?cache=2026082103') < html.indexOf('sanctuary-editor.js?cache=2026082104'), `${entry}: range controller must load before its consumer`);
 }
 
 console.log('KINOJO shared range control contract: PASS');

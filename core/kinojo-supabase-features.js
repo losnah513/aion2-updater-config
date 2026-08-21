@@ -1190,7 +1190,7 @@
   async function getSanctuaryRosterData(id){
     const passKey = optionalServerSessionCredential();
     const [data,badgeMap]=await Promise.all([
-      rpc('kinojo_web_get_sanctuary_v374', { p_sanctuary_code:String(id || '') || null, p_pass_key:passKey || null }),
+      rpc('kinojo_web_get_sanctuary_v376', { p_sanctuary_code:String(id || '') || null, p_pass_key:passKey || null }),
       getIdentityBadges().catch(()=>new Map())
     ]);
     return decorateIdentityBadges(data,badgeMap);
@@ -1367,8 +1367,9 @@
   }
 
   async function saveSanctuaryData(extra={}){
-    assertAdmin();
-    return rpc('kinojo_web_save_sanctuary', { p_payload:extra || {} });
+    const sessionToken=String(extra.sessionToken||extra.session_token||optionalServerSessionCredential()||'').trim();
+    if(!sessionToken) throw new Error('로그인 세션을 확인할 수 없습니다. 다시 로그인해 주세요.');
+    return rpc('kinojo_web_save_sanctuary_v376', { p_payload:Object.assign({},extra||{},{sessionToken}) });
   }
 
   async function sanctuaryRosterAction(command, extra={}){
