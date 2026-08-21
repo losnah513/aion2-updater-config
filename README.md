@@ -24,12 +24,14 @@ KINOJO INFO GitHub Pages upload package.
 - The editor output is WebP at quality `0.90`, with metadata removed. Only the edited result may be uploaded; the original screenshot stays in the browser.
 - Source selection remains JPEG, PNG, or WebP up to 5 MiB. Profile output is a public profile override; FRONT/BACK/UPPER_BODY remain private references with the existing maximum seven-day retention.
 - Before file selection, FRONT must request the full head, both hands, and feet; BACK must include hair, outfit back, and heels; UPPER_BODY must include the full head through the waist and both shoulders. A shared warning explains that overlapping chat/HUD/skill UI cannot be removed by the editor.
-- This A-1 contract is the follow-up target. Crop rendering and Server pixel enforcement are enabled only in the later editor/upload stages, so the existing production upload path is not changed prematurely.
+- This follow-up contract remains separate from the existing production upload path until B-3 connects the edited result to the Stage 1-8 upload flow.
 - A-2 provides three original, text-free SVG reference guides under `assets/images/my-info/guides/`: FRONT and BACK use the 2:3 output frame, and UPPER_BODY uses the 4:5 output frame. The SVGs expose accessible titles/descriptions and contain no script, external reference, or embedded raster data.
 - `guideAssetPath` in the shared image contract owns each reference slot's asset path. PROFILE intentionally has no pre-attachment reference asset in this three-guide set.
 - B-1 adds `ui/kinojo-my-info-image-editor.js` as the shared pre-attachment guide-card and editor viewport foundation. It fixes the editing frame to each slot's contract ratio, overlays the A-2 SVG guide, and supports drag, zoom, rotation, reset, keyboard-safe dismissal, focus containment, and object-URL cleanup.
-- The editor reuses `ui/kinojo-range-control.js` for zoom and rotation. Its confirmed state is explicitly `previewOnly`; B-1 does not render pixels, encode WebP, call Supabase, or replace the existing Stage 1-8 upload path. Those connections remain B-2 and B-3 work.
-- `tests/my-info-image-editor-harness.html` is the visual fixture for the three reference cards and the fixed guide frame.
+- The editor reuses `ui/kinojo-range-control.js` for zoom and rotation. B-2 renders the selected transform into an exact-size canvas, encodes only the edited pixels as metadata-free WebP at quality `0.90`, and returns a browser-memory `Blob`/`File` result. The A-2 guide overlay is never included in the output.
+- Output quality is estimated from effective source pixels per output pixel. Below `1.00` shows a caution and below `0.75` shows a low-resolution warning; neither warning blocks export. Desktop and mobile frames keep the slot ratio while presenting the warning and controls.
+- A B-2 result is `outputReady` but still `uploadConnected: false`. It performs no fetch, Supabase, Storage, or session-token work; B-3 alone will connect the edited WebP to the existing safe upload path.
+- `tests/my-info-image-editor-harness.html` is the visual fixture for the three reference cards, fixed guide frame, quality warning, and exact WebP output dimensions.
 
 ## KINOJO shared range control
 

@@ -1,7 +1,8 @@
 /*
  * KINOJO My Info image editor foundation
  * B-1 owns guide cards, the fixed guide frame, and reversible viewport transforms.
- * Pixel rendering and upload remain B-2/B-3 responsibilities.
+ * B-2 owns exact crop rendering, metadata-free WebP output, and resolution warnings.
+ * Upload remains a B-3 responsibility.
  */
 (function(root, factory){
   const api = factory(root);
@@ -78,6 +79,62 @@
       y: sine * clampedAxisX + cosine * clampedAxisY,
       scale,
       minimumScale
+    });
+  }
+
+  function outputMatrix(state, definition){
+    const frameWidth = Math.max(1, finite(state?.frameWidth, 1));
+    const frameHeight = Math.max(1, finite(state?.frameHeight, 1));
+    const outputWidth = Math.max(1, finite(definition?.outputWidth, 1));
+    const outputHeight = Math.max(1, finite(definition?.outputHeight, 1));
+    const frameScaleX = outputWidth / frameWidth;
+    const frameScaleY = outputHeight / frameHeight;
+    const sourceScale = Math.max(0, finite(state?.scale));
+    const angle = radians(state?.rotation);
+    const cosine = Math.cos(angle);
+    const sine = Math.sin(angle);
+    return Object.freeze({
+      a: frameScaleX * sourceScale * cosine,
+      b: frameScaleY * sourceScale * sine,
+      c: -frameScaleX * sourceScale * sine,
+      d: frameScaleY * sourceScale * cosine,
+      e: outputWidth / 2 + frameScaleX * finite(state?.x),
+      f: outputHeight / 2 + frameScaleY * finite(state?.y),
+      frameScaleX,
+      frameScaleY,
+      outputWidth,
+      outputHeight
+    });
+  }
+
+  function qualityReport(state, definition, outputContract = {}){
+    const matrix = outputMatrix(state, definition);
+    const sourceScale = Math.max(0.000001, finite(state?.scale, 0.000001));
+    const outputPixelsPerSourcePixel = Math.max(matrix.frameScaleX * sourceScale, matrix.frameScaleY * sourceScale);
+    const sourcePixelsPerOutputPixel = 1 / outputPixelsPerSourcePixel;
+    const warning = outputContract.qualityWarning || {};
+    const cautionBelow = Math.max(0.01, finite(warning.cautionBelowSourcePixelsPerOutputPixel, 1));
+    const lowBelow = clamp(finite(warning.lowBelowSourcePixelsPerOutputPixel, 0.75), 0.01, cautionBelow);
+    const thresholdEpsilon = 0.005;
+    let level = 'GOOD';
+    let title = '출력 해상도에 충분한 원본입니다.';
+    let message = '현재 구도는 원본 픽셀을 확대하지 않고 결과 크기로 변환합니다.';
+    if(sourcePixelsPerOutputPixel + thresholdEpsilon < lowBelow){
+      level = 'LOW';
+      title = '원본 해상도가 많이 부족합니다.';
+      message = '현재 구도는 약 ' + Math.round(100 / sourcePixelsPerOutputPixel) + '% 확대 출력되어 선명도가 크게 떨어질 수 있습니다.';
+    }else if(sourcePixelsPerOutputPixel + thresholdEpsilon < cautionBelow){
+      level = 'CAUTION';
+      title = '원본 해상도가 조금 부족합니다.';
+      message = '현재 구도는 약 ' + Math.round(100 / sourcePixelsPerOutputPixel) + '% 확대 출력됩니다. 가능하면 더 큰 원본을 선택해 주세요.';
+    }
+    return Object.freeze({
+      level,
+      title,
+      message,
+      sourcePixelsPerOutputPixel: Number(sourcePixelsPerOutputPixel.toFixed(4)),
+      outputPixelsPerSourcePixel: Number(outputPixelsPerSourcePixel.toFixed(4)),
+      blocksExport: warning.blocksExport === true
     });
   }
 
@@ -160,6 +217,8 @@
     let drag = null;
     let openOptions = {};
     let state = null;
+    let sourceName = '';
+    let openSequence = 0;
 
     function snapshot(){
       if(!state) return null;
@@ -175,6 +234,9 @@
         imageHeight: state.imageHeight,
         frameWidth: state.frameWidth,
         frameHeight: state.frameHeight,
+        quality: qualityReport(state, contract.slots[state.slot], contract.output),
+        outputReady: false,
+        uploadConnected: false,
         previewOnly: true
       });
     }
@@ -193,8 +255,16 @@
     function updateFrameGeometry(){
       if(!state || !frame) return;
       const bounds = frame.getBoundingClientRect();
-      state.frameWidth = Math.max(1, bounds.width);
-      state.frameHeight = Math.max(1, bounds.height);
+      state.frameWidth = Math.max(1, frame.clientWidth || bounds.width);
+      state.frameHeight = Math.max(1, frame.clientHeight || bounds.height);
+    }
+
+    function updateQualityUi(report){
+      const host = element?.querySelector?.('[data-kinojo-image-editor-quality]');
+      if(!host || !report) return;
+      host.dataset.state = report.level.toLowerCase();
+      host.querySelector('[data-kinojo-image-editor-quality-title]').textContent = report.title;
+      host.querySelector('[data-kinojo-image-editor-quality-message]').textContent = report.message;
     }
 
     function constrain(){
@@ -221,6 +291,7 @@
       constrain();
       sourceImage.style.transform = 'translate(-50%, -50%) translate(' + state.x.toFixed(3) + 'px, ' + state.y.toFixed(3) + 'px) rotate(' + state.rotation.toFixed(3) + 'deg) scale(' + state.scale.toFixed(6) + ')';
       const next = snapshot();
+      updateQualityUi(next.quality);
       emit('kinojo-my-info-editor-change', Object.assign({source}, next));
       openOptions.onChange?.(next, source);
       return next;
@@ -255,14 +326,82 @@
       return render(source);
     }
 
+    function setBusy(value){
+      if(!element) return;
+      const busy = value === true;
+      element.setAttribute('aria-busy', busy ? 'true' : 'false');
+      element.classList.toggle('is-exporting', busy);
+      [zoomInput, rotationInput, element.querySelector('[data-kinojo-image-editor-reset]')].forEach(control => {
+        if(control) control.disabled = busy;
+      });
+      const confirm = element.querySelector('[data-kinojo-image-editor-confirm]');
+      if(confirm){
+        confirm.disabled = busy;
+        confirm.textContent = busy ? 'WebP 만드는 중…' : 'WebP 결과 만들기';
+      }
+    }
+
+    function canvasToBlob(canvas, mimeType, quality){
+      if(typeof canvas?.toBlob !== 'function') return Promise.reject(new Error('CANVAS_BLOB_NOT_SUPPORTED'));
+      return new Promise((resolve, reject) => canvas.toBlob(blob => {
+        if(!blob) return reject(new Error('IMAGE_ENCODE_FAILED'));
+        if(String(blob.type || '').toLowerCase() !== String(mimeType || '').toLowerCase()) return reject(new Error('WEBP_NOT_SUPPORTED'));
+        resolve(blob);
+      }, mimeType, quality));
+    }
+
+    async function exportImage(){
+      if(!state || !sourceImage?.complete || !sourceImage.naturalWidth) throw new Error('IMAGE_NOT_READY');
+      render('export');
+      const definition = contract.slots[state.slot];
+      const output = contract.output;
+      const canvas = document.createElement('canvas');
+      canvas.width = definition.outputWidth;
+      canvas.height = definition.outputHeight;
+      const context = canvas.getContext('2d', {alpha: true});
+      if(!context) throw new Error('CANVAS_CONTEXT_UNAVAILABLE');
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = 'high';
+      const matrix = outputMatrix(state, definition);
+      context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f);
+      context.drawImage(sourceImage, -state.imageWidth / 2, -state.imageHeight / 2, state.imageWidth, state.imageHeight);
+      const blob = await canvasToBlob(canvas, output.mimeType, output.quality);
+      const quality = qualityReport(state, definition, output);
+      const filename = 'kinojo-' + state.slot.toLowerCase().replace(/_/g, '-') + '.' + output.extension;
+      const file = typeof root?.File === 'function'
+        ? new root.File([blob], filename, {type: output.mimeType, lastModified: Date.now()})
+        : null;
+      return Object.freeze({
+        slot: state.slot,
+        blob,
+        file,
+        filename,
+        mimeType: output.mimeType,
+        extension: output.extension,
+        width: definition.outputWidth,
+        height: definition.outputHeight,
+        quality,
+        encodingQuality: output.quality,
+        metadataStripped: output.stripMetadata === true,
+        originalUploaded: false,
+        sourceName,
+        transform: snapshot(),
+        outputReady: true,
+        uploadConnected: false,
+        previewOnly: false
+      });
+    }
+
     function focusable(){
       return Array.from(element?.querySelectorAll?.('button:not([disabled]),input:not([disabled]),[tabindex]:not([tabindex="-1"])') || []);
     }
 
     function close(reason = 'cancel'){
       if(!element || element.hidden) return;
+      openSequence += 1;
       element.hidden = true;
       document.body.classList.remove('kinojo-image-editor-open');
+      setBusy(false);
       releaseObjectUrl();
       drag = null;
       const detail = Object.assign({reason}, snapshot() || {});
@@ -301,6 +440,10 @@
         '        <p id="kinojo-image-editor-guidance" data-kinojo-image-editor-guidance></p>',
         '        <small data-kinojo-image-editor-notice></small>',
         '      </div>',
+        '      <div class="kinojo-image-editor__quality" data-kinojo-image-editor-quality data-state="good" role="status" aria-live="polite">',
+        '        <strong data-kinojo-image-editor-quality-title>원본 해상도를 확인하는 중입니다.</strong>',
+        '        <span data-kinojo-image-editor-quality-message></span>',
+        '      </div>',
         '      <label class="kinojo-image-editor__control-label" for="kinojo-image-editor-zoom">확대 <output data-kinojo-range-output></output></label>',
         '      <div class="kinojo-range" data-kinojo-range data-kinojo-range-mode="continuous" data-kinojo-range-unit="×" data-kinojo-image-editor-zoom>',
         '        <div class="kinojo-range__control"><input id="kinojo-image-editor-zoom" class="kinojo-range__input" data-kinojo-range-input type="range" min="1" max="3" step="0.01" value="1" aria-label="사진 확대"></div>',
@@ -314,7 +457,7 @@
         '  </div>',
         '  <footer class="kinojo-image-editor__footer">',
         '    <button class="kinojo-image-editor__button kinojo-image-editor__button--secondary" type="button" data-kinojo-image-editor-close>취소</button>',
-        '    <button class="kinojo-image-editor__button kinojo-image-editor__button--primary" type="button" data-kinojo-image-editor-confirm>구도 적용</button>',
+        '    <button class="kinojo-image-editor__button kinojo-image-editor__button--primary" type="button" data-kinojo-image-editor-confirm>WebP 결과 만들기</button>',
         '  </footer>',
         '</section>'
       ].join('');
@@ -329,14 +472,37 @@
       rotationInput = rotationControl.querySelector('[data-kinojo-range-input]');
       root?.KinojoRangeControl?.enhanceAll?.(element);
 
-      element.addEventListener('click', event => {
-        if(event.target.closest?.('[data-kinojo-image-editor-close]')) close('cancel');
-        if(event.target.closest?.('[data-kinojo-image-editor-reset]')) reset();
+      element.addEventListener('click', async event => {
+        if(event.target.closest?.('[data-kinojo-image-editor-close]')){
+          close('cancel');
+          return;
+        }
+        if(event.target.closest?.('[data-kinojo-image-editor-reset]')){
+          reset();
+          return;
+        }
         if(event.target.closest?.('[data-kinojo-image-editor-confirm]')){
-          const detail = snapshot();
-          emit('kinojo-my-info-editor-confirm', detail);
-          openOptions.onConfirm?.(detail);
-          close('confirm');
+          const sequence = openSequence;
+          setBusy(true);
+          try{
+            const result = await exportImage();
+            if(sequence !== openSequence || element.hidden) return;
+            emit('kinojo-my-info-editor-confirm', result);
+            await openOptions.onConfirm?.(result);
+            if(sequence === openSequence && !element.hidden) close('confirm');
+          }catch(error){
+            if(sequence !== openSequence || element.hidden) return;
+            const host = element.querySelector('[data-kinojo-image-editor-quality]');
+            if(host){
+              host.dataset.state = 'error';
+              host.querySelector('[data-kinojo-image-editor-quality-title]').textContent = 'WebP 결과를 만들지 못했습니다.';
+              host.querySelector('[data-kinojo-image-editor-quality-message]').textContent = '브라우저의 이미지 변환 지원을 확인한 뒤 다시 시도해 주세요.';
+            }
+            emit('kinojo-my-info-editor-error', {code: String(error?.message || 'IMAGE_EXPORT_FAILED')});
+            openOptions.onError?.(error);
+          }finally{
+            if(sequence === openSequence && !element.hidden) setBusy(false);
+          }
         }
       });
       zoomControl.addEventListener('kinojo-range-input', event => setTransform({zoom: event.detail.value}, 'zoom'));
@@ -392,6 +558,7 @@
 
     async function open(nextOptions = {}){
       ensureElement();
+      const sequence = ++openSequence;
       const slot = normalizeSlot(nextOptions.slot, contract);
       const definition = contract.slots[slot];
       const sourceUrl = nextOptions.file
@@ -400,10 +567,13 @@
       if(!sourceUrl) throw new TypeError('A file or sourceUrl is required to open the image editor.');
 
       releaseObjectUrl();
+      state = null;
       if(nextOptions.file) objectUrl = sourceUrl;
       openOptions = nextOptions;
+      sourceName = String(nextOptions.file?.name || nextOptions.sourceName || 'browser-source').slice(0, 120);
       previousFocus = document.activeElement;
       element.hidden = false;
+      setBusy(false);
       document.body.classList.add('kinojo-image-editor-open');
       element.querySelector('[data-kinojo-image-editor-title]').textContent = definition.label + ' 구도 맞추기';
       element.querySelector('[data-kinojo-image-editor-output]').textContent = '결과 기준 ' + definition.outputWidth + '×' + definition.outputHeight + ' · ' + definition.aspectWidth + ':' + definition.aspectHeight;
@@ -420,6 +590,7 @@
       try{
         await loadImage(sourceUrl);
         await new Promise(resolve => (root?.requestAnimationFrame || root?.setTimeout || setTimeout)(resolve));
+        if(sequence !== openSequence || element.hidden) throw new Error('IMAGE_OPEN_CANCELLED');
         state = {
           slot,
           x: 0,
@@ -438,7 +609,7 @@
         emit('kinojo-my-info-editor-open', snapshot());
         return snapshot();
       }catch(error){
-        close('load-error');
+        if(sequence === openSequence && !element.hidden) close('load-error');
         throw error;
       }
     }
@@ -450,7 +621,7 @@
       state = null;
     }
 
-    return Object.freeze({open, close, reset, setTransform, getState: snapshot, destroy, getElement: ensureElement});
+    return Object.freeze({open, close, reset, setTransform, exportImage, getState: snapshot, destroy, getElement: ensureElement});
   }
 
   function defaultEditor(options = {}){
@@ -463,11 +634,17 @@
     open(options){ return defaultEditor(options).open(options); },
     close(reason){ return singleton?.close(reason); },
     getState(){ return singleton?.getState() || null; },
+    exportImage(){
+      if(!singleton) return Promise.reject(new Error('IMAGE_EDITOR_NOT_OPEN'));
+      return singleton.exportImage();
+    },
     guideCard,
     renderGuideCards,
     normalizeSlot,
     coverScale,
     clampTranslation,
+    outputMatrix,
+    qualityReport,
     constants: Object.freeze({EDITOR_SELECTOR, SLOT_KEYS, ZOOM_MIN, ZOOM_MAX, ROTATION_MIN, ROTATION_MAX})
   };
   return Object.freeze(api);
