@@ -111,6 +111,12 @@ jobs:
             "admin/js/admin-system.js"
             "admin/js/admin-bootstrap.js"
             "meter/js/meter-app.js"
+            "ranking/js/ranking-utils.js"
+            "ranking/js/ranking-data.js"
+            "ranking/js/ranking-card.js"
+            "ranking/js/ranking-render.js"
+            "ranking/js/ranking-events.js"
+            "ranking/js/ranking-app.js"
           )
 
           for path in "${js_files[@]}"; do
@@ -126,6 +132,7 @@ jobs:
           node tests/sanctuary-waitlist-contract.test.js
           node tests/staged-page-contract.test.js
           node tests/meter-presence-log-contract.test.js
+          node tests/ranking-ui-contract.test.js
 
           python3 <<'PY'
           from pathlib import Path

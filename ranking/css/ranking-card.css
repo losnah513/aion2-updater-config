@@ -1,53 +1,66 @@
 /* ===========================================================
-   KINOJO Ranking Character Card - 2026080105
-   역할: 레기온 순위 캐릭터 카드의 구조·프로필·지표·성장 코멘트만 관리합니다.
-   규칙: 검색/필터/패널은 ranking.css, 반응형 분기는 ranking-responsive.css가 소유합니다.
+   KINOJO Ranking Character Card - 20260821 Compact Rows
+   역할: 독립 스크롤 목록과 컴팩트 캐릭터 카드만 관리합니다.
 =========================================================== */
 .ranking-card-list{
+  box-sizing:border-box;
+  height:100%;
+  min-height:0;
   display:flex;
   flex-direction:column;
   gap:7px;
-  padding:7px;
-  overflow:hidden;
-  border:1px solid var(--ranking-line);
-  border-radius:20px;
-  background:rgba(255,255,255,.84);
-  box-shadow:0 12px 40px rgba(31,47,79,.06);
+  padding:8px 8px 46px;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-width:none;
+  -ms-overflow-style:none;
+  scroll-behavior:smooth;
 }
+.ranking-card-list::-webkit-scrollbar{display:none;width:0;height:0}
+.ranking-card-list:focus-visible{outline:3px solid rgba(37,99,235,.13);outline-offset:-3px}
 .ranking-card{
   --card-accent:var(--ranking-pve);
   position:relative;
+  flex:0 0 auto;
+  box-sizing:border-box;
   min-width:0;
   overflow:hidden;
   border:1px solid rgba(120,145,180,.22);
-  border-radius:16px;
-  background:linear-gradient(105deg,#fff 0%,#fff 65%,#f4f8ff 100%);
-  box-shadow:0 5px 16px rgba(31,47,79,.045);
+  border-radius:14px;
+  background:linear-gradient(105deg,#fff 0%,#fff 69%,#f4f8ff 100%);
+  box-shadow:0 4px 12px rgba(31,47,79,.045);
   isolation:isolate;
 }
 .ranking-card.pvp{
   --card-accent:var(--ranking-pvp);
-  background:linear-gradient(105deg,#fff 0%,#fff 65%,#faf6ff 100%);
+  background:linear-gradient(105deg,#fff 0%,#fff 69%,#faf6ff 100%);
 }
 .ranking-detail-card{
   cursor:pointer;
   transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;
 }
-.ranking-detail-card:hover,
-.ranking-detail-card:focus-visible{
+.ranking-detail-card:hover,.ranking-detail-card:focus-visible{
   transform:translateY(-1px);
   border-color:rgba(56,101,176,.40);
-  box-shadow:0 10px 24px rgba(31,47,79,.10);
+  box-shadow:0 8px 20px rgba(31,47,79,.10);
   outline:none;
 }
 .ranking-detail-card:active{transform:scale(.994)}
+.ranking-detail-card.is-my-character{border-color:rgba(37,99,235,.38)}
+.ranking-detail-card.is-my-rank-target{
+  border-color:var(--card-accent);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--card-accent) 18%,transparent),0 10px 26px rgba(31,47,79,.14);
+}
 .ranking-card-main{
+  box-sizing:border-box;
   display:grid;
-  grid-template-columns:54px 54px minmax(0,1fr) 132px;
-  gap:10px;
+  grid-template-columns:44px 44px minmax(0,1fr) 100px 100px;
+  gap:7px;
   align-items:center;
-  min-height:122px;
-  padding:8px 0 8px 8px;
+  height:84px;
+  min-height:84px;
+  padding:6px 0 6px 6px;
 }
 .ranking-rank{
   align-self:stretch;
@@ -55,14 +68,14 @@
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  gap:3px;
+  gap:2px;
   min-width:0;
   border-right:1px solid rgba(120,145,180,.16);
   color:#53627a;
   text-align:center;
 }
-.ranking-rank-crown{height:15px;color:#d29a19;font-size:17px;line-height:1}
-.ranking-rank-current{display:block;color:#314158;font-size:24px;line-height:1;font-variant-numeric:tabular-nums}
+.ranking-rank-crown{height:12px;color:#d29a19;font-size:14px;line-height:1}
+.ranking-rank-current{display:block;color:#314158;font-size:20px;line-height:1;font-variant-numeric:tabular-nums}
 .ranking-card.top-one .ranking-rank-current{color:#c38b10}
 .ranking-card.top-two .ranking-rank-current{color:#718096}
 .ranking-card.top-three .ranking-rank-current{color:#a26540}
@@ -70,10 +83,10 @@
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  min-height:18px;
-  padding:0 5px;
-  border-radius:6px;
-  font-size:9px;
+  min-height:15px;
+  padding:0 4px;
+  border-radius:5px;
+  font-size:8px;
   font-weight:1000;
   line-height:1;
   white-space:nowrap;
@@ -88,48 +101,79 @@
   position:relative;
   display:grid;
   place-items:center;
-  width:48px;
-  height:48px;
+  width:38px;
+  height:38px;
   overflow:hidden;
   border:1px solid rgba(120,145,180,.22);
   border-radius:50%;
   background:linear-gradient(145deg,#fff,#edf4ff);
-  box-shadow:0 4px 12px rgba(31,47,79,.08);
+  box-shadow:0 3px 9px rgba(31,47,79,.08);
 }
-.ranking-class-emblem img{position:relative;z-index:2;width:38px;height:38px;object-fit:contain}
-.ranking-class-fallback{position:absolute;z-index:1;color:var(--card-accent);font-size:19px;font-weight:1000}
+.ranking-class-emblem img{position:relative;z-index:2;width:31px;height:31px;object-fit:contain}
+.ranking-class-fallback{position:absolute;z-index:1;color:var(--card-accent);font-size:16px;font-weight:1000}
 .ranking-class-emblem:not(.is-fallback) .ranking-class-fallback{opacity:0}
 .ranking-class-emblem.is-fallback .ranking-class-fallback{opacity:1}
-.ranking-character-meta{position:relative;z-index:3;min-width:0;padding:4px 0}
-.ranking-legion-line{display:flex;align-items:center;gap:6px;min-width:0;margin-bottom:3px}
-.ranking-legion{max-width:100%;overflow:hidden;color:#2563eb;font-size:10px;font-weight:1000;text-overflow:ellipsis;white-space:nowrap}
+.ranking-character-meta{position:relative;z-index:3;min-width:0;padding:2px 0}
+.ranking-legion-line{display:flex;align-items:center;gap:5px;min-width:0;margin-bottom:5px}
+.ranking-legion{
+  max-width:45%;
+  overflow:hidden;
+  color:#2563eb;
+  font-size:9px;
+  font-weight:1000;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
 .ranking-card.pvp .ranking-legion{color:#7f46c2}
-.ranking-actual-legion{max-width:120px;overflow:hidden;color:#94a3b8;font-size:9px;font-weight:800;text-overflow:ellipsis;white-space:nowrap}
-.ranking-name-line{display:flex;align-items:center;gap:6px;min-width:0}
-.ranking-name-line strong{min-width:0;overflow:hidden;color:#16243a;font-size:16px;line-height:1.18;letter-spacing:-.035em;text-overflow:ellipsis;white-space:nowrap}
+.ranking-server-tag{
+  flex:0 0 auto;
+  color:#a16207;
+  font-size:9px;
+  font-weight:950;
+  white-space:nowrap;
+}
+.ranking-actual-legion{
+  min-width:0;
+  overflow:hidden;
+  color:#94a3b8;
+  font-size:8px;
+  font-weight:800;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.ranking-name-line{display:flex;align-items:center;gap:5px;min-width:0}
+.ranking-name-line strong{
+  min-width:0;
+  overflow:hidden;
+  color:#16243a;
+  font-size:15px;
+  line-height:1.15;
+  letter-spacing:-.035em;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
 .ranking-owner-note,.ranking-main-badge{
   display:inline-flex;
   align-items:center;
   flex:0 0 auto;
-  min-height:18px;
-  padding:0 6px;
+  min-height:17px;
+  padding:0 5px;
   border:1px solid rgba(37,99,235,.18);
   border-radius:999px;
   background:#eef4ff;
   color:#475569;
-  font-size:9px;
+  font-size:8px;
   font-weight:900;
   white-space:nowrap;
 }
 .ranking-main-badge{color:#1d4ed8}
-.ranking-server-line{margin-top:3px;color:var(--ranking-muted);font-size:10px;font-weight:800}
 .ranking-metrics{
   display:grid;
-  grid-template-columns:minmax(0,1.18fr) 1px minmax(0,1fr);
-  align-items:end;
-  gap:8px;
+  grid-template-rows:1fr 1fr;
+  align-items:center;
+  gap:3px;
   min-width:0;
-  margin-top:6px;
+  padding:2px 0;
 }
 .ranking-metric{
   display:grid;
@@ -138,30 +182,20 @@
   color:#475569;
   font-variant-numeric:tabular-nums;
 }
-.ranking-metric.power{grid-template-columns:20px minmax(0,1fr);gap:5px}
-.ranking-metric.item{grid-template-columns:14px minmax(0,1fr);gap:5px;color:#b66a18}
+.ranking-metric.power{grid-template-columns:17px minmax(0,1fr);gap:4px}
+.ranking-metric.item{grid-template-columns:12px minmax(0,1fr);gap:4px;color:#b66a18}
 .ranking-metric.power.pve{color:var(--ranking-pve)}
 .ranking-metric.power.pvp{color:var(--ranking-pvp)}
-.ranking-metric-icon{
-  display:block;
-  align-self:end;
-  object-fit:contain;
-  object-position:center;
-}
-.ranking-metric.power .ranking-metric-icon{width:20px;height:20px;margin-bottom:1px}
-.ranking-metric.item .ranking-metric-icon{width:12px;height:18px;justify-self:center;margin-bottom:1px}
-.ranking-metric-content{
-  display:grid;
-  grid-template-rows:16px auto;
-  align-items:end;
-  min-width:0;
-}
+.ranking-metric-icon{display:block;align-self:end;object-fit:contain;object-position:center}
+.ranking-metric.power .ranking-metric-icon{width:17px;height:17px;margin-bottom:1px}
+.ranking-metric.item .ranking-metric-icon{width:10px;height:15px;justify-self:center;margin-bottom:1px}
+.ranking-metric-content{display:grid;grid-template-rows:12px auto;align-items:end;min-width:0}
 .ranking-metric strong{
   min-width:0;
   overflow:hidden;
-  font-size:13px;
+  font-size:11px;
   font-weight:1000;
-  line-height:1.1;
+  line-height:1.05;
   text-overflow:ellipsis;
   white-space:nowrap;
 }
@@ -171,12 +205,12 @@
   justify-content:center;
   justify-self:start;
   max-width:100%;
-  height:15px;
-  padding:0 5px;
+  height:11px;
+  padding:0 3px;
   overflow:hidden;
   border:1px solid transparent;
   border-radius:999px;
-  font-size:8px;
+  font-size:6px;
   font-weight:1000;
   line-height:1;
   text-overflow:ellipsis;
@@ -185,13 +219,13 @@
 .ranking-metric-delta.is-positive{color:#166534;background:#f0fdf4;border-color:rgba(34,197,94,.22)}
 .ranking-metric-delta.is-negative{color:#9f3a3a;background:#fff1f2;border-color:rgba(239,68,68,.20)}
 .ranking-metric-delta.is-empty{visibility:hidden}
-.ranking-metric-divider{width:1px;height:24px;align-self:end;background:rgba(120,145,180,.24)}
 .ranking-portrait{
   position:relative;
-  align-self:stretch;
+  align-self:center;
+  height:72px;
   min-width:0;
   overflow:hidden;
-  border-radius:0 15px 0 0;
+  border-radius:0 13px 0 0;
   background:linear-gradient(145deg,#eef4ff,#dfe9f8);
 }
 .ranking-card.pvp .ranking-portrait{background:linear-gradient(145deg,#f2eaff,#e6dcf8)}
@@ -200,21 +234,23 @@
   position:absolute;
   z-index:2;
   inset:0 auto 0 0;
-  width:38%;
+  width:34%;
   pointer-events:none;
-  background:linear-gradient(90deg,#fff 0%,rgba(255,255,255,.78) 30%,transparent 100%);
+  background:linear-gradient(90deg,#fff 0%,rgba(255,255,255,.70) 28%,transparent 100%);
 }
 .ranking-portrait img{width:100%;height:100%;display:block;object-fit:cover;object-position:center 16%}
-.ranking-portrait.is-empty{display:grid;place-items:center;color:var(--card-accent);font-size:34px;font-weight:1000}
+.ranking-portrait.is-empty{display:grid;place-items:center;color:var(--card-accent);font-size:28px;font-weight:1000}
 .ranking-card-footer{
   position:relative;
   z-index:3;
+  box-sizing:border-box;
   display:grid;
   grid-template-columns:auto minmax(0,1fr);
   align-items:center;
-  gap:7px;
-  min-height:34px;
-  padding:5px 8px;
+  gap:6px;
+  height:28px;
+  min-height:28px;
+  padding:3px 7px;
   border-top:1px solid rgba(120,145,180,.14);
   background:rgba(248,251,255,.94);
 }
@@ -223,11 +259,11 @@
   display:inline-flex;
   align-items:center;
   flex:0 0 auto;
-  height:19px;
-  padding:0 7px;
+  height:17px;
+  padding:0 5px;
   border:1px solid transparent;
   border-radius:999px;
-  font-size:9px;
+  font-size:8px;
   font-weight:1000;
   white-space:nowrap;
 }
@@ -240,14 +276,14 @@
   margin:0;
   overflow:hidden;
   color:#64748b;
-  font-size:10px;
+  font-size:9px;
   font-weight:700;
   text-overflow:ellipsis;
   white-space:nowrap;
 }
 
 /* TOP3 flowing border: card outline only */
-.ranking-card.top-one,.ranking-card.top-two,.ranking-card.top-three{--flow-radius:16px;border-color:rgba(120,145,180,.18)}
+.ranking-card.top-one,.ranking-card.top-two,.ranking-card.top-three{--flow-radius:14px;border-color:rgba(120,145,180,.18)}
 .ranking-card.top-one::after,.ranking-card.top-two::after,.ranking-card.top-three::after{
   content:"";
   position:absolute;
@@ -266,3 +302,9 @@
 .ranking-card.top-two{--flow-color:rgba(96,165,250,.86);--flow-opacity:.78;--flow-speed:3.9s}
 .ranking-card.top-three{--flow-color:rgba(124,58,237,.82);--flow-opacity:.72;--flow-speed:4.2s}
 @keyframes kinojoRankingBorderFlow{0%{background-position:-42% 0,100% -42%,142% 100%,0 142%}100%{background-position:142% 0,100% 142%,-42% 100%,0 -42%}}
+
+@media (prefers-reduced-motion:reduce){
+  .ranking-card-list{scroll-behavior:auto}
+  .ranking-card.top-one::after,.ranking-card.top-two::after,.ranking-card.top-three::after{animation:none;background-position:0 0,100% 0,100% 100%,0 100%}
+  .ranking-detail-card{transition:none}
+}

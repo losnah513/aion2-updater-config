@@ -17,6 +17,15 @@ KINOJO INFO GitHub Pages upload package.
 - Server members render with the shared class icons, main/alt treatment, and long-name fade. The current layout allows up to five member cards per row on desktop and two on mobile.
 - Browser code does not reconstruct missing tree structure or members. Default-stage fallback and empty-role presentation remain later Server/UI contract stages.
 
+## Legion ranking unified panel
+
+- Desktop PVE/PVP rankings share one outer card with a visual center divider. Each side owns an independent, hidden-scrollbar viewport and keeps the Server-returned order; reaching the viewport end appends the next Server page without moving the document scroll.
+- Mobile reuses the same panels through PVE/PVP tabs and preserves each tab's scroll position. The fixed notice strip remains outside the panel safe area.
+- The bottom affordance is a non-interactive gradient overlay. It fades only the peeking card edge, never applies CSS blur to card text, and disappears at the end of the list.
+- Ranking cards omit visible class text because the shared class emblem already identifies the class. Legion and server render together as `<레기온> [서버]`, and combat power is stacked above item level in the compact metric column.
+- `내 캐릭터 순위 보기` reuses the authenticated `kinojo-member-profile` character list and matches only exact `server_id + character_name` identities. The Browser does not infer ownership or calculate a rank.
+- `tests/ranking-ui-contract.test.js` protects the unified panel, compact-card, exact-identity, independent-scroll, hidden-scrollbar, and gradient contracts.
+
 ## My Info image editor contract
 
 - The completed Stage 1-8 member-image system remains the active upload, ownership, privacy, retention, and cleanup baseline. The follow-up editor must reuse it instead of rebuilding those Server contracts.
