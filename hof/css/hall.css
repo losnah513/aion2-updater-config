@@ -2175,8 +2175,8 @@ body>.hof-filter-bar .kinojo-filter-switch{min-height:34px!important;width:auto!
    KINOJO HOF 20260821 - equal-card square board authority
    - Desktop/tablet: the six-card outer board is exactly 1:1.
    - Four wide cards share one 7x1 size; two God cards share one 3x2 size.
-   - Fold landscape keeps My Rank on the right and never sizes from dynamic vh.
-   - TOP3: full-width rows separated by one line, with four aligned columns.
+   - Fold portrait/landscape keeps a half-width My Rank card on the right.
+   - TOP3: rank/class/server-name-owner/score/profile stay on one centered row.
    - God titles: official item-level / combat-power artwork.
    ============================================================ */
 .hof-v2-area-meter{grid-area:meter!important;}
@@ -2326,11 +2326,11 @@ body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card{
   min-height:0!important;
   margin:0!important;
   padding:0!important;
-  grid-template-columns:30px clamp(44px,4vw,64px) minmax(0,1fr) clamp(58px,5vw,84px)!important;
-  grid-template-rows:minmax(0,1fr) minmax(0,1fr)!important;
+  grid-template-columns:30px clamp(44px,4vw,64px) minmax(0,1fr) minmax(72px,7vw,104px) clamp(58px,5vw,84px)!important;
+  grid-template-rows:1fr!important;
   column-gap:4px!important;
   row-gap:0!important;
-  align-items:stretch!important;
+  align-items:center!important;
   border:0!important;
   border-radius:0!important;
   background:transparent!important;
@@ -2350,7 +2350,7 @@ body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card:focus-visible
 }
 body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power-rank{
   grid-column:1!important;
-  grid-row:1/3!important;
+  grid-row:1!important;
   width:100%!important;
   min-width:0!important;
   height:100%!important;
@@ -2358,12 +2358,15 @@ body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power
 body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-top3-info{
   grid-column:3!important;
   grid-row:1!important;
-  align-self:end!important;
-  align-content:end!important;
+  align-self:center!important;
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  align-content:center!important;
   justify-self:stretch!important;
-  gap:3px!important;
+  gap:5px!important;
   min-width:0!important;
-  padding:5px 0 1px!important;
+  padding:0!important;
 }
 body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-server-badge{
   display:inline-flex!important;
@@ -2373,6 +2376,10 @@ body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-serve
   text-overflow:ellipsis!important;
 }
 body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-top3-name-row{
+  display:flex!important;
+  flex:1 1 auto!important;
+  align-items:center!important;
+  gap:4px!important;
   width:100%!important;
   min-width:0!important;
 }
@@ -2385,10 +2392,11 @@ body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-top3-
   text-overflow:ellipsis!important;
   white-space:nowrap!important;
   font-size:15px!important;
+  flex:1 1 auto!important;
 }
 body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power-class-slot{
   grid-column:2!important;
-  grid-row:1/3!important;
+  grid-row:1!important;
   align-self:stretch!important;
   display:grid!important;
   place-items:center!important;
@@ -2407,25 +2415,26 @@ body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power
   flex-basis:auto!important;
 }
 body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-top3-aside{
-  grid-column:3!important;
-  grid-row:2!important;
+  grid-column:4!important;
+  grid-row:1!important;
   display:flex!important;
-  align-self:start!important;
-  align-content:flex-start!important;
+  align-self:center!important;
+  align-content:center!important;
   align-items:center!important;
-  justify-content:space-between!important;
+  justify-content:flex-end!important;
   gap:4px!important;
   width:100%!important;
   min-width:0!important;
-  padding:1px 0 5px!important;
+  padding:0 5px 0 0!important;
 }
 body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-owner-slot{
   display:flex!important;
   width:auto!important;
   min-width:0!important;
-  min-height:18px!important;
-  justify-content:flex-end!important;
+  min-height:0!important;
+  justify-content:flex-start!important;
   overflow:hidden!important;
+  flex:0 0 auto!important;
 }
 body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-owner-badge{
   max-width:100%!important;
@@ -2459,12 +2468,81 @@ body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power
   flex-basis:17px!important;
 }
 body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power-portrait{
-  grid-column:4!important;
-  grid-row:1/3!important;
+  grid-column:5!important;
+  grid-row:1!important;
   align-self:stretch!important;
   width:100%!important;
   min-width:0!important;
   height:100%!important;
+}
+
+body.kinojo-page-hall .hof-v2-my-head{
+  min-height:44px!important;
+  padding:10px 12px!important;
+  display:flex!important;
+  align-items:center!important;
+}
+body.kinojo-page-hall .hof-v2-my-head h2{
+  margin:0!important;
+  font-size:19px!important;
+  line-height:1.1!important;
+}
+body.kinojo-page-hall .hof-v2-my-profile{
+  margin:8px 8px 0!important;
+  padding:7px!important;
+  display:grid!important;
+  grid-template-columns:52px minmax(0,1fr)!important;
+  gap:7px!important;
+  align-items:center!important;
+}
+body.kinojo-page-hall .hof-v2-my-profile .hof-v2-portrait.my{
+  width:52px!important;
+  height:60px!important;
+  border-width:1px!important;
+  border-radius:4px!important;
+  object-fit:cover!important;
+}
+body.kinojo-page-hall .hof-v2-my-profile>strong{
+  min-width:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  font-size:14px!important;
+}
+body.kinojo-page-hall .hof-v2-my-list{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:5px!important;
+  margin:7px 8px 8px!important;
+}
+body.kinojo-page-hall .hof-v2-my-row{
+  width:100%!important;
+  min-width:0!important;
+  min-height:34px!important;
+  padding:6px 7px!important;
+  display:flex!important;
+  flex-wrap:nowrap!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:4px!important;
+  overflow:hidden!important;
+  white-space:nowrap!important;
+}
+body.kinojo-page-hall .hof-v2-my-row>strong{
+  flex:1 1 auto!important;
+  min-width:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  font-size:10px!important;
+}
+body.kinojo-page-hall .hof-v2-my-row>span,
+body.kinojo-page-hall .hof-v2-my-row>em,
+body.kinojo-page-hall .hof-v2-my-row>b{
+  flex:0 0 auto!important;
+  font-size:9px!important;
+  line-height:1!important;
+  white-space:nowrap!important;
 }
 
 @media (min-width:761px){
@@ -2480,24 +2558,24 @@ body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power
     grid-template-columns:repeat(10,minmax(0,1fr))!important;
     grid-template-rows:repeat(4,minmax(0,1fr))!important;
     grid-template-areas:
-      "enhance enhance enhance pve pve pve pve pve pve pve"
       "enhance enhance enhance meter meter meter meter meter meter meter"
-      "pvp pvp pvp pvp pvp pvp pvp growth growth growth"
-      "ranking-link-card ranking-link-card ranking-link-card ranking-link-card ranking-link-card ranking-link-card ranking-link-card growth growth growth"!important;
+      "enhance enhance enhance ranking-link-card ranking-link-card ranking-link-card ranking-link-card ranking-link-card ranking-link-card ranking-link-card"
+      "pve pve pve pve pve pve pve growth growth growth"
+      "pvp pvp pvp pvp pvp pvp pvp growth growth growth"!important;
   }
   body.kinojo-page-hall .hof-v2-area .hof-v2-panel{
     border:0!important;
     border-radius:0!important;
   }
   body.kinojo-page-hall .hof-v2-area-enhance .hof-v2-panel,
-  body.kinojo-page-hall .hof-v2-area-ranking-link-card .hof-v2-panel,
+  body.kinojo-page-hall .hof-v2-area-pve .hof-v2-panel,
   body.kinojo-page-hall .hof-v2-area-pvp .hof-v2-panel{
     border-right:1px solid var(--hof-line)!important;
   }
   body.kinojo-page-hall .hof-v2-area-enhance .hof-v2-panel,
-  body.kinojo-page-hall .hof-v2-area-pve .hof-v2-panel,
   body.kinojo-page-hall .hof-v2-area-meter .hof-v2-panel,
-  body.kinojo-page-hall .hof-v2-area-pvp .hof-v2-panel{
+  body.kinojo-page-hall .hof-v2-area-ranking-link-card .hof-v2-panel,
+  body.kinojo-page-hall .hof-v2-area-pve .hof-v2-panel{
     border-bottom:1px solid var(--hof-line)!important;
   }
   body.kinojo-page-hall .hof-v2-area-meter .hof-v2-meter-wait{
@@ -2560,32 +2638,15 @@ body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power
   }
 }
 
-@media (min-width:761px) and (max-width:1180px) and (orientation:portrait){
+@media (min-width:761px) and (max-width:1180px){
   body.kinojo-page-hall .hof-v2-layout{
-    grid-template-columns:max-content!important;
-  }
-  body.kinojo-page-hall .hof-v2-right,
-  body.kinojo-page-hall .hof-v2-my-rank{
-    width:300px!important;
-    max-width:300px!important;
-    justify-self:center!important;
-  }
-  body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power-class-slot .hof-v2-class-icon{
-    width:calc(100% - 10px)!important;
-    max-width:38px!important;
-    max-height:38px!important;
-  }
-}
-
-@media (min-width:761px) and (max-width:1180px) and (orientation:landscape){
-  body.kinojo-page-hall .hof-v2-layout{
-    --hof-my-rank-width:clamp(280px,30vw,300px);
+    --hof-my-rank-width:clamp(140px,16vw,150px);
     grid-template-columns:max-content var(--hof-my-rank-width)!important;
     grid-template-rows:auto!important;
     align-items:start!important;
   }
   body.kinojo-page-hall .hof-v2-board{
-    --hof-board-size:clamp(360px,calc(100vw - var(--hof-my-rank-width) - 46px),720px);
+    --hof-board-size:clamp(480px,calc(100vw - var(--hof-my-rank-width) - 46px),720px);
   }
   body.kinojo-page-hall .hof-v2-right,
   body.kinojo-page-hall .hof-v2-my-rank{
@@ -2594,6 +2655,54 @@ body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power
     min-height:0!important;
     height:var(--hof-board-size)!important;
     justify-self:stretch!important;
+  }
+  body.kinojo-page-hall .hof-v2-my-rank{
+    overflow:auto!important;
+  }
+  body.kinojo-page-hall .hof-v2-my-head{
+    min-height:40px!important;
+    padding:9px 8px!important;
+  }
+  body.kinojo-page-hall .hof-v2-my-head h2{
+    font-size:17px!important;
+  }
+  body.kinojo-page-hall .hof-v2-my-profile{
+    margin:6px 6px 0!important;
+    padding:5px!important;
+    grid-template-columns:44px minmax(0,1fr)!important;
+    gap:5px!important;
+  }
+  body.kinojo-page-hall .hof-v2-my-profile .hof-v2-portrait.my{
+    width:44px!important;
+    height:52px!important;
+  }
+  body.kinojo-page-hall .hof-v2-my-profile>strong{
+    font-size:11px!important;
+  }
+  body.kinojo-page-hall .hof-v2-my-list{
+    gap:4px!important;
+    margin:6px!important;
+  }
+  body.kinojo-page-hall .hof-v2-my-row{
+    min-height:31px!important;
+    padding:5px!important;
+    gap:3px!important;
+  }
+  body.kinojo-page-hall .hof-v2-my-row>strong{
+    font-size:9px!important;
+  }
+  body.kinojo-page-hall .hof-v2-my-row>span,
+  body.kinojo-page-hall .hof-v2-my-row>em,
+  body.kinojo-page-hall .hof-v2-my-row>b{
+    font-size:8px!important;
+  }
+}
+
+@media (min-width:761px) and (max-width:1180px) and (orientation:portrait){
+  body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power-class-slot .hof-v2-class-icon{
+    width:calc(100% - 10px)!important;
+    max-width:38px!important;
+    max-height:38px!important;
   }
 }
 
@@ -2648,7 +2757,7 @@ body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power
     aspect-ratio:14/5!important;
   }
   body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card{
-    grid-template-columns:30px 56px minmax(0,1fr) 62px!important;
+    grid-template-columns:26px 42px minmax(0,1fr) minmax(62px,70px) 50px!important;
     column-gap:6px!important;
   }
   body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-top3-info,
@@ -2681,7 +2790,7 @@ body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power
 
 @media (max-width:430px){
   body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card{
-    grid-template-columns:24px 52px minmax(0,1fr) 52px!important;
+    grid-template-columns:22px 36px minmax(0,1fr) minmax(56px,64px) 44px!important;
     column-gap:4px!important;
   }
   body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-server-badge{
