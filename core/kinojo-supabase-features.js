@@ -703,6 +703,17 @@
     }, extra || {}));
   }
 
+  async function adminAutomation(command, extra={}){
+    assertAdmin();
+    const actions={status:'adminStatus',save:'adminSave'};
+    const action=actions[String(command||'').trim()];
+    if(!action)return{ok:false,message:'알 수 없는 서버 자동화 관리자 명령입니다.'};
+    return invokeEdgeFunction('scheduled-maintenance-control',Object.assign({
+      action,
+      sessionToken:currentAdminSessionCredential()
+    },extra||{}));
+  }
+
 
 
   async function getWebEventNoticeGroups(limit){
@@ -1973,7 +1984,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.54-modular-core-20260802',
+    version:'1.3.1.55-server-automation-20260821',
     getConfig,
     isPreferred,
     isConfigured,
@@ -2037,6 +2048,7 @@
     adminNotice,
     adminEventNotice,
     adminMeter,
+    adminAutomation,
     adminSanctuarySheetSync,
     adminSanctuaryProfileDiagnostic,
     adminCharacter,
