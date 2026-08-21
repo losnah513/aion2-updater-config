@@ -6,8 +6,8 @@
 
 - GitHub: `losnah513/aion2-updater-config`
 - 운영 브랜치: `main`
-- 내 정보 B-3 제품 운영 commit: `ad428f4d0c05de4d9b649ff66c4ac8529824ef40` (문서 마감 PR `#166`)
-- 내 정보 후속 B-3: PR `#165` 병합 완료
+- 내 정보 C-1 제품 운영 commit: `5b70ee93cdecd31467162657381e34bfecd9be58` (PR `#170`)
+- 내 정보 후속 A-1~C-1: 7/12 완료
 - 레기온 순위 통합 패널: PR `#164` 병합 완료
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 최신 일일 로그를 작업 규칙 원본으로 사용한다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
@@ -24,7 +24,7 @@
 ## 내 정보 이미지 기존 완료 상태
 
 - 기존 내 정보/캐릭터 이미지 Stage 1-8은 `80/80` 완료 상태이며 재구현하지 않는다.
-- 운영 Edge 기준은 `kinojo-member-auth` v2, `kinojo-member-profile` v19(API 2.6), `kinojo-member-image-download` v2, `kinojo-member-image-cleanup` v5다.
+- 운영 Edge 기준은 `kinojo-member-auth` v2, `kinojo-member-profile` v20(API 2.7 / DB 375), `kinojo-member-image-download` v2, `kinojo-member-image-cleanup` v5다.
 - `kinojo-member-profile` 버킷은 공개, `kinojo-member-reference` 버킷은 비공개다.
 - 참고 이미지는 최대 7일 보존하며 cleanup cron은 `*/15 * * * *`로 활성화되어 있다.
 - 관리자 이미지 SQL 367/371은 `service_role` 전용이다.
@@ -113,6 +113,16 @@
 - 운영 `kinojo-member-profile` v19/API 2.6은 업로드된 WebP 바이트에서 실제 픽셀을 파싱한다. PROFILE `512x512`, FRONT/BACK `800x1200`, UPPER_BODY `800x1000`이 아니면 후보 object를 삭제하고 metadata를 활성화하지 않는다.
 - `tests/my-info-image-upload.test.js`와 브라우저 harness가 신규 등록·교체·삭제·원본 미전송·B3 픽셀 확인을 검증한다. PR CI, Pages build/deploy, custom-domain exact live readback이 모두 성공했다.
 
+## C-1 배치 bootstrap
+
+- C-1은 PR `#170`, 운영 commit `5b70ee93cdecd31467162657381e34bfecd9be58`으로 반영됐다.
+- `ui/kinojo-my-info-batch-bootstrap.js`가 내 정보 모달 bootstrap 계약을 소유한다. 모달을 열 때 `kinojo-member-profile`의 `batch-bootstrap` action을 정확히 한 번 호출하고 API `2.7`, DB `375`, batch contract `375`를 검증한다.
+- Edge v20은 KWS 세션을 한 번 검증한 뒤 service-role 전용 `kinojo_member_image_batch_bootstrap_v375(text)` RPC를 한 번 호출한다. RPC는 소유 캐릭터 목록과 각 캐릭터의 프로필 override/공식 이미지 상태, FRONT/BACK/UPPER_BODY 비공개 참고 이미지 등록 metadata를 한 번에 반환한다.
+- 브라우저는 반환된 모든 캐릭터 상태를 cache에 채우므로 캐릭터 전환 시 추가 profile/reference 요청을 보내지 않는다. 비공개 참고 이미지의 object path와 signed URL은 bootstrap 응답에 포함하지 않는다.
+- 운영 인증 readback은 7개 소유 캐릭터와 7개 이미지 상태를 HTTP 200으로 확인했고, 임시 검증 세션은 즉시 폐기했다. Health는 `ONE_EDGE_REQUEST_ONE_RPC`를 반환한다.
+- C-1은 선택 이미지 preload, 다음 이미지 preload, 나머지 2개 단위 background loading, 캐릭터별 retry를 구현하지 않는다. 이 범위는 C-2가 소유한다.
+- PR CI와 운영 workflow가 성공했다: Pages/live readback `32451957817`, Pages build/deploy `32451957234`, Legion Tree `32451957839`, Character Refresh Profile `32451957849`.
+
 ## 검증 / 다음 행동
 
 - 계약 검증: `node tests/my-info-image-contract.test.js`
@@ -120,8 +130,9 @@
 - 공통 슬라이더 검증: `node tests/kinojo-range-control.test.js`
 - 편집기 기본 검증: `node tests/my-info-image-editor.test.js`
 - 안전 업로드 검증: `node tests/my-info-image-upload.test.js`
+- 배치 bootstrap 검증: `node tests/my-info-batch-bootstrap.test.js`
 - 성역 이전 회귀: `node tests/sanctuary-roster-quick-edit-contract.test.js`
 - 공통 회귀: `node tests/web-shell-auth-contract.test.js`
 - 레기온 순위 UI 회귀: `node tests/ranking-ui-contract.test.js`
-- GitHub workflow는 공통 슬라이더·이미지 편집기·안전 업로드 모듈의 구문 검사, 계약 테스트, Pages exact live readback을 포함한다.
-- 다음 작업은 **C-1 배치 bootstrap만** 진행한다.
+- GitHub workflow는 공통 슬라이더·이미지 편집기·안전 업로드·배치 bootstrap 모듈의 구문 검사, 계약 테스트, Pages exact live readback을 포함한다.
+- 다음 작업은 **C-2 preloading/background/retry만** 진행한다.
