@@ -572,6 +572,10 @@
 (function(){
   'use strict';
 
+  const ROSTER_POWER_ICON_URL='https://assets.playnccdn.com/static-aion2/characters/img/info/profile_power_icon_pc.png';
+  const QUICK_SCOPES=['WAITLIST','LEGION','ALL'];
+  const QUICK_SCOPE_LABELS={WAITLIST:'대기자',LEGION:'레기온',ALL:'전체'};
+
   const rosterState={
     editor:null,
     editors:{},
@@ -583,6 +587,7 @@
     editGroupId:'',
     groupLeases:[],
     forceOptions:[],
+    previewSlots:{},
     targetErrors:{},
     selectedSlot:null,
     moveMenuSource:'',
@@ -603,7 +608,14 @@
     dragForceTimer:0,
     suppressClickUntil:0,
     openButton:null,
-    changed:false
+    changed:false,
+    quickMode:false,
+    quickPoint:null,
+    quickActiveRow:'',
+    quickResults:[],
+    quickScope:'ALL',
+    quickName:'',
+    quickClass:''
   };
 
   function html(value){
@@ -657,9 +669,10 @@
     if(replaceAll){rosterState.editors={};rosterState.baselineSlots={};rosterState.draftSlots={};}
     rosterState.editors[teamNo]=editor;
     for(let partyNo=1;partyNo<=2;partyNo++)for(let slotNo=1;slotNo<=5;slotNo++){
-      const found=(editor.force.slots||[]).find(slot=>Number(slot.partyNo)===partyNo&&Number(slot.slotNo)===slotNo);
-      const slot=found?cloneSlot(found,teamNo,partyNo,slotNo):emptySlot(teamNo,partyNo,slotNo);
       const key=slotKey(teamNo,partyNo,slotNo);
+      const found=(editor.force.slots||[]).find(slot=>Number(slot.partyNo)===partyNo&&Number(slot.slotNo)===slotNo);
+      const preview=rosterState.previewSlots[key]||{};
+      const slot=found?cloneSlot(Object.assign({},preview,found),teamNo,partyNo,slotNo):emptySlot(teamNo,partyNo,slotNo);
       rosterState.baselineSlots[key]=cloneSlot(slot,teamNo,partyNo,slotNo);
       rosterState.draftSlots[key]=cloneSlot(slot,teamNo,partyNo,slotNo);
     }
@@ -676,11 +689,31 @@
   function hasDraft(){return draftChanges().length>0;}
   function collectForceOptions(){
     const seen=new Set();
-    return Array.from(document.querySelectorAll('[data-sanctuary-roster-edit]')).map(button=>{
-      const card=button.closest('.force-card');
-      const group=button.closest('.san-team-group');
-      const teamNo=Number(button.dataset.teamNo||card?.dataset.teamNo||0);
-      return {teamNo,teamGroupNo:Number(button.dataset.teamGroupNo||card?.dataset.teamGroupNo||group?.dataset.teamGroup||0),forceName:String(button.dataset.forceName||card?.dataset.forceName||card?.querySelector('.team-name>span')?.textContent||teamNo+'포스').trim()};
+    rosterState.previewSlots={};
+    return Array.from(document.querySelectorAll('.force-card[data-team-no]')).map(card=>{
+      const group=card.closest('.san-team-group');
+      const teamNo=Number(card.dataset.teamNo||0);
+      const slots=[];
+      card.querySelectorAll('.party-card[data-party-no]').forEach(party=>{
+        const partyNo=Number(party.dataset.partyNo||0);
+        Array.from(party.querySelectorAll('.slot-grid > .char-card, .slot-grid > .empty-slot')).slice(0,5).forEach((node,index)=>{
+          const slotNo=index+1;
+          const occupied=node.classList.contains('char-card');
+          const slot=occupied?{
+            teamNo,partyNo,slotNo,
+            characterMasterId:Number(node.dataset.characterId||0)||null,
+            name:String(node.dataset.charName||''),
+            className:String(node.dataset.charClass||''),
+            serverName:String(node.dataset.serverName||''),
+            isMain:node.dataset.isMain==='true',
+            mainCharacterName:String(node.dataset.charOwner||''),
+            pvePower:String(node.dataset.pvePower||node.dataset.charPower||''),
+            classIconUrl:String(node.dataset.classIcon||'')
+          }:emptySlot(teamNo,partyNo,slotNo);
+          slots.push(slot);rosterState.previewSlots[slotKey(teamNo,partyNo,slotNo)]=slot;
+        });
+      });
+      return {teamNo,teamGroupNo:Number(card.dataset.teamGroupNo||group?.dataset.teamGroup||0),forceName:String(card.dataset.forceName||card.querySelector('.team-name>span')?.textContent||teamNo+'포스').trim(),sanctuaryId:String(card.dataset.sanctuaryId||'').trim().toLowerCase(),slots};
     }).filter(item=>item.teamNo&&!seen.has(item.teamNo)&&seen.add(item.teamNo));
   }
 
@@ -702,7 +735,14 @@
   function refreshRosterButtons(){
     const visible=canManageRoster();
     document.querySelectorAll('[data-sanctuary-roster-edit]').forEach(button=>{
-      button.hidden=!visible;
+      button.hidden=true;
+      button.setAttribute('aria-hidden','true');
+    });
+    const forceEdit=document.getElementById('forceEditBtn');
+    if(forceEdit){forceEdit.hidden=!visible;forceEdit.setAttribute('aria-hidden',visible?'false':'true');}
+    document.querySelectorAll('[data-sanctuary-quick-add]').forEach(button=>{
+      button.disabled=!visible;
+      button.classList.toggle('is-quick-add-enabled',visible);
       button.setAttribute('aria-hidden',visible?'false':'true');
     });
   }
@@ -716,7 +756,7 @@
     modal.setAttribute('aria-hidden','true');
     modal.innerHTML=''
       +'<div class="sanctuary-roster-card" role="dialog" aria-modal="true" aria-labelledby="sanctuaryRosterTitle">'
-      +'  <header class="sanctuary-roster-head"><div><div class="tip-kicker">FORCE PARTY MEMBERS</div><h2 id="sanctuaryRosterTitle">파티 정보 수정</h2><p id="sanctuaryRosterDescription">포스 편집 정보를 불러오는 중...</p></div><button type="button" class="sanctuary-roster-close" aria-label="닫기">×</button></header>'
+      +'  <header class="sanctuary-roster-head"><div><div class="tip-kicker">FORCE PARTY MEMBERS</div><h2 id="sanctuaryRosterTitle">포스 편집하기</h2><p id="sanctuaryRosterDescription">포스 편집 정보를 불러오는 중...</p></div><button type="button" class="sanctuary-roster-close" aria-label="닫기">×</button></header>'
       +'  <div class="sanctuary-roster-lease" id="sanctuaryRosterLease" aria-live="polite"></div>'
       +'  <nav class="sanctuary-roster-force-nav" id="sanctuaryRosterForceNav" aria-label="이동 대상 포스"></nav>'
       +'  <div class="sanctuary-roster-content" id="sanctuaryRosterContent"></div>'
@@ -786,26 +826,72 @@
     return draftSlot(rosterState.viewTeamNo,partyNo,slotNo);
   }
 
+  function displaySlot(teamNo,partyNo,slotNo){
+    return rosterState.draftSlots[slotKey(teamNo,partyNo,slotNo)]||rosterState.previewSlots[slotKey(teamNo,partyNo,slotNo)]||emptySlot(teamNo,partyNo,slotNo);
+  }
+
+  function rosterPowerValue(slot){
+    return slot?.pvePower||slot?.pve_power||slot?.latestPveCombatPower||slot?.latest_pve_combat_power||slot?.power||'';
+  }
+
+  function rosterPowerShort(value){
+    const helper=window.KinojoPowerFormat||{};
+    if(typeof helper.short==='function')return helper.short(value);
+    const number=Number(String(value??'').replace(/[^0-9.-]/g,''));
+    if(!Number.isFinite(number)||number<=0)return '전투력 미확인';
+    return number>=1000?(number/1000).toFixed(1)+'K':Math.round(number).toLocaleString('ko-KR');
+  }
+
+  function rosterPowerFull(value){
+    const helper=window.KinojoPowerFormat||{};
+    if(typeof helper.full==='function')return helper.full(value);
+    const number=Number(String(value??'').replace(/[^0-9.-]/g,''));
+    return Number.isFinite(number)&&number>0?Math.round(number).toLocaleString('ko-KR'):'전투력 미확인';
+  }
+
+  function rosterClassIcon(slot){
+    return String(slot?.classIconUrl||slot?.class_icon_url||slot?.classIcon||'').trim()
+      ||String(window.KinojoCharacterReaction?.classIconFor?.(slot?.className)||'').trim()
+      ||String(window.KinojoCharacterProfileImage?.classIconFor?.(slot?.className)||'').trim();
+  }
+
   function slotMarkup(slot){
     const occupied=!!String(slot.name||'').trim();
     const key=slotKey(slot.teamNo,slot.partyNo,slot.slotNo);
     const common=' data-roster-slot data-slot-key="'+html(key)+'" data-team-no="'+html(slot.teamNo)+'" data-party-no="'+html(slot.partyNo)+'" data-slot-no="'+html(slot.slotNo)+'"';
     if(!occupied){
-      return '<button class="sanctuary-roster-slot is-empty" type="button" data-roster-action="select-slot"'+common+'><span>'+html(slot.slotNo)+'번</span><strong>'+(hasDraft()||rosterState.editGroupId?'이동 가능 슬롯':'+ 구성원 추가')+'</strong></button>';
+      return '<div class="sanctuary-roster-slot is-empty"'+common+'><span aria-hidden="true">+</span><strong>'+html(slot.slotNo)+'번 빈 슬롯</strong></div>';
     }
-    const relation=slot.isMain===true?'본캐':(slot.mainCharacterName?'부캐 · '+slot.mainCharacterName:'관계 미확인');
-    return '<article class="sanctuary-roster-slot is-filled'+(slot.isTeamLeader===true?' is-team-leader':'')+'" tabindex="0" role="group" aria-label="'+html(slot.name)+' 이동 또는 편성 제외" data-roster-draggable data-character-id="'+html(slot.characterMasterId||'')+'"'+common+'>'
-      +'<span class="sanctuary-roster-drag-handle" aria-hidden="true">⋮⋮</span>'
-      +'<span class="sanctuary-roster-slot-number">'+html(slot.slotNo)+'번</span>'
-      +'<div><strong>'+html(slot.name)+'</strong><span>'+html(slot.className||'직업 미확인')+' · '+html(slot.serverName||'서버 미확인')+'</span><small>'+html(relation)+(slot.isTeamLeader===true?' · 팀 대표':'')+'</small></div>'
-      +'<div class="sanctuary-roster-slot-actions"><button type="button" class="sanctuary-roster-move" data-roster-action="move-menu" data-slot-key="'+html(key)+'">이동</button><button type="button" class="sanctuary-roster-remove" data-roster-action="remove" data-party-no="'+html(slot.partyNo)+'" data-slot-no="'+html(slot.slotNo)+'" data-character-id="'+html(slot.characterMasterId||'')+'" data-character-name="'+html(slot.name)+'">편성 제외</button></div>'
+    const isMain=slot.isMain===true;
+    const relation=isMain?'본캐':(slot.mainCharacterName?'부캐 · '+slot.mainCharacterName:'부캐 · 본캐 미확인');
+    const icon=rosterClassIcon(slot);
+    const power=rosterPowerValue(slot);
+    const powerShort=rosterPowerShort(power);
+    const powerFull=rosterPowerFull(power);
+    return '<article class="sanctuary-roster-slot is-filled'+(slot.isTeamLeader===true?' is-team-leader':'')+'" tabindex="0" role="group" aria-label="'+html(slot.slotNo)+'번 '+html(slot.name)+' 길게 눌러 이동, 키보드는 Enter" data-roster-draggable data-character-id="'+html(slot.characterMasterId||'')+'"'+common+'>'
+      +'<span class="sanctuary-roster-class-icon" aria-hidden="true">'+(icon?'<img src="'+html(icon)+'" alt="" loading="lazy" decoding="async">':'<span>'+html(String(slot.className||'?').slice(0,1))+'</span>')+'</span>'
+      +'<div class="sanctuary-roster-slot-copy"><div class="sanctuary-roster-slot-identity"><strong>'+html(slot.name)+'</strong><span class="sanctuary-roster-relation-badge '+(isMain?'is-main':'is-sub')+'" title="'+html(relation)+'">'+html(relation)+'</span></div>'
+      +'<div class="sanctuary-roster-slot-meta"><span>'+html(slot.serverName||'서버 미확인')+'</span><span class="sanctuary-roster-power" title="정확한 전투력 '+html(powerFull)+'"><img src="'+ROSTER_POWER_ICON_URL+'" alt="" aria-hidden="true"><strong>'+html(powerShort)+'</strong></span></div></div>'
       +'</article>';
   }
 
-  function partyMarkup(partyNo){
-    const slots=Array.from({length:5},(_,index)=>slotByPosition(partyNo,index+1));
+  function partyMarkup(partyNo,teamNo){
+    const slots=Array.from({length:5},(_,index)=>displaySlot(teamNo,partyNo,index+1));
     const filled=slots.filter(slot=>String(slot.name||'').trim()).length;
     return '<section class="sanctuary-roster-party"><header><strong>'+partyNo+'파티</strong><span>'+filled+' / 5</span></header><div>'+slots.map(slotMarkup).join('')+'</div></section>';
+  }
+
+  function forceGridMarkup(){
+    return '<div class="sanctuary-roster-force-grid">'+rosterState.forceOptions.map(option=>{
+      const loaded=!!rosterState.editors[option.teamNo];
+      const active=Number(option.teamNo)===Number(rosterState.viewTeamNo);
+      const failure=rosterState.targetErrors[option.teamNo];
+      return '<article class="sanctuary-roster-force-card'+(loaded?' is-loaded':'')+(active?' is-active':'')+(failure?' is-blocked':'')+'" data-roster-force-card data-team-no="'+html(option.teamNo)+'">'
+        +'<header><div><small>'+(option.teamGroupNo?html(option.teamGroupNo)+'팀':'운영팀')+'</small><strong>'+html(option.forceName)+'</strong></div>'
+        +'<button type="button" data-roster-action="view-force" data-target-team-no="'+html(option.teamNo)+'">'+(loaded?'편집 준비됨':failure?'잠금 확인':'편집 준비')+'</button></header>'
+        +(failure?'<p class="sanctuary-roster-force-error">'+html(failure)+'</p>':'')
+        +'<div class="sanctuary-roster-parties">'+partyMarkup(1,option.teamNo)+partyMarkup(2,option.teamNo)+'</div></article>';
+    }).join('')+'</div>';
   }
 
   function renderForceNav(){
@@ -902,21 +988,19 @@
 
   function renderRoster(){
     const modal=ensureRosterModal();
-    const force=currentForce();
     const lease=document.getElementById('sanctuaryRosterLease');
     const content=document.getElementById('sanctuaryRosterContent');
-    document.getElementById('sanctuaryRosterTitle').textContent=(force.forceName||'포스')+' 파티 정보 수정';
-    document.getElementById('sanctuaryRosterDescription').textContent='캐릭터를 끌어 이동·맞교환하고 저장하세요. 터치는 길게 누르며, 이동 버튼은 키보드 대안입니다.';
+    document.getElementById('sanctuaryRosterTitle').textContent='포스 편집하기';
+    document.getElementById('sanctuaryRosterDescription').textContent='캐릭터를 길게 눌러 들어 올린 뒤 빈 슬롯으로 이동하거나 다른 캐릭터와 맞교환하고 저장하세요.';
     lease.className='sanctuary-roster-lease'+(rosterState.leaseLost?' is-lost':'');
     lease.textContent=leaseText();
-    renderForceNav();
+    const nav=document.getElementById('sanctuaryRosterForceNav');if(nav)nav.innerHTML='';
     const changes=draftChanges();
     const count=document.getElementById('sanctuaryRosterDraftCount');
     if(count){count.hidden=!changes.length;count.textContent='변경사항 '+changes.length+'건';}
     modal.querySelector('[data-roster-action="save-draft"]')?.toggleAttribute('hidden',!changes.length);
     modal.querySelector('[data-roster-action="cancel-draft"]')?.toggleAttribute('hidden',!changes.length&&!rosterState.editGroupId);
-    content.innerHTML='<div class="sanctuary-roster-layout"><div class="sanctuary-roster-parties">'+partyMarkup(1)+partyMarkup(2)+'</div>'
-      +(rosterState.selectedSlot?(rosterState.panel==='new'?newPanelMarkup():existingPanelMarkup()):moveMenuMarkup())+'</div>';
+    content.innerHTML='<div class="sanctuary-roster-layout">'+forceGridMarkup()+moveMenuMarkup()+'</div>';
     modal.querySelectorAll('button,input,select').forEach(control=>{
       if(control.classList.contains('sanctuary-roster-close'))return;
       if(rosterState.busy||rosterState.leaseLost)control.disabled=true;
@@ -959,6 +1043,10 @@
     const source=rosterState.draftSlots[sourceKey];
     const target=rosterState.draftSlots[targetKey];
     if(!source?.characterMasterId||!target||sourceKey===targetKey){setRosterStatus('이동할 수 없는 위치여서 원래 자리로 돌아왔습니다.','error');return false;}
+    if(hasRelationshipConflict(sourceKey,targetKey)){
+      setRosterStatus('이동할 포스에 같은 본캐·부캐 관계의 캐릭터가 있어 이동할 수 없습니다.','error');
+      return false;
+    }
     const sourceName=source.name||'캐릭터';
     const targetName=target.name||'';
     rosterState.draftSlots[sourceKey]=cloneSlot(target,source.teamNo,source.partyNo,source.slotNo);
@@ -1071,6 +1159,50 @@
     ghost.style.top=(y-Math.min(40,ghost.offsetHeight/2))+'px';
   }
 
+  function relationshipKey(slot){
+    if(!slot?.characterMasterId)return '';
+    const value=slot.isMain===true?slot.name:slot.mainCharacterName;
+    return String(value||'').trim().toLocaleLowerCase().replace(/\s+/g,'');
+  }
+
+  function hasRelationshipConflict(sourceKey,targetKey){
+    const source=rosterState.draftSlots[sourceKey];
+    const target=rosterState.draftSlots[targetKey];
+    if(!source||!target)return false;
+    const occupiedRelations=Object.entries(Object.assign({},rosterState.previewSlots,rosterState.draftSlots));
+    const conflicts=(teamNo,relation)=>relation&&occupiedRelations.some(([key,slot])=>{
+      if(Number(slot.teamNo)!==Number(teamNo)||key===sourceKey||key===targetKey)return false;
+      return relationshipKey(slot)===relation;
+    });
+    return conflicts(target.teamNo,relationshipKey(source))||(target.characterMasterId&&conflicts(source.teamNo,relationshipKey(target)));
+  }
+
+  function hasForceRelationshipConflict(sourceKey,targetTeamNo,ignoredTargetKey=''){
+    const source=rosterState.draftSlots[sourceKey];
+    const relation=relationshipKey(source);
+    if(!source||!relation||!targetTeamNo)return false;
+    return Object.entries(Object.assign({},rosterState.previewSlots,rosterState.draftSlots)).some(([key,slot])=>{
+      if(key===sourceKey||key===ignoredTargetKey||Number(slot.teamNo)!==Number(targetTeamNo))return false;
+      return relationshipKey(slot)===relation;
+    });
+  }
+
+  function clearRelationshipWarnings(){
+    document.querySelectorAll('.sanctuary-roster-force-card.is-owner-conflict,.sanctuary-roster-slot.is-owner-conflict').forEach(node=>node.classList.remove('is-owner-conflict'));
+  }
+
+  async function preparePointerDrag(x,y){
+    const drag=rosterState.drag;
+    if(!drag||drag.active||drag.preparing)return;
+    drag.preparing=true;
+    const teamNo=Number(String(drag.sourceKey||'').split(':')[0]||0);
+    if(!rosterState.editors[teamNo]){
+      const opened=await openDraftTarget(teamNo,{fromDrag:true});
+      if(!opened||!rosterState.drag){cleanupPointerDrag(true);return;}
+    }
+    if(rosterState.drag){rosterState.drag.preparing=false;beginPointerDrag(rosterState.drag.lastX||x,rosterState.drag.lastY||y);}
+  }
+
   function beginPointerDrag(x,y){
     const drag=rosterState.drag;
     if(!drag||drag.active)return;
@@ -1097,16 +1229,17 @@
     if(!drag?.active)return;
     positionDragGhost(x,y);
     const under=document.elementFromPoint(x,y);
-    const forceButton=under?.closest?.('[data-roster-action="view-force"]');
-    const dwellTeamNo=Number(forceButton?.dataset.targetTeamNo||0);
-    if(dwellTeamNo&&dwellTeamNo!==Number(rosterState.viewTeamNo)){
+    const candidate=under?.closest?.('[data-roster-slot]');
+    const forceCard=under?.closest?.('[data-roster-force-card]');
+    const dwellTeamNo=Number(candidate?.dataset.teamNo||forceCard?.dataset.teamNo||0);
+    if(dwellTeamNo&&!rosterState.editors[dwellTeamNo]){
       if(drag.dwellTeamNo!==dwellTeamNo){
         clearDragForceTimer();drag.dwellTeamNo=dwellTeamNo;
         rosterState.dragForceTimer=window.setTimeout(async()=>{
           rosterState.dragForceTimer=0;
           await openDraftTarget(dwellTeamNo,{fromDrag:true});
           if(rosterState.drag)rosterState.drag.dwellTeamNo=0;
-        },550);
+        },420);
       }
     }else clearDragForceTimer();
     const content=document.getElementById('sanctuaryRosterContent');
@@ -1116,10 +1249,27 @@
       if(y<contentRect.top+edge)content.scrollTop-=Math.ceil((contentRect.top+edge-y)/7);
       else if(y>contentRect.bottom-edge)content.scrollTop+=Math.ceil((y-(contentRect.bottom-edge))/7);
     }
-    const candidate=under?.closest?.('[data-roster-slot]');
-    const valid=candidate&&candidate.dataset.slotKey!==drag.sourceKey&&rosterState.dragGhost&&overlapRatio(rosterState.dragGhost.getBoundingClientRect(),candidate.getBoundingClientRect())>=.42;
-    if(rosterState.dragTarget!==candidate){rosterState.dragTarget?.classList.remove('is-drop-target','is-swap-target');rosterState.dragTarget=null;}
+    const targetKey=candidate?.dataset.slotKey||'';
+    const targetLoaded=candidate&&!!rosterState.draftSlots[targetKey];
+    const valid=targetLoaded&&targetKey!==drag.sourceKey&&rosterState.dragGhost&&overlapRatio(rosterState.dragGhost.getBoundingClientRect(),candidate.getBoundingClientRect())>=.42;
+    drag.blockedByRelationship=false;
+    rosterState.dragTarget?.classList.remove('is-drop-target','is-swap-target','is-owner-conflict');
+    rosterState.dragTarget=null;clearRelationshipWarnings();
+    if(forceCard&&hasForceRelationshipConflict(drag.sourceKey,dwellTeamNo,valid?targetKey:'')){
+      drag.blockedByRelationship=true;
+      forceCard.classList.add('is-owner-conflict');
+      if(valid)candidate.classList.add('is-owner-conflict');
+      setRosterStatus('같은 본캐·부캐 관계가 이미 이 포스에 있어 다른 자리로 옮길 수 없습니다.','error');
+      return;
+    }
     if(valid){
+      if(hasRelationshipConflict(drag.sourceKey,targetKey)){
+        drag.blockedByRelationship=true;
+        candidate.classList.add('is-owner-conflict');
+        candidate.closest('[data-roster-force-card]')?.classList.add('is-owner-conflict');
+        setRosterStatus('같은 본캐·부캐 관계가 이미 이 포스에 있어 다른 자리로 옮길 수 없습니다.','error');
+        return;
+      }
       rosterState.dragTarget=candidate;
       candidate.classList.add(candidate.classList.contains('is-empty')?'is-drop-target':'is-swap-target');
     }
@@ -1129,6 +1279,7 @@
     if(rosterState.dragTimer)window.clearTimeout(rosterState.dragTimer);
     rosterState.dragTimer=0;clearDragForceTimer();
     rosterState.dragTarget?.classList.remove('is-drop-target','is-swap-target');
+    clearRelationshipWarnings();
     document.querySelectorAll('.is-drag-source').forEach(node=>node.classList.toggle('is-returning',returned));
     rosterState.dragGhost?.remove();
     rosterState.dragGhost=null;rosterState.dragTarget=null;rosterState.drag=null;
@@ -1142,8 +1293,8 @@
     modal.addEventListener('pointerdown',event=>{
       const source=event.target.closest?.('[data-roster-draggable]');
       if(!source||event.target.closest('button')||rosterState.busy||rosterState.leaseLost||event.button>0)return;
-      rosterState.drag={pointerId:event.pointerId,pointerType:event.pointerType,startX:event.clientX,startY:event.clientY,lastX:event.clientX,lastY:event.clientY,sourceKey:source.dataset.slotKey,active:false,dwellTeamNo:0};
-      if(event.pointerType==='touch')rosterState.dragTimer=window.setTimeout(()=>beginPointerDrag(event.clientX,event.clientY),380);
+      rosterState.drag={pointerId:event.pointerId,pointerType:event.pointerType,startX:event.clientX,startY:event.clientY,lastX:event.clientX,lastY:event.clientY,sourceKey:source.dataset.slotKey,active:false,preparing:false,dwellTeamNo:0};
+      rosterState.dragTimer=window.setTimeout(()=>preparePointerDrag(event.clientX,event.clientY),260);
     });
     document.addEventListener('pointermove',event=>{
       const drag=rosterState.drag;
@@ -1151,8 +1302,7 @@
       drag.lastX=event.clientX;drag.lastY=event.clientY;
       const distance=Math.hypot(event.clientX-drag.startX,event.clientY-drag.startY);
       if(!drag.active){
-        if(drag.pointerType==='touch'&&distance>10){cleanupPointerDrag();return;}
-        if(drag.pointerType!=='touch'&&distance>=6)beginPointerDrag(event.clientX,event.clientY);
+        if(distance>10&&!drag.preparing){cleanupPointerDrag();return;}
       }
       if(drag.active){event.preventDefault();updateDragTarget(event.clientX,event.clientY);}
     },{passive:false});
@@ -1162,10 +1312,12 @@
       const active=drag.active;
       const sourceKey=drag.sourceKey;
       const targetKey=rosterState.dragTarget?.dataset.slotKey||'';
+      const blockedByRelationship=drag.blockedByRelationship===true;
       cleanupPointerDrag(active&&!targetKey);
       if(active){
         rosterState.suppressClickUntil=Date.now()+500;
         if(targetKey)moveDraft(sourceKey,targetKey);
+        else if(blockedByRelationship)setRosterStatus('같은 본캐·부캐 관계가 이미 이 포스에 있어 원래 자리로 돌아왔습니다.','error');
         else setRosterStatus('유효한 슬롯에 놓이지 않아 원래 자리로 돌아왔습니다.','');
       }
     };
@@ -1173,10 +1325,247 @@
     document.addEventListener('pointercancel',finish);
   }
 
+  function ensureQuickPopover(){
+    let popover=document.getElementById('sanctuaryQuickAddPopover');
+    if(popover)return popover;
+    popover=document.createElement('section');
+    popover.id='sanctuaryQuickAddPopover';
+    popover.className='sanctuary-quick-add';
+    popover.setAttribute('aria-hidden','true');
+    popover.innerHTML='<div class="sanctuary-quick-add-card" role="dialog" aria-modal="false" aria-labelledby="sanctuaryQuickAddTitle">'
+      +'<header><div><small>QUICK PARTY ADD</small><strong id="sanctuaryQuickAddTitle">캐릭터 간편 추가</strong></div><button type="button" data-quick-action="close" aria-label="닫기">×</button></header>'
+      +'<div id="sanctuaryQuickAddBody"></div><footer id="sanctuaryQuickAddStatus" aria-live="polite"></footer></div>';
+    document.body.appendChild(popover);
+    popover.addEventListener('pointerdown',event=>{
+      const row=event.target.closest?.('[data-quick-row]');
+      if(row&&row.classList.contains('is-disabled')){activateQuickRow(row.dataset.quickRow);event.preventDefault();}
+    },true);
+    popover.addEventListener('click',event=>{
+      const action=event.target.closest?.('[data-quick-action]');
+      if(action)handleQuickAction(action);
+    });
+    popover.addEventListener('input',event=>{
+      if(event.target.id==='sanctuaryQuickScope'){
+        updateQuickScopeSlider(event.target,Number(event.target.value));
+        return;
+      }
+      if(event.target.id==='sanctuaryQuickName')rosterState.quickName=event.target.value;
+      const row=event.target.closest?.('[data-quick-row]');if(row)activateQuickRow(row.dataset.quickRow);
+    });
+    popover.addEventListener('change',event=>{
+      if(event.target.id==='sanctuaryQuickScope'){
+        commitQuickScope(Number(event.target.value));
+        return;
+      }
+      const row=event.target.closest?.('[data-quick-row]');if(row)activateQuickRow(row.dataset.quickRow);
+      if(event.target.id==='sanctuaryQuickClass')rosterState.quickClass=event.target.value;
+    });
+    popover.addEventListener('keydown',event=>{
+      if(event.target.id==='sanctuaryQuickScope'&&['ArrowLeft','ArrowDown','ArrowRight','ArrowUp','Home','End'].includes(event.key)){
+        event.preventDefault();
+        const current=quickScopeIndex();
+        const next=event.key==='Home'?0:event.key==='End'?2:Math.max(0,Math.min(2,current+(['ArrowRight','ArrowUp'].includes(event.key)?1:-1)));
+        commitQuickScope(next);
+        return;
+      }
+      if(event.key==='Enter'&&event.target.id==='sanctuaryQuickName'){event.preventDefault();quickSearch('name');}
+    });
+    return popover;
+  }
+
+  function quickClassOptions(){
+    return (currentEditor().classOptions||[]).map(value=>'<option value="'+html(value)+'">'+html(value)+'</option>').join('');
+  }
+
+  function quickScopeIndex(scope=rosterState.quickScope){
+    const index=QUICK_SCOPES.indexOf(String(scope||'').toUpperCase());
+    return index>=0?index:2;
+  }
+
+  function updateQuickScopeSlider(input,value){
+    if(!input)return;
+    const position=Math.max(0,Math.min(2,Number(value)||0));
+    const nearest=Math.round(position);
+    input.style.setProperty('--quick-scope-progress',(position*50)+'%');
+    input.setAttribute('aria-valuetext',QUICK_SCOPE_LABELS[QUICK_SCOPES[nearest]]+' 검색');
+    input.closest('[data-quick-scope-control]')?.querySelectorAll('[data-quick-scope]').forEach(button=>{
+      button.classList.toggle('is-active',button.dataset.quickScope===QUICK_SCOPES[nearest]);
+      button.setAttribute('aria-pressed',button.dataset.quickScope===QUICK_SCOPES[nearest]?'true':'false');
+    });
+  }
+
+  function commitQuickScope(value,{announce=true}={}){
+    const index=Math.max(0,Math.min(2,Math.round(Number(value)||0)));
+    const next=QUICK_SCOPES[index];
+    const changed=rosterState.quickScope!==next;
+    rosterState.quickScope=next;
+    if(changed)rosterState.quickResults=[];
+    if(changed)renderQuickPopover();
+    const input=document.getElementById('sanctuaryQuickScope');
+    if(input){input.value=String(index);input.classList.add('is-snapping');updateQuickScopeSlider(input,index);window.setTimeout(()=>input.classList.remove('is-snapping'),180);}
+    if(changed&&navigator.vibrate)navigator.vibrate(8);
+    if(announce)setQuickStatus(QUICK_SCOPE_LABELS[next]+' 검색 범위를 선택했습니다.','');
+    if(changed)requestAnimationFrame(positionQuickPopover);
+  }
+
+  function quickScopeMarkup(){
+    const selected=quickScopeIndex();
+    return '<section class="sanctuary-quick-scope" data-quick-scope-control aria-label="검색 범위">'
+      +'<strong>검색 범위</strong><input id="sanctuaryQuickScope" type="range" min="0" max="2" step="0.01" value="'+selected+'" style="--quick-scope-progress:'+(selected*50)+'%" aria-label="검색 범위" aria-valuetext="'+QUICK_SCOPE_LABELS[QUICK_SCOPES[selected]]+' 검색">'
+      +'<div>'+QUICK_SCOPES.map(scope=>'<button type="button" class="'+(rosterState.quickScope===scope?'is-active':'')+'" data-quick-action="scope" data-quick-scope="'+scope+'" aria-pressed="'+(rosterState.quickScope===scope?'true':'false')+'">'+QUICK_SCOPE_LABELS[scope]+'</button>').join('')+'</div></section>';
+  }
+
+  function quickResultAllowed(item){
+    if(rosterState.quickScope==='LEGION'){
+      const legion=item.isLegionMember===true||item.is_legion_member===true||item.legionMember===true||!!String(item.legionName||item.legion_name||'').trim();
+      if(!legion)return false;
+    }
+    if(rosterState.quickScope==='WAITLIST'){
+      const status=String(item.waitlistStatus||item.waitlist_status||item.registrationStatus||item.registration_status||'').toUpperCase();
+      const candidates=typeof waitlistCandidates==='function'?waitlistCandidates():[];
+      const candidateId=Number(item.characterMasterId||item.character_master_id||0);
+      const candidateName=String(item.characterName||item.character_name||'').trim().toLocaleLowerCase();
+      const localMatch=candidates.some(candidate=>Number(candidate.characterMasterId||0)===candidateId||(candidateName&&String(candidate.name||'').trim().toLocaleLowerCase()===candidateName));
+      const waitlisted=item.isWaitlisted===true||item.is_waitlisted===true||item.waitlistEntryId||item.waitlist_entry_id||/WAIT|대기/.test(status)||localMatch;
+      if(!waitlisted)return false;
+    }
+    return true;
+  }
+
+  function quickResultMarkup(item,index){
+    const assigned=item.alreadyAssigned===true||item.already_assigned===true;
+    const addExisting=item.addExistingAllowed===true||item.add_existing_allowed===true;
+    const addNew=item.addNewAllowed===true||item.add_new_allowed===true;
+    const relation=item.isMain===true?'본캐':(item.mainCharacterName?'부캐 · '+item.mainCharacterName:'관계 미확인');
+    return '<article class="sanctuary-quick-result'+(assigned?' is-assigned':'')+'"><div><strong>'+html(item.characterName||item.character_name)+'</strong><span>'+html(item.className||item.class_name||'직업 미확인')+' · '+html(relation)+'</span></div>'
+      +(addExisting||addNew?'<button type="button" data-quick-action="add" data-result-index="'+index+'" data-operation="'+(addExisting?'ADD_EXISTING':'ADD_NEW')+'">추가</button>':'<button type="button" disabled>추가 불가</button>')+'</article>';
+  }
+
+  function renderQuickPopover(){
+    const popover=ensureQuickPopover();
+    const selected=rosterState.selectedSlot||{};
+    const body=document.getElementById('sanctuaryQuickAddBody');
+    const nameDisabled=rosterState.quickActiveRow&&rosterState.quickActiveRow!=='name';
+    const conditionDisabled=rosterState.quickActiveRow&&rosterState.quickActiveRow!=='condition';
+    const results=rosterState.quickResults.length?'<div class="sanctuary-quick-results">'+rosterState.quickResults.map(quickResultMarkup).join('')+'</div>':'';
+    body.innerHTML='<p class="sanctuary-quick-target">'+html(selected.forceName||'포스')+' · '+html(selected.partyNo)+'파티 '+html(selected.slotNo)+'번</p>'
+      +'<div class="sanctuary-quick-controls">'+quickScopeMarkup()
+      +'<div class="sanctuary-quick-row'+(nameDisabled?' is-disabled':'')+'" data-quick-row="name" aria-disabled="'+(nameDisabled?'true':'false')+'"><input id="sanctuaryQuickName" type="search" autocomplete="off" value="'+html(rosterState.quickName)+'" placeholder="캐릭터 이름" '+(nameDisabled?'disabled':'')+'><button type="button" data-quick-action="search-name" '+(nameDisabled?'disabled':'')+'>해당 캐릭터로 검색</button><button type="button" data-quick-action="reset-name">초기화</button></div>'
+      +'<div class="sanctuary-quick-row'+(conditionDisabled?' is-disabled':'')+'" data-quick-row="condition" aria-disabled="'+(conditionDisabled?'true':'false')+'"><select id="sanctuaryQuickClass" '+(conditionDisabled?'disabled':'')+'><option value="">전체 클래스</option>'+quickClassOptions()+'</select><button type="button" data-quick-action="search-condition" '+(conditionDisabled?'disabled':'')+'>이 조건으로 검색</button><button type="button" data-quick-action="reset-condition">초기화</button></div></div>'+results;
+    const classSelect=document.getElementById('sanctuaryQuickClass');if(classSelect)classSelect.value=rosterState.quickClass;
+    popover.classList.toggle('is-busy',rosterState.busy);
+  }
+
+  function positionQuickPopover(){
+    const popover=ensureQuickPopover();
+    const card=popover.querySelector('.sanctuary-quick-add-card');
+    const point=rosterState.quickPoint||{x:innerWidth/2,y:innerHeight/2};
+    const gap=14,margin=10;
+    let left=point.x+gap,top=point.y-18;
+    const rect=card.getBoundingClientRect();
+    if(left+rect.width>innerWidth-margin)left=Math.max(margin,point.x-rect.width-gap);
+    top=Math.max(margin,Math.min(top,innerHeight-rect.height-margin));
+    card.style.left=left+'px';card.style.top=top+'px';
+  }
+
+  function activateQuickRow(row){
+    if(!['name','condition'].includes(row)||rosterState.quickActiveRow===row)return;
+    rosterState.quickActiveRow=row;rosterState.quickResults=[];renderQuickPopover();
+    requestAnimationFrame(()=>{positionQuickPopover();document.getElementById(row==='name'?'sanctuaryQuickName':'sanctuaryQuickClass')?.focus();});
+  }
+
+  function setQuickStatus(message,type=''){
+    const status=document.getElementById('sanctuaryQuickAddStatus');if(!status)return;
+    status.className=type;status.textContent=message||'';
+  }
+
+  function resetQuickRow(row){
+    rosterState.quickResults=[];
+    rosterState.quickScope='ALL';
+    if(row==='name')rosterState.quickName='';
+    if(row==='condition')rosterState.quickClass='';
+    rosterState.quickActiveRow='';renderQuickPopover();setQuickStatus('');requestAnimationFrame(positionQuickPopover);
+  }
+
+  async function quickSearch(row){
+    if(rosterState.busy||rosterState.leaseLost)return;
+    activateQuickRow(row);
+    const query=row==='name'?String(document.getElementById('sanctuaryQuickName')?.value||rosterState.quickName||'').trim():'';
+    const className=row==='condition'?String(document.getElementById('sanctuaryQuickClass')?.value||rosterState.quickClass||'').trim():'';
+    rosterState.quickName=query;rosterState.quickClass=className;
+    if(row==='name'&&query.length<2){setQuickStatus('캐릭터 이름을 2자 이상 입력해 주세요.','error');return;}
+    try{
+      rosterState.busy=true;renderQuickPopover();setQuickStatus('Server에서 캐릭터를 검색하는 중...','pending');
+      const result=await rosterAction('SEARCH',{editSessionId:currentLease().editSessionId,query:query||null,className:className||null,mainOnly:false,limit:30});
+      rosterState.quickResults=(result.results||[]).filter(quickResultAllowed);
+      renderQuickPopover();setQuickStatus(rosterState.quickResults.length+'명의 캐릭터를 찾았습니다.','success');
+    }catch(error){rosterState.quickResults=[];renderQuickPopover();setQuickStatus(error.message||'캐릭터 검색에 실패했습니다.','error');}
+    finally{rosterState.busy=false;renderQuickPopover();requestAnimationFrame(positionQuickPopover);}
+  }
+
+  async function quickAdd(action){
+    const item=rosterState.quickResults[Number(action.dataset.resultIndex||-1)];
+    const slot=rosterState.selectedSlot;
+    if(!item||!slot||rosterState.busy)return;
+    try{
+      rosterState.busy=true;renderQuickPopover();setQuickStatus('Server와 Google Sheet에 반영하는 중...','pending');
+      const result=await rosterAction('MUTATE',{editSessionId:currentLease().editSessionId,operation:String(action.dataset.operation||''),partyNo:slot.partyNo,slotNo:slot.slotNo,characterMasterId:Number(item.characterMasterId||item.character_master_id)});
+      rosterState.changed=true;setQuickStatus(result.message||'성역 파티에 추가했습니다.','success');
+      await refreshSanctuaryPageData();window.setTimeout(()=>closeQuickPopover({skipRelease:result.editClosed===true}),350);
+    }catch(error){setQuickStatus(error.message||'캐릭터 추가에 실패했습니다.','error');}
+    finally{rosterState.busy=false;renderQuickPopover();requestAnimationFrame(positionQuickPopover);}
+  }
+
+  function handleQuickAction(action){
+    const command=action.dataset.quickAction;
+    if(command==='close'){closeQuickPopover();return;}
+    if(command==='scope'){commitQuickScope(quickScopeIndex(action.dataset.quickScope));return;}
+    if(command==='search-name'){quickSearch('name');return;}
+    if(command==='search-condition'){quickSearch('condition');return;}
+    if(command==='reset-name'){resetQuickRow('name');return;}
+    if(command==='reset-condition'){resetQuickRow('condition');return;}
+    if(command==='add')quickAdd(action);
+  }
+
+  async function openQuickPopover(button,event){
+    if(rosterState.busy||!canManageRoster())return;
+    const force=button.closest('.force-card');
+    const party=button.closest('.party-card');
+    const sanctuaryId=String(force?.dataset.sanctuaryId||'').trim().toLowerCase();
+    const teamNo=Number(force?.dataset.teamNo||0),partyNo=Number(party?.dataset.partyNo||0),slotNo=Number(button.dataset.slotNo||0);
+    if(!sanctuaryId||!teamNo||!partyNo||!slotNo)return;
+    button.disabled=true;button.classList.add('is-loading');
+    try{
+      const options=collectForceOptions();
+      const editor=await rosterAction('OPEN',{sanctuaryId,teamNo});
+      if(!editor?.ok)throw Object.assign(new Error(editor?.message||'간편 추가를 시작하지 못했습니다.'),{data:editor});
+      adoptPrimaryEditor(editor);rosterState.forceOptions=options;
+      rosterState.selectedSlot={teamNo,partyNo,slotNo,forceName:String(force.dataset.forceName||teamNo+'포스')};
+      rosterState.quickMode=true;rosterState.quickPoint={x:event.clientX,y:event.clientY};rosterState.quickActiveRow='';rosterState.quickResults=[];rosterState.quickScope='ALL';rosterState.quickName='';rosterState.quickClass='';rosterState.leaseLost=false;rosterState.changed=false;
+      const popover=ensureQuickPopover();renderQuickPopover();setQuickStatus('검색 조건을 선택해 주세요.','');
+      popover.classList.add('open');popover.setAttribute('aria-hidden','false');startHeartbeat();
+      requestAnimationFrame(()=>{positionQuickPopover();document.getElementById('sanctuaryQuickName')?.focus();});
+    }catch(error){setInlineNotice(button,error?.data?.message||error.message||'간편 추가를 시작하지 못했습니다.');}
+    finally{button.disabled=!canManageRoster();button.classList.remove('is-loading');}
+  }
+
+  async function closeQuickPopover({skipRelease=false}={}){
+    const popover=document.getElementById('sanctuaryQuickAddPopover');
+    if(!popover?.classList.contains('open'))return;
+    stopHeartbeat();const editSessionId=anchorSessionId();const changed=rosterState.changed;
+    popover.classList.remove('open');popover.setAttribute('aria-hidden','true');
+    if(editSessionId&&!rosterState.leaseLost&&!skipRelease)rosterAction('RELEASE',{editSessionId,reason:'WEB_QUICK_ADD_CLOSED'}).catch(()=>{});
+    rosterState.editor=null;rosterState.editors={};rosterState.baselineSlots={};rosterState.draftSlots={};rosterState.previewSlots={};rosterState.primaryTeamNo=0;rosterState.viewTeamNo=0;rosterState.anchorEditSessionId='';rosterState.editGroupId='';rosterState.groupLeases=[];rosterState.forceOptions=[];rosterState.targetErrors={};rosterState.selectedSlot=null;rosterState.quickMode=false;rosterState.quickPoint=null;rosterState.quickActiveRow='';rosterState.quickResults=[];rosterState.quickScope='ALL';rosterState.quickName='';rosterState.quickClass='';rosterState.busy=false;rosterState.changed=false;
+    if(changed)refreshSanctuaryPageData();
+  }
+
   async function openRoster(button){
     if(rosterState.busy||!canManageRoster())return;
-    const sanctuaryId=String(button.dataset.sanctuaryId||'').trim().toLowerCase();
-    const teamNo=Number(button.dataset.teamNo||0);
+    const options=collectForceOptions();
+    const requested=Number(button.dataset.teamNo||0);
+    const first=options.find(option=>Number(option.teamNo)===requested)||options[0]||{};
+    const sanctuaryId=String(button.dataset.sanctuaryId||first.sanctuaryId||'').trim().toLowerCase();
+    const teamNo=Number(requested||first.teamNo||0);
     if(!sanctuaryId||!teamNo)return;
     setInlineNotice(button,'','');
     button.disabled=true;
@@ -1185,17 +1574,18 @@
       const editor=await rosterAction('OPEN',{sanctuaryId,teamNo});
       if(!editor?.ok)throw Object.assign(new Error(editor?.message||'포스 편집을 시작하지 못했습니다.'),{data:editor});
       adoptPrimaryEditor(editor);
-      rosterState.forceOptions=collectForceOptions();
+      rosterState.forceOptions=options;
       rosterState.selectedSlot=null;
       rosterState.panel='existing';
       rosterState.busy=false;
       rosterState.leaseLost=false;
       rosterState.openButton=button;
       rosterState.changed=false;
+      rosterState.quickMode=false;
       resetAddPanel();
       const modal=ensureRosterModal();
       renderRoster();
-      setRosterStatus('캐릭터를 끌어 이동하거나 빈 슬롯에서 구성원을 추가해 주세요.','');
+      setRosterStatus('캐릭터를 길게 눌러 이동·맞교환한 뒤 변경사항을 저장해 주세요.','');
       modal.classList.add('open');
       modal.setAttribute('aria-hidden','false');
       document.body.classList.add('sanctuary-roster-open');
@@ -1226,8 +1616,8 @@
     }catch(error){
       rosterState.leaseLost=true;
       stopHeartbeat();
-      renderRoster();
-      setRosterStatus(error.message||'편집 권한이 만료되었습니다.','error');
+      if(rosterState.quickMode){renderQuickPopover();setQuickStatus(error.message||'편집 권한이 만료되었습니다.','error');}
+      else{renderRoster();setRosterStatus(error.message||'편집 권한이 만료되었습니다.','error');}
     }
   }
 
@@ -1255,7 +1645,7 @@
     }
     const changed=rosterState.changed;
     rosterState.editor=null;
-    rosterState.editors={};rosterState.baselineSlots={};rosterState.draftSlots={};
+    rosterState.editors={};rosterState.baselineSlots={};rosterState.draftSlots={};rosterState.previewSlots={};
     rosterState.primaryTeamNo=0;rosterState.viewTeamNo=0;rosterState.anchorEditSessionId='';rosterState.editGroupId='';rosterState.groupLeases=[];rosterState.forceOptions=[];rosterState.targetErrors={};
     rosterState.selectedSlot=null;
     rosterState.openButton=null;
@@ -1435,18 +1825,29 @@
   function bindRoster(){
     document.addEventListener('click',event=>{
       const button=event.target.closest('[data-sanctuary-roster-edit]');
-      if(!button)return;
-      event.preventDefault();event.stopPropagation();openRoster(button);
+      if(button){event.preventDefault();event.stopPropagation();openRoster(button);return;}
+      const forceEdit=event.target.closest('#forceEditBtn');
+      if(forceEdit){event.preventDefault();openRoster(forceEdit);return;}
+      const quick=event.target.closest('[data-sanctuary-quick-add]');
+      if(quick&&!quick.disabled){event.preventDefault();event.stopPropagation();openQuickPopover(quick,event);}
+    });
+    document.addEventListener('pointerdown',event=>{
+      const popover=document.getElementById('sanctuaryQuickAddPopover');
+      if(!popover?.classList.contains('open')||popover.contains(event.target)||event.target.closest?.('[data-sanctuary-quick-add]'))return;
+      closeQuickPopover();
     });
     window.addEventListener('kinojo:auth-changed',refreshRosterButtons);
-    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&document.getElementById('sanctuaryRosterEditorModal')?.classList.contains('open'))heartbeat();});
-    document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.getElementById('sanctuaryRosterEditorModal')?.classList.contains('open'))closeRoster();});
+    window.addEventListener('resize',()=>{if(document.getElementById('sanctuaryQuickAddPopover')?.classList.contains('open'))positionQuickPopover();});
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&(document.getElementById('sanctuaryRosterEditorModal')?.classList.contains('open')||document.getElementById('sanctuaryQuickAddPopover')?.classList.contains('open')))heartbeat();});
+    document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;if(document.getElementById('sanctuaryQuickAddPopover')?.classList.contains('open'))closeQuickPopover();else if(document.getElementById('sanctuaryRosterEditorModal')?.classList.contains('open'))closeRoster();});
     refreshRosterButtons();
   }
 
   const api=window.KinojoSanctuaryEditor||{};
   api.openRoster=openRoster;
   api.closeRoster=closeRoster;
+  api.openQuickPopover=openQuickPopover;
+  api.closeQuickPopover=closeQuickPopover;
   api.refreshRosterButtons=refreshRosterButtons;
   api.canManageRoster=canManageRoster;
   window.KinojoSanctuaryEditor=api;

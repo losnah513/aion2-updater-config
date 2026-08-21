@@ -11,15 +11,16 @@
     .force-card{overflow:hidden;border:1px solid #d7e0ec;border-radius:18px;background:#fff}
     .team-head{align-items:center}
     .harness-test-controls{position:fixed;right:8px;top:8px;z-index:10200;display:flex;gap:5px;padding:6px;border-radius:10px;background:#fff;box-shadow:0 4px 18px #0003}.harness-test-controls button{padding:6px 8px;border:1px solid #aac0db;border-radius:7px;background:#eef5ff;color:#173b67;font-size:11px;font-weight:800}.harness-test-controls output{align-self:center;color:#173b67;font-size:10px}
+    @media(max-width:600px){.harness-test-controls{top:auto;bottom:4px;left:4px;right:4px;overflow:auto}}
   </style>
   <script>
     const rosterByTeam = {
       301:[
-        {partyNo:1,slotNo:1,characterMasterId:101,name:'테스트수호',className:'수호성',serverName:'이스라펠',isMain:true,isTeamLeader:true},
-        {partyNo:1,slotNo:2,characterMasterId:102,name:'테스트치유',className:'치유성',serverName:'이스라펠',isMain:true}
+        {partyNo:1,slotNo:1,characterMasterId:101,name:'테스트수호',className:'수호성',serverName:'이스라펠',isMain:true,isTeamLeader:true,pvePower:848729,classIconUrl:'/assets/images/classes/class_icon_templar.png'},
+        {partyNo:1,slotNo:2,characterMasterId:102,name:'테스트치유',className:'치유성',serverName:'이스라펠',isMain:true,pvePower:454804,classIconUrl:'/assets/images/classes/class_icon_cleric.png'}
       ],
-      302:[{partyNo:1,slotNo:1,characterMasterId:201,name:'두번째검성',className:'검성',serverName:'시엘',isMain:true}],
-      401:[{partyNo:2,slotNo:5,characterMasterId:301,name:'다른팀궁성',className:'궁성',serverName:'시엘',isMain:true}]
+      302:[{partyNo:1,slotNo:1,characterMasterId:201,name:'두번째검성',className:'검성',serverName:'시엘',isMain:false,mainCharacterName:'테스트수호',pvePower:357919,classIconUrl:'/assets/images/classes/class_icon_gladiator.png'}],
+      401:[{partyNo:2,slotNo:5,characterMasterId:301,name:'다른팀궁성',className:'궁성',serverName:'시엘',isMain:true,pvePower:529699,classIconUrl:'/assets/images/classes/class_icon_ranger.png'}]
     };
     const forceMeta={301:{teamGroupNo:3,forceName:'1포스'},302:{teamGroupNo:3,forceName:'2포스'},401:{teamGroupNo:4,forceName:'1포스'}};
     let groupActive=false;
@@ -71,8 +72,9 @@
           return {ok:true,draftSaved:true,message:(payload.slotChanges||[]).length+'개 슬롯 변경을 저장했습니다.',editor:editorSnapshot(301)};
         }
         if(payload.command==='SEARCH')return {
-          ok:true,resultCount:2,results:[
-            {characterMasterId:401,characterName:'검색수호',className:'수호성',serverName:'이스라펠',isMain:true,addExistingAllowed:true,addNewAllowed:false},
+          ok:true,resultCount:3,results:[
+            {characterMasterId:401,characterName:'검색수호',className:'수호성',serverName:'이스라펠',isMain:true,isLegionMember:true,addExistingAllowed:true,addNewAllowed:false},
+            {characterMasterId:402,characterName:'대기치유',className:'치유성',serverName:'이스라펠',isMain:true,isWaitlisted:true,addExistingAllowed:true,addNewAllowed:false},
             {characterMasterId:202,characterName:'편성된치유',className:'치유성',serverName:'이스라펠',isMain:true,alreadyAssigned:true,addExistingAllowed:false,addNewAllowed:false,rosterLocation:{teamGroupNo:3,forceNo:2,partyNo:1,slotNo:4}}
           ]
         };
@@ -108,7 +110,7 @@
         document.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,pointerId,pointerType,clientX:a.left+a.width/2,clientY:a.top+a.height/2+22}));
         document.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId,pointerType,clientX:a.left+a.width/2,clientY:a.top+a.height/2+22}));
       }else{
-        if(pointerType==='touch')await new Promise(resolve=>setTimeout(resolve,410));
+        await new Promise(resolve=>setTimeout(resolve,310));
         document.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,cancelable:true,pointerId,pointerType,clientX:b.left+b.width/2,clientY:b.top+b.height/2}));
         document.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId,pointerType,clientX:b.left+b.width/2,clientY:b.top+b.height/2}));
       }
@@ -117,14 +119,15 @@
     }
     async function runDwellHarness(){
       const source=document.querySelector('#sanctuaryRosterEditorModal [data-roster-draggable]');
-      const target=document.querySelector('#sanctuaryRosterForceNav [data-target-team-no="302"]');
+      const target=document.querySelector('#sanctuaryRosterEditorModal [data-roster-force-card][data-team-no="302"]');
       const output=document.getElementById('harnessPointerResult');
       if(!source||!target){output.value='dwell 대상 없음';return;}
       const a=source.getBoundingClientRect(),b=target.getBoundingClientRect(),pointerId=82;
       source.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId,pointerType:'mouse',button:0,clientX:a.left+a.width/2,clientY:a.top+a.height/2}));
+      await new Promise(resolve=>setTimeout(resolve,310));
       document.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,cancelable:true,pointerId,pointerType:'mouse',clientX:b.left+b.width/2,clientY:b.top+b.height/2}));
-      await new Promise(resolve=>setTimeout(resolve,700));
-      const empty=document.querySelector('#sanctuaryRosterEditorModal [data-roster-slot].is-empty');
+      await new Promise(resolve=>setTimeout(resolve,520));
+      const empty=document.querySelector('#sanctuaryRosterEditorModal [data-roster-force-card][data-team-no="302"] [data-roster-slot].is-empty');
       if(empty){
         const c=empty.getBoundingClientRect();
         document.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,cancelable:true,pointerId,pointerType:'mouse',clientX:c.left+c.width/2,clientY:c.top+c.height/2}));
@@ -141,6 +144,7 @@
       if(slots.length<2){output.value='swap 대상 없음';return;}
       const source=slots[0],target=slots[1],a=source.getBoundingClientRect(),b=target.getBoundingClientRect(),pointerId=83;
       source.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId,pointerType:'mouse',button:0,clientX:a.left+a.width/2,clientY:a.top+a.height/2}));
+      await new Promise(resolve=>setTimeout(resolve,310));
       document.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,cancelable:true,pointerId,pointerType:'mouse',clientX:b.left+b.width/2,clientY:b.top+b.height/2}));
       document.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId,pointerType:'mouse',clientX:b.left+b.width/2,clientY:b.top+b.height/2}));
       await new Promise(resolve=>setTimeout(resolve,30));
@@ -165,11 +169,12 @@
 <body>
   <div class="harness-test-controls" aria-label="포인터 테스트 도구"><button type="button" onclick="runPointerHarness('mouse')">마우스 시나리오</button><button type="button" onclick="runSwapHarness()">마우스 맞교환</button><button type="button" onclick="runPointerHarness('touch')">터치 길게 누르기</button><button type="button" onclick="runPointerHarness('touch',{scrollCancel:true})">터치 스크롤</button><button type="button" onclick="runAutoScrollHarness()">터치 자동 스크롤</button><button type="button" onclick="runDwellHarness()">드래그 포스 전환</button><output id="harnessPointerResult">대기</output></div>
   <main class="harness-shell">
+    <button class="edit-btn" id="forceEditBtn" type="button" hidden>포스 편집하기</button>
     <section class="san-team-group" data-team-group="3"><h2>3팀</h2>
-      <article class="force-card" data-team-no="301" data-team-group-no="3" data-force-name="1포스"><header class="team-head"><div class="team-title-wrap"><div class="team-name"><span>1포스</span></div><div class="team-meta">v313 · 실제 서버/시트 변경 없음</div></div><button class="sanctuary-roster-edit-btn" type="button" hidden data-sanctuary-roster-edit data-sanctuary-id="kaldrix" data-team-no="301" data-team-group-no="3" data-force-name="1포스">파티 정보 수정</button></header></article>
-      <article class="force-card" data-team-no="302" data-team-group-no="3" data-force-name="2포스"><header class="team-head"><div class="team-title-wrap"><div class="team-name"><span>2포스</span></div></div><button class="sanctuary-roster-edit-btn" type="button" hidden data-sanctuary-roster-edit data-sanctuary-id="kaldrix" data-team-no="302" data-team-group-no="3" data-force-name="2포스">파티 정보 수정</button></header></article>
+      <article class="force-card" data-sanctuary-id="kaldrix" data-team-no="301" data-team-group-no="3" data-force-name="1포스"><header class="team-head"><div class="team-title-wrap"><div class="team-name"><span>1포스</span></div><div class="team-meta">v321 · 실제 서버/시트 변경 없음</div></div></header><div class="force-party-pair"><section class="party-card" data-party-no="1"><div class="slot-grid"><button class="char-card" data-character-id="101" data-is-main="true" data-char-name="테스트수호" data-char-class="수호성" data-char-owner=""></button><button class="empty-slot" data-sanctuary-quick-add data-slot-no="2" disabled><strong>+ 공석</strong></button></div></section><section class="party-card" data-party-no="2"><div class="slot-grid"><button class="empty-slot" data-sanctuary-quick-add data-slot-no="1" disabled><strong>+ 공석</strong></button></div></section></div></article>
+      <article class="force-card" data-sanctuary-id="kaldrix" data-team-no="302" data-team-group-no="3" data-force-name="2포스"><header class="team-head"><div class="team-title-wrap"><div class="team-name"><span>2포스</span></div></div></header><div class="force-party-pair"><section class="party-card" data-party-no="1"><div class="slot-grid"><button class="char-card" data-character-id="201" data-is-main="false" data-char-name="두번째검성" data-char-class="검성" data-char-owner="테스트수호"></button><button class="empty-slot" data-sanctuary-quick-add data-slot-no="2" disabled><strong>+ 공석</strong></button></div></section><section class="party-card" data-party-no="2"><div class="slot-grid"><button class="empty-slot" data-sanctuary-quick-add data-slot-no="1" disabled><strong>+ 공석</strong></button></div></section></div></article>
     </section>
-    <section class="san-team-group" data-team-group="4"><h2>4팀</h2><article class="force-card" data-team-no="401" data-team-group-no="4" data-force-name="1포스"><header class="team-head"><div class="team-title-wrap"><div class="team-name"><span>1포스</span></div></div><button class="sanctuary-roster-edit-btn" type="button" hidden data-sanctuary-roster-edit data-sanctuary-id="kaldrix" data-team-no="401" data-team-group-no="4" data-force-name="1포스">파티 정보 수정</button></header></article></section>
+    <section class="san-team-group" data-team-group="4"><h2>4팀</h2><article class="force-card" data-sanctuary-id="kaldrix" data-team-no="401" data-team-group-no="4" data-force-name="1포스"><header class="team-head"><div class="team-title-wrap"><div class="team-name"><span>1포스</span></div></div></header><div class="force-party-pair"><section class="party-card" data-party-no="1"><div class="slot-grid"><button class="empty-slot" data-sanctuary-quick-add data-slot-no="1" disabled><strong>+ 공석</strong></button></div></section><section class="party-card" data-party-no="2"><div class="slot-grid"><button class="char-card" data-character-id="301" data-is-main="true" data-char-name="다른팀궁성" data-char-class="궁성" data-char-owner=""></button></div></section></div></article></section>
   </main>
   <script src="/sanctuary/js/sanctuary-editor.js"></script>
 </body>

@@ -365,15 +365,14 @@ function teamHtml(t,g){
   const parties=normalizeForceParties(t);
   const filled=Number(t.characterCount||0);
   const avg=fmt(t.averagePower);
-  return '<article class="team-card force-card" id="'+esc(teamAnchorId(t))+'" data-team="'+esc(t.teamId||groupNo)+'" data-force="'+esc(forceId||forceNo)+'" data-team-no="'+esc(teamNo)+'" data-team-group-no="'+esc(groupNo)+'" data-force-name="'+esc(forceName)+'">'
+  return '<article class="team-card force-card" id="'+esc(teamAnchorId(t))+'" data-team="'+esc(t.teamId||groupNo)+'" data-force="'+esc(forceId||forceNo)+'" data-sanctuary-id="'+esc(currentId||'')+'" data-team-no="'+esc(teamNo)+'" data-team-group-no="'+esc(groupNo)+'" data-force-name="'+esc(forceName)+'">'
     + '<header class="team-head"><div class="team-title-wrap"><div class="team-name">'
     + '<span>'+esc(forceName)+'</span>'
-    + '<button class="sanctuary-roster-edit-btn" type="button" hidden data-sanctuary-roster-edit data-sanctuary-id="'+esc(currentId||'')+'" data-team-no="'+esc(teamNo)+'" data-team-group-no="'+esc(groupNo)+'" data-force-name="'+esc(forceName)+'">파티 정보 수정</button>'
     + '<button class="team-copy-btn kinojo-copy-icon-btn team-copy-icon" type="button" data-force-copy data-kinojo-tooltip="해당 포스 전체를 클립보드에 복사합니다" title="해당 포스 전체를 클립보드에 복사합니다" aria-label="'+esc(forceName)+' 클립보드 복사"><span class="copy-stack-icon" aria-hidden="true"><span></span><span></span></span></button>'
     + '</div><div class="team-meta"><span class="force-count-badge">'+fmt(filled)+' / 10</span><span>'+fmt(t.partyCount||2)+'파티</span><span>평균 '+avg+'</span></div></div></header>'
     + '<div class="force-party-pair">'+parties.map(partyHtml).join('')+'</div></article>';
 }
-function partyHtml(p){return '<section class="party-card force-party-column" data-party-no="'+esc(p.partyNo)+'"><div class="party-head"><div class="party-title-row"><div class="party-title">'+esc(p.partyNo)+'파티</div></div><div class="party-count">'+fmt(p.filled)+' / '+fmt(p.capacity||5)+'</div></div><div class="slot-grid">'+(p.slots||[]).slice(0,5).map(slotHtml).join('')+'</div></section>'}
+function partyHtml(p){return '<section class="party-card force-party-column" data-party-no="'+esc(p.partyNo)+'"><div class="party-head"><div class="party-title-row"><div class="party-title">'+esc(p.partyNo)+'파티</div></div><div class="party-count">'+fmt(p.filled)+' / '+fmt(p.capacity||5)+'</div></div><div class="slot-grid">'+(p.slots||[]).slice(0,5).map((slot,index)=>slotHtml(slot,index+1)).join('')+'</div></section>'}
 function sanctuaryProfileUrl(s){const direct=String(s.profileImageUrl||s.profileUrl||s.profile_image_url||s.imageUrl||s.characterImageUrl||'').trim();if(direct)return direct;const serverId=String(s.serverId||s.server_id||'').trim();const charKey=String(s.charKey||s.char_key||'').trim();return /^\d+$/.test(serverId)&&/^\d{10,}$/.test(charKey)?'https://profileimg.plaync.com/game_profile_images/aion2/images?gameServerKey='+encodeURIComponent(serverId)+'&charKey='+encodeURIComponent(charKey):'';}
 function sanctuaryDetailUrl(s){return String(s.detailUrl||s.detail_url||s.url||'').trim();}
 function sanctuaryIdentityBadge(s){
@@ -382,8 +381,8 @@ function sanctuaryIdentityBadge(s){
   const detail=String(badge.detail||badge.label||'').trim();
   return '<span class="san-identity-badge" title="'+esc(detail)+'" aria-label="'+esc(detail)+'">'+esc(badge.label)+'</span>';
 }
-function slotHtml(s){
-  if(!s.name)return '<div class="empty-slot"><strong>+ '+esc(s.vacancyText||'파티 인원 모집중')+'</strong><span>대기자 명단에서 추가 가능</span></div>';
+function slotHtml(s,slotNo){
+  if(!s.name)return '<button class="empty-slot" type="button" data-sanctuary-quick-add data-slot-no="'+esc(slotNo||s.slotNo||'')+'" disabled aria-label="빈 슬롯에 캐릭터 빠르게 추가"><strong>+ '+esc(s.vacancyText||'파티 인원 모집중')+'</strong><span>권한이 있으면 바로 추가</span></button>';
   const className=String(s.className||'직업 미확인');
   const iconSrc=classIconSrc(className);
   const icon=iconSrc?'<img class="class-icon" src="'+esc(iconSrc)+'" alt="" width="15" height="15" loading="lazy" decoding="async"> ':'';
@@ -399,7 +398,7 @@ function slotHtml(s){
   const powerFull=powerFormat.full?powerFormat.full(pvePower):fmt(pvePower);
   const ownerBadge=isMain?'<span class="char-main-badge">본캐</span>':(mainCharacterName?'<span class="char-owner-badge" title="소유 본캐 '+esc(mainCharacterName)+'">본캐 '+esc(mainCharacterName)+'</span>':'');
   const profileHtml='<span class="char-profile-wrap"><span class="char-profile is-empty" data-character-profile data-char-name="'+esc(s.name)+'" data-char-class="'+esc(className)+'" data-profile-image="'+esc(profile)+'" data-server-id="'+esc(serverId)+'" data-char-key="'+esc(charKey)+'">?</span>'+sanctuaryIdentityBadge(s)+'</span>';
-  return '<button class="char-card san-reaction-card '+(isMain?'is-main-character':'is-sub-character')+'" type="button" draggable="false" data-char-name="'+esc(s.name)+'" data-char-class="'+esc(className)+'" data-char-power="'+esc(fmt(pvePower))+'" data-pve-power="'+esc(fmt(pvePower))+'" data-pvp-power="'+esc(fmt(pvpPower))+'" data-char-owner="'+esc(mainCharacterName)+'" data-profile-image="'+esc(profile)+'" data-class-icon="'+esc(iconSrc)+'" data-server-id="'+esc(serverId)+'" data-char-key="'+esc(charKey)+'" data-detail-url="'+esc(sanctuaryDetailUrl(s))+'" aria-label="'+esc(s.name)+' 반응 남기기">'
+  return '<button class="char-card san-reaction-card '+(isMain?'is-main-character':'is-sub-character')+'" type="button" draggable="false" data-character-id="'+esc(s.characterMasterId||s.character_master_id||'')+'" data-is-main="'+(isMain?'true':'false')+'" data-char-name="'+esc(s.name)+'" data-char-class="'+esc(className)+'" data-char-power="'+esc(fmt(pvePower))+'" data-pve-power="'+esc(fmt(pvePower))+'" data-pvp-power="'+esc(fmt(pvpPower))+'" data-char-owner="'+esc(mainCharacterName)+'" data-profile-image="'+esc(profile)+'" data-class-icon="'+esc(iconSrc)+'" data-server-id="'+esc(serverId)+'" data-server-name="'+esc(s.serverName||s.server_name||'')+'" data-char-key="'+esc(charKey)+'" data-detail-url="'+esc(sanctuaryDetailUrl(s))+'" aria-label="'+esc(s.name)+' 반응 남기기">'
     +'<span class="char-text"><span class="char-name-row"><span class="char-name">'+esc(s.name)+'</span>'+ownerBadge+'</span><span class="char-meta" title="정확한 전투력 '+esc(powerFull)+'">'+icon+esc(className)+' · '+esc(powerShort)+'</span></span>'+profileHtml+'</button>';
 }
 function bindSanctuaryProfileImages(){

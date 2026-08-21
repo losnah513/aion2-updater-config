@@ -20,6 +20,7 @@ on:
       - "sanctuary/**"
       - "assets/images/sanctuary/**"
       - "assets/images/classes/**"
+      - "assets/images/my-info/**"
       - "m/sanctuary/**"
       - "sanctuary-schedule/**"
       - "m/sanctuary-schedule/**"
@@ -52,6 +53,7 @@ on:
       - "sanctuary/**"
       - "assets/images/sanctuary/**"
       - "assets/images/classes/**"
+      - "assets/images/my-info/**"
       - "m/sanctuary/**"
       - "sanctuary-schedule/**"
       - "m/sanctuary-schedule/**"
@@ -91,6 +93,7 @@ jobs:
           set -euo pipefail
 
           js_files=(
+            "ui/kinojo-my-info-image-contract.js"
             "ui/kinojo-character-reaction.js"
             "ui/kinojo-character-detail-refresh.js"
             "ui/kinojo-character-skill-bridge.js"
@@ -113,6 +116,8 @@ jobs:
           done
 
           node tests/web-shell-auth-contract.test.js
+          node tests/my-info-image-contract.test.js
+          node tests/my-info-guide-assets.test.js
           node tests/sanctuary-waitlist-contract.test.js
           node tests/staged-page-contract.test.js
           node tests/meter-presence-log-contract.test.js
@@ -413,6 +418,9 @@ jobs:
             "assets/images/classes/original/class_icon_ranger.png"
             "assets/images/classes/original/class_icon_sorcerer.png"
             "assets/images/classes/original/class_icon_templar.png"
+            "assets/images/my-info/guides/front-2x3.svg"
+            "assets/images/my-info/guides/back-2x3.svg"
+            "assets/images/my-info/guides/upper-body-4x5.svg"
             "sanctuary-schedule/index.html"
             "m/sanctuary-schedule/index.html"
             "sanctuary-schedule/css/sanctuary-schedule.css"
@@ -451,6 +459,7 @@ jobs:
             "ui/kinojo-components.css"
             "ui/kinojo-common-ui.css"
             "ui/kinojo-common-ui.js"
+            "ui/kinojo-my-info-image-contract.js"
             "ui/kinojo-public-shell.css"
             "ui/kinojo-staged-loading.css"
             "ui/kinojo-staged-loading.js"
