@@ -18,8 +18,14 @@ assert.ok(render.includes('hof-v2-area-meter'), 'DPS slot needs a semantic grid 
 assert.ok(render.includes('hof-v2-area-ranking-link-card'), 'Ranking link slot needs a semantic grid area');
 assert.ok(render.includes("+'<div id=\"hallSlotPve\" class=\"hof-v2-area hof-v2-area-pve"), 'PVE slot class is not semantic');
 assert.ok(render.includes("+'<div id=\"hallSlotPvp\" class=\"hof-v2-area hof-v2-area-pvp"), 'PVP slot class is not semantic');
-assert.ok(render.includes('+hofPowerClass(item)'), 'TOP3 class column is missing from rendered cards');
-assert.match(render,/\+hofPowerRank\(rank\)\s*\+hofPowerClass\(item\)/, 'TOP3 class icon must follow the rank');
+assert.equal(render.includes('function hofPowerClass('), false, 'TOP3 class icon must not live in a detached grid column');
+const powerInfoRender = render.slice(render.indexOf('function hofPowerInfo'),render.indexOf('function hofPowerAside'));
+assert.match(powerInfoRender,/hof-v2-power-class-slot[\s\S]*?hofClassIcon\(item\)[\s\S]*?hof-v2-top3-name[\s\S]*?hof-v2-top3-server[\s\S]*?hof-v2-owner-slot/, 'TOP3 identity must keep class, name, server, and owner together');
+assert.ok(render.includes("hof-v2-top3-server\">['+escapeHtml(server)+']</span>"), 'TOP3 server must render as [server] beside the character name');
+assert.equal(render.includes('hof-v2-server-badge'), false, 'TOP3 server must not render as a badge');
+assert.ok(render.includes('<span class="hof-v2-owner-badge">부캐</span>'), 'Sub character badge must use only the label 부캐');
+assert.equal(render.includes('부캐 · '), false, 'Sub character badge must not include an owner name');
+assert.ok(render.includes("size!=='power-card'&&badge?.label"), 'TOP3 portraits must suppress extra identity badges');
 assert.equal(render.includes("hofClassIcon(safeItem)+'<span>'+escapeHtml(hofClassName"), false, 'God cards must not repeat visible class text beside the icon');
 assert.equal(render.includes('<span>이번 주 합계</span>'), false, 'God cards must not repeat the weekly increase as a total row');
 
@@ -68,14 +74,13 @@ mobileDomOrder.reduce((previous,id)=>{
   return current;
 },-1);
 assert.ok(css.includes('height:calc(100% - 44px)!important'), 'TOP3 body must fit the panel below its header');
-assert.ok(css.includes('grid-template-columns:30px clamp(44px,4vw,64px) minmax(0,1fr) minmax(72px,7vw,104px) clamp(58px,5vw,84px)'), 'TOP3 rank/class/identity/score/profile one-line grid is missing');
+assert.ok(css.includes('grid-template-columns:30px minmax(0,1fr) minmax(72px,7vw,104px) clamp(58px,5vw,84px)'), 'TOP3 rank/identity/score/profile one-line grid is missing');
 assert.ok(css.includes('grid-template-rows:1fr!important'), 'TOP3 entries must stay on one row');
-assert.match(css,/hof-v2-power-class-slot\{\s*grid-column:2!important;/, 'TOP3 class icon must be the first field after rank');
-assert.match(css,/hof-v2-top3-info\{\s*grid-column:3!important;/, 'TOP3 identity must follow the class icon');
-assert.match(css,/hof-v2-top3-aside\{\s*grid-column:4!important;\s*grid-row:1!important;/, 'TOP3 score must stay beside the identity on the same row');
-assert.match(css,/hof-v2-power-portrait\{\s*grid-column:5!important;\s*grid-row:1!important;/, 'TOP3 profile must finish the same centered row');
-assert.match(render,/hof-v2-top3-name[^\n]*hof-v2-owner-slot[^\n]*hofOwnerBadge\(item\)/, 'Main/sub badge must render beside the character name');
-assert.match(css,/hof-v2-power-class-slot \.hof-v2-class-icon\{[\s\S]*?width:calc\(100% - 18px\)!important;[\s\S]*?max-width:58px!important;[\s\S]*?max-height:46px!important;/, 'TOP3 class icon must fill the wide-card row without escaping it');
+assert.match(css,/hof-v2-top3-info\{\s*grid-column:2!important;/, 'TOP3 identity must immediately follow the rank');
+assert.match(css,/hof-v2-top3-aside\{\s*grid-column:3!important;\s*grid-row:1!important;/, 'TOP3 score must stay beside the identity on the same row');
+assert.match(css,/hof-v2-power-portrait\{\s*grid-column:4!important;\s*grid-row:1!important;/, 'TOP3 profile must finish the same centered row');
+assert.match(render,/hof-v2-top3-name[^\n]*hof-v2-top3-server[^\n]*hof-v2-owner-slot[^\n]*hofOwnerBadge\(item\)/, 'Name, [server], and main/sub badge must stay together');
+assert.match(css,/hof-v2-power-class-slot \.hof-v2-class-icon\{[\s\S]*?width:32px!important;[\s\S]*?border:0!important;[\s\S]*?border-radius:0!important;[\s\S]*?background:transparent!important;/, 'TOP3 class icon must use its raw shape without a circular badge');
 assert.match(css,/hof-v2-god-class\{\s*grid-column:1!important;/, 'God-card class icon must occupy the left edge');
 assert.match(css,/hof-v2-god-class \.hof-v2-class-icon\{[\s\S]*?width:clamp\(48px,5vw,64px\)!important;[\s\S]*?max-height:64px!important;/, 'God-card class icon must remain visible and smaller than its profile portrait');
 assert.ok(css.includes('border-top:1px solid rgba(22,34,58,.14)!important'), 'Single TOP3 row divider is missing');
@@ -94,8 +99,8 @@ assert.match(css,/hof-v2-my-row\{[\s\S]*?flex-wrap:nowrap!important;[\s\S]*?alig
 
 for (const entry of ['hof/index.html', 'm/hof/index.html']) {
   const html = read(entry);
-  assert.ok(html.includes('hall.css?cache=2026082108'), `${entry}: Hall CSS cache key was not updated`);
-  assert.ok(html.includes('hall-render.js?cache=2026082104'), `${entry}: Hall render cache key was not updated`);
+  assert.ok(html.includes('hall.css?cache=2026082109'), `${entry}: Hall CSS cache key was not updated`);
+  assert.ok(html.includes('hall-render.js?cache=2026082105'), `${entry}: Hall render cache key was not updated`);
 }
 
 console.log('KINOJO Hall of Fame reference layout contract: PASS');
