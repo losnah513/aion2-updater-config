@@ -16,11 +16,11 @@
   <script>
     const rosterByTeam = {
       301:[
-        {partyNo:1,slotNo:1,characterMasterId:101,name:'테스트수호',className:'수호성',serverName:'이스라펠',isMain:true,isTeamLeader:true},
-        {partyNo:1,slotNo:2,characterMasterId:102,name:'테스트치유',className:'치유성',serverName:'이스라펠',isMain:true}
+        {partyNo:1,slotNo:1,characterMasterId:101,name:'테스트수호',className:'수호성',serverName:'이스라펠',isMain:true,isTeamLeader:true,pvePower:848729,classIconUrl:'/assets/images/classes/class_icon_templar.png'},
+        {partyNo:1,slotNo:2,characterMasterId:102,name:'테스트치유',className:'치유성',serverName:'이스라펠',isMain:true,pvePower:454804,classIconUrl:'/assets/images/classes/class_icon_cleric.png'}
       ],
-      302:[{partyNo:1,slotNo:1,characterMasterId:201,name:'두번째검성',className:'검성',serverName:'시엘',isMain:false,mainCharacterName:'테스트수호'}],
-      401:[{partyNo:2,slotNo:5,characterMasterId:301,name:'다른팀궁성',className:'궁성',serverName:'시엘',isMain:true}]
+      302:[{partyNo:1,slotNo:1,characterMasterId:201,name:'두번째검성',className:'검성',serverName:'시엘',isMain:false,mainCharacterName:'테스트수호',pvePower:357919,classIconUrl:'/assets/images/classes/class_icon_gladiator.png'}],
+      401:[{partyNo:2,slotNo:5,characterMasterId:301,name:'다른팀궁성',className:'궁성',serverName:'시엘',isMain:true,pvePower:529699,classIconUrl:'/assets/images/classes/class_icon_ranger.png'}]
     };
     const forceMeta={301:{teamGroupNo:3,forceName:'1포스'},302:{teamGroupNo:3,forceName:'2포스'},401:{teamGroupNo:4,forceName:'1포스'}};
     let groupActive=false;
@@ -72,8 +72,9 @@
           return {ok:true,draftSaved:true,message:(payload.slotChanges||[]).length+'개 슬롯 변경을 저장했습니다.',editor:editorSnapshot(301)};
         }
         if(payload.command==='SEARCH')return {
-          ok:true,resultCount:2,results:[
-            {characterMasterId:401,characterName:'검색수호',className:'수호성',serverName:'이스라펠',isMain:true,addExistingAllowed:true,addNewAllowed:false},
+          ok:true,resultCount:3,results:[
+            {characterMasterId:401,characterName:'검색수호',className:'수호성',serverName:'이스라펠',isMain:true,isLegionMember:true,addExistingAllowed:true,addNewAllowed:false},
+            {characterMasterId:402,characterName:'대기치유',className:'치유성',serverName:'이스라펠',isMain:true,isWaitlisted:true,addExistingAllowed:true,addNewAllowed:false},
             {characterMasterId:202,characterName:'편성된치유',className:'치유성',serverName:'이스라펠',isMain:true,alreadyAssigned:true,addExistingAllowed:false,addNewAllowed:false,rosterLocation:{teamGroupNo:3,forceNo:2,partyNo:1,slotNo:4}}
           ]
         };
