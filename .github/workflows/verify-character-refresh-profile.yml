@@ -60,7 +60,7 @@ jobs:
                   count = text.count(f'id="{item_id}"')
                   if count != 1:
                       raise SystemExit(f'{page}: {item_id} count={count}')
-              if 'admin.js?cache=2026081701' not in text:
+              if 'admin.js?cache=2026082103' not in text:
                   raise SystemExit(f'{page}: stale admin cache')
           source = Path('admin/js/admin-characters.js').read_text(encoding='utf-8')
           for token in [
@@ -114,7 +114,7 @@ jobs:
               if forbidden in download:
                   raise SystemExit(f'admin member image download leaked forbidden field {forbidden}')
           loader = Path('admin/js/admin.js').read_text(encoding='utf-8')
-          if 'v2026082102' not in loader or "name+'?cache=2026082102'" not in loader or "'admin-member-image-download.js'" not in loader:
+          if 'v2026082103' not in loader or "name+'?cache=2026082103'" not in loader or "'admin-member-image-download.js'" not in loader:
               raise SystemExit('admin loader/download module contract missing')
           print('Character refresh profile source contracts: PASS')
           PY
