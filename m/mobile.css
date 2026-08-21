@@ -625,8 +625,24 @@ body{min-height:100svh}.mobile-wrap{width:100%;max-width:560px;padding:clamp(16p
     gap:3px!important;
   }
   .kinojo-mobile-sanctuary-detail-page .edit-shell{
-    display:grid;
-    gap:8px;
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:6px 8px;
+    padding:7px 8px;
+  }
+  .kinojo-mobile-sanctuary-detail-page .sanctuary-edit-actions{
+    display:flex;
+    flex-wrap:nowrap;
+    gap:5px;
+  }
+  .kinojo-mobile-sanctuary-detail-page .edit-shell .edit-btn{
+    padding:7px 9px;
+    font-size:11px;
+    white-space:nowrap;
+  }
+  .kinojo-mobile-sanctuary-detail-page .edit-shell .edit-note{
+    flex:1 1 160px;
   }
   .kinojo-mobile-sanctuary-detail-page .tip-panel .tip-card,
   .kinojo-mobile-sanctuary-detail-page .admin-code-card{

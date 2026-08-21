@@ -42,6 +42,8 @@ for (const token of [
   'grid-template-columns:max-content minmax(220px,460px)',
   'max-width:460px',
   'flex:0 0 456px',
+  'grid-template-columns:max-content minmax(240px,360px)',
+  'grid-template-columns:max-content minmax(200px,300px)',
   'main.wrap>.sanctuary-page-bar .sanctuary-operation.kinojo-staged-region',
   'main.wrap>.sanctuary-page-bar .summary-grid.kinojo-staged-region{min-height:0}'
 ]) {
@@ -50,7 +52,8 @@ for (const token of [
 
 for (const entry of ['sanctuary/index.html', 'm/sanctuary/index.html']) {
   const html = read(entry);
-  assert.ok(html.includes('sanctuary.css?cache=2026082105'), entry + ': sanctuary CSS cache is stale');
+  assert.ok(html.includes('sanctuary.css?cache=2026082106'), entry + ': sanctuary CSS cache is stale');
+  assert.equal(html.includes('id="sanctuarySyncChip"'), false, entry + ': body sync card duplicates the topbar status');
   assert.ok(html.includes('kinojo-supabase-features.js?cache=2026082103'), entry + ': Server feature cache is stale');
   assert.ok(html.includes('sanctuary.js?cache=2026082105'), entry + ': sanctuary page cache is stale');
 }

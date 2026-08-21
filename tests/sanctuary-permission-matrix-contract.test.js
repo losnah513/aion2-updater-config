@@ -41,7 +41,7 @@ for (const entry of ['sanctuary/index.html', 'm/sanctuary/index.html']) {
   assert.ok(html.includes('id="editModeBtn" type="button" hidden'), `${entry}: info editor must remain hidden until Server access arrives`);
   assert.ok(html.includes('kinojo-supabase-features.js?cache=2026082103'), `${entry}: feature cache key is stale`);
   assert.ok(html.includes('sanctuary.js?cache=2026082105'), `${entry}: page cache key is stale`);
-  assert.ok(html.includes('sanctuary-editor.js?cache=2026082104'), `${entry}: editor cache key is stale`);
+  assert.ok(html.includes('sanctuary-editor.js?cache=2026082105'), `${entry}: editor cache key is stale`);
 }
 
 console.log('KINOJO sanctuary fine-grained permission matrix contract: PASS');
