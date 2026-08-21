@@ -2172,9 +2172,10 @@ body>.hof-filter-bar .kinojo-filter-switch{min-height:34px!important;width:auto!
 }
 
 /* ============================================================
-   KINOJO HOF 20260821 - square six-card domino board authority
+   KINOJO HOF 20260821 - equal-card square board authority
    - Desktop/tablet: the six-card outer board is exactly 1:1.
-   - Wide cards are exactly 2:1; God cards are exactly 1:2.
+   - Four wide cards share one 7x1 size; two God cards share one 3x2 size.
+   - Fold landscape keeps My Rank on the right and never sizes from dynamic vh.
    - TOP3: full-width rows separated by one line, with four aligned columns.
    - God titles: official item-level / combat-power artwork.
    ============================================================ */
@@ -2182,6 +2183,7 @@ body>.hof-filter-bar .kinojo-filter-switch{min-height:34px!important;width:auto!
 .hof-v2-area-ranking-link-card{grid-area:ranking-link-card!important;}
 .hof-v2-area-pve{grid-area:pve!important;}
 .hof-v2-area-pvp{grid-area:pvp!important;}
+.hof-v2-area-growth{grid-area:growth!important;}
 
 .hof-v2-title-icon.is-official{
   width:28px!important;
@@ -2471,25 +2473,23 @@ body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power
     justify-items:center!important;
   }
   body.kinojo-page-hall .hof-v2-board{
-    --hof-domino-unit:clamp(56px,calc((100vw - 48px)/6),150px);
-    width:calc(var(--hof-domino-unit) * 6 + 2px)!important;
-    height:calc(var(--hof-domino-unit) * 6 + 2px)!important;
-    grid-template-columns:repeat(6,var(--hof-domino-unit))!important;
-    grid-template-rows:repeat(6,var(--hof-domino-unit))!important;
+    --hof-board-size:clamp(480px,min(calc(100vw - 32px),900px),900px);
+    width:var(--hof-board-size)!important;
+    height:var(--hof-board-size)!important;
+    aspect-ratio:1/1!important;
+    grid-template-columns:repeat(10,minmax(0,1fr))!important;
+    grid-template-rows:repeat(4,minmax(0,1fr))!important;
     grid-template-areas:
-      "enhance enhance pve pve pve pve"
-      "enhance enhance pve pve pve pve"
-      "enhance enhance meter meter growth growth"
-      "enhance enhance ranking-link-card ranking-link-card growth growth"
-      "pvp pvp pvp pvp growth growth"
-      "pvp pvp pvp pvp growth growth"!important;
+      "enhance enhance enhance pve pve pve pve pve pve pve"
+      "enhance enhance enhance meter meter meter meter meter meter meter"
+      "pvp pvp pvp pvp pvp pvp pvp growth growth growth"
+      "ranking-link-card ranking-link-card ranking-link-card ranking-link-card ranking-link-card ranking-link-card ranking-link-card growth growth growth"!important;
   }
   body.kinojo-page-hall .hof-v2-area .hof-v2-panel{
     border:0!important;
     border-radius:0!important;
   }
   body.kinojo-page-hall .hof-v2-area-enhance .hof-v2-panel,
-  body.kinojo-page-hall .hof-v2-area-meter .hof-v2-panel,
   body.kinojo-page-hall .hof-v2-area-ranking-link-card .hof-v2-panel,
   body.kinojo-page-hall .hof-v2-area-pvp .hof-v2-panel{
     border-right:1px solid var(--hof-line)!important;
@@ -2497,23 +2497,22 @@ body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power
   body.kinojo-page-hall .hof-v2-area-enhance .hof-v2-panel,
   body.kinojo-page-hall .hof-v2-area-pve .hof-v2-panel,
   body.kinojo-page-hall .hof-v2-area-meter .hof-v2-panel,
-  body.kinojo-page-hall .hof-v2-area-ranking-link-card .hof-v2-panel{
+  body.kinojo-page-hall .hof-v2-area-pvp .hof-v2-panel{
     border-bottom:1px solid var(--hof-line)!important;
   }
   body.kinojo-page-hall .hof-v2-area-meter .hof-v2-meter-wait{
-    gap:3px!important;
-    padding:6px!important;
+    gap:8px!important;
+    padding:18px!important;
   }
-  body.kinojo-page-hall .hof-v2-area-meter .hof-v2-meter-wait strong{font-size:14px!important;}
-  body.kinojo-page-hall .hof-v2-area-meter .hof-v2-meter-wait span{font-size:9px!important;}
-  body.kinojo-page-hall .hof-v2-area-meter .hof-v2-meter-wait small{font-size:8px!important;}
+  body.kinojo-page-hall .hof-v2-area-meter .hof-v2-meter-wait strong{font-size:20px!important;}
+  body.kinojo-page-hall .hof-v2-area-meter .hof-v2-meter-wait span{font-size:11px!important;}
+  body.kinojo-page-hall .hof-v2-area-meter .hof-v2-meter-wait small{font-size:9px!important;}
   body.kinojo-page-hall .hof-v2-area-ranking-link-card .hof-v2-ranking-link-inner{
-    position:relative!important;
     align-content:center!important;
     grid-template-columns:minmax(0,1fr)!important;
-    grid-template-rows:auto auto minmax(0,1fr)!important;
-    gap:2px!important;
-    padding:7px 9px!important;
+    grid-template-rows:auto auto auto auto!important;
+    gap:7px!important;
+    padding:16px 20px!important;
   }
   body.kinojo-page-hall .hof-v2-area-ranking-link-card .hof-v2-ranking-kicker{
     grid-column:1!important;
@@ -2522,19 +2521,23 @@ body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power
   body.kinojo-page-hall .hof-v2-area-ranking-link-card .hof-v2-ranking-link-inner strong{
     grid-column:1!important;
     grid-row:2!important;
-    font-size:14px!important;
+    font-size:20px!important;
     white-space:nowrap!important;
   }
   body.kinojo-page-hall .hof-v2-area-ranking-link-card .hof-v2-ranking-link-inner span:not(.hof-v2-ranking-kicker){
-    display:none!important;
+    display:block!important;
+    grid-column:1!important;
+    grid-row:3!important;
+    font-size:11px!important;
   }
   body.kinojo-page-hall .hof-v2-area-ranking-link-card .hof-v2-ranking-link-inner em{
-    position:absolute!important;
-    right:8px!important;
-    bottom:7px!important;
+    position:static!important;
+    grid-column:1!important;
+    grid-row:4!important;
+    justify-self:start!important;
     margin:0!important;
-    padding:4px 7px!important;
-    font-size:10px!important;
+    padding:6px 11px!important;
+    font-size:11px!important;
   }
 }
 
@@ -2545,7 +2548,7 @@ body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power
     height:auto!important;
   }
   body.kinojo-page-hall .hof-v2-board{
-    --hof-domino-unit:clamp(60px,min(calc((100dvh - 196px)/6),calc((100vw - 380px)/6)),160px);
+    --hof-board-size:clamp(480px,min(calc(100svh - 196px),calc(100vw - 380px)),960px);
     min-height:0!important;
   }
   body.kinojo-page-hall .hof-v2-right,
@@ -2557,7 +2560,7 @@ body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power
   }
 }
 
-@media (min-width:761px) and (max-width:1180px){
+@media (min-width:761px) and (max-width:1180px) and (orientation:portrait){
   body.kinojo-page-hall .hof-v2-layout{
     grid-template-columns:max-content!important;
   }
@@ -2574,9 +2577,23 @@ body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power
   }
 }
 
-@media (min-width:900px) and (max-width:1180px){
+@media (min-width:761px) and (max-width:1180px) and (orientation:landscape){
+  body.kinojo-page-hall .hof-v2-layout{
+    --hof-my-rank-width:clamp(280px,30vw,300px);
+    grid-template-columns:max-content var(--hof-my-rank-width)!important;
+    grid-template-rows:auto!important;
+    align-items:start!important;
+  }
   body.kinojo-page-hall .hof-v2-board{
-    --hof-domino-unit:clamp(60px,min(calc((100dvh - 196px)/6),calc((100vw - 48px)/6)),150px);
+    --hof-board-size:clamp(360px,calc(100vw - var(--hof-my-rank-width) - 46px),720px);
+  }
+  body.kinojo-page-hall .hof-v2-right,
+  body.kinojo-page-hall .hof-v2-my-rank{
+    width:var(--hof-my-rank-width)!important;
+    max-width:var(--hof-my-rank-width)!important;
+    min-height:0!important;
+    height:var(--hof-board-size)!important;
+    justify-self:stretch!important;
   }
 }
 
@@ -2587,15 +2604,17 @@ body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power
     gap:10px!important;
   }
   body.kinojo-page-hall .hof-v2-board{
-    grid-template-columns:1fr!important;
+    width:100%!important;
+    height:auto!important;
+    aspect-ratio:auto!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
     grid-template-rows:auto!important;
     grid-template-areas:
-      "enhance"
-      "meter"
-      "ranking-link-card"
-      "pve"
-      "pvp"
-      "growth"!important;
+      "meter meter"
+      "pve pve"
+      "pvp pvp"
+      "enhance growth"
+      "ranking-link-card ranking-link-card"!important;
     gap:10px!important;
     padding:8px!important;
   }
@@ -2604,17 +2623,20 @@ body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power
     width:100%!important;
     height:auto!important;
     min-height:0!important;
-    aspect-ratio:1/2!important;
+    aspect-ratio:3/5!important;
   }
   body.kinojo-page-hall .hof-v2-god-main:not(.is-empty){
-    grid-template-columns:clamp(70px,23vw,92px) clamp(86px,28vw,112px)!important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1.15fr)!important;
+    column-gap:4px!important;
+    margin:5px 5px 4px!important;
+    padding:6px 4px!important;
   }
   body.kinojo-page-hall .hof-v2-god-main:not(.is-empty) .hof-v2-god-class .hof-v2-class-icon{
-    width:clamp(70px,23vw,92px)!important;
-    max-height:92px!important;
+    width:clamp(34px,11vw,54px)!important;
+    max-height:54px!important;
   }
   body.kinojo-page-hall .hof-v2-god-main:not(.is-empty) .hof-v2-portrait.large{
-    max-width:112px!important;
+    max-width:64px!important;
   }
   body.kinojo-page-hall .hof-v2-area-meter .hof-v2-panel,
   body.kinojo-page-hall .hof-v2-area-ranking-link-card .hof-v2-panel,
@@ -2623,7 +2645,7 @@ body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power
     width:100%!important;
     height:auto!important;
     min-height:0!important;
-    aspect-ratio:2/1!important;
+    aspect-ratio:14/5!important;
   }
   body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card{
     grid-template-columns:30px 56px minmax(0,1fr) 62px!important;

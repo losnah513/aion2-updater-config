@@ -347,12 +347,12 @@ function hofV2Layout(){
   const pvpList=s.pvpTop||s.pvpTop3||hallData?.pvpTop||hallData?.pvpTop3||[];
   return '<div class="hof-v2-layout">'
     + '<div class="hof-v2-board">'
-    + '<div class="hof-v2-area hof-v2-area-enhance">'+hofGodHeroCard('강화의 신','최고 강화 기록',s.enhanceGod || hallData?.weeklyAwards?.bulkUp?.[0], 'enhance')+'</div>'
     + '<div class="hof-v2-area hof-v2-area-meter">'+hofMeterDpsPanel()+'</div>'
-    + '<div class="hof-v2-area hof-v2-area-ranking-link-card">'+hofRankingLinkCard()+'</div>'
-    + '<div class="hof-v2-area hof-v2-area-growth">'+hofGodHeroCard('성장의 신','이번주 성장량',s.growthGod || hallData?.weeklyAwards?.growthKing?.[0], 'growth')+'</div>'
     + '<div class="hof-v2-area hof-v2-area-pve">'+hofWidePanel('PVE 랭킹','PVE TOP 3',pveList,'pve')+'</div>'
     + '<div class="hof-v2-area hof-v2-area-pvp">'+hofWidePanel('PVP 랭킹','PVP TOP 3',pvpList,'pvp')+'</div>'
+    + '<div class="hof-v2-area hof-v2-area-enhance">'+hofGodHeroCard('강화의 신','최고 강화 기록',s.enhanceGod || hallData?.weeklyAwards?.bulkUp?.[0], 'enhance')+'</div>'
+    + '<div class="hof-v2-area hof-v2-area-growth">'+hofGodHeroCard('성장의 신','이번주 성장량',s.growthGod || hallData?.weeklyAwards?.growthKing?.[0], 'growth')+'</div>'
+    + '<div class="hof-v2-area hof-v2-area-ranking-link-card">'+hofRankingLinkCard()+'</div>'
     + '</div>'
     + '<div class="hof-v2-right">'+hofMyRankingPanel()+'</div>'
     + '</div>';
@@ -426,12 +426,12 @@ function hallSlotTasks(){
   const pveList=s.pveTop||s.pveTop3||hallData?.pveTop||hallData?.pveTop3||[];
   const pvpList=s.pvpTop||s.pvpTop3||hallData?.pvpTop||hallData?.pvpTop3||[];
   return [
-    {id:'hallSlotEnhance',images:compactImageList([s.enhanceGod?.profileImageUrl]),render:()=>hofGodHeroCard('강화의 신','최고 강화 기록',s.enhanceGod || hallData?.weeklyAwards?.bulkUp?.[0], 'enhance')},
     {id:'hallSlotMeter',images:[],render:()=>hofMeterDpsPanel()},
-    {id:'hallSlotRankingLink',images:[],render:()=>hofRankingLinkCard()},
-    {id:'hallSlotGrowth',images:compactImageList([s.growthGod?.profileImageUrl]),render:()=>hofGodHeroCard('성장의 신','이번주 성장량',s.growthGod || hallData?.weeklyAwards?.growthKing?.[0], 'growth')},
     {id:'hallSlotPve',images:compactImageList(pveList.map(item=>item?.profileImageUrl)),render:()=>hofWidePanel('PVE 랭킹','PVE TOP 3',pveList,'pve')},
     {id:'hallSlotPvp',images:compactImageList(pvpList.map(item=>item?.profileImageUrl)),render:()=>hofWidePanel('PVP 랭킹','PVP TOP 3',pvpList,'pvp')},
+    {id:'hallSlotEnhance',images:compactImageList([s.enhanceGod?.profileImageUrl]),render:()=>hofGodHeroCard('강화의 신','최고 강화 기록',s.enhanceGod || hallData?.weeklyAwards?.bulkUp?.[0], 'enhance')},
+    {id:'hallSlotGrowth',images:compactImageList([s.growthGod?.profileImageUrl]),render:()=>hofGodHeroCard('성장의 신','이번주 성장량',s.growthGod || hallData?.weeklyAwards?.growthKing?.[0], 'growth')},
+    {id:'hallSlotRankingLink',images:[],render:()=>hofRankingLinkCard()},
     {id:'hallSlotMyRank',images:compactImageList(images),render:()=>hofMyRankingPanel()}
   ];
 }
@@ -445,12 +445,12 @@ function renderHallShell(showSpinners){
   const slotClass='hall-slot is-pending';
   const spinner=showSpinners?kinojoCardSpinner('영역 불러오는 중'):'';
   app.innerHTML='<div class="hof-v2-shell"><div class="hof-v2-layout"><div class="hof-v2-board">'
-    +'<div id="hallSlotEnhance" class="hof-v2-area hof-v2-area-enhance '+slotClass+'">'+spinner+'</div>'
     +'<div id="hallSlotMeter" class="hof-v2-area hof-v2-area-meter '+slotClass+'">'+spinner+'</div>'
-    +'<div id="hallSlotRankingLink" class="hof-v2-area hof-v2-area-ranking-link-card '+slotClass+'">'+spinner+'</div>'
-    +'<div id="hallSlotGrowth" class="hof-v2-area hof-v2-area-growth '+slotClass+'">'+spinner+'</div>'
     +'<div id="hallSlotPve" class="hof-v2-area hof-v2-area-pve '+slotClass+'">'+spinner+'</div>'
     +'<div id="hallSlotPvp" class="hof-v2-area hof-v2-area-pvp '+slotClass+'">'+spinner+'</div>'
+    +'<div id="hallSlotEnhance" class="hof-v2-area hof-v2-area-enhance '+slotClass+'">'+spinner+'</div>'
+    +'<div id="hallSlotGrowth" class="hof-v2-area hof-v2-area-growth '+slotClass+'">'+spinner+'</div>'
+    +'<div id="hallSlotRankingLink" class="hof-v2-area hof-v2-area-ranking-link-card '+slotClass+'">'+spinner+'</div>'
     +'</div><div class="hof-v2-right"><div id="hallSlotMyRank" class="'+slotClass+'">'+spinner+'</div></div></div></div>';
   hallSlotTasks().forEach(task=>window.KinojoStagedLoading?.region?.('#'+task.id,task.id));
 }
