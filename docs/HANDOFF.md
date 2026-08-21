@@ -6,8 +6,8 @@
 
 - GitHub: `losnah513/aion2-updater-config`
 - 운영 브랜치: `main`
-- 내 정보 C-2 제품 운영 commit: `b97d598375400d7eaac9986a6a70a9f533ddb126` (PR `#175`)
-- 내 정보 후속 A-1~C-2: 8/12 완료
+- 내 정보 D-1 제품 운영 commit: `11ca4c071d8c3d7dbf90aa374d681db0ec212ce4` (PR `#179`)
+- 내 정보 후속 A-1~D-1: 9/12 완료
 - 레기온 순위 통합 패널: PR `#164` 병합 완료
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 최신 일일 로그를 작업 규칙 원본으로 사용한다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
@@ -132,6 +132,14 @@
 - 고정 300ms 모달 지연을 제거하고 실제 초기 이미지 gate로 교체했다. 프로필 업로드·공식 이미지 복원 뒤에도 해당 캐릭터의 새 유효 URL만 다시 준비한다.
 - PR workflow의 KINOJO Pages, Character Refresh Profile, Legion Tree 검증과 로컬 Node 계약·브라우저 동작 검증이 통과했다. Supabase Edge v20/API 2.7/DB375, SQL375, Storage 상태는 변경하지 않았다.
 
+## D-1 캐릭터명 기준 가변 패널 너비
+
+- D-1은 PR `#179`, 운영 commit `11ca4c071d8c3d7dbf90aa374d681db0ec212ce4`로 반영됐다.
+- PC 우측 내 정보 패널만 C-1 캐릭터 목록의 가장 긴 이름을 한 번 측정해 `352~420px` 범위로 정한다. 같은 이름 목록을 다시 렌더링할 때는 측정값을 재사용한다.
+- 모바일 라우트와 `760px` 이하 viewport는 기존 `width: 100%`를 유지한다. 중앙 이미지 관리 모달은 이름 기반 패널 너비 변수를 사용하지 않는다.
+- 실제 브라우저에서 짧은 이름 `352px`, 중간 이름 `360px`, 긴 이름 상한 `420px`, 모바일 라우트 전체 폭을 확인했다. 전체 Node 계약 테스트와 PR workflow 3종이 통과했다.
+- D-1은 WEB 표시 계약만 변경했다. Supabase Edge v20/API 2.7/DB375, SQL375, Storage 및 기존 Stage 1-8 계약은 변경하지 않았다.
+
 ## 성역 Fold 도구 / 포스 제외 후속
 
 - Fold 펼침 폭 `761~1180px`에서 성역 일정과 3개 요약 카드가 한 줄을 유지하도록 attached subbar 그리드를 재구성했다. `390px` 전화 폭에서는 기존 일정 축약 규칙을 유지한다.
@@ -148,8 +156,9 @@
 - 안전 업로드 검증: `node tests/my-info-image-upload.test.js`
 - 배치 bootstrap 검증: `node tests/my-info-batch-bootstrap.test.js`
 - 프로필 이미지 선로딩 검증: `node tests/my-info-image-preloader.test.js`
+- 가변 패널 너비 검증: `node tests/my-info-panel-width.test.js`
 - 성역 이전 회귀: `node tests/sanctuary-roster-quick-edit-contract.test.js`
 - 공통 회귀: `node tests/web-shell-auth-contract.test.js`
 - 레기온 순위 UI 회귀: `node tests/ranking-ui-contract.test.js`
-- GitHub workflow는 공통 슬라이더·이미지 편집기·안전 업로드·배치 bootstrap·프로필 이미지 preloader 모듈의 구문 검사, 계약 테스트, Pages exact live readback을 포함한다.
-- 다음 작업은 **D-1 가변 패널 너비만** 진행한다.
+- GitHub workflow는 공통 슬라이더·이미지 편집기·안전 업로드·배치 bootstrap·프로필 이미지 preloader·가변 패널 너비의 구문 검사, 계약 테스트, Pages exact live readback을 포함한다.
+- 다음 작업은 **D-2 잘림 없는 반응형 배치만** 진행한다.
