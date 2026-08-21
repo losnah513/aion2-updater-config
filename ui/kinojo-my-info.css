@@ -90,6 +90,8 @@ body.kinojo-my-info-open{overflow:hidden}
 .kinojo-my-info-profile-character-btn>span{min-width:0;display:grid;gap:3px}.kinojo-my-info-profile-character-btn b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;font-weight:950}.kinojo-my-info-profile-character-btn small{font-size:7px;font-weight:900;color:#94a3b8}
 .kinojo-my-info-profile-character-btn.is-selected{border-color:rgba(37,99,235,.38);background:#eef5ff;color:#1d4ed8;box-shadow:0 0 0 1px rgba(37,99,235,.08)}
 .kinojo-my-info-profile-character-btn.is-selected small{color:#2563eb}.kinojo-my-info-profile-character-btn:focus-visible{outline:2px solid rgba(37,99,235,.38);outline-offset:2px}
+.kinojo-my-info-profile-character-btn.is-image-loading small{color:#64748b}.kinojo-my-info-profile-character-btn.is-image-loading>img{opacity:.62}
+.kinojo-my-info-profile-character-btn.is-image-error{border-color:rgba(225,29,72,.28);background:#fff7f8}.kinojo-my-info-profile-character-btn.is-image-error small{color:#be123c}
 .kinojo-my-info-profile-empty{display:block;width:100%;padding:10px;border:1px dashed rgba(122,146,180,.22);border-radius:10px;background:#f8fafc;color:#64748b;text-align:center;font-size:9px;font-weight:850}
 .kinojo-my-info-profile-images{margin-top:7px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
 .kinojo-my-info-profile-card{min-width:0;display:grid;grid-template-columns:88px minmax(0,1fr);align-items:center;gap:11px;padding:10px;border:1px solid rgba(122,146,180,.16);border-radius:13px;background:linear-gradient(135deg,#fbfdff,#f8fafc)}
