@@ -6,8 +6,8 @@
 
 - GitHub: `losnah513/aion2-updater-config`
 - 운영 브랜치: `main`
-- 작업 시작 기준 운영 commit: `e6ac8358f6482b9455e1d5972987a5871d0ae26b`
-- 후속 작업 브랜치: `codex/my-info-modal-followup-a3`
+- 작업 시작 기준 운영 commit: `fd583f1d423b968690caa99c64aa74a5c7a975d0`
+- 후속 작업 브랜치: `codex/my-info-modal-followup-b1`
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 최신 일일 로그를 작업 규칙 원본으로 사용한다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
 
@@ -56,17 +56,29 @@
 
 ## A-3 KINOJO 공통 슬라이더
 
+- A-3은 PR `#159`, 운영 commit `fd583f1d423b968690caa99c64aa74a5c7a975d0`으로 반영됐다.
 - `ui/kinojo-range-control.js`가 연속값, 단계점, 얇은 단일값, 선택 구간의 값 동기화·키보드·접근성·이벤트 계약을 소유한다.
 - `ui/kinojo-components.css`가 track, active segment, thumb, focus, disabled, mobile 44px hit area, forced colors, reduced motion 시각 계약을 소유한다.
 - 성역 간편 추가의 3단계 검색 범위는 공통 컴포넌트의 첫 소비자로 이전했다. 성역 전용 CSS/JS에는 슬라이더 track/thumb/snapping/키보드 로직을 남기지 않는다.
 - A-3은 WEB 공통 컴포넌트 작업이며 Supabase·이미지 업로드 운영 계약은 변경하지 않는다.
+
+## B-1 편집기 기본 / 가이드 프레임
+
+- `ui/kinojo-my-info-image-editor.js`가 첨부 전 3종 가이드 카드와 공통 편집기 viewport를 소유한다.
+- 편집 프레임은 A-1 슬롯 비율에 고정되고 FRONT/BACK/UPPER_BODY에는 A-2 SVG를 overlay한다. PROFILE은 별도 에셋 없이 정사각형 안전 영역만 제공한다.
+- 원본은 브라우저 메모리의 object URL 또는 호출자가 제공한 URL로만 표시하며, 닫기·오류 시 편집기가 만든 object URL을 해제한다.
+- 사진 이동, 확대, 회전, 초기화와 포인터/터치 drag, Escape 닫기, 포커스 순환·복귀를 제공한다. 확대/회전은 A-3 공통 슬라이더를 사용한다.
+- 회전된 프레임의 네 모서리가 원본 밖으로 벗어나지 않도록 최소 cover scale과 이동 범위를 계산한다.
+- B-1 확인 결과는 `previewOnly` 구도 상태다. canvas crop, WebP encoding, 품질 경고, Supabase 호출, 기존 Stage 1-8 업로드 교체는 포함하지 않는다.
+- `tests/my-info-image-editor-harness.html`에서 3종 촬영 카드와 편집 프레임을 시각 검증한다. 실제 파일 선택 결과와 출력 생성 연결은 B-2에서 진행한다.
 
 ## 검증 / 다음 행동
 
 - 계약 검증: `node tests/my-info-image-contract.test.js`
 - 가이드 자산 검증: `node tests/my-info-guide-assets.test.js`
 - 공통 슬라이더 검증: `node tests/kinojo-range-control.test.js`
+- 편집기 기본 검증: `node tests/my-info-image-editor.test.js`
 - 성역 이전 회귀: `node tests/sanctuary-roster-quick-edit-contract.test.js`
 - 공통 회귀: `node tests/web-shell-auth-contract.test.js`
-- GitHub workflow는 공통 슬라이더 모듈의 구문 검사, 계약 테스트, Pages exact live readback을 포함한다.
-- 다음 작업은 **B-1 편집기 기본/가이드 프레임만** 진행한다.
+- GitHub workflow는 공통 슬라이더·이미지 편집기 모듈의 구문 검사, 계약 테스트, Pages exact live readback을 포함한다.
+- 다음 작업은 **B-2 크롭/WebP/품질 경고만** 진행한다.

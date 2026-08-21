@@ -20,6 +20,9 @@ KINOJO INFO GitHub Pages upload package.
 - This A-1 contract is the follow-up target. Crop rendering and Server pixel enforcement are enabled only in the later editor/upload stages, so the existing production upload path is not changed prematurely.
 - A-2 provides three original, text-free SVG reference guides under `assets/images/my-info/guides/`: FRONT and BACK use the 2:3 output frame, and UPPER_BODY uses the 4:5 output frame. The SVGs expose accessible titles/descriptions and contain no script, external reference, or embedded raster data.
 - `guideAssetPath` in the shared image contract owns each reference slot's asset path. PROFILE intentionally has no pre-attachment reference asset in this three-guide set.
+- B-1 adds `ui/kinojo-my-info-image-editor.js` as the shared pre-attachment guide-card and editor viewport foundation. It fixes the editing frame to each slot's contract ratio, overlays the A-2 SVG guide, and supports drag, zoom, rotation, reset, keyboard-safe dismissal, focus containment, and object-URL cleanup.
+- The editor reuses `ui/kinojo-range-control.js` for zoom and rotation. Its confirmed state is explicitly `previewOnly`; B-1 does not render pixels, encode WebP, call Supabase, or replace the existing Stage 1-8 upload path. Those connections remain B-2 and B-3 work.
+- `tests/my-info-image-editor-harness.html` is the visual fixture for the three reference cards and the fixed guide frame.
 
 ## KINOJO shared range control
 
