@@ -20,7 +20,12 @@
     extension:'webp',
     quality:0.90,
     uploadOriginal:false,
-    stripMetadata:true
+    stripMetadata:true,
+    qualityWarning:{
+      cautionBelowSourcePixelsPerOutputPixel:1,
+      lowBelowSourcePixelsPerOutputPixel:0.75,
+      blocksExport:false
+    }
   });
   const commonCaptureNotice='캐릭터 위에 겹친 채팅창·스킬 버튼 등은 편집으로 제거할 수 없습니다. 가능하면 HUD를 숨기거나 캐릭터와 겹치지 않게 촬영해 주세요.';
 
@@ -76,7 +81,7 @@
   });
 
   return deepFreeze({
-    contractVersion:'2026-08-21.2',
+    contractVersion:'2026-08-21.3',
     status:'FOLLOWUP_TARGET',
     input:sharedInput,
     output:sharedOutput,

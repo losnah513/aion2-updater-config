@@ -3,7 +3,7 @@
 const assert=require('node:assert/strict');
 const contract=require('../ui/kinojo-my-info-image-contract.js');
 
-assert.equal(contract.contractVersion,'2026-08-21.2');
+assert.equal(contract.contractVersion,'2026-08-21.3');
 assert.equal(contract.status,'FOLLOWUP_TARGET');
 assert.deepEqual(contract.input.acceptedMimeTypes,['image/jpeg','image/png','image/webp']);
 assert.equal(contract.input.maxBytes,5*1024*1024);
@@ -12,7 +12,12 @@ assert.deepEqual(contract.output,{
   extension:'webp',
   quality:0.90,
   uploadOriginal:false,
-  stripMetadata:true
+  stripMetadata:true,
+  qualityWarning:{
+    cautionBelowSourcePixelsPerOutputPixel:1,
+    lowBelowSourcePixelsPerOutputPixel:0.75,
+    blocksExport:false
+  }
 });
 assert.deepEqual(contract.slotOrder,['PROFILE','FRONT','BACK','UPPER_BODY']);
 assert.deepEqual(contract.referenceSlotOrder,['FRONT','BACK','UPPER_BODY']);

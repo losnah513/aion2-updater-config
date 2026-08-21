@@ -6,8 +6,8 @@
 
 - GitHub: `losnah513/aion2-updater-config`
 - 운영 브랜치: `main`
-- 작업 시작 기준 운영 commit: `fd583f1d423b968690caa99c64aa74a5c7a975d0`
-- 후속 작업 브랜치: `codex/my-info-modal-followup-b1`
+- 작업 시작 기준 운영 commit: `ec52d8d93c02a9645ab01b27ad163f6f1a2e177c`
+- 후속 작업 브랜치: `codex/my-info-modal-followup-b2`
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 최신 일일 로그를 작업 규칙 원본으로 사용한다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
 
@@ -73,6 +73,7 @@
 
 ## B-1 편집기 기본 / 가이드 프레임
 
+- B-1은 PR `#161`, 운영 commit `ec52d8d93c02a9645ab01b27ad163f6f1a2e177c`으로 반영됐다.
 - `ui/kinojo-my-info-image-editor.js`가 첨부 전 3종 가이드 카드와 공통 편집기 viewport를 소유한다.
 - 편집 프레임은 A-1 슬롯 비율에 고정되고 FRONT/BACK/UPPER_BODY에는 A-2 SVG를 overlay한다. PROFILE은 별도 에셋 없이 정사각형 안전 영역만 제공한다.
 - 원본은 브라우저 메모리의 object URL 또는 호출자가 제공한 URL로만 표시하며, 닫기·오류 시 편집기가 만든 object URL을 해제한다.
@@ -80,6 +81,16 @@
 - 회전된 프레임의 네 모서리가 원본 밖으로 벗어나지 않도록 최소 cover scale과 이동 범위를 계산한다.
 - B-1 확인 결과는 `previewOnly` 구도 상태다. canvas crop, WebP encoding, 품질 경고, Supabase 호출, 기존 Stage 1-8 업로드 교체는 포함하지 않는다.
 - `tests/my-info-image-editor-harness.html`에서 3종 촬영 카드와 편집 프레임을 시각 검증한다. 실제 파일 선택 결과와 출력 생성 연결은 B-2에서 진행한다.
+
+## B-2 크롭 / WebP / 품질 경고
+
+- `ui/kinojo-my-info-image-editor.js`가 현재 이동·확대·회전 상태를 슬롯별 고정 크기 canvas로 렌더링한다. 가이드 SVG는 화면 overlay로만 유지하며 결과 픽셀에는 포함하지 않는다.
+- PROFILE은 `512x512`, FRONT/BACK은 `800x1200`, UPPER_BODY는 `800x1000`의 WebP 결과를 만들고 quality `0.90`을 적용한다.
+- canvas 재인코딩으로 원본 metadata를 승계하지 않으며 원본 파일은 업로드하지 않는다. 결과는 브라우저 메모리의 `Blob`과 지원 환경의 `File`로만 반환한다.
+- 실제 출력 픽셀 대비 유효 원본 픽셀이 `1.00` 미만이면 주의, `0.75` 미만이면 낮은 해상도 경고를 표시한다. 임계값 경계의 소수점 오차를 허용하며 경고는 결과 생성을 막지 않는다.
+- 결과 상태는 `outputReady: true`, `uploadConnected: false`다. fetch, Supabase, Storage, 세션 토큰과 기존 Stage 1-8 업로드 연결은 B-3 전까지 추가하지 않는다.
+- 데스크톱 프레임은 슬롯 비율을 유지하도록 너비를 viewport 높이에도 맞추고, 모바일 `390x844`에서도 경고·슬라이더·하단 버튼이 함께 노출된다.
+- 테스트 harness에서 FRONT `800x1200`과 UPPER_BODY `800x1000`의 실제 `image/webp` decode, 비차단 경고, 가이드가 빠진 편집 결과를 확인했다.
 
 ## 검증 / 다음 행동
 
@@ -90,4 +101,4 @@
 - 성역 이전 회귀: `node tests/sanctuary-roster-quick-edit-contract.test.js`
 - 공통 회귀: `node tests/web-shell-auth-contract.test.js`
 - GitHub workflow는 공통 슬라이더·이미지 편집기 모듈의 구문 검사, 계약 테스트, Pages exact live readback을 포함한다.
-- 다음 작업은 **B-2 크롭/WebP/품질 경고만** 진행한다.
+- 다음 작업은 **B-3 안전 업로드 연결만** 진행한다.
