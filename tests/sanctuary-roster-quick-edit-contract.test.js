@@ -63,7 +63,7 @@ for (const token of [
 for (const entry of ['sanctuary/index.html', 'm/sanctuary/index.html']) {
   const html = read(entry);
   assert.ok(html.includes('id="forceEditBtn"'), `${entry}: global force editor button is missing`);
-  assert.ok(html.includes('sanctuary.css?cache=2026082103'), `${entry}: sanctuary CSS cache key is stale`);
+  assert.ok(html.includes('sanctuary.css?cache=2026082104'), `${entry}: sanctuary CSS cache key is stale`);
   assert.ok(html.includes('kinojo-components.css?cache=2026082103'), `${entry}: shared component CSS is missing`);
   assert.ok(html.includes('kinojo-range-control.js?cache=2026082103'), `${entry}: shared range controller is missing`);
   assert.ok(html.includes('sanctuary-editor.js?cache=2026082103'), `${entry}: editor cache key is stale`);

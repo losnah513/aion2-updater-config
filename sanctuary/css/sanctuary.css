@@ -1069,3 +1069,12 @@ body>.sanctuary-page-bar .summary-label{font-size:8.5px;line-height:1}
   .sanctuary-quick-add-card{width:calc(100vw - 12px)}#sanctuaryQuickAddBody{padding:10px 12px 12px}.sanctuary-quick-controls{grid-template-rows:auto 42px 42px}.sanctuary-quick-row{height:42px;grid-template-columns:minmax(100px,180px) minmax(112px,1fr) 54px;grid-template-rows:42px;gap:6px}.sanctuary-quick-row>input,.sanctuary-quick-row>select{grid-column:auto;grid-row:auto;width:100%;min-width:0}.sanctuary-quick-row>button,.sanctuary-quick-row>button:last-child{grid-column:auto;grid-row:auto;min-width:0;padding:0 6px;font-size:10px}
 }
 @media(prefers-reduced-motion:reduce){.sanctuary-roster-force-card.is-owner-conflict{animation:none}.sanctuary-roster-modal.is-dragging .sanctuary-roster-slot,.sanctuary-roster-drag-ghost{transition:none}}
+
+/* 20260821_14: release staged-region height and keep only three compact summary cards */
+body>.sanctuary-page-bar .sanctuary-operation.kinojo-staged-region,
+body>.sanctuary-page-bar .summary-grid.kinojo-staged-region{min-height:0}
+body>.sanctuary-page-bar .summary-grid{grid-template-columns:repeat(3,max-content);align-self:center;grid-auto-rows:max-content}
+body>.sanctuary-page-bar .summary-card{height:auto;align-self:center}
+@media(max-width:1180px){body>.sanctuary-page-bar .summary-grid{grid-template-columns:repeat(3,minmax(110px,150px))}}
+@media(max-width:760px){body>.sanctuary-page-bar .summary-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:360px){body>.sanctuary-page-bar .summary-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
