@@ -6,8 +6,8 @@
 
 - GitHub: `losnah513/aion2-updater-config`
 - 운영 브랜치: `main`
-- 작업 시작 기준 운영 commit: `4c5c6ef94bae6109b39a59ed95e5ac61f78a0600`
-- 후속 작업 브랜치: `codex/my-info-modal-followup-a2`
+- 작업 시작 기준 운영 commit: `e6ac8358f6482b9455e1d5972987a5871d0ae26b`
+- 후속 작업 브랜치: `codex/my-info-modal-followup-a3`
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 최신 일일 로그를 작업 규칙 원본으로 사용한다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
 
@@ -56,16 +56,26 @@
 
 ## A-2 가이드 에셋
 
+- A-2는 PR `#158`, 운영 commit `e6ac8358f6482b9455e1d5972987a5871d0ae26b`으로 반영됐다.
 - `assets/images/my-info/guides/`에 FRONT, BACK, UPPER_BODY용 SVG 3종을 둔다.
 - FRONT/BACK은 2:3, UPPER_BODY는 4:5이며 A-1 출력 크기와 같은 viewBox를 사용한다.
 - 각 SVG는 화면 문구를 포함하지 않는 독립 실루엣으로, 접근 가능한 title/description과 슬롯 식별자를 제공한다.
 - 외부 이미지·폰트·script·embedded raster를 사용하지 않으며 각 파일은 8KiB 이하로 유지한다.
 - `ui/kinojo-my-info-image-contract.js`의 `guideAssetPath`가 경로 소유권을 갖고, 실제 첨부 전 카드와 편집기 연결은 B-1에서 진행한다.
 
+## A-3 KINOJO 공통 슬라이더
+
+- `ui/kinojo-range-control.js`가 연속값, 단계점, 얇은 단일값, 선택 구간의 값 동기화·키보드·접근성·이벤트 계약을 소유한다.
+- `ui/kinojo-components.css`가 track, active segment, thumb, focus, disabled, mobile 44px hit area, forced colors, reduced motion 시각 계약을 소유한다.
+- 성역 간편 추가의 3단계 검색 범위는 공통 컴포넌트의 첫 소비자로 이전했다. 성역 전용 CSS/JS에는 슬라이더 track/thumb/snapping/키보드 로직을 남기지 않는다.
+- A-3은 WEB 공통 컴포넌트 작업이며 Supabase·이미지 업로드 운영 계약은 변경하지 않는다.
+
 ## 검증 / 다음 행동
 
 - 계약 검증: `node tests/my-info-image-contract.test.js`
 - 가이드 자산 검증: `node tests/my-info-guide-assets.test.js`
+- 공통 슬라이더 검증: `node tests/kinojo-range-control.test.js`
+- 성역 이전 회귀: `node tests/sanctuary-roster-quick-edit-contract.test.js`
 - 공통 회귀: `node tests/web-shell-auth-contract.test.js`
-- GitHub workflow는 새 계약 모듈의 구문 검사, 계약 테스트, Pages exact live readback을 포함한다.
-- 다음 작업은 **A-3 KINOJO 공통 슬라이더만** 진행한다.
+- GitHub workflow는 공통 슬라이더 모듈의 구문 검사, 계약 테스트, Pages exact live readback을 포함한다.
+- 다음 작업은 **B-1 편집기 기본/가이드 프레임만** 진행한다.
