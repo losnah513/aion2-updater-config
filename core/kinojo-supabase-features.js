@@ -1190,7 +1190,7 @@
   async function getSanctuaryRosterData(id){
     const passKey = optionalServerSessionCredential();
     const [data,badgeMap]=await Promise.all([
-      rpc('kinojo_web_get_sanctuary_v317', { p_sanctuary_code:String(id || '') || null, p_pass_key:passKey || null }),
+      rpc('kinojo_web_get_sanctuary_v374', { p_sanctuary_code:String(id || '') || null, p_pass_key:passKey || null }),
       getIdentityBadges().catch(()=>new Map())
     ]);
     return decorateIdentityBadges(data,badgeMap);
