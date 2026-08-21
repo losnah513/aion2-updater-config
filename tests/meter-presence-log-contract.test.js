@@ -26,7 +26,7 @@ assert.ok(stagedLoading.includes('.meter-live-subbar'), 'Meter live users must b
 
 for (const entry of ['admin/index.html', 'm/admin/index.html']) {
   const html = read(entry);
-  for (const token of ['data-admin-subtab="logs"', 'id="meterDungeonLogRows"', 'id="meterDungeonLogChannel"', 'id="meterDungeonLogQuery"', 'METER RUNTIME LOG', '미터기 실행', '미터기 종료', 'id="characterAutomationToggle"', 'id="sanctuaryAutomationToggle"', 'kinojo-supabase-features.js?cache=2026082101', 'admin.js?cache=2026082104']) {
+  for (const token of ['data-admin-subtab="logs"', 'id="meterDungeonLogRows"', 'id="meterDungeonLogChannel"', 'id="meterDungeonLogQuery"', 'METER RUNTIME LOG', '미터기 실행', '미터기 종료', 'id="characterAutomationToggle"', 'id="sanctuaryAutomationToggle"', 'KST 22:00 · 04:00 · 10:00 · 16:00', 'kinojo-supabase-features.js?cache=2026082101', 'admin.js?cache=2026082201']) {
     assert.ok(html.includes(token), `${entry}: Meter dungeon log UI missing ${token}`);
   }
   for (const noticeId of ['characterAutomationNotice', 'sanctuaryAutomationNotice']) {
@@ -40,6 +40,9 @@ for (const entry of ['admin/index.html', 'm/admin/index.html']) {
 const adminShared = read('admin/js/admin-shared.js');
 assert.ok(adminShared.includes('function adminAutomation(cmd, extra){ return window.KinojoSupabase.adminAutomation(cmd, extra||{}); }'), 'Admin automation bridge missing from shared module');
 assert.ok(adminShared.includes('adminMeter,adminAutomation,adminVisitor'), 'Admin automation bridge missing from shared exports');
+
+const adminCharacters = read('admin/js/admin-characters.js');
+assert.ok(adminCharacters.includes("'22:00 · 04:00 · 10:00 · 16:00'"), 'Character automation fallback schedule must stay anchored at 22:00 KST');
 
 const features = read('core/kinojo-supabase-features.js');
 assert.ok(features.includes("logs:'adminMeterDungeonLogs'"), 'Admin Meter dungeon log action mapping missing');
