@@ -40,6 +40,13 @@
 - `내 캐릭터 순위 보기`는 Server가 반환한 소유 캐릭터를 정확한 `server_id + character_name`으로만 대조하고, 현재 20명 밖이면 기존 순위 페이지를 추가로 받아 해당 카드로 부드럽게 이동한다.
 - 1920×1080과 390×844 모두 카드 4장 전체와 5번째 카드 일부가 보이고, 고정 공지바가 목록을 덮지 않는다.
 
+## 명예의 전당 동일 크기 카드 보드
+
+- PC·태블릿의 6개 카드 보드는 기존 `hof/css/hall.css`의 단일 HOF authority에서 10열×4행 정사각형으로 관리한다. PVE·DPS·PVP·레기온 이동은 동일한 7열×1행, 강화의 신·성장의 신은 동일한 3열×2행이다.
+- Fold 펼침 가로는 같은 보드 오른쪽에 280~300px `내 랭킹`을 유지한다. 보드 크기는 dynamic viewport height를 사용하지 않아 스크롤 중 변하지 않는다.
+- 760px 이하의 좁은 화면은 기존 `hall-render.js` 슬롯을 DPS→PVE→PVP→강화/성장 좌우→레기온 이동 순서로 사용한다. PC `/hof/`와 모바일 `/m/hof/`는 같은 렌더러와 CSS를 공유한다.
+- 기존 `tests/hof-layout-contract.test.js`가 카드 span·비율·DOM 순서·Fold 안정 크기·cache key를 검증하며, 기존 `verify-kinojo-pages.yml`이 JS 구문과 이 계약 테스트를 실행한다.
+
 ## 후속 12개 작업
 
 1. A-1 이미지 가이드/출력 계약

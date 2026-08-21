@@ -109,6 +109,7 @@ jobs:
             "core/kinojo-supabase-features.js"
             "core/kinojo-auth-session.js"
             "core/kinojo-auth-ui.js"
+            "hof/js/hall-render.js"
             "sanctuary/js/sanctuary.js"
             "sanctuary/js/sanctuary-editor.js"
             "sanctuary-schedule/js/sanctuary-schedule.js"
@@ -128,6 +129,7 @@ jobs:
           done
 
           node tests/web-shell-auth-contract.test.js
+          node tests/hof-layout-contract.test.js
           node tests/my-info-image-contract.test.js
           node tests/my-info-guide-assets.test.js
           node tests/my-info-image-editor.test.js
