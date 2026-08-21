@@ -946,3 +946,68 @@ body>.sanctuary-page-bar .summary-label{font-size:9px;line-height:1.1}
   body>.sanctuary-page-bar .summary-card{display:flex;justify-content:space-between;min-height:28px;padding:3px 7px;text-align:left}
   body>.sanctuary-page-bar .summary-label{text-align:right}
 }
+
+/* 20260821_11: compact attached summary, quick empty-slot add, global force editor */
+body>.sanctuary-page-bar .summary-card{min-height:26px;gap:5px;padding:2px 6px}
+body>.sanctuary-page-bar .summary-num{font-size:13px}
+body>.sanctuary-page-bar .summary-label{font-size:8.5px;line-height:1}
+.sanctuary-force-edit-open{border-color:rgba(56,173,113,.34);background:#effcf5;color:#176b48}
+.empty-slot[data-sanctuary-quick-add]{position:relative;width:100%;overflow:hidden;text-align:left;font:inherit;appearance:none}
+.empty-slot[data-sanctuary-quick-add]:disabled{cursor:default}
+.empty-slot[data-sanctuary-quick-add].is-quick-add-enabled{cursor:pointer;transition:border-color .2s ease,color .2s ease,background .2s ease,transform .2s ease}
+.empty-slot[data-sanctuary-quick-add].is-quick-add-enabled::after{content:"";position:absolute;inset:-40% -65%;z-index:0;opacity:0;background:linear-gradient(105deg,transparent 28%,rgba(187,247,208,.08) 38%,rgba(134,239,172,.42) 50%,rgba(187,247,208,.08) 62%,transparent 72%);transform:translateX(-42%);pointer-events:none}
+.empty-slot[data-sanctuary-quick-add]>*{position:relative;z-index:1}
+.empty-slot[data-sanctuary-quick-add].is-quick-add-enabled:hover,.empty-slot[data-sanctuary-quick-add].is-quick-add-enabled:focus-visible{border-color:#6dd59a;color:#166534;background:repeating-linear-gradient(135deg,#f0fdf4,#f0fdf4 8px,#dcfce7 8px,#dcfce7 16px);outline:none;transform:translateY(-1px)}
+.empty-slot[data-sanctuary-quick-add].is-quick-add-enabled:hover strong,.empty-slot[data-sanctuary-quick-add].is-quick-add-enabled:focus-visible strong{color:#15803d}
+.empty-slot[data-sanctuary-quick-add].is-quick-add-enabled:hover::after,.empty-slot[data-sanctuary-quick-add].is-quick-add-enabled:focus-visible::after{opacity:1;animation:sanctuaryQuickFlow 1.35s linear infinite}
+@keyframes sanctuaryQuickFlow{to{transform:translateX(42%)}}
+
+.sanctuary-quick-add{position:fixed;inset:0;z-index:10160;display:none;pointer-events:none}
+.sanctuary-quick-add.open{display:block}
+.sanctuary-quick-add-card{position:fixed;width:min(780px,calc(100vw - 20px));overflow:hidden;border:1px solid rgba(153,211,179,.48);border-radius:14px;background:linear-gradient(145deg,rgba(13,31,31,.92),rgba(11,22,35,.88));color:#effff6;box-shadow:0 20px 54px rgba(0,0,0,.36);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);pointer-events:auto}
+.sanctuary-quick-add-card>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 10px 7px;border-bottom:1px solid rgba(190,232,207,.16)}
+.sanctuary-quick-add-card>header>div{display:grid;gap:1px}.sanctuary-quick-add-card>header small{color:#83ddb0;font-size:7px;font-weight:1000;letter-spacing:.12em}.sanctuary-quick-add-card>header strong{font-size:13px}.sanctuary-quick-add-card>header button{width:25px;height:25px;border:1px solid rgba(210,235,222,.2);border-radius:8px;background:rgba(255,255,255,.07);color:#fff;font-size:18px;line-height:1;cursor:pointer}
+#sanctuaryQuickAddBody{display:grid;gap:6px;padding:8px 9px}.sanctuary-quick-target{margin:0;color:#a9c8ba;font-size:8px;font-weight:900}
+.sanctuary-quick-row{display:grid;grid-template-columns:max-content minmax(120px,1fr) max-content max-content;gap:6px;align-items:center;transition:opacity .18s ease,filter .18s ease}
+.sanctuary-quick-row.is-disabled{opacity:.42;filter:saturate(.45);cursor:pointer}
+.sanctuary-quick-row>.kinojo-filter-switch{min-height:30px!important;width:auto!important;gap:5px!important;padding:0 7px!important;border-color:rgba(167,222,191,.22)!important;background:rgba(255,255,255,.06)!important;color:#d9f9e7!important;font-size:8px!important;white-space:nowrap}
+.sanctuary-quick-row>input,.sanctuary-quick-row>select{min-width:0;height:30px;border:1px solid rgba(171,211,190,.24);border-radius:8px;background:rgba(255,255,255,.93);color:#193328;padding:0 9px;font-size:10px;font-weight:850;outline:none}
+.sanctuary-quick-row>input:focus,.sanctuary-quick-row>select:focus{border-color:#64d697;box-shadow:0 0 0 2px rgba(100,214,151,.13)}
+.sanctuary-quick-row>button,.sanctuary-quick-result>button{min-height:30px;border:1px solid rgba(100,214,151,.3);border-radius:8px;background:rgba(39,119,82,.38);color:#dffeed;padding:0 9px;font-size:9px;font-weight:1000;white-space:nowrap;cursor:pointer}
+.sanctuary-quick-row>button:last-child{border-color:rgba(188,208,199,.2);background:rgba(255,255,255,.06);color:#c4d4cc}
+.sanctuary-quick-row :disabled{cursor:not-allowed}
+.sanctuary-quick-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;max-height:174px;overflow:auto;padding-top:2px}
+.sanctuary-quick-result{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;padding:7px 8px;border:1px solid rgba(174,213,193,.16);border-radius:9px;background:rgba(255,255,255,.065)}.sanctuary-quick-result>div{display:grid;min-width:0}.sanctuary-quick-result strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}.sanctuary-quick-result span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#a7c2b5;font-size:8px;font-weight:800}.sanctuary-quick-result.is-assigned{opacity:.62}
+#sanctuaryQuickAddStatus{display:block;min-height:23px;padding:6px 9px;border-top:1px solid rgba(190,232,207,.12);color:#b4c9bf;font-size:8px;font-weight:850}#sanctuaryQuickAddStatus.success{color:#8ce5b5}#sanctuaryQuickAddStatus.error{color:#ffb4ba}#sanctuaryQuickAddStatus.pending{color:#bdd8ff}.sanctuary-quick-add.is-busy{cursor:progress}
+
+.sanctuary-roster-card{width:min(1520px,100%)}
+.sanctuary-roster-force-nav{display:none!important}
+.sanctuary-roster-layout{display:block}
+.sanctuary-roster-force-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:start}
+.sanctuary-roster-force-card{min-width:0;overflow:hidden;border:1px solid rgba(126,166,220,.22);border-radius:14px;background:rgba(20,35,55,.72);transition:border-color .18s ease,box-shadow .18s ease,background .18s ease}
+.sanctuary-roster-force-card>header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;border-bottom:1px solid rgba(143,176,221,.13)}
+.sanctuary-roster-force-card>header>div{display:grid;gap:1px}.sanctuary-roster-force-card>header small{color:#7890ad;font-size:8px;font-weight:900}.sanctuary-roster-force-card>header strong{font-size:14px}.sanctuary-roster-force-card>header button{min-height:25px;border:1px solid rgba(102,170,240,.24);border-radius:8px;background:rgba(47,99,154,.24);color:#b9d9fb;padding:0 8px;font-size:8px;font-weight:950;cursor:pointer}.sanctuary-roster-force-card.is-loaded>header button{border-color:rgba(101,213,161,.28);background:rgba(34,130,90,.22);color:#baf3d5}
+.sanctuary-roster-force-card.is-active{border-color:rgba(104,168,235,.48);box-shadow:0 0 0 2px rgba(93,157,224,.09)}
+.sanctuary-roster-force-card.is-owner-conflict{border-color:#ef666f!important;background:rgba(111,30,40,.32)!important;box-shadow:0 0 0 3px rgba(239,84,96,.18)!important}
+.sanctuary-roster-force-error{margin:0;padding:6px 10px;background:rgba(116,34,45,.3);color:#ffbdc4;font-size:8px;font-weight:850}
+.sanctuary-roster-force-card .sanctuary-roster-parties{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:7px}
+.sanctuary-roster-force-card .sanctuary-roster-party{border-radius:10px}.sanctuary-roster-force-card .sanctuary-roster-party>header{padding:7px 8px}.sanctuary-roster-force-card .sanctuary-roster-party>div{gap:4px;padding:5px}
+.sanctuary-roster-force-card .sanctuary-roster-slot{min-height:55px;border-radius:8px}
+.sanctuary-roster-force-card .sanctuary-roster-slot.is-filled{grid-template-columns:auto minmax(0,1fr);gap:5px;padding:9px 7px 6px;transition:border-color .18s ease,transform .18s ease,box-shadow .18s ease,background .18s ease}
+.sanctuary-roster-force-card .sanctuary-roster-slot.is-filled:hover,.sanctuary-roster-force-card .sanctuary-roster-slot.is-filled:focus-visible{border-color:#65aef0;background:rgba(40,78,119,.7);box-shadow:0 0 0 2px rgba(101,174,240,.1);outline:none}
+.sanctuary-roster-force-card .sanctuary-roster-slot-actions{grid-column:2}.sanctuary-roster-force-card .sanctuary-roster-slot-actions button{padding:3px 6px;font-size:8px}
+.sanctuary-roster-force-card .sanctuary-roster-slot.is-owner-conflict{border-color:#ef666f!important;background:rgba(128,35,45,.45)!important}
+.sanctuary-roster-slot.is-drag-source{transform:translateY(-5px) scale(1.015);box-shadow:0 10px 24px rgba(0,0,0,.34)}
+
+@media(max-width:1180px){.sanctuary-roster-force-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){
+  body>.sanctuary-page-bar .summary-card{min-height:24px;gap:2px;padding:2px 4px}body>.sanctuary-page-bar .summary-num{font-size:11.5px}body>.sanctuary-page-bar .summary-label{font-size:7.5px}
+  .sanctuary-quick-row{grid-template-columns:max-content minmax(0,1fr) max-content}.sanctuary-quick-row>button:last-child{grid-column:3}.sanctuary-quick-results{grid-template-columns:1fr}
+  .sanctuary-roster-force-grid{grid-template-columns:1fr}.sanctuary-roster-force-card .sanctuary-roster-parties{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:520px){
+  body>.sanctuary-page-bar .summary-card{min-height:23px;padding:1px 3px}
+  .sanctuary-quick-add-card{width:calc(100vw - 12px)}.sanctuary-quick-row{grid-template-columns:1fr 1fr}.sanctuary-quick-row>.kinojo-filter-switch{grid-column:1}.sanctuary-quick-row>input,.sanctuary-quick-row>select{grid-column:2}.sanctuary-quick-row>button{grid-row:2}.sanctuary-quick-row>button:last-child{grid-column:2;grid-row:2}
+  .sanctuary-roster-force-card .sanctuary-roster-parties{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){.empty-slot[data-sanctuary-quick-add].is-quick-add-enabled:hover::after,.empty-slot[data-sanctuary-quick-add].is-quick-add-enabled:focus-visible::after{animation:none}.sanctuary-roster-slot.is-drag-source{transform:none}}
