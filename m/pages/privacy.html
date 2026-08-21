@@ -14,5 +14,49 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="KINOJO INFO - 개인정보처리방침">
 <meta name="twitter:description" content="KINOJO INFO 개인정보 처리 기준을 안내합니다.">
-<meta name="twitter:image" content="https://kinojo.info/assets/images/common/kinojo-og.jpg"><link rel="stylesheet" href="../mobile.css?cache=26062205"></head>
-<body><main class="mobile-wrap"><div class="mobile-top"><div class="mobile-brand">KINOJO MOBILE</div><a class="mobile-pill" href="../../home.html?view=desktop">PC 화면</a></div><section class="mobile-hero"><h1>개인정보처리방침</h1><p>모바일 전용 문서 화면입니다. 본문은 PC 문서와 충돌하지 않게 별도 확장합니다.</p></section><a class="mobile-action" href="../../pages/privacy.html?view=desktop">PC 문서로 열기</a></main><nav class="mobile-bottom-nav"><a class="is-active" href="../index.html">메인</a><a class="" href="../hof/">명예</a><a class="" href="../sanctuary/">성역</a><a class="" href="../arcana/">아르카나</a></nav></body></html>
+<meta name="twitter:image" content="https://kinojo.info/assets/images/common/kinojo-og.jpg"><link rel="stylesheet" href="../mobile.css?cache=26062205">
+<style>.privacy-card{margin:12px 0 90px;padding:18px 16px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;color:#475467;line-height:1.7}.privacy-card h2{margin:22px 0 8px;font-size:16px;color:#1f2937}.privacy-card p{margin:0 0 10px}.privacy-card ul{margin:8px 0 0;padding-left:19px}.privacy-card li{margin:7px 0}.privacy-note{font-size:12px;color:#667085}</style></head>
+<body><main class="mobile-wrap"><div class="mobile-top"><div class="mobile-brand">KINOJO MOBILE</div><a class="mobile-pill" href="../../pages/privacy.html?view=desktop">PC 화면</a></div><section class="mobile-hero"><h1>개인정보처리방침</h1><p>회원 인증과 캐릭터 이미지 처리 기준을 안내합니다.</p></section><section class="privacy-card">
+<p class="privacy-note">시행일: 2026년 8월 21일</p>
+<p>KINOJO INFO는 서비스 운영에 필요한 최소 정보만 처리하며, 회원 인증정보와 사용자가 직접 등록한 캐릭터 이미지를 아래 기준에 따라 관리합니다.</p>
+
+<h2>1. 회원 인증 및 세션</h2>
+<ul>
+<li>PASS KEY는 로그인 확인을 위해 Server로 전달되며, 로그인 후 브라우저에는 원문 PASS KEY·passCode를 저장하지 않습니다.</li>
+<li>로그인 성공 후에는 Server가 발급한 <strong>kws_ 세션 토큰</strong>을 사용합니다. Server는 세션 토큰의 원문 대신 검증용 해시와 회원 식별값, 세션 수명·상태 등 운영에 필요한 정보를 관리합니다.</li>
+<li>로그아웃, 세션 만료 또는 운영상 폐기 시 해당 세션은 더 이상 사용할 수 없습니다.</li>
+</ul>
+
+<h2>2. 캐릭터 프로필 이미지</h2>
+<ul>
+<li>회원은 본인이 소유한 본캐·부캐별로 프로필 이미지를 선택적으로 등록할 수 있습니다.</li>
+<li>등록된 프로필 이미지는 기존 공식 캐릭터 이미지를 덮어쓰지 않는 별도 override로 관리되며, 회원이 초기화하거나 다른 이미지로 교체하기 전까지 유지될 수 있습니다.</li>
+<li>프로필 이미지는 캐릭터 정보, 랭킹, 명예의 전당, 성역, Meter 등 KINOJO 기능에서 표시될 수 있으며 <strong>공개 이미지</strong>로 제공될 수 있습니다. 공개를 원하지 않으면 프로필 이미지 등록을 초기화해야 합니다.</li>
+</ul>
+
+<h2>3. 비공개 참고 이미지</h2>
+<ul>
+<li>FRONT(정면), BACK(후면), UPPER_BODY(상반신) 참고 이미지는 선택적으로 등록할 수 있으며 일반 이용자에게 공개하지 않는 <strong>비공개 운영 참고자료</strong>입니다.</li>
+<li>참고 이미지는 MASTER 권한의 관리자만 회원·캐릭터 소유관계를 Server에서 다시 확인한 뒤 열람할 수 있습니다.</li>
+<li>관리자 미리보기·다운로드는 private Storage의 영구 공개 주소가 아니라 요청 시점에 발급되는 <strong>최대 60초의 Signed URL</strong>을 사용합니다.</li>
+<li>참고 이미지는 등록 시점부터 <strong>최대 7일</strong>만 유효합니다. 만료 시 즉시 논리적으로 숨겨지며, 이후 정리 작업에서 Storage 파일과 관련 메타데이터가 삭제됩니다.</li>
+</ul>
+
+<h2>4. 이미지 처리 정보와 제한</h2>
+<ul>
+<li>이미지 기능 운영을 위해 캐릭터 식별값, 이미지 슬롯, MIME 유형, 파일 크기, 등록 시각, 만료 시각 등 최소 메타데이터를 처리할 수 있습니다.</li>
+<li>허용 형식은 JPEG·PNG·WebP이며 파일당 최대 5MB입니다.</li>
+<li>이미지 업로드·조회·삭제 요청은 로그인 세션과 캐릭터 소유권을 Server에서 검증한 뒤 처리합니다. 브라우저에 service_role 키나 private object path를 제공하지 않습니다.</li>
+</ul>
+
+<h2>5. 보관 및 삭제</h2>
+<ul>
+<li>프로필 override: 회원이 초기화하거나 교체할 때까지 유지될 수 있습니다.</li>
+<li>비공개 참고 이미지: 최대 7일. 만료 후 열람이 차단되고 자동 정리 대상이 됩니다.</li>
+<li>Server 세션: 로그아웃·만료·폐기 등 세션 수명주기에 따라 관리합니다.</li>
+</ul>
+
+<h2>6. 이용자의 선택</h2>
+<p>이미지 등록은 선택 사항입니다. 회원은 자신의 프로필 override를 초기화할 수 있으며, 참고 이미지는 만료 전에 교체하거나 삭제할 수 있습니다. 이미지 등록 없이도 해당 이미지 기능을 제외한 KINOJO INFO의 이용 가능한 기능을 사용할 수 있습니다.</p>
+<p class="privacy-note">서비스 구조나 개인정보 처리 방식이 변경되는 경우 본 방침의 내용을 갱신합니다.</p>
+</section></main><nav class="mobile-bottom-nav"><a class="is-active" href="../index.html">메인</a><a href="../hof/">명예</a><a href="../sanctuary/">성역</a><a href="../arcana/">아르카나</a></nav></body></html>
