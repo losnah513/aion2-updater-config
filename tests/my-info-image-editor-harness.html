@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>KINOJO My Info image editor harness</title>
+  <link rel="stylesheet" href="../ui/kinojo-components.css">
+  <link rel="stylesheet" href="../ui/kinojo-my-info.css">
+  <style>
+    body{margin:0;padding:24px;background:#edf3fb;color:#172033;font-family:Arial,"Noto Sans KR",sans-serif}
+    main{width:min(980px,100%);margin:auto}
+    h1{margin:0 0 6px;font-size:22px}.summary{margin:0 0 18px;color:#526178;font-size:13px}
+    #guide-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    [data-guide-slot]{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+    @media(max-width:720px){body{padding:16px}#guide-cards{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>B-1 편집기 기본 · 가이드 프레임</h1>
+    <p class="summary">카드를 선택하면 같은 샘플 원본을 슬롯별 고정 비율과 촬영 가이드로 확인합니다.</p>
+    <span data-guide-slot="FRONT">FRONT</span>
+    <span data-guide-slot="BACK">BACK</span>
+    <span data-guide-slot="UPPER_BODY">UPPER_BODY</span>
+    <section id="guide-cards" aria-label="촬영 가이드"></section>
+  </main>
+  <script src="../ui/kinojo-my-info-image-contract.js"></script>
+  <script src="../ui/kinojo-range-control.js"></script>
+  <script src="../ui/kinojo-my-info-image-editor.js"></script>
+  <script>
+    (() => {
+      const fixture = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1800" viewBox="0 0 1200 1800">
+        <defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#77b6ea"/><stop offset="1" stop-color="#1f355b"/></linearGradient></defs>
+        <rect width="1200" height="1800" fill="url(#sky)"/><circle cx="600" cy="300" r="145" fill="#f1c7a9"/>
+        <path d="M410 280 Q600 20 790 280 L730 410 Q600 330 470 410Z" fill="#212a45"/>
+        <path d="M380 520 Q600 390 820 520 L930 1300 Q600 1450 270 1300Z" fill="#eaf1ff"/>
+        <path d="M390 560 L155 1130 M810 560 L1045 1130" stroke="#eaf1ff" stroke-width="92" stroke-linecap="round"/>
+        <path d="M500 1280 L430 1690 M700 1280 L770 1690" stroke="#17233f" stroke-width="130" stroke-linecap="round"/>
+        <circle cx="150" cy="1145" r="57" fill="#f1c7a9"/><circle cx="1050" cy="1145" r="57" fill="#f1c7a9"/>
+      </svg>`;
+      const fixtureUrl = URL.createObjectURL(new Blob([fixture], {type:'image/svg+xml'}));
+      const cards = document.getElementById('guide-cards');
+      const open = slot => window.KinojoMyInfoImageEditor.open({slot, sourceUrl:fixtureUrl});
+      window.KinojoMyInfoImageEditor.renderGuideCards(cards, {onSelect:open});
+      open('FRONT').then(() => {
+        document.documentElement.dataset.kinojoImageEditorHarness = 'ready';
+      });
+      window.addEventListener('pagehide', () => URL.revokeObjectURL(fixtureUrl), {once:true});
+    })();
+  </script>
+</body>
+</html>

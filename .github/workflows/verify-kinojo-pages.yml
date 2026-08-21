@@ -94,6 +94,7 @@ jobs:
 
           js_files=(
             "ui/kinojo-my-info-image-contract.js"
+            "ui/kinojo-my-info-image-editor.js"
             "ui/kinojo-range-control.js"
             "ui/kinojo-character-reaction.js"
             "ui/kinojo-character-detail-refresh.js"
@@ -119,6 +120,7 @@ jobs:
           node tests/web-shell-auth-contract.test.js
           node tests/my-info-image-contract.test.js
           node tests/my-info-guide-assets.test.js
+          node tests/my-info-image-editor.test.js
           node tests/kinojo-range-control.test.js
           node tests/sanctuary-roster-quick-edit-contract.test.js
           node tests/sanctuary-waitlist-contract.test.js
@@ -462,7 +464,9 @@ jobs:
             "ui/kinojo-components.css"
             "ui/kinojo-common-ui.css"
             "ui/kinojo-common-ui.js"
+            "ui/kinojo-my-info.css"
             "ui/kinojo-my-info-image-contract.js"
+            "ui/kinojo-my-info-image-editor.js"
             "ui/kinojo-range-control.js"
             "ui/kinojo-public-shell.css"
             "ui/kinojo-staged-loading.css"

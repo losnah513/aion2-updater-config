@@ -290,3 +290,109 @@ body.kinojo-page-mobile .kinojo-my-info-modal-dialog{
     border-radius:16px;
   }
 }
+
+/* 20260821 B-1: shared My Info image editor and pre-attachment guide cards */
+body.kinojo-image-editor-open{overflow:hidden}
+.kinojo-image-guide-card{
+  display:grid;grid-template-columns:78px minmax(0,1fr);gap:12px;align-items:center;
+  padding:12px;border:1px solid #dbe7f8;border-radius:14px;background:#f8fbff;color:#172033;
+}
+.kinojo-image-guide-card__preview{
+  position:relative;display:grid;place-items:center;overflow:hidden;width:100%;max-height:108px;
+  border:1px solid #c8d9ee;border-radius:10px;background:linear-gradient(155deg,#16243a,#08111f);
+}
+.kinojo-image-guide-card__preview img{display:block;width:100%;height:100%;object-fit:contain}
+.kinojo-image-guide-card__preview--profile::after{
+  content:'';width:54%;aspect-ratio:3/4;border:2px solid rgba(255,255,255,.82);border-radius:50% 50% 45% 45%;
+}
+.kinojo-image-guide-card__copy{display:grid;gap:3px;min-width:0}
+.kinojo-image-guide-card__copy strong{font-size:14px;font-weight:900}
+.kinojo-image-guide-card__copy span{font-size:12px;line-height:1.45;color:#34435a}
+.kinojo-image-guide-card__copy small{font-size:11px;font-weight:800;color:#2563eb}
+.kinojo-image-guide-card__notice{grid-column:1/-1;margin:0;color:#64748b;font-size:11px;line-height:1.45}
+.kinojo-image-guide-card__action{
+  grid-column:1/-1;min-height:44px;border:1px solid #b9ceeb;border-radius:10px;background:#fff;color:#1d4ed8;
+  font:inherit;font-size:13px;font-weight:900;cursor:pointer;
+}
+.kinojo-image-guide-card__action:focus-visible{outline:3px solid rgba(37,99,235,.3);outline-offset:2px}
+
+.kinojo-image-editor{position:fixed;z-index:2147483000;inset:0;display:grid;place-items:center;padding:20px;color:#172033}
+.kinojo-image-editor[hidden]{display:none!important}
+.kinojo-image-editor__backdrop{position:absolute;inset:0;background:rgba(2,6,23,.72);backdrop-filter:blur(6px)}
+.kinojo-image-editor__dialog{
+  position:relative;display:grid;grid-template-rows:auto minmax(0,1fr) auto;box-sizing:border-box;width:min(920px,calc(100vw - 40px));max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px);
+  overflow:hidden;border:1px solid rgba(255,255,255,.55);border-radius:24px;background:#fff;box-shadow:0 30px 80px rgba(2,6,23,.44);
+}
+.kinojo-image-editor__header,.kinojo-image-editor__footer{display:flex;align-items:center;padding:18px 22px;background:#fff}
+.kinojo-image-editor__header{justify-content:space-between;border-bottom:1px solid #e5edf8}
+.kinojo-image-editor__header small{display:block;margin-bottom:2px;color:#2563eb;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+.kinojo-image-editor__header h2{margin:0;font-size:20px;line-height:1.25}
+.kinojo-image-editor__icon-button{
+  display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:50%;background:#eef4fb;color:#26354c;font:inherit;font-size:26px;line-height:1;cursor:pointer;
+}
+.kinojo-image-editor__body{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(250px,.75fr);min-height:0;overflow:auto;background:#f3f7fc}
+.kinojo-image-editor__workspace{display:grid;align-content:center;justify-items:center;min-width:0;padding:24px;background:radial-gradient(circle at 50% 38%,#27364c,#0b1321 72%)}
+.kinojo-image-editor__frame{
+  position:relative;isolation:isolate;width:min(100%,470px);max-height:min(58vh,610px);overflow:hidden;
+  border:2px solid rgba(255,255,255,.94);border-radius:14px;background:#020617;box-shadow:0 12px 38px rgba(0,0,0,.42);cursor:grab;touch-action:none;user-select:none;
+}
+.kinojo-image-editor__frame.is-dragging{cursor:grabbing}
+.kinojo-image-editor__source{
+  position:absolute;z-index:1;top:50%;left:50%;display:block;max-width:none;max-height:none;transform-origin:center;pointer-events:none;will-change:transform;
+}
+.kinojo-image-editor__grid{
+  position:absolute;z-index:2;inset:0;pointer-events:none;opacity:.46;
+  background:linear-gradient(90deg,transparent 33.1%,rgba(255,255,255,.55) 33.2%,rgba(255,255,255,.55) 33.6%,transparent 33.7%,transparent 66.3%,rgba(255,255,255,.55) 66.4%,rgba(255,255,255,.55) 66.8%,transparent 66.9%),linear-gradient(0deg,transparent 33.1%,rgba(255,255,255,.55) 33.2%,rgba(255,255,255,.55) 33.6%,transparent 33.7%,transparent 66.3%,rgba(255,255,255,.55) 66.4%,rgba(255,255,255,.55) 66.8%,transparent 66.9%);
+}
+.kinojo-image-editor__guide{position:absolute;z-index:3;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))}
+.kinojo-image-editor__profile-safe{display:none;position:absolute;z-index:3;inset:12%;border:2px dashed rgba(255,255,255,.9);border-radius:50%;pointer-events:none;box-shadow:0 0 0 999px rgba(2,6,23,.14)}
+.kinojo-image-editor__frame--profile .kinojo-image-editor__profile-safe{display:block}
+.kinojo-image-editor__drag-hint{margin:12px 0 0;color:#dbeafe;font-size:12px;font-weight:800;text-align:center}
+.kinojo-image-editor__panel{display:grid;align-content:start;gap:8px;min-width:0;padding:22px;background:#fff}
+.kinojo-image-editor__capture{display:grid;gap:8px;margin-bottom:8px;padding:14px;border:1px solid #dbe7f8;border-radius:14px;background:#f8fbff}
+.kinojo-image-editor__capture strong{color:#1d4ed8;font-size:13px;font-weight:900}
+.kinojo-image-editor__capture p{margin:0;color:#23324a;font-size:13px;font-weight:800;line-height:1.5}
+.kinojo-image-editor__capture small{color:#64748b;font-size:11px;line-height:1.5}
+.kinojo-image-editor__control-label{display:flex;justify-content:space-between;align-items:center;margin-top:7px;font-size:13px;font-weight:900}
+.kinojo-image-editor__control-label output{color:#1d4ed8;font-size:12px;font-variant-numeric:tabular-nums}
+.kinojo-image-editor__reset{
+  min-height:44px;margin-top:8px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#334155;font:inherit;font-size:12px;font-weight:900;cursor:pointer;
+}
+.kinojo-image-editor__footer{justify-content:flex-end;gap:8px;border-top:1px solid #e5edf8}
+.kinojo-image-editor__button{min-width:112px;min-height:44px;border:0;border-radius:11px;font:inherit;font-size:13px;font-weight:900;cursor:pointer}
+.kinojo-image-editor__button--secondary{border:1px solid #cbd5e1;background:#fff;color:#334155}
+.kinojo-image-editor__button--primary{background:#2563eb;color:#fff;box-shadow:0 7px 18px rgba(37,99,235,.24)}
+.kinojo-image-editor button:focus-visible,.kinojo-image-editor input:focus-visible{outline:3px solid rgba(37,99,235,.38);outline-offset:2px}
+
+@media(max-width:760px){
+  .kinojo-image-editor{align-items:end;padding:0}
+  .kinojo-image-editor__dialog{width:100%;max-height:100vh;max-height:100dvh;border-radius:22px 22px 0 0}
+  .kinojo-image-editor__header{padding:max(14px,env(safe-area-inset-top,0px)) 16px 12px}
+  .kinojo-image-editor__body{grid-template-columns:1fr}
+  .kinojo-image-editor__workspace{min-height:0;padding:16px}
+  .kinojo-image-editor__frame{width:auto;height:min(48vh,450px);max-width:100%;max-height:48vh}
+  .kinojo-image-editor__panel{gap:5px;padding:14px 16px}
+  .kinojo-image-editor__capture{margin-bottom:2px;padding:11px}
+  .kinojo-image-editor__footer{padding:12px 16px max(12px,env(safe-area-inset-bottom,0px))}
+  .kinojo-image-editor__button{flex:1;min-width:0}
+}
+@media(max-width:420px){
+  .kinojo-image-guide-card{grid-template-columns:64px minmax(0,1fr);padding:10px}
+  .kinojo-image-editor__header h2{font-size:18px}
+  .kinojo-image-editor__workspace{padding:12px}
+  .kinojo-image-editor__frame{height:min(42vh,390px)}
+  .kinojo-image-editor__drag-hint{margin-top:8px}
+}
+@media(max-height:640px) and (max-width:760px){
+  .kinojo-image-editor__frame{height:34vh}
+  .kinojo-image-editor__capture small{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .kinojo-image-editor__source,.kinojo-image-editor__dialog,.kinojo-image-editor__button{scroll-behavior:auto;transition:none!important}
+}
+@media(forced-colors:active){
+  .kinojo-image-editor__backdrop{background:Canvas}
+  .kinojo-image-editor__dialog,.kinojo-image-editor__frame,.kinojo-image-editor__capture,.kinojo-image-guide-card{border:2px solid CanvasText}
+  .kinojo-image-editor__button--primary,.kinojo-image-guide-card__action{border:2px solid ButtonText;background:ButtonFace;color:ButtonText;forced-color-adjust:none}
+  .kinojo-image-editor__grid,.kinojo-image-editor__profile-safe{forced-color-adjust:none}
+}
