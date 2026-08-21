@@ -586,6 +586,7 @@
     previewSlots:{},
     targetErrors:{},
     selectedSlot:null,
+    selectedMemberKey:'',
     moveMenuSource:'',
     panel:'existing',
     searchResults:[],
@@ -744,17 +745,18 @@
     modal.innerHTML=''
       +'<div class="sanctuary-roster-card" role="dialog" aria-modal="true" aria-labelledby="sanctuaryRosterTitle">'
       +'  <header class="sanctuary-roster-head"><div><div class="tip-kicker">FORCE PARTY MEMBERS</div><h2 id="sanctuaryRosterTitle">포스 편집하기</h2><p id="sanctuaryRosterDescription">포스 편집 정보를 불러오는 중...</p></div><button type="button" class="sanctuary-roster-close" aria-label="닫기">×</button></header>'
-      +'  <div class="sanctuary-roster-lease" id="sanctuaryRosterLease" aria-live="polite"></div>'
+      +'  <div class="sanctuary-roster-lease" id="sanctuaryRosterLease"><span id="sanctuaryRosterLeaseText" aria-live="polite"></span><div class="sanctuary-roster-lease-actions"><span id="sanctuaryRosterStatus" aria-live="polite"></span><strong id="sanctuaryRosterDraftCount" hidden>변경사항 0건</strong><button type="button" class="edit-btn" data-roster-action="refresh">최신 정보</button><button type="button" class="edit-btn" data-roster-action="cancel-draft" hidden>취소</button><button type="button" class="edit-btn sanctuary-roster-draft-save" data-roster-action="save-draft" hidden>저장</button></div></div>'
       +'  <nav class="sanctuary-roster-force-nav" id="sanctuaryRosterForceNav" aria-label="이동 대상 포스"></nav>'
       +'  <div class="sanctuary-roster-content" id="sanctuaryRosterContent"></div>'
-      +'  <footer class="sanctuary-roster-foot"><span id="sanctuaryRosterStatus" aria-live="polite"></span><strong id="sanctuaryRosterDraftCount" hidden>변경사항 0건</strong><button type="button" class="edit-btn sanctuary-roster-draft-save" data-roster-action="save-draft" hidden>저장</button><button type="button" class="edit-btn" data-roster-action="cancel-draft" hidden>취소</button><button type="button" class="edit-btn" data-roster-action="refresh">최신 정보</button><button type="button" class="edit-btn" data-roster-action="close">닫기</button></footer>'
       +'</div>';
     document.body.appendChild(modal);
     modal.addEventListener('click',event=>{
       if(Date.now()<rosterState.suppressClickUntil){event.preventDefault();event.stopPropagation();return;}
       if(event.target===modal){closeRoster();return;}
       const action=event.target.closest('[data-roster-action]');
-      if(action)handleRosterAction(action);
+      if(action){handleRosterAction(action);return;}
+      const member=event.target.closest('[data-roster-draggable]');
+      if(member)selectMemberCard(member.dataset.slotKey);
     });
     modal.addEventListener('keydown',event=>{
       if(event.key==='Enter'&&event.target?.id==='sanctuaryRosterSearchInput'){
@@ -767,7 +769,9 @@
         event.preventDefault();searchExisting(true);
       }
       if((event.key==='Enter'||event.key===' ')&&event.target?.matches?.('[data-roster-draggable]')){
-        event.preventDefault();openMoveMenu(event.target.dataset.slotKey);
+        event.preventDefault();
+        if(event.key===' ')selectMemberCard(event.target.dataset.slotKey);
+        else openMoveMenu(event.target.dataset.slotKey);
       }
     });
     modal.querySelector('.sanctuary-roster-close')?.addEventListener('click',closeRoster);
@@ -807,6 +811,11 @@
     return rosterState.leaseLost
       ? '편집 권한이 만료되었습니다. 최신 포스 정보를 다시 불러와 주세요.'
       : (rosterState.editGroupId?'이동 대상 '+Math.max(2,rosterState.groupLeases.length)+'개 포스 잠금 유지 중':'포스 편집 잠금 유지 중')+' · 약 '+seconds+'초 안에 자동 갱신';
+  }
+
+  function updateLeaseText(){
+    const target=document.getElementById('sanctuaryRosterLeaseText');
+    if(target)target.textContent=leaseText();
   }
 
   function slotByPosition(partyNo,slotNo){
@@ -855,10 +864,12 @@
     const power=rosterPowerValue(slot);
     const powerShort=rosterPowerShort(power);
     const powerFull=rosterPowerFull(power);
-    return '<article class="sanctuary-roster-slot is-filled'+(slot.isTeamLeader===true?' is-team-leader':'')+'" tabindex="0" role="group" aria-label="'+html(slot.slotNo)+'번 '+html(slot.name)+' 길게 눌러 이동, 키보드는 Enter" data-roster-draggable data-character-id="'+html(slot.characterMasterId||'')+'"'+common+'>'
+    const selected=rosterState.selectedMemberKey===key;
+    return '<article class="sanctuary-roster-slot is-filled'+(slot.isTeamLeader===true?' is-team-leader':'')+(selected?' is-selected':'')+'" tabindex="0" role="group" aria-label="'+html(slot.slotNo)+'번 '+html(slot.name)+' 클릭하여 제외 선택, 길게 눌러 이동, 키보드는 Enter" data-roster-draggable data-character-id="'+html(slot.characterMasterId||'')+'"'+common+'>'
       +'<span class="sanctuary-roster-class-icon" aria-hidden="true">'+(icon?'<img src="'+html(icon)+'" alt="" loading="lazy" decoding="async">':'<span>'+html(String(slot.className||'?').slice(0,1))+'</span>')+'</span>'
       +'<div class="sanctuary-roster-slot-copy"><div class="sanctuary-roster-slot-identity"><strong>'+html(slot.name)+'</strong><span class="sanctuary-roster-relation-badge '+(isMain?'is-main':'is-sub')+'" title="'+html(relation)+'">'+html(relation)+'</span></div>'
       +'<div class="sanctuary-roster-slot-meta"><span>'+html(slot.serverName||'서버 미확인')+'</span><span class="sanctuary-roster-power" title="정확한 전투력 '+html(powerFull)+'"><img src="'+ROSTER_POWER_ICON_URL+'" alt="" aria-hidden="true"><strong>'+html(powerShort)+'</strong></span></div></div>'
+      +(selected?'<button type="button" class="sanctuary-roster-exclude-badge" data-roster-action="stage-remove" data-slot-key="'+html(key)+'" aria-label="'+html(slot.name)+' 포스에서 제외">제외</button>':'')
       +'</article>';
   }
 
@@ -978,9 +989,9 @@
     const lease=document.getElementById('sanctuaryRosterLease');
     const content=document.getElementById('sanctuaryRosterContent');
     document.getElementById('sanctuaryRosterTitle').textContent='포스 편집하기';
-    document.getElementById('sanctuaryRosterDescription').textContent='캐릭터를 길게 눌러 들어 올린 뒤 빈 슬롯으로 이동하거나 다른 캐릭터와 맞교환하고 저장하세요.';
+    document.getElementById('sanctuaryRosterDescription').textContent='카드를 눌러 제외하거나 길게 눌러 이동·맞교환한 뒤 변경사항을 저장하세요.';
     lease.className='sanctuary-roster-lease'+(rosterState.leaseLost?' is-lost':'');
-    lease.textContent=leaseText();
+    updateLeaseText();
     const nav=document.getElementById('sanctuaryRosterForceNav');if(nav)nav.innerHTML='';
     const changes=draftChanges();
     const count=document.getElementById('sanctuaryRosterDraftCount');
@@ -1001,6 +1012,16 @@
     rosterState.raceId=null;
     rosterState.relationType='';
     rosterState.selectedMain=null;
+  }
+
+  function selectMemberCard(key){
+    const slot=rosterState.draftSlots[key]||rosterState.previewSlots[key];
+    if(!slot?.characterMasterId||rosterState.busy||rosterState.leaseLost)return;
+    rosterState.selectedSlot=null;
+    rosterState.moveMenuSource='';
+    rosterState.selectedMemberKey=rosterState.selectedMemberKey===key?'':key;
+    renderRoster();
+    if(rosterState.selectedMemberKey)setRosterStatus(slot.name+'을 선택했습니다. 우측 상단 제외 버튼으로 편성에서 뺄 수 있습니다.','');
   }
 
   function adoptPrimaryEditor(editor,{replaceAll=true}={}){
@@ -1039,6 +1060,7 @@
     rosterState.draftSlots[sourceKey]=cloneSlot(target,source.teamNo,source.partyNo,source.slotNo);
     rosterState.draftSlots[targetKey]=cloneSlot(source,target.teamNo,target.partyNo,target.slotNo);
     rosterState.selectedSlot=null;
+    rosterState.selectedMemberKey='';
     rosterState.moveMenuSource='';
     resetAddPanel();
     renderRoster();
@@ -1095,7 +1117,7 @@
         return;
       }
       adoptPrimaryEditor(result.editor);
-      rosterState.selectedSlot=null;resetAddPanel();startHeartbeat();
+      rosterState.selectedSlot=null;rosterState.selectedMemberKey='';resetAddPanel();startHeartbeat();
       setRosterStatus(result.message||changes.length+'개 슬롯 변경을 저장했습니다.','success');
       await refreshSanctuaryPageData();
     }catch(error){
@@ -1109,18 +1131,19 @@
     if(rosterState.busy||rosterState.leaseLost)return;
     if(!rosterState.editGroupId){
       Object.keys(rosterState.baselineSlots).forEach(key=>{const slot=rosterState.baselineSlots[key];rosterState.draftSlots[key]=cloneSlot(slot,slot.teamNo,slot.partyNo,slot.slotNo);});
-      rosterState.moveMenuSource='';renderRoster();setRosterStatus('Draft 변경을 취소했습니다.','');return;
+      rosterState.selectedMemberKey='';rosterState.moveMenuSource='';renderRoster();setRosterStatus('Draft 변경을 취소했습니다.','');return;
     }
     try{
       setRosterBusy(true,'대상 포스 잠금을 정리하고 Draft를 취소하는 중...');
       const result=await rosterAction('DRAFT_RESET',{editSessionId:anchorSessionId()});
       if(result.editClosed===true){
         Object.keys(rosterState.baselineSlots).forEach(key=>{const slot=rosterState.baselineSlots[key];rosterState.draftSlots[key]=cloneSlot(slot,slot.teamNo,slot.partyNo,slot.slotNo);});
-        rosterState.editGroupId='';rosterState.groupLeases=[];rosterState.leaseLost=true;stopHeartbeat();setRosterStatus(result.message||'Draft를 취소하고 편집을 종료했습니다.','success');return;
+        rosterState.editGroupId='';rosterState.groupLeases=[];rosterState.selectedMemberKey='';rosterState.leaseLost=true;stopHeartbeat();setRosterStatus(result.message||'Draft를 취소하고 편집을 종료했습니다.','success');return;
       }
       const editor=result.editor||result;
       if(!editor?.force)throw new Error('초기 포스 정보를 다시 불러오지 못했습니다.');
       adoptPrimaryEditor(editor);
+      rosterState.selectedMemberKey='';
       resetAddPanel();startHeartbeat();
       setRosterStatus('Draft 변경과 대상 포스 잠금을 취소했습니다.','success');
     }catch(error){setRosterStatus(error.message||'Draft 취소에 실패했습니다.','error');}
@@ -1539,6 +1562,7 @@
       adoptPrimaryEditor(editor);
       rosterState.forceOptions=options;
       rosterState.selectedSlot=null;
+      rosterState.selectedMemberKey='';
       rosterState.panel='existing';
       rosterState.busy=false;
       rosterState.leaseLost=false;
@@ -1575,7 +1599,7 @@
       const expiresAt=next.expiresAt||next.lease?.expiresAt||currentLease().expiresAt;
       Object.values(rosterState.editors).forEach(editor=>{if(editor.lease)editor.lease.expiresAt=expiresAt;});
       const target=document.getElementById('sanctuaryRosterLease');
-      if(target)target.textContent=leaseText();
+      if(target)updateLeaseText();
     }catch(error){
       rosterState.leaseLost=true;
       stopHeartbeat();
@@ -1611,6 +1635,7 @@
     rosterState.editors={};rosterState.baselineSlots={};rosterState.draftSlots={};rosterState.previewSlots={};
     rosterState.primaryTeamNo=0;rosterState.viewTeamNo=0;rosterState.anchorEditSessionId='';rosterState.editGroupId='';rosterState.groupLeases=[];rosterState.forceOptions=[];rosterState.targetErrors={};
     rosterState.selectedSlot=null;
+    rosterState.selectedMemberKey='';
     rosterState.openButton=null;
     resetAddPanel();
     if(changed)refreshSanctuaryPageData();
@@ -1736,6 +1761,25 @@
     },'신규 캐릭터를 list와 성역 파티에 추가했습니다.');
   }
 
+  async function stageMemberRemoval(action){
+    const key=String(action.dataset.slotKey||rosterState.selectedMemberKey||'');
+    const [teamNo,partyNo,slotNo]=key.split(':').map(value=>Number(value||0));
+    let slot=rosterState.draftSlots[key]||rosterState.previewSlots[key];
+    if(!teamNo||!partyNo||!slotNo||!slot?.characterMasterId)return;
+    if(!rosterState.editors[teamNo]){
+      const opened=await openDraftTarget(teamNo);
+      if(!opened)return;
+      slot=rosterState.draftSlots[key];
+    }
+    if(!slot?.characterMasterId)return;
+    rosterState.draftSlots[key]=emptySlot(teamNo,partyNo,slotNo);
+    rosterState.selectedMemberKey='';
+    rosterState.selectedSlot=null;
+    rosterState.moveMenuSource='';
+    renderRoster();
+    setRosterStatus((slot.name||'캐릭터')+' 제외를 Draft에 담았습니다. 저장하면 포스에서 제외됩니다.','success');
+  }
+
   async function removeMember(action){
     if(hasDraft()||rosterState.editGroupId){setRosterStatus('이동 Draft를 저장하거나 취소한 뒤 편성에서 제외해 주세요.','error');return;}
     const partyNo=Number(action.dataset.partyNo||0);
@@ -1757,6 +1801,7 @@
     if(command==='move-menu'){openMoveMenu(action.dataset.slotKey);return;}
     if(command==='close-move-menu'){rosterState.moveMenuSource='';renderRoster();return;}
     if(command==='move-to'){moveDraft(rosterState.moveMenuSource,action.dataset.slotKey);return;}
+    if(command==='stage-remove'){stageMemberRemoval(action);return;}
     if(command==='select-slot'){
       if(hasDraft()||rosterState.editGroupId){setRosterStatus('이동 Draft를 저장하거나 취소한 뒤 구성원을 추가해 주세요.','error');return;}
       rosterState.selectedSlot={partyNo:Number(action.dataset.partyNo),slotNo:Number(action.dataset.slotNo)};
