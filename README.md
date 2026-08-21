@@ -48,7 +48,10 @@ KINOJO INFO GitHub Pages upload package.
 - C-2 adds `ui/kinojo-my-info-image-preloader.js`. The selected character and the next character in the hydrated order settle before the modal opens; one failed image does not block the gate.
 - After the modal opens, only the remaining idle profile images load in the background with a fixed concurrency of two. A failed character remains isolated and exposes retry only for that character.
 - The Browser accepts only normalized HTTP(S) profile URLs from the C-1 effective-profile state. Private FRONT/BACK/UPPER_BODY references remain metadata-only and never receive C-2 signed preview URLs.
+- D-1 measures the longest hydrated character name once per character-list identity and sizes only the desktop right-side My Info panel from `352px` through `420px`. Reopening or rerendering the same list reuses the cached result.
+- Mobile routes and viewports up to `760px` keep a full-width panel. The central image-management modal does not consume the character-name width variable.
 - `tests/my-info-image-editor-harness.html` verifies the editor output, `tests/my-info-image-upload-harness.html` verifies profile registration, private reference replacement/deletion, original non-upload, `tests/my-info-batch-bootstrap.test.js` protects the one-request/one-RPC bootstrap boundary, and `tests/my-info-image-preloader.test.js` protects the C-2 gate, concurrency, failure isolation, and retry contract.
+- `tests/my-info-panel-width.test.js` protects the D-1 desktop clamp, one-measure cache, mobile full-width override, and central-modal isolation contracts.
 
 ## KINOJO shared range control
 
