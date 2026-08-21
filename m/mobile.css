@@ -608,20 +608,21 @@ body{min-height:100svh}.mobile-wrap{width:100%;max-width:560px;padding:clamp(16p
   border-radius:999px;
   white-space:nowrap;
 }
-.kinojo-mobile-sanctuary-detail-page .summary-grid,
-.kinojo-mobile-sanctuary-detail-page .team-list,
-.kinojo-mobile-sanctuary-detail-page .waiting-section{
+.kinojo-mobile-sanctuary-detail-page .team-list{
   max-width:100%;
 }
 @media (max-width:540px){
-  .kinojo-mobile-sanctuary-detail-page .summary-grid,
   .kinojo-mobile-sanctuary-detail-page .team-list,
-  .kinojo-mobile-sanctuary-detail-page .waiting-section,
   .kinojo-mobile-sanctuary-detail-page .team-grid,
   .kinojo-mobile-sanctuary-detail-page .party-grid{
     display:grid!important;
     grid-template-columns:1fr!important;
     gap:12px!important;
+  }
+  .kinojo-mobile-sanctuary-detail-page>.sanctuary-page-bar .summary-grid{
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:3px!important;
   }
   .kinojo-mobile-sanctuary-detail-page .edit-shell{
     display:grid;

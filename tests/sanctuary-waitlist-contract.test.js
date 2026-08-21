@@ -62,10 +62,21 @@ assert.ok(style.includes('bottom:var(--kinojo-safe-bottom,0px)'), 'Modal must re
 
 for (const entry of ['sanctuary/index.html', 'm/sanctuary/index.html']) {
   const html = read(entry);
-  assert.ok(html.includes('sanctuary.css?cache=2026082103'), `${entry}: sanctuary CSS cache missing`);
-  assert.ok(html.includes('sanctuary.js?cache=2026082101'), `${entry}: sanctuary JS cache missing`);
+  assert.ok(html.includes('sanctuary.css?cache=2026082104'), `${entry}: sanctuary CSS cache missing`);
+  assert.ok(html.includes('sanctuary.js?cache=2026082102'), `${entry}: sanctuary JS cache missing`);
   assert.ok(html.includes('kinojo-supabase-features.js?cache=2026081801'), `${entry}: feature bridge cache missing`);
+  assert.ok(html.includes('class="sanctuary-rail-waitlist"'), `${entry}: the body-left waitlist entry must remain`);
+  assert.equal(html.includes('id="waitingSection"'), false, `${entry}: the retired bottom waitlist card must not render`);
+  if (entry.startsWith('m/')) assert.ok(html.includes('mobile.css?cache=2026082101'), `${entry}: mobile layout cache is stale`);
 }
+
+assert.equal(page.includes('function renderWaiting('), false, 'The retired bottom waitlist renderer must be removed');
+assert.equal(page.includes("summaryCard(fmt(s.waitingCount),'대기자'"), false, 'The attached subbar waitlist action must not render');
+assert.ok(style.includes('.summary-grid.kinojo-staged-region{min-height:0}'), 'The attached summary must override the global 80px staged-region floor');
+assert.ok(style.includes('grid-template-columns:repeat(3,minmax(0,1fr))'), 'Phone summary must keep the three retained cards on one row');
+const mobileStyle = read('m/mobile.css');
+assert.ok(mobileStyle.includes('.kinojo-mobile-sanctuary-detail-page>.sanctuary-page-bar .summary-grid'), 'Mobile sanctuary summary override is missing');
+assert.ok(mobileStyle.includes('grid-template-columns:repeat(3,minmax(0,1fr))!important'), 'Mobile sanctuary summary must not fall back to the generic one-column grid');
 
 assert.ok(style.includes('.sanctuary-waitlist-modal.is-split-mobile'), 'Fold/tablet split-flow contract is missing');
 assert.ok(style.includes('.is-recommendation-stage'), 'Fold/tablet sanctuary-to-recommendation slide is missing');
