@@ -18,6 +18,8 @@ KINOJO INFO GitHub Pages upload package.
 - Source selection remains JPEG, PNG, or WebP up to 5 MiB. Profile output is a public profile override; FRONT/BACK/UPPER_BODY remain private references with the existing maximum seven-day retention.
 - Before file selection, FRONT must request the full head, both hands, and feet; BACK must include hair, outfit back, and heels; UPPER_BODY must include the full head through the waist and both shoulders. A shared warning explains that overlapping chat/HUD/skill UI cannot be removed by the editor.
 - This A-1 contract is the follow-up target. Crop rendering and Server pixel enforcement are enabled only in the later editor/upload stages, so the existing production upload path is not changed prematurely.
+- A-2 provides three original, text-free SVG reference guides under `assets/images/my-info/guides/`: FRONT and BACK use the 2:3 output frame, and UPPER_BODY uses the 4:5 output frame. The SVGs expose accessible titles/descriptions and contain no script, external reference, or embedded raster data.
+- `guideAssetPath` in the shared image contract owns each reference slot's asset path. PROFILE intentionally has no pre-attachment reference asset in this three-guide set.
 
 ## Character detail modal
 

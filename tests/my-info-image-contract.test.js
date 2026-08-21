@@ -3,7 +3,7 @@
 const assert=require('node:assert/strict');
 const contract=require('../ui/kinojo-my-info-image-contract.js');
 
-assert.equal(contract.contractVersion,'2026-08-21.1');
+assert.equal(contract.contractVersion,'2026-08-21.2');
 assert.equal(contract.status,'FOLLOWUP_TARGET');
 assert.deepEqual(contract.input.acceptedMimeTypes,['image/jpeg','image/png','image/webp']);
 assert.equal(contract.input.maxBytes,5*1024*1024);
@@ -18,10 +18,10 @@ assert.deepEqual(contract.slotOrder,['PROFILE','FRONT','BACK','UPPER_BODY']);
 assert.deepEqual(contract.referenceSlotOrder,['FRONT','BACK','UPPER_BODY']);
 
 const expected={
-  PROFILE:{size:[512,512],aspect:[1,1],visibility:'PUBLIC_PROFILE_OVERRIDE',retentionDays:null,guide:'얼굴과 캐릭터 특징'},
-  FRONT:{size:[800,1200],aspect:[2,3],visibility:'PRIVATE_REFERENCE',retentionDays:7,guide:'머리·양손·발끝'},
-  BACK:{size:[800,1200],aspect:[2,3],visibility:'PRIVATE_REFERENCE',retentionDays:7,guide:'머리카락·의상 후면·뒤꿈치'},
-  UPPER_BODY:{size:[800,1000],aspect:[4,5],visibility:'PRIVATE_REFERENCE',retentionDays:7,guide:'머리 전체부터 허리선까지, 양어깨'}
+  PROFILE:{size:[512,512],aspect:[1,1],visibility:'PUBLIC_PROFILE_OVERRIDE',retentionDays:null,guideAssetPath:null,guide:'얼굴과 캐릭터 특징'},
+  FRONT:{size:[800,1200],aspect:[2,3],visibility:'PRIVATE_REFERENCE',retentionDays:7,guideAssetPath:'/assets/images/my-info/guides/front-2x3.svg',guide:'머리·양손·발끝'},
+  BACK:{size:[800,1200],aspect:[2,3],visibility:'PRIVATE_REFERENCE',retentionDays:7,guideAssetPath:'/assets/images/my-info/guides/back-2x3.svg',guide:'머리카락·의상 후면·뒤꿈치'},
+  UPPER_BODY:{size:[800,1000],aspect:[4,5],visibility:'PRIVATE_REFERENCE',retentionDays:7,guideAssetPath:'/assets/images/my-info/guides/upper-body-4x5.svg',guide:'머리 전체부터 허리선까지, 양어깨'}
 };
 
 for(const [slot,rule] of Object.entries(expected)){
@@ -32,6 +32,7 @@ for(const [slot,rule] of Object.entries(expected)){
   assert.equal(actual.outputWidth/actual.outputHeight,actual.aspectWidth/actual.aspectHeight);
   assert.equal(actual.visibility,rule.visibility);
   assert.equal(actual.retentionDays,rule.retentionDays);
+  assert.equal(actual.guideAssetPath,rule.guideAssetPath);
   assert.match(actual.preAttachGuide,new RegExp(rule.guide));
 }
 
