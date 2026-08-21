@@ -66,7 +66,7 @@ for (const entry of ['sanctuary/index.html', 'm/sanctuary/index.html']) {
   assert.ok(html.includes('sanctuary.css?cache=2026082105'), `${entry}: sanctuary CSS cache key is stale`);
   assert.ok(html.includes('kinojo-components.css?cache=2026082103'), `${entry}: shared component CSS is missing`);
   assert.ok(html.includes('kinojo-range-control.js?cache=2026082103'), `${entry}: shared range controller is missing`);
-  assert.ok(html.includes('sanctuary-editor.js?cache=2026082103'), `${entry}: editor cache key is stale`);
+  assert.ok(html.includes('sanctuary-editor.js?cache=2026082104'), `${entry}: editor cache key is stale`);
 }
 
 assert.equal(editor.includes('sanctuaryQuickLegionOnly'), false, 'Legacy legion checkbox must be retired');

@@ -9,7 +9,7 @@ const page = read('sanctuary/js/sanctuary.js');
 const style = read('sanctuary/css/sanctuary.css');
 
 assert.ok(
-  features.includes("rpc('kinojo_web_get_sanctuary_v374'"),
+  features.includes("rpc('kinojo_web_get_sanctuary_v376'"),
   'Sanctuary roster must use the Server contract that exposes the successful sheet apply time'
 );
 
@@ -51,8 +51,8 @@ for (const token of [
 for (const entry of ['sanctuary/index.html', 'm/sanctuary/index.html']) {
   const html = read(entry);
   assert.ok(html.includes('sanctuary.css?cache=2026082105'), entry + ': sanctuary CSS cache is stale');
-  assert.ok(html.includes('kinojo-supabase-features.js?cache=2026082102'), entry + ': Server feature cache is stale');
-  assert.ok(html.includes('sanctuary.js?cache=2026082104'), entry + ': sanctuary page cache is stale');
+  assert.ok(html.includes('kinojo-supabase-features.js?cache=2026082103'), entry + ': Server feature cache is stale');
+  assert.ok(html.includes('sanctuary.js?cache=2026082105'), entry + ': sanctuary page cache is stale');
 }
 
 console.log('KINOJO sanctuary sheet-sync time and compact schedule contract: PASS');

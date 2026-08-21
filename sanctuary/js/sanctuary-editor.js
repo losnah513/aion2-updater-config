@@ -44,20 +44,10 @@
     }catch(_err){ return ''; }
   }
 
-  function currentLevel(){
-    const session = window.KinojoAuth?.getSession?.() || {};
-    const direct = Number(session.level || 0);
-    if(direct > 0) return direct;
-    const role = String(session.role || session.roleLabel || '').toUpperCase().replace(/\s+/g,'_');
-    if(role === 'MASTER') return 5;
-    if(role === 'SUB_MASTER' || role === 'SUBMASTER') return 4;
-    if(role === 'MANAGER' || role === 'ADMIN') return 3;
-    if(role === 'STAFF') return 2;
-    return 1;
-  }
-
-  function canEditTeamInfo(){ return currentLevel() >= 3; }
-  function canAssignLeader(){ return currentLevel() >= 4; }
+  function pageAccess(){ return sourceData()?.access || {}; }
+  function canEditTeamName(){ return pageAccess().authenticated === true && pageAccess().canEditTeamName === true; }
+  function canAssignLeader(){ return pageAccess().authenticated === true && pageAccess().canAssignTeamLeader === true; }
+  function canEditTeamInfo(){ return pageAccess().authenticated === true && pageAccess().canOpenInfoEditor === true; }
 
   function toast(message){
     if(window.KinojoToast && typeof window.KinojoToast.show === 'function') return window.KinojoToast.show(message);
@@ -251,7 +241,10 @@
         + '  <div class="sanctuary-editor-picker-divider"><span>또는</span></div>'
         + '  <label class="sanctuary-editor-picker-field"><span>팀 목록에서 선택</span><div><select id="sanctuaryEditorTeamSelect"><option value="">팀을 선택해 주세요</option>' + options + '</select><button type="button" data-editor-action="choose-team">확인</button></div></label>'
         + '</div>'
-        + '<aside class="sanctuary-editor-guide"><strong>수정 범위</strong><span>Manager 이상은 팀 이름을 수정할 수 있습니다.</span><span>Sub Master 이상은 해당 팀의 본캐만 대표로 임명할 수 있습니다.</span><span>MASTER 시트의 캐릭터명·직업·전투력·본캐명은 읽기 전용입니다.</span></aside>'
+        + '<aside class="sanctuary-editor-guide"><strong>현재 허용된 수정 범위</strong>'
+        + (canEditTeamName() ? '<span>운영 팀 이름과 자동 이름 모드를 수정할 수 있습니다.</span>' : '')
+        + (canAssignLeader() ? '<span>해당 팀의 본캐를 대표로 지정·변경할 수 있습니다.</span>' : '')
+        + '<span>캐릭터명·직업·전투력·본캐명은 MASTER 시트 원본이라 읽기 전용입니다.</span></aside>'
         + '</section>'
       : '<div class="empty-main">수정할 운영 팀 데이터가 없습니다.</div>';
     setStatus('', '');
@@ -271,7 +264,7 @@
       : '';
     return '<section class="sanctuary-editor-setting-panel">'
       + '<div class="sanctuary-editor-setting-head"><div><span>현재 팀 이름</span><strong>' + esc(group.teamGroupName) + '</strong><small>' + (isManual ? '사용자 지정 이름' : '자동 생성 이름') + '</small></div>'
-      + '<button type="button" data-editor-action="open-name">변경하기</button></div>'
+      + (canEditTeamName() ? '<button type="button" data-editor-action="open-name">변경하기</button>' : '<span class="sanctuary-editor-permission-note">팀 이름 수정 권한 없음</span>') + '</div>'
       + editor
       + '</section>';
   }
@@ -299,7 +292,7 @@
     }
     return '<section class="sanctuary-editor-setting-panel">'
       + '<div class="sanctuary-editor-setting-head"><div><span>현재 대표자</span><strong>' + esc(leader || '대표자 미설정') + '</strong><small>' + (leader ? '팀 대표 권한 적용 중' : '임명된 대표자가 없습니다.') + '</small></div>'
-      + (canAssignLeader() ? '<button type="button" data-editor-action="open-leader">' + (leader ? '대표 변경' : '대표 임명') + '</button>' : '<span class="sanctuary-editor-permission-note">Sub Master 이상</span>')
+      + (canAssignLeader() ? '<button type="button" data-editor-action="open-leader">' + (leader ? '대표 변경' : '대표 임명') + '</button>' : '<span class="sanctuary-editor-permission-note">팀 대표자 지정 권한 없음</span>')
       + '</div>' + editor + '</section>';
   }
 
@@ -442,6 +435,7 @@
     if(!group) return;
 
     if(command === 'open-name'){
+      if(!canEditTeamName()) return;
       state.nameEditorOpen = true;
       renderTeamDetail();
       requestAnimationFrame(() => {
@@ -466,6 +460,7 @@
       return;
     }
     if(command === 'open-leader'){
+      if(!canAssignLeader()) return;
       state.leaderEditorOpen = true;
       renderTeamDetail();
       return;
@@ -488,7 +483,7 @@
     const modal = ensureModal();
     const source = sourceData();
     if(!token() || !canEditTeamInfo()){
-      toast('성역 팀 정보 수정은 Manager 이상만 사용할 수 있습니다.');
+      toast('성역 정보 수정 권한이 없습니다.');
       return;
     }
     if(!source){
@@ -552,6 +547,7 @@
     }
     updateEditButtonAccess();
     window.addEventListener('kinojo:auth-changed', updateEditButtonAccess);
+    window.addEventListener('kinojo:sanctuary-access-changed', updateEditButtonAccess);
     document.addEventListener('keydown', event => {
       if(event.key === 'Escape') close();
     });
@@ -624,34 +620,22 @@
       .replaceAll('"','&quot;').replaceAll("'",'&#39;');
   }
 
-  function accountSources(){
-    const auth=window.KinojoAuth||window.KinojoAuthSessionCore||{};
-    return [auth.getAccount?.(),auth.getSession?.()].filter(Boolean);
+  function rosterAccess(){
+    try{ return (typeof sanctuaryData !== 'undefined' && sanctuaryData?.access) || {}; }
+    catch(_error){ return {}; }
   }
 
-  function permissionList(){
-    const values=[];
-    accountSources().forEach(source=>{
-      const raw=source.permissions;
-      if(Array.isArray(raw))values.push(...raw);
-      else if(typeof raw==='string')values.push(...raw.split(/[\s,|]+/));
-    });
-    return values.map(value=>String(value||'').trim().toLowerCase()).filter(Boolean);
+  function manageableForceTeamNos(){
+    return new Set((Array.isArray(rosterAccess().manageableForceTeamNos) ? rosterAccess().manageableForceTeamNos : [])
+      .map(value=>Number(value||0)).filter(Boolean));
   }
 
-  function sessionLevel(){
-    let level=0;
-    accountSources().forEach(source=>{
-      level=Math.max(level,Number(source.level||0));
-      const role=String(source.role||source.roleLabel||'').trim().toUpperCase().replace(/[\s-]+/g,'_');
-      level=Math.max(level,role==='MASTER'?5:role==='SUB_MASTER'?4:role==='MANAGER'||role==='ADMIN'?3:role==='STAFF'?2:role==='MEMBER'?1:0);
-    });
-    return level;
+  function canManageForce(teamNo){
+    return rosterAccess().authenticated===true && manageableForceTeamNos().has(Number(teamNo||0));
   }
 
   function canManageRoster(){
-    const permissions=permissionList();
-    return sessionLevel()>=3||permissions.includes('all')||permissions.includes('sanctuary_roster_manage_all')||permissions.includes('sanctuary_roster_manage_assigned');
+    return rosterAccess().authenticated===true && rosterAccess().canManageRoster===true && manageableForceTeamNos().size>0;
   }
 
   function currentEditor(){return rosterState.editors[rosterState.viewTeamNo]||rosterState.editor||{};}
@@ -687,7 +671,7 @@
     });
   }
   function hasDraft(){return draftChanges().length>0;}
-  function collectForceOptions(){
+  function collectForceOptions({manageableOnly=false}={}){
     const seen=new Set();
     rosterState.previewSlots={};
     return Array.from(document.querySelectorAll('.force-card[data-team-no]')).map(card=>{
@@ -714,7 +698,8 @@
         });
       });
       return {teamNo,teamGroupNo:Number(card.dataset.teamGroupNo||group?.dataset.teamGroup||0),forceName:String(card.dataset.forceName||card.querySelector('.team-name>span')?.textContent||teamNo+'포스').trim(),sanctuaryId:String(card.dataset.sanctuaryId||'').trim().toLowerCase(),slots};
-    }).filter(item=>item.teamNo&&!seen.has(item.teamNo)&&seen.add(item.teamNo));
+    }).filter(item=>item.teamNo&&!seen.has(item.teamNo)&&seen.add(item.teamNo))
+      .filter(item=>!manageableOnly||canManageForce(item.teamNo));
   }
 
   async function rosterAction(command,extra={}){
@@ -741,9 +726,11 @@
     const forceEdit=document.getElementById('forceEditBtn');
     if(forceEdit){forceEdit.hidden=!visible;forceEdit.setAttribute('aria-hidden',visible?'false':'true');}
     document.querySelectorAll('[data-sanctuary-quick-add]').forEach(button=>{
-      button.disabled=!visible;
-      button.classList.toggle('is-quick-add-enabled',visible);
-      button.setAttribute('aria-hidden',visible?'false':'true');
+      const teamNo=Number(button.closest('.force-card')?.dataset.teamNo||0);
+      const enabled=visible&&canManageForce(teamNo);
+      button.disabled=!enabled;
+      button.classList.toggle('is-quick-add-enabled',enabled);
+      button.setAttribute('aria-hidden',enabled?'false':'true');
     });
   }
 
@@ -1509,10 +1496,10 @@
     const party=button.closest('.party-card');
     const sanctuaryId=String(force?.dataset.sanctuaryId||'').trim().toLowerCase();
     const teamNo=Number(force?.dataset.teamNo||0),partyNo=Number(party?.dataset.partyNo||0),slotNo=Number(button.dataset.slotNo||0);
-    if(!sanctuaryId||!teamNo||!partyNo||!slotNo)return;
+    if(!sanctuaryId||!teamNo||!partyNo||!slotNo||!canManageForce(teamNo))return;
     button.disabled=true;button.classList.add('is-loading');
     try{
-      const options=collectForceOptions();
+      const options=collectForceOptions({manageableOnly:true});
       const editor=await rosterAction('OPEN',{sanctuaryId,teamNo});
       if(!editor?.ok)throw Object.assign(new Error(editor?.message||'간편 추가를 시작하지 못했습니다.'),{data:editor});
       adoptPrimaryEditor(editor);rosterState.forceOptions=options;
@@ -1522,7 +1509,7 @@
       popover.classList.add('open');popover.setAttribute('aria-hidden','false');startHeartbeat();
       requestAnimationFrame(()=>{positionQuickPopover();document.getElementById('sanctuaryQuickName')?.focus();});
     }catch(error){setInlineNotice(button,error?.data?.message||error.message||'간편 추가를 시작하지 못했습니다.');}
-    finally{button.disabled=!canManageRoster();button.classList.remove('is-loading');}
+    finally{button.disabled=!canManageForce(teamNo);button.classList.remove('is-loading');}
   }
 
   async function closeQuickPopover({skipRelease=false}={}){
@@ -1537,7 +1524,7 @@
 
   async function openRoster(button){
     if(rosterState.busy||!canManageRoster())return;
-    const options=collectForceOptions();
+    const options=collectForceOptions({manageableOnly:true});
     const requested=Number(button.dataset.teamNo||0);
     const first=options.find(option=>Number(option.teamNo)===requested)||options[0]||{};
     const sanctuaryId=String(button.dataset.sanctuaryId||first.sanctuaryId||'').trim().toLowerCase();
@@ -1813,6 +1800,7 @@
       closeQuickPopover();
     });
     window.addEventListener('kinojo:auth-changed',refreshRosterButtons);
+    window.addEventListener('kinojo:sanctuary-access-changed',refreshRosterButtons);
     window.addEventListener('resize',()=>{if(document.getElementById('sanctuaryQuickAddPopover')?.classList.contains('open'))positionQuickPopover();});
     document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&(document.getElementById('sanctuaryRosterEditorModal')?.classList.contains('open')||document.getElementById('sanctuaryQuickAddPopover')?.classList.contains('open')))heartbeat();});
     document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;if(document.getElementById('sanctuaryQuickAddPopover')?.classList.contains('open'))closeQuickPopover();else if(document.getElementById('sanctuaryRosterEditorModal')?.classList.contains('open'))closeRoster();});
@@ -1826,6 +1814,7 @@
   api.closeQuickPopover=closeQuickPopover;
   api.refreshRosterButtons=refreshRosterButtons;
   api.canManageRoster=canManageRoster;
+  api.canManageForce=canManageForce;
   window.KinojoSanctuaryEditor=api;
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindRoster);
   else bindRoster();
