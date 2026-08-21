@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ko">
+<head><meta charset="utf-8"><title>KINOJO B-3 Upload Harness</title></head>
+<body data-test-state="running">
+  <h1>My Info edited-image upload harness</h1>
+  <pre id="result">RUNNING</pre>
+  <script src="../ui/kinojo-my-info-image-contract.js"></script>
+  <script src="../ui/kinojo-my-info-image-upload.js"></script>
+  <script>
+    (async()=>{
+      const calls=[];
+      const token='kws_'+('a'.repeat(40));
+      const response=(slot,path,characterId,replacing)=>slot==='PROFILE'?{
+        ok:true,characterId,character:{characterId},profile:{hasOverride:true},
+        upload:{objectPath:path,activated:true,pixelVerified:true,pixelContract:'B3',pixelWidth:512,pixelHeight:512},
+        replacement:replacing?{replaced:true,newObjectPath:path}:undefined
+      }:{
+        ok:true,characterId,reference:{slot,active:true},
+        upload:{objectPath:path,activated:true,pixelVerified:true,pixelContract:'B3',pixelWidth:800,pixelHeight:slot==='UPPER_BODY'?1000:1200},
+        replacement:replacing?{replaced:true,newObjectPath:path}:undefined
+      };
+      const client={
+        async ensureConfig(){return{url:location.origin,publishableKey:'sb_publishable_browser_harness'};},
+        async invokeEdgeFunction(_name,body){
+          calls.push(body);
+          const slot=body.slot||'PROFILE',suffix='0123456789abcdef0123456789abcdef.webp';
+          const path=slot==='PROFILE'?`characters/${body.characterId}/${suffix}`:`characters/${body.characterId}/${slot}/${suffix}`;
+          if(body.action==='profile-bootstrap')return{ok:true,character:{characterId:body.characterId},profile:{hasOverride:false}};
+          if(body.action==='reference-state')return{ok:true,characterId:body.characterId,references:[{slot:'FRONT',active:true}]};
+          if(body.action.endsWith('-prepare'))return{ok:true,upload:{bucket:slot==='PROFILE'?'kinojo-member-profile':'kinojo-member-reference',objectPath:path,uploadUrl:`${location.origin}/storage/v1/object/upload/sign/${slot==='PROFILE'?'kinojo-member-profile':'kinojo-member-reference'}/${path}?token=signed`,upsert:false,mimeType:'image/webp',sizeBytes:body.sizeBytes}};
+          if(body.action==='profile-upload-complete')return response(slot,body.objectPath,body.characterId,false);
+          if(body.action==='reference-upload-replace-complete')return response(slot,body.objectPath,body.characterId,true);
+          if(body.action==='reference-delete')return{ok:true,characterId:body.characterId,deleted:{slot:body.slot,deleted:true,storageObjectDeleted:true,metadataDeleted:true}};
+          throw new Error('UNEXPECTED_ACTION:'+body.action);
+        }
+      };
+      const nativeFetch=window.fetch;
+      window.fetch=async(url,options)=>{
+        if(String(url).includes('/storage/v1/object/upload/sign/')){
+          if(options?.method!=='PUT'||options?.headers?.['x-upsert']!=='false')throw new Error('SIGNED_UPLOAD_BOUNDARY_FAILED');
+          return new Response('',{status:200});
+        }
+        return nativeFetch(url,options);
+      };
+      const makeResult=(slot,width,height)=>({slot,blob:new Blob(['edited-webp'],{type:'image/webp'}),mimeType:'image/webp',width,height,outputReady:true,uploadConnected:false,originalUploaded:false,metadataStripped:true});
+      const profile=await KinojoMyInfoImageUpload.uploadEdited({client,sessionToken:token,characterId:41,contract:KinojoMyInfoImageContract,result:makeResult('PROFILE',512,512)});
+      const reference=await KinojoMyInfoImageUpload.uploadEdited({client,sessionToken:token,characterId:41,contract:KinojoMyInfoImageContract,result:makeResult('FRONT',800,1200)});
+      const deleted=await KinojoMyInfoImageUpload.deleteReference({client,sessionToken:token,characterId:41,slot:'FRONT',contract:KinojoMyInfoImageContract});
+      const passed=profile.ok&&profile.uploadConnected&&!profile.originalUploaded&&!profile.replacing&&reference.ok&&reference.replacing&&deleted.deleted.metadataDeleted&&calls.some(call=>call.action==='profile-upload-complete')&&calls.some(call=>call.action==='reference-upload-replace-complete');
+      if(!passed)throw new Error('B3_BROWSER_CONTRACT_FAILED');
+      document.body.dataset.testState='pass';
+      document.querySelector('#result').textContent=JSON.stringify({state:'PASS',profileNew:true,referenceReplace:true,referenceDelete:true,editedWebpOnly:true,originalUploaded:false,serverPixelsVerified:true,actions:calls.map(call=>call.action)},null,2);
+    })().catch(error=>{
+      document.body.dataset.testState='fail';
+      document.querySelector('#result').textContent='FAIL\n'+String(error?.stack||error);
+    });
+  </script>
+</body>
+</html>
