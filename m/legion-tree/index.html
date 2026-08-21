@@ -16,7 +16,7 @@
 <link href="../../ui/kinojo-components.css?cache=2026081219" rel="stylesheet"/>
 <link href="../../ui/kinojo-common-ui.css?cache=2026081205" rel="stylesheet"/>
 <link href="../../ui/kinojo-public-shell.css?cache=2026081202" rel="stylesheet"/>
-<link href="../../legion-tree/css/legion-tree.css?cache=2026082006" rel="stylesheet"/>
+<link href="../../legion-tree/css/legion-tree.css?cache=2026082101" rel="stylesheet"/>
 <link rel="stylesheet" href="../../ui/kinojo-event-notice.css?cache=2026081003"/>
 </head>
 <body class="kinojo-page-legion-tree">
@@ -26,7 +26,7 @@
       <label class="legion-tree-subbar-field" for="legionTreeAltName"><span>부캐 이름</span><input class="kinojo-input" id="legionTreeAltName" type="text" placeholder="부캐 이름" autocomplete="off"/></label>
       <div class="legion-tree-subbar-field legion-tree-race-field">
         <span>종족</span>
-        <div class="legion-tree-race-switch" role="group" aria-label="종족 선택 미리보기">
+        <div class="legion-tree-race-switch" role="group" aria-label="종족 선택">
           <button class="legion-tree-race-btn" id="legionTreeRaceElyos" type="button" aria-pressed="false" disabled>천족</button>
           <button class="legion-tree-race-btn" id="legionTreeRaceAsmodian" type="button" aria-pressed="false" disabled>마족</button>
         </div>
@@ -37,38 +37,13 @@
       <button class="kinojo-btn" id="legionTreeAddBtn" type="button" disabled>추가</button>
       <button class="kinojo-btn secondary" id="legionTreeResetBtn" type="button">초기화</button>
       <button class="kinojo-btn secondary" id="legionTreeEditBtn" type="button" disabled>조직도 편집</button>
-      <span class="legion-tree-subbar-status" id="legionTreeStatus" aria-live="polite">가-0 프리뷰 · 데이터/편집 기능 연결 전</span>
+      <span class="legion-tree-subbar-status" id="legionTreeStatus" aria-live="polite">레기온 데이터를 불러오는 중…</span>
     </div>
   </section>
 
 <main class="legion-tree-wrap">
-
-  <section class="legion-tree-legion is-main-legion" aria-labelledby="legionTreeMainTitle">
-    <header class="legion-tree-legion-head"><div><span>MAIN LEGION</span><h2 id="legionTreeMainTitle">깡 레기온</h2></div><small>기본 3단계 조직 구조</small></header>
-    <div class="legion-tree-stage-list">
-      <section class="legion-tree-stage" data-stage="1"><div class="legion-tree-role-plate"><small>1단계</small><strong>군단장</strong></div><div class="legion-tree-empty-slot">지정 전</div></section>
-      <div class="legion-tree-connector" aria-hidden="true"></div>
-      <section class="legion-tree-stage" data-stage="2"><div class="legion-tree-role-plate"><small>2단계</small><strong>엘리트장교</strong></div><div class="legion-tree-empty-slot">지정 전</div></section>
-      <div class="legion-tree-connector" aria-hidden="true"></div>
-      <section class="legion-tree-stage is-members" data-stage="3">
-        <div class="legion-tree-role-plate"><small>3단계</small><strong>군단병</strong></div>
-        <div class="legion-tree-member-grid" data-branch-count="1" aria-label="군단병 카드 프리뷰">
-          <button class="legion-tree-character is-main" type="button" data-preview-card title="본캐예시" aria-label="본캐 카드 예시 · 검성 · 본캐예시"><span class="legion-tree-kind">본캐</span><img src="../../assets/images/classes/class_icon_gladiator.png" alt=""/><span class="legion-tree-name">본캐예시</span></button>
-          <button class="legion-tree-character is-alt" type="button" data-preview-card title="부캐예시" aria-label="부캐 카드 예시 · 치유성 · 부캐예시"><span class="legion-tree-kind">부캐</span><img src="../../assets/images/classes/class_icon_cleric.png" alt=""/><span class="legion-tree-name">부캐예시</span></button>
-          <button class="legion-tree-character is-main" type="button" data-preview-card title="아주긴캐릭터이름" aria-label="긴 이름 fade 예시 · 권성 · 아주긴캐릭터이름"><span class="legion-tree-kind">본캐</span><img src="../../assets/images/classes/class_icon_fighter.png" alt=""/><span class="legion-tree-name">아주긴캐릭터이름</span></button>
-          <button class="legion-tree-character is-alt" type="button" data-preview-card title="구성원04" aria-label="부캐 카드 예시 · 궁성 · 구성원04"><span class="legion-tree-kind">부캐</span><img src="../../assets/images/classes/class_icon_ranger.png" alt=""/><span class="legion-tree-name">구성원04</span></button>
-        </div>
-      </section>
-    </div>
-  </section>
-
-  <section class="legion-tree-satellites" aria-labelledby="legionTreeSatelliteTitle">
-    <header class="legion-tree-section-head"><div><span>SATELLITE LEGIONS</span><h2 id="legionTreeSatelliteTitle">위성 레기온</h2></div><p>각 레기온은 독립된 단계·직급·소속 구조를 가질 수 있습니다.</p></header>
-    <div class="legion-tree-satellite-grid">
-      <article class="legion-tree-mini-legion"><header><span>01</span><strong>낮</strong></header><div class="legion-tree-mini-stage"><b>군단장</b><small>지정 전</small></div><div class="legion-tree-mini-line"></div><div class="legion-tree-mini-stage"><b>엘리트장교</b><small>지정 전</small></div><div class="legion-tree-mini-line"></div><div class="legion-tree-mini-stage is-members"><b>군단병</b><div class="legion-tree-mini-cards"><span></span><span></span></div></div></article>
-      <article class="legion-tree-mini-legion"><header><span>02</span><strong>밤</strong></header><div class="legion-tree-mini-stage"><b>군단장</b><small>지정 전</small></div><div class="legion-tree-mini-line"></div><div class="legion-tree-mini-stage"><b>엘리트장교</b><small>지정 전</small></div><div class="legion-tree-mini-line"></div><div class="legion-tree-mini-stage is-members"><b>군단병</b><div class="legion-tree-mini-cards"><span></span><span></span></div></div></article>
-      <article class="legion-tree-mini-legion"><header><span>03</span><strong>키나노동조합</strong></header><div class="legion-tree-mini-stage"><b>군단장</b><small>직급명 편집 예정</small></div><div class="legion-tree-mini-line"></div><div class="legion-tree-mini-stage is-branch"><b>엘리트장교</b><div><small>2-1</small><small>+ 2-2</small></div></div><div class="legion-tree-mini-line"></div><div class="legion-tree-mini-stage is-members"><b>군단병</b><div class="legion-tree-mini-cards"><span></span><span></span><span></span></div></div></article>
-    </div>
+  <section class="legion-tree-data-list" id="legionTreeRoot" aria-live="polite" aria-busy="true">
+    <div class="legion-tree-load-state">Server 레기온 데이터를 불러오는 중…</div>
   </section>
 
   <footer class="footer common-footer"><div class="footer-links"><a href="../../pages/about.html">사이트 소개</a><a href="../../pages/terms.html">이용약관</a><a href="../../pages/privacy.html">개인정보처리방침</a><a href="../../pages/contact.html">아이디어 제안 및 건의</a></div><div class="footer-powered">Powered by AION2 · KINOJO 레기온 지원</div></footer>
@@ -91,6 +66,6 @@
 <script src="../../core/kinojo-auth-service.js?cache=2026081801"></script>
 <script src="../../core/kinojo-auth-ui.js?cache=2026081801"></script>
 <script src="../../ui/kinojo-event-notice.js?cache=2026081003"></script>
-<script src="../../legion-tree/js/legion-tree.js?cache=2026082003"></script>
+<script src="../../legion-tree/js/legion-tree.js?cache=2026082101"></script>
 </body>
 </html>
