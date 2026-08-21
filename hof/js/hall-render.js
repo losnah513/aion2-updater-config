@@ -212,17 +212,14 @@ function hofPowerScore(score){
 function hofPowerInfo(item,name,server){
   return '<span class="hof-v2-top3-info is-power">'
     +'<span class="hof-v2-server-badge">'+escapeHtml(server)+'</span>'
-    +'<span class="hof-v2-top3-name-row"><span class="hof-v2-top3-name">'+escapeHtml(name)+'</span></span>'
+    +'<span class="hof-v2-top3-name-row"><span class="hof-v2-top3-name">'+escapeHtml(name)+'</span><span class="hof-v2-owner-slot">'+hofOwnerBadge(item)+'</span></span>'
     +'</span>';
 }
 function hofPowerClass(item){
   return '<span class="hof-v2-power-class-slot">'+hofClassIcon(item)+'</span>';
 }
-function hofPowerAside(item,score){
-  return '<span class="hof-v2-top3-aside">'
-    +'<span class="hof-v2-owner-slot">'+hofOwnerBadge(item)+'</span>'
-    +hofPowerScore(score)
-    +'</span>';
+function hofPowerAside(score){
+  return '<span class="hof-v2-top3-aside">'+hofPowerScore(score)+'</span>';
 }
 function hofPowerPortrait(item){
   return '<span class="hof-v2-power-portrait">'+hofRankPortrait(item,0,'power-card')+'</span>';
@@ -238,8 +235,8 @@ function hofTop3Card(item,index,metric){
       return '<div class="hof-v2-top3-item rank-'+rank+' is-empty is-power-card">'
         +hofPowerRank(rank)
         +hofPowerClass(null)
-        +'<span class="hof-v2-top3-info is-power"><span class="hof-v2-server-badge">-</span><span class="hof-v2-top3-name">데이터 대기</span></span>'
-        +'<span class="hof-v2-top3-aside"><span class="hof-v2-owner-slot"></span>'+hofPowerScore('-')+'</span>'
+        +'<span class="hof-v2-top3-info is-power"><span class="hof-v2-server-badge">-</span><span class="hof-v2-top3-name-row"><span class="hof-v2-top3-name">데이터 대기</span><span class="hof-v2-owner-slot"></span></span></span>'
+        +hofPowerAside('-')
         +'<span class="hof-v2-power-portrait is-empty"><span class="hof-v2-empty-dot">-</span></span>'
         +'</div>';
     }
@@ -258,7 +255,7 @@ function hofTop3Card(item,index,metric){
       +hofPowerRank(rank)
       +hofPowerClass(item)
       +hofPowerInfo(item,name,server)
-      +hofPowerAside(item,score)
+      +hofPowerAside(score)
       +hofPowerPortrait(item)
       +'</button>';
   }
@@ -366,7 +363,6 @@ function hofMyRankingPanel(){
   const profileMetric=metrics.find(metric=>foundByMetric[metric]?.item);
   const item=profileMetric?foundByMetric[profileMetric].item:null;
   const displayName=hofCharName(item)||myName||'내 캐릭터';
-  const profileMeta=[hofServerName(item),hofClassName(item)].filter(Boolean).join(' · ')||'캐릭터 정보를 확인 중입니다.';
   const primaryHtml=['pve','pvp'].map(metric=>{
     const found=foundByMetric[metric];
     const power=metric==='pve'?hofFirstDefined(item?.pvePower,item?.pve_power,''):hofFirstDefined(item?.pvpPower,item?.pvp_power,'');
@@ -374,23 +370,26 @@ function hofMyRankingPanel(){
     const powerText=power!==''?hofPowerShort(power):'-';
     const powerFull=power!==''?hofPowerFull(power):'-';
     const itemText=itemLevel!==''?Number(itemLevel).toLocaleString('ko-KR'):'-';
-    return '<article class="hof-v2-my-current is-'+metric+'" data-hof-metric="'+metric+'">'
-      + '<div class="hof-v2-my-current-head"><span>'+metric.toUpperCase()+'</span><strong>'+(found?Number(found.rank).toLocaleString('ko-KR')+'위':'-')+'</strong></div>'
-      + '<dl><div><dt>전투력</dt><dd title="정확한 전투력 '+escapeHtml(powerFull)+'">'+escapeHtml(powerText)+'</dd></div><div><dt>아이템 Lv.</dt><dd>'+escapeHtml(itemText)+'</dd></div></dl>'
-      + '</article>';
+    return '<div class="hof-v2-my-row hof-v2-my-primary is-'+metric+'" data-hof-metric="'+metric+'">'
+      + '<strong>'+metric.toUpperCase()+'</strong>'
+      + '<span>'+(found?Number(found.rank).toLocaleString('ko-KR')+'위':'-')+'</span>'
+      + '<b title="정확한 전투력 '+escapeHtml(powerFull)+'">'+escapeHtml(powerText)+'</b>'
+      + '<em>Lv. '+escapeHtml(itemText)+'</em>'
+      + '</div>';
   }).join('');
   const secondaryRows=[['강화의 신','enhance'],['성장의 신','growth'],['좋아요','like'],['싫어요','dislike']];
   const secondaryHtml=secondaryRows.map(([title,metric])=>{
     const found=foundByMetric[metric];
     return '<div class="hof-v2-my-row '+hofBackgroundClass(metric)+(found?' is-found':'')+'" data-hof-metric="'+metric+'">'
-      + '<div><strong>'+escapeHtml(title)+'</strong><span>'+(found?Number(found.rank).toLocaleString('ko-KR')+'위':'순위 없음')+'</span></div>'
-      + '<div><em>'+escapeHtml(hofMetricLabel(metric))+'</em><b>'+escapeHtml(found?found.score:'-')+'</b></div>'
+      + '<strong>'+escapeHtml(title)+'</strong>'
+      + '<span>'+(found?Number(found.rank).toLocaleString('ko-KR')+'위':'순위 없음')+'</span>'
+      + '<b>'+escapeHtml(found?found.score:'-')+'</b>'
       + '</div>';
   }).join('');
   return '<aside class="hof-v2-panel hof-v2-my-rank">'
-    + '<div class="hof-v2-my-head"><span class="hof-v2-kicker">MY KINOJO</span><h2><span class="hof-v2-title-icon">◎</span>내 랭킹</h2><p>'+escapeHtml(hallData?.myRanking?.scopeLabel||(includeAllLegions?'전체 레기온':'기본 레기온')+' · '+(includeSubs?'부캐 포함':'본캐만'))+'</p></div>'
+    + '<div class="hof-v2-my-head"><h2>내 랭킹</h2></div>'
     + (!isLoggedIn?'<div class="hof-v2-login-guide"><span>🔒</span><strong>로그인 후 나의 랭킹을 확인하세요.</strong><button id="hofMyRankingLoginBtn" type="button">로그인</button></div>':'')
-    + (isLoggedIn?'<div class="hof-v2-my-profile">'+hofRankPortrait(item,0,'my')+'<div><strong>'+escapeHtml(displayName)+'</strong><span>'+escapeHtml(profileMeta)+'</span><em>본인 카드</em></div></div><div class="hof-v2-my-current-grid">'+primaryHtml+'</div><div class="hof-v2-my-list">'+secondaryHtml+'</div>':'')
+    + (isLoggedIn?'<div class="hof-v2-my-profile">'+hofRankPortrait(item,0,'my')+'<strong>'+escapeHtml(displayName)+'</strong></div><div class="hof-v2-my-list">'+primaryHtml+secondaryHtml+'</div>':'')
     + '</aside>';
 }
 function setHallSlot(id,html){
