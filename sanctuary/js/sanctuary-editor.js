@@ -1345,29 +1345,17 @@
       if(action)handleQuickAction(action);
     });
     popover.addEventListener('input',event=>{
-      if(event.target.id==='sanctuaryQuickScope'){
-        updateQuickScopeSlider(event.target,Number(event.target.value));
-        return;
-      }
       if(event.target.id==='sanctuaryQuickName')rosterState.quickName=event.target.value;
       const row=event.target.closest?.('[data-quick-row]');if(row)activateQuickRow(row.dataset.quickRow);
     });
     popover.addEventListener('change',event=>{
-      if(event.target.id==='sanctuaryQuickScope'){
-        commitQuickScope(Number(event.target.value));
-        return;
-      }
       const row=event.target.closest?.('[data-quick-row]');if(row)activateQuickRow(row.dataset.quickRow);
       if(event.target.id==='sanctuaryQuickClass')rosterState.quickClass=event.target.value;
     });
+    popover.addEventListener('kinojo-range-change',event=>{
+      if(event.target.matches?.('[data-quick-scope-control]'))commitQuickScope(event.detail?.value);
+    });
     popover.addEventListener('keydown',event=>{
-      if(event.target.id==='sanctuaryQuickScope'&&['ArrowLeft','ArrowDown','ArrowRight','ArrowUp','Home','End'].includes(event.key)){
-        event.preventDefault();
-        const current=quickScopeIndex();
-        const next=event.key==='Home'?0:event.key==='End'?2:Math.max(0,Math.min(2,current+(['ArrowRight','ArrowUp'].includes(event.key)?1:-1)));
-        commitQuickScope(next);
-        return;
-      }
       if(event.key==='Enter'&&event.target.id==='sanctuaryQuickName'){event.preventDefault();quickSearch('name');}
     });
     return popover;
@@ -1382,18 +1370,6 @@
     return index>=0?index:2;
   }
 
-  function updateQuickScopeSlider(input,value){
-    if(!input)return;
-    const position=Math.max(0,Math.min(2,Number(value)||0));
-    const nearest=Math.round(position);
-    input.style.setProperty('--quick-scope-progress',(position*50)+'%');
-    input.setAttribute('aria-valuetext',QUICK_SCOPE_LABELS[QUICK_SCOPES[nearest]]+' 검색');
-    input.closest('[data-quick-scope-control]')?.querySelectorAll('[data-quick-scope]').forEach(button=>{
-      button.classList.toggle('is-active',button.dataset.quickScope===QUICK_SCOPES[nearest]);
-      button.setAttribute('aria-pressed',button.dataset.quickScope===QUICK_SCOPES[nearest]?'true':'false');
-    });
-  }
-
   function commitQuickScope(value,{announce=true}={}){
     const index=Math.max(0,Math.min(2,Math.round(Number(value)||0)));
     const next=QUICK_SCOPES[index];
@@ -1401,8 +1377,8 @@
     rosterState.quickScope=next;
     if(changed)rosterState.quickResults=[];
     if(changed)renderQuickPopover();
-    const input=document.getElementById('sanctuaryQuickScope');
-    if(input){input.value=String(index);input.classList.add('is-snapping');updateQuickScopeSlider(input,index);window.setTimeout(()=>input.classList.remove('is-snapping'),180);}
+    const control=document.querySelector('[data-quick-scope-control]');
+    if(control)window.KinojoRangeControl?.setValue(control,index);
     if(changed&&navigator.vibrate)navigator.vibrate(8);
     if(announce)setQuickStatus(QUICK_SCOPE_LABELS[next]+' 검색 범위를 선택했습니다.','');
     if(changed)requestAnimationFrame(positionQuickPopover);
@@ -1410,9 +1386,9 @@
 
   function quickScopeMarkup(){
     const selected=quickScopeIndex();
-    return '<section class="sanctuary-quick-scope" data-quick-scope-control aria-label="검색 범위">'
-      +'<strong>검색 범위</strong><input id="sanctuaryQuickScope" type="range" min="0" max="2" step="0.01" value="'+selected+'" style="--quick-scope-progress:'+(selected*50)+'%" aria-label="검색 범위" aria-valuetext="'+QUICK_SCOPE_LABELS[QUICK_SCOPES[selected]]+' 검색">'
-      +'<div>'+QUICK_SCOPES.map(scope=>'<button type="button" class="'+(rosterState.quickScope===scope?'is-active':'')+'" data-quick-action="scope" data-quick-scope="'+scope+'" aria-pressed="'+(rosterState.quickScope===scope?'true':'false')+'">'+QUICK_SCOPE_LABELS[scope]+'</button>').join('')+'</div></section>';
+    return '<section class="sanctuary-quick-scope kinojo-range kinojo-range--steps" data-quick-scope-control data-kinojo-range data-kinojo-range-mode="steps" data-kinojo-range-stops="0,1,2" data-kinojo-range-labels="대기자 검색|레기온 검색|전체 검색" aria-label="검색 범위">'
+      +'<strong>검색 범위</strong><div class="kinojo-range__control"><input id="sanctuaryQuickScope" class="kinojo-range__input" data-kinojo-range-input type="range" min="0" max="2" step="0.01" value="'+selected+'" aria-label="검색 범위" aria-valuetext="'+QUICK_SCOPE_LABELS[QUICK_SCOPES[selected]]+' 검색"></div>'
+      +'<div class="kinojo-range__steps">'+QUICK_SCOPES.map((scope,index)=>'<button type="button" class="kinojo-range__option'+(rosterState.quickScope===scope?' is-active':'')+'" data-kinojo-range-option="'+index+'" aria-pressed="'+(rosterState.quickScope===scope?'true':'false')+'">'+QUICK_SCOPE_LABELS[scope]+'</button>').join('')+'</div></section>';
   }
 
   function quickResultAllowed(item){
@@ -1452,6 +1428,7 @@
       +'<div class="sanctuary-quick-controls">'+quickScopeMarkup()
       +'<div class="sanctuary-quick-row'+(nameDisabled?' is-disabled':'')+'" data-quick-row="name" aria-disabled="'+(nameDisabled?'true':'false')+'"><input id="sanctuaryQuickName" type="search" autocomplete="off" value="'+html(rosterState.quickName)+'" placeholder="캐릭터 이름" '+(nameDisabled?'disabled':'')+'><button type="button" data-quick-action="search-name" '+(nameDisabled?'disabled':'')+'>해당 캐릭터로 검색</button><button type="button" data-quick-action="reset-name">초기화</button></div>'
       +'<div class="sanctuary-quick-row'+(conditionDisabled?' is-disabled':'')+'" data-quick-row="condition" aria-disabled="'+(conditionDisabled?'true':'false')+'"><select id="sanctuaryQuickClass" '+(conditionDisabled?'disabled':'')+'><option value="">전체 클래스</option>'+quickClassOptions()+'</select><button type="button" data-quick-action="search-condition" '+(conditionDisabled?'disabled':'')+'>이 조건으로 검색</button><button type="button" data-quick-action="reset-condition">초기화</button></div></div>'+results;
+    window.KinojoRangeControl?.enhance(body.querySelector('[data-quick-scope-control]'));
     const classSelect=document.getElementById('sanctuaryQuickClass');if(classSelect)classSelect.value=rosterState.quickClass;
     popover.classList.toggle('is-busy',rosterState.busy);
   }
@@ -1519,7 +1496,6 @@
   function handleQuickAction(action){
     const command=action.dataset.quickAction;
     if(command==='close'){closeQuickPopover();return;}
-    if(command==='scope'){commitQuickScope(quickScopeIndex(action.dataset.quickScope));return;}
     if(command==='search-name'){quickSearch('name');return;}
     if(command==='search-condition'){quickSearch('condition');return;}
     if(command==='reset-name'){resetQuickRow('name');return;}

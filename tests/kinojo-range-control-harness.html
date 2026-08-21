@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>KINOJO range control harness</title>
+  <link rel="stylesheet" href="../ui/kinojo-components.css">
+  <style>
+    *{box-sizing:border-box}
+    html,body{width:100%;max-width:100%;overflow-x:hidden}
+    body{margin:0;padding:32px;background:#f8fafc!important;color:#1e293b;font-family:Arial,"Noto Sans KR",sans-serif}
+    main{width:100%;max-width:780px;margin:auto;padding:24px;border:1px solid #dbe3ef;border-radius:16px;background:#fff}
+    h1{margin:0 0 8px;font-size:24px}p{margin:0 0 24px;color:#64748b;overflow-wrap:anywhere}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;min-width:0}
+    article{display:grid;gap:10px;min-width:0;padding:18px;border:1px solid #e2e8f0;border-radius:12px}article>header{display:flex;justify-content:space-between;gap:12px}article h2{margin:0;font-size:15px}
+    @media(max-width:640px){body{padding:12px}main{padding:16px}.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main data-kinojo-range-harness="loading">
+    <h1>공통 슬라이더</h1>
+    <p>연속값, 단계점, 얇은 단일값, 선택 구간을 같은 동작 계약으로 확인합니다.</p>
+    <div class="grid">
+      <article class="kinojo-range" data-kinojo-range data-kinojo-range-mode="continuous" data-kinojo-range-unit="%">
+        <header><h2>연속값</h2><output class="kinojo-range__output" data-kinojo-range-output>40%</output></header>
+        <div class="kinojo-range__control"><input class="kinojo-range__input" data-kinojo-range-input type="range" min="0" max="100" value="40" aria-label="확대"></div>
+      </article>
+      <article class="kinojo-range kinojo-range--steps" data-kinojo-range data-kinojo-range-mode="steps" data-kinojo-range-stops="0,1,2" data-kinojo-range-labels="대기자 검색|레기온 검색|전체 검색">
+        <header><h2>단계점</h2></header>
+        <div class="kinojo-range__control"><input class="kinojo-range__input" data-kinojo-range-input type="range" min="0" max="2" step="0.01" value="1" aria-label="검색 범위"></div>
+        <div class="kinojo-range__steps"><button class="kinojo-range__option" data-kinojo-range-option="0" type="button">대기자</button><button class="kinojo-range__option" data-kinojo-range-option="1" type="button">레기온</button><button class="kinojo-range__option" data-kinojo-range-option="2" type="button">전체</button></div>
+      </article>
+      <article class="kinojo-range kinojo-range--thin" data-kinojo-range data-kinojo-range-mode="thin" data-kinojo-range-unit="°">
+        <header><h2>얇은 단일값</h2><output class="kinojo-range__output" data-kinojo-range-output>15°</output></header>
+        <div class="kinojo-range__control"><input class="kinojo-range__input" data-kinojo-range-input type="range" min="-45" max="45" value="15" aria-label="회전"></div>
+      </article>
+      <article class="kinojo-range kinojo-range--interval" data-kinojo-range data-kinojo-range-mode="interval" data-kinojo-range-unit="%">
+        <header><h2>선택 구간</h2><output class="kinojo-range__output" data-kinojo-range-output>20–75%</output></header>
+        <div class="kinojo-range__control">
+          <input class="kinojo-range__input" data-kinojo-range-input data-kinojo-range-handle="from" type="range" min="0" max="100" value="20" aria-label="구간 시작">
+          <input class="kinojo-range__input" data-kinojo-range-input data-kinojo-range-handle="to" type="range" min="0" max="100" value="75" aria-label="구간 끝">
+        </div>
+      </article>
+    </div>
+  </main>
+  <script src="../ui/kinojo-range-control.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded',()=>{
+      window.KinojoRangeControl.enhanceAll(document);
+      document.querySelector('[data-kinojo-range-harness]').dataset.kinojoRangeHarness='ready';
+    });
+  </script>
+</body>
+</html>
