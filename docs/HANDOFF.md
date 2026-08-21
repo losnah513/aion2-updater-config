@@ -6,9 +6,9 @@
 
 - GitHub: `losnah513/aion2-updater-config`
 - 운영 브랜치: `main`
-- 작업 시작 기준 운영 commit: `1e74b3cee933f0399824458c744b588c67b39667`
-- 내 정보 후속 작업 기록 브랜치: `codex/my-info-modal-followup-b2`
-- 현재 레기온 순위 작업 브랜치: `codex/legion-ranking-ui-20260821`
+- 현재 운영 commit: `ad428f4d0c05de4d9b649ff66c4ac8529824ef40`
+- 내 정보 후속 B-3: PR `#165` 병합 완료
+- 레기온 순위 통합 패널: PR `#164` 병합 완료
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 최신 일일 로그를 작업 규칙 원본으로 사용한다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
 
@@ -24,7 +24,7 @@
 ## 내 정보 이미지 기존 완료 상태
 
 - 기존 내 정보/캐릭터 이미지 Stage 1-8은 `80/80` 완료 상태이며 재구현하지 않는다.
-- 운영 Edge 기준은 `kinojo-member-auth` v2, `kinojo-member-profile` v17, `kinojo-member-image-download` v2, `kinojo-member-image-cleanup` v5다.
+- 운영 Edge 기준은 `kinojo-member-auth` v2, `kinojo-member-profile` v19(API 2.6), `kinojo-member-image-download` v2, `kinojo-member-image-cleanup` v5다.
 - `kinojo-member-profile` 버킷은 공개, `kinojo-member-reference` 버킷은 비공개다.
 - 참고 이미지는 최대 7일 보존하며 cleanup cron은 `*/15 * * * *`로 활성화되어 있다.
 - 관리자 이미지 SQL 367/371은 `service_role` 전용이다.
@@ -102,14 +102,24 @@
 - 데스크톱 프레임은 슬롯 비율을 유지하도록 너비를 viewport 높이에도 맞추고, 모바일 `390x844`에서도 경고·슬라이더·하단 버튼이 함께 노출된다.
 - 테스트 harness에서 FRONT `800x1200`과 UPPER_BODY `800x1000`의 실제 `image/webp` decode, 비차단 경고, 가이드가 빠진 편집 결과를 확인했다.
 
+## B-3 안전 업로드 연결
+
+- B-3은 PR `#165`, 운영 commit `ad428f4d0c05de4d9b649ff66c4ac8529824ef40`으로 반영됐다.
+- `ui/kinojo-my-info-image-upload.js`는 편집 완료 WebP 결과만 기존 Stage 1-8의 signed upload prepare/complete 계약에 연결한다. 원본 JPEG/PNG/WebP는 편집기 object URL로만 읽고 Storage에 전송하지 않는다.
+- 프로필은 신규 등록과 기존 override의 안전 교체를 지원한다. FRONT/BACK/UPPER_BODY는 Server 등록 상태를 읽고 비공개 신규 등록·안전 교체·Storage object와 metadata 동시 삭제를 제공한다.
+- Storage signed upload는 `upsert: false`, 무작위 32자리 object path, publishable key만 사용한다. 사용자 세션 토큰이나 service role을 Storage 요청에 전달하지 않는다.
+- 운영 `kinojo-member-profile` v19/API 2.6은 업로드된 WebP 바이트에서 실제 픽셀을 파싱한다. PROFILE `512x512`, FRONT/BACK `800x1200`, UPPER_BODY `800x1000`이 아니면 후보 object를 삭제하고 metadata를 활성화하지 않는다.
+- `tests/my-info-image-upload.test.js`와 브라우저 harness가 신규 등록·교체·삭제·원본 미전송·B3 픽셀 확인을 검증한다. PR CI, Pages build/deploy, custom-domain exact live readback이 모두 성공했다.
+
 ## 검증 / 다음 행동
 
 - 계약 검증: `node tests/my-info-image-contract.test.js`
 - 가이드 자산 검증: `node tests/my-info-guide-assets.test.js`
 - 공통 슬라이더 검증: `node tests/kinojo-range-control.test.js`
 - 편집기 기본 검증: `node tests/my-info-image-editor.test.js`
+- 안전 업로드 검증: `node tests/my-info-image-upload.test.js`
 - 성역 이전 회귀: `node tests/sanctuary-roster-quick-edit-contract.test.js`
 - 공통 회귀: `node tests/web-shell-auth-contract.test.js`
 - 레기온 순위 UI 회귀: `node tests/ranking-ui-contract.test.js`
-- GitHub workflow는 공통 슬라이더·이미지 편집기 모듈의 구문 검사, 계약 테스트, Pages exact live readback을 포함한다.
-- 다음 작업은 **B-3 안전 업로드 연결만** 진행한다.
+- GitHub workflow는 공통 슬라이더·이미지 편집기·안전 업로드 모듈의 구문 검사, 계약 테스트, Pages exact live readback을 포함한다.
+- 다음 작업은 **C-1 배치 bootstrap만** 진행한다.
