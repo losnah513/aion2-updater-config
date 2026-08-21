@@ -10,6 +10,15 @@ KINOJO INFO GitHub Pages upload package.
 
 `config.json` is intentionally kept at repository root because the extension currently reads `/config.json`.
 
+## My Info image editor contract
+
+- The completed Stage 1-8 member-image system remains the active upload, ownership, privacy, retention, and cleanup baseline. The follow-up editor must reuse it instead of rebuilding those Server contracts.
+- `ui/kinojo-my-info-image-contract.js` owns the follow-up output contract: profile `512x512` (1:1), front/back `800x1200` (2:3), and upper body `800x1000` (4:5).
+- The editor output is WebP at quality `0.90`, with metadata removed. Only the edited result may be uploaded; the original screenshot stays in the browser.
+- Source selection remains JPEG, PNG, or WebP up to 5 MiB. Profile output is a public profile override; FRONT/BACK/UPPER_BODY remain private references with the existing maximum seven-day retention.
+- Before file selection, FRONT must request the full head, both hands, and feet; BACK must include hair, outfit back, and heels; UPPER_BODY must include the full head through the waist and both shoulders. A shared warning explains that overlapping chat/HUD/skill UI cannot be removed by the editor.
+- This A-1 contract is the follow-up target. Crop rendering and Server pixel enforcement are enabled only in the later editor/upload stages, so the existing production upload path is not changed prematurely.
+
 ## Character detail modal
 
 - The shared modal lives in `ui/kinojo-character-reaction.*` and is used by Hall of Fame, ranking, and sanctuary pages on PC and mobile.
