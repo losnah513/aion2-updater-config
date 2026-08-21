@@ -6,13 +6,75 @@
   const $$=A.$$;
   const state=A.state;
   const action=(...args)=>A.action(...args);
+  const adminAutomation=(...args)=>A.adminAutomation(...args);
   const addLog=(...args)=>A.addLog(...args);
   const esc=(...args)=>A.esc(...args);
   const refreshDashboard=(...args)=>A.refreshDashboard(...args);
   const refreshServerStatus=(...args)=>A.refreshServerStatus(...args);
+  const roleLevel=(...args)=>A.roleLevel(...args);
   const setStatus=(...args)=>A.setStatus(...args);
   const toast=(...args)=>A.toast(...args);
   const todayDateInputValue=(...args)=>A.todayDateInputValue(...args);
+
+  function sanctuaryAutomationBlocked(){
+    return !state.sanctuaryAutomation||state.sanctuaryAutomation.manualBlocked===true||state.sanctuaryAutomation.running===true;
+  }
+
+  function renderSanctuaryAutomation(status){
+    state.sanctuaryAutomation=status&&status.ok!==false?status:null;
+    const current=state.sanctuaryAutomation;
+    const toggle=$('#sanctuaryAutomationToggle');
+    const schedule=$('#sanctuaryAutomationSchedule');
+    if(schedule){
+      const times=Array.isArray(current?.scheduleKst)?current.scheduleKst.join(' · '):'02:00 · 14:00';
+      const next=current?.nextRunAt?' · 다음 '+formatServerTime(current.nextRunAt):'';
+      schedule.textContent=(current?.enabled===true?'ON':'OFF')+' · KST '+times+next;
+    }
+    if(toggle){
+      toggle.checked=current?.enabled===true;
+      toggle.disabled=!current||current.running===true||state.sanctuaryAutomationSaving===true||state.sanctuaryAutomationCanManage!==true;
+      toggle.title=current?.running===true?'자동 동기화 진행 중에는 ON/OFF를 변경할 수 없습니다.':state.sanctuaryAutomationCanManage!==true?'MASTER만 변경할 수 있습니다.':'';
+    }
+    setStatus('#sanctuaryAutomationNotice',current?.message||(current?'자동 실행 상태를 확인했습니다.':'자동 실행 상태를 불러오지 못해 수동 동기화를 잠시 제한합니다.'),current?.running===true?'error':current?.manualBlocked===true?'':current?'ok':'error');
+    const disabled=state.sanctuarySyncBusy===true||sanctuaryAutomationBlocked();
+    if($('#sanctuaryPreviewBtn'))$('#sanctuaryPreviewBtn').disabled=disabled;
+    if($('#sanctuarySyncBtn'))$('#sanctuarySyncBtn').disabled=disabled;
+  }
+
+  async function refreshSanctuaryAutomation(silent=true){
+    try{
+      const data=await adminAutomation('status');
+      if(!data||data.ok===false)throw new Error(data?.message||'자동 동기화 상태 확인 실패');
+      state.sanctuaryAutomationCanManage=data.canManage===true;
+      renderSanctuaryAutomation(data.sanctuarySync||null);
+      return state.sanctuaryAutomation;
+    }catch(error){
+      state.sanctuaryAutomationCanManage=false;
+      renderSanctuaryAutomation(null);
+      if(!silent)setStatus('#sanctuarySyncStatus',error.message||String(error),'error');
+      return null;
+    }
+  }
+
+  async function saveSanctuaryAutomation(enabled){
+    if(state.sanctuaryAutomationSaving||state.sanctuaryAutomation?.running===true)return;
+    state.sanctuaryAutomationSaving=true;renderSanctuaryAutomation(state.sanctuaryAutomation);
+    try{
+      const data=await adminAutomation('save',{jobType:'sanctuary_sync',enabled:enabled===true});
+      if(!data||data.ok===false)throw new Error(data?.message||'자동 동기화 설정 저장 실패');
+      state.sanctuaryAutomationCanManage=data.status?.canManage===true;
+      renderSanctuaryAutomation(data.status?.sanctuarySync||state.sanctuaryAutomation);
+      toast(data.message||'성역 시트 자동 동기화 설정을 저장했습니다.');
+    }catch(error){
+      setStatus('#sanctuaryAutomationNotice',error.message||String(error),'error');
+      await refreshSanctuaryAutomation(true);
+    }finally{state.sanctuaryAutomationSaving=false;renderSanctuaryAutomation(state.sanctuaryAutomation);}
+  }
+
+  function startSanctuaryAutomationPolling(){
+    if(state.sanctuaryAutomationPollTimer)return;
+    state.sanctuaryAutomationPollTimer=setInterval(()=>{const toggle=$('#sanctuaryAutomationToggle');if(toggle&&toggle.offsetParent!==null)refreshSanctuaryAutomation(true);},10000);
+  }
 
   function countArray(data, keys){
     for(const k of keys){ if(Array.isArray(data?.[k])) return data[k].length; }
@@ -182,28 +244,32 @@
     try{
       const [data,profileDiagnostic]=await Promise.all([
         action('adminSanctuarySheetSync',{mode:'status'}),
-        requestProfileDiagnostic('all').catch(error=>profileDiagnosticFailure(error,'all'))
+        requestProfileDiagnostic('all').catch(error=>profileDiagnosticFailure(error,'all')),
+        refreshSanctuaryAutomation(true)
       ]);
       if(data?.ok===false)throw new Error(data.message||'동기화 상태 조회 실패');
       data.profileDiagnostic=profileDiagnostic;
       renderSanctuarySyncStatus(data);
       setStatus('#sanctuarySyncStatus','Server Engine 상태를 불러왔습니다.','ok');
+      startSanctuaryAutomationPolling();
     }catch(err){setStatus('#sanctuarySyncStatus',err.message||String(err),'error');}
   }
 
   async function runSanctuaryPreview(){
-    const id=$('#sanctuarySyncId')?.value||'all'; const btn=$('#sanctuaryPreviewBtn'); btn&&(btn.disabled=true); setSyncStep(1); setStatus('#sanctuarySyncStatus','Apps Script에서 원본 시트를 읽는 중...','');
+    if(sanctuaryAutomationBlocked()){setStatus('#sanctuarySyncStatus',state.sanctuaryAutomation?.message||'자동 실행 상태 확인 후 수동 미리보기를 이용해 주세요.','error');return;}
+    const id=$('#sanctuarySyncId')?.value||'all'; const btn=$('#sanctuaryPreviewBtn'); state.sanctuarySyncBusy=true;renderSanctuaryAutomation(state.sanctuaryAutomation);setSyncStep(1); setStatus('#sanctuarySyncStatus','Apps Script에서 원본 시트를 읽는 중...','');
     try{
       const data=await action('adminSanctuarySheetSync',{mode:'preview',sanctuaryId:id});
       if(data?.ok===false)throw new Error(data.message||'성역 변경 미리보기 실패');
       setSyncStep(2); setStatus('#sanctuarySyncStatus','Server Engine 변경 미리보기 완료','ok');
       state.lastSanctuaryId=id; state.lastSanctuarySyncData=data; $('#sanctuarySyncResult').innerHTML=renderSyncReport(data); addLog('SANCTUARY','성역 변경 미리보기 완료');
     }catch(err){setStatus('#sanctuarySyncStatus',err.message||String(err),'error');addLog('ERROR',err.message||err);}
-    finally{btn&&(btn.disabled=false);}
+    finally{state.sanctuarySyncBusy=false;renderSanctuaryAutomation(state.sanctuaryAutomation);}
   }
 
   async function runSanctuarySync(){
-    const id=$('#sanctuarySyncId')?.value||'all'; const btn=$('#sanctuarySyncBtn'); btn&&(btn.disabled=true); setSyncStep(1); setStatus('#sanctuarySyncStatus','성역 시트를 읽는 중...','');
+    if(sanctuaryAutomationBlocked()){setStatus('#sanctuarySyncStatus',state.sanctuaryAutomation?.message||'자동 실행 상태 확인 후 수동 동기화를 이용해 주세요.','error');return;}
+    const id=$('#sanctuarySyncId')?.value||'all'; const btn=$('#sanctuarySyncBtn'); state.sanctuarySyncBusy=true;renderSanctuaryAutomation(state.sanctuaryAutomation);setSyncStep(1); setStatus('#sanctuarySyncStatus','성역 시트를 읽는 중...','');
     try{
       setSyncStep(2); setStatus('#sanctuarySyncStatus','Server Engine에서 원본을 파싱·검증하고 반영하는 중...','');
       const data=await action('adminSanctuarySheetSync',{mode:'apply',sanctuaryId:id});
@@ -220,7 +286,7 @@
       setStatus('#sanctuarySyncStatus',msg,'error');
       addLog('ERROR',msg);
     }
-    finally{ btn&&(btn.disabled=false); }
+    finally{state.sanctuarySyncBusy=false;renderSanctuaryAutomation(state.sanctuaryAutomation);}
   }
 
   function dateTimeLocalValue(value){
@@ -420,5 +486,7 @@
     }catch(error){setStatus('#sanctuaryRequestStatus',error.message||String(error),'error');row.querySelectorAll('button').forEach(control=>control.disabled=false);}
   }
 
-  Object.assign(A,{countArray,summarizeSanctuary,profileCharacterKey,profileDiagnosticStats,profileDiagnosticFailure,requestProfileDiagnostic,renderProfileDiagnostic,renderSyncReport,retryProfileDiagnostic,testWebAppConnection,setSyncStep,formatServerTime,renderSanctuarySyncStatus,loadSanctuarySyncConsole,runSanctuaryPreview,runSanctuarySync,dateTimeLocalValue,selectedSanctuaryMaster,selectedScheduleMode,fillSanctuaryScheduleSelects,renderSanctuaryTeamSelect,applySanctuaryScheduleMode,updateSanctuaryScheduleSaveState,resetSanctuaryScheduleEditor,sanctuaryScheduleRowHtml,renderSanctuaryScheduleList,loadSanctuaryScheduleConsole,sanctuaryScheduleById,collectSanctuarySchedulePayload,saveSanctuarySchedule,changeSanctuaryScheduleStatus,sanctuaryRequestStatusLabel,sanctuaryRequestRowHtml,loadSanctuarySupportRequests,handleSanctuarySupportRequest});
+  document.addEventListener('change',event=>{if(event.target?.id==='sanctuaryAutomationToggle')saveSanctuaryAutomation(event.target.checked);});
+
+  Object.assign(A,{sanctuaryAutomationBlocked,renderSanctuaryAutomation,refreshSanctuaryAutomation,saveSanctuaryAutomation,startSanctuaryAutomationPolling,countArray,summarizeSanctuary,profileCharacterKey,profileDiagnosticStats,profileDiagnosticFailure,requestProfileDiagnostic,renderProfileDiagnostic,renderSyncReport,retryProfileDiagnostic,testWebAppConnection,setSyncStep,formatServerTime,renderSanctuarySyncStatus,loadSanctuarySyncConsole,runSanctuaryPreview,runSanctuarySync,dateTimeLocalValue,selectedSanctuaryMaster,selectedScheduleMode,fillSanctuaryScheduleSelects,renderSanctuaryTeamSelect,applySanctuaryScheduleMode,updateSanctuaryScheduleSaveState,resetSanctuaryScheduleEditor,sanctuaryScheduleRowHtml,renderSanctuaryScheduleList,loadSanctuaryScheduleConsole,sanctuaryScheduleById,collectSanctuarySchedulePayload,saveSanctuarySchedule,changeSanctuaryScheduleStatus,sanctuaryRequestStatusLabel,sanctuaryRequestRowHtml,loadSanctuarySupportRequests,handleSanctuarySupportRequest});
 })(window.KinojoAdmin);
