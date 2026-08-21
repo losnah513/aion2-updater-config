@@ -118,7 +118,7 @@ function hofRankPortrait(item,rank,size){
   const cls='hof-v2-portrait '+(size||'')+(url?'':' is-empty');
   const badge=item?.identityBadge||item?.identity_badge||null;
   const detail=String(badge?.detail||'').trim();
-  const badgeHtml=badge?.label
+  const badgeHtml=size!=='power-card'&&badge?.label
     ?'<span class="hof-identity-badge" role="button" tabindex="0" data-identity-detail="'+escapeHtml(detail)+'" title="'+escapeHtml(detail)+'" aria-label="'+escapeHtml(detail||badge.label)+'">'+escapeHtml(badge.label)+'</span>'
     :'';
   const portrait=!url
@@ -198,9 +198,8 @@ function hofClassIcon(item){
     +'</span>';
 }
 function hofOwnerBadge(item){
-  const owner=hofOwnerName(item);
   if(item?.isMain===true)return '<span class="hof-v2-owner-badge is-main">본캐</span>';
-  if(item?.isMain===false && owner)return '<span class="hof-v2-owner-badge">부캐 · '+escapeHtml(owner)+'</span>';
+  if(item?.isMain===false)return '<span class="hof-v2-owner-badge">부캐</span>';
   return '';
 }
 function hofPowerScore(score){
@@ -211,12 +210,9 @@ function hofPowerScore(score){
 }
 function hofPowerInfo(item,name,server){
   return '<span class="hof-v2-top3-info is-power">'
-    +'<span class="hof-v2-server-badge">'+escapeHtml(server)+'</span>'
-    +'<span class="hof-v2-top3-name-row"><span class="hof-v2-top3-name">'+escapeHtml(name)+'</span><span class="hof-v2-owner-slot">'+hofOwnerBadge(item)+'</span></span>'
+    +'<span class="hof-v2-power-class-slot">'+hofClassIcon(item)+'</span>'
+    +'<span class="hof-v2-top3-name-row"><span class="hof-v2-top3-name">'+escapeHtml(name)+'</span><span class="hof-v2-top3-server">['+escapeHtml(server)+']</span><span class="hof-v2-owner-slot">'+hofOwnerBadge(item)+'</span></span>'
     +'</span>';
-}
-function hofPowerClass(item){
-  return '<span class="hof-v2-power-class-slot">'+hofClassIcon(item)+'</span>';
 }
 function hofPowerAside(score){
   return '<span class="hof-v2-top3-aside">'+hofPowerScore(score)+'</span>';
@@ -234,8 +230,7 @@ function hofTop3Card(item,index,metric){
     if(isPower){
       return '<div class="hof-v2-top3-item rank-'+rank+' is-empty is-power-card">'
         +hofPowerRank(rank)
-        +hofPowerClass(null)
-        +'<span class="hof-v2-top3-info is-power"><span class="hof-v2-server-badge">-</span><span class="hof-v2-top3-name-row"><span class="hof-v2-top3-name">데이터 대기</span><span class="hof-v2-owner-slot"></span></span></span>'
+        +hofPowerInfo(null,'데이터 대기','-')
         +hofPowerAside('-')
         +'<span class="hof-v2-power-portrait is-empty"><span class="hof-v2-empty-dot">-</span></span>'
         +'</div>';
@@ -253,7 +248,6 @@ function hofTop3Card(item,index,metric){
   if(isPower){
     return '<button type="button" class="hof-v2-top3-item rank-'+rank+' is-power-card"'+commonAttrs+'>'
       +hofPowerRank(rank)
-      +hofPowerClass(item)
       +hofPowerInfo(item,name,server)
       +hofPowerAside(score)
       +hofPowerPortrait(item)
