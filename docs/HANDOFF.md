@@ -6,8 +6,8 @@
 
 - GitHub: `losnah513/aion2-updater-config`
 - 운영 브랜치: `main`
-- 내 정보 C-1 제품 운영 commit: `5b70ee93cdecd31467162657381e34bfecd9be58` (PR `#170`)
-- 내 정보 후속 A-1~C-1: 7/12 완료
+- 내 정보 C-2 제품 운영 commit: `b97d598375400d7eaac9986a6a70a9f533ddb126` (PR `#175`)
+- 내 정보 후속 A-1~C-2: 8/12 완료
 - 레기온 순위 통합 패널: PR `#164` 병합 완료
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 최신 일일 로그를 작업 규칙 원본으로 사용한다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
@@ -123,6 +123,15 @@
 - C-1은 선택 이미지 preload, 다음 이미지 preload, 나머지 2개 단위 background loading, 캐릭터별 retry를 구현하지 않는다. 이 범위는 C-2가 소유한다.
 - PR CI와 운영 workflow가 성공했다: Pages/live readback `32451957817`, Pages build/deploy `32451957234`, Legion Tree `32451957839`, Character Refresh Profile `32451957849`.
 
+## C-2 프로필 이미지 선로딩 / 백그라운드 / 재시도
+
+- C-2는 PR `#175`, 운영 commit `b97d598375400d7eaac9986a6a70a9f533ddb126`으로 반영됐다.
+- `ui/kinojo-my-info-image-preloader.js`가 C-1 batch cache의 실제 유효 프로필 이미지 URL만 읽는다. 선택 캐릭터와 순서상 다음 캐릭터의 이미지가 성공 또는 실패로 settle된 뒤 모달을 연다.
+- 모달이 열린 뒤 남은 idle 이미지만 고정 동시성 2로 백그라운드 준비한다. 한 캐릭터의 실패는 다른 캐릭터나 모달 표시를 막지 않고, 실패한 캐릭터에만 개별 재시도 버튼을 노출한다.
+- URL은 HTTP(S)만 허용하고, 준비 완료 전에는 현재 이미지 `<img>`에 URL을 넣지 않는다. FRONT/BACK/UPPER_BODY 참고 이미지는 기존처럼 비공개 등록 metadata만 사용하며 C-2 Signed URL을 만들지 않는다.
+- 고정 300ms 모달 지연을 제거하고 실제 초기 이미지 gate로 교체했다. 프로필 업로드·공식 이미지 복원 뒤에도 해당 캐릭터의 새 유효 URL만 다시 준비한다.
+- PR workflow의 KINOJO Pages, Character Refresh Profile, Legion Tree 검증과 로컬 Node 계약·브라우저 동작 검증이 통과했다. Supabase Edge v20/API 2.7/DB375, SQL375, Storage 상태는 변경하지 않았다.
+
 ## 검증 / 다음 행동
 
 - 계약 검증: `node tests/my-info-image-contract.test.js`
@@ -131,8 +140,9 @@
 - 편집기 기본 검증: `node tests/my-info-image-editor.test.js`
 - 안전 업로드 검증: `node tests/my-info-image-upload.test.js`
 - 배치 bootstrap 검증: `node tests/my-info-batch-bootstrap.test.js`
+- 프로필 이미지 선로딩 검증: `node tests/my-info-image-preloader.test.js`
 - 성역 이전 회귀: `node tests/sanctuary-roster-quick-edit-contract.test.js`
 - 공통 회귀: `node tests/web-shell-auth-contract.test.js`
 - 레기온 순위 UI 회귀: `node tests/ranking-ui-contract.test.js`
-- GitHub workflow는 공통 슬라이더·이미지 편집기·안전 업로드·배치 bootstrap 모듈의 구문 검사, 계약 테스트, Pages exact live readback을 포함한다.
-- 다음 작업은 **C-2 preloading/background/retry만** 진행한다.
+- GitHub workflow는 공통 슬라이더·이미지 편집기·안전 업로드·배치 bootstrap·프로필 이미지 preloader 모듈의 구문 검사, 계약 테스트, Pages exact live readback을 포함한다.
+- 다음 작업은 **D-1 가변 패널 너비만** 진행한다.

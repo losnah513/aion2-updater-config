@@ -45,8 +45,10 @@ KINOJO INFO GitHub Pages upload package.
 - `kinojo-member-profile` API `2.7` / Edge v20 preserves the B-3 pixel boundary: it reads the uploaded Storage bytes, parses the actual WebP dimensions, and activates metadata only when PROFILE is `512x512`, FRONT/BACK are `800x1200`, or UPPER_BODY is `800x1000`. Invalid candidates are deleted before activation.
 - C-1 adds `ui/kinojo-my-info-batch-bootstrap.js`. Opening My Info sends one `batch-bootstrap` Edge request, which performs one service-role-only v375 RPC and returns the owned character list plus every character's profile and private-reference registration metadata.
 - Character switching reads the hydrated profile/reference cache without another request. The bootstrap response never exposes private reference object paths or signed URLs.
-- Image preloading, two-at-a-time background loading, and per-character retry remain C-2 work and are intentionally absent from the C-1 contract.
-- `tests/my-info-image-editor-harness.html` verifies the editor output, `tests/my-info-image-upload-harness.html` verifies profile registration, private reference replacement/deletion, original non-upload, and the B3 server-pixel acknowledgement contract, and `tests/my-info-batch-bootstrap.test.js` protects the one-request/one-RPC bootstrap boundary.
+- C-2 adds `ui/kinojo-my-info-image-preloader.js`. The selected character and the next character in the hydrated order settle before the modal opens; one failed image does not block the gate.
+- After the modal opens, only the remaining idle profile images load in the background with a fixed concurrency of two. A failed character remains isolated and exposes retry only for that character.
+- The Browser accepts only normalized HTTP(S) profile URLs from the C-1 effective-profile state. Private FRONT/BACK/UPPER_BODY references remain metadata-only and never receive C-2 signed preview URLs.
+- `tests/my-info-image-editor-harness.html` verifies the editor output, `tests/my-info-image-upload-harness.html` verifies profile registration, private reference replacement/deletion, original non-upload, `tests/my-info-batch-bootstrap.test.js` protects the one-request/one-RPC bootstrap boundary, and `tests/my-info-image-preloader.test.js` protects the C-2 gate, concurrency, failure isolation, and retry contract.
 
 ## KINOJO shared range control
 
