@@ -247,8 +247,6 @@ body.kinojo-page-ranking>.ranking-toolbar .ranking-action-box .kinojo-filter-swi
   border-bottom:1px solid rgba(120,145,180,.18);
   background:rgba(255,255,255,.72);
 }
-.ranking-panel.pve .ranking-panel-head{box-shadow:inset 3px 0 0 rgba(37,111,178,.70)}
-.ranking-panel.pvp .ranking-panel-head{box-shadow:inset 3px 0 0 rgba(127,70,194,.68)}
 .ranking-panel-head h2{margin:0;font-size:16px;letter-spacing:-.04em}
 .ranking-panel-head p{margin:3px 0 0;color:var(--ranking-muted);font-size:10px;font-weight:700}
 .ranking-panel-chip{

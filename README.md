@@ -21,10 +21,12 @@ KINOJO INFO GitHub Pages upload package.
 
 - Desktop PVE/PVP rankings share one outer card with a visual center divider. Each side owns an independent, hidden-scrollbar viewport and keeps the Server-returned order; reaching the viewport end appends the next Server page without moving the document scroll.
 - Mobile reuses the same panels through PVE/PVP tabs and preserves each tab's scroll position. The fixed notice strip remains outside the panel safe area.
+- Unfolded mobile/tablet widths from `700px` through `1220px` use a two-column/two-row toolbar grid: search and scope switches stay in the left column while the five-column class filter occupies the right column. This prevents the former one-line flex shrink and label/control overlap in both Fold orientations.
+- Panel headers do not draw PVE/PVP-colored inset bars. The center divider and labeled chips remain the only fixed-area separators.
 - The bottom affordance is a non-interactive gradient overlay. It fades only the peeking card edge, never applies CSS blur to card text, and disappears at the end of the list.
 - Ranking cards omit visible class text because the shared class emblem already identifies the class. Legion and server render together as `<레기온> [서버]`, and combat power is stacked above item level in the compact metric column.
 - `내 캐릭터 순위 보기` reuses the authenticated `kinojo-member-profile` character list and matches only exact `server_id + character_name` identities. The Browser does not infer ownership or calculate a rank.
-- `tests/ranking-ui-contract.test.js` protects the unified panel, compact-card, exact-identity, independent-scroll, hidden-scrollbar, and gradient contracts.
+- `tests/ranking-ui-contract.test.js` protects the unified panel, compact-card, exact-identity, independent-scroll, hidden-scrollbar, gradient, Fold toolbar, and no-header-accent contracts.
 
 ## My Info image editor contract
 
