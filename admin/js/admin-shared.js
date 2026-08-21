@@ -1,4 +1,4 @@
-/* KINOJO Admin Shared state and utilities v2026081003 */
+/* KINOJO Admin Shared state and utilities v2026082104 */
 (function(global){
   'use strict';
   const A=global.KinojoAdmin=global.KinojoAdmin||{};
@@ -62,6 +62,8 @@
 
   function adminMeter(cmd, extra){ return window.KinojoSupabase.adminMeter(cmd, extra||{}); }
 
+  function adminAutomation(cmd, extra){ return window.KinojoSupabase.adminAutomation(cmd, extra||{}); }
+
   function adminVisitor(cmd, extra){ return window.KinojoSupabase.adminVisitor(cmd, extra||{}); }
 
   const EVENT_NOTICE_TYPES = [
@@ -86,5 +88,5 @@
 
   async function action(name, params){ return window.KinojoApi ? window.KinojoApi.getAction(name, params||{}) : window.KinojoSupabase.webAction(name, params||{}); }
 
-  Object.assign(A,{$,$$,state,CACHE,DEFAULT_SUBTABS,esc,addLog,setStatus,toast,roleLabel,roleKey,roleLevel,isMaster,isFullAdmin,isStaffConsole,isAdmin,adminAccount,adminCharacter,adminLookup,adminNotice,adminEventNotice,adminMeter,adminVisitor,EVENT_NOTICE_TYPES,eventNoticeTypeLabel,todayDateInputValue,action});
+  Object.assign(A,{$,$$,state,CACHE,DEFAULT_SUBTABS,esc,addLog,setStatus,toast,roleLabel,roleKey,roleLevel,isMaster,isFullAdmin,isStaffConsole,isAdmin,adminAccount,adminCharacter,adminLookup,adminNotice,adminEventNotice,adminMeter,adminAutomation,adminVisitor,EVENT_NOTICE_TYPES,eventNoticeTypeLabel,todayDateInputValue,action});
 })(window);
