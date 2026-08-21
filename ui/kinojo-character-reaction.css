@@ -23,12 +23,17 @@ body.kinojo-character-reaction-open{overflow:hidden}
 .kinojo-character-reaction-kicker{font-size:11px;font-weight:1000;letter-spacing:.18em;color:#2563eb}
 .kinojo-character-reaction-title{max-width:100%;margin:0;font-size:34px;font-weight:1000;line-height:1.04;letter-spacing:-.05em;overflow-wrap:anywhere}
 .kinojo-character-reaction-sub{margin:0;color:#64748b;font-size:13px;font-weight:800;line-height:1.4;word-break:keep-all}
-.kinojo-character-reaction-powers{display:flex;flex-wrap:wrap;gap:7px;margin-top:5px}
-.kinojo-character-reaction-power{display:inline-flex;align-items:center;gap:7px;min-height:30px;padding:5px 10px;border:1px solid rgba(148,163,184,.24);border-radius:999px;background:#fff;box-shadow:0 5px 13px rgba(15,23,42,.05);box-sizing:border-box}
-.kinojo-character-reaction-power b{font-size:10px;line-height:1;letter-spacing:.06em}
-.kinojo-character-reaction-power strong{font-size:12px;line-height:1;color:#1e293b}
-.kinojo-character-reaction-power.is-pve b{color:#2563eb}
-.kinojo-character-reaction-power.is-pvp b{color:#7c3aed}
+.kinojo-character-reaction-powers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;width:100%;margin-top:4px}
+.kinojo-character-reaction-mode{display:grid;grid-template-columns:24px minmax(0,1fr);align-items:center;gap:5px;min-width:0;min-height:42px;padding:4px 7px;border:1px solid rgba(148,163,184,.24);border-radius:10px;background:#fff;box-shadow:0 5px 13px rgba(15,23,42,.05);box-sizing:border-box}
+.kinojo-character-reaction-mode>b{display:grid;place-items:center;align-self:stretch;border-right:1px solid rgba(148,163,184,.18);font-size:8px;line-height:1;letter-spacing:.04em}
+.kinojo-character-reaction-mode.is-pve>b{color:#2563eb}.kinojo-character-reaction-mode.is-pvp>b{color:#7c3aed}
+.kinojo-character-reaction-mode.is-pve{border-color:rgba(37,99,235,.18);background:linear-gradient(135deg,rgba(239,246,255,.88),#fff 54%)}
+.kinojo-character-reaction-mode.is-pvp{border-color:rgba(124,58,237,.17);background:linear-gradient(135deg,rgba(245,243,255,.88),#fff 54%)}
+.kinojo-character-reaction-mode-metrics{display:grid;gap:2px;min-width:0}
+.kinojo-character-reaction-metric{display:grid;grid-template-columns:18px minmax(0,1fr);align-items:center;gap:3px;min-width:0;height:16px}
+.kinojo-character-reaction-metric img{display:block;justify-self:center;object-fit:contain}
+.kinojo-character-reaction-metric.is-power img{width:17px;height:17px}.kinojo-character-reaction-metric.is-item-level img{width:11px;height:16px}
+.kinojo-character-reaction-metric strong{min-width:0;color:#1e293b;font-size:10px;font-weight:950;line-height:1;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
 .kinojo-character-reaction-detail{display:none;align-items:center;gap:5px;width:max-content;margin-top:3px;padding:6px 10px;border:1px solid rgba(37,99,235,.16);border-radius:999px;background:rgba(37,99,235,.07);color:#1d4ed8;font-size:11px;font-weight:900;text-decoration:none}
 .kinojo-character-reaction-detail.is-visible{display:inline-flex}
 .kinojo-character-reaction-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px}
@@ -58,8 +63,9 @@ body.kinojo-character-reaction-open{overflow:hidden}
   .kinojo-character-reaction-title{font-size:28px}
   .kinojo-character-reaction-sub{font-size:12px}
   .kinojo-character-reaction-powers{gap:5px;margin-top:3px}
-  .kinojo-character-reaction-power{min-height:27px;padding:4px 8px;gap:5px}
-  .kinojo-character-reaction-power strong{font-size:11px}
+  .kinojo-character-reaction-mode{grid-template-columns:22px minmax(0,1fr);min-height:40px;padding:3px 6px;gap:4px}
+  .kinojo-character-reaction-metric{grid-template-columns:17px minmax(0,1fr);gap:2px}
+  .kinojo-character-reaction-metric strong{font-size:9px}
   .kinojo-character-reaction-detail{padding:5px 9px;font-size:10px}
   .kinojo-character-reaction-actions{margin-top:18px;gap:8px}
   .kinojo-character-reaction-type{height:42px;font-size:13px}
@@ -75,7 +81,10 @@ body.kinojo-character-reaction-open{overflow:hidden}
   .kinojo-character-reaction-class{width:31px;height:31px}
   .kinojo-character-reaction-class img{width:19px;height:19px}
   .kinojo-character-reaction-title{font-size:25px}
-  .kinojo-character-reaction-power{padding:4px 7px}
+  .kinojo-character-reaction-mode{grid-template-columns:20px minmax(0,1fr);padding:3px 5px}
+  .kinojo-character-reaction-mode>b{font-size:7px}
+  .kinojo-character-reaction-metric{grid-template-columns:16px minmax(0,1fr)}
+  .kinojo-character-reaction-metric strong{font-size:8px}
 }
 
 /* 2026072709 · 실시간 캐릭터 상세 모달 */
