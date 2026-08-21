@@ -24,13 +24,18 @@ assert.equal(render.includes("hofClassIcon(safeItem)+'<span>'+escapeHtml(hofClas
 assert.equal(render.includes('<span>이번 주 합계</span>'), false, 'God cards must not repeat the weekly increase as a total row');
 
 assert.ok(css.includes('"enhance meter meter"') && css.includes('"pve pve growth"'), 'Desktop reference-proportion grid is missing');
+assert.ok(css.includes('grid-template-columns:repeat(3,minmax(0,1fr))!important'), 'Desktop HOF board must use three equal columns');
+assert.ok(css.includes('grid-template-columns:minmax(0,2fr) minmax(340px,1fr)!important'), 'Desktop board and personal ranking must keep the compact 2:1 split');
+assert.ok(css.includes('height:clamp(600px,calc(100dvh - 205px),875px)!important'), 'Desktop HOF content must use the viewport without crossing the fixed notice bar');
+assert.ok(css.includes('grid-template-rows:minmax(0,1fr)!important'), 'Desktop outer grid must allow the board to shrink to the first-screen height budget');
 assert.match(css,/"enhance"\s*"meter"\s*"ranking-link-card"\s*"pve"\s*"pvp"\s*"growth"/, 'Mobile Hall of Fame order is missing');
 assert.ok(css.includes('height:calc(100% - 44px)!important'), 'TOP3 body must fit the panel below its header');
-assert.ok(css.includes('grid-template-columns:38px clamp(48px,4vw,58px) minmax(132px,1fr) minmax(118px,132px)'), 'Desktop TOP3 rank/class/identity/score/portrait grid is missing');
+assert.ok(css.includes('grid-template-columns:36px clamp(40px,3.2vw,48px) minmax(112px,1fr) minmax(108px,124px)'), 'Desktop TOP3 rank/class/identity/score/portrait grid is missing');
 assert.match(css,/hof-v2-power-class-slot\{\s*grid-column:2!important;/, 'TOP3 class icon must be the first field after rank');
 assert.match(css,/hof-v2-top3-info\{\s*grid-column:3!important;/, 'TOP3 identity must follow the class icon');
-assert.match(css,/hof-v2-power-class-slot \.hof-v2-class-icon\{[\s\S]*?width:100%!important;[\s\S]*?max-height:100%!important;/, 'TOP3 class icon must scale to the character-card bounds');
+assert.match(css,/hof-v2-power-class-slot \.hof-v2-class-icon\{[\s\S]*?height:calc\(100% - 12px\)!important;[\s\S]*?max-height:42px!important;/, 'TOP3 class icon must stay inside the character row');
 assert.match(css,/hof-v2-god-class\{\s*grid-column:1!important;/, 'God-card class icon must occupy the left edge');
+assert.match(css,/hof-v2-god-class \.hof-v2-class-icon\{[\s\S]*?width:52px!important;[\s\S]*?max-height:52px!important;/, 'God-card class icon must remain smaller than its profile portrait');
 assert.ok(css.includes('border-top:1px solid rgba(22,34,58,.14)!important'), 'Single TOP3 row divider is missing');
 assert.match(css,/padding:0!important;\s*gap:0!important;/, 'TOP3 rows must fill the complete panel body');
 assert.match(commonCss,/body\.kinojo-page-hall\{\s*--kinojo-page-max:1520px;/, 'Hall page width must not be capped at 1120px');

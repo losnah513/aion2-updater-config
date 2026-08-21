@@ -2173,7 +2173,8 @@ body>.hof-filter-bar .kinojo-filter-switch{min-height:34px!important;width:auto!
 
 /* ============================================================
    KINOJO HOF 20260821 - reference-proportion layout authority
-   - Desktop: asymmetric four-row board from the approved reference.
+   - Desktop: equal-track four-row board from the approved reference.
+   - Wide cards use 2x1 tracks; tall cards use 1x2 tracks (same two-track footprint).
    - TOP3: full-width rows separated by one line, with five aligned columns.
    - God titles: official item-level / combat-power artwork.
    ============================================================ */
@@ -2245,7 +2246,7 @@ body.kinojo-page-hall .hof-v2-god{
   grid-template-rows:44px minmax(0,1fr) auto auto!important;
 }
 body.kinojo-page-hall .hof-v2-god-main:not(.is-empty){
-  grid-template-columns:clamp(68px,36%,112px) clamp(58px,24%,82px) minmax(0,1fr)!important;
+  grid-template-columns:58px 68px minmax(0,1fr)!important;
   grid-template-rows:auto auto!important;
   align-content:center!important;
   align-items:center!important;
@@ -2267,10 +2268,11 @@ body.kinojo-page-hall .hof-v2-god-main:not(.is-empty) .hof-v2-god-class{
   min-width:0!important;
 }
 body.kinojo-page-hall .hof-v2-god-main:not(.is-empty) .hof-v2-god-class .hof-v2-class-icon{
-  width:100%!important;
+  width:52px!important;
   height:auto!important;
   min-width:0!important;
-  max-width:112px!important;
+  max-width:100%!important;
+  max-height:52px!important;
   aspect-ratio:1!important;
   flex-basis:auto!important;
 }
@@ -2281,7 +2283,7 @@ body.kinojo-page-hall .hof-v2-god-main:not(.is-empty) .hof-v2-god-portrait{
 }
 body.kinojo-page-hall .hof-v2-god-main:not(.is-empty) .hof-v2-portrait.large{
   width:100%!important;
-  max-width:86px!important;
+  max-width:68px!important;
   height:auto!important;
   aspect-ratio:1!important;
 }
@@ -2318,7 +2320,7 @@ body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card{
   min-height:0!important;
   margin:0!important;
   padding:0!important;
-  grid-template-columns:38px clamp(48px,4vw,58px) minmax(132px,1fr) minmax(118px,132px) clamp(78px,7vw,104px)!important;
+  grid-template-columns:36px clamp(40px,3.2vw,48px) minmax(112px,1fr) minmax(108px,124px) clamp(68px,6vw,88px)!important;
   grid-template-rows:minmax(0,1fr)!important;
   column-gap:8px!important;
   row-gap:0!important;
@@ -2390,11 +2392,11 @@ body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power
   padding:0!important;
 }
 body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power-class-slot .hof-v2-class-icon{
-  width:100%!important;
-  height:auto!important;
+  width:auto!important;
+  height:calc(100% - 12px)!important;
   min-width:0!important;
-  max-width:56px!important;
-  max-height:100%!important;
+  max-width:42px!important;
+  max-height:42px!important;
   aspect-ratio:1!important;
   flex-basis:auto!important;
 }
@@ -2455,16 +2457,34 @@ body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power
 
 @media (min-width:761px){
   body.kinojo-page-hall .hof-v2-layout{
-    grid-template-columns:minmax(0,1fr) clamp(280px,20vw,320px)!important;
+    grid-template-columns:minmax(0,1fr)!important;
   }
   body.kinojo-page-hall .hof-v2-board{
-    grid-template-columns:minmax(220px,3fr) minmax(280px,4fr) minmax(220px,3fr)!important;
-    grid-template-rows:repeat(4,clamp(180px,10.5vw,205px))!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    grid-template-rows:repeat(4,190px)!important;
     grid-template-areas:
       "enhance meter meter"
       "enhance ranking-link-card ranking-link-card"
       "pve pve growth"
       "pvp pvp growth"!important;
+  }
+}
+
+@media (min-width:1181px){
+  body.kinojo-page-hall .hof-v2-layout{
+    grid-template-columns:minmax(0,2fr) minmax(340px,1fr)!important;
+    grid-template-rows:minmax(0,1fr)!important;
+    height:clamp(600px,calc(100dvh - 205px),875px)!important;
+  }
+  body.kinojo-page-hall .hof-v2-board{
+    height:100%!important;
+    min-height:0!important;
+    grid-template-rows:repeat(4,minmax(0,1fr))!important;
+  }
+  body.kinojo-page-hall .hof-v2-right,
+  body.kinojo-page-hall .hof-v2-my-rank{
+    min-height:0!important;
+    height:100%!important;
   }
 }
 
@@ -2476,7 +2496,7 @@ body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power
     grid-template-rows:repeat(4,190px)!important;
   }
   body.kinojo-page-hall .hof-v2-god-main:not(.is-empty){
-    grid-template-columns:58px 58px minmax(0,1fr)!important;
+    grid-template-columns:52px 62px minmax(0,1fr)!important;
   }
 }
 
@@ -2523,11 +2543,11 @@ body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power
     font-size:13px!important;
   }
   body.kinojo-page-hall .hof-v2-wide .hof-v2-top3-item.is-power-card .hof-v2-power-class-slot .hof-v2-class-icon{
-    width:100%!important;
-    height:auto!important;
+    width:auto!important;
+    height:calc(100% - 12px)!important;
     min-width:0!important;
-    max-width:56px!important;
-    max-height:100%!important;
+    max-width:42px!important;
+    max-height:42px!important;
     aspect-ratio:1!important;
     flex-basis:auto!important;
   }
