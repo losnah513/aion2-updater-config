@@ -91,6 +91,7 @@ jobs:
           set -euo pipefail
 
           js_files=(
+            "ui/kinojo-my-info-image-contract.js"
             "ui/kinojo-character-reaction.js"
             "ui/kinojo-character-detail-refresh.js"
             "ui/kinojo-character-skill-bridge.js"
@@ -113,6 +114,7 @@ jobs:
           done
 
           node tests/web-shell-auth-contract.test.js
+          node tests/my-info-image-contract.test.js
           node tests/sanctuary-waitlist-contract.test.js
           node tests/staged-page-contract.test.js
           node tests/meter-presence-log-contract.test.js
@@ -451,6 +453,7 @@ jobs:
             "ui/kinojo-components.css"
             "ui/kinojo-common-ui.css"
             "ui/kinojo-common-ui.js"
+            "ui/kinojo-my-info-image-contract.js"
             "ui/kinojo-public-shell.css"
             "ui/kinojo-staged-loading.css"
             "ui/kinojo-staged-loading.js"
