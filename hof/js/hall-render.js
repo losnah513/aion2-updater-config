@@ -5,6 +5,12 @@ function profileImageUrlFor(item){
 }
 function reactionDataFor(item){const by=hallData?.reactionSummary?.byName||{};return by[item?.name]||{like:0,dislike:0,comments:[]}}
 
+const HOF_OFFICIAL_METRIC_ICONS=Object.freeze({
+  enhance:'https://assets.playnccdn.com/static-aion2/characters/img/info/profile_level_icon_pc.png',
+  growth:'https://assets.playnccdn.com/static-aion2/characters/img/info/profile_power_icon_pc.png'
+});
+const HOF_POWER_ICON=HOF_OFFICIAL_METRIC_ICONS.growth;
+
 function hofFirstDefined(){
   for(let i=0;i<arguments.length;i++){
     const v=arguments[i];
@@ -147,13 +153,21 @@ function hofBackgroundClass(metric){
 }
 
 function hofMetricIcon(metric){
-  if(metric==='enhance')return '✦';
-  if(metric==='growth')return '▲';
   if(metric==='pve')return 'PVE';
   if(metric==='pvp')return 'PVP';
   if(metric==='like')return '♥';
   if(metric==='dislike')return '◆';
   return 'H';
+}
+function hofMetricIconHtml(metric){
+  const icon=HOF_OFFICIAL_METRIC_ICONS[metric];
+  if(icon){
+    const kind=metric==='enhance'?'item-level':'power';
+    return '<span class="hof-v2-title-icon is-official is-'+kind+'" aria-hidden="true">'
+      +'<img src="'+icon+'" alt="" decoding="async">'
+      +'</span>';
+  }
+  return '<span class="hof-v2-title-icon">'+escapeHtml(hofMetricIcon(metric))+'</span>';
 }
 function hofMetricToneLabel(metric){
   if(metric==='enhance')return 'ENHANCE GOD';
@@ -190,16 +204,15 @@ function hofOwnerBadge(item){
   return '';
 }
 function hofPowerScore(score){
-  const icon='https://assets.playnccdn.com/static-aion2/characters/img/info/profile_power_icon_pc.png';
   return '<strong class="hof-v2-top3-score is-power">'
-    +'<img class="hof-v2-power-icon" src="'+icon+'" alt="" aria-hidden="true" loading="lazy" decoding="async">'
+    +'<img class="hof-v2-power-icon" src="'+HOF_POWER_ICON+'" alt="" aria-hidden="true" loading="lazy" decoding="async">'
     +'<span>'+escapeHtml(score)+'</span>'
     +'</strong>';
 }
 function hofPowerInfo(item,name,server){
   return '<span class="hof-v2-top3-info is-power">'
     +'<span class="hof-v2-server-badge">'+escapeHtml(server)+'</span>'
-    +'<span class="hof-v2-top3-name-row">'+hofClassIcon(item)+'<span class="hof-v2-top3-name">'+escapeHtml(name)+'</span></span>'
+    +'<span class="hof-v2-top3-name-row"><span class="hof-v2-top3-name">'+escapeHtml(name)+'</span></span>'
     +'</span>';
 }
 function hofPowerClass(item){
@@ -224,6 +237,7 @@ function hofTop3Card(item,index,metric){
     if(isPower){
       return '<div class="hof-v2-top3-item rank-'+rank+' is-empty is-power-card">'
         +hofPowerRank(rank)
+        +hofPowerClass(null)
         +'<span class="hof-v2-top3-info is-power"><span class="hof-v2-server-badge">-</span><span class="hof-v2-top3-name">데이터 대기</span></span>'
         +'<span class="hof-v2-top3-aside"><span class="hof-v2-owner-slot"></span>'+hofPowerScore('-')+'</span>'
         +'<span class="hof-v2-power-portrait is-empty"><span class="hof-v2-empty-dot">-</span></span>'
@@ -242,6 +256,7 @@ function hofTop3Card(item,index,metric){
   if(isPower){
     return '<button type="button" class="hof-v2-top3-item rank-'+rank+' is-power-card"'+commonAttrs+'>'
       +hofPowerRank(rank)
+      +hofPowerClass(item)
       +hofPowerInfo(item,name,server)
       +hofPowerAside(item,score)
       +hofPowerPortrait(item)
@@ -265,7 +280,7 @@ function hofWidePanel(title,note,list,metric){
   const compactTitle=(metric==='pve')?'PVE TOP3':(metric==='pvp')?'PVP TOP3':(metric==='like')?'좋아요 TOP3':title.replace(' 랭킹',' TOP3');
   return '<section class="hof-v2-panel hof-v2-wide '+hofBackgroundClass(metric)+'" data-hof-panel="'+escapeHtml(metric)+'">'
     + '<div class="hof-v2-panel-bg" aria-hidden="true"></div>'
-    + '<div class="hof-v2-panel-head is-compact"><h2><span class="hof-v2-title-icon">'+escapeHtml(hofMetricIcon(metric))+'</span>'+escapeHtml(compactTitle)+'</h2></div>'
+    + '<div class="hof-v2-panel-head is-compact"><h2>'+hofMetricIconHtml(metric)+escapeHtml(compactTitle)+'</h2></div>'
     + '<div class="hof-v2-top3">'+[0,1,2].map(i=>hofTop3Card(items[i],i,metric)).join('')+'</div>'
     + '</section>';
 }
@@ -274,10 +289,7 @@ function hofGodHeroCard(title,note,item,metric){
   const hasItem=!!(safeItem&&hofCharName(safeItem));
   const name=hasItem?hofCharName(safeItem):'집계 대기';
   const score=hasItem?(hofMetricValue(safeItem,metric)||'-'):'-';
-  const meta=[hofServerName(safeItem), hofClassName(safeItem)].filter(Boolean).join(' · ');
   const deltaLabel=metric==='enhance'?'주간 아이템레벨 증가':'주간 전투력 증가';
-  const recent=metric==='enhance'?hofFirstDefined(safeItem?.itemLevelDelta,safeItem?.item_level_delta,safeItem?.valueDelta,safeItem?.value_delta,''):hofFirstDefined(safeItem?.powerDelta,safeItem?.power_delta,safeItem?.itemDelta,safeItem?.item_delta,safeItem?.valueDelta,safeItem?.value_delta,'');
-  const recentText=recent!==''?hofSignedNumber(recent):'-';
   const compare=hofFirstDefined(safeItem?.growthRateLabel,safeItem?.growth_rate_label,safeItem?.rateLabel,safeItem?.rate_label,safeItem?.weekCompareLabel,safeItem?.week_compare_label,'');
   const bodyTag=hasItem?'button':'div';
   const bodyAttrs=hasItem?' type="button" data-character="'+escapeHtml(name)+'" data-hof-metric="'+escapeHtml(metric)+'" data-hof-rank="1" data-hof-score="'+escapeHtml(score)+'" aria-label="'+escapeHtml(name)+' 상세 보기"':'';
@@ -287,11 +299,11 @@ function hofGodHeroCard(title,note,item,metric){
   const criterion=start&&end?start+' ~ '+end+' 직전':'매주 수요일 새 집계를 시작합니다.';
   return '<section class="hof-v2-panel hof-v2-god '+hofBackgroundClass(metric)+'" data-hof-panel="'+escapeHtml(metric)+'">'
     + '<div class="hof-v2-panel-bg" aria-hidden="true"></div>'
-    + '<div class="hof-v2-god-head is-compact"><h2><span class="hof-v2-title-icon">'+escapeHtml(hofMetricIcon(metric))+'</span>'+escapeHtml(title)+'</h2><button type="button" class="hof-v2-card-info" data-hof-period-toggle data-hof-period-target="'+criterionId+'" aria-controls="'+criterionId+'" aria-expanded="false">i</button><div class="hof-v2-card-info-popover" id="'+criterionId+'" hidden aria-hidden="true"><strong>집계 기준</strong><span>'+escapeHtml(criterion)+'</span><small>Asia/Seoul · 시작 포함, 종료 미포함</small></div></div>'
+    + '<div class="hof-v2-god-head is-compact"><h2>'+hofMetricIconHtml(metric)+escapeHtml(title)+'</h2><button type="button" class="hof-v2-card-info" data-hof-period-toggle data-hof-period-target="'+criterionId+'" aria-controls="'+criterionId+'" aria-expanded="false">i</button><div class="hof-v2-card-info-popover" id="'+criterionId+'" hidden aria-hidden="true"><strong>집계 기준</strong><span>'+escapeHtml(criterion)+'</span><small>Asia/Seoul · 시작 포함, 종료 미포함</small></div></div>'
     + '<'+bodyTag+' class="hof-v2-god-main'+(hasItem?'':' is-empty')+'"'+bodyAttrs+'>'
-    + (hasItem?'<span class="hof-v2-god-portrait">'+hofRankPortrait(safeItem,1,'large')+'</span><span class="hof-v2-god-server">'+escapeHtml(hofServerName(safeItem)||'지켈')+'</span><strong>'+escapeHtml(name)+'</strong><span class="hof-v2-god-class">'+hofClassIcon(safeItem)+'<span>'+escapeHtml(hofClassName(safeItem)||'클래스 정보 없음')+'</span></span>':'<strong class="hof-v2-waiting-copy">집계 대기</strong>')
+    + (hasItem?'<span class="hof-v2-god-class">'+hofClassIcon(safeItem)+'</span><span class="hof-v2-god-portrait">'+hofRankPortrait(safeItem,1,'large')+'</span><span class="hof-v2-god-server">'+escapeHtml(hofServerName(safeItem)||'지켈')+'</span><strong>'+escapeHtml(name)+'</strong>':'<strong class="hof-v2-waiting-copy">집계 대기</strong>')
     + '</'+bodyTag+'>'
-    + (hasItem?'<div class="hof-v2-god-score"><strong>'+escapeHtml(score)+'</strong><span>'+deltaLabel+'</span></div><div class="hof-v2-god-sub"><span>이번 주 합계</span><strong>'+escapeHtml(recentText)+'</strong></div>'+(compare?'<div class="hof-v2-god-compare"><span>전주 대비</span><strong>'+escapeHtml(compare)+'</strong></div>':''):'')
+    + (hasItem?'<div class="hof-v2-god-score"><strong>'+escapeHtml(score)+'</strong><span>'+deltaLabel+'</span></div>'+(compare?'<div class="hof-v2-god-compare"><span>전주 대비</span><strong>'+escapeHtml(compare)+'</strong></div>':''):'')
     + '</section>';
 }
 function hofMeterDpsPanel(){
@@ -336,11 +348,11 @@ function hofV2Layout(){
   return '<div class="hof-v2-layout">'
     + '<div class="hof-v2-board">'
     + '<div class="hof-v2-area hof-v2-area-enhance">'+hofGodHeroCard('강화의 신','최고 강화 기록',s.enhanceGod || hallData?.weeklyAwards?.bulkUp?.[0], 'enhance')+'</div>'
-    + '<div class="hof-v2-area hof-v2-area-pve">'+hofMeterDpsPanel()+'</div>'
-    + '<div class="hof-v2-area hof-v2-area-pvp">'+hofRankingLinkCard()+'</div>'
+    + '<div class="hof-v2-area hof-v2-area-meter">'+hofMeterDpsPanel()+'</div>'
+    + '<div class="hof-v2-area hof-v2-area-ranking-link-card">'+hofRankingLinkCard()+'</div>'
     + '<div class="hof-v2-area hof-v2-area-growth">'+hofGodHeroCard('성장의 신','이번주 성장량',s.growthGod || hallData?.weeklyAwards?.growthKing?.[0], 'growth')+'</div>'
-    + '<div class="hof-v2-area hof-v2-area-like">'+hofWidePanel('PVE 랭킹','PVE TOP 3',pveList,'pve')+'</div>'
-    + '<div class="hof-v2-area hof-v2-area-ranking-link">'+hofWidePanel('PVP 랭킹','PVP TOP 3',pvpList,'pvp')+'</div>'
+    + '<div class="hof-v2-area hof-v2-area-pve">'+hofWidePanel('PVE 랭킹','PVE TOP 3',pveList,'pve')+'</div>'
+    + '<div class="hof-v2-area hof-v2-area-pvp">'+hofWidePanel('PVP 랭킹','PVP TOP 3',pvpList,'pvp')+'</div>'
     + '</div>'
     + '<div class="hof-v2-right">'+hofMyRankingPanel()+'</div>'
     + '</div>';
@@ -434,11 +446,11 @@ function renderHallShell(showSpinners){
   const spinner=showSpinners?kinojoCardSpinner('영역 불러오는 중'):'';
   app.innerHTML='<div class="hof-v2-shell"><div class="hof-v2-layout"><div class="hof-v2-board">'
     +'<div id="hallSlotEnhance" class="hof-v2-area hof-v2-area-enhance '+slotClass+'">'+spinner+'</div>'
-    +'<div id="hallSlotMeter" class="hof-v2-area hof-v2-area-pve '+slotClass+'">'+spinner+'</div>'
-    +'<div id="hallSlotRankingLink" class="hof-v2-area hof-v2-area-pvp '+slotClass+'">'+spinner+'</div>'
+    +'<div id="hallSlotMeter" class="hof-v2-area hof-v2-area-meter '+slotClass+'">'+spinner+'</div>'
+    +'<div id="hallSlotRankingLink" class="hof-v2-area hof-v2-area-ranking-link-card '+slotClass+'">'+spinner+'</div>'
     +'<div id="hallSlotGrowth" class="hof-v2-area hof-v2-area-growth '+slotClass+'">'+spinner+'</div>'
-    +'<div id="hallSlotPve" class="hof-v2-area hof-v2-area-like '+slotClass+'">'+spinner+'</div>'
-    +'<div id="hallSlotPvp" class="hof-v2-area hof-v2-area-ranking-link '+slotClass+'">'+spinner+'</div>'
+    +'<div id="hallSlotPve" class="hof-v2-area hof-v2-area-pve '+slotClass+'">'+spinner+'</div>'
+    +'<div id="hallSlotPvp" class="hof-v2-area hof-v2-area-pvp '+slotClass+'">'+spinner+'</div>'
     +'</div><div class="hof-v2-right"><div id="hallSlotMyRank" class="'+slotClass+'">'+spinner+'</div></div></div></div>';
   hallSlotTasks().forEach(task=>window.KinojoStagedLoading?.region?.('#'+task.id,task.id));
 }

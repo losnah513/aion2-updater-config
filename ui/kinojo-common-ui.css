@@ -698,10 +698,11 @@ img,picture,canvas,svg,.sanctuary-hero,.hero-bg,.mvp-profile-image,.character-pr
   --kinojo-card-border:rgba(124,145,175,.22);
   --kinojo-card-bg:rgba(255,255,255,.96);
 }body.kinojo-page-home,
-body.kinojo-page-hall,
 body.kinojo-page-sanctuary,
 body.kinojo-page-arcana{
   --kinojo-page-max:1120px;
+}body.kinojo-page-hall{
+  --kinojo-page-max:1520px;
 }body.kinojo-page-home .wrap,
 body.kinojo-page-hall .wrap,
 body.kinojo-page-sanctuary .wrap{
