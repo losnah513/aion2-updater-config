@@ -11,6 +11,15 @@
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 최신 일일 로그를 작업 규칙 원본으로 사용한다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
 
+## 레기온 트리 마-2~마-6 / 사-1~사-5
+
+- PC·모바일 페이지가 공개 RPC `kinojo_web_get_legion_tree`의 `web-legion-tree-v1` / DB 365 계약을 읽어 깡·낮·밤·키나노동조합을 Server 순서대로 렌더링한다.
+- 2026-08-21 검증 기준 실제 구성원은 깡 41명, 낮 4명, 밤 2명, 키나노동조합 37명으로 총 84명이다.
+- 종족 선택은 v372 Server reference의 천족/마족 각 21개 서버만 표시하며, 종족 전환 시 호환되지 않는 선택 서버를 즉시 초기화한다.
+- 실제 구성원 카드는 공통 직업 아이콘, 본캐/부캐 스타일, 긴 이름 페이드 규칙을 유지한다. PC는 최대 5열, 모바일은 2열이다.
+- 계약 버전이나 필수 4개 레기온이 맞지 않으면 임의 fallback을 만들지 않고 오류 상태로 닫는다.
+- 다음 레기온 트리 작업은 **사-6 default stage fallback**, 이어서 **사-7 빈 role의 `지정 전` 표시**다.
+
 ## 내 정보 이미지 기존 완료 상태
 
 - 기존 내 정보/캐릭터 이미지 Stage 1-8은 `80/80` 완료 상태이며 재구현하지 않는다.

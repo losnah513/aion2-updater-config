@@ -8,6 +8,7 @@ on:
       - "m/legion-tree/**"
       - "ui/kinojo-common-navigation.js"
       - "core/kinojo-route-guard.js"
+      - "tests/legion-tree-data-render-contract.test.js"
       - ".github/workflows/verify-legion-tree-pages.yml"
   push:
     branches: [main]
@@ -16,6 +17,7 @@ on:
       - "m/legion-tree/**"
       - "ui/kinojo-common-navigation.js"
       - "core/kinojo-route-guard.js"
+      - "tests/legion-tree-data-render-contract.test.js"
       - ".github/workflows/verify-legion-tree-pages.yml"
   workflow_dispatch:
 
@@ -44,6 +46,7 @@ jobs:
           node --check ui/kinojo-common-navigation.js
           node --check core/kinojo-route-guard.js
           node --check legion-tree/js/legion-tree.js
+          node tests/legion-tree-data-render-contract.test.js
 
           python3 <<'PY'
           from pathlib import Path

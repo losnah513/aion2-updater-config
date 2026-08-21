@@ -10,6 +10,13 @@ KINOJO INFO GitHub Pages upload package.
 
 `config.json` is intentionally kept at repository root because the extension currently reads `/config.json`.
 
+## Legion Tree public rendering
+
+- The desktop and mobile Legion Tree pages load the public `kinojo_web_get_legion_tree` Server contract and fail closed unless contract `web-legion-tree-v1` / database contract `365` contains all four required legions in order: 깡, 낮, 밤, 키나노동조합.
+- Race selection filters the v372 Server reference to the current 21 Elyos or 21 Asmodian servers and clears an incompatible selected server when the race changes.
+- Server members render with the shared class icons, main/alt treatment, and long-name fade. The current layout allows up to five member cards per row on desktop and two on mobile.
+- Browser code does not reconstruct missing tree structure or members. Default-stage fallback and empty-role presentation remain later Server/UI contract stages.
+
 ## My Info image editor contract
 
 - The completed Stage 1-8 member-image system remains the active upload, ownership, privacy, retention, and cleanup baseline. The follow-up editor must reuse it instead of rebuilding those Server contracts.

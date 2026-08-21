@@ -1,36 +1,445 @@
-/* KINOJO Legion Tree · Foundation Preview · 가-0 */
+/* KINOJO Legion Tree · race/server filter + Server data rendering · 마-2~6 + 사-1~5 */
 (function(){
   'use strict';
 
   const q=(selector,root=document)=>root.querySelector(selector);
+  const SERVER_REFERENCE_RPC='kinojo_web_legion_tree_server_reference_v372';
+  const TREE_RPC='kinojo_web_get_legion_tree';
+  const TREE_CONTRACT='web-legion-tree-v1';
+  const TREE_DATABASE_CONTRACT='365';
+  const LEGION_ORDER=Object.freeze(['깡','낮','밤','키나노동조합']);
+  const MAIN_REQUIRED_MESSAGE='본캐 이름을 입력해 주세요.';
+  const CLASS_ICON_MAP=Object.freeze({
+    '수호성':'templar','검성':'gladiator','살성':'assassin','궁성':'ranger',
+    '마도성':'sorcerer','정령성':'elementalist','치유성':'cleric','호법성':'chanter','권성':'fighter'
+  });
+
+  let serverReference=[];
+  let selectedRaceId=null;
+  let serverReferenceReady=false;
+  let serverReferenceError='';
+  let treeStatusMessage='레기온 데이터를 불러오는 중…';
+
+  function text(value,max=160){
+    return String(value??'').trim().slice(0,max);
+  }
+
+  function esc(value){
+    return String(value??'').replace(/[&<>"']/g,ch=>({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[ch]));
+  }
+
+  function positiveInt(value){
+    const number=Number(value);
+    return Number.isInteger(number)&&number>0?number:null;
+  }
+
+  function boolean(value){
+    return value===true||value===1||String(value).toLowerCase()==='true';
+  }
+
+  function array(value){
+    return Array.isArray(value)?value:[];
+  }
 
   function toast(message){
     if(window.KinojoCommonUI?.toast)return window.KinojoCommonUI.toast(message);
     if(window.KinojoToast?.show)return window.KinojoToast.show(message);
   }
 
-  function resetPreviewInputs(){
+  function raceLabel(raceId){
+    return Number(raceId)===1?'천족':Number(raceId)===2?'마족':'';
+  }
+
+  function normalStatusMessage(){
+    if(serverReferenceError)return serverReferenceError;
+    if(selectedRaceId){
+      const count=serverReference.filter(item=>item.raceId===selectedRaceId).length;
+      return `${raceLabel(selectedRaceId)} 서버 ${count}개 표시 · ${treeStatusMessage}`;
+    }
+    return treeStatusMessage;
+  }
+
+  function setStatus(message,color=''){
+    const status=q('#legionTreeStatus');
+    if(!status)return;
+    status.textContent=message;
+    status.style.color=color;
+  }
+
+  function refreshStatus(){
+    setStatus(normalStatusMessage(),serverReferenceError?'#dc2626':'');
+  }
+
+  function setMainRequiredError(active){
+    const main=q('#legionTreeMainName');
+    if(main){
+      if(active){
+        main.setAttribute('aria-invalid','true');
+        main.style.borderColor='#dc2626';
+        main.style.boxShadow='0 0 0 3px rgba(220,38,38,.10)';
+      }else{
+        main.removeAttribute('aria-invalid');
+        main.style.removeProperty('border-color');
+        main.style.removeProperty('box-shadow');
+      }
+    }
+    if(active)setStatus(MAIN_REQUIRED_MESSAGE,'#dc2626');
+    else refreshStatus();
+  }
+
+  function normalizeServer(item){
+    const source=item&&typeof item==='object'?item:{};
+    const serverId=positiveInt(source.serverId??source.server_id);
+    const raceId=positiveInt(source.raceId??source.race_id);
+    const serverName=text(source.serverName??source.server_name);
+    const shortName=text(source.shortName??source.server_short_name);
+    if(serverId===null||![1,2].includes(raceId)||!serverName)return null;
+    return {serverId,raceId,serverName,shortName};
+  }
+
+  function normalizeMember(item){
+    const source=item&&typeof item==='object'?item:{};
+    const characterId=positiveInt(source.characterId??source.character_id);
+    const characterName=text(source.characterName??source.character_name,120);
+    if(characterId===null||!characterName)return null;
+    return {
+      characterId,
+      characterName,
+      className:text(source.className??source.class_name,80),
+      isMain:boolean(source.isMain??source.is_main),
+      mainCharacterId:positiveInt(source.mainCharacterId??source.main_character_id),
+      mainCharacterName:text(source.mainCharacterName??source.main_character_name,120),
+      serverId:positiveInt(source.serverId??source.server_id),
+      serverName:text(source.serverName??source.server_name,120),
+      listRow:positiveInt(source.listRow??source.list_row)
+    };
+  }
+
+  function normalizeGroup(item,index){
+    const source=item&&typeof item==='object'?item:{};
+    return {
+      groupKey:text(source.groupKey??source.group_key,180)||`group_${index+1}`,
+      groupName:text(source.groupName??source.group_name,120),
+      sortOrder:positiveInt(source.sortOrder??source.sort_order)||index+1,
+      members:array(source.members).map(normalizeMember).filter(Boolean)
+    };
+  }
+
+  function normalizeRole(item,index){
+    const source=item&&typeof item==='object'?item:{};
+    const roleName=text(source.roleName??source.role_name,120);
+    if(!roleName)throw new Error('LEGION_TREE_ROLE_INVALID');
+    return {
+      roleKey:text(source.roleKey??source.role_key,180)||`role_${index+1}`,
+      roleName,
+      slotNo:positiveInt(source.slotNo??source.slot_no)||index+1,
+      maxMembers:positiveInt(source.maxMembers??source.max_members),
+      groups:array(source.groups).map(normalizeGroup).sort((a,b)=>a.sortOrder-b.sortOrder)
+    };
+  }
+
+  function normalizeStage(item,index){
+    const source=item&&typeof item==='object'?item:{};
+    const stageNo=positiveInt(source.stageNo??source.stage_no)||index+1;
+    const roles=array(source.roles).map(normalizeRole).sort((a,b)=>a.slotNo-b.slotNo);
+    if(!roles.length)throw new Error('LEGION_TREE_STAGE_ROLES_EMPTY');
+    return {
+      stageNo,
+      stageName:text(source.stageName??source.stage_name,120)||`${stageNo}단계`,
+      roles
+    };
+  }
+
+  function normalizeLegion(item,expectedName,expectedOrder){
+    const source=item&&typeof item==='object'?item:{};
+    const legionName=text(source.legionName??source.legion_name,120);
+    if(legionName!==expectedName)throw new Error('LEGION_TREE_LEGION_IDENTITY_INVALID');
+    const stages=array(source.stages).map(normalizeStage).sort((a,b)=>a.stageNo-b.stageNo);
+    if(!stages.length)throw new Error('LEGION_TREE_STAGES_EMPTY');
+    return {
+      legionName,
+      legionOrder:positiveInt(source.legionOrder??source.legion_order)||expectedOrder,
+      revision:Number(source.revision)||0,
+      treeState:text(source.treeState??source.tree_state,80),
+      fallbackApplied:boolean(source.fallbackApplied??source.fallback_applied),
+      stageCount:positiveInt(source.stageCount??source.stage_count)||stages.length,
+      memberCount:Number.isInteger(Number(source.memberCount??source.member_count))
+        ?Math.max(0,Number(source.memberCount??source.member_count)):0,
+      stages
+    };
+  }
+
+  function normalizeTreePayload(payload){
+    const source=payload&&typeof payload==='object'?payload:{};
+    if(source.ok!==true||text(source.contract,80)!==TREE_CONTRACT||text(source.databaseContract??source.database_contract,40)!==TREE_DATABASE_CONTRACT){
+      throw new Error('LEGION_TREE_READ_CONTRACT_INVALID');
+    }
+    const sourceLegions=array(source.legions);
+    const byName=new Map();
+    sourceLegions.forEach(item=>{
+      const name=text(item?.legionName??item?.legion_name,120);
+      if(name&&byName.has(name))throw new Error('LEGION_TREE_DUPLICATE_LEGION');
+      if(name)byName.set(name,item);
+    });
+    const legions=LEGION_ORDER.map((name,index)=>{
+      if(!byName.has(name))throw new Error('LEGION_TREE_REQUIRED_LEGION_MISSING');
+      return normalizeLegion(byName.get(name),name,index+1);
+    });
+    return {
+      contract:TREE_CONTRACT,
+      databaseContract:TREE_DATABASE_CONTRACT,
+      generatedAt:text(source.generatedAt??source.generated_at,80),
+      legions
+    };
+  }
+
+  function normalizedClassName(className){
+    return text(className,80)
+      .replace(/[\s\u200B-\u200D\uFEFF]+/g,'')
+      .replace(/[\[(（].*?[\])）]\s*$/g,'')
+      .trim();
+  }
+
+  function classIconPath(className){
+    const file=CLASS_ICON_MAP[normalizedClassName(className)];
+    return file?`/assets/images/classes/class_icon_${file}.png`:'';
+  }
+
+  function renderCharacter(member){
+    const kind=member.isMain?'본캐':'부캐';
+    const icon=classIconPath(member.className);
+    const owner=member.isMain?member.characterName:member.mainCharacterName;
+    const image=icon
+      ?`<img src="${esc(icon)}" alt="" loading="lazy"/>`
+      :'<span class="legion-tree-class-fallback" aria-hidden="true">?</span>';
+    return `<button class="legion-tree-character ${member.isMain?'is-main':'is-alt'}" type="button" data-character-id="${member.characterId}" data-character-name="${esc(member.characterName)}" data-class-name="${esc(member.className)}" data-is-main="${member.isMain?'true':'false'}" data-main-character-id="${member.mainCharacterId||''}" data-main-character-name="${esc(owner)}" data-server-id="${member.serverId||''}" data-server-name="${esc(member.serverName)}" title="${esc(member.characterName)}" aria-label="${esc(member.characterName)} · ${esc(member.className||'클래스 정보 없음')} · ${kind}"><span class="legion-tree-kind">${kind}</span>${image}<span class="legion-tree-name">${esc(member.characterName)}</span></button>`;
+  }
+
+  function renderGroup(group,roleName,branchCount){
+    const label=group.groupName&&group.groupName!==roleName
+      ?`<small class="legion-tree-group-label">${esc(group.groupName)}</small>`:'';
+    const members=group.members.map(renderCharacter).join('');
+    return `<section class="legion-tree-group" data-group-key="${esc(group.groupKey)}">${label}<div class="legion-tree-member-grid" data-branch-count="${branchCount}" aria-label="${esc(roleName)} 구성원">${members}</div></section>`;
+  }
+
+  function renderRole(role,stageNo){
+    const branchCount=Math.min(Math.max(role.groups.length,1),5);
+    const groups=role.groups.map(group=>renderGroup(group,role.roleName,branchCount)).join('');
+    return `<article class="legion-tree-role" data-role-key="${esc(role.roleKey)}"><div class="legion-tree-role-plate"><small>${stageNo}단계</small><strong>${esc(role.roleName)}</strong></div><div class="legion-tree-role-groups" data-branch-count="${branchCount}">${groups}</div></article>`;
+  }
+
+  function renderStage(stage){
+    const roles=stage.roles.map(role=>renderRole(role,stage.stageNo)).join('');
+    return `<section class="legion-tree-stage" data-stage="${stage.stageNo}"><div class="legion-tree-stage-roles">${roles}</div></section>`;
+  }
+
+  function renderLegion(legion){
+    const headingId=`legionTreeLegion${legion.legionOrder}Title`;
+    const stages=legion.stages.map((stage,index)=>{
+      const connector=index?'<div class="legion-tree-connector" aria-hidden="true"></div>':'';
+      return connector+renderStage(stage);
+    }).join('');
+    const kicker=legion.legionOrder===1?'MAIN LEGION':`LEGION ${String(legion.legionOrder).padStart(2,'0')}`;
+    return `<section class="legion-tree-legion${legion.legionOrder===1?' is-main-legion':''}" data-legion-name="${esc(legion.legionName)}" aria-labelledby="${headingId}"><header class="legion-tree-legion-head"><div><span>${kicker}</span><h2 id="${headingId}">${esc(legion.legionName)} 레기온</h2></div><small>${legion.memberCount}명 · ${legion.stageCount}단계</small></header><div class="legion-tree-stage-list">${stages}</div></section>`;
+  }
+
+  function renderTreeMarkup(model){
+    return model.legions.map(renderLegion).join('');
+  }
+
+  function renderTreeData(model){
+    const root=q('#legionTreeRoot');
+    if(!root)throw new Error('LEGION_TREE_ROOT_MISSING');
+    root.innerHTML=renderTreeMarkup(model);
+    root.setAttribute('aria-busy','false');
+  }
+
+  async function loadTreeData(){
+    const root=q('#legionTreeRoot');
+    treeStatusMessage='레기온 데이터를 확인하는 중…';
+    refreshStatus();
+    if(root){
+      root.setAttribute('aria-busy','true');
+      root.innerHTML='<div class="legion-tree-load-state">Server 레기온 데이터를 불러오는 중…</div>';
+    }
+    try{
+      const api=window.KinojoSupabase;
+      if(!api||typeof api.rpc!=='function')throw new Error('LEGION_TREE_API_UNAVAILABLE');
+      const model=normalizeTreePayload(await api.rpc(TREE_RPC,{}));
+      renderTreeData(model);
+      const memberCount=model.legions.reduce((sum,legion)=>sum+legion.memberCount,0);
+      treeStatusMessage=`레기온 ${model.legions.length}개 · 구성원 ${memberCount}명`;
+      refreshStatus();
+      window.dispatchEvent(new CustomEvent('kinojo:page-time',{detail:{value:new Date(),label:'레기온 데이터'}}));
+      return model;
+    }catch(error){
+      treeStatusMessage='레기온 데이터를 불러오지 못했습니다.';
+      setStatus(treeStatusMessage,'#dc2626');
+      if(root){
+        root.setAttribute('aria-busy','false');
+        root.innerHTML='<div class="legion-tree-load-state is-error">레기온 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</div>';
+      }
+      console.warn('[KINOJO][LegionTree] tree load failed',error);
+      return null;
+    }
+  }
+
+  function setRaceButtonState(raceId){
+    const elyos=q('#legionTreeRaceElyos');
+    const asmodian=q('#legionTreeRaceAsmodian');
+    [[elyos,1],[asmodian,2]].forEach(([button,id])=>{
+      if(!button)return;
+      const selected=Number(raceId)===id;
+      button.setAttribute('aria-pressed',selected?'true':'false');
+      button.style.opacity=raceId?(selected?'1':'.58'):'1';
+      button.style.boxShadow=selected?'inset 0 0 0 2px rgba(50,85,145,.28)':'none';
+    });
+  }
+
+  function clearServerOptions(){
+    const server=q('#legionTreeServer');
+    if(!server)return;
+    while(server.firstChild)server.removeChild(server.firstChild);
+    const placeholder=document.createElement('option');
+    placeholder.value='';
+    placeholder.textContent='서버 선택';
+    server.appendChild(placeholder);
+    server.value='';
+  }
+
+  function renderServerOptions(raceId){
+    const server=q('#legionTreeServer');
+    if(!server)return;
+    const previous=String(server.value||'');
+    clearServerOptions();
+    const filtered=serverReference.filter(item=>item.raceId===Number(raceId));
+    filtered.forEach(item=>{
+      const option=document.createElement('option');
+      option.value=String(item.serverId);
+      option.textContent=item.serverName;
+      option.dataset.raceId=String(item.raceId);
+      option.dataset.shortName=item.shortName;
+      server.appendChild(option);
+    });
+    if(filtered.some(item=>String(item.serverId)===previous))server.value=previous;
+    server.disabled=false;
+  }
+
+  function selectRace(raceId){
+    if(!serverReferenceReady)return;
+    const normalized=Number(raceId);
+    if(![1,2].includes(normalized))return;
+    selectedRaceId=normalized;
+    setRaceButtonState(normalized);
+    renderServerOptions(normalized);
+    refreshStatus();
+  }
+
+  async function loadServerReference(){
+    const elyos=q('#legionTreeRaceElyos');
+    const asmodian=q('#legionTreeRaceAsmodian');
+    const server=q('#legionTreeServer');
+    if(elyos)elyos.disabled=true;
+    if(asmodian)asmodian.disabled=true;
+    if(server){
+      server.disabled=true;
+      clearServerOptions();
+    }
+    serverReferenceError='';
+
+    try{
+      const api=window.KinojoSupabase;
+      if(!api||typeof api.rpc!=='function')throw new Error('SERVER_REFERENCE_API_UNAVAILABLE');
+      const data=await api.rpc(SERVER_REFERENCE_RPC,{});
+      if(!data||data.ok!==true||String(data.contract||'')!=='web-legion-tree-server-reference-v1')throw new Error('SERVER_REFERENCE_CONTRACT_INVALID');
+      const normalized=array(data.servers).map(normalizeServer).filter(Boolean);
+      if(!normalized.some(item=>item.raceId===1)||!normalized.some(item=>item.raceId===2))throw new Error('SERVER_REFERENCE_EMPTY_RACE');
+      serverReference=normalized;
+      serverReferenceReady=true;
+      if(elyos)elyos.disabled=false;
+      if(asmodian)asmodian.disabled=false;
+      if(server)server.disabled=true;
+      setRaceButtonState(null);
+      refreshStatus();
+    }catch(error){
+      serverReference=[];
+      serverReferenceReady=false;
+      serverReferenceError='서버 기준정보를 불러오지 못했습니다.';
+      if(elyos)elyos.disabled=true;
+      if(asmodian)asmodian.disabled=true;
+      if(server)server.disabled=true;
+      refreshStatus();
+      console.warn('[KINOJO][LegionTree] server reference load failed',error);
+    }
+  }
+
+  function resetInputs(){
     const main=q('#legionTreeMainName');
     const alt=q('#legionTreeAltName');
     const server=q('#legionTreeServer');
     if(main)main.value='';
     if(alt)alt.value='';
-    if(server)server.selectedIndex=0;
-    const status=q('#legionTreeStatus');
-    if(status)status.textContent='가-0 프리뷰 · 데이터/편집 기능 연결 전';
+    selectedRaceId=null;
+    setRaceButtonState(null);
+    clearServerOptions();
+    if(server)server.disabled=true;
+    setMainRequiredError(false);
   }
 
-  function bindPreview(){
-    q('#legionTreeResetBtn')?.addEventListener('click',resetPreviewInputs);
-    document.querySelectorAll('[data-preview-card]').forEach(card=>{
-      card.addEventListener('click',()=>toast('프리뷰 카드입니다. 캐릭터 상세 연결은 후속 단계에서 활성화합니다.'));
+  function validateAddBeforeNetwork(){
+    const main=q('#legionTreeMainName');
+    const alt=q('#legionTreeAltName');
+    const mainName=main?.value.trim()||'';
+    const altName=alt?.value.trim()||'';
+
+    // 라-2 hard guard: this branch must stay before every future Server/network call.
+    if(altName&&!mainName){
+      setMainRequiredError(true);
+      main?.focus();
+      return false;
+    }
+
+    setMainRequiredError(false);
+    return true;
+  }
+
+  function handleAdd(){
+    if(!validateAddBeforeNetwork())return;
+    toast('캐릭터 추가 화면 동작은 자 단계에서 연결합니다.');
+  }
+
+  function bindPage(){
+    const add=q('#legionTreeAddBtn');
+    if(add){
+      add.disabled=false;
+      add.addEventListener('click',handleAdd);
+    }
+    q('#legionTreeResetBtn')?.addEventListener('click',resetInputs);
+    q('#legionTreeMainName')?.addEventListener('input',event=>{
+      if(String(event.currentTarget?.value||'').trim())setMainRequiredError(false);
+    });
+    q('#legionTreeRaceElyos')?.addEventListener('click',()=>selectRace(1));
+    q('#legionTreeRaceAsmodian')?.addEventListener('click',()=>selectRace(2));
+    q('#legionTreeRoot')?.addEventListener('click',event=>{
+      if(event.target?.closest?.('.legion-tree-character')){
+        toast('캐릭터 상세 모달은 파 단계에서 연결합니다.');
+      }
     });
   }
 
   function start(){
-    bindPreview();
-    window.dispatchEvent(new CustomEvent('kinojo:page-time',{detail:{value:new Date(),label:'프리뷰'}}));
+    bindPage();
+    void Promise.allSettled([loadServerReference(),loadTreeData()]);
   }
+
+  window.KinojoLegionTree=Object.freeze({
+    normalizeTreePayload,
+    renderTreeMarkup,
+    classIconPath,
+    loadTreeData
+  });
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
   else start();
