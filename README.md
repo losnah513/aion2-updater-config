@@ -42,8 +42,11 @@ KINOJO INFO GitHub Pages upload package.
 - The editor reuses `ui/kinojo-range-control.js` for zoom and rotation. B-2 renders the selected transform into an exact-size canvas, encodes only the edited pixels as metadata-free WebP at quality `0.90`, and returns a browser-memory `Blob`/`File` result. The A-2 guide overlay is never included in the output.
 - Output quality is estimated from effective source pixels per output pixel. Below `1.00` shows a caution and below `0.75` shows a low-resolution warning; neither warning blocks export. Desktop and mobile frames keep the slot ratio while presenting the warning and controls.
 - The upload boundary accepts only `outputReady: true`, `uploadConnected: false`, metadata-free WebP editor results and never stores or transmits the selected original. Signed Storage upload uses `upsert: false` and a random object path.
-- `kinojo-member-profile` API `2.6` / Edge v19 reads the uploaded Storage bytes, parses the actual WebP dimensions, and activates metadata only when PROFILE is `512x512`, FRONT/BACK are `800x1200`, or UPPER_BODY is `800x1000`. Invalid candidates are deleted before activation.
-- `tests/my-info-image-editor-harness.html` verifies the editor output, while `tests/my-info-image-upload-harness.html` verifies profile registration, private reference replacement/deletion, original non-upload, and the B3 server-pixel acknowledgement contract.
+- `kinojo-member-profile` API `2.7` / Edge v20 preserves the B-3 pixel boundary: it reads the uploaded Storage bytes, parses the actual WebP dimensions, and activates metadata only when PROFILE is `512x512`, FRONT/BACK are `800x1200`, or UPPER_BODY is `800x1000`. Invalid candidates are deleted before activation.
+- C-1 adds `ui/kinojo-my-info-batch-bootstrap.js`. Opening My Info sends one `batch-bootstrap` Edge request, which performs one service-role-only v375 RPC and returns the owned character list plus every character's profile and private-reference registration metadata.
+- Character switching reads the hydrated profile/reference cache without another request. The bootstrap response never exposes private reference object paths or signed URLs.
+- Image preloading, two-at-a-time background loading, and per-character retry remain C-2 work and are intentionally absent from the C-1 contract.
+- `tests/my-info-image-editor-harness.html` verifies the editor output, `tests/my-info-image-upload-harness.html` verifies profile registration, private reference replacement/deletion, original non-upload, and the B3 server-pixel acknowledgement contract, and `tests/my-info-batch-bootstrap.test.js` protects the one-request/one-RPC bootstrap boundary.
 
 ## KINOJO shared range control
 
