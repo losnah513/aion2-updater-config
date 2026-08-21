@@ -41,8 +41,26 @@ const SANCTUARY_CACHE_TTL_MS=5*60*1000;
 function sanctuaryCacheKey(){const session=window.KinojoAuth?.getSession?.()||{};const identity=String(session.mainCharacter||session.mainCharacterName||'guest').trim().replace(/[^0-9A-Za-z가-힣_-]+/g,'_');return 'kinojo_sanctuary_cache_v2026071803_'+(currentId||'default')+'_'+(identity||'guest')}
 function readSanctuaryCache(){try{const raw=sessionStorage.getItem(sanctuaryCacheKey());if(!raw)return null;const cached=JSON.parse(raw);if(!cached||!cached.savedAt||!cached.data)return null;if(Date.now()-cached.savedAt>SANCTUARY_CACHE_TTL_MS)return null;return cached.data}catch(e){return null}}
 function writeSanctuaryCache(data){try{if(data&&data.ok!==false)sessionStorage.setItem(sanctuaryCacheKey(),JSON.stringify({savedAt:Date.now(),data}))}catch(e){}}
-function sanctuaryTopbarUpdateText(value,fromCache=false){const raw=String(value||'').trim();const matched=raw.match(/(?:T|\s)(\d{1,2}:\d{2})(?::\d{2})?/)||raw.match(/(\d{1,2}:\d{2})/);const time=matched?.[1]||'';return time?'업데이트 '+time+(fromCache?' · 캐시':''):(fromCache?'캐시 데이터':'업데이트 완료')}
-function setSanctuarySyncState(value,{fromCache=false,error=false}={}){const raw=String(value||'').trim();const bodyChip=document.getElementById('sanctuarySyncChip');if(bodyChip)bodyChip.textContent=error?(raw||'성역 데이터를 불러오지 못했습니다.'):'Server Engine 업데이트 '+(raw||'완료')+(fromCache?' · 캐시':'');const topbarChip=document.getElementById('syncChip');if(topbarChip)topbarChip.textContent=error?'업데이트 확인 실패':sanctuaryTopbarUpdateText(raw,fromCache)}
+function sanctuarySheetSyncAt(data){return String(data?.sheetSyncedAt||data?.sheetSync?.completedAt||'').trim()}
+function sanctuarySyncDisplay(value){
+  const date=new Date(value);
+  if(!Number.isFinite(date.getTime()))return '';
+  const parts=new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',year:'2-digit',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(date);
+  const part=type=>parts.find(item=>item.type===type)?.value||'';
+  return [part('year'),part('month'),part('day')].join('/')+' '+[part('hour'),part('minute'),part('second')].join(':');
+}
+function sanctuaryTopbarUpdateText(value,fromCache=false){const display=sanctuarySyncDisplay(value);return display?'시트 동기화 · '+display+(fromCache?' · 캐시':''):'시트 동기화 기록 없음'+(fromCache?' · 캐시':'')}
+function setSanctuarySyncState(value,{fromCache=false,error=false}={}){
+  const raw=String(value||'').trim();
+  const display=sanctuarySyncDisplay(raw);
+  const bodyChip=document.getElementById('sanctuarySyncChip');
+  if(bodyChip)bodyChip.textContent=error?(raw||'성역 데이터를 불러오지 못했습니다.'):(display?'마지막 시트 동기화 '+display+(fromCache?' · 캐시':''):'시트 동기화 기록 없음'+(fromCache?' · 캐시':''));
+  const topbarChip=document.getElementById('syncChip');
+  if(topbarChip){
+    topbarChip.textContent=error?'동기화 확인 실패':sanctuaryTopbarUpdateText(raw,fromCache);
+    topbarChip.dataset.serverTime=raw||'unavailable';
+  }
+}
 function validateSanctuaryPayload(data){
   if(!data||data.ok===false)throw new Error(data?.message||'성역 데이터 로드 실패');
   const groups=normalizeSanctuaryTeamGroups(data);
@@ -51,7 +69,26 @@ function validateSanctuaryPayload(data){
   if(expectedTeamCount>0&&!groups.length){const error=new Error('성역 팀 데이터가 완전히 도착하지 않았습니다.');error.code='SANCTUARY_TEAM_DATA_INCOMPLETE';throw error}
   return data;
 }
-function applySanctuaryData(data,{fromCache=false}={}){const existingWaitlist=sanctuaryData?.waitlist;const existingWaiting=sanctuaryData?.waiting;sanctuaryData=Object.assign({},sanctuaryData||{},data||{});if(existingWaitlist){sanctuaryData.waitlist=existingWaitlist;sanctuaryData.waiting=Array.isArray(existingWaiting)?existingWaiting:[];sanctuaryData.summary=Object.assign({},sanctuaryData.summary||{},{waitingCount:Number(existingWaitlist.waitingCount||sanctuaryData.waiting.length||0)})}sanctuaryHasRenderedData=true;masterInfo=sanctuaryData?.info||sanctuaryData?.master||masterInfo;currentId=String(masterInfo?.sanctuaryId||masterInfo?.code||currentId||"").trim().toLowerCase();window.KinojoSanctuaryCurrentId=currentId;if(currentId&&!params.get("id")){const next=new URL(location.href);next.searchParams.set("id",currentId);history.replaceState(null,"",next)}render(sanctuaryData);ensureSanctuaryOperation();setSanctuarySyncState(sanctuaryData.generatedAt||"완료",{fromCache});if(sanctuaryData?.generatedAt)window.dispatchEvent(new CustomEvent('kinojo:page-time',{detail:{value:sanctuaryData.generatedAt,label:fromCache?'동기화(캐시)':'동기화'}}))}
+function applySanctuaryData(data,{fromCache=false}={}){
+  const existingWaitlist=sanctuaryData?.waitlist;
+  const existingWaiting=sanctuaryData?.waiting;
+  sanctuaryData=Object.assign({},sanctuaryData||{},data||{});
+  if(existingWaitlist){
+    sanctuaryData.waitlist=existingWaitlist;
+    sanctuaryData.waiting=Array.isArray(existingWaiting)?existingWaiting:[];
+    sanctuaryData.summary=Object.assign({},sanctuaryData.summary||{},{waitingCount:Number(existingWaitlist.waitingCount||sanctuaryData.waiting.length||0)});
+  }
+  sanctuaryHasRenderedData=true;
+  masterInfo=sanctuaryData?.info||sanctuaryData?.master||masterInfo;
+  currentId=String(masterInfo?.sanctuaryId||masterInfo?.code||currentId||"").trim().toLowerCase();
+  window.KinojoSanctuaryCurrentId=currentId;
+  if(currentId&&!params.get("id")){const next=new URL(location.href);next.searchParams.set("id",currentId);history.replaceState(null,"",next)}
+  render(sanctuaryData);
+  ensureSanctuaryOperation();
+  const sheetSyncedAt=sanctuarySheetSyncAt(sanctuaryData);
+  setSanctuarySyncState(sheetSyncedAt,{fromCache});
+  if(sheetSyncedAt)window.dispatchEvent(new CustomEvent('kinojo:page-time',{detail:{value:sheetSyncedAt,label:fromCache?'시트 동기화(캐시)':'시트 동기화'}}));
+}
 function applySanctuaryWaitlist(waitlist){if(!waitlist||waitlist.ok===false)throw new Error(waitlist?.message||'대기자 조회 실패');sanctuaryData=Object.assign({},sanctuaryData||{}, {waiting:Array.isArray(waitlist.waiting)?waitlist.waiting:[],waitlist});sanctuaryData.summary=Object.assign({},sanctuaryData.summary||{},{waitingCount:Number(waitlist.waitingCount||0)});renderSummary(sanctuaryData);window.KinojoStagedLoading?.ready?.('#summaryGrid');refreshWaitlistModalIfOpen();writeSanctuaryCache(sanctuaryData)}
 async function fetchSanctuaryFresh(){
   if(!window.KinojoApi)throw new Error('KinojoApi 연결을 확인해 주세요.');
@@ -229,13 +266,14 @@ function operationScheduleHtml(item){
   const state=operationStatusClass(item.displayState||item.effectiveStatus);
   const userResponse=item.user?.response;
   const teamName=item.teams?.[0]?.teamName||item.teams?.[0]?.teamNo&&item.teams[0].teamNo+'팀'||'팀 미확인';
-  const responseText=item.requiresResponse?(item.responseRequired?'응답 필요':(userResponse?.statusLabel||'투표 일정')):'일정 확정';
+  const responseText=item.requiresResponse?(item.responseRequired?'응답 필요':(userResponse?.statusLabel||'투표 일정')):'';
+  const responseHtml=responseText?'<span class="sanctuary-operation-response">'+esc(responseText)+'</span>':'';
   const meta=[item.dateLabel||item.targetDate||'',item.startTime||'',item.location||''].filter(Boolean).join(' · ');
-  return '<button class="sanctuary-operation-schedule status-'+state+(item.responseRequired?' needs-response':'')+'" type="button" data-operation-schedule="'+esc(item.id)+'">'
+  return '<button class="sanctuary-operation-schedule status-'+state+(item.requiresResponse?' has-response':'')+(item.responseRequired?' needs-response':'')+'" type="button" data-operation-schedule="'+esc(item.id)+'">'
     +'<span class="sanctuary-operation-status status-'+state+'">'+esc(item.scheduleModeLabel||item.displayLabel||item.statusLabel||'일정')+'</span>'
     +'<strong class="sanctuary-operation-schedule-title">'+esc(teamName)+'</strong>'
     +'<span class="sanctuary-operation-schedule-time">'+esc(meta)+'</span>'
-    +'<span class="sanctuary-operation-response">'+esc(responseText)+'</span>'
+    +responseHtml
     +'<span class="sanctuary-operation-arrow" aria-hidden="true">›</span></button>';
 }
 function ensureOperationScheduleModal(){
