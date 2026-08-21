@@ -6,7 +6,7 @@
 
 - GitHub: `losnah513/aion2-updater-config`
 - 운영 브랜치: `main`
-- 현재 운영 commit: `ad428f4d0c05de4d9b649ff66c4ac8529824ef40`
+- 내 정보 B-3 제품 운영 commit: `ad428f4d0c05de4d9b649ff66c4ac8529824ef40` (문서 마감 PR `#166`)
 - 내 정보 후속 B-3: PR `#165` 병합 완료
 - 레기온 순위 통합 패널: PR `#164` 병합 완료
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 최신 일일 로그를 작업 규칙 원본으로 사용한다.
