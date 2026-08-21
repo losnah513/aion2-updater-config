@@ -157,6 +157,9 @@ jobs:
               Path("m/sanctuary/index.html"),
           ]
           required_assets = [
+              "kinojo-character-reaction.css?cache=2026082201",
+              "kinojo-character-reaction.js?cache=2026082201",
+              "kinojo-character-detail-refresh.js?cache=2026082201",
               "kinojo-character-skill.css?cache=2026081001",
               "kinojo-character-daevanion.css?cache=2026081002",
               "kinojo-animations.css?cache=2026081003",
@@ -174,6 +177,9 @@ jobs:
           daev = Path("ui/kinojo-character-daevanion-bridge.js").read_text(encoding="utf-8")
           animations = Path("ui/kinojo-animations.css").read_text(encoding="utf-8")
           daev_css = Path("ui/kinojo-character-daevanion.css").read_text(encoding="utf-8")
+          reaction = Path("ui/kinojo-character-reaction.js").read_text(encoding="utf-8")
+          reaction_css = Path("ui/kinojo-character-reaction.css").read_text(encoding="utf-8")
+          detail_refresh = Path("ui/kinojo-character-detail-refresh.js").read_text(encoding="utf-8")
 
           forbidden = {
               "skill rpc monkey patch": (skill, r"\brpc\.rpc\s*="),
@@ -197,6 +203,14 @@ jobs:
               "daev board map": (daev + daev_css, "kinojo-daevanion-board-map"),
               "inner modal scroll": (animations, "kinojo-character-reaction-scroll"),
               "outer modal overflow lock": (animations, "overflow:hidden!important"),
+              "modal PVE item level": (reaction, "latest_pve_item_level"),
+              "modal PVP item level": (reaction, "latest_pvp_item_level"),
+              "modal PVE item element": (reaction, "kinojoCharacterReactionPveItemLevel"),
+              "modal PVP item element": (reaction, "kinojoCharacterReactionPvpItemLevel"),
+              "official combat power icon": (reaction, "profile_power_icon_pc.png"),
+              "official item level icon": (reaction, "profile_level_icon_pc.png"),
+              "compact PVE/PVP layout": (reaction_css, ".kinojo-character-reaction-mode"),
+              "refresh cache invalidation": (detail_refresh, "reloadOverview"),
           }
           for label, (text, token) in required_tokens.items():
               if token not in text:

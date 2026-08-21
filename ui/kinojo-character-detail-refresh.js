@@ -38,6 +38,21 @@
     const n=Number(value);return Number.isFinite(n)?n:0;
   }
 
+  function newestTimestamp(first,second){
+    const firstTime=Date.parse(String(first||''));
+    const secondTime=Date.parse(String(second||''));
+    if(Number.isFinite(firstTime)&&Number.isFinite(secondTime)) return firstTime>=secondTime?first:second;
+    return first||second||null;
+  }
+
+  function mergeProfilePreservingLatestMetrics(baseProfile,manualProfile){
+    const base=baseProfile||{},merged=Object.assign({},base,manualProfile||{});
+    ['combatPower','itemLevel','pveCombatPower','pveItemLevel','pvpCombatPower','pvpItemLevel'].forEach(key=>{
+      if(Object.prototype.hasOwnProperty.call(base,key)) merged[key]=base[key];
+    });
+    return merged;
+  }
+
   function invoke(action,payload){
     const core=window.KinojoSupabaseClientCore;
     if(!core || typeof core.invokeEdgeFunction!=='function') return Promise.reject(new Error('상세 갱신 Server 연결 모듈을 불러오지 못했습니다.'));
@@ -227,19 +242,23 @@
   }
 
   function renderStatus(data){
+    const previousJob=state.status&&state.status.job||null;
     state.status=data||null;
     const panel=ensurePanel();if(!panel) return;
     const btn=document.getElementById('kinojoDetailRefreshBtn');
     const meta=document.getElementById('kinojoDetailRefreshMeta');
     const message=document.getElementById('kinojoDetailRefreshMessage');
     const job=data && data.job || null;
+    const refreshFinished=isActive(previousJob)&&!isActive(job);
     const remaining=cooldownRemaining(job);
 
     if(!job){
       if(btn){btn.disabled=state.starting;btn.textContent=state.starting?'갱신 요청 중':'전체 상세 정보 갱신';}
       if(meta) meta.textContent=data?.hasStoredDetail?'저장된 일부 상세 정보 있음':'아직 상세 갱신 기록 없음';
       if(message) message.textContent=data?.message||'버튼을 누른 캐릭터만 장비·데바니온 상세를 순차 갱신합니다.';
-      renderProgress(null);syncVisibleDetailStates();return;
+      renderProgress(null);syncVisibleDetailStates();
+      if(refreshFinished) window.KinojoCharacterReaction?.reloadOverview?.();
+      return;
     }
 
     if(isActive(job)){
@@ -261,6 +280,7 @@
     }
     renderProgress(job);
     syncVisibleDetailStates();
+    if(refreshFinished) window.KinojoCharacterReaction?.reloadOverview?.();
   }
 
   function stopPoll(){
@@ -310,8 +330,9 @@
         if(!manual || manual.available!==true) return base;
         return Object.assign({},base,{
           source:manual.source||base.source,
-          fetchedAt:manual.detailRefresh?.refreshedAt||base.fetchedAt,
-          profile:Object.assign({},base.profile||{},manual.profile||{}),
+          fetchedAt:newestTimestamp(base.fetchedAt,manual.detailRefresh?.refreshedAt),
+          metrics:base.metrics||manual.metrics||null,
+          profile:mergeProfilePreservingLatestMetrics(base.profile,manual.profile),
           baseStats:Array.isArray(manual.baseStats)?manual.baseStats:base.baseStats,
           equipment:Array.isArray(manual.equipment)?manual.equipment:base.equipment,
           arcana:Array.isArray(manual.arcana)?manual.arcana:base.arcana,

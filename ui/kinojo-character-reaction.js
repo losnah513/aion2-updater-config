@@ -27,6 +27,10 @@
     liveStatusTimer: null
   };
   const LIVE_CACHE_TTL = 120000;
+  const OFFICIAL_METRIC_ICONS = Object.freeze({
+    power:'https://assets.playnccdn.com/static-aion2/characters/img/info/profile_power_icon_pc.png',
+    itemLevel:'https://assets.playnccdn.com/static-aion2/characters/img/info/profile_level_icon_pc.png'
+  });
   const liveCache = new Map();
   const liveInflight = new Map();
 
@@ -171,8 +175,10 @@
 
   function mergeMasterRow(target, row){
     if(!row) return target;
-    const pve = firstValue(row.latest_pve_combat_power, row.pve_power_total, row.pvePowerTotal, target.pvePower);
-    const pvp = firstValue(row.latest_pvp_combat_power, row.pvp_power_total, row.pvpPowerTotal, target.pvpPower);
+    const pvePower = firstValue(row.latest_pve_combat_power, row.pve_power_total, row.pvePowerTotal, target.pvePower);
+    const pveItemLevel = firstValue(row.latest_pve_item_level, row.pve_item_level, row.pveItemLevel, target.pveItemLevel);
+    const pvpPower = firstValue(row.latest_pvp_combat_power, row.pvp_power_total, row.pvpPowerTotal, target.pvpPower);
+    const pvpItemLevel = firstValue(row.latest_pvp_item_level, row.pvp_item_level, row.pvpItemLevel, target.pvpItemLevel);
     const className = firstValue(row.class_name, row.className, target.className);
     const server = firstValue(row.server_name, row.serverName, target.server);
     const serverId = firstValue(row.server_id, row.serverId, target.serverId);
@@ -181,8 +187,10 @@
     const owner = firstValue(row.main_character_name, row.mainCharacterName, target.owner);
     return normalizeTarget(Object.assign({}, target, {
       className, server, serverId, owner, profileImageUrl, detailUrl,
-      pvePower: numText(pve) || '',
-      pvpPower: numText(pvp) || '',
+      pvePower: numText(pvePower) || '',
+      pveItemLevel: numText(pveItemLevel) || '',
+      pvpPower: numText(pvpPower) || '',
+      pvpItemLevel: numText(pvpItemLevel) || '',
       classIconUrl: firstValue(target.classIconUrl, classIconFor(className))
     }));
   }
@@ -192,7 +200,7 @@
     const name = characterMasterQueryName(item.name);
     if(!name || !window.KinojoSupabase || typeof window.KinojoSupabase.request !== 'function') return null;
 
-    const select = 'select=character_name,main_character_name,server_id,server_name,class_name,profile_image_url,detail_url,latest_pve_combat_power,latest_pvp_combat_power';
+    const select = 'select=character_name,main_character_name,server_id,server_name,class_name,profile_image_url,detail_url,latest_pve_combat_power,latest_pve_item_level,latest_pvp_combat_power,latest_pvp_item_level';
     let query = select + '&character_name=eq.' + name;
     const serverId = String(item.serverId || '').trim();
     const serverName = String(item.server || '').trim();
@@ -251,9 +259,19 @@
               '<span><b>레기온</b><strong id="kinojoCharacterReactionLegion">-</strong></span>' +
               '<span class="is-title"><b>칭호</b><strong id="kinojoCharacterReactionTitleName">-</strong></span>' +
             '</div>' +
-            '<div class="kinojo-character-reaction-powers" aria-label="캐릭터 핵심 정보">' +
-              '<span class="kinojo-character-reaction-power is-pve"><b>전투력</b><strong id="kinojoCharacterReactionPvePower">-</strong></span>' +
-              '<span class="kinojo-character-reaction-power is-pvp"><b>아이템 레벨</b><strong id="kinojoCharacterReactionPvpPower">-</strong></span>' +
+            '<div class="kinojo-character-reaction-powers" aria-label="PVE 및 PVP 최신 전투력과 아이템 레벨">' +
+              '<span class="kinojo-character-reaction-mode is-pve">' +
+                '<b>PVE</b><span class="kinojo-character-reaction-mode-metrics">' +
+                  '<span class="kinojo-character-reaction-metric is-power" aria-label="PVE 전투력"><img src="' + OFFICIAL_METRIC_ICONS.power + '" alt="" decoding="async"><strong id="kinojoCharacterReactionPvePower">-</strong></span>' +
+                  '<span class="kinojo-character-reaction-metric is-item-level" aria-label="PVE 아이템 레벨"><img src="' + OFFICIAL_METRIC_ICONS.itemLevel + '" alt="" decoding="async"><strong id="kinojoCharacterReactionPveItemLevel">-</strong></span>' +
+                '</span>' +
+              '</span>' +
+              '<span class="kinojo-character-reaction-mode is-pvp">' +
+                '<b>PVP</b><span class="kinojo-character-reaction-mode-metrics">' +
+                  '<span class="kinojo-character-reaction-metric is-power" aria-label="PVP 전투력"><img src="' + OFFICIAL_METRIC_ICONS.power + '" alt="" decoding="async"><strong id="kinojoCharacterReactionPvpPower">-</strong></span>' +
+                  '<span class="kinojo-character-reaction-metric is-item-level" aria-label="PVP 아이템 레벨"><img src="' + OFFICIAL_METRIC_ICONS.itemLevel + '" alt="" decoding="async"><strong id="kinojoCharacterReactionPvpItemLevel">-</strong></span>' +
+                '</span>' +
+              '</span>' +
             '</div>' +
             '<div class="kinojo-character-live-meta"><span id="kinojoCharacterLiveTime">저장 정보 확인 중</span><a class="kinojo-character-reaction-detail" id="kinojoCharacterReactionDetail" href="#" target="_blank" rel="noopener noreferrer">PLAYNC 정보실 ↗</a></div>' +
           '</div>' +
@@ -745,6 +763,8 @@
   function applyLiveProfile(data){
     state.live = data;
     const profile = data.profile || {};
+    const pveMetrics = data.metrics?.pve || {};
+    const pvpMetrics = data.metrics?.pvp || {};
     state.target = normalizeTarget(Object.assign({}, state.target, {
       name:profile.characterName || state.target?.name,
       className:profile.className || state.target?.className,
@@ -753,8 +773,10 @@
       charKey:data.identity?.charKey || state.target?.charKey,
       characterId:data.identity?.characterId || state.target?.characterId,
       profileImageUrl:profile.profileImageUrl || state.target?.profileImageUrl,
-      pvePower:profile.combatPower || state.target?.pvePower,
-      pvpPower:profile.itemLevel || state.target?.pvpPower,
+      pvePower:firstValue(pveMetrics.combatPower, profile.pveCombatPower, profile.combatPower, state.target?.pvePower),
+      pveItemLevel:firstValue(pveMetrics.itemLevel, profile.pveItemLevel, profile.itemLevel, state.target?.pveItemLevel),
+      pvpPower:firstValue(pvpMetrics.combatPower, profile.pvpCombatPower, state.target?.pvpPower),
+      pvpItemLevel:firstValue(pvpMetrics.itemLevel, profile.pvpItemLevel, state.target?.pvpItemLevel),
       level:profile.level || state.target?.level,
       legionName:profile.regionName || state.target?.legionName,
       titleName:profile.titleName || state.target?.titleName
@@ -768,6 +790,21 @@
     const time = document.getElementById('kinojoCharacterLiveTime');
     if(time) time.textContent = 'PLAYNC 실시간 · ' + new Date(data.fetchedAt || Date.now()).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
     setLiveStatus('저장 프로필 조회 완료','ok');
+  }
+
+  function clearLiveCacheForTarget(target){
+    const identity = liveIdentityKey(target);
+    for(const key of Array.from(liveCache.keys())){
+      if(key.includes('|' + identity + '|')) liveCache.delete(key);
+    }
+  }
+
+  async function reloadOverview(){
+    if(!state.open || !state.target) return false;
+    clearLiveCacheForTarget(state.target);
+    await enrichTargetFromMaster();
+    await loadLiveOverview();
+    return true;
   }
 
   async function loadLiveOverview(){
@@ -940,11 +977,13 @@
     const detailUrl = t.detailUrl || t.url || '';
     const classIconUrl = t.classIconUrl || t.classIcon || t.iconUrl || classIconFor(className);
     const pvePower = numText(firstValue(t.pvePower, t.pve_power, t.pvePowerTotal, t.latestPveCombatPower, t.latest_pve_combat_power));
+    const pveItemLevel = numText(firstValue(t.pveItemLevel, t.pve_item_level, t.latestPveItemLevel, t.latest_pve_item_level));
     const pvpPower = numText(firstValue(t.pvpPower, t.pvp_power, t.pvpPowerTotal, t.latestPvpCombatPower, t.latest_pvp_combat_power));
+    const pvpItemLevel = numText(firstValue(t.pvpItemLevel, t.pvp_item_level, t.latestPvpItemLevel, t.latest_pvp_item_level));
     const level = firstValue(t.level,t.characterLevel,t.character_level);
     const legionName = firstValue(t.legionName,t.regionName,t.legion,t.guildName,t.guild_name);
     const titleName = firstValue(t.titleName,t.title,t.characterTitle,t.character_title);
-    return { name, className, server, serverId, charKey, characterId, owner, profileImageUrl, detailUrl, classIconUrl, pvePower, pvpPower, level, legionName, titleName };
+    return { name, className, server, serverId, charKey, characterId, owner, profileImageUrl, detailUrl, classIconUrl, pvePower, pveItemLevel, pvpPower, pvpItemLevel, level, legionName, titleName };
   }
 
   function renderTarget(){
@@ -959,7 +998,9 @@
     const titleName = document.getElementById('kinojoCharacterReactionTitleName');
     const detail = document.getElementById('kinojoCharacterReactionDetail');
     const pvePower = document.getElementById('kinojoCharacterReactionPvePower');
+    const pveItemLevel = document.getElementById('kinojoCharacterReactionPveItemLevel');
     const pvpPower = document.getElementById('kinojoCharacterReactionPvpPower');
+    const pvpItemLevel = document.getElementById('kinojoCharacterReactionPvpItemLevel');
 
     if(title) title.textContent = target.name || '캐릭터';
     if(className) className.textContent = target.className || '-';
@@ -968,7 +1009,9 @@
     if(legion) legion.textContent = target.legionName || '-';
     if(titleName) titleName.textContent = target.titleName || '-';
     if(pvePower) pvePower.textContent = target.pvePower || '-';
+    if(pveItemLevel) pveItemLevel.textContent = target.pveItemLevel || '-';
     if(pvpPower) pvpPower.textContent = target.pvpPower || '-';
+    if(pvpItemLevel) pvpItemLevel.textContent = target.pvpItemLevel || '-';
     if(classIcon){
       const icon = String(target.classIconUrl || classIconFor(target.className) || '').trim();
       if(icon){
@@ -1138,7 +1181,7 @@
     candidates: characterImageCandidates
   };
   window.KinojoPowerFormat = { short: shortPower, full: fullPower, number: powerNumber };
-  window.KinojoCharacterReaction = { open, close, setType };
+  window.KinojoCharacterReaction = { open, close, setType, reloadOverview };
   window.addEventListener('kinojo:auth-changed', () => {
     liveCache.clear();
     state.compare = null;
