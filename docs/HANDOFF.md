@@ -1,13 +1,13 @@
 # KINOJO WEB HANDOFF
 
-기준일: 2026-08-21 KST
+기준일: 2026-08-22 KST
 
 ## 저장소 / 현재 기준
 
 - GitHub: `losnah513/aion2-updater-config`
 - 운영 브랜치: `main`
-- 내 정보 D-1 제품 운영 commit: `11ca4c071d8c3d7dbf90aa374d681db0ec212ce4` (PR `#179`)
-- 내 정보 후속 A-1~D-1: 9/12 완료
+- 내 정보 D-2 제품 운영 commit: `b7132f365e4b49cae8b5f84cbb1e609571de1920` (PR `#192`)
+- 내 정보 후속 A-1~D-2: 10/12 완료
 - 레기온 순위 통합 패널: PR `#164` 병합 완료
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 최신 일일 로그를 작업 규칙 원본으로 사용한다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
@@ -148,6 +148,14 @@
 - 실제 브라우저에서 짧은 이름 `352px`, 중간 이름 `360px`, 긴 이름 상한 `420px`, 모바일 라우트 전체 폭을 확인했다. 전체 Node 계약 테스트와 PR workflow 3종이 통과했다.
 - D-1은 WEB 표시 계약만 변경했다. Supabase Edge v20/API 2.7/DB375, SQL375, Storage 및 기존 Stage 1-8 계약은 변경하지 않았다.
 
+## D-2 잘림 없는 반응형 배치
+
+- D-2는 PR `#192`, 운영 commit `b7132f365e4b49cae8b5f84cbb1e609571de1920`으로 반영됐다.
+- D-1의 PC 패널 `352~420px` 측정값은 유지한다. 가장 긴 이름의 계산 폭이 `420px` 상한을 넘을 때만 `data-panel-layout="stacked"`를 적용해 이름과 스탯을 두 줄 배치하고, 같은 이름 목록의 캐시 경로에서도 배치 상태를 재사용한다.
+- `420px` 이하 화면은 캐릭터명을 생략하지 않고 필요한 만큼 줄바꿈한다. 이미지 관리 모달은 내부 그리드를 `minmax(0,1fr)`로 제한하고 캐릭터명·파일명·상태·버튼 문구·참고 이미지 문구를 줄바꿈한다.
+- 캐릭터 선택 띠의 의도된 가로 스크롤과 모달의 세로 스크롤은 유지한다. 실제 브라우저 `1280px` PC, `390x844`, `320x800`, `844x390`에서 문서와 모달의 가로 overflow `0`을 확인했다.
+- `tests/my-info-responsive-layout.test.js`와 PR workflow 3종이 통과했다. Supabase Edge v20/API 2.7/DB375, SQL375, Storage 및 기존 Stage 1-8 계약은 변경하지 않았다.
+
 ## 성역 Fold 도구 / 포스 제외 후속
 
 - Fold 펼침 폭 `761~1180px`에서 성역 일정과 3개 요약 카드가 한 줄을 유지하도록 attached subbar 그리드를 재구성했다. `390px` 전화 폭에서는 기존 일정 축약 규칙을 유지한다.
@@ -165,8 +173,9 @@
 - 배치 bootstrap 검증: `node tests/my-info-batch-bootstrap.test.js`
 - 프로필 이미지 선로딩 검증: `node tests/my-info-image-preloader.test.js`
 - 가변 패널 너비 검증: `node tests/my-info-panel-width.test.js`
+- 잘림 없는 반응형 배치 검증: `node tests/my-info-responsive-layout.test.js`
 - 성역 이전 회귀: `node tests/sanctuary-roster-quick-edit-contract.test.js`
 - 공통 회귀: `node tests/web-shell-auth-contract.test.js`
 - 레기온 순위 UI 회귀: `node tests/ranking-ui-contract.test.js`
-- GitHub workflow는 공통 슬라이더·이미지 편집기·안전 업로드·배치 bootstrap·프로필 이미지 preloader·가변 패널 너비의 구문 검사, 계약 테스트, Pages exact live readback을 포함한다.
-- 다음 작업은 **D-2 잘림 없는 반응형 배치만** 진행한다.
+- GitHub workflow는 공통 슬라이더·이미지 편집기·안전 업로드·배치 bootstrap·프로필 이미지 preloader·가변 패널 너비·잘림 없는 반응형 배치의 구문 검사, 계약 테스트, Pages exact live readback을 포함한다.
+- 다음 작업은 **E-1 회귀·접근성·시각 검증만** 진행한다.
