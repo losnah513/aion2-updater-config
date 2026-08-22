@@ -5,6 +5,8 @@ const vm=require('node:vm');
 const path=require('node:path');
 const root=path.join(__dirname,'..');
 const source=fs.readFileSync(path.join(root,'ui/kinojo-banner-runtime.js'),'utf8');
+const pcHome=fs.readFileSync(path.join(root,'home.html'),'utf8');
+const mobileHome=fs.readFileSync(path.join(root,'m/index.html'),'utf8');
 
 class MemoryStorage{constructor(){this.m=new Map()}getItem(k){return this.m.has(k)?this.m.get(k):null}setItem(k,v){this.m.set(k,String(v))}removeItem(k){this.m.delete(k)}}
 const makeHeaders=obj=>new Headers(obj||{});
@@ -48,6 +50,22 @@ function manifest(extra={}){return Object.assign({
   assert.throws(()=>api.fetchManifest('bad page','MAIN'),e=>e.code==='BANNER_MANIFEST_TARGET_INVALID');
   assert.equal(/Date\.now|Math\.random|Asia\/Seoul|priority|weighted|scheduleMode/.test(source),false,'Browser runtime must not own schedule/priority/random decisions');
   assert.equal(/passKey|passCode|service_role/.test(source),false,'public runtime must not contain private credentials');
+
+  const supabaseClientIndex=pcHome.indexOf('core/kinojo-supabase-client.js?cache=2026080205');
+  const runtimeIndex=pcHome.indexOf('ui/kinojo-banner-runtime.js?cache=2026082301');
+  const manifestCallIndex=pcHome.indexOf("runtime.fetchManifest('HOME', 'MAIN')");
+  assert.ok(supabaseClientIndex>=0&&runtimeIndex>supabaseClientIndex&&manifestCallIndex>runtimeIndex,'PC HOME must load Supabase client, then Banner runtime, then request HOME:MAIN');
+  assert.match(pcHome,/manifest\?\.active !== true/,'inactive Manifest must leave current PC banner untouched');
+  assert.match(pcHome,/manifest\.playlist\[0\]/,'6-나 must render only the first Server playlist item; rotation remains 8-마');
+  assert.match(pcHome,/banner\.src = item\.imageUrl/);
+  assert.match(pcHome,/banner\.alt = item\.alt \|\| 'KINOJO INFO 깡 레기온 대표 배너'/);
+  assert.match(pcHome,/bannerLink\.setAttribute\('href', item\.clickUrl\)/);
+  assert.match(pcHome,/bannerLink\.removeAttribute\('href'\)/,'Manifest item without clickUrl must not keep the legacy HOF click target');
+  assert.match(pcHome,/kinojo_banner_summer\.png\?cache=2026080602/,'legacy summer fallback must remain until migration stage 9');
+  assert.match(pcHome,/2026-08-31T23:59:59\.999\+09:00/,'legacy summer end schedule must remain until 9-다');
+  assert.equal(mobileHome.includes('kinojo-banner-runtime.js'),false,'mobile HOME connection belongs to 6-다');
+  assert.equal(/setInterval|setTimeout\([^)]*slide|transitionDurationMs/.test(pcHome),false,'6-나 must not implement slideshow timing/crossfade before 8-마');
+  console.log('KINOJO PC HOME Banner Manifest connection: PASS');
   console.log('KINOJO banner Manifest client contract: PASS');
 
   if(process.env.KINOJO_BANNER_LIVE==='1'){
