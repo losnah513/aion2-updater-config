@@ -63,9 +63,23 @@ function manifest(extra={}){return Object.assign({
   assert.match(pcHome,/bannerLink\.removeAttribute\('href'\)/,'Manifest item without clickUrl must not keep the legacy HOF click target');
   assert.match(pcHome,/kinojo_banner_summer\.png\?cache=2026080602/,'legacy summer fallback must remain until migration stage 9');
   assert.match(pcHome,/2026-08-31T23:59:59\.999\+09:00/,'legacy summer end schedule must remain until 9-다');
-  assert.equal(mobileHome.includes('kinojo-banner-runtime.js'),false,'mobile HOME connection belongs to 6-다');
   assert.equal(/setInterval|setTimeout\([^)]*slide|transitionDurationMs/.test(pcHome),false,'6-나 must not implement slideshow timing/crossfade before 8-마');
-  console.log('KINOJO PC HOME Banner Manifest connection: PASS');
+
+  const mobileSupabaseClientIndex=mobileHome.indexOf('../core/kinojo-supabase-client.js?cache=2026080205');
+  const mobileRuntimeIndex=mobileHome.indexOf('../ui/kinojo-banner-runtime.js?cache=2026082301');
+  const mobileManifestCallIndex=mobileHome.indexOf("runtime.fetchManifest('HOME', 'MAIN')");
+  assert.ok(mobileSupabaseClientIndex>=0&&mobileRuntimeIndex>mobileSupabaseClientIndex&&mobileManifestCallIndex>mobileRuntimeIndex,'mobile HOME must load Supabase client, then shared Banner runtime, then request HOME:MAIN');
+  assert.match(mobileHome,/manifest\?\.active !== true/,'inactive Manifest must leave current mobile banner untouched');
+  assert.match(mobileHome,/manifest\.playlist\[0\]/,'6-다 must render only the first Server playlist item; rotation remains 8-마');
+  assert.match(mobileHome,/banner\.src = item\.imageUrl/);
+  assert.match(mobileHome,/banner\.alt = item\.alt \|\| 'KINOJO INFO 깡 레기온 대표 배너'/);
+  assert.match(mobileHome,/bannerLink\.setAttribute\('href', item\.clickUrl\)/);
+  assert.match(mobileHome,/bannerLink\.removeAttribute\('href'\)/,'mobile Manifest item without clickUrl must not keep the legacy HOF click target');
+  assert.match(mobileHome,/kinojo_banner_summer\.png\?cache=2026080602/,'mobile legacy summer fallback must remain until migration stage 9');
+  assert.match(mobileHome,/2026-08-31T23:59:59\.999\+09:00/,'mobile legacy summer end schedule must remain until 9-다');
+  assert.equal(/runtime\.fetchManifest\([^)]*,\s*'(?:LEFT|RIGHT)'/.test(mobileHome),false,'mobile HOME must not request SIDE banner slots');
+  assert.equal(/setInterval|setTimeout\([^)]*slide|transitionDurationMs/.test(mobileHome),false,'6-다 must not implement slideshow timing/crossfade before 8-마');
+  console.log('KINOJO PC/Mobile HOME Banner Manifest connection: PASS');
   console.log('KINOJO banner Manifest client contract: PASS');
 
   if(process.env.KINOJO_BANNER_LIVE==='1'){
