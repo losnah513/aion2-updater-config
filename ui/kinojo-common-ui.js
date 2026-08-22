@@ -670,7 +670,7 @@
     }
     const link=document.createElement('link');
     link.rel='stylesheet';
-    link.href='/ui/kinojo-my-info.css?cache=2026082106';
+    link.href='/ui/kinojo-my-info.css?cache=2026082201';
     link.dataset.kinojoMyInfoStyles='true';
     link.addEventListener('load',()=>guard?.remove(),{once:true});
     document.head.appendChild(link);
@@ -701,7 +701,7 @@
   }
   const kinojoMyCharactersState={token:'',data:null,promise:null,retryTimer:0};
   const KINOJO_MY_INFO_PANEL_WIDTH=Object.freeze({min:352,max:420,fixed:228});
-  const kinojoMyInfoPanelWidthState={key:'',width:KINOJO_MY_INFO_PANEL_WIDTH.min,context:null};
+  const kinojoMyInfoPanelWidthState={key:'',width:KINOJO_MY_INFO_PANEL_WIDTH.min,layout:'inline',context:null};
   function myInfoSessionToken_(){
     const token=String(window.KinojoAuth?.getSession?.()?.token||'').trim();
     return /^kws_[A-Za-z0-9_-]{40,80}$/.test(token)?token:'';
@@ -742,6 +742,7 @@
     if(!panel)return KINOJO_MY_INFO_PANEL_WIDTH.min;
     if(kinojoMyInfoPanelWidthState.key===key){
       panel.style.setProperty('--kinojo-my-info-panel-width',kinojoMyInfoPanelWidthState.width+'px');
+      panel.dataset.panelLayout=kinojoMyInfoPanelWidthState.layout;
       return kinojoMyInfoPanelWidthState.width;
     }
     let context=kinojoMyInfoPanelWidthState.context;
@@ -753,11 +754,14 @@
     const longest=names.reduce((width,name)=>Math.max(width,context?context.measureText(name).width:fallbackMyInfoCharacterNameWidth_(name)),0);
     const measured=Math.ceil(KINOJO_MY_INFO_PANEL_WIDTH.fixed+longest);
     const width=Math.min(KINOJO_MY_INFO_PANEL_WIDTH.max,Math.max(KINOJO_MY_INFO_PANEL_WIDTH.min,measured));
+    const layout=measured>KINOJO_MY_INFO_PANEL_WIDTH.max?'stacked':'inline';
     kinojoMyInfoPanelWidthState.key=key;
     kinojoMyInfoPanelWidthState.width=width;
+    kinojoMyInfoPanelWidthState.layout=layout;
     panel.style.setProperty('--kinojo-my-info-panel-width',width+'px');
     panel.dataset.panelWidth=String(width);
     panel.dataset.panelWidthSource=names.length?'character-name':'default';
+    panel.dataset.panelLayout=layout;
     return width;
   }
   function renderMyInfoCharacters_(data){
