@@ -11,7 +11,7 @@
 @media (min-width:1840px){
   .kinojo-pc-banner-slot{
     display:grid;
-    position:absolute;
+    position:fixed;
     top:0;
     z-index:1;
     width:300px;
@@ -28,15 +28,15 @@
   }
 
   .kinojo-pc-banner-slot.is-left{
-    right:calc(100% + 14px);
+    right:auto;
   }
 
   .kinojo-pc-banner-slot.is-right{
-    left:calc(100% + 14px);
+    right:auto;
   }
 
   body.kinojo-page-hall .hof-v2-layout.kinojo-pc-banner-host{
-    transform:translateX(calc((300px + 14px) / 2));
+    left:calc((300px + 14px) / 2);
   }
 
   body.kinojo-sanctuary-schedule-page .schedule-wrap{
