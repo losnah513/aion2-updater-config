@@ -1,0 +1,112 @@
+name: Verify Banner Admin
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "admin/js/admin.js"
+      - "admin/js/admin-images.js"
+      - "admin/js/admin-side-banners.js"
+      - "admin/js/admin-banner-quality.js"
+      - "tests/banner-admin-main-ui-contract.test.js"
+      - "tests/banner-admin-side-ui-contract.test.js"
+      - "tests/banner-admin-quality-contract.test.js"
+      - ".github/workflows/verify-banner-admin.yml"
+  push:
+    branches: [main]
+    paths:
+      - "admin/js/admin.js"
+      - "admin/js/admin-images.js"
+      - "admin/js/admin-side-banners.js"
+      - "admin/js/admin-banner-quality.js"
+      - "tests/banner-admin-main-ui-contract.test.js"
+      - "tests/banner-admin-side-ui-contract.test.js"
+      - "tests/banner-admin-quality-contract.test.js"
+      - ".github/workflows/verify-banner-admin.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-banner-admin-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+      - name: Verify banner admin contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          for path in \
+            admin/js/admin.js \
+            admin/js/admin-images.js \
+            admin/js/admin-side-banners.js \
+            admin/js/admin-banner-quality.js; do
+            node --check "$path"
+          done
+          node tests/banner-admin-main-ui-contract.test.js
+          node tests/banner-admin-side-ui-contract.test.js
+          node tests/banner-admin-quality-contract.test.js
+
+  verify-live-readback:
+    if: github.event_name == 'push'
+    needs: verify-source
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      LIVE_BASE: https://kinojo.info
+    steps:
+      - name: Checkout deployed source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Verify banner admin files on custom domain
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(
+            "admin/js/admin.js"
+            "admin/js/admin-images.js"
+            "admin/js/admin-side-banners.js"
+            "admin/js/admin-banner-quality.js"
+          )
+          tmp_dir="$(mktemp -d)"
+          trap 'rm -rf "$tmp_dir"' EXIT
+          verify_key="${GITHUB_SHA:0:12}-$(date -u +%s)"
+
+          for attempt in $(seq 1 15); do
+            mismatch=0
+            for path in "${files[@]}"; do
+              live_file="$tmp_dir/$(echo "$path" | tr '/' '_')"
+              url="$LIVE_BASE/$path?verify=$verify_key-$attempt"
+              if ! curl --fail --silent --show-error --location --compressed \
+                --retry 3 --retry-all-errors --connect-timeout 10 --max-time 30 \
+                -H 'Cache-Control: no-cache' "$url" -o "$live_file"; then
+                echo "FETCH_FAIL $path"
+                mismatch=1
+                continue
+              fi
+              if cmp -s "$path" "$live_file"; then
+                echo "MATCH $path"
+              else
+                echo "MISMATCH $path"
+                mismatch=1
+              fi
+            done
+            if [[ "$mismatch" -eq 0 ]]; then
+              exit 0
+            fi
+            [[ "$attempt" -lt 15 ]] && sleep 20
+          done
+          echo "Banner admin live readback did not converge to main source." >&2
+          exit 1
