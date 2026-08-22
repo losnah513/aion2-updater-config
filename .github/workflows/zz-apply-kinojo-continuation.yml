@@ -1,0 +1,49 @@
+name: Apply KINOJO continuation patch
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/zz-apply-kinojo-continuation.yml'
+      - 'tools/zz_patch_member.py'
+      - 'tools/zz_member_append.css'
+      - 'tools/zz_patch_admin.py'
+      - 'tools/zz_admin_append.css'
+      - 'tools/zz_patch_release.py'
+      - 'tools/zz_contract_test.js'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - name: Apply scoped continuation patch
+        run: |
+          set -euo pipefail
+          python3 tools/zz_patch_member.py
+          python3 tools/zz_patch_admin.py
+          python3 tools/zz_patch_release.py
+          node --check ui/kinojo-common-ui.js
+          node --check admin/js/admin-members.js
+          node --check admin/js/admin.js
+          node tests/my-info-admin-image-layout-contract.test.js
+          git diff --check
+      - name: Commit product changes and remove patch helpers
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/zz-apply-kinojo-continuation.yml
+          rm -f tools/zz_patch_member.py tools/zz_member_append.css tools/zz_patch_admin.py tools/zz_admin_append.css tools/zz_patch_release.py tools/zz_contract_test.js
+          git config user.name 'kinojo-actions'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'feat: refine member image management UI'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
