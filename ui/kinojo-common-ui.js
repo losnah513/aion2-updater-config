@@ -1,4 +1,4 @@
-/* KINOJO common UI v20260821.01 */
+/* KINOJO common UI v20260822.02 */
 (function(){
   if(window.__KINOJO_COMMON_UI_INIT_DONE__) return;
   window.__KINOJO_COMMON_UI_INIT_DONE__ = true;
@@ -670,7 +670,7 @@
     }
     const link=document.createElement('link');
     link.rel='stylesheet';
-    link.href='/ui/kinojo-my-info.css?cache=2026082201';
+    link.href='/ui/kinojo-my-info.css?cache=2026082202';
     link.dataset.kinojoMyInfoStyles='true';
     link.addEventListener('load',()=>guard?.remove(),{once:true});
     document.head.appendChild(link);
@@ -682,7 +682,7 @@
     layer.id='kinojoMyInfoLayer';
     layer.setAttribute('aria-hidden','true');
     layer.innerHTML=`
-      <aside class="kinojo-my-info-panel" id="kinojoMyInfoPanel" role="dialog" aria-modal="false" aria-labelledby="kinojoMyInfoTitle">
+      <aside class="kinojo-my-info-panel" id="kinojoMyInfoPanel" role="dialog" aria-modal="true" aria-labelledby="kinojoMyInfoTitle" tabindex="-1">
         <div class="kinojo-panel-head">
           <strong class="kinojo-panel-title" id="kinojoMyInfoTitle">내 정보</strong>
           <button class="kinojo-common-close kinojo-panel-close" id="kinojoMyInfoCloseBtn" type="button" aria-label="내 정보 닫기">×</button>
@@ -693,7 +693,7 @@
           </button>
           <section class="kinojo-my-info-characters" aria-labelledby="kinojoMyCharactersTitle">
             <div class="kinojo-my-info-section-title" id="kinojoMyCharactersTitle">내 캐릭터</div>
-            <div class="kinojo-my-info-character-list" id="kinojoMyInfoCharacterList" aria-live="polite"><div class="kinojo-my-info-character-status">캐릭터 불러오는 중</div></div>
+            <div class="kinojo-my-info-character-list" id="kinojoMyInfoCharacterList" aria-live="polite" aria-atomic="true"><div class="kinojo-my-info-character-status" role="status">캐릭터 불러오는 중</div></div>
           </section>
         </div>
       </aside>`;
@@ -702,6 +702,29 @@
   const kinojoMyCharactersState={token:'',data:null,promise:null,retryTimer:0};
   const KINOJO_MY_INFO_PANEL_WIDTH=Object.freeze({min:352,max:420,fixed:228});
   const kinojoMyInfoPanelWidthState={key:'',width:KINOJO_MY_INFO_PANEL_WIDTH.min,layout:'inline',context:null};
+  const kinojoMyInfoFocusState={panelReturn:null,modalReturn:null};
+  const KINOJO_MY_INFO_FOCUSABLE='a[href],button:not([disabled]),input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+  function myInfoFocusable_(root){
+    if(!(root instanceof Element))return [];
+    return Array.from(root.querySelectorAll(KINOJO_MY_INFO_FOCUSABLE)).filter(element=>{
+      const style=getComputedStyle(element);
+      return !element.hidden&&element.getAttribute('aria-hidden')!=='true'&&style.display!=='none'&&style.visibility!=='hidden'&&element.getClientRects().length>0;
+    });
+  }
+  function focusMyInfoElement_(element){
+    if(!(element instanceof HTMLElement)||!element.isConnected)return;
+    requestAnimationFrame(()=>{try{element.focus({preventScroll:true});}catch(_error){element.focus();}});
+  }
+  function trapMyInfoFocus_(event,root){
+    if(event.defaultPrevented||event.key!=='Tab'||!(root instanceof Element))return;
+    const focusable=myInfoFocusable_(root);
+    if(!focusable.length){event.preventDefault();focusMyInfoElement_(root);return;}
+    const first=focusable[0];
+    const last=focusable[focusable.length-1];
+    const active=document.activeElement;
+    if(event.shiftKey&&(active===first||!root.contains(active))){event.preventDefault();last.focus();}
+    else if(!event.shiftKey&&(active===last||!root.contains(active))){event.preventDefault();first.focus();}
+  }
   function myInfoSessionToken_(){
     const token=String(window.KinojoAuth?.getSession?.()?.token||'').trim();
     return /^kws_[A-Za-z0-9_-]{40,80}$/.test(token)?token:'';
@@ -710,7 +733,7 @@
     const host=q('#kinojoMyInfoCharacterList');
     if(!host)return;
     host.dataset.state=code||'status';
-    host.innerHTML='<div class="kinojo-my-info-character-status">'+escapeHtml(message||'캐릭터 정보를 확인 중입니다.')+'</div>';
+    host.innerHTML='<div class="kinojo-my-info-character-status" role="status">'+escapeHtml(message||'캐릭터 정보를 확인 중입니다.')+'</div>';
   }
   function resetMyInfoCharacters_(){
     if(kinojoMyCharactersState.retryTimer)clearTimeout(kinojoMyCharactersState.retryTimer);
@@ -762,6 +785,10 @@
     panel.dataset.panelWidth=String(width);
     panel.dataset.panelWidthSource=names.length?'character-name':'default';
     panel.dataset.panelLayout=layout;
+    if(layout==='inline'){
+      const clipped=Array.from(panel.querySelectorAll('.kinojo-my-info-character-name')).some(element=>element.scrollWidth>element.clientWidth+1);
+      if(clipped){kinojoMyInfoPanelWidthState.layout='stacked';panel.dataset.panelLayout='stacked';}
+    }
     return width;
   }
   function renderMyInfoCharacters_(data){
@@ -1841,13 +1868,13 @@
     modal.setAttribute('aria-hidden','true');
     modal.innerHTML=`
       <div class="kinojo-my-info-modal-backdrop" data-kinojo-my-info-modal-close></div>
-      <div class="kinojo-my-info-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="kinojoMyInfoModalTitle" tabindex="-1">
+      <div class="kinojo-my-info-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="kinojoMyInfoModalTitle" aria-describedby="kinojoMyInfoModalSummary" tabindex="-1">
         <button class="kinojo-my-info-modal-close" type="button" aria-label="내 정보 닫기" data-kinojo-my-info-modal-close>×</button>
         <div class="kinojo-my-info-manager">
           <header class="kinojo-my-info-manager-head">
             <span class="kinojo-my-info-manager-badge">MY INFO</span>
             <strong id="kinojoMyInfoModalTitle">내 정보</strong>
-            <p>내 캐릭터의 프로필 이미지와 관리자 확인용 참고 이미지를 관리합니다.</p>
+            <p id="kinojoMyInfoModalSummary">내 캐릭터의 프로필 이미지와 관리자 확인용 참고 이미지를 관리합니다.</p>
           </header>
           <section class="kinojo-my-info-profile-section" aria-labelledby="kinojoMyInfoProfileTitle">
             <div class="kinojo-my-info-manager-section-head">
@@ -1886,15 +1913,15 @@
               <button class="kinojo-my-info-action-btn is-primary" id="kinojoMyInfoProfileUploadBtn" type="button" hidden>업로드</button>
               <button class="kinojo-my-info-action-btn" id="kinojoMyInfoProfileCancelBtn" type="button" hidden>선택 취소</button>
             </div>
-            <div class="kinojo-my-info-profile-status" id="kinojoMyInfoProfileStatus" data-state="loading" aria-live="polite">현재 프로필 이미지를 확인하는 중입니다.</div>
+            <div class="kinojo-my-info-profile-status" id="kinojoMyInfoProfileStatus" data-state="loading" role="status" aria-live="polite" aria-atomic="true">현재 프로필 이미지를 확인하는 중입니다.</div>
           </section>
-          <section class="kinojo-my-info-reference-preview" id="kinojoMyInfoReferenceSection" aria-disabled="true">
+          <section class="kinojo-my-info-reference-preview" id="kinojoMyInfoReferenceSection" aria-labelledby="kinojoMyInfoReferenceTitle" aria-disabled="true">
             <div class="kinojo-my-info-manager-section-head">
-              <div><strong>참고 이미지</strong><span>관리자 확인용 비공개 자료</span></div>
+              <div><strong id="kinojoMyInfoReferenceTitle">참고 이미지</strong><span>관리자 확인용 비공개 자료</span></div>
               <small id="kinojoMyInfoReferenceHeadMeta">캐릭터 선택 후 슬롯 선택</small>
             </div>
             <input id="kinojoMyInfoReferenceFileInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
-            <div class="kinojo-my-info-reference-preview-grid" id="kinojoMyInfoReferenceGrid">
+            <div class="kinojo-my-info-reference-preview-grid" id="kinojoMyInfoReferenceGrid" role="group" aria-labelledby="kinojoMyInfoReferenceTitle">
               <button class="kinojo-my-info-reference-slot" type="button" data-reference-slot="FRONT" aria-pressed="false" disabled><b>FRONT</b><span>정면</span><small data-reference-file-status>이미지 선택</small></button>
               <button class="kinojo-my-info-reference-slot" type="button" data-reference-slot="BACK" aria-pressed="false" disabled><b>BACK</b><span>후면</span><small data-reference-file-status>이미지 선택</small></button>
               <button class="kinojo-my-info-reference-slot" type="button" data-reference-slot="UPPER_BODY" aria-pressed="false" disabled><b>UPPER_BODY</b><span>얼굴이 잘 보이는 상반신</span><small data-reference-file-status>이미지 선택</small></button>
@@ -1904,7 +1931,7 @@
               <button class="kinojo-my-info-action-btn" id="kinojoMyInfoReferenceCancelBtn" type="button" hidden>편집 결과 취소</button>
               <button class="kinojo-my-info-action-btn is-danger" id="kinojoMyInfoReferenceDeleteBtn" type="button" hidden>등록 이미지 삭제</button>
             </div>
-            <div class="kinojo-my-info-reference-status" id="kinojoMyInfoReferenceStatus" data-state="info" aria-live="polite">캐릭터를 선택하면 슬롯별 이미지를 고를 수 있습니다.</div>
+            <div class="kinojo-my-info-reference-status" id="kinojoMyInfoReferenceStatus" data-state="info" role="status" aria-live="polite" aria-atomic="true">캐릭터를 선택하면 슬롯별 이미지를 고를 수 있습니다.</div>
           </section>
         </div>
       </div>`;
@@ -1913,11 +1940,12 @@
   async function openMyInfoModal(){
     const modal=q('#kinojoMyInfoModal');
     if(!modal||!window.KinojoAuth?.getSession?.())return;
+    if(!modal.classList.contains('open'))kinojoMyInfoFocusState.modalReturn=q('#kinojoMyInfoBtn')||(document.activeElement instanceof HTMLElement?document.activeElement:null);
     const token=myInfoSessionToken_();
     const requestId=++kinojoMyProfileUiState.openRequestId;
     await prepareMyInfoProfileModal_().catch(()=>null);
     if(requestId!==kinojoMyProfileUiState.openRequestId||!token||myInfoSessionToken_()!==token||!window.KinojoAuth?.getSession?.())return;
-    closeMyInfoPanel();
+    closeMyInfoPanel(false);
     const show=()=>{
       if(!window.KinojoAuth?.getSession?.())return;
       modal.classList.add('open');
@@ -1925,7 +1953,7 @@
       document.body.classList.add('kinojo-my-info-modal-open');
       const dialog=q('.kinojo-my-info-modal-dialog',modal);
       if(dialog)dialog.scrollTop=0;
-      requestAnimationFrame(()=>{try{dialog?.focus({preventScroll:true});}catch(_err){dialog?.focus();}});
+      focusMyInfoElement_(q('.kinojo-my-info-modal-close',modal)||dialog);
     };
     show();
     const loader=kinojoMyProfileUiState.imagePreloader;
@@ -1935,32 +1963,42 @@
         .finally(()=>{kinojoMyProfileUiState.imageBackgroundPromise=null;});
     }
   }
-  function closeMyInfoModal(){
+  function closeMyInfoModal(restoreFocus=true){
     const modal=q('#kinojoMyInfoModal');
+    const wasOpen=!!modal?.classList.contains('open');
+    const returnFocus=kinojoMyInfoFocusState.modalReturn;
     if(modal){modal.classList.remove('open');modal.setAttribute('aria-hidden','true');}
     window.KinojoMyInfoImageEditor?.close?.('parent-close');
     clearMyInfoProfilePreview_();
     resetMyInfoReferencePicker_(kinojoMyProfileUiState.selectedCharacterId);
     kinojoMyProfileUiState.openRequestId+=1;
     document.body.classList.remove('kinojo-my-info-modal-open');
+    kinojoMyInfoFocusState.modalReturn=null;
+    if(wasOpen&&restoreFocus)focusMyInfoElement_(returnFocus||q('#kinojoMyInfoBtn'));
   }
   function openMyInfoPanel(){
     const layer=q('#kinojoMyInfoLayer');
     const btn=q('#kinojoMyInfoBtn');
     if(!layer||!window.KinojoAuth?.getSession?.())return;
+    if(!layer.classList.contains('open'))kinojoMyInfoFocusState.panelReturn=document.activeElement instanceof HTMLElement?document.activeElement:btn;
     closeSideDrawer();
     layer.classList.add('open');
     layer.setAttribute('aria-hidden','false');
     document.body.classList.add('kinojo-my-info-open');
     if(btn)btn.setAttribute('aria-expanded','true');
+    focusMyInfoElement_(q('#kinojoMyInfoCloseBtn')||q('#kinojoMyInfoPanel'));
     loadMyInfoCharacters_().catch(()=>{});
   }
-  function closeMyInfoPanel(){
+  function closeMyInfoPanel(restoreFocus=true){
     const layer=q('#kinojoMyInfoLayer');
     const btn=q('#kinojoMyInfoBtn');
+    const wasOpen=!!layer?.classList.contains('open');
+    const returnFocus=kinojoMyInfoFocusState.panelReturn;
     if(layer){layer.classList.remove('open');layer.setAttribute('aria-hidden','true');}
     document.body.classList.remove('kinojo-my-info-open');
     if(btn)btn.setAttribute('aria-expanded','false');
+    kinojoMyInfoFocusState.panelReturn=null;
+    if(wasOpen&&restoreFocus)focusMyInfoElement_(returnFocus||btn);
   }
 
   function toggleAdminMenu(){
@@ -2192,6 +2230,8 @@
       if(e.target.closest('#kinojoMyInfoReferenceCancelBtn')){e.preventDefault();e.stopPropagation();clearMyInfoReferencePreview_(kinojoMyReferencePickerState.activeSlot,'편집 결과를 취소했습니다. 원본은 저장되거나 업로드되지 않았습니다.');return;}
       if(e.target.closest('#kinojoMyInfoReferenceDeleteBtn')){e.preventDefault();e.stopPropagation();deleteMyInfoReference_().catch(()=>{});return;}
     });
+    q('#kinojoMyInfoPanel')?.addEventListener('keydown',e=>trapMyInfoFocus_(e,e.currentTarget));
+    q('.kinojo-my-info-modal-dialog',q('#kinojoMyInfoModal'))?.addEventListener('keydown',e=>trapMyInfoFocus_(e,e.currentTarget));
     q('#kinojoMyInfoProfileFileInput')?.addEventListener('change',e=>{handleMyInfoProfileFile_(e.target?.files?.[0]||null).catch(()=>{});});
     q('#kinojoMyInfoReferenceFileInput')?.addEventListener('change',e=>{handleMyInfoReferenceFile_(e.target?.files?.[0]||null).catch(()=>{});});
     const referenceGrid=q('#kinojoMyInfoReferenceGrid');
