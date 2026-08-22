@@ -7,7 +7,7 @@
 - GitHub: `losnah513/aion2-updater-config`
 - 운영 브랜치: `main`
 - 내 정보 E-1 제품 운영 commit: `640b7eebcef1c13b0516fe2cd020df870bc23752` (PR `#194`)
-- 내 정보 후속 A-1~E-1: 11/12 완료
+- 내 정보 후속 A-1~E-2: 12/12 완료
 - 레기온 순위 통합 패널: PR `#164` 병합 완료
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 최신 일일 로그를 작업 규칙 원본으로 사용한다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
@@ -165,6 +165,15 @@
 - `tests/my-info-e1-harness.html`과 기존 편집기 harness로 `1280x900`, `390x844`, `320x800`, `844x390`을 확인했다. 문서·패널·모달의 가로 overflow는 `0`, 주요 조작부는 `44px` 이상이며, 3종 촬영 안내와 FRONT `800x1200 image/webp` 결과 생성을 재확인했다.
 - `tests/my-info-e1-accessibility.test.js`를 GitHub workflow에 추가했고 전체 Node 계약 `21/21`과 PR workflow 3종이 통과했다. Supabase Edge v20/API 2.7/DB375, SQL375, Storage 및 기존 Stage 1-8 계약은 변경하지 않았다.
 
+## E-2 배포 / live / Drive / Supabase 마감
+
+- 제품 운영 기준은 PR `#194`, commit `640b7eebcef1c13b0516fe2cd020df870bc23752`, merge commit `4b2901dfb9a4486c333729aeaaf9b3f6f1a99348`다. E-2에서 제품 코드와 Supabase 운영 구성을 변경하지 않았다.
+- 로컬 `main`과 `origin/main` 일치, 전체 Node 계약 `21/21`, GitHub Pages 배포 성공과 `kinojo/live-readback` 성공을 확인했다. 제품 merge SHA의 내 정보 관련 공개 파일 `25/25`가 `kinojo.info`의 Git blob과 일치한다.
+- 실서비스 harness에서 패널 Tab/Shift+Tab 순환, Escape 후 호출 버튼 초점 복귀, 3종 촬영 안내와 가이드 에셋, KINOJO 공통 슬라이더, 최소 `44px` 조작부, 가로 overflow `0`, FRONT `800x1200 image/webp` 결과를 재확인했다.
+- Google Drive `01_WEB/GitHub_Pages`의 E-1 변경 manifest는 병합 로컬 바이트와 크기·SHA-256이 `26/26` 일치한다.
+- Supabase `kinojo-production`은 `ACTIVE_HEALTHY`, Postgres `17.6.1.127`이다. `kinojo-member-profile` v20/API2.7/DB375 health, profile 공개/reference 비공개 5MiB 이미지 버킷, metadata/object 무결성, service-role 전용 이미지 RPC, 15분 cleanup cron, 활성 test-like 세션 `0`을 확인했다.
+- 내 정보 후속 A-1~E-2는 `12/12` 완료됐으며 남은 후속 작업은 없다.
+
 ## 성역 Fold 도구 / 포스 제외 후속
 
 - Fold 펼침 폭 `761~1180px`에서 성역 일정과 3개 요약 카드가 한 줄을 유지하도록 attached subbar 그리드를 재구성했다. `390px` 전화 폭에서는 기존 일정 축약 규칙을 유지한다.
@@ -188,4 +197,4 @@
 - 공통 회귀: `node tests/web-shell-auth-contract.test.js`
 - 레기온 순위 UI 회귀: `node tests/ranking-ui-contract.test.js`
 - GitHub workflow는 공통 슬라이더·이미지 편집기·안전 업로드·배치 bootstrap·프로필 이미지 preloader·가변 패널 너비·잘림 없는 반응형 배치·E-1 접근성 회귀의 구문 검사, 계약 테스트, Pages exact live readback을 포함한다.
-- 다음 작업은 **E-2 배포·live·Drive·Supabase 마감만** 진행한다.
+- 내 정보 후속 A-1~E-2는 모두 완료됐다. 다음 작업은 없다.
