@@ -3,6 +3,15 @@
 
   const selector='[data-kinojo-pc-banner]';
   const observed=new WeakSet();
+  const manifestBound=new WeakSet();
+  const targetLoads=new Map();
+  const runtimeScriptUrl=(()=>{
+    try{
+      const src=String(document.currentScript?.src||'').trim();
+      return src?new URL('kinojo-banner-runtime.js?cache=2026082301',src).href:'';
+    }catch(_error){return ''}
+  })();
+  let runtimePromise=null;
   const resizeObserver=typeof ResizeObserver==='function'
     ?new ResizeObserver(entries=>entries.forEach(entry=>update(entry.target)))
     :null;
@@ -13,6 +22,32 @@
 
   function text(value,max=300){
     return String(value??'').trim().slice(0,max);
+  }
+
+  function normalizePath(pathname){
+    let path=String(pathname||'/').trim().split(/[?#]/,1)[0]||'/';
+    if(!path.startsWith('/'))path='/'+path;
+    path=path.replace(/\/index\.html$/i,'/');
+    if(path!=='/'&&!path.endsWith('/'))path+='/';
+    return path.replace(/\/{2,}/g,'/');
+  }
+
+  function resolvePageCode(pathname=window.location?.pathname){
+    const path=normalizePath(pathname);
+    if(path==='/'||path==='/home.html/')return 'HOME';
+    if(path==='/hof/')return 'HOF';
+    if(path==='/ranking/')return 'RANKING';
+    if(path==='/legion-tree/')return 'LEGION_TREE';
+    if(path==='/meter/')return 'METER';
+    if(path==='/sanctuary/')return 'SANCTUARY';
+    if(path==='/sanctuary-schedule/')return 'SANCTUARY_SCHEDULE';
+    return '';
+  }
+
+  function resolveSlotCode(slot){
+    if(slot?.classList?.contains('is-left'))return 'LEFT';
+    if(slot?.classList?.contains('is-right'))return 'RIGHT';
+    return '';
   }
 
   function update(slot){
@@ -39,14 +74,10 @@
     }
   }
 
-  function attach(slot){
-    if(observed.has(slot)){
-      update(slot);
-      return;
-    }
+  function observe(slot){
+    if(!slot||observed.has(slot))return;
     observed.add(slot);
     resizeObserver?.observe(slot);
-    update(slot);
   }
 
   function clear(slot){
@@ -54,7 +85,8 @@
     slot.replaceChildren();
     slot.dataset.kinojoPcBannerState='empty';
     slot.setAttribute('aria-hidden','true');
-    attach(slot);
+    observe(slot);
+    update(slot);
     return true;
   }
 
@@ -83,15 +115,73 @@
     slot.replaceChildren(frame);
     slot.dataset.kinojoPcBannerState='rendered';
     slot.removeAttribute('aria-hidden');
-    attach(slot);
+    observe(slot);
+    update(slot);
     return true;
+  }
+
+  function ensureRuntime(){
+    const current=window.KinojoBannerRuntime;
+    if(current?.fetchManifest)return Promise.resolve(current);
+    if(runtimePromise)return runtimePromise;
+    runtimePromise=new Promise((resolve,reject)=>{
+      if(!runtimeScriptUrl){
+        reject(new Error('KINOJO Banner runtime URL을 확인할 수 없습니다.'));
+        return;
+      }
+      const script=document.createElement('script');
+      script.src=runtimeScriptUrl;
+      script.async=true;
+      script.dataset.kinojoBannerRuntimeLoader='pc-side';
+      script.onload=()=>{
+        const loaded=window.KinojoBannerRuntime;
+        if(loaded?.fetchManifest)resolve(loaded);
+        else reject(new Error('KINOJO Banner runtime이 준비되지 않았습니다.'));
+      };
+      script.onerror=()=>reject(new Error('KINOJO Banner runtime을 불러오지 못했습니다.'));
+      (document.head||document.documentElement).appendChild(script);
+    });
+    return runtimePromise;
+  }
+
+  function loadTarget(pageCode,slotCode){
+    const key=pageCode+':'+slotCode;
+    if(targetLoads.has(key))return targetLoads.get(key);
+    const load=ensureRuntime().then(runtime=>runtime.fetchManifest(pageCode,slotCode));
+    targetLoads.set(key,load);
+    return load;
+  }
+
+  function bindManifest(slot){
+    if(!slot||manifestBound.has(slot))return;
+    const pageCode=resolvePageCode();
+    const slotCode=resolveSlotCode(slot);
+    if(!pageCode||!slotCode)return;
+    manifestBound.add(slot);
+    slot.dataset.kinojoPcBannerTarget=pageCode+':'+slotCode;
+    loadTarget(pageCode,slotCode).then(manifest=>{
+      if(manifest?.active===true&&Array.isArray(manifest.playlist)&&manifest.playlist.length>0){
+        render(slot,manifest.playlist[0]);
+        return;
+      }
+      clear(slot);
+    }).catch(error=>{
+      clear(slot);
+      console.warn('[KINOJO BANNER] '+pageCode+':'+slotCode+' Manifest를 불러오지 못해 빈 사이드 슬롯을 유지합니다.',error);
+    });
+  }
+
+  function attach(slot){
+    observe(slot);
+    update(slot);
+    bindManifest(slot);
   }
 
   function refresh(){
     document.querySelectorAll(selector).forEach(attach);
   }
 
-  window.KinojoPcBanners=Object.freeze({refresh,render,clear});
+  window.KinojoPcBanners=Object.freeze({refresh,render,clear,resolvePageCode,resolveSlotCode});
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh,{once:true});
   else refresh();
   window.addEventListener('resize',refresh,{passive:true});
