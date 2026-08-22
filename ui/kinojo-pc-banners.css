@@ -6,6 +6,8 @@
 .kinojo-pc-banner-slot{
   display:none;
   box-sizing:border-box;
+  aspect-ratio:300/715;
+  overflow:hidden;
 }
 
 .kinojo-pc-banner-media,
@@ -16,11 +18,14 @@
 }
 
 .kinojo-pc-banner-media{
+  overflow:hidden;
+  border-radius:inherit;
   text-decoration:none;
 }
 
 .kinojo-pc-banner-image{
   object-fit:cover;
+  object-position:center;
 }
 
 @media (min-width:1840px){
@@ -40,6 +45,10 @@
     font-variant-numeric:tabular-nums;
     letter-spacing:.03em;
     box-shadow:none;
+  }
+
+  .kinojo-pc-banner-slot[data-kinojo-pc-banner-state="empty"]{
+    place-items:center;
   }
 
   .kinojo-pc-banner-slot[data-kinojo-pc-banner-state="rendered"]{
