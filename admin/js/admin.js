@@ -12,6 +12,7 @@
     'admin-notices.js',
     'admin-system.js',
     'admin-images.js',
+    'admin-side-banners.js',
     'admin-bootstrap.js'
   ];
   function loadScript(name){
