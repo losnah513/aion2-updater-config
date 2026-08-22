@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>KINOJO My Info E-1 accessibility harness</title>
+  <link rel="stylesheet" href="../ui/kinojo-common-ui.css">
+  <link rel="stylesheet" href="../ui/kinojo-public-shell.css">
+  <style>
+    body{margin:0;background:#edf3fb;color:#172033;font-family:Arial,"Noto Sans KR",sans-serif}
+    main{width:min(780px,calc(100% - 32px));margin:104px auto 72px;padding:22px;border:1px solid #cbd8e8;border-radius:18px;background:#fff;box-sizing:border-box}
+    h1{margin:0 0 8px;font-size:22px}.summary{margin:0 0 18px;color:#475569;font-size:13px;line-height:1.6}
+    .harness-actions{display:flex;flex-wrap:wrap;gap:10px}.harness-actions button,.harness-actions a{min-height:44px;padding:10px 14px;border:1px solid #94a3b8;border-radius:10px;background:#fff;color:#1e293b;font:800 13px/1.3 inherit;box-sizing:border-box}
+  </style>
+  <script>
+    (()=>{
+      const token='kws_'+'E'.repeat(44);
+      const characters=[
+        {characterId:101,serverId:1001,characterName:'접근성검증용아주긴캐릭터이름',className:'검성',isMain:true,displayItemLevel:3280,displayCombatPower:198765,displayStatBasis:'PVE',officialProfileImageUrl:''},
+        {characterId:102,serverId:1001,characterName:'보조캐릭터',className:'치유성',isMain:false,displayItemLevel:3010,displayCombatPower:176543,displayStatBasis:'PVE',officialProfileImageUrl:''}
+      ];
+      const characterResponse={ok:true,ownerResolved:true,displayStatBasis:'PVE',owner:{mainCharacterName:characters[0].characterName},characters};
+      const batchResponse={
+        ok:true,service:'kinojo-member-profile',apiVersion:'2.7',databaseContract:'375',authContract:'opaque-session-v1',characterListContract:'member-character-list-v1',characterAccessContract:'member-character-access-v1',batchBootstrapContract:'375',contract:'member-image-batch-bootstrap-api-v1',bootstrapTransport:'ONE_EDGE_REQUEST_ONE_RPC',member:{id:1},ownerResolved:true,owner:characterResponse.owner,characterCount:characters.length,imageStateCount:characters.length,
+        characters,
+        items:characters.map(character=>({characterId:character.characterId,isMain:character.isMain,mainCharacterId:101,character,profile:{effectiveProfileImageUrl:'',effectiveSource:'OFFICIAL',hasOverride:false},referenceState:{retentionDays:7,activeCount:0,references:[],logicalExpiry:'SERVER_FILTER_EXPIRES_AT_GT_NOW'}}))
+      };
+      window.KinojoAuth={getSession:()=>({token})};
+      window.KinojoSupabaseClientCore={invokeEdgeFunction:async(_name,payload)=>{
+        const action=String(payload?.action||'');
+        if(action==='characters')return characterResponse;
+        if(action==='batch-bootstrap')return batchResponse;
+        throw new Error('E1_HARNESS_UNEXPECTED_ACTION:'+action);
+      }};
+    })();
+  </script>
+</head>
+<body>
+  <main>
+    <h1>E-1 회귀 · 접근성 · 시각 검증</h1>
+    <p class="summary">실제 공통 내 정보 UI를 고정 캐릭터 응답으로 열어 키보드 포커스, 보조기기 이름, 모바일 잘림과 터치 영역을 검증합니다.</p>
+    <div class="harness-actions">
+      <button id="e1HarnessPanelTrigger" type="button">내 정보 패널 열기</button>
+      <a href="#after-harness" id="e1HarnessOutsideLink">바깥 포커스 대상</a>
+    </div>
+    <div id="after-harness" tabindex="-1"></div>
+  </main>
+  <script src="../ui/kinojo-common-ui.js?cache=2026082202"></script>
+  <script>
+    (()=>{
+      document.getElementById('e1HarnessPanelTrigger').addEventListener('click',()=>window.KinojoCommonUI.openMyInfoPanel());
+      document.addEventListener('focusin',event=>{document.documentElement.dataset.kinojoE1Focus=event.target?.id||event.target?.className||event.target?.tagName||'';});
+      requestAnimationFrame(()=>{document.documentElement.dataset.kinojoE1Harness='ready';});
+    })();
+  </script>
+</body>
+</html>

@@ -34,10 +34,12 @@ body.kinojo-my-info-open{overflow:hidden}
 .kinojo-my-info-panel>.kinojo-panel-head{flex:0 0 auto}
 .kinojo-my-info-panel>.kinojo-panel-body{flex:1 1 auto;min-height:0}
 @media(max-width:420px){.kinojo-my-info-panel{width:100%!important;border-left:0!important}}
-@media(prefers-reduced-motion:reduce){.kinojo-my-info-layer,.kinojo-my-info-panel{transition:none!important}}
+@media(prefers-reduced-motion:reduce){.kinojo-my-info-layer,.kinojo-my-info-panel,.kinojo-my-info-reference-slot,.kinojo-my-info-action-btn,.kinojo-my-info-modal-close{transition:none!important}.kinojo-my-info-body,.kinojo-my-info-modal-dialog{scroll-behavior:auto!important}}
 .kinojo-my-info-body{padding:14px!important;overflow-y:auto!important;overscroll-behavior:contain}
 .kinojo-my-info-menu-btn{appearance:none;width:100%;min-height:52px;padding:9px 11px;display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid rgba(122,146,180,.18);border-radius:12px;background:#fff;color:#334155;font-family:inherit;text-align:left;cursor:pointer}
 .kinojo-my-info-menu-btn>span{font-size:13px;font-weight:950}.kinojo-my-info-menu-btn>small{color:#64748b;font-size:9px;font-weight:850}.kinojo-my-info-menu-btn.is-active{border-color:rgba(37,99,235,.28);background:#eef5ff;color:#1d4ed8}
+.kinojo-my-info-menu-btn:focus-visible,.kinojo-my-info-panel .kinojo-panel-close:focus-visible,.kinojo-my-info-modal-close:focus-visible{outline:3px solid rgba(37,99,235,.42);outline-offset:2px}
+.kinojo-my-info-panel .kinojo-panel-close{min-width:44px;min-height:44px}
 .kinojo-my-info-view{display:none;margin-top:10px}.kinojo-my-info-view.is-active{display:block}
 .kinojo-my-info-characters{margin-top:16px;padding-top:14px;border-top:1px solid rgba(122,146,180,.16)}
 .kinojo-my-info-section-title{margin-bottom:8px;color:#17233a;font-size:12px;font-weight:1000}
@@ -88,7 +90,7 @@ body.kinojo-my-info-open{overflow:hidden}
 
 /* 20260819_12: 4-D profile file select/preview — local preview only, no upload */
 .kinojo-my-info-manager{min-width:0;display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
-.kinojo-my-info-manager-head{min-width:0;padding:2px 46px 2px 2px;display:grid;gap:5px;box-sizing:border-box}
+.kinojo-my-info-manager-head{min-width:0;padding:2px 54px 2px 2px;display:grid;gap:5px;box-sizing:border-box}
 .kinojo-my-info-manager-head>strong{color:#17233a;font-size:18px;font-weight:1000;line-height:1.2}
 .kinojo-my-info-manager-head>p{margin:0;color:#64748b;font-size:10px;line-height:1.55;font-weight:800}
 .kinojo-my-info-manager-badge{justify-self:start;padding:3px 7px;border-radius:999px;background:#eff6ff;color:#2563eb;font-size:8px;font-weight:1000;letter-spacing:.08em}
@@ -96,10 +98,10 @@ body.kinojo-my-info-open{overflow:hidden}
 .kinojo-my-info-manager-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px}
 .kinojo-my-info-manager-section-head>div{min-width:0;display:grid;gap:3px}.kinojo-my-info-manager-section-head strong{color:#17233a;font-size:13px;font-weight:1000}.kinojo-my-info-manager-section-head span,.kinojo-my-info-manager-section-head>small{min-width:0;color:#64748b;font-size:8px;font-weight:850;line-height:1.4;overflow-wrap:anywhere}.kinojo-my-info-manager-section-head>small{max-width:52%;text-align:right}
 .kinojo-my-info-profile-characters{display:flex;gap:7px;overflow-x:auto;padding:1px 1px 7px;scrollbar-width:thin;scrollbar-color:rgba(37,99,235,.3) transparent}
-.kinojo-my-info-profile-character-btn{appearance:none;flex:0 0 auto;min-width:112px;max-width:168px;display:grid;grid-template-columns:28px minmax(0,1fr);align-items:center;gap:7px;padding:7px 9px;border:1px solid rgba(122,146,180,.18);border-radius:11px;background:#f8fafc;color:#334155;font-family:inherit;text-align:left;cursor:pointer}
+.kinojo-my-info-profile-character-btn{appearance:none;flex:0 0 auto;min-width:112px;max-width:168px;min-height:44px;display:grid;grid-template-columns:28px minmax(0,1fr);align-items:center;gap:7px;padding:7px 9px;border:1px solid rgba(122,146,180,.18);border-radius:11px;background:#f8fafc;color:#334155;font-family:inherit;text-align:left;cursor:pointer}
 .kinojo-my-info-profile-character-btn>img,.kinojo-my-info-profile-character-btn>.is-empty{width:28px;height:28px;display:block;border-radius:8px;object-fit:contain;background:#fff}
 .kinojo-my-info-profile-character-btn>.is-empty{border:1px dashed rgba(122,146,180,.24);box-sizing:border-box}
-.kinojo-my-info-profile-character-btn>span{min-width:0;display:grid;gap:3px}.kinojo-my-info-profile-character-btn b{overflow:visible;text-overflow:clip;white-space:normal;overflow-wrap:anywhere;font-size:10px;font-weight:950;line-height:1.25}.kinojo-my-info-profile-character-btn small{overflow-wrap:anywhere;font-size:7px;font-weight:900;color:#94a3b8}
+.kinojo-my-info-profile-character-btn>span{min-width:0;display:grid;gap:3px}.kinojo-my-info-profile-character-btn b{overflow:visible;text-overflow:clip;white-space:normal;overflow-wrap:anywhere;font-size:10px;font-weight:950;line-height:1.25}.kinojo-my-info-profile-character-btn small{overflow-wrap:anywhere;font-size:7px;font-weight:900;color:#64748b}
 .kinojo-my-info-profile-character-btn.is-selected{border-color:rgba(37,99,235,.38);background:#eef5ff;color:#1d4ed8;box-shadow:0 0 0 1px rgba(37,99,235,.08)}
 .kinojo-my-info-profile-character-btn.is-selected small{color:#2563eb}.kinojo-my-info-profile-character-btn:focus-visible{outline:2px solid rgba(37,99,235,.38);outline-offset:2px}
 .kinojo-my-info-profile-character-btn.is-image-loading small{color:#64748b}.kinojo-my-info-profile-character-btn.is-image-loading>img{opacity:.62}
@@ -108,13 +110,13 @@ body.kinojo-my-info-open{overflow:hidden}
 .kinojo-my-info-profile-images{margin-top:7px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
 .kinojo-my-info-profile-card{min-width:0;display:grid;grid-template-columns:88px minmax(0,1fr);align-items:center;gap:11px;padding:10px;border:1px solid rgba(122,146,180,.16);border-radius:13px;background:linear-gradient(135deg,#fbfdff,#f8fafc)}
 .kinojo-my-info-profile-card.is-candidate{border-color:rgba(37,99,235,.24);background:linear-gradient(135deg,#f7fbff,#fff)}
-.kinojo-my-info-profile-image-frame{width:88px;height:88px;display:grid;place-items:center;overflow:hidden;border:1px solid rgba(122,146,180,.18);border-radius:12px;background:linear-gradient(135deg,#eef2f7,#f8fafc);color:#94a3b8;font-size:8px;font-weight:900}
+.kinojo-my-info-profile-image-frame{width:88px;height:88px;display:grid;place-items:center;overflow:hidden;border:1px solid rgba(122,146,180,.18);border-radius:12px;background:linear-gradient(135deg,#eef2f7,#f8fafc);color:#64748b;font-size:8px;font-weight:900}
 .kinojo-my-info-profile-image-frame img{width:100%;height:100%;display:block;object-fit:cover;background:#f8fafc}
 .kinojo-my-info-manager [hidden]{display:none!important}
 .kinojo-my-info-profile-card-copy{min-width:0;display:grid;gap:5px}.kinojo-my-info-profile-card-copy small{color:#64748b;font-size:7px;font-weight:900;overflow-wrap:anywhere}.kinojo-my-info-profile-card-copy strong{overflow:visible;text-overflow:clip;white-space:normal;overflow-wrap:anywhere;color:#17233a;font-size:11px;font-weight:1000;line-height:1.3}.kinojo-my-info-profile-card-copy span{color:#64748b;font-size:8px;line-height:1.45;font-weight:800;overflow-wrap:anywhere}
 #kinojoMyInfoProfileCurrentSource[data-source="USER_OVERRIDE"]{color:#2563eb}
 .kinojo-my-info-profile-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.kinojo-my-info-action-btn{appearance:none;min-width:0;max-width:100%;min-height:34px;padding:8px 12px;border:1px solid rgba(122,146,180,.2);border-radius:9px;background:#fff;color:#475569;font-family:inherit;font-size:9px;font-weight:950;line-height:1.35;white-space:normal;overflow-wrap:anywhere;cursor:pointer}
+.kinojo-my-info-action-btn{appearance:none;min-width:0;max-width:100%;min-height:44px;padding:9px 12px;border:1px solid rgba(122,146,180,.2);border-radius:9px;background:#fff;color:#475569;font-family:inherit;font-size:9px;font-weight:950;line-height:1.35;white-space:normal;overflow-wrap:anywhere;cursor:pointer}
 .kinojo-my-info-action-btn.is-primary{border-color:#2563eb;background:#2563eb;color:#fff}.kinojo-my-info-action-btn:hover:not(:disabled){filter:brightness(.98)}.kinojo-my-info-action-btn:focus-visible{outline:2px solid rgba(37,99,235,.38);outline-offset:2px}.kinojo-my-info-action-btn:disabled{cursor:not-allowed;opacity:.45;filter:none}
 .kinojo-my-info-profile-status{margin-top:9px;padding:8px 10px;border-radius:9px;background:#f8fafc;color:#64748b;font-size:8px;font-weight:850;line-height:1.45;overflow-wrap:anywhere}
 .kinojo-my-info-profile-status[data-state="error"]{background:#fff1f2;color:#be123c}.kinojo-my-info-profile-status[data-state="preview"]{background:#eff6ff;color:#1d4ed8}.kinojo-my-info-profile-status[data-state="ready"]{background:#f0fdf4;color:#15803d}.kinojo-my-info-profile-status[data-state="loading"]{background:#f8fafc;color:#64748b}
@@ -187,13 +189,13 @@ body.kinojo-my-info-modal-open{overflow:hidden}
   box-sizing:border-box;
   outline:none;
 }
-.kinojo-my-info-modal-close{position:absolute;top:14px;right:14px;width:34px;height:34px;border:0;border-radius:999px;background:rgba(15,23,42,.07);color:#334155;font-size:22px;line-height:1;cursor:pointer;display:grid;place-items:center;z-index:5}
+.kinojo-my-info-modal-close{position:absolute;top:12px;right:12px;width:44px;height:44px;border:0;border-radius:999px;background:rgba(15,23,42,.07);color:#334155;font-size:22px;line-height:1;cursor:pointer;display:grid;place-items:center;z-index:5}
 .kinojo-my-info-modal-close:hover{background:rgba(15,23,42,.12)}
 .kinojo-my-info-modal .kinojo-my-info-manager{margin:0;padding-top:2px}
 @media(max-width:640px){
   .kinojo-my-info-modal{padding:12px}
   .kinojo-my-info-modal-dialog{width:min(430px,calc(100vw - 24px));max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);padding:20px;border-radius:22px}
-  .kinojo-my-info-modal-close{top:11px;right:11px;width:32px;height:32px;font-size:20px}
+  .kinojo-my-info-modal-close{top:10px;right:10px;width:44px;height:44px;font-size:20px}
 }
 @media(max-width:370px){.kinojo-my-info-modal-dialog{padding:18px 16px}}
 
@@ -278,8 +280,8 @@ body.kinojo-page-mobile .kinojo-my-info-modal-dialog{
   .kinojo-my-info-modal-close{
     top:10px;
     right:10px;
-    width:38px;
-    height:38px;
+    width:44px;
+    height:44px;
     font-size:21px;
   }
   .kinojo-my-info-modal-dialog::-webkit-scrollbar-track{margin-block:14px}
@@ -296,7 +298,7 @@ body.kinojo-page-mobile .kinojo-my-info-modal-dialog{
 }
 @media(max-width:360px){
   .kinojo-my-info-modal-dialog{padding:16px 12px 18px}
-  .kinojo-my-info-modal-close{width:36px;height:36px}
+  .kinojo-my-info-modal-close{width:44px;height:44px}
 }
 @media(max-width:760px) and (max-height:560px){
   .kinojo-my-info-modal{
@@ -400,8 +402,8 @@ body.kinojo-image-editor-open{overflow:hidden}
   .kinojo-image-editor{align-items:end;padding:0}
   .kinojo-image-editor__dialog{width:100%;max-height:100vh;max-height:100dvh;border-radius:22px 22px 0 0}
   .kinojo-image-editor__header{padding:max(14px,env(safe-area-inset-top,0px)) 16px 12px}
-  .kinojo-image-editor__body{grid-template-columns:1fr}
-  .kinojo-image-editor__workspace{min-height:0;padding:16px}
+  .kinojo-image-editor__body{grid-template-columns:1fr;grid-template-rows:max-content max-content}
+  .kinojo-image-editor__workspace{min-height:calc(48vh + 64px);padding:16px;box-sizing:border-box}
   .kinojo-image-editor__frame{width:auto;height:min(48vh,450px);max-width:100%;max-height:48vh}
   .kinojo-image-editor__panel{gap:5px;padding:14px 16px}
   .kinojo-image-editor__capture{margin-bottom:2px;padding:11px}
@@ -412,11 +414,12 @@ body.kinojo-image-editor-open{overflow:hidden}
 @media(max-width:420px){
   .kinojo-image-guide-card{grid-template-columns:64px minmax(0,1fr);padding:10px}
   .kinojo-image-editor__header h2{font-size:18px}
-  .kinojo-image-editor__workspace{padding:12px}
+  .kinojo-image-editor__workspace{min-height:calc(42vh + 56px);padding:12px}
   .kinojo-image-editor__frame{height:min(42vh,390px)}
   .kinojo-image-editor__drag-hint{margin-top:8px}
 }
 @media(max-height:640px) and (max-width:760px){
+  .kinojo-image-editor__workspace{min-height:calc(34vh + 56px)}
   .kinojo-image-editor__frame{height:34vh}
   .kinojo-image-editor__capture small{display:none}
 }
@@ -424,6 +427,9 @@ body.kinojo-image-editor-open{overflow:hidden}
   .kinojo-image-editor__source,.kinojo-image-editor__dialog,.kinojo-image-editor__button{scroll-behavior:auto;transition:none!important}
 }
 @media(forced-colors:active){
+  .kinojo-my-info-panel,.kinojo-my-info-modal-dialog,.kinojo-my-info-menu-btn,.kinojo-my-info-character-row,.kinojo-my-info-profile-section,.kinojo-my-info-reference-preview,.kinojo-my-info-profile-character-btn,.kinojo-my-info-reference-slot,.kinojo-my-info-action-btn{border:2px solid CanvasText}
+  .kinojo-my-info-profile-character-btn.is-selected,.kinojo-my-info-reference-slot.is-selected{outline:3px solid Highlight;outline-offset:2px}
+  .kinojo-my-info-action-btn.is-primary,.kinojo-my-info-action-btn.is-danger{border:2px solid ButtonText;background:ButtonFace;color:ButtonText;forced-color-adjust:none}
   .kinojo-image-editor__backdrop{background:Canvas}
   .kinojo-image-editor__dialog,.kinojo-image-editor__frame,.kinojo-image-editor__capture,.kinojo-image-editor__quality,.kinojo-image-guide-card{border:2px solid CanvasText}
   .kinojo-image-editor__button--primary,.kinojo-image-guide-card__action{border:2px solid ButtonText;background:ButtonFace;color:ButtonText;forced-color-adjust:none}
