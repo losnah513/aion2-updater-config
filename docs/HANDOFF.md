@@ -6,8 +6,8 @@
 
 - GitHub: `losnah513/aion2-updater-config`
 - 운영 브랜치: `main`
-- 내 정보 D-2 제품 운영 commit: `b7132f365e4b49cae8b5f84cbb1e609571de1920` (PR `#192`)
-- 내 정보 후속 A-1~D-2: 10/12 완료
+- 내 정보 E-1 제품 운영 commit: `640b7eebcef1c13b0516fe2cd020df870bc23752` (PR `#194`)
+- 내 정보 후속 A-1~E-1: 11/12 완료
 - 레기온 순위 통합 패널: PR `#164` 병합 완료
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 최신 일일 로그를 작업 규칙 원본으로 사용한다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
@@ -156,6 +156,15 @@
 - 캐릭터 선택 띠의 의도된 가로 스크롤과 모달의 세로 스크롤은 유지한다. 실제 브라우저 `1280px` PC, `390x844`, `320x800`, `844x390`에서 문서와 모달의 가로 overflow `0`을 확인했다.
 - `tests/my-info-responsive-layout.test.js`와 PR workflow 3종이 통과했다. Supabase Edge v20/API 2.7/DB375, SQL375, Storage 및 기존 Stage 1-8 계약은 변경하지 않았다.
 
+## E-1 회귀 / 접근성 / 시각 검증
+
+- E-1은 PR `#194`, 운영 commit `640b7eebcef1c13b0516fe2cd020df870bc23752`로 반영됐다.
+- 우측 내 정보 패널과 중앙 이미지 관리 모달은 열릴 때 닫기 버튼으로 초점을 옮기고, Tab/Shift+Tab을 내부에서 순환하며, Escape·닫기 뒤에는 호출 버튼으로 초점을 돌려준다.
+- 패널·모달의 대화상자 이름과 설명, 비동기 상태 영역, 참고 이미지 3종 그룹 이름을 보조기기에 노출한다. 닫기·캐릭터 선택·업로드 계열 조작부는 최소 `44px`, 보조 문구는 AA 대비를 유지하고 forced colors·reduced motion 규칙을 제공한다.
+- 실제 시각 검증에서 계산값 안에 있던 긴 캐릭터명의 잔여 말줄임을 감지해 stacked 배치로 전환하고, 모바일 이미지 편집기의 프레임이 축소된 grid row 밖으로 잘리던 문제를 별도 스크롤 행으로 수정했다.
+- `tests/my-info-e1-harness.html`과 기존 편집기 harness로 `1280x900`, `390x844`, `320x800`, `844x390`을 확인했다. 문서·패널·모달의 가로 overflow는 `0`, 주요 조작부는 `44px` 이상이며, 3종 촬영 안내와 FRONT `800x1200 image/webp` 결과 생성을 재확인했다.
+- `tests/my-info-e1-accessibility.test.js`를 GitHub workflow에 추가했고 전체 Node 계약 `21/21`과 PR workflow 3종이 통과했다. Supabase Edge v20/API 2.7/DB375, SQL375, Storage 및 기존 Stage 1-8 계약은 변경하지 않았다.
+
 ## 성역 Fold 도구 / 포스 제외 후속
 
 - Fold 펼침 폭 `761~1180px`에서 성역 일정과 3개 요약 카드가 한 줄을 유지하도록 attached subbar 그리드를 재구성했다. `390px` 전화 폭에서는 기존 일정 축약 규칙을 유지한다.
@@ -174,8 +183,9 @@
 - 프로필 이미지 선로딩 검증: `node tests/my-info-image-preloader.test.js`
 - 가변 패널 너비 검증: `node tests/my-info-panel-width.test.js`
 - 잘림 없는 반응형 배치 검증: `node tests/my-info-responsive-layout.test.js`
+- 회귀·접근성·시각 계약 검증: `node tests/my-info-e1-accessibility.test.js`
 - 성역 이전 회귀: `node tests/sanctuary-roster-quick-edit-contract.test.js`
 - 공통 회귀: `node tests/web-shell-auth-contract.test.js`
 - 레기온 순위 UI 회귀: `node tests/ranking-ui-contract.test.js`
-- GitHub workflow는 공통 슬라이더·이미지 편집기·안전 업로드·배치 bootstrap·프로필 이미지 preloader·가변 패널 너비·잘림 없는 반응형 배치의 구문 검사, 계약 테스트, Pages exact live readback을 포함한다.
-- 다음 작업은 **E-1 회귀·접근성·시각 검증만** 진행한다.
+- GitHub workflow는 공통 슬라이더·이미지 편집기·안전 업로드·배치 bootstrap·프로필 이미지 preloader·가변 패널 너비·잘림 없는 반응형 배치·E-1 접근성 회귀의 구문 검사, 계약 테스트, Pages exact live readback을 포함한다.
+- 다음 작업은 **E-2 배포·live·Drive·Supabase 마감만** 진행한다.
