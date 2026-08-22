@@ -54,11 +54,14 @@ assert.ok(css.includes('width:var(--hof-board-size)!important') && css.includes(
 assert.ok(css.includes('grid-template-columns:repeat(10,minmax(0,1fr))!important'), 'Desktop HOF board must use ten equal columns');
 assert.ok(css.includes('grid-template-rows:repeat(4,minmax(0,1fr))!important'), 'Desktop HOF board must use four equal rows');
 assert.match(css,/hof-v2-board\{[\s\S]*?gap:0!important;[\s\S]*?padding:0!important;/, 'Positive board gaps would break the square board');
+assert.match(css,/@media \(min-width:761px\)\{[\s\S]*?hof-v2-area\{\s*padding:2\.5px!important;/, 'Each desktop grid area must inset by 2.5px so adjacent cards have a visible 5px separation');
+assert.match(css,/hof-v2-area \.hof-v2-panel\{\s*border:1px solid var\(--hof-line\)!important;\s*border-radius:4px!important;/, 'Desktop area cards must use a visible border and only slightly rounded corners');
+assert.match(css,/hof-v2-board\{[\s\S]*?border-radius:4px!important;/, 'The six-card square outer frame must use only slightly rounded corners');
 assert.equal(css.includes('100dvh'),false,'Dynamic viewport height would resize the board while scrolling');
 assert.ok(css.includes('grid-template-columns:max-content minmax(280px,300px)!important'), 'Desktop personal ranking must stay within 280–300px');
 assert.ok(css.includes('width:300px!important') && css.includes('max-width:300px!important'), 'Personal ranking must not expand with unused width');
 assert.match(css,/@media \(min-width:761px\) and \(max-width:1180px\)\{[\s\S]*?--hof-my-rank-width:clamp\(140px,16vw,150px\);[\s\S]*?grid-template-columns:max-content var\(--hof-my-rank-width\)!important;/, 'Fold portrait and landscape must keep the half-width My Rank card on the right');
-assert.ok(css.includes('calc(100vw - var(--hof-my-rank-width) - 46px)'), 'Fold landscape board must reserve wrap padding and the My Rank gap');
+assert.ok(css.includes('calc(100vw - var(--hof-my-rank-width) - 62px)'), 'Fold landscape board must reserve wrap padding, My Rank gap, and scrollbar width');
 assert.equal(css.includes('grid-template-columns:minmax(0,2fr) minmax(340px,1fr)!important'), false, 'Obsolete flexible 2:1 outer split remains');
 assert.match(css,/"meter meter"\s*"pve pve"\s*"pvp pvp"\s*"enhance growth"\s*"ranking-link-card ranking-link-card"/, 'Mobile DPS/PVE/PVP/God-pair/ranking order is missing');
 assert.ok(css.includes('aspect-ratio:3/5!important'), 'Mobile God cards must share the 3:5 portrait ratio');
@@ -81,6 +84,8 @@ assert.match(css,/hof-v2-top3-aside\{\s*grid-column:3!important;\s*grid-row:1!im
 assert.match(css,/hof-v2-power-portrait\{\s*grid-column:4!important;\s*grid-row:1!important;/, 'TOP3 profile must finish the same centered row');
 assert.match(render,/hof-v2-top3-name[^\n]*hof-v2-top3-server[^\n]*hof-v2-owner-slot[^\n]*hofOwnerBadge\(item\)/, 'Name, [server], and main/sub badge must stay together');
 assert.match(css,/hof-v2-power-class-slot \.hof-v2-class-icon\{[\s\S]*?width:32px!important;[\s\S]*?border:0!important;[\s\S]*?border-radius:0!important;[\s\S]*?background:transparent!important;/, 'TOP3 class icon must use its raw shape without a circular badge');
+assert.match(css,/@media \(max-width:760px\)\{[\s\S]*?hof-v2-power-class-slot \.hof-v2-class-icon\{[\s\S]*?width:clamp\(16px,5\.2vw,30px\)!important;/, 'Narrow-mobile TOP3 class icons must scale within each row instead of being clipped');
+assert.match(css,/@media \(max-width:760px\)\{[\s\S]*?hof-v2-top3-info,[\s\S]*?hof-v2-top3-aside\{\s*padding:0!important;/, 'Narrow-mobile TOP3 identity and score content must not exceed its row with vertical padding');
 assert.match(css,/hof-v2-god-class\{\s*grid-column:1!important;/, 'God-card class icon must occupy the left edge');
 assert.match(css,/hof-v2-god-class \.hof-v2-class-icon\{[\s\S]*?width:clamp\(48px,5vw,64px\)!important;[\s\S]*?max-height:64px!important;/, 'God-card class icon must remain visible and smaller than its profile portrait');
 assert.ok(css.includes('border-top:1px solid rgba(22,34,58,.14)!important'), 'Single TOP3 row divider is missing');
@@ -94,13 +99,22 @@ assert.equal(myRankingRender.includes('hof-v2-title-icon'), false, 'My Ranking t
 assert.equal(myRankingRender.includes('scopeLabel'), false, 'My Ranking scope subtitle must be removed');
 assert.equal(myRankingRender.includes('hof-v2-my-current-grid'), false, 'My Ranking must use one unified single-row list');
 assert.ok(myRankingRender.includes("'<div class=\"hof-v2-my-profile\">'+hofRankPortrait(item,0,'my')+'<strong>'"), 'My Ranking profile block must contain only the rectangular profile and name');
+assert.ok(myRankingRender.includes("const metrics=['pve','pvp','enhance','growth']"), 'My Ranking must retain only PVE, PVP, Enhance God, and Growth God');
+assert.equal(myRankingRender.includes("['좋아요','like']"), false, 'Retired Like row must be removed from My Ranking');
+assert.equal(myRankingRender.includes("['싫어요','dislike']"), false, 'Retired Dislike row must be removed from My Ranking');
+assert.ok(myRankingRender.includes('hof-v2-my-mode-badge'), 'My Ranking PVE/PVP labels must use colored badges');
+assert.ok(myRankingRender.includes('hof-v2-my-stats'), 'My Ranking must visually separate combat power and item level');
+assert.ok(myRankingRender.includes('>전투력</dt>') && myRankingRender.includes('>아이템레벨</dt>'), 'My Ranking stat labels must remain clearly visible');
+assert.ok(myRankingRender.includes("hofMetricIconHtml(metric)"), 'Enhance/Growth rows must use their official metric artwork');
 assert.match(css,/hof-v2-my-profile \.hof-v2-portrait\.my\{[\s\S]*?border-radius:4px!important;/, 'My Ranking profile must not be cropped into a circle');
-assert.match(css,/hof-v2-my-row\{[\s\S]*?flex-wrap:nowrap!important;[\s\S]*?align-items:center!important;/, 'My Ranking information must use one vertically centered line per item');
+assert.match(css,/hof-v2-my-profile\{[\s\S]*?min-height:150px!important;[\s\S]*?flex-direction:column!important;/, 'My Ranking profile area must be taller and place the name below the centered portrait');
+assert.match(css,/hof-v2-my-profile \.hof-identity-portrait\{[\s\S]*?width:94px!important;[\s\S]*?height:94px!important;/, 'My Ranking desktop portrait must grow with the taller profile area');
+assert.match(css,/hof-v2-my-god-row\{[\s\S]*?grid-template-columns:30px minmax\(0,1fr\) auto!important;/, 'Enhance/Growth icon, label, and score must stay aligned');
 
 for (const entry of ['hof/index.html', 'm/hof/index.html']) {
   const html = read(entry);
-  assert.ok(html.includes('hall.css?cache=2026082109'), `${entry}: Hall CSS cache key was not updated`);
-  assert.ok(html.includes('hall-render.js?cache=2026082105'), `${entry}: Hall render cache key was not updated`);
+  assert.ok(html.includes('hall.css?cache=2026082206'), `${entry}: Hall CSS cache key was not updated`);
+  assert.ok(html.includes('hall-render.js?cache=2026082202'), `${entry}: Hall render cache key was not updated`);
 }
 
 console.log('KINOJO Hall of Fame reference layout contract: PASS');
