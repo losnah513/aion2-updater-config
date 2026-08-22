@@ -1,4 +1,4 @@
-/* PC-only empty banner slots. The Admin image source is intentionally not connected yet. */
+/* PC-only 300×715 banner slots. Manifest target mapping is connected separately. */
 .kinojo-pc-banner-host{
   position:relative;
 }
@@ -6,6 +6,21 @@
 .kinojo-pc-banner-slot{
   display:none;
   box-sizing:border-box;
+}
+
+.kinojo-pc-banner-media,
+.kinojo-pc-banner-image{
+  display:block;
+  width:100%;
+  height:100%;
+}
+
+.kinojo-pc-banner-media{
+  text-decoration:none;
+}
+
+.kinojo-pc-banner-image{
+  object-fit:cover;
 }
 
 @media (min-width:1840px){
@@ -25,6 +40,10 @@
     font-variant-numeric:tabular-nums;
     letter-spacing:.03em;
     box-shadow:none;
+  }
+
+  .kinojo-pc-banner-slot[data-kinojo-pc-banner-state="rendered"]{
+    place-items:stretch;
   }
 
   .kinojo-pc-banner-slot.is-left{
