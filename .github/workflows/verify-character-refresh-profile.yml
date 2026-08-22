@@ -6,6 +6,7 @@ on:
     paths:
       - 'admin/index.html'
       - 'm/admin/index.html'
+      - 'admin/css/admin.css'
       - 'admin/js/admin.js'
       - 'admin/js/admin-members.js'
       - 'admin/js/admin-member-image-download.js'
@@ -16,6 +17,7 @@ on:
     paths:
       - 'admin/index.html'
       - 'm/admin/index.html'
+      - 'admin/css/admin.css'
       - 'admin/js/admin.js'
       - 'admin/js/admin-members.js'
       - 'admin/js/admin-member-image-download.js'
@@ -60,7 +62,7 @@ jobs:
                   count = text.count(f'id="{item_id}"')
                   if count != 1:
                       raise SystemExit(f'{page}: {item_id} count={count}')
-              if 'admin.js?cache=2026082201' not in text:
+              if 'admin.js?cache=2026082202' not in text:
                   raise SystemExit(f'{page}: stale admin cache')
           source = Path('admin/js/admin-characters.js').read_text(encoding='utf-8')
           for token in [
@@ -76,7 +78,7 @@ jobs:
           members = Path('admin/js/admin-members.js').read_text(encoding='utf-8')
           for token in [
               'function memberImageSessionToken_()',
-              'function renderMemberImageGroups_(data)',
+              'function renderMemberImageGroups_(data,selectedCharacterId',
               'function showAdminImagePreview_(button)',
               "action:'admin-image-preview'",
               'SIGNED_PREVIEW_URL_ONLY_NO_OBJECT_PATH',
@@ -92,6 +94,9 @@ jobs:
               'function openMemberImageModal(target)',
               'data-member-image-modal-close',
               'data-member-image-view',
+              'data-admin-image-character-select',
+              'data-admin-member-image-detail',
+              'function selectMemberImageCharacter_(characterId)',
               '캐릭터 이미지 상태를 불러오는 중입니다.',
           ]:
               if token not in members:
@@ -99,6 +104,16 @@ jobs:
           for forbidden in ['objectPath','signedUrl','signedURL','uploadUrl']:
               if forbidden in members:
                   raise SystemExit(f'admin member image client leaked private storage field {forbidden}')
+          admin_css = Path('admin/css/admin.css').read_text(encoding='utf-8')
+          for token in [
+              '#adminMemberImageModal .admin-event-preview-panel',
+              '#adminMemberImageModal .admin-event-preview-head',
+              '#adminMemberImageModal .admin-event-preview-body',
+              '.admin-member-image-character-selector',
+              'body.admin-member-image-modal-open{overflow:hidden}',
+          ]:
+              if token not in admin_css:
+                  raise SystemExit(f'admin member image modal CSS missing {token}')
           download = Path('admin/js/admin-member-image-download.js').read_text(encoding='utf-8')
           for token in [
               'kinojo-member-image-download',
@@ -115,7 +130,7 @@ jobs:
               if forbidden in download:
                   raise SystemExit(f'admin member image download leaked forbidden field {forbidden}')
           loader = Path('admin/js/admin.js').read_text(encoding='utf-8')
-          if 'v2026082201' not in loader or "name+'?cache=2026082201'" not in loader or "'admin-member-image-download.js'" not in loader:
+          if 'v2026082202' not in loader or "name+'?cache=2026082202'" not in loader or "'admin-member-image-download.js'" not in loader:
               raise SystemExit('admin loader/download module contract missing')
           print('Character refresh profile source contracts: PASS')
           PY
@@ -134,7 +149,7 @@ jobs:
           set -euo pipefail
           tmp_dir="$(mktemp -d)"
           trap 'rm -rf "$tmp_dir"' EXIT
-          files=(admin/index.html m/admin/index.html admin/js/admin.js admin/js/admin-members.js admin/js/admin-member-image-download.js admin/js/admin-characters.js)
+          files=(admin/index.html m/admin/index.html admin/css/admin.css admin/js/admin.js admin/js/admin-members.js admin/js/admin-member-image-download.js admin/js/admin-characters.js)
           verify_key="${GITHUB_SHA:0:12}-$(date -u +%s)"
           for attempt in $(seq 1 15); do
             mismatch=0
