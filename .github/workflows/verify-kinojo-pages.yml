@@ -113,6 +113,8 @@ jobs:
             "sanctuary/js/sanctuary.js"
             "sanctuary/js/sanctuary-editor.js"
             "sanctuary-schedule/js/sanctuary-schedule.js"
+            "admin/js/admin-members.js"
+            "admin/js/admin.js"
             "admin/js/admin-system.js"
             "admin/js/admin-bootstrap.js"
             "meter/js/meter-app.js"
@@ -139,6 +141,7 @@ jobs:
           node tests/my-info-panel-width.test.js
           node tests/my-info-responsive-layout.test.js
           node tests/my-info-e1-accessibility.test.js
+          node tests/my-info-admin-image-layout-contract.test.js
           node tests/kinojo-range-control.test.js
           node tests/sanctuary-roster-quick-edit-contract.test.js
           node tests/sanctuary-waitlist-contract.test.js
@@ -468,6 +471,7 @@ jobs:
             "admin/index.html"
             "m/admin/index.html"
             "admin/js/admin.js"
+            "admin/js/admin-members.js"
             "admin/js/admin-system.js"
             "admin/js/admin-shared.js"
             "admin/js/admin-characters.js"
