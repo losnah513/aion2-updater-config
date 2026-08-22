@@ -15,13 +15,16 @@
 <link href="../ui/kinojo-layout.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../ui/kinojo-components.css?cache=2026072201" rel="stylesheet"/>
 <link href="../ui/kinojo-common-ui.css?cache=2026081205" rel="stylesheet"/>
-<link href="../ui/kinojo-public-shell.css?cache=2026081202" rel="stylesheet"/>
+  <link href="../ui/kinojo-public-shell.css?cache=2026081202" rel="stylesheet"/>
+  <link href="../ui/kinojo-pc-banners.css?cache=2026082202" rel="stylesheet"/>
 <link href="../ui/kinojo-staged-loading.css?cache=2026081502" rel="stylesheet"/>
 <link href="../meter/css/meter.css?cache=2026081502" rel="stylesheet"/>
 <script src="../ui/kinojo-device-router.js?cache=2026072201" data-mobile-path="../m/meter/"></script>
 </head>
 <body class="kinojo-meter-page kinojo-page-booting">
-<main class="meter-wrap">
+<main class="meter-wrap kinojo-pc-banner-host">
+  <aside class="kinojo-pc-banner-slot is-left" data-kinojo-pc-banner aria-hidden="true"></aside>
+  <aside class="kinojo-pc-banner-slot is-right" data-kinojo-pc-banner aria-hidden="true"></aside>
   <section class="meter-hero">
     <div class="meter-hero-copy">
       <div class="meter-kicker"><span>KINOJO</span> METER · TEST</div>
@@ -240,6 +243,7 @@
 <script src="../core/kinojo-auth-session.js?cache=2026081801"></script>
 <script src="../core/kinojo-auth-service.js?cache=2026081801"></script>
 <script src="../core/kinojo-auth-ui.js?cache=2026081801"></script>
+<script src="../ui/kinojo-pc-banners.js?cache=2026082201"></script>
 <script src="./js/meter-app.js?cache=2026081502-50040&auth=2026081801"></script>
 </body>
 </html>

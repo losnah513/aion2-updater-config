@@ -336,7 +336,8 @@ function hofV2Layout(){
   const s=hallData?.summarySections||{};
   const pveList=s.pveTop||s.pveTop3||hallData?.pveTop||hallData?.pveTop3||[];
   const pvpList=s.pvpTop||s.pvpTop3||hallData?.pvpTop||hallData?.pvpTop3||[];
-  return '<div class="hof-v2-layout">'
+  return '<div class="hof-v2-layout kinojo-pc-banner-host">'
+    + '<aside class="kinojo-pc-banner-slot is-left" data-kinojo-pc-banner aria-hidden="true"></aside>'
     + '<div class="hof-v2-board">'
     + '<div class="hof-v2-area hof-v2-area-meter">'+hofMeterDpsPanel()+'</div>'
     + '<div class="hof-v2-area hof-v2-area-pve">'+hofWidePanel('PVE 랭킹','PVE TOP 3',pveList,'pve')+'</div>'
@@ -351,7 +352,7 @@ function hofV2Layout(){
 function hofMyRankingPanel(){
   const isLoggedIn=!!(window.KinojoAuth&&typeof window.KinojoAuth.getSession==='function'&&window.KinojoAuth.getSession());
   const myName=hofSessionName();
-  const metrics=['pve','pvp','enhance','growth','like','dislike'];
+  const metrics=['pve','pvp','enhance','growth'];
   const foundByMetric={};
   metrics.forEach(metric=>{foundByMetric[metric]=isLoggedIn?hofFindMyMetric(metric):null;});
   const profileMetric=metrics.find(metric=>foundByMetric[metric]?.item);
@@ -359,24 +360,26 @@ function hofMyRankingPanel(){
   const displayName=hofCharName(item)||myName||'내 캐릭터';
   const primaryHtml=['pve','pvp'].map(metric=>{
     const found=foundByMetric[metric];
-    const power=metric==='pve'?hofFirstDefined(item?.pvePower,item?.pve_power,''):hofFirstDefined(item?.pvpPower,item?.pvp_power,'');
-    const itemLevel=metric==='pve'?hofFirstDefined(item?.pveItem,item?.pve_item,''):hofFirstDefined(item?.pvpItem,item?.pvp_item,'');
+    const metricItem=found?.item||item||{};
+    const power=metric==='pve'?hofFirstDefined(metricItem?.pvePower,metricItem?.pve_power,''):hofFirstDefined(metricItem?.pvpPower,metricItem?.pvp_power,'');
+    const itemLevel=metric==='pve'?hofFirstDefined(metricItem?.pveItem,metricItem?.pve_item,''):hofFirstDefined(metricItem?.pvpItem,metricItem?.pvp_item,'');
     const powerText=power!==''?hofPowerShort(power):'-';
     const powerFull=power!==''?hofPowerFull(power):'-';
     const itemText=itemLevel!==''?Number(itemLevel).toLocaleString('ko-KR'):'-';
-    return '<div class="hof-v2-my-row hof-v2-my-primary is-'+metric+'" data-hof-metric="'+metric+'">'
-      + '<strong>'+metric.toUpperCase()+'</strong>'
-      + '<span>'+(found?Number(found.rank).toLocaleString('ko-KR')+'위':'-')+'</span>'
-      + '<b title="정확한 전투력 '+escapeHtml(powerFull)+'">'+escapeHtml(powerText)+'</b>'
-      + '<em>Lv. '+escapeHtml(itemText)+'</em>'
-      + '</div>';
+    return '<section class="hof-v2-my-primary is-'+metric+'" data-hof-metric="'+metric+'">'
+      + '<div class="hof-v2-my-primary-head"><span class="hof-v2-my-mode-badge">'+metric.toUpperCase()+'</span><strong>'+(found?Number(found.rank).toLocaleString('ko-KR')+'위':'순위 없음')+'</strong></div>'
+      + '<dl class="hof-v2-my-stats">'
+      + '<div><dt><img src="'+HOF_POWER_ICON+'" alt="" aria-hidden="true">전투력</dt><dd title="정확한 전투력 '+escapeHtml(powerFull)+'">'+escapeHtml(powerText)+'</dd></div>'
+      + '<div><dt><img src="'+HOF_OFFICIAL_METRIC_ICONS.enhance+'" alt="" aria-hidden="true">아이템레벨</dt><dd>'+escapeHtml(itemText)+'</dd></div>'
+      + '</dl>'
+      + '</section>';
   }).join('');
-  const secondaryRows=[['강화의 신','enhance'],['성장의 신','growth'],['좋아요','like'],['싫어요','dislike']];
+  const secondaryRows=[['강화의 신','enhance'],['성장의 신','growth']];
   const secondaryHtml=secondaryRows.map(([title,metric])=>{
     const found=foundByMetric[metric];
-    return '<div class="hof-v2-my-row '+hofBackgroundClass(metric)+(found?' is-found':'')+'" data-hof-metric="'+metric+'">'
-      + '<strong>'+escapeHtml(title)+'</strong>'
-      + '<span>'+(found?Number(found.rank).toLocaleString('ko-KR')+'위':'순위 없음')+'</span>'
+    return '<div class="hof-v2-my-row hof-v2-my-god-row '+hofBackgroundClass(metric)+(found?' is-found':'')+'" data-hof-metric="'+metric+'">'
+      + '<span class="hof-v2-my-metric-icon">'+hofMetricIconHtml(metric)+'</span>'
+      + '<div><strong>'+escapeHtml(title)+'</strong><span>'+(found?Number(found.rank).toLocaleString('ko-KR')+'위':'순위 없음')+'</span></div>'
       + '<b>'+escapeHtml(found?found.score:'-')+'</b>'
       + '</div>';
   }).join('');
@@ -437,7 +440,7 @@ function renderHallShell(showSpinners){
   app.className='';
   const slotClass='hall-slot is-pending';
   const spinner=showSpinners?kinojoCardSpinner('영역 불러오는 중'):'';
-  app.innerHTML='<div class="hof-v2-shell"><div class="hof-v2-layout"><div class="hof-v2-board">'
+  app.innerHTML='<div class="hof-v2-shell"><div class="hof-v2-layout kinojo-pc-banner-host"><aside class="kinojo-pc-banner-slot is-left" data-kinojo-pc-banner aria-hidden="true"></aside><div class="hof-v2-board">'
     +'<div id="hallSlotMeter" class="hof-v2-area hof-v2-area-meter '+slotClass+'">'+spinner+'</div>'
     +'<div id="hallSlotPve" class="hof-v2-area hof-v2-area-pve '+slotClass+'">'+spinner+'</div>'
     +'<div id="hallSlotPvp" class="hof-v2-area hof-v2-area-pvp '+slotClass+'">'+spinner+'</div>'

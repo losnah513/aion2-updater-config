@@ -1,0 +1,45 @@
+/* PC-only empty banner slots. The Admin image source is intentionally not connected yet. */
+.kinojo-pc-banner-host{
+  position:relative;
+}
+
+.kinojo-pc-banner-slot{
+  display:none;
+  box-sizing:border-box;
+}
+
+@media (min-width:1840px){
+  .kinojo-pc-banner-slot{
+    display:grid;
+    position:absolute;
+    top:0;
+    z-index:1;
+    width:300px;
+    height:715px;
+    place-items:center;
+    border:1px solid rgba(120,145,180,.28);
+    border-radius:4px;
+    background:#fff;
+    color:#94a3b8;
+    font:850 11px/1 Arial,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    font-variant-numeric:tabular-nums;
+    letter-spacing:.03em;
+    box-shadow:none;
+  }
+
+  .kinojo-pc-banner-slot.is-left{
+    right:calc(100% + 14px);
+  }
+
+  .kinojo-pc-banner-slot.is-right{
+    left:calc(100% + 14px);
+  }
+
+  body.kinojo-page-hall .hof-v2-layout.kinojo-pc-banner-host{
+    transform:translateX(calc((300px + 14px) / 2));
+  }
+
+  body.kinojo-sanctuary-schedule-page .schedule-wrap{
+    width:min(1180px,calc(100% - 660px));
+  }
+}
