@@ -13,10 +13,21 @@
 
   function update(slot){
     if(!visible(slot))return;
+    const host=slot.closest('.kinojo-pc-banner-host');
+    if(!host)return;
+    const hostRect=host.getBoundingClientRect();
     const rect=slot.getBoundingClientRect();
     const width=Math.round(rect.width);
     const height=Math.round(rect.height);
+    const documentTop=hostRect.top+window.scrollY;
+    const maxTop=Math.max(14,window.innerHeight-height-14);
+    const top=Math.max(14,Math.min(Math.round(documentTop),maxTop));
+    const left=slot.classList.contains('is-left')
+      ?Math.round(hostRect.left-width-14)
+      :Math.round(hostRect.right+14);
     const label=width+' × '+height;
+    slot.style.left=left+'px';
+    slot.style.top=top+'px';
     if(width>0&&height>0&&slot.textContent!==label)slot.textContent=label;
   }
 
