@@ -435,3 +435,76 @@ body.kinojo-image-editor-open{overflow:hidden}
   .kinojo-image-editor__button--primary,.kinojo-image-guide-card__action{border:2px solid ButtonText;background:ButtonFace;color:ButtonText;forced-color-adjust:none}
   .kinojo-image-editor__grid,.kinojo-image-editor__profile-safe{forced-color-adjust:none}
 }
+
+/* 20260822_03: compact My Info profile/reference slot follow-up */
+.kinojo-my-info-btn,.kinojo-my-info-menu-btn{transition:transform .14s ease,box-shadow .14s ease,filter .14s ease,background-color .14s ease}
+.kinojo-my-info-btn:hover:not(:disabled),.kinojo-my-info-menu-btn:hover:not(:disabled){transform:translateY(-1px);filter:brightness(.985)}
+.kinojo-my-info-btn:active:not(:disabled),.kinojo-my-info-menu-btn:active:not(:disabled),.kinojo-my-info-btn.is-clicked,.kinojo-my-info-menu-btn.is-clicked{transform:translateY(1px) scale(.985);box-shadow:inset 0 2px 5px rgba(15,23,42,.12)}
+.kinojo-my-info-manager-head{display:flex;align-items:center;gap:9px;padding:1px 54px 1px 2px}
+.kinojo-my-info-manager-headline{min-width:0;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.kinojo-my-info-manager-headline>strong{color:#17233a;font-size:18px;font-weight:1000;line-height:1.2;white-space:nowrap}
+.kinojo-my-info-manager-headline>p{margin:0;color:#64748b;font-size:9px;line-height:1.45;font-weight:800;overflow-wrap:anywhere}
+.kinojo-my-info-manager-badge{flex:0 0 auto}
+.kinojo-my-info-profile-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:stretch;min-width:0}
+.kinojo-my-info-profile-character-pane{position:relative;min-width:0;min-height:0;border:1px solid rgba(122,146,180,.14);border-radius:13px;background:#fbfdff;overflow:hidden}
+.kinojo-my-info-profile-characters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:7px;height:100%;max-height:244px;overflow-x:hidden;overflow-y:auto;padding:8px;scrollbar-width:none;overscroll-behavior:contain}
+.kinojo-my-info-profile-characters::-webkit-scrollbar{display:none;width:0;height:0}
+.kinojo-my-info-profile-character-btn{width:100%;min-width:0;max-width:none;min-height:52px;grid-template-columns:26px minmax(0,1fr);padding:7px}
+.kinojo-my-info-profile-character-btn>img,.kinojo-my-info-profile-character-btn>.is-empty{width:26px;height:26px}
+.kinojo-my-info-profile-character-pane::before,.kinojo-my-info-profile-character-pane::after{content:"";position:absolute;z-index:3;left:0;right:0;height:26px;pointer-events:none;opacity:0;transition:opacity .16s ease}
+.kinojo-my-info-profile-character-pane::before{top:0;background:linear-gradient(180deg,#fff 5%,rgba(255,255,255,0))}
+.kinojo-my-info-profile-character-pane::after{bottom:0;background:linear-gradient(0deg,#fff 5%,rgba(255,255,255,0))}
+.kinojo-my-info-profile-character-pane.is-overflowing:not(.is-at-start)::before,.kinojo-my-info-profile-character-pane.is-overflowing:not(.is-at-end)::after{opacity:1}
+.kinojo-my-info-profile-current-pane{min-width:0;display:grid;grid-template-rows:auto auto auto;align-content:start;gap:8px}
+.kinojo-my-info-profile-current-pane .kinojo-my-info-profile-actions{justify-content:flex-end;align-items:center;margin:0;min-height:44px}
+.kinojo-my-info-profile-current-pane .kinojo-my-info-profile-images{margin:0;grid-template-columns:1fr;gap:8px}
+.kinojo-my-info-profile-current-pane .kinojo-my-info-profile-card{grid-template-columns:82px minmax(0,1fr);min-height:104px;padding:9px}
+.kinojo-my-info-profile-current-pane .kinojo-my-info-profile-image-frame{width:82px;height:82px}
+.kinojo-my-info-profile-current-pane .kinojo-my-info-profile-status{margin:0}
+.kinojo-my-info-reference-preview-grid{grid-template-columns:repeat(3,minmax(0,1fr));align-items:start;gap:9px}
+.kinojo-my-info-reference-slot{min-width:0;display:grid;grid-template-rows:auto auto auto;align-content:start;gap:8px;padding:9px;border:1px solid rgba(122,146,180,.22);border-radius:12px;background:linear-gradient(135deg,#fff,#f8fafc);box-sizing:border-box;transition:border-color .16s ease,background-color .16s ease,box-shadow .16s ease,transform .16s ease}
+.kinojo-my-info-reference-slot[aria-disabled="true"]{opacity:.64}
+.kinojo-my-info-reference-slot.is-selected,.kinojo-my-info-reference-slot.is-pending{border-color:rgba(37,99,235,.42);background:linear-gradient(135deg,#eef5ff,#f8fbff);box-shadow:0 0 0 1px rgba(37,99,235,.08)}
+.kinojo-my-info-reference-slot.is-registered{border-color:rgba(22,163,74,.34)}
+.kinojo-my-info-reference-visual{min-width:0;width:100%;display:grid;place-items:center;overflow:hidden;border:1px solid rgba(122,146,180,.16);border-radius:9px;background:#f1f5f9}
+.kinojo-my-info-reference-guide{display:block;width:100%;height:auto;max-height:176px;object-fit:contain;background:#eef3f8}
+.kinojo-my-info-reference-preview-image{display:block;width:100%;height:auto;max-height:none;object-fit:contain;border:0;border-radius:0;background:#eef2f7;margin:0}
+.kinojo-my-info-reference-slot-copy{min-width:0;display:grid;gap:3px}
+.kinojo-my-info-reference-slot-copy b{color:#334155;font-size:9px;font-weight:1000;overflow-wrap:anywhere}
+.kinojo-my-info-reference-slot-copy span{color:#64748b;font-size:8px;font-weight:850;overflow-wrap:anywhere}
+.kinojo-my-info-reference-slot-copy small{color:#2563eb;font-size:7px;font-weight:900;overflow-wrap:anywhere}
+.kinojo-my-info-reference-slot.is-registered .kinojo-my-info-reference-slot-copy b,.kinojo-my-info-reference-slot.is-registered .kinojo-my-info-reference-slot-copy small{color:#15803d}
+.kinojo-my-info-reference-slot-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.kinojo-my-info-reference-slot-actions .kinojo-my-info-action-btn{width:100%;min-width:0;padding:7px 8px;font-size:8px}
+.kinojo-my-info-reference-status{margin-top:10px}
+@media(max-width:760px){
+  .kinojo-my-info-manager-head{align-items:flex-start;gap:7px}
+  .kinojo-my-info-manager-headline{display:grid;gap:2px}
+  .kinojo-my-info-profile-layout{grid-template-columns:minmax(0,1fr)}
+  .kinojo-my-info-profile-characters{max-height:190px}
+  .kinojo-my-info-profile-current-pane .kinojo-my-info-profile-actions{justify-content:flex-start}
+}
+@media(max-width:620px){
+  .kinojo-my-info-reference-preview-grid{grid-template-columns:1fr}
+  .kinojo-my-info-reference-slot{grid-template-columns:minmax(88px,.75fr) minmax(0,1fr);grid-template-rows:auto auto;align-items:center}
+  .kinojo-my-info-reference-visual{grid-row:1/3;grid-column:1}
+  .kinojo-my-info-reference-slot-copy{grid-row:1;grid-column:2}
+  .kinojo-my-info-reference-slot-actions{grid-row:2;grid-column:2}
+  .kinojo-my-info-reference-guide{max-height:154px}
+}
+@media(max-width:390px){
+  .kinojo-my-info-manager-head{padding-right:46px}
+  .kinojo-my-info-manager-badge{display:none}
+  .kinojo-my-info-profile-characters{gap:5px;padding:6px}
+  .kinojo-my-info-profile-character-btn{grid-template-columns:22px minmax(0,1fr);gap:5px;padding:6px;min-height:48px}
+  .kinojo-my-info-profile-character-btn>img,.kinojo-my-info-profile-character-btn>.is-empty{width:22px;height:22px}
+  .kinojo-my-info-profile-current-pane .kinojo-my-info-profile-card{grid-template-columns:70px minmax(0,1fr)}
+  .kinojo-my-info-profile-current-pane .kinojo-my-info-profile-image-frame{width:70px;height:70px}
+  .kinojo-my-info-reference-slot{grid-template-columns:76px minmax(0,1fr)}
+  .kinojo-my-info-reference-slot-actions{grid-template-columns:1fr 1fr}
+  .kinojo-my-info-reference-slot-actions .kinojo-my-info-action-btn{font-size:7.5px;padding:6px}
+}
+@media(prefers-reduced-motion:reduce){
+  .kinojo-my-info-btn,.kinojo-my-info-menu-btn,.kinojo-my-info-profile-character-pane::before,.kinojo-my-info-profile-character-pane::after,.kinojo-my-info-reference-slot{transition:none!important;animation:none!important}
+  .kinojo-my-info-btn:hover:not(:disabled),.kinojo-my-info-menu-btn:hover:not(:disabled),.kinojo-my-info-btn:active:not(:disabled),.kinojo-my-info-menu-btn:active:not(:disabled),.kinojo-my-info-btn.is-clicked,.kinojo-my-info-menu-btn.is-clicked{transform:none!important}
+}
