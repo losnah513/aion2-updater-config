@@ -11,6 +11,7 @@
     'admin-sanctuary.js',
     'admin-notices.js',
     'admin-system.js',
+    'admin-images.js',
     'admin-bootstrap.js'
   ];
   function loadScript(name){
