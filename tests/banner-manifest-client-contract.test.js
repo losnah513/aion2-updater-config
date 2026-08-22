@@ -75,9 +75,12 @@ function jpegDimensions(bytes){
   assert.equal(/Date\.now|Math\.random|Asia\/Seoul|priority|weighted|scheduleMode/.test(source),false,'Browser runtime must not own schedule/priority/random decisions');
   assert.equal(/passKey|passCode|service_role/.test(source),false,'public runtime must not contain private credentials');
 
-  assert.equal(/fetchManifest|pageCode|slotCode/.test(pcBannerSource),false,'7-가 renderer must not own page/LEFT/RIGHT Manifest mapping before 7-나');
+  assert.match(pcBannerSource,/runtime\.fetchManifest\(pageCode,slotCode\)/,'7-나 common PC renderer must request the mapped public Manifest target');
+  assert.match(pcBannerSource,/if\(path==='\/'\|\|path==='\/home\.html\/'\)return 'HOME'/,'HOME route mapping must be explicit');
+  for(const code of ['HOF','RANKING','LEGION_TREE','METER','SANCTUARY','SANCTUARY_SCHEDULE'])assert.ok(pcBannerSource.includes("return '"+code+"'"),'missing PC side page mapping '+code);
+  assert.equal(/Date\.now|Math\.random|Asia\/Seoul|priority|weighted|scheduleMode/.test(pcBannerSource),false,'PC side mapping must not own Server schedule/priority/random decisions');
   assert.equal(pcBannerSource.includes('innerHTML'),false,'PC side banner renderer must use DOM construction instead of HTML injection');
-  assert.match(pcBannerSource,/Object\.freeze\(\{refresh,render,clear\}\)/,'common PC side banner renderer must expose refresh/render/clear');
+  assert.match(pcBannerSource,/Object\.freeze\(\{refresh,render,clear,resolvePageCode,resolveSlotCode\}\)/,'common PC side banner renderer must expose renderer and canonical mapping helpers');
   assert.match(pcBannerCss,/\.kinojo-pc-banner-media,[\s\S]*\.kinojo-pc-banner-image\{[\s\S]*width:100%;[\s\S]*height:100%;/,'rendered media must fill the existing 300×715 slot');
   assert.match(pcBannerCss,/\.kinojo-pc-banner-image\{[\s\S]*object-fit:cover;/,'side banner image must preserve the validated 300:715 media ratio');
 
@@ -99,9 +102,9 @@ function jpegDimensions(bytes){
   const fakeSlot=new FakeElement('aside',['kinojo-pc-banner-slot','is-left']);fakeSlot.host=fakeHost;fakeSlot.setAttribute('aria-hidden','true');
   let renderedSlots=[];
   const pcBannerContext={
-    window:{scrollY:0,innerHeight:900,getComputedStyle(){return{display:'grid'}},addEventListener(){}},
-    document:{readyState:'complete',documentElement:{},querySelectorAll(){return renderedSlots},createElement(tag){return new FakeElement(tag)},addEventListener(){}},
-    WeakSet,Object,String,Math,console,
+    window:{scrollY:0,innerHeight:900,location:{pathname:'/unsupported/'},getComputedStyle(){return{display:'grid'}},addEventListener(){}},
+    document:{readyState:'complete',currentScript:null,documentElement:{appendChild(){}},head:{appendChild(){}},querySelectorAll(){return renderedSlots},createElement(tag){return new FakeElement(tag)},addEventListener(){}},
+    WeakSet,Map,Promise,URL,Object,String,Math,console,
   };
   vm.runInNewContext(pcBannerSource,pcBannerContext,{filename:'ui/kinojo-pc-banners.js'});
   const pcBannerApi=pcBannerContext.window.KinojoPcBanners;
@@ -117,6 +120,44 @@ function jpegDimensions(bytes){
   assert.equal(pcBannerApi.render(fakeSlot,{imageUrl:'https://kinojo.info/assets/images/common/kinojo-og.jpg',alt:'',clickUrl:null}),true);
   assert.equal(fakeSlot.children[0].tagName,'SPAN','image without clickUrl must not create a clickable target');
   assert.equal(fakeSlot.children[0].children[0].getAttribute('alt'),'KINOJO 사이드 배너','blank alt must receive a safe visible-content fallback');
+  for(const [route,code] of [['/','HOME'],['/index.html','HOME'],['/home.html','HOME'],['/hof/','HOF'],['/ranking/index.html','RANKING'],['/legion-tree/','LEGION_TREE'],['/meter/','METER'],['/sanctuary/','SANCTUARY'],['/sanctuary-schedule/index.html','SANCTUARY_SCHEDULE']])assert.equal(pcBannerApi.resolvePageCode(route),code,route+' page mapping mismatch');
+  assert.equal(pcBannerApi.resolvePageCode('/m/'),'','mobile HOME must never map to a PC SIDE target');
+  assert.equal(pcBannerApi.resolvePageCode('/m/hof/'),'','mobile subpages must never map to PC SIDE targets');
+  assert.equal(pcBannerApi.resolveSlotCode(fakeSlot),'LEFT');
+  const fakeRightSlot=new FakeElement('aside',['kinojo-pc-banner-slot','is-right']);fakeRightSlot.host=fakeHost;fakeRightSlot.setAttribute('aria-hidden','true');
+  assert.equal(pcBannerApi.resolveSlotCode(fakeRightSlot),'RIGHT');
+
+  const sideCalls=[];
+  pcBannerContext.window.KinojoBannerRuntime={async fetchManifest(pageCode,slotCode){
+    sideCalls.push(pageCode+':'+slotCode);
+    if(slotCode==='RIGHT')return{active:false,pageCode,slotCode,playlist:[]};
+    return{active:true,pageCode,slotCode,playlist:[{imageUrl:'https://kinojo.info/assets/images/common/kinojo-og.jpg',alt:pageCode+' '+slotCode,clickUrl:null}]};
+  }};
+  pcBannerContext.window.location.pathname='/ranking/';
+  pcBannerApi.clear(fakeSlot);pcBannerApi.clear(fakeRightSlot);renderedSlots=[fakeSlot,fakeRightSlot];pcBannerApi.refresh();
+  await new Promise(resolve=>setTimeout(resolve,0));
+  assert.deepEqual(sideCalls.sort(),['RANKING:LEFT','RANKING:RIGHT'],'mapped PC page must request only its supported LEFT/RIGHT targets once each');
+  assert.equal(fakeSlot.dataset.kinojoPcBannerTarget,'RANKING:LEFT');assert.equal(fakeSlot.dataset.kinojoPcBannerState,'rendered');
+  assert.equal(fakeRightSlot.dataset.kinojoPcBannerTarget,'RANKING:RIGHT');assert.equal(fakeRightSlot.dataset.kinojoPcBannerState,'empty');
+  renderedSlots=[fakeSlot];pcBannerApi.refresh();await new Promise(resolve=>setTimeout(resolve,0));
+  assert.equal(sideCalls.length,2,'repeated refresh must not repeat the same target network request');
+
+  const loaderHost=new FakeElement('main',['kinojo-pc-banner-host']);loaderHost.rect=fakeHost.rect;
+  const loaderSlot=new FakeElement('aside',['kinojo-pc-banner-slot','is-left']);loaderSlot.host=loaderHost;loaderSlot.setAttribute('aria-hidden','true');
+  const loadedScripts=[];const loaderCalls=[];let loaderContext=null;
+  loaderContext={
+    window:{scrollY:0,innerHeight:900,location:{pathname:'/meter/'},getComputedStyle(){return{display:'grid'}},addEventListener(){}},
+    document:{
+      readyState:'complete',currentScript:{src:'https://kinojo.info/ui/kinojo-pc-banners.js?cache=2026082202'},documentElement:{appendChild(){}},
+      head:{appendChild(script){loadedScripts.push(script.src);loaderContext.window.KinojoBannerRuntime={async fetchManifest(pageCode,slotCode){loaderCalls.push(pageCode+':'+slotCode);return{active:false,pageCode,slotCode,playlist:[]}}};script.onload?.();return script}},
+      querySelectorAll(){return[loaderSlot]},createElement(tag){return new FakeElement(tag)},addEventListener(){},
+    },
+    WeakSet,Map,Promise,URL,Object,String,Math,console,
+  };
+  vm.runInNewContext(pcBannerSource,loaderContext,{filename:'ui/kinojo-pc-banners.js'});await new Promise(resolve=>setTimeout(resolve,0));
+  assert.deepEqual(loadedScripts,['https://kinojo.info/ui/kinojo-banner-runtime.js?cache=2026082301'],'PC pages without a static runtime tag must load the shared Manifest client from the same /ui/ base');
+  assert.deepEqual(loaderCalls,['METER:LEFT'],'dynamically loaded shared runtime must receive the canonical page/slot target');
+  assert.equal(loaderSlot.dataset.kinojoPcBannerState,'empty','inactive SIDE Manifest must keep the existing empty slot');
   assert.equal(/og:image|twitter:image/.test(source),false,'Banner runtime must not rewrite static SEO fallback metadata');
 
   const supabaseClientIndex=pcHome.indexOf('core/kinojo-supabase-client.js?cache=2026080205');
@@ -172,6 +213,17 @@ function jpegDimensions(bytes){
     assert.equal(one.contract,'banner-public-manifest-v1');assert.equal(one.pageCode,'HOME');assert.equal(one.slotCode,'MAIN');assert.deepEqual(two,one);
     assert.equal(live.getMeta('HOME','MAIN').httpStatus,304,'second live request must revalidate with ETag/304');
 
+    const liveSideTargets=[
+      ['HOME','LEFT'],['HOME','RIGHT'],['HOF','LEFT'],
+      ['RANKING','LEFT'],['RANKING','RIGHT'],['LEGION_TREE','LEFT'],['LEGION_TREE','RIGHT'],
+      ['METER','LEFT'],['METER','RIGHT'],['SANCTUARY','LEFT'],['SANCTUARY','RIGHT'],
+      ['SANCTUARY_SCHEDULE','LEFT'],['SANCTUARY_SCHEDULE','RIGHT'],
+    ];
+    for(const [pageCode,slotCode] of liveSideTargets){
+      const side=await live.fetchManifest(pageCode,slotCode);
+      assert.equal(side.contract,'banner-public-manifest-v1');assert.equal(side.pageCode,pageCode);assert.equal(side.slotCode,slotCode);
+    }
+
     const fallbackUrl='https://kinojo.info/assets/images/common/kinojo-og.jpg';
     let fallbackResponse=null;let fallbackError=null;
     for(let attempt=1;attempt<=3;attempt+=1){
@@ -188,7 +240,7 @@ function jpegDimensions(bytes){
     const fallbackBytes=new Uint8Array(await fallbackResponse.arrayBuffer());
     assert.ok(fallbackBytes.length>0&&fallbackBytes[0]===0xff&&fallbackBytes[1]===0xd8,'static fallback must have a JPEG signature');
     assert.deepEqual(jpegDimensions(fallbackBytes),{width:1536,height:864},'static fallback dimensions must match the declared 16:9 SEO metadata');
-    console.log('KINOJO banner Manifest live ETag/304: PASS');
+    console.log('KINOJO banner Manifest live ETag/304 + PC SIDE target matrix: PASS');
     console.log('KINOJO MAIN fallback image/SEO contract live readback: PASS');
   }
 })().catch(error=>{console.error(error);process.exit(1)});
