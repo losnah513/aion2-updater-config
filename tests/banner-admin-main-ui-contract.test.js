@@ -1,0 +1,15 @@
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const source=fs.readFileSync(path.join(__dirname,'../admin/js/admin-images.js'),'utf8');
+const loader=fs.readFileSync(path.join(__dirname,'../admin/js/admin.js'),'utf8');
+assert.ok(loader.includes("'admin-images.js'"));
+for(const token of ["EDGE='kinojo-banner-media'","api('asset-list'","api('campaign-list'","api('manifest',{pageCode:'HOME',slotCode:'MAIN'}","api('upload-prepare'","api('upload-complete'","'x-upsert':'false'","formatCode:FORMAT","type:'MAIN',pageCode:'HOME',slotCodes:['MAIN']","scheduleMode:m","startsAtKst","endsAtKst","weekdays","specificDates","slideIntervalMs","transitionDurationMs","weight:100,enabled:true","scheduleMode:'INHERIT'","campaign-update","campaign-create","campaign-publish","campaign-pause","campaign-archive","campaign-restore","bannerMainPreviewPc","bannerMainPreviewMobile","Server Manifest"]) assert.ok(source.includes(token),`missing ${token}`);
+assert.equal(/service_role/i.test(source),false);
+assert.equal(/passKey|passCode/.test(source),false);
+assert.ok(source.includes('p.idempotencyKey=id()'));
+assert.ok(source.includes("method:'PUT'"));
+assert.ok(source.includes('im.naturalWidth*9!==im.naturalHeight*16'));
+assert.equal(source.includes('SIDE_300_715'),false);
+console.log('KINOJO banner admin 5-b main UI contract: PASS');
