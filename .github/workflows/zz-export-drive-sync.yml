@@ -1,0 +1,58 @@
+name: Export Drive Sync Files
+
+on:
+  push:
+    branches: [codex/drive-sync-export-e022442b]
+    paths:
+      - '.github/workflows/zz-export-drive-sync.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: e022442be2261adfcc769bd0b34a6a766f717d9a
+      - name: Verify exact merged commit
+        run: test "$(git rev-parse HEAD)" = "e022442be2261adfcc769bd0b34a6a766f717d9a"
+      - name: Export changed files
+        uses: actions/upload-artifact@v4
+        with:
+          name: kinojo-drive-sync-e022442b
+          retention-days: 1
+          if-no-files-found: error
+          path: |
+            .github/workflows/verify-character-refresh-profile.yml
+            .github/workflows/verify-kinojo-pages.yml
+            admin/css/admin.css
+            admin/index.html
+            admin/js/admin-members.js
+            admin/js/admin.js
+            arcana/index.html
+            hof/index.html
+            home.html
+            legion-tree/index.html
+            m/admin/index.html
+            m/arcana/index.html
+            m/hof/index.html
+            m/index.html
+            m/legion-tree/index.html
+            m/meter/index.html
+            m/ranking/index.html
+            m/sanctuary-schedule/index.html
+            m/sanctuary/index.html
+            meter/index.html
+            ranking/index.html
+            sanctuary-schedule/index.html
+            sanctuary/index.html
+            tests/meter-presence-log-contract.test.js
+            tests/my-info-admin-image-layout-contract.test.js
+            tests/my-info-e1-harness.html
+            tests/my-info-image-editor-harness.html
+            tests/web-shell-auth-contract.test.js
+            ui/kinojo-common-ui.js
+            ui/kinojo-my-info.css
