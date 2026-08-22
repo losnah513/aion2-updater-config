@@ -5,12 +5,16 @@ on:
     branches: [main]
     paths:
       - "ui/kinojo-banner-runtime.js"
+      - "ui/kinojo-pc-banners.js"
+      - "ui/kinojo-pc-banners.css"
       - "tests/banner-manifest-client-contract.test.js"
       - ".github/workflows/verify-banner-runtime.yml"
   push:
     branches: [main]
     paths:
       - "ui/kinojo-banner-runtime.js"
+      - "ui/kinojo-pc-banners.js"
+      - "ui/kinojo-pc-banners.css"
       - "tests/banner-manifest-client-contract.test.js"
       - ".github/workflows/verify-banner-runtime.yml"
   workflow_dispatch:
@@ -38,7 +42,22 @@ jobs:
         run: |
           set -euo pipefail
           node --check ui/kinojo-banner-runtime.js
+          node --check ui/kinojo-pc-banners.js
           node tests/banner-manifest-client-contract.test.js
+          node <<'NODE'
+          const assert=require('node:assert/strict');
+          const fs=require('node:fs');
+          const css=fs.readFileSync('ui/kinojo-pc-banners.css','utf8');
+          const js=fs.readFileSync('ui/kinojo-pc-banners.js','utf8');
+          assert.match(css,/\.kinojo-pc-banner-slot\{[\s\S]*aspect-ratio:300\/715;[\s\S]*overflow:hidden;/);
+          assert.match(css,/@media \(min-width:1840px\)\{[\s\S]*position:fixed;[\s\S]*width:300px;[\s\S]*height:715px;/);
+          assert.match(css,/border-radius:4px;/);
+          assert.match(css,/\.kinojo-pc-banner-media\{[\s\S]*overflow:hidden;[\s\S]*border-radius:inherit;/);
+          assert.match(css,/data-kinojo-pc-banner-state=\"empty\"[\s\S]*place-items:center;/);
+          assert.match(js,/const documentTop=hostRect\.top\+window\.scrollY;/);
+          assert.match(js,/const maxTop=Math\.max\(14,window\.innerHeight-height-14\);/);
+          console.log('KINOJO PC SIDE fixed/ratio/overflow/corner/empty contract: PASS');
+          NODE
 
   verify-live-readback:
     if: github.event_name == 'push'
