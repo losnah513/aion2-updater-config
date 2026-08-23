@@ -1,0 +1,119 @@
+name: Apply My Info PNG guides
+
+on:
+  push:
+    branches:
+      - codex/my-info-guide-png-final-20260823
+    paths:
+      - .github/workflows/apply-my-info-png-guides.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Render SVG staging guides to PNG
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq librsvg2-bin
+          rsvg-convert -w 800 -h 1200 assets/images/my-info/guides/front-2x3.svg -o assets/images/my-info/guides/front-2x3.png
+          rsvg-convert -w 800 -h 1200 assets/images/my-info/guides/back-2x3.svg -o assets/images/my-info/guides/back-2x3.png
+          rsvg-convert -w 800 -h 1000 assets/images/my-info/guides/upper-body-4x5.svg -o assets/images/my-info/guides/upper-body-4x5.png
+
+      - name: Migrate guide contract and verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          python <<'PY'
+          from pathlib import Path
+          root=Path('.')
+          def replace(path,old,new,count=None):
+              p=root/path; text=p.read_text(encoding='utf-8'); n=text.count(old)
+              if count is not None and n!=count: raise SystemExit(f'{path}: {old!r} count={n}, expected={count}')
+              if n==0: raise SystemExit(f'{path}: missing {old!r}')
+              p.write_text(text.replace(old,new),encoding='utf-8',newline='\n')
+
+          contract=Path('ui/kinojo-my-info-image-contract.js')
+          replace(contract,'front-2x3.svg','front-2x3.png',1)
+          replace(contract,'back-2x3.svg','back-2x3.png',1)
+          replace(contract,'upper-body-4x5.svg','upper-body-4x5.png',1)
+          replace(contract,"contractVersion:'2026-08-21.3'","contractVersion:'2026-08-23.2'",1)
+
+          common=Path('ui/kinojo-common-ui.js')
+          replace(common,'/* KINOJO common UI v20260822.03 */','/* KINOJO common UI v20260823.04 */',1)
+          replace(common,'front-2x3.svg','front-2x3.png',1)
+          replace(common,'back-2x3.svg','back-2x3.png',1)
+          replace(common,'upper-body-4x5.svg','upper-body-4x5.png',1)
+          replace(common,'kinojo-my-info-image-contract.js?cache=2026082103','kinojo-my-info-image-contract.js?cache=2026082304',1)
+
+          t=Path('tests/my-info-image-contract.test.js')
+          replace(t,"contract.contractVersion,'2026-08-21.3'","contract.contractVersion,'2026-08-23.2'",1)
+          for old,new in [('front-2x3.svg','front-2x3.png'),('back-2x3.svg','back-2x3.png'),('upper-body-4x5.svg','upper-body-4x5.png')]: replace(t,old,new,1)
+
+          Path('tests/my-info-guide-assets.test.js').write_text("""'use strict';\n\nconst assert=require('node:assert/strict');\nconst fs=require('node:fs');\nconst path=require('node:path');\nconst contract=require('../ui/kinojo-my-info-image-contract.js');\nconst expected={FRONT:[800,1200,['머리','양손','발끝']],BACK:[800,1200,['머리카락','의상 후면','뒤꿈치']],UPPER_BODY:[800,1000,['머리 전체','양어깨','허리선']]};\nconst sig=Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a]);\nconst paths=[];\nfor(const slot of contract.referenceSlotOrder){\n  const def=contract.slots[slot], rule=expected[slot];\n  assert.ok(def.guideAssetPath?.startsWith('/assets/images/my-info/guides/'));\n  assert.ok(def.guideAssetPath.endsWith('.png'));\n  const rel=def.guideAssetPath.slice(1), abs=path.join(__dirname,'..',rel), data=fs.readFileSync(abs);\n  paths.push(rel);\n  assert.ok(data.subarray(0,8).equals(sig),`${rel} PNG signature`);\n  assert.equal(data.toString('ascii',12,16),'IHDR');\n  assert.equal(data.readUInt32BE(16),rule[0]); assert.equal(data.readUInt32BE(20),rule[1]);\n  const colorType=data[25]; assert.ok(colorType===4||colorType===6||data.includes(Buffer.from('tRNS')),`${rel} transparency`);\n  assert.ok(data.length<=256*1024,`${rel} size budget`);\n  assert.equal(def.outputWidth,rule[0]); assert.equal(def.outputHeight,rule[1]);\n  for(const landmark of rule[2])assert.match(def.preAttachGuide,new RegExp(landmark));\n}\nassert.equal(new Set(paths).size,3); assert.equal(contract.slots.PROFILE.guideAssetPath,null);\nfor(const legacy of ['front-2x3.svg','back-2x3.svg','upper-body-4x5.svg'])assert.equal(fs.existsSync(path.join(__dirname,'../assets/images/my-info/guides',legacy)),false);\nconsole.log('My Info three transparent PNG reference guide assets: PASS');\n""",encoding='utf-8',newline='\n')
+
+          wf=Path('.github/workflows/verify-kinojo-pages.yml')
+          for old,new in [('front-2x3.svg','front-2x3.png'),('back-2x3.svg','back-2x3.png'),('upper-body-4x5.svg','upper-body-4x5.png')]: replace(wf,old,new,1)
+
+          old_cache='kinojo-common-ui.js?cache=2026082203'; new_cache='kinojo-common-ui.js?cache=2026082304'; changed=[]
+          for p in root.rglob('*.html'):
+              if '.git' in p.parts or 'tests' in p.parts: continue
+              text=p.read_text(encoding='utf-8')
+              if old_cache in text:
+                  p.write_text(text.replace(old_cache,new_cache),encoding='utf-8',newline='\n'); changed.append(str(p))
+          if len(changed)<16: raise SystemExit(f'common UI cache changed on only {len(changed)} files')
+          for p in (root/'tests').glob('*.js'):
+              text=p.read_text(encoding='utf-8')
+              if old_cache in text: p.write_text(text.replace(old_cache,new_cache),encoding='utf-8',newline='\n')
+
+          readme=Path('README.md'); text=readme.read_text(encoding='utf-8')
+          old='- A-2 provides three original, text-free SVG reference guides under `assets/images/my-info/guides/`: FRONT and BACK use the 2:3 output frame, and UPPER_BODY uses the 4:5 output frame. The SVGs expose accessible titles/descriptions and contain no script, external reference, or embedded raster data.'
+          new='- A-2 reference guides under `assets/images/my-info/guides/` are transparent PNG overlays: FRONT/BACK are 800×1200 (2:3) and UPPER_BODY is 800×1000 (4:5). They contain only the face-free character outline, hair orientation cues, framing marks, and semi-transparent guide lines; the guide is display-only and never enters the edited WebP output.'
+          if old not in text: raise SystemExit('README A-2 paragraph missing')
+          readme.write_text(text.replace(old,new).replace('overlays the A-2 SVG guide','overlays the A-2 transparent PNG guide'),encoding='utf-8',newline='\n')
+
+          hand=Path('docs/HANDOFF.md'); text=hand.read_text(encoding='utf-8')
+          marker='## 2026-08-23 참고 가이드 PNG 후속'
+          if marker not in text:
+              block='''\n## 2026-08-23 참고 가이드 PNG 후속\n\n- FRONT/BACK/UPPER_BODY 촬영 가이드는 기존 SVG에서 투명 PNG로 교체했다. 활성 경로는 `front-2x3.png`, `back-2x3.png`, `upper-body-4x5.png`이며 각각 800×1200, 800×1200, 800×1000이다.\n- PNG는 얼굴·의상 채움 없이 캐릭터 외곽선과 머리카락 방향, 반투명 프레임/가이드만 표시한다. 기존 `<img>` overlay 구조를 재사용하며 가이드는 WebP 결과 픽셀에 포함되지 않는다.\n- 회귀 테스트는 PNG signature·IHDR 픽셀 크기·투명도·파일 크기와 legacy SVG 제거를 검증한다. Server/Edge/Storage 계약은 변경하지 않았다.\n\n'''
+              anchor='## My Info / Admin Image Modal 추가 UI 후속 — CLOSED\n'
+              if anchor not in text: raise SystemExit('HANDOFF anchor missing')
+              text=text.replace(anchor,block+anchor,1)
+          text=text.replace('FRONT, BACK, UPPER_BODY용 SVG 3종','FRONT, BACK, UPPER_BODY용 투명 PNG 3종').replace('A-2 SVG를 overlay한다','A-2 투명 PNG를 overlay한다')
+          hand.write_text(text,encoding='utf-8',newline='\n')
+
+          for p in [Path('assets/images/my-info/guides/front-2x3.svg'),Path('assets/images/my-info/guides/back-2x3.svg'),Path('assets/images/my-info/guides/upper-body-4x5.svg')]: p.unlink()
+          PY
+
+      - name: Verify migration
+        run: |
+          set -euo pipefail
+          node --check ui/kinojo-my-info-image-contract.js
+          node --check ui/kinojo-common-ui.js
+          node tests/my-info-image-contract.test.js
+          node tests/my-info-guide-assets.test.js
+          node tests/my-info-image-editor.test.js
+          node tests/my-info-responsive-layout.test.js
+          node tests/my-info-e1-accessibility.test.js
+          node tests/web-shell-auth-contract.test.js
+          git diff --check
+
+      - name: Commit migration
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m "Replace My Info SVG guides with PNG assets"
+          git push origin HEAD:${GITHUB_REF_NAME}
