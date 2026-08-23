@@ -1,0 +1,83 @@
+name: Apply admin notification cache r2 once
+
+on:
+  push:
+    branches:
+      - codex/admin-notification-ui-v389-r2
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply exact cache token replacements
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          html_paths = [
+              'admin/index.html',
+              'arcana/index.html',
+              'hof/index.html',
+              'home.html',
+              'legion-tree/index.html',
+              'm/admin/index.html',
+              'm/arcana/index.html',
+              'm/hof/index.html',
+              'm/index.html',
+              'm/legion-tree/index.html',
+              'm/meter/index.html',
+              'm/ranking/index.html',
+              'm/sanctuary-schedule/index.html',
+              'm/sanctuary/index.html',
+              'meter/index.html',
+              'ranking/index.html',
+              'sanctuary-schedule/index.html',
+              'sanctuary/index.html',
+          ]
+
+          old_auth = 'kinojo-auth-ui.js?cache=2026082303'
+          new_auth = 'kinojo-auth-ui.js?cache=2026082304'
+          for rel in html_paths:
+              path = Path(rel)
+              text = path.read_text(encoding='utf-8')
+              count = text.count(old_auth)
+              if count != 1:
+                  raise SystemExit(f'{rel}: expected one auth cache token, found {count}')
+              path.write_text(text.replace(old_auth, new_auth), encoding='utf-8', newline='')
+
+          auth_path = Path('core/kinojo-auth-ui.js')
+          auth_text = auth_path.read_text(encoding='utf-8')
+          old_bridge = 'kinojo-admin-notifications.js?cache=2026082303'
+          new_bridge = 'kinojo-admin-notifications.js?cache=2026082304'
+          count = auth_text.count(old_bridge)
+          if count != 1:
+              raise SystemExit(f'core/kinojo-auth-ui.js: expected one bridge cache token, found {count}')
+          auth_path.write_text(auth_text.replace(old_bridge, new_bridge), encoding='utf-8', newline='')
+
+          test_path = Path('tests/web-shell-auth-contract.test.js')
+          test_text = test_path.read_text(encoding='utf-8')
+          count = test_text.count(old_auth)
+          if count != 2:
+              raise SystemExit(f'tests/web-shell-auth-contract.test.js: expected two auth cache tokens, found {count}')
+          test_path.write_text(test_text.replace(old_auth, new_auth), encoding='utf-8', newline='')
+          PY
+
+          rm .github/workflows/admin-notification-cache-r2-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add core/kinojo-auth-ui.js tests/web-shell-auth-contract.test.js \
+            admin/index.html arcana/index.html hof/index.html home.html legion-tree/index.html \
+            m/admin/index.html m/arcana/index.html m/hof/index.html m/index.html m/legion-tree/index.html \
+            m/meter/index.html m/ranking/index.html m/sanctuary-schedule/index.html m/sanctuary/index.html \
+            meter/index.html ranking/index.html sanctuary-schedule/index.html sanctuary/index.html \
+            .github/workflows/admin-notification-cache-r2-once.yml
+          git diff --cached --check
+          git commit -m "Refresh administrator notification cache tokens"
+          git push origin HEAD:codex/admin-notification-ui-v389-r2
