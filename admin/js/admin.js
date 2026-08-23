@@ -1,4 +1,4 @@
-/* KINOJO Admin modular loader v2026082202 */
+/* KINOJO Admin modular loader v2026082301 */
 (function(){
   'use strict';
   const current=document.currentScript;
@@ -12,6 +12,7 @@
     'admin-notices.js',
     'admin-system.js',
     'admin-images.js',
+    'admin-banner-delete.js',
     'admin-side-banners.js',
     'admin-banner-quality.js',
     'admin-bootstrap.js'
@@ -19,7 +20,8 @@
   function loadScript(name){
     return new Promise((resolve,reject)=>{
       const script=document.createElement('script');
-      script.src=new URL(name+'?cache=2026082202',base).href;
+      const cache=name==='admin-banner-delete.js'?'2026082301':'2026082202';
+      script.src=new URL(name+'?cache='+cache,base).href;
       script.async=false;
       script.onload=resolve;
       script.onerror=()=>reject(new Error('관리자 모듈을 불러오지 못했습니다: '+name));
