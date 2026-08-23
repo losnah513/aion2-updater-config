@@ -86,7 +86,7 @@
 <script src="../ui/kinojo-common-ui.js?cache=2026082203"></script>
 <script src="../ui/kinojo-admin-panel.js?cache=2026071712"></script>
 <script src="../core/kinojo-supabase-client.js?cache=2026080205"></script>
-<script src="../ui/kinojo-banner-runtime.js?cache=2026082301"></script>
+<script src="../ui/kinojo-banner-runtime.js?cache=2026082302"></script>
 <script src="../core/kinojo-supabase-rpc.js?cache=2026080205"></script>
 <script src="../core/kinojo-supabase-features.js?cache=2026081801"></script>
 <script src="../core/kinojo-auth-session.js?cache=2026081801"></script>
@@ -108,19 +108,29 @@
     }
 
     const runtime = window.KinojoBannerRuntime;
-    if (!banner || !runtime?.fetchManifest) return;
+    if (!banner || !bannerLink || !runtime?.mountBanner) return;
 
-    runtime.fetchManifest('HOME', 'MAIN').then((manifest) => {
-      if (manifest?.active !== true || !Array.isArray(manifest.playlist) || manifest.playlist.length === 0) return;
-      const item = manifest.playlist[0];
-      banner.src = item.imageUrl;
-      banner.alt = item.alt || 'KINOJO INFO 깡 레기온 대표 배너';
-      if (!bannerLink) return;
-      if (item.clickUrl) bannerLink.setAttribute('href', item.clickUrl);
+    const fallback = {
+      src: banner.getAttribute('src') || '',
+      alt: banner.getAttribute('alt') || 'KINOJO INFO 깡 레기온 대표 배너',
+      href: bannerLink.getAttribute('href'),
+      ariaLabel: bannerLink.getAttribute('aria-label') || 'KINOJO INFO 대표 배너'
+    };
+    const restoreFallback = () => {
+      banner.setAttribute('src', fallback.src);
+      banner.setAttribute('alt', fallback.alt);
+      if (fallback.href) bannerLink.setAttribute('href', fallback.href);
       else bannerLink.removeAttribute('href');
-      bannerLink.setAttribute('aria-label', banner.alt || 'KINOJO INFO 대표 배너');
-    }).catch((error) => {
-      console.warn('[KINOJO BANNER] HOME:MAIN Manifest를 불러오지 못해 기존 모바일 배너를 유지합니다.', error);
+      bannerLink.setAttribute('aria-label', fallback.ariaLabel);
+    };
+
+    runtime.mountBanner({
+      pageCode: 'HOME',
+      slotCode: 'MAIN',
+      fallbackAlt: 'KINOJO INFO 깡 레기온 대표 배너',
+      ensureElements: () => ({ host: bannerLink, image: banner }),
+      deactivate: restoreFallback,
+      onError: (error) => console.warn('[KINOJO BANNER] HOME:MAIN Manifest 재생 중 오류가 발생해 현재 모바일 배너를 유지합니다.', error)
     });
   })();
 </script>
