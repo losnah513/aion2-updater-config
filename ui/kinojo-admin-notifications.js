@@ -1,4 +1,4 @@
-/* KINOJO administrator request notification bridge v20260823.02 */
+/* KINOJO administrator request notification bridge v20260823.03 */
 (function(){
   'use strict';
   if(window.__KINOJO_ADMIN_NOTIFICATION_BRIDGE__) return;
@@ -37,9 +37,11 @@
     style.id='kinojoAdminNotificationStyles';
     style.textContent=''
       +'.kinojo-admin-notification-host{position:fixed;z-index:2147483001;right:16px;bottom:calc(var(--kinojo-safe-bottom,0px) + 76px);pointer-events:none}'
-      +'.kinojo-admin-notification-card{position:relative;box-sizing:border-box;width:min(360px,calc(100vw - 28px));aspect-ratio:4/3;display:grid;grid-template-rows:auto minmax(0,1fr);overflow:hidden;border:1px solid rgba(255,255,255,.19);border-radius:16px;background:radial-gradient(circle at 84% 13%,rgba(82,137,227,.28),transparent 34%),linear-gradient(145deg,#08182f 0%,#123b6d 55%,#1d2d62 100%);color:#fff;text-align:left;box-shadow:0 20px 56px rgba(4,15,35,.4);opacity:0;transform:translateY(22px) scale(.985);transition:opacity .24s ease,transform .24s ease;pointer-events:auto;cursor:pointer;outline:none}'
+      +'.kinojo-admin-notification-card{position:relative;box-sizing:border-box;width:min(360px,calc(100vw - 28px));aspect-ratio:4/3;display:grid;grid-template-rows:auto minmax(0,1fr);overflow:hidden;border:1px solid rgba(255,255,255,.19);border-radius:16px;background:radial-gradient(circle at 84% 13%,rgba(82,137,227,.28),transparent 34%),linear-gradient(145deg,#08182f 0%,#123b6d 55%,#1d2d62 100%);color:#fff;text-align:left;box-shadow:0 20px 56px rgba(4,15,35,.4);opacity:0;transform:translateY(22px) scale(.985);transition:opacity .24s ease,transform .24s ease,border-color .18s ease,box-shadow .18s ease,filter .12s ease;pointer-events:auto;cursor:pointer;outline:none}'
       +'.kinojo-admin-notification-card.show{opacity:1;transform:translateY(0) scale(1)}'
       +'.kinojo-admin-notification-card:focus-visible{box-shadow:0 0 0 3px rgba(147,197,253,.58),0 20px 56px rgba(4,15,35,.4)}'
+      +'.kinojo-admin-notification-card:hover{border-color:rgba(96,165,250,.82);box-shadow:0 0 0 1px rgba(96,165,250,.24),0 0 24px rgba(59,130,246,.24),0 24px 64px rgba(4,15,35,.48)}'
+      +'.kinojo-admin-notification-card.is-pressing{border-color:rgba(147,197,253,.92);box-shadow:0 0 0 1px rgba(96,165,250,.34),0 10px 28px rgba(4,15,35,.44);transform:translateY(2px) scale(.972);filter:brightness(.94);transition-duration:.08s}'
       +'.kinojo-admin-notification-link-hint{position:absolute;right:0;bottom:calc(100% + 8px);display:flex;align-items:center;gap:7px;padding:8px 11px;border:1px solid rgba(147,197,253,.28);border-radius:9px;background:rgba(4,18,39,.94);color:rgba(255,255,255,.94);font-size:12px;line-height:1;font-weight:900;letter-spacing:-.01em;box-shadow:0 10px 28px rgba(4,15,35,.32);opacity:0;transform:translateY(6px);transition:opacity .18s ease,transform .18s ease;pointer-events:none;white-space:nowrap}'
       +'.kinojo-admin-notification-link-hint-arrow{color:#60a5fa;font-size:16px;line-height:1;font-weight:1000}'
       +'.kinojo-admin-notification-card:hover + .kinojo-admin-notification-link-hint,.kinojo-admin-notification-card:focus-visible + .kinojo-admin-notification-link-hint{opacity:1;transform:translateY(0)}'
@@ -110,7 +112,12 @@
       +'<button class="kinojo-admin-notification-close" type="button" aria-label="알림 닫기">×</button>'
       +'<div class="kinojo-admin-notification-body"><strong class="kinojo-admin-notification-character">'+esc(item.characterName)+'</strong><p class="kinojo-admin-notification-message">'+esc(item.message)+'</p>'
       +(item.moreCount>0?'<span class="kinojo-admin-notification-more">외 '+esc(item.moreCount)+'건</span>':'')+'</div>';
-    const open=()=>{if(item.href)location.href=item.href;};
+    const open=()=>{
+      if(!item.href||card.dataset.navigating==='1')return;
+      card.dataset.navigating='1';card.classList.add('is-pressing');
+      if(hideTimer){clearTimeout(hideTimer);hideTimer=0;}
+      setTimeout(()=>{location.href=item.href;},110);
+    };
     card.addEventListener('click',event=>{if(event.target.closest('.kinojo-admin-notification-close'))return;open();});
     card.addEventListener('keydown',event=>{if((event.key==='Enter'||event.key===' ')&&!event.target.closest('.kinojo-admin-notification-close')){event.preventDefault();open();}});
     card.querySelector('.kinojo-admin-notification-close')?.addEventListener('click',event=>{event.stopPropagation();finish(card);});
