@@ -1,6 +1,6 @@
 # KINOJO WEB HANDOFF
 
-기준일: 2026-08-22 KST
+기준일: 2026-08-23 KST
 
 ## 저장소 / 현재 기준
 
@@ -8,6 +8,7 @@
 - 운영 브랜치: `main`
 - 내 정보 E-1 제품 운영 commit: `640b7eebcef1c13b0516fe2cd020df870bc23752` (PR `#194`)
 - 내 정보 후속 A-1~E-2: 12/12 완료
+- My Info / 관리자 이미지 모달 추가 UI 후속: PR `#197` 구현·배포·동기화 기준 CLOSED · 수동 실브라우저 sanity check는 post-close 보류
 - 레기온 순위 통합 패널: PR `#164` 병합 완료
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 최신 일일 로그를 작업 규칙 원본으로 사용한다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
@@ -28,6 +29,16 @@
 - `kinojo-member-profile` 버킷은 공개, `kinojo-member-reference` 버킷은 비공개다.
 - 참고 이미지는 최대 7일 보존하며 cleanup cron은 `*/15 * * * *`로 활성화되어 있다.
 - 관리자 이미지 SQL 367/371은 `service_role` 전용이다.
+
+## My Info / Admin Image Modal 추가 UI 후속 — CLOSED
+
+- PR `#197` (`Refine My Info image UI and admin image modal`)은 head `d90ca1e93a97d284447df76c19b695b56db7a324`, merge commit `e022442be2261adfcc769bd0b34a6a766f717d9a`로 2026-08-22 병합됐다. 이후 배너 작업이 이어진 현재 기준 `main` `f3502f04dfbbba89392a44e8a1c2aaaa3b46a7eb`에서도 관련 계약은 유지된다.
+- 회원 My Info는 compact 제목, 프로필 캐릭터 2열 selector/현재 이미지 좌우 pane, 내부 스크롤·hidden scrollbar·white fade, FRONT/BACK/UPPER_BODY 독립 슬롯, no-crop 미리보기, 슬롯별 선택/비공개 등록/편집 취소/삭제와 `filesBySlot`/`outputsBySlot`/`previewUrlsBySlot` 독립 pending 상태를 유지한다.
+- 관리자 회원 이미지 모달은 본캐 우선 기본 선택, 회원 보유 캐릭터 selector, 선택 캐릭터 상세 1개만 교체 렌더, `data-admin-member-image-character` 기반 preview/download/privacy 계약, `#adminMemberImageModal` scoped viewport/internal-scroll 및 body scroll lock을 유지한다.
+- PR #197 자체는 Supabase SQL/RPC/Edge/Storage policy/bucket/cleanup/signed upload·preview·download 계약을 변경하지 않았다. 이후 다른 프로젝트의 Supabase 변경과 구분한다.
+- 자동 검증은 PR #197의 `Verify KINOJO Pages`, `Verify Character Refresh Profile`, `Verify Legion Tree Pages` PASS와 merge commit의 `kinojo/live-readback`, `legion-tree/live-readback` success를 확인했다. 2026-08-23 마감 readback에서는 현재 `main`의 관련 소스 계약 유지, Drive 전용 회귀 테스트 직접 실행 PASS, `ui/kinojo-common-ui.js`·`ui/kinojo-my-info.css`·`admin/js/admin-members.js`·`admin/css/admin.css`·`tests/my-info-admin-image-layout-contract.test.js`의 GitHub↔Drive Git blob SHA `5/5` 일치를 확인했다.
+- PC `1280x900`, 모바일 `390x844`/`320x800`/`844x390`, 실제 3 reference slot 동시 pending→개별 등록, 관리자 실제 다캐릭터 selector/preview/download의 **PR #197 후속 최종 수동 sanity check는 이번 마감 회차에서 재실행하지 못했다.** 현재 실행 환경에 KINOJO 인증 브라우저 세션이 없고 headless Chromium도 사용할 수 없었으며, 2026-08-23 사용자 명시 지시로 Codex 재사용 가능 시점까지 기다리지 않고 마감한다. 이 항목은 `PASS`로 기록하지 않고 **post-close 수동 확인 보류**로 남긴다.
+- 최종 상태는 **구현·자동 회귀·PR 병합·Pages/live 배포·Drive 소스 동기화 기준 CLOSED**다. 수동 sanity check에서 실제 회귀가 발견될 경우에만 최신 `main`에서 새 `codex/` 수정 브랜치를 만들어 별도 최소 수정한다. 이전 PR #197 작업 브랜치나 과거 dirty branch를 다시 병합하지 않는다.
 
 ## 레기온 순위 통합 패널 UI
 
