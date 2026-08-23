@@ -38,6 +38,96 @@ function jpegDimensions(bytes){
   return null;
 }
 
+function playbackElement(){
+  return {
+    style:{},attrs:{},
+    setAttribute(k,v){this.attrs[k]=String(v);if(k==='src')this.src=String(v);if(k==='alt')this.alt=String(v)},
+    removeAttribute(k){delete this.attrs[k]},
+    getAttribute(k){return this.attrs[k]??null},
+  };
+}
+function playbackManifest(items,{slide=3000,transition=600,validMs=600000}={}){
+  return {
+    ok:true,service:'kinojo-banner-media',apiVersion:'1.4',databaseContract:'388',contract:'banner-public-manifest-v1',
+    manifestVersion:'playback-v1',generatedAtKst:'2035-01-01T12:00:00+09:00',validUntil:new Date(Date.now()+validMs).toISOString(),
+    pageCode:'HOME',slotCode:'MAIN',slotKey:'HOME:MAIN',active:true,reason:null,
+    rotation:{slideIntervalMs:slide,transitionDurationMs:transition},playlist:items,
+  };
+}
+function playbackContext(raw,{reduced=false}={}){
+  let nextTimer=1;
+  const timers=new Map(),listeners=new Map(),preloadLog=[],session={};
+  class FakeImage{
+    constructor(){this.complete=false;this.naturalWidth=0;this.onload=null;this.onerror=null}
+    set src(v){this._src=v;preloadLog.push(v);this.complete=true;this.naturalWidth=100;queueMicrotask(()=>this.onload?.())}
+    get src(){return this._src}
+  }
+  const document={hidden:false,addEventListener(type,fn){listeners.set(type,fn)},removeEventListener(type,fn){if(listeners.get(type)===fn)listeners.delete(type)}};
+  const window={
+    sessionStorage:{getItem:k=>session[k]??null,setItem:(k,v)=>{session[k]=String(v)}},
+    KinojoSupabaseClientCore:{async ensureConfig(){return{url:'https://example.supabase.co'}},headers(){return{}}},
+    matchMedia:()=>({matches:reduced}),requestAnimationFrame:cb=>{cb();return 0},
+    getComputedStyle:()=>({objectFit:'cover',objectPosition:'right center'}),
+  };
+  const headers={get(name){return String(name).toLowerCase()==='etag'?'W/"playback"':''}};
+  const fakeFetch=async()=>({ok:true,status:200,headers,text:async()=>JSON.stringify(raw)});
+  function fakeSetTimeout(fn,delay){const id=nextTimer++;timers.set(id,{fn,delay,active:true});return id}
+  function fakeClearTimeout(id){const timer=timers.get(id);if(timer)timer.active=false}
+  const context={window,document,Image:FakeImage,fetch:fakeFetch,console,URL,Date,JSON,Map,WeakMap,WeakSet,Promise,Number,String,Object,Array,RegExp,Error,setTimeout:fakeSetTimeout,clearTimeout:fakeClearTimeout,queueMicrotask};
+  vm.runInNewContext(source,context,{filename:'ui/kinojo-banner-runtime.js'});
+  return{runtime:window.KinojoBannerRuntime,document,listeners,timers,preloadLog};
+}
+async function playbackFlush(n=40){for(let i=0;i<n;i++)await Promise.resolve()}
+function activePlaybackTimers(timers,delay){return[...timers.entries()].filter(([,timer])=>timer.active&&(delay===undefined||timer.delay===delay))}
+async function firePlaybackTimer(timers,delay){const found=activePlaybackTimers(timers,delay)[0];assert.ok(found,`expected active timer ${delay}`);found[1].active=false;found[1].fn();await playbackFlush()}
+async function verifyPlaybackRuntime(){
+  assert.match(source,/prefers-reduced-motion:\s*reduce/);
+  assert.match(source,/visibilitychange/);
+  assert.match(source,/preloadImage\(next\.playlist\[0\]\.imageUrl\)/);
+  const A={imageUrl:'https://kinojo.info/assets/images/a.jpg',alt:'A',clickUrl:'/a'};
+  const B={imageUrl:'https://kinojo.info/assets/images/b.jpg',alt:'B',clickUrl:'/b'};
+  const C={imageUrl:'https://kinojo.info/assets/images/c.jpg',alt:'C',clickUrl:null};
+  {
+    const env=playbackContext(playbackManifest([A,B,C])),host=playbackElement(),image=playbackElement();
+    const controller=env.runtime.mountBanner({pageCode:'HOME',slotCode:'MAIN',ensureElements:()=>({host,image}),fallbackAlt:'fallback'});
+    await playbackFlush();
+    assert.equal(image.src,A.imageUrl,'first Server playlist item should render after preload');
+    assert.equal(host.attrs.href,'/a');
+    assert.deepEqual(env.preloadLog.slice(0,2),[A.imageUrl,B.imageUrl],'player should preload only current and next image');
+    assert.equal(activePlaybackTimers(env.timers,3000).length,1,'slide interval must come from Server rotation');
+    await firePlaybackTimer(env.timers,3000);
+    assert.equal(host.style.backgroundImage,`url(${JSON.stringify(B.imageUrl)})`,'next preloaded image should sit below current image during crossfade');
+    assert.equal(image.style.opacity,'0');
+    assert.equal(activePlaybackTimers(env.timers,600).length,1,'transition duration must come from Server rotation');
+    await firePlaybackTimer(env.timers,600);
+    assert.equal(image.src,B.imageUrl,'player must consume Server playlist in order');
+    assert.equal(host.attrs.href,'/b');
+    assert.equal(host.style.backgroundImage,undefined,'transient crossfade background must be restored');
+    assert.equal(controller.getState().index,1);
+    assert.ok(env.preloadLog.includes(C.imageUrl),'following image must preload after transition');
+    env.document.hidden=true;env.listeners.get('visibilitychange')();
+    assert.equal(activePlaybackTimers(env.timers,3000).length,0,'background tab must pause slide timer');
+    env.document.hidden=false;env.listeners.get('visibilitychange')();
+    assert.equal(controller.getState().index,1,'visibility restore must preserve current playlist index');
+    assert.equal(activePlaybackTimers(env.timers,3000).length,1,'visible tab must resume slide timer');
+    controller.stop();
+  }
+  {
+    const env=playbackContext(playbackManifest([A,B],{transition:900}),{reduced:true}),host=playbackElement(),image=playbackElement();
+    env.runtime.mountBanner({pageCode:'HOME',slotCode:'MAIN',ensureElements:()=>({host,image})});await playbackFlush();await firePlaybackTimer(env.timers,3000);
+    assert.equal(image.src,B.imageUrl,'reduced motion should switch immediately after preload');
+    assert.equal(activePlaybackTimers(env.timers,900).length,0,'reduced motion must skip fade wait');
+    assert.equal(host.style.backgroundImage,undefined,'reduced motion must skip crossfade background');
+  }
+  {
+    const env=playbackContext(playbackManifest([A])),host=playbackElement(),image=playbackElement();
+    env.runtime.mountBanner({pageCode:'HOME',slotCode:'MAIN',ensureElements:()=>({host,image})});await playbackFlush();
+    assert.equal(image.src,A.imageUrl);assert.equal(activePlaybackTimers(env.timers,3000).length,0,'single-image playlist must not run slide timer');
+  }
+  console.log('KINOJO banner playback preload/crossfade/visibility/reduced-motion contract: PASS');
+}
+
+
 (async()=>{
   const calls=[];let mode='fresh';let delayResolve=null;
   const cfg={url:'https://josvoltpktvwysrasffq.supabase.co',publishableKey:'sb_publishable_test'};
@@ -72,10 +162,13 @@ function jpegDimensions(bytes){
   assert.equal(calls.length,4,'dedupe must avoid a second network call');
 
   assert.throws(()=>api.fetchManifest('bad page','MAIN'),e=>e.code==='BANNER_MANIFEST_TARGET_INVALID');
-  assert.equal(/Date\.now|Math\.random|Asia\/Seoul|priority|weighted|scheduleMode/.test(source),false,'Browser runtime must not own schedule/priority/random decisions');
+  assert.equal(/Math\.random|Asia\/Seoul|priority|weighted|scheduleMode/.test(source),false,'Browser runtime must not own schedule/priority/random decisions');
+  assert.match(source,/Date\.now\(\)>=Date\.parse\(value\?\.validUntil/,'Browser time may only trigger Manifest validity revalidation');
+  assert.equal(/Date\.parse\([^)]*generatedAtKst/.test(source),false,'Browser must not derive publication state from Server KST metadata');
   assert.equal(/passKey|passCode|service_role/.test(source),false,'public runtime must not contain private credentials');
+  await verifyPlaybackRuntime();
 
-  assert.match(pcBannerSource,/runtime\.fetchManifest\(pageCode,slotCode\)/,'7-나 common PC renderer must request the mapped public Manifest target');
+  assert.match(pcBannerSource,/runtime\.mountBanner\(\{/,'8-마 common PC renderer must mount the shared Banner player');
   assert.match(pcBannerSource,/if\(path==='\/'\|\|path==='\/home\.html\/'\)return 'HOME'/,'HOME route mapping must be explicit');
   for(const code of ['HOF','RANKING','LEGION_TREE','METER','SANCTUARY','SANCTUARY_SCHEDULE'])assert.ok(pcBannerSource.includes("return '"+code+"'"),'missing PC side page mapping '+code);
   assert.equal(/Date\.now|Math\.random|Asia\/Seoul|priority|weighted|scheduleMode/.test(pcBannerSource),false,'PC side mapping must not own Server schedule/priority/random decisions');
@@ -118,7 +211,8 @@ function jpegDimensions(bytes){
   assert.equal(pcBannerApi.clear(fakeSlot),true);assert.equal(fakeSlot.dataset.kinojoPcBannerState,'empty');assert.equal(fakeSlot.getAttribute('aria-hidden'),'true');
   assert.equal(fakeSlot.children.length,0);assert.equal(fakeSlot.textContent,'300 × 715','clear must restore the existing empty slot label');
   assert.equal(pcBannerApi.render(fakeSlot,{imageUrl:'https://kinojo.info/assets/images/common/kinojo-og.jpg',alt:'',clickUrl:null}),true);
-  assert.equal(fakeSlot.children[0].tagName,'SPAN','image without clickUrl must not create a clickable target');
+  assert.equal(fakeSlot.children[0].tagName,'A','stable SIDE player host remains an anchor element');
+  assert.equal(fakeSlot.children[0].getAttribute('href'),null,'image without clickUrl must not expose a clickable href');
   assert.equal(fakeSlot.children[0].children[0].getAttribute('alt'),'KINOJO 사이드 배너','blank alt must receive a safe visible-content fallback');
   for(const [route,code] of [['/','HOME'],['/index.html','HOME'],['/home.html','HOME'],['/hof/','HOF'],['/ranking/index.html','RANKING'],['/legion-tree/','LEGION_TREE'],['/meter/','METER'],['/sanctuary/','SANCTUARY'],['/sanctuary-schedule/index.html','SANCTUARY_SCHEDULE']])assert.equal(pcBannerApi.resolvePageCode(route),code,route+' page mapping mismatch');
   assert.equal(pcBannerApi.resolvePageCode('/m/'),'','mobile HOME must never map to a PC SIDE target');
@@ -128,10 +222,14 @@ function jpegDimensions(bytes){
   assert.equal(pcBannerApi.resolveSlotCode(fakeRightSlot),'RIGHT');
 
   const sideCalls=[];
-  pcBannerContext.window.KinojoBannerRuntime={async fetchManifest(pageCode,slotCode){
-    sideCalls.push(pageCode+':'+slotCode);
-    if(slotCode==='RIGHT')return{active:false,pageCode,slotCode,playlist:[]};
-    return{active:true,pageCode,slotCode,playlist:[{imageUrl:'https://kinojo.info/assets/images/common/kinojo-og.jpg',alt:pageCode+' '+slotCode,clickUrl:null}]};
+  pcBannerContext.window.KinojoBannerRuntime={mountBanner(options){
+    sideCalls.push(options.pageCode+':'+options.slotCode);
+    if(options.slotCode==='RIGHT'){options.deactivate?.();return{stop(){}}}
+    const elements=options.ensureElements?.();
+    elements?.image?.setAttribute('src','https://kinojo.info/assets/images/common/kinojo-og.jpg');
+    elements?.image?.setAttribute('alt',options.pageCode+' '+options.slotCode);
+    elements?.host?.removeAttribute('href');
+    return{stop(){}};
   }};
   pcBannerContext.window.location.pathname='/ranking/';
   pcBannerApi.clear(fakeSlot);pcBannerApi.clear(fakeRightSlot);renderedSlots=[fakeSlot,fakeRightSlot];pcBannerApi.refresh();
@@ -148,58 +246,54 @@ function jpegDimensions(bytes){
   loaderContext={
     window:{scrollY:0,innerHeight:900,location:{pathname:'/meter/'},getComputedStyle(){return{display:'grid'}},addEventListener(){}},
     document:{
-      readyState:'complete',currentScript:{src:'https://kinojo.info/ui/kinojo-pc-banners.js?cache=2026082202'},documentElement:{appendChild(){}},
-      head:{appendChild(script){loadedScripts.push(script.src);loaderContext.window.KinojoBannerRuntime={async fetchManifest(pageCode,slotCode){loaderCalls.push(pageCode+':'+slotCode);return{active:false,pageCode,slotCode,playlist:[]}}};script.onload?.();return script}},
+      readyState:'complete',currentScript:{src:'https://kinojo.info/ui/kinojo-pc-banners.js?cache=2026082303'},documentElement:{appendChild(){}},
+      head:{appendChild(script){loadedScripts.push(script.src);loaderContext.window.KinojoBannerRuntime={mountBanner(options){loaderCalls.push(options.pageCode+':'+options.slotCode);options.deactivate?.();return{stop(){}}}};script.onload?.();return script}},
       querySelectorAll(){return[loaderSlot]},createElement(tag){return new FakeElement(tag)},addEventListener(){},
     },
     WeakSet,Map,Promise,URL,Object,String,Math,console,
   };
   vm.runInNewContext(pcBannerSource,loaderContext,{filename:'ui/kinojo-pc-banners.js'});await new Promise(resolve=>setTimeout(resolve,0));
-  assert.deepEqual(loadedScripts,['https://kinojo.info/ui/kinojo-banner-runtime.js?cache=2026082301'],'PC pages without a static runtime tag must load the shared Manifest client from the same /ui/ base');
+  assert.deepEqual(loadedScripts,['https://kinojo.info/ui/kinojo-banner-runtime.js?cache=2026082302'],'PC pages without a static runtime tag must load the shared Manifest client from the same /ui/ base');
   assert.deepEqual(loaderCalls,['METER:LEFT'],'dynamically loaded shared runtime must receive the canonical page/slot target');
   assert.equal(loaderSlot.dataset.kinojoPcBannerState,'empty','inactive SIDE Manifest must keep the existing empty slot');
   assert.equal(/og:image|twitter:image/.test(source),false,'Banner runtime must not rewrite static SEO fallback metadata');
 
   const supabaseClientIndex=pcHome.indexOf('core/kinojo-supabase-client.js?cache=2026080205');
-  const runtimeIndex=pcHome.indexOf('ui/kinojo-banner-runtime.js?cache=2026082301');
-  const manifestCallIndex=pcHome.indexOf("runtime.fetchManifest('HOME', 'MAIN')");
-  assert.ok(supabaseClientIndex>=0&&runtimeIndex>supabaseClientIndex&&manifestCallIndex>runtimeIndex,'PC HOME must load Supabase client, then Banner runtime, then request HOME:MAIN');
+  const runtimeIndex=pcHome.indexOf('ui/kinojo-banner-runtime.js?cache=2026082302');
+  const manifestCallIndex=pcHome.indexOf('runtime.mountBanner({');
+  assert.ok(supabaseClientIndex>=0&&runtimeIndex>supabaseClientIndex&&manifestCallIndex>runtimeIndex,'PC HOME must load Supabase client, then Banner runtime, then mount HOME:MAIN playback');
   assert.match(pcHome,/<a class="kinojo-main-banner" href="hof\/"/,'PC default banner link must remain HOF before a Server Manifest overrides it');
   assert.match(pcHome,/<img id="kinojo-main-banner-image" src="assets\/images\/common\/kinojo-og\.jpg\?cache=26062218" alt="KINOJO INFO 깡 레기온 대표 배너">/,'PC default visual fallback must remain kinojo-og.jpg with a non-empty alt');
   assert.match(pcHome,/<meta property="og:image" content="https:\/\/kinojo\.info\/assets\/images\/common\/kinojo-og\.jpg">/,'PC Open Graph fallback must stay on the static kinojo-og.jpg');
   assert.match(pcHome,/<meta property="og:image:width" content="1536">/);
   assert.match(pcHome,/<meta property="og:image:height" content="864">/);
   assert.match(pcHome,/<meta name="twitter:image" content="https:\/\/kinojo\.info\/assets\/images\/common\/kinojo-og\.jpg">/,'PC Twitter fallback must stay on the static kinojo-og.jpg');
-  assert.match(pcHome,/manifest\?\.active !== true/,'inactive Manifest must leave current PC banner untouched');
-  assert.match(pcHome,/manifest\.playlist\[0\]/,'6-나 must render only the first Server playlist item; rotation remains 8-마');
-  assert.match(pcHome,/banner\.src = item\.imageUrl/);
-  assert.match(pcHome,/banner\.alt = item\.alt \|\| 'KINOJO INFO 깡 레기온 대표 배너'/);
-  assert.match(pcHome,/bannerLink\.setAttribute\('href', item\.clickUrl\)/);
-  assert.match(pcHome,/bannerLink\.removeAttribute\('href'\)/,'Manifest item without clickUrl must not keep the legacy HOF click target');
+  assert.match(pcHome,/runtime\.mountBanner\(\{/,'8-마 PC HOME must use the shared playback runtime');
+  assert.match(pcHome,/pageCode: 'HOME'/);assert.match(pcHome,/slotCode: 'MAIN'/);
+  assert.match(pcHome,/deactivate: restoreFallback/,'inactive/error Manifest must restore the current PC fallback');
+  assert.match(pcHome,/ensureElements: \(\) => \(\{ host: bannerLink, image: banner \}\)/);
   assert.match(pcHome,/kinojo_banner_summer\.png\?cache=2026080602/,'legacy summer fallback must remain until migration stage 9');
   assert.match(pcHome,/2026-08-31T23:59:59\.999\+09:00/,'legacy summer end schedule must remain until 9-다');
-  assert.equal(/setInterval|setTimeout\([^)]*slide|transitionDurationMs/.test(pcHome),false,'6-나 must not implement slideshow timing/crossfade before 8-마');
+  assert.equal(/runtime\.fetchManifest\(/.test(pcHome),false,'PC HOME must not implement a page-specific Manifest player');
 
   const mobileSupabaseClientIndex=mobileHome.indexOf('../core/kinojo-supabase-client.js?cache=2026080205');
-  const mobileRuntimeIndex=mobileHome.indexOf('../ui/kinojo-banner-runtime.js?cache=2026082301');
-  const mobileManifestCallIndex=mobileHome.indexOf("runtime.fetchManifest('HOME', 'MAIN')");
-  assert.ok(mobileSupabaseClientIndex>=0&&mobileRuntimeIndex>mobileSupabaseClientIndex&&mobileManifestCallIndex>mobileRuntimeIndex,'mobile HOME must load Supabase client, then shared Banner runtime, then request HOME:MAIN');
+  const mobileRuntimeIndex=mobileHome.indexOf('../ui/kinojo-banner-runtime.js?cache=2026082302');
+  const mobileManifestCallIndex=mobileHome.indexOf('runtime.mountBanner({');
+  assert.ok(mobileSupabaseClientIndex>=0&&mobileRuntimeIndex>mobileSupabaseClientIndex&&mobileManifestCallIndex>mobileRuntimeIndex,'mobile HOME must load Supabase client, then shared Banner runtime, then mount HOME:MAIN playback');
   assert.match(mobileHome,/<a class="mobile-og-banner" href="hof\/"/,'mobile default banner link must remain HOF before a Server Manifest overrides it');
   assert.match(mobileHome,/<img id="kinojo-main-banner-image" src="\.\.\/assets\/images\/common\/kinojo-og\.jpg\?cache=26062218" alt="KINOJO INFO 깡 레기온 대표 배너">/,'mobile default visual fallback must remain kinojo-og.jpg with a non-empty alt');
   assert.match(mobileHome,/<meta property="og:image" content="https:\/\/kinojo\.info\/assets\/images\/common\/kinojo-og\.jpg">/,'mobile Open Graph fallback must use the same static kinojo-og.jpg');
   assert.match(mobileHome,/<meta property="og:image:width" content="1536">/);
   assert.match(mobileHome,/<meta property="og:image:height" content="864">/);
   assert.match(mobileHome,/<meta name="twitter:image" content="https:\/\/kinojo\.info\/assets\/images\/common\/kinojo-og\.jpg">/,'mobile Twitter fallback must use the same static kinojo-og.jpg');
-  assert.match(mobileHome,/manifest\?\.active !== true/,'inactive Manifest must leave current mobile banner untouched');
-  assert.match(mobileHome,/manifest\.playlist\[0\]/,'6-다 must render only the first Server playlist item; rotation remains 8-마');
-  assert.match(mobileHome,/banner\.src = item\.imageUrl/);
-  assert.match(mobileHome,/banner\.alt = item\.alt \|\| 'KINOJO INFO 깡 레기온 대표 배너'/);
-  assert.match(mobileHome,/bannerLink\.setAttribute\('href', item\.clickUrl\)/);
-  assert.match(mobileHome,/bannerLink\.removeAttribute\('href'\)/,'mobile Manifest item without clickUrl must not keep the legacy HOF click target');
+  assert.match(mobileHome,/runtime\.mountBanner\(\{/,'8-마 mobile HOME must use the shared playback runtime');
+  assert.match(mobileHome,/pageCode: 'HOME'/);assert.match(mobileHome,/slotCode: 'MAIN'/);
+  assert.match(mobileHome,/deactivate: restoreFallback/,'inactive/error Manifest must restore the current mobile fallback');
+  assert.match(mobileHome,/ensureElements: \(\) => \(\{ host: bannerLink, image: banner \}\)/);
   assert.match(mobileHome,/kinojo_banner_summer\.png\?cache=2026080602/,'mobile legacy summer fallback must remain until migration stage 9');
   assert.match(mobileHome,/2026-08-31T23:59:59\.999\+09:00/,'mobile legacy summer end schedule must remain until 9-다');
   assert.equal(/runtime\.fetchManifest\([^)]*,\s*'(?:LEFT|RIGHT)'/.test(mobileHome),false,'mobile HOME must not request SIDE banner slots');
-  assert.equal(/setInterval|setTimeout\([^)]*slide|transitionDurationMs/.test(mobileHome),false,'6-다 must not implement slideshow timing/crossfade before 8-마');
+  assert.equal(/runtime\.fetchManifest\(/.test(mobileHome),false,'mobile HOME must not implement a page-specific Manifest player');
   console.log('KINOJO PC/Mobile HOME Banner Manifest connection: PASS');
   console.log('KINOJO banner Manifest client contract: PASS');
 
