@@ -1,0 +1,109 @@
+name: Patch admin notification hover link
+
+on:
+  push:
+    branches:
+      - kinojo/admin-notification-hover-link-20260823
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: kinojo/admin-notification-hover-link-20260823
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply focused notification affordance patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          bridge_path = Path('ui/kinojo-admin-notifications.js')
+          bridge = bridge_path.read_text(encoding='utf-8')
+          old = bridge
+          bridge = bridge.replace('/* KINOJO administrator request notification bridge v20260823.01 */', '/* KINOJO administrator request notification bridge v20260823.02 */', 1)
+          anchor = "      +'.kinojo-admin-notification-card:focus-visible{box-shadow:0 0 0 3px rgba(147,197,253,.58),0 20px 56px rgba(4,15,35,.4)}'\n"
+          hint_css = anchor + "      +'.kinojo-admin-notification-link-hint{position:absolute;right:0;bottom:calc(100% + 8px);display:flex;align-items:center;gap:7px;padding:8px 11px;border:1px solid rgba(147,197,253,.28);border-radius:9px;background:rgba(4,18,39,.94);color:rgba(255,255,255,.94);font-size:12px;line-height:1;font-weight:900;letter-spacing:-.01em;box-shadow:0 10px 28px rgba(4,15,35,.32);opacity:0;transform:translateY(6px);transition:opacity .18s ease,transform .18s ease;pointer-events:none;white-space:nowrap}'\n      +'.kinojo-admin-notification-link-hint-arrow{color:#60a5fa;font-size:16px;line-height:1;font-weight:1000}'\n      +'.kinojo-admin-notification-card:hover + .kinojo-admin-notification-link-hint,.kinojo-admin-notification-card:focus-visible + .kinojo-admin-notification-link-hint{opacity:1;transform:translateY(0)}'\n"
+          if anchor not in bridge:
+              raise SystemExit('focus-visible CSS anchor missing')
+          bridge = bridge.replace(anchor, hint_css, 1)
+          mobile_anchor = "      +'@media(max-width:720px){.kinojo-admin-notification-host{left:12px;right:12px;bottom:calc(var(--kinojo-safe-bottom,0px) + 70px)}.kinojo-admin-notification-card{width:min(360px,100%);margin-left:auto}.kinojo-admin-notification-head{min-height:64px;padding:17px 50px 14px 18px}.kinojo-admin-notification-title{font-size:18px}.kinojo-admin-notification-body{padding:17px 18px 19px}.kinojo-admin-notification-character{font-size:17px}.kinojo-admin-notification-message{font-size:13px}}'\n"
+          if mobile_anchor not in bridge:
+              raise SystemExit('mobile CSS anchor missing')
+          bridge = bridge.replace(mobile_anchor, mobile_anchor + "      +'@media(hover:none){.kinojo-admin-notification-link-hint{display:none}}'\n", 1)
+          aria_old = "card.className='kinojo-admin-notification-card';card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',item.title+' · '+item.message);"
+          aria_new = "card.className='kinojo-admin-notification-card';card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',item.title+' · '+item.message+' · 관리자 페이지 이동');"
+          if aria_old not in bridge:
+              raise SystemExit('card aria anchor missing')
+          bridge = bridge.replace(aria_old, aria_new, 1)
+          append_old = "    host.appendChild(card);requestAnimationFrame(()=>card.classList.add('show'));\n"
+          append_new = "    const hint=document.createElement('div');hint.className='kinojo-admin-notification-link-hint';hint.setAttribute('aria-hidden','true');\n    hint.innerHTML='관리자 페이지 이동 <span class=\"kinojo-admin-notification-link-hint-arrow\">→</span>';\n    host.appendChild(card);host.appendChild(hint);requestAnimationFrame(()=>card.classList.add('show'));\n"
+          if append_old not in bridge:
+              raise SystemExit('card append anchor missing')
+          bridge = bridge.replace(append_old, append_new, 1)
+          if bridge == old:
+              raise SystemExit('bridge unchanged')
+          bridge_path.write_text(bridge, encoding='utf-8')
+
+          auth_path = Path('core/kinojo-auth-ui.js')
+          auth = auth_path.read_text(encoding='utf-8')
+          if auth.count('kinojo-admin-notifications.js?cache=2026082301') != 1:
+              raise SystemExit('unexpected bridge cache count in auth UI')
+          auth = auth.replace('kinojo-admin-notifications.js?cache=2026082301', 'kinojo-admin-notifications.js?cache=2026082302')
+          auth_path.write_text(auth, encoding='utf-8')
+
+          html_files = [
+              'home.html','m/index.html','hof/index.html','m/hof/index.html','ranking/index.html','m/ranking/index.html',
+              'sanctuary/index.html','m/sanctuary/index.html','sanctuary-schedule/index.html','m/sanctuary-schedule/index.html',
+              'meter/index.html','m/meter/index.html','arcana/index.html','m/arcana/index.html','legion-tree/index.html','m/legion-tree/index.html',
+              'admin/index.html','m/admin/index.html'
+          ]
+          for name in html_files:
+              p = Path(name)
+              text = p.read_text(encoding='utf-8')
+              if text.count('kinojo-auth-ui.js?cache=2026082301') != 1:
+                  raise SystemExit(f'{name}: unexpected auth cache count')
+              p.write_text(text.replace('kinojo-auth-ui.js?cache=2026082301', 'kinojo-auth-ui.js?cache=2026082302'), encoding='utf-8')
+
+          contract_path = Path('tests/admin-notification-contract.test.js')
+          contract = contract_path.read_text(encoding='utf-8')
+          contract = contract.replace("kinojo-admin-notifications.js?cache=2026082301", "kinojo-admin-notifications.js?cache=2026082302")
+          marker = "assert.ok(bridge.includes(\"sessionStorage.setItem(LEGACY_SUPPORT_SEEN_KEY,String(id))\"), 'legacy support-only toast must be suppressed before common renderer resumes');\n"
+          if marker not in contract:
+              raise SystemExit('notification contract marker missing')
+          extra = marker + "assert.ok(bridge.includes('관리자 페이지 이동'), 'notification card must expose administrator-page hover/focus affordance');\nassert.ok(bridge.includes('kinojo-admin-notification-link-hint-arrow'), 'administrator-page arrow must have its own accent style hook');\nassert.ok(bridge.includes('kinojo-admin-notification-card:hover + .kinojo-admin-notification-link-hint'), 'desktop pointer hover must reveal the navigation hint');\nassert.ok(bridge.includes('location.href=item.href'), 'notification card activation must navigate to the mapped administrator page');\nassert.ok(bridge.includes('@media(hover:none){.kinojo-admin-notification-link-hint{display:none}}'), 'touch-only layouts must not reserve hover hint UI');\n"
+          contract = contract.replace(marker, extra, 1)
+          contract_path.write_text(contract, encoding='utf-8')
+
+          shell_path = Path('tests/web-shell-auth-contract.test.js')
+          shell = shell_path.read_text(encoding='utf-8')
+          if 'kinojo-auth-ui.js?cache=2026082301' not in shell:
+              raise SystemExit('web shell auth cache marker missing')
+          shell_path.write_text(shell.replace('kinojo-auth-ui.js?cache=2026082301', 'kinojo-auth-ui.js?cache=2026082302'), encoding='utf-8')
+          PY
+      - name: Verify focused patch
+        shell: bash
+        run: |
+          node --check core/kinojo-auth-ui.js
+          node --check ui/kinojo-admin-notifications.js
+          node tests/admin-notification-contract.test.js
+          node tests/web-shell-auth-contract.test.js
+          git diff --check
+          test "$(grep -RIl --include='*.html' 'kinojo-auth-ui.js?cache=2026082301' home.html m hof ranking sanctuary sanctuary-schedule meter arcana legion-tree admin 2>/dev/null | wc -l)" -eq 0
+      - name: Commit product patch and remove temporary workflow
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/patch-admin-notification-hover-link.yml
+          git add core/kinojo-auth-ui.js ui/kinojo-admin-notifications.js tests/admin-notification-contract.test.js tests/web-shell-auth-contract.test.js home.html m/index.html hof/index.html m/hof/index.html ranking/index.html m/ranking/index.html sanctuary/index.html m/sanctuary/index.html sanctuary-schedule/index.html m/sanctuary-schedule/index.html meter/index.html m/meter/index.html arcana/index.html m/arcana/index.html legion-tree/index.html m/legion-tree/index.html admin/index.html m/admin/index.html
+          git commit -m 'Improve administrator notification navigation affordance'
+          git push origin HEAD:kinojo/admin-notification-hover-link-20260823
