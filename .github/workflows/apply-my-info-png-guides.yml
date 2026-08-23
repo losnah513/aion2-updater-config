@@ -1,29 +1,32 @@
 name: Apply My Info PNG guides
 
 on:
-  push:
-    branches:
-      - codex/my-info-guide-png-final-20260823
-    paths:
-      - .github/workflows/apply-my-info-png-guides.yml
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize]
 
 permissions:
   contents: write
 
 jobs:
   apply:
+    if: github.event.pull_request.head.ref == 'codex/my-info-guide-png-final-20260823'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
 
       - name: Render SVG staging guides to PNG
         shell: bash
         run: |
           set -euo pipefail
+          if [[ -f assets/images/my-info/guides/front-2x3.png && ! -f assets/images/my-info/guides/front-2x3.svg ]]; then
+            echo "PNG migration already applied"
+            exit 0
+          fi
           sudo apt-get update -qq
           sudo apt-get install -y -qq librsvg2-bin
           rsvg-convert -w 800 -h 1200 assets/images/my-info/guides/front-2x3.svg -o assets/images/my-info/guides/front-2x3.png
@@ -34,6 +37,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          if [[ -f assets/images/my-info/guides/front-2x3.png && ! -f assets/images/my-info/guides/front-2x3.svg ]]; then
+            echo "PNG migration already applied"
+            exit 0
+          fi
           python <<'PY'
           from pathlib import Path
           root=Path('.')
@@ -109,6 +116,8 @@ jobs:
           git diff --check
 
       - name: Commit migration
+        env:
+          TARGET_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
@@ -116,4 +125,4 @@ jobs:
           git add -A
           git diff --cached --quiet && exit 0
           git commit -m "Replace My Info SVG guides with PNG assets"
-          git push origin HEAD:${GITHUB_REF_NAME}
+          git push origin HEAD:${TARGET_BRANCH}
