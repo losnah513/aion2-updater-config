@@ -272,8 +272,7 @@ async function verifyPlaybackRuntime(){
   assert.match(pcHome,/pageCode: 'HOME'/);assert.match(pcHome,/slotCode: 'MAIN'/);
   assert.match(pcHome,/deactivate: restoreFallback/,'inactive/error Manifest must restore the current PC fallback');
   assert.match(pcHome,/ensureElements: \(\) => \(\{ host: bannerLink, image: banner \}\)/);
-  assert.match(pcHome,/kinojo_banner_summer\.png\?cache=2026080602/,'legacy summer fallback must remain until migration stage 9');
-  assert.match(pcHome,/2026-08-31T23:59:59\.999\+09:00/,'legacy summer end schedule must remain until 9-다');
+  assert.equal(/kinojo_banner_summer\.png|2026-08-31T23:59:59\.999\+09:00|summerBannerEndsAt|Date\.now\(\)\s*<=/.test(pcHome),false,'9-다 PC HOME must not own the migrated summer schedule or image selection');
   assert.equal(/runtime\.fetchManifest\(/.test(pcHome),false,'PC HOME must not implement a page-specific Manifest player');
 
   const mobileSupabaseClientIndex=mobileHome.indexOf('../core/kinojo-supabase-client.js?cache=2026080205');
@@ -290,8 +289,7 @@ async function verifyPlaybackRuntime(){
   assert.match(mobileHome,/pageCode: 'HOME'/);assert.match(mobileHome,/slotCode: 'MAIN'/);
   assert.match(mobileHome,/deactivate: restoreFallback/,'inactive/error Manifest must restore the current mobile fallback');
   assert.match(mobileHome,/ensureElements: \(\) => \(\{ host: bannerLink, image: banner \}\)/);
-  assert.match(mobileHome,/kinojo_banner_summer\.png\?cache=2026080602/,'mobile legacy summer fallback must remain until migration stage 9');
-  assert.match(mobileHome,/2026-08-31T23:59:59\.999\+09:00/,'mobile legacy summer end schedule must remain until 9-다');
+  assert.equal(/kinojo_banner_summer\.png|2026-08-31T23:59:59\.999\+09:00|summerBannerEndsAt|Date\.now\(\)\s*<=/.test(mobileHome),false,'9-다 mobile HOME must not own the migrated summer schedule or image selection');
   assert.equal(/runtime\.fetchManifest\([^)]*,\s*'(?:LEFT|RIGHT)'/.test(mobileHome),false,'mobile HOME must not request SIDE banner slots');
   assert.equal(/runtime\.fetchManifest\(/.test(mobileHome),false,'mobile HOME must not implement a page-specific Manifest player');
   console.log('KINOJO PC/Mobile HOME Banner Manifest connection: PASS');
