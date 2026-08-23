@@ -12,6 +12,7 @@
     'admin-notices.js',
     'admin-system.js',
     'admin-images.js',
+    'admin-banner-delete.js',
     'admin-side-banners.js',
     'admin-banner-quality.js',
     'admin-bootstrap.js'
