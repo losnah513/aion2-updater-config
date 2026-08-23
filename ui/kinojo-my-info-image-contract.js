@@ -45,7 +45,7 @@
     FRONT:{
       slot:'FRONT',
       label:'전신 정면',
-      guideAssetPath:'/assets/images/my-info/guides/front-2x3.svg',
+      guideAssetPath:'/assets/images/my-info/guides/front-2x3.png?v=20260823',
       outputWidth:800,
       outputHeight:1200,
       aspectWidth:2,
@@ -57,7 +57,7 @@
     BACK:{
       slot:'BACK',
       label:'전신 후면',
-      guideAssetPath:'/assets/images/my-info/guides/back-2x3.svg',
+      guideAssetPath:'/assets/images/my-info/guides/back-2x3.png?v=20260823',
       outputWidth:800,
       outputHeight:1200,
       aspectWidth:2,
@@ -69,7 +69,7 @@
     UPPER_BODY:{
       slot:'UPPER_BODY',
       label:'상반신',
-      guideAssetPath:'/assets/images/my-info/guides/upper-body-4x5.svg',
+      guideAssetPath:'/assets/images/my-info/guides/upper-body-4x5.png?v=20260823',
       outputWidth:800,
       outputHeight:1000,
       aspectWidth:4,
@@ -81,7 +81,7 @@
   });
 
   return deepFreeze({
-    contractVersion:'2026-08-21.3',
+    contractVersion:'2026-08-23.1',
     status:'FOLLOWUP_TARGET',
     input:sharedInput,
     output:sharedOutput,
