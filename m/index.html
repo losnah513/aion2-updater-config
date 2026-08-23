@@ -99,14 +99,6 @@
   (() => {
     const banner = document.getElementById('kinojo-main-banner-image');
     const bannerLink = banner?.closest('.mobile-og-banner') || document.querySelector('.mobile-og-banner');
-    const summerBannerEndsAt = Date.parse('2026-08-31T23:59:59.999+09:00');
-
-    // 9-다 이관 완료 전까지 현재 운영 여름 배너를 fallback으로 보존한다.
-    if (banner && Date.now() <= summerBannerEndsAt) {
-      banner.src = '../assets/images/common/kinojo_banner_summer.png?cache=2026080602';
-      banner.alt = 'KINOJO INFO 여름 휴가 배너';
-    }
-
     const runtime = window.KinojoBannerRuntime;
     if (!banner || !bannerLink || !runtime?.mountBanner) return;
 
