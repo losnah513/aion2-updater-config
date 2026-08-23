@@ -8,6 +8,12 @@ on:
       - "ui/kinojo-pc-banners.js"
       - "ui/kinojo-pc-banners.css"
       - "tests/banner-manifest-client-contract.test.js"
+      - "tests/banner-admin-main-ui-contract.test.js"
+      - "tests/banner-admin-chrome-e2e.html"
+      - "admin/js/admin.js"
+      - "admin/js/admin-banner-delete.js"
+      - "admin/index.html"
+      - "m/admin/index.html"
       - ".github/workflows/verify-banner-runtime.yml"
   push:
     branches: [main]
@@ -16,6 +22,12 @@ on:
       - "ui/kinojo-pc-banners.js"
       - "ui/kinojo-pc-banners.css"
       - "tests/banner-manifest-client-contract.test.js"
+      - "tests/banner-admin-main-ui-contract.test.js"
+      - "tests/banner-admin-chrome-e2e.html"
+      - "admin/js/admin.js"
+      - "admin/js/admin-banner-delete.js"
+      - "admin/index.html"
+      - "m/admin/index.html"
       - ".github/workflows/verify-banner-runtime.yml"
   workflow_dispatch:
 
@@ -71,11 +83,29 @@ jobs:
           assert.match(css,/@media \(min-width:1840px\)\{[\s\S]*position:fixed;[\s\S]*width:300px;[\s\S]*height:715px;/);
           assert.match(css,/border-radius:4px;/);
           assert.match(css,/\.kinojo-pc-banner-media\{[\s\S]*overflow:hidden;[\s\S]*border-radius:inherit;/);
-          assert.match(css,/data-kinojo-pc-banner-state=\"empty\"[\s\S]*place-items:center;/);
+          assert.match(css,/data-kinojo-pc-banner-state="empty"[\s\S]*place-items:center;/);
           assert.match(js,/const documentTop=hostRect\.top\+window\.scrollY;/);
           assert.match(js,/const maxTop=Math\.max\(14,window\.innerHeight-height-14\);/);
           console.log('KINOJO PC SIDE fixed/ratio/overflow/corner/empty + mobile/breakpoint contract: PASS');
           NODE
+
+      - name: Verify admin banner Chrome E2E
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check admin/js/admin.js
+          node --check admin/js/admin-banner-delete.js
+          node tests/banner-admin-main-ui-contract.test.js
+          node tests/banner-admin-quality-contract.test.js
+          chrome="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [[ -z "$chrome" ]]; then
+            echo "Chrome/Chromium is required for banner admin E2E." >&2
+            exit 1
+          fi
+          "$chrome" --headless --no-sandbox --disable-gpu --allow-file-access-from-files \
+            --virtual-time-budget=15000 --dump-dom "file://$PWD/tests/banner-admin-chrome-e2e.html#images" \
+            > /tmp/banner-admin-chrome-e2e.html
+          grep -F 'data-e2e-result="PASS"' /tmp/banner-admin-chrome-e2e.html
 
   verify-live-readback:
     if: github.event_name == 'push'
@@ -120,6 +150,10 @@ jobs:
             "ui/kinojo-banner-runtime.js"
             "ui/kinojo-pc-banners.js"
             "ui/kinojo-pc-banners.css"
+            "admin/js/admin.js"
+            "admin/js/admin-banner-delete.js"
+            "admin/index.html"
+            "m/admin/index.html"
             "m/index.html"
             "m/hof/index.html"
             "m/ranking/index.html"
