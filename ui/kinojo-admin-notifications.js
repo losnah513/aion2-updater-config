@@ -1,4 +1,4 @@
-/* KINOJO administrator request notification bridge v20260823.01 */
+/* KINOJO administrator request notification bridge v20260823.02 */
 (function(){
   'use strict';
   if(window.__KINOJO_ADMIN_NOTIFICATION_BRIDGE__) return;
@@ -40,6 +40,9 @@
       +'.kinojo-admin-notification-card{position:relative;box-sizing:border-box;width:min(360px,calc(100vw - 28px));aspect-ratio:4/3;display:grid;grid-template-rows:auto minmax(0,1fr);overflow:hidden;border:1px solid rgba(255,255,255,.19);border-radius:16px;background:radial-gradient(circle at 84% 13%,rgba(82,137,227,.28),transparent 34%),linear-gradient(145deg,#08182f 0%,#123b6d 55%,#1d2d62 100%);color:#fff;text-align:left;box-shadow:0 20px 56px rgba(4,15,35,.4);opacity:0;transform:translateY(22px) scale(.985);transition:opacity .24s ease,transform .24s ease;pointer-events:auto;cursor:pointer;outline:none}'
       +'.kinojo-admin-notification-card.show{opacity:1;transform:translateY(0) scale(1)}'
       +'.kinojo-admin-notification-card:focus-visible{box-shadow:0 0 0 3px rgba(147,197,253,.58),0 20px 56px rgba(4,15,35,.4)}'
+      +'.kinojo-admin-notification-link-hint{position:absolute;right:0;bottom:calc(100% + 8px);display:flex;align-items:center;gap:7px;padding:8px 11px;border:1px solid rgba(147,197,253,.28);border-radius:9px;background:rgba(4,18,39,.94);color:rgba(255,255,255,.94);font-size:12px;line-height:1;font-weight:900;letter-spacing:-.01em;box-shadow:0 10px 28px rgba(4,15,35,.32);opacity:0;transform:translateY(6px);transition:opacity .18s ease,transform .18s ease;pointer-events:none;white-space:nowrap}'
+      +'.kinojo-admin-notification-link-hint-arrow{color:#60a5fa;font-size:16px;line-height:1;font-weight:1000}'
+      +'.kinojo-admin-notification-card:hover + .kinojo-admin-notification-link-hint,.kinojo-admin-notification-card:focus-visible + .kinojo-admin-notification-link-hint{opacity:1;transform:translateY(0)}'
       +'.kinojo-admin-notification-head{min-height:72px;display:flex;align-items:center;padding:20px 54px 16px 22px;border-bottom:1px solid rgba(255,255,255,.12);background:linear-gradient(100deg,rgba(4,18,39,.38),rgba(29,78,137,.16))}'
       +'.kinojo-admin-notification-title{margin:0;color:#fff;font-size:20px;line-height:1.2;font-weight:1000;letter-spacing:-.02em}'
       +'.kinojo-admin-notification-close{position:absolute;top:14px;right:14px;width:32px;height:32px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.22);border-radius:999px;background:rgba(3,15,32,.26);color:#fff;font:900 20px/1 system-ui,sans-serif;cursor:pointer}'
@@ -50,6 +53,7 @@
       +'.kinojo-admin-notification-more{margin-top:auto;color:rgba(219,234,254,.8);font-size:11px;line-height:1.3;font-weight:900}'
       +'.kinojo-admin-notification-card.is-leaving{opacity:0;transform:translateY(16px) scale(.985)}'
       +'@media(max-width:720px){.kinojo-admin-notification-host{left:12px;right:12px;bottom:calc(var(--kinojo-safe-bottom,0px) + 70px)}.kinojo-admin-notification-card{width:min(360px,100%);margin-left:auto}.kinojo-admin-notification-head{min-height:64px;padding:17px 50px 14px 18px}.kinojo-admin-notification-title{font-size:18px}.kinojo-admin-notification-body{padding:17px 18px 19px}.kinojo-admin-notification-character{font-size:17px}.kinojo-admin-notification-message{font-size:13px}}'
+      +'@media(hover:none){.kinojo-admin-notification-link-hint{display:none}}'
       +'@media(prefers-reduced-motion:reduce){.kinojo-admin-notification-card{transition:none}}';
     document.head.appendChild(style);
   }
@@ -101,7 +105,7 @@
     if(!host){host=document.createElement('div');host.id='kinojoAdminNotificationHost';host.className='kinojo-admin-notification-host';document.body.appendChild(host);}
     host.replaceChildren();
     const card=document.createElement('article');
-    card.className='kinojo-admin-notification-card';card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',item.title+' · '+item.message);
+    card.className='kinojo-admin-notification-card';card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',item.title+' · '+item.message+' · 관리자 페이지 이동');
     card.innerHTML='<header class="kinojo-admin-notification-head"><h2 class="kinojo-admin-notification-title">'+esc(item.title)+'</h2></header>'
       +'<button class="kinojo-admin-notification-close" type="button" aria-label="알림 닫기">×</button>'
       +'<div class="kinojo-admin-notification-body"><strong class="kinojo-admin-notification-character">'+esc(item.characterName)+'</strong><p class="kinojo-admin-notification-message">'+esc(item.message)+'</p>'
@@ -110,7 +114,9 @@
     card.addEventListener('click',event=>{if(event.target.closest('.kinojo-admin-notification-close'))return;open();});
     card.addEventListener('keydown',event=>{if((event.key==='Enter'||event.key===' ')&&!event.target.closest('.kinojo-admin-notification-close')){event.preventDefault();open();}});
     card.querySelector('.kinojo-admin-notification-close')?.addEventListener('click',event=>{event.stopPropagation();finish(card);});
-    host.appendChild(card);requestAnimationFrame(()=>card.classList.add('show'));
+    const hint=document.createElement('div');hint.className='kinojo-admin-notification-link-hint';hint.setAttribute('aria-hidden','true');
+    hint.innerHTML='관리자 페이지 이동 <span class="kinojo-admin-notification-link-hint-arrow">→</span>';
+    host.appendChild(card);host.appendChild(hint);requestAnimationFrame(()=>card.classList.add('show'));
     hideTimer=setTimeout(()=>finish(card),8500);
   }
 

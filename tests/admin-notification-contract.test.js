@@ -19,7 +19,7 @@ for (const removed of [
 ]) {
   assert.equal(authUi.includes(removed), false, `legacy central admin notice path must be removed: ${removed}`);
 }
-assert.ok(authUi.includes('kinojo-admin-notifications.js?cache=2026082301'), 'auth UI must load the shared admin notification bridge');
+assert.ok(authUi.includes('kinojo-admin-notifications.js?cache=2026082302'), 'auth UI must load the shared admin notification bridge');
 
 for (const expected of [
   "const SEEN_KEY='kinojo_admin_notification_seen_v389'",
@@ -42,5 +42,10 @@ for (const expected of [
 assert.ok(bridge.includes("badge.textContent=total>99?'99+':String(total);badge.hidden=total<1"), 'admin red badge must continue to use server totalCount only');
 assert.ok(bridge.includes('Date.now()-lastSummaryAt<35000'), 'bridge must reuse common polling and only fall back when summary polling is absent');
 assert.ok(bridge.includes("sessionStorage.setItem(LEGACY_SUPPORT_SEEN_KEY,String(id))"), 'legacy support-only toast must be suppressed before common renderer resumes');
+assert.ok(bridge.includes('관리자 페이지 이동'), 'notification card must expose administrator-page hover/focus affordance');
+assert.ok(bridge.includes('kinojo-admin-notification-link-hint-arrow'), 'administrator-page arrow must have its own accent style hook');
+assert.ok(bridge.includes('kinojo-admin-notification-card:hover + .kinojo-admin-notification-link-hint'), 'desktop pointer hover must reveal the navigation hint');
+assert.ok(bridge.includes('location.href=item.href'), 'notification card activation must navigate to the mapped administrator page');
+assert.ok(bridge.includes('@media(hover:none){.kinojo-admin-notification-link-hint{display:none}}'), 'touch-only layouts must not reserve hover hint UI');
 
 console.log('admin notification contract: PASS');
