@@ -1,4 +1,4 @@
-/* KINOJO common UI v20260822.03 */
+/* KINOJO common UI v20260823.04 */
 (function(){
   if(window.__KINOJO_COMMON_UI_INIT_DONE__) return;
   window.__KINOJO_COMMON_UI_INIT_DONE__ = true;
@@ -985,7 +985,7 @@
   const KINOJO_PROFILE_IMAGE_MIME_TYPES=new Set(['image/jpeg','image/png','image/webp']);
   const kinojoMyProfileUiState={token:'',selectedCharacterId:0,bootstrapByCharacter:Object.create(null),requestId:0,batchRequestId:0,batchPromise:null,batchData:null,imagePreloader:null,imagePreloaderBatch:null,imagePreloaderToken:'',imageBackgroundPromise:null,openRequestId:0,file:null,editedOutput:null,previewUrl:'',uploading:false};
   const KINOJO_REFERENCE_IMAGE_SLOTS=['FRONT','BACK','UPPER_BODY'];
-  const KINOJO_REFERENCE_GUIDE_ASSETS={FRONT:'/assets/images/my-info/guides/front-2x3.svg',BACK:'/assets/images/my-info/guides/back-2x3.svg',UPPER_BODY:'/assets/images/my-info/guides/upper-body-4x5.svg'};
+  const KINOJO_REFERENCE_GUIDE_ASSETS={FRONT:'/assets/images/my-info/guides/front-2x3.png',BACK:'/assets/images/my-info/guides/back-2x3.png',UPPER_BODY:'/assets/images/my-info/guides/upper-body-4x5.png'};
   const kinojoMyReferencePickerState={characterId:0,activeSlot:'',filesBySlot:Object.create(null),outputsBySlot:Object.create(null),previewUrlsBySlot:Object.create(null),stateByCharacter:Object.create(null),requestId:0,uploadingSlot:''};
   let kinojoMyImageToolsPromise=null;
   function ensureMyInfoImageStyle_(href,key){
@@ -1020,7 +1020,7 @@
     if(kinojoMyImageToolsPromise)return kinojoMyImageToolsPromise;
     kinojoMyImageToolsPromise=(async()=>{
       await ensureMyInfoImageStyle_('/ui/kinojo-components.css?cache=2026082101','components');
-      await ensureMyInfoImageScript_('/ui/kinojo-my-info-image-contract.js?cache=2026082103','contract',()=>!!window.KinojoMyInfoImageContract);
+      await ensureMyInfoImageScript_('/ui/kinojo-my-info-image-contract.js?cache=2026082304','contract',()=>!!window.KinojoMyInfoImageContract);
       await ensureMyInfoImageScript_('/ui/kinojo-range-control.js?cache=2026082101','range',()=>!!window.KinojoRangeControl);
       await ensureMyInfoImageScript_('/ui/kinojo-my-info-image-editor.js?cache=2026082103','editor',()=>!!window.KinojoMyInfoImageEditor);
       await ensureMyInfoImageScript_('/ui/kinojo-my-info-image-upload.js?cache=2026082101','upload',()=>!!window.KinojoMyInfoImageUpload);
