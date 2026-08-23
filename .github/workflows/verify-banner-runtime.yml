@@ -49,6 +49,24 @@ jobs:
           const fs=require('node:fs');
           const css=fs.readFileSync('ui/kinojo-pc-banners.css','utf8');
           const js=fs.readFileSync('ui/kinojo-pc-banners.js','utf8');
+          const mobileFiles=[
+            'm/index.html',
+            'm/hof/index.html',
+            'm/ranking/index.html',
+            'm/legion-tree/index.html',
+            'm/meter/index.html',
+            'm/sanctuary/index.html',
+            'm/sanctuary-schedule/index.html',
+          ];
+          assert.match(css,/\.kinojo-pc-banner-slot\{[\s\S]*?display:none;/);
+          assert.deepEqual([...css.matchAll(/@media\s*\(min-width:(\d+)px\)/g)].map(match=>Number(match[1])),[1840]);
+          assert.match(css,/@media \(min-width:1840px\)\{[\s\S]*?\.kinojo-pc-banner-slot\{[\s\S]*?display:grid;/);
+          for(const file of mobileFiles){
+            const html=fs.readFileSync(file,'utf8');
+            assert.equal(html.includes('kinojo-pc-banners.css'),false,file+' must not load PC SIDE banner CSS');
+            assert.equal(html.includes('kinojo-pc-banners.js'),false,file+' must not load PC SIDE banner JS');
+            assert.equal(html.includes('data-kinojo-pc-banner'),false,file+' must not declare a static PC SIDE slot');
+          }
           assert.match(css,/\.kinojo-pc-banner-slot\{[\s\S]*aspect-ratio:300\/715;[\s\S]*overflow:hidden;/);
           assert.match(css,/@media \(min-width:1840px\)\{[\s\S]*position:fixed;[\s\S]*width:300px;[\s\S]*height:715px;/);
           assert.match(css,/border-radius:4px;/);
@@ -56,7 +74,7 @@ jobs:
           assert.match(css,/data-kinojo-pc-banner-state=\"empty\"[\s\S]*place-items:center;/);
           assert.match(js,/const documentTop=hostRect\.top\+window\.scrollY;/);
           assert.match(js,/const maxTop=Math\.max\(14,window\.innerHeight-height-14\);/);
-          console.log('KINOJO PC SIDE fixed/ratio/overflow/corner/empty contract: PASS');
+          console.log('KINOJO PC SIDE fixed/ratio/overflow/corner/empty + mobile/breakpoint contract: PASS');
           NODE
 
   verify-live-readback:
@@ -102,6 +120,13 @@ jobs:
             "ui/kinojo-banner-runtime.js"
             "ui/kinojo-pc-banners.js"
             "ui/kinojo-pc-banners.css"
+            "m/index.html"
+            "m/hof/index.html"
+            "m/ranking/index.html"
+            "m/legion-tree/index.html"
+            "m/meter/index.html"
+            "m/sanctuary/index.html"
+            "m/sanctuary-schedule/index.html"
           )
           tmp_dir="$(mktemp -d)"
           trap 'rm -rf "$tmp_dir"' EXIT
