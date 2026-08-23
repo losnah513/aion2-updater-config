@@ -1,30 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="upperGuideTitle upperGuideDesc" data-kinojo-guide="UPPER_BODY">
-  <title id="upperGuideTitle">상반신 촬영 가이드</title>
-  <desc id="upperGuideDesc">머리 전체, 양어깨, 허리선이 안전 영역 안에 모두 들어오는 상반신 실루엣</desc>
-  <defs>
-    <linearGradient id="upperGuideFill" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#cffafe" stop-opacity=".30"/>
-      <stop offset="1" stop-color="#22d3ee" stop-opacity=".12"/>
-    </linearGradient>
-    <filter id="upperGuideGlow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="7" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-  </defs>
-  <rect x="42" y="42" width="716" height="916" rx="44" fill="none" stroke="#a5f3fc" stroke-width="7" stroke-dasharray="18 14" opacity=".9"/>
-  <rect x="66" y="66" width="668" height="868" rx="32" fill="none" stroke="#22d3ee" stroke-width="3" opacity=".55"/>
-  <path d="M130 104h92M578 104h92M130 896h92M578 896h92" fill="none" stroke="#ecfeff" stroke-width="8" stroke-linecap="round" opacity=".85"/>
-  <g filter="url(#upperGuideGlow)" stroke="#cffafe" stroke-width="9" stroke-linejoin="round" stroke-linecap="round">
-    <circle cx="400" cy="222" r="108" fill="url(#upperGuideFill)"/>
-    <path d="M360 319v70h80v-70" fill="url(#upperGuideFill)"/>
-    <path d="M352 370Q400 350 448 370L528 412L616 502L564 588L509 544L492 842Q400 894 308 842L291 544L236 588L184 502L272 412Z" fill="url(#upperGuideFill)"/>
-    <path d="M256 486Q400 440 544 486" fill="none" stroke="#22d3ee" stroke-width="5" stroke-dasharray="13 13" opacity=".8"/>
-    <path d="M308 842Q400 878 492 842" fill="none" stroke="#22d3ee" stroke-width="6" opacity=".85"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000">
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="48" y="34" width="704" height="932" rx="52" stroke="#77c2d5" stroke-width="7" stroke-dasharray="20 16" opacity=".58"/>
+    <rect x="74" y="62" width="652" height="876" rx="40" stroke="#1b9cba" stroke-width="5" opacity=".76"/>
+    <path d="M116 112h124M560 112h124M116 888h124M560 888h124" stroke="#b7e6ef" stroke-width="8" opacity=".78"/>
+    <g stroke="#77c2d5" stroke-width="8">
+      <ellipse cx="400" cy="266" rx="75" ry="88"/>
+      <path d="M400 125c-48 0-82 18-103 54-15 27-18 64-17 108 1 53-14 92-31 118 17 25 42 42 78 54M400 125c48 0 82 18 103 54 15 27 18 64 17 108-1 53 14 92 31 118-17 25-42 42-78 54"/>
+      <path d="M335 221l21-40 24 44 18-50 23 50 26-43 24 38"/>
+      <path d="M350 354l-4 49-30 20-41 21-38 45-36 75-41 90-63 106M450 354l4 49 30 20 41 21 38 45 36 75 41 90 63 106"/>
+      <path d="M316 423c-13 58-9 105 3 157l18 82 12 77-19 156M484 423c13 58 9 105-3 157l-18 82-12 77 19 156"/>
+    </g>
   </g>
-  <g fill="#ecfeff" stroke="#0891b2" stroke-width="7">
-    <circle cx="400" cy="88" r="17"/>
-    <circle cx="203" cy="478" r="17"/>
-    <circle cx="597" cy="478" r="17"/>
-    <circle cx="400" cy="874" r="17"/>
+  <g fill="#fff" stroke="#0891b2" stroke-width="7">
+    <circle cx="400" cy="83" r="22"/><circle cx="97" cy="780" r="22"/><circle cx="703" cy="780" r="22"/><circle cx="400" cy="925" r="22"/>
   </g>
 </svg>
