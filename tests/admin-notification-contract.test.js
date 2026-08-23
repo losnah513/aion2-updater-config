@@ -19,7 +19,7 @@ for (const removed of [
 ]) {
   assert.equal(authUi.includes(removed), false, `legacy central admin notice path must be removed: ${removed}`);
 }
-assert.ok(authUi.includes('kinojo-admin-notifications.js?cache=2026082302'), 'auth UI must load the shared admin notification bridge');
+assert.ok(authUi.includes('kinojo-admin-notifications.js?cache=2026082303'), 'auth UI must load the shared admin notification bridge');
 
 for (const expected of [
   "const SEEN_KEY='kinojo_admin_notification_seen_v389'",
@@ -47,5 +47,9 @@ assert.ok(bridge.includes('kinojo-admin-notification-link-hint-arrow'), 'adminis
 assert.ok(bridge.includes('kinojo-admin-notification-card:hover + .kinojo-admin-notification-link-hint'), 'desktop pointer hover must reveal the navigation hint');
 assert.ok(bridge.includes('location.href=item.href'), 'notification card activation must navigate to the mapped administrator page');
 assert.ok(bridge.includes('@media(hover:none){.kinojo-admin-notification-link-hint{display:none}}'), 'touch-only layouts must not reserve hover hint UI');
+assert.ok(bridge.includes('.kinojo-admin-notification-card:hover{border-color:rgba(96,165,250,.82)'), 'pointer hover must add a blue border highlight');
+assert.ok(bridge.includes('.kinojo-admin-notification-card.is-pressing'), 'card activation must expose a pressed-state animation class');
+assert.ok(bridge.includes("card.classList.add('is-pressing')"), 'card activation must trigger the pressed-state animation before navigation');
+assert.ok(bridge.includes('setTimeout(()=>{location.href=item.href;},110)'), 'navigation must wait briefly so the press animation is visible');
 
 console.log('admin notification contract: PASS');

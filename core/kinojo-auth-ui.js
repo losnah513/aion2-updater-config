@@ -1246,7 +1246,7 @@
     if(!authScript?.src) return;
     const bridge=document.createElement('script');
     bridge.dataset.kinojoAdminNotifications='1';
-    bridge.src=new URL('../ui/kinojo-admin-notifications.js?cache=2026082302',authScript.src).toString();
+    bridge.src=new URL('../ui/kinojo-admin-notifications.js?cache=2026082303',authScript.src).toString();
     bridge.defer=true;
     document.head.appendChild(bridge);
   }
