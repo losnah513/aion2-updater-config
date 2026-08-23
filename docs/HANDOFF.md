@@ -30,6 +30,13 @@
 - 참고 이미지는 최대 7일 보존하며 cleanup cron은 `*/15 * * * *`로 활성화되어 있다.
 - 관리자 이미지 SQL 367/371은 `service_role` 전용이다.
 
+
+## 2026-08-23 참고 가이드 PNG 후속
+
+- FRONT/BACK/UPPER_BODY 촬영 가이드는 기존 SVG에서 투명 PNG로 교체했다. 활성 경로는 `front-2x3.png`, `back-2x3.png`, `upper-body-4x5.png`이며 각각 800×1200, 800×1200, 800×1000이다.
+- PNG는 얼굴·의상 채움 없이 캐릭터 외곽선과 머리카락 방향, 반투명 프레임/가이드만 표시한다. 기존 `<img>` overlay 구조를 재사용하며 가이드는 WebP 결과 픽셀에 포함되지 않는다.
+- 회귀 테스트는 PNG signature·IHDR 픽셀 크기·투명도·파일 크기와 legacy SVG 제거를 검증한다. Server/Edge/Storage 계약은 변경하지 않았다.
+
 ## My Info / Admin Image Modal 추가 UI 후속 — CLOSED
 
 - PR `#197` (`Refine My Info image UI and admin image modal`)은 head `d90ca1e93a97d284447df76c19b695b56db7a324`, merge commit `e022442be2261adfcc769bd0b34a6a766f717d9a`로 2026-08-22 병합됐다. 이후 배너 작업이 이어진 현재 기준 `main` `f3502f04dfbbba89392a44e8a1c2aaaa3b46a7eb`에서도 관련 계약은 유지된다.
@@ -88,7 +95,7 @@
 ## A-2 가이드 에셋
 
 - A-2는 PR `#158`, 운영 commit `e6ac8358f6482b9455e1d5972987a5871d0ae26b`으로 반영됐다.
-- `assets/images/my-info/guides/`에 FRONT, BACK, UPPER_BODY용 SVG 3종을 둔다.
+- `assets/images/my-info/guides/`에 FRONT, BACK, UPPER_BODY용 투명 PNG 3종을 둔다.
 - FRONT/BACK은 2:3, UPPER_BODY는 4:5이며 A-1 출력 크기와 같은 viewBox를 사용한다.
 - 각 SVG는 화면 문구를 포함하지 않는 독립 실루엣으로, 접근 가능한 title/description과 슬롯 식별자를 제공한다.
 - 외부 이미지·폰트·script·embedded raster를 사용하지 않으며 각 파일은 8KiB 이하로 유지한다.
@@ -106,7 +113,7 @@
 
 - B-1은 PR `#161`, 운영 commit `ec52d8d93c02a9645ab01b27ad163f6f1a2e177c`으로 반영됐다.
 - `ui/kinojo-my-info-image-editor.js`가 첨부 전 3종 가이드 카드와 공통 편집기 viewport를 소유한다.
-- 편집 프레임은 A-1 슬롯 비율에 고정되고 FRONT/BACK/UPPER_BODY에는 A-2 SVG를 overlay한다. PROFILE은 별도 에셋 없이 정사각형 안전 영역만 제공한다.
+- 편집 프레임은 A-1 슬롯 비율에 고정되고 FRONT/BACK/UPPER_BODY에는 A-2 투명 PNG를 overlay한다. PROFILE은 별도 에셋 없이 정사각형 안전 영역만 제공한다.
 - 원본은 브라우저 메모리의 object URL 또는 호출자가 제공한 URL로만 표시하며, 닫기·오류 시 편집기가 만든 object URL을 해제한다.
 - 사진 이동, 확대, 회전, 초기화와 포인터/터치 drag, Escape 닫기, 포커스 순환·복귀를 제공한다. 확대/회전은 A-3 공통 슬라이더를 사용한다.
 - 회전된 프레임의 네 모서리가 원본 밖으로 벗어나지 않도록 최소 cover scale과 이동 범위를 계산한다.
