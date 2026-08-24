@@ -74,3 +74,20 @@
 - main push 뒤 `kinojo/banner-admin-live-readback` run `32688967136`, `kinojo/live-readback` run `32688967119`, `kinojo/banner-runtime-live-readback` run `32688967176` 3종이 모두 success다. 운영 `kinojo.info`가 새 PC/모바일 HTML, 새 loader, 배너 탭 모듈을 제공하는 상태를 확인했다.
 - Drive same-ID exact sync는 7/7 완료했다: `admin/index.html` ID `1RYfeMzCObVNxcUpsxqIBPmkKFjZWafEG` / blob `24f457d6a912d816f8f98574ca6960ca8c9bf130`; `m/admin/index.html` ID `1UzPaI8m_0ygd1NGEbJwCvYbLdTp8Qt5d` / blob `d71b0c4807ddc824e768fda1c0223302a0d23d1b`; `admin/js/admin.js` ID `1YtRNWaJzsnbBwwtY_01k4BvWSKCxsOtU` / blob `f59cb4973970bf98495e5d9e2d08481cdbddcdcc`; `banner-admin-main-ui-contract.test.js` ID `11zy50NNsPQSmYP2W0sTnXXq0MzZm2y-H` / blob `f9bf29fb76835d9bb4bae40a063970fd862d3da2`; `verify-character-refresh-profile.yml` ID `14dkjeOnUESwOGhy3lKuKtyIXhtU0BffP` / blob `203f7d194fe2a7090aa1a928412a844ab8f125a7`; `verify-banner-admin.yml` ID `1KbJNF4PAes1vjjKlhKuPWhTBjMx9D0u5` / blob `d5d8cbac99c4eae7850331dd96a99ad023ec8987`; `meter-presence-log-contract.test.js` ID `1nxPH9TyO1NKM5ojwGKOgXzS1rk_fSedY` / blob `0832bd59d3307f84a768aaf550b7f7c63a9282bd`.
 - Supabase 제품 변경은 없다. 최종 readback은 Asset `2` / Campaign `1` / Item `1` / idempotency ledger `0` / `kinojo-site-banners` object `0`으로 기존 운영 상태를 유지한다.
+
+## Post-close redesign · 관리자 이벤트 작성 Stage 0~3 · 2026-08-24
+
+- 사용자가 요청한 2차 리디자인은 기존 `51/51 CLOSED` 운영 배너를 폐기하지 않고, 기존 Server 권한·Manifest 계약 위에 단계식 관리자 작성 UI를 추가하는 후속 작업으로 진행한다. 현재 완료 범위는 Stage `0~3`이며 전체 리디자인 종료 판정은 아니다.
+- Stage 0: PR `#241`, merge `fc26876d`에서 회원 관리 아래 `캐릭터 이미지 확인` 큐와 미확인 숫자 배지를 추가했다. 회원 업로드를 팝업 외에도 목록에서 추적할 수 있으며 MASTER 전용 권한과 비공개 이미지 경계를 유지한다.
+- Stage 1: PR `#242`, merge `6071da3b`에서 배너 이벤트 저장·게시·활성 이벤트 합산·이미지별 문구 overlay를 위한 DB/API 기반을 추가했다. 운영 기준은 `kinojo-banner-media` Edge v11 / API `1.7` / DB `394`다.
+- Stage 2: PR `#244`, merge `5766aec0`에서 이미지 추가 → 새 노출 묶음 → 이미지 이벤트 설정 → 문구 편집 → 검토·게시의 5단계 노선형 UI, 최대 3장 누적 추가 카드, 새 묶음만의 순서·태그 구성을 추가했다.
+- Stage 3: PR `#245`, merge `5e3f549d`에서 이미지 이벤트 설정을 활성화했다. 메인 배너는 단일 설정, 사이드 배너는 전체/개별 페이지와 `좌우 동시 | 좌우 별도` 스위치를 제공한다. 좌우 별도 모드에서는 왼쪽·오른쪽 이미지 선택과 순서를 각각 유지한다. HOF는 왼쪽만 생성한다.
+- 노출 조건은 항상 또는 KST 기간·요일·특정 날짜로 설정한다. 이미지 유지 시간, 전환 시간, 즉시/CROSSFADE/SLIDE/SLIDE_FADE/ZOOM 효과와 좌→우·우→좌·상→하·하→상 방향을 기존 DB394 enum에 맞춰 게시용 payload로 조립한다. Stage 3 자체는 `event-save`와 `event-publish`를 호출하지 않으며 저장·게시는 Stage 5가 소유한다.
+- 좌우 별도 화면은 좌·우 이미지 영역의 높이와 설정 시작선을 맞췄고, 반쪽 폭에서는 설정을 3열 2행으로 배치한다. `1500px`와 `700px` 실제 Chrome E2E에서 Stage 3 가로 overflow `0`을 확인했다.
+- 추가 사용성 수정은 PR `#246`, 제품 baseline `3917ecb240f491bce05efee591b7da0f95fa8abc`다. 이미지 추가·라이브러리·이미지 순서·좌우별 순서의 미리보기 프레임 크기는 유지하고 이미지 렌더링만 `object-fit: contain`으로 바꿔 세로형 캐릭터 전신이 잘리지 않게 했다. 관리자 cache generation은 `2026082409`다.
+- 전체 Node 계약 테스트 `31/31`, Banner Chrome E2E, `1500px`/`700px` 반응형 검증이 통과했다. main push run은 Banner Admin `32713822755`, KINOJO Pages `32713822740`, Character Refresh Profile `32713822728`, Banner Runtime `32713822737`, Pages deployment `32713821823` 모두 success다.
+- 운영 `kinojo.info`의 `admin/index.html`, `m/admin/index.html`, `admin/js/admin.js`, `admin/js/admin-banner-event-workflow.js`는 제품 baseline의 Git blob과 `4/4` exact-match했다.
+- Drive 제품 동기화는 `13/13` exact-match다. same-ID 갱신: `admin/index.html` `1RYfeMzCObVNxcUpsxqIBPmkKFjZWafEG`, mobile admin `1UzPaI8m_0ygd1NGEbJwCvYbLdTp8Qt5d`, `admin.js` `1YtRNWaJzsnbBwwtY_01k4BvWSKCxsOtU`, Chrome E2E `1rGg7QNUOPlnjHerX9vTFR4zA7P9NE_-D`, main UI test `11zy50NNsPQSmYP2W0sTnXXq0MzZm2y-H`, meter test `1nxPH9TyO1NKM5ojwGKOgXzS1rk_fSedY`, character workflow `14dkjeOnUESwOGhy3lKuKtyIXhtU0BffP`, banner workflow `1KbJNF4PAes1vjjKlhKuPWhTBjMx9D0u5`.
+- Drive 신규 파일: event workflow `1Dw4cchI16JDwZaV8TZ55JOvtd5CCQd_U`, member browser E2E `10gvNOG4J5QzoJ5iQZ_mr5wCQ5Kbldj_k`, member contract `1YMJEOMGDrZqZyWVTeK208ZDeOt7DWZjG`, Stage 2 test `1qDG3l6Ly30V6FmJZgB4LP3xZqJM-7kum`, Stage 3 test `1j714Vx_DNi-VSRvro8xi2wiKg8CxWTh3`.
+- Stage 3에서는 Supabase migration, RPC, Edge 배포와 운영 배너 데이터를 변경하지 않았다. 기존 v394 계약이 요구 enum과 좌우 variant 구조를 이미 제공해 UI와 payload 조립만 추가했다.
+- 다음 작업은 Stage 4 이미지별/선택 이미지 공통 문구 편집과 Stage 5 검토 미리보기·초안 저장·전체 게시·오류 위치 이동·이벤트 목록 분리다.
