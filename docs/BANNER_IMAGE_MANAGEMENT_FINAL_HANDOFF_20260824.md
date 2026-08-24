@@ -51,3 +51,15 @@
 - PR 검증 `Verify Banner Runtime`, `Verify Banner Admin`, `Verify KINOJO Pages`가 모두 success. main push 후 `kinojo/live-readback`, `kinojo/banner-admin-live-readback`, `kinojo/banner-runtime-live-readback` 3종도 모두 success로 운영 바이트 반영을 확인했다.
 - Drive exact sync: `admin-images.js` 기존 ID `1I6Vz20ogyLDOUkYY710fbT9IYONIranb`, Git blob `d1c631104dcd26931b2aeaeceb011d78cf1e5c19`; `banner-admin-chrome-e2e.html` 기존 ID `1rGg7QNUOPlnjHerX9vTFR4zA7P9NE_-D`, Git blob `e7fc17e3221d3f690d52079501a72bf86183778d`. raw readback 2/2 exact-match.
 - 이 bugfix에서 DB/RPC/Edge/Storage/Campaign 데이터 변경은 `0`이며 기존 배너 운영 계약은 유지한다.
+
+## Post-close UI conformance · `메인 배너 | 사이드 배너` 내부 탭 복구 · 2026-08-24
+
+- 초기 계획에는 최상위 `이미지 관리` 내부에 `메인 배너`와 `사이드 배너` 두 관리 항목을 분리하도록 명시돼 있었지만, 실제 구현은 두 UI를 같은 pane에 세로로 이어 붙여 노출하고 있었다. 원본 `51/51 CLOSED`는 유지하고 post-close UI conformance fix로 처리했다.
+- PR `#229` (`Split admin banner management into main and side tabs`)을 squash merge해 제품 코드 baseline을 `32e2346044c7029e5afccdf937f173f2ff7d5fa4`로 갱신했다.
+- 새 `admin/js/admin-banner-tabs.js`가 기존 KINOJO 관리자 공통 `admin-subnav` / `admin-subpane` 스타일을 재사용해 `메인 배너 | 사이드 배너` 탭을 생성한다. 메인 배너가 기본 선택이며, 한 시점에는 선택한 한 패널만 보인다. 기존 `[data-main-banner-admin]` / `[data-side-banner-admin]` 모듈은 각 tabpanel로 이동할 뿐 기존 업로드·일정·가중치·Manifest 계약은 변경하지 않는다.
+- 탭은 마우스 클릭뿐 아니라 방향키, Home, End를 지원하고 `role=tablist/tab/tabpanel`, `aria-selected`, `aria-controls`, `aria-labelledby` 상태를 동기화한다.
+- Chrome E2E는 실제 images pane 활성화 뒤 메인 탭 초기 표시, 사이드 탭 전환, 사이드 데이터 로드, 메인 탭 복귀, 기존 메인 배너 upload→publish→pause→save→delete lifecycle을 같은 회차에 검증하며 PR #229의 `Verify Banner Runtime`, `Verify Banner Admin`, `Verify Character Refresh Profile`, `Verify KINOJO Pages`가 모두 success다.
+- PR #229 main push 기준 `kinojo/banner-admin-live-readback`, `kinojo/live-readback`, `kinojo/banner-runtime-live-readback` 3종이 success로 실제 `kinojo.info` 배포를 확인했다.
+- PR `#230` (`Keep banner admin tabs under permanent verification`)은 workflow-only 후속으로 `admin-banner-tabs.js` 단독 변경도 `Verify Banner Admin`을 실행하고, syntax·실제 Chrome 탭 전환·custom-domain byte readback을 영구 검증하도록 보강했다. 검증 config baseline main은 `a900aaf55336d9e688d6301ef1a4b1047a8982af`이며 `kinojo/banner-admin-live-readback` success다.
+- Drive exact sync: `admin.js` 기존 ID `1YtRNWaJzsnbBwwtY_01k4BvWSKCxsOtU`, `banner-admin-chrome-e2e.html` 기존 ID `1rGg7QNUOPlnjHerX9vTFR4zA7P9NE_-D`, `verify-banner-admin.yml` 기존 ID `1KbJNF4PAes1vjjKlhKuPWhTBjMx9D0u5`를 same-ID 갱신했고, 신규 `admin-banner-tabs.js`는 ID `1Y_nPA-231jnebljJS3GjUAuv_oypfMFn`으로 추가했다. 네 파일 모두 GitHub main과 raw Git blob exact-match했다.
+- 이 UI conformance fix에서 Supabase DB/RPC/Edge/Storage/Campaign 데이터 변경은 `0`이며 기존 MAIN/SIDE Server authority와 배너 운영 계약은 그대로 유지한다.
