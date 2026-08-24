@@ -1,0 +1,31 @@
+/* KINOJO Admin banner management tabs v2026082401 */
+(function(A){
+'use strict';
+if(!A)throw Error('KINOJO Admin shared module is required.');
+const $=(q,r=document)=>r.querySelector(q),$$=(q,r=document)=>Array.from(r.querySelectorAll(q));
+const pane=()=> $('[data-admin-pane="images"]');
+function ensure(){
+  const p=pane();if(!p)return;
+  let nav=$('[data-banner-management-tabs]',p),main=$('[data-banner-management-panel="main"]',p),side=$('[data-banner-management-panel="side"]',p);
+  if(!nav){
+    nav=document.createElement('nav');nav.className='admin-subnav';nav.dataset.bannerManagementTabs='';nav.setAttribute('role','tablist');nav.setAttribute('aria-label','이미지 관리 배너 종류');
+    nav.innerHTML='<button class="active" id="adminBannerMainTab" data-banner-management-tab="main" type="button" role="tab" aria-selected="true" aria-controls="adminBannerMainPanel">메인 배너</button><button id="adminBannerSideTab" data-banner-management-tab="side" type="button" role="tab" aria-selected="false" aria-controls="adminBannerSidePanel" tabindex="-1">사이드 배너</button>';
+    p.prepend(nav);
+  }
+  if(!main){main=document.createElement('div');main.className='admin-subpane active';main.id='adminBannerMainPanel';main.dataset.bannerManagementPanel='main';main.setAttribute('role','tabpanel');main.setAttribute('aria-labelledby','adminBannerMainTab');nav.after(main)}
+  if(!side){side=document.createElement('div');side.className='admin-subpane';side.id='adminBannerSidePanel';side.dataset.bannerManagementPanel='side';side.setAttribute('role','tabpanel');side.setAttribute('aria-labelledby','adminBannerSideTab');side.hidden=true;main.after(side)}
+  const mainRoot=$('[data-main-banner-admin]',p),sideRoot=$('[data-side-banner-admin]',p);if(mainRoot&&mainRoot.parentElement!==main)main.appendChild(mainRoot);if(sideRoot&&sideRoot.parentElement!==side)side.appendChild(sideRoot);
+}
+function active(){return $('[data-banner-management-tab].active',pane()||document)?.dataset.bannerManagementTab==='side'?'side':'main'}
+function show(section,{focus=false}={}){
+  ensure();const p=pane();if(!p)return;const next=section==='side'?'side':'main';
+  $$('[data-banner-management-tab]',p).forEach(button=>{const on=button.dataset.bannerManagementTab===next;button.classList.toggle('active',on);button.setAttribute('aria-selected',String(on));button.tabIndex=on?0:-1;if(on&&focus)button.focus()});
+  $$('[data-banner-management-panel]',p).forEach(panel=>{const on=panel.dataset.bannerManagementPanel===next;panel.classList.toggle('active',on);panel.hidden=!on});
+  if(next==='side')A.loadSideBannerManagement?.();else A.loadMainBannerManagement?.();
+}
+ensure();
+const p=pane();if(p)new MutationObserver(()=>ensure()).observe(p,{childList:true});
+document.addEventListener('click',event=>{const button=event.target.closest?.('[data-banner-management-tab]');if(button)show(button.dataset.bannerManagementTab)});
+document.addEventListener('keydown',event=>{const button=event.target.closest?.('[data-banner-management-tab]');if(!button)return;const order=['main','side'],current=order.indexOf(button.dataset.bannerManagementTab);let next=null;if(event.key==='ArrowRight'||event.key==='ArrowDown')next=order[(current+1)%order.length];else if(event.key==='ArrowLeft'||event.key==='ArrowUp')next=order[(current-1+order.length)%order.length];else if(event.key==='Home')next=order[0];else if(event.key==='End')next=order[order.length-1];if(next){event.preventDefault();show(next,{focus:true})}});
+Object.assign(A,{ensureBannerManagementTabs:ensure,switchBannerManagementTab:show,getBannerManagementTab:active});
+})(window.KinojoAdmin);
