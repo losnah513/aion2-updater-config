@@ -40,10 +40,10 @@
 - 관리자 이미지 SQL 367/371은 `service_role` 전용이다.
 
 
-## 2026-08-23 참고 가이드 PNG 후속
+## 2026-08-24 참고 가이드 PNG 최종 에셋
 
-- FRONT/BACK/UPPER_BODY 촬영 가이드는 기존 SVG에서 투명 PNG로 교체했다. 활성 경로는 `front-2x3.png`, `back-2x3.png`, `upper-body-4x5.png`이며 각각 800×1200, 800×1200, 800×1000이다.
-- PNG는 얼굴·의상 채움 없이 캐릭터 외곽선과 머리카락 방향, 반투명 프레임/가이드만 표시한다. 기존 `<img>` overlay 구조를 재사용하며 가이드는 WebP 결과 픽셀에 포함되지 않는다.
+- FRONT/BACK/UPPER_BODY 촬영 가이드는 사용자가 제작한 `front.png`/`back.png`/`body.png`를 각각 `front-2x3.png`/`back-2x3.png`/`upper-body-4x5.png`에 매핑했다. 운영 크기는 800×1200, 800×1200, 800×1000이다.
+- PNG는 원본의 반투명 발광 프레임, 캐릭터 실루엣과 랜드마크를 유지한다. 기존 `<img>` overlay 구조를 재사용하며 가이드는 WebP 결과 픽셀에 포함되지 않는다.
 - 회귀 테스트는 PNG signature·IHDR 픽셀 크기·투명도·파일 크기와 legacy SVG 제거를 검증한다. Server/Edge/Storage 계약은 변경하지 않았다.
 
 ## My Info / Admin Image Modal 추가 UI 후속 — CLOSED
