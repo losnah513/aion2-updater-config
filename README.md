@@ -15,9 +15,11 @@ KINOJO INFO GitHub Pages upload package.
 - The desktop and mobile Legion Tree pages load the public `kinojo_web_get_legion_tree` Server contract and fail closed unless contract `web-legion-tree-v1` / database contract `365` contains all four required legions in order: 깡, 낮, 밤, 키나노동조합.
 - Race selection filters the v372 Server reference to the current 21 Elyos or 21 Asmodian servers and clears an incompatible selected server when the race changes.
 - Server `className` values render through the exact shared icon mapping: 수호성→templar, 검성→gladiator, 살성→assassin, 궁성→ranger, 마도성→sorcerer, 정령성→elementalist, 치유성→cleric, 호법성→chanter, 권성→fighter. Unknown or empty class values fail closed to the `?` class fallback instead of guessing an icon.
-- Member cards retain the existing main/alt treatment and long-name fade. The current layout allows up to five cards per row on desktop and two on mobile.
+- Member cards render the exact Server `characterName` and `isMain` state without Browser-side ownership inference. The full name remains in DOM text, `title`, and `aria-label`; only names longer than five Unicode characters receive the right-edge fade, with no ellipsis.
+- Server member-array order is preserved inside each explicitly ordered stage/role/group. The Browser does not alphabetize or move mains before alts.
+- Branch count reduces columns without shrinking the fixed 124px cards: desktop uses 5 columns for one branch, 3 for two branches, and 2 for three or more; mobile centers on 2 columns for one or two branches and 1 for three or more.
 - Browser code does not reconstruct missing tree structure or members. A Server-supplied `DEFAULT_FALLBACK` tree is marked `기본 단계`, while a role with no assigned members is rendered as `지정 전`; missing stages and inconsistent fallback state still fail closed.
-- `tests/legion-tree-data-render-contract.test.js` protects the complete nine-class shared-icon mapping and assets, unknown-class fallback, four-legion fallback marker, empty-role presentation, cache lineage, and no-browser-reconstruction boundary.
+- `tests/legion-tree-data-render-contract.test.js` protects the complete nine-class mapping, exact/full character names, main/alt state, five-character fade boundary, Server member order, branch-responsive columns, fallback presentation, cache lineage, and no-browser-reconstruction boundary.
 
 ## Legion ranking unified panel
 

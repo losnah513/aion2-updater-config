@@ -1,4 +1,4 @@
-/* KINOJO Legion Tree · race/server filter + Server data rendering · 마-2~6 + 사-1~7 + 아-1 */
+/* KINOJO Legion Tree · race/server filter + Server data rendering · 마-2~6 + 사-1~7 + 아-1~6 */
 (function(){
   'use strict';
 
@@ -216,10 +216,11 @@
     const kind=member.isMain?'본캐':'부캐';
     const icon=classIconPath(member.className);
     const owner=member.isMain?member.characterName:member.mainCharacterName;
+    const nameOverflow=Array.from(member.characterName).length>5;
     const image=icon
       ?`<img src="${esc(icon)}" alt="" loading="lazy"/>`
       :'<span class="legion-tree-class-fallback" aria-hidden="true">?</span>';
-    return `<button class="legion-tree-character ${member.isMain?'is-main':'is-alt'}" type="button" data-character-id="${member.characterId}" data-character-name="${esc(member.characterName)}" data-class-name="${esc(member.className)}" data-is-main="${member.isMain?'true':'false'}" data-main-character-id="${member.mainCharacterId||''}" data-main-character-name="${esc(owner)}" data-server-id="${member.serverId||''}" data-server-name="${esc(member.serverName)}" title="${esc(member.characterName)}" aria-label="${esc(member.characterName)} · ${esc(member.className||'클래스 정보 없음')} · ${kind}"><span class="legion-tree-kind">${kind}</span>${image}<span class="legion-tree-name">${esc(member.characterName)}</span></button>`;
+    return `<button class="legion-tree-character ${member.isMain?'is-main':'is-alt'}" type="button" data-character-id="${member.characterId}" data-character-name="${esc(member.characterName)}" data-class-name="${esc(member.className)}" data-is-main="${member.isMain?'true':'false'}" data-main-character-id="${member.mainCharacterId||''}" data-main-character-name="${esc(owner)}" data-server-id="${member.serverId||''}" data-server-name="${esc(member.serverName)}" title="${esc(member.characterName)}" aria-label="${esc(member.characterName)} · ${esc(member.className||'클래스 정보 없음')} · ${kind}"><span class="legion-tree-kind">${kind}</span>${image}<span class="legion-tree-name${nameOverflow?' is-faded':''}" data-name-overflow="${nameOverflow?'true':'false'}">${esc(member.characterName)}</span></button>`;
   }
 
   function renderGroup(group,roleName,branchCount){
