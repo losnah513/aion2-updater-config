@@ -1,6 +1,6 @@
 const S = "kinojo-banner-media",
   V = "1.9",
-  DB = "396",
+  DB = "397",
   EVENT = "396",
   UPLOAD = "394",
   MASTER = "337",
@@ -49,6 +49,8 @@ const ERR: Record<string, string> = {
   BANNER_IDEMPOTENCY_KEY_REUSED:
     "같은 중복 요청 방지 키를 다른 요청에 재사용할 수 없습니다.",
   BANNER_IDEMPOTENCY_IN_PROGRESS: "같은 요청이 이미 처리 중입니다.",
+  BANNER_IDEMPOTENCY_ACTION_INVALID:
+    "서버가 이 업로드 작업을 허용하지 않습니다. 관리자 화면을 새로고침한 뒤 다시 시도해 주세요.",
   BANNER_CAMPAIGN_DELETE_PAUSE_REQUIRED:
     "게시 중인 캠페인은 먼저 일시정지해야 영구 삭제할 수 있습니다.",
   BANNER_CAMPAIGN_DELETE_CONFIRMATION_MISMATCH:
