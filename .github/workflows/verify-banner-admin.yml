@@ -4,6 +4,8 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - "admin/index.html"
+      - "m/admin/index.html"
       - "admin/js/admin.js"
       - "admin/js/admin-images.js"
       - "admin/js/admin-side-banners.js"
@@ -17,6 +19,8 @@ on:
   push:
     branches: [main]
     paths:
+      - "admin/index.html"
+      - "m/admin/index.html"
       - "admin/js/admin.js"
       - "admin/js/admin-images.js"
       - "admin/js/admin-side-banners.js"
@@ -115,6 +119,8 @@ jobs:
         run: |
           set -euo pipefail
           files=(
+            "admin/index.html"
+            "m/admin/index.html"
             "admin/js/admin.js"
             "admin/js/admin-images.js"
             "admin/js/admin-side-banners.js"

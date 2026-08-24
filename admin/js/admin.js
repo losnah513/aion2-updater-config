@@ -1,8 +1,10 @@
-/* KINOJO Admin modular loader v2026082202 */
+/* KINOJO Admin modular loader v2026082402 */
 (function(){
   'use strict';
   const current=document.currentScript;
-  const base=new URL('./',current?.src||location.href);
+  const currentUrl=new URL(current?.src||location.href,location.href);
+  const base=new URL('./',currentUrl);
+  const CACHE=String(currentUrl.searchParams.get('cache')||'2026082402').trim()||'2026082402';
   const modules=[
     'admin-shared.js',
     'admin-members.js',
@@ -21,7 +23,7 @@
   function loadScript(name){
     return new Promise((resolve,reject)=>{
       const script=document.createElement('script');
-      script.src=new URL(name+'?cache=2026082202',base).href;
+      script.src=new URL(name+'?cache='+encodeURIComponent(CACHE),base).href;
       script.async=false;
       script.onload=resolve;
       script.onerror=()=>reject(new Error('관리자 모듈을 불러오지 못했습니다: '+name));
