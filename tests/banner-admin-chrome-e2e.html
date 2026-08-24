@@ -33,7 +33,7 @@ function response(action,payload){
     return {ok:true,asset:clone(a),image:{activation:'ASSET_READY',aspectValid:true}};
   }
   if(action==='campaign-create'){
-    const c={campaignId:state.nextCampaign++,status:'DRAFT',...clone(payload.campaign)};state.campaigns=[c];syncRefs();return {ok:true,campaign:clone(c)};
+    const c={campaignId:state.nextCampaign++,status:'DRAFT',...clone(payload.campaign)};state.campaigns.push(c);syncRefs();return {ok:true,campaign:clone(c)};
   }
   if(action==='campaign-update'){
     const c=state.campaigns.find(x=>Number(x.campaignId)===Number(payload.campaignId));if(!c)throw Error('campaign missing');Object.assign(c,clone(payload.campaign));syncRefs();return {ok:true,campaign:clone(c)};
@@ -110,6 +110,16 @@ async function run(){
     await waitFor(()=>document.querySelector('#sStatus')?.classList.contains('ok'),'side banner tab data load');
     if(location.hash!=='#images/side')throw Error('side banner route mismatch');
     if(sideTab.getAttribute('aria-selected')!=='true'||mainTab.getAttribute('aria-selected')!=='false')throw Error('side banner tab aria state mismatch');
+    const allOption=document.querySelector('#sPage option[value="ALL"]');
+    if(!allOption||allOption.textContent.trim()!=='전체 페이지')throw Error('side all-pages option missing');
+    if(!document.querySelector('#sTargetHelp')?.textContent.includes('실제 페이지에 새 캠페인을 각각 생성'))throw Error('all-pages guidance missing');
+    document.querySelector('#sName').value='전체 페이지 E2E';fire(document.querySelector('#sName'),'input');
+    document.querySelector('[data-s-save]').click();
+    await waitFor(()=>document.querySelector('#sCampaignStatus')?.textContent.includes('7개 페이지 캠페인 저장 완료'),'all-pages batch save');
+    const sideCampaigns=state.campaigns.filter(c=>c.type==='SIDE');
+    if(sideCampaigns.length!==7||sideCampaigns.some(c=>c.pageCode==='ALL'))throw Error('all-pages batch must create seven physical campaigns');
+    const hof=sideCampaigns.find(c=>c.pageCode==='HOF');
+    if(!hof||hof.slotCodes.join('+')!=='LEFT')throw Error('HOF batch target must stay left-only');
     document.querySelector('#adminTopSubnav [data-admin-subtab="main"]').click();
     await waitFor(()=>!mainPanel.hidden&&sidePanel.hidden&&mainPanel.classList.contains('active'),'main banner tab return');
     if(location.hash!=='#images/main')throw Error('main banner return route mismatch');
@@ -125,14 +135,15 @@ async function run(){
     document.querySelector('#bName').value='Chrome E2E Campaign';fire(document.querySelector('#bName'),'input');
     document.querySelector('[data-b-publish]').click();
     await waitFor(()=>document.querySelector('#bCampaignStatus')?.textContent.includes('게시 완료'),'publish');
-    if(state.campaigns[0]?.status!=='PUBLISHED'||state.manifest.active!==true)throw Error('publish state mismatch');
+    const mainCampaign=()=>state.campaigns.find(c=>c.type==='MAIN');
+    if(mainCampaign()?.status!=='PUBLISHED'||state.manifest.active!==true)throw Error('publish state mismatch');
     document.querySelector('[data-b-pause]').click();
     await waitFor(()=>document.querySelector('#bCampaignStatus')?.textContent.includes('일시정지 완료'),'pause');
-    if(state.campaigns[0]?.status!=='PAUSED'||state.manifest.active!==false)throw Error('pause state mismatch');
+    if(mainCampaign()?.status!=='PAUSED'||state.manifest.active!==false)throw Error('pause state mismatch');
     const selected=document.querySelector('[data-b-check="101"]');if(!selected?.checked)throw Error('asset unexpectedly unselected');selected.click();
     document.querySelector('[data-b-save]').click();
     await waitFor(()=>document.querySelector('#bCampaignStatus')?.textContent.includes('저장 완료'),'save unreferenced');
-    syncRefs();if(Number(state.assets[0]?.referenceCount||0)!==0||state.campaigns[0]?.items?.length!==0)throw Error('asset reference not cleared');
+    syncRefs();if(Number(state.assets[0]?.referenceCount||0)!==0||mainCampaign()?.items?.length!==0)throw Error('asset reference not cleared');
     await waitFor(()=>document.querySelector('[data-b-asset-delete="101"]'),'delete control');
     document.querySelector('[data-b-asset-delete="101"]').click();
     await waitFor(()=>document.querySelector('#bUploadStatus')?.textContent.includes('삭제 완료'),'delete');
