@@ -12,7 +12,7 @@
 <link href="../../ui/kinojo-common-ui.css?cache=2026081205" rel="stylesheet"/>
 <link href="../../ui/kinojo-card-guards.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../../ui/kinojo-animations.css?cache=2026081003" rel="stylesheet"/>
-<link href="../../admin/css/admin.css?cache=2026082202" rel="stylesheet"/>
+<link href="../../admin/css/admin.css?cache=2026082401" rel="stylesheet"/>
 
 </head>
 <body class="kinojo-page-admin">
@@ -21,7 +21,7 @@
   <nav class="admin-nav" aria-label="관리자 메뉴">
       <button class="active" data-admin-tab="dashboard" type="button">🏠 대시보드</button>
       <button data-admin-tab="requests" type="button">🧾 코드 요청 <span class="badge" id="adminPendingBadge">0</span></button>
-      <button data-admin-tab="members" type="button">👥 회원 관리</button>
+      <button data-admin-tab="members" type="button">👥 회원 관리 <span class="badge" id="adminMemberImageBadge" data-admin-master-only>0</span></button>
       <button data-admin-tab="characters" type="button">🧍 캐릭터 관리</button>
       <button data-admin-tab="sanctuary" type="button">🏰 성역 관리 <span class="badge" id="adminSanctuaryRequestBadge">0</span></button>
       <button data-admin-tab="notices" type="button">📢 공지 관리</button>
@@ -42,8 +42,9 @@
 
     <section class="admin-pane" data-admin-pane="requests"><section class="admin-card"><div class="admin-card-head"><div><h2>회원 코드 요청</h2><p>신규 이용자가 요청한 코드를 승인/거절합니다.</p></div><button class="admin-btn" id="requestReloadBtn" type="button">새로고침</button></div><div id="requestStatus" class="admin-statusline"></div><div class="admin-list" id="requestList"></div></section></section>
     <section class="admin-pane" data-admin-pane="members">
-      <nav class="admin-subnav" data-admin-subnav="members" aria-label="회원 관리 하위 기능"><button class="active" data-admin-subtab="accounts" type="button">회원 목록</button><button data-admin-subtab="permissions" type="button">등급별 권한</button></nav>
+      <nav class="admin-subnav" data-admin-subnav="members" aria-label="회원 관리 하위 기능"><button class="active" data-admin-subtab="accounts" type="button">회원 목록</button><button data-admin-subtab="character-images" data-admin-master-only type="button">캐릭터 이미지 확인 <span class="badge" id="adminMemberImageSubBadge">0</span></button><button data-admin-subtab="permissions" type="button">등급별 권한</button></nav>
       <div class="admin-subpane active" data-admin-subpane="accounts"><section class="admin-card"><div class="admin-card-head"><div><h2>회원 관리</h2><p>현재 등급을 확인하고 권한 범위 안에서 변경합니다. 회원 코드는 Master·Sub Master에게만 표시됩니다.</p></div><button class="admin-btn" id="memberReloadBtn" type="button">목록 불러오기</button></div><div class="admin-form-row admin-member-tools"><input class="admin-input grow" id="memberSearch" placeholder="회원명 / 코드 / 등급 검색"/><select class="admin-select" id="memberRoleFilter"><option value="">전체 등급</option><option value="MEMBER">Member</option><option value="STAFF">Staff</option><option value="MANAGER">Manager</option><option value="SUB_MASTER">Sub Master</option><option value="MASTER">Master</option></select></div><div id="memberStatus" class="admin-statusline"></div><div class="admin-list" id="memberList"><div class="admin-empty">회원 목록을 불러오세요.</div></div></section></div>
+      <div class="admin-subpane" data-admin-subpane="character-images" data-admin-master-only><section class="admin-card admin-member-image-review-card"><div class="admin-card-head"><div><h2>캐릭터 이미지 확인</h2><p>회원이 등록한 프로필·참고 이미지를 업로더별로 확인합니다. 새 이미지가 올라오면 미확인 숫자가 자동으로 늘어납니다.</p></div><button class="admin-btn" id="memberImageReviewReloadBtn" type="button">새로고침</button></div><div class="admin-form-row admin-member-image-review-tools"><input class="admin-input grow" id="memberImageReviewSearch" placeholder="업로더 또는 캐릭터명 검색"/><select class="admin-select" id="memberImageReviewStatus"><option value="PENDING">미확인만</option><option value="ALL">전체</option><option value="REVIEWED">확인 완료</option></select></div><div class="admin-member-image-review-summary" id="memberImageReviewSummary" aria-live="polite"><span>미확인 <strong>0</strong>명</span><span>현재 이미지 업로더 <strong>0</strong>명</span></div><div id="memberImageReviewStatusLine" class="admin-statusline" role="status" aria-live="polite"></div><div class="admin-member-image-review-list" id="memberImageReviewList"><div class="admin-empty">캐릭터 이미지 업로드 목록을 불러오세요.</div></div></section></div>
       <div class="admin-subpane" data-admin-subpane="permissions"><section class="admin-card admin-role-permission-card" id="sanctuaryRolePermissionCard" hidden><div class="admin-card-head"><div><h2>성역 등급별 권한</h2><p>등급별 기본 권한을 한눈에 확인하고 MASTER가 직접 설정합니다.</p></div><button class="admin-btn" id="sanctuaryRolePermissionReloadBtn" type="button">권한 불러오기</button></div><div id="sanctuaryRolePermissionStatus" class="admin-statusline"></div><div class="admin-role-permission-wrap" id="sanctuaryRolePermissionMatrix"><div class="admin-empty">권한표를 불러오세요.</div></div></section></div>
     </section>
     <section class="admin-pane" data-admin-pane="characters">
@@ -383,7 +384,7 @@
 <script src="../../core/kinojo-supabase-features.js?cache=2026082101"></script>
 <script src="../../core/kinojo-auth-session.js?cache=2026081801"></script>
 <script src="../../core/kinojo-auth-service.js?cache=2026081801"></script>
-<script src="../../core/kinojo-auth-ui.js?cache=2026082304"></script>
-<script src="../../admin/js/admin.js?cache=2026082405"></script>
+<script src="../../core/kinojo-auth-ui.js?cache=2026082401"></script>
+<script src="../../admin/js/admin.js?cache=2026082406"></script>
 </body>
 </html>

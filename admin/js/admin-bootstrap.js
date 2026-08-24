@@ -34,6 +34,7 @@
   const isMaster=(...args)=>A.isMaster(...args);
   const isStaffConsole=(...args)=>A.isStaffConsole(...args);
   const loadAccounts=(...args)=>A.loadAccounts(...args);
+  const loadMemberImageReviews=(...args)=>A.loadMemberImageReviews(...args);
   const loadCharacterLookupConsole=(...args)=>A.loadCharacterLookupConsole(...args);
   const loadCodeRequests=(...args)=>A.loadCodeRequests(...args);
   const loadEventNoticeGroups=(...args)=>A.loadEventNoticeGroups(...args);
@@ -48,6 +49,7 @@
   const loadSanctuarySyncConsole=(...args)=>A.loadSanctuarySyncConsole(...args);
   const loadVisitorDashboard=(...args)=>A.loadVisitorDashboard(...args);
   const loadVisitorHistory=(...args)=>A.loadVisitorHistory(...args);
+  const handleMemberImageReviewClick_=(...args)=>A.handleMemberImageReviewClick_(...args);
   const lookupExitSafety=(...args)=>A.lookupExitSafety(...args);
   const meterNoticeById=(...args)=>A.meterNoticeById(...args);
   const openEventNoticePreview=(...args)=>A.openEventNoticePreview(...args);
@@ -78,6 +80,7 @@
   const saveNotice=(...args)=>A.saveNotice(...args);
   const saveSanctuarySchedule=(...args)=>A.saveSanctuarySchedule(...args);
   const searchCharacters=(...args)=>A.searchCharacters(...args);
+  const scheduleMemberImageReviewSearch_=(...args)=>A.scheduleMemberImageReviewSearch_(...args);
   const setSanctuaryRolePermission=(...args)=>A.setSanctuaryRolePermission(...args);
   const setStatus=(...args)=>A.setStatus(...args);
   const startCharacterServerQueue=(...args)=>A.startCharacterServerQueue(...args);
@@ -108,6 +111,7 @@
     if(tab==='dashboard') refreshDashboard();
     if(tab==='requests') loadCodeRequests();
     if(tab==='members'&&subtab==='accounts') loadAccounts();
+    if(tab==='members'&&subtab==='character-images'&&isMaster()) loadMemberImageReviews();
     if(tab==='members'&&subtab==='permissions'&&isMaster()) loadSanctuaryRolePermissions();
     if(tab==='characters'&&subtab==='lookup') loadCharacterLookupConsole(force===true);
     if(tab==='characters'&&subtab==='records') searchCharacters();
@@ -179,6 +183,7 @@
     $$('[data-admin-subtab]',source).filter(button=>!button.hidden).forEach(button=>{
       const clone=button.cloneNode(true);
       clone.removeAttribute('id');
+      clone.querySelectorAll('[id]').forEach(element=>element.removeAttribute('id'));
       clone.addEventListener('click',()=>switchSubtab(tab,button.dataset.adminSubtab));
       slot.appendChild(clone);
     });
@@ -213,6 +218,26 @@
     $('#adminLoginGo')?.addEventListener('click',()=>window.KinojoAuth?.openLoginModal?.());
   }
 
+  function applyNotificationBadges(summary){
+    const data=summary&&typeof summary==='object'?summary:{};
+    const codeCount=Math.max(0,Number(data.codeRequestCount||0));
+    const supportCount=Math.max(0,Number(data.supportRequestCount||0));
+    const imageCount=Math.max(0,Number(data.memberImagePendingCount||0));
+    if($('#adminPendingBadge'))$('#adminPendingBadge').textContent=String(codeCount);
+    if($('#adminSanctuaryRequestBadge'))$('#adminSanctuaryRequestBadge').textContent=String(supportCount);
+    if($('#adminSanctuarySubBadge'))$('#adminSanctuarySubBadge').textContent=String(supportCount);
+    document.querySelectorAll('#adminMemberImageBadge,[data-admin-subtab="character-images"] .badge').forEach(badge=>{badge.textContent=String(imageCount);});
+    state.memberImageReviewPendingCount=imageCount;
+  }
+
+  async function refreshNotificationBadges(){
+    try{
+      const summary=await action('notificationSummary',{});
+      if(summary?.ok===true)applyNotificationBadges(summary);
+      return summary;
+    }catch(_err){return null;}
+  }
+
   async function refreshDashboard(){
     try{
       const [visit, req, runtime, sync, pending] = await Promise.allSettled([
@@ -239,10 +264,7 @@
       $('#statServerSub').textContent = runtimeData.ok === false ? '확인이 필요한 항목이 있습니다.' : '핵심 서비스가 정상입니다.';
       state.requests=requests;
       renderDashboardServerOverview(runtimeData,syncData);
-      $('#adminPendingBadge').textContent=String(requests.length||0);
-      const supportCount=Number(pendingSummary.supportRequestCount||0);
-      if($('#adminSanctuaryRequestBadge'))$('#adminSanctuaryRequestBadge').textContent=String(supportCount);
-      if($('#adminSanctuarySubBadge'))$('#adminSanctuarySubBadge').textContent=String(supportCount);
+      applyNotificationBadges(Object.assign({},pendingSummary,{codeRequestCount:requests.length||0}));
       addLog('INFO','대시보드 새로고침 완료');
     }catch(err){ addLog('ERROR',err.message||err); }
   }
@@ -268,7 +290,7 @@
     $$('[data-admin-jump]').forEach(button=>button.addEventListener('click',()=>{const [tab,subtab]=button.dataset.adminJump.split('/');switchTab(tab,{subtab});}));
     $('#requestReloadBtn')?.addEventListener('click',loadCodeRequests);
     $('#requestList')?.addEventListener('click',e=>{ if(e.target.matches('[data-approve-request]')) processRequest(e.target,'approveCodeRequest'); if(e.target.matches('[data-reject-request]')) processRequest(e.target,'rejectCodeRequest'); });
-    $('#memberReloadBtn')?.addEventListener('click',loadAccounts); $('#sanctuaryRolePermissionReloadBtn')?.addEventListener('click',loadSanctuaryRolePermissions); $('#sanctuaryRolePermissionMatrix')?.addEventListener('change',e=>{if(e.target.matches('[data-sanctuary-role-permission]'))setSanctuaryRolePermission(e.target);}); $('#memberSearch')?.addEventListener('input',applyMemberFilters); $('#memberRoleFilter')?.addEventListener('change',applyMemberFilters); $('#memberList')?.addEventListener('click',e=>{ if(e.target.matches('[data-member-role-open],[data-member-role-save],[data-member-role-cancel],[data-member-disable],[data-member-delete]')) handleMemberAction(e.target); });
+    $('#memberReloadBtn')?.addEventListener('click',loadAccounts); $('#memberImageReviewReloadBtn')?.addEventListener('click',loadMemberImageReviews); $('#memberImageReviewStatus')?.addEventListener('change',loadMemberImageReviews); $('#memberImageReviewSearch')?.addEventListener('input',scheduleMemberImageReviewSearch_); $('#memberImageReviewList')?.addEventListener('click',e=>handleMemberImageReviewClick_(e.target)); $('#sanctuaryRolePermissionReloadBtn')?.addEventListener('click',loadSanctuaryRolePermissions); $('#sanctuaryRolePermissionMatrix')?.addEventListener('change',e=>{if(e.target.matches('[data-sanctuary-role-permission]'))setSanctuaryRolePermission(e.target);}); $('#memberSearch')?.addEventListener('input',applyMemberFilters); $('#memberRoleFilter')?.addEventListener('change',applyMemberFilters); $('#memberList')?.addEventListener('click',e=>{ if(e.target.matches('[data-member-role-open],[data-member-role-save],[data-member-role-cancel],[data-member-disable],[data-member-delete]')) handleMemberAction(e.target); });
     $('#characterLookupServerQueueBtn')?.addEventListener('click',startCharacterServerQueue);
     $('#characterLookupReloadBtn')?.addEventListener('click',()=>refreshCharacterLookupStatus({statusLine:true}));
     $('#characterLookupHistoryReloadBtn')?.addEventListener('click',loadLookupHistory);
@@ -370,12 +392,12 @@
     const permissionCard=$('#sanctuaryRolePermissionCard'); if(permissionCard)permissionCard.hidden=!isMaster();
     const permissionTab=$('[data-admin-subnav="members"] [data-admin-subtab="permissions"]'); if(permissionTab)permissionTab.hidden=!isMaster();
     $$('[data-admin-master-only]').forEach(element=>{element.hidden=!isMaster();});
-    buildMobileLauncher();bind();renderLogs();
+    buildMobileLauncher();bind();renderLogs();refreshNotificationBadges();
     const route=adminRoute();
     switchTab(isStaffConsole()?'sanctuary':route.tab,{subtab:isStaffConsole()?'':route.subtab,updateRoute:true});
   }
 
-  Object.assign(A,{adminRoute,writeAdminRoute,loadFeature,switchSubtab,switchTab,renderAccessBlocked,refreshDashboard,renderLogs,bind,init});
+  Object.assign(A,{adminRoute,writeAdminRoute,loadFeature,switchSubtab,switchTab,renderAccessBlocked,applyNotificationBadges,refreshNotificationBadges,refreshDashboard,renderLogs,bind,init});
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 })(window.KinojoAdmin);

@@ -76,6 +76,8 @@
 
   let memberImageModalRequestId=0;
   let memberImagePreviewRequestId=0;
+  let memberImageReviewRequestId=0;
+  let memberImageReviewSearchTimer=0;
   let memberImageModalData=null;
   let selectedMemberImageCharacterId=0;
   const ADMIN_IMAGE_SLOTS=['FRONT','BACK','UPPER_BODY'];
@@ -299,6 +301,119 @@
     });
   }
 
+  function updateMemberImageReviewBadges_(value){
+    const count=Math.max(0,Number(value||0));
+    state.memberImageReviewPendingCount=count;
+    document.querySelectorAll('#adminMemberImageBadge,[data-admin-subtab="character-images"] .badge').forEach(badge=>{badge.textContent=String(count);});
+  }
+
+  function renderMemberImageReviewSummary_(pendingCount,totalCount){
+    const root=$('#memberImageReviewSummary');if(!root)return;
+    root.innerHTML='<span>미확인 <strong>'+Math.max(0,Number(pendingCount||0))+'</strong>명</span><span>현재 이미지 업로더 <strong>'+Math.max(0,Number(totalCount||0))+'</strong>명</span>';
+  }
+
+  function memberImageKindLabel_(latest){
+    if(String(latest?.kind||'').toUpperCase()==='PROFILE')return '프로필 이미지';
+    const slot=String(latest?.slot||'').toUpperCase();
+    return (ADMIN_IMAGE_SLOT_LABELS[slot]||'참고')+' 이미지';
+  }
+
+  function renderMemberImageReviewRows_(items){
+    const root=$('#memberImageReviewList');if(!root)return;
+    const list=Array.isArray(items)?items:[];
+    root.innerHTML=list.length?list.map(item=>{
+      const memberId=Number(item?.memberId||0);
+      const name=esc(item?.mainCharacterName||'회원');
+      const role=normalizeMemberRole(item?.role||'MEMBER');
+      const roleName=esc(item?.roleLabel||MEMBER_ROLE_LABELS[role]||role);
+      const names=(Array.isArray(item?.characterNames)?item.characterNames:[]).map(value=>String(value||'').trim()).filter(Boolean);
+      const latest=item?.latestImage&&typeof item.latestImage==='object'?item.latestImage:{};
+      const latestName=esc(latest.characterName||names[0]||'-');
+      const latestType=esc(memberImageKindLabel_(latest));
+      const latestAt=String(item?.latestUploadedAt||latest.uploadedAt||'').trim();
+      const pending=item?.pending===true;
+      const imageCount=Math.max(0,Number(item?.imageCount||0));
+      const profileCount=Math.max(0,Number(item?.profileImageCount||0));
+      const referenceCount=Math.max(0,Number(item?.referenceImageCount||0));
+      const reviewedAt=esc(formatAdminImageTime_(item?.reviewedAt));
+      return '<article class="admin-member-image-review-row '+(pending?'is-pending':'is-reviewed')+'" data-member-id="'+memberId+'" data-member-name="'+name+'" data-latest-uploaded-at="'+esc(latestAt)+'">'
+        +'<div class="admin-member-image-review-main"><header><div><strong>'+name+'</strong><span class="admin-member-role-badge role-'+esc(role.toLowerCase())+'">'+roleName+'</span></div><span class="admin-pill '+(pending?'pending':'ok')+'">'+(pending?'미확인':'확인 완료')+'</span></header>'
+        +'<p><b>'+latestName+'</b>의 '+latestType+'가 마지막으로 등록되었습니다.</p>'
+        +'<dl><div><dt>현재 이미지</dt><dd>'+imageCount+'장 <small>프로필 '+profileCount+' · 참고 '+referenceCount+'</small></dd></div><div><dt>등록 캐릭터</dt><dd>'+Math.max(0,Number(item?.characterCount||0))+'명 <small>'+esc(names.join(' · ')||'-')+'</small></dd></div><div><dt>최근 업로드</dt><dd>'+esc(formatAdminImageTime_(latestAt))+'<small>'+(pending?'관리자 확인 필요':'확인 '+reviewedAt)+'</small></dd></div></dl></div>'
+        +'<footer><button class="admin-btn" data-member-image-view type="button">이미지 보기</button>'+(pending?'<button class="admin-btn primary" data-member-image-review-ack type="button">확인 완료</button>':'')+'</footer></article>';
+    }).join(''):'<div class="admin-empty">'+(String($('#memberImageReviewStatus')?.value||'PENDING')==='PENDING'?'현재 미확인 이미지 업로더가 없습니다.':'조건에 맞는 이미지 업로더가 없습니다.')+'</div>';
+  }
+
+  async function loadMemberImageReviews(){
+    if(!isMaster())return;
+    const root=$('#memberImageReviewList');
+    const token=memberImageSessionToken_();
+    const client=window.KinojoSupabaseClientCore;
+    const status=String($('#memberImageReviewStatus')?.value||'PENDING').toUpperCase();
+    const search=String($('#memberImageReviewSearch')?.value||'').trim();
+    const requestId=++memberImageReviewRequestId;
+    setStatus('#memberImageReviewStatusLine','캐릭터 이미지 업로드 목록을 불러오는 중...','');
+    if(root)root.innerHTML='<div class="admin-empty">업로더별 이미지 상태를 확인하는 중입니다.</div>';
+    try{
+      if(!token)throw new Error('관리자 세션이 만료되었습니다. 다시 로그인해 주세요.');
+      if(!client||typeof client.invokeEdgeFunction!=='function')throw new Error('회원 이미지 조회 모듈을 준비하지 못했습니다.');
+      const data=await client.invokeEdgeFunction('kinojo-member-profile',{action:'admin-image-review-list',sessionToken:token,status,search,limit:200});
+      if(requestId!==memberImageReviewRequestId)return null;
+      if(!data||data.ok!==true)throw new Error(data?.message||data?.code||'ADMIN_MEMBER_IMAGE_REVIEW_LIST_FAILED');
+      if(String(data.privacy||'')!=='NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS')throw new Error('ADMIN_MEMBER_IMAGE_REVIEW_PRIVACY_MISMATCH');
+      const items=Array.isArray(data.items)?data.items:[];
+      state.memberImageReviewItems=items;
+      state.memberImageReviewTotalCount=Math.max(0,Number(data.totalUploaderCount||0));
+      updateMemberImageReviewBadges_(data.pendingCount);
+      renderMemberImageReviewSummary_(data.pendingCount,data.totalUploaderCount);
+      renderMemberImageReviewRows_(items);
+      setStatus('#memberImageReviewStatusLine','조건에 맞는 업로더 '+items.length+'명 · 미확인 '+Math.max(0,Number(data.pendingCount||0))+'명','ok');
+      return data;
+    }catch(err){
+      if(requestId!==memberImageReviewRequestId)return null;
+      if(root)root.innerHTML='<div class="admin-callout error"><strong>이미지 업로드 목록을 불러오지 못했습니다.</strong><span>'+esc(err?.message||err)+'</span></div>';
+      setStatus('#memberImageReviewStatusLine',err?.message||String(err),'error');
+      return null;
+    }
+  }
+
+  function scheduleMemberImageReviewSearch_(){
+    clearTimeout(memberImageReviewSearchTimer);
+    memberImageReviewSearchTimer=setTimeout(loadMemberImageReviews,260);
+  }
+
+  async function acknowledgeMemberImageReview_(button){
+    if(!isMaster()||!button)return;
+    const row=button.closest('[data-member-id]');
+    const memberId=Number(row?.dataset.memberId||0);
+    const reviewedThrough=String(row?.dataset.latestUploadedAt||'').trim();
+    const name=String(row?.dataset.memberName||'회원');
+    if(!Number.isInteger(memberId)||memberId<=0||!reviewedThrough)return;
+    const token=memberImageSessionToken_();
+    const client=window.KinojoSupabaseClientCore;
+    button.disabled=true;
+    button.textContent='처리 중...';
+    try{
+      if(!token||!client||typeof client.invokeEdgeFunction!=='function')throw new Error('회원 이미지 확인 모듈을 준비하지 못했습니다.');
+      const data=await client.invokeEdgeFunction('kinojo-member-profile',{action:'admin-image-review-ack',sessionToken:token,memberId,reviewedThrough});
+      if(!data||data.ok!==true||Number(data.memberId)!==memberId)throw new Error(data?.message||data?.code||'ADMIN_MEMBER_IMAGE_REVIEW_ACK_FAILED');
+      toast(name+' 회원의 현재 이미지를 확인 완료로 처리했습니다.');
+      addLog('MEMBER_IMAGE',name+' 이미지 확인 완료');
+      await loadMemberImageReviews();
+    }catch(err){
+      button.disabled=false;
+      button.textContent='확인 완료';
+      setStatus('#memberImageReviewStatusLine',err?.message||String(err),'error');
+    }
+  }
+
+  function handleMemberImageReviewClick_(target){
+    const view=target?.closest?.('[data-member-image-view]');
+    if(view){openMemberImageModal(view);return;}
+    const ack=target?.closest?.('[data-member-image-review-ack]');
+    if(ack)acknowledgeMemberImageReview_(ack);
+  }
+
   function applyMemberFilters(){
     const q = String($('#memberSearch')?.value || '').trim().toLowerCase();
     const role = String($('#memberRoleFilter')?.value || '').trim();
@@ -420,5 +535,5 @@
     }
   }
 
-  Object.assign(A,{renderRequestPreview,requestRowHtml,loadCodeRequests,processRequest,loadAccounts,MEMBER_ROLE_LABELS,normalizeMemberRole,getAccountId,getAccountCode,getAccountName,getAccountRole,getAccountRoleLabel,getAccountCanEdit,getAccountAllowedRoles,memberImageSessionToken_,renderMemberImageGroups_,selectMemberImageCharacter_,loadMemberImageGroups_,clearAdminImagePreview_,showAdminImagePreview_,ensureMemberImageModal,openMemberImageModal,closeMemberImageModal,applyMemberFilters,renderAccounts,handleMemberAction,SANCTUARY_ROLE_LABELS,renderSanctuaryRolePermissions,loadSanctuaryRolePermissions,setSanctuaryRolePermission});
+  Object.assign(A,{renderRequestPreview,requestRowHtml,loadCodeRequests,processRequest,loadAccounts,MEMBER_ROLE_LABELS,normalizeMemberRole,getAccountId,getAccountCode,getAccountName,getAccountRole,getAccountRoleLabel,getAccountCanEdit,getAccountAllowedRoles,memberImageSessionToken_,renderMemberImageGroups_,selectMemberImageCharacter_,loadMemberImageGroups_,clearAdminImagePreview_,showAdminImagePreview_,ensureMemberImageModal,openMemberImageModal,closeMemberImageModal,updateMemberImageReviewBadges_,renderMemberImageReviewRows_,loadMemberImageReviews,scheduleMemberImageReviewSearch_,acknowledgeMemberImageReview_,handleMemberImageReviewClick_,applyMemberFilters,renderAccounts,handleMemberAction,SANCTUARY_ROLE_LABELS,renderSanctuaryRolePermissions,loadSanctuaryRolePermissions,setSanctuaryRolePermission});
 })(window.KinojoAdmin);

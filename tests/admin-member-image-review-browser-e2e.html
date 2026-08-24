@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin member image review browser contract</title>
+  <link href="../admin/css/admin.css?cache=2026082401" rel="stylesheet" />
+</head>
+<body>
+  <header class="admin-shellbar">
+    <div class="admin-shellbar-main"><button class="admin-shell-control" id="adminBackBtn" type="button">←</button><div class="admin-shell-title"><span>관리자 페이지</span><strong id="adminCurrentLocation">[회원 관리]</strong></div><div class="admin-shell-account"><strong id="adminRoleLabel">Master</strong><button class="admin-shell-logout" id="adminLogoutBtn" type="button">로그아웃</button></div><button class="admin-shell-control close" id="adminCloseBtn" type="button">×</button></div>
+    <nav class="admin-nav"><button class="active" data-admin-tab="members" type="button">👥 회원 관리 <span class="badge" id="adminMemberImageBadge" data-admin-master-only>0</span></button></nav>
+    <div class="admin-top-subnav" id="adminTopSubnav"></div>
+  </header>
+  <main class="kinojo-admin-console"><section class="admin-main">
+    <nav class="admin-mobile-launcher"></nav>
+    <section class="admin-pane active" data-admin-pane="members">
+      <nav class="admin-subnav" data-admin-subnav="members"><button data-admin-subtab="accounts" type="button">회원 목록</button><button class="active" data-admin-subtab="character-images" data-admin-master-only type="button">캐릭터 이미지 확인 <span class="badge" id="adminMemberImageSubBadge">0</span></button></nav>
+      <div class="admin-subpane" data-admin-subpane="accounts"></div>
+      <div class="admin-subpane active" data-admin-subpane="character-images" data-admin-master-only><section class="admin-card admin-member-image-review-card"><div class="admin-card-head"><div><h2>캐릭터 이미지 확인</h2><p>회원이 등록한 프로필·참고 이미지를 업로더별로 확인합니다. 새 이미지가 올라오면 미확인 숫자가 자동으로 늘어납니다.</p></div><button class="admin-btn" id="memberImageReviewReloadBtn" type="button">새로고침</button></div><div class="admin-form-row admin-member-image-review-tools"><input class="admin-input grow" id="memberImageReviewSearch" placeholder="업로더 또는 캐릭터명 검색"/><select class="admin-select" id="memberImageReviewStatus"><option value="PENDING">미확인만</option><option value="ALL">전체</option><option value="REVIEWED">확인 완료</option></select></div><div class="admin-member-image-review-summary" id="memberImageReviewSummary"><span>미확인 <strong>0</strong>명</span><span>현재 이미지 업로더 <strong>0</strong>명</span></div><div id="memberImageReviewStatusLine" class="admin-statusline"></div><div class="admin-member-image-review-list" id="memberImageReviewList"><div class="admin-empty">불러오는 중</div></div></section></div>
+    </section>
+  </section></main>
+  <script>
+    location.hash='#members/character-images';
+    window.__reviewPending=2;
+    window.__reviewedMembers=[];
+    window.KinojoAuth={getSession:()=>({role:'MASTER',roleLabel:'Master',level:5,token:'kws_'+('a'.repeat(40))}),clearSession(){}};
+    window.KinojoToast={show(){}};
+    window.KinojoApi={async getAction(name){if(name==='notificationSummary')return{ok:true,codeRequestCount:0,supportRequestCount:0,memberImagePendingCount:window.__reviewPending};return{ok:true};}};
+    window.KinojoSupabase={adminAccount:async()=>({ok:true,accounts:[]})};
+    const mockItems=[
+      {memberId:9,mainCharacterName:'푸석사과',role:'SUB_MASTER',roleLabel:'Sub Master',level:4,isActive:true,imageCount:3,profileImageCount:0,referenceImageCount:3,characterCount:1,characterNames:['푸석사과'],latestUploadedAt:'2026-08-22T05:47:50.758Z',latestImage:{kind:'REFERENCE',characterId:127,characterName:'푸석사과',slot:'UPPER_BODY',uploadedAt:'2026-08-22T05:47:50.758Z'},pending:true},
+      {memberId:1,mainCharacterName:'청소기',role:'MASTER',roleLabel:'Master',level:5,isActive:true,imageCount:4,profileImageCount:1,referenceImageCount:3,characterCount:2,characterNames:['꾸힉','청소기'],latestUploadedAt:'2026-08-22T04:07:45.980Z',latestImage:{kind:'REFERENCE',characterId:13,characterName:'꾸힉',slot:'BACK',uploadedAt:'2026-08-22T04:07:45.980Z'},pending:true}
+    ];
+    window.KinojoSupabaseClientCore={
+      async invokeEdgeFunction(_name,payload){
+        if(payload.action==='admin-image-review-list'){
+          const items=mockItems.map(item=>Object.assign({},item,{pending:!window.__reviewedMembers.includes(item.memberId)})).filter(item=>payload.status==='ALL'||(payload.status==='PENDING'&&item.pending)||(payload.status==='REVIEWED'&&!item.pending));
+          return{ok:true,privacy:'NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS',pendingCount:window.__reviewPending,totalUploaderCount:2,items};
+        }
+        if(payload.action==='admin-image-review-ack'){if(!window.__reviewedMembers.includes(payload.memberId))window.__reviewedMembers.push(payload.memberId);window.__reviewPending=Math.max(0,2-window.__reviewedMembers.length);return{ok:true,memberId:payload.memberId,pending:false};}
+        if(payload.action==='admin-image-list')return{ok:true,privacy:'NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS',targetMember:{id:payload.memberId},ownerResolved:true,profileOverrideCount:0,referenceCount:3,characters:[{characterId:127,characterName:'푸석사과',serverName:'시엘',className:'궁성',isMain:true,profile:{hasOverride:false},references:[{slot:'FRONT',mimeType:'image/webp',sizeBytes:120000,uploadedAt:'2026-08-22T05:47:45Z',expiresAt:'2026-08-29T05:47:45Z',active:true}]}]};
+        return{ok:false,code:'UNEXPECTED_ACTION'};
+      },
+      async ensureConfig(){return{url:'https://example.supabase.co'};}
+    };
+  </script>
+  <script src="../admin/js/admin-shared.js?cache=2026082406"></script>
+  <script src="../admin/js/admin-members.js?cache=2026082406"></script>
+  <script src="../admin/js/admin-bootstrap.js?cache=2026082406"></script>
+</body>
+</html>
