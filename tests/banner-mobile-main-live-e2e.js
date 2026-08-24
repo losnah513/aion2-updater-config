@@ -147,7 +147,7 @@ async function waitAlt(page,expected,timeout=6000){
 (async()=>{
   const browser=await puppeteer.launch({executablePath:CHROME,headless:true,args:['--no-sandbox','--disable-gpu','--disable-dev-shm-usage']});
   try{
-    // 1) Real live mobile HOME + delayed Manifest: fallback must paint before Server response.
+    // 1) Real live mobile HOME + delayed Manifest: fallback must paint first, then settle to Server state.
     {
       const scenario={mode:'slow-live'};
       const page=await configurePage(browser,scenario);
@@ -157,11 +157,31 @@ async function waitAlt(page,expected,timeout=6000){
       const first=await waitBanner(page);
       assertVisibleBanner(first,'slow first paint');
       assert.ok(isFallback(first.src),'slow first paint must keep kinojo-og fallback: '+first.src);
-      await sleep(3000);
-      const settled=await waitBanner(page);
-      assertVisibleBanner(settled,'slow settled');
-      assert.ok(settled.complete&&settled.naturalWidth>0,'slow settled image loaded');
-      console.log('PASS mobile slow Manifest first-paint fallback -> settled '+settled.src);
+      await page.waitForFunction(()=>window.KinojoBannerRuntime?.peekManifest?.('HOME','MAIN')!==null,{timeout:15000});
+      const liveManifest=await page.evaluate(()=>window.KinojoBannerRuntime.peekManifest('HOME','MAIN'));
+      assert.equal(liveManifest?.pageCode,'HOME','slow live Manifest page');
+      assert.equal(liveManifest?.slotCode,'MAIN','slow live Manifest slot');
+      assert.equal(typeof liveManifest?.active,'boolean','slow live Manifest active');
+      if(liveManifest.active){
+        const expected=String(liveManifest.playlist?.[0]?.imageUrl||'');
+        assert.ok(expected,'slow live active first image');
+        await page.waitForFunction(url=>{
+          const i=document.querySelector('#kinojo-main-banner-image');
+          return String(i?.currentSrc||i?.src||'')===url;
+        },{timeout:10000},expected);
+        const settled=await waitBanner(page);
+        assertVisibleBanner(settled,'slow active settled');
+        assert.equal(settled.src,expected,'slow active DOM follows Server first playlist item');
+        assert.ok(settled.complete&&settled.naturalWidth>0,'slow active settled image loaded');
+        console.log('PASS mobile slow Manifest first-paint fallback -> active Server image '+settled.src);
+      }else{
+        await page.waitForFunction(()=>document.querySelector('#kinojo-main-banner-image')?.src.includes('/assets/images/common/kinojo-og.jpg'),{timeout:5000});
+        const settled=await waitBanner(page);
+        assertVisibleBanner(settled,'slow inactive settled');
+        assert.ok(isFallback(settled.src),'slow inactive must keep fallback '+settled.src);
+        assert.ok(settled.complete&&settled.naturalWidth>0,'slow inactive fallback loaded');
+        console.log('PASS mobile slow Manifest first-paint fallback -> inactive Server fallback');
+      }
       await page.close();
     }
 
