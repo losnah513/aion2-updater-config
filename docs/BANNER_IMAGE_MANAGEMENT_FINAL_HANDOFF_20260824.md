@@ -105,3 +105,16 @@
 - Stage 3 필드는 내용 폭에 맞춘 compact flex로 정리해 초 단위가 줄바꿈되지 않는다. 실제 Chrome `1500×900`, `700×900`에서 가로 overflow `0`, 문구 UI 단일 열 전환, 단위 정렬을 확인했다.
 - 전체 Node 계약 테스트 `33/33`, Banner Chrome E2E, 드래그 순서·hover preview·빈도 payload·앞/뒤 3개 문구·선택 이미지 복사가 통과했다. Supabase v395 dry-run과 기존 운영 playlist 수 v394/v395 동일성도 확인했다.
 - 다음 작업은 Stage 5 검토 미리보기·초안 저장·전체 게시·누락 설정 이동/강조이며, 이후 Stage 6 이벤트 목록 분리와 Stage 7 실제 전환·문구 렌더링을 진행한다.
+
+## Post-close redesign · 관리자 이벤트 작성 Stage 5 · 2026-08-24
+
+- PR `#250`, merge `d96dcfca2cccca7083827b1d27d78846165fcba5`에서 Stage 5 검토·초안 저장·전체 게시를 운영 반영했다. 관리자 cache generation은 `2026082411`이다.
+- 기존 문구 편집을 범용 콘텐츠 편집으로 확장했다. 배너 이미지 하나당 문구 최대 3개와 이모지·이모티콘·스티커·뱃지 합계 최대 3개를 추가하며, 각 레이어에 이미지 앞/뒤, 위치, 크기, 회전, 투명도를 지정한다. 기본 레이어는 이미지 앞이다.
+- 업로드한 스티커·뱃지·이모티콘은 RLS deny-all 재사용 라이브러리에 별도 등록한다. 관리자 Server RPC만 목록·등록을 수행하고 `anon`·`authenticated`의 table/RPC 직접 접근은 허용하지 않는다.
+- 초안은 원본 이미지와 편집 가능한 콘텐츠 레이어를 유지한다. 전체 게시 시 브라우저 canvas가 원본+뒤 레이어+앞 레이어를 WebP 한 장으로 합성하고 별도 Storage object로 업로드한다. Server는 합성본을 검증해 게시 항목에 연결하며, 합성본 누락 또는 편집 후 stale 상태면 게시를 거부한다.
+- 공개 Manifest v396은 콘텐츠가 있는 항목에서 합성본 URL만 반환하고 콘텐츠 레이어 배열은 비운다. 실제 배너는 한 이미지 요청만 수행하므로 문구·스티커가 따로 뜨거나 이미지와 시간차로 노출되지 않는다. 원본과 레이어 설정은 이후 편집을 위해 보존한다.
+- v396 orphan cleanup은 원본 배너, 재사용 콘텐츠 라이브러리, 게시 합성본을 모두 보호한다. 24시간이 지난 정상 콘텐츠·합성본이 미참조 파일로 오판되어 지워지던 가능성을 차단했다.
+- 검토 영역은 메인/사이드, 좌우 동시/별도, 각 이미지 순서와 콘텐츠를 실제 구성대로 요약한다. 우측 하단 고정 `진행 중인 초안 저장`·`전체 게시`를 제공하며, 게시 필수값이 빠지면 해당 단계로 이동하고 테두리를 강조한다.
+- 운영 기준은 `kinojo-banner-media` API `1.9` / DB `396` / Event `396` / Upload `394`, 게시 미디어 계약 `FLATTENED_COMPOSITE_WHEN_CONTENT_EXISTS`, 편집 원본 보존 `true`다. v396 migration 두 건과 Edge 배포를 실제 적용했고 health/Manifest/RLS/RPC 경계를 확인했다.
+- 전체 Node 계약 `35/35`와 PR source workflow 4종이 통과했다. 운영 `kinojo.info`의 PC/모바일 관리자 HTML, loader, event workflow JS는 merge Git blob과 `4/4` exact-match다. 도구의 localhost URL 정책으로 업데이트한 Chrome E2E harness는 이번 회차에 실행하지 못했으며 실제 Chrome PASS로 기록하지 않는다.
+- 다음 제품 단계는 Stage 6 `메인 배너 | 사이드 배너 | 이벤트 목록` 분리와 독립 스크롤·필터·활성 상태·영구 삭제 UI다. Stage 7은 사이트 전환 효과 연결과 최종 반응형·접근성·통합 회귀를 담당하며 콘텐츠의 실제 노출 자체는 합성본 계약으로 Stage 5에서 완료했다.
