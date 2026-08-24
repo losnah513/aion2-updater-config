@@ -15,7 +15,8 @@ KINOJO INFO GitHub Pages upload package.
 - The desktop and mobile Legion Tree pages load the public `kinojo_web_get_legion_tree` Server contract and fail closed unless contract `web-legion-tree-v1` / database contract `365` contains all four required legions in order: 깡, 낮, 밤, 키나노동조합.
 - Race selection filters the v372 Server reference to the current 21 Elyos or 21 Asmodian servers and clears an incompatible selected server when the race changes.
 - Server members render with the shared class icons, main/alt treatment, and long-name fade. The current layout allows up to five member cards per row on desktop and two on mobile.
-- Browser code does not reconstruct missing tree structure or members. Default-stage fallback and empty-role presentation remain later Server/UI contract stages.
+- Browser code does not reconstruct missing tree structure or members. A Server-supplied `DEFAULT_FALLBACK` tree is marked `기본 단계`, while a role with no assigned members is rendered as `지정 전`; missing stages and inconsistent fallback state still fail closed.
+- `tests/legion-tree-data-render-contract.test.js` protects the four-legion fallback marker, empty-role presentation, cache lineage, and no-browser-reconstruction boundary.
 
 ## Legion ranking unified panel
 
