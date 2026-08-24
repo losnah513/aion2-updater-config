@@ -70,6 +70,6 @@
 - 공개 Manifest는 콘텐츠가 있는 항목에 합성본 URL만 반환하고 개별 레이어는 반환하지 않는다. 따라서 실제 배너에서 원본·문구·스티커가 따로 뜨거나 로딩 시차가 생기지 않는다.
 - 합성본이 없거나 편집 뒤 낡은 합성본이면 게시를 거부한다. 새 꾸밈 에셋과 합성본은 기존 원본 배너와 함께 orphan cleanup 보호 대상이다.
 - 5단계에는 메인/사이드와 좌·우별 순서·콘텐츠 검토, 우측 하단 고정 `진행 중인 초안 저장`·`전체 게시`, 누락 항목 자동 이동·테두리 강조가 포함된다.
-- 운영은 `kinojo-banner-media` API `1.9` / DB `396` / Event `396` / Upload `394`이며 공개 재생 미디어 계약은 `FLATTENED_COMPOSITE_WHEN_CONTENT_EXISTS`다.
+- 운영은 `kinojo-banner-media` API `1.9` / DB `397` / Event `396` / Upload `394`이며 공개 재생 미디어 계약은 `FLATTENED_COMPOSITE_WHEN_CONTENT_EXISTS`다. PR `#252`가 합성/꾸밈 업로드 4종을 Server idempotency 허용 목록에 추가해 최초 게시 HTTP 400을 수정했다.
 
 문구와 재사용 꾸밈 콘텐츠의 영구 저장·검토·게시·실제 노출 합성은 5단계에서 완료했다. 다음 제품 단계는 Stage 6 이벤트 목록 분리와 Stage 7 전환 효과·최종 반응형/접근성 통합 검증이다.

@@ -115,6 +115,12 @@
 - 공개 Manifest v396은 콘텐츠가 있는 항목에서 합성본 URL만 반환하고 콘텐츠 레이어 배열은 비운다. 실제 배너는 한 이미지 요청만 수행하므로 문구·스티커가 따로 뜨거나 이미지와 시간차로 노출되지 않는다. 원본과 레이어 설정은 이후 편집을 위해 보존한다.
 - v396 orphan cleanup은 원본 배너, 재사용 콘텐츠 라이브러리, 게시 합성본을 모두 보호한다. 24시간이 지난 정상 콘텐츠·합성본이 미참조 파일로 오판되어 지워지던 가능성을 차단했다.
 - 검토 영역은 메인/사이드, 좌우 동시/별도, 각 이미지 순서와 콘텐츠를 실제 구성대로 요약한다. 우측 하단 고정 `진행 중인 초안 저장`·`전체 게시`를 제공하며, 게시 필수값이 빠지면 해당 단계로 이동하고 테두리를 강조한다.
-- 운영 기준은 `kinojo-banner-media` API `1.9` / DB `396` / Event `396` / Upload `394`, 게시 미디어 계약 `FLATTENED_COMPOSITE_WHEN_CONTENT_EXISTS`, 편집 원본 보존 `true`다. v396 migration 두 건과 Edge 배포를 실제 적용했고 health/Manifest/RLS/RPC 경계를 확인했다.
+- 운영 기준은 `kinojo-banner-media` API `1.9` / DB `397` / Event `396` / Upload `394`, 게시 미디어 계약 `FLATTENED_COMPOSITE_WHEN_CONTENT_EXISTS`, 편집 원본 보존 `true`다. v396 migration 두 건과 DB397 hotfix, Edge 배포를 실제 적용했고 health/Manifest/RLS/RPC 경계를 확인했다.
 - 전체 Node 계약 `35/35`와 PR source workflow 4종이 통과했다. 운영 `kinojo.info`의 PC/모바일 관리자 HTML, loader, event workflow JS는 merge Git blob과 `4/4` exact-match다. 도구의 localhost URL 정책으로 업데이트한 Chrome E2E harness는 이번 회차에 실행하지 못했으며 실제 Chrome PASS로 기록하지 않는다.
 - 다음 제품 단계는 Stage 6 `메인 배너 | 사이드 배너 | 이벤트 목록` 분리와 독립 스크롤·필터·활성 상태·영구 삭제 UI다. Stage 7은 사이트 전환 효과 연결과 최종 반응형·접근성·통합 회귀를 담당하며 콘텐츠의 실제 노출 자체는 합성본 계약으로 Stage 5에서 완료했다.
+
+### Stage 5 게시 hotfix · DB397
+
+- 실제 최초 게시에서 `event-save`는 200으로 성공했지만 직후 `composite-upload-prepare`가 400으로 거절됐다. Edge의 새 mutation 4종과 v388 idempotency claim의 action 허용 목록이 일치하지 않은 것이 원인이다.
+- PR `#252`, merge `c1536603d19dfb69932b98ac18fd50022e47d1ce`에서 `overlay-upload-prepare/complete`, `composite-upload-prepare/complete`를 허용하고 DB contract를 `397`로 올렸다.
+- 운영 Edge v15 health DB397, 허용 목록 4종 존재, `anon/authenticated` execute false, `service_role` execute true를 확인했다. 기존 성공한 초안은 유지되며 새로고침 뒤 전체 게시를 다시 실행할 수 있다.

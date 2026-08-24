@@ -6,11 +6,11 @@
 ## 제품 기준
 
 - GitHub PR: `#250`
-- 제품 merge: `d96dcfca2cccca7083827b1d27d78846165fcba5`
+- 제품 merge: `d96dcfca2cccca7083827b1d27d78846165fcba5`; 게시 hotfix merge: `c1536603d19dfb69932b98ac18fd50022e47d1ce`
 - 관리자 cache generation: `2026082411`
 - Supabase project: `josvoltpktvwysrasffq`
 - Edge: `kinojo-banner-media` API `1.9`
-- DB/Event/Upload contract: `396` / `396` / `394`
+- DB/Event/Upload contract: `397` / `396` / `394`
 
 ## 편집 모델
 
@@ -54,12 +54,20 @@
 - Migration `20260824110551_banner_content_overlay_library_v396.sql` 적용 완료.
 - Migration `20260824113811_banner_overlay_orphan_protection_v396.sql` 적용 완료.
 - v396 전체 DDL을 실제 운영 schema에서 transaction rollback 검증한 뒤 적용했다.
-- Edge health: API1.9 / DB396 / Event396 / Upload394 / `FLATTENED_COMPOSITE_WHEN_CONTENT_EXISTS`.
-- 공개 Manifest HOME:MAIN: HTTP 정상, DB396, 기존 playlist 1개 유지.
+- Edge health: API1.9 / DB397 / Event396 / Upload394 / `FLATTENED_COMPOSITE_WHEN_CONTENT_EXISTS`.
+- 공개 Manifest HOME:MAIN: HTTP 정상, DB397, 기존 playlist 1개 유지.
 - 신규 overlay RLS, table grant, RPC execute 경계 확인 완료.
 - 전체 Node 계약 `35/35`, PR source workflow 4종 PASS.
 - 운영 `kinojo.info` 관리자 공개 파일 4종은 merge Git blob과 exact-match.
 - Browser 도구의 localhost URL 정책 때문에 업데이트한 Chrome E2E harness는 이번 회차에 실행하지 못했다. 이를 Chrome PASS로 기록하지 않는다.
+
+## 게시 hotfix · DB397
+
+- 최초 운영 게시 시 초안 저장은 성공했지만 합성 이미지 준비 요청이 HTTP 400으로 거절됐다.
+- 원인은 Edge가 새 `overlay/composite upload` 4종을 중복요청 방지 대상으로 지정한 반면, Server의 v388 idempotency claim 허용 목록에는 네 action이 빠져 있던 계약 불일치였다.
+- PR `#252`, merge `c1536603d19dfb69932b98ac18fd50022e47d1ce`와 migration `20260824115430_banner_stage5_idempotency_actions_v397.sql`에서 4종 action을 허용했다.
+- 운영 Edge v15는 DB397을 반환한다. 허용 목록 readback은 true이며 RPC 실행 권한은 `anon=false`, `authenticated=false`, `service_role=true`다.
+- 기존 성공한 초안과 이벤트 그룹은 유지하므로 관리자가 설정을 다시 만들 필요 없이 새로고침 후 전체 게시를 재시도한다.
 
 ## 다음 단계
 
