@@ -72,7 +72,18 @@ const payload = {
       {
         stageNo: 2,
         stageName: '엘리트장교',
-        roles: [{ roleKey: `r${index}-2`, roleName: '엘리트장교', slotNo: 1, maxMembers: null, groups: [] }]
+        roles: [{
+          roleKey: `r${index}-2`,
+          roleName: '엘리트장교',
+          slotNo: 1,
+          maxMembers: null,
+          groups: [{
+            groupKey: `g${index}-empty`,
+            groupName: '엘리트장교',
+            sortOrder: 1,
+            members: []
+          }]
+        }]
       },
       {
         stageNo: 3,
@@ -112,6 +123,12 @@ const markup = window.KinojoLegionTree.renderTreeMarkup(model);
 for (const name of names) {
   assert(markup.includes(`data-legion-name="${name}"`), `${name} legion must render`);
 }
+assert.strictEqual((markup.match(/data-tree-state="DEFAULT_FALLBACK"/g) || []).length, 4);
+assert.strictEqual((markup.match(/data-fallback-applied="true"/g) || []).length, 4);
+assert.strictEqual((markup.match(/class="legion-tree-fallback-badge">기본 단계/g) || []).length, 4);
+assert.strictEqual((markup.match(/class="legion-tree-empty-role"/g) || []).length, 8);
+assert.strictEqual((markup.match(/data-is-empty="true"/g) || []).length, 8);
+assert.strictEqual((markup.match(/>지정 전<\/p>/g) || []).length, 8);
 for (let index = 1; index <= 4; index += 1) {
   assert(markup.includes(`실제구성원${index}`), `member ${index} must render`);
 }
@@ -124,6 +141,20 @@ assert(!markup.includes('data-preview-card'));
 assert.throws(
   () => window.KinojoLegionTree.normalizeTreePayload({ ...payload, legions: payload.legions.slice(0, 3) }),
   /LEGION_TREE_REQUIRED_LEGION_MISSING/
+);
+assert.throws(
+  () => window.KinojoLegionTree.normalizeTreePayload({
+    ...payload,
+    legions: payload.legions.map((legion, index) => index ? legion : { ...legion, fallbackApplied: false })
+  }),
+  /LEGION_TREE_FALLBACK_STATE_INVALID/
+);
+assert.throws(
+  () => window.KinojoLegionTree.normalizeTreePayload({
+    ...payload,
+    legions: payload.legions.map((legion, index) => index ? legion : { ...legion, stages: [] })
+  }),
+  /LEGION_TREE_STAGES_EMPTY/
 );
 
 const rpcCalls = [];
@@ -149,6 +180,8 @@ window.KinojoSupabase = {
     assert(html.includes('Server 레기온 데이터를 불러오는 중'));
     assert(!html.includes('data-preview-card'));
     assert(!html.includes('본캐예시'));
+    assert(html.includes('cache=2026082401'));
+    assert(!html.includes('cache=2026082101'));
   }
 
   assert(script.includes("kinojo_web_legion_tree_server_reference_v372"));

@@ -158,12 +158,17 @@
     if(legionName!==expectedName)throw new Error('LEGION_TREE_LEGION_IDENTITY_INVALID');
     const stages=array(source.stages).map(normalizeStage).sort((a,b)=>a.stageNo-b.stageNo);
     if(!stages.length)throw new Error('LEGION_TREE_STAGES_EMPTY');
+    const treeState=text(source.treeState??source.tree_state,80);
+    const fallbackApplied=boolean(source.fallbackApplied??source.fallback_applied);
+    if((treeState==='DEFAULT_FALLBACK')!==fallbackApplied){
+      throw new Error('LEGION_TREE_FALLBACK_STATE_INVALID');
+    }
     return {
       legionName,
       legionOrder:positiveInt(source.legionOrder??source.legion_order)||expectedOrder,
       revision:Number(source.revision)||0,
-      treeState:text(source.treeState??source.tree_state,80),
-      fallbackApplied:boolean(source.fallbackApplied??source.fallback_applied),
+      treeState,
+      fallbackApplied,
       stageCount:positiveInt(source.stageCount??source.stage_count)||stages.length,
       memberCount:Number.isInteger(Number(source.memberCount??source.member_count))
         ?Math.max(0,Number(source.memberCount??source.member_count)):0,
@@ -227,7 +232,11 @@
   function renderRole(role,stageNo){
     const branchCount=Math.min(Math.max(role.groups.length,1),5);
     const groups=role.groups.map(group=>renderGroup(group,role.roleName,branchCount)).join('');
-    return `<article class="legion-tree-role" data-role-key="${esc(role.roleKey)}"><div class="legion-tree-role-plate"><small>${stageNo}단계</small><strong>${esc(role.roleName)}</strong></div><div class="legion-tree-role-groups" data-branch-count="${branchCount}">${groups}</div></article>`;
+    const memberCount=role.groups.reduce((total,group)=>total+group.members.length,0);
+    const assignment=memberCount
+      ?`<div class="legion-tree-role-groups" data-branch-count="${branchCount}">${groups}</div>`
+      :`<p class="legion-tree-empty-role" aria-label="${esc(role.roleName)} 배정 상태">지정 전</p>`;
+    return `<article class="legion-tree-role" data-role-key="${esc(role.roleKey)}" data-is-empty="${memberCount?'false':'true'}"><div class="legion-tree-role-plate"><small>${stageNo}단계</small><strong>${esc(role.roleName)}</strong></div>${assignment}</article>`;
   }
 
   function renderStage(stage){
@@ -242,7 +251,8 @@
       return connector+renderStage(stage);
     }).join('');
     const kicker=legion.legionOrder===1?'MAIN LEGION':`LEGION ${String(legion.legionOrder).padStart(2,'0')}`;
-    return `<section class="legion-tree-legion${legion.legionOrder===1?' is-main-legion':''}" data-legion-name="${esc(legion.legionName)}" aria-labelledby="${headingId}"><header class="legion-tree-legion-head"><div><span>${kicker}</span><h2 id="${headingId}">${esc(legion.legionName)} 레기온</h2></div><small>${legion.memberCount}명 · ${legion.stageCount}단계</small></header><div class="legion-tree-stage-list">${stages}</div></section>`;
+    const fallbackBadge=legion.fallbackApplied?'<span class="legion-tree-fallback-badge">기본 단계</span>':'';
+    return `<section class="legion-tree-legion${legion.legionOrder===1?' is-main-legion':''}" data-legion-name="${esc(legion.legionName)}" data-tree-state="${esc(legion.treeState)}" data-fallback-applied="${legion.fallbackApplied?'true':'false'}" aria-labelledby="${headingId}"><header class="legion-tree-legion-head"><div><span>${kicker}</span><h2 id="${headingId}">${esc(legion.legionName)} 레기온</h2></div><div class="legion-tree-legion-meta">${fallbackBadge}<small>${legion.memberCount}명 · ${legion.stageCount}단계</small></div></header><div class="legion-tree-stage-list">${stages}</div></section>`;
   }
 
   function renderTreeMarkup(model){
