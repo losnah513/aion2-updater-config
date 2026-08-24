@@ -10,6 +10,7 @@ on:
       - "tests/banner-manifest-client-contract.test.js"
       - "tests/banner-admin-main-ui-contract.test.js"
       - "tests/banner-admin-chrome-e2e.html"
+      - "tests/banner-pc-side-live-e2e.js"
       - "admin/js/admin.js"
       - "admin/js/admin-banner-delete.js"
       - "admin/index.html"
@@ -24,6 +25,7 @@ on:
       - "tests/banner-manifest-client-contract.test.js"
       - "tests/banner-admin-main-ui-contract.test.js"
       - "tests/banner-admin-chrome-e2e.html"
+      - "tests/banner-pc-side-live-e2e.js"
       - "admin/js/admin.js"
       - "admin/js/admin-banner-delete.js"
       - "admin/index.html"
@@ -55,6 +57,7 @@ jobs:
           set -euo pipefail
           node --check ui/kinojo-banner-runtime.js
           node --check ui/kinojo-pc-banners.js
+          node --check tests/banner-pc-side-live-e2e.js
           node tests/banner-manifest-client-contract.test.js
           node <<'NODE'
           const assert=require('node:assert/strict');
@@ -111,7 +114,7 @@ jobs:
     if: github.event_name == 'push'
     needs: verify-source
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     env:
       LIVE_BASE: https://kinojo.info
     steps:
@@ -193,6 +196,18 @@ jobs:
           set -euo pipefail
           node tests/banner-manifest-client-contract.test.js
 
+      - name: Verify PC SIDE live Chrome layout
+        shell: bash
+        run: |
+          set -euo pipefail
+          chrome="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [[ -z "$chrome" ]]; then
+            echo "Chrome/Chromium is required for PC SIDE live E2E." >&2
+            exit 1
+          fi
+          npm install --no-save --no-package-lock puppeteer-core@24.16.0 >/dev/null
+          CHROME_BIN="$chrome" LIVE_BASE="$LIVE_BASE" node tests/banner-pc-side-live-e2e.js
+
       - name: Publish live readback success status
         if: success()
         shell: bash
@@ -205,7 +220,7 @@ jobs:
           print(json.dumps({
               "state": "success",
               "context": "kinojo/banner-runtime-live-readback",
-              "description": "Manifest client 배포·GET·ETag/304 확인 완료",
+              "description": "Manifest·PC SIDE Chrome 운영 확인 완료",
               "target_url": f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
           }, ensure_ascii=False))
           PY
@@ -228,7 +243,7 @@ jobs:
           print(json.dumps({
               "state": "failure",
               "context": "kinojo/banner-runtime-live-readback",
-              "description": "Manifest client 운영 readback 실패",
+              "description": "Manifest/PC SIDE 운영 readback 실패",
               "target_url": f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
           }, ensure_ascii=False))
           PY
