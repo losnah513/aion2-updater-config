@@ -41,3 +41,13 @@
 
 - 원본 마지막 단계: `11-라 — GitHub 반영·Drive 동일 ID 동기화·일일 로그·최종 인계`.
 - 이 프로젝트에 남은 원본 단계는 없다.
+
+## Post-close bugfix · 관리자 `이미지 관리` 화면 멈춤 · 2026-08-24
+
+- 원본 `51/51 CLOSED` 판정 이후 실제 관리자 사용에서 `이미지 관리` 메뉴 진입 즉시 화면이 멈추는 결함이 확인됐다. 원본 단계는 다시 열지 않고 post-close production bugfix로 처리했다.
+- 원인은 `admin/js/admin-images.js`의 `#adminCurrentLocation` `MutationObserver`가 `label()`을 호출하고, `label()`이 이미 같은 값인 `[이미지 관리]`를 다시 `textContent`로 써 observer를 자기 재호출하던 microtask loop였다.
+- PR `#227` (`Fix admin image-management freeze`)을 squash merge해 제품 코드 baseline을 `82b3f15e311aea1709386289f03a486777cb01b6`으로 갱신했다. 위치 라벨은 실제 값이 다를 때만 쓰도록 변경해 observer 재귀를 차단했다.
+- 기존 Chrome E2E가 hidden image-management UI만 조작해 실제 메뉴 활성화 경로를 놓쳤던 문제도 보완했다. 회귀 테스트가 실제 images pane을 `active`로 전환하고 event-loop heartbeat, `[이미지 관리]` 라벨 정착, 초기 asset/campaign/Manifest 로드를 확인한 뒤 기존 upload→publish→pause→save→delete lifecycle까지 진행한다.
+- PR 검증 `Verify Banner Runtime`, `Verify Banner Admin`, `Verify KINOJO Pages`가 모두 success. main push 후 `kinojo/live-readback`, `kinojo/banner-admin-live-readback`, `kinojo/banner-runtime-live-readback` 3종도 모두 success로 운영 바이트 반영을 확인했다.
+- Drive exact sync: `admin-images.js` 기존 ID `1I6Vz20ogyLDOUkYY710fbT9IYONIranb`, Git blob `d1c631104dcd26931b2aeaeceb011d78cf1e5c19`; `banner-admin-chrome-e2e.html` 기존 ID `1rGg7QNUOPlnjHerX9vTFR4zA7P9NE_-D`, Git blob `e7fc17e3221d3f690d52079501a72bf86183778d`. raw readback 2/2 exact-match.
+- 이 bugfix에서 DB/RPC/Edge/Storage/Campaign 데이터 변경은 `0`이며 기존 배너 운영 계약은 유지한다.
