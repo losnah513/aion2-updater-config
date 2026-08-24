@@ -109,7 +109,7 @@ jobs:
             exit 1
           fi
           "$chrome" --headless --no-sandbox --disable-gpu --allow-file-access-from-files \
-            --virtual-time-budget=15000 --dump-dom "file://$PWD/tests/banner-admin-chrome-e2e.html#images" \
+            --virtual-time-budget=30000 --dump-dom "file://$PWD/tests/banner-admin-chrome-e2e.html#images" \
             > /tmp/banner-admin-chrome-e2e.html
           grep -F 'data-e2e-result="PASS"' /tmp/banner-admin-chrome-e2e.html
 

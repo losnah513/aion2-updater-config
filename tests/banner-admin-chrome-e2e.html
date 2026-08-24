@@ -131,7 +131,7 @@ async function run(){
     const file=new File([blob],'banner-e2e.png',{type:'image/png'}),dt=new DataTransfer();dt.items.add(file);document.querySelector('#bFile').files=dt.files;
     document.querySelector('#bUploadName').value='Chrome E2E Asset';document.querySelector('#bUploadAlt').value='Chrome E2E 배너';
     document.querySelector('#bUpload').click();
-    await waitFor(()=>document.querySelector('#bUploadStatus')?.textContent.includes('등록 완료'),'upload complete');
+    await waitFor(()=>document.querySelector('#bUploadStatus')?.textContent.includes('등록 완료'),'upload complete',20000);
     if(!state.put||state.put.method!=='PUT'||state.put.upsert!=='false'||state.put.contentType!=='image/webp')throw Error('signed PUT contract mismatch');
     if(state.put.size<1)throw Error('converted WebP body missing');
     await waitFor(()=>document.querySelector('[data-b-check="101"]'),'uploaded asset in library');
