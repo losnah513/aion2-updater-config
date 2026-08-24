@@ -12,11 +12,13 @@ on:
       - "admin/js/admin-bootstrap.js"
       - "admin/js/admin-images.js"
       - "admin/js/admin-side-banners.js"
+      - "admin/js/admin-banner-event-workflow.js"
       - "admin/js/admin-banner-tabs.js"
       - "admin/js/admin-banner-quality.js"
       - "tests/banner-admin-main-ui-contract.test.js"
       - "tests/banner-admin-side-ui-contract.test.js"
       - "tests/banner-admin-quality-contract.test.js"
+      - "tests/banner-event-stage2-ui-contract.test.js"
       - "tests/banner-admin-chrome-e2e.html"
       - ".github/workflows/verify-banner-admin.yml"
   push:
@@ -30,11 +32,13 @@ on:
       - "admin/js/admin-bootstrap.js"
       - "admin/js/admin-images.js"
       - "admin/js/admin-side-banners.js"
+      - "admin/js/admin-banner-event-workflow.js"
       - "admin/js/admin-banner-tabs.js"
       - "admin/js/admin-banner-quality.js"
       - "tests/banner-admin-main-ui-contract.test.js"
       - "tests/banner-admin-side-ui-contract.test.js"
       - "tests/banner-admin-quality-contract.test.js"
+      - "tests/banner-event-stage2-ui-contract.test.js"
       - "tests/banner-admin-chrome-e2e.html"
       - ".github/workflows/verify-banner-admin.yml"
   workflow_dispatch:
@@ -67,6 +71,7 @@ jobs:
             admin/js/admin-bootstrap.js \
             admin/js/admin-images.js \
             admin/js/admin-side-banners.js \
+            admin/js/admin-banner-event-workflow.js \
             admin/js/admin-banner-tabs.js \
             admin/js/admin-banner-quality.js; do
             node --check "$path"
@@ -74,6 +79,7 @@ jobs:
           node tests/banner-admin-main-ui-contract.test.js
           node tests/banner-admin-side-ui-contract.test.js
           node tests/banner-admin-quality-contract.test.js
+          node tests/banner-event-stage2-ui-contract.test.js
           chrome="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
           if [[ -z "$chrome" ]]; then
             echo "Chrome/Chromium is required for banner admin tab E2E." >&2
@@ -138,6 +144,7 @@ jobs:
             "admin/js/admin-bootstrap.js"
             "admin/js/admin-images.js"
             "admin/js/admin-side-banners.js"
+            "admin/js/admin-banner-event-workflow.js"
             "admin/js/admin-banner-tabs.js"
             "admin/js/admin-banner-quality.js"
           )
