@@ -18,18 +18,22 @@ const state={assets:[
   {assetId:1,sourceType:'STORAGE',objectPath:'2035/01/11111111-2222-4333-8444-000000000001.webp',mimeType:'image/webp',sizeBytes:12000,width:300,height:715,formatCode:'SIDE_300_715',displayName:'사이드 첫 번째',originalFileName:'side-1.webp',defaultAlt:'사이드 첫 번째',status:'READY',referenceCount:0},
   {assetId:2,sourceType:'STORAGE',objectPath:'2035/01/11111111-2222-4333-8444-000000000002.webp',mimeType:'image/webp',sizeBytes:13000,width:300,height:715,formatCode:'SIDE_300_715',displayName:'사이드 두 번째',originalFileName:'side-2.webp',defaultAlt:'사이드 두 번째',status:'READY',referenceCount:0},
   {assetId:3,sourceType:'STORAGE',objectPath:'2035/01/11111111-2222-4333-8444-000000000003.webp',mimeType:'image/webp',sizeBytes:14000,width:300,height:715,formatCode:'SIDE_300_715',displayName:'사이드 세 번째',originalFileName:'side-3.webp',defaultAlt:'사이드 세 번째',status:'READY',referenceCount:0}
+],events:[
+  {eventGroupId:'aaaaaaaa-2222-4333-8444-000000000001',name:'첫 이벤트',type:'SIDE',sideMode:'INDEPENDENT',tags:['룩북'],status:'DRAFT',targetPages:['HOME'],campaignCount:2,itemCount:3,managerOrder:2,updatedAt:'2035-01-02T09:00:00+09:00'},
+  {eventGroupId:'aaaaaaaa-2222-4333-8444-000000000002',name:'두 번째 이벤트',type:'SIDE',sideMode:'SYNC',tags:['공지'],status:'PAUSED',targetPages:['HOME','RANKING'],campaignCount:2,itemCount:4,managerOrder:1,updatedAt:'2035-01-01T09:00:00+09:00'}
 ],campaigns:[],manifest:{ok:true,active:false,reason:'NO_ACTIVE_CAMPAIGN',playlist:[]},calls:[],puts:[],nextCampaign:501,nextAsset:101};
 const clone=v=>JSON.parse(JSON.stringify(v));
 function syncRefs(){for(const a of state.assets)a.referenceCount=state.campaigns.reduce((n,c)=>n+(c.items||[]).filter(i=>Number(i.assetId)===Number(a.assetId)).length,0)}
 function response(action,payload){
   state.calls.push(action);
-  if(action!=='asset-list'&&action!=='overlay-asset-list'&&action!=='campaign-list'&&action!=='manifest'){
+  if(action!=='asset-list'&&action!=='overlay-asset-list'&&action!=='campaign-list'&&action!=='event-list'&&action!=='manifest'){
     if(!/^kws_[A-Za-z0-9_-]{40,80}$/.test(String(payload.sessionToken||'')))throw Error('missing KWS');
     if(!/^[0-9a-f-]{36}$/i.test(String(payload.idempotencyKey||'')))throw Error('missing idempotency key');
   }
   if(action==='asset-list')return {ok:true,assets:clone(state.assets.filter(a=>payload.includeArchived!==false||a.status!=='ARCHIVED'))};
   if(action==='overlay-asset-list')return {ok:true,assets:[]};
   if(action==='campaign-list')return {ok:true,campaigns:clone(state.campaigns)};
+  if(action==='event-list')return {ok:true,events:clone(state.events),legacyCampaigns:[]};
   if(action==='manifest')return clone(state.manifest);
   if(action==='upload-prepare'){const ext=payload.mimeType==='image/png'?'png':payload.mimeType==='image/jpeg'?'jpg':'webp',uuid=`11111111-2222-4333-8444-${String(state.nextAsset).padStart(12,'0')}`,path=`2035/01/${uuid}.${ext}`;return {ok:true,formatCode:payload.formatCode,upload:{bucket:'kinojo-site-banners',objectPath:path,uploadUrl:'http://127.0.0.1/storage/v1/object/upload/sign/kinojo-site-banners/'+path+'?token=e2e',mimeType:payload.mimeType,sizeBytes:payload.sizeBytes,upsert:false,expiresInSeconds:7200,activation:'BANNER_UPLOAD_COMPLETE_REQUIRED'}}}
   if(action==='upload-complete'){
@@ -39,6 +43,7 @@ function response(action,payload){
   }
   if(action==='event-save')return {ok:true,eventGroupId:'11111111-2222-4333-8444-555555555555',savedCampaignIds:[901],event:{name:payload.event.name,status:'DRAFT',campaigns:clone(payload.event.variants)}};
   if(action==='event-publish')return {ok:true,eventGroupId:payload.eventGroupId,publishedCampaignCount:1,event:{status:'PUBLISHED'}};
+  if(action==='event-move'){const index=state.events.findIndex(item=>item.eventGroupId===payload.eventGroupId),next=payload.direction==='UP'?index-1:index+1;if(index>=0&&next>=0&&next<state.events.length){const hold=state.events[index];state.events[index]=state.events[next];state.events[next]=hold}return {ok:true,eventGroupId:payload.eventGroupId,direction:payload.direction,moved:index!==next,event:clone(state.events.find(item=>item.eventGroupId===payload.eventGroupId))};}
   if(action==='campaign-create'){
     const c={campaignId:state.nextCampaign++,status:'DRAFT',...clone(payload.campaign)};state.campaigns.push(c);syncRefs();return {ok:true,campaign:clone(c)};
   }
@@ -88,6 +93,7 @@ window.fetch=async(input,init={})=>{
 <script src="../admin/js/admin-banner-delete.js"></script>
 <script src="../admin/js/admin-side-banners.js"></script>
 <script src="../admin/js/admin-banner-event-workflow.js"></script>
+<script src="../admin/js/admin-banner-events.js"></script>
 <script src="../admin/js/admin-banner-tabs.js"></script>
 <script src="../admin/js/admin-banner-quality.js"></script>
 <script src="../admin/js/admin-bootstrap.js"></script>
@@ -106,16 +112,16 @@ async function run(){
     await waitFor(()=>document.querySelector('#adminCurrentLocation')?.textContent==='[이미지 관리]','image pane location label',1500);
     await waitFor(()=>document.querySelector('[data-banner-event-workflow="main"]')&&document.querySelector('[data-main-banner-admin] [data-bew-status]')?.classList.contains('ok'),'stage-5 workflow initial load');
     const sourceNav=document.querySelector('[data-admin-subnav="images"]'),topNav=document.querySelector('#adminTopSubnav');
-    const mainTab=sourceNav?.querySelector('[data-banner-management-tab="main"]'),sideTab=sourceNav?.querySelector('[data-banner-management-tab="side"]');
-    const mainPanel=document.querySelector('[data-banner-management-panel="main"]'),sidePanel=document.querySelector('[data-banner-management-panel="side"]');
-    if(!mainTab||!sideTab||!mainPanel||!sidePanel)throw Error('main/side banner tabs missing');
+    const mainTab=sourceNav?.querySelector('[data-banner-management-tab="main"]'),sideTab=sourceNav?.querySelector('[data-banner-management-tab="side"]'),eventsTab=sourceNav?.querySelector('[data-banner-management-tab="events"]');
+    const mainPanel=document.querySelector('[data-banner-management-panel="main"]'),sidePanel=document.querySelector('[data-banner-management-panel="side"]'),eventsPanel=document.querySelector('[data-banner-management-panel="events"]');
+    if(!mainTab||!sideTab||!eventsTab||!mainPanel||!sidePanel||!eventsPanel)throw Error('main/side/event banner tabs missing');
     if(!sourceNav||getComputedStyle(sourceNav).display!=='none')throw Error('source image subnav must remain hidden in the content pane');
     if(topNav.hidden||getComputedStyle(topNav).display==='none')throw Error('image top subnav must be visible');
-    if([...topNav.querySelectorAll('[data-admin-subtab]')].map(button=>button.textContent.trim()).join('|')!=='메인 배너|사이드 배너')throw Error('image top subnav labels missing');
-    if(document.querySelectorAll('#adminBannerMainTab').length!==1||document.querySelectorAll('#adminBannerSideTab').length!==1)throw Error('top subnav clone duplicated source tab ids');
+    if([...topNav.querySelectorAll('[data-admin-subtab]')].map(button=>button.textContent.trim()).join('|')!=='메인 배너|사이드 배너|이벤트 관리')throw Error('image top subnav labels missing');
+    if(document.querySelectorAll('#adminBannerMainTab').length!==1||document.querySelectorAll('#adminBannerSideTab').length!==1||document.querySelectorAll('#adminBannerEventsTab').length!==1)throw Error('top subnav clone duplicated source tab ids');
     if(location.hash!=='#images/main')throw Error('image default subtab route mismatch');
-    if(mainPanel.hidden||!mainPanel.classList.contains('active')||!sidePanel.hidden)throw Error('main banner must be the initial visible tab');
-    if(!mainPanel.contains(document.querySelector('[data-main-banner-admin]'))||!sidePanel.contains(document.querySelector('[data-side-banner-admin]')))throw Error('banner modules not isolated into tab panels');
+    if(mainPanel.hidden||!mainPanel.classList.contains('active')||!sidePanel.hidden||!eventsPanel.hidden)throw Error('main banner must be the initial visible tab');
+    if(!mainPanel.contains(document.querySelector('[data-main-banner-admin]'))||!sidePanel.contains(document.querySelector('[data-side-banner-admin]'))||!eventsPanel.contains(document.querySelector('[data-banner-events-admin]')))throw Error('banner modules not isolated into tab panels');
     if(document.querySelectorAll('[data-banner-event-workflow="main"] .bew-map-step').length!==5)throw Error('five-step workflow map missing');
     if(document.querySelectorAll('[data-banner-event-workflow="main"] .bew-step').length!==5)throw Error('five workflow sections missing');
     if(document.querySelectorAll('[data-banner-event-workflow="main"] [data-bew-add-card]').length!==1)throw Error('initial add card missing');
@@ -217,6 +223,12 @@ async function run(){
     const finalPage=document.querySelector('[data-banner-event-workflow="side"] [data-bew-page]');finalPage.value='ALL';fire(finalPage,'change');
     const target=document.querySelector('#bew-side-3');window.scrollTo(0,target.getBoundingClientRect().top+window.scrollY-110);await sleep(300);
     if(getComputedStyle(document.querySelector('[data-banner-event-workflow="side"] .bew-side-order-item img')).objectFit!=='contain')throw Error('side order preview must show the whole image');
+    document.querySelector('#adminTopSubnav [data-admin-subtab="events"]').click();
+    await waitFor(()=>eventsPanel.classList.contains('active')&&!eventsPanel.hidden&&document.querySelectorAll('[data-banner-events-admin] [data-bem-event]').length===2,'event manager list load');
+    if(location.hash!=='#images/events')throw Error('event manager route mismatch');
+    if(!document.querySelector('[data-banner-events-admin]')?.textContent.includes('등록 이벤트 목록'))throw Error('event manager heading missing');
+    document.querySelector('[data-banner-events-admin] [data-bem-move="DOWN"]:not(:disabled)')?.click();
+    await waitFor(()=>state.calls.includes('event-move'),'event manager order mutation');
     document.documentElement.dataset.e2eResult='PASS';document.querySelector('#e2eResult').textContent='PASS '+state.calls.join(' > ');
   }catch(error){document.documentElement.dataset.e2eResult='FAIL';document.querySelector('#e2eResult').textContent='FAIL '+(error?.stack||error);console.error(error)}
 }

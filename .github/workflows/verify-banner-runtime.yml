@@ -14,6 +14,7 @@ on:
       - "tests/banner-mobile-main-live-e2e.js"
       - "admin/js/admin.js"
       - "admin/js/admin-banner-delete.js"
+      - "admin/js/admin-banner-events.js"
       - "admin/index.html"
       - "m/admin/index.html"
       - ".github/workflows/verify-banner-runtime.yml"
@@ -30,6 +31,7 @@ on:
       - "tests/banner-mobile-main-live-e2e.js"
       - "admin/js/admin.js"
       - "admin/js/admin-banner-delete.js"
+      - "admin/js/admin-banner-events.js"
       - "admin/index.html"
       - "m/admin/index.html"
       - ".github/workflows/verify-banner-runtime.yml"
@@ -101,6 +103,7 @@ jobs:
           set -euo pipefail
           node --check admin/js/admin.js
           node --check admin/js/admin-banner-delete.js
+          node --check admin/js/admin-banner-events.js
           node tests/banner-admin-main-ui-contract.test.js
           node tests/banner-admin-quality-contract.test.js
           chrome="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
@@ -161,6 +164,7 @@ jobs:
             "ui/kinojo-pc-banners.css"
             "admin/js/admin.js"
             "admin/js/admin-banner-delete.js"
+            "admin/js/admin-banner-events.js"
             "admin/index.html"
             "m/admin/index.html"
             "m/index.html"

@@ -29,9 +29,9 @@ for(const token of [
 ])assert.ok(migration.includes(token),`missing v396 migration token: ${token}`);
 
 for(const token of [
-  'V = "1.9"',
-  'DB = "397"',
-  'EVENT = "396"',
+  'V = "2.0"',
+  'DB = "398"',
+  'EVENT = "398"',
   '"overlay-asset-list"',
   '"overlay-upload-prepare"',
   '"overlay-upload-complete"',

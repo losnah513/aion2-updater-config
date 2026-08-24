@@ -1,7 +1,7 @@
 const S = "kinojo-banner-media",
-  V = "1.9",
-  DB = "397",
-  EVENT = "396",
+  V = "2.0",
+  DB = "398",
+  EVENT = "398",
   UPLOAD = "394",
   MASTER = "337",
   STORAGE = "382",
@@ -32,6 +32,9 @@ const MUT = new Set([
   "campaign-delete",
   "event-save",
   "event-publish",
+  "event-move",
+  "event-pause",
+  "event-delete",
   "overlay-upload-prepare",
   "overlay-upload-complete",
   "composite-upload-prepare",
@@ -59,6 +62,11 @@ const ERR: Record<string, string> = {
   BANNER_EVENT_GROUP_ID_INVALID: "이미지 이벤트 식별자가 올바르지 않습니다.",
   BANNER_EVENT_PAYLOAD_INVALID: "이미지 이벤트 설정을 확인해 주세요.",
   BANNER_EVENT_ITEMS_REQUIRED: "게시할 활성 이미지를 한 장 이상 선택해 주세요.",
+  BANNER_EVENT_MOVE_DIRECTION_INVALID: "이벤트 이동 방향이 올바르지 않습니다.",
+  BANNER_EVENT_DELETE_PAUSE_REQUIRED:
+    "게시 중인 이벤트는 먼저 게시를 중지해야 영구 삭제할 수 있습니다.",
+  BANNER_EVENT_DELETE_CONFIRMATION_MISMATCH:
+    "영구 삭제 확인을 위해 이벤트 이름을 정확히 입력해 주세요.",
   BANNER_TEXT_OVERLAY_WIDTH_FIXED: "문구 영역의 폭은 배너 전체로 고정됩니다.",
   BANNER_CONTENT_TEXT_REQUIRED: "노출할 문구 내용을 입력해 주세요.",
   BANNER_CONTENT_EMOJI_REQUIRED: "노출할 이모지를 선택해 주세요.",
@@ -994,7 +1002,7 @@ async function campaign(r: Request, b: any, t: string, a: string) {
 async function event(r: Request, b: any, t: string, a: string) {
   let d: any;
   if (a === "event-list") {
-    d = await rpc("kinojo_banner_event_list_v396", {
+    d = await rpc("kinojo_banner_event_list_v398", {
       p_session_token: t,
       p_include_archived: b.includeArchived !== false,
     });
@@ -1010,7 +1018,7 @@ async function event(r: Request, b: any, t: string, a: string) {
       p_event_group_id: rawId || null,
       p_payload: payload,
     });
-  } else {
+  } else if (a === "event-publish") {
     const id = txt(b.eventGroupId ?? b.event_group_id, 80);
     if (!K.test(id))
       return out(r, { ok: false, code: "BANNER_EVENT_GROUP_ID_REQUIRED" }, 400);
@@ -1018,6 +1026,38 @@ async function event(r: Request, b: any, t: string, a: string) {
       p_session_token: t,
       p_event_group_id: id,
     });
+  } else {
+    const id = txt(b.eventGroupId ?? b.event_group_id, 80);
+    if (!K.test(id))
+      return out(r, { ok: false, code: "BANNER_EVENT_GROUP_ID_REQUIRED" }, 400);
+    if (a === "event-move") {
+      const direction = txt(b.direction, 12).toUpperCase();
+      if (!["UP", "DOWN"].includes(direction))
+        return out(r, { ok: false, code: "BANNER_EVENT_MOVE_DIRECTION_INVALID" }, 400);
+      d = await rpc("kinojo_banner_event_move_v398", {
+        p_session_token: t,
+        p_event_group_id: id,
+        p_direction: direction,
+      });
+    } else if (a === "event-pause") {
+      d = await rpc("kinojo_banner_event_pause_v398", {
+        p_session_token: t,
+        p_event_group_id: id,
+      });
+    } else {
+      const expected = txt(b.expectedName ?? b.expected_name, 120);
+      if (!expected)
+        return out(
+          r,
+          { ok: false, code: "BANNER_EVENT_DELETE_CONFIRMATION_MISMATCH" },
+          400,
+        );
+      d = await rpc("kinojo_banner_event_delete_v398", {
+        p_session_token: t,
+        p_event_group_id: id,
+        p_expected_name: expected,
+      });
+    }
   }
   return d.ok === true
     ? out(r, {
@@ -1321,6 +1361,9 @@ Deno.serve(async (r) => {
           "event-list",
           "event-save",
           "event-publish",
+          "event-move",
+          "event-pause",
+          "event-delete",
           "overlay-asset-list",
           "overlay-upload-prepare",
           "overlay-upload-complete",
@@ -1347,7 +1390,14 @@ Deno.serve(async (r) => {
         "campaign-restore",
         "campaign-delete",
       ],
-      ee = ["event-list", "event-save", "event-publish"],
+      ee = [
+        "event-list",
+        "event-save",
+        "event-publish",
+        "event-move",
+        "event-pause",
+        "event-delete",
+      ],
       oo = [
         "overlay-asset-list",
         "overlay-upload-prepare",

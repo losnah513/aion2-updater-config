@@ -1,10 +1,10 @@
-/* KINOJO Admin modular loader v2026082411 */
+/* KINOJO Admin modular loader v2026082412 */
 (function(){
   'use strict';
   const current=document.currentScript;
   const currentUrl=new URL(current?.src||location.href,location.href);
   const base=new URL('./',currentUrl);
-  const CACHE=String(currentUrl.searchParams.get('cache')||'2026082411').trim()||'2026082411';
+  const CACHE=String(currentUrl.searchParams.get('cache')||'2026082412').trim()||'2026082412';
   const modules=[
     'admin-shared.js',
     'admin-members.js',
@@ -17,6 +17,7 @@
     'admin-banner-delete.js',
     'admin-side-banners.js',
     'admin-banner-event-workflow.js',
+    'admin-banner-events.js',
     'admin-banner-quality.js',
     'admin-banner-tabs.js',
     'admin-bootstrap.js'
