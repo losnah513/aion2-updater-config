@@ -9,7 +9,7 @@ const tabs=fs.readFileSync(path.join(__dirname,'../admin/js/admin-banner-tabs.js
 const shared=fs.readFileSync(path.join(__dirname,'../admin/js/admin-shared.js'),'utf8');
 const bootstrap=fs.readFileSync(path.join(__dirname,'../admin/js/admin-bootstrap.js'),'utf8');
 const css=fs.readFileSync(path.join(__dirname,'../admin/css/admin.css'),'utf8');
-const CACHE='2026082403';
+const CACHE='2026082404';
 const adminPages=[
   fs.readFileSync(path.join(__dirname,'../admin/index.html'),'utf8'),
   fs.readFileSync(path.join(__dirname,'../m/admin/index.html'),'utf8'),
@@ -35,6 +35,7 @@ assert.ok(bootstrap.includes("clone.removeAttribute('id')"),'top subnav clones m
 assert.ok(bootstrap.includes("subpane.hidden=!on"),'tabpanel visibility must follow the selected admin subtab');
 assert.ok(css.includes('.admin-pane>.admin-subnav{display:none!important}'),'source subnav remains hidden because the visible tabs are rendered in the top subnav');
 for(const token of ["EDGE='kinojo-banner-media'","api('asset-list'","api('campaign-list'","api('manifest',{pageCode:'HOME',slotCode:'MAIN'}","api('upload-prepare'","api('upload-complete'","'x-upsert':'false'","formatCode:FORMAT","type:'MAIN',pageCode:'HOME',slotCodes:['MAIN']","scheduleMode:m","startsAtKst","endsAtKst","weekdays","specificDates","slideIntervalMs","transitionDurationMs","weight:100,enabled:true","scheduleMode:'INHERIT'","campaign-update","campaign-create","campaign-publish","campaign-pause","campaign-archive","campaign-restore","bannerMainPreviewPc","bannerMainPreviewMobile","Server Manifest"]) assert.ok(source.includes(token),`missing ${token}`);
+for(const token of ['메인 배너 관리','PC와 모바일 홈에 공통으로 노출','banner-admin-grid','banner-fields','banner-actions-primary','현재 게시 중','PC·모바일 미리보기','이미지 업로드','캠페인 설정','이미지 라이브러리','선택 이미지','메인 캠페인 목록','ensureBannerAdminLayoutStyle']) assert.ok(source.includes(token),`missing polished main layout contract ${token}`);
 for(const token of ["EDGE='kinojo-banner-media'","BUCKET='kinojo-site-banners'","api('asset-list'","api('asset-archive'","api('asset-delete'","api('asset-restore'","sourceType)!=='STORAGE'","referenceCount||0","data-b-asset-delete","loadMainBannerManagement?.(true)"]) assert.ok(del.includes(token),`missing delete contract ${token}`);
 assert.equal(/service_role/i.test(source+del),false);
 assert.equal(/passKey|passCode/.test(source+del),false);
