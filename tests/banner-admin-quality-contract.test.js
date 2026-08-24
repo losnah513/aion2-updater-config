@@ -7,7 +7,7 @@ const q=fs.readFileSync(path.join(root,'admin/js/admin-banner-quality.js'),'utf8
 const loader=fs.readFileSync(path.join(root,'admin/js/admin.js'),'utf8');
 const main=fs.readFileSync(path.join(root,'admin/js/admin-images.js'),'utf8');
 const side=fs.readFileSync(path.join(root,'admin/js/admin-side-banners.js'),'utf8');
-assert.ok(loader.replace(/\r\n/g,'\n').includes("'admin-side-banners.js',\n    'admin-banner-quality.js',\n    'admin-banner-tabs.js',\n    'admin-bootstrap.js'"),'quality and tab guards must load after banner modules and before bootstrap');
+assert.ok(loader.replace(/\r\n/g,'\n').includes("'admin-side-banners.js',\n    'admin-banner-event-workflow.js',\n    'admin-banner-quality.js',\n    'admin-banner-tabs.js',\n    'admin-bootstrap.js'"),'workflow, quality and tab guards must load after legacy banner modules and before bootstrap');
 for(const token of [
   "addEventListener('beforeunload'","data-unsaved","aria-live","aria-busy","aria-invalid","role','region'","type==='error'?'alert':'status'",
   'function validDate(','function safeLink(','function validateBase(','function validateSide(','function setBusy(','function releaseBusy(','function markDirty(','function markClean(','function confirmDiscard(',

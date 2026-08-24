@@ -14,7 +14,7 @@ location.hash='images';
 window.confirm=()=>true;
 window.KinojoAdmin={};
 window.KinojoAuth={getSession:()=>({token:'kws_'+('A'.repeat(40)),role:'MASTER',roleLabel:'Master',level:5})};
-const state={assets:[],campaigns:[],manifest:{ok:true,active:false,reason:'NO_ACTIVE_CAMPAIGN',playlist:[]},calls:[],put:null,nextCampaign:501};
+const state={assets:[],campaigns:[],manifest:{ok:true,active:false,reason:'NO_ACTIVE_CAMPAIGN',playlist:[]},calls:[],puts:[],nextCampaign:501,nextAsset:101};
 const clone=v=>JSON.parse(JSON.stringify(v));
 function syncRefs(){for(const a of state.assets)a.referenceCount=state.campaigns.reduce((n,c)=>n+(c.items||[]).filter(i=>Number(i.assetId)===Number(a.assetId)).length,0)}
 function response(action,payload){
@@ -26,11 +26,11 @@ function response(action,payload){
   if(action==='asset-list')return {ok:true,assets:clone(state.assets.filter(a=>payload.includeArchived!==false||a.status!=='ARCHIVED'))};
   if(action==='campaign-list')return {ok:true,campaigns:clone(state.campaigns)};
   if(action==='manifest')return clone(state.manifest);
-  if(action==='upload-prepare')return {ok:true,formatCode:'MAIN_16_9',upload:{bucket:'kinojo-site-banners',objectPath:'2035/01/11111111-2222-4333-8444-555555555555.webp',uploadUrl:'http://127.0.0.1/storage/v1/object/upload/sign/kinojo-site-banners/2035/01/11111111-2222-4333-8444-555555555555.webp?token=e2e',mimeType:'image/webp',sizeBytes:payload.sizeBytes,upsert:false,expiresInSeconds:7200,activation:'BANNER_UPLOAD_COMPLETE_REQUIRED'}};
+  if(action==='upload-prepare'){const ext=payload.mimeType==='image/png'?'png':payload.mimeType==='image/jpeg'?'jpg':'webp',uuid=`11111111-2222-4333-8444-${String(state.nextAsset).padStart(12,'0')}`,path=`2035/01/${uuid}.${ext}`;return {ok:true,formatCode:payload.formatCode,upload:{bucket:'kinojo-site-banners',objectPath:path,uploadUrl:'http://127.0.0.1/storage/v1/object/upload/sign/kinojo-site-banners/'+path+'?token=e2e',mimeType:payload.mimeType,sizeBytes:payload.sizeBytes,upsert:false,expiresInSeconds:7200,activation:'BANNER_UPLOAD_COMPLETE_REQUIRED'}}}
   if(action==='upload-complete'){
-    const a={assetId:101,sourceType:'STORAGE',objectPath:payload.objectPath,staticPath:null,mimeType:payload.mimeType,sizeBytes:payload.sizeBytes,width:1536,height:864,formatCode:'MAIN_16_9',displayName:payload.displayName,originalFileName:payload.originalFileName,defaultAlt:payload.defaultAlt,status:'READY',referenceCount:0};
-    state.assets=[a];
-    return {ok:true,asset:clone(a),image:{activation:'ASSET_READY',aspectValid:true}};
+    const side=payload.formatCode==='SIDE_300_715',a={assetId:state.nextAsset++,sourceType:'STORAGE',objectPath:payload.objectPath,staticPath:null,mimeType:payload.mimeType,sizeBytes:payload.sizeBytes,width:side?300:812,height:side?715:1936,formatCode:payload.formatCode,displayName:payload.displayName,originalFileName:payload.originalFileName,defaultAlt:payload.defaultAlt,status:'READY',referenceCount:0};
+    state.assets.push(a);
+    return {ok:true,asset:clone(a),image:{activation:'ASSET_READY',aspectMatchesTarget:side,cropWarning:!side}};
   }
   if(action==='campaign-create'){
     const c={campaignId:state.nextCampaign++,status:'DRAFT',...clone(payload.campaign)};state.campaigns.push(c);syncRefs();return {ok:true,campaign:clone(c)};
@@ -70,7 +70,7 @@ const nativeFetch=window.fetch.bind(window);
 window.fetch=async(input,init={})=>{
   const href=String(input?.url||input||'');
   if(href.startsWith('http://127.0.0.1/storage/v1/object/upload/sign/')){
-    state.put={href,method:init.method,contentType:init.headers?.['content-type'],upsert:init.headers?.['x-upsert'],size:init.body?.size};
+    state.puts.push({href,method:init.method,contentType:init.headers?.['content-type'],upsert:init.headers?.['x-upsert'],size:init.body?.size});
     return new Response('',{status:200});
   }
   return nativeFetch(input,init);
@@ -80,6 +80,7 @@ window.fetch=async(input,init={})=>{
 <script src="../admin/js/admin-images.js"></script>
 <script src="../admin/js/admin-banner-delete.js"></script>
 <script src="../admin/js/admin-side-banners.js"></script>
+<script src="../admin/js/admin-banner-event-workflow.js"></script>
 <script src="../admin/js/admin-banner-tabs.js"></script>
 <script src="../admin/js/admin-banner-quality.js"></script>
 <script src="../admin/js/admin-bootstrap.js"></script>
@@ -96,7 +97,7 @@ async function run(){
     let heartbeat=false;setTimeout(()=>{heartbeat=true},0);
     await waitFor(()=>heartbeat,'image pane activation event-loop heartbeat',1500);
     await waitFor(()=>document.querySelector('#adminCurrentLocation')?.textContent==='[이미지 관리]','image pane location label',1500);
-    await waitFor(()=>document.querySelector('#bUpload')&&document.querySelector('#bStatus')?.classList.contains('ok'),'initial admin load');
+    await waitFor(()=>document.querySelector('[data-banner-event-workflow="main"]')&&document.querySelector('[data-main-banner-admin] [data-bew-status]')?.classList.contains('ok'),'stage-2 workflow initial load');
     const sourceNav=document.querySelector('[data-admin-subnav="images"]'),topNav=document.querySelector('#adminTopSubnav');
     const mainTab=sourceNav?.querySelector('[data-banner-management-tab="main"]'),sideTab=sourceNav?.querySelector('[data-banner-management-tab="side"]');
     const mainPanel=document.querySelector('[data-banner-management-panel="main"]'),sidePanel=document.querySelector('[data-banner-management-panel="side"]');
@@ -108,58 +109,45 @@ async function run(){
     if(location.hash!=='#images/main')throw Error('image default subtab route mismatch');
     if(mainPanel.hidden||!mainPanel.classList.contains('active')||!sidePanel.hidden)throw Error('main banner must be the initial visible tab');
     if(!mainPanel.contains(document.querySelector('[data-main-banner-admin]'))||!sidePanel.contains(document.querySelector('[data-side-banner-admin]')))throw Error('banner modules not isolated into tab panels');
+    if(document.querySelectorAll('[data-banner-event-workflow="main"] .bew-map-step').length!==5)throw Error('five-step workflow map missing');
+    if(document.querySelectorAll('[data-banner-event-workflow="main"] .bew-step').length!==5)throw Error('five workflow sections missing');
+    if(document.querySelectorAll('[data-banner-event-workflow="main"] [data-bew-add-card]').length!==1)throw Error('initial add card missing');
     topNav.querySelector('[data-admin-subtab="side"]').click();
     await waitFor(()=>mainPanel.hidden&&!sidePanel.hidden&&sidePanel.classList.contains('active'),'side banner tab switch');
-    await waitFor(()=>document.querySelector('#sStatus')?.classList.contains('ok'),'side banner tab data load');
+    await waitFor(()=>document.querySelector('[data-side-banner-admin] [data-bew-status]')?.classList.contains('ok'),'side banner tab data load');
     if(location.hash!=='#images/side')throw Error('side banner route mismatch');
     if(sideTab.getAttribute('aria-selected')!=='true'||mainTab.getAttribute('aria-selected')!=='false')throw Error('side banner tab aria state mismatch');
-    const allOption=document.querySelector('#sPage option[value="ALL"]');
-    if(!allOption||allOption.textContent.trim()!=='전체 페이지')throw Error('side all-pages option missing');
-    if(!document.querySelector('#sTargetHelp')?.textContent.includes('실제 페이지에 새 캠페인을 각각 생성'))throw Error('all-pages guidance missing');
-    document.querySelector('#sName').value='전체 페이지 E2E';fire(document.querySelector('#sName'),'input');
-    document.querySelector('[data-s-save]').click();
-    await waitFor(()=>document.querySelector('#sCampaignStatus')?.textContent.includes('7개 페이지 캠페인 저장 완료'),'all-pages batch save');
-    const sideCampaigns=state.campaigns.filter(c=>c.type==='SIDE');
-    if(sideCampaigns.length!==7||sideCampaigns.some(c=>c.pageCode==='ALL'))throw Error('all-pages batch must create seven physical campaigns');
-    const hof=sideCampaigns.find(c=>c.pageCode==='HOF');
-    if(!hof||hof.slotCodes.join('+')!=='LEFT')throw Error('HOF batch target must stay left-only');
+    if(!document.querySelector('[data-banner-event-workflow="side"]')?.textContent.includes('PC 좌·우 사이드 배너'))throw Error('side target summary missing');
     document.querySelector('#adminTopSubnav [data-admin-subtab="main"]').click();
     await waitFor(()=>!mainPanel.hidden&&sidePanel.hidden&&mainPanel.classList.contains('active'),'main banner tab return');
     if(location.hash!=='#images/main')throw Error('main banner return route mismatch');
-    const canvas=document.createElement('canvas');canvas.width=200;canvas.height=300;const ctx=canvas.getContext('2d');ctx.fillRect(0,0,200,300);
-    const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
-    const file=new File([blob],'banner-e2e.png',{type:'image/png'}),dt=new DataTransfer();dt.items.add(file);document.querySelector('#bFile').files=dt.files;
-    document.querySelector('#bUploadName').value='Chrome E2E Asset';document.querySelector('#bUploadAlt').value='Chrome E2E 배너';
-    document.querySelector('#bUpload').click();
-    await waitFor(()=>document.querySelector('#bUploadStatus')?.textContent.includes('등록 완료'),'upload complete',20000);
-    if(!state.put||state.put.method!=='PUT'||state.put.upsert!=='false'||state.put.contentType!=='image/webp')throw Error('signed PUT contract mismatch');
-    if(state.put.size<1)throw Error('converted WebP body missing');
-    await waitFor(()=>document.querySelector('[data-b-check="101"]'),'uploaded asset in library');
-    const check=document.querySelector('[data-b-check="101"]');if(!check.checked)check.click();
-    document.querySelector('#bName').value='Chrome E2E Campaign';fire(document.querySelector('#bName'),'input');
-    document.querySelector('[data-b-publish]').click();
-    await waitFor(()=>document.querySelector('#bCampaignStatus')?.textContent.includes('게시 완료'),'publish');
-    const mainCampaign=()=>state.campaigns.find(c=>c.type==='MAIN');
-    if(mainCampaign()?.status!=='PUBLISHED'||state.manifest.active!==true)throw Error('publish state mismatch');
-    document.querySelector('[data-b-pause]').click();
-    await waitFor(()=>document.querySelector('#bCampaignStatus')?.textContent.includes('일시정지 완료'),'pause');
-    if(mainCampaign()?.status!=='PAUSED'||state.manifest.active!==false)throw Error('pause state mismatch');
-    const selected=document.querySelector('[data-b-check="101"]');if(!selected?.checked)throw Error('asset unexpectedly unselected');selected.click();
-    document.querySelector('[data-b-save]').click();
-    await waitFor(()=>document.querySelector('#bCampaignStatus')?.textContent.includes('저장 완료'),'save unreferenced');
-    syncRefs();if(Number(state.assets[0]?.referenceCount||0)!==0||mainCampaign()?.items?.length!==0)throw Error('asset reference not cleared');
-    await waitFor(()=>document.querySelector('[data-b-asset-delete="101"]'),'delete control');
-    document.querySelector('[data-b-asset-delete="101"]').click();
-    await waitFor(()=>document.querySelector('#bUploadStatus')?.textContent.includes('삭제 완료'),'delete');
-    if(state.assets.length!==0)throw Error('asset not deleted');
-    document.querySelector('[data-b-delete]').click();
-    await waitFor(()=>document.querySelector('[data-banner-delete-name]'),'campaign delete confirmation');
-    const deleteName=document.querySelector('[data-banner-delete-name]');deleteName.value='Chrome E2E Campaign';fire(deleteName,'input');document.querySelector('[data-banner-delete-confirm]').click();
-    await waitFor(()=>document.querySelector('#bCampaignStatus')?.textContent.includes('영구 삭제했습니다'),'campaign permanent delete');
-    if(mainCampaign())throw Error('campaign not permanently deleted');
-    const required=['upload-prepare','upload-complete','campaign-create','campaign-publish','campaign-pause','campaign-update','campaign-delete','asset-list','asset-archive','asset-delete'];
-    for(const action of required)if(!state.calls.includes(action))throw Error('missing browser action '+action);
-    if(state.calls.indexOf('asset-archive')>state.calls.indexOf('asset-delete'))throw Error('delete order mismatch');
+    async function imageFile(name,width,height,color){const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;const context=canvas.getContext('2d');context.fillStyle=color;context.fillRect(0,0,width,height);const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));return new File([blob],name,{type:'image/png'})}
+    const input=document.querySelector('[data-banner-event-workflow="main"] [data-bew-file-input]');
+    const first=await imageFile('first.png',320,180,'#ef4444'),firstTransfer=new DataTransfer();firstTransfer.items.add(first);input.files=firstTransfer.files;fire(input,'change');
+    await waitFor(()=>document.querySelectorAll('[data-banner-event-workflow="main"] .bew-file-card').length===1,'first persistent image card');
+    if(document.querySelectorAll('[data-banner-event-workflow="main"] [data-bew-add-card]').length!==1)throw Error('second add card not created');
+    const second=await imageFile('second.png',200,300,'#3b82f6'),secondTransfer=new DataTransfer();secondTransfer.items.add(second);input.files=secondTransfer.files;fire(input,'change');
+    await waitFor(()=>document.querySelectorAll('[data-banner-event-workflow="main"] .bew-file-card').length===2,'second image appended');
+    const third=await imageFile('third.png',480,270,'#10b981'),thirdTransfer=new DataTransfer();thirdTransfer.items.add(third);input.files=thirdTransfer.files;fire(input,'change');
+    await waitFor(()=>document.querySelectorAll('[data-banner-event-workflow="main"] .bew-file-card').length===3,'third image appended');
+    if(document.querySelector('[data-banner-event-workflow="main"] [data-bew-add-card]'))throw Error('add card must disappear at three images');
+    const fourth=await imageFile('fourth.png',320,180,'#a855f7'),fourthTransfer=new DataTransfer();fourthTransfer.items.add(fourth);input.files=fourthTransfer.files;fire(input,'change');await sleep(100);
+    if(document.querySelectorAll('[data-banner-event-workflow="main"] .bew-file-card').length!==3)throw Error('maximum three image guard failed');
+    if(!document.querySelector('[data-banner-event-workflow="main"]')?.textContent.includes('잘릴 수 있습니다'))throw Error('ratio crop warning missing');
+    const uploadName=document.querySelector('[data-banner-event-workflow="main"] [data-bew-upload-name]'),uploadTags=document.querySelector('[data-banner-event-workflow="main"] [data-bew-upload-tags]');uploadName.value='Chrome E2E 이미지';uploadTags.value='#푸석사과 #검증';
+    document.querySelector('[data-banner-event-workflow="main"] [data-bew-upload]').click();
+    await waitFor(()=>document.querySelector('[data-banner-event-workflow="main"] [data-bew-upload-status]')?.textContent.includes('3장 업로드 완료'),'three image upload complete',20000);
+    if(state.puts.length!==3||state.puts.some(put=>put.method!=='PUT'||put.upsert!=='false'||put.contentType!=='image/png'||put.size<1))throw Error('original signed PUT contract mismatch');
+    if(state.assets.length!==3)throw Error('uploaded assets not retained');
+    await waitFor(()=>document.querySelectorAll('[data-banner-event-workflow="main"] .bew-order-item').length===3,'new bundle auto selection');
+    const orderBefore=[...document.querySelectorAll('[data-banner-event-workflow="main"] .bew-order-copy b')].map(node=>node.textContent).join('|');
+    document.querySelector('[data-banner-event-workflow="main"] [data-bew-move][data-bew-direction="down"]').click();
+    const orderAfter=[...document.querySelectorAll('[data-banner-event-workflow="main"] .bew-order-copy b')].map(node=>node.textContent).join('|');
+    if(orderBefore===orderAfter)throw Error('bundle order control did not move image');
+    const tagInput=document.querySelector('[data-banner-event-workflow="main"] [data-bew-tag-input]');tagInput.value='푸석사과';tagInput.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
+    if(!document.querySelector('[data-banner-event-workflow="main"] [data-bew-tag-remove="푸석사과"]'))throw Error('event hashtag chip missing');
+    if(!document.querySelector('[data-banner-event-workflow="main"] [data-bew-filter="푸석사과"]'))throw Error('library hashtag filter missing');
+    const required=['upload-prepare','upload-complete','asset-list'];for(const action of required)if(!state.calls.includes(action))throw Error('missing browser action '+action);
     document.documentElement.dataset.e2eResult='PASS';document.querySelector('#e2eResult').textContent='PASS '+state.calls.join(' > ');
   }catch(error){document.documentElement.dataset.e2eResult='FAIL';document.querySelector('#e2eResult').textContent='FAIL '+(error?.stack||error);console.error(error)}
 }

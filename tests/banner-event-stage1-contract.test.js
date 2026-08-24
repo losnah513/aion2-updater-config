@@ -5,7 +5,7 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-const migration = read('supabase/migrations/20260824082604_banner_event_text_overlay_v394.sql');
+const migration = read('supabase/migrations/20260824082604_banner_event_text_overlay_v394.sql').replace(/\r\n/g, '\n');
 const edge = read('supabase/functions/kinojo-banner-media/index.ts');
 const config = read('supabase/config.toml');
 
