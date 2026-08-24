@@ -147,6 +147,7 @@ async function run(){
     const input=document.querySelector('[data-banner-event-workflow="main"] [data-bew-file-input]');
     const first=await imageFile('first.png',320,180,'#ef4444'),firstTransfer=new DataTransfer();firstTransfer.items.add(first);input.files=firstTransfer.files;fire(input,'change');
     await waitFor(()=>document.querySelectorAll('[data-banner-event-workflow="main"] .bew-file-card').length===1,'first persistent image card');
+    if(getComputedStyle(document.querySelector('[data-banner-event-workflow="main"] .bew-file-thumb img')).objectFit!=='contain')throw Error('upload preview must show the whole image');
     if(document.querySelectorAll('[data-banner-event-workflow="main"] [data-bew-add-card]').length!==1)throw Error('second add card not created');
     const second=await imageFile('second.png',200,300,'#3b82f6'),secondTransfer=new DataTransfer();secondTransfer.items.add(second);input.files=secondTransfer.files;fire(input,'change');
     await waitFor(()=>document.querySelectorAll('[data-banner-event-workflow="main"] .bew-file-card').length===2,'second image appended');
@@ -162,6 +163,7 @@ async function run(){
     if(state.puts.length!==3||state.puts.some(put=>put.method!=='PUT'||put.upsert!=='false'||put.contentType!=='image/png'||put.size<1))throw Error('original signed PUT contract mismatch');
     if(state.assets.filter(asset=>asset.formatCode==='MAIN_16_9').length!==3)throw Error('uploaded assets not retained');
     await waitFor(()=>document.querySelectorAll('[data-banner-event-workflow="main"] .bew-order-item').length===3,'new bundle auto selection');
+    if(getComputedStyle(document.querySelector('[data-banner-event-workflow="main"] .bew-asset img')).objectFit!=='contain'||getComputedStyle(document.querySelector('[data-banner-event-workflow="main"] .bew-order-item img')).objectFit!=='contain')throw Error('library and order previews must show the whole image');
     const orderBefore=[...document.querySelectorAll('[data-banner-event-workflow="main"] .bew-order-copy b')].map(node=>node.textContent).join('|');
     document.querySelector('[data-banner-event-workflow="main"] [data-bew-move][data-bew-direction="down"]').click();
     const orderAfter=[...document.querySelectorAll('[data-banner-event-workflow="main"] .bew-order-copy b')].map(node=>node.textContent).join('|');
@@ -191,6 +193,7 @@ async function run(){
     await waitFor(()=>!sidePanel.hidden&&sidePanel.classList.contains('active'),'side banner visual return');
     const finalPage=document.querySelector('[data-banner-event-workflow="side"] [data-bew-page]');finalPage.value='ALL';fire(finalPage,'change');
     const target=document.querySelector('#bew-side-3');window.scrollTo(0,target.getBoundingClientRect().top+window.scrollY-110);await sleep(300);
+    if(getComputedStyle(document.querySelector('[data-banner-event-workflow="side"] .bew-side-order-item img')).objectFit!=='contain')throw Error('side order preview must show the whole image');
     document.documentElement.dataset.e2eResult='PASS';document.querySelector('#e2eResult').textContent='PASS '+state.calls.join(' > ');
   }catch(error){document.documentElement.dataset.e2eResult='FAIL';document.querySelector('#e2eResult').textContent='FAIL '+(error?.stack||error);console.error(error)}
 }
