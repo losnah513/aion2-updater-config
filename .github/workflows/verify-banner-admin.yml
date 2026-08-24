@@ -6,7 +6,10 @@ on:
     paths:
       - "admin/index.html"
       - "m/admin/index.html"
+      - "admin/css/admin.css"
       - "admin/js/admin.js"
+      - "admin/js/admin-shared.js"
+      - "admin/js/admin-bootstrap.js"
       - "admin/js/admin-images.js"
       - "admin/js/admin-side-banners.js"
       - "admin/js/admin-banner-tabs.js"
@@ -21,7 +24,10 @@ on:
     paths:
       - "admin/index.html"
       - "m/admin/index.html"
+      - "admin/css/admin.css"
       - "admin/js/admin.js"
+      - "admin/js/admin-shared.js"
+      - "admin/js/admin-bootstrap.js"
       - "admin/js/admin-images.js"
       - "admin/js/admin-side-banners.js"
       - "admin/js/admin-banner-tabs.js"
@@ -57,6 +63,8 @@ jobs:
           set -euo pipefail
           for path in \
             admin/js/admin.js \
+            admin/js/admin-shared.js \
+            admin/js/admin-bootstrap.js \
             admin/js/admin-images.js \
             admin/js/admin-side-banners.js \
             admin/js/admin-banner-tabs.js \
@@ -121,7 +129,10 @@ jobs:
           files=(
             "admin/index.html"
             "m/admin/index.html"
+            "admin/css/admin.css"
             "admin/js/admin.js"
+            "admin/js/admin-shared.js"
+            "admin/js/admin-bootstrap.js"
             "admin/js/admin-images.js"
             "admin/js/admin-side-banners.js"
             "admin/js/admin-banner-tabs.js"

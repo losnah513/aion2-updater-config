@@ -85,7 +85,7 @@
   const testWebAppConnection=(...args)=>A.testWebAppConnection(...args);
   const todayDateInputValue=(...args)=>A.todayDateInputValue(...args);
   const updateSanctuaryScheduleSaveState=(...args)=>A.updateSanctuaryScheduleSaveState(...args);
-  const TAB_LABELS={dashboard:'대시보드',requests:'코드 요청',members:'회원 관리',characters:'캐릭터 관리',sanctuary:'성역 관리',notices:'공지 관리',meter:'키노조 미터',system:'시스템 설정',logs:'로그 관리'};
+  const TAB_LABELS={dashboard:'대시보드',requests:'코드 요청',members:'회원 관리',characters:'캐릭터 관리',sanctuary:'성역 관리',notices:'공지 관리',images:'이미지 관리',meter:'키노조 미터',system:'시스템 설정',logs:'로그 관리'};
 
   function adminRoute(){
     const raw=decodeURIComponent(String(location.hash||'').replace(/^#/,''));
@@ -115,6 +115,8 @@
     if(tab==='sanctuary'&&subtab==='requests') loadSanctuarySupportRequests(force===true);
     if(tab==='notices'&&subtab==='general') loadNotices();
     if(tab==='notices'&&subtab==='event') loadEventNoticeGroups();
+    if(tab==='images'&&subtab==='main') A.loadMainBannerManagement?.(force===true);
+    if(tab==='images'&&subtab==='side') A.loadSideBannerManagement?.(force===true);
     if(tab==='meter'&&isMaster()&&subtab==='logs') loadMeterDungeonLogs(1);
     if(tab==='meter'&&isMaster()&&subtab!=='logs') loadMeterAdminConsole();
     if(tab==='system'&&subtab==='server-status') refreshServerStatus();
@@ -130,8 +132,16 @@
     const next=available.includes(subtab)?subtab:(DEFAULT_SUBTABS[tab]||available[0]||'');
     state.subtabs[tab]=next;
     state.subtab=next;
-    $$('[data-admin-subtab]',pane).forEach(button=>button.classList.toggle('active',button.dataset.adminSubtab===next));
-    $$('[data-admin-subpane]',pane).forEach(subpane=>subpane.classList.toggle('active',subpane.dataset.adminSubpane===next));
+    $$('[data-admin-subtab]',pane).forEach(button=>{
+      const on=button.dataset.adminSubtab===next;
+      button.classList.toggle('active',on);
+      if(button.matches('[role="tab"]')){button.setAttribute('aria-selected',String(on));button.tabIndex=on?0:-1;}
+    });
+    $$('[data-admin-subpane]',pane).forEach(subpane=>{
+      const on=subpane.dataset.adminSubpane===next;
+      subpane.classList.toggle('active',on);
+      if(subpane.matches('[role="tabpanel"]'))subpane.hidden=!on;
+    });
     if(options.updateRoute!==false)writeAdminRoute(tab,next);
     loadFeature(tab,next,options.force===true);
     if(state.tab===tab)syncAdminChrome(tab);
@@ -168,6 +178,7 @@
     slot.hidden=false;
     $$('[data-admin-subtab]',source).filter(button=>!button.hidden).forEach(button=>{
       const clone=button.cloneNode(true);
+      clone.removeAttribute('id');
       clone.addEventListener('click',()=>switchSubtab(tab,button.dataset.adminSubtab));
       slot.appendChild(clone);
     });
