@@ -50,6 +50,17 @@ assert(window.KinojoLegionTree, 'KinojoLegionTree contract must be exported');
 
 const names = ['깡', '낮', '밤', '키나노동조합'];
 const classes = ['검성', '치유성', '권성', '궁성'];
+const classIconCases = [
+  ['수호성', 'templar'],
+  ['검성', 'gladiator'],
+  ['살성', 'assassin'],
+  ['궁성', 'ranger'],
+  ['마도성', 'sorcerer'],
+  ['정령성', 'elementalist'],
+  ['치유성', 'cleric'],
+  ['호법성', 'chanter'],
+  ['권성', 'fighter']
+];
 const payload = {
   ok: true,
   contract: 'web-legion-tree-v1',
@@ -137,6 +148,24 @@ assert(markup.includes('/assets/images/classes/class_icon_gladiator.png'));
 assert(markup.includes('/assets/images/classes/class_icon_cleric.png'));
 assert(!markup.includes('본캐예시'));
 assert(!markup.includes('data-preview-card'));
+
+for (const [className, fileName] of classIconCases) {
+  const expectedPath = `/assets/images/classes/class_icon_${fileName}.png`;
+  assert.strictEqual(window.KinojoLegionTree.classIconPath(className), expectedPath);
+  assert(fs.existsSync(path.join(rootDir, expectedPath.slice(1))), `${className} shared icon asset must exist`);
+}
+assert.strictEqual(window.KinojoLegionTree.classIconPath('검 성'), '/assets/images/classes/class_icon_gladiator.png');
+assert.strictEqual(window.KinojoLegionTree.classIconPath('치유성 (주력)'), '/assets/images/classes/class_icon_cleric.png');
+assert.strictEqual(window.KinojoLegionTree.classIconPath('미확인 직업'), '');
+assert.strictEqual(window.KinojoLegionTree.classIconPath(''), '');
+
+const unknownClassPayload = JSON.parse(JSON.stringify(payload));
+unknownClassPayload.legions[0].stages[2].roles[0].groups[0].members[0].className = '미확인 직업';
+const unknownClassMarkup = window.KinojoLegionTree.renderTreeMarkup(
+  window.KinojoLegionTree.normalizeTreePayload(unknownClassPayload)
+);
+assert.strictEqual((unknownClassMarkup.match(/class="legion-tree-class-fallback"/g) || []).length, 1);
+assert(!unknownClassMarkup.includes('class_icon_undefined'));
 
 assert.throws(
   () => window.KinojoLegionTree.normalizeTreePayload({ ...payload, legions: payload.legions.slice(0, 3) }),

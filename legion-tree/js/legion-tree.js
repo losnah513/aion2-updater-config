@@ -1,4 +1,4 @@
-/* KINOJO Legion Tree · race/server filter + Server data rendering · 마-2~6 + 사-1~5 */
+/* KINOJO Legion Tree · race/server filter + Server data rendering · 마-2~6 + 사-1~7 + 아-1 */
 (function(){
   'use strict';
 
