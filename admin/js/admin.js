@@ -15,7 +15,8 @@
     'admin-banner-delete.js',
     'admin-side-banners.js',
     'admin-banner-quality.js',
-    'admin-bootstrap.js'
+    'admin-bootstrap.js',
+    'admin-banner-tabs.js'
   ];
   function loadScript(name){
     return new Promise((resolve,reject)=>{

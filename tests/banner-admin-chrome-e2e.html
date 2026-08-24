@@ -72,6 +72,8 @@ window.fetch=async(input,init={})=>{
 </script>
 <script src="../admin/js/admin-images.js"></script>
 <script src="../admin/js/admin-banner-delete.js"></script>
+<script src="../admin/js/admin-side-banners.js"></script>
+<script src="../admin/js/admin-banner-tabs.js"></script>
 <script src="../admin/js/admin-banner-quality.js"></script>
 <script>
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -89,6 +91,17 @@ async function run(){
     await waitFor(()=>heartbeat,'image pane activation event-loop heartbeat',1500);
     await waitFor(()=>document.querySelector('#adminCurrentLocation')?.textContent==='[이미지 관리]','image pane location label',1500);
     await waitFor(()=>document.querySelector('#bUpload')&&document.querySelector('#bStatus')?.classList.contains('ok'),'initial admin load');
+    const mainTab=document.querySelector('[data-banner-management-tab="main"]'),sideTab=document.querySelector('[data-banner-management-tab="side"]');
+    const mainPanel=document.querySelector('[data-banner-management-panel="main"]'),sidePanel=document.querySelector('[data-banner-management-panel="side"]');
+    if(!mainTab||!sideTab||!mainPanel||!sidePanel)throw Error('main/side banner tabs missing');
+    if(mainPanel.hidden||!mainPanel.classList.contains('active')||!sidePanel.hidden)throw Error('main banner must be the initial visible tab');
+    if(!mainPanel.contains(document.querySelector('[data-main-banner-admin]'))||!sidePanel.contains(document.querySelector('[data-side-banner-admin]')))throw Error('banner modules not isolated into tab panels');
+    sideTab.click();
+    await waitFor(()=>mainPanel.hidden&&!sidePanel.hidden&&sidePanel.classList.contains('active'),'side banner tab switch');
+    await waitFor(()=>document.querySelector('#sStatus')?.classList.contains('ok'),'side banner tab data load');
+    if(sideTab.getAttribute('aria-selected')!=='true'||mainTab.getAttribute('aria-selected')!=='false')throw Error('side banner tab aria state mismatch');
+    mainTab.click();
+    await waitFor(()=>!mainPanel.hidden&&sidePanel.hidden&&mainPanel.classList.contains('active'),'main banner tab return');
     const canvas=document.createElement('canvas');canvas.width=160;canvas.height=90;const ctx=canvas.getContext('2d');ctx.fillRect(0,0,160,90);
     const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
     const file=new File([blob],'banner-e2e.png',{type:'image/png'}),dt=new DataTransfer();dt.items.add(file);document.querySelector('#bFile').files=dt.files;
