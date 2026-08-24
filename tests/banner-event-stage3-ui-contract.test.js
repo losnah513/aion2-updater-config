@@ -9,7 +9,7 @@ const desktop=fs.readFileSync(path.join(root,'admin/index.html'),'utf8');
 const mobile=fs.readFileSync(path.join(root,'m/admin/index.html'),'utf8');
 
 for(const token of [
-  'banner event workflow stage 3',
+  'banner event workflow stage 4',
   "['ALL','전체 페이지']",
   "['HOME','홈']",
   "['HOF','명예의 전당']",
@@ -24,10 +24,10 @@ for(const token of [
   'kinojo-filter-switch bew-mode-switch',
   '좌우 동시',
   '좌우 별도',
-  '언제 보여줄까요?',
+  '노출 일정',
   '날짜·요일 지정',
-  '이미지 유지 시간',
-  '바뀌는 시간',
+  '이미지 유지',
+  '전환 시간',
   '부드럽게 겹쳐 바꾸기',
   '밀어서 바꾸기',
   '밀면서 부드럽게 바꾸기',
@@ -47,8 +47,8 @@ for(const token of [
   'getBannerEventPayload'
 ])assert.ok(workflow.includes(token),`stage-3 workflow token missing: ${token}`);
 
-assert.ok(workflow.includes("root.dataset.bannerEventStage='3'"),'stage-3 mount marker missing');
-assert.ok(workflow.includes("index<3?' ready':''"),'third workflow node must be active');
+assert.ok(workflow.includes("root.dataset.bannerEventStage='4'"),'stage-4 mount marker missing');
+assert.ok(workflow.includes("index<4?' ready':''"),'fourth workflow node must be active');
 assert.ok(workflow.includes("pageCode==='HOF'?['LEFT']:['LEFT','RIGHT']"),'HOF left-only shared target missing');
 assert.ok(workflow.includes("if(pageCode!=='HOF')"),'HOF right variant exclusion missing');
 assert.ok(workflow.includes('slideIntervalMs:Math.max(3000'),'slide interval normalization missing');
@@ -57,8 +57,8 @@ assert.ok(workflow.includes("directional?value.transitionDirection:'NONE'"),'non
 assert.ok(!workflow.includes("'event-save'"),'stage 3 must not persist a draft before stage 5');
 assert.ok(!workflow.includes("'event-publish'"),'stage 3 must not publish before stage 5');
 
-assert.ok(loader.includes('v2026082409'),'stage-3 loader cache generation missing');
-assert.ok(desktop.includes('admin.js?cache=2026082409'),'desktop stage-3 cache mismatch');
-assert.ok(mobile.includes('admin.js?cache=2026082409'),'mobile stage-3 cache mismatch');
+assert.ok(loader.includes('v2026082410'),'stage-4 loader cache generation missing');
+assert.ok(desktop.includes('admin.js?cache=2026082410'),'desktop stage-4 cache mismatch');
+assert.ok(mobile.includes('admin.js?cache=2026082410'),'mobile stage-4 cache mismatch');
 
 console.log('PASS banner event stage-3 UI contract');
