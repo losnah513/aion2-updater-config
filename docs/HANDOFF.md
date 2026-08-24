@@ -226,13 +226,14 @@
 - GitHub workflow는 공통 슬라이더·이미지 편집기·안전 업로드·배치 bootstrap·프로필 이미지 preloader·가변 패널 너비·잘림 없는 반응형 배치·E-1 접근성 회귀의 구문 검사, 계약 테스트, Pages exact live readback을 포함한다.
 - 내 정보 후속 A-1~E-2는 모두 완료됐다. 다음 작업은 없다.
 
-## 배너 관리자 리디자인 · Stage 0~3 현재 기준
+## 배너 관리자 리디자인 · Stage 0~4 현재 기준
 
-- Stage 0~3 제품 기준은 PR `#241`, `#242`, `#244`, `#245`와 미리보기 후속 PR `#246`이며, 현재 제품 main은 `3917ecb240f491bce05efee591b7da0f95fa8abc`다.
-- 관리자 이미지 관리에는 메인/사이드 배너별 5단계 작성 흐름이 있다. Stage 1은 Edge v11/API1.7/DB394 이벤트 기반, Stage 2는 최대 3장 누적 추가·새 묶음·순서·태그, Stage 3은 좌우 동시/별도·페이지·일정·전환 효과/방향과 게시용 payload 조립을 소유한다.
-- Stage 3은 저장·게시하지 않는다. `event-save`와 `event-publish`, 검토 미리보기, 오류 위치 이동은 Stage 5에서 연결한다. 문구 overlay 편집 UI는 Stage 4가 소유한다.
+- Stage 0~4 제품 기준은 PR `#241`, `#242`, `#244`, `#245`, `#246`, `#248`이며, 현재 제품 main은 merge `8d81c772`다.
+- 관리자 이미지 관리에는 메인/사이드 배너별 5단계 작성 흐름이 있다. Stage 1은 Event394 저장 기반, Stage 2는 최대 3장 누적 추가·새 묶음·순서, Stage 3은 좌우 동시/별도·페이지·일정·전환 효과/방향, Stage 4는 이미지별 문구 편집과 합성 미리보기를 소유한다.
+- 이미지 라이브러리는 기본 미선택이고 전체 또는 분류 해시태그를 선택해 불러온다. 선택 수는 `N / 3`으로 표시하며 순서는 드래그 앤 드롭과 화살표로 바꾼다. 세로형 이미지는 카드 프레임 안에서 `contain`으로 전신을 표시하고 rollover 확대 미리보기를 제공한다.
+- 기존 숫자 우선순위는 노출 횟수를 제어하지 않았으므로 UI에서 제거했다. 새 `기본 | ×1.5 | ×2.0`은 DB395 Manifest에서 실제 Server playlist 비율로 반영한다. 운영은 Edge v12/API1.8/DB395/Event394/Upload394다.
+- 문구는 이미지 하나당 최대 3개 레이어다. 레이어별 상·중·하, 글꼴·크기·색·배경 농도·높이와 이미지 앞/뒤를 설정하며 기본은 이미지 앞이다. 선택 이미지에 같은 레이어 구성을 복사할 수 있다.
+- Stage 4까지는 저장·게시하지 않는다. `event-save`와 `event-publish`, 다중 레이어 영구 저장 계약, 검토 미리보기, 오류 위치 이동은 Stage 5에서 연결한다. 실제 사이트 문구 렌더링은 Stage 7 범위다.
 - 사이드 `ALL` 독립 설정은 HOF 오른쪽을 제외한 13개 variant, HOF 단독은 LEFT 1개를 만든다. 좌·우 이미지는 2단계 선택 3장 안에서 별도로 제외·추가·정렬할 수 있다.
-- 이미지 추가·라이브러리·이미지 순서·좌우별 순서 썸네일은 프레임 크기를 늘리지 않고 `contain`으로 전체 이미지를 표시한다. 캐시 기준은 `2026082409`다.
-- 전체 Node 테스트 `31/31`, 실제 Chrome E2E `1500px`/`700px`, GitHub main workflow 5종, custom-domain source `4/4` exact readback이 통과했다.
-- Drive 제품 변경 파일은 `13/13` 로컬 바이트와 exact-match한다. 핵심 신규 ID는 event workflow `1Dw4cchI16JDwZaV8TZ55JOvtd5CCQd_U`, Stage 2 test `1qDG3l6Ly30V6FmJZgB4LP3xZqJM-7kum`, Stage 3 test `1j714Vx_DNi-VSRvro8xi2wiKg8CxWTh3`다.
-- Stage 3에서 Supabase migration/RPC/Edge/운영 데이터 변경은 없다. 다음 구현 순서는 Stage 4 문구 편집, Stage 5 검토·저장·게시·이벤트 목록이다.
+- 캐시 기준은 `2026082410`이다. 전체 Node 테스트 `33/33`, 실제 Chrome E2E `1500px`/`700px`, 드래그 순서·hover preview·빈도 payload·앞/뒤 3개 문구 레이어 검증이 통과했다.
+- 다음 구현 순서는 Stage 5 검토·저장·게시, Stage 6 이벤트 목록, Stage 7 실제 전환·문구 렌더링이다.

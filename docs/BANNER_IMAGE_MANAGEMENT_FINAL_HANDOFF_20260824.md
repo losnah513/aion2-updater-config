@@ -91,3 +91,17 @@
 - Drive 신규 파일: event workflow `1Dw4cchI16JDwZaV8TZ55JOvtd5CCQd_U`, member browser E2E `10gvNOG4J5QzoJ5iQZ_mr5wCQ5Kbldj_k`, member contract `1YMJEOMGDrZqZyWVTeK208ZDeOt7DWZjG`, Stage 2 test `1qDG3l6Ly30V6FmJZgB4LP3xZqJM-7kum`, Stage 3 test `1j714Vx_DNi-VSRvro8xi2wiKg8CxWTh3`.
 - Stage 3에서는 Supabase migration, RPC, Edge 배포와 운영 배너 데이터를 변경하지 않았다. 기존 v394 계약이 요구 enum과 좌우 variant 구조를 이미 제공해 UI와 payload 조립만 추가했다.
 - 다음 작업은 Stage 4 이미지별/선택 이미지 공통 문구 편집과 Stage 5 검토 미리보기·초안 저장·전체 게시·오류 위치 이동·이벤트 목록 분리다.
+
+## Post-close redesign · 관리자 이벤트 작성 Stage 4 · 2026-08-24
+
+- PR `#248`, merge `8d81c772`에서 문구 편집 Stage 4와 Stage 2~3 사용성 보완을 반영했다. 관리자 cache generation은 `2026082410`이다.
+- 이미지 라이브러리는 기본 `미선택`이며 `전체`와 이미지 분류 해시태그를 명시적으로 선택한다. 1단계 관리 이름은 이미지 묶음의 라이브러리 이름, 분류 해시태그는 라이브러리 필터 용도로만 사용한다. 2단계의 중복 해시태그 편집기는 제거했다.
+- 노출 묶음은 최대 `3장`이며 현재 선택 수를 `N / 3`으로 표시한다. 이미지 순서는 드래그 앤 드롭과 기존 화살표 버튼으로 바꿀 수 있고, 이동 애니메이션과 마우스·키보드 포커스 확대 미리보기를 제공한다.
+- 기존 `우선순위 100`은 노출 횟수를 늘리는 값이 아니라 정렬 기준이라 사용자 의도와 달랐다. UI에서 이를 제거하고 실제 노출 빈도 `기본 | ×1.5 | ×2.0`으로 교체했다.
+- Migration `banner_event_exposure_frequency_v395`와 `kinojo_banner_manifest_v395`가 활성 신규 이벤트의 빈도 비율을 Server playlist에 실제 반영한다. ×1.5가 있는 묶음은 기본 `2`, ×1.5 `3`, ×2.0 `4`; 없으면 기본 `1`, ×2.0 `2`의 최소 정수 비율로 확장한다. legacy 캠페인은 기존 동작을 유지한다.
+- 운영 `kinojo-banner-media`는 Edge v12 / API `1.8` / DB `395` / Event `394` / Upload `394`이며 deployment SHA는 `911f218350ed027b471cff97e66c77ee1a38b2a2448c0fabf186133df6a1dcc5`다. v395 RPC는 `service_role`만 실행할 수 있다.
+- 문구는 이미지별 최대 `3개 레이어`를 편집한다. 각 레이어는 문구, 상·중·하 위치, 글꼴, 크기, 글자색, 배경색·농도, 높이와 이미지 `앞 | 뒤`를 가진다. 기본값은 이미지 앞이며, 선택 이미지에 현재 이미지의 문구 레이어 전체를 복사할 수 있다.
+- 문구 레이어 앞·뒤 합성 미리보기를 Stage 4 안에서 제공하고 게시용 payload의 각 item에 `textOverlays` 배열을 조립한다. 다만 Event 계약은 여전히 `394`이고 Stage 4는 `event-save`·`event-publish`를 호출하지 않으므로, 다중 레이어의 영구 저장 계약과 실제 사이트 렌더링은 후속 Stage 5·7에서 확정한다.
+- Stage 3 필드는 내용 폭에 맞춘 compact flex로 정리해 초 단위가 줄바꿈되지 않는다. 실제 Chrome `1500×900`, `700×900`에서 가로 overflow `0`, 문구 UI 단일 열 전환, 단위 정렬을 확인했다.
+- 전체 Node 계약 테스트 `33/33`, Banner Chrome E2E, 드래그 순서·hover preview·빈도 payload·앞/뒤 3개 문구·선택 이미지 복사가 통과했다. Supabase v395 dry-run과 기존 운영 playlist 수 v394/v395 동일성도 확인했다.
+- 다음 작업은 Stage 5 검토 미리보기·초안 저장·전체 게시·누락 설정 이동/강조이며, 이후 Stage 6 이벤트 목록 분리와 Stage 7 실제 전환·문구 렌더링을 진행한다.
