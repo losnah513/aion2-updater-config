@@ -21,7 +21,11 @@ for(const token of [
   "data-bew-upload-cards",
   "data-bew-asset-add",
   "data-bew-move",
-  "data-bew-tag-input",
+  "data-bew-upload-tags",
+  "filter:'NONE'",
+  'data-bew-filter="NONE"',
+  'data-bew-order-drag',
+  'data-bew-image-preview',
   "cropWarning",
   "배너 비율과 달라 표시할 때 가장자리가 잘릴 수 있습니다.",
   "기존 게시 이미지가 자동으로 섞이지 않습니다.",
@@ -42,8 +46,8 @@ assert.ok(workflow.includes('.bew-file-thumb img,.bew-asset img,.bew-order-item 
 assert.ok(loader.includes("'admin-banner-event-workflow.js'"),'workflow module loader entry missing');
 assert.ok(loader.indexOf("'admin-side-banners.js'")<loader.indexOf("'admin-banner-event-workflow.js'"),'workflow must mount after legacy shells');
 assert.ok(loader.indexOf("'admin-banner-event-workflow.js'")<loader.indexOf("'admin-banner-quality.js'"),'quality guard must decorate new workflow');
-assert.ok(loader.includes("2026082409"),'loader cache generation not bumped');
-assert.ok(desktop.includes('admin.js?cache=2026082409'),'desktop admin cache generation mismatch');
-assert.ok(mobile.includes('admin.js?cache=2026082409'),'mobile admin cache generation mismatch');
+assert.ok(loader.includes("2026082410"),'loader cache generation not bumped');
+assert.ok(desktop.includes('admin.js?cache=2026082410'),'desktop admin cache generation mismatch');
+assert.ok(mobile.includes('admin.js?cache=2026082410'),'mobile admin cache generation mismatch');
 
 console.log('PASS banner event stage-2 UI contract');

@@ -1,6 +1,6 @@
 const S = "kinojo-banner-media",
-  V = "1.7",
-  DB = "390",
+  V = "1.8",
+  DB = "395",
   EVENT = "394",
   UPLOAD = "394",
   MASTER = "337",
@@ -930,7 +930,7 @@ async function manifest(r: Request, b: any) {
       { ok: false, code: "PUBLIC_MANIFEST_SELECTOR_FORBIDDEN" },
       400,
     );
-  const d = await rpc("kinojo_banner_manifest_v394", {
+  const d = await rpc("kinojo_banner_manifest_v395", {
     p_page_code: page,
     p_slot_code: slot,
   });
@@ -1026,6 +1026,8 @@ async function manifest(r: Request, b: any) {
     slotKey: txt(d.slotKey, 80) || `${page}:${slot}`,
     active,
     exposureMode: d.exposureMode === "ALL_ACTIVE" ? "ALL_ACTIVE" : "SELECTED",
+    exposureFrequencyMode:
+      d.exposureFrequencyMode === "BASE_X1_5_X2" ? "BASE_X1_5_X2" : "BASE",
     activeCampaignCount: Math.max(
       0,
       Math.floor(num(d.activeCampaignCount) ?? 0),

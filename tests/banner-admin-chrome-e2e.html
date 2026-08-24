@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ko" data-e2e-result="RUNNING">
-<head><meta charset="utf-8"><title>KINOJO Banner Admin Chrome E2E</title><link rel="stylesheet" href="../ui/kinojo-components.css"><link rel="stylesheet" href="../admin/css/admin.css"></head>
+<head><meta charset="utf-8"><title>KINOJO Banner Admin Chrome E2E</title><link rel="stylesheet" href="../ui/kinojo-components.css"><link rel="stylesheet" href="../admin/css/admin.css"><style>#e2eResult{white-space:pre-wrap;overflow-wrap:anywhere}</style></head>
 <body>
 <header class="admin-shellbar">
   <div id="adminCurrentLocation">[대시보드]</div><strong id="adminRoleLabel"></strong><strong id="adminMobileRoleLabel"></strong>
@@ -101,7 +101,7 @@ async function run(){
     let heartbeat=false;setTimeout(()=>{heartbeat=true},0);
     await waitFor(()=>heartbeat,'image pane activation event-loop heartbeat',1500);
     await waitFor(()=>document.querySelector('#adminCurrentLocation')?.textContent==='[이미지 관리]','image pane location label',1500);
-    await waitFor(()=>document.querySelector('[data-banner-event-workflow="main"]')&&document.querySelector('[data-main-banner-admin] [data-bew-status]')?.classList.contains('ok'),'stage-3 workflow initial load');
+    await waitFor(()=>document.querySelector('[data-banner-event-workflow="main"]')&&document.querySelector('[data-main-banner-admin] [data-bew-status]')?.classList.contains('ok'),'stage-4 workflow initial load');
     const sourceNav=document.querySelector('[data-admin-subnav="images"]'),topNav=document.querySelector('#adminTopSubnav');
     const mainTab=sourceNav?.querySelector('[data-banner-management-tab="main"]'),sideTab=sourceNav?.querySelector('[data-banner-management-tab="side"]');
     const mainPanel=document.querySelector('[data-banner-management-panel="main"]'),sidePanel=document.querySelector('[data-banner-management-panel="side"]');
@@ -122,6 +122,7 @@ async function run(){
     if(location.hash!=='#images/side')throw Error('side banner route mismatch');
     if(sideTab.getAttribute('aria-selected')!=='true'||mainTab.getAttribute('aria-selected')!=='false')throw Error('side banner tab aria state mismatch');
     if(!document.querySelector('[data-banner-event-workflow="side"]')?.textContent.includes('PC 좌·우 사이드 배너'))throw Error('side target summary missing');
+    document.querySelector('[data-banner-event-workflow="side"] [data-bew-filter="ALL"]').click();
     for(let index=0;index<3;index++)document.querySelector('[data-banner-event-workflow="side"] [data-bew-asset-add]:not(:disabled)')?.click();
     if(document.querySelectorAll('[data-banner-event-workflow="side"] .bew-order-item').length!==3)throw Error('side bundle selection missing');
     const sideMode=document.querySelector('[data-banner-event-workflow="side"] [data-bew-side-mode]');
@@ -163,15 +164,20 @@ async function run(){
     if(state.puts.length!==3||state.puts.some(put=>put.method!=='PUT'||put.upsert!=='false'||put.contentType!=='image/png'||put.size<1))throw Error('original signed PUT contract mismatch');
     if(state.assets.filter(asset=>asset.formatCode==='MAIN_16_9').length!==3)throw Error('uploaded assets not retained');
     await waitFor(()=>document.querySelectorAll('[data-banner-event-workflow="main"] .bew-order-item').length===3,'new bundle auto selection');
+    if(!document.querySelector('[data-banner-event-workflow="main"] [data-bew-filter="NONE"].active'))throw Error('library must start unselected');
+    document.querySelector('[data-banner-event-workflow="main"] [data-bew-filter="푸석사과"]').click();
     if(getComputedStyle(document.querySelector('[data-banner-event-workflow="main"] .bew-asset img')).objectFit!=='contain'||getComputedStyle(document.querySelector('[data-banner-event-workflow="main"] .bew-order-item img')).objectFit!=='contain')throw Error('library and order previews must show the whole image');
+    const hoverImage=document.querySelector('[data-banner-event-workflow="main"] .bew-asset [data-bew-image-preview]');hoverImage.dispatchEvent(new MouseEvent('mouseover',{bubbles:true}));
+    if(!document.querySelector('#bewImagePeek')?.classList.contains('show'))throw Error('rollover image preview missing');hoverImage.dispatchEvent(new MouseEvent('mouseout',{bubbles:true}));
     const orderBefore=[...document.querySelectorAll('[data-banner-event-workflow="main"] .bew-order-copy b')].map(node=>node.textContent).join('|');
     document.querySelector('[data-banner-event-workflow="main"] [data-bew-move][data-bew-direction="down"]').click();
     const orderAfter=[...document.querySelectorAll('[data-banner-event-workflow="main"] .bew-order-copy b')].map(node=>node.textContent).join('|');
     if(orderBefore===orderAfter)throw Error('bundle order control did not move image');
-    const tagInput=document.querySelector('[data-banner-event-workflow="main"] [data-bew-tag-input]');tagInput.value='푸석사과';tagInput.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
-    if(!document.querySelector('[data-banner-event-workflow="main"] [data-bew-tag-remove="푸석사과"]'))throw Error('event hashtag chip missing');
     if(!document.querySelector('[data-banner-event-workflow="main"] [data-bew-filter="푸석사과"]'))throw Error('library hashtag filter missing');
+    const dragItems=[...document.querySelectorAll('[data-banner-event-workflow="main"] [data-bew-order-drag]')],dragData=new DataTransfer(),dragStartOrder=dragItems.map(node=>node.dataset.bewOrderDrag).join('|'),dropRect=dragItems.at(-1).getBoundingClientRect();dragItems[0].dispatchEvent(new DragEvent('dragstart',{bubbles:true,dataTransfer:dragData}));dragItems.at(-1).dispatchEvent(new DragEvent('dragover',{bubbles:true,dataTransfer:dragData,clientY:dropRect.bottom-1}));dragItems.at(-1).dispatchEvent(new DragEvent('drop',{bubbles:true,dataTransfer:dragData,clientY:dropRect.bottom-1}));
+    const dragEndOrder=[...document.querySelectorAll('[data-banner-event-workflow="main"] [data-bew-order-drag]')].map(node=>node.dataset.bewOrderDrag).join('|');if(dragStartOrder===dragEndOrder)throw Error('drag-and-drop order did not move image');
     const bundleName=document.querySelector('[data-banner-event-workflow="main"] [data-bew-bundle-name]');bundleName.value='Chrome E2E 메인 이벤트';fire(bundleName,'input');
+    const frequency=document.querySelector('[data-banner-event-workflow="main"] [data-bew-field="frequency"]');frequency.value='ONE_HALF';fire(frequency,'change');
     const scheduleMode=document.querySelector('[data-banner-event-workflow="main"] [data-bew-field="scheduleMode"]');scheduleMode.value='SCHEDULED';fire(scheduleMode,'change');
     if(!document.querySelector('[data-banner-event-workflow="main"] .bew-schedule'))throw Error('scheduled condition panel missing');
     const starts=document.querySelector('[data-banner-event-workflow="main"] [data-bew-field="startsAtKst"]');starts.value='2035-01-01T08:00';fire(starts,'input');
@@ -182,12 +188,21 @@ async function run(){
     const direction=document.querySelector('[data-banner-event-workflow="main"] [data-bew-field="transitionDirection"]');if(direction.disabled)throw Error('slide direction must be enabled');direction.value='BOTTOM_TO_TOP';fire(direction,'change');
     const slide=document.querySelector('[data-banner-event-workflow="main"] [data-bew-field="slideSeconds"]');slide.value='5';fire(slide,'input');
     const transition=document.querySelector('[data-banner-event-workflow="main"] [data-bew-field="transitionSeconds"]');transition.value='0.8';fire(transition,'input');
+    const addOverlay=()=>document.querySelector('[data-banner-event-workflow="main"] [data-bew-overlay-add]').click();addOverlay();
+    let overlayText=document.querySelector('[data-banner-event-workflow="main"] [data-bew-overlay-field="text"]');overlayText.value='첫 번째 안내';fire(overlayText,'input');
+    if(document.querySelector('[data-banner-event-workflow="main"] [data-bew-overlay-field="layerPosition"]').value!=='FRONT')throw Error('new overlay must default in front of image');
+    addOverlay();overlayText=document.querySelector('[data-banner-event-workflow="main"] [data-bew-overlay-field="text"]');overlayText.value='뒤쪽 안내';fire(overlayText,'input');const layerPosition=document.querySelector('[data-banner-event-workflow="main"] [data-bew-overlay-field="layerPosition"]');layerPosition.value='BACK';fire(layerPosition,'change');
+    addOverlay();overlayText=document.querySelector('[data-banner-event-workflow="main"] [data-bew-overlay-field="text"]');overlayText.value='세 번째 안내';fire(overlayText,'input');
+    if(!document.querySelector('[data-banner-event-workflow="main"] [data-bew-overlay-add]').disabled)throw Error('overlay add must stop at three layers');
+    let uncheckedOverlay;while((uncheckedOverlay=document.querySelector('[data-banner-event-workflow="main"] [data-bew-overlay-apply-check]:not(:checked)'))){uncheckedOverlay.checked=true;fire(uncheckedOverlay,'change')}
+    document.querySelector('[data-banner-event-workflow="main"] [data-bew-overlay-apply]').click();
     const mainPayload=window.KinojoAdmin.getBannerEventPayload('main'),variant=mainPayload.variants[0];
     if(mainPayload.name!=='Chrome E2E 메인 이벤트'||mainPayload.type!=='MAIN'||mainPayload.sideMode!=='SYNC')throw Error('main event payload identity mismatch');
     if(mainPayload.variants.length!==1||variant.eventRole!=='MAIN'||variant.items.length!==3)throw Error('main ordered item payload mismatch');
-    if(variant.scheduleMode!=='SCHEDULED'||variant.slideIntervalMs!==5000||variant.transitionDurationMs!==800||variant.transitionEffect!=='SLIDE_FADE'||variant.transitionDirection!=='BOTTOM_TO_TOP')throw Error('main event condition payload mismatch');
+    if(variant.priority!==150||variant.scheduleMode!=='SCHEDULED'||variant.slideIntervalMs!==5000||variant.transitionDurationMs!==800||variant.transitionEffect!=='SLIDE_FADE'||variant.transitionDirection!=='BOTTOM_TO_TOP')throw Error('main event condition payload mismatch');
     if(variant.startsAtKst!=='2035-01-01T08:00'||variant.endsAtKst!=='2035-01-31T22:00'||variant.weekdays.join('|')!=='1'||variant.specificDates.join('|')!=='2035-01-02|2035-01-15')throw Error('main schedule detail payload mismatch');
-    if(state.calls.includes('event-save')||state.calls.includes('event-publish'))throw Error('stage 3 must not save or publish');
+    if(variant.items.some(item=>item.textOverlays.length!==3)||variant.items[0].textOverlays[0].layerPosition!=='FRONT'||variant.items[0].textOverlays[1].layerPosition!=='BACK')throw Error('multi-layer text overlay payload mismatch');
+    if(state.calls.includes('event-save')||state.calls.includes('event-publish'))throw Error('stage 4 must not save or publish');
     const required=['upload-prepare','upload-complete','asset-list'];for(const action of required)if(!state.calls.includes(action))throw Error('missing browser action '+action);
     document.querySelector('#adminTopSubnav [data-admin-subtab="side"]').click();
     await waitFor(()=>!sidePanel.hidden&&sidePanel.classList.contains('active'),'side banner visual return');
