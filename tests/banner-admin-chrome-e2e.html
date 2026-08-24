@@ -23,11 +23,12 @@ const clone=v=>JSON.parse(JSON.stringify(v));
 function syncRefs(){for(const a of state.assets)a.referenceCount=state.campaigns.reduce((n,c)=>n+(c.items||[]).filter(i=>Number(i.assetId)===Number(a.assetId)).length,0)}
 function response(action,payload){
   state.calls.push(action);
-  if(action!=='asset-list'&&action!=='campaign-list'&&action!=='manifest'){
+  if(action!=='asset-list'&&action!=='overlay-asset-list'&&action!=='campaign-list'&&action!=='manifest'){
     if(!/^kws_[A-Za-z0-9_-]{40,80}$/.test(String(payload.sessionToken||'')))throw Error('missing KWS');
     if(!/^[0-9a-f-]{36}$/i.test(String(payload.idempotencyKey||'')))throw Error('missing idempotency key');
   }
   if(action==='asset-list')return {ok:true,assets:clone(state.assets.filter(a=>payload.includeArchived!==false||a.status!=='ARCHIVED'))};
+  if(action==='overlay-asset-list')return {ok:true,assets:[]};
   if(action==='campaign-list')return {ok:true,campaigns:clone(state.campaigns)};
   if(action==='manifest')return clone(state.manifest);
   if(action==='upload-prepare'){const ext=payload.mimeType==='image/png'?'png':payload.mimeType==='image/jpeg'?'jpg':'webp',uuid=`11111111-2222-4333-8444-${String(state.nextAsset).padStart(12,'0')}`,path=`2035/01/${uuid}.${ext}`;return {ok:true,formatCode:payload.formatCode,upload:{bucket:'kinojo-site-banners',objectPath:path,uploadUrl:'http://127.0.0.1/storage/v1/object/upload/sign/kinojo-site-banners/'+path+'?token=e2e',mimeType:payload.mimeType,sizeBytes:payload.sizeBytes,upsert:false,expiresInSeconds:7200,activation:'BANNER_UPLOAD_COMPLETE_REQUIRED'}}}
@@ -36,6 +37,8 @@ function response(action,payload){
     state.assets.push(a);
     return {ok:true,asset:clone(a),image:{activation:'ASSET_READY',aspectMatchesTarget:side,cropWarning:!side}};
   }
+  if(action==='event-save')return {ok:true,eventGroupId:'11111111-2222-4333-8444-555555555555',savedCampaignIds:[901],event:{name:payload.event.name,status:'DRAFT',campaigns:clone(payload.event.variants)}};
+  if(action==='event-publish')return {ok:true,eventGroupId:payload.eventGroupId,publishedCampaignCount:1,event:{status:'PUBLISHED'}};
   if(action==='campaign-create'){
     const c={campaignId:state.nextCampaign++,status:'DRAFT',...clone(payload.campaign)};state.campaigns.push(c);syncRefs();return {ok:true,campaign:clone(c)};
   }
@@ -101,7 +104,7 @@ async function run(){
     let heartbeat=false;setTimeout(()=>{heartbeat=true},0);
     await waitFor(()=>heartbeat,'image pane activation event-loop heartbeat',1500);
     await waitFor(()=>document.querySelector('#adminCurrentLocation')?.textContent==='[이미지 관리]','image pane location label',1500);
-    await waitFor(()=>document.querySelector('[data-banner-event-workflow="main"]')&&document.querySelector('[data-main-banner-admin] [data-bew-status]')?.classList.contains('ok'),'stage-4 workflow initial load');
+    await waitFor(()=>document.querySelector('[data-banner-event-workflow="main"]')&&document.querySelector('[data-main-banner-admin] [data-bew-status]')?.classList.contains('ok'),'stage-5 workflow initial load');
     const sourceNav=document.querySelector('[data-admin-subnav="images"]'),topNav=document.querySelector('#adminTopSubnav');
     const mainTab=sourceNav?.querySelector('[data-banner-management-tab="main"]'),sideTab=sourceNav?.querySelector('[data-banner-management-tab="side"]');
     const mainPanel=document.querySelector('[data-banner-management-panel="main"]'),sidePanel=document.querySelector('[data-banner-management-panel="side"]');
@@ -194,6 +197,7 @@ async function run(){
     addOverlay();overlayText=document.querySelector('[data-banner-event-workflow="main"] [data-bew-overlay-field="text"]');overlayText.value='뒤쪽 안내';fire(overlayText,'input');const layerPosition=document.querySelector('[data-banner-event-workflow="main"] [data-bew-overlay-field="layerPosition"]');layerPosition.value='BACK';fire(layerPosition,'change');
     addOverlay();overlayText=document.querySelector('[data-banner-event-workflow="main"] [data-bew-overlay-field="text"]');overlayText.value='세 번째 안내';fire(overlayText,'input');
     if(!document.querySelector('[data-banner-event-workflow="main"] [data-bew-overlay-add]').disabled)throw Error('overlay add must stop at three layers');
+    document.querySelector('[data-banner-event-workflow="main"] [data-bew-emoji-add]')?.click();
     let uncheckedOverlay;while((uncheckedOverlay=document.querySelector('[data-banner-event-workflow="main"] [data-bew-overlay-apply-check]:not(:checked)'))){uncheckedOverlay.checked=true;fire(uncheckedOverlay,'change')}
     document.querySelector('[data-banner-event-workflow="main"] [data-bew-overlay-apply]').click();
     const mainPayload=window.KinojoAdmin.getBannerEventPayload('main'),variant=mainPayload.variants[0];
@@ -201,9 +205,13 @@ async function run(){
     if(mainPayload.variants.length!==1||variant.eventRole!=='MAIN'||variant.items.length!==3)throw Error('main ordered item payload mismatch');
     if(variant.priority!==150||variant.scheduleMode!=='SCHEDULED'||variant.slideIntervalMs!==5000||variant.transitionDurationMs!==800||variant.transitionEffect!=='SLIDE_FADE'||variant.transitionDirection!=='BOTTOM_TO_TOP')throw Error('main event condition payload mismatch');
     if(variant.startsAtKst!=='2035-01-01T08:00'||variant.endsAtKst!=='2035-01-31T22:00'||variant.weekdays.join('|')!=='1'||variant.specificDates.join('|')!=='2035-01-02|2035-01-15')throw Error('main schedule detail payload mismatch');
-    if(variant.items.some(item=>item.textOverlays.length!==3)||variant.items[0].textOverlays[0].layerPosition!=='FRONT'||variant.items[0].textOverlays[1].layerPosition!=='BACK')throw Error('multi-layer text overlay payload mismatch');
-    if(state.calls.includes('event-save')||state.calls.includes('event-publish'))throw Error('stage 4 must not save or publish');
-    const required=['upload-prepare','upload-complete','asset-list'];for(const action of required)if(!state.calls.includes(action))throw Error('missing browser action '+action);
+    if(variant.items.some(item=>item.contentOverlays.length!==4)||variant.items[0].contentOverlays[0].layerPosition!=='FRONT'||variant.items[0].contentOverlays[1].layerPosition!=='BACK'||variant.items[0].contentOverlays[3].type!=='EMOJI')throw Error('general content overlay payload mismatch');
+    if(!document.querySelector('[data-banner-event-workflow="main"] [data-bew-review]')?.textContent.includes('게시 이미지 저장 방식'))throw Error('stage-5 review summary missing');
+    if(getComputedStyle(document.querySelector('[data-banner-event-workflow="main"] [data-bew-action-dock]')).position!=='fixed')throw Error('fixed action dock missing');
+    document.querySelector('[data-banner-event-workflow="main"] [data-bew-save-draft]').click();
+    await waitFor(()=>state.calls.includes('event-save'),'stage-5 draft save');
+    if(state.calls.includes('event-publish'))throw Error('draft save must not publish');
+    const required=['upload-prepare','upload-complete','asset-list','overlay-asset-list','event-save'];for(const action of required)if(!state.calls.includes(action))throw Error('missing browser action '+action);
     document.querySelector('#adminTopSubnav [data-admin-subtab="side"]').click();
     await waitFor(()=>!sidePanel.hidden&&sidePanel.classList.contains('active'),'side banner visual return');
     const finalPage=document.querySelector('[data-banner-event-workflow="side"] [data-bew-page]');finalPage.value='ALL';fire(finalPage,'change');

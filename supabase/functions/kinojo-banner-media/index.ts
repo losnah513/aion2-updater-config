@@ -1,7 +1,7 @@
 const S = "kinojo-banner-media",
-  V = "1.8",
-  DB = "395",
-  EVENT = "394",
+  V = "1.9",
+  DB = "396",
+  EVENT = "396",
   UPLOAD = "394",
   MASTER = "337",
   STORAGE = "382",
@@ -32,6 +32,10 @@ const MUT = new Set([
   "campaign-delete",
   "event-save",
   "event-publish",
+  "overlay-upload-prepare",
+  "overlay-upload-complete",
+  "composite-upload-prepare",
+  "composite-upload-complete",
 ]);
 const ERR: Record<string, string> = {
   METHOD_NOT_ALLOWED: "허용되지 않은 요청 방식입니다.",
@@ -54,6 +58,10 @@ const ERR: Record<string, string> = {
   BANNER_EVENT_PAYLOAD_INVALID: "이미지 이벤트 설정을 확인해 주세요.",
   BANNER_EVENT_ITEMS_REQUIRED: "게시할 활성 이미지를 한 장 이상 선택해 주세요.",
   BANNER_TEXT_OVERLAY_WIDTH_FIXED: "문구 영역의 폭은 배너 전체로 고정됩니다.",
+  BANNER_CONTENT_TEXT_REQUIRED: "노출할 문구 내용을 입력해 주세요.",
+  BANNER_CONTENT_EMOJI_REQUIRED: "노출할 이모지를 선택해 주세요.",
+  BANNER_CONTENT_ASSET_REQUIRED: "노출할 스티커 또는 뱃지를 선택해 주세요.",
+  BANNER_COMPOSITE_REQUIRED: "콘텐츠가 합쳐진 게시용 이미지를 먼저 만들어 주세요.",
   BANNER_SERVER_ERROR: "배너 요청을 처리하는 중 서버 오류가 발생했습니다.",
 };
 const rec = (v: any) =>
@@ -341,6 +349,14 @@ function file(b: any) {
     return { ok: false, code: "BANNER_FORMAT_CODE_INVALID" };
   return { ok: true, mime, size, format };
 }
+function mediaFile(b: any) {
+  const mime = txt(b.mimeType ?? b.mime_type, 120).toLowerCase(),
+    size = pos(b.sizeBytes ?? b.size_bytes);
+  if (!M.includes(mime)) return { ok: false, code: "BANNER_IMAGE_MIME_INVALID" };
+  if (size === null || size > MAX)
+    return { ok: false, code: "BANNER_IMAGE_SIZE_INVALID" };
+  return { ok: true, mime, size };
+}
 const token = (b: any) => txt(b.sessionToken ?? b.session_token, 120),
   rawCred = (b: any) =>
     has(b, ["passKey", "pass_key", "passCode", "pass_code"]),
@@ -617,6 +633,144 @@ async function complete(r: Request, b: any, t: string) {
     },
   });
 }
+async function mediaPrep(r: Request, b: any, t: string, purpose: string) {
+  if (badSel(b) || has(b, ["objectPath", "object_path"]))
+    return out(r, { ok: false, code: "CLIENT_STORAGE_SELECTOR_FORBIDDEN" }, 400);
+  const f = mediaFile(b);
+  if (!f.ok) return out(r, f, 400);
+  const g = await rpc("kinojo_banner_upload_prepare_v383", {
+    p_session_token: t,
+    p_mime_type: f.mime,
+    p_size_bytes: f.size,
+  });
+  if (g.ok !== true)
+    return out(r, { ok: false, code: txt(g.code, 80) }, stat(txt(g.code, 80)));
+  const p = txt(g.objectPath, 1024);
+  return out(r, {
+    ok: true,
+    service: S,
+    apiVersion: V,
+    databaseContract: DB,
+    contract: `banner-${purpose}-signed-upload-prepare-api-v1`,
+    upload: {
+      bucket: B,
+      objectPath: p,
+      uploadUrl: await sign(p),
+      mimeType: f.mime,
+      sizeBytes: f.size,
+      upsert: false,
+      expiresInSeconds: TTL,
+      activation: `${purpose.toUpperCase()}_UPLOAD_COMPLETE_REQUIRED`,
+    },
+  });
+}
+async function verifiedMedia(r: Request, b: any, t: string) {
+  if (badSel(b)) return { response: out(r, { ok: false, code: "CLIENT_STORAGE_SELECTOR_FORBIDDEN" }, 400) };
+  const f = mediaFile(b);
+  if (!f.ok) return { response: out(r, f, 400) };
+  const p = txt(b.objectPath ?? b.object_path, 1024);
+  if (!p) return { response: out(r, { ok: false, code: "BANNER_OBJECT_PATH_REQUIRED" }, 400) };
+  const g = await rpc("kinojo_banner_upload_complete_gate_v383", {
+    p_session_token: t,
+    p_object_path: p,
+    p_mime_type: f.mime,
+    p_size_bytes: f.size,
+  });
+  if (g.ok !== true)
+    return { response: out(r, { ok: false, code: txt(g.code, 80) }, stat(txt(g.code, 80))) };
+  const stored: any = await obj(p);
+  if (!stored.ok) return { response: out(r, stored, 409) };
+  if (stored.mime !== f.mime || stored.size !== f.size || stored.size < 1 || stored.size > MAX) {
+    await del(p);
+    return { response: out(r, {
+      ok: false,
+      code: stored.mime !== f.mime ? "BANNER_UPLOAD_MIME_MISMATCH" : "BANNER_UPLOAD_SIZE_MISMATCH",
+      candidateDeleted: true,
+    }, 409) };
+  }
+  const dimensions = info(stored.bytes);
+  if (!dimensions || dimensions.mime !== f.mime) {
+    await del(p);
+    return { response: out(r, { ok: false, code: "BANNER_UPLOAD_SIGNATURE_INVALID", candidateDeleted: true }, 409) };
+  }
+  return { p, stored, dimensions };
+}
+async function overlayComplete(r: Request, b: any, t: string) {
+  const verified: any = await verifiedMedia(r, b, t);
+  if (verified.response) return verified.response;
+  const kind = txt(b.assetKind ?? b.asset_kind, 20).toUpperCase(),
+    name = txt(b.displayName ?? b.display_name, 80);
+  if (!["EMOTICON", "STICKER", "BADGE"].includes(kind))
+    return out(r, { ok: false, code: "BANNER_OVERLAY_KIND_INVALID" }, 400);
+  if (!name) return out(r, { ok: false, code: "BANNER_OVERLAY_NAME_INVALID" }, 400);
+  const a = await rpc("kinojo_banner_overlay_asset_register_v396", {
+    p_session_token: t,
+    p_object_path: verified.p,
+    p_mime_type: verified.stored.mime,
+    p_size_bytes: verified.stored.size,
+    p_width: verified.dimensions.w,
+    p_height: verified.dimensions.h,
+    p_asset_kind: kind,
+    p_display_name: name,
+  });
+  if (a.ok !== true)
+    return out(r, { ok: false, code: txt(a.code, 80), candidateRetainedForCleanup: true }, stat(txt(a.code, 80)));
+  const { url } = ctx();
+  return out(r, {
+    ok: true,
+    service: S,
+    apiVersion: V,
+    databaseContract: DB,
+    contract: "banner-overlay-upload-complete-api-v1",
+    asset: a.asset,
+    image: {
+      bucket: B,
+      objectPath: verified.p,
+      publicUrl: `${url}/storage/v1/object/public/${B}/${verified.p.split("/").map(encodeURIComponent).join("/")}`,
+      mimeType: verified.stored.mime,
+      sizeBytes: verified.stored.size,
+      width: verified.dimensions.w,
+      height: verified.dimensions.h,
+      activation: "OVERLAY_ASSET_READY",
+    },
+  });
+}
+async function compositeComplete(r: Request, b: any, t: string) {
+  const verified: any = await verifiedMedia(r, b, t);
+  if (verified.response) return verified.response;
+  const eventGroupId = txt(b.eventGroupId ?? b.event_group_id, 80),
+    assetId = pos(b.assetId ?? b.asset_id);
+  if (!K.test(eventGroupId) || assetId === null)
+    return out(r, { ok: false, code: "BANNER_COMPOSITE_TARGET_INVALID" }, 400);
+  const a = await rpc("kinojo_banner_composite_register_v396", {
+    p_session_token: t,
+    p_event_group_id: eventGroupId,
+    p_asset_id: assetId,
+    p_object_path: verified.p,
+    p_mime_type: verified.stored.mime,
+    p_size_bytes: verified.stored.size,
+    p_width: verified.dimensions.w,
+    p_height: verified.dimensions.h,
+  });
+  if (a.ok !== true)
+    return out(r, { ok: false, code: txt(a.code, 80), candidateRetainedForCleanup: true }, stat(txt(a.code, 80)));
+  return out(r, {
+    ...a,
+    service: S,
+    apiVersion: V,
+    databaseContract: DB,
+    contract: "banner-composite-upload-complete-api-v1",
+    image: {
+      bucket: B,
+      objectPath: verified.p,
+      mimeType: verified.stored.mime,
+      sizeBytes: verified.stored.size,
+      width: verified.dimensions.w,
+      height: verified.dimensions.h,
+      activation: "COMPOSITE_ATTACHED",
+    },
+  });
+}
 async function asset(r: Request, b: any, t: string, a: string) {
   if (a === "asset-list") {
     const d = await rpc("kinojo_banner_asset_list_v384", {
@@ -691,6 +845,37 @@ async function asset(r: Request, b: any, t: string, a: string) {
       })
     : out(r, f, stat(txt(f.code, 80)));
 }
+async function overlayAssets(r: Request, b: any, t: string) {
+  const d = await rpc("kinojo_banner_overlay_asset_list_v396", {
+    p_session_token: t,
+    p_include_archived: b.includeArchived === true,
+  });
+  if (d.ok !== true) return out(r, d, stat(txt(d.code, 80)));
+  const { url } = ctx(), assets = [];
+  for (const raw of Array.isArray(d.assets) ? d.assets : []) {
+    const item = rec(raw), p = txt(item?.objectPath, 1024);
+    if (!item || !/^\d{4}\/\d{2}\/[0-9a-f-]{36}\.(?:jpg|jpeg|png|webp)$/i.test(p)) continue;
+    assets.push({
+      overlayAssetId: pos(item.overlayAssetId),
+      assetKind: txt(item.assetKind, 20),
+      displayName: txt(item.displayName, 80),
+      mimeType: txt(item.mimeType, 120),
+      sizeBytes: pos(item.sizeBytes),
+      width: pos(item.width),
+      height: pos(item.height),
+      status: txt(item.status, 20),
+      imageUrl: `${url}/storage/v1/object/public/${B}/${p.split("/").map(encodeURIComponent).join("/")}`,
+    });
+  }
+  return out(r, {
+    ok: true,
+    service: S,
+    apiVersion: V,
+    databaseContract: DB,
+    contract: "banner-overlay-asset-list-api-v1",
+    assets,
+  });
+}
 async function orphan(r: Request, b: any, t: string) {
   const h = Math.max(
       3,
@@ -700,7 +885,7 @@ async function orphan(r: Request, b: any, t: string) {
       ),
     ),
     l = Math.max(1, Math.min(100, Math.floor(num(b.limit) ?? 50))),
-    d = await rpc("kinojo_banner_orphan_candidates_v384", {
+    d = await rpc("kinojo_banner_orphan_candidates_v396", {
       p_session_token: t,
       p_older_than_hours: h,
       p_limit: l,
@@ -807,7 +992,7 @@ async function campaign(r: Request, b: any, t: string, a: string) {
 async function event(r: Request, b: any, t: string, a: string) {
   let d: any;
   if (a === "event-list") {
-    d = await rpc("kinojo_banner_event_list_v394", {
+    d = await rpc("kinojo_banner_event_list_v396", {
       p_session_token: t,
       p_include_archived: b.includeArchived !== false,
     });
@@ -818,7 +1003,7 @@ async function event(r: Request, b: any, t: string, a: string) {
     const rawId = txt(b.eventGroupId ?? b.event_group_id, 80);
     if (rawId && !K.test(rawId))
       return out(r, { ok: false, code: "BANNER_EVENT_GROUP_ID_INVALID" }, 400);
-    d = await rpc("kinojo_banner_event_save_v394", {
+    d = await rpc("kinojo_banner_event_save_v396", {
       p_session_token: t,
       p_event_group_id: rawId || null,
       p_payload: payload,
@@ -827,7 +1012,7 @@ async function event(r: Request, b: any, t: string, a: string) {
     const id = txt(b.eventGroupId ?? b.event_group_id, 80);
     if (!K.test(id))
       return out(r, { ok: false, code: "BANNER_EVENT_GROUP_ID_REQUIRED" }, 400);
-    d = await rpc("kinojo_banner_event_publish_v394", {
+    d = await rpc("kinojo_banner_event_publish_v396", {
       p_session_token: t,
       p_event_group_id: id,
     });
@@ -930,7 +1115,7 @@ async function manifest(r: Request, b: any) {
       { ok: false, code: "PUBLIC_MANIFEST_SELECTOR_FORBIDDEN" },
       400,
     );
-  const d = await rpc("kinojo_banner_manifest_v395", {
+  const d = await rpc("kinojo_banner_manifest_v396", {
     p_page_code: page,
     p_slot_code: slot,
   });
@@ -1110,6 +1295,8 @@ Deno.serve(async (r) => {
           inactiveItemsExcluded: true,
           publicManifestAnonymous: true,
           internalIdsExposed: false,
+          publishedMedia: "FLATTENED_COMPOSITE_WHEN_CONTENT_EXISTS",
+          editableSourcesRetained: true,
         },
         publicActions: ["manifest"],
         actions: [
@@ -1132,6 +1319,11 @@ Deno.serve(async (r) => {
           "event-list",
           "event-save",
           "event-publish",
+          "overlay-asset-list",
+          "overlay-upload-prepare",
+          "overlay-upload-complete",
+          "composite-upload-prepare",
+          "composite-upload-complete",
           "manifest",
         ],
       });
@@ -1154,6 +1346,13 @@ Deno.serve(async (r) => {
         "campaign-delete",
       ],
       ee = ["event-list", "event-save", "event-publish"],
+      oo = [
+        "overlay-asset-list",
+        "overlay-upload-prepare",
+        "overlay-upload-complete",
+        "composite-upload-prepare",
+        "composite-upload-complete",
+      ],
       allow = [
         ...aa,
         "upload-prepare",
@@ -1161,6 +1360,7 @@ Deno.serve(async (r) => {
         "orphan-cleanup",
         ...cc,
         ...ee,
+        ...oo,
       ];
     if (!allow.includes(a))
       return out(r, { ok: false, code: "UNSUPPORTED_ACTION" }, 400);
@@ -1170,6 +1370,11 @@ Deno.serve(async (r) => {
     const run = async () => {
       if (a === "upload-prepare") return await prep(r, b, t);
       if (a === "upload-complete") return await complete(r, b, t);
+      if (a === "overlay-upload-prepare") return await mediaPrep(r, b, t, "overlay");
+      if (a === "overlay-upload-complete") return await overlayComplete(r, b, t);
+      if (a === "composite-upload-prepare") return await mediaPrep(r, b, t, "composite");
+      if (a === "composite-upload-complete") return await compositeComplete(r, b, t);
+      if (a === "overlay-asset-list") return await overlayAssets(r, b, t);
       if (a === "orphan-cleanup") return await orphan(r, b, t);
       if (aa.includes(a)) return await asset(r, b, t, a);
       if (ee.includes(a)) return await event(r, b, t, a);
