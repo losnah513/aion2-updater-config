@@ -1,10 +1,10 @@
-/* KINOJO administrator request notification bridge v20260823.04 */
+/* KINOJO administrator request notification bridge v20260824.01 */
 (function(){
   'use strict';
   if(window.__KINOJO_ADMIN_NOTIFICATION_BRIDGE__) return;
   window.__KINOJO_ADMIN_NOTIFICATION_BRIDGE__=true;
 
-  const SEEN_KEY='kinojo_admin_notification_seen_v389';
+  const SEEN_KEY='kinojo_admin_notification_seen_v392';
   const LEGACY_SUPPORT_SEEN_KEY='kinojo_support_notice_seen_v316';
   const queue=[];
   const queuedKeys=new Set();
@@ -92,13 +92,14 @@
         href:adminHref('#sanctuary/requests'),createdAt:String(support.createdAt||'')
       });
     }
-    const reference=summary?.latestReferenceUpload;
+    const hasUnifiedImageQueue=Object.prototype.hasOwnProperty.call(summary||{},'memberImagePendingCount');
+    const reference=hasUnifiedImageQueue?summary?.latestCharacterImageUpload:summary?.latestReferenceUpload;
     if(reference?.characterId&&reference?.uploadedAt){
-      const name=String(reference.characterName||'캐릭터').trim()||'캐릭터';
+      const name=String(reference.characterName||reference.memberMainCharacterName||'캐릭터').trim()||'캐릭터';
       rows.push({
-        eventKey:'REFERENCE_IMAGE:'+String(reference.characterId)+':'+String(reference.slot||'')+':'+String(reference.uploadedAt),tone:'reference',title:'참고 이미지 업로드',characterName:name,
-        message:'['+name+']님이 참고 이미지를 업로드 하였습니다.',moreCount:0,
-        href:adminHref('#members/accounts'),createdAt:String(reference.uploadedAt||'')
+        eventKey:'CHARACTER_IMAGE:'+String(reference.memberId||'')+':'+String(reference.characterId)+':'+String(reference.slot||'')+':'+String(reference.uploadedAt),tone:'reference',title:'캐릭터 이미지 업로드',characterName:name,
+        message:'['+name+']님이 캐릭터 이미지를 업로드하였습니다.',moreCount:Math.max(0,Number(summary?.memberImagePendingCount||0)-1),
+        href:adminHref('#members/character-images'),createdAt:String(reference.uploadedAt||'')
       });
     }
     return rows.sort((a,b)=>(Date.parse(b.createdAt)||0)-(Date.parse(a.createdAt)||0));

@@ -19,21 +19,24 @@ for (const removed of [
 ]) {
   assert.equal(authUi.includes(removed), false, `legacy central admin notice path must be removed: ${removed}`);
 }
-assert.ok(authUi.includes('kinojo-admin-notifications.js?cache=2026082304'), 'auth UI must load the latest shared admin notification bridge');
+assert.ok(authUi.includes('kinojo-admin-notifications.js?cache=2026082401'), 'auth UI must load the latest shared admin notification bridge');
 
 for (const expected of [
-  "const SEEN_KEY='kinojo_admin_notification_seen_v389'",
+  "const SEEN_KEY='kinojo_admin_notification_seen_v392'",
   "const LEGACY_SUPPORT_SEEN_KEY='kinojo_support_notice_seen_v316'",
   'latestCodeRequest',
   'latestSupportRequest',
   'latestReferenceUpload',
+  'latestCharacterImageUpload',
+  'memberImagePendingCount',
+  'hasUnifiedImageQueue',
   "title:'코드 요청'",
   "title:'포스 지원'",
-  "title:'참고 이미지 업로드'",
-  "message:'['+name+']님이 참고 이미지를 업로드 하였습니다.'",
+  "title:'캐릭터 이미지 업로드'",
+  "message:'['+name+']님이 캐릭터 이미지를 업로드하였습니다.'",
   "eventKey:'CODE_REQUEST:'",
   "eventKey:'FORCE_REQUEST:'",
-  "eventKey:'REFERENCE_IMAGE:'",
+  "eventKey:'CHARACTER_IMAGE:'",
   "tone:'code'",
   "tone:'support'",
   "tone:'reference'",
@@ -43,7 +46,7 @@ for (const expected of [
   'translateY(36px)',
   "adminHref('#requests')",
   "adminHref('#sanctuary/requests')",
-  "adminHref('#members/accounts')",
+  "adminHref('#members/character-images')",
   "name==='notificationSummary'",
 ]) {
   assert.ok(bridge.includes(expected), `admin notification bridge contract missing: ${expected}`);

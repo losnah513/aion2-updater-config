@@ -25,7 +25,8 @@ const doubleSlotPages = [
 for (const file of doubleSlotPages) {
   const html = read(file);
   assert.ok(html.includes('kinojo-pc-banners.css?cache=2026082203'), `${file}: shared PC slot CSS is missing`);
-  assert.ok(html.includes('kinojo-pc-banners.js?cache=2026082202'), `${file}: shared PC slot sizing script is missing`);
+  const sizingCache=file==='home.html'?'2026082303':'2026082202';
+  assert.ok(html.includes(`kinojo-pc-banners.js?cache=${sizingCache}`), `${file}: shared PC slot sizing script is missing`);
   assert.equal((html.match(/data-kinojo-pc-banner/g) || []).length, 2, `${file}: exactly one left and one right slot are required`);
   assert.match(html,/<aside class="kinojo-pc-banner-slot is-left" data-kinojo-pc-banner aria-hidden="true"><\/aside>/, `${file}: left slot must start empty`);
   assert.match(html,/<aside class="kinojo-pc-banner-slot is-right" data-kinojo-pc-banner aria-hidden="true"><\/aside>/, `${file}: right slot must start empty`);
