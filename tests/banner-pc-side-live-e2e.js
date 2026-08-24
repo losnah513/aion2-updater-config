@@ -29,6 +29,7 @@ async function snapshot(page){
       const hostRect=host?.getBoundingClientRect?.();
       const style=getComputedStyle(slot);
       const code=slot.classList.contains('is-left')?'LEFT':slot.classList.contains('is-right')?'RIGHT':'';
+      const image=slot.querySelector('.kinojo-pc-banner-image');
       return {
         code,
         display:style.display,
@@ -44,6 +45,10 @@ async function snapshot(page){
         target:slot.dataset.kinojoPcBannerTarget||'',
         state:slot.dataset.kinojoPcBannerState||'',
         text:String(slot.textContent||'').trim(),
+        ariaHidden:slot.getAttribute('aria-hidden'),
+        mediaCount:slot.querySelectorAll('.kinojo-pc-banner-media').length,
+        imageCount:slot.querySelectorAll('.kinojo-pc-banner-image').length,
+        imageSrc:String(image?.currentSrc||image?.src||''),
         host:hostRect?{left:hostRect.left,right:hostRect.right,top:hostRect.top,bottom:hostRect.bottom,width:hostRect.width,height:hostRect.height}:null,
       };
     });
@@ -76,8 +81,17 @@ function verify(pageSpec,width,data){
     assert.ok(slot.host,`${pageSpec.name}:${slot.code} host exists`);
     const gap=slot.code==='LEFT'?slot.host.left-slot.right:slot.left-slot.host.right;
     assert.ok(approx(gap,14,2),`${pageSpec.name}:${slot.code} host gap=${gap}`);
-    assert.equal(slot.state,'empty',`${pageSpec.name}:${slot.code} current production SIDE state`);
-    assert.equal(slot.text,'300 × 715',`${pageSpec.name}:${slot.code} empty label`);
+    assert.ok(slot.state==='empty'||slot.state==='rendered',`${pageSpec.name}:${slot.code} state=${slot.state}`);
+    if(slot.state==='empty'){
+      assert.equal(slot.text,'300 × 715',`${pageSpec.name}:${slot.code} empty label`);
+      assert.equal(slot.ariaHidden,'true',`${pageSpec.name}:${slot.code} empty aria-hidden`);
+      assert.equal(slot.mediaCount,0,`${pageSpec.name}:${slot.code} empty media`);
+    }else{
+      assert.equal(slot.ariaHidden,null,`${pageSpec.name}:${slot.code} rendered aria-hidden`);
+      assert.equal(slot.mediaCount,1,`${pageSpec.name}:${slot.code} rendered media`);
+      assert.equal(slot.imageCount,1,`${pageSpec.name}:${slot.code} rendered image`);
+      assert.ok(/^https?:\/\//.test(slot.imageSrc),`${pageSpec.name}:${slot.code} rendered image URL`);
+    }
   }
 }
 
