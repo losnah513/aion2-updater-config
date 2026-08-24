@@ -1,16 +1,19 @@
 <!doctype html>
 <html lang="ko" data-e2e-result="RUNNING">
-<head><meta charset="utf-8"><title>KINOJO Banner Admin Chrome E2E</title></head>
+<head><meta charset="utf-8"><title>KINOJO Banner Admin Chrome E2E</title><link rel="stylesheet" href="../admin/css/admin.css"></head>
 <body>
-<div id="adminCurrentLocation">[대시보드]</div>
-<nav class="admin-nav"><button data-admin-tab="dashboard">대시보드</button><button data-admin-tab="system">시스템</button></nav>
-<main class="admin-main"><section class="admin-pane active" data-admin-pane="dashboard"></section><section class="admin-pane" data-admin-pane="system"></section></main>
+<header class="admin-shellbar">
+  <div id="adminCurrentLocation">[대시보드]</div><strong id="adminRoleLabel"></strong><strong id="adminMobileRoleLabel"></strong>
+  <nav class="admin-nav"><button data-admin-tab="dashboard">대시보드</button><button data-admin-tab="system">시스템</button></nav>
+  <div class="admin-top-subnav" id="adminTopSubnav" aria-live="polite" hidden></div>
+</header>
+<main class="kinojo-admin-console"><section class="admin-main"><section class="admin-pane active" data-admin-pane="dashboard"></section><section class="admin-pane" data-admin-pane="system"></section></section></main>
 <pre id="e2eResult">RUNNING</pre>
 <script>
 location.hash='images';
 window.confirm=()=>true;
-window.KinojoAdmin={isMaster:()=>true,switchTab:()=>{}};
-window.KinojoAuth={getSession:()=>({token:'kws_'+('A'.repeat(40))})};
+window.KinojoAdmin={};
+window.KinojoAuth={getSession:()=>({token:'kws_'+('A'.repeat(40)),role:'MASTER',roleLabel:'Master',level:5})};
 const state={assets:[],campaigns:[],manifest:{ok:true,active:false,reason:'NO_ACTIVE_CAMPAIGN',playlist:[]},calls:[],put:null,nextCampaign:501};
 const clone=v=>JSON.parse(JSON.stringify(v));
 function syncRefs(){for(const a of state.assets)a.referenceCount=state.campaigns.reduce((n,c)=>n+(c.items||[]).filter(i=>Number(i.assetId)===Number(a.assetId)).length,0)}
@@ -70,11 +73,13 @@ window.fetch=async(input,init={})=>{
   return nativeFetch(input,init);
 };
 </script>
+<script src="../admin/js/admin-shared.js"></script>
 <script src="../admin/js/admin-images.js"></script>
 <script src="../admin/js/admin-banner-delete.js"></script>
 <script src="../admin/js/admin-side-banners.js"></script>
 <script src="../admin/js/admin-banner-tabs.js"></script>
 <script src="../admin/js/admin-banner-quality.js"></script>
+<script src="../admin/js/admin-bootstrap.js"></script>
 <script>
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function waitFor(fn,label,timeout=8000){const end=performance.now()+timeout;while(performance.now()<end){if(fn())return;await sleep(30)}throw Error('timeout: '+label)}
@@ -82,26 +87,32 @@ function fire(el,type){el.dispatchEvent(new Event(type,{bubbles:true}))}
 async function run(){
   try{
     const dashboardPane=document.querySelector('[data-admin-pane="dashboard"]');
+    await waitFor(()=>document.querySelector('[data-admin-pane="images"]')?.classList.contains('active'),'image pane activated by admin router');
     const imagesPane=document.querySelector('[data-admin-pane="images"]');
-    if(!imagesPane)throw Error('images pane missing');
-    dashboardPane?.classList.remove('active');
-    imagesPane.classList.add('active');
-    document.querySelector('#adminCurrentLocation').textContent='[관리]';
+    if(!imagesPane||dashboardPane?.classList.contains('active'))throw Error('images pane routing mismatch');
     let heartbeat=false;setTimeout(()=>{heartbeat=true},0);
     await waitFor(()=>heartbeat,'image pane activation event-loop heartbeat',1500);
     await waitFor(()=>document.querySelector('#adminCurrentLocation')?.textContent==='[이미지 관리]','image pane location label',1500);
     await waitFor(()=>document.querySelector('#bUpload')&&document.querySelector('#bStatus')?.classList.contains('ok'),'initial admin load');
-    const mainTab=document.querySelector('[data-banner-management-tab="main"]'),sideTab=document.querySelector('[data-banner-management-tab="side"]');
+    const sourceNav=document.querySelector('[data-admin-subnav="images"]'),topNav=document.querySelector('#adminTopSubnav');
+    const mainTab=sourceNav?.querySelector('[data-banner-management-tab="main"]'),sideTab=sourceNav?.querySelector('[data-banner-management-tab="side"]');
     const mainPanel=document.querySelector('[data-banner-management-panel="main"]'),sidePanel=document.querySelector('[data-banner-management-panel="side"]');
     if(!mainTab||!sideTab||!mainPanel||!sidePanel)throw Error('main/side banner tabs missing');
+    if(!sourceNav||getComputedStyle(sourceNav).display!=='none')throw Error('source image subnav must remain hidden in the content pane');
+    if(topNav.hidden||getComputedStyle(topNav).display==='none')throw Error('image top subnav must be visible');
+    if([...topNav.querySelectorAll('[data-admin-subtab]')].map(button=>button.textContent.trim()).join('|')!=='메인 배너|사이드 배너')throw Error('image top subnav labels missing');
+    if(document.querySelectorAll('#adminBannerMainTab').length!==1||document.querySelectorAll('#adminBannerSideTab').length!==1)throw Error('top subnav clone duplicated source tab ids');
+    if(location.hash!=='#images/main')throw Error('image default subtab route mismatch');
     if(mainPanel.hidden||!mainPanel.classList.contains('active')||!sidePanel.hidden)throw Error('main banner must be the initial visible tab');
     if(!mainPanel.contains(document.querySelector('[data-main-banner-admin]'))||!sidePanel.contains(document.querySelector('[data-side-banner-admin]')))throw Error('banner modules not isolated into tab panels');
-    sideTab.click();
+    topNav.querySelector('[data-admin-subtab="side"]').click();
     await waitFor(()=>mainPanel.hidden&&!sidePanel.hidden&&sidePanel.classList.contains('active'),'side banner tab switch');
     await waitFor(()=>document.querySelector('#sStatus')?.classList.contains('ok'),'side banner tab data load');
+    if(location.hash!=='#images/side')throw Error('side banner route mismatch');
     if(sideTab.getAttribute('aria-selected')!=='true'||mainTab.getAttribute('aria-selected')!=='false')throw Error('side banner tab aria state mismatch');
-    mainTab.click();
+    document.querySelector('#adminTopSubnav [data-admin-subtab="main"]').click();
     await waitFor(()=>!mainPanel.hidden&&sidePanel.hidden&&mainPanel.classList.contains('active'),'main banner tab return');
+    if(location.hash!=='#images/main')throw Error('main banner return route mismatch');
     const canvas=document.createElement('canvas');canvas.width=160;canvas.height=90;const ctx=canvas.getContext('2d');ctx.fillRect(0,0,160,90);
     const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
     const file=new File([blob],'banner-e2e.png',{type:'image/png'}),dt=new DataTransfer();dt.items.add(file);document.querySelector('#bFile').files=dt.files;
@@ -132,6 +143,6 @@ async function run(){
     document.documentElement.dataset.e2eResult='PASS';document.querySelector('#e2eResult').textContent='PASS '+state.calls.join(' > ');
   }catch(error){document.documentElement.dataset.e2eResult='FAIL';document.querySelector('#e2eResult').textContent='FAIL '+(error?.stack||error);console.error(error)}
 }
-run();
+window.addEventListener('load',run);
 </script>
 </body></html>
