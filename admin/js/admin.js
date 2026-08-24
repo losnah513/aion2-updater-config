@@ -14,8 +14,8 @@
     'admin-images.js',
     'admin-banner-delete.js',
     'admin-side-banners.js',
-    'admin-banner-tabs.js',
     'admin-banner-quality.js',
+    'admin-banner-tabs.js',
     'admin-bootstrap.js'
   ];
   function loadScript(name){
