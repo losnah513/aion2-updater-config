@@ -44,7 +44,7 @@ assert.equal(/passKey|passCode/.test(source+del),false);
 assert.ok(source.includes('p.idempotencyKey=id()'));
 assert.ok(del.includes('payload.idempotencyKey=crypto.randomUUID()'));
 assert.ok(source.includes("method:'PUT'"));
-for(const token of ['prepareBannerUploadImage','canvas.toBlob','image/webp','Math.max)(canvas.width/sourceWidth','renderFileQueue','queueWarning','files=Array.from','for(let index=0;index<files.length;index++)','bannerUploadDisplayName','bannerAssetTags','confirmPermanentCampaignDelete']) assert.ok(source.includes(token),`missing responsive upload/delete contract ${token}`);
+for(const token of ['prepareBannerUploadImage','canvas.toDataURL','image/webp','createImageBitmap','Math.max)(canvas.width/sourceWidth','renderFileQueue','queueWarning','files=Array.from','for(let index=0;index<files.length;index++)','bannerUploadDisplayName','bannerAssetTags','confirmPermanentCampaignDelete']) assert.ok(source.includes(token),`missing responsive upload/delete contract ${token}`);
 assert.equal(source.includes('naturalWidth*9!=='),false,'arbitrary source ratios must be converted instead of rejected');
 assert.equal(source.includes('SIDE_300_715'),false);
 assert.ok(del.includes("if(!isStorageAsset(label)"));
