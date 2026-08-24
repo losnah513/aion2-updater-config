@@ -1,10 +1,10 @@
-/* KINOJO Admin modular loader v2026082408 */
+/* KINOJO Admin modular loader v2026082409 */
 (function(){
   'use strict';
   const current=document.currentScript;
   const currentUrl=new URL(current?.src||location.href,location.href);
   const base=new URL('./',currentUrl);
-  const CACHE=String(currentUrl.searchParams.get('cache')||'2026082408').trim()||'2026082408';
+  const CACHE=String(currentUrl.searchParams.get('cache')||'2026082409').trim()||'2026082409';
   const modules=[
     'admin-shared.js',
     'admin-members.js',
