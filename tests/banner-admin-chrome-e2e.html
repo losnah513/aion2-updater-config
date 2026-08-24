@@ -79,6 +79,15 @@ async function waitFor(fn,label,timeout=8000){const end=performance.now()+timeou
 function fire(el,type){el.dispatchEvent(new Event(type,{bubbles:true}))}
 async function run(){
   try{
+    const dashboardPane=document.querySelector('[data-admin-pane="dashboard"]');
+    const imagesPane=document.querySelector('[data-admin-pane="images"]');
+    if(!imagesPane)throw Error('images pane missing');
+    dashboardPane?.classList.remove('active');
+    imagesPane.classList.add('active');
+    document.querySelector('#adminCurrentLocation').textContent='[관리]';
+    let heartbeat=false;setTimeout(()=>{heartbeat=true},0);
+    await waitFor(()=>heartbeat,'image pane activation event-loop heartbeat',1500);
+    await waitFor(()=>document.querySelector('#adminCurrentLocation')?.textContent==='[이미지 관리]','image pane location label',1500);
     await waitFor(()=>document.querySelector('#bUpload')&&document.querySelector('#bStatus')?.classList.contains('ok'),'initial admin load');
     const canvas=document.createElement('canvas');canvas.width=160;canvas.height=90;const ctx=canvas.getContext('2d');ctx.fillRect(0,0,160,90);
     const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
