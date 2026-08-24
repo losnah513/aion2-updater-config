@@ -1831,6 +1831,17 @@
     return invokeEdgeFunction('character-profile-snapshot',payload);
   }
 
+  async function addLegionTreeCharacter(extra={}){
+    const sessionToken=currentServerSessionCredential();
+    return invokeEdgeFunction('kinojo-legion-tree',{
+      action:'character-add',
+      sessionToken,
+      mainCharacterName:String(extra.mainCharacterName||'').trim(),
+      altCharacterName:String(extra.altCharacterName||'').trim(),
+      serverId:Number(extra.serverId||0)
+    });
+  }
+
   async function adminSanctuarySheetSync(command, extra={}){
     assertAdmin();
     const sessionToken=currentAdminSessionCredential();
@@ -1984,7 +1995,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.55-server-automation-20260821',
+    version:'1.3.1.56-legion-tree-character-add-20260824',
     getConfig,
     isPreferred,
     isConfigured,
@@ -2053,6 +2064,7 @@
     adminSanctuaryProfileDiagnostic,
     adminCharacter,
     adminLookup,
+    addLegionTreeCharacter,
     getLiveCharacterProfile,
     adminVisit,
     adminVisitor,
