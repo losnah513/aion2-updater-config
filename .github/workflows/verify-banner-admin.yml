@@ -7,10 +7,12 @@ on:
       - "admin/js/admin.js"
       - "admin/js/admin-images.js"
       - "admin/js/admin-side-banners.js"
+      - "admin/js/admin-banner-tabs.js"
       - "admin/js/admin-banner-quality.js"
       - "tests/banner-admin-main-ui-contract.test.js"
       - "tests/banner-admin-side-ui-contract.test.js"
       - "tests/banner-admin-quality-contract.test.js"
+      - "tests/banner-admin-chrome-e2e.html"
       - ".github/workflows/verify-banner-admin.yml"
   push:
     branches: [main]
@@ -18,10 +20,12 @@ on:
       - "admin/js/admin.js"
       - "admin/js/admin-images.js"
       - "admin/js/admin-side-banners.js"
+      - "admin/js/admin-banner-tabs.js"
       - "admin/js/admin-banner-quality.js"
       - "tests/banner-admin-main-ui-contract.test.js"
       - "tests/banner-admin-side-ui-contract.test.js"
       - "tests/banner-admin-quality-contract.test.js"
+      - "tests/banner-admin-chrome-e2e.html"
       - ".github/workflows/verify-banner-admin.yml"
   workflow_dispatch:
 
@@ -51,12 +55,22 @@ jobs:
             admin/js/admin.js \
             admin/js/admin-images.js \
             admin/js/admin-side-banners.js \
+            admin/js/admin-banner-tabs.js \
             admin/js/admin-banner-quality.js; do
             node --check "$path"
           done
           node tests/banner-admin-main-ui-contract.test.js
           node tests/banner-admin-side-ui-contract.test.js
           node tests/banner-admin-quality-contract.test.js
+          chrome="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [[ -z "$chrome" ]]; then
+            echo "Chrome/Chromium is required for banner admin tab E2E." >&2
+            exit 1
+          fi
+          "$chrome" --headless --no-sandbox --disable-gpu --allow-file-access-from-files \
+            --virtual-time-budget=15000 --dump-dom "file://$PWD/tests/banner-admin-chrome-e2e.html#images" \
+            > /tmp/banner-admin-chrome-e2e.html
+          grep -F 'data-e2e-result="PASS"' /tmp/banner-admin-chrome-e2e.html
 
   verify-live-readback:
     if: github.event_name == 'push'
@@ -104,6 +118,7 @@ jobs:
             "admin/js/admin.js"
             "admin/js/admin-images.js"
             "admin/js/admin-side-banners.js"
+            "admin/js/admin-banner-tabs.js"
             "admin/js/admin-banner-quality.js"
           )
           tmp_dir="$(mktemp -d)"
