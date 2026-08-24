@@ -19,7 +19,10 @@ KINOJO INFO GitHub Pages upload package.
 - Server member-array order is preserved inside each explicitly ordered stage/role/group. The Browser does not alphabetize or move mains before alts.
 - Branch count reduces columns without shrinking the fixed 124px cards: desktop uses 5 columns for one branch, 3 for two branches, and 2 for three or more; mobile centers on 2 columns for one or two branches and 1 for three or more.
 - Browser code does not reconstruct missing tree structure or members. A Server-supplied `DEFAULT_FALLBACK` tree is marked `기본 단계`, while a role with no assigned members is rendered as `지정 전`; missing stages and inconsistent fallback state still fail closed.
-- `tests/legion-tree-data-render-contract.test.js` protects the complete nine-class mapping, exact/full character names, main/alt state, five-character fade boundary, Server member order, branch-responsive columns, fallback presentation, cache lineage, and no-browser-reconstruction boundary.
+- The subbar character-add action reuses the existing authenticated `kinojo-legion-tree` `character-add` Server chain. A main name alone requests `MAIN`; main plus alt requests `ALT`; alt-only input is rejected before any network call. The Browser sends only names and `serverId` and never supplies mode, race, member identity, character facts, list columns, or Queue credentials.
+- While the Server Worker runs, the UI prevents duplicate submission and maps the bound runtime session into five visible states: 공식 확인 → 정보 반영 → list 반영 → readback → 완료. Completion is accepted only for the same session with `SERVER_QUEUE_LIST_SYNC_DONE`, after which the page reloads `kinojo_web_get_legion_tree`.
+- Reset clears both names, race/server selection, validation styling, status text, and add-progress presentation when no add operation is running. It never pretends to cancel a Server job.
+- `tests/legion-tree-data-render-contract.test.js` protects the complete nine-class mapping, exact/full character names, main/alt state, five-character fade boundary, Server member order, branch-responsive columns, fallback presentation, authenticated add wrapper, main/alt request shapes, alt-only network-zero guard, duplicate-click lock, five-stage progress, reset, completion-bound tree reload, cache lineage, and no-browser-reconstruction boundary.
 
 ## Legion ranking unified panel
 

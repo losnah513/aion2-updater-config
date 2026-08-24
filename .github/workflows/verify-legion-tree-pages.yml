@@ -8,6 +8,7 @@ on:
       - "m/legion-tree/**"
       - "ui/kinojo-common-navigation.js"
       - "core/kinojo-route-guard.js"
+      - "core/kinojo-supabase-features.js"
       - "tests/legion-tree-data-render-contract.test.js"
       - ".github/workflows/verify-legion-tree-pages.yml"
   push:
@@ -45,6 +46,7 @@ jobs:
           set -euo pipefail
           node --check ui/kinojo-common-navigation.js
           node --check core/kinojo-route-guard.js
+          node --check core/kinojo-supabase-features.js
           node --check legion-tree/js/legion-tree.js
           node tests/legion-tree-data-render-contract.test.js
 
@@ -136,6 +138,7 @@ jobs:
             "legion-tree/js/legion-tree.js"
             "ui/kinojo-common-navigation.js"
             "core/kinojo-route-guard.js"
+            "core/kinojo-supabase-features.js"
             "ui/kinojo-event-notice.js"
             "home.html"
             "m/index.html"
