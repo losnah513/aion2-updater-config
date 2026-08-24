@@ -121,6 +121,7 @@
     if(tab==='notices'&&subtab==='event') loadEventNoticeGroups();
     if(tab==='images'&&subtab==='main') A.loadMainBannerManagement?.(force===true);
     if(tab==='images'&&subtab==='side') A.loadSideBannerManagement?.(force===true);
+    if(tab==='images'&&subtab==='events') A.loadBannerEventManagement?.(force===true);
     if(tab==='meter'&&isMaster()&&subtab==='logs') loadMeterDungeonLogs(1);
     if(tab==='meter'&&isMaster()&&subtab!=='logs') loadMeterAdminConsole();
     if(tab==='system'&&subtab==='server-status') refreshServerStatus();

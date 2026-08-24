@@ -236,6 +236,7 @@
 - 초안에는 원본과 편집 레이어를 유지한다. 전체 게시 시 원본과 콘텐츠를 별도 WebP 배너 한 장으로 합성·업로드·Server 검증하고, 공개 Manifest는 합성본만 반환한다. 합성본이 없거나 편집 뒤 stale이면 게시하지 않는다.
 - Stage 5 검토는 메인/사이드와 좌우별 순서·콘텐츠를 요약하고, 고정 초안 저장·전체 게시와 누락 설정 자동 이동·강조를 제공한다. v396 orphan cleanup은 원본·재사용 꾸밈·합성본을 함께 보호한다.
 - 사이드 `ALL` 독립 설정은 HOF 오른쪽을 제외한 13개 variant, HOF 단독은 LEFT 1개를 만든다. 좌·우 이미지는 2단계 선택 3장 안에서 별도로 제외·추가·정렬할 수 있다.
-- 캐시 기준은 `2026082411`이다. 전체 Node 테스트 `35/35`, PR source workflow 4종, 운영 파일 Git blob `4/4`, Edge health/Manifest/security 경계가 통과했다. 업데이트한 Chrome E2E harness는 이번 회차의 localhost URL 정책 때문에 실행하지 못했으므로 PASS로 기록하지 않는다.
+- Stage 5 캐시 기준은 `2026082411`이다. 전체 Node 테스트 `35/35`, PR source workflow 4종, 운영 파일 Git blob `4/4`, Edge health/Manifest/security 경계가 통과했다. 업데이트한 Chrome E2E harness는 이번 회차의 localhost URL 정책 때문에 실행하지 못했으므로 PASS로 기록하지 않는다.
+- Stage 6에서 DB398과 Edge v16/API2.0을 적용해 합성 업로드 idempotency table check 누락을 수정했다. 관리자 cache `2026082412`는 `이벤트 관리` 탭, 전체 이벤트 검색·상태 필터, 같은 종류 내 목록 정렬, 전체 게시 중지, 이름 확인 영구 삭제를 추가한다. 세부 내용은 `docs/BANNER_EVENT_MANAGER_STAGE6_20260824.md`를 기준으로 한다.
 - 최초 전체 게시의 합성 업로드 400은 v388 idempotency action 허용 목록에서 새 overlay/composite mutation 4종이 빠진 것이 원인이었다. PR `#252`와 DB397 migration으로 수정했으며 기존 초안은 보존한다.
 - 다음 구현 순서는 Stage 6 이벤트 목록, Stage 7 전환 효과·최종 반응형·접근성 통합 검증이다. 콘텐츠 실제 노출은 Stage 5 합성본으로 완료했다.

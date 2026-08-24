@@ -19,8 +19,8 @@ for(const token of [
   'Legacy campaigns remain BASE',
 ])assert.ok(migration.includes(token),`frequency migration token missing: ${token}`);
 
-assert.ok(edge.includes('V = "1.9"'),'Edge API version must be 1.9');
-assert.ok(edge.includes('DB = "397"'),'Edge DB contract must be 397');
+assert.ok(edge.includes('V = "2.0"'),'Edge API version must be 2.0');
+assert.ok(edge.includes('DB = "398"'),'Edge DB contract must be 398');
 assert.ok(edge.includes('rpc("kinojo_banner_manifest_v396"'),'Edge must read the weighted content manifest');
 assert.ok(edge.includes('"BASE_X1_5_X2" ? "BASE_X1_5_X2" : "BASE"'),'public frequency contract normalization missing');
 

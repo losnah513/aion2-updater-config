@@ -9,7 +9,7 @@ const tabs=fs.readFileSync(path.join(__dirname,'../admin/js/admin-banner-tabs.js
 const shared=fs.readFileSync(path.join(__dirname,'../admin/js/admin-shared.js'),'utf8');
 const bootstrap=fs.readFileSync(path.join(__dirname,'../admin/js/admin-bootstrap.js'),'utf8');
 const css=fs.readFileSync(path.join(__dirname,'../admin/css/admin.css'),'utf8');
-const CACHE='2026082411';
+const CACHE='2026082412';
 const adminPages=[
   fs.readFileSync(path.join(__dirname,'../admin/index.html'),'utf8'),
   fs.readFileSync(path.join(__dirname,'../m/admin/index.html'),'utf8'),
@@ -27,12 +27,14 @@ assert.ok(loader.includes(`v${CACHE}`),'loader generation must match entrypoint 
 assert.ok(loader.includes("searchParams.get('cache')"),'loader must inherit cache key from its own script URL');
 assert.ok(loader.includes("name+'?cache='+encodeURIComponent(CACHE)"),'child admin modules must inherit the loader cache key');
 assert.ok(loader.includes("'admin-banner-tabs.js'"),'banner tab module must be part of the admin loader');
+assert.ok(loader.includes("'admin-banner-events.js'"),'banner event manager must be part of the admin loader');
 assert.ok(loader.indexOf("'admin-banner-tabs.js'")<loader.indexOf("'admin-bootstrap.js'"),'banner tabs must register before admin navigation bootstrap');
 assert.equal(loader.includes("name+'?cache=2026082202'"),false,'stale fixed child-module cache must not remain');
-for(const token of ["nav.dataset.adminSubnav='images'",'data-admin-subtab="main"','data-admin-subtab="side"',"main.dataset.adminSubpane='main'","side.dataset.adminSubpane='side'"]) assert.ok(tabs.includes(token),`missing standard image subnavigation contract ${token}`);
+for(const token of ["nav.dataset.adminSubnav='images'",'data-admin-subtab="main"','data-admin-subtab="side"','data-admin-subtab="events"',"main.dataset.adminSubpane='main'","side.dataset.adminSubpane='side'","events.dataset.adminSubpane='events'"]) assert.ok(tabs.includes(token),`missing standard image subnavigation contract ${token}`);
 assert.ok(shared.includes("images:'main'"),'image management must have a standard default subtab');
 assert.ok(bootstrap.includes("if(tab==='images'&&subtab==='main')"),'main banner must load through the admin subtab router');
 assert.ok(bootstrap.includes("if(tab==='images'&&subtab==='side')"),'side banner must load through the admin subtab router');
+assert.ok(bootstrap.includes("if(tab==='images'&&subtab==='events')"),'event manager must load through the admin subtab router');
 assert.ok(bootstrap.includes("clone.removeAttribute('id')"),'top subnav clones must not duplicate source tab ids');
 assert.ok(bootstrap.includes("subpane.hidden=!on"),'tabpanel visibility must follow the selected admin subtab');
 assert.ok(css.includes('.admin-pane>.admin-subnav{display:none!important}'),'source subnav remains hidden because the visible tabs are rendered in the top subnav');
