@@ -26,9 +26,9 @@ function response(action,payload){
   if(action==='asset-list')return {ok:true,assets:clone(state.assets.filter(a=>payload.includeArchived!==false||a.status!=='ARCHIVED'))};
   if(action==='campaign-list')return {ok:true,campaigns:clone(state.campaigns)};
   if(action==='manifest')return clone(state.manifest);
-  if(action==='upload-prepare')return {ok:true,formatCode:'MAIN_16_9',upload:{bucket:'kinojo-site-banners',objectPath:'2035/01/11111111-2222-4333-8444-555555555555.png',uploadUrl:'http://127.0.0.1/storage/v1/object/upload/sign/kinojo-site-banners/2035/01/11111111-2222-4333-8444-555555555555.png?token=e2e',mimeType:'image/png',sizeBytes:payload.sizeBytes,upsert:false,expiresInSeconds:7200,activation:'BANNER_UPLOAD_COMPLETE_REQUIRED'}};
+  if(action==='upload-prepare')return {ok:true,formatCode:'MAIN_16_9',upload:{bucket:'kinojo-site-banners',objectPath:'2035/01/11111111-2222-4333-8444-555555555555.webp',uploadUrl:'http://127.0.0.1/storage/v1/object/upload/sign/kinojo-site-banners/2035/01/11111111-2222-4333-8444-555555555555.webp?token=e2e',mimeType:'image/webp',sizeBytes:payload.sizeBytes,upsert:false,expiresInSeconds:7200,activation:'BANNER_UPLOAD_COMPLETE_REQUIRED'}};
   if(action==='upload-complete'){
-    const a={assetId:101,sourceType:'STORAGE',objectPath:payload.objectPath,staticPath:null,mimeType:payload.mimeType,sizeBytes:payload.sizeBytes,width:160,height:90,formatCode:'MAIN_16_9',displayName:payload.displayName,originalFileName:payload.originalFileName,defaultAlt:payload.defaultAlt,status:'READY',referenceCount:0};
+    const a={assetId:101,sourceType:'STORAGE',objectPath:payload.objectPath,staticPath:null,mimeType:payload.mimeType,sizeBytes:payload.sizeBytes,width:1536,height:864,formatCode:'MAIN_16_9',displayName:payload.displayName,originalFileName:payload.originalFileName,defaultAlt:payload.defaultAlt,status:'READY',referenceCount:0};
     state.assets=[a];
     return {ok:true,asset:clone(a),image:{activation:'ASSET_READY',aspectValid:true}};
   }
@@ -46,6 +46,9 @@ function response(action,payload){
   }
   if(action==='campaign-pause'){
     const c=state.campaigns.find(x=>Number(x.campaignId)===Number(payload.campaignId));c.status='PAUSED';state.manifest={ok:true,active:false,reason:'NO_ACTIVE_CAMPAIGN',playlist:[]};return {ok:true,campaign:clone(c)};
+  }
+  if(action==='campaign-delete'){
+    const c=state.campaigns.find(x=>Number(x.campaignId)===Number(payload.campaignId));if(!c)throw Error('campaign missing');if(c.status==='PUBLISHED')throw Error('pause required');if(payload.expectedName!==c.name)throw Error('confirmation mismatch');state.campaigns=state.campaigns.filter(x=>Number(x.campaignId)!==Number(payload.campaignId));syncRefs();return {ok:true,campaignId:payload.campaignId,deletedItemCount:c.items?.length||0,permanent:true};
   }
   if(action==='asset-archive'){
     const a=state.assets.find(x=>Number(x.assetId)===Number(payload.assetId));if(!a)throw Error('asset missing');a.status='ARCHIVED';return {ok:true,asset:clone(a)};
@@ -123,15 +126,16 @@ async function run(){
     document.querySelector('#adminTopSubnav [data-admin-subtab="main"]').click();
     await waitFor(()=>!mainPanel.hidden&&sidePanel.hidden&&mainPanel.classList.contains('active'),'main banner tab return');
     if(location.hash!=='#images/main')throw Error('main banner return route mismatch');
-    const canvas=document.createElement('canvas');canvas.width=160;canvas.height=90;const ctx=canvas.getContext('2d');ctx.fillRect(0,0,160,90);
+    const canvas=document.createElement('canvas');canvas.width=200;canvas.height=300;const ctx=canvas.getContext('2d');ctx.fillRect(0,0,200,300);
     const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
     const file=new File([blob],'banner-e2e.png',{type:'image/png'}),dt=new DataTransfer();dt.items.add(file);document.querySelector('#bFile').files=dt.files;
     document.querySelector('#bUploadName').value='Chrome E2E Asset';document.querySelector('#bUploadAlt').value='Chrome E2E 배너';
     document.querySelector('#bUpload').click();
     await waitFor(()=>document.querySelector('#bUploadStatus')?.textContent.includes('등록 완료'),'upload complete');
-    if(!state.put||state.put.method!=='PUT'||state.put.upsert!=='false'||state.put.contentType!=='image/png')throw Error('signed PUT contract mismatch');
+    if(!state.put||state.put.method!=='PUT'||state.put.upsert!=='false'||state.put.contentType!=='image/webp')throw Error('signed PUT contract mismatch');
+    if(state.put.size<1)throw Error('converted WebP body missing');
     await waitFor(()=>document.querySelector('[data-b-check="101"]'),'uploaded asset in library');
-    const check=document.querySelector('[data-b-check="101"]');check.click();
+    const check=document.querySelector('[data-b-check="101"]');if(!check.checked)check.click();
     document.querySelector('#bName').value='Chrome E2E Campaign';fire(document.querySelector('#bName'),'input');
     document.querySelector('[data-b-publish]').click();
     await waitFor(()=>document.querySelector('#bCampaignStatus')?.textContent.includes('게시 완료'),'publish');
@@ -148,7 +152,12 @@ async function run(){
     document.querySelector('[data-b-asset-delete="101"]').click();
     await waitFor(()=>document.querySelector('#bUploadStatus')?.textContent.includes('삭제 완료'),'delete');
     if(state.assets.length!==0)throw Error('asset not deleted');
-    const required=['upload-prepare','upload-complete','campaign-create','campaign-publish','campaign-pause','campaign-update','asset-list','asset-archive','asset-delete'];
+    document.querySelector('[data-b-delete]').click();
+    await waitFor(()=>document.querySelector('[data-banner-delete-name]'),'campaign delete confirmation');
+    const deleteName=document.querySelector('[data-banner-delete-name]');deleteName.value='Chrome E2E Campaign';fire(deleteName,'input');document.querySelector('[data-banner-delete-confirm]').click();
+    await waitFor(()=>document.querySelector('#bCampaignStatus')?.textContent.includes('영구 삭제했습니다'),'campaign permanent delete');
+    if(mainCampaign())throw Error('campaign not permanently deleted');
+    const required=['upload-prepare','upload-complete','campaign-create','campaign-publish','campaign-pause','campaign-update','campaign-delete','asset-list','asset-archive','asset-delete'];
     for(const action of required)if(!state.calls.includes(action))throw Error('missing browser action '+action);
     if(state.calls.indexOf('asset-archive')>state.calls.indexOf('asset-delete'))throw Error('delete order mismatch');
     document.documentElement.dataset.e2eResult='PASS';document.querySelector('#e2eResult').textContent='PASS '+state.calls.join(' > ');

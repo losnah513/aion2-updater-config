@@ -25,6 +25,7 @@
       <button data-admin-tab="characters" type="button">🧍 캐릭터 관리</button>
       <button data-admin-tab="sanctuary" type="button">🏰 성역 관리 <span class="badge" id="adminSanctuaryRequestBadge">0</span></button>
       <button data-admin-tab="notices" type="button">📢 공지 관리</button>
+      <button data-admin-tab="images" data-admin-master-only type="button">🖼 이미지 관리</button>
       <button data-admin-tab="meter" data-admin-master-only type="button">📊 키노조 미터</button>
       <button data-admin-tab="system" type="button">⚙ 시스템 설정</button>
       <button data-admin-tab="logs" type="button">📋 로그 관리</button>
@@ -197,6 +198,7 @@
       <div class="admin-subpane active" data-admin-subpane="general"><section class="admin-card"><div class="admin-card-head"><div><h2>일반 공지</h2><p>하단 공지바에 표시할 공지를 작성합니다.</p></div><button class="admin-btn" id="noticeReloadBtn" type="button">목록 새로고침</button></div><div class="admin-form"><div class="admin-form-row"><select class="admin-select" id="noticeType"><option value="공지">공지</option><option value="알림">알림</option><option value="이벤트">이벤트</option></select><button class="admin-btn primary" id="noticeSaveBtn" type="button">공지 등록</button></div><textarea class="admin-textarea" id="noticeContent" placeholder="공지 내용을 입력하세요."></textarea></div><div id="noticeStatus" class="admin-statusline"></div><div class="admin-list" id="noticeList"></div></section></div>
       <div class="admin-subpane" data-admin-subpane="event"><section class="admin-card admin-event-notice-card"><div class="admin-card-head"><div><h2>이벤트 공지 관리</h2><p>페이지 진입 팝업에 표시할 이벤트 공지 묶음 목록입니다.</p></div><div class="admin-row-actions"><button class="admin-btn" id="eventNoticeReloadBtn" type="button">목록 새로고침</button><button class="admin-btn primary" id="eventNoticeCreateBtn" type="button">이벤트 공지 등록</button></div></div><div class="admin-form-row admin-event-notice-tools"><select class="admin-select" id="eventNoticeStatusFilter"><option value="ALL">전체 상태</option><option value="DRAFT">작성중</option><option value="SCHEDULED">예정</option><option value="ACTIVE">진행중</option><option value="PAUSED">일시중지</option><option value="EXPIRED">종료</option><option value="DELETED">삭제됨</option></select></div><div id="eventNoticeStatus" class="admin-statusline"></div><div class="admin-list admin-event-notice-list" id="eventNoticeList"><div class="admin-empty">이벤트 공지 목록을 불러오세요.</div></div></section></div>
     </section>
+    <section class="admin-pane" data-admin-pane="images" data-admin-master-only></section>
     <section class="admin-pane" data-admin-pane="meter" data-admin-master-only>
       <nav class="admin-subnav admin-meter-subnav" data-admin-subnav="meter" aria-label="키노조 미터 관리 하위 기능"><button class="active" data-admin-subtab="downloads" type="button">다운로드 관리</button><button data-admin-subtab="runtime" type="button">미터기 관리</button><button data-admin-subtab="statistics" type="button">통계 관리</button><button data-admin-subtab="notices" type="button">공지 관리</button><button data-admin-subtab="logs" type="button">로그 관리</button></nav>
 
@@ -407,6 +409,6 @@
 <script src="../core/kinojo-auth-session.js?cache=2026081801"></script>
 <script src="../core/kinojo-auth-service.js?cache=2026081801"></script>
 <script src="../core/kinojo-auth-ui.js?cache=2026082304"></script>
-<script src="./js/admin.js?cache=2026082404"></script>
+<script src="./js/admin.js?cache=2026082405"></script>
 </body>
 </html>
