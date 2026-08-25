@@ -19,8 +19,8 @@ const state={assets:[
   {assetId:2,sourceType:'STORAGE',objectPath:'2035/01/11111111-2222-4333-8444-000000000002.webp',mimeType:'image/webp',sizeBytes:13000,width:300,height:715,formatCode:'SIDE_300_715',displayName:'사이드 두 번째',originalFileName:'side-2.webp',defaultAlt:'사이드 두 번째',status:'READY',referenceCount:0},
   {assetId:3,sourceType:'STORAGE',objectPath:'2035/01/11111111-2222-4333-8444-000000000003.webp',mimeType:'image/webp',sizeBytes:14000,width:300,height:715,formatCode:'SIDE_300_715',displayName:'사이드 세 번째',originalFileName:'side-3.webp',defaultAlt:'사이드 세 번째',status:'READY',referenceCount:0}
 ],events:[
-  {eventGroupId:'aaaaaaaa-2222-4333-8444-000000000001',name:'첫 이벤트',type:'SIDE',sideMode:'INDEPENDENT',tags:['룩북'],status:'DRAFT',targetPages:['HOME'],campaignCount:2,itemCount:3,managerOrder:2,updatedAt:'2035-01-02T09:00:00+09:00'},
-  {eventGroupId:'aaaaaaaa-2222-4333-8444-000000000002',name:'두 번째 이벤트',type:'SIDE',sideMode:'SYNC',tags:['공지'],status:'PAUSED',targetPages:['HOME','RANKING'],campaignCount:2,itemCount:4,managerOrder:1,updatedAt:'2035-01-01T09:00:00+09:00'}
+  {eventGroupId:'aaaaaaaa-2222-4333-8444-000000000001',name:'첫 이벤트',type:'SIDE',sideMode:'INDEPENDENT',tags:['룩북'],status:'DRAFT',playbackMode:'ORDERED',targetPages:['HOME'],campaignCount:2,itemCount:3,managerOrder:2,updatedAt:'2035-01-02T09:00:00+09:00'},
+  {eventGroupId:'aaaaaaaa-2222-4333-8444-000000000002',name:'두 번째 이벤트',type:'SIDE',sideMode:'SYNC',tags:['공지'],status:'PAUSED',playbackMode:'ORDERED',targetPages:['HOME','RANKING'],campaignCount:2,itemCount:4,managerOrder:1,updatedAt:'2035-01-01T09:00:00+09:00'}
 ],campaigns:[],manifest:{ok:true,active:false,reason:'NO_ACTIVE_CAMPAIGN',playlist:[]},calls:[],puts:[],nextCampaign:501,nextAsset:101};
 const clone=v=>JSON.parse(JSON.stringify(v));
 function syncRefs(){for(const a of state.assets)a.referenceCount=state.campaigns.reduce((n,c)=>n+(c.items||[]).filter(i=>Number(i.assetId)===Number(a.assetId)).length,0)}
@@ -43,6 +43,7 @@ function response(action,payload){
   }
   if(action==='event-save')return {ok:true,eventGroupId:'11111111-2222-4333-8444-555555555555',savedCampaignIds:[901],event:{name:payload.event.name,status:'DRAFT',campaigns:clone(payload.event.variants)}};
   if(action==='event-publish')return {ok:true,eventGroupId:payload.eventGroupId,publishedCampaignCount:1,event:{status:'PUBLISHED'}};
+  if(action==='event-playback'){const item=state.events.find(event=>event.eventGroupId===payload.eventGroupId);if(!item)throw Error('event missing');item.playbackMode=payload.playbackMode;return {ok:true,eventGroupId:payload.eventGroupId,playbackMode:item.playbackMode,updatedCampaignCount:item.campaignCount,event:clone(item)};}
   if(action==='event-move'){const index=state.events.findIndex(item=>item.eventGroupId===payload.eventGroupId),next=payload.direction==='UP'?index-1:index+1;if(index>=0&&next>=0&&next<state.events.length){const hold=state.events[index];state.events[index]=state.events[next];state.events[next]=hold}return {ok:true,eventGroupId:payload.eventGroupId,direction:payload.direction,moved:index!==next,event:clone(state.events.find(item=>item.eventGroupId===payload.eventGroupId))};}
   if(action==='campaign-create'){
     const c={campaignId:state.nextCampaign++,status:'DRAFT',...clone(payload.campaign)};state.campaigns.push(c);syncRefs();return {ok:true,campaign:clone(c)};
@@ -227,6 +228,12 @@ async function run(){
     await waitFor(()=>eventsPanel.classList.contains('active')&&!eventsPanel.hidden&&document.querySelectorAll('[data-banner-events-admin] [data-bem-event]').length===2,'event manager list load');
     if(location.hash!=='#images/events')throw Error('event manager route mismatch');
     if(!document.querySelector('[data-banner-events-admin]')?.textContent.includes('등록 이벤트 목록'))throw Error('event manager heading missing');
+    const playback=document.querySelector('[data-banner-events-admin] [data-bem-playback]');
+    if(!playback||playback.checked)throw Error('ordered playback switch state missing');
+    if(!playback.closest('.kinojo-filter-switch')?.textContent.includes('순차')||!playback.closest('.kinojo-filter-switch')?.textContent.includes('랜덤'))throw Error('shared playback switch labels missing');
+    playback.checked=true;fire(playback,'change');
+    await waitFor(()=>state.calls.includes('event-playback'),'event manager playback mutation');
+    if(state.events[0].playbackMode!=='RANDOM')throw Error('random playback state missing');
     document.querySelector('[data-banner-events-admin] [data-bem-move="DOWN"]:not(:disabled)')?.click();
     await waitFor(()=>state.calls.includes('event-move'),'event manager order mutation');
     document.documentElement.dataset.e2eResult='PASS';document.querySelector('#e2eResult').textContent='PASS '+state.calls.join(' > ');
