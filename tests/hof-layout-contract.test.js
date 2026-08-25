@@ -99,9 +99,9 @@ assert.equal(myRankingRender.includes('hof-v2-title-icon'), false, 'My Ranking t
 assert.equal(myRankingRender.includes('scopeLabel'), false, 'My Ranking scope subtitle must be removed');
 assert.equal(myRankingRender.includes('hof-v2-my-current-grid'), false, 'My Ranking must use one unified single-row list');
 assert.ok(myRankingRender.includes("'<div class=\"hof-v2-my-profile\">'+hofRankPortrait(item,0,'my')+'<strong>'"), 'My Ranking profile block must contain only the rectangular profile and name');
-assert.ok(myRankingRender.includes("const metrics=['pve','pvp','enhance','growth']"), 'My Ranking must retain only PVE, PVP, Enhance God, and Growth God');
-assert.equal(myRankingRender.includes("['좋아요','like']"), false, 'Retired Like row must be removed from My Ranking');
-assert.equal(myRankingRender.includes("['싫어요','dislike']"), false, 'Retired Dislike row must be removed from My Ranking');
+assert.ok(myRankingRender.includes("const metrics=['pve','pvp','enhance','growth','like','dislike']"), 'My Ranking must expose the complete six-metric snapshot contract');
+assert.ok(myRankingRender.includes("['좋아요','like']"), 'My Ranking must expose the Like metric');
+assert.ok(myRankingRender.includes("['싫어요','dislike']"), 'My Ranking must expose the Dislike metric');
 assert.ok(myRankingRender.includes('hof-v2-my-mode-badge'), 'My Ranking PVE/PVP labels must use colored badges');
 assert.ok(myRankingRender.includes('hof-v2-my-stats'), 'My Ranking must visually separate combat power and item level');
 assert.ok(myRankingRender.includes('>전투력</dt>') && myRankingRender.includes('>아이템레벨</dt>'), 'My Ranking stat labels must remain clearly visible');
@@ -113,8 +113,8 @@ assert.match(css,/hof-v2-my-god-row\{[\s\S]*?grid-template-columns:30px minmax\(
 
 for (const entry of ['hof/index.html', 'm/hof/index.html']) {
   const html = read(entry);
-  assert.ok(html.includes('hall.css?cache=2026082206'), `${entry}: Hall CSS cache key was not updated`);
-  assert.ok(html.includes('hall-render.js?cache=2026082202'), `${entry}: Hall render cache key was not updated`);
+  assert.ok(html.includes('hall.css?cache=2026082501'), `${entry}: Hall CSS cache key was not updated`);
+  assert.ok(html.includes('hall-render.js?cache=2026082501'), `${entry}: Hall render cache key was not updated`);\n  assert.ok(html.includes('hall-data.js?cache=2026082501'), `${entry}: Hall data cache key was not updated`);\n  assert.ok(html.includes('app.js?cache=2026082501'), `${entry}: Hall app cache key was not updated`);
 }
 
 console.log('KINOJO Hall of Fame reference layout contract: PASS');
