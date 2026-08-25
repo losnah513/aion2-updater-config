@@ -7,6 +7,8 @@
   'use strict';
   const Ranking = window.KinojoRanking = window.KinojoRanking || {};
   const U = Ranking.utils;
+  const LAST_GOOD_PREFIX = 'kinojo_ranking_last_good_v398';
+  const LAST_GOOD_TTL_MS = 24 * 60 * 60 * 1000;
 
   const state = {
     page: 1,
@@ -22,6 +24,24 @@
 
   function cacheKey(page){
     return ['ranking', Number(page || state.page), state.pageSize, state.className, state.search, state.includeSubs ? 'subs' : 'main', state.includeAllLegions ? 'all-legions' : 'default-legions'].join('::');
+  }
+  function lastGoodKey(page){ return LAST_GOOD_PREFIX+'::'+cacheKey(page); }
+  function readLastGood(page){
+    try{
+      const raw = sessionStorage.getItem(lastGoodKey(page));
+      if(!raw) return null;
+      const saved = JSON.parse(raw);
+      if(!saved?.savedAt || !saved?.data || Date.now()-saved.savedAt>LAST_GOOD_TTL_MS){
+        sessionStorage.removeItem(lastGoodKey(page));
+        return null;
+      }
+      return saved.data;
+    }catch(_err){ return null; }
+  }
+  function writeLastGood(page,data){
+    if(!data || data.ok===false) return data;
+    try{ sessionStorage.setItem(lastGoodKey(page),JSON.stringify({savedAt:Date.now(),data})); }catch(_err){}
+    return data;
   }
   function readCache(page){
     if(!window.KinojoCache) return null;
@@ -46,7 +66,9 @@
       pvpItems: rows(current, 'PVP').concat(rows(next, 'PVP')),
       pveTotalCount: total(next, 'PVE') || total(current, 'PVE'),
       pvpTotalCount: total(next, 'PVP') || total(current, 'PVP'),
-      classCounts: next?.classCounts || current?.classCounts || {}
+      classCounts: next?.classCounts || current?.classCounts || {},
+      _kinojoStale: current?._kinojoStale===true || next?._kinojoStale===true,
+      _kinojoStaleReason: next?._kinojoStaleReason || current?._kinojoStaleReason || ''
     });
   }
   function publishServerTime(data){
@@ -55,11 +77,12 @@
       .filter(Boolean)
       .sort((a,b)=>new Date(b)-new Date(a));
     const value=data?.updatedAt||data?.generatedAt||candidates[0];
-    if(value)window.dispatchEvent(new CustomEvent('kinojo:page-time',{detail:{value,label:'최종 조회'}}));
+    if(value)window.dispatchEvent(new CustomEvent('kinojo:page-time',{detail:{value,label:data?._kinojoStale?'저장된 조회':'최종 조회'}}));
   }
-  async function fetchPage(page){
+  function delay(ms){ return new Promise(resolve=>setTimeout(resolve,ms)); }
+  async function fetchPage(page,{force=false}={}){
     const pageNo = Math.max(1, Number(page || 1));
-    const cached = readCache(pageNo);
+    const cached = force ? null : readCache(pageNo);
     if(cached){publishServerTime(cached);return cached;}
     if(!window.KinojoSupabase || typeof window.KinojoSupabase.rpc !== 'function'){
       throw new Error('Server Engine 연결을 확인해 주세요.');
@@ -72,14 +95,32 @@
       p_class_name: state.className,
       p_search: state.search
     };
-    const data = await window.KinojoSupabase.rpc('kinojo_web_get_legion_ranking', params);
-    if(!data || data.ok === false) throw new Error(data?.message || data?.error || '레기온 순위 응답이 실패했습니다.');
-    publishServerTime(data);
-    return writeCache(pageNo, data);
+    let lastError = null;
+    for(const wait of [0,350,900]){
+      if(wait) await delay(wait);
+      try{
+        const data = await window.KinojoSupabase.rpc('kinojo_web_get_legion_ranking', params);
+        if(!data || data.ok === false) throw new Error(data?.message || data?.error || '레기온 순위 응답이 실패했습니다.');
+        const fresh = Object.assign({},data,{_kinojoStale:false,_kinojoStaleReason:''});
+        writeLastGood(pageNo,fresh);
+        publishServerTime(fresh);
+        return writeCache(pageNo,fresh);
+      }catch(err){ lastError=err; }
+    }
+    const fallback = readLastGood(pageNo);
+    if(fallback){
+      const stale = Object.assign({},fallback,{
+        _kinojoStale:true,
+        _kinojoStaleReason:String(lastError?.message||'최신 스냅샷 조회 실패')
+      });
+      publishServerTime(stale);
+      return stale;
+    }
+    throw lastError || new Error('레기온 순위를 불러오지 못했습니다.');
   }
   async function fetchRanking(options){
     const append = !!options?.append;
-    const pageData = await fetchPage(state.page);
+    const pageData = await fetchPage(state.page,{force:!!options?.force});
     return append ? mergePageData(state.data, pageData) : pageData;
   }
   function totalPages(){

@@ -29,11 +29,20 @@
       return '<button type="button" class="ranking-class-tab '+(D.state.className === cls ? 'is-active' : '')+'" data-class="'+U.escapeHtml(cls)+'">'+U.escapeHtml(cls)+U.escapeHtml(count)+'</button>';
     }).join('');
   }
+  function freshnessHtml(data){
+    if(data?._kinojoStale!==true) return '';
+    const generated = data?.generatedAt ? new Date(data.generatedAt).toLocaleString('ko-KR') : '';
+    return '<div class="ranking-stale-notice" role="status">'
+      + '<span><strong>저장된 순위를 표시 중입니다.</strong>'+(generated?' 스냅샷 '+U.escapeHtml(generated):'')+'</span>'
+      + '<button type="button" data-ranking-retry>최신 순위 다시 조회</button>'
+      + '</div>';
+  }
   function render(){
     const board = U.$('rankingBoard');
     if(!board) return;
     const d = D.state.data || {};
-    board.innerHTML = panelHtml('PVE', d.pveItems || [], d.pveTotalCount || 0) + panelHtml('PVP', d.pvpItems || [], d.pvpTotalCount || 0);
+    board.innerHTML = freshnessHtml(d) + panelHtml('PVE', d.pveItems || [], d.pveTotalCount || 0) + panelHtml('PVP', d.pvpItems || [], d.pvpTotalCount || 0);
+    board.classList.toggle('is-stale',d?._kinojoStale===true);
     board.dataset.mobileMode = D.state.mobileMode;
     board.setAttribute('aria-busy','false');
     window.KinojoStagedLoading?.ready?.('#rankingBoard');
@@ -42,6 +51,7 @@
   function renderLoading(){
     const board = U.$('rankingBoard');
     if(board){
+      board.classList.remove('is-stale');
       board.setAttribute('aria-busy','true');
       board.innerHTML = '<div class="ranking-loading"><span class="kinojo-spinner"><span></span></span><span>레기온 전체 순위를 불러오는 중...</span></div>';
     }
@@ -50,6 +60,7 @@
   function renderError(err){
     const board = U.$('rankingBoard');
     if(board){
+      board.classList.remove('is-stale');
       board.setAttribute('aria-busy','false');
       board.innerHTML = '<div class="ranking-empty error">레기온 전체 순위를 불러오지 못했습니다.<br>'+U.escapeHtml(err.message || err)+'</div>';
     }
