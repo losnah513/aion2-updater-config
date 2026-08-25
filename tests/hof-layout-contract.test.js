@@ -114,7 +114,9 @@ assert.match(css,/hof-v2-my-god-row\{[\s\S]*?grid-template-columns:30px minmax\(
 for (const entry of ['hof/index.html', 'm/hof/index.html']) {
   const html = read(entry);
   assert.ok(html.includes('hall.css?cache=2026082501'), `${entry}: Hall CSS cache key was not updated`);
-  assert.ok(html.includes('hall-render.js?cache=2026082501'), `${entry}: Hall render cache key was not updated`);\n  assert.ok(html.includes('hall-data.js?cache=2026082501'), `${entry}: Hall data cache key was not updated`);\n  assert.ok(html.includes('app.js?cache=2026082501'), `${entry}: Hall app cache key was not updated`);
+  assert.ok(html.includes('hall-render.js?cache=2026082501'), `${entry}: Hall render cache key was not updated`);
+  assert.ok(html.includes('hall-data.js?cache=2026082501'), `${entry}: Hall data cache key was not updated`);
+  assert.ok(html.includes('app.js?cache=2026082501'), `${entry}: Hall app cache key was not updated`);
 }
 
 console.log('KINOJO Hall of Fame reference layout contract: PASS');
