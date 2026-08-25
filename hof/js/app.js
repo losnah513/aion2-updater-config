@@ -58,6 +58,9 @@
   window.__KINOJO_HALL_INIT_DONE__=true;
 
   bindHallStaticEvents();
-  window.addEventListener('kinojo:auth-changed',()=>window.reloadHallAfterAuthChange?.());
+  window.addEventListener('kinojo:auth-changed',()=>{
+    window.clearHallPersonalRankingCache?.();
+    window.reloadHallAfterAuthChange?.();
+  });
   load();
 })();

@@ -271,3 +271,7 @@
   .ranking-card-main{grid-template-columns:28px 29px minmax(0,1fr) 58px 58px}
   .ranking-owner-note,.ranking-main-badge{display:none}
 }
+@media (max-width:699px){
+  .ranking-stale-notice{align-items:flex-start;flex-direction:column;gap:6px;padding:8px 10px;font-size:10px}
+  .ranking-stale-notice button{align-self:flex-end}
+}

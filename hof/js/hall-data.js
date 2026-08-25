@@ -63,12 +63,17 @@ function preloadImages(paths){
 
 const HALL_CACHE_PREFIX="kinojo_hall_summary_cache_v2026080204";
 const HALL_STALE_PREFIX="kinojo_hall_summary_stale_v2026080204";
+const HALL_PERSONAL_PREFIX="kinojo_hall_personal_last_good_v398";
+const HALL_PERSONAL_TTL_MS=24*60*60*1000;
 function hallCacheKey(){return HALL_CACHE_PREFIX+"::"+(includeSubs?"subs":"main")+"::"+(includeAllLegions?"all-legions":"default-legions");}
 const HALL_CACHE_TTL_MS=5*60*1000;
 const HALL_STALE_TTL_MS=24*60*60*1000;
 let hallLoadRequestSeq=0;
 let hallLoadInFlight=null;
 let hallAuthReloadTimer=null;
+let hallPersonalRequestSeq=0;
+let hallPersonalAccountKey="";
+let hallPersonalState={status:"idle",message:""};
 
 function readStoredHallCache(storage,prefix,maxAge){
   try{
@@ -90,6 +95,61 @@ function writeHallCache(data){
     const staleKey=HALL_STALE_PREFIX+"::"+(includeSubs?"subs":"main")+"::"+(includeAllLegions?"all-legions":"default-legions");
     localStorage.setItem(staleKey,wrapped);
   }catch(_err){}
+}
+
+function hallPersonalIdentityKey(){
+  const session=window.KinojoAuth?.getSession?.()||{};
+  const account=window.KinojoAuth?.getAccount?.()||{};
+  const value=[account.memberId,account.id,session.memberId,session.accountId,hofSessionName()]
+    .map(item=>String(item||"").trim()).find(Boolean)||"";
+  return hofNormalizeName(value);
+}
+function hallPersonalCacheKey(accountKey=hallPersonalIdentityKey()){
+  if(!accountKey)return "";
+  return HALL_PERSONAL_PREFIX+"::"+accountKey+"::"+(includeSubs?"subs":"main")+"::"+(includeAllLegions?"all-legions":"default-legions");
+}
+function readHallPersonalLastGood(){
+  try{
+    const key=hallPersonalCacheKey();
+    const raw=key?sessionStorage.getItem(key):"";
+    if(!raw)return null;
+    const saved=JSON.parse(raw);
+    if(!saved?.savedAt||!saved?.data||Date.now()-saved.savedAt>HALL_PERSONAL_TTL_MS){
+      sessionStorage.removeItem(key);
+      return null;
+    }
+    return saved.data;
+  }catch(_err){return null;}
+}
+function writeHallPersonalLastGood(data){
+  if(!data||data.ok===false||data.authenticated!==true)return;
+  try{
+    const key=hallPersonalCacheKey();
+    if(key)sessionStorage.setItem(key,JSON.stringify({savedAt:Date.now(),data}));
+  }catch(_err){}
+}
+function clearHallPersonalRankingCache(){
+  hallPersonalRequestSeq++;
+  hallPersonalAccountKey="";
+  hallPersonalState={status:"idle",message:""};
+  try{
+    for(let index=sessionStorage.length-1;index>=0;index--){
+      const key=sessionStorage.key(index)||"";
+      if(key.startsWith(HALL_PERSONAL_PREFIX+"::"))sessionStorage.removeItem(key);
+    }
+  }catch(_err){}
+  if(hallData)hallData={...hallData,myRanking:null};
+  renderHallPersonalSlot();
+}
+function hallPersonalHasAggregate(data){
+  return ['enhance','pve','pvp','like','dislike','growth']
+    .some(metric=>Number(data?.[metric]?.rank||0)>0);
+}
+function renderHallPersonalSlot(){
+  if(document.getElementById('hallSlotMyRank')){
+    setHallSlot('hallSlotMyRank',hofMyRankingPanel());
+    bindHallAfterSlot();
+  }
 }
 
 function hallDataSignature(data){
@@ -141,28 +201,59 @@ function hallSessionCredential(){
   return String(session.token||"").trim();
 }
 async function refreshHallPersonalRanking(requestSeq=hallLoadRequestSeq){
+  const accountKey=hallPersonalIdentityKey();
+  if(!hallPersonalAccountKey){
+    hallPersonalAccountKey=accountKey;
+  }else if(accountKey!==hallPersonalAccountKey){
+    clearHallPersonalRankingCache();
+    hallPersonalAccountKey=accountKey;
+  }
+  const personalSeq=++hallPersonalRequestSeq;
+  const credential=hallSessionCredential();
+  if(!credential){
+    hallPersonalState={status:"signed-out",message:""};
+    if(hallData)hallData={...hallData,myRanking:null};
+    renderHallPersonalSlot();
+    return false;
+  }
+  hallPersonalState={status:"loading",message:"내 랭킹 집계를 불러오는 중입니다."};
+  if(hallData)hallData={...hallData,myRanking:null};
+  renderHallPersonalSlot();
   window.KinojoStagedLoading?.region?.('#hallSlotMyRank','내 랭킹');
   let lastError=null;
   try{
     let personal=null;
-    for(const wait of [0,350,800,1600,2800]){
+    for(const wait of [0,350,900]){
       if(wait)await hallDelay(wait);
-      const credential=hallSessionCredential();
-      if(!credential){lastError=new Error('로그인 정보를 불러오는 중입니다.');continue;}
+      if(hallSessionCredential()!==credential)throw new Error('로그인 세션이 변경되었습니다.');
       try{
         personal=await window.KinojoSupabase.rpc("kinojo_web_get_my_hof_ranking_v329",{p_credential:credential,p_include_subs:!!includeSubs,p_include_all_legions:!!includeAllLegions});
-        if(personal&&personal.ok!==false)break;
+        if(personal&&personal.ok!==false&&personal.authenticated===true)break;
         lastError=new Error(personal?.message||"내 랭킹 응답을 확인하지 못했습니다.");
       }catch(error){lastError=error;}
     }
-    if(requestSeq!==hallLoadRequestSeq)return false;
-    if(!personal||personal.ok===false)throw lastError||new Error(personal?.message||"내 랭킹을 불러오지 못했습니다.");
+    if(requestSeq!==hallLoadRequestSeq||personalSeq!==hallPersonalRequestSeq)return false;
+    if(!personal||personal.ok===false||personal.authenticated!==true)throw lastError||new Error(personal?.message||"내 랭킹을 불러오지 못했습니다.");
+    if(String(personal.snapshotId||'')!==String(hallData?.snapshotId||''))throw new Error('공개 랭킹과 내 랭킹 스냅샷이 일치하지 않습니다.');
     hallData={...hallData,myRanking:personal};
-    setHallSlot('hallSlotMyRank',hofMyRankingPanel());
-    bindHallAfterSlot();
+    hallPersonalState=hallPersonalHasAggregate(personal)
+      ?{status:"ready",message:""}
+      :{status:"empty",message:"이번 스냅샷에 집계된 내 순위가 없습니다."};
+    writeHallPersonalLastGood(personal);
+    renderHallPersonalSlot();
     return true;
   }catch(err){lastError=err;}
-  if(requestSeq===hallLoadRequestSeq)setHallSlot('hallSlotMyRank',hofMyRankingPanel());
+  if(requestSeq!==hallLoadRequestSeq||personalSeq!==hallPersonalRequestSeq)return false;
+  const fallback=readHallPersonalLastGood();
+  if(fallback){
+    hallData={...hallData,myRanking:fallback};
+    hallPersonalState={status:"stale",message:"최신 조회에 실패해 이 세션의 마지막 정상 집계를 표시합니다."};
+    renderHallPersonalSlot();
+    console.warn("KINOJO Hall personal ranking refresh failed; session fallback retained:",lastError);
+    return true;
+  }
+  hallPersonalState={status:"error",message:"내 랭킹을 불러오지 못했습니다."};
+  renderHallPersonalSlot();
   window.KinojoStagedLoading?.failed?.('#hallSlotMyRank');
   console.warn("KINOJO Hall personal ranking load failed:",lastError);
   return false;
@@ -185,7 +276,11 @@ async function load({force=false}={}){
     return true;
   }catch(err){
     if(requestSeq!==hallLoadRequestSeq)return false;
-    if(fallback){console.warn("KINOJO Hall refresh failed; fallback retained:",err);return true;}
+    if(fallback){
+      console.warn("KINOJO Hall refresh failed; fallback retained:",err);
+      void refreshHallPersonalRanking(requestSeq);
+      return true;
+    }
     stopLoadingText();
     app.className="";
     app.innerHTML='<div class="hof-v2-load-error"><strong>명예의 전당 데이터를 불러오지 못했습니다.</strong><span>'+escapeHtml(err.message||err)+'</span><button type="button" onclick="load({force:true})">다시 불러오기</button></div>';
@@ -197,3 +292,4 @@ async function reloadHallAfterAuthChange(){
   return new Promise(resolve=>{hallAuthReloadTimer=setTimeout(()=>resolve(refreshHallPersonalRanking(hallLoadRequestSeq)),350);});
 }
 window.reloadHallAfterAuthChange=reloadHallAfterAuthChange;
+window.clearHallPersonalRankingCache=clearHallPersonalRankingCache;

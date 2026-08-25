@@ -3003,3 +3003,44 @@ body.kinojo-page-hall .hof-v2-my-god-row>b{
     flex-basis:clamp(16px,5.2vw,30px)!important;
   }
 }
+body.kinojo-page-hall .hof-v2-my-state{
+  display:grid;
+  justify-items:center;
+  gap:7px;
+  margin:8px 10px 0;
+  padding:12px 10px;
+  border:1px solid rgba(37,99,235,.16);
+  border-radius:8px;
+  background:#f8fbff;
+  color:#64748b;
+  text-align:center;
+  font-size:10px;
+  line-height:1.45;
+}
+body.kinojo-page-hall .hof-v2-my-state strong{color:#334155;font-size:11px}
+body.kinojo-page-hall .hof-v2-my-state button{
+  border:1px solid rgba(37,99,235,.26);
+  border-radius:999px;
+  padding:5px 10px;
+  background:#fff;
+  color:#1d4ed8;
+  font-size:9px;
+  font-weight:1000;
+  cursor:pointer;
+}
+body.kinojo-page-hall .hof-v2-my-state.is-stale{
+  border-color:rgba(180,83,9,.22);
+  background:#fffbeb;
+  color:#92400e;
+}
+body.kinojo-page-hall .hof-v2-my-state.is-stale strong{color:#92400e}
+body.kinojo-page-hall .hof-v2-my-rank.is-stale{box-shadow:inset 0 3px 0 #d97706!important}
+
+@media (min-width:761px) and (max-width:1180px){
+  body.kinojo-page-hall .hof-v2-my-list{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px!important}
+  body.kinojo-page-hall .hof-v2-my-state{margin:6px;padding:9px 6px;font-size:8px}
+  body.kinojo-page-hall .hof-v2-my-state strong{font-size:9px}
+  body.kinojo-page-hall .hof-v2-my-god-row>div>strong{font-size:8px!important}
+  body.kinojo-page-hall .hof-v2-my-god-row>div>span,
+  body.kinojo-page-hall .hof-v2-my-god-row>b{font-size:8px!important}
+}

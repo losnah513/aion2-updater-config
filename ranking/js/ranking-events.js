@@ -218,7 +218,7 @@
     if(append) board?.classList.add('is-appending');
     else Ranking.render.renderLoading();
     try{
-      D.state.data = await D.fetchRanking({ append });
+      D.state.data = await D.fetchRanking({ append, force:!!options?.force });
       Ranking.render.render();
       bindDynamicEvents();
       requestAnimationFrame(restoreScrollPositions);
@@ -271,6 +271,8 @@
   }
 
   function bindDynamicEvents(){
+    const retry = document.querySelector('[data-ranking-retry]');
+    if(retry) retry.onclick = () => loadRanking({force:true});
     const tabs = U.$('rankingClassTabs');
     if(tabs){
       tabs.querySelectorAll('button').forEach(btn => {

@@ -351,10 +351,16 @@ function hofV2Layout(){
 }
 function hofMyRankingPanel(){
   const isLoggedIn=!!(window.KinojoAuth&&typeof window.KinojoAuth.getSession==='function'&&window.KinojoAuth.getSession());
+  const personalState=typeof hallPersonalState!=='undefined'?hallPersonalState:{status:'idle',message:''};
+  const personalStatus=personalState?.status||'idle';
+  const isLoading=isLoggedIn&&(personalStatus==='idle'||personalStatus==='loading');
+  const isFailure=isLoggedIn&&personalStatus==='error';
+  const isEmpty=isLoggedIn&&personalStatus==='empty';
+  const isStale=isLoggedIn&&personalStatus==='stale';
   const myName=hofSessionName();
-  const metrics=['pve','pvp','enhance','growth'];
+  const metrics=['pve','pvp','enhance','growth','like','dislike'];
   const foundByMetric={};
-  metrics.forEach(metric=>{foundByMetric[metric]=isLoggedIn?hofFindMyMetric(metric):null;});
+  metrics.forEach(metric=>{foundByMetric[metric]=isLoggedIn&&!isLoading&&!isFailure?hofFindMyMetric(metric):null;});
   const profileMetric=metrics.find(metric=>foundByMetric[metric]?.item);
   const item=profileMetric?foundByMetric[profileMetric].item:null;
   const displayName=hofCharName(item)||myName||'내 캐릭터';
@@ -374,19 +380,26 @@ function hofMyRankingPanel(){
       + '</dl>'
       + '</section>';
   }).join('');
-  const secondaryRows=[['강화의 신','enhance'],['성장의 신','growth']];
+  const secondaryRows=[['강화의 신','enhance'],['성장의 신','growth'],['좋아요','like'],['싫어요','dislike']];
   const secondaryHtml=secondaryRows.map(([title,metric])=>{
     const found=foundByMetric[metric];
     return '<div class="hof-v2-my-row hof-v2-my-god-row '+hofBackgroundClass(metric)+(found?' is-found':'')+'" data-hof-metric="'+metric+'">'
       + '<span class="hof-v2-my-metric-icon">'+hofMetricIconHtml(metric)+'</span>'
-      + '<div><strong>'+escapeHtml(title)+'</strong><span>'+(found?Number(found.rank).toLocaleString('ko-KR')+'위':'순위 없음')+'</span></div>'
+      + '<div><strong>'+escapeHtml(title)+'</strong><span>'+(found?Number(found.rank).toLocaleString('ko-KR')+'위':'집계 없음')+'</span></div>'
       + '<b>'+escapeHtml(found?found.score:'-')+'</b>'
       + '</div>';
   }).join('');
-  return '<aside class="hof-v2-panel hof-v2-my-rank">'
+  const stateHtml=!isLoggedIn?''
+    :isLoading?'<div class="hof-v2-my-state is-loading" role="status">'+kinojoCardSpinner('내 랭킹 집계를 불러오는 중')+'</div>'
+    :isFailure?'<div class="hof-v2-my-state is-error" role="alert"><strong>내 랭킹을 불러오지 못했습니다.</strong><button type="button" onclick="reloadHallAfterAuthChange()">다시 조회</button></div>'
+    :isEmpty?'<div class="hof-v2-my-state is-empty" role="status"><strong>집계된 내 순위가 없습니다.</strong><span>현재 스냅샷과 선택한 랭킹 범위를 확인해 주세요.</span></div>'
+    :isStale?'<div class="hof-v2-my-state is-stale" role="status"><strong>저장된 내 랭킹</strong><span>'+escapeHtml(personalState.message||'최신 조회에 실패해 마지막 정상 집계를 표시합니다.')+'</span><button type="button" onclick="reloadHallAfterAuthChange()">다시 조회</button></div>'
+    :'';
+  return '<aside class="hof-v2-panel hof-v2-my-rank'+(isStale?' is-stale':'')+'">'
     + '<div class="hof-v2-my-head"><h2>내 랭킹</h2></div>'
     + (!isLoggedIn?'<div class="hof-v2-login-guide"><span>🔒</span><strong>로그인 후 나의 랭킹을 확인하세요.</strong><button id="hofMyRankingLoginBtn" type="button">로그인</button></div>':'')
-    + (isLoggedIn?'<div class="hof-v2-my-profile">'+hofRankPortrait(item,0,'my')+'<strong>'+escapeHtml(displayName)+'</strong></div><div class="hof-v2-my-list">'+primaryHtml+secondaryHtml+'</div>':'')
+    + stateHtml
+    + (isLoggedIn&&!isLoading&&!isFailure&&!isEmpty?'<div class="hof-v2-my-profile">'+hofRankPortrait(item,0,'my')+'<strong>'+escapeHtml(displayName)+'</strong></div><div class="hof-v2-my-list">'+primaryHtml+secondaryHtml+'</div>':'')
     + '</aside>';
 }
 function setHallSlot(id,html){

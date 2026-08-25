@@ -12,8 +12,11 @@ for (const file of ['ranking/index.html','m/ranking/index.html']) {
   assert.equal(html.includes('id="rankingLoadMore"'), false, `${file}: global load-more control remains`);
   assert.equal((html.match(/data-mobile-mode="PVE"/g) || []).length, 1, `${file}: PVE mobile tab count mismatch`);
   assert.equal((html.match(/data-mobile-mode="PVP"/g) || []).length, 1, `${file}: PVP mobile tab count mismatch`);
-  assert.ok(html.includes('ranking.css?cache=2026082123'), `${file}: ranking CSS cache key missing`);
-  assert.ok(html.includes('ranking-responsive.css?cache=2026082123'), `${file}: responsive CSS cache key missing`);
+  assert.ok(html.includes('ranking.css?cache=2026082501'), `${file}: ranking CSS cache key missing`);
+  assert.ok(html.includes('ranking-responsive.css?cache=2026082501'), `${file}: responsive CSS cache key missing`);
+  assert.ok(html.includes('ranking-data.js?cache=2026082501'), `${file}: ranking data cache key missing`);
+  assert.ok(html.includes('ranking-render.js?cache=2026082501'), `${file}: ranking render cache key missing`);
+  assert.ok(html.includes('ranking-events.js?cache=2026082501'), `${file}: ranking events cache key missing`);
 }
 
 const pageCss = read('ranking/css/ranking.css');
