@@ -230,7 +230,7 @@ async function run(){
     if(!document.querySelector('[data-banner-events-admin]')?.textContent.includes('등록 이벤트 목록'))throw Error('event manager heading missing');
     if(document.querySelector('[data-banner-events-admin] [data-bem-playback]'))throw Error('retired per-event playback switch remains');
     const rotation=document.querySelector('[data-banner-events-admin] [data-bem-event-rotation]');
-    if(!rotation||rotation.checked)throw Error('ordered global event rotation state missing');
+    if(!rotation||rotation.checked||rotation.disabled)throw Error('enabled ordered global event rotation state missing');
     if(!rotation.closest('.kinojo-filter-switch')?.textContent.includes('순차')||!rotation.closest('.kinojo-filter-switch')?.textContent.includes('랜덤 순환'))throw Error('shared global rotation switch labels missing');
     rotation.checked=true;fire(rotation,'change');
     await waitFor(()=>state.calls.includes('event-rotation'),'global event rotation mutation');
