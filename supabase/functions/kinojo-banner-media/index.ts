@@ -1,7 +1,7 @@
 const S = "kinojo-banner-media",
   V = "2.0",
-  DB = "400",
-  EVENT = "400",
+  DB = "402",
+  EVENT = "402",
   UPLOAD = "394",
   MASTER = "337",
   STORAGE = "382",
@@ -33,7 +33,7 @@ const MUT = new Set([
   "event-save",
   "event-publish",
   "event-move",
-  "event-playback",
+  "event-rotation",
   "event-pause",
   "event-delete",
   "overlay-upload-prepare",
@@ -64,7 +64,10 @@ const ERR: Record<string, string> = {
   BANNER_EVENT_PAYLOAD_INVALID: "이미지 이벤트 설정을 확인해 주세요.",
   BANNER_EVENT_ITEMS_REQUIRED: "게시할 활성 이미지를 한 장 이상 선택해 주세요.",
   BANNER_EVENT_MOVE_DIRECTION_INVALID: "이벤트 이동 방향이 올바르지 않습니다.",
-  BANNER_EVENT_PLAYBACK_MODE_INVALID: "노출 순서는 순차 또는 랜덤만 선택할 수 있습니다.",
+  BANNER_EVENT_ROTATION_MODE_INVALID:
+    "전체 이벤트 노출 방식은 순차 또는 랜덤 순환만 선택할 수 있습니다.",
+  BANNER_EVENT_PLAYBACK_RETIRED:
+    "이벤트별 랜덤 설정은 종료되었습니다. 이벤트 관리 상단의 전체 이벤트 노출 방식을 사용해 주세요.",
   BANNER_EVENT_DELETE_PAUSE_REQUIRED:
     "게시 중인 이벤트는 먼저 게시를 중지해야 영구 삭제할 수 있습니다.",
   BANNER_EVENT_DELETE_CONFIRMATION_MISMATCH:
@@ -241,7 +244,7 @@ async function idem(
     return out(r, { ok: false, code: "BANNER_IDEMPOTENCY_KEY_INVALID" }, 400);
   const q = await hashRequest(a, b),
     ttl = a === "upload-prepare" ? 7200 : 86400,
-    c = await rpc("kinojo_banner_idempotency_claim_v388", {
+    c = await rpc("kinojo_banner_idempotency_claim_v402", {
       p_session_token: t,
       p_action: a,
       p_idempotency_key: key,
@@ -1003,8 +1006,10 @@ async function campaign(r: Request, b: any, t: string, a: string) {
 }
 async function event(r: Request, b: any, t: string, a: string) {
   let d: any;
-  if (a === "event-list") {
-    d = await rpc("kinojo_banner_event_list_v400", {
+  if (a === "event-playback") {
+    return out(r, { ok: false, code: "BANNER_EVENT_PLAYBACK_RETIRED" }, 409);
+  } else if (a === "event-list") {
+    d = await rpc("kinojo_banner_event_list_v402", {
       p_session_token: t,
       p_include_archived: b.includeArchived !== false,
     });
@@ -1015,7 +1020,7 @@ async function event(r: Request, b: any, t: string, a: string) {
     const rawId = txt(b.eventGroupId ?? b.event_group_id, 80);
     if (rawId && !K.test(rawId))
       return out(r, { ok: false, code: "BANNER_EVENT_GROUP_ID_INVALID" }, 400);
-    d = await rpc("kinojo_banner_event_save_v400", {
+    d = await rpc("kinojo_banner_event_save_v402", {
       p_session_token: t,
       p_event_group_id: rawId || null,
       p_payload: payload,
@@ -1024,9 +1029,20 @@ async function event(r: Request, b: any, t: string, a: string) {
     const id = txt(b.eventGroupId ?? b.event_group_id, 80);
     if (!K.test(id))
       return out(r, { ok: false, code: "BANNER_EVENT_GROUP_ID_REQUIRED" }, 400);
-    d = await rpc("kinojo_banner_event_publish_v400", {
+    d = await rpc("kinojo_banner_event_publish_v402", {
       p_session_token: t,
       p_event_group_id: id,
+    });
+  } else if (a === "event-rotation") {
+    const mode = txt(
+      b.rotationMode ?? b.rotation_mode ?? b.mode,
+      20,
+    ).toUpperCase();
+    if (!["ORDERED", "RANDOM_CYCLE"].includes(mode))
+      return out(r, { ok: false, code: "BANNER_EVENT_ROTATION_MODE_INVALID" }, 400);
+    d = await rpc("kinojo_banner_event_rotation_set_v402", {
+      p_session_token: t,
+      p_rotation_mode: mode,
     });
   } else {
     const id = txt(b.eventGroupId ?? b.event_group_id, 80);
@@ -1040,18 +1056,6 @@ async function event(r: Request, b: any, t: string, a: string) {
         p_session_token: t,
         p_event_group_id: id,
         p_direction: direction,
-      });
-    } else if (a === "event-playback") {
-      const mode = txt(
-        b.playbackMode ?? b.playback_mode ?? b.mode,
-        16,
-      ).toUpperCase();
-      if (!["ORDERED", "RANDOM"].includes(mode))
-        return out(r, { ok: false, code: "BANNER_EVENT_PLAYBACK_MODE_INVALID" }, 400);
-      d = await rpc("kinojo_banner_event_playback_v400", {
-        p_session_token: t,
-        p_event_group_id: id,
-        p_playback_mode: mode,
       });
     } else if (a === "event-pause") {
       d = await rpc("kinojo_banner_event_pause_v398", {
@@ -1171,7 +1175,7 @@ async function manifest(r: Request, b: any) {
       { ok: false, code: "PUBLIC_MANIFEST_SELECTOR_FORBIDDEN" },
       400,
     );
-  const d = await rpc("kinojo_banner_manifest_v400", {
+  const d = await rpc("kinojo_banner_manifest_v402", {
     p_page_code: page,
     p_slot_code: slot,
   });
@@ -1269,6 +1273,13 @@ async function manifest(r: Request, b: any) {
     exposureMode: d.exposureMode === "ALL_ACTIVE" ? "ALL_ACTIVE" : "SELECTED",
     exposureFrequencyMode:
       d.exposureFrequencyMode === "BASE_X1_5_X2" ? "BASE_X1_5_X2" : "BASE",
+    eventRotationMode:
+      d.eventRotationMode === "RANDOM_CYCLE" ? "RANDOM_CYCLE" : "ORDERED",
+    eventRotationScope: "FORMAL_EVENT_GROUPS_ONLY",
+    playbackOrderMode:
+      d.eventRotationMode === "RANDOM_CYCLE"
+        ? "GLOBAL_EVENT_RANDOM_CYCLE"
+        : "GLOBAL_EVENT_ORDERED",
     activeCampaignCount: Math.max(
       0,
       Math.floor(num(d.activeCampaignCount) ?? 0),
@@ -1348,6 +1359,7 @@ Deno.serve(async (r) => {
           timeAuthority: "ASIA_SEOUL_SERVER",
           playlistAuthority: "SERVER",
           exposureMode: "ALL_ACTIVE_PUBLISHED_ITEMS",
+          eventRotationAuthority: "SERVER_GLOBAL_FORMAL_EVENT_GROUPS",
           inactiveItemsExcluded: true,
           publicManifestAnonymous: true,
           internalIdsExposed: false,
@@ -1376,7 +1388,7 @@ Deno.serve(async (r) => {
           "event-save",
           "event-publish",
           "event-move",
-          "event-playback",
+          "event-rotation",
           "event-pause",
           "event-delete",
           "overlay-asset-list",
@@ -1410,6 +1422,7 @@ Deno.serve(async (r) => {
         "event-save",
         "event-publish",
         "event-move",
+        "event-rotation",
         "event-playback",
         "event-pause",
         "event-delete",

@@ -27,8 +27,8 @@ for(const token of [
 ])assert.ok(migration.toLowerCase().includes(token.toLowerCase()),`missing DB398 contract: ${token}`);
 
 for(const token of [
-  'V = "2.0"','DB = "400"','EVENT = "400"',
-  'kinojo_banner_event_list_v400','kinojo_banner_event_move_v398',
+  'V = "2.0"','DB = "402"','EVENT = "402"',
+  'kinojo_banner_event_list_v402','kinojo_banner_event_move_v398',
   'kinojo_banner_event_pause_v398','kinojo_banner_event_delete_v398',
   '"event-move"','"event-pause"','"event-delete"',
 ])assert.ok(edge.includes(token),`missing Edge398 contract: ${token}`);
@@ -40,8 +40,9 @@ for(const token of [
   '이전 방식으로 등록된 캠페인','window.prompt','window.confirm',
 ])assert.ok(manager.includes(token),`missing event manager UI contract: ${token}`);
 
-for(const token of ['data-bem-playback','kinojo-filter-switch bem-playback-switch','순차','랜덤',"api('event-playback'"])
-  assert.ok(manager.includes(token),`missing event playback UI contract: ${token}`);
+for(const token of ['data-bem-event-rotation','kinojo-filter-switch bem-global-rotation-switch','전체 이벤트 노출 방식','순차','랜덤 순환',"api('event-rotation'"])
+  assert.ok(manager.includes(token),`missing global event rotation UI contract: ${token}`);
+assert.equal(manager.includes('data-bem-playback'),false,'event-local playback controls must stay retired');
 
 for(const token of ['data-admin-subtab="events"','data-banner-management-panel="events"',"const order=['main','side','events']"])assert.ok(tabs.includes(token),`missing event tab contract: ${token}`);
 assert.ok(bootstrap.includes("if(tab==='images'&&subtab==='events')"),'event manager must load through the admin router');
