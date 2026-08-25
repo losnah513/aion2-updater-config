@@ -238,5 +238,6 @@
 - 사이드 `ALL` 독립 설정은 HOF 오른쪽을 제외한 13개 variant, HOF 단독은 LEFT 1개를 만든다. 좌·우 이미지는 2단계 선택 3장 안에서 별도로 제외·추가·정렬할 수 있다.
 - Stage 5 캐시 기준은 `2026082411`이다. 전체 Node 테스트 `35/35`, PR source workflow 4종, 운영 파일 Git blob `4/4`, Edge health/Manifest/security 경계가 통과했다. 업데이트한 Chrome E2E harness는 이번 회차의 localhost URL 정책 때문에 실행하지 못했으므로 PASS로 기록하지 않는다.
 - Stage 6에서 DB398과 Edge v16/API2.0을 적용해 합성 업로드 idempotency table check 누락을 수정했다. 관리자 cache `2026082412`는 `이벤트 관리` 탭, 전체 이벤트 검색·상태 필터, 같은 종류 내 목록 정렬, 전체 게시 중지, 이름 확인 영구 삭제를 추가한다. 세부 내용은 `docs/BANNER_EVENT_MANAGER_STAGE6_20260824.md`를 기준으로 한다.
+- Stage 7은 이벤트 관리에 공통 `kinojo-filter-switch` 기반 `순차 | 랜덤` 스위치를 추가한다. DB400은 이벤트 그룹을 원본으로 삼아 연결 캠페인 전체에 `ORDERED/RANDOM`을 반영하고, RANDOM 이벤트만 5분 manifest 구간별 안정 해시 순서로 섞는다. 기존 이벤트, legacy 캠페인, 노출빈도는 유지한다. 세부 내용은 `docs/BANNER_EVENT_PLAYBACK_STAGE7_20260825.md`를 기준으로 한다.
 - 최초 전체 게시의 합성 업로드 400은 v388 idempotency action 허용 목록에서 새 overlay/composite mutation 4종이 빠진 것이 원인이었다. PR `#252`와 DB397 migration으로 수정했으며 기존 초안은 보존한다.
-- 다음 구현 순서는 Stage 6 이벤트 목록, Stage 7 전환 효과·최종 반응형·접근성 통합 검증이다. 콘텐츠 실제 노출은 Stage 5 합성본으로 완료했다.
+- 다음 구현 순서는 Stage 7 순차·랜덤 운영 검증과 전환 효과·최종 반응형·접근성 통합 검증이다. 콘텐츠 실제 노출은 Stage 5 합성본으로 완료했다.
