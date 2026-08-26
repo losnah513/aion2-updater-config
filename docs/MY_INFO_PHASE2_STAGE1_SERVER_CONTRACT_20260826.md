@@ -1,7 +1,17 @@
 # My Info Phase 2 · Stage 1 Server/Storage Contract
 
 기준일: 2026-08-26 KST
-상태: 구현 기준 확정
+상태: 운영 반영 완료
+
+## 운영 반영
+
+- GitHub: PR #266, main merge `02d65572e0f0102bcd6d7ce38e51982484c2dd5c`
+- Supabase migration: `20260826040254 / member_image_request_batch_v404`
+- Edge: `kinojo-member-profile` v23 ACTIVE, `kinojo-member-image-cleanup` v6 ACTIVE
+- 기존 cleanup Cron: `kinojo-member-image-cleanup-v364`, `*/15 * * * *`, ACTIVE 유지
+- 운영 readback: private 표 4개 RLS default-deny/policy 0, DB404 RPC 7개 service_role-only, 신규 row 0
+- Runtime smoke: profile health API 2.7 / DB375 / request 404, 신규 action 3개 노출; cleanup 무인증 401
+- Advisor: 신규 항목은 의도한 RLS-no-policy INFO와 배포 직후 unused-index INFO뿐이다.
 
 ## 결정
 

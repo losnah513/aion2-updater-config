@@ -51,6 +51,7 @@
 - private 요청/항목/상태 이력/cleanup queue 4개 표는 RLS default-deny이며 Browser role의 표·RPC 직접 권한은 없다. DB404 RPC 7개는 `service_role`만 실행한다.
 - cleanup Edge는 v1.3 / DB404로 확장해 abandoned DRAFT, 7일 만료 요청 이미지, legacy active reference, 교체 queue를 Storage 먼저 삭제한 뒤 metadata를 확정하고, object 삭제가 끝난 30일 metadata만 제거한다.
 - 완성 결과 이미지 업로드·회원 전달·프로필 자동 적용과 관리자 요청 목록·상태 처리 UI는 1단계 범위가 아니다. 관리자 요청 처리는 3단계에서 기존 MASTER signed preview/download 경계 위에 연결한다.
+- 운영 반영: PR #266 / main `02d65572`, migration `20260826040254 member_image_request_batch_v404`, `kinojo-member-profile` v23, `kinojo-member-image-cleanup` v6. DB404 ACL/RLS·빈 초기 상태·기존 15분 cleanup Cron·profile health/cleanup 무인증 경계를 readback했다.
 
 
 ## 2026-08-24 참고 가이드 PNG 최종 에셋
