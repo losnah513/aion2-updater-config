@@ -15,9 +15,9 @@ window.confirm=()=>true;
 window.KinojoAdmin={};
 window.KinojoAuth={getSession:()=>({token:'kws_'+('A'.repeat(40)),role:'MASTER',roleLabel:'Master',level:5})};
 const state={assets:[
-  {assetId:1,sourceType:'STORAGE',objectPath:'2035/01/11111111-2222-4333-8444-000000000001.webp',mimeType:'image/webp',sizeBytes:12000,width:300,height:715,formatCode:'SIDE_300_715',displayName:'사이드 첫 번째',originalFileName:'side-1.webp',defaultAlt:'사이드 첫 번째',status:'READY',referenceCount:0},
-  {assetId:2,sourceType:'STORAGE',objectPath:'2035/01/11111111-2222-4333-8444-000000000002.webp',mimeType:'image/webp',sizeBytes:13000,width:300,height:715,formatCode:'SIDE_300_715',displayName:'사이드 두 번째',originalFileName:'side-2.webp',defaultAlt:'사이드 두 번째',status:'READY',referenceCount:0},
-  {assetId:3,sourceType:'STORAGE',objectPath:'2035/01/11111111-2222-4333-8444-000000000003.webp',mimeType:'image/webp',sizeBytes:14000,width:300,height:715,formatCode:'SIDE_300_715',displayName:'사이드 세 번째',originalFileName:'side-3.webp',defaultAlt:'사이드 세 번째',status:'READY',referenceCount:0}
+  {assetId:1,sourceType:'STORAGE',objectPath:'2035/01/11111111-2222-4333-8444-000000000001.webp',mimeType:'image/webp',sizeBytes:12000,width:300,height:715,formatCode:'SIDE_300_715',title:'사이드 첫 번째',tags:['기존'],displayName:'#기존 · 사이드 첫 번째',originalFileName:'side-1.webp',defaultAlt:'사이드 첫 번째',status:'READY',referenceCount:0},
+  {assetId:2,sourceType:'STORAGE',objectPath:'2035/01/11111111-2222-4333-8444-000000000002.webp',mimeType:'image/webp',sizeBytes:13000,width:300,height:715,formatCode:'SIDE_300_715',title:'사이드 두 번째',tags:['기존'],displayName:'#기존 · 사이드 두 번째',originalFileName:'side-2.webp',defaultAlt:'사이드 두 번째',status:'READY',referenceCount:0},
+  {assetId:3,sourceType:'STORAGE',objectPath:'2035/01/11111111-2222-4333-8444-000000000003.webp',mimeType:'image/webp',sizeBytes:14000,width:300,height:715,formatCode:'SIDE_300_715',title:'사이드 세 번째',tags:['기존'],displayName:'#기존 · 사이드 세 번째',originalFileName:'side-3.webp',defaultAlt:'사이드 세 번째',status:'READY',referenceCount:0}
 ],eventRotationMode:'ORDERED',events:[
   {eventGroupId:'aaaaaaaa-2222-4333-8444-000000000001',name:'첫 이벤트',type:'SIDE',sideMode:'INDEPENDENT',tags:['룩북'],status:'DRAFT',targetPages:['HOME'],campaignCount:2,itemCount:3,managerOrder:2,updatedAt:'2035-01-02T09:00:00+09:00'},
   {eventGroupId:'aaaaaaaa-2222-4333-8444-000000000002',name:'두 번째 이벤트',type:'SIDE',sideMode:'SYNC',tags:['공지'],status:'PAUSED',targetPages:['HOME','RANKING'],campaignCount:2,itemCount:4,managerOrder:1,updatedAt:'2035-01-01T09:00:00+09:00'}
@@ -26,18 +26,19 @@ const clone=v=>JSON.parse(JSON.stringify(v));
 function syncRefs(){for(const a of state.assets)a.referenceCount=state.campaigns.reduce((n,c)=>n+(c.items||[]).filter(i=>Number(i.assetId)===Number(a.assetId)).length,0)}
 function response(action,payload){
   state.calls.push(action);
-  if(action!=='asset-list'&&action!=='overlay-asset-list'&&action!=='campaign-list'&&action!=='event-list'&&action!=='manifest'){
+  if(action!=='asset-list'&&action!=='asset-title-check'&&action!=='overlay-asset-list'&&action!=='campaign-list'&&action!=='event-list'&&action!=='manifest'){
     if(!/^kws_[A-Za-z0-9_-]{40,80}$/.test(String(payload.sessionToken||'')))throw Error('missing KWS');
     if(!/^[0-9a-f-]{36}$/i.test(String(payload.idempotencyKey||'')))throw Error('missing idempotency key');
   }
   if(action==='asset-list')return {ok:true,assets:clone(state.assets.filter(a=>payload.includeArchived!==false||a.status!=='ARCHIVED'))};
+  if(action==='asset-title-check'){const key=String(payload.title||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('ko-KR'),available=!state.assets.some(asset=>String(asset.title||asset.displayName||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('ko-KR')===key&&Number(asset.assetId)!==Number(payload.excludeAssetId||0));return {ok:true,title:payload.title,available,code:available?null:'BANNER_ASSET_TITLE_DUPLICATE'};}
   if(action==='overlay-asset-list')return {ok:true,assets:[]};
   if(action==='campaign-list')return {ok:true,campaigns:clone(state.campaigns)};
   if(action==='event-list')return {ok:true,eventRotationMode:state.eventRotationMode,eventRotationScope:'FORMAL_EVENT_GROUPS_ONLY',events:clone(state.events),legacyCampaigns:[]};
   if(action==='manifest')return clone(state.manifest);
   if(action==='upload-prepare'){const ext=payload.mimeType==='image/png'?'png':payload.mimeType==='image/jpeg'?'jpg':'webp',uuid=`11111111-2222-4333-8444-${String(state.nextAsset).padStart(12,'0')}`,path=`2035/01/${uuid}.${ext}`;return {ok:true,formatCode:payload.formatCode,upload:{bucket:'kinojo-site-banners',objectPath:path,uploadUrl:'http://127.0.0.1/storage/v1/object/upload/sign/kinojo-site-banners/'+path+'?token=e2e',mimeType:payload.mimeType,sizeBytes:payload.sizeBytes,upsert:false,expiresInSeconds:7200,activation:'BANNER_UPLOAD_COMPLETE_REQUIRED'}}}
   if(action==='upload-complete'){
-    const side=payload.formatCode==='SIDE_300_715',a={assetId:state.nextAsset++,sourceType:'STORAGE',objectPath:payload.objectPath,staticPath:null,mimeType:payload.mimeType,sizeBytes:payload.sizeBytes,width:side?300:812,height:side?715:1936,formatCode:payload.formatCode,displayName:payload.displayName,originalFileName:payload.originalFileName,defaultAlt:payload.defaultAlt,status:'READY',referenceCount:0};
+    const title=String(payload.title||'').trim().replace(/\s+/g,' '),tags=clone(payload.tags||[]),displayName=(tags.map(tag=>'#'+tag).join(' ')+(tags.length?' · ':'')+title),side=payload.formatCode==='SIDE_300_715',a={assetId:state.nextAsset++,sourceType:'STORAGE',objectPath:payload.objectPath,staticPath:null,mimeType:payload.mimeType,sizeBytes:payload.sizeBytes,width:side?300:812,height:side?715:1936,formatCode:payload.formatCode,title,tags,displayName,originalFileName:payload.originalFileName,defaultAlt:payload.defaultAlt,status:'READY',referenceCount:0};
     state.assets.push(a);
     return {ok:true,asset:clone(a),image:{activation:'ASSET_READY',aspectMatchesTarget:side,cropWarning:!side}};
   }
@@ -138,13 +139,13 @@ async function run(){
     document.querySelector('[data-banner-event-workflow="main"] [data-bew-scroll="1"]').click();
     let resetButton=document.querySelector('[data-banner-event-workflow="main"] [data-bew-reset]');
     if(!resetButton?.disabled)throw Error('empty authoring reset must start disabled');
-    const resetProbe=document.querySelector('[data-banner-event-workflow="main"] [data-bew-upload-name]');resetProbe.value='초기화 확인';fire(resetProbe,'input');
+    const resetProbe=document.querySelector('[data-banner-event-workflow="main"] [data-bew-tag-input]');resetProbe.value='초기화 확인';fire(resetProbe,'input');
     if(resetButton.disabled)throw Error('reset must enable for local authoring input');
     resetButton.click();await sleep(30);let resetModal=document.querySelector('[data-banner-event-workflow="main"] [data-bew-reset-modal]');
     if(resetModal.hidden||!resetModal.contains(document.activeElement))throw Error('reset modal must open and retain focus');
     document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));await sleep(30);if(!resetModal.hidden)throw Error('Escape must close reset modal');
     resetButton.click();await sleep(20);document.querySelector('[data-banner-event-workflow="main"] [data-bew-reset-confirm]').click();
-    await waitFor(()=>document.querySelector('[data-banner-event-workflow="main"] [data-bew-upload-name]')?.value===''&&document.querySelector('[data-banner-event-workflow="main"] [data-bew-reset]')?.disabled,'authoring content reset');
+    await waitFor(()=>document.querySelector('[data-banner-event-workflow="main"] [data-bew-tag-input]')?.value===''&&document.querySelector('[data-banner-event-workflow="main"] [data-bew-reset]')?.disabled,'authoring content reset');
     if(!document.querySelector('[data-banner-event-workflow="main"] [data-bew-action-status]')?.textContent.includes('초기화했습니다'))throw Error('reset completion notice missing');
     topNav.querySelector('[data-admin-subtab="side"]').click();
     await waitFor(()=>mainPanel.hidden&&!sidePanel.hidden&&sidePanel.classList.contains('active'),'side banner tab switch');
@@ -189,7 +190,15 @@ async function run(){
     const fourth=await imageFile('fourth.png',320,180,'#a855f7'),fourthTransfer=new DataTransfer();fourthTransfer.items.add(fourth);input.files=fourthTransfer.files;fire(input,'change');await sleep(100);
     if(document.querySelectorAll('[data-banner-event-workflow="main"] .bew-file-card').length!==3)throw Error('maximum three image guard failed');
     if(!document.querySelector('[data-banner-event-workflow="main"]')?.textContent.includes('잘릴 수 있습니다'))throw Error('ratio crop warning missing');
-    const uploadName=document.querySelector('[data-banner-event-workflow="main"] [data-bew-upload-name]'),uploadTags=document.querySelector('[data-banner-event-workflow="main"] [data-bew-upload-tags]');uploadName.value='Chrome E2E 이미지';uploadTags.value='#푸석사과 #검증';
+    let titleInputs=[...document.querySelectorAll('[data-banner-event-workflow="main"] [data-bew-file-title]')];titleInputs[1].value=titleInputs[0].value;fire(titleInputs[1],'input');await sleep(30);
+    if(!document.querySelector('[data-banner-event-workflow="main"] [data-bew-title-state="1"].error')||!document.querySelector('[data-banner-event-workflow="main"] [data-bew-upload]').disabled)throw Error('local duplicate title must block upload');
+    titleInputs.forEach((field,index)=>{field.value=`Chrome E2E 이미지 ${index+1}`;fire(field,'input')});
+    const uploadTags=document.querySelector('[data-banner-event-workflow="main"] [data-bew-tag-input]');uploadTags.value='조합중';uploadTags.dispatchEvent(new CompositionEvent('compositionstart',{bubbles:true,data:'조합중'}));uploadTags.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true,isComposing:true}));
+    if(document.querySelectorAll('[data-banner-event-workflow="main"] [data-bew-tag-remove]').length)throw Error('IME composition must not commit a partial tag');uploadTags.dispatchEvent(new CompositionEvent('compositionend',{bubbles:true,data:'조합중'}));uploadTags.value='푸석사과';uploadTags.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
+    const pasteData=new DataTransfer();pasteData.setData('text/plain','#검증, #회귀');uploadTags.dispatchEvent(new ClipboardEvent('paste',{bubbles:true,clipboardData:pasteData}));
+    if(document.querySelectorAll('[data-banner-event-workflow="main"] [data-bew-tag-remove]').length!==3)throw Error('Enter/paste hashtag badges missing');uploadTags.value='';uploadTags.dispatchEvent(new KeyboardEvent('keydown',{key:'Backspace',bubbles:true}));
+    if(document.querySelector('[data-banner-event-workflow="main"] [data-bew-tag-count]')?.textContent.trim()!=='2 / 5')throw Error('empty Backspace must remove the last hashtag');
+    await waitFor(()=>[...document.querySelectorAll('[data-banner-event-workflow="main"] [data-bew-title-state]')].every(node=>node.classList.contains('ok'))&&!document.querySelector('[data-banner-event-workflow="main"] [data-bew-upload]').disabled,'server title availability checks');
     document.querySelector('[data-banner-event-workflow="main"] [data-bew-upload]').click();
     await waitFor(()=>document.querySelector('[data-banner-event-workflow="main"] [data-bew-upload-status]')?.textContent.includes('3장 업로드 완료'),'three image upload complete',20000);
     if(state.puts.length!==3||state.puts.some(put=>put.method!=='PUT'||put.upsert!=='false'||put.contentType!=='image/png'||put.size<1))throw Error('original signed PUT contract mismatch');
@@ -239,7 +248,7 @@ async function run(){
     document.querySelector('[data-banner-event-workflow="main"] [data-bew-save-draft]').click();
     await waitFor(()=>state.calls.includes('event-save'),'stage-5 draft save');
     if(state.calls.includes('event-publish'))throw Error('draft save must not publish');
-    const required=['upload-prepare','upload-complete','asset-list','overlay-asset-list','event-save'];for(const action of required)if(!state.calls.includes(action))throw Error('missing browser action '+action);
+    const required=['upload-prepare','upload-complete','asset-title-check','asset-list','overlay-asset-list','event-save'];for(const action of required)if(!state.calls.includes(action))throw Error('missing browser action '+action);
     window.KinojoAdmin.getBannerEventWorkflowState('main').overlays={};
     document.querySelector('[data-banner-event-workflow="main"] [data-bew-publish]').click();
     await waitFor(()=>!document.querySelector('[data-banner-event-workflow="main"] [data-bew-result-notice]')?.hidden,'publish readback and automatic reset',12000);

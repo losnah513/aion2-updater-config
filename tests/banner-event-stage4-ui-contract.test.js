@@ -6,11 +6,11 @@ const root=path.resolve(__dirname,'..');
 const workflow=fs.readFileSync(path.join(root,'admin/js/admin-banner-event-workflow.js'),'utf8');
 
 for(const token of [
-  'banner event workflow phase 2 shell stage 1',
+  'banner event workflow phase 2 stage 2',
   "filter:'NONE'",
   '미선택',
   '전체 ${usableAssets(s).length}',
-  '분류 해시태그 · 라이브러리 필터용',
+  '분류 해시태그 · 선택 이미지 공통 적용',
   '해시태그는 1번에서 이미지 분류용으로 한 번만 지정합니다.',
   '3장 선택 완료',
   'data-bew-order-drag',
@@ -42,7 +42,8 @@ for(const token of [
   "widthMode:'FULL'",
 ])assert.ok(workflow.includes(token),`stage-4 workflow token missing: ${token}`);
 
-assert.equal(workflow.includes('data-bew-tag-input'),false,'step 2 must not expose a second hashtag editor');
+const step2Markup=workflow.slice(workflow.indexOf('id="bew-${s.kind}-2"'),workflow.indexOf('id="bew-${s.kind}-3"'));
+assert.equal(step2Markup.includes('data-bew-tag-input'),false,'step 2 must not expose a second hashtag editor');
 assert.ok(workflow.includes("layers.filter(layer=>layer.type==='TEXT').length<LIMIT"),'text overlay maximum-three guard missing');
 assert.ok(workflow.includes("source.map(layer=>({...layer}))"),'multi-image overlay copy missing');
 assert.ok(workflow.includes('.bew-unit-input{display:grid;grid-template-columns:minmax(0,1fr) 22px'),'seconds suffix must stay beside its compact input');

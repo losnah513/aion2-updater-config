@@ -39,11 +39,11 @@ assert.equal(
 );
 
 for (const token of [
-  'V = "2.0"',
-  'DB = "402"',
+  'V = "2.1"',
+  'DB = "403"',
   'EVENT = "402"',
-  'UPLOAD = "394"',
-  'kinojo_banner_asset_register_storage_v394',
+  'UPLOAD = "403"',
+  'kinojo_banner_asset_register_storage_v403',
   'kinojo_banner_event_list_v402',
   'kinojo_banner_event_save_v402',
   'kinojo_banner_event_publish_v402',
