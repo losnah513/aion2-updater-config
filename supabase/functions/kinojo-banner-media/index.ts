@@ -1,6 +1,6 @@
 const S = "kinojo-banner-media",
-  V = "2.5",
-  DB = "409",
+  V = "2.6",
+  DB = "411",
   EVENT = "407",
   UPLOAD = "403",
   MASTER = "337",
