@@ -1,6 +1,6 @@
 # KINOJO WEB HANDOFF
 
-기준일: 2026-08-26 KST
+기준일: 2026-08-27 KST
 
 ## 저장소 / 현재 기준
 
@@ -13,6 +13,14 @@
 - 레기온 순위 통합 패널: PR `#164` 병합 완료
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 최신 일일 로그를 작업 규칙 원본으로 사용한다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
+
+## My Info 2차 · 제작 요청 업로드 장애 수정 · 2026-08-27
+
+- PR `#282`를 merge commit `1916e7cc8201eee260c44bcca4a87bee13797212`로 병합했다. 회원 prepare 응답에서 DB404가 `items`만 반환할 때 Edge가 선택 슬롯을 잃어 `request.slots=[]`를 내보내고, 브라우저가 `IMAGE_REQUEST_RESULT_INVALID`로 signed upload 전에 중단하던 문제를 수정했다.
+- `imageRequestPublic`는 DB가 명시한 `slots`를 우선하고, prepare에서만 검증이 끝난 입력 슬롯을 fallback으로 사용한다. private bucket/object path는 응답에 노출하지 않는다.
+- 운영 `kinojo-member-profile`은 v25 ACTIVE(API 2.7 / DB 375 / Request 404)이며 배포 소스가 병합된 GitHub source와 exact 일치한다. health 200, 무효 세션 401, 관련 DB404 RPC의 service-role-only ACL과 기존 RLS 경계를 재확인했다.
+- 신규 실제 Edge helper 회귀를 포함한 전체 Node 계약 52개가 통과했다. PR의 My Info 관련 검증은 모두 통과했고, `Verify KINOJO Pages`의 실패 1건은 동시 진행된 별도 성역 운영 Edge 414와 저장소 기대값 412 불일치로 이 변경 범위와 무관하다.
+- 기존 실패 DRAFT는 수동 삭제하지 않고 기존 cleanup 수명주기를 따른다. 영향 사용자는 새 운영 코드가 반영된 뒤 My Info를 새로 열어 이미지를 다시 선택·전송한다.
 
 ## 성역·스케줄 관리 개편 · Stage 3-1 Server 데이터 경계
 
@@ -43,7 +51,7 @@
 ## 내 정보 이미지 기존 완료 상태
 
 - 기존 내 정보/캐릭터 이미지 Stage 1-8은 `80/80` 완료 상태이며 재구현하지 않는다.
-- 운영 Edge 기준은 `kinojo-member-auth` v2, `kinojo-member-profile` v20(API 2.7 / DB 375), `kinojo-member-image-download` v2, `kinojo-member-image-cleanup` v5다.
+- 운영 Edge 기준은 `kinojo-member-auth` v2, `kinojo-member-profile` v25(API 2.7 / DB 375 / Request 404), `kinojo-member-image-download` v2, `kinojo-member-image-cleanup` v6다.
 - `kinojo-member-profile` 버킷은 공개, `kinojo-member-reference` 버킷은 비공개다.
 - 참고 이미지는 최대 7일 보존하며 cleanup cron은 `*/15 * * * *`로 활성화되어 있다.
 - 관리자 이미지 SQL 367/371은 `service_role` 전용이다.
