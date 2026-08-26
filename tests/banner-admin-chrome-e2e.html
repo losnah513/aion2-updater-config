@@ -15,9 +15,9 @@ window.confirm=()=>true;
 window.KinojoAdmin={};
 window.KinojoAuth={getSession:()=>({token:'kws_'+('A'.repeat(40)),role:'MASTER',roleLabel:'Master',level:5})};
 const state={assets:[
-  {assetId:1,sourceType:'STORAGE',objectPath:'2035/01/11111111-2222-4333-8444-000000000001.webp',mimeType:'image/webp',sizeBytes:12000,width:300,height:715,formatCode:'SIDE_300_715',title:'사이드 첫 번째',tags:['기존','룩북','남성','계절','SITTING'],displayName:'#기존 #룩북 #남성 #계절 #SITTING · 사이드 첫 번째',originalFileName:'side-1.webp',defaultAlt:'사이드 첫 번째',status:'READY',referenceCount:0},
+  {assetId:1,sourceType:'STORAGE',objectPath:'2035/01/11111111-2222-4333-8444-000000000001.webp',mimeType:'image/webp',sizeBytes:12000,width:300,height:715,formatCode:'SIDE_300_715',title:'사이드 첫 번째',tags:['기존','룩북','남성','계절','SITTING'],displayName:'#기존 #룩북 #남성 #계절 #SITTING · 사이드 첫 번째',originalFileName:'side-1.webp',defaultAlt:'사이드 첫 번째',status:'READY',referenceCount:1,formalEventCount:1,createdAt:'2035-01-01T09:00:00+09:00',usageEvents:[{eventGroupId:'aaaaaaaa-2222-4333-8444-000000000001',eventName:'첫 이벤트',eventType:'SIDE',sideMode:'INDEPENDENT',status:'DRAFT',campaignCount:2,itemCount:1,enabledItemCount:1,pageCodes:['HOME'],slotCodes:['LEFT']}]},
   {assetId:2,sourceType:'STORAGE',objectPath:'2035/01/11111111-2222-4333-8444-000000000002.webp',mimeType:'image/webp',sizeBytes:13000,width:300,height:715,formatCode:'SIDE_300_715',title:'사이드 두 번째',tags:['기존'],displayName:'#기존 · 사이드 두 번째',originalFileName:'side-2.webp',defaultAlt:'사이드 두 번째',status:'READY',referenceCount:0},
-  {assetId:3,sourceType:'STORAGE',objectPath:'2035/01/11111111-2222-4333-8444-000000000003.webp',mimeType:'image/webp',sizeBytes:14000,width:300,height:715,formatCode:'SIDE_300_715',title:'사이드 세 번째',tags:['기존'],displayName:'#기존 · 사이드 세 번째',originalFileName:'side-3.webp',defaultAlt:'사이드 세 번째',status:'READY',referenceCount:0}
+  {assetId:3,sourceType:'STORAGE',objectPath:'2035/01/11111111-2222-4333-8444-000000000003.webp',mimeType:'image/webp',sizeBytes:14000,width:300,height:715,formatCode:'SIDE_300_715',title:'사이드 세 번째',tags:[],displayName:'사이드 세 번째',originalFileName:'side-3.webp',defaultAlt:'사이드 세 번째',status:'READY',referenceCount:0,formalEventCount:0,createdAt:'2035-01-03T09:00:00+09:00',usageEvents:[]}
 ],overlayAssets:[],eventRotationMode:'ORDERED',events:[
   {eventGroupId:'aaaaaaaa-2222-4333-8444-000000000001',name:'첫 이벤트',type:'SIDE',sideMode:'INDEPENDENT',tags:['룩북'],status:'DRAFT',targetPages:['HOME'],campaignCount:2,itemCount:3,managerOrder:2,updatedAt:'2035-01-02T09:00:00+09:00'},
   {eventGroupId:'aaaaaaaa-2222-4333-8444-000000000002',name:'두 번째 이벤트',type:'SIDE',sideMode:'SYNC',tags:['공지'],status:'PAUSED',targetPages:['HOME','RANKING'],campaignCount:2,itemCount:4,managerOrder:1,updatedAt:'2035-01-01T09:00:00+09:00'}
@@ -35,12 +35,14 @@ const clone=v=>JSON.parse(JSON.stringify(v));
 function syncRefs(){for(const a of state.assets)a.referenceCount=state.campaigns.reduce((n,c)=>n+(c.items||[]).filter(i=>Number(i.assetId)===Number(a.assetId)).length,0)}
 function response(action,payload){
   state.calls.push(action);
-  if(action!=='asset-list'&&action!=='asset-title-check'&&action!=='overlay-asset-list'&&action!=='campaign-list'&&action!=='event-targets'&&action!=='event-list'&&action!=='manifest'){
+  if(action!=='asset-library'&&action!=='asset-list'&&action!=='asset-title-check'&&action!=='overlay-asset-list'&&action!=='campaign-list'&&action!=='event-targets'&&action!=='event-list'&&action!=='manifest'){
     if(!/^kws_[A-Za-z0-9_-]{40,80}$/.test(String(payload.sessionToken||'')))throw Error('missing KWS');
     if(!/^[0-9a-f-]{36}$/i.test(String(payload.idempotencyKey||'')))throw Error('missing idempotency key');
   }
   if(action==='asset-list')return {ok:true,assets:clone(state.assets.filter(a=>payload.includeArchived!==false||a.status!=='ARCHIVED'))};
+  if(action==='asset-library'){const assets=state.assets.filter(a=>payload.includeArchived===true||a.status!=='ARCHIVED'),counts=new Map();for(const asset of assets)for(const tag of asset.tags||[])counts.set(tag,(counts.get(tag)||0)+1);return {ok:true,apiVersion:'406',contract:'banner-asset-library-v406',assets:clone(assets),tagGroups:[...counts].map(([tag,count])=>({tag,count})).sort((a,b)=>b.count-a.count||a.tag.localeCompare(b.tag,'ko')),summary:{total:assets.length,ready:assets.filter(a=>a.status==='READY').length,archived:assets.filter(a=>a.status==='ARCHIVED').length,inUse:assets.filter(a=>Number(a.referenceCount)>0).length}};}
   if(action==='asset-title-check'){const key=String(payload.title||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('ko-KR'),available=!state.assets.some(asset=>String(asset.title||asset.displayName||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('ko-KR')===key&&Number(asset.assetId)!==Number(payload.excludeAssetId||0));return {ok:true,title:payload.title,available,code:available?null:'BANNER_ASSET_TITLE_DUPLICATE'};}
+  if(action==='asset-update'){const asset=state.assets.find(item=>Number(item.assetId)===Number(payload.assetId));if(!asset)throw Error('asset missing');const duplicate=state.assets.some(item=>Number(item.assetId)!==Number(asset.assetId)&&String(item.title||'').toLocaleLowerCase('ko-KR')===String(payload.title||'').toLocaleLowerCase('ko-KR'));if(duplicate)throw Error('이미 사용 중인 이미지 제목입니다.');asset.title=String(payload.title||'').trim().replace(/\s+/g,' ');asset.tags=clone(payload.tags||[]);asset.displayName=(asset.tags.map(tag=>'#'+tag).join(' ')+(asset.tags.length?' · ':'')+asset.title);return {ok:true,apiVersion:'406',contract:'banner-asset-update-v406',asset:clone(asset)};}
   if(action==='overlay-asset-list')return {ok:true,assets:clone(state.overlayAssets)};
   if(action==='event-targets')return {ok:true,apiVersion:'404',targetPageContract:clone(targetPageContract)};
   if(action==='campaign-list')return {ok:true,campaigns:clone(state.campaigns)};
@@ -113,6 +115,7 @@ window.fetch=async(input,init={})=>{
 <script src="../admin/js/admin-banner-event-workflow.js"></script>
 <script src="../admin/js/admin-banner-events.js"></script>
 <script src="../admin/js/admin-banner-tabs.js"></script>
+<script src="../admin/js/admin-banner-library.js"></script>
 <script src="../admin/js/admin-banner-quality.js"></script>
 <script src="../admin/js/admin-bootstrap.js"></script>
 <script>
@@ -131,15 +134,15 @@ async function run(){
     await waitFor(()=>document.querySelector('[data-banner-event-workflow="main"]')&&document.querySelector('[data-main-banner-admin] [data-bew-status]')?.classList.contains('ok'),'stage-5 workflow initial load');
     if(!document.querySelector('[data-banner-event-workflow="main"] .bew-page-badge.is-locked')?.textContent.includes('홈')||window.KinojoAdmin.getBannerEventPayload('main').targetPages.join('|')!=='HOME')throw Error('main page target must be a server-owned locked HOME badge');
     const sourceNav=document.querySelector('[data-admin-subnav="images"]'),topNav=document.querySelector('#adminTopSubnav');
-    const mainTab=sourceNav?.querySelector('[data-banner-management-tab="main"]'),sideTab=sourceNav?.querySelector('[data-banner-management-tab="side"]'),eventsTab=sourceNav?.querySelector('[data-banner-management-tab="events"]');
-    const mainPanel=document.querySelector('[data-banner-management-panel="main"]'),sidePanel=document.querySelector('[data-banner-management-panel="side"]'),eventsPanel=document.querySelector('[data-banner-management-panel="events"]');
-    if(!mainTab||!sideTab||!eventsTab||!mainPanel||!sidePanel||!eventsPanel)throw Error('main/side/event banner tabs missing');
+    const mainTab=sourceNav?.querySelector('[data-banner-management-tab="main"]'),sideTab=sourceNav?.querySelector('[data-banner-management-tab="side"]'),eventsTab=sourceNav?.querySelector('[data-banner-management-tab="events"]'),libraryTab=sourceNav?.querySelector('[data-banner-management-tab="library"]');
+    const mainPanel=document.querySelector('[data-banner-management-panel="main"]'),sidePanel=document.querySelector('[data-banner-management-panel="side"]'),eventsPanel=document.querySelector('[data-banner-management-panel="events"]'),libraryPanel=document.querySelector('[data-banner-management-panel="library"]');
+    if(!mainTab||!sideTab||!eventsTab||!libraryTab||!mainPanel||!sidePanel||!eventsPanel||!libraryPanel)throw Error('main/side/event/library banner tabs missing');
     if(!sourceNav||getComputedStyle(sourceNav).display!=='none')throw Error('source image subnav must remain hidden in the content pane');
     if(topNav.hidden||getComputedStyle(topNav).display==='none')throw Error('image top subnav must be visible');
-    if([...topNav.querySelectorAll('[data-admin-subtab]')].map(button=>button.textContent.trim()).join('|')!=='메인 배너|사이드 배너|이벤트 관리')throw Error('image top subnav labels missing');
-    if(document.querySelectorAll('#adminBannerMainTab').length!==1||document.querySelectorAll('#adminBannerSideTab').length!==1||document.querySelectorAll('#adminBannerEventsTab').length!==1)throw Error('top subnav clone duplicated source tab ids');
+    if([...topNav.querySelectorAll('[data-admin-subtab]')].map(button=>button.textContent.trim()).join('|')!=='메인 배너|사이드 배너|이벤트 관리|이미지 라이브러리')throw Error('image top subnav labels missing');
+    if(document.querySelectorAll('#adminBannerMainTab').length!==1||document.querySelectorAll('#adminBannerSideTab').length!==1||document.querySelectorAll('#adminBannerEventsTab').length!==1||document.querySelectorAll('#adminBannerLibraryTab').length!==1)throw Error('top subnav clone duplicated source tab ids');
     if(location.hash!=='#images/main')throw Error('image default subtab route mismatch');
-    if(mainPanel.hidden||!mainPanel.classList.contains('active')||!sidePanel.hidden||!eventsPanel.hidden)throw Error('main banner must be the initial visible tab');
+    if(mainPanel.hidden||!mainPanel.classList.contains('active')||!sidePanel.hidden||!eventsPanel.hidden||!libraryPanel.hidden)throw Error('main banner must be the initial visible tab');
     if(!mainPanel.contains(document.querySelector('[data-main-banner-admin]'))||!sidePanel.contains(document.querySelector('[data-side-banner-admin]'))||!eventsPanel.contains(document.querySelector('[data-banner-events-admin]')))throw Error('banner modules not isolated into tab panels');
     if(document.querySelectorAll('[data-banner-event-workflow="main"] .bew-map-step').length!==5)throw Error('five-step workflow map missing');
     if(document.querySelectorAll('[data-banner-event-workflow="main"] .bew-step').length!==5)throw Error('five workflow sections missing');
@@ -320,6 +323,30 @@ async function run(){
     if(state.eventRotationMode!=='RANDOM_CYCLE')throw Error('random cycle rotation state missing');
     document.querySelector('[data-banner-events-admin] [data-bem-move="DOWN"]:not(:disabled)')?.click();
     await waitFor(()=>state.calls.includes('event-move'),'event manager order mutation');
+    document.querySelector('#adminTopSubnav [data-admin-subtab="library"]').click();
+    await waitFor(()=>libraryPanel.classList.contains('active')&&!libraryPanel.hidden&&state.calls.includes('asset-library'),'image library route and load');
+    if(location.hash!=='#images/library'||document.querySelector('#adminCurrentLocation')?.textContent!=='[이미지 관리] - 이미지 라이브러리')throw Error('image library location/route mismatch');
+    if(document.querySelector('[data-banner-asset-library] [data-bal-detail] .bal-detail-empty')===null)throw Error('library must start with no selected image');
+    const libraryMode=document.querySelector('[data-banner-asset-library] [data-bal-mode]');libraryMode.checked=true;fire(libraryMode,'change');
+    if(document.querySelector('[data-banner-asset-library] [data-bal-tag-groups]').hidden||!document.querySelector('[data-banner-asset-library] [data-bal-tag-filter="룩북"]'))throw Error('library hashtag grouping switch missing');
+    document.querySelector('[data-banner-asset-library] [data-bal-tag-filter="룩북"]').click();
+    if(document.querySelectorAll('[data-banner-asset-library] [data-bal-select]').length!==1)throw Error('hashtag selection filter mismatch');
+    document.querySelector('[data-banner-asset-library] [data-bal-select="1"]').click();
+    if(!document.querySelector('[data-banner-asset-library] [data-bal-detail]')?.textContent.includes('side-1.webp')||!document.querySelector('[data-banner-asset-library] [data-bal-detail]')?.textContent.includes('첫 이벤트'))throw Error('read-only metadata or formal event usage missing');
+    if(document.querySelector('[data-banner-asset-library] [data-bal-save]')?.disabled!==true)throw Error('unchanged library detail must not save');
+    if(!document.querySelector('[data-banner-asset-library] [data-bal-tag-input]')?.disabled)throw Error('five-tag limit state missing');
+    document.querySelector('[data-banner-asset-library] [data-bal-tag-remove="4"]').click();
+    let libraryTagInput=document.querySelector('[data-banner-asset-library] [data-bal-tag-input]');libraryTagInput.value='신규';libraryTagInput.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
+    if(!document.querySelector('[data-banner-asset-library]')?.textContent.includes('#신규'))throw Error('library hashtag add missing');
+    document.querySelector('[data-banner-asset-library] [data-bal-tag-move="4:up"]').click();
+    const libraryTitle=document.querySelector('[data-banner-asset-library] [data-bal-title]');libraryTitle.value='사이드 두 번째';fire(libraryTitle,'input');
+    await waitFor(()=>document.querySelector('[data-banner-asset-library] [data-bal-title-note]')?.classList.contains('error'),'duplicate library title state');
+    const uniqueTitle=document.querySelector('[data-banner-asset-library] [data-bal-title]');uniqueTitle.value='사이드 첫 번째 수정';fire(uniqueTitle,'input');
+    await waitFor(()=>document.querySelector('[data-banner-asset-library] [data-bal-title-note]')?.classList.contains('ok')&&!document.querySelector('[data-banner-asset-library] [data-bal-save]').disabled,'valid dirty library state');
+    document.querySelector('[data-banner-asset-library] [data-bal-save]').click();
+    await waitFor(()=>state.calls.includes('asset-update')&&document.querySelector('[data-banner-asset-library] [data-bal-status]')?.textContent.includes('최신화했습니다'),'library save and cache refresh');
+    if(window.KinojoAdmin.getBannerEventWorkflowState('side').assets.find(asset=>Number(asset.assetId)===1)?.title!=='사이드 첫 번째 수정')throw Error('authoring library cache was not refreshed');
+    const libraryQuery=document.querySelector('[data-banner-asset-library] [data-bal-query]');libraryQuery.value='검색결과없음';fire(libraryQuery,'input');if(!document.querySelector('[data-banner-asset-library] .bal-empty')?.textContent.includes('조건에 맞는 이미지가 없습니다'))throw Error('library empty search state missing');
     document.documentElement.dataset.e2eResult='PASS';document.querySelector('#e2eResult').textContent='PASS '+state.calls.join(' > ');
   }catch(error){document.documentElement.dataset.e2eResult='FAIL';document.querySelector('#e2eResult').textContent='FAIL '+(error?.stack||error)+`\nlocation=${document.querySelector('#adminCurrentLocation')?.textContent||''} subtab=${window.KinojoAdmin.state?.subtab||''}`;console.error(error)}
 }

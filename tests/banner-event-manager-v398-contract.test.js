@@ -27,7 +27,7 @@ for(const token of [
 ])assert.ok(migration.toLowerCase().includes(token.toLowerCase()),`missing DB398 contract: ${token}`);
 
 for(const token of [
-  'V = "2.3"','DB = "405"','EVENT = "404"',
+  'V = "2.4"','DB = "406"','EVENT = "404"',
   'kinojo_banner_event_list_v404','kinojo_banner_event_move_v398',
   'kinojo_banner_event_pause_v398','kinojo_banner_event_delete_v398',
   '"event-move"','"event-pause"','"event-delete"',
@@ -44,7 +44,7 @@ for(const token of ['data-bem-event-rotation','kinojo-filter-switch bem-global-r
   assert.ok(manager.includes(token),`missing global event rotation UI contract: ${token}`);
 assert.equal(manager.includes('data-bem-playback'),false,'event-local playback controls must stay retired');
 
-for(const token of ['data-admin-subtab="events"','data-banner-management-panel="events"',"const order=['main','side','events']"])assert.ok(tabs.includes(token),`missing event tab contract: ${token}`);
+for(const token of ['data-admin-subtab="events"','data-banner-management-panel="events"',"const order=['main','side','events','library']"])assert.ok(tabs.includes(token),`missing event tab contract: ${token}`);
 assert.ok(bootstrap.includes("if(tab==='images'&&subtab==='events')"),'event manager must load through the admin router');
 assert.ok(loader.includes("'admin-banner-events.js'"),'event manager module missing from loader');
 assert.ok(loader.indexOf("'admin-banner-event-workflow.js'")<loader.indexOf("'admin-banner-events.js'"),'event manager must load after workflow');

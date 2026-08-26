@@ -1,4 +1,4 @@
-/* KINOJO Admin banner event workflow phase 2 stage 5 v2026082606 */
+/* KINOJO Admin banner event workflow phase 2 stage 6 integration v2026082607 */
 (function(A){
 'use strict';
 if(!A)throw Error('KINOJO Admin shared module is required.');
@@ -461,6 +461,7 @@ document.addEventListener('keydown',event=>{const card=event.target.closest?.('[
 document.addEventListener('keydown',event=>{const input=event.target;if(!input.matches?.('[data-bew-tag-input]'))return;const workflow=input.closest('[data-banner-event-workflow]');if(!workflow)return;const s=state(workflow.dataset.bannerEventWorkflow);if(s.tagComposing||event.isComposing)return;if((event.key==='Enter'||event.key===',')&&input.value.trim()){event.preventDefault();commitTags(s,input.value)}else if(event.key==='Backspace'&&!input.value&&s.uploadTags.length){event.preventDefault();s.uploadTags.pop();s.tagError='';renderTagEditor(s,{focus:true})}});
 document.addEventListener('keydown',event=>{const s=Object.values(states).find(item=>item.resetOpen);if(!s)return;const modal=$('[data-bew-reset-modal]',s.root);if(!modal)return;if(event.key==='Escape'){event.preventDefault();closeResetModal(s);return}if(event.key!=='Tab')return;const focusable=$$('button:not([disabled]),[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])',modal).filter(node=>!node.hidden),first=focusable[0],last=focusable[focusable.length-1];if(!first){event.preventDefault();$('[data-bew-reset-dialog]',modal)?.focus();return}if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}});
 window.addEventListener('scroll',hideImagePeek,true);
+window.addEventListener('kinojo:banner-assets-updated',event=>{const assets=Array.isArray(event.detail?.assets)?event.detail.assets:null;if(!assets)return;for(const s of Object.values(states)){s.assets=assets;s.loaded=true;if(!s.root)continue;renderBundle(s);renderSettings(s);renderReview(s);renderActions(s)}});
 
 mount('main');mount('side');
 Object.assign(A,{ensureBannerEventWorkflow:()=>{mount('main');mount('side')},loadMainBannerManagement:force=>load('main',force),loadSideBannerManagement:force=>load('side',force),getBannerEventWorkflowState:kind=>state(kind),getBannerEventPayload:kind=>eventPayload(state(kind))});

@@ -1,6 +1,6 @@
 const S = "kinojo-banner-media",
-  V = "2.3",
-  DB = "405",
+  V = "2.4",
+  DB = "406",
   EVENT = "404",
   UPLOAD = "403",
   MASTER = "337",
@@ -835,6 +835,15 @@ async function compositeComplete(r: Request, b: any, t: string) {
   });
 }
 async function asset(r: Request, b: any, t: string, a: string) {
+  if (a === "asset-library") {
+    const d = await rpc("kinojo_banner_asset_library_v406", {
+      p_session_token: t,
+      p_include_archived: b.includeArchived === true,
+    });
+    return d.ok === true
+      ? out(r, { ...d, service: S, apiVersion: V, databaseContract: DB })
+      : out(r, d, stat(txt(d.code, 80)));
+  }
   if (a === "asset-list") {
     const d = await rpc("kinojo_banner_asset_list_v403", {
       p_session_token: t,
@@ -864,7 +873,7 @@ async function asset(r: Request, b: any, t: string, a: string) {
       return out(r, { ok: false, code: "BANNER_ASSET_TITLE_INVALID" }, 400);
     const tagResult = assetTags(b.tags);
     if (!tagResult.ok) return out(r, tagResult, 400);
-    const d = await rpc("kinojo_banner_asset_update_v403", {
+    const d = await rpc("kinojo_banner_asset_update_v406", {
       p_session_token: t,
       p_asset_id: id,
       p_title: title,
@@ -1434,6 +1443,7 @@ Deno.serve(async (r) => {
         },
         publicActions: ["manifest"],
         actions: [
+          "asset-library",
           "asset-list",
           "asset-title-check",
           "upload-prepare",
@@ -1469,6 +1479,7 @@ Deno.serve(async (r) => {
       });
     if (a === "manifest") return await manifest(r, b);
     const aa = [
+        "asset-library",
         "asset-list",
         "asset-title-check",
         "asset-update",
