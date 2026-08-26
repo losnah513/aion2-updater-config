@@ -38,9 +38,9 @@ for(const token of [
 ])assert.ok(migration.includes(token),`missing DB402 global rotation contract: ${token}`);
 
 for(const token of [
-  'DB = "403"','EVENT = "402"','"event-rotation"',
-  'kinojo_banner_event_list_v402','kinojo_banner_event_save_v402',
-  'kinojo_banner_event_publish_v402','kinojo_banner_event_rotation_set_v402',
+  'DB = "404"','EVENT = "404"','"event-rotation"',
+  'kinojo_banner_event_list_v404','kinojo_banner_event_save_v404',
+  'kinojo_banner_event_publish_v404','kinojo_banner_event_rotation_set_v402',
   'kinojo_banner_manifest_v402','kinojo_banner_idempotency_claim_v402',
   'BANNER_EVENT_ROTATION_MODE_INVALID','BANNER_EVENT_PLAYBACK_RETIRED',
   'eventRotationAuthority: "SERVER_GLOBAL_FORMAL_EVENT_GROUPS"',
