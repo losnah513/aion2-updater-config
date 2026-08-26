@@ -6,7 +6,7 @@ const root=path.resolve(__dirname,'..');
 const workflow=fs.readFileSync(path.join(root,'admin/js/admin-banner-event-workflow.js'),'utf8');
 
 for(const token of [
-  'banner event workflow stage 5',
+  'banner event workflow phase 2 shell stage 1',
   '이미지별 콘텐츠 편집',
   '재사용 꾸미기 라이브러리',
   "const EMOJIS=",
@@ -37,6 +37,6 @@ for(const token of [
 assert.ok(workflow.includes("layers.filter(layer=>layer.type==='TEXT').length<LIMIT"),'text maximum must be three');
 assert.ok(workflow.includes("layers.filter(layer=>layer.type!=='TEXT').length<LIMIT"),'decoration maximum must be three');
 assert.ok(workflow.includes("position:fixed;z-index:12020;right:24px;bottom:20px"),'fixed bottom-right action dock missing');
-assert.ok(workflow.includes("step?.scrollIntoView({behavior:'smooth',block:'center'})"),'missing-field navigation missing');
+assert.ok(workflow.includes("target?.scrollIntoView({behavior:'smooth',block:'start'})"),'sticky-safe missing-field navigation missing');
 assert.ok(workflow.includes("contentOverlays:(s.overlays[Number(id)]||[])"),'general content payload missing');
 console.log('PASS banner event stage-5 UI contract');

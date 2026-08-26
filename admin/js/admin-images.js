@@ -10,7 +10,7 @@ function session(){const t=String(window.KinojoAuth?.getSession?.()?.token||'').
 function id(){return crypto.randomUUID()}
 function imageRoute(){return String(location.hash||'').replace(/^#/,'').split('/')[0]==='images'}
 function guard(){if(master()||!imageRoute())return false;history.replaceState(null,'',location.pathname+location.search+'#dashboard');A.switchTab?.('dashboard',{updateRoute:true});return true}
-function label(){const e=$('#adminCurrentLocation'),p=$('[data-admin-pane="images"]'),text='[이미지 관리]';if(e&&p?.classList.contains('active')&&e.textContent!==text)e.textContent=text}
+function label(){const e=$('#adminCurrentLocation'),p=$('[data-admin-pane="images"]'),text='[이미지 관리]';if(e&&p?.classList.contains('active')&&!String(e.textContent||'').startsWith(text+' - ')&&e.textContent!==text)e.textContent=text}
 function msg(q,text,type=''){const e=$(q);if(e){e.textContent=text||'';e.className='admin-statusline '+type}}
 const bytes=value=>{const size=Number(value)||0;return size>=1048576?(size/1048576).toFixed(1)+'MB':Math.max(1,Math.round(size/1024))+'KB'};
 const fileStem=name=>String(name||'').replace(/\.[^.]+$/,'').trim()||'배너 이미지';

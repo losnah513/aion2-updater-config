@@ -9,7 +9,7 @@ const desktop=fs.readFileSync(path.join(root,'admin/index.html'),'utf8');
 const mobile=fs.readFileSync(path.join(root,'m/admin/index.html'),'utf8');
 
 for(const token of [
-  'banner event workflow stage 5',
+  'banner event workflow phase 2 shell stage 1',
   "['ALL','전체 페이지']",
   "['HOME','홈']",
   "['HOF','명예의 전당']",
@@ -47,8 +47,9 @@ for(const token of [
   'getBannerEventPayload'
 ])assert.ok(workflow.includes(token),`stage-3 workflow token missing: ${token}`);
 
-assert.ok(workflow.includes("root.dataset.bannerEventStage='5'"),'stage-5 mount marker missing');
-assert.ok(workflow.includes("index<4?' ready':''"),'fourth workflow node must be active');
+assert.ok(workflow.includes("root.dataset.bannerEventStage='phase2-1'"),'phase-2 stage-1 mount marker missing');
+assert.ok(!workflow.includes("index<4?' ready':''"),'static ready workflow nodes must be removed');
+assert.ok(workflow.includes('function renderStepProgress('),'real workflow progress calculator missing');
 assert.ok(workflow.includes("pageCode==='HOF'?['LEFT']:['LEFT','RIGHT']"),'HOF left-only shared target missing');
 assert.ok(workflow.includes("if(pageCode!=='HOF')"),'HOF right variant exclusion missing');
 assert.ok(workflow.includes('slideIntervalMs:Math.max(3000'),'slide interval normalization missing');
@@ -57,8 +58,8 @@ assert.ok(workflow.includes("directional?value.transitionDirection:'NONE'"),'non
 assert.ok(workflow.includes("'event-save'"),'stage 5 draft persistence missing');
 assert.ok(workflow.includes("'event-publish'"),'stage 5 publish action missing');
 
-assert.ok(loader.includes('v2026082503'),'stage-8 loader cache generation missing');
-assert.ok(desktop.includes('admin.js?cache=2026082503'),'desktop stage-8 cache mismatch');
-assert.ok(mobile.includes('admin.js?cache=2026082503'),'mobile stage-8 cache mismatch');
+assert.ok(loader.includes('v2026082601'),'stage-8 loader cache generation missing');
+assert.ok(desktop.includes('admin.js?cache=2026082601'),'desktop stage-8 cache mismatch');
+assert.ok(mobile.includes('admin.js?cache=2026082601'),'mobile stage-8 cache mismatch');
 
 console.log('PASS banner event stage-3 UI contract');
