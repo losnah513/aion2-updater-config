@@ -329,7 +329,7 @@
 <!-- KINOJO_MY_INFO_PHASE2_STAGE4_CLOSEOUT_20260826 -->
 ## My Info 2차 · 4단계 통합 검증·배포·문서 마감 · 2026-08-26
 
-- 1~3단계의 Server/Storage·회원 요청·MASTER 관리자 처리 계약을 재작성하지 않고 통합 회귀와 운영 readback으로 닫았다.
+- PR `#274` (`codex/my-page-phase2-closeout-20260826`)에서 1~3단계의 Server/Storage·회원 요청·MASTER 관리자 처리 계약을 재작성하지 않고 통합 회귀와 운영 readback으로 닫았다.
 - 입력 경계 `0/1/2/3/4장`, 스타일 미선택·무효 스타일, 직접 요청 빈 값, 300/301자, 부분 실패·멱등 재시도와 회원 → 관리자 연결을 신규 통합 계약으로 고정했다.
 - PC·모바일 개인정보 처리방침은 제작 요청 이미지 7일, 스타일·요청문·상태·감사 메타데이터 최대 30일, MASTER 전용 확인과 60초 signed URL 경계를 동일하게 고지한다. PC 래퍼의 좁은 화면 가로 넘침도 제거했다.
 - 운영 Supabase는 DB404/DB405, `kinojo-member-profile` v24, cleanup v6, private bucket, 15분 cron을 유지한다. 요청 테이블 5개 RLS와 service-role-only RPC 11개 ACL, trigger, health 200, 무인증 관리자 401을 readback했다.

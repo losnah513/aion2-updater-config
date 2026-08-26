@@ -31,5 +31,5 @@
 
 ## 배포 기록
 
-- GitHub PR과 운영 main merge, Pages 및 live readback 결과는 PR 생성 뒤 이 문서와 Drive 전용 LOG에 확정 기록한다.
+- GitHub PR `#274` (`codex/my-page-phase2-closeout-20260826`)로 검증·배포한다. 운영 main merge SHA와 Pages/live 최종 결과는 Drive 전용 LOG에 확정 기록한다.
 - 진행도는 **4/4**, 다음 단계는 없다.
