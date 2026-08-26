@@ -1,4 +1,4 @@
-/* KINOJO Admin banner management tabs v2026082609 */
+/* KINOJO Admin banner management tabs v2026082610 */
 (function(A){
 'use strict';
 if(!A)throw Error('KINOJO Admin shared module is required.');

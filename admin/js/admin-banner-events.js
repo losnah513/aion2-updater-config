@@ -1,4 +1,4 @@
-/* KINOJO Admin banner event manager stage 7 follow-up v2026082609 */
+/* KINOJO Admin banner event manager stage 7 follow-up v2026082610 */
 (function(A){
 'use strict';
 if(!A)throw Error('KINOJO Admin shared module is required.');
@@ -44,7 +44,7 @@ function template(){return `<div class="bem-shell"><section class="admin-card be
 function mount(){const root=$('[data-banner-events-admin]');if(!root)return null;S.root=root;if(root.dataset.bannerEventManager==='7-followup')return root;root.innerHTML=template();root.dataset.bannerEventManager='7-followup';style();render();return root}
 async function fetchEvents(){const result=await api('event-list',{includeArchived:true});S.events=Array.isArray(result.events)?result.events:[];S.legacyCampaigns=Array.isArray(result.legacyCampaigns)?result.legacyCampaigns:[];S.rotationMode=result.eventRotationMode==='RANDOM_CYCLE'?'RANDOM_CYCLE':'ORDERED';S.loaded=true;render()}
 async function load(force=false){mount();if(!S.root||A.isMaster?.()!==true||S.busy||(!force&&S.loaded))return;S.busy=true;status(`${contextLabel()} 이벤트를 불러오는 중...`);try{await fetchEvents();status(`${contextLabel()} 등록 이벤트 ${contextEvents().length}개를 불러왔습니다.`,'ok')}catch(error){status(error.message||String(error),'error')}finally{S.busy=false;renderRotation()}}
-function setContext(kind){const next=kind==='side'?'side':'main';if(S.context===next&&S.root){render();return}S.context=next;S.slotFilter='ALL';S.status='ALL';S.query='';mount();render()}
+function setContext(kind){const next=kind==='side'?'side':'main';if(S.context===next&&S.root){render();return}S.context=next;S.slotFilter='ALL';S.status='ALL';S.query='';if(S.loaded){S.message=`${contextLabel()} 등록 이벤트 ${contextEvents().length}개를 불러왔습니다.`;S.messageKind='ok'}else{S.message='';S.messageKind=''}mount();render()}
 function eventFrom(control){const id=control.closest('[data-bem-event]')?.dataset.bemEvent;return S.events.find(event=>event.eventGroupId===id)}
 async function moveEvent(event,direction){if(S.busy)return;S.busy=true;status(`${event.name} 순서를 조정하는 중...`);try{await api('event-move',{eventGroupId:event.eventGroupId,direction},true);await fetchEvents();status(`${event.name} 순서를 조정했습니다.`,'ok')}catch(error){status(error.message||String(error),'error')}finally{S.busy=false}}
 async function setRotation(mode,input){if(S.busy){input.checked=S.rotationMode==='RANDOM_CYCLE';return}const previous=S.rotationMode;S.busy=true;input.disabled=true;status(`등록 이벤트 순환 순서를 ${mode==='RANDOM_CYCLE'?'랜덤':'순차'}으로 바꾸는 중...`);try{const result=await api('event-rotation',{rotationMode:mode},true);S.rotationMode=result.eventRotationMode==='RANDOM_CYCLE'?'RANDOM_CYCLE':'ORDERED';await fetchEvents();status(`등록 이벤트 순환 순서를 ${S.rotationMode==='RANDOM_CYCLE'?'랜덤':'순차'}으로 변경했습니다.`,'ok')}catch(error){S.rotationMode=previous;input.checked=previous==='RANDOM_CYCLE';status(error.message||String(error),'error')}finally{S.busy=false;renderRotation()}}
