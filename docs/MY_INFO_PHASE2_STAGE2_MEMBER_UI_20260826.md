@@ -1,7 +1,7 @@
 # My Info Phase 2 · Stage 2 Member Request UI
 
 기준일: 2026-08-26 KST  
-상태: 구현·로컬 검증 완료, 운영 병합 전
+상태: 운영 반영 완료 (PR #268)
 
 ## 범위
 
