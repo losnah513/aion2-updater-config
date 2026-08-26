@@ -6,7 +6,7 @@
 
 - GitHub: `losnah513/aion2-updater-config`
 - 운영 브랜치: `main`
-- 배너 이미지 관리 2차 3단계 운영 기준: PR `#264`, merge commit `83f981e5af8dd8cbc528f1040726ecf53f0a329c`, 관리자 cache `2026082603`, Edge `kinojo-banner-media` v20(API 2.1 / DB 403 / Upload 403 / Event 402)
+- 배너 이미지 관리 2차 6단계 운영 기준: PR `#275`, merge commit `71a31d6508ea53a5060e239069632ecb9dbe03e1`, 관리자 cache `2026082607`, Edge `kinojo-banner-media` v23(API 2.4 / DB 406 / Upload 403 / Event 404)
 - 내 정보 E-1 제품 운영 commit: `640b7eebcef1c13b0516fe2cd020df870bc23752` (PR `#194`)
 - 내 정보 후속 A-1~E-2: 12/12 완료
 - My Info / 관리자 이미지 모달 추가 UI 후속: PR `#197` 구현·배포·동기화 기준 CLOSED · 수동 실브라우저 sanity check는 post-close 보류
@@ -316,6 +316,18 @@
 - 로그인된 운영 관리자에서 기존 이벤트를 읽기 전용으로 불러와 합성 미리보기, 숫자 `41` 입력과 슬라이더·`41px` 반영, `별` 검색 결과 `⭐`, Escape 닫힘, 스티커 등록 폼의 파일 선택 전 비활성 상태를 확인했다. 저장·게시는 실행하지 않고 새로고침으로 로컬 작성 상태를 비웠으며 운영 꾸밈 자산도 등록하지 않았다.
 - DB/Edge 반영 전후 이벤트 그룹 6개, 캠페인 74개, 아이템 233개, 게시 캠페인 67개, 꾸밈 자산 0개가 같았다. 캠페인 fingerprint `8f77f2ee6b8548428fc4a8b9a93b69b6`, 아이템 fingerprint `fee5948e8dfe499b2fafc2d2a1e9da51`도 일치한다.
 - 다음 제품 구현은 2차 계획 **6단계**다. 5단계의 단일 편집 상태·재사용 보관함·합성 미리보기·Server 무결성 계약을 재작성하지 않고 운영 main과 Drive 전용 LOG를 기준으로 이어간다.
+
+## 배너 이미지 관리 2차 · 6단계 이미지 라이브러리 완료 · 2026-08-26
+
+- 2차 계획 6단계 `6-가~6-마`는 PR `#275`로 한 묶음 구현·배포했다. 운영 merge는 `71a31d6508ea53a5060e239069632ecb9dbe03e1`, 관리자 cache는 `2026082607`, 누적 진행도는 **37/49**다.
+- 이미지 관리의 네 번째 하위 탭으로 `이미지 라이브러리`를 신설하고 전용 `admin-banner-library.js` 모듈로 분리했다. 화면은 기본 미선택이며 카드에서 이미지를 고른 경우에만 오른쪽 상세·편집 영역을 연다. 작성 화면의 이미지 선택 캐시와는 `kinojo:banner-assets-updated` 이벤트로 동기화한다.
+- 전체 카드, 저장 제목·해시태그 검색, `라이브러리 | 해시태그` 공통 스위치, Server 집계 해시태그 묶음과 필터를 제공한다. 선택 상세는 원본 전신을 `contain`으로 표시하고 원본 파일명·MIME·용량·픽셀·등록 시각·처리 상태를 읽기 전용으로 보여 준다. 현재 정식 이벤트 이름, 연결 캠페인 수, 활성 캠페인 수, 노출 페이지와 좌우 위치도 함께 집계한다.
+- 저장 이미지 제목과 분류 해시태그는 라이브러리에서 수정할 수 있다. 해시태그는 추가·제거·순서 변경·최대 5개·정규화 중복 검사를 적용하고, 제목은 Server 중복 확인을 거친다. 실제 변경이 있을 때만 저장 버튼을 활성화하며 저장 성공 후 라이브러리·작성 화면·이벤트 관리가 같은 Server 자산 목록을 다시 읽는다. 원본 파일·Storage 객체·게시 이벤트를 삭제하거나 교체하지 않는다.
+- 운영 DB에는 `banner_asset_library_v406`을 적용했다. MASTER 전용 Edge action `asset-library`와 `asset-update`가 private 집계 함수를 호출하며 public RPC 실행 권한은 `service_role`만 가진다. 새 Edge를 만들지 않고 기존 `kinojo-banner-media`를 **REUSE_WITH_DB_MODULE**로 확장해 v23(API 2.4 / DB 406 / Event 404 / Upload 403)으로 배포했다. 배포 뒤 신규 v406 관련 security/performance advisor 경고는 0건이다.
+- 전체 Node 테스트 `49/49`와 실제 Chrome E2E를 통과했다. PR 및 main의 Banner Admin, Banner Runtime, Character Refresh Profile, KINOJO Pages, Pages 배포가 모두 성공했고 Banner Admin 운영 exact byte readback과 Banner Runtime Manifest ETag·PC SIDE·모바일 MAIN live 검증도 통과했다.
+- 로그인된 운영 관리자에서 이미지 26개, 처리 완료 26개, 연결 사용 중 19개, 해시태그 묶음 5개를 확인했다. 첫 자산의 원본 메타데이터와 정식 이벤트 1개·연결 캠페인 13개·활성 13개·페이지/좌우 사용 현황을 읽기 전용으로 확인했다. 데스크톱과 `390×844`에서 가로 넘침 0, 모바일 1열, 상세 영역 static, 원본 `contain`, console error 0건이다. 운영 자산 메타데이터 저장은 실행하지 않았다.
+- DB/Edge 반영 전후 이미지 26개, 캠페인 74개, 아이템 233개, 이벤트 그룹 6개가 같았다. 이번 단계는 관리 메타데이터 조회·수정 경로만 추가했으며 기존 이미지·이벤트·게시 상태를 일괄 변경하지 않았다.
+- 다음 제품 구현은 2차 계획 **7단계**다. 6단계의 전용 라이브러리·Server 사용 현황·메타데이터 편집·캐시 갱신 계약을 재작성하지 않고 운영 main과 Drive 전용 LOG를 기준으로 이어간다.
 
 ## My Info 2차 · 2단계 회원 제작 요청 UI · 2026-08-26
 
