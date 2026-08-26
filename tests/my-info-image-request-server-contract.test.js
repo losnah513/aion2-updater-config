@@ -1,6 +1,7 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
+const vm = require("node:vm");
 
 const root = path.resolve(__dirname, "..");
 const read = (file) =>
@@ -92,6 +93,53 @@ assert.match(
   profile,
   /txt\(draft\.status, 40\) === "SUBMITTED"[\s\S]+p_verified_items: \[\]/,
   "a submitted retry must return idempotently without reading expired Storage objects",
+);
+assert.match(
+  profile,
+  /const request = imageRequestPublic\(\s*d,\s*input\.items\.map\(\(x\) => x\.slot\),\s*\);/,
+  "prepare must project the validated request slots when DB404 returns items without a slots field",
+);
+const publicHelperSource = profile.match(
+  /function imageRequestPublic\(d, fallbackSlots = \[\]\) \{[\s\S]*?\n\}/,
+)?.[0];
+assert.ok(publicHelperSource, "image request public projection helper must stay testable");
+const imageRequestPublic = vm.runInNewContext(`(${publicHelperSource})`, {
+  SLOTS: ["FRONT", "BACK", "UPPER_BODY"],
+  txt: (value, limit = 500) => String(value ?? "").trim().slice(0, limit),
+  pos: (value) => {
+    const number = Number(value);
+    return Number.isInteger(number) && number > 0 ? number : null;
+  },
+});
+const rpcPrepareShape = {
+  requestId: 8,
+  status: "DRAFT",
+  styleCode: "REALISTIC",
+  requestNote: "",
+  imageExpiresAt: "2026-09-02T12:11:43Z",
+  metadataExpiresAt: "2026-09-25T12:11:43Z",
+  items: [
+    { slot: "FRONT", objectPath: "private/front.webp" },
+    { slot: "BACK", objectPath: "private/back.webp" },
+    { slot: "UPPER_BODY", objectPath: "private/upper-body.webp" },
+  ],
+};
+assert.deepEqual(
+  Array.from(
+    imageRequestPublic(rpcPrepareShape, ["FRONT", "BACK", "UPPER_BODY"]).slots,
+  ),
+  ["FRONT", "BACK", "UPPER_BODY"],
+  "the actual Edge helper must restore canonical slots for the DB404 prepare response shape",
+);
+assert.deepEqual(
+  Array.from(imageRequestPublic({ ...rpcPrepareShape, slots: ["BACK"] }, ["FRONT"]).slots),
+  ["BACK"],
+  "an explicit DB slots field must remain authoritative for finalize and state responses",
+);
+assert.equal(
+  JSON.stringify(imageRequestPublic(rpcPrepareShape, ["FRONT"])).includes("objectPath"),
+  false,
+  "the public projection must not expose private Storage object paths",
 );
 assert.doesNotMatch(profile, /uploads\.push\([^\n]*objectPath/);
 

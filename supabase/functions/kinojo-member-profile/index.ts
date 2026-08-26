@@ -390,8 +390,8 @@ function imageRequestInput(b) {
     items,
   };
 }
-function imageRequestPublic(d) {
-  const slots = (Array.isArray(d.slots) ? d.slots : [])
+function imageRequestPublic(d, fallbackSlots = []) {
+  const slots = (Array.isArray(d.slots) ? d.slots : fallbackSlots)
     .map((x) => txt(x, 40))
     .filter((x) => SLOTS.includes(x));
   return {
@@ -1905,7 +1905,10 @@ async function imageRequestPrepare(r, b, t) {
       status(code),
     );
   }
-  const request = imageRequestPublic(d);
+  const request = imageRequestPublic(
+    d,
+    input.items.map((x) => x.slot),
+  );
   if (request.requestId === null || num(d.characterId) !== input.characterId)
     throw Error("IMAGE_REQUEST_PREPARE_BINDING_MISMATCH");
   if (request.status !== "DRAFT")
