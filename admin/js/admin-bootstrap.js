@@ -227,12 +227,16 @@
     const data=summary&&typeof summary==='object'?summary:{};
     const codeCount=Math.max(0,Number(data.codeRequestCount||0));
     const supportCount=Math.max(0,Number(data.supportRequestCount||0));
-    const imageCount=Math.max(0,Number(data.memberImagePendingCount||0));
+    const imageReviewCount=Math.max(0,Number(data.memberImagePendingCount||0));
+    const imageRequestCount=Math.max(0,Number(data.memberImageRequestPendingCount||0));
+    const imageCount=imageReviewCount+imageRequestCount;
     if($('#adminPendingBadge'))$('#adminPendingBadge').textContent=String(codeCount);
     if($('#adminSanctuaryRequestBadge'))$('#adminSanctuaryRequestBadge').textContent=String(supportCount);
     if($('#adminSanctuarySubBadge'))$('#adminSanctuarySubBadge').textContent=String(supportCount);
     document.querySelectorAll('#adminMemberImageBadge,[data-admin-subtab="character-images"] .badge').forEach(badge=>{badge.textContent=String(imageCount);});
-    state.memberImageReviewPendingCount=imageCount;
+    state.memberImageReviewPendingCount=imageReviewCount;
+    state.memberImageRequestPendingCount=imageRequestCount;
+    if(typeof A.renderMemberImageReviewSummary_==='function')A.renderMemberImageReviewSummary_(imageReviewCount,state.memberImageReviewTotalCount);
   }
 
   async function refreshNotificationBadges(){

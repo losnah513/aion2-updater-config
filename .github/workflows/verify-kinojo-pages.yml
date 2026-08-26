@@ -32,7 +32,7 @@ on:
       - "ui/**"
       - "supabase/functions/kinojo-member-profile/**"
       - "supabase/functions/kinojo-member-image-cleanup/**"
-      - "supabase/migrations/20260826033315_member_image_request_batch_v404.sql"
+      - "supabase/migrations/*member_image_request*.sql"
       - "tests/**"
       - "launcher-content.json"
       - "CNAME"
@@ -68,7 +68,7 @@ on:
       - "ui/**"
       - "supabase/functions/kinojo-member-profile/**"
       - "supabase/functions/kinojo-member-image-cleanup/**"
-      - "supabase/migrations/20260826033315_member_image_request_batch_v404.sql"
+      - "supabase/migrations/*member_image_request*.sql"
       - "tests/**"
       - "launcher-content.json"
       - "CNAME"
@@ -107,6 +107,7 @@ jobs:
             "ui/kinojo-my-info-image-preloader.js"
             "ui/kinojo-common-ui.js"
             "ui/kinojo-range-control.js"
+            "ui/kinojo-admin-notifications.js"
             "ui/kinojo-character-reaction.js"
             "ui/kinojo-character-detail-refresh.js"
             "ui/kinojo-character-skill-bridge.js"
@@ -122,6 +123,7 @@ jobs:
             "sanctuary-schedule/js/sanctuary-schedule.js"
             "admin/js/admin-members.js"
             "admin/js/admin.js"
+            "admin/js/admin-shared.js"
             "admin/js/admin-system.js"
             "admin/js/admin-bootstrap.js"
             "meter/js/meter-app.js"
@@ -136,6 +138,7 @@ jobs:
           for path in "${js_files[@]}"; do
             node --check "$path"
           done
+          node --check supabase/functions/kinojo-member-profile/index.ts
 
           node tests/web-shell-auth-contract.test.js
           node tests/hof-layout-contract.test.js
@@ -154,6 +157,7 @@ jobs:
           node tests/my-info-admin-image-layout-contract.test.js
           node tests/admin-member-image-review-contract.test.js
           node tests/admin-notification-contract.test.js
+          node tests/my-info-phase2-stage3-admin-contract.test.js
           node tests/kinojo-range-control.test.js
           node tests/sanctuary-roster-quick-edit-contract.test.js
           node tests/sanctuary-waitlist-contract.test.js

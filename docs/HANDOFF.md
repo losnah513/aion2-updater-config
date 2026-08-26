@@ -303,3 +303,14 @@
 - 실제 공통 모달에서 FRONT `800×1200 WebP` 편집, 선택 `1/3`, 미선택 확인, 애니메이션 스타일·요청문, 일괄 전송과 접수 결과를 확인했다. PC와 `390×844` 가로 overflow는 `0`, console error/warn은 `0`이다.
 - 전체 Node 계약 테스트가 통과했다. 상세 계약과 검증 기록은 `docs/MY_INFO_PHASE2_STAGE2_MEMBER_UI_20260826.md`를 기준으로 한다.
 - Stage 2는 WEB UI·브라우저 클라이언트만 변경하며 Supabase DB/RPC/Edge/Storage/cleanup은 Stage 1 운영 상태를 유지한다. 다음은 3단계 관리자 제작 요청 확인·처리다.
+
+## My Info 2차 · 3단계 관리자 제작 요청 확인·처리 · 2026-08-26
+
+- 3단계는 `codex/my-page-phase2-admin-20260826` 브랜치에서 구현했으며, 운영 migration `20260826055902 member_image_request_admin_workflow_v405`와 `kinojo-member-profile` v24 ACTIVE를 먼저 readback했다.
+- 기존 회원별 이미지 목록과 캐릭터 선택 구조를 유지하고, 선택 캐릭터 아래에 최신순 제작 요청 카드만 출력한다. 요청 상세는 카드 한 건을 선택했을 때만 열며 스타일·요청문·실제 첨부 슬롯·보존 상태·감사 이력을 표시한다.
+- MASTER 상태 처리는 `SUBMITTED → IN_PROGRESS/REJECTED`, `IN_PROGRESS → COMPLETED/REJECTED`만 허용한다. 동일 상태 재호출은 멱등이며 실제 변경은 MASTER actor로 상태 이력에 남긴다.
+- 신규 list/detail/status/asset RPC 4개는 service_role 전용이다. 목록·상세에는 private path나 URL이 없고, 미리보기·다운로드를 누른 순간에만 기존 private Storage에서 최대 60초 signed URL을 발급한다.
+- request ID primary key event 표와 finalize trigger가 제작 요청 하나당 관리자 event 하나만 만든다. 공통 알림은 `IMAGE_REQUEST:<requestId>` 하나로 정규화하며 slot별 업로드 알림과 중복시키지 않는다.
+- 관리자 모달은 PC 요청 카드 2열·첨부 3열, 모바일 1열과 내부 스크롤을 사용한다. 실제 브라우저 mock에서 선택 전 상세 없음, 선택 후 요청 한 건 상세, `390×844`/`320×700` 가로 overflow 0을 확인했다.
+- 신규·기존 Node 회귀, 운영 RLS/ACL/trigger/Edge health, 무인증 401, Supabase advisor를 통과했다. 세부 계약은 `docs/MY_INFO_PHASE2_STAGE3_ADMIN_WORKFLOW_20260826.md`를 기준으로 한다.
+- 다음은 4단계 통합 검증·배포·문서 마감이다. 1~3단계의 Server·회원 UI·관리자 처리 계약을 재작성하지 않는다.

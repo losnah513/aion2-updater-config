@@ -19,6 +19,7 @@ const S = "kinojo-member-profile",
   ADMIN_LIST = "367",
   ADMIN_PREVIEW = "371",
   ADMIN_REVIEW = "392",
+  ADMIN_REQUEST = "405",
   REQUEST = "404",
   PIX = "B3";
 const MAX_REQ = 4096,
@@ -108,6 +109,7 @@ function hdr(r) {
     "x-kinojo-reference-state-contract": REF_STATE,
     "x-kinojo-admin-image-preview-contract": ADMIN_PREVIEW,
     "x-kinojo-admin-image-review-contract": ADMIN_REVIEW,
+    "x-kinojo-admin-image-request-contract": ADMIN_REQUEST,
     "x-kinojo-image-request-contract": REQUEST,
     "x-kinojo-edited-image-pixel-contract": PIX,
   };
@@ -251,8 +253,21 @@ function status(c) {
     ].includes(c)
   )
     return 401;
-  if (["CHARACTER_NOT_OWNED", "MASTER_REQUIRED"].includes(c)) return 403;
-  if (["TARGET_MEMBER_NOT_FOUND", "REQUEST_NOT_FOUND"].includes(c)) return 404;
+  if (
+    ["CHARACTER_NOT_OWNED", "TARGET_CHARACTER_NOT_OWNED", "MASTER_REQUIRED"].includes(
+      c,
+    )
+  )
+    return 403;
+  if (
+    [
+      "TARGET_MEMBER_NOT_FOUND",
+      "REQUEST_NOT_FOUND",
+      "REQUEST_IMAGE_NOT_FOUND",
+      "REQUEST_IMAGE_EXPIRED",
+    ].includes(c)
+  )
+    return 404;
   if (
     [
       "OWNER_NOT_RESOLVED",
@@ -285,6 +300,7 @@ function status(c) {
       "REQUEST_REFERENCE_CONFLICT",
       "REQUEST_VERIFICATION_INCOMPLETE",
       "REQUEST_VERIFICATION_MISMATCH",
+      "REQUEST_STATUS_TRANSITION_INVALID",
     ].includes(c)
   )
     return 409;
@@ -491,6 +507,51 @@ async function signPreview(bucket, p, seconds) {
   )
     throw Error("ADMIN_IMAGE_PREVIEW_URL_INVALID");
   return { url: x.toString(), expiresInSeconds: ttl };
+}
+async function signDownload(bucket, p, seconds, filename) {
+  const ttl = Math.max(
+      1,
+      Math.min(PREVIEW_TTL, Math.floor(Number(seconds) || 0)),
+    ),
+    name = txt(filename, 180),
+    { url, key } = ctx();
+  if (!/^[A-Za-z0-9._-]{1,180}$/.test(name))
+    throw Error("ADMIN_IMAGE_REQUEST_DOWNLOAD_FILENAME_INVALID");
+  const e = p.split("/").map(encodeURIComponent).join("/"),
+    r = await fetch(url + "/storage/v1/object/sign/" + bucket + "/" + e, {
+      method: "POST",
+      headers: {
+        apikey: key,
+        authorization: "Bearer " + key,
+        "content-type": "application/json",
+        "x-client-info": S + "/" + V,
+      },
+      body: JSON.stringify({ expiresIn: ttl }),
+    }),
+    raw = await r.text();
+  let d = null;
+  try {
+    d = rec(raw ? JSON.parse(raw) : {});
+  } catch {}
+  if (!r.ok || !d) throw Error("ADMIN_IMAGE_REQUEST_DOWNLOAD_SIGN_FAILED");
+  let u = txt(d.signedURL ?? d.signedUrl ?? d.url, 4000);
+  if (!u) throw Error("ADMIN_IMAGE_REQUEST_DOWNLOAD_URL_MISSING");
+  u = u.startsWith("/object/")
+    ? "/storage/v1" + u
+    : u.startsWith("object/")
+      ? "/storage/v1/" + u
+      : u;
+  const x = new URL(u, url);
+  if (
+    x.origin !== new URL(url).origin ||
+    !x.pathname.startsWith("/storage/v1/object/sign/" + bucket + "/") ||
+    !x.searchParams.get("token")
+  )
+    throw Error("ADMIN_IMAGE_REQUEST_DOWNLOAD_URL_INVALID");
+  x.searchParams.set("download", name);
+  if (x.searchParams.get("download") !== name)
+    throw Error("ADMIN_IMAGE_REQUEST_DOWNLOAD_URL_INVALID");
+  return { url: x.toString(), expiresInSeconds: ttl, filename: name };
 }
 function webpPixels(bytes) {
   const b = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes || 0),
@@ -1092,6 +1153,422 @@ async function adminImageReviewAck(r, b, t) {
     reviewedAt: txt(d.reviewedAt, 80),
     latestUploadedAt: txt(d.latestUploadedAt, 80),
     pending: d.pending === true,
+  });
+}
+function adminImageRequestIds(b, requireRequest = false) {
+  if (
+    prepStorage(b) ||
+    compStorage(b) ||
+    has(b, [
+      "mimeType",
+      "mime_type",
+      "sizeBytes",
+      "size_bytes",
+      "expiresAt",
+      "expires_at",
+      "filename",
+      "fileName",
+      "download",
+      "downloadName",
+    ])
+  )
+    return { ok: false, code: "CLIENT_STORAGE_OR_METADATA_SELECTOR_FORBIDDEN" };
+  const memberId = adminMid(b),
+    characterId = cid(b),
+    requestId = pos(b.requestId ?? b.request_id);
+  if (memberId === null)
+    return {
+      ok: false,
+      code: "TARGET_MEMBER_ID_REQUIRED",
+      message: "조회할 회원 식별값이 필요합니다.",
+    };
+  if (characterId === null)
+    return {
+      ok: false,
+      code: "TARGET_CHARACTER_ID_REQUIRED",
+      message: "조회할 캐릭터 식별값이 필요합니다.",
+    };
+  if (requireRequest && requestId === null)
+    return {
+      ok: false,
+      code: "REQUEST_ID_REQUIRED",
+      message: "확인할 제작 요청 식별값이 필요합니다.",
+    };
+  return { ok: true, memberId, characterId, requestId };
+}
+function adminImageRequestPublic(v) {
+  const x = rec(v) || {},
+    slots = (Array.isArray(x.slots) ? x.slots : [])
+      .map((slot) => txt(slot, 40).toUpperCase())
+      .filter((slot) => SLOTS.includes(slot)),
+    style = x.styleCode === null ? null : txt(x.styleCode, 40).toUpperCase();
+  return {
+    requestId: pos(x.requestId),
+    styleCode: REQUEST_STYLES.includes(style) ? style : null,
+    requestNote: txt(x.requestNote, 300),
+    status: txt(x.status, 40).toUpperCase(),
+    submittedAt: txt(x.submittedAt, 80) || null,
+    createdAt: txt(x.createdAt, 80) || null,
+    updatedAt: txt(x.updatedAt, 80) || null,
+    imageExpiresAt: txt(x.imageExpiresAt, 80) || null,
+    metadataExpiresAt: txt(x.metadataExpiresAt, 80) || null,
+    itemCount: Math.max(0, num(x.itemCount) ?? slots.length),
+    availableImageCount: Math.max(0, num(x.availableImageCount) ?? 0),
+    imageAvailable: x.imageAvailable === true,
+    slots,
+  };
+}
+async function adminImageRequestList(r, b, t) {
+  const input = adminImageRequestIds(b);
+  if (!input.ok) return out(r, input, 400);
+  const requestStatus =
+      txt(b.requestStatus ?? b.request_status, 30).toUpperCase() || "ALL",
+    limit = Math.max(1, Math.min(100, Math.floor(Number(b.limit) || 50)));
+  if (
+    !["ALL", "SUBMITTED", "IN_PROGRESS", "COMPLETED", "REJECTED"].includes(
+      requestStatus,
+    )
+  )
+    return out(
+      r,
+      {
+        ok: false,
+        code: "REQUEST_STATUS_FILTER_INVALID",
+        message: "지원하지 않는 제작 요청 상태 필터입니다.",
+      },
+      400,
+    );
+  const d = await rpc("kinojo_admin_member_image_request_list_v405", {
+    p_session_token: t,
+    p_member_id: input.memberId,
+    p_character_id: input.characterId,
+    p_status: requestStatus,
+    p_limit: limit,
+  });
+  if (d.ok !== true) {
+    const code = txt(d.code, 80) || "ADMIN_IMAGE_REQUEST_LIST_FAILED";
+    return out(
+      r,
+      {
+        ok: false,
+        service: S,
+        apiVersion: V,
+        adminImageRequestContract: ADMIN_REQUEST,
+        contract: "admin-member-image-request-list-api-v1",
+        code,
+        message: txt(d.message, 300),
+      },
+      status(code),
+    );
+  }
+  if (
+    num(d.targetMemberId) !== input.memberId ||
+    num(d.characterId) !== input.characterId ||
+    txt(d.privacy, 120) !== "NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS"
+  )
+    throw Error("ADMIN_IMAGE_REQUEST_LIST_BINDING_MISMATCH");
+  const requests = (Array.isArray(d.requests) ? d.requests : [])
+    .map(adminImageRequestPublic)
+    .filter((request) => request.requestId !== null);
+  return out(r, {
+    ok: true,
+    service: S,
+    apiVersion: V,
+    databaseContract: DB,
+    masterBoundaryContract: MASTER,
+    adminImageRequestContract: ADMIN_REQUEST,
+    contract: "admin-member-image-request-list-api-v1",
+    privacy: "NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS",
+    targetMemberId: input.memberId,
+    characterId: input.characterId,
+    status: requestStatus,
+    rowCount: requests.length,
+    requests,
+  });
+}
+async function adminImageRequestDetail(r, b, t) {
+  const input = adminImageRequestIds(b, true);
+  if (!input.ok) return out(r, input, 400);
+  const d = await rpc("kinojo_admin_member_image_request_detail_v405", {
+    p_session_token: t,
+    p_member_id: input.memberId,
+    p_character_id: input.characterId,
+    p_request_id: input.requestId,
+  });
+  if (d.ok !== true) {
+    const code = txt(d.code, 80) || "ADMIN_IMAGE_REQUEST_DETAIL_FAILED";
+    return out(
+      r,
+      {
+        ok: false,
+        service: S,
+        apiVersion: V,
+        adminImageRequestContract: ADMIN_REQUEST,
+        contract: "admin-member-image-request-detail-api-v1",
+        code,
+        message: txt(d.message, 300),
+      },
+      status(code),
+    );
+  }
+  if (
+    num(d.targetMemberId) !== input.memberId ||
+    num(d.characterId) !== input.characterId ||
+    num(d.requestId) !== input.requestId ||
+    txt(d.privacy, 120) !== "NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS"
+  )
+    throw Error("ADMIN_IMAGE_REQUEST_DETAIL_BINDING_MISMATCH");
+  const base = adminImageRequestPublic(d),
+    allowed = (
+      Array.isArray(d.allowedNextStatuses) ? d.allowedNextStatuses : []
+    )
+      .map((value) => txt(value, 40).toUpperCase())
+      .filter((value) =>
+        ["IN_PROGRESS", "COMPLETED", "REJECTED"].includes(value)
+      ),
+    items = (Array.isArray(d.items) ? d.items : [])
+      .map((value) => {
+        const x = rec(value) || {},
+          slot = txt(x.slot, 40).toUpperCase();
+        return SLOTS.includes(slot)
+          ? {
+              slot,
+              mimeType: txt(x.mimeType, 120).toLowerCase(),
+              sizeBytes: num(x.sizeBytes),
+              createdAt: txt(x.createdAt, 80) || null,
+              storageVerifiedAt: txt(x.storageVerifiedAt, 80) || null,
+              available: x.available === true,
+            }
+          : null;
+      })
+      .filter(Boolean),
+    history = (Array.isArray(d.history) ? d.history : [])
+      .map((value) => {
+        const x = rec(value) || {};
+        return {
+          previousStatus: txt(x.previousStatus, 40).toUpperCase() || null,
+          newStatus: txt(x.newStatus, 40).toUpperCase(),
+          actorKind: txt(x.actorKind, 30).toUpperCase(),
+          createdAt: txt(x.createdAt, 80) || null,
+        };
+      })
+      .filter((value) => value.newStatus);
+  return out(r, {
+    ok: true,
+    service: S,
+    apiVersion: V,
+    databaseContract: DB,
+    masterBoundaryContract: MASTER,
+    adminImageRequestContract: ADMIN_REQUEST,
+    contract: "admin-member-image-request-detail-api-v1",
+    privacy: "NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS",
+    targetMemberId: input.memberId,
+    characterId: input.characterId,
+    ...base,
+    itemCount: items.length,
+    availableImageCount: items.filter((item) => item.available).length,
+    imageAvailable: items.some((item) => item.available),
+    allowedNextStatuses: allowed,
+    items,
+    history,
+  });
+}
+async function adminImageRequestStatus(r, b, t) {
+  const input = adminImageRequestIds(b, true);
+  if (!input.ok) return out(r, input, 400);
+  const nextStatus = txt(
+    b.nextStatus ?? b.next_status,
+    40,
+  ).toUpperCase();
+  if (!["IN_PROGRESS", "COMPLETED", "REJECTED"].includes(nextStatus))
+    return out(
+      r,
+      {
+        ok: false,
+        code: "REQUEST_STATUS_INVALID",
+        message: "지원하지 않는 제작 요청 상태입니다.",
+      },
+      400,
+    );
+  const d = await rpc("kinojo_admin_member_image_request_status_v405", {
+    p_session_token: t,
+    p_member_id: input.memberId,
+    p_character_id: input.characterId,
+    p_request_id: input.requestId,
+    p_status: nextStatus,
+  });
+  if (d.ok !== true) {
+    const code = txt(d.code, 80) || "ADMIN_IMAGE_REQUEST_STATUS_FAILED";
+    return out(
+      r,
+      {
+        ok: false,
+        service: S,
+        apiVersion: V,
+        adminImageRequestContract: ADMIN_REQUEST,
+        contract: "admin-member-image-request-status-api-v1",
+        code,
+        message: txt(d.message, 300),
+        requestId: input.requestId,
+        status: txt(d.status, 40).toUpperCase() || null,
+      },
+      status(code),
+    );
+  }
+  if (
+    num(d.targetMemberId) !== input.memberId ||
+    num(d.characterId) !== input.characterId ||
+    num(d.requestId) !== input.requestId
+  )
+    throw Error("ADMIN_IMAGE_REQUEST_STATUS_BINDING_MISMATCH");
+  return out(r, {
+    ok: true,
+    service: S,
+    apiVersion: V,
+    databaseContract: DB,
+    masterBoundaryContract: MASTER,
+    adminImageRequestContract: ADMIN_REQUEST,
+    contract: "admin-member-image-request-status-api-v1",
+    targetMemberId: input.memberId,
+    characterId: input.characterId,
+    requestId: input.requestId,
+    previousStatus: txt(d.previousStatus, 40).toUpperCase() || null,
+    status: txt(d.status, 40).toUpperCase(),
+    updatedAt: txt(d.updatedAt, 80) || null,
+    allowedNextStatuses: (
+      Array.isArray(d.allowedNextStatuses) ? d.allowedNextStatuses : []
+    )
+      .map((value) => txt(value, 40).toUpperCase())
+      .filter((value) =>
+        ["IN_PROGRESS", "COMPLETED", "REJECTED"].includes(value)
+      ),
+    idempotent: d.idempotent === true,
+  });
+}
+async function adminImageRequestAsset(r, b, t, purpose) {
+  const input = adminImageRequestIds(b, true);
+  if (!input.ok) return out(r, input, 400);
+  const slot = txt(b.slot, 40).toUpperCase();
+  if (!SLOTS.includes(slot))
+    return out(
+      r,
+      {
+        ok: false,
+        code: "REQUEST_SLOT_INVALID",
+        message: "FRONT, BACK, UPPER_BODY 이미지만 확인할 수 있습니다.",
+      },
+      400,
+    );
+  const d = await rpc("kinojo_admin_member_image_request_asset_v405", {
+    p_session_token: t,
+    p_member_id: input.memberId,
+    p_character_id: input.characterId,
+    p_request_id: input.requestId,
+    p_slot: slot,
+  });
+  if (d.ok !== true) {
+    const code = txt(d.code, 80) || "ADMIN_IMAGE_REQUEST_ASSET_FAILED";
+    return out(
+      r,
+      {
+        ok: false,
+        service: S,
+        apiVersion: V,
+        adminImageRequestContract: ADMIN_REQUEST,
+        contract: "admin-member-image-request-asset-api-v1",
+        code,
+        message: txt(d.message, 300),
+      },
+      status(code),
+    );
+  }
+  if (
+    num(d.targetMemberId) !== input.memberId ||
+    num(d.characterId) !== input.characterId ||
+    num(d.requestId) !== input.requestId ||
+    txt(d.slot, 40).toUpperCase() !== slot
+  )
+    throw Error("ADMIN_IMAGE_REQUEST_ASSET_BINDING_MISMATCH");
+  const bucket = txt(d.bucket, 120),
+    path = txt(d.objectPath, 1024),
+    mime = txt(d.mimeType, 120).toLowerCase(),
+    expiresAt = txt(d.expiresAt, 80);
+  if (
+    bucket !== RB ||
+    mime !== "image/webp" ||
+    !validReferencePath(input.characterId, slot, path, mime)
+  )
+    throw Error("ADMIN_IMAGE_REQUEST_ASSET_PATH_INVALID");
+  const remaining = Math.floor(
+    (new Date(expiresAt).getTime() - Date.now()) / 1000,
+  );
+  if (!Number.isFinite(remaining) || remaining <= 0)
+    return out(
+      r,
+      {
+        ok: false,
+        code: "REQUEST_IMAGE_EXPIRED",
+        message: "참고 이미지 보존 기간이 끝났습니다.",
+      },
+      404,
+    );
+  const ttl = Math.min(PREVIEW_TTL, remaining);
+  if (purpose === "DOWNLOAD") {
+    const filename =
+        "kinojo-request-" +
+        input.requestId +
+        "-" +
+        slot.toLowerCase() +
+        ".webp",
+      signed = await signDownload(bucket, path, ttl, filename);
+    return out(r, {
+      ok: true,
+      service: S,
+      apiVersion: V,
+      databaseContract: DB,
+      masterBoundaryContract: MASTER,
+      adminImageRequestContract: ADMIN_REQUEST,
+      contract: "admin-member-image-request-download-api-v1",
+      privacy: "SIGNED_DOWNLOAD_URL_ONLY_NO_OBJECT_PATH",
+      purpose: "EXPLICIT_DOWNLOAD_ONLY",
+      targetMemberId: input.memberId,
+      characterId: input.characterId,
+      requestId: input.requestId,
+      slot,
+      mimeType: mime,
+      sizeBytes: num(d.sizeBytes),
+      expiresAt,
+      download: {
+        url: signed.url,
+        expiresInSeconds: signed.expiresInSeconds,
+        filename: signed.filename,
+        attachment: true,
+      },
+    });
+  }
+  const signed = await signPreview(bucket, path, ttl);
+  return out(r, {
+    ok: true,
+    service: S,
+    apiVersion: V,
+    databaseContract: DB,
+    masterBoundaryContract: MASTER,
+    adminImageRequestContract: ADMIN_REQUEST,
+    contract: "admin-member-image-request-preview-api-v1",
+    privacy: "SIGNED_PREVIEW_URL_ONLY_NO_OBJECT_PATH",
+    purpose: "INLINE_PREVIEW_ONLY",
+    targetMemberId: input.memberId,
+    characterId: input.characterId,
+    requestId: input.requestId,
+    slot,
+    mimeType: mime,
+    sizeBytes: num(d.sizeBytes),
+    expiresAt,
+    preview: {
+      url: signed.url,
+      expiresInSeconds: signed.expiresInSeconds,
+      download: false,
+    },
   });
 }
 async function characters(r, b, t) {
@@ -2774,6 +3251,11 @@ Deno.serve(async (r) => {
         "admin-image-list",
         "admin-image-preview",
         "admin-image-review-ack",
+        "admin-image-request-list",
+        "admin-image-request-detail",
+        "admin-image-request-status",
+        "admin-image-request-preview",
+        "admin-image-request-download",
       ].includes(a)
     )
       return out(
@@ -2805,6 +3287,7 @@ Deno.serve(async (r) => {
         adminImageListContract: ADMIN_LIST,
         adminImagePreviewContract: ADMIN_PREVIEW,
         adminImageReviewContract: ADMIN_REVIEW,
+        adminImageRequestContract: ADMIN_REQUEST,
         imageRequestContract: REQUEST,
         editedImagePixelContract: PIX,
         authBoundary: "KWS_SERVER_SESSION_ONLY",
@@ -2851,6 +3334,21 @@ Deno.serve(async (r) => {
           finalize: "ALL_ITEMS_STORAGE_AND_PIXELS_VERIFIED",
           idempotency: "MEMBER_AND_CLIENT_KEY",
           privacy: "NO_PRIVATE_OBJECT_PATH_FIELD",
+          admin: {
+            lifecycle: [
+              "SUBMITTED",
+              "IN_PROGRESS",
+              "COMPLETED",
+              "REJECTED",
+            ],
+            transitions: {
+              SUBMITTED: ["IN_PROGRESS", "REJECTED"],
+              IN_PROGRESS: ["COMPLETED", "REJECTED"],
+            },
+            listAndDetail: "MASTER_ONLY_NO_PRIVATE_PATHS",
+            assets: "SHORT_SIGNED_PREVIEW_OR_EXPLICIT_DOWNLOAD",
+            notification: "ONE_DURABLE_EVENT_PER_REQUEST_ID",
+          },
         },
         actions: [
           "characters",
@@ -2873,6 +3371,11 @@ Deno.serve(async (r) => {
           "admin-image-preview",
           "admin-image-review-list",
           "admin-image-review-ack",
+          "admin-image-request-list",
+          "admin-image-request-detail",
+          "admin-image-request-status",
+          "admin-image-request-preview",
+          "admin-image-request-download",
         ],
       });
     if (
@@ -2897,6 +3400,11 @@ Deno.serve(async (r) => {
         "admin-image-preview",
         "admin-image-review-list",
         "admin-image-review-ack",
+        "admin-image-request-list",
+        "admin-image-request-detail",
+        "admin-image-request-status",
+        "admin-image-request-preview",
+        "admin-image-request-download",
       ].includes(a)
     )
       return out(r, { ok: false, code: "UNSUPPORTED_ACTION" }, 400);
@@ -2909,6 +3417,16 @@ Deno.serve(async (r) => {
       return await adminImageReviewList(r, b, t);
     if (a === "admin-image-review-ack")
       return await adminImageReviewAck(r, b, t);
+    if (a === "admin-image-request-list")
+      return await adminImageRequestList(r, b, t);
+    if (a === "admin-image-request-detail")
+      return await adminImageRequestDetail(r, b, t);
+    if (a === "admin-image-request-status")
+      return await adminImageRequestStatus(r, b, t);
+    if (a === "admin-image-request-preview")
+      return await adminImageRequestAsset(r, b, t, "PREVIEW");
+    if (a === "admin-image-request-download")
+      return await adminImageRequestAsset(r, b, t, "DOWNLOAD");
     if (a === "characters") return await characters(r, b, t);
     if (a === "batch-bootstrap") return await batchBootstrap(r, b, t);
     if (a === "character-access") return await access(r, b, t);
