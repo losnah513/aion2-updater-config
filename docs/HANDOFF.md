@@ -6,7 +6,7 @@
 
 - GitHub: `losnah513/aion2-updater-config`
 - 운영 브랜치: `main`
-- 배너 이미지 관리 2차 2단계 운영 기준: PR `#262`, merge commit `9d0a5bc014109274b323adf8f24886e4c6e5b195`, 관리자 cache `2026082602`, Edge `kinojo-banner-media` v20(API 2.1 / DB 403 / Upload 403 / Event 402)
+- 배너 이미지 관리 2차 3단계 운영 기준: PR `#264`, merge commit `83f981e5af8dd8cbc528f1040726ecf53f0a329c`, 관리자 cache `2026082603`, Edge `kinojo-banner-media` v20(API 2.1 / DB 403 / Upload 403 / Event 402)
 - 내 정보 E-1 제품 운영 commit: `640b7eebcef1c13b0516fe2cd020df870bc23752` (PR `#194`)
 - 내 정보 후속 A-1~E-2: 12/12 완료
 - My Info / 관리자 이미지 모달 추가 UI 후속: PR `#197` 구현·배포·동기화 기준 CLOSED · 수동 실브라우저 sanity check는 post-close 보류
@@ -266,3 +266,16 @@
 - 보안 경계는 기존 MASTER KWS를 재사용한다. v403 RPC는 `service_role`만 실행할 수 있고 public/anon/authenticated 권한은 철회했으며 `kinojo_banner_assets` RLS는 활성 상태다. 정책 없음 advisor는 직접 테이블 접근을 닫는 의도된 service-role-only 구조이고, 새 태그 GIN의 미사용 표시는 배포 직후라 정상이다. 기존 FK 인덱스 advisor는 이번 단계와 무관한 선행 상태다.
 - 검증은 전체 banner Node 계약, 신규 v403 메타데이터 계약, 실제 Chrome 관리자 E2E, PR source CI 4종, main Pages 배포, Banner Admin byte readback, Banner Runtime Manifest ETag·PC SIDE·모바일 MAIN live 회귀를 통과했다. 로그인된 운영 Chrome에서 메인 2개·사이드 24개의 canonical 제목, 사이드 `#남/#룩북/#샤르/#여/#SITTING` 필터, 콘솔 오류 0건을 읽기 전용으로 확인했다.
 - 다음 제품 구현은 2차 계획 **3단계**다. 2단계 DB/API/UI를 재작성하지 않고 운영 main·Drive 전용 LOG를 기준으로 이어간다.
+
+## 배너 이미지 관리 2차 · 3단계 미리보기·카드·순서 UX 완료 · 2026-08-26
+
+- 2차 계획 3단계 `3-가~3-라`는 PR `#264`로 한 묶음 구현·배포했다. 운영 main은 `83f981e5af8dd8cbc528f1040726ecf53f0a329c`, 관리자 cache는 `2026082603`, 누적 진행도는 **21/49**다.
+- 업로드·라이브러리·이미지 순서·좌우별 순서의 미리보기를 공통 버튼으로 통일했다. 긴 세로 이미지는 고정된 작은 창에서 상단~중간을 빠르게 확인하고, `전체 보기`를 누르면 원본 전체를 `contain`으로 보여 주는 접근 가능한 모달을 연다. 모달은 초점 이동·Tab 순환·Escape·배경 클릭·호출 버튼 초점 복귀를 지원한다.
+- 이미지 라이브러리 카드는 canonical 저장 제목을 최대 두 줄로 표시하고, 그 아래 구조화 해시태그를 세로로 최대 3개 표시한다. 나머지는 `+N`으로 축약하며 보조기기에는 전체 태그 수와 초과 개수를 전달한다. 라이브러리 기본 `미선택`과 전체/태그 필터 계약은 유지한다.
+- 이미지 순서 카드는 드래그 시작 시 들림·그림자·확대를 표시하고, 대상 카드 위·아래 절반에 맞춰 삽입선을 보여 준다. 놓은 뒤에는 이동 카드 강조와 FLIP 전환을 제공한다. `prefers-reduced-motion` 환경에서는 이동 애니메이션을 생략하고 정적 강조와 `aria-live` 문장으로 결과를 알린다.
+- 순서 조작은 카드 오른쪽의 확대된 `↑ / × / ↓` 세로 버튼으로 통일했다. 버튼마다 이미지 제목을 포함한 한국어 접근성 라벨을 붙였고, 카드 자체에서 `Alt+↑/↓` 이동과 `Delete/Backspace` 제거를 지원한다. 이동·제거 뒤에는 새 위치 또는 제거 결과를 음성 안내하고 다음 조작 대상으로 초점을 복원한다.
+- 신규 `banner-event-phase2-stage3-preview-order-contract`와 Chrome 관리자 E2E에 긴 이미지 창/전체 모달, 태그 3개+`+N`, 세로 버튼, 키보드 이동·제거, 드래그 들림·삽입선 계약을 추가했다. 로컬 Node 계약과 headless Chrome E2E가 통과했다.
+- PR과 main push의 Banner Admin, Banner Runtime, KINOJO Pages, Character Refresh Profile, Pages 배포가 모두 성공했다. Banner Admin 운영 byte readback과 Banner Runtime의 Manifest ETag·PC SIDE·모바일 MAIN live Chrome 검증도 merge commit 기준으로 통과했다.
+- 재시작 뒤 인앱 브라우저에는 KINOJO 관리자 인증 세션이 없어 운영 관리자 화면은 로그인 안내로 닫혔고, 연결 가능한 외부 Chrome 세션도 없었다. 인증을 우회하거나 운영 데이터를 변경하지 않았으며, 실제 UI 동작은 동일 소스를 사용하는 Chrome E2E와 운영 exact byte readback으로 검증했다.
+- 이번 3단계는 WEB 관리자 UI·테스트·검증 workflow만 변경했다. DB/RPC/Edge/Storage, 정식 이벤트·레거시 캠페인·전역 순환 모드와 운영 게시 데이터는 변경하지 않았다.
+- 다음 제품 구현은 2차 계획 **4단계**다. 3단계 미리보기·카드·순서 계약을 재작성하지 않고 운영 main과 Drive 전용 LOG를 기준으로 이어간다.
