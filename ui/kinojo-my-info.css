@@ -508,3 +508,70 @@ body.kinojo-image-editor-open{overflow:hidden}
   .kinojo-my-info-btn,.kinojo-my-info-menu-btn,.kinojo-my-info-profile-character-pane::before,.kinojo-my-info-profile-character-pane::after,.kinojo-my-info-reference-slot{transition:none!important;animation:none!important}
   .kinojo-my-info-btn:hover:not(:disabled),.kinojo-my-info-menu-btn:hover:not(:disabled),.kinojo-my-info-btn:active:not(:disabled),.kinojo-my-info-menu-btn:active:not(:disabled),.kinojo-my-info-btn.is-clicked,.kinojo-my-info-menu-btn.is-clicked{transform:none!important}
 }
+
+/* 20260826 Phase 2 Stage 2: one member image-production request */
+.kinojo-my-info-request{min-width:0;margin-top:12px;padding-top:12px;border-top:1px solid rgba(122,146,180,.18)}
+.kinojo-my-info-request-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:11px}
+.kinojo-my-info-request-head>div{min-width:0;display:grid;gap:3px}
+.kinojo-my-info-request-head strong{color:#17233a;font-size:12px;font-weight:1000}
+.kinojo-my-info-request-head span{color:#64748b;font-size:8px;font-weight:800;line-height:1.45}
+.kinojo-my-info-request-head>b{flex:0 0 auto;padding:5px 8px;border-radius:999px;background:#eaf2ff;color:#1d4ed8;font-size:8px;font-weight:1000}
+.kinojo-my-info-request-styles{min-width:0;margin:0;padding:0;border:0}
+.kinojo-my-info-request-styles legend{margin-bottom:7px;color:#334155;font-size:9px;font-weight:950}
+.kinojo-my-info-request-styles legend small{margin-left:4px;color:#64748b;font-size:7px;font-weight:850}
+.kinojo-my-info-request-style-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.kinojo-my-info-request-style{position:relative;min-width:0;cursor:pointer}
+.kinojo-my-info-request-style>input{position:absolute;inline-size:1px;block-size:1px;opacity:0;pointer-events:none}
+.kinojo-my-info-request-style>span{min-width:0;min-height:50px;display:grid;align-content:center;gap:3px;padding:8px 10px;border:1px solid rgba(122,146,180,.22);border-radius:10px;background:#fff;color:#334155;box-sizing:border-box;transition:border-color .15s ease,background-color .15s ease,box-shadow .15s ease}
+.kinojo-my-info-request-style b{font-size:9px;font-weight:1000;line-height:1.3;overflow-wrap:anywhere}
+.kinojo-my-info-request-style small{color:#64748b;font-size:7px;font-weight:800;line-height:1.35;overflow-wrap:anywhere}
+.kinojo-my-info-request-style>input:checked+span{border-color:rgba(37,99,235,.52);background:#eef5ff;color:#1d4ed8;box-shadow:0 0 0 1px rgba(37,99,235,.1)}
+.kinojo-my-info-request-style>input:focus-visible+span{outline:3px solid rgba(37,99,235,.32);outline-offset:2px}
+.kinojo-my-info-request-style>input:disabled+span{cursor:not-allowed;opacity:.5}
+.kinojo-my-info-request-note{display:grid;gap:6px;margin-top:11px}
+.kinojo-my-info-request-note>span{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.kinojo-my-info-request-note b{color:#334155;font-size:9px;font-weight:950}
+.kinojo-my-info-request-note small{color:#64748b;font-size:8px;font-weight:900;font-variant-numeric:tabular-nums}
+.kinojo-my-info-request-note textarea{width:100%;min-width:0;min-height:78px;resize:vertical;padding:10px 11px;border:1px solid rgba(122,146,180,.26);border-radius:10px;background:#fff;color:#17233a;font:800 9px/1.55 inherit;box-sizing:border-box}
+.kinojo-my-info-request-note textarea::placeholder{color:#7b8799}
+.kinojo-my-info-request-note textarea:focus-visible{outline:3px solid rgba(37,99,235,.28);outline-offset:1px;border-color:#60a5fa}
+.kinojo-my-info-request-note textarea[aria-invalid="true"]{border-color:#e11d48;background:#fff7f8}
+.kinojo-my-info-request-submit-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;margin-top:10px}
+.kinojo-my-info-request-submit-row p{margin:0;color:#64748b;font-size:8px;font-weight:800;line-height:1.45}
+.kinojo-my-info-request-submit-row .kinojo-my-info-action-btn{min-width:174px}
+.kinojo-my-info-request-status{margin-top:9px;padding:8px 10px;border-radius:9px;background:#f8fafc;color:#64748b;font-size:8px;font-weight:850;line-height:1.45;overflow-wrap:anywhere}
+.kinojo-my-info-request-status[data-state="loading"]{background:#eff6ff;color:#1d4ed8}
+.kinojo-my-info-request-status[data-state="ready"]{background:#f0fdf4;color:#15803d}
+.kinojo-my-info-request-status[data-state="error"]{background:#fff1f2;color:#be123c}
+.kinojo-my-info-request-result{min-width:0;margin-top:8px;padding:9px 10px;display:grid;gap:3px;border:1px solid #bbdfc9;border-radius:10px;background:#f0fdf4;color:#166534;overflow-wrap:anywhere}
+.kinojo-my-info-request-result[hidden]{display:none!important}
+.kinojo-my-info-request-result strong{font-size:9px;font-weight:1000}
+.kinojo-my-info-request-result span{font-size:8px;font-weight:900;line-height:1.4}
+.kinojo-my-info-request-result small{font-size:7px;font-weight:800;line-height:1.4}
+.kinojo-my-info-request-confirm{position:absolute;z-index:20;inset:0;display:grid;place-items:center;padding:18px;box-sizing:border-box}
+.kinojo-my-info-request-confirm[hidden]{display:none!important}
+.kinojo-my-info-request-confirm__backdrop{position:absolute;inset:0;background:rgba(15,23,42,.62);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+.kinojo-my-info-request-confirm__dialog{position:relative;width:min(430px,calc(100vw - 36px));display:grid;gap:9px;padding:22px;border:1px solid rgba(148,163,184,.34);border-radius:18px;background:#fff;box-shadow:0 22px 54px rgba(15,23,42,.32);box-sizing:border-box;outline:none}
+.kinojo-my-info-request-confirm__dialog>small{color:#2563eb;font-size:8px;font-weight:1000;letter-spacing:.06em}
+.kinojo-my-info-request-confirm__dialog>strong{color:#17233a;font-size:15px;font-weight:1000;line-height:1.4;overflow-wrap:anywhere}
+.kinojo-my-info-request-confirm__dialog>p{margin:0;color:#64748b;font-size:10px;font-weight:800;line-height:1.55}
+.kinojo-my-info-request-confirm__dialog>div{display:flex;justify-content:flex-end;gap:7px;margin-top:4px}
+.kinojo-my-info-request-confirm__dialog .kinojo-my-info-action-btn{min-width:0}
+.kinojo-my-info-modal.is-request-submitting .kinojo-my-info-modal-close{pointer-events:none;opacity:.45}
+@media(max-width:620px){
+  .kinojo-my-info-request-style-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kinojo-my-info-request-submit-row{grid-template-columns:1fr}
+  .kinojo-my-info-request-submit-row .kinojo-my-info-action-btn{width:100%;min-width:0}
+}
+@media(max-width:390px){
+  .kinojo-my-info-request-style-grid{grid-template-columns:1fr}
+  .kinojo-my-info-request-style>span{min-height:46px}
+  .kinojo-my-info-request-confirm{padding:12px}
+  .kinojo-my-info-request-confirm__dialog{width:100%;padding:18px 16px;border-radius:16px}
+  .kinojo-my-info-request-confirm__dialog>div{display:grid;grid-template-columns:1fr}
+}
+@media(forced-colors:active){
+  .kinojo-my-info-request,.kinojo-my-info-request-style>span,.kinojo-my-info-request-note textarea,.kinojo-my-info-request-result,.kinojo-my-info-request-confirm__dialog{border:2px solid CanvasText}
+  .kinojo-my-info-request-style>input:checked+span{outline:3px solid Highlight;outline-offset:2px}
+}
+@media(prefers-reduced-motion:reduce){.kinojo-my-info-request-style>span{transition:none!important}}

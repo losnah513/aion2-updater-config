@@ -30,6 +30,7 @@
         const action=String(payload?.action||'');
         if(action==='characters')return characterResponse;
         if(action==='batch-bootstrap')return batchResponse;
+        if(action==='image-request-state')return{ok:true,contract:'member-image-request-state-api-v1',characterId:payload.characterId,imageRetentionDays:7,metadataRetentionDays:30,requestCount:0,requests:[]};
         throw new Error('E1_HARNESS_UNEXPECTED_ACTION:'+action);
       }};
     })();
@@ -45,7 +46,7 @@
     </div>
     <div id="after-harness" tabindex="-1"></div>
   </main>
-  <script src="../ui/kinojo-common-ui.js?cache=2026082203"></script>
+  <script src="../ui/kinojo-common-ui.js?cache=2026082601"></script>
   <script>
     (()=>{
       document.getElementById('e1HarnessPanelTrigger').addEventListener('click',()=>window.KinojoCommonUI.openMyInfoPanel());

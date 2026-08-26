@@ -12,7 +12,7 @@ const harness=read('tests/my-info-e1-harness.html');
 const workflow=read('.github/workflows/verify-kinojo-pages.yml');
 
 for(const token of [
-  'const kinojoMyInfoFocusState={panelReturn:null,modalReturn:null}',
+  'const kinojoMyInfoFocusState={panelReturn:null,modalReturn:null,requestConfirmReturn:null}',
   'function myInfoFocusable_(root)',
   'function trapMyInfoFocus_(event,root)',
   "event.key!=='Tab'",

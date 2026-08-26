@@ -670,7 +670,7 @@
     }
     const link=document.createElement('link');
     link.rel='stylesheet';
-    link.href='/ui/kinojo-my-info.css?cache=2026082203';
+    link.href='/ui/kinojo-my-info.css?cache=2026082601';
     link.dataset.kinojoMyInfoStyles='true';
     link.addEventListener('load',()=>guard?.remove(),{once:true});
     document.head.appendChild(link);
@@ -702,7 +702,7 @@
   const kinojoMyCharactersState={token:'',data:null,promise:null,retryTimer:0};
   const KINOJO_MY_INFO_PANEL_WIDTH=Object.freeze({min:352,max:420,fixed:228});
   const kinojoMyInfoPanelWidthState={key:'',width:KINOJO_MY_INFO_PANEL_WIDTH.min,layout:'inline',context:null};
-  const kinojoMyInfoFocusState={panelReturn:null,modalReturn:null};
+  const kinojoMyInfoFocusState={panelReturn:null,modalReturn:null,requestConfirmReturn:null};
   const KINOJO_MY_INFO_FOCUSABLE='a[href],button:not([disabled]),input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
   function myInfoFocusable_(root){
     if(!(root instanceof Element))return [];
@@ -986,7 +986,8 @@
   const kinojoMyProfileUiState={token:'',selectedCharacterId:0,bootstrapByCharacter:Object.create(null),requestId:0,batchRequestId:0,batchPromise:null,batchData:null,imagePreloader:null,imagePreloaderBatch:null,imagePreloaderToken:'',imageBackgroundPromise:null,openRequestId:0,file:null,editedOutput:null,previewUrl:'',uploading:false};
   const KINOJO_REFERENCE_IMAGE_SLOTS=['FRONT','BACK','UPPER_BODY'];
   const KINOJO_REFERENCE_GUIDE_ASSETS={FRONT:'/assets/images/my-info/guides/front-2x3.png',BACK:'/assets/images/my-info/guides/back-2x3.png',UPPER_BODY:'/assets/images/my-info/guides/upper-body-4x5.png'};
-  const kinojoMyReferencePickerState={characterId:0,activeSlot:'',filesBySlot:Object.create(null),outputsBySlot:Object.create(null),previewUrlsBySlot:Object.create(null),stateByCharacter:Object.create(null),requestId:0,uploadingSlot:''};
+  const KINOJO_IMAGE_REQUEST_STYLES={SHONEN_MANGA:'소년만화 스타일',ROMANCE_MANGA:'순정만화 스타일',ANIMATION:'애니메이션 스타일',REALISTIC:'실사풍 스타일',CUSTOM:'직접 요청'};
+  const kinojoMyReferencePickerState={characterId:0,activeSlot:'',filesBySlot:Object.create(null),outputsBySlot:Object.create(null),previewUrlsBySlot:Object.create(null),stateByCharacter:Object.create(null),requestId:0,uploadingSlot:'',submitting:false,resume:null,lastSubmission:null,requestStateByCharacter:Object.create(null),requestStateId:0};
   let kinojoMyImageToolsPromise=null;
   function ensureMyInfoImageStyle_(href,key){
     if(document.querySelector('link[data-kinojo-my-info-tool-style="'+key+'"],link[href*="'+href.split('/').pop().split('?')[0]+'"]'))return Promise.resolve(true);
@@ -1016,7 +1017,7 @@
     });
   }
   function ensureMyInfoImageTools_(){
-    if(window.KinojoMyInfoImageContract&&window.KinojoRangeControl&&window.KinojoMyInfoImageEditor&&window.KinojoMyInfoImageUpload&&window.KinojoMyInfoBatchBootstrap&&window.KinojoMyInfoImagePreloader)return Promise.resolve(true);
+    if(window.KinojoMyInfoImageContract&&window.KinojoRangeControl&&window.KinojoMyInfoImageEditor&&window.KinojoMyInfoImageUpload&&window.KinojoMyInfoImageRequest&&window.KinojoMyInfoBatchBootstrap&&window.KinojoMyInfoImagePreloader)return Promise.resolve(true);
     if(kinojoMyImageToolsPromise)return kinojoMyImageToolsPromise;
     kinojoMyImageToolsPromise=(async()=>{
       await ensureMyInfoImageStyle_('/ui/kinojo-components.css?cache=2026082101','components');
@@ -1024,6 +1025,7 @@
       await ensureMyInfoImageScript_('/ui/kinojo-range-control.js?cache=2026082101','range',()=>!!window.KinojoRangeControl);
       await ensureMyInfoImageScript_('/ui/kinojo-my-info-image-editor.js?cache=2026082103','editor',()=>!!window.KinojoMyInfoImageEditor);
       await ensureMyInfoImageScript_('/ui/kinojo-my-info-image-upload.js?cache=2026082101','upload',()=>!!window.KinojoMyInfoImageUpload);
+      await ensureMyInfoImageScript_('/ui/kinojo-my-info-image-request.js?cache=2026082601','image-request',()=>!!window.KinojoMyInfoImageRequest);
       await ensureMyInfoImageScript_('/ui/kinojo-my-info-batch-bootstrap.js?cache=2026082101','batch-bootstrap',()=>!!window.KinojoMyInfoBatchBootstrap);
       await ensureMyInfoImageScript_('/ui/kinojo-my-info-image-preloader.js?cache=2026082101','image-preloader',()=>!!window.KinojoMyInfoImagePreloader);
       return true;
@@ -1036,6 +1038,54 @@
     host.dataset.state=state;
     host.textContent=message||'';
   }
+  function myInfoSelectedRequestResults_(){
+    return KINOJO_REFERENCE_IMAGE_SLOTS.map(slot=>kinojoMyReferencePickerState.outputsBySlot[slot]).filter(Boolean);
+  }
+  function invalidateMyInfoImageRequestResume_(){
+    kinojoMyReferencePickerState.resume=null;
+  }
+  function setMyInfoImageRequestStatus_(message,state='info'){
+    const host=q('#kinojoMyInfoRequestStatus');
+    if(!host)return;
+    host.dataset.state=state;
+    host.textContent=message||'';
+  }
+  function myInfoImageRequestStyleLabel_(code){
+    return code?KINOJO_IMAGE_REQUEST_STYLES[String(code)]||String(code):'스타일 지정 없음';
+  }
+  function myInfoImageRequestDate_(value){
+    const date=new Date(String(value||''));
+    return Number.isFinite(date.getTime())?new Intl.DateTimeFormat('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}).format(date):'-';
+  }
+  function renderMyInfoImageRequest_(){
+    const characterId=Number(kinojoMyProfileUiState.selectedCharacterId||0);
+    const ready=Number.isInteger(characterId)&&characterId>0&&!!myInfoSessionToken_()&&kinojoMyReferencePickerState.characterId===characterId;
+    const selectedCount=myInfoSelectedRequestResults_().length;
+    const busy=kinojoMyReferencePickerState.submitting===true;
+    const style=q('input[name="kinojoMyInfoRequestStyle"]:checked')?.value||'';
+    const note=q('#kinojoMyInfoRequestNote');
+    const counter=q('#kinojoMyInfoRequestNoteCount');
+    const submit=q('#kinojoMyInfoRequestSubmitBtn');
+    const summary=q('#kinojoMyInfoRequestSelectionSummary');
+    if(summary)summary.textContent='선택 '+selectedCount+'/3';
+    if(counter)counter.textContent=String((note?.value||'').length)+'/300';
+    document.querySelectorAll('input[name="kinojoMyInfoRequestStyle"]').forEach(input=>{input.disabled=!ready||busy;});
+    if(note){note.disabled=!ready||busy;note.setAttribute('aria-required',style==='CUSTOM'?'true':'false');}
+    if(submit){
+      submit.disabled=!ready||selectedCount<1||busy;
+      submit.textContent=busy?'전송 중...':kinojoMyReferencePickerState.resume?'전송 다시 시도':'이미지 제작 요청 보내기';
+    }
+    const resultHost=q('#kinojoMyInfoRequestResult');
+    if(!resultHost)return;
+    const local=kinojoMyReferencePickerState.lastSubmission;
+    const remote=kinojoMyReferencePickerState.requestStateByCharacter[characterId];
+    const request=Number(local?.characterId)===characterId?local.request:(Array.isArray(remote?.requests)?remote.requests[0]:null);
+    if(!request){resultHost.hidden=true;resultHost.innerHTML='';return;}
+    const status=String(request.status||'');
+    const slots=Array.isArray(request.slots)?request.slots.join(' · '):'';
+    resultHost.hidden=false;
+    resultHost.innerHTML='<strong>'+(status==='SUBMITTED'?'제작 요청 접수 완료':'전송 준비 상태')+'</strong><span>'+escapeHtml(myInfoImageRequestStyleLabel_(request.styleCode))+' · '+escapeHtml(slots||'이미지 확인 중')+'</span><small>이미지 보관 '+escapeHtml(myInfoImageRequestDate_(request.imageExpiresAt))+'까지 · 요청 #'+escapeHtml(String(request.requestId||''))+'</small>';
+  }
   function renderMyInfoReferencePicker_(){
     const characterId=Number(kinojoMyProfileUiState.selectedCharacterId||0);
     const ready=Number.isInteger(characterId)&&characterId>0&&!!myInfoSessionToken_()&&kinojoMyReferencePickerState.characterId===characterId;
@@ -1044,13 +1094,14 @@
     const section=q('#kinojoMyInfoReferenceSection');
     const head=q('#kinojoMyInfoReferenceHeadMeta');
     if(section)section.setAttribute('aria-disabled',ready?'false':'true');
-    if(head)head.textContent=ready?(serverState?.ok===true?'비공개 · 최대 7일 보관':'등록 상태 확인 중'):'캐릭터 선택 후 슬롯 선택';
+    const selectedCount=myInfoSelectedRequestResults_().length;
+    if(head)head.textContent=ready?'선택 '+selectedCount+'/3 · 비공개 · 최대 7일 보관':'캐릭터 선택 후 슬롯 선택';
     document.querySelectorAll('#kinojoMyInfoReferenceGrid [data-reference-slot]').forEach(card=>{
       const slot=String(card.dataset.referenceSlot||'');
       const file=kinojoMyReferencePickerState.filesBySlot[slot]||null;
       const active=references.find(item=>item?.slot===slot&&item?.active===true)||null;
       const selected=kinojoMyReferencePickerState.activeSlot===slot;
-      const busy=!!kinojoMyReferencePickerState.uploadingSlot;
+      const busy=!!kinojoMyReferencePickerState.uploadingSlot||kinojoMyReferencePickerState.submitting===true;
       card.setAttribute('aria-disabled',(!ready||busy)?'true':'false');
       card.classList.toggle('is-selected',selected||!!file);
       card.classList.toggle('is-registered',!!active);
@@ -1076,7 +1127,7 @@
       }
       const status=card.querySelector('[data-reference-file-status]');
       if(status){
-        if(file)status.textContent='WEBP · '+myInfoProfileFileSize_(file.size)+' · 등록 대기';
+        if(file)status.textContent='WEBP · '+myInfoProfileFileSize_(file.size)+' · 제작 요청 대기';
         else if(active){
           const expiry=String(active.expiresAt||'');
           const remaining=Math.max(0,Math.ceil((new Date(expiry).getTime()-Date.now())/86400000));
@@ -1084,14 +1135,13 @@
         }else status.textContent='등록된 이미지 없음';
       }
       const select=card.querySelector('[data-reference-select-slot]');
-      const upload=card.querySelector('[data-reference-upload-slot]');
       const cancel=card.querySelector('[data-reference-cancel-slot]');
       const remove=card.querySelector('[data-reference-delete-slot]');
-      if(select){select.disabled=!ready||busy;select.textContent=active?'이미지 교체':'이미지 업로드';}
-      if(upload){upload.hidden=!file;upload.disabled=!file||busy;upload.textContent=active?'안전하게 교체':'비공개 등록';}
+      if(select){select.disabled=!ready||busy;select.textContent=file?'다시 선택':'이미지 선택';}
       if(cancel){cancel.hidden=!file;cancel.disabled=busy;}
-      if(remove){remove.hidden=!active;remove.disabled=busy;}
+      if(remove){remove.hidden=!active||!!file;remove.disabled=busy;}
     });
+    renderMyInfoImageRequest_();
   }
   function resetMyInfoReferencePicker_(characterId=0){
     const id=Number(characterId||0);
@@ -1104,14 +1154,25 @@
     kinojoMyReferencePickerState.outputsBySlot=Object.create(null);
     kinojoMyReferencePickerState.previewUrlsBySlot=Object.create(null);
     kinojoMyReferencePickerState.uploadingSlot='';
+    kinojoMyReferencePickerState.submitting=false;
+    kinojoMyReferencePickerState.resume=null;
+    kinojoMyReferencePickerState.lastSubmission=null;
+    closeMyInfoStyleConfirm_(false);
+    document.querySelectorAll('input[name="kinojoMyInfoRequestStyle"]').forEach(input=>{input.checked=false;input.disabled=!kinojoMyReferencePickerState.characterId;});
+    const requestNote=q('#kinojoMyInfoRequestNote');
+    if(requestNote){requestNote.value='';requestNote.removeAttribute('aria-invalid');}
     const input=q('#kinojoMyInfoReferenceFileInput');
     if(input)input.value='';
     clearMyInfoReferenceDragState_();
     renderMyInfoReferencePicker_();
     if(kinojoMyReferencePickerState.characterId>0){
       const row=myInfoProfileCharacters_().find(item=>Number(item?.characterId||0)===kinojoMyReferencePickerState.characterId);
-      setMyInfoReferenceStatus_((row?.characterName?String(row.characterName)+' · ':'')+'등록 상태를 확인하는 중입니다.','loading');
-    }else setMyInfoReferenceStatus_('캐릭터를 선택하면 슬롯별 이미지를 고를 수 있습니다.','info');
+      setMyInfoReferenceStatus_((row?.characterName?String(row.characterName)+' · ':'')+'참고 이미지 상태를 확인하는 중입니다.','loading');
+      setMyInfoImageRequestStatus_('참고 이미지 1~3장을 선택한 뒤 스타일과 요청 내용을 확인해 주세요.','info');
+    }else{
+      setMyInfoReferenceStatus_('캐릭터를 선택하면 슬롯별 이미지를 고를 수 있습니다.','info');
+      setMyInfoImageRequestStatus_('참고 이미지를 선택하면 제작 요청을 보낼 수 있습니다.','info');
+    }
   }
   function syncMyInfoReferenceCharacter_(characterId){
     const id=Number(characterId||0);
@@ -1193,8 +1254,10 @@
           kinojoMyReferencePickerState.outputsBySlot[slot]=result;
           kinojoMyReferencePickerState.previewUrlsBySlot[slot]=previewUrl;
           kinojoMyReferencePickerState.activeSlot=slot;
+          invalidateMyInfoImageRequestResume_();
           renderMyInfoReferencePicker_();
-          setMyInfoReferenceStatus_(slot+' · WebP '+edited.definition.outputWidth+'×'+edited.definition.outputHeight+' · '+myInfoProfileFileSize_(edited.sizeBytes)+' 편집 결과만 등록 대기 중입니다.','preview');
+          setMyInfoReferenceStatus_(slot+' · WebP '+edited.definition.outputWidth+'×'+edited.definition.outputHeight+' · '+myInfoProfileFileSize_(edited.sizeBytes)+' 편집 결과를 로컬에 준비했습니다.','preview');
+          setMyInfoImageRequestStatus_('참고 이미지 '+myInfoSelectedRequestResults_().length+'장을 선택했습니다. 스타일과 추가 요청을 확인해 주세요.','info');
         },
         onClose(detail){
           if(detail?.reason!=='confirm'&&!kinojoMyReferencePickerState.outputsBySlot[slot])setMyInfoReferenceStatus_(slot+' 이미지 편집을 취소했습니다. 원본은 저장되거나 업로드되지 않았습니다.','info');
@@ -1216,45 +1279,122 @@
     delete kinojoMyReferencePickerState.previewUrlsBySlot[slot];
     delete kinojoMyReferencePickerState.filesBySlot[slot];
     delete kinojoMyReferencePickerState.outputsBySlot[slot];
+    invalidateMyInfoImageRequestResume_();
     const input=q('#kinojoMyInfoReferenceFileInput');
     if(input)input.value='';
     renderMyInfoReferencePicker_();
     if(message)setMyInfoReferenceStatus_(message,'info');
+    setMyInfoImageRequestStatus_(myInfoSelectedRequestResults_().length?'참고 이미지 '+myInfoSelectedRequestResults_().length+'장을 선택했습니다.':'참고 이미지를 최소 1장 선택해 주세요.','info');
     return true;
   }
-  async function uploadMyInfoReference_(slotValue){
-    const slot=String(slotValue||kinojoMyReferencePickerState.activeSlot||'').trim();
-    if(!KINOJO_REFERENCE_IMAGE_SLOTS.includes(slot))return false;
-    kinojoMyReferencePickerState.activeSlot=slot;
-    const characterId=Number(kinojoMyProfileUiState.selectedCharacterId||0);
+  function openMyInfoStyleConfirm_(){
+    const layer=q('#kinojoMyInfoStyleConfirm');
+    if(!layer||kinojoMyReferencePickerState.submitting)return false;
+    kinojoMyInfoFocusState.requestConfirmReturn=document.activeElement instanceof HTMLElement?document.activeElement:q('#kinojoMyInfoRequestSubmitBtn');
+    layer.hidden=false;
+    layer.setAttribute('aria-hidden','false');
+    focusMyInfoElement_(q('#kinojoMyInfoStyleConfirmChooseBtn')||q('.kinojo-my-info-request-confirm__dialog',layer));
+    return true;
+  }
+  function closeMyInfoStyleConfirm_(restoreFocus=true){
+    const layer=q('#kinojoMyInfoStyleConfirm');
+    const wasOpen=!!layer&&!layer.hidden;
+    const returnFocus=kinojoMyInfoFocusState.requestConfirmReturn;
+    if(layer){layer.hidden=true;layer.setAttribute('aria-hidden','true');}
+    kinojoMyInfoFocusState.requestConfirmReturn=null;
+    if(wasOpen&&restoreFocus)focusMyInfoElement_(returnFocus||q('#kinojoMyInfoRequestSubmitBtn'));
+    return wasOpen;
+  }
+  async function loadMyInfoImageRequestState_(characterId,force=false){
     const token=myInfoSessionToken_();
-    const result=kinojoMyReferencePickerState.outputsBySlot[slot]||null;
-    if(kinojoMyReferencePickerState.uploadingSlot||!result||!token||!Number.isInteger(characterId)||characterId<=0)return false;
-    kinojoMyReferencePickerState.uploadingSlot=slot;
-    renderMyInfoReferencePicker_();
+    const id=Number(characterId||0);
+    if(!token||!Number.isInteger(id)||id<=0)return null;
+    if(!force&&kinojoMyReferencePickerState.requestStateByCharacter[id])return kinojoMyReferencePickerState.requestStateByCharacter[id];
+    const requestId=++kinojoMyReferencePickerState.requestStateId;
     try{
-      setMyInfoReferenceStatus_(slot+' 편집 결과를 비공개 저장소에 안전하게 등록하는 중입니다.','loading');
       await ensureMyInfoImageTools_();
-      const uploaded=await window.KinojoMyInfoImageUpload.uploadEdited({client:window.KinojoSupabaseClientCore,sessionToken:token,characterId,contract:window.KinojoMyInfoImageContract,result});
-      clearMyInfoReferencePreview_(slot);
+      const state=await window.KinojoMyInfoImageRequest.state({client:window.KinojoSupabaseClientCore,sessionToken:token,characterId:id});
+      if(requestId!==kinojoMyReferencePickerState.requestStateId||myInfoSessionToken_()!==token||Number(kinojoMyProfileUiState.selectedCharacterId)!==id)return null;
+      kinojoMyReferencePickerState.requestStateByCharacter[id]=state;
+      renderMyInfoImageRequest_();
+      return state;
+    }catch(error){
+      console.warn('KINOJO My Info image request state failed:',error);
+      return null;
+    }
+  }
+  function setMyInfoImageRequestSubmitting_(value){
+    kinojoMyReferencePickerState.submitting=value===true;
+    renderMyInfoProfileCharacterButtons_();
+    renderMyInfoReferencePicker_();
+    const profile=kinojoMyProfileUiState.bootstrapByCharacter[Number(kinojoMyProfileUiState.selectedCharacterId||0)]||null;
+    renderMyInfoProfileCurrent_(profile);
+    ['#kinojoMyInfoProfileUploadBtn','#kinojoMyInfoProfileCancelBtn','#kinojoMyInfoProfileRetryBtn'].forEach(selector=>{const button=q(selector);if(button&&!button.hidden)button.disabled=value===true;});
+    q('#kinojoMyInfoModal')?.classList.toggle('is-request-submitting',value===true);
+  }
+  async function submitMyInfoImageRequest_(options={}){
+    if(kinojoMyReferencePickerState.submitting)return false;
+    const results=myInfoSelectedRequestResults_();
+    const characterId=Number(kinojoMyProfileUiState.selectedCharacterId||0);
+    const sessionToken=myInfoSessionToken_();
+    if(!results.length){
+      setMyInfoImageRequestStatus_('참고 이미지를 최소 1장 선택해 주세요.','error');
+      focusMyInfoElement_(q('[data-reference-select-slot="FRONT"]'));
+      return false;
+    }
+    const styleCode=q('input[name="kinojoMyInfoRequestStyle"]:checked')?.value||null;
+    const note=q('#kinojoMyInfoRequestNote');
+    const requestNote=String(note?.value||'').trim();
+    if(styleCode==='CUSTOM'&&!requestNote){
+      setMyInfoImageRequestStatus_('직접 요청을 선택한 경우 원하는 스타일을 입력해 주세요.','error');
+      note?.setAttribute('aria-invalid','true');
+      focusMyInfoElement_(note);
+      return false;
+    }
+    if(!styleCode&&options.allowNoStyle!==true){
+      openMyInfoStyleConfirm_();
+      return false;
+    }
+    closeMyInfoStyleConfirm_(false);
+    if(note)note.removeAttribute('aria-invalid');
+    setMyInfoImageRequestSubmitting_(true);
+    setMyInfoImageRequestStatus_('제작 요청을 안전하게 준비하는 중입니다.','loading');
+    try{
+      await ensureMyInfoImageTools_();
+      const submitted=await window.KinojoMyInfoImageRequest.submit({
+        client:window.KinojoSupabaseClientCore,sessionToken,characterId,styleCode,requestNote,results,
+        contract:window.KinojoMyInfoImageContract,uploadApi:window.KinojoMyInfoImageUpload,resume:kinojoMyReferencePickerState.resume,
+        onProgress(progress){
+          if(progress?.resume)kinojoMyReferencePickerState.resume=progress.resume;
+          if(progress?.stage==='uploading'||progress?.stage==='uploaded')setMyInfoImageRequestStatus_('참고 이미지 '+Number(progress.completed||0)+'/'+Number(progress.total||results.length)+' 전송 중입니다.','loading');
+          else if(progress?.stage==='finalizing')setMyInfoImageRequestStatus_('이미지 전송을 마쳤습니다. 제작 요청을 최종 확인하는 중입니다.','loading');
+        }
+      });
+      kinojoMyReferencePickerState.lastSubmission={characterId,request:submitted.request};
+      kinojoMyReferencePickerState.requestStateByCharacter[characterId]={ok:true,characterId,requestCount:1,requests:[submitted.request]};
+      KINOJO_REFERENCE_IMAGE_SLOTS.forEach(slot=>{
+        const url=String(kinojoMyReferencePickerState.previewUrlsBySlot[slot]||'');
+        if(url){try{URL.revokeObjectURL(url);}catch(_error){}}
+      });
+      kinojoMyReferencePickerState.filesBySlot=Object.create(null);
+      kinojoMyReferencePickerState.outputsBySlot=Object.create(null);
+      kinojoMyReferencePickerState.previewUrlsBySlot=Object.create(null);
+      kinojoMyReferencePickerState.resume=null;
+      document.querySelectorAll('input[name="kinojoMyInfoRequestStyle"]').forEach(input=>{input.checked=false;});
+      if(note){note.value='';note.removeAttribute('aria-invalid');}
       delete kinojoMyReferencePickerState.stateByCharacter[characterId];
-      const state=await loadMyInfoReferenceState_(characterId,true);
-      if(!state)throw new Error('REFERENCE_STATE_REFRESH_FAILED');
-      setMyInfoReferenceStatus_(uploaded.replacing?slot+' 참고 이미지가 안전하게 교체되었습니다. 새 파일은 최대 7일 동안만 보관됩니다.':slot+' 참고 이미지가 비공개 등록되었습니다. 파일은 최대 7일 동안만 보관됩니다.','ready');
+      await loadMyInfoReferenceState_(characterId,true).catch(()=>null);
+      setMyInfoImageRequestStatus_('제작 요청이 접수되었습니다. 이미지는 최대 7일 동안 비공개로 보관됩니다.','ready');
+      renderMyInfoReferencePicker_();
       return true;
     }catch(error){
-      const code=String(error?.code||error?.data?.code||error?.message||'');
-      if(code.includes('REFERENCE_')&&/(EXISTS|NOT_FOUND|CONFLICT|STATE)/.test(code)){
-        delete kinojoMyReferencePickerState.stateByCharacter[characterId];
-        await loadMyInfoReferenceState_(characterId,true).catch(()=>null);
-        clearMyInfoReferencePreview_(slot);
-        setMyInfoReferenceStatus_('다른 작업에서 '+slot+' 등록 상태가 변경되었습니다. 현재 상태를 확인했으니 이미지를 다시 편집해 주세요.','info');
-      }else setMyInfoReferenceStatus_(slot+' 등록 또는 교체에 실패했습니다. 기존 등록 이미지는 유지됩니다. 다시 시도해 주세요.','error');
-      console.warn('KINOJO My Info reference upload failed:',error);
+      if(error?.resume)kinojoMyReferencePickerState.resume=error.resume;
+      const completed=Array.isArray(kinojoMyReferencePickerState.resume?.uploadedSlots)?kinojoMyReferencePickerState.resume.uploadedSlots.length:0;
+      setMyInfoImageRequestStatus_(completed?'일부 이미지('+completed+'/'+results.length+') 전송 후 멈췄습니다. 전송 다시 시도를 눌러 이어서 보내 주세요.':'제작 요청 전송에 실패했습니다. 같은 요청으로 다시 시도할 수 있습니다.','error');
+      console.warn('KINOJO My Info image request submit failed:',error);
       return false;
     }finally{
-      kinojoMyReferencePickerState.uploadingSlot='';
-      renderMyInfoReferencePicker_();
+      setMyInfoImageRequestSubmitting_(false);
     }
   }
   async function deleteMyInfoReference_(slotValue){
@@ -1263,7 +1403,7 @@
     kinojoMyReferencePickerState.activeSlot=slot;
     const characterId=Number(kinojoMyProfileUiState.selectedCharacterId||0);
     const token=myInfoSessionToken_();
-    if(kinojoMyReferencePickerState.uploadingSlot||!KINOJO_REFERENCE_IMAGE_SLOTS.includes(slot)||!token||!Number.isInteger(characterId)||characterId<=0)return false;
+    if(kinojoMyReferencePickerState.uploadingSlot||kinojoMyReferencePickerState.submitting||!KINOJO_REFERENCE_IMAGE_SLOTS.includes(slot)||!token||!Number.isInteger(characterId)||characterId<=0)return false;
     if(!window.confirm(slot+' 비공개 참고 이미지를 삭제할까요? 삭제한 파일은 복구할 수 없습니다.'))return false;
     kinojoMyReferencePickerState.uploadingSlot=slot;
     renderMyInfoReferencePicker_();
@@ -1380,6 +1520,8 @@
     kinojoMyProfileUiState.imageBackgroundPromise=null;
     kinojoMyReferencePickerState.stateByCharacter=Object.create(null);
     kinojoMyReferencePickerState.requestId+=1;
+    kinojoMyReferencePickerState.requestStateByCharacter=Object.create(null);
+    kinojoMyReferencePickerState.requestStateId+=1;
     const picker=q('#kinojoMyInfoProfileCharacters');
     if(picker)picker.innerHTML='<span class="kinojo-my-info-profile-empty">캐릭터 정보를 불러오는 중입니다.</span>';
     renderMyInfoProfileCurrent_(null);
@@ -1417,7 +1559,7 @@
       const state=String(imageState?.status||'idle');
       const stateClass=state==='loading'?' is-image-loading':state==='error'?' is-image-error':state==='loaded'||state==='empty'?' is-image-ready':'';
       const stateLabel=state==='loading'?' · 이미지 준비 중':state==='error'?' · 이미지 재시도 필요':'';
-      return '<button class="kinojo-my-info-profile-character-btn '+(id===selected?'is-selected':'')+stateClass+'" type="button" data-profile-character-id="'+id+'" data-image-load-state="'+escapeHtml(state)+'" aria-pressed="'+(id===selected?'true':'false')+'">'
+      return '<button class="kinojo-my-info-profile-character-btn '+(id===selected?'is-selected':'')+stateClass+'" type="button" data-profile-character-id="'+id+'" data-image-load-state="'+escapeHtml(state)+'" aria-pressed="'+(id===selected?'true':'false')+'" '+(kinojoMyReferencePickerState.submitting?'disabled':'')+'>'
         +(icon?'<img src="'+escapeHtml(icon)+'" alt="" aria-hidden="true">':'<span class="is-empty" aria-hidden="true"></span>')
         +'<span><b>'+escapeHtml(String(row.characterName||'이름 없음'))+'</b><small>'+(row.isMain===true?'본캐':'부캐')+stateLabel+'</small></span>'
         +'</button>';
@@ -1472,14 +1614,14 @@
     }
     if(select){
       const blocked=data?.ok!==true;
-      select.disabled=blocked||kinojoMyProfileUiState.uploading;
+      select.disabled=blocked||kinojoMyProfileUiState.uploading||kinojoMyReferencePickerState.submitting;
       select.textContent=profile?.hasOverride===true?'교체 이미지 선택':'이미지 선택';
       select.title=profile?.hasOverride===true?'새 이미지를 선택하면 기존 사용자 이미지를 안전하게 교체합니다.':'';
     }
     if(reset){
       const canReset=data?.ok===true&&profile?.hasOverride===true;
       reset.hidden=!canReset;
-      reset.disabled=!canReset||kinojoMyProfileUiState.uploading;
+      reset.disabled=!canReset||kinojoMyProfileUiState.uploading||kinojoMyReferencePickerState.submitting;
       reset.textContent=kinojoMyProfileUiState.uploading?'처리 중...':'공식 이미지로 복원';
       reset.title=canReset?'사용자 Override만 제거하고 현재 공식 프로필 이미지로 돌아갑니다.':'';
     }
@@ -1662,6 +1804,7 @@
     return kinojoMyProfileUiState.bootstrapByCharacter[Number(selected.characterId)]||null;
   }
   function selectMyInfoProfileCharacter_(characterId){
+    if(kinojoMyReferencePickerState.submitting)return;
     const id=Number(characterId||0);
     if(!myInfoProfileCharacters_().some(row=>Number(row.characterId)===id))return;
     kinojoMyProfileUiState.selectedCharacterId=id;
@@ -1669,6 +1812,7 @@
     syncMyInfoReferenceCharacter_(id);
     renderMyInfoProfileCharacterButtons_();
     renderMyInfoBatchSelectedState_();
+    loadMyInfoImageRequestState_(id).catch(()=>null);
     const imageState=myInfoProfileImageState_(id);
     if(imageState?.status==='idle'){
       kinojoMyProfileUiState.imagePreloader.request(id).catch(()=>{});
@@ -1933,10 +2077,31 @@
             </div>
             <input id="kinojoMyInfoReferenceFileInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
             <div class="kinojo-my-info-reference-preview-grid" id="kinojoMyInfoReferenceGrid" role="group" aria-labelledby="kinojoMyInfoReferenceTitle">
-              ${KINOJO_REFERENCE_IMAGE_SLOTS.map(slot=>{const label=slot==='FRONT'?'정면':slot==='BACK'?'후면':'얼굴이 잘 보이는 상반신';return `<article class="kinojo-my-info-reference-slot" data-reference-slot="${slot}" aria-disabled="true"><div class="kinojo-my-info-reference-visual" data-reference-visual><img class="kinojo-my-info-reference-guide" data-reference-guide src="${KINOJO_REFERENCE_GUIDE_ASSETS[slot]}" alt="${label} 촬영 가이드"></div><div class="kinojo-my-info-reference-slot-copy"><b>${slot}</b><span>${label}</span><small data-reference-file-status>등록된 이미지 없음</small></div><div class="kinojo-my-info-reference-slot-actions"><button class="kinojo-my-info-action-btn" data-reference-select-slot="${slot}" type="button" disabled>이미지 업로드</button><button class="kinojo-my-info-action-btn is-primary" data-reference-upload-slot="${slot}" type="button" hidden>비공개 등록</button><button class="kinojo-my-info-action-btn" data-reference-cancel-slot="${slot}" type="button" hidden>편집 취소</button><button class="kinojo-my-info-action-btn is-danger" data-reference-delete-slot="${slot}" type="button" hidden>등록 삭제</button></div></article>`;}).join('')}
+              ${KINOJO_REFERENCE_IMAGE_SLOTS.map(slot=>{const label=slot==='FRONT'?'정면':slot==='BACK'?'후면':'얼굴이 잘 보이는 상반신';return `<article class="kinojo-my-info-reference-slot" data-reference-slot="${slot}" aria-disabled="true"><div class="kinojo-my-info-reference-visual" data-reference-visual><img class="kinojo-my-info-reference-guide" data-reference-guide src="${KINOJO_REFERENCE_GUIDE_ASSETS[slot]}" alt="${label} 촬영 가이드"></div><div class="kinojo-my-info-reference-slot-copy"><b>${slot}</b><span>${label}</span><small data-reference-file-status>등록된 이미지 없음</small></div><div class="kinojo-my-info-reference-slot-actions"><button class="kinojo-my-info-action-btn" data-reference-select-slot="${slot}" type="button" disabled>이미지 선택</button><button class="kinojo-my-info-action-btn" data-reference-cancel-slot="${slot}" type="button" hidden>편집 취소</button><button class="kinojo-my-info-action-btn is-danger" data-reference-delete-slot="${slot}" type="button" hidden>등록 삭제</button></div></article>`;}).join('')}
             </div>
             <div class="kinojo-my-info-reference-status" id="kinojoMyInfoReferenceStatus" data-state="info" role="status" aria-live="polite" aria-atomic="true">캐릭터를 선택하면 슬롯별 이미지를 고를 수 있습니다.</div>
+            <section class="kinojo-my-info-request" aria-labelledby="kinojoMyInfoRequestTitle">
+              <div class="kinojo-my-info-request-head"><div><strong id="kinojoMyInfoRequestTitle">이미지 제작 요청</strong><span>선택한 참고 이미지를 한 번에 전송합니다.</span></div><b id="kinojoMyInfoRequestSelectionSummary">선택 0/3</b></div>
+              <fieldset class="kinojo-my-info-request-styles">
+                <legend>원하는 이미지 스타일 <small>선택 사항</small></legend>
+                <div class="kinojo-my-info-request-style-grid">
+                  ${Object.entries(KINOJO_IMAGE_REQUEST_STYLES).map(([code,label])=>`<label class="kinojo-my-info-request-style"><input type="radio" name="kinojoMyInfoRequestStyle" value="${code}" disabled><span><b>${label}</b><small>${code==='CUSTOM'?'아래 요청 내용에 직접 작성':'관리자 제작 기준으로 전달'}</small></span></label>`).join('')}
+                </div>
+              </fieldset>
+              <label class="kinojo-my-info-request-note" for="kinojoMyInfoRequestNote"><span><b>추가 요청</b><small id="kinojoMyInfoRequestNoteCount">0/300</small></span><textarea id="kinojoMyInfoRequestNote" maxlength="300" rows="3" placeholder="원하는 분위기, 색감, 의상 표현 등을 적어 주세요." disabled></textarea></label>
+              <div class="kinojo-my-info-request-submit-row"><p>정면·후면·상반신 중 1장만 선택해도 요청할 수 있습니다.</p><button class="kinojo-my-info-action-btn is-primary" id="kinojoMyInfoRequestSubmitBtn" type="button" disabled>이미지 제작 요청 보내기</button></div>
+              <div class="kinojo-my-info-request-status" id="kinojoMyInfoRequestStatus" data-state="info" role="status" aria-live="polite" aria-atomic="true">참고 이미지를 선택하면 제작 요청을 보낼 수 있습니다.</div>
+              <div class="kinojo-my-info-request-result" id="kinojoMyInfoRequestResult" hidden></div>
+            </section>
           </section>
+        </div>
+      </div>
+      <div class="kinojo-my-info-request-confirm" id="kinojoMyInfoStyleConfirm" aria-hidden="true" hidden>
+        <div class="kinojo-my-info-request-confirm__backdrop" data-request-confirm-cancel></div>
+        <div class="kinojo-my-info-request-confirm__dialog" role="alertdialog" aria-modal="true" aria-labelledby="kinojoMyInfoStyleConfirmTitle" aria-describedby="kinojoMyInfoStyleConfirmDescription" tabindex="-1">
+          <small>스타일 미선택</small><strong id="kinojoMyInfoStyleConfirmTitle">요청 스타일을 정하지 않고 이미지만 업로드하시겠습니까?</strong>
+          <p id="kinojoMyInfoStyleConfirmDescription">스타일을 고르지 않아도 접수할 수 있으며, 관리자가 참고 이미지와 추가 요청을 기준으로 제작합니다.</p>
+          <div><button class="kinojo-my-info-action-btn is-primary" id="kinojoMyInfoStyleConfirmChooseBtn" type="button">돌아가서 스타일 선택</button><button class="kinojo-my-info-action-btn" id="kinojoMyInfoStyleConfirmSubmitBtn" type="button">스타일 없이 업로드</button></div>
         </div>
       </div>`;
     document.body.appendChild(modal);
@@ -1960,6 +2125,7 @@
       focusMyInfoElement_(q('.kinojo-my-info-modal-close',modal)||dialog);
     };
     show();
+    loadMyInfoImageRequestState_(kinojoMyProfileUiState.selectedCharacterId).catch(()=>null);
     const loader=kinojoMyProfileUiState.imagePreloader;
     if(loader){
       kinojoMyProfileUiState.imageBackgroundPromise=loader.startBackground()
@@ -1968,10 +2134,15 @@
     }
   }
   function closeMyInfoModal(restoreFocus=true){
+    if(kinojoMyReferencePickerState.submitting){
+      setMyInfoImageRequestStatus_('이미지 전송이 끝날 때까지 잠시 기다려 주세요.','loading');
+      return false;
+    }
     const modal=q('#kinojoMyInfoModal');
     const wasOpen=!!modal?.classList.contains('open');
     const returnFocus=kinojoMyInfoFocusState.modalReturn;
     if(modal){modal.classList.remove('open');modal.setAttribute('aria-hidden','true');}
+    closeMyInfoStyleConfirm_(false);
     window.KinojoMyInfoImageEditor?.close?.('parent-close');
     clearMyInfoProfilePreview_();
     resetMyInfoReferencePicker_(kinojoMyProfileUiState.selectedCharacterId);
@@ -2227,17 +2398,18 @@
     q('#kinojoMyInfoMenuBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();replayMyInfoClickAnimation_(e.currentTarget);openMyInfoModal().catch(()=>{});});
     q('#kinojoMyInfoModal')?.addEventListener('click',e=>{
       if(!(e.target instanceof Element))return;
+      if(e.target.closest('[data-request-confirm-cancel],#kinojoMyInfoStyleConfirmChooseBtn')){e.preventDefault();e.stopPropagation();closeMyInfoStyleConfirm_();return;}
+      if(e.target.closest('#kinojoMyInfoStyleConfirmSubmitBtn')){e.preventDefault();e.stopPropagation();submitMyInfoImageRequest_({allowNoStyle:true}).catch(()=>{});return;}
       if(e.target.closest('[data-kinojo-my-info-modal-close]')){e.preventDefault();e.stopPropagation();closeMyInfoModal();return;}
       const characterButton=e.target.closest('[data-profile-character-id]');
       if(characterButton){e.preventDefault();e.stopPropagation();selectMyInfoProfileCharacter_(characterButton.dataset.profileCharacterId);return;}
       const referenceSelect=e.target.closest('[data-reference-select-slot]');
       if(referenceSelect){e.preventDefault();e.stopPropagation();selectMyInfoReferenceSlot_(referenceSelect.dataset.referenceSelectSlot);return;}
-      const referenceUpload=e.target.closest('[data-reference-upload-slot]');
-      if(referenceUpload){e.preventDefault();e.stopPropagation();uploadMyInfoReference_(referenceUpload.dataset.referenceUploadSlot).catch(()=>{});return;}
       const referenceCancel=e.target.closest('[data-reference-cancel-slot]');
       if(referenceCancel){e.preventDefault();e.stopPropagation();clearMyInfoReferencePreview_(referenceCancel.dataset.referenceCancelSlot,'편집 결과를 취소했습니다. 원본은 저장되거나 업로드되지 않았습니다.');return;}
       const referenceDelete=e.target.closest('[data-reference-delete-slot]');
       if(referenceDelete){e.preventDefault();e.stopPropagation();deleteMyInfoReference_(referenceDelete.dataset.referenceDeleteSlot).catch(()=>{});return;}
+      if(e.target.closest('#kinojoMyInfoRequestSubmitBtn')){e.preventDefault();e.stopPropagation();submitMyInfoImageRequest_().catch(()=>{});return;}
       if(e.target.closest('#kinojoMyInfoProfileSelectBtn')){e.preventDefault();e.stopPropagation();q('#kinojoMyInfoProfileFileInput')?.click();return;}
       if(e.target.closest('#kinojoMyInfoProfileResetBtn')){e.preventDefault();e.stopPropagation();resetMyInfoProfileOfficial_().catch(()=>{});return;}
       if(e.target.closest('#kinojoMyInfoProfileRetryBtn')){e.preventDefault();e.stopPropagation();retryMyInfoProfileImage_().catch(()=>{});return;}
@@ -2246,8 +2418,21 @@
     });
     q('#kinojoMyInfoPanel')?.addEventListener('keydown',e=>trapMyInfoFocus_(e,e.currentTarget));
     q('.kinojo-my-info-modal-dialog',q('#kinojoMyInfoModal'))?.addEventListener('keydown',e=>trapMyInfoFocus_(e,e.currentTarget));
+    q('.kinojo-my-info-request-confirm__dialog',q('#kinojoMyInfoModal'))?.addEventListener('keydown',e=>trapMyInfoFocus_(e,e.currentTarget));
     q('#kinojoMyInfoProfileFileInput')?.addEventListener('change',e=>{handleMyInfoProfileFile_(e.target?.files?.[0]||null).catch(()=>{});});
     q('#kinojoMyInfoReferenceFileInput')?.addEventListener('change',e=>{handleMyInfoReferenceFile_(e.target?.files?.[0]||null).catch(()=>{});});
+    q('#kinojoMyInfoModal')?.addEventListener('change',e=>{
+      if(!(e.target instanceof HTMLInputElement)||e.target.name!=='kinojoMyInfoRequestStyle')return;
+      invalidateMyInfoImageRequestResume_();
+      q('#kinojoMyInfoRequestNote')?.removeAttribute('aria-invalid');
+      setMyInfoImageRequestStatus_('선택한 스타일과 참고 이미지를 확인한 뒤 요청을 보내 주세요.','info');
+      renderMyInfoImageRequest_();
+    });
+    q('#kinojoMyInfoRequestNote')?.addEventListener('input',e=>{
+      invalidateMyInfoImageRequestResume_();
+      e.currentTarget.removeAttribute('aria-invalid');
+      renderMyInfoImageRequest_();
+    });
     const profileCharacters=q('#kinojoMyInfoProfileCharacters');
     profileCharacters?.addEventListener('scroll',updateMyInfoProfileCharacterOverflow_,{passive:true});
     window.addEventListener('resize',updateMyInfoProfileCharacterOverflow_,{passive:true});
@@ -2294,7 +2479,7 @@
         a.setAttribute('href','#');a.dataset.pagePanel=type;a.dataset.guideMode='standalone';
       });
     });
-    document.addEventListener('keydown',e=>{if(e.defaultPrevented)return;if(e.key==='Escape'){const myInfoModal=q('#kinojoMyInfoModal');if(myInfoModal?.classList.contains('open'))return closeMyInfoModal();const myInfo=q('#kinojoMyInfoLayer');if(myInfo?.classList.contains('open'))return closeMyInfoPanel();const p=q('#drawerPagePanel');if(p?.classList.contains('open'))return closeDrawerPagePanel();const d=q('#sideDrawer');if(d?.classList.contains('open'))return closeSideDrawer();}});
+    document.addEventListener('keydown',e=>{if(e.defaultPrevented)return;if(e.key==='Escape'){const requestConfirm=q('#kinojoMyInfoStyleConfirm');if(requestConfirm&&!requestConfirm.hidden)return closeMyInfoStyleConfirm_();const myInfoModal=q('#kinojoMyInfoModal');if(myInfoModal?.classList.contains('open'))return closeMyInfoModal();const myInfo=q('#kinojoMyInfoLayer');if(myInfo?.classList.contains('open'))return closeMyInfoPanel();const p=q('#drawerPagePanel');if(p?.classList.contains('open'))return closeDrawerPagePanel();const d=q('#sideDrawer');if(d?.classList.contains('open'))return closeSideDrawer();}});
   }
   function loadSanctuaryMasterRenderer(){
     if(document.querySelector('script[data-kinojo-sanctuary-master-loader]')) return;
