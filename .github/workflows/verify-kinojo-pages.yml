@@ -30,6 +30,9 @@ on:
       - "m/meter/**"
       - "core/**"
       - "ui/**"
+      - "supabase/functions/kinojo-member-profile/**"
+      - "supabase/functions/kinojo-member-image-cleanup/**"
+      - "supabase/migrations/20260826033315_member_image_request_batch_v404.sql"
       - "tests/**"
       - "launcher-content.json"
       - "CNAME"
@@ -63,6 +66,9 @@ on:
       - "m/meter/**"
       - "core/**"
       - "ui/**"
+      - "supabase/functions/kinojo-member-profile/**"
+      - "supabase/functions/kinojo-member-image-cleanup/**"
+      - "supabase/migrations/20260826033315_member_image_request_batch_v404.sql"
       - "tests/**"
       - "launcher-content.json"
       - "CNAME"
@@ -136,6 +142,7 @@ jobs:
           node tests/my-info-guide-assets.test.js
           node tests/my-info-image-editor.test.js
           node tests/my-info-image-upload.test.js
+          node tests/my-info-image-request-server-contract.test.js
           node tests/my-info-batch-bootstrap.test.js
           node tests/my-info-image-preloader.test.js
           node tests/my-info-panel-width.test.js
