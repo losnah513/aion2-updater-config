@@ -6,7 +6,7 @@ const root=path.resolve(__dirname,'..');
 const workflow=fs.readFileSync(path.join(root,'admin/js/admin-banner-event-workflow.js'),'utf8');
 
 for(const token of [
-  'banner event workflow phase 2 stage 4',
+  'banner event workflow phase 2 stage 5',
   "filter:'NONE'",
   '미선택',
   '전체 ${usableAssets(s).length}',
@@ -33,11 +33,11 @@ for(const token of [
   'data-bew-overlay-apply',
   'data-bew-overlay-field="verticalPosition"',
   'data-bew-overlay-field="fontFamily"',
-  'data-bew-overlay-field="fontSizePx"',
+  "rangeControl('글자 크기','fontSizePx'",
   'data-bew-overlay-field="textColor"',
   'data-bew-overlay-field="backgroundColor"',
-  'data-bew-overlay-field="backgroundOpacity"',
-  'data-bew-overlay-field="heightPercent"',
+  "rangeControl('배경 농도','backgroundOpacity'",
+  "rangeControl('문구 영역 높이','heightPercent'",
   "contentOverlays:(s.overlays[Number(id)]||[])",
   "widthMode:'FULL'",
 ])assert.ok(workflow.includes(token),`stage-4 workflow token missing: ${token}`);

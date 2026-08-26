@@ -29,15 +29,15 @@ for(const token of [
 ])assert.ok(migration.includes(token),`missing v396 migration token: ${token}`);
 
 for(const token of [
-  'V = "2.2"',
-  'DB = "404"',
+  'V = "2.3"',
+  'DB = "405"',
   'EVENT = "404"',
   '"overlay-asset-list"',
   '"overlay-upload-prepare"',
   '"overlay-upload-complete"',
   '"composite-upload-prepare"',
   '"composite-upload-complete"',
-  'kinojo_banner_overlay_asset_register_v396',
+  'kinojo_banner_overlay_asset_register_v405',
   'kinojo_banner_composite_register_v396',
   'kinojo_banner_event_save_v404',
   'kinojo_banner_event_publish_v404',
