@@ -20,11 +20,13 @@ on:
       - "tests/banner-admin-side-ui-contract.test.js"
       - "tests/banner-admin-quality-contract.test.js"
       - "tests/banner-event-stage2-ui-contract.test.js"
+      - "tests/banner-asset-metadata-v403-contract.test.js"
       - "tests/banner-event-stage3-ui-contract.test.js"
       - "tests/banner-event-phase2-stage1-shell-contract.test.js"
       - "tests/banner-event-manager-v398-contract.test.js"
       - "tests/banner-legacy-lookbook-groups-v399-contract.test.js"
       - "supabase/functions/kinojo-banner-media/index.ts"
+      - "supabase/migrations/20260826020948_banner_asset_titles_tags_v403.sql"
       - "supabase/migrations/20260824143000_banner_event_manager_v398.sql"
       - "supabase/migrations/20260824232500_attach_legacy_lookbooks_v399.sql"
       - "tests/banner-admin-chrome-e2e.html"
@@ -48,11 +50,13 @@ on:
       - "tests/banner-admin-side-ui-contract.test.js"
       - "tests/banner-admin-quality-contract.test.js"
       - "tests/banner-event-stage2-ui-contract.test.js"
+      - "tests/banner-asset-metadata-v403-contract.test.js"
       - "tests/banner-event-stage3-ui-contract.test.js"
       - "tests/banner-event-phase2-stage1-shell-contract.test.js"
       - "tests/banner-event-manager-v398-contract.test.js"
       - "tests/banner-legacy-lookbook-groups-v399-contract.test.js"
       - "supabase/functions/kinojo-banner-media/index.ts"
+      - "supabase/migrations/20260826020948_banner_asset_titles_tags_v403.sql"
       - "supabase/migrations/20260824143000_banner_event_manager_v398.sql"
       - "supabase/migrations/20260824232500_attach_legacy_lookbooks_v399.sql"
       - "tests/banner-admin-chrome-e2e.html"
@@ -97,6 +101,7 @@ jobs:
           node tests/banner-admin-side-ui-contract.test.js
           node tests/banner-admin-quality-contract.test.js
           node tests/banner-event-stage2-ui-contract.test.js
+          node tests/banner-asset-metadata-v403-contract.test.js
           node tests/banner-event-stage3-ui-contract.test.js
           node tests/banner-event-phase2-stage1-shell-contract.test.js
           node tests/banner-event-manager-v398-contract.test.js

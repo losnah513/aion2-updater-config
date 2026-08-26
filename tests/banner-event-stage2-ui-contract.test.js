@@ -21,7 +21,10 @@ for(const token of [
   "data-bew-upload-cards",
   "data-bew-asset-add",
   "data-bew-move",
-  "data-bew-upload-tags",
+  "data-bew-file-title",
+  "data-bew-tag-input",
+  "data-bew-tag-remove",
+  "data-bew-tag-count",
   "filter:'NONE'",
   'data-bew-filter="NONE"',
   'data-bew-order-drag',
@@ -29,12 +32,19 @@ for(const token of [
   "cropWarning",
   "배너 비율과 달라 표시할 때 가장자리가 잘릴 수 있습니다.",
   "기존 게시 이미지가 자동으로 섞이지 않습니다.",
-  "원본 크기와 비율 그대로 등록",
+  "원본은 크기와 비율 그대로 저장",
   "업로드만으로는 게시되지 않습니다."
 ])assert.ok(workflow.includes(token),`stage-2 workflow token missing: ${token}`);
 
 assert.ok(workflow.includes("s.files.length>=LIMIT"),'maximum image guard missing');
 assert.ok(workflow.includes("s.files.push"),'persistent append behavior missing');
+assert.ok(workflow.includes("api(s,'asset-title-check'"),'per-image title precheck missing');
+assert.ok(workflow.includes("title:normalizeTitle(stem(file.name))"),'filename-based initial image title missing');
+assert.ok(workflow.includes("tags:s.uploadTags"),'structured upload hashtag payload missing');
+assert.ok(workflow.includes("event.key==='Backspace'"),'hashtag Backspace removal missing');
+assert.ok(workflow.includes("event.key==='Enter'||event.key===','"),'hashtag Enter/comma commit missing');
+assert.ok(workflow.includes("compositionstart"),'hashtag IME guard missing');
+assert.ok(workflow.includes("clipboardData?.getData('text')"),'hashtag paste handling missing');
 assert.ok(workflow.includes("s.selected.push"),'new bundle selection missing');
 assert.ok(workflow.includes("[s.selected[index],s.selected[next]]"),'bundle ordering swap missing');
 assert.ok(workflow.includes("payload.idempotencyKey=uuid()"),'mutation idempotency missing');
@@ -46,8 +56,8 @@ assert.ok(workflow.includes('.bew-file-thumb img,.bew-asset img,.bew-order-item 
 assert.ok(loader.includes("'admin-banner-event-workflow.js'"),'workflow module loader entry missing');
 assert.ok(loader.indexOf("'admin-side-banners.js'")<loader.indexOf("'admin-banner-event-workflow.js'"),'workflow must mount after legacy shells');
 assert.ok(loader.indexOf("'admin-banner-event-workflow.js'")<loader.indexOf("'admin-banner-quality.js'"),'quality guard must decorate new workflow');
-assert.ok(loader.includes("2026082601"),'loader cache generation not bumped');
-assert.ok(desktop.includes('admin.js?cache=2026082601'),'desktop admin cache generation mismatch');
-assert.ok(mobile.includes('admin.js?cache=2026082601'),'mobile admin cache generation mismatch');
+assert.ok(loader.includes("2026082602"),'loader cache generation not bumped');
+assert.ok(desktop.includes('admin.js?cache=2026082602'),'desktop admin cache generation mismatch');
+assert.ok(mobile.includes('admin.js?cache=2026082602'),'mobile admin cache generation mismatch');
 
 console.log('PASS banner event stage-2 UI contract');

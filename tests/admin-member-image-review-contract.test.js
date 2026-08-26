@@ -26,7 +26,7 @@ for (const html of [desktop, mobile]) {
   ]) assert.ok(html.includes(token), `member image review HTML contract missing: ${token}`);
   assert.ok(html.includes('data-admin-master-only'), 'member image review must remain MASTER-only');
   assert.ok(html.includes('admin.css?cache=2026082401'), 'member image review CSS cache must be current');
-  assert.ok(html.includes('admin.js?cache=2026082601'), 'admin module cache must be current');
+  assert.ok(html.includes('admin.js?cache=2026082602'), 'admin module cache must be current');
 }
 
 for (const token of [

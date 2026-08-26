@@ -1,8 +1,8 @@
 const S = "kinojo-banner-media",
-  V = "2.0",
-  DB = "402",
+  V = "2.1",
+  DB = "403",
   EVENT = "402",
-  UPLOAD = "394",
+  UPLOAD = "403",
   MASTER = "337",
   STORAGE = "382",
   B = "kinojo-site-banners",
@@ -76,6 +76,11 @@ const ERR: Record<string, string> = {
   BANNER_CONTENT_TEXT_REQUIRED: "노출할 문구 내용을 입력해 주세요.",
   BANNER_CONTENT_EMOJI_REQUIRED: "노출할 이모지를 선택해 주세요.",
   BANNER_CONTENT_ASSET_REQUIRED: "노출할 스티커 또는 뱃지를 선택해 주세요.",
+  BANNER_ASSET_TITLE_INVALID:
+    "저장 이미지 제목은 공백을 정리한 1~120자로 입력해 주세요.",
+  BANNER_ASSET_TITLE_DUPLICATE: "이미 사용 중인 이미지 제목입니다.",
+  BANNER_ASSET_TAGS_INVALID:
+    "해시태그는 최대 5개, 태그당 20자 이내의 글자·숫자·공백·밑줄·하이픈만 사용할 수 있습니다.",
   BANNER_COMPOSITE_REQUIRED: "콘텐츠가 합쳐진 게시용 이미지를 먼저 만들어 주세요.",
   BANNER_SERVER_ERROR: "배너 요청을 처리하는 중 서버 오류가 발생했습니다.",
 };
@@ -95,6 +100,24 @@ const rec = (v: any) =>
     Number.isInteger(num(v)) && Number(v) > 0 ? Number(v) : null,
   has = (o: any, ks: string[]) =>
     ks.some((k) => Object.prototype.hasOwnProperty.call(o, k));
+const assetTitle = (value: any) =>
+  typeof value === "string" ? value.trim().replace(/\s+/gu, " ") : "";
+function assetTags(value: any) {
+  if (value == null) return { ok: true, tags: [] as string[] };
+  if (!Array.isArray(value) || value.length > 5)
+    return { ok: false, code: "BANNER_ASSET_TAGS_INVALID" };
+  const tags: string[] = [], keys = new Set<string>();
+  for (const raw of value) {
+    if (typeof raw !== "string")
+      return { ok: false, code: "BANNER_ASSET_TAGS_INVALID" };
+    const tag = raw.trim().replace(/^#+/u, "").replace(/\s+/gu, " ");
+    if (!tag || tag.length > 20 || !/^[0-9A-Za-z가-힣_-]+(?: [0-9A-Za-z가-힣_-]+)*$/u.test(tag))
+      return { ok: false, code: "BANNER_ASSET_TAGS_INVALID" };
+    const key = tag.toLocaleLowerCase("ko-KR");
+    if (!keys.has(key)) { keys.add(key); tags.push(tag); }
+  }
+  return { ok: true, tags };
+}
 function ctx() {
   const url = txt(Deno.env.get("SUPABASE_URL"), 500).replace(/\/$/, "");
   let key = txt(Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"), 2200);
@@ -340,6 +363,7 @@ function stat(c: string) {
     ].includes(c) ||
     c.includes("PAUSE_REQUIRED") ||
     c.includes("CONFLICT") ||
+    c.includes("DUPLICATE") ||
     c.includes("STILL_REFERENCED") ||
     c.includes("DELETE_IN_PROGRESS") ||
     c.includes("NO_ACTIVE_ITEMS") ||
@@ -553,6 +577,14 @@ async function complete(r: Request, b: any, t: string) {
     );
   const f = file(b);
   if (!f.ok) return out(r, f, 400);
+  const title = assetTitle(
+    b.title ?? b.displayName ?? b.display_name ??
+      b.originalFileName ?? b.original_file_name ?? "배너 이미지",
+  );
+  if (!title || title.length > 120)
+    return out(r, { ok: false, code: "BANNER_ASSET_TITLE_INVALID" }, 400);
+  const tagResult = assetTags(b.tags);
+  if (!tagResult.ok) return out(r, tagResult, 400);
   const p = txt(b.objectPath ?? b.object_path, 1024);
   if (!p)
     return out(r, { ok: false, code: "BANNER_OBJECT_PATH_REQUIRED" }, 400);
@@ -595,7 +627,7 @@ async function complete(r: Request, b: any, t: string) {
     );
   }
   const aspectMatchesTarget = ratio(f.format, i.w, i.h);
-  const a = await rpc("kinojo_banner_asset_register_storage_v394", {
+  const a = await rpc("kinojo_banner_asset_register_storage_v403", {
     p_session_token: t,
     p_object_path: p,
     p_mime_type: s.mime,
@@ -603,25 +635,27 @@ async function complete(r: Request, b: any, t: string) {
     p_width: i.w,
     p_height: i.h,
     p_format_code: f.format,
-    p_display_name:
-      txt(b.displayName ?? b.display_name, 120) ||
-      txt(b.originalFileName ?? b.original_file_name, 120) ||
-      "배너 이미지",
+    p_title: title,
+    p_tags: tagResult.tags,
     p_original_file_name:
       txt(b.originalFileName ?? b.original_file_name, 255) || null,
     p_default_alt: txt(b.defaultAlt ?? b.default_alt, 300),
   });
-  if (a.ok !== true)
+  if (a.ok !== true) {
+    const duplicateTitle = txt(a.code, 80) === "BANNER_ASSET_TITLE_DUPLICATE";
+    if (duplicateTitle) await del(p);
     return out(
       r,
       {
         ok: false,
         code: txt(a.code, 80),
-        candidateRetainedForCleanup: true,
-        cleanupAfterHours: 24,
+        candidateDeleted: duplicateTitle,
+        candidateRetainedForCleanup: !duplicateTitle,
+        cleanupAfterHours: duplicateTitle ? null : 24,
       },
       stat(txt(a.code, 80)),
     );
+  }
   const { url } = ctx();
   return out(r, {
     ok: true,
@@ -629,7 +663,7 @@ async function complete(r: Request, b: any, t: string) {
     apiVersion: V,
     databaseContract: DB,
     uploadContract: UPLOAD,
-    contract: "banner-asset-upload-complete-api-v2",
+    contract: "banner-asset-upload-complete-api-v3",
     asset: a.asset,
     image: {
       bucket: B,
@@ -788,7 +822,7 @@ async function compositeComplete(r: Request, b: any, t: string) {
 }
 async function asset(r: Request, b: any, t: string, a: string) {
   if (a === "asset-list") {
-    const d = await rpc("kinojo_banner_asset_list_v384", {
+    const d = await rpc("kinojo_banner_asset_list_v403", {
       p_session_token: t,
       p_include_archived: b.includeArchived !== false,
     });
@@ -796,17 +830,31 @@ async function asset(r: Request, b: any, t: string, a: string) {
       ? out(r, { ...d, service: S, apiVersion: V, databaseContract: DB })
       : out(r, d, stat(txt(d.code, 80)));
   }
+  if (a === "asset-title-check") {
+    const title = assetTitle(b.title ?? b.displayName ?? b.display_name);
+    if (!title || title.length > 120)
+      return out(r, { ok: false, code: "BANNER_ASSET_TITLE_INVALID" }, 400);
+    const d = await rpc("kinojo_banner_asset_title_available_v403", {
+      p_session_token: t,
+      p_title: title,
+      p_exclude_asset_id: pos(b.excludeAssetId ?? b.exclude_asset_id),
+    });
+    return d.ok === true ? out(r, { ...d, service: S, apiVersion: V, databaseContract: DB }) : out(r, d, stat(txt(d.code, 80)));
+  }
   const id = pos(b.assetId ?? b.asset_id);
   if (id === null)
     return out(r, { ok: false, code: "BANNER_ASSET_ID_REQUIRED" }, 400);
   if (a === "asset-update") {
-    const n = txt(b.displayName ?? b.display_name, 120);
-    if (!n)
-      return out(r, { ok: false, code: "BANNER_DISPLAY_NAME_REQUIRED" }, 400);
-    const d = await rpc("kinojo_banner_asset_update_v384", {
+    const title = assetTitle(b.title ?? b.displayName ?? b.display_name);
+    if (!title || title.length > 120)
+      return out(r, { ok: false, code: "BANNER_ASSET_TITLE_INVALID" }, 400);
+    const tagResult = assetTags(b.tags);
+    if (!tagResult.ok) return out(r, tagResult, 400);
+    const d = await rpc("kinojo_banner_asset_update_v403", {
       p_session_token: t,
       p_asset_id: id,
-      p_display_name: n,
+      p_title: title,
+      p_tags: tagResult.tags,
       p_default_alt: txt(b.defaultAlt ?? b.default_alt, 300),
     });
     return d.ok === true ? out(r, d) : out(r, d, stat(txt(d.code, 80)));
@@ -1369,6 +1417,7 @@ Deno.serve(async (r) => {
         publicActions: ["manifest"],
         actions: [
           "asset-list",
+          "asset-title-check",
           "upload-prepare",
           "upload-complete",
           "asset-update",
@@ -1402,6 +1451,7 @@ Deno.serve(async (r) => {
     if (a === "manifest") return await manifest(r, b);
     const aa = [
         "asset-list",
+        "asset-title-check",
         "asset-update",
         "asset-archive",
         "asset-restore",
