@@ -80,8 +80,14 @@
   let memberImageReviewSearchTimer=0;
   let memberImageModalData=null;
   let selectedMemberImageCharacterId=0;
+  let memberImageProductionListRequestId=0;
+  let memberImageProductionDetailRequestId=0;
+  let memberImageProductionAssetRequestId=0;
+  let selectedMemberImageRequestId=0;
   const ADMIN_IMAGE_SLOTS=['FRONT','BACK','UPPER_BODY'];
   const ADMIN_IMAGE_SLOT_LABELS={FRONT:'정면',BACK:'후면',UPPER_BODY:'상반신'};
+  const ADMIN_IMAGE_REQUEST_STYLE_LABELS={SHONEN_MANGA:'소년만화',ROMANCE_MANGA:'순정만화',ANIMATION:'애니메이션',REALISTIC:'실사풍',CUSTOM:'직접 요청'};
+  const ADMIN_IMAGE_REQUEST_STATUS_LABELS={SUBMITTED:'접수',IN_PROGRESS:'제작 중',COMPLETED:'완료',REJECTED:'반려'};
 
   function memberImageSessionToken_(){
     const token=String(window.KinojoAuth?.getSession?.()?.token||'').trim();
@@ -133,7 +139,119 @@
       +'<div class="admin-card-head"><div><h2>'+name+'</h2><p>'+server+' · '+className+'</p></div><span class="admin-pill '+(isMain?'info':'')+'">'+(isMain?'본캐':'부캐')+'</span></div>'
       +'<div class="admin-list"><div class="admin-row" data-admin-image-slot="PROFILE"><div class="admin-row-main"><strong>프로필 이미지</strong><span>'+profileMeta+'</span></div><div class="admin-row-actions"><span class="admin-pill '+(hasOverride?'ok':'info')+'">'+(hasOverride?'사용자 이미지':'공식 이미지')+'</span>'+(hasOverride?'<button class="admin-btn" data-admin-image-preview type="button">미리보기</button>':'')+'</div></div></div>'
       +'<div class="admin-list" style="margin-top:8px">'+ADMIN_IMAGE_SLOTS.map(slot=>renderAdminReferenceSlot_(slot,bySlot[slot]||null)).join('')+'</div>'
+      +'<section class="admin-member-image-request-console" data-admin-image-request-console data-character-id="'+(Number.isInteger(id)&&id>0?id:'')+'" aria-live="polite"><div class="admin-empty">이미지 제작 요청을 불러오는 중입니다.</div></section>'
       +'</section>';
+  }
+
+  function adminImageRequestStatusClass_(status){
+    const value=String(status||'').toUpperCase();
+    if(value==='COMPLETED')return 'ok';
+    if(value==='REJECTED')return 'error';
+    if(value==='IN_PROGRESS')return 'info';
+    return 'pending';
+  }
+
+  function adminImageRequestStyleLabel_(styleCode){
+    const value=String(styleCode||'').toUpperCase();
+    return ADMIN_IMAGE_REQUEST_STYLE_LABELS[value]||'스타일 미지정';
+  }
+
+  function adminImageRequestStatusLabel_(status){
+    const value=String(status||'').toUpperCase();
+    return ADMIN_IMAGE_REQUEST_STATUS_LABELS[value]||value||'-';
+  }
+
+  function renderMemberImageRequestCards_(requests,selectedId=selectedMemberImageRequestId){
+    const list=Array.isArray(requests)?requests:[];
+    const cards=list.length?'<div class="admin-member-image-request-list" role="list" aria-label="이미지 제작 요청 목록">'+list.map(request=>{
+      const requestId=Number(request?.requestId||0);
+      const status=String(request?.status||'').toUpperCase();
+      const slots=(Array.isArray(request?.slots)?request.slots:[]).map(slot=>ADMIN_IMAGE_SLOT_LABELS[String(slot||'').toUpperCase()]||String(slot||'')).filter(Boolean);
+      const selected=requestId===Number(selectedId||0);
+      return '<div role="listitem"><button class="admin-member-image-request-card '+(selected?'is-selected':'')+'" data-admin-image-request-select="'+requestId+'" type="button" aria-pressed="'+(selected?'true':'false')+'">'
+        +'<span class="admin-member-image-request-card-main"><strong>요청 #'+requestId+'</strong><small>'+esc(adminImageRequestStyleLabel_(request?.styleCode))+' · '+esc(slots.join(' · ')||'첨부 없음')+'</small></span>'
+        +'<span class="admin-member-image-request-card-side"><em class="admin-pill '+adminImageRequestStatusClass_(status)+'">'+esc(adminImageRequestStatusLabel_(status))+'</em><time>'+esc(formatAdminImageTime_(request?.submittedAt||request?.createdAt))+'</time></span>'
+        +'</button></div>';
+    }).join('')+'</div>':'<div class="admin-empty">이 캐릭터의 이미지 제작 요청이 없습니다.</div>';
+    return '<div class="admin-member-image-request-head"><div><strong>이미지 제작 요청</strong><span>요청을 선택하면 첨부 이미지와 제작 지시를 확인할 수 있습니다.</span></div><em>'+list.length+'건</em></div>'+cards+'<div class="admin-member-image-request-detail" data-admin-image-request-detail-host></div>';
+  }
+
+  function renderMemberImageRequestDetail_(request){
+    const requestId=Number(request?.requestId||0);
+    const status=String(request?.status||'').toUpperCase();
+    const items=Array.isArray(request?.items)?request.items:[];
+    const history=Array.isArray(request?.history)?request.history:[];
+    const allowed=Array.isArray(request?.allowedNextStatuses)?request.allowedNextStatuses.map(value=>String(value||'').toUpperCase()):[];
+    const note=String(request?.requestNote||'').trim();
+    const itemHtml=items.length?items.map(item=>{
+      const slot=String(item?.slot||'').toUpperCase();
+      const available=item?.available===true;
+      return '<article class="admin-member-image-request-asset" data-admin-image-request-slot="'+esc(slot)+'"><div><strong>'+esc(ADMIN_IMAGE_SLOT_LABELS[slot]||slot)+'</strong><span>'+esc(item?.mimeType||'-')+' · '+esc(formatAdminImageBytes_(item?.sizeBytes))+'</span><small>'+(available?'이미지 보존 '+esc(formatAdminImageTime_(request?.imageExpiresAt))+'까지':'이미지 보존 기간 만료 또는 정리됨')+'</small></div><footer>'
+        +(available?'<button class="admin-btn" data-admin-image-request-preview type="button">미리보기</button><button class="admin-btn" data-admin-image-request-download type="button">다운로드</button>':'<span class="admin-pill error">열람 불가</span>')
+        +'</footer></article>';
+    }).join(''):'<div class="admin-empty">이 요청에 첨부된 이미지가 없습니다.</div>';
+    const historyHtml=history.length?'<ol class="admin-member-image-request-history">'+history.map(entry=>'<li><span class="admin-pill '+adminImageRequestStatusClass_(entry?.newStatus)+'">'+esc(adminImageRequestStatusLabel_(entry?.newStatus))+'</span><div><strong>'+esc(entry?.actorKind==='MASTER'?'관리자':'회원')+' 처리</strong><time>'+esc(formatAdminImageTime_(entry?.createdAt))+'</time></div></li>').join('')+'</ol>':'<div class="admin-empty">상태 변경 이력이 없습니다.</div>';
+    const actionHtml=allowed.length?'<footer class="admin-member-image-request-actions">'+allowed.map(next=>'<button class="admin-btn '+(next==='REJECTED'?'danger':'primary')+'" data-admin-image-request-status="'+esc(next)+'" type="button">'+esc(next==='IN_PROGRESS'?'제작 시작':next==='COMPLETED'?'완료 처리':'반려 처리')+'</button>').join('')+'</footer>':'';
+    return '<article class="admin-member-image-request-detail-card" data-admin-image-request-detail-view="'+requestId+'">'
+      +'<header><div><span>제작 요청 #'+requestId+'</span><h3>'+esc(adminImageRequestStyleLabel_(request?.styleCode))+'</h3></div><em class="admin-pill '+adminImageRequestStatusClass_(status)+'">'+esc(adminImageRequestStatusLabel_(status))+'</em></header>'
+      +'<dl class="admin-member-image-request-meta"><div><dt>요청 접수</dt><dd>'+esc(formatAdminImageTime_(request?.submittedAt))+'</dd></div><div><dt>첨부 이미지</dt><dd>'+items.length+'장 · 열람 가능 '+items.filter(item=>item?.available===true).length+'장</dd></div></dl>'
+      +'<section class="admin-member-image-request-note"><strong>제작 요청 내용</strong><p>'+esc(note||'별도 요청 내용 없음')+'</p></section>'
+      +'<section><h4>첨부 이미지</h4><div class="admin-member-image-request-assets">'+itemHtml+'</div></section>'
+      +'<section><h4>처리 이력</h4>'+historyHtml+'</section>'+actionHtml+'</article>';
+  }
+
+  function renderMemberImageRequestError_(message){
+    return '<div class="admin-callout error"><strong>제작 요청을 불러오지 못했습니다.</strong><span>'+esc(message||'알 수 없는 오류')+'</span></div>';
+  }
+
+  async function loadMemberImageRequests_(memberId,characterId,preserveRequestId=0){
+    const modal=$('#adminMemberImageModal');
+    const host=modal?.querySelector('[data-admin-image-request-console][data-character-id="'+Number(characterId)+'"]');
+    const token=memberImageSessionToken_();
+    const client=window.KinojoSupabaseClientCore;
+    const requestId=++memberImageProductionListRequestId;
+    memberImageProductionDetailRequestId+=1;
+    memberImageProductionAssetRequestId+=1;
+    selectedMemberImageRequestId=Number(preserveRequestId||0);
+    if(host)host.innerHTML='<div class="admin-empty">이미지 제작 요청을 불러오는 중입니다.</div>';
+    try{
+      if(!token)throw new Error('관리자 세션이 만료되었습니다. 다시 로그인해 주세요.');
+      if(!client||typeof client.invokeEdgeFunction!=='function')throw new Error('제작 요청 조회 모듈을 준비하지 못했습니다.');
+      const data=await client.invokeEdgeFunction('kinojo-member-profile',{action:'admin-image-request-list',sessionToken:token,memberId:Number(memberId),characterId:Number(characterId),requestStatus:'ALL',limit:100});
+      if(requestId!==memberImageProductionListRequestId||!modal?.classList.contains('active')||modal.dataset.memberId!==String(memberId)||Number(selectedMemberImageCharacterId)!==Number(characterId))return null;
+      if(!data||data.ok!==true)throw new Error(data?.message||data?.code||'ADMIN_IMAGE_REQUEST_LIST_FAILED');
+      if(Number(data.targetMemberId)!==Number(memberId)||Number(data.characterId)!==Number(characterId))throw new Error('ADMIN_IMAGE_REQUEST_LIST_BINDING_MISMATCH');
+      if(String(data.privacy||'')!=='NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS')throw new Error('ADMIN_IMAGE_REQUEST_LIST_PRIVACY_MISMATCH');
+      const requests=Array.isArray(data.requests)?data.requests:[];
+      if(!requests.some(request=>Number(request?.requestId||0)===selectedMemberImageRequestId))selectedMemberImageRequestId=0;
+      if(host)host.innerHTML=renderMemberImageRequestCards_(requests,selectedMemberImageRequestId);
+      if(selectedMemberImageRequestId)loadMemberImageRequestDetail_(memberId,characterId,selectedMemberImageRequestId).catch(error=>{const detail=host?.querySelector('[data-admin-image-request-detail-host]');if(detail)detail.innerHTML=renderMemberImageRequestError_(error?.message||error);});
+      return data;
+    }catch(error){
+      if(requestId===memberImageProductionListRequestId&&host)host.innerHTML=renderMemberImageRequestError_(error?.message||error);
+      return null;
+    }
+  }
+
+  async function loadMemberImageRequestDetail_(memberId,characterId,imageRequestId){
+    const modal=$('#adminMemberImageModal');
+    const host=modal?.querySelector('[data-admin-image-request-console][data-character-id="'+Number(characterId)+'"]');
+    const detail=host?.querySelector('[data-admin-image-request-detail-host]');
+    const token=memberImageSessionToken_();
+    const client=window.KinojoSupabaseClientCore;
+    const requestId=++memberImageProductionDetailRequestId;
+    selectedMemberImageRequestId=Number(imageRequestId||0);
+    host?.querySelectorAll('[data-admin-image-request-select]').forEach(button=>{const selected=Number(button.dataset.adminImageRequestSelect||0)===selectedMemberImageRequestId;button.classList.toggle('is-selected',selected);button.setAttribute('aria-pressed',selected?'true':'false');});
+    if(detail)detail.innerHTML='<div class="admin-empty">선택한 제작 요청을 불러오는 중입니다.</div>';
+    if(!token)throw new Error('관리자 세션이 만료되었습니다. 다시 로그인해 주세요.');
+    if(!client||typeof client.invokeEdgeFunction!=='function')throw new Error('제작 요청 상세 모듈을 준비하지 못했습니다.');
+    const data=await client.invokeEdgeFunction('kinojo-member-profile',{action:'admin-image-request-detail',sessionToken:token,memberId:Number(memberId),characterId:Number(characterId),requestId:Number(imageRequestId)});
+    if(requestId!==memberImageProductionDetailRequestId||selectedMemberImageRequestId!==Number(imageRequestId)||!modal?.classList.contains('active')||modal.dataset.memberId!==String(memberId)||Number(selectedMemberImageCharacterId)!==Number(characterId))return null;
+    if(!data||data.ok!==true)throw new Error(data?.message||data?.code||'ADMIN_IMAGE_REQUEST_DETAIL_FAILED');
+    if(Number(data.targetMemberId)!==Number(memberId)||Number(data.characterId)!==Number(characterId)||Number(data.requestId)!==Number(imageRequestId))throw new Error('ADMIN_IMAGE_REQUEST_DETAIL_BINDING_MISMATCH');
+    if(String(data.privacy||'')!=='NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS')throw new Error('ADMIN_IMAGE_REQUEST_DETAIL_PRIVACY_MISMATCH');
+    if(detail){detail.innerHTML=renderMemberImageRequestDetail_(data);detail.scrollIntoView({block:'nearest'});}
+    return data;
   }
 
   function defaultMemberImageCharacterId_(characters){
@@ -185,11 +303,14 @@
     });
     const detail=$('[data-admin-member-image-detail]',modal);
     if(detail)detail.innerHTML=renderAdminCharacterImageGroup_(selected);
+    const memberId=Number(modal.dataset.memberId||0);
+    if(Number.isInteger(memberId)&&memberId>0)loadMemberImageRequests_(memberId,id).catch(()=>{});
     return true;
   }
 
   function clearAdminImagePreview_(){
     memberImagePreviewRequestId+=1;
+    memberImageProductionAssetRequestId+=1;
     const host=$('#adminMemberImagePreview');
     if(!host)return;
     const img=host.querySelector('img');
@@ -225,9 +346,99 @@
     if(previewUrl.origin!==expected.origin||!previewUrl.pathname.startsWith('/storage/v1/object/sign/')||!previewUrl.searchParams.get('token')||previewUrl.searchParams.has('download'))throw new Error('ADMIN_MEMBER_IMAGE_PREVIEW_URL_INVALID');
     const ttl=Math.max(1,Math.min(60,Number(data.preview?.expiresInSeconds||0)));
     const label=slot==='PROFILE'?'프로필 이미지':(ADMIN_IMAGE_SLOT_LABELS[slot]||slot);
-    host.innerHTML='<div class="admin-card-head"><div><h2>'+esc(label)+' 미리보기</h2><p>최대 '+ttl+'초 동안만 유효한 관리자용 미리보기입니다. 다운로드 기능은 7-F에서 별도로 처리합니다.</p></div><button class="admin-btn" data-admin-image-preview-close type="button">미리보기 닫기</button></div><img src="'+esc(previewUrl.toString())+'" alt="'+esc(label)+' 미리보기" style="display:block;max-width:100%;max-height:60vh;object-fit:contain;margin:12px auto 0" referrerpolicy="no-referrer" />';
+    host.innerHTML='<div class="admin-card-head"><div><h2>'+esc(label)+' 미리보기</h2><p>최대 '+ttl+'초 동안만 유효한 관리자용 미리보기입니다. 필요한 파일은 각 이미지의 다운로드 버튼으로 받을 수 있습니다.</p></div><button class="admin-btn" data-admin-image-preview-close type="button">미리보기 닫기</button></div><img src="'+esc(previewUrl.toString())+'" alt="'+esc(label)+' 미리보기" style="display:block;max-width:100%;max-height:60vh;object-fit:contain;margin:12px auto 0" referrerpolicy="no-referrer" />';
     host.scrollIntoView({block:'nearest'});
     return data;
+  }
+
+  function adminImageRequestContext_(button){
+    const modal=$('#adminMemberImageModal');
+    const consoleRoot=button?.closest?.('[data-admin-image-request-console]');
+    const requestRoot=button?.closest?.('[data-admin-image-request-detail-view]');
+    const slotRoot=button?.closest?.('[data-admin-image-request-slot]');
+    const memberId=Number(modal?.dataset.memberId||0);
+    const characterId=Number(consoleRoot?.dataset.characterId||0);
+    const requestId=Number(requestRoot?.dataset.adminImageRequestDetailView||button?.dataset.adminImageRequestSelect||0);
+    const slot=String(slotRoot?.dataset.adminImageRequestSlot||'').toUpperCase();
+    if(!modal?.classList.contains('active')||!Number.isInteger(memberId)||memberId<=0||!Number.isInteger(characterId)||characterId<=0||!Number.isInteger(requestId)||requestId<=0)return null;
+    return {modal,consoleRoot,memberId,characterId,requestId,slot};
+  }
+
+  async function showAdminImageRequestPreview_(button){
+    if(!isMaster())return null;
+    const context=adminImageRequestContext_(button);
+    const host=$('#adminMemberImagePreview',context?.modal||document);
+    if(!context||!ADMIN_IMAGE_SLOTS.includes(context.slot)||!host)return null;
+    const token=memberImageSessionToken_();
+    const client=window.KinojoSupabaseClientCore;
+    if(!token||!client||typeof client.invokeEdgeFunction!=='function')throw new Error('제작 요청 이미지 미리보기 모듈을 준비하지 못했습니다.');
+    const assetRequestId=++memberImageProductionAssetRequestId;
+    host.hidden=false;
+    host.innerHTML='<div class="admin-empty">제작 요청 이미지의 안전한 미리보기 주소를 발급하는 중입니다.</div>';
+    const data=await client.invokeEdgeFunction('kinojo-member-profile',{action:'admin-image-request-preview',sessionToken:token,memberId:context.memberId,characterId:context.characterId,requestId:context.requestId,slot:context.slot});
+    if(assetRequestId!==memberImageProductionAssetRequestId||!context.modal.classList.contains('active')||context.modal.dataset.memberId!==String(context.memberId)||selectedMemberImageRequestId!==context.requestId)return null;
+    if(!data||data.ok!==true)throw new Error(data?.message||data?.code||'ADMIN_IMAGE_REQUEST_PREVIEW_FAILED');
+    if(Number(data.targetMemberId)!==context.memberId||Number(data.characterId)!==context.characterId||Number(data.requestId)!==context.requestId||String(data.slot||'')!==context.slot)throw new Error('ADMIN_IMAGE_REQUEST_PREVIEW_BINDING_MISMATCH');
+    if(String(data.privacy||'')!=='SIGNED_PREVIEW_URL_ONLY_NO_OBJECT_PATH'||String(data.purpose||'')!=='INLINE_PREVIEW_ONLY'||data.preview?.download!==false)throw new Error('ADMIN_IMAGE_REQUEST_PREVIEW_PRIVACY_MISMATCH');
+    const cfg=await client.ensureConfig();
+    const previewUrl=new URL(String(data.preview?.url||''));
+    const expected=new URL(String(cfg.url||''));
+    if(previewUrl.origin!==expected.origin||!previewUrl.pathname.startsWith('/storage/v1/object/sign/')||!previewUrl.searchParams.get('token')||previewUrl.searchParams.has('download'))throw new Error('ADMIN_IMAGE_REQUEST_PREVIEW_URL_INVALID');
+    const ttl=Math.max(1,Math.min(60,Number(data.preview?.expiresInSeconds||0)));
+    const label=ADMIN_IMAGE_SLOT_LABELS[context.slot]||context.slot;
+    host.innerHTML='<div class="admin-card-head"><div><h2>요청 #'+context.requestId+' · '+esc(label)+' 미리보기</h2><p>최대 '+ttl+'초 동안만 유효한 MASTER 전용 미리보기입니다.</p></div><button class="admin-btn" data-admin-image-preview-close type="button">미리보기 닫기</button></div><img src="'+esc(previewUrl.toString())+'" alt="요청 #'+context.requestId+' '+esc(label)+' 미리보기" referrerpolicy="no-referrer" />';
+    host.scrollIntoView({block:'nearest'});
+    return data;
+  }
+
+  async function downloadAdminImageRequest_(button){
+    if(!isMaster())return null;
+    const context=adminImageRequestContext_(button);
+    if(!context||!ADMIN_IMAGE_SLOTS.includes(context.slot))return null;
+    const token=memberImageSessionToken_();
+    const client=window.KinojoSupabaseClientCore;
+    if(!token||!client||typeof client.invokeEdgeFunction!=='function')throw new Error('제작 요청 이미지 다운로드 모듈을 준비하지 못했습니다.');
+    button.disabled=true;
+    try{
+      const data=await client.invokeEdgeFunction('kinojo-member-profile',{action:'admin-image-request-download',sessionToken:token,memberId:context.memberId,characterId:context.characterId,requestId:context.requestId,slot:context.slot});
+      if(!data||data.ok!==true)throw new Error(data?.message||data?.code||'ADMIN_IMAGE_REQUEST_DOWNLOAD_FAILED');
+      if(Number(data.targetMemberId)!==context.memberId||Number(data.characterId)!==context.characterId||Number(data.requestId)!==context.requestId||String(data.slot||'')!==context.slot)throw new Error('ADMIN_IMAGE_REQUEST_DOWNLOAD_BINDING_MISMATCH');
+      if(String(data.privacy||'')!=='SIGNED_DOWNLOAD_URL_ONLY_NO_OBJECT_PATH'||String(data.purpose||'')!=='EXPLICIT_DOWNLOAD_ONLY'||data.download?.attachment!==true)throw new Error('ADMIN_IMAGE_REQUEST_DOWNLOAD_PRIVACY_MISMATCH');
+      const cfg=await client.ensureConfig();
+      const url=new URL(String(data.download?.url||''));
+      const expected=new URL(String(cfg.url||''));
+      const filename=String(data.download?.filename||'').trim();
+      if(!/^[A-Za-z0-9._-]{1,180}$/.test(filename))throw new Error('ADMIN_IMAGE_REQUEST_DOWNLOAD_FILENAME_INVALID');
+      if(url.origin!==expected.origin||!url.pathname.startsWith('/storage/v1/object/sign/')||!url.searchParams.get('token')||url.searchParams.get('download')!==filename)throw new Error('ADMIN_IMAGE_REQUEST_DOWNLOAD_URL_INVALID');
+      const link=document.createElement('a');
+      link.href=url.toString();link.download=filename;link.rel='noopener';link.hidden=true;
+      document.body.appendChild(link);link.click();link.remove();
+      toast('요청 #'+context.requestId+' '+(ADMIN_IMAGE_SLOT_LABELS[context.slot]||context.slot)+' 이미지 다운로드를 시작했습니다.');
+      return data;
+    }finally{button.disabled=false;}
+  }
+
+  async function updateMemberImageRequestStatus_(button){
+    if(!isMaster())return null;
+    const context=adminImageRequestContext_(button);
+    const nextStatus=String(button?.dataset.adminImageRequestStatus||'').toUpperCase();
+    if(!context||!['IN_PROGRESS','COMPLETED','REJECTED'].includes(nextStatus))return null;
+    const nextLabel=adminImageRequestStatusLabel_(nextStatus);
+    if(!confirm('요청 #'+context.requestId+'을(를) '+nextLabel+' 상태로 변경할까요?'))return null;
+    const token=memberImageSessionToken_();
+    const client=window.KinojoSupabaseClientCore;
+    if(!token||!client||typeof client.invokeEdgeFunction!=='function')throw new Error('제작 요청 상태 처리 모듈을 준비하지 못했습니다.');
+    button.disabled=true;
+    try{
+      const data=await client.invokeEdgeFunction('kinojo-member-profile',{action:'admin-image-request-status',sessionToken:token,memberId:context.memberId,characterId:context.characterId,requestId:context.requestId,nextStatus});
+      if(!data||data.ok!==true)throw new Error(data?.message||data?.code||'ADMIN_IMAGE_REQUEST_STATUS_FAILED');
+      if(Number(data.targetMemberId)!==context.memberId||Number(data.characterId)!==context.characterId||Number(data.requestId)!==context.requestId||String(data.status||'')!==nextStatus)throw new Error('ADMIN_IMAGE_REQUEST_STATUS_BINDING_MISMATCH');
+      toast('요청 #'+context.requestId+'을(를) '+nextLabel+' 상태로 변경했습니다.');
+      addLog('MEMBER_IMAGE_REQUEST','요청 #'+context.requestId+' · '+nextLabel);
+      await loadMemberImageRequests_(context.memberId,context.characterId,context.requestId);
+      await refreshDashboard();
+      return data;
+    }finally{button.disabled=false;}
   }
 
   async function loadMemberImageGroups_(memberId,requestId){
@@ -245,6 +456,7 @@
     memberImageModalData=data;
     selectedMemberImageCharacterId=defaultMemberImageCharacterId_(data.characters);
     if(body)body.innerHTML=renderMemberImageGroups_(data,selectedMemberImageCharacterId);
+    if(selectedMemberImageCharacterId)loadMemberImageRequests_(memberId,selectedMemberImageCharacterId).catch(()=>{});
     return data;
   }
 
@@ -253,7 +465,7 @@
     if(modal)return modal;
     document.body.insertAdjacentHTML('beforeend','<div class="admin-event-preview-modal" id="adminMemberImageModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="adminMemberImageModalTitle"><div class="admin-event-preview-backdrop" data-member-image-modal-close></div><section class="admin-event-preview-panel"><header class="admin-event-preview-head"><div><h2 id="adminMemberImageModalTitle">캐릭터 이미지 보기</h2><p id="adminMemberImageModalMember">회원 선택 대기</p></div><button class="admin-icon-btn" data-member-image-modal-close type="button" aria-label="캐릭터 이미지 모달 닫기">×</button></header><div class="admin-event-preview-body" id="adminMemberImageModalBody"><div class="admin-empty">회원의 캐릭터 이미지 목록을 불러올 준비가 되었습니다.</div></div><footer class="admin-event-preview-actions"><button class="admin-btn" data-member-image-modal-close type="button">닫기</button></footer></section></div>');
     modal=$('#adminMemberImageModal');
-    modal?.addEventListener('click',event=>{const close=event.target.closest('[data-member-image-modal-close]');if(close){closeMemberImageModal();return;}const selector=event.target.closest('[data-admin-image-character-select]');if(selector){selectMemberImageCharacter_(selector.dataset.adminImageCharacterSelect);return;}const previewClose=event.target.closest('[data-admin-image-preview-close]');if(previewClose){clearAdminImagePreview_();return;}const preview=event.target.closest('[data-admin-image-preview]');if(preview)showAdminImagePreview_(preview).catch(error=>{const host=$('#adminMemberImagePreview',modal);if(host){host.hidden=false;host.innerHTML='<div class="admin-callout error"><strong>미리보기를 열지 못했습니다.</strong><span>'+esc(error?.message||error)+'</span></div>';}});});
+    modal?.addEventListener('click',event=>{const close=event.target.closest('[data-member-image-modal-close]');if(close){closeMemberImageModal();return;}const selector=event.target.closest('[data-admin-image-character-select]');if(selector){selectMemberImageCharacter_(selector.dataset.adminImageCharacterSelect);return;}const requestSelector=event.target.closest('[data-admin-image-request-select]');if(requestSelector){const context=adminImageRequestContext_(requestSelector);if(context)loadMemberImageRequestDetail_(context.memberId,context.characterId,context.requestId).catch(error=>{const detail=context.consoleRoot?.querySelector('[data-admin-image-request-detail-host]');if(detail)detail.innerHTML=renderMemberImageRequestError_(error?.message||error);});return;}const previewClose=event.target.closest('[data-admin-image-preview-close]');if(previewClose){clearAdminImagePreview_();return;}const requestPreview=event.target.closest('[data-admin-image-request-preview]');if(requestPreview){showAdminImageRequestPreview_(requestPreview).catch(error=>{const host=$('#adminMemberImagePreview',modal);if(host){host.hidden=false;host.innerHTML='<div class="admin-callout error"><strong>미리보기를 열지 못했습니다.</strong><span>'+esc(error?.message||error)+'</span></div>';}});return;}const requestDownload=event.target.closest('[data-admin-image-request-download]');if(requestDownload){downloadAdminImageRequest_(requestDownload).catch(error=>toast(error?.message||String(error)));return;}const requestStatus=event.target.closest('[data-admin-image-request-status]');if(requestStatus){updateMemberImageRequestStatus_(requestStatus).catch(error=>toast(error?.message||String(error)));return;}const preview=event.target.closest('[data-admin-image-preview]');if(preview)showAdminImagePreview_(preview).catch(error=>{const host=$('#adminMemberImagePreview',modal);if(host){host.hidden=false;host.innerHTML='<div class="admin-callout error"><strong>미리보기를 열지 못했습니다.</strong><span>'+esc(error?.message||error)+'</span></div>';}});});
     document.addEventListener('keydown',event=>{if(event.key==='Escape'&&modal?.classList.contains('active'))closeMemberImageModal();});
     return modal;
   }
@@ -261,8 +473,12 @@
   function closeMemberImageModal(){
     clearAdminImagePreview_();
     memberImageModalRequestId+=1;
+    memberImageProductionListRequestId+=1;
+    memberImageProductionDetailRequestId+=1;
+    memberImageProductionAssetRequestId+=1;
     memberImageModalData=null;
     selectedMemberImageCharacterId=0;
+    selectedMemberImageRequestId=0;
     document.body.classList.remove('admin-member-image-modal-open');
     const modal=$('#adminMemberImageModal');
     if(!modal)return;
@@ -285,6 +501,7 @@
     const requestId=++memberImageModalRequestId;
     memberImageModalData=null;
     selectedMemberImageCharacterId=0;
+    selectedMemberImageRequestId=0;
     modal.dataset.memberId=memberId;
     modal._kinojoTrigger=target;
     const label=$('#adminMemberImageModalMember',modal);
@@ -303,13 +520,15 @@
 
   function updateMemberImageReviewBadges_(value){
     const count=Math.max(0,Number(value||0));
-    state.memberImageReviewPendingCount=count;
-    document.querySelectorAll('#adminMemberImageBadge,[data-admin-subtab="character-images"] .badge').forEach(badge=>{badge.textContent=String(count);});
+    const requestCount=Math.max(0,Number(state.memberImageRequestPendingCount||0));
+    if(requestCount===0)state.memberImageReviewPendingCount=count;
+    const total=Math.max(0,Number(state.memberImageReviewPendingCount||0))+requestCount;
+    document.querySelectorAll('#adminMemberImageBadge,[data-admin-subtab="character-images"] .badge').forEach(badge=>{badge.textContent=String(total);});
   }
 
   function renderMemberImageReviewSummary_(pendingCount,totalCount){
     const root=$('#memberImageReviewSummary');if(!root)return;
-    root.innerHTML='<span>미확인 <strong>'+Math.max(0,Number(pendingCount||0))+'</strong>명</span><span>현재 이미지 업로더 <strong>'+Math.max(0,Number(totalCount||0))+'</strong>명</span>';
+    root.innerHTML='<span>미확인 <strong>'+Math.max(0,Number(pendingCount||0))+'</strong>명</span><span>진행 중 제작 요청 <strong>'+Math.max(0,Number(state.memberImageRequestPendingCount||0))+'</strong>건</span><span>현재 이미지 업로더 <strong>'+Math.max(0,Number(totalCount||0))+'</strong>명</span>';
   }
 
   function memberImageKindLabel_(latest){
@@ -535,5 +754,5 @@
     }
   }
 
-  Object.assign(A,{renderRequestPreview,requestRowHtml,loadCodeRequests,processRequest,loadAccounts,MEMBER_ROLE_LABELS,normalizeMemberRole,getAccountId,getAccountCode,getAccountName,getAccountRole,getAccountRoleLabel,getAccountCanEdit,getAccountAllowedRoles,memberImageSessionToken_,renderMemberImageGroups_,selectMemberImageCharacter_,loadMemberImageGroups_,clearAdminImagePreview_,showAdminImagePreview_,ensureMemberImageModal,openMemberImageModal,closeMemberImageModal,updateMemberImageReviewBadges_,renderMemberImageReviewRows_,loadMemberImageReviews,scheduleMemberImageReviewSearch_,acknowledgeMemberImageReview_,handleMemberImageReviewClick_,applyMemberFilters,renderAccounts,handleMemberAction,SANCTUARY_ROLE_LABELS,renderSanctuaryRolePermissions,loadSanctuaryRolePermissions,setSanctuaryRolePermission});
+  Object.assign(A,{renderRequestPreview,requestRowHtml,loadCodeRequests,processRequest,loadAccounts,MEMBER_ROLE_LABELS,normalizeMemberRole,getAccountId,getAccountCode,getAccountName,getAccountRole,getAccountRoleLabel,getAccountCanEdit,getAccountAllowedRoles,memberImageSessionToken_,renderMemberImageGroups_,selectMemberImageCharacter_,loadMemberImageGroups_,clearAdminImagePreview_,showAdminImagePreview_,adminImageRequestStyleLabel_,adminImageRequestStatusLabel_,renderMemberImageRequestCards_,renderMemberImageRequestDetail_,loadMemberImageRequests_,loadMemberImageRequestDetail_,showAdminImageRequestPreview_,downloadAdminImageRequest_,updateMemberImageRequestStatus_,ensureMemberImageModal,openMemberImageModal,closeMemberImageModal,updateMemberImageReviewBadges_,renderMemberImageReviewSummary_,renderMemberImageReviewRows_,loadMemberImageReviews,scheduleMemberImageReviewSearch_,acknowledgeMemberImageReview_,handleMemberImageReviewClick_,applyMemberFilters,renderAccounts,handleMemberAction,SANCTUARY_ROLE_LABELS,renderSanctuaryRolePermissions,loadSanctuaryRolePermissions,setSanctuaryRolePermission});
 })(window.KinojoAdmin);

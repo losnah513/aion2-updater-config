@@ -19,27 +19,31 @@ for (const removed of [
 ]) {
   assert.equal(authUi.includes(removed), false, `legacy central admin notice path must be removed: ${removed}`);
 }
-assert.ok(authUi.includes('kinojo-admin-notifications.js?cache=2026082401'), 'auth UI must load the latest shared admin notification bridge');
+assert.ok(authUi.includes('kinojo-admin-notifications.js?cache=2026082601'), 'auth UI must load the latest shared admin notification bridge');
 
 for (const expected of [
-  "const SEEN_KEY='kinojo_admin_notification_seen_v392'",
+  "const SEEN_KEY='kinojo_admin_notification_seen_v405'",
   "const LEGACY_SUPPORT_SEEN_KEY='kinojo_support_notice_seen_v316'",
   'latestCodeRequest',
   'latestSupportRequest',
   'latestReferenceUpload',
   'latestCharacterImageUpload',
+  'latestImageRequest',
   'memberImagePendingCount',
   'hasUnifiedImageQueue',
   "title:'코드 요청'",
   "title:'포스 지원'",
   "title:'캐릭터 이미지 업로드'",
+  "title:'참고 이미지 제작 요청'",
   "message:'['+name+']님이 캐릭터 이미지를 업로드하였습니다.'",
   "eventKey:'CODE_REQUEST:'",
   "eventKey:'FORCE_REQUEST:'",
   "eventKey:'CHARACTER_IMAGE:'",
+  "eventKey:'IMAGE_REQUEST:'",
   "tone:'code'",
   "tone:'support'",
   "tone:'reference'",
+  "tone:'request'",
   'aspect-ratio:2/1',
   'grid-template-rows:1fr 2fr',
   'background:#fff',
@@ -56,6 +60,7 @@ for (const colorContract of [
   '.tone-code .kinojo-admin-notification-head{background:linear-gradient(135deg,#38bdf8 0%,#3b82f6 100%)}',
   '.tone-support .kinojo-admin-notification-head{background:linear-gradient(135deg,#fb7185 0%,#ef4444 100%)}',
   '.tone-reference .kinojo-admin-notification-head{background:linear-gradient(135deg,#34d399 0%,#10b981 100%)}',
+  '.tone-request .kinojo-admin-notification-head{background:linear-gradient(135deg,#a78bfa 0%,#7c3aed 100%)}',
 ]) {
   assert.ok(bridge.includes(colorContract), `notification type header color contract missing: ${colorContract}`);
 }

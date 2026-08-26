@@ -21,12 +21,12 @@ for (const html of [desktop, mobile]) {
     'id="memberImageReviewStatus"',
     'id="memberImageReviewSummary"',
     'id="memberImageReviewList"',
-    '캐릭터 이미지 확인',
+    '캐릭터 이미지·제작 요청 확인',
     '미확인만',
   ]) assert.ok(html.includes(token), `member image review HTML contract missing: ${token}`);
   assert.ok(html.includes('data-admin-master-only'), 'member image review must remain MASTER-only');
-  assert.ok(html.includes('admin.css?cache=2026082401'), 'member image review CSS cache must be current');
-  assert.ok(html.includes('admin.js?cache=2026082604'), 'admin module cache must be current');
+  assert.ok(html.includes('admin.css?cache=2026082605'), 'member image review CSS cache must be current');
+  assert.ok(html.includes('admin.js?cache=2026082605'), 'admin module cache must be current');
 }
 
 for (const token of [
@@ -45,6 +45,7 @@ for (const token of [
 for (const token of [
   "subtab==='character-images'&&isMaster()",
   'memberImagePendingCount',
+  'memberImageRequestPendingCount',
   'refreshNotificationBadges()',
   'memberImageReviewReloadBtn',
   'memberImageReviewStatus',

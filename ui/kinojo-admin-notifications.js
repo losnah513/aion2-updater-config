@@ -1,10 +1,10 @@
-/* KINOJO administrator request notification bridge v20260824.01 */
+/* KINOJO administrator request notification bridge v20260826.01 */
 (function(){
   'use strict';
   if(window.__KINOJO_ADMIN_NOTIFICATION_BRIDGE__) return;
   window.__KINOJO_ADMIN_NOTIFICATION_BRIDGE__=true;
 
-  const SEEN_KEY='kinojo_admin_notification_seen_v392';
+  const SEEN_KEY='kinojo_admin_notification_seen_v405';
   const LEGACY_SUPPORT_SEEN_KEY='kinojo_support_notice_seen_v316';
   const queue=[];
   const queuedKeys=new Set();
@@ -45,6 +45,7 @@
       +'.kinojo-admin-notification-card.tone-code,.kinojo-admin-notification-link-hint.tone-code{--kinojo-admin-notification-accent:#3b82f6;--kinojo-admin-notification-accent-soft:rgba(59,130,246,.23);--kinojo-admin-notification-focus:rgba(56,189,248,.38)}'
       +'.kinojo-admin-notification-card.tone-support,.kinojo-admin-notification-link-hint.tone-support{--kinojo-admin-notification-accent:#ef4444;--kinojo-admin-notification-accent-soft:rgba(239,68,68,.22);--kinojo-admin-notification-focus:rgba(251,113,133,.36)}'
       +'.kinojo-admin-notification-card.tone-reference,.kinojo-admin-notification-link-hint.tone-reference{--kinojo-admin-notification-accent:#10b981;--kinojo-admin-notification-accent-soft:rgba(16,185,129,.22);--kinojo-admin-notification-focus:rgba(52,211,153,.36)}'
+      +'.kinojo-admin-notification-card.tone-request,.kinojo-admin-notification-link-hint.tone-request{--kinojo-admin-notification-accent:#8b5cf6;--kinojo-admin-notification-accent-soft:rgba(139,92,246,.22);--kinojo-admin-notification-focus:rgba(167,139,250,.38)}'
       +'.kinojo-admin-notification-card{position:relative;box-sizing:border-box;width:min(460px,calc(100vw - 28px));aspect-ratio:2/1;display:grid;grid-template-rows:1fr 2fr;overflow:hidden;border:1px solid #dbe4ef;border-radius:14px;background:#fff;color:#172033;text-align:left;box-shadow:0 18px 50px rgba(15,23,42,.2);opacity:0;transform:translateY(36px);transition:opacity .24s ease,transform .24s ease,border-color .18s ease,box-shadow .18s ease,filter .12s ease;pointer-events:auto;cursor:pointer;outline:none}'
       +'.kinojo-admin-notification-card.show{opacity:1;transform:translateY(0)}'
       +'.kinojo-admin-notification-card:focus-visible{border-color:var(--kinojo-admin-notification-accent);box-shadow:0 0 0 3px var(--kinojo-admin-notification-focus),0 18px 50px rgba(15,23,42,.22)}'
@@ -57,6 +58,7 @@
       +'.kinojo-admin-notification-card.tone-code .kinojo-admin-notification-head{background:linear-gradient(135deg,#38bdf8 0%,#3b82f6 100%)}'
       +'.kinojo-admin-notification-card.tone-support .kinojo-admin-notification-head{background:linear-gradient(135deg,#fb7185 0%,#ef4444 100%)}'
       +'.kinojo-admin-notification-card.tone-reference .kinojo-admin-notification-head{background:linear-gradient(135deg,#34d399 0%,#10b981 100%)}'
+      +'.kinojo-admin-notification-card.tone-request .kinojo-admin-notification-head{background:linear-gradient(135deg,#a78bfa 0%,#7c3aed 100%)}'
       +'.kinojo-admin-notification-title{margin:0;color:#fff;font-size:20px;line-height:1.2;font-weight:1000;letter-spacing:-.02em}'
       +'.kinojo-admin-notification-close{position:absolute;top:14px;right:14px;width:32px;height:32px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.46);border-radius:999px;background:rgba(15,23,42,.14);color:#fff;font:900 20px/1 system-ui,sans-serif;cursor:pointer}'
       +'.kinojo-admin-notification-close:hover,.kinojo-admin-notification-close:focus-visible{background:rgba(15,23,42,.24);outline:2px solid rgba(255,255,255,.72);outline-offset:1px}'
@@ -93,6 +95,15 @@
       });
     }
     const hasUnifiedImageQueue=Object.prototype.hasOwnProperty.call(summary||{},'memberImagePendingCount');
+    const imageRequest=summary?.latestImageRequest;
+    if(imageRequest?.requestId&&imageRequest?.createdAt){
+      const name=String(imageRequest.characterName||imageRequest.memberMainCharacterName||'캐릭터').trim()||'캐릭터';
+      rows.push({
+        eventKey:'IMAGE_REQUEST:'+String(imageRequest.requestId),tone:'request',title:'참고 이미지 제작 요청',characterName:name,
+        message:'['+name+']님이 참고 이미지 제작을 요청하였습니다.',moreCount:Math.max(0,Number(summary?.memberImageRequestPendingCount||0)-1),
+        href:adminHref('#members/character-images'),createdAt:String(imageRequest.createdAt||'')
+      });
+    }
     const reference=hasUnifiedImageQueue?summary?.latestCharacterImageUpload:summary?.latestReferenceUpload;
     if(reference?.characterId&&reference?.uploadedAt){
       const name=String(reference.characterName||reference.memberMainCharacterName||'캐릭터').trim()||'캐릭터';

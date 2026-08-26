@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Admin member image review browser contract</title>
-  <link href="../admin/css/admin.css?cache=2026082401" rel="stylesheet" />
+  <link href="../admin/css/admin.css?cache=2026082605" rel="stylesheet" />
 </head>
 <body>
   <header class="admin-shellbar">
@@ -15,9 +15,9 @@
   <main class="kinojo-admin-console"><section class="admin-main">
     <nav class="admin-mobile-launcher"></nav>
     <section class="admin-pane active" data-admin-pane="members">
-      <nav class="admin-subnav" data-admin-subnav="members"><button data-admin-subtab="accounts" type="button">회원 목록</button><button class="active" data-admin-subtab="character-images" data-admin-master-only type="button">캐릭터 이미지 확인 <span class="badge" id="adminMemberImageSubBadge">0</span></button></nav>
+      <nav class="admin-subnav" data-admin-subnav="members"><button data-admin-subtab="accounts" type="button">회원 목록</button><button class="active" data-admin-subtab="character-images" data-admin-master-only type="button">이미지·제작 요청 <span class="badge" id="adminMemberImageSubBadge">0</span></button></nav>
       <div class="admin-subpane" data-admin-subpane="accounts"></div>
-      <div class="admin-subpane active" data-admin-subpane="character-images" data-admin-master-only><section class="admin-card admin-member-image-review-card"><div class="admin-card-head"><div><h2>캐릭터 이미지 확인</h2><p>회원이 등록한 프로필·참고 이미지를 업로더별로 확인합니다. 새 이미지가 올라오면 미확인 숫자가 자동으로 늘어납니다.</p></div><button class="admin-btn" id="memberImageReviewReloadBtn" type="button">새로고침</button></div><div class="admin-form-row admin-member-image-review-tools"><input class="admin-input grow" id="memberImageReviewSearch" placeholder="업로더 또는 캐릭터명 검색"/><select class="admin-select" id="memberImageReviewStatus"><option value="PENDING">미확인만</option><option value="ALL">전체</option><option value="REVIEWED">확인 완료</option></select></div><div class="admin-member-image-review-summary" id="memberImageReviewSummary"><span>미확인 <strong>0</strong>명</span><span>현재 이미지 업로더 <strong>0</strong>명</span></div><div id="memberImageReviewStatusLine" class="admin-statusline"></div><div class="admin-member-image-review-list" id="memberImageReviewList"><div class="admin-empty">불러오는 중</div></div></section></div>
+      <div class="admin-subpane active" data-admin-subpane="character-images" data-admin-master-only><section class="admin-card admin-member-image-review-card"><div class="admin-card-head"><div><h2>캐릭터 이미지·제작 요청 확인</h2><p>회원별 현재 이미지와 캐릭터별 제작 요청을 함께 확인합니다.</p></div><button class="admin-btn" id="memberImageReviewReloadBtn" type="button">새로고침</button></div><div class="admin-form-row admin-member-image-review-tools"><input class="admin-input grow" id="memberImageReviewSearch" placeholder="업로더 또는 캐릭터명 검색"/><select class="admin-select" id="memberImageReviewStatus"><option value="PENDING">미확인만</option><option value="ALL">전체</option><option value="REVIEWED">확인 완료</option></select></div><div class="admin-member-image-review-summary" id="memberImageReviewSummary"><span>미확인 <strong>0</strong>명</span><span>현재 이미지 업로더 <strong>0</strong>명</span></div><div id="memberImageReviewStatusLine" class="admin-statusline"></div><div class="admin-member-image-review-list" id="memberImageReviewList"><div class="admin-empty">불러오는 중</div></div></section></div>
     </section>
   </section></main>
   <script>
@@ -26,7 +26,8 @@
     window.__reviewedMembers=[];
     window.KinojoAuth={getSession:()=>({role:'MASTER',roleLabel:'Master',level:5,token:'kws_'+('a'.repeat(40))}),clearSession(){}};
     window.KinojoToast={show(){}};
-    window.KinojoApi={async getAction(name){if(name==='notificationSummary')return{ok:true,codeRequestCount:0,supportRequestCount:0,memberImagePendingCount:window.__reviewPending};return{ok:true};}};
+    window.__requestStatus='SUBMITTED';
+    window.KinojoApi={async getAction(name){if(name==='notificationSummary')return{ok:true,codeRequestCount:0,supportRequestCount:0,memberImagePendingCount:0,memberImageRequestPendingCount:2};return{ok:true};}};
     window.KinojoSupabase={adminAccount:async()=>({ok:true,accounts:[]})};
     const mockItems=[
       {memberId:9,mainCharacterName:'푸석사과',role:'SUB_MASTER',roleLabel:'Sub Master',level:4,isActive:true,imageCount:3,profileImageCount:0,referenceImageCount:3,characterCount:1,characterNames:['푸석사과'],latestUploadedAt:'2026-08-22T05:47:50.758Z',latestImage:{kind:'REFERENCE',characterId:127,characterName:'푸석사과',slot:'UPPER_BODY',uploadedAt:'2026-08-22T05:47:50.758Z'},pending:true},
@@ -40,13 +41,16 @@
         }
         if(payload.action==='admin-image-review-ack'){if(!window.__reviewedMembers.includes(payload.memberId))window.__reviewedMembers.push(payload.memberId);window.__reviewPending=Math.max(0,2-window.__reviewedMembers.length);return{ok:true,memberId:payload.memberId,pending:false};}
         if(payload.action==='admin-image-list')return{ok:true,privacy:'NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS',targetMember:{id:payload.memberId},ownerResolved:true,profileOverrideCount:0,referenceCount:3,characters:[{characterId:127,characterName:'푸석사과',serverName:'시엘',className:'궁성',isMain:true,profile:{hasOverride:false},references:[{slot:'FRONT',mimeType:'image/webp',sizeBytes:120000,uploadedAt:'2026-08-22T05:47:45Z',expiresAt:'2026-08-29T05:47:45Z',active:true}]}]};
+        if(payload.action==='admin-image-request-list')return{ok:true,privacy:'NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS',targetMemberId:payload.memberId,characterId:payload.characterId,requests:[{requestId:501,styleCode:'ANIMATION',requestNote:'푸른 조명과 밝은 표정',status:window.__requestStatus,submittedAt:'2026-08-26T02:10:00Z',imageExpiresAt:'2026-09-02T02:10:00Z',slots:['FRONT','BACK'],itemCount:2,availableImageCount:2,imageAvailable:true},{requestId:498,styleCode:null,requestNote:'',status:'COMPLETED',submittedAt:'2026-08-25T02:10:00Z',imageExpiresAt:'2026-09-01T02:10:00Z',slots:['UPPER_BODY'],itemCount:1,availableImageCount:1,imageAvailable:true}]};
+        if(payload.action==='admin-image-request-detail'){const active=payload.requestId===501;return{ok:true,privacy:'NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS',targetMemberId:payload.memberId,characterId:payload.characterId,requestId:payload.requestId,styleCode:active?'ANIMATION':null,requestNote:active?'푸른 조명과 밝은 표정':'',status:active?window.__requestStatus:'COMPLETED',submittedAt:'2026-08-26T02:10:00Z',imageExpiresAt:'2026-09-02T02:10:00Z',allowedNextStatuses:active&&window.__requestStatus==='SUBMITTED'?['IN_PROGRESS','REJECTED']:active&&window.__requestStatus==='IN_PROGRESS'?['COMPLETED','REJECTED']:[],items:active?[{slot:'FRONT',mimeType:'image/webp',sizeBytes:123456,available:true},{slot:'BACK',mimeType:'image/webp',sizeBytes:142222,available:true}]:[{slot:'UPPER_BODY',mimeType:'image/webp',sizeBytes:119000,available:true}],history:[{previousStatus:'DRAFT',newStatus:'SUBMITTED',actorKind:'MEMBER',createdAt:'2026-08-26T02:10:00Z'}]};}
+        if(payload.action==='admin-image-request-status'){window.__requestStatus=payload.nextStatus;return{ok:true,targetMemberId:payload.memberId,characterId:payload.characterId,requestId:payload.requestId,status:payload.nextStatus,allowedNextStatuses:payload.nextStatus==='IN_PROGRESS'?['COMPLETED','REJECTED']:[]};}
         return{ok:false,code:'UNEXPECTED_ACTION'};
       },
       async ensureConfig(){return{url:'https://example.supabase.co'};}
     };
   </script>
-  <script src="../admin/js/admin-shared.js?cache=2026082411"></script>
-  <script src="../admin/js/admin-members.js?cache=2026082411"></script>
-  <script src="../admin/js/admin-bootstrap.js?cache=2026082411"></script>
+  <script src="../admin/js/admin-shared.js?cache=2026082605"></script>
+  <script src="../admin/js/admin-members.js?cache=2026082605"></script>
+  <script src="../admin/js/admin-bootstrap.js?cache=2026082605"></script>
 </body>
 </html>
