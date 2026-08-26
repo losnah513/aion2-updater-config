@@ -40,6 +40,18 @@
 - 참고 이미지는 최대 7일 보존하며 cleanup cron은 `*/15 * * * *`로 활성화되어 있다.
 - 관리자 이미지 SQL 367/371은 `service_role` 전용이다.
 
+## 마이페이지 모달 2차 · 1단계 Server/Storage 계약
+
+- 2026-08-26 기준 1단계는 기존 `kinojo-member-profile` 책임을 재사용하는 `REUSE_WITH_DB_MODULE`로 확정했다. 별도 회원 이미지 Edge를 만들지 않고 요청의 원자성은 DB404 RPC가 담당한다.
+- 기존 API 2.7 / DB375 bootstrap·프로필·참고 이미지 action은 유지하며 신규 `image-request-prepare`, `image-request-finalize`, `image-request-state`만 image request contract `404`로 추가한다.
+- 요청은 회원 세션에서 확정한 캐릭터에 이미지 `1~3`장과 `SHONEN_MANGA / ROMANCE_MANGA / ANIMATION / REALISTIC / CUSTOM / null`, plain-text 요청문 최대 300자를 묶는다. `CUSTOM`은 요청문이 필수다.
+- prepare는 회원+idempotency key로 `DRAFT`와 서버 생성 object path를 한 번만 만들고 브라우저에는 path 필드 없이 private Storage signed upload URL만 반환한다. 업로드 URL은 2시간, draft object는 2시간 뒤 cleanup 대상이다.
+- finalize는 소유권을 다시 검증하고 모든 요청 object의 MIME·size·실제 WebP 픽셀을 확인한 뒤 DB 트랜잭션 하나로 `SUBMITTED`와 활성 참고 이미지를 갱신한다. 일부 실패·동시 교체 충돌에서는 기존 활성 이미지와 `DRAFT`를 보존한다.
+- 이미지 bytes는 요청 생성 시각부터 최대 7일, 스타일·요청문·상태·감사 metadata는 최대 30일 보존한다. 기존 요청 이미지가 새 요청으로 교체돼도 남은 7일 동안 보존하고, legacy 교체 object는 cleanup queue로 넘긴다.
+- private 요청/항목/상태 이력/cleanup queue 4개 표는 RLS default-deny이며 Browser role의 표·RPC 직접 권한은 없다. DB404 RPC 7개는 `service_role`만 실행한다.
+- cleanup Edge는 v1.3 / DB404로 확장해 abandoned DRAFT, 7일 만료 요청 이미지, legacy active reference, 교체 queue를 Storage 먼저 삭제한 뒤 metadata를 확정하고, object 삭제가 끝난 30일 metadata만 제거한다.
+- 완성 결과 이미지 업로드·회원 전달·프로필 자동 적용과 관리자 요청 목록·상태 처리 UI는 1단계 범위가 아니다. 관리자 요청 처리는 3단계에서 기존 MASTER signed preview/download 경계 위에 연결한다.
+
 
 ## 2026-08-24 참고 가이드 PNG 최종 에셋
 
