@@ -21,6 +21,7 @@ on:
       - "tests/banner-admin-quality-contract.test.js"
       - "tests/banner-event-stage2-ui-contract.test.js"
       - "tests/banner-event-stage3-ui-contract.test.js"
+      - "tests/banner-event-phase2-stage1-shell-contract.test.js"
       - "tests/banner-event-manager-v398-contract.test.js"
       - "tests/banner-legacy-lookbook-groups-v399-contract.test.js"
       - "supabase/functions/kinojo-banner-media/index.ts"
@@ -48,6 +49,7 @@ on:
       - "tests/banner-admin-quality-contract.test.js"
       - "tests/banner-event-stage2-ui-contract.test.js"
       - "tests/banner-event-stage3-ui-contract.test.js"
+      - "tests/banner-event-phase2-stage1-shell-contract.test.js"
       - "tests/banner-event-manager-v398-contract.test.js"
       - "tests/banner-legacy-lookbook-groups-v399-contract.test.js"
       - "supabase/functions/kinojo-banner-media/index.ts"
@@ -96,6 +98,7 @@ jobs:
           node tests/banner-admin-quality-contract.test.js
           node tests/banner-event-stage2-ui-contract.test.js
           node tests/banner-event-stage3-ui-contract.test.js
+          node tests/banner-event-phase2-stage1-shell-contract.test.js
           node tests/banner-event-manager-v398-contract.test.js
           node tests/banner-legacy-lookbook-groups-v399-contract.test.js
           chrome="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
