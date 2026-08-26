@@ -15,6 +15,7 @@
     if(path.includes('/hof/')||path.includes('/hall-of-fame/'))return {key:'hall',label:'명예의 전당',root:mobile?'../../':'../',mobile};
     if(path.includes('/ranking/'))return {key:'ranking',label:'레기온 순위',root:mobile?'../../':'../',mobile};
     if(path.includes('/meter/'))return {key:'meter',label:'키노조 미터',root:mobile?'../../':'../',mobile};
+    if(path.includes('/sanctuary-management/'))return {key:'sanctuaryManagement',label:'성역 팀 관리',root:mobile?'../../':'../',mobile};
     if(path.includes('/sanctuary-schedule/'))return {key:'schedule',label:'성역 스케줄',root:mobile?'../../':'../',mobile};
     if(path.includes('/sanctuary/'))return {key:'sanctuary',label:'성역',root:mobile?'../../':'../',mobile};
     if(path.includes('/arcana/'))return {key:'arcana',label:'아르카나',root:mobile?'../../':'../',mobile};
@@ -535,7 +536,7 @@
     return 'topbarUpdateTime';
   }
 
-  const PAGE_TIME_LABELS={home:'접속',hall:'최종 조회',ranking:'최종 조회',meter:'접속',sanctuary:'동기화',schedule:'조회',arcana:'콘텐츠'};
+  const PAGE_TIME_LABELS={home:'접속',hall:'최종 조회',ranking:'최종 조회',meter:'접속',sanctuary:'동기화',schedule:'조회',sanctuaryManagement:'조회',arcana:'콘텐츠'};
   function formatPageTime_(value){
     const date=value instanceof Date?value:new Date(value);
     if(!Number.isFinite(date.getTime()))return '';
@@ -565,10 +566,23 @@
   }
 
   function syncAuthRequiredUi_(){
-    const loggedIn=!!window.KinojoAuth?.getSession?.();
+    const auth=window.KinojoAuth||{};
+    const session=typeof auth.getSession==='function'?auth.getSession():null;
+    const account=typeof auth.getAccount==='function'?auth.getAccount():null;
+    const loggedIn=!!session;
+    const sanctuaryAccount=Object.assign({},session||{},account||{});
+    const canEditSanctuary=loggedIn&&window.KinojoPermissions?.canEditSanctuary?.(sanctuaryAccount)===true;
     document.querySelectorAll('[data-kinojo-auth-required]').forEach(element=>{
       element.hidden=!loggedIn;
       element.setAttribute('aria-hidden',loggedIn?'false':'true');
+      if(loggedIn)element.style.removeProperty('display');
+      else element.style.setProperty('display','none','important');
+    });
+    document.querySelectorAll('[data-kinojo-sanctuary-management-required]').forEach(element=>{
+      element.hidden=!canEditSanctuary;
+      element.setAttribute('aria-hidden',canEditSanctuary?'false':'true');
+      if(canEditSanctuary)element.style.removeProperty('display');
+      else element.style.setProperty('display','none','important');
     });
     if(!loggedIn){resetMyInfoCharacters_();resetMyInfoProfileUi_();closeMyInfoPanel();closeMyInfoModal();}
     else setTimeout(()=>loadMyInfoCharacters_().catch(()=>{}),0);
@@ -588,6 +602,7 @@
       {key:'meter',label:'미터기',href:base+'meter/'},
       {key:'sanctuary',label:'성역',href:base+'sanctuary/',sanctuaryMenu:true},
       {key:'schedule',label:'성역 스케줄',href:base+'sanctuary-schedule/',authRequired:true},
+      {key:'sanctuaryManagement',label:'성역 관리',href:base+'sanctuary-management/',sanctuaryManagementRequired:true},
       {key:'arcana',label:'아르카나',href:base+'arcana/'}
     ];
     const navHtml=navItems.map(item=>{
@@ -597,7 +612,7 @@
         const sanctuaryBase=info.mobile?'/m/sanctuary/':'/sanctuary/';
         return '<span class="kinojo-top-sanctuary-wrap"><button class="kinojo-top-nav-link kinojo-top-sanctuary-toggle'+(active?' active':'')+'" id="kinojoTopSanctuaryToggle" type="button" aria-expanded="false" aria-haspopup="menu"'+(active?' aria-current="page"':'')+'>성역 <i aria-hidden="true">▾</i></button><span class="kinojo-top-sanctuary-menu" id="kinojoTopSanctuaryMenu" role="menu" aria-hidden="true" data-sanctuary-master-nav data-sanctuary-base="'+sanctuaryBase+'"><a href="'+sanctuaryBase+'">성역 목록 불러오는 중</a></span></span>';
       }
-      return '<a class="kinojo-top-nav-link'+(active?' active':'')+(item.adminOnly?' kinojo-admin-only-link':'')+'" href="'+href+'"'+(active?' aria-current="page"':'')+(item.authRequired?' data-kinojo-auth-required="true"':'')+'>'+item.label+'</a>';
+      return '<a class="kinojo-top-nav-link'+(active?' active':'')+(item.adminOnly?' kinojo-admin-only-link':'')+'" href="'+href+'"'+(active?' aria-current="page"':'')+(item.authRequired?' data-kinojo-auth-required="true"':'')+(item.sanctuaryManagementRequired?' data-kinojo-sanctuary-management-required="true" hidden':'')+'>'+item.label+'</a>';
     }).join('');
     bar.innerHTML=`<div class="kinojo-topbar-shell">
       <div class="kinojo-top-left">
@@ -2196,6 +2211,7 @@
     const isMeter=info.key==='meter';
     const isSanctuary=info.key==='sanctuary';
     const isSchedule=info.key==='schedule';
+    const isSanctuaryManagement=info.key==='sanctuaryManagement';
     const isArcana=info.key==='arcana';
     const base=info.mobile?'/m/':'/';
     const home=base;
@@ -2204,6 +2220,7 @@
     const meterHref=isMeter?'./':base+'meter/';
     const sanctuaryPrefix=isSanctuary?'./':base+'sanctuary/';
     const scheduleHref=isSchedule?'./':base+'sanctuary-schedule/';
+    const sanctuaryManagementHref=isSanctuaryManagement?'./':base+'sanctuary-management/';
     const arcanaHref=isArcana?'./':base+'arcana/';
     const drawer=document.createElement('section');
     drawer.className='kinojo-common-drawer';
@@ -2227,6 +2244,7 @@
             <a href="${sanctuaryPrefix}">성역 목록 불러오는 중</a>
           </div>
           <a href="${scheduleHref}" data-kinojo-auth-required="true" ${isSchedule?'class="active" aria-disabled="true"':''}>성역 스케줄</a>
+          <a href="${sanctuaryManagementHref}" data-kinojo-sanctuary-management-required="true" ${isSanctuaryManagement?'class="active" aria-disabled="true"':''} hidden>성역 관리</a>
           <div class="kinojo-drawer-divider"></div>
           <div class="kinojo-drawer-category">도구</div>
           <a href="${arcanaHref}" ${isArcana?'class="active" aria-disabled="true"':''}>ARCANA 스킬 시뮬레이터</a>

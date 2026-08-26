@@ -24,6 +24,8 @@ on:
       - "m/sanctuary/**"
       - "sanctuary-schedule/**"
       - "m/sanctuary-schedule/**"
+      - "sanctuary-management/**"
+      - "m/sanctuary-management/**"
       - "admin/**"
       - "m/admin/**"
       - "meter/**"
@@ -60,6 +62,8 @@ on:
       - "m/sanctuary/**"
       - "sanctuary-schedule/**"
       - "m/sanctuary-schedule/**"
+      - "sanctuary-management/**"
+      - "m/sanctuary-management/**"
       - "admin/**"
       - "m/admin/**"
       - "meter/**"
@@ -121,6 +125,7 @@ jobs:
             "sanctuary/js/sanctuary.js"
             "sanctuary/js/sanctuary-editor.js"
             "sanctuary-schedule/js/sanctuary-schedule.js"
+            "sanctuary-management/js/sanctuary-management.js"
             "admin/js/admin-members.js"
             "admin/js/admin.js"
             "admin/js/admin-shared.js"
@@ -162,6 +167,7 @@ jobs:
           node tests/kinojo-range-control.test.js
           node tests/sanctuary-roster-quick-edit-contract.test.js
           node tests/sanctuary-waitlist-contract.test.js
+          node tests/sanctuary-management-data-boundary-contract.test.js
           node tests/staged-page-contract.test.js
           node tests/meter-presence-log-contract.test.js
           node tests/ranking-ui-contract.test.js
@@ -483,6 +489,10 @@ jobs:
             "m/sanctuary-schedule/index.html"
             "sanctuary-schedule/css/sanctuary-schedule.css"
             "sanctuary-schedule/js/sanctuary-schedule.js"
+            "sanctuary-management/index.html"
+            "m/sanctuary-management/index.html"
+            "sanctuary-management/css/sanctuary-management.css"
+            "sanctuary-management/js/sanctuary-management.js"
             "arcana/index.html"
             "m/arcana/index.html"
             "admin/index.html"
@@ -518,6 +528,7 @@ jobs:
             "ui/kinojo-components.css"
             "ui/kinojo-common-ui.css"
             "ui/kinojo-common-ui.js"
+            "ui/kinojo-sanctuary-navigation.css"
             "ui/kinojo-my-info.css"
             "ui/kinojo-my-info-image-contract.js"
             "ui/kinojo-my-info-image-editor.js"

@@ -1,0 +1,42 @@
+.kinojo-sanctuary-tabs{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:6px;
+  width:min(100%,430px);
+  margin:0 0 14px;
+  padding:4px;
+  border:1px solid rgba(113,134,169,.2);
+  border-radius:14px;
+  background:rgba(255,255,255,.82);
+  box-shadow:0 8px 22px rgba(33,51,86,.06);
+}
+.kinojo-sanctuary-tab{
+  min-width:0;
+  min-height:34px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:7px 10px;
+  border-radius:10px;
+  color:#62708a;
+  font-size:12px;
+  font-weight:900;
+  line-height:1.2;
+  text-align:center;
+  text-decoration:none;
+  white-space:nowrap;
+  transition:background .18s ease,color .18s ease,box-shadow .18s ease,transform .18s ease;
+}
+.kinojo-sanctuary-tab:hover{color:#1f55c5;background:#edf4ff;transform:translateY(-1px)}
+.kinojo-sanctuary-tab:focus-visible{outline:3px solid rgba(59,130,246,.32);outline-offset:2px}
+.kinojo-sanctuary-tab[aria-current="page"]{color:#fff;background:linear-gradient(135deg,#326ee8,#6f54e9);box-shadow:0 7px 18px rgba(64,83,210,.24)}
+.kinojo-sanctuary-tab[hidden]{display:none!important}
+.kinojo-attached-subbar>.kinojo-sanctuary-tabs:first-child{margin-top:0}
+@media(min-width:1081px) and (max-width:1320px){
+  .kinojo-top-nav-link{padding-inline:7px!important;font-size:10px!important}
+}
+@media(max-width:420px){
+  .kinojo-sanctuary-tabs{width:100%;gap:4px;margin-bottom:10px;padding:3px;border-radius:12px}
+  .kinojo-sanctuary-tab{min-height:32px;padding-inline:5px;font-size:11px}
+}
+@media(prefers-reduced-motion:reduce){.kinojo-sanctuary-tab{transition:none}}

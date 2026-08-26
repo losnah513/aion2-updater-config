@@ -14,6 +14,14 @@
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 최신 일일 로그를 작업 규칙 원본으로 사용한다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
 
+## 성역·스케줄 관리 개편 · Stage 3-1 Server 데이터 경계
+
+- 신규 권한형 경로는 PC `/sanctuary-management/`, 모바일 `/m/sanctuary-management/`이며 둘 다 `noindex,nofollow,noarchive`다. 공통 Topbar·Drawer와 성역/성역 일정/성역 관리 탭은 `KinojoPermissions.canEditSanctuary(account)` 기준으로 MANAGER 이상 또는 `sanctuary_edit` 권한 계정에만 관리 진입점을 표시한다.
+- WEB 단일 진입점은 `KinojoSupabase.getSanctuaryManagementBootstrap()`이다. 현재 KWS opaque session을 body의 `sessionToken`으로 `sanctuary-management` Edge에 전달하고 브라우저 직접 service-role RPC, legacy Sheet bridge, page mock adapter를 사용하지 않는다.
+- 운영 계약은 Edge API `1.0` / DB `412`다. 성역 이름·노출·출시 메타는 Server `sanctuary_master` 응답만 렌더링하며 WEB에 성역1~4 이름 목록을 별도 유지하지 않는다.
+- 운영 `readEnabled=false`, `writeEnabled=false`를 유지한다. 3-1에서는 실제 성역 범위와 rollout 상태까지만 표시하고 팀 추가·편집은 비활성이다. 플래그 활성화, 팀 DRAFT 생성, 기존 성역·스케줄·Sheet 경로 변경은 이번 범위가 아니다.
+- 회귀 기준은 신규 data-boundary 계약, 기존 permission/schedule/waitlist/sheet-sync 계약, 전체 Node 계약 52개와 PC 1440px·모바일 390px·최소 320px overflow 0이다. 다음 작업은 3-2 고정 팀 DRAFT 생성·저장·불러오기다.
+
 ## 레기온 트리 마-2~마-6 / 사-1~사-7 / 아-1~아-6 / 자-1~자-7
 
 - PC·모바일 페이지가 공개 RPC `kinojo_web_get_legion_tree`의 `web-legion-tree-v1` / DB 365 계약을 읽어 깡·낮·밤·키나노동조합을 Server 순서대로 렌더링한다.

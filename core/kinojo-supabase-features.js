@@ -1190,6 +1190,13 @@
     return rpc('kinojo_web_get_sanctuary_master', {});
   }
 
+  async function getSanctuaryManagementBootstrap(){
+    return invokeEdgeFunction('sanctuary-management', {
+      action:'bootstrap',
+      sessionToken:currentServerSessionCredential()
+    });
+  }
+
   function decorateSanctuaryWaitlist(data){
     if(!data || data.ok === false) return data;
     data.waiting = (Array.isArray(data.waiting) ? data.waiting : []).map(item => Object.assign({}, item, {
@@ -1900,6 +1907,7 @@
     if(name === 'hallReaction') return submitHallReaction(extra);
     if(name === 'hallSuggestion') return submitHallSuggestion(extra);
     if(name === 'sanctuaryMaster') return getSanctuaryMaster();
+    if(name === 'sanctuaryManagementBootstrap') return getSanctuaryManagementBootstrap();
     if(name === 'sanctuary') return getSanctuaryData(extra.id || extra.sanctuaryId || '');
     if(name === 'sanctuaryRosterData') return getSanctuaryRosterData(extra.id || extra.sanctuaryId || '');
     if(name === 'sanctuaryWaitlistData') return getSanctuaryWaitlistData(extra.id || extra.sanctuaryId || '');
@@ -1995,7 +2003,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.56-legion-tree-character-add-20260824',
+    version:'1.3.1.57-sanctuary-management-bootstrap-20260826',
     getConfig,
     isPreferred,
     isConfigured,
@@ -2023,6 +2031,7 @@
     submitHallReaction,
     submitHallSuggestion,
     getSanctuaryMaster,
+    getSanctuaryManagementBootstrap,
     getSanctuaryData,
     getSanctuaryRosterData,
     getSanctuaryWaitlistData,

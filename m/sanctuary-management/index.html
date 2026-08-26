@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>KINOJO INFO - 성역 팀 관리</title>
+<meta name="description" content="KINOJO 성역 팀을 Server 기반으로 관리하는 권한형 모바일 화면입니다."/>
+<meta name="robots" content="noindex,nofollow,noarchive"/>
+<link rel="canonical" href="https://kinojo.info/m/sanctuary-management/"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="KINOJO INFO"/>
+<meta property="og:title" content="KINOJO INFO - 성역 팀 관리"/>
+<meta property="og:description" content="권한 사용자를 위한 Server 기반 성역 팀 관리 화면입니다."/>
+<meta property="og:url" content="https://kinojo.info/m/sanctuary-management/"/>
+<meta property="og:image" content="https://kinojo.info/assets/images/common/kinojo-og.jpg"/>
+<link href="../../ui/kinojo-common-ui.css?cache=2026081205" rel="stylesheet"/>
+<link href="../../ui/kinojo-public-shell.css?cache=2026081202" rel="stylesheet"/>
+<link href="../../ui/kinojo-components.css?cache=2026082103" rel="stylesheet"/>
+<link href="../../ui/kinojo-staged-loading.css?cache=2026081222" rel="stylesheet"/>
+<link href="../../ui/kinojo-sanctuary-navigation.css?cache=2026082603" rel="stylesheet"/>
+<link href="../../sanctuary-management/css/sanctuary-management.css?cache=2026082603" rel="stylesheet"/>
+<link href="../../ui/kinojo-event-notice.css?cache=2026081003" rel="stylesheet"/>
+</head>
+<body class="kinojo-page-booting kinojo-sanctuary-management-page kinojo-mobile-sanctuary-management-page">
+  <section class="sanctuary-management-page-bar" aria-label="성역 화면과 관리 범위">
+    <div class="sanctuary-management-page-bar-shell">
+      <nav class="kinojo-sanctuary-tabs" aria-label="성역 페이지">
+        <a class="kinojo-sanctuary-tab" href="../sanctuary/">성역</a>
+        <a class="kinojo-sanctuary-tab" href="../sanctuary-schedule/" data-kinojo-auth-required="true" hidden>성역 일정</a>
+        <a class="kinojo-sanctuary-tab" href="./" aria-current="page" data-kinojo-sanctuary-management-required="true" hidden>성역 관리</a>
+      </nav>
+      <div class="sanctuary-management-scope-shell" id="sanctuaryManagementScopeShell" hidden>
+        <span class="sanctuary-management-scope-label">관리 범위</span>
+        <div class="sanctuary-management-scope" id="sanctuaryManagementScope" role="group" aria-label="관리할 성역 선택"></div>
+      </div>
+    </div>
+  </section>
+
+  <main class="sanctuary-management-wrap">
+    <header class="sanctuary-management-hero" aria-labelledby="sanctuaryManagementTitle">
+      <div>
+        <p class="sanctuary-management-kicker">SERVER ENGINE · SANCTUARY MANAGEMENT</p>
+        <h1 id="sanctuaryManagementTitle">성역 팀 관리</h1>
+        <p>기존 성역·스케줄과 분리된 신규 Server 데이터 경계입니다.</p>
+      </div>
+      <div class="sanctuary-management-contract" id="sanctuaryManagementContract">API 계약 확인 중</div>
+    </header>
+
+    <section class="sanctuary-management-access" id="sanctuaryManagementAccess" aria-live="polite" aria-busy="true">
+      <span class="sanctuary-management-access-icon" aria-hidden="true">•••</span>
+      <div>
+        <strong id="sanctuaryManagementAccessTitle">권한과 Server 연결을 확인하고 있습니다.</strong>
+        <p id="sanctuaryManagementAccessMessage">운영 데이터는 변경하지 않습니다.</p>
+      </div>
+      <button class="kinojo-btn secondary" id="sanctuaryManagementAccessAction" type="button" hidden>다시 시도</button>
+    </section>
+
+    <div class="sanctuary-management-content" id="sanctuaryManagementContent" hidden>
+      <section class="sanctuary-management-summary" aria-label="Server 연결 상태">
+        <article><span>데이터 원본</span><strong id="sanctuaryManagementSource">Server</strong><small>목업·시트 우회 없음</small></article>
+        <article><span>팀 읽기</span><strong id="sanctuaryManagementReadState">확인 중</strong><small>Server 기능 플래그</small></article>
+        <article><span>팀 쓰기</span><strong id="sanctuaryManagementWriteState">확인 중</strong><small>별도 승인 전 비활성</small></article>
+        <article><span>선택 성역</span><strong id="sanctuaryManagementSelectedName">전체</strong><small id="sanctuaryManagementSelectedMeta">Server master</small></article>
+      </section>
+
+      <div class="sanctuary-management-layout">
+        <section class="sanctuary-management-team-panel" aria-labelledby="sanctuaryManagementTeamTitle">
+          <header class="sanctuary-management-section-head">
+            <div>
+              <p>TEAM WORKSPACE</p>
+              <h2 id="sanctuaryManagementTeamTitle">운영 팀</h2>
+              <span id="sanctuaryManagementTeamStatus">Server 상태를 확인하는 중입니다.</span>
+            </div>
+            <button class="kinojo-btn" id="sanctuaryManagementAddTeam" type="button" disabled aria-describedby="sanctuaryManagementTeamStatus">팀 추가하기</button>
+          </header>
+          <div class="sanctuary-management-team-list" id="sanctuaryManagementTeamList" aria-live="polite"></div>
+        </section>
+
+        <aside class="sanctuary-management-side" aria-label="성역 팀 보조 정보">
+          <section>
+            <p>SCHEDULE</p>
+            <h2>일정 요약</h2>
+            <div class="sanctuary-management-placeholder" id="sanctuaryManagementScheduleState">팀 일정 연결은 3-6에서 Server 계약으로 이어집니다.</div>
+          </section>
+          <section>
+            <p>RECRUITMENT</p>
+            <h2>모집·지원</h2>
+            <div class="sanctuary-management-placeholder" id="sanctuaryManagementRecruitmentState">지원 상태 연결은 후속 단계에서 Server 응답으로만 표시됩니다.</div>
+          </section>
+          <section>
+            <p>ADMINISTRATION</p>
+            <h2>관리</h2>
+            <div class="sanctuary-management-placeholder" id="sanctuaryManagementAdminState">편집·해산은 쓰기 플래그와 Server 권한 검증 후 활성화됩니다.</div>
+          </section>
+        </aside>
+      </div>
+    </div>
+
+    <footer class="footer common-footer"><div class="footer-links"><a href="../../pages/about.html">사이트 소개</a><a href="../../pages/terms.html">이용약관</a><a href="../../pages/privacy.html">개인정보처리방침</a><a href="../../pages/contact.html">아이디어 제안 및 건의</a></div><div class="footer-powered">Powered by AION2 · KINOJO Server</div></footer>
+  </main>
+
+  <script src="../../core/kinojo-api.js?cache=2026070115"></script>
+  <script src="../../core/kinojo-cache.js?cache=2026070115"></script>
+  <script src="../../core/kinojo-permissions.js?cache=2026071517"></script>
+  <script src="../../core/kinojo-toast.js?cache=2026070115"></script>
+  <script src="../../core/kinojo-modal.js?cache=2026070115"></script>
+  <script src="../../core/kinojo-route-guard.js?cache=2026070115"></script>
+  <script src="../../core/kinojo-debug.js?cache=2026070115"></script>
+  <script src="../../core/kinojo-logger.js?cache=2026070115"></script>
+  <script src="../../ui/kinojo-common-ui.js?cache=2026082604"></script>
+  <script src="../../ui/kinojo-staged-loading.js?cache=2026082603"></script>
+  <script src="../../ui/kinojo-admin-panel.js?cache=2026071712"></script>
+  <script src="../../core/kinojo-supabase-client.js?cache=2026081106"></script>
+  <script src="../../core/kinojo-supabase-rpc.js?cache=2026080205"></script>
+  <script src="../../core/kinojo-supabase-features.js?cache=2026082603"></script>
+  <script src="../../core/kinojo-auth-session.js?cache=2026081801"></script>
+  <script src="../../core/kinojo-auth-service.js?cache=2026081801"></script>
+  <script src="../../core/kinojo-auth-ui.js?cache=2026082401"></script>
+  <script src="../../ui/kinojo-event-notice.js?cache=2026081003"></script>
+  <script src="../../sanctuary-management/js/sanctuary-management.js?cache=2026082603"></script>
+</body>
+</html>
