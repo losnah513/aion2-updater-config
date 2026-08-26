@@ -7,6 +7,7 @@ KINOJO INFO GitHub Pages upload package.
 - `kinojo-main/`: KINOJO INFO main, common UI/core/pages/docs
 - `hall-of-fame/`: Hall of Fame page and assets
 - `sanctuary/`: Sanctuary page
+- `sanctuary-management/`: Permission-gated Server sanctuary team management page
 
 `config.json` is intentionally kept at repository root because the extension currently reads `/config.json`.
 
@@ -120,6 +121,14 @@ KINOJO INFO GitHub Pages upload package.
 - A recommendation request recalculates current vacancies and class overlap on Server. Forces with at least one vacant party that does not duplicate the selected class appear first.
 - Sanctuary backgrounds and boss portraits are separated under `assets/images/sanctuary/backgrounds/` and `assets/images/sanctuary/bosses/`; official reference sources and asset policy are recorded in `assets/images/sanctuary/SOURCES.md`.
 - `tests/sanctuary-waitlist-contract.test.js` prevents item-level thresholds from moving into WEB, verifies the three-pane/scroll-safe modal contract, and checks all six WebP assets against the web size budget.
+
+## Sanctuary management Server boundary
+
+- PC `/sanctuary-management/` and mobile `/m/sanctuary-management/` are noindex permission-gated entrypoints for MANAGER-or-higher or `sanctuary_edit` accounts.
+- The browser reads the new domain only through `KinojoSupabase.getSanctuaryManagementBootstrap()`, which invokes the `sanctuary-management` Edge Function with the current opaque KWS session. It does not call the service-role DB RPC, legacy Sheet bridge, or a page mock adapter directly.
+- The active contract is Edge API `1.0` / DB `412`. Server `sanctuary_master` supplies management-visible sanctuary names and release metadata; WEB must not keep a competing hard-coded sanctuary list.
+- The new read/write flags remain false until separately approved. The current 3-1 page therefore shows the Server-provided sanctuary scope and rollout state, while team create/edit controls remain disabled and the existing sanctuary, schedule, and Sheet paths remain unchanged.
+- `tests/sanctuary-management-data-boundary-contract.test.js` verifies the Server-only adapter, contract versions, disabled flags, PC/mobile shell, permission-gated navigation, and direct Edge health in CI.
 
 ## Public page shell verification
 
