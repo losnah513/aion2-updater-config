@@ -7,14 +7,14 @@ const root=path.resolve(__dirname,'..');
 const workflow=fs.readFileSync(path.join(root,'admin/js/admin-banner-event-workflow.js'),'utf8');
 
 for(const token of [
-  'banner event workflow phase 2 stage 6 integration v2026082607',
-  "root.dataset.bannerEventStage='phase2-5'",
+  'banner event workflow phase 2 stage 7 integration v2026082608',
+  "root.dataset.bannerEventStage='phase2-7'",
   'function previewButton(',
   'const isTallPreview=',
-  '상단~중간 · 전체 보기',
+  '전체 이미지 · 확대 보기',
   'data-bew-image-open',
   "${tall?' is-tall':''}",
-  '.bew-preview-trigger.is-tall img{object-fit:cover!important;object-position:center 28%!important}',
+  '.bew-preview-trigger.is-tall img{object-fit:contain!important;object-position:center!important}',
   'function imagePreviewModal(',
   'role="dialog"',
   'aria-modal="true"',

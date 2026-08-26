@@ -184,7 +184,7 @@ async function run(){
     document.querySelector('[data-banner-event-workflow="side"] [data-bew-filter="ALL"]').click();
     const firstSideAsset=document.querySelector('[data-banner-event-workflow="side"] .bew-asset'),sideTags=[...firstSideAsset.querySelectorAll('.bew-asset-tag')],sideTagMore=firstSideAsset.querySelector('.bew-asset-tag-more'),sideTallPreview=firstSideAsset.querySelector('.bew-preview-trigger.is-tall');
     if(sideTags.length!==3||sideTagMore?.textContent.trim()!=='+2')throw Error('library tags must show three badges plus remaining count');
-    if(!sideTallPreview||getComputedStyle(sideTallPreview.querySelector('img')).objectFit!=='cover'||!getComputedStyle(sideTallPreview.querySelector('img')).objectPosition.includes('28%'))throw Error('tall library preview must use top-to-middle fixed window');
+    if(!sideTallPreview||getComputedStyle(sideTallPreview.querySelector('img')).objectFit!=='contain'||sideTallPreview.querySelector('.bew-preview-label')?.textContent.trim()!=='전체 이미지 · 확대 보기')throw Error('tall library preview must contain the complete image');
     sideTallPreview.click();await sleep(30);const imageModal=document.querySelector('#bewImagePreviewModal');
     if(imageModal?.hidden||!imageModal.querySelector('[data-bew-image-preview-full]')?.src||!imageModal.contains(document.activeElement))throw Error('full image dialog must open with complete image and focus');
     document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));await sleep(20);if(!imageModal.hidden||document.activeElement!==sideTallPreview)throw Error('full image dialog Escape/return focus failed');
@@ -228,6 +228,7 @@ async function run(){
     const fourth=await imageFile('fourth.png',320,180,'#a855f7'),fourthTransfer=new DataTransfer();fourthTransfer.items.add(fourth);input.files=fourthTransfer.files;fire(input,'change');await sleep(100);
     if(document.querySelectorAll('[data-banner-event-workflow="main"] .bew-file-card').length!==3)throw Error('maximum three image guard failed');
     if(!document.querySelector('[data-banner-event-workflow="main"]')?.textContent.includes('잘릴 수 있습니다'))throw Error('ratio crop warning missing');
+    for(let index=0;index<3;index++){const box=document.querySelector(`[data-banner-event-workflow="main"] [data-bew-character-unlinked="${index}"]`);box.checked=true;fire(box,'change')}
     let titleInputs=[...document.querySelectorAll('[data-banner-event-workflow="main"] [data-bew-file-title]')];titleInputs[1].value=titleInputs[0].value;fire(titleInputs[1],'input');await sleep(30);
     if(!document.querySelector('[data-banner-event-workflow="main"] [data-bew-title-state="1"].error')||!document.querySelector('[data-banner-event-workflow="main"] [data-bew-upload]').disabled)throw Error('local duplicate title must block upload');
     titleInputs.forEach((field,index)=>{field.value=`Chrome E2E 이미지 ${index+1}`;fire(field,'input')});
@@ -244,7 +245,7 @@ async function run(){
     await waitFor(()=>document.querySelectorAll('[data-banner-event-workflow="main"] .bew-order-item').length===3,'new bundle auto selection');
     if(!document.querySelector('[data-banner-event-workflow="main"] [data-bew-filter="NONE"].active'))throw Error('library must start unselected');
     document.querySelector('[data-banner-event-workflow="main"] [data-bew-filter="푸석사과"]').click();
-    if(getComputedStyle(document.querySelector('[data-banner-event-workflow="main"] .bew-asset img')).objectFit!=='cover'||getComputedStyle(document.querySelector('[data-banner-event-workflow="main"] .bew-order-item img')).objectFit!=='cover')throw Error('tall library and order previews must use the fixed viewing window');
+    if(getComputedStyle(document.querySelector('[data-banner-event-workflow="main"] .bew-asset img')).objectFit!=='contain'||getComputedStyle(document.querySelector('[data-banner-event-workflow="main"] .bew-order-item img')).objectFit!=='contain')throw Error('library and order previews must show complete images');
     const hoverImage=document.querySelector('[data-banner-event-workflow="main"] .bew-asset [data-bew-image-preview]');hoverImage.dispatchEvent(new MouseEvent('mouseover',{bubbles:true}));
     if(!document.querySelector('#bewImagePeek')?.classList.contains('show'))throw Error('rollover image preview missing');hoverImage.dispatchEvent(new MouseEvent('mouseout',{bubbles:true}));
     const orderBefore=[...document.querySelectorAll('[data-banner-event-workflow="main"] .bew-order-copy b')].map(node=>node.textContent).join('|');
@@ -308,7 +309,7 @@ async function run(){
     await waitFor(()=>!sidePanel.hidden&&sidePanel.classList.contains('active'),'side banner visual return');
     const finalAllPages=document.querySelector('[data-banner-event-workflow="side"] [data-bew-all-pages]');finalAllPages.checked=true;fire(finalAllPages,'change');
     const target=document.querySelector('#bew-side-3');window.scrollTo(0,target.getBoundingClientRect().top+window.scrollY-110);await sleep(300);
-    if(getComputedStyle(document.querySelector('[data-banner-event-workflow="side"] .bew-side-order-item img')).objectFit!=='cover')throw Error('side order preview must use the tall fixed viewing window');
+    if(getComputedStyle(document.querySelector('[data-banner-event-workflow="side"] .bew-side-order-item img')).objectFit!=='contain')throw Error('side order preview must show the complete image');
     document.querySelector('#adminTopSubnav [data-admin-subtab="events"]').click();
     await waitFor(()=>eventsPanel.classList.contains('active')&&!eventsPanel.hidden&&document.querySelectorAll('[data-banner-events-admin] [data-bem-event]').length===3,'event manager list load');
     if(location.hash!=='#images/events')throw Error('event manager route mismatch');
@@ -328,7 +329,7 @@ async function run(){
     if(location.hash!=='#images/library'||document.querySelector('#adminCurrentLocation')?.textContent!=='[이미지 관리] - 이미지 라이브러리')throw Error('image library location/route mismatch');
     if(document.querySelector('[data-banner-asset-library] [data-bal-detail] .bal-detail-empty')===null)throw Error('library must start with no selected image');
     const libraryMode=document.querySelector('[data-banner-asset-library] [data-bal-mode]');libraryMode.checked=true;fire(libraryMode,'change');
-    if(document.querySelector('[data-banner-asset-library] [data-bal-tag-groups]').hidden||!document.querySelector('[data-banner-asset-library] [data-bal-tag-filter="룩북"]'))throw Error('library hashtag grouping switch missing');
+    await waitFor(()=>!document.querySelector('[data-banner-asset-library] [data-bal-tag-groups]')?.hidden&&document.querySelector('[data-banner-asset-library] [data-bal-tag-filter="룩북"]'),'library hashtag grouping switch');
     document.querySelector('[data-banner-asset-library] [data-bal-tag-filter="룩북"]').click();
     if(document.querySelectorAll('[data-banner-asset-library] [data-bal-select]').length!==1)throw Error('hashtag selection filter mismatch');
     document.querySelector('[data-banner-asset-library] [data-bal-select="1"]').click();

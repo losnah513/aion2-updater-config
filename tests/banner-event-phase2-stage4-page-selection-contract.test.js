@@ -10,7 +10,7 @@ const edge=read('supabase/functions/kinojo-banner-media/index.ts');
 const migration=read('supabase/migrations/20260826045246_banner_event_page_targets_v404.sql');
 
 for(const token of [
-  'banner event workflow phase 2 stage 6 integration v2026082607',
+  'banner event workflow phase 2 stage 7 integration v2026082608',
   "api(s,'event-targets')",
   'function normalizeTargetContract(',
   'function selectedSidePages(',
@@ -41,12 +41,12 @@ assert.match(workflow,/if\(checked\)\{s\.individualTargetPages=[\s\S]+?s\.target
 assert.match(workflow,/if\(s\.kind==='side'&&!s\.targetPages\.length\)return\{step:3,selector:'\[data-bew-page-selector\]'/,'publish must stop at the page selector when no page is selected');
 
 for(const token of [
-  'DB = "406"',
-  'EVENT = "404"',
+  'DB = "409"',
+  'EVENT = "407"',
   '"event-targets"',
   'kinojo_banner_event_targets_v404',
   'kinojo_banner_event_list_v404',
-  'kinojo_banner_event_save_v404',
+  'kinojo_banner_event_save_v407',
   'kinojo_banner_event_publish_v404',
   'BANNER_EVENT_TARGET_PAGES_REQUIRED',
   'BANNER_EVENT_TARGET_VARIANTS_MISMATCH'

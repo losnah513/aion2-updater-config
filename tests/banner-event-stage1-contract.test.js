@@ -39,15 +39,15 @@ assert.equal(
 );
 
 for (const token of [
-  'V = "2.4"',
-  'DB = "406"',
-  'EVENT = "404"',
+  'V = "2.5"',
+  'DB = "409"',
+  'EVENT = "407"',
   'UPLOAD = "403"',
   'kinojo_banner_asset_register_storage_v403',
   'kinojo_banner_event_list_v404',
-  'kinojo_banner_event_save_v404',
+  'kinojo_banner_event_save_v407',
   'kinojo_banner_event_publish_v404',
-  'kinojo_banner_manifest_v402',
+  'kinojo_banner_manifest_v409',
   'eventWorkflowContract: EVENT',
   'uploadContract: UPLOAD',
   'exposureMode: "ALL_ACTIVE_PUBLISHED_ITEMS"',

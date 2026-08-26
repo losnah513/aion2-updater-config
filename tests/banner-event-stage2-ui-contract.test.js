@@ -9,7 +9,7 @@ const desktop=fs.readFileSync(path.join(root,'admin/index.html'),'utf8');
 const mobile=fs.readFileSync(path.join(root,'m/admin/index.html'),'utf8');
 
 for(const token of [
-  "LIMIT=3",
+  "UPLOAD_LIMIT=3",
   "data-banner-event-workflow",
   "이미지 추가",
   "새 노출 묶음 구성",
@@ -36,7 +36,7 @@ for(const token of [
   "업로드만으로는 게시되지 않습니다."
 ])assert.ok(workflow.includes(token),`stage-2 workflow token missing: ${token}`);
 
-assert.ok(workflow.includes("s.files.length>=LIMIT"),'maximum image guard missing');
+assert.ok(workflow.includes("s.files.length>=UPLOAD_LIMIT"),'maximum image guard missing');
 assert.ok(workflow.includes("s.files.push"),'persistent append behavior missing');
 assert.ok(workflow.includes("api(s,'asset-title-check'"),'per-image title precheck missing');
 assert.ok(workflow.includes("title:normalizeTitle(stem(file.name))"),'filename-based initial image title missing');
@@ -52,13 +52,13 @@ assert.ok(workflow.includes("'content-type':item.file.type"),'original image MIM
 assert.ok(!workflow.includes("campaign-create"),'stage-2 workflow must not create legacy campaigns');
 assert.ok(!workflow.includes("campaign-publish"),'stage-2 workflow must not publish before review stage');
 assert.ok(workflow.includes('.bew-preview-trigger img{display:block;width:100%!important;height:100%!important;min-height:0!important;border-radius:inherit;object-fit:contain!important;object-position:center!important}'),'ordinary workflow previews must fit the whole image');
-assert.ok(workflow.includes('.bew-preview-trigger.is-tall img{object-fit:cover!important;object-position:center 28%!important}'),'tall workflow previews must use the fixed top-to-middle viewing window');
+assert.ok(workflow.includes('.bew-preview-trigger.is-tall img{object-fit:contain!important;object-position:center!important}'),'tall workflow previews must show the full image');
 
 assert.ok(loader.includes("'admin-banner-event-workflow.js'"),'workflow module loader entry missing');
 assert.ok(loader.indexOf("'admin-side-banners.js'")<loader.indexOf("'admin-banner-event-workflow.js'"),'workflow must mount after legacy shells');
 assert.ok(loader.indexOf("'admin-banner-event-workflow.js'")<loader.indexOf("'admin-banner-quality.js'"),'quality guard must decorate new workflow');
-assert.ok(loader.includes("2026082607"),'loader cache generation not bumped');
-assert.ok(desktop.includes('admin.js?cache=2026082607'),'desktop admin cache generation mismatch');
-assert.ok(mobile.includes('admin.js?cache=2026082607'),'mobile admin cache generation mismatch');
+assert.ok(loader.includes("2026082608"),'loader cache generation not bumped');
+assert.ok(desktop.includes('admin.js?cache=2026082608'),'desktop admin cache generation mismatch');
+assert.ok(mobile.includes('admin.js?cache=2026082608'),'mobile admin cache generation mismatch');
 
 console.log('PASS banner event stage-2 UI contract');
