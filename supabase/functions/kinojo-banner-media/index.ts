@@ -1,6 +1,6 @@
 const S = "kinojo-banner-media",
-  V = "2.2",
-  DB = "404",
+  V = "2.3",
+  DB = "405",
   EVENT = "404",
   UPLOAD = "403",
   MASTER = "337",
@@ -83,6 +83,7 @@ const ERR: Record<string, string> = {
   BANNER_CONTENT_TEXT_REQUIRED: "노출할 문구 내용을 입력해 주세요.",
   BANNER_CONTENT_EMOJI_REQUIRED: "노출할 이모지를 선택해 주세요.",
   BANNER_CONTENT_ASSET_REQUIRED: "노출할 스티커 또는 뱃지를 선택해 주세요.",
+  BANNER_OVERLAY_NAME_DUPLICATE: "이미 내 스티커 보관함에서 사용 중인 이름입니다.",
   BANNER_ASSET_TITLE_INVALID:
     "저장 이미지 제목은 공백을 정리한 1~120자로 입력해 주세요.",
   BANNER_ASSET_TITLE_DUPLICATE: "이미 사용 중인 이미지 제목입니다.",
@@ -759,7 +760,7 @@ async function overlayComplete(r: Request, b: any, t: string) {
   if (!["EMOTICON", "STICKER", "BADGE"].includes(kind))
     return out(r, { ok: false, code: "BANNER_OVERLAY_KIND_INVALID" }, 400);
   if (!name) return out(r, { ok: false, code: "BANNER_OVERLAY_NAME_INVALID" }, 400);
-  const a = await rpc("kinojo_banner_overlay_asset_register_v396", {
+  const a = await rpc("kinojo_banner_overlay_asset_register_v405", {
     p_session_token: t,
     p_object_path: verified.p,
     p_mime_type: verified.stored.mime,
@@ -769,8 +770,14 @@ async function overlayComplete(r: Request, b: any, t: string) {
     p_asset_kind: kind,
     p_display_name: name,
   });
-  if (a.ok !== true)
-    return out(r, { ok: false, code: txt(a.code, 80), candidateRetainedForCleanup: true }, stat(txt(a.code, 80)));
+  if (a.ok !== true) {
+    const deleted = await del(verified.p);
+    return out(r, {
+      ok: false,
+      code: txt(a.code, 80),
+      candidateDeleted: deleted === true,
+    }, stat(txt(a.code, 80)));
+  }
   const { url } = ctx();
   return out(r, {
     ok: true,
@@ -970,8 +977,8 @@ async function orphan(r: Request, b: any, t: string) {
       candidateCount: xs.length,
       items: xs,
     });
-  const deleted = [],
-    failed = [];
+  const deleted: string[] = [],
+    failed: string[] = [];
   for (const x of xs) {
     const p = txt(rec(x)?.objectPath, 1024);
     if (!p) continue;

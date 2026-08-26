@@ -6,9 +6,9 @@ const root=path.resolve(__dirname,'..');
 const workflow=fs.readFileSync(path.join(root,'admin/js/admin-banner-event-workflow.js'),'utf8');
 
 for(const token of [
-  'banner event workflow phase 2 stage 4',
+  'banner event workflow phase 2 stage 5',
   '이미지별 콘텐츠 편집',
-  '재사용 꾸미기 라이브러리',
+  '내 스티커 보관함',
   "const EMOJIS=",
   "type:'EMOJI'",
   "type:String(asset.assetKind||'STICKER')",
@@ -39,4 +39,7 @@ assert.ok(workflow.includes("layers.filter(layer=>layer.type!=='TEXT').length<LI
 assert.ok(workflow.includes("position:fixed;z-index:12020;right:24px;bottom:20px"),'fixed bottom-right action dock missing');
 assert.ok(workflow.includes("target?.scrollIntoView({behavior:'smooth',block:'start'})"),'sticky-safe missing-field navigation missing');
 assert.ok(workflow.includes("contentOverlays:(s.overlays[Number(id)]||[])"),'general content payload missing');
+assert.ok(workflow.includes('data-bew-overlay-number-field'),'numeric direct input missing');
+assert.ok(workflow.includes('data-bew-emoji-popover'),'emoji popover missing');
+assert.ok(workflow.includes('실제 합성 미리보기'),'live composite preview missing');
 console.log('PASS banner event stage-5 UI contract');

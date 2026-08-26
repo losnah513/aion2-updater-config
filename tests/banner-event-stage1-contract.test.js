@@ -39,8 +39,8 @@ assert.equal(
 );
 
 for (const token of [
-  'V = "2.2"',
-  'DB = "404"',
+  'V = "2.3"',
+  'DB = "405"',
   'EVENT = "404"',
   'UPLOAD = "403"',
   'kinojo_banner_asset_register_storage_v403',
