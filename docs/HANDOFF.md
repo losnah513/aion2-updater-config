@@ -6,7 +6,7 @@
 
 - GitHub: `losnah513/aion2-updater-config`
 - 운영 브랜치: `main`
-- 배너 이미지 관리 2차 1단계 운영 기준: PR `#260`, merge commit `983d7d9f73082f6fab8da7efe23b2506ff1e66eb`, 관리자 cache `2026082601`
+- 배너 이미지 관리 2차 2단계 운영 기준: PR `#262`, merge commit `9d0a5bc014109274b323adf8f24886e4c6e5b195`, 관리자 cache `2026082602`, Edge `kinojo-banner-media` v20(API 2.1 / DB 403 / Upload 403 / Event 402)
 - 내 정보 E-1 제품 운영 commit: `640b7eebcef1c13b0516fe2cd020df870bc23752` (PR `#194`)
 - 내 정보 후속 A-1~E-2: 12/12 완료
 - My Info / 관리자 이미지 모달 추가 UI 후속: PR `#197` 구현·배포·동기화 기준 CLOSED · 수동 실브라우저 sanity check는 post-close 보류
@@ -232,7 +232,7 @@
 - Stage 0~5 제품 기준은 PR `#241`, `#242`, `#244`, `#245`, `#246`, `#248`, `#250`, 게시 hotfix `#252`이며, 현재 제품 main은 merge `c1536603d19dfb69932b98ac18fd50022e47d1ce`다.
 - 관리자 이미지 관리에는 메인/사이드 배너별 5단계 작성 흐름이 있다. Stage 1은 Event396 저장 기반, Stage 2는 최대 3장 누적 추가·새 묶음·순서, Stage 3은 좌우 동시/별도·페이지·일정·전환 효과/방향, Stage 4~5는 이미지별 콘텐츠 편집·검토·저장·게시를 소유한다.
 - 이미지 라이브러리는 기본 미선택이고 전체 또는 분류 해시태그를 선택해 불러온다. 선택 수는 `N / 3`으로 표시하며 순서는 드래그 앤 드롭과 화살표로 바꾼다. 세로형 이미지는 카드 프레임 안에서 `contain`으로 전신을 표시하고 rollover 확대 미리보기를 제공한다.
-- 기존 숫자 우선순위는 노출 횟수를 제어하지 않았으므로 UI에서 제거했다. 새 `기본 | ×1.5 | ×2.0`은 Server playlist 비율로 반영한다. 운영은 API1.9/DB397/Event396/Upload394다.
+- 기존 숫자 우선순위는 노출 횟수를 제어하지 않았으므로 UI에서 제거했다. 새 `기본 | ×1.5 | ×2.0`은 Server playlist 비율로 반영한다. 현재 배너 운영 계약은 API2.1/DB403/Event402/Upload403이다.
 - 문구는 이미지 하나당 최대 3개, 꾸밈 콘텐츠는 이모지·이모티콘·스티커·뱃지 합계 최대 3개다. 레이어별 이미지 앞/뒤, 위치, 크기, 회전, 투명도를 설정하며 기본은 이미지 앞이다. 업로드한 꾸밈 에셋은 별도 관리자 라이브러리에서 다른 이미지에 재사용한다.
 - 초안에는 원본과 편집 레이어를 유지한다. 전체 게시 시 원본과 콘텐츠를 별도 WebP 배너 한 장으로 합성·업로드·Server 검증하고, 공개 Manifest는 합성본만 반환한다. 합성본이 없거나 편집 뒤 stale이면 게시하지 않는다.
 - Stage 5 검토는 메인/사이드와 좌우별 순서·콘텐츠를 요약하고, 고정 초안 저장·전체 게시와 누락 설정 자동 이동·강조를 제공한다. v396 orphan cleanup은 원본·재사용 꾸밈·합성본을 함께 보호한다.
@@ -254,3 +254,15 @@
 - 검증은 전체 배너 Node 계약 `16/16`, PR 및 main push의 Banner Admin/Runtime 실제 Chrome E2E, KINOJO Pages, Character Refresh Profile, Pages 배포와 custom-domain live readback이 모두 통과했다. 운영 캐시 우회 읽기에서 PC 관리자 HTML, loader, workflow, bootstrap의 `2026082601` 계약을 다시 확인했다.
 - 이번 1단계는 WEB 관리자 UI와 테스트만 변경했다. Supabase DB/RPC/Edge/Storage, 현재 정식 이벤트·레거시 캠페인·전역 순환 모드와 운영 게시 데이터는 변경하지 않았다.
 - 다음 제품 구현은 2차 계획 2단계 `저장 이미지 제목·해시태그`이며, 시작 전 main·Drive 전용 LOG·운영 상태를 다시 읽는다.
+
+## 배너 이미지 관리 2차 · 2단계 저장 제목·해시태그 완료 · 2026-08-26
+
+- 2차 계획 2단계 `2-가~2-마`는 PR `#262`로 한 묶음 구현·배포했다. 운영 main은 `9d0a5bc014109274b323adf8f24886e4c6e5b195`, 관리자 cache는 `2026082602`, 운영 `kinojo-banner-media`는 v20(API 2.1 / DB 403 / Upload 403 / Event 402)이다. 누적 진행도는 **17/49**다.
+- `kinojo_banner_assets`의 canonical 관리 메타데이터는 `title`과 `tags text[]`다. `display_name`은 과거 화면·RPC 호환용 표시 필드로 유지하고, 구형 insert/update가 들어오면 v403 호환 트리거가 제목·태그를 채운다. 새 RPC는 제목·태그를 저장하면서 호환 표시 이름도 함께 갱신한다.
+- 기존 운영 이미지 26개를 무삭제 이전했다. `#태그 · 제목` 패턴 24개는 `AUTO_SPLIT`, 일반 이름 2개는 `PRESERVED`로 기록됐으며 이전 직후 빈/무효 메타데이터 0건, 대소문자·공백 정규화 중복 제목 0건이다. 모호한 과거 데이터는 원문을 버리지 않고 `REVIEW_REQUIRED_DUPLICATE` 경로로 보존한다.
+- 제목은 이미지 추가 카드마다 `저장 이미지 제목`으로 입력한다. 파일명 stem을 기본값으로 사용하고, 현재 추가 목록과 라이브러리의 중복을 즉시 표시하며 `asset-title-check` Server 사전 확인과 업로드 직전 강제 재확인을 모두 거친다. DB unique expression index가 동시 요청 경쟁의 최종 권한이며 `BANNER_ASSET_TITLE_DUPLICATE`를 안정적으로 반환한다. 중복 경쟁으로 실패한 새 Storage 후보는 Edge가 즉시 삭제한다.
+- 분류 해시태그는 선택 이미지에 공통 적용하는 최대 5개 배지 입력이다. Enter·쉼표·붙여넣기·한글 IME 조합·빈 입력 Backspace·개별 제거를 지원하고 `N / 5`와 제한 오류를 표시한다. 태그당 20자, 허용 문자, 대소문자 중복 제거 규칙은 WEB·Edge·DB가 함께 검증한다.
+- 이미지 목록 API는 구조화된 `title/tags/metadataMigrationStatus`를 반환한다. 라이브러리는 계속 기본 `미선택`이며 `전체` 또는 Server 태그 배열에서 만든 필터만 펼친다. 화면 이름은 canonical title을 우선 사용하고 과거 응답에만 `displayName` fallback을 사용한다.
+- 보안 경계는 기존 MASTER KWS를 재사용한다. v403 RPC는 `service_role`만 실행할 수 있고 public/anon/authenticated 권한은 철회했으며 `kinojo_banner_assets` RLS는 활성 상태다. 정책 없음 advisor는 직접 테이블 접근을 닫는 의도된 service-role-only 구조이고, 새 태그 GIN의 미사용 표시는 배포 직후라 정상이다. 기존 FK 인덱스 advisor는 이번 단계와 무관한 선행 상태다.
+- 검증은 전체 banner Node 계약, 신규 v403 메타데이터 계약, 실제 Chrome 관리자 E2E, PR source CI 4종, main Pages 배포, Banner Admin byte readback, Banner Runtime Manifest ETag·PC SIDE·모바일 MAIN live 회귀를 통과했다. 로그인된 운영 Chrome에서 메인 2개·사이드 24개의 canonical 제목, 사이드 `#남/#룩북/#샤르/#여/#SITTING` 필터, 콘솔 오류 0건을 읽기 전용으로 확인했다.
+- 다음 제품 구현은 2차 계획 **3단계**다. 2단계 DB/API/UI를 재작성하지 않고 운영 main·Drive 전용 LOG를 기준으로 이어간다.
