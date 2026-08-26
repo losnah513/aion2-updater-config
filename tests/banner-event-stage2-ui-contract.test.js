@@ -51,13 +51,14 @@ assert.ok(workflow.includes("payload.idempotencyKey=uuid()"),'mutation idempoten
 assert.ok(workflow.includes("'content-type':item.file.type"),'original image MIME upload missing');
 assert.ok(!workflow.includes("campaign-create"),'stage-2 workflow must not create legacy campaigns');
 assert.ok(!workflow.includes("campaign-publish"),'stage-2 workflow must not publish before review stage');
-assert.ok(workflow.includes('.bew-file-thumb img,.bew-asset img,.bew-order-item img,.bew-side-order-item>img{object-fit:contain;object-position:center}'),'all workflow thumbnails must fit the whole image without enlarging their frames');
+assert.ok(workflow.includes('.bew-preview-trigger img{display:block;width:100%!important;height:100%!important;min-height:0!important;border-radius:inherit;object-fit:contain!important;object-position:center!important}'),'ordinary workflow previews must fit the whole image');
+assert.ok(workflow.includes('.bew-preview-trigger.is-tall img{object-fit:cover!important;object-position:center 28%!important}'),'tall workflow previews must use the fixed top-to-middle viewing window');
 
 assert.ok(loader.includes("'admin-banner-event-workflow.js'"),'workflow module loader entry missing');
 assert.ok(loader.indexOf("'admin-side-banners.js'")<loader.indexOf("'admin-banner-event-workflow.js'"),'workflow must mount after legacy shells');
 assert.ok(loader.indexOf("'admin-banner-event-workflow.js'")<loader.indexOf("'admin-banner-quality.js'"),'quality guard must decorate new workflow');
-assert.ok(loader.includes("2026082602"),'loader cache generation not bumped');
-assert.ok(desktop.includes('admin.js?cache=2026082602'),'desktop admin cache generation mismatch');
-assert.ok(mobile.includes('admin.js?cache=2026082602'),'mobile admin cache generation mismatch');
+assert.ok(loader.includes("2026082603"),'loader cache generation not bumped');
+assert.ok(desktop.includes('admin.js?cache=2026082603'),'desktop admin cache generation mismatch');
+assert.ok(mobile.includes('admin.js?cache=2026082603'),'mobile admin cache generation mismatch');
 
 console.log('PASS banner event stage-2 UI contract');

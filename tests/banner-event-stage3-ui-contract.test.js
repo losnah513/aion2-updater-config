@@ -9,7 +9,7 @@ const desktop=fs.readFileSync(path.join(root,'admin/index.html'),'utf8');
 const mobile=fs.readFileSync(path.join(root,'m/admin/index.html'),'utf8');
 
 for(const token of [
-  'banner event workflow phase 2 stage 2',
+  'banner event workflow phase 2 stage 3',
   "['ALL','전체 페이지']",
   "['HOME','홈']",
   "['HOF','명예의 전당']",
@@ -47,7 +47,7 @@ for(const token of [
   'getBannerEventPayload'
 ])assert.ok(workflow.includes(token),`stage-3 workflow token missing: ${token}`);
 
-assert.ok(workflow.includes("root.dataset.bannerEventStage='phase2-2'"),'phase-2 stage-2 mount marker missing');
+assert.ok(workflow.includes("root.dataset.bannerEventStage='phase2-3'"),'phase-2 stage-3 mount marker missing');
 assert.ok(!workflow.includes("index<4?' ready':''"),'static ready workflow nodes must be removed');
 assert.ok(workflow.includes('function renderStepProgress('),'real workflow progress calculator missing');
 assert.ok(workflow.includes("pageCode==='HOF'?['LEFT']:['LEFT','RIGHT']"),'HOF left-only shared target missing');
@@ -58,8 +58,8 @@ assert.ok(workflow.includes("directional?value.transitionDirection:'NONE'"),'non
 assert.ok(workflow.includes("'event-save'"),'stage 5 draft persistence missing');
 assert.ok(workflow.includes("'event-publish'"),'stage 5 publish action missing');
 
-assert.ok(loader.includes('v2026082602'),'stage-8 loader cache generation missing');
-assert.ok(desktop.includes('admin.js?cache=2026082602'),'desktop stage-8 cache mismatch');
-assert.ok(mobile.includes('admin.js?cache=2026082602'),'mobile stage-8 cache mismatch');
+assert.ok(loader.includes('v2026082603'),'stage-8 loader cache generation missing');
+assert.ok(desktop.includes('admin.js?cache=2026082603'),'desktop stage-8 cache mismatch');
+assert.ok(mobile.includes('admin.js?cache=2026082603'),'mobile stage-8 cache mismatch');
 
 console.log('PASS banner event stage-3 UI contract');
