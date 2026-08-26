@@ -27,8 +27,8 @@ for(const token of [
 ])assert.ok(migration.toLowerCase().includes(token.toLowerCase()),`missing DB398 contract: ${token}`);
 
 for(const token of [
-  'V = "2.1"','DB = "403"','EVENT = "402"',
-  'kinojo_banner_event_list_v402','kinojo_banner_event_move_v398',
+  'V = "2.2"','DB = "404"','EVENT = "404"',
+  'kinojo_banner_event_list_v404','kinojo_banner_event_move_v398',
   'kinojo_banner_event_pause_v398','kinojo_banner_event_delete_v398',
   '"event-move"','"event-pause"','"event-delete"',
 ])assert.ok(edge.includes(token),`missing Edge398 contract: ${token}`);

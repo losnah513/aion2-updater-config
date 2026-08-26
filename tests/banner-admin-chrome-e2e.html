@@ -22,17 +22,27 @@ const state={assets:[
   {eventGroupId:'aaaaaaaa-2222-4333-8444-000000000001',name:'첫 이벤트',type:'SIDE',sideMode:'INDEPENDENT',tags:['룩북'],status:'DRAFT',targetPages:['HOME'],campaignCount:2,itemCount:3,managerOrder:2,updatedAt:'2035-01-02T09:00:00+09:00'},
   {eventGroupId:'aaaaaaaa-2222-4333-8444-000000000002',name:'두 번째 이벤트',type:'SIDE',sideMode:'SYNC',tags:['공지'],status:'PAUSED',targetPages:['HOME','RANKING'],campaignCount:2,itemCount:4,managerOrder:1,updatedAt:'2035-01-01T09:00:00+09:00'}
 ],campaigns:[],manifest:{ok:true,active:false,reason:'NO_ACTIVE_CAMPAIGN',playlist:[]},calls:[],puts:[],nextCampaign:501,nextAsset:101};
+const targetPageContract={contractVersion:404,main:{pageCode:'HOME',label:'홈',slotCodes:['MAIN'],locked:true},sidePages:[
+  {pageCode:'HOME',label:'홈',slotCodes:['LEFT','RIGHT'],sortOrder:1},
+  {pageCode:'HOF',label:'명예의 전당',slotCodes:['LEFT'],sortOrder:2},
+  {pageCode:'RANKING',label:'레기온 순위',slotCodes:['LEFT','RIGHT'],sortOrder:3},
+  {pageCode:'LEGION_TREE',label:'레기온 트리',slotCodes:['LEFT','RIGHT'],sortOrder:4},
+  {pageCode:'METER',label:'키노조 미터',slotCodes:['LEFT','RIGHT'],sortOrder:5},
+  {pageCode:'SANCTUARY',label:'성역 메인',slotCodes:['LEFT','RIGHT'],sortOrder:6},
+  {pageCode:'SANCTUARY_SCHEDULE',label:'성역 스케줄',slotCodes:['LEFT','RIGHT'],sortOrder:7}
+]};
 const clone=v=>JSON.parse(JSON.stringify(v));
 function syncRefs(){for(const a of state.assets)a.referenceCount=state.campaigns.reduce((n,c)=>n+(c.items||[]).filter(i=>Number(i.assetId)===Number(a.assetId)).length,0)}
 function response(action,payload){
   state.calls.push(action);
-  if(action!=='asset-list'&&action!=='asset-title-check'&&action!=='overlay-asset-list'&&action!=='campaign-list'&&action!=='event-list'&&action!=='manifest'){
+  if(action!=='asset-list'&&action!=='asset-title-check'&&action!=='overlay-asset-list'&&action!=='campaign-list'&&action!=='event-targets'&&action!=='event-list'&&action!=='manifest'){
     if(!/^kws_[A-Za-z0-9_-]{40,80}$/.test(String(payload.sessionToken||'')))throw Error('missing KWS');
     if(!/^[0-9a-f-]{36}$/i.test(String(payload.idempotencyKey||'')))throw Error('missing idempotency key');
   }
   if(action==='asset-list')return {ok:true,assets:clone(state.assets.filter(a=>payload.includeArchived!==false||a.status!=='ARCHIVED'))};
   if(action==='asset-title-check'){const key=String(payload.title||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('ko-KR'),available=!state.assets.some(asset=>String(asset.title||asset.displayName||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('ko-KR')===key&&Number(asset.assetId)!==Number(payload.excludeAssetId||0));return {ok:true,title:payload.title,available,code:available?null:'BANNER_ASSET_TITLE_DUPLICATE'};}
   if(action==='overlay-asset-list')return {ok:true,assets:[]};
+  if(action==='event-targets')return {ok:true,apiVersion:'404',targetPageContract:clone(targetPageContract)};
   if(action==='campaign-list')return {ok:true,campaigns:clone(state.campaigns)};
   if(action==='event-list')return {ok:true,eventRotationMode:state.eventRotationMode,eventRotationScope:'FORMAL_EVENT_GROUPS_ONLY',events:clone(state.events),legacyCampaigns:[]};
   if(action==='manifest')return clone(state.manifest);
@@ -43,7 +53,7 @@ function response(action,payload){
     return {ok:true,asset:clone(a),image:{activation:'ASSET_READY',aspectMatchesTarget:side,cropWarning:!side}};
   }
   if(action==='event-save'){
-    const eventGroupId=String(payload.eventGroupId||'11111111-2222-4333-8444-555555555555'),existing=state.events.find(item=>item.eventGroupId===eventGroupId),summary={eventGroupId,name:payload.event.name,type:payload.event.type,sideMode:payload.event.sideMode,tags:clone(payload.event.tags||[]),status:existing?.status||'DRAFT',targetPages:[...new Set((payload.event.variants||[]).map(item=>item.pageCode))],campaignCount:(payload.event.variants||[]).length,itemCount:(payload.event.variants||[]).reduce((sum,item)=>sum+(item.items||[]).length,0),managerOrder:state.events.length+1,updatedAt:'2035-01-03T09:00:00+09:00'};
+    const eventGroupId=String(payload.eventGroupId||'11111111-2222-4333-8444-555555555555'),existing=state.events.find(item=>item.eventGroupId===eventGroupId),summary={eventGroupId,name:payload.event.name,type:payload.event.type,sideMode:payload.event.sideMode,tags:clone(payload.event.tags||[]),status:existing?.status||'DRAFT',targetPages:clone(payload.event.targetPages||[]),targetPageContractVersion:payload.event.targetPageContractVersion,campaignCount:(payload.event.variants||[]).length,itemCount:(payload.event.variants||[]).reduce((sum,item)=>sum+(item.items||[]).length,0),managerOrder:state.events.length+1,updatedAt:'2035-01-03T09:00:00+09:00'};
     if(existing)Object.assign(existing,summary);else state.events.push(summary);
     return {ok:true,eventGroupId,savedCampaignIds:[901],event:{name:payload.event.name,status:'DRAFT',campaigns:clone(payload.event.variants)}};
   }
@@ -117,6 +127,7 @@ async function run(){
     await waitFor(()=>heartbeat,'image pane activation event-loop heartbeat',1500);
     await waitFor(()=>document.querySelector('#adminCurrentLocation')?.textContent==='[이미지 관리] - 메인 배너 이벤트 만들기','image pane location label',1500);
     await waitFor(()=>document.querySelector('[data-banner-event-workflow="main"]')&&document.querySelector('[data-main-banner-admin] [data-bew-status]')?.classList.contains('ok'),'stage-5 workflow initial load');
+    if(!document.querySelector('[data-banner-event-workflow="main"] .bew-page-badge.is-locked')?.textContent.includes('홈')||window.KinojoAdmin.getBannerEventPayload('main').targetPages.join('|')!=='HOME')throw Error('main page target must be a server-owned locked HOME badge');
     const sourceNav=document.querySelector('[data-admin-subnav="images"]'),topNav=document.querySelector('#adminTopSubnav');
     const mainTab=sourceNav?.querySelector('[data-banner-management-tab="main"]'),sideTab=sourceNav?.querySelector('[data-banner-management-tab="side"]'),eventsTab=sourceNav?.querySelector('[data-banner-management-tab="events"]');
     const mainPanel=document.querySelector('[data-banner-management-panel="main"]'),sidePanel=document.querySelector('[data-banner-management-panel="side"]'),eventsPanel=document.querySelector('[data-banner-management-panel="events"]');
@@ -154,6 +165,17 @@ async function run(){
     if(document.querySelector('#adminCurrentLocation')?.textContent!=='[이미지 관리] - 사이드 배너 이벤트 만들기')throw Error('side banner location label mismatch');
     if(sideTab.getAttribute('aria-selected')!=='true'||mainTab.getAttribute('aria-selected')!=='false')throw Error('side banner tab aria state mismatch');
     if(document.querySelector('[data-banner-event-workflow="side"] .bew-hero'))throw Error('side authoring hero must be removed');
+    let pageBadges=[...document.querySelectorAll('[data-banner-event-workflow="side"] [data-bew-page-code]')],allPages=document.querySelector('[data-banner-event-workflow="side"] [data-bew-all-pages]');
+    if(pageBadges.length!==7||pageBadges.some(button=>button.getAttribute('aria-pressed')!=='false')||!allPages||allPages.checked)throw Error('side pages must start as seven inactive server badges in individual mode');
+    for(const code of ['HOME','HOF','RANKING'])document.querySelector(`[data-banner-event-workflow="side"] [data-bew-page-code="${code}"]`).click();
+    let selectedPages=window.KinojoAdmin.getBannerEventPayload('side').targetPages;
+    if(selectedPages.join('|')!=='HOME|HOF|RANKING')throw Error('individual page badges did not select independently');
+    allPages=document.querySelector('[data-banner-event-workflow="side"] [data-bew-all-pages]');allPages.checked=true;fire(allPages,'change');
+    pageBadges=[...document.querySelectorAll('[data-banner-event-workflow="side"] [data-bew-page-code]')];
+    if(pageBadges.some(button=>button.getAttribute('aria-pressed')!=='true')||window.KinojoAdmin.getBannerEventPayload('side').targetPages.length!==7)throw Error('all-page switch did not select the server page set');
+    allPages=document.querySelector('[data-banner-event-workflow="side"] [data-bew-all-pages]');allPages.checked=false;fire(allPages,'change');
+    selectedPages=window.KinojoAdmin.getBannerEventPayload('side').targetPages;
+    if(selectedPages.join('|')!=='HOME|HOF|RANKING')throw Error('individual page set was not restored after all-page mode');
     document.querySelector('[data-banner-event-workflow="side"] [data-bew-filter="ALL"]').click();
     const firstSideAsset=document.querySelector('[data-banner-event-workflow="side"] .bew-asset'),sideTags=[...firstSideAsset.querySelectorAll('.bew-asset-tag')],sideTagMore=firstSideAsset.querySelector('.bew-asset-tag-more'),sideTallPreview=firstSideAsset.querySelector('.bew-preview-trigger.is-tall');
     if(sideTags.length!==3||sideTagMore?.textContent.trim()!=='+2')throw Error('library tags must show three badges plus remaining count');
@@ -163,6 +185,7 @@ async function run(){
     document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));await sleep(20);if(!imageModal.hidden||document.activeElement!==sideTallPreview)throw Error('full image dialog Escape/return focus failed');
     for(let index=0;index<3;index++)document.querySelector('[data-banner-event-workflow="side"] [data-bew-asset-add]:not(:disabled)')?.click();
     if(document.querySelectorAll('[data-banner-event-workflow="side"] .bew-order-item').length!==3)throw Error('side bundle selection missing');
+    const sideBundleName=document.querySelector('[data-banner-event-workflow="side"] [data-bew-bundle-name]');sideBundleName.value='Chrome E2E 사이드 이벤트';fire(sideBundleName,'input');
     const sideMode=document.querySelector('[data-banner-event-workflow="side"] [data-bew-side-mode]');
     if(!sideMode||sideMode.checked)throw Error('side mode must start with shared settings');
     sideMode.checked=true;fire(sideMode,'change');
@@ -170,15 +193,19 @@ async function run(){
     document.querySelector('[data-banner-event-workflow="side"] [data-bew-side-remove="right:2"]').click();
     document.querySelector('[data-banner-event-workflow="side"] [data-bew-side-move="left:1:down"]').click();
     let sidePayload=window.KinojoAdmin.getBannerEventPayload('side');
-    if(sidePayload.sideMode!=='INDEPENDENT'||sidePayload.variants.length!==13)throw Error('all-page independent variant payload mismatch');
+    if(sidePayload.sideMode!=='INDEPENDENT'||sidePayload.targetPageContractVersion!==404||sidePayload.targetPages.join('|')!=='HOME|HOF|RANKING'||sidePayload.variants.length!==5)throw Error('individual-page independent variant payload mismatch');
     if(sidePayload.variants.some(variant=>variant.pageCode==='HOF'&&variant.eventRole==='RIGHT'))throw Error('HOF right variant must not be created');
     const firstLeft=sidePayload.variants.find(variant=>variant.eventRole==='LEFT'),firstRight=sidePayload.variants.find(variant=>variant.eventRole==='RIGHT');
     if(firstLeft.items.map(item=>item.assetId).join('|')!=='2|1|3')throw Error('left-side image order mismatch');
     if(firstRight.items.map(item=>item.assetId).join('|')!=='1|3')throw Error('right-side image selection mismatch');
-    const sidePage=document.querySelector('[data-banner-event-workflow="side"] [data-bew-page]');sidePage.value='HOF';fire(sidePage,'change');
+    for(const code of ['HOME','RANKING'])document.querySelector(`[data-banner-event-workflow="side"] [data-bew-page-code="${code}"]`).click();
     if(document.querySelectorAll('[data-banner-event-workflow="side"] [data-bew-variant]').length!==1)throw Error('HOF must show left settings only');
     sidePayload=window.KinojoAdmin.getBannerEventPayload('side');
     if(sidePayload.variants.length!==1||sidePayload.variants[0].eventRole!=='LEFT'||sidePayload.variants[0].slotCodes.join('|')!=='LEFT')throw Error('HOF left-only payload mismatch');
+    document.querySelector('[data-banner-event-workflow="side"] [data-bew-page-code="HOF"]').click();
+    const eventSaveBefore=state.calls.filter(action=>action==='event-save').length;document.querySelector('[data-banner-event-workflow="side"] [data-bew-publish]').click();await sleep(40);
+    if(state.calls.filter(action=>action==='event-save').length!==eventSaveBefore||!document.querySelector('[data-banner-event-workflow="side"] [data-bew-action-status]')?.textContent.includes('노출 페이지'))throw Error('zero-page publish must stop at stage 3 without saving');
+    document.querySelector('[data-banner-event-workflow="side"] [data-bew-page-code="HOF"]').click();
     document.querySelector('#adminTopSubnav [data-admin-subtab="main"]').click();
     await waitFor(()=>!mainPanel.hidden&&sidePanel.hidden&&mainPanel.classList.contains('active'),'main banner tab return');
     if(location.hash!=='#images/main')throw Error('main banner return route mismatch');
@@ -260,7 +287,7 @@ async function run(){
     document.querySelector('[data-banner-event-workflow="main"] [data-bew-save-draft]').click();
     await waitFor(()=>state.calls.includes('event-save'),'stage-5 draft save');
     if(state.calls.includes('event-publish'))throw Error('draft save must not publish');
-    const required=['upload-prepare','upload-complete','asset-title-check','asset-list','overlay-asset-list','event-save'];for(const action of required)if(!state.calls.includes(action))throw Error('missing browser action '+action);
+    const required=['event-targets','upload-prepare','upload-complete','asset-title-check','asset-list','overlay-asset-list','event-save'];for(const action of required)if(!state.calls.includes(action))throw Error('missing browser action '+action);
     window.KinojoAdmin.getBannerEventWorkflowState('main').overlays={};
     document.querySelector('[data-banner-event-workflow="main"] [data-bew-publish]').click();
     await waitFor(()=>!document.querySelector('[data-banner-event-workflow="main"] [data-bew-result-notice]')?.hidden,'publish readback and automatic reset',12000);
@@ -270,7 +297,7 @@ async function run(){
     if(!document.querySelector('[data-banner-event-workflow="main"] [data-bew-result-notice]')?.textContent.includes('Chrome E2E 메인 이벤트')||!state.calls.includes('event-list'))throw Error('published event identity/readback notice missing');
     document.querySelector('#adminTopSubnav [data-admin-subtab="side"]').click();
     await waitFor(()=>!sidePanel.hidden&&sidePanel.classList.contains('active'),'side banner visual return');
-    const finalPage=document.querySelector('[data-banner-event-workflow="side"] [data-bew-page]');finalPage.value='ALL';fire(finalPage,'change');
+    const finalAllPages=document.querySelector('[data-banner-event-workflow="side"] [data-bew-all-pages]');finalAllPages.checked=true;fire(finalAllPages,'change');
     const target=document.querySelector('#bew-side-3');window.scrollTo(0,target.getBoundingClientRect().top+window.scrollY-110);await sleep(300);
     if(getComputedStyle(document.querySelector('[data-banner-event-workflow="side"] .bew-side-order-item img')).objectFit!=='cover')throw Error('side order preview must use the tall fixed viewing window');
     document.querySelector('#adminTopSubnav [data-admin-subtab="events"]').click();

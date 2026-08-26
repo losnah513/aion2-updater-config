@@ -77,8 +77,8 @@ for(const token of [
   '작성 화면은 새 이벤트를 만들 수 있도록 초기화했습니다.'
 ])assert.ok(workflow.includes(token),`publish readback/reset contract missing: ${token}`);
 
-assert.ok(loader.includes('v2026082603'),'phase-2 stage-3 loader generation missing');
-assert.ok(desktop.includes('admin.js?cache=2026082603'),'desktop loader generation mismatch');
-assert.ok(mobile.includes('admin.js?cache=2026082603'),'mobile loader generation mismatch');
+assert.ok(loader.includes('v2026082604'),'phase-2 stage-4 loader generation missing');
+assert.ok(desktop.includes('admin.js?cache=2026082604'),'desktop loader generation mismatch');
+assert.ok(mobile.includes('admin.js?cache=2026082604'),'mobile loader generation mismatch');
 
 console.log('PASS banner event phase-2 stage-1 shell contract');

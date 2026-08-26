@@ -24,10 +24,12 @@ on:
       - "tests/banner-event-stage3-ui-contract.test.js"
       - "tests/banner-event-phase2-stage1-shell-contract.test.js"
       - "tests/banner-event-phase2-stage3-preview-order-contract.test.js"
+      - "tests/banner-event-phase2-stage4-page-selection-contract.test.js"
       - "tests/banner-event-manager-v398-contract.test.js"
       - "tests/banner-legacy-lookbook-groups-v399-contract.test.js"
       - "supabase/functions/kinojo-banner-media/index.ts"
       - "supabase/migrations/20260826020948_banner_asset_titles_tags_v403.sql"
+      - "supabase/migrations/20260826045246_banner_event_page_targets_v404.sql"
       - "supabase/migrations/20260824143000_banner_event_manager_v398.sql"
       - "supabase/migrations/20260824232500_attach_legacy_lookbooks_v399.sql"
       - "tests/banner-admin-chrome-e2e.html"
@@ -55,10 +57,12 @@ on:
       - "tests/banner-event-stage3-ui-contract.test.js"
       - "tests/banner-event-phase2-stage1-shell-contract.test.js"
       - "tests/banner-event-phase2-stage3-preview-order-contract.test.js"
+      - "tests/banner-event-phase2-stage4-page-selection-contract.test.js"
       - "tests/banner-event-manager-v398-contract.test.js"
       - "tests/banner-legacy-lookbook-groups-v399-contract.test.js"
       - "supabase/functions/kinojo-banner-media/index.ts"
       - "supabase/migrations/20260826020948_banner_asset_titles_tags_v403.sql"
+      - "supabase/migrations/20260826045246_banner_event_page_targets_v404.sql"
       - "supabase/migrations/20260824143000_banner_event_manager_v398.sql"
       - "supabase/migrations/20260824232500_attach_legacy_lookbooks_v399.sql"
       - "tests/banner-admin-chrome-e2e.html"
@@ -107,6 +111,7 @@ jobs:
           node tests/banner-event-stage3-ui-contract.test.js
           node tests/banner-event-phase2-stage1-shell-contract.test.js
           node tests/banner-event-phase2-stage3-preview-order-contract.test.js
+          node tests/banner-event-phase2-stage4-page-selection-contract.test.js
           node tests/banner-event-manager-v398-contract.test.js
           node tests/banner-legacy-lookbook-groups-v399-contract.test.js
           chrome="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"

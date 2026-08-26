@@ -1,7 +1,7 @@
 const S = "kinojo-banner-media",
-  V = "2.1",
-  DB = "403",
-  EVENT = "402",
+  V = "2.2",
+  DB = "404",
+  EVENT = "404",
   UPLOAD = "403",
   MASTER = "337",
   STORAGE = "382",
@@ -63,6 +63,13 @@ const ERR: Record<string, string> = {
   BANNER_EVENT_GROUP_ID_INVALID: "이미지 이벤트 식별자가 올바르지 않습니다.",
   BANNER_EVENT_PAYLOAD_INVALID: "이미지 이벤트 설정을 확인해 주세요.",
   BANNER_EVENT_ITEMS_REQUIRED: "게시할 활성 이미지를 한 장 이상 선택해 주세요.",
+  BANNER_EVENT_TARGET_PAGE_CONTRACT_INVALID:
+    "노출 페이지 목록이 갱신되었습니다. 관리자 화면을 새로고침해 주세요.",
+  BANNER_EVENT_TARGET_PAGES_INVALID: "노출 페이지 선택을 다시 확인해 주세요.",
+  BANNER_EVENT_TARGET_PAGES_REQUIRED:
+    "전체 게시 전에 노출 페이지를 한 곳 이상 선택해 주세요.",
+  BANNER_EVENT_TARGET_VARIANTS_MISMATCH:
+    "노출 페이지와 좌우 이미지 설정이 일치하지 않습니다.",
   BANNER_EVENT_MOVE_DIRECTION_INVALID: "이벤트 이동 방향이 올바르지 않습니다.",
   BANNER_EVENT_ROTATION_MODE_INVALID:
     "전체 이벤트 노출 방식은 순차 또는 랜덤 순환만 선택할 수 있습니다.",
@@ -1056,8 +1063,12 @@ async function event(r: Request, b: any, t: string, a: string) {
   let d: any;
   if (a === "event-playback") {
     return out(r, { ok: false, code: "BANNER_EVENT_PLAYBACK_RETIRED" }, 409);
+  } else if (a === "event-targets") {
+    d = await rpc("kinojo_banner_event_targets_v404", {
+      p_session_token: t,
+    });
   } else if (a === "event-list") {
-    d = await rpc("kinojo_banner_event_list_v402", {
+    d = await rpc("kinojo_banner_event_list_v404", {
       p_session_token: t,
       p_include_archived: b.includeArchived !== false,
     });
@@ -1068,7 +1079,7 @@ async function event(r: Request, b: any, t: string, a: string) {
     const rawId = txt(b.eventGroupId ?? b.event_group_id, 80);
     if (rawId && !K.test(rawId))
       return out(r, { ok: false, code: "BANNER_EVENT_GROUP_ID_INVALID" }, 400);
-    d = await rpc("kinojo_banner_event_save_v402", {
+    d = await rpc("kinojo_banner_event_save_v404", {
       p_session_token: t,
       p_event_group_id: rawId || null,
       p_payload: payload,
@@ -1077,7 +1088,7 @@ async function event(r: Request, b: any, t: string, a: string) {
     const id = txt(b.eventGroupId ?? b.event_group_id, 80);
     if (!K.test(id))
       return out(r, { ok: false, code: "BANNER_EVENT_GROUP_ID_REQUIRED" }, 400);
-    d = await rpc("kinojo_banner_event_publish_v402", {
+    d = await rpc("kinojo_banner_event_publish_v404", {
       p_session_token: t,
       p_event_group_id: id,
     });
@@ -1433,6 +1444,7 @@ Deno.serve(async (r) => {
           "campaign-archive",
           "campaign-restore",
           "campaign-delete",
+          "event-targets",
           "event-list",
           "event-save",
           "event-publish",
@@ -1468,6 +1480,7 @@ Deno.serve(async (r) => {
         "campaign-delete",
       ],
       ee = [
+        "event-targets",
         "event-list",
         "event-save",
         "event-publish",

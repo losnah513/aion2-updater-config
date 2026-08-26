@@ -7,8 +7,8 @@ const root=path.resolve(__dirname,'..');
 const workflow=fs.readFileSync(path.join(root,'admin/js/admin-banner-event-workflow.js'),'utf8');
 
 for(const token of [
-  'banner event workflow phase 2 stage 3 v2026082603',
-  "root.dataset.bannerEventStage='phase2-3'",
+  'banner event workflow phase 2 stage 4 v2026082604',
+  "root.dataset.bannerEventStage='phase2-4'",
   'function previewButton(',
   'const isTallPreview=',
   '상단~중간 · 전체 보기',
