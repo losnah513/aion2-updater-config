@@ -13,6 +13,7 @@
 
 ## 운영 계약
 
+- GitHub: PR `#271` (`codex/my-page-phase2-admin-20260826`)
 - Supabase migration: `20260826055902 / member_image_request_admin_workflow_v405`
 - 저장소 migration source: `supabase/migrations/20260826053325_member_image_request_admin_workflow_v405.sql`
 - Edge: `kinojo-member-profile` v24 ACTIVE, API 2.7 유지, admin image request contract 405 추가

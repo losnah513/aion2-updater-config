@@ -306,7 +306,7 @@
 
 ## My Info 2차 · 3단계 관리자 제작 요청 확인·처리 · 2026-08-26
 
-- 3단계는 `codex/my-page-phase2-admin-20260826` 브랜치에서 구현했으며, 운영 migration `20260826055902 member_image_request_admin_workflow_v405`와 `kinojo-member-profile` v24 ACTIVE를 먼저 readback했다.
+- 3단계는 PR `#271` (`codex/my-page-phase2-admin-20260826`)에서 구현했으며, 운영 migration `20260826055902 member_image_request_admin_workflow_v405`와 `kinojo-member-profile` v24 ACTIVE를 먼저 readback했다.
 - 기존 회원별 이미지 목록과 캐릭터 선택 구조를 유지하고, 선택 캐릭터 아래에 최신순 제작 요청 카드만 출력한다. 요청 상세는 카드 한 건을 선택했을 때만 열며 스타일·요청문·실제 첨부 슬롯·보존 상태·감사 이력을 표시한다.
 - MASTER 상태 처리는 `SUBMITTED → IN_PROGRESS/REJECTED`, `IN_PROGRESS → COMPLETED/REJECTED`만 허용한다. 동일 상태 재호출은 멱등이며 실제 변경은 MASTER actor로 상태 이력에 남긴다.
 - 신규 list/detail/status/asset RPC 4개는 service_role 전용이다. 목록·상세에는 private path나 URL이 없고, 미리보기·다운로드를 누른 순간에만 기존 private Storage에서 최대 60초 signed URL을 발급한다.
