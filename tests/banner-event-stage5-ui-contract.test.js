@@ -6,7 +6,7 @@ const root=path.resolve(__dirname,'..');
 const workflow=fs.readFileSync(path.join(root,'admin/js/admin-banner-event-workflow.js'),'utf8');
 
 for(const token of [
-  'banner event workflow phase 2 stage 6 integration',
+  'banner event workflow phase 2 stage 7 integration',
   '이미지별 콘텐츠 편집',
   '내 스티커 보관함',
   "const EMOJIS=",
@@ -34,8 +34,8 @@ for(const token of [
   '원본과 편집 설정은 재편집용으로 계속 보관됩니다.',
 ])assert.ok(workflow.includes(token),`missing stage-5 UI token: ${token}`);
 
-assert.ok(workflow.includes("layers.filter(layer=>layer.type==='TEXT').length<LIMIT"),'text maximum must be three');
-assert.ok(workflow.includes("layers.filter(layer=>layer.type!=='TEXT').length<LIMIT"),'decoration maximum must be three');
+assert.ok(workflow.includes("layers.filter(layer=>layer.type==='TEXT').length<LAYER_LIMIT"),'text maximum must be three');
+assert.ok(workflow.includes("layers.filter(layer=>layer.type!=='TEXT').length<LAYER_LIMIT"),'decoration maximum must be three');
 assert.ok(workflow.includes("position:fixed;z-index:12020;right:24px;bottom:20px"),'fixed bottom-right action dock missing');
 assert.ok(workflow.includes("target?.scrollIntoView({behavior:'smooth',block:'start'})"),'sticky-safe missing-field navigation missing');
 assert.ok(workflow.includes("contentOverlays:(s.overlays[Number(id)]||[])"),'general content payload missing');

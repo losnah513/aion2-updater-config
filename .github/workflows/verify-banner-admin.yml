@@ -16,6 +16,7 @@ on:
       - "admin/js/admin-banner-events.js"
       - "admin/js/admin-banner-tabs.js"
       - "admin/js/admin-banner-library.js"
+      - "admin/js/admin-banner-auto-pool.js"
       - "admin/js/admin-banner-quality.js"
       - "tests/banner-admin-main-ui-contract.test.js"
       - "tests/banner-admin-side-ui-contract.test.js"
@@ -28,6 +29,7 @@ on:
       - "tests/banner-event-phase2-stage4-page-selection-contract.test.js"
       - "tests/banner-event-phase2-stage5-editor-contract.test.js"
       - "tests/banner-event-phase2-stage6-library-contract.test.js"
+      - "tests/banner-event-phase2-stage7-character-auto-pool-contract.test.js"
       - "tests/banner-event-stage4-ui-contract.test.js"
       - "tests/banner-event-stage5-ui-contract.test.js"
       - "tests/banner-content-overlay-v396-contract.test.js"
@@ -38,6 +40,10 @@ on:
       - "supabase/migrations/20260826045246_banner_event_page_targets_v404.sql"
       - "supabase/migrations/20260826054751_banner_overlay_name_uniqueness_v405.sql"
       - "supabase/migrations/20260826065731_banner_asset_library_v406.sql"
+      - "supabase/migrations/20260826075456_banner_character_auto_pool_v407.sql"
+      - "supabase/migrations/20260826084259_banner_eventless_pool_priority_v408.sql"
+      - "supabase/migrations/20260826084607_banner_eventless_pool_activation_v409.sql"
+      - "supabase/migrations/20260826091642_banner_stage7_security_performance_v410.sql"
       - "supabase/migrations/20260824143000_banner_event_manager_v398.sql"
       - "supabase/migrations/20260824232500_attach_legacy_lookbooks_v399.sql"
       - "tests/banner-admin-chrome-e2e.html"
@@ -57,6 +63,7 @@ on:
       - "admin/js/admin-banner-events.js"
       - "admin/js/admin-banner-tabs.js"
       - "admin/js/admin-banner-library.js"
+      - "admin/js/admin-banner-auto-pool.js"
       - "admin/js/admin-banner-quality.js"
       - "tests/banner-admin-main-ui-contract.test.js"
       - "tests/banner-admin-side-ui-contract.test.js"
@@ -69,6 +76,7 @@ on:
       - "tests/banner-event-phase2-stage4-page-selection-contract.test.js"
       - "tests/banner-event-phase2-stage5-editor-contract.test.js"
       - "tests/banner-event-phase2-stage6-library-contract.test.js"
+      - "tests/banner-event-phase2-stage7-character-auto-pool-contract.test.js"
       - "tests/banner-event-stage4-ui-contract.test.js"
       - "tests/banner-event-stage5-ui-contract.test.js"
       - "tests/banner-content-overlay-v396-contract.test.js"
@@ -79,6 +87,10 @@ on:
       - "supabase/migrations/20260826045246_banner_event_page_targets_v404.sql"
       - "supabase/migrations/20260826054751_banner_overlay_name_uniqueness_v405.sql"
       - "supabase/migrations/20260826065731_banner_asset_library_v406.sql"
+      - "supabase/migrations/20260826075456_banner_character_auto_pool_v407.sql"
+      - "supabase/migrations/20260826084259_banner_eventless_pool_priority_v408.sql"
+      - "supabase/migrations/20260826084607_banner_eventless_pool_activation_v409.sql"
+      - "supabase/migrations/20260826091642_banner_stage7_security_performance_v410.sql"
       - "supabase/migrations/20260824143000_banner_event_manager_v398.sql"
       - "supabase/migrations/20260824232500_attach_legacy_lookbooks_v399.sql"
       - "tests/banner-admin-chrome-e2e.html"
@@ -117,6 +129,7 @@ jobs:
             admin/js/admin-banner-events.js \
             admin/js/admin-banner-tabs.js \
             admin/js/admin-banner-library.js \
+            admin/js/admin-banner-auto-pool.js \
             admin/js/admin-banner-quality.js; do
             node --check "$path"
           done
@@ -131,6 +144,7 @@ jobs:
           node tests/banner-event-phase2-stage4-page-selection-contract.test.js
           node tests/banner-event-phase2-stage5-editor-contract.test.js
           node tests/banner-event-phase2-stage6-library-contract.test.js
+          node tests/banner-event-phase2-stage7-character-auto-pool-contract.test.js
           node tests/banner-event-stage4-ui-contract.test.js
           node tests/banner-event-stage5-ui-contract.test.js
           node tests/banner-content-overlay-v396-contract.test.js

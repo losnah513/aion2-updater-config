@@ -29,9 +29,9 @@ for(const token of [
 ])assert.ok(migration.includes(token),`missing v396 migration token: ${token}`);
 
 for(const token of [
-  'V = "2.4"',
-  'DB = "406"',
-  'EVENT = "404"',
+  'V = "2.5"',
+  'DB = "409"',
+  'EVENT = "407"',
   '"overlay-asset-list"',
   '"overlay-upload-prepare"',
   '"overlay-upload-complete"',
@@ -39,9 +39,9 @@ for(const token of [
   '"composite-upload-complete"',
   'kinojo_banner_overlay_asset_register_v405',
   'kinojo_banner_composite_register_v396',
-  'kinojo_banner_event_save_v404',
+  'kinojo_banner_event_save_v407',
   'kinojo_banner_event_publish_v404',
-  'kinojo_banner_manifest_v402',
+  'kinojo_banner_manifest_v409',
   'publishedMedia: "FLATTENED_COMPOSITE_WHEN_CONTENT_EXISTS"',
 ])assert.ok(edge.includes(token),`missing v396 Edge token: ${token}`);
 

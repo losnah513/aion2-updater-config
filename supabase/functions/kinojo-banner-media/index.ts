@@ -1,14 +1,14 @@
 const S = "kinojo-banner-media",
-  V = "2.4",
-  DB = "406",
-  EVENT = "404",
+  V = "2.5",
+  DB = "409",
+  EVENT = "407",
   UPLOAD = "403",
   MASTER = "337",
   STORAGE = "382",
   B = "kinojo-site-banners",
   MAX = 5242880,
   TTL = 7200,
-  REQ = 65536;
+  REQ = 4194304;
 const M = ["image/jpeg", "image/png", "image/webp"],
   F = ["MAIN_16_9", "SIDE_300_715"],
   T = /^kws_[A-Za-z0-9_-]{40,80}$/,
@@ -20,6 +20,8 @@ const MUT = new Set([
   "upload-prepare",
   "upload-complete",
   "asset-update",
+  "asset-character-set",
+  "asset-representative-set",
   "asset-archive",
   "asset-restore",
   "asset-delete",
@@ -40,6 +42,11 @@ const MUT = new Set([
   "overlay-upload-complete",
   "composite-upload-prepare",
   "composite-upload-complete",
+  "auto-pool-save",
+  "auto-pool-state",
+  "auto-pool-delete",
+  "pool-composite-upload-prepare",
+  "pool-composite-upload-complete",
 ]);
 const ERR: Record<string, string> = {
   METHOD_NOT_ALLOWED: "허용되지 않은 요청 방식입니다.",
@@ -89,6 +96,24 @@ const ERR: Record<string, string> = {
   BANNER_ASSET_TITLE_DUPLICATE: "이미 사용 중인 이미지 제목입니다.",
   BANNER_ASSET_TAGS_INVALID:
     "해시태그는 최대 5개, 태그당 20자 이내의 글자·숫자·공백·밑줄·하이픈만 사용할 수 있습니다.",
+  BANNER_CHARACTER_QUERY_INVALID: "캐릭터 이름을 한 글자 이상 입력해 주세요.",
+  BANNER_CHARACTER_NOT_ACTIVE: "현재 사용할 수 있는 캐릭터 마스터 항목이 아닙니다.",
+  BANNER_CHARACTER_UNLINK_CONFIRMATION_REQUIRED: "캐릭터 연결 해제를 확인해 주세요.",
+  BANNER_REPRESENTATIVE_REPLACE_CONFIRMATION_REQUIRED: "이미 등록된 대표 이미지를 교체할지 확인해 주세요.",
+  BANNER_AUTO_POOL_ASSET_REQUIRED: "자동 순환 풀에 사용할 이미지를 한 장 이상 선택해 주세요.",
+  BANNER_AUTO_POOL_ASSETS_MAX_99: "자동 순환 풀에는 이미지를 최대 99장까지 넣을 수 있습니다.",
+  BANNER_AUTO_POOL_NAME_INVALID: "자동 순환 풀의 관리 이름을 입력해 주세요.",
+  BANNER_AUTO_POOL_NAME_DUPLICATE: "이미 사용 중인 자동 순환 풀 이름입니다.",
+  BANNER_AUTO_POOL_TARGET_REQUIRED: "자동 순환 풀의 노출 페이지와 위치를 선택해 주세요.",
+  BANNER_AUTO_POOL_TARGET_INVALID: "자동 순환 풀의 노출 페이지를 다시 확인해 주세요.",
+  BANNER_AUTO_POOL_TARGET_FORMAT_MISMATCH: "배너 형식과 노출 페이지·위치가 맞지 않습니다.",
+  BANNER_AUTO_POOL_ASSET_INVALID: "선택 이미지 중 현재 사용할 수 없거나 배너 형식이 다른 항목이 있습니다.",
+  BANNER_AUTO_POOL_SETTING_INVALID: "자동 순환 풀의 시간·전환·문구 설정을 확인해 주세요.",
+  BANNER_AUTO_POOL_ELIGIBLE_ASSET_REQUIRED: "현재 조건에서 노출할 수 있는 이미지가 한 장 이상 필요합니다.",
+  BANNER_AUTO_POOL_COMPOSITES_REQUIRED: "캐릭터 이름띠 합성본을 모두 만든 뒤 활성화해 주세요.",
+  BANNER_AUTO_POOL_DISABLE_REQUIRED: "자동 순환 풀을 먼저 비활성화해 주세요.",
+  BANNER_AUTO_POOL_DELETE_CONFIRMATION_MISMATCH: "영구 삭제 확인을 위해 풀 이름을 정확히 입력해 주세요.",
+  BANNER_EVENT_ITEMS_MAX_99: "한 노출 묶음에는 이미지를 최대 99장까지 넣을 수 있습니다.",
   BANNER_COMPOSITE_REQUIRED: "콘텐츠가 합쳐진 게시용 이미지를 먼저 만들어 주세요.",
   BANNER_SERVER_ERROR: "배너 요청을 처리하는 중 서버 오류가 발생했습니다.",
 };
@@ -361,6 +386,7 @@ function stat(c: string) {
       "BANNER_ASSET_NOT_FOUND",
       "BANNER_CAMPAIGN_NOT_FOUND",
       "BANNER_EVENT_NOT_FOUND",
+      "BANNER_AUTO_POOL_NOT_FOUND",
     ].includes(c)
   )
     return 404;
@@ -593,6 +619,11 @@ async function complete(r: Request, b: any, t: string) {
     return out(r, { ok: false, code: "BANNER_ASSET_TITLE_INVALID" }, 400);
   const tagResult = assetTags(b.tags);
   if (!tagResult.ok) return out(r, tagResult, 400);
+  const characterId = pos(b.characterId ?? b.character_id),
+    hasUnlinkedConfirmation = has(b, ["unlinkedConfirmed", "unlinked_confirmed"]),
+    unlinkedConfirmed = b.unlinkedConfirmed === true || b.unlinked_confirmed === true || !hasUnlinkedConfirmation;
+  if (characterId === null && !unlinkedConfirmed)
+    return out(r, { ok: false, code: "BANNER_CHARACTER_UNLINK_CONFIRMATION_REQUIRED" }, 400);
   const p = txt(b.objectPath ?? b.object_path, 1024);
   if (!p)
     return out(r, { ok: false, code: "BANNER_OBJECT_PATH_REQUIRED" }, 400);
@@ -604,6 +635,14 @@ async function complete(r: Request, b: any, t: string) {
   });
   if (g.ok !== true)
     return out(r, { ok: false, code: txt(g.code, 80) }, stat(txt(g.code, 80)));
+  if (characterId !== null) {
+    const resolved = await rpc("kinojo_banner_character_resolve_v407", {
+      p_session_token: t,
+      p_character_id: characterId,
+    });
+    if (resolved.ok !== true)
+      return out(r, { ok: false, code: txt(resolved.code, 80), candidateRetainedForRetry: true }, stat(txt(resolved.code, 80)));
+  }
   const s: any = await obj(p);
   if (!s.ok) return out(r, s, 409);
   if (s.mime !== f.mime || s.size !== f.size || s.size < 1 || s.size > MAX) {
@@ -664,6 +703,19 @@ async function complete(r: Request, b: any, t: string) {
       stat(txt(a.code, 80)),
     );
   }
+  const linked = await rpc("kinojo_banner_asset_character_set_v407", {
+    p_session_token: t,
+    p_asset_id: pos(a.asset?.assetId),
+    p_character_id: characterId,
+    p_unlinked_confirmed: unlinkedConfirmed,
+  });
+  if (linked.ok !== true)
+    return out(r, {
+      ok: false,
+      code: txt(linked.code, 80),
+      assetRegistered: true,
+      candidateRetainedForRecovery: true,
+    }, stat(txt(linked.code, 80)));
   const { url } = ctx();
   return out(r, {
     ok: true,
@@ -672,7 +724,7 @@ async function complete(r: Request, b: any, t: string) {
     databaseContract: DB,
     uploadContract: UPLOAD,
     contract: "banner-asset-upload-complete-api-v3",
-    asset: a.asset,
+    asset: linked.asset,
     image: {
       bucket: B,
       objectPath: p,
@@ -836,7 +888,7 @@ async function compositeComplete(r: Request, b: any, t: string) {
 }
 async function asset(r: Request, b: any, t: string, a: string) {
   if (a === "asset-library") {
-    const d = await rpc("kinojo_banner_asset_library_v406", {
+    const d = await rpc("kinojo_banner_asset_library_v407", {
       p_session_token: t,
       p_include_archived: b.includeArchived === true,
     });
@@ -879,6 +931,25 @@ async function asset(r: Request, b: any, t: string, a: string) {
       p_title: title,
       p_tags: tagResult.tags,
       p_default_alt: txt(b.defaultAlt ?? b.default_alt, 300),
+    });
+    return d.ok === true ? out(r, d) : out(r, d, stat(txt(d.code, 80)));
+  }
+  if (a === "asset-character-set") {
+    const characterId = pos(b.characterId ?? b.character_id),
+      d = await rpc("kinojo_banner_asset_character_set_v407", {
+        p_session_token: t,
+        p_asset_id: id,
+        p_character_id: characterId,
+        p_unlinked_confirmed: b.unlinkedConfirmed === true || b.unlinked_confirmed === true,
+      });
+    return d.ok === true ? out(r, d) : out(r, d, stat(txt(d.code, 80)));
+  }
+  if (a === "asset-representative-set") {
+    const d = await rpc("kinojo_banner_asset_representative_set_v407", {
+      p_session_token: t,
+      p_asset_id: id,
+      p_enabled: b.enabled === true,
+      p_expected_asset_id: pos(b.expectedAssetId ?? b.expected_asset_id),
     });
     return d.ok === true ? out(r, d) : out(r, d, stat(txt(d.code, 80)));
   }
@@ -961,6 +1032,93 @@ async function overlayAssets(r: Request, b: any, t: string) {
     contract: "banner-overlay-asset-list-api-v1",
     assets,
   });
+}
+async function characterSearch(r: Request, b: any, t: string) {
+  const query = txt(b.query ?? b.characterName ?? b.character_name, 60);
+  if (!query) return out(r, { ok: false, code: "BANNER_CHARACTER_QUERY_INVALID" }, 400);
+  const d = await rpc("kinojo_banner_character_search_v407", {
+    p_session_token: t,
+    p_query: query,
+    p_limit: Math.max(1, Math.min(30, Math.floor(num(b.limit) ?? 20))),
+  });
+  return d.ok === true ? out(r, d) : out(r, d, stat(txt(d.code, 80)));
+}
+async function poolCompositeComplete(r: Request, b: any, t: string) {
+  const verified: any = await verifiedMedia(r, b, t);
+  if (verified.response) return verified.response;
+  const poolId = pos(b.poolId ?? b.pool_id), assetId = pos(b.assetId ?? b.asset_id);
+  if (poolId === null || assetId === null)
+    return out(r, { ok: false, code: "BANNER_AUTO_POOL_COMPOSITE_TARGET_INVALID" }, 400);
+  const d = await rpc("kinojo_banner_auto_pool_composite_register_v407", {
+    p_session_token: t,
+    p_pool_id: poolId,
+    p_asset_id: assetId,
+    p_object_path: verified.p,
+    p_mime_type: verified.stored.mime,
+    p_size_bytes: verified.stored.size,
+    p_width: verified.dimensions.w,
+    p_height: verified.dimensions.h,
+  });
+  if (d.ok !== true)
+    return out(r, { ok: false, code: txt(d.code, 80), candidateRetainedForCleanup: true }, stat(txt(d.code, 80)));
+  return out(r, {
+    ...d,
+    image: {
+      bucket: B,
+      objectPath: verified.p,
+      mimeType: verified.stored.mime,
+      sizeBytes: verified.stored.size,
+      width: verified.dimensions.w,
+      height: verified.dimensions.h,
+      activation: "AUTO_POOL_COMPOSITE_READY",
+    },
+  });
+}
+async function autoPool(r: Request, b: any, t: string, a: string) {
+  let d: any;
+  if (a === "auto-pool-list") {
+    d = await rpc("kinojo_banner_auto_pool_list_v407", { p_session_token: t });
+  } else if (a === "auto-pool-save") {
+    const payload = rec(b.pool ?? b.payload);
+    if (!payload) return out(r, { ok: false, code: "BANNER_AUTO_POOL_PAYLOAD_INVALID" }, 400);
+    const assetIds = Array.isArray(payload.assetIds) ? payload.assetIds : [];
+    if (assetIds.length < 1)
+      return out(r, { ok: false, code: "BANNER_AUTO_POOL_ASSET_REQUIRED" }, 400);
+    if (assetIds.length > 99)
+      return out(r, { ok: false, code: "BANNER_AUTO_POOL_ASSETS_MAX_99" }, 400);
+    d = await rpc("kinojo_banner_auto_pool_save_v407", {
+      p_session_token: t,
+      p_pool_id: pos(b.poolId ?? b.pool_id),
+      p_payload: payload,
+    });
+  } else if (a === "auto-pool-state") {
+    const poolId = pos(b.poolId ?? b.pool_id);
+    if (poolId === null) return out(r, { ok: false, code: "BANNER_AUTO_POOL_ID_REQUIRED" }, 400);
+    d = await rpc("kinojo_banner_auto_pool_state_v407", {
+      p_session_token: t,
+      p_pool_id: poolId,
+      p_enabled: b.enabled === true,
+    });
+  } else {
+    const poolId = pos(b.poolId ?? b.pool_id), expectedName = txt(b.expectedName ?? b.expected_name, 120);
+    if (poolId === null || !expectedName)
+      return out(r, { ok: false, code: "BANNER_AUTO_POOL_DELETE_CONFIRMATION_MISMATCH" }, 400);
+    d = await rpc("kinojo_banner_auto_pool_delete_v407", {
+      p_session_token: t,
+      p_pool_id: poolId,
+      p_expected_name: expectedName,
+    });
+    if (d.ok === true) {
+      const failed: string[] = [];
+      for (const path of Array.isArray(d.compositeObjectPaths) ? d.compositeObjectPaths : []) {
+        const safe = txt(path, 1024);
+        if (safe && !(await del(safe))) failed.push(safe);
+      }
+      d.storageCleanupFailedCount = failed.length;
+      d.storageCleanupDeferred = failed.length > 0;
+    }
+  }
+  return d.ok === true ? out(r, d) : out(r, d, stat(txt(d.code, 80)));
 }
 async function orphan(r: Request, b: any, t: string) {
   const h = Math.max(
@@ -1095,7 +1253,7 @@ async function event(r: Request, b: any, t: string, a: string) {
     const rawId = txt(b.eventGroupId ?? b.event_group_id, 80);
     if (rawId && !K.test(rawId))
       return out(r, { ok: false, code: "BANNER_EVENT_GROUP_ID_INVALID" }, 400);
-    d = await rpc("kinojo_banner_event_save_v404", {
+    d = await rpc("kinojo_banner_event_save_v407", {
       p_session_token: t,
       p_event_group_id: rawId || null,
       p_payload: payload,
@@ -1250,7 +1408,7 @@ async function manifest(r: Request, b: any) {
       { ok: false, code: "PUBLIC_MANIFEST_SELECTOR_FORBIDDEN" },
       400,
     );
-  const d = await rpc("kinojo_banner_manifest_v402", {
+  const d = await rpc("kinojo_banner_manifest_v409", {
     p_page_code: page,
     p_slot_code: slot,
   });
@@ -1319,6 +1477,8 @@ async function manifest(r: Request, b: any) {
         ? direction
         : "NONE",
       textOverlay: publicOverlay(x.textOverlay),
+      sourceMode: txt(x.sourceMode, 30) === "AUTO_LIBRARY_POOL" ? "AUTO_LIBRARY_POOL" : "CAMPAIGN",
+      characterName: txt(x.characterName, 60) || null,
     });
   }
   const q = rec(d.rotation),
@@ -1351,6 +1511,9 @@ async function manifest(r: Request, b: any) {
     eventRotationMode:
       d.eventRotationMode === "RANDOM_CYCLE" ? "RANDOM_CYCLE" : "ORDERED",
     eventRotationScope: "FORMAL_EVENT_GROUPS_ONLY",
+    eventlessAutoPoolMode:
+      d.eventlessAutoPoolMode === "FORMAL_EVENT_EMPTY_ONLY" ? "FORMAL_EVENT_EMPTY_ONLY" : "DISABLED",
+    activeAutoPoolItemCount: Math.max(0, Math.floor(num(d.activeAutoPoolItemCount) ?? 0)),
     playbackOrderMode:
       d.eventRotationMode === "RANDOM_CYCLE"
         ? "GLOBAL_EVENT_RANDOM_CYCLE"
@@ -1435,6 +1598,8 @@ Deno.serve(async (r) => {
           playlistAuthority: "SERVER",
           exposureMode: "ALL_ACTIVE_PUBLISHED_ITEMS",
           eventRotationAuthority: "SERVER_GLOBAL_FORMAL_EVENT_GROUPS",
+          eventlessAutoPoolAuthority: "SERVER_FORMAL_EVENT_EMPTY_ONLY_EXPLICIT_READY_ASSETS",
+          maxItemsPerEventVariant: 99,
           inactiveItemsExcluded: true,
           publicManifestAnonymous: true,
           internalIdsExposed: false,
@@ -1446,9 +1611,12 @@ Deno.serve(async (r) => {
           "asset-library",
           "asset-list",
           "asset-title-check",
+          "character-search",
           "upload-prepare",
           "upload-complete",
           "asset-update",
+          "asset-character-set",
+          "asset-representative-set",
           "asset-archive",
           "asset-restore",
           "asset-delete",
@@ -1474,6 +1642,12 @@ Deno.serve(async (r) => {
           "overlay-upload-complete",
           "composite-upload-prepare",
           "composite-upload-complete",
+          "auto-pool-list",
+          "auto-pool-save",
+          "auto-pool-state",
+          "auto-pool-delete",
+          "pool-composite-upload-prepare",
+          "pool-composite-upload-complete",
           "manifest",
         ],
       });
@@ -1482,7 +1656,10 @@ Deno.serve(async (r) => {
         "asset-library",
         "asset-list",
         "asset-title-check",
+        "character-search",
         "asset-update",
+        "asset-character-set",
+        "asset-representative-set",
         "asset-archive",
         "asset-restore",
         "asset-delete",
@@ -1515,6 +1692,14 @@ Deno.serve(async (r) => {
         "composite-upload-prepare",
         "composite-upload-complete",
       ],
+      pp = [
+        "auto-pool-list",
+        "auto-pool-save",
+        "auto-pool-state",
+        "auto-pool-delete",
+        "pool-composite-upload-prepare",
+        "pool-composite-upload-complete",
+      ],
       allow = [
         ...aa,
         "upload-prepare",
@@ -1523,6 +1708,7 @@ Deno.serve(async (r) => {
         ...cc,
         ...ee,
         ...oo,
+        ...pp,
       ];
     if (!allow.includes(a))
       return out(r, { ok: false, code: "UNSUPPORTED_ACTION" }, 400);
@@ -1536,7 +1722,11 @@ Deno.serve(async (r) => {
       if (a === "overlay-upload-complete") return await overlayComplete(r, b, t);
       if (a === "composite-upload-prepare") return await mediaPrep(r, b, t, "composite");
       if (a === "composite-upload-complete") return await compositeComplete(r, b, t);
+      if (a === "pool-composite-upload-prepare") return await mediaPrep(r, b, t, "pool-composite");
+      if (a === "pool-composite-upload-complete") return await poolCompositeComplete(r, b, t);
       if (a === "overlay-asset-list") return await overlayAssets(r, b, t);
+      if (a === "character-search") return await characterSearch(r, b, t);
+      if (a.startsWith("auto-pool-")) return await autoPool(r, b, t, a);
       if (a === "orphan-cleanup") return await orphan(r, b, t);
       if (aa.includes(a)) return await asset(r, b, t, a);
       if (ee.includes(a)) return await event(r, b, t, a);

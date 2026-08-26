@@ -1,4 +1,4 @@
-/* KINOJO Admin banner management tabs v2026082607 */
+/* KINOJO Admin banner management tabs v2026082608 */
 (function(A){
 'use strict';
 if(!A)throw Error('KINOJO Admin shared module is required.');
@@ -16,7 +16,9 @@ function ensure(){
   if(!main){main=document.createElement('div');main.className='admin-subpane active';main.id='adminBannerMainPanel';main.dataset.bannerManagementPanel='main';main.dataset.adminSubpane='main';main.setAttribute('role','tabpanel');main.setAttribute('aria-labelledby','adminBannerMainTab');nav.after(main)}
   if(!side){side=document.createElement('div');side.className='admin-subpane';side.id='adminBannerSidePanel';side.dataset.bannerManagementPanel='side';side.dataset.adminSubpane='side';side.setAttribute('role','tabpanel');side.setAttribute('aria-labelledby','adminBannerSideTab');side.hidden=true;main.after(side)}
   if(!events){events=document.createElement('div');events.className='admin-subpane';events.id='adminBannerEventsPanel';events.dataset.bannerManagementPanel='events';events.dataset.adminSubpane='events';events.setAttribute('role','tabpanel');events.setAttribute('aria-labelledby','adminBannerEventsTab');events.hidden=true;events.innerHTML='<div data-banner-events-admin></div>';side.after(events)}
-  if(!library){library=document.createElement('div');library.className='admin-subpane';library.id='adminBannerLibraryPanel';library.dataset.bannerManagementPanel='library';library.dataset.adminSubpane='library';library.setAttribute('role','tabpanel');library.setAttribute('aria-labelledby','adminBannerLibraryTab');library.hidden=true;library.innerHTML='<div data-banner-asset-library></div>';events.after(library)}
+  if(!library){library=document.createElement('div');library.className='admin-subpane';library.id='adminBannerLibraryPanel';library.dataset.bannerManagementPanel='library';library.dataset.adminSubpane='library';library.setAttribute('role','tabpanel');library.setAttribute('aria-labelledby','adminBannerLibraryTab');library.hidden=true;library.innerHTML='<div data-banner-asset-library></div><div data-banner-auto-pool></div>';events.after(library)}
+  if(!$('[data-banner-asset-library]',library)){const root=document.createElement('div');root.dataset.bannerAssetLibrary='';library.appendChild(root)}
+  if(!$('[data-banner-auto-pool]',library)){const root=document.createElement('div');root.dataset.bannerAutoPool='';library.appendChild(root)}
   main.dataset.adminSubpane='main';side.dataset.adminSubpane='side';events.dataset.adminSubpane='events';library.dataset.adminSubpane='library';
   const mainRoot=$('[data-main-banner-admin]',p),sideRoot=$('[data-side-banner-admin]',p);if(mainRoot&&mainRoot.parentElement!==main)main.appendChild(mainRoot);if(sideRoot&&sideRoot.parentElement!==side)side.appendChild(sideRoot);
 }
@@ -27,7 +29,7 @@ function show(section,{focus=false,updateRoute=true,force=false}={}){
   else{
     $$('[data-admin-subtab]',p).forEach(button=>{const on=button.dataset.adminSubtab===next;button.classList.toggle('active',on);button.setAttribute('aria-selected',String(on));button.tabIndex=on?0:-1});
     $$('[data-admin-subpane]',p).forEach(panel=>{const on=panel.dataset.adminSubpane===next;panel.classList.toggle('active',on);panel.hidden=!on});
-    if(next==='side')A.loadSideBannerManagement?.(force);else if(next==='events')A.loadBannerEventManagement?.(force);else if(next==='library')A.loadBannerAssetLibrary?.(force);else A.loadMainBannerManagement?.(force);
+    if(next==='side')A.loadSideBannerManagement?.(force);else if(next==='events')A.loadBannerEventManagement?.(force);else if(next==='library'){A.loadBannerAssetLibrary?.(force);A.loadBannerAutoPool?.(force)}else A.loadMainBannerManagement?.(force);
   }
   if(focus)queueMicrotask(()=>($(`[data-admin-subtab="${next}"]`,$('#adminTopSubnav'))||$(`[data-admin-subtab="${next}"]`,p))?.focus());
 }

@@ -27,7 +27,7 @@ for(const token of [
 ])assert.ok(migration.toLowerCase().includes(token.toLowerCase()),`missing DB398 contract: ${token}`);
 
 for(const token of [
-  'V = "2.4"','DB = "406"','EVENT = "404"',
+  'V = "2.5"','DB = "409"','EVENT = "407"',
   'kinojo_banner_event_list_v404','kinojo_banner_event_move_v398',
   'kinojo_banner_event_pause_v398','kinojo_banner_event_delete_v398',
   '"event-move"','"event-pause"','"event-delete"',
