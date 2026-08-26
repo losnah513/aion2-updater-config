@@ -292,3 +292,13 @@
 - 재시작 뒤 인앱 브라우저에는 KINOJO 관리자 인증 세션이 없어 운영 관리자 화면은 로그인 안내로 닫혔고, 연결 가능한 외부 Chrome 세션도 없었다. 인증을 우회하거나 운영 데이터를 변경하지 않았으며, 실제 UI 동작은 동일 소스를 사용하는 Chrome E2E와 운영 exact byte readback으로 검증했다.
 - 이번 3단계는 WEB 관리자 UI·테스트·검증 workflow만 변경했다. DB/RPC/Edge/Storage, 정식 이벤트·레거시 캠페인·전역 순환 모드와 운영 게시 데이터는 변경하지 않았다.
 - 다음 제품 구현은 2차 계획 **4단계**다. 3단계 미리보기·카드·순서 계약을 재작성하지 않고 운영 main과 Drive 전용 LOG를 기준으로 이어간다.
+
+## My Info 2차 · 2단계 회원 제작 요청 UI · 2026-08-26
+
+- 1단계의 DB404와 `image-request-prepare/finalize/state` 계약을 그대로 사용해 회원 My Info 모달에 1~3장 일괄 제작 요청 흐름을 연결했다. 프로필 이미지 기능과 기존 참고 이미지 상태·삭제는 유지하며, 슬롯별 즉시 Server 등록 버튼만 제거했다.
+- FRONT/BACK/UPPER_BODY 편집 결과는 전송 전까지 로컬에 staging한다. 0장은 차단하고 1~3장을 허용하며 선택 수를 `N/3`으로 표시한다.
+- 스타일은 소년만화, 순정만화, 애니메이션, 실사풍, 직접 요청 5종이다. 추가 요청은 plain text 300자이며 직접 요청은 필수다. 스타일 미선택 시 별도 alertdialog에서 명시적으로 `스타일 없이 업로드`해야 전송한다.
+- `ui/kinojo-my-info-image-request.js`가 prepare, signed upload, finalize, state readback을 소유한다. 부분 실패는 finalize하지 않으며 같은 idempotency key와 새 signed URL로 재시도하고 이미 성공한 슬롯은 건너뛴다. private bucket/object path가 응답에 나타나면 fail-closed한다.
+- 실제 공통 모달에서 FRONT `800×1200 WebP` 편집, 선택 `1/3`, 미선택 확인, 애니메이션 스타일·요청문, 일괄 전송과 접수 결과를 확인했다. PC와 `390×844` 가로 overflow는 `0`, console error/warn은 `0`이다.
+- 전체 Node 계약 테스트가 통과했다. 상세 계약과 검증 기록은 `docs/MY_INFO_PHASE2_STAGE2_MEMBER_UI_20260826.md`를 기준으로 한다.
+- Stage 2는 WEB UI·브라우저 클라이언트만 변경하며 Supabase DB/RPC/Edge/Storage/cleanup은 Stage 1 운영 상태를 유지한다. 다음은 3단계 관리자 제작 요청 확인·처리다.

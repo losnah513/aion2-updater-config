@@ -19,14 +19,14 @@ for (const token of [
   '/assets/images/my-info/guides/back-2x3.png',
   '/assets/images/my-info/guides/upper-body-4x5.png',
   'data-reference-select-slot',
-  'data-reference-upload-slot',
   'data-reference-cancel-slot',
   'data-reference-delete-slot',
-  'uploadMyInfoReference_(slotValue)',
   'deleteMyInfoReference_(slotValue)',
-  "link.href='/ui/kinojo-my-info.css?cache=2026082203'",
+  'kinojoMyInfoRequestSubmitBtn',
+  "link.href='/ui/kinojo-my-info.css?cache=2026082601'",
 ]) assert.ok(common.includes(token), `My Info JS contract missing: ${token}`);
-assert.equal(common.includes('kinojoMyInfoReferenceUploadBtn'), false, 'global reference upload button must be removed');
+assert.equal(common.includes('data-reference-upload-slot'), false, 'old per-slot server upload button must be removed');
+assert.equal(common.includes('kinojoMyInfoRequestSubmitBtn'), true, 'one global production-request button must exist');
 assert.equal(common.includes('kinojoMyInfoReferenceCancelBtn'), false, 'global reference cancel button must be removed');
 assert.equal(common.includes('kinojoMyInfoReferenceDeleteBtn'), false, 'global reference delete button must be removed');
 

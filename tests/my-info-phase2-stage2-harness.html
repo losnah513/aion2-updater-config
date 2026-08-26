@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>KINOJO My Info Phase 2 Stage 2 Harness</title>
+  <link rel="stylesheet" href="../ui/kinojo-common-ui.css">
+  <link rel="stylesheet" href="../ui/kinojo-public-shell.css">
+  <style>
+    body{margin:0;background:#eaf0f8;color:#172033;font-family:Arial,"Noto Sans KR",sans-serif}
+    main{width:min(760px,calc(100% - 28px));margin:92px auto;padding:20px;border-radius:18px;background:#fff;box-shadow:0 14px 40px rgba(15,23,42,.12);box-sizing:border-box}
+    h1{margin:0 0 8px;font-size:21px}p{margin:0 0 14px;color:#64748b;font-size:12px;line-height:1.55}
+    #stage2HarnessOpen{min-height:44px;padding:10px 15px;border:0;border-radius:10px;background:#2563eb;color:#fff;font:900 13px/1.2 inherit;cursor:pointer}
+  </style>
+  <script>
+    (()=>{
+      const token='kws_'+('S'.repeat(44));
+      const characters=[
+        {characterId:201,serverId:1001,characterName:'2단계검증캐릭터',className:'검성',isMain:true,displayItemLevel:3300,displayCombatPower:201234,displayStatBasis:'PVE',officialProfileImageUrl:''},
+        {characterId:202,serverId:1001,characterName:'보조캐릭터',className:'치유성',isMain:false,displayItemLevel:3050,displayCombatPower:181234,displayStatBasis:'PVE',officialProfileImageUrl:''}
+      ];
+      const owner={mainCharacterName:characters[0].characterName};
+      const batch={ok:true,service:'kinojo-member-profile',apiVersion:'2.7',databaseContract:'375',authContract:'opaque-session-v1',characterListContract:'member-character-list-v1',characterAccessContract:'member-character-access-v1',batchBootstrapContract:'375',contract:'member-image-batch-bootstrap-api-v1',bootstrapTransport:'ONE_EDGE_REQUEST_ONE_RPC',member:{id:1},ownerResolved:true,owner,characterCount:characters.length,imageStateCount:characters.length,characters,items:characters.map(character=>({characterId:character.characterId,isMain:character.isMain,mainCharacterId:201,character,profile:{effectiveProfileImageUrl:'',effectiveSource:'OFFICIAL',hasOverride:false},referenceState:{retentionDays:7,activeCount:0,references:[],logicalExpiry:'SERVER_FILTER_EXPIRES_AT_GT_NOW'}}))};
+      const state={calls:[],uploads:[],submitted:null,prepared:null};
+      const publicRequest=(status,payload)=>({requestId:8801,status,styleCode:payload.styleCode??null,requestNote:String(payload.requestNote||''),submittedAt:status==='SUBMITTED'?'2026-08-26T08:00:00Z':null,imageExpiresAt:'2026-09-02T08:00:00Z',metadataExpiresAt:'2026-09-25T08:00:00Z',slots:payload.items.map(item=>item.slot)});
+      window.KinojoAuth={getSession:()=>({token})};
+      window.KinojoSupabaseClientCore={
+        async ensureConfig(){return{url:location.origin,publishableKey:'sb_publishable_stage2_harness'};},
+        async invokeEdgeFunction(_name,payload){
+          const action=String(payload?.action||'');
+          state.calls.push(JSON.parse(JSON.stringify(payload||{})));
+          if(action==='characters')return{ok:true,ownerResolved:true,displayStatBasis:'PVE',owner,characters};
+          if(action==='batch-bootstrap')return batch;
+          if(action==='image-request-state')return{ok:true,contract:'member-image-request-state-api-v1',characterId:payload.characterId,imageRetentionDays:7,metadataRetentionDays:30,requestCount:state.submitted?1:0,requests:state.submitted?[state.submitted]:[],privacy:'NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS'};
+          if(action==='image-request-prepare'){
+            state.prepared=payload;
+            return{ok:true,contract:'member-image-request-prepare-api-v1',characterId:payload.characterId,privacy:'SIGNED_UPLOAD_URL_ONLY_NO_OBJECT_PATH_FIELD',request:publicRequest('DRAFT',payload),uploads:payload.items.map(item=>({slot:item.slot,uploadUrl:location.origin+'/storage/v1/object/upload/sign/kinojo-member-reference/'+item.slot.toLowerCase()+'?token=stage2',mimeType:item.mimeType,sizeBytes:item.sizeBytes,upsert:false}))};
+          }
+          if(action==='image-request-finalize'){
+            state.submitted=publicRequest('SUBMITTED',state.prepared);
+            return{ok:true,contract:'member-image-request-finalize-api-v1',characterId:state.prepared.characterId,privacy:'NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS',request:state.submitted};
+          }
+          if(action==='reference-state'){
+            const items=state.prepared?.items||[];
+            return{ok:true,characterId:payload.characterId,references:items.map(item=>({slot:item.slot,mimeType:item.mimeType,sizeBytes:item.sizeBytes,uploadedAt:'2026-08-26T08:00:00Z',expiresAt:'2026-09-02T08:00:00Z',active:true}))};
+          }
+          throw new Error('STAGE2_HARNESS_UNEXPECTED_ACTION:'+action);
+        }
+      };
+      const nativeFetch=window.fetch.bind(window);
+      window.fetch=async(url,options)=>{
+        if(String(url).includes('/storage/v1/object/upload/sign/kinojo-member-reference/')){
+          state.uploads.push({url:String(url),method:options?.method,upsert:options?.headers?.['x-upsert']});
+          return new Response('',{status:200});
+        }
+        return nativeFetch(url,options);
+      };
+      window.__kinojoStage2Harness=state;
+    })();
+  </script>
+</head>
+<body>
+  <main><h1>My Info 2단계 브라우저 검증</h1><p>실제 공통 모달·편집기·배치 요청 클라이언트를 고정 Server 응답으로 검증합니다.</p><button id="stage2HarnessOpen" type="button">내 정보 열기</button></main>
+  <script src="../ui/kinojo-common-ui.js?cache=2026082601"></script>
+  <script>document.getElementById('stage2HarnessOpen').addEventListener('click',()=>window.KinojoCommonUI.openMyInfoModal());</script>
+</body>
+</html>
