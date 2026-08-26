@@ -31,6 +31,7 @@ for(const token of [
   'bem-body-filter','표시할 이벤트',
   'data-bem-slot="ALL"','data-bem-slot="LEFT"','data-bem-slot="RIGHT"',
   "S.context!=='side'",'eventSlots(event).includes(S.slotFilter)',
+  'contextEvents().length}개를 불러왔습니다.',
   '등록 이벤트 순환 순서','data-bem-create',
 ])assert.ok(events.includes(token),`missing contextual event hub token: ${token}`);
 
@@ -41,6 +42,7 @@ for(const token of [
   'grid-template-columns:repeat(4,minmax(0,1fr))',
   '<button class="bap-asset','aria-pressed="${chosen}"',
   'bap-strip-controls','maxPerCharacter:99',"startsAtKst:''","endsAtKst:''",
+  'contextPools().length}개 · 사용 가능 이미지 ${visibleAssets().length}개를 불러왔습니다.',
 ])assert.ok(pool.includes(token),`missing compact random-event editor token: ${token}`);
 for(const retired of ['이벤트 없는 자동 순환 풀','캐릭터당 최대 이미지','시작 일시 · 선택','종료 일시 · 선택','>${chosen?\'빼기\':\'추가\'}<'])assert.equal(pool.includes(retired),false,`retired random-event UI remains: ${retired}`);
 

@@ -96,6 +96,6 @@ assert.ok(tabs.includes('A.loadBannerAutoPool?.(force)'),'tab navigation must lo
 assert.ok(bootstrap.includes('A.loadBannerContext?.(subtab,force===true)'),'router must load the contextual event/library workspace');
 assert.ok(loader.includes("'admin-banner-auto-pool.js'"),'automatic-pool module missing from shared loader');
 assert.ok(loader.indexOf("'admin-banner-library.js'")<loader.indexOf("'admin-banner-auto-pool.js'"),'automatic pool must load after the asset library');
-assert.ok(desktop.includes('admin.js?cache=2026082609')&&mobile.includes('admin.js?cache=2026082609'),'PC/mobile must share the current stage-7 loader generation');
+assert.ok(desktop.includes('admin.js?cache=2026082610')&&mobile.includes('admin.js?cache=2026082610'),'PC/mobile must share the current stage-7 loader generation');
 
 console.log('PASS banner event phase-2 stage-7 character identity and automatic pool contract');
