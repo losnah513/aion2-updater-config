@@ -451,7 +451,7 @@ document.addEventListener('click',event=>{
   else if(control.matches('[data-bew-reset]'))openResetModal(s,control)
   else if(control.matches('[data-bew-reset-back]'))closeResetModal(s)
   else if(control.matches('[data-bew-reset-confirm]')){closeResetModal(s,{restoreFocus:false});resetWorkflow(s,{message:'작성 중인 내용을 초기화했습니다.'})}
-  else if(control.matches('[data-bew-go-events]'))A.switchBannerManagementTab?.('events',{updateRoute:true,force:true})
+  else if(control.matches('[data-bew-go-events]'))A.openBannerEventHub?.(s.kind,{force:true})
   else if(control.matches('[data-bew-save-draft]'))saveDraft(s)
   else if(control.matches('[data-bew-publish]'))publishWorkflow(s)
 });

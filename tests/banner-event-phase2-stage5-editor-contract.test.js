@@ -55,8 +55,8 @@ for(const token of [
 ])assert.ok(migration.includes(token),`missing v405 overlay uniqueness token: ${token}`);
 
 for(const token of [
-  'V = "2.5"',
-  'DB = "409"',
+  'V = "2.6"',
+  'DB = "411"',
   'BANNER_OVERLAY_NAME_DUPLICATE',
   'rpc("kinojo_banner_overlay_asset_register_v405"',
   'candidateDeleted: deleted === true',

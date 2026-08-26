@@ -55,18 +55,17 @@ assert.match(library,/dirty\(\)&&validDraft\(\)&&!S\.saving/,'save must require 
 assert.match(library,/titleOf\(asset\)\.toLocaleLowerCase[\s\S]+tags\.some/,'title and hashtag search must share one filter');
 
 for(const token of [
-  'data-banner-management-tab="library"',
-  'data-banner-management-panel="library"',
-  'adminBannerLibraryPanel',
-  "['main','side','events','library']",
+  'data-banner-view="library"',
+  'data-banner-library-host',
+  "const order=['main','side']",
   "A.loadBannerAssetLibrary?.(force)",
 ])assert.ok(tabs.includes(token),`missing stage-6 image tab token: ${token}`);
 
-assert.ok(bootstrap.includes("if(tab==='images'&&subtab==='library'){A.loadBannerAssetLibrary?.(force===true)"),'library router loader missing');
+assert.ok(bootstrap.includes('A.loadBannerContext?.(subtab,force===true)'),'contextual library router loader missing');
 assert.ok(loader.includes("'admin-banner-library.js'"),'dedicated library module missing from common admin loader');
 assert.ok(loader.indexOf("'admin-banner-tabs.js'")<loader.indexOf("'admin-banner-library.js'"),'library module must mount after the image tab shell');
 assert.ok(workflow.includes("window.addEventListener('kinojo:banner-assets-updated'"),'authoring cache refresh listener missing');
-assert.ok(desktop.includes('admin.js?cache=2026082608')&&mobile.includes('admin.js?cache=2026082608'),'PC/mobile must share the stage-7 loader generation');
+assert.ok(desktop.includes('admin.js?cache=2026082609')&&mobile.includes('admin.js?cache=2026082609'),'PC/mobile must share the current stage-7 loader generation');
 
 for(const token of [
   'private.kinojo_banner_asset_usage_v406',
@@ -89,8 +88,8 @@ assert.ok(!/delete\s+from\s+public\.kinojo_banner_(assets|campaigns|campaign_ite
 assert.ok(!/alter\s+table\s+public\.kinojo_banner_assets\s+disable\s+row\s+level\s+security/i.test(migration),'stage 6 must not disable asset RLS');
 
 for(const token of [
-  'V = "2.5"',
-  'DB = "409"',
+  'V = "2.6"',
+  'DB = "411"',
   '"asset-library"',
   'kinojo_banner_asset_library_v407',
   'kinojo_banner_asset_update_v406',

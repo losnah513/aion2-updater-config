@@ -41,8 +41,8 @@ assert.match(migration,/when unique_violation then[\s\S]+BANNER_ASSET_TITLE_DUPL
 assert.match(migration,/where a\.title is null[\s\S]+metadata_migration_status=case/,'legacy displayName migration must only fill missing canonical metadata');
 
 for(const token of [
-  'V = "2.5"',
-  'DB = "409"',
+  'V = "2.6"',
+  'DB = "411"',
   'UPLOAD = "403"',
   '"asset-title-check"',
   'kinojo_banner_asset_title_available_v403',

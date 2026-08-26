@@ -89,7 +89,7 @@
   const todayDateInputValue=(...args)=>A.todayDateInputValue(...args);
   const updateSanctuaryScheduleSaveState=(...args)=>A.updateSanctuaryScheduleSaveState(...args);
   const TAB_LABELS={dashboard:'대시보드',requests:'코드 요청',members:'회원 관리',characters:'캐릭터 관리',sanctuary:'성역 관리',notices:'공지 관리',images:'이미지 관리',meter:'키노조 미터',system:'시스템 설정',logs:'로그 관리'};
-  const IMAGE_LOCATION_LABELS={main:'메인 배너 이벤트 만들기',side:'사이드 배너 이벤트 만들기',events:'이벤트 관리',library:'이미지 라이브러리'};
+  const IMAGE_LOCATION_LABELS={main:'메인 배너',side:'사이드 배너'};
 
   function adminRoute(){
     const raw=decodeURIComponent(String(location.hash||'').replace(/^#/,''));
@@ -120,10 +120,7 @@
     if(tab==='sanctuary'&&subtab==='requests') loadSanctuarySupportRequests(force===true);
     if(tab==='notices'&&subtab==='general') loadNotices();
     if(tab==='notices'&&subtab==='event') loadEventNoticeGroups();
-    if(tab==='images'&&subtab==='main') A.loadMainBannerManagement?.(force===true);
-    if(tab==='images'&&subtab==='side') A.loadSideBannerManagement?.(force===true);
-    if(tab==='images'&&subtab==='events') A.loadBannerEventManagement?.(force===true);
-    if(tab==='images'&&subtab==='library'){A.loadBannerAssetLibrary?.(force===true);A.loadBannerAutoPool?.(force===true)}
+    if(tab==='images'&&(subtab==='main'||subtab==='side')) A.loadBannerContext?.(subtab,force===true);
     if(tab==='meter'&&isMaster()&&subtab==='logs') loadMeterDungeonLogs(1);
     if(tab==='meter'&&isMaster()&&subtab!=='logs') loadMeterAdminConsole();
     if(tab==='system'&&subtab==='server-status') refreshServerStatus();

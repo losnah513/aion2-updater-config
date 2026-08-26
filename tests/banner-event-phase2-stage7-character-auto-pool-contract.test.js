@@ -56,7 +56,7 @@ assert.ok(closeout.includes('kinojo_banner_auto_pool_assets_asset_v410_idx'),'au
 assert.ok(closeout.includes('kinojo_banner_auto_pool_composites_asset_v410_idx'),'automatic composite cleanup must have a covering index');
 
 for(const token of [
-  'V = "2.5"','DB = "409"','EVENT = "407"','REQ = 4194304',
+  'V = "2.6"','DB = "411"','EVENT = "407"','REQ = 4194304',
   '"character-search"','"asset-character-set"','"asset-representative-set"',
   '"auto-pool-list"','"auto-pool-save"','"auto-pool-state"','"auto-pool-delete"',
   '"pool-composite-upload-prepare"','"pool-composite-upload-complete"',
@@ -80,21 +80,22 @@ for(const token of [
 ])assert.ok(library.includes(token),`missing stage-7 library token: ${token}`);
 
 for(const token of [
-  '이벤트 없는 자동 순환 풀','정식 이벤트 → 자동 순환 풀 → 기존 기본 배너',
-  "const EDGE='kinojo-banner-media',BUCKET='kinojo-site-banners',LIMIT=99,WINDOW=24",
+  '랜덤 이벤트','등록 이벤트 → 랜덤 이벤트 → 기본 배너',
+  "const EDGE='kinojo-banner-media',BUCKET='kinojo-site-banners',LIMIT=99,WINDOW=32",
   "api('event-targets')","api('asset-library'","api('auto-pool-list')",
   "api('auto-pool-save'","api('auto-pool-state'","api('auto-pool-delete'",
   "api('pool-composite-upload-prepare'","api('pool-composite-upload-complete'",
   'function drawCover(','canvas.toBlob','AUTO_POOL_COMPOSITE_READY',
-  'showCharacterName','representativeOnly','data-bap-page','data-bap-slot',
+  'showCharacterName','representativeOnly','data-bap-page','data-bap-slot-choice',
   'loading="lazy" decoding="async"','꺼진 상태로 저장','영구 삭제',
 ])assert.ok(pool.includes(token),`missing automatic-pool UI token: ${token}`);
 
-assert.ok(tabs.includes('<div data-banner-asset-library></div><div data-banner-auto-pool></div>'),'library and automatic pool must share the dedicated library tab');
+assert.ok(tabs.includes('data-banner-view="events"')&&tabs.includes('data-banner-view="library"'),'event and library views must share a contextual secondary navigation');
+assert.ok(read('admin/js/admin-banner-events.js').includes('data-banner-auto-pool'),'random event must be hosted inside event management');
 assert.ok(tabs.includes('A.loadBannerAutoPool?.(force)'),'tab navigation must load automatic pools');
-assert.ok(bootstrap.includes('A.loadBannerAutoPool?.(force===true)'),'router must load automatic pools');
+assert.ok(bootstrap.includes('A.loadBannerContext?.(subtab,force===true)'),'router must load the contextual event/library workspace');
 assert.ok(loader.includes("'admin-banner-auto-pool.js'"),'automatic-pool module missing from shared loader');
 assert.ok(loader.indexOf("'admin-banner-library.js'")<loader.indexOf("'admin-banner-auto-pool.js'"),'automatic pool must load after the asset library');
-assert.ok(desktop.includes('admin.js?cache=2026082608')&&mobile.includes('admin.js?cache=2026082608'),'PC/mobile must share the stage-7 loader generation');
+assert.ok(desktop.includes('admin.js?cache=2026082609')&&mobile.includes('admin.js?cache=2026082609'),'PC/mobile must share the current stage-7 loader generation');
 
 console.log('PASS banner event phase-2 stage-7 character identity and automatic pool contract');
