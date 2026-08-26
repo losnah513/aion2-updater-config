@@ -15,6 +15,7 @@ on:
       - "admin/js/admin-banner-event-workflow.js"
       - "admin/js/admin-banner-events.js"
       - "admin/js/admin-banner-tabs.js"
+      - "admin/js/admin-banner-library.js"
       - "admin/js/admin-banner-quality.js"
       - "tests/banner-admin-main-ui-contract.test.js"
       - "tests/banner-admin-side-ui-contract.test.js"
@@ -26,6 +27,7 @@ on:
       - "tests/banner-event-phase2-stage3-preview-order-contract.test.js"
       - "tests/banner-event-phase2-stage4-page-selection-contract.test.js"
       - "tests/banner-event-phase2-stage5-editor-contract.test.js"
+      - "tests/banner-event-phase2-stage6-library-contract.test.js"
       - "tests/banner-event-stage4-ui-contract.test.js"
       - "tests/banner-event-stage5-ui-contract.test.js"
       - "tests/banner-content-overlay-v396-contract.test.js"
@@ -35,6 +37,7 @@ on:
       - "supabase/migrations/20260826020948_banner_asset_titles_tags_v403.sql"
       - "supabase/migrations/20260826045246_banner_event_page_targets_v404.sql"
       - "supabase/migrations/20260826054751_banner_overlay_name_uniqueness_v405.sql"
+      - "supabase/migrations/20260826065731_banner_asset_library_v406.sql"
       - "supabase/migrations/20260824143000_banner_event_manager_v398.sql"
       - "supabase/migrations/20260824232500_attach_legacy_lookbooks_v399.sql"
       - "tests/banner-admin-chrome-e2e.html"
@@ -53,6 +56,7 @@ on:
       - "admin/js/admin-banner-event-workflow.js"
       - "admin/js/admin-banner-events.js"
       - "admin/js/admin-banner-tabs.js"
+      - "admin/js/admin-banner-library.js"
       - "admin/js/admin-banner-quality.js"
       - "tests/banner-admin-main-ui-contract.test.js"
       - "tests/banner-admin-side-ui-contract.test.js"
@@ -64,6 +68,7 @@ on:
       - "tests/banner-event-phase2-stage3-preview-order-contract.test.js"
       - "tests/banner-event-phase2-stage4-page-selection-contract.test.js"
       - "tests/banner-event-phase2-stage5-editor-contract.test.js"
+      - "tests/banner-event-phase2-stage6-library-contract.test.js"
       - "tests/banner-event-stage4-ui-contract.test.js"
       - "tests/banner-event-stage5-ui-contract.test.js"
       - "tests/banner-content-overlay-v396-contract.test.js"
@@ -73,6 +78,7 @@ on:
       - "supabase/migrations/20260826020948_banner_asset_titles_tags_v403.sql"
       - "supabase/migrations/20260826045246_banner_event_page_targets_v404.sql"
       - "supabase/migrations/20260826054751_banner_overlay_name_uniqueness_v405.sql"
+      - "supabase/migrations/20260826065731_banner_asset_library_v406.sql"
       - "supabase/migrations/20260824143000_banner_event_manager_v398.sql"
       - "supabase/migrations/20260824232500_attach_legacy_lookbooks_v399.sql"
       - "tests/banner-admin-chrome-e2e.html"
@@ -110,6 +116,7 @@ jobs:
             admin/js/admin-banner-event-workflow.js \
             admin/js/admin-banner-events.js \
             admin/js/admin-banner-tabs.js \
+            admin/js/admin-banner-library.js \
             admin/js/admin-banner-quality.js; do
             node --check "$path"
           done
@@ -123,6 +130,7 @@ jobs:
           node tests/banner-event-phase2-stage3-preview-order-contract.test.js
           node tests/banner-event-phase2-stage4-page-selection-contract.test.js
           node tests/banner-event-phase2-stage5-editor-contract.test.js
+          node tests/banner-event-phase2-stage6-library-contract.test.js
           node tests/banner-event-stage4-ui-contract.test.js
           node tests/banner-event-stage5-ui-contract.test.js
           node tests/banner-content-overlay-v396-contract.test.js
@@ -195,6 +203,7 @@ jobs:
             "admin/js/admin-banner-event-workflow.js"
             "admin/js/admin-banner-events.js"
             "admin/js/admin-banner-tabs.js"
+            "admin/js/admin-banner-library.js"
             "admin/js/admin-banner-quality.js"
           )
           tmp_dir="$(mktemp -d)"

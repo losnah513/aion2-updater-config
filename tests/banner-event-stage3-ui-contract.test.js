@@ -9,7 +9,7 @@ const desktop=fs.readFileSync(path.join(root,'admin/index.html'),'utf8');
 const mobile=fs.readFileSync(path.join(root,'m/admin/index.html'),'utf8');
 
 for(const token of [
-  'banner event workflow phase 2 stage 5',
+  'banner event workflow phase 2 stage 6 integration',
   "api(s,'event-targets')",
   'normalizeTargetContract',
   'supportedSidePages',
@@ -54,8 +54,8 @@ assert.ok(workflow.includes("directional?value.transitionDirection:'NONE'"),'non
 assert.ok(workflow.includes("'event-save'"),'stage 5 draft persistence missing');
 assert.ok(workflow.includes("'event-publish'"),'stage 5 publish action missing');
 
-assert.ok(loader.includes('v2026082606'),'stage-5 loader cache generation missing');
-assert.ok(desktop.includes('admin.js?cache=2026082606'),'desktop stage-5 cache mismatch');
-assert.ok(mobile.includes('admin.js?cache=2026082606'),'mobile stage-5 cache mismatch');
+assert.ok(loader.includes('v2026082607'),'stage-6 loader cache generation missing');
+assert.ok(desktop.includes('admin.js?cache=2026082607'),'desktop stage-6 cache mismatch');
+assert.ok(mobile.includes('admin.js?cache=2026082607'),'mobile stage-6 cache mismatch');
 
 console.log('PASS banner event stage-3 UI contract');

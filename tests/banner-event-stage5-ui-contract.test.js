@@ -6,7 +6,7 @@ const root=path.resolve(__dirname,'..');
 const workflow=fs.readFileSync(path.join(root,'admin/js/admin-banner-event-workflow.js'),'utf8');
 
 for(const token of [
-  'banner event workflow phase 2 stage 5',
+  'banner event workflow phase 2 stage 6 integration',
   '이미지별 콘텐츠 편집',
   '내 스티커 보관함',
   "const EMOJIS=",

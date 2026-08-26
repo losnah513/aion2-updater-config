@@ -10,7 +10,7 @@ const edge=read('supabase/functions/kinojo-banner-media/index.ts');
 const migration=read('supabase/migrations/20260826054751_banner_overlay_name_uniqueness_v405.sql');
 
 for(const token of [
-  'banner event workflow phase 2 stage 5 v2026082606',
+  'banner event workflow phase 2 stage 6 integration v2026082607',
   "root.dataset.bannerEventStage='phase2-5'",
   'const OVERLAY_NUMERIC=',
   'function clampOverlayNumber(',
@@ -55,8 +55,8 @@ for(const token of [
 ])assert.ok(migration.includes(token),`missing v405 overlay uniqueness token: ${token}`);
 
 for(const token of [
-  'V = "2.3"',
-  'DB = "405"',
+  'V = "2.4"',
+  'DB = "406"',
   'BANNER_OVERLAY_NAME_DUPLICATE',
   'rpc("kinojo_banner_overlay_asset_register_v405"',
   'candidateDeleted: deleted === true',
