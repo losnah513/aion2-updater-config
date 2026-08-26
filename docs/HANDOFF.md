@@ -338,3 +338,13 @@
 - 관리자 모달은 PC 요청 카드 2열·첨부 3열, 모바일 1열과 내부 스크롤을 사용한다. 실제 브라우저 mock에서 선택 전 상세 없음, 선택 후 요청 한 건 상세, `390×844`/`320×700` 가로 overflow 0을 확인했다.
 - 신규·기존 Node 회귀, 운영 RLS/ACL/trigger/Edge health, 무인증 401, Supabase advisor를 통과했다. 세부 계약은 `docs/MY_INFO_PHASE2_STAGE3_ADMIN_WORKFLOW_20260826.md`를 기준으로 한다.
 - 다음은 4단계 통합 검증·배포·문서 마감이다. 1~3단계의 Server·회원 UI·관리자 처리 계약을 재작성하지 않는다.
+
+<!-- KINOJO_MY_INFO_PHASE2_STAGE4_CLOSEOUT_20260826 -->
+## My Info 2차 · 4단계 통합 검증·배포·문서 마감 · 2026-08-26
+
+- PR `#274` (`codex/my-page-phase2-closeout-20260826`)에서 1~3단계의 Server/Storage·회원 요청·MASTER 관리자 처리 계약을 재작성하지 않고 통합 회귀와 운영 readback으로 닫았다.
+- 입력 경계 `0/1/2/3/4장`, 스타일 미선택·무효 스타일, 직접 요청 빈 값, 300/301자, 부분 실패·멱등 재시도와 회원 → 관리자 연결을 신규 통합 계약으로 고정했다.
+- PC·모바일 개인정보 처리방침은 제작 요청 이미지 7일, 스타일·요청문·상태·감사 메타데이터 최대 30일, MASTER 전용 확인과 60초 signed URL 경계를 동일하게 고지한다. PC 래퍼의 좁은 화면 가로 넘침도 제거했다.
+- 운영 Supabase는 DB404/DB405, `kinojo-member-profile` v24, cleanup v6, private bucket, 15분 cron을 유지한다. 요청 테이블 5개 RLS와 service-role-only RPC 11개 ACL, trigger, health 200, 무인증 관리자 401을 readback했다.
+- 회원·관리자·개인정보 페이지를 PC/390/320에서 확인했고 가로 overflow와 관리자 console error/warn은 0이다. 전체 Node 계약은 **48/48 PASS**다.
+- 상세 근거는 `docs/MY_INFO_PHASE2_STAGE4_CLOSEOUT_20260826.md`를 기준으로 한다. 진행도는 **4/4**, 다음 단계는 없다.
