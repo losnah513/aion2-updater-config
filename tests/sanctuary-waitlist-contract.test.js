@@ -64,7 +64,7 @@ for (const entry of ['sanctuary/index.html', 'm/sanctuary/index.html']) {
   const html = read(entry);
   assert.ok(html.includes('sanctuary.css?cache=2026082106'), `${entry}: sanctuary CSS cache missing`);
   assert.ok(html.includes('sanctuary.js?cache=2026082105'), `${entry}: sanctuary JS cache missing`);
-  assert.ok(html.includes('kinojo-supabase-features.js?cache=2026082603'), `${entry}: feature bridge cache missing`);
+  assert.ok(html.includes('kinojo-supabase-features.js?cache=2026082702'), `${entry}: feature bridge cache missing`);
   assert.ok(html.includes('class="sanctuary-rail-waitlist"'), `${entry}: the body-left waitlist entry must remain`);
   assert.equal(html.includes('id="waitingSection"'), false, `${entry}: the retired bottom waitlist card must not render`);
   if (entry.startsWith('m/')) assert.ok(html.includes('mobile.css?cache=2026082102'), `${entry}: mobile layout cache is stale`);
