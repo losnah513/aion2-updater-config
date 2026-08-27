@@ -882,193 +882,6 @@
     return value;
   }
 
-  function numberLabel(value){
-    const n = Number(value || 0);
-    return Number.isFinite(n) && n > 0 ? n.toLocaleString('ko-KR') : '';
-  }
-
-  function hallItemFromRow(row, rankFallback){
-    const name = stripServerSuffixFromCharacterName(snakeOrCamel(row, 'character_name', 'characterName', ''));
-    const owner = stripServerSuffixFromCharacterName(snakeOrCamel(row, 'main_character_name', 'mainCharacterName', name));
-    const serverId = String(snakeOrCamel(row, 'server_id', 'serverId', '') || '');
-    const serverName = snakeOrCamel(row, 'server_name', 'serverName', '') || getServerNameByServerId(serverId);
-    const pvePower = Number(snakeOrCamel(row, 'pve_power_total', 'pvePowerTotal', snakeOrCamel(row, 'latest_pve_combat_power', 'latestPveCombatPower', snakeOrCamel(row, 'power_total', 'powerTotal', 0))) || 0);
-    const pvpPower = Number(snakeOrCamel(row, 'pvp_power_total', 'pvpPowerTotal', snakeOrCamel(row, 'latest_pvp_combat_power', 'latestPvpCombatPower', 0)) || 0);
-    const pveItem = Number(snakeOrCamel(row, 'pve_item_level', 'pveItemLevel', snakeOrCamel(row, 'latest_pve_item_level', 'latestPveItemLevel', 0)) || 0);
-    const pvpItem = Number(snakeOrCamel(row, 'pvp_item_level', 'pvpItemLevel', snakeOrCamel(row, 'latest_pvp_item_level', 'latestPvpItemLevel', 0)) || 0);
-    const itemLevel = Number(snakeOrCamel(row, 'item_level_total', 'itemLevelTotal', (pveItem || 0) + (pvpItem || 0)) || 0);
-    const powerDelta = Number(snakeOrCamel(row, 'power_delta', 'powerDelta', 0) || 0);
-    const itemDelta = Number(snakeOrCamel(row, 'item_level_delta', 'itemLevelDelta', 0) || 0);
-    const className = snakeOrCamel(row, 'class_name', 'className', '') || '';
-    const reviewText = snakeOrCamel(row, 'review_text', 'reviewText', '') || '';
-    const growthLabel = snakeOrCamel(row, 'growth_label', 'growthLabel', '') || '';
-    const rank = Number(snakeOrCamel(row, 'rank_no', 'rankNo', rankFallback || 0) || rankFallback || 0);
-    const rankTotal = Number(snakeOrCamel(row, 'rank_total', 'rankTotal', 0) || 0);
-    const rankTier = snakeOrCamel(row, 'rank_tier', 'rankTier', '') || '';
-    return {
-      rank,
-      rankTotal,
-      rankTier,
-      name,
-      owner,
-      className,
-      serverId,
-      serverName,
-      meta:serverName,
-      category:String(snakeOrCamel(row, 'rank_mode', 'rankMode', 'PVE') || 'PVE').toUpperCase()==='PVP'?'PVP':'PVE',
-      value:(String(snakeOrCamel(row, 'rank_mode', 'rankMode', 'PVE') || 'PVE').toUpperCase()==='PVP'?pvpPower:pvePower),
-      label:numberLabel(String(snakeOrCamel(row, 'rank_mode', 'rankMode', 'PVE') || 'PVE').toUpperCase()==='PVP'?pvpPower:pvePower),
-      pvePower:pvePower,
-      pvePowerLabel:numberLabel(pvePower),
-      pvpPower:pvpPower,
-      pvpPowerLabel:numberLabel(pvpPower),
-      pveItem:pveItem,
-      pvpItem:pvpItem,
-      itemLevel:itemLevel,
-      itemLabel:itemDelta ? (itemDelta > 0 ? '+' : '') + numberLabel(itemDelta) : numberLabel(itemLevel),
-      powerDelta,
-      itemLevelDelta:itemDelta,
-      powerLabel:powerDelta ? (powerDelta > 0 ? '+' : '') + numberLabel(powerDelta) : numberLabel(pvePower),
-      pveReview:reviewText || growthLabel,
-      pvpReview:growthLabel || reviewText,
-      growthStatus:snakeOrCamel(row, 'growth_status', 'growthStatus', '') || '',
-      growthLabel,
-      profileImageUrl:snakeOrCamel(row, 'profile_image_url', 'profileImageUrl', '') || '',
-      detailUrl:snakeOrCamel(row, 'detail_url', 'detailUrl', '') || '',
-      identityBadge:snakeOrCamel(row, 'identity_badge', 'identityBadge', null),
-      isMain:(() => { const raw=snakeOrCamel(row, 'is_main', 'isMain', null); if(raw===true || String(raw).toLowerCase()==='true') return true; if(raw===false || String(raw).toLowerCase()==='false') return false; return null; })(),
-      raw:row
-    };
-  }
-
-  async function getWebRanking(limit){
-    return rpc('kinojo_web_get_ranking', { p_limit:Number(limit || 300) });
-  }
-
-  async function getWebHallOfFame(limit, extra={}){
-    return getWebHofSummary(Object.assign({}, extra || {}, { limit:Number(limit || 300) }));
-  }
-
-  async function getWebHallRankingView(extra={}){
-    const [data,badgeMap] = await Promise.all([
-      rpc('kinojo_web_get_hall_ranking_view', {
-        p_limit:Number(extra.limit || 300),
-        p_page:Number(extra.page || 1),
-        p_page_size:Number(extra.pageSize || extra.page_size || 10),
-        p_include_subs:!!extra.includeSubs || !!extra.include_subs,
-        p_class_name:String(extra.className || extra.class_name || '전체'),
-        p_search:String(extra.search || ''),
-        p_rank_mode:String(extra.rankMode || extra.rank_mode || 'PVE').toUpperCase()==='PVP'?'PVP':'PVE'
-      }),
-      getIdentityBadges().catch(()=>new Map())
-    ]);
-    decorateIdentityBadges(data,badgeMap);
-    const rows = Array.isArray(data && data.items) ? data.items : [];
-    const items = rows.map((row, idx)=>hallItemFromRow(row, idx + 1));
-    return Object.assign({}, data || {}, {
-      ok:data?.ok!==false,
-      items,
-      totalCount:Number(data?.totalCount || data?.total_count || items.length || 0),
-      page:Number(data?.page || extra.page || 1),
-      pageSize:Number(data?.pageSize || data?.page_size || extra.pageSize || 10),
-      rankMode:data?.rankMode || data?.rank_mode || extra.rankMode || 'PVE',
-      className:data?.className || data?.class_name || extra.className || '전체',
-      search:data?.search || extra.search || '',
-      includeSubs:!!(data?.includeSubs || data?.include_subs || extra.includeSubs),
-      classCounts:data?.classCounts || data?.class_counts || {}
-    });
-  }
-
-
-  async function getWebHofSummary(extra={}){
-    const [data,badgeMap] = await Promise.all([
-      rpc('kinojo_web_get_hof_summary', {
-        p_include_subs:!!extra.includeSubs || !!extra.include_subs,
-        p_pass_key:String(extra.passKey || extra.pass_key || '').trim() || null
-      }),
-      getIdentityBadges().catch(()=>new Map())
-    ]);
-    decorateIdentityBadges(data,badgeMap);
-    const sections = data && data.sections ? data.sections : {};
-    const toList = function(rows, category){
-      return (Array.isArray(rows) ? rows : []).map((row, idx)=>{
-        const item = hallItemFromRow(row, idx + 1);
-        const like = Number(snakeOrCamel(row, 'like_count', 'likeCount', 0) || 0);
-        const dislike = Number(snakeOrCamel(row, 'dislike_count', 'dislikeCount', 0) || 0);
-        return Object.assign({}, item, {
-          rank:Number(snakeOrCamel(row, 'rank_no', 'rankNo', idx + 1) || idx + 1),
-          category:category || item.category,
-          like,
-          dislike,
-          reactionComments:snakeOrCamel(row, 'reaction_comments', 'reactionComments', []) || snakeOrCamel(row, 'comments', 'comments', []) || [],
-          value:category === 'PVP' ? item.pvpPower : category === 'PVE' ? item.pvePower : item.value,
-          label:category === 'PVP' ? item.pvpPowerLabel : category === 'PVE' ? item.pvePowerLabel : item.label
-        });
-      });
-    };
-    const toItem = function(row, category){
-      if(!row || !Object.keys(row).length) return null;
-      return toList([row], category)[0] || null;
-    };
-    const likesTop = toList(sections.likesTop3, 'LIKE');
-    const dislikesTop = toList(sections.dislikesTop3, 'DISLIKE');
-    const pveTop = toList(sections.pveTop3, 'PVE');
-    const pvpTop = toList(sections.pvpTop3, 'PVP');
-    const growthGod = toItem(sections.growthGod, 'GROWTH');
-    const enhanceGod = toItem(sections.enhanceGod, 'ENHANCE');
-    const allSummaryItems = likesTop.concat(dislikesTop, pveTop, pvpTop, growthGod?[growthGod]:[], enhanceGod?[enhanceGod]:[]);
-    const rawMyRanking = data && data.myRanking && typeof data.myRanking === 'object' ? data.myRanking : {};
-    const rawRankingPeriod = data && (data.rankingPeriod || data.ranking_period || data.weeklyPeriod || data.weekly_period) || {};
-    const rankingPeriod = {
-      startAt:rawRankingPeriod.startAt || rawRankingPeriod.start_at || '',
-      endAt:rawRankingPeriod.endAt || rawRankingPeriod.end_at || '',
-      timezone:rawRankingPeriod.timezone || 'Asia/Seoul',
-      endExclusive:rawRankingPeriod.endExclusive !== undefined ? !!rawRankingPeriod.endExclusive : !!rawRankingPeriod.end_exclusive
-    };
-    const myRanking = {};
-    ['enhance','pve','pvp','like','dislike','growth'].forEach(metric=>{
-      const row = rawMyRanking[metric];
-      if(!row || typeof row !== 'object' || !Number(row.rank_no || row.rankNo || 0)) return;
-      const item = hallItemFromRow(row, Number(row.rank_no || row.rankNo || 0));
-      const score = Number(row.score || 0);
-      let scoreLabel = numberLabel(score);
-      if(metric === 'growth' || metric === 'enhance') scoreLabel = (score > 0 ? '+' : '') + numberLabel(score);
-      myRanking[metric] = { item, rank:Number(row.rank_no || row.rankNo || 0), score:scoreLabel || '-' };
-    });
-    const byName = {};
-    allSummaryItems.forEach(item=>{
-      if(!item || !item.name) return;
-      byName[item.name] = {
-        like:Number(item.like || 0),
-        dislike:Number(item.dislike || 0),
-        comments:Array.isArray(item.reactionComments) ? item.reactionComments : []
-      };
-    });
-    return {
-      ok:data?.ok!==false,
-      source:data?.source || 'supabase_049',
-      updatedAt:data?.updatedAt || data?.updated_at || '',
-      includeSubs:!!(data?.includeSubs || data?.include_subs || extra.includeSubs),
-      pveTop,
-      pvpTop,
-      overallMain:allSummaryItems,
-      overallAll:allSummaryItems,
-      reactionSummary:{ likeTop:likesTop, dislikeTop:dislikesTop, byName },
-      weeklyAwards:{ growthKing:growthGod?[growthGod]:[], bulkUp:enhanceGod?[enhanceGod]:[] },
-      summarySections:{ likesTop, dislikesTop, pveTop, pvpTop, growthGod, enhanceGod },
-      myRanking,
-      rankingPeriod,
-      mvp:null,
-      mvpCandidatesTop3:[],
-      mvpConfirmed:false,
-      newChicks:[],
-      demonFamily:[],
-      demonFamilyAll:[],
-      partyFriend:[],
-      partyFriendAll:[]
-    };
-  }
-
   async function getWebDashboard(){
     return rpc('kinojo_web_get_dashboard', {});
   }
@@ -1141,11 +954,6 @@
     }catch(_err){
       return readVisitSummaryCache()||emptyVisitStats(todayVisitKey());
     }
-  }
-
-  async function getHallReactionSummary(){
-    const data=await getWebHofSummary({includeSubs:false});
-    return data.reactionSummary||{byName:{},likeTop:[],dislikeTop:[]};
   }
 
   async function submitHallReaction(extra={}){
@@ -1892,11 +1700,7 @@
   async function webAction(action, params){
     const name = String(action || '').trim();
     const extra = params || {};
-    if(name === 'hallOfFame') return getWebHofSummary(extra);
-    if(name === 'hofSummary') return getWebHofSummary(extra);
-    if(name === 'hallRankingView') return getWebHallRankingView(extra);
     if(name === 'legionRanking') return getWebLegionRanking(extra);
-    if(name === 'ranking') return getWebRanking(extra.limit || 300);
     if(name === 'dashboard') return getWebDashboard();
     if(name === 'updaterStatus') return runtimeGetStatus();
     if(name === 'runtimeStatus') return runtimeGetStatus();
@@ -2003,7 +1807,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.57-sanctuary-management-bootstrap-20260826',
+    version:'1.3.1.58-legacy-ranking-snapshot-only-20260827',
     getConfig,
     isPreferred,
     isConfigured,
@@ -2018,8 +1822,6 @@
     request,
     rpc,
     webAction,
-    getWebHallOfFame,
-    getWebRanking,
     getWebDashboard,
     getWebUpdaterStatus,
     runtimeGetStatus,
@@ -2027,7 +1829,6 @@
     runtimeProgress,
     runtimeFinish,
     runtimeForceRelease,
-    getHallReactionSummary,
     submitHallReaction,
     submitHallSuggestion,
     getSanctuaryMaster,
