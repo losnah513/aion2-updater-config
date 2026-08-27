@@ -12,7 +12,7 @@
 <link href="../ui/kinojo-common-ui.css?cache=2026081205" rel="stylesheet"/>
 <link href="../ui/kinojo-card-guards.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../ui/kinojo-animations.css?cache=2026081003" rel="stylesheet"/>
-<link href="./css/admin.css?cache=2026082605" rel="stylesheet"/>
+<link href="./css/admin.css?cache=2026082706" rel="stylesheet"/>
 <script src="../ui/kinojo-device-router.js?cache=2026070110" data-mobile-path="../m/admin/"></script>
 </head>
 <body class="kinojo-page-admin">
@@ -103,14 +103,14 @@
               </section>
             </div>
             <aside class="admin-lookup-target-panel is-disabled" id="characterLookupTargetPanel" aria-label="캐릭터 조회 현황">
-              <header><div><strong>캐릭터 조회 현황</strong><span id="characterLookupTargetSummary">STEP 2 시작 전</span></div><b id="characterLookupTargetBadge">0명</b></header>
+              <header><div><strong>캐릭터 조회 현황</strong><span id="characterLookupTargetSummary">STEP 2 시작 전</span></div><div class="admin-lookup-target-actions"><b id="characterLookupTargetBadge">0명</b><button class="admin-btn" id="characterLookupTargetLoadBtn" type="button" disabled>대상 목록 보기</button></div></header>
               <div class="admin-lookup-target-legend"><span class="done">조회 완료</span><span class="active">조회 중</span><span class="standby">다음 작업</span><span class="error">오류</span></div>
-              <div class="admin-lookup-target-list" id="characterLookupTargetList"><div class="admin-empty">STEP 2가 시작되면 대상별 상태가 표시됩니다.</div></div>
+              <div class="admin-lookup-target-list" id="characterLookupTargetList"><div class="admin-empty">대상별 상세는 필요할 때만 불러옵니다.</div></div>
             </aside>
           </div>
 
           <section class="admin-lookup-history admin-lookup-profile is-disabled" id="characterLookupPerformancePanel" aria-label="캐릭터 최신화 성능·정확도 프로파일">
-            <div class="admin-lookup-history-head"><div><strong>성능·정확도 프로파일</strong><span id="characterLookupPerformanceState">조회 세션을 시작하면 단계별 시간이 표시됩니다.</span></div></div>
+            <div class="admin-lookup-history-head"><div><strong>성능·정확도 프로파일</strong><span id="characterLookupPerformanceState">필요할 때만 성능 상세를 계산합니다.</span></div><button class="admin-btn" id="characterLookupPerformanceLoadBtn" type="button" disabled>성능 상세 보기</button></div>
             <div class="admin-lookup-source-summary">
               <article><span>전체 시간</span><strong id="characterLookupPerformanceTotal">-</strong></article>
               <article><span>가장 긴 단계</span><strong id="characterLookupPerformanceBottleneck">-</strong></article>
@@ -406,10 +406,10 @@
 <script src="../ui/kinojo-admin-panel.js?cache=2026071712"></script>
 <script src="../core/kinojo-supabase-client.js?cache=2026080205"></script>
 <script src="../core/kinojo-supabase-rpc.js?cache=2026081704"></script>
-<script src="../core/kinojo-supabase-features.js?cache=2026082702"></script>
+<script src="../core/kinojo-supabase-features.js?cache=2026082703"></script>
 <script src="../core/kinojo-auth-session.js?cache=2026081801"></script>
 <script src="../core/kinojo-auth-service.js?cache=2026081801"></script>
 <script src="../core/kinojo-auth-ui.js?cache=2026082601"></script>
-<script src="./js/admin.js?cache=2026082703"></script>
+<script src="./js/admin.js?cache=2026082704"></script>
 </body>
 </html>
