@@ -124,7 +124,7 @@ async function verifyAdapter() {
     assert.equal(health.ok, true);
     assert.equal(health.service, 'sanctuary-management');
     assert.equal(String(health.apiVersion), '1.0');
-    assert.equal(Number(health.databaseContract), 412);
+    assert.equal(Number(health.databaseContract), 414);
     assert.equal(health.readEnabled, false);
     assert.equal(health.writeEnabled, false);
   }
