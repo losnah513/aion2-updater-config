@@ -101,7 +101,7 @@ KINOJO INFO GitHub Pages upload package.
 - The queue-status read contract is DB `422` with terminal-state correction `423`. `updater_session_progress_current` owns one materialized current-progress row per runtime session and is updated transactionally from the existing session, target, step, event, job, batch, lock, and rate-limit writers.
 - `kinojo_admin_server_queue_status_v289` selects only the authenticated actor's explicit session, active session, or latest session. It does not interpret an omitted date range as all operational history and does not rebuild missing reports while reading.
 - Poll responses exclude target, event, step, and performance aggregates. Those sections use the credential-gated `kinojo_admin_server_queue_detail_v422` endpoint only after the user opens the related detail control, with bounded section limits.
-- Foreground polling uses three seconds, hidden or inactive polling uses fifteen seconds, and terminal status stops polling without an extra request. Desktop and mobile share admin loader `2026082704`.
+- Foreground polling uses three seconds, hidden or inactive polling uses fifteen seconds, and terminal status stops polling without an extra request. Same-name targets on different servers remain separate by target ID or server identity. Desktop and mobile share admin loader `2026082705`.
 - `tests/admin-queue-materialized-status-contract.test.js` and `tests/admin-queue-materialized-status-runtime.test.js` protect the one-row poll path, bounded lazy details, background backoff, and terminal stop behavior.
 
 ## KINOJO Meter presence and party-card profile source
