@@ -54,8 +54,8 @@ assert.ok(workflow.includes("directional?value.transitionDirection:'NONE'"),'non
 assert.ok(workflow.includes("'event-save'"),'stage 5 draft persistence missing');
 assert.ok(workflow.includes("'event-publish'"),'stage 5 publish action missing');
 
-assert.ok(loader.includes('v2026082704'),'current admin loader cache generation missing');
-assert.ok(desktop.includes('admin.js?cache=2026082704'),'desktop admin cache mismatch');
-assert.ok(mobile.includes('admin.js?cache=2026082704'),'mobile admin cache mismatch');
+assert.ok(loader.includes('v2026082705'),'current admin loader cache generation missing');
+assert.ok(desktop.includes('admin.js?cache=2026082705'),'desktop admin cache mismatch');
+assert.ok(mobile.includes('admin.js?cache=2026082705'),'mobile admin cache mismatch');
 
 console.log('PASS banner event stage-3 UI contract');

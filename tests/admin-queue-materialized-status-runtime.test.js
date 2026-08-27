@@ -82,6 +82,15 @@ const sandbox = {
 
 vm.runInNewContext(source, sandbox, {filename: 'admin-characters.js'});
 
+const duplicateNameRows = A.lookupTargetRoster({
+  targets: [
+    {targetId: 1, characterName: '동명이인', serverId: 101},
+    {targetId: 2, characterName: '동명이인', serverId: 202},
+  ],
+}, {});
+assert.equal(duplicateNameRows.length, 2, 'same character name on different servers must keep both target rows');
+assert.notEqual(A.lookupTargetKey(duplicateNameRows[0]), A.lookupTargetKey(duplicateNameRows[1]));
+
 A.startCharacterLookupPolling();
 assert.equal(timers.length, 1);
 assert.equal(timers[0].delay, 3000, 'foreground active polling must use 3 seconds');

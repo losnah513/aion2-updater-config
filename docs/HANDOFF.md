@@ -16,7 +16,7 @@
 
 ## 관리자 캐릭터 최신화 실행 기록 보존 · 2026-08-27
 
-- 관리자 `최근 조회 기록`은 기본 3건이며 사용자가 3/5/10건 중에서 선택한다. PC·모바일은 같은 `admin-characters.js` 계약과 loader cache `2026082704`을 사용한다.
+- 관리자 `최근 조회 기록`은 기본 3건이며 사용자가 3/5/10건 중에서 선택한다. PC·모바일은 같은 `admin-characters.js` 계약과 loader cache `2026082705`을 사용한다.
 - 운영 Migration `20260827081644 / updater_run_report_retention_v421`은 목록 getter의 기본 limit을 3으로 고정하고, 누락 preview·repair를 최근 7일 안으로 제한한다. preview·repair·cleanup RPC는 `service_role`만 실행할 수 있다.
 - `updater_run_reports`는 영구 감사 자료가 아닌 즉시 장애 확인용 보고서다. `finished_at <= statement_timestamp() - interval '7 days'`인 보고서 요약·상세 행만 완전 삭제하며 runtime job·event·payload·session 원본은 삭제하지 않는다.
 - 정리 Cron `kinojo-updater-run-report-cleanup-v421`은 매주 수요일 05:10 KST에 최대 500건을 삭제한다. pg_cron 저장식은 GMT 기준 `10 20 * * 2`다.
@@ -29,7 +29,7 @@
 - 상태 조회 `kinojo_admin_server_queue_status_v289`는 집계 원본을 다시 읽거나 report를 생성하지 않고 인증된 관리자에게 해당 세션의 요약 한 행만 반환한다. 30회 운영 표본은 평균 1.814ms, p95 1.928ms, 최대 6.304ms였고 200ms 초과는 0회다.
 - 조회 범위는 무기간 전체 운영 이력이 아니다. 요청한 `sessionId`, 없으면 현재 actor의 active session, 그것도 없으면 현재 actor의 가장 최근 session 한 건만 선택한다. 대상·단계·이벤트·성능 표본은 선택된 동일 세션의 상세 버튼에서만 각각 최대 200/20/40/1 범위로 조회한다.
 - 기본 polling은 전경 3초, 숨김 또는 비활성 문맥 15초이며 terminal 상태를 받으면 즉시 중단한다. 완료 뒤 추가 polling은 0회다. 대상 목록과 성능 진단은 사용자가 명시적으로 열 때만 가져온다.
-- PC·모바일 관리자 loader는 `2026082704`, 공통 Supabase feature module은 모든 페이지에서 `2026082703`, 관리자 CSS는 `2026082706`이다. `tests/admin-queue-materialized-status-*.test.js`와 전체 Node 계약 58개가 이 경계를 보호한다.
+- PC·모바일 관리자 loader는 `2026082705`, 공통 Supabase feature module은 모든 페이지에서 `2026082703`, 관리자 CSS는 `2026082706`이다. 동명이인 target은 target ID 또는 server+name identity로 분리한다. `tests/admin-queue-materialized-status-*.test.js`와 전체 Node 계약 58개가 이 경계를 보호한다.
 
 ## My Info 2차 · 제작 요청 업로드 장애 수정 · 2026-08-27
 

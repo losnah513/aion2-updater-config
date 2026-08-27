@@ -331,6 +331,14 @@
 
   function lookupTargetName(row){return String(row?.character_name||row?.characterName||row?.name||'').trim();}
 
+  function lookupTargetServer(row){return String(row?.server_name||row?.serverName||row?.server_id||row?.serverId||'').trim();}
+
+  function lookupTargetKey(row){
+    const targetId=String(row?.target_id||row?.targetId||row?.id||'').trim();
+    if(targetId)return 'target:'+targetId;
+    return 'identity:'+lookupTargetServer(row)+'|'+lookupTargetName(row);
+  }
+
   function lookupFilterList(value){return Array.isArray(value)?value.map(v=>String(v)):String(value||'').split(',').map(v=>v.trim()).filter(Boolean);}
 
   function lookupTargetRoster(data,progress){
@@ -347,8 +355,8 @@
       const cls=String(row.class_name||row.className||'');const server=String(row.server_name||row.serverName||row.server_id||row.serverId||'');const race=String(row.race||row.race_name||row.raceName||'');
       return (!classSet.size||classSet.has(cls))&&(!serverSet.size||serverSet.has(server))&&(!raceSet.size||raceSet.has(race));
     });
-    const unique=new Map();rows.forEach(row=>{const name=lookupTargetName(row);if(name&&!unique.has(name))unique.set(name,row);});
-    return Array.from(unique.values()).sort((a,b)=>lookupTargetName(a).localeCompare(lookupTargetName(b),'ko'));
+    const unique=new Map();rows.forEach(row=>{const key=lookupTargetKey(row);if(lookupTargetName(row)&&!unique.has(key))unique.set(key,row);});
+    return Array.from(unique.values()).sort((a,b)=>lookupTargetName(a).localeCompare(lookupTargetName(b),'ko')||lookupTargetServer(a).localeCompare(lookupTargetServer(b),'ko'));
   }
 
   function prepareLookupDetailSession(sessionId){
@@ -477,19 +485,26 @@
       loadButton.textContent=state.lookupTargetsLoading?'목록 불러오는 중...':state.lookupTargetsLoaded?'대상 목록 불러옴':'대상 목록 보기';
     }
     const roster=lookupTargetRoster(data,progress);
-    const rowMap=new Map(roster.map(row=>[lookupTargetName(row),row]));
-    failures.forEach(row=>{const name=lookupTargetName(row);if(name&&!rowMap.has(name))rowMap.set(name,row);});
-    if(currentCharacter&&!rowMap.has(currentCharacter))rowMap.set(currentCharacter,{characterName:currentCharacter});
-    const rows=Array.from(rowMap.values()).sort((a,b)=>lookupTargetName(a).localeCompare(lookupTargetName(b),'ko'));
+    const rowMap=new Map(roster.map(row=>[lookupTargetKey(row),row]));
+    failures.forEach(row=>{
+      const name=lookupTargetName(row),key=lookupTargetKey(row);
+      const nameExists=Array.from(rowMap.values()).some(item=>lookupTargetName(item)===name);
+      if(name&&!rowMap.has(key)&&!nameExists)rowMap.set(key,row);
+    });
+    if(currentCharacter&&!Array.from(rowMap.values()).some(row=>lookupTargetName(row)===currentCharacter))rowMap.set('current:|'+currentCharacter,{characterName:currentCharacter});
+    const rows=Array.from(rowMap.values()).sort((a,b)=>lookupTargetName(a).localeCompare(lookupTargetName(b),'ko')||lookupTargetServer(a).localeCompare(lookupTargetServer(b),'ko'));
+    const nameCounts=rows.reduce((counts,row)=>{const name=lookupTargetName(row);counts.set(name,(counts.get(name)||0)+1);return counts;},new Map());
     const failNames=new Set(failures.map(lookupTargetName));
     const statusLabel={done:'조회 완료',active:'조회 중',error:'오류',standby:'다음 작업',pending:'대기'};
     let doneCount=0,errorCount=0;
     const rendered=rows.map(row=>{
       const name=lookupTargetName(row);
+      const server=lookupTargetServer(row);
+      const label=nameCounts.get(name)>1&&server?name+' ['+server+']':name;
       let status=failNames.has(name)?'error':state.lookupTargetStates[name]||(enabled?'standby':'pending');
       if(name===currentCharacter)status='active';
       if(status==='done')doneCount++;if(status==='error')errorCount++;
-      return '<article class="admin-lookup-target-row '+status+'"><strong title="'+esc(name)+'">'+esc(name)+'</strong><span>'+statusLabel[status]+'</span></article>';
+      return '<article class="admin-lookup-target-row '+status+'"><strong title="'+esc(label)+'">'+esc(label)+'</strong><span>'+statusLabel[status]+'</span></article>';
     });
     root.innerHTML=rendered.length?rendered.join(''):'<div class="admin-empty">'+(!enabled?'STEP 2가 시작되면 대상별 상태가 표시됩니다.':state.lookupTargetsLoaded?'이 세션의 대상 목록이 비어 있습니다.':'대상별 상세는 필요할 때만 불러옵니다.')+'</div>';
     const total=Number(progress.total||data?.queueMeta?.queueCount||rows.length||0);
@@ -900,5 +915,5 @@
 
   document.addEventListener('change',event=>{if(event.target?.id==='characterAutomationToggle')saveCharacterAutomation(event.target.checked);});
 
-  Object.assign(A,{lookupSplit,lookupSessionStorageKey,lookupTokenStorageKey,characterAutomationBlocked,renderCharacterAutomation,refreshCharacterAutomation,saveCharacterAutomation,loadStoredLookupSession,storeLookupSession,readLookupFilter,lookupCount,lookupErrorPresentation,lookupStateLabel,setLookupError,redactDiagnostic,copyText,diagnosticPayload,copyLookupDiagnostics,copyLookupFailure,historySessionId,historySummary,renderLookupHistory,loadLookupHistory,loadLookupHistoryDetail,handleLookupHistoryClick,lookupStatusLabel,lookupStepClass,lookupDuration,lookupExitSafety,renderLookupExitSafety,lookupPhaseStep,lookupPhaseHasUncertainEta,lookupTargetName,lookupFilterList,lookupTargetRoster,prepareLookupDetailSession,mergeCharacterLookupDetails,loadCharacterLookupDetail,loadCharacterLookupTargets,loadCharacterLookupPerformance,loadCharacterLookupDiagnostics,saveLookupTargetStates,prepareLookupTargetStates,renderLookupTargets,renderLookupPhase,lookupMetricDuration,lookupMetricStageRows,renderLookupPerformance,renderCharacterLookupConsole,refreshCharacterLookupStatus,stopCharacterLookupPolling,characterLookupPollDelay,startCharacterLookupPolling,handleCharacterLookupVisibilityChange,loadCharacterLookupConsole,startCharacterServerQueue,retryFailedCharacterLookup,controlCharacterLookup,searchCharacters,renderCharacterSummary,characterMode,filteredCharacters,option,renderCharacters,saveCharacterStatus,decideIdentityReview,probeCharacterIdentity});
+  Object.assign(A,{lookupSplit,lookupSessionStorageKey,lookupTokenStorageKey,characterAutomationBlocked,renderCharacterAutomation,refreshCharacterAutomation,saveCharacterAutomation,loadStoredLookupSession,storeLookupSession,readLookupFilter,lookupCount,lookupErrorPresentation,lookupStateLabel,setLookupError,redactDiagnostic,copyText,diagnosticPayload,copyLookupDiagnostics,copyLookupFailure,historySessionId,historySummary,renderLookupHistory,loadLookupHistory,loadLookupHistoryDetail,handleLookupHistoryClick,lookupStatusLabel,lookupStepClass,lookupDuration,lookupExitSafety,renderLookupExitSafety,lookupPhaseStep,lookupPhaseHasUncertainEta,lookupTargetName,lookupTargetServer,lookupTargetKey,lookupFilterList,lookupTargetRoster,prepareLookupDetailSession,mergeCharacterLookupDetails,loadCharacterLookupDetail,loadCharacterLookupTargets,loadCharacterLookupPerformance,loadCharacterLookupDiagnostics,saveLookupTargetStates,prepareLookupTargetStates,renderLookupTargets,renderLookupPhase,lookupMetricDuration,lookupMetricStageRows,renderLookupPerformance,renderCharacterLookupConsole,refreshCharacterLookupStatus,stopCharacterLookupPolling,characterLookupPollDelay,startCharacterLookupPolling,handleCharacterLookupVisibilityChange,loadCharacterLookupConsole,startCharacterServerQueue,retryFailedCharacterLookup,controlCharacterLookup,searchCharacters,renderCharacterSummary,characterMode,filteredCharacters,option,renderCharacters,saveCharacterStatus,decideIdentityReview,probeCharacterIdentity});
 })(window.KinojoAdmin);
