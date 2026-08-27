@@ -194,6 +194,11 @@
 
   function historySessionId(item){return String(item?.sessionId||item?.session_id||item?.id||'');}
 
+  function lookupHistoryLimit(){
+    const value=Number($('#characterLookupHistoryLimit')?.value||3);
+    return [3,5,10].includes(value)?value:3;
+  }
+
   function historySummary(item){
     const summary=item?.summary||item?.result||item?.progress||{};
     const counts=item?.counts||summary?.counts||{};
@@ -223,7 +228,7 @@
   async function loadLookupHistory(){
     const root=$('#characterLookupHistoryList');if(root)root.innerHTML='<div class="admin-empty">Server 조회 기록을 불러오는 중입니다.</div>';
     try{
-      const data=await adminLookup('history',{limit:40});
+      const data=await adminLookup('history',{limit:lookupHistoryLimit()});
       if(!data||data.ok===false)throw new Error(data?.message||'조회 기록을 불러오지 못했습니다.');
       state.lookupHistory=Array.isArray(data.items)?data.items:Array.isArray(data.reports)?data.reports:[];
       renderLookupHistory();

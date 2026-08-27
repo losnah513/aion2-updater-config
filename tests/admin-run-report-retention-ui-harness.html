@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>KINOJO Admin run-report retention UI harness</title>
+  <link href="../admin/css/admin.css?cache=2026082605" rel="stylesheet">
+  <style>
+    body{margin:0;padding:24px;background:#f4f7fb}
+    main{width:min(920px,100%);margin:0 auto}
+  </style>
+</head>
+<body>
+  <main>
+    <section class="admin-lookup-history">
+      <div class="admin-lookup-history-head">
+        <div>
+          <strong>최근 조회 기록</strong>
+          <span>WEB Server 최신화 기록이며 7일간 보관합니다.</span>
+        </div>
+        <div class="admin-row-actions">
+          <select class="admin-select compact" id="characterLookupHistoryLimit" aria-label="최근 조회 기록 표시 건수">
+            <option value="3" selected>최근 3건</option>
+            <option value="5">최근 5건</option>
+            <option value="10">최근 10건</option>
+          </select>
+          <button class="admin-btn" id="characterLookupHistoryReloadBtn" type="button">기록 새로고침</button>
+        </div>
+      </div>
+      <div id="characterLookupHistoryList">
+        <article class="admin-lookup-history-item">
+          <div class="admin-lookup-history-main">
+            <strong>2026-08-27 1차 조회</strong>
+            <span>완료 · 대상 154 · 성공 154 · 실패 0 · 조회 제외 0</span>
+            <time>2026. 8. 27. 오후 4:08</time>
+          </div>
+          <div class="admin-lookup-history-actions">
+            <button class="admin-btn" type="button">상세</button>
+            <button class="admin-btn" type="button">로그 복사</button>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -14,6 +14,15 @@
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 최신 일일 로그를 작업 규칙 원본으로 사용한다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
 
+## 관리자 캐릭터 최신화 실행 기록 보존 · 2026-08-27
+
+- 관리자 `최근 조회 기록`은 기본 3건이며 사용자가 3/5/10건 중에서 선택한다. PC·모바일은 같은 `admin-characters.js` 계약과 loader cache `2026082703`을 사용한다.
+- 운영 Migration `20260827081644 / updater_run_report_retention_v421`은 목록 getter의 기본 limit을 3으로 고정하고, 누락 preview·repair를 최근 7일 안으로 제한한다. preview·repair·cleanup RPC는 `service_role`만 실행할 수 있다.
+- `updater_run_reports`는 영구 감사 자료가 아닌 즉시 장애 확인용 보고서다. `finished_at <= statement_timestamp() - interval '7 days'`인 보고서 요약·상세 행만 완전 삭제하며 runtime job·event·payload·session 원본은 삭제하지 않는다.
+- 정리 Cron `kinojo-updater-run-report-cleanup-v421`은 매주 수요일 05:10 KST에 최대 500건을 삭제한다. pg_cron 저장식은 GMT 기준 `10 20 * * 2`다.
+- 최초 dry-run은 전체 181건 중 만료 157건·유지 24건·최근 누락 0건이었고, 승인된 157건 삭제 후 24건·만료 0건·최근 누락 0건이다. 일반 `VACUUM (ANALYZE)` 후 dead tuple은 0건이다.
+- UI와 DB 계약 회귀는 전체 Node 계약, PC 1440px·모바일 390px·최소 320px overflow 0, 홈 PC 960px banner bound·모바일 overflow 0을 기준으로 한다.
+
 ## My Info 2차 · 제작 요청 업로드 장애 수정 · 2026-08-27
 
 - PR `#282`를 merge commit `1916e7cc8201eee260c44bcca4a87bee13797212`로 병합했다. 회원 prepare 응답에서 DB404가 `items`만 반환할 때 Edge가 선택 슬롯을 잃어 `request.slots=[]`를 내보내고, 브라우저가 `IMAGE_REQUEST_RESULT_INVALID`로 signed upload 전에 중단하던 문제를 수정했다.
