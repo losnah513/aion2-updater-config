@@ -186,12 +186,12 @@ jobs:
           ]
           required_assets = [
               "kinojo-character-reaction.css?cache=2026082201",
-              "kinojo-character-reaction.js?cache=2026082201",
+              "kinojo-character-reaction.js?cache=2026082701",
               "kinojo-character-detail-refresh.js?cache=2026082201",
               "kinojo-character-skill.css?cache=2026081001",
               "kinojo-character-daevanion.css?cache=2026081002",
               "kinojo-animations.css?cache=2026081003",
-              "kinojo-character-skill-bridge.js?cache=2026081001",
+              "kinojo-character-skill-bridge.js?cache=2026082701",
               "kinojo-character-daevanion-bridge.js?cache=2026081002",
           ]
           for page in pages:
@@ -211,6 +211,7 @@ jobs:
 
           forbidden = {
               "skill rpc monkey patch": (skill, r"\brpc\.rpc\s*="),
+              "skill bridge duplicate skill RPC": (skill, r"kinojo_character_skill_overview_"),
               "daev edge monkey patch": (daev, r"\bcore\.invokeEdgeFunction\s*="),
               "daev overview monkey patch": (daev, r"\bapi\.getLiveCharacterProfile\s*="),
           }
@@ -219,11 +220,11 @@ jobs:
                   raise SystemExit(f"Forbidden frozen-core mutation detected: {label}")
 
           required_tokens = {
-              "skill SQL 305": (skill, "kinojo_character_skill_overview_v305"),
-              "skill Server category": (skill, "categoryLabel"),
-              "skill Server tier": (skill, "levelBand"),
-              "skill stigma": (skill, "스티그마"),
-              "skill tier class": (skill, "is-level-30"),
+              "skill SQL 415": (reaction, "kinojo_character_skill_overview_v415"),
+              "skill Server category": (reaction, "categoryLabel"),
+              "skill Server tier": (reaction, "levelBand"),
+              "skill stigma": (reaction, "스티그마"),
+              "skill tier class": (reaction, "is-level-30"),
               "daev SQL 307": (daev, "kinojo_character_daevanion_detail_v307"),
               "daev active nodes": (daev, "activeNodes"),
               "daev stat effects": (daev, "statEffects"),
