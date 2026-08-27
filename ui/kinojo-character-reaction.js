@@ -27,6 +27,7 @@
     liveStatusTimer: null
   };
   const LIVE_CACHE_TTL = 120000;
+  const SKILL_RPC = 'kinojo_character_skill_overview_v415';
   const OFFICIAL_METRIC_ICONS = Object.freeze({
     power:'https://assets.playnccdn.com/static-aion2/characters/img/info/profile_power_icon_pc.png',
     itemLevel:'https://assets.playnccdn.com/static-aion2/characters/img/info/profile_level_icon_pc.png'
@@ -440,23 +441,37 @@
   async function mergeServerSkills(data){
     const rpc=window.KinojoSupabaseRpcCore;
     const identity=liveIdentity(state.target);
-    if(!rpc || typeof rpc.rpc!=='function' || !identity.serverId || !identity.characterName) return data;
+    if(!rpc || typeof rpc.rpc!=='function' || !identity.serverId || !identity.characterName){
+      return Object.assign({},data,{
+        skills:[],
+        skillLoadState:'error',
+        skillMessage:'Server 스킬 조회 모듈을 불러오지 못했습니다.'
+      });
+    }
     try{
-      const result=await rpc.rpc('kinojo_character_skill_overview_v304',{
+      const result=await rpc.rpc(SKILL_RPC,{
         p_server_id:Number(identity.serverId||0),
         p_character_name:String(identity.characterName||'')
       });
-      if(result && result.ok===true && Array.isArray(result.skills)){
-        return Object.assign({},data,{
-          skills:result.skills,
-          skillSource:result.source||'KINOJO_SERVER_SKILL_NORMALIZED',
-          skillRefreshedAt:result.refreshedAt||null
-        });
+      if(!result || result.ok!==true || !Array.isArray(result.skills)){
+        throw new Error(result?.message||'Server 스킬 최신 상태를 불러오지 못했습니다.');
       }
-    }catch(_error){
-      // 저장된 공식 스킬 원본이 없는 캐릭터는 기존 overview 범위를 유지한다.
+      return Object.assign({},data,{
+        skills:result.skills,
+        skillSource:result.source||'NONE',
+        skillRefreshedAt:result.refreshedAt||null,
+        skillLoadState:result.skills.length?'ready':'empty',
+        skillMessage:result.skills.length?'':'저장된 공식 스킬 정보가 없습니다.'
+      });
+    }catch(error){
+      return Object.assign({},data,{
+        skills:[],
+        skillSource:'ERROR',
+        skillRefreshedAt:null,
+        skillLoadState:'error',
+        skillMessage:error?.message||String(error)
+      });
     }
-    return data;
   }
 
   function livePanel(name){
@@ -545,23 +560,28 @@
     return 'active';
   }
 
-  function skillCategoryLabel(value){
+  function skillCategoryLabel(value,serverLabel){
+    const explicit=String(serverLabel||'').trim();
+    if(explicit) return explicit;
     return ({ active:'액티브', passive:'패시브', stigma:'스티그마' })[skillCategoryKey(value)] || '액티브';
   }
 
-  function skillLevelClass(level){
-    if(level >= 30) return 'is-level-30';
-    if(level >= 25) return 'is-level-25';
-    if(level >= 20) return 'is-level-20';
+  function skillLevelClass(levelBand){
+    const band=String(levelBand||'normal');
+    if(['30-34','35-39','40+'].includes(band)) return 'is-level-30';
+    if(band==='25-29') return 'is-level-25';
+    if(band==='20-24') return 'is-level-20';
     return '';
   }
 
   function renderSkillCard(skill){
     const icon = normalizedImageUrl(skill?.icon);
     const level = Math.max(0, Number(skill?.level || 0));
-    return '<article class="kinojo-character-skill-card ' + skillLevelClass(level) + '">' +
+    const category=skillCategoryKey(skill?.category);
+    const classes=['kinojo-character-skill-card',skillLevelClass(skill?.levelBand),category==='stigma'?'is-skill-stigma':''].filter(Boolean);
+    return '<article class="' + classes.join(' ') + '" data-kinojo-skill-v415="true" data-level-band="' + esc(skill?.levelBand||'normal') + '">' +
       '<div class="kinojo-character-skill-icon ' + (icon ? '' : 'is-empty') + '">' + (icon ? '<img src="' + safeUrl(icon) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">' : '') + '<strong class="kinojo-character-skill-level">Lv.' + level + '</strong></div>' +
-      '<span><b>' + esc(skill?.name || '-') + '</b><small>' + esc(skillCategoryLabel(skill?.category)) + (skill?.equip ? ' · 장착' : '') + '</small></span>' +
+      '<span><b>' + esc(skill?.name || '-') + '</b><small>' + esc(skillCategoryLabel(category,skill?.categoryLabel)) + (skill?.equip ? ' · 장착' : '') + '</small></span>' +
     '</article>';
   }
 
@@ -579,11 +599,12 @@
       { key:'amplify', label:'피해 증폭', description:'피해 유형별 증폭값을 서로 분리' },
       { key:'combat', label:'전투 효과', description:'완벽 · 강타 · 다단 히트 · 재사용시간' }
     ];
-    const skillGroups = ['active','passive','stigma'].map(key => ({
-      key,
-      label:skillCategoryLabel(key),
-      rows:skills.filter(skill => skillCategoryKey(skill.category) === key)
-    }));
+    const skillGroups = ['active','passive','stigma'].map(key => {
+      const rows=skills.filter(skill => skillCategoryKey(skill.category) === key);
+      return {key,rows,label:skillCategoryLabel(key,rows[0]?.categoryLabel)};
+    });
+    const skillLoadState=String(data.skillLoadState||'empty');
+    const skillMessage=String(data.skillMessage||'표시할 스킬이 없습니다.');
     const renderStatGroup = group =>
       '<section class="kinojo-character-stat-group is-' + group.key + '">' +
         '<header><div><strong>' + esc(group.label) + '</strong><span>' + esc(group.description) + '</span></div><em>' + stats.filter(stat => stat.group === group.key && stat.available).length + ' / ' + stats.filter(stat => stat.group === group.key).length + '</em></header>' +
@@ -607,11 +628,11 @@
             '<section class="kinojo-character-stat-group is-base"><header><div><strong>기본 스탯</strong><span>공식 정보실 최종 능력 축</span></div><em>' + base.length + '개</em></header><div class="kinojo-character-core-stats kinojo-character-base-stats-grid">' + primary.concat(secondary).map(renderBaseStatCard).join('') + '</div></section>' +
           '</div>' +
         '</section>' +
-        '<section class="kinojo-character-overview-column kinojo-character-skill-section">' +
-          '<div class="kinojo-character-live-section-head"><div><strong>스킬</strong><span>공식 아이콘과 현재 습득·장착 레벨</span></div><em>' + skills.length + '개</em></div>' +
+        '<section class="kinojo-character-overview-column kinojo-character-skill-section" data-kinojo-skill-load-state="' + esc(skillLoadState) + '" data-kinojo-skill-api-version="415">' +
+          '<div class="kinojo-character-live-section-head"><div><strong>스킬</strong><span>Server가 정규화한 현재 습득·장착 레벨</span></div><em>' + (skillLoadState==='error'?'조회 오류':skills.length+'개') + '</em></div>' +
           '<div class="kinojo-character-overview-subtabs is-skill" role="tablist" aria-label="스킬 분류">' + skillGroups.map(group => tabButton('skill',group.key,group.label,group.rows.length)).join('') + '</div>' +
           '<div class="kinojo-character-skill-groups">' + skillGroups.map(group =>
-            '<section data-kinojo-skill-panel="' + group.key + '" ' + (state.skillTab === group.key ? '' : 'hidden') + '><header><strong>' + esc(group.label) + '</strong><em>' + group.rows.length + '개</em></header>' + (group.rows.length ? '<div class="kinojo-character-skill-list">' + group.rows.map(renderSkillCard).join('') + '</div>' : '<p class="kinojo-character-overview-empty">표시할 ' + esc(group.label) + ' 스킬이 없습니다.</p>') + '</section>'
+            '<section data-kinojo-skill-panel="' + group.key + '" ' + (state.skillTab === group.key ? '' : 'hidden') + '><header><strong>' + esc(group.label) + '</strong><em>' + group.rows.length + '개</em></header>' + (group.rows.length ? '<div class="kinojo-character-skill-list">' + group.rows.map(renderSkillCard).join('') + '</div>' : '<p class="kinojo-character-overview-empty">' + esc(skillLoadState==='error'?skillMessage:'표시할 '+group.label+' 스킬이 없습니다.') + '</p>') + '</section>'
           ).join('') + '</div>' +
         '</section>' +
       '</div>' +

@@ -946,9 +946,9 @@
         ensureCharacterDetailStyle_('/ui/kinojo-character-skill.css?cache=2026081001','skill'),
         ensureCharacterDetailStyle_('/ui/kinojo-character-daevanion.css?cache=2026081002','daevanion')
       ]);
-      await ensureCharacterDetailScript_('/ui/kinojo-character-reaction.js?cache=2026081801','reaction',()=>!!window.KinojoCharacterReaction?.open);
+      await ensureCharacterDetailScript_('/ui/kinojo-character-reaction.js?cache=2026082701','reaction',()=>!!window.KinojoCharacterReaction?.open);
       await ensureCharacterDetailScript_('/ui/kinojo-character-detail-refresh.js?cache=2026081003','detail-refresh');
-      await ensureCharacterDetailScript_('/ui/kinojo-character-skill-bridge.js?cache=2026081001','skill');
+      await ensureCharacterDetailScript_('/ui/kinojo-character-skill-bridge.js?cache=2026082701','skill');
       await ensureCharacterDetailScript_('/ui/kinojo-character-daevanion-bridge.js?cache=2026081002','daevanion');
       if(!window.KinojoCharacterReaction?.open)throw new Error('CHARACTER_DETAIL_MODAL_UNAVAILABLE');
       return true;
