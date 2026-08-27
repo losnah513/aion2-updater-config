@@ -36,6 +36,9 @@
   const loadAccounts=(...args)=>A.loadAccounts(...args);
   const loadMemberImageReviews=(...args)=>A.loadMemberImageReviews(...args);
   const loadCharacterLookupConsole=(...args)=>A.loadCharacterLookupConsole(...args);
+  const loadCharacterLookupTargets=(...args)=>A.loadCharacterLookupTargets(...args);
+  const loadCharacterLookupPerformance=(...args)=>A.loadCharacterLookupPerformance(...args);
+  const loadCharacterLookupDiagnostics=(...args)=>A.loadCharacterLookupDiagnostics(...args);
   const loadCodeRequests=(...args)=>A.loadCodeRequests(...args);
   const loadEventNoticeGroups=(...args)=>A.loadEventNoticeGroups(...args);
   const loadLookupHistory=(...args)=>A.loadLookupHistory(...args);
@@ -51,6 +54,7 @@
   const loadVisitorHistory=(...args)=>A.loadVisitorHistory(...args);
   const handleMemberImageReviewClick_=(...args)=>A.handleMemberImageReviewClick_(...args);
   const lookupExitSafety=(...args)=>A.lookupExitSafety(...args);
+  const handleCharacterLookupVisibilityChange=(...args)=>A.handleCharacterLookupVisibilityChange(...args);
   const meterNoticeById=(...args)=>A.meterNoticeById(...args);
   const openEventNoticePreview=(...args)=>A.openEventNoticePreview(...args);
   const option=(...args)=>A.option(...args);
@@ -302,6 +306,9 @@
     $('#characterLookupReloadBtn')?.addEventListener('click',()=>refreshCharacterLookupStatus({statusLine:true}));
     $('#characterLookupHistoryReloadBtn')?.addEventListener('click',loadLookupHistory);
     $('#characterLookupHistoryLimit')?.addEventListener('change',loadLookupHistory);
+    $('#characterLookupTargetLoadBtn')?.addEventListener('click',loadCharacterLookupTargets);
+    $('#characterLookupPerformanceLoadBtn')?.addEventListener('click',loadCharacterLookupPerformance);
+    $('#characterLookupDiagnostics')?.addEventListener('toggle',event=>{if(event.currentTarget.open)loadCharacterLookupDiagnostics();});
     $('#characterLookupCopyDiagnosticsBtn')?.addEventListener('click',copyLookupDiagnostics);
     $('#characterLookupHistoryList')?.addEventListener('click',e=>{const button=e.target.closest('[data-lookup-history-detail],[data-lookup-history-copy],[data-lookup-history-retry]');if(button)handleLookupHistoryClick(button);});
     $('#characterLookupFailures')?.addEventListener('click',e=>{const retry=e.target.closest('[data-lookup-failed-retry]');if(retry){retryFailedCharacterLookup(retry.dataset.lookupFailedRetry,Number(retry.dataset.lookupFailedCount||0));return;}const button=e.target.closest('[data-lookup-failure-copy]');if(button)copyLookupFailure(Number(button.dataset.lookupFailureCopy||0));});
@@ -309,6 +316,7 @@
     $('#characterLookupResumeBtn')?.addEventListener('click',()=>controlCharacterLookup('resume'));
     $('#characterLookupStopBtn')?.addEventListener('click',()=>controlCharacterLookup('cancel'));
     $('#characterLookupScope')?.addEventListener('change',e=>{const single=e.target.value==='single';if($('#characterLookupName'))$('#characterLookupName').disabled=!single;renderCharacterLookupConsole(state.lookupConsole||null);});
+    document.addEventListener('visibilitychange',handleCharacterLookupVisibilityChange);
     $('#characterSearchBtn')?.addEventListener('click',searchCharacters);
     $('#characterSearch')?.addEventListener('keydown',e=>{ if(e.key==='Enter') searchCharacters(); });
     $('#characterIncludeInactive')?.addEventListener('change',searchCharacters);

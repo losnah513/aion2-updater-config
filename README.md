@@ -96,6 +96,14 @@ KINOJO INFO GitHub Pages upload package.
 - Statistics management groups Server-owned collection flow, validation quality, and publication readiness without recalculating Server metrics in the browser.
 - Dungeon logs reuse the existing selected-character session and Server Catalog; only one lifecycle row is retained per dungeon visit and the list is ordered by exit time. Per-packet log duplication is forbidden.
 
+## Admin character refresh current progress
+
+- The queue-status read contract is DB `422` with terminal-state correction `423`. `updater_session_progress_current` owns one materialized current-progress row per runtime session and is updated transactionally from the existing session, target, step, event, job, batch, lock, and rate-limit writers.
+- `kinojo_admin_server_queue_status_v289` selects only the authenticated actor's explicit session, active session, or latest session. It does not interpret an omitted date range as all operational history and does not rebuild missing reports while reading.
+- Poll responses exclude target, event, step, and performance aggregates. Those sections use the credential-gated `kinojo_admin_server_queue_detail_v422` endpoint only after the user opens the related detail control, with bounded section limits.
+- Foreground polling uses three seconds, hidden or inactive polling uses fifteen seconds, and terminal status stops polling without an extra request. Desktop and mobile share admin loader `2026082704`.
+- `tests/admin-queue-materialized-status-contract.test.js` and `tests/admin-queue-materialized-status-runtime.test.js` protect the one-row poll path, bounded lazy details, background backoff, and terminal stop behavior.
+
 ## KINOJO Meter presence and party-card profile source
 
 - The public desktop/mobile Meter page counts every active Meter user. Name publication defaults to ON; users who turn it OFF remain in the active count and appear only as an anonymous-user aggregate. The list refreshes every 15 seconds and Server expires stale presence after 45 seconds. Party Meter-user markers do not depend on WEB name publication.

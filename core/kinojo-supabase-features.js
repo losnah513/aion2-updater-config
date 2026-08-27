@@ -1605,6 +1605,16 @@
       });
     }
 
+    if(normalized==='statusdetail'){
+      return rpc('kinojo_admin_server_queue_detail_v422',{
+        p_pass_key:credential,
+        p_session_id:String(extra.sessionId||''),
+        p_section:String(extra.section||''),
+        p_offset:Math.max(0,Number(extra.offset||0)),
+        p_limit:Math.max(1,Number(extra.limit||50))
+      });
+    }
+
     if(normalized==='control'){
       return rpc('kinojo_admin_server_queue_control_v276',{
         p_pass_key:credential,
