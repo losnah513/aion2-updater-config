@@ -18,13 +18,29 @@
 <meta name="twitter:title" content="KINOJO INFO">
 <meta name="twitter:description" content="아이온2 지켈 서버 깡 레기온의 비공식 정보 사이트입니다.">
 <meta name="twitter:image" content="https://kinojo.info/assets/images/common/kinojo-og.jpg">
-<link rel="stylesheet" href="ui/info-home.css?cache=26062207">
+<link rel="stylesheet" href="ui/info-home.css?cache=2026082701">
 <link rel="stylesheet" href="ui/kinojo-sanctuary-cards.css?cache=2026081222">
   <link rel="stylesheet" href="ui/kinojo-common-ui.css?cache=2026081205">
   <link rel="stylesheet" href="ui/kinojo-public-shell.css?cache=2026081202">
   <link rel="stylesheet" href="ui/kinojo-pc-banners.css?cache=2026082203">
 <script src="ui/kinojo-device-router.js?cache=2026062610" data-mobile-path="m/"></script>
 <link rel="stylesheet" href="ui/kinojo-event-notice.css?cache=2026081003">
+<style data-kinojo-home-critical>
+  /* Keep the home hero bounded even when an external stylesheet is stale or delayed. */
+  .kinojo-main-banner{
+    display:block;
+    width:min(960px,100%);
+    margin:14px auto 0;
+    overflow:hidden;
+  }
+  .kinojo-main-banner>img{
+    display:block;
+    width:100%;
+    height:auto;
+    aspect-ratio:16/9;
+    object-fit:cover;
+  }
+</style>
 </head>
 <body>
 <main class="wrap kinojo-pc-banner-host">
@@ -64,7 +80,7 @@
 <script src="core/kinojo-supabase-client.js?cache=2026080205"></script>
 <script src="ui/kinojo-banner-runtime.js?cache=2026082302"></script>
 <script src="core/kinojo-supabase-rpc.js?cache=2026080205"></script>
-<script src="core/kinojo-supabase-features.js?cache=2026081801"></script>
+<script src="core/kinojo-supabase-features.js?cache=2026082702"></script>
 <script src="core/kinojo-auth-session.js?cache=2026081801"></script>
 <script src="core/kinojo-auth-service.js?cache=2026081801"></script>
 <script src="core/kinojo-auth-ui.js?cache=2026082401"></script>

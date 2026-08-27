@@ -16,7 +16,7 @@ for (const page of pages) {
     'data-kinojo-sanctuary-management-required',
     'id="sanctuaryManagementScope"',
     'id="sanctuaryManagementTeamList"',
-    'kinojo-supabase-features.js?cache=2026082603',
+    'kinojo-supabase-features.js?cache=2026082702',
     'sanctuary-management.js?cache=2026082603',
   ]) assert.ok(html.includes(token), `${page}: missing ${token}`);
   assert.equal(html.includes('SanctuaryManagementMockAdapter'), false, `${page}: Stage 1 mock adapter remains`);
