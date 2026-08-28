@@ -6,13 +6,23 @@
 
 - GitHub: `losnah513/aion2-updater-config`
 - 운영 브랜치: `main`
-- 배너 이미지 관리 2차 완료·운영 후속 안정화 기준: PR `#290` + `#295`, 진행도 `49/49`, 관리자 cache `2026082802`, Edge `kinojo-banner-media` v26(API 2.6 / DB 412 / Upload 403 / Event 407)
+- 배너 이미지 관리 2차 완료·운영 후속 안정화 기준: PR `#290` + `#295` + `#298`, 진행도 `49/49`, 관리자 cache `2026082803`, Edge `kinojo-banner-media` v26(API 2.6 / DB 412 / Upload 403 / Event 407)
 - 내 정보 E-1 제품 운영 commit: `640b7eebcef1c13b0516fe2cd020df870bc23752` (PR `#194`)
 - 내 정보 후속 A-1~E-2: 12/12 완료
 - My Info / 관리자 이미지 모달 추가 UI 후속: PR `#197` 구현·배포·동기화 기준 CLOSED · 수동 실브라우저 sanity check는 post-close 보류
 - 레기온 순위 통합 패널: PR `#164` 병합 완료
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 최신 일일 로그를 작업 규칙 원본으로 사용한다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
+
+## 배너 관리자 입력·알림·작성 페이지 UX 안정화 · 2026-08-28
+
+- 이미지 관리의 메인 배너와 사이드 배너는 각각 `새 이벤트 → 이벤트 관리 → 이미지 라이브러리` 순서의 독립 하위 페이지를 사용한다. 상위 탭 진입 기본값은 `새 이벤트`이며 `#images/{main|side}/{create|events|library}` hash를 새로고침 뒤에도 유지한다. 이벤트 관리 카드의 중복 `새 이벤트` 버튼은 제거했다.
+- 이미지 라이브러리와 이벤트 작성기의 캐릭터 검색은 한글 IME 조합 중 전체 카드를 다시 그리지 않는다. 조합 종료 뒤에만 조회하고 결과 영역만 교체하므로 `복숭아` 입력이 `복숭ㅇㅏ`로 갈라지거나 입력 노드가 교체되지 않는다. 제목·태그·이모지·랜덤 이벤트 검색도 같은 조합 보호 경계를 사용한다.
+- 저장·연결·게시 상태는 기존 접근성 live region을 유지하면서 화면 중앙의 반투명 toast로 함께 표시하고, 성공/안내는 충분한 읽기 시간 뒤 fade out, 오류는 더 길게 유지한다. 캐릭터 연결 결과에는 hover·focus·active 피드백을 추가했다.
+- 제품 PR `#298`은 main squash commit `193c1ca7513a797ea8f2c6b9669d11ce3194ae82`로 병합됐다. 로컬 JavaScript syntax 11종·Node 계약 24종, Chrome 1440×1200·768×1024·390×844 E2E, PR 4개 source check, main Pages 배포·Banner Admin exact-byte·Banner Runtime PC SIDE/mobile MAIN readback을 모두 통과했다.
+- Server는 변경하지 않았다. 운영 기준은 계속 `kinojo-banner-media` v26 / API 2.6 / DB 412 / Upload 403 / Event 407이며 관리자 loader cache만 `2026082803`으로 올렸다.
+- Google Drive WEB 미러는 관리자·모바일 관리자·테스트 기존 ID 26개와 신규 `admin-banner-events.js`, `banner-phase2-admin-ux-followup-contract.test.js` 2개를 raw byte exact로 동기화했다. 기존 `.github` 미러 폴더는 목록 조회 후 하위 폴더 쓰기가 404로 두 번 거절되어 workflow 2개는 GitHub main을 권위 원본으로 유지한다.
+- 롤백은 PR `#298`의 관리자 WEB/CSS/JS·계약 테스트·cache `2026082803` 변경만 되돌린다. DB migration, Edge 배포, Storage 자산과 운영 이벤트 데이터는 건드리지 않는다.
 
 ## 예방적 확장성 SQL428 · 2026-08-28
 
