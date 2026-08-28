@@ -6,7 +6,7 @@
 
 - GitHub: `losnah513/aion2-updater-config`
 - 운영 브랜치: `main`
-- 배너 이미지 관리 2차 완료·운영 후속 안정화 기준: PR `#290` + `#295` + `#298` + `#303` + `#317` + `#319`, 진행도 `49/49`, 관리자 cache `2026082804`, Edge `kinojo-banner-media` v27(API 2.6 / DB 412 / Upload 403 / Event 407), HOF 이벤트 저장 patch `DB440 + DB441`, 참고 이미지 요청 확인 계약 `444` 구현 대기
+- 배너 이미지 관리 2차 완료·운영 후속 안정화 기준: PR `#290` + `#295` + `#298` + `#303` + `#317` + `#319`, 진행도 `49/49`, 관리자 cache `2026082804`, Edge `kinojo-banner-media` v27(API 2.6 / DB 412 / Upload 403 / Event 407), HOF 이벤트 저장 patch `DB440 + DB441`, 참고 이미지 요청 확인 계약 `DB444 + kinojo-member-profile v27 + WEB PR #323`
 - 내 정보 E-1 제품 운영 commit: `640b7eebcef1c13b0516fe2cd020df870bc23752` (PR `#194`)
 - 내 정보 후속 A-1~E-2: 12/12 완료
 - My Info / 관리자 이미지 모달 추가 UI 후속: PR `#197` 구현·배포·동기화 기준 CLOSED · 수동 실브라우저 sanity check는 post-close 보류
@@ -21,7 +21,7 @@
 - 알림: `kinojo_web_notification_summary_v316`은 확인 전 요청만 집계하고 최신 요청도 같은 조건으로 선택한다. 일반 캐릭터 이미지 업로드 건수와 최신 업로드 필드는 0/null로 고정해 별도 알림 경로를 제거한다. 따라서 DB에 확인 시각이 기록된 요청은 브라우저 세션이 바뀌어도 다시 알리지 않는다.
 - Edge/WEB: `kinojo-member-profile` API 2.8은 `admin-image-request-ack` 한 동작만 제공하고 구 `admin-image-review-*`, `admin-image-request-status` 동작을 노출하지 않는다. 관리자 목록은 참고 이미지 제작 요청만 표시하며 필터는 `확인 필요 / 확인 완료 / 전체`다. 접수·제작 중·완료·반려 버튼과 처리 이력 UI는 제거했다.
 - 보안: 새 읽기·확인 RPC는 MASTER opaque session을 다시 검증하고, 고정 `search_path`와 `service_role` 전용 실행 권한을 사용한다. 목록·상세에는 private object path나 signed URL을 포함하지 않고, 이미지 열람은 기존 60초 미리보기·명시적 다운로드 경계를 유지한다.
-- 배포 상태: 이 항목은 저장소 구현 및 로컬 계약 검증 기준이다. Supabase migration/Edge 배포와 GitHub Pages 반영은 별도 운영 배포가 필요하다.
+- 운영 배포: Supabase remote migration `20260828231225`와 FK index 후속 `20260828231422`를 적용했고, `kinojo-member-profile` v27(API 2.8 / Request 444 / Work Queue 444)을 `verify_jwt=false` 기존 custom KWS 경계로 배포했다. 배포 source는 이 브랜치와 줄바꿈 정규화 기준 exact 일치한다. WEB은 PR `#323` main 병합과 Pages/custom-domain readback을 최종 closeout 조건으로 한다.
 
 ## 관리자 대시보드 첫 진입 모듈 분리 · 2026-08-29
 
