@@ -24,6 +24,8 @@ for(const token of [
   "mode:'FIXED'",
   "joinPolicy:'INSTANT'",
   'await load()',
+  "ServerAdapter.command('ADD_FORCE'",
+  'addForce,',
   'data-sanctuary-draft-team',
 ])assert.ok(client.includes(token),`client fixed DRAFT flow missing ${token}`);
 
@@ -35,8 +37,12 @@ for(const token of [
   'data-draft-kind="ONCE"',
   'draftWeekday',
   'durationMinutes',
-  'Server 기본 생성',
+  '저장 후 Server 생성',
   'Array.from({length:10}',
+  'data-draft-force=',
+  'data-draft-add-force',
+  'data-slot-id=',
+  "await bridge().addForce",
   'aria-modal="true"',
   "if(event.key==='Escape'",
   "if(event.key!=='Tab')",
@@ -55,6 +61,8 @@ for(const token of [
   '.sanctuary-management-composer{order:2',
   'overflow-x:hidden',
   'scrollbar-width:none',
+  '.sanctuary-management-force-list',
+  '.sanctuary-management-force-rail.has-more::after',
   '.sanctuary-management-draft-frame.has-more::after',
   '.sanctuary-management-schedule-panel.has-more::after',
   '@media(max-width:350px)',
@@ -62,8 +70,8 @@ for(const token of [
 
 for(const page of ['sanctuary-management/index.html','m/sanctuary-management/index.html']){
   const html=read(page);
-  assert.ok(html.includes('sanctuary-management-draft.css?cache=2026082801'),`${page}: draft CSS cache missing`);
-  assert.ok(html.includes('sanctuary-management-draft.js?cache=2026082801'),`${page}: draft JS cache missing`);
+  assert.ok(html.includes('sanctuary-management-draft.css?cache=2026082802'),`${page}: draft CSS cache missing`);
+  assert.ok(html.includes('sanctuary-management-draft.js?cache=2026082802'),`${page}: draft JS cache missing`);
 }
 
 console.log('KINOJO sanctuary management fixed-team DRAFT contract: PASS');

@@ -46,15 +46,17 @@
 - 신규 실제 Edge helper 회귀를 포함한 전체 Node 계약 52개가 통과했다. PR의 My Info 관련 검증은 모두 통과했고, `Verify KINOJO Pages`의 실패 1건은 동시 진행된 별도 성역 운영 Edge 414와 저장소 기대값 412 불일치로 이 변경 범위와 무관하다.
 - 기존 실패 DRAFT는 수동 삭제하지 않고 기존 cleanup 수명주기를 따른다. 영향 사용자는 새 운영 코드가 반영된 뒤 My Info를 새로 열어 이미지를 다시 선택·전송한다.
 
-## 성역·스케줄 관리 개편 · Stage 3-2 고정 팀 DRAFT
+## 성역·스케줄 관리 개편 · Stage 3-3 포스·파티·슬롯 실제 상태
 
 - 신규 권한형 경로는 PC `/sanctuary-management/`, 모바일 `/m/sanctuary-management/`이며 둘 다 `noindex,nofollow,noarchive`다. 공통 Topbar·Drawer와 성역/성역 일정/성역 관리 탭은 `KinojoPermissions.canEditSanctuary(account)` 기준으로 MANAGER 이상 또는 `sanctuary_edit` 권한 계정에만 관리 진입점을 표시한다.
 - WEB 진입점은 `KinojoSupabase.getSanctuaryManagementBootstrap()`과 `runSanctuaryManagementCommand()`이다. 현재 KWS opaque session을 body의 `sessionToken`으로 `sanctuary-management` Edge에 전달하고 브라우저 직접 service-role RPC, legacy Sheet bridge, page mock adapter를 사용하지 않는다.
-- 운영 계약은 Edge `sanctuary-management` v4 / API `1.0` / DB `429`다. DB429 bootstrap은 읽기 플래그가 켜졌을 때 팀별 저장 일정도 반환하며, command는 기존 `CREATE_TEAM`과 revision 필수 `UPDATE_TEAM_DRAFT`를 제공한다.
-- WEB은 고정 팀 방식 선택, 팀 제목·성역·진행 내용, 1회성/무기한 주간 반복, 수요일~화요일 요일, 30분 단위 진행 시간을 같은 dialog에서 조립한다. 저장 성공 뒤 bootstrap을 다시 호출해 DRAFT와 revision을 Server 결과로 교체한다.
-- 운영 `readEnabled=false`, `writeEnabled=false`는 그대로다. 따라서 운영 화면의 팀 추가·초안 계속 작성은 별도 승인 전까지 비활성이고 SQL429/Edge v4도 사용자 팀 데이터를 생성하지 않는다. 기존 성역·스케줄·Sheet 경로는 변경하지 않았다.
-- SQL429 Source `1A5loObIlXG4fa3d-8WobLNhc_l73Ki91`, Deploy `1BMy7UpqdDqKbsUCLxu8pKISbHOq6HPpq`, Verify `1PKz8So7LrHjmd1ZOex2JCOjod5_lgopd`, Rollback `1rBbx-2DJeAMD5Q2n8_z8o4rpN5YFPj5p`, Edge source `1-ysdBz0kwIKWnVDPHJTraJ3FqIiBC-Fv`다. Source/Deploy text는 9,011자로 동일하고 Edge health는 DB429/read false/write false다.
-- 다음 작업은 3-3 포스·파티·슬롯 실제 상태 연결이다. 운영 플래그 활성화는 별도 승인 범위이며, 3-3에서도 Browser는 Server가 반환한 force/party/slot/revision만 표시해야 한다.
+- 운영 계약은 Edge `sanctuary-management` v5 / API `1.0` / DB `430`이다. DB430 bootstrap은 DB429의 팀 일정에 Server 저장 포스, 포스별 2파티, 파티별 5슬롯, 캐릭터 snapshot, occupied/vacancy 합계와 force/slot revision을 번호순으로 결합한다.
+- private roster helper와 public bootstrap/command v430은 모두 `SECURITY DEFINER` 고정 search path이며 `PUBLIC/anon/authenticated` 실행 권한을 제거하고 `service_role`만 허용한다. command v430은 기존 DB429/414로 위임하므로 생성자·관리자 권한, request key idempotency, expected revision, 최대 9포스 검증은 바뀌지 않는다.
+- WEB은 저장된 팀의 실제 포스 rail과 선택 포스의 1~10번 슬롯을 렌더링한다. `+ 포스 추가`는 현재 제목·일정을 먼저 `UPDATE_TEAM_DRAFT`로 저장한 다음 갱신된 team revision으로 `ADD_FORCE`를 실행하고 bootstrap을 다시 읽는다. 포스 전환은 입력값을 유지하며 화면에서 슬롯을 추정하거나 임의 생성하지 않는다.
+- PC는 680px 정사각형 composer와 286px 세로 일정 패널을 나란히 유지한다. 모바일은 일정 패널을 composer 위에 두며 390px·350px에서 composer 비율 1:1, slot 10개, 가로 overflow 0을 확인했다. 9포스 rail은 세로 overflow와 숨김 scrollbar, 아래 내용이 있을 때만 하단 fade를 사용한다.
+- 운영 `readEnabled=false`, `writeEnabled=false` 및 team/force/party/slot/command 0건은 그대로다. 운영 화면의 생성·편집은 별도 승인 전까지 비활성이고 기존 성역·스케줄·Sheet 경로도 변경하지 않았다.
+- SQL430 Source/Deploy/Verify/Rollback 및 Edge v5 Source의 Drive ID는 Stage 3-3 LOG와 SQL_INDEX에 기록한다. 전체 Node 계약 62종과 로컬 PC/모바일 실제 UI 검수를 통과했다.
+- 다음 작업은 3-4 생성자 캐릭터 후보 실제 연결이다. 우측 1/5 후보 영역과 빈 슬롯 선택은 이 단계에서 Server가 반환하는 소유 캐릭터만 사용해 연결하며 운영 플래그 활성화는 별도 승인 범위다.
 
 ## 레기온 트리 마-2~마-6 / 사-1~사-7 / 아-1~아-6 / 자-1~자-7
 

@@ -21,10 +21,33 @@
   </main>
   <script>
     (()=>{
+      let forceSequence=100;
+      let partySequence=200;
+      let slotSequence=300;
+      const character={characterId:501,name:'테스트본캐',serverName:'지켈',className:'검성',profileImageUrl:'',relation:'MAIN'};
+      function makeForce(forceNo,withCharacter=false){
+        const forceId=forceSequence++;
+        const parties=[1,2].map(partyNo=>{
+          const partyId=partySequence++;
+          const slots=Array.from({length:5},(_,index)=>({slotId:slotSequence++,slotNo:index+1,occupied:withCharacter&&partyNo===1&&index===0,revision:1,character:withCharacter&&partyNo===1&&index===0?character:null}));
+          const occupiedCount=slots.filter(slot=>slot.occupied).length;
+          return {partyId,partyNo,capacity:5,occupiedCount,vacancyCount:5-occupiedCount,slots};
+        });
+        const occupiedCount=parties.reduce((sum,party)=>sum+party.occupiedCount,0);
+        return {forceId,forceNo,capacity:10,status:occupiedCount===10?'FULL':'OPEN',revision:1,occupiedCount,vacancyCount:10-occupiedCount,parties};
+      }
+      function syncTeam(team){
+        team.forceCount=team.forces.length;
+        team.slotCount=team.forces.length*10;
+        team.occupiedCount=team.forces.reduce((sum,force)=>sum+force.occupiedCount,0);
+        team.vacancyCount=team.slotCount-team.occupiedCount;
+        return team;
+      }
       let teams=[{
         teamId:77,sanctuaryId:1,title:'1팀 목요일 21시',activity:'성역1 진행',mode:'FIXED',joinPolicy:'INSTANT',status:'DRAFT',revision:4,
-        schedule:{scheduleId:91,kind:'WEEKLY',startsOn:'2026-08-27',weekdays:[4],startsAt:'21:00',durationMinutes:60,status:'ACTIVE',revision:2}
-      }];
+        schedule:{scheduleId:91,kind:'WEEKLY',startsOn:'2026-08-27',weekdays:[4],startsAt:'21:00',durationMinutes:60,status:'ACTIVE',revision:2},
+        forces:[makeForce(1,true)]
+      }].map(syncTeam);
       const sanctuaries=[
         {id:1,code:'rudra',name:'성역1',shortName:'성역1',releaseStatus:'OPEN'},
         {id:2,code:'bagot',name:'성역2',shortName:'성역2',releaseStatus:'OPEN'},
@@ -35,14 +58,19 @@
       window.KinojoPermissions={canEditSanctuary:()=>true};
       window.KinojoToast={show:message=>{document.body.dataset.toast=message;},success:message=>{document.body.dataset.toast=message;}};
       window.KinojoSupabase={
-        async getSanctuaryManagementBootstrap(){return {apiVersion:1,schemaVersion:429,serverTime:new Date().toISOString(),readEnabled:true,writeEnabled:true,actor:{memberId:7,canManageAll:true},sanctuaries,teams:structuredClone(teams)};},
+        async getSanctuaryManagementBootstrap(){return {apiVersion:1,schemaVersion:430,serverTime:new Date().toISOString(),readEnabled:true,writeEnabled:true,actor:{memberId:7,canManageAll:true},sanctuaries,teams:structuredClone(teams)};},
         async runSanctuaryManagementCommand(command,payload,expectedRevision){
           if(command==='CREATE_TEAM'){
-            const teamId=88;teams.unshift({teamId,sanctuaryId:sanctuaries.find(item=>item.code===payload.sanctuaryCode).id,title:payload.title,activity:payload.activity,mode:'FIXED',joinPolicy:'INSTANT',status:'DRAFT',revision:1,schedule:Object.assign({scheduleId:92,status:'ACTIVE',revision:1},payload.schedule)});
+            const teamId=88;teams.unshift(syncTeam({teamId,sanctuaryId:sanctuaries.find(item=>item.code===payload.sanctuaryCode).id,title:payload.title,activity:payload.activity,mode:'FIXED',joinPolicy:'INSTANT',status:'DRAFT',revision:1,schedule:Object.assign({scheduleId:92,status:'ACTIVE',revision:1},payload.schedule),forces:[makeForce(1)]}));
             return {ok:true,action:command,teamId,revision:1};
           }
           const team=teams.find(item=>item.teamId===payload.teamId);
           if(!team||team.revision!==expectedRevision)throw new Error('다른 사용자가 먼저 팀 초안을 수정했습니다.');
+          if(command==='ADD_FORCE'){
+            if(team.forces.length>=9)throw new Error('팀당 포스는 최대 9개까지 만들 수 있습니다.');
+            const force=makeForce(team.forces.length+1);team.forces.push(force);team.revision+=1;syncTeam(team);
+            return {ok:true,action:command,teamId:team.teamId,forceId:force.forceId,forceNo:force.forceNo,revision:team.revision};
+          }
           team.title=payload.title;team.activity=payload.activity;team.sanctuaryId=sanctuaries.find(item=>item.code===payload.sanctuaryCode).id;team.schedule=Object.assign({},team.schedule,payload.schedule,{revision:team.schedule.revision+1});team.revision+=1;
           return {ok:true,action:command,teamId:team.teamId,revision:team.revision};
         }
