@@ -18,9 +18,8 @@ const S = "kinojo-member-profile",
   REF_STATE = "357",
   ADMIN_LIST = "367",
   ADMIN_PREVIEW = "371",
-  ADMIN_REVIEW = "392",
-  ADMIN_REQUEST = "405",
-  ADMIN_WORK_QUEUE = "406",
+  ADMIN_REQUEST = "444",
+  ADMIN_WORK_QUEUE = "444",
   REQUEST = "404",
   PIX = "B3";
 const MAX_REQ = 4096,
@@ -103,13 +102,9 @@ function hdr(r) {
     "x-kinojo-profile-upload-complete-contract": COMP,
     "x-kinojo-profile-upload-replace-contract": REPL,
     "x-kinojo-profile-reset-contract": RESET,
-    "x-kinojo-reference-upload-prepare-contract": REF_PREP,
-    "x-kinojo-reference-upload-complete-contract": REF_COMP,
-    "x-kinojo-reference-upload-replace-contract": REF_REPL,
     "x-kinojo-reference-delete-contract": REF_DEL,
     "x-kinojo-reference-state-contract": REF_STATE,
     "x-kinojo-admin-image-preview-contract": ADMIN_PREVIEW,
-    "x-kinojo-admin-image-review-contract": ADMIN_REVIEW,
     "x-kinojo-admin-image-request-contract": ADMIN_REQUEST,
     "x-kinojo-admin-image-work-queue-contract": ADMIN_WORK_QUEUE,
     "x-kinojo-image-request-contract": REQUEST,
@@ -974,58 +969,15 @@ async function adminImageList(r, b, t) {
 function adminImageWorkQueueItemPublic(v) {
   const x = rec(v) || {},
     itemType = txt(x.itemType, 40).toUpperCase(),
-    memberId = pos(x.memberId),
-    characterNames = (
-      Array.isArray(x.characterNames) ? x.characterNames : []
-    )
-      .map((name) => txt(name, 120))
-      .filter(Boolean)
-      .slice(0, 50);
+    memberId = pos(x.memberId);
   if (memberId === null) return null;
-  if (itemType === "IMAGE_REVIEW") {
-    const latest = rec(x.latestImage) || {};
-    return {
-      itemType,
-      memberId,
-      mainCharacterName: txt(x.mainCharacterName, 120),
-      role: txt(x.role, 40),
-      roleLabel: txt(x.roleLabel, 80),
-      level: num(x.level) ?? 0,
-      isActive: x.isActive === true,
-      imageCount: Math.max(0, num(x.imageCount) ?? 0),
-      profileImageCount: Math.max(0, num(x.profileImageCount) ?? 0),
-      referenceImageCount: Math.max(0, num(x.referenceImageCount) ?? 0),
-      characterCount: Math.max(0, num(x.characterCount) ?? 0),
-      characterNames,
-      latestUploadedAt: txt(x.latestUploadedAt, 80),
-      activityAt: txt(x.activityAt, 80),
-      latestImage: {
-        kind: txt(latest.kind, 20),
-        characterId: pos(latest.characterId),
-        characterName: txt(latest.characterName, 120),
-        slot: txt(latest.slot, 40),
-        uploadedAt: txt(latest.uploadedAt, 80),
-      },
-      reviewedThrough: txt(x.reviewedThrough, 80) || null,
-      reviewedAt: txt(x.reviewedAt, 80) || null,
-      pending: x.pending === true,
-    };
-  }
-  if (itemType !== "PRODUCTION_REQUEST") return null;
+  if (itemType !== "REFERENCE_IMAGE_REQUEST") return null;
   const requestId = pos(x.requestId),
     characterId = pos(x.characterId),
-    statusValue = txt(x.status, 40).toUpperCase(),
     slots = (Array.isArray(x.slots) ? x.slots : [])
       .map((slot) => txt(slot, 40).toUpperCase())
       .filter((slot) => SLOTS.includes(slot));
-  if (
-    requestId === null ||
-    characterId === null ||
-    !["SUBMITTED", "IN_PROGRESS", "COMPLETED", "REJECTED"].includes(
-      statusValue,
-    )
-  )
-    return null;
+  if (requestId === null || characterId === null) return null;
   return {
     itemType,
     memberId,
@@ -1042,12 +994,13 @@ function adminImageWorkQueueItemPublic(v) {
     styleCode: REQUEST_STYLES.includes(txt(x.styleCode, 40).toUpperCase())
       ? txt(x.styleCode, 40).toUpperCase()
       : null,
-    status: statusValue,
     submittedAt: txt(x.submittedAt, 80) || null,
-    updatedAt: txt(x.updatedAt, 80) || null,
     activityAt: txt(x.activityAt, 80) || null,
     imageExpiresAt: txt(x.imageExpiresAt, 80) || null,
     metadataExpiresAt: txt(x.metadataExpiresAt, 80) || null,
+    acknowledged: x.acknowledged === true,
+    pending: x.pending === true,
+    acknowledgedAt: txt(x.acknowledgedAt, 80) || null,
     itemCount: Math.max(0, num(x.itemCount) ?? slots.length),
     availableImageCount: Math.max(0, num(x.availableImageCount) ?? 0),
     slots,
@@ -1069,28 +1022,20 @@ async function adminImageWorkQueueList(r, b, t) {
     );
   const queueFilter =
     txt(b.filter ?? b.queueFilter ?? b.queue_filter, 40).toUpperCase() ||
-    "ACTION_REQUIRED";
-  if (
-    ![
-      "ACTION_REQUIRED",
-      "IMAGE_REVIEW",
-      "PRODUCTION_REQUEST",
-      "COMPLETED",
-      "ALL",
-    ].includes(queueFilter)
-  )
+    "PENDING";
+  if (!["PENDING", "ACKNOWLEDGED", "ALL"].includes(queueFilter))
     return out(
       r,
       {
         ok: false,
         code: "WORK_QUEUE_FILTER_INVALID",
-        message: "지원하지 않는 이미지 작업 필터입니다.",
+        message: "지원하지 않는 참고 이미지 제작 요청 필터입니다.",
       },
       400,
     );
   const search = txt(b.search ?? b.query, 120) || null,
     limit = Math.max(1, Math.min(200, Math.floor(Number(b.limit) || 100)));
-  const d = await rpc("kinojo_admin_member_image_work_queue_v406", {
+  const d = await rpc("kinojo_admin_member_image_work_queue_v444", {
     p_session_token: t,
     p_filter: queueFilter,
     p_search: search,
@@ -1115,7 +1060,7 @@ async function adminImageWorkQueueList(r, b, t) {
     );
   }
   if (
-    txt(d.contract, 120) !== "admin-member-image-work-queue-v406" ||
+    txt(d.contract, 120) !== "admin-member-image-work-queue-v444" ||
     txt(d.privacy, 120) !== "NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS" ||
     txt(d.filter, 40) !== queueFilter
   )
@@ -1133,198 +1078,11 @@ async function adminImageWorkQueueList(r, b, t) {
     contract: "admin-member-image-work-queue-api-v1",
     privacy: "NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS",
     filter: queueFilter,
-    pendingUploadCount: Math.max(0, num(d.pendingUploadCount) ?? 0),
-    activeRequestCount: Math.max(0, num(d.activeRequestCount) ?? 0),
+    pendingRequestCount: Math.max(0, num(d.pendingRequestCount) ?? 0),
     actionRequiredCount: Math.max(0, num(d.actionRequiredCount) ?? 0),
-    totalUploaderCount: Math.max(0, num(d.totalUploaderCount) ?? 0),
+    totalRequestCount: Math.max(0, num(d.totalRequestCount) ?? 0),
     rowCount: items.length,
     items,
-  });
-}
-async function adminImageReviewList(r, b, t) {
-  if (memberSel(b) || charAlias(b) || prepStorage(b) || compStorage(b))
-    return out(
-      r,
-      {
-        ok: false,
-        code: memberSel(b)
-          ? "CLIENT_MEMBER_SELECTOR_FORBIDDEN"
-          : charAlias(b)
-            ? "CLIENT_CHARACTER_SELECTOR_FORBIDDEN"
-            : "CLIENT_STORAGE_SELECTOR_FORBIDDEN",
-      },
-      400,
-    );
-  const reviewStatus =
-    txt(b.status ?? b.reviewStatus ?? b.review_status, 20).toUpperCase() ||
-    "PENDING";
-  if (!["PENDING", "REVIEWED", "ALL"].includes(reviewStatus))
-    return out(
-      r,
-      {
-        ok: false,
-        code: "REVIEW_STATUS_INVALID",
-        message: "PENDING, REVIEWED, ALL 상태만 조회할 수 있습니다.",
-      },
-      400,
-    );
-  const search = txt(b.search ?? b.query, 120) || null,
-    limit = Math.max(1, Math.min(200, Math.floor(Number(b.limit) || 100)));
-  const d = await rpc("kinojo_admin_member_image_review_list_v392", {
-    p_session_token: t,
-    p_status: reviewStatus,
-    p_search: search,
-    p_limit: limit,
-  });
-  if (d.ok !== true) {
-    const x = txt(d.code, 80) || "ADMIN_MEMBER_IMAGE_REVIEW_LIST_FAILED";
-    return out(
-      r,
-      {
-        ok: false,
-        service: S,
-        apiVersion: V,
-        databaseContract: DB,
-        masterBoundaryContract: MASTER,
-        adminImageReviewContract: ADMIN_REVIEW,
-        contract: "admin-member-image-review-list-api-v1",
-        code: x,
-        message: txt(d.message, 300),
-      },
-      status(x),
-    );
-  }
-  if (txt(d.privacy, 120) !== "NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS")
-    throw Error("ADMIN_MEMBER_IMAGE_REVIEW_PRIVACY_MISMATCH");
-  const items = (Array.isArray(d.items) ? d.items : [])
-    .map((v) => {
-      const x = rec(v) || {},
-        latest = rec(x.latestImage) || {},
-        memberId = num(x.memberId),
-        characterNames = (
-          Array.isArray(x.characterNames) ? x.characterNames : []
-        )
-          .map((name) => txt(name, 120))
-          .filter(Boolean)
-          .slice(0, 50);
-      return Number.isInteger(memberId) && memberId > 0
-        ? {
-            memberId,
-            mainCharacterName: txt(x.mainCharacterName, 120),
-            role: txt(x.role, 40),
-            roleLabel: txt(x.roleLabel, 80),
-            level: num(x.level) ?? 0,
-            isActive: x.isActive === true,
-            imageCount: num(x.imageCount) ?? 0,
-            profileImageCount: num(x.profileImageCount) ?? 0,
-            referenceImageCount: num(x.referenceImageCount) ?? 0,
-            characterCount: num(x.characterCount) ?? 0,
-            characterNames,
-            latestUploadedAt: txt(x.latestUploadedAt, 80),
-            latestImage: {
-              kind: txt(latest.kind, 20),
-              characterId: num(latest.characterId),
-              characterName: txt(latest.characterName, 120),
-              slot: txt(latest.slot, 40),
-              uploadedAt: txt(latest.uploadedAt, 80),
-            },
-            reviewedThrough: txt(x.reviewedThrough, 80) || null,
-            reviewedAt: txt(x.reviewedAt, 80) || null,
-            pending: x.pending === true,
-          }
-        : null;
-    })
-    .filter(Boolean);
-  return out(r, {
-    ok: true,
-    service: S,
-    apiVersion: V,
-    databaseContract: DB,
-    masterBoundaryContract: MASTER,
-    adminImageReviewContract: ADMIN_REVIEW,
-    contract: "admin-member-image-review-list-api-v1",
-    privacy: "NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS",
-    status: reviewStatus,
-    pendingCount: num(d.pendingCount) ?? 0,
-    totalUploaderCount: num(d.totalUploaderCount) ?? 0,
-    rowCount: items.length,
-    items,
-  });
-}
-async function adminImageReviewAck(r, b, t) {
-  if (has(b, ["targetMemberId", "target_member_id"]))
-    return out(r, { ok: false, code: "CLIENT_MEMBER_SELECTOR_FORBIDDEN" }, 400);
-  if (charAlias(b) || prepStorage(b) || compStorage(b))
-    return out(
-      r,
-      {
-        ok: false,
-        code: charAlias(b)
-          ? "CLIENT_CHARACTER_SELECTOR_FORBIDDEN"
-          : "CLIENT_STORAGE_SELECTOR_FORBIDDEN",
-      },
-      400,
-    );
-  const m = adminMid(b);
-  if (m === null)
-    return out(
-      r,
-      {
-        ok: false,
-        code: "TARGET_MEMBER_ID_REQUIRED",
-        message: "확인 처리할 회원 식별값이 필요합니다.",
-      },
-      400,
-    );
-  const reviewed = txt(b.reviewedThrough ?? b.reviewed_through, 80);
-  if (reviewed && !Number.isFinite(Date.parse(reviewed)))
-    return out(
-      r,
-      {
-        ok: false,
-        code: "REVIEWED_THROUGH_INVALID",
-        message: "확인 기준 시간이 올바르지 않습니다.",
-      },
-      400,
-    );
-  const d = await rpc("kinojo_admin_member_image_review_ack_v392", {
-    p_session_token: t,
-    p_member_id: m,
-    p_reviewed_through: reviewed || null,
-  });
-  if (d.ok !== true) {
-    const x = txt(d.code, 80) || "ADMIN_MEMBER_IMAGE_REVIEW_ACK_FAILED";
-    return out(
-      r,
-      {
-        ok: false,
-        service: S,
-        apiVersion: V,
-        databaseContract: DB,
-        masterBoundaryContract: MASTER,
-        adminImageReviewContract: ADMIN_REVIEW,
-        contract: "admin-member-image-review-ack-api-v1",
-        code: x,
-        message: txt(d.message, 300),
-      },
-      status(x),
-    );
-  }
-  if (num(d.memberId) !== m)
-    throw Error("ADMIN_MEMBER_IMAGE_REVIEW_ACK_BINDING_MISMATCH");
-  return out(r, {
-    ok: true,
-    service: S,
-    apiVersion: V,
-    databaseContract: DB,
-    masterBoundaryContract: MASTER,
-    adminImageReviewContract: ADMIN_REVIEW,
-    contract: "admin-member-image-review-ack-api-v1",
-    memberId: m,
-    reviewedThrough: txt(d.reviewedThrough, 80),
-    reviewedAt: txt(d.reviewedAt, 80),
-    latestUploadedAt: txt(d.latestUploadedAt, 80),
-    pending: d.pending === true,
   });
 }
 function adminImageRequestIds(b, requireRequest = false) {
@@ -1378,12 +1136,13 @@ function adminImageRequestPublic(v) {
     requestId: pos(x.requestId),
     styleCode: REQUEST_STYLES.includes(style) ? style : null,
     requestNote: txt(x.requestNote, 300),
-    status: txt(x.status, 40).toUpperCase(),
     submittedAt: txt(x.submittedAt, 80) || null,
     createdAt: txt(x.createdAt, 80) || null,
-    updatedAt: txt(x.updatedAt, 80) || null,
     imageExpiresAt: txt(x.imageExpiresAt, 80) || null,
     metadataExpiresAt: txt(x.metadataExpiresAt, 80) || null,
+    acknowledged: x.acknowledged === true,
+    pending: x.pending === true,
+    acknowledgedAt: txt(x.acknowledgedAt, 80) || null,
     itemCount: Math.max(0, num(x.itemCount) ?? slots.length),
     availableImageCount: Math.max(0, num(x.availableImageCount) ?? 0),
     imageAvailable: x.imageAvailable === true,
@@ -1393,28 +1152,27 @@ function adminImageRequestPublic(v) {
 async function adminImageRequestList(r, b, t) {
   const input = adminImageRequestIds(b);
   if (!input.ok) return out(r, input, 400);
-  const requestStatus =
-      txt(b.requestStatus ?? b.request_status, 30).toUpperCase() || "ALL",
+  const acknowledgementFilter =
+      txt(
+        b.acknowledgementFilter ?? b.acknowledgement_filter ?? b.filter,
+        30,
+      ).toUpperCase() || "ALL",
     limit = Math.max(1, Math.min(100, Math.floor(Number(b.limit) || 50)));
-  if (
-    !["ALL", "SUBMITTED", "IN_PROGRESS", "COMPLETED", "REJECTED"].includes(
-      requestStatus,
-    )
-  )
+  if (!["PENDING", "ACKNOWLEDGED", "ALL"].includes(acknowledgementFilter))
     return out(
       r,
       {
         ok: false,
-        code: "REQUEST_STATUS_FILTER_INVALID",
-        message: "지원하지 않는 제작 요청 상태 필터입니다.",
+        code: "REQUEST_ACK_FILTER_INVALID",
+        message: "지원하지 않는 참고 이미지 제작 요청 확인 필터입니다.",
       },
       400,
     );
-  const d = await rpc("kinojo_admin_member_image_request_list_v405", {
+  const d = await rpc("kinojo_admin_member_image_request_list_v444", {
     p_session_token: t,
     p_member_id: input.memberId,
     p_character_id: input.characterId,
-    p_status: requestStatus,
+    p_filter: acknowledgementFilter,
     p_limit: limit,
   });
   if (d.ok !== true) {
@@ -1453,7 +1211,7 @@ async function adminImageRequestList(r, b, t) {
     privacy: "NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS",
     targetMemberId: input.memberId,
     characterId: input.characterId,
-    status: requestStatus,
+    filter: acknowledgementFilter,
     rowCount: requests.length,
     requests,
   });
@@ -1461,7 +1219,7 @@ async function adminImageRequestList(r, b, t) {
 async function adminImageRequestDetail(r, b, t) {
   const input = adminImageRequestIds(b, true);
   if (!input.ok) return out(r, input, 400);
-  const d = await rpc("kinojo_admin_member_image_request_detail_v405", {
+  const d = await rpc("kinojo_admin_member_image_request_detail_v444", {
     p_session_token: t,
     p_member_id: input.memberId,
     p_character_id: input.characterId,
@@ -1491,13 +1249,6 @@ async function adminImageRequestDetail(r, b, t) {
   )
     throw Error("ADMIN_IMAGE_REQUEST_DETAIL_BINDING_MISMATCH");
   const base = adminImageRequestPublic(d),
-    allowed = (
-      Array.isArray(d.allowedNextStatuses) ? d.allowedNextStatuses : []
-    )
-      .map((value) => txt(value, 40).toUpperCase())
-      .filter((value) =>
-        ["IN_PROGRESS", "COMPLETED", "REJECTED"].includes(value)
-      ),
     items = (Array.isArray(d.items) ? d.items : [])
       .map((value) => {
         const x = rec(value) || {},
@@ -1513,18 +1264,7 @@ async function adminImageRequestDetail(r, b, t) {
             }
           : null;
       })
-      .filter(Boolean),
-    history = (Array.isArray(d.history) ? d.history : [])
-      .map((value) => {
-        const x = rec(value) || {};
-        return {
-          previousStatus: txt(x.previousStatus, 40).toUpperCase() || null,
-          newStatus: txt(x.newStatus, 40).toUpperCase(),
-          actorKind: txt(x.actorKind, 30).toUpperCase(),
-          createdAt: txt(x.createdAt, 80) || null,
-        };
-      })
-      .filter((value) => value.newStatus);
+      .filter(Boolean);
   return out(r, {
     ok: true,
     service: S,
@@ -1540,37 +1280,20 @@ async function adminImageRequestDetail(r, b, t) {
     itemCount: items.length,
     availableImageCount: items.filter((item) => item.available).length,
     imageAvailable: items.some((item) => item.available),
-    allowedNextStatuses: allowed,
     items,
-    history,
   });
 }
-async function adminImageRequestStatus(r, b, t) {
+async function adminImageRequestAck(r, b, t) {
   const input = adminImageRequestIds(b, true);
   if (!input.ok) return out(r, input, 400);
-  const nextStatus = txt(
-    b.nextStatus ?? b.next_status,
-    40,
-  ).toUpperCase();
-  if (!["IN_PROGRESS", "COMPLETED", "REJECTED"].includes(nextStatus))
-    return out(
-      r,
-      {
-        ok: false,
-        code: "REQUEST_STATUS_INVALID",
-        message: "지원하지 않는 제작 요청 상태입니다.",
-      },
-      400,
-    );
-  const d = await rpc("kinojo_admin_member_image_request_status_v405", {
+  const d = await rpc("kinojo_admin_member_image_request_ack_v444", {
     p_session_token: t,
     p_member_id: input.memberId,
     p_character_id: input.characterId,
     p_request_id: input.requestId,
-    p_status: nextStatus,
   });
   if (d.ok !== true) {
-    const code = txt(d.code, 80) || "ADMIN_IMAGE_REQUEST_STATUS_FAILED";
+    const code = txt(d.code, 80) || "ADMIN_IMAGE_REQUEST_ACK_FAILED";
     return out(
       r,
       {
@@ -1578,11 +1301,11 @@ async function adminImageRequestStatus(r, b, t) {
         service: S,
         apiVersion: V,
         adminImageRequestContract: ADMIN_REQUEST,
-        contract: "admin-member-image-request-status-api-v1",
+        contract: "admin-member-image-request-ack-api-v1",
         code,
         message: txt(d.message, 300),
         requestId: input.requestId,
-        status: txt(d.status, 40).toUpperCase() || null,
+        acknowledged: d.acknowledged === true,
       },
       status(code),
     );
@@ -1592,7 +1315,7 @@ async function adminImageRequestStatus(r, b, t) {
     num(d.characterId) !== input.characterId ||
     num(d.requestId) !== input.requestId
   )
-    throw Error("ADMIN_IMAGE_REQUEST_STATUS_BINDING_MISMATCH");
+    throw Error("ADMIN_IMAGE_REQUEST_ACK_BINDING_MISMATCH");
   return out(r, {
     ok: true,
     service: S,
@@ -1600,20 +1323,14 @@ async function adminImageRequestStatus(r, b, t) {
     databaseContract: DB,
     masterBoundaryContract: MASTER,
     adminImageRequestContract: ADMIN_REQUEST,
-    contract: "admin-member-image-request-status-api-v1",
+    contract: "admin-member-image-request-ack-api-v1",
     targetMemberId: input.memberId,
     characterId: input.characterId,
     requestId: input.requestId,
-    previousStatus: txt(d.previousStatus, 40).toUpperCase() || null,
-    status: txt(d.status, 40).toUpperCase(),
-    updatedAt: txt(d.updatedAt, 80) || null,
-    allowedNextStatuses: (
-      Array.isArray(d.allowedNextStatuses) ? d.allowedNextStatuses : []
-    )
-      .map((value) => txt(value, 40).toUpperCase())
-      .filter((value) =>
-        ["IN_PROGRESS", "COMPLETED", "REJECTED"].includes(value)
-      ),
+    acknowledged: d.acknowledged === true,
+    pending: d.pending === true,
+    acknowledgedAt: txt(d.acknowledgedAt, 80) || null,
+    acknowledgedByMemberId: pos(d.acknowledgedByMemberId),
     idempotent: d.idempotent === true,
   });
 }
@@ -3425,10 +3142,9 @@ Deno.serve(async (r) => {
       ![
         "admin-image-list",
         "admin-image-preview",
-        "admin-image-review-ack",
         "admin-image-request-list",
         "admin-image-request-detail",
-        "admin-image-request-status",
+        "admin-image-request-ack",
         "admin-image-request-preview",
         "admin-image-request-download",
       ].includes(a)
@@ -3454,14 +3170,10 @@ Deno.serve(async (r) => {
         profileUploadCompleteContract: COMP,
         profileUploadReplaceContract: REPL,
         profileResetContract: RESET,
-        referenceUploadPrepareContract: REF_PREP,
-        referenceUploadCompleteContract: REF_COMP,
-        referenceUploadReplaceContract: REF_REPL,
         referenceDeleteContract: REF_DEL,
         referenceStateContract: REF_STATE,
         adminImageListContract: ADMIN_LIST,
         adminImagePreviewContract: ADMIN_PREVIEW,
-        adminImageReviewContract: ADMIN_REVIEW,
         adminImageRequestContract: ADMIN_REQUEST,
         adminImageWorkQueueContract: ADMIN_WORK_QUEUE,
         imageRequestContract: REQUEST,
@@ -3511,19 +3223,10 @@ Deno.serve(async (r) => {
           idempotency: "MEMBER_AND_CLIENT_KEY",
           privacy: "NO_PRIVATE_OBJECT_PATH_FIELD",
           admin: {
-            lifecycle: [
-              "SUBMITTED",
-              "IN_PROGRESS",
-              "COMPLETED",
-              "REJECTED",
-            ],
-            transitions: {
-              SUBMITTED: ["IN_PROGRESS", "REJECTED"],
-              IN_PROGRESS: ["COMPLETED", "REJECTED"],
-            },
+            acknowledgement: "ONE_IDEMPOTENT_MASTER_CONFIRMATION",
             listAndDetail: "MASTER_ONLY_NO_PRIVATE_PATHS",
             assets: "SHORT_SIGNED_PREVIEW_OR_EXPLICIT_DOWNLOAD",
-            notification: "ONE_DURABLE_EVENT_PER_REQUEST_ID",
+            notification: "UNACKNOWLEDGED_REQUESTS_ONLY",
           },
         },
         actions: [
@@ -3535,9 +3238,6 @@ Deno.serve(async (r) => {
           "profile-upload-complete",
           "profile-upload-replace-complete",
           "profile-reset-official",
-          "reference-upload-prepare",
-          "reference-upload-complete",
-          "reference-upload-replace-complete",
           "reference-delete",
           "reference-state",
           "image-request-prepare",
@@ -3546,11 +3246,9 @@ Deno.serve(async (r) => {
           "admin-image-list",
           "admin-image-preview",
           "admin-image-work-queue-list",
-          "admin-image-review-list",
-          "admin-image-review-ack",
           "admin-image-request-list",
           "admin-image-request-detail",
-          "admin-image-request-status",
+          "admin-image-request-ack",
           "admin-image-request-preview",
           "admin-image-request-download",
         ],
@@ -3565,9 +3263,6 @@ Deno.serve(async (r) => {
         "profile-upload-complete",
         "profile-upload-replace-complete",
         "profile-reset-official",
-        "reference-upload-prepare",
-        "reference-upload-complete",
-        "reference-upload-replace-complete",
         "reference-delete",
         "reference-state",
         "image-request-prepare",
@@ -3576,11 +3271,9 @@ Deno.serve(async (r) => {
         "admin-image-list",
         "admin-image-preview",
         "admin-image-work-queue-list",
-        "admin-image-review-list",
-        "admin-image-review-ack",
         "admin-image-request-list",
         "admin-image-request-detail",
-        "admin-image-request-status",
+        "admin-image-request-ack",
         "admin-image-request-preview",
         "admin-image-request-download",
       ].includes(a)
@@ -3593,16 +3286,12 @@ Deno.serve(async (r) => {
     if (a === "admin-image-preview") return await adminImagePreview(r, b, t);
     if (a === "admin-image-work-queue-list")
       return await adminImageWorkQueueList(r, b, t);
-    if (a === "admin-image-review-list")
-      return await adminImageReviewList(r, b, t);
-    if (a === "admin-image-review-ack")
-      return await adminImageReviewAck(r, b, t);
     if (a === "admin-image-request-list")
       return await adminImageRequestList(r, b, t);
     if (a === "admin-image-request-detail")
       return await adminImageRequestDetail(r, b, t);
-    if (a === "admin-image-request-status")
-      return await adminImageRequestStatus(r, b, t);
+    if (a === "admin-image-request-ack")
+      return await adminImageRequestAck(r, b, t);
     if (a === "admin-image-request-preview")
       return await adminImageRequestAsset(r, b, t, "PREVIEW");
     if (a === "admin-image-request-download")
@@ -3622,13 +3311,8 @@ Deno.serve(async (r) => {
       return await imageRequestFinalize(r, b, t);
     if (a === "image-request-state") return await imageRequestState(r, b, t);
     if (a === "reference-state") return await referenceState(r, b, t);
-    if (a === "reference-upload-prepare")
-      return await referencePrepare(r, b, t);
-    if (a === "reference-upload-complete")
-      return await referenceComplete(r, b, t);
-    if (a === "reference-upload-replace-complete")
-      return await referenceReplaceComplete(r, b, t);
-    return await referenceDelete(r, b, t);
+    if (a === "reference-delete") return await referenceDelete(r, b, t);
+    return out(r, { ok: false, code: "UNSUPPORTED_ACTION" }, 400);
   } catch (e) {
     const c = e instanceof Error ? e.message : "PROFILE_SERVER_ERROR";
     return out(

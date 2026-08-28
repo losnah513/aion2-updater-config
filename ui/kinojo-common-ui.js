@@ -1135,7 +1135,7 @@
     const status=String(request.status||'');
     const slots=Array.isArray(request.slots)?request.slots.join(' · '):'';
     resultHost.hidden=false;
-    resultHost.innerHTML='<strong>'+(status==='SUBMITTED'?'제작 요청 접수 완료':'전송 준비 상태')+'</strong><span>'+escapeHtml(myInfoImageRequestStyleLabel_(request.styleCode))+' · '+escapeHtml(slots||'이미지 확인 중')+'</span><small>이미지 보관 '+escapeHtml(myInfoImageRequestDate_(request.imageExpiresAt))+'까지 · 요청 #'+escapeHtml(String(request.requestId||''))+'</small>';
+    resultHost.innerHTML='<strong>'+(status==='SUBMITTED'?'참고 이미지 제작 요청 전송 완료':'전송 준비 상태')+'</strong><span>'+escapeHtml(myInfoImageRequestStyleLabel_(request.styleCode))+' · '+escapeHtml(slots||'이미지 확인 중')+'</span><small>이미지 보관 '+escapeHtml(myInfoImageRequestDate_(request.imageExpiresAt))+'까지 · 요청 #'+escapeHtml(String(request.requestId||''))+'</small>';
   }
   function renderMyInfoReferencePicker_(){
     const characterId=Number(kinojoMyProfileUiState.selectedCharacterId||0);
@@ -1435,7 +1435,7 @@
       if(note){note.value='';note.removeAttribute('aria-invalid');}
       delete kinojoMyReferencePickerState.stateByCharacter[characterId];
       await loadMyInfoReferenceState_(characterId,true).catch(()=>null);
-      setMyInfoImageRequestStatus_('제작 요청이 접수되었습니다. 이미지는 최대 7일 동안 비공개로 보관됩니다.','ready');
+      setMyInfoImageRequestStatus_('참고 이미지 제작 요청을 보냈습니다. 이미지는 최대 7일 동안 비공개로 보관됩니다.','ready');
       renderMyInfoReferencePicker_();
       return true;
     }catch(error){
@@ -2151,7 +2151,7 @@
         <div class="kinojo-my-info-request-confirm__backdrop" data-request-confirm-cancel></div>
         <div class="kinojo-my-info-request-confirm__dialog" role="alertdialog" aria-modal="true" aria-labelledby="kinojoMyInfoStyleConfirmTitle" aria-describedby="kinojoMyInfoStyleConfirmDescription" tabindex="-1">
           <small>스타일 미선택</small><strong id="kinojoMyInfoStyleConfirmTitle">요청 스타일을 정하지 않고 이미지만 업로드하시겠습니까?</strong>
-          <p id="kinojoMyInfoStyleConfirmDescription">스타일을 고르지 않아도 접수할 수 있으며, 관리자가 참고 이미지와 추가 요청을 기준으로 제작합니다.</p>
+          <p id="kinojoMyInfoStyleConfirmDescription">스타일을 고르지 않아도 요청할 수 있으며, 관리자가 참고 이미지와 추가 요청을 기준으로 제작합니다.</p>
           <div><button class="kinojo-my-info-action-btn is-primary" id="kinojoMyInfoStyleConfirmChooseBtn" type="button">돌아가서 스타일 선택</button><button class="kinojo-my-info-action-btn" id="kinojoMyInfoStyleConfirmSubmitBtn" type="button">스타일 없이 업로드</button></div>
         </div>
       </div>`;

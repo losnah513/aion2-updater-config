@@ -19,30 +19,23 @@ for (const removed of [
 ]) {
   assert.equal(authUi.includes(removed), false, `legacy central admin notice path must be removed: ${removed}`);
 }
-assert.ok(authUi.includes('kinojo-admin-notifications.js?cache=2026082601'), 'auth UI must load the latest shared admin notification bridge');
+assert.ok(authUi.includes('kinojo-admin-notifications.js?cache=2026082901'), 'auth UI must load the latest shared admin notification bridge');
 
 for (const expected of [
-  "const SEEN_KEY='kinojo_admin_notification_seen_v405'",
+  "const SEEN_KEY='kinojo_admin_notification_seen_v444'",
   "const LEGACY_SUPPORT_SEEN_KEY='kinojo_support_notice_seen_v316'",
   'latestCodeRequest',
   'latestSupportRequest',
-  'latestReferenceUpload',
-  'latestCharacterImageUpload',
   'latestImageRequest',
-  'memberImagePendingCount',
-  'hasUnifiedImageQueue',
+  'memberImageRequestPendingCount',
   "title:'코드 요청'",
   "title:'포스 지원'",
-  "title:'캐릭터 이미지 업로드'",
   "title:'참고 이미지 제작 요청'",
-  "message:'['+name+']님이 캐릭터 이미지를 업로드하였습니다.'",
   "eventKey:'CODE_REQUEST:'",
   "eventKey:'FORCE_REQUEST:'",
-  "eventKey:'CHARACTER_IMAGE:'",
   "eventKey:'IMAGE_REQUEST:'",
   "tone:'code'",
   "tone:'support'",
-  "tone:'reference'",
   "tone:'request'",
   'aspect-ratio:2/1',
   'grid-template-rows:1fr 2fr',
@@ -59,7 +52,6 @@ for (const expected of [
 for (const colorContract of [
   '.tone-code .kinojo-admin-notification-head{background:linear-gradient(135deg,#38bdf8 0%,#3b82f6 100%)}',
   '.tone-support .kinojo-admin-notification-head{background:linear-gradient(135deg,#fb7185 0%,#ef4444 100%)}',
-  '.tone-reference .kinojo-admin-notification-head{background:linear-gradient(135deg,#34d399 0%,#10b981 100%)}',
   '.tone-request .kinojo-admin-notification-head{background:linear-gradient(135deg,#a78bfa 0%,#7c3aed 100%)}',
 ]) {
   assert.ok(bridge.includes(colorContract), `notification type header color contract missing: ${colorContract}`);
@@ -92,5 +84,8 @@ assert.ok(bridge.includes('setTimeout(showNext,260)'), 'closing one notification
 assert.ok(bridge.includes('@media(prefers-reduced-motion:reduce)'), 'notification motion must respect reduced-motion preferences');
 assert.ok(bridge.includes("event.key==='Enter'||event.key===' '"), 'card keyboard activation must keep Enter and Space support');
 assert.ok(bridge.includes('.kinojo-admin-notification-close:focus-visible'), 'close button must remain keyboard focus-visible');
+for (const removed of ['latestCharacterImageUpload', 'latestReferenceUpload', "title:'캐릭터 이미지 업로드'", "eventKey:'CHARACTER_IMAGE:'", 'memberImagePendingCount']) {
+  assert.equal(bridge.includes(removed), false, `generic character-image notification path must be removed: ${removed}`);
+}
 
 console.log('admin notification contract: PASS');

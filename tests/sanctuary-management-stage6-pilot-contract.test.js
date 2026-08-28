@@ -58,7 +58,7 @@ for(const page of ['sanctuary-management/index.html','m/sanctuary-management/ind
   const html=read(page);
   for(const token of [
     'id="sanctuaryManagementWriteMeta"','sanctuary-management.js?cache=2026082814',
-    'sanctuary-management-support.js?cache=2026082814','kinojo-common-ui.js?cache=2026082814',
+    'sanctuary-management-support.js?cache=2026082814','kinojo-common-ui.js?cache=2026082901',
   ])assert.ok(html.includes(token),`${page}: missing ${token}`);
 }
 

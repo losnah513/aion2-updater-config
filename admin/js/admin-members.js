@@ -140,7 +140,6 @@
   const ADMIN_IMAGE_SLOTS=['FRONT','BACK','UPPER_BODY'];
   const ADMIN_IMAGE_SLOT_LABELS={FRONT:'정면',BACK:'후면',UPPER_BODY:'상반신'};
   const ADMIN_IMAGE_REQUEST_STYLE_LABELS={SHONEN_MANGA:'소년만화',ROMANCE_MANGA:'순정만화',ANIMATION:'애니메이션',REALISTIC:'실사풍',CUSTOM:'직접 요청'};
-  const ADMIN_IMAGE_REQUEST_STATUS_LABELS={SUBMITTED:'접수',IN_PROGRESS:'제작 중',COMPLETED:'완료',REJECTED:'반려'};
 
   function memberImageSessionToken_(){
     const token=String(window.KinojoAuth?.getSession?.()?.token||'').trim();
@@ -196,34 +195,25 @@
       +'</section>';
   }
 
-  function adminImageRequestStatusClass_(status){
-    const value=String(status||'').toUpperCase();
-    if(value==='COMPLETED')return 'ok';
-    if(value==='REJECTED')return 'error';
-    if(value==='IN_PROGRESS')return 'info';
-    return 'pending';
-  }
-
   function adminImageRequestStyleLabel_(styleCode){
     const value=String(styleCode||'').toUpperCase();
     return ADMIN_IMAGE_REQUEST_STYLE_LABELS[value]||'스타일 미지정';
   }
 
-  function adminImageRequestStatusLabel_(status){
-    const value=String(status||'').toUpperCase();
-    return ADMIN_IMAGE_REQUEST_STATUS_LABELS[value]||value||'-';
+  function adminImageRequestAcknowledgementLabel_(request){
+    return request?.pending===true?'확인 필요':'확인 완료';
   }
 
   function renderMemberImageRequestCards_(requests,selectedId=selectedMemberImageRequestId){
     const list=Array.isArray(requests)?requests:[];
     const cards=list.length?'<div class="admin-member-image-request-list" role="list" aria-label="이미지 제작 요청 목록">'+list.map(request=>{
       const requestId=Number(request?.requestId||0);
-      const status=String(request?.status||'').toUpperCase();
+      const pending=request?.pending===true;
       const slots=(Array.isArray(request?.slots)?request.slots:[]).map(slot=>ADMIN_IMAGE_SLOT_LABELS[String(slot||'').toUpperCase()]||String(slot||'')).filter(Boolean);
       const selected=requestId===Number(selectedId||0);
       return '<div role="listitem"><button class="admin-member-image-request-card '+(selected?'is-selected':'')+'" data-admin-image-request-select="'+requestId+'" type="button" aria-pressed="'+(selected?'true':'false')+'">'
         +'<span class="admin-member-image-request-card-main"><strong>요청 #'+requestId+'</strong><small>'+esc(adminImageRequestStyleLabel_(request?.styleCode))+' · '+esc(slots.join(' · ')||'첨부 없음')+'</small></span>'
-        +'<span class="admin-member-image-request-card-side"><em class="admin-pill '+adminImageRequestStatusClass_(status)+'">'+esc(adminImageRequestStatusLabel_(status))+'</em><time>'+esc(formatAdminImageTime_(request?.submittedAt||request?.createdAt))+'</time></span>'
+        +'<span class="admin-member-image-request-card-side"><em class="admin-pill '+(pending?'pending':'ok')+'">'+esc(adminImageRequestAcknowledgementLabel_(request))+'</em><time>'+esc(formatAdminImageTime_(request?.submittedAt||request?.createdAt))+'</time></span>'
         +'</button></div>';
     }).join('')+'</div>':'<div class="admin-empty">이 캐릭터의 이미지 제작 요청이 없습니다.</div>';
     return '<div class="admin-member-image-request-head"><div><strong>이미지 제작 요청</strong><span>요청을 선택하면 첨부 이미지와 제작 지시를 확인할 수 있습니다.</span></div><em>'+list.length+'건</em></div>'+cards+'<div class="admin-member-image-request-detail" data-admin-image-request-detail-host></div>';
@@ -231,10 +221,8 @@
 
   function renderMemberImageRequestDetail_(request){
     const requestId=Number(request?.requestId||0);
-    const status=String(request?.status||'').toUpperCase();
+    const pending=request?.pending===true;
     const items=Array.isArray(request?.items)?request.items:[];
-    const history=Array.isArray(request?.history)?request.history:[];
-    const allowed=Array.isArray(request?.allowedNextStatuses)?request.allowedNextStatuses.map(value=>String(value||'').toUpperCase()):[];
     const note=String(request?.requestNote||'').trim();
     const itemHtml=items.length?items.map(item=>{
       const slot=String(item?.slot||'').toUpperCase();
@@ -243,14 +231,14 @@
         +(available?'<button class="admin-btn" data-admin-image-request-preview type="button">미리보기</button><button class="admin-btn" data-admin-image-request-download type="button">다운로드</button>':'<span class="admin-pill error">열람 불가</span>')
         +'</footer></article>';
     }).join(''):'<div class="admin-empty">이 요청에 첨부된 이미지가 없습니다.</div>';
-    const historyHtml=history.length?'<ol class="admin-member-image-request-history">'+history.map(entry=>'<li><span class="admin-pill '+adminImageRequestStatusClass_(entry?.newStatus)+'">'+esc(adminImageRequestStatusLabel_(entry?.newStatus))+'</span><div><strong>'+esc(entry?.actorKind==='MASTER'?'관리자':'회원')+' 처리</strong><time>'+esc(formatAdminImageTime_(entry?.createdAt))+'</time></div></li>').join('')+'</ol>':'<div class="admin-empty">상태 변경 이력이 없습니다.</div>';
-    const actionHtml=allowed.length?'<footer class="admin-member-image-request-actions">'+allowed.map(next=>'<button class="admin-btn '+(next==='REJECTED'?'danger':'primary')+'" data-admin-image-request-status="'+esc(next)+'" type="button">'+esc(next==='IN_PROGRESS'?'제작 시작':next==='COMPLETED'?'완료 처리':'반려 처리')+'</button>').join('')+'</footer>':'';
+    const acknowledgementHtml='<section><h4>관리자 확인</h4><div class="admin-statusline '+(pending?'':'ok')+'">'+(pending?'아직 확인하지 않은 요청입니다.':'확인 완료 · '+esc(formatAdminImageTime_(request?.acknowledgedAt)))+'</div></section>';
+    const actionHtml=pending?'<footer class="admin-member-image-request-actions"><button class="admin-btn primary" data-admin-image-request-ack type="button">확인 완료</button></footer>':'';
     return '<article class="admin-member-image-request-detail-card" data-admin-image-request-detail-view="'+requestId+'">'
-      +'<header><div><span>제작 요청 #'+requestId+'</span><h3>'+esc(adminImageRequestStyleLabel_(request?.styleCode))+'</h3></div><em class="admin-pill '+adminImageRequestStatusClass_(status)+'">'+esc(adminImageRequestStatusLabel_(status))+'</em></header>'
-      +'<dl class="admin-member-image-request-meta"><div><dt>요청 접수</dt><dd>'+esc(formatAdminImageTime_(request?.submittedAt))+'</dd></div><div><dt>첨부 이미지</dt><dd>'+items.length+'장 · 열람 가능 '+items.filter(item=>item?.available===true).length+'장</dd></div></dl>'
+      +'<header><div><span>참고 이미지 제작 요청 #'+requestId+'</span><h3>'+esc(adminImageRequestStyleLabel_(request?.styleCode))+'</h3></div><em class="admin-pill '+(pending?'pending':'ok')+'">'+esc(adminImageRequestAcknowledgementLabel_(request))+'</em></header>'
+      +'<dl class="admin-member-image-request-meta"><div><dt>요청 전송</dt><dd>'+esc(formatAdminImageTime_(request?.submittedAt))+'</dd></div><div><dt>첨부 이미지</dt><dd>'+items.length+'장 · 열람 가능 '+items.filter(item=>item?.available===true).length+'장</dd></div></dl>'
       +'<section class="admin-member-image-request-note"><strong>제작 요청 내용</strong><p>'+esc(note||'별도 요청 내용 없음')+'</p></section>'
       +'<section><h4>첨부 이미지</h4><div class="admin-member-image-request-assets">'+itemHtml+'</div></section>'
-      +'<section><h4>처리 이력</h4>'+historyHtml+'</section>'+actionHtml+'</article>';
+      +acknowledgementHtml+actionHtml+'</article>';
   }
 
   function renderMemberImageRequestError_(message){
@@ -270,7 +258,7 @@
     try{
       if(!token)throw new Error('관리자 세션이 만료되었습니다. 다시 로그인해 주세요.');
       if(!client||typeof client.invokeEdgeFunction!=='function')throw new Error('제작 요청 조회 모듈을 준비하지 못했습니다.');
-      const data=await client.invokeEdgeFunction('kinojo-member-profile',{action:'admin-image-request-list',sessionToken:token,memberId:Number(memberId),characterId:Number(characterId),requestStatus:'ALL',limit:100});
+      const data=await client.invokeEdgeFunction('kinojo-member-profile',{action:'admin-image-request-list',sessionToken:token,memberId:Number(memberId),characterId:Number(characterId),acknowledgementFilter:'ALL',limit:100});
       if(requestId!==memberImageProductionListRequestId||!modal?.classList.contains('active')||modal.dataset.memberId!==String(memberId)||Number(selectedMemberImageCharacterId)!==Number(characterId))return null;
       if(!data||data.ok!==true)throw new Error(data?.message||data?.code||'ADMIN_IMAGE_REQUEST_LIST_FAILED');
       if(Number(data.targetMemberId)!==Number(memberId)||Number(data.characterId)!==Number(characterId))throw new Error('ADMIN_IMAGE_REQUEST_LIST_BINDING_MISMATCH');
@@ -471,28 +459,31 @@
     }finally{button.disabled=false;}
   }
 
-  async function updateMemberImageRequestStatus_(button){
+  async function acknowledgeMemberImageRequest_(button){
     if(!isMaster())return null;
     const context=adminImageRequestContext_(button);
-    const nextStatus=String(button?.dataset.adminImageRequestStatus||'').toUpperCase();
-    if(!context||!['IN_PROGRESS','COMPLETED','REJECTED'].includes(nextStatus))return null;
-    const nextLabel=adminImageRequestStatusLabel_(nextStatus);
-    if(!confirm('요청 #'+context.requestId+'을(를) '+nextLabel+' 상태로 변경할까요?'))return null;
+    const row=button?.closest?.('[data-member-id][data-character-id][data-request-id]');
+    const memberId=context?.memberId||Number(row?.dataset.memberId||0);
+    const characterId=context?.characterId||Number(row?.dataset.characterId||0);
+    const requestId=context?.requestId||Number(row?.dataset.requestId||0);
+    if(!Number.isInteger(memberId)||memberId<=0||!Number.isInteger(characterId)||characterId<=0||!Number.isInteger(requestId)||requestId<=0)return null;
     const token=memberImageSessionToken_();
     const client=window.KinojoSupabaseClientCore;
-    if(!token||!client||typeof client.invokeEdgeFunction!=='function')throw new Error('제작 요청 상태 처리 모듈을 준비하지 못했습니다.');
+    if(!token||!client||typeof client.invokeEdgeFunction!=='function')throw new Error('참고 이미지 제작 요청 확인 모듈을 준비하지 못했습니다.');
     button.disabled=true;
+    const originalText=button.textContent;
+    button.textContent='확인 중...';
     try{
-      const data=await client.invokeEdgeFunction('kinojo-member-profile',{action:'admin-image-request-status',sessionToken:token,memberId:context.memberId,characterId:context.characterId,requestId:context.requestId,nextStatus});
-      if(!data||data.ok!==true)throw new Error(data?.message||data?.code||'ADMIN_IMAGE_REQUEST_STATUS_FAILED');
-      if(Number(data.targetMemberId)!==context.memberId||Number(data.characterId)!==context.characterId||Number(data.requestId)!==context.requestId||String(data.status||'')!==nextStatus)throw new Error('ADMIN_IMAGE_REQUEST_STATUS_BINDING_MISMATCH');
-      toast('요청 #'+context.requestId+'을(를) '+nextLabel+' 상태로 변경했습니다.');
-      addLog('MEMBER_IMAGE_REQUEST','요청 #'+context.requestId+' · '+nextLabel);
-      await loadMemberImageRequests_(context.memberId,context.characterId,context.requestId);
+      const data=await client.invokeEdgeFunction('kinojo-member-profile',{action:'admin-image-request-ack',sessionToken:token,memberId,characterId,requestId});
+      if(!data||data.ok!==true||data.acknowledged!==true)throw new Error(data?.message||data?.code||'ADMIN_IMAGE_REQUEST_ACK_FAILED');
+      if(Number(data.targetMemberId)!==memberId||Number(data.characterId)!==characterId||Number(data.requestId)!==requestId)throw new Error('ADMIN_IMAGE_REQUEST_ACK_BINDING_MISMATCH');
+      toast('요청 #'+requestId+'을 확인 완료로 처리했습니다.');
+      addLog('MEMBER_IMAGE_REQUEST','요청 #'+requestId+' · 확인 완료');
+      if(context)await loadMemberImageRequests_(memberId,characterId,requestId);
       await refreshDashboard();
       await loadMemberImageReviews();
       return data;
-    }finally{button.disabled=false;}
+    }finally{button.disabled=false;button.textContent=originalText;}
   }
 
   async function loadMemberImageGroups_(memberId,requestId,preferredCharacterId=0,preferredRequestId=0){
@@ -523,7 +514,7 @@
     if(modal)return modal;
     document.body.insertAdjacentHTML('beforeend','<div class="admin-event-preview-modal" id="adminMemberImageModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="adminMemberImageModalTitle"><div class="admin-event-preview-backdrop" data-member-image-modal-close></div><section class="admin-event-preview-panel"><header class="admin-event-preview-head"><div><h2 id="adminMemberImageModalTitle">캐릭터 이미지 보기</h2><p id="adminMemberImageModalMember">회원 선택 대기</p></div><button class="admin-icon-btn" data-member-image-modal-close type="button" aria-label="캐릭터 이미지 모달 닫기">×</button></header><div class="admin-event-preview-body" id="adminMemberImageModalBody"><div class="admin-empty">회원의 캐릭터 이미지 목록을 불러올 준비가 되었습니다.</div></div><footer class="admin-event-preview-actions"><button class="admin-btn" data-member-image-modal-close type="button">닫기</button></footer></section></div>');
     modal=$('#adminMemberImageModal');
-    modal?.addEventListener('click',event=>{const close=event.target.closest('[data-member-image-modal-close]');if(close){closeMemberImageModal();return;}const selector=event.target.closest('[data-admin-image-character-select]');if(selector){selectMemberImageCharacter_(selector.dataset.adminImageCharacterSelect);return;}const requestSelector=event.target.closest('[data-admin-image-request-select]');if(requestSelector){const context=adminImageRequestContext_(requestSelector);if(context)loadMemberImageRequestDetail_(context.memberId,context.characterId,context.requestId).catch(error=>{const detail=context.consoleRoot?.querySelector('[data-admin-image-request-detail-host]');if(detail)detail.innerHTML=renderMemberImageRequestError_(error?.message||error);});return;}const previewClose=event.target.closest('[data-admin-image-preview-close]');if(previewClose){clearAdminImagePreview_();return;}const requestPreview=event.target.closest('[data-admin-image-request-preview]');if(requestPreview){showAdminImageRequestPreview_(requestPreview).catch(error=>{const host=$('#adminMemberImagePreview',modal);if(host){host.hidden=false;host.innerHTML='<div class="admin-callout error"><strong>미리보기를 열지 못했습니다.</strong><span>'+esc(error?.message||error)+'</span></div>';}});return;}const requestDownload=event.target.closest('[data-admin-image-request-download]');if(requestDownload){downloadAdminImageRequest_(requestDownload).catch(error=>toast(error?.message||String(error)));return;}const requestStatus=event.target.closest('[data-admin-image-request-status]');if(requestStatus){updateMemberImageRequestStatus_(requestStatus).catch(error=>toast(error?.message||String(error)));return;}const preview=event.target.closest('[data-admin-image-preview]');if(preview)showAdminImagePreview_(preview).catch(error=>{const host=$('#adminMemberImagePreview',modal);if(host){host.hidden=false;host.innerHTML='<div class="admin-callout error"><strong>미리보기를 열지 못했습니다.</strong><span>'+esc(error?.message||error)+'</span></div>';}});});
+    modal?.addEventListener('click',event=>{const close=event.target.closest('[data-member-image-modal-close]');if(close){closeMemberImageModal();return;}const selector=event.target.closest('[data-admin-image-character-select]');if(selector){selectMemberImageCharacter_(selector.dataset.adminImageCharacterSelect);return;}const requestSelector=event.target.closest('[data-admin-image-request-select]');if(requestSelector){const context=adminImageRequestContext_(requestSelector);if(context)loadMemberImageRequestDetail_(context.memberId,context.characterId,context.requestId).catch(error=>{const detail=context.consoleRoot?.querySelector('[data-admin-image-request-detail-host]');if(detail)detail.innerHTML=renderMemberImageRequestError_(error?.message||error);});return;}const previewClose=event.target.closest('[data-admin-image-preview-close]');if(previewClose){clearAdminImagePreview_();return;}const requestPreview=event.target.closest('[data-admin-image-request-preview]');if(requestPreview){showAdminImageRequestPreview_(requestPreview).catch(error=>{const host=$('#adminMemberImagePreview',modal);if(host){host.hidden=false;host.innerHTML='<div class="admin-callout error"><strong>미리보기를 열지 못했습니다.</strong><span>'+esc(error?.message||error)+'</span></div>';}});return;}const requestDownload=event.target.closest('[data-admin-image-request-download]');if(requestDownload){downloadAdminImageRequest_(requestDownload).catch(error=>toast(error?.message||String(error)));return;}const requestAck=event.target.closest('[data-admin-image-request-ack]');if(requestAck){acknowledgeMemberImageRequest_(requestAck).catch(error=>toast(error?.message||String(error)));return;}const preview=event.target.closest('[data-admin-image-preview]');if(preview)showAdminImagePreview_(preview).catch(error=>{const host=$('#adminMemberImagePreview',modal);if(host){host.hidden=false;host.innerHTML='<div class="admin-callout error"><strong>미리보기를 열지 못했습니다.</strong><span>'+esc(error?.message||error)+'</span></div>';}});});
     document.addEventListener('keydown',event=>{if(event.key==='Escape'&&modal?.classList.contains('active'))closeMemberImageModal();});
     return modal;
   }
@@ -577,24 +568,17 @@
     });
   }
 
-  function updateMemberImageReviewBadges_(pendingUploadCount,activeRequestCount){
-    const uploadCount=Math.max(0,Number(pendingUploadCount||0));
-    const requestCount=Math.max(0,Number(activeRequestCount||0));
-    state.memberImageReviewPendingCount=uploadCount;
+  function updateMemberImageReviewBadges_(pendingRequestCount){
+    const requestCount=Math.max(0,Number(pendingRequestCount||0));
     state.memberImageRequestPendingCount=requestCount;
-    const total=uploadCount+requestCount;
-    document.querySelectorAll('#adminMemberImageBadge,[data-admin-subtab="character-images"] .badge').forEach(badge=>{badge.textContent=String(total);});
+    document.querySelectorAll('#adminMemberImageBadge,[data-admin-subtab="character-images"] .badge').forEach(badge=>{badge.textContent=String(requestCount);});
   }
 
-  function renderMemberImageReviewSummary_(actionRequiredCount,pendingUploadCount,activeRequestCount,totalCount){
+  function renderMemberImageReviewSummary_(pendingRequestCount,totalRequestCount){
     const root=$('#memberImageReviewSummary');if(!root)return;
-    root.innerHTML='<span>처리 필요 <strong>'+Math.max(0,Number(actionRequiredCount||0))+'</strong>건</span><span>이미지 확인 <strong>'+Math.max(0,Number(pendingUploadCount||0))+'</strong>건</span><span>진행 중 제작 요청 <strong>'+Math.max(0,Number(activeRequestCount||0))+'</strong>건</span><span>현재 이미지 업로더 <strong>'+Math.max(0,Number(totalCount||0))+'</strong>명</span>';
-  }
-
-  function memberImageKindLabel_(latest){
-    if(String(latest?.kind||'').toUpperCase()==='PROFILE')return '프로필 이미지';
-    const slot=String(latest?.slot||'').toUpperCase();
-    return (ADMIN_IMAGE_SLOT_LABELS[slot]||'참고')+' 이미지';
+    const pending=Math.max(0,Number(pendingRequestCount||0));
+    const total=Math.max(0,Number(totalRequestCount||0));
+    root.innerHTML='<span>확인 필요 <strong>'+pending+'</strong>건</span><span>확인 완료 <strong>'+Math.max(0,total-pending)+'</strong>건</span><span>전체 요청 <strong>'+total+'</strong>건</span>';
   }
 
   function renderMemberImageReviewRows_(items){
@@ -605,40 +589,23 @@
       const name=esc(item?.mainCharacterName||'회원');
       const role=normalizeMemberRole(item?.role||'MEMBER');
       const roleName=esc(item?.roleLabel||MEMBER_ROLE_LABELS[role]||role);
-      const itemType=String(item?.itemType||'IMAGE_REVIEW').toUpperCase();
-      if(itemType==='PRODUCTION_REQUEST'){
-        const characterId=Number(item?.characterId||0);
-        const requestId=Number(item?.requestId||0);
-        const requestStatus=String(item?.status||'').toUpperCase();
-        const requestActive=['SUBMITTED','IN_PROGRESS'].includes(requestStatus);
-        const characterName=esc(item?.characterName||'-');
-        const serverName=esc(item?.serverName||'-');
-        const className=esc(item?.className||'-');
-        const slots=(Array.isArray(item?.slots)?item.slots:[]).map(slot=>ADMIN_IMAGE_SLOT_LABELS[String(slot||'').toUpperCase()]||String(slot||'')).filter(Boolean);
-        const itemCount=Math.max(0,Number(item?.itemCount||0));
-        const availableCount=Math.max(0,Number(item?.availableImageCount||0));
-        return '<article class="admin-member-image-review-row is-request '+(requestActive?'is-pending':'is-reviewed')+'" data-work-item-type="PRODUCTION_REQUEST" data-member-id="'+memberId+'" data-member-name="'+name+'" data-character-id="'+characterId+'" data-request-id="'+requestId+'">'
-          +'<div class="admin-member-image-review-main"><header><div><strong>'+name+'</strong><span class="admin-member-role-badge role-'+esc(role.toLowerCase())+'">'+roleName+'</span><span class="admin-work-kind request">제작 요청</span></div><span class="admin-pill '+adminImageRequestStatusClass_(requestStatus)+'">'+esc(adminImageRequestStatusLabel_(requestStatus))+'</span></header>'
-          +'<p><b>'+characterName+'</b>의 제작 요청 #'+requestId+' · '+esc(adminImageRequestStyleLabel_(item?.styleCode))+'</p>'
-          +'<dl><div><dt>캐릭터</dt><dd>'+characterName+' <small>'+serverName+' · '+className+'</small></dd></div><div><dt>첨부 이미지</dt><dd>'+itemCount+'장 <small>현재 열람 가능 '+availableCount+'장 · '+esc(slots.join(' · ')||'첨부 없음')+'</small></dd></div><div><dt>최근 처리</dt><dd>'+esc(formatAdminImageTime_(item?.activityAt||item?.updatedAt||item?.submittedAt))+'<small>'+(requestActive?'관리자 처리 필요':'처리 완료')+'</small></dd></div></dl></div>'
-          +'<footer><button class="admin-btn primary" data-member-image-request-view type="button">요청 바로 보기</button></footer></article>';
-      }
-      const names=(Array.isArray(item?.characterNames)?item.characterNames:[]).map(value=>String(value||'').trim()).filter(Boolean);
-      const latest=item?.latestImage&&typeof item.latestImage==='object'?item.latestImage:{};
-      const latestName=esc(latest.characterName||names[0]||'-');
-      const latestType=esc(memberImageKindLabel_(latest));
-      const latestAt=String(item?.latestUploadedAt||latest.uploadedAt||'').trim();
+      const itemType=String(item?.itemType||'').toUpperCase();
+      if(itemType!=='REFERENCE_IMAGE_REQUEST')return '';
+      const characterId=Number(item?.characterId||0);
+      const requestId=Number(item?.requestId||0);
       const pending=item?.pending===true;
-      const imageCount=Math.max(0,Number(item?.imageCount||0));
-      const profileCount=Math.max(0,Number(item?.profileImageCount||0));
-      const referenceCount=Math.max(0,Number(item?.referenceImageCount||0));
-      const reviewedAt=esc(formatAdminImageTime_(item?.reviewedAt));
-      return '<article class="admin-member-image-review-row '+(pending?'is-pending':'is-reviewed')+'" data-work-item-type="IMAGE_REVIEW" data-member-id="'+memberId+'" data-member-name="'+name+'" data-latest-uploaded-at="'+esc(latestAt)+'">'
-        +'<div class="admin-member-image-review-main"><header><div><strong>'+name+'</strong><span class="admin-member-role-badge role-'+esc(role.toLowerCase())+'">'+roleName+'</span><span class="admin-work-kind image">이미지 확인</span></div><span class="admin-pill '+(pending?'pending':'ok')+'">'+(pending?'미확인':'확인 완료')+'</span></header>'
-        +'<p><b>'+latestName+'</b>의 '+latestType+'가 마지막으로 등록되었습니다.</p>'
-        +'<dl><div><dt>현재 이미지</dt><dd>'+imageCount+'장 <small>프로필 '+profileCount+' · 참고 '+referenceCount+'</small></dd></div><div><dt>등록 캐릭터</dt><dd>'+Math.max(0,Number(item?.characterCount||0))+'명 <small>'+esc(names.join(' · ')||'-')+'</small></dd></div><div><dt>최근 업로드</dt><dd>'+esc(formatAdminImageTime_(latestAt))+'<small>'+(pending?'관리자 확인 필요':'확인 '+reviewedAt)+'</small></dd></div></dl></div>'
-        +'<footer><button class="admin-btn" data-member-image-view type="button">이미지 보기</button>'+(pending?'<button class="admin-btn primary" data-member-image-review-ack type="button">확인 완료</button>':'')+'</footer></article>';
-    }).join(''):'<div class="admin-empty">'+({ACTION_REQUIRED:'현재 처리할 이미지나 제작 요청이 없습니다.',IMAGE_REVIEW:'현재 확인할 새 이미지가 없습니다.',PRODUCTION_REQUEST:'현재 진행 중인 제작 요청이 없습니다.',COMPLETED:'처리 완료된 이미지 작업이 없습니다.',ALL:'조건에 맞는 이미지 작업이 없습니다.'}[String($('#memberImageReviewStatus')?.value||'ACTION_REQUIRED')]||'조건에 맞는 이미지 작업이 없습니다.')+'</div>';
+      const characterName=esc(item?.characterName||'-');
+      const serverName=esc(item?.serverName||'-');
+      const className=esc(item?.className||'-');
+      const slots=(Array.isArray(item?.slots)?item.slots:[]).map(slot=>ADMIN_IMAGE_SLOT_LABELS[String(slot||'').toUpperCase()]||String(slot||'')).filter(Boolean);
+      const itemCount=Math.max(0,Number(item?.itemCount||0));
+      const availableCount=Math.max(0,Number(item?.availableImageCount||0));
+      return '<article class="admin-member-image-review-row is-request '+(pending?'is-pending':'is-reviewed')+'" data-work-item-type="REFERENCE_IMAGE_REQUEST" data-member-id="'+memberId+'" data-member-name="'+name+'" data-character-id="'+characterId+'" data-request-id="'+requestId+'">'
+        +'<div class="admin-member-image-review-main"><header><div><strong>'+name+'</strong><span class="admin-member-role-badge role-'+esc(role.toLowerCase())+'">'+roleName+'</span><span class="admin-work-kind request">참고 이미지 제작 요청</span></div><span class="admin-pill '+(pending?'pending':'ok')+'">'+(pending?'확인 필요':'확인 완료')+'</span></header>'
+        +'<p><b>'+characterName+'</b>의 참고 이미지 제작 요청 #'+requestId+' · '+esc(adminImageRequestStyleLabel_(item?.styleCode))+'</p>'
+        +'<dl><div><dt>캐릭터</dt><dd>'+characterName+' <small>'+serverName+' · '+className+'</small></dd></div><div><dt>첨부 이미지</dt><dd>'+itemCount+'장 <small>현재 열람 가능 '+availableCount+'장 · '+esc(slots.join(' · ')||'첨부 없음')+'</small></dd></div><div><dt>요청 시각</dt><dd>'+esc(formatAdminImageTime_(item?.submittedAt))+'<small>'+(pending?'관리자 확인 필요':'확인 '+esc(formatAdminImageTime_(item?.acknowledgedAt)))+'</small></dd></div></dl></div>'
+        +'<footer><button class="admin-btn" data-member-image-request-view type="button">요청 보기</button>'+(pending?'<button class="admin-btn primary" data-member-image-request-ack type="button">확인 완료</button>':'')+'</footer></article>';
+    }).filter(Boolean).join(''):'<div class="admin-empty">'+({PENDING:'현재 확인할 참고 이미지 제작 요청이 없습니다.',ACKNOWLEDGED:'확인 완료된 요청이 없습니다.',ALL:'조건에 맞는 참고 이미지 제작 요청이 없습니다.'}[String($('#memberImageReviewStatus')?.value||'PENDING')]||'조건에 맞는 참고 이미지 제작 요청이 없습니다.')+'</div>';
   }
 
   async function loadMemberImageReviews(){
@@ -646,11 +613,11 @@
     const root=$('#memberImageReviewList');
     const token=memberImageSessionToken_();
     const client=window.KinojoSupabaseClientCore;
-    const filter=String($('#memberImageReviewStatus')?.value||'ACTION_REQUIRED').toUpperCase();
+    const filter=String($('#memberImageReviewStatus')?.value||'PENDING').toUpperCase();
     const search=String($('#memberImageReviewSearch')?.value||'').trim();
     const requestId=++memberImageReviewRequestId;
-    setStatus('#memberImageReviewStatusLine','이미지 처리 목록을 불러오는 중...','');
-    if(root)root.innerHTML='<div class="admin-empty">확인이 필요한 이미지 작업을 확인하는 중입니다.</div>';
+    setStatus('#memberImageReviewStatusLine','참고 이미지 제작 요청을 불러오는 중...','');
+    if(root)root.innerHTML='<div class="admin-empty">확인이 필요한 참고 이미지 제작 요청을 확인하는 중입니다.</div>';
     try{
       if(!token)throw new Error('관리자 세션이 만료되었습니다. 다시 로그인해 주세요.');
       if(!client||typeof client.invokeEdgeFunction!=='function')throw new Error('회원 이미지 조회 모듈을 준비하지 못했습니다.');
@@ -660,15 +627,15 @@
       if(String(data.privacy||'')!=='NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS'||String(data.filter||'')!==filter)throw new Error('ADMIN_MEMBER_IMAGE_WORK_QUEUE_CONTRACT_MISMATCH');
       const items=Array.isArray(data.items)?data.items:[];
       state.memberImageReviewItems=items;
-      state.memberImageReviewTotalCount=Math.max(0,Number(data.totalUploaderCount||0));
-      updateMemberImageReviewBadges_(data.pendingUploadCount,data.activeRequestCount);
-      renderMemberImageReviewSummary_(data.actionRequiredCount,data.pendingUploadCount,data.activeRequestCount,data.totalUploaderCount);
+      state.memberImageReviewTotalCount=Math.max(0,Number(data.totalRequestCount||0));
+      updateMemberImageReviewBadges_(data.pendingRequestCount);
+      renderMemberImageReviewSummary_(data.pendingRequestCount,data.totalRequestCount);
       renderMemberImageReviewRows_(items);
-      setStatus('#memberImageReviewStatusLine','조건에 맞는 작업 '+items.length+'건 · 현재 처리 필요 '+Math.max(0,Number(data.actionRequiredCount||0))+'건','ok');
+      setStatus('#memberImageReviewStatusLine','조건에 맞는 요청 '+items.length+'건 · 현재 확인 필요 '+Math.max(0,Number(data.pendingRequestCount||0))+'건','ok');
       return data;
     }catch(err){
       if(requestId!==memberImageReviewRequestId)return null;
-      if(root)root.innerHTML='<div class="admin-callout error"><strong>이미지 처리 목록을 불러오지 못했습니다.</strong><span>'+esc(err?.message||err)+'</span></div>';
+      if(root)root.innerHTML='<div class="admin-callout error"><strong>참고 이미지 제작 요청을 불러오지 못했습니다.</strong><span>'+esc(err?.message||err)+'</span></div>';
       setStatus('#memberImageReviewStatusLine',err?.message||String(err),'error');
       return null;
     }
@@ -679,31 +646,6 @@
     memberImageReviewSearchTimer=setTimeout(loadMemberImageReviews,260);
   }
 
-  async function acknowledgeMemberImageReview_(button){
-    if(!isMaster()||!button)return;
-    const row=button.closest('[data-member-id]');
-    const memberId=Number(row?.dataset.memberId||0);
-    const reviewedThrough=String(row?.dataset.latestUploadedAt||'').trim();
-    const name=String(row?.dataset.memberName||'회원');
-    if(!Number.isInteger(memberId)||memberId<=0||!reviewedThrough)return;
-    const token=memberImageSessionToken_();
-    const client=window.KinojoSupabaseClientCore;
-    button.disabled=true;
-    button.textContent='처리 중...';
-    try{
-      if(!token||!client||typeof client.invokeEdgeFunction!=='function')throw new Error('회원 이미지 확인 모듈을 준비하지 못했습니다.');
-      const data=await client.invokeEdgeFunction('kinojo-member-profile',{action:'admin-image-review-ack',sessionToken:token,memberId,reviewedThrough});
-      if(!data||data.ok!==true||Number(data.memberId)!==memberId)throw new Error(data?.message||data?.code||'ADMIN_MEMBER_IMAGE_REVIEW_ACK_FAILED');
-      toast(name+' 회원의 현재 이미지를 확인 완료로 처리했습니다.');
-      addLog('MEMBER_IMAGE',name+' 이미지 확인 완료');
-      await loadMemberImageReviews();
-    }catch(err){
-      button.disabled=false;
-      button.textContent='확인 완료';
-      setStatus('#memberImageReviewStatusLine',err?.message||String(err),'error');
-    }
-  }
-
   function handleMemberImageReviewClick_(target){
     const requestView=target?.closest?.('[data-member-image-request-view]');
     if(requestView){
@@ -711,10 +653,8 @@
       openMemberImageModal(requestView,{characterId:Number(row?.dataset.characterId||0),requestId:Number(row?.dataset.requestId||0)});
       return;
     }
-    const view=target?.closest?.('[data-member-image-view]');
-    if(view){openMemberImageModal(view);return;}
-    const ack=target?.closest?.('[data-member-image-review-ack]');
-    if(ack)acknowledgeMemberImageReview_(ack);
+    const ack=target?.closest?.('[data-member-image-request-ack]');
+    if(ack)acknowledgeMemberImageRequest_(ack).catch(error=>setStatus('#memberImageReviewStatusLine',error?.message||String(error),'error'));
   }
 
   function applyMemberFilters(){
@@ -828,5 +768,5 @@
     }
   }
 
-  Object.assign(A,{renderRequestPreview,requestRowHtml,loadCodeRequests,processRequest,loadAccounts,loadNextMemberPage_,loadPreviousMemberPage_,MEMBER_ROLE_LABELS,normalizeMemberRole,getAccountId,getAccountCode,getAccountName,getAccountRole,getAccountRoleLabel,getAccountCanEdit,getAccountAllowedRoles,memberImageSessionToken_,renderMemberImageGroups_,selectMemberImageCharacter_,loadMemberImageGroups_,clearAdminImagePreview_,showAdminImagePreview_,adminImageRequestStyleLabel_,adminImageRequestStatusLabel_,renderMemberImageRequestCards_,renderMemberImageRequestDetail_,loadMemberImageRequests_,loadMemberImageRequestDetail_,showAdminImageRequestPreview_,downloadAdminImageRequest_,updateMemberImageRequestStatus_,ensureMemberImageModal,openMemberImageModal,closeMemberImageModal,updateMemberImageReviewBadges_,renderMemberImageReviewSummary_,renderMemberImageReviewRows_,loadMemberImageReviews,scheduleMemberImageReviewSearch_,acknowledgeMemberImageReview_,handleMemberImageReviewClick_,applyMemberFilters,renderAccounts,handleMemberAction,SANCTUARY_ROLE_LABELS,renderSanctuaryRolePermissions,loadSanctuaryRolePermissions,setSanctuaryRolePermission});
+  Object.assign(A,{renderRequestPreview,requestRowHtml,loadCodeRequests,processRequest,loadAccounts,loadNextMemberPage_,loadPreviousMemberPage_,MEMBER_ROLE_LABELS,normalizeMemberRole,getAccountId,getAccountCode,getAccountName,getAccountRole,getAccountRoleLabel,getAccountCanEdit,getAccountAllowedRoles,memberImageSessionToken_,renderMemberImageGroups_,selectMemberImageCharacter_,loadMemberImageGroups_,clearAdminImagePreview_,showAdminImagePreview_,adminImageRequestStyleLabel_,adminImageRequestAcknowledgementLabel_,renderMemberImageRequestCards_,renderMemberImageRequestDetail_,loadMemberImageRequests_,loadMemberImageRequestDetail_,showAdminImageRequestPreview_,downloadAdminImageRequest_,acknowledgeMemberImageRequest_,ensureMemberImageModal,openMemberImageModal,closeMemberImageModal,updateMemberImageReviewBadges_,renderMemberImageReviewSummary_,renderMemberImageReviewRows_,loadMemberImageReviews,scheduleMemberImageReviewSearch_,handleMemberImageReviewClick_,applyMemberFilters,renderAccounts,handleMemberAction,SANCTUARY_ROLE_LABELS,renderSanctuaryRolePermissions,loadSanctuaryRolePermissions,setSanctuaryRolePermission});
 })(window.KinojoAdmin);
