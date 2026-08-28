@@ -29,6 +29,7 @@ for (const target of targets) {
   assert.match(html, /if \(!runtime\?\.mountBanner\) \{[\s\S]*revealBanner\(\);[\s\S]*return;/, `${target.name} must reveal the fallback if the runtime is unavailable`);
   assert.match(html, /const restoreFallback = \(\) => \{[\s\S]*revealBanner\(\);[\s\S]*\};/, `${target.name} inactive/error fallback must be revealed`);
   assert.match(html, /onActive: revealBanner/, `${target.name} must reveal only after the active Manifest image is installed`);
+  assert.match(html, /onError: \(error\) => \{[\s\S]*revealBanner\(\);[\s\S]*console\.warn/, `${target.name} must reveal the fallback when the first active image cannot preload`);
   assert.match(html, /<meta property="og:image" content="https:\/\/kinojo\.info\/assets\/images\/common\/kinojo-og\.jpg">/, `${target.name} SEO fallback must remain static`);
 }
 
