@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  const API_VERSION=1;
-  const SCHEMA_VERSION=431;
+  const API_VERSION=1.1;
+  const SCHEMA_VERSION=432;
   let requestSequence=0;
   let bootstrapData=null;
   let selectedSanctuary='all';
@@ -136,6 +136,33 @@
     };
   }
 
+  function validateCharacterCard(item){
+    if(!item||typeof item!=='object'||Array.isArray(item))throw new Error('캐릭터 조회 결과가 올바르지 않습니다.');
+    const card=Object.assign({},item,{
+      characterId:integer(item.characterId),serverId:integer(item.serverId),raceId:integer(item.raceId),
+      mainCharacterId:integer(item.mainCharacterId),ownerMemberId:integer(item.ownerMemberId),
+      characterName:value(item.characterName),serverName:value(item.serverName),className:value(item.className),
+      legionName:value(item.legionName),profileImageUrl:value(item.profileImageUrl),relation:value(item.relation).toUpperCase(),
+      isOperationalLegion:item.isOperationalLegion===true
+    });
+    if(card.characterId<1||card.serverId<1||!card.characterName||!card.serverName||!['MAIN','ALT','GUEST'].includes(card.relation))throw new Error('캐릭터 조회 식별 정보가 올바르지 않습니다.');
+    return card;
+  }
+
+  function validateCharacterSearch(data){
+    if(!data||typeof data!=='object'||data.ok!==true||Number(data.schemaVersion)!==SCHEMA_VERSION)throw new Error(value(data?.message)||'캐릭터 검색 Server 계약이 올바르지 않습니다.');
+    if(value(data.source)==='CHARACTER_MASTER')return Object.assign({},data,{character:validateCharacterCard(data.character)});
+    if(value(data.source)!=='OFFICIAL'||!data.candidate||typeof data.candidate!=='object')throw new Error('공식 캐릭터 조회 결과가 올바르지 않습니다.');
+    const candidate=Object.assign({},data.candidate,{
+      candidateId:value(data.candidate.candidateId),characterName:value(data.candidate.characterName),serverId:integer(data.candidate.serverId),raceId:integer(data.candidate.raceId),
+      serverName:value(data.candidate.serverName),className:value(data.candidate.className),legionName:value(data.candidate.legionName),profileImageUrl:value(data.candidate.profileImageUrl),
+      isOperationalLegion:data.candidate.isOperationalLegion===true,
+      allowedRelations:Array.isArray(data.candidate.allowedRelations)?data.candidate.allowedRelations.map(item=>value(item).toUpperCase()):[]
+    });
+    if(!candidate.candidateId||candidate.serverId<1||!candidate.characterName||!candidate.serverName||!candidate.allowedRelations.length||candidate.allowedRelations.some(item=>!['MAIN','ALT','GUEST'].includes(item)))throw new Error('공식 캐릭터 관계 정보가 올바르지 않습니다.');
+    return Object.assign({},data,{candidate});
+  }
+
   const ServerAdapter=Object.freeze({
     kind:'SERVER_ONLY',
     apiVersion:API_VERSION,
@@ -151,6 +178,18 @@
       const result=await api.runSanctuaryManagementCommand(command,payload,expectedRevision,requestKey);
       if(!result||typeof result!=='object'||result.ok!==true)throw new Error(value(result?.message)||'성역 팀 초안을 저장하지 못했습니다.');
       return result;
+    },
+    async searchCharacter(teamId,query){
+      const api=window.KinojoSupabase;
+      if(!api||typeof api.searchSanctuaryManagementCharacter!=='function')throw new Error('캐릭터 검색 Server 어댑터를 불러오지 못했습니다.');
+      return validateCharacterSearch(await api.searchSanctuaryManagementCharacter(Number(teamId),value(query)));
+    },
+    async registerCharacter(teamId,candidateId,relationType,mainCharacterId,requestKey){
+      const api=window.KinojoSupabase;
+      if(!api||typeof api.registerSanctuaryManagementCharacter!=='function')throw new Error('캐릭터 관계 확정 Server 어댑터를 불러오지 못했습니다.');
+      const result=await api.registerSanctuaryManagementCharacter(Number(teamId),value(candidateId),value(relationType),mainCharacterId==null?null:Number(mainCharacterId),value(requestKey));
+      if(!result||typeof result!=='object'||result.ok!==true)return Promise.reject(new Error(value(result?.message)||'캐릭터 관계를 확정하지 못했습니다.'));
+      return Object.assign({},result,{character:validateCharacterCard(result.character)});
     }
   });
   window.KinojoSanctuaryManagementData=ServerAdapter;
@@ -339,6 +378,9 @@
     return result;
   }
 
+  async function searchCharacter(teamId,query){return ServerAdapter.searchCharacter(teamId,query);}
+  async function registerCharacter(teamId,candidateId,relationType,mainCharacterId,requestKey){return ServerAdapter.registerCharacter(teamId,candidateId,relationType,mainCharacterId,requestKey);}
+
   window.KinojoSanctuaryManagementDraftBridge=Object.freeze({
     kind:'SERVER_ONLY_DRAFT',
     schemaVersion:SCHEMA_VERSION,
@@ -347,6 +389,8 @@
     saveFixedDraft,
     addForce,
     setSlot,
+    searchCharacter,
+    registerCharacter,
     reload:load
   });
 

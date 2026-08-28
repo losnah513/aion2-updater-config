@@ -16,13 +16,13 @@ for(const token of [
   'creatorCandidateCount',
   "ServerAdapter.command('SET_SLOT'",
   'async function setSlot',
-])assert.ok(client.includes(token),`Browser DB431 candidate boundary missing ${token}`);
+])assert.ok(client.includes(token),`Browser DB432 candidate boundary missing ${token}`);
 
 for(const token of [
   'function candidateMarkup',
   'data-draft-slot',
   'data-draft-candidate',
-  '현재 포스에 없는 소유 캐릭터만 Server가 반환합니다.',
+  '다른 구성원을 검색해 추가할 수 있습니다.',
   'function assignCreatorCharacter',
   'await bridge().setSlot',
   'state.selectedSlotId=0',
@@ -46,7 +46,7 @@ function party(partyNo){
 
 const candidate={characterId:501,serverId:2,serverName:'지켈',characterName:'생성자본캐',className:'검성',profileImageUrl:'',isMain:true,relation:'MAIN',mainCharacterId:501};
 const response={
-  apiVersion:1,schemaVersion:431,serverTime:'2026-08-28T04:30:00Z',readEnabled:true,writeEnabled:true,
+  apiVersion:1.1,schemaVersion:432,serverTime:'2026-08-28T04:30:00Z',readEnabled:true,writeEnabled:true,
   actor:{memberId:7,canManageAll:true},sanctuaries:[{id:1,code:'rudra',shortName:'성역1'}],
   teams:[{
     teamId:77,sanctuaryId:1,title:'1팀',activity:'성역1 진행',mode:'FIXED',joinPolicy:'INSTANT',status:'DRAFT',revision:4,schedule:null,
@@ -69,7 +69,7 @@ vm.runInNewContext(client,context,{filename:'sanctuary-management/js/sanctuary-m
 
 async function verify(){
   const data=await context.window.KinojoSanctuaryManagementData.bootstrap();
-  assert.equal(data.schemaVersion,431);
+  assert.equal(data.schemaVersion,432);
   assert.equal(data.teams[0].forces[0].creatorCandidateCount,1);
   assert.equal(data.teams[0].forces[0].creatorCandidates[0].characterName,'생성자본캐');
   assert.equal(data.teams[0].forces[1].creatorAlreadyAssigned,true);
@@ -83,5 +83,5 @@ async function verify(){
 }
 
 verify()
-  .then(()=>console.log('KINOJO sanctuary management DB431 creator candidates contract: PASS'))
+  .then(()=>console.log('KINOJO sanctuary management DB432 creator candidates contract: PASS'))
   .catch(error=>{console.error(error);process.exitCode=1;});
