@@ -44,9 +44,10 @@
       };
       const makeResult=(slot,width,height)=>({slot,blob:new Blob(['edited-webp'],{type:'image/webp'}),mimeType:'image/webp',width,height,outputReady:true,uploadConnected:false,originalUploaded:false,metadataStripped:true});
       const profile=await KinojoMyInfoImageUpload.uploadEdited({client,sessionToken:token,characterId:41,contract:KinojoMyInfoImageContract,result:makeResult('PROFILE',512,512)});
-      const reference=await KinojoMyInfoImageUpload.uploadEdited({client,sessionToken:token,characterId:41,contract:KinojoMyInfoImageContract,result:makeResult('FRONT',800,1200)});
+      let referenceError='';
+      try{await KinojoMyInfoImageUpload.uploadEdited({client,sessionToken:token,characterId:41,contract:KinojoMyInfoImageContract,result:makeResult('FRONT',800,1200)});}catch(error){referenceError=String(error?.message||error);}
       const deleted=await KinojoMyInfoImageUpload.deleteReference({client,sessionToken:token,characterId:41,slot:'FRONT',contract:KinojoMyInfoImageContract});
-      const passed=profile.ok&&profile.uploadConnected&&!profile.originalUploaded&&!profile.replacing&&reference.ok&&reference.replacing&&deleted.deleted.metadataDeleted&&calls.some(call=>call.action==='profile-upload-complete')&&calls.some(call=>call.action==='reference-upload-replace-complete');
+      const passed=profile.ok&&profile.uploadConnected&&!profile.originalUploaded&&!profile.replacing&&referenceError.includes('REFERENCE_DIRECT_UPLOAD_REMOVED_USE_IMAGE_REQUEST')&&deleted.deleted.metadataDeleted&&calls.some(call=>call.action==='profile-upload-complete')&&!calls.some(call=>String(call.action||'').startsWith('reference-upload-'));
       if(!passed)throw new Error('B3_BROWSER_CONTRACT_FAILED');
       document.body.dataset.testState='pass';
       document.querySelector('#result').textContent=JSON.stringify({state:'PASS',profileNew:true,referenceReplace:true,referenceDelete:true,editedWebpOnly:true,originalUploaded:false,serverPixelsVerified:true,actions:calls.map(call=>call.action)},null,2);

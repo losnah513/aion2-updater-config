@@ -11,7 +11,7 @@ const bootstrap = read('admin/js/admin-bootstrap.js');
 const css = read('admin/css/admin.css');
 const notifications = read('ui/kinojo-admin-notifications.js');
 const edge = read('supabase/functions/kinojo-member-profile/index.ts');
-const migration = read('supabase/migrations/20260828070646_member_image_admin_work_queue_v406.sql');
+const migration = read('supabase/migrations/20260828223317_member_image_request_acknowledgement_v444.sql');
 
 for (const html of [desktop, mobile]) {
   for (const token of [
@@ -23,11 +23,10 @@ for (const html of [desktop, mobile]) {
     'id="memberImageReviewStatus"',
     'id="memberImageReviewSummary"',
     'id="memberImageReviewList"',
-    '캐릭터 이미지·제작 요청 확인',
-    'value="ACTION_REQUIRED">처리 필요',
-    'value="IMAGE_REVIEW">이미지 확인',
-    'value="PRODUCTION_REQUEST">제작 요청',
-    'value="COMPLETED">처리 완료',
+    '참고 이미지 제작 요청 확인',
+    'value="PENDING">확인 필요',
+    'value="ACKNOWLEDGED">확인 완료',
+    'value="ALL">전체',
   ]) assert.ok(html.includes(token), `member image review HTML contract missing: ${token}`);
   assert.ok(html.includes('data-admin-master-only'), 'member image review must remain MASTER-only');
   assert.ok(html.includes('admin.css?cache=2026082804'), 'member image review CSS cache must be current');
@@ -36,14 +35,13 @@ for (const html of [desktop, mobile]) {
 
 for (const token of [
   "action:'admin-image-work-queue-list'",
-  "action:'admin-image-review-ack'",
+  "action:'admin-image-request-ack'",
   'NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS',
   'updateMemberImageReviewBadges_',
   'renderMemberImageReviewRows_',
   'loadMemberImageReviews',
-  'acknowledgeMemberImageReview_',
-  'data-member-image-review-ack',
-  'data-latest-uploaded-at',
+  'acknowledgeMemberImageRequest_',
+  'data-member-image-request-ack',
   'data-member-image-request-view',
   'openMemberImageModal(requestView,{characterId:',
   'loadMemberImageGroups_(memberId,requestId,preferredCharacterId=0,preferredRequestId=0)',
@@ -51,9 +49,8 @@ for (const token of [
 
 for (const token of [
   "subtab==='character-images'&&isMaster()",
-  'memberImagePendingCount',
   'memberImageRequestPendingCount',
-  'renderMemberImageReviewSummary_(imageCount,imageReviewCount,imageRequestCount,state.memberImageReviewTotalCount)',
+  'renderMemberImageReviewSummary_(imageRequestCount,state.memberImageReviewTotalCount)',
   'refreshNotificationBadges()',
   'memberImageReviewReloadBtn',
   'memberImageReviewStatus',
@@ -73,27 +70,32 @@ for (const token of [
 ]) assert.ok(css.includes(token), `member image review CSS contract missing: ${token}`);
 
 assert.ok(notifications.includes("adminHref('#members/character-images')"), 'image upload notification must open the review subtab');
-assert.ok(notifications.includes('latestCharacterImageUpload'), 'notification bridge must prefer the unified character-image event');
+assert.ok(notifications.includes('latestImageRequest'), 'notification bridge must use the reference-image request event');
+assert.equal(notifications.includes('latestCharacterImageUpload'), false, 'generic character-image upload notification path must be removed');
 
 for (const token of [
-  'ADMIN_WORK_QUEUE = "406"',
+  'ADMIN_WORK_QUEUE = "444"',
   'admin-image-work-queue-list',
-  'kinojo_admin_member_image_work_queue_v406',
+  'kinojo_admin_member_image_work_queue_v444',
   'NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS',
   'admin-member-image-work-queue-api-v1',
 ]) assert.ok(edge.includes(token), `unified work queue Edge contract missing: ${token}`);
 
 for (const token of [
-  'create or replace function public.kinojo_admin_member_image_work_queue_v406',
-  "v_filter text := upper(pg_catalog.btrim(coalesce(p_filter, 'ACTION_REQUIRED')))",
-  "r.status in ('SUBMITTED', 'IN_PROGRESS')",
-  "'itemType', 'IMAGE_REVIEW'",
-  "'itemType', 'PRODUCTION_REQUEST'",
+  'create or replace function public.kinojo_admin_member_image_work_queue_v444',
+  "v_filter text := upper(pg_catalog.btrim(coalesce(p_filter, 'PENDING')))" ,
+  "r.status = 'SUBMITTED'",
+  "'itemType', 'REFERENCE_IMAGE_REQUEST'",
+  "'pendingRequestCount'",
   "'actionRequiredCount'",
   'NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS',
-  'revoke all on function public.kinojo_admin_member_image_work_queue_v406',
-  'grant execute on function public.kinojo_admin_member_image_work_queue_v406',
+  'revoke all on function public.kinojo_admin_member_image_work_queue_v444',
+  'grant execute on function public.kinojo_admin_member_image_work_queue_v444',
 ]) assert.ok(migration.includes(token), `unified work queue migration contract missing: ${token}`);
+
+for (const removed of ['admin-image-review-ack', 'IMAGE_REVIEW', 'PRODUCTION_REQUEST', 'admin-image-request-status']) {
+  assert.equal(edge.includes(removed), false, `removed image workflow must not remain exposed by Edge: ${removed}`);
+}
 
 for (const forbidden of ['objectPath', 'signedUrl', 'signedURL', 'uploadUrl']) {
   assert.ok(!members.includes(forbidden), `admin work queue client leaked private storage field: ${forbidden}`);

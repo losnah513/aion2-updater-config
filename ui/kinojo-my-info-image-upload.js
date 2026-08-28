@@ -109,36 +109,22 @@
   async function uploadEdited(options={}){
     const client=requireClient(options.client);
     const context=requestContext(options);
-    let replacing=false;
-    if(context.slot==='PROFILE'){
-      const latest=await client.invokeEdgeFunction('kinojo-member-profile',{action:'profile-bootstrap',sessionToken:context.sessionToken,characterId:context.characterId});
-      if(latest?.ok!==true||Number(latest?.character?.characterId)!==context.characterId)throw new Error('PROFILE_BOOTSTRAP_INVALID');
-      replacing=latest.profile?.hasOverride===true;
-    }else{
-      const latest=await referenceState({client,sessionToken:context.sessionToken,characterId:context.characterId});
-      replacing=latest.references.some(item=>item?.slot===context.slot&&item?.active===true);
-    }
-    const prepareAction=context.slot==='PROFILE'?'profile-upload-prepare':'reference-upload-prepare';
+    if(context.slot!=='PROFILE')throw new Error('REFERENCE_DIRECT_UPLOAD_REMOVED_USE_IMAGE_REQUEST');
+    const latest=await client.invokeEdgeFunction('kinojo-member-profile',{action:'profile-bootstrap',sessionToken:context.sessionToken,characterId:context.characterId});
+    if(latest?.ok!==true||Number(latest?.character?.characterId)!==context.characterId)throw new Error('PROFILE_BOOTSTRAP_INVALID');
+    const replacing=latest.profile?.hasOverride===true;
+    const prepareAction='profile-upload-prepare';
     const prepareBody={action:prepareAction,sessionToken:context.sessionToken,characterId:context.characterId,mimeType:context.mimeType,sizeBytes:context.sizeBytes};
-    if(context.slot!=='PROFILE')prepareBody.slot=context.slot;
     const preparedResponse=await client.invokeEdgeFunction('kinojo-member-profile',prepareBody);
     const prepared=validatePreparedUpload(preparedResponse,context);
     await signedUpload(client,prepared,context);
-    const completeAction=context.slot==='PROFILE'
-      ?(replacing?'profile-upload-replace-complete':'profile-upload-complete')
-      :(replacing?'reference-upload-replace-complete':'reference-upload-complete');
+    const completeAction=replacing?'profile-upload-replace-complete':'profile-upload-complete';
     const completeBody={action:completeAction,sessionToken:context.sessionToken,characterId:context.characterId,objectPath:prepared.objectPath,mimeType:context.mimeType,sizeBytes:context.sizeBytes};
-    if(context.slot!=='PROFILE')completeBody.slot=context.slot;
     const completed=await client.invokeEdgeFunction('kinojo-member-profile',completeBody);
     if(completed?.ok!==true||completed?.upload?.activated!==true||text(completed?.upload?.objectPath)!==prepared.objectPath)throw new Error('EDITED_IMAGE_UPLOAD_COMPLETE_INVALID');
     validateCompletedPixels(completed,context);
-    if(context.slot==='PROFILE'){
-      if(Number(completed?.character?.characterId)!==context.characterId||completed?.profile?.hasOverride!==true)throw new Error('PROFILE_UPLOAD_RESULT_INVALID');
-      if(replacing&&(completed?.replacement?.replaced!==true||text(completed?.replacement?.newObjectPath)!==prepared.objectPath))throw new Error('PROFILE_REPLACEMENT_RESULT_INVALID');
-    }else{
-      if(Number(completed?.characterId)!==context.characterId||completed?.reference?.slot!==context.slot||completed?.reference?.active!==true)throw new Error('REFERENCE_UPLOAD_RESULT_INVALID');
-      if(replacing&&(completed?.replacement?.replaced!==true||text(completed?.replacement?.newObjectPath)!==prepared.objectPath))throw new Error('REFERENCE_REPLACEMENT_RESULT_INVALID');
-    }
+    if(Number(completed?.character?.characterId)!==context.characterId||completed?.profile?.hasOverride!==true)throw new Error('PROFILE_UPLOAD_RESULT_INVALID');
+    if(replacing&&(completed?.replacement?.replaced!==true||text(completed?.replacement?.newObjectPath)!==prepared.objectPath))throw new Error('PROFILE_REPLACEMENT_RESULT_INVALID');
     return Object.freeze({ok:true,slot:context.slot,characterId:context.characterId,replacing,uploadConnected:true,originalUploaded:false,response:completed});
   }
   async function deleteReference(options={}){

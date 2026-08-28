@@ -11,7 +11,8 @@ const imageContract = require('../ui/kinojo-my-info-image-contract.js');
 const uploadApi = require('../ui/kinojo-my-info-image-upload.js');
 
 const memberMigration = read('supabase/migrations/20260826033315_member_image_request_batch_v404.sql');
-const adminMigration = read('supabase/migrations/20260826053325_member_image_request_admin_workflow_v405.sql');
+const adminMigration = read('supabase/migrations/20260828223317_member_image_request_acknowledgement_v444.sql');
+const legacyAdminMigration = read('supabase/migrations/20260826053325_member_image_request_admin_workflow_v405.sql');
 const edge = read('supabase/functions/kinojo-member-profile/index.ts');
 const cleanup = read('supabase/functions/kinojo-member-image-cleanup/index.ts');
 const memberUi = read('ui/kinojo-common-ui.js');
@@ -81,12 +82,13 @@ for (const tokenText of [
 ]) assert.ok(memberMigration.includes(tokenText), `missing member closeout contract: ${tokenText}`);
 
 for (const tokenText of [
-  "v_request.status = 'SUBMITTED' and v_next in ('IN_PROGRESS', 'REJECTED')",
-  "v_request.status = 'IN_PROGRESS' and v_next in ('COMPLETED', 'REJECTED')",
-  'on conflict (request_id) do nothing',
-  'alter table private.member_image_request_admin_events enable row level security',
-  'kinojo_admin_member_image_request_asset_v405',
+  'add column acknowledged_at timestamptz',
+  'kinojo_admin_member_image_request_ack_v444',
+  "check (status in ('DRAFT', 'SUBMITTED', 'CANCELLED'))",
+  "'latestCharacterImageUpload', null",
+  "'latestImageRequest', v_latest_image_request",
 ]) assert.ok(adminMigration.includes(tokenText), `missing admin closeout contract: ${tokenText}`);
+assert.ok(legacyAdminMigration.includes('kinojo_admin_member_image_request_asset_v405'), 'signed asset resolver must remain available');
 
 for (const tokenText of [
   'image-request-prepare',
@@ -94,13 +96,20 @@ for (const tokenText of [
   'image-request-state',
   'admin-image-request-list',
   'admin-image-request-detail',
-  'admin-image-request-status',
+  'admin-image-request-ack',
   'admin-image-request-preview',
   'admin-image-request-download',
   'NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS',
   'SIGNED_PREVIEW_URL_ONLY_NO_OBJECT_PATH',
   'SIGNED_DOWNLOAD_URL_ONLY_NO_OBJECT_PATH',
 ]) assert.ok(edge.includes(tokenText), `missing integrated Edge action/privacy contract: ${tokenText}`);
+for (const removed of ['admin-image-review-list', 'admin-image-review-ack', 'admin-image-request-status']) {
+  assert.equal(edge.includes(removed), false, `removed admin image action still exposed: ${removed}`);
+}
+for (const removed of ['"reference-upload-prepare",', '"reference-upload-complete",', '"reference-upload-replace-complete",']) {
+  assert.equal(edge.includes(removed), false, `standalone reference upload action still exposed: ${removed}`);
+}
+assert.ok(memberUi.includes('참고 이미지 제작 요청 전송 완료'), 'member UI must describe one request submission path');
 
 assert.ok(cleanup.includes('kinojo_member_image_request_metadata_cleanup_v404'));
 assert.ok(memberUi.includes('이미지 제작 요청 보내기'));
@@ -118,7 +127,7 @@ for (const privacy of [desktopPrivacy, mobilePrivacy]) {
     '최대 60초의 Signed URL',
     '최대 7일',
     '최대 30일',
-    '스타일·추가 요청·처리 상태·감사 이력',
+    '스타일·추가 요청·관리자 확인 시각',
   ]) assert.ok(privacy.includes(tokenText), `privacy disclosure missing: ${tokenText}`);
   assert.ok(privacy.includes('service_role 키나 private object path를 제공하지 않습니다.'));
 }
