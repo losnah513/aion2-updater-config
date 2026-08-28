@@ -1032,6 +1032,23 @@
     });
   }
 
+  async function getSanctuaryManagementNotificationSummary(){
+    return invokeEdgeFunction('sanctuary-management',{
+      action:'notification-summary',
+      sessionToken:currentServerSessionCredential()
+    });
+  }
+
+  async function getSanctuaryManagementArchivePreview(teamId){
+    const normalizedTeamId=Number(teamId||0);
+    if(!Number.isSafeInteger(normalizedTeamId)||normalizedTeamId<1)throw new Error('해산할 팀을 다시 선택해 주세요.');
+    return invokeEdgeFunction('sanctuary-management',{
+      action:'archive-preview',
+      sessionToken:currentServerSessionCredential(),
+      teamId:normalizedTeamId
+    });
+  }
+
   async function runSanctuaryManagementCommand(command,payload={},expectedRevision=null,requestKey=''){
     const normalizedCommand=String(command||'').trim().toUpperCase();
     if(!/^[A-Z][A-Z0-9_]{2,47}$/.test(normalizedCommand))throw new Error('성역 관리 작업을 다시 선택해 주세요.');
@@ -1184,7 +1201,17 @@
 
   async function getNotificationSummary(){
     const passKey=optionalServerSessionCredential();if(!passKey)return {ok:false,totalCount:0};
-    return rpc('kinojo_web_notification_summary_v316',{p_pass_key:passKey});
+    // One common polling cycle owns both the legacy admin queue and the
+    // Stage 5 recruitment summary. This intentionally does not add a second timer.
+    const [legacy,recruitment]=await Promise.all([
+      rpc('kinojo_web_notification_summary_v316',{p_pass_key:passKey}),
+      getSanctuaryManagementNotificationSummary().catch(()=>({ok:false,recruitmentCount:0,recruitmentGroups:[]}))
+    ]);
+    return Object.assign({},legacy,{
+      sanctuaryRecruitmentCount:Number(recruitment?.recruitmentCount||0),
+      sanctuaryRecruitmentGroups:Array.isArray(recruitment?.recruitmentGroups)?recruitment.recruitmentGroups:[],
+      sanctuaryRecruitmentPolicy:recruitment?.dedupePolicy||'WEB_SESSION'
+    });
   }
 
   async function getSanctuaryOperationOverview(extra={}){
@@ -1819,6 +1846,7 @@
     if(name === 'sanctuaryMaster') return getSanctuaryMaster();
     if(name === 'sanctuaryManagementBootstrap') return getSanctuaryManagementBootstrap();
     if(name === 'sanctuaryManagementMonth') return getSanctuaryManagementMonth(extra.month || '');
+    if(name === 'sanctuaryManagementArchivePreview') return getSanctuaryManagementArchivePreview(extra.teamId || extra.team_id);
     if(name === 'sanctuary') return getSanctuaryData(extra.id || extra.sanctuaryId || '');
     if(name === 'sanctuaryRosterData') return getSanctuaryRosterData(extra.id || extra.sanctuaryId || '');
     if(name === 'sanctuaryWaitlistData') return getSanctuaryWaitlistData(extra.id || extra.sanctuaryId || '');
@@ -1954,6 +1982,8 @@
     getSanctuaryRequestConsole,
     rejectSanctuarySupportRequest,
     getNotificationSummary,
+    getSanctuaryManagementNotificationSummary,
+    getSanctuaryManagementArchivePreview,
     getSanctuaryOperationOverview,
     getSanctuaryScheduleCalendar,
     getSanctuaryScheduleDay,

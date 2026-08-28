@@ -515,6 +515,37 @@
     item.addEventListener('click',()=>{location.href=(info?.mobile?'/m/admin/':'/admin/')+'#sanctuary/requests'});
     host.appendChild(item);requestAnimationFrame(()=>item.classList.add('show'));setTimeout(()=>{item.classList.remove('show');setTimeout(()=>item.remove(),260)},7000);
   }
+  function sanctuaryRecruitmentHref_(group,info){
+    const navigation=group?.navigation||{};
+    const params=new URLSearchParams();
+    if(group?.sanctuaryCode)params.set('id',String(group.sanctuaryCode));
+    if(group?.teamId)params.set('team',String(group.teamId));
+    if(navigation.forceId)params.set('force',String(navigation.forceId));
+    if(navigation.openSupport===true)params.set('support','1');
+    return (info?.mobile?'/m/sanctuary-management/':'/sanctuary-management/')+'?'+params.toString();
+  }
+  function renderRecruitmentNotificationToast_(summary,info){
+    const groups=Array.isArray(summary?.sanctuaryRecruitmentGroups)?summary.sanctuaryRecruitmentGroups:[];
+    if(!groups.length)return;
+    const storageKey='kinojo_sanctuary_recruitment_seen_v437';
+    let seen=[];try{seen=JSON.parse(sessionStorage.getItem(storageKey)||'[]');}catch(_err){seen=[];}
+    const seenSet=new Set(Array.isArray(seen)?seen.map(String):[]);
+    const unseen=groups.filter(group=>group?.eventKey&&!seenSet.has(String(group.eventKey)));
+    if(!unseen.length)return;
+    unseen.forEach(group=>seenSet.add(String(group.eventKey)));
+    try{sessionStorage.setItem(storageKey,JSON.stringify(Array.from(seenSet).slice(-80)));}catch(_err){}
+    let host=document.getElementById('kinojoRequestToastHost');
+    if(!host){host=document.createElement('div');host.id='kinojoRequestToastHost';host.className='kinojo-request-toast-host';document.body.appendChild(host);}
+    const first=unseen[0];
+    const forceCount=unseen.reduce((sum,group)=>sum+(Array.isArray(group.forces)?group.forces.length:0),0);
+    const item=document.createElement('button');item.type='button';item.className='kinojo-request-toast kinojo-recruitment-toast';
+    const detail=unseen.length===1
+      ?String(first.teamTitle||'참여 팀')+' · '+forceCount+'개 포스 모집 중'
+      :unseen.length+'개 팀 · '+forceCount+'개 지원 가능 포스';
+    item.innerHTML='<span class="kinojo-request-toast-icon">＋</span><span><strong>참여 가능한 성역 팀이 있습니다</strong><small>'+escapeHtml(detail)+'</small></span><i aria-hidden="true">›</i>';
+    item.addEventListener('click',()=>{location.href=sanctuaryRecruitmentHref_(first,info);});
+    host.appendChild(item);requestAnimationFrame(()=>item.classList.add('show'));setTimeout(()=>{item.classList.remove('show');setTimeout(()=>item.remove(),260)},9000);
+  }
   async function loadCommonNotificationSummary_(info,{notify=true}={}){
     const credential=commonSessionCredential_();const badge=q('#kinojoAdminPendingBadge');
     if(!credential||!window.KinojoApi?.getAction){if(badge)badge.hidden=true;return;}
@@ -523,6 +554,7 @@
       const summary=await window.KinojoApi.getAction('notificationSummary',{});if(seq!==commonNotificationSeq)return;
       const total=Math.max(0,Number(summary?.totalCount||0));if(badge){badge.textContent=total>99?'99+':String(total);badge.hidden=total<1;}
       if(notify&&summary?.supportRequestCount>0)renderCommonNotificationToast_(summary,info);
+      if(notify&&summary?.sanctuaryRecruitmentCount>0)renderRecruitmentNotificationToast_(summary,info);
     }catch(_err){if(seq===commonNotificationSeq&&badge)badge.hidden=true;}
   }
   function scheduleCommonNotifications_(info){
