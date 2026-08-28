@@ -40,7 +40,14 @@
     aspect-ratio:16/9;
     object-fit:cover;
   }
+  .kinojo-main-banner.is-manifest-pending{
+    background:#eaf0f7;
+  }
+  .kinojo-main-banner.is-manifest-pending>img{
+    visibility:hidden;
+  }
 </style>
+<noscript><style>.kinojo-main-banner.is-manifest-pending>img{visibility:visible}</style></noscript>
 </head>
 <body>
 <main class="wrap kinojo-pc-banner-host">
@@ -48,7 +55,7 @@
   <aside class="kinojo-pc-banner-slot is-right" data-kinojo-pc-banner aria-hidden="true"></aside>
   <section class="hero">
     <div class="eyebrow">✨ AION2 · KINOJO PORTAL</div>
-    <a class="kinojo-main-banner" href="hof/" aria-label="KINOJO INFO 명예의 전당 열기">
+    <a class="kinojo-main-banner is-manifest-pending" href="hof/" aria-label="KINOJO INFO 명예의 전당 열기" aria-busy="true">
       <img id="kinojo-main-banner-image" src="assets/images/common/kinojo-og.jpg?cache=26062218" alt="KINOJO INFO 깡 레기온 대표 배너">
     </a>
     <p class="subtitle">아이온2 지켈 서버 깡 레기온의 비공식 정보 사이트입니다.</p>
@@ -91,7 +98,16 @@
     const banner = document.getElementById('kinojo-main-banner-image');
     const bannerLink = banner?.closest('.kinojo-main-banner') || document.querySelector('.kinojo-main-banner');
     const runtime = window.KinojoBannerRuntime;
-    if (!banner || !bannerLink || !runtime?.mountBanner) return;
+    if (!banner || !bannerLink) return;
+
+    const revealBanner = () => {
+      bannerLink.classList.remove('is-manifest-pending');
+      bannerLink.removeAttribute('aria-busy');
+    };
+    if (!runtime?.mountBanner) {
+      revealBanner();
+      return;
+    }
 
     const fallback = {
       src: banner.getAttribute('src') || '',
@@ -105,6 +121,7 @@
       if (fallback.href) bannerLink.setAttribute('href', fallback.href);
       else bannerLink.removeAttribute('href');
       bannerLink.setAttribute('aria-label', fallback.ariaLabel);
+      revealBanner();
     };
 
     runtime.mountBanner({
@@ -113,6 +130,7 @@
       fallbackAlt: 'KINOJO INFO 깡 레기온 대표 배너',
       ensureElements: () => ({ host: bannerLink, image: banner }),
       deactivate: restoreFallback,
+      onActive: revealBanner,
       onError: (error) => console.warn('[KINOJO BANNER] HOME:MAIN Manifest 재생 중 오류가 발생해 현재 배너를 유지합니다.', error)
     });
   })();

@@ -4,10 +4,14 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - "home.html"
+      - "m/index.html"
       - "ui/kinojo-banner-runtime.js"
       - "ui/kinojo-pc-banners.js"
       - "ui/kinojo-pc-banners.css"
       - "tests/banner-manifest-client-contract.test.js"
+      - "tests/banner-home-first-paint-contract.test.js"
+      - "tests/banner-home-main-live-e2e.js"
       - "tests/banner-admin-main-ui-contract.test.js"
       - "tests/banner-admin-chrome-e2e.html"
       - "tests/banner-pc-side-live-e2e.js"
@@ -21,10 +25,14 @@ on:
   push:
     branches: [main]
     paths:
+      - "home.html"
+      - "m/index.html"
       - "ui/kinojo-banner-runtime.js"
       - "ui/kinojo-pc-banners.js"
       - "ui/kinojo-pc-banners.css"
       - "tests/banner-manifest-client-contract.test.js"
+      - "tests/banner-home-first-paint-contract.test.js"
+      - "tests/banner-home-main-live-e2e.js"
       - "tests/banner-admin-main-ui-contract.test.js"
       - "tests/banner-admin-chrome-e2e.html"
       - "tests/banner-pc-side-live-e2e.js"
@@ -63,7 +71,9 @@ jobs:
           node --check ui/kinojo-pc-banners.js
           node --check tests/banner-pc-side-live-e2e.js
           node --check tests/banner-mobile-main-live-e2e.js
+          node --check tests/banner-home-main-live-e2e.js
           node tests/banner-manifest-client-contract.test.js
+          node tests/banner-home-first-paint-contract.test.js
           node <<'NODE'
           const assert=require('node:assert/strict');
           const fs=require('node:fs');
@@ -159,6 +169,7 @@ jobs:
         run: |
           set -euo pipefail
           files=(
+            "home.html"
             "ui/kinojo-banner-runtime.js"
             "ui/kinojo-pc-banners.js"
             "ui/kinojo-pc-banners.css"
@@ -217,6 +228,7 @@ jobs:
           fi
           npm install --no-save --no-package-lock puppeteer-core@24.16.0 >/dev/null
           CHROME_BIN="$chrome" LIVE_BASE="$LIVE_BASE" node tests/banner-pc-side-live-e2e.js
+          CHROME_BIN="$chrome" LIVE_BASE="$LIVE_BASE" node tests/banner-home-main-live-e2e.js
 
       - name: Verify mobile MAIN live fallback
         shell: bash
