@@ -9,6 +9,11 @@ enabled = true
 verify_jwt = false
 entrypoint = "./functions/kinojo-banner-media/index.ts"
 
+[functions.sanctuary-management]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/sanctuary-management/index.ts"
+
 [api]
 enabled = true
 # Port to use for the API URL.

@@ -24,6 +24,26 @@
 - Google Drive WEB 미러는 관리자·모바일 관리자·테스트 기존 ID 26개와 신규 `admin-banner-events.js`, `banner-phase2-admin-ux-followup-contract.test.js` 2개를 raw byte exact로 동기화했다. 기존 `.github` 미러 폴더는 목록 조회 후 하위 폴더 쓰기가 404로 두 번 거절되어 workflow 2개는 GitHub main을 권위 원본으로 유지한다.
 - 롤백은 PR `#298`의 관리자 WEB/CSS/JS·계약 테스트·cache `2026082803` 변경만 되돌린다. DB migration, Edge 배포, Storage 자산과 운영 이벤트 데이터는 건드리지 않는다.
 
+## Server 응답 계약 권위 규칙 · 2026-08-28
+
+- Edge가 DB RPC JSON을 공통 응답 봉투로 감쌀 때 DB payload를 먼저 펼치고 `service`, `apiVersion`, `databaseContract`, `schemaVersion` 같은 Edge 소유 계약 필드를 마지막에 기록한다.
+- 구버전 DB wrapper가 예전 `apiVersion`을 보존할 수 있으므로 `{Edge 계약, ...DB payload}` 순서는 금지한다. 이 순서가 2026-08-28 성역관리 운영 화면의 API 1.1/DB432 계약 불일치를 일으켰다.
+- `supabase/functions/sanctuary-management/index.ts`의 `EDGE_CONTRACT_AUTHORITY` 주석과 `tests/sanctuary-management-edge-contract.test.js`를 이후 Edge 응답 정규화 작업의 기준으로 사용한다.
+- 계약 버전 변경 뒤에는 공개 health만 확인하지 않고, 권한 세션의 실제 bootstrap 화면에서 API/DB 표시와 오류 상태 해제를 함께 확인한다.
+
+## 전용 ADMIN 계정 규칙 · 2026-08-28
+
+- 원본 DB 등급 `ADMIN`은 자동화·실화면 검수 전용 비공개 등급이다. 서버 권한 판정은 `MASTER`와 동등하게 정규화하되, 회원 목록의 ADMIN 행은 원본 등급이 `MASTER`인 이용자에게만 반환한다.
+- ADMIN은 일반 관리자 UI에서 생성·승급할 수 없고 코드에 하드코딩하지 않는다. 전용 패스키 원문은 소스·migration·테스트·작업 로그·Drive 문서·채팅 출력에 절대 남기지 않는다.
+- 구현 기준은 migration의 `CODEX_ADMIN_ROLE` 주석, `kinojo_admin_member_list_v433`, `core/kinojo-auth-ui.js`의 동일 주석이다. 권한 로직을 수정할 때 표시용 `roleLabel=Admin`과 판정용 `role=MASTER`를 혼동하지 않는다.
+- 전용 계정으로 실화면을 열 때는 사용자 브라우저 세션과 분리된 전용 브라우저 저장소를 사용한다. 인증 입력 직전 확인을 받고, 검수가 끝나면 패스키 원문을 임시 메모리에서 제거한다.
+
+## 성역관리 Stage 3 편집·레이아웃 규칙 · 2026-08-28
+
+- 고정 팀 일정은 팀 단위이며 팀 아래 모든 포스가 같은 시작일·시각·진행 시간을 공유한다. 기본·최소 30분, 30분 단위이고 반복 일정은 종료일이 없으며 수요일~화요일 주간 맥락을 표시한다.
+- DRAFT 공개는 생성자 소유 캐릭터가 최소 1개일 때 허용하고 나머지 슬롯은 비어 있어도 된다. 공개 뒤 편집은 Server `canEdit`, 2분 lease, optimistic revision을 모두 통과해야 하며 카드 이동·교환은 원자적 `MOVE_SLOT`만 사용한다.
+- 레이아웃·내부 배치를 바꾸면 PC와 모바일에서 document/modal 가로 overflow 0을 확인한다. 세로 내용이 넘칠 때만 숨김 scrollbar와 하단 fade를 쓰고, 가로 넘침을 스크롤로 우회하지 않는다.
+
 ## 예방적 확장성 SQL428 · 2026-08-28
 
 - Meter 공개 통계/내 비교의 기본 기간은 Server `WEEK`이며 DAY/WEEK/MONTH 시간 경계가 raw combat 조회에 적용된다. `ALL`은 명시적인 사용자 선택지다. 2026-08-28 기준 records 333, participants 1,753, 적격 0이며 집계 전환 Gate 미만이므로 기간·보존·집계 구조를 변경하지 않았다.

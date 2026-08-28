@@ -20,7 +20,7 @@ for(const token of [
 
 for(const token of [
   'SERVER_ONLY_DRAFT',
-  "command=teamId?'UPDATE_TEAM_DRAFT':'CREATE_TEAM'",
+  "teamId?'UPDATE_TEAM_DRAFT':'CREATE_TEAM'",
   "mode:'FIXED'",
   "joinPolicy:'INSTANT'",
   'await load()',
@@ -28,7 +28,7 @@ for(const token of [
   "ServerAdapter.command('SET_SLOT'",
   'addForce,',
   'setSlot,',
-  'data-sanctuary-draft-team',
+  'data-sanctuary-edit-team',
 ])assert.ok(client.includes(token),`client fixed DRAFT flow missing ${token}`);
 
 for(const token of [
@@ -80,9 +80,9 @@ for(const token of [
 
 for(const page of ['sanctuary-management/index.html','m/sanctuary-management/index.html']){
   const html=read(page);
-  assert.ok(html.includes('sanctuary-management.js?cache=2026082805'),`${page}: management JS cache missing`);
-  assert.ok(html.includes('sanctuary-management-draft.css?cache=2026082804'),`${page}: draft CSS cache missing`);
-  assert.ok(html.includes('sanctuary-management-draft.js?cache=2026082804'),`${page}: draft JS cache missing`);
+  assert.ok(html.includes('sanctuary-management.js?cache=2026082806'),`${page}: management JS cache missing`);
+  assert.ok(html.includes('sanctuary-management-draft.css?cache=2026082806'),`${page}: draft CSS cache missing`);
+  assert.ok(html.includes('sanctuary-management-draft.js?cache=2026082806'),`${page}: draft JS cache missing`);
 }
 
 console.log('KINOJO sanctuary management fixed-team DRAFT contract: PASS');

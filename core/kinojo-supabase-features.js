@@ -353,7 +353,7 @@
 
     if(normalizedCommand === 'listCodes'){
       const limit = Math.min(100, Math.max(1, Math.trunc(Number(extra.limit || 20)) || 20));
-      const data = await rpc('kinojo_admin_member_list_v428', {
+      const data = await rpc('kinojo_admin_member_list_v433', {
         p_pass_key:currentAdminSessionCredential(),
         p_limit:limit,
         p_cursor:String(extra.cursor || '').trim() || null,
@@ -367,7 +367,7 @@
         accounts:source.map(accountFromRow).filter(Boolean),
         codeVisibility:String(data?.codeVisibility || data?.code_visibility || 'VISIBLE').toUpperCase(),
         actor:data?.actor || null,
-        databaseContract:Number(data?.databaseContract || 428),
+        databaseContract:Number(data?.databaseContract || 433),
         paginationContract:String(data?.paginationContract || 'ADMIN_MEMBER_CURSOR_V1'),
         pageInfo:{
           limit:Number(page.limit || limit),
@@ -1038,6 +1038,22 @@
       command:normalizedCommand,
       payload:normalizedPayload,
       expectedRevision:revision
+    });
+  }
+
+  async function runSanctuaryManagementLease(teamId,leaseAction,leaseToken){
+    const normalizedTeamId=Number(teamId||0);
+    const normalizedAction=String(leaseAction||'').trim().toUpperCase();
+    const normalizedToken=String(leaseToken||'').trim();
+    if(!Number.isSafeInteger(normalizedTeamId)||normalizedTeamId<1||!['ACQUIRE','RENEW','RELEASE'].includes(normalizedAction)||normalizedToken.length<32){
+      throw new Error('편집 잠금 요청을 다시 확인해 주세요.');
+    }
+    return invokeEdgeFunction('sanctuary-management',{
+      action:'lease',
+      sessionToken:currentServerSessionCredential(),
+      teamId:normalizedTeamId,
+      leaseAction:normalizedAction,
+      leaseToken:normalizedToken
     });
   }
 
@@ -1914,6 +1930,7 @@
     getSanctuaryMaster,
     getSanctuaryManagementBootstrap,
     runSanctuaryManagementCommand,
+    runSanctuaryManagementLease,
     searchSanctuaryManagementCharacter,
     registerSanctuaryManagementCharacter,
     getSanctuaryData,

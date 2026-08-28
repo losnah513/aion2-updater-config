@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  const API_VERSION=1.1;
-  const SCHEMA_VERSION=432;
+  const API_VERSION=1.2;
+  const SCHEMA_VERSION=433;
   let requestSequence=0;
   let bootstrapData=null;
   let selectedSanctuary='all';
@@ -108,7 +108,8 @@
       slotCount:integer(item.slotCount),
       occupiedCount:integer(item.occupiedCount),
       vacancyCount:integer(item.vacancyCount),
-      forces
+      forces,
+      canEdit:item.canEdit===true
     });
     const slotCount=forces.reduce((sum,force)=>sum+force.capacity,0);
     const occupiedCount=forces.reduce((sum,force)=>sum+force.occupiedCount,0);
@@ -271,6 +272,15 @@
     const status=value(team.status);
     return ({DRAFT:'DRAFT',ACTIVE:'운영 중',FULL:'모집 완료',ARCHIVED:'보관됨'})[status]||status||'상태 확인 중';
   }
+  function scheduleLabel(team){
+    const schedule=team?.schedule||{};
+    const time=value(schedule.startsAt).slice(0,5)||'시간 미정';
+    const duration=integer(schedule.durationMinutes)||30;
+    if(value(schedule.kind)==='ONCE')return value(schedule.startsOn)+' '+time+' · '+duration+'분';
+    const labels={1:'월',2:'화',3:'수',4:'목',5:'금',6:'토',7:'일'};
+    const days=(Array.isArray(schedule.weekdays)?schedule.weekdays:[]).map(day=>labels[Number(day)]).filter(Boolean).join('·');
+    return '매주 '+(days||'요일 미정')+' '+time+' · '+duration+'분';
+  }
 
   function createEmpty(title,message){
     const empty=document.createElement('div');
@@ -289,18 +299,16 @@
     const title=document.createElement('h3');title.textContent=value(team.title)||'이름 없는 팀';
     const activity=document.createElement('p');activity.textContent=value(team.activity)||'진행 내용 미정';
     titleWrap.append(title,activity);
-    const badge=document.createElement('span');badge.className='sanctuary-management-team-badge';badge.textContent=teamStatusLabel(team);
-    head.append(titleWrap,badge);
-    const meta=document.createElement('div');meta.className='sanctuary-management-team-meta';
-    [teamModeLabel(team),value(team.forceCount)+'포스 · '+value(team.occupiedCount)+'/'+value(team.slotCount)+'명','팀 ID '+value(team.teamId),'revision '+value(team.revision)].forEach(text=>{const item=document.createElement('span');item.textContent=text;meta.appendChild(item);});
-    card.append(head,meta);
-    if(value(team.status)==='DRAFT'){
-      const actions=document.createElement('div');actions.className='sanctuary-management-team-actions';
-      const reopen=document.createElement('button');reopen.type='button';reopen.className='kinojo-btn secondary';reopen.textContent='초안 계속 작성';
-      reopen.dataset.sanctuaryDraftTeam=value(team.teamId);
-      reopen.disabled=!bootstrapData?.writeEnabled;
-      actions.appendChild(reopen);card.appendChild(actions);
+    const headActions=document.createElement('div');headActions.className='sanctuary-management-team-head-actions';
+    const badge=document.createElement('span');badge.className='sanctuary-management-team-badge';badge.textContent=teamStatusLabel(team);headActions.appendChild(badge);
+    if(team.canEdit&&value(team.status)!=='ARCHIVED'){
+      const edit=document.createElement('button');edit.type='button';edit.className='kinojo-btn secondary';edit.textContent=value(team.status)==='DRAFT'?'초안 계속 작성':'편집';edit.dataset.sanctuaryEditTeam=value(team.teamId);edit.disabled=!bootstrapData?.writeEnabled;headActions.appendChild(edit);
+      const archive=document.createElement('button');archive.type='button';archive.className='kinojo-btn danger sanctuary-management-archive-team';archive.textContent='팀 해산';archive.dataset.sanctuaryArchiveTeam=value(team.teamId);archive.disabled=!bootstrapData?.writeEnabled;headActions.appendChild(archive);
     }
+    head.append(titleWrap,headActions);
+    const meta=document.createElement('div');meta.className='sanctuary-management-team-meta';
+    [teamModeLabel(team),scheduleLabel(team),value(team.forceCount)+'포스 · '+value(team.occupiedCount)+'/'+value(team.slotCount)+'명','팀 ID '+value(team.teamId),'revision '+value(team.revision)].forEach(text=>{const item=document.createElement('span');item.textContent=text;meta.appendChild(item);});
+    card.append(head,meta);
     return card;
   }
 
@@ -337,7 +345,8 @@
     if(!bootstrapData?.writeEnabled)throw new Error('Server 쓰기 기능이 아직 활성화되지 않았습니다.');
     const source=model&&typeof model==='object'?model:{};
     const teamId=Number(source.teamId||0);
-    const command=teamId?'UPDATE_TEAM_DRAFT':'CREATE_TEAM';
+    const status=value(source.status);
+    const command=teamId&&['ACTIVE','FULL'].includes(status)?'UPDATE_FIXED_TEAM':teamId?'UPDATE_TEAM_DRAFT':'CREATE_TEAM';
     const payload={
       sanctuaryCode:value(source.sanctuaryCode),
       title:value(source.title),
@@ -346,29 +355,30 @@
       joinPolicy:'INSTANT',
       schedule:source.schedule&&typeof source.schedule==='object'?source.schedule:{}
     };
-    if(teamId)payload.teamId=teamId;
+    if(teamId){payload.teamId=teamId;payload.leaseToken=value(source.leaseToken);}
     const result=await ServerAdapter.command(command,payload,teamId?Number(source.revision):null,value(source.requestKey));
     await load();
     return result;
   }
 
-  async function addForce(teamId,expectedRevision,requestKey){
+  async function addForce(teamId,expectedRevision,requestKey,leaseToken){
     if(!bootstrapData?.writeEnabled)throw new Error('Server 쓰기 기능이 아직 활성화되지 않았습니다.');
     const normalizedTeamId=Number(teamId||0);
     if(!Number.isSafeInteger(normalizedTeamId)||normalizedTeamId<1)throw new Error('포스를 추가할 팀을 다시 선택해 주세요.');
-    const result=await ServerAdapter.command('ADD_FORCE',{teamId:normalizedTeamId},Number(expectedRevision)||null,value(requestKey));
+    const result=await ServerAdapter.command('ADD_FORCE',{teamId:normalizedTeamId,leaseToken:value(leaseToken)},Number(expectedRevision)||null,value(requestKey));
     await load();
     return result;
   }
 
-  async function setSlot(teamId,forceId,partyNo,slotNo,characterId,expectedRevision,requestKey){
+  async function setSlot(teamId,forceId,partyNo,slotNo,characterId,expectedRevision,requestKey,leaseToken){
     if(!bootstrapData?.writeEnabled)throw new Error('Server 쓰기 기능이 아직 활성화되지 않았습니다.');
     const payload={
       teamId:Number(teamId),
       forceId:Number(forceId),
       partyNo:Number(partyNo),
       slotNo:Number(slotNo),
-      characterId:Number(characterId)
+      characterId:Number(characterId),
+      leaseToken:value(leaseToken)
     };
     if(!Number.isSafeInteger(payload.teamId)||payload.teamId<1||!Number.isSafeInteger(payload.forceId)||payload.forceId<1||![1,2].includes(payload.partyNo)||payload.slotNo<1||payload.slotNo>5||!Number.isSafeInteger(payload.characterId)||payload.characterId<1){
       throw new Error('캐릭터를 추가할 슬롯을 다시 선택해 주세요.');
@@ -376,6 +386,27 @@
     const result=await ServerAdapter.command('SET_SLOT',payload,Number(expectedRevision)||null,value(requestKey));
     await load();
     return result;
+  }
+
+  async function lease(teamId,action,leaseToken){
+    const api=window.KinojoSupabase;
+    if(!api||typeof api.runSanctuaryManagementLease!=='function')throw new Error('편집 잠금 Server 어댑터를 불러오지 못했습니다.');
+    return api.runSanctuaryManagementLease(Number(teamId),value(action),value(leaseToken));
+  }
+
+  async function publishFixedTeam(teamId,expectedRevision,requestKey,leaseToken){
+    const result=await ServerAdapter.command('PUBLISH_TEAM',{teamId:Number(teamId),leaseToken:value(leaseToken)},Number(expectedRevision)||null,value(requestKey));
+    await load();return result;
+  }
+
+  async function moveSlot(teamId,fromSlotId,toSlotId,expectedRevision,requestKey,leaseToken){
+    const result=await ServerAdapter.command('MOVE_SLOT',{teamId:Number(teamId),fromSlotId:Number(fromSlotId),toSlotId:Number(toSlotId),leaseToken:value(leaseToken)},Number(expectedRevision)||null,value(requestKey));
+    await load();return result;
+  }
+
+  async function archiveTeam(teamId,expectedRevision,requestKey){
+    const result=await ServerAdapter.command('ARCHIVE_TEAM',{teamId:Number(teamId),reason:'운영 종료'},Number(expectedRevision)||null,value(requestKey));
+    await load();return result;
   }
 
   async function searchCharacter(teamId,query){return ServerAdapter.searchCharacter(teamId,query);}
@@ -389,6 +420,10 @@
     saveFixedDraft,
     addForce,
     setSlot,
+    lease,
+    publishFixedTeam,
+    moveSlot,
+    archiveTeam,
     searchCharacter,
     registerCharacter,
     reload:load
@@ -460,10 +495,14 @@
       window.KinojoSanctuaryManagementDraftUI?.openMode?.(event.currentTarget);
     });
     byId('sanctuaryManagementTeamList')?.addEventListener('click',event=>{
-      const button=event.target.closest('[data-sanctuary-draft-team]');
-      if(!button||button.disabled)return;
-      const team=selectedDraftTeam(button.dataset.sanctuaryDraftTeam);
-      if(team)window.KinojoSanctuaryManagementDraftUI?.openDraft?.(team,button);
+      const edit=event.target.closest('[data-sanctuary-edit-team]');
+      if(edit&&!edit.disabled){const team=selectedDraftTeam(edit.dataset.sanctuaryEditTeam);if(team)window.KinojoSanctuaryManagementDraftUI?.openDraft?.(team,edit);return;}
+      const archive=event.target.closest('[data-sanctuary-archive-team]');
+      if(!archive||archive.disabled)return;
+      const team=selectedDraftTeam(archive.dataset.sanctuaryArchiveTeam);if(!team)return;
+      if(!window.confirm('['+value(team.title)+'] 팀을 해산할까요? 해산하면 일정과 지원 대기가 종료됩니다.'))return;
+      archive.disabled=true;
+      archiveTeam(team.teamId,team.revision,'sm-archive-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10)).then(()=>window.KinojoToast?.success?.('팀을 해산했습니다.')).catch(error=>{archive.disabled=false;window.KinojoToast?.show?.(value(error?.message)||'팀을 해산하지 못했습니다.');});
     });
     window.addEventListener('kinojo:auth-changed',load);
     load();
