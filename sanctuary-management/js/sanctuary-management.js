@@ -309,9 +309,16 @@
       button.setAttribute('aria-label',item.full);
       button.title=item.full;
       const short=document.createElement('span');short.className='sanctuary-management-scope-short';short.textContent=item.short;
-      const detail=document.createElement('span');detail.className='sanctuary-management-scope-detail';detail.setAttribute('aria-hidden','true');detail.textContent=item.full.slice(item.short.length);
+      const detail=document.createElement('span');detail.className='sanctuary-management-scope-detail';detail.setAttribute('aria-hidden','true');
+      Array.from(item.full.slice(item.short.length)).forEach((character,index)=>{
+        const glyph=document.createElement('span');glyph.className='sanctuary-management-scope-detail-char';glyph.textContent=character;glyph.style.setProperty('--scope-char-index',String(index));detail.appendChild(glyph);
+      });
       button.append(short,detail);
       root.appendChild(button);
+      requestAnimationFrame(()=>{
+        const detailWidth=Math.min(260,detail.scrollWidth);
+        detail.style.setProperty('--scope-detail-width',detailWidth+'px');
+      });
     });
     shell.hidden=false;
   }

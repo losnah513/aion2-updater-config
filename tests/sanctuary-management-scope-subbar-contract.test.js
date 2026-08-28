@@ -15,8 +15,8 @@ for(const page of ['sanctuary-management/index.html','m/sanctuary-management/ind
   for(const token of [
     'aria-label="성역 선택"',
     'id="sanctuaryManagementScope"',
-    'sanctuary-management.css?cache=2026082811',
-    'sanctuary-management.js?cache=2026082811',
+    'sanctuary-management.css?cache=2026082812',
+    'sanctuary-management.js?cache=2026082812',
     'sanctuary-management-draft.js?cache=2026082811',
   ])assert.ok(html.includes(token),`${page}: scope-only subbar missing ${token}`);
   for(const legacy of ['kinojo-sanctuary-tabs','관리 범위'])assert.equal(html.includes(legacy),false,`${page}: legacy subbar content remains ${legacy}`);
@@ -28,6 +28,12 @@ for(const token of [
   "short+' | '+official",
   "const items=bootstrapData.sanctuaries.map",
   "detail.className='sanctuary-management-scope-detail'",
+  "glyph.className='sanctuary-management-scope-detail-char'",
+  "glyph.style.setProperty('--scope-char-index',String(index))",
+  "detail.setAttribute('aria-hidden','true')",
+  "requestAnimationFrame(()=>{",
+  "Math.min(260,detail.scrollWidth)",
+  "detail.style.setProperty('--scope-detail-width',detailWidth+'px')",
   "return sanctuaryKey(data.sanctuaries[0]);",
   "item.setAttribute('aria-pressed',item.dataset.sanctuaryScope===selectedSanctuary?'true':'false')",
 ])assert.ok(client.includes(token),`scope renderer missing ${token}`);
@@ -39,8 +45,11 @@ for(const token of [
   'flex-wrap:wrap',
   '.sanctuary-management-scope-short{',
   '.sanctuary-management-scope-detail{',
-  'max-width .42s cubic-bezier(.2,.8,.2,1)',
-  'button[aria-pressed="true"] .sanctuary-management-scope-detail{max-width:260px',
+  'width .84s cubic-bezier(.2,.8,.2,1)',
+  '.sanctuary-management-scope-detail-char{',
+  'transform:translateX(-.6em) scale(.94)',
+  'transition-delay:calc(.06s + var(--scope-char-index) * .035s)',
+  'button[aria-pressed="true"] .sanctuary-management-scope-detail{width:var(--scope-detail-width,0px)',
   'overflow:hidden',
 ])assert.ok(css.includes(token),`animated scope CSS missing ${token}`);
 
