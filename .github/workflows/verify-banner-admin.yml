@@ -116,7 +116,7 @@ concurrency:
 jobs:
   verify-source:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
