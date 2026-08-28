@@ -77,6 +77,10 @@ const ERR: Record<string, string> = {
     "전체 게시 전에 노출 페이지를 한 곳 이상 선택해 주세요.",
   BANNER_EVENT_TARGET_VARIANTS_MISMATCH:
     "노출 페이지와 좌우 이미지 설정이 일치하지 않습니다.",
+  BANNER_EVENT_SYNC_TARGET_INVALID:
+    "선택한 페이지의 좌우 동시 노출 위치가 서버 지원 범위와 일치하지 않습니다.",
+  BANNER_EVENT_INDEPENDENT_TARGET_INVALID:
+    "선택한 페이지의 좌우 개별 노출 위치가 서버 지원 범위와 일치하지 않습니다.",
   BANNER_EVENT_MOVE_DIRECTION_INVALID: "이벤트 이동 방향이 올바르지 않습니다.",
   BANNER_EVENT_ROTATION_MODE_INVALID:
     "전체 이벤트 노출 방식은 순차 또는 랜덤 순환만 선택할 수 있습니다.",

@@ -9,6 +9,7 @@ const workflow=read('admin/js/admin-banner-event-workflow.js');
 const edge=read('supabase/functions/kinojo-banner-media/index.ts');
 const migration=read('supabase/migrations/20260826045246_banner_event_page_targets_v404.sql');
 const hofRightPatch=read('supabase/migrations/20260828111622_banner_hof_right_side_target_v438.sql');
+const hofRightSavePatch=read('supabase/migrations/20260828115503_banner_hof_right_event_save_v440.sql');
 
 for(const token of [
   'banner event workflow phase 2 stage 7 integration v2026082811',
@@ -50,7 +51,9 @@ for(const token of [
   'kinojo_banner_event_save_v407',
   'kinojo_banner_event_publish_v404',
   'BANNER_EVENT_TARGET_PAGES_REQUIRED',
-  'BANNER_EVENT_TARGET_VARIANTS_MISMATCH'
+  'BANNER_EVENT_TARGET_VARIANTS_MISMATCH',
+  'BANNER_EVENT_SYNC_TARGET_INVALID',
+  'BANNER_EVENT_INDEPENDENT_TARGET_INVALID'
 ])assert.ok(edge.includes(token),`phase-2 stage-4 Edge contract missing: ${token}`);
 
 for(const token of [
@@ -87,5 +90,18 @@ for(const token of [
 ])assert.ok(hofRightPatch.includes(token),`DB438 HOF right-side patch missing: ${token}`);
 assert.ok(!/create\s+table|create\s+type|alter\s+table/i.test(hofRightPatch),'DB438 must only replace the existing target-contract functions');
 assert.ok(!edge.includes('kinojo_banner_event_targets_v413'),'the existing v404 Edge entry point must be reused');
+
+for(const token of [
+  'public.kinojo_banner_event_save_v391',
+  'private.kinojo_banner_supported_page_slots_v404',
+  'v_supported_slots text[]',
+  'v_slots<>v_supported_slots',
+  'not (v_role=any(v_supported_slots))',
+  'DB440 event-save base contract',
+  'to service_role'
+])assert.ok(hofRightSavePatch.includes(token),`DB440 HOF event-save patch missing: ${token}`);
+assert.ok(!hofRightSavePatch.includes("(v_page='HOF' and v_role='RIGHT')"),'DB440 must not retain the retired HOF-right rejection');
+assert.ok(!hofRightSavePatch.includes("(v_page='HOF' and v_slots<>array['LEFT']::text[])"),'DB440 must not retain the retired HOF-left-only sync rule');
+assert.ok(!/create\s+table|create\s+type|alter\s+table/i.test(hofRightSavePatch),'DB440 must only replace the existing event-save function');
 
 console.log('PASS banner event phase-2 stage-4 page selection contract');
