@@ -76,7 +76,7 @@ for(const token of [
 ])assert.ok(workflow.includes(token),`publish readback/reset contract missing: ${token}`);
 
 assert.ok(loader.includes('v2026082705'),'current admin loader generation missing');
-assert.ok(desktop.includes('admin.js?cache=2026082705'),'desktop loader generation mismatch');
-assert.ok(mobile.includes('admin.js?cache=2026082705'),'mobile loader generation mismatch');
+assert.ok(desktop.includes('admin.js?cache=2026082801'),'desktop loader generation mismatch');
+assert.ok(mobile.includes('admin.js?cache=2026082801'),'mobile loader generation mismatch');
 
 console.log('PASS banner event phase-2 stage-1 shell contract');

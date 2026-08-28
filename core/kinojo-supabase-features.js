@@ -352,13 +352,30 @@
     }
 
     if(normalizedCommand === 'listCodes'){
-      const data = await rpc('kinojo_admin_member_list_264', { p_pass_key:currentAdminSessionCredential() });
+      const limit = Math.min(100, Math.max(1, Math.trunc(Number(extra.limit || 20)) || 20));
+      const data = await rpc('kinojo_admin_member_list_v428', {
+        p_pass_key:currentAdminSessionCredential(),
+        p_limit:limit,
+        p_cursor:String(extra.cursor || '').trim() || null,
+        p_query:String(extra.query || '').trim() || null,
+        p_role:String(extra.role || '').trim() || null
+      });
       const source = Array.isArray(data?.accounts) ? data.accounts : [];
+      const page = data?.pageInfo || data?.page_info || {};
       return {
         ok:true,
         accounts:source.map(accountFromRow).filter(Boolean),
         codeVisibility:String(data?.codeVisibility || data?.code_visibility || 'VISIBLE').toUpperCase(),
-        actor:data?.actor || null
+        actor:data?.actor || null,
+        databaseContract:Number(data?.databaseContract || 428),
+        paginationContract:String(data?.paginationContract || 'ADMIN_MEMBER_CURSOR_V1'),
+        pageInfo:{
+          limit:Number(page.limit || limit),
+          returnedCount:Number(page.returnedCount ?? page.returned_count ?? source.length),
+          totalCount:Number(page.totalCount ?? page.total_count ?? source.length),
+          hasMore:page.hasMore===true || page.has_more===true,
+          nextCursor:String(page.nextCursor || page.next_cursor || '')
+        }
       };
     }
 

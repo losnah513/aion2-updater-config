@@ -40,17 +40,70 @@
     catch(err){ toast(err.message||String(err)); btn.disabled=false; }
   }
 
-  async function loadAccounts(){
+  const MEMBER_PAGE_LIMIT=20;
+  let memberSearchTimer_=0;
+
+  function memberListFilters_(){
+    return {
+      query:String($('#memberSearch')?.value||'').trim(),
+      role:String($('#memberRoleFilter')?.value||'').trim()
+    };
+  }
+
+  function syncMemberPagination_(){
+    const previous=$('#memberPrevBtn');
+    const next=$('#memberNextBtn');
+    const info=$('#memberPageInfo');
+    if(previous)previous.disabled=state.memberCursorStack.length===0;
+    if(next)next.disabled=!state.memberHasMore||!state.memberNextCursor;
+    if(info)info.textContent=state.memberPage+'페이지 · '+state.accounts.length+'건 / 총 '+state.memberTotalCount+'건';
+  }
+
+  async function loadAccounts(options={}){
+    const reset=options.reset!==false;
+    if(reset){
+      state.memberPage=1;
+      state.memberCursor='';
+      state.memberNextCursor='';
+      state.memberCursorStack=[];
+    }
     setStatus('#memberStatus','회원 목록을 불러오는 중...','');
     try{
-      const data=await adminAccount('listCodes',{});
+      const filters=memberListFilters_();
+      const data=await adminAccount('listCodes',{limit:MEMBER_PAGE_LIMIT,cursor:state.memberCursor,query:filters.query,role:filters.role});
       state.accounts=data.accounts||[];
+      const page=data.pageInfo||{};
+      state.memberTotalCount=Number(page.totalCount||0);
+      state.memberHasMore=page.hasMore===true;
+      state.memberNextCursor=String(page.nextCursor||'');
       state.memberCodeVisibility=String(data.codeVisibility||'VISIBLE').toUpperCase();
       const search=$('#memberSearch');
-      if(search)search.placeholder=state.memberCodeVisibility==='MASKED'?'회원명 / 등급 검색':'회원명 / 코드 / 등급 검색';
-      applyMemberFilters();
+      if(search)search.placeholder=state.memberCodeVisibility==='MASKED'?'회원명 앞부분 검색':'회원명 앞부분 / 코드 검색';
+      renderAccounts(state.accounts);
+      syncMemberPagination_();
+      setStatus('#memberStatus','회원 '+state.accounts.length+'건 표시 / 검색 결과 '+state.memberTotalCount+'건','ok');
     }
     catch(err){ setStatus('#memberStatus',err.message||String(err),'error'); }
+  }
+
+  function scheduleMemberSearch_(){
+    if(memberSearchTimer_)clearTimeout(memberSearchTimer_);
+    memberSearchTimer_=setTimeout(()=>{memberSearchTimer_=0;loadAccounts({reset:true});},250);
+  }
+
+  async function loadNextMemberPage_(){
+    if(!state.memberHasMore||!state.memberNextCursor)return;
+    state.memberCursorStack.push(state.memberCursor||'');
+    state.memberCursor=state.memberNextCursor;
+    state.memberPage+=1;
+    await loadAccounts({reset:false});
+  }
+
+  async function loadPreviousMemberPage_(){
+    if(!state.memberCursorStack.length)return;
+    state.memberCursor=state.memberCursorStack.pop()||'';
+    state.memberPage=Math.max(1,state.memberPage-1);
+    await loadAccounts({reset:false});
   }
 
   const MEMBER_ROLE_LABELS={MEMBER:'Member',STAFF:'Staff',MANAGER:'Manager',SUB_MASTER:'Sub Master',MASTER:'Master'};
@@ -634,17 +687,7 @@
   }
 
   function applyMemberFilters(){
-    const q = String($('#memberSearch')?.value || '').trim().toLowerCase();
-    const role = String($('#memberRoleFilter')?.value || '').trim();
-    const filtered = (state.accounts || []).filter(a=>{
-      const searchableCode=(a.codeMasked===true||a.code_masked===true)?'':getAccountCode(a);
-      const hay = [getAccountName(a), searchableCode, getAccountRole(a), getAccountRoleLabel(a)].join(' ').toLowerCase();
-      if(q && !hay.includes(q)) return false;
-      if(role && String(getAccountRole(a)).toUpperCase() !== role) return false;
-      return true;
-    });
-    renderAccounts(filtered);
-    setStatus('#memberStatus','회원 '+filtered.length+'건 표시 / 전체 '+(state.accounts||[]).length+'건','ok');
+    scheduleMemberSearch_();
   }
 
   function renderAccounts(list){
@@ -754,5 +797,5 @@
     }
   }
 
-  Object.assign(A,{renderRequestPreview,requestRowHtml,loadCodeRequests,processRequest,loadAccounts,MEMBER_ROLE_LABELS,normalizeMemberRole,getAccountId,getAccountCode,getAccountName,getAccountRole,getAccountRoleLabel,getAccountCanEdit,getAccountAllowedRoles,memberImageSessionToken_,renderMemberImageGroups_,selectMemberImageCharacter_,loadMemberImageGroups_,clearAdminImagePreview_,showAdminImagePreview_,adminImageRequestStyleLabel_,adminImageRequestStatusLabel_,renderMemberImageRequestCards_,renderMemberImageRequestDetail_,loadMemberImageRequests_,loadMemberImageRequestDetail_,showAdminImageRequestPreview_,downloadAdminImageRequest_,updateMemberImageRequestStatus_,ensureMemberImageModal,openMemberImageModal,closeMemberImageModal,updateMemberImageReviewBadges_,renderMemberImageReviewSummary_,renderMemberImageReviewRows_,loadMemberImageReviews,scheduleMemberImageReviewSearch_,acknowledgeMemberImageReview_,handleMemberImageReviewClick_,applyMemberFilters,renderAccounts,handleMemberAction,SANCTUARY_ROLE_LABELS,renderSanctuaryRolePermissions,loadSanctuaryRolePermissions,setSanctuaryRolePermission});
+  Object.assign(A,{renderRequestPreview,requestRowHtml,loadCodeRequests,processRequest,loadAccounts,loadNextMemberPage_,loadPreviousMemberPage_,MEMBER_ROLE_LABELS,normalizeMemberRole,getAccountId,getAccountCode,getAccountName,getAccountRole,getAccountRoleLabel,getAccountCanEdit,getAccountAllowedRoles,memberImageSessionToken_,renderMemberImageGroups_,selectMemberImageCharacter_,loadMemberImageGroups_,clearAdminImagePreview_,showAdminImagePreview_,adminImageRequestStyleLabel_,adminImageRequestStatusLabel_,renderMemberImageRequestCards_,renderMemberImageRequestDetail_,loadMemberImageRequests_,loadMemberImageRequestDetail_,showAdminImageRequestPreview_,downloadAdminImageRequest_,updateMemberImageRequestStatus_,ensureMemberImageModal,openMemberImageModal,closeMemberImageModal,updateMemberImageReviewBadges_,renderMemberImageReviewSummary_,renderMemberImageReviewRows_,loadMemberImageReviews,scheduleMemberImageReviewSearch_,acknowledgeMemberImageReview_,handleMemberImageReviewClick_,applyMemberFilters,renderAccounts,handleMemberAction,SANCTUARY_ROLE_LABELS,renderSanctuaryRolePermissions,loadSanctuaryRolePermissions,setSanctuaryRolePermission});
 })(window.KinojoAdmin);

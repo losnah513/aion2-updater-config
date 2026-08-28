@@ -58,7 +58,7 @@ assert.ok(loader.includes("'admin-banner-event-workflow.js'"),'workflow module l
 assert.ok(loader.indexOf("'admin-side-banners.js'")<loader.indexOf("'admin-banner-event-workflow.js'"),'workflow must mount after legacy shells');
 assert.ok(loader.indexOf("'admin-banner-event-workflow.js'")<loader.indexOf("'admin-banner-quality.js'"),'quality guard must decorate new workflow');
 assert.ok(loader.includes("2026082705"),'loader cache generation not bumped');
-assert.ok(desktop.includes('admin.js?cache=2026082705'),'desktop admin cache generation mismatch');
-assert.ok(mobile.includes('admin.js?cache=2026082705'),'mobile admin cache generation mismatch');
+assert.ok(desktop.includes('admin.js?cache=2026082801'),'desktop admin cache generation mismatch');
+assert.ok(mobile.includes('admin.js?cache=2026082801'),'mobile admin cache generation mismatch');
 
 console.log('PASS banner event stage-2 UI contract');
