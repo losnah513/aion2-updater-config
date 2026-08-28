@@ -18,6 +18,7 @@ KINOJO INFO GitHub Pages upload package.
 - Sanctuary public read uses current-state roster tables, not historical-period data. DB442 (`20260828134721 / sanctuary_public_read_n_plus_one_v442`) removes repeated per-slot character/profile lookups while preserving guest/member payload digests. `rudra` improved from about 343ms/23,900 shared hits to 105–108ms/4,023 hits; `bagot` is about 95ms and `kaldrix` 81ms. Recheck at warm p95 300ms, max 1s, or 1,000 active slots. Owner: Sanctuary Web/DB.
 - Admin notification v316 has status/latest/expiry indexes and no waiting relation lock in the 2026-08-28 profile. Fresh MASTER runs were 17ms first and 6.6ms warm, so no snapshot or retention change was added. Recheck at warm p95 300ms, reproducible waiting locks, or 100,000 related rows. Owner: Admin Notification/DB.
 - No page period, retention, or explicit `ALL` behavior may be changed from these facts without user confirmation.
+- Drive canonical sync at GitHub `bd8b2263d724915187b6ad45b4355648eac88b3c` updated the existing ranking-data, hall-data, and common feature file IDs to exact GitHub bytes. Supabase reported 27 ACTIVE Edge Functions; Drive now includes the GitHub/production-exact `sanctuary-management` v14 source and an ACTIVE inventory manifest. Three ACTIVE functions without GitHub canonical source remain explicitly inventory-only instead of receiving invented source files.
 
 ## Legion Tree public rendering
 

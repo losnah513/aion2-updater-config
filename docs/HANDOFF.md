@@ -128,6 +128,13 @@
 - 알림 v316은 fresh MASTER 16.995ms→6.572ms, 관련 대기 lock 0이며 상태·최신순·만료 index가 이미 있어 추가 snapshot/index/보존 변경 없이 감시로 닫았다.
 - 재검증 조건은 성역 warm p95 300ms·max 1초·활성 slot 1,000건, 알림 warm p95 300ms·동시 대기 lock 재현·관련 표 10만 건이다. 다음 독립 작업은 7단계 Drive·GitHub·Supabase 기준본 일치 감사이며 SQL426 정기 parity는 자동 감시로 병행한다.
 
+## Drive·GitHub·Supabase 기준본 일치 · 2026-08-28
+
+- GitHub `main` `bd8b2263d724915187b6ad45b4355648eac88b3c` 기준으로 Drive 기존 ID를 유지해 `ranking/js/ranking-data.js` 6,634 bytes, `hof/js/hall-data.js` 12,814 bytes, `core/kinojo-supabase-features.js` 98,390 bytes를 raw exact 동기화했다.
+- Supabase ACTIVE Edge는 27개, 기존 Drive 함수 폴더는 23개였다. GitHub canonical source가 존재하고 운영 v14와 newline-normalized exact인 `sanctuary-management`(API 1.6/DB439/verify_jwt=false)를 Drive source folder에 추가했다.
+- `ACTIVE_MANIFEST_20260828.md`는 전체 ACTIVE name/version/verify_jwt/status를 기록한다. GitHub source가 없는 `kinojo-deploy-probe-295`, `meter-release-producer-sync`, `meter-stage85-activation`은 inventory-only 예외이며 소스를 임의 생성하지 않는다.
+- 이 동기화는 Drive 기준본만 변경했다. Supabase 함수 배포·설정과 제품 WEB 코드는 변경하지 않았다. 다음 독립 작업은 8단계 통합 부하·장애·보안·배포·문서 readback이다.
+
 ## 관리자 캐릭터 최신화 실행 기록 보존 · 2026-08-27
 
 - 관리자 `최근 조회 기록`은 기본 3건이며 사용자가 3/5/10건 중에서 선택한다. PC·모바일은 같은 `admin-characters.js` 계약과 loader cache `2026082801`을 사용한다.
