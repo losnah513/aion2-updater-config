@@ -1,5 +1,5 @@
 const S = "kinojo-member-profile",
-  V = "2.8",
+  V = "2.7",
   DB = "375",
   AUTH = "320",
   LIST = "334",
