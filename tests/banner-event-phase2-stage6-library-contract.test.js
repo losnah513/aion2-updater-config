@@ -65,7 +65,7 @@ assert.ok(bootstrap.includes('A.loadBannerContext?.(subtab,force===true)'),'cont
 assert.ok(loader.includes("'admin-banner-library.js'"),'dedicated library module missing from common admin loader');
 assert.ok(loader.indexOf("'admin-banner-tabs.js'")<loader.indexOf("'admin-banner-library.js'"),'library module must mount after the image tab shell');
 assert.ok(workflow.includes("window.addEventListener('kinojo:banner-assets-updated'"),'authoring cache refresh listener missing');
-assert.ok(desktop.includes('admin.js?cache=2026082801')&&mobile.includes('admin.js?cache=2026082801'),'PC/mobile must share the current admin loader generation');
+assert.ok(desktop.includes('admin.js?cache=2026082802')&&mobile.includes('admin.js?cache=2026082802'),'PC/mobile must share the current admin loader generation');
 
 for(const token of [
   'private.kinojo_banner_asset_usage_v406',
@@ -89,7 +89,7 @@ assert.ok(!/alter\s+table\s+public\.kinojo_banner_assets\s+disable\s+row\s+level
 
 for(const token of [
   'V = "2.6"',
-  'DB = "411"',
+  'DB = "412"',
   '"asset-library"',
   'kinojo_banner_asset_library_v407',
   'kinojo_banner_asset_update_v406',

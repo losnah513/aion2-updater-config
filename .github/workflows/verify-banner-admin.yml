@@ -32,6 +32,7 @@ on:
       - "tests/banner-event-phase2-stage7-character-auto-pool-contract.test.js"
       - "tests/banner-stage7-random-event-workspace-contract.test.js"
       - "tests/banner-event-phase2-stage8-closeout-contract.test.js"
+      - "tests/banner-phase2-post-stabilization-contract.test.js"
       - "tests/banner-event-stage4-ui-contract.test.js"
       - "tests/banner-event-stage5-ui-contract.test.js"
       - "tests/banner-content-overlay-v396-contract.test.js"
@@ -46,6 +47,7 @@ on:
       - "supabase/migrations/20260826084259_banner_eventless_pool_priority_v408.sql"
       - "supabase/migrations/20260826084607_banner_eventless_pool_activation_v409.sql"
       - "supabase/migrations/20260826091642_banner_stage7_security_performance_v410.sql"
+      - "supabase/migrations/20260828043859_banner_phase2_post_stabilization_v412.sql"
       - "supabase/migrations/20260824143000_banner_event_manager_v398.sql"
       - "supabase/migrations/20260824232500_attach_legacy_lookbooks_v399.sql"
       - "tests/banner-admin-chrome-e2e.html"
@@ -81,6 +83,7 @@ on:
       - "tests/banner-event-phase2-stage7-character-auto-pool-contract.test.js"
       - "tests/banner-stage7-random-event-workspace-contract.test.js"
       - "tests/banner-event-phase2-stage8-closeout-contract.test.js"
+      - "tests/banner-phase2-post-stabilization-contract.test.js"
       - "tests/banner-event-stage4-ui-contract.test.js"
       - "tests/banner-event-stage5-ui-contract.test.js"
       - "tests/banner-content-overlay-v396-contract.test.js"
@@ -95,6 +98,7 @@ on:
       - "supabase/migrations/20260826084259_banner_eventless_pool_priority_v408.sql"
       - "supabase/migrations/20260826084607_banner_eventless_pool_activation_v409.sql"
       - "supabase/migrations/20260826091642_banner_stage7_security_performance_v410.sql"
+      - "supabase/migrations/20260828043859_banner_phase2_post_stabilization_v412.sql"
       - "supabase/migrations/20260824143000_banner_event_manager_v398.sql"
       - "supabase/migrations/20260824232500_attach_legacy_lookbooks_v399.sql"
       - "tests/banner-admin-chrome-e2e.html"
@@ -151,6 +155,7 @@ jobs:
           node tests/banner-event-phase2-stage7-character-auto-pool-contract.test.js
           node tests/banner-stage7-random-event-workspace-contract.test.js
           node tests/banner-event-phase2-stage8-closeout-contract.test.js
+          node tests/banner-phase2-post-stabilization-contract.test.js
           node tests/banner-event-stage4-ui-contract.test.js
           node tests/banner-event-stage5-ui-contract.test.js
           node tests/banner-content-overlay-v396-contract.test.js

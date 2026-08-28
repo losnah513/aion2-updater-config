@@ -40,7 +40,7 @@ async function snapshot(page){
       }
       if(request.method()==='GET'&&request.url().includes(EDGE_PATH)){
         if(FIXTURE){
-          const body={ok:true,service:'kinojo-banner-media',apiVersion:'e2e',databaseContract:'411',contract:'banner-public-manifest-v1',manifestVersion:'first-paint-e2e',generatedAtKst:'2035-01-01T00:00:00+09:00',validUntil:'2035-01-01T00:05:00+09:00',pageCode:'HOME',slotCode:'MAIN',slotKey:'HOME:MAIN',active:true,reason:null,rotation:{slideIntervalMs:8000,transitionDurationMs:600},playlist:[{imageUrl:'https://kinojo.info/assets/images/common/kinojo_banner_summer.png',alt:'First paint E2E',clickUrl:null}]};
+          const body={ok:true,service:'kinojo-banner-media',apiVersion:'e2e',databaseContract:'412',contract:'banner-public-manifest-v1',manifestVersion:'first-paint-e2e',generatedAtKst:'2035-01-01T00:00:00+09:00',validUntil:'2035-01-01T00:05:00+09:00',pageCode:'HOME',slotCode:'MAIN',slotKey:'HOME:MAIN',active:true,reason:null,rotation:{slideIntervalMs:8000,transitionDurationMs:600},playlist:[{imageUrl:'https://kinojo.info/assets/images/common/kinojo_banner_summer.png',alt:'First paint E2E',clickUrl:null}]};
           setTimeout(()=>request.respond({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*','cache-control':'no-store','etag':'W/"first-paint-e2e"'},body:JSON.stringify(body)}).catch(()=>{}),2500);
           return;
         }

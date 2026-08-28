@@ -42,7 +42,7 @@ assert.match(migration,/where a\.title is null[\s\S]+metadata_migration_status=c
 
 for(const token of [
   'V = "2.6"',
-  'DB = "411"',
+  'DB = "412"',
   'UPLOAD = "403"',
   '"asset-title-check"',
   'kinojo_banner_asset_title_available_v403',

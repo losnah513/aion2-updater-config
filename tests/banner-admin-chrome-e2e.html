@@ -249,6 +249,13 @@ async function run(){
     if(state.puts.length!==3||state.puts.some(put=>put.method!=='PUT'||put.upsert!=='false'||put.contentType!=='image/png'||put.size<1))throw Error('original signed PUT contract mismatch');
     if(state.assets.filter(asset=>asset.formatCode==='MAIN_16_9').length!==3)throw Error('uploaded assets not retained');
     await waitFor(()=>document.querySelectorAll('[data-banner-event-workflow="main"] .bew-order-item').length===3,'new bundle auto selection');
+    const assetLibraryReadsBefore=state.calls.filter(action=>action==='asset-library').length;
+    window.KinojoAdmin.openBannerEventHub('main');
+    document.querySelector('[data-banner-secondary-nav="main"] [data-banner-view="library"]').click();
+    await waitFor(()=>document.querySelectorAll('[data-banner-asset-library] .bal-card').length===3,'uploaded images appear in library without page refresh');
+    if(state.calls.filter(action=>action==='asset-library').length!==assetLibraryReadsBefore)throw Error('library should consume the upload snapshot without a manual reload');
+    if(!document.querySelector('[data-banner-asset-library]')?.textContent.includes('Chrome E2E 이미지 3'))throw Error('latest uploaded image missing from immediate library snapshot');
+    window.KinojoAdmin.openBannerAuthoring('main');
     if(!document.querySelector('[data-banner-event-workflow="main"] [data-bew-filter="NONE"].active'))throw Error('library must start unselected');
     document.querySelector('[data-banner-event-workflow="main"] [data-bew-filter="푸석사과"]').click();
     if(getComputedStyle(document.querySelector('[data-banner-event-workflow="main"] .bew-asset img')).objectFit!=='contain'||getComputedStyle(document.querySelector('[data-banner-event-workflow="main"] .bew-order-item img')).objectFit!=='contain')throw Error('library and order previews must show complete images');

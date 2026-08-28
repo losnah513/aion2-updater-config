@@ -56,7 +56,7 @@ for(const token of [
 
 for(const token of [
   'V = "2.6"',
-  'DB = "411"',
+  'DB = "412"',
   'BANNER_OVERLAY_NAME_DUPLICATE',
   'rpc("kinojo_banner_overlay_asset_register_v405"',
   'candidateDeleted: deleted === true',

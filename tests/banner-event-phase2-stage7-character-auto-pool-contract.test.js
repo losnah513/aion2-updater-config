@@ -56,7 +56,7 @@ assert.ok(closeout.includes('kinojo_banner_auto_pool_assets_asset_v410_idx'),'au
 assert.ok(closeout.includes('kinojo_banner_auto_pool_composites_asset_v410_idx'),'automatic composite cleanup must have a covering index');
 
 for(const token of [
-  'V = "2.6"','DB = "411"','EVENT = "407"','REQ = 4194304',
+  'V = "2.6"','DB = "412"','EVENT = "407"','REQ = 4194304',
   '"character-search"','"asset-character-set"','"asset-representative-set"',
   '"auto-pool-list"','"auto-pool-save"','"auto-pool-state"','"auto-pool-delete"',
   '"pool-composite-upload-prepare"','"pool-composite-upload-complete"',
@@ -96,6 +96,6 @@ assert.ok(tabs.includes('A.loadBannerAutoPool?.(force)'),'tab navigation must lo
 assert.ok(bootstrap.includes('A.loadBannerContext?.(subtab,force===true)'),'router must load the contextual event/library workspace');
 assert.ok(loader.includes("'admin-banner-auto-pool.js'"),'automatic-pool module missing from shared loader');
 assert.ok(loader.indexOf("'admin-banner-library.js'")<loader.indexOf("'admin-banner-auto-pool.js'"),'automatic pool must load after the asset library');
-assert.ok(desktop.includes('admin.js?cache=2026082801')&&mobile.includes('admin.js?cache=2026082801'),'PC/mobile must share the current admin loader generation');
+assert.ok(desktop.includes('admin.js?cache=2026082802')&&mobile.includes('admin.js?cache=2026082802'),'PC/mobile must share the current admin loader generation');
 
 console.log('PASS banner event phase-2 stage-7 character identity and automatic pool contract');
