@@ -56,6 +56,11 @@ body.kinojo-page-legion-tree>.legion-tree-subbar{
 .legion-tree-add-progress li{min-width:0;display:flex;align-items:center;justify-content:center;gap:4px;padding:4px 5px;border:1px solid #dce4ef;border-radius:6px;background:#f8fafc;color:#8793a5;font-size:9px;font-weight:850;line-height:1;white-space:nowrap}
 .legion-tree-add-progress li span{width:14px;height:14px;display:grid;place-items:center;border-radius:50%;background:#e8edf5;color:#718096;font-size:8px}
 .legion-tree-add-progress li[data-state="active"]{border-color:#93b4eb;background:#eff6ff;color:#2457a5}
+@media(min-width:1840px){
+  body.kinojo-page-legion-tree>.legion-tree-subbar{padding-block:4px}
+  .legion-tree-subbar-field .kinojo-input,.legion-tree-race-switch{height:32px}
+  .legion-tree-subbar-actions .kinojo-btn{height:32px;min-height:32px}
+}
 .legion-tree-add-progress li[data-state="active"] span{background:#2563eb;color:#fff;box-shadow:0 0 0 3px rgba(37,99,235,.10)}
 .legion-tree-add-progress li[data-state="done"]{border-color:#b7dfc5;background:#f0fdf4;color:#18713b}
 .legion-tree-add-progress li[data-state="done"] span{background:#22a559;color:#fff}

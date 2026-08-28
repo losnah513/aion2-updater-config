@@ -20,6 +20,7 @@ assert.ok(q.includes("window.dispatchEvent(new CustomEvent('kinojo-banner-discar
 assert.ok(q.includes("window.addEventListener('kinojo-banner-discard-all'"),'cross-module reset listener missing');
 assert.ok(q.includes('root.dataset.pendingAction'),'pending action lock missing');
 assert.ok(q.includes("for(const weight of $$('[data-s-weight]'"),'side weight validation missing');
+assert.equal(q.includes("page==='HOF'"),false,'HOF must not be rejected for right-side banner settings');
 assert.ok(q.includes("if(root.dataset.unsaved==='true'){block(event,root"),'upload must not discard unsaved campaign state');
 assert.equal(/service_role/i.test(q+main+side),false,'browser banner sources must not contain service role');
 assert.equal(/passKey|passCode/.test(q+main+side),false,'browser banner sources must not contain raw credential fields');
