@@ -96,13 +96,14 @@
   const updateSanctuaryScheduleSaveState=(...args)=>A.updateSanctuaryScheduleSaveState(...args);
   const TAB_LABELS={dashboard:'대시보드',requests:'코드 요청',members:'회원 관리',characters:'캐릭터 관리',sanctuary:'성역 관리',notices:'공지 관리',images:'이미지 관리',meter:'키노조 미터',system:'시스템 설정',logs:'로그 관리'};
   const IMAGE_LOCATION_LABELS={main:'메인 배너',side:'사이드 배너'};
+  const IMAGE_VIEW_LABELS={create:'새 이벤트',events:'이벤트 관리',library:'이미지 라이브러리'};
 
   function adminRoute(){
     const raw=decodeURIComponent(String(location.hash||'').replace(/^#/,''));
-    let [tab,subtab]=raw.split('/').filter(Boolean);
+    let [tab,subtab,view]=raw.split('/').filter(Boolean);
     if(tab==='server'){tab='system';subtab='server-status';}
     if(!document.querySelector('[data-admin-pane="'+String(tab||'')+'"]'))tab=isStaffConsole()?'sanctuary':'dashboard';
-    return {tab,subtab:subtab||DEFAULT_SUBTABS[tab]||''};
+    return {tab,subtab:subtab||DEFAULT_SUBTABS[tab]||'',view:['create','events','library'].includes(view)?view:''};
   }
 
   function writeAdminRoute(tab,subtab){
@@ -113,6 +114,11 @@
 
   function loadFeature(tab,subtab,force){
     const key=tab+(subtab?'/'+subtab:'');
+    if(tab==='images'&&(subtab==='main'||subtab==='side')){
+      state.loaded[key]=true;
+      A.loadBannerContext?.(subtab,force===true);
+      return;
+    }
     if(state.loaded[key]&&!force)return;
     state.loaded[key]=true;
     if(tab==='dashboard') refreshDashboard();
@@ -126,7 +132,6 @@
     if(tab==='sanctuary'&&subtab==='requests') loadSanctuarySupportRequests(force===true);
     if(tab==='notices'&&subtab==='general') loadNotices();
     if(tab==='notices'&&subtab==='event') loadEventNoticeGroups();
-    if(tab==='images'&&(subtab==='main'||subtab==='side')) A.loadBannerContext?.(subtab,force===true);
     if(tab==='meter'&&isMaster()&&subtab==='logs') loadMeterDungeonLogs(1);
     if(tab==='meter'&&isMaster()&&subtab!=='logs') loadMeterAdminConsole();
     if(tab==='system'&&subtab==='server-status') refreshServerStatus();
@@ -180,7 +185,8 @@
     const locationLabel=$('#adminCurrentLocation');
     if(locationLabel){
       const imageLocation=tab==='images'?IMAGE_LOCATION_LABELS[state.subtab]:'';
-      locationLabel.textContent=imageLocation?`[이미지 관리] - ${imageLocation}`:'['+(TAB_LABELS[tab]||'관리')+']';
+      const imageView=imageLocation?IMAGE_VIEW_LABELS[A.getBannerWorkspaceView?.(state.subtab)||'create']:'';
+      locationLabel.textContent=imageLocation?`[이미지 관리] - ${imageLocation}${imageView?` · ${imageView}`:''}`:'['+(TAB_LABELS[tab]||'관리')+']';
     }
     document.body.classList.toggle('admin-dashboard-active',tab==='dashboard');
     const slot=$('#adminTopSubnav');
@@ -387,7 +393,7 @@
     $('#visitorSearchBtn')?.addEventListener('click',()=>loadVisitorHistory(1));
     $('#visitorPrevBtn')?.addEventListener('click',()=>loadVisitorHistory(state.visitorPage-1));
     $('#visitorNextBtn')?.addEventListener('click',()=>loadVisitorHistory(state.visitorPage+1));
-    window.addEventListener('hashchange',()=>{const route=adminRoute();switchTab(route.tab,{subtab:route.subtab,updateRoute:false});});
+    window.addEventListener('hashchange',()=>{const route=adminRoute();switchTab(route.tab,{subtab:route.subtab,updateRoute:false});if(route.tab==='images'&&route.view)A.switchBannerWorkspaceView?.(route.view,route.subtab,{updateRoute:false})});
     window.addEventListener('beforeunload',event=>{
       if(state.lookupExitSafety!=='unsafe')return;
       event.preventDefault();
@@ -413,9 +419,10 @@
     buildMobileLauncher();bind();renderLogs();refreshNotificationBadges();
     const route=adminRoute();
     switchTab(isStaffConsole()?'sanctuary':route.tab,{subtab:isStaffConsole()?'':route.subtab,updateRoute:true});
+    if(!isStaffConsole()&&route.tab==='images'&&route.view)A.switchBannerWorkspaceView?.(route.view,route.subtab,{updateRoute:true});
   }
 
-  Object.assign(A,{adminRoute,writeAdminRoute,loadFeature,switchSubtab,switchTab,renderAccessBlocked,applyNotificationBadges,refreshNotificationBadges,refreshDashboard,renderLogs,bind,init});
+  Object.assign(A,{adminRoute,writeAdminRoute,loadFeature,switchSubtab,switchTab,syncAdminChrome,renderAccessBlocked,applyNotificationBadges,refreshNotificationBadges,refreshDashboard,renderLogs,bind,init});
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 })(window.KinojoAdmin);

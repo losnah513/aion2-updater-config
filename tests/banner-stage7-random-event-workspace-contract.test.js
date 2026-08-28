@@ -16,8 +16,8 @@ const edge=read('supabase/functions/kinojo-banner-media/index.ts');
 
 for(const token of [
   'data-admin-subtab="main"','data-admin-subtab="side"',
-  'data-banner-view="events"','data-banner-view="library"',
-  'data-banner-authoring-back','openBannerEventHub','openBannerAuthoring',
+  'data-banner-view="create"','data-banner-view="events"','data-banner-view="library"',
+  'openBannerEventHub','openBannerAuthoring',
   'loadBannerContext','setBannerEventManagementContext','setBannerAssetLibraryContext','setBannerAutoPoolContext',
 ])assert.ok(tabs.includes(token),`missing two-level banner workspace token: ${token}`);
 assert.equal(tabs.includes('data-admin-subtab="events"'),false,'event management must be secondary, not a primary image tab');
@@ -32,8 +32,9 @@ for(const token of [
   'data-bem-slot="ALL"','data-bem-slot="LEFT"','data-bem-slot="RIGHT"',
   "S.context!=='side'",'eventSlots(event).includes(S.slotFilter)',
   'contextEvents().length}개를 불러왔습니다.',
-  '등록 이벤트 순환 순서','data-bem-create',
+  '등록 이벤트 순환 순서',
 ])assert.ok(events.includes(token),`missing contextual event hub token: ${token}`);
+assert.equal(events.includes('data-bem-create'),false,'event management must not contain a duplicate authoring launcher');
 
 for(const token of [
   '같은 페이지·위치에 게시 중인 등록 이벤트가 있으면 대기',
