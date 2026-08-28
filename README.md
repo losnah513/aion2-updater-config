@@ -11,6 +11,14 @@ KINOJO INFO GitHub Pages upload package.
 
 `config.json` is intentionally kept at repository root because the extension currently reads `/config.json`.
 
+## Read-scope scalability known facts
+
+- Meter public stats/my comparison default to the explicit Server `WEEK` period. `ALL` is an explicit user choice, not an omitted-period fallback. At 333 records/1,753 participants the aggregation gate is not reached; recheck at 100,000 participants, representative p95 300ms, or max 1s. Owner: Meter Server/DB.
+- Admin member list uses DB428 server cursor pagination: default 20, hard max 100, server prefix/role filters, and four indexes. Recheck at 1,000 members, p95 300ms, or max 1s. Owner: Web Admin/DB.
+- Sanctuary public read uses current-state roster tables, not historical-period data. DB442 (`20260828134721 / sanctuary_public_read_n_plus_one_v442`) removes repeated per-slot character/profile lookups while preserving guest/member payload digests. `rudra` improved from about 343ms/23,900 shared hits to 105–108ms/4,023 hits; `bagot` is about 95ms and `kaldrix` 81ms. Recheck at warm p95 300ms, max 1s, or 1,000 active slots. Owner: Sanctuary Web/DB.
+- Admin notification v316 has status/latest/expiry indexes and no waiting relation lock in the 2026-08-28 profile. Fresh MASTER runs were 17ms first and 6.6ms warm, so no snapshot or retention change was added. Recheck at warm p95 300ms, reproducible waiting locks, or 100,000 related rows. Owner: Admin Notification/DB.
+- No page period, retention, or explicit `ALL` behavior may be changed from these facts without user confirmation.
+
 ## Legion Tree public rendering
 
 - The desktop and mobile Legion Tree pages load the public `kinojo_web_get_legion_tree` Server contract and fail closed unless contract `web-legion-tree-v1` / database contract `365` contains all four required legions in order: 깡, 낮, 밤, 키나노동조합.

@@ -117,12 +117,16 @@
 - DB439 public wrapper는 `PUBLIC/anon/authenticated` EXECUTE false, `service_role` true다. allowlist table은 private schema, RLS enabled, 직접 SELECT 권한 없음이며 security/performance advisor에서 이 신규 객체 관련 항목은 0건이다.
 - WEB은 승인자에게 `시험 운영 · 승인됨`, 미승인자에게 `읽기 전용 · 시험 사용자만 쓰기`를 표시한다. PC 1440×900, 모바일 390×844, 최소 320×568에서 document 가로 overflow 0, 승인/미승인 버튼 상태, 콘솔 error 0을 확인했다.
 
-## 예방적 확장성 SQL428 · 2026-08-28
+## 예방적 확장성 SQL428·SQL442 · 2026-08-28
 
 - Meter 공개 통계/내 비교의 기본 기간은 Server `WEEK`이며 DAY/WEEK/MONTH 시간 경계가 raw combat 조회에 적용된다. `ALL`은 명시적인 사용자 선택지다. 2026-08-28 기준 records 333, participants 1,753, 적격 0이며 집계 전환 Gate 미만이므로 기간·보존·집계 구조를 변경하지 않았다.
 - 관리자 회원 목록은 운영 DB `428 / ADMIN_MEMBER_CURSOR_V1`이다. 기본 WEB page 20, Server hard max 100, 이름·코드 prefix/등급 filter, opaque forward cursor와 전용 index 4개를 사용한다. 구 v264는 100건 compatibility wrapper다.
 - 운영 검증은 total 16, 첫/둘째 3건 페이지 overlap 0, MEMBER filter 9/9, self 원문 code leak false, warm 10.735ms다.
-- WEB main `89ead17485801c9ca684ca98d5206755e47b98be`, 관리자 cache `2026082801`; PC/mobile admin live 200과 Node 계약 12종을 통과했다. 다음 독립 작업은 6-C 성역·알림 profile이며 SQL426 정기 parity는 자동 감시로 병행한다.
+- WEB main `89ead17485801c9ca684ca98d5206755e47b98be`, 관리자 cache `2026082801`; PC/mobile admin live 200과 Node 계약 12종을 통과했다.
+- 성역 v376은 기간 없는 과거 누적 scan이 아니라 현재 편성 JSON의 슬롯별 캐릭터·프로필 반복 lookup이 병목이었다. 운영 `20260828134721 / sanctuary_public_read_n_plus_one_v442`는 전용 identity covering index와 단일 aggregate lookup helper를 적용했고, migration 내부 guest/회원 × 활성 성역 3곳 payload digest·byte parity가 통과했다.
+- `rudra` full warm은 약 343ms·shared hit 23,900에서 104.768~107.551ms·4,023으로 개선됐다. `bagot` 94.968ms, `kaldrix` 80.858ms다. 기간·로스터·권한·가시성·프로필 우선순위·WEB 호출명은 변경하지 않았다.
+- 알림 v316은 fresh MASTER 16.995ms→6.572ms, 관련 대기 lock 0이며 상태·최신순·만료 index가 이미 있어 추가 snapshot/index/보존 변경 없이 감시로 닫았다.
+- 재검증 조건은 성역 warm p95 300ms·max 1초·활성 slot 1,000건, 알림 warm p95 300ms·동시 대기 lock 재현·관련 표 10만 건이다. 다음 독립 작업은 7단계 Drive·GitHub·Supabase 기준본 일치 감사이며 SQL426 정기 parity는 자동 감시로 병행한다.
 
 ## 관리자 캐릭터 최신화 실행 기록 보존 · 2026-08-27
 
