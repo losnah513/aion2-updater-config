@@ -14,6 +14,13 @@
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 최신 일일 로그를 작업 규칙 원본으로 사용한다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
 
+## 예방적 확장성 SQL428 · 2026-08-28
+
+- Meter 공개 통계/내 비교의 기본 기간은 Server `WEEK`이며 DAY/WEEK/MONTH 시간 경계가 raw combat 조회에 적용된다. `ALL`은 명시적인 사용자 선택지다. 2026-08-28 기준 records 333, participants 1,753, 적격 0이며 집계 전환 Gate 미만이므로 기간·보존·집계 구조를 변경하지 않았다.
+- 관리자 회원 목록은 운영 DB `428 / ADMIN_MEMBER_CURSOR_V1`이다. 기본 WEB page 20, Server hard max 100, 이름·코드 prefix/등급 filter, opaque forward cursor와 전용 index 4개를 사용한다. 구 v264는 100건 compatibility wrapper다.
+- 운영 검증은 total 16, 첫/둘째 3건 페이지 overlap 0, MEMBER filter 9/9, self 원문 code leak false, warm 10.735ms다.
+- WEB main `89ead17485801c9ca684ca98d5206755e47b98be`, 관리자 cache `2026082801`; PC/mobile admin live 200과 Node 계약 12종을 통과했다. 다음 독립 작업은 6-C 성역·알림 profile이며 SQL426 정기 parity는 자동 감시로 병행한다.
+
 ## 관리자 캐릭터 최신화 실행 기록 보존 · 2026-08-27
 
 - 관리자 `최근 조회 기록`은 기본 3건이며 사용자가 3/5/10건 중에서 선택한다. PC·모바일은 같은 `admin-characters.js` 계약과 loader cache `2026082705`을 사용한다.
