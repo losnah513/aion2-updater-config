@@ -138,7 +138,10 @@
       ensureElements: () => ({ host: bannerLink, image: banner }),
       deactivate: restoreFallback,
       onActive: revealBanner,
-      onError: (error) => console.warn('[KINOJO BANNER] HOME:MAIN Manifest 재생 중 오류가 발생해 현재 모바일 배너를 유지합니다.', error)
+      onError: (error) => {
+        revealBanner();
+        console.warn('[KINOJO BANNER] HOME:MAIN Manifest 재생 중 오류가 발생해 현재 모바일 배너를 유지합니다.', error);
+      }
     });
   })();
 </script>
