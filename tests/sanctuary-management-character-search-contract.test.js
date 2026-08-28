@@ -42,7 +42,7 @@ const master={characterId:501,characterName:'마스터캐릭터',serverId:2002,s
 const official={candidateId:'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',characterName:'공식캐릭터',serverId:2002,serverName:'지켈',raceId:2,className:'살성',legionName:'외부',profileImageUrl:'',isOperationalLegion:false,allowedRelations:['GUEST']};
 const context={
   window:{KinojoSupabase:{
-    async searchSanctuaryManagementCharacter(teamId,query){calls.push({kind:'search',teamId,query});return query==='공식'?{ok:true,schemaVersion:433,source:'OFFICIAL',candidate:official}:{ok:true,schemaVersion:433,source:'CHARACTER_MASTER',character:master};},
+    async searchSanctuaryManagementCharacter(teamId,query){calls.push({kind:'search',teamId,query});return query==='공식'?{ok:true,schemaVersion:435,source:'OFFICIAL',candidate:official}:{ok:true,schemaVersion:435,source:'CHARACTER_MASTER',character:master};},
     async registerSanctuaryManagementCharacter(teamId,candidateId,relationType,mainCharacterId,requestKey){calls.push({kind:'register',teamId,candidateId,relationType,mainCharacterId,requestKey});return{ok:true,character:master};},
   }},
   document:{readyState:'loading',addEventListener(name,callback){listeners.set(name,callback);},getElementById(){return null;}},
@@ -64,4 +64,4 @@ async function verify(){
   assert.equal(calls[2].relationType,'GUEST');
 }
 
-verify().then(()=>console.log('KINOJO sanctuary management DB433 character search contract: PASS')).catch(error=>{console.error(error);process.exitCode=1;});
+verify().then(()=>console.log('KINOJO sanctuary management DB435 character search contract: PASS')).catch(error=>{console.error(error);process.exitCode=1;});

@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  const API_VERSION=1.2;
-  const SCHEMA_VERSION=433;
+  const API_VERSION=1.3;
+  const SCHEMA_VERSION=435;
   let requestSequence=0;
   let bootstrapData=null;
   let selectedSanctuary='all';
@@ -341,18 +341,20 @@
     return bootstrapData?.teams.find(team=>String(team.teamId)===String(teamId))||null;
   }
 
-  async function saveFixedDraft(model){
+  async function saveTeamDraft(model){
     if(!bootstrapData?.writeEnabled)throw new Error('Server 쓰기 기능이 아직 활성화되지 않았습니다.');
     const source=model&&typeof model==='object'?model:{};
     const teamId=Number(source.teamId||0);
     const status=value(source.status);
-    const command=teamId&&['ACTIVE','FULL'].includes(status)?'UPDATE_FIXED_TEAM':teamId?'UPDATE_TEAM_DRAFT':'CREATE_TEAM';
+    const mode=value(source.mode).toUpperCase()==='PARTICIPATION'?'PARTICIPATION':'FIXED';
+    const joinPolicy=mode==='PARTICIPATION'&&value(source.joinPolicy).toUpperCase()==='APPROVAL'?'APPROVAL':'INSTANT';
+    const command=teamId&&mode==='PARTICIPATION'?'UPDATE_PARTICIPATION_TEAM_DRAFT':teamId&&['ACTIVE','FULL'].includes(status)?'UPDATE_FIXED_TEAM':teamId?'UPDATE_TEAM_DRAFT':'CREATE_TEAM';
     const payload={
       sanctuaryCode:value(source.sanctuaryCode),
       title:value(source.title),
       activity:value(source.activity),
-      mode:'FIXED',
-      joinPolicy:'INSTANT',
+      mode,
+      joinPolicy,
       schedule:source.schedule&&typeof source.schedule==='object'?source.schedule:{}
     };
     if(teamId){payload.teamId=teamId;payload.leaseToken=value(source.leaseToken);}
@@ -360,6 +362,8 @@
     await load();
     return result;
   }
+
+  async function saveFixedDraft(model){return saveTeamDraft(Object.assign({},model,{mode:'FIXED',joinPolicy:'INSTANT'}));}
 
   async function addForce(teamId,expectedRevision,requestKey,leaseToken){
     if(!bootstrapData?.writeEnabled)throw new Error('Server 쓰기 기능이 아직 활성화되지 않았습니다.');
@@ -417,6 +421,7 @@
     schemaVersion:SCHEMA_VERSION,
     snapshot(){return bootstrapData;},
     findTeam:selectedDraftTeam,
+    saveTeamDraft,
     saveFixedDraft,
     addForce,
     setSlot,
