@@ -30,15 +30,15 @@ for(const token of [
 for(const token of ["v_team.team_mode = 'FIXED' and not exists",'kinojo_sm_team_conflicts_v433(v_team_id)','kinojo_sanctuary_management_command_v436'])assert.ok(publishGuard.includes(token),`DB436 publish guard migration missing ${token}`);
 
 for(const token of [
-  'const API_VERSION="1.5"','const DATABASE_CONTRACT="437"','"month"',
-  'kinojo_sanctuary_management_bootstrap_v437','kinojo_sanctuary_management_month_v437',
-  'kinojo_sanctuary_management_command_v437',
+  'const API_VERSION="1.6"','const DATABASE_CONTRACT="439"','"month"',
+  'kinojo_sanctuary_management_bootstrap_v439','kinojo_sanctuary_management_month_v439',
+  'kinojo_sanctuary_management_command_v439',
 ])assert.ok(edge.includes(token),`current Edge contract missing ${token}`);
 
 for(const token of ['getSanctuaryManagementMonth',"action:'month'",'runSanctuaryManagementCommand'])assert.ok(feature.includes(token),`Feature bridge missing ${token}`);
 
 for(const token of [
-  'const API_VERSION=1.5','const SCHEMA_VERSION=437','validateSupportCharacter','validateSupportBatch',
+  'const API_VERSION=1.6','const SCHEMA_VERSION=439','validateSupportCharacter','validateSupportBatch',
   'data-sanctuary-support-force','sanctuary-management-force-grid','async function loadMonth',
   "ServerAdapter.command('SUBMIT_SUPPORT'","ServerAdapter.command('DECIDE_SUPPORT'","ServerAdapter.command('CANCEL_SUPPORT'",
   'window.KinojoSanctuaryManagementSupportBridge',"['ACTIVE','FULL'].includes(status)?'UPDATE_PARTICIPATION_TEAM':'UPDATE_PARTICIPATION_TEAM_DRAFT'",
@@ -67,7 +67,7 @@ assert.ok(commonUi.includes('const canOpenSanctuaryManagement=loggedIn'),'manage
 
 for(const page of ['sanctuary-management/index.html','m/sanctuary-management/index.html']){
   const html=read(page);
-  for(const token of ['sanctuary-management-support.css?cache=2026082808','sanctuary-management-support.js?cache=2026082808','kinojo-supabase-features.js?cache=2026082813'])assert.ok(html.includes(token),`${page}: missing ${token}`);
+  for(const token of ['sanctuary-management-support.css?cache=2026082808','sanctuary-management-support.js?cache=2026082814','kinojo-supabase-features.js?cache=2026082813'])assert.ok(html.includes(token),`${page}: missing ${token}`);
 }
 
 console.log('KINOJO sanctuary management Stage 4 complete v436 contract: PASS');

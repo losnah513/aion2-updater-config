@@ -16,7 +16,7 @@
     <section id="sanctuaryManagementAccess" class="sanctuary-management-access" aria-live="polite"><span class="sanctuary-management-access-icon">S</span><div><strong id="sanctuaryManagementAccessTitle"></strong><p id="sanctuaryManagementAccessMessage"></p></div><button id="sanctuaryManagementAccessAction" type="button" hidden></button></section>
     <section class="sanctuary-management-page-bar"><div class="sanctuary-management-page-bar-shell"><div class="sanctuary-management-scope-shell" id="sanctuaryManagementScopeShell" hidden><div class="sanctuary-management-scope" id="sanctuaryManagementScope" role="group" aria-label="관리할 성역 선택"></div></div></div></section>
     <div id="sanctuaryManagementContent" class="sanctuary-management-content" hidden>
-      <section class="sanctuary-management-summary"><article><strong id="sanctuaryManagementSource"></strong><div class="sanctuary-management-info-copy"><span>데이터 원본</span><small>Mock Server</small></div></article><article><strong id="sanctuaryManagementReadState"></strong><div class="sanctuary-management-info-copy"><span>팀 읽기</span><small>Server 기능 플래그</small></div></article><article><strong id="sanctuaryManagementWriteState"></strong><div class="sanctuary-management-info-copy"><span>팀 쓰기</span><small>Server 기능 플래그</small></div></article><article><strong id="sanctuaryManagementSelectedName"></strong><div class="sanctuary-management-info-copy"><span>선택 성역</span><small id="sanctuaryManagementSelectedMeta"></small></div></article></section>
+      <section class="sanctuary-management-summary"><article><strong id="sanctuaryManagementSource"></strong><div class="sanctuary-management-info-copy"><span>데이터 원본</span><small>Mock Server</small></div></article><article><strong id="sanctuaryManagementReadState"></strong><div class="sanctuary-management-info-copy"><span>팀 읽기</span><small>Server 기능 플래그</small></div></article><article><strong id="sanctuaryManagementWriteState"></strong><div class="sanctuary-management-info-copy"><span>팀 쓰기</span><small id="sanctuaryManagementWriteMeta">Server 기능 플래그</small></div></article><article><strong id="sanctuaryManagementSelectedName"></strong><div class="sanctuary-management-info-copy"><span>선택 성역</span><small id="sanctuaryManagementSelectedMeta"></small></div></article></section>
       <div class="sanctuary-management-layout">
         <section class="sanctuary-management-team-panel"><header class="sanctuary-management-section-head"><div class="sanctuary-management-section-info"><h2>운영 팀</h2><div class="sanctuary-management-info-copy"><p>TEAM WORKSPACE</p><span id="sanctuaryManagementTeamStatus"></span></div></div><button class="kinojo-btn" id="sanctuaryManagementAddTeam" type="button" disabled>팀 추가하기</button></header><div id="sanctuaryManagementTeamList" class="sanctuary-management-team-list"></div></section>
         <aside class="sanctuary-management-side" aria-label="성역 팀 보조 정보">
@@ -29,6 +29,7 @@
   </main>
   <script>
     (()=>{
+      const pilotApproved=new URLSearchParams(location.search).get('pilot')!=='0';
       let forceSequence=100;
       let partySequence=200;
       let slotSequence=300;
@@ -90,16 +91,16 @@
       window.KinojoPermissions={canEditSanctuary:()=>true};
       window.KinojoToast={show:message=>{document.body.dataset.toast=message;},success:message=>{document.body.dataset.toast=message;}};
       window.KinojoSupabase={
-        async getSanctuaryManagementBootstrap(){return {apiVersion:1.5,schemaVersion:437,serverTime:new Date().toISOString(),readEnabled:true,writeEnabled:true,actor:{memberId:7,canManageAll:true},sanctuaries,teams:structuredClone(teams)};},
-        async getSanctuaryManagementMonth(month){return {ok:true,apiVersion:1.5,schemaVersion:437,month,weekStartsOn:'WEDNESDAY',rangeStart:'2026-07-29',rangeEnd:'2026-09-01',weekStarts:['2026-07-29','2026-08-05','2026-08-12','2026-08-19','2026-08-26'],occurrences:[{occurrenceKey:'sm-78-20260829-2200',scheduleId:92,scheduleRevision:1,teamId:78,teamTitle:'2팀 토요일 22시',sanctuaryId:1,teamMode:'PARTICIPATION',joinPolicy:'APPROVAL',occurrenceDate:'2026-08-29',weekStart:'2026-08-26',startAt:'2026-08-29T13:00:00Z',endAt:'2026-08-29T14:30:00Z',durationMinutes:90,sourceScope:'RULE',canEdit:true}]};},
-        async getSanctuaryManagementArchivePreview(teamId){const team=teams.find(item=>item.teamId===Number(teamId));return {ok:true,schemaVersion:437,teamId:team.teamId,teamTitle:team.title,revision:team.revision,canArchive:true,futureOccurrenceCount:52,futureWindowDays:366,recurringSchedule:true,pendingSupportCount:1,historyPreserved:true,message:'팀 편성·감사 이력은 보존하고 이후 일정과 승인 대기 지원을 종료합니다.'};},
+        async getSanctuaryManagementBootstrap(){return {apiVersion:1.6,schemaVersion:439,serverTime:new Date().toISOString(),readEnabled:true,writeEnabled:pilotApproved,globalWriteEnabled:true,rollout:{mode:'PILOT',globalWriteEnabled:true,effectiveWriteEnabled:pilotApproved,pilotApproved,pilotApprovedAt:pilotApproved?new Date().toISOString():'',pilotExpiresAt:'',reasonCode:pilotApproved?'PILOT_APPROVED':'PILOT_NOT_APPROVED',message:pilotApproved?'시험 사용자 쓰기가 활성화되었습니다.':'승인된 시험 사용자만 신규 성역 관리 쓰기를 사용할 수 있습니다.'},actor:{memberId:7,canManageAll:true},sanctuaries,teams:structuredClone(teams)};},
+        async getSanctuaryManagementMonth(month){return {ok:true,apiVersion:1.6,schemaVersion:439,month,weekStartsOn:'WEDNESDAY',rangeStart:'2026-07-29',rangeEnd:'2026-09-01',weekStarts:['2026-07-29','2026-08-05','2026-08-12','2026-08-19','2026-08-26'],occurrences:[{occurrenceKey:'sm-78-20260829-2200',scheduleId:92,scheduleRevision:1,teamId:78,teamTitle:'2팀 토요일 22시',sanctuaryId:1,teamMode:'PARTICIPATION',joinPolicy:'APPROVAL',occurrenceDate:'2026-08-29',weekStart:'2026-08-26',startAt:'2026-08-29T13:00:00Z',endAt:'2026-08-29T14:30:00Z',durationMinutes:90,sourceScope:'RULE',canEdit:true}]};},
+        async getSanctuaryManagementArchivePreview(teamId){const team=teams.find(item=>item.teamId===Number(teamId));return {ok:true,schemaVersion:439,teamId:team.teamId,teamTitle:team.title,revision:team.revision,canArchive:true,futureOccurrenceCount:52,futureWindowDays:366,recurringSchedule:true,pendingSupportCount:1,historyPreserved:true,message:'팀 편성·감사 이력은 보존하고 이후 일정과 승인 대기 지원을 종료합니다.'};},
         async runSanctuaryManagementLease(){return {ok:true,lease:{status:'ACTIVE'}};},
         async searchSanctuaryManagementCharacter(teamId,query){
           const normalized=String(query||'').trim().replace(/\[지켈\]$/,'');
           const character=searchableCharacters.find(item=>item.characterName===normalized);
-          if(character)return {ok:true,apiVersion:1.5,schemaVersion:437,source:'CHARACTER_MASTER',teamId,character:structuredClone(character)};
+          if(character)return {ok:true,apiVersion:1.6,schemaVersion:439,source:'CHARACTER_MASTER',teamId,character:structuredClone(character)};
           const candidate=officialCandidates[normalized];
-          if(candidate)return {ok:true,apiVersion:1.5,schemaVersion:437,source:'OFFICIAL',teamId,candidate:structuredClone(candidate)};
+          if(candidate)return {ok:true,apiVersion:1.6,schemaVersion:439,source:'OFFICIAL',teamId,candidate:structuredClone(candidate)};
           throw new Error('정확히 일치하는 캐릭터를 찾지 못했습니다.');
         },
         async registerSanctuaryManagementCharacter(teamId,candidateId,relationType,mainCharacterId){
@@ -107,7 +108,7 @@
           if(!candidate)throw new Error('공식 조회 후보를 다시 선택해 주세요.');
           const character={characterId:700+searchableCharacters.length,serverId:candidate.serverId,serverName:candidate.serverName,characterName:candidate.characterName,className:candidate.className,legionName:candidate.legionName,profileImageUrl:candidate.profileImageUrl,raceId:candidate.raceId,isOperationalLegion:candidate.isOperationalLegion,ownerMemberId:relationType==='GUEST'?0:7,relation:relationType,mainCharacterId:relationType==='ALT'?mainCharacterId:700+searchableCharacters.length};
           searchableCharacters.push(character);
-          return {ok:true,apiVersion:1.5,schemaVersion:437,teamId,character:structuredClone(character)};
+          return {ok:true,apiVersion:1.6,schemaVersion:439,teamId,character:structuredClone(character)};
         },
         async runSanctuaryManagementCommand(command,payload,expectedRevision){
           if(command==='CREATE_TEAM'){
@@ -116,8 +117,8 @@
           }
           const team=teams.find(item=>item.teamId===payload.teamId);
           if(!team||team.revision!==expectedRevision)throw new Error('다른 사용자가 먼저 팀 초안을 수정했습니다.');
-          if(command==='EDIT_SCHEDULE'){team.schedule=Object.assign({},team.schedule,payload.schedule,{revision:team.schedule.revision+1,status:payload.operation==='UPDATE'?'ACTIVE':'STOPPED'});team.revision+=1;return {ok:true,action:command,teamId:team.teamId,revision:team.revision,schemaVersion:437};}
-          if(command==='ARCHIVE_TEAM'){team.status='ARCHIVED';team.revision+=1;teams=teams.filter(item=>item.teamId!==team.teamId);return {ok:true,action:command,teamId:team.teamId,revision:team.revision,schemaVersion:437,historyPreserved:true};}
+          if(command==='EDIT_SCHEDULE'){team.schedule=Object.assign({},team.schedule,payload.schedule,{revision:team.schedule.revision+1,status:payload.operation==='UPDATE'?'ACTIVE':'STOPPED'});team.revision+=1;return {ok:true,action:command,teamId:team.teamId,revision:team.revision,schemaVersion:439};}
+          if(command==='ARCHIVE_TEAM'){team.status='ARCHIVED';team.revision+=1;teams=teams.filter(item=>item.teamId!==team.teamId);return {ok:true,action:command,teamId:team.teamId,revision:team.revision,schemaVersion:439,historyPreserved:true};}
           if(command==='ADD_FORCE'){
             if(team.forces.length>=9)throw new Error('팀당 포스는 최대 9개까지 만들 수 있습니다.');
             const force=makeForce(team.forces.length+1);team.forces.push(force);team.revision+=1;syncTeam(team);

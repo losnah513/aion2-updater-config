@@ -15,9 +15,9 @@ for (const page of pages) {
     'id="sanctuaryManagementScope"',
     'id="sanctuaryManagementTeamList"',
     'kinojo-supabase-features.js?cache=2026082813',
-    'sanctuary-management.js?cache=2026082813',
+    'sanctuary-management.js?cache=2026082814',
     'sanctuary-management-draft.js?cache=2026082811',
-    'sanctuary-management-support.js?cache=2026082808',
+    'sanctuary-management-support.js?cache=2026082814',
   ]) assert.ok(html.includes(token), `${page}: missing ${token}`);
   assert.equal(html.includes('kinojo-sanctuary-tabs'), false, `${page}: legacy sanctuary tabs remain in the management subbar`);
   assert.equal(html.includes('관리 범위'), false, `${page}: legacy management scope label remains`);
@@ -45,8 +45,8 @@ assert.equal(feature.includes("rpc('kinojo_sanctuary_management_bootstrap_v412'"
 const client = read('sanctuary-management/js/sanctuary-management.js');
 for (const token of [
   "kind:'SERVER_ONLY'",
-  'const API_VERSION=1.5',
-  'const SCHEMA_VERSION=437',
+  'const API_VERSION=1.6',
+  'const SCHEMA_VERSION=439',
   'getSanctuaryManagementBootstrap',
   'runSanctuaryManagementCommand',
   "teamId?'UPDATE_TEAM_DRAFT':'CREATE_TEAM'",
@@ -72,11 +72,13 @@ const context = {
       async getSanctuaryManagementBootstrap() {
         calls.push('bootstrap');
         return {
-          apiVersion: 1.5,
-          schemaVersion: 437,
+          apiVersion: 1.6,
+          schemaVersion: 439,
           serverTime: '2026-08-26T11:00:00Z',
           readEnabled: false,
           writeEnabled: false,
+          globalWriteEnabled: true,
+          rollout: { mode:'PILOT', globalWriteEnabled:true, effectiveWriteEnabled:false, pilotApproved:false, reasonCode:'PILOT_NOT_APPROVED', message:'승인된 시험 사용자만 신규 성역 관리 쓰기를 사용할 수 있습니다.' },
           actor: { memberId: 7 },
           sanctuaries: [{ id: 4, code: 'sanctuary4', name: '서버 이름', managementVisible: true }],
           teams: [],
@@ -113,8 +115,8 @@ vm.runInNewContext(client, context, { filename: 'sanctuary-management/js/sanctua
 async function verifyAdapter() {
   const adapter = context.window.KinojoSanctuaryManagementData;
   assert.equal(adapter.kind, 'SERVER_ONLY');
-  assert.equal(adapter.apiVersion, 1.5);
-  assert.equal(adapter.schemaVersion, 437);
+  assert.equal(adapter.apiVersion, 1.6);
+  assert.equal(adapter.schemaVersion, 439);
   const data = await adapter.bootstrap();
   assert.deepEqual(calls, ['bootstrap']);
   assert.equal(data.readEnabled, false);
@@ -127,7 +129,7 @@ async function verifyAdapter() {
   assert.equal(command.revision,5);
   assert.equal(calls[1].expectedRevision,4);
 
-  context.window.KinojoSupabase.getSanctuaryManagementBootstrap = async () => ({ apiVersion: 2, schemaVersion: 437, sanctuaries: [], teams: [] });
+  context.window.KinojoSupabase.getSanctuaryManagementBootstrap = async () => ({ apiVersion: 2, schemaVersion: 439, sanctuaries: [], teams: [] });
   await assert.rejects(adapter.bootstrap(), /계약 버전/);
 
   if (process.env.CI === 'true') {
@@ -138,8 +140,8 @@ async function verifyAdapter() {
     assert.equal(response.status, 200, `sanctuary-management health HTTP ${response.status}`);
     assert.equal(health.ok, true);
     assert.equal(health.service, 'sanctuary-management');
-    assert.equal(String(health.apiVersion), '1.5');
-    assert.equal(Number(health.databaseContract), 437);
+    assert.equal(String(health.apiVersion), '1.6');
+    assert.equal(Number(health.databaseContract), 439);
   }
 }
 
