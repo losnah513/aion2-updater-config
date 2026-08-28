@@ -16,8 +16,9 @@ for (const page of pages) {
     'data-kinojo-sanctuary-management-required',
     'id="sanctuaryManagementScope"',
     'id="sanctuaryManagementTeamList"',
-    'kinojo-supabase-features.js?cache=2026082703',
-    'sanctuary-management.js?cache=2026082603',
+    'kinojo-supabase-features.js?cache=2026082802',
+    'sanctuary-management.js?cache=2026082802',
+    'sanctuary-management-draft.js?cache=2026082801',
   ]) assert.ok(html.includes(token), `${page}: missing ${token}`);
   assert.equal(html.includes('SanctuaryManagementMockAdapter'), false, `${page}: Stage 1 mock adapter remains`);
 }
@@ -34,6 +35,9 @@ for (const token of [
   "action:'bootstrap'",
   'sessionToken:currentServerSessionCredential()',
   'getSanctuaryManagementBootstrap',
+  'runSanctuaryManagementCommand',
+  "action:'command'",
+  'expectedRevision:revision',
 ]) assert.ok(feature.includes(token), `Supabase feature bridge missing ${token}`);
 assert.equal(feature.includes("rpc('kinojo_sanctuary_management_bootstrap_v412'"), false, 'Browser must not call the service-role RPC directly');
 
@@ -41,8 +45,10 @@ const client = read('sanctuary-management/js/sanctuary-management.js');
 for (const token of [
   "kind:'SERVER_ONLY'",
   'const API_VERSION=1',
-  'const SCHEMA_VERSION=412',
+  'const SCHEMA_VERSION=429',
   'getSanctuaryManagementBootstrap',
+  'runSanctuaryManagementCommand',
+  "command=teamId?'UPDATE_TEAM_DRAFT':'CREATE_TEAM'",
   'validateBootstrap',
   'window.KinojoSanctuaryManagementData=ServerAdapter',
   'data.readEnabled===true',
@@ -66,7 +72,7 @@ const context = {
         calls.push('bootstrap');
         return {
           apiVersion: 1,
-          schemaVersion: 412,
+          schemaVersion: 429,
           serverTime: '2026-08-26T11:00:00Z',
           readEnabled: false,
           writeEnabled: false,
@@ -74,6 +80,10 @@ const context = {
           sanctuaries: [{ id: 4, code: 'sanctuary4', name: '서버 이름', managementVisible: true }],
           teams: [],
         };
+      },
+      async runSanctuaryManagementCommand(command,payload,expectedRevision,requestKey) {
+        calls.push({ command, payload, expectedRevision, requestKey });
+        return { ok:true, action:command, teamId:31, revision:expectedRevision?expectedRevision+1:1 };
       },
     },
   },
@@ -103,7 +113,7 @@ async function verifyAdapter() {
   const adapter = context.window.KinojoSanctuaryManagementData;
   assert.equal(adapter.kind, 'SERVER_ONLY');
   assert.equal(adapter.apiVersion, 1);
-  assert.equal(adapter.schemaVersion, 412);
+  assert.equal(adapter.schemaVersion, 429);
   const data = await adapter.bootstrap();
   assert.deepEqual(calls, ['bootstrap']);
   assert.equal(data.readEnabled, false);
@@ -112,7 +122,11 @@ async function verifyAdapter() {
   assert.equal(data.teams.length, 0);
   assert.ok(listeners.has('DOMContentLoaded'), 'Management client boot binding is missing');
 
-  context.window.KinojoSupabase.getSanctuaryManagementBootstrap = async () => ({ apiVersion: 2, schemaVersion: 412, sanctuaries: [], teams: [] });
+  const command=await adapter.command('UPDATE_TEAM_DRAFT',{teamId:31},4,'sm-contract-1234');
+  assert.equal(command.revision,5);
+  assert.equal(calls[1].expectedRevision,4);
+
+  context.window.KinojoSupabase.getSanctuaryManagementBootstrap = async () => ({ apiVersion: 2, schemaVersion: 429, sanctuaries: [], teams: [] });
   await assert.rejects(adapter.bootstrap(), /계약 버전/);
 
   if (process.env.CI === 'true') {
@@ -124,7 +138,7 @@ async function verifyAdapter() {
     assert.equal(health.ok, true);
     assert.equal(health.service, 'sanctuary-management');
     assert.equal(String(health.apiVersion), '1.0');
-    assert.equal(Number(health.databaseContract), 414);
+    assert.equal(Number(health.databaseContract), 429);
     assert.equal(health.readEnabled, false);
     assert.equal(health.writeEnabled, false);
   }

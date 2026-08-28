@@ -1022,6 +1022,25 @@
     });
   }
 
+  async function runSanctuaryManagementCommand(command,payload={},expectedRevision=null,requestKey=''){
+    const normalizedCommand=String(command||'').trim().toUpperCase();
+    if(!/^[A-Z][A-Z0-9_]{2,47}$/.test(normalizedCommand))throw new Error('성역 관리 작업을 다시 선택해 주세요.');
+    const normalizedPayload=payload&&typeof payload==='object'&&!Array.isArray(payload)?payload:{};
+    const revision=expectedRevision==null?null:Number(expectedRevision);
+    if(revision!=null&&(!Number.isSafeInteger(revision)||revision<1))throw new Error('팀 revision을 다시 확인해 주세요.');
+    const generatedKey='sm-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12);
+    const normalizedKey=String(requestKey||generatedKey).trim();
+    if(!/^[A-Za-z0-9][A-Za-z0-9._:-]{7,119}$/.test(normalizedKey))throw new Error('중복 요청 방지 키를 다시 만들어 주세요.');
+    return invokeEdgeFunction('sanctuary-management',{
+      action:'command',
+      sessionToken:currentServerSessionCredential(),
+      requestKey:normalizedKey,
+      command:normalizedCommand,
+      payload:normalizedPayload,
+      expectedRevision:revision
+    });
+  }
+
   function decorateSanctuaryWaitlist(data){
     if(!data || data.ok === false) return data;
     data.waiting = (Array.isArray(data.waiting) ? data.waiting : []).map(item => Object.assign({}, item, {
@@ -1860,6 +1879,7 @@
     submitHallSuggestion,
     getSanctuaryMaster,
     getSanctuaryManagementBootstrap,
+    runSanctuaryManagementCommand,
     getSanctuaryData,
     getSanctuaryRosterData,
     getSanctuaryWaitlistData,
