@@ -20,6 +20,7 @@ const S = "kinojo-member-profile",
   ADMIN_PREVIEW = "371",
   ADMIN_REVIEW = "392",
   ADMIN_REQUEST = "405",
+  ADMIN_WORK_QUEUE = "406",
   REQUEST = "404",
   PIX = "B3";
 const MAX_REQ = 4096,
@@ -110,6 +111,7 @@ function hdr(r) {
     "x-kinojo-admin-image-preview-contract": ADMIN_PREVIEW,
     "x-kinojo-admin-image-review-contract": ADMIN_REVIEW,
     "x-kinojo-admin-image-request-contract": ADMIN_REQUEST,
+    "x-kinojo-admin-image-work-queue-contract": ADMIN_WORK_QUEUE,
     "x-kinojo-image-request-contract": REQUEST,
     "x-kinojo-edited-image-pixel-contract": PIX,
   };
@@ -967,6 +969,176 @@ async function adminImageList(r, b, t) {
     profileOverrideCount: num(d.profileOverrideCount) ?? 0,
     referenceCount: cs.reduce((n, x) => n + x.referenceCount, 0),
     characters: cs,
+  });
+}
+function adminImageWorkQueueItemPublic(v) {
+  const x = rec(v) || {},
+    itemType = txt(x.itemType, 40).toUpperCase(),
+    memberId = pos(x.memberId),
+    characterNames = (
+      Array.isArray(x.characterNames) ? x.characterNames : []
+    )
+      .map((name) => txt(name, 120))
+      .filter(Boolean)
+      .slice(0, 50);
+  if (memberId === null) return null;
+  if (itemType === "IMAGE_REVIEW") {
+    const latest = rec(x.latestImage) || {};
+    return {
+      itemType,
+      memberId,
+      mainCharacterName: txt(x.mainCharacterName, 120),
+      role: txt(x.role, 40),
+      roleLabel: txt(x.roleLabel, 80),
+      level: num(x.level) ?? 0,
+      isActive: x.isActive === true,
+      imageCount: Math.max(0, num(x.imageCount) ?? 0),
+      profileImageCount: Math.max(0, num(x.profileImageCount) ?? 0),
+      referenceImageCount: Math.max(0, num(x.referenceImageCount) ?? 0),
+      characterCount: Math.max(0, num(x.characterCount) ?? 0),
+      characterNames,
+      latestUploadedAt: txt(x.latestUploadedAt, 80),
+      activityAt: txt(x.activityAt, 80),
+      latestImage: {
+        kind: txt(latest.kind, 20),
+        characterId: pos(latest.characterId),
+        characterName: txt(latest.characterName, 120),
+        slot: txt(latest.slot, 40),
+        uploadedAt: txt(latest.uploadedAt, 80),
+      },
+      reviewedThrough: txt(x.reviewedThrough, 80) || null,
+      reviewedAt: txt(x.reviewedAt, 80) || null,
+      pending: x.pending === true,
+    };
+  }
+  if (itemType !== "PRODUCTION_REQUEST") return null;
+  const requestId = pos(x.requestId),
+    characterId = pos(x.characterId),
+    statusValue = txt(x.status, 40).toUpperCase(),
+    slots = (Array.isArray(x.slots) ? x.slots : [])
+      .map((slot) => txt(slot, 40).toUpperCase())
+      .filter((slot) => SLOTS.includes(slot));
+  if (
+    requestId === null ||
+    characterId === null ||
+    !["SUBMITTED", "IN_PROGRESS", "COMPLETED", "REJECTED"].includes(
+      statusValue,
+    )
+  )
+    return null;
+  return {
+    itemType,
+    memberId,
+    mainCharacterName: txt(x.mainCharacterName, 120),
+    role: txt(x.role, 40),
+    roleLabel: txt(x.roleLabel, 80),
+    level: num(x.level) ?? 0,
+    isActive: x.isActive === true,
+    characterId,
+    characterName: txt(x.characterName, 120),
+    serverName: txt(x.serverName, 120),
+    className: txt(x.className, 120),
+    requestId,
+    styleCode: REQUEST_STYLES.includes(txt(x.styleCode, 40).toUpperCase())
+      ? txt(x.styleCode, 40).toUpperCase()
+      : null,
+    status: statusValue,
+    submittedAt: txt(x.submittedAt, 80) || null,
+    updatedAt: txt(x.updatedAt, 80) || null,
+    activityAt: txt(x.activityAt, 80) || null,
+    imageExpiresAt: txt(x.imageExpiresAt, 80) || null,
+    metadataExpiresAt: txt(x.metadataExpiresAt, 80) || null,
+    itemCount: Math.max(0, num(x.itemCount) ?? slots.length),
+    availableImageCount: Math.max(0, num(x.availableImageCount) ?? 0),
+    slots,
+  };
+}
+async function adminImageWorkQueueList(r, b, t) {
+  if (memberSel(b) || charAlias(b) || prepStorage(b) || compStorage(b))
+    return out(
+      r,
+      {
+        ok: false,
+        code: memberSel(b)
+          ? "CLIENT_MEMBER_SELECTOR_FORBIDDEN"
+          : charAlias(b)
+            ? "CLIENT_CHARACTER_SELECTOR_FORBIDDEN"
+            : "CLIENT_STORAGE_SELECTOR_FORBIDDEN",
+      },
+      400,
+    );
+  const queueFilter =
+    txt(b.filter ?? b.queueFilter ?? b.queue_filter, 40).toUpperCase() ||
+    "ACTION_REQUIRED";
+  if (
+    ![
+      "ACTION_REQUIRED",
+      "IMAGE_REVIEW",
+      "PRODUCTION_REQUEST",
+      "COMPLETED",
+      "ALL",
+    ].includes(queueFilter)
+  )
+    return out(
+      r,
+      {
+        ok: false,
+        code: "WORK_QUEUE_FILTER_INVALID",
+        message: "지원하지 않는 이미지 작업 필터입니다.",
+      },
+      400,
+    );
+  const search = txt(b.search ?? b.query, 120) || null,
+    limit = Math.max(1, Math.min(200, Math.floor(Number(b.limit) || 100)));
+  const d = await rpc("kinojo_admin_member_image_work_queue_v406", {
+    p_session_token: t,
+    p_filter: queueFilter,
+    p_search: search,
+    p_limit: limit,
+  });
+  if (d.ok !== true) {
+    const code = txt(d.code, 80) || "ADMIN_MEMBER_IMAGE_WORK_QUEUE_FAILED";
+    return out(
+      r,
+      {
+        ok: false,
+        service: S,
+        apiVersion: V,
+        databaseContract: DB,
+        masterBoundaryContract: MASTER,
+        adminImageWorkQueueContract: ADMIN_WORK_QUEUE,
+        contract: "admin-member-image-work-queue-api-v1",
+        code,
+        message: txt(d.message, 300),
+      },
+      status(code),
+    );
+  }
+  if (
+    txt(d.contract, 120) !== "admin-member-image-work-queue-v406" ||
+    txt(d.privacy, 120) !== "NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS" ||
+    txt(d.filter, 40) !== queueFilter
+  )
+    throw Error("ADMIN_MEMBER_IMAGE_WORK_QUEUE_CONTRACT_MISMATCH");
+  const items = (Array.isArray(d.items) ? d.items : [])
+    .map(adminImageWorkQueueItemPublic)
+    .filter(Boolean);
+  return out(r, {
+    ok: true,
+    service: S,
+    apiVersion: V,
+    databaseContract: DB,
+    masterBoundaryContract: MASTER,
+    adminImageWorkQueueContract: ADMIN_WORK_QUEUE,
+    contract: "admin-member-image-work-queue-api-v1",
+    privacy: "NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS",
+    filter: queueFilter,
+    pendingUploadCount: Math.max(0, num(d.pendingUploadCount) ?? 0),
+    activeRequestCount: Math.max(0, num(d.activeRequestCount) ?? 0),
+    actionRequiredCount: Math.max(0, num(d.actionRequiredCount) ?? 0),
+    totalUploaderCount: Math.max(0, num(d.totalUploaderCount) ?? 0),
+    rowCount: items.length,
+    items,
   });
 }
 async function adminImageReviewList(r, b, t) {
@@ -3291,6 +3463,7 @@ Deno.serve(async (r) => {
         adminImagePreviewContract: ADMIN_PREVIEW,
         adminImageReviewContract: ADMIN_REVIEW,
         adminImageRequestContract: ADMIN_REQUEST,
+        adminImageWorkQueueContract: ADMIN_WORK_QUEUE,
         imageRequestContract: REQUEST,
         editedImagePixelContract: PIX,
         authBoundary: "KWS_SERVER_SESSION_ONLY",
@@ -3372,6 +3545,7 @@ Deno.serve(async (r) => {
           "image-request-state",
           "admin-image-list",
           "admin-image-preview",
+          "admin-image-work-queue-list",
           "admin-image-review-list",
           "admin-image-review-ack",
           "admin-image-request-list",
@@ -3401,6 +3575,7 @@ Deno.serve(async (r) => {
         "image-request-state",
         "admin-image-list",
         "admin-image-preview",
+        "admin-image-work-queue-list",
         "admin-image-review-list",
         "admin-image-review-ack",
         "admin-image-request-list",
@@ -3416,6 +3591,8 @@ Deno.serve(async (r) => {
       return out(r, { ok: false, code: "SESSION_TOKEN_INVALID" }, 401);
     if (a === "admin-image-list") return await adminImageList(r, b, t);
     if (a === "admin-image-preview") return await adminImagePreview(r, b, t);
+    if (a === "admin-image-work-queue-list")
+      return await adminImageWorkQueueList(r, b, t);
     if (a === "admin-image-review-list")
       return await adminImageReviewList(r, b, t);
     if (a === "admin-image-review-ack")

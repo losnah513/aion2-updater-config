@@ -16,7 +16,8 @@ on:
       - 'core/kinojo-auth-ui.js'
       - 'ui/kinojo-admin-notifications.js'
       - 'supabase/functions/kinojo-member-profile/**'
-      - 'supabase/migrations/*member_image_request*.sql'
+      - 'supabase/migrations/*member_image*.sql'
+      - 'tests/admin-member-image-review-contract.test.js'
       - 'tests/my-info-phase2-stage3-admin-contract.test.js'
       - '.github/workflows/verify-character-refresh-profile.yml'
   push:
@@ -34,7 +35,8 @@ on:
       - 'core/kinojo-auth-ui.js'
       - 'ui/kinojo-admin-notifications.js'
       - 'supabase/functions/kinojo-member-profile/**'
-      - 'supabase/migrations/*member_image_request*.sql'
+      - 'supabase/migrations/*member_image*.sql'
+      - 'tests/admin-member-image-review-contract.test.js'
       - 'tests/my-info-phase2-stage3-admin-contract.test.js'
       - '.github/workflows/verify-character-refresh-profile.yml'
   workflow_dispatch:
@@ -61,6 +63,7 @@ jobs:
           node --check ui/kinojo-admin-notifications.js
           node --check supabase/functions/kinojo-member-profile/index.ts
           node tests/my-info-phase2-stage3-admin-contract.test.js
+          node tests/admin-member-image-review-contract.test.js
           python3 <<'PY'
           from pathlib import Path
           pages = [Path('admin/index.html'), Path('m/admin/index.html')]
@@ -82,7 +85,7 @@ jobs:
                   count = text.count(f'id="{item_id}"')
                   if count != 1:
                       raise SystemExit(f'{page}: {item_id} count={count}')
-              if 'admin.js?cache=2026082803' not in text:
+              if 'admin.js?cache=2026082804' not in text:
                   raise SystemExit(f'{page}: stale admin cache')
           source = Path('admin/js/admin-characters.js').read_text(encoding='utf-8')
           for token in [
@@ -105,13 +108,15 @@ jobs:
               'INLINE_PREVIEW_ONLY',
               'data-admin-image-preview',
               '필요한 파일은 각 이미지의 다운로드 버튼으로 받을 수 있습니다.',
-              'function loadMemberImageGroups_(memberId,requestId)',
+              'function loadMemberImageGroups_(memberId,requestId,preferredCharacterId=0,preferredRequestId=0)',
               "action:'admin-image-list'",
               'NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS',
               '등록된 사용자 프로필 이미지 없음',
               '등록된 참고 이미지 없음',
               'function ensureMemberImageModal()',
-              'function openMemberImageModal(target)',
+              'function openMemberImageModal(target,options={})',
+              "action:'admin-image-work-queue-list'",
+              'data-member-image-request-view',
               'data-member-image-modal-close',
               'data-member-image-view',
               'data-admin-image-character-select',
@@ -150,7 +155,7 @@ jobs:
               if forbidden in download:
                   raise SystemExit(f'admin member image download leaked forbidden field {forbidden}')
           loader = Path('admin/js/admin.js').read_text(encoding='utf-8')
-          if 'v2026082803' not in loader or "searchParams.get('cache')" not in loader or "name+'?cache='+encodeURIComponent(CACHE)" not in loader or "'admin-member-image-download.js'" not in loader:
+          if 'v2026082804' not in loader or "searchParams.get('cache')" not in loader or "name+'?cache='+encodeURIComponent(CACHE)" not in loader or "'admin-member-image-download.js'" not in loader:
               raise SystemExit('admin loader/download module contract missing')
           print('Character refresh profile source contracts: PASS')
           PY

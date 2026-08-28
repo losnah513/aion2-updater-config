@@ -246,7 +246,7 @@
     document.querySelectorAll('#adminMemberImageBadge,[data-admin-subtab="character-images"] .badge').forEach(badge=>{badge.textContent=String(imageCount);});
     state.memberImageReviewPendingCount=imageReviewCount;
     state.memberImageRequestPendingCount=imageRequestCount;
-    if(typeof A.renderMemberImageReviewSummary_==='function')A.renderMemberImageReviewSummary_(imageReviewCount,state.memberImageReviewTotalCount);
+    if(typeof A.renderMemberImageReviewSummary_==='function')A.renderMemberImageReviewSummary_(imageCount,imageReviewCount,imageRequestCount,state.memberImageReviewTotalCount);
   }
 
   async function refreshNotificationBadges(){

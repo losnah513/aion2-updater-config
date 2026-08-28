@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Admin member image review browser contract</title>
-  <link href="../admin/css/admin.css?cache=2026082706" rel="stylesheet" />
+  <link href="../admin/css/admin.css?cache=2026082804" rel="stylesheet" />
 </head>
 <body>
   <header class="admin-shellbar">
@@ -17,27 +17,32 @@
     <section class="admin-pane active" data-admin-pane="members">
       <nav class="admin-subnav" data-admin-subnav="members"><button data-admin-subtab="accounts" type="button">회원 목록</button><button class="active" data-admin-subtab="character-images" data-admin-master-only type="button">이미지·제작 요청 <span class="badge" id="adminMemberImageSubBadge">0</span></button></nav>
       <div class="admin-subpane" data-admin-subpane="accounts"></div>
-      <div class="admin-subpane active" data-admin-subpane="character-images" data-admin-master-only><section class="admin-card admin-member-image-review-card"><div class="admin-card-head"><div><h2>캐릭터 이미지·제작 요청 확인</h2><p>회원별 현재 이미지와 캐릭터별 제작 요청을 함께 확인합니다.</p></div><button class="admin-btn" id="memberImageReviewReloadBtn" type="button">새로고침</button></div><div class="admin-form-row admin-member-image-review-tools"><input class="admin-input grow" id="memberImageReviewSearch" placeholder="업로더 또는 캐릭터명 검색"/><select class="admin-select" id="memberImageReviewStatus"><option value="PENDING">미확인만</option><option value="ALL">전체</option><option value="REVIEWED">확인 완료</option></select></div><div class="admin-member-image-review-summary" id="memberImageReviewSummary"><span>미확인 <strong>0</strong>명</span><span>현재 이미지 업로더 <strong>0</strong>명</span></div><div id="memberImageReviewStatusLine" class="admin-statusline"></div><div class="admin-member-image-review-list" id="memberImageReviewList"><div class="admin-empty">불러오는 중</div></div></section></div>
+      <div class="admin-subpane active" data-admin-subpane="character-images" data-admin-master-only><section class="admin-card admin-member-image-review-card"><div class="admin-card-head"><div><h2>캐릭터 이미지·제작 요청 확인</h2><p>확인이 필요한 새 이미지와 진행 중인 제작 요청을 한 목록에서 확인합니다.</p></div><button class="admin-btn" id="memberImageReviewReloadBtn" type="button">새로고침</button></div><div class="admin-form-row admin-member-image-review-tools"><input class="admin-input grow" id="memberImageReviewSearch" placeholder="회원 또는 캐릭터명 검색"/><select class="admin-select" id="memberImageReviewStatus"><option value="ACTION_REQUIRED">처리 필요</option><option value="IMAGE_REVIEW">이미지 확인</option><option value="PRODUCTION_REQUEST">제작 요청</option><option value="COMPLETED">처리 완료</option><option value="ALL">전체</option></select></div><div class="admin-member-image-review-summary" id="memberImageReviewSummary"><span>처리 필요 <strong>0</strong>건</span><span>이미지 확인 <strong>0</strong>건</span><span>진행 중 제작 요청 <strong>0</strong>건</span><span>현재 이미지 업로더 <strong>0</strong>명</span></div><div id="memberImageReviewStatusLine" class="admin-statusline"></div><div class="admin-member-image-review-list" id="memberImageReviewList"><div class="admin-empty">불러오는 중</div></div></section></div>
     </section>
   </section></main>
   <script>
     location.hash='#members/character-images';
-    window.__reviewPending=2;
+    window.__reviewPending=0;
     window.__reviewedMembers=[];
     window.KinojoAuth={getSession:()=>({role:'MASTER',roleLabel:'Master',level:5,token:'kws_'+('a'.repeat(40))}),clearSession(){}};
     window.KinojoToast={show(){}};
     window.__requestStatus='SUBMITTED';
-    window.KinojoApi={async getAction(name){if(name==='notificationSummary')return{ok:true,codeRequestCount:0,supportRequestCount:0,memberImagePendingCount:0,memberImageRequestPendingCount:2};return{ok:true};}};
+    window.KinojoApi={async getAction(name){if(name==='notificationSummary')return{ok:true,codeRequestCount:0,supportRequestCount:0,memberImagePendingCount:0,memberImageRequestPendingCount:1};return{ok:true};}};
     window.KinojoSupabase={adminAccount:async()=>({ok:true,accounts:[]})};
     const mockItems=[
-      {memberId:9,mainCharacterName:'푸석사과',role:'SUB_MASTER',roleLabel:'Sub Master',level:4,isActive:true,imageCount:3,profileImageCount:0,referenceImageCount:3,characterCount:1,characterNames:['푸석사과'],latestUploadedAt:'2026-08-22T05:47:50.758Z',latestImage:{kind:'REFERENCE',characterId:127,characterName:'푸석사과',slot:'UPPER_BODY',uploadedAt:'2026-08-22T05:47:50.758Z'},pending:true},
-      {memberId:1,mainCharacterName:'청소기',role:'MASTER',roleLabel:'Master',level:5,isActive:true,imageCount:4,profileImageCount:1,referenceImageCount:3,characterCount:2,characterNames:['꾸힉','청소기'],latestUploadedAt:'2026-08-22T04:07:45.980Z',latestImage:{kind:'REFERENCE',characterId:13,characterName:'꾸힉',slot:'BACK',uploadedAt:'2026-08-22T04:07:45.980Z'},pending:true}
+      {itemType:'IMAGE_REVIEW',memberId:9,mainCharacterName:'푸석사과',role:'SUB_MASTER',roleLabel:'Sub Master',level:4,isActive:true,imageCount:3,profileImageCount:0,referenceImageCount:3,characterCount:1,characterNames:['푸석사과'],latestUploadedAt:'2026-08-22T05:47:50.758Z',latestImage:{kind:'REFERENCE',characterId:127,characterName:'푸석사과',slot:'UPPER_BODY',uploadedAt:'2026-08-22T05:47:50.758Z'},pending:false}
     ];
+    const mockRequest={itemType:'PRODUCTION_REQUEST',memberId:9,mainCharacterName:'푸석사과',role:'SUB_MASTER',roleLabel:'Sub Master',level:4,isActive:true,characterId:127,characterName:'푸석사과',serverName:'시엘',className:'궁성',requestId:501,styleCode:'ANIMATION',status:'SUBMITTED',submittedAt:'2026-08-26T02:10:00Z',updatedAt:'2026-08-26T02:10:00Z',activityAt:'2026-08-26T02:10:00Z',slots:['FRONT','BACK'],itemCount:2,availableImageCount:2};
     window.KinojoSupabaseClientCore={
       async invokeEdgeFunction(_name,payload){
-        if(payload.action==='admin-image-review-list'){
-          const items=mockItems.map(item=>Object.assign({},item,{pending:!window.__reviewedMembers.includes(item.memberId)})).filter(item=>payload.status==='ALL'||(payload.status==='PENDING'&&item.pending)||(payload.status==='REVIEWED'&&!item.pending));
-          return{ok:true,privacy:'NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS',pendingCount:window.__reviewPending,totalUploaderCount:2,items};
+        if(payload.action==='admin-image-work-queue-list'){
+          const active=['SUBMITTED','IN_PROGRESS'].includes(window.__requestStatus);
+          const request=Object.assign({},mockRequest,{status:window.__requestStatus});
+          const items=[];
+          if((payload.filter==='ACTION_REQUIRED'||payload.filter==='PRODUCTION_REQUEST'||payload.filter==='ALL')&&active)items.push(request);
+          if(payload.filter==='COMPLETED'&&!active)items.push(request);
+          if(payload.filter==='COMPLETED'||payload.filter==='ALL')items.push(...mockItems);
+          return{ok:true,privacy:'NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS',filter:payload.filter,pendingUploadCount:0,activeRequestCount:active?1:0,actionRequiredCount:active?1:0,totalUploaderCount:1,items};
         }
         if(payload.action==='admin-image-review-ack'){if(!window.__reviewedMembers.includes(payload.memberId))window.__reviewedMembers.push(payload.memberId);window.__reviewPending=Math.max(0,2-window.__reviewedMembers.length);return{ok:true,memberId:payload.memberId,pending:false};}
         if(payload.action==='admin-image-list')return{ok:true,privacy:'NO_PRIVATE_OBJECT_PATHS_OR_SIGNED_URLS',targetMember:{id:payload.memberId},ownerResolved:true,profileOverrideCount:0,referenceCount:3,characters:[{characterId:127,characterName:'푸석사과',serverName:'시엘',className:'궁성',isMain:true,profile:{hasOverride:false},references:[{slot:'FRONT',mimeType:'image/webp',sizeBytes:120000,uploadedAt:'2026-08-22T05:47:45Z',expiresAt:'2026-08-29T05:47:45Z',active:true}]}]};
@@ -49,8 +54,8 @@
       async ensureConfig(){return{url:'https://example.supabase.co'};}
     };
   </script>
-  <script src="../admin/js/admin-shared.js?cache=2026082605"></script>
-  <script src="../admin/js/admin-members.js?cache=2026082605"></script>
-  <script src="../admin/js/admin-bootstrap.js?cache=2026082605"></script>
+  <script src="../admin/js/admin-shared.js?cache=2026082804"></script>
+  <script src="../admin/js/admin-members.js?cache=2026082804"></script>
+  <script src="../admin/js/admin-bootstrap.js?cache=2026082804"></script>
 </body>
 </html>

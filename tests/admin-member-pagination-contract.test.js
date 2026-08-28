@@ -19,7 +19,7 @@ for(const token of ['memberCursorStack:[]','memberNextCursor:',"const MEMBER_PAG
 }
 for(const entry of ['admin/index.html','m/admin/index.html']){
   const html=read(entry);
-  for(const token of ['id="memberPrevBtn"','id="memberNextBtn"','id="memberPageInfo"','kinojo-supabase-rpc.js?cache=2026082806','kinojo-supabase-features.js?cache=2026082806','admin.js?cache=2026082803']){
+  for(const token of ['id="memberPrevBtn"','id="memberNextBtn"','id="memberPageInfo"','kinojo-supabase-rpc.js?cache=2026082806','kinojo-supabase-features.js?cache=2026082806','admin.js?cache=2026082804']){
     assert.ok(html.includes(token),entry+' missing '+token);
   }
 }
