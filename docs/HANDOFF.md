@@ -46,18 +46,18 @@
 - 신규 실제 Edge helper 회귀를 포함한 전체 Node 계약 52개가 통과했다. PR의 My Info 관련 검증은 모두 통과했고, `Verify KINOJO Pages`의 실패 1건은 동시 진행된 별도 성역 운영 Edge 414와 저장소 기대값 412 불일치로 이 변경 범위와 무관하다.
 - 기존 실패 DRAFT는 수동 삭제하지 않고 기존 cleanup 수명주기를 따른다. 영향 사용자는 새 운영 코드가 반영된 뒤 My Info를 새로 열어 이미지를 다시 선택·전송한다.
 
-## 성역·스케줄 관리 개편 · Stage 3-4 생성자 캐릭터 후보 실제 연결
+## 성역·스케줄 관리 개편 · Stage 3-5 캐릭터 검색·공식 조회·관계 등록
 
 - 신규 권한형 경로는 PC `/sanctuary-management/`, 모바일 `/m/sanctuary-management/`이며 둘 다 `noindex,nofollow,noarchive`다. 공통 Topbar·Drawer와 성역/성역 일정/성역 관리 탭은 `KinojoPermissions.canEditSanctuary(account)` 기준으로 MANAGER 이상 또는 `sanctuary_edit` 권한 계정에만 관리 진입점을 표시한다.
-- WEB 진입점은 `KinojoSupabase.getSanctuaryManagementBootstrap()`과 `runSanctuaryManagementCommand()`이다. 현재 KWS opaque session을 body의 `sessionToken`으로 `sanctuary-management` Edge에 전달하고 브라우저 직접 service-role RPC, legacy Sheet bridge, page mock adapter를 사용하지 않는다.
-- 운영 계약은 Edge `sanctuary-management` v6 / API `1.0` / DB `431`이다. DB431 bootstrap은 DB430의 포스·파티·슬롯 실제 상태를 유지하고 팀 생성자의 `kinojo_member_character_list_v334` 소유 캐릭터 후보를 포스별로 결합한다.
-- private candidate/roster helper와 public bootstrap/command v431은 모두 `SECURITY DEFINER` 고정 search path이며 `PUBLIC/anon/authenticated` 실행 권한을 제거하고 `service_role`만 허용한다. command v431은 기존 DB430/429/414로 위임하므로 생성자·관리자 권한, request key idempotency, expected revision, 최대 9포스, `SET_SLOT` 충돌 검증은 바뀌지 않는다.
-- WEB은 저장된 팀에서 선택한 빈 슬롯을 표시하고 우측 1/5 영역에 Server가 반환한 생성자의 본캐·부캐 후보만 렌더링한다. 후보를 누르면 `SET_SLOT`을 실행하고 bootstrap을 다시 읽으며, 선택한 포스에 생성자의 캐릭터가 이미 하나 있으면 후보를 닫고 배치 완료 상태를 표시한다. 제목·일정 입력값은 슬롯 배정 중 유지된다.
-- 포스별 소유자·본캐 root 중복은 기존 unique index가 최종 차단한다. 로컬 E2E에서 생성자 본캐를 1포스, 부캐를 2포스에 각각 배정하고 각 포스에서 추가 후보가 닫히는 것과 팀/포스 revision 증가를 확인했다.
+- WEB 진입점은 기존 bootstrap/command에 `searchSanctuaryManagementCharacter()`와 `registerSanctuaryManagementCharacter()`를 추가했다. 현재 KWS opaque session을 body의 `sessionToken`으로 `sanctuary-management` Edge에 전달하고 브라우저 직접 service-role RPC, PLAYNC 호출, legacy Sheet bridge, page mock adapter를 사용하지 않는다.
+- 운영 계약은 Edge `sanctuary-management` v8 / API `1.1` / DB `432`다. DB432 bootstrap/command wrapper는 DB431/430 계약을 유지하고 캐릭터 마스터 우선 검색, 공식 조회 candidate, 관계 확정, character master materialization helper를 추가한다.
+- 캐릭터 조회는 `이름`을 `지켈` 서버로, `이름[서버]`를 명시 서버로 해석하고 이름·서버 정확 일치만 허용한다. 캐릭터 마스터에 없을 때만 Edge가 PLAYNC search/info를 호출하며 브라우저에는 공식 endpoint나 lookup token을 노출하지 않는다. 공식 candidate는 private service-only table에 짧게 보관되고 prepare/gate RPC의 사용자·팀 단위 제한을 거친다.
+- 운영 레기온은 private DB reference의 `깡`, `낮`, `밤`, `키나노동조합` 네 항목이다. 운영 레기온 캐릭터는 `MAIN/ALT`만 허용하고 `ALT`는 이미 등록·확인된 본캐 연결이 필수다. 외부 레기온·무레기온 캐릭터는 `GUEST`만 허용한다. 관계를 확정한 캐릭터는 기존 `character_master`에 안전하게 반영한 뒤 처음 선택한 빈 슬롯에 `SET_SLOT`하고 bootstrap을 다시 읽는다.
+- v432 public wrapper 7개와 private helper/table은 고정 search path·RLS·service-role-only ACL을 사용한다. `PUBLIC/anon/authenticated` 실행 권한은 0이고 service role 실행 권한은 7이다. command v432는 기존 권한, request key idempotency, expected revision, 최대 9포스, 포스별 소유자·본캐 root 중복과 슬롯 충돌 검증을 그대로 위임한다.
 - PC는 680px 정사각형 composer와 286px 세로 일정 패널을 나란히 유지한다. 모바일은 일정 패널을 composer 위에 두며 390px·350px에서 composer 비율 1:1, slot 10개, 가로 overflow 0을 확인했다. 9포스 rail은 세로 overflow와 숨김 scrollbar, 아래 내용이 있을 때만 하단 fade를 사용한다.
-- 운영 `readEnabled=false`, `writeEnabled=false` 및 team/force/party/slot/command 0건은 그대로다. 운영 화면의 생성·편집은 별도 승인 전까지 비활성이고 기존 성역·스케줄·Sheet 경로도 변경하지 않았다.
-- SQL431 Source/Deploy/Verify/Rollback 및 Edge v6 Source의 Drive ID는 Stage 3-4 LOG와 SQL_INDEX에 기록한다. 전체 Node 계약 64종과 로컬 PC 1440×1000, 모바일 390×844·350×740 실제 UI 검수를 통과했다.
-- 다음 작업은 3-5 캐릭터 검색·공식 조회·본캐 관계·게스트 등록 흐름이다. 운영 `readEnabled=false`, `writeEnabled=false`는 별도 승인 전까지 유지한다.
+- 운영 `readEnabled=false`, `writeEnabled=false`는 그대로다. 운영 화면의 생성·편집·캐릭터 등록은 별도 승인 전까지 비활성이고 기존 성역·스케줄·Sheet 경로도 변경하지 않았다.
+- SQL432 Source/Deploy/Verify/Rollback, FK index follow-up, Edge v8 Source의 Drive ID는 Stage 3-5 LOG와 SQL_INDEX에 기록한다. 전체 Node 계약 66종, JavaScript/Deno check, 로컬 PC 1440×1000과 모바일 390×844·350×740 검수를 통과했다. 검색 버튼·Enter, 마스터 결과 슬롯 배치, 공식 게스트 확정 배치, 중첩 form 0, 가로 overflow 0, 콘솔 오류 0을 확인했다.
+- 다음 작업은 3-6 일정 입력·30분 단위 진행 시간·반복 규칙·다른 팀 충돌 검증 연결이다. 운영 `readEnabled=false`, `writeEnabled=false`는 별도 승인 전까지 유지한다.
 
 ## 레기온 트리 마-2~마-6 / 사-1~사-7 / 아-1~아-6 / 자-1~자-7
 

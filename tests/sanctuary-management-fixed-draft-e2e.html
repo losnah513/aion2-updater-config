@@ -28,6 +28,13 @@
         {characterId:501,serverId:2,serverName:'지켈',characterName:'테스트본캐',className:'검성',profileImageUrl:'',isMain:true,relation:'MAIN',mainCharacterId:501},
         {characterId:502,serverId:2,serverName:'지켈',characterName:'테스트부캐',className:'살성',profileImageUrl:'',isMain:false,relation:'ALT',mainCharacterId:501}
       ];
+      const searchableCharacters=[
+        {characterId:601,serverId:2,serverName:'지켈',characterName:'테스트검색',className:'궁성',legionName:'깡',profileImageUrl:'',raceId:1,isOperationalLegion:true,ownerMemberId:9,relation:'MAIN',mainCharacterId:601}
+      ];
+      const officialCandidates={
+        외부게스트:{candidateId:'official-guest-701',characterName:'외부게스트',serverId:2,serverName:'지켈',className:'마도성',legionName:'외부레기온',profileImageUrl:'',raceId:1,isOperationalLegion:false,allowedRelations:['GUEST']},
+        운영부캐:{candidateId:'official-alt-702',characterName:'운영부캐',serverId:2,serverName:'지켈',className:'치유성',legionName:'밤',profileImageUrl:'',raceId:1,isOperationalLegion:true,allowedRelations:['MAIN','ALT']}
+      };
       const character={characterId:501,name:'테스트본캐',serverName:'지켈',className:'검성',profileImageUrl:'',relation:'MAIN'};
       function makeForce(forceNo,withCharacter=false){
         const forceId=forceSequence++;
@@ -62,7 +69,22 @@
       window.KinojoPermissions={canEditSanctuary:()=>true};
       window.KinojoToast={show:message=>{document.body.dataset.toast=message;},success:message=>{document.body.dataset.toast=message;}};
       window.KinojoSupabase={
-        async getSanctuaryManagementBootstrap(){return {apiVersion:1,schemaVersion:431,serverTime:new Date().toISOString(),readEnabled:true,writeEnabled:true,actor:{memberId:7,canManageAll:true},sanctuaries,teams:structuredClone(teams)};},
+        async getSanctuaryManagementBootstrap(){return {apiVersion:1.1,schemaVersion:432,serverTime:new Date().toISOString(),readEnabled:true,writeEnabled:true,actor:{memberId:7,canManageAll:true},sanctuaries,teams:structuredClone(teams)};},
+        async searchSanctuaryManagementCharacter(teamId,query){
+          const normalized=String(query||'').trim().replace(/\[지켈\]$/,'');
+          const character=searchableCharacters.find(item=>item.characterName===normalized);
+          if(character)return {ok:true,apiVersion:1.1,schemaVersion:432,source:'CHARACTER_MASTER',teamId,character:structuredClone(character)};
+          const candidate=officialCandidates[normalized];
+          if(candidate)return {ok:true,apiVersion:1.1,schemaVersion:432,source:'OFFICIAL',teamId,candidate:structuredClone(candidate)};
+          throw new Error('정확히 일치하는 캐릭터를 찾지 못했습니다.');
+        },
+        async registerSanctuaryManagementCharacter(teamId,candidateId,relationType,mainCharacterId){
+          const candidate=Object.values(officialCandidates).find(item=>item.candidateId===candidateId);
+          if(!candidate)throw new Error('공식 조회 후보를 다시 선택해 주세요.');
+          const character={characterId:700+searchableCharacters.length,serverId:candidate.serverId,serverName:candidate.serverName,characterName:candidate.characterName,className:candidate.className,legionName:candidate.legionName,profileImageUrl:candidate.profileImageUrl,raceId:candidate.raceId,isOperationalLegion:candidate.isOperationalLegion,ownerMemberId:relationType==='GUEST'?0:7,relation:relationType,mainCharacterId:relationType==='ALT'?mainCharacterId:700+searchableCharacters.length};
+          searchableCharacters.push(character);
+          return {ok:true,apiVersion:1.1,schemaVersion:432,teamId,character:structuredClone(character)};
+        },
         async runSanctuaryManagementCommand(command,payload,expectedRevision){
           if(command==='CREATE_TEAM'){
             const teamId=88;teams.unshift(syncTeam({teamId,sanctuaryId:sanctuaries.find(item=>item.code===payload.sanctuaryCode).id,title:payload.title,activity:payload.activity,mode:'FIXED',joinPolicy:'INSTANT',status:'DRAFT',revision:1,schedule:Object.assign({scheduleId:92,status:'ACTIVE',revision:1},payload.schedule),forces:[makeForce(1)]}));
@@ -79,7 +101,7 @@
             const force=team.forces.find(item=>item.forceId===payload.forceId);
             const party=force?.parties.find(item=>item.partyNo===payload.partyNo);
             const slot=party?.slots.find(item=>item.slotNo===payload.slotNo);
-            const candidate=force?.creatorCandidates.find(item=>item.characterId===payload.characterId);
+            const candidate=force?.creatorCandidates.find(item=>item.characterId===payload.characterId)||searchableCharacters.find(item=>item.characterId===payload.characterId);
             if(!force||!slot||slot.occupied||!candidate)throw new Error('생성자 캐릭터 후보와 슬롯을 다시 선택해 주세요.');
             slot.occupied=true;slot.revision+=1;slot.character={characterId:candidate.characterId,name:candidate.characterName,serverName:candidate.serverName,className:candidate.className,profileImageUrl:candidate.profileImageUrl,relation:candidate.relation};
             party.occupiedCount+=1;party.vacancyCount-=1;force.occupiedCount+=1;force.vacancyCount-=1;force.revision+=1;force.creatorAlreadyAssigned=true;force.creatorCandidateCode='CREATOR_ALREADY_ASSIGNED';force.creatorCandidateCount=0;force.creatorCandidates=[];team.revision+=1;syncTeam(team);

@@ -1041,6 +1041,40 @@
     });
   }
 
+  async function searchSanctuaryManagementCharacter(teamId,query){
+    const normalizedTeamId=Number(teamId||0);
+    const normalizedQuery=String(query||'').trim();
+    if(!Number.isSafeInteger(normalizedTeamId)||normalizedTeamId<1)throw new Error('캐릭터를 추가할 팀을 다시 선택해 주세요.');
+    if(!normalizedQuery||normalizedQuery.length>48)throw new Error('캐릭터 이름 또는 이름[서버]를 입력해 주세요.');
+    return invokeEdgeFunction('sanctuary-management',{
+      action:'character-search',
+      sessionToken:currentServerSessionCredential(),
+      teamId:normalizedTeamId,
+      query:normalizedQuery
+    });
+  }
+
+  async function registerSanctuaryManagementCharacter(teamId,candidateId,relationType,mainCharacterId=null,requestKey=''){
+    const normalizedTeamId=Number(teamId||0);
+    const normalizedCandidateId=String(candidateId||'').trim();
+    const normalizedRelation=String(relationType||'').trim().toUpperCase();
+    const normalizedMainId=mainCharacterId==null?null:Number(mainCharacterId);
+    const generatedKey='sm-character-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12);
+    const normalizedKey=String(requestKey||generatedKey).trim();
+    if(!Number.isSafeInteger(normalizedTeamId)||normalizedTeamId<1||!normalizedCandidateId||!['MAIN','ALT','GUEST'].includes(normalizedRelation))throw new Error('캐릭터 관계 확정 요청을 다시 확인해 주세요.');
+    if(normalizedRelation==='ALT'&&(!Number.isSafeInteger(normalizedMainId)||normalizedMainId<1))throw new Error('부캐에 연결할 본캐를 먼저 확인해 주세요.');
+    if(!/^[A-Za-z0-9][A-Za-z0-9._:-]{7,119}$/.test(normalizedKey))throw new Error('중복 요청 방지 키를 다시 만들어 주세요.');
+    return invokeEdgeFunction('sanctuary-management',{
+      action:'character-register',
+      sessionToken:currentServerSessionCredential(),
+      teamId:normalizedTeamId,
+      candidateId:normalizedCandidateId,
+      relationType:normalizedRelation,
+      mainCharacterId:normalizedRelation==='ALT'?normalizedMainId:null,
+      requestKey:normalizedKey
+    });
+  }
+
   function decorateSanctuaryWaitlist(data){
     if(!data || data.ok === false) return data;
     data.waiting = (Array.isArray(data.waiting) ? data.waiting : []).map(item => Object.assign({}, item, {
@@ -1880,6 +1914,8 @@
     getSanctuaryMaster,
     getSanctuaryManagementBootstrap,
     runSanctuaryManagementCommand,
+    searchSanctuaryManagementCharacter,
+    registerSanctuaryManagementCharacter,
     getSanctuaryData,
     getSanctuaryRosterData,
     getSanctuaryWaitlistData,
