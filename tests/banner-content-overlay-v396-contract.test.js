@@ -30,7 +30,7 @@ for(const token of [
 
 for(const token of [
   'V = "2.6"',
-  'DB = "411"',
+  'DB = "412"',
   'EVENT = "407"',
   '"overlay-asset-list"',
   '"overlay-upload-prepare"',

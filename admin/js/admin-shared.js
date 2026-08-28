@@ -88,5 +88,10 @@
 
   async function action(name, params){ return window.KinojoApi ? window.KinojoApi.getAction(name, params||{}) : window.KinojoSupabase.webAction(name, params||{}); }
 
-  Object.assign(A,{$,$$,state,CACHE,DEFAULT_SUBTABS,esc,addLog,setStatus,toast,roleLabel,roleKey,roleLevel,isMaster,isFullAdmin,isStaffConsole,isAdmin,adminAccount,adminCharacter,adminLookup,adminNotice,adminEventNotice,adminMeter,adminAutomation,adminVisitor,EVENT_NOTICE_TYPES,eventNoticeTypeLabel,todayDateInputValue,action});
+  function notifyBannerAssetsUpdated(assets,source='admin',createdAssetIds=[]){
+    const snapshot=Array.isArray(assets)?[...assets]:[];
+    window.dispatchEvent(new CustomEvent('kinojo:banner-assets-updated',{detail:{assets:snapshot,source:String(source||'admin'),createdAssetIds:[...new Set((createdAssetIds||[]).map(Number).filter(Number.isFinite))],updatedAt:new Date().toISOString()}}));
+  }
+
+  Object.assign(A,{$,$$,state,CACHE,DEFAULT_SUBTABS,esc,addLog,setStatus,toast,roleLabel,roleKey,roleLevel,isMaster,isFullAdmin,isStaffConsole,isAdmin,adminAccount,adminCharacter,adminLookup,adminNotice,adminEventNotice,adminMeter,adminAutomation,adminVisitor,EVENT_NOTICE_TYPES,eventNoticeTypeLabel,todayDateInputValue,action,notifyBannerAssetsUpdated});
 })(window);

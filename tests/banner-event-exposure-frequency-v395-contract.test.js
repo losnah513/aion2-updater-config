@@ -20,7 +20,7 @@ for(const token of [
 ])assert.ok(migration.includes(token),`frequency migration token missing: ${token}`);
 
 assert.ok(edge.includes('V = "2.6"'),'Edge API version must be 2.6');
-assert.ok(edge.includes('DB = "411"'),'Edge DB contract must be 411');
+assert.ok(edge.includes('DB = "412"'),'Edge DB contract must be 412');
 assert.ok(edge.includes('rpc("kinojo_banner_manifest_v409"'),'Edge must read the eventless automatic-pool manifest built on global-event rotation');
 assert.ok(edge.includes('"BASE_X1_5_X2" ? "BASE_X1_5_X2" : "BASE"'),'public frequency contract normalization missing');
 

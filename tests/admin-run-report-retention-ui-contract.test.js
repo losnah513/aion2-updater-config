@@ -18,7 +18,7 @@ for (const html of [desktop, mobile]) {
     '<option value="5">최근 5건</option>',
     '<option value="10">최근 10건</option>',
     '7일간 보관합니다.',
-    'admin.js?cache=2026082801',
+    'admin.js?cache=2026082802',
   ]) assert.ok(html.includes(token), `run-report history UI contract missing: ${token}`);
 }
 

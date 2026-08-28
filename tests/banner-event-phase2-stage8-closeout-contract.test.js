@@ -65,6 +65,7 @@ for(const token of [
 for(const token of [
   'node tests/banner-stage7-random-event-workspace-contract.test.js',
   'node tests/banner-event-phase2-stage8-closeout-contract.test.js',
+  'node tests/banner-phase2-post-stabilization-contract.test.js',
   'for viewport in 1440,1200 768,1024 390,844',
   '"admin/js/admin-banner-auto-pool.js"',
 ])assert.ok(verify.includes(token),`missing Stage 8 CI/readback gate: ${token}`);

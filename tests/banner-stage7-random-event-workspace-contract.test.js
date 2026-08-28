@@ -54,6 +54,6 @@ for(const token of [
   "s.slot_code not in ('LEFT','RIGHT')",
 ])assert.ok(migration.includes(token),`missing DB411 random-event contract: ${token}`);
 assert.equal(migration.includes("'HOF'=any(v_pages) and 'RIGHT'=any(v_slots)"),false,'HOF + RIGHT must be accepted; the manifest naturally omits unsupported HOF RIGHT');
-assert.ok(edge.includes('V = "2.6"')&&edge.includes('DB = "411"'),'Edge health contract must advertise the DB411 follow-up');
+assert.ok(edge.includes('V = "2.6"')&&edge.includes('DB = "412"'),'Edge health contract must advertise the DB412 stabilization');
 
 console.log('PASS banner stage-7 contextual event and random-event workspace contract');

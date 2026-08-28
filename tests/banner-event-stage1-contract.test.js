@@ -40,7 +40,7 @@ assert.equal(
 
 for (const token of [
   'V = "2.6"',
-  'DB = "411"',
+  'DB = "412"',
   'EVENT = "407"',
   'UPLOAD = "403"',
   'kinojo_banner_asset_register_storage_v403',
