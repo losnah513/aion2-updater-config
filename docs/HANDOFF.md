@@ -6,7 +6,7 @@
 
 - GitHub: `losnah513/aion2-updater-config`
 - 운영 브랜치: `main`
-- 배너 이미지 관리 2차 8단계 완료 기준: PR `#290`, 진행도 `49/49`, 관리자 cache `2026082801`, Edge `kinojo-banner-media` v25(API 2.6 / DB 411 / Upload 403 / Event 407)
+- 배너 이미지 관리 2차 완료·운영 후속 안정화 기준: PR `#290` + `#295`, 진행도 `49/49`, 관리자 cache `2026082802`, Edge `kinojo-banner-media` v26(API 2.6 / DB 412 / Upload 403 / Event 407)
 - 내 정보 E-1 제품 운영 commit: `640b7eebcef1c13b0516fe2cd020df870bc23752` (PR `#194`)
 - 내 정보 후속 A-1~E-2: 12/12 완료
 - My Info / 관리자 이미지 모달 추가 UI 후속: PR `#197` 구현·배포·동기화 기준 CLOSED · 수동 실브라우저 sanity check는 post-close 보류
@@ -412,6 +412,18 @@
 - Open Graph·Twitter 메타데이터와 정적 fallback `src`는 유지하고, JavaScript 비활성 환경은 `noscript` 규칙으로 fallback을 계속 표시한다. Server/DB/Edge/Storage와 게시 이벤트 데이터는 변경하지 않는다.
 - 전용 first-paint 계약과 PC live E2E를 추가하고 기존 모바일 live E2E의 잘못된 `fallback first paint` 기대를 `hidden pending → Server image` 계약으로 교체했다. Manifest 응답을 2.5초 지연한 실제 Chrome에서 기존 이미지는 숨김, 여름 이미지 설치 뒤 공개를 확인했고 전체 Node 계약 `62/62`를 통과했다.
 - Banner Runtime workflow는 PC·모바일 HOME 변경과 신규 계약을 직접 감시하며 Pages 배포 뒤 `home.html`·`m/index.html` exact readback, PC·모바일 delayed Manifest Chrome 검증을 수행한다.
+
+## 배너 이미지 관리 2차 · 12회차 운영 후속 안정화 — 캐릭터 연결·업로드 즉시 동기화 · 2026-08-28
+
+- 이미지 라이브러리의 캐릭터 연결·대표 이미지·랜덤 이벤트 저장이 `BANNER_IDEMPOTENCY_ACTION_INVALID`로 막힌 원인은 DB407에서 ledger CHECK만 확장하고 `kinojo_banner_idempotency_claim_v402`의 action allowlist는 구 DB402 상태로 남긴 계약 불일치였다. 캐시 문제가 아니며 Edge v25가 새 action을 정상 전송해도 DB gate가 실제 mutation 전에 거절했다.
+- repo migration `20260828043859_banner_phase2_post_stabilization_v412.sql`과 운영 migration `20260828045730 / banner_phase2_post_stabilization_v412`가 현재 Edge mutation 전체를 allowlist에 동기화했다. 함수 서명·`CLAIMED/REPLAY/IN_PROGRESS` 재시도 계약·고정 search path는 유지하고 `PUBLIC/anon/authenticated` 실행 권한은 차단, `service_role`만 허용한다.
+- 운영 `kinojo-banner-media`는 v26 ACTIVE이며 배포 source가 GitHub source와 exact 일치한다. health는 API `2.6`, DB `412`, Event `407`, Upload `403`, `verifyJwt=false` + 기존 KWS MASTER custom auth 경계를 반환한다.
+- 이벤트 작성 업로드, legacy 메인 업로드, legacy 사이드 업로드가 성공하면 최신 자산 전체 스냅샷을 `kinojo:banner-assets-updated`로 알린다. 이미지 라이브러리는 자기 저장 알림의 재귀를 무시하고 다른 업로드 스냅샷을 즉시 렌더하므로 페이지 새로고침이나 추가 `asset-library` 요청 없이 새 카드가 표시된다.
+- 관리자 loader·PC·모바일 진입점 cache는 `2026082802`다. 신규 계약은 Edge mutation 집합과 DB412 allowlist의 전수 일치, service-role-only ACL, 세 업로드 경로와 라이브러리 구독, cache·CI 포함을 보호한다.
+- PR `#295`를 merge commit `f37aaf8ab631c38e0c24a8ea73229b466a3f16c5`로 병합했다. 로컬 Node 계약 `64/64`, 관리자 JavaScript 문법, Chrome E2E와 PR의 Banner Admin/Runtime/Character 검증이 통과했다. main push는 Pages, Banner Admin exact byte readback, Manifest ETag, PC SIDE·모바일 MAIN live Chrome까지 통과했다.
+- 운영 advisor의 이번 배너 변경 관련 신규 WARN/ERROR는 없다. 표시된 배너 항목은 기존 default-deny RLS의 정책 없음 INFO와 기존 index INFO이며 이번 함수 allowlist 변경 범위에서 표·정책·index를 임의 변경하지 않았다.
+- 로그인된 운영 화면에서 대상 `남 · 남_free_2`와 `남 · 지켈 · 마족 · 마도성 · ID 16`을 재확인했다. 최종 연결 클릭 시점에 기존 MASTER 세션이 만료되어 mutation 결과 확인은 로그인 후 재시도 대상으로 남겼으며, 운영 함수 정의·ACL·Edge source·health와 자동 계약에서는 구 action 차단이 제거된 것을 확인했다.
+- 롤백은 Web에서 PR `#295`를 되돌리고, Edge는 v25 source로 재배포하며, DB는 직전 allowlist 함수 정의를 별도 forward migration으로 복원한다. 이미 연결·저장된 운영 데이터는 자동 삭제하지 않는다.
 
 ## My Info 2차 · 2단계 회원 제작 요청 UI · 2026-08-26
 
