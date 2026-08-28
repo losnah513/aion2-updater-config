@@ -86,6 +86,17 @@
 - 제품 PR `#308`, main squash `0a114f7be74d9a9277de8a4175e6747a4253a4ce`, Pages run `33157778590`이 기준이다. 운영 활성 팀은 0개로 확인되어 검수용 팀을 만들거나 운영 데이터를 변경하지 않았다.
 - 다음 작업은 Stage 5의 `5-1 로그인 사용자별 모집 가능 포스 요약`이다. 기존 알림의 Server summary/polling 경계를 재사용하되 중복 Queue와 이미 참여한 포스 알림을 차단한다.
 
+## 성역관리 Stage 5 완료 · 알림·월간 달력·운영 편집·해산 · 2026-08-28
+
+- 운영 계약은 Edge `sanctuary-management` v13, API `1.5`, DB `437`이다. Migration `20260828104017_sanctuary_management_stage5_complete_v437.sql`과 FK 성능 가드 `20260828105308_sanctuary_management_stage5_performance_guard_v437.sql`이 운영 적용됐다.
+- 모집 알림은 별도 polling을 만들지 않는다. 공통 `notificationSummary`의 기존 30초 주기 한 번 안에서 기존 관리자 지원 알림과 DB437 모집 요약을 함께 읽으며, `sessionStorage` event key로 같은 웹 세션에서 팀별 한 번만 그룹 카드로 표시한다.
+- DB437 모집 요약은 `kinojo_sm_support_characters_v436`의 실제 `availableForceIds`를 재사용한다. 이미 같은 포스에 참여·승인 대기 중이거나 정원 마감·일정 충돌·소유 캐릭터 없음 상태인 이용자에게는 해당 포스를 반환하지 않는다. 알림 이동은 성역/팀/포스 식별자를 포함해 지원 모달까지 연결한다.
+- 일정 이력은 `private.sanctuary_management_schedule_versions_v437`에 유효 기간별로 보존한다. 이번 일정만은 MOVE/CANCEL 예외, 이후 일정은 version split, 전체 반복은 전체 교체/종료로 처리하고 저장 직전에 향후 366일 회차를 기준으로 같은 이용자·본캐 루트의 일정 충돌을 다시 확인한다.
+- 월 화면은 Server month payload 하나로 수요일~화요일 7열 달력을 만들며 팀 카드의 가까운 일정도 같은 payload를 사용한다. 달력 항목을 누르면 권한 보유자는 해당 회차 일정 관리창을 열 수 있다.
+- 팀 해산은 native confirm을 사용하지 않는다. 먼저 Server archive preview로 향후 366일 일정 수·승인 대기 지원 수·이력 보존 여부를 보여주고, 생성자 또는 관리 권한만 해산 명령을 실행한다. 기존 DB436 원자 명령이 팀 ARCHIVED, 일정 STOPPED, 대기 지원 CANCELLED, lease 해제를 한 트랜잭션으로 처리하고 편성·감사 이력은 삭제하지 않는다.
+- PC 1440×900, 모바일 390×844, 소형 모바일 320×568에서 document/modal 가로 overflow 0을 확인했다. 소형 화면의 일정 본문은 숨김 세로 scrollbar와 하단 fade를 쓰고 버튼 영역은 유지한다. Escape 포커스 복귀, Tab 순환, 콘솔 error/warning 0을 확인했다.
+- 전체 Node 계약은 `75/75`를 통과했다. DB437 공개 RPC는 `PUBLIC/anon/authenticated` EXECUTE false, `service_role` true다. advisor의 신규 FK 미인덱스는 후속 가드로 해소했으며 private service-only 테이블의 RLS-no-policy INFO는 의도된 직접 접근 차단이다.
+
 ## 예방적 확장성 SQL428 · 2026-08-28
 
 - Meter 공개 통계/내 비교의 기본 기간은 Server `WEEK`이며 DAY/WEEK/MONTH 시간 경계가 raw combat 조회에 적용된다. `ALL`은 명시적인 사용자 선택지다. 2026-08-28 기준 records 333, participants 1,753, 적격 0이며 집계 전환 Gate 미만이므로 기간·보존·집계 구조를 변경하지 않았다.

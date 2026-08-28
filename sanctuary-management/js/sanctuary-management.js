@@ -1,14 +1,17 @@
 (function(){
   'use strict';
 
-  const API_VERSION=1.4;
-  const SCHEMA_VERSION=436;
+  const API_VERSION=1.5;
+  const SCHEMA_VERSION=437;
   let requestSequence=0;
   let monthRequestSequence=0;
   let bootstrapData=null;
   let monthData=null;
   let selectedSanctuary='';
   let selectedMonth=new Date(Date.now()+9*60*60*1000).toISOString().slice(0,7);
+  let operationLayer=null;
+  let operationOpener=null;
+  let deepLinkApplied=false;
 
   const byId=id=>document.getElementById(id);
   const value=value=>String(value??'').trim();
@@ -155,7 +158,9 @@
         characters:Array.isArray(item.supportCharacters.characters)?item.supportCharacters.characters.map(validateSupportCharacter):[]
       }:{ownerResolved:false,code:'MISSING',candidateCount:0,characters:[]},
       supportBatches:Array.isArray(item.supportBatches)?item.supportBatches.map(validateSupportBatch):[],
-      canEdit:item.canEdit===true
+      canEdit:item.canEdit===true,
+      canArchive:item.canArchive===true,
+      scheduleEditScopes:Array.isArray(item.scheduleEditScopes)?item.scheduleEditScopes.map(value):[]
     });
     const slotCount=forces.reduce((sum,force)=>sum+force.capacity,0);
     const occupiedCount=forces.reduce((sum,force)=>sum+force.occupiedCount,0);
@@ -231,6 +236,13 @@
       if(!api||typeof api.runSanctuaryManagementCommand!=='function')throw new Error('성역 관리 Server 명령 어댑터를 불러오지 못했습니다.');
       const result=await api.runSanctuaryManagementCommand(command,payload,expectedRevision,requestKey);
       if(!result||typeof result!=='object'||result.ok!==true)throw new Error(value(result?.message)||'성역 팀 초안을 저장하지 못했습니다.');
+      return result;
+    },
+    async archivePreview(teamId){
+      const api=window.KinojoSupabase;
+      if(!api||typeof api.getSanctuaryManagementArchivePreview!=='function')throw new Error('팀 해산 영향 Server 어댑터를 불러오지 못했습니다.');
+      const result=await api.getSanctuaryManagementArchivePreview(Number(teamId));
+      if(!result||result.ok!==true||Number(result.schemaVersion)!==SCHEMA_VERSION)throw new Error(value(result?.message)||'팀 해산 영향을 확인하지 못했습니다.');
       return result;
     },
     async searchCharacter(teamId,query){
@@ -344,6 +356,11 @@
     return ({DRAFT:'DRAFT',ACTIVE:'운영 중',FULL:'모집 완료',ARCHIVED:'보관됨'})[status]||status||'상태 확인 중';
   }
   function scheduleLabel(team){
+    const occurrence=(monthData?.occurrences||[]).filter(item=>Number(item.teamId)===Number(team?.teamId)).sort((left,right)=>value(left.startAt).localeCompare(value(right.startAt)))[0];
+    if(occurrence){
+      const time=new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(occurrence.startAt));
+      return value(occurrence.occurrenceDate)+' '+time+' · '+(integer(occurrence.durationMinutes)||30)+'분';
+    }
     const schedule=team?.schedule||{};
     const time=value(schedule.startsAt).slice(0,5)||'시간 미정';
     const duration=integer(schedule.durationMinutes)||30;
@@ -406,7 +423,8 @@
     if(pending){const pendingBadge=document.createElement('span');pendingBadge.className='sanctuary-management-team-badge is-pending';pendingBadge.textContent='승인 대기 '+pending;headActions.appendChild(pendingBadge);}
     if(team.canEdit&&value(team.status)!=='ARCHIVED'){
       const edit=document.createElement('button');edit.type='button';edit.className='kinojo-btn secondary';edit.textContent=value(team.status)==='DRAFT'?'초안 계속 작성':'편집';edit.dataset.sanctuaryEditTeam=value(team.teamId);edit.disabled=!bootstrapData?.writeEnabled;headActions.appendChild(edit);
-      const archive=document.createElement('button');archive.type='button';archive.className='kinojo-btn danger sanctuary-management-archive-team';archive.textContent='팀 해산';archive.dataset.sanctuaryArchiveTeam=value(team.teamId);archive.disabled=!bootstrapData?.writeEnabled;headActions.appendChild(archive);
+      if(['ACTIVE','FULL'].includes(value(team.status))){const schedule=document.createElement('button');schedule.type='button';schedule.className='kinojo-btn secondary';schedule.textContent='일정 관리';schedule.dataset.sanctuaryScheduleTeam=value(team.teamId);schedule.disabled=!bootstrapData?.writeEnabled;headActions.appendChild(schedule);}
+      if(team.canArchive){const archive=document.createElement('button');archive.type='button';archive.className='kinojo-btn danger sanctuary-management-archive-team';archive.textContent='팀 해산';archive.dataset.sanctuaryArchiveTeam=value(team.teamId);archive.disabled=!bootstrapData?.writeEnabled;headActions.appendChild(archive);}
     }
     head.append(titleWrap,headActions);
     const meta=document.createElement('div');meta.className='sanctuary-management-team-meta';
@@ -447,24 +465,103 @@
     root.classList.add('has-calendar');
     if(!monthData){root.innerHTML='<strong>월간 일정을 불러오는 중입니다.</strong>';return;}
     const occurrences=monthData.occurrences.filter(item=>String(item.sanctuaryId)===String(sanctuaryForSelection()?.id));
-    const weeks=monthData.weekStarts.map(weekStart=>{
-      const items=occurrences.filter(item=>value(item.weekStart)===weekStart).map(item=>{
-        const starts=value(item.startAt);const time=(starts.match(/T(\d{2}:\d{2})/)||starts.match(/ (\d{2}:\d{2})/))?.[1]||starts.slice(11,16);
-        return '<li><time datetime="'+escapeHtml(starts)+'">'+escapeHtml(value(item.occurrenceDate).slice(5)+' '+time)+'</time><span>'+escapeHtml(item.teamTitle)+'</span></li>';
+    const start=new Date(monthData.rangeStart+'T00:00:00Z');
+    const end=new Date(monthData.rangeEnd+'T00:00:00Z');
+    const days=[];
+    for(let cursor=new Date(start);cursor<=end;cursor.setUTCDate(cursor.getUTCDate()+1))days.push(cursor.toISOString().slice(0,10));
+    const cells=days.map(day=>{
+      const outside=!day.startsWith(monthData.month);
+      const items=occurrences.filter(item=>value(item.occurrenceDate)===day).map(item=>{
+        const starts=value(item.startAt);const time=new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(starts));
+        return '<button type="button" data-sanctuary-calendar-team="'+escapeHtml(item.teamId)+'" data-sanctuary-calendar-date="'+escapeHtml(day)+'" title="'+escapeHtml(item.teamTitle+' · '+time)+'"><time datetime="'+escapeHtml(starts)+'">'+escapeHtml(time)+'</time><span>'+escapeHtml(item.teamTitle)+'</span></button>';
       }).join('');
-      return '<section class="sanctuary-management-calendar-week"><strong>'+escapeHtml(weekStart.slice(5))+' 수요일 시작</strong>'+(items?'<ul>'+items+'</ul>':'<p>등록 일정 없음</p>')+'</section>';
+      return '<div class="sanctuary-management-calendar-day'+(outside?' is-outside':'')+'" data-calendar-date="'+escapeHtml(day)+'"><strong>'+Number(day.slice(8))+'</strong><div>'+items+'</div></div>';
     }).join('');
-    root.innerHTML='<div class="sanctuary-management-calendar-controls"><button type="button" data-sanctuary-month-shift="-1" aria-label="이전 달">‹</button><strong>'+escapeHtml(monthData.month)+'</strong><button type="button" data-sanctuary-month-shift="1" aria-label="다음 달">›</button></div><div class="sanctuary-management-calendar-scroll">'+weeks+'</div>';
+    root.innerHTML='<div class="sanctuary-management-calendar-controls"><button type="button" data-sanctuary-month-shift="-1" aria-label="이전 달">‹</button><strong>'+escapeHtml(monthData.month)+'</strong><button type="button" data-sanctuary-month-shift="1" aria-label="다음 달">›</button></div>'
+      +'<div class="sanctuary-management-calendar-weekdays" aria-hidden="true"><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span><span>월</span><span>화</span></div>'
+      +'<div class="sanctuary-management-calendar-grid" aria-label="'+escapeHtml(monthData.month)+' 수요일 시작 월간 일정">'+cells+'</div>';
   }
 
   async function loadMonth(month=selectedMonth){
     const sequence=++monthRequestSequence;selectedMonth=month;monthData=null;renderMonth();
-    try{const data=await ServerAdapter.month(month);if(sequence!==monthRequestSequence)return;monthData=data;renderMonth();}
+    try{const data=await ServerAdapter.month(month);if(sequence!==monthRequestSequence)return;monthData=data;renderMonth();if(bootstrapData)renderTeams();}
     catch(error){if(sequence!==monthRequestSequence)return;const root=byId('sanctuaryManagementScheduleState');if(root)root.innerHTML='<strong>월간 일정을 불러오지 못했습니다.</strong><span>'+escapeHtml(value(error?.message))+'</span>';}
   }
 
   function shiftedMonth(delta){
     const [year,month]=selectedMonth.split('-').map(Number);const date=new Date(Date.UTC(year,month-1+delta,1));return date.toISOString().slice(0,7);
+  }
+
+  function ensureOperationLayer(){
+    if(operationLayer&&document.body.contains(operationLayer))return operationLayer;
+    operationLayer=document.createElement('section');operationLayer.className='sanctuary-management-operation-layer';operationLayer.hidden=true;operationLayer.setAttribute('aria-hidden','true');
+    operationLayer.addEventListener('click',event=>{if(event.target.closest('[data-operation-close]'))closeOperationLayer();});
+    operationLayer.addEventListener('keydown',event=>{
+      if(event.key==='Escape'){event.preventDefault();closeOperationLayer();return;}
+      if(event.key!=='Tab')return;const items=Array.from(operationLayer.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled])'));if(!items.length)return;
+      const first=items[0],last=items.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+    });
+    document.body.appendChild(operationLayer);return operationLayer;
+  }
+
+  function openOperationLayer(opener,markup){
+    const layer=ensureOperationLayer();operationOpener=opener||document.activeElement;layer.innerHTML='<div class="sanctuary-management-operation-backdrop" data-operation-close></div>'+markup;layer.hidden=false;layer.setAttribute('aria-hidden','false');document.body.classList.add('sanctuary-management-operation-open');
+    requestAnimationFrame(()=>layer.querySelector('[role="dialog"]')?.focus());
+  }
+
+  function closeOperationLayer(){
+    if(!operationLayer)return;operationLayer.hidden=true;operationLayer.setAttribute('aria-hidden','true');operationLayer.replaceChildren();document.body.classList.remove('sanctuary-management-operation-open');
+    const target=operationOpener;operationOpener=null;try{target?.focus({preventScroll:true});}catch(_err){target?.focus?.();}
+  }
+
+  function scheduleOccurrenceForTeam(team){
+    const items=(monthData?.occurrences||[]).filter(item=>Number(item.teamId)===Number(team.teamId)).sort((a,b)=>value(a.startAt).localeCompare(value(b.startAt)));
+    return items.find(item=>value(item.occurrenceDate)>=new Date(Date.now()+9*60*60*1000).toISOString().slice(0,10))||items[0]||null;
+  }
+
+  function weekdayButtons(selected){
+    const labels=[[3,'수'],[4,'목'],[5,'금'],[6,'토'],[7,'일'],[1,'월'],[2,'화']];
+    return labels.map(([day,label])=>'<label><input type="checkbox" name="weekdays" value="'+day+'"'+(selected.includes(day)?' checked':'')+'><span>'+label+'</span></label>').join('');
+  }
+
+  function openScheduleOperation(team,opener,occurrenceDate=''){
+    const schedule=team.schedule||{};const occurrence=scheduleOccurrenceForTeam(team);const baseDate=occurrenceDate||value(occurrence?.occurrenceDate)||value(schedule.startsOn);
+    const scopes=(team.scheduleEditScopes||[]).filter(scope=>['OCCURRENCE','FUTURE','ALL'].includes(scope));
+    const scopeLabels={OCCURRENCE:'이번 일정만',FUTURE:'이후 일정',ALL:'전체 반복'};
+    openOperationLayer(opener,'<form class="sanctuary-management-operation-dialog" role="dialog" aria-modal="true" aria-labelledby="sanctuaryScheduleOperationTitle" tabindex="-1" data-schedule-operation>'
+      +'<header><span>SCHEDULE OPERATION</span><h2 id="sanctuaryScheduleOperationTitle">'+escapeHtml(team.title)+' 일정 관리</h2><p>팀 아래 모든 포스에 같은 변경 범위가 적용되며 저장 전 일정 충돌을 다시 확인합니다.</p></header>'
+      +'<div class="sanctuary-management-operation-body">'
+        +'<fieldset><legend>변경 범위</legend><div class="sanctuary-management-operation-options">'+scopes.map((scope,index)=>'<label><input type="radio" name="scope" value="'+scope+'"'+(index===0?' checked':'')+'><span>'+scopeLabels[scope]+'</span></label>').join('')+'</div></fieldset>'
+        +'<div class="sanctuary-management-operation-fields"><label><span>기준/이동 날짜</span><input type="date" name="startsOn" required value="'+escapeHtml(baseDate)+'"></label><label><span>시작 시간</span><input type="time" name="startsAt" step="1800" required value="'+escapeHtml(value(schedule.startsAt).slice(0,5)||'21:00')+'"></label><label><span>진행 시간</span><select name="durationMinutes">'+Array.from({length:24},(_,index)=>(index+1)*30).map(minutes=>'<option value="'+minutes+'"'+(minutes===integer(schedule.durationMinutes)?' selected':'')+'>'+minutes+'분</option>').join('')+'</select></label></div>'
+        +'<fieldset><legend>반복 요일</legend><div class="sanctuary-management-operation-weekdays">'+weekdayButtons(Array.isArray(schedule.weekdays)?schedule.weekdays.map(Number):[])+'</div></fieldset>'
+        +'<p class="sanctuary-management-operation-status" data-operation-status aria-live="polite">이번 일정·이후 일정·전체 반복 중 하나를 선택하세요.</p>'
+      +'</div><footer><button type="button" class="kinojo-btn secondary" data-operation-close>닫기</button><button type="button" class="kinojo-btn danger" data-schedule-stop>선택 범위 종료</button><button type="submit" class="kinojo-btn">변경 저장</button></footer></form>');
+    const form=operationLayer.querySelector('[data-schedule-operation]');
+    async function submit(operation){
+      const data=new FormData(form);const scope=value(data.get('scope'));const startsOn=value(data.get('startsOn'));const status=form.querySelector('[data-operation-status]');
+      const schedulePayload={kind:value(schedule.kind)==='ONCE'?'ONCE':'WEEKLY',startsOn,startsAt:value(data.get('startsAt')),durationMinutes:Number(data.get('durationMinutes')),weekdays:Array.from(form.querySelectorAll('input[name="weekdays"]:checked')).map(input=>Number(input.value))};
+      if(schedulePayload.kind==='ONCE')schedulePayload.weekdays=[];
+      form.querySelectorAll('button,input,select').forEach(control=>control.disabled=true);status.textContent=operation==='UPDATE'?'Server에서 일정 충돌을 확인하고 저장 중입니다.':'선택한 범위의 향후 일정을 종료하고 있습니다.';
+      try{await ServerAdapter.command('EDIT_SCHEDULE',{teamId:Number(team.teamId),scope,operation,occurrenceDate:baseDate,schedule:schedulePayload},Number(team.revision),'sm-schedule-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10));closeOperationLayer();await load();window.KinojoToast?.success?.(operation==='UPDATE'?'일정 변경을 저장했습니다.':'선택한 범위의 일정을 종료했습니다.');}
+      catch(error){form.querySelectorAll('button,input,select').forEach(control=>control.disabled=false);status.textContent=value(error?.message)||'일정을 변경하지 못했습니다.';status.classList.add('is-error');}
+    }
+    form.addEventListener('submit',event=>{event.preventDefault();submit('UPDATE');});
+    form.querySelector('[data-schedule-stop]').addEventListener('click',()=>submit('STOP'));
+  }
+
+  async function openArchiveOperation(team,opener){
+    openOperationLayer(opener,'<section class="sanctuary-management-operation-dialog is-archive" role="dialog" aria-modal="true" aria-labelledby="sanctuaryArchiveTitle" tabindex="-1"><header><span>ARCHIVE TEAM</span><h2 id="sanctuaryArchiveTitle">팀 해산 영향 확인</h2><p>Server에서 종료될 일정과 지원 요청을 확인하고 있습니다.</p></header><div class="sanctuary-management-operation-loading" aria-live="polite">영향 범위 불러오는 중…</div><footer><button type="button" class="kinojo-btn secondary" data-operation-close>닫기</button></footer></section>');
+    try{
+      const preview=await ServerAdapter.archivePreview(team.teamId);if(operationLayer.hidden)return;
+      const dialog=operationLayer.querySelector('[role="dialog"]');
+      dialog.innerHTML='<header><span>ARCHIVE TEAM</span><h2 id="sanctuaryArchiveTitle">'+escapeHtml(preview.teamTitle)+' 팀을 해산할까요?</h2><p>'+escapeHtml(preview.message)+'</p></header>'
+        +'<div class="sanctuary-management-archive-impact"><article><strong>'+escapeHtml(preview.futureOccurrenceCount)+'</strong><span>향후 '+escapeHtml(preview.futureWindowDays)+'일 일정</span></article><article><strong>'+escapeHtml(preview.pendingSupportCount)+'</strong><span>승인 대기 지원</span></article><article><strong>보존</strong><span>편성·감사 이력</span></article></div>'
+        +'<label class="sanctuary-management-archive-reason"><span>해산 사유</span><input maxlength="240" value="운영 종료" data-archive-reason></label>'
+        +'<p class="sanctuary-management-operation-status" data-operation-status aria-live="polite">해산 후에는 모집 알림과 향후 일정이 즉시 종료됩니다.</p>'
+        +'<footer><button type="button" class="kinojo-btn secondary" data-operation-close>취소</button><button type="button" class="kinojo-btn danger" data-archive-confirm>팀 해산</button></footer>';
+      dialog.querySelector('[data-archive-confirm]').addEventListener('click',async event=>{const button=event.currentTarget;const status=dialog.querySelector('[data-operation-status]');button.disabled=true;status.textContent='팀과 향후 일정·지원 대기를 Server에서 종료하고 있습니다.';try{await ServerAdapter.command('ARCHIVE_TEAM',{teamId:Number(team.teamId),reason:value(dialog.querySelector('[data-archive-reason]').value)||'운영 종료'},Number(team.revision),'sm-archive-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10));closeOperationLayer();await load();window.KinojoToast?.success?.('팀을 해산했습니다. 편성과 감사 이력은 보존됩니다.');}catch(error){button.disabled=false;status.textContent=value(error?.message)||'팀을 해산하지 못했습니다.';status.classList.add('is-error');}});
+      dialog.querySelector('[data-archive-reason]')?.focus();
+    }catch(error){const loading=operationLayer.querySelector('.sanctuary-management-operation-loading');if(loading)loading.textContent=value(error?.message)||'팀 해산 영향을 불러오지 못했습니다.';}
   }
 
   function selectedDraftTeam(teamId){
@@ -553,8 +650,8 @@
     await load();return result;
   }
 
-  async function archiveTeam(teamId,expectedRevision,requestKey){
-    const result=await ServerAdapter.command('ARCHIVE_TEAM',{teamId:Number(teamId),reason:'운영 종료'},Number(expectedRevision)||null,value(requestKey));
+  async function archiveTeam(teamId,expectedRevision,requestKey,reason='운영 종료'){
+    const result=await ServerAdapter.command('ARCHIVE_TEAM',{teamId:Number(teamId),reason:value(reason)||'운영 종료'},Number(expectedRevision)||null,value(requestKey));
     await load();return result;
   }
 
@@ -584,6 +681,13 @@
     snapshot(){return bootstrapData;},findTeam:selectedDraftTeam,submitSupport,decideSupport,cancelSupport,reload:load
   });
 
+  function applyDeepLink(){
+    if(deepLinkApplied||!bootstrapData)return;const params=new URLSearchParams(location.search);const teamId=Number(params.get('team')||0);if(!teamId)return;
+    const team=selectedDraftTeam(teamId);if(!team)return;deepLinkApplied=true;
+    const card=byId('sanctuaryManagementTeamList')?.querySelector('[data-sanctuary-team="'+CSS.escape(String(teamId))+'"]');card?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});card?.classList.add('is-deep-linked');setTimeout(()=>card?.classList.remove('is-deep-linked'),2400);
+    if(params.get('support')==='1'){const forceId=Number(params.get('force')||team.forces?.find(force=>force.canSupport)?.forceId||0);const trigger=card?.querySelector('[data-sanctuary-support-force="'+CSS.escape(String(forceId))+'"]');if(trigger)setTimeout(()=>window.KinojoSanctuaryManagementSupportUI?.open?.(team,forceId,trigger),180);}
+  }
+
   function renderBootstrap(data){
     bootstrapData=data;
     selectedSanctuary=resolveInitialSelection(data);
@@ -602,6 +706,7 @@
       setAccess('rollout','Server 연결은 완료됐고 실제 팀 읽기는 준비 중입니다.','신규 read/write 플래그는 그대로 비활성 상태이며 기존 성역·스케줄·시트 데이터는 변경하지 않습니다.');
     }
     if(data.serverTime)window.dispatchEvent(new CustomEvent('kinojo:page-time',{detail:{value:data.serverTime,label:'Server'}}));
+    requestAnimationFrame(applyDeepLink);
   }
 
   async function load(){
@@ -652,15 +757,19 @@
       if(support){const team=selectedDraftTeam(support.dataset.sanctuarySupportTeam);if(team)window.KinojoSanctuaryManagementSupportUI?.open?.(team,Number(support.dataset.sanctuarySupportForce),support);return;}
       const edit=event.target.closest('[data-sanctuary-edit-team]');
       if(edit&&!edit.disabled){const team=selectedDraftTeam(edit.dataset.sanctuaryEditTeam);if(team)window.KinojoSanctuaryManagementDraftUI?.openDraft?.(team,edit);return;}
+      const schedule=event.target.closest('[data-sanctuary-schedule-team]');
+      if(schedule&&!schedule.disabled){const team=selectedDraftTeam(schedule.dataset.sanctuaryScheduleTeam);if(team)openScheduleOperation(team,schedule);return;}
       const archive=event.target.closest('[data-sanctuary-archive-team]');
       if(!archive||archive.disabled)return;
       const team=selectedDraftTeam(archive.dataset.sanctuaryArchiveTeam);if(!team)return;
-      if(!window.confirm('['+value(team.title)+'] 팀을 해산할까요? 해산하면 일정과 지원 대기가 종료됩니다.'))return;
-      archive.disabled=true;
-      archiveTeam(team.teamId,team.revision,'sm-archive-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10)).then(()=>window.KinojoToast?.success?.('팀을 해산했습니다.')).catch(error=>{archive.disabled=false;window.KinojoToast?.show?.(value(error?.message)||'팀을 해산하지 못했습니다.');});
+      openArchiveOperation(team,archive);
     });
     byId('sanctuaryManagementScheduleState')?.addEventListener('click',event=>{
       const button=event.target.closest('[data-sanctuary-month-shift]');if(!button)return;loadMonth(shiftedMonth(Number(button.dataset.sanctuaryMonthShift)||0));
+    });
+    byId('sanctuaryManagementScheduleState')?.addEventListener('click',event=>{
+      const item=event.target.closest('[data-sanctuary-calendar-team]');if(!item)return;const team=selectedDraftTeam(item.dataset.sanctuaryCalendarTeam);if(!team)return;
+      const card=byId('sanctuaryManagementTeamList')?.querySelector('[data-sanctuary-team="'+CSS.escape(String(team.teamId))+'"]');card?.scrollIntoView({behavior:'smooth',block:'center'});if(team.canEdit)openScheduleOperation(team,item,value(item.dataset.sanctuaryCalendarDate));
     });
     window.addEventListener('kinojo:auth-changed',load);
     load();

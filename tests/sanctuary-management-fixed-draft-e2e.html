@@ -61,6 +61,8 @@
         team.occupiedCount=team.forces.reduce((sum,force)=>sum+force.occupiedCount,0);
         team.vacancyCount=team.slotCount-team.occupiedCount;
         team.canEdit=true;
+        team.canArchive=true;
+        team.scheduleEditScopes=team.schedule?.kind==='WEEKLY'?['OCCURRENCE','FUTURE','ALL']:['OCCURRENCE','ALL'];
         team.supportCharacters=team.supportCharacters||{ownerResolved:true,code:'NOT_OPEN',candidateCount:0,characters:[]};
         team.supportBatches=team.supportBatches||[];
         return team;
@@ -72,7 +74,7 @@
         schedule:{scheduleId:91,kind:'WEEKLY',startsOn:'2026-08-27',weekdays:[4],startsAt:'21:00',durationMinutes:60,status:'ACTIVE',revision:2},
         forces:[makeForce(1)]
       },{
-        teamId:78,sanctuaryId:2,title:'2팀 토요일 22시',activity:'성역2 진행',mode:'PARTICIPATION',joinPolicy:'APPROVAL',status:'ACTIVE',revision:2,canEdit:true,
+        teamId:78,sanctuaryId:1,title:'2팀 토요일 22시',activity:'성역1 참여 모집',mode:'PARTICIPATION',joinPolicy:'APPROVAL',status:'ACTIVE',revision:2,canEdit:true,
         schedule:{scheduleId:92,kind:'WEEKLY',startsOn:'2026-08-29',weekdays:[6],startsAt:'22:00',durationMinutes:90,status:'ACTIVE',revision:1},
         forces:[participationForce],
         supportCharacters:{ownerResolved:true,code:'READY',candidateCount:1,characters:[{characterId:801,mainCharacterId:801,serverId:2,characterName:'지원본캐',serverName:'지켈',className:'치유성',profileImageUrl:'',relation:'MAIN',isMain:true,availableForceIds:[participationForce.forceId],disabledCode:'',disabledMessage:'',conflicts:[]}]},
@@ -88,15 +90,16 @@
       window.KinojoPermissions={canEditSanctuary:()=>true};
       window.KinojoToast={show:message=>{document.body.dataset.toast=message;},success:message=>{document.body.dataset.toast=message;}};
       window.KinojoSupabase={
-        async getSanctuaryManagementBootstrap(){return {apiVersion:1.4,schemaVersion:436,serverTime:new Date().toISOString(),readEnabled:true,writeEnabled:true,actor:{memberId:7,canManageAll:true},sanctuaries,teams:structuredClone(teams)};},
-        async getSanctuaryManagementMonth(month){return {ok:true,apiVersion:1.4,schemaVersion:436,month,weekStartsOn:'WEDNESDAY',rangeStart:month+'-01',rangeEnd:month+'-31',weekStarts:[],occurrences:[]};},
+        async getSanctuaryManagementBootstrap(){return {apiVersion:1.5,schemaVersion:437,serverTime:new Date().toISOString(),readEnabled:true,writeEnabled:true,actor:{memberId:7,canManageAll:true},sanctuaries,teams:structuredClone(teams)};},
+        async getSanctuaryManagementMonth(month){return {ok:true,apiVersion:1.5,schemaVersion:437,month,weekStartsOn:'WEDNESDAY',rangeStart:'2026-07-29',rangeEnd:'2026-09-01',weekStarts:['2026-07-29','2026-08-05','2026-08-12','2026-08-19','2026-08-26'],occurrences:[{occurrenceKey:'sm-78-20260829-2200',scheduleId:92,scheduleRevision:1,teamId:78,teamTitle:'2팀 토요일 22시',sanctuaryId:1,teamMode:'PARTICIPATION',joinPolicy:'APPROVAL',occurrenceDate:'2026-08-29',weekStart:'2026-08-26',startAt:'2026-08-29T13:00:00Z',endAt:'2026-08-29T14:30:00Z',durationMinutes:90,sourceScope:'RULE',canEdit:true}]};},
+        async getSanctuaryManagementArchivePreview(teamId){const team=teams.find(item=>item.teamId===Number(teamId));return {ok:true,schemaVersion:437,teamId:team.teamId,teamTitle:team.title,revision:team.revision,canArchive:true,futureOccurrenceCount:52,futureWindowDays:366,recurringSchedule:true,pendingSupportCount:1,historyPreserved:true,message:'팀 편성·감사 이력은 보존하고 이후 일정과 승인 대기 지원을 종료합니다.'};},
         async runSanctuaryManagementLease(){return {ok:true,lease:{status:'ACTIVE'}};},
         async searchSanctuaryManagementCharacter(teamId,query){
           const normalized=String(query||'').trim().replace(/\[지켈\]$/,'');
           const character=searchableCharacters.find(item=>item.characterName===normalized);
-          if(character)return {ok:true,apiVersion:1.4,schemaVersion:436,source:'CHARACTER_MASTER',teamId,character:structuredClone(character)};
+          if(character)return {ok:true,apiVersion:1.5,schemaVersion:437,source:'CHARACTER_MASTER',teamId,character:structuredClone(character)};
           const candidate=officialCandidates[normalized];
-          if(candidate)return {ok:true,apiVersion:1.4,schemaVersion:436,source:'OFFICIAL',teamId,candidate:structuredClone(candidate)};
+          if(candidate)return {ok:true,apiVersion:1.5,schemaVersion:437,source:'OFFICIAL',teamId,candidate:structuredClone(candidate)};
           throw new Error('정확히 일치하는 캐릭터를 찾지 못했습니다.');
         },
         async registerSanctuaryManagementCharacter(teamId,candidateId,relationType,mainCharacterId){
@@ -104,7 +107,7 @@
           if(!candidate)throw new Error('공식 조회 후보를 다시 선택해 주세요.');
           const character={characterId:700+searchableCharacters.length,serverId:candidate.serverId,serverName:candidate.serverName,characterName:candidate.characterName,className:candidate.className,legionName:candidate.legionName,profileImageUrl:candidate.profileImageUrl,raceId:candidate.raceId,isOperationalLegion:candidate.isOperationalLegion,ownerMemberId:relationType==='GUEST'?0:7,relation:relationType,mainCharacterId:relationType==='ALT'?mainCharacterId:700+searchableCharacters.length};
           searchableCharacters.push(character);
-          return {ok:true,apiVersion:1.4,schemaVersion:436,teamId,character:structuredClone(character)};
+          return {ok:true,apiVersion:1.5,schemaVersion:437,teamId,character:structuredClone(character)};
         },
         async runSanctuaryManagementCommand(command,payload,expectedRevision){
           if(command==='CREATE_TEAM'){
@@ -113,6 +116,8 @@
           }
           const team=teams.find(item=>item.teamId===payload.teamId);
           if(!team||team.revision!==expectedRevision)throw new Error('다른 사용자가 먼저 팀 초안을 수정했습니다.');
+          if(command==='EDIT_SCHEDULE'){team.schedule=Object.assign({},team.schedule,payload.schedule,{revision:team.schedule.revision+1,status:payload.operation==='UPDATE'?'ACTIVE':'STOPPED'});team.revision+=1;return {ok:true,action:command,teamId:team.teamId,revision:team.revision,schemaVersion:437};}
+          if(command==='ARCHIVE_TEAM'){team.status='ARCHIVED';team.revision+=1;teams=teams.filter(item=>item.teamId!==team.teamId);return {ok:true,action:command,teamId:team.teamId,revision:team.revision,schemaVersion:437,historyPreserved:true};}
           if(command==='ADD_FORCE'){
             if(team.forces.length>=9)throw new Error('팀당 포스는 최대 9개까지 만들 수 있습니다.');
             const force=makeForce(team.forces.length+1);team.forces.push(force);team.revision+=1;syncTeam(team);
