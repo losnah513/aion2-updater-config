@@ -42,7 +42,7 @@ for(const token of ["detail.source==='image-library'",'S.assets=[...assets];S.lo
 assert.ok(main.includes("A.notifyBannerAssetsUpdated?.(S.assets,'legacy-main-upload'"),'legacy main upload refresh missing');
 assert.ok(side.includes("A.notifyBannerAssetsUpdated?.(S.assets,'legacy-side-upload'"),'legacy side upload refresh missing');
 
-for(const source of [loader,desktop,mobile])assert.ok(source.includes('2026082811'),'admin cache generation must be 2026082811');
+for(const source of [loader,desktop,mobile])assert.ok(source.includes('2026082901'),'admin cache generation must be 2026082901');
 for(const token of [
   'tests/banner-phase2-post-stabilization-contract.test.js',
   'supabase/migrations/20260828043859_banner_phase2_post_stabilization_v412.sql',

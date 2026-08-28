@@ -122,6 +122,12 @@
     return d.toISOString().slice(0,10);
   }
 
+  function formatServerTime(value){
+    if(!value)return '기록 없음';
+    const date=new Date(value);
+    return Number.isNaN(date.getTime())?String(value):date.toLocaleString('ko-KR');
+  }
+
   async function action(name, params){ return window.KinojoApi ? window.KinojoApi.getAction(name, params||{}) : window.KinojoSupabase.webAction(name, params||{}); }
 
   function notifyBannerAssetsUpdated(assets,source='admin',createdAssetIds=[]){
@@ -129,5 +135,5 @@
     window.dispatchEvent(new CustomEvent('kinojo:banner-assets-updated',{detail:{assets:snapshot,source:String(source||'admin'),createdAssetIds:[...new Set((createdAssetIds||[]).map(Number).filter(Number.isFinite))],updatedAt:new Date().toISOString()}}));
   }
 
-  Object.assign(A,{$,$$,state,CACHE,DEFAULT_SUBTABS,esc,addLog,setStatus,toast,showAdminActionToast,roleLabel,roleKey,roleLevel,isMaster,isFullAdmin,isStaffConsole,isAdmin,adminAccount,adminCharacter,adminLookup,adminNotice,adminEventNotice,adminMeter,adminAutomation,adminVisitor,EVENT_NOTICE_TYPES,eventNoticeTypeLabel,todayDateInputValue,action,notifyBannerAssetsUpdated});
+  Object.assign(A,{$,$$,state,CACHE,DEFAULT_SUBTABS,esc,addLog,setStatus,toast,showAdminActionToast,roleLabel,roleKey,roleLevel,isMaster,isFullAdmin,isStaffConsole,isAdmin,adminAccount,adminCharacter,adminLookup,adminNotice,adminEventNotice,adminMeter,adminAutomation,adminVisitor,EVENT_NOTICE_TYPES,eventNoticeTypeLabel,todayDateInputValue,formatServerTime,action,notifyBannerAssetsUpdated});
 })(window);

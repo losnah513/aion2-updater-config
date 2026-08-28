@@ -112,32 +112,35 @@
     history.replaceState(null,'',location.pathname+location.search+value);
   }
 
-  function loadFeature(tab,subtab,force){
+  async function loadFeature(tab,subtab,force){
     const key=tab+(subtab?'/'+subtab:'');
-    if(tab==='images'&&(subtab==='main'||subtab==='side')){
-      state.loaded[key]=true;
-      A.loadBannerContext?.(subtab,force===true);
-      return;
-    }
     if(state.loaded[key]&&!force)return;
-    state.loaded[key]=true;
-    if(tab==='dashboard') refreshDashboard();
-    if(tab==='requests') loadCodeRequests();
-    if(tab==='members'&&subtab==='accounts') loadAccounts();
-    if(tab==='members'&&subtab==='character-images'&&isMaster()) loadMemberImageReviews();
-    if(tab==='members'&&subtab==='permissions'&&isMaster()) loadSanctuaryRolePermissions();
-    if(tab==='characters'&&subtab==='lookup') loadCharacterLookupConsole(force===true);
-    if(tab==='characters'&&subtab==='records') searchCharacters();
-    if(tab==='sanctuary'&&subtab==='schedule') loadSanctuaryScheduleConsole(force===true);
-    if(tab==='sanctuary'&&subtab==='requests') loadSanctuarySupportRequests(force===true);
-    if(tab==='notices'&&subtab==='general') loadNotices();
-    if(tab==='notices'&&subtab==='event') loadEventNoticeGroups();
-    if(tab==='meter'&&isMaster()&&subtab==='logs') loadMeterDungeonLogs(1);
-    if(tab==='meter'&&isMaster()&&subtab!=='logs') loadMeterAdminConsole();
-    if(tab==='system'&&subtab==='server-status') refreshServerStatus();
-    if(tab==='system'&&subtab==='sheet-sync') loadSanctuarySyncConsole(force===true);
-    if(tab==='system'&&subtab==='environment') refreshSystemSettings();
-    if(tab==='logs'&&subtab==='visitors') loadVisitorDashboard(force===true);
+    try{
+      await A.ensureFeatureModules?.(tab,subtab);
+      if(state.tab!==tab||(subtab&&state.subtab!==subtab))return;
+      state.loaded[key]=true;
+      if(tab==='images'&&(subtab==='main'||subtab==='side'))return A.loadBannerContext?.(subtab,force===true);
+      if(tab==='dashboard') refreshDashboard();
+      if(tab==='requests') loadCodeRequests();
+      if(tab==='members'&&subtab==='accounts') loadAccounts();
+      if(tab==='members'&&subtab==='character-images'&&isMaster()) loadMemberImageReviews();
+      if(tab==='members'&&subtab==='permissions'&&isMaster()) loadSanctuaryRolePermissions();
+      if(tab==='characters'&&subtab==='lookup') loadCharacterLookupConsole(force===true);
+      if(tab==='characters'&&subtab==='records') searchCharacters();
+      if(tab==='sanctuary'&&subtab==='schedule') loadSanctuaryScheduleConsole(force===true);
+      if(tab==='sanctuary'&&subtab==='requests') loadSanctuarySupportRequests(force===true);
+      if(tab==='notices'&&subtab==='general') loadNotices();
+      if(tab==='notices'&&subtab==='event') loadEventNoticeGroups();
+      if(tab==='meter'&&isMaster()&&subtab==='logs') loadMeterDungeonLogs(1);
+      if(tab==='meter'&&isMaster()&&subtab!=='logs') loadMeterAdminConsole();
+      if(tab==='system'&&subtab==='server-status') refreshServerStatus();
+      if(tab==='system'&&subtab==='sheet-sync') loadSanctuarySyncConsole(force===true);
+      if(tab==='system'&&subtab==='environment') refreshSystemSettings();
+      if(tab==='logs'&&subtab==='visitors') loadVisitorDashboard(force===true);
+    }catch(error){
+      state.loaded[key]=false;
+      addLog('ERROR','관리자 기능 모듈 로드 실패 · '+(error?.message||error));
+    }
   }
 
   function switchSubtab(tab,subtab,options={}){
