@@ -1,12 +1,12 @@
 # KINOJO WEB HANDOFF
 
-기준일: 2026-08-27 KST
+기준일: 2026-08-28 KST
 
 ## 저장소 / 현재 기준
 
 - GitHub: `losnah513/aion2-updater-config`
 - 운영 브랜치: `main`
-- 배너 이미지 관리 2차 7단계 운영 기준: PR `#277`, merge commit `275998aee2eb2689a11edea808e22dda5a873913`, 관리자 cache `2026082608`, Edge `kinojo-banner-media` v24(API 2.5 / DB 409 / Upload 403 / Event 407)
+- 배너 이미지 관리 2차 8단계 완료 기준: PR `#290`, 진행도 `49/49`, 관리자 cache `2026082801`, Edge `kinojo-banner-media` v25(API 2.6 / DB 411 / Upload 403 / Event 407)
 - 내 정보 E-1 제품 운영 commit: `640b7eebcef1c13b0516fe2cd020df870bc23752` (PR `#194`)
 - 내 정보 후속 A-1~E-2: 12/12 완료
 - My Info / 관리자 이미지 모달 추가 UI 후속: PR `#197` 구현·배포·동기화 기준 CLOSED · 수동 실브라우저 sanity check는 post-close 보류
@@ -23,7 +23,7 @@
 
 ## 관리자 캐릭터 최신화 실행 기록 보존 · 2026-08-27
 
-- 관리자 `최근 조회 기록`은 기본 3건이며 사용자가 3/5/10건 중에서 선택한다. PC·모바일은 같은 `admin-characters.js` 계약과 loader cache `2026082705`을 사용한다.
+- 관리자 `최근 조회 기록`은 기본 3건이며 사용자가 3/5/10건 중에서 선택한다. PC·모바일은 같은 `admin-characters.js` 계약과 loader cache `2026082801`을 사용한다.
 - 운영 Migration `20260827081644 / updater_run_report_retention_v421`은 목록 getter의 기본 limit을 3으로 고정하고, 누락 preview·repair를 최근 7일 안으로 제한한다. preview·repair·cleanup RPC는 `service_role`만 실행할 수 있다.
 - `updater_run_reports`는 영구 감사 자료가 아닌 즉시 장애 확인용 보고서다. `finished_at <= statement_timestamp() - interval '7 days'`인 보고서 요약·상세 행만 완전 삭제하며 runtime job·event·payload·session 원본은 삭제하지 않는다.
 - 정리 Cron `kinojo-updater-run-report-cleanup-v421`은 매주 수요일 05:10 KST에 최대 500건을 삭제한다. pg_cron 저장식은 GMT 기준 `10 20 * * 2`다.
@@ -36,7 +36,7 @@
 - 상태 조회 `kinojo_admin_server_queue_status_v289`는 집계 원본을 다시 읽거나 report를 생성하지 않고 인증된 관리자에게 해당 세션의 요약 한 행만 반환한다. 30회 운영 표본은 평균 1.814ms, p95 1.928ms, 최대 6.304ms였고 200ms 초과는 0회다.
 - 조회 범위는 무기간 전체 운영 이력이 아니다. 요청한 `sessionId`, 없으면 현재 actor의 active session, 그것도 없으면 현재 actor의 가장 최근 session 한 건만 선택한다. 대상·단계·이벤트·성능 표본은 선택된 동일 세션의 상세 버튼에서만 각각 최대 200/20/40/1 범위로 조회한다.
 - 기본 polling은 전경 3초, 숨김 또는 비활성 문맥 15초이며 terminal 상태를 받으면 즉시 중단한다. 완료 뒤 추가 polling은 0회다. 대상 목록과 성능 진단은 사용자가 명시적으로 열 때만 가져온다.
-- PC·모바일 관리자 loader는 `2026082705`, 공통 Supabase feature module은 모든 페이지에서 `2026082703`, 관리자 CSS는 `2026082706`이다. 동명이인 target은 target ID 또는 server+name identity로 분리한다. `tests/admin-queue-materialized-status-*.test.js`와 전체 Node 계약 58개가 이 경계를 보호한다.
+- PC·모바일 관리자 loader와 모든 페이지의 공통 Supabase feature module cache는 `2026082801`, 관리자 CSS는 `2026082706`이다. 동명이인 target은 target ID 또는 server+name identity로 분리한다. `tests/admin-queue-materialized-status-*.test.js`와 전체 Node 계약 60개가 이 경계를 보호한다.
 
 ## My Info 2차 · 제작 요청 업로드 장애 수정 · 2026-08-27
 
@@ -296,7 +296,7 @@
 - Stage 6에서 DB398과 Edge v16/API2.0을 적용해 합성 업로드 idempotency table check 누락을 수정했다. 관리자 cache `2026082412`는 `이벤트 관리` 탭, 전체 이벤트 검색·상태 필터, 같은 종류 내 목록 정렬, 전체 게시 중지, 이름 확인 영구 삭제를 추가한다. 세부 내용은 `docs/BANNER_EVENT_MANAGER_STAGE6_20260824.md`를 기준으로 한다.
 - Stage 7은 이벤트 관리에 공통 `kinojo-filter-switch` 기반 `순차 | 랜덤` 스위치를 추가한다. DB400은 이벤트 그룹을 원본으로 삼아 연결 캠페인 전체에 `ORDERED/RANDOM`을 반영하고, RANDOM 이벤트만 5분 manifest 구간별 안정 해시 순서로 섞는다. 기존 이벤트, legacy 캠페인, 노출빈도는 유지한다. 세부 내용은 `docs/BANNER_EVENT_PLAYBACK_STAGE7_20260825.md`를 기준으로 한다.
 - 최초 전체 게시의 합성 업로드 400은 v388 idempotency action 허용 목록에서 새 overlay/composite mutation 4종이 빠진 것이 원인이었다. PR `#252`와 DB397 migration으로 수정했으며 기존 초안은 보존한다.
-- 다음 구현 순서는 Stage 7 순차·랜덤 운영 검증과 전환 효과·최종 반응형·접근성 통합 검증이다. 콘텐츠 실제 노출은 Stage 5 합성본으로 완료했다.
+- 이 절은 과거 Stage 0~5 기준이다. 후속 제품 상태는 아래 2차 1~8단계 절을 따르며 콘텐츠 실제 노출은 Stage 5 합성본으로 완료했다.
 
 ## 배너 이미지 관리 2차 · 1단계 페이지 셸·초기화 완료 · 2026-08-26
 
@@ -384,7 +384,23 @@
 - 전체 Node 계약 51개와 로컬 Chrome 통합 E2E를 통과했다. PR 및 main의 Banner Admin, Banner Runtime, Character Refresh Profile, KINOJO Pages와 Pages 배포가 성공했고, 운영 byte readback·Manifest ETag·PC SIDE·모바일 MAIN 검증도 통과했다. 로그인된 운영 MASTER Chrome에서도 라이브러리·자동 풀·99장 작성 흐름을 읽기 전용으로 확인했다.
 - 운영 UI는 이미지 26·READY 26·이벤트 사용 19·자동 풀 0·캐릭터 연결 0·대표 0을 표시했다. `조각칼` 검색은 챈가룽 천족 호법성 ID 11630과 지켈 마족 살성 ID 14023의 동명이인 2명을 분리했고, 카드·상세 미리보기는 모두 `contain`, 미변경 저장 버튼은 비활성, 메인 작성은 기본 미선택과 `0/99`·24장 분할 안내를 보였다. console error/warn은 0건이며 저장·게시·활성화·삭제는 실행하지 않았다.
 - 운영 반영 후 이미지 26개, 캠페인 74개, 아이템 233개, 이벤트 그룹 6개는 그대로다. 자동 풀·캐릭터 연결·대표 지정은 모두 0개로 시작하므로 기존 자산이나 게시 결과를 자동 편입하지 않는다.
-- 다음 제품 구현은 2차 계획 **8단계**다. 7단계의 캐릭터 영구 ID·대표 이미지·명시적 READY 자동 풀·정식 이벤트 우선 계약을 재작성하지 않고 최종 통합 검증과 문서 마감을 진행한다.
+- 다음 제품 기준은 아래 7단계 후속과 8단계 완료 절이다. 7단계의 캐릭터 영구 ID·대표 이미지·명시적 READY 자동 풀·정식 이벤트 우선 계약은 유지한다.
+
+## 배너 이미지 관리 2차 · 7단계 후속 이벤트 작업공간 정리 완료 · 2026-08-26
+
+- PR `#279`와 `#280`으로 1차/2차 관리자 탐색 구조를 정리했다. 운영 merge 기준은 `4a37d0f1ee4ac0d22ad6c51dd5e758e2a1ba0b28`과 `4115a439832abe34c88b6274090b97cf38ebfb21`, 관리자 cache는 `2026082610`이다.
+- 이미지 관리의 1차 탭은 `메인 배너 | 사이드 배너`, 각 문맥의 2차 메뉴는 `이벤트 관리 | 이미지 라이브러리`다. 이벤트 관리 안에서 상단 제어 카드를 고정하고 아래를 등록 이벤트 3 : 랜덤 이벤트 7로 나눈다. 사이드 문맥은 등록 이벤트를 전체·왼쪽·오른쪽으로 필터링한다.
+- 과거 `이벤트 없는 자동 순환 풀`은 `랜덤 이벤트`로 이름과 위치를 바꿨다. 등록 이벤트가 같은 페이지·위치에 있으면 대기하고 `등록 이벤트 → 랜덤 이벤트 → 기본 배너` 순서로 노출한다. 랜덤 이벤트는 전체 페이지 선택, 전체·왼쪽·오른쪽 위치, 카드 클릭 선택, 간결한 캐릭터 이름 합성 제어를 제공한다.
+- 운영 `kinojo-banner-media`는 v25(API 2.6 / DB 411 / Event 407 / Upload 403)다. DB411은 랜덤 이벤트 저장 계약과 HOF 오른쪽 입력 허용을 반영하며 공개 Manifest가 지원하지 않는 HOF 오른쪽 슬롯은 자연스럽게 반환하지 않는다.
+
+## 배너 이미지 관리 2차 · 8단계 통합 QA·배포·문서 마감 · 2026-08-28
+
+- 2차 계획 8단계 `8-가~8-마`는 PR `#290`으로 닫는다. 누적 진행도는 **49/49**이며 이후 예정된 제품 단계는 없다. Server/DB/Edge/Storage와 기존 게시 데이터는 변경하지 않고 `kinojo-banner-media` v25(API 2.6 / DB 411 / Event 407 / Upload 403)를 **REUSE_AS_IS** 한다.
+- 관리자 loader 기본 세대와 PC·모바일 진입점은 `2026082801`로 맞췄다. 전체 페이지의 공통 `kinojo-supabase-features.js` cache도 `2026082801`로 통일해 관리자만 새 스냅샷을 읽던 분기 상태를 제거했다.
+- 신규 Stage 8 통합 계약은 메인/사이드 1차 탭, 이벤트/라이브러리 2차 메뉴, 등록 이벤트 3 : 랜덤 이벤트 7, 사이드 전체·왼쪽·오른쪽 필터, 반응형 1열 전환, 상태 안내·포커스·키보드·reduced-motion 계약을 한 번에 보호한다.
+- 실제 Chrome E2E는 MASTER 모의 인증 상태에서 1440×1200, 768×1024, 390×844를 각각 실행한다. 메인/사이드 탭 키보드 전환, 초안 저장과 게시 호출 분리, 게시 뒤 Server 목록 재확인·작성 상태 초기화, 이미지 라이브러리 문맥, 가로 넘침 0을 검증한다.
+- Banner Admin workflow는 최신 7단계/8단계 계약을 직접 실행하고 `admin-banner-auto-pool.js`를 custom-domain exact readback 목록에 포함한다. 로컬 기준 배너 계약 `24/24`, 전체 Node 계약 `60/60`, 세 viewport Chrome E2E가 통과했다.
+- 롤백은 PR `#290`의 WEB·테스트·workflow 변경만 되돌린다. DB migration·Edge 재배포·운영 이미지/이벤트 변경은 없으므로 Server 데이터 롤백은 필요 없다.
 
 ## My Info 2차 · 2단계 회원 제작 요청 UI · 2026-08-26
 
