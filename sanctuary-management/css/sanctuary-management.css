@@ -51,8 +51,10 @@ body.kinojo-sanctuary-management-page{
   transition:border-color .22s ease,color .22s ease,background-color .22s ease,box-shadow .28s ease;
 }
 .sanctuary-management-scope-short{flex:0 0 auto;white-space:nowrap}
-.sanctuary-management-scope-detail{min-width:0;max-width:0;overflow:hidden;opacity:0;transform:translateX(-6px);white-space:nowrap;transition:max-width .42s cubic-bezier(.2,.8,.2,1),opacity .2s ease,transform .42s cubic-bezier(.2,.8,.2,1)}
-.sanctuary-management-scope button[aria-pressed="true"] .sanctuary-management-scope-detail{max-width:260px;opacity:1;transform:translateX(0)}
+.sanctuary-management-scope-detail{flex:0 0 auto;min-width:0;width:0;overflow:hidden;white-space:nowrap;transition:width .84s cubic-bezier(.2,.8,.2,1)}
+.sanctuary-management-scope-detail-char{display:inline-block;white-space:pre;opacity:0;transform:translateX(-.6em) scale(.94);transition:opacity .28s ease,transform .38s cubic-bezier(.2,.8,.2,1);transition-delay:0s}
+.sanctuary-management-scope button[aria-pressed="true"] .sanctuary-management-scope-detail{width:var(--scope-detail-width,0px)}
+.sanctuary-management-scope button[aria-pressed="true"] .sanctuary-management-scope-detail-char{opacity:1;transform:translateX(0) scale(1);transition-delay:calc(.06s + var(--scope-char-index) * .035s)}
 .sanctuary-management-scope button:hover{border-color:#9ab8f5;color:#245bc7;background:#f4f8ff}
 .sanctuary-management-scope button:focus-visible{outline:3px solid rgba(59,130,246,.3);outline-offset:2px}
 .sanctuary-management-scope button[aria-pressed="true"]{border-color:transparent;color:#fff;background:linear-gradient(135deg,var(--san-mgmt-blue),var(--san-mgmt-violet));box-shadow:0 7px 16px rgba(70,86,211,.22)}
@@ -162,4 +164,4 @@ body.kinojo-sanctuary-management-page{
   .sanctuary-management-team-card-head{display:block}.sanctuary-management-team-head-actions{max-width:none;margin-top:10px;justify-content:flex-start}.sanctuary-management-team-badge{display:inline-block}
 }
 @media(max-width:350px){.sanctuary-management-wrap{width:calc(100% - 14px)}.sanctuary-management-summary{grid-template-columns:1fr}.sanctuary-management-team-panel{padding:13px}.sanctuary-management-page-bar{padding-inline:5px}}
-@media(prefers-reduced-motion:reduce){.sanctuary-management-scope button,.sanctuary-management-scope-detail{transition:none}}
+@media(prefers-reduced-motion:reduce){.sanctuary-management-scope button,.sanctuary-management-scope-detail,.sanctuary-management-scope-detail-char{transition:none}}
