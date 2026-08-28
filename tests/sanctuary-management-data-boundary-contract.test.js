@@ -16,7 +16,7 @@ for (const page of pages) {
     'data-kinojo-sanctuary-management-required',
     'id="sanctuaryManagementScope"',
     'id="sanctuaryManagementTeamList"',
-    'kinojo-supabase-features.js?cache=2026082703',
+    'kinojo-supabase-features.js?cache=2026082801',
     'sanctuary-management.js?cache=2026082603',
   ]) assert.ok(html.includes(token), `${page}: missing ${token}`);
   assert.equal(html.includes('SanctuaryManagementMockAdapter'), false, `${page}: Stage 1 mock adapter remains`);
@@ -124,7 +124,7 @@ async function verifyAdapter() {
     assert.equal(health.ok, true);
     assert.equal(health.service, 'sanctuary-management');
     assert.equal(String(health.apiVersion), '1.0');
-    assert.equal(Number(health.databaseContract), 414);
+    assert.equal(Number(health.databaseContract), 429);
     assert.equal(health.readEnabled, false);
     assert.equal(health.writeEnabled, false);
   }

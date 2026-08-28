@@ -30,6 +30,8 @@ on:
       - "tests/banner-event-phase2-stage5-editor-contract.test.js"
       - "tests/banner-event-phase2-stage6-library-contract.test.js"
       - "tests/banner-event-phase2-stage7-character-auto-pool-contract.test.js"
+      - "tests/banner-stage7-random-event-workspace-contract.test.js"
+      - "tests/banner-event-phase2-stage8-closeout-contract.test.js"
       - "tests/banner-event-stage4-ui-contract.test.js"
       - "tests/banner-event-stage5-ui-contract.test.js"
       - "tests/banner-content-overlay-v396-contract.test.js"
@@ -77,6 +79,8 @@ on:
       - "tests/banner-event-phase2-stage5-editor-contract.test.js"
       - "tests/banner-event-phase2-stage6-library-contract.test.js"
       - "tests/banner-event-phase2-stage7-character-auto-pool-contract.test.js"
+      - "tests/banner-stage7-random-event-workspace-contract.test.js"
+      - "tests/banner-event-phase2-stage8-closeout-contract.test.js"
       - "tests/banner-event-stage4-ui-contract.test.js"
       - "tests/banner-event-stage5-ui-contract.test.js"
       - "tests/banner-content-overlay-v396-contract.test.js"
@@ -145,6 +149,8 @@ jobs:
           node tests/banner-event-phase2-stage5-editor-contract.test.js
           node tests/banner-event-phase2-stage6-library-contract.test.js
           node tests/banner-event-phase2-stage7-character-auto-pool-contract.test.js
+          node tests/banner-stage7-random-event-workspace-contract.test.js
+          node tests/banner-event-phase2-stage8-closeout-contract.test.js
           node tests/banner-event-stage4-ui-contract.test.js
           node tests/banner-event-stage5-ui-contract.test.js
           node tests/banner-content-overlay-v396-contract.test.js
@@ -155,13 +161,19 @@ jobs:
             echo "Chrome/Chromium is required for banner admin tab E2E." >&2
             exit 1
           fi
-          "$chrome" --headless --no-sandbox --disable-gpu --allow-file-access-from-files \
-            --virtual-time-budget=30000 --dump-dom "file://$PWD/tests/banner-admin-chrome-e2e.html#images" \
-            > /tmp/banner-admin-chrome-e2e.html
-          if ! grep -F 'data-e2e-result="PASS"' /tmp/banner-admin-chrome-e2e.html; then
-            grep -o '<pre id="e2eResult">[^<]*' /tmp/banner-admin-chrome-e2e.html || true
-            exit 1
-          fi
+          for viewport in 1440,1200 768,1024 390,844; do
+            output="/tmp/banner-admin-chrome-e2e-${viewport//,/-}.html"
+            "$chrome" --headless --no-sandbox --disable-gpu --allow-file-access-from-files \
+              --disable-background-networking --disable-component-update --disable-sync \
+              --metrics-recording-only --no-first-run --no-default-browser-check \
+              --window-size="$viewport" --force-device-scale-factor=1 \
+              --virtual-time-budget=30000 --dump-dom "file://$PWD/tests/banner-admin-chrome-e2e.html#images" \
+              > "$output"
+            if ! grep -F 'data-e2e-result="PASS"' "$output"; then
+              grep -o '<pre id="e2eResult">[^<]*' "$output" || true
+              exit 1
+            fi
+          done
 
   verify-live-readback:
     if: github.event_name == 'push'
@@ -218,6 +230,7 @@ jobs:
             "admin/js/admin-banner-events.js"
             "admin/js/admin-banner-tabs.js"
             "admin/js/admin-banner-library.js"
+            "admin/js/admin-banner-auto-pool.js"
             "admin/js/admin-banner-quality.js"
           )
           tmp_dir="$(mktemp -d)"
