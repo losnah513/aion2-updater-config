@@ -1022,6 +1022,16 @@
     });
   }
 
+  async function getSanctuaryManagementMonth(month){
+    const normalized=String(month||'').trim();
+    if(!/^20\d{2}-(0[1-9]|1[0-2])$/.test(normalized))throw new Error('조회할 월을 YYYY-MM 형식으로 선택해 주세요.');
+    return invokeEdgeFunction('sanctuary-management', {
+      action:'month',
+      sessionToken:currentServerSessionCredential(),
+      month:normalized
+    });
+  }
+
   async function runSanctuaryManagementCommand(command,payload={},expectedRevision=null,requestKey=''){
     const normalizedCommand=String(command||'').trim().toUpperCase();
     if(!/^[A-Z][A-Z0-9_]{2,47}$/.test(normalizedCommand))throw new Error('성역 관리 작업을 다시 선택해 주세요.');
@@ -1808,6 +1818,7 @@
     if(name === 'hallSuggestion') return submitHallSuggestion(extra);
     if(name === 'sanctuaryMaster') return getSanctuaryMaster();
     if(name === 'sanctuaryManagementBootstrap') return getSanctuaryManagementBootstrap();
+    if(name === 'sanctuaryManagementMonth') return getSanctuaryManagementMonth(extra.month || '');
     if(name === 'sanctuary') return getSanctuaryData(extra.id || extra.sanctuaryId || '');
     if(name === 'sanctuaryRosterData') return getSanctuaryRosterData(extra.id || extra.sanctuaryId || '');
     if(name === 'sanctuaryWaitlistData') return getSanctuaryWaitlistData(extra.id || extra.sanctuaryId || '');
@@ -1929,6 +1940,7 @@
     submitHallSuggestion,
     getSanctuaryMaster,
     getSanctuaryManagementBootstrap,
+    getSanctuaryManagementMonth,
     runSanctuaryManagementCommand,
     runSanctuaryManagementLease,
     searchSanctuaryManagementCharacter,

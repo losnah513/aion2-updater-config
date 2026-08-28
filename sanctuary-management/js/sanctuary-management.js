@@ -1,15 +1,19 @@
 (function(){
   'use strict';
 
-  const API_VERSION=1.3;
-  const SCHEMA_VERSION=435;
+  const API_VERSION=1.4;
+  const SCHEMA_VERSION=436;
   let requestSequence=0;
+  let monthRequestSequence=0;
   let bootstrapData=null;
+  let monthData=null;
   let selectedSanctuary='all';
+  let selectedMonth=new Date(Date.now()+9*60*60*1000).toISOString().slice(0,7);
 
   const byId=id=>document.getElementById(id);
   const value=value=>String(value??'').trim();
   const integer=input=>Number.isSafeInteger(Number(input))?Number(input):0;
+  const escapeHtml=input=>String(input??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 
   function validateSlot(item){
     if(!item||typeof item!=='object'||Array.isArray(item))throw new Error('성역 관리 슬롯 데이터가 올바르지 않습니다.');
@@ -69,6 +73,36 @@
     return candidate;
   }
 
+  function validateSupportCharacter(item){
+    if(!item||typeof item!=='object'||Array.isArray(item))throw new Error('지원 캐릭터 데이터가 올바르지 않습니다.');
+    const character=Object.assign({},item,{
+      characterId:integer(item.characterId),mainCharacterId:integer(item.mainCharacterId),serverId:integer(item.serverId),
+      characterName:value(item.characterName),serverName:value(item.serverName),className:value(item.className),
+      profileImageUrl:value(item.profileImageUrl),relation:value(item.relation).toUpperCase(),isMain:item.isMain===true,
+      availableForceIds:Array.isArray(item.availableForceIds)?item.availableForceIds.map(integer).filter(id=>id>0):[],
+      disabledCode:value(item.disabledCode),disabledMessage:value(item.disabledMessage),
+      conflicts:Array.isArray(item.conflicts)?item.conflicts.filter(conflict=>conflict&&typeof conflict==='object'):[]
+    });
+    if(character.characterId<1||character.mainCharacterId<1||character.serverId<1||!character.characterName||!character.serverName||!['MAIN','ALT'].includes(character.relation))throw new Error('지원 캐릭터 식별 정보가 올바르지 않습니다.');
+    if(new Set(character.availableForceIds).size!==character.availableForceIds.length)throw new Error('지원 가능한 포스 정보가 중복되었습니다.');
+    return character;
+  }
+
+  function validateSupportBatch(item){
+    if(!item||typeof item!=='object'||Array.isArray(item)||!Array.isArray(item.items))throw new Error('지원 요청 데이터가 올바르지 않습니다.');
+    const items=item.items.map(entry=>Object.assign({},entry,{
+      supportItemId:integer(entry.supportItemId),forceId:integer(entry.forceId),forceNo:integer(entry.forceNo),characterId:integer(entry.characterId),
+      characterName:value(entry.characterName),serverName:value(entry.serverName),className:value(entry.className),status:value(entry.status).toUpperCase(),
+      resultCode:value(entry.resultCode),resultMessage:value(entry.resultMessage)
+    }));
+    if(items.some(entry=>entry.supportItemId<1||entry.forceId<1||entry.forceNo<1||entry.characterId<1||!entry.characterName||!['PENDING','APPLIED','REJECTED','CANCELLED'].includes(entry.status)))throw new Error('지원 요청 항목 식별 정보가 올바르지 않습니다.');
+    return Object.assign({},item,{
+      supportBatchId:integer(item.supportBatchId),teamId:integer(item.teamId),requesterMemberId:integer(item.requesterMemberId),requesterName:value(item.requesterName),
+      status:value(item.status).toUpperCase(),itemCount:integer(item.itemCount),appliedCount:integer(item.appliedCount),pendingCount:integer(item.pendingCount),
+      rejectedCount:integer(item.rejectedCount),cancelledCount:integer(item.cancelledCount),decisionNote:value(item.decisionNote),items
+    });
+  }
+
   function validateForce(item){
     if(!item||typeof item!=='object'||Array.isArray(item)||!Array.isArray(item.parties)||item.parties.length!==2){
       throw new Error('성역 관리 포스 파티 데이터가 올바르지 않습니다.');
@@ -88,6 +122,11 @@
       creatorCandidateCode:value(item.creatorCandidateCode),
       creatorCandidateCount:integer(item.creatorCandidateCount),
       creatorCandidates:Array.isArray(item.creatorCandidates)?item.creatorCandidates.map(validateCreatorCandidate):[],
+      viewerAlreadyAssigned:item.viewerAlreadyAssigned===true,
+      viewerPending:item.viewerPending===true,
+      canSupport:item.canSupport===true,
+      supportDisabledCode:value(item.supportDisabledCode),
+      supportDisabledMessage:value(item.supportDisabledMessage),
       parties
     });
     const occupiedCount=parties.reduce((sum,party)=>sum+party.occupiedCount,0);
@@ -109,11 +148,18 @@
       occupiedCount:integer(item.occupiedCount),
       vacancyCount:integer(item.vacancyCount),
       forces,
+      supportCharacters:item.supportCharacters&&typeof item.supportCharacters==='object'&&!Array.isArray(item.supportCharacters)?{
+        ownerResolved:item.supportCharacters.ownerResolved===true,
+        code:value(item.supportCharacters.code),
+        candidateCount:integer(item.supportCharacters.candidateCount),
+        characters:Array.isArray(item.supportCharacters.characters)?item.supportCharacters.characters.map(validateSupportCharacter):[]
+      }:{ownerResolved:false,code:'MISSING',candidateCount:0,characters:[]},
+      supportBatches:Array.isArray(item.supportBatches)?item.supportBatches.map(validateSupportBatch):[],
       canEdit:item.canEdit===true
     });
     const slotCount=forces.reduce((sum,force)=>sum+force.capacity,0);
     const occupiedCount=forces.reduce((sum,force)=>sum+force.occupiedCount,0);
-    if(team.forceCount!==forces.length||team.slotCount!==slotCount||team.occupiedCount!==occupiedCount||team.vacancyCount!==slotCount-occupiedCount){
+    if(team.forceCount!==forces.length||team.slotCount!==slotCount||team.occupiedCount!==occupiedCount||team.vacancyCount!==slotCount-occupiedCount||team.supportCharacters.candidateCount!==team.supportCharacters.characters.length){
       throw new Error('성역 관리 팀 인원 집계가 올바르지 않습니다.');
     }
     return team;
@@ -172,6 +218,13 @@
       const api=window.KinojoSupabase;
       if(!api||typeof api.getSanctuaryManagementBootstrap!=='function')throw new Error('성역 관리 Server 어댑터를 불러오지 못했습니다.');
       return validateBootstrap(await api.getSanctuaryManagementBootstrap());
+    },
+    async month(month){
+      const api=window.KinojoSupabase;
+      if(!api||typeof api.getSanctuaryManagementMonth!=='function')throw new Error('월간 일정 Server 어댑터를 불러오지 못했습니다.');
+      const result=await api.getSanctuaryManagementMonth(value(month));
+      if(!result||typeof result!=='object'||result.ok!==true||Number(result.schemaVersion)!==SCHEMA_VERSION||!Array.isArray(result.occurrences)||!Array.isArray(result.weekStarts))throw new Error(value(result?.message)||'월간 일정 Server 계약이 올바르지 않습니다.');
+      return Object.assign({},result,{month:value(result.month),rangeStart:value(result.rangeStart),rangeEnd:value(result.rangeEnd),weekStarts:result.weekStarts.map(value),occurrences:result.occurrences.filter(item=>item&&typeof item==='object')});
     },
     async command(command,payload,expectedRevision=null,requestKey=''){
       const api=window.KinojoSupabase;
@@ -292,8 +345,38 @@
     return empty;
   }
 
+  function createForceCard(team,force){
+    const participation=value(team.mode)==='PARTICIPATION'&&['ACTIVE','FULL'].includes(value(team.status));
+    const card=document.createElement(participation?'button':'div');
+    if(participation){card.type='button';card.dataset.sanctuarySupportForce=value(force.forceId);card.dataset.sanctuarySupportTeam=value(team.teamId);}
+    card.className='sanctuary-management-force-card'+(participation?' is-supportable':'')+(force.canSupport?' can-support':' is-unavailable')+(force.viewerAlreadyAssigned?' is-assigned':'')+(force.viewerPending?' is-pending':'');
+    if(participation){card.setAttribute('aria-label',force.forceNo+'포스 지원 창 열기. '+(force.canSupport?'지원 가능':value(force.supportDisabledMessage)||'지원 상태 확인'));card.setAttribute('aria-disabled',force.canSupport?'false':'true');}
+    const head=document.createElement('span');head.className='sanctuary-management-force-card-head';
+    const name=document.createElement('strong');name.textContent=force.forceNo+'포스';
+    const count=document.createElement('em');count.textContent=force.occupiedCount+'/'+force.capacity+'명';head.append(name,count);
+    const parties=document.createElement('span');parties.className='sanctuary-management-force-parties';
+    force.parties.forEach(party=>{
+      const partyNode=document.createElement('span');partyNode.className='sanctuary-management-force-party';
+      const label=document.createElement('small');label.textContent=party.partyNo+'파티';partyNode.appendChild(label);
+      party.slots.forEach(slot=>{
+        const item=document.createElement('span');item.className='sanctuary-management-force-slot'+(slot.occupied?' is-occupied':'');
+        item.textContent=slot.occupied?value(slot.character?.name):String((party.partyNo-1)*5+slot.slotNo);
+        item.title=slot.occupied?[value(slot.character?.name),value(slot.character?.className)].filter(Boolean).join(' · '):'빈 슬롯 '+((party.partyNo-1)*5+slot.slotNo);
+        partyNode.appendChild(item);
+      });
+      parties.appendChild(partyNode);
+    });
+    const stateText=document.createElement('span');stateText.className='sanctuary-management-force-card-state';
+    if(force.viewerAlreadyAssigned)stateText.textContent='내 캐릭터 참여 중';
+    else if(force.viewerPending)stateText.textContent='승인 대기 중';
+    else if(force.canSupport)stateText.textContent='빈자리 '+force.vacancyCount+' · 눌러서 지원';
+    else stateText.textContent=value(force.supportDisabledMessage)||'편성 확인';
+    card.append(head,parties,stateText);
+    return card;
+  }
+
   function createTeamCard(team){
-    const card=document.createElement('article');card.className='sanctuary-management-team-card';
+    const card=document.createElement('article');card.className='sanctuary-management-team-card';card.dataset.sanctuaryTeam=value(team.teamId);
     const head=document.createElement('div');head.className='sanctuary-management-team-card-head';
     const titleWrap=document.createElement('div');
     const title=document.createElement('h3');title.textContent=value(team.title)||'이름 없는 팀';
@@ -301,6 +384,8 @@
     titleWrap.append(title,activity);
     const headActions=document.createElement('div');headActions.className='sanctuary-management-team-head-actions';
     const badge=document.createElement('span');badge.className='sanctuary-management-team-badge';badge.textContent=teamStatusLabel(team);headActions.appendChild(badge);
+    const pending=(team.supportBatches||[]).reduce((sum,batch)=>sum+integer(batch.pendingCount),0);
+    if(pending){const pendingBadge=document.createElement('span');pendingBadge.className='sanctuary-management-team-badge is-pending';pendingBadge.textContent='승인 대기 '+pending;headActions.appendChild(pendingBadge);}
     if(team.canEdit&&value(team.status)!=='ARCHIVED'){
       const edit=document.createElement('button');edit.type='button';edit.className='kinojo-btn secondary';edit.textContent=value(team.status)==='DRAFT'?'초안 계속 작성':'편집';edit.dataset.sanctuaryEditTeam=value(team.teamId);edit.disabled=!bootstrapData?.writeEnabled;headActions.appendChild(edit);
       const archive=document.createElement('button');archive.type='button';archive.className='kinojo-btn danger sanctuary-management-archive-team';archive.textContent='팀 해산';archive.dataset.sanctuaryArchiveTeam=value(team.teamId);archive.disabled=!bootstrapData?.writeEnabled;headActions.appendChild(archive);
@@ -308,7 +393,9 @@
     head.append(titleWrap,headActions);
     const meta=document.createElement('div');meta.className='sanctuary-management-team-meta';
     [teamModeLabel(team),scheduleLabel(team),value(team.forceCount)+'포스 · '+value(team.occupiedCount)+'/'+value(team.slotCount)+'명','팀 ID '+value(team.teamId),'revision '+value(team.revision)].forEach(text=>{const item=document.createElement('span');item.textContent=text;meta.appendChild(item);});
-    card.append(head,meta);
+    const forces=document.createElement('div');forces.className='sanctuary-management-force-grid';forces.setAttribute('aria-label',value(team.title)+' 포스 편성');
+    team.forces.forEach(force=>forces.appendChild(createForceCard(team,force)));
+    card.append(head,meta,forces);
     return card;
   }
 
@@ -337,6 +424,32 @@
     teams.forEach(team=>root.appendChild(createTeamCard(team)));
   }
 
+  function renderMonth(){
+    const root=byId('sanctuaryManagementScheduleState');
+    if(!root)return;
+    root.classList.add('has-calendar');
+    if(!monthData){root.innerHTML='<strong>월간 일정을 불러오는 중입니다.</strong>';return;}
+    const occurrences=monthData.occurrences.filter(item=>selectedSanctuary==='all'||String(item.sanctuaryId)===String(sanctuaryForSelection()?.id));
+    const weeks=monthData.weekStarts.map(weekStart=>{
+      const items=occurrences.filter(item=>value(item.weekStart)===weekStart).map(item=>{
+        const starts=value(item.startAt);const time=(starts.match(/T(\d{2}:\d{2})/)||starts.match(/ (\d{2}:\d{2})/))?.[1]||starts.slice(11,16);
+        return '<li><time datetime="'+escapeHtml(starts)+'">'+escapeHtml(value(item.occurrenceDate).slice(5)+' '+time)+'</time><span>'+escapeHtml(item.teamTitle)+'</span></li>';
+      }).join('');
+      return '<section class="sanctuary-management-calendar-week"><strong>'+escapeHtml(weekStart.slice(5))+' 수요일 시작</strong>'+(items?'<ul>'+items+'</ul>':'<p>등록 일정 없음</p>')+'</section>';
+    }).join('');
+    root.innerHTML='<div class="sanctuary-management-calendar-controls"><button type="button" data-sanctuary-month-shift="-1" aria-label="이전 달">‹</button><strong>'+escapeHtml(monthData.month)+'</strong><button type="button" data-sanctuary-month-shift="1" aria-label="다음 달">›</button></div><div class="sanctuary-management-calendar-scroll">'+weeks+'</div>';
+  }
+
+  async function loadMonth(month=selectedMonth){
+    const sequence=++monthRequestSequence;selectedMonth=month;monthData=null;renderMonth();
+    try{const data=await ServerAdapter.month(month);if(sequence!==monthRequestSequence)return;monthData=data;renderMonth();}
+    catch(error){if(sequence!==monthRequestSequence)return;const root=byId('sanctuaryManagementScheduleState');if(root)root.innerHTML='<strong>월간 일정을 불러오지 못했습니다.</strong><span>'+escapeHtml(value(error?.message))+'</span>';}
+  }
+
+  function shiftedMonth(delta){
+    const [year,month]=selectedMonth.split('-').map(Number);const date=new Date(Date.UTC(year,month-1+delta,1));return date.toISOString().slice(0,7);
+  }
+
   function selectedDraftTeam(teamId){
     return bootstrapData?.teams.find(team=>String(team.teamId)===String(teamId))||null;
   }
@@ -348,7 +461,7 @@
     const status=value(source.status);
     const mode=value(source.mode).toUpperCase()==='PARTICIPATION'?'PARTICIPATION':'FIXED';
     const joinPolicy=mode==='PARTICIPATION'&&value(source.joinPolicy).toUpperCase()==='APPROVAL'?'APPROVAL':'INSTANT';
-    const command=teamId&&mode==='PARTICIPATION'?'UPDATE_PARTICIPATION_TEAM_DRAFT':teamId&&['ACTIVE','FULL'].includes(status)?'UPDATE_FIXED_TEAM':teamId?'UPDATE_TEAM_DRAFT':'CREATE_TEAM';
+    const command=teamId&&mode==='PARTICIPATION'?(['ACTIVE','FULL'].includes(status)?'UPDATE_PARTICIPATION_TEAM':'UPDATE_PARTICIPATION_TEAM_DRAFT'):teamId&&['ACTIVE','FULL'].includes(status)?'UPDATE_FIXED_TEAM':teamId?'UPDATE_TEAM_DRAFT':'CREATE_TEAM';
     const payload={
       sanctuaryCode:value(source.sanctuaryCode),
       title:value(source.title),
@@ -398,9 +511,24 @@
     return api.runSanctuaryManagementLease(Number(teamId),value(action),value(leaseToken));
   }
 
-  async function publishFixedTeam(teamId,expectedRevision,requestKey,leaseToken){
+  async function publishTeam(teamId,expectedRevision,requestKey,leaseToken){
     const result=await ServerAdapter.command('PUBLISH_TEAM',{teamId:Number(teamId),leaseToken:value(leaseToken)},Number(expectedRevision)||null,value(requestKey));
     await load();return result;
+  }
+
+  async function submitSupport(teamId,assignments,requestKey){
+    const normalized=Array.isArray(assignments)?assignments.map(item=>({forceId:Number(item.forceId),characterId:Number(item.characterId)})):[];
+    if(!normalized.length||normalized.length>9||normalized.some(item=>!Number.isSafeInteger(item.forceId)||item.forceId<1||!Number.isSafeInteger(item.characterId)||item.characterId<1)||new Set(normalized.map(item=>item.forceId)).size!==normalized.length||new Set(normalized.map(item=>item.characterId)).size!==normalized.length)throw new Error('포스와 캐릭터를 1:1로 하나 이상 선택해 주세요.');
+    const result=await ServerAdapter.command('SUBMIT_SUPPORT',{teamId:Number(teamId),assignments:normalized},null,value(requestKey));await load();return result;
+  }
+
+  async function decideSupport(supportBatchId,decision,note,requestKey){
+    const normalized=value(decision).toUpperCase();if(!['APPROVE','REJECT'].includes(normalized))throw new Error('승인 또는 거절을 선택해 주세요.');
+    const result=await ServerAdapter.command('DECIDE_SUPPORT',{supportBatchId:Number(supportBatchId),decision:normalized,note:value(note).slice(0,240)},null,value(requestKey));await load();return result;
+  }
+
+  async function cancelSupport(supportBatchId,requestKey){
+    const result=await ServerAdapter.command('CANCEL_SUPPORT',{supportBatchId:Number(supportBatchId)},null,value(requestKey));await load();return result;
   }
 
   async function moveSlot(teamId,fromSlotId,toSlotId,expectedRevision,requestKey,leaseToken){
@@ -426,12 +554,17 @@
     addForce,
     setSlot,
     lease,
-    publishFixedTeam,
+    publishTeam,
     moveSlot,
     archiveTeam,
     searchCharacter,
     registerCharacter,
     reload:load
+  });
+
+  window.KinojoSanctuaryManagementSupportBridge=Object.freeze({
+    kind:'SERVER_ONLY_SUPPORT',schemaVersion:SCHEMA_VERSION,
+    snapshot(){return bootstrapData;},findTeam:selectedDraftTeam,submitSupport,decideSupport,cancelSupport,reload:load
   });
 
   function renderBootstrap(data){
@@ -444,9 +577,10 @@
     renderScope();
     renderSelectedSanctuary();
     renderTeams();
+    loadMonth(selectedMonth);
     byId('sanctuaryManagementContent').hidden=false;
     if(data.readEnabled){
-      setAccess('ready','Server 데이터 경계가 연결되었습니다.',data.writeEnabled?'읽기와 쓰기 플래그가 활성 상태입니다.':'읽기 전용 상태이며 팀 생성·편집은 아직 비활성입니다.');
+      setAccess('ready','성역 팀과 참여 모집이 연결되었습니다.',data.writeEnabled?'로그인 이용자는 팀 생성·참여 지원을 사용할 수 있고, 권한 보유자는 팀 편집·해산·승인을 처리할 수 있습니다.':'현재 읽기 전용 상태입니다.');
     }else{
       setAccess('rollout','Server 연결은 완료됐고 실제 팀 읽기는 준비 중입니다.','신규 read/write 플래그는 그대로 비활성 상태이며 기존 성역·스케줄·시트 데이터는 변경하지 않습니다.');
     }
@@ -464,11 +598,7 @@
       setAccess('denied','로그인이 필요합니다.','성역 팀 관리는 권한형 화면입니다. 로그인 후 권한을 다시 확인합니다.','login');
       return;
     }
-    if(!auth.canEdit){
-      setAccess('denied','성역 관리 권한이 없습니다.','MANAGER 이상 또는 sanctuary_edit 권한이 있는 계정만 이 화면을 사용할 수 있습니다.','back');
-      return;
-    }
-    setAccess('loading','Server 성역 관리 계약을 확인하고 있습니다.','목업이나 기존 시트를 사용하지 않고 신규 Server 어댑터만 호출합니다.');
+    setAccess('loading','Server 성역 관리 계약을 확인하고 있습니다.','로그인 이용자의 팀·포스·지원 데이터를 신규 Server 어댑터로 불러옵니다.');
     try{
       const data=await ServerAdapter.bootstrap();
       if(sequence!==requestSequence)return;
@@ -488,6 +618,7 @@
       renderScope();
       renderSelectedSanctuary();
       renderTeams();
+      renderMonth();
     });
     byId('sanctuaryManagementAccessAction')?.addEventListener('click',event=>{
       const action=value(event.currentTarget.dataset.action);
@@ -500,6 +631,8 @@
       window.KinojoSanctuaryManagementDraftUI?.openMode?.(event.currentTarget);
     });
     byId('sanctuaryManagementTeamList')?.addEventListener('click',event=>{
+      const support=event.target.closest('[data-sanctuary-support-force]');
+      if(support){const team=selectedDraftTeam(support.dataset.sanctuarySupportTeam);if(team)window.KinojoSanctuaryManagementSupportUI?.open?.(team,Number(support.dataset.sanctuarySupportForce),support);return;}
       const edit=event.target.closest('[data-sanctuary-edit-team]');
       if(edit&&!edit.disabled){const team=selectedDraftTeam(edit.dataset.sanctuaryEditTeam);if(team)window.KinojoSanctuaryManagementDraftUI?.openDraft?.(team,edit);return;}
       const archive=event.target.closest('[data-sanctuary-archive-team]');
@@ -508,6 +641,9 @@
       if(!window.confirm('['+value(team.title)+'] 팀을 해산할까요? 해산하면 일정과 지원 대기가 종료됩니다.'))return;
       archive.disabled=true;
       archiveTeam(team.teamId,team.revision,'sm-archive-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10)).then(()=>window.KinojoToast?.success?.('팀을 해산했습니다.')).catch(error=>{archive.disabled=false;window.KinojoToast?.show?.(value(error?.message)||'팀을 해산하지 못했습니다.');});
+    });
+    byId('sanctuaryManagementScheduleState')?.addEventListener('click',event=>{
+      const button=event.target.closest('[data-sanctuary-month-shift]');if(!button)return;loadMonth(shiftedMonth(Number(button.dataset.sanctuaryMonthShift)||0));
     });
     window.addEventListener('kinojo:auth-changed',load);
     load();

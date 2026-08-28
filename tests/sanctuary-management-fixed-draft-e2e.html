@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="../ui/kinojo-components.css">
   <link rel="stylesheet" href="../sanctuary-management/css/sanctuary-management.css">
   <link rel="stylesheet" href="../sanctuary-management/css/sanctuary-management-draft.css">
+  <link rel="stylesheet" href="../sanctuary-management/css/sanctuary-management-support.css">
 </head>
 <body class="kinojo-sanctuary-management-page">
   <main class="sanctuary-management-wrap">
@@ -52,12 +53,23 @@
         team.slotCount=team.forces.length*10;
         team.occupiedCount=team.forces.reduce((sum,force)=>sum+force.occupiedCount,0);
         team.vacancyCount=team.slotCount-team.occupiedCount;
+        team.canEdit=true;
+        team.supportCharacters=team.supportCharacters||{ownerResolved:true,code:'NOT_OPEN',candidateCount:0,characters:[]};
+        team.supportBatches=team.supportBatches||[];
         return team;
       }
+      const participationForce=makeForce(1,true);
+      Object.assign(participationForce,{viewerAlreadyAssigned:false,viewerPending:false,canSupport:true,supportDisabledCode:'',supportDisabledMessage:''});
       let teams=[{
         teamId:77,sanctuaryId:1,title:'1팀 목요일 21시',activity:'성역1 진행',mode:'FIXED',joinPolicy:'INSTANT',status:'DRAFT',revision:4,
         schedule:{scheduleId:91,kind:'WEEKLY',startsOn:'2026-08-27',weekdays:[4],startsAt:'21:00',durationMinutes:60,status:'ACTIVE',revision:2},
         forces:[makeForce(1)]
+      },{
+        teamId:78,sanctuaryId:2,title:'2팀 토요일 22시',activity:'성역2 진행',mode:'PARTICIPATION',joinPolicy:'APPROVAL',status:'ACTIVE',revision:2,canEdit:true,
+        schedule:{scheduleId:92,kind:'WEEKLY',startsOn:'2026-08-29',weekdays:[6],startsAt:'22:00',durationMinutes:90,status:'ACTIVE',revision:1},
+        forces:[participationForce],
+        supportCharacters:{ownerResolved:true,code:'READY',candidateCount:1,characters:[{characterId:801,mainCharacterId:801,serverId:2,characterName:'지원본캐',serverName:'지켈',className:'치유성',profileImageUrl:'',relation:'MAIN',isMain:true,availableForceIds:[participationForce.forceId],disabledCode:'',disabledMessage:'',conflicts:[]}]},
+        supportBatches:[]
       }].map(syncTeam);
       const sanctuaries=[
         {id:1,code:'rudra',name:'성역1',shortName:'성역1',releaseStatus:'OPEN'},
@@ -69,13 +81,15 @@
       window.KinojoPermissions={canEditSanctuary:()=>true};
       window.KinojoToast={show:message=>{document.body.dataset.toast=message;},success:message=>{document.body.dataset.toast=message;}};
       window.KinojoSupabase={
-        async getSanctuaryManagementBootstrap(){return {apiVersion:1.2,schemaVersion:433,serverTime:new Date().toISOString(),readEnabled:true,writeEnabled:true,actor:{memberId:7,canManageAll:true},sanctuaries,teams:structuredClone(teams)};},
+        async getSanctuaryManagementBootstrap(){return {apiVersion:1.4,schemaVersion:436,serverTime:new Date().toISOString(),readEnabled:true,writeEnabled:true,actor:{memberId:7,canManageAll:true},sanctuaries,teams:structuredClone(teams)};},
+        async getSanctuaryManagementMonth(month){return {ok:true,apiVersion:1.4,schemaVersion:436,month,weekStartsOn:'WEDNESDAY',rangeStart:month+'-01',rangeEnd:month+'-31',weekStarts:[],occurrences:[]};},
+        async runSanctuaryManagementLease(){return {ok:true,lease:{status:'ACTIVE'}};},
         async searchSanctuaryManagementCharacter(teamId,query){
           const normalized=String(query||'').trim().replace(/\[지켈\]$/,'');
           const character=searchableCharacters.find(item=>item.characterName===normalized);
-          if(character)return {ok:true,apiVersion:1.2,schemaVersion:433,source:'CHARACTER_MASTER',teamId,character:structuredClone(character)};
+          if(character)return {ok:true,apiVersion:1.4,schemaVersion:436,source:'CHARACTER_MASTER',teamId,character:structuredClone(character)};
           const candidate=officialCandidates[normalized];
-          if(candidate)return {ok:true,apiVersion:1.2,schemaVersion:433,source:'OFFICIAL',teamId,candidate:structuredClone(candidate)};
+          if(candidate)return {ok:true,apiVersion:1.4,schemaVersion:436,source:'OFFICIAL',teamId,candidate:structuredClone(candidate)};
           throw new Error('정확히 일치하는 캐릭터를 찾지 못했습니다.');
         },
         async registerSanctuaryManagementCharacter(teamId,candidateId,relationType,mainCharacterId){
@@ -83,7 +97,7 @@
           if(!candidate)throw new Error('공식 조회 후보를 다시 선택해 주세요.');
           const character={characterId:700+searchableCharacters.length,serverId:candidate.serverId,serverName:candidate.serverName,characterName:candidate.characterName,className:candidate.className,legionName:candidate.legionName,profileImageUrl:candidate.profileImageUrl,raceId:candidate.raceId,isOperationalLegion:candidate.isOperationalLegion,ownerMemberId:relationType==='GUEST'?0:7,relation:relationType,mainCharacterId:relationType==='ALT'?mainCharacterId:700+searchableCharacters.length};
           searchableCharacters.push(character);
-          return {ok:true,apiVersion:1.2,schemaVersion:433,teamId,character:structuredClone(character)};
+          return {ok:true,apiVersion:1.4,schemaVersion:436,teamId,character:structuredClone(character)};
         },
         async runSanctuaryManagementCommand(command,payload,expectedRevision){
           if(command==='CREATE_TEAM'){
@@ -115,5 +129,6 @@
   </script>
   <script src="../sanctuary-management/js/sanctuary-management.js"></script>
   <script src="../sanctuary-management/js/sanctuary-management-draft.js"></script>
+  <script src="../sanctuary-management/js/sanctuary-management-support.js"></script>
 </body>
 </html>

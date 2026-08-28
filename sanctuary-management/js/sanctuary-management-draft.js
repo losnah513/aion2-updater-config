@@ -152,6 +152,7 @@
 
   function currentMode(){return value(state.team?.mode||state.creationMode).toUpperCase()==='PARTICIPATION'?'PARTICIPATION':'FIXED';}
   function currentJoinPolicy(){return value(state.joinPolicy).toUpperCase()==='APPROVAL'?'APPROVAL':'INSTANT';}
+  function participationReady(){const forces=teamForces();return currentMode()==='PARTICIPATION'&&forces.length>0&&forces.every(force=>force.creatorAlreadyAssigned===true);}
 
   function selectedForce(){
     const forces=teamForces();
@@ -236,6 +237,8 @@
       const canRegister=Boolean(state.relationType&&state.relationType!=='ALT'||state.relationType==='ALT'&&state.mainLookup?.character);
       resultMarkup='<article class="sanctuary-management-official-result"><div class="sanctuary-management-official-card"><em>아이온2 공식 확인</em><strong>'+escapeHtml(candidate.characterName)+'</strong><small>'+escapeHtml([candidate.serverName,candidate.className,candidate.legionName||'레기온 없음'].join(' · '))+'</small></div><p>'+(candidate.isOperationalLegion?'운영 레기온 캐릭터입니다. 본캐 또는 연결할 본캐를 확인해 주세요.':'외부 레기온 또는 레기온 미가입 캐릭터로 게스트 등록할 수 있습니다.')+'</p><div class="sanctuary-management-relation-buttons">'+relationButtons+'</div>'+relationBody+'<button type="button" class="sanctuary-management-register-character" data-draft-register-character'+(canRegister?'':' disabled')+'>관계 확정 후 추가</button></article>';
     }
+    const creatorOnly=currentMode()==='PARTICIPATION'&&value(state.team?.status)==='DRAFT';
+    if(creatorOnly)return '<aside class="sanctuary-management-candidate-rail" aria-label="'+escapeHtml(force.forceNo)+'포스 생성자 캐릭터 선택"><header><strong>내 캐릭터 선택</strong><small>'+slotNumber+'번 슬롯 · 포스마다 1개</small></header><div class="sanctuary-management-candidate-list" data-candidate-list>'+quick+'<div class="sanctuary-management-candidate-note"><strong>참여 팀 생성 조건</strong><small>각 포스에 생성자의 서로 다른 본캐·부캐를 하나씩 추가해야 합니다.</small></div></div></aside>';
     return '<aside class="sanctuary-management-candidate-rail" aria-label="'+escapeHtml(force.forceNo)+'포스 '+slotNumber+'번 슬롯 캐릭터 선택"><header><strong>캐릭터 선택</strong><small>'+slotNumber+'번 슬롯 · 이름은 16자까지</small></header><div class="sanctuary-management-candidate-list" data-candidate-list>'+quick+'<div class="sanctuary-management-character-search" data-character-search-form role="search"><label><span>캐릭터 검색</span><input name="characterQuery" size="16" maxlength="48" placeholder="이름 또는 이름[서버]" autocomplete="off" required></label><button type="button" data-character-search-submit'+(state.lookup?.loading?' disabled':'')+'>검색</button></div>'+resultMarkup+'</div><button type="button" class="sanctuary-management-search-reset" data-draft-search-reset>조회 초기화</button></aside>';
   }
 
@@ -280,10 +283,11 @@
     const draft=editing&&value(state.team.status)==='DRAFT';
     const busy=state.saving||state.mutating;
     const participation=currentMode()==='PARTICIPATION';
+    const ready=participationReady();
     const modeLabel=participation?'참여 팀':'고정 팀';
     const joinPolicy=currentJoinPolicy();
-    const submitLabel=state.saving?'처리 중…':state.mutating?'변경 중…':participation?(editing?'초안 저장':'1포스 먼저 추가'):(active?'저장':draft?'팀 생성':'구성 시작');
-    const joinPolicyMarkup=participation?'<div class="sanctuary-management-join-policy"><strong>참가 방식</strong><div class="sanctuary-management-schedule-kind" role="group" aria-label="참가 방식"><button type="button" data-draft-join-policy="INSTANT" aria-pressed="'+(joinPolicy==='INSTANT')+'">즉시 참가</button><button type="button" data-draft-join-policy="APPROVAL" aria-pressed="'+(joinPolicy==='APPROVAL')+'">승인 참가</button></div><small>기본은 즉시 참가이며 지원 처리는 다음 작업에서 연결합니다.</small></div>':'';
+    const submitLabel=state.saving?'처리 중…':state.mutating?'변경 중…':participation?(active?'저장':draft?'참여 팀 생성':'1포스 먼저 추가'):(active?'저장':draft?'팀 생성':'구성 시작');
+    const joinPolicyMarkup=participation?'<div class="sanctuary-management-join-policy"><strong>참가 방식</strong><div class="sanctuary-management-schedule-kind" role="group" aria-label="참가 방식"><button type="button" data-draft-join-policy="INSTANT" aria-pressed="'+(joinPolicy==='INSTANT')+'">즉시 참가</button><button type="button" data-draft-join-policy="APPROVAL" aria-pressed="'+(joinPolicy==='APPROVAL')+'">승인 참가</button></div><small>즉시 참가는 빈 슬롯에 바로 배치되고, 승인 참가는 운영자 확인 후 배치됩니다.</small></div>':'';
     return '<div class="sanctuary-management-draft-backdrop" data-draft-close></div>'
       +'<div class="sanctuary-management-draft-frame">'
         +'<form class="sanctuary-management-builder-dialog" role="dialog" aria-modal="true" aria-labelledby="sanctuaryDraftTitle" aria-describedby="sanctuaryDraftDescription" tabindex="-1" data-draft-form>'
@@ -295,7 +299,7 @@
                 +rosterMarkup()
                 +candidateMarkup()
               +'</div>'
-              +'<footer class="sanctuary-management-composer-actions"><p class="sanctuary-management-draft-status'+(state.tone?' is-'+escapeHtml(state.tone):'')+'" data-draft-status role="status">'+escapeHtml(state.message||defaultStatus())+'</p><div><button type="submit" class="is-primary"'+(busy?' disabled':'')+'>'+submitLabel+'</button><button type="button" data-draft-reset'+(busy?' disabled':'')+'>초기화</button><button type="button" data-draft-close'+(busy?' disabled':'')+'>닫기</button></div></footer>'
+              +'<footer class="sanctuary-management-composer-actions"><p class="sanctuary-management-draft-status'+(state.tone?' is-'+escapeHtml(state.tone):'')+'" data-draft-status role="status">'+escapeHtml(state.message||defaultStatus())+'</p><div><button type="submit" class="is-primary'+(participation&&draft&&!ready?' is-requirement-pending':'')+'" aria-disabled="'+String(participation&&draft&&!ready)+'"'+(busy?' disabled':'')+'>'+submitLabel+'</button><button type="button" data-draft-reset'+(busy?' disabled':'')+'>초기화</button><button type="button" data-draft-close'+(busy?' disabled':'')+'>닫기</button></div></footer>'
             +'</section>'
             +'<section class="sanctuary-management-schedule-panel" aria-labelledby="sanctuaryDraftScheduleTitle">'
               +'<header><span>SCHEDULE</span><h3 id="sanctuaryDraftScheduleTitle">팀 일정 입력</h3><p>팀 아래 모든 포스가 같은 일정과 진행 시간을 공유합니다.</p></header>'
@@ -310,7 +314,7 @@
                 +'<label class="sanctuary-management-field"><span>'+(isWeekly?'반복 시작일':'진행 날짜')+'</span><input type="date" name="draftStartsOn" required value="'+escapeHtml(schedule.startsOn)+'"></label>'
                 +'<label class="sanctuary-management-field"><span>시작 시각</span><input type="time" name="draftStartsAt" step="1800" required value="'+escapeHtml(schedule.startsAt)+'"></label>'
                 +'<label class="sanctuary-management-field"><span>진행 시간</span><select name="draftDuration">'+[30,60,90,120,150,180,210,240].map(minutes=>'<option value="'+minutes+'"'+(minutes===schedule.durationMinutes?' selected':'')+'>'+minutes+'분</option>').join('')+'</select><small>기본·최소 30분, 30분 단위</small></label>'
-                +'<div class="sanctuary-management-schedule-preview"><span>저장 상태</span><strong>'+(editing?'DB '+escapeHtml(state.team.status)+' · revision '+escapeHtml(state.team.revision):'새 Server 구성')+'</strong><small>'+(participation?'첫 포스부터 9포스까지 DRAFT로 저장할 수 있습니다. 포스별 생성자 캐릭터는 다음 작업에서 연결합니다.':'빈 슬롯이 있어도 생성할 수 있으며, 생성자 캐릭터는 최소 1개 필요합니다.')+'</small></div>'
+                +'<div class="sanctuary-management-schedule-preview"><span>저장 상태</span><strong>'+(editing?'DB '+escapeHtml(state.team.status)+' · revision '+escapeHtml(state.team.revision):'새 Server 구성')+'</strong><small>'+(participation?(ready?'모든 포스에 생성자의 서로 다른 캐릭터가 1개씩 배치되어 팀 생성 조건을 충족했습니다.':'1~9포스 각각에 생성자의 서로 다른 본캐·부캐를 하나씩 추가해야 참여 팀을 생성할 수 있습니다.'):'빈 슬롯이 있어도 생성할 수 있으며, 생성자 캐릭터는 최소 1개 필요합니다.')+'</small></div>'
               +'</div>'
             +'</section>'
           +'</div>'
@@ -411,6 +415,7 @@
     const issue=validate(model);
     if(issue){setStatus(issue);return;}
     if(model.mode==='PARTICIPATION'&&!state.team){setStatus('왼쪽 [+ 포스 추가]를 눌러 참여 팀 DRAFT와 1포스를 먼저 만들어 주세요.');return;}
+    if(model.mode==='PARTICIPATION'&&value(state.team?.status)==='DRAFT'&&!participationReady()){setStatus('최소 팀 생성자의 캐릭터 1개를 각 포스에 서로 다르게 추가해야 합니다.');return;}
     state.saving=true;
     state.requestKey=state.requestKey||('sm-draft-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10));
     model.requestKey=state.requestKey;
@@ -431,11 +436,16 @@
         state.layer.innerHTML=modeMarkup();syncDateMinimum();focusDialog('.sanctuary-management-builder-dialog');return;
       }
       if(model.mode==='PARTICIPATION'){
-        const message='참여 팀 DRAFT를 저장했습니다. · team '+value(teamId)+' · '+teamForces().length+'/9포스 · revision '+value(result.revision);
+        if(wasDraft){
+          const published=await bridge().publishTeam(teamId,Number(state.team.revision),'sm-publish-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10),state.leaseToken);
+          const message='참여 팀을 생성했습니다. · '+teamForces().length+'포스 · team '+value(teamId)+' · revision '+value(published.revision);
+          close();if(window.KinojoToast?.success)window.KinojoToast.success(message);else window.KinojoToast?.show?.(message);return;
+        }
+        const message='참여 팀 변경사항을 저장했습니다. · team '+value(teamId)+' · revision '+value(result.revision);
         close();if(window.KinojoToast?.success)window.KinojoToast.success(message);else window.KinojoToast?.show?.(message);return;
       }
       if(wasDraft){
-        const published=await bridge().publishFixedTeam(teamId,Number(state.team.revision),'sm-publish-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10),state.leaseToken);
+        const published=await bridge().publishTeam(teamId,Number(state.team.revision),'sm-publish-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10),state.leaseToken);
         const message='고정 팀을 생성했습니다. 빈 슬롯은 그대로 유지됩니다. · team '+value(teamId)+' · revision '+value(published.revision);
         close();if(window.KinojoToast?.success)window.KinojoToast.success(message);else window.KinojoToast?.show?.(message);return;
       }
