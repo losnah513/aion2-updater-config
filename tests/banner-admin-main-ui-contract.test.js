@@ -9,7 +9,7 @@ const tabs=fs.readFileSync(path.join(__dirname,'../admin/js/admin-banner-tabs.js
 const shared=fs.readFileSync(path.join(__dirname,'../admin/js/admin-shared.js'),'utf8');
 const bootstrap=fs.readFileSync(path.join(__dirname,'../admin/js/admin-bootstrap.js'),'utf8');
 const css=fs.readFileSync(path.join(__dirname,'../admin/css/admin.css'),'utf8');
-const CACHE='2026082804';
+const CACHE='2026082811';
 const adminPages=[
   fs.readFileSync(path.join(__dirname,'../admin/index.html'),'utf8'),
   fs.readFileSync(path.join(__dirname,'../m/admin/index.html'),'utf8'),

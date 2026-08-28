@@ -29,6 +29,33 @@
 }
 
 @media (min-width:1840px){
+  body .kinojo-pc-banner-host.kinojo-pc-standard-host{
+    width:1180px!important;
+    max-width:1180px!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+    box-sizing:border-box;
+  }
+
+  body.kinojo-page-home .wrap.kinojo-pc-standard-host{
+    padding-left:44px;
+    padding-right:44px;
+  }
+
+  body.kinojo-page-ranking .ranking-wrap.kinojo-pc-standard-host{
+    padding-left:30px;
+    padding-right:30px;
+  }
+
+  body.kinojo-page-hall .hof-v2-layout.kinojo-pc-standard-host{
+    left:auto!important;
+    justify-content:center!important;
+  }
+
+  body.kinojo-page-hall .wrap{
+    padding-top:0!important;
+  }
+
   .kinojo-pc-banner-slot{
     display:grid;
     position:fixed;
@@ -61,10 +88,6 @@
 
   .kinojo-pc-banner-slot.is-right{
     right:auto;
-  }
-
-  body.kinojo-page-hall .hof-v2-layout.kinojo-pc-banner-host{
-    left:calc((300px + 14px) / 2);
   }
 
   body.kinojo-sanctuary-schedule-page .schedule-wrap{

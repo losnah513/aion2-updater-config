@@ -10,7 +10,7 @@ const edge=read('supabase/functions/kinojo-banner-media/index.ts');
 const migration=read('supabase/migrations/20260826054751_banner_overlay_name_uniqueness_v405.sql');
 
 for(const token of [
-  'banner event workflow phase 2 stage 7 integration v2026082608',
+  'banner event workflow phase 2 stage 7 integration v2026082811',
   "root.dataset.bannerEventStage='phase2-7'",
   'const OVERLAY_NUMERIC=',
   'function clampOverlayNumber(',

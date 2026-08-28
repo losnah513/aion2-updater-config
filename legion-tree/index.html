@@ -16,13 +16,14 @@
 <link href="../ui/kinojo-components.css?cache=2026081219" rel="stylesheet"/>
 <link href="../ui/kinojo-common-ui.css?cache=2026081205" rel="stylesheet"/>
   <link href="../ui/kinojo-public-shell.css?cache=2026081202" rel="stylesheet"/>
-  <link href="../ui/kinojo-pc-banners.css?cache=2026082203" rel="stylesheet"/>
-<link href="./css/legion-tree.css?cache=2026082403" rel="stylesheet"/>
+  <link href="../ui/kinojo-pc-banners.css?cache=2026082811" rel="stylesheet"/>
+  <link href="../ui/kinojo-staged-loading.css?cache=2026082811" rel="stylesheet"/>
+<link href="./css/legion-tree.css?cache=2026082811" rel="stylesheet"/>
 <script src="../ui/kinojo-device-router.js?cache=2026070115" data-mobile-path="../m/legion-tree/"></script>
 <link rel="stylesheet" href="../ui/kinojo-event-notice.css?cache=2026081003"/>
 </head>
 <body class="kinojo-page-legion-tree">
-  <section class="hof-filter-bar legion-tree-subbar" aria-label="레기온 구성원 도구">
+  <section class="hof-filter-bar legion-tree-subbar kinojo-standard-subbar" aria-label="레기온 구성원 도구">
     <div class="legion-tree-subbar-fields">
       <label class="legion-tree-subbar-field" for="legionTreeMainName"><span>본캐 이름</span><input class="kinojo-input" id="legionTreeMainName" type="text" placeholder="본캐 이름" autocomplete="off"/></label>
       <label class="legion-tree-subbar-field" for="legionTreeAltName"><span>부캐 이름</span><input class="kinojo-input" id="legionTreeAltName" type="text" placeholder="부캐 이름" autocomplete="off"/></label>
@@ -44,7 +45,7 @@
     </div>
   </section>
 
-<main class="legion-tree-wrap kinojo-pc-banner-host">
+<main class="legion-tree-wrap kinojo-pc-banner-host kinojo-pc-standard-host">
   <aside class="kinojo-pc-banner-slot is-left" data-kinojo-pc-banner aria-hidden="true"></aside>
   <aside class="kinojo-pc-banner-slot is-right" data-kinojo-pc-banner aria-hidden="true"></aside>
   <section class="legion-tree-data-list" id="legionTreeRoot" aria-live="polite" aria-busy="true">
@@ -62,6 +63,7 @@
 <script src="../core/kinojo-debug.js?cache=2026070115"></script>
 <script src="../core/kinojo-logger.js?cache=2026070115"></script>
   <script src="../ui/kinojo-common-ui.js?cache=2026082813"></script>
+<script src="../ui/kinojo-staged-loading.js?cache=2026082811"></script>
 <script src="../ui/kinojo-common-navigation.js?cache=2026082003"></script>
 <script src="../ui/kinojo-admin-panel.js?cache=2026071712"></script>
 <script src="../core/kinojo-supabase-client.js?cache=2026081106"></script>

@@ -306,7 +306,7 @@ async function verifyPlaybackRuntime(){
     assert.equal(live.getMeta('HOME','MAIN').httpStatus,304,'second live request must revalidate with ETag/304');
 
     const liveSideTargets=[
-      ['HOME','LEFT'],['HOME','RIGHT'],['HOF','LEFT'],
+      ['HOME','LEFT'],['HOME','RIGHT'],['HOF','LEFT'],['HOF','RIGHT'],
       ['RANKING','LEFT'],['RANKING','RIGHT'],['LEGION_TREE','LEFT'],['LEGION_TREE','RIGHT'],
       ['METER','LEFT'],['METER','RIGHT'],['SANCTUARY','LEFT'],['SANCTUARY','RIGHT'],
       ['SANCTUARY_SCHEDULE','LEFT'],['SANCTUARY_SCHEDULE','RIGHT'],

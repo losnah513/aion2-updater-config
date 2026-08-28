@@ -431,7 +431,7 @@ window.KinojoSupabase = {
     assert(html.includes('Server 레기온 데이터를 불러오는 중'));
     assert(!html.includes('data-preview-card'));
     assert(!html.includes('본캐예시'));
-    assert(html.includes('legion-tree.css?cache=2026082403'));
+    assert(html.includes('legion-tree.css?cache=2026082811'));
     assert(html.includes('legion-tree.js?cache=2026082403'));
     assert(html.includes('kinojo-supabase-features.js?cache=2026082813'));
     assert(!html.includes('legion-tree.js?cache=2026082402'));

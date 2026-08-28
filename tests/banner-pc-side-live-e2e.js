@@ -9,7 +9,7 @@ assert.ok(CHROME,'CHROME_BIN is required');
 
 const pages=[
   {name:'HOME',path:'/',slots:['LEFT','RIGHT']},
-  {name:'HOF',path:'/hof/',slots:['LEFT']},
+  {name:'HOF',path:'/hof/',slots:['LEFT','RIGHT']},
   {name:'RANKING',path:'/ranking/',slots:['LEFT','RIGHT']},
   {name:'LEGION_TREE',path:'/legion-tree/',slots:['LEFT','RIGHT']},
   {name:'METER',path:'/meter/',slots:['LEFT','RIGHT']},

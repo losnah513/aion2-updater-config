@@ -8,9 +8,10 @@ const read=file=>fs.readFileSync(path.join(root,file),'utf8');
 const workflow=read('admin/js/admin-banner-event-workflow.js');
 const edge=read('supabase/functions/kinojo-banner-media/index.ts');
 const migration=read('supabase/migrations/20260826045246_banner_event_page_targets_v404.sql');
+const hofRightPatch=read('supabase/migrations/20260828111622_banner_hof_right_side_target_v438.sql');
 
 for(const token of [
-  'banner event workflow phase 2 stage 7 integration v2026082608',
+  'banner event workflow phase 2 stage 7 integration v2026082811',
   "api(s,'event-targets')",
   'function normalizeTargetContract(',
   'function selectedSidePages(',
@@ -75,5 +76,16 @@ for(const token of [
 assert.match(migration,/update private\.kinojo_banner_event_groups_v391 g[\s\S]+select distinct c\.page_code[\s\S]+where c\.event_group_id=g\.event_group_id/,'existing formal events must be backfilled from their linked campaigns');
 assert.match(migration,/target_pages=v_targets,target_page_contract_version=404/,'saved event must persist the explicit page set and contract version');
 assert.ok(!migration.includes('update public.kinojo_banner_campaigns\n   set page_code'),'legacy operating campaign targets must not be rewritten by backfill');
+
+for(const token of [
+  'private.kinojo_banner_manifest_target_valid_v387',
+  'private.kinojo_banner_supported_page_slots_v404',
+  'private.kinojo_banner_target_page_contract_v404',
+  "'HOF','RANKING','LEGION_TREE','METER','SANCTUARY','SANCTUARY_SCHEDULE'",
+  "jsonb_build_object('pageCode','HOF','label','명예의 전당','slotCodes',jsonb_build_array('LEFT','RIGHT')",
+  'from public, anon, authenticated, service_role'
+])assert.ok(hofRightPatch.includes(token),`DB438 HOF right-side patch missing: ${token}`);
+assert.ok(!/create\s+table|create\s+type|alter\s+table/i.test(hofRightPatch),'DB438 must only replace the existing target-contract functions');
+assert.ok(!edge.includes('kinojo_banner_event_targets_v413'),'the existing v404 Edge entry point must be reused');
 
 console.log('PASS banner event phase-2 stage-4 page selection contract');

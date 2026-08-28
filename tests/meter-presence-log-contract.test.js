@@ -7,7 +7,7 @@ const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
 for (const entry of ['meter/index.html', 'm/meter/index.html']) {
   const html = read(entry);
-  for (const token of ['id="meterLiveUsers"', 'id="meterLiveCount"', 'id="meterLiveNames"', 'kinojo-page-booting', '이름 공개를 끈 이용자는 웹에 익명 사용자로 표시됩니다.', 'kinojo-staged-loading.css?cache=2026081502', 'kinojo-staged-loading.js?cache=2026081502', 'meter-app.js?cache=2026081502-50040&auth=2026081801']) {
+  for (const token of ['id="meterLiveUsers"', 'id="meterLiveCount"', 'id="meterLiveNames"', 'kinojo-page-booting', '이름 공개를 끈 이용자는 웹에 익명 사용자로 표시됩니다.', 'kinojo-staged-loading.css?cache=2026082811', 'kinojo-staged-loading.js?cache=2026082811', 'meter-app.js?cache=2026081502-50040&auth=2026081801']) {
     assert.ok(html.includes(token), `${entry}: public presence contract missing ${token}`);
   }
 }
@@ -26,7 +26,7 @@ assert.ok(stagedLoading.includes('.meter-live-subbar'), 'Meter live users must b
 
 for (const entry of ['admin/index.html', 'm/admin/index.html']) {
   const html = read(entry);
-  for (const token of ['data-admin-subtab="logs"', 'id="meterDungeonLogRows"', 'id="meterDungeonLogChannel"', 'id="meterDungeonLogQuery"', 'METER RUNTIME LOG', '미터기 실행', '미터기 종료', 'id="characterAutomationToggle"', 'id="sanctuaryAutomationToggle"', 'KST 22:00 · 04:00 · 10:00 · 16:00', 'kinojo-supabase-features.js?cache=2026082813', 'admin.js?cache=2026082804']) {
+  for (const token of ['data-admin-subtab="logs"', 'id="meterDungeonLogRows"', 'id="meterDungeonLogChannel"', 'id="meterDungeonLogQuery"', 'METER RUNTIME LOG', '미터기 실행', '미터기 종료', 'id="characterAutomationToggle"', 'id="sanctuaryAutomationToggle"', 'KST 22:00 · 04:00 · 10:00 · 16:00', 'kinojo-supabase-features.js?cache=2026082813', 'admin.js?cache=2026082811']) {
     assert.ok(html.includes(token), `${entry}: Meter dungeon log UI missing ${token}`);
   }
   for (const noticeId of ['characterAutomationNotice', 'sanctuaryAutomationNotice']) {

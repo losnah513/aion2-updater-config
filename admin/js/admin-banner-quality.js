@@ -1,4 +1,4 @@
-/* KINOJO Admin banner quality guard v2026082201 */
+/* KINOJO Admin banner quality guard v2026082811 */
 (function(A){
   'use strict';
   if(!A) throw new Error('KINOJO Admin shared module is required.');
@@ -88,7 +88,6 @@
   function validateMain(forPublish=false){const root=$(MAIN);return root?validateBase(root,'b',forPublish):false}
   function validateSide(forPublish=false){
     const root=$(SIDE);if(!root||!validateBase(root,'s',forPublish))return false;
-    const page=value(root,'#sPage'),slot=value(root,'#sSlot');if(page==='HOF'&&slot!=='LEFT')return fail(root,'명예의 전당은 왼쪽 배너만 지원합니다.',$('#sSlot',root));
     for(const weight of $$('[data-s-weight]',root)){const v=Number(weight.value);if(!/^\d+$/.test(String(weight.value).trim())||!Number.isInteger(v)||v<1||v>10000)return fail(root,'이미지 가중치는 1~10000 정수로 입력해 주세요.',weight)}
     for(const mode of $$('[data-s-item-mode]',root)){
       if(mode.value!=='CUSTOM')continue;const id=mode.dataset.sItemMode;

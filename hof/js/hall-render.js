@@ -336,8 +336,9 @@ function hofV2Layout(){
   const s=hallData?.summarySections||{};
   const pveList=s.pveTop||s.pveTop3||hallData?.pveTop||hallData?.pveTop3||[];
   const pvpList=s.pvpTop||s.pvpTop3||hallData?.pvpTop||hallData?.pvpTop3||[];
-  return '<div class="hof-v2-layout kinojo-pc-banner-host">'
+  return '<div class="hof-v2-layout kinojo-pc-banner-host kinojo-pc-standard-host">'
     + '<aside class="kinojo-pc-banner-slot is-left" data-kinojo-pc-banner aria-hidden="true"></aside>'
+    + '<aside class="kinojo-pc-banner-slot is-right" data-kinojo-pc-banner aria-hidden="true"></aside>'
     + '<div class="hof-v2-board">'
     + '<div class="hof-v2-area hof-v2-area-meter">'+hofMeterDpsPanel()+'</div>'
     + '<div class="hof-v2-area hof-v2-area-pve">'+hofWidePanel('PVE 랭킹','PVE TOP 3',pveList,'pve')+'</div>'
@@ -453,7 +454,7 @@ function renderHallShell(showSpinners){
   app.className='';
   const slotClass='hall-slot is-pending';
   const spinner=showSpinners?kinojoCardSpinner('영역 불러오는 중'):'';
-  app.innerHTML='<div class="hof-v2-shell"><div class="hof-v2-layout kinojo-pc-banner-host"><aside class="kinojo-pc-banner-slot is-left" data-kinojo-pc-banner aria-hidden="true"></aside><div class="hof-v2-board">'
+  app.innerHTML='<div class="hof-v2-shell"><div class="hof-v2-layout kinojo-pc-banner-host kinojo-pc-standard-host"><aside class="kinojo-pc-banner-slot is-left" data-kinojo-pc-banner aria-hidden="true"></aside><aside class="kinojo-pc-banner-slot is-right" data-kinojo-pc-banner aria-hidden="true"></aside><div class="hof-v2-board">'
     +'<div id="hallSlotMeter" class="hof-v2-area hof-v2-area-meter '+slotClass+'">'+spinner+'</div>'
     +'<div id="hallSlotPve" class="hof-v2-area hof-v2-area-pve '+slotClass+'">'+spinner+'</div>'
     +'<div id="hallSlotPvp" class="hof-v2-area hof-v2-area-pvp '+slotClass+'">'+spinner+'</div>'
