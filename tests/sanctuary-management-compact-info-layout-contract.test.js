@@ -11,7 +11,7 @@ const workflow=read('.github/workflows/verify-kinojo-pages.yml');
 for(const page of ['sanctuary-management/index.html','m/sanctuary-management/index.html']){
   const html=read(page);
   for(const token of [
-    'sanctuary-management.css?cache=2026082809',
+    'sanctuary-management.css?cache=2026082810',
     'sanctuary-management-hero-info',
     'sanctuary-management-section-info',
     'sanctuary-management-side-head',
@@ -23,11 +23,14 @@ for(const page of ['sanctuary-management/index.html','m/sanctuary-management/ind
 
 for(const token of [
   '.sanctuary-management-hero-info{',
-  'grid-template-columns:minmax(190px,.72fr) minmax(260px,1.28fr)',
+  'display:flex;align-items:center;gap:24px',
   '.sanctuary-management-summary article{',
   '.sanctuary-management-section-info{',
   '.sanctuary-management-side-head{',
-  'grid-template-columns:minmax(118px,.72fr) minmax(0,1.28fr)',
+  '.sanctuary-management-hero-info>h1{flex:0 0 auto;white-space:nowrap}',
+  '.sanctuary-management-summary .sanctuary-management-info-copy{flex:1}',
+  '.sanctuary-management-section-info>h2{flex:0 0 auto;white-space:nowrap}',
+  '.sanctuary-management-side-head>h2{flex:0 0 auto;white-space:nowrap}',
 ])assert.ok(css.includes(token),`compact information CSS missing ${token}`);
 
 for(const token of ['sanctuary-management-hero-info','sanctuary-management-section-info','sanctuary-management-info-copy'])assert.ok(harness.includes(token),`E2E harness missing ${token}`);
