@@ -135,6 +135,15 @@
 - `ACTIVE_MANIFEST_20260828.md`는 전체 ACTIVE name/version/verify_jwt/status를 기록한다. GitHub source가 없는 `kinojo-deploy-probe-295`, `meter-release-producer-sync`, `meter-stage85-activation`은 inventory-only 예외이며 소스를 임의 생성하지 않는다.
 - 이 동기화는 Drive 기준본만 변경했다. Supabase 함수 배포·설정과 제품 WEB 코드는 변경하지 않았다. 다음 독립 작업은 8단계 통합 부하·장애·보안·배포·문서 readback이다.
 
+## DB 조회 기준·누적 데이터 안정화 SQL427·8단계 마감 · 2026-08-28
+
+- SQL426 이후 정기 published snapshot 20·21이 각각 본캐/부캐 × 기본/전체 레기온 네 scope exact·error 0으로 Gate를 통과했다. 운영 Migration `ranking_snapshot_bounded_input_cutover_v427`은 `kinojo_ranking_snapshot_build_step_v390`의 입력 호출 하나만 raw v390에서 bounded v426으로 전환했다.
+- 적용 직후 live 네 범위 legacy/candidate payload가 모두 exact였고 `cutoverActive=true`, `successfulRegularSnapshots=2`다. 공개 ranking/HOF/my-ranking 함수명·응답·published snapshot contract는 유지한다. raw `character_history`·`growth_reviews` 보존 기간은 미확정이며 사용자 승인 전 삭제하지 않는다.
+- builder는 `search_path=pg_catalog, private, public`, statement timeout 40초·lock timeout 2초, anon/authenticated EXECUTE false·service_role true다. rollback은 입력 호출만 v390으로 복구하고 SQL426 parity와 published snapshot·raw 원본을 유지한다.
+- 전체 Node 계약 76/76을 통과했다. live HOME cache-bypass readback은 PC 1920px에서 양쪽 고정 배너와 main이 겹치지 않고, 모바일 390px에서 양쪽 배너가 숨김·단일 열로 전환되며 두 viewport 모두 document 가로 overflow 0이다.
+- 후속 운영 표본은 HOF display warm 20/20 HTTP 200·p95 169.623ms, notification warm 20/20 200·p95 87.110ms다. 14:06 UTC 이후 API/Edge 4xx·5xx와 DB timeout은 0이다.
+- SQL427 Drive Source/Deploy/Verify/Rollback ID는 `14bDFgbhF7R1VJ73DY9XSp-c1XohuhaFW` / `1n682ubd8zP6YkYeoT133Bt3Wrht2Cc03` / `1s1mW-m5i_MJgf1yRzYr8bCiCBvKhTBkE` / `1JU63QBm61UmPc49JEwkeg7gRYLs5LUMN`이며 모두 local raw bytes와 exact다. 이 안정화 프로젝트는 완료 상태다.
+
 ## 관리자 캐릭터 최신화 실행 기록 보존 · 2026-08-27
 
 - 관리자 `최근 조회 기록`은 기본 3건이며 사용자가 3/5/10건 중에서 선택한다. PC·모바일은 같은 `admin-characters.js` 계약과 loader cache `2026082801`을 사용한다.

@@ -19,6 +19,7 @@ KINOJO INFO GitHub Pages upload package.
 - Admin notification v316 has status/latest/expiry indexes and no waiting relation lock in the 2026-08-28 profile. Fresh MASTER runs were 17ms first and 6.6ms warm, so no snapshot or retention change was added. Recheck at warm p95 300ms, reproducible waiting locks, or 100,000 related rows. Owner: Admin Notification/DB.
 - No page period, retention, or explicit `ALL` behavior may be changed from these facts without user confirmation.
 - Drive canonical sync at GitHub `bd8b2263d724915187b6ad45b4355648eac88b3c` updated the existing ranking-data, hall-data, and common feature file IDs to exact GitHub bytes. Supabase reported 27 ACTIVE Edge Functions; Drive now includes the GitHub/production-exact `sanctuary-management` v14 source and an ACTIVE inventory manifest. Three ACTIVE functions without GitHub canonical source remain explicitly inventory-only instead of receiving invented source files.
+- DB427 cut over only the background ranking snapshot builder input from raw v390 aggregation to bounded v426 state after regular published snapshots 20 and 21 each passed all four exact-parity scopes with no errors. Public ranking/HOF/my-ranking contracts and raw source retention remain unchanged. Post-cutover verification reported `cutoverActive=true`, live parity 4/4, full Node contracts 76/76, and live HOME document overflow 0 at desktop 1920px and mobile 390px.
 
 ## Legion Tree public rendering
 
