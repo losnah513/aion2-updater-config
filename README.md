@@ -11,6 +11,12 @@ KINOJO INFO GitHub Pages upload package.
 
 `config.json` is intentionally kept at repository root because the extension currently reads `/config.json`.
 
+## Admin dashboard first-entry module boundary
+
+- Admin loader cache `2026082901` starts the desktop and mobile dashboard with only `admin-shared.js` and `admin-bootstrap.js`. Member, character, notice, system/log, and banner modules load once when their feature tab is first entered.
+- The initial dynamic admin JavaScript boundary fell from 677,096 bytes across 17 sequential modules to 42,350 bytes across two modules, a 93.7% reduction. The loader reuses in-flight promises, preserves the banner dependency order, and exposes a visible admin-log error if a feature module cannot load.
+- Dashboard RPCs, notification refresh behavior, card rendering, database functions, and retention periods are unchanged in this step. `tests/admin-dashboard-lazy-loader-contract.test.js` and the full 77-test Node suite protect the split.
+
 ## Read-scope scalability known facts
 
 - Meter public stats/my comparison default to the explicit Server `WEEK` period. `ALL` is an explicit user choice, not an omitted-period fallback. At 333 records/1,753 participants the aggregation gate is not reached; recheck at 100,000 participants, representative p95 300ms, or max 1s. Owner: Meter Server/DB.

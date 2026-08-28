@@ -27,7 +27,7 @@ for(const token of [
 assert.equal(events.includes('data-bem-create'),false,'event management must not contain the old create launcher');
 for(const token of [
   'let [tab,subtab,view]',"view:['create','events','library'].includes(view)?view:''",
-  "if(tab==='images'&&(subtab==='main'||subtab==='side'))",
+  "const isImageContext=tab==='images'&&(subtab==='main'||subtab==='side')",
   "IMAGE_VIEW_LABELS={create:'새 이벤트',events:'이벤트 관리',library:'이미지 라이브러리'}",
 ])assert.ok(bootstrap.includes(token),`missing routed image workspace contract: ${token}`);
 

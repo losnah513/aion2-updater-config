@@ -1,50 +1,76 @@
-/* KINOJO Admin modular loader v2026082811 */
+/* KINOJO Admin modular loader v2026082901 */
 (function(){
   'use strict';
   const current=document.currentScript;
   const currentUrl=new URL(current?.src||location.href,location.href);
   const base=new URL('./',currentUrl);
-  const CACHE=String(currentUrl.searchParams.get('cache')||'2026082811').trim()||'2026082811';
-  const modules=[
-    'admin-shared.js',
-    'admin-members.js',
-    'admin-member-image-download.js',
-    'admin-characters.js',
-    'admin-sanctuary.js',
-    'admin-notices.js',
-    'admin-system.js',
-    'admin-images.js',
-    'admin-banner-delete.js',
-    'admin-side-banners.js',
-    'admin-banner-event-workflow.js',
-    'admin-banner-events.js',
-    'admin-banner-quality.js',
-    'admin-banner-tabs.js',
-    'admin-banner-library.js',
-    'admin-banner-auto-pool.js',
-    'admin-bootstrap.js'
+  const CACHE=String(currentUrl.searchParams.get('cache')||'2026082901').trim()||'2026082901';
+  const modulePromises=new Map();
+  const loadedModules=new Set();
+  const coreModules=[
+    'admin-shared.js'
   ];
+  const featureModules={
+    requests:['admin-members.js'],
+    members:['admin-members.js','admin-member-image-download.js'],
+    characters:['admin-characters.js'],
+    sanctuary:[],
+    notices:['admin-notices.js'],
+    meter:['admin-system.js'],
+    system:['admin-system.js'],
+    logs:['admin-system.js'],
+    images:[
+      'admin-images.js',
+      'admin-banner-delete.js',
+      'admin-side-banners.js',
+      'admin-banner-event-workflow.js',
+      'admin-banner-events.js',
+      'admin-banner-quality.js',
+      'admin-banner-tabs.js',
+      'admin-banner-library.js',
+      'admin-banner-auto-pool.js'
+    ]
+  };
   function loadScript(name){
-    return new Promise((resolve,reject)=>{
+    if(modulePromises.has(name))return modulePromises.get(name);
+    const promise=new Promise((resolve,reject)=>{
       const script=document.createElement('script');
       script.src=new URL(name+'?cache='+encodeURIComponent(CACHE),base).href;
       script.async=false;
-      script.onload=resolve;
-      script.onerror=()=>reject(new Error('관리자 모듈을 불러오지 못했습니다: '+name));
+      script.onload=()=>{
+        loadedModules.add(name);
+        resolve(name);
+      };
+      script.onerror=()=>{
+        modulePromises.delete(name);
+        reject(new Error('관리자 모듈을 불러오지 못했습니다: '+name));
+      };
       document.head.appendChild(script);
     });
+    modulePromises.set(name,promise);
+    return promise;
+  }
+  function ensureFeatureModules(tab){
+    const names=featureModules[String(tab||'')]||[];
+    if(names.every(name=>loadedModules.has(name)))return null;
+    return (async()=>{for(const name of names)await loadScript(name)})();
+  }
+  function showLoadError(error){
+    console.error('[KINOJO ADMIN]',error);
+    const root=document.querySelector('.kinojo-admin-console')||document.body;
+    const box=document.createElement('div');
+    box.className='admin-access-block';
+    box.innerHTML='<h1>관리자 화면을 불러오지 못했습니다</h1><p>'+String(error?.message||error)+'</p><button class="admin-btn primary" type="button">새로고침</button>';
+    box.querySelector('button').addEventListener('click',()=>location.reload());
+    root.replaceChildren(box);
   }
   (async()=>{
     try{
-      for(const name of modules)await loadScript(name);
+      for(const name of coreModules)await loadScript(name);
+      window.KinojoAdmin.ensureFeatureModules=ensureFeatureModules;
+      await loadScript('admin-bootstrap.js');
     }catch(error){
-      console.error('[KINOJO ADMIN]',error);
-      const root=document.querySelector('.kinojo-admin-console')||document.body;
-      const box=document.createElement('div');
-      box.className='admin-access-block';
-      box.innerHTML='<h1>관리자 화면을 불러오지 못했습니다</h1><p>'+String(error?.message||error)+'</p><button class="admin-btn primary" type="button">새로고침</button>';
-      box.querySelector('button').addEventListener('click',()=>location.reload());
-      root.replaceChildren(box);
+      showLoadError(error);
     }
   })();
 })();

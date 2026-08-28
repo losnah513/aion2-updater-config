@@ -1,6 +1,6 @@
 # KINOJO WEB HANDOFF
 
-기준일: 2026-08-28 KST
+기준일: 2026-08-29 KST
 
 ## 저장소 / 현재 기준
 
@@ -13,6 +13,15 @@
 - 레기온 순위 통합 패널: PR `#164` 병합 완료
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 최신 일일 로그를 작업 규칙 원본으로 사용한다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
+
+## 관리자 대시보드 첫 진입 모듈 분리 · 2026-08-29
+
+- 원인: 관리자 loader가 첫 화면이 대시보드여도 회원·캐릭터·공지·시스템·이미지 관리 등 17개 모듈 677,096 bytes를 모두 순차 다운로드했다. 특히 배너 이벤트 workflow 하나만 약 180 KiB라서 DB 응답 전부터 정적 파일 대기가 누적됐다.
+- WEB: 관리자 cache `2026082901`은 첫 진입에 `admin-shared.js`와 `admin-bootstrap.js` 두 파일 42,350 bytes만 불러온다. 회원·캐릭터·공지·시스템/로그·이미지 그룹은 해당 탭 첫 진입 직전에 원래 의존 순서로 한 번만 로드하고, 같은 요청은 in-flight Promise를 재사용한다.
+- 체감 효과: 첫 화면의 동적 관리자 JavaScript 전송량이 634,746 bytes, 93.7% 감소한다. 대시보드와 무관한 15개 모듈의 직렬 네트워크 왕복이 첫 카드 표시를 막지 않는다. 다른 탭의 최초 진입에만 그 탭 모듈 로드가 이동한다.
+- 경계: 이번 단계는 권장 수정 순서 1번만 반영했다. 알림 요약 중복 호출, 카드별 점진 갱신, 요청 시간 제한·최근 정상값 대체, DB 통합 RPC는 변경하지 않았다. DB·Edge·운영 데이터·기간/보존 기준도 변경하지 않았다.
+- 검증: JavaScript 구문, 전용 lazy-loader 계약, 기존 배너 의존 순서, PC/mobile 공통 cache, 전체 Node 계약 77/77을 통과했다. 로컬 브라우저 readback에서도 첫 진입 동적 관리자 모듈은 shared와 bootstrap 두 개뿐이었다.
+- 롤백: `admin.js`, `admin-bootstrap.js`, `admin-shared.js`와 PC/mobile cache를 이전 `2026082811` 기준으로 되돌리면 된다. DB·Edge 롤백은 없다.
 
 ## 명예의 전당 오른쪽 사이드 배너 이벤트 저장 수정 · 2026-08-28
 
