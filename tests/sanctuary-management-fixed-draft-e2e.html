@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Sanctuary Management Fixed Draft E2E</title>
+  <link rel="stylesheet" href="../ui/kinojo-common-ui.css">
+  <link rel="stylesheet" href="../ui/kinojo-components.css">
+  <link rel="stylesheet" href="../sanctuary-management/css/sanctuary-management.css">
+  <link rel="stylesheet" href="../sanctuary-management/css/sanctuary-management-draft.css">
+</head>
+<body class="kinojo-sanctuary-management-page">
+  <main class="sanctuary-management-wrap">
+    <header class="sanctuary-management-hero"><div><p class="sanctuary-management-kicker">E2E HARNESS</p><h1>고정 팀 DRAFT</h1><p>실제 제품 CSS·JS와 mock Server 어댑터를 사용하는 레이아웃 검수 화면</p></div><div id="sanctuaryManagementContract" class="sanctuary-management-contract"></div></header>
+    <section id="sanctuaryManagementAccess" class="sanctuary-management-access" aria-live="polite"><span class="sanctuary-management-access-icon">S</span><div><strong id="sanctuaryManagementAccessTitle"></strong><p id="sanctuaryManagementAccessMessage"></p></div><button id="sanctuaryManagementAccessAction" type="button" hidden></button></section>
+    <div id="sanctuaryManagementScopeShell" hidden><div id="sanctuaryManagementScope"></div></div>
+    <div id="sanctuaryManagementContent" class="sanctuary-management-content" hidden>
+      <section class="sanctuary-management-summary"><article><span>원본</span><strong id="sanctuaryManagementSource"></strong></article><article><span>읽기</span><strong id="sanctuaryManagementReadState"></strong></article><article><span>쓰기</span><strong id="sanctuaryManagementWriteState"></strong></article><article><span>성역</span><strong id="sanctuaryManagementSelectedName"></strong><small id="sanctuaryManagementSelectedMeta"></small></article></section>
+      <section class="sanctuary-management-team-panel"><header class="sanctuary-management-section-head"><div><p>TEAM WORKSPACE</p><h2>운영 팀</h2><span id="sanctuaryManagementTeamStatus"></span></div><button class="kinojo-btn" id="sanctuaryManagementAddTeam" type="button" disabled>팀 추가하기</button></header><div id="sanctuaryManagementTeamList" class="sanctuary-management-team-list"></div></section>
+    </div>
+  </main>
+  <script>
+    (()=>{
+      let teams=[{
+        teamId:77,sanctuaryId:1,title:'1팀 목요일 21시',activity:'성역1 진행',mode:'FIXED',joinPolicy:'INSTANT',status:'DRAFT',revision:4,
+        schedule:{scheduleId:91,kind:'WEEKLY',startsOn:'2026-08-27',weekdays:[4],startsAt:'21:00',durationMinutes:60,status:'ACTIVE',revision:2}
+      }];
+      const sanctuaries=[
+        {id:1,code:'rudra',name:'성역1',shortName:'성역1',releaseStatus:'OPEN'},
+        {id:2,code:'bagot',name:'성역2',shortName:'성역2',releaseStatus:'OPEN'},
+        {id:3,code:'kaldrix',name:'성역3',shortName:'성역3',releaseStatus:'OPEN'},
+        {id:4,code:'sanctuary4',name:'성역4',shortName:'성역4',availableFrom:'2026-09-09',releaseStatus:'UPCOMING',releaseLabel:'9월 9일 추가 예정'}
+      ];
+      window.KinojoAuth={getSession:()=>({token:'kws_'+('A'.repeat(40))}),getAccount:()=>({level:3,permissions:['sanctuary_edit']})};
+      window.KinojoPermissions={canEditSanctuary:()=>true};
+      window.KinojoToast={show:message=>{document.body.dataset.toast=message;},success:message=>{document.body.dataset.toast=message;}};
+      window.KinojoSupabase={
+        async getSanctuaryManagementBootstrap(){return {apiVersion:1,schemaVersion:429,serverTime:new Date().toISOString(),readEnabled:true,writeEnabled:true,actor:{memberId:7,canManageAll:true},sanctuaries,teams:structuredClone(teams)};},
+        async runSanctuaryManagementCommand(command,payload,expectedRevision){
+          if(command==='CREATE_TEAM'){
+            const teamId=88;teams.unshift({teamId,sanctuaryId:sanctuaries.find(item=>item.code===payload.sanctuaryCode).id,title:payload.title,activity:payload.activity,mode:'FIXED',joinPolicy:'INSTANT',status:'DRAFT',revision:1,schedule:Object.assign({scheduleId:92,status:'ACTIVE',revision:1},payload.schedule)});
+            return {ok:true,action:command,teamId,revision:1};
+          }
+          const team=teams.find(item=>item.teamId===payload.teamId);
+          if(!team||team.revision!==expectedRevision)throw new Error('다른 사용자가 먼저 팀 초안을 수정했습니다.');
+          team.title=payload.title;team.activity=payload.activity;team.sanctuaryId=sanctuaries.find(item=>item.code===payload.sanctuaryCode).id;team.schedule=Object.assign({},team.schedule,payload.schedule,{revision:team.schedule.revision+1});team.revision+=1;
+          return {ok:true,action:command,teamId:team.teamId,revision:team.revision};
+        }
+      };
+    })();
+  </script>
+  <script src="../sanctuary-management/js/sanctuary-management.js"></script>
+  <script src="../sanctuary-management/js/sanctuary-management-draft.js"></script>
+</body>
+</html>

@@ -46,13 +46,15 @@
 - 신규 실제 Edge helper 회귀를 포함한 전체 Node 계약 52개가 통과했다. PR의 My Info 관련 검증은 모두 통과했고, `Verify KINOJO Pages`의 실패 1건은 동시 진행된 별도 성역 운영 Edge 414와 저장소 기대값 412 불일치로 이 변경 범위와 무관하다.
 - 기존 실패 DRAFT는 수동 삭제하지 않고 기존 cleanup 수명주기를 따른다. 영향 사용자는 새 운영 코드가 반영된 뒤 My Info를 새로 열어 이미지를 다시 선택·전송한다.
 
-## 성역·스케줄 관리 개편 · Stage 3-1 Server 데이터 경계
+## 성역·스케줄 관리 개편 · Stage 3-2 고정 팀 DRAFT
 
 - 신규 권한형 경로는 PC `/sanctuary-management/`, 모바일 `/m/sanctuary-management/`이며 둘 다 `noindex,nofollow,noarchive`다. 공통 Topbar·Drawer와 성역/성역 일정/성역 관리 탭은 `KinojoPermissions.canEditSanctuary(account)` 기준으로 MANAGER 이상 또는 `sanctuary_edit` 권한 계정에만 관리 진입점을 표시한다.
-- WEB 단일 진입점은 `KinojoSupabase.getSanctuaryManagementBootstrap()`이다. 현재 KWS opaque session을 body의 `sessionToken`으로 `sanctuary-management` Edge에 전달하고 브라우저 직접 service-role RPC, legacy Sheet bridge, page mock adapter를 사용하지 않는다.
-- 운영 계약은 Edge API `1.0` / DB `412`다. 성역 이름·노출·출시 메타는 Server `sanctuary_master` 응답만 렌더링하며 WEB에 성역1~4 이름 목록을 별도 유지하지 않는다.
-- 운영 `readEnabled=false`, `writeEnabled=false`를 유지한다. 3-1에서는 실제 성역 범위와 rollout 상태까지만 표시하고 팀 추가·편집은 비활성이다. 플래그 활성화, 팀 DRAFT 생성, 기존 성역·스케줄·Sheet 경로 변경은 이번 범위가 아니다.
-- 회귀 기준은 신규 data-boundary 계약, 기존 permission/schedule/waitlist/sheet-sync 계약, 전체 Node 계약 52개와 PC 1440px·모바일 390px·최소 320px overflow 0이다. 다음 작업은 3-2 고정 팀 DRAFT 생성·저장·불러오기다.
+- WEB 진입점은 `KinojoSupabase.getSanctuaryManagementBootstrap()`과 `runSanctuaryManagementCommand()`이다. 현재 KWS opaque session을 body의 `sessionToken`으로 `sanctuary-management` Edge에 전달하고 브라우저 직접 service-role RPC, legacy Sheet bridge, page mock adapter를 사용하지 않는다.
+- 운영 계약은 Edge `sanctuary-management` v4 / API `1.0` / DB `429`다. DB429 bootstrap은 읽기 플래그가 켜졌을 때 팀별 저장 일정도 반환하며, command는 기존 `CREATE_TEAM`과 revision 필수 `UPDATE_TEAM_DRAFT`를 제공한다.
+- WEB은 고정 팀 방식 선택, 팀 제목·성역·진행 내용, 1회성/무기한 주간 반복, 수요일~화요일 요일, 30분 단위 진행 시간을 같은 dialog에서 조립한다. 저장 성공 뒤 bootstrap을 다시 호출해 DRAFT와 revision을 Server 결과로 교체한다.
+- 운영 `readEnabled=false`, `writeEnabled=false`는 그대로다. 따라서 운영 화면의 팀 추가·초안 계속 작성은 별도 승인 전까지 비활성이고 SQL429/Edge v4도 사용자 팀 데이터를 생성하지 않는다. 기존 성역·스케줄·Sheet 경로는 변경하지 않았다.
+- SQL429 Source `1A5loObIlXG4fa3d-8WobLNhc_l73Ki91`, Deploy `1BMy7UpqdDqKbsUCLxu8pKISbHOq6HPpq`, Verify `1PKz8So7LrHjmd1ZOex2JCOjod5_lgopd`, Rollback `1rBbx-2DJeAMD5Q2n8_z8o4rpN5YFPj5p`, Edge source `1-ysdBz0kwIKWnVDPHJTraJ3FqIiBC-Fv`다. Source/Deploy text는 9,011자로 동일하고 Edge health는 DB429/read false/write false다.
+- 다음 작업은 3-3 포스·파티·슬롯 실제 상태 연결이다. 운영 플래그 활성화는 별도 승인 범위이며, 3-3에서도 Browser는 Server가 반환한 force/party/slot/revision만 표시해야 한다.
 
 ## 레기온 트리 마-2~마-6 / 사-1~사-7 / 아-1~아-6 / 자-1~자-7
 

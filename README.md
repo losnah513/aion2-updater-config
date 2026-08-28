@@ -138,10 +138,11 @@ KINOJO INFO GitHub Pages upload package.
 ## Sanctuary management Server boundary
 
 - PC `/sanctuary-management/` and mobile `/m/sanctuary-management/` are noindex permission-gated entrypoints for MANAGER-or-higher or `sanctuary_edit` accounts.
-- The browser reads the new domain only through `KinojoSupabase.getSanctuaryManagementBootstrap()`, which invokes the `sanctuary-management` Edge Function with the current opaque KWS session. It does not call the service-role DB RPC, legacy Sheet bridge, or a page mock adapter directly.
-- The active contract is Edge API `1.0` / DB `412`. Server `sanctuary_master` supplies management-visible sanctuary names and release metadata; WEB must not keep a competing hard-coded sanctuary list.
-- The new read/write flags remain false until separately approved. The current 3-1 page therefore shows the Server-provided sanctuary scope and rollout state, while team create/edit controls remain disabled and the existing sanctuary, schedule, and Sheet paths remain unchanged.
-- `tests/sanctuary-management-data-boundary-contract.test.js` verifies the Server-only adapter, contract versions, disabled flags, PC/mobile shell, permission-gated navigation, and direct Edge health in CI.
+- The browser reads and writes the new domain only through `KinojoSupabase.getSanctuaryManagementBootstrap()` and `runSanctuaryManagementCommand()`. Both invoke the `sanctuary-management` Edge Function with the current opaque KWS session; the browser does not call the service-role DB RPC, legacy Sheet bridge, or a page mock adapter directly.
+- The active contract is Edge API `1.0` / DB `429`. Server `sanctuary_master` supplies management-visible sanctuary names and release metadata, and DB429 returns the saved schedule with each readable team DRAFT.
+- DB429 adds revision-checked `UPDATE_TEAM_DRAFT`; `CREATE_TEAM` remains the idempotent fixed-team DRAFT creation command. The approved square composer/right schedule panel and mobile schedule-first flow use those commands and reload bootstrap after every successful save.
+- The new read/write flags remain false until separately approved. Team create/edit controls therefore remain disabled in production and the existing sanctuary, schedule, and Sheet paths remain unchanged.
+- `tests/sanctuary-management-data-boundary-contract.test.js` and `tests/sanctuary-management-fixed-draft-contract.test.js` verify the Server-only adapter, command envelope, DRAFT create/update/reload contract, disabled flags, responsive layout tokens, permission-gated navigation, and direct Edge health in CI.
 
 ## Public page shell verification
 

@@ -2,7 +2,7 @@
   'use strict';
 
   const API_VERSION=1;
-  const SCHEMA_VERSION=412;
+  const SCHEMA_VERSION=429;
   let requestSequence=0;
   let bootstrapData=null;
   let selectedSanctuary='all';
@@ -24,7 +24,9 @@
       writeEnabled:data.writeEnabled===true,
       actor:data.actor&&typeof data.actor==='object'?data.actor:{},
       sanctuaries:data.sanctuaries.filter(item=>item&&typeof item==='object'),
-      teams:data.teams.filter(item=>item&&typeof item==='object')
+      teams:data.teams.filter(item=>item&&typeof item==='object').map(item=>Object.assign({},item,{
+        schedule:item.schedule&&typeof item.schedule==='object'?Object.assign({},item.schedule):null
+      }))
     };
   }
 
@@ -36,6 +38,13 @@
       const api=window.KinojoSupabase;
       if(!api||typeof api.getSanctuaryManagementBootstrap!=='function')throw new Error('성역 관리 Server 어댑터를 불러오지 못했습니다.');
       return validateBootstrap(await api.getSanctuaryManagementBootstrap());
+    },
+    async command(command,payload,expectedRevision=null,requestKey=''){
+      const api=window.KinojoSupabase;
+      if(!api||typeof api.runSanctuaryManagementCommand!=='function')throw new Error('성역 관리 Server 명령 어댑터를 불러오지 못했습니다.');
+      const result=await api.runSanctuaryManagementCommand(command,payload,expectedRevision,requestKey);
+      if(!result||typeof result!=='object'||result.ok!==true)throw new Error(value(result?.message)||'성역 팀 초안을 저장하지 못했습니다.');
+      return result;
     }
   });
   window.KinojoSanctuaryManagementData=ServerAdapter;
@@ -140,6 +149,13 @@
     const meta=document.createElement('div');meta.className='sanctuary-management-team-meta';
     [teamModeLabel(team),'팀 ID '+value(team.teamId),'revision '+value(team.revision)].forEach(text=>{const item=document.createElement('span');item.textContent=text;meta.appendChild(item);});
     card.append(head,meta);
+    if(value(team.status)==='DRAFT'){
+      const actions=document.createElement('div');actions.className='sanctuary-management-team-actions';
+      const reopen=document.createElement('button');reopen.type='button';reopen.className='kinojo-btn secondary';reopen.textContent='초안 계속 작성';
+      reopen.dataset.sanctuaryDraftTeam=value(team.teamId);
+      reopen.disabled=!bootstrapData?.writeEnabled;
+      actions.appendChild(reopen);card.appendChild(actions);
+    }
     return card;
   }
 
@@ -153,9 +169,9 @@
     const root=byId('sanctuaryManagementTeamList');
     root.replaceChildren();
     const addButton=byId('sanctuaryManagementAddTeam');
-    addButton.disabled=true;
+    addButton.disabled=!bootstrapData.writeEnabled;
     if(!bootstrapData.readEnabled){
-      byId('sanctuaryManagementTeamStatus').textContent='Server 읽기 플래그가 비활성 상태입니다.';
+      byId('sanctuaryManagementTeamStatus').textContent='Server 읽기 플래그가 비활성 상태입니다. 팀 생성도 운영 승인 전까지 열리지 않습니다.';
       root.appendChild(createEmpty('실제 팀 읽기는 아직 열리지 않았습니다.','Server 어댑터 연결은 완료됐으며 별도 승인 전까지 운영 팀 데이터는 표시하지 않습니다.'));
       return;
     }
@@ -167,6 +183,38 @@
     }
     teams.forEach(team=>root.appendChild(createTeamCard(team)));
   }
+
+  function selectedDraftTeam(teamId){
+    return bootstrapData?.teams.find(team=>String(team.teamId)===String(teamId))||null;
+  }
+
+  async function saveFixedDraft(model){
+    if(!bootstrapData?.writeEnabled)throw new Error('Server 쓰기 기능이 아직 활성화되지 않았습니다.');
+    const source=model&&typeof model==='object'?model:{};
+    const teamId=Number(source.teamId||0);
+    const command=teamId?'UPDATE_TEAM_DRAFT':'CREATE_TEAM';
+    const payload={
+      sanctuaryCode:value(source.sanctuaryCode),
+      title:value(source.title),
+      activity:value(source.activity),
+      mode:'FIXED',
+      joinPolicy:'INSTANT',
+      schedule:source.schedule&&typeof source.schedule==='object'?source.schedule:{}
+    };
+    if(teamId)payload.teamId=teamId;
+    const result=await ServerAdapter.command(command,payload,teamId?Number(source.revision):null,value(source.requestKey));
+    await load();
+    return result;
+  }
+
+  window.KinojoSanctuaryManagementDraftBridge=Object.freeze({
+    kind:'SERVER_ONLY_DRAFT',
+    schemaVersion:SCHEMA_VERSION,
+    snapshot(){return bootstrapData;},
+    findTeam:selectedDraftTeam,
+    saveFixedDraft,
+    reload:load
+  });
 
   function renderBootstrap(data){
     bootstrapData=data;
@@ -228,6 +276,16 @@
       if(action==='login'){byId('kinojoLoginBtn')?.click();return;}
       if(action==='back'){location.href=document.body.classList.contains('kinojo-page-mobile')?'../sanctuary/':'../sanctuary/';return;}
       load();
+    });
+    byId('sanctuaryManagementAddTeam')?.addEventListener('click',event=>{
+      if(event.currentTarget.disabled)return;
+      window.KinojoSanctuaryManagementDraftUI?.openMode?.(event.currentTarget);
+    });
+    byId('sanctuaryManagementTeamList')?.addEventListener('click',event=>{
+      const button=event.target.closest('[data-sanctuary-draft-team]');
+      if(!button||button.disabled)return;
+      const team=selectedDraftTeam(button.dataset.sanctuaryDraftTeam);
+      if(team)window.KinojoSanctuaryManagementDraftUI?.openDraft?.(team,button);
     });
     window.addEventListener('kinojo:auth-changed',load);
     load();

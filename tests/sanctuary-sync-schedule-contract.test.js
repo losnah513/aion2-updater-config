@@ -54,7 +54,7 @@ for (const entry of ['sanctuary/index.html', 'm/sanctuary/index.html']) {
   const html = read(entry);
   assert.ok(html.includes('sanctuary.css?cache=2026082106'), entry + ': sanctuary CSS cache is stale');
   assert.equal(html.includes('id="sanctuarySyncChip"'), false, entry + ': body sync card duplicates the topbar status');
-  assert.ok(html.includes('kinojo-supabase-features.js?cache=2026082801'), entry + ': Server feature cache is stale');
+  assert.ok(html.includes('kinojo-supabase-features.js?cache=2026082802'), entry + ': Server feature cache is stale');
   assert.ok(html.includes('sanctuary.js?cache=2026082105'), entry + ': sanctuary page cache is stale');
 }
 

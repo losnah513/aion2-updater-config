@@ -115,6 +115,7 @@ body.kinojo-sanctuary-management-page{
 .sanctuary-management-team-card p{margin:7px 0 0;color:#7c889b;font-size:11px;font-weight:740}
 .sanctuary-management-team-badge{flex:0 0 auto;padding:6px 8px;border-radius:999px;background:#eaf1ff;color:#2b5fca;font-size:9px;font-weight:950}
 .sanctuary-management-team-meta{margin-top:14px;display:flex;flex-wrap:wrap;gap:7px}.sanctuary-management-team-meta span{padding:6px 8px;border:1px solid rgba(110,132,170,.16);border-radius:8px;background:#fff;color:#66758d;font-size:10px;font-weight:850}
+.sanctuary-management-team-actions{margin-top:13px;display:flex;justify-content:flex-end}.sanctuary-management-team-actions .kinojo-btn{min-height:36px;font-size:10px}.sanctuary-management-team-actions .kinojo-btn:disabled{cursor:not-allowed;opacity:.5}
 .sanctuary-management-side{display:grid;gap:14px}.sanctuary-management-side>section{padding:18px}.sanctuary-management-side h2{font-size:16px}.sanctuary-management-placeholder{min-height:86px;margin-top:13px;padding:13px;display:flex;align-items:center;border:1px dashed rgba(109,130,168,.24);border-radius:13px;background:#f7f9fd;color:#7b889c;font-size:11px;font-weight:730;line-height:1.55}
 .sanctuary-management-wrap .common-footer{margin-top:28px}
 @media(max-width:1100px){
