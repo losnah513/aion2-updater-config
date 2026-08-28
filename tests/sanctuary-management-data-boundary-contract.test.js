@@ -17,8 +17,8 @@ for (const page of pages) {
     'id="sanctuaryManagementScope"',
     'id="sanctuaryManagementTeamList"',
     'kinojo-supabase-features.js?cache=2026082802',
-    'sanctuary-management.js?cache=2026082803',
-    'sanctuary-management-draft.js?cache=2026082802',
+    'sanctuary-management.js?cache=2026082804',
+    'sanctuary-management-draft.js?cache=2026082803',
   ]) assert.ok(html.includes(token), `${page}: missing ${token}`);
   assert.equal(html.includes('SanctuaryManagementMockAdapter'), false, `${page}: Stage 1 mock adapter remains`);
 }
@@ -45,7 +45,7 @@ const client = read('sanctuary-management/js/sanctuary-management.js');
 for (const token of [
   "kind:'SERVER_ONLY'",
   'const API_VERSION=1',
-  'const SCHEMA_VERSION=430',
+  'const SCHEMA_VERSION=431',
   'getSanctuaryManagementBootstrap',
   'runSanctuaryManagementCommand',
   "command=teamId?'UPDATE_TEAM_DRAFT':'CREATE_TEAM'",
@@ -72,7 +72,7 @@ const context = {
         calls.push('bootstrap');
         return {
           apiVersion: 1,
-          schemaVersion: 430,
+          schemaVersion: 431,
           serverTime: '2026-08-26T11:00:00Z',
           readEnabled: false,
           writeEnabled: false,
@@ -113,7 +113,7 @@ async function verifyAdapter() {
   const adapter = context.window.KinojoSanctuaryManagementData;
   assert.equal(adapter.kind, 'SERVER_ONLY');
   assert.equal(adapter.apiVersion, 1);
-  assert.equal(adapter.schemaVersion, 430);
+  assert.equal(adapter.schemaVersion, 431);
   const data = await adapter.bootstrap();
   assert.deepEqual(calls, ['bootstrap']);
   assert.equal(data.readEnabled, false);
@@ -126,7 +126,7 @@ async function verifyAdapter() {
   assert.equal(command.revision,5);
   assert.equal(calls[1].expectedRevision,4);
 
-  context.window.KinojoSupabase.getSanctuaryManagementBootstrap = async () => ({ apiVersion: 2, schemaVersion: 430, sanctuaries: [], teams: [] });
+  context.window.KinojoSupabase.getSanctuaryManagementBootstrap = async () => ({ apiVersion: 2, schemaVersion: 431, sanctuaries: [], teams: [] });
   await assert.rejects(adapter.bootstrap(), /계약 버전/);
 
   if (process.env.CI === 'true') {
@@ -138,7 +138,7 @@ async function verifyAdapter() {
     assert.equal(health.ok, true);
     assert.equal(health.service, 'sanctuary-management');
     assert.equal(String(health.apiVersion), '1.0');
-    assert.equal(Number(health.databaseContract), 430);
+    assert.equal(Number(health.databaseContract), 431);
     assert.equal(health.readEnabled, false);
     assert.equal(health.writeEnabled, false);
   }

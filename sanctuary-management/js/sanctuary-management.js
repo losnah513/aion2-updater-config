@@ -2,7 +2,7 @@
   'use strict';
 
   const API_VERSION=1;
-  const SCHEMA_VERSION=430;
+  const SCHEMA_VERSION=431;
   let requestSequence=0;
   let bootstrapData=null;
   let selectedSanctuary='all';
@@ -50,6 +50,25 @@
     return party;
   }
 
+  function validateCreatorCandidate(item){
+    if(!item||typeof item!=='object'||Array.isArray(item))throw new Error('성역 관리 생성자 캐릭터 후보가 올바르지 않습니다.');
+    const candidate=Object.assign({},item,{
+      characterId:integer(item.characterId),
+      serverId:integer(item.serverId),
+      mainCharacterId:integer(item.mainCharacterId),
+      characterName:value(item.characterName),
+      serverName:value(item.serverName),
+      className:value(item.className),
+      profileImageUrl:value(item.profileImageUrl),
+      relation:value(item.relation).toUpperCase(),
+      isMain:item.isMain===true
+    });
+    if(candidate.characterId<1||candidate.serverId<1||candidate.mainCharacterId<1||!candidate.characterName||!candidate.serverName||!['MAIN','ALT'].includes(candidate.relation)||candidate.isMain!==(candidate.relation==='MAIN')){
+      throw new Error('성역 관리 생성자 캐릭터 후보 식별 정보가 올바르지 않습니다.');
+    }
+    return candidate;
+  }
+
   function validateForce(item){
     if(!item||typeof item!=='object'||Array.isArray(item)||!Array.isArray(item.parties)||item.parties.length!==2){
       throw new Error('성역 관리 포스 파티 데이터가 올바르지 않습니다.');
@@ -63,10 +82,17 @@
       revision:integer(item.revision),
       occupiedCount:integer(item.occupiedCount),
       vacancyCount:integer(item.vacancyCount),
+      creatorMemberId:integer(item.creatorMemberId),
+      creatorOwnerResolved:item.creatorOwnerResolved===true,
+      creatorAlreadyAssigned:item.creatorAlreadyAssigned===true,
+      creatorCandidateCode:value(item.creatorCandidateCode),
+      creatorCandidateCount:integer(item.creatorCandidateCount),
+      creatorCandidates:Array.isArray(item.creatorCandidates)?item.creatorCandidates.map(validateCreatorCandidate):[],
       parties
     });
     const occupiedCount=parties.reduce((sum,party)=>sum+party.occupiedCount,0);
-    if(force.forceId<1||force.capacity!==10||force.revision<1||force.occupiedCount!==occupiedCount||force.vacancyCount!==force.capacity-occupiedCount){
+    const candidateIds=new Set(force.creatorCandidates.map(candidate=>candidate.characterId));
+    if(force.forceId<1||force.capacity!==10||force.revision<1||force.occupiedCount!==occupiedCount||force.vacancyCount!==force.capacity-occupiedCount||force.creatorMemberId<1||force.creatorCandidateCount!==force.creatorCandidates.length||candidateIds.size!==force.creatorCandidates.length||!force.creatorOwnerResolved&&force.creatorCandidates.length||force.creatorAlreadyAssigned&&force.creatorCandidates.length){
       throw new Error('성역 관리 포스 인원 집계가 올바르지 않습니다.');
     }
     return force;
@@ -296,6 +322,23 @@
     return result;
   }
 
+  async function setSlot(teamId,forceId,partyNo,slotNo,characterId,expectedRevision,requestKey){
+    if(!bootstrapData?.writeEnabled)throw new Error('Server 쓰기 기능이 아직 활성화되지 않았습니다.');
+    const payload={
+      teamId:Number(teamId),
+      forceId:Number(forceId),
+      partyNo:Number(partyNo),
+      slotNo:Number(slotNo),
+      characterId:Number(characterId)
+    };
+    if(!Number.isSafeInteger(payload.teamId)||payload.teamId<1||!Number.isSafeInteger(payload.forceId)||payload.forceId<1||![1,2].includes(payload.partyNo)||payload.slotNo<1||payload.slotNo>5||!Number.isSafeInteger(payload.characterId)||payload.characterId<1){
+      throw new Error('캐릭터를 추가할 슬롯을 다시 선택해 주세요.');
+    }
+    const result=await ServerAdapter.command('SET_SLOT',payload,Number(expectedRevision)||null,value(requestKey));
+    await load();
+    return result;
+  }
+
   window.KinojoSanctuaryManagementDraftBridge=Object.freeze({
     kind:'SERVER_ONLY_DRAFT',
     schemaVersion:SCHEMA_VERSION,
@@ -303,6 +346,7 @@
     findTeam:selectedDraftTeam,
     saveFixedDraft,
     addForce,
+    setSlot,
     reload:load
   });
 

@@ -25,7 +25,9 @@ for(const token of [
   "joinPolicy:'INSTANT'",
   'await load()',
   "ServerAdapter.command('ADD_FORCE'",
+  "ServerAdapter.command('SET_SLOT'",
   'addForce,',
+  'setSlot,',
   'data-sanctuary-draft-team',
 ])assert.ok(client.includes(token),`client fixed DRAFT flow missing ${token}`);
 
@@ -42,6 +44,11 @@ for(const token of [
   'data-draft-force=',
   'data-draft-add-force',
   'data-slot-id=',
+  'data-draft-slot',
+  'data-draft-candidate',
+  'function candidateMarkup',
+  'function assignCreatorCharacter',
+  "await bridge().setSlot",
   "await bridge().addForce",
   'aria-modal="true"',
   "if(event.key==='Escape'",
@@ -63,6 +70,9 @@ for(const token of [
   'scrollbar-width:none',
   '.sanctuary-management-force-list',
   '.sanctuary-management-force-rail.has-more::after',
+  '.sanctuary-management-candidate-rail.has-more::after',
+  '.sanctuary-management-candidate-list',
+  '.sanctuary-management-draft-slot.is-selected',
   '.sanctuary-management-draft-frame.has-more::after',
   '.sanctuary-management-schedule-panel.has-more::after',
   '@media(max-width:350px)',
@@ -70,8 +80,9 @@ for(const token of [
 
 for(const page of ['sanctuary-management/index.html','m/sanctuary-management/index.html']){
   const html=read(page);
-  assert.ok(html.includes('sanctuary-management-draft.css?cache=2026082802'),`${page}: draft CSS cache missing`);
-  assert.ok(html.includes('sanctuary-management-draft.js?cache=2026082802'),`${page}: draft JS cache missing`);
+  assert.ok(html.includes('sanctuary-management.js?cache=2026082804'),`${page}: management JS cache missing`);
+  assert.ok(html.includes('sanctuary-management-draft.css?cache=2026082803'),`${page}: draft CSS cache missing`);
+  assert.ok(html.includes('sanctuary-management-draft.js?cache=2026082803'),`${page}: draft JS cache missing`);
 }
 
 console.log('KINOJO sanctuary management fixed-team DRAFT contract: PASS');
