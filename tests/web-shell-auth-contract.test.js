@@ -78,12 +78,12 @@ for (const page of publicShellPages) {
   ]) {
     assert.ok(html.includes(token), `${page}: missing ${token}`);
   }
-  assert.ok(html.includes('kinojo-common-ui.js?cache=2026082813'), `${page}: common UI cache missing`);
+  assert.ok(html.includes('kinojo-common-ui.js?cache=2026082814'), `${page}: common UI cache missing`);
 }
 
 for (const page of ['admin/index.html', 'm/admin/index.html']) {
   const html = read(page);
-  assert.ok(html.includes('kinojo-common-ui.js?cache=2026082813'), `${page}: common UI cache missing`);
+  assert.ok(html.includes('kinojo-common-ui.js?cache=2026082814'), `${page}: common UI cache missing`);
   assert.ok(html.includes('kinojo-auth-session.js?cache=2026081801'), `${page}: stale auth session cache`);
   assert.ok(html.includes('kinojo-auth-ui.js?cache=2026082806'), `${page}: stale auth UI cache`);
 }

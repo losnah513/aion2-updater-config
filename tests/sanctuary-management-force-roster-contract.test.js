@@ -9,7 +9,7 @@ const client=read('sanctuary-management/js/sanctuary-management.js');
 const draft=read('sanctuary-management/js/sanctuary-management-draft.js');
 
 for(const token of [
-  'const SCHEMA_VERSION=437',
+  'const SCHEMA_VERSION=439',
   'function validateSlot',
   'function validateParty',
   'function validateForce',
@@ -48,11 +48,13 @@ function makeParty(partyNo){
 }
 
 const response={
-  apiVersion:1.5,
-  schemaVersion:437,
+  apiVersion:1.6,
+  schemaVersion:439,
   serverTime:'2026-08-28T04:00:00Z',
   readEnabled:true,
   writeEnabled:true,
+  globalWriteEnabled:true,
+  rollout:{mode:'PILOT',globalWriteEnabled:true,effectiveWriteEnabled:true,pilotApproved:true,reasonCode:'PILOT_APPROVED',message:'시험 사용자 쓰기가 활성화되었습니다.'},
   actor:{memberId:7,canManageAll:true},
   sanctuaries:[{id:1,code:'rudra',shortName:'성역1'}],
   teams:[{
@@ -74,7 +76,7 @@ vm.runInNewContext(client,context,{filename:'sanctuary-management/js/sanctuary-m
 async function verify(){
   const adapter=context.window.KinojoSanctuaryManagementData;
   const data=await adapter.bootstrap();
-  assert.equal(data.schemaVersion,437);
+  assert.equal(data.schemaVersion,439);
   assert.equal(data.teams[0].forces.length,1);
   assert.equal(data.teams[0].forces[0].parties.length,2);
   assert.equal(data.teams[0].forces[0].parties[0].slots.length,5);

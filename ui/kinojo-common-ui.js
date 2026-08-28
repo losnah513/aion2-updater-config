@@ -527,7 +527,9 @@
   function renderRecruitmentNotificationToast_(summary,info){
     const groups=Array.isArray(summary?.sanctuaryRecruitmentGroups)?summary.sanctuaryRecruitmentGroups:[];
     if(!groups.length)return;
-    const storageKey='kinojo_sanctuary_recruitment_seen_v437';
+    // Stage 6 pilot notifications use a new session namespace so approved
+    // CODEX_ADMIN/MASTER trial users receive one fresh, deduplicated rollout notice.
+    const storageKey='kinojo_sanctuary_recruitment_seen_v439';
     let seen=[];try{seen=JSON.parse(sessionStorage.getItem(storageKey)||'[]');}catch(_err){seen=[];}
     const seenSet=new Set(Array.isArray(seen)?seen.map(String):[]);
     const unseen=groups.filter(group=>group?.eventKey&&!seenSet.has(String(group.eventKey)));

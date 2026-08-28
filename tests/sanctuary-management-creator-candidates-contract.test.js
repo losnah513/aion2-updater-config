@@ -46,7 +46,8 @@ function party(partyNo){
 
 const candidate={characterId:501,serverId:2,serverName:'지켈',characterName:'생성자본캐',className:'검성',profileImageUrl:'',isMain:true,relation:'MAIN',mainCharacterId:501};
 const response={
-  apiVersion:1.5,schemaVersion:437,serverTime:'2026-08-28T04:30:00Z',readEnabled:true,writeEnabled:true,
+  apiVersion:1.6,schemaVersion:439,serverTime:'2026-08-28T04:30:00Z',readEnabled:true,writeEnabled:true,globalWriteEnabled:true,
+  rollout:{mode:'PILOT',globalWriteEnabled:true,effectiveWriteEnabled:true,pilotApproved:true,reasonCode:'PILOT_APPROVED',message:'시험 사용자 쓰기가 활성화되었습니다.'},
   actor:{memberId:7,canManageAll:true},sanctuaries:[{id:1,code:'rudra',shortName:'성역1'}],
   teams:[{
     teamId:77,sanctuaryId:1,title:'1팀',activity:'성역1 진행',mode:'FIXED',joinPolicy:'INSTANT',status:'DRAFT',revision:4,schedule:null,
@@ -69,7 +70,7 @@ vm.runInNewContext(client,context,{filename:'sanctuary-management/js/sanctuary-m
 
 async function verify(){
   const data=await context.window.KinojoSanctuaryManagementData.bootstrap();
-  assert.equal(data.schemaVersion,437);
+  assert.equal(data.schemaVersion,439);
   assert.equal(data.teams[0].forces[0].creatorCandidateCount,1);
   assert.equal(data.teams[0].forces[0].creatorCandidates[0].characterName,'생성자본캐');
   assert.equal(data.teams[0].forces[1].creatorAlreadyAssigned,true);

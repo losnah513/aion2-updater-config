@@ -97,6 +97,15 @@
 - PC 1440×900, 모바일 390×844, 소형 모바일 320×568에서 document/modal 가로 overflow 0을 확인했다. 소형 화면의 일정 본문은 숨김 세로 scrollbar와 하단 fade를 쓰고 버튼 영역은 유지한다. Escape 포커스 복귀, Tab 순환, 콘솔 error/warning 0을 확인했다.
 - 전체 Node 계약은 `75/75`를 통과했다. DB437 공개 RPC는 `PUBLIC/anon/authenticated` EXECUTE false, `service_role` true다. advisor의 신규 FK 미인덱스는 후속 가드로 해소했으며 private service-only 테이블의 RLS-no-policy INFO는 의도된 직접 접근 차단이다.
 
+## 성역관리 Stage 6-1 · 베타 기능 플래그와 시험 사용자 운영 · 2026-08-28
+
+- 운영 계약은 Edge `sanctuary-management` v14, API `1.6`, DB `439`다. Migration `20260828111536_sanctuary_management_stage6_pilot_rollout_v439.sql`이 `write_rollout_mode=CLOSED/PILOT/OPEN`과 private 시험 사용자 허용 목록을 추가했다.
+- 현재 모드는 `PILOT`이며 global read/write는 유지한다. 로그인 이용자는 신규 팀·월 일정 데이터를 읽을 수 있지만, 유효한 허용 목록 행이 없으면 bootstrap의 effective `writeEnabled`가 false이고 팀 추가·편집·일정 변경·해산·지원·모집 알림이 모두 읽기 전용으로 내려간다. 기존 성역·성역 일정·Sheet 경로는 변경하지 않는다.
+- 최초 시험 사용자는 활성 raw `MASTER`와 전용 raw `ADMIN` 각 1명이다. 허용 목록은 member ID·승인 시각·만료/해지 상태만 보관하며 패스키·KWS 세션·브라우저 자격 증명은 소스, migration, 테스트, 문서에 남기지 않는다.
+- Edge는 archive preview, command, lease, character search/register 전에 DB439 `write_access`를 확인해 미승인 요청을 HTTP 403 `SANCTUARY_PILOT_REQUIRED`로 거절한다. 최종 command/lease/materialize/archive wrapper도 `kinojo_sm_assert_pilot_write_v439`를 다시 실행하므로 UI 또는 Edge 분기를 우회해도 쓰기는 허용되지 않는다.
+- DB439 public wrapper는 `PUBLIC/anon/authenticated` EXECUTE false, `service_role` true다. allowlist table은 private schema, RLS enabled, 직접 SELECT 권한 없음이며 security/performance advisor에서 이 신규 객체 관련 항목은 0건이다.
+- WEB은 승인자에게 `시험 운영 · 승인됨`, 미승인자에게 `읽기 전용 · 시험 사용자만 쓰기`를 표시한다. PC 1440×900, 모바일 390×844, 최소 320×568에서 document 가로 overflow 0, 승인/미승인 버튼 상태, 콘솔 error 0을 확인했다.
+
 ## 예방적 확장성 SQL428 · 2026-08-28
 
 - Meter 공개 통계/내 비교의 기본 기간은 Server `WEEK`이며 DAY/WEEK/MONTH 시간 경계가 raw combat 조회에 적용된다. `ALL`은 명시적인 사용자 선택지다. 2026-08-28 기준 records 333, participants 1,753, 적격 0이며 집계 전환 Gate 미만이므로 기간·보존·집계 구조를 변경하지 않았다.
