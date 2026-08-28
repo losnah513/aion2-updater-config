@@ -112,14 +112,14 @@
     history.replaceState(null,'',location.pathname+location.search+value);
   }
 
-  async function loadFeature(tab,subtab,force){
+  function loadFeature(tab,subtab,force){
     const key=tab+(subtab?'/'+subtab:'');
-    if(state.loaded[key]&&!force)return;
-    try{
-      await A.ensureFeatureModules?.(tab,subtab);
+    const isImageContext=tab==='images'&&(subtab==='main'||subtab==='side');
+    if(state.loaded[key]&&!force&&!isImageContext)return;
+    const activate=()=>{
       if(state.tab!==tab||(subtab&&state.subtab!==subtab))return;
       state.loaded[key]=true;
-      if(tab==='images'&&(subtab==='main'||subtab==='side'))return A.loadBannerContext?.(subtab,force===true);
+      if(isImageContext)return A.loadBannerContext?.(subtab,force===true);
       if(tab==='dashboard') refreshDashboard();
       if(tab==='requests') loadCodeRequests();
       if(tab==='members'&&subtab==='accounts') loadAccounts();
@@ -137,9 +137,17 @@
       if(tab==='system'&&subtab==='sheet-sync') loadSanctuarySyncConsole(force===true);
       if(tab==='system'&&subtab==='environment') refreshSystemSettings();
       if(tab==='logs'&&subtab==='visitors') loadVisitorDashboard(force===true);
-    }catch(error){
+    };
+    const fail=error=>{
       state.loaded[key]=false;
       addLog('ERROR','관리자 기능 모듈 로드 실패 · '+(error?.message||error));
+    };
+    try{
+      const pending=A.ensureFeatureModules?.(tab,subtab);
+      if(pending&&typeof pending.then==='function')return pending.then(activate).catch(fail);
+      return activate();
+    }catch(error){
+      fail(error);
     }
   }
 

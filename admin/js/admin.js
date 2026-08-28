@@ -6,6 +6,7 @@
   const base=new URL('./',currentUrl);
   const CACHE=String(currentUrl.searchParams.get('cache')||'2026082901').trim()||'2026082901';
   const modulePromises=new Map();
+  const loadedModules=new Set();
   const coreModules=[
     'admin-shared.js'
   ];
@@ -36,7 +37,10 @@
       const script=document.createElement('script');
       script.src=new URL(name+'?cache='+encodeURIComponent(CACHE),base).href;
       script.async=false;
-      script.onload=()=>resolve(name);
+      script.onload=()=>{
+        loadedModules.add(name);
+        resolve(name);
+      };
       script.onerror=()=>{
         modulePromises.delete(name);
         reject(new Error('관리자 모듈을 불러오지 못했습니다: '+name));
@@ -46,8 +50,10 @@
     modulePromises.set(name,promise);
     return promise;
   }
-  async function ensureFeatureModules(tab){
-    for(const name of featureModules[String(tab||'')]||[])await loadScript(name);
+  function ensureFeatureModules(tab){
+    const names=featureModules[String(tab||'')]||[];
+    if(names.every(name=>loadedModules.has(name)))return null;
+    return (async()=>{for(const name of names)await loadScript(name)})();
   }
   function showLoadError(error){
     console.error('[KINOJO ADMIN]',error);
