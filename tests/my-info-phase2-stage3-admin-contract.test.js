@@ -94,7 +94,7 @@ for (const html of [desktop, mobile]) {
   assert.ok(html.includes('캐릭터 이미지·제작 요청 확인'), 'admin page must explain the combined request workflow');
   assert.ok(html.includes('admin.css?cache=2026082706'), 'admin CSS cache must include stage 3');
   assert.ok(html.includes('admin.js?cache=2026082803'), 'admin JS cache must include the current admin loader');
-  assert.ok(html.includes('kinojo-auth-ui.js?cache=2026082601'), 'notification bridge loader cache must include stage 3');
+  assert.ok(html.includes('kinojo-auth-ui.js?cache=2026082806'), 'notification bridge loader cache must include the ADMIN label guard');
 }
 
 assert.ok(shared.includes('memberImageRequestPendingCount:0'), 'shared state must track active production requests');

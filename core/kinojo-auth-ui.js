@@ -126,13 +126,16 @@
       if(isServerSessionToken_(session.token)&&!lastServerTouchAt) lastServerTouchAt=Date.now();
       const name = account?.mainCharacter || session.mainCharacter || '회원';
       const role = roleOf(session) || roleOf(account) || '';
+      // CODEX_ADMIN_ROLE: authorization stays MASTER-equivalent, while the
+      // server-owned roleLabel keeps the dedicated ADMIN account recognizable.
+      const displayRoleLabel = account?.roleLabel || session?.roleLabel || roleLabel(role);
       const className = account?.className || session.className || '';
       const icon = classIconFor(className);
       if(label){
         label.innerHTML = '<span class="kinojo-auth-profile">'
           + (icon ? '<img class="kinojo-auth-class-icon" src="' + safeText(icon) + '" alt="" />' : '')
           + '<span class="kinojo-auth-name">' + safeText(name) + '</span>'
-          + '<span class="kinojo-auth-role kinojo-auth-role-' + role.toLowerCase().replace('_','-') + '">' + safeText(roleLabel(role)) + '</span>'
+          + '<span class="kinojo-auth-role kinojo-auth-role-' + role.toLowerCase().replace('_','-') + '">' + safeText(displayRoleLabel) + '</span>'
           + '<span class="kinojo-auth-online" aria-hidden="true">●</span>'
           + '</span>';
       }
@@ -917,6 +920,7 @@
 
     box.innerHTML = accounts.map(account => {
       const role = roleOf(account);
+      const managedRoleLabel = account.roleLabel || roleLabel(role);
       const isRoot = role === 'MASTER';
       const actorRole = roleOf(currentAdminAccount_());
       const editable = canEditManagedAccount_(account);
@@ -929,7 +933,7 @@
         return '<label class="admin-switch-row"><span>' + safeText(PERMISSION_LABELS[key]) + '</span><button aria-label="' + safeText(PERMISSION_LABELS[key]) + ' 권한" aria-pressed="' + (on ? 'true' : 'false') + '" class="admin-permission-toggle ' + (on ? 'on' : '') + '" data-account-action="toggle-permission" data-code="' + safeText(account.code || '') + '" data-permission="' + key + '" type="button"' + disabled + '><span></span></button></label>';
       }).join('');
       const roleOptions = assignableRoles_(actorRole).map(r => '<option value="' + r + '"' + (role === r ? ' selected' : '') + '>' + safeText(roleLabel(r)) + '</option>').join('');
-      const roleSelect = !editable ? '<span class="admin-account-role-fixed">' + safeText(roleLabel(role)) + '</span>' : '<select class="admin-account-role-select" data-account-action="change-role" data-code="' + safeText(account.code || '') + '">' + roleOptions + '</select>'; 
+      const roleSelect = !editable ? '<span class="admin-account-role-fixed">' + safeText(managedRoleLabel) + '</span>' : '<select class="admin-account-role-select" data-account-action="change-role" data-code="' + safeText(account.code || '') + '">' + roleOptions + '</select>';
       const deleteButton = !editable
         ? '<button class="btn admin-account-delete" type="button" disabled>수정 불가</button>'
         : '<button class="btn admin-account-delete" data-account-action="delete-code" data-code="' + safeText(account.code || '') + '" type="button">코드 삭제</button>';

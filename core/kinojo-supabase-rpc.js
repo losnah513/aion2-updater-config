@@ -19,6 +19,7 @@
     'kinojo_admin_member_create_264',
     'kinojo_admin_member_list_264',
     'kinojo_admin_member_list_v428',
+    'kinojo_admin_member_list_v433',
     'kinojo_admin_member_manage_264',
     'kinojo_admin_character_deactivate',
     'kinojo_admin_character_exclusion_update_v278',

@@ -39,7 +39,7 @@ assert.ok(page.includes("new CustomEvent('kinojo:sanctuary-access-changed'"), 'F
 for (const entry of ['sanctuary/index.html', 'm/sanctuary/index.html']) {
   const html = read(entry);
   assert.ok(html.includes('id="editModeBtn" type="button" hidden'), `${entry}: info editor must remain hidden until Server access arrives`);
-  assert.ok(html.includes('kinojo-supabase-features.js?cache=2026082803'), `${entry}: feature cache key is stale`);
+  assert.ok(html.includes('kinojo-supabase-features.js?cache=2026082806'), `${entry}: feature cache key is stale`);
   assert.ok(html.includes('sanctuary.js?cache=2026082105'), `${entry}: page cache key is stale`);
   assert.ok(html.includes('sanctuary-editor.js?cache=2026082105'), `${entry}: editor cache key is stale`);
 }
