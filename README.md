@@ -139,10 +139,11 @@ KINOJO INFO GitHub Pages upload package.
 
 - PC `/sanctuary-management/` and mobile `/m/sanctuary-management/` are noindex permission-gated entrypoints for MANAGER-or-higher or `sanctuary_edit` accounts.
 - The browser reads and writes the new domain only through `KinojoSupabase.getSanctuaryManagementBootstrap()` and `runSanctuaryManagementCommand()`. Both invoke the `sanctuary-management` Edge Function with the current opaque KWS session; the browser does not call the service-role DB RPC, legacy Sheet bridge, or a page mock adapter directly.
-- The active contract is Edge API `1.0` / DB `429`. Server `sanctuary_master` supplies management-visible sanctuary names and release metadata, and DB429 returns the saved schedule with each readable team DRAFT.
-- DB429 adds revision-checked `UPDATE_TEAM_DRAFT`; `CREATE_TEAM` remains the idempotent fixed-team DRAFT creation command. The approved square composer/right schedule panel and mobile schedule-first flow use those commands and reload bootstrap after every successful save.
+- The active contract is Edge API `1.0` / DB `430`. Server `sanctuary_master` supplies management-visible sanctuary names and release metadata. DB430 adds each readable team's ordered forces, two parties per force, five slots per party, character snapshot, occupancy/vacancy totals, and revisions to the saved DB429 schedule.
+- `CREATE_TEAM` seeds the first 10-slot force, DB429 provides revision-checked `UPDATE_TEAM_DRAFT`, and the DB430 command wrapper preserves the existing permission/idempotency/maximum-nine-force `ADD_FORCE` validation. The square composer reloads Server state after every save or force addition; changing the selected force never rebuilds slot state in the Browser.
+- Desktop keeps the square composer beside the vertical schedule panel. Mobile places the schedule above the square composer. A nine-force rail uses vertical overflow with a hidden scrollbar and bottom fade, while horizontal overflow remains forbidden.
 - The new read/write flags remain false until separately approved. Team create/edit controls therefore remain disabled in production and the existing sanctuary, schedule, and Sheet paths remain unchanged.
-- `tests/sanctuary-management-data-boundary-contract.test.js` and `tests/sanctuary-management-fixed-draft-contract.test.js` verify the Server-only adapter, command envelope, DRAFT create/update/reload contract, disabled flags, responsive layout tokens, permission-gated navigation, and direct Edge health in CI.
+- `tests/sanctuary-management-data-boundary-contract.test.js`, `tests/sanctuary-management-fixed-draft-contract.test.js`, and `tests/sanctuary-management-force-roster-contract.test.js` verify the Server-only adapter, DB430 nested roster validation, DRAFT create/update/add-force/reload contract, disabled flags, responsive layout tokens, permission-gated navigation, and direct Edge health in CI.
 
 ## Public page shell verification
 

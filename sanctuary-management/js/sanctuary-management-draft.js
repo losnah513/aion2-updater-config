@@ -5,7 +5,7 @@
     {value:3,label:'수'},{value:4,label:'목'},{value:5,label:'금'},{value:6,label:'토'},
     {value:7,label:'일'},{value:1,label:'월'},{value:2,label:'화'}
   ]);
-  const state={layer:null,opener:null,team:null,requestKey:'',message:'',tone:'',saving:false};
+  const state={layer:null,opener:null,team:null,selectedForceId:0,requestKey:'',forceSaveRequestKey:'',forceAddRequestKey:'',message:'',tone:'',saving:false,mutating:false};
   const value=input=>String(input??'').trim();
   const escapeHtml=input=>String(input??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const bridge=()=>window.KinojoSanctuaryManagementDraftBridge;
@@ -55,7 +55,7 @@
     layer.addEventListener('keydown',handleKeydown);
     layer.addEventListener('change',handleChange);
     layer.addEventListener('scroll',event=>{
-      if(event.target.matches?.('.sanctuary-management-builder-dialog,.sanctuary-management-schedule-scroll'))syncScrollFade(event.target);
+      if(event.target.matches?.('.sanctuary-management-builder-dialog,.sanctuary-management-schedule-scroll,.sanctuary-management-force-list'))syncScrollFade(event.target);
     },true);
     window.addEventListener('resize',()=>requestAnimationFrame(syncScrollFades));
     document.body.appendChild(layer);
@@ -78,7 +78,7 @@
     layer.replaceChildren();
     document.body.classList.remove('sanctuary-management-draft-open');
     const target=state.opener;
-    state.opener=null;state.team=null;state.requestKey='';state.message='';state.tone='';state.saving=false;
+    state.opener=null;state.team=null;state.selectedForceId=0;state.requestKey='';state.forceSaveRequestKey='';state.forceAddRequestKey='';state.message='';state.tone='';state.saving=false;state.mutating=false;
     try{target?.focus({preventScroll:true});}catch(_error){target?.focus?.();}
   }
 
@@ -94,17 +94,17 @@
   function syncScrollFade(scroller){
     if(!scroller)return;
     const hasMore=scroller.scrollTop+scroller.clientHeight<scroller.scrollHeight-2;
-    const shell=scroller.matches('.sanctuary-management-builder-dialog')?scroller.closest('.sanctuary-management-draft-frame'):scroller.closest('.sanctuary-management-schedule-panel');
+    const shell=scroller.matches('.sanctuary-management-builder-dialog')?scroller.closest('.sanctuary-management-draft-frame'):scroller.matches('.sanctuary-management-force-list')?scroller.closest('.sanctuary-management-force-rail'):scroller.closest('.sanctuary-management-schedule-panel');
     shell?.classList.toggle('has-more',hasMore);
   }
 
   function syncScrollFades(){
-    state.layer?.querySelectorAll('.sanctuary-management-builder-dialog,.sanctuary-management-schedule-scroll').forEach(syncScrollFade);
+    state.layer?.querySelectorAll('.sanctuary-management-builder-dialog,.sanctuary-management-schedule-scroll,.sanctuary-management-force-list').forEach(syncScrollFade);
   }
 
   function openMode(opener){
     if(!bridge()?.snapshot()?.writeEnabled)return;
-    state.team=null;state.requestKey='';state.message='';state.tone='';state.saving=false;
+    state.team=null;state.selectedForceId=0;state.requestKey='';state.forceSaveRequestKey='';state.forceAddRequestKey='';state.message='';state.tone='';state.saving=false;state.mutating=false;
     openLayer(opener);
     state.layer.innerHTML='<div class="sanctuary-management-draft-backdrop" data-draft-close></div>'
       +'<section class="sanctuary-management-mode-dialog" role="dialog" aria-modal="true" aria-labelledby="sanctuaryDraftModeTitle" aria-describedby="sanctuaryDraftModeDescription" tabindex="-1">'
@@ -118,6 +118,64 @@
     focusDialog('[data-draft-mode="fixed"]');
   }
 
+  function teamForces(){
+    return Array.isArray(state.team?.forces)?state.team.forces.slice().sort((left,right)=>Number(left.forceNo)-Number(right.forceNo)):[];
+  }
+
+  function selectedForce(){
+    const forces=teamForces();
+    return forces.find(force=>Number(force.forceId)===Number(state.selectedForceId))||forces[0]||null;
+  }
+
+  function forceRailMarkup(){
+    const forces=teamForces();
+    const active=selectedForce();
+    const busy=state.saving||state.mutating;
+    if(!state.team){
+      return '<div class="sanctuary-management-force-list"><button type="button" class="is-active" disabled><strong>1포스</strong><small>저장 후 Server 생성</small></button></div><p>새 DRAFT 저장 시 1포스와 10슬롯을 Server가 생성합니다.</p>';
+    }
+    const buttons=forces.map(force=>{
+      const selected=Number(force.forceId)===Number(active?.forceId);
+      return '<button type="button" data-draft-force="'+escapeHtml(force.forceId)+'" class="'+(selected?'is-active':'')+'" aria-pressed="'+selected+'"'+(busy?' disabled':'')+'><strong>'+escapeHtml(force.forceNo)+'포스</strong><small>'+escapeHtml(force.occupiedCount)+' / '+escapeHtml(force.capacity)+'명 · rev '+escapeHtml(force.revision)+'</small></button>';
+    }).join('');
+    const add=forces.length<9?'<button type="button" class="is-add" data-draft-add-force'+(busy?' disabled':'')+'><strong>+ 포스 추가</strong><small>다음 '+(forces.length+1)+'포스 · 최대 9</small></button>':'';
+    return '<div class="sanctuary-management-force-list" data-force-list>'+buttons+add+'</div><p>Server 포스 '+forces.length+'/9 · 선택한 포스의 10슬롯을 표시합니다.</p>';
+  }
+
+  function slotMarkup(slot,partyNo){
+    const number=(Number(partyNo)-1)*5+Number(slot.slotNo);
+    const occupied=slot.occupied===true&&slot.character;
+    const name=occupied?value(slot.character.name):'빈 슬롯';
+    const detail=occupied?[value(slot.character.serverName),value(slot.character.className),value(slot.character.relation)].filter(Boolean).join(' · '):'slot '+value(slot.slotId)+' · rev '+value(slot.revision);
+    return '<button type="button" class="sanctuary-management-draft-slot'+(occupied?' is-occupied':'')+'" disabled data-slot-id="'+escapeHtml(slot.slotId)+'" data-slot-revision="'+escapeHtml(slot.revision)+'" data-occupied="'+String(Boolean(occupied))+'"><span>'+number+'</span><strong>'+escapeHtml(name)+'</strong><small>'+escapeHtml(detail)+'</small></button>';
+  }
+
+  function rosterMarkup(){
+    const force=selectedForce();
+    if(!force){
+      const slots=Array.from({length:10},(_,index)=>'<button type="button" class="sanctuary-management-draft-slot" disabled data-occupied="false"><span>'+(index+1)+'</span><strong>생성 대기</strong><small>'+(index<5?'1파티':'2파티')+' · Server 저장 전</small></button>').join('');
+      return '<main class="sanctuary-management-roster" aria-label="저장 전 1포스 슬롯 미리보기"><div class="sanctuary-management-party-labels"><span>1파티 · 1–5번</span><span>2파티 · 6–10번</span></div><div class="sanctuary-management-draft-slot-grid">'+slots+'</div></main>';
+    }
+    const parties=force.parties.slice().sort((left,right)=>Number(left.partyNo)-Number(right.partyNo));
+    const labels=parties.map(party=>'<span>'+escapeHtml(party.partyNo)+'파티 · '+escapeHtml(party.occupiedCount)+'/'+escapeHtml(party.capacity)+'명</span>').join('');
+    const slots=parties.map(party=>party.slots.map(slot=>slotMarkup(slot,party.partyNo)).join('')).join('');
+    return '<main class="sanctuary-management-roster" aria-label="'+escapeHtml(force.forceNo)+'포스 Server 슬롯"><div class="sanctuary-management-party-labels">'+labels+'</div><div class="sanctuary-management-draft-slot-grid">'+slots+'</div></main>';
+  }
+
+  function defaultStatus(){
+    const force=selectedForce();
+    if(!force)return '새 DRAFT는 저장할 때 1포스·2파티·10슬롯이 Server에 생성됩니다.';
+    return force.forceNo+'포스 · '+force.occupiedCount+'/'+force.capacity+'명 · 빈자리 '+force.vacancyCount+' · Server revision '+force.revision;
+  }
+
+  function renderRosterState(){
+    const rail=state.layer?.querySelector('.sanctuary-management-force-rail');
+    if(rail)rail.innerHTML=forceRailMarkup();
+    const roster=state.layer?.querySelector('.sanctuary-management-roster');
+    if(roster)roster.outerHTML=rosterMarkup();
+    requestAnimationFrame(syncScrollFades);
+  }
+
   function modeMarkup(){
     const schedule=currentSchedule();
     const sanctuaryOptions=sanctuaryItems().map(item=>{
@@ -125,9 +183,9 @@
       return '<option value="'+escapeHtml(code)+'"'+(code===selectedCode()?' selected':'')+' data-available-from="'+escapeHtml(available)+'">'+escapeHtml(sanctuaryLabel(item))+(available?' · '+escapeHtml(available)+'부터':'')+'</option>';
     }).join('');
     const weekdays=WEEKDAYS.map(day=>'<label><input type="checkbox" name="draftWeekday" value="'+day.value+'"'+(schedule.weekdays.includes(day.value)?' checked':'')+'><span>'+day.label+'</span></label>').join('');
-    const slots=Array.from({length:10},(_,index)=>'<button type="button" class="sanctuary-management-draft-slot" disabled><span>'+(index+1)+'</span><strong>빈 슬롯</strong><small>'+(index<5?'1파티':'2파티')+' · 3-3 연결</small></button>').join('');
     const isWeekly=schedule.kind==='WEEKLY';
     const editing=Boolean(state.team);
+    const busy=state.saving||state.mutating;
     return '<div class="sanctuary-management-draft-backdrop" data-draft-close></div>'
       +'<div class="sanctuary-management-draft-frame">'
         +'<form class="sanctuary-management-builder-dialog" role="dialog" aria-modal="true" aria-labelledby="sanctuaryDraftTitle" aria-describedby="sanctuaryDraftDescription" tabindex="-1" data-draft-form>'
@@ -135,11 +193,11 @@
             +'<section class="sanctuary-management-composer">'
               +'<header class="sanctuary-management-composer-title"><div><span>TEAM &amp; FORCE</span><h2 id="sanctuaryDraftTitle">고정 팀 '+(editing?'초안 이어쓰기':'초안 생성')+'</h2><p id="sanctuaryDraftDescription">편성 전 팀 정보와 일정을 안전하게 저장합니다.</p></div><label><span>팀 제목</span><input name="draftTitle" maxlength="80" required value="'+escapeHtml(state.team?.title||'')+'" placeholder="예: 1팀 목요일 21시"></label></header>'
               +'<div class="sanctuary-management-composer-middle">'
-                +'<aside class="sanctuary-management-force-rail" aria-label="포스 선택"><button type="button" class="is-active" disabled><strong>1포스</strong><small>Server 기본 생성</small></button><p>포스 추가·전환은 3-3에서 연결합니다.</p></aside>'
-                +'<main class="sanctuary-management-roster" aria-label="1포스 슬롯 미리보기"><div class="sanctuary-management-party-labels"><span>1파티 · 1–5번</span><span>2파티 · 6–10번</span></div><div class="sanctuary-management-draft-slot-grid">'+slots+'</div></main>'
+                +'<aside class="sanctuary-management-force-rail" aria-label="포스 선택">'+forceRailMarkup()+'</aside>'
+                +rosterMarkup()
                 +'<aside class="sanctuary-management-candidate-rail" aria-label="캐릭터 후보"><span aria-hidden="true">◇</span><strong>후보 영역</strong><p>생성자 캐릭터는 3-4에서 Server 결과로 연결합니다.</p></aside>'
               +'</div>'
-              +'<footer class="sanctuary-management-composer-actions"><p class="sanctuary-management-draft-status'+(state.tone?' is-'+escapeHtml(state.tone):'')+'" data-draft-status role="status">'+escapeHtml(state.message||'DRAFT는 빈 슬롯 상태로 저장할 수 있습니다.')+'</p><div><button type="submit" class="is-primary"'+(state.saving?' disabled':'')+'>'+(state.saving?'저장 중…':editing?'초안 저장':'초안 생성')+'</button><button type="button" data-draft-reset'+(state.saving?' disabled':'')+'>초기화</button><button type="button" data-draft-close'+(state.saving?' disabled':'')+'>닫기</button></div></footer>'
+              +'<footer class="sanctuary-management-composer-actions"><p class="sanctuary-management-draft-status'+(state.tone?' is-'+escapeHtml(state.tone):'')+'" data-draft-status role="status">'+escapeHtml(state.message||defaultStatus())+'</p><div><button type="submit" class="is-primary"'+(busy?' disabled':'')+'>'+(state.saving?'저장 중…':state.mutating?'포스 추가 중…':editing?'초안 저장':'초안 생성')+'</button><button type="button" data-draft-reset'+(busy?' disabled':'')+'>초기화</button><button type="button" data-draft-close'+(busy?' disabled':'')+'>닫기</button></div></footer>'
             +'</section>'
             +'<section class="sanctuary-management-schedule-panel" aria-labelledby="sanctuaryDraftScheduleTitle">'
               +'<header><span>SCHEDULE</span><h3 id="sanctuaryDraftScheduleTitle">팀 일정 입력</h3><p>팀 아래 모든 포스가 같은 일정과 진행 시간을 공유합니다.</p></header>'
@@ -164,7 +222,8 @@
   function openDraft(team,opener){
     if(!bridge()?.snapshot()?.writeEnabled)return;
     state.team=team&&typeof team==='object'?team:null;
-    state.requestKey='';state.message='';state.tone='';state.saving=false;
+    state.selectedForceId=Number(state.team?.forces?.[0]?.forceId||0);
+    state.requestKey='';state.forceSaveRequestKey='';state.forceAddRequestKey='';state.message='';state.tone='';state.saving=false;state.mutating=false;
     openLayer(opener||state.opener);
     state.layer.innerHTML=modeMarkup();
     syncDateMinimum();
@@ -222,8 +281,20 @@
     if(status){status.textContent=message;status.className='sanctuary-management-draft-status is-'+tone;}
   }
 
+  function setControlsDisabled(disabled){
+    state.layer?.querySelectorAll('button,input,select').forEach(control=>{
+      if(disabled){
+        if(control.disabled)control.dataset.draftWasDisabled='true';
+        control.disabled=true;
+        return;
+      }
+      control.disabled=control.dataset.draftWasDisabled==='true';
+      delete control.dataset.draftWasDisabled;
+    });
+  }
+
   async function save(){
-    if(state.saving)return;
+    if(state.saving||state.mutating)return;
     const model=readModel();
     const issue=validate(model);
     if(issue){setStatus(issue);return;}
@@ -231,10 +302,7 @@
     state.requestKey=state.requestKey||('sm-draft-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10));
     model.requestKey=state.requestKey;
     setStatus('Server에 고정 팀 DRAFT를 저장하고 다시 불러오는 중입니다.','progress');
-    state.layer.querySelectorAll('button,input,select').forEach(control=>{
-      if(control.disabled)control.dataset.draftWasDisabled='true';
-      control.disabled=true;
-    });
+    setControlsDisabled(true);
     try{
       const result=await bridge().saveFixedDraft(model);
       const message=(state.team?'고정 팀 초안을 저장했습니다.':'고정 팀 초안을 생성했습니다.')+' · team '+value(result.teamId)+' · revision '+value(result.revision);
@@ -243,16 +311,55 @@
     }catch(error){
       state.saving=false;
       setStatus(value(error?.message)||'고정 팀 초안을 저장하지 못했습니다.','error');
-      state.layer.querySelectorAll('button,input,select').forEach(control=>{
-        control.disabled=control.dataset.draftWasDisabled==='true';
-        delete control.dataset.draftWasDisabled;
-      });
+      setControlsDisabled(false);
       state.layer.querySelector('[data-draft-mode="participation"]')?.setAttribute('aria-disabled','true');
     }
   }
 
+  async function addForce(){
+    if(state.saving||state.mutating||!state.team)return;
+    const forces=teamForces();
+    if(forces.length>=9){setStatus('한 팀에는 최대 9포스까지만 구성할 수 있습니다.');return;}
+    const model=readModel();
+    const issue=validate(model);
+    if(issue){setStatus(issue);return;}
+    state.mutating=true;
+    state.forceSaveRequestKey=state.forceSaveRequestKey||('sm-force-save-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10));
+    state.forceAddRequestKey=state.forceAddRequestKey||('sm-force-add-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10));
+    model.requestKey=state.forceSaveRequestKey;
+    setStatus('현재 입력 내용을 먼저 저장한 뒤 Server에 다음 포스를 추가하고 있습니다.','progress');
+    setControlsDisabled(true);
+    const teamId=Number(state.team.teamId);
+    try{
+      await bridge().saveFixedDraft(model);
+      const saved=bridge().findTeam(teamId);
+      if(!saved)throw new Error('저장된 팀 초안을 다시 찾지 못했습니다.');
+      const result=await bridge().addForce(teamId,Number(saved.revision),state.forceAddRequestKey);
+      state.team=bridge().findTeam(teamId);
+      if(!state.team)throw new Error('포스가 추가된 팀 초안을 다시 찾지 못했습니다.');
+      state.selectedForceId=Number(result.forceId||state.team.forces?.at(-1)?.forceId||0);
+      state.forceSaveRequestKey='';state.forceAddRequestKey='';state.mutating=false;
+      state.message=value(result.forceNo)+'포스를 추가했습니다. · 팀 revision '+value(result.revision)+' · Server 편성 재조회 완료';
+      state.tone='success';
+      state.layer.innerHTML=modeMarkup();
+      syncDateMinimum();
+      requestAnimationFrame(()=>{
+        syncScrollFades();
+        state.layer?.querySelector('[data-draft-force="'+CSS.escape(String(state.selectedForceId))+'"]')?.focus();
+      });
+    }catch(error){
+      state.team=bridge()?.findTeam?.(teamId)||state.team;
+      state.mutating=false;
+      state.message=value(error?.message)||'포스를 추가하지 못했습니다.';
+      state.tone='error';
+      state.layer.innerHTML=modeMarkup();
+      syncDateMinimum();
+      requestAnimationFrame(syncScrollFades);
+    }
+  }
+
   function handleClick(event){
-    if(event.target.closest('[data-draft-close]')){if(!state.saving)close();return;}
+    if(event.target.closest('[data-draft-close]')){if(!state.saving&&!state.mutating)close();return;}
     const mode=event.target.closest('[data-draft-mode]');
     if(mode){if(mode.dataset.draftMode==='fixed')openDraft(null,state.opener);else window.KinojoToast?.show?.('참여 팀은 Stage 4에서 연결합니다.');return;}
     const kind=event.target.closest('[data-draft-kind]');
@@ -265,13 +372,16 @@
       form.elements.draftStartsOn.previousElementSibling.textContent=kind.dataset.draftKind==='WEEKLY'?'반복 시작일':'진행 날짜';
       return;
     }
+    const force=event.target.closest('[data-draft-force]');
+    if(force&&!force.disabled){state.selectedForceId=Number(force.dataset.draftForce)||0;renderRosterState();return;}
+    if(event.target.closest('[data-draft-add-force]')){addForce();return;}
     if(event.target.closest('[data-draft-reset]')){openDraft(state.team,state.opener);}
   }
 
   function handleChange(event){if(event.target.name==='draftSanctuary')syncDateMinimum();}
 
   function handleKeydown(event){
-    if(event.key==='Escape'&&!state.saving){event.preventDefault();close();return;}
+    if(event.key==='Escape'&&!state.saving&&!state.mutating){event.preventDefault();close();return;}
     if(event.key!=='Tab')return;
     const focusable=Array.from(state.layer.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),[tabindex="0"]')).filter(item=>item.offsetParent!==null);
     if(!focusable.length)return;
