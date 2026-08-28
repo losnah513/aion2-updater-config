@@ -17,7 +17,7 @@
 ## 참고 이미지 제작 요청 1회 확인 통합 · 2026-08-29
 
 - 원인: 같은 제출이 `캐릭터 이미지 업로드`와 `참고 이미지 제작 요청` 두 관리자 경로로 해석됐고, 제작 요청 알림의 최신 건 조회가 완료·반려 상태를 거르지 않았다. 브라우저의 확인 여부도 세션 저장소에만 있어 새 탭이나 새 로그인에서 이미 처리한 요청이 다시 나타날 수 있었다.
-- DB444: migration `20260828223317_member_image_request_acknowledgement_v444.sql`은 제출 요청에 `acknowledged_at`과 확인 관리자 ID를 추가한다. 구 `IN_PROGRESS / COMPLETED / REJECTED` 값을 내부 `SUBMITTED`로 통합하되 기존 완료·반려 건은 먼저 확인 완료로 소급 처리한다. 관리자에게 노출되는 상태는 `확인 필요 / 확인 완료`뿐이다.
+- DB444: migration `20260828223317_member_image_request_acknowledgement_v444.sql`은 제출 요청에 `acknowledged_at`과 확인 관리자 ID를 추가한다. 구 `IN_PROGRESS / COMPLETED / REJECTED` 값을 내부 `SUBMITTED`로 통합하되 기존 완료·반려 건은 먼저 확인 완료로 소급 처리한다. 후속 `20260828231310_member_image_request_ack_actor_index_v444.sql`은 확인 관리자 FK 보조 index를 추가한다. 관리자에게 노출되는 상태는 `확인 필요 / 확인 완료`뿐이다.
 - 알림: `kinojo_web_notification_summary_v316`은 확인 전 요청만 집계하고 최신 요청도 같은 조건으로 선택한다. 일반 캐릭터 이미지 업로드 건수와 최신 업로드 필드는 0/null로 고정해 별도 알림 경로를 제거한다. 따라서 DB에 확인 시각이 기록된 요청은 브라우저 세션이 바뀌어도 다시 알리지 않는다.
 - Edge/WEB: `kinojo-member-profile` API 2.8은 `admin-image-request-ack` 한 동작만 제공하고 구 `admin-image-review-*`, `admin-image-request-status` 동작을 노출하지 않는다. 관리자 목록은 참고 이미지 제작 요청만 표시하며 필터는 `확인 필요 / 확인 완료 / 전체`다. 접수·제작 중·완료·반려 버튼과 처리 이력 UI는 제거했다.
 - 보안: 새 읽기·확인 RPC는 MASTER opaque session을 다시 검증하고, 고정 `search_path`와 `service_role` 전용 실행 권한을 사용한다. 목록·상세에는 private object path나 signed URL을 포함하지 않고, 이미지 열람은 기존 60초 미리보기·명시적 다운로드 경계를 유지한다.
