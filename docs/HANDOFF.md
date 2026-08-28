@@ -402,6 +402,14 @@
 - Banner Admin workflow는 최신 7단계/8단계 계약을 직접 실행하고 `admin-banner-auto-pool.js`를 custom-domain exact readback 목록에 포함한다. 로컬 기준 배너 계약 `24/24`, 전체 Node 계약 `60/60`, 세 viewport Chrome E2E가 통과했다.
 - 롤백은 PR `#290`의 WEB·테스트·workflow 변경만 되돌린다. DB migration·Edge 재배포·운영 이미지/이벤트 변경은 없으므로 Server 데이터 롤백은 필요 없다.
 
+## 배너 이미지 관리 2차 · 11회차 운영 후속 — 홈 MAIN 첫 화면 교정 · 2026-08-28
+
+- 원인은 캐시가 아니라 PC `home.html`과 모바일 `m/index.html`이 SEO·오류 fallback인 `kinojo-og.jpg`를 실제 `<img>`로 즉시 그린 뒤, 비동기 HOME:MAIN Manifest 요청과 첫 이벤트 이미지 preload가 끝나면 Server 이미지로 교체하던 초기 렌더링 순서였다.
+- PC·모바일 HOME MAIN은 HTML 파싱 시 `is-manifest-pending`·`aria-busy=true` 상태로 시작하고, inline critical CSS가 fallback 이미지만 숨긴다. 활성 Manifest의 첫 이미지가 설치된 뒤 `onActive`에서 한 번에 공개하며, 비활성 Manifest·네트워크/선로딩 오류·runtime 부재 때는 기존 fallback을 복원해 공개한다.
+- Open Graph·Twitter 메타데이터와 정적 fallback `src`는 유지하고, JavaScript 비활성 환경은 `noscript` 규칙으로 fallback을 계속 표시한다. Server/DB/Edge/Storage와 게시 이벤트 데이터는 변경하지 않는다.
+- 전용 first-paint 계약과 PC live E2E를 추가하고 기존 모바일 live E2E의 잘못된 `fallback first paint` 기대를 `hidden pending → Server image` 계약으로 교체했다. Manifest 응답을 2.5초 지연한 실제 Chrome에서 기존 이미지는 숨김, 여름 이미지 설치 뒤 공개를 확인했고 전체 Node 계약 `62/62`를 통과했다.
+- Banner Runtime workflow는 PC·모바일 HOME 변경과 신규 계약을 직접 감시하며 Pages 배포 뒤 `home.html`·`m/index.html` exact readback, PC·모바일 delayed Manifest Chrome 검증을 수행한다.
+
 ## My Info 2차 · 2단계 회원 제작 요청 UI · 2026-08-26
 
 - 2단계는 PR `#268`로 구현·검증·운영 반영했다.

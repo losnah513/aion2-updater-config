@@ -99,6 +99,9 @@ async function waitBanner(page){
       naturalWidth:Number(image?.naturalWidth||0),
       width:Number(rect?.width||0),
       height:Number(rect?.height||0),
+      visibility:String(getComputedStyle(image).visibility||''),
+      pending:host?.classList.contains('is-manifest-pending')===true,
+      ariaBusy:host?.getAttribute('aria-busy'),
       sideSlots:document.querySelectorAll('[data-kinojo-pc-banner]').length,
       sideResources:resources.filter(url=>/kinojo-pc-banners\.(?:js|css)/.test(url))
     };
@@ -108,6 +111,9 @@ async function waitBanner(page){
 function assertVisibleBanner(state,label){
   assert.ok(state.src,label+' src');
   assert.ok(state.width>0&&state.height>0,label+' geometry '+state.width+'x'+state.height);
+  assert.equal(state.visibility,'visible',label+' visibility');
+  assert.equal(state.pending,false,label+' pending state');
+  assert.equal(state.ariaBusy,null,label+' aria-busy');
   assert.equal(state.sideSlots,0,label+' SIDE DOM');
   assert.deepEqual(state.sideResources,[],label+' SIDE resources');
 }
@@ -147,16 +153,18 @@ async function waitAlt(page,expected,timeout=6000){
 (async()=>{
   const browser=await puppeteer.launch({executablePath:CHROME,headless:true,args:['--no-sandbox','--disable-gpu','--disable-dev-shm-usage']});
   try{
-    // 1) Real live mobile HOME + delayed Manifest: fallback must paint first, then settle to Server state.
+    // 1) Real live mobile HOME + delayed Manifest: fallback stays hidden until Server state settles.
     {
       const scenario={mode:'slow-live'};
       const page=await configurePage(browser,scenario);
       const response=await page.goto(MOBILE_URL,{waitUntil:'domcontentloaded',timeout:45000});
       assert.ok(response&&response.status()>=200&&response.status()<400,'slow-live HTTP '+response?.status());
-      await page.waitForFunction(()=>{const i=document.querySelector('#kinojo-main-banner-image');return i?.complete&&i.naturalWidth>0},{timeout:5000});
       const first=await waitBanner(page);
-      assertVisibleBanner(first,'slow first paint');
-      assert.ok(isFallback(first.src),'slow first paint must keep kinojo-og fallback: '+first.src);
+      assert.ok(first.width>0&&first.height>0,'slow pending geometry '+first.width+'x'+first.height);
+      assert.ok(isFallback(first.src),'slow pending source must remain the SEO fallback: '+first.src);
+      assert.equal(first.visibility,'hidden','slow pending fallback visibility');
+      assert.equal(first.pending,true,'slow pending class');
+      assert.equal(first.ariaBusy,'true','slow pending aria-busy');
       await page.waitForFunction(()=>window.KinojoBannerRuntime?.peekManifest?.('HOME','MAIN')!==null,{timeout:15000});
       const liveManifest=await page.evaluate(()=>window.KinojoBannerRuntime.peekManifest('HOME','MAIN'));
       assert.equal(liveManifest?.pageCode,'HOME','slow live Manifest page');
@@ -173,14 +181,14 @@ async function waitAlt(page,expected,timeout=6000){
         assertVisibleBanner(settled,'slow active settled');
         assert.equal(settled.src,expected,'slow active DOM follows Server first playlist item');
         assert.ok(settled.complete&&settled.naturalWidth>0,'slow active settled image loaded');
-        console.log('PASS mobile slow Manifest first-paint fallback -> active Server image '+settled.src);
+        console.log('PASS mobile slow Manifest hidden fallback -> active Server image '+settled.src);
       }else{
         await page.waitForFunction(()=>document.querySelector('#kinojo-main-banner-image')?.src.includes('/assets/images/common/kinojo-og.jpg'),{timeout:5000});
         const settled=await waitBanner(page);
         assertVisibleBanner(settled,'slow inactive settled');
         assert.ok(isFallback(settled.src),'slow inactive must keep fallback '+settled.src);
         assert.ok(settled.complete&&settled.naturalWidth>0,'slow inactive fallback loaded');
-        console.log('PASS mobile slow Manifest first-paint fallback -> inactive Server fallback');
+        console.log('PASS mobile slow Manifest hidden fallback -> inactive visible fallback');
       }
       await page.close();
     }

@@ -262,7 +262,7 @@ async function verifyPlaybackRuntime(){
   const runtimeIndex=pcHome.indexOf('ui/kinojo-banner-runtime.js?cache=2026082302');
   const manifestCallIndex=pcHome.indexOf('runtime.mountBanner({');
   assert.ok(supabaseClientIndex>=0&&runtimeIndex>supabaseClientIndex&&manifestCallIndex>runtimeIndex,'PC HOME must load Supabase client, then Banner runtime, then mount HOME:MAIN playback');
-  assert.match(pcHome,/<a class="kinojo-main-banner" href="hof\/"/,'PC default banner link must remain HOF before a Server Manifest overrides it');
+  assert.match(pcHome,/<a class="kinojo-main-banner is-manifest-pending" href="hof\/"[^>]*aria-busy="true"/,'PC fallback link must remain available but visually pending before a Server Manifest resolves');
   assert.match(pcHome,/<img id="kinojo-main-banner-image" src="assets\/images\/common\/kinojo-og\.jpg\?cache=26062218" alt="KINOJO INFO 깡 레기온 대표 배너">/,'PC default visual fallback must remain kinojo-og.jpg with a non-empty alt');
   assert.match(pcHome,/<meta property="og:image" content="https:\/\/kinojo\.info\/assets\/images\/common\/kinojo-og\.jpg">/,'PC Open Graph fallback must stay on the static kinojo-og.jpg');
   assert.match(pcHome,/<meta property="og:image:width" content="1536">/);
@@ -279,7 +279,7 @@ async function verifyPlaybackRuntime(){
   const mobileRuntimeIndex=mobileHome.indexOf('../ui/kinojo-banner-runtime.js?cache=2026082302');
   const mobileManifestCallIndex=mobileHome.indexOf('runtime.mountBanner({');
   assert.ok(mobileSupabaseClientIndex>=0&&mobileRuntimeIndex>mobileSupabaseClientIndex&&mobileManifestCallIndex>mobileRuntimeIndex,'mobile HOME must load Supabase client, then shared Banner runtime, then mount HOME:MAIN playback');
-  assert.match(mobileHome,/<a class="mobile-og-banner" href="hof\/"/,'mobile default banner link must remain HOF before a Server Manifest overrides it');
+  assert.match(mobileHome,/<a class="mobile-og-banner is-manifest-pending" href="hof\/"[^>]*aria-busy="true"/,'mobile fallback link must remain available but visually pending before a Server Manifest resolves');
   assert.match(mobileHome,/<img id="kinojo-main-banner-image" src="\.\.\/assets\/images\/common\/kinojo-og\.jpg\?cache=26062218" alt="KINOJO INFO 깡 레기온 대표 배너">/,'mobile default visual fallback must remain kinojo-og.jpg with a non-empty alt');
   assert.match(mobileHome,/<meta property="og:image" content="https:\/\/kinojo\.info\/assets\/images\/common\/kinojo-og\.jpg">/,'mobile Open Graph fallback must use the same static kinojo-og.jpg');
   assert.match(mobileHome,/<meta property="og:image:width" content="1536">/);
