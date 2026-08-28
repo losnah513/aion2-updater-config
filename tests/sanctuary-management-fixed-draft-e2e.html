@@ -12,12 +12,19 @@
 </head>
 <body class="kinojo-sanctuary-management-page">
   <main class="sanctuary-management-wrap">
-    <header class="sanctuary-management-hero"><div><p class="sanctuary-management-kicker">E2E HARNESS</p><h1>고정 팀 DRAFT</h1><p>실제 제품 CSS·JS와 mock Server 어댑터를 사용하는 레이아웃 검수 화면</p></div><div id="sanctuaryManagementContract" class="sanctuary-management-contract"></div></header>
+    <header class="sanctuary-management-hero"><div class="sanctuary-management-hero-info"><h1>고정 팀 DRAFT</h1><div class="sanctuary-management-info-copy"><p class="sanctuary-management-kicker">E2E HARNESS</p><p class="sanctuary-management-hero-description">실제 제품 CSS·JS와 mock Server 어댑터를 사용하는 레이아웃 검수 화면</p></div></div><div id="sanctuaryManagementContract" class="sanctuary-management-contract"></div></header>
     <section id="sanctuaryManagementAccess" class="sanctuary-management-access" aria-live="polite"><span class="sanctuary-management-access-icon">S</span><div><strong id="sanctuaryManagementAccessTitle"></strong><p id="sanctuaryManagementAccessMessage"></p></div><button id="sanctuaryManagementAccessAction" type="button" hidden></button></section>
     <div id="sanctuaryManagementScopeShell" hidden><div id="sanctuaryManagementScope"></div></div>
     <div id="sanctuaryManagementContent" class="sanctuary-management-content" hidden>
-      <section class="sanctuary-management-summary"><article><span>원본</span><strong id="sanctuaryManagementSource"></strong></article><article><span>읽기</span><strong id="sanctuaryManagementReadState"></strong></article><article><span>쓰기</span><strong id="sanctuaryManagementWriteState"></strong></article><article><span>성역</span><strong id="sanctuaryManagementSelectedName"></strong><small id="sanctuaryManagementSelectedMeta"></small></article></section>
-      <section class="sanctuary-management-team-panel"><header class="sanctuary-management-section-head"><div><p>TEAM WORKSPACE</p><h2>운영 팀</h2><span id="sanctuaryManagementTeamStatus"></span></div><button class="kinojo-btn" id="sanctuaryManagementAddTeam" type="button" disabled>팀 추가하기</button></header><div id="sanctuaryManagementTeamList" class="sanctuary-management-team-list"></div></section>
+      <section class="sanctuary-management-summary"><article><strong id="sanctuaryManagementSource"></strong><div class="sanctuary-management-info-copy"><span>데이터 원본</span><small>Mock Server</small></div></article><article><strong id="sanctuaryManagementReadState"></strong><div class="sanctuary-management-info-copy"><span>팀 읽기</span><small>Server 기능 플래그</small></div></article><article><strong id="sanctuaryManagementWriteState"></strong><div class="sanctuary-management-info-copy"><span>팀 쓰기</span><small>Server 기능 플래그</small></div></article><article><strong id="sanctuaryManagementSelectedName"></strong><div class="sanctuary-management-info-copy"><span>선택 성역</span><small id="sanctuaryManagementSelectedMeta"></small></div></article></section>
+      <div class="sanctuary-management-layout">
+        <section class="sanctuary-management-team-panel"><header class="sanctuary-management-section-head"><div class="sanctuary-management-section-info"><h2>운영 팀</h2><div class="sanctuary-management-info-copy"><p>TEAM WORKSPACE</p><span id="sanctuaryManagementTeamStatus"></span></div></div><button class="kinojo-btn" id="sanctuaryManagementAddTeam" type="button" disabled>팀 추가하기</button></header><div id="sanctuaryManagementTeamList" class="sanctuary-management-team-list"></div></section>
+        <aside class="sanctuary-management-side" aria-label="성역 팀 보조 정보">
+          <section><header class="sanctuary-management-side-head"><h2>일정 요약</h2><div class="sanctuary-management-info-copy"><p>SCHEDULE</p><span>월 단위 · 수요일 시작</span></div></header><div class="sanctuary-management-placeholder" id="sanctuaryManagementScheduleState"></div></section>
+          <section><header class="sanctuary-management-side-head"><h2>모집·지원</h2><div class="sanctuary-management-info-copy"><p>RECRUITMENT</p><span>포스별 지원 현황</span></div></header><div class="sanctuary-management-placeholder" id="sanctuaryManagementRecruitmentState"></div></section>
+          <section><header class="sanctuary-management-side-head"><h2>관리</h2><div class="sanctuary-management-info-copy"><p>ADMINISTRATION</p><span>편집 · 승인 · 팀 해산</span></div></header><div class="sanctuary-management-placeholder" id="sanctuaryManagementAdminState"></div></section>
+        </aside>
+      </div>
     </div>
   </main>
   <script>

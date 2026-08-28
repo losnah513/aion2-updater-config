@@ -178,6 +178,7 @@ jobs:
           node tests/sanctuary-management-stage3-complete-contract.test.js
           node tests/sanctuary-management-participation-forces-v435-contract.test.js
           node tests/sanctuary-management-stage4-complete-contract.test.js
+          node tests/sanctuary-management-compact-info-layout-contract.test.js
           node tests/admin-member-v433-browser-rpc-contract.test.js
           node tests/staged-page-contract.test.js
           node tests/meter-presence-log-contract.test.js
