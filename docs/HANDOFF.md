@@ -63,6 +63,16 @@
 - DRAFT 공개는 생성자 소유 캐릭터가 최소 1개일 때 허용하고 나머지 슬롯은 비어 있어도 된다. 공개 뒤 편집은 Server `canEdit`, 2분 lease, optimistic revision을 모두 통과해야 하며 카드 이동·교환은 원자적 `MOVE_SLOT`만 사용한다.
 - 레이아웃·내부 배치를 바꾸면 PC와 모바일에서 document/modal 가로 overflow 0을 확인한다. 세로 내용이 넘칠 때만 숨김 scrollbar와 하단 fade를 쓰고, 가로 넘침을 스크롤로 우회하지 않는다.
 
+## 성역관리 Stage 4-1 참여 팀·1~9포스 · 2026-08-28
+
+- 운영 계약은 Edge `sanctuary-management` v11, API `1.3`, DB `435`다. Migration `20260828074303_sanctuary_management_participation_forces_v435.sql`의 `PARTICIPATION_FORCE_BOUNDARY`가 첫 포스 원자 생성과 추가 포스 토폴로지 검증을 고정한다.
+- 참여 팀 방식 선택 뒤에는 팀이 아직 생성되지 않은 상태로 일정·제목·즉시/승인 참가를 입력한다. 최초 `[+ 포스 추가]`가 `CREATE_TEAM`을 호출해 DRAFT·일정·1포스·2파티·10슬롯을 같은 트랜잭션으로 만들며, 이후 추가는 lease·revision·idempotency를 거쳐 9포스까지만 허용한다.
+- 참여 팀의 DRAFT 수정은 `UPDATE_PARTICIPATION_TEAM_DRAFT`로 분리했다. 이 명령은 생성자 또는 관리 권한, DRAFT/PARTICIPATION 상태, 편집 lease, expected revision, 일정·진행 시간·참가 정책을 모두 다시 검증한다.
+- 10번째 포스는 WEB의 `9/9` 한도 안내와 DB412 `FOR UPDATE` 직렬화·`force_no > 9` 오류, DB435 결과 토폴로지 검증의 세 경계로 차단한다. DB435 공개 RPC는 Edge 전용이므로 `service_role`만 EXECUTE하고 `PUBLIC/anon/authenticated`는 false다.
+- 운영 ADMIN 실검수에서 승인 참가 DRAFT를 1→9포스로 생성했고 DB 결과는 9포스·18파티·90슬롯, force 번호 1~9였다. 10번째 클릭은 `한 팀에는 최대 9포스` 안내로 차단했다. 검수 팀 ID 6은 확인 직후 `ARCHIVED`로 해산해 운영 목록에서 제거했다.
+- PC 1280px에서는 정사각형 composer 오른쪽에 일정 패널이 위치했고 document/frame 가로 overflow는 0이었다. 모바일 390×844에서는 일정 패널 top 12px, composer top 812.27px로 일정이 위에 배치됐고 document/dialog 가로 overflow는 0이었다. 두 화면 모두 세로 scrollbar는 숨기고 하단 fade 규칙을 유지한다.
+- PR `#306`, main squash `20b570b85c829522f2093c420195218f2f67f205`, Pages run `33153151606`이 운영 기준이다. 다음 작업은 `4-2 포스별 생성자 캐릭터 선배치`이며, 각 포스에 서로 다른 생성자 캐릭터 한 명이 있어야 참여 팀을 공개할 수 있게 한다.
+
 ## 예방적 확장성 SQL428 · 2026-08-28
 
 - Meter 공개 통계/내 비교의 기본 기간은 Server `WEEK`이며 DAY/WEEK/MONTH 시간 경계가 raw combat 조회에 적용된다. `ALL`은 명시적인 사용자 선택지다. 2026-08-28 기준 records 333, participants 1,753, 적격 0이며 집계 전환 Gate 미만이므로 기간·보존·집계 구조를 변경하지 않았다.
