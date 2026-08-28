@@ -570,8 +570,10 @@
     const session=typeof auth.getSession==='function'?auth.getSession():null;
     const account=typeof auth.getAccount==='function'?auth.getAccount():null;
     const loggedIn=!!session;
-    const sanctuaryAccount=Object.assign({},session||{},account||{});
-    const canEditSanctuary=loggedIn&&window.KinojoPermissions?.canEditSanctuary?.(sanctuaryAccount)===true;
+    // SANCTUARY_PARTICIPATION_NAV: every signed-in member can open the management
+    // page to create a team or support an open force. Edit/archive/approval buttons
+    // remain governed by the server-owned per-team canEdit flag.
+    const canOpenSanctuaryManagement=loggedIn;
     document.querySelectorAll('[data-kinojo-auth-required]').forEach(element=>{
       element.hidden=!loggedIn;
       element.setAttribute('aria-hidden',loggedIn?'false':'true');
@@ -579,9 +581,9 @@
       else element.style.setProperty('display','none','important');
     });
     document.querySelectorAll('[data-kinojo-sanctuary-management-required]').forEach(element=>{
-      element.hidden=!canEditSanctuary;
-      element.setAttribute('aria-hidden',canEditSanctuary?'false':'true');
-      if(canEditSanctuary)element.style.removeProperty('display');
+      element.hidden=!canOpenSanctuaryManagement;
+      element.setAttribute('aria-hidden',canOpenSanctuaryManagement?'false':'true');
+      if(canOpenSanctuaryManagement)element.style.removeProperty('display');
       else element.style.setProperty('display','none','important');
     });
     if(!loggedIn){resetMyInfoCharacters_();resetMyInfoProfileUi_();closeMyInfoPanel();closeMyInfoModal();}

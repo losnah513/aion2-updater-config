@@ -29,17 +29,17 @@ for(const token of [
 ])assert.ok(migration.includes(token),`DB435 participation force contract missing ${token}`);
 
 for(const token of [
-  'const API_VERSION="1.3"',
-  'const DATABASE_CONTRACT="435"',
-  'kinojo_sanctuary_management_bootstrap_v435',
-  'kinojo_sanctuary_management_command_v435',
-])assert.ok(edge.includes(token),`Edge435 contract missing ${token}`);
+  'const API_VERSION="1.4"',
+  'const DATABASE_CONTRACT="436"',
+  'kinojo_sanctuary_management_bootstrap_v436',
+  'kinojo_sanctuary_management_command_v436',
+])assert.ok(edge.includes(token),`current Edge contract missing ${token}`);
 
 for(const token of [
-  'const API_VERSION=1.3',
-  'const SCHEMA_VERSION=435',
+  'const API_VERSION=1.4',
+  'const SCHEMA_VERSION=436',
   'async function saveTeamDraft',
-  "mode==='PARTICIPATION'?'UPDATE_PARTICIPATION_TEAM_DRAFT'",
+  "['ACTIVE','FULL'].includes(status)?'UPDATE_PARTICIPATION_TEAM':'UPDATE_PARTICIPATION_TEAM_DRAFT'",
   'joinPolicy,',
   'saveTeamDraft,',
   "ServerAdapter.command('ADD_FORCE'",
