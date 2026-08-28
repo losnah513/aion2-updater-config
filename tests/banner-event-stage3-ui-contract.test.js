@@ -54,7 +54,7 @@ assert.ok(workflow.includes("directional?value.transitionDirection:'NONE'"),'non
 assert.ok(workflow.includes("'event-save'"),'stage 5 draft persistence missing');
 assert.ok(workflow.includes("'event-publish'"),'stage 5 publish action missing');
 
-assert.ok(loader.includes('v2026082705'),'current admin loader cache generation missing');
+assert.ok(loader.includes('v2026082801'),'current admin loader cache generation missing');
 assert.ok(desktop.includes('admin.js?cache=2026082801'),'desktop admin cache mismatch');
 assert.ok(mobile.includes('admin.js?cache=2026082801'),'mobile admin cache mismatch');
 

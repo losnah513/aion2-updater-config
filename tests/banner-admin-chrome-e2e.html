@@ -167,7 +167,7 @@ async function run(){
     resetButton.click();await sleep(20);document.querySelector('[data-banner-event-workflow="main"] [data-bew-reset-confirm]').click();
     await waitFor(()=>document.querySelector('[data-banner-event-workflow="main"] [data-bew-tag-input]')?.value===''&&document.querySelector('[data-banner-event-workflow="main"] [data-bew-reset]')?.disabled,'authoring content reset');
     if(!document.querySelector('[data-banner-event-workflow="main"] [data-bew-action-status]')?.textContent.includes('초기화했습니다'))throw Error('reset completion notice missing');
-    topNav.querySelector('[data-admin-subtab="side"]').click();
+    const topMainTab=topNav.querySelector('[data-admin-subtab="main"]');topMainTab.focus();topMainTab.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));
     await waitFor(()=>mainPanel.hidden&&!sidePanel.hidden&&sidePanel.classList.contains('active'),'side banner tab switch');
     await waitFor(()=>document.querySelector('[data-banner-events-admin] [data-bem-title]')?.textContent.includes('사이드 배너'),'side event hub context');
     document.querySelector('[data-banner-events-admin] [data-bem-create]').click();
@@ -217,7 +217,7 @@ async function run(){
     const eventSaveBefore=state.calls.filter(action=>action==='event-save').length;document.querySelector('[data-banner-event-workflow="side"] [data-bew-publish]').click();await sleep(40);
     if(state.calls.filter(action=>action==='event-save').length!==eventSaveBefore||!document.querySelector('[data-banner-event-workflow="side"] [data-bew-action-status]')?.textContent.includes('노출 페이지'))throw Error('zero-page publish must stop at stage 3 without saving');
     document.querySelector('[data-banner-event-workflow="side"] [data-bew-page-code="HOF"]').click();
-    document.querySelector('#adminTopSubnav [data-admin-subtab="main"]').click();
+    const topSideTab=document.querySelector('#adminTopSubnav [data-admin-subtab="side"]');topSideTab.focus();topSideTab.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true}));
     await waitFor(()=>!mainPanel.hidden&&sidePanel.hidden&&mainPanel.classList.contains('active'),'main banner tab return');
     if(location.hash!=='#images/main')throw Error('main banner return route mismatch');
     async function imageFile(name,width,height,color){const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;const context=canvas.getContext('2d');context.fillStyle=color;context.fillRect(0,0,width,height);const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));return new File([blob],name,{type:'image/png'})}
@@ -311,13 +311,14 @@ async function run(){
     if(publishedState.bundleName||publishedState.selected.length||publishedState.eventGroupId)throw Error('published authoring state did not reset');
     if(document.querySelector('[data-banner-event-workflow="main"] [data-bew-scroll="1"]')?.dataset.stepState!=='current'||!document.querySelector('[data-banner-event-workflow="main"] [data-bew-reset]')?.disabled)throw Error('post-publish workflow must return to empty step 1');
     if(!document.querySelector('[data-banner-event-workflow="main"] [data-bew-result-notice]')?.textContent.includes('Chrome E2E 메인 이벤트')||!state.calls.includes('event-list'))throw Error('published event identity/readback notice missing');
-    document.querySelector('#adminTopSubnav [data-admin-subtab="side"]').click();
+    document.querySelector('#adminTopSubnav [data-admin-subtab="main"]').dispatchEvent(new KeyboardEvent('keydown',{key:'End',bubbles:true}));
     await waitFor(()=>!sidePanel.hidden&&sidePanel.classList.contains('active'),'side banner visual return');
     const finalAllPages=document.querySelector('[data-banner-event-workflow="side"] [data-bew-all-pages]');finalAllPages.checked=true;fire(finalAllPages,'change');
     const target=document.querySelector('#bew-side-3');window.scrollTo(0,target.getBoundingClientRect().top+window.scrollY-110);await sleep(300);
     if(getComputedStyle(document.querySelector('[data-banner-event-workflow="side"] .bew-side-order-item img')).objectFit!=='contain')throw Error('side order preview must show the complete image');
     document.querySelector('[data-banner-context="side"] [data-banner-view="events"]').click();
     await waitFor(()=>!document.querySelector('[data-banner-context="side"] [data-banner-view-panel="events"]')?.hidden&&document.querySelectorAll('[data-banner-events-admin] [data-bem-event]').length===2,'event manager list load');
+    const eventViewportWidth=document.documentElement.clientWidth,eventColumns=getComputedStyle(document.querySelector('[data-banner-events-admin] .bem-body-grid')).gridTemplateColumns.trim().split(/\s+/).filter(Boolean).length;if(eventViewportWidth<=900&&eventColumns!==1)throw Error(`responsive event workspace must stack at ${eventViewportWidth}px`);if(eventViewportWidth>900&&eventColumns!==2)throw Error(`desktop event workspace must keep the 3:7 split at ${eventViewportWidth}px`);
     if(location.hash!=='#images/side')throw Error('event manager must retain the side context route');
     if(document.querySelector('#adminCurrentLocation')?.textContent!=='[이미지 관리] - 사이드 배너')throw Error('event manager context label mismatch');
     if(!document.querySelector('[data-banner-events-admin]')?.textContent.includes('등록 이벤트 목록'))throw Error('event manager heading missing');
@@ -357,7 +358,8 @@ async function run(){
     await waitFor(()=>state.calls.includes('asset-update')&&document.querySelector('[data-banner-asset-library] [data-bal-status]')?.textContent.includes('최신화했습니다'),'library save and cache refresh');
     if(window.KinojoAdmin.getBannerEventWorkflowState('side').assets.find(asset=>Number(asset.assetId)===1)?.title!=='사이드 첫 번째 수정')throw Error('authoring library cache was not refreshed');
     const libraryQuery=document.querySelector('[data-banner-asset-library] [data-bal-query]');libraryQuery.value='검색결과없음';fire(libraryQuery,'input');if(!document.querySelector('[data-banner-asset-library] .bal-empty')?.textContent.includes('조건에 맞는 이미지가 없습니다'))throw Error('library empty search state missing');
-    document.documentElement.dataset.e2eResult='PASS';document.querySelector('#e2eResult').textContent='PASS '+state.calls.join(' > ');
+    const viewportWidth=document.documentElement.clientWidth,overflow=document.documentElement.scrollWidth-viewportWidth;if(overflow>1)throw Error(`responsive horizontal overflow ${overflow}px at ${viewportWidth}px`);
+    document.documentElement.dataset.e2eResult='PASS';document.querySelector('#e2eResult').textContent=`PASS ${viewportWidth}px `+state.calls.join(' > ');
   }catch(error){document.documentElement.dataset.e2eResult='FAIL';document.querySelector('#e2eResult').textContent='FAIL '+(error?.stack||error)+`\nlocation=${document.querySelector('#adminCurrentLocation')?.textContent||''} subtab=${window.KinojoAdmin.state?.subtab||''}`;console.error(error)}
 }
 window.addEventListener('load',run);
