@@ -11,11 +11,12 @@ const workflow=read('.github/workflows/verify-kinojo-pages.yml');
 for(const page of ['sanctuary-management/index.html','m/sanctuary-management/index.html']){
   const html=read(page);
   for(const token of [
-    'sanctuary-management.css?cache=2026082810',
+    'sanctuary-management.css?cache=2026082811',
     'sanctuary-management-hero-info',
     'sanctuary-management-section-info',
     'sanctuary-management-side-head',
     '<strong id="sanctuaryManagementSource">Server</strong><div class="sanctuary-management-info-copy">',
+    '<strong id="sanctuaryManagementSelectedName">성역 1</strong>',
     '<h2 id="sanctuaryManagementTeamTitle">운영 팀</h2>',
     '월 단위 · 수요일 시작',
   ])assert.ok(html.includes(token),`${page}: compact information layout missing ${token}`);

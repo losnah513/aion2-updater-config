@@ -18,7 +18,7 @@
 <link href="../ui/kinojo-components.css?cache=2026082103" rel="stylesheet"/>
 <link href="../ui/kinojo-staged-loading.css?cache=2026081222" rel="stylesheet"/>
 <link href="../ui/kinojo-sanctuary-navigation.css?cache=2026082603" rel="stylesheet"/>
-<link href="css/sanctuary-management.css?cache=2026082810" rel="stylesheet"/>
+<link href="css/sanctuary-management.css?cache=2026082811" rel="stylesheet"/>
 <link href="css/sanctuary-management-draft.css?cache=2026082807" rel="stylesheet"/>
 <link href="css/sanctuary-management-support.css?cache=2026082808" rel="stylesheet"/>
 <link href="../ui/kinojo-pc-banners.css?cache=2026082203" rel="stylesheet"/>
@@ -26,15 +26,9 @@
 <script src="../ui/kinojo-device-router.js?cache=2026070115" data-mobile-path="../m/sanctuary-management/"></script>
 </head>
 <body class="kinojo-page-booting kinojo-sanctuary-management-page">
-  <section class="sanctuary-management-page-bar" aria-label="성역 화면과 관리 범위">
+  <section class="sanctuary-management-page-bar" aria-label="성역 선택">
     <div class="sanctuary-management-page-bar-shell">
-      <nav class="kinojo-sanctuary-tabs" aria-label="성역 페이지">
-        <a class="kinojo-sanctuary-tab" href="../sanctuary/">성역</a>
-        <a class="kinojo-sanctuary-tab" href="../sanctuary-schedule/" data-kinojo-auth-required="true" hidden>성역 일정</a>
-        <a class="kinojo-sanctuary-tab" href="./" aria-current="page" data-kinojo-sanctuary-management-required="true" hidden>성역 관리</a>
-      </nav>
       <div class="sanctuary-management-scope-shell" id="sanctuaryManagementScopeShell" hidden>
-        <span class="sanctuary-management-scope-label">관리 범위</span>
         <div class="sanctuary-management-scope" id="sanctuaryManagementScope" role="group" aria-label="관리할 성역 선택"></div>
       </div>
     </div>
@@ -69,7 +63,7 @@
         <article><strong id="sanctuaryManagementSource">Server</strong><div class="sanctuary-management-info-copy"><span>데이터 원본</span><small>목업·시트 우회 없음</small></div></article>
         <article><strong id="sanctuaryManagementReadState">확인 중</strong><div class="sanctuary-management-info-copy"><span>팀 읽기</span><small>Server 기능 플래그</small></div></article>
         <article><strong id="sanctuaryManagementWriteState">확인 중</strong><div class="sanctuary-management-info-copy"><span>팀 쓰기</span><small>Server 기능 플래그</small></div></article>
-        <article><strong id="sanctuaryManagementSelectedName">전체</strong><div class="sanctuary-management-info-copy"><span>선택 성역</span><small id="sanctuaryManagementSelectedMeta">Server master</small></div></article>
+        <article><strong id="sanctuaryManagementSelectedName">성역 1</strong><div class="sanctuary-management-info-copy"><span>선택 성역</span><small id="sanctuaryManagementSelectedMeta">Server master</small></div></article>
       </section>
 
       <div class="sanctuary-management-layout">
@@ -134,8 +128,8 @@
   <script src="../core/kinojo-auth-service.js?cache=2026081801"></script>
   <script src="../core/kinojo-auth-ui.js?cache=2026082806"></script>
   <script src="../ui/kinojo-event-notice.js?cache=2026081003"></script>
-  <script src="js/sanctuary-management.js?cache=2026082808"></script>
-  <script src="js/sanctuary-management-draft.js?cache=2026082808"></script>
+  <script src="js/sanctuary-management.js?cache=2026082811"></script>
+  <script src="js/sanctuary-management-draft.js?cache=2026082811"></script>
   <script src="js/sanctuary-management-support.js?cache=2026082808"></script>
   <script src="../ui/kinojo-pc-banners.js?cache=2026082202"></script>
 </body>

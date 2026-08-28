@@ -12,15 +12,15 @@ for (const page of pages) {
   for (const token of [
     'noindex,nofollow,noarchive',
     'sanctuary-management-page-bar',
-    'kinojo-sanctuary-tabs',
-    'data-kinojo-sanctuary-management-required',
     'id="sanctuaryManagementScope"',
     'id="sanctuaryManagementTeamList"',
     'kinojo-supabase-features.js?cache=2026082808',
-    'sanctuary-management.js?cache=2026082808',
-    'sanctuary-management-draft.js?cache=2026082808',
+    'sanctuary-management.js?cache=2026082811',
+    'sanctuary-management-draft.js?cache=2026082811',
     'sanctuary-management-support.js?cache=2026082808',
   ]) assert.ok(html.includes(token), `${page}: missing ${token}`);
+  assert.equal(html.includes('kinojo-sanctuary-tabs'), false, `${page}: legacy sanctuary tabs remain in the management subbar`);
+  assert.equal(html.includes('관리 범위'), false, `${page}: legacy management scope label remains`);
   assert.equal(html.includes('SanctuaryManagementMockAdapter'), false, `${page}: Stage 1 mock adapter remains`);
 }
 

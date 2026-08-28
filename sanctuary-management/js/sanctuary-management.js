@@ -7,7 +7,7 @@
   let monthRequestSequence=0;
   let bootstrapData=null;
   let monthData=null;
-  let selectedSanctuary='all';
+  let selectedSanctuary='';
   let selectedMonth=new Date(Date.now()+9*60*60*1000).toISOString().slice(0,7);
 
   const byId=id=>document.getElementById(id);
@@ -274,19 +274,25 @@
 
   function contractLabel(data){return 'API '+data.apiVersion+' · DB '+data.schemaVersion;}
   function sanctuaryKey(item){return value(item.code)||value(item.id);}
-  function sanctuaryLabel(item){return value(item.shortName)||value(item.name)||value(item.code)||String(item.id||'');}
+  function sanctuaryOrder(item,index=0){return integer(item?.displayOrder)||integer(item?.id)||index+1;}
+  function sanctuaryLabel(item,index=0){return '성역 '+sanctuaryOrder(item,index);}
+  function sanctuaryOfficialName(item){return value(item?.name);}
+  function sanctuaryFullLabel(item,index=0){
+    const short=sanctuaryLabel(item,index);const official=sanctuaryOfficialName(item);
+    return official&&official.replace(/\s+/g,'')!==short.replace(/\s+/g,'')?short+' | '+official:short;
+  }
   function sanctuaryForSelection(){return bootstrapData?.sanctuaries.find(item=>sanctuaryKey(item)===selectedSanctuary)||null;}
 
   function resolveInitialSelection(data){
     const requested=value(new URLSearchParams(location.search).get('id'));
     if(requested&&data.sanctuaries.some(item=>sanctuaryKey(item)===requested))return requested;
-    return 'all';
+    return sanctuaryKey(data.sanctuaries[0]);
   }
 
   function syncLocation(){
     const url=new URL(location.href);
-    if(selectedSanctuary==='all')url.searchParams.delete('id');
-    else url.searchParams.set('id',selectedSanctuary);
+    if(selectedSanctuary)url.searchParams.set('id',selectedSanctuary);
+    else url.searchParams.delete('id');
     history.replaceState(null,'',url.pathname+url.search+url.hash);
   }
 
@@ -294,13 +300,17 @@
     const shell=byId('sanctuaryManagementScopeShell');
     const root=byId('sanctuaryManagementScope');
     root.replaceChildren();
-    const items=[{key:'all',label:'전체'}].concat(bootstrapData.sanctuaries.map(item=>({key:sanctuaryKey(item),label:sanctuaryLabel(item)})));
+    const items=bootstrapData.sanctuaries.map((item,index)=>({key:sanctuaryKey(item),short:sanctuaryLabel(item,index),full:sanctuaryFullLabel(item,index)}));
     items.forEach(item=>{
       const button=document.createElement('button');
       button.type='button';
       button.dataset.sanctuaryScope=item.key;
       button.setAttribute('aria-pressed',item.key===selectedSanctuary?'true':'false');
-      button.textContent=item.label;
+      button.setAttribute('aria-label',item.full);
+      button.title=item.full;
+      const short=document.createElement('span');short.className='sanctuary-management-scope-short';short.textContent=item.short;
+      const detail=document.createElement('span');detail.className='sanctuary-management-scope-detail';detail.setAttribute('aria-hidden','true');detail.textContent=item.full.slice(item.short.length);
+      button.append(short,detail);
       root.appendChild(button);
     });
     shell.hidden=false;
@@ -315,8 +325,9 @@
 
   function renderSelectedSanctuary(){
     const selected=sanctuaryForSelection();
-    byId('sanctuaryManagementSelectedName').textContent=selected?sanctuaryLabel(selected):'전체';
-    const status=selected?(value(selected.releaseLabel)||value(selected.releaseStatus)||'Server master'):'Server master 전체';
+    byId('sanctuaryManagementSelectedName').textContent=selected?sanctuaryLabel(selected):'성역';
+    const official=selected?sanctuaryOfficialName(selected):'';
+    const status=selected?(official&&official.replace(/\s+/g,'')!==sanctuaryLabel(selected).replace(/\s+/g,'')?official:value(selected.releaseLabel)||value(selected.releaseStatus)||'Server master'):'Server master';
     byId('sanctuaryManagementSelectedMeta').textContent=status;
   }
 
@@ -400,7 +411,6 @@
   }
 
   function visibleTeams(){
-    if(selectedSanctuary==='all')return bootstrapData.teams;
     const selected=sanctuaryForSelection();
     return bootstrapData.teams.filter(team=>String(team.sanctuaryId)===String(selected?.id));
   }
@@ -429,7 +439,7 @@
     if(!root)return;
     root.classList.add('has-calendar');
     if(!monthData){root.innerHTML='<strong>월간 일정을 불러오는 중입니다.</strong>';return;}
-    const occurrences=monthData.occurrences.filter(item=>selectedSanctuary==='all'||String(item.sanctuaryId)===String(sanctuaryForSelection()?.id));
+    const occurrences=monthData.occurrences.filter(item=>String(item.sanctuaryId)===String(sanctuaryForSelection()?.id));
     const weeks=monthData.weekStarts.map(weekStart=>{
       const items=occurrences.filter(item=>value(item.weekStart)===weekStart).map(item=>{
         const starts=value(item.startAt);const time=(starts.match(/T(\d{2}:\d{2})/)||starts.match(/ (\d{2}:\d{2})/))?.[1]||starts.slice(11,16);
@@ -613,9 +623,9 @@
     byId('sanctuaryManagementScope')?.addEventListener('click',event=>{
       const button=event.target.closest('[data-sanctuary-scope]');
       if(!button||!bootstrapData)return;
-      selectedSanctuary=value(button.dataset.sanctuaryScope)||'all';
+      selectedSanctuary=value(button.dataset.sanctuaryScope)||sanctuaryKey(bootstrapData.sanctuaries[0]);
       syncLocation();
-      renderScope();
+      byId('sanctuaryManagementScope').querySelectorAll('[data-sanctuary-scope]').forEach(item=>item.setAttribute('aria-pressed',item.dataset.sanctuaryScope===selectedSanctuary?'true':'false'));
       renderSelectedSanctuary();
       renderTeams();
       renderMonth();

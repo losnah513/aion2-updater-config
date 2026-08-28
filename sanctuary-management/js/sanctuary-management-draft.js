@@ -37,7 +37,10 @@
 
   function sanctuaryItems(){return Array.isArray(bridge()?.snapshot()?.sanctuaries)?bridge().snapshot().sanctuaries:[];}
   function sanctuaryCode(item){return value(item?.code)||value(item?.id);}
-  function sanctuaryLabel(item){return value(item?.shortName)||value(item?.name)||sanctuaryCode(item);}
+  function sanctuaryLabel(item,index=0){
+    const order=Number(item?.displayOrder)||Number(item?.id)||index+1;const short='성역 '+order;const official=value(item?.name);
+    return official&&official.replace(/\s+/g,'')!==short.replace(/\s+/g,'')?short+' | '+official:short;
+  }
   function sanctuaryForTeam(team){return sanctuaryItems().find(item=>String(item.id)===String(team?.sanctuaryId))||null;}
   function selectedCode(){
     const fromTeam=sanctuaryForTeam(state.team);

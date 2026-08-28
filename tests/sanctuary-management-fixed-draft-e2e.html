@@ -14,7 +14,7 @@
   <main class="sanctuary-management-wrap">
     <header class="sanctuary-management-hero"><div class="sanctuary-management-hero-info"><h1>고정 팀 DRAFT</h1><div class="sanctuary-management-info-copy"><p class="sanctuary-management-kicker">E2E HARNESS</p><p class="sanctuary-management-hero-description">실제 제품 CSS·JS와 mock Server 어댑터를 사용하는 레이아웃 검수 화면</p></div></div><div id="sanctuaryManagementContract" class="sanctuary-management-contract"></div></header>
     <section id="sanctuaryManagementAccess" class="sanctuary-management-access" aria-live="polite"><span class="sanctuary-management-access-icon">S</span><div><strong id="sanctuaryManagementAccessTitle"></strong><p id="sanctuaryManagementAccessMessage"></p></div><button id="sanctuaryManagementAccessAction" type="button" hidden></button></section>
-    <div id="sanctuaryManagementScopeShell" hidden><div id="sanctuaryManagementScope"></div></div>
+    <section class="sanctuary-management-page-bar"><div class="sanctuary-management-page-bar-shell"><div class="sanctuary-management-scope-shell" id="sanctuaryManagementScopeShell" hidden><div class="sanctuary-management-scope" id="sanctuaryManagementScope" role="group" aria-label="관리할 성역 선택"></div></div></div></section>
     <div id="sanctuaryManagementContent" class="sanctuary-management-content" hidden>
       <section class="sanctuary-management-summary"><article><strong id="sanctuaryManagementSource"></strong><div class="sanctuary-management-info-copy"><span>데이터 원본</span><small>Mock Server</small></div></article><article><strong id="sanctuaryManagementReadState"></strong><div class="sanctuary-management-info-copy"><span>팀 읽기</span><small>Server 기능 플래그</small></div></article><article><strong id="sanctuaryManagementWriteState"></strong><div class="sanctuary-management-info-copy"><span>팀 쓰기</span><small>Server 기능 플래그</small></div></article><article><strong id="sanctuaryManagementSelectedName"></strong><div class="sanctuary-management-info-copy"><span>선택 성역</span><small id="sanctuaryManagementSelectedMeta"></small></div></article></section>
       <div class="sanctuary-management-layout">
@@ -79,10 +79,10 @@
         supportBatches:[]
       }].map(syncTeam);
       const sanctuaries=[
-        {id:1,code:'rudra',name:'성역1',shortName:'성역1',releaseStatus:'OPEN'},
-        {id:2,code:'bagot',name:'성역2',shortName:'성역2',releaseStatus:'OPEN'},
-        {id:3,code:'kaldrix',name:'성역3',shortName:'성역3',releaseStatus:'OPEN'},
-        {id:4,code:'sanctuary4',name:'성역4',shortName:'성역4',availableFrom:'2026-09-09',releaseStatus:'UPCOMING',releaseLabel:'9월 9일 추가 예정'}
+        {id:1,code:'rudra',name:'심연의 재련: 루드라',shortName:'루드라팟',displayOrder:1,releaseStatus:'OPEN'},
+        {id:2,code:'bagot',name:'침식의 정화소',shortName:'바고트팟',displayOrder:2,releaseStatus:'OPEN'},
+        {id:3,code:'kaldrix',name:'무스펠의 성배',shortName:'칼드릭스팟',displayOrder:3,releaseStatus:'OPEN'},
+        {id:4,code:'sanctuary4',name:'성역4',shortName:'성역4',displayOrder:4,availableFrom:'2026-09-09',releaseStatus:'UPCOMING',releaseLabel:'9월 9일 추가 예정'}
       ];
       window.KinojoAuth={getSession:()=>({token:'kws_'+('A'.repeat(40))}),getAccount:()=>({level:3,permissions:['sanctuary_edit']})};
       window.KinojoPermissions={canEditSanctuary:()=>true};
