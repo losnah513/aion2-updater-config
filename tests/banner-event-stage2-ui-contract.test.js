@@ -57,8 +57,8 @@ assert.ok(workflow.includes('.bew-preview-trigger.is-tall img{object-fit:contain
 assert.ok(loader.includes("'admin-banner-event-workflow.js'"),'workflow module loader entry missing');
 assert.ok(loader.indexOf("'admin-side-banners.js'")<loader.indexOf("'admin-banner-event-workflow.js'"),'workflow must mount after legacy shells');
 assert.ok(loader.indexOf("'admin-banner-event-workflow.js'")<loader.indexOf("'admin-banner-quality.js'"),'quality guard must decorate new workflow');
-assert.ok(loader.includes("2026082802"),'loader cache generation not bumped');
-assert.ok(desktop.includes('admin.js?cache=2026082802'),'desktop admin cache generation mismatch');
-assert.ok(mobile.includes('admin.js?cache=2026082802'),'mobile admin cache generation mismatch');
+assert.ok(loader.includes("2026082803"),'loader cache generation not bumped');
+assert.ok(desktop.includes('admin.js?cache=2026082803'),'desktop admin cache generation mismatch');
+assert.ok(mobile.includes('admin.js?cache=2026082803'),'mobile admin cache generation mismatch');
 
 console.log('PASS banner event stage-2 UI contract');

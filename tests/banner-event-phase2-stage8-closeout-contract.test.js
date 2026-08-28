@@ -17,8 +17,8 @@ const verify=read('.github/workflows/verify-banner-admin.yml');
 for(const token of [
   "setAttribute('role','tablist')",'role="tab"',"setAttribute('role','tabpanel')",
   'ArrowRight','ArrowLeft','ArrowDown','ArrowUp','Home','End',
-  'data-banner-view="events"','data-banner-view="library"',
-  '메인 배너','사이드 배너','이벤트 관리','이미지 라이브러리',
+  'data-banner-view="create"','data-banner-view="events"','data-banner-view="library"',
+  '메인 배너','사이드 배너','새 이벤트','이벤트 관리','이미지 라이브러리',
 ])assert.ok(tabs.includes(token),`missing keyboard/semantic workspace contract: ${token}`);
 
 for(const token of [

@@ -20,7 +20,7 @@ for (const html of [desktop, mobile]) {
   for (const token of [
     'id="characterLookupPerformanceLoadBtn"',
     'id="characterLookupDiagnostics"',
-    'admin.js?cache=2026082802',
+    'admin.js?cache=2026082803',
     'kinojo-supabase-features.js?cache=2026082803',
   ]) assert.ok(html.includes(token), `materialized queue UI contract missing: ${token}`);
 }

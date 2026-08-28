@@ -16,7 +16,7 @@ for(const label of [
   '사이드 배너'
 ])assert.ok(bootstrap.includes(label),`image subpage header label missing: ${label}`);
 assert.ok(bootstrap.includes("IMAGE_LOCATION_LABELS[state.subtab]"),'image header must follow the active image subtab');
-assert.ok(bootstrap.includes('`[이미지 관리] - ${imageLocation}`'),'image header hierarchy missing');
+assert.ok(bootstrap.includes('`[이미지 관리] - ${imageLocation}${imageView?` · ${imageView}`:\'\'}`'),'image header hierarchy must include the selected workspace page');
 assert.ok(legacyImages.includes("startsWith(text+' - ')"),'legacy image shell must preserve the subpage header label');
 
 assert.ok(!workflow.includes('<section class="admin-card bew-hero"'),'large authoring hero card must be removed');
@@ -75,8 +75,8 @@ for(const token of [
   '작성 화면은 새 이벤트를 만들 수 있도록 초기화했습니다.'
 ])assert.ok(workflow.includes(token),`publish readback/reset contract missing: ${token}`);
 
-assert.ok(loader.includes('v2026082802'),'current admin loader generation missing');
-assert.ok(desktop.includes('admin.js?cache=2026082802'),'desktop loader generation mismatch');
-assert.ok(mobile.includes('admin.js?cache=2026082802'),'mobile loader generation mismatch');
+assert.ok(loader.includes('v2026082803'),'current admin loader generation missing');
+assert.ok(desktop.includes('admin.js?cache=2026082803'),'desktop loader generation mismatch');
+assert.ok(mobile.includes('admin.js?cache=2026082803'),'mobile loader generation mismatch');
 
 console.log('PASS banner event phase-2 stage-1 shell contract');

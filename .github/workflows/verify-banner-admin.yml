@@ -33,6 +33,7 @@ on:
       - "tests/banner-stage7-random-event-workspace-contract.test.js"
       - "tests/banner-event-phase2-stage8-closeout-contract.test.js"
       - "tests/banner-phase2-post-stabilization-contract.test.js"
+      - "tests/banner-phase2-admin-ux-followup-contract.test.js"
       - "tests/banner-event-stage4-ui-contract.test.js"
       - "tests/banner-event-stage5-ui-contract.test.js"
       - "tests/banner-content-overlay-v396-contract.test.js"
@@ -84,6 +85,7 @@ on:
       - "tests/banner-stage7-random-event-workspace-contract.test.js"
       - "tests/banner-event-phase2-stage8-closeout-contract.test.js"
       - "tests/banner-phase2-post-stabilization-contract.test.js"
+      - "tests/banner-phase2-admin-ux-followup-contract.test.js"
       - "tests/banner-event-stage4-ui-contract.test.js"
       - "tests/banner-event-stage5-ui-contract.test.js"
       - "tests/banner-content-overlay-v396-contract.test.js"
@@ -156,6 +158,7 @@ jobs:
           node tests/banner-stage7-random-event-workspace-contract.test.js
           node tests/banner-event-phase2-stage8-closeout-contract.test.js
           node tests/banner-phase2-post-stabilization-contract.test.js
+          node tests/banner-phase2-admin-ux-followup-contract.test.js
           node tests/banner-event-stage4-ui-contract.test.js
           node tests/banner-event-stage5-ui-contract.test.js
           node tests/banner-content-overlay-v396-contract.test.js

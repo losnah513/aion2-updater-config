@@ -26,6 +26,42 @@
 
   function toast(msg){ if(window.KinojoToast?.show) window.KinojoToast.show(msg); else addLog('TOAST',msg); }
 
+  let adminActionToastTimer=0;
+  function showAdminActionToast(message,kind='info',options={}){
+    const text=String(message||'').trim();
+    if(!text)return;
+    let layer=document.querySelector('[data-admin-action-toast-layer]');
+    if(!layer){
+      layer=document.createElement('div');
+      layer.className='admin-action-toast-layer';
+      layer.dataset.adminActionToastLayer='';
+      layer.setAttribute('aria-live','polite');
+      layer.setAttribute('aria-atomic','true');
+      document.body.appendChild(layer);
+    }
+    let box=layer.querySelector('[data-admin-action-toast]');
+    if(!box){
+      box=document.createElement('div');
+      box.dataset.adminActionToast='';
+      box.setAttribute('role','status');
+      layer.appendChild(box);
+    }
+    window.clearTimeout(adminActionToastTimer);
+    box.className=`admin-action-toast ${kind||'info'}`;
+    box.textContent=text;
+    box.dataset.message=text;
+    box.classList.remove('is-leaving');
+    box.classList.add('is-visible');
+    const persistent=options.persistent===true||kind==='pending';
+    if(!persistent){
+      const duration=Number(options.duration)||((kind==='error'||kind==='danger')?8000:5200);
+      adminActionToastTimer=window.setTimeout(()=>{
+        box.classList.add('is-leaving');
+        box.classList.remove('is-visible');
+      },duration);
+    }
+  }
+
   function roleLabel(){ const s=window.KinojoAuth?.getSession?.()||{}; return s.roleLabel||s.role||'관리자'; }
 
   function roleKey(){ const s=window.KinojoAuth?.getSession?.()||{}; return String(s.role||s.roleLabel||'').toUpperCase().replace(/\s+/g,'_'); }
@@ -93,5 +129,5 @@
     window.dispatchEvent(new CustomEvent('kinojo:banner-assets-updated',{detail:{assets:snapshot,source:String(source||'admin'),createdAssetIds:[...new Set((createdAssetIds||[]).map(Number).filter(Number.isFinite))],updatedAt:new Date().toISOString()}}));
   }
 
-  Object.assign(A,{$,$$,state,CACHE,DEFAULT_SUBTABS,esc,addLog,setStatus,toast,roleLabel,roleKey,roleLevel,isMaster,isFullAdmin,isStaffConsole,isAdmin,adminAccount,adminCharacter,adminLookup,adminNotice,adminEventNotice,adminMeter,adminAutomation,adminVisitor,EVENT_NOTICE_TYPES,eventNoticeTypeLabel,todayDateInputValue,action,notifyBannerAssetsUpdated});
+  Object.assign(A,{$,$$,state,CACHE,DEFAULT_SUBTABS,esc,addLog,setStatus,toast,showAdminActionToast,roleLabel,roleKey,roleLevel,isMaster,isFullAdmin,isStaffConsole,isAdmin,adminAccount,adminCharacter,adminLookup,adminNotice,adminEventNotice,adminMeter,adminAutomation,adminVisitor,EVENT_NOTICE_TYPES,eventNoticeTypeLabel,todayDateInputValue,action,notifyBannerAssetsUpdated});
 })(window);
