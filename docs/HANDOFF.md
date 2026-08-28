@@ -38,6 +38,14 @@
 - 구현 기준은 migration의 `CODEX_ADMIN_ROLE` 주석, `kinojo_admin_member_list_v433`, `core/kinojo-auth-ui.js`의 동일 주석이다. 권한 로직을 수정할 때 표시용 `roleLabel=Admin`과 판정용 `role=MASTER`를 혼동하지 않는다.
 - 전용 계정으로 실화면을 열 때는 사용자 브라우저 세션과 분리된 전용 브라우저 저장소를 사용한다. 인증 입력 직전 확인을 받고, 검수가 끝나면 패스키 원문을 임시 메모리에서 제거한다.
 
+## ADMIN 회원목록 브라우저 RPC 규칙 · 2026-08-28
+
+- 관리자 WEB의 회원목록은 브라우저가 `kinojo_admin_member_list_v433`에 원문 PASS KEY가 아닌 Server 발급 `kws_` 세션을 전달하고, v433이 위임한 v428이 세션·actor·등급을 다시 검증하는 기존 경계를 사용한다.
+- 이 RPC는 PostgREST 브라우저 호출을 위해 `anon`, `authenticated`, `service_role`에만 EXECUTE를 허용하고 `PUBLIC`은 계속 revoke한다. v433을 service_role-only로 잠그면 인증된 관리자도 `permission denied`가 되어 회원목록 전체가 중단된다.
+- DB 권한은 진입 허용일 뿐 행 권한 판정이 아니다. 잘못된 세션은 v428 내부에서 거부되고, ADMIN 행은 v433의 raw MASTER 검사 뒤에만 반환된다. 브라우저 ACL을 바꿀 때는 무효 세션 거부와 raw MASTER/ADMIN 가시성을 함께 검증한다.
+- Supabase Advisor의 `anon_security_definer_function_executable`, `authenticated_security_definer_function_executable` 경고 2건은 이 의도적 PostgREST 진입점 때문에 예상된다. v428과 같은 opaque 세션 검증을 제거하거나 우회하지 말고, 경고를 없애기 위해 다시 service_role-only로 잠그지 않는다. 향후 전체 관리자 RPC를 Edge proxy로 전환할 때만 함께 제거한다.
+- 구현 기준은 `20260828072731_sanctuary_admin_browser_rpc_v434.sql`의 `ADMIN_BROWSER_RPC_SESSION_GATE` 주석과 `tests/admin-member-v433-browser-rpc-contract.test.js`다.
+
 ## 성역관리 Stage 3 편집·레이아웃 규칙 · 2026-08-28
 
 - 고정 팀 일정은 팀 단위이며 팀 아래 모든 포스가 같은 시작일·시각·진행 시간을 공유한다. 기본·최소 30분, 30분 단위이고 반복 일정은 종료일이 없으며 수요일~화요일 주간 맥락을 표시한다.
