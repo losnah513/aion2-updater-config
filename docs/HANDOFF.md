@@ -6,13 +6,23 @@
 
 - GitHub: `losnah513/aion2-updater-config`
 - 운영 브랜치: `main`
-- 배너 이미지 관리 2차 완료·운영 후속 안정화 기준: PR `#290` + `#295` + `#298` + `#303`, 진행도 `49/49`, 관리자 cache `2026082804`, Edge `kinojo-banner-media` v26(API 2.6 / DB 412 / Upload 403 / Event 407), 회원 이미지 통합 처리 큐 `406`
+- 배너 이미지 관리 2차 완료·운영 후속 안정화 기준: PR `#290` + `#295` + `#298` + `#303` + `#317`, 진행도 `49/49`, 관리자 cache `2026082804`, Edge `kinojo-banner-media` v27(API 2.6 / DB 412 / Upload 403 / Event 407), HOF 이벤트 저장 patch `DB440`, 회원 이미지 통합 처리 큐 `406`
 - 내 정보 E-1 제품 운영 commit: `640b7eebcef1c13b0516fe2cd020df870bc23752` (PR `#194`)
 - 내 정보 후속 A-1~E-2: 12/12 완료
 - My Info / 관리자 이미지 모달 추가 UI 후속: PR `#197` 구현·배포·동기화 기준 CLOSED · 수동 실브라우저 sanity check는 post-close 보류
 - 레기온 순위 통합 패널: PR `#164` 병합 완료
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 최신 일일 로그를 작업 규칙 원본으로 사용한다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
+
+## 명예의 전당 오른쪽 사이드 배너 이벤트 저장 수정 · 2026-08-28
+
+- 원인: DB438은 명예의 전당의 공식 SIDE 슬롯을 `LEFT + RIGHT`로 확장했지만, 실제 저장 경로 `event-save v407 → v404 → v402 → v396 → v394 → v391`의 최하위 v391에 `HOF 오른쪽 거부`와 `HOF 동시 노출은 왼쪽만`이라는 구 규칙이 남아 있었다. 따라서 관리자에서 전체 7개 페이지·좌우 별도 이벤트를 저장하면 HOF RIGHT variant에서 HTTP 400 `BANNER_EVENT_INDEPENDENT_TARGET_INVALID`가 반환됐다. 캐시·이미지 업로드·합성 문제는 아니었다.
+- Server: migration `20260828115503_banner_hof_right_event_save_v440.sql`이 v391의 SIDE 대상 검증을 `private.kinojo_banner_supported_page_slots_v404` 기준으로 통일했다. 좌우 동시는 페이지의 전체 지원 슬롯과 정확히 일치해야 하고, 좌우 별도는 요청 role이 지원 슬롯에 포함돼야 한다. HOME·HOF·나머지 SIDE 페이지가 모두 같은 Server 권위 목록을 사용한다.
+- Edge: `kinojo-banner-media` v27은 API 2.6 / DB 412 / Event 407 / Upload 403과 custom KWS MASTER 인증 경계를 유지한다. 대상 불일치 시 일반 문구 대신 좌우 동시/개별 설정이 서버 지원 범위와 맞지 않는다는 구체적 안내를 반환한다.
+- 보안: 교체한 `SECURITY DEFINER` 함수는 고정 `search_path`를 유지하고 `PUBLIC/anon/authenticated` EXECUTE를 회수했으며 `service_role`만 실행 가능하다. DB readback은 service_role=true, anon=false, authenticated=false다.
+- 검증: 운영 DB 트랜잭션 롤백 구문 검사, 지원 슬롯 `HOF=[LEFT,RIGHT]`, 구 거부 조건 제거와 새 계약 사용 exact readback, 전체 Node 계약 76/76, PR #317 source check 2종, main Pages·Banner Admin·KINOJO Pages 운영 readback, Edge health 200을 통과했다. Advisor의 배너 관련 항목은 기존 RLS-no-policy 및 index INFO뿐이며 이번 함수 교체로 신규 객체나 경고를 만들지 않았다.
+- 운영 데이터: 실패한 `쿠르` event group은 생성되지 않았고 업로드 asset 59~61은 READY 상태로 보존됐다. 작성 화면의 이미지·노출 페이지·좌우·문구 설정을 자동으로 다시 게시하거나 수정하지 않았다.
+- 롤백: Edge는 v26 원본으로 되돌릴 수 있다. DB는 v391의 검증 두 블록을 DB440 직전 본문으로 교체하되 event group·campaign·asset·Storage 데이터는 삭제하지 않는다.
 
 ## 회원 관리 이미지·제작 요청 통합 처리 큐 · 2026-08-28
 
