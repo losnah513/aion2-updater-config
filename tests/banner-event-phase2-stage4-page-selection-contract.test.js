@@ -10,6 +10,7 @@ const edge=read('supabase/functions/kinojo-banner-media/index.ts');
 const migration=read('supabase/migrations/20260826045246_banner_event_page_targets_v404.sql');
 const hofRightPatch=read('supabase/migrations/20260828111622_banner_hof_right_side_target_v438.sql');
 const hofRightSavePatch=read('supabase/migrations/20260828115503_banner_hof_right_event_save_v440.sql');
+const hofRightCampaignPatch=read('supabase/migrations/20260828120843_banner_hof_right_campaign_target_v441.sql');
 
 for(const token of [
   'banner event workflow phase 2 stage 7 integration v2026082811',
@@ -103,5 +104,17 @@ for(const token of [
 assert.ok(!hofRightSavePatch.includes("(v_page='HOF' and v_role='RIGHT')"),'DB440 must not retain the retired HOF-right rejection');
 assert.ok(!hofRightSavePatch.includes("(v_page='HOF' and v_slots<>array['LEFT']::text[])"),'DB440 must not retain the retired HOF-left-only sync rule');
 assert.ok(!/create\s+table|create\s+type|alter\s+table/i.test(hofRightSavePatch),'DB440 must only replace the existing event-save function');
+
+for(const token of [
+  'private.kinojo_banner_campaign_target_valid_v386',
+  "'HOME','HOF','RANKING','LEGION_TREE','METER','SANCTUARY','SANCTUARY_SCHEDULE'",
+  "p_slots <@ array['LEFT','RIGHT']::text[]",
+  'cardinality(p_slots) between 1 and 2',
+  'security invoker',
+  'from public, anon, authenticated, service_role',
+  'DB441 shared campaign target validation'
+])assert.ok(hofRightCampaignPatch.includes(token),`DB441 HOF campaign target patch missing: ${token}`);
+assert.ok(!hofRightCampaignPatch.includes("when p_type='SIDE' and p_page='HOF' then p_slots=array['LEFT']::text[]"),'DB441 must not retain the retired HOF-left-only campaign rule');
+assert.ok(!/create\s+table|create\s+type|alter\s+table/i.test(hofRightCampaignPatch),'DB441 must only replace the existing campaign target helper');
 
 console.log('PASS banner event phase-2 stage-4 page selection contract');
