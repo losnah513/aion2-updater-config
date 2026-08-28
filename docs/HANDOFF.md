@@ -46,17 +46,18 @@
 - 신규 실제 Edge helper 회귀를 포함한 전체 Node 계약 52개가 통과했다. PR의 My Info 관련 검증은 모두 통과했고, `Verify KINOJO Pages`의 실패 1건은 동시 진행된 별도 성역 운영 Edge 414와 저장소 기대값 412 불일치로 이 변경 범위와 무관하다.
 - 기존 실패 DRAFT는 수동 삭제하지 않고 기존 cleanup 수명주기를 따른다. 영향 사용자는 새 운영 코드가 반영된 뒤 My Info를 새로 열어 이미지를 다시 선택·전송한다.
 
-## 성역·스케줄 관리 개편 · Stage 3-3 포스·파티·슬롯 실제 상태
+## 성역·스케줄 관리 개편 · Stage 3-4 생성자 캐릭터 후보 실제 연결
 
 - 신규 권한형 경로는 PC `/sanctuary-management/`, 모바일 `/m/sanctuary-management/`이며 둘 다 `noindex,nofollow,noarchive`다. 공통 Topbar·Drawer와 성역/성역 일정/성역 관리 탭은 `KinojoPermissions.canEditSanctuary(account)` 기준으로 MANAGER 이상 또는 `sanctuary_edit` 권한 계정에만 관리 진입점을 표시한다.
 - WEB 진입점은 `KinojoSupabase.getSanctuaryManagementBootstrap()`과 `runSanctuaryManagementCommand()`이다. 현재 KWS opaque session을 body의 `sessionToken`으로 `sanctuary-management` Edge에 전달하고 브라우저 직접 service-role RPC, legacy Sheet bridge, page mock adapter를 사용하지 않는다.
-- 운영 계약은 Edge `sanctuary-management` v5 / API `1.0` / DB `430`이다. DB430 bootstrap은 DB429의 팀 일정에 Server 저장 포스, 포스별 2파티, 파티별 5슬롯, 캐릭터 snapshot, occupied/vacancy 합계와 force/slot revision을 번호순으로 결합한다.
-- private roster helper와 public bootstrap/command v430은 모두 `SECURITY DEFINER` 고정 search path이며 `PUBLIC/anon/authenticated` 실행 권한을 제거하고 `service_role`만 허용한다. command v430은 기존 DB429/414로 위임하므로 생성자·관리자 권한, request key idempotency, expected revision, 최대 9포스 검증은 바뀌지 않는다.
-- WEB은 저장된 팀의 실제 포스 rail과 선택 포스의 1~10번 슬롯을 렌더링한다. `+ 포스 추가`는 현재 제목·일정을 먼저 `UPDATE_TEAM_DRAFT`로 저장한 다음 갱신된 team revision으로 `ADD_FORCE`를 실행하고 bootstrap을 다시 읽는다. 포스 전환은 입력값을 유지하며 화면에서 슬롯을 추정하거나 임의 생성하지 않는다.
+- 운영 계약은 Edge `sanctuary-management` v6 / API `1.0` / DB `431`이다. DB431 bootstrap은 DB430의 포스·파티·슬롯 실제 상태를 유지하고 팀 생성자의 `kinojo_member_character_list_v334` 소유 캐릭터 후보를 포스별로 결합한다.
+- private candidate/roster helper와 public bootstrap/command v431은 모두 `SECURITY DEFINER` 고정 search path이며 `PUBLIC/anon/authenticated` 실행 권한을 제거하고 `service_role`만 허용한다. command v431은 기존 DB430/429/414로 위임하므로 생성자·관리자 권한, request key idempotency, expected revision, 최대 9포스, `SET_SLOT` 충돌 검증은 바뀌지 않는다.
+- WEB은 저장된 팀에서 선택한 빈 슬롯을 표시하고 우측 1/5 영역에 Server가 반환한 생성자의 본캐·부캐 후보만 렌더링한다. 후보를 누르면 `SET_SLOT`을 실행하고 bootstrap을 다시 읽으며, 선택한 포스에 생성자의 캐릭터가 이미 하나 있으면 후보를 닫고 배치 완료 상태를 표시한다. 제목·일정 입력값은 슬롯 배정 중 유지된다.
+- 포스별 소유자·본캐 root 중복은 기존 unique index가 최종 차단한다. 로컬 E2E에서 생성자 본캐를 1포스, 부캐를 2포스에 각각 배정하고 각 포스에서 추가 후보가 닫히는 것과 팀/포스 revision 증가를 확인했다.
 - PC는 680px 정사각형 composer와 286px 세로 일정 패널을 나란히 유지한다. 모바일은 일정 패널을 composer 위에 두며 390px·350px에서 composer 비율 1:1, slot 10개, 가로 overflow 0을 확인했다. 9포스 rail은 세로 overflow와 숨김 scrollbar, 아래 내용이 있을 때만 하단 fade를 사용한다.
 - 운영 `readEnabled=false`, `writeEnabled=false` 및 team/force/party/slot/command 0건은 그대로다. 운영 화면의 생성·편집은 별도 승인 전까지 비활성이고 기존 성역·스케줄·Sheet 경로도 변경하지 않았다.
-- SQL430 Source/Deploy/Verify/Rollback 및 Edge v5 Source의 Drive ID는 Stage 3-3 LOG와 SQL_INDEX에 기록한다. 전체 Node 계약 62종과 로컬 PC/모바일 실제 UI 검수를 통과했다.
-- 다음 작업은 3-4 생성자 캐릭터 후보 실제 연결이다. 우측 1/5 후보 영역과 빈 슬롯 선택은 이 단계에서 Server가 반환하는 소유 캐릭터만 사용해 연결하며 운영 플래그 활성화는 별도 승인 범위다.
+- SQL431 Source/Deploy/Verify/Rollback 및 Edge v6 Source의 Drive ID는 Stage 3-4 LOG와 SQL_INDEX에 기록한다. 전체 Node 계약 64종과 로컬 PC 1440×1000, 모바일 390×844·350×740 실제 UI 검수를 통과했다.
+- 다음 작업은 3-5 캐릭터 검색·공식 조회·본캐 관계·게스트 등록 흐름이다. 운영 `readEnabled=false`, `writeEnabled=false`는 별도 승인 전까지 유지한다.
 
 ## 레기온 트리 마-2~마-6 / 사-1~사-7 / 아-1~아-6 / 자-1~자-7
 

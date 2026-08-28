@@ -24,6 +24,10 @@
       let forceSequence=100;
       let partySequence=200;
       let slotSequence=300;
+      const creatorCandidates=[
+        {characterId:501,serverId:2,serverName:'지켈',characterName:'테스트본캐',className:'검성',profileImageUrl:'',isMain:true,relation:'MAIN',mainCharacterId:501},
+        {characterId:502,serverId:2,serverName:'지켈',characterName:'테스트부캐',className:'살성',profileImageUrl:'',isMain:false,relation:'ALT',mainCharacterId:501}
+      ];
       const character={characterId:501,name:'테스트본캐',serverName:'지켈',className:'검성',profileImageUrl:'',relation:'MAIN'};
       function makeForce(forceNo,withCharacter=false){
         const forceId=forceSequence++;
@@ -34,7 +38,7 @@
           return {partyId,partyNo,capacity:5,occupiedCount,vacancyCount:5-occupiedCount,slots};
         });
         const occupiedCount=parties.reduce((sum,party)=>sum+party.occupiedCount,0);
-        return {forceId,forceNo,capacity:10,status:occupiedCount===10?'FULL':'OPEN',revision:1,occupiedCount,vacancyCount:10-occupiedCount,parties};
+        return {forceId,forceNo,capacity:10,status:occupiedCount===10?'FULL':'OPEN',revision:1,occupiedCount,vacancyCount:10-occupiedCount,creatorMemberId:7,creatorOwnerResolved:true,creatorAlreadyAssigned:withCharacter,creatorCandidateCode:withCharacter?'CREATOR_ALREADY_ASSIGNED':'READY',creatorCandidateCount:withCharacter?0:creatorCandidates.length,creatorCandidates:withCharacter?[]:structuredClone(creatorCandidates),parties};
       }
       function syncTeam(team){
         team.forceCount=team.forces.length;
@@ -46,7 +50,7 @@
       let teams=[{
         teamId:77,sanctuaryId:1,title:'1팀 목요일 21시',activity:'성역1 진행',mode:'FIXED',joinPolicy:'INSTANT',status:'DRAFT',revision:4,
         schedule:{scheduleId:91,kind:'WEEKLY',startsOn:'2026-08-27',weekdays:[4],startsAt:'21:00',durationMinutes:60,status:'ACTIVE',revision:2},
-        forces:[makeForce(1,true)]
+        forces:[makeForce(1)]
       }].map(syncTeam);
       const sanctuaries=[
         {id:1,code:'rudra',name:'성역1',shortName:'성역1',releaseStatus:'OPEN'},
@@ -58,7 +62,7 @@
       window.KinojoPermissions={canEditSanctuary:()=>true};
       window.KinojoToast={show:message=>{document.body.dataset.toast=message;},success:message=>{document.body.dataset.toast=message;}};
       window.KinojoSupabase={
-        async getSanctuaryManagementBootstrap(){return {apiVersion:1,schemaVersion:430,serverTime:new Date().toISOString(),readEnabled:true,writeEnabled:true,actor:{memberId:7,canManageAll:true},sanctuaries,teams:structuredClone(teams)};},
+        async getSanctuaryManagementBootstrap(){return {apiVersion:1,schemaVersion:431,serverTime:new Date().toISOString(),readEnabled:true,writeEnabled:true,actor:{memberId:7,canManageAll:true},sanctuaries,teams:structuredClone(teams)};},
         async runSanctuaryManagementCommand(command,payload,expectedRevision){
           if(command==='CREATE_TEAM'){
             const teamId=88;teams.unshift(syncTeam({teamId,sanctuaryId:sanctuaries.find(item=>item.code===payload.sanctuaryCode).id,title:payload.title,activity:payload.activity,mode:'FIXED',joinPolicy:'INSTANT',status:'DRAFT',revision:1,schedule:Object.assign({scheduleId:92,status:'ACTIVE',revision:1},payload.schedule),forces:[makeForce(1)]}));
@@ -70,6 +74,16 @@
             if(team.forces.length>=9)throw new Error('팀당 포스는 최대 9개까지 만들 수 있습니다.');
             const force=makeForce(team.forces.length+1);team.forces.push(force);team.revision+=1;syncTeam(team);
             return {ok:true,action:command,teamId:team.teamId,forceId:force.forceId,forceNo:force.forceNo,revision:team.revision};
+          }
+          if(command==='SET_SLOT'){
+            const force=team.forces.find(item=>item.forceId===payload.forceId);
+            const party=force?.parties.find(item=>item.partyNo===payload.partyNo);
+            const slot=party?.slots.find(item=>item.slotNo===payload.slotNo);
+            const candidate=force?.creatorCandidates.find(item=>item.characterId===payload.characterId);
+            if(!force||!slot||slot.occupied||!candidate)throw new Error('생성자 캐릭터 후보와 슬롯을 다시 선택해 주세요.');
+            slot.occupied=true;slot.revision+=1;slot.character={characterId:candidate.characterId,name:candidate.characterName,serverName:candidate.serverName,className:candidate.className,profileImageUrl:candidate.profileImageUrl,relation:candidate.relation};
+            party.occupiedCount+=1;party.vacancyCount-=1;force.occupiedCount+=1;force.vacancyCount-=1;force.revision+=1;force.creatorAlreadyAssigned=true;force.creatorCandidateCode='CREATOR_ALREADY_ASSIGNED';force.creatorCandidateCount=0;force.creatorCandidates=[];team.revision+=1;syncTeam(team);
+            return {ok:true,action:command,teamId:team.teamId,slotId:slot.slotId,revision:team.revision};
           }
           team.title=payload.title;team.activity=payload.activity;team.sanctuaryId=sanctuaries.find(item=>item.code===payload.sanctuaryCode).id;team.schedule=Object.assign({},team.schedule,payload.schedule,{revision:team.schedule.revision+1});team.revision+=1;
           return {ok:true,action:command,teamId:team.teamId,revision:team.revision};
