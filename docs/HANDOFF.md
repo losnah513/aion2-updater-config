@@ -6,13 +6,24 @@
 
 - GitHub: `losnah513/aion2-updater-config`
 - 운영 브랜치: `main`
-- 배너 이미지 관리 2차 완료·운영 후속 안정화 기준: PR `#290` + `#295` + `#298`, 진행도 `49/49`, 관리자 cache `2026082803`, Edge `kinojo-banner-media` v26(API 2.6 / DB 412 / Upload 403 / Event 407)
+- 배너 이미지 관리 2차 완료·운영 후속 안정화 기준: PR `#290` + `#295` + `#298` + `#303`, 진행도 `49/49`, 관리자 cache `2026082804`, Edge `kinojo-banner-media` v26(API 2.6 / DB 412 / Upload 403 / Event 407), 회원 이미지 통합 처리 큐 `406`
 - 내 정보 E-1 제품 운영 commit: `640b7eebcef1c13b0516fe2cd020df870bc23752` (PR `#194`)
 - 내 정보 후속 A-1~E-2: 12/12 완료
 - My Info / 관리자 이미지 모달 추가 UI 후속: PR `#197` 구현·배포·동기화 기준 CLOSED · 수동 실브라우저 sanity check는 post-close 보류
 - 레기온 순위 통합 패널: PR `#164` 병합 완료
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 최신 일일 로그를 작업 규칙 원본으로 사용한다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
+
+## 회원 관리 이미지·제작 요청 통합 처리 큐 · 2026-08-28
+
+- 원인: 회원 관리 상단 배지는 `새 이미지 확인 + 진행 중 제작 요청`을 합산했지만 `이미지·제작 요청` 기본 목록은 구 `admin-image-review-list`로 새 이미지 업로더만 조회했다. 따라서 실제 운영값이 이미지 확인 0건·제작 요청 1건이면 배지는 1인데 목록은 비어 보였다. 캐시 문제가 아니라 알림과 목록의 Server 데이터셋 불일치였다.
+- Server: migration `20260828070646_member_image_admin_work_queue_v406.sql`의 `kinojo_admin_member_image_work_queue_v406`가 `ACTION_REQUIRED / IMAGE_REVIEW / PRODUCTION_REQUEST / COMPLETED / ALL`을 한 번에 조회한다. 기존 알림과 동일하게 제작 요청 제출로 생긴 업로드는 별도 이미지 확인 건으로 중복 계산하지 않는다.
+- 보안: v406 RPC는 MASTER opaque session을 다시 검증하는 `SECURITY DEFINER`·고정 `search_path` 함수이며 `PUBLIC/anon/authenticated` 실행 권한은 없다. `service_role`만 실행하고 응답에는 private object path나 signed URL을 포함하지 않는다.
+- Edge: 별도 함수를 만들지 않고 기존 `kinojo-member-profile`을 `REUSE_WITH_DB_MODULE`로 재사용했다. 운영은 v26 ACTIVE, API 2.7 / DB 375 / 이미지 제작 요청 405 / 통합 처리 큐 406이며 custom KWS session 경계를 유지한다.
+- WEB: 기본 필터를 `처리 필요`로 바꾸고 이미지 확인·제작 요청·처리 완료·전체 필터, 종류별 카드, `처리 필요 / 이미지 확인 / 진행 중 제작 요청 / 현재 이미지 업로더` 요약을 추가했다. 제작 요청 카드의 `요청 바로 보기`는 대상 회원·캐릭터·request ID를 보존해 요청 상세를 자동 선택한다. 상태 변경 뒤 처리 큐와 배지를 즉시 다시 읽는다.
+- 운영 결과: PR `#303`은 main squash commit `58f46a23ecdaba4d3c942f12b0ca080c191dd705`로 병합됐다. 관리자 loader/CSS cache는 `2026082804`다. 운영 관리자에서 기본 `처리 필요 1`, `이미지 확인 0`, `진행 중 제작 요청 1`, 업로더 7과 `남 · 요청 #14` 카드, 본캐 `남`·요청 #14 상세 자동 선택을 확인했다.
+- 검증: 전체 Node 계약 69개, JS/Edge 구문, diff 검사, PR 4개 source check, Pages 배포, Character Refresh 운영 exact-byte readback을 통과했다. DB ACL은 service_role=true·anon/authenticated=false, Edge health header/action 406, 무효 세션 401을 확인했고 advisor에 v406 관련 신규 보안·성능 항목은 0건이다.
+- 롤백: WEB은 PR #303의 통합 목록·상세 바로가기·cache `2026082804`만 되돌린다. Edge는 v25로 되돌릴 수 있으며 v406 RPC는 additive·service-role-only라 남겨도 기존 경로에 영향이 없다. 실제 요청 #14와 첨부 이미지·상태 이력은 수정하거나 삭제하지 않았다.
 
 ## 배너 관리자 입력·알림·작성 페이지 UX 안정화 · 2026-08-28
 
@@ -118,7 +129,7 @@
 ## 내 정보 이미지 기존 완료 상태
 
 - 기존 내 정보/캐릭터 이미지 Stage 1-8은 `80/80` 완료 상태이며 재구현하지 않는다.
-- 운영 Edge 기준은 `kinojo-member-auth` v2, `kinojo-member-profile` v25(API 2.7 / DB 375 / Request 404), `kinojo-member-image-download` v2, `kinojo-member-image-cleanup` v6다.
+- 운영 Edge 기준은 `kinojo-member-auth` v2, `kinojo-member-profile` v26(API 2.7 / DB 375 / Request 404 / Admin Request 405 / Work Queue 406), `kinojo-member-image-download` v2, `kinojo-member-image-cleanup` v6다.
 - `kinojo-member-profile` 버킷은 공개, `kinojo-member-reference` 버킷은 비공개다.
 - 참고 이미지는 최대 7일 보존하며 cleanup cron은 `*/15 * * * *`로 활성화되어 있다.
 - 관리자 이미지 SQL 367/371은 `service_role` 전용이다.
