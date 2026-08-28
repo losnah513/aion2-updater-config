@@ -138,11 +138,21 @@
 ## DB 조회 기준·누적 데이터 안정화 SQL427·8단계 마감 · 2026-08-28
 
 - SQL426 이후 정기 published snapshot 20·21이 각각 본캐/부캐 × 기본/전체 레기온 네 scope exact·error 0으로 Gate를 통과했다. 운영 Migration `ranking_snapshot_bounded_input_cutover_v427`은 `kinojo_ranking_snapshot_build_step_v390`의 입력 호출 하나만 raw v390에서 bounded v426으로 전환했다.
-- 적용 직후 live 네 범위 legacy/candidate payload가 모두 exact였고 `cutoverActive=true`, `successfulRegularSnapshots=2`다. 공개 ranking/HOF/my-ranking 함수명·응답·published snapshot contract는 유지한다. raw `character_history`·`growth_reviews` 보존 기간은 미확정이며 사용자 승인 전 삭제하지 않는다.
+- 적용 직후 live 네 범위 legacy/candidate payload가 모두 exact였고 `cutoverActive=true`, `successfulRegularSnapshots=2`다. 공개 ranking/HOF/my-ranking 함수명·응답·published snapshot contract는 유지한다. 당시 미확정이던 raw `character_history`·`growth_reviews` 보존 기간은 후속 SQL443의 30일 정책으로 대체됐다.
 - builder는 `search_path=pg_catalog, private, public`, statement timeout 40초·lock timeout 2초, anon/authenticated EXECUTE false·service_role true다. rollback은 입력 호출만 v390으로 복구하고 SQL426 parity와 published snapshot·raw 원본을 유지한다.
 - 전체 Node 계약 76/76을 통과했다. live HOME cache-bypass readback은 PC 1920px에서 양쪽 고정 배너와 main이 겹치지 않고, 모바일 390px에서 양쪽 배너가 숨김·단일 열로 전환되며 두 viewport 모두 document 가로 overflow 0이다.
 - 후속 운영 표본은 HOF display warm 20/20 HTTP 200·p95 169.623ms, notification warm 20/20 200·p95 87.110ms다. 14:06 UTC 이후 API/Edge 4xx·5xx와 DB timeout은 0이다.
 - SQL427 Drive Source/Deploy/Verify/Rollback ID는 `14bDFgbhF7R1VJ73DY9XSp-c1XohuhaFW` / `1n682ubd8zP6YkYeoT133Bt3Wrht2Cc03` / `1s1mW-m5i_MJgf1yRzYr8bCiCBvKhTBkE` / `1JU63QBm61UmPc49JEwkeg7gRYLs5LUMN`이며 모두 local raw bytes와 exact다. 이 안정화 프로젝트는 완료 상태다.
+
+## 캐릭터 성장 원본 30일 보존 SQL443 · 2026-08-29
+
+- 운영 Migration `20260828215808 / character_growth_raw_retention_v443`은 `character_history.history_date`와 `growth_reviews.review_date`를 canonical source date로 사용해 KST 현재일을 포함한 최근 30개 날짜를 유지한다. `history_date`가 NULL인 예외만 `created_at AT TIME ZONE 'Asia/Seoul'`을 사용한다. 이 정책은 두 성장 원본 표에만 적용하며 runtime event·payload·session·audit 표로 확대하지 않는다.
+- 초기 dry-run은 history 8,441건, review 8,442건을 만료 대상으로 확인했다. 2,000건/표 이하의 다섯 bounded 호출로 총 16,883건을 완전 삭제했고, 최종 history 9,171건·review 9,125건, 최소 source date `260731`, 최대 `260829`, 만료 잔여 0건이다.
+- `kinojo_character_growth_raw_cleanup_v443(boolean, integer)`은 dry-run 기본, 기본 5,000·최대 10,000건/표, `FOR UPDATE SKIP LOCKED`, statement timeout 10초·lock timeout 500ms, fixed empty search path를 사용한다. PUBLIC/anon/authenticated 실행 권한은 없고 service role만 실행한다.
+- Cron job 21 `kinojo-character-growth-raw-cleanup-v443`은 매주 수요일 05:40 KST에 최대 5,000건/표를 정리한다. pg_cron UTC 식은 `40 20 * * 2`이며 05:10 run-report, 05:20 rollup, 05:30·05:45 회원 이미지 정리와 겹치지 않는다.
+- 정리 전후 rollup, v426 history/review current state, latest published snapshot scope hash가 각각 exact했다. public ranking/HOF/hall payload와 v426 본캐/부캐 × 기본/전체 레기온 네 scope 호출도 정상이며 waiting lock·expired row·dead tuple은 모두 0이다. retained review 608건의 `previous_history_id` provenance가 제거된 raw 행을 가리키지만 각 review의 `raw_previous`와 직전 scalar 기준값은 모두 남아 있어 표시와 delta는 유지된다.
+- SQL443 Source/Deploy/Verify/Rollback Drive ID는 `1MEHiRbIovgXifqDP6P4Ern8dJBihvWos` / `1vVGtzwy-NqeSBFWurUkBSqyumlk4UbwA` / `1BSg6RrHDfFyNZ0u4iABK8F3ll_jrszBR` / `1ph_q-1qcRmJGikBAW3ZpeYUvNHdveHoJ`다. Source/Deploy는 7,705 bytes·SHA-256 `63fb8849033c6c74cc19170abc8333dfe1a84f93c82314b53ecfcced8d96298e`, Verify는 4,775 bytes·`08ed864c834d9185cf46fddab5730ebca865271430ad58e31318de744f5224a9`, Rollback은 843 bytes·`a32f7ebac23cd3d6384f6449c26835464c5340d07a86e4c68b00a764f59d0e70`이며 Drive raw size가 local과 일치한다.
+- SQL443 rollback은 Cron·cleanup 함수·전용 index를 제거해 미래 삭제를 중단할 뿐 이미 삭제된 raw 행을 복원하지 않는다. SQL427의 raw v390 rollback 경로는 더 이상 기능상 안전하지 않으므로 production ranking builder는 bounded v426 입력을 유지한다.
 
 ## 관리자 캐릭터 최신화 실행 기록 보존 · 2026-08-27
 
