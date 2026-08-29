@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  const API_VERSION=1.7;
-  const SCHEMA_VERSION=445;
+  const API_VERSION=1.8;
+  const SCHEMA_VERSION=446;
   let requestSequence=0;
   let monthRequestSequence=0;
   let bootstrapData=null;
@@ -518,7 +518,7 @@
       return;
     }
     const teams=visibleTeams();
-    byId('sanctuaryManagementTeamStatus').textContent=bootstrapData.writeEnabled?'승인된 시험 사용자로 Server 팀 데이터를 편집할 수 있습니다.':value(bootstrapData.rollout?.message)||'읽기 전용으로 Server 팀 데이터를 표시합니다.';
+    byId('sanctuaryManagementTeamStatus').textContent=bootstrapData.writeEnabled?'Server 팀 데이터를 생성·참여·편집할 수 있습니다.':value(bootstrapData.rollout?.message)||'읽기 전용으로 Server 팀 데이터를 표시합니다.';
     if(!teams.length){
       root.appendChild(createEmpty('등록된 팀이 없습니다.','선택한 성역에 Server가 반환한 운영 팀이 없습니다.'));
       return;
@@ -782,6 +782,7 @@
   function renderTransitionReview(data){
     const button=byId('sanctuaryManagementTransitionReview');const state=byId('sanctuaryManagementAdminState')?.querySelector('span');const review=data.transitionReview||{};
     if(!button)return;
+    if(review.completed){button.hidden=true;if(state)state.textContent='Stage 7 전환이 완료되었습니다. 권한이 있는 팀은 편집·카드 이동·팀 해산을 사용할 수 있습니다.';return;}
     button.hidden=!review.canReview;
     if(!review.canReview){if(state)state.textContent='권한이 있는 팀은 편집·카드 이동·팀 해산을 사용할 수 있습니다.';return;}
     button.textContent=review.approved?'전환 승인됨':'전환 검수';button.classList.toggle('is-approved',review.approved);
@@ -812,7 +813,12 @@
   });
 
   function applyDeepLink(){
-    if(deepLinkApplied||!bootstrapData)return;const params=new URLSearchParams(location.search);const teamId=Number(params.get('team')||0);if(!teamId)return;
+    if(deepLinkApplied||!bootstrapData)return;const params=new URLSearchParams(location.search);
+    if(params.get('view')==='schedule'){
+      const panel=byId('sanctuaryManagementSchedulePanel');if(!panel)return;deepLinkApplied=true;
+      panel.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});panel.classList.add('is-deep-linked');setTimeout(()=>panel.classList.remove('is-deep-linked'),2400);return;
+    }
+    const teamId=Number(params.get('team')||0);if(!teamId)return;
     const team=selectedDraftTeam(teamId);if(!team)return;deepLinkApplied=true;
     const card=byId('sanctuaryManagementTeamList')?.querySelector('[data-sanctuary-team="'+CSS.escape(String(teamId))+'"]');card?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});card?.classList.add('is-deep-linked');setTimeout(()=>card?.classList.remove('is-deep-linked'),2400);
     if(params.get('support')==='1'&&bootstrapData.writeEnabled){const forceId=Number(params.get('force')||team.forces?.find(force=>force.canSupport)?.forceId||0);const trigger=card?.querySelector('[data-sanctuary-support-force="'+CSS.escape(String(forceId))+'"]');if(trigger)setTimeout(()=>window.KinojoSanctuaryManagementSupportUI?.open?.(team,forceId,trigger),180);}

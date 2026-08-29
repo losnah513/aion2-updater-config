@@ -182,6 +182,7 @@ jobs:
           node tests/sanctuary-management-stage6-pilot-contract.test.js
           node tests/sanctuary-management-stage6-transition-contract.test.js
           node tests/sanctuary-management-transition-approval-stability-contract.test.js
+          node tests/sanctuary-management-stage7-complete-contract.test.js
           node tests/sanctuary-management-compact-info-layout-contract.test.js
           node tests/sanctuary-management-scope-subbar-contract.test.js
           node tests/admin-member-v433-browser-rpc-contract.test.js

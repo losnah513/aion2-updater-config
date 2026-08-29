@@ -26,10 +26,10 @@ for(const token of [
 assert.ok(performanceGuard.includes('sanctuary_management_schedule_versions_v437_created_by_idx'),'DB437 actor FK performance guard missing');
 
 for(const token of [
-  'const API_VERSION="1.7"','const DATABASE_CONTRACT="445"','"archive-preview"',
-  'kinojo_sanctuary_management_bootstrap_v445','kinojo_sanctuary_management_month_v445',
-  'kinojo_sanctuary_management_notification_summary_v445','kinojo_sanctuary_management_archive_preview_v445',
-  'kinojo_sanctuary_management_command_v445',
+  'const API_VERSION="1.8"','const DATABASE_CONTRACT="446"','"archive-preview"',
+  'kinojo_sanctuary_management_bootstrap_v446','kinojo_sanctuary_management_month_v446',
+  'kinojo_sanctuary_management_notification_summary_v446','kinojo_sanctuary_management_archive_preview_v446',
+  'kinojo_sanctuary_management_command_v446',
 ])assert.ok(edge.includes(token),`Current Edge contract missing ${token}`);
 
 for(const token of [
@@ -45,7 +45,7 @@ for(const token of [
 assert.equal((common.match(/commonNotificationTimer=setInterval/g)||[]).length,1,'common notification must keep one polling timer');
 
 for(const token of [
-  'const API_VERSION=1.7','const SCHEMA_VERSION=445','sanctuary-management-calendar-grid',
+  'const API_VERSION=1.8','const SCHEMA_VERSION=446','sanctuary-management-calendar-grid',
   "['OCCURRENCE','FUTURE','ALL']",'openScheduleOperation','EDIT_SCHEDULE',
   'openArchiveOperation','archivePreview','futureOccurrenceCount','pendingSupportCount',
   "event.key==='Escape'","event.key!=='Tab'",'applyDeepLink','data-sanctuary-schedule-team',

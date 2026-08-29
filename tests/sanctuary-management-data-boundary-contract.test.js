@@ -45,8 +45,8 @@ assert.equal(feature.includes("rpc('kinojo_sanctuary_management_bootstrap_v412'"
 const client = read('sanctuary-management/js/sanctuary-management.js');
 for (const token of [
   "kind:'SERVER_ONLY'",
-  'const API_VERSION=1.7',
-  'const SCHEMA_VERSION=445',
+    'const API_VERSION=1.8',
+  'const SCHEMA_VERSION=446',
   'getSanctuaryManagementBootstrap',
   'runSanctuaryManagementCommand',
   "teamId?'UPDATE_TEAM_DRAFT':'CREATE_TEAM'",
@@ -72,8 +72,8 @@ const context = {
       async getSanctuaryManagementBootstrap() {
         calls.push('bootstrap');
         return {
-          apiVersion: 1.7,
-          schemaVersion: 445,
+          apiVersion: 1.8,
+          schemaVersion: 446,
           serverTime: '2026-08-26T11:00:00Z',
           readEnabled: false,
           writeEnabled: false,
@@ -115,8 +115,8 @@ vm.runInNewContext(client, context, { filename: 'sanctuary-management/js/sanctua
 async function verifyAdapter() {
   const adapter = context.window.KinojoSanctuaryManagementData;
   assert.equal(adapter.kind, 'SERVER_ONLY');
-  assert.equal(adapter.apiVersion, 1.7);
-  assert.equal(adapter.schemaVersion, 445);
+  assert.equal(adapter.apiVersion, 1.8);
+  assert.equal(adapter.schemaVersion, 446);
   const data = await adapter.bootstrap();
   assert.deepEqual(calls, ['bootstrap']);
   assert.equal(data.readEnabled, false);
@@ -129,7 +129,7 @@ async function verifyAdapter() {
   assert.equal(command.revision,5);
   assert.equal(calls[1].expectedRevision,4);
 
-  context.window.KinojoSupabase.getSanctuaryManagementBootstrap = async () => ({ apiVersion: 2, schemaVersion: 445, sanctuaries: [], teams: [] });
+  context.window.KinojoSupabase.getSanctuaryManagementBootstrap = async () => ({ apiVersion: 2, schemaVersion: 446, sanctuaries: [], teams: [] });
   await assert.rejects(adapter.bootstrap(), /계약 버전/);
 
   if (process.env.CI === 'true') {
@@ -140,8 +140,8 @@ async function verifyAdapter() {
     assert.equal(response.status, 200, `sanctuary-management health HTTP ${response.status}`);
     assert.equal(health.ok, true);
     assert.equal(health.service, 'sanctuary-management');
-    assert.equal(String(health.apiVersion), '1.7');
-    assert.equal(Number(health.databaseContract), 445);
+    assert.equal(String(health.apiVersion), '1.8');
+    assert.equal(Number(health.databaseContract), 446);
   }
 }
 

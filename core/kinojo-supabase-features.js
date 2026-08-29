@@ -1820,26 +1820,12 @@
 
   async function adminSanctuarySheetSync(command, extra={}){
     assertAdmin();
-    const sessionToken=currentAdminSessionCredential();
-    const normalized=String(command||'status').trim().toLowerCase();
-    if(normalized==='status'){
-      return rpc('kinojo_admin_sanctuary_sheet_sync_status',{p_pass_key:sessionToken});
-    }
-    if(normalized==='ping'){
-      return invokeEdgeFunction('lookup-sheet-bridge',{
-        action:'adminBridgePing',
-        sessionToken,
-        clientVersion:'kinojo-web-2026071819'
-      });
-    }
-    if(normalized!=='preview'&&normalized!=='apply')return {ok:false,message:'알 수 없는 성역 시트 동기화 명령입니다.'};
-    return invokeEdgeFunction('lookup-sheet-bridge',{
-      action:'adminSanctuarySheetSync',
-      sessionToken,
-      sanctuaryId:String(extra.sanctuaryId||extra.id||'all'),
-      mode:normalized,
-      clientVersion:'kinojo-web-2026071819'
-    });
+    return {
+      ok:false,
+      code:'SANCTUARY_SHEET_SYNC_RETIRED',
+      message:'성역 자동·수동 시트 동기화는 Stage 7 전환으로 종료되었습니다.',
+      replacement:'/sanctuary-management/'
+    };
   }
 
   async function adminSanctuaryProfileDiagnostic(extra={}){
