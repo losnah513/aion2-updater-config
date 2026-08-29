@@ -426,6 +426,7 @@
         setStatus('Server 편집 잠금을 확인하고 있습니다.','progress');
         await acquireLease();
         state.mutating=false;
+        setStatus('편집 잠금을 확인했습니다. 모달의 변경은 마지막 저장 전까지 Server에 반영되지 않습니다.','success');
         state.layer.innerHTML=modeMarkup();syncDateMinimum();focusDialog('.sanctuary-management-builder-dialog');
       }catch(error){state.mutating=false;setStatus(value(error?.message)||'팀 편집 잠금을 가져오지 못했습니다.','error');setControlsDisabled(true);state.layer?.querySelector('[data-draft-close]')?.removeAttribute('disabled');}
     }
