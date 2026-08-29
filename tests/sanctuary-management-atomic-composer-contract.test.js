@@ -63,7 +63,7 @@ for(const token of [
 for(const page of ['sanctuary-management/index.html','m/sanctuary-management/index.html']){
   const html=read(page);
   assert.ok(html.includes('성역 팀 관리 전체 보기'),`${page}: full-view title missing`);
-  assert.ok(html.includes('stage7review=2026082921'),`${page}: review cache key missing`);
+  assert.ok(html.includes('stage7review=2026082922'),`${page}: review cache key missing`);
 }
 
 console.log('KINOJO sanctuary management atomic browser-local composer contract: PASS');

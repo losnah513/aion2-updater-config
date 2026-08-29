@@ -13,6 +13,7 @@
   let backgroundCheckActive=false;
   let monthData=null;
   let selectedSanctuary='';
+  let sanctuaryMasterData=null;
   let selectedMonth=new Date(Date.now()+9*60*60*1000).toISOString().slice(0,7);
   let operationLayer=null;
   let operationOpener=null;
@@ -341,6 +342,8 @@
   function setAccess(state,title,message,action){
     const region=byId('sanctuaryManagementAccess');
     if(!region)return;
+    const folded=state==='ready'||state==='rollout';
+    region.hidden=folded;
     region.dataset.state=state;
     region.setAttribute('aria-busy',state==='loading'?'true':'false');
     byId('sanctuaryManagementAccessTitle').textContent=title;
@@ -349,6 +352,17 @@
     button.hidden=!action;
     button.textContent=action==='login'?'로그인':action==='back'?'성역으로 돌아가기':'다시 시도';
     button.dataset.action=action||'';
+    const summary=byId('sanctuaryManagementConnectionCard');
+    if(summary){
+      summary.dataset.state=state;
+      byId('sanctuaryManagementConnectionState').textContent=state==='ready'?'연결됨':state==='rollout'?'준비 중':'확인 중';
+      const summaryTitle=byId('sanctuaryManagementConnectionTitle');
+      const summaryMessage=byId('sanctuaryManagementConnectionMessage');
+      summaryTitle.textContent=title;
+      summaryTitle.title=title;
+      summaryMessage.textContent=message;
+      summaryMessage.title=message;
+    }
   }
 
   function contractLabel(data){return 'API '+data.apiVersion+' · DB '+data.schemaVersion;}
@@ -361,6 +375,32 @@
     return official&&official.replace(/\s+/g,'')!==short.replace(/\s+/g,'')?short+' | '+official:short;
   }
   function sanctuaryForSelection(){return bootstrapData?.sanctuaries.find(item=>sanctuaryKey(item)===selectedSanctuary)||null;}
+  const SANCTUARY_BANNER_FALLBACK=Object.freeze({
+    rudra:Object.freeze({image:'/assets/images/sanctuary/backgrounds/rudra.webp',bossName:'루드라'}),
+    bagot:Object.freeze({image:'/assets/images/sanctuary/backgrounds/bagot.webp',bossName:'중합체 바고트'}),
+    kaldrix:Object.freeze({image:'/assets/images/sanctuary/backgrounds/kaldrix.webp',bossName:'지저의 재앙 칼드릭스'})
+  });
+  function sanctuaryMasterForSelection(){return sanctuaryMasterData?.items?.find(item=>sanctuaryKey(item)===selectedSanctuary)||null;}
+  function safeHeroImage(input){const image=value(input);return image&&(image.startsWith('/')||image.startsWith('https://'))?image.replace(/["'()]/g,encodeURIComponent):'';}
+  function renderSanctuaryBanner(){
+    const item=sanctuaryForSelection();if(!item)return;
+    const master=sanctuaryMasterForSelection()||{};
+    const code=sanctuaryKey(item);const order=sanctuaryOrder(item);const fallback=SANCTUARY_BANNER_FALLBACK[code]||{};
+    const image=safeHeroImage(master.bannerImage||item.bannerImage||fallback.image);
+    const background=value(master.cardBackground||item.cardBackground);
+    const bg=byId('sanctuaryManagementHeroBg');
+    if(bg){
+      bg.style.background='';bg.style.backgroundImage='';
+      if(image)bg.style.backgroundImage='url("'+image+'")';
+      else if(/^(radial-gradient|linear-gradient)\(/i.test(background)&&!/[;{}]/.test(background))bg.style.background=background;
+    }
+    const hero=byId('sanctuaryManagementHero');if(hero)hero.dataset.sanctuaryCode=code;
+    byId('sanctuaryManagementHeroKicker').textContent='성역 '+order;
+    byId('sanctuaryManagementTitle').textContent=sanctuaryOfficialName(item)||value(master.name)||sanctuaryLabel(item);
+    const boss=value(master.bossName||item.bossName||fallback.bossName);
+    byId('sanctuaryManagementHeroSub').textContent=boss?'Boss. '+boss+' · 성역 '+order:'성역 '+order+' · 팀·포스 운영 관리';
+  }
+  function acceptSanctuaryMaster(payload){if(!Array.isArray(payload?.items))return;sanctuaryMasterData=payload;if(bootstrapData)renderSanctuaryBanner();}
 
   function resolveInitialSelection(data){
     const requested=value(new URLSearchParams(location.search).get('id'));
@@ -958,7 +998,7 @@
     currentBootstrapFingerprint=bootstrapFingerprint(data);
     selectedSanctuary=resolveInitialSelection(data);
     byId('sanctuaryManagementContract').textContent=contractLabel(data);
-    byId('sanctuaryManagementSource').textContent='Server';
+    renderSanctuaryBanner();
     setFlagState('sanctuaryManagementReadState',data.readEnabled);
     renderWriteState(data);
     renderScope();
@@ -1036,6 +1076,7 @@
       selectedSanctuary=value(button.dataset.sanctuaryScope)||sanctuaryKey(bootstrapData.sanctuaries[0]);
       syncLocation();
       byId('sanctuaryManagementScope').querySelectorAll('[data-sanctuary-scope]').forEach(item=>item.setAttribute('aria-pressed',item.dataset.sanctuaryScope===selectedSanctuary?'true':'false'));
+      renderSanctuaryBanner();
       renderTeams();
       renderMonth();
     });
@@ -1072,6 +1113,8 @@
       const card=byId('sanctuaryManagementTeamList')?.querySelector('[data-sanctuary-team="'+CSS.escape(String(team.teamId))+'"]');card?.scrollIntoView({behavior:'smooth',block:'center'});if(bootstrapData?.writeEnabled&&team.canEdit)openScheduleOperation(team,item,value(item.dataset.sanctuaryCalendarDate));
     });
     byId('sanctuaryManagementRefreshAction')?.addEventListener('click',refreshContent);
+    window.addEventListener('kinojo:sanctuary-master-rendered',event=>acceptSanctuaryMaster(event.detail));
+    if(typeof window.KinojoSanctuaryMaster?.load==='function')window.KinojoSanctuaryMaster.load().then(acceptSanctuaryMaster).catch(()=>{});
     window.addEventListener('kinojo:auth-changed',handleAuthChanged);
     window.addEventListener('focus',checkForUpdates);
     document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkForUpdates();});

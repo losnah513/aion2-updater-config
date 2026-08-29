@@ -67,29 +67,22 @@ body.kinojo-sanctuary-management-page{
 .sanctuary-management-scope button[aria-pressed="true"]{border-color:transparent;color:#fff;background:linear-gradient(135deg,var(--san-mgmt-blue),var(--san-mgmt-violet));box-shadow:0 7px 16px rgba(70,86,211,.22)}
 .sanctuary-management-wrap{position:relative;width:min(1180px,calc(100% - 32px));min-height:70vh;margin:18px auto 0;padding:0 0 24px}
 .sanctuary-management-hero{
-  min-height:146px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:24px;
-  padding:28px clamp(22px,4vw,42px);
-  border:1px solid rgba(91,113,155,.18);
-  border-radius:24px;
+  position:relative;
+  min-height:82px;
+  border:1px solid rgba(255,255,255,.92);
+  border-radius:6px;
   color:#fff;
-  background:
-    linear-gradient(115deg,rgba(16,34,70,.96),rgba(42,71,139,.91) 55%,rgba(93,67,173,.9)),
-    radial-gradient(circle at 80% 20%,rgba(255,255,255,.2),transparent 18rem);
-  box-shadow:0 22px 48px rgba(31,48,84,.16);
+  background:#dce8fa;
   overflow:hidden;
 }
-.sanctuary-management-hero-info{min-width:0;flex:1;display:flex;align-items:center;gap:24px}
-.sanctuary-management-hero-info>h1{flex:0 0 auto;white-space:nowrap}
-.sanctuary-management-hero-info>.sanctuary-management-info-copy{flex:0 1 480px}
+.sanctuary-management-hero-bg{position:absolute;inset:0;background:linear-gradient(135deg,#26344e,#7f8fb2);background-size:cover;background-position:center;filter:saturate(.96);transition:opacity .24s ease}
+.sanctuary-management-hero-fade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(12,22,38,.76),rgba(12,22,38,.32) 54%,rgba(12,22,38,.04))}
+.sanctuary-management-hero-text{position:relative;z-index:2;padding:14px 18px;color:#fff;text-shadow:0 2px 16px rgba(0,0,0,.42)}
+.sanctuary-management-hero-kicker{font-size:12px;font-weight:1000;letter-spacing:.12em;opacity:.9}
+.sanctuary-management-hero h1{margin:3px 0 4px;font-size:22px;line-height:1.08;letter-spacing:-.9px}
+.sanctuary-management-hero-text p{margin:0;font-size:12px;font-weight:900;opacity:.92}
 .sanctuary-management-info-copy{min-width:0;display:grid;align-content:center;gap:5px}
-.sanctuary-management-kicker,.sanctuary-management-section-head p,.sanctuary-management-side-head p{margin:0;color:#93b8ff;font-size:10px;font-weight:950;letter-spacing:.13em}
-.sanctuary-management-hero h1{margin:0;font-size:clamp(27px,3vw,42px);line-height:1.05;letter-spacing:-.045em}
-.sanctuary-management-hero-description{margin:0;color:#d8e5ff;font-size:13px;font-weight:760;line-height:1.55}
-.sanctuary-management-contract{flex:0 0 auto;max-width:230px;padding:10px 13px;border:1px solid rgba(255,255,255,.2);border-radius:999px;background:rgba(255,255,255,.1);color:#edf4ff;font-size:11px;font-weight:900;text-align:center;backdrop-filter:blur(8px)}
+.sanctuary-management-section-head p,.sanctuary-management-side-head p{margin:0;color:#93b8ff;font-size:10px;font-weight:950;letter-spacing:.13em}
 .sanctuary-management-access{
   min-height:88px;
   margin-top:18px;
@@ -103,6 +96,7 @@ body.kinojo-sanctuary-management-page{
   background:var(--san-mgmt-surface);
   box-shadow:0 12px 28px rgba(31,48,84,.08);
 }
+.sanctuary-management-access[hidden]{display:none}
 .sanctuary-management-access[data-state="ready"]{border-color:rgba(45,151,103,.3);background:rgba(245,255,250,.94)}
 .sanctuary-management-access[data-state="rollout"]{border-color:rgba(217,151,33,.28);background:rgba(255,251,240,.95)}
 .sanctuary-management-access[data-state="error"],.sanctuary-management-access[data-state="denied"]{border-color:rgba(212,76,76,.24);background:rgba(255,247,247,.95)}
@@ -118,6 +112,7 @@ body.kinojo-sanctuary-management-page{
 .sanctuary-management-summary small{display:block;color:#8995a8;font-size:10px;font-weight:750;line-height:1.4}
 .sanctuary-management-summary .sanctuary-management-info-copy{flex:1}
 .sanctuary-management-summary .sanctuary-management-info-copy span,.sanctuary-management-summary .sanctuary-management-info-copy small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sanctuary-management-connection-card{transition:border-color .2s ease,background .2s ease,box-shadow .2s ease}.sanctuary-management-connection-card[data-state="ready"]{border-color:rgba(45,151,103,.3);background:linear-gradient(135deg,#f5fff9,#fff)}.sanctuary-management-connection-card[data-state="ready"] strong{color:#198754}.sanctuary-management-connection-card[data-state="rollout"]{border-color:rgba(217,151,33,.3);background:linear-gradient(135deg,#fffaf0,#fff)}.sanctuary-management-connection-card[data-state="rollout"] strong{color:#b27618}
 .sanctuary-management-refresh-card{transition:border-color .2s ease,background .2s ease,box-shadow .2s ease}.sanctuary-management-refresh-card.has-update{border-color:#7c8fff;background:linear-gradient(135deg,#f4f7ff,#f7f3ff);box-shadow:0 10px 28px rgba(72,92,205,.14)}.sanctuary-management-refresh-card.has-update strong,.sanctuary-management-refresh-card.has-update small{color:#4661d3}.sanctuary-management-refresh-card button{width:max-content;margin:3px 0 0;padding:0;border:0;background:transparent;color:#405ecf;font:inherit;font-size:10px;font-weight:950;text-decoration:underline;text-underline-offset:3px;cursor:pointer}.sanctuary-management-refresh-card button:hover,.sanctuary-management-refresh-card button:focus-visible{color:#6a43d7;outline:0}.sanctuary-management-refresh-card button[hidden]{display:none}.sanctuary-management-refresh-card.is-checking{opacity:.78}
 .sanctuary-management-layout{margin-top:14px;display:grid;grid-template-columns:minmax(0,1fr) 350px;align-items:start;gap:14px}
 .sanctuary-management-team-panel,.sanctuary-management-side>section{border:1px solid var(--san-mgmt-line);border-radius:20px;background:var(--san-mgmt-surface);box-shadow:0 12px 30px rgba(31,48,84,.07)}
@@ -174,10 +169,8 @@ body.kinojo-sanctuary-management-page{
 }
 @media(max-width:699px){
   .sanctuary-management-wrap{width:min(100% - 20px,1180px);margin-top:12px}
-  .sanctuary-management-hero{min-height:0;display:block;padding:23px 19px;border-radius:20px}
-  .sanctuary-management-hero-info{gap:14px}
-  .sanctuary-management-hero-description{font-size:11px;line-height:1.48}
-  .sanctuary-management-contract{width:max-content;max-width:100%;margin-top:17px}
+  .sanctuary-management-hero{min-height:70px}
+  .sanctuary-management-hero h1{font-size:19px}
   .sanctuary-management-access{grid-template-columns:auto minmax(0,1fr);padding:16px}
   .sanctuary-management-access .kinojo-btn{grid-column:1/-1;width:100%}
   .sanctuary-management-side{grid-template-columns:1fr}.sanctuary-management-side>section:last-child{grid-column:auto}
@@ -195,4 +188,4 @@ body.kinojo-sanctuary-management-page{
   .sanctuary-management-placeholder.has-action{align-items:flex-start;flex-direction:column}.sanctuary-management-placeholder.has-action .kinojo-btn{width:100%}.sanctuary-management-transition-compare,.sanctuary-management-transition-checks{grid-template-columns:1fr}.sanctuary-management-transition-confirm-input{grid-template-columns:1fr}.sanctuary-management-transition-overview strong{font-size:13px}
 }
 @media(max-width:350px){.sanctuary-management-wrap{width:calc(100% - 14px)}.sanctuary-management-summary{grid-template-columns:1fr}.sanctuary-management-team-panel{padding:13px}.sanctuary-management-page-bar{padding-inline:5px}}
-@media(prefers-reduced-motion:reduce){.sanctuary-management-scope button,.sanctuary-management-scope-detail,.sanctuary-management-scope-detail-char,.sanctuary-management-team-card{transition:none}}
+@media(prefers-reduced-motion:reduce){.sanctuary-management-scope button,.sanctuary-management-scope-detail,.sanctuary-management-scope-detail-char,.sanctuary-management-team-card,.sanctuary-management-hero-bg{transition:none}}

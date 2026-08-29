@@ -12,10 +12,13 @@ for(const page of ['sanctuary-management/index.html','m/sanctuary-management/ind
   const html=read(page);
   for(const token of [
     'sanctuary-management.css?cache=2026082903',
-    'sanctuary-management-hero-info',
+    'id="sanctuaryManagementHeroBg"',
+    'id="sanctuaryManagementHeroKicker"',
+    'id="sanctuaryManagementHeroSub"',
     'sanctuary-management-section-info',
     'sanctuary-management-side-head',
-    '<strong id="sanctuaryManagementSource">Server</strong><div class="sanctuary-management-info-copy">',
+    'id="sanctuaryManagementConnectionCard"',
+    'id="sanctuaryManagementConnectionState"',
     'id="sanctuaryManagementRefreshCard"',
     'id="sanctuaryManagementRefreshAction"',
     '<h2 id="sanctuaryManagementTeamTitle">운영 팀</h2>',
@@ -24,18 +27,17 @@ for(const page of ['sanctuary-management/index.html','m/sanctuary-management/ind
 }
 
 for(const token of [
-  '.sanctuary-management-hero-info{',
-  'display:flex;align-items:center;gap:24px',
+  '.sanctuary-management-hero-bg{',
+  '.sanctuary-management-hero-text{',
   '.sanctuary-management-summary article{',
   '.sanctuary-management-section-info{',
   '.sanctuary-management-side-head{',
-  '.sanctuary-management-hero-info>h1{flex:0 0 auto;white-space:nowrap}',
   '.sanctuary-management-summary .sanctuary-management-info-copy{flex:1}',
   '.sanctuary-management-section-info>h2{flex:0 0 auto;white-space:nowrap}',
   '.sanctuary-management-side-head>h2{flex:0 0 auto;white-space:nowrap}',
 ])assert.ok(css.includes(token),`compact information CSS missing ${token}`);
 
-for(const token of ['sanctuary-management-hero-info','sanctuary-management-section-info','sanctuary-management-info-copy'])assert.ok(harness.includes(token),`E2E harness missing ${token}`);
+for(const token of ['sanctuary-management-hero-bg','sanctuary-management-hero-text','sanctuary-management-section-info','sanctuary-management-info-copy'])assert.ok(harness.includes(token),`E2E harness missing ${token}`);
 assert.ok(workflow.includes('node tests/sanctuary-management-compact-info-layout-contract.test.js'),'compact information layout test is not wired into CI');
 
 console.log('KINOJO sanctuary management compact information layout contract: PASS');
