@@ -3,9 +3,14 @@
 
   const API_VERSION=1.8;
   const SCHEMA_VERSION=446;
+  const CLASS_ICON_MAP=Object.freeze({'수호성':'templar','검성':'gladiator','살성':'assassin','궁성':'ranger','마도성':'sorcerer','정령성':'elementalist','치유성':'cleric','호법성':'chanter','권성':'fighter'});
+  const BACKGROUND_CHECK_INTERVAL=60000;
   let requestSequence=0;
   let monthRequestSequence=0;
   let bootstrapData=null;
+  let pendingBootstrapData=null;
+  let currentBootstrapFingerprint='';
+  let backgroundCheckActive=false;
   let monthData=null;
   let selectedSanctuary='';
   let selectedMonth=new Date(Date.now()+9*60*60*1000).toISOString().slice(0,7);
@@ -17,6 +22,7 @@
   const value=value=>String(value??'').trim();
   const integer=input=>Number.isSafeInteger(Number(input))?Number(input):0;
   const escapeHtml=input=>String(input??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  function classIconFor(className){const key=CLASS_ICON_MAP[value(className).replace(/[\s\u200B-\u200D\uFEFF]+/g,'').replace(/[\[(（].*?[\])）]\s*$/g,'')];return key?'/assets/images/classes/class_icon_'+key+'.png':'';}
 
   function validateSlot(item){
     if(!item||typeof item!=='object'||Array.isArray(item))throw new Error('성역 관리 슬롯 데이터가 올바르지 않습니다.');
@@ -425,12 +431,25 @@
     if(meta)meta.textContent=detail;
   }
 
-  function renderSelectedSanctuary(){
-    const selected=sanctuaryForSelection();
-    byId('sanctuaryManagementSelectedName').textContent=selected?sanctuaryLabel(selected):'성역';
-    const official=selected?sanctuaryOfficialName(selected):'';
-    const status=selected?(official&&official.replace(/\s+/g,'')!==sanctuaryLabel(selected).replace(/\s+/g,'')?official:value(selected.releaseLabel)||value(selected.releaseStatus)||'Server master'):'Server master';
-    byId('sanctuaryManagementSelectedMeta').textContent=status;
+  function bootstrapFingerprint(data){
+    return JSON.stringify({
+      readEnabled:data?.readEnabled===true,writeEnabled:data?.writeEnabled===true,globalWriteEnabled:data?.globalWriteEnabled===true,
+      rollout:data?.rollout||{},actor:data?.actor||{},composerCharacters:data?.composerCharacters||{},sanctuaries:data?.sanctuaries||[],teams:data?.teams||[]
+    });
+  }
+
+  function renderRefreshIndicator(hasUpdate,checking=false){
+    const card=byId('sanctuaryManagementRefreshCard');
+    const state=byId('sanctuaryManagementRefreshState');
+    const meta=byId('sanctuaryManagementRefreshMeta');
+    const action=byId('sanctuaryManagementRefreshAction');
+    if(!card||!state||!meta||!action)return;
+    card.classList.toggle('has-update',hasUpdate);
+    card.classList.toggle('is-checking',checking);
+    state.textContent=checking?'확인 중':hasUpdate?'새 내용':'최신';
+    meta.textContent=hasUpdate?'새로운 내용이 추가되었습니다.':checking?'백그라운드에서 확인하고 있습니다.':'변경 없음';
+    action.hidden=!hasUpdate;
+    action.disabled=checking;
   }
 
   function teamModeLabel(team){return value(team.mode)==='FIXED'?'고정 팀':value(team.mode)==='PARTICIPATION'?'참여 팀':value(team.mode)||'팀';}
@@ -464,6 +483,32 @@
     return empty;
   }
 
+  function viewerCharacterMap(){
+    return new Map((bootstrapData?.composerCharacters?.characters||[]).map(character=>[integer(character.characterId),character]));
+  }
+
+  function slotCharacterState(character){
+    const owned=viewerCharacterMap().get(integer(character?.characterId))||null;
+    const relation=value(character?.relation||owned?.relation).toUpperCase();
+    return {owned,relation:relation==='MAIN'||character?.isMain===true||owned?.isMain===true?'MAIN':relation==='ALT'?'ALT':''};
+  }
+
+  function createMaskedCharacterName(name){
+    const fullName=value(name)||'이름 없음';
+    const characters=Array.from(fullName);
+    const node=document.createElement('strong');
+    node.className='sanctuary-management-force-slot-name';
+    node.setAttribute('aria-label',fullName);
+    node.title=fullName;
+    characters.slice(0,5).forEach((character,index)=>{
+      const letter=document.createElement('span');
+      letter.textContent=character;
+      if(characters.length>5&&index===4)letter.className='is-faded';
+      node.appendChild(letter);
+    });
+    return node;
+  }
+
   function createForceCard(team,force){
     const participation=value(team.mode)==='PARTICIPATION'&&['ACTIVE','FULL'].includes(value(team.status));
     const card=document.createElement(participation?'button':'div');
@@ -480,12 +525,16 @@
       const label=document.createElement('strong');label.textContent=party.partyNo+'파티';
       const partyCount=document.createElement('small');partyCount.textContent=party.occupiedCount+'/'+party.capacity+'명';partyHead.append(label,partyCount);partyNode.appendChild(partyHead);
       party.slots.forEach(slot=>{
-        const item=document.createElement('span');item.className='sanctuary-management-force-slot'+(slot.occupied?' is-occupied':'');
+        const characterState=slotCharacterState(slot.character);
+        const item=document.createElement('span');item.className='sanctuary-management-force-slot'+(slot.occupied?' is-occupied':'')+(characterState.relation==='MAIN'?' is-main':characterState.relation==='ALT'?' is-alt':' is-guest')+(characterState.owned?' is-viewer-character':'');
         const slotNo=document.createElement('em');slotNo.textContent=String((party.partyNo-1)*5+slot.slotNo);
-        const icon=document.createElement('span');icon.className='sanctuary-management-force-slot-icon';icon.textContent=slot.occupied?Array.from(value(slot.character?.className)||'?')[0]||'?':'+';
+        const icon=document.createElement('span');icon.className='sanctuary-management-force-slot-icon';
+        const iconPath=slot.occupied?classIconFor(slot.character?.className):'';
+        if(iconPath){const image=document.createElement('img');image.src=iconPath;image.alt=value(slot.character?.className)||'클래스';icon.appendChild(image);}
+        else icon.textContent=slot.occupied?Array.from(value(slot.character?.className)||'?')[0]||'?':'+';
         const copy=document.createElement('span');copy.className='sanctuary-management-force-slot-copy';
-        const slotName=document.createElement('strong');slotName.textContent=slot.occupied?value(slot.character?.name):'빈 슬롯';
-        const slotMeta=document.createElement('small');slotMeta.textContent=slot.occupied?[value(slot.character?.serverName),value(slot.character?.className)].filter(Boolean).join(' · '):'구성원 대기';copy.append(slotName,slotMeta);item.append(slotNo,icon,copy);
+        const slotName=slot.occupied?createMaskedCharacterName(slot.character?.name):createMaskedCharacterName('빈 슬롯');
+        const slotMeta=document.createElement('small');slotMeta.className='sanctuary-management-force-slot-server';slotMeta.textContent=slot.occupied?'['+(value(slot.character?.serverName)||'서버 미상')+']':'[대기]';copy.append(slotName,slotMeta);item.append(slotNo,icon,copy);
         item.title=slot.occupied?[value(slot.character?.name),value(slot.character?.className)].filter(Boolean).join(' · '):'빈 슬롯 '+((party.partyNo-1)*5+slot.slotNo);
         partyNode.appendChild(item);
       });
@@ -498,6 +547,37 @@
     else stateText.textContent=value(force.supportDisabledMessage)||'편성 확인';
     card.append(head,parties,stateText);
     return card;
+  }
+
+  function forceCarouselColumns(){return matchMedia('(max-width:760px)').matches?1:2;}
+  function forceCarouselStarts(count,columns){
+    const last=Math.max(0,count-columns);const starts=[];
+    for(let index=0;index<=last;index+=columns)starts.push(index);
+    if(!starts.includes(last))starts.push(last);
+    return starts;
+  }
+  function forceCarouselCards(track){return Array.from(track?.querySelectorAll(':scope > .sanctuary-management-force-card')||[]);}
+  function forceCarouselOffset(cards,index){return cards[index]?cards[index].offsetLeft-cards[0].offsetLeft:0;}
+  function forceCarouselCurrent(track){
+    const cards=forceCarouselCards(track);if(!cards.length)return 0;
+    return cards.reduce((best,_card,index)=>Math.abs(forceCarouselOffset(cards,index)-track.scrollLeft)<Math.abs(forceCarouselOffset(cards,best)-track.scrollLeft)?index:best,0);
+  }
+  function updateForceCarousel(carousel){
+    const track=carousel?.querySelector('.sanctuary-management-force-grid');const cards=forceCarouselCards(track);if(!track||!cards.length)return;
+    const starts=forceCarouselStarts(cards.length,forceCarouselColumns());const current=forceCarouselCurrent(track);const page=starts.reduce((best,start,index)=>Math.abs(start-current)<Math.abs(starts[best]-current)?index:best,0);
+    const previous=carousel.querySelector('[data-sanctuary-force-shift="-1"]');const next=carousel.querySelector('[data-sanctuary-force-shift="1"]');
+    carousel.classList.toggle('has-pages',starts.length>1);if(previous)previous.disabled=page===0;if(next)next.disabled=page===starts.length-1;
+  }
+  function shiftForceCarousel(button){
+    const carousel=button.closest('.sanctuary-management-force-carousel');const track=carousel?.querySelector('.sanctuary-management-force-grid');const cards=forceCarouselCards(track);if(!track||!cards.length)return;
+    const starts=forceCarouselStarts(cards.length,forceCarouselColumns());const current=forceCarouselCurrent(track);const page=starts.reduce((best,start,index)=>Math.abs(start-current)<Math.abs(starts[best]-current)?index:best,0);const target=Math.max(0,Math.min(starts.length-1,page+Number(button.dataset.sanctuaryForceShift||0)));
+    track.scrollTo({left:forceCarouselOffset(cards,starts[target]),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+  }
+  function initializeForceCarousels(){
+    document.querySelectorAll('.sanctuary-management-force-carousel').forEach(carousel=>{
+      const track=carousel.querySelector('.sanctuary-management-force-grid');if(!track||track.dataset.carouselBound==='true'){updateForceCarousel(carousel);return;}
+      track.dataset.carouselBound='true';let frame=0;track.addEventListener('scroll',()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>updateForceCarousel(carousel));},{passive:true});updateForceCarousel(carousel);
+    });
   }
 
   function createTeamCard(team){
@@ -518,9 +598,12 @@
     head.append(titleWrap,headActions);
     const meta=document.createElement('div');meta.className='sanctuary-management-team-meta';
     [teamModeLabel(team),scheduleLabel(team),value(team.forceCount)+'포스 · '+value(team.occupiedCount)+'/'+value(team.slotCount)+'명','팀 ID '+value(team.teamId),'revision '+value(team.revision)].forEach(text=>{const item=document.createElement('span');item.textContent=text;meta.appendChild(item);});
+    const carousel=document.createElement('div');carousel.className='sanctuary-management-force-carousel';
+    const previous=document.createElement('button');previous.type='button';previous.className='sanctuary-management-force-arrow is-previous';previous.dataset.sanctuaryForceShift='-1';previous.setAttribute('aria-label','이전 포스 보기');previous.textContent='‹';
     const forces=document.createElement('div');forces.className='sanctuary-management-force-grid';forces.setAttribute('aria-label',value(team.title)+' 포스 편성');
     team.forces.forEach(force=>forces.appendChild(createForceCard(team,force)));
-    card.append(head,meta,forces);
+    const next=document.createElement('button');next.type='button';next.className='sanctuary-management-force-arrow is-next';next.dataset.sanctuaryForceShift='1';next.setAttribute('aria-label','다음 포스 보기');next.textContent='›';
+    carousel.append(previous,forces,next);card.append(head,meta,carousel);
     return card;
   }
 
@@ -547,6 +630,7 @@
       return;
     }
     teams.forEach(team=>root.appendChild(createTeamCard(team)));
+    requestAnimationFrame(initializeForceCarousels);
   }
 
   function renderMonth(){
@@ -574,7 +658,7 @@
 
   async function loadMonth(month=selectedMonth){
     const sequence=++monthRequestSequence;selectedMonth=month;monthData=null;renderMonth();
-    try{const data=await ServerAdapter.month(month);if(sequence!==monthRequestSequence)return;monthData=data;renderMonth();if(bootstrapData)renderTeams();}
+    try{const data=await ServerAdapter.month(month);if(sequence!==monthRequestSequence)return;monthData=data;renderMonth();}
     catch(error){if(sequence!==monthRequestSequence)return;const root=byId('sanctuaryManagementScheduleState');if(root)root.innerHTML='<strong>월간 일정을 불러오지 못했습니다.</strong><span>'+escapeHtml(value(error?.message))+'</span>';}
   }
 
@@ -870,13 +954,15 @@
 
   function renderBootstrap(data){
     bootstrapData=data;
+    pendingBootstrapData=null;
+    currentBootstrapFingerprint=bootstrapFingerprint(data);
     selectedSanctuary=resolveInitialSelection(data);
     byId('sanctuaryManagementContract').textContent=contractLabel(data);
     byId('sanctuaryManagementSource').textContent='Server';
     setFlagState('sanctuaryManagementReadState',data.readEnabled);
     renderWriteState(data);
     renderScope();
-    renderSelectedSanctuary();
+    renderRefreshIndicator(false);
     renderTeams();
     renderTransitionReview(data);
     loadMonth(selectedMonth);
@@ -894,6 +980,31 @@
     }
     if(data.serverTime)window.dispatchEvent(new CustomEvent('kinojo:page-time',{detail:{value:data.serverTime,label:'Server'}}));
     requestAnimationFrame(applyDeepLink);
+  }
+
+  async function checkForUpdates(){
+    if(!bootstrapData||backgroundCheckActive||document.hidden||!authState().loggedIn)return;
+    backgroundCheckActive=true;
+    try{
+      const next=await ServerAdapter.bootstrap();
+      const changed=bootstrapFingerprint(next)!==currentBootstrapFingerprint;
+      pendingBootstrapData=changed?next:null;
+      renderRefreshIndicator(changed);
+    }catch(_error){
+      if(pendingBootstrapData)renderRefreshIndicator(true);
+    }finally{backgroundCheckActive=false;}
+  }
+
+  async function refreshContent(){
+    if(!bootstrapData)return;
+    renderRefreshIndicator(false,true);
+    try{renderBootstrap(pendingBootstrapData||await ServerAdapter.bootstrap());}
+    catch(error){renderRefreshIndicator(Boolean(pendingBootstrapData));window.KinojoToast?.error?.(value(error?.message)||'새 내용을 불러오지 못했습니다.');}
+  }
+
+  function handleAuthChanged(){
+    if(!authState().loggedIn||!bootstrapData){load();return;}
+    checkForUpdates();
   }
 
   async function load(){
@@ -925,7 +1036,6 @@
       selectedSanctuary=value(button.dataset.sanctuaryScope)||sanctuaryKey(bootstrapData.sanctuaries[0]);
       syncLocation();
       byId('sanctuaryManagementScope').querySelectorAll('[data-sanctuary-scope]').forEach(item=>item.setAttribute('aria-pressed',item.dataset.sanctuaryScope===selectedSanctuary?'true':'false'));
-      renderSelectedSanctuary();
       renderTeams();
       renderMonth();
     });
@@ -941,6 +1051,8 @@
     });
     byId('sanctuaryManagementTransitionReview')?.addEventListener('click',event=>{if(!bootstrapData?.transitionReview?.canReview)return;openTransitionReview(event.currentTarget);});
     byId('sanctuaryManagementTeamList')?.addEventListener('click',event=>{
+      const carouselButton=event.target.closest('[data-sanctuary-force-shift]');
+      if(carouselButton){shiftForceCarousel(carouselButton);return;}
       const support=event.target.closest('[data-sanctuary-support-force]');
       if(support){if(!bootstrapData?.writeEnabled||support.disabled)return;const team=selectedDraftTeam(support.dataset.sanctuarySupportTeam);if(team)window.KinojoSanctuaryManagementSupportUI?.open?.(team,Number(support.dataset.sanctuarySupportForce),support);return;}
       const edit=event.target.closest('[data-sanctuary-edit-team]');
@@ -959,7 +1071,12 @@
       const item=event.target.closest('[data-sanctuary-calendar-team]');if(!item)return;const team=selectedDraftTeam(item.dataset.sanctuaryCalendarTeam);if(!team)return;
       const card=byId('sanctuaryManagementTeamList')?.querySelector('[data-sanctuary-team="'+CSS.escape(String(team.teamId))+'"]');card?.scrollIntoView({behavior:'smooth',block:'center'});if(bootstrapData?.writeEnabled&&team.canEdit)openScheduleOperation(team,item,value(item.dataset.sanctuaryCalendarDate));
     });
-    window.addEventListener('kinojo:auth-changed',load);
+    byId('sanctuaryManagementRefreshAction')?.addEventListener('click',refreshContent);
+    window.addEventListener('kinojo:auth-changed',handleAuthChanged);
+    window.addEventListener('focus',checkForUpdates);
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkForUpdates();});
+    window.addEventListener('resize',()=>requestAnimationFrame(initializeForceCarousels),{passive:true});
+    window.setInterval(checkForUpdates,BACKGROUND_CHECK_INTERVAL);
     load();
   }
 
