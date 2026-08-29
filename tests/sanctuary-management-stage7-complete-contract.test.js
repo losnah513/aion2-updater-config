@@ -6,6 +6,7 @@ const root=path.resolve(__dirname,'..');
 const read=file=>fs.readFileSync(path.join(root,file),'utf8');
 const migration=read('supabase/migrations/20260829061610_sanctuary_management_stage7_final_cutover_v446.sql');
 const sanctuary4Migration=read('supabase/migrations/20260829071000_sanctuary4_official_name.sql');
+const performanceGuard=read('supabase/migrations/20260829072000_sanctuary_management_stage7_performance_guard_v446.sql');
 const edge=read('supabase/functions/sanctuary-management/index.ts');
 const client=read('sanctuary-management/js/sanctuary-management.js');
 const features=read('core/kinojo-supabase-features.js');
@@ -68,6 +69,7 @@ for(const [page,canonical] of [
 for(const token of ["code = 'sanctuary4'","name = '비탄의 설원'","short_name = '비탄의 설원'","enabled 상태는 변경하지 않는다"]){
   assert.ok(sanctuary4Migration.includes(token),`sanctuary 4 official-name migration missing ${token}`);
 }
+assert.ok(performanceGuard.includes('sanctuary_management_stage7_runs_v446_approval_id_idx'),'Stage 7 approval FK performance guard missing');
 
 for(const page of ['admin/index.html','m/admin/index.html']){
   const html=read(page);
