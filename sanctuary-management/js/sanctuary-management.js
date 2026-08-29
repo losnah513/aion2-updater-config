@@ -195,11 +195,18 @@
       canReview:sourceTransition.canReview===true,
       canApprove:sourceTransition.canApprove===true,
       approved:sourceTransition.approved===true,
+      executed:sourceTransition.executed===true,
+      completed:sourceTransition.completed===true,
+      runId:sourceTransition.runId==null?null:integer(sourceTransition.runId),
+      stage7State:value(sourceTransition.stage7State),
       scopeHash:value(sourceTransition.scopeHash),
       unresolvedCount:integer(sourceTransition.unresolvedCount)
     };
     if(transitionReview.canReview&&(!/^[0-9a-f]{64}$/.test(transitionReview.scopeHash)||transitionReview.unresolvedCount<0)){
       throw new Error('성역 관리 전환 검수 상태가 올바르지 않습니다.');
+    }
+    if(transitionReview.completed&&transitionReview.stage7State!=='COMPLETE'){
+      throw new Error('성역 관리 전환 완료 상태가 Server 응답과 일치하지 않습니다.');
     }
     return {
       apiVersion:Number(data.apiVersion),

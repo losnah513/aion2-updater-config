@@ -46,14 +46,14 @@ for(const token of [
 ])assert.ok(edge.includes(token),`Edge 1.8/446 missing ${token}`);
 assert.doesNotMatch(edge,/"transition-(report|approve)"/,'retired transition approval routes remain public');
 
-for(const token of ['const API_VERSION=1.8','const SCHEMA_VERSION=446',"params.get('view')==='schedule'",'sanctuaryManagementSchedulePanel','review.completed']){
+for(const token of ['const API_VERSION=1.8','const SCHEMA_VERSION=446',"params.get('view')==='schedule'",'sanctuaryManagementSchedulePanel','completed:sourceTransition.completed===true',"transitionReview.stage7State!=='COMPLETE'",'review.completed']){
   assert.ok(client.includes(token),`Stage 7 client missing ${token}`);
 }
 
 for(const page of ['sanctuary-management/index.html','m/sanctuary-management/index.html']){
   const html=read(page);
   assert.ok(html.includes('id="sanctuaryManagementSchedulePanel"'),`${page}: schedule deep-link target missing`);
-  assert.ok(html.includes('stage7=2026082904'),`${page}: Stage 7 cache buster missing`);
+  assert.ok(html.includes('stage7=2026082911'),`${page}: Stage 7 cache buster missing`);
 }
 for(const [page,canonical] of [
   ['sanctuary/index.html','https://kinojo.info/sanctuary/'],
