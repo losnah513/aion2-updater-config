@@ -11,7 +11,7 @@ const workflow=read('.github/workflows/verify-kinojo-pages.yml');
 for(const page of ['sanctuary-management/index.html','m/sanctuary-management/index.html']){
   const html=read(page);
   for(const token of [
-    'sanctuary-management.css?cache=2026082813',
+    'sanctuary-management.css?cache=2026082902',
     'sanctuary-management-hero-info',
     'sanctuary-management-section-info',
     'sanctuary-management-side-head',

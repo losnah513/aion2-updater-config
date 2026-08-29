@@ -38,15 +38,15 @@ for(const signature of [
 assert.doesNotMatch(migration,/kws_[A-Za-z0-9_-]{20,}/,'pilot migration must never contain a session credential');
 
 for(const token of [
-  'const API_VERSION="1.6"','const DATABASE_CONTRACT="439"','PILOT_WRITE_ACTIONS',
-  'kinojo_sanctuary_management_write_access_v439','kinojo_sanctuary_management_bootstrap_v439',
-  'kinojo_sanctuary_management_command_v439','kinojo_sanctuary_management_lease_v439',
-  'kinojo_sanctuary_management_official_materialize_v439','SANCTUARY_PILOT_REQUIRED',
-  'pilot?403','writeRolloutMode:"PILOT"',
-])assert.ok(edge.includes(token),`Edge 1.6/439 pilot gate missing ${token}`);
+  'const API_VERSION="1.7"','const DATABASE_CONTRACT="445"','PILOT_WRITE_ACTIONS',
+  'kinojo_sanctuary_management_write_access_v445','kinojo_sanctuary_management_bootstrap_v445',
+  'kinojo_sanctuary_management_command_v445','kinojo_sanctuary_management_lease_v445',
+  'kinojo_sanctuary_management_official_materialize_v445','SANCTUARY_PILOT_REQUIRED',
+  'pilot?403','kinojo_sanctuary_management_rollout_state_v445',
+])assert.ok(edge.includes(token),`Edge 1.7/445 pilot gate missing ${token}`);
 
 for(const token of [
-  'const API_VERSION=1.6','const SCHEMA_VERSION=439','sourceRollout',
+  'const API_VERSION=1.7','const SCHEMA_VERSION=445','sourceRollout',
   "['CLOSED','PILOT','OPEN']",'renderWriteState','시험 운영','읽기 전용',
   '시험 사용자만 쓰기','bootstrapData?.writeEnabled&&team.canEdit',
   "params.get('support')==='1'&&bootstrapData.writeEnabled",
@@ -57,7 +57,7 @@ assert.ok(common.includes('kinojo_sanctuary_recruitment_seen_v439'),'Stage 6 not
 for(const page of ['sanctuary-management/index.html','m/sanctuary-management/index.html']){
   const html=read(page);
   for(const token of [
-    'id="sanctuaryManagementWriteMeta"','sanctuary-management.js?cache=2026082814',
+    'id="sanctuaryManagementWriteMeta"','sanctuary-management.js?cache=2026082902',
     'sanctuary-management-support.js?cache=2026082814','kinojo-common-ui.js?cache=2026082901',
   ])assert.ok(html.includes(token),`${page}: missing ${token}`);
 }

@@ -15,8 +15,8 @@ for(const page of ['sanctuary-management/index.html','m/sanctuary-management/ind
   for(const token of [
     'aria-label="성역 선택"',
     'id="sanctuaryManagementScope"',
-    'sanctuary-management.css?cache=2026082813',
-    'sanctuary-management.js?cache=2026082814',
+    'sanctuary-management.css?cache=2026082902',
+    'sanctuary-management.js?cache=2026082902',
     'sanctuary-management-draft.js?cache=2026082811',
   ])assert.ok(html.includes(token),`${page}: scope-only subbar missing ${token}`);
   for(const legacy of ['kinojo-sanctuary-tabs','관리 범위'])assert.equal(html.includes(legacy),false,`${page}: legacy subbar content remains ${legacy}`);

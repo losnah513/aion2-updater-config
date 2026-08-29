@@ -4,7 +4,8 @@ const fs=require('node:fs');
 const path=require('node:path');
 
 const root=path.resolve(__dirname,'..');
-const read=relative=>fs.readFileSync(path.join(root,relative),'utf8');
+// Git may materialize CRLF on Windows; contract matching is line-ending agnostic.
+const read=relative=>fs.readFileSync(path.join(root,relative),'utf8').replace(/\r\n/g,'\n');
 const loader=read('admin/js/admin.js');
 const bootstrap=read('admin/js/admin-bootstrap.js');
 const desktop=read('admin/index.html');

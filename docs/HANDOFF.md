@@ -135,6 +135,17 @@
 - DB439 public wrapper는 `PUBLIC/anon/authenticated` EXECUTE false, `service_role` true다. allowlist table은 private schema, RLS enabled, 직접 SELECT 권한 없음이며 security/performance advisor에서 이 신규 객체 관련 항목은 0건이다.
 - WEB은 승인자에게 `시험 운영 · 승인됨`, 미승인자에게 `읽기 전용 · 시험 사용자만 쓰기`를 표시한다. PC 1440×900, 모바일 390×844, 최소 320×568에서 document 가로 overflow 0, 승인/미승인 버튼 상태, 콘솔 error 0을 확인했다.
 
+## 성역관리 Stage 6-2~6-6 · 병행 비교·운영 검증·롤백·전환 범위 · 2026-08-29
+
+- 운영 계약은 Edge `sanctuary-management` v15, API `1.7`, DB `445`다. Migration `20260829041843_sanctuary_management_stage6_transition_readiness_v445`는 private 비교 증빙·롤백 연습·전환 승인 이력과 service-role 전용 보고/제어 RPC를 추가한다.
+- 6-2 카드 비교는 기존 Sheet DB 27팀·54파티·270슬롯(점유 101)과 신규 Server DB 3팀·16포스·32파티·160슬롯(점유 6)을 `EXPECTED_PARALLEL_SCOPE`로 판정했다. 건수 일치가 아니라 포스 10명·포스당 2파티·파티당 5슬롯 불변 조건을 기준으로 하며 실패 0건이다.
+- 6-3 일정 비교는 2026-08 수요일 시작 범위 `2026-07-29~2026-09-01`에서 기존 일정 23개·발생 13회와 신규 활성 규칙 2개·발생 0회를 병행 범위로 판정했다. 양쪽 모두 30분 최소·단위 계약을 통과했다.
+- 6-4·6-5는 운영 명령 40건과 감사 40건의 연결, 8개 실제 action 종류, 중복 요청·정원 초과·포스별 이용자 중복·대기 지원 중복·활성 lease 중복 0건을 확인했다. public/anon/authenticated는 DB445 RPC 실행 불가, service_role만 실행 가능하다.
+- 6-6 운영 롤백 연습 ID 1은 `PILOT → CLOSED → PILOT`을 수행했다. CLOSED에서 읽기는 유지되고 쓰기는 비활성화됐으며 3.27초 뒤 PILOT으로 복구됐다. 최종 health는 API1.7/DB445, mode PILOT, `restored=true`다.
+- 전환 범위 hash는 `8a3d79f8642f1e53f007f7d26d7cba190ada41755ee752a9cbbb3f68a2e36f9a`다. 유지 84행, 이관 0행, 보관·해산 49행, 초기화 대상 점유 107행, Sheet sync 중지 168행이다. 상세 ID와 사유는 `docs/SANCTUARY_MANAGEMENT_STAGE6_TRANSITION_CHECKLIST.md`와 ADMIN/MASTER 전용 `전환 검수` 모달에서 확인한다.
+- Stage 6 증빙 5종과 구조 검사 13종은 모두 PASS, 미해결 0건, 승인 가능 상태다. PC 1280×720, 모바일 390×844·320×568에서 document/dialog 가로 overflow 0과 콘솔 error/warning 0을 확인했다.
+- 6-7 사용자 승인은 아직 기록하지 않았다. `전환 범위 승인`은 정확한 scope hash와 다섯 범위 확인을 DB에 남길 뿐 초기화·해산·동기화 중지를 실행하지 않는다. 실제 변경은 승인 뒤 Stage 7에서 별도 백업·재확인 후 수행한다. 누적 진행도는 **50/59**, 다음 작업은 **6-7 사용자 최종 승인**이다.
+
 ## 예방적 확장성 SQL428·SQL442 · 2026-08-28
 
 - Meter 공개 통계/내 비교의 기본 기간은 Server `WEEK`이며 DAY/WEEK/MONTH 시간 경계가 raw combat 조회에 적용된다. `ALL`은 명시적인 사용자 선택지다. 2026-08-28 기준 records 333, participants 1,753, 적격 0이며 집계 전환 Gate 미만이므로 기간·보존·집계 구조를 변경하지 않았다.

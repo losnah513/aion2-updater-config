@@ -9,7 +9,7 @@ const client=read('sanctuary-management/js/sanctuary-management.js');
 const draft=read('sanctuary-management/js/sanctuary-management-draft.js');
 
 for(const token of [
-  'const SCHEMA_VERSION=439',
+  'const SCHEMA_VERSION=445',
   'function validateSlot',
   'function validateParty',
   'function validateForce',
@@ -48,8 +48,8 @@ function makeParty(partyNo){
 }
 
 const response={
-  apiVersion:1.6,
-  schemaVersion:439,
+  apiVersion:1.7,
+  schemaVersion:445,
   serverTime:'2026-08-28T04:00:00Z',
   readEnabled:true,
   writeEnabled:true,
@@ -76,7 +76,7 @@ vm.runInNewContext(client,context,{filename:'sanctuary-management/js/sanctuary-m
 async function verify(){
   const adapter=context.window.KinojoSanctuaryManagementData;
   const data=await adapter.bootstrap();
-  assert.equal(data.schemaVersion,439);
+  assert.equal(data.schemaVersion,445);
   assert.equal(data.teams[0].forces.length,1);
   assert.equal(data.teams[0].forces[0].parties.length,2);
   assert.equal(data.teams[0].forces[0].parties[0].slots.length,5);
