@@ -14,6 +14,18 @@ enabled = true
 verify_jwt = false
 entrypoint = "./functions/sanctuary-management/index.ts"
 
+# Stage 7 keeps the retired slugs as explicit 410 tombstones so stale clients,
+# bookmarks, or delayed jobs cannot reach the former Google Sheet mutation path.
+[functions.sanctuary-sheet-bridge]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/sanctuary-sheet-bridge/index.ts"
+
+[functions.sanctuary-roster-bridge]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/sanctuary-roster-bridge/index.ts"
+
 [api]
 enabled = true
 # Port to use for the API URL.

@@ -51,7 +51,6 @@
   const loadSanctuaryScheduleConsole=(...args)=>A.loadSanctuaryScheduleConsole(...args);
   const loadSanctuarySupportRequests=(...args)=>A.loadSanctuarySupportRequests(...args);
   const handleSanctuarySupportRequest=(...args)=>A.handleSanctuarySupportRequest(...args);
-  const loadSanctuarySyncConsole=(...args)=>A.loadSanctuarySyncConsole(...args);
   const loadVisitorDashboard=(...args)=>A.loadVisitorDashboard(...args);
   const loadVisitorHistory=(...args)=>A.loadVisitorHistory(...args);
   const handleMemberImageReviewClick_=(...args)=>A.handleMemberImageReviewClick_(...args);
@@ -75,10 +74,7 @@
   const resetMeterNoticeEditor=(...args)=>A.resetMeterNoticeEditor(...args);
   const resetSanctuaryScheduleEditor=(...args)=>A.resetSanctuaryScheduleEditor(...args);
   const retryFailedCharacterLookup=(...args)=>A.retryFailedCharacterLookup(...args);
-  const retryProfileDiagnostic=(...args)=>A.retryProfileDiagnostic(...args);
   const roleLabel=(...args)=>A.roleLabel(...args);
-  const runSanctuaryPreview=(...args)=>A.runSanctuaryPreview(...args);
-  const runSanctuarySync=(...args)=>A.runSanctuarySync(...args);
   const sanctuaryScheduleById=(...args)=>A.sanctuaryScheduleById(...args);
   const saveCharacterStatus=(...args)=>A.saveCharacterStatus(...args);
   const saveEventNoticeEditor=(...args)=>A.saveEventNoticeEditor(...args);
@@ -134,7 +130,6 @@
       if(tab==='meter'&&isMaster()&&subtab==='logs') loadMeterDungeonLogs(1);
       if(tab==='meter'&&isMaster()&&subtab!=='logs') loadMeterAdminConsole();
       if(tab==='system'&&subtab==='server-status') refreshServerStatus();
-      if(tab==='system'&&subtab==='sheet-sync') loadSanctuarySyncConsole(force===true);
       if(tab==='system'&&subtab==='environment') refreshSystemSettings();
       if(tab==='logs'&&subtab==='visitors') loadVisitorDashboard(force===true);
     };
@@ -267,30 +262,27 @@
 
   async function refreshDashboard(){
     try{
-      const [visit, req, runtime, sync, pending] = await Promise.allSettled([
+      const [visit, req, runtime, pending] = await Promise.allSettled([
         action('hallVisit',{ mode:'stats', pageKey:'admin' }),
         adminAccount('listCodeRequests',{ status:'PENDING', limit:20 }),
         action('runtimeStatus',{}),
-        action('adminSanctuarySheetSync',{mode:'status'}),
         action('notificationSummary',{})
       ]);
       const stats = visit.status==='fulfilled' ? (visit.value.stats || visit.value || {}) : {};
       const requests = req.status==='fulfilled' ? (req.value.requests || []) : [];
       const runtimeData = runtime.status==='fulfilled' ? runtime.value : {};
-      const syncData = sync.status==='fulfilled' ? sync.value : {};
       const pendingSummary=pending.status==='fulfilled'?pending.value:{};
       $('#statVisitors').textContent = Number(stats.todayVisits ?? stats.today ?? stats.daily ?? 0).toLocaleString('ko-KR');
       const anonymous=Number(stats.todayAnonymous ?? 0), logged=Number(stats.todayLoggedIn ?? 0), views=Number(stats.todayPageViews ?? 0);
       $('#statVisitorsSub').textContent = '비로그인 '+anonymous.toLocaleString('ko-KR')+' · 로그인 '+logged.toLocaleString('ko-KR')+(views?' · 조회 '+views.toLocaleString('ko-KR'):'');
       $('#statRequests').textContent = String(requests.length||0);
       $('#statRequestsSub').textContent = requests.length ? '대기 중' : '처리할 요청 없음';
-      const recentSync=syncData.recentSync||syncData.recent_sync||{};
-      $('#statSanctuary').textContent = recentSync.status==='failed' ? '확인' : recentSync.completedAt||recentSync.completed_at ? '정상' : '대기';
-      $('#statSanctuarySub').textContent = formatServerTime(recentSync.completedAt||recentSync.completed_at);
+      $('#statSanctuary').textContent = 'Server';
+      $('#statSanctuarySub').textContent = '시트 동기화 종료';
       $('#statServer').textContent = runtimeData.ok === false ? '점검' : '정상';
       $('#statServerSub').textContent = runtimeData.ok === false ? '확인이 필요한 항목이 있습니다.' : '핵심 서비스가 정상입니다.';
       state.requests=requests;
-      renderDashboardServerOverview(runtimeData,syncData);
+      renderDashboardServerOverview(runtimeData,{});
       applyNotificationBadges(Object.assign({},pendingSummary,{codeRequestCount:requests.length||0}));
       addLog('INFO','대시보드 새로고침 완료');
     }catch(err){ addLog('ERROR',err.message||err); }
@@ -343,8 +335,6 @@
       if(e.target.matches('[data-identity-review-approve]'))decideIdentityReview(e.target,true);
       if(e.target.matches('[data-identity-review-reject]'))decideIdentityReview(e.target,false);
     });
-    $('#sanctuaryPreviewBtn')?.addEventListener('click',runSanctuaryPreview);
-    $('#sanctuarySyncBtn')?.addEventListener('click',runSanctuarySync);
     $('#sanctuaryScheduleReloadBtn')?.addEventListener('click',()=>loadSanctuaryScheduleConsole(true));
     $('#sanctuaryRequestReloadBtn')?.addEventListener('click',()=>loadSanctuarySupportRequests(true));
     $('#sanctuaryRequestStatusFilter')?.addEventListener('change',()=>loadSanctuarySupportRequests(true));
@@ -395,7 +385,7 @@
     });
     $('#eventNoticeEditorCards')?.addEventListener('change',e=>{ if(e.target.matches('[data-event-field="noticeType"]')) applyEventNoticeTypeTemplate(e.target.closest('[data-event-notice-card]')); });
     $('#webAppTestBtn')?.addEventListener('click',()=>testWebAppConnection('#serverStatus')); $('#webAppTestBtnSystem')?.addEventListener('click',()=>testWebAppConnection('#systemStatus')); $('#serverRefreshBtn')?.addEventListener('click',refreshServerStatus); $('#goSystemSettingsBtn')?.addEventListener('click',()=>switchTab('system',{subtab:'environment'}));
-    document.addEventListener('click',e=>{ const retry=e.target.closest('[data-profile-diagnostic-retry]'); if(retry){retryProfileDiagnostic(retry);return;} if(e.target.matches('[data-jump-server]')) switchTab('system',{subtab:'server-status'}); if(e.target.matches('[data-jump-system]')) switchTab('system',{subtab:'environment'}); });
+    document.addEventListener('click',e=>{ if(e.target.matches('[data-jump-server]')) switchTab('system',{subtab:'server-status'}); if(e.target.matches('[data-jump-system]')) switchTab('system',{subtab:'environment'}); });
     $$('[data-visitor-days]').forEach(button=>button.addEventListener('click',()=>{state.visitorDays=Number(button.dataset.visitorDays||7);$$('[data-visitor-days]').forEach(item=>item.classList.toggle('active',item===button));loadVisitorDashboard(true);}));
     $('#visitorReloadBtn')?.addEventListener('click',()=>loadVisitorDashboard(true));
     $('#visitorSearchBtn')?.addEventListener('click',()=>loadVisitorHistory(1));

@@ -26,15 +26,16 @@ assert.ok(stagedLoading.includes('.meter-live-subbar'), 'Meter live users must b
 
 for (const entry of ['admin/index.html', 'm/admin/index.html']) {
   const html = read(entry);
-  for (const token of ['data-admin-subtab="logs"', 'id="meterDungeonLogRows"', 'id="meterDungeonLogChannel"', 'id="meterDungeonLogQuery"', 'METER RUNTIME LOG', '미터기 실행', '미터기 종료', 'id="characterAutomationToggle"', 'id="sanctuaryAutomationToggle"', 'KST 22:00 · 04:00 · 10:00 · 16:00', 'kinojo-supabase-features.js?cache=2026082902', 'admin.js?cache=2026082901']) {
+  for (const token of ['data-admin-subtab="logs"', 'id="meterDungeonLogRows"', 'id="meterDungeonLogChannel"', 'id="meterDungeonLogQuery"', 'METER RUNTIME LOG', '미터기 실행', '미터기 종료', 'id="characterAutomationToggle"', 'KST 22:00 · 04:00 · 10:00 · 16:00', 'kinojo-supabase-features.js?cache=2026082902', 'admin.js?cache=2026082901', '성역 팀 운영', '시트 동기화 종료']) {
     assert.ok(html.includes(token), `${entry}: Meter dungeon log UI missing ${token}`);
   }
-  for (const noticeId of ['characterAutomationNotice', 'sanctuaryAutomationNotice']) {
+  for (const noticeId of ['characterAutomationNotice']) {
     const noticeAt = html.indexOf(`id="${noticeId}"`);
     const rowAt = html.lastIndexOf('<div class="admin-meter-control-row">', noticeAt);
     const switchAt = html.indexOf('<label class="kinojo-filter-switch admin-meter-switch">', noticeAt);
     assert.ok(rowAt >= 0 && noticeAt > rowAt && switchAt > noticeAt, `${entry}: ${noticeId} must stay inside the automation control card`);
   }
+  assert.doesNotMatch(html,/id="sanctuaryAutomationToggle"|id="sanctuaryAutomationNotice"/,'retired sanctuary Sheet automation controls must not return');
 }
 
 const adminShared = read('admin/js/admin-shared.js');

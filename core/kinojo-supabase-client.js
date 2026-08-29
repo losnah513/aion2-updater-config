@@ -208,13 +208,7 @@
   const EDGE_FUNCTION_ROUTE_ALIASES=Object.freeze({
     prepareList:'lookup-list-prepare',
     syncList:'lookup-list-sync',
-    adminBridgePing:'sanctuary-sheet-bridge',
-    adminSanctuarySheetSync:'sanctuary-sheet-bridge',
-    readSanctuarySheet:'sanctuary-sheet-bridge',
-    webSanctuaryRosterV312:'sanctuary-roster-bridge',
-    serverSanctuaryRosterMutationV309:'sanctuary-roster-bridge',
-    serverSanctuaryRosterMutationV310:'sanctuary-roster-bridge',
-    serverSanctuaryRosterMembershipV311:'sanctuary-roster-bridge'
+    adminBridgePing:'lookup-sheet-bridge'
   });
 
   function resolveEdgeFunctionName(functionName, body){

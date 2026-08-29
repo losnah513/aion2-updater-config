@@ -49,12 +49,11 @@ assert.doesNotMatch(approvalBody,/delete\s+from|update\s+public\.sanctuary_|upda
 assert.doesNotMatch(migration,/kws_[A-Za-z0-9_-]{20,}/,'Stage 6 migration must never contain a session credential');
 
 for(const token of [
-  'const API_VERSION="1.7"','const DATABASE_CONTRACT="445"',
-  '"transition-report"','"transition-approve"',
-  'kinojo_sanctuary_management_rollout_state_v445',
-  'kinojo_sanctuary_management_transition_report_v445',
-  'kinojo_sanctuary_management_transition_approve_v445',
-])assert.ok(edge.includes(token),`Edge 1.7/445 transition route missing ${token}`);
+  'const API_VERSION="1.8"','const DATABASE_CONTRACT="446"',
+  'kinojo_sanctuary_management_rollout_state_v446',
+  'kinojo_sanctuary_management_bootstrap_v446',
+])assert.ok(edge.includes(token),`Stage 7 Edge transition handoff missing ${token}`);
+assert.doesNotMatch(edge,/"transition-(report|approve)"/,'Stage 6 approval routes must retire after Stage 7 cutover');
 
 for(const token of [
   'getSanctuaryManagementTransitionReport','approveSanctuaryManagementTransition',
@@ -62,7 +61,7 @@ for(const token of [
 ])assert.ok(features.includes(token),`WEB Server adapter missing ${token}`);
 
 for(const token of [
-  'const API_VERSION=1.7','const SCHEMA_VERSION=445','transitionReview',
+  'const API_VERSION=1.8','const SCHEMA_VERSION=446','transitionReview',
   'openTransitionReview','transitionReportMarkup','bindTransitionApproval',
   '6-2 성역 카드 비교','6-3 일정 결과 비교','6-4·6-5 운영·장애 검증','6-6 롤백·전환 대상',
   '전환 범위 승인','이 승인은 실행 허가를 기록할 뿐 지금 데이터를 변경하지 않습니다.',

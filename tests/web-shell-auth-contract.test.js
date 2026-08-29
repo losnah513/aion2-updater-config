@@ -166,8 +166,8 @@ const resolveEdgeFunctionName = edgeRouteContext.window.KinojoSupabaseClientCore
 for (const [functionName, action, expected] of [
   ['lookup-sheet-bridge', 'prepareList', 'lookup-list-prepare'],
   ['lookup-sheet-bridge', 'syncList', 'lookup-list-sync'],
-  ['lookup-sheet-bridge', 'adminBridgePing', 'sanctuary-sheet-bridge'],
-  ['lookup-sheet-bridge', 'webSanctuaryRosterV312', 'sanctuary-roster-bridge'],
+  ['lookup-sheet-bridge', 'adminBridgePing', 'lookup-sheet-bridge'],
+  ['lookup-sheet-bridge', 'webSanctuaryRosterV312', 'lookup-sheet-bridge'],
   ['lookup-sheet-bridge', 'unknown', 'lookup-sheet-bridge'],
   ['meter-admin-control', 'adminMeterConsole', 'meter-admin-control'],
 ]) {
