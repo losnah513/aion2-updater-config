@@ -29,7 +29,10 @@
   </main>
   <script>
     (()=>{
-      const pilotApproved=new URLSearchParams(location.search).get('pilot')!=='0';
+      const query=new URLSearchParams(location.search);
+      const pilotApproved=query.get('pilot')!=='0';
+      const transitionDelay=Math.min(2000,Math.max(0,Number(query.get('transitionDelay'))||0));
+      const waitForTransition=()=>transitionDelay?new Promise(resolve=>setTimeout(resolve,transitionDelay)):Promise.resolve();
       let forceSequence=100;
       let partySequence=200;
       let slotSequence=300;
@@ -95,7 +98,7 @@
       window.KinojoSupabase={
         async getSanctuaryManagementBootstrap(){return {apiVersion:1.7,schemaVersion:445,serverTime:new Date().toISOString(),readEnabled:true,writeEnabled:pilotApproved,globalWriteEnabled:true,rollout:{mode:'PILOT',globalWriteEnabled:true,effectiveWriteEnabled:pilotApproved,pilotApproved,pilotApprovedAt:pilotApproved?new Date().toISOString():'',pilotExpiresAt:'',reasonCode:pilotApproved?'PILOT_APPROVED':'PILOT_NOT_APPROVED',message:pilotApproved?'시험 사용자 쓰기가 활성화되었습니다.':'승인된 시험 사용자만 신규 성역 관리 쓰기를 사용할 수 있습니다.'},transitionReview:{canReview:pilotApproved,canApprove:pilotApproved,approved:false,scopeHash:'a'.repeat(64),unresolvedCount:0},actor:{memberId:7,canManageAll:true},sanctuaries,teams:structuredClone(teams)};},
         async getSanctuaryManagementMonth(month){return {ok:true,apiVersion:1.7,schemaVersion:445,month,weekStartsOn:'WEDNESDAY',rangeStart:'2026-07-29',rangeEnd:'2026-09-01',weekStarts:['2026-07-29','2026-08-05','2026-08-12','2026-08-19','2026-08-26'],occurrences:[{occurrenceKey:'sm-78-20260829-2200',scheduleId:92,scheduleRevision:1,teamId:78,teamTitle:'2팀 토요일 22시',sanctuaryId:1,teamMode:'PARTICIPATION',joinPolicy:'APPROVAL',occurrenceDate:'2026-08-29',weekStart:'2026-08-26',startAt:'2026-08-29T13:00:00Z',endAt:'2026-08-29T14:30:00Z',durationMinutes:90,sourceScope:'RULE',canEdit:true}]};},
-        async getSanctuaryManagementTransitionReport(month){return structuredClone(Object.assign({},transitionReport,{scheduleComparison:Object.assign({},transitionReport.scheduleComparison,{month})}));},
+        async getSanctuaryManagementTransitionReport(month){document.body.dataset.transitionReportRequests=String(Number(document.body.dataset.transitionReportRequests||0)+1);await waitForTransition();return structuredClone(Object.assign({},transitionReport,{scheduleComparison:Object.assign({},transitionReport.scheduleComparison,{month})}));},
         async approveSanctuaryManagementTransition(month,scopeHash,scopePayload,confirmation){if(scopeHash!==transitionReport.scopeHash||confirmation!=='전환 범위 승인'||JSON.stringify(scopePayload)!==JSON.stringify(transitionTargets))throw new Error('전환 승인 입력이 일치하지 않습니다.');transitionReport.approval={approved:true,approvedAt:new Date().toISOString()};return {ok:true,approved:true,schemaVersion:445,scopeHash,message:'전환 범위가 승인되었습니다.'};},
         async getSanctuaryManagementArchivePreview(teamId){const team=teams.find(item=>item.teamId===Number(teamId));return {ok:true,schemaVersion:445,teamId:team.teamId,teamTitle:team.title,revision:team.revision,canArchive:true,futureOccurrenceCount:52,futureWindowDays:366,recurringSchedule:true,pendingSupportCount:1,historyPreserved:true,message:'팀 편성·감사 이력은 보존하고 이후 일정과 승인 대기 지원을 종료합니다.'};},
         async runSanctuaryManagementLease(){return {ok:true,lease:{status:'ACTIVE'}};},

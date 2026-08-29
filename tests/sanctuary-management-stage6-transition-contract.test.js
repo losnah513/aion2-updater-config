@@ -9,6 +9,7 @@ const edge=read('supabase/functions/sanctuary-management/index.ts');
 const client=read('sanctuary-management/js/sanctuary-management.js');
 const css=read('sanctuary-management/css/sanctuary-management.css');
 const features=read('core/kinojo-supabase-features.js');
+const harness=read('tests/sanctuary-management-fixed-draft-e2e.html');
 
 for(const token of [
   'sanctuary_management_stage6_evidence_v445',
@@ -83,5 +84,8 @@ for(const page of ['sanctuary-management/index.html','m/sanctuary-management/ind
     'sanctuary-management.js?cache=2026082902',
   ])assert.ok(html.includes(token),`${page}: missing ${token}`);
 }
+
+assert.ok(harness.includes("query.get('transitionDelay')"),'transition harness must support bounded slow-network QA');
+assert.ok(harness.includes('dataset.transitionReportRequests'),'transition harness must expose report request count for duplicate-click QA');
 
 console.log('KINOJO sanctuary management Stage 6 transition readiness v445 contract: PASS');
