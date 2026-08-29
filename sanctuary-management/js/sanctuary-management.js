@@ -747,7 +747,7 @@
     const approvalHtml=approved
       ? '<section class="sanctuary-management-transition-approval is-approved"><strong>전환 범위 승인 완료</strong><span>'+escapeHtml(value(report.approval.approvedAt))+' · 실제 초기화와 전환은 Stage 7에서 재검증 후 실행합니다.</span></section>'
       : ready
-        ? '<section class="sanctuary-management-transition-approval" data-transition-approval><strong>최종 전환 범위 승인</strong><p>아래 다섯 범위를 모두 확인하고 확인 문구 <b>전환 범위 승인</b>을 입력해야 합니다. 이 승인은 실행 허가를 기록할 뿐 지금 데이터를 변경하지 않습니다.</p><div class="sanctuary-management-transition-confirm-list">'+Object.entries(targetLabels).map(([key,label])=>'<label><input type="checkbox" value="'+escapeHtml(key)+'"><span>'+escapeHtml(label)+' 범위 확인</span></label>').join('')+'</div><label class="sanctuary-management-transition-confirm-input"><span>확인 문구</span><input type="text" maxlength="20" autocomplete="off" placeholder="전환 범위 승인"></label><p class="sanctuary-management-transition-approval-state" data-transition-approval-state>모든 범위와 확인 문구를 확인해 주세요.</p></section>'
+        ? '<section class="sanctuary-management-transition-approval" data-transition-approval><strong>최종 전환 범위 승인</strong><p>아래 다섯 범위를 모두 확인하고 확인 문구 <b>전환 범위 승인</b>을 입력해야 합니다. 이 승인은 실행 허가를 기록할 뿐 지금 데이터를 변경하지 않습니다.</p><div class="sanctuary-management-transition-confirm-list">'+Object.entries(targetLabels).map(([key,label])=>'<label><input type="checkbox" value="'+escapeHtml(key)+'"><span>'+escapeHtml(label)+' 범위 확인</span></label>').join('')+'</div><label class="sanctuary-management-transition-confirm-input"><span>확인 문구</span><input type="text" maxlength="20" autocomplete="off" placeholder="전환 범위 승인"></label><p class="sanctuary-management-transition-approval-state" data-transition-approval-state aria-live="polite">0/5 범위를 확인했습니다. 남은 5개 범위를 확인해 주세요.</p></section>'
         : '<section class="sanctuary-management-transition-approval is-blocked"><strong>승인 대기</strong><span>미해결 검증 '+transitionCount(report.unresolvedCount)+'건을 먼저 해결해야 합니다.</span></section>';
     return '<section class="sanctuary-management-operation-dialog is-transition" role="dialog" aria-modal="true" aria-labelledby="sanctuaryTransitionTitle" tabindex="-1">'
       +'<header><span>STAGE 6 · PARALLEL OPERATION</span><h2 id="sanctuaryTransitionTitle">병행 운영·전환 검수</h2><p>기존 시트 기반 영역과 신규 Server 영역의 차이, 운영 시험, 롤백 복구, 초기화 후보를 한 화면에서 확인합니다.</p></header>'
@@ -764,12 +764,12 @@
     const section=operationLayer?.querySelector('[data-transition-approval]');const button=operationLayer?.querySelector('[data-transition-approve]');
     if(!section||!button)return;
     const checks=Array.from(section.querySelectorAll('input[type="checkbox"]'));const confirmation=section.querySelector('input[type="text"]');const state=section.querySelector('[data-transition-approval-state]');
-    const update=()=>{const ready=checks.length===5&&checks.every(item=>item.checked)&&value(confirmation?.value)==='전환 범위 승인';button.disabled=!ready;if(state)state.textContent=ready?'승인할 수 있습니다. Stage 7 실행은 별도 단계입니다.':'모든 범위와 확인 문구를 확인해 주세요.';};
-    checks.forEach(input=>input.addEventListener('change',update));confirmation?.addEventListener('input',update);update();
+    const update=()=>{const checkedCount=checks.filter(item=>item.checked).length;const confirmationValue=value(confirmation?.value);const phraseReady=confirmationValue==='전환 범위 승인';const ready=checks.length===5&&checkedCount===5&&phraseReady;button.disabled=!ready;if(state){state.classList.remove('is-error');state.classList.toggle('is-ready',ready);state.textContent=ready?'5/5 범위와 확인 문구가 일치합니다. 승인할 수 있으며 Stage 7 실행은 별도 단계입니다.':checkedCount<5?checkedCount+'/5 범위를 확인했습니다. 남은 '+(5-checkedCount)+'개 범위를 확인해 주세요.':confirmationValue?'5/5 범위를 확인했습니다. 확인 문구가 일치하지 않습니다.':'5/5 범위를 확인했습니다. 확인 문구 “전환 범위 승인”을 입력해 주세요.';}};
+    checks.forEach(input=>input.addEventListener('change',update));confirmation?.addEventListener('input',update);confirmation?.addEventListener('compositionend',update);update();
     button.addEventListener('click',async()=>{
       if(button.disabled)return;button.disabled=true;button.textContent='승인 기록 중';if(state)state.textContent='Server에서 범위 해시와 검증 결과를 다시 확인하고 있습니다.';
       try{const result=await ServerAdapter.approveTransition(value(report.scheduleComparison?.month)||selectedMonth,report,value(confirmation?.value));window.KinojoToast?.success?.(value(result.message)||'전환 범위가 승인되었습니다.');closeOperationLayer();await load();}
-      catch(error){button.textContent='전환 범위 승인';if(state){state.textContent=value(error?.message)||'전환 범위를 승인하지 못했습니다.';state.classList.add('is-error');}update();}
+      catch(error){button.textContent='전환 범위 승인';button.disabled=false;if(state){state.textContent=value(error?.message)||'전환 범위를 승인하지 못했습니다.';state.classList.remove('is-ready');state.classList.add('is-error');}}
     });
   }
 
