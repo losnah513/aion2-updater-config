@@ -13,6 +13,20 @@
 - 레기온 순위 통합 패널: PR `#164` 병합 완료
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 최신 일일 로그를 작업 규칙 원본으로 사용한다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
+- 성역 관리 Stage 7 기술 전환 기준: PR `#328` + `#329` + `#330`, main `377f44b244b30b858f3bf43f48229390c4952b9f`, Edge `sanctuary-management` v16(API 1.8 / DB446), transition run 1 `COMPLETE`, 진행도 `57/59`. 다음은 7-7 사용자 최종 검수 뒤 구 페이지·버튼 정리 여부 확정이다.
+
+## 성역 관리 Stage 7-1~7-6 · Server DB 정식 전환 · 2026-08-29
+
+- 승인 ID 1과 안정 scope hash `d55690120f1e24e21c5b24981c6b55c9f5820ddcfdd97a226e418272d84b1e1e`를 fresh readback한 뒤 `BACKUP → LOCK → EXECUTE → STOP_SYNC → OPEN → COMPLETE`를 순서대로 실행했다. 전환 run ID는 1이고 exact backup은 421행이다. passkey, KWS session, credential 원문은 저장하지 않았다.
+- 승인 범위만 처리했다. 신규 시험 팀 3개 ARCHIVED, 신규 규칙 3개 STOPPED, 기존 일정·연결 23+23개 canceled, public 점유 슬롯 101개와 private 점유 슬롯 6개 초기화, 만료 lease 1개 정리다. `sanctuary_master` 4행과 합의한 명령·감사·복구 이력은 보존했다.
+- 성역 Sheet cron은 inactive이고 역사 sync job 171행은 status를 덮지 않은 채 `stage7Stopped` 메타데이터만 추가했다. 관리자 Sheet sync pane·preview·manual/automation listener와 browser route alias를 제거했다. 공용 lookup Sheet 기능은 유지하고 성역 전용 sheet/roster bridge는 HTTP 410 tombstone이다.
+- 현재 Edge health는 API1.8/DB446, read/write true, rollout OPEN, sheet sync false, transition COMPLETE다. transition report/approve action은 공개 목록에서 제거됐고 COMPLETE bootstrap 뒤 WEB의 전환 검수 버튼도 숨겨진다.
+- 성역 4 기준 DB 이름은 `비탄의 설원`, 시작일은 `2026-09-09`다. 신규 관리에는 표시하되 구 성역 화면 enabled는 false로 유지한다.
+- PC 1920×1080과 모바일 390×844 모두 document 가로 overflow 0이다. PC 팀 구성 모달 오른쪽에 일정 패널, 모바일에서는 일정 패널이 팀 구성 위에 놓인다. 일정 deep link, API/DB badge, 성역 1~4, COMPLETE 안내, 콘솔 error 0을 production에서 확인했다.
+- 사용자의 최신 결정에 따라 `/sanctuary/`, `/sanctuary-schedule/`과 모바일 두 경로, 탑바·drawer 구 버튼은 제거하거나 redirect하지 않는다. 신규 관리 전체 구현·사용자 실화면 검수·후속 수정 완료 뒤 별도 승인으로만 정리한다.
+- 전체 Node 계약 80/80 PASS. Stage 7 migration은 `20260829061610`, settings hotfix `20260829063301`, sanctuary 4 name `20260829071000`, FK performance guard `20260829072000`이다. Advisor의 Stage 7 security 항목은 private service-only table의 RLS-no-policy INFO 2건, performance는 적용 직후 unused index INFO뿐이다.
+- 복구는 run ID 1의 service-only `kinojo_sanctuary_management_stage7_restore_v446`으로 exact backup 범위만 되돌린다. COMPLETE 뒤 임의 복구를 실행하지 말고, 실제 장애와 승인된 대상 범위를 다시 확인한 뒤 사용한다.
+- 진행도는 **57/59**다. 현재 7-7은 사용자 최종 검수 대기, 7-8은 7-7 결정 반영 뒤 성역 규칙·운영·복구 문서 최종 종료다.
 
 ## 참고 이미지 제작 요청 1회 확인 통합 · 2026-08-29
 
