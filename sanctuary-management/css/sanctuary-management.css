@@ -6,6 +6,12 @@
   --san-mgmt-violet:#7656e8;
   --san-mgmt-surface:rgba(255,255,255,.9);
 }
+.kinojo-sanctuary-management-page button,.sanctuary-management-draft-layer button,.sanctuary-management-support-layer button,.sanctuary-management-operation-layer button{appearance:none;-webkit-appearance:none;margin:0;box-sizing:border-box;font-family:inherit;font-weight:850;line-height:1.2}
+.kinojo-sanctuary-management-page .kinojo-btn,.sanctuary-management-operation-layer .kinojo-btn{min-height:38px;padding:0 14px;border:1px solid transparent;border-radius:10px;background:linear-gradient(135deg,#315fe8,#7150eb);box-shadow:0 7px 17px rgba(64,79,207,.18);color:#fff;font-size:10px;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease,background-color .18s ease}
+.kinojo-sanctuary-management-page .kinojo-btn:hover,.sanctuary-management-operation-layer .kinojo-btn:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(64,79,207,.23)}
+.kinojo-sanctuary-management-page .kinojo-btn.secondary,.sanctuary-management-operation-layer .kinojo-btn.secondary{border-color:#d6dfed;background:#fff;box-shadow:none;color:#53647d}
+.kinojo-sanctuary-management-page .kinojo-btn.danger,.sanctuary-management-operation-layer .kinojo-btn.danger{border-color:#fecaca;background:#fff1f2;box-shadow:none;color:#be123c}
+.kinojo-sanctuary-management-page .kinojo-btn:disabled,.sanctuary-management-operation-layer .kinojo-btn:disabled{cursor:not-allowed;opacity:.5;transform:none;box-shadow:none}
 *{box-sizing:border-box}
 body.kinojo-sanctuary-management-page{
   min-width:0;

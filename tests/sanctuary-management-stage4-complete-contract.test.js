@@ -45,8 +45,8 @@ for(const token of [
 ])assert.ok(client.includes(token),`WEB Stage 4 bridge missing ${token}`);
 
 for(const token of [
-  'function participationReady()',"bridge().publishTeam",'참여 팀 생성',
-  '각 포스에 생성자의 서로 다른 본캐·부캐','최소 팀 생성자의 캐릭터 1개를 각 포스에 서로 다르게 추가해야 합니다.',
+  'function participationReady()',"bridge().saveComposition(model)",'참여 팀 생성',
+  '만들어 둔 포스 중 한 곳에 생성자의 캐릭터 1개','최소 팀 생성자의 캐릭터 1개를 추가해야 합니다.',
   '즉시 참가는 빈 슬롯에 바로 배치되고',
 ])assert.ok(draft.includes(token),`Participation publisher UI missing ${token}`);
 

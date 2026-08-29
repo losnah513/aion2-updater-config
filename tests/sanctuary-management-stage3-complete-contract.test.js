@@ -64,7 +64,7 @@ for(const token of [
   'handleDragStart',
   'handleDrop',
   'moveSlot(fromSlotId,toSlotId)',
-  '빈 슬롯은 그대로 유지됩니다.',
+  '빈 슬롯이 있어도 생성할 수 있으며',
   '최소 1개 필요합니다.',
 ])assert.ok(draft.includes(token),`Management Stage 3 editor missing ${token}`);
 
