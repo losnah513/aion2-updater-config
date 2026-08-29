@@ -50,13 +50,13 @@ for(const token of [
   "state.creationMode=mode.dataset.draftMode==='participation'?'PARTICIPATION':'FIXED'",
   'data-draft-join-policy="INSTANT"',
   'data-draft-join-policy="APPROVAL"',
-  '첫 포스 추가 시 DRAFT와 1포스가 함께 생성됩니다.',
+  '필요한 포스를 만들고 생성자 캐릭터를 한 곳 이상 배치합니다.',
   '1포스 생성 · 최대 9',
   '10번째 포스는 추가할 수 없음',
   "if(forces.length>=9){setStatus('한 팀에는 최대 9포스까지만 구성할 수 있습니다.')",
-  '참여 팀 DRAFT와 1포스를 Server에 함께 만들고 있습니다.',
-  'await bridge().saveTeamDraft(model)',
-  'await bridge().addForce',
+  '로컬 편성안에 1포스·2파티·10슬롯이 추가됩니다.',
+  'await bridge().saveComposition(model)',
+  'state.team.forces.push(force)',
 ])assert.ok(draft.includes(token),`participation-team UI missing ${token}`);
 assert.equal(draft.includes('aria-disabled="true" data-draft-mode="participation"'),false,'participation mode must be selectable');
 

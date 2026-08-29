@@ -15,7 +15,7 @@
     if(path.includes('/hof/')||path.includes('/hall-of-fame/'))return {key:'hall',label:'명예의 전당',root:mobile?'../../':'../',mobile};
     if(path.includes('/ranking/'))return {key:'ranking',label:'레기온 순위',root:mobile?'../../':'../',mobile};
     if(path.includes('/meter/'))return {key:'meter',label:'키노조 미터',root:mobile?'../../':'../',mobile};
-    if(path.includes('/sanctuary-management/'))return {key:'sanctuaryManagement',label:'성역 팀 관리',root:mobile?'../../':'../',mobile};
+    if(path.includes('/sanctuary-management/'))return {key:'sanctuaryManagement',label:'성역 팀 관리 전체 보기',root:mobile?'../../':'../',mobile};
     if(path.includes('/sanctuary-schedule/'))return {key:'schedule',label:'성역 스케줄',root:mobile?'../../':'../',mobile};
     if(path.includes('/sanctuary/'))return {key:'sanctuary',label:'성역',root:mobile?'../../':'../',mobile};
     if(path.includes('/arcana/'))return {key:'arcana',label:'아르카나',root:mobile?'../../':'../',mobile};

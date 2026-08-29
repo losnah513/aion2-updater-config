@@ -27,7 +27,7 @@ for(const token of [
   'data-draft-add-force',
   'data-slot-id=',
   'data-slot-revision=',
-  '현재 입력 내용을 먼저 저장한 뒤 Server에 다음 포스를 추가하고 있습니다.',
+  '포스를 로컬 편성안에 추가했습니다. 마지막 저장 전까지 Server에는 반영되지 않습니다.',
 ])assert.ok(draft.includes(token),`DRAFT force roster UI missing ${token}`);
 
 function makeParty(partyNo){

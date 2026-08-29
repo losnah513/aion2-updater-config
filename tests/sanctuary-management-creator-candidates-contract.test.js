@@ -24,7 +24,7 @@ for(const token of [
   'data-draft-candidate',
   '다른 구성원을 검색해 추가할 수 있습니다.',
   'function assignCreatorCharacter',
-  'await bridge().setSlot',
+  'chosen.slot.character=candidateCharacter(candidate)',
   'state.selectedSlotId=0',
 ])assert.ok(draft.includes(token),`DRAFT creator candidate UI missing ${token}`);
 
