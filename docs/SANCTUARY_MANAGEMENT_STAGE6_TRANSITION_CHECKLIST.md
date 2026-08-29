@@ -1,8 +1,8 @@
 # 성역관리 Stage 6 전환 체크리스트
 
-기준 시각: 2026-08-29 KST  
+기준 시각: 2026-08-29 14:46 KST
 운영 계약: `sanctuary-management` v15 / API 1.7 / DB 445  
-전환 범위 hash: `8a3d79f8642f1e53f007f7d26d7cba190ada41755ee752a9cbbb3f68a2e36f9a`
+승인 안정 전환 범위 hash: `d55690120f1e24e21c5b24981c6b55c9f5820ddcfdd97a226e418272d84b1e1e`
 
 ## 검증 결과
 
@@ -10,17 +10,17 @@
 |---|---|---|---|
 | 6-2 | 기존·신규 카드 비교 | PASS | 기존 27팀·54파티·270슬롯/101점유, 신규 3팀·16포스·32파티·160슬롯/6점유 |
 | 6-3 | 기존·신규 일정 비교 | PASS | 2026-08 수요일 시작 범위, 기존 23일정·13회, 신규 2규칙·0회, 30분 단위 |
-| 6-4 | 생성·편집·지원·승인·알림·해산 운영 경계 | PASS | 명령 40건·감사 40건, 8개 실제 action, 명령-감사 누락 0 |
+| 6-4 | 생성·편집·지원·승인·알림·해산 운영 경계 | PASS | 명령 40건·감사 41건, 8개 실제 action와 전환 승인 감사 1건, 명령-감사 누락 0 |
 | 6-5 | 세션·중복·동시성·레이아웃 | PASS | 구조 검사 13/13, 중복·정원 초과 0, 1280/390/320px 가로 넘침·콘솔 오류 0 |
 | 6-6 | 롤백 연습·전환 범위 산출 | PASS | rehearsal 1, PILOT→CLOSED→PILOT 복구, 미해결 0 |
-| 6-7 | 사용자 최종 승인 | 대기 | ADMIN/MASTER 전환 검수 모달에서 다섯 범위 확인 후 명시 승인 |
+| 6-7 | 사용자 최종 승인 | PASS | 승인 ID 1 · MASTER · 2026-08-29 14:36:57 KST · 기존 승인 행과 감사 기록 보존 |
 
 ## 전환 범위
 
-### 유지 · 84행
+### 유지 · 85행
 
 - `public.sanctuary_master`: ID 1, 2, 3, 4 — 성역 1~4 공식 이름·노출·출시일 원본 유지
-- `private.sanctuary_management_audit_events_v412`: 40행, ID 범위 2~41 — 시험 운영 감사 이력 보존
+- `private.sanctuary_management_audit_events_v412`: 41행, ID 범위 2~42 — 승인 감사 1건을 포함한 시험 운영 감사 이력 보존
 - `private.sanctuary_management_commands_v412`: 40행, ID 범위 2~41 — 중복 방지·복구 검증 이력 보존
 
 ### 이관 · 0행
@@ -38,14 +38,15 @@
 - 기존 `public.sanctuary_slots`: 전체 270행 중 점유 101행을 빈 편성으로 초기화
 - 신규 `private.sanctuary_management_slots_v412`: 전체 160행 중 점유 ID 141, 151, 161, 171, 181, 196의 6행을 빈 편성으로 초기화
 
-### 중지 · 168행
+### 중지 · 171행
 
-- `public.sanctuary_sheet_sync_jobs`: ID 1~129, 133~171의 성역 전용 자동·수동 Sheet 동기화 작업 168행 중지
+- `public.sanctuary_sheet_sync_jobs`: ID 1~129, 133~174의 성역 전용 자동·수동 Sheet 동기화 작업 171행 중지
 
 ## 실행 경계
 
 - Stage 6에서는 위 범위의 초기화·해산·동기화 중지를 실행하지 않는다.
-- 6-7 승인은 다섯 범위와 동일한 hash에 대한 실행 허가만 기록한다.
+- 6-7 승인은 다섯 범위와 동일한 hash에 대한 실행 허가만 기록하며 승인 ID 1로 완료됐다.
+- migration `20260829053939_sanctuary_management_transition_approval_stability_v445.sql`은 감사·명령 이력의 append-only `rowCount`·`idRange`만 승인 identity에서 제외한다. 보고서에는 실제 최신 건수를 계속 표시하고, 보관·초기화·중지 대상이 달라지면 기존 승인은 무효가 된다.
 - Stage 7 시작 직전에 운영 상태와 hash를 다시 계산한다. 값이 달라지면 기존 승인을 사용하지 않고 재검토한다.
 - Stage 7에서는 백업 확인 후 보관·초기화·동기화 중지를 각각 분리 실행하고 단계별 결과를 감사 로그로 남긴다.
 - 전용 raw `ADMIN`은 raw `MASTER`와 동등한 검수 권한을 가지지만 MASTER 외 이용자에게 존재를 노출하지 않는다. 패스키·KWS 세션·브라우저 자격 증명은 문서·소스·migration·로그에 기록하지 않는다.
