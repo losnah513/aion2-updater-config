@@ -16,7 +16,8 @@ for(const page of ['sanctuary-management/index.html','m/sanctuary-management/ind
     'sanctuary-management-section-info',
     'sanctuary-management-side-head',
     '<strong id="sanctuaryManagementSource">Server</strong><div class="sanctuary-management-info-copy">',
-    '<strong id="sanctuaryManagementSelectedName">성역 1</strong>',
+    'id="sanctuaryManagementRefreshCard"',
+    'id="sanctuaryManagementRefreshAction"',
     '<h2 id="sanctuaryManagementTeamTitle">운영 팀</h2>',
     '월 단위 · 수요일 시작',
   ])assert.ok(html.includes(token),`${page}: compact information layout missing ${token}`);
