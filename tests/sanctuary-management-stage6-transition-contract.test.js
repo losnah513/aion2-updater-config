@@ -66,22 +66,25 @@ for(const token of [
   'openTransitionReview','transitionReportMarkup','bindTransitionApproval',
   '6-2 성역 카드 비교','6-3 일정 결과 비교','6-4·6-5 운영·장애 검증','6-6 롤백·전환 대상',
   '전환 범위 승인','이 승인은 실행 허가를 기록할 뿐 지금 데이터를 변경하지 않습니다.',
+  'checkedCount=checks.filter','5/5 범위와 확인 문구가 일치합니다.','compositionend','aria-live="polite"',
 ])assert.ok(client.includes(token),`Stage 6 transition UI missing ${token}`);
 
 for(const token of [
   '.sanctuary-management-operation-dialog.is-transition',
   '.sanctuary-management-transition-targets',
-  'overflow-x:hidden','scrollbar-width:none',
+  'overflow-x:hidden','scrollbar-width:none','overflow:clip','flex:1 1 auto',
   '@media(max-width:699px)','@media(max-width:430px)',
+  '.sanctuary-management-transition-confirm-list input:checked+span::before',
+  "content:'✓'",'background:#315cca',
 ])assert.ok(css.includes(token),`Stage 6 transition responsive CSS missing ${token}`);
 
 for(const page of ['sanctuary-management/index.html','m/sanctuary-management/index.html']){
   const html=read(page);
   for(const token of [
     'id="sanctuaryManagementTransitionReview"',
-    'sanctuary-management.css?cache=2026082902',
+    'sanctuary-management.css?cache=2026082903',
     'kinojo-supabase-features.js?cache=2026082902',
-    'sanctuary-management.js?cache=2026082902',
+    'sanctuary-management.js?cache=2026082903',
   ])assert.ok(html.includes(token),`${page}: missing ${token}`);
 }
 

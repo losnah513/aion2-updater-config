@@ -57,7 +57,7 @@ assert.ok(common.includes('kinojo_sanctuary_recruitment_seen_v439'),'Stage 6 not
 for(const page of ['sanctuary-management/index.html','m/sanctuary-management/index.html']){
   const html=read(page);
   for(const token of [
-    'id="sanctuaryManagementWriteMeta"','sanctuary-management.js?cache=2026082902',
+    'id="sanctuaryManagementWriteMeta"','sanctuary-management.js?cache=2026082903',
     'sanctuary-management-support.js?cache=2026082814','kinojo-common-ui.js?cache=2026082901',
   ])assert.ok(html.includes(token),`${page}: missing ${token}`);
 }

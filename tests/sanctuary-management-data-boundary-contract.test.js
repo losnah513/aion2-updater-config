@@ -15,7 +15,7 @@ for (const page of pages) {
     'id="sanctuaryManagementScope"',
     'id="sanctuaryManagementTeamList"',
     'kinojo-supabase-features.js?cache=2026082902',
-    'sanctuary-management.js?cache=2026082902',
+    'sanctuary-management.js?cache=2026082903',
     'sanctuary-management-draft.js?cache=2026082811',
     'sanctuary-management-support.js?cache=2026082814',
   ]) assert.ok(html.includes(token), `${page}: missing ${token}`);
