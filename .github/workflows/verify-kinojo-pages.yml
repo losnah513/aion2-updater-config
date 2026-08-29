@@ -187,6 +187,7 @@ jobs:
           node tests/sanctuary-management-compact-info-layout-contract.test.js
           node tests/sanctuary-management-scope-subbar-contract.test.js
           node tests/sanctuary-management-roster-carousel-refresh-contract.test.js
+          node tests/sanctuary-management-sanctuary-banner-connection-contract.test.js
           node tests/admin-member-v433-browser-rpc-contract.test.js
           node tests/staged-page-contract.test.js
           node tests/meter-presence-log-contract.test.js
