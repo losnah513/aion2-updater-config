@@ -142,9 +142,9 @@
 - 6-3 일정 비교는 2026-08 수요일 시작 범위 `2026-07-29~2026-09-01`에서 기존 일정 23개·발생 13회와 신규 활성 규칙 2개·발생 0회를 병행 범위로 판정했다. 양쪽 모두 30분 최소·단위 계약을 통과했다.
 - 6-4·6-5는 운영 명령 40건과 감사 40건의 연결, 8개 실제 action 종류, 중복 요청·정원 초과·포스별 이용자 중복·대기 지원 중복·활성 lease 중복 0건을 확인했다. public/anon/authenticated는 DB445 RPC 실행 불가, service_role만 실행 가능하다.
 - 6-6 운영 롤백 연습 ID 1은 `PILOT → CLOSED → PILOT`을 수행했다. CLOSED에서 읽기는 유지되고 쓰기는 비활성화됐으며 3.27초 뒤 PILOT으로 복구됐다. 최종 health는 API1.7/DB445, mode PILOT, `restored=true`다.
-- 전환 범위 hash는 `8a3d79f8642f1e53f007f7d26d7cba190ada41755ee752a9cbbb3f68a2e36f9a`다. 유지 84행, 이관 0행, 보관·해산 49행, 초기화 대상 점유 107행, Sheet sync 중지 168행이다. 상세 ID와 사유는 `docs/SANCTUARY_MANAGEMENT_STAGE6_TRANSITION_CHECKLIST.md`와 ADMIN/MASTER 전용 `전환 검수` 모달에서 확인한다.
+- 승인 안정 전환 범위 hash는 `d55690120f1e24e21c5b24981c6b55c9f5820ddcfdd97a226e418272d84b1e1e`다. 유지 85행, 이관 0행, 보관·해산 49행, 초기화 대상 점유 107행, Sheet sync 중지 171행이다. 상세 ID와 사유는 `docs/SANCTUARY_MANAGEMENT_STAGE6_TRANSITION_CHECKLIST.md`와 ADMIN/MASTER 전용 `전환 승인됨` 모달에서 확인한다.
 - Stage 6 증빙 5종과 구조 검사 13종은 모두 PASS, 미해결 0건, 승인 가능 상태다. PC 1280×720, 모바일 390×844·320×568에서 document/dialog 가로 overflow 0과 콘솔 error/warning 0을 확인했다.
-- 6-7 사용자 승인은 아직 기록하지 않았다. `전환 범위 승인`은 정확한 scope hash와 다섯 범위 확인을 DB에 남길 뿐 초기화·해산·동기화 중지를 실행하지 않는다. 실제 변경은 승인 뒤 Stage 7에서 별도 백업·재확인 후 수행한다. 누적 진행도는 **50/59**, 다음 작업은 **6-7 사용자 최종 승인**이다.
+- 6-7 사용자 승인은 승인 ID 1, MASTER, 2026-08-29 14:36:57 KST로 기록됐다. 승인 감사가 추가되며 hash가 스스로 바뀌던 결함은 remote migration `20260829054534 / sanctuary_management_transition_approval_stability_v445`로 보정했다. 기존 승인 행·감사 행은 수정하지 않고 저장 payload를 안정 정규화해 인정하며, 감사·명령의 append-only 건수만 identity에서 제외한다. 보관·초기화·중지 대상 변경은 계속 승인을 무효화한다. 누적 진행도는 **51/59**, 다음 작업은 **7-1 전환 직전 전체 백업과 readback**이다.
 
 ## 예방적 확장성 SQL428·SQL442 · 2026-08-28
 
