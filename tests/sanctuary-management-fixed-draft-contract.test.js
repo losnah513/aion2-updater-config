@@ -80,7 +80,7 @@ for(const token of [
 
 for(const page of ['sanctuary-management/index.html','m/sanctuary-management/index.html']){
   const html=read(page);
-  assert.ok(html.includes('sanctuary-management.js?cache=2026082814'),`${page}: management JS cache missing`);
+  assert.ok(html.includes('sanctuary-management.js?cache=2026082902'),`${page}: management JS cache missing`);
   assert.ok(html.includes('sanctuary-management-draft.css?cache=2026082807'),`${page}: draft CSS cache missing`);
   assert.ok(html.includes('sanctuary-management-draft.js?cache=2026082811'),`${page}: draft JS cache missing`);
 }

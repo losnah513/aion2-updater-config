@@ -1032,6 +1032,34 @@
     });
   }
 
+  async function getSanctuaryManagementTransitionReport(month){
+    const normalized=String(month||'').trim();
+    if(!/^20\d{2}-(0[1-9]|1[0-2])$/.test(normalized))throw new Error('비교할 월을 YYYY-MM 형식으로 선택해 주세요.');
+    return invokeEdgeFunction('sanctuary-management',{
+      action:'transition-report',
+      sessionToken:currentServerSessionCredential(),
+      month:normalized
+    });
+  }
+
+  async function approveSanctuaryManagementTransition(month,scopeHash,scopePayload,confirmation){
+    const normalizedMonth=String(month||'').trim();
+    const normalizedHash=String(scopeHash||'').trim();
+    const normalizedScope=scopePayload&&typeof scopePayload==='object'&&!Array.isArray(scopePayload)?scopePayload:null;
+    const normalizedConfirmation=String(confirmation||'').trim();
+    if(!/^20\d{2}-(0[1-9]|1[0-2])$/.test(normalizedMonth)||!/^[0-9a-f]{64}$/.test(normalizedHash)||!normalizedScope||normalizedConfirmation!=='전환 범위 승인'){
+      throw new Error('전환 범위와 확인 문구를 다시 확인해 주세요.');
+    }
+    return invokeEdgeFunction('sanctuary-management',{
+      action:'transition-approve',
+      sessionToken:currentServerSessionCredential(),
+      month:normalizedMonth,
+      scopeHash:normalizedHash,
+      scopePayload:normalizedScope,
+      confirmation:normalizedConfirmation
+    });
+  }
+
   async function getSanctuaryManagementNotificationSummary(){
     return invokeEdgeFunction('sanctuary-management',{
       action:'notification-summary',
@@ -1969,6 +1997,8 @@
     getSanctuaryMaster,
     getSanctuaryManagementBootstrap,
     getSanctuaryManagementMonth,
+    getSanctuaryManagementTransitionReport,
+    approveSanctuaryManagementTransition,
     runSanctuaryManagementCommand,
     runSanctuaryManagementLease,
     searchSanctuaryManagementCharacter,

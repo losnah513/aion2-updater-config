@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  const API_VERSION=1.6;
-  const SCHEMA_VERSION=439;
+  const API_VERSION=1.7;
+  const SCHEMA_VERSION=445;
   let requestSequence=0;
   let monthRequestSequence=0;
   let bootstrapData=null;
@@ -190,6 +190,17 @@
     if(!['CLOSED','PILOT','OPEN'].includes(rollout.mode)||rollout.effectiveWriteEnabled!==(data.writeEnabled===true)){
       throw new Error('성역 관리 시험 운영 상태가 Server 쓰기 권한과 일치하지 않습니다.');
     }
+    const sourceTransition=data.transitionReview&&typeof data.transitionReview==='object'&&!Array.isArray(data.transitionReview)?data.transitionReview:{};
+    const transitionReview={
+      canReview:sourceTransition.canReview===true,
+      canApprove:sourceTransition.canApprove===true,
+      approved:sourceTransition.approved===true,
+      scopeHash:value(sourceTransition.scopeHash),
+      unresolvedCount:integer(sourceTransition.unresolvedCount)
+    };
+    if(transitionReview.canReview&&(!/^[0-9a-f]{64}$/.test(transitionReview.scopeHash)||transitionReview.unresolvedCount<0)){
+      throw new Error('성역 관리 전환 검수 상태가 올바르지 않습니다.');
+    }
     return {
       apiVersion:Number(data.apiVersion),
       schemaVersion:Number(data.schemaVersion),
@@ -198,6 +209,7 @@
       writeEnabled:data.writeEnabled===true,
       globalWriteEnabled:data.globalWriteEnabled===true,
       rollout,
+      transitionReview,
       actor:data.actor&&typeof data.actor==='object'?data.actor:{},
       sanctuaries:data.sanctuaries.filter(item=>item&&typeof item==='object'),
       teams:data.teams.filter(item=>item&&typeof item==='object').map(validateTeam)
@@ -246,6 +258,22 @@
       const result=await api.getSanctuaryManagementMonth(value(month));
       if(!result||typeof result!=='object'||result.ok!==true||Number(result.schemaVersion)!==SCHEMA_VERSION||!Array.isArray(result.occurrences)||!Array.isArray(result.weekStarts))throw new Error(value(result?.message)||'월간 일정 Server 계약이 올바르지 않습니다.');
       return Object.assign({},result,{month:value(result.month),rangeStart:value(result.rangeStart),rangeEnd:value(result.rangeEnd),weekStarts:result.weekStarts.map(value),occurrences:result.occurrences.filter(item=>item&&typeof item==='object')});
+    },
+    async transitionReport(month){
+      const api=window.KinojoSupabase;
+      if(!api||typeof api.getSanctuaryManagementTransitionReport!=='function')throw new Error('전환 검수 Server 어댑터를 불러오지 못했습니다.');
+      const result=await api.getSanctuaryManagementTransitionReport(value(month));
+      if(!result||typeof result!=='object'||result.ok!==true||Number(result.schemaVersion)!==SCHEMA_VERSION||!result.targets||typeof result.targets!=='object'||!Array.isArray(result.evidence)||!result.operations||typeof result.operations!=='object'||!/^[0-9a-f]{64}$/.test(value(result.scopeHash))){
+        throw new Error(value(result?.message)||'전환 검수 Server 계약이 올바르지 않습니다.');
+      }
+      return result;
+    },
+    async approveTransition(month,report,confirmation){
+      const api=window.KinojoSupabase;
+      if(!api||typeof api.approveSanctuaryManagementTransition!=='function')throw new Error('전환 승인 Server 어댑터를 불러오지 못했습니다.');
+      const result=await api.approveSanctuaryManagementTransition(value(month),value(report?.scopeHash),report?.targets,value(confirmation));
+      if(!result||typeof result!=='object'||result.ok!==true||result.approved!==true||Number(result.schemaVersion)!==SCHEMA_VERSION)throw new Error(value(result?.message)||'전환 범위를 승인하지 못했습니다.');
+      return result;
     },
     async command(command,payload,expectedRevision=null,requestKey=''){
       const api=window.KinojoSupabase;
@@ -697,6 +725,69 @@
   async function searchCharacter(teamId,query){return ServerAdapter.searchCharacter(teamId,query);}
   async function registerCharacter(teamId,candidateId,relationType,mainCharacterId,requestKey){return ServerAdapter.registerCharacter(teamId,candidateId,relationType,mainCharacterId,requestKey);}
 
+  function transitionCount(value){return new Intl.NumberFormat('ko-KR').format(integer(value));}
+  function transitionStatus(status){const normalized=value(status).toUpperCase();return '<span class="sanctuary-management-transition-status is-'+escapeHtml(normalized.toLowerCase())+'">'+escapeHtml(normalized||'PENDING')+'</span>';}
+  function transitionTargetIds(item){
+    const ids=Array.isArray(item?.ids)?item.ids:Array.isArray(item?.occupiedIds)?item.occupiedIds:[];
+    if(!ids.length)return '';
+    const text=ids.map(value).filter(Boolean).join(', ');
+    if(ids.length<=14)return '<small>ID '+escapeHtml(text)+'</small>';
+    return '<details><summary>ID '+transitionCount(ids.length)+'개 보기</summary><small>'+escapeHtml(text)+'</small></details>';
+  }
+  function transitionTargetGroup(title,items){
+    const rows=(Array.isArray(items)?items:[]).map(item=>'<article><div><strong>'+escapeHtml(value(item.object))+'</strong><span>'+escapeHtml(value(item.reason))+'</span>'+transitionTargetIds(item)+'</div><em>'+transitionCount(item.rowCount)+'행'+(item.occupiedRowCount==null?'':' · 점유 '+transitionCount(item.occupiedRowCount))+'</em></article>').join('');
+    return '<section class="sanctuary-management-transition-target-group"><h3>'+escapeHtml(title)+'</h3><div>'+(rows||'<p>대상 없음</p>')+'</div></section>';
+  }
+  function transitionReportMarkup(report){
+    const legacy=report.cardComparison?.legacy||{};const server=report.cardComparison?.server||{};
+    const legacySchedule=report.scheduleComparison?.legacy||{};const serverSchedule=report.scheduleComparison?.server||{};
+    const evidence=Array.isArray(report.evidence)?report.evidence:[];const checks=Array.isArray(report.operations?.checks)?report.operations.checks:[];
+    const approved=report.approval?.approved===true;const ready=report.readyForApproval===true;
+    const targetLabels={preserve:'유지',migrate:'이관',archive:'보관·해산',initialize:'초기화',stop:'중지'};
+    const approvalHtml=approved
+      ? '<section class="sanctuary-management-transition-approval is-approved"><strong>전환 범위 승인 완료</strong><span>'+escapeHtml(value(report.approval.approvedAt))+' · 실제 초기화와 전환은 Stage 7에서 재검증 후 실행합니다.</span></section>'
+      : ready
+        ? '<section class="sanctuary-management-transition-approval" data-transition-approval><strong>최종 전환 범위 승인</strong><p>아래 다섯 범위를 모두 확인하고 확인 문구 <b>전환 범위 승인</b>을 입력해야 합니다. 이 승인은 실행 허가를 기록할 뿐 지금 데이터를 변경하지 않습니다.</p><div class="sanctuary-management-transition-confirm-list">'+Object.entries(targetLabels).map(([key,label])=>'<label><input type="checkbox" value="'+escapeHtml(key)+'"><span>'+escapeHtml(label)+' 범위 확인</span></label>').join('')+'</div><label class="sanctuary-management-transition-confirm-input"><span>확인 문구</span><input type="text" maxlength="20" autocomplete="off" placeholder="전환 범위 승인"></label><p class="sanctuary-management-transition-approval-state" data-transition-approval-state>모든 범위와 확인 문구를 확인해 주세요.</p></section>'
+        : '<section class="sanctuary-management-transition-approval is-blocked"><strong>승인 대기</strong><span>미해결 검증 '+transitionCount(report.unresolvedCount)+'건을 먼저 해결해야 합니다.</span></section>';
+    return '<section class="sanctuary-management-operation-dialog is-transition" role="dialog" aria-modal="true" aria-labelledby="sanctuaryTransitionTitle" tabindex="-1">'
+      +'<header><span>STAGE 6 · PARALLEL OPERATION</span><h2 id="sanctuaryTransitionTitle">병행 운영·전환 검수</h2><p>기존 시트 기반 영역과 신규 Server 영역의 차이, 운영 시험, 롤백 복구, 초기화 후보를 한 화면에서 확인합니다.</p></header>'
+      +'<div class="sanctuary-management-operation-body sanctuary-management-transition-body">'
+      +'<section class="sanctuary-management-transition-overview"><article><span>판정</span><strong class="'+(ready?'is-pass':'is-warn')+'">'+(ready?'승인 가능':'검증 필요')+'</strong><small>미해결 '+transitionCount(report.unresolvedCount)+'건</small></article><article><span>비교 월</span><strong>'+escapeHtml(value(report.scheduleComparison?.month))+'</strong><small>수요일~화요일</small></article><article><span>운영 명령</span><strong>'+transitionCount(report.operations?.commandCount)+'</strong><small>감사 '+transitionCount(report.operations?.auditEventCount)+'건</small></article><article><span>범위 해시</span><strong>'+escapeHtml(value(report.scopeHash).slice(0,8))+'</strong><small>대상 변경 감지</small></article></section>'
+      +'<section class="sanctuary-management-transition-section"><header><h3>6-2 성역 카드 비교</h3>'+transitionStatus(evidence.find(item=>item.stageItem==='6-2')?.status)+'</header><p>'+escapeHtml(value(report.cardComparison?.explanation))+'</p><div class="sanctuary-management-transition-compare"><article><span>기존 Sheet DB</span><strong>'+transitionCount(legacy.teamCount)+'팀 · '+transitionCount(legacy.partyCount)+'파티</strong><small>'+transitionCount(legacy.occupiedSlotCount)+'/'+transitionCount(legacy.slotCount)+' 슬롯 점유</small></article><article><span>신규 Server DB</span><strong>'+transitionCount(server.teamCount)+'팀 · '+transitionCount(server.forceCount)+'포스</strong><small>'+transitionCount(server.occupiedSlotCount)+'/'+transitionCount(server.slotCount)+' 슬롯 점유</small></article></div></section>'
+      +'<section class="sanctuary-management-transition-section"><header><h3>6-3 일정 결과 비교</h3>'+transitionStatus(evidence.find(item=>item.stageItem==='6-3')?.status)+'</header><p>'+escapeHtml(value(report.scheduleComparison?.explanation))+'</p><div class="sanctuary-management-transition-compare"><article><span>기존 일정</span><strong>'+transitionCount(legacySchedule.scheduleCount)+'개</strong><small>표시 범위 '+transitionCount(legacySchedule.monthOccurrenceCount)+'회</small></article><article><span>신규 팀 일정</span><strong>'+transitionCount(serverSchedule.activeRuleCount)+'개 규칙</strong><small>표시 범위 '+transitionCount(serverSchedule.monthOccurrenceCount)+'회</small></article></div></section>'
+      +'<section class="sanctuary-management-transition-section"><header><h3>6-4·6-5 운영·장애 검증</h3>'+transitionStatus(checks.every(item=>item.status==='PASS')?'PASS':'FAIL')+'</header><div class="sanctuary-management-transition-checks">'+checks.map(item=>'<article>'+transitionStatus(item.status)+'<span>'+escapeHtml(value(item.label))+'</span><small>실패 '+transitionCount(item.failureCount)+'</small></article>').join('')+'</div><div class="sanctuary-management-transition-evidence">'+evidence.filter(item=>['6-4','6-5'].includes(item.stageItem)).map(item=>'<article>'+transitionStatus(item.status)+'<div><strong>'+escapeHtml(value(item.stageItem))+'</strong><span>'+escapeHtml(value(item.source))+'</span></div></article>').join('')+'</div></section>'
+      +'<section class="sanctuary-management-transition-section"><header><h3>6-6 롤백·전환 대상</h3>'+transitionStatus(report.rollback?.restored===true?'PASS':'PENDING')+'</header><p>'+(report.rollback?.restored===true?'PILOT → CLOSED → PILOT 복구가 운영 환경에서 확인되었습니다.':'운영 롤백 복구 연습이 아직 기록되지 않았습니다.')+'</p><div class="sanctuary-management-transition-targets">'+transitionTargetGroup('유지',report.targets?.preserve)+transitionTargetGroup('이관',report.targets?.migrate)+transitionTargetGroup('보관·해산',report.targets?.archive)+transitionTargetGroup('초기화',report.targets?.initialize)+transitionTargetGroup('중지',report.targets?.stop)+'</div><p class="sanctuary-management-transition-policy">'+escapeHtml(value(report.targets?.executionPolicy))+'</p></section>'
+      +approvalHtml+'</div><footer><button class="kinojo-btn secondary" type="button" data-operation-close>닫기</button>'+(ready&&!approved?'<button class="kinojo-btn" type="button" data-transition-approve disabled>전환 범위 승인</button>':'')+'</footer></section>';
+  }
+
+  function bindTransitionApproval(report){
+    const section=operationLayer?.querySelector('[data-transition-approval]');const button=operationLayer?.querySelector('[data-transition-approve]');
+    if(!section||!button)return;
+    const checks=Array.from(section.querySelectorAll('input[type="checkbox"]'));const confirmation=section.querySelector('input[type="text"]');const state=section.querySelector('[data-transition-approval-state]');
+    const update=()=>{const ready=checks.length===5&&checks.every(item=>item.checked)&&value(confirmation?.value)==='전환 범위 승인';button.disabled=!ready;if(state)state.textContent=ready?'승인할 수 있습니다. Stage 7 실행은 별도 단계입니다.':'모든 범위와 확인 문구를 확인해 주세요.';};
+    checks.forEach(input=>input.addEventListener('change',update));confirmation?.addEventListener('input',update);update();
+    button.addEventListener('click',async()=>{
+      if(button.disabled)return;button.disabled=true;button.textContent='승인 기록 중';if(state)state.textContent='Server에서 범위 해시와 검증 결과를 다시 확인하고 있습니다.';
+      try{const result=await ServerAdapter.approveTransition(value(report.scheduleComparison?.month)||selectedMonth,report,value(confirmation?.value));window.KinojoToast?.success?.(value(result.message)||'전환 범위가 승인되었습니다.');closeOperationLayer();await load();}
+      catch(error){button.textContent='전환 범위 승인';if(state){state.textContent=value(error?.message)||'전환 범위를 승인하지 못했습니다.';state.classList.add('is-error');}update();}
+    });
+  }
+
+  async function openTransitionReview(opener){
+    openOperationLayer(opener,'<section class="sanctuary-management-operation-dialog is-transition" role="dialog" aria-modal="true" aria-labelledby="sanctuaryTransitionLoading" tabindex="-1"><header><span>STAGE 6 · PARALLEL OPERATION</span><h2 id="sanctuaryTransitionLoading">병행 운영·전환 검수</h2><p>Server에서 비교·운영·복구·초기화 범위를 계산합니다.</p></header><div class="sanctuary-management-operation-loading">전환 검수 자료를 불러오는 중입니다.</div><footer><button class="kinojo-btn secondary" type="button" data-operation-close>닫기</button></footer></section>');
+    try{const report=await ServerAdapter.transitionReport(selectedMonth);if(operationLayer?.hidden)return;openOperationLayer(opener,transitionReportMarkup(report));bindTransitionApproval(report);}
+    catch(error){if(operationLayer?.hidden)return;openOperationLayer(opener,'<section class="sanctuary-management-operation-dialog is-transition" role="dialog" aria-modal="true" aria-labelledby="sanctuaryTransitionError" tabindex="-1"><header><span>STAGE 6 · PARALLEL OPERATION</span><h2 id="sanctuaryTransitionError">전환 검수 자료를 불러오지 못했습니다.</h2><p>'+escapeHtml(value(error?.message)||'잠시 후 다시 시도해 주세요.')+'</p></header><footer><button class="kinojo-btn secondary" type="button" data-operation-close>닫기</button></footer></section>');}
+  }
+
+  function renderTransitionReview(data){
+    const button=byId('sanctuaryManagementTransitionReview');const state=byId('sanctuaryManagementAdminState')?.querySelector('span');const review=data.transitionReview||{};
+    if(!button)return;
+    button.hidden=!review.canReview;
+    if(!review.canReview){if(state)state.textContent='권한이 있는 팀은 편집·카드 이동·팀 해산을 사용할 수 있습니다.';return;}
+    button.textContent=review.approved?'전환 승인됨':'전환 검수';button.classList.toggle('is-approved',review.approved);
+    if(state)state.textContent=review.approved?'전환 범위가 승인되었습니다. Stage 7 실행 전 다시 검증합니다.':review.unresolvedCount?'병행 운영 검수 '+transitionCount(review.unresolvedCount)+'건이 남아 있습니다.':'비교·복구 결과를 확인하고 전환 범위를 승인할 수 있습니다.';
+  }
+
   window.KinojoSanctuaryManagementDraftBridge=Object.freeze({
     kind:'SERVER_ONLY_DRAFT',
     schemaVersion:SCHEMA_VERSION,
@@ -737,6 +828,7 @@
     renderScope();
     renderSelectedSanctuary();
     renderTeams();
+    renderTransitionReview(data);
     loadMonth(selectedMonth);
     byId('sanctuaryManagementContent').hidden=false;
     if(data.readEnabled){
@@ -797,6 +889,7 @@
       if(event.currentTarget.disabled)return;
       window.KinojoSanctuaryManagementDraftUI?.openMode?.(event.currentTarget);
     });
+    byId('sanctuaryManagementTransitionReview')?.addEventListener('click',event=>{if(!bootstrapData?.transitionReview?.canReview)return;openTransitionReview(event.currentTarget);});
     byId('sanctuaryManagementTeamList')?.addEventListener('click',event=>{
       const support=event.target.closest('[data-sanctuary-support-force]');
       if(support){if(!bootstrapData?.writeEnabled||support.disabled)return;const team=selectedDraftTeam(support.dataset.sanctuarySupportTeam);if(team)window.KinojoSanctuaryManagementSupportUI?.open?.(team,Number(support.dataset.sanctuarySupportForce),support);return;}
