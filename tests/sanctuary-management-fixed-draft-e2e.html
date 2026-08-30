@@ -48,7 +48,7 @@
         외부게스트:{candidateId:'official-guest-701',characterName:'외부게스트',serverId:2,serverName:'지켈',className:'마도성',legionName:'외부레기온',profileImageUrl:'',raceId:1,isOperationalLegion:false,allowedRelations:['GUEST']},
         운영부캐:{candidateId:'official-alt-702',characterName:'운영부캐',serverId:2,serverName:'지켈',className:'치유성',legionName:'밤',profileImageUrl:'',raceId:1,isOperationalLegion:true,allowedRelations:['MAIN','ALT']}
       };
-      const character={characterId:501,name:'테스트본캐',serverName:'지켈',className:'검성',profileImageUrl:'',relation:'MAIN'};
+      const character={characterId:501,name:'테스트본캐',serverName:'지켈',className:'검성',profileImageUrl:'',power:123456,mainCharacterName:'테스트본캐',isMain:true,relation:'MAIN'};
       function makeForce(forceNo,withCharacter=false){
         const forceId=forceSequence++;
         const parties=[1,2].map(partyNo=>{
@@ -97,6 +97,8 @@
       window.KinojoPermissions={canEditSanctuary:()=>true};
       window.KinojoToast={show:message=>{document.body.dataset.toast=message;},success:message=>{document.body.dataset.toast=message;}};
       window.KinojoSupabase={
+        async ensureReady(){return true;},
+        getConfig(){return {url:'https://josvoltpktvwysrasffq.supabase.co'};},
         async getSanctuaryManagementBootstrap(){return {apiVersion:1.8,schemaVersion:446,serverTime:new Date().toISOString(),readEnabled:true,writeEnabled:pilotApproved,globalWriteEnabled:true,rollout:{mode:'PILOT',globalWriteEnabled:true,effectiveWriteEnabled:pilotApproved,pilotApproved,pilotApprovedAt:pilotApproved?new Date().toISOString():'',pilotExpiresAt:'',reasonCode:pilotApproved?'PILOT_APPROVED':'PILOT_NOT_APPROVED',message:pilotApproved?'시험 사용자 쓰기가 활성화되었습니다.':'승인된 시험 사용자만 신규 성역 관리 쓰기를 사용할 수 있습니다.'},transitionReview:{canReview:pilotApproved,canApprove:pilotApproved,approved:false,scopeHash:'a'.repeat(64),unresolvedCount:0},actor:{memberId:7,canManageAll:true},composerCharacters:{ownerResolved:true,code:'READY',candidateCount:creatorCandidates.length,characters:structuredClone(creatorCandidates)},sanctuaries,teams:structuredClone(teams)};},
         async getSanctuaryManagementMonth(month){return {ok:true,apiVersion:1.8,schemaVersion:446,month,weekStartsOn:'WEDNESDAY',rangeStart:'2026-07-29',rangeEnd:'2026-09-01',weekStarts:['2026-07-29','2026-08-05','2026-08-12','2026-08-19','2026-08-26'],occurrences:[{occurrenceKey:'sm-78-20260829-2200',scheduleId:92,scheduleRevision:1,teamId:78,teamTitle:'2팀 토요일 22시',sanctuaryId:1,teamMode:'PARTICIPATION',joinPolicy:'APPROVAL',occurrenceDate:'2026-08-29',weekStart:'2026-08-26',startAt:'2026-08-29T13:00:00Z',endAt:'2026-08-29T14:30:00Z',durationMinutes:90,sourceScope:'RULE',canEdit:true}]};},
         async getSanctuaryManagementTransitionReport(month){document.body.dataset.transitionReportRequests=String(Number(document.body.dataset.transitionReportRequests||0)+1);await waitForTransition();return structuredClone(Object.assign({},transitionReport,{scheduleComparison:Object.assign({},transitionReport.scheduleComparison,{month})}));},
