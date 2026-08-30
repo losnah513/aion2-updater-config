@@ -9,7 +9,7 @@ const client=read('sanctuary-management/js/sanctuary-management.js');
 const draft=read('sanctuary-management/js/sanctuary-management-draft.js');
 
 for(const token of [
-  'const SCHEMA_VERSION=446',
+  'const SCHEMA_VERSION=449',
   'function validateSlot',
   'function validateParty',
   'function validateForce',

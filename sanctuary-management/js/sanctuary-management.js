@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  const API_VERSION=1.8;
-  const SCHEMA_VERSION=446;
+  const API_VERSION=1.9;
+  const SCHEMA_VERSION=449;
   const CLASS_ICON_MAP=Object.freeze({'수호성':'templar','검성':'gladiator','살성':'assassin','궁성':'ranger','마도성':'sorcerer','정령성':'elementalist','치유성':'cleric','호법성':'chanter','권성':'fighter'});
   const BACKGROUND_CHECK_INTERVAL=60000;
   let requestSequence=0;
@@ -22,6 +22,7 @@
   let forceOverviewTeamId=0;
   let forceOverviewForceId=0;
   let deepLinkApplied=false;
+  let currentAuthProjection='';
 
   const byId=id=>document.getElementById(id);
   const value=value=>String(value??'').trim();
@@ -29,10 +30,36 @@
   const escapeHtml=input=>String(input??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   function classIconFor(className){const key=CLASS_ICON_MAP[value(className).replace(/[\s\u200B-\u200D\uFEFF]+/g,'').replace(/[\[(（].*?[\])）]\s*$/g,'')];return key?'/assets/images/classes/class_icon_'+key+'.png':'';}
 
+  function contractSupported(data){
+    const api=Number(data?.apiVersion),schema=Number(data?.schemaVersion);
+    return api===API_VERSION&&schema===SCHEMA_VERSION||api===1.8&&schema===446;
+  }
+  function combatPowerValue(input){const power=Number(input);return Number.isFinite(power)&&power>0?Math.round(power):0;}
+  function formatCombatPower(input){const power=combatPowerValue(input);if(!power)return '전투력 미확인';const kilo=power/1000;return '전투력 '+(kilo>=100?Math.round(kilo):kilo.toFixed(1))+'K';}
+  function validateCombatPower(item){
+    const source=item&&typeof item==='object'&&!Array.isArray(item)?item:{};
+    const power={average:combatPowerValue(source.average),total:combatPowerValue(source.total),knownCount:integer(source.knownCount),occupiedCount:integer(source.occupiedCount),unknownCount:integer(source.unknownCount)};
+    if(power.knownCount<0||power.occupiedCount<0||power.unknownCount<0||power.knownCount+power.unknownCount!==power.occupiedCount)throw new Error('성역 관리 전투력 집계가 올바르지 않습니다.');
+    return power;
+  }
+  function validateRequirements(item,capacity){
+    const source=item&&typeof item==='object'&&!Array.isArray(item)?item:{};
+    const rules=(Array.isArray(source.rules)?source.rules:[]).map(rule=>({
+      compositionRuleId:integer(rule?.compositionRuleId),scopeType:value(rule?.scopeType).toUpperCase(),ruleType:value(rule?.ruleType).toUpperCase(),
+      minimumCount:integer(rule?.minimumCount),powerThreshold:combatPowerValue(rule?.powerThreshold),matchingCount:integer(rule?.matchingCount),
+      satisfied:rule?.satisfied===true,message:value(rule?.message)
+    }));
+    if(rules.some(rule=>!['FORCE','PARTY'].includes(rule.scopeType)||!['MAIN_MIN','POWER_MIN'].includes(rule.ruleType)||rule.minimumCount<1||rule.minimumCount>capacity||rule.matchingCount<0||rule.matchingCount>capacity||rule.satisfied!==(rule.matchingCount>=rule.minimumCount)||rule.ruleType==='POWER_MIN'&&!rule.powerThreshold||rule.ruleType==='MAIN_MIN'&&rule.powerThreshold))throw new Error('성역 관리 포스 구성 조건이 올바르지 않습니다.');
+    const unsatisfiedCount=rules.filter(rule=>!rule.satisfied).length;
+    const result={satisfied:unsatisfiedCount===0,ruleCount:rules.length,unsatisfiedCount,rules};
+    if(source.ruleCount!=null&&integer(source.ruleCount)!==result.ruleCount||source.unsatisfiedCount!=null&&integer(source.unsatisfiedCount)!==result.unsatisfiedCount||source.satisfied!=null&&(source.satisfied===true)!==result.satisfied)throw new Error('성역 관리 포스 구성 조건 집계가 올바르지 않습니다.');
+    return result;
+  }
+
   function validateSlot(item){
     if(!item||typeof item!=='object'||Array.isArray(item))throw new Error('성역 관리 슬롯 데이터가 올바르지 않습니다.');
     const occupied=item.occupied===true;
-    const character=item.character&&typeof item.character==='object'&&!Array.isArray(item.character)?Object.assign({},item.character):null;
+    const character=item.character&&typeof item.character==='object'&&!Array.isArray(item.character)?Object.assign({},item.character,{power:combatPowerValue(item.character.power??item.character.latestPveCombatPower??item.character.latest_pve_combat_power)}):null;
     if(occupied!==Boolean(character))throw new Error('성역 관리 슬롯 점유 상태가 일치하지 않습니다.');
     const slot=Object.assign({},item,{
       slotId:integer(item.slotId),
@@ -59,6 +86,8 @@
       capacity:integer(item.capacity),
       occupiedCount:integer(item.occupiedCount),
       vacancyCount:integer(item.vacancyCount),
+      combatPower:validateCombatPower(item.combatPower),
+      requirements:validateRequirements(item.requirements,5),
       slots
     });
     const occupiedCount=slots.filter(slot=>slot.occupied).length;
@@ -81,6 +110,7 @@
       relation:value(item.relation).toUpperCase(),
       isMain:item.isMain===true,
       ownerMemberId:integer(item.ownerMemberId)
+      ,power:combatPowerValue(item.power??item.latestPveCombatPower??item.latest_pve_combat_power)
     });
     if(candidate.characterId<1||candidate.serverId<1||candidate.mainCharacterId<1||!candidate.characterName||!candidate.serverName||!['MAIN','ALT'].includes(candidate.relation)||candidate.isMain!==(candidate.relation==='MAIN')){
       throw new Error('성역 관리 생성자 캐릭터 후보 식별 정보가 올바르지 않습니다.');
@@ -142,6 +172,8 @@
       canSupport:item.canSupport===true,
       supportDisabledCode:value(item.supportDisabledCode),
       supportDisabledMessage:value(item.supportDisabledMessage),
+      combatPower:validateCombatPower(item.combatPower),
+      requirements:validateRequirements(item.requirements,10),
       parties
     });
     const occupiedCount=parties.reduce((sum,party)=>sum+party.occupiedCount,0);
@@ -185,7 +217,7 @@
 
   function validateBootstrap(data){
     if(!data||typeof data!=='object'||Array.isArray(data))throw new Error('성역 관리 Server 응답이 올바르지 않습니다.');
-    if(Number(data.apiVersion)!==API_VERSION||Number(data.schemaVersion)!==SCHEMA_VERSION){
+    if(!contractSupported(data)){
       throw new Error('성역 관리 Server 계약 버전이 일치하지 않습니다.');
     }
     if(!Array.isArray(data.sanctuaries)||!Array.isArray(data.teams))throw new Error('성역 관리 Server 데이터 형식이 올바르지 않습니다.');
@@ -254,14 +286,15 @@
       mainCharacterId:integer(item.mainCharacterId),ownerMemberId:integer(item.ownerMemberId),
       characterName:value(item.characterName),serverName:value(item.serverName),className:value(item.className),
       legionName:value(item.legionName),profileImageUrl:value(item.profileImageUrl),relation:value(item.relation).toUpperCase(),
-      isOperationalLegion:item.isOperationalLegion===true
+      isOperationalLegion:item.isOperationalLegion===true,
+      power:combatPowerValue(item.power??item.latestPveCombatPower??item.latest_pve_combat_power)
     });
     if(card.characterId<1||card.serverId<1||!card.characterName||!card.serverName||!['MAIN','ALT','GUEST'].includes(card.relation))throw new Error('캐릭터 조회 식별 정보가 올바르지 않습니다.');
     return card;
   }
 
   function validateCharacterSearch(data){
-    if(!data||typeof data!=='object'||data.ok!==true||Number(data.schemaVersion)!==SCHEMA_VERSION)throw new Error(value(data?.message)||'캐릭터 검색 Server 계약이 올바르지 않습니다.');
+    if(!data||typeof data!=='object'||data.ok!==true||!contractSupported(data))throw new Error(value(data?.message)||'캐릭터 검색 Server 계약이 올바르지 않습니다.');
     if(value(data.source)==='CHARACTER_MASTER')return Object.assign({},data,{character:validateCharacterCard(data.character)});
     if(value(data.source)!=='OFFICIAL'||!data.candidate||typeof data.candidate!=='object')throw new Error('공식 캐릭터 조회 결과가 올바르지 않습니다.');
     const candidate=Object.assign({},data.candidate,{
@@ -287,14 +320,14 @@
       const api=window.KinojoSupabase;
       if(!api||typeof api.getSanctuaryManagementMonth!=='function')throw new Error('월간 일정 Server 어댑터를 불러오지 못했습니다.');
       const result=await api.getSanctuaryManagementMonth(value(month));
-      if(!result||typeof result!=='object'||result.ok!==true||Number(result.schemaVersion)!==SCHEMA_VERSION||!Array.isArray(result.occurrences)||!Array.isArray(result.weekStarts))throw new Error(value(result?.message)||'월간 일정 Server 계약이 올바르지 않습니다.');
+      if(!result||typeof result!=='object'||result.ok!==true||!contractSupported(result)||!Array.isArray(result.occurrences)||!Array.isArray(result.weekStarts))throw new Error(value(result?.message)||'월간 일정 Server 계약이 올바르지 않습니다.');
       return Object.assign({},result,{month:value(result.month),rangeStart:value(result.rangeStart),rangeEnd:value(result.rangeEnd),weekStarts:result.weekStarts.map(value),occurrences:result.occurrences.filter(item=>item&&typeof item==='object')});
     },
     async transitionReport(month){
       const api=window.KinojoSupabase;
       if(!api||typeof api.getSanctuaryManagementTransitionReport!=='function')throw new Error('전환 검수 Server 어댑터를 불러오지 못했습니다.');
       const result=await api.getSanctuaryManagementTransitionReport(value(month));
-      if(!result||typeof result!=='object'||result.ok!==true||Number(result.schemaVersion)!==SCHEMA_VERSION||!result.targets||typeof result.targets!=='object'||!Array.isArray(result.evidence)||!result.operations||typeof result.operations!=='object'||!/^[0-9a-f]{64}$/.test(value(result.scopeHash))){
+      if(!result||typeof result!=='object'||result.ok!==true||!contractSupported(result)||!result.targets||typeof result.targets!=='object'||!Array.isArray(result.evidence)||!result.operations||typeof result.operations!=='object'||!/^[0-9a-f]{64}$/.test(value(result.scopeHash))){
         throw new Error(value(result?.message)||'전환 검수 Server 계약이 올바르지 않습니다.');
       }
       return result;
@@ -303,7 +336,7 @@
       const api=window.KinojoSupabase;
       if(!api||typeof api.approveSanctuaryManagementTransition!=='function')throw new Error('전환 승인 Server 어댑터를 불러오지 못했습니다.');
       const result=await api.approveSanctuaryManagementTransition(value(month),value(report?.scopeHash),report?.targets,value(confirmation));
-      if(!result||typeof result!=='object'||result.ok!==true||result.approved!==true||Number(result.schemaVersion)!==SCHEMA_VERSION)throw new Error(value(result?.message)||'전환 범위를 승인하지 못했습니다.');
+      if(!result||typeof result!=='object'||result.ok!==true||result.approved!==true||!contractSupported(result))throw new Error(value(result?.message)||'전환 범위를 승인하지 못했습니다.');
       return result;
     },
     async command(command,payload,expectedRevision=null,requestKey=''){
@@ -317,7 +350,7 @@
       const api=window.KinojoSupabase;
       if(!api||typeof api.getSanctuaryManagementArchivePreview!=='function')throw new Error('팀 해산 영향 Server 어댑터를 불러오지 못했습니다.');
       const result=await api.getSanctuaryManagementArchivePreview(Number(teamId));
-      if(!result||result.ok!==true||Number(result.schemaVersion)!==SCHEMA_VERSION)throw new Error(value(result?.message)||'팀 해산 영향을 확인하지 못했습니다.');
+      if(!result||result.ok!==true||!contractSupported(result))throw new Error(value(result?.message)||'팀 해산 영향을 확인하지 못했습니다.');
       return result;
     },
     async searchCharacter(teamId,query){
@@ -343,7 +376,9 @@
     const combined=Object.assign({},session||{},account||{});
     const loggedIn=Boolean(session&&value(session.token));
     const canEdit=loggedIn&&window.KinojoPermissions?.canEditSanctuary?.(combined)===true;
-    return {loggedIn,canEdit};
+    const memberId=integer(combined.memberId||combined.member_id||combined.id||combined.userId||combined.user_id);
+    const role=value(combined.role||combined.grade||combined.permission).toUpperCase();
+    return {loggedIn,canEdit,projection:loggedIn?['MEMBER',memberId||'pending',role||'pending',canEdit?'edit':'read'].join(':'):'PUBLIC'};
   }
 
   function setAccess(state,title,message,action){
@@ -568,12 +603,13 @@
     const head=document.createElement('span');head.className='sanctuary-management-force-card-head';
     const titleWrap=document.createElement('span');titleWrap.className='sanctuary-management-force-title-row';
     const name=document.createElement('strong');name.textContent=force.forceNo+'포스';
+    const power=document.createElement('small');power.className='sanctuary-management-force-average';power.textContent='평균 '+formatCombatPower(force.combatPower?.average)+' · '+force.combatPower.knownCount+'/'+force.occupiedCount+'명 확인';
     const copyButton=document.createElement('button');copyButton.type='button';copyButton.className='sanctuary-management-copy-button';copyButton.dataset.sanctuaryCopyForce=value(force.forceId);copyButton.dataset.sanctuaryCopyTeam=value(team.teamId);copyButton.setAttribute('aria-label',force.forceNo+'포스 이미지 클립보드 복사');copyButton.title='해당 포스 전체를 이미지로 복사';copyButton.innerHTML='<span aria-hidden="true"><i></i><i></i></span>';
-    titleWrap.append(name,copyButton);
+    titleWrap.append(name,copyButton);titleWrap.appendChild(power);
     const count=document.createElement('em');count.textContent=force.occupiedCount+'/'+force.capacity+'명';head.append(titleWrap,count);
     const parties=document.createElement('span');parties.className='sanctuary-management-force-parties';
     force.parties.forEach(party=>{
-      const partyNode=document.createElement('span');partyNode.className='sanctuary-management-force-party';
+      const partyNode=document.createElement('span');partyNode.className='sanctuary-management-force-party'+(party.requirements.satisfied?'':' has-unmet-requirements');
       const partyHead=document.createElement('span');partyHead.className='sanctuary-management-force-party-head';
       const label=document.createElement('strong');label.textContent=party.partyNo+'파티';
       const partyCount=document.createElement('small');partyCount.textContent=party.occupiedCount+'/'+party.capacity+'명';partyHead.append(label,partyCount);partyNode.appendChild(partyHead);
@@ -587,7 +623,8 @@
         else icon.textContent=slot.occupied?Array.from(value(slot.character?.className)||'?')[0]||'?':'+';
         const copy=document.createElement('span');copy.className='sanctuary-management-force-slot-copy';
         const slotName=slot.occupied?createMaskedCharacterName(slot.character?.name):createMaskedCharacterName('빈 슬롯');
-        const slotMeta=document.createElement('small');slotMeta.className='sanctuary-management-force-slot-server';slotMeta.textContent=slot.occupied?'['+(value(slot.character?.serverName)||'서버 미상')+']':'[대기]';copy.append(slotName,slotMeta);item.append(slotNo,icon,copy);
+        const slotMeta=document.createElement('small');slotMeta.className='sanctuary-management-force-slot-server';slotMeta.textContent=slot.occupied?'['+(value(slot.character?.serverName)||'서버 미상')+']':'[대기]';
+        const slotPower=document.createElement('small');slotPower.className='sanctuary-management-force-slot-power';slotPower.textContent=slot.occupied?formatCombatPower(slot.character?.power):'캐릭터 대기';copy.append(slotName,slotMeta,slotPower);item.append(slotNo,icon,copy);
         item.title=slot.occupied?[value(slot.character?.name),value(slot.character?.className)].filter(Boolean).join(' · '):'빈 슬롯 '+((party.partyNo-1)*5+slot.slotNo);
         partyNode.appendChild(item);
       });
@@ -598,7 +635,8 @@
     else if(force.viewerPending)stateText.textContent='승인 대기 중';
     else if(force.canSupport)stateText.textContent='빈자리 '+force.vacancyCount+' · 눌러서 지원';
     else stateText.textContent=value(force.supportDisabledMessage)||'편성 확인';
-    card.append(head,parties,stateText);
+    if(!force.requirements.satisfied){card.classList.add('has-unmet-requirements');const warning=document.createElement('span');warning.className='sanctuary-management-requirement-warning';warning.textContent='구성 조건 '+force.requirements.unsatisfiedCount+'개 미충족';card.append(head,parties,warning,stateText);}
+    else card.append(head,parties,stateText);
     return card;
   }
 
@@ -890,7 +928,11 @@
   async function saveComposition(model){
     if(!bootstrapData?.writeEnabled)throw new Error('Server 쓰기 기능이 아직 활성화되지 않았습니다.');
     const source=model&&typeof model==='object'?model:{};const teamId=Number(source.teamId||0);
-    const composition=Array.isArray(source.composition)?source.composition.map(force=>({sourceForceId:Number(force?.sourceForceId)||null,slots:Array.isArray(force?.slots)?force.slots.map(slot=>({partyNo:Number(slot?.partyNo),slotNo:Number(slot?.slotNo),characterId:Number(slot?.characterId)||null})):[]})):[];
+    const composition=Array.isArray(source.composition)?source.composition.map(force=>({
+      sourceForceId:Number(force?.sourceForceId)||null,
+      slots:Array.isArray(force?.slots)?force.slots.map(slot=>({partyNo:Number(slot?.partyNo),slotNo:Number(slot?.slotNo),characterId:Number(slot?.characterId)||null})):[],
+      requirements:Array.isArray(force?.requirements)?force.requirements.map(rule=>({scopeType:value(rule?.scopeType).toUpperCase(),partyNo:rule?.partyNo==null?null:Number(rule.partyNo),ruleType:value(rule?.ruleType).toUpperCase(),minimumCount:Number(rule?.minimumCount),powerThreshold:rule?.powerThreshold==null?null:Number(rule.powerThreshold)})):[]
+    })):[];
     if(!composition.length||composition.length>9||composition.some(force=>force.slots.length!==10||force.slots.some(slot=>![1,2].includes(slot.partyNo)||slot.slotNo<1||slot.slotNo>5)))throw new Error('포스 편성안을 다시 확인해 주세요.');
     const payload={
       teamId:teamId||null,
@@ -901,6 +943,7 @@
       joinPolicy:value(source.joinPolicy).toUpperCase()==='APPROVAL'?'APPROVAL':'INSTANT',
       schedule:source.schedule&&typeof source.schedule==='object'?source.schedule:{},
       composition,
+      compositionRulesVersion:1,
       leaseToken:value(source.leaseToken)
     };
     const result=await ServerAdapter.command('SAVE_COMPOSITION',payload,teamId?Number(source.revision):null,value(source.requestKey));
@@ -1130,14 +1173,19 @@
   }
 
   function handleAuthChanged(){
-    // Login and logout switch between the public and viewer-specific server
-    // projections, so always reload rather than reusing stale permission data.
+    // A token renewal can dispatch the same auth event repeatedly. Only an
+    // actual public/member/role projection change may replace visible data;
+    // same-viewer renewals stay on the manual refresh path.
+    const next=authState().projection;
+    if(bootstrapData&&next===currentAuthProjection){checkForUpdates();return;}
+    currentAuthProjection=next;
     load();
   }
 
   async function load(){
     const sequence=++requestSequence;
     const auth=authState();
+    currentAuthProjection=auth.projection;
     bootstrapData=null;
     byId('sanctuaryManagementContent').hidden=true;
     byId('sanctuaryManagementScopeShell').hidden=true;

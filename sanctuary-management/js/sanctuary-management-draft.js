@@ -8,18 +8,33 @@
   const UNLIMITED_DURATION_MINUTES=720;
   const DURATION_OPTIONS=Object.freeze([{value:30,label:'30분'},{value:60,label:'1시간'},{value:120,label:'2시간'},{value:UNLIMITED_DURATION_MINUTES,label:'무제한'}]);
   const CLASS_ICON_MAP=Object.freeze({'수호성':'templar','검성':'gladiator','살성':'assassin','궁성':'ranger','마도성':'sorcerer','정령성':'elementalist','치유성':'cleric','호법성':'chanter','권성':'fighter'});
-  const state={layer:null,opener:null,team:null,sourceTeamId:0,creationMode:'FIXED',joinPolicy:'INSTANT',selectedForceId:0,selectedSlotId:0,moveFromSlotId:0,draggedSlotId:0,dragSwitching:false,requestKey:'',forceSaveRequestKey:'',forceAddRequestKey:'',slotRequestKey:'',moveRequestKey:'',characterRequestKey:'',leaseToken:'',leaseTimer:0,message:'',tone:'',saving:false,mutating:false,lookup:null,mainLookup:null,relationType:''};
+  const state={layer:null,opener:null,team:null,sourceTeamId:0,creationMode:'FIXED',joinPolicy:'INSTANT',selectedForceId:0,selectedSlotId:0,moveFromSlotId:0,draggedSlotId:0,dragSwitching:false,requirementTarget:null,requestKey:'',forceSaveRequestKey:'',forceAddRequestKey:'',slotRequestKey:'',moveRequestKey:'',characterRequestKey:'',leaseToken:'',leaseTimer:0,message:'',tone:'',saving:false,mutating:false,lookup:null,mainLookup:null,relationType:''};
   const value=input=>String(input??'').trim();
   const escapeHtml=input=>String(input??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const bridge=()=>window.KinojoSanctuaryManagementDraftBridge;
 
   function clone(value){return typeof structuredClone==='function'?structuredClone(value):JSON.parse(JSON.stringify(value));}
   function classIconFor(className){const key=CLASS_ICON_MAP[value(className).replace(/[\s\u200B-\u200D\uFEFF]+/g,'').replace(/[\[(（].*?[\])）]\s*$/g,'')];return key?'/assets/images/classes/class_icon_'+key+'.png':'';}
+  function combatPowerValue(input){const power=Number(input);return Number.isFinite(power)&&power>0?Math.round(power):0;}
+  function formatCombatPower(input){const power=combatPowerValue(input);if(!power)return '전투력 미확인';const kilo=power/1000;return '전투력 '+(kilo>=100?Math.round(kilo):kilo.toFixed(1))+'K';}
+  function emptyRequirements(){return {satisfied:true,ruleCount:0,unsatisfiedCount:0,rules:[]};}
+  function scopeRules(scope){return Array.isArray(scope?.requirements?.rules)?scope.requirements.rules:[];}
+  function refreshRequirementScope(scope,slots){
+    const occupied=slots.filter(slot=>slot.occupied&&slot.character);
+    const known=occupied.map(slot=>combatPowerValue(slot.character?.power)).filter(Boolean);
+    scope.combatPower={average:known.length?Math.round(known.reduce((sum,power)=>sum+power,0)/known.length):0,total:known.reduce((sum,power)=>sum+power,0),knownCount:known.length,occupiedCount:occupied.length,unknownCount:occupied.length-known.length};
+    const rules=scopeRules(scope).map(rule=>{
+      const ruleType=value(rule.ruleType).toUpperCase();const minimumCount=Math.max(1,Number(rule.minimumCount)||1);const powerThreshold=ruleType==='POWER_MIN'?combatPowerValue(rule.powerThreshold):0;
+      const matchingCount=occupied.filter(slot=>ruleType==='MAIN_MIN'?(value(slot.character?.relation).toUpperCase()==='MAIN'||slot.character?.isMain===true):combatPowerValue(slot.character?.power)>=powerThreshold).length;
+      return Object.assign({},rule,{ruleType,minimumCount,powerThreshold:powerThreshold||null,matchingCount,satisfied:matchingCount>=minimumCount,message:ruleType==='MAIN_MIN'?'본캐 '+minimumCount+'명 이상':'전투력 '+(powerThreshold/1000).toFixed(1)+'K 이상 '+minimumCount+'명 이상'});
+    });
+    scope.requirements={satisfied:rules.every(rule=>rule.satisfied),ruleCount:rules.length,unsatisfiedCount:rules.filter(rule=>!rule.satisfied).length,rules};
+  }
   function makeLocalForce(forceNo,localForceId){
     const forceId=Number(localForceId)||-forceNo;
     const localKey=Math.abs(forceId);
-    const parties=[1,2].map(partyNo=>({partyId:-(localKey*10+partyNo),partyNo,capacity:5,occupiedCount:0,vacancyCount:5,slots:Array.from({length:5},(_,index)=>({slotId:-(localKey*100+partyNo*10+index+1),slotNo:index+1,revision:1,occupied:false,character:null}))}));
-    return {forceId,forceNo,capacity:10,status:'OPEN',revision:1,occupiedCount:0,vacancyCount:10,creatorMemberId:Number(bridge()?.snapshot()?.actor?.memberId||0),creatorOwnerResolved:true,creatorAlreadyAssigned:false,creatorCandidateCode:'READY',creatorCandidateCount:0,creatorCandidates:[],viewerAlreadyAssigned:false,viewerPending:false,canSupport:false,parties};
+    const parties=[1,2].map(partyNo=>({partyId:-(localKey*10+partyNo),partyNo,capacity:5,occupiedCount:0,vacancyCount:5,combatPower:{average:0,total:0,knownCount:0,occupiedCount:0,unknownCount:0},requirements:emptyRequirements(),slots:Array.from({length:5},(_,index)=>({slotId:-(localKey*100+partyNo*10+index+1),slotNo:index+1,revision:1,occupied:false,character:null}))}));
+    return {forceId,forceNo,capacity:10,status:'OPEN',revision:1,occupiedCount:0,vacancyCount:10,combatPower:{average:0,total:0,knownCount:0,occupiedCount:0,unknownCount:0},requirements:emptyRequirements(),creatorMemberId:Number(bridge()?.snapshot()?.actor?.memberId||0),creatorOwnerResolved:true,creatorAlreadyAssigned:false,creatorCandidateCode:'READY',creatorCandidateCount:0,creatorCandidates:[],viewerAlreadyAssigned:false,viewerPending:false,canSupport:false,parties};
   }
   function makeLocalTeam(mode){
     const normalized=mode==='PARTICIPATION'?'PARTICIPATION':'FIXED';
@@ -37,9 +52,11 @@
       force.parties.forEach(party=>{
         party.occupiedCount=party.slots.filter(slot=>slot.occupied&&slot.character).length;
         party.vacancyCount=party.capacity-party.occupiedCount;
+        refreshRequirementScope(party,party.slots);
         forceOccupied+=party.occupiedCount;
       });
       force.occupiedCount=forceOccupied;force.vacancyCount=force.capacity-forceOccupied;
+      refreshRequirementScope(force,force.parties.flatMap(party=>party.slots));
       const creatorIsActor=Number(force.creatorMemberId||actorMemberId)===actorMemberId;
       const derivedCreatorAssigned=force.parties.some(party=>party.slots.some(slot=>slot.character&&(Number(slot.character.ownerMemberId||0)===Number(force.creatorMemberId||actorMemberId)||creatorIsActor&&actorCharacterIds.has(Number(slot.character.characterId)))));
       if(state.team.localOnly||creatorIsActor)force.creatorAlreadyAssigned=derivedCreatorAssigned;
@@ -181,7 +198,7 @@
     const target=state.opener;
     const teamId=Number(state.team?.teamId||0),leaseToken=state.leaseToken;
     stopLeaseRenewal();
-    state.opener=null;state.team=null;state.sourceTeamId=0;state.creationMode='FIXED';state.joinPolicy='INSTANT';state.selectedForceId=0;state.selectedSlotId=0;state.moveFromSlotId=0;state.draggedSlotId=0;state.dragSwitching=false;state.requestKey='';state.forceSaveRequestKey='';state.forceAddRequestKey='';state.slotRequestKey='';state.moveRequestKey='';state.leaseToken='';state.message='';state.tone='';state.saving=false;state.mutating=false;resetCharacterLookup();
+    state.opener=null;state.team=null;state.sourceTeamId=0;state.creationMode='FIXED';state.joinPolicy='INSTANT';state.selectedForceId=0;state.selectedSlotId=0;state.moveFromSlotId=0;state.draggedSlotId=0;state.dragSwitching=false;state.requirementTarget=null;state.requestKey='';state.forceSaveRequestKey='';state.forceAddRequestKey='';state.slotRequestKey='';state.moveRequestKey='';state.leaseToken='';state.message='';state.tone='';state.saving=false;state.mutating=false;resetCharacterLookup();
     if(teamId&&leaseToken)bridge()?.lease?.(teamId,'RELEASE',leaseToken).catch(()=>{});
     try{target?.focus({preventScroll:true});}catch(_error){target?.focus?.();}
   }
@@ -208,7 +225,7 @@
 
   function openMode(opener){
     if(!bridge()?.snapshot()?.writeEnabled)return;
-    state.team=null;state.sourceTeamId=0;state.creationMode='FIXED';state.joinPolicy='INSTANT';state.selectedForceId=0;state.selectedSlotId=0;state.moveFromSlotId=0;state.draggedSlotId=0;state.dragSwitching=false;state.requestKey='';state.forceSaveRequestKey='';state.forceAddRequestKey='';state.slotRequestKey='';state.moveRequestKey='';state.leaseToken='';state.message='';state.tone='';state.saving=false;state.mutating=false;resetCharacterLookup();
+    state.team=null;state.sourceTeamId=0;state.creationMode='FIXED';state.joinPolicy='INSTANT';state.selectedForceId=0;state.selectedSlotId=0;state.moveFromSlotId=0;state.draggedSlotId=0;state.dragSwitching=false;state.requirementTarget=null;state.requestKey='';state.forceSaveRequestKey='';state.forceAddRequestKey='';state.slotRequestKey='';state.moveRequestKey='';state.leaseToken='';state.message='';state.tone='';state.saving=false;state.mutating=false;resetCharacterLookup();
     openLayer(opener);
     state.layer.innerHTML='<div class="sanctuary-management-draft-backdrop" data-draft-close></div>'
       +'<section class="sanctuary-management-mode-dialog" role="dialog" aria-modal="true" aria-labelledby="sanctuaryDraftModeTitle" aria-describedby="sanctuaryDraftModeDescription" tabindex="-1">'
@@ -262,7 +279,7 @@
     const buttons=forces.map(force=>{
       const selected=Number(force.forceId)===Number(active?.forceId);
       const removable=selected&&forces.length>1;
-      return '<div class="sanctuary-management-force-option'+(selected?' is-active':'')+'"><button type="button" data-draft-force="'+escapeHtml(force.forceId)+'" class="'+(selected?'is-active':'')+'" aria-pressed="'+selected+'"'+(busy?' disabled':'')+'><strong>'+escapeHtml(force.forceNo)+'포스</strong><small>'+escapeHtml(force.occupiedCount)+' / '+escapeHtml(force.capacity)+'명'+(state.team?.localOnly?' · 편집 중':' · rev '+escapeHtml(force.revision))+'</small></button>'+(removable?'<button type="button" class="sanctuary-management-force-remove" data-draft-remove-force="'+escapeHtml(force.forceId)+'" aria-label="'+escapeHtml(force.forceNo)+'포스 제거"'+(busy?' disabled':'')+'>−</button>':'')+'</div>';
+      return '<div class="sanctuary-management-force-option'+(selected?' is-active':'')+(force.requirements?.satisfied===false?' has-unmet-requirements':'')+'"><button type="button" data-draft-force="'+escapeHtml(force.forceId)+'" class="'+(selected?'is-active':'')+'" aria-pressed="'+selected+'"'+(busy?' disabled':'')+'><strong>'+escapeHtml(force.forceNo)+'포스</strong><small>'+escapeHtml(force.occupiedCount)+' / '+escapeHtml(force.capacity)+'명 · 평균 '+escapeHtml(formatCombatPower(force.combatPower?.average).replace('전투력 ',''))+(force.requirements?.satisfied===false?' · 조건 미충족':state.team?.localOnly?' · 편집 중':' · rev '+escapeHtml(force.revision))+'</small></button>'+(removable?'<button type="button" class="sanctuary-management-force-remove" data-draft-remove-force="'+escapeHtml(force.forceId)+'" aria-label="'+escapeHtml(force.forceNo)+'포스 제거"'+(busy?' disabled':'')+'>−</button>':'')+'</div>';
     }).join('');
     const add=forces.length<9?'<button type="button" class="is-add" data-draft-add-force'+(busy?' disabled':'')+'><strong>+ 포스 추가</strong><small>다음 '+(forces.length+1)+'포스 · 최대 9</small></button>':'<button type="button" class="is-add is-limit" data-draft-add-force aria-disabled="true"'+(busy?' disabled':'')+'><strong>최대 9포스</strong><small>10번째 포스는 추가할 수 없음</small></button>';
     return '<div class="sanctuary-management-force-list" data-force-list>'+buttons+add+'</div><p>편성안 '+forces.length+'/9포스 · 마지막 저장 전에는 Server 데이터가 바뀌지 않습니다.</p>';
@@ -276,15 +293,52 @@
     const name=occupied?value(slot.character.name):'빈 슬롯';
     const relation=value(slot.character?.relation).toUpperCase();
     const relationLabel=relation==='MAIN'?'본캐':relation==='ALT'?'부캐':relation==='GUEST'?'게스트':'';
-    const detail=occupied?[value(slot.character.serverName),relationLabel].filter(Boolean).join(' · '):selected?'후보를 선택해 추가':'눌러서 캐릭터 선택';
+    const detail=occupied?formatCombatPower(slot.character?.power):selected?'후보를 선택해 추가':'눌러서 캐릭터 선택';
     const disabled=state.saving||state.mutating;
     return '<div class="sanctuary-management-draft-slot-shell'+(moving?' is-selected':'')+'"><button type="button" class="sanctuary-management-draft-slot'+(occupied?' is-occupied':'')+(selected?' is-selected':'')+(moving?' is-move-source':'')+'"'+(disabled?' disabled':'')+(occupied?' draggable="true"':'')+' data-draft-slot data-slot-id="'+escapeHtml(slot.slotId)+'" data-slot-revision="'+escapeHtml(slot.revision)+'" data-party-no="'+escapeHtml(partyNo)+'" data-slot-no="'+escapeHtml(slot.slotNo)+'" data-occupied="'+String(Boolean(occupied))+'" aria-pressed="'+String(selected||moving)+'"><span>'+number+'</span><strong>'+escapeHtml(name)+'</strong><small>'+escapeHtml(moving?'이동하거나 − 버튼으로 제거':detail)+'</small></button>'+(moving?'<button type="button" class="sanctuary-management-slot-remove" data-draft-clear-slot="'+escapeHtml(slot.slotId)+'" aria-label="'+escapeHtml(name)+' 캐릭터 제거"'+(disabled?' disabled':'')+'>−</button>':'')+'</div>';
+  }
+
+  function requirementTargetScope(){
+    const target=state.requirementTarget;if(!target)return null;
+    const force=teamForces().find(item=>Number(item.forceId)===Number(target.forceId));if(!force)return null;
+    if(Number(target.partyNo))return {force,scope:force.parties.find(party=>Number(party.partyNo)===Number(target.partyNo))||null,partyNo:Number(target.partyNo),capacity:5};
+    return {force,scope:force,partyNo:null,capacity:10};
+  }
+
+  function requirementEditorMarkup(){
+    const target=requirementTargetScope();if(!target?.scope)return '';
+    const rules=scopeRules(target.scope);const main=rules.find(rule=>value(rule.ruleType).toUpperCase()==='MAIN_MIN');const power=rules.find(rule=>value(rule.ruleType).toUpperCase()==='POWER_MIN');
+    const scopeLabel=target.partyNo?target.force.forceNo+'포스 '+target.partyNo+'파티':target.force.forceNo+'포스 전체';
+    const maximum=target.capacity;
+    return '<aside class="sanctuary-management-candidate-rail sanctuary-management-requirement-editor" aria-label="'+escapeHtml(scopeLabel)+' 구성 조건">'
+      +'<header><strong>배치 조건</strong><span class="sanctuary-management-candidate-position"><em>적용 범위</em><b>'+escapeHtml(scopeLabel)+'</b></span></header>'
+      +'<div class="sanctuary-management-requirement-editor-body">'
+        +'<section><button type="button" data-requirement-toggle="MAIN_MIN" aria-pressed="'+String(Boolean(main))+'">본캐 조건</button><label><span>최소 인원</span><input name="requirementMainCount" type="number" min="1" max="'+maximum+'" value="'+escapeHtml(main?.minimumCount||1)+'"></label><small>본캐가 지정 인원보다 적어도 팀은 저장되며 붉게 안내됩니다.</small></section>'
+        +'<section><button type="button" data-requirement-toggle="POWER_MIN" aria-pressed="'+String(Boolean(power))+'">전투력 조건</button><label><span>기준</span><input name="requirementPowerK" type="number" min="1" max="1000000" step="0.1" value="'+escapeHtml(power?.powerThreshold?power.powerThreshold/1000:300)+'"><b>K</b></label><label><span>최소 인원</span><input name="requirementPowerCount" type="number" min="1" max="'+maximum+'" value="'+escapeHtml(power?.minimumCount||1)+'"></label></section>'
+        +'<div class="sanctuary-management-requirement-preview"><strong>'+escapeHtml(target.scope.requirements?.satisfied===false?'현재 조건 미충족':'현재 조건 충족')+'</strong><small>평균 '+escapeHtml(formatCombatPower(target.scope.combatPower?.average))+' · '+escapeHtml(target.scope.combatPower?.knownCount||0)+'명 확인</small></div>'
+      +'</div><footer><button type="button" class="is-primary" data-requirement-apply>조건 적용</button><button type="button" data-requirement-clear>조건 없음</button><button type="button" data-requirement-close>돌아가기</button></footer></aside>';
+  }
+
+  function applyRequirementEditor(clear=false){
+    const target=requirementTargetScope();const editor=state.layer?.querySelector('.sanctuary-management-requirement-editor');if(!target?.scope||!editor)return;
+    const rules=[];
+    if(!clear){
+      const mainEnabled=editor.querySelector('[data-requirement-toggle="MAIN_MIN"]')?.getAttribute('aria-pressed')==='true';
+      const powerEnabled=editor.querySelector('[data-requirement-toggle="POWER_MIN"]')?.getAttribute('aria-pressed')==='true';
+      const mainCount=Number(editor.querySelector('[name="requirementMainCount"]')?.value);const powerCount=Number(editor.querySelector('[name="requirementPowerCount"]')?.value);const powerK=Number(editor.querySelector('[name="requirementPowerK"]')?.value);
+      if(mainEnabled&&(mainCount<1||mainCount>target.capacity)){setStatus('본캐 최소 인원을 1명부터 '+target.capacity+'명 사이로 입력해 주세요.');return;}
+      if(powerEnabled&&(powerCount<1||powerCount>target.capacity||powerK<1||powerK>1000000)){setStatus('전투력 기준과 최소 인원을 다시 확인해 주세요.');return;}
+      if(mainEnabled)rules.push({scopeType:target.partyNo?'PARTY':'FORCE',partyNo:target.partyNo,ruleType:'MAIN_MIN',minimumCount:mainCount,powerThreshold:null});
+      if(powerEnabled)rules.push({scopeType:target.partyNo?'PARTY':'FORCE',partyNo:target.partyNo,ruleType:'POWER_MIN',minimumCount:powerCount,powerThreshold:Math.round(powerK*1000)});
+    }
+    target.scope.requirements={rules};refreshLocalTeam();state.requirementTarget=null;renderRosterState();setStatus(clear?'구성 조건을 없앴습니다. 마지막 저장 전까지 Server에는 반영되지 않습니다.':'구성 조건을 로컬 편성안에 적용했습니다. 미충족 상태여도 저장할 수 있습니다.','success');
   }
 
   function candidateMarkup(){
     const force=selectedForce();
     const chosen=selectedSlot();
     if(!state.team||!force)return '<aside class="sanctuary-management-candidate-rail is-empty" aria-label="캐릭터 후보"><div class="sanctuary-management-candidate-empty"><span aria-hidden="true">◇</span><strong>초안 저장 후 연결</strong><p>Server가 생성자의 소유 캐릭터를 확인합니다.</p></div></aside>';
+    if(state.requirementTarget)return requirementEditorMarkup();
     if(!chosen)return '<aside class="sanctuary-management-candidate-rail is-empty" aria-label="캐릭터 후보"><div class="sanctuary-management-candidate-empty"><span aria-hidden="true">◇</span><strong>빈 슬롯 선택</strong><p>'+escapeHtml(force.forceNo)+'포스의 빈 카드를 누르면 내 캐릭터와 검색 창을 표시합니다.</p></div></aside>';
     const usedIds=localUsedCharacterIds();
     const sourceCandidates=composerCharacters().length?composerCharacters():Array.isArray(force.creatorCandidates)?force.creatorCandidates:[];
@@ -296,7 +350,7 @@
       const relation=candidate.isMain?'본캐':'부캐';
       const initial=Array.from(value(candidate.characterName)||'?')[0]||'?';
       const icon=classIconFor(candidate.className);
-      return '<button type="button" class="sanctuary-management-candidate-card '+(candidate.isMain?'is-main':'is-alt')+'" data-draft-candidate="'+escapeHtml(candidate.characterId)+'"'+(state.saving||state.mutating?' disabled':'')+'><span class="sanctuary-management-candidate-avatar" aria-hidden="true">'+(icon?'<img src="'+escapeHtml(icon)+'" alt="">':escapeHtml(initial))+'</span><span class="sanctuary-management-candidate-copy"><em>'+relation+'</em><strong>'+escapeHtml(candidate.characterName)+'</strong><small>'+escapeHtml(candidate.serverName||'서버 미확인')+'</small></span></button>';
+      return '<button type="button" class="sanctuary-management-candidate-card '+(candidate.isMain?'is-main':'is-alt')+'" data-draft-candidate="'+escapeHtml(candidate.characterId)+'"'+(state.saving||state.mutating?' disabled':'')+'><span class="sanctuary-management-candidate-avatar" aria-hidden="true">'+(icon?'<img src="'+escapeHtml(icon)+'" alt="">':escapeHtml(initial))+'</span><span class="sanctuary-management-candidate-copy"><em>'+relation+'</em><strong>'+escapeHtml(candidate.characterName)+'</strong><small>'+escapeHtml(candidate.serverName||'서버 미확인')+' · '+escapeHtml(formatCombatPower(candidate.power))+'</small></span></button>';
     }).join('');
     let quick='';
     let completion='';
@@ -343,15 +397,17 @@
       return '<main class="sanctuary-management-roster" aria-label="저장 전 1포스 슬롯 미리보기"><div class="sanctuary-management-party-labels"><span>1파티 · 1–5번</span><span>2파티 · 6–10번</span></div><div class="sanctuary-management-draft-slot-grid">'+slots+'</div></main>';
     }
     const parties=force.parties.slice().sort((left,right)=>Number(left.partyNo)-Number(right.partyNo));
-    const labels=parties.map(party=>'<span>'+escapeHtml(party.partyNo)+'파티 · '+escapeHtml(party.occupiedCount)+'/'+escapeHtml(party.capacity)+'명</span>').join('');
+    const forceWarning=force.requirements?.satisfied===false;
+    const forceSummary='<div class="sanctuary-management-force-requirement-summary'+(forceWarning?' has-unmet-requirements':'')+'"><span><strong>'+escapeHtml(force.forceNo)+'포스 평균 '+escapeHtml(formatCombatPower(force.combatPower?.average))+'</strong><small>'+escapeHtml(force.combatPower?.knownCount||0)+'/'+escapeHtml(force.occupiedCount)+'명 전투력 확인'+(forceWarning?' · 조건 '+escapeHtml(force.requirements.unsatisfiedCount)+'개 미충족':'')+'</small></span><button type="button" data-requirement-open data-force-id="'+escapeHtml(force.forceId)+'">포스 조건</button></div>';
+    const labels=parties.map(party=>'<span class="'+(party.requirements?.satisfied===false?'has-unmet-requirements':'')+'"><b>'+escapeHtml(party.partyNo)+'파티 · '+escapeHtml(party.occupiedCount)+'/'+escapeHtml(party.capacity)+'명</b><button type="button" data-requirement-open data-force-id="'+escapeHtml(force.forceId)+'" data-party-no="'+escapeHtml(party.partyNo)+'">조건</button></span>').join('');
     const slots=parties.map(party=>party.slots.map(slot=>slotMarkup(slot,party.partyNo)).join('')).join('');
-    return '<main class="sanctuary-management-roster" aria-label="'+escapeHtml(force.forceNo)+'포스 Server 슬롯"><div class="sanctuary-management-party-labels">'+labels+'</div><div class="sanctuary-management-draft-slot-grid">'+slots+'</div></main>';
+    return '<main class="sanctuary-management-roster'+(forceWarning?' has-unmet-requirements':'')+'" aria-label="'+escapeHtml(force.forceNo)+'포스 Server 슬롯">'+forceSummary+'<div class="sanctuary-management-party-labels">'+labels+'</div><div class="sanctuary-management-draft-slot-grid">'+slots+'</div></main>';
   }
 
   function defaultStatus(){
     const force=selectedForce();
     if(!force)return '[+ 포스 추가]를 누르면 로컬 편성안에 1포스·2파티·10슬롯이 추가됩니다.';
-    return force.forceNo+'포스 · '+force.occupiedCount+'/'+force.capacity+'명 · 빈자리 '+force.vacancyCount+' · 마지막 저장 전 Server 미반영';
+    return force.forceNo+'포스 · '+force.occupiedCount+'/'+force.capacity+'명 · 평균 '+formatCombatPower(force.combatPower?.average)+(force.requirements?.satisfied===false?' · 구성 조건 '+force.requirements.unsatisfiedCount+'개 미충족':'')+' · 마지막 저장 전 Server 미반영';
   }
 
   function renderRosterState(){
@@ -423,7 +479,7 @@
     if(state.team){state.creationMode=value(state.team.mode).toUpperCase()==='PARTICIPATION'?'PARTICIPATION':'FIXED';state.joinPolicy=value(state.team.joinPolicy).toUpperCase()==='APPROVAL'?'APPROVAL':'INSTANT';}
     state.selectedForceId=Number(state.team?.forces?.[0]?.forceId||0);
     refreshLocalTeam();
-    state.selectedSlotId=0;state.moveFromSlotId=0;state.draggedSlotId=0;state.dragSwitching=false;state.requestKey='';state.forceSaveRequestKey='';state.forceAddRequestKey='';state.slotRequestKey='';state.moveRequestKey='';state.message='';state.tone='';state.saving=false;state.mutating=Boolean(state.sourceTeamId);resetCharacterLookup();
+    state.selectedSlotId=0;state.moveFromSlotId=0;state.draggedSlotId=0;state.dragSwitching=false;state.requirementTarget=null;state.requestKey='';state.forceSaveRequestKey='';state.forceAddRequestKey='';state.slotRequestKey='';state.moveRequestKey='';state.message='';state.tone='';state.saving=false;state.mutating=Boolean(state.sourceTeamId);resetCharacterLookup();
     openLayer(opener||state.opener);
     state.layer.innerHTML=modeMarkup();
     syncDateMinimum();
@@ -507,7 +563,14 @@
         startsAt:value(form?.elements.draftStartsAt?.value),
         durationMinutes:Number(form?.elements.draftDuration?.value)||30
       },
-      composition:teamForces().map(force=>({sourceForceId:Number(force.forceId)>0?Number(force.forceId):null,slots:forceSlots(force).map(item=>({partyNo:item.partyNo,slotNo:Number(item.slot.slotNo),characterId:Number(item.slot.character?.characterId||0)||null}))}))
+      composition:teamForces().map(force=>({
+        sourceForceId:Number(force.forceId)>0?Number(force.forceId):null,
+        slots:forceSlots(force).map(item=>({partyNo:item.partyNo,slotNo:Number(item.slot.slotNo),characterId:Number(item.slot.character?.characterId||0)||null})),
+        requirements:[
+          ...scopeRules(force).map(rule=>({scopeType:'FORCE',partyNo:null,ruleType:value(rule.ruleType).toUpperCase(),minimumCount:Number(rule.minimumCount),powerThreshold:value(rule.ruleType).toUpperCase()==='POWER_MIN'?combatPowerValue(rule.powerThreshold):null})),
+          ...force.parties.flatMap(party=>scopeRules(party).map(rule=>({scopeType:'PARTY',partyNo:Number(party.partyNo),ruleType:value(rule.ruleType).toUpperCase(),minimumCount:Number(rule.minimumCount),powerThreshold:value(rule.ruleType).toUpperCase()==='POWER_MIN'?combatPowerValue(rule.powerThreshold):null})))
+        ]
+      }))
     };
   }
 
@@ -581,7 +644,7 @@
 
   function candidateCharacter(candidate){
     const actorMemberId=Number(bridge()?.snapshot()?.actor?.memberId||0);
-    return {characterId:Number(candidate.characterId),name:value(candidate.characterName||candidate.name),serverId:Number(candidate.serverId)||null,serverName:value(candidate.serverName),className:value(candidate.className),profileImageUrl:value(candidate.profileImageUrl),relation:value(candidate.relation)||(candidate.isMain?'MAIN':'ALT'),isMain:candidate.isMain===true,mainCharacterId:Number(candidate.mainCharacterId)||null,ownerMemberId:Number(candidate.ownerMemberId||actorMemberId)||null};
+    return {characterId:Number(candidate.characterId),name:value(candidate.characterName||candidate.name),serverId:Number(candidate.serverId)||null,serverName:value(candidate.serverName),className:value(candidate.className),profileImageUrl:value(candidate.profileImageUrl),relation:value(candidate.relation)||(candidate.isMain?'MAIN':'ALT'),isMain:candidate.isMain===true,power:combatPowerValue(candidate.power??candidate.latestPveCombatPower??candidate.latest_pve_combat_power),mainCharacterId:Number(candidate.mainCharacterId)||null,ownerMemberId:Number(candidate.ownerMemberId||actorMemberId)||null};
   }
 
   function assignCreatorCharacter(characterId){
@@ -732,21 +795,29 @@
     if(period){state.layer.querySelectorAll('[data-draft-period]').forEach(button=>button.setAttribute('aria-pressed',String(button===period)));syncTimeFromParts();return;}
     const duration=event.target.closest('[data-draft-duration]');
     if(duration){const form=state.layer.querySelector('[data-draft-form]');form.elements.draftDuration.value=duration.dataset.draftDuration;form.querySelectorAll('[data-draft-duration]').forEach(button=>button.setAttribute('aria-pressed',String(button===duration)));return;}
+    const requirementOpen=event.target.closest('[data-requirement-open]');
+    if(requirementOpen){state.requirementTarget={forceId:Number(requirementOpen.dataset.forceId)||Number(state.selectedForceId),partyNo:Number(requirementOpen.dataset.partyNo)||null};state.selectedSlotId=0;state.moveFromSlotId=0;resetCharacterLookup();renderRosterState();setStatus('본캐·전투력 조건은 미충족이어도 저장할 수 있으며 붉은 안내로 표시됩니다.','progress');return;}
+    const requirementToggle=event.target.closest('[data-requirement-toggle]');
+    if(requirementToggle){requirementToggle.setAttribute('aria-pressed',String(requirementToggle.getAttribute('aria-pressed')!=='true'));return;}
+    if(event.target.closest('[data-requirement-apply]')){applyRequirementEditor(false);return;}
+    if(event.target.closest('[data-requirement-clear]')){applyRequirementEditor(true);return;}
+    if(event.target.closest('[data-requirement-close]')){state.requirementTarget=null;renderRosterState();return;}
     const remove=event.target.closest('[data-draft-remove-force]');
     if(remove&&!remove.disabled){removeForce(Number(remove.dataset.draftRemoveForce));return;}
     const force=event.target.closest('[data-draft-force]');
-    if(force&&!force.disabled){state.selectedForceId=Number(force.dataset.draftForce)||0;state.selectedSlotId=0;resetCharacterLookup();renderRosterState();return;}
+    if(force&&!force.disabled){state.selectedForceId=Number(force.dataset.draftForce)||0;state.selectedSlotId=0;state.requirementTarget=null;resetCharacterLookup();renderRosterState();return;}
     if(event.target.closest('[data-draft-add-force]')){addForce();return;}
     const clear=event.target.closest('[data-draft-clear-slot]');
     if(clear&&!clear.disabled){clearSlot(Number(clear.dataset.draftClearSlot));return;}
     const slot=event.target.closest('[data-draft-slot]');
     if(slot&&!slot.disabled&&state.moveFromSlotId){moveSlot(state.moveFromSlotId,Number(slot.dataset.slotId));return;}
     if(slot&&!slot.disabled&&slot.dataset.occupied==='true'){
-      state.moveFromSlotId=Number(slot.dataset.slotId)||0;state.selectedSlotId=0;resetCharacterLookup();renderRosterState();
+      state.moveFromSlotId=Number(slot.dataset.slotId)||0;state.selectedSlotId=0;state.requirementTarget=null;resetCharacterLookup();renderRosterState();
       setStatus(slot.textContent.trim()+' 카드를 선택했습니다. 이동할 빈 슬롯이나 다른 카드를 누르세요.','progress');return;
     }
     if(slot&&!slot.disabled&&slot.dataset.occupied!=='true'){
       state.selectedSlotId=Number(slot.dataset.slotId)||0;
+      state.requirementTarget=null;
       resetCharacterLookup();
       renderRosterState();
       setStatus(slotDisplayNumber(selectedSlot())+'번 슬롯에 추가할 내 캐릭터를 선택하거나 이름을 검색해 주세요.','progress');
