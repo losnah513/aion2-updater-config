@@ -16,6 +16,15 @@
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
 - 성역·스케줄 관리 개편은 Stage 7-8까지 **59/59 CLOSED**다. 제품 전환·종료는 PR `#328` + `#329` + `#330` + `#337` + `#338` + `#339` + `#342`, UI 기준 main `3e8d253e818349357f171ca4b025ca9d10062ae6`, Edge `sanctuary-management` v16(API 1.8 / DB446), copy renderer v20(DB447), transition run 1 `COMPLETE`다. 최종 운영·복구 기준은 `docs/SANCTUARY_MANAGEMENT_STAGE7_CLOSEOUT_20260830.md`를 따른다.
 
+## 성역 비로그인 공개 읽기 후속 · 2026-08-30
+
+- PC `/sanctuary/`와 모바일 `/m/sanctuary/`는 로그인하지 않아도 성역 1~4, `ACTIVE/FULL` 팀, 포스·파티·슬롯, 월간 일정을 표시한다. `DRAFT/ARCHIVED` 팀은 공개 응답에 포함하지 않는다.
+- 비로그인 bootstrap은 생성자·내 캐릭터 후보, 지원 batch, viewer 배정·대기 상태, 편집·해산·일정 관리 권한을 반환하지 않는다. 팀 생성·지원·편집·해산·캐릭터 검색/등록과 다른 쓰기 경로는 기존 opaque KWS session과 Server 권한 검사를 그대로 요구한다.
+- migration `20260830051921_sanctuary_management_public_read_v448.sql`은 service-role-only 공개 읽기 RPC와 활성 팀 partial index를 추가했다. Browser 역할에는 RPC EXECUTE를 부여하지 않았고 Edge만 service role로 호출한다.
+- `sanctuary-management` Edge v17은 세션이 없을 때 `bootstrap`과 `month`만 공개 읽기 RPC로 보낸다. 현재 API 1.8 / DB446 계약은 유지하며 비로그인 `command`는 HTTP 401이다.
+- WEB PR `#346`은 공개/로그인 projection 전환 때 bootstrap을 다시 읽고 비로그인 상태에서도 백그라운드 변경 감지와 수동 새로고침을 유지한다. 팀 추가·지원·편집 버튼은 공개 보기에서 비활성이다.
+- 운영 readback은 공개 bootstrap HTTP 200, 성역 4개, 운영 팀 2개, `writeEnabled=false`, 공개 month HTTP 200, 비로그인 command HTTP 401이었다. 공개 팀·포스 응답에서 계정 member ID와 viewer 지원·관리 상태가 제거됐음을 DB 집계로 확인했다.
+
 ## 성역·스케줄 관리 개편 Stage 7-8 종료 · 2026-08-30
 
 - 정식 운영은 PC `/sanctuary/`, 모바일 `/m/sanctuary/`, Server DB 단일 원본이다. 구 관리·일정 주소는 쿼리·해시를 보존하는 호환 redirect이고 성역 전용 Sheet 예약·수동 동기화와 두 bridge는 운영 경로가 아니다.

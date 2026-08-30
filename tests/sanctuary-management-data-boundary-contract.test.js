@@ -14,8 +14,8 @@ for (const page of pages) {
     'sanctuary-management-page-bar',
     'id="sanctuaryManagementScope"',
     'id="sanctuaryManagementTeamList"',
-    'kinojo-supabase-features.js?cache=2026082902',
-    'sanctuary-management.js?cache=2026082903',
+    'kinojo-supabase-features.js?cache=2026083004',
+    'sanctuary-management.js?cache=2026083004',
     'sanctuary-management-draft.js?cache=2026082811',
     'sanctuary-management-support.js?cache=2026082923',
   ]) assert.ok(html.includes(token), `${page}: missing ${token}`);
@@ -40,7 +40,7 @@ const feature = read('core/kinojo-supabase-features.js');
 for (const token of [
   "invokeEdgeFunction('sanctuary-management'",
   "action:'bootstrap'",
-  'sessionToken:currentServerSessionCredential()',
+  'sessionToken:optionalServerSessionCredential()',
   'getSanctuaryManagementBootstrap',
   'runSanctuaryManagementCommand',
   "action:'command'",

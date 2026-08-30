@@ -605,10 +605,10 @@
     const session=typeof auth.getSession==='function'?auth.getSession():null;
     const account=typeof auth.getAccount==='function'?auth.getAccount():null;
     const loggedIn=!!session;
-    // SANCTUARY_PARTICIPATION_NAV: every signed-in member can open the management
-    // page to create a team or support an open force. Edit/archive/approval buttons
-    // remain governed by the server-owned per-team canEdit flag.
-    const canOpenSanctuaryManagement=loggedIn;
+    // PUBLIC_SANCTUARY_NAV: Sanctuary navigation and read pages are public.
+    // Team creation, support, editing and archive controls remain protected by
+    // the strict session gate and server-owned per-team permissions.
+    const canOpenSanctuaryManagement=true;
     document.querySelectorAll('[data-kinojo-auth-required]').forEach(element=>{
       element.hidden=!loggedIn;
       element.setAttribute('aria-hidden',loggedIn?'false':'true');

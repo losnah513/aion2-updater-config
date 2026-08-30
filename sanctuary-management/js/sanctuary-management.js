@@ -118,7 +118,7 @@
     });
   }
 
-  function validateForce(item){
+  function validateForce(item,options={}){
     if(!item||typeof item!=='object'||Array.isArray(item)||!Array.isArray(item.parties)||item.parties.length!==2){
       throw new Error('성역 관리 포스 파티 데이터가 올바르지 않습니다.');
     }
@@ -146,15 +146,16 @@
     });
     const occupiedCount=parties.reduce((sum,party)=>sum+party.occupiedCount,0);
     const candidateIds=new Set(force.creatorCandidates.map(candidate=>candidate.characterId));
-    if(force.forceId<1||force.capacity!==10||force.revision<1||force.occupiedCount!==occupiedCount||force.vacancyCount!==force.capacity-occupiedCount||force.creatorMemberId<1||force.creatorCandidateCount!==force.creatorCandidates.length||candidateIds.size!==force.creatorCandidates.length||!force.creatorOwnerResolved&&force.creatorCandidates.length||force.creatorAlreadyAssigned&&force.creatorCandidates.length){
+    const publicRead=options.publicRead===true;
+    if(force.forceId<1||force.capacity!==10||force.revision<1||force.occupiedCount!==occupiedCount||force.vacancyCount!==force.capacity-occupiedCount||(!publicRead&&force.creatorMemberId<1)||force.creatorCandidateCount!==force.creatorCandidates.length||candidateIds.size!==force.creatorCandidates.length||(!force.creatorOwnerResolved&&force.creatorCandidates.length)||(force.creatorAlreadyAssigned&&force.creatorCandidates.length)){
       throw new Error('성역 관리 포스 인원 집계가 올바르지 않습니다.');
     }
     return force;
   }
 
-  function validateTeam(item){
+  function validateTeam(item,options={}){
     if(!item||typeof item!=='object'||Array.isArray(item)||!Array.isArray(item.forces))throw new Error('성역 관리 팀 편성 데이터가 올바르지 않습니다.');
-    const forces=item.forces.map(validateForce).sort((left,right)=>left.forceNo-right.forceNo);
+    const forces=item.forces.map(force=>validateForce(force,options)).sort((left,right)=>left.forceNo-right.forceNo);
     if(forces.length<1||forces.length>9||forces.some((force,index)=>force.forceNo!==index+1))throw new Error('성역 관리 포스 순서가 올바르지 않습니다.');
     const team=Object.assign({},item,{
       schedule:item.schedule&&typeof item.schedule==='object'&&!Array.isArray(item.schedule)?Object.assign({},item.schedule):null,
@@ -188,6 +189,7 @@
       throw new Error('성역 관리 Server 계약 버전이 일치하지 않습니다.');
     }
     if(!Array.isArray(data.sanctuaries)||!Array.isArray(data.teams))throw new Error('성역 관리 Server 데이터 형식이 올바르지 않습니다.');
+    const publicRead=data.publicRead===true;
     const sourceRollout=data.rollout&&typeof data.rollout==='object'&&!Array.isArray(data.rollout)?data.rollout:{};
     const rollout={
       mode:value(sourceRollout.mode).toUpperCase(),
@@ -232,6 +234,7 @@
       apiVersion:Number(data.apiVersion),
       schemaVersion:Number(data.schemaVersion),
       serverTime:value(data.serverTime),
+      publicRead,
       readEnabled:data.readEnabled===true,
       writeEnabled:data.writeEnabled===true,
       globalWriteEnabled:data.globalWriteEnabled===true,
@@ -240,7 +243,7 @@
       actor:data.actor&&typeof data.actor==='object'?data.actor:{},
       composerCharacters,
       sanctuaries:data.sanctuaries.filter(item=>item&&typeof item==='object'),
-      teams:data.teams.filter(item=>item&&typeof item==='object').map(validateTeam)
+      teams:data.teams.filter(item=>item&&typeof item==='object').map(item=>validateTeam(item,{publicRead}))
     };
   }
 
@@ -459,7 +462,10 @@
     const rollout=data.rollout||{};
     let label=data.writeEnabled?'활성':'준비 중';
     let detail='Server 기능 플래그';
-    if(rollout.mode==='PILOT'){
+    if(data.publicRead){
+      label='로그인 필요';
+      detail='팀·일정 공개 · 쓰기는 로그인 후';
+    }else if(rollout.mode==='PILOT'){
       label=data.writeEnabled?'시험 운영':'읽기 전용';
       detail=data.writeEnabled?'승인됨 · Server 허용 목록':'시험 사용자만 쓰기';
     }else if(rollout.mode==='OPEN'){
@@ -732,14 +738,14 @@
     root.replaceChildren();
     const addButton=byId('sanctuaryManagementAddTeam');
     addButton.disabled=!bootstrapData.writeEnabled;
-    addButton.title=bootstrapData.writeEnabled?'새 성역 팀을 생성합니다.':value(bootstrapData.rollout?.message)||'현재 읽기 전용입니다.';
+    addButton.title=bootstrapData.writeEnabled?'새 성역 팀을 생성합니다.':bootstrapData.publicRead?'로그인 후 팀을 생성할 수 있습니다.':value(bootstrapData.rollout?.message)||'현재 읽기 전용입니다.';
     if(!bootstrapData.readEnabled){
       byId('sanctuaryManagementTeamStatus').textContent='Server 읽기 플래그가 비활성 상태입니다. 팀 생성도 운영 승인 전까지 열리지 않습니다.';
       root.appendChild(createEmpty('실제 팀 읽기는 아직 열리지 않았습니다.','Server 어댑터 연결은 완료됐으며 별도 승인 전까지 운영 팀 데이터는 표시하지 않습니다.'));
       return;
     }
     const teams=visibleTeams();
-    byId('sanctuaryManagementTeamStatus').textContent=bootstrapData.writeEnabled?'Server 팀 데이터를 생성·참여·편집할 수 있습니다.':value(bootstrapData.rollout?.message)||'읽기 전용으로 Server 팀 데이터를 표시합니다.';
+    byId('sanctuaryManagementTeamStatus').textContent=bootstrapData.writeEnabled?'Server 팀 데이터를 생성·참여·편집할 수 있습니다.':bootstrapData.publicRead?'운영 팀과 포스는 로그인 없이 볼 수 있습니다. 팀 생성·지원·편집은 로그인 후 사용할 수 있습니다.':value(bootstrapData.rollout?.message)||'읽기 전용으로 Server 팀 데이터를 표시합니다.';
     if(!teams.length){
       root.appendChild(createEmpty('등록된 팀이 없습니다.','선택한 성역에 Server가 반환한 운영 팀이 없습니다.'));
       return;
@@ -1087,7 +1093,9 @@
     loadMonth(selectedMonth);
     byId('sanctuaryManagementContent').hidden=false;
     if(data.readEnabled){
-      if(data.rollout.mode==='PILOT'&&data.writeEnabled){
+      if(data.publicRead){
+        setAccess('ready','성역 팀과 일정을 공개 보기로 표시합니다.','팀·포스·일정은 로그인 없이 볼 수 있습니다. 팀 생성·지원·편집은 로그인 후 사용할 수 있습니다.');
+      }else if(data.rollout.mode==='PILOT'&&data.writeEnabled){
         setAccess('ready','성역 시험 운영이 활성화되었습니다.','승인된 시험 사용자로 팀 생성·참여·편집·해산을 검수할 수 있습니다.');
       }else if(data.rollout.mode==='PILOT'){
         setAccess('ready','성역 관리 시험 운영을 읽기 전용으로 확인할 수 있습니다.','신규 쓰기는 승인된 시험 사용자만 사용할 수 있습니다. 기존 성역·스케줄 이용에는 영향이 없습니다.');
@@ -1102,7 +1110,7 @@
   }
 
   async function checkForUpdates(){
-    if(!bootstrapData||backgroundCheckActive||document.hidden||!authState().loggedIn)return;
+    if(!bootstrapData||backgroundCheckActive||document.hidden)return;
     backgroundCheckActive=true;
     try{
       const next=await ServerAdapter.bootstrap();
@@ -1122,8 +1130,9 @@
   }
 
   function handleAuthChanged(){
-    if(!authState().loggedIn||!bootstrapData){load();return;}
-    checkForUpdates();
+    // Login and logout switch between the public and viewer-specific server
+    // projections, so always reload rather than reusing stale permission data.
+    load();
   }
 
   async function load(){
@@ -1133,11 +1142,7 @@
     byId('sanctuaryManagementContent').hidden=true;
     byId('sanctuaryManagementScopeShell').hidden=true;
     byId('sanctuaryManagementContract').textContent='API 계약 확인 중';
-    if(!auth.loggedIn){
-      setAccess('denied','로그인이 필요합니다.','성역 팀·포스 기능은 로그인 후 사용할 수 있습니다.','login');
-      return;
-    }
-    setAccess('loading','Server 성역 관리 계약을 확인하고 있습니다.','로그인 이용자의 팀·포스·지원 데이터를 신규 Server 어댑터로 불러옵니다.');
+    setAccess('loading','Server 성역 데이터를 확인하고 있습니다.',auth.loggedIn?'로그인 이용자의 팀·포스·지원 데이터를 불러옵니다.':'공개된 팀·포스·월간 일정을 불러옵니다.');
     try{
       const data=await ServerAdapter.bootstrap();
       if(sequence!==requestSequence)return;
