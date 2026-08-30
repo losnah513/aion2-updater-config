@@ -12,9 +12,22 @@
 - My Info / 관리자 이미지 모달 추가 UI 후속: PR `#197` 구현·배포·동기화 기준 CLOSED · 수동 실브라우저 sanity check는 post-close 보류
 - 레기온 순위 통합 패널: PR `#164` 병합 완료
 - 캐릭터 상세 모달 지연 생성 스크롤 복구: PR `#340`, main `751239c0a3646cea74dfdf71ce80bea97323a245`, Pages·custom-domain readback 완료
+- HOME 로딩·외부 레이아웃 안정화: PR `#343` + `#344` + `#345` + `#347`, 최종 main `36c18b25e1c0fbe230b6076690fe6ef3b7f2d92e`, 진행도 `9/9 CLOSED`, Pages·KINOJO Pages·Banner Runtime 운영 readback 완료
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 작업 대상별 세부 규칙과 최신 프로젝트 LOG를 작업 규칙 원본으로 사용한다. 성역 작업은 최신 `KINOJO_SANCTUARY_RULES.md`와 Stage 7 종료 문서를 추가로 읽는다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
 - 성역·스케줄 관리 개편은 Stage 7-8까지 **59/59 CLOSED**다. 제품 전환·종료는 PR `#328` + `#329` + `#330` + `#337` + `#338` + `#339` + `#342`, UI 기준 main `3e8d253e818349357f171ca4b025ca9d10062ae6`, Edge `sanctuary-management` v16(API 1.8 / DB446), copy renderer v20(DB447), transition run 1 `COMPLETE`다. 최종 운영·복구 기준은 `docs/SANCTUARY_MANAGEMENT_STAGE7_CLOSEOUT_20260830.md`를 따른다.
+
+## HOME 로딩·외부 레이아웃 안정화 종료 · 2026-08-30
+
+- 원인은 사용자 인터넷만이 아니었다. 운영 Stage 0에서 1920px CLS `0.212239`, LCP `5100ms`, cold 전송 `4,944,241 bytes`였고, 늦게 이동한 두 SIDE 슬롯이 최대 shift `0.185875`를 만들었다. 1839px와 390px에서도 숨은 SIDE Manifest·이미지와 My Info 가이드 3장 약 `604KB`, 루트 `/ → /home.html` 두 번째 Document가 첫 로드에 포함됐다.
+- 첫 페인트에서 topbar `69px`, HOME subbar `52px`(1840 이상)/`1px`(미만), content y=`121/70`, `1180px` 프레임, SIDE `300×715`, 성역 카드 영역을 미리 예약했다. HOME subbar는 최종 DOM 위치로 출하하고 staged runtime은 HOME을 다시 이동하지 않는다. 1920 실서비스 좌표는 topbar `0,0,1905×69`, subbar `0,69,1905×52`, main `472.5,202,960×540.875`, SIDE x=`49/1557`, y=`121`이며 가로 overflow는 0이다.
+- 데스크톱 루트는 HOME 본문을 직접 제공해 HTTP 200 Document를 정확히 1개만 사용한다. 모바일 device router와 직접 `/home.html` 호환은 유지한다. 외부 body script는 순서를 보존한 `defer` 경로로 옮겼다.
+- 여름 MAIN 원본 PNG `2,457,965 bytes`는 승인된 WebP 파생 `307,496 bytes`로 전달한다. 초기 PC HOME은 같은 WebP를 `fetchpriority=high`로 즉시 표시하고 Server Manifest의 canonical PNG 항목은 runtime delivery alias로 같은 파생본을 인계한다. SEO Open Graph/Twitter 이미지는 기존 `kinojo-og.jpg`를 유지한다. 다음 슬라이드는 Server 전환 1.2초 전에만 preload하며 1840 미만 SIDE 슬롯은 Manifest 자체를 bind/fetch하지 않는다.
+- My Info 패널·모달 DOM, 캐릭터 batch, 가이드 이미지는 초기 HOME에서 만들지 않는다. 첫 패널 열기에서 패널만 생성하고, 첫 이미지 관리 열기에서 모달과 `loading=lazy / decoding=async` 가이드 3장을 생성한다. 운영 브라우저에 실제 KWS 로그인 세션이 남아 있지 않아 계정 mutation은 하지 않았고, 최종 collector의 유효 형식 격리 토큰으로 클라이언트 생성 순서만 검증했다.
+- 최종 운영 Chrome 결과는 1920 cold `CLS 0.000236 / LCP 824ms / critical banner 307,796 bytes`, warm LCP `244ms`다. 1840 cold LCP `576ms`, 1839 `536ms`, 390 `1288ms`이며 390 CLS는 0이다. 초기 My Info guide bytes는 전 폭 0, SIDE Manifest는 1840에서 2개·1839에서 0개다. 1920 cold 총 전송은 `1,697,133 bytes`로 Stage 0보다 약 65.7% 줄었다.
+- PR `#343`이 제품·회귀·로컬 증거를 병합했고, `#344`는 숨은 SIDE 무요청 계약, `#345`는 canonical PNG→WebP 전달 E2E, `#347`은 즉시 first-paint 성능을 마감했다. 최종 main은 `36c18b25e1c0fbe230b6076690fe6ef3b7f2d92e`다. KINOJO Pages run `33295310685`, Banner Runtime run `33295310712`, Pages run `33295310440`이 모두 성공했고 exact custom-domain byte readback, Manifest ETag, PC SIDE 6페이지×4폭+고정 스크롤, PC HOME, 모바일 MAIN을 통과했다.
+- 기계 판독 근거는 `tests/evidence/20260830-home-loading-stage0/baseline.json`, 최종 `tests/evidence/20260830-home-loading-final/final-local.json`과 `final-production.json`이다. Supabase DB·Auth·Storage·Edge Function·배너 playlist/일정·운영 데이터는 변경하지 않았다.
+- 롤백은 Web-only다. 즉시 표시만 철회할 때는 PR `#347`, live gate만 되돌릴 때는 `#345/#344`, 전체 HOME 안정화는 PR `#343`을 역순으로 revert한다. DB migration, Edge 재배포, Storage 삭제, 운영 배너 데이터 롤백은 필요 없다. 완료 상태는 **Stage 0~8 · 9/9 CLOSED**, 다음 작업은 없다.
 
 ## 성역 비로그인 공개 읽기 후속 · 2026-08-30
 
