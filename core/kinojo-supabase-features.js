@@ -1018,7 +1018,10 @@
   async function getSanctuaryManagementBootstrap(){
     return invokeEdgeFunction('sanctuary-management', {
       action:'bootstrap',
-      sessionToken:currentServerSessionCredential()
+      // PUBLIC_SANCTUARY_READ: an empty credential selects the server-owned
+      // guest projection. Mutating Sanctuary methods still call the strict
+      // currentServerSessionCredential() gate below.
+      sessionToken:optionalServerSessionCredential()
     });
   }
 
@@ -1027,7 +1030,7 @@
     if(!/^20\d{2}-(0[1-9]|1[0-2])$/.test(normalized))throw new Error('조회할 월을 YYYY-MM 형식으로 선택해 주세요.');
     return invokeEdgeFunction('sanctuary-management', {
       action:'month',
-      sessionToken:currentServerSessionCredential(),
+      sessionToken:optionalServerSessionCredential(),
       month:normalized
     });
   }

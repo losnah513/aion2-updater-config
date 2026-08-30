@@ -11,6 +11,13 @@ KINOJO INFO GitHub Pages upload package.
 
 `config.json` is intentionally kept at repository root because the extension currently reads `/config.json`.
 
+## Sanctuary public read boundary
+
+- Desktop `/sanctuary/` and mobile `/m/sanctuary/` show Sanctuary 1–4, published teams, force rosters, and the Wednesday-first monthly schedule without login.
+- Guest responses include only `ACTIVE/FULL` teams. They omit viewer character candidates, support batches, assignment/pending state, member identifiers, and every edit/archive permission.
+- Team creation, support, editing, archive, character lookup/registration, and all other mutations still require the opaque KINOJO session plus the existing Edge and database permission checks.
+- `20260830051921_sanctuary_management_public_read_v448.sql` adds service-role-only read models; browsers continue to call the `sanctuary-management` Edge Function rather than database RPCs directly. The public-read addition keeps the current Edge API `1.8` / DB contract `446` for authenticated-write compatibility.
+
 ## Admin dashboard first-entry module boundary
 
 - Admin loader cache `2026082901` starts the desktop and mobile dashboard with only `admin-shared.js` and `admin-bootstrap.js`. Member, character, notice, system/log, and banner modules load once when their feature tab is first entered.

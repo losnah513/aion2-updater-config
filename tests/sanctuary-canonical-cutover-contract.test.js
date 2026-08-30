@@ -13,7 +13,7 @@ for(const [page,canonical,mobile] of [
   const html=read(page);
   for(const token of [
     '<title>KINOJO INFO - 성역</title>',canonical,'id="sanctuaryManagementTeamList"',
-    'id="sanctuaryManagementSchedulePanel"','sanctuary-management.js?cache=2026082903',
+    'id="sanctuaryManagementSchedulePanel"','sanctuary-management.js?cache=2026083004',
     'sanctuary-management-draft.js?cache=2026082811','sanctuary-management-support.js?cache=2026082923',
     'kinojo-common-ui.js?cache=2026082923',
   ])assert.ok(html.includes(token),`${page}: canonical Sanctuary missing ${token}`);
