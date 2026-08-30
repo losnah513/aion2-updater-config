@@ -146,8 +146,8 @@ async function verifyAdapter() {
     assert.equal(response.status, 200, `sanctuary-management health HTTP ${response.status}`);
     assert.equal(health.ok, true);
     assert.equal(health.service, 'sanctuary-management');
-    assert.equal(String(health.apiVersion), '1.8');
-    assert.equal(Number(health.databaseContract), 446);
+    assert.equal(String(health.apiVersion), '1.9');
+    assert.equal(Number(health.databaseContract), 449);
   }
 }
 
