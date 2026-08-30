@@ -24,7 +24,7 @@ for(const token of [
 for(const token of ['created_by_member_id','updated_by_member_id','where created_by_member_id is not null','where updated_by_member_id is not null'])assert.ok(performanceGuard.includes(token),`Stage 8 performance guard missing ${token}`);
 for(const token of ['drop index if exists private.sanctuary_management_composition_rules_v449_created_by_idx','created_by_member_id);','updated_by_member_id);'])assert.ok(fkIndexGuard.includes(token),`Stage 8 FK index guard missing ${token}`);
 
-for(const token of ['const API_VERSION="2.0"','const DATABASE_CONTRACT="450"','bootstrap_v450','public_bootstrap_v450','command_v450'])assert.ok(edge.includes(token),`Stage 8 Edge contract missing ${token}`);
+for(const token of ['const API_VERSION="2.1"','const DATABASE_CONTRACT="451"','bootstrap_v451','public_bootstrap_v451','command_v451'])assert.ok(edge.includes(token),`Stage 8 Edge contract missing ${token}`);
 for(const token of [
   'function formatCombatPower','validateCombatPower','validateRequirements','sanctuary-management-force-average',
   'sanctuary-management-force-slot-power','has-unmet-requirements','compositionRulesVersion:1',
@@ -38,7 +38,7 @@ for(const token of [
 assert.equal(/function handleAuthChanged\(\)\{[\s\S]*?\n\s*load\(\);\n\s*\}/.test(client)&&!client.includes('next===currentAuthProjection'),false,'same-viewer auth renewal must not automatically replace visible content');
 for(const token of ['sanctuary-management-force-slot-power','has-unmet-requirements','sanctuary-management-requirement-warning'])assert.ok(rosterCss.includes(token),`Stage 8 operating CSS missing ${token}`);
 for(const token of ['sanctuary-management-force-requirement-summary','sanctuary-management-requirement-editor','overflow-x:hidden'])assert.ok(draftCss.includes(token),`Stage 8 composer CSS missing ${token}`);
-for(const page of ['sanctuary/index.html','m/sanctuary/index.html'])assert.ok(read(page).includes('stage8=2026083020'),`${page}: Stage 8 cache boundary missing`);
+for(const page of ['sanctuary/index.html','m/sanctuary/index.html'])assert.ok(read(page).includes('stage8=2026083030'),`${page}: Stage 8 cache boundary missing`);
 assert.ok(workflow.includes('node tests/sanctuary-management-stage8-part1-contract.test.js'),'Stage 8 part 1 contract is not wired into CI');
 
 console.log('KINOJO sanctuary management Stage 8 part 1 contract: PASS');

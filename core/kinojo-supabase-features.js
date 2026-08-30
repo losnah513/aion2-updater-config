@@ -1163,6 +1163,26 @@
     });
   }
 
+  async function getSanctuaryManagementBalanceProposal(teamId,expectedRevision,leaseToken,stableSeed,lockOverrides=[]){
+    const normalizedTeamId=Number(teamId||0);
+    const revision=Number(expectedRevision||0);
+    const normalizedLease=String(leaseToken||'').trim();
+    const normalizedSeed=String(stableSeed||'').trim();
+    const locks=Array.isArray(lockOverrides)?lockOverrides.slice(0,90).map(item=>({slotId:Number(item?.slotId),locked:item?.locked===true})):[];
+    if(!Number.isSafeInteger(normalizedTeamId)||normalizedTeamId<1||!Number.isSafeInteger(revision)||revision<1||normalizedLease.length<32||normalizedSeed.length<8||locks.some(item=>!Number.isSafeInteger(item.slotId)||item.slotId<1)){
+      throw new Error('균형 배치 제안에 필요한 팀 revision과 잠금 상태를 다시 확인해 주세요.');
+    }
+    return invokeEdgeFunction('sanctuary-management',{
+      action:'balance-proposal',
+      sessionToken:currentServerSessionCredential(),
+      teamId:normalizedTeamId,
+      expectedRevision:revision,
+      leaseToken:normalizedLease,
+      stableSeed:normalizedSeed,
+      lockOverrides:locks
+    });
+  }
+
   function decorateSanctuaryWaitlist(data){
     if(!data || data.ok === false) return data;
     data.waiting = (Array.isArray(data.waiting) ? data.waiting : []).map(item => Object.assign({}, item, {
@@ -2007,6 +2027,7 @@
     searchSanctuaryManagementCharacter,
     registerSanctuaryManagementCharacter,
     getSanctuaryManagementLinkedAlts,
+    getSanctuaryManagementBalanceProposal,
     getSanctuaryData,
     getSanctuaryRosterData,
     getSanctuaryWaitlistData,

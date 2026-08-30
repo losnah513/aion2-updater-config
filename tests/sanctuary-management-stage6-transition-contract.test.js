@@ -49,9 +49,9 @@ assert.doesNotMatch(approvalBody,/delete\s+from|update\s+public\.sanctuary_|upda
 assert.doesNotMatch(migration,/kws_[A-Za-z0-9_-]{20,}/,'Stage 6 migration must never contain a session credential');
 
 for(const token of [
-  'const API_VERSION="2.0"','const DATABASE_CONTRACT="450"',
+  'const API_VERSION="2.1"','const DATABASE_CONTRACT="451"',
   'kinojo_sanctuary_management_rollout_state_v446',
-  'kinojo_sanctuary_management_bootstrap_v450',
+  'kinojo_sanctuary_management_bootstrap_v451',
 ])assert.ok(edge.includes(token),`Stage 7 Edge transition handoff missing ${token}`);
 assert.doesNotMatch(edge,/"transition-(report|approve)"/,'Stage 6 approval routes must retire after Stage 7 cutover');
 
@@ -61,7 +61,7 @@ for(const token of [
 ])assert.ok(features.includes(token),`WEB Server adapter missing ${token}`);
 
 for(const token of [
-  'const API_VERSION=2','const SCHEMA_VERSION=450','transitionReview',
+  'const API_VERSION=2.1','const SCHEMA_VERSION=451','transitionReview',
   'openTransitionReview','transitionReportMarkup','bindTransitionApproval',
   '6-2 성역 카드 비교','6-3 일정 결과 비교','6-4·6-5 운영·장애 검증','6-6 롤백·전환 대상',
   '전환 범위 승인','이 승인은 실행 허가를 기록할 뿐 지금 데이터를 변경하지 않습니다.',
@@ -82,8 +82,8 @@ for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   for(const token of [
     'id="sanctuaryManagementTransitionReview"',
     'sanctuary-management.css?cache=2026082903',
-    'kinojo-supabase-features.js?cache=2026083020',
-    'sanctuary-management.js?cache=2026083020',
+    'kinojo-supabase-features.js?cache=2026083030',
+    'sanctuary-management.js?cache=2026083030',
   ])assert.ok(html.includes(token),`${page}: missing ${token}`);
 }
 

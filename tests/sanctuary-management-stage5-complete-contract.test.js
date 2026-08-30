@@ -26,10 +26,10 @@ for(const token of [
 assert.ok(performanceGuard.includes('sanctuary_management_schedule_versions_v437_created_by_idx'),'DB437 actor FK performance guard missing');
 
 for(const token of [
-  'const API_VERSION="2.0"','const DATABASE_CONTRACT="450"','"archive-preview"',
-  'kinojo_sanctuary_management_bootstrap_v450','kinojo_sanctuary_management_month_v450',
+  'const API_VERSION="2.1"','const DATABASE_CONTRACT="451"','"archive-preview"',
+  'kinojo_sanctuary_management_bootstrap_v451','kinojo_sanctuary_management_month_v451',
   'kinojo_sanctuary_management_notification_summary_v446','kinojo_sanctuary_management_archive_preview_v446',
-  'kinojo_sanctuary_management_command_v450',
+  'kinojo_sanctuary_management_command_v451',
 ])assert.ok(edge.includes(token),`Current Edge contract missing ${token}`);
 
 for(const token of [
@@ -45,7 +45,7 @@ for(const token of [
 assert.equal((common.match(/commonNotificationTimer=setInterval/g)||[]).length,1,'common notification must keep one polling timer');
 
 for(const token of [
-  'const API_VERSION=2','const SCHEMA_VERSION=450','sanctuary-management-calendar-grid',
+  'const API_VERSION=2.1','const SCHEMA_VERSION=451','sanctuary-management-calendar-grid',
   "['OCCURRENCE','FUTURE','ALL']",'openScheduleOperation','EDIT_SCHEDULE',
   'openArchiveOperation','archivePreview','futureOccurrenceCount','pendingSupportCount',
   "event.key==='Escape'","event.key!=='Tab'",'applyDeepLink','data-sanctuary-schedule-team',
@@ -59,7 +59,7 @@ for(const token of [
 
 for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
-  for(const token of ['sanctuary-management.css?cache=2026082903','sanctuary-management.js?cache=2026083020','sanctuary-management-support.js?cache=2026082923','kinojo-supabase-features.js?cache=2026083020','kinojo-common-ui.js?cache=2026083001'])assert.ok(html.includes(token),`${page}: missing ${token}`);
+  for(const token of ['sanctuary-management.css?cache=2026082903','sanctuary-management.js?cache=2026083030','sanctuary-management-support.js?cache=2026082923','kinojo-supabase-features.js?cache=2026083030','kinojo-common-ui.js?cache=2026083001'])assert.ok(html.includes(token),`${page}: missing ${token}`);
 }
 
 console.log('KINOJO sanctuary management Stage 5 preserved under Stage 6 contract: PASS');
