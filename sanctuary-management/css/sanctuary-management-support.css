@@ -86,6 +86,7 @@ body.sanctuary-management-force-overview-open{overflow:hidden}
 .sanctuary-management-force-card.is-pending{background:transparent}
 .sanctuary-management-force-card:hover,
 .sanctuary-management-force-card:focus-within,
+.sanctuary-management-force-card.is-supportable:hover,
 .sanctuary-management-force-card.is-supportable:focus-visible{background:#eefaf4}
 .sanctuary-management-support-forces button,
 .sanctuary-management-support-forces button.is-active,
