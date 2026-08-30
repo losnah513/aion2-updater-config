@@ -13,7 +13,16 @@
 - 레기온 순위 통합 패널: PR `#164` 병합 완료
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 최신 일일 로그를 작업 규칙 원본으로 사용한다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
-- 성역 관리 Stage 7 기술 전환 기준: PR `#328` + `#329` + `#330`, main `377f44b244b30b858f3bf43f48229390c4952b9f`, Edge `sanctuary-management` v16(API 1.8 / DB446), transition run 1 `COMPLETE`, 진행도 `57/59`. 다음은 7-7 사용자 최종 검수 뒤 구 페이지·버튼 정리 여부 확정이다.
+- 성역 관리 Stage 7 기술 전환·정식 승격 기준: PR `#328` + `#329` + `#330` + `#337` + `#338`, main `6e713e87455c3af7194b401342fb315bb942097f`, Edge `sanctuary-management` v16(API 1.8 / DB446), copy renderer v20(DB447), transition run 1 `COMPLETE`, 진행도 `58/59`. 다음은 7-8 규칙·운영·복구 문서와 프로젝트 종료 정리다.
+
+## 성역 관리 Stage 7-7 후속 · 단일 확대 포스와 전체 포스 모달 · 2026-08-30
+
+- 운영 팀은 PC·모바일 모두 한 번에 1포스만 표시한다. PC는 중앙 최대 700px 카드에 1·2파티를 병렬 배치하고 슬롯 48px·클래스 아이콘 34px·주요 글자 11px로 확대한다. 모바일은 화살표 여백을 없애고 390px viewport에서 카드 281px·슬롯 44px·아이콘 32px를 확보한다.
+- PC 이전·다음은 첫/마지막 경계에서 비활성화되고 순환하지 않는다. 약 0.46초 동안 이동·기울기·축소·명암이 결합된 폴라로이드 전환을 사용하며 reduced-motion은 애니메이션을 제거한다. 모바일은 화살표를 숨기고 48px 이상 좌우 터치 스와이프, 키보드는 좌우 방향키를 지원한다.
+- 팀별 `전체 포스 보기`는 PC 최대 1420px·2열, 980px 이하 1열, 760px 이하 전체 화면 모달이다. 운영 화면과 동일한 `createForceCard`를 재사용하므로 클래스 아이콘·본캐/부캐·내 캐릭터·포스 복사 표시가 중복 구현되지 않는다.
+- 참여 포스 선택은 기존 다중 포스 지원·즉시/승인 처리 화면으로 연결하고 닫으면 최신 bootstrap으로 같은 전체 포스 모달에 복귀한다. 권한자의 `포스·캐릭터 편집`은 기존 local composition·lease·revision·`SAVE_COMPOSITION` 화면으로 연결하며 전체 보기에서 별도 즉시 저장 명령을 추가하지 않는다.
+- 변경 파일은 `sanctuary-management/js/sanctuary-management.js`, `sanctuary-management/js/sanctuary-management-support.js`, `sanctuary-management/css/sanctuary-management-support.css`, PC·모바일 `sanctuary/index.html`, fixture와 roster carousel 계약이다. DB·migration·Edge·운영 팀 데이터는 변경하지 않는다.
+- 로컬 fixture PC 1440×1100과 모바일 390×844에서 단일 포스, 1/5 전환, 전체 포스 5개, 지원 → 전체 모달 복귀, 편집 화면 연결, body/dialog 가로 overflow 0, 콘솔 warning/error 0을 확인했다. KINOJO Pages workflow Node 계약 49/49와 `node --check`, `git diff --check`가 통과한다.
 
 ## 성역 관리 Stage 7-1~7-6 · Server DB 정식 전환 · 2026-08-29
 
@@ -23,10 +32,10 @@
 - 현재 Edge health는 API1.8/DB446, read/write true, rollout OPEN, sheet sync false, transition COMPLETE다. transition report/approve action은 공개 목록에서 제거됐고 COMPLETE bootstrap 뒤 WEB의 전환 검수 버튼도 숨겨진다.
 - 성역 4 기준 DB 이름은 `비탄의 설원`, 시작일은 `2026-09-09`다. 신규 관리에는 표시하되 구 성역 화면 enabled는 false로 유지한다.
 - PC 1920×1080과 모바일 390×844 모두 document 가로 overflow 0이다. PC 팀 구성 모달 오른쪽에 일정 패널, 모바일에서는 일정 패널이 팀 구성 위에 놓인다. 일정 deep link, API/DB badge, 성역 1~4, COMPLETE 안내, 콘솔 error 0을 production에서 확인했다.
-- 사용자의 최신 결정에 따라 `/sanctuary/`, `/sanctuary-schedule/`과 모바일 두 경로, 탑바·drawer 구 버튼은 제거하거나 redirect하지 않는다. 신규 관리 전체 구현·사용자 실화면 검수·후속 수정 완료 뒤 별도 승인으로만 정리한다.
+- 이후 사용자 승인과 7-7 검수를 거쳐 신규 관리 화면을 PC·모바일 `/sanctuary/` 정식 페이지로 승격했다. 구 `/sanctuary-management/`는 쿼리·해시를 보존해 정식 주소로, `/sanctuary-schedule/`은 `view=schedule`을 추가해 정식 주소로 이동하며 탑바·drawer는 성역 1~4만 표시한다.
 - 전체 Node 계약 80/80 PASS. Stage 7 migration은 `20260829061610`, settings hotfix `20260829063301`, sanctuary 4 name `20260829071000`, FK performance guard `20260829072000`이다. Advisor의 Stage 7 security 항목은 private service-only table의 RLS-no-policy INFO 2건, performance는 적용 직후 unused index INFO뿐이다.
 - 복구는 run ID 1의 service-only `kinojo_sanctuary_management_stage7_restore_v446`으로 exact backup 범위만 되돌린다. COMPLETE 뒤 임의 복구를 실행하지 말고, 실제 장애와 승인된 대상 범위를 다시 확인한 뒤 사용한다.
-- 진행도는 **57/59**다. 현재 7-7은 사용자 최종 검수 대기, 7-8은 7-7 결정 반영 뒤 성역 규칙·운영·복구 문서 최종 종료다.
+- 진행도는 **58/59**다. 7-7 정식 승격과 후속 단일 포스·전체 포스 UI가 완료됐고, 7-8은 현재 규칙·운영·복구 문서와 프로젝트 종료 정리다.
 
 ## 참고 이미지 제작 요청 1회 확인 통합 · 2026-08-29
 
