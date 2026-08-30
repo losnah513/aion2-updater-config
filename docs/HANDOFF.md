@@ -16,6 +16,7 @@
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 작업 대상별 세부 규칙과 최신 프로젝트 LOG를 작업 규칙 원본으로 사용한다. 성역 작업은 최신 `KINOJO_SANCTUARY_RULES.md`와 Stage 7 종료 문서를 추가로 읽는다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
 - 성역·스케줄 관리 개편은 Stage 7-8까지 **59/59 CLOSED**다. 제품 전환·종료는 PR `#328` + `#329` + `#330` + `#337` + `#338` + `#339` + `#342`, UI 기준 main `3e8d253e818349357f171ca4b025ca9d10062ae6`, Edge `sanctuary-management` v16(API 1.8 / DB446), copy renderer v20(DB447), transition run 1 `COMPLETE`다. 최종 운영·복구 기준은 `docs/SANCTUARY_MANAGEMENT_STAGE7_CLOSEOUT_20260830.md`를 따른다.
+- 성역 Stage 9 후속은 **77/77 CLOSED**다. 활성 제품 계약은 Edge `sanctuary-management` API 2.2 / DB452이며, 입장 아이템 레벨·성역 3 난이도·랜덤 부캐·연결 부캐 노출·전투력/아이템 레벨 공식 파싱·고밀도 지원 카드 기준은 `docs/SANCTUARY_MANAGEMENT_STAGE9_CLOSEOUT_20260830.md`를 따른다. Stage 7 백업·복구 경계는 기존 종료 문서를 계속 따른다.
 
 ## HOME 로딩·외부 레이아웃 안정화 종료 · 2026-08-30
 
