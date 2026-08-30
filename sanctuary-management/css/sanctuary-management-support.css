@@ -76,3 +76,37 @@ body.sanctuary-management-force-overview-open{overflow:hidden}
 @media(max-width:560px){.sanctuary-management-force-carousel-head{justify-content:space-between}.sanctuary-management-force-parties{grid-template-columns:1fr}.sanctuary-management-force-card{padding:13px}.sanctuary-management-force-party{padding:8px}.sanctuary-management-force-slot{min-height:44px;padding:5px 6px;grid-template-columns:18px 32px 5em minmax(0,1fr);gap:6px}.sanctuary-management-force-slot-icon{width:32px;height:32px}.sanctuary-management-force-slot-name{font-size:10px}.sanctuary-management-force-slot-server{font-size:9px}}
 @media(max-width:380px){.sanctuary-management-force-overview-dialog>footer>div{grid-template-columns:1fr}.sanctuary-management-force-overview-dialog>footer .kinojo-btn{width:100%}.sanctuary-management-force-slot{grid-template-columns:16px 30px 5em minmax(0,1fr)}.sanctuary-management-force-slot-icon{width:30px;height:30px}}
 @media(prefers-reduced-motion:reduce){.sanctuary-management-force-grid>.sanctuary-management-force-card{animation:none!important;transition:none!important}}
+
+/* Canonical Sanctuary visual policy: class artwork has no coloured tile behind
+   it, force cards are transparent until hover/focus, and all selection rings
+   stay inside clipped panels so their rounded corners remain visible. */
+.sanctuary-management-force-card,
+.sanctuary-management-force-card.is-unavailable,
+.sanctuary-management-force-card.is-assigned,
+.sanctuary-management-force-card.is-pending{background:transparent}
+.sanctuary-management-force-card:hover,
+.sanctuary-management-force-card:focus-within,
+.sanctuary-management-force-card.is-supportable:focus-visible{background:#eefaf4}
+.sanctuary-management-support-forces button,
+.sanctuary-management-support-forces button.is-active,
+.sanctuary-management-support-forces button.is-selected{background:transparent}
+.sanctuary-management-support-forces button:hover,
+.sanctuary-management-support-forces button:focus-visible{background:#eefaf4}
+
+:is(.sanctuary-management-force-slot-icon,.sanctuary-management-support-avatar,.sanctuary-management-candidate-avatar,.sanctuary-management-search-result-avatar):has(>img){border-radius:0;background:transparent!important;color:inherit}
+:is(.sanctuary-management-force-slot-icon,.sanctuary-management-support-avatar,.sanctuary-management-candidate-avatar,.sanctuary-management-search-result-avatar):has(>img)>img{object-fit:contain}
+
+.sanctuary-management-team-card.is-deep-linked,
+.sanctuary-management-side>section.is-deep-linked{box-shadow:inset 0 0 0 3px rgba(76,104,224,.22),0 18px 36px rgba(31,48,84,.13)}
+.sanctuary-management-support-forces button.is-active,
+.sanctuary-management-support-character.is-selected{box-shadow:inset 0 0 0 2px rgba(77,105,235,.18)}
+.sanctuary-management-force-slot.is-viewer-character{box-shadow:inset 0 0 0 2px rgba(103,92,231,.32)}
+.sanctuary-management-draft-slot.is-move-source,
+.sanctuary-management-draft-slot.is-dragging{box-shadow:inset 0 0 0 2px rgba(114,80,235,.2)}
+
+.sanctuary-management-scope button:focus-visible,
+.sanctuary-management-calendar-day button:focus-visible,
+.sanctuary-management-operation-options input:focus-visible+span,
+.sanctuary-management-operation-weekdays input:focus-visible+span,
+.sanctuary-management-transition-confirm-list input:focus-visible+span,
+.sanctuary-management-draft-layer :is(button,input,select,[tabindex]):focus-visible{outline:0;box-shadow:inset 0 0 0 3px rgba(37,99,235,.42)}

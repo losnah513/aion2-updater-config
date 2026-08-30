@@ -38,6 +38,14 @@
 - WEB PR `#346`은 공개/로그인 projection 전환 때 bootstrap을 다시 읽고 비로그인 상태에서도 백그라운드 변경 감지와 수동 새로고침을 유지한다. 팀 추가·지원·편집 버튼은 공개 보기에서 비활성이다.
 - 운영 readback은 공개 bootstrap HTTP 200, 성역 4개, 운영 팀 2개, `writeEnabled=false`, 공개 month HTTP 200, 비로그인 command HTTP 401이었다. 공개 팀·포스 응답에서 계정 member ID와 viewer 지원·관리 상태가 제거됐음을 DB 집계로 확인했다.
 
+## 성역 클래스 아이콘·포스 배경·강조선 후속 · 2026-08-30
+
+- 정식 PC·모바일 성역 페이지의 운영 포스, 전체 포스 보기, 지원 모달, 고정·참여 팀 생성과 편집 모달은 클래스 이미지가 있을 때 아이콘 래퍼의 보라·파랑 배경과 둥근 타일을 표시하지 않는다. 클래스 이미지 자체만 `contain`으로 표시하며, 빈 슬롯 `+`와 클래스 정보가 없는 fallback은 기존 배경을 유지한다.
+- 포스 카드와 지원 모달의 포스 선택 카드는 기본 배경이 투명하다. 마우스 hover나 키보드 focus가 들어온 동안에만 연한 초록 `#eefaf4` 배경으로 바뀐다. 참여·대기·선택 상태는 배경을 상시 칠하지 않고 테두리·문구로 구분한다.
+- clipped panel 안의 팀 deep link, 지원 포스·캐릭터 선택, 내 캐릭터 슬롯, 드래그 원본, 일정·요일·검색 입력 focus 강조는 바깥 outline/ring 대신 inset box-shadow를 사용한다. rounded corner 강조선이 부모 overflow에서 잘리지 않게 한다.
+- 변경 소유 파일은 `sanctuary-management/css/sanctuary-management-support.css` 하나이며 PC·모바일 `sanctuary/index.html`에서 cache/canonical `2026083006`으로 연결한다. 전용 계약은 `tests/sanctuary-management-transparent-icons-focus-contract.test.js`이고 Pages workflow에 포함한다.
+- 로컬 fixture PC와 390×844에서 운영 포스, 지원 선택, 고정 팀 생성, 참여 팀 편집과 검색 결과를 확인했다. document/dialog 가로 overflow 0, console warning/error 0이며 DB·Edge·운영 성역 데이터는 변경하지 않는다.
+
 ## 성역 팀 구성 모달 가독성 후속 · 2026-08-30
 
 - 고정 팀 생성·참여 팀 생성·기존 팀 편집은 `sanctuary-management-draft.js`의 같은 슬롯·후보 렌더러와 `sanctuary-management-draft.css`의 같은 가독성 규칙을 사용한다. 편집 화면만 별도로 키우는 분기나 중복 마크업을 만들지 않는다.

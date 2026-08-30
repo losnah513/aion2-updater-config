@@ -175,6 +175,7 @@ jobs:
           node tests/sanctuary-management-creator-candidates-contract.test.js
           node tests/sanctuary-management-character-search-contract.test.js
           node tests/sanctuary-management-editor-readability-contract.test.js
+          node tests/sanctuary-management-transparent-icons-focus-contract.test.js
           node tests/sanctuary-management-edge-contract.test.js
           node tests/sanctuary-management-public-read-contract.test.js
           node tests/sanctuary-management-stage3-complete-contract.test.js
