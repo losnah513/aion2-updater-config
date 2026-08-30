@@ -118,6 +118,8 @@
     if(root) ensureScrollViewport(root);
     if(!observer && document.body){
       observer=new MutationObserver(records=>{
+        const activeRoot=document.getElementById('kinojoCharacterReactionModal');
+        if(activeRoot) ensureScrollViewport(activeRoot);
         if(records.some(record=>{
           const target=record.target;
           if(target?.nodeType===1 && (target.matches?.('#kinojoCharacterReactionModal,#kinojoCharacterReactionAvatar') || target.closest?.('#kinojoCharacterReactionModal'))) return true;

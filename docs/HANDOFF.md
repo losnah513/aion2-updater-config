@@ -11,6 +11,7 @@
 - 내 정보 후속 A-1~E-2: 12/12 완료
 - My Info / 관리자 이미지 모달 추가 UI 후속: PR `#197` 구현·배포·동기화 기준 CLOSED · 수동 실브라우저 sanity check는 post-close 보류
 - 레기온 순위 통합 패널: PR `#164` 병합 완료
+- 캐릭터 상세 모달 지연 생성 스크롤 복구: PR `#340`, main `751239c0a3646cea74dfdf71ce80bea97323a245`, Pages·custom-domain readback 완료
 - Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 작업 대상별 세부 규칙과 최신 프로젝트 LOG를 작업 규칙 원본으로 사용한다. 성역 작업은 최신 `KINOJO_SANCTUARY_RULES.md`와 Stage 7 종료 문서를 추가로 읽는다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
 - 성역·스케줄 관리 개편은 Stage 7-8까지 **59/59 CLOSED**다. 제품 전환·종료는 PR `#328` + `#329` + `#330` + `#337` + `#338` + `#339` + `#342`, UI 기준 main `3e8d253e818349357f171ca4b025ca9d10062ae6`, Edge `sanctuary-management` v16(API 1.8 / DB446), copy renderer v20(DB447), transition run 1 `COMPLETE`다. 최종 운영·복구 기준은 `docs/SANCTUARY_MANAGEMENT_STAGE7_CLOSEOUT_20260830.md`를 따른다.
@@ -21,6 +22,14 @@
 - `KINOJO_SANCTUARY_RULES.md`를 DB446 이후 계약으로 교체했다. 팀=일정, 1포스=2파티=10슬롯, 최대 9포스, 팀 간 일정 충돌, 즉시·승인 참가, 임시 편성안+`SAVE_COMPOSITION`, lease·revision·ADMIN 보안 경계를 공식 규칙으로 고정했다.
 - run ID 1의 exact backup 421행과 service-only `kinojo_sanctuary_management_stage7_restore_v446` 경계를 종료 문서에 기록했다. 복구는 백업 행만 되돌리며 전환 뒤 신규 운영 데이터를 자동 정리하지 않으므로 장애·승인·신규 데이터 보존 확인 없이 실행하지 않는다.
 - 프로젝트 공식 계획서와 LOG는 Drive 원본까지 동기화하며, 현재 작업·다음 작업 없음, 완료 59/59, 남은 작업 0/59로 종료한다. 이후 큰 정책·화면 변경은 별도 후속 계획으로 시작한다.
+
+## 캐릭터 상세 모달 지연 생성 스크롤 복구 · 2026-08-30
+
+- 원인: 공용 애니메이션 CSS는 바깥 `.kinojo-character-reaction-dialog`를 `overflow:hidden`으로 잠그고 안쪽 `.kinojo-character-reaction-scroll`이 스크롤을 맡도록 정의한다. 그러나 카드 클릭 뒤 모달이 지연 생성될 때 `ui/kinojo-character-skill-bridge.js`의 시작 시점 검사에는 모달이 없었고, 이후 MutationObserver도 내부 viewport를 만들지 않아 긴 상세 정보가 모달 높이 밖에서 잘렸다.
+- 수정: 기존 스크롤 소유자인 `ui/kinojo-character-skill-bridge.js`의 observer가 활성 모달을 발견할 때마다 `ensureScrollViewport`를 호출한다. 중복 구현 없이 래퍼 수를 정확히 1개로 유지하며, PC·모바일 ranking/HOF의 bridge cache는 `2026083001`이다.
+- 검증: 로컬과 실서비스에서 모바일 `390x844`, 소형 모바일 `320x568`, 정확한 경계 `760x900`, PC `1280x900`을 확인했다. 모든 크기에서 dialog/document 가로 overflow 0, 내부 overflow `auto`, 래퍼 1개이며 실제 휠 스크롤이 이동했다. PR `#340` source check, main Pages 배포, custom-domain live readback이 통과했다.
+- 회귀: `node --check`와 `tests/character-skill-current-state-contract.test.js`는 PASS다. 전체 Node 계약은 85개 중 83개 PASS이며 `sanctuary-permission-matrix-contract.test.js`, `sanctuary-sync-schedule-contract.test.js` 2개는 이번 파일 범위 밖에서 최신 main에도 존재하는 Sanctuary 계약 불일치로 분리했다.
+- 병합·롤백: PR `#340`은 main `751239c0a3646cea74dfdf71ce80bea97323a245`로 squash 병합됐다. 롤백은 해당 커밋의 bridge observer 2줄과 4개 페이지 cache·회귀 계약·README 변경만 되돌리며 DB·Edge·운영 데이터는 변경하지 않는다.
 
 ## 성역 관리 Stage 7-7 후속 · 단일 확대 포스와 전체 포스 모달 · 2026-08-30
 

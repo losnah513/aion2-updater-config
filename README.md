@@ -87,7 +87,8 @@ KINOJO INFO GitHub Pages upload package.
 
 ## Character detail modal
 
-- The shared modal lives in `ui/kinojo-character-reaction.*` and is used by Hall of Fame, ranking, and sanctuary pages on PC and mobile.
+- The shared modal lives in `ui/kinojo-character-reaction.*` and is used by Hall of Fame and ranking pages on PC and mobile.
+- `ui/kinojo-character-skill-bridge.js` repairs the internal `.kinojo-character-reaction-scroll` viewport when a card click creates the modal lazily. The outer dialog stays locked while the internal viewport owns vertical scrolling.
 - The overview keeps stats and skills side by side on desktop, with independent category tabs to reduce vertical scrolling.
 - Skill cards highlight levels 20+, 25+, and 30+ with yellow, orange, and red gradient borders and badges.
 - The character header uses the original square profile image and groups class, server, level, legion, and title without repeating those facts below the stats.
