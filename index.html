@@ -1,8 +1,8 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>KINOJO INFO</title>
 <meta name="description" content="아이온2 지켈 서버 깡 레기온의 비공식 정보 사이트입니다.">
 <link rel="canonical" href="https://kinojo.info/">
@@ -18,32 +18,146 @@
 <meta name="twitter:title" content="KINOJO INFO">
 <meta name="twitter:description" content="아이온2 지켈 서버 깡 레기온의 비공식 정보 사이트입니다.">
 <meta name="twitter:image" content="https://kinojo.info/assets/images/common/kinojo-og.jpg">
-  <script>
-    (function () {
-      'use strict';
-      var params = new URLSearchParams(window.location.search || '');
-      var forcedView = params.get('view') || params.get('device') || '';
-      if (forcedView === 'desktop' || forcedView === 'pc') {
-        try { sessionStorage.setItem('kinojoPreferredView', 'desktop'); } catch (error) {}
-      }
-      if (forcedView === 'mobile') {
-        try { sessionStorage.setItem('kinojoPreferredView', 'mobile'); } catch (error) {}
-      }
-      var preferredView = '';
-      try { preferredView = sessionStorage.getItem('kinojoPreferredView') || ''; } catch (error) {}
-      var ua = navigator.userAgent || navigator.vendor || '';
-      var uaMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
-      var coarsePointer = false;
-      try { coarsePointer = window.matchMedia && window.matchMedia('(pointer: coarse)').matches; } catch (error) {}
-      var narrow = window.innerWidth > 0 && window.innerWidth <= 820;
-      var mobile = preferredView === 'mobile' || (preferredView !== 'desktop' && (uaMobile || (coarsePointer && narrow)));
-      var target = mobile ? 'm/' : 'home.html';
-      window.location.replace(target + window.location.search + window.location.hash);
-    })();
-  </script>
+<link rel="stylesheet" href="ui/info-home.css?cache=2026083002">
+<link rel="stylesheet" href="ui/kinojo-sanctuary-cards.css?cache=2026083002">
+  <link rel="stylesheet" href="ui/kinojo-common-ui.css?cache=2026081205">
+  <link rel="stylesheet" href="ui/kinojo-public-shell.css?cache=2026083001">
+  <link rel="stylesheet" href="ui/kinojo-pc-banners.css?cache=2026083001">
+  <link rel="stylesheet" href="ui/kinojo-staged-loading.css?cache=2026083001">
+<script src="ui/kinojo-device-router.js?cache=2026062610" data-mobile-path="m/"></script>
+<link rel="stylesheet" href="ui/kinojo-event-notice.css?cache=2026081003">
+<style data-kinojo-home-critical>
+  html,body{margin:0}
+  body.kinojo-page-home{padding-top:69px!important}
+  body.kinojo-page-home>.kinojo-home-subbar{display:block;position:sticky;top:69px;z-index:90;width:100%;height:1px;min-height:1px;max-height:1px;box-sizing:border-box;margin:0}
+  @media(max-width:1080px){
+    body.kinojo-page-home{padding-top:63px!important}
+    body.kinojo-page-home>.kinojo-home-subbar{top:63px}
+  }
+  @media(min-width:1840px){
+    body.kinojo-page-home>.kinojo-home-subbar{height:52px;min-height:52px;max-height:52px}
+    body.kinojo-page-home>.wrap.kinojo-pc-standard-host{width:1180px;max-width:1180px;margin-left:auto;margin-right:auto;padding-left:44px;padding-right:44px}
+    body.kinojo-page-home .kinojo-pc-banner-slot{display:grid;position:fixed;top:121px;width:300px;height:715px}
+    body.kinojo-page-home .kinojo-pc-banner-slot.is-left{left:calc(50% - 904px)}
+    body.kinojo-page-home .kinojo-pc-banner-slot.is-right{left:calc(50% + 604px)}
+  }
+  /* Keep the home hero bounded even when an external stylesheet is stale or delayed. */
+  .kinojo-main-banner{
+    display:block;
+    width:min(960px,100%);
+    margin:14px auto 0;
+    overflow:hidden;
+  }
+  .kinojo-main-banner>img{
+    display:block;
+    width:100%;
+    height:auto;
+    aspect-ratio:16/9;
+    object-fit:cover;
+  }
+  .kinojo-main-banner.is-manifest-pending{
+    background:#eaf0f7;
+  }
+  .kinojo-main-banner.is-manifest-pending>img{
+    visibility:hidden;
+  }
+</style>
+<noscript><style>.kinojo-main-banner.is-manifest-pending>img{visibility:visible}</style></noscript>
 </head>
-<body>
-  <p>KINOJO INFO로 이동 중입니다.</p>
-  <p><a href="home.html?view=desktop">PC 화면으로 열기</a> · <a href="m/?view=mobile">모바일 화면으로 열기</a></p>
+<body class="kinojo-page-home" data-kinojo-page="home">
+<section class="kinojo-home-subbar kinojo-standard-subbar kinojo-attached-subbar" aria-label="HOME 보조 메뉴"></section>
+<main class="wrap kinojo-pc-banner-host kinojo-pc-standard-host">
+  <aside class="kinojo-pc-banner-slot is-left" data-kinojo-pc-banner aria-hidden="true"></aside>
+  <aside class="kinojo-pc-banner-slot is-right" data-kinojo-pc-banner aria-hidden="true"></aside>
+  <section class="hero">
+    <div class="eyebrow">✨ AION2 · KINOJO PORTAL</div>
+    <a class="kinojo-main-banner is-manifest-pending" href="hof/" aria-label="KINOJO INFO 명예의 전당 열기" aria-busy="true">
+      <img id="kinojo-main-banner-image" src="assets/images/common/kinojo-og.jpg?cache=26062218" alt="KINOJO INFO 깡 레기온 대표 배너">
+    </a>
+    <p class="subtitle">아이온2 지켈 서버 깡 레기온의 비공식 정보 사이트입니다.</p>
+  </section>
+  <section class="sanctuary-row" aria-label="성역 파티 확인" data-sanctuary-master-list="desktop" data-sanctuary-base="sanctuary/">
+    <div class="sanctuary-master-loading">성역 목록을 불러오는 중입니다.</div>
+  </section>
+  <footer class="footer common-footer">
+    <div class="footer-links">
+      <button type="button" data-drawer="about">사이트 소개</button>
+      <button type="button" data-drawer="terms">이용약관</button>
+      <button type="button" data-drawer="privacy">개인정보처리방침</button>
+      <button type="button" data-drawer="contact">아이디어 제안 및 건의</button>
+    </div>
+    <div class="footer-powered">Powered by AION2 · 깡 레기온 지원</div>
+  </footer>
+</main>
+
+<script defer src="core/kinojo-api.js?cache=2026062610"></script>
+<script defer src="core/kinojo-cache.js?cache=2026062610"></script>
+<script defer src="core/kinojo-permissions.js?cache=2026071517"></script>
+<script defer src="core/kinojo-toast.js?cache=2026062610"></script>
+<script defer src="core/kinojo-modal.js?cache=2026062610"></script>
+<script defer src="core/kinojo-route-guard.js?cache=2026082003"></script>
+<script defer src="core/kinojo-debug.js?cache=2026062610"></script>
+<script defer src="core/kinojo-logger.js?cache=2026062610"></script>
+<script defer src="ui/kinojo-common-ui.js?cache=2026083001"></script>
+<script defer src="ui/kinojo-staged-loading.js?cache=2026083001"></script>
+<script defer src="ui/kinojo-admin-panel.js?cache=2026071712"></script>
+<script defer src="core/kinojo-supabase-client.js?cache=2026080205"></script>
+<script defer src="ui/kinojo-banner-runtime.js?cache=2026083001"></script>
+<script defer src="core/kinojo-supabase-rpc.js?cache=2026082806"></script>
+  <script defer src="core/kinojo-supabase-features.js?cache=2026082902"></script>
+<script defer src="core/kinojo-auth-session.js?cache=2026081801"></script>
+<script defer src="core/kinojo-auth-service.js?cache=2026081801"></script>
+<script defer src="core/kinojo-auth-ui.js?cache=2026082901"></script>
+<script defer src="ui/kinojo-event-notice.js?cache=2026081003"></script>
+<script defer src="ui/kinojo-pc-banners.js?cache=2026083001"></script>
+<script>
+  (() => {
+    const mountHomeMainBanner = () => {
+    const banner = document.getElementById('kinojo-main-banner-image');
+    const bannerLink = banner?.closest('.kinojo-main-banner') || document.querySelector('.kinojo-main-banner');
+    const runtime = window.KinojoBannerRuntime;
+    if (!banner || !bannerLink) return;
+
+    const revealBanner = () => {
+      bannerLink.classList.remove('is-manifest-pending');
+      bannerLink.removeAttribute('aria-busy');
+    };
+    if (!runtime?.mountBanner) {
+      revealBanner();
+      return;
+    }
+
+    const fallback = {
+      src: banner.getAttribute('src') || '',
+      alt: banner.getAttribute('alt') || 'KINOJO INFO 깡 레기온 대표 배너',
+      href: bannerLink.getAttribute('href'),
+      ariaLabel: bannerLink.getAttribute('aria-label') || 'KINOJO INFO 대표 배너'
+    };
+    const restoreFallback = () => {
+      banner.setAttribute('src', fallback.src);
+      banner.setAttribute('alt', fallback.alt);
+      if (fallback.href) bannerLink.setAttribute('href', fallback.href);
+      else bannerLink.removeAttribute('href');
+      bannerLink.setAttribute('aria-label', fallback.ariaLabel);
+      revealBanner();
+    };
+
+    runtime.mountBanner({
+      pageCode: 'HOME',
+      slotCode: 'MAIN',
+      fallbackAlt: 'KINOJO INFO 깡 레기온 대표 배너',
+      ensureElements: () => ({ host: bannerLink, image: banner }),
+      deactivate: restoreFallback,
+      onActive: revealBanner,
+      onError: (error) => {
+        revealBanner();
+        console.warn('[KINOJO BANNER] HOME:MAIN Manifest 재생 중 오류가 발생해 현재 배너를 유지합니다.', error);
+      }
+    });
+    };
+    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mountHomeMainBanner, { once:true });
+    else mountHomeMainBanner();
+  })();
+</script>
 </body>
 </html>

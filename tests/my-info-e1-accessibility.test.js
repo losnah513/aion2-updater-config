@@ -20,8 +20,8 @@ for(const token of [
   'closeMyInfoPanel(false)',
   "const clipped=Array.from(panel.querySelectorAll('.kinojo-my-info-character-name')).some(element=>element.scrollWidth>element.clientWidth+1)",
   'if(wasOpen&&restoreFocus)focusMyInfoElement_',
-  "q('#kinojoMyInfoPanel')?.addEventListener('keydown'",
-  "q('.kinojo-my-info-modal-dialog',q('#kinojoMyInfoModal'))?.addEventListener('keydown'"
+  "q('#kinojoMyInfoPanel',layer)?.addEventListener('keydown'",
+  "q('.kinojo-my-info-modal-dialog',modal)?.addEventListener('keydown'"
 ])assert.ok(commonUi.includes(token),`My Info focus contract is missing ${token}`);
 
 assert.match(commonUi,/<aside class="kinojo-my-info-panel"[^>]*role="dialog"[^>]*aria-modal="true"[^>]*tabindex="-1"/,'the blocking side panel must expose modal dialog semantics');

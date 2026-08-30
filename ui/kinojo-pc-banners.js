@@ -2,12 +2,13 @@
   'use strict';
 
   const selector='[data-kinojo-pc-banner]';
+  const desktopQuery=window.matchMedia?.('(min-width: 1840px)')||null;
   const observed=new WeakSet();
   const manifestBound=new WeakSet();
   const runtimeScriptUrl=(()=>{
     try{
       const src=String(document.currentScript?.src||'').trim();
-      return src?new URL('kinojo-banner-runtime.js?cache=2026082302',src).href:'';
+      return src?new URL('kinojo-banner-runtime.js?cache=2026083001',src).href:'';
     }catch(_error){return ''}
   })();
   let runtimePromise=null;
@@ -92,6 +93,9 @@
   }
   function bindManifest(slot){
     if(!slot||manifestBound.has(slot))return;
+    /* A hidden SIDE slot must not fetch its manifest or any media. The same
+       refresh path binds it when the viewport later crosses into PC mode. */
+    if(desktopQuery&&!desktopQuery.matches)return;
     const pageCode=resolvePageCode(),slotCode=resolveSlotCode(slot);if(!pageCode||!slotCode)return;
     manifestBound.add(slot);slot.dataset.kinojoPcBannerTarget=pageCode+':'+slotCode;
     ensureRuntime().then(runtime=>{
@@ -109,5 +113,6 @@
   window.KinojoPcBanners=Object.freeze({refresh,render,clear,resolvePageCode,resolveSlotCode});
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh,{once:true});else refresh();
   window.addEventListener('resize',refresh,{passive:true});
+  desktopQuery?.addEventListener?.('change',refresh);
   if(typeof MutationObserver==='function')new MutationObserver(refresh).observe(document.documentElement,{childList:true,subtree:true});
 })();

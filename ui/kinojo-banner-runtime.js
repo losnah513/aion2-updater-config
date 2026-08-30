@@ -1,4 +1,4 @@
-/* KINOJO public Banner Manifest client v2026082302 */
+/* KINOJO public Banner Manifest client v2026083001 */
 (function(){
   'use strict';
 
@@ -8,6 +8,9 @@
   const PAGE_RE=/^(HOME|HOF|RANKING|LEGION_TREE|METER|SANCTUARY|SANCTUARY_SCHEDULE)$/;
   const SLOT_RE=/^(MAIN|LEFT|RIGHT)$/;
   const STATIC_RE=/^https:\/\/kinojo\.info\/assets\/images\/[A-Za-z0-9._\/-]+$/;
+  const DELIVERY_ALIASES=Object.freeze({
+    'https://kinojo.info/assets/images/common/kinojo_banner_summer.png':'https://kinojo.info/assets/images/common/kinojo_banner_summer.webp'
+  });
   const memory=new Map();
   const inflight=new Map();
   const meta=new Map();
@@ -16,6 +19,7 @@
 
   const text=(value,max=500)=>String(value??'').trim().slice(0,max);
   const clone=value=>value==null?value:JSON.parse(JSON.stringify(value));
+  const deliveryImageUrl=value=>DELIVERY_ALIASES[text(value,3000)]||text(value,3000);
 
   function core(){
     const value=window.KinojoSupabaseClientCore;
@@ -126,7 +130,7 @@
   function getMeta(pageCode,slotCode){const t=target(pageCode,slotCode);return clone(meta.get(t.key)||null)}
 
   function preloadImage(imageUrl){
-    const url=text(imageUrl,3000);if(!url)return Promise.reject(invalid('BANNER_PRELOAD_URL_INVALID'));
+    const url=deliveryImageUrl(imageUrl);if(!url)return Promise.reject(invalid('BANNER_PRELOAD_URL_INVALID'));
     if(preloads.has(url))return preloads.get(url);
     const promise=new Promise((resolve,reject)=>{
       const image=new Image();image.decoding='async';
@@ -144,7 +148,7 @@
   function applyItem(elements,item,fallbackAlt){
     const host=elements?.host,image=elements?.image;if(!host||!image)return false;
     const alt=text(item?.alt,300)||text(fallbackAlt,300)||'KINOJO 배너';
-    image.setAttribute('src',item.imageUrl);image.setAttribute('alt',alt);image.setAttribute('decoding','async');image.setAttribute('draggable','false');
+    image.setAttribute('src',deliveryImageUrl(item.imageUrl));image.setAttribute('alt',alt);image.setAttribute('decoding','async');image.setAttribute('draggable','false');
     if(item.clickUrl)host.setAttribute('href',item.clickUrl);else host.removeAttribute('href');
     host.setAttribute('aria-label',alt);
     return true;
@@ -155,7 +159,7 @@
     if(motionReduced()||duration<=0){applyItem(elements,item,fallbackAlt);return}
     const imageStyle=window.getComputedStyle?window.getComputedStyle(image):{};
     const previous={backgroundImage:host.style.backgroundImage,backgroundSize:host.style.backgroundSize,backgroundPosition:host.style.backgroundPosition,backgroundRepeat:host.style.backgroundRepeat,transition:image.style.transition,opacity:image.style.opacity};
-    host.style.backgroundImage=`url(${JSON.stringify(item.imageUrl)})`;
+    host.style.backgroundImage=`url(${JSON.stringify(deliveryImageUrl(item.imageUrl))})`;
     host.style.backgroundSize=imageStyle.objectFit==='contain'?'contain':'cover';
     host.style.backgroundPosition=imageStyle.objectPosition||'center';
     host.style.backgroundRepeat='no-repeat';
@@ -171,9 +175,9 @@
   function mountBanner(options){
     const t=target(options?.pageCode,options?.slotCode);
     players.get(t.key)?.stop?.();
-    let stopped=false,manifest=null,index=0,elements=null,slideTimer=0,refreshTimer=0,requestSeq=0;
+    let stopped=false,manifest=null,index=0,elements=null,slideTimer=0,preloadTimer=0,refreshTimer=0,requestSeq=0;
     const fallbackAlt=text(options?.fallbackAlt,300)||'KINOJO 배너';
-    const clearTimers=()=>{if(slideTimer){clearTimeout(slideTimer);slideTimer=0}if(refreshTimer){clearTimeout(refreshTimer);refreshTimer=0}};
+    const clearTimers=()=>{if(slideTimer){clearTimeout(slideTimer);slideTimer=0}if(preloadTimer){clearTimeout(preloadTimer);preloadTimer=0}if(refreshTimer){clearTimeout(refreshTimer);refreshTimer=0}};
     const isHidden=()=>document.hidden===true;
     const expired=value=>Date.now()>=Date.parse(value?.validUntil||'');
     function scheduleRefresh(){
@@ -183,6 +187,9 @@
     }
     function scheduleSlide(){
       if(stopped||isHidden()||!manifest?.active||manifest.playlist.length<2)return;
+      const nextIndex=(index+1)%manifest.playlist.length;
+      const preloadDelay=Math.max(0,manifest.rotation.slideIntervalMs-1200);
+      preloadTimer=setTimeout(()=>{preloadTimer=0;preloadImage(manifest.playlist[nextIndex].imageUrl).catch(()=>{})},preloadDelay);
       slideTimer=setTimeout(()=>{slideTimer=0;advance()},manifest.rotation.slideIntervalMs);
     }
     async function install(next,seq){
@@ -194,7 +201,6 @@
       elements=options?.ensureElements?.(next.playlist[0],next)||options?.elements||null;
       if(!elements?.host||!elements?.image)throw invalid('BANNER_PLAYER_ELEMENTS_INVALID');
       applyItem(elements,next.playlist[0],fallbackAlt);options?.onActive?.(next,elements);
-      if(next.playlist.length>1)preloadImage(next.playlist[1].imageUrl).catch(()=>{});
       scheduleSlide();scheduleRefresh();
     }
     async function load(force){
@@ -209,7 +215,6 @@
         await crossfade(elements,item,manifest.rotation.transitionDurationMs,fallbackAlt);
         if(stopped)return;
         index=nextIndex;
-        const following=(index+1)%manifest.playlist.length;preloadImage(manifest.playlist[following].imageUrl).catch(()=>{});
       }catch(error){options?.onError?.(error)}
       scheduleSlide();
     }
@@ -226,5 +231,5 @@
     players.set(t.key,controller);load(false);return controller;
   }
 
-  window.KinojoBannerRuntime=Object.freeze({version:'2026082302',contract:CONTRACT,fetchManifest,peekManifest,getMeta,clearCache,preloadImage,mountBanner});
+  window.KinojoBannerRuntime=Object.freeze({version:'2026083001',contract:CONTRACT,fetchManifest,peekManifest,getMeta,clearCache,preloadImage,mountBanner});
 })();

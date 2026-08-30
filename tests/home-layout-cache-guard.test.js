@@ -6,7 +6,7 @@ const root = path.resolve(__dirname, '..');
 const home = fs.readFileSync(path.join(root, 'home.html'), 'utf8');
 
 assert.ok(
-  home.includes('ui/info-home.css?cache=2026082701'),
+  home.includes('ui/info-home.css?cache=2026083002'),
   'Home stylesheet cache key must advance when the hero layout contract changes'
 );
 assert.match(

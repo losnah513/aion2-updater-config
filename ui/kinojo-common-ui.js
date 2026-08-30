@@ -622,7 +622,6 @@
       else element.style.setProperty('display','none','important');
     });
     if(!loggedIn){resetMyInfoCharacters_();resetMyInfoProfileUi_();closeMyInfoPanel();closeMyInfoModal();}
-    else setTimeout(()=>loadMyInfoCharacters_().catch(()=>{}),0);
   }
 
   function makeTopbar(rescued,info){
@@ -726,6 +725,8 @@
     document.head.appendChild(link);
   }
   function makeMyInfoPanel(){
+    const existing=q('#kinojoMyInfoLayer');
+    if(existing)return existing;
     ensureMyInfoStyles();
     const layer=document.createElement('section');
     layer.className='kinojo-my-info-layer';
@@ -748,6 +749,20 @@
         </div>
       </aside>`;
     document.body.appendChild(layer);
+    q('#kinojoMyInfoMenuBtn',layer)?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();replayMyInfoClickAnimation_(e.currentTarget);openMyInfoModal().catch(()=>{});});
+    q('#kinojoMyInfoPanel',layer)?.addEventListener('keydown',e=>trapMyInfoFocus_(e,e.currentTarget));
+    q('#kinojoMyInfoCloseBtn',layer)?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeMyInfoPanel();});
+    layer.addEventListener('click',e=>{if(e.target===layer)closeMyInfoPanel();});
+    q('#kinojoMyInfoCharacterList',layer)?.addEventListener('click',e=>{
+      const row=e.target instanceof Element?e.target.closest('.kinojo-my-info-character-row'):null;
+      if(!row)return;e.preventDefault();e.stopPropagation();openMyInfoCharacterDetail_(row);
+    });
+    q('#kinojoMyInfoCharacterList',layer)?.addEventListener('keydown',e=>{
+      if(e.key!=='Enter'&&e.key!==' ')return;
+      const row=e.target instanceof Element?e.target.closest('.kinojo-my-info-character-row'):null;
+      if(!row)return;e.preventDefault();e.stopPropagation();openMyInfoCharacterDetail_(row);
+    });
+    return layer;
   }
   const kinojoMyCharactersState={token:'',data:null,promise:null,retryTimer:0};
   const KINOJO_MY_INFO_PANEL_WIDTH=Object.freeze({min:352,max:420,fixed:228});
@@ -2075,6 +2090,9 @@
     }finally{setMyInfoProfileUploading_(false);}
   }
   function makeMyInfoModal(){
+    const existing=q('#kinojoMyInfoModal');
+    if(existing)return existing;
+    ensureMyInfoStyles();
     const modal=document.createElement('section');
     modal.className='kinojo-my-info-modal';
     modal.id='kinojoMyInfoModal';
@@ -2127,7 +2145,7 @@
             </div>
             <input id="kinojoMyInfoReferenceFileInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
             <div class="kinojo-my-info-reference-preview-grid" id="kinojoMyInfoReferenceGrid" role="group" aria-labelledby="kinojoMyInfoReferenceTitle">
-              ${KINOJO_REFERENCE_IMAGE_SLOTS.map(slot=>{const label=slot==='FRONT'?'정면':slot==='BACK'?'후면':'얼굴이 잘 보이는 상반신';return `<article class="kinojo-my-info-reference-slot" data-reference-slot="${slot}" aria-disabled="true"><div class="kinojo-my-info-reference-visual" data-reference-visual><img class="kinojo-my-info-reference-guide" data-reference-guide src="${KINOJO_REFERENCE_GUIDE_ASSETS[slot]}" alt="${label} 촬영 가이드"></div><div class="kinojo-my-info-reference-slot-copy"><b>${slot}</b><span>${label}</span><small data-reference-file-status>등록된 이미지 없음</small></div><div class="kinojo-my-info-reference-slot-actions"><button class="kinojo-my-info-action-btn" data-reference-select-slot="${slot}" type="button" disabled>이미지 선택</button><button class="kinojo-my-info-action-btn" data-reference-cancel-slot="${slot}" type="button" hidden>편집 취소</button><button class="kinojo-my-info-action-btn is-danger" data-reference-delete-slot="${slot}" type="button" hidden>등록 삭제</button></div></article>`;}).join('')}
+              ${KINOJO_REFERENCE_IMAGE_SLOTS.map(slot=>{const label=slot==='FRONT'?'정면':slot==='BACK'?'후면':'얼굴이 잘 보이는 상반신';return `<article class="kinojo-my-info-reference-slot" data-reference-slot="${slot}" aria-disabled="true"><div class="kinojo-my-info-reference-visual" data-reference-visual><img class="kinojo-my-info-reference-guide" data-reference-guide loading="lazy" decoding="async" src="${KINOJO_REFERENCE_GUIDE_ASSETS[slot]}" alt="${label} 촬영 가이드"></div><div class="kinojo-my-info-reference-slot-copy"><b>${slot}</b><span>${label}</span><small data-reference-file-status>등록된 이미지 없음</small></div><div class="kinojo-my-info-reference-slot-actions"><button class="kinojo-my-info-action-btn" data-reference-select-slot="${slot}" type="button" disabled>이미지 선택</button><button class="kinojo-my-info-action-btn" data-reference-cancel-slot="${slot}" type="button" hidden>편집 취소</button><button class="kinojo-my-info-action-btn is-danger" data-reference-delete-slot="${slot}" type="button" hidden>등록 삭제</button></div></article>`;}).join('')}
             </div>
             <div class="kinojo-my-info-reference-status" id="kinojoMyInfoReferenceStatus" data-state="info" role="status" aria-live="polite" aria-atomic="true">캐릭터를 선택하면 슬롯별 이미지를 고를 수 있습니다.</div>
             <section class="kinojo-my-info-request" aria-labelledby="kinojoMyInfoRequestTitle">
@@ -2155,9 +2173,44 @@
         </div>
       </div>`;
     document.body.appendChild(modal);
+    modal.addEventListener('click',e=>{
+      if(!(e.target instanceof Element))return;
+      if(e.target.closest('[data-request-confirm-cancel],#kinojoMyInfoStyleConfirmChooseBtn')){e.preventDefault();e.stopPropagation();closeMyInfoStyleConfirm_();return;}
+      if(e.target.closest('#kinojoMyInfoStyleConfirmSubmitBtn')){e.preventDefault();e.stopPropagation();submitMyInfoImageRequest_({allowNoStyle:true}).catch(()=>{});return;}
+      if(e.target.closest('[data-kinojo-my-info-modal-close]')){e.preventDefault();e.stopPropagation();closeMyInfoModal();return;}
+      const characterButton=e.target.closest('[data-profile-character-id]');
+      if(characterButton){e.preventDefault();e.stopPropagation();selectMyInfoProfileCharacter_(characterButton.dataset.profileCharacterId);return;}
+      const referenceSelect=e.target.closest('[data-reference-select-slot]');
+      if(referenceSelect){e.preventDefault();e.stopPropagation();selectMyInfoReferenceSlot_(referenceSelect.dataset.referenceSelectSlot);return;}
+      const referenceCancel=e.target.closest('[data-reference-cancel-slot]');
+      if(referenceCancel){e.preventDefault();e.stopPropagation();clearMyInfoReferencePreview_(referenceCancel.dataset.referenceCancelSlot,'편집 결과를 취소했습니다. 원본은 저장되거나 업로드되지 않았습니다.');return;}
+      const referenceDelete=e.target.closest('[data-reference-delete-slot]');
+      if(referenceDelete){e.preventDefault();e.stopPropagation();deleteMyInfoReference_(referenceDelete.dataset.referenceDeleteSlot).catch(()=>{});return;}
+      if(e.target.closest('#kinojoMyInfoRequestSubmitBtn')){e.preventDefault();e.stopPropagation();submitMyInfoImageRequest_().catch(()=>{});return;}
+      if(e.target.closest('#kinojoMyInfoProfileSelectBtn')){e.preventDefault();e.stopPropagation();q('#kinojoMyInfoProfileFileInput')?.click();return;}
+      if(e.target.closest('#kinojoMyInfoProfileResetBtn')){e.preventDefault();e.stopPropagation();resetMyInfoProfileOfficial_().catch(()=>{});return;}
+      if(e.target.closest('#kinojoMyInfoProfileRetryBtn')){e.preventDefault();e.stopPropagation();retryMyInfoProfileImage_().catch(()=>{});return;}
+      if(e.target.closest('#kinojoMyInfoProfileUploadBtn')){e.preventDefault();e.stopPropagation();uploadMyInfoProfile_().catch(()=>{});return;}
+      if(e.target.closest('#kinojoMyInfoProfileCancelBtn')){e.preventDefault();e.stopPropagation();clearMyInfoProfilePreview_('선택한 이미지를 취소했습니다.');}
+    });
+    q('.kinojo-my-info-modal-dialog',modal)?.addEventListener('keydown',e=>trapMyInfoFocus_(e,e.currentTarget));
+    q('.kinojo-my-info-request-confirm__dialog',modal)?.addEventListener('keydown',e=>trapMyInfoFocus_(e,e.currentTarget));
+    q('#kinojoMyInfoProfileFileInput',modal)?.addEventListener('change',e=>{handleMyInfoProfileFile_(e.target?.files?.[0]||null).catch(()=>{});});
+    q('#kinojoMyInfoReferenceFileInput',modal)?.addEventListener('change',e=>{handleMyInfoReferenceFile_(e.target?.files?.[0]||null).catch(()=>{});});
+    modal.addEventListener('change',e=>{
+      if(!(e.target instanceof HTMLInputElement)||e.target.name!=='kinojoMyInfoRequestStyle')return;
+      invalidateMyInfoImageRequestResume_();e.target.removeAttribute('aria-invalid');
+      setMyInfoImageRequestStatus_('선택한 스타일과 참고 이미지를 확인한 뒤 요청을 보내 주세요.','info');renderMyInfoImageRequest_();
+    });
+    q('#kinojoMyInfoRequestNote',modal)?.addEventListener('input',e=>{invalidateMyInfoImageRequestResume_();e.currentTarget.removeAttribute('aria-invalid');renderMyInfoImageRequest_();});
+    q('#kinojoMyInfoProfileCharacters',modal)?.addEventListener('scroll',updateMyInfoProfileCharacterOverflow_,{passive:true});
+    window.addEventListener('resize',updateMyInfoProfileCharacterOverflow_,{passive:true});
+    const referenceGrid=q('#kinojoMyInfoReferenceGrid',modal);
+    ['dragenter','dragover','dragleave','drop'].forEach(type=>referenceGrid?.addEventListener(type,event=>{try{handleMyInfoReferenceDrag_(event);}catch(error){console.warn('KINOJO My Info reference drag failed:',error);}}));
+    return modal;
   }
   async function openMyInfoModal(){
-    const modal=q('#kinojoMyInfoModal');
+    const modal=makeMyInfoModal();
     if(!modal||!window.KinojoAuth?.getSession?.())return;
     if(!modal.classList.contains('open'))kinojoMyInfoFocusState.modalReturn=q('#kinojoMyInfoBtn')||(document.activeElement instanceof HTMLElement?document.activeElement:null);
     const token=myInfoSessionToken_();
@@ -2202,7 +2255,7 @@
     if(wasOpen&&restoreFocus)focusMyInfoElement_(returnFocus||q('#kinojoMyInfoBtn'));
   }
   function openMyInfoPanel(){
-    const layer=q('#kinojoMyInfoLayer');
+    const layer=makeMyInfoPanel();
     const btn=q('#kinojoMyInfoBtn');
     if(!layer||!window.KinojoAuth?.getSession?.())return;
     if(!layer.classList.contains('open'))kinojoMyInfoFocusState.panelReturn=document.activeElement instanceof HTMLElement?document.activeElement:btn;
@@ -2442,64 +2495,6 @@
   }
   function bind(){
     q('#kinojoMyInfoBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();replayMyInfoClickAnimation_(e.currentTarget);openMyInfoPanel();});
-    q('#kinojoMyInfoMenuBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();replayMyInfoClickAnimation_(e.currentTarget);openMyInfoModal().catch(()=>{});});
-    q('#kinojoMyInfoModal')?.addEventListener('click',e=>{
-      if(!(e.target instanceof Element))return;
-      if(e.target.closest('[data-request-confirm-cancel],#kinojoMyInfoStyleConfirmChooseBtn')){e.preventDefault();e.stopPropagation();closeMyInfoStyleConfirm_();return;}
-      if(e.target.closest('#kinojoMyInfoStyleConfirmSubmitBtn')){e.preventDefault();e.stopPropagation();submitMyInfoImageRequest_({allowNoStyle:true}).catch(()=>{});return;}
-      if(e.target.closest('[data-kinojo-my-info-modal-close]')){e.preventDefault();e.stopPropagation();closeMyInfoModal();return;}
-      const characterButton=e.target.closest('[data-profile-character-id]');
-      if(characterButton){e.preventDefault();e.stopPropagation();selectMyInfoProfileCharacter_(characterButton.dataset.profileCharacterId);return;}
-      const referenceSelect=e.target.closest('[data-reference-select-slot]');
-      if(referenceSelect){e.preventDefault();e.stopPropagation();selectMyInfoReferenceSlot_(referenceSelect.dataset.referenceSelectSlot);return;}
-      const referenceCancel=e.target.closest('[data-reference-cancel-slot]');
-      if(referenceCancel){e.preventDefault();e.stopPropagation();clearMyInfoReferencePreview_(referenceCancel.dataset.referenceCancelSlot,'편집 결과를 취소했습니다. 원본은 저장되거나 업로드되지 않았습니다.');return;}
-      const referenceDelete=e.target.closest('[data-reference-delete-slot]');
-      if(referenceDelete){e.preventDefault();e.stopPropagation();deleteMyInfoReference_(referenceDelete.dataset.referenceDeleteSlot).catch(()=>{});return;}
-      if(e.target.closest('#kinojoMyInfoRequestSubmitBtn')){e.preventDefault();e.stopPropagation();submitMyInfoImageRequest_().catch(()=>{});return;}
-      if(e.target.closest('#kinojoMyInfoProfileSelectBtn')){e.preventDefault();e.stopPropagation();q('#kinojoMyInfoProfileFileInput')?.click();return;}
-      if(e.target.closest('#kinojoMyInfoProfileResetBtn')){e.preventDefault();e.stopPropagation();resetMyInfoProfileOfficial_().catch(()=>{});return;}
-      if(e.target.closest('#kinojoMyInfoProfileRetryBtn')){e.preventDefault();e.stopPropagation();retryMyInfoProfileImage_().catch(()=>{});return;}
-      if(e.target.closest('#kinojoMyInfoProfileUploadBtn')){e.preventDefault();e.stopPropagation();uploadMyInfoProfile_().catch(()=>{});return;}
-      if(e.target.closest('#kinojoMyInfoProfileCancelBtn')){e.preventDefault();e.stopPropagation();clearMyInfoProfilePreview_('선택한 이미지를 취소했습니다.');}
-    });
-    q('#kinojoMyInfoPanel')?.addEventListener('keydown',e=>trapMyInfoFocus_(e,e.currentTarget));
-    q('.kinojo-my-info-modal-dialog',q('#kinojoMyInfoModal'))?.addEventListener('keydown',e=>trapMyInfoFocus_(e,e.currentTarget));
-    q('.kinojo-my-info-request-confirm__dialog',q('#kinojoMyInfoModal'))?.addEventListener('keydown',e=>trapMyInfoFocus_(e,e.currentTarget));
-    q('#kinojoMyInfoProfileFileInput')?.addEventListener('change',e=>{handleMyInfoProfileFile_(e.target?.files?.[0]||null).catch(()=>{});});
-    q('#kinojoMyInfoReferenceFileInput')?.addEventListener('change',e=>{handleMyInfoReferenceFile_(e.target?.files?.[0]||null).catch(()=>{});});
-    q('#kinojoMyInfoModal')?.addEventListener('change',e=>{
-      if(!(e.target instanceof HTMLInputElement)||e.target.name!=='kinojoMyInfoRequestStyle')return;
-      invalidateMyInfoImageRequestResume_();
-      q('#kinojoMyInfoRequestNote')?.removeAttribute('aria-invalid');
-      setMyInfoImageRequestStatus_('선택한 스타일과 참고 이미지를 확인한 뒤 요청을 보내 주세요.','info');
-      renderMyInfoImageRequest_();
-    });
-    q('#kinojoMyInfoRequestNote')?.addEventListener('input',e=>{
-      invalidateMyInfoImageRequestResume_();
-      e.currentTarget.removeAttribute('aria-invalid');
-      renderMyInfoImageRequest_();
-    });
-    const profileCharacters=q('#kinojoMyInfoProfileCharacters');
-    profileCharacters?.addEventListener('scroll',updateMyInfoProfileCharacterOverflow_,{passive:true});
-    window.addEventListener('resize',updateMyInfoProfileCharacterOverflow_,{passive:true});
-    const referenceGrid=q('#kinojoMyInfoReferenceGrid');
-    ['dragenter','dragover','dragleave','drop'].forEach(type=>referenceGrid?.addEventListener(type,event=>{try{handleMyInfoReferenceDrag_(event);}catch(error){console.warn('KINOJO My Info reference drag failed:',error);}}));
-    q('#kinojoMyInfoCloseBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeMyInfoPanel();});
-    q('#kinojoMyInfoLayer')?.addEventListener('click',e=>{if(e.target.id==='kinojoMyInfoLayer')closeMyInfoPanel();});
-    q('#kinojoMyInfoCharacterList')?.addEventListener('click',e=>{
-      const row=e.target instanceof Element?e.target.closest('.kinojo-my-info-character-row'):null;
-      if(!row)return;
-      e.preventDefault();e.stopPropagation();
-      openMyInfoCharacterDetail_(row);
-    });
-    q('#kinojoMyInfoCharacterList')?.addEventListener('keydown',e=>{
-      if(e.key!=='Enter'&&e.key!==' ')return;
-      const row=e.target instanceof Element?e.target.closest('.kinojo-my-info-character-row'):null;
-      if(!row)return;
-      e.preventDefault();e.stopPropagation();
-      openMyInfoCharacterDetail_(row);
-    });
     q('#drawerToggleBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openSideDrawer();});
     q('#drawerCloseBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeSideDrawer();});
     q('#drawerPageCloseBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeDrawerPagePanel();});
@@ -2567,8 +2562,6 @@
   }
   makeTopbar(rescued,info);
   makeDrawer(info);
-  makeMyInfoPanel();
-  makeMyInfoModal();
   syncDrawerWidth_();
   window.addEventListener('resize',syncDrawerWidth_,{passive:true});
   window.addEventListener('orientationchange',syncDrawerWidth_,{passive:true});

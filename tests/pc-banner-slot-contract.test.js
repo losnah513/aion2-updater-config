@@ -32,9 +32,9 @@ const doubleSlotPages = [
 ];
 for (const file of doubleSlotPages) {
   const html = read(file);
-  const layoutCache=['home.html','ranking/index.html','legion-tree/index.html','meter/index.html'].includes(file)?'2026082811':'2026082203';
+  const layoutCache='2026083001';
   assert.ok(html.includes(`kinojo-pc-banners.css?cache=${layoutCache}`), `${file}: shared PC slot CSS is missing`);
-  const sizingCache=file==='home.html'?'2026082303':'2026082202';
+  const sizingCache='2026083001';
   assert.ok(html.includes(`kinojo-pc-banners.js?cache=${sizingCache}`), `${file}: shared PC slot sizing script is missing`);
   assert.equal((html.match(/data-kinojo-pc-banner/g) || []).length, 2, `${file}: exactly one left and one right slot are required`);
   assert.match(html,/<aside class="kinojo-pc-banner-slot is-left" data-kinojo-pc-banner aria-hidden="true"><\/aside>/, `${file}: left slot must start empty`);
@@ -55,15 +55,15 @@ const standardSubbars={
 for(const [file,classes] of Object.entries(standardSubbars)){
   const html=read(file);
   assert.ok(html.includes(classes),`${file}: standard topbar-attached subbar is missing`);
-  assert.ok(html.includes('kinojo-staged-loading.css?cache=2026082811'),`${file}: shared subbar CSS generation is stale`);
-  assert.ok(html.includes('kinojo-staged-loading.js?cache=2026082811'),`${file}: shared subbar attachment generation is stale`);
+  assert.ok(html.includes('kinojo-staged-loading.css?cache=2026083001'),`${file}: shared subbar CSS generation is stale`);
+  assert.ok(html.includes('kinojo-staged-loading.js?cache=2026083001'),`${file}: shared subbar attachment generation is stale`);
 }
-assert.match(read('home.html'),/<section class="kinojo-home-subbar kinojo-standard-subbar" aria-label="HOME 보조 메뉴"><\/section>/,'HOME must reserve an intentionally empty subbar row');
+assert.match(read('home.html'),/<body class="kinojo-page-home"[^>]*>\s*<section class="kinojo-home-subbar kinojo-standard-subbar kinojo-attached-subbar" aria-label="HOME 보조 메뉴"><\/section>\s*<main/,'HOME must ship the empty subbar in its final DOM position before first paint');
 
 const hofHtml = read('hof/index.html');
 const hofRender = read('hof/js/hall-render.js');
-assert.ok(hofHtml.includes('kinojo-pc-banners.css?cache=2026082811'), 'HOF PC slot CSS is missing');
-assert.ok(hofHtml.includes('kinojo-pc-banners.js?cache=2026082202'), 'HOF PC slot sizing script is missing');
+assert.ok(hofHtml.includes('kinojo-pc-banners.css?cache=2026083001'), 'HOF PC slot CSS is missing');
+assert.ok(hofHtml.includes('kinojo-pc-banners.js?cache=2026083001'), 'HOF PC slot sizing script is missing');
 assert.equal((hofRender.match(/kinojo-pc-standard-host/g) || []).length, 2, 'Both HOF render paths must opt into the unified 1180px PC frame');
 assert.equal((hofRender.match(/kinojo-pc-banner-slot is-left/g) || []).length, 2, 'Both HOF render paths must include one left slot');
 assert.equal((hofRender.match(/kinojo-pc-banner-slot is-right/g) || []).length, 2, 'Both HOF render paths must include one right slot');

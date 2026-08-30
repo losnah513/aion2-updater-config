@@ -5,7 +5,9 @@
     const bar=document.querySelector('.kinojo-home-subbar,.hof-filter-bar,.ranking-toolbar,.schedule-page-bar,.sanctuary-page-bar,.sanctuary-management-page-bar,.meter-live-subbar');
     const topbar=document.querySelector('.kinojo-topbar');
     if(!bar||!topbar)return false;
-    if(topbar.nextElementSibling!==bar)topbar.insertAdjacentElement('afterend',bar);
+    /* HOME ships the subbar in its final DOM position. Keep the legacy move as
+       a compatibility fallback for older page templates only. */
+    if(topbar.nextElementSibling!==bar&&!bar.classList.contains('kinojo-home-subbar'))topbar.insertAdjacentElement('afterend',bar);
     bar.classList.add('kinojo-attached-subbar');
     const sync=()=>{
       const topbarHeight=topbar.getBoundingClientRect().height||0;
