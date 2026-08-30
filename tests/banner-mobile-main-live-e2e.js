@@ -11,6 +11,7 @@ const MOBILE_URL=BASE+'/m/';
 const EDGE_PATH='/functions/v1/kinojo-banner-media';
 const FALLBACK='/assets/images/common/kinojo-og.jpg';
 const SUMMER='/assets/images/common/kinojo_banner_summer.png';
+const SUMMER_DELIVERY='/assets/images/common/kinojo_banner_summer.webp';
 const MOBILE_UA='Mozilla/5.0 (Linux; Android 16; SM-F956N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36';
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 
@@ -36,7 +37,8 @@ function manifest(mode){
 }
 
 function isFallback(src){return String(src||'').includes(FALLBACK)}
-function isSummer(src){return String(src||'').includes(SUMMER)}
+function deliveryImageUrl(value){return String(value||'').replace(SUMMER,SUMMER_DELIVERY)}
+function isSummer(src){return String(src||'').includes(SUMMER_DELIVERY)}
 
 async function configurePage(browser,scenario,{reducedMotion=false}={}){
   const page=await browser.newPage();
@@ -75,7 +77,7 @@ async function configurePage(browser,scenario,{reducedMotion=false}={}){
         return;
       }
     }
-    if(scenario.mode==='preload-fail'&&url.includes(SUMMER)){
+    if(scenario.mode==='preload-fail'&&(url.includes(SUMMER)||url.includes(SUMMER_DELIVERY))){
       request.abort('failed').catch(()=>{});
       return;
     }
@@ -171,15 +173,16 @@ async function waitAlt(page,expected,timeout=6000){
       assert.equal(liveManifest?.slotCode,'MAIN','slow live Manifest slot');
       assert.equal(typeof liveManifest?.active,'boolean','slow live Manifest active');
       if(liveManifest.active){
-        const expected=String(liveManifest.playlist?.[0]?.imageUrl||'');
-        assert.ok(expected,'slow live active first image');
+        const canonical=String(liveManifest.playlist?.[0]?.imageUrl||'');
+        const expected=deliveryImageUrl(canonical);
+        assert.ok(canonical&&expected,'slow live active first image');
         await page.waitForFunction(url=>{
           const i=document.querySelector('#kinojo-main-banner-image');
           return String(i?.currentSrc||i?.src||'')===url;
         },{timeout:10000},expected);
         const settled=await waitBanner(page);
         assertVisibleBanner(settled,'slow active settled');
-        assert.equal(settled.src,expected,'slow active DOM follows Server first playlist item');
+        assert.equal(settled.src,expected,'slow active DOM follows the approved delivery URL for the Server first playlist item');
         assert.ok(settled.complete&&settled.naturalWidth>0,'slow active settled image loaded');
         console.log('PASS mobile slow Manifest hidden fallback -> active Server image '+settled.src);
       }else{
