@@ -77,7 +77,7 @@ for(const token of [
   "content:'✓'",'background:#315cca',
 ])assert.ok(css.includes(token),`Stage 6 transition responsive CSS missing ${token}`);
 
-for(const page of ['sanctuary-management/index.html','m/sanctuary-management/index.html']){
+for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
   for(const token of [
     'id="sanctuaryManagementTransitionReview"',

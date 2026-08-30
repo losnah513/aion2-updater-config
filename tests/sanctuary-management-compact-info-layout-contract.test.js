@@ -8,7 +8,7 @@ const css=read('sanctuary-management/css/sanctuary-management.css');
 const harness=read('tests/sanctuary-management-fixed-draft-e2e.html');
 const workflow=read('.github/workflows/verify-kinojo-pages.yml');
 
-for(const page of ['sanctuary-management/index.html','m/sanctuary-management/index.html']){
+for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
   for(const token of [
     'sanctuary-management.css?cache=2026082903',

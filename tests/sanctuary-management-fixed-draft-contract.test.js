@@ -79,7 +79,7 @@ for(const token of [
   '@media(max-width:350px)',
 ])assert.ok(css.includes(token),`fixed DRAFT layout missing ${token}`);
 
-for(const page of ['sanctuary-management/index.html','m/sanctuary-management/index.html']){
+for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
   assert.ok(html.includes('sanctuary-management.js?cache=2026082903'),`${page}: management JS cache missing`);
   assert.ok(html.includes('sanctuary-management-draft.css?cache=2026082807'),`${page}: draft CSS cache missing`);

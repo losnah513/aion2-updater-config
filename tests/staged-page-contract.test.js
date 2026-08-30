@@ -8,9 +8,7 @@ const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 for (const entry of [
   'hof/index.html','m/hof/index.html',
   'ranking/index.html','m/ranking/index.html',
-  'sanctuary/index.html','m/sanctuary/index.html',
-  'sanctuary-schedule/index.html','m/sanctuary-schedule/index.html',
-  'sanctuary-management/index.html','m/sanctuary-management/index.html'
+  'sanctuary/index.html','m/sanctuary/index.html'
 ]) {
   const html = read(entry);
   assert.ok(html.includes('kinojo-page-booting'), `${entry}: page boot state missing`);

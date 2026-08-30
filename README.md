@@ -6,8 +6,8 @@ KINOJO INFO GitHub Pages upload package.
 - `config.json`: Chrome extension remote config compatibility file
 - `kinojo-main/`: KINOJO INFO main, common UI/core/pages/docs
 - `hall-of-fame/`: Hall of Fame page and assets
-- `sanctuary/`: Sanctuary page
-- `sanctuary-management/`: Permission-gated Server sanctuary team management page
+- `sanctuary/`: Canonical Server sanctuary team, force, schedule, and participation page
+- `sanctuary-management/`: Shared Sanctuary implementation assets plus a compatibility redirect (`sanctuary-schedule/` is also a compatibility redirect)
 
 `config.json` is intentionally kept at repository root because the extension currently reads `/config.json`.
 
@@ -154,7 +154,7 @@ KINOJO INFO GitHub Pages upload package.
 
 ## Sanctuary management Server boundary
 
-- PC `/sanctuary-management/` and mobile `/m/sanctuary-management/` are noindex signed-in entrypoints. Every signed-in member can inspect the new domain and Stage 7 `OPEN` enables normal writes; team creator or privileged manager authorization remains the additional gate for edit, approval, schedule operations, and archive controls.
+- PC `/sanctuary/` and mobile `/m/sanctuary/` are the canonical Sanctuary entrypoints. Every signed-in member can inspect the Server domain and Stage 7 `OPEN` enables normal writes; team creator or privileged manager authorization remains the additional gate for edit, approval, schedule operations, and archive controls.
 - The browser reads and writes the new domain only through the `KinojoSupabase` sanctuary-management feature methods. They invoke the `sanctuary-management` Edge Function with the current opaque KWS session; the browser does not call service-role DB RPCs, PLAYNC, the legacy Sheet bridge, or a page mock adapter directly.
 - The active contract is Edge API `1.8` / DB `446`. Server `sanctuary_master` supplies management-visible names and release metadata, including sanctuary 4 `비탄의 설원` with `available_from=2026-09-09`. DB446 keeps a service-only, exact-row Stage 7 backup and a `BACKUP → LOCK → EXECUTE → STOP_SYNC → OPEN → COMPLETE` state machine bound to the approved immutable scope hash.
 - Fixed and participation team modes share the square composer and team-level schedule panel. A participation team is not created by the footer button: the first `+ 포스 추가` action atomically creates the DRAFT, schedule, force 1, two parties, and ten slots. Later additions use the existing revision/idempotency/lease boundary and stop at force 9; the Server row lock and DB force-number constraint independently reject force 10.
@@ -164,9 +164,9 @@ KINOJO INFO GitHub Pages upload package.
 - `깡`, `낮`, `밤`, and `키나노동조합` are DB-owned operational-legion references. Their official characters require a `MAIN` or `ALT` relationship; `ALT` requires a separately verified registered main character. External-legion and no-legion results can only become `GUEST`. The selected character is written to the exact originally selected slot and the Server bootstrap is reloaded after registration and assignment.
 - Desktop keeps the square composer beside the vertical schedule panel. Mobile places the schedule above the square composer. A nine-force rail uses vertical overflow with a hidden scrollbar and bottom fade, while horizontal overflow remains forbidden.
 - Global read/write flags and `write_rollout_mode=OPEN` are active. Every Edge mutation still performs a DB446 write-access preflight and the final DB wrapper repeats credential-bound ownership, capability, revision, lease, capacity, conflict, and idempotency checks.
-- Stage 7 stopped the sanctuary Sheet cron and retired the sanctuary-specific Sheet/roster bridges with HTTP 410 tombstones. The general lookup Sheet bridge is unchanged. Existing `/sanctuary/`, `/sanctuary-schedule/`, their mobile paths, and their topbar/drawer buttons remain available until the user finishes final visual review and explicitly approves removal.
+- Stage 7 stopped the sanctuary Sheet cron and retired the sanctuary-specific Sheet/roster bridges with HTTP 410 tombstones. The general lookup Sheet bridge is unchanged. The upgraded Server screen now owns `/sanctuary/`; the former `/sanctuary-management/` and `/sanctuary-schedule/` PC/mobile URLs preserve bookmarks through query-safe redirects, while their separate topbar and drawer buttons are retired.
 - The raw `ADMIN` QA role remains MASTER-equivalent for permission checks but hidden from non-MASTER membership lists. No passkey or session credential is stored in migrations, comments, fixtures, logs, or browser-visible data.
-- `tests/sanctuary-management-stage6-pilot-contract.test.js`, `tests/sanctuary-management-stage6-transition-contract.test.js`, and `tests/sanctuary-management-transition-approval-stability-contract.test.js` preserve the historical pilot and approval boundaries. `tests/sanctuary-management-stage7-complete-contract.test.js` verifies the DB446 backup/restore/cutover state machine, service-only ACL, retired bridges, Server-only admin UI, legacy-page preservation through user review, sanctuary 4 official name, performance guard, and completed-state UI.
+- `tests/sanctuary-management-stage6-pilot-contract.test.js`, `tests/sanctuary-management-stage6-transition-contract.test.js`, and `tests/sanctuary-management-transition-approval-stability-contract.test.js` preserve the historical pilot and approval boundaries. `tests/sanctuary-management-stage7-complete-contract.test.js` verifies the DB446 backup/restore/cutover state machine, service-only ACL, retired bridges, canonical Sanctuary cutover, sanctuary 4 official name, performance guard, and completed-state UI.
 
 ## Public page shell verification
 

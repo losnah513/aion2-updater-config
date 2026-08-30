@@ -188,6 +188,8 @@ jobs:
           node tests/sanctuary-management-scope-subbar-contract.test.js
           node tests/sanctuary-management-roster-carousel-refresh-contract.test.js
           node tests/sanctuary-management-sanctuary-banner-connection-contract.test.js
+          node tests/sanctuary-canonical-cutover-contract.test.js
+          node tests/sanctuary-management-copy-contract.test.js
           node tests/admin-member-v433-browser-rpc-contract.test.js
           node tests/staged-page-contract.test.js
           node tests/meter-presence-log-contract.test.js
@@ -204,8 +206,6 @@ jobs:
               Path("m/hof/index.html"),
               Path("ranking/index.html"),
               Path("m/ranking/index.html"),
-              Path("sanctuary/index.html"),
-              Path("m/sanctuary/index.html"),
           ]
           required_assets = [
               "kinojo-character-reaction.css?cache=2026082201",

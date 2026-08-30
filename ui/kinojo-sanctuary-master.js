@@ -6,7 +6,7 @@
 (function(){
   'use strict';
 
-  const CACHE_KEY = 'kinojo_sanctuary_master_v228';
+  const CACHE_KEY = 'kinojo_sanctuary_master_v229';
   const CACHE_TTL = 5 * 60 * 1000;
   let loadPromise = null;
 

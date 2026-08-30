@@ -57,9 +57,9 @@ for(const token of [
   'scrollbar-width:none','mask-image:linear-gradient','@media(max-width:699px)','100dvh',
 ])assert.ok(css.includes(token),`Stage 5 responsive layout guard missing ${token}`);
 
-for(const page of ['sanctuary-management/index.html','m/sanctuary-management/index.html']){
+for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
-  for(const token of ['sanctuary-management.css?cache=2026082903','sanctuary-management.js?cache=2026082903','sanctuary-management-support.js?cache=2026082814','kinojo-supabase-features.js?cache=2026082902','kinojo-common-ui.js?cache=2026082901'])assert.ok(html.includes(token),`${page}: missing ${token}`);
+  for(const token of ['sanctuary-management.css?cache=2026082903','sanctuary-management.js?cache=2026082903','sanctuary-management-support.js?cache=2026082923','kinojo-supabase-features.js?cache=2026082902','kinojo-common-ui.js?cache=2026082923'])assert.ok(html.includes(token),`${page}: missing ${token}`);
 }
 
 console.log('KINOJO sanctuary management Stage 5 preserved under Stage 6 contract: PASS');

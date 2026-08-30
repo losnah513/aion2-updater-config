@@ -60,10 +60,11 @@ for(const token of [
   '.sanctuary-management-force-slot-copy','grid-template-columns:1fr',
 ])assert.ok(supportCss.includes(token),`legacy-like operating roster styling missing ${token}`);
 
-for(const page of ['sanctuary-management/index.html','m/sanctuary-management/index.html']){
+for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
-  assert.ok(html.includes('성역 팀 관리 전체 보기'),`${page}: full-view title missing`);
-  assert.ok(html.includes('stage7review=2026082922'),`${page}: review cache key missing`);
+  assert.ok(html.includes('<title>KINOJO INFO - 성역</title>'),`${page}: canonical Sanctuary title missing`);
+  assert.equal(html.includes('성역 팀 관리 전체 보기'),false,`${page}: retired separate management title remains`);
+  assert.ok(html.includes('canonical=2026083001'),`${page}: review cache key missing`);
 }
 
 console.log('KINOJO sanctuary management atomic browser-local composer contract: PASS');

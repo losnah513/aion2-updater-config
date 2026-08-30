@@ -6,7 +6,7 @@ const vm = require('node:vm');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-const pages = ['sanctuary-management/index.html', 'm/sanctuary-management/index.html'];
+const pages = ['sanctuary/index.html', 'm/sanctuary/index.html'];
 for (const page of pages) {
   const html = read(page);
   for (const token of [
@@ -17,17 +17,23 @@ for (const page of pages) {
     'kinojo-supabase-features.js?cache=2026082902',
     'sanctuary-management.js?cache=2026082903',
     'sanctuary-management-draft.js?cache=2026082811',
-    'sanctuary-management-support.js?cache=2026082814',
+    'sanctuary-management-support.js?cache=2026082923',
   ]) assert.ok(html.includes(token), `${page}: missing ${token}`);
   assert.equal(html.includes('kinojo-sanctuary-tabs'), false, `${page}: legacy sanctuary tabs remain in the management subbar`);
   assert.equal(html.includes('관리 범위'), false, `${page}: legacy management scope label remains`);
   assert.equal(html.includes('SanctuaryManagementMockAdapter'), false, `${page}: Stage 1 mock adapter remains`);
 }
 
-for (const page of ['sanctuary/index.html', 'm/sanctuary/index.html', 'sanctuary-schedule/index.html', 'm/sanctuary-schedule/index.html']) {
+for (const [page,target] of [
+  ['sanctuary-management/index.html','/sanctuary/'],
+  ['m/sanctuary-management/index.html','/m/sanctuary/'],
+  ['sanctuary-schedule/index.html','/sanctuary/'],
+  ['m/sanctuary-schedule/index.html','/m/sanctuary/'],
+]) {
   const html = read(page);
-  assert.ok(html.includes('kinojo-sanctuary-navigation.css?cache=2026082603'), `${page}: shared sanctuary tabs CSS missing`);
-  assert.ok(html.includes('data-kinojo-sanctuary-management-required'), `${page}: permission-gated management tab missing`);
+  assert.ok(html.includes(`new URL('${target}',location.origin)`), `${page}: canonical redirect target missing`);
+  assert.ok(html.includes('location.replace(destination.pathname+destination.search+destination.hash)'), `${page}: query-safe redirect missing`);
+  assert.equal(html.includes('kinojo-sanctuary-tabs'), false, `${page}: retired product UI remains`);
 }
 
 const feature = read('core/kinojo-supabase-features.js');

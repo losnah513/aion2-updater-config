@@ -54,11 +54,11 @@ for(const token of [
 assert.ok(support.includes("bridge()?.snapshot?.()?.writeEnabled!==true"),'support modal must reject read-only bootstrap state');
 assert.ok(common.includes('kinojo_sanctuary_recruitment_seen_v439'),'Stage 6 notification session namespace missing');
 
-for(const page of ['sanctuary-management/index.html','m/sanctuary-management/index.html']){
+for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
   for(const token of [
     'id="sanctuaryManagementWriteMeta"','sanctuary-management.js?cache=2026082903',
-    'sanctuary-management-support.js?cache=2026082814','kinojo-common-ui.js?cache=2026082901',
+    'sanctuary-management-support.js?cache=2026082923','kinojo-common-ui.js?cache=2026082923',
   ])assert.ok(html.includes(token),`${page}: missing ${token}`);
 }
 

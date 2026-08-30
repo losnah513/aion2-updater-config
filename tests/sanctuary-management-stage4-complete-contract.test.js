@@ -65,9 +65,9 @@ for(const token of [
 assert.ok(commonUi.includes('SANCTUARY_PARTICIPATION_NAV'),'signed-in participation navigation warning missing');
 assert.ok(commonUi.includes('const canOpenSanctuaryManagement=loggedIn'),'management navigation must open to every signed-in member');
 
-for(const page of ['sanctuary-management/index.html','m/sanctuary-management/index.html']){
+for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
-  for(const token of ['sanctuary-management-support.css?cache=2026082808','sanctuary-management-support.js?cache=2026082814','kinojo-supabase-features.js?cache=2026082902'])assert.ok(html.includes(token),`${page}: missing ${token}`);
+  for(const token of ['sanctuary-management-support.css?cache=2026082808','sanctuary-management-support.js?cache=2026082923','kinojo-supabase-features.js?cache=2026082902'])assert.ok(html.includes(token),`${page}: missing ${token}`);
 }
 
 console.log('KINOJO sanctuary management Stage 4 complete v436 contract: PASS');
