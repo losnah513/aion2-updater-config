@@ -9,7 +9,7 @@ const FIXTURE=process.env.BANNER_E2E_FIXTURE==='1';
 assert.ok(CHROME,'CHROME_BIN is required');
 
 const EDGE_PATH='/functions/v1/kinojo-banner-media';
-const FALLBACK='/assets/images/common/kinojo-og.jpg';
+const FALLBACK='/assets/images/common/kinojo_banner_summer.webp';
 const SUMMER_PNG='/assets/images/common/kinojo_banner_summer.png';
 const SUMMER_WEBP='/assets/images/common/kinojo_banner_summer.webp';
 const deliveryImageUrl=value=>String(value||'').replace(SUMMER_PNG,SUMMER_WEBP);
@@ -58,7 +58,7 @@ async function snapshot(page){
     const pending=await snapshot(page);
     assert.ok(pending.src.includes(FALLBACK),'pending source must remain SEO fallback '+pending.src);
     assert.ok(pending.width>0&&pending.height>0,'pending banner must reserve layout geometry');
-    assert.equal(pending.visibility,'hidden','old fallback must not paint while Manifest is unresolved');
+    assert.equal(pending.visibility,'visible','approved optimized first banner must paint while Manifest is unresolved');
     assert.equal(pending.pending,true,'pending state class');
     assert.equal(pending.ariaBusy,'true','pending accessibility state');
 

@@ -4,8 +4,8 @@ const path = require('node:path');
 
 const root = path.resolve(__dirname, '..');
 const targets = [
-  { name: 'PC HOME', file: 'home.html', host: 'kinojo-main-banner' },
-  { name: 'Mobile HOME', file: 'm/index.html', host: 'mobile-og-banner' },
+  { name: 'PC HOME', file: 'home.html', host: 'kinojo-main-banner', pendingVisibility: 'visible' },
+  { name: 'Mobile HOME', file: 'm/index.html', host: 'mobile-og-banner', pendingVisibility: 'hidden' },
 ];
 
 for (const target of targets) {
@@ -17,8 +17,8 @@ for (const target of targets) {
   );
   assert.match(
     html,
-    new RegExp(`\\.${target.host}\\.is-manifest-pending>img\\s*\\{\\s*visibility:hidden;?\\s*\\}`),
-    `${target.name} must hide only the stale visual fallback while the Manifest is unresolved`,
+    new RegExp(`\\.${target.host}\\.is-manifest-pending>img\\s*\\{\\s*visibility:${target.pendingVisibility};?\\s*\\}`),
+    `${target.name} must use its approved pending visibility while the Manifest is unresolved`,
   );
   assert.match(
     html,
@@ -31,6 +31,9 @@ for (const target of targets) {
   assert.match(html, /onActive: revealBanner/, `${target.name} must reveal only after the active Manifest image is installed`);
   assert.match(html, /onError: \(error\) => \{[\s\S]*revealBanner\(\);[\s\S]*console\.warn/, `${target.name} must reveal the fallback when the first active image cannot preload`);
   assert.match(html, /<meta property="og:image" content="https:\/\/kinojo\.info\/assets\/images\/common\/kinojo-og\.jpg">/, `${target.name} SEO fallback must remain static`);
+  if (target.name === 'PC HOME') {
+    assert.match(html, /<img id="kinojo-main-banner-image" src="https:\/\/kinojo\.info\/assets\/images\/common\/kinojo_banner_summer\.webp" fetchpriority="high"/, 'PC HOME must paint the optimized approved first banner without waiting for Manifest round trips');
+  }
 }
 
 console.log('KINOJO HOME server banner first-paint contract: PASS');
