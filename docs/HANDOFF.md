@@ -22,7 +22,7 @@
 - 비로그인 bootstrap은 생성자·내 캐릭터 후보, 지원 batch, viewer 배정·대기 상태, 편집·해산·일정 관리 권한을 반환하지 않는다. 팀 생성·지원·편집·해산·캐릭터 검색/등록과 다른 쓰기 경로는 기존 opaque KWS session과 Server 권한 검사를 그대로 요구한다.
 - migration `20260830051921_sanctuary_management_public_read_v448.sql`은 service-role-only 공개 읽기 RPC와 활성 팀 partial index를 추가했다. Browser 역할에는 RPC EXECUTE를 부여하지 않았고 Edge만 service role로 호출한다.
 - `sanctuary-management` Edge v17은 세션이 없을 때 `bootstrap`과 `month`만 공개 읽기 RPC로 보낸다. 현재 API 1.8 / DB446 계약은 유지하며 비로그인 `command`는 HTTP 401이다.
-- WEB은 공개/로그인 projection 전환 때 bootstrap을 다시 읽고 비로그인 상태에서도 백그라운드 변경 감지와 수동 새로고침을 유지한다. 팀 추가·지원·편집 버튼은 공개 보기에서 비활성이다.
+- WEB PR `#346`은 공개/로그인 projection 전환 때 bootstrap을 다시 읽고 비로그인 상태에서도 백그라운드 변경 감지와 수동 새로고침을 유지한다. 팀 추가·지원·편집 버튼은 공개 보기에서 비활성이다.
 - 운영 readback은 공개 bootstrap HTTP 200, 성역 4개, 운영 팀 2개, `writeEnabled=false`, 공개 month HTTP 200, 비로그인 command HTTP 401이었다. 공개 팀·포스 응답에서 계정 member ID와 viewer 지원·관리 상태가 제거됐음을 DB 집계로 확인했다.
 
 ## 성역·스케줄 관리 개편 Stage 7-8 종료 · 2026-08-30
