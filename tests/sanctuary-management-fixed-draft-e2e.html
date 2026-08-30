@@ -108,9 +108,9 @@
         async searchSanctuaryManagementCharacter(teamId,query){
           const normalized=String(query||'').trim().replace(/\[지켈\]$/,'');
           const character=searchableCharacters.find(item=>item.characterName===normalized);
-          if(character)return {ok:true,apiVersion:1.7,schemaVersion:445,source:'CHARACTER_MASTER',teamId,character:structuredClone(character)};
+          if(character)return {ok:true,apiVersion:1.8,schemaVersion:446,source:'CHARACTER_MASTER',teamId,character:structuredClone(character)};
           const candidate=officialCandidates[normalized];
-          if(candidate)return {ok:true,apiVersion:1.7,schemaVersion:445,source:'OFFICIAL',teamId,candidate:structuredClone(candidate)};
+          if(candidate)return {ok:true,apiVersion:1.8,schemaVersion:446,source:'OFFICIAL',teamId,candidate:structuredClone(candidate)};
           throw new Error('정확히 일치하는 캐릭터를 찾지 못했습니다.');
         },
         async registerSanctuaryManagementCharacter(teamId,candidateId,relationType,mainCharacterId){
@@ -118,7 +118,7 @@
           if(!candidate)throw new Error('공식 조회 후보를 다시 선택해 주세요.');
           const character={characterId:700+searchableCharacters.length,serverId:candidate.serverId,serverName:candidate.serverName,characterName:candidate.characterName,className:candidate.className,legionName:candidate.legionName,profileImageUrl:candidate.profileImageUrl,raceId:candidate.raceId,isOperationalLegion:candidate.isOperationalLegion,ownerMemberId:relationType==='GUEST'?0:7,relation:relationType,mainCharacterId:relationType==='ALT'?mainCharacterId:700+searchableCharacters.length};
           searchableCharacters.push(character);
-          return {ok:true,apiVersion:1.7,schemaVersion:445,teamId,character:structuredClone(character)};
+          return {ok:true,apiVersion:1.8,schemaVersion:446,teamId,character:structuredClone(character)};
         },
         async runSanctuaryManagementCommand(command,payload,expectedRevision){
           if(command==='CREATE_TEAM'){

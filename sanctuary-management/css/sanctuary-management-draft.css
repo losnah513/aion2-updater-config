@@ -82,3 +82,68 @@ button.is-requirement-pending{opacity:.58}
 .sanctuary-management-date-field,.sanctuary-management-time-field{grid-template-columns:max-content minmax(0,1fr);align-items:center;column-gap:8px}.sanctuary-management-date-parts,.sanctuary-management-time-parts{min-width:0;display:flex;align-items:center;gap:6px}.sanctuary-management-date-parts label,.sanctuary-management-time-parts label{min-width:0;flex:0 0 auto;display:flex;align-items:center;gap:4px}.sanctuary-management-date-parts label span,.sanctuary-management-time-parts label span{color:#596a81;font-size:9px;font-weight:950}.sanctuary-management-date-parts input,.sanctuary-management-time-parts input{box-sizing:border-box;width:3.25em!important;min-width:3.25em!important;height:38px!important;padding:0 5px!important;text-align:center}.sanctuary-management-period-buttons{flex:0 0 auto;display:grid;grid-template-columns:repeat(2,40px);gap:4px}.sanctuary-management-period-buttons button,.sanctuary-management-duration-options button{height:38px;border:1px solid rgba(112,135,174,.22);border-radius:9px;background:#f7f9fc;color:#67778e;font-size:8px;cursor:pointer}.sanctuary-management-period-buttons button[aria-pressed="true"],.sanctuary-management-duration-options button[aria-pressed="true"]{border-color:#5573dd;background:linear-gradient(135deg,#edf3ff,#f2edff);color:#3456c5;box-shadow:inset 0 0 0 1px rgba(85,115,221,.08)}
 .sanctuary-management-duration-options{min-width:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.sanctuary-management-duration-options button{aspect-ratio:1.25/1;height:auto;min-height:44px;padding:4px;white-space:nowrap}.sanctuary-management-date-field>small{grid-column:1/-1;line-height:1.45}
 @media(max-width:699px){.sanctuary-management-force-option>.sanctuary-management-force-remove,.sanctuary-management-slot-remove{top:2px;right:2px;width:14px;min-width:14px;height:14px;min-height:14px;border-radius:4px;font-size:10px}.sanctuary-management-candidate-card{min-height:29px}.sanctuary-management-candidate-copy{padding-right:17px}.sanctuary-management-candidate-copy strong{font-size:6.5px}.sanctuary-management-date-field,.sanctuary-management-time-field{column-gap:6px}.sanctuary-management-date-parts,.sanctuary-management-time-parts{gap:4px}.sanctuary-management-period-buttons{grid-template-columns:repeat(2,36px)}.sanctuary-management-duration-options{gap:4px}}
+
+/* Shared readable team composer: fixed/participation creation and editing use
+   the same candidate rail. Its type scales to the rail, while mobile moves the
+   rail below the roster instead of shrinking labels into the former 20% column. */
+.sanctuary-management-composer-middle{grid-template-columns:18% 58% 24%}
+.sanctuary-management-roster{container-type:inline-size}
+.sanctuary-management-draft-slot{padding:7px 8px 7px 31px;gap:3px}
+.sanctuary-management-draft-slot>span{left:8px;width:18px;height:18px;font-size:8.5px}
+.sanctuary-management-draft-slot strong{font-size:clamp(10.5px,3cqw,12px);line-height:1.2}
+.sanctuary-management-draft-slot small{font-size:clamp(7.5px,2.25cqw,9px);line-height:1.25}
+.sanctuary-management-party-labels span{font-size:9px}
+.sanctuary-management-candidate-rail{container-type:inline-size;grid-template-rows:auto minmax(0,1fr) auto auto;align-content:stretch;padding:11px;gap:10px}
+.sanctuary-management-candidate-rail>header{gap:7px}
+.sanctuary-management-candidate-rail>header>strong{font-size:clamp(12px,9cqw,15px);line-height:1.15}
+.sanctuary-management-candidate-position{min-width:0;display:grid;gap:2px}
+.sanctuary-management-candidate-position em{color:#7e8ca0;font-size:clamp(7px,5.2cqw,9px);font-style:normal;font-weight:900}
+.sanctuary-management-candidate-position b{min-width:0;color:#334a6c;font-size:clamp(9px,6.6cqw,11px);line-height:1.3;word-break:keep-all}
+.sanctuary-management-candidate-list{gap:9px}
+.sanctuary-management-quick-candidates{gap:7px}
+.sanctuary-management-quick-candidates>strong{font-size:clamp(9px,6.5cqw,11px)}
+.sanctuary-management-candidate-card{min-height:58px;padding:8px;grid-template-columns:32px minmax(0,1fr);gap:8px;border-radius:10px}
+.sanctuary-management-candidate-avatar{width:32px;height:32px;border-radius:9px}
+.sanctuary-management-candidate-copy{padding-right:30px;gap:2px}
+.sanctuary-management-candidate-copy em{font-size:clamp(7px,5cqw,8.5px)}
+.sanctuary-management-candidate-copy strong{font-size:clamp(10px,7.5cqw,12.5px);line-height:1.2}
+.sanctuary-management-candidate-copy small{font-size:clamp(7.5px,5.5cqw,9px)}
+.sanctuary-management-candidate-note,.sanctuary-management-search-empty{padding:9px;gap:4px;border-radius:9px}
+.sanctuary-management-candidate-note strong,.sanctuary-management-search-empty strong{font-size:clamp(9px,6.7cqw,11px);line-height:1.3}
+.sanctuary-management-candidate-note small,.sanctuary-management-search-empty small{font-size:clamp(7px,5.2cqw,8.5px);line-height:1.5}
+.sanctuary-management-candidate-completion{grid-row:3;margin-top:auto}
+.sanctuary-management-character-search,.sanctuary-management-main-search{grid-template-columns:minmax(0,1fr);gap:7px}
+.sanctuary-management-character-search label,.sanctuary-management-main-search label{gap:5px}
+.sanctuary-management-character-search span,.sanctuary-management-main-search span{font-size:clamp(10px,7.4cqw,12.5px);line-height:1.2}
+.sanctuary-management-character-search input,.sanctuary-management-main-search input{height:38px;padding:0 9px;border-radius:9px;font-size:clamp(9px,6.4cqw,11px)}
+.sanctuary-management-character-search>button,.sanctuary-management-main-search>button{width:100%;height:34px;padding:0 9px;border-radius:9px;font-size:clamp(9px,6.4cqw,11px)}
+.sanctuary-management-search-result{min-height:118px;grid-template-columns:minmax(0,1fr);align-content:start;gap:9px;padding:9px;border-radius:10px}
+.sanctuary-management-search-result-profile,.sanctuary-management-official-card{min-width:0;display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;gap:8px}
+.sanctuary-management-search-result-avatar{width:34px;height:34px;display:grid;place-items:center;overflow:hidden;border-radius:10px;background:linear-gradient(135deg,#315fe8,#7250eb);color:#fff;font-size:14px;font-weight:1000}
+.sanctuary-management-search-result-avatar img{display:block;width:100%;height:100%;object-fit:cover}
+.sanctuary-management-search-result-copy{min-width:0;display:grid;gap:3px}
+.sanctuary-management-search-result-copy em{color:#664ed5;font-size:clamp(7.5px,5.5cqw,9px);font-style:normal;font-weight:950}
+.sanctuary-management-search-result-copy strong{min-width:0;overflow:hidden;color:#293f60;font-size:clamp(13px,9.5cqw,16px);line-height:1.2;text-overflow:ellipsis;white-space:nowrap}
+.sanctuary-management-search-result-copy small{color:#6f7f95;font-size:clamp(8px,5.8cqw,10px);font-weight:850}
+.sanctuary-management-search-result>button,.sanctuary-management-register-character{width:100%;height:34px;padding:0 9px;border-radius:9px;font-size:clamp(9px,6.4cqw,11px)}
+.sanctuary-management-official-result{padding:9px;gap:8px;border-radius:10px}
+.sanctuary-management-official-result>p{font-size:clamp(7px,5.2cqw,8.5px)}
+.sanctuary-management-relation-buttons{gap:5px}
+.sanctuary-management-relation-buttons button{height:30px;font-size:clamp(7px,5.2cqw,8.5px)}
+.sanctuary-management-search-reset{grid-row:4;width:100%;height:30px;font-size:clamp(8px,5.8cqw,10px)}
+
+@media(max-width:699px){
+  .sanctuary-management-composer{height:auto;aspect-ratio:auto;grid-template-rows:auto auto auto}
+  .sanctuary-management-composer-middle{grid-template-columns:86px minmax(0,1fr);grid-template-rows:minmax(430px,auto) minmax(370px,auto);overflow:visible}
+  .sanctuary-management-force-rail{grid-column:1;grid-row:1;min-height:430px}
+  .sanctuary-management-roster{grid-column:2;grid-row:1;min-height:430px}
+  .sanctuary-management-candidate-rail{grid-column:1/-1;grid-row:2;min-height:370px;padding:14px;border-top:1px solid rgba(112,135,174,.13);border-left:0}
+  .sanctuary-management-candidate-rail::after{left:12px;right:12px}
+  .sanctuary-management-candidate-card{min-height:62px;padding:9px;grid-template-columns:36px minmax(0,1fr);gap:9px}
+  .sanctuary-management-candidate-avatar{width:36px;height:36px}
+  .sanctuary-management-draft-slot{padding:6px 6px 6px 27px}
+  .sanctuary-management-draft-slot>span{left:6px;width:17px;height:17px;font-size:8px}
+  .sanctuary-management-draft-slot strong{font-size:clamp(9px,4.5cqw,11px)}
+  .sanctuary-management-draft-slot small{font-size:clamp(7px,3.6cqw,8.5px)}
+  .sanctuary-management-party-labels span{font-size:8px}
+}

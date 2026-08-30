@@ -290,6 +290,8 @@
     const sourceCandidates=composerCharacters().length?composerCharacters():Array.isArray(force.creatorCandidates)?force.creatorCandidates:[];
     const candidates=sourceCandidates.filter(candidate=>!usedIds.has(Number(candidate.characterId)));
     const slotNumber=slotDisplayNumber(chosen);
+    const selectedPosition='<span class="sanctuary-management-candidate-position"><em>선택한 포스·슬롯</em><b>'+escapeHtml(force.forceNo)+'포스 · '+escapeHtml(slotNumber)+'번 슬롯</b></span>';
+    const railHeader='<header><strong>캐릭터 선택</strong>'+selectedPosition+'</header>';
     const quickCards=candidates.map(candidate=>{
       const relation=candidate.isMain?'본캐':'부캐';
       const initial=Array.from(value(candidate.characterName)||'?')[0]||'?';
@@ -297,8 +299,9 @@
       return '<button type="button" class="sanctuary-management-candidate-card '+(candidate.isMain?'is-main':'is-alt')+'" data-draft-candidate="'+escapeHtml(candidate.characterId)+'"'+(state.saving||state.mutating?' disabled':'')+'><span class="sanctuary-management-candidate-avatar" aria-hidden="true">'+(icon?'<img src="'+escapeHtml(icon)+'" alt="">':escapeHtml(initial))+'</span><span class="sanctuary-management-candidate-copy"><em>'+relation+'</em><strong>'+escapeHtml(candidate.characterName)+'</strong><small>'+escapeHtml(candidate.serverName||'서버 미확인')+'</small></span></button>';
     }).join('');
     let quick='';
+    let completion='';
     if(force.creatorOwnerResolved!==true&&!sourceCandidates.length)quick='<div class="sanctuary-management-candidate-note is-warning"><strong>생성자 소유권 확인 필요</strong><small>'+escapeHtml(force.creatorCandidateCode||'OWNER_NOT_RESOLVED')+'</small></div>';
-    else if(force.creatorAlreadyAssigned===true)quick='<div class="sanctuary-management-candidate-note is-complete"><strong>이 포스에 내 캐릭터 배치 완료</strong><small>한 이용자는 포스마다 캐릭터 1개만 배치할 수 있습니다.</small></div>';
+    else if(force.creatorAlreadyAssigned===true)completion='<div class="sanctuary-management-candidate-note sanctuary-management-candidate-completion is-complete"><strong>이 포스에 내 캐릭터 배치 완료</strong><small>한 이용자는 포스마다 캐릭터 1개만 배치할 수 있습니다.</small></div>';
     else if(quickCards)quick='<section class="sanctuary-management-quick-candidates"><strong>내 캐릭터</strong>'+quickCards+'</section>';
     else quick='<div class="sanctuary-management-candidate-note"><strong>내 캐릭터 후보 없음</strong><small>팀 생성 후 편집에서는 다른 구성원을 검색해 추가할 수 있습니다.</small></div>';
     let resultMarkup='<div class="sanctuary-management-search-empty"><strong>캐릭터 마스터 우선 조회</strong><small>없을 때만 아이온2 공식 정보를 확인합니다.</small></div>';
@@ -306,7 +309,10 @@
     else if(state.lookup?.error)resultMarkup='<div class="sanctuary-management-search-empty is-warning"><strong>조회하지 못했습니다.</strong><small>'+escapeHtml(state.lookup.error)+'</small></div>';
     else if(state.lookup?.character){
       const character=state.lookup.character;
-      resultMarkup='<article class="sanctuary-management-search-result"><div><em>'+escapeHtml(character.relation==='GUEST'?'게스트':character.relation==='MAIN'?'본캐':'부캐')+'</em><strong>'+escapeHtml(character.characterName)+'</strong><small>'+escapeHtml([character.serverName,character.className,character.legionName].filter(Boolean).join(' · '))+'</small></div><button type="button" data-draft-search-character="'+escapeHtml(character.characterId)+'">추가하기</button></article>';
+      const icon=classIconFor(character.className);
+      const relation=character.relation==='GUEST'?'게스트':character.relation==='MAIN'?'본캐':'부캐';
+      const server='['+(value(character.serverName)||'서버 미확인')+']';
+      resultMarkup='<article class="sanctuary-management-search-result"><div class="sanctuary-management-search-result-profile"><span class="sanctuary-management-search-result-avatar" aria-hidden="true">'+(icon?'<img src="'+escapeHtml(icon)+'" alt="">':'◇')+'</span><span class="sanctuary-management-search-result-copy"><em>'+escapeHtml(relation)+'</em><strong>'+escapeHtml(character.characterName)+'</strong><small>'+escapeHtml(server)+'</small></span></div><button type="button" data-draft-search-character="'+escapeHtml(character.characterId)+'">추가하기</button></article>';
     }else if(state.lookup?.candidate){
       const candidate=state.lookup.candidate;const allowed=candidate.allowedRelations||[];
       const relationButtons=allowed.map(relation=>'<button type="button" data-draft-relation="'+relation+'" aria-pressed="'+String(state.relationType===relation)+'">'+(relation==='MAIN'?'본캐':relation==='ALT'?'부캐':'게스트')+'</button>').join('');
@@ -320,12 +326,14 @@
         relationBody='<div class="sanctuary-management-main-search" data-main-search-form role="search"><label><span>연결할 본캐</span><input name="mainCharacterQuery" size="16" maxlength="48" placeholder="본캐 또는 본캐[서버]" autocomplete="off"></label><button type="button" data-main-search-submit>검색</button></div>'+mainResult;
       }
       const canRegister=Boolean(state.relationType&&state.relationType!=='ALT'||state.relationType==='ALT'&&state.mainLookup?.character);
-      resultMarkup='<article class="sanctuary-management-official-result"><div class="sanctuary-management-official-card"><em>아이온2 공식 확인</em><strong>'+escapeHtml(candidate.characterName)+'</strong><small>'+escapeHtml([candidate.serverName,candidate.className,candidate.legionName||'레기온 없음'].join(' · '))+'</small></div><p>'+(candidate.isOperationalLegion?'운영 레기온 캐릭터입니다. 본캐 또는 연결할 본캐를 확인해 주세요.':'외부 레기온 또는 레기온 미가입 캐릭터로 게스트 등록할 수 있습니다.')+'</p><div class="sanctuary-management-relation-buttons">'+relationButtons+'</div>'+relationBody+'<button type="button" class="sanctuary-management-register-character" data-draft-register-character'+(canRegister?'':' disabled')+'>관계 확정 후 추가</button></article>';
+      const icon=classIconFor(candidate.className);
+      const server='['+(value(candidate.serverName)||'서버 미확인')+']';
+      resultMarkup='<article class="sanctuary-management-official-result"><div class="sanctuary-management-official-card"><span class="sanctuary-management-search-result-avatar" aria-hidden="true">'+(icon?'<img src="'+escapeHtml(icon)+'" alt="">':'◇')+'</span><span class="sanctuary-management-search-result-copy"><em>아이온2 공식 확인</em><strong>'+escapeHtml(candidate.characterName)+'</strong><small>'+escapeHtml(server)+'</small></span></div><p>'+(candidate.isOperationalLegion?'운영 레기온 캐릭터입니다. 본캐 또는 연결할 본캐를 확인해 주세요.':'외부 레기온 또는 레기온 미가입 캐릭터로 게스트 등록할 수 있습니다.')+'</p><div class="sanctuary-management-relation-buttons">'+relationButtons+'</div>'+relationBody+'<button type="button" class="sanctuary-management-register-character" data-draft-register-character'+(canRegister?'':' disabled')+'>관계 확정 후 추가</button></article>';
     }
     const creatorOnly=currentMode()==='PARTICIPATION'&&value(state.team?.status)==='DRAFT'&&state.team?.localOnly;
-    if(creatorOnly)return '<aside class="sanctuary-management-candidate-rail" aria-label="'+escapeHtml(force.forceNo)+'포스 생성자 캐릭터 선택"><header><strong>내 캐릭터 선택</strong><small>'+slotNumber+'번 슬롯 · 이용자당 포스별 1개</small></header><div class="sanctuary-management-candidate-list" data-candidate-list>'+quick+'<div class="sanctuary-management-candidate-note"><strong>참여 팀 생성 조건</strong><small>만들어 둔 포스 중 한 곳에 생성자의 캐릭터 1개 이상을 배치하면 생성할 수 있습니다.</small></div></div></aside>';
-    if(state.team?.localOnly)return '<aside class="sanctuary-management-candidate-rail" aria-label="'+escapeHtml(force.forceNo)+'포스 내 캐릭터 선택"><header><strong>내 캐릭터 선택</strong><small>'+slotNumber+'번 슬롯 · 로컬 편성안</small></header><div class="sanctuary-management-candidate-list" data-candidate-list>'+quick+'<div class="sanctuary-management-candidate-note"><strong>한 번에 Server 반영</strong><small>외부·게스트 검색은 팀을 만든 뒤 편집에서 사용할 수 있습니다.</small></div></div></aside>';
-    return '<aside class="sanctuary-management-candidate-rail" aria-label="'+escapeHtml(force.forceNo)+'포스 '+slotNumber+'번 슬롯 캐릭터 선택"><header><strong>캐릭터 선택</strong><small>'+slotNumber+'번 슬롯 · 이름은 16자까지</small></header><div class="sanctuary-management-candidate-list" data-candidate-list>'+quick+'<div class="sanctuary-management-character-search" data-character-search-form role="search"><label><span>캐릭터 검색</span><input name="characterQuery" size="16" maxlength="48" placeholder="이름 또는 이름[서버]" autocomplete="off" required></label><button type="button" data-character-search-submit'+(state.lookup?.loading?' disabled':'')+'>검색</button></div>'+resultMarkup+'</div><button type="button" class="sanctuary-management-search-reset" data-draft-search-reset>조회 초기화</button></aside>';
+    if(creatorOnly)return '<aside class="sanctuary-management-candidate-rail" aria-label="'+escapeHtml(force.forceNo)+'포스 생성자 캐릭터 선택">'+railHeader+'<div class="sanctuary-management-candidate-list" data-candidate-list>'+quick+'<div class="sanctuary-management-candidate-note"><strong>참여 팀 생성 조건</strong><small>만들어 둔 포스 중 한 곳에 생성자의 캐릭터 1개 이상을 배치하면 생성할 수 있습니다.</small></div></div>'+completion+'</aside>';
+    if(state.team?.localOnly)return '<aside class="sanctuary-management-candidate-rail" aria-label="'+escapeHtml(force.forceNo)+'포스 내 캐릭터 선택">'+railHeader+'<div class="sanctuary-management-candidate-list" data-candidate-list>'+quick+'<div class="sanctuary-management-candidate-note"><strong>한 번에 Server 반영</strong><small>외부·게스트 검색은 팀을 만든 뒤 편집에서 사용할 수 있습니다.</small></div></div>'+completion+'</aside>';
+    return '<aside class="sanctuary-management-candidate-rail" aria-label="'+escapeHtml(force.forceNo)+'포스 '+slotNumber+'번 슬롯 캐릭터 선택">'+railHeader+'<div class="sanctuary-management-candidate-list" data-candidate-list>'+quick+'<div class="sanctuary-management-character-search" data-character-search-form role="search"><label><span>캐릭터 검색</span><input name="characterQuery" size="16" maxlength="48" placeholder="이름 또는 이름[서버]" autocomplete="off" required></label><button type="button" data-character-search-submit'+(state.lookup?.loading?' disabled':'')+'>검색</button></div>'+resultMarkup+'</div>'+completion+'<button type="button" class="sanctuary-management-search-reset" data-draft-search-reset>조회 초기화</button></aside>';
   }
 
   function rosterMarkup(){

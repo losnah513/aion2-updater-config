@@ -25,6 +25,14 @@
 - WEB PR `#346`은 공개/로그인 projection 전환 때 bootstrap을 다시 읽고 비로그인 상태에서도 백그라운드 변경 감지와 수동 새로고침을 유지한다. 팀 추가·지원·편집 버튼은 공개 보기에서 비활성이다.
 - 운영 readback은 공개 bootstrap HTTP 200, 성역 4개, 운영 팀 2개, `writeEnabled=false`, 공개 month HTTP 200, 비로그인 command HTTP 401이었다. 공개 팀·포스 응답에서 계정 member ID와 viewer 지원·관리 상태가 제거됐음을 DB 집계로 확인했다.
 
+## 성역 팀 구성 모달 가독성 후속 · 2026-08-30
+
+- 고정 팀 생성·참여 팀 생성·기존 팀 편집은 `sanctuary-management-draft.js`의 같은 슬롯·후보 렌더러와 `sanctuary-management-draft.css`의 같은 가독성 규칙을 사용한다. 편집 화면만 별도로 키우는 분기나 중복 마크업을 만들지 않는다.
+- 포스 슬롯은 번호·캐릭터명·상세 글자를 확대했다. 후보 영역은 `캐릭터 선택` 다음 줄에 `선택한 포스·슬롯`과 실제 `n포스 · n번 슬롯`을 표시하고, 내 캐릭터 배치 완료 안내는 스크롤 목록 아래 고정 영역으로 이동한다.
+- 검색 입력과 검색 버튼은 각각 한 줄 전체 폭을 사용한다. 검색 결과는 왼쪽 클래스 아이콘, 오른쪽 `본캐/부캐/게스트 → 큰 캐릭터명 → [서버명]`, 맨 아래 전체 폭 `추가하기` 순서다. 클래스 이름을 작은 보조 글자로 중복 표시하지 않는다.
+- 모바일 699px 이하는 후보 영역을 20% 너비 열에 압축하지 않고 포스·슬롯 편성 아래 전체 폭으로 배치한다. 로컬 fixture의 PC와 390×844에서 고정 생성·참여 생성·참여 편집을 모두 열어 document/dialog 가로 overflow 0과 console warning/error 0을 확인했다.
+- 회귀 기준은 `tests/sanctuary-management-editor-readability-contract.test.js`이며 Pages workflow에 포함한다. DB·Edge·성역 팀/편성 운영 데이터는 변경하지 않는다.
+
 ## 성역·스케줄 관리 개편 Stage 7-8 종료 · 2026-08-30
 
 - 정식 운영은 PC `/sanctuary/`, 모바일 `/m/sanctuary/`, Server DB 단일 원본이다. 구 관리·일정 주소는 쿼리·해시를 보존하는 호환 redirect이고 성역 전용 Sheet 예약·수동 동기화와 두 bridge는 운영 경로가 아니다.
