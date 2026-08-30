@@ -14,6 +14,13 @@ enabled = true
 verify_jwt = false
 entrypoint = "./functions/sanctuary-management/index.ts"
 
+# Original Sanctuary clipboard renderer. The new Server roster adapter must
+# continue to use this function so copied pixels keep the retired layout.
+[functions.sanctuary-copy-render]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/sanctuary-copy-render/index.ts"
+
 # Stage 7 keeps the retired slugs as explicit 410 tombstones so stale clients,
 # bookmarks, or delayed jobs cannot reach the former Google Sheet mutation path.
 [functions.sanctuary-sheet-bridge]
