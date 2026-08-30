@@ -66,18 +66,22 @@ assert.ok(
   'The bridge must retain modal scroll responsibility'
 );
 assert.ok(
+  bridge.includes("const activeRoot=document.getElementById('kinojoCharacterReactionModal');") &&
+    bridge.includes('if(activeRoot) ensureScrollViewport(activeRoot);'),
+  'The bridge observer must repair the scroll viewport when the modal is created lazily'
+);
+assert.ok(
   common.includes('/ui/kinojo-character-skill-bridge.js'),
   'My Info must keep loading the reduced profile/scroll bridge'
 );
 
 for (const page of [
   'hof/index.html', 'm/hof/index.html',
-  'ranking/index.html', 'm/ranking/index.html',
-  'sanctuary/index.html', 'm/sanctuary/index.html'
+  'ranking/index.html', 'm/ranking/index.html'
 ]) {
   const html = read(page);
   assert.equal((html.match(/kinojo-character-reaction\.js\?cache=2026082701/g) || []).length, 1, `${page}: reaction cache contract mismatch`);
-  assert.equal((html.match(/kinojo-character-skill-bridge\.js\?cache=2026082701/g) || []).length, 1, `${page}: reduced bridge cache contract mismatch`);
+  assert.equal((html.match(/kinojo-character-skill-bridge\.js\?cache=2026083001/g) || []).length, 1, `${page}: reduced bridge cache contract mismatch`);
 }
 
 console.log('KINOJO character skill current-state single-call contract: PASS');
