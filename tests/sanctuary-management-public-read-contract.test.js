@@ -37,8 +37,8 @@ assert.doesNotMatch(migration,/kws_[A-Za-z0-9_-]{20,}/,'public read migration mu
 for(const token of [
   'PUBLIC_SANCTUARY_READ',
   'if(!credential){',
-  'kinojo_sanctuary_management_public_bootstrap_v449',
-  'kinojo_sanctuary_management_public_month_v449',
+  'kinojo_sanctuary_management_public_bootstrap_v450',
+  'kinojo_sanctuary_management_public_month_v450',
   'return failure(request,"SESSION_TOKEN_INVALID"',
 ])assert.ok(edge.includes(token),`Edge public-read boundary missing ${token}`);
 assert.ok(feature.includes('sessionToken:optionalServerSessionCredential()'),'public reads must accept an empty browser credential');
@@ -57,8 +57,8 @@ assert.ok(workflow.includes('node tests/sanctuary-management-public-read-contrac
 
 for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
-  assert.ok(html.includes('kinojo-supabase-features.js?cache=2026083004'),`${page}: public feature cache key missing`);
-  assert.ok(html.includes('sanctuary-management.js?cache=2026083004'),`${page}: public client cache key missing`);
+  assert.ok(html.includes('kinojo-supabase-features.js?cache=2026083020'),`${page}: public feature cache key missing`);
+  assert.ok(html.includes('sanctuary-management.js?cache=2026083020'),`${page}: public client cache key missing`);
 }
 
 function party(partyNo){
