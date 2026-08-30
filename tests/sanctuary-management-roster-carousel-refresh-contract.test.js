@@ -13,7 +13,7 @@ const workflow=read('.github/workflows/verify-kinojo-pages.yml');
 
 for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
-  for(const token of ['sanctuaryManagementRefreshCard','sanctuaryManagementRefreshState','sanctuaryManagementRefreshMeta','sanctuaryManagementRefreshAction','새로고침하기','canonical=2026083002','stage77=2026083001'])assert.ok(html.includes(token),`${page}: refresh/projector asset missing ${token}`);
+  for(const token of ['sanctuaryManagementRefreshCard','sanctuaryManagementRefreshState','sanctuaryManagementRefreshMeta','sanctuaryManagementRefreshAction','새로고침하기','canonical=2026083006','stage77=2026083001'])assert.ok(html.includes(token),`${page}: refresh/projector asset missing ${token}`);
   assert.equal(html.includes('sanctuaryManagementSelectedName'),false,`${page}: redundant selected sanctuary card returned`);
 }
 
