@@ -17,6 +17,10 @@
   let selectedMonth=new Date(Date.now()+9*60*60*1000).toISOString().slice(0,7);
   let operationLayer=null;
   let operationOpener=null;
+  let forceOverviewLayer=null;
+  let forceOverviewOpener=null;
+  let forceOverviewTeamId=0;
+  let forceOverviewForceId=0;
   let deepLinkApplied=false;
 
   const byId=id=>document.getElementById(id);
@@ -592,36 +596,98 @@
     return card;
   }
 
-  function forceCarouselColumns(){return matchMedia('(max-width:760px)').matches?1:2;}
-  function forceCarouselStarts(count,columns){
-    const last=Math.max(0,count-columns);const starts=[];
-    for(let index=0;index<=last;index+=columns)starts.push(index);
-    if(!starts.includes(last))starts.push(last);
-    return starts;
-  }
   function forceCarouselCards(track){return Array.from(track?.querySelectorAll(':scope > .sanctuary-management-force-card')||[]);}
-  function forceCarouselOffset(cards,index){return cards[index]?cards[index].offsetLeft-cards[0].offsetLeft:0;}
-  function forceCarouselCurrent(track){
-    const cards=forceCarouselCards(track);if(!cards.length)return 0;
-    return cards.reduce((best,_card,index)=>Math.abs(forceCarouselOffset(cards,index)-track.scrollLeft)<Math.abs(forceCarouselOffset(cards,best)-track.scrollLeft)?index:best,0);
+  function forceCarouselCurrent(carousel){return Math.max(0,integer(carousel?.dataset.forceIndex));}
+  function setForceCardVisibility(card,active){
+    if(!card)return;
+    if(!card.dataset.carouselTabindex)card.dataset.carouselTabindex=String(card.tabIndex);
+    card.classList.toggle('is-active',active);
+    card.toggleAttribute('inert',!active);
+    if(active){card.removeAttribute('aria-hidden');card.tabIndex=integer(card.dataset.carouselTabindex);}
+    else{card.setAttribute('aria-hidden','true');card.tabIndex=-1;}
   }
   function updateForceCarousel(carousel){
     const track=carousel?.querySelector('.sanctuary-management-force-grid');const cards=forceCarouselCards(track);if(!track||!cards.length)return;
-    const starts=forceCarouselStarts(cards.length,forceCarouselColumns());const current=forceCarouselCurrent(track);const page=starts.reduce((best,start,index)=>Math.abs(start-current)<Math.abs(starts[best]-current)?index:best,0);
+    const current=Math.min(cards.length-1,forceCarouselCurrent(carousel));carousel.dataset.forceIndex=String(current);
+    cards.forEach((card,index)=>setForceCardVisibility(card,index===current));
     const previous=carousel.querySelector('[data-sanctuary-force-shift="-1"]');const next=carousel.querySelector('[data-sanctuary-force-shift="1"]');
-    carousel.classList.toggle('has-pages',starts.length>1);if(previous)previous.disabled=page===0;if(next)next.disabled=page===starts.length-1;
+    const position=carousel.querySelector('[data-sanctuary-force-position]');const announcer=carousel.querySelector('[data-sanctuary-force-announcer]');const force=cards[current];
+    carousel.classList.toggle('has-pages',cards.length>1);if(previous)previous.disabled=current===0;if(next)next.disabled=current===cards.length-1;
+    if(position)position.textContent=(current+1)+' / '+cards.length;
+    if(announcer)announcer.textContent=(force?.querySelector('.sanctuary-management-force-card-head strong')?.textContent||current+1+'포스')+' · '+(force?.querySelector('.sanctuary-management-force-card-head em')?.textContent||'편성 정보');
+  }
+  function setForceCarouselIndex(carousel,targetIndex,animate=true){
+    const track=carousel?.querySelector('.sanctuary-management-force-grid');const cards=forceCarouselCards(track);if(!track||!cards.length||carousel.dataset.forceAnimating==='true')return;
+    const current=Math.min(cards.length-1,forceCarouselCurrent(carousel));const target=Math.max(0,Math.min(cards.length-1,integer(targetIndex)));
+    if(current===target){updateForceCarousel(carousel);return;}
+    const outgoing=cards[current],incoming=cards[target];const direction=target>current?'forward':'backward';const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    carousel.dataset.forceIndex=String(target);setForceCardVisibility(outgoing,false);setForceCardVisibility(incoming,true);
+    if(!animate||reduced){updateForceCarousel(carousel);return;}
+    carousel.dataset.forceAnimating='true';outgoing.classList.add('is-leaving-'+direction);incoming.classList.add('is-entering-'+direction);
+    window.setTimeout(()=>{outgoing.classList.remove('is-leaving-forward','is-leaving-backward');incoming.classList.remove('is-entering-forward','is-entering-backward');carousel.dataset.forceAnimating='false';updateForceCarousel(carousel);},480);
+    updateForceCarousel(carousel);
   }
   function shiftForceCarousel(button){
-    const carousel=button.closest('.sanctuary-management-force-carousel');const track=carousel?.querySelector('.sanctuary-management-force-grid');const cards=forceCarouselCards(track);if(!track||!cards.length)return;
-    const starts=forceCarouselStarts(cards.length,forceCarouselColumns());const current=forceCarouselCurrent(track);const page=starts.reduce((best,start,index)=>Math.abs(start-current)<Math.abs(starts[best]-current)?index:best,0);const target=Math.max(0,Math.min(starts.length-1,page+Number(button.dataset.sanctuaryForceShift||0)));
-    track.scrollTo({left:forceCarouselOffset(cards,starts[target]),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+    const carousel=button.closest('.sanctuary-management-force-carousel');if(!carousel)return;
+    setForceCarouselIndex(carousel,forceCarouselCurrent(carousel)+Number(button.dataset.sanctuaryForceShift||0));
+  }
+  function bindForceCarouselGestures(carousel){
+    if(carousel.dataset.carouselBound==='true')return;carousel.dataset.carouselBound='true';
+    let touchStart=null;
+    carousel.addEventListener('touchstart',event=>{const touch=event.touches?.[0];touchStart=touch?{x:touch.clientX,y:touch.clientY}:null;},{passive:true});
+    carousel.addEventListener('touchend',event=>{if(!touchStart)return;const touch=event.changedTouches?.[0];if(!touch){touchStart=null;return;}const deltaX=touch.clientX-touchStart.x,deltaY=touch.clientY-touchStart.y;touchStart=null;if(Math.abs(deltaX)<48||Math.abs(deltaX)<=Math.abs(deltaY)*1.2)return;event.preventDefault();carousel.dataset.swipeSuppress='true';setForceCarouselIndex(carousel,forceCarouselCurrent(carousel)+(deltaX<0?1:-1));window.setTimeout(()=>{carousel.dataset.swipeSuppress='false';},360);},{passive:false});
+    carousel.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight'].includes(event.key)||event.target.matches('input,textarea,select'))return;event.preventDefault();setForceCarouselIndex(carousel,forceCarouselCurrent(carousel)+(event.key==='ArrowRight'?1:-1));});
   }
   function initializeForceCarousels(){
     document.querySelectorAll('.sanctuary-management-force-carousel').forEach(carousel=>{
-      const track=carousel.querySelector('.sanctuary-management-force-grid');if(!track||track.dataset.carouselBound==='true'){updateForceCarousel(carousel);return;}
-      track.dataset.carouselBound='true';let frame=0;track.addEventListener('scroll',()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>updateForceCarousel(carousel));},{passive:true});updateForceCarousel(carousel);
+      bindForceCarouselGestures(carousel);updateForceCarousel(carousel);
     });
   }
+
+  function ensureForceOverviewLayer(){
+    if(forceOverviewLayer)return forceOverviewLayer;
+    forceOverviewLayer=document.createElement('div');forceOverviewLayer.className='sanctuary-management-force-overview-layer';forceOverviewLayer.hidden=true;forceOverviewLayer.setAttribute('aria-hidden','true');document.body.appendChild(forceOverviewLayer);
+    forceOverviewLayer.addEventListener('click',event=>{
+      if(event.target.closest('[data-force-overview-close]')){closeForceOverview();return;}
+      const support=event.target.closest('[data-sanctuary-support-force]');
+      if(support){
+        const team=selectedDraftTeam(support.dataset.sanctuarySupportTeam);if(!team||!bootstrapData?.writeEnabled)return;
+        forceOverviewForceId=integer(support.dataset.sanctuarySupportForce);suspendForceOverview();
+        window.KinojoSanctuaryManagementSupportUI?.open?.(team,forceOverviewForceId,forceOverviewOpener,{onClose:()=>resumeForceOverview(forceOverviewForceId)});return;
+      }
+      const edit=event.target.closest('[data-force-overview-edit]');
+      if(edit&&!edit.disabled){const team=selectedDraftTeam(edit.dataset.forceOverviewEdit);const opener=forceOverviewOpener;closeForceOverview({restoreFocus:false});if(team)window.KinojoSanctuaryManagementDraftUI?.openDraft?.(team,opener);}
+    });
+    forceOverviewLayer.addEventListener('keydown',event=>{
+      if(event.key==='Escape'){event.preventDefault();closeForceOverview();return;}if(event.key!=='Tab')return;
+      const focusable=Array.from(forceOverviewLayer.querySelectorAll('button:not(:disabled),[tabindex="0"]')).filter(item=>item.offsetParent!==null);if(!focusable.length)return;const first=focusable[0],last=focusable.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+    });
+    return forceOverviewLayer;
+  }
+  function renderForceOverview(preferredForceId=0){
+    const team=selectedDraftTeam(forceOverviewTeamId);const layer=ensureForceOverviewLayer();if(!team){closeForceOverview();return;}
+    forceOverviewForceId=integer(preferredForceId)||integer(team.forces?.[0]?.forceId);
+    const backdrop=document.createElement('div');backdrop.className='sanctuary-management-force-overview-backdrop';backdrop.dataset.forceOverviewClose='';
+    const dialog=document.createElement('section');dialog.className='sanctuary-management-force-overview-dialog';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-labelledby','sanctuaryForceOverviewTitle');dialog.tabIndex=-1;
+    const header=document.createElement('header');const heading=document.createElement('div');const kicker=document.createElement('span');kicker.textContent='ALL FORCE ROSTER';const title=document.createElement('h2');title.id='sanctuaryForceOverviewTitle';title.textContent=(value(team.title)||'이름 없는 팀')+' 전체 포스';const summary=document.createElement('p');summary.textContent=scheduleLabel(team)+' · '+value(team.forceCount)+'포스 · '+value(team.occupiedCount)+'/'+value(team.slotCount)+'명';heading.append(kicker,title,summary);
+    const close=document.createElement('button');close.type='button';close.dataset.forceOverviewClose='';close.setAttribute('aria-label','전체 포스 보기 닫기');close.textContent='×';header.append(heading,close);
+    const scroll=document.createElement('div');scroll.className='sanctuary-management-force-overview-scroll';
+    const grid=document.createElement('div');grid.className='sanctuary-management-force-overview-grid';grid.setAttribute('aria-label',value(team.title)+' 전체 포스 편성');team.forces.forEach(force=>grid.appendChild(createForceCard(team,force)));scroll.appendChild(grid);
+    const footer=document.createElement('footer');const status=document.createElement('p');status.textContent=value(team.mode)==='PARTICIPATION'?'포스 카드를 누르면 기존 다중 포스 지원·승인 화면으로 연결됩니다.':'고정 팀 편성을 한 화면에서 확인할 수 있습니다.';const actions=document.createElement('div');
+    const teamCopy=document.createElement('button');teamCopy.type='button';teamCopy.className='kinojo-btn secondary';teamCopy.dataset.sanctuaryCopyTeam=value(team.teamId);teamCopy.textContent='팀 이미지 복사';actions.appendChild(teamCopy);
+    if(team.canEdit&&value(team.status)!=='ARCHIVED'){
+      const edit=document.createElement('button');edit.type='button';edit.className='kinojo-btn';edit.dataset.forceOverviewEdit=value(team.teamId);edit.disabled=!bootstrapData?.writeEnabled;edit.textContent='포스·캐릭터 편집';actions.appendChild(edit);
+    }
+    const done=document.createElement('button');done.type='button';done.className='kinojo-btn secondary';done.dataset.forceOverviewClose='';done.textContent='닫기';actions.appendChild(done);footer.append(status,actions);dialog.append(header,scroll,footer);layer.replaceChildren(backdrop,dialog);
+  }
+  function openForceOverview(team,opener,preferredForceId=0){
+    if(!team)return;forceOverviewTeamId=integer(team.teamId);forceOverviewForceId=integer(preferredForceId)||integer(team.forces?.[0]?.forceId);forceOverviewOpener=opener||document.activeElement;renderForceOverview(forceOverviewForceId);const layer=ensureForceOverviewLayer();layer.hidden=false;layer.setAttribute('aria-hidden','false');document.body.classList.add('sanctuary-management-force-overview-open');requestAnimationFrame(()=>layer.querySelector('.sanctuary-management-force-overview-dialog')?.focus());
+  }
+  function suspendForceOverview(){const layer=ensureForceOverviewLayer();layer.hidden=true;layer.setAttribute('aria-hidden','true');document.body.classList.remove('sanctuary-management-force-overview-open');}
+  function resumeForceOverview(preferredForceId=0){
+    if(!forceOverviewTeamId||!selectedDraftTeam(forceOverviewTeamId))return;renderForceOverview(preferredForceId);const layer=ensureForceOverviewLayer();layer.hidden=false;layer.setAttribute('aria-hidden','false');document.body.classList.add('sanctuary-management-force-overview-open');requestAnimationFrame(()=>{const force=layer.querySelector('[data-sanctuary-support-force="'+CSS.escape(String(preferredForceId))+'"]');(force||layer.querySelector('.sanctuary-management-force-overview-dialog'))?.focus?.({preventScroll:true});});
+  }
+  function closeForceOverview(options={}){const restoreFocus=options.restoreFocus!==false;const target=forceOverviewOpener,layer=ensureForceOverviewLayer();layer.hidden=true;layer.setAttribute('aria-hidden','true');layer.replaceChildren();document.body.classList.remove('sanctuary-management-force-overview-open');forceOverviewTeamId=0;forceOverviewForceId=0;forceOverviewOpener=null;if(restoreFocus)target?.focus?.({preventScroll:true});}
 
   function createTeamCard(team){
     const card=document.createElement('article');card.className='sanctuary-management-team-card';card.dataset.sanctuaryTeam=value(team.teamId);
@@ -644,11 +710,15 @@
     const meta=document.createElement('div');meta.className='sanctuary-management-team-meta';
     [teamModeLabel(team),scheduleLabel(team),value(team.forceCount)+'포스 · '+value(team.occupiedCount)+'/'+value(team.slotCount)+'명','팀 ID '+value(team.teamId),'revision '+value(team.revision)].forEach(text=>{const item=document.createElement('span');item.textContent=text;meta.appendChild(item);});
     const carousel=document.createElement('div');carousel.className='sanctuary-management-force-carousel';
+    const carouselHead=document.createElement('div');carouselHead.className='sanctuary-management-force-carousel-head';
+    const position=document.createElement('span');position.className='sanctuary-management-force-position';position.dataset.sanctuaryForcePosition='';position.textContent='1 / '+team.forces.length;const announcer=document.createElement('span');announcer.className='sanctuary-management-sr-only';announcer.dataset.sanctuaryForceAnnouncer='';announcer.setAttribute('aria-live','polite');
+    const overview=document.createElement('button');overview.type='button';overview.className='kinojo-btn secondary sanctuary-management-force-overview-button';overview.dataset.sanctuaryForceOverview=value(team.teamId);overview.textContent='전체 포스 보기';carouselHead.append(position,announcer,overview);
+    const viewport=document.createElement('div');viewport.className='sanctuary-management-force-viewport';
     const previous=document.createElement('button');previous.type='button';previous.className='sanctuary-management-force-arrow is-previous';previous.dataset.sanctuaryForceShift='-1';previous.setAttribute('aria-label','이전 포스 보기');previous.textContent='‹';
     const forces=document.createElement('div');forces.className='sanctuary-management-force-grid';forces.setAttribute('aria-label',value(team.title)+' 포스 편성');
     team.forces.forEach(force=>forces.appendChild(createForceCard(team,force)));
     const next=document.createElement('button');next.type='button';next.className='sanctuary-management-force-arrow is-next';next.dataset.sanctuaryForceShift='1';next.setAttribute('aria-label','다음 포스 보기');next.textContent='›';
-    carousel.append(previous,forces,next);card.append(head,meta,carousel);
+    viewport.append(previous,forces,next);carousel.append(carouselHead,viewport);card.append(head,meta,carousel);
     return card;
   }
 
@@ -1101,8 +1171,11 @@
     });
     byId('sanctuaryManagementTransitionReview')?.addEventListener('click',event=>{if(!bootstrapData?.transitionReview?.canReview)return;openTransitionReview(event.currentTarget);});
     byId('sanctuaryManagementTeamList')?.addEventListener('click',event=>{
+      const sourceCarousel=event.target.closest('.sanctuary-management-force-carousel');if(sourceCarousel?.dataset.swipeSuppress==='true'){event.preventDefault();return;}
       const carouselButton=event.target.closest('[data-sanctuary-force-shift]');
       if(carouselButton){shiftForceCarousel(carouselButton);return;}
+      const overview=event.target.closest('[data-sanctuary-force-overview]');
+      if(overview){const team=selectedDraftTeam(overview.dataset.sanctuaryForceOverview);if(team)openForceOverview(team,overview,team.forces?.[forceCarouselCurrent(overview.closest('.sanctuary-management-force-carousel'))]?.forceId);return;}
       const support=event.target.closest('[data-sanctuary-support-force]');
       if(support){if(!bootstrapData?.writeEnabled||support.disabled)return;const team=selectedDraftTeam(support.dataset.sanctuarySupportTeam);if(team)window.KinojoSanctuaryManagementSupportUI?.open?.(team,Number(support.dataset.sanctuarySupportForce),support);return;}
       const edit=event.target.closest('[data-sanctuary-edit-team]');

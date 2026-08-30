@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const state={layer:null,opener:null,teamId:0,activeForceId:0,assignments:new Map(),saving:false,message:'',tone:'',result:null};
+  const state={layer:null,opener:null,onClose:null,teamId:0,activeForceId:0,assignments:new Map(),saving:false,message:'',tone:'',result:null};
   const value=input=>String(input??'').trim();
   const integer=input=>Number.isSafeInteger(Number(input))?Number(input):0;
   const escapeHtml=input=>String(input??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -82,13 +82,13 @@
   }
 
   function syncFade(){const scroll=state.layer?.querySelector('.sanctuary-management-support-scroll');state.layer?.querySelector('.sanctuary-management-support-dialog')?.classList.toggle('has-more',Boolean(scroll&&scroll.scrollTop+scroll.clientHeight<scroll.scrollHeight-2));}
-  function open(targetTeam,forceId,opener){
+  function open(targetTeam,forceId,opener,options={}){
     if(!targetTeam||value(targetTeam.mode)!=='PARTICIPATION'||bridge()?.snapshot?.()?.writeEnabled!==true)return;
-    state.opener=opener||document.activeElement;state.teamId=integer(targetTeam.teamId);state.activeForceId=integer(forceId)||integer(targetTeam.forces?.[0]?.forceId);state.assignments=new Map();state.saving=false;state.message='';state.tone='';state.result=null;
+    state.opener=opener||document.activeElement;state.onClose=typeof options?.onClose==='function'?options.onClose:null;state.teamId=integer(targetTeam.teamId);state.activeForceId=integer(forceId)||integer(targetTeam.forces?.[0]?.forceId);state.assignments=new Map();state.saving=false;state.message='';state.tone='';state.result=null;
     const layer=ensureLayer();layer.hidden=false;layer.setAttribute('aria-hidden','false');document.body.classList.add('sanctuary-management-support-open');render();requestAnimationFrame(()=>layer.querySelector('[data-support-force][aria-pressed="true"]')?.focus());
   }
 
-  function close(){if(state.saving)return;const target=state.opener,layer=ensureLayer();layer.hidden=true;layer.setAttribute('aria-hidden','true');layer.replaceChildren();document.body.classList.remove('sanctuary-management-support-open');state.opener=null;state.teamId=0;state.activeForceId=0;state.assignments=new Map();state.result=null;target?.focus?.({preventScroll:true});}
+  function close(){if(state.saving)return;const target=state.opener,onClose=state.onClose,layer=ensureLayer();layer.hidden=true;layer.setAttribute('aria-hidden','true');layer.replaceChildren();document.body.classList.remove('sanctuary-management-support-open');state.opener=null;state.onClose=null;state.teamId=0;state.activeForceId=0;state.assignments=new Map();state.result=null;if(onClose)onClose();else target?.focus?.({preventScroll:true});}
   function setMessage(message,tone='warning'){state.message=message;state.tone=tone;render();}
 
   async function submit(){
