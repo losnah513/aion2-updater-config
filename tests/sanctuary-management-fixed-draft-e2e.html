@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="../ui/kinojo-common-ui.css">
   <link rel="stylesheet" href="../ui/kinojo-components.css">
   <link rel="stylesheet" href="../sanctuary-management/css/sanctuary-management.css">
-  <link rel="stylesheet" href="../sanctuary-management/css/sanctuary-management-draft.css">
+  <link rel="stylesheet" href="../sanctuary-management/css/sanctuary-management-draft.css?stage9=2026083001">
   <link rel="stylesheet" href="../sanctuary-management/css/sanctuary-management-support.css?stage77=2026083001">
   <link rel="stylesheet" href="../sanctuary-management/css/sanctuary-management-copy.css">
 </head>
@@ -38,18 +38,18 @@
       let partySequence=200;
       let slotSequence=300;
       const creatorCandidates=[
-        {characterId:501,serverId:2,serverName:'지켈',characterName:'테스트본캐',className:'검성',profileImageUrl:'',isMain:true,relation:'MAIN',mainCharacterId:501},
-        {characterId:502,serverId:2,serverName:'지켈',characterName:'테스트부캐',className:'살성',profileImageUrl:'',isMain:false,relation:'ALT',mainCharacterId:501}
+        {characterId:501,serverId:2,serverName:'지켈',characterName:'테스트본캐',className:'검성',profileImageUrl:'',power:123456,itemLevel:4321,isMain:true,relation:'MAIN',mainCharacterId:501,canSelectAlts:true},
+        {characterId:502,serverId:2,serverName:'지켈',characterName:'테스트부캐',className:'살성',profileImageUrl:'',power:111111,itemLevel:4200,isMain:false,relation:'ALT',mainCharacterId:501}
       ];
       const searchableCharacters=[
-        {characterId:601,serverId:2,serverName:'지켈',characterName:'테스트검색',className:'궁성',legionName:'깡',profileImageUrl:'',raceId:1,isOperationalLegion:true,ownerMemberId:9,relation:'MAIN',mainCharacterId:601}
+        {characterId:601,serverId:2,serverName:'지켈',characterName:'테스트검색',className:'궁성',legionName:'깡',profileImageUrl:'',raceId:1,power:456789,itemLevel:4400,isOperationalLegion:true,ownerMemberId:9,relation:'MAIN',mainCharacterId:601,canSelectAlts:true}
       ];
       const balanceCharacter={characterId:901,mainCharacterId:901,ownerMemberId:21,serverId:2,serverName:'지켈',characterName:'균형지원자',className:'치유성',relation:'MAIN',isMain:true,power:318400};
       const officialCandidates={
         외부게스트:{candidateId:'official-guest-701',characterName:'외부게스트',serverId:2,serverName:'지켈',className:'마도성',legionName:'외부레기온',profileImageUrl:'',raceId:1,isOperationalLegion:false,allowedRelations:['GUEST']},
         운영부캐:{candidateId:'official-alt-702',characterName:'운영부캐',serverId:2,serverName:'지켈',className:'치유성',legionName:'밤',profileImageUrl:'',raceId:1,isOperationalLegion:true,allowedRelations:['MAIN','ALT']}
       };
-      const character={characterId:501,name:'테스트본캐',serverName:'지켈',className:'검성',profileImageUrl:'',power:123456,mainCharacterName:'테스트본캐',isMain:true,relation:'MAIN'};
+      const character={characterId:501,name:'테스트본캐',serverName:'지켈',className:'검성',profileImageUrl:'',power:123456,itemLevel:4321,mainCharacterName:'테스트본캐',isMain:true,relation:'MAIN'};
       function makeForce(forceNo,withCharacter=false){
         const forceId=forceSequence++;
         const parties=[1,2].map(partyNo=>{
@@ -83,14 +83,14 @@
         teamId:78,sanctuaryId:1,title:'2팀 토요일 22시',activity:'성역1 참여 모집',mode:'PARTICIPATION',joinPolicy:'APPROVAL',status:'ACTIVE',revision:2,canEdit:true,
         schedule:{scheduleId:92,kind:'WEEKLY',startsOn:'2026-08-29',weekdays:[6],startsAt:'22:00',durationMinutes:90,status:'ACTIVE',revision:1},
         forces:[participationForce],
-        supportCharacters:{ownerResolved:true,code:'READY',candidateCount:1,characters:[{characterId:801,mainCharacterId:801,serverId:2,characterName:'지원본캐',serverName:'지켈',className:'치유성',profileImageUrl:'',relation:'MAIN',isMain:true,availableForceIds:[participationForce.forceId],disabledCode:'',disabledMessage:'',conflicts:[]}]},
+        supportCharacters:{ownerResolved:true,code:'READY',candidateCount:1,characters:[{characterId:801,mainCharacterId:801,serverId:2,characterName:'지원본캐',serverName:'지켈',className:'치유성',profileImageUrl:'',power:654321,itemLevel:4400,relation:'MAIN',isMain:true,availableForceIds:[participationForce.forceId],disabledCode:'',disabledMessage:'',conflicts:[]}],randomAltCandidate:{assignmentKind:'RANDOM_ALT',isRandomAlt:true,mainCharacterId:801,serverId:2,serverName:'지켈',characterName:'지원본캐의 랜덤 부캐',eligibleAltCount:2,availableForceIds:[participationForce.forceId],disabledCode:'',disabledMessage:''}},
         supportBatches:[]
       }].map(syncTeam);
       const sanctuaries=[
-        {id:1,code:'rudra',name:'심연의 재련: 루드라',shortName:'루드라팟',displayOrder:1,releaseStatus:'OPEN'},
-        {id:2,code:'bagot',name:'침식의 정화소',shortName:'바고트팟',displayOrder:2,releaseStatus:'OPEN'},
-        {id:3,code:'kaldrix',name:'무스펠의 성배',shortName:'칼드릭스팟',displayOrder:3,releaseStatus:'OPEN'},
-        {id:4,code:'sanctuary4',name:'비탄의 설원',shortName:'비탄의 설원',displayOrder:4,availableFrom:'2026-09-09',releaseStatus:'UPCOMING',releaseLabel:'9월 9일 추가 예정'}
+        {id:1,code:'rudra',name:'심연의 재련: 루드라',shortName:'루드라팟',displayOrder:1,releaseStatus:'OPEN',entryModes:[{key:'default',label:'입장 가능',sortOrder:1,minItemLevel:2700}]},
+        {id:2,code:'bagot',name:'침식의 정화소',shortName:'바고트팟',displayOrder:2,releaseStatus:'OPEN',entryModes:[{key:'default',label:'입장 가능',sortOrder:1,minItemLevel:3500}]},
+        {id:3,code:'kaldrix',name:'무스펠의 성배',shortName:'칼드릭스팟',displayOrder:3,releaseStatus:'OPEN',entryModes:[{key:'normal',label:'보통',sortOrder:1,minItemLevel:4300},{key:'hard',label:'어려움',sortOrder:2,minItemLevel:4500}]},
+        {id:4,code:'sanctuary4',name:'비탄의 설원',shortName:'비탄의 설원',displayOrder:4,availableFrom:'2026-09-09',releaseStatus:'UPCOMING',releaseLabel:'9월 9일 추가 예정',entryModes:[]}
       ];
       const transitionTargets={proposalVersion:1,preserve:[{object:'public.sanctuary_master',rowCount:4,ids:[1,2,3,4],reason:'성역 1~4 공식 원본 유지'}],migrate:[],archive:[{object:'private.sanctuary_management_teams_v412',rowCount:3,ids:[6,7,8],reason:'시험 팀 이력 보관'}],initialize:[{object:'public.sanctuary_slots',rowCount:270,occupiedRowCount:101,occupiedIds:Array.from({length:101},(_,index)=>18238+index),reason:'기존 파티 편성 초기화'}],stop:[{object:'public.sanctuary_sheet_sync_jobs',rowCount:168,ids:Array.from({length:168},(_,index)=>index+1),reason:'성역 Sheet 동기화 중지'}],executionPolicy:'Stage 6에서는 실행하지 않습니다.'};
       const transitionReport={ok:true,apiVersion:1.7,schemaVersion:445,scopeHash:'a'.repeat(64),unresolvedCount:0,readyForApproval:true,approval:{approved:false},rollback:{restored:true,closedAt:'2026-08-29T04:00:00Z',restoredAt:'2026-08-29T04:01:00Z'},targets:transitionTargets,cardComparison:{explanation:'두 데이터 영역은 이관 전 병행 운영 범위이며 신규 정원 불변 조건을 비교합니다.',legacy:{teamCount:27,partyCount:54,slotCount:270,occupiedSlotCount:101},server:{teamCount:3,forceCount:16,partyCount:32,slotCount:160,occupiedSlotCount:6}},scheduleComparison:{month:'2026-08',explanation:'월 범위·수요일 경계·30분 단위를 공통 기준으로 검증합니다.',legacy:{scheduleCount:23,monthOccurrenceCount:5},server:{activeRuleCount:2,monthOccurrenceCount:2}},operations:{commandCount:40,auditEventCount:40,checks:[{status:'PASS',label:'신규 포스 정원 10명',failureCount:0},{status:'PASS',label:'포스당 2파티',failureCount:0},{status:'PASS',label:'중복 요청 결과 단일화',failureCount:0}]},evidence:['6-2','6-3','6-4','6-5','6-6'].map((stageItem,index)=>({stageItem,status:'PASS',source:'LOCAL_BROWSER_QA_'+(index+1)}))};
@@ -100,7 +100,7 @@
       window.KinojoSupabase={
         async ensureReady(){return true;},
         getConfig(){return {url:'https://josvoltpktvwysrasffq.supabase.co'};},
-        async getSanctuaryManagementBootstrap(){return {apiVersion:1.8,schemaVersion:446,serverTime:new Date().toISOString(),readEnabled:true,writeEnabled:pilotApproved,globalWriteEnabled:true,rollout:{mode:'PILOT',globalWriteEnabled:true,effectiveWriteEnabled:pilotApproved,pilotApproved,pilotApprovedAt:pilotApproved?new Date().toISOString():'',pilotExpiresAt:'',reasonCode:pilotApproved?'PILOT_APPROVED':'PILOT_NOT_APPROVED',message:pilotApproved?'시험 사용자 쓰기가 활성화되었습니다.':'승인된 시험 사용자만 신규 성역 관리 쓰기를 사용할 수 있습니다.'},transitionReview:{canReview:pilotApproved,canApprove:pilotApproved,approved:false,scopeHash:'a'.repeat(64),unresolvedCount:0},actor:{memberId:7,canManageAll:true},composerCharacters:{ownerResolved:true,code:'READY',candidateCount:creatorCandidates.length,characters:structuredClone(creatorCandidates)},sanctuaries,teams:structuredClone(teams)};},
+        async getSanctuaryManagementBootstrap(){return {apiVersion:2.2,schemaVersion:452,serverTime:new Date().toISOString(),readEnabled:true,writeEnabled:pilotApproved,globalWriteEnabled:true,rollout:{mode:'PILOT',globalWriteEnabled:true,effectiveWriteEnabled:pilotApproved,pilotApproved,pilotApprovedAt:pilotApproved?new Date().toISOString():'',pilotExpiresAt:'',reasonCode:pilotApproved?'PILOT_APPROVED':'PILOT_NOT_APPROVED',message:pilotApproved?'시험 사용자 쓰기가 활성화되었습니다.':'승인된 시험 사용자만 신규 성역 관리 쓰기를 사용할 수 있습니다.'},transitionReview:{canReview:pilotApproved,canApprove:pilotApproved,approved:false,scopeHash:'a'.repeat(64),unresolvedCount:0},actor:{memberId:7,canManageAll:true},composerCharacters:{ownerResolved:true,code:'READY',candidateCount:creatorCandidates.length,characters:structuredClone(creatorCandidates)},sanctuaries,teams:structuredClone(teams)};},
         async getSanctuaryManagementMonth(month){return {ok:true,apiVersion:1.8,schemaVersion:446,month,weekStartsOn:'WEDNESDAY',rangeStart:'2026-07-29',rangeEnd:'2026-09-01',weekStarts:['2026-07-29','2026-08-05','2026-08-12','2026-08-19','2026-08-26'],occurrences:[{occurrenceKey:'sm-78-20260829-2200',scheduleId:92,scheduleRevision:1,teamId:78,teamTitle:'2팀 토요일 22시',sanctuaryId:1,teamMode:'PARTICIPATION',joinPolicy:'APPROVAL',occurrenceDate:'2026-08-29',weekStart:'2026-08-26',startAt:'2026-08-29T13:00:00Z',endAt:'2026-08-29T14:30:00Z',durationMinutes:90,sourceScope:'RULE',canEdit:true}]};},
         async getSanctuaryManagementTransitionReport(month){document.body.dataset.transitionReportRequests=String(Number(document.body.dataset.transitionReportRequests||0)+1);await waitForTransition();return structuredClone(Object.assign({},transitionReport,{scheduleComparison:Object.assign({},transitionReport.scheduleComparison,{month})}));},
         async approveSanctuaryManagementTransition(month,scopeHash,scopePayload,confirmation){if(scopeHash!==transitionReport.scopeHash||confirmation!=='전환 범위 승인'||JSON.stringify(scopePayload)!==JSON.stringify(transitionTargets))throw new Error('전환 승인 입력이 일치하지 않습니다.');transitionReport.approval={approved:true,approvedAt:new Date().toISOString()};return {ok:true,approved:true,schemaVersion:445,scopeHash,message:'전환 범위가 승인되었습니다.'};},
@@ -125,8 +125,8 @@
           const team=teams.find(item=>item.teamId===Number(teamId));
           if(!team||team.revision!==Number(expectedRevision)||String(leaseToken).length<32)throw new Error('다른 사용자가 먼저 팀을 수정했습니다.');
           const force=team.forces[0];const party=force.parties[0];const slot=party.slots.find(item=>!item.occupied&&!lockOverrides.some(lock=>lock.slotId===item.slotId&&lock.locked));
-          if(!slot)return {ok:true,apiVersion:2.1,schemaVersion:451,proposalToken:'smbp_'+('b'.repeat(64)),expiresAt:new Date(Date.now()+600000).toISOString(),stableSeed,assignments:[],excluded:[{characterName:balanceCharacter.characterName,reasonCode:'NO_ELIGIBLE_UNLOCKED_SLOT',reasonMessage:'잠금 해제 빈 슬롯이 없습니다.'}],beforeAverages:[{forceId:force.forceId,forceNo:force.forceNo,average:123456,knownCount:1,occupiedCount:1}],afterAverages:[{forceId:force.forceId,forceNo:force.forceNo,average:123456,knownCount:1,occupiedCount:1}],assignmentCount:0,excludedCount:1};
-          return {ok:true,apiVersion:2.1,schemaVersion:451,proposalToken:'smbp_'+('b'.repeat(64)),expiresAt:new Date(Date.now()+600000).toISOString(),stableSeed,assignments:[Object.assign({supportItemId:9901,supportBatchId:9900,slotId:slot.slotId,forceId:force.forceId,forceNo:force.forceNo,partyNo:party.partyNo,slotNo:slot.slotNo},balanceCharacter)],excluded:[],beforeAverages:[{forceId:force.forceId,forceNo:force.forceNo,average:123456,knownCount:1,occupiedCount:1}],afterAverages:[{forceId:force.forceId,forceNo:force.forceNo,average:220928,knownCount:2,occupiedCount:2}],assignmentCount:1,excludedCount:0};
+          if(!slot)return {ok:true,apiVersion:2.2,schemaVersion:452,proposalToken:'smbp_'+('b'.repeat(64)),expiresAt:new Date(Date.now()+600000).toISOString(),stableSeed,assignments:[],excluded:[{characterName:balanceCharacter.characterName,reasonCode:'NO_ELIGIBLE_UNLOCKED_SLOT',reasonMessage:'잠금 해제 빈 슬롯이 없습니다.'}],beforeAverages:[{forceId:force.forceId,forceNo:force.forceNo,average:123456,knownCount:1,occupiedCount:1}],afterAverages:[{forceId:force.forceId,forceNo:force.forceNo,average:123456,knownCount:1,occupiedCount:1}],assignmentCount:0,excludedCount:1};
+          return {ok:true,apiVersion:2.2,schemaVersion:452,proposalToken:'smbp_'+('b'.repeat(64)),expiresAt:new Date(Date.now()+600000).toISOString(),stableSeed,assignments:[Object.assign({supportItemId:9901,supportBatchId:9900,slotId:slot.slotId,forceId:force.forceId,forceNo:force.forceNo,partyNo:party.partyNo,slotNo:slot.slotNo},balanceCharacter)],excluded:[],beforeAverages:[{forceId:force.forceId,forceNo:force.forceNo,average:123456,knownCount:1,occupiedCount:1}],afterAverages:[{forceId:force.forceId,forceNo:force.forceNo,average:220928,knownCount:2,occupiedCount:2}],assignmentCount:1,excludedCount:0};
         },
         async runSanctuaryManagementCommand(command,payload,expectedRevision){
           if(command==='CREATE_TEAM'){
@@ -159,7 +159,7 @@
     })();
   </script>
   <script src="../sanctuary-management/js/sanctuary-management.js?stage77=2026083001"></script>
-  <script src="../sanctuary-management/js/sanctuary-management-draft.js"></script>
+  <script src="../sanctuary-management/js/sanctuary-management-draft.js?stage9=2026083001"></script>
   <script src="../sanctuary-management/js/sanctuary-management-support.js?stage77=2026083001"></script>
   <script src="../sanctuary-management/js/sanctuary-management-copy.js"></script>
 </body>

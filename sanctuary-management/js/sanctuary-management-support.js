@@ -10,6 +10,7 @@
   const team=()=>bridge()?.findTeam?.(state.teamId)||null;
   const forces=()=>Array.isArray(team()?.forces)?team().forces.slice().sort((a,b)=>integer(a.forceNo)-integer(b.forceNo)):[];
   const characters=()=>Array.isArray(team()?.supportCharacters?.characters)?team().supportCharacters.characters:[];
+  const randomCandidate=()=>team()?.supportCharacters?.randomAltCandidate||null;
   const actorId=()=>integer(bridge()?.snapshot?.()?.actor?.memberId);
   const CLASS_ICON_MAP={
     '검성':'gladiator','수호성':'templar','궁성':'ranger','살성':'assassin',
@@ -28,9 +29,17 @@
 
   function activeForce(){return forces().find(force=>integer(force.forceId)===state.activeForceId)||forces()[0]||null;}
   function characterFor(id){return characters().find(character=>integer(character.characterId)===integer(id))||null;}
-  function assignmentOwner(characterId){for(const [forceId,id] of state.assignments){if(id===integer(characterId))return forceId;}return 0;}
+  function assignmentOwner(characterId){for(const [forceId,assignment] of state.assignments){if(assignment.kind==='ACTUAL_CHARACTER'&&assignment.characterId===integer(characterId))return forceId;}return 0;}
+  function randomAssignmentCount(mainCharacterId){return Array.from(state.assignments.values()).filter(assignment=>assignment.kind==='RANDOM_ALT'&&assignment.mainCharacterId===integer(mainCharacterId)).length;}
+  function assignmentLabel(assignment){if(!assignment)return '';if(assignment.kind==='RANDOM_ALT')return randomCandidate()?.characterName||'랜덤 부캐';return characterFor(assignment.characterId)?.characterName||'선택 완료';}
   function eligible(character,force){
     if(!force)return {ok:false,message:'지원할 포스를 선택해 주세요.'};
+    if(character?.isRandomAlt){
+      const current=state.assignments.get(integer(force.forceId));
+      if(!character.availableForceIds.includes(integer(force.forceId)))return {ok:false,message:value(force.supportDisabledMessage)||'이 포스에는 랜덤 부캐로 지원할 수 없습니다.'};
+      if(current?.kind!=='RANDOM_ALT'&&randomAssignmentCount(character.mainCharacterId)>=integer(character.eligibleAltCount))return {ok:false,message:'지원 가능한 부캐 수만큼 이미 선택했습니다.'};
+      return {ok:true,message:''};
+    }
     const owner=assignmentOwner(character.characterId);
     if(owner&&owner!==integer(force.forceId))return {ok:false,message:'이미 다른 포스에 선택한 캐릭터입니다.'};
     if(value(character.disabledCode))return {ok:false,message:value(character.disabledMessage)||'이 캐릭터는 현재 지원할 수 없습니다.'};
@@ -40,16 +49,21 @@
 
   function forceMarkup(force){
     const selected=integer(force.forceId)===integer(activeForce()?.forceId);const assigned=state.assignments.get(integer(force.forceId));
-    const label=force.viewerAlreadyAssigned?'참여 중':force.viewerPending?'승인 대기':assigned?characterFor(assigned)?.characterName||'선택 완료':force.canSupport?'빈자리 '+force.vacancyCount:value(force.supportDisabledMessage)||'지원 불가';
+    const label=force.viewerAlreadyAssigned?'참여 중':force.viewerPending?'승인 대기':assigned?assignmentLabel(assigned):force.canSupport?'빈자리 '+force.vacancyCount:value(force.supportDisabledMessage)||'지원 불가';
     return '<button type="button" data-support-force="'+force.forceId+'" aria-pressed="'+selected+'" class="'+(selected?'is-active ':'')+(assigned?'is-selected ':'')+(force.canSupport?'can-support':'is-unavailable')+'"><strong>'+force.forceNo+'포스</strong><small>'+escapeHtml(label)+'</small></button>';
   }
 
   function characterMarkup(character,force){
-    const selected=state.assignments.get(integer(force?.forceId))===integer(character.characterId);const allowed=eligible(character,force);const owner=assignmentOwner(character.characterId);
-    const reason=allowed.ok?'선택하면 '+force.forceNo+'포스에 지원합니다.':allowed.message;
+    const assigned=state.assignments.get(integer(force?.forceId));const selected=assigned?.kind==='ACTUAL_CHARACTER'&&assigned.characterId===integer(character.characterId);const allowed=eligible(character,force);
     const classIcon=classIconFor(character.className);
     const avatar=classIcon?'<img src="'+escapeHtml(classIcon)+'" alt="" aria-hidden="true">':'<span aria-hidden="true">?</span>';
-    return '<button type="button" class="sanctuary-management-support-character '+(selected?'is-selected ':'')+(!allowed.ok?'is-disabled':'')+'" data-support-character="'+character.characterId+'" aria-pressed="'+selected+'" aria-disabled="'+(!allowed.ok)+'"'+(state.saving?' disabled':'')+'><span class="sanctuary-management-support-avatar" title="'+escapeHtml(character.className||'클래스 정보 없음')+'">'+avatar+'</span><span><em>'+(character.isMain?'본캐':'부캐')+'</em><strong>'+escapeHtml(character.characterName)+'</strong><small>'+escapeHtml([character.serverName,character.className].filter(Boolean).join(' · '))+'</small><i>'+escapeHtml(owner&&owner!==integer(force?.forceId)?'다른 포스에 선택됨':reason)+'</i></span></button>';
+    return '<button type="button" class="sanctuary-management-support-character '+(selected?'is-selected ':'')+(!allowed.ok?'is-disabled':'')+'" data-support-character="'+character.characterId+'" aria-pressed="'+selected+'" aria-disabled="'+(!allowed.ok)+'"'+(state.saving?' disabled':'')+'><span class="sanctuary-management-support-avatar" title="'+escapeHtml(character.className||'클래스 정보 없음')+'">'+avatar+'</span><span><em>'+(character.isMain?'본캐':'부캐')+'</em><strong>'+escapeHtml(character.characterName)+'</strong><small>['+escapeHtml(character.serverName||'서버 미확인')+']</small></span></button>';
+  }
+
+  function randomMarkup(character,force){
+    if(!character)return '';
+    const assigned=state.assignments.get(integer(force?.forceId));const selected=assigned?.kind==='RANDOM_ALT'&&assigned.mainCharacterId===integer(character.mainCharacterId);const allowed=eligible(character,force);
+    return '<button type="button" class="sanctuary-management-support-character is-random '+(selected?'is-selected ':'')+(!allowed.ok?'is-disabled':'')+'" data-support-random="'+escapeHtml(character.mainCharacterId)+'" aria-pressed="'+selected+'" aria-disabled="'+(!allowed.ok)+'"'+(state.saving?' disabled':'')+'><span class="sanctuary-management-support-avatar" aria-hidden="true">R</span><span><em>랜덤 부캐</em><strong>랜덤 부캐 신청하기</strong><small>'+escapeHtml(character.eligibleAltCount)+'개 부캐 중 자동 배정</small></span></button>';
   }
 
   function batchMarkup(batch){
@@ -70,11 +84,12 @@
   function markup(){
     const current=team(),force=activeForce();if(!current)return '<div class="sanctuary-management-support-backdrop" data-support-close></div>';
     const forceButtons=forces().map(forceMarkup).join('');
-    const cards=characters().map(character=>characterMarkup(character,force)).join('')||'<div class="sanctuary-management-support-empty"><strong>지원할 내 캐릭터가 없습니다.</strong><p>내 정보에서 본캐·부캐 소유 관계를 먼저 확인해 주세요.</p></div>';
+    const cards=characters().map(character=>characterMarkup(character,force)).join('')+randomMarkup(randomCandidate(),force)||'<div class="sanctuary-management-support-empty"><strong>지원할 내 캐릭터가 없습니다.</strong><p>내 정보에서 본캐·부캐 소유 관계를 먼저 확인해 주세요.</p></div>';
     const batches=(current.supportBatches||[]).filter(batch=>integer(batch.pendingCount)>0||integer(batch.requesterMemberId)===actorId()).map(batchMarkup).join('');
     const selected=Array.from(state.assignments.entries()).sort((a,b)=>a[0]-b[0]);
-    const summary=selected.length?selected.map(([forceId,characterId])=>{const f=forces().find(item=>integer(item.forceId)===forceId),c=characterFor(characterId);return (f?.forceNo||'?')+'포스 '+(c?.characterName||'');}).join(' · '):'포스를 고른 뒤 내 캐릭터를 선택하세요.';
-    return '<div class="sanctuary-management-support-backdrop" data-support-close></div><section class="sanctuary-management-support-dialog" role="dialog" aria-modal="true" aria-labelledby="sanctuarySupportTitle" tabindex="-1"><header><div><span>PARTICIPATION SUPPORT</span><h2 id="sanctuarySupportTitle">'+escapeHtml(current.title)+' 지원하기</h2><p>'+escapeHtml(current.joinPolicy==='APPROVAL'?'승인 참가 · 운영자 승인 시 빈 슬롯에 배치':'즉시 참가 · 빈 슬롯에 바로 배치')+'</p></div><button type="button" data-support-close aria-label="닫기">×</button></header><div class="sanctuary-management-support-scroll"><nav class="sanctuary-management-support-forces" aria-label="지원할 포스">'+forceButtons+'</nav><section class="sanctuary-management-support-characters" aria-labelledby="sanctuarySupportCharacters"><header><strong id="sanctuarySupportCharacters">'+escapeHtml(force?.forceNo||'')+'포스 캐릭터 선택</strong><small>포스마다 본캐·부캐 중 1개 · 여러 포스 중복 선택 가능</small></header><div>'+cards+'</div></section>'+resultMarkup()+(batches?'<section class="sanctuary-management-support-batches"><header><strong>지원 요청 현황</strong><small>승인 대기는 운영자가 처리하고, 본인 요청은 취소할 수 있습니다.</small></header>'+batches+'</section>':'')+'</div><footer><p class="sanctuary-management-support-status is-'+escapeHtml(state.tone||'normal')+'" role="status">'+escapeHtml(state.message||summary)+'</p><div><button type="button" class="is-primary" data-support-submit '+(!selected.length||state.saving?'disabled':'')+'>'+(state.saving?'처리 중…':'지원하기 · '+selected.length+'개')+'</button><button type="button" data-support-close '+(state.saving?'disabled':'')+'>닫기</button></div></footer></section>';
+    const summary=selected.length?selected.map(([forceId,assignment])=>{const f=forces().find(item=>integer(item.forceId)===forceId);return (f?.forceNo||'?')+'포스 '+assignmentLabel(assignment);}).join(' · '):'포스를 고른 뒤 내 캐릭터를 선택하세요.';
+    const inline=state.message?'<b class="sanctuary-management-support-inline is-'+escapeHtml(state.tone||'normal')+'" role="status">'+escapeHtml(state.message)+'</b>':'';
+    return '<div class="sanctuary-management-support-backdrop" data-support-close></div><section class="sanctuary-management-support-dialog" role="dialog" aria-modal="true" aria-labelledby="sanctuarySupportTitle" tabindex="-1"><header><div><span>PARTICIPATION SUPPORT</span><h2 id="sanctuarySupportTitle">'+escapeHtml(current.title)+' 지원하기</h2><p>'+escapeHtml(current.joinPolicy==='APPROVAL'?'승인 참가 · 운영자 승인 시 빈 슬롯에 배치':'즉시 참가 · 빈 슬롯에 바로 배치')+'</p></div><button type="button" data-support-close aria-label="닫기">×</button></header><div class="sanctuary-management-support-scroll"><nav class="sanctuary-management-support-forces" aria-label="지원할 포스">'+forceButtons+'</nav><section class="sanctuary-management-support-characters" aria-labelledby="sanctuarySupportCharacters"><header><span><strong id="sanctuarySupportCharacters">'+escapeHtml(force?.forceNo||'')+'포스 캐릭터 선택</strong>'+inline+'</span><small>포스마다 본캐·부캐 중 1개 · 여러 포스 중복 선택 가능</small></header><div>'+cards+'</div></section>'+resultMarkup()+(batches?'<section class="sanctuary-management-support-batches"><header><strong>지원 요청 현황</strong><small>승인 대기는 운영자가 처리하고, 본인 요청은 취소할 수 있습니다.</small></header>'+batches+'</section>':'')+'</div><footer><p class="sanctuary-management-support-status" role="status">'+escapeHtml(summary)+'</p><div><button type="button" class="is-primary" data-support-submit '+(!selected.length||state.saving?'disabled':'')+'>'+(state.saving?'처리 중…':'지원하기 · '+selected.length+'개')+'</button><button type="button" data-support-close '+(state.saving?'disabled':'')+'>닫기</button></div></footer></section>';
   }
 
   function render(focusSelector=''){
@@ -93,7 +108,7 @@
 
   async function submit(){
     if(state.saving||!state.assignments.size)return;state.saving=true;state.message='선택한 포스의 일정 충돌과 마지막 빈자리를 Server에서 다시 확인하고 있습니다.';state.tone='progress';render();
-    try{const result=await bridge().submitSupport(state.teamId,Array.from(state.assignments,([forceId,characterId])=>({forceId,characterId})),requestKey('sm-support'));state.result=result;state.assignments=new Map();state.saving=false;state.message='지원 요청을 처리했습니다. 포스별 결과를 확인해 주세요.';state.tone='success';render();window.KinojoToast?.success?.('참여 지원 결과를 반영했습니다.');}
+    try{const result=await bridge().submitSupport(state.teamId,Array.from(state.assignments,([forceId,assignment])=>assignment.kind==='RANDOM_ALT'?{forceId,assignmentKind:'RANDOM_ALT',mainCharacterId:assignment.mainCharacterId}:{forceId,assignmentKind:'ACTUAL_CHARACTER',characterId:assignment.characterId}),requestKey('sm-support'));state.result=result;state.assignments=new Map();state.saving=false;state.message='지원 요청을 처리했습니다. 포스별 결과를 확인해 주세요.';state.tone='success';render();window.KinojoToast?.success?.('참여 지원 결과를 반영했습니다.');}
     catch(error){state.saving=false;setMessage(value(error?.message)||'참여 지원을 처리하지 못했습니다.','error');}
   }
 
@@ -112,7 +127,8 @@
   function handleClick(event){
     if(event.target.closest('[data-support-close]')){close();return;}
     const forceButton=event.target.closest('[data-support-force]');if(forceButton&&!state.saving){state.activeForceId=integer(forceButton.dataset.supportForce);state.message='';state.tone='';render('[data-support-force="'+state.activeForceId+'"]');return;}
-    const characterButton=event.target.closest('[data-support-character]');if(characterButton&&!state.saving){const character=characterFor(characterButton.dataset.supportCharacter),force=activeForce(),allowed=eligible(character,force);if(!allowed.ok){setMessage(allowed.message);return;}const forceId=integer(force.forceId),characterId=integer(character.characterId);if(state.assignments.get(forceId)===characterId)state.assignments.delete(forceId);else state.assignments.set(forceId,characterId);state.message='';state.tone='';render('[data-support-character="'+characterId+'"]');return;}
+    const characterButton=event.target.closest('[data-support-character]');if(characterButton&&!state.saving){const character=characterFor(characterButton.dataset.supportCharacter),force=activeForce(),allowed=eligible(character,force);if(!allowed.ok){setMessage(allowed.message);return;}const forceId=integer(force.forceId),characterId=integer(character.characterId),current=state.assignments.get(forceId);if(current?.kind==='ACTUAL_CHARACTER'&&current.characterId===characterId){state.assignments.delete(forceId);state.message=character.characterName+' 선택을 해제했습니다.';}else{state.assignments.set(forceId,{kind:'ACTUAL_CHARACTER',characterId});state.message=character.characterName+' 캐릭터를 '+force.forceNo+'포스에 선택했습니다.';}state.tone='success';render('[data-support-character="'+characterId+'"]');return;}
+    const randomButton=event.target.closest('[data-support-random]');if(randomButton&&!state.saving){const character=randomCandidate(),force=activeForce(),allowed=eligible(character,force);if(!allowed.ok){setMessage(allowed.message);return;}const forceId=integer(force.forceId),mainCharacterId=integer(character.mainCharacterId),current=state.assignments.get(forceId);if(current?.kind==='RANDOM_ALT'&&current.mainCharacterId===mainCharacterId){state.assignments.delete(forceId);state.message='랜덤 부캐 신청을 해제했습니다.';}else{state.assignments.set(forceId,{kind:'RANDOM_ALT',mainCharacterId});state.message='랜덤 부캐를 '+force.forceNo+'포스에 선택했습니다.';}state.tone='success';render('[data-support-random="'+mainCharacterId+'"]');return;}
     if(event.target.closest('[data-support-submit]')){submit();return;}
     const decision=event.target.closest('[data-support-decision]');if(decision){decide(integer(decision.dataset.supportBatch),value(decision.dataset.supportDecision));return;}
     const cancellation=event.target.closest('[data-support-cancel]');if(cancellation)cancel(integer(cancellation.dataset.supportCancel));
