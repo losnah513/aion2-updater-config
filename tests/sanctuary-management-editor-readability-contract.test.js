@@ -49,8 +49,8 @@ for(const token of [
 
 for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
-  assert.ok(html.includes('sanctuary-management-draft.css?cache=2026083020'),`${page}: readable editor CSS cache missing`);
-  assert.ok(html.includes('sanctuary-management-draft.js?cache=2026083020'),`${page}: readable editor JS cache missing`);
+  assert.ok(html.includes('sanctuary-management-draft.css?cache=2026083030'),`${page}: readable editor CSS cache missing`);
+  assert.ok(html.includes('sanctuary-management-draft.js?cache=2026083030'),`${page}: readable editor JS cache missing`);
 }
 
 console.log('KINOJO Sanctuary team composer readability contract: PASS');

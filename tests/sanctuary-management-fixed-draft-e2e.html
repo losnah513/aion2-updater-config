@@ -44,6 +44,7 @@
       const searchableCharacters=[
         {characterId:601,serverId:2,serverName:'지켈',characterName:'테스트검색',className:'궁성',legionName:'깡',profileImageUrl:'',raceId:1,isOperationalLegion:true,ownerMemberId:9,relation:'MAIN',mainCharacterId:601}
       ];
+      const balanceCharacter={characterId:901,mainCharacterId:901,ownerMemberId:21,serverId:2,serverName:'지켈',characterName:'균형지원자',className:'치유성',relation:'MAIN',isMain:true,power:318400};
       const officialCandidates={
         외부게스트:{candidateId:'official-guest-701',characterName:'외부게스트',serverId:2,serverName:'지켈',className:'마도성',legionName:'외부레기온',profileImageUrl:'',raceId:1,isOperationalLegion:false,allowedRelations:['GUEST']},
         운영부캐:{candidateId:'official-alt-702',characterName:'운영부캐',serverId:2,serverName:'지켈',className:'치유성',legionName:'밤',profileImageUrl:'',raceId:1,isOperationalLegion:true,allowedRelations:['MAIN','ALT']}
@@ -119,6 +120,13 @@
           const character={characterId:700+searchableCharacters.length,serverId:candidate.serverId,serverName:candidate.serverName,characterName:candidate.characterName,className:candidate.className,legionName:candidate.legionName,profileImageUrl:candidate.profileImageUrl,raceId:candidate.raceId,isOperationalLegion:candidate.isOperationalLegion,ownerMemberId:relationType==='GUEST'?0:7,relation:relationType,mainCharacterId:relationType==='ALT'?mainCharacterId:700+searchableCharacters.length};
           searchableCharacters.push(character);
           return {ok:true,apiVersion:1.8,schemaVersion:446,teamId,character:structuredClone(character)};
+        },
+        async getSanctuaryManagementBalanceProposal(teamId,expectedRevision,leaseToken,stableSeed,lockOverrides){
+          const team=teams.find(item=>item.teamId===Number(teamId));
+          if(!team||team.revision!==Number(expectedRevision)||String(leaseToken).length<32)throw new Error('다른 사용자가 먼저 팀을 수정했습니다.');
+          const force=team.forces[0];const party=force.parties[0];const slot=party.slots.find(item=>!item.occupied&&!lockOverrides.some(lock=>lock.slotId===item.slotId&&lock.locked));
+          if(!slot)return {ok:true,apiVersion:2.1,schemaVersion:451,proposalToken:'smbp_'+('b'.repeat(64)),expiresAt:new Date(Date.now()+600000).toISOString(),stableSeed,assignments:[],excluded:[{characterName:balanceCharacter.characterName,reasonCode:'NO_ELIGIBLE_UNLOCKED_SLOT',reasonMessage:'잠금 해제 빈 슬롯이 없습니다.'}],beforeAverages:[{forceId:force.forceId,forceNo:force.forceNo,average:123456,knownCount:1,occupiedCount:1}],afterAverages:[{forceId:force.forceId,forceNo:force.forceNo,average:123456,knownCount:1,occupiedCount:1}],assignmentCount:0,excludedCount:1};
+          return {ok:true,apiVersion:2.1,schemaVersion:451,proposalToken:'smbp_'+('b'.repeat(64)),expiresAt:new Date(Date.now()+600000).toISOString(),stableSeed,assignments:[Object.assign({supportItemId:9901,supportBatchId:9900,slotId:slot.slotId,forceId:force.forceId,forceNo:force.forceNo,partyNo:party.partyNo,slotNo:slot.slotNo},balanceCharacter)],excluded:[],beforeAverages:[{forceId:force.forceId,forceNo:force.forceNo,average:123456,knownCount:1,occupiedCount:1}],afterAverages:[{forceId:force.forceId,forceNo:force.forceNo,average:220928,knownCount:2,occupiedCount:2}],assignmentCount:1,excludedCount:0};
         },
         async runSanctuaryManagementCommand(command,payload,expectedRevision){
           if(command==='CREATE_TEAM'){

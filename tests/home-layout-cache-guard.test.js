@@ -36,7 +36,7 @@ assert.ok(featureReferences.length > 0, 'At least one common feature module refe
 for (const reference of featureReferences) {
   assert.equal(
     reference.cacheKey,
-    '2026083020',
+    '2026083030',
     `${path.relative(root, reference.filePath)} must load the current snapshot-only feature module`
   );
 }

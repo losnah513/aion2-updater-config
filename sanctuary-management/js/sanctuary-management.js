@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  const API_VERSION=2;
-  const SCHEMA_VERSION=450;
+  const API_VERSION=2.1;
+  const SCHEMA_VERSION=451;
   const SLOT_CLASS_CODES=Object.freeze(['ALL','TEMPLAR','GLADIATOR','ASSASSIN','RANGER','SORCERER','ELEMENTALIST','CLERIC','CHANTER','FIGHTER']);
   const CLASS_ICON_MAP=Object.freeze({'수호성':'templar','검성':'gladiator','살성':'assassin','궁성':'ranger','마도성':'sorcerer','정령성':'elementalist','치유성':'cleric','호법성':'chanter','권성':'fighter'});
   const CLASS_NAME_BY_CODE=Object.freeze({TEMPLAR:'수호성',GLADIATOR:'검성',ASSASSIN:'살성',RANGER:'궁성',SORCERER:'마도성',ELEMENTALIST:'정령성',CLERIC:'치유성',CHANTER:'호법성',FIGHTER:'권성'});
@@ -34,7 +34,7 @@
 
   function contractSupported(data){
     const api=Number(data?.apiVersion),schema=Number(data?.schemaVersion);
-    return api===API_VERSION&&schema===SCHEMA_VERSION||api===1.9&&schema===449||api===1.8&&schema===446;
+    return api===API_VERSION&&schema===SCHEMA_VERSION||api===2&&schema===450||api===1.9&&schema===449||api===1.8&&schema===446;
   }
   function combatPowerValue(input){const power=Number(input);return Number.isFinite(power)&&power>0?Math.round(power):0;}
   function formatCombatPower(input){const power=combatPowerValue(input);if(!power)return '전투력 미확인';const kilo=power/1000;return '전투력 '+(kilo>=100?Math.round(kilo):kilo.toFixed(1))+'K';}
@@ -63,6 +63,7 @@
     const occupied=item.occupied===true;
     const assignmentKind=value(item.assignmentKind||'ACTUAL_CHARACTER').toUpperCase();
     const requiredClassCode=value(item.requiredClassCode||'ALL').toUpperCase();
+    const placementLocked=item.placementLocked===true;
     const character=item.character&&typeof item.character==='object'&&!Array.isArray(item.character)?Object.assign({},item.character,{power:combatPowerValue(item.character.power??item.character.latestPveCombatPower??item.character.latest_pve_combat_power)}):null;
     if(occupied!==Boolean(character))throw new Error('성역 관리 슬롯 점유 상태가 일치하지 않습니다.');
     const slot=Object.assign({},item,{
@@ -72,12 +73,13 @@
       assignmentKind,
       requiredClassCode,
       requiredClassName:value(item.requiredClassName),
+      placementLocked,
       occupied,
       character
     });
     const actualValid=assignmentKind==='ACTUAL_CHARACTER'&&(!occupied||integer(character?.characterId)>0&&value(character?.name));
     const randomValid=assignmentKind==='RANDOM_ALT'&&occupied&&integer(character?.mainCharacterId)>0&&value(character?.name)&&character?.isRandomAlt===true&&requiredClassCode==='ALL';
-    if(slot.slotId<1||slot.slotNo<1||slot.revision<1||!SLOT_CLASS_CODES.includes(requiredClassCode)||!['ACTUAL_CHARACTER','RANDOM_ALT'].includes(assignmentKind)||!(actualValid||randomValid)){
+    if(slot.slotId<1||slot.slotNo<1||slot.revision<1||!SLOT_CLASS_CODES.includes(requiredClassCode)||!['ACTUAL_CHARACTER','RANDOM_ALT'].includes(assignmentKind)||!(actualValid||randomValid)||placementLocked&&!occupied){
       throw new Error('성역 관리 슬롯 식별 정보가 올바르지 않습니다.');
     }
     return slot;
@@ -951,7 +953,7 @@
     const source=model&&typeof model==='object'?model:{};const teamId=Number(source.teamId||0);
     const composition=Array.isArray(source.composition)?source.composition.map(force=>({
       sourceForceId:Number(force?.sourceForceId)||null,
-      slots:Array.isArray(force?.slots)?force.slots.map(slot=>({partyNo:Number(slot?.partyNo),slotNo:Number(slot?.slotNo),characterId:Number(slot?.characterId)||null,mainCharacterId:Number(slot?.mainCharacterId)||null,assignmentKind:value(slot?.assignmentKind).toUpperCase()==='RANDOM_ALT'?'RANDOM_ALT':'ACTUAL_CHARACTER',requiredClassCode:SLOT_CLASS_CODES.includes(value(slot?.requiredClassCode).toUpperCase())?value(slot?.requiredClassCode).toUpperCase():'ALL'})):[],
+      slots:Array.isArray(force?.slots)?force.slots.map(slot=>({partyNo:Number(slot?.partyNo),slotNo:Number(slot?.slotNo),characterId:Number(slot?.characterId)||null,mainCharacterId:Number(slot?.mainCharacterId)||null,assignmentKind:value(slot?.assignmentKind).toUpperCase()==='RANDOM_ALT'?'RANDOM_ALT':'ACTUAL_CHARACTER',requiredClassCode:SLOT_CLASS_CODES.includes(value(slot?.requiredClassCode).toUpperCase())?value(slot?.requiredClassCode).toUpperCase():'ALL',placementLocked:slot?.placementLocked===true})):[],
       requirements:Array.isArray(force?.requirements)?force.requirements.map(rule=>({scopeType:value(rule?.scopeType).toUpperCase(),partyNo:rule?.partyNo==null?null:Number(rule.partyNo),ruleType:value(rule?.ruleType).toUpperCase(),minimumCount:Number(rule?.minimumCount),powerThreshold:rule?.powerThreshold==null?null:Number(rule.powerThreshold)})):[]
     })):[];
     if(!composition.length||composition.length>9||composition.some(force=>force.slots.length!==10||force.slots.some(slot=>![1,2].includes(slot.partyNo)||slot.slotNo<1||slot.slotNo>5)))throw new Error('포스 편성안을 다시 확인해 주세요.');
@@ -965,7 +967,8 @@
       schedule:source.schedule&&typeof source.schedule==='object'?source.schedule:{},
       composition,
       compositionRulesVersion:1,
-      leaseToken:value(source.leaseToken)
+      leaseToken:value(source.leaseToken),
+      balanceProposalToken:value(source.balanceProposalToken)
     };
     const result=await ServerAdapter.command('SAVE_COMPOSITION',payload,teamId?Number(source.revision):null,value(source.requestKey));
     await load();return result;
@@ -1040,6 +1043,18 @@
     const api=window.KinojoSupabase;
     if(!api||typeof api.getSanctuaryManagementLinkedAlts!=='function')throw new Error('연결된 부캐 Server 어댑터를 불러오지 못했습니다.');
     return validateLinkedAlts(await api.getSanctuaryManagementLinkedAlts(Number(teamId),Number(mainCharacterId)));
+  }
+
+  async function balanceProposal(teamId,expectedRevision,leaseToken,stableSeed,lockOverrides){
+    const api=window.KinojoSupabase;
+    if(!api||typeof api.getSanctuaryManagementBalanceProposal!=='function')throw new Error('균형 배치 Server 어댑터를 불러오지 못했습니다.');
+    const result=await api.getSanctuaryManagementBalanceProposal(Number(teamId),Number(expectedRevision),value(leaseToken),value(stableSeed),lockOverrides);
+    const assignments=Array.isArray(result?.assignments)?result.assignments:[];
+    const excluded=Array.isArray(result?.excluded)?result.excluded:[];
+    if(!value(result?.proposalToken)||!value(result?.expiresAt)||assignments.some(item=>integer(item?.supportItemId)<1||integer(item?.slotId)<1||integer(item?.forceId)<1||integer(item?.characterId)<1||!value(item?.characterName))){
+      throw new Error('균형 배치 제안 응답이 올바르지 않습니다.');
+    }
+    return Object.assign({},result,{assignments,excluded,beforeAverages:Array.isArray(result.beforeAverages)?result.beforeAverages:[],afterAverages:Array.isArray(result.afterAverages)?result.afterAverages:[]});
   }
 
   function transitionCount(value){return new Intl.NumberFormat('ko-KR').format(integer(value));}
@@ -1123,6 +1138,7 @@
     searchCharacter,
     registerCharacter,
     linkedAlts,
+    balanceProposal,
     reload:load
   });
 
