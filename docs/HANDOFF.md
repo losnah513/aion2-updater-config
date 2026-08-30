@@ -1,6 +1,6 @@
 # KINOJO WEB HANDOFF
 
-기준일: 2026-08-29 KST
+기준일: 2026-08-30 KST
 
 ## 저장소 / 현재 기준
 
@@ -11,9 +11,16 @@
 - 내 정보 후속 A-1~E-2: 12/12 완료
 - My Info / 관리자 이미지 모달 추가 UI 후속: PR `#197` 구현·배포·동기화 기준 CLOSED · 수동 실브라우저 sanity check는 post-close 보류
 - 레기온 순위 통합 패널: PR `#164` 병합 완료
-- Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 최신 일일 로그를 작업 규칙 원본으로 사용한다.
+- Google Drive의 `00_README_FIRST.md`, `KINOJO_MASTER_RULES.md`, `KINOJO_WORKFLOW_RULES.md`, `KINOJO_COMPONENT_RULES.md`, 작업 대상별 세부 규칙과 최신 프로젝트 LOG를 작업 규칙 원본으로 사용한다. 성역 작업은 최신 `KINOJO_SANCTUARY_RULES.md`와 Stage 7 종료 문서를 추가로 읽는다.
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
-- 성역 관리 Stage 7 기술 전환·정식 승격 기준: PR `#328` + `#329` + `#330` + `#337` + `#338`, main `6e713e87455c3af7194b401342fb315bb942097f`, Edge `sanctuary-management` v16(API 1.8 / DB446), copy renderer v20(DB447), transition run 1 `COMPLETE`, 진행도 `58/59`. 다음은 7-8 규칙·운영·복구 문서와 프로젝트 종료 정리다.
+- 성역·스케줄 관리 개편은 Stage 7-8까지 **59/59 CLOSED**다. 제품 전환은 PR `#328` + `#329` + `#330` + `#337` + `#338` + `#339`, UI 기준 main `3e8d253e818349357f171ca4b025ca9d10062ae6`, Edge `sanctuary-management` v16(API 1.8 / DB446), copy renderer v20(DB447), transition run 1 `COMPLETE`다. 최종 운영·복구 기준은 `docs/SANCTUARY_MANAGEMENT_STAGE7_CLOSEOUT_20260830.md`를 따른다.
+
+## 성역·스케줄 관리 개편 Stage 7-8 종료 · 2026-08-30
+
+- 정식 운영은 PC `/sanctuary/`, 모바일 `/m/sanctuary/`, Server DB 단일 원본이다. 구 관리·일정 주소는 쿼리·해시를 보존하는 호환 redirect이고 성역 전용 Sheet 예약·수동 동기화와 두 bridge는 운영 경로가 아니다.
+- `KINOJO_SANCTUARY_RULES.md`를 DB446 이후 계약으로 교체했다. 팀=일정, 1포스=2파티=10슬롯, 최대 9포스, 팀 간 일정 충돌, 즉시·승인 참가, 임시 편성안+`SAVE_COMPOSITION`, lease·revision·ADMIN 보안 경계를 공식 규칙으로 고정했다.
+- run ID 1의 exact backup 421행과 service-only `kinojo_sanctuary_management_stage7_restore_v446` 경계를 종료 문서에 기록했다. 복구는 백업 행만 되돌리며 전환 뒤 신규 운영 데이터를 자동 정리하지 않으므로 장애·승인·신규 데이터 보존 확인 없이 실행하지 않는다.
+- 프로젝트 공식 계획서와 LOG는 Drive 원본까지 동기화하며, 현재 작업·다음 작업 없음, 완료 59/59, 남은 작업 0/59로 종료한다. 이후 큰 정책·화면 변경은 별도 후속 계획으로 시작한다.
 
 ## 성역 관리 Stage 7-7 후속 · 단일 확대 포스와 전체 포스 모달 · 2026-08-30
 
@@ -35,7 +42,7 @@
 - 이후 사용자 승인과 7-7 검수를 거쳐 신규 관리 화면을 PC·모바일 `/sanctuary/` 정식 페이지로 승격했다. 구 `/sanctuary-management/`는 쿼리·해시를 보존해 정식 주소로, `/sanctuary-schedule/`은 `view=schedule`을 추가해 정식 주소로 이동하며 탑바·drawer는 성역 1~4만 표시한다.
 - 전체 Node 계약 80/80 PASS. Stage 7 migration은 `20260829061610`, settings hotfix `20260829063301`, sanctuary 4 name `20260829071000`, FK performance guard `20260829072000`이다. Advisor의 Stage 7 security 항목은 private service-only table의 RLS-no-policy INFO 2건, performance는 적용 직후 unused index INFO뿐이다.
 - 복구는 run ID 1의 service-only `kinojo_sanctuary_management_stage7_restore_v446`으로 exact backup 범위만 되돌린다. COMPLETE 뒤 임의 복구를 실행하지 말고, 실제 장애와 승인된 대상 범위를 다시 확인한 뒤 사용한다.
-- 진행도는 **58/59**다. 7-7 정식 승격과 후속 단일 포스·전체 포스 UI가 완료됐고, 7-8은 현재 규칙·운영·복구 문서와 프로젝트 종료 정리다.
+- 이 항목의 기술 전환 뒤 7-7 사용자 검수와 7-8 문서 종료까지 완료되어 최종 진행도는 **59/59 CLOSED**다.
 
 ## 참고 이미지 제작 요청 1회 확인 통합 · 2026-08-29
 
