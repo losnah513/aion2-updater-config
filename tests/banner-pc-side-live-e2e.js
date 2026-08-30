@@ -14,7 +14,6 @@ const pages=[
   {name:'LEGION_TREE',path:'/legion-tree/',slots:['LEFT','RIGHT']},
   {name:'METER',path:'/meter/',slots:['LEFT','RIGHT']},
   {name:'SANCTUARY',path:'/sanctuary/',slots:['LEFT','RIGHT']},
-  {name:'SANCTUARY_SCHEDULE',path:'/sanctuary-schedule/',slots:['LEFT','RIGHT']},
 ];
 const widths=[1839,1840,1920,2560];
 const height=1080;

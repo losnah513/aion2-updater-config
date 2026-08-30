@@ -1824,7 +1824,7 @@
       ok:false,
       code:'SANCTUARY_SHEET_SYNC_RETIRED',
       message:'성역 자동·수동 시트 동기화는 Stage 7 전환으로 종료되었습니다.',
-      replacement:'/sanctuary-management/'
+      replacement:'/sanctuary/'
     };
   }
 

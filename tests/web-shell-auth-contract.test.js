@@ -62,8 +62,6 @@ const publicShellPages = [
   'hof/index.html', 'm/hof/index.html',
   'ranking/index.html', 'm/ranking/index.html',
   'sanctuary/index.html', 'm/sanctuary/index.html',
-  'sanctuary-schedule/index.html', 'm/sanctuary-schedule/index.html',
-  'sanctuary-management/index.html', 'm/sanctuary-management/index.html',
   'meter/index.html', 'm/meter/index.html',
   'arcana/index.html', 'm/arcana/index.html',
 ];
@@ -78,12 +76,12 @@ for (const page of publicShellPages) {
   ]) {
     assert.ok(html.includes(token), `${page}: missing ${token}`);
   }
-  assert.ok(html.includes('kinojo-common-ui.js?cache=2026082901'), `${page}: common UI cache missing`);
+  assert.ok(html.includes('kinojo-common-ui.js?cache=2026082923'), `${page}: common UI cache missing`);
 }
 
 for (const page of ['admin/index.html', 'm/admin/index.html']) {
   const html = read(page);
-  assert.ok(html.includes('kinojo-common-ui.js?cache=2026082901'), `${page}: common UI cache missing`);
+  assert.ok(html.includes('kinojo-common-ui.js?cache=2026082923'), `${page}: common UI cache missing`);
   assert.ok(html.includes('kinojo-auth-session.js?cache=2026081801'), `${page}: stale auth session cache`);
   assert.ok(html.includes('kinojo-auth-ui.js?cache=2026082901'), `${page}: stale auth UI cache`);
 }
@@ -118,10 +116,13 @@ for (const token of ['--kinojo-drawer-width', 'scrollbar-color:#6d5ee7', '.kinoj
   assert.ok(publicShell.includes(token), `public shell mobile contract missing: ${token}`);
 }
 
-for (const page of ['sanctuary-schedule/index.html', 'm/sanctuary-schedule/index.html']) {
+for (const [page,target] of [
+  ['sanctuary-management/index.html','/sanctuary/'], ['sanctuary-schedule/index.html','/sanctuary/'],
+  ['m/sanctuary-management/index.html','/m/sanctuary/'], ['m/sanctuary-schedule/index.html','/m/sanctuary/'],
+]) {
   const html = read(page);
-  assert.ok(html.includes('sanctuary-schedule.css?cache=2026081218'), `${page}: schedule CSS cache missing`);
-  assert.ok(html.includes('sanctuary-schedule.js?cache=2026081801'), `${page}: schedule JS cache missing`);
+  assert.ok(html.includes(`new URL('${target}',location.origin)`), `${page}: canonical Sanctuary redirect missing`);
+  assert.ok(html.includes('location.replace(destination.pathname+destination.search+destination.hash)'), `${page}: redirect must preserve query and hash`);
 }
 
 const schedule = read('sanctuary-schedule/js/sanctuary-schedule.js');

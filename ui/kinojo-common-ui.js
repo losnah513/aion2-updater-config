@@ -15,8 +15,8 @@
     if(path.includes('/hof/')||path.includes('/hall-of-fame/'))return {key:'hall',label:'명예의 전당',root:mobile?'../../':'../',mobile};
     if(path.includes('/ranking/'))return {key:'ranking',label:'레기온 순위',root:mobile?'../../':'../',mobile};
     if(path.includes('/meter/'))return {key:'meter',label:'키노조 미터',root:mobile?'../../':'../',mobile};
-    if(path.includes('/sanctuary-management/'))return {key:'sanctuaryManagement',label:'성역 팀 관리 전체 보기',root:mobile?'../../':'../',mobile};
-    if(path.includes('/sanctuary-schedule/'))return {key:'schedule',label:'성역 스케줄',root:mobile?'../../':'../',mobile};
+    // Retired Sanctuary URLs are aliases of the upgraded canonical Sanctuary page.
+    if(path.includes('/sanctuary-management/')||path.includes('/sanctuary-schedule/'))return {key:'sanctuary',label:'성역',root:mobile?'../../':'../',mobile};
     if(path.includes('/sanctuary/'))return {key:'sanctuary',label:'성역',root:mobile?'../../':'../',mobile};
     if(path.includes('/arcana/'))return {key:'arcana',label:'아르카나',root:mobile?'../../':'../',mobile};
     if(path.includes('/admin/'))return {key:'admin',label:'관리자 콘솔',root:mobile?'../../':'../',mobile};
@@ -464,7 +464,8 @@
     if(item?.sanctuaryCode)params.set('id',String(item.sanctuaryCode));
     if(item?.targetDate)params.set('date',String(item.targetDate));
     if(item?.id)params.set('schedule',String(item.id));
-    return base+'sanctuary-schedule/'+(params.toString()?'?'+params.toString():'');
+    params.set('view','schedule');
+    return base+'sanctuary/'+(params.toString()?'?'+params.toString():'');
   }
   function renderSanctuaryAlert_(data,info){
     const alert=q('#kinojoSanctuaryAlert');
@@ -522,7 +523,7 @@
     if(group?.teamId)params.set('team',String(group.teamId));
     if(navigation.forceId)params.set('force',String(navigation.forceId));
     if(navigation.openSupport===true)params.set('support','1');
-    return (info?.mobile?'/m/sanctuary-management/':'/sanctuary-management/')+'?'+params.toString();
+    return (info?.mobile?'/m/sanctuary/':'/sanctuary/')+'?'+params.toString();
   }
   function renderRecruitmentNotificationToast_(summary,info){
     const groups=Array.isArray(summary?.sanctuaryRecruitmentGroups)?summary.sanctuaryRecruitmentGroups:[];
@@ -637,8 +638,6 @@
       {key:'ranking',label:'레기온 순위',href:base+'ranking/'},
       {key:'meter',label:'미터기',href:base+'meter/'},
       {key:'sanctuary',label:'성역',href:base+'sanctuary/',sanctuaryMenu:true},
-      {key:'schedule',label:'성역 스케줄',href:base+'sanctuary-schedule/',authRequired:true},
-      {key:'sanctuaryManagement',label:'성역 관리',href:base+'sanctuary-management/',sanctuaryManagementRequired:true},
       {key:'arcana',label:'아르카나',href:base+'arcana/'}
     ];
     const navHtml=navItems.map(item=>{
@@ -2246,8 +2245,6 @@
     const isRanking=info.key==='ranking';
     const isMeter=info.key==='meter';
     const isSanctuary=info.key==='sanctuary';
-    const isSchedule=info.key==='schedule';
-    const isSanctuaryManagement=info.key==='sanctuaryManagement';
     const isArcana=info.key==='arcana';
     const base=info.mobile?'/m/':'/';
     const home=base;
@@ -2255,8 +2252,6 @@
     const rankingHref=isRanking?'./':base+'ranking/';
     const meterHref=isMeter?'./':base+'meter/';
     const sanctuaryPrefix=isSanctuary?'./':base+'sanctuary/';
-    const scheduleHref=isSchedule?'./':base+'sanctuary-schedule/';
-    const sanctuaryManagementHref=isSanctuaryManagement?'./':base+'sanctuary-management/';
     const arcanaHref=isArcana?'./':base+'arcana/';
     const drawer=document.createElement('section');
     drawer.className='kinojo-common-drawer';
@@ -2279,8 +2274,6 @@
           <div class="kinojo-drawer-sanctuary-list" data-sanctuary-master-nav data-sanctuary-base="${sanctuaryPrefix}">
             <a href="${sanctuaryPrefix}">성역 목록 불러오는 중</a>
           </div>
-          <a href="${scheduleHref}" data-kinojo-auth-required="true" ${isSchedule?'class="active" aria-disabled="true"':''}>성역 스케줄</a>
-          <a href="${sanctuaryManagementHref}" data-kinojo-sanctuary-management-required="true" ${isSanctuaryManagement?'class="active" aria-disabled="true"':''} hidden>성역 관리</a>
           <div class="kinojo-drawer-divider"></div>
           <div class="kinojo-drawer-category">도구</div>
           <a href="${arcanaHref}" ${isArcana?'class="active" aria-disabled="true"':''}>ARCANA 스킬 시뮬레이터</a>
@@ -2538,7 +2531,7 @@
   function loadSanctuaryMasterRenderer(){
     if(document.querySelector('script[data-kinojo-sanctuary-master-loader]')) return;
     const script=document.createElement('script');
-    script.src='/ui/kinojo-sanctuary-master.js?cache=2026081222';
+    script.src='/ui/kinojo-sanctuary-master.js?cache=2026083001';
     script.async=true;
     script.dataset.kinojoSanctuaryMasterLoader='true';
     document.head.appendChild(script);

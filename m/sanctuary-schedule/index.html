@@ -2,95 +2,23 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
-<title>KINOJO INFO - 성역 스케줄</title>
-<meta name="description" content="아이온2 수요일~화요일 기준 성역 일정과 팀 참여 가능 시간을 확인하고 응답합니다."/>
-<link rel="canonical" href="https://kinojo.info/m/sanctuary-schedule/"/>
-<meta property="og:type" content="website"/>
-<meta property="og:site_name" content="KINOJO INFO"/>
-<meta property="og:title" content="KINOJO INFO - 성역 스케줄"/>
-<meta property="og:description" content="성역 월간·주간 일정과 참여 가능 시간을 한곳에서 관리합니다."/>
-<meta property="og:url" content="https://kinojo.info/m/sanctuary-schedule/"/>
-<meta property="og:image" content="https://kinojo.info/assets/images/common/kinojo-og.jpg"/>
-<meta name="twitter:card" content="summary_large_image"/>
-<link href="../../ui/kinojo-common-ui.css?cache=2026081205" rel="stylesheet"/>
-<link href="../../ui/kinojo-public-shell.css?cache=2026081202" rel="stylesheet"/>
-<link href="../../ui/kinojo-event-notice.css?cache=2026081003" rel="stylesheet"/>
-<link href="../mobile.css?cache=2026071906" rel="stylesheet"/>
-<link href="../../sanctuary-schedule/css/sanctuary-schedule.css?cache=2026081218" rel="stylesheet"/>
-<link href="../../ui/kinojo-staged-loading.css?cache=2026081222" rel="stylesheet"/>
-<link href="../../ui/kinojo-sanctuary-navigation.css?cache=2026082603" rel="stylesheet"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>KINOJO INFO - 성역으로 이동 중</title>
+<meta name="robots" content="noindex,follow"/>
+<link rel="canonical" href="https://kinojo.info/m/sanctuary/"/>
+<noscript><meta http-equiv="refresh" content="0;url=/m/sanctuary/?view=schedule"/></noscript>
+<script>
+(function(){
+  'use strict';
+  // Legacy bookmarks remain safe while the upgraded Sanctuary becomes the only product page.
+  const destination=new URL('/m/sanctuary/',location.origin);
+  const incoming=new URLSearchParams(location.search);
+  incoming.forEach((value,key)=>destination.searchParams.append(key,value));
+  if(!destination.searchParams.has('view'))destination.searchParams.set('view','schedule');
+  destination.hash=location.hash;
+  location.replace(destination.pathname+destination.search+destination.hash);
+})();
+</script>
 </head>
-<body class="kinojo-mobile-detail-page kinojo-sanctuary-schedule-page kinojo-mobile-sanctuary-schedule-page kinojo-page-booting">
-<main class="schedule-wrap">
-  <div class="schedule-page-bar">
-  <nav class="kinojo-sanctuary-tabs" aria-label="성역 페이지"><a class="kinojo-sanctuary-tab" href="../sanctuary/">성역</a><a class="kinojo-sanctuary-tab" href="./" aria-current="page">성역 일정</a><a class="kinojo-sanctuary-tab" href="../sanctuary-management/" data-kinojo-sanctuary-management-required="true" hidden>성역 관리</a></nav>
-  <section class="schedule-hero" aria-labelledby="scheduleTitle">
-    <div>
-      <div class="schedule-kicker">SANCTUARY OPERATION</div>
-      <h1 id="scheduleTitle">성역 스케줄</h1>
-      <p>월간 또는 주간으로 내 팀 성역 일정을 확인합니다. 관리 권한 계정은 필요할 때 모든 팀으로 전환할 수 있습니다.</p>
-    </div>
-    <a class="schedule-back-link" id="scheduleSanctuaryLink" href="../sanctuary/">성역 파티 보기</a>
-  </section>
-
-  <section class="schedule-toolbar" aria-label="스케줄 보기 설정">
-    <div class="schedule-integrated-label" aria-label="전체 성역 통합 보기">
-      <strong>전체 성역 통합</strong><span id="scheduleIntegratedScopeLabel">내 팀 일정</span>
-    </div>
-    <div class="schedule-view-switch" role="group" aria-label="월간 또는 주간 보기">
-      <button type="button" class="is-active" data-schedule-view="month">월간</button>
-      <button type="button" data-schedule-view="week">주간</button>
-    </div>
-    <div class="schedule-scope-switch" id="scheduleScopeSwitch" role="group" aria-label="내 팀 또는 모든 팀 보기" hidden>
-      <button type="button" class="is-active" data-schedule-scope="mine">내 팀</button>
-      <button type="button" data-schedule-scope="all">모든 팀</button>
-    </div>
-    <button type="button" class="schedule-today-btn" id="scheduleTodayBtn">오늘</button>
-    <div class="schedule-sync" id="scheduleSyncState">Server Engine 연결 중</div>
-  </section>
-  </div>
-
-  <section class="schedule-layout">
-    <section class="schedule-calendar-shell" aria-label="성역 달력">
-      <div class="schedule-week-head" id="scheduleWeekHead"></div>
-      <div class="schedule-calendar-viewport" id="scheduleCalendarViewport">
-        <div class="schedule-calendar-loading"><span class="kinojo-spinner" aria-hidden="true"></span><strong>일정을 불러오는 중...</strong></div>
-      </div>
-      <nav class="schedule-calendar-rail" aria-label="이전 또는 다음 기간">
-        <button type="button" id="schedulePrevBtn" aria-label="이전 기간">▲</button>
-        <button type="button" id="scheduleNextBtn" aria-label="다음 기간">▼</button>
-      </nav>
-    </section>
-
-    <aside class="schedule-detail" id="scheduleDetail" aria-live="polite">
-      <div class="schedule-detail-loading"><span class="kinojo-spinner" aria-hidden="true"></span><strong>날짜를 선택해 주세요.</strong></div>
-    </aside>
-  </section>
-
-  <footer class="footer common-footer">
-    <div class="footer-links"><a href="../../pages/about.html">사이트 소개</a><a href="../../pages/terms.html">이용약관</a><a href="../../pages/privacy.html">개인정보처리방침</a><a href="../../pages/contact.html">아이디어 제안 및 건의</a></div>
-    <div class="footer-powered">Powered by AION2 · 깡 레기온 지원</div>
-  </footer>
-</main>
-<script src="../../core/kinojo-api.js?cache=2026070115"></script>
-<script src="../../core/kinojo-cache.js?cache=2026070115"></script>
-<script src="../../core/kinojo-permissions.js?cache=2026071517"></script>
-<script src="../../core/kinojo-toast.js?cache=2026070115"></script>
-<script src="../../core/kinojo-modal.js?cache=2026070115"></script>
-<script src="../../core/kinojo-route-guard.js?cache=2026070115"></script>
-<script src="../../core/kinojo-debug.js?cache=2026070115"></script>
-<script src="../../core/kinojo-logger.js?cache=2026070115"></script>
-<script src="../../ui/kinojo-common-ui.js?cache=2026082901"></script>
-<script src="../../ui/kinojo-staged-loading.js?cache=2026082603"></script>
-<script src="../../ui/kinojo-admin-panel.js?cache=2026071712"></script>
-<script src="../../core/kinojo-supabase-client.js?cache=2026080205"></script>
-<script src="../../core/kinojo-supabase-rpc.js?cache=2026082806"></script>
-  <script src="../../core/kinojo-supabase-features.js?cache=2026082902"></script>
-<script src="../../core/kinojo-auth-session.js?cache=2026081801"></script>
-<script src="../../core/kinojo-auth-service.js?cache=2026081801"></script>
-<script src="../../core/kinojo-auth-ui.js?cache=2026082901"></script>
-<script src="../../ui/kinojo-event-notice.js?cache=2026070521"></script>
-<script src="../../sanctuary-schedule/js/sanctuary-schedule.js?cache=2026081801"></script>
-</body>
+<body><p><a href="/m/sanctuary/?view=schedule">새 성역 페이지로 이동</a></p></body>
 </html>

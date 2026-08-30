@@ -551,13 +551,16 @@
 
   function createForceCard(team,force){
     const participation=value(team.mode)==='PARTICIPATION'&&['ACTIVE','FULL'].includes(value(team.status));
-    const card=document.createElement(participation?'button':'div');
-    if(participation){card.type='button';card.dataset.sanctuarySupportForce=value(force.forceId);card.dataset.sanctuarySupportTeam=value(team.teamId);card.disabled=!bootstrapData?.writeEnabled;}
+    const card=document.createElement('article');
+    if(participation){card.dataset.sanctuarySupportForce=value(force.forceId);card.dataset.sanctuarySupportTeam=value(team.teamId);card.tabIndex=bootstrapData?.writeEnabled?0:-1;card.setAttribute('role','button');}
     card.className='sanctuary-management-force-card'+(participation?' is-supportable':'')+(force.canSupport?' can-support':' is-unavailable')+(force.viewerAlreadyAssigned?' is-assigned':'')+(force.viewerPending?' is-pending':'');
     if(participation){card.setAttribute('aria-label',force.forceNo+'포스 지원 창 열기. '+(force.canSupport?'지원 가능':value(force.supportDisabledMessage)||'지원 상태 확인'));card.setAttribute('aria-disabled',bootstrapData?.writeEnabled&&force.canSupport?'false':'true');}
     const head=document.createElement('span');head.className='sanctuary-management-force-card-head';
+    const titleWrap=document.createElement('span');titleWrap.className='sanctuary-management-force-title-row';
     const name=document.createElement('strong');name.textContent=force.forceNo+'포스';
-    const count=document.createElement('em');count.textContent=force.occupiedCount+'/'+force.capacity+'명';head.append(name,count);
+    const copyButton=document.createElement('button');copyButton.type='button';copyButton.className='sanctuary-management-copy-button';copyButton.dataset.sanctuaryCopyForce=value(force.forceId);copyButton.dataset.sanctuaryCopyTeam=value(team.teamId);copyButton.setAttribute('aria-label',force.forceNo+'포스 이미지 클립보드 복사');copyButton.title='해당 포스 전체를 이미지로 복사';copyButton.innerHTML='<span aria-hidden="true"><i></i><i></i></span>';
+    titleWrap.append(name,copyButton);
+    const count=document.createElement('em');count.textContent=force.occupiedCount+'/'+force.capacity+'명';head.append(titleWrap,count);
     const parties=document.createElement('span');parties.className='sanctuary-management-force-parties';
     force.parties.forEach(party=>{
       const partyNode=document.createElement('span');partyNode.className='sanctuary-management-force-party';
@@ -624,8 +627,10 @@
     const card=document.createElement('article');card.className='sanctuary-management-team-card';card.dataset.sanctuaryTeam=value(team.teamId);
     const head=document.createElement('div');head.className='sanctuary-management-team-card-head';
     const titleWrap=document.createElement('div');
+    const titleRow=document.createElement('div');titleRow.className='sanctuary-management-team-title-row';
     const title=document.createElement('h3');title.textContent=value(team.title)||'이름 없는 팀';
-    titleWrap.append(title);
+    const copyButton=document.createElement('button');copyButton.type='button';copyButton.className='sanctuary-management-copy-button';copyButton.dataset.sanctuaryCopyTeam=value(team.teamId);copyButton.setAttribute('aria-label',(value(team.title)||'이름 없는 팀')+' 전체 이미지 클립보드 복사');copyButton.title='해당 팀의 모든 포스를 이미지로 복사';copyButton.innerHTML='<span aria-hidden="true"><i></i><i></i></span>';
+    titleRow.append(title,copyButton);titleWrap.append(titleRow);
     const headActions=document.createElement('div');headActions.className='sanctuary-management-team-head-actions';
     const badge=document.createElement('span');badge.className='sanctuary-management-team-badge';badge.textContent=teamStatusLabel(team);headActions.appendChild(badge);
     const pending=(team.supportBatches||[]).reduce((sum,batch)=>sum+integer(batch.pendingCount),0);
@@ -979,6 +984,10 @@
     kind:'SERVER_ONLY_SUPPORT',schemaVersion:SCHEMA_VERSION,
     snapshot(){return bootstrapData;},findTeam:selectedDraftTeam,submitSupport,decideSupport,cancelSupport,reload:load
   });
+  window.KinojoSanctuaryManagementCopyBridge=Object.freeze({
+    kind:'BROWSER_IMAGE_COPY',schemaVersion:SCHEMA_VERSION,
+    snapshot(){return bootstrapData;},findTeam:selectedDraftTeam,selectedSanctuary:sanctuaryForSelection
+  });
 
   function applyDeepLink(){
     if(deepLinkApplied||!bootstrapData)return;const params=new URLSearchParams(location.search);
@@ -1009,7 +1018,7 @@
     byId('sanctuaryManagementContent').hidden=false;
     if(data.readEnabled){
       if(data.rollout.mode==='PILOT'&&data.writeEnabled){
-        setAccess('ready','성역 관리 시험 운영이 활성화되었습니다.','승인된 시험 사용자로 팀 생성·참여·편집·해산을 검수할 수 있습니다. 기존 성역·스케줄은 그대로 유지됩니다.');
+        setAccess('ready','성역 시험 운영이 활성화되었습니다.','승인된 시험 사용자로 팀 생성·참여·편집·해산을 검수할 수 있습니다.');
       }else if(data.rollout.mode==='PILOT'){
         setAccess('ready','성역 관리 시험 운영을 읽기 전용으로 확인할 수 있습니다.','신규 쓰기는 승인된 시험 사용자만 사용할 수 있습니다. 기존 성역·스케줄 이용에는 영향이 없습니다.');
       }else{
@@ -1055,7 +1064,7 @@
     byId('sanctuaryManagementScopeShell').hidden=true;
     byId('sanctuaryManagementContract').textContent='API 계약 확인 중';
     if(!auth.loggedIn){
-      setAccess('denied','로그인이 필요합니다.','성역 팀 관리는 권한형 화면입니다. 로그인 후 권한을 다시 확인합니다.','login');
+      setAccess('denied','로그인이 필요합니다.','성역 팀·포스 기능은 로그인 후 사용할 수 있습니다.','login');
       return;
     }
     setAccess('loading','Server 성역 관리 계약을 확인하고 있습니다.','로그인 이용자의 팀·포스·지원 데이터를 신규 Server 어댑터로 불러옵니다.');
@@ -1104,6 +1113,12 @@
       if(!archive||archive.disabled)return;
       const team=selectedDraftTeam(archive.dataset.sanctuaryArchiveTeam);if(!team)return;
       openArchiveOperation(team,archive);
+    });
+    byId('sanctuaryManagementTeamList')?.addEventListener('keydown',event=>{
+      if(event.key!=='Enter'&&event.key!==' ')return;
+      const card=event.target.closest('[data-sanctuary-support-force]');if(!card||event.target.closest('[data-sanctuary-copy-team]'))return;
+      event.preventDefault();if(!bootstrapData?.writeEnabled||card.getAttribute('aria-disabled')==='true')return;
+      const team=selectedDraftTeam(card.dataset.sanctuarySupportTeam);if(team)window.KinojoSanctuaryManagementSupportUI?.open?.(team,Number(card.dataset.sanctuarySupportForce),card);
     });
     byId('sanctuaryManagementScheduleState')?.addEventListener('click',event=>{
       const button=event.target.closest('[data-sanctuary-month-shift]');if(!button)return;loadMonth(shiftedMonth(Number(button.dataset.sanctuaryMonthShift)||0));

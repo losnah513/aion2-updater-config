@@ -62,12 +62,11 @@ assert.ok(style.includes('bottom:var(--kinojo-safe-bottom,0px)'), 'Modal must re
 
 for (const entry of ['sanctuary/index.html', 'm/sanctuary/index.html']) {
   const html = read(entry);
-  assert.ok(html.includes('sanctuary.css?cache=2026082106'), `${entry}: sanctuary CSS cache missing`);
-  assert.ok(html.includes('sanctuary.js?cache=2026082105'), `${entry}: sanctuary JS cache missing`);
+  assert.ok(html.includes('sanctuary-management.css?cache=2026082903'), `${entry}: upgraded Sanctuary CSS missing`);
+  assert.ok(html.includes('sanctuary-management.js?cache=2026082903'), `${entry}: upgraded Sanctuary JS missing`);
   assert.ok(html.includes('kinojo-supabase-features.js?cache=2026082902'), `${entry}: feature bridge cache missing`);
-  assert.ok(html.includes('class="sanctuary-rail-waitlist"'), `${entry}: the body-left waitlist entry must remain`);
-  assert.equal(html.includes('id="waitingSection"'), false, `${entry}: the retired bottom waitlist card must not render`);
-  if (entry.startsWith('m/')) assert.ok(html.includes('mobile.css?cache=2026082102'), `${entry}: mobile layout cache is stale`);
+  assert.equal(html.includes('class="sanctuary-rail-waitlist"'), false, `${entry}: retired waitlist entry remains`);
+  assert.equal(html.includes('sanctuary/js/sanctuary.js'), false, `${entry}: retired legacy page bundle remains loaded`);
 }
 
 assert.equal(page.includes('function renderWaiting('), false, 'The retired bottom waitlist renderer must be removed');

@@ -11,6 +11,13 @@
   const forces=()=>Array.isArray(team()?.forces)?team().forces.slice().sort((a,b)=>integer(a.forceNo)-integer(b.forceNo)):[];
   const characters=()=>Array.isArray(team()?.supportCharacters?.characters)?team().supportCharacters.characters:[];
   const actorId=()=>integer(bridge()?.snapshot?.()?.actor?.memberId);
+  const CLASS_ICON_MAP={
+    '검성':'gladiator','수호성':'templar','궁성':'ranger','살성':'assassin',
+    '마도성':'sorcerer','정령성':'elementalist','치유성':'cleric','호법성':'chanter','권성':'fighter',
+    'gladiator':'gladiator','templar':'templar','ranger':'ranger','assassin':'assassin',
+    'sorcerer':'sorcerer','elementalist':'elementalist','cleric':'cleric','chanter':'chanter','fighter':'fighter','brawler':'fighter'
+  };
+  function classIconFor(className){const slug=CLASS_ICON_MAP[value(className)];return slug?'/assets/images/classes/class_icon_'+slug+'.png':'';}
 
   function ensureLayer(){
     if(state.layer&&document.body.contains(state.layer))return state.layer;
@@ -40,7 +47,9 @@
   function characterMarkup(character,force){
     const selected=state.assignments.get(integer(force?.forceId))===integer(character.characterId);const allowed=eligible(character,force);const owner=assignmentOwner(character.characterId);
     const reason=allowed.ok?'선택하면 '+force.forceNo+'포스에 지원합니다.':allowed.message;
-    return '<button type="button" class="sanctuary-management-support-character '+(selected?'is-selected ':'')+(!allowed.ok?'is-disabled':'')+'" data-support-character="'+character.characterId+'" aria-pressed="'+selected+'" aria-disabled="'+(!allowed.ok)+'"'+(state.saving?' disabled':'')+'><span class="sanctuary-management-support-avatar" aria-hidden="true">'+escapeHtml(Array.from(value(character.characterName)||'?')[0]||'?')+'</span><span><em>'+(character.isMain?'본캐':'부캐')+'</em><strong>'+escapeHtml(character.characterName)+'</strong><small>'+escapeHtml([character.serverName,character.className].filter(Boolean).join(' · '))+'</small><i>'+escapeHtml(owner&&owner!==integer(force?.forceId)?'다른 포스에 선택됨':reason)+'</i></span></button>';
+    const classIcon=classIconFor(character.className);
+    const avatar=classIcon?'<img src="'+escapeHtml(classIcon)+'" alt="" aria-hidden="true">':'<span aria-hidden="true">?</span>';
+    return '<button type="button" class="sanctuary-management-support-character '+(selected?'is-selected ':'')+(!allowed.ok?'is-disabled':'')+'" data-support-character="'+character.characterId+'" aria-pressed="'+selected+'" aria-disabled="'+(!allowed.ok)+'"'+(state.saving?' disabled':'')+'><span class="sanctuary-management-support-avatar" title="'+escapeHtml(character.className||'클래스 정보 없음')+'">'+avatar+'</span><span><em>'+(character.isMain?'본캐':'부캐')+'</em><strong>'+escapeHtml(character.characterName)+'</strong><small>'+escapeHtml([character.serverName,character.className].filter(Boolean).join(' · '))+'</small><i>'+escapeHtml(owner&&owner!==integer(force?.forceId)?'다른 포스에 선택됨':reason)+'</i></span></button>';
   }
 
   function batchMarkup(batch){

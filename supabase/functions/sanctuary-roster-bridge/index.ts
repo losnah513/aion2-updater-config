@@ -12,7 +12,7 @@ Deno.serve((request:Request)=>{
     ok:false,
     code:"SANCTUARY_ROSTER_BRIDGE_RETIRED",
     message:"기존 성역 편성 Bridge는 종료되었습니다.",
-    replacement:"/sanctuary-management/",
+    replacement:"/sanctuary/",
     retiredAt:"2026-08-29"
   }),{status:410,headers});
 });

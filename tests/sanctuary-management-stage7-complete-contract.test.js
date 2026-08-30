@@ -50,20 +50,21 @@ for(const token of ['const API_VERSION=1.8','const SCHEMA_VERSION=446',"params.g
   assert.ok(client.includes(token),`Stage 7 client missing ${token}`);
 }
 
-for(const page of ['sanctuary-management/index.html','m/sanctuary-management/index.html']){
+for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
   assert.ok(html.includes('id="sanctuaryManagementSchedulePanel"'),`${page}: schedule deep-link target missing`);
   assert.ok(html.includes('stage7=2026082911'),`${page}: Stage 7 cache buster missing`);
 }
-for(const [page,canonical] of [
-  ['sanctuary/index.html','https://kinojo.info/sanctuary/'],
-  ['sanctuary-schedule/index.html','https://kinojo.info/sanctuary-schedule/'],
-  ['m/sanctuary/index.html','https://kinojo.info/m/sanctuary/'],
-  ['m/sanctuary-schedule/index.html','https://kinojo.info/m/sanctuary-schedule/'],
+for(const [page,target] of [
+  ['sanctuary-management/index.html','/sanctuary/'],
+  ['sanctuary-schedule/index.html','/sanctuary/'],
+  ['m/sanctuary-management/index.html','/m/sanctuary/'],
+  ['m/sanctuary-schedule/index.html','/m/sanctuary/'],
 ]){
   const html=read(page);
-  assert.ok(html.includes(canonical),`${page}: legacy page must remain available through user review`);
-  assert.doesNotMatch(html,/http-equiv="refresh"/i,`${page}: legacy page was redirected before user review`);
+  assert.ok(html.includes(`new URL('${target}',location.origin)`),`${page}: legacy URL must redirect to canonical Sanctuary`);
+  assert.match(html,/http-equiv="refresh"/i,`${page}: no-script redirect fallback missing`);
+  assert.ok(html.includes('location.replace(destination.pathname+destination.search+destination.hash)'),`${page}: legacy query/hash preservation missing`);
 }
 
 for(const token of ["code = 'sanctuary4'","name = '비탄의 설원'","short_name = '비탄의 설원'","enabled 상태는 변경하지 않는다"]){

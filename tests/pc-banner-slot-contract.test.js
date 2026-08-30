@@ -28,8 +28,7 @@ const doubleSlotPages = [
   'ranking/index.html',
   'legion-tree/index.html',
   'meter/index.html',
-  'sanctuary/index.html',
-  'sanctuary-schedule/index.html'
+  'sanctuary/index.html'
 ];
 for (const file of doubleSlotPages) {
   const html = read(file);

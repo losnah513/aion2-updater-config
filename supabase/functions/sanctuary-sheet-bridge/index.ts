@@ -13,7 +13,7 @@ Deno.serve((request:Request)=>{
     ok:false,
     code:"SANCTUARY_SHEET_BRIDGE_RETIRED",
     message:"성역 시트 동기화는 종료되었습니다.",
-    replacement:"/sanctuary-management/",
+    replacement:"/sanctuary/",
     retiredAt:"2026-08-29"
   }),{status:410,headers});
 });

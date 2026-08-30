@@ -69,13 +69,11 @@ for (const token of [
 
 for (const entry of ['sanctuary/index.html', 'm/sanctuary/index.html']) {
   const html = read(entry);
-  assert.ok(html.includes('id="forceEditBtn"'), `${entry}: global force editor button is missing`);
-  assert.ok(html.includes('class="sanctuary-edit-actions"'), `${entry}: compact action group is missing`);
-  assert.equal(html.includes('id="sanctuarySyncChip"'), false, `${entry}: duplicate body sheet sync card must be removed`);
-  assert.ok(html.includes('sanctuary.css?cache=2026082106'), `${entry}: sanctuary CSS cache key is stale`);
+  assert.ok(html.includes('id="sanctuaryManagementTeamList"'), `${entry}: upgraded Server roster workspace is missing`);
+  assert.ok(html.includes('sanctuary-management.css?cache=2026082903'), `${entry}: upgraded Sanctuary CSS is missing`);
   assert.ok(html.includes('kinojo-components.css?cache=2026082103'), `${entry}: shared component CSS is missing`);
-  assert.ok(html.includes('kinojo-range-control.js?cache=2026082103'), `${entry}: shared range controller is missing`);
-  assert.ok(html.includes('sanctuary-editor.js?cache=2026082105'), `${entry}: editor cache key is stale`);
+  assert.equal(html.includes('sanctuary-editor.js'), false, `${entry}: retired roster editor remains loaded`);
+  assert.equal(html.includes('id="forceEditBtn"'), false, `${entry}: retired global editor entry remains`);
 }
 
 assert.equal(editor.includes('class="sanctuary-roster-foot"'), false, 'Roster actions must not remain in a separate bottom footer');
