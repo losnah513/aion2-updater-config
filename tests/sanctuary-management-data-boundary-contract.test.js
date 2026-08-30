@@ -16,7 +16,7 @@ for (const page of pages) {
     'id="sanctuaryManagementTeamList"',
     'kinojo-supabase-features.js?cache=2026083004',
     'sanctuary-management.js?cache=2026083004',
-    'sanctuary-management-draft.js?cache=2026082811',
+    'sanctuary-management-draft.js?cache=2026083005',
     'sanctuary-management-support.js?cache=2026082923',
   ]) assert.ok(html.includes(token), `${page}: missing ${token}`);
   assert.equal(html.includes('kinojo-sanctuary-tabs'), false, `${page}: legacy sanctuary tabs remain in the management subbar`);

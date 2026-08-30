@@ -82,8 +82,8 @@ for(const token of [
 for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
   assert.ok(html.includes('sanctuary-management.js?cache=2026083004'),`${page}: management JS cache missing`);
-  assert.ok(html.includes('sanctuary-management-draft.css?cache=2026082807'),`${page}: draft CSS cache missing`);
-  assert.ok(html.includes('sanctuary-management-draft.js?cache=2026082811'),`${page}: draft JS cache missing`);
+  assert.ok(html.includes('sanctuary-management-draft.css?cache=2026083005'),`${page}: draft CSS cache missing`);
+  assert.ok(html.includes('sanctuary-management-draft.js?cache=2026083005'),`${page}: draft JS cache missing`);
 }
 
 console.log('KINOJO sanctuary management fixed-team DRAFT contract: PASS');

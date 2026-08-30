@@ -17,7 +17,7 @@ for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
     'id="sanctuaryManagementScope"',
     'sanctuary-management.css?cache=2026082903',
     'sanctuary-management.js?cache=2026083004',
-    'sanctuary-management-draft.js?cache=2026082811',
+    'sanctuary-management-draft.js?cache=2026083005',
   ])assert.ok(html.includes(token),`${page}: scope-only subbar missing ${token}`);
   for(const legacy of ['kinojo-sanctuary-tabs','관리 범위'])assert.equal(html.includes(legacy),false,`${page}: legacy subbar content remains ${legacy}`);
 }
