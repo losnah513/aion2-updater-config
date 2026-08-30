@@ -5,12 +5,21 @@ on:
     branches: [main]
     paths:
       - "home.html"
+      - "index.html"
       - "m/index.html"
+      - "assets/images/common/kinojo_banner_summer.webp"
       - "ui/kinojo-banner-runtime.js"
       - "ui/kinojo-pc-banners.js"
       - "ui/kinojo-pc-banners.css"
+      - "ui/kinojo-common-ui.js"
+      - "ui/kinojo-public-shell.css"
+      - "ui/kinojo-staged-loading.css"
+      - "ui/kinojo-staged-loading.js"
+      - "ui/kinojo-sanctuary-cards.css"
       - "tests/banner-manifest-client-contract.test.js"
       - "tests/banner-home-first-paint-contract.test.js"
+      - "tests/home-layout-stability-contract.test.js"
+      - "tests/home-loading-budget-contract.test.js"
       - "tests/banner-home-main-live-e2e.js"
       - "tests/banner-admin-main-ui-contract.test.js"
       - "tests/banner-admin-chrome-e2e.html"
@@ -26,12 +35,21 @@ on:
     branches: [main]
     paths:
       - "home.html"
+      - "index.html"
       - "m/index.html"
+      - "assets/images/common/kinojo_banner_summer.webp"
       - "ui/kinojo-banner-runtime.js"
       - "ui/kinojo-pc-banners.js"
       - "ui/kinojo-pc-banners.css"
+      - "ui/kinojo-common-ui.js"
+      - "ui/kinojo-public-shell.css"
+      - "ui/kinojo-staged-loading.css"
+      - "ui/kinojo-staged-loading.js"
+      - "ui/kinojo-sanctuary-cards.css"
       - "tests/banner-manifest-client-contract.test.js"
       - "tests/banner-home-first-paint-contract.test.js"
+      - "tests/home-layout-stability-contract.test.js"
+      - "tests/home-loading-budget-contract.test.js"
       - "tests/banner-home-main-live-e2e.js"
       - "tests/banner-admin-main-ui-contract.test.js"
       - "tests/banner-admin-chrome-e2e.html"
@@ -74,6 +92,8 @@ jobs:
           node --check tests/banner-home-main-live-e2e.js
           node tests/banner-manifest-client-contract.test.js
           node tests/banner-home-first-paint-contract.test.js
+          node tests/home-layout-stability-contract.test.js
+          node tests/home-loading-budget-contract.test.js
           node <<'NODE'
           const assert=require('node:assert/strict');
           const fs=require('node:fs');
