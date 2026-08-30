@@ -8,7 +8,10 @@
   --kinojo-drawer-width:min(250px,calc(100vw - 16px));
 }
 body:not(.kinojo-page-admin){
-  padding-top:calc(var(--kinojo-shell-top) + 12px)!important;
+  /* The fixed topbar is one border pixel taller than its shell token. Reserve
+     that final height before common-ui.js creates the bar so page content does
+     not move from 80px to 69px during boot. */
+  padding-top:calc(var(--kinojo-shell-top) + 1px)!important;
   padding-bottom:calc(var(--kinojo-shell-bottom) + env(safe-area-inset-bottom,0px) + 14px)!important;
 }
 .kinojo-topbar{

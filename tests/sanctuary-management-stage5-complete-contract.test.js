@@ -59,7 +59,7 @@ for(const token of [
 
 for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
-  for(const token of ['sanctuary-management.css?cache=2026082903','sanctuary-management.js?cache=2026083004','sanctuary-management-support.js?cache=2026082923','kinojo-supabase-features.js?cache=2026083004','kinojo-common-ui.js?cache=2026082923'])assert.ok(html.includes(token),`${page}: missing ${token}`);
+  for(const token of ['sanctuary-management.css?cache=2026082903','sanctuary-management.js?cache=2026083004','sanctuary-management-support.js?cache=2026082923','kinojo-supabase-features.js?cache=2026083004','kinojo-common-ui.js?cache=2026083001'])assert.ok(html.includes(token),`${page}: missing ${token}`);
 }
 
 console.log('KINOJO sanctuary management Stage 5 preserved under Stage 6 contract: PASS');

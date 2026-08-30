@@ -10,6 +10,9 @@ assert.ok(CHROME,'CHROME_BIN is required');
 
 const EDGE_PATH='/functions/v1/kinojo-banner-media';
 const FALLBACK='/assets/images/common/kinojo-og.jpg';
+const SUMMER_PNG='/assets/images/common/kinojo_banner_summer.png';
+const SUMMER_WEBP='/assets/images/common/kinojo_banner_summer.webp';
+const deliveryImageUrl=value=>String(value||'').replace(SUMMER_PNG,SUMMER_WEBP);
 
 async function snapshot(page){
   return page.evaluate(()=>{
@@ -67,7 +70,8 @@ async function snapshot(page){
     assert.equal(settled.pending,false,'settled pending state');
     assert.equal(settled.ariaBusy,null,'settled accessibility state');
     if(manifest.active){
-      assert.equal(settled.src,String(manifest.playlist?.[0]?.imageUrl||''),'active first image must come directly from Server Manifest');
+      const canonical=String(manifest.playlist?.[0]?.imageUrl||'');
+      assert.equal(settled.src,deliveryImageUrl(canonical),'active first image must use the approved delivery URL for the Server Manifest item');
     }else{
       assert.ok(settled.src.includes(FALLBACK),'inactive Manifest must reveal fallback');
     }

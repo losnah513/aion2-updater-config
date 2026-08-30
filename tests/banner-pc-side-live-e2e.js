@@ -61,14 +61,15 @@ function verify(pageSpec,width,data){
   assert.equal(data.slots.some(s=>s.code==='RIGHT'),pageSpec.slots.includes('RIGHT'),`${pageSpec.name} RIGHT presence`);
 
   for(const slot of data.slots){
-    assert.equal(slot.target,`${pageSpec.name}:${slot.code}`,`${pageSpec.name}:${slot.code} manifest target`);
     if(width<1840){
+      assert.equal(slot.target,'',`${pageSpec.name}:${slot.code} hidden slot must not bind or fetch a manifest`);
       assert.equal(slot.display,'none',`${pageSpec.name}:${slot.code} hidden below 1840`);
       assert.equal(slot.width,0,`${pageSpec.name}:${slot.code} hidden width`);
       assert.equal(slot.height,0,`${pageSpec.name}:${slot.code} hidden height`);
       continue;
     }
 
+    assert.equal(slot.target,`${pageSpec.name}:${slot.code}`,`${pageSpec.name}:${slot.code} manifest target`);
     assert.equal(slot.display,'grid',`${pageSpec.name}:${slot.code} display at ${width}`);
     assert.equal(slot.position,'fixed',`${pageSpec.name}:${slot.code} fixed`);
     assert.equal(slot.overflow,'hidden',`${pageSpec.name}:${slot.code} overflow`);

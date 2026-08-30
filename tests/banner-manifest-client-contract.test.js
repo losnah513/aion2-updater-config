@@ -93,7 +93,10 @@ async function verifyPlaybackRuntime(){
     await playbackFlush();
     assert.equal(image.src,A.imageUrl,'first Server playlist item should render after preload');
     assert.equal(host.attrs.href,'/a');
-    assert.deepEqual(env.preloadLog.slice(0,2),[A.imageUrl,B.imageUrl],'player should preload only current and next image');
+    assert.deepEqual(env.preloadLog,[A.imageUrl],'player should preload only the current image during the critical window');
+    assert.equal(activePlaybackTimers(env.timers,1800).length,1,'next image preload must wait until shortly before the Server slide interval');
+    await firePlaybackTimer(env.timers,1800);
+    assert.deepEqual(env.preloadLog,[A.imageUrl,B.imageUrl],'scheduled preload must prepare only the next Server item');
     assert.equal(activePlaybackTimers(env.timers,3000).length,1,'slide interval must come from Server rotation');
     await firePlaybackTimer(env.timers,3000);
     assert.equal(host.style.backgroundImage,`url(${JSON.stringify(B.imageUrl)})`,'next preloaded image should sit below current image during crossfade');
@@ -104,7 +107,9 @@ async function verifyPlaybackRuntime(){
     assert.equal(host.attrs.href,'/b');
     assert.equal(host.style.backgroundImage,undefined,'transient crossfade background must be restored');
     assert.equal(controller.getState().index,1);
-    assert.ok(env.preloadLog.includes(C.imageUrl),'following image must preload after transition');
+    assert.equal(env.preloadLog.includes(C.imageUrl),false,'following image must not preload immediately after transition');
+    await firePlaybackTimer(env.timers,1800);
+    assert.ok(env.preloadLog.includes(C.imageUrl),'following image must preload only near its transition');
     env.document.hidden=true;env.listeners.get('visibilitychange')();
     assert.equal(activePlaybackTimers(env.timers,3000).length,0,'background tab must pause slide timer');
     env.document.hidden=false;env.listeners.get('visibilitychange')();
@@ -246,20 +251,20 @@ async function verifyPlaybackRuntime(){
   loaderContext={
     window:{scrollY:0,innerHeight:900,location:{pathname:'/meter/'},getComputedStyle(){return{display:'grid'}},addEventListener(){}},
     document:{
-      readyState:'complete',currentScript:{src:'https://kinojo.info/ui/kinojo-pc-banners.js?cache=2026082303'},documentElement:{appendChild(){}},
+      readyState:'complete',currentScript:{src:'https://kinojo.info/ui/kinojo-pc-banners.js?cache=2026083001'},documentElement:{appendChild(){}},
       head:{appendChild(script){loadedScripts.push(script.src);loaderContext.window.KinojoBannerRuntime={mountBanner(options){loaderCalls.push(options.pageCode+':'+options.slotCode);options.deactivate?.();return{stop(){}}}};script.onload?.();return script}},
       querySelectorAll(){return[loaderSlot]},createElement(tag){return new FakeElement(tag)},addEventListener(){},
     },
     WeakSet,Map,Promise,URL,Object,String,Math,console,
   };
   vm.runInNewContext(pcBannerSource,loaderContext,{filename:'ui/kinojo-pc-banners.js'});await new Promise(resolve=>setTimeout(resolve,0));
-  assert.deepEqual(loadedScripts,['https://kinojo.info/ui/kinojo-banner-runtime.js?cache=2026082302'],'PC pages without a static runtime tag must load the shared Manifest client from the same /ui/ base');
+  assert.deepEqual(loadedScripts,['https://kinojo.info/ui/kinojo-banner-runtime.js?cache=2026083001'],'PC pages without a static runtime tag must load the shared Manifest client from the same /ui/ base');
   assert.deepEqual(loaderCalls,['METER:LEFT'],'dynamically loaded shared runtime must receive the canonical page/slot target');
   assert.equal(loaderSlot.dataset.kinojoPcBannerState,'empty','inactive SIDE Manifest must keep the existing empty slot');
   assert.equal(/og:image|twitter:image/.test(source),false,'Banner runtime must not rewrite static SEO fallback metadata');
 
   const supabaseClientIndex=pcHome.indexOf('core/kinojo-supabase-client.js?cache=2026080205');
-  const runtimeIndex=pcHome.indexOf('ui/kinojo-banner-runtime.js?cache=2026082302');
+  const runtimeIndex=pcHome.indexOf('ui/kinojo-banner-runtime.js?cache=2026083001');
   const manifestCallIndex=pcHome.indexOf('runtime.mountBanner({');
   assert.ok(supabaseClientIndex>=0&&runtimeIndex>supabaseClientIndex&&manifestCallIndex>runtimeIndex,'PC HOME must load Supabase client, then Banner runtime, then mount HOME:MAIN playback');
   assert.match(pcHome,/<a class="kinojo-main-banner is-manifest-pending" href="hof\/"[^>]*aria-busy="true"/,'PC fallback link must remain available but visually pending before a Server Manifest resolves');
@@ -276,7 +281,7 @@ async function verifyPlaybackRuntime(){
   assert.equal(/runtime\.fetchManifest\(/.test(pcHome),false,'PC HOME must not implement a page-specific Manifest player');
 
   const mobileSupabaseClientIndex=mobileHome.indexOf('../core/kinojo-supabase-client.js?cache=2026080205');
-  const mobileRuntimeIndex=mobileHome.indexOf('../ui/kinojo-banner-runtime.js?cache=2026082302');
+  const mobileRuntimeIndex=mobileHome.indexOf('../ui/kinojo-banner-runtime.js?cache=2026083001');
   const mobileManifestCallIndex=mobileHome.indexOf('runtime.mountBanner({');
   assert.ok(mobileSupabaseClientIndex>=0&&mobileRuntimeIndex>mobileSupabaseClientIndex&&mobileManifestCallIndex>mobileRuntimeIndex,'mobile HOME must load Supabase client, then shared Banner runtime, then mount HOME:MAIN playback');
   assert.match(mobileHome,/<a class="mobile-og-banner is-manifest-pending" href="hof\/"[^>]*aria-busy="true"/,'mobile fallback link must remain available but visually pending before a Server Manifest resolves');

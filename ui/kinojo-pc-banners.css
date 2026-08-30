@@ -59,7 +59,7 @@
   .kinojo-pc-banner-slot{
     display:grid;
     position:fixed;
-    top:0;
+    top:121px;
     z-index:1;
     width:300px;
     height:715px;
@@ -83,10 +83,12 @@
   }
 
   .kinojo-pc-banner-slot.is-left{
+    left:calc(50% - 904px);
     right:auto;
   }
 
   .kinojo-pc-banner-slot.is-right{
+    left:calc(50% + 604px);
     right:auto;
   }
 
