@@ -10,6 +10,7 @@ for(const token of [
   '.sanctuary-management-force-card.is-assigned,',
   '.sanctuary-management-force-card.is-pending{background:transparent}',
   '.sanctuary-management-force-card:hover,',
+  '.sanctuary-management-force-card.is-supportable:hover,',
   'background:#eefaf4',
   '.sanctuary-management-support-forces button.is-selected{background:transparent}',
   '.sanctuary-management-support-forces button:focus-visible{background:#eefaf4}',
@@ -36,8 +37,8 @@ for(const legacy of [
 
 for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
-  assert.ok(html.includes('sanctuary-management-support.css?cache=2026083006'),`${page}: transparent icon CSS cache missing`);
-  assert.ok(html.includes('canonical=2026083006'),`${page}: canonical transparent icon cache missing`);
+  assert.ok(html.includes('sanctuary-management-support.css?cache=2026083007'),`${page}: transparent icon CSS cache missing`);
+  assert.ok(html.includes('canonical=2026083007'),`${page}: canonical transparent icon cache missing`);
 }
 
 console.log('KINOJO Sanctuary transparent class icons and inset highlights contract: PASS');
