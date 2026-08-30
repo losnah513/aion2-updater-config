@@ -8,19 +8,32 @@
   const UNLIMITED_DURATION_MINUTES=720;
   const DURATION_OPTIONS=Object.freeze([{value:30,label:'30분'},{value:60,label:'1시간'},{value:120,label:'2시간'},{value:UNLIMITED_DURATION_MINUTES,label:'무제한'}]);
   const CLASS_ICON_MAP=Object.freeze({'수호성':'templar','검성':'gladiator','살성':'assassin','궁성':'ranger','마도성':'sorcerer','정령성':'elementalist','치유성':'cleric','호법성':'chanter','권성':'fighter'});
-  const state={layer:null,opener:null,team:null,sourceTeamId:0,creationMode:'FIXED',joinPolicy:'INSTANT',selectedForceId:0,selectedSlotId:0,moveFromSlotId:0,draggedSlotId:0,dragSwitching:false,requirementTarget:null,requestKey:'',forceSaveRequestKey:'',forceAddRequestKey:'',slotRequestKey:'',moveRequestKey:'',characterRequestKey:'',leaseToken:'',leaseTimer:0,message:'',tone:'',saving:false,mutating:false,lookup:null,mainLookup:null,relationType:''};
+  const SLOT_CLASSES=Object.freeze([
+    {code:'ALL',label:'전체',className:''},{code:'TEMPLAR',label:'수호성',className:'수호성'},
+    {code:'GLADIATOR',label:'검성',className:'검성'},{code:'ASSASSIN',label:'살성',className:'살성'},
+    {code:'RANGER',label:'궁성',className:'궁성'},{code:'SORCERER',label:'마도성',className:'마도성'},
+    {code:'ELEMENTALIST',label:'정령성',className:'정령성'},{code:'CLERIC',label:'치유성',className:'치유성'},
+    {code:'CHANTER',label:'호법성',className:'호법성'},{code:'FIGHTER',label:'권성',className:'권성'}
+  ]);
+  const CLASS_CODE_BY_NAME=Object.freeze(Object.fromEntries(SLOT_CLASSES.filter(item=>item.className).map(item=>[item.className,item.code])));
+  const state={layer:null,opener:null,team:null,sourceTeamId:0,creationMode:'FIXED',joinPolicy:'INSTANT',selectedForceId:0,selectedSlotId:0,moveFromSlotId:0,draggedSlotId:0,dragSwitching:false,requirementTarget:null,classTargetSlotId:0,requestKey:'',forceSaveRequestKey:'',forceAddRequestKey:'',slotRequestKey:'',moveRequestKey:'',characterRequestKey:'',leaseToken:'',leaseTimer:0,message:'',tone:'',saving:false,mutating:false,lookup:null,mainLookup:null,linkedAlts:null,relationType:''};
   const value=input=>String(input??'').trim();
   const escapeHtml=input=>String(input??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const bridge=()=>window.KinojoSanctuaryManagementDraftBridge;
 
   function clone(value){return typeof structuredClone==='function'?structuredClone(value):JSON.parse(JSON.stringify(value));}
   function classIconFor(className){const key=CLASS_ICON_MAP[value(className).replace(/[\s\u200B-\u200D\uFEFF]+/g,'').replace(/[\[(（].*?[\])）]\s*$/g,'')];return key?'/assets/images/classes/class_icon_'+key+'.png':'';}
+  function classCodeFor(className){return CLASS_CODE_BY_NAME[value(className).replace(/[\s\u200B-\u200D\uFEFF]+/g,'').replace(/[\[(（].*?[\])）]\s*$/g,'')]||'';}
+  function classOption(code){return SLOT_CLASSES.find(item=>item.code===value(code).toUpperCase())||SLOT_CLASSES[0];}
+  function slotClassCode(slot){return classOption(slot?.requiredClassCode).code;}
+  function assignmentKind(slot){return value(slot?.assignmentKind||slot?.character?.assignmentKind).toUpperCase()==='RANDOM_ALT'?'RANDOM_ALT':'ACTUAL_CHARACTER';}
+  function slotAcceptsCharacter(slot,character){const required=slotClassCode(slot);if(character?.isRandomAlt)return required==='ALL';return required==='ALL'||required===classCodeFor(character?.className);}
   function combatPowerValue(input){const power=Number(input);return Number.isFinite(power)&&power>0?Math.round(power):0;}
   function formatCombatPower(input){const power=combatPowerValue(input);if(!power)return '전투력 미확인';const kilo=power/1000;return '전투력 '+(kilo>=100?Math.round(kilo):kilo.toFixed(1))+'K';}
   function emptyRequirements(){return {satisfied:true,ruleCount:0,unsatisfiedCount:0,rules:[]};}
   function scopeRules(scope){return Array.isArray(scope?.requirements?.rules)?scope.requirements.rules:[];}
   function refreshRequirementScope(scope,slots){
-    const occupied=slots.filter(slot=>slot.occupied&&slot.character);
+    const occupied=slots.filter(slot=>slot.occupied&&slot.character&&!slot.character.isRandomAlt);
     const known=occupied.map(slot=>combatPowerValue(slot.character?.power)).filter(Boolean);
     scope.combatPower={average:known.length?Math.round(known.reduce((sum,power)=>sum+power,0)/known.length):0,total:known.reduce((sum,power)=>sum+power,0),knownCount:known.length,occupiedCount:occupied.length,unknownCount:occupied.length-known.length};
     const rules=scopeRules(scope).map(rule=>{
@@ -33,7 +46,7 @@
   function makeLocalForce(forceNo,localForceId){
     const forceId=Number(localForceId)||-forceNo;
     const localKey=Math.abs(forceId);
-    const parties=[1,2].map(partyNo=>({partyId:-(localKey*10+partyNo),partyNo,capacity:5,occupiedCount:0,vacancyCount:5,combatPower:{average:0,total:0,knownCount:0,occupiedCount:0,unknownCount:0},requirements:emptyRequirements(),slots:Array.from({length:5},(_,index)=>({slotId:-(localKey*100+partyNo*10+index+1),slotNo:index+1,revision:1,occupied:false,character:null}))}));
+    const parties=[1,2].map(partyNo=>({partyId:-(localKey*10+partyNo),partyNo,capacity:5,occupiedCount:0,vacancyCount:5,combatPower:{average:0,total:0,knownCount:0,occupiedCount:0,unknownCount:0},requirements:emptyRequirements(),slots:Array.from({length:5},(_,index)=>({slotId:-(localKey*100+partyNo*10+index+1),slotNo:index+1,revision:1,occupied:false,character:null,requiredClassCode:'ALL',requiredClassName:'전체 클래스',assignmentKind:'ACTUAL_CHARACTER'}))}));
     return {forceId,forceNo,capacity:10,status:'OPEN',revision:1,occupiedCount:0,vacancyCount:10,combatPower:{average:0,total:0,knownCount:0,occupiedCount:0,unknownCount:0},requirements:emptyRequirements(),creatorMemberId:Number(bridge()?.snapshot()?.actor?.memberId||0),creatorOwnerResolved:true,creatorAlreadyAssigned:false,creatorCandidateCode:'READY',creatorCandidateCount:0,creatorCandidates:[],viewerAlreadyAssigned:false,viewerPending:false,canSupport:false,parties};
   }
   function makeLocalTeam(mode){
@@ -58,7 +71,7 @@
       force.occupiedCount=forceOccupied;force.vacancyCount=force.capacity-forceOccupied;
       refreshRequirementScope(force,force.parties.flatMap(party=>party.slots));
       const creatorIsActor=Number(force.creatorMemberId||actorMemberId)===actorMemberId;
-      const derivedCreatorAssigned=force.parties.some(party=>party.slots.some(slot=>slot.character&&(Number(slot.character.ownerMemberId||0)===Number(force.creatorMemberId||actorMemberId)||creatorIsActor&&actorCharacterIds.has(Number(slot.character.characterId)))));
+       const derivedCreatorAssigned=force.parties.some(party=>party.slots.some(slot=>slot.character&&!slot.character.isRandomAlt&&(Number(slot.character.ownerMemberId||0)===Number(force.creatorMemberId||actorMemberId)||creatorIsActor&&actorCharacterIds.has(Number(slot.character.characterId)))));
       if(state.team.localOnly||creatorIsActor)force.creatorAlreadyAssigned=derivedCreatorAssigned;
     });
     state.team.forceCount=state.team.forces.length;
@@ -70,7 +83,7 @@
   function composerCharacters(){return Array.isArray(bridge()?.snapshot()?.composerCharacters?.characters)?bridge().snapshot().composerCharacters.characters:[];}
   function localUsedCharacterIds(){return new Set(teamForces().flatMap(force=>forceSlots(force)).map(item=>Number(item.slot.character?.characterId||0)).filter(Boolean));}
 
-  function resetCharacterLookup(){state.lookup=null;state.mainLookup=null;state.relationType='';state.characterRequestKey='';}
+  function resetCharacterLookup(){state.lookup=null;state.mainLookup=null;state.linkedAlts=null;state.relationType='';state.characterRequestKey='';}
 
   function newLeaseToken(){
     const bytes=new Uint8Array(32);
@@ -198,7 +211,7 @@
     const target=state.opener;
     const teamId=Number(state.team?.teamId||0),leaseToken=state.leaseToken;
     stopLeaseRenewal();
-    state.opener=null;state.team=null;state.sourceTeamId=0;state.creationMode='FIXED';state.joinPolicy='INSTANT';state.selectedForceId=0;state.selectedSlotId=0;state.moveFromSlotId=0;state.draggedSlotId=0;state.dragSwitching=false;state.requirementTarget=null;state.requestKey='';state.forceSaveRequestKey='';state.forceAddRequestKey='';state.slotRequestKey='';state.moveRequestKey='';state.leaseToken='';state.message='';state.tone='';state.saving=false;state.mutating=false;resetCharacterLookup();
+    state.opener=null;state.team=null;state.sourceTeamId=0;state.creationMode='FIXED';state.joinPolicy='INSTANT';state.selectedForceId=0;state.selectedSlotId=0;state.moveFromSlotId=0;state.draggedSlotId=0;state.dragSwitching=false;state.requirementTarget=null;state.classTargetSlotId=0;state.requestKey='';state.forceSaveRequestKey='';state.forceAddRequestKey='';state.slotRequestKey='';state.moveRequestKey='';state.leaseToken='';state.message='';state.tone='';state.saving=false;state.mutating=false;resetCharacterLookup();
     if(teamId&&leaseToken)bridge()?.lease?.(teamId,'RELEASE',leaseToken).catch(()=>{});
     try{target?.focus({preventScroll:true});}catch(_error){target?.focus?.();}
   }
@@ -225,7 +238,7 @@
 
   function openMode(opener){
     if(!bridge()?.snapshot()?.writeEnabled)return;
-    state.team=null;state.sourceTeamId=0;state.creationMode='FIXED';state.joinPolicy='INSTANT';state.selectedForceId=0;state.selectedSlotId=0;state.moveFromSlotId=0;state.draggedSlotId=0;state.dragSwitching=false;state.requirementTarget=null;state.requestKey='';state.forceSaveRequestKey='';state.forceAddRequestKey='';state.slotRequestKey='';state.moveRequestKey='';state.leaseToken='';state.message='';state.tone='';state.saving=false;state.mutating=false;resetCharacterLookup();
+    state.team=null;state.sourceTeamId=0;state.creationMode='FIXED';state.joinPolicy='INSTANT';state.selectedForceId=0;state.selectedSlotId=0;state.moveFromSlotId=0;state.draggedSlotId=0;state.dragSwitching=false;state.requirementTarget=null;state.classTargetSlotId=0;state.requestKey='';state.forceSaveRequestKey='';state.forceAddRequestKey='';state.slotRequestKey='';state.moveRequestKey='';state.leaseToken='';state.message='';state.tone='';state.saving=false;state.mutating=false;resetCharacterLookup();
     openLayer(opener);
     state.layer.innerHTML='<div class="sanctuary-management-draft-backdrop" data-draft-close></div>'
       +'<section class="sanctuary-management-mode-dialog" role="dialog" aria-modal="true" aria-labelledby="sanctuaryDraftModeTitle" aria-describedby="sanctuaryDraftModeDescription" tabindex="-1">'
@@ -293,9 +306,21 @@
     const name=occupied?value(slot.character.name):'빈 슬롯';
     const relation=value(slot.character?.relation).toUpperCase();
     const relationLabel=relation==='MAIN'?'본캐':relation==='ALT'?'부캐':relation==='GUEST'?'게스트':'';
-    const detail=occupied?formatCombatPower(slot.character?.power):selected?'후보를 선택해 추가':'눌러서 캐릭터 선택';
+    const required=classOption(slotClassCode(slot));
+    const requiredIcon=classIconFor(required.className);
+    const pickerOpen=Number(slot.slotId)===Number(state.classTargetSlotId);
+    const detail=occupied?(slot.character?.isRandomAlt?'실제 부캐 저장 전 미확정':formatCombatPower(slot.character?.power)):selected?'후보를 선택해 추가':required.code==='ALL'?'눌러서 캐릭터 선택':required.label+'만 지원 가능';
     const disabled=state.saving||state.mutating;
-    return '<div class="sanctuary-management-draft-slot-shell'+(moving?' is-selected':'')+'"><button type="button" class="sanctuary-management-draft-slot'+(occupied?' is-occupied':'')+(selected?' is-selected':'')+(moving?' is-move-source':'')+'"'+(disabled?' disabled':'')+(occupied?' draggable="true"':'')+' data-draft-slot data-slot-id="'+escapeHtml(slot.slotId)+'" data-slot-revision="'+escapeHtml(slot.revision)+'" data-party-no="'+escapeHtml(partyNo)+'" data-slot-no="'+escapeHtml(slot.slotNo)+'" data-occupied="'+String(Boolean(occupied))+'" aria-pressed="'+String(selected||moving)+'"><span>'+number+'</span><strong>'+escapeHtml(name)+'</strong><small>'+escapeHtml(moving?'이동하거나 − 버튼으로 제거':detail)+'</small></button>'+(moving?'<button type="button" class="sanctuary-management-slot-remove" data-draft-clear-slot="'+escapeHtml(slot.slotId)+'" aria-label="'+escapeHtml(name)+' 캐릭터 제거"'+(disabled?' disabled':'')+'>−</button>':'')+'</div>';
+    const picker=pickerOpen?'<div class="sanctuary-management-slot-class-picker" role="group" aria-label="'+number+'번 슬롯 지원 클래스">'+SLOT_CLASSES.map(option=>{const icon=classIconFor(option.className);return '<button type="button" data-slot-class="'+option.code+'" data-slot-id="'+escapeHtml(slot.slotId)+'" aria-pressed="'+String(option.code===required.code)+'" title="'+escapeHtml(option.label)+'"'+(disabled?' disabled':'')+'>'+(icon?'<img src="'+escapeHtml(icon)+'" alt=""><span>'+escapeHtml(option.label)+'</span>':'<b>ALL</b><span>전체</span>')+'</button>';}).join('')+'</div>':'';
+    return '<div class="sanctuary-management-draft-slot-shell'+(moving?' is-selected':'')+(pickerOpen?' has-class-picker':'')+'"><button type="button" class="sanctuary-management-slot-class-trigger" data-slot-class-open="'+escapeHtml(slot.slotId)+'" aria-expanded="'+String(pickerOpen)+'" title="지원 클래스: '+escapeHtml(required.label)+'"'+(disabled?' disabled':'')+'>'+(requiredIcon?'<img src="'+escapeHtml(requiredIcon)+'" alt=""><span>'+escapeHtml(required.label)+'</span>':'<b>ALL</b><span>전체</span>')+'</button><button type="button" class="sanctuary-management-draft-slot'+(occupied?' is-occupied':'')+(selected?' is-selected':'')+(moving?' is-move-source':'')+(slot.character?.isRandomAlt?' is-random-alt':'')+'"'+(disabled?' disabled':'')+(occupied?' draggable="true"':'')+' data-draft-slot data-slot-id="'+escapeHtml(slot.slotId)+'" data-slot-revision="'+escapeHtml(slot.revision)+'" data-party-no="'+escapeHtml(partyNo)+'" data-slot-no="'+escapeHtml(slot.slotNo)+'" data-occupied="'+String(Boolean(occupied))+'" aria-pressed="'+String(selected||moving)+'"><span>'+number+'</span><strong>'+escapeHtml(name)+'</strong><small>'+escapeHtml(moving?'이동하거나 − 버튼으로 제거':detail)+'</small></button>'+(moving?'<button type="button" class="sanctuary-management-slot-remove" data-draft-clear-slot="'+escapeHtml(slot.slotId)+'" aria-label="'+escapeHtml(name)+' 캐릭터 제거"'+(disabled?' disabled':'')+'>−</button>':'')+picker+'</div>';
+  }
+
+  function applySlotClass(slotId,classCode){
+    const item=teamSlot(slotId);const option=classOption(classCode);if(!item)return;
+    if(item.slot.character&&!slotAcceptsCharacter(Object.assign({},item.slot,{requiredClassCode:option.code}),item.slot.character)){
+      setStatus(item.slot.character.isRandomAlt?'랜덤 부캐 슬롯은 전체 클래스만 선택할 수 있습니다.':value(item.slot.character.name)+' 캐릭터의 클래스와 맞지 않습니다. 먼저 캐릭터를 빼거나 알맞은 클래스를 선택해 주세요.');return;
+    }
+    item.slot.requiredClassCode=option.code;item.slot.requiredClassName=option.code==='ALL'?'전체 클래스':option.label;state.classTargetSlotId=0;renderRosterState();setStatus(slotDisplayNumber(item)+'번 슬롯 지원 클래스를 '+option.label+'(으)로 설정했습니다. 마지막 저장 전까지 Server에는 반영되지 않습니다.','success');
   }
 
   function requirementTargetScope(){
@@ -366,7 +391,8 @@
       const icon=classIconFor(character.className);
       const relation=character.relation==='GUEST'?'게스트':character.relation==='MAIN'?'본캐':'부캐';
       const server='['+(value(character.serverName)||'서버 미확인')+']';
-      resultMarkup='<article class="sanctuary-management-search-result"><div class="sanctuary-management-search-result-profile"><span class="sanctuary-management-search-result-avatar" aria-hidden="true">'+(icon?'<img src="'+escapeHtml(icon)+'" alt="">':'◇')+'</span><span class="sanctuary-management-search-result-copy"><em>'+escapeHtml(relation)+'</em><strong>'+escapeHtml(character.characterName)+'</strong><small>'+escapeHtml(server)+'</small></span></div><button type="button" data-draft-search-character="'+escapeHtml(character.characterId)+'">추가하기</button></article>';
+      const altButton=character.relation==='MAIN'&&Number(character.ownerMemberId)>0?'<button type="button" data-linked-alts-open="'+escapeHtml(character.characterId)+'">부캐 선택</button>':'';
+      resultMarkup='<article class="sanctuary-management-search-result"><div class="sanctuary-management-search-result-profile"><span class="sanctuary-management-search-result-avatar" aria-hidden="true">'+(icon?'<img src="'+escapeHtml(icon)+'" alt="">':'◇')+'</span><span class="sanctuary-management-search-result-copy"><em>'+escapeHtml(relation)+'</em><strong>'+escapeHtml(character.characterName)+'</strong><small>'+escapeHtml(server)+'</small></span></div><div class="sanctuary-management-search-result-actions"><button type="button" data-draft-search-character="'+escapeHtml(character.characterId)+'">추가하기</button>'+altButton+'</div></article>';
     }else if(state.lookup?.candidate){
       const candidate=state.lookup.candidate;const allowed=candidate.allowedRelations||[];
       const relationButtons=allowed.map(relation=>'<button type="button" data-draft-relation="'+relation+'" aria-pressed="'+String(state.relationType===relation)+'">'+(relation==='MAIN'?'본캐':relation==='ALT'?'부캐':'게스트')+'</button>').join('');
@@ -388,6 +414,21 @@
     if(creatorOnly)return '<aside class="sanctuary-management-candidate-rail" aria-label="'+escapeHtml(force.forceNo)+'포스 생성자 캐릭터 선택">'+railHeader+'<div class="sanctuary-management-candidate-list" data-candidate-list>'+quick+'<div class="sanctuary-management-candidate-note"><strong>참여 팀 생성 조건</strong><small>만들어 둔 포스 중 한 곳에 생성자의 캐릭터 1개 이상을 배치하면 생성할 수 있습니다.</small></div></div>'+completion+'</aside>';
     if(state.team?.localOnly)return '<aside class="sanctuary-management-candidate-rail" aria-label="'+escapeHtml(force.forceNo)+'포스 내 캐릭터 선택">'+railHeader+'<div class="sanctuary-management-candidate-list" data-candidate-list>'+quick+'<div class="sanctuary-management-candidate-note"><strong>한 번에 Server 반영</strong><small>외부·게스트 검색은 팀을 만든 뒤 편집에서 사용할 수 있습니다.</small></div></div>'+completion+'</aside>';
     return '<aside class="sanctuary-management-candidate-rail" aria-label="'+escapeHtml(force.forceNo)+'포스 '+slotNumber+'번 슬롯 캐릭터 선택">'+railHeader+'<div class="sanctuary-management-candidate-list" data-candidate-list>'+quick+'<div class="sanctuary-management-character-search" data-character-search-form role="search"><label><span>캐릭터 검색</span><input name="characterQuery" size="16" maxlength="48" placeholder="이름 또는 이름[서버]" autocomplete="off" required></label><button type="button" data-character-search-submit'+(state.lookup?.loading?' disabled':'')+'>검색</button></div>'+resultMarkup+'</div>'+completion+'<button type="button" class="sanctuary-management-search-reset" data-draft-search-reset>조회 초기화</button></aside>';
+  }
+
+  function linkedAltPanelMarkup(){
+    const data=state.linkedAlts;if(!data)return '<aside class="sanctuary-management-linked-alt-panel" data-linked-alt-panel hidden></aside>';
+    let body='';
+    if(data.loading)body='<div class="sanctuary-management-linked-alt-state"><strong>부캐 목록 확인 중…</strong><small>캐릭터 마스터의 실제 연결 관계를 조회합니다.</small></div>';
+    else if(data.error)body='<div class="sanctuary-management-linked-alt-state is-error"><strong>부캐 목록을 불러오지 못했습니다.</strong><small>'+escapeHtml(data.error)+'</small></div>';
+    else{
+      const chosen=selectedSlot();const usedIds=localUsedCharacterIds();const random=data.randomCandidate;
+      const randomAllowed=Boolean(chosen&&slotAcceptsCharacter(chosen.slot,random));
+      const randomCard=random?'<button type="button" class="sanctuary-management-linked-alt-card is-random" data-linked-alt-random aria-disabled="'+String(!randomAllowed)+'"'+(!randomAllowed?' disabled':'')+'><span><b>RANDOM</b></span><span><em>랜덤 부캐</em><strong>'+escapeHtml(random.characterName)+'</strong><small>실제 캐릭터 확정 전 · 전투력/조건 계산 제외</small></span></button>':'';
+      const cards=(data.characters||[]).map(character=>{const icon=classIconFor(character.className);const disabled=usedIds.has(Number(character.characterId))||!chosen||!slotAcceptsCharacter(chosen.slot,character);return '<button type="button" class="sanctuary-management-linked-alt-card" data-linked-alt-character="'+escapeHtml(character.characterId)+'" aria-disabled="'+String(disabled)+'"'+(disabled?' disabled':'')+'><span>'+(icon?'<img src="'+escapeHtml(icon)+'" alt="">':'?')+'</span><span><em>부캐</em><strong>'+escapeHtml(character.characterName)+'</strong><small>['+escapeHtml(character.serverName||'서버 미확인')+'] · '+escapeHtml(formatCombatPower(character.power))+'</small></span></button>';}).join('');
+      body=randomCard+(cards||'<div class="sanctuary-management-linked-alt-state"><strong>연결된 실제 부캐 없음</strong><small>랜덤 부캐 카드는 선택할 수 있습니다.</small></div>');
+    }
+    return '<aside class="sanctuary-management-linked-alt-panel is-open" data-linked-alt-panel role="dialog" aria-modal="false" aria-label="연결된 부캐 선택"><header><div><span>LINKED ALTS</span><strong>'+escapeHtml(data.mainCharacter?.characterName||'본캐')+'의 부캐 선택</strong><small>실제 부캐 또는 저장 전 미확정 랜덤 부캐를 고르세요.</small></div><button type="button" data-linked-alts-close aria-label="부캐 선택 닫기">×</button></header><div>'+body+'</div></aside>';
   }
 
   function rosterMarkup(){
@@ -417,6 +458,8 @@
     if(roster)roster.outerHTML=rosterMarkup();
     const candidates=state.layer?.querySelector('.sanctuary-management-candidate-rail');
     if(candidates)candidates.outerHTML=candidateMarkup();
+    const linked=state.layer?.querySelector('[data-linked-alt-panel]');
+    if(linked)linked.outerHTML=linkedAltPanelMarkup();
     requestAnimationFrame(syncScrollFades);
   }
 
@@ -468,7 +511,7 @@
               +'</div>'
             +'</section>'
           +'</div>'
-        +'</form>'
+        +'</form>'+linkedAltPanelMarkup()
       +'</div>';
   }
 
@@ -479,7 +522,7 @@
     if(state.team){state.creationMode=value(state.team.mode).toUpperCase()==='PARTICIPATION'?'PARTICIPATION':'FIXED';state.joinPolicy=value(state.team.joinPolicy).toUpperCase()==='APPROVAL'?'APPROVAL':'INSTANT';}
     state.selectedForceId=Number(state.team?.forces?.[0]?.forceId||0);
     refreshLocalTeam();
-    state.selectedSlotId=0;state.moveFromSlotId=0;state.draggedSlotId=0;state.dragSwitching=false;state.requirementTarget=null;state.requestKey='';state.forceSaveRequestKey='';state.forceAddRequestKey='';state.slotRequestKey='';state.moveRequestKey='';state.message='';state.tone='';state.saving=false;state.mutating=Boolean(state.sourceTeamId);resetCharacterLookup();
+    state.selectedSlotId=0;state.moveFromSlotId=0;state.draggedSlotId=0;state.dragSwitching=false;state.requirementTarget=null;state.classTargetSlotId=0;state.requestKey='';state.forceSaveRequestKey='';state.forceAddRequestKey='';state.slotRequestKey='';state.moveRequestKey='';state.message='';state.tone='';state.saving=false;state.mutating=Boolean(state.sourceTeamId);resetCharacterLookup();
     openLayer(opener||state.opener);
     state.layer.innerHTML=modeMarkup();
     syncDateMinimum();
@@ -565,7 +608,14 @@
       },
       composition:teamForces().map(force=>({
         sourceForceId:Number(force.forceId)>0?Number(force.forceId):null,
-        slots:forceSlots(force).map(item=>({partyNo:item.partyNo,slotNo:Number(item.slot.slotNo),characterId:Number(item.slot.character?.characterId||0)||null})),
+        slots:forceSlots(force).map(item=>({
+          partyNo:item.partyNo,
+          slotNo:Number(item.slot.slotNo),
+          characterId:Number(item.slot.character?.characterId||0)||null,
+          mainCharacterId:item.slot.character?.isRandomAlt?Number(item.slot.character.mainCharacterId)||null:null,
+          assignmentKind:item.slot.character?.isRandomAlt?'RANDOM_ALT':'ACTUAL_CHARACTER',
+          requiredClassCode:slotClassCode(item.slot)
+        })),
         requirements:[
           ...scopeRules(force).map(rule=>({scopeType:'FORCE',partyNo:null,ruleType:value(rule.ruleType).toUpperCase(),minimumCount:Number(rule.minimumCount),powerThreshold:value(rule.ruleType).toUpperCase()==='POWER_MIN'?combatPowerValue(rule.powerThreshold):null})),
           ...force.parties.flatMap(party=>scopeRules(party).map(rule=>({scopeType:'PARTY',partyNo:Number(party.partyNo),ruleType:value(rule.ruleType).toUpperCase(),minimumCount:Number(rule.minimumCount),powerThreshold:value(rule.ruleType).toUpperCase()==='POWER_MIN'?combatPowerValue(rule.powerThreshold):null})))
@@ -578,6 +628,7 @@
     if(!model.title||model.title.length>80)return '팀 이름을 1자 이상 80자 이하로 입력해 주세요.';
     if(!model.sanctuaryCode)return '진행 성역을 선택해 주세요.';
     if(!model.composition.length||model.composition.length>9)return '포스를 하나 이상, 최대 9개까지 구성해 주세요.';
+    if(model.composition.some(force=>force.slots.some(slot=>!SLOT_CLASSES.some(option=>option.code===slot.requiredClassCode)||slot.assignmentKind==='RANDOM_ALT'&&(!slot.mainCharacterId||slot.requiredClassCode!=='ALL'))))return '슬롯 클래스 제한과 랜덤 부캐 편성을 다시 확인해 주세요.';
     if(!model.datePartsValid)return '월과 일을 올바른 숫자로 입력해 주세요.';
     if(!model.timePartsValid)return '오전·오후와 시·분을 올바르게 입력해 주세요.';
     if(!model.schedule.startsOn)return model.schedule.kind==='WEEKLY'?'반복 시작일을 입력해 주세요.':'진행 날짜를 입력해 주세요.';
@@ -614,7 +665,7 @@
     const issue=validate(model);
     if(issue){setStatus(issue);return;}
     if(value(state.team?.status)==='DRAFT'&&!participationReady()&&model.mode==='PARTICIPATION'){setStatus('만들어 둔 포스 중 한 곳에 팀 생성자의 캐릭터 1개를 추가해 주세요.');return;}
-    const hasCreator=state.team?.localOnly?teamSlots().some(item=>item.slot.occupied&&item.slot.character):teamForces().some(force=>force.creatorAlreadyAssigned===true);
+    const hasCreator=state.team?.localOnly?teamSlots().some(item=>item.slot.occupied&&item.slot.character&&!item.slot.character.isRandomAlt):teamForces().some(force=>force.creatorAlreadyAssigned===true);
     if(value(state.team?.status)==='DRAFT'&&!hasCreator){setStatus('최소 팀 생성자의 캐릭터 1개를 추가해야 합니다.');return;}
     state.saving=true;
     state.requestKey=state.requestKey||('sm-compose-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10));
@@ -644,7 +695,7 @@
 
   function candidateCharacter(candidate){
     const actorMemberId=Number(bridge()?.snapshot()?.actor?.memberId||0);
-    return {characterId:Number(candidate.characterId),name:value(candidate.characterName||candidate.name),serverId:Number(candidate.serverId)||null,serverName:value(candidate.serverName),className:value(candidate.className),profileImageUrl:value(candidate.profileImageUrl),relation:value(candidate.relation)||(candidate.isMain?'MAIN':'ALT'),isMain:candidate.isMain===true,power:combatPowerValue(candidate.power??candidate.latestPveCombatPower??candidate.latest_pve_combat_power),mainCharacterId:Number(candidate.mainCharacterId)||null,ownerMemberId:Number(candidate.ownerMemberId||actorMemberId)||null};
+    return {characterId:Number(candidate.characterId)||null,name:value(candidate.characterName||candidate.name),serverId:Number(candidate.serverId)||null,serverName:value(candidate.serverName),className:value(candidate.className),profileImageUrl:value(candidate.profileImageUrl),relation:value(candidate.relation)||(candidate.isMain?'MAIN':'ALT'),isMain:candidate.isMain===true,isRandomAlt:candidate.isRandomAlt===true,assignmentKind:candidate.isRandomAlt?'RANDOM_ALT':'ACTUAL_CHARACTER',power:combatPowerValue(candidate.power??candidate.latestPveCombatPower??candidate.latest_pve_combat_power),mainCharacterId:Number(candidate.mainCharacterId)||null,ownerMemberId:Number(candidate.ownerMemberId||actorMemberId)||null};
   }
 
   function assignCreatorCharacter(characterId){
@@ -654,8 +705,9 @@
     const candidate=source.find(item=>Number(item.characterId)===Number(characterId));
     if(!force||!chosen||chosen.slot.occupied||!candidate){setStatus('빈 슬롯과 내 캐릭터를 다시 선택해 주세요.');return;}
     if(localUsedCharacterIds().has(Number(characterId))){setStatus('같은 캐릭터는 한 팀 편성안에 중복 배치할 수 없습니다.');return;}
+    if(!slotAcceptsCharacter(chosen.slot,candidate)){setStatus(classOption(slotClassCode(chosen.slot)).label+' 전용 슬롯에는 '+value(candidate.className)+' 캐릭터를 추가할 수 없습니다.');return;}
     const slotNumber=slotDisplayNumber(chosen);
-    chosen.slot.character=candidateCharacter(candidate);chosen.slot.occupied=true;state.selectedSlotId=0;state.moveFromSlotId=0;resetCharacterLookup();refreshLocalTeam();renderRosterState();
+    chosen.slot.character=candidateCharacter(candidate);chosen.slot.occupied=true;chosen.slot.assignmentKind='ACTUAL_CHARACTER';state.selectedSlotId=0;state.moveFromSlotId=0;resetCharacterLookup();refreshLocalTeam();renderRosterState();
     setStatus((candidate.isMain?'본캐 ':'부캐 ')+value(candidate.characterName)+' 캐릭터를 '+force.forceNo+'포스 '+slotNumber+'번에 배치했습니다. 마지막 저장 전까지 Server에는 반영되지 않습니다.','success');
   }
 
@@ -692,9 +744,24 @@
     const force=selectedForce(),chosen=selectedSlot();
     if(!force||!chosen||chosen.slot.occupied){setStatus('캐릭터를 추가할 빈 슬롯을 다시 선택해 주세요.');return;}
     if(localUsedCharacterIds().has(Number(character.characterId))){setStatus('같은 캐릭터는 한 팀 편성안에 중복 배치할 수 없습니다.');return;}
+    if(!slotAcceptsCharacter(chosen.slot,character)){setStatus(classOption(slotClassCode(chosen.slot)).label+' 전용 슬롯에는 '+value(character.className)+' 캐릭터를 추가할 수 없습니다.');return;}
     const slotNumber=slotDisplayNumber(chosen);
-    chosen.slot.character=candidateCharacter(character);chosen.slot.occupied=true;state.selectedSlotId=0;state.moveFromSlotId=0;resetCharacterLookup();refreshLocalTeam();renderRosterState();
+    chosen.slot.character=candidateCharacter(character);chosen.slot.occupied=true;chosen.slot.assignmentKind='ACTUAL_CHARACTER';state.selectedSlotId=0;state.moveFromSlotId=0;resetCharacterLookup();refreshLocalTeam();renderRosterState();
     setStatus(value(character.characterName)+' 캐릭터를 '+force.forceNo+'포스 '+slotNumber+'번에 배치했습니다. 마지막 저장 전까지 Server에는 반영되지 않습니다.','success');
+  }
+
+  async function loadLinkedAlts(mainCharacterId){
+    if(state.saving||state.mutating||!state.sourceTeamId||!selectedSlot())return;
+    state.linkedAlts={loading:true,mainCharacter:{characterId:Number(mainCharacterId),characterName:value(state.lookup?.character?.characterName)}};renderRosterState();
+    try{state.linkedAlts=await bridge().linkedAlts(Number(state.sourceTeamId),Number(mainCharacterId));renderRosterState();setStatus(state.linkedAlts.characterCount+'개의 실제 부캐와 랜덤 부캐 후보를 확인했습니다.','success');}
+    catch(error){state.linkedAlts={error:value(error?.message)||'연결된 부캐 목록을 확인하지 못했습니다.',mainCharacter:{characterName:value(state.lookup?.character?.characterName)}};renderRosterState();setStatus(state.linkedAlts.error,'error');}
+  }
+
+  function assignRandomAlt(){
+    const chosen=selectedSlot(),force=selectedForce(),candidate=state.linkedAlts?.randomCandidate;if(!chosen||!force||!candidate||chosen.slot.occupied)return;
+    if(slotClassCode(chosen.slot)!=='ALL'){setStatus('랜덤 부캐는 실제 클래스가 미정이므로 전체 클래스 슬롯에만 추가할 수 있습니다.');return;}
+    const ownerId=Number(candidate.ownerMemberId);if(ownerId&&forceSlots(force).some(item=>item.slot.occupied&&Number(item.slot.character?.ownerMemberId)===ownerId)){setStatus('이 포스에는 이미 같은 이용자의 캐릭터 또는 랜덤 부캐가 있습니다.');return;}
+    chosen.slot.character=candidateCharacter(candidate);chosen.slot.occupied=true;chosen.slot.assignmentKind='RANDOM_ALT';state.selectedSlotId=0;state.classTargetSlotId=0;resetCharacterLookup();refreshLocalTeam();renderRosterState();setStatus(value(candidate.characterName)+' 카드를 로컬 편성안에 추가했습니다. 실제 캐릭터 확정 전에는 전투력·조건 계산에서 제외됩니다.','success');
   }
 
   async function registerOfficialCharacter(asMainOnly=false){
@@ -717,14 +784,17 @@
     if(state.saving||state.mutating||!state.team||Number(fromSlotId)===Number(toSlotId))return;
     const source=teamSlot(fromSlotId);const target=teamSlot(toSlotId);
     if(!source?.slot?.occupied||!target){setStatus('캐릭터가 있는 출발 슬롯과 이동할 위치를 다시 선택해 주세요.');return;}
+    if(!slotAcceptsCharacter(target.slot,source.slot.character)){setStatus(classOption(slotClassCode(target.slot)).label+' 전용 대상 슬롯에는 이 캐릭터를 옮길 수 없습니다.');return;}
+    if(target.slot.character&&!slotAcceptsCharacter(source.slot,target.slot.character)){setStatus(classOption(slotClassCode(source.slot)).label+' 전용 출발 슬롯과 맞지 않아 두 카드를 교환할 수 없습니다.');return;}
     const sourceCharacter=source.slot.character;source.slot.character=target.slot.character||null;source.slot.occupied=Boolean(source.slot.character);target.slot.character=sourceCharacter;target.slot.occupied=true;
+    source.slot.assignmentKind=source.slot.character?.isRandomAlt?'RANDOM_ALT':'ACTUAL_CHARACTER';target.slot.assignmentKind=target.slot.character?.isRandomAlt?'RANDOM_ALT':'ACTUAL_CHARACTER';
     const sourceForceNo=source.force.forceNo,targetForceNo=target.force.forceNo;state.selectedForceId=target.force.forceId;state.moveFromSlotId=0;state.draggedSlotId=0;state.selectedSlotId=0;refreshLocalTeam();renderRosterState();
     setStatus(sourceForceNo+'포스에서 '+targetForceNo+'포스로 캐릭터 위치를 옮겼습니다. 마지막 저장 전까지 Server에는 반영되지 않습니다.','success');
   }
 
   function clearSlot(slotId){
     const item=teamSlot(slotId);if(!item?.slot?.occupied)return;
-    const name=value(item.slot.character?.name);item.slot.character=null;item.slot.occupied=false;state.selectedSlotId=0;state.moveFromSlotId=0;state.draggedSlotId=0;refreshLocalTeam();renderRosterState();setStatus(name+' 캐릭터를 로컬 편성안에서 뺐습니다.','success');
+    const name=value(item.slot.character?.name);item.slot.character=null;item.slot.occupied=false;item.slot.assignmentKind='ACTUAL_CHARACTER';state.selectedSlotId=0;state.moveFromSlotId=0;state.draggedSlotId=0;refreshLocalTeam();renderRosterState();setStatus(name+' 캐릭터를 로컬 편성안에서 뺐습니다.','success');
   }
 
   function removeForce(forceId){
@@ -802,22 +872,33 @@
     if(event.target.closest('[data-requirement-apply]')){applyRequirementEditor(false);return;}
     if(event.target.closest('[data-requirement-clear]')){applyRequirementEditor(true);return;}
     if(event.target.closest('[data-requirement-close]')){state.requirementTarget=null;renderRosterState();return;}
+    const classOpen=event.target.closest('[data-slot-class-open]');
+    if(classOpen&&!classOpen.disabled){const slotId=Number(classOpen.dataset.slotClassOpen)||0;state.classTargetSlotId=Number(state.classTargetSlotId)===slotId?0:slotId;state.requirementTarget=null;renderRosterState();setStatus('전체 또는 이 슬롯에 지원할 클래스 하나를 선택해 주세요.','progress');return;}
+    const classChoice=event.target.closest('[data-slot-class]');
+    if(classChoice&&!classChoice.disabled){applySlotClass(Number(classChoice.dataset.slotId),classChoice.dataset.slotClass);return;}
+    if(event.target.closest('[data-linked-alts-close]')){state.linkedAlts=null;renderRosterState();return;}
+    const linkedOpen=event.target.closest('[data-linked-alts-open]');
+    if(linkedOpen&&!linkedOpen.disabled){loadLinkedAlts(Number(linkedOpen.dataset.linkedAltsOpen));return;}
+    const linkedCharacter=event.target.closest('[data-linked-alt-character]');
+    if(linkedCharacter&&!linkedCharacter.disabled){const character=state.linkedAlts?.characters?.find(item=>Number(item.characterId)===Number(linkedCharacter.dataset.linkedAltCharacter));assignSearchedCharacter(character);return;}
+    if(event.target.closest('[data-linked-alt-random]')){assignRandomAlt();return;}
     const remove=event.target.closest('[data-draft-remove-force]');
     if(remove&&!remove.disabled){removeForce(Number(remove.dataset.draftRemoveForce));return;}
     const force=event.target.closest('[data-draft-force]');
-    if(force&&!force.disabled){state.selectedForceId=Number(force.dataset.draftForce)||0;state.selectedSlotId=0;state.requirementTarget=null;resetCharacterLookup();renderRosterState();return;}
+    if(force&&!force.disabled){state.selectedForceId=Number(force.dataset.draftForce)||0;state.selectedSlotId=0;state.requirementTarget=null;state.classTargetSlotId=0;resetCharacterLookup();renderRosterState();return;}
     if(event.target.closest('[data-draft-add-force]')){addForce();return;}
     const clear=event.target.closest('[data-draft-clear-slot]');
     if(clear&&!clear.disabled){clearSlot(Number(clear.dataset.draftClearSlot));return;}
     const slot=event.target.closest('[data-draft-slot]');
     if(slot&&!slot.disabled&&state.moveFromSlotId){moveSlot(state.moveFromSlotId,Number(slot.dataset.slotId));return;}
     if(slot&&!slot.disabled&&slot.dataset.occupied==='true'){
-      state.moveFromSlotId=Number(slot.dataset.slotId)||0;state.selectedSlotId=0;state.requirementTarget=null;resetCharacterLookup();renderRosterState();
+      state.moveFromSlotId=Number(slot.dataset.slotId)||0;state.selectedSlotId=0;state.requirementTarget=null;state.classTargetSlotId=0;resetCharacterLookup();renderRosterState();
       setStatus(slot.textContent.trim()+' 카드를 선택했습니다. 이동할 빈 슬롯이나 다른 카드를 누르세요.','progress');return;
     }
     if(slot&&!slot.disabled&&slot.dataset.occupied!=='true'){
       state.selectedSlotId=Number(slot.dataset.slotId)||0;
       state.requirementTarget=null;
+      state.classTargetSlotId=0;
       resetCharacterLookup();
       renderRosterState();
       setStatus(slotDisplayNumber(selectedSlot())+'번 슬롯에 추가할 내 캐릭터를 선택하거나 이름을 검색해 주세요.','progress');

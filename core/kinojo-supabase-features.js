@@ -1149,6 +1149,20 @@
     });
   }
 
+  async function getSanctuaryManagementLinkedAlts(teamId,mainCharacterId){
+    const normalizedTeamId=Number(teamId||0);
+    const normalizedMainId=Number(mainCharacterId||0);
+    if(!Number.isSafeInteger(normalizedTeamId)||normalizedTeamId<1||!Number.isSafeInteger(normalizedMainId)||normalizedMainId<1){
+      throw new Error('부캐를 확인할 팀과 본캐를 다시 선택해 주세요.');
+    }
+    return invokeEdgeFunction('sanctuary-management',{
+      action:'linked-alts',
+      sessionToken:currentServerSessionCredential(),
+      teamId:normalizedTeamId,
+      mainCharacterId:normalizedMainId
+    });
+  }
+
   function decorateSanctuaryWaitlist(data){
     if(!data || data.ok === false) return data;
     data.waiting = (Array.isArray(data.waiting) ? data.waiting : []).map(item => Object.assign({}, item, {
@@ -1992,6 +2006,7 @@
     runSanctuaryManagementLease,
     searchSanctuaryManagementCharacter,
     registerSanctuaryManagementCharacter,
+    getSanctuaryManagementLinkedAlts,
     getSanctuaryData,
     getSanctuaryRosterData,
     getSanctuaryWaitlistData,

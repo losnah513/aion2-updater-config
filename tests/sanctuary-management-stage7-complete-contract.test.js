@@ -40,13 +40,13 @@ for(const signature of [
 assert.doesNotMatch(migration,/kws_[A-Za-z0-9_-]{20,}/,'Stage 7 migration must never contain a session credential');
 
 for(const token of [
-  'const API_VERSION="1.9"','const DATABASE_CONTRACT="449"','WRITE_ACTIONS',
-  'kinojo_sanctuary_management_rollout_state_v446','kinojo_sanctuary_management_bootstrap_v449',
-  'kinojo_sanctuary_management_month_v449','kinojo_sanctuary_management_command_v449',
+  'const API_VERSION="2.0"','const DATABASE_CONTRACT="450"','WRITE_ACTIONS',
+  'kinojo_sanctuary_management_rollout_state_v446','kinojo_sanctuary_management_bootstrap_v450',
+  'kinojo_sanctuary_management_month_v450','kinojo_sanctuary_management_command_v450',
 ])assert.ok(edge.includes(token),`current Edge contract missing ${token}`);
 assert.doesNotMatch(edge,/"transition-(report|approve)"/,'retired transition approval routes remain public');
 
-for(const token of ['const API_VERSION=1.9','const SCHEMA_VERSION=449',"params.get('view')==='schedule'",'sanctuaryManagementSchedulePanel','completed:sourceTransition.completed===true',"transitionReview.stage7State!=='COMPLETE'",'review.completed']){
+for(const token of ['const API_VERSION=2','const SCHEMA_VERSION=450',"params.get('view')==='schedule'",'sanctuaryManagementSchedulePanel','completed:sourceTransition.completed===true',"transitionReview.stage7State!=='COMPLETE'",'review.completed']){
   assert.ok(client.includes(token),`Stage 7 client missing ${token}`);
 }
 

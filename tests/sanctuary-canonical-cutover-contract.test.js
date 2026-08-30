@@ -13,8 +13,8 @@ for(const [page,canonical,mobile] of [
   const html=read(page);
   for(const token of [
     '<title>KINOJO INFO - 성역</title>',canonical,'id="sanctuaryManagementTeamList"',
-    'id="sanctuaryManagementSchedulePanel"','sanctuary-management.js?cache=2026083004',
-    'sanctuary-management-draft.js?cache=2026083005','sanctuary-management-support.js?cache=2026082923',
+    'id="sanctuaryManagementSchedulePanel"','sanctuary-management.js?cache=2026083020',
+    'sanctuary-management-draft.js?cache=2026083020','sanctuary-management-support.js?cache=2026082923',
     'kinojo-common-ui.js?cache=2026083001',
   ])assert.ok(html.includes(token),`${page}: canonical Sanctuary missing ${token}`);
   for(const retired of ['kinojo-sanctuary-tabs','id="forceEditBtn"','sanctuary/js/sanctuary.js','sanctuary-schedule.js']){
