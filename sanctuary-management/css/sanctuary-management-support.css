@@ -111,3 +111,15 @@ body.sanctuary-management-force-overview-open{overflow:hidden}
 .sanctuary-management-operation-weekdays input:focus-visible+span,
 .sanctuary-management-transition-confirm-list input:focus-visible+span,
 .sanctuary-management-draft-layer :is(button,input,select,[tabindex]):focus-visible{outline:0;box-shadow:inset 0 0 0 3px rgba(37,99,235,.42)}
+
+/* Stage 8 part 1: combat power remains readable below the character identity.
+   Composition rules are warnings, not a publish gate. */
+.sanctuary-management-force-title-row{flex-wrap:wrap}.sanctuary-management-force-average{flex:1 1 100%;color:#718098;font-size:10px;font-weight:850;line-height:1.35}
+.sanctuary-management-force-slot{grid-template-columns:21px 34px minmax(0,1fr)}
+.sanctuary-management-force-slot-copy{min-width:0;display:grid;grid-template-columns:5em minmax(0,1fr);grid-template-areas:"name server" "power power";align-items:center;column-gap:7px;row-gap:2px}
+.sanctuary-management-force-slot-name{grid-area:name}.sanctuary-management-force-slot-server{grid-area:server}.sanctuary-management-force-slot-power{grid-area:power;min-width:0;overflow:hidden;color:#556b93;font-size:10px;font-weight:900;line-height:1.2;text-overflow:ellipsis;white-space:nowrap}
+.sanctuary-management-force-card.has-unmet-requirements{border-color:#e15f68;background:linear-gradient(180deg,#fff,#fff5f5)}
+.sanctuary-management-force-party.has-unmet-requirements{border-color:#efa0a5;background:#fff8f8}
+.sanctuary-management-requirement-warning{display:block;margin-top:10px;padding:7px 9px;border:1px solid #efb3b7;border-radius:9px;background:#fff0f1;color:#b3323b;font-size:10px;font-weight:950}
+@media(max-width:560px){.sanctuary-management-force-slot{grid-template-columns:18px 32px minmax(0,1fr)}.sanctuary-management-force-slot-power{font-size:9px}.sanctuary-management-force-average{font-size:9px}}
+@media(max-width:380px){.sanctuary-management-force-slot{grid-template-columns:16px 30px minmax(0,1fr)}.sanctuary-management-force-slot-copy{grid-template-columns:4.8em minmax(0,1fr);column-gap:5px}}
