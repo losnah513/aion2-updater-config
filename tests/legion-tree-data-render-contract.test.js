@@ -451,7 +451,9 @@ window.KinojoSupabase = {
     assert(html.includes('id="legionTreeAltResults"'));
     assert(html.includes('id="legionTreeSearchCloseBtn"'));
     assert(html.includes('id="legionTreeAddProgress"'));
-    assert(html.includes('id="legionTreeServerHint"'));
+    assert(!html.includes('id="legionTreeServerHint"'));
+    assert(html.includes('aria-describedby="legionTreeStatus"'));
+    assert(html.includes('</section>\n  <section class="legion-tree-search-results"'));
     assert(html.includes('placeholder="본캐이름[서버]"'));
     assert(html.includes('placeholder="부캐이름[서버]"'));
     assert(!html.includes('<span>본캐 이름</span>'));
@@ -465,9 +467,9 @@ window.KinojoSupabase = {
     assert(!html.includes('본캐예시'));
     assert(html.includes('kinojo-character-reaction.css?cache=2026082201'));
     assert(html.includes('kinojo-character-reaction.js?cache=2026082701'));
-    assert(html.includes('legion-tree.css?cache=2026083106'));
+    assert(html.includes('legion-tree.css?cache=2026083107'));
     assert(html.includes('legion-tree-editor.js?cache=2026083103'));
-    assert(html.includes('legion-tree.js?cache=2026083106'));
+    assert(html.includes('legion-tree.js?cache=2026083107'));
     assert(html.includes('kinojo-supabase-features.js?cache=2026083105'));
     assert(!html.includes('legion-tree.js?cache=2026082403'));
   }
@@ -481,6 +483,9 @@ window.KinojoSupabase = {
   assert(script.includes('handleSearch'));
   assert(script.includes('selectSearchCandidate'));
   assert(script.includes('candidateExactInput'));
+  assert(script.includes("document.addEventListener('pointerdown'"));
+  assert(script.includes("event.key!=='Escape'"));
+  assert(script.includes('positionSearchResults'));
   assert(script.includes('resetInputs({keepStatus:true,force:true})'));
   assert(!script.includes("renderServerOptions"));
   assert(!script.includes("selectedRaceId"));
@@ -491,7 +496,7 @@ window.KinojoSupabase = {
   assert(css.includes('.legion-tree-add-progress'));
   assert(css.includes('.legion-tree-add-progress{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))'));
   assert(css.includes('.legion-tree-subbar-feedback'));
-  assert(css.includes(':has(.legion-tree-add-progress:not([hidden]))'));
+  assert(css.includes('position:fixed;top:var(--legion-tree-search-top'));
   assert(css.includes('li[data-state="done"]'));
   assert(css.includes('li[data-state="error"]'));
   assert(css.includes('.legion-tree-search-results'));

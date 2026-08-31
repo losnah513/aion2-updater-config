@@ -321,7 +321,7 @@
 - 공개 트리는 비회원도 계속 읽을 수 있다. 후보 조회·캐릭터 추가·조직도 편집 UI는 비관리자에게 fail-closed이고, `kinojo-legion-tree` API 1.6은 search/add/save/reset마다 현재 KWS 세션과 `canManage`를 독립 재검증한다. organization DB453의 revision/CAS·v365 무결성·단일 transaction 계약은 유지한다.
 - 저장 성공 응답은 같은 요청 안에서 `kinojo_web_get_legion_tree`를 재호출해 revision·fallback 상태가 일치할 때만 `readbackVerified=true`로 반환한다. 편집기는 이 readback만 재렌더링하며 직접 service-role RPC를 호출하지 않는다.
 - 설정 저장 전 전체 draft의 단계 순서·필수 이름·직급 키/순서·최대 인원·현재 레기온 구성원·중복 배치·직급 존재·최상위/하위 parent 방향을 검증한다. 실패하면 네트워크 요청 없이 첫 오류 위치와 메시지를 표시하고 해당 입력으로 focus한다. Server validator v365를 최종 권한으로 대체하지 않는다.
-- 레기온 트리 계획은 최신 Drive 기준 **139개 micro-task**다. 선행-1~선행-10 후보 조회/선택 UX를 하 단계 앞에 배치했고, 다음은 하-1~하-4 공개 읽기·관리 쓰기 권한 Gate다. 운영 반영과 readback이 끝나기 전에는 완료 수치를 올리지 않는다.
+- 레기온 트리 계획은 최신 Drive 기준 **139개 micro-task**이며 현재 **102/139**다. 선행-1~선행-10 후보 조회/선택 UX와 하-1~하-4 공개 읽기·관리 쓰기 권한 Gate를 운영 반영·readback까지 완료했다. 조회 결과창은 서브바 아래에 고정하고 ESC·바깥 클릭으로 닫을 수 있으며 안내문은 한 줄만 노출한다. 다음 작업은 거-1이다.
 
 ## 내 정보 이미지 기존 완료 상태
 

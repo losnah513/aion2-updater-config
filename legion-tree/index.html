@@ -19,36 +19,35 @@
   <link href="../ui/kinojo-public-shell.css?cache=2026083001" rel="stylesheet"/>
   <link href="../ui/kinojo-pc-banners.css?cache=2026083001" rel="stylesheet"/>
   <link href="../ui/kinojo-staged-loading.css?cache=2026083001" rel="stylesheet"/>
-<link href="./css/legion-tree.css?cache=2026083106" rel="stylesheet"/>
+<link href="./css/legion-tree.css?cache=2026083107" rel="stylesheet"/>
 <script src="../ui/kinojo-device-router.js?cache=2026070115" data-mobile-path="../m/legion-tree/"></script>
 <link rel="stylesheet" href="../ui/kinojo-event-notice.css?cache=2026081003"/>
 </head>
 <body class="kinojo-page-legion-tree">
   <section class="hof-filter-bar legion-tree-subbar kinojo-standard-subbar" aria-label="레기온 구성원 도구">
     <div class="legion-tree-subbar-fields">
-      <input class="kinojo-input legion-tree-subbar-field" id="legionTreeMainName" type="text" maxlength="180" placeholder="본캐이름[서버]" autocomplete="off" aria-label="본캐 이름과 서버" aria-describedby="legionTreeServerHint"/>
-      <input class="kinojo-input legion-tree-subbar-field" id="legionTreeAltName" type="text" maxlength="180" placeholder="부캐이름[서버]" autocomplete="off" aria-label="부캐 이름과 서버" aria-describedby="legionTreeServerHint"/>
+      <input class="kinojo-input legion-tree-subbar-field" id="legionTreeMainName" type="text" maxlength="180" placeholder="본캐이름[서버]" autocomplete="off" aria-label="본캐 이름과 서버" aria-describedby="legionTreeStatus"/>
+      <input class="kinojo-input legion-tree-subbar-field" id="legionTreeAltName" type="text" maxlength="180" placeholder="부캐이름[서버]" autocomplete="off" aria-label="부캐 이름과 서버" aria-describedby="legionTreeStatus"/>
     </div>
     <div class="legion-tree-subbar-actions">
       <button class="kinojo-btn" id="legionTreeSearchBtn" type="button" disabled>조회</button>
       <button class="kinojo-btn secondary" id="legionTreeEditBtn" type="button" disabled>조직도 편집</button>
     </div>
     <div class="legion-tree-subbar-feedback">
-      <span class="legion-tree-server-hint" id="legionTreeServerHint">이름만 입력하면 모든 활성 서버 · 이름[서버약칭]은 해당 서버만 조회</span>
       <span class="legion-tree-subbar-status" id="legionTreeStatus" aria-live="polite">레기온 데이터를 불러오는 중…</span>
       <ol class="legion-tree-add-progress" id="legionTreeAddProgress" aria-label="캐릭터 추가 진행 상태" aria-busy="false" hidden></ol>
     </div>
-    <section class="legion-tree-search-results" id="legionTreeSearchResults" role="dialog" aria-modal="false" aria-label="캐릭터 조회 결과" hidden>
-      <div class="legion-tree-search-groups">
-        <section aria-labelledby="legionTreeMainResultsTitle"><h2 id="legionTreeMainResultsTitle">본캐 후보</h2><div class="legion-tree-search-cards" id="legionTreeMainResults"></div></section>
-        <section id="legionTreeAltResultsGroup" aria-labelledby="legionTreeAltResultsTitle" hidden><h2 id="legionTreeAltResultsTitle">부캐 후보</h2><div class="legion-tree-search-cards" id="legionTreeAltResults"></div></section>
-      </div>
-      <div class="legion-tree-search-actions">
-        <button class="kinojo-btn" id="legionTreeAddBtn" type="button" disabled>추가</button>
-        <button class="kinojo-btn secondary" id="legionTreeSearchCloseBtn" type="button">닫기</button>
-        <button class="kinojo-btn secondary" id="legionTreeResetBtn" type="button">초기화</button>
-      </div>
-    </section>
+  </section>
+  <section class="legion-tree-search-results" id="legionTreeSearchResults" role="dialog" aria-modal="false" aria-label="캐릭터 조회 결과" hidden>
+    <div class="legion-tree-search-groups">
+      <section aria-labelledby="legionTreeMainResultsTitle"><h2 id="legionTreeMainResultsTitle">본캐 후보</h2><div class="legion-tree-search-cards" id="legionTreeMainResults"></div></section>
+      <section id="legionTreeAltResultsGroup" aria-labelledby="legionTreeAltResultsTitle" hidden><h2 id="legionTreeAltResultsTitle">부캐 후보</h2><div class="legion-tree-search-cards" id="legionTreeAltResults"></div></section>
+    </div>
+    <div class="legion-tree-search-actions">
+      <button class="kinojo-btn" id="legionTreeAddBtn" type="button" disabled>추가</button>
+      <button class="kinojo-btn secondary" id="legionTreeSearchCloseBtn" type="button">닫기</button>
+      <button class="kinojo-btn secondary" id="legionTreeResetBtn" type="button">초기화</button>
+    </div>
   </section>
 
 <main class="legion-tree-wrap kinojo-pc-banner-host kinojo-pc-standard-host">
@@ -83,6 +82,6 @@
 <script src="../ui/kinojo-event-notice.js?cache=2026081003"></script>
 <script src="../ui/kinojo-pc-banners.js?cache=2026083001"></script>
 <script src="./js/legion-tree-editor.js?cache=2026083103"></script>
-  <script src="./js/legion-tree.js?cache=2026083106"></script>
+  <script src="./js/legion-tree.js?cache=2026083107"></script>
 </body>
 </html>
