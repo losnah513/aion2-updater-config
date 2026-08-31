@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  const API_VERSION=2.2;
-  const SCHEMA_VERSION=454;
+  const API_VERSION=2.3;
+  const SCHEMA_VERSION=456;
   const SLOT_CLASS_CODES=Object.freeze(['ALL','TEMPLAR','GLADIATOR','ASSASSIN','RANGER','SORCERER','ELEMENTALIST','CLERIC','CHANTER','FIGHTER']);
   const CLASS_ICON_MAP=Object.freeze({'수호성':'templar','검성':'gladiator','살성':'assassin','궁성':'ranger','마도성':'sorcerer','정령성':'elementalist','치유성':'cleric','호법성':'chanter','권성':'fighter'});
   const CLASS_NAME_BY_CODE=Object.freeze({TEMPLAR:'수호성',GLADIATOR:'검성',ASSASSIN:'살성',RANGER:'궁성',SORCERER:'마도성',ELEMENTALIST:'정령성',CLERIC:'치유성',CHANTER:'호법성',FIGHTER:'권성'});
@@ -13,6 +13,8 @@
   let bootstrapData=null;
   let pendingBootstrapData=null;
   let currentBootstrapFingerprint='';
+  let currentRevisionKey='';
+  const bootstrapCache=new Map();
   let backgroundCheckActive=false;
   let monthData=null;
   let monthError='';
@@ -41,7 +43,7 @@
 
   function contractSupported(data){
     const api=Number(data?.apiVersion),schema=Number(data?.schemaVersion);
-    return api===API_VERSION&&(schema===SCHEMA_VERSION||schema===453||schema===452)||api===2.1&&schema===451||api===2&&schema===450||api===1.9&&schema===449||api===1.8&&schema===446;
+    return api===API_VERSION&&schema===SCHEMA_VERSION||api===2.2&&(schema===454||schema===453||schema===452)||api===2.1&&schema===451||api===2&&schema===450||api===1.9&&schema===449||api===1.8&&schema===446;
   }
   function combatPowerValue(input){const power=Number(input);return Number.isFinite(power)&&power>0?Math.round(power):0;}
   function itemLevelValue(input){const level=Number(input);return Number.isFinite(level)&&level>0?Math.round(level):0;}
@@ -318,6 +320,9 @@
       transitionReview,
       actor:data.actor&&typeof data.actor==='object'?data.actor:{},
       composerCharacters,
+      selectedSanctuaryId:integer(data.selectedSanctuaryId),
+      selectedSanctuaryCode:value(data.selectedSanctuaryCode),
+      revisionKey:value(data.revisionKey),
       sanctuaries:data.sanctuaries.filter(item=>item&&typeof item==='object'),
       teams:data.teams.filter(item=>item&&typeof item==='object').map(item=>validateTeam(item,{publicRead}))
     };
@@ -369,10 +374,17 @@
     kind:'SERVER_ONLY',
     apiVersion:API_VERSION,
     schemaVersion:SCHEMA_VERSION,
-    async bootstrap(){
+    async bootstrap(sanctuaryCode=''){
       const api=window.KinojoSupabase;
       if(!api||typeof api.getSanctuaryManagementBootstrap!=='function')throw new Error('성역 관리 Server 어댑터를 불러오지 못했습니다.');
-      return validateBootstrap(await api.getSanctuaryManagementBootstrap());
+      return validateBootstrap(await api.getSanctuaryManagementBootstrap(value(sanctuaryCode)));
+    },
+    async revision(sanctuaryCode=''){
+      const api=window.KinojoSupabase;
+      if(!api||typeof api.getSanctuaryManagementRevision!=='function')throw new Error('성역 관리 변경 확인 어댑터를 불러오지 못했습니다.');
+      const result=await api.getSanctuaryManagementRevision(value(sanctuaryCode));
+      if(!result||typeof result!=='object'||result.ok!==true||!contractSupported(result)||!value(result.revisionKey))throw new Error(value(result?.message)||'성역 관리 변경 확인 계약이 올바르지 않습니다.');
+      return {revisionKey:value(result.revisionKey),sanctuaryCode:value(result.sanctuaryCode),serverTime:value(result.serverTime)};
     },
     async month(month){
       const api=window.KinojoSupabase;
@@ -479,6 +491,11 @@
     rudra:Object.freeze({image:'/assets/images/sanctuary/backgrounds/rudra.webp',bossName:'루드라'}),
     bagot:Object.freeze({image:'/assets/images/sanctuary/backgrounds/bagot.webp',bossName:'중합체 바고트'}),
     kaldrix:Object.freeze({image:'/assets/images/sanctuary/backgrounds/kaldrix.webp',bossName:'지저의 재앙 칼드릭스'})
+  });
+  const SANCTUARY_BOSS_ART=Object.freeze({
+    rudra:'/assets/images/sanctuary/bosses-v2/rudra.webp',
+    bagot:'/assets/images/sanctuary/bosses-v2/bagot.webp',
+    kaldrix:'/assets/images/sanctuary/bosses-v2/kaldrix.webp'
   });
   function sanctuaryMasterForSelection(){return sanctuaryMasterData?.items?.find(item=>sanctuaryKey(item)===selectedSanctuary)||null;}
   function safeHeroImage(input){const image=value(input);return image&&(image.startsWith('/')||image.startsWith('https://'))?image.replace(/["'()]/g,encodeURIComponent):'';}
@@ -743,7 +760,7 @@
     carousel.dataset.forcePage=String(current);carousel.dataset.forceStart=String(start);carousel.dataset.forceVisible=String(activeIndexes.size);
     cards.forEach((card,index)=>setForceCardVisibility(card,activeIndexes.has(index)));
     const previous=carousel.querySelector('[data-sanctuary-force-shift="-1"]');const next=carousel.querySelector('[data-sanctuary-force-shift="1"]');
-    const position=carousel.querySelector('[data-sanctuary-force-position]');const announcer=carousel.querySelector('[data-sanctuary-force-announcer]');const activeCards=cards.filter((_card,index)=>activeIndexes.has(index));
+    const position=carousel.closest('.sanctuary-management-team-card')?.querySelector('[data-sanctuary-force-position]');const announcer=carousel.querySelector('[data-sanctuary-force-announcer]');const activeCards=cards.filter((_card,index)=>activeIndexes.has(index));
     carousel.classList.toggle('has-pages',pages.length>1);if(previous)previous.disabled=current===0;if(next)next.disabled=current===pages.length-1;
     if(position)position.textContent=(current+1)+' / '+pages.length;
     if(announcer)announcer.textContent=activeCards.map(card=>card.querySelector('.sanctuary-management-force-card-head strong')?.textContent).filter(Boolean).join(' · ')+' 편성 정보';
@@ -822,6 +839,19 @@
   }
   function closeForceOverview(options={}){const restoreFocus=options.restoreFocus!==false;const target=forceOverviewOpener,layer=ensureForceOverviewLayer();layer.hidden=true;layer.setAttribute('aria-hidden','true');layer.replaceChildren();document.body.classList.remove('sanctuary-management-force-overview-open');forceOverviewTeamId=0;forceOverviewForceId=0;forceOverviewOpener=null;if(restoreFocus)target?.focus?.({preventScroll:true});}
 
+  function createSingleForceBossVisual(team){
+    if((team?.forces||[]).length!==1)return null;
+    const sanctuary=bootstrapData?.sanctuaries?.find(item=>String(item.id)===String(team.sanctuaryId));
+    const source=SANCTUARY_BOSS_ART[sanctuaryKey(sanctuary)];
+    if(!source)return null;
+    const visual=document.createElement('div');visual.className='sanctuary-management-force-boss-visual';visual.setAttribute('aria-hidden','true');
+    const image=document.createElement('img');image.src=source;image.alt='';image.loading='lazy';image.decoding='async';
+    visual.appendChild(image);return visual;
+  }
+
+  function requestedSanctuary(){return value(new URLSearchParams(location.search).get('id'));}
+  function bootstrapCacheKey(sanctuaryCode){return currentAuthProjection+'|'+value(sanctuaryCode);}
+
   function createTeamCard(team){
     const card=document.createElement('article');card.className='sanctuary-management-team-card';card.dataset.sanctuaryTeam=value(team.teamId);
     const head=document.createElement('div');head.className='sanctuary-management-team-card-head';
@@ -834,6 +864,7 @@
     titleRow.append(mode,title,copyButton);
     const headActions=document.createElement('div');headActions.className='sanctuary-management-team-head-actions';
     const overview=document.createElement('button');overview.type='button';overview.className='kinojo-btn sanctuary-management-force-overview-button';overview.dataset.sanctuaryForceOverview=value(team.teamId);overview.textContent='전체 포스 보기';headActions.appendChild(overview);
+    const position=document.createElement('span');position.className='sanctuary-management-force-position';position.dataset.sanctuaryForcePosition='';position.textContent='1 / '+team.forces.length;headActions.appendChild(position);
     if(!['ACTIVE','FULL'].includes(value(team.status))){const badge=document.createElement('span');badge.className='sanctuary-management-team-badge';badge.textContent=teamStatusLabel(team);headActions.appendChild(badge);}
     const pending=(team.supportBatches||[]).reduce((sum,batch)=>sum+integer(batch.pendingCount),0);
     if(pending){const pendingBadge=document.createElement('span');pendingBadge.className='sanctuary-management-team-badge is-pending';pendingBadge.textContent='승인 대기 '+pending;headActions.appendChild(pendingBadge);}
@@ -844,15 +875,14 @@
     }
     titleBand.append(titleRow,headActions);head.append(schedule,titleBand);
     const carousel=document.createElement('div');carousel.className='sanctuary-management-force-carousel';
-    const carouselHead=document.createElement('div');carouselHead.className='sanctuary-management-force-carousel-head';
-    const position=document.createElement('span');position.className='sanctuary-management-force-position';position.dataset.sanctuaryForcePosition='';position.textContent='1 / '+team.forces.length;const announcer=document.createElement('span');announcer.className='sanctuary-management-sr-only';announcer.dataset.sanctuaryForceAnnouncer='';announcer.setAttribute('aria-live','polite');
-    carouselHead.append(position,announcer);
+    const announcer=document.createElement('span');announcer.className='sanctuary-management-sr-only';announcer.dataset.sanctuaryForceAnnouncer='';announcer.setAttribute('aria-live','polite');
     const viewport=document.createElement('div');viewport.className='sanctuary-management-force-viewport';
     const previous=document.createElement('button');previous.type='button';previous.className='sanctuary-management-force-arrow is-previous';previous.dataset.sanctuaryForceShift='-1';previous.setAttribute('aria-label','이전 포스 보기');previous.textContent='‹';
     const forces=document.createElement('div');forces.className='sanctuary-management-force-grid';forces.setAttribute('aria-label',value(team.title)+' 포스 편성');
     team.forces.forEach(force=>forces.appendChild(createForceCard(team,force)));
+    const bossVisual=createSingleForceBossVisual(team);if(bossVisual)forces.appendChild(bossVisual);
     const next=document.createElement('button');next.type='button';next.className='sanctuary-management-force-arrow is-next';next.dataset.sanctuaryForceShift='1';next.setAttribute('aria-label','다음 포스 보기');next.textContent='›';
-    viewport.append(previous,forces,next);carousel.append(carouselHead,viewport);card.append(head,carousel);
+    viewport.append(previous,forces,next);carousel.append(announcer,viewport);card.append(head,carousel);
     return card;
   }
 
@@ -1254,11 +1284,14 @@
     if(params.get('support')==='1'&&bootstrapData.writeEnabled){const forceId=Number(params.get('force')||team.forces?.find(force=>force.canSupport)?.forceId||0);const trigger=card?.querySelector('[data-sanctuary-support-force="'+CSS.escape(String(forceId))+'"]');if(trigger)setTimeout(()=>window.KinojoSanctuaryManagementSupportUI?.open?.(team,forceId,trigger),180);}
   }
 
-  function renderBootstrap(data){
+  function renderBootstrap(data,preferredSanctuary=''){
     bootstrapData=data;
     pendingBootstrapData=null;
     currentBootstrapFingerprint=bootstrapFingerprint(data);
-    selectedSanctuary=resolveInitialSelection(data);
+    selectedSanctuary=value(preferredSanctuary)||value(data.selectedSanctuaryCode)||resolveInitialSelection(data);
+    if(!data.sanctuaries.some(item=>sanctuaryKey(item)===selectedSanctuary))selectedSanctuary=resolveInitialSelection(data);
+    currentRevisionKey=value(data.revisionKey)||currentBootstrapFingerprint;
+    bootstrapCache.set(bootstrapCacheKey(selectedSanctuary),data);
     byId('sanctuaryManagementContract').textContent=contractLabel(data);
     renderSanctuaryBanner();
     setFlagState('sanctuaryManagementReadState',data.readEnabled);
@@ -1267,7 +1300,7 @@
     renderRefreshIndicator(false);
     renderTeams();
     renderTransitionReview(data);
-    loadMonth(selectedMonth);
+    if(!monthData)loadMonth(selectedMonth);
     byId('sanctuaryManagementContent').hidden=false;
     if(data.readEnabled){
       if(data.publicRead){
@@ -1290,9 +1323,9 @@
     if(!bootstrapData||backgroundCheckActive||document.hidden)return;
     backgroundCheckActive=true;
     try{
-      const next=await ServerAdapter.bootstrap();
-      const changed=bootstrapFingerprint(next)!==currentBootstrapFingerprint;
-      pendingBootstrapData=changed?next:null;
+      const next=await ServerAdapter.revision(selectedSanctuary);
+      const changed=next.revisionKey!==currentRevisionKey;
+      pendingBootstrapData=null;
       renderRefreshIndicator(changed);
     }catch(_error){
       if(pendingBootstrapData)renderRefreshIndicator(true);
@@ -1302,7 +1335,7 @@
   async function refreshContent(){
     if(!bootstrapData)return;
     renderRefreshIndicator(false,true);
-    try{renderBootstrap(pendingBootstrapData||await ServerAdapter.bootstrap());}
+    try{renderBootstrap(await ServerAdapter.bootstrap(selectedSanctuary),selectedSanctuary);}
     catch(error){renderRefreshIndicator(Boolean(pendingBootstrapData));window.KinojoToast?.error?.(value(error?.message)||'새 내용을 불러오지 못했습니다.');}
   }
 
@@ -1316,6 +1349,19 @@
     load();
   }
 
+  async function selectSanctuary(sanctuaryCode){
+    const target=value(sanctuaryCode);if(!target||target===selectedSanctuary||!bootstrapData?.sanctuaries.some(item=>sanctuaryKey(item)===target))return;
+    selectedSanctuary=target;syncLocation();
+    byId('sanctuaryManagementScope').querySelectorAll('[data-sanctuary-scope]').forEach(item=>item.setAttribute('aria-pressed',item.dataset.sanctuaryScope===selectedSanctuary?'true':'false'));
+    renderSanctuaryBanner();renderWeek();renderRefreshIndicator(false);
+    const cached=bootstrapCache.get(bootstrapCacheKey(target));
+    if(cached){renderBootstrap(cached,target);return;}
+    const sequence=++requestSequence;const root=byId('sanctuaryManagementTeamList');root.replaceChildren(createEmpty('성역 팀을 불러오는 중입니다.','선택한 성역의 팀·포스만 Server에서 조회하고 있습니다.'));
+    byId('sanctuaryManagementTeamStatus').textContent='선택한 성역 데이터를 불러오는 중입니다.';
+    try{const data=await ServerAdapter.bootstrap(target);if(sequence!==requestSequence||selectedSanctuary!==target)return;renderBootstrap(data,target);}
+    catch(error){if(sequence!==requestSequence||selectedSanctuary!==target)return;root.replaceChildren(createEmpty('성역 팀을 불러오지 못했습니다.',value(error?.message)||'잠시 후 다시 선택해 주세요.'));}
+  }
+
   async function load(){
     const sequence=++requestSequence;
     const auth=authState();
@@ -1327,9 +1373,9 @@
     byId('sanctuaryManagementContract').textContent='API 계약 확인 중';
     setAccess('loading','Server 성역 데이터를 확인하고 있습니다.',auth.loggedIn?'로그인 이용자의 팀·포스·지원 데이터를 불러옵니다.':'공개된 팀·포스·월간 일정을 불러옵니다.');
     try{
-      const data=await ServerAdapter.bootstrap();
+      const data=await ServerAdapter.bootstrap(requestedSanctuary()||selectedSanctuary);
       if(sequence!==requestSequence)return;
-      renderBootstrap(data);
+      renderBootstrap(data,value(data.selectedSanctuaryCode)||requestedSanctuary());
     }catch(error){
       if(sequence!==requestSequence)return;
       setAccess('error','Server 데이터를 불러오지 못했습니다.',value(error?.message)||'잠시 후 다시 시도해 주세요.','retry');
@@ -1340,12 +1386,7 @@
     byId('sanctuaryManagementScope')?.addEventListener('click',event=>{
       const button=event.target.closest('[data-sanctuary-scope]');
       if(!button||!bootstrapData)return;
-      selectedSanctuary=value(button.dataset.sanctuaryScope)||sanctuaryKey(bootstrapData.sanctuaries[0]);
-      syncLocation();
-      byId('sanctuaryManagementScope').querySelectorAll('[data-sanctuary-scope]').forEach(item=>item.setAttribute('aria-pressed',item.dataset.sanctuaryScope===selectedSanctuary?'true':'false'));
-      renderSanctuaryBanner();
-      renderTeams();
-      renderWeek();
+      selectSanctuary(value(button.dataset.sanctuaryScope)||sanctuaryKey(bootstrapData.sanctuaries[0]));
     });
     byId('sanctuaryManagementAccessAction')?.addEventListener('click',event=>{
       const action=value(event.currentTarget.dataset.action);

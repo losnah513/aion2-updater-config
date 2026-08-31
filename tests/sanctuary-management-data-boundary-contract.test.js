@@ -14,8 +14,8 @@ for (const page of pages) {
     'sanctuary-management-page-bar',
     'id="sanctuaryManagementScope"',
     'id="sanctuaryManagementTeamList"',
-    'kinojo-supabase-features.js?cache=2026083103',
-    'sanctuary-management.js?cache=2026083030',
+    'kinojo-supabase-features.js?cache=2026083104',
+    'sanctuary-management.js?cache=2026083104',
     'sanctuary-management-draft.js?cache=2026083030',
     'sanctuary-management-support.js?cache=2026082923',
   ]) assert.ok(html.includes(token), `${page}: missing ${token}`);
@@ -51,8 +51,8 @@ assert.equal(feature.includes("rpc('kinojo_sanctuary_management_bootstrap_v412'"
 const client = read('sanctuary-management/js/sanctuary-management.js');
 for (const token of [
   "kind:'SERVER_ONLY'",
-    'const API_VERSION=2.2',
-  'const SCHEMA_VERSION=454',
+    'const API_VERSION=2.3',
+  'const SCHEMA_VERSION=456',
   'getSanctuaryManagementBootstrap',
   'runSanctuaryManagementCommand',
   "teamId?'UPDATE_TEAM_DRAFT':'CREATE_TEAM'",
@@ -121,8 +121,8 @@ vm.runInNewContext(client, context, { filename: 'sanctuary-management/js/sanctua
 async function verifyAdapter() {
   const adapter = context.window.KinojoSanctuaryManagementData;
   assert.equal(adapter.kind, 'SERVER_ONLY');
-  assert.equal(adapter.apiVersion, 2.2);
-  assert.equal(adapter.schemaVersion, 454);
+  assert.equal(adapter.apiVersion, 2.3);
+  assert.equal(adapter.schemaVersion, 456);
   const data = await adapter.bootstrap();
   assert.deepEqual(calls, ['bootstrap']);
   assert.equal(data.readEnabled, false);
@@ -146,8 +146,8 @@ async function verifyAdapter() {
     assert.equal(response.status, 200, `sanctuary-management health HTTP ${response.status}`);
     assert.equal(health.ok, true);
     assert.equal(health.service, 'sanctuary-management');
-    assert.equal(String(health.apiVersion), '2.2');
-    assert.equal(Number(health.databaseContract), 454);
+    assert.equal(String(health.apiVersion), '2.3');
+    assert.equal(Number(health.databaseContract), 456);
   }
 }
 

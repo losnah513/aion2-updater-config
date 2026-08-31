@@ -27,7 +27,7 @@ for(const token of [
   "const folded=state==='ready'||state==='rollout'","region.hidden=folded","byId('sanctuaryManagementConnectionState').textContent=state==='ready'?'연결됨'",
   "window.addEventListener('kinojo:sanctuary-master-rendered'"
 ])assert.ok(client.includes(token),`client banner/connection behavior missing ${token}`);
-assert.match(client,/renderSanctuaryBanner\(\);\s+renderTeams\(\);\s+renderWeek\(\);/,'scope selection must refresh the banner before scoped content');
+assert.match(client,/renderSanctuaryBanner\(\);renderWeek\(\);renderRefreshIndicator\(false\);/,'scope selection must refresh the banner before requesting scoped content');
 assert.equal(client.includes("byId('sanctuaryManagementSource')"),false,'retired Server source renderer remains');
 
 for(const token of [
