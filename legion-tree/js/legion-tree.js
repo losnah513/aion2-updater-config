@@ -300,8 +300,16 @@
     main.innerHTML=renderSearchCards(searchGroups.main);
     alt.innerHTML=renderSearchCards(searchGroups.alt);
     altGroup.hidden=!searchGroups.alt;
+    positionSearchResults();
     root.hidden=false;
     syncManagementControls();
+  }
+
+  function positionSearchResults(){
+    const root=q('#legionTreeSearchResults'),subbar=q('.legion-tree-subbar');
+    if(!root||!subbar)return false;
+    root.style.setProperty('--legion-tree-search-top',`${Math.ceil(subbar.getBoundingClientRect().bottom+8)}px`);
+    return true;
   }
 
   function normalizeMember(item){
@@ -765,6 +773,20 @@
       const card=event.target?.closest?.('.legion-tree-search-card');
       if(card)selectSearchCandidate(text(card.dataset?.searchRole,20),text(card.dataset?.candidateKey,420));
     });
+    document.addEventListener('pointerdown',event=>{
+      const panel=q('#legionTreeSearchResults');
+      if(!panel||panel.hidden||panel.contains(event.target)||q('#legionTreeSearchBtn')?.contains(event.target))return;
+      hideSearchResults();
+    });
+    document.addEventListener('keydown',event=>{
+      const panel=q('#legionTreeSearchResults');
+      if(event.key!=='Escape'||!panel||panel.hidden)return;
+      event.preventDefault();
+      hideSearchResults();
+      q('#legionTreeSearchBtn')?.focus();
+    });
+    window.addEventListener('resize',positionSearchResults,{passive:true});
+    window.addEventListener('scroll',positionSearchResults,{passive:true});
     const root=q('#legionTreeRoot');
     root?.addEventListener('click',event=>{
       const card=event.target?.closest?.('.legion-tree-character');
