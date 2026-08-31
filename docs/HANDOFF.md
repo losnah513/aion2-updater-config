@@ -299,7 +299,7 @@
 - SQL432 Source/Deploy/Verify/Rollback, FK index follow-up, Edge v8 Source의 Drive ID는 Stage 3-5 LOG와 SQL_INDEX에 기록한다. 전체 Node 계약 66종, JavaScript/Deno check, 로컬 PC 1440×1000과 모바일 390×844·350×740 검수를 통과했다. 검색 버튼·Enter, 마스터 결과 슬롯 배치, 공식 게스트 확정 배치, 중첩 form 0, 가로 overflow 0, 콘솔 오류 0을 확인했다.
 - 다음 작업은 3-6 일정 입력·30분 단위 진행 시간·반복 규칙·다른 팀 충돌 검증 연결이다. 운영 `readEnabled=false`, `writeEnabled=false`는 별도 승인 전까지 유지한다.
 
-## 레기온 트리 마-2~마-6 / 사-1~사-7 / 아-1~아-6 / 자-1~자-7 / 차-1~차-10 / 타-1~타-9
+## 레기온 트리 마-2~마-6 / 사-1~사-7 / 아-1~아-6 / 자-1~자-7 / 차-1~차-10 / 타-1~타-9 / 카-1~카-10
 
 - PC·모바일 페이지가 공개 RPC `kinojo_web_get_legion_tree`의 `web-legion-tree-v1` / DB 453 계약을 읽어 깡·낮·밤·키나노동조합을 Server 순서대로 렌더링한다. 설정이 없으면 기존 DB355 fallback, 설정이 있으면 DB453 configured tree를 반환한다.
 - 2026-08-24 운영 readback 기준 실제 구성원은 깡 41명, 낮 4명, 밤 2명, 키나노동조합 42명으로 총 89명이다.
@@ -316,11 +316,11 @@
 - DB454 Queue wrapper는 target 서버와 main 서버를 별도로 저장하고 ALT 시작 전에 해당 main 서버의 기존 본캐를 확인한다. 기존 list-sync가 호출하는 relation finalizer의 함수 identity는 유지하면서 내부를 cross-server 조회로 확장해 `복숭아(지켈) → 화비(루미엘)` 관계를 확정한다.
 - 진행 UI는 요청에 결합된 Server runtime `sessionId`만 추적해 `공식 확인 → 정보 반영 → list 반영 → readback → 완료`를 표시한다. subbar는 입력·버튼·상태/progress를 독립 grid 영역으로 나눠 조회 시작 후 긴 오류/진행 문구가 본문과 겹치지 않는다. 동일 세션의 `completed / SERVER_QUEUE_LIST_SYNC_DONE`만 완료로 인정하고, Google list readback 완료 뒤 공개 트리를 재조회한다.
 - 초기화는 작업이 없을 때 두 이름, 오류, 진행 표시를 함께 비운다. Server 작업 실행 중에는 초기화를 거부하며 Server Queue를 취소했다고 표시하지 않는다.
-- 조직도 편집은 PC·모바일 공용 `legion-tree/js/legion-tree-editor.js`가 소유한다. 네 레기온 선택, 단계 수·단계명, 동일 단계 복수 직급, 직급 삭제, 구성원 배치·해제, 바로 윗 단계 상위 소속, Server fallback 초기화, 취소·저장 UI를 제공한다.
-- 타 단계는 기존 `kinojo-legion-tree`를 v4로 확장 재사용한다. Browser는 현재 KWS 세션과 편집값만 보내고, Edge와 DB453이 `canManage`, revision/CAS, v365 무결성, 역할 UUID 정규화, 설정·직급·배치·parent 저장 또는 reset을 한 transaction에서 다시 검증한다.
+- 조직도 편집은 PC·모바일 공용 `legion-tree/js/legion-tree-editor.js`가 소유한다. 네 레기온 선택, 안전한 단계 증감, 단계명, 동일 단계 복수 직급, 점유·parent 참조 직급 삭제 차단, 직급별 최대 인원 또는 제한 없음, 현재 레기온 구성원의 개별·원자적 일괄 배치와 해제, 바로 윗 단계 상위 소속, Server fallback 초기화, 취소·저장 UI를 제공한다.
+- 조직도 저장 경계는 현재 `kinojo-legion-tree` v5 / API 1.4 안의 organization DB453 계약을 재사용한다. Browser는 현재 KWS 세션과 편집값만 보내고, Edge와 DB453이 `canManage`, revision/CAS, v365 무결성, 역할 UUID 정규화, 설정·직급·배치·parent 저장 또는 reset을 한 transaction에서 다시 검증한다.
 - 저장 성공 응답은 같은 요청 안에서 `kinojo_web_get_legion_tree`를 재호출해 revision·fallback 상태가 일치할 때만 `readbackVerified=true`로 반환한다. 편집기는 이 readback만 재렌더링하며 직접 service-role RPC를 호출하지 않는다.
-- 점유 직급·상위 소속으로 참조되는 직급·단계의 마지막 직급·사용 중 단계 감소·즉시 윗 단계가 아닌 parent·현재 `maxMembers` 초과는 local draft에서도 먼저 차단한다. Server validator v365를 최종 권한으로 대체하지 않는다.
-- 레기온 트리 진행도는 **75/115**다. 명시적으로 건너뛴 미완료 묶음은 **카-1~카-10**이며, 원본의 타 다음 단계는 파다.
+- 설정 저장 전 전체 draft의 단계 순서·필수 이름·직급 키/순서·최대 인원·현재 레기온 구성원·중복 배치·직급 존재·최상위/하위 parent 방향을 검증한다. 실패하면 네트워크 요청 없이 첫 오류 위치와 메시지를 표시하고 해당 입력으로 focus한다. Server validator v365를 최종 권한으로 대체하지 않는다.
+- 레기온 트리 진행도는 **85/115**다. 카-1~카-10까지 연속 완료했으며 다음 미완료 단계는 **파-1**이다.
 
 ## 내 정보 이미지 기존 완료 상태
 
