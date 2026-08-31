@@ -2,7 +2,7 @@
   'use strict';
 
   const API_VERSION=2.2;
-  const SCHEMA_VERSION=452;
+  const SCHEMA_VERSION=453;
   const SLOT_CLASS_CODES=Object.freeze(['ALL','TEMPLAR','GLADIATOR','ASSASSIN','RANGER','SORCERER','ELEMENTALIST','CLERIC','CHANTER','FIGHTER']);
   const CLASS_ICON_MAP=Object.freeze({'수호성':'templar','검성':'gladiator','살성':'assassin','궁성':'ranger','마도성':'sorcerer','정령성':'elementalist','치유성':'cleric','호법성':'chanter','권성':'fighter'});
   const CLASS_NAME_BY_CODE=Object.freeze({TEMPLAR:'수호성',GLADIATOR:'검성',ASSASSIN:'살성',RANGER:'궁성',SORCERER:'마도성',ELEMENTALIST:'정령성',CLERIC:'치유성',CHANTER:'호법성',FIGHTER:'권성'});
@@ -35,7 +35,7 @@
 
   function contractSupported(data){
     const api=Number(data?.apiVersion),schema=Number(data?.schemaVersion);
-    return api===API_VERSION&&schema===SCHEMA_VERSION||api===2.1&&schema===451||api===2&&schema===450||api===1.9&&schema===449||api===1.8&&schema===446;
+    return api===API_VERSION&&(schema===SCHEMA_VERSION||schema===452)||api===2.1&&schema===451||api===2&&schema===450||api===1.9&&schema===449||api===1.8&&schema===446;
   }
   function combatPowerValue(input){const power=Number(input);return Number.isFinite(power)&&power>0?Math.round(power):0;}
   function itemLevelValue(input){const level=Number(input);return Number.isFinite(level)&&level>0?Math.round(level):0;}
@@ -68,6 +68,7 @@
     const requiredClassCode=value(item.requiredClassCode||'ALL').toUpperCase();
     const placementLocked=item.placementLocked===true;
     const character=item.character&&typeof item.character==='object'&&!Array.isArray(item.character)?Object.assign({},item.character,{power:combatPowerValue(item.character.power??item.character.latestPveCombatPower??item.character.latest_pve_combat_power),itemLevel:itemLevelValue(item.character.itemLevel??item.character.latestPveItemLevel??item.character.latest_pve_item_level)}):null;
+    if(character?.isRandomAlt===true){character.randomClassCode=requiredClassCode;character.className=CLASS_NAME_BY_CODE[requiredClassCode]||'';}
     if(occupied!==Boolean(character))throw new Error('성역 관리 슬롯 점유 상태가 일치하지 않습니다.');
     const slot=Object.assign({},item,{
       slotId:integer(item.slotId),
@@ -81,7 +82,7 @@
       character
     });
     const actualValid=assignmentKind==='ACTUAL_CHARACTER'&&(!occupied||integer(character?.characterId)>0&&value(character?.name));
-    const randomValid=assignmentKind==='RANDOM_ALT'&&occupied&&integer(character?.mainCharacterId)>0&&value(character?.name)&&character?.isRandomAlt===true&&requiredClassCode==='ALL';
+    const randomValid=assignmentKind==='RANDOM_ALT'&&occupied&&integer(character?.mainCharacterId)>0&&value(character?.name)&&character?.isRandomAlt===true;
     if(slot.slotId<1||slot.slotNo<1||slot.revision<1||!SLOT_CLASS_CODES.includes(requiredClassCode)||!['ACTUAL_CHARACTER','RANDOM_ALT'].includes(assignmentKind)||!(actualValid||randomValid)||placementLocked&&!occupied){
       throw new Error('성역 관리 슬롯 식별 정보가 올바르지 않습니다.');
     }

@@ -28,7 +28,7 @@
   function classOption(code){return SLOT_CLASSES.find(item=>item.code===value(code).toUpperCase())||SLOT_CLASSES[0];}
   function slotClassCode(slot){return classOption(slot?.requiredClassCode).code;}
   function assignmentKind(slot){return value(slot?.assignmentKind||slot?.character?.assignmentKind).toUpperCase()==='RANDOM_ALT'?'RANDOM_ALT':'ACTUAL_CHARACTER';}
-  function slotAcceptsCharacter(slot,character){const required=slotClassCode(slot);if(character?.isRandomAlt)return required==='ALL';return required==='ALL'||required===classCodeFor(character?.className);}
+  function slotAcceptsCharacter(slot,character){const required=slotClassCode(slot);if(character?.isRandomAlt){const reserved=classOption(character.randomClassCode||classCodeFor(character.className)).code;return required==='ALL'||reserved==='ALL'||required===reserved;}return required==='ALL'||required===classCodeFor(character?.className);}
   function combatPowerValue(input){const power=Number(input);return Number.isFinite(power)&&power>0?Math.round(power):0;}
   function itemLevelValue(input){const level=Number(input);return Number.isFinite(level)&&level>0?Math.round(level):0;}
   function formatCombatPower(input){const power=combatPowerValue(input);return power?(power/1000).toFixed(1)+'K':'—';}
@@ -346,8 +346,11 @@
 
   function applySlotClass(slotId,classCode){
     const item=teamSlot(slotId);const option=classOption(classCode);if(!item)return;
+    if(item.slot.character?.isRandomAlt){
+      invalidateBalanceProposal();item.slot.requiredClassCode=option.code;item.slot.requiredClassName=option.code==='ALL'?'전체 클래스':option.label;item.slot.character.randomClassCode=option.code;item.slot.character.className=option.className||'';state.classTargetSlotId=0;renderRosterState();setStatus(slotDisplayNumber(item)+'번 랜덤 부캐 클래스를 '+option.label+'(으)로 설정했습니다. 마지막 저장 전까지 Server에는 반영되지 않습니다.','success');return;
+    }
     if(item.slot.character&&!slotAcceptsCharacter(Object.assign({},item.slot,{requiredClassCode:option.code}),item.slot.character)){
-      setStatus(item.slot.character.isRandomAlt?'랜덤 부캐 슬롯은 전체 클래스만 선택할 수 있습니다.':value(item.slot.character.name)+' 캐릭터의 클래스와 맞지 않습니다. 먼저 캐릭터를 빼거나 알맞은 클래스를 선택해 주세요.');return;
+      setStatus(value(item.slot.character.name)+' 캐릭터의 클래스와 맞지 않습니다. 먼저 캐릭터를 빼거나 알맞은 클래스를 선택해 주세요.');return;
     }
     invalidateBalanceProposal();item.slot.requiredClassCode=option.code;item.slot.requiredClassName=option.code==='ALL'?'전체 클래스':option.label;state.classTargetSlotId=0;renderRosterState();setStatus(slotDisplayNumber(item)+'번 슬롯 지원 클래스를 '+option.label+'(으)로 설정했습니다. 마지막 저장 전까지 Server에는 반영되지 않습니다.','success');
   }
@@ -425,7 +428,7 @@
       const icon=classIconFor(character.className);
       const relation=character.relation==='GUEST'?'게스트':character.relation==='MAIN'?'본캐':'부캐';
       const server='['+(value(character.serverName)||'서버 미확인')+']';
-      const altButton=character.canSelectAlts===true?'<button type="button" data-linked-alts-open="'+escapeHtml(character.characterId)+'">부캐 선택</button>':'';const eligible=characterEligible(character);
+      const altButton=character.canSelectAlts===true||character.relation==='MAIN'||character.isMain===true?'<button type="button" data-linked-alts-open="'+escapeHtml(character.characterId)+'">부캐 선택</button>':'';const eligible=characterEligible(character);
       resultMarkup='<article class="sanctuary-management-search-result'+(eligible?'':' is-ineligible')+'"><div class="sanctuary-management-search-result-profile"><span class="sanctuary-management-search-result-avatar" aria-hidden="true">'+(icon?'<img src="'+escapeHtml(icon)+'" alt="">':'◇')+'</span><span class="sanctuary-management-search-result-copy"><em>'+escapeHtml(relation)+'</em><strong>'+escapeHtml(character.characterName)+'</strong><small>'+escapeHtml(server)+' · '+combatPowerMarkup(character.power)+'</small></span></div><div class="sanctuary-management-search-result-actions"><button type="button" data-draft-search-character="'+escapeHtml(character.characterId)+'"'+(eligible?'':' disabled')+'>추가하기</button>'+altButton+'</div></article>';
     }else if(state.lookup?.candidate){
       const candidate=state.lookup.candidate;const allowed=candidate.allowedRelations||[];
@@ -445,8 +448,9 @@
       const candidateEligible=characterEligible(candidate);resultMarkup='<article class="sanctuary-management-official-result'+(candidateEligible?'':' is-ineligible')+'"><div class="sanctuary-management-official-card"><span class="sanctuary-management-search-result-avatar" aria-hidden="true">'+(icon?'<img src="'+escapeHtml(icon)+'" alt="">':'◇')+'</span><span class="sanctuary-management-search-result-copy"><em>아이온2 공식 확인</em><strong>'+escapeHtml(candidate.characterName)+'</strong><small>'+escapeHtml(server)+' · '+combatPowerMarkup(candidate.power)+'</small></span></div><p>'+(candidate.isOperationalLegion?'운영 레기온 캐릭터입니다. 본캐 또는 연결할 본캐를 확인해 주세요.':'외부 레기온 또는 레기온 미가입 캐릭터로 게스트 등록할 수 있습니다.')+'</p><div class="sanctuary-management-relation-buttons">'+relationButtons+'</div>'+relationBody+'<button type="button" class="sanctuary-management-register-character" data-draft-register-character'+(canRegister&&candidateEligible?'':' disabled')+'>관계 확정 후 추가</button></article>';
     }
     const creatorOnly=currentMode()==='PARTICIPATION'&&value(state.team?.status)==='DRAFT'&&state.team?.localOnly;
-    if(creatorOnly)return '<aside class="sanctuary-management-candidate-rail" aria-label="'+escapeHtml(force.forceNo)+'포스 생성자 캐릭터 선택">'+railHeader+'<div class="sanctuary-management-candidate-list" data-candidate-list>'+quick+'<div class="sanctuary-management-candidate-note"><strong>참여 팀 생성 조건</strong><small>만들어 둔 포스 중 한 곳에 생성자의 캐릭터 1개 이상을 배치하면 생성할 수 있습니다.</small></div></div>'+completion+'</aside>';
-    if(state.team?.localOnly)return '<aside class="sanctuary-management-candidate-rail" aria-label="'+escapeHtml(force.forceNo)+'포스 내 캐릭터 선택">'+railHeader+'<div class="sanctuary-management-candidate-list" data-candidate-list>'+quick+'<div class="sanctuary-management-candidate-note"><strong>한 번에 Server 반영</strong><small>외부·게스트 검색은 팀을 만든 뒤 편집에서 사용할 수 있습니다.</small></div></div>'+completion+'</aside>';
+    const localSearch='<div class="sanctuary-management-character-search" data-character-search-form role="search"><label><span>내 캐릭터 검색</span><input name="characterQuery" size="16" maxlength="48" placeholder="이름 또는 이름[서버]" autocomplete="off" required></label><button type="button" data-character-search-submit'+(state.lookup?.loading?' disabled':'')+'>검색</button></div>'+resultMarkup;
+    if(creatorOnly)return '<aside class="sanctuary-management-candidate-rail" aria-label="'+escapeHtml(force.forceNo)+'포스 생성자 캐릭터 선택">'+railHeader+'<div class="sanctuary-management-candidate-list" data-candidate-list>'+quick+localSearch+'<div class="sanctuary-management-candidate-note"><strong>참여 팀 생성 조건</strong><small>만들어 둔 포스 중 한 곳에 생성자의 캐릭터 1개 이상을 배치하면 생성할 수 있습니다.</small></div></div>'+completion+'</aside>';
+    if(state.team?.localOnly)return '<aside class="sanctuary-management-candidate-rail" aria-label="'+escapeHtml(force.forceNo)+'포스 내 캐릭터 선택">'+railHeader+'<div class="sanctuary-management-candidate-list" data-candidate-list>'+quick+localSearch+'<div class="sanctuary-management-candidate-note"><strong>한 번에 Server 반영</strong><small>외부·게스트 검색은 팀을 만든 뒤 편집에서 사용할 수 있습니다.</small></div></div>'+completion+'</aside>';
     return '<aside class="sanctuary-management-candidate-rail" aria-label="'+escapeHtml(force.forceNo)+'포스 '+slotNumber+'번 슬롯 캐릭터 선택">'+railHeader+'<div class="sanctuary-management-candidate-list" data-candidate-list>'+quick+'<div class="sanctuary-management-character-search" data-character-search-form role="search"><label><span>캐릭터 검색</span><input name="characterQuery" size="16" maxlength="48" placeholder="이름 또는 이름[서버]" autocomplete="off" required></label><button type="button" data-character-search-submit'+(state.lookup?.loading?' disabled':'')+'>검색</button></div>'+resultMarkup+'</div>'+completion+'<button type="button" class="sanctuary-management-search-reset" data-draft-search-reset>조회 초기화</button></aside>';
   }
 
@@ -456,10 +460,13 @@
     if(data.loading)body='<div class="sanctuary-management-linked-alt-state"><strong>부캐 목록 확인 중…</strong><small>캐릭터 마스터의 실제 연결 관계를 조회합니다.</small></div>';
     else if(data.error)body='<div class="sanctuary-management-linked-alt-state is-error"><strong>부캐 목록을 불러오지 못했습니다.</strong><small>'+escapeHtml(data.error)+'</small></div>';
     else{
-      const chosen=selectedSlot();const usedIds=localUsedCharacterIds();const random=data.randomCandidate;
-      const randomAllowed=Boolean(chosen&&slotAcceptsCharacter(chosen.slot,random));
-      const randomCard=random?'<button type="button" class="sanctuary-management-linked-alt-card is-random" data-linked-alt-random aria-disabled="'+String(!randomAllowed)+'"'+(!randomAllowed?' disabled':'')+'><span><b>RANDOM</b></span><span><em>랜덤 부캐</em><strong>'+escapeHtml(random.characterName)+'</strong><small>실제 캐릭터 확정 전 · 전투력/조건 계산 제외</small></span></button>':'';
-      const cards=(data.characters||[]).filter(character=>characterEligible(character)).map(character=>{const icon=classIconFor(character.className);const disabled=usedIds.has(Number(character.characterId))||!chosen||!slotAcceptsCharacter(chosen.slot,character);return '<button type="button" class="sanctuary-management-linked-alt-card" data-linked-alt-character="'+escapeHtml(character.characterId)+'" aria-disabled="'+String(disabled)+'"'+(disabled?' disabled':'')+'><span>'+(icon?'<img src="'+escapeHtml(icon)+'" alt="">':'?')+'</span><span><em>부캐</em><strong>'+escapeHtml(character.characterName)+'</strong><small>['+escapeHtml(character.serverName||'서버 미확인')+'] · '+combatPowerMarkup(character.power)+'</small></span></button>';}).join('');
+      const chosen=selectedSlot();const force=selectedForce();const usedIds=localUsedCharacterIds();const random=data.randomCandidate;
+      const randomClass=classOption(data.randomClassCode||slotClassCode(chosen?.slot));
+      const ownerAlreadyInForce=Boolean(random&&force&&forceSlots(force).some(item=>item.slot.occupied&&Number(item.slot.character?.ownerMemberId)===Number(random.ownerMemberId)));
+      const randomAllowed=Boolean(chosen&&random&&!ownerAlreadyInForce);
+      const randomClassChoices=SLOT_CLASSES.map(option=>{const icon=classIconFor(option.className);return '<button type="button" data-linked-alt-class="'+option.code+'" aria-pressed="'+String(option.code===randomClass.code)+'" title="'+escapeHtml(option.label)+'">'+(icon?'<img src="'+escapeHtml(icon)+'" alt=""><span>'+escapeHtml(option.label)+'</span>':'<b>ALL</b><span>전체</span>')+'</button>';}).join('');
+      const randomCard=random?'<article class="sanctuary-management-linked-alt-card is-random"><div class="sanctuary-management-linked-alt-random-profile"><span><b>RANDOM</b></span><span><em>랜덤 부캐</em><strong>'+escapeHtml(random.characterName)+'</strong><small>실제 캐릭터 확정 전 · 전투력/조건 계산 제외</small></span></div><div class="sanctuary-management-linked-alt-class-picker" role="group" aria-label="랜덤 부캐 클래스 선택">'+randomClassChoices+'</div><button type="button" class="sanctuary-management-linked-alt-random-add" data-linked-alt-random aria-disabled="'+String(!randomAllowed)+'"'+(!randomAllowed?' disabled':'')+'>'+escapeHtml(randomClass.label)+' 랜덤 부캐 추가</button>'+(ownerAlreadyInForce?'<span class="sanctuary-management-linked-alt-unavailable">이미 이 포스에 같은 이용자의 캐릭터가 있습니다</span>':'')+'</article>':'';
+      const cards=(data.characters||[]).map(character=>{const icon=classIconFor(character.className),messages=[];if(!characterEligible(character)||character.itemLevelEligible===false)messages.push('캐릭터의 아이템레벨이 부족합니다');if(usedIds.has(Number(character.characterId))||character.alreadyAssignedToOtherForce===true)messages.push('이미 다른 포스에 소속되어 있습니다');else if(character.scheduleConflict===true)messages.push('같은 시간 다른 포스에 소속되어있습니다');if(!messages.length&&(!chosen||!slotAcceptsCharacter(chosen.slot,character)))messages.push('선택한 슬롯의 지원 클래스와 맞지 않습니다');if(!messages.length&&force&&Number(character.ownerMemberId)&&forceSlots(force).some(item=>item.slot.occupied&&Number(item.slot.character?.ownerMemberId)===Number(character.ownerMemberId)))messages.push('이미 이 포스에 같은 이용자의 캐릭터가 있습니다');const message=messages.join(' · '),disabled=Boolean(message);return '<button type="button" class="sanctuary-management-linked-alt-card'+(disabled?' is-unavailable':'')+'" data-linked-alt-character="'+escapeHtml(character.characterId)+'" aria-disabled="'+String(disabled)+'"'+(disabled?' disabled':'')+'><span>'+(icon?'<img src="'+escapeHtml(icon)+'" alt="">':'?')+'</span><span><em>부캐</em><strong>'+escapeHtml(character.characterName)+'</strong><small>['+escapeHtml(character.serverName||'서버 미확인')+'] · '+combatPowerMarkup(character.power)+'</small></span>'+(message?'<span class="sanctuary-management-linked-alt-unavailable">'+escapeHtml(message)+'</span>':'')+'</button>';}).join('');
       body=randomCard+(cards||(!randomCard?'<div class="sanctuary-management-linked-alt-state"><strong>선택 가능한 부캐 없음</strong></div>':''));
     }
     return '<aside class="sanctuary-management-linked-alt-panel is-open" data-linked-alt-panel role="dialog" aria-modal="false" aria-label="연결된 부캐 선택"><header><div><span>LINKED ALTS</span><strong>'+escapeHtml(data.mainCharacter?.characterName||'본캐')+'의 부캐 선택</strong><small>실제 부캐 또는 저장 전 미확정 랜덤 부캐를 고르세요.</small></div><button type="button" data-linked-alts-close aria-label="부캐 선택 닫기">×</button></header><div>'+body+'</div></aside>';
@@ -717,7 +724,7 @@
     if(!model.sanctuaryCode)return '진행 성역을 선택해 주세요.';
     if(!model.composition.length||model.composition.length>9)return '포스를 하나 이상, 최대 9개까지 구성해 주세요.';
     if(teamSlots().some(item=>item.slot.occupied&&item.slot.character&&!item.slot.character.isRandomAlt&&!characterEligible(item.slot.character,model.sanctuaryCode,model.difficulty)))return '해당 성역 아이템레벨을 충족하지 않는 캐릭터가 포함되어 있습니다.';
-    if(model.composition.some(force=>force.slots.some(slot=>!SLOT_CLASSES.some(option=>option.code===slot.requiredClassCode)||slot.assignmentKind==='RANDOM_ALT'&&(!slot.mainCharacterId||slot.requiredClassCode!=='ALL'))))return '슬롯 클래스 제한과 랜덤 부캐 편성을 다시 확인해 주세요.';
+    if(model.composition.some(force=>force.slots.some(slot=>!SLOT_CLASSES.some(option=>option.code===slot.requiredClassCode)||slot.assignmentKind==='RANDOM_ALT'&&!slot.mainCharacterId)))return '슬롯 클래스 제한과 랜덤 부캐 편성을 다시 확인해 주세요.';
     if(!model.datePartsValid)return '월과 일을 올바른 숫자로 입력해 주세요.';
     if(!model.timePartsValid)return '오전·오후와 시·분을 올바르게 입력해 주세요.';
     if(!model.schedule.startsOn)return model.schedule.kind==='WEEKLY'?'반복 시작일을 입력해 주세요.':'진행 날짜를 입력해 주세요.';
@@ -784,7 +791,7 @@
   }
 
   function candidateCharacter(candidate){
-    return {characterId:Number(candidate.characterId)||null,name:value(candidate.characterName||candidate.name),serverId:Number(candidate.serverId)||null,serverName:value(candidate.serverName),className:value(candidate.className),profileImageUrl:value(candidate.profileImageUrl),relation:value(candidate.relation)||(candidate.isMain?'MAIN':'ALT'),isMain:candidate.isMain===true,isRandomAlt:candidate.isRandomAlt===true,assignmentKind:candidate.isRandomAlt?'RANDOM_ALT':'ACTUAL_CHARACTER',power:combatPowerValue(candidate.power??candidate.latestPveCombatPower??candidate.latest_pve_combat_power),itemLevel:itemLevelValue(candidate.itemLevel??candidate.latestPveItemLevel??candidate.latest_pve_item_level),mainCharacterId:Number(candidate.mainCharacterId)||null,ownerMemberId:Number(candidate.ownerMemberId)||null};
+    return {characterId:Number(candidate.characterId)||null,name:value(candidate.characterName||candidate.name),serverId:Number(candidate.serverId)||null,serverName:value(candidate.serverName),className:value(candidate.className),randomClassCode:value(candidate.randomClassCode).toUpperCase(),profileImageUrl:value(candidate.profileImageUrl),relation:value(candidate.relation)||(candidate.isMain?'MAIN':'ALT'),isMain:candidate.isMain===true,isRandomAlt:candidate.isRandomAlt===true,assignmentKind:candidate.isRandomAlt?'RANDOM_ALT':'ACTUAL_CHARACTER',power:combatPowerValue(candidate.power??candidate.latestPveCombatPower??candidate.latest_pve_combat_power),itemLevel:itemLevelValue(candidate.itemLevel??candidate.latestPveItemLevel??candidate.latest_pve_item_level),mainCharacterId:Number(candidate.mainCharacterId)||null,ownerMemberId:Number(candidate.ownerMemberId)||null};
   }
 
   function assignCreatorCharacter(characterId){
@@ -803,8 +810,14 @@
 
   async function searchCharacter(query,isMainSearch=false){
     if(state.saving||state.mutating||!state.team||!selectedSlot())return;
-    if(!state.sourceTeamId){setStatus('외부·게스트 캐릭터 검색은 팀을 만든 뒤 편집에서 사용할 수 있습니다.');return;}
     const key=isMainSearch?'mainLookup':'lookup';
+    if(!state.sourceTeamId){
+      const raw=value(query);const bracket=raw.match(/^([^\[\]]+)\[([^\[\]]+)\]$/u);const wanted=value(bracket?.[1]||raw).normalize('NFKC').toLocaleLowerCase('ko-KR');const server=value(bracket?.[2]);
+      const character=composerCharacters().find(item=>value(item.characterName).normalize('NFKC').toLocaleLowerCase('ko-KR')===wanted&&(!server||value(item.serverName)===server));
+      if(!character){state[key]={error:'팀 생성 중에는 내 캐릭터 목록에서만 검색할 수 있습니다.'};renderRosterState();setStatus(state[key].error,'error');return;}
+      if(isMainSearch&&value(character.relation)!=='MAIN'&&character.isMain!==true){state[key]={error:'선택한 캐릭터가 본캐로 확인되지 않습니다.'};renderRosterState();setStatus(state[key].error,'error');return;}
+      state[key]={character};if(!isMainSearch){state.mainLookup=null;state.relationType='';}renderRosterState();setStatus((isMainSearch?'연결할 본캐':'추가할 캐릭터')+'를 내 캐릭터 목록에서 확인했습니다.','success');return;
+    }
     state[key]={loading:true};
     renderRosterState();
     try{
@@ -834,6 +847,7 @@
     const force=selectedForce(),chosen=selectedSlot();
     if(!force||!chosen||chosen.slot.occupied){setStatus('캐릭터를 추가할 빈 슬롯을 다시 선택해 주세요.');return;}
     if(localUsedCharacterIds().has(Number(character.characterId))){setStatus('같은 캐릭터는 한 팀 편성안에 중복 배치할 수 없습니다.');return;}
+    if(Number(character.ownerMemberId)&&forceSlots(force).some(item=>item.slot.occupied&&Number(item.slot.character?.ownerMemberId)===Number(character.ownerMemberId))){setStatus('한 이용자는 같은 포스에 캐릭터를 하나만 배치할 수 있습니다.');return;}
     if(!characterEligible(character)){setStatus('해당 성역 아이템레벨을 충족하는 캐릭터만 추가할 수 있습니다.');return;}
     if(!slotAcceptsCharacter(chosen.slot,character)){setStatus(classOption(slotClassCode(chosen.slot)).label+' 전용 슬롯에는 '+value(character.className)+' 캐릭터를 추가할 수 없습니다.');return;}
     const slotNumber=slotDisplayNumber(chosen);
@@ -842,17 +856,29 @@
   }
 
   async function loadLinkedAlts(mainCharacterId){
-    if(state.saving||state.mutating||!state.sourceTeamId||!selectedSlot())return;
+    if(state.saving||state.mutating||!selectedSlot())return;
     state.linkedAlts={loading:true,mainCharacter:{characterId:Number(mainCharacterId),characterName:value(state.lookup?.character?.characterName)}};renderRosterState();
-    try{state.linkedAlts=await bridge().linkedAlts(Number(state.sourceTeamId),Number(mainCharacterId));renderRosterState();setStatus(state.linkedAlts.characterCount+'개의 선택 가능한 부캐를 확인했습니다.'+(state.linkedAlts.randomCandidate?' 랜덤 부캐도 선택할 수 있습니다.':''),'success');}
+    if(!state.sourceTeamId){
+      const main=composerCharacters().find(item=>Number(item.characterId)===Number(mainCharacterId));
+      if(!main){state.linkedAlts={error:'내 본캐 정보를 확인하지 못했습니다.',mainCharacter:{characterName:value(state.lookup?.character?.characterName)}};renderRosterState();return;}
+      const characters=composerCharacters().filter(item=>Number(item.characterId)!==Number(mainCharacterId)&&Number(item.mainCharacterId)===Number(mainCharacterId)).map(item=>Object.assign({},item,{itemLevelEligible:characterEligible(item),alreadyAssignedToOtherForce:localUsedCharacterIds().has(Number(item.characterId)),scheduleConflict:false}));
+      state.linkedAlts={mainCharacter:{characterId:Number(main.characterId),characterName:value(main.characterName),serverId:Number(main.serverId)||0,serverName:value(main.serverName),ownerMemberId:Number(main.ownerMemberId)||Number(state.team?.creatorMemberId)||0},randomCandidate:{assignmentKind:'RANDOM_ALT',mainCharacterId:Number(main.characterId),ownerMemberId:Number(main.ownerMemberId)||Number(state.team?.creatorMemberId)||0,characterName:value(main.characterName)+'의 랜덤 부캐',serverId:Number(main.serverId)||0,serverName:value(main.serverName),relation:'RANDOM_ALT',isMain:false,isRandomAlt:true,power:0,itemLevel:0},characters,characterCount:characters.length,randomClassCode:slotClassCode(selectedSlot()?.slot)};
+      renderRosterState();setStatus(characters.length+'개의 연결 부캐를 확인했습니다. 랜덤 부캐도 선택할 수 있습니다.','success');return;
+    }
+    try{state.linkedAlts=await bridge().linkedAlts(Number(state.sourceTeamId),Number(mainCharacterId));state.linkedAlts.randomClassCode=slotClassCode(selectedSlot()?.slot);renderRosterState();setStatus(state.linkedAlts.characterCount+'개의 연결 부캐를 확인했습니다.'+(state.linkedAlts.randomCandidate?' 랜덤 부캐도 선택할 수 있습니다.':''),'success');}
     catch(error){state.linkedAlts={error:value(error?.message)||'연결된 부캐 목록을 확인하지 못했습니다.',mainCharacter:{characterName:value(state.lookup?.character?.characterName)}};renderRosterState();setStatus(state.linkedAlts.error,'error');}
   }
 
   function assignRandomAlt(){
     const chosen=selectedSlot(),force=selectedForce(),candidate=state.linkedAlts?.randomCandidate;if(!chosen||!force||!candidate||chosen.slot.occupied)return;
-    if(slotClassCode(chosen.slot)!=='ALL'){setStatus('랜덤 부캐는 실제 클래스가 미정이므로 전체 클래스 슬롯에만 추가할 수 있습니다.');return;}
+    const option=classOption(state.linkedAlts?.randomClassCode);
     const ownerId=Number(candidate.ownerMemberId);if(ownerId&&forceSlots(force).some(item=>item.slot.occupied&&Number(item.slot.character?.ownerMemberId)===ownerId)){setStatus('이 포스에는 이미 같은 이용자의 캐릭터 또는 랜덤 부캐가 있습니다.');return;}
-    invalidateBalanceProposal();chosen.slot.character=candidateCharacter(candidate);chosen.slot.occupied=true;chosen.slot.assignmentKind='RANDOM_ALT';state.selectedSlotId=0;state.classTargetSlotId=0;resetCharacterLookup();refreshLocalTeam();renderRosterState();setStatus(value(candidate.characterName)+' 카드를 로컬 편성안에 추가했습니다. 실제 캐릭터 확정 전에는 전투력·조건 계산에서 제외됩니다.','success');
+    invalidateBalanceProposal();chosen.slot.requiredClassCode=option.code;chosen.slot.requiredClassName=option.code==='ALL'?'전체 클래스':option.label;chosen.slot.character=candidateCharacter(Object.assign({},candidate,{className:option.className||'',randomClassCode:option.code}));chosen.slot.occupied=true;chosen.slot.assignmentKind='RANDOM_ALT';state.selectedSlotId=0;state.classTargetSlotId=0;resetCharacterLookup();refreshLocalTeam();renderRosterState();setStatus(value(candidate.characterName)+' · '+option.label+' 카드를 로컬 편성안에 추가했습니다. 실제 캐릭터 확정 전에는 전투력·조건 계산에서 제외됩니다.','success');
+  }
+
+  function chooseRandomAltClass(classCode){
+    if(!state.linkedAlts||state.saving||state.mutating)return;
+    const option=classOption(classCode);state.linkedAlts.randomClassCode=option.code;renderRosterState();setStatus('랜덤 부캐 클래스를 '+option.label+'(으)로 선택했습니다.','progress');
   }
 
   async function registerOfficialCharacter(asMainOnly=false){
@@ -988,6 +1014,8 @@
     if(linkedOpen&&!linkedOpen.disabled){loadLinkedAlts(Number(linkedOpen.dataset.linkedAltsOpen));return;}
     const linkedCharacter=event.target.closest('[data-linked-alt-character]');
     if(linkedCharacter&&!linkedCharacter.disabled){const character=state.linkedAlts?.characters?.find(item=>Number(item.characterId)===Number(linkedCharacter.dataset.linkedAltCharacter));assignSearchedCharacter(character);return;}
+    const linkedClass=event.target.closest('[data-linked-alt-class]');
+    if(linkedClass&&!linkedClass.disabled){chooseRandomAltClass(linkedClass.dataset.linkedAltClass);return;}
     if(event.target.closest('[data-linked-alt-random]')){assignRandomAlt();return;}
     const remove=event.target.closest('[data-draft-remove-force]');
     if(remove&&!remove.disabled){removeForce(Number(remove.dataset.draftRemoveForce));return;}
