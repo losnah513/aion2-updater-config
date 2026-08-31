@@ -1855,6 +1855,35 @@
     });
   }
 
+  async function saveLegionTreeOrganization(extra={},resetToDefault=false){
+    const sessionToken=currentServerSessionCredential();
+    const legionName=String(extra.legionName||'').trim();
+    const expectedRevision=Number(extra.expectedRevision);
+    if(!['깡','낮','밤','키나노동조합'].includes(legionName))throw new Error('저장할 레기온을 다시 선택해 주세요.');
+    if(!Number.isSafeInteger(expectedRevision)||expectedRevision<0)throw new Error('조직도 revision을 다시 확인해 주세요.');
+    if(resetToDefault===true){
+      return invokeEdgeFunction('kinojo-legion-tree',{
+        action:'organization-reset',
+        sessionToken,
+        legionName,
+        expectedRevision
+      });
+    }
+    const stageCount=Number(extra.stageCount);
+    if(!Number.isSafeInteger(stageCount)||stageCount<1||stageCount>50||!Array.isArray(extra.stages)||!Array.isArray(extra.assignments)){
+      throw new Error('저장할 조직도 구조를 다시 확인해 주세요.');
+    }
+    return invokeEdgeFunction('kinojo-legion-tree',{
+      action:'organization-save',
+      sessionToken,
+      legionName,
+      expectedRevision,
+      stageCount,
+      stages:extra.stages,
+      assignments:extra.assignments
+    });
+  }
+
   async function adminSanctuarySheetSync(command, extra={}){
     assertAdmin();
     return {
@@ -1993,7 +2022,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.58-legacy-ranking-snapshot-only-20260827',
+    version:'1.3.1.59-legion-tree-organization-save-20260831',
     getConfig,
     isPreferred,
     isConfigured,
@@ -2072,6 +2101,7 @@
     adminCharacter,
     adminLookup,
     addLegionTreeCharacter,
+    saveLegionTreeOrganization,
     getLiveCharacterProfile,
     adminVisit,
     adminVisitor,

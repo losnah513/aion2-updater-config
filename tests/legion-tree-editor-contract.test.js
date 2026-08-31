@@ -10,6 +10,9 @@ const pageScript = fs.readFileSync(path.join(rootDir, 'legion-tree/js/legion-tre
 const css = fs.readFileSync(path.join(rootDir, 'legion-tree/css/legion-tree.css'), 'utf8');
 const pc = fs.readFileSync(path.join(rootDir, 'legion-tree/index.html'), 'utf8');
 const mobile = fs.readFileSync(path.join(rootDir, 'm/legion-tree/index.html'), 'utf8');
+const featureScript = fs.readFileSync(path.join(rootDir, 'core/kinojo-supabase-features.js'), 'utf8');
+const edgeScript = fs.readFileSync(path.join(rootDir, 'supabase/functions/kinojo-legion-tree/index.ts'), 'utf8');
+const migration = fs.readFileSync(path.join(rootDir, 'supabase/migrations/20260831041509_legion_tree_atomic_save_v453.sql'), 'utf8');
 
 const document = {
   activeElement: null,
@@ -127,7 +130,11 @@ assert.strictEqual(draft.assignments.find(item => item.characterId === 3).parent
 
 const invalidParent = api.setParentRole(draft, 3, 'stage-3-member');
 assert.strictEqual(invalidParent.ok, false);
-assert.strictEqual(invalidParent.code, 'PARENT_NOT_HIGHER_STAGE');
+assert.strictEqual(invalidParent.code, 'PARENT_NOT_IMMEDIATE_STAGE');
+
+const skippedParent = api.setParentRole(draft, 3, 'stage-1-commander');
+assert.strictEqual(skippedParent.ok, false);
+assert.strictEqual(skippedParent.code, 'PARENT_NOT_IMMEDIATE_STAGE');
 
 const occupiedDelete = api.deleteRole(draft, 'stage-3-member');
 assert.strictEqual(occupiedDelete.ok, false);
@@ -151,10 +158,11 @@ assert(serialized.assignments.every(item => Object.prototype.hasOwnProperty.call
 
 for (const html of [pc, mobile]) {
   assert(html.includes('id="legionTreeEditorRoot"'));
-  assert(html.includes('legion-tree-editor.js?cache=2026083101'));
-  assert(html.includes('legion-tree.js?cache=2026083101'));
-  assert(html.includes('legion-tree.css?cache=2026083101'));
-  assert(html.indexOf('legion-tree-editor.js?cache=2026083101') < html.indexOf('legion-tree.js?cache=2026083101'));
+  assert(html.includes('legion-tree-editor.js?cache=2026083102'));
+  assert(html.includes('legion-tree.js?cache=2026083102'));
+  assert(html.includes('legion-tree.css?cache=2026083102'));
+  assert(html.includes('kinojo-supabase-features.js?cache=2026083102'));
+  assert(html.indexOf('legion-tree-editor.js?cache=2026083102') < html.indexOf('legion-tree.js?cache=2026083102'));
 }
 
 for (const token of [
@@ -168,12 +176,15 @@ for (const token of [
   '상위 소속',
   '기본 조직도로 초기화',
   'data-editor-cancel',
-  'data-editor-save disabled',
+  'data-editor-save ',
   "event.key==='Escape'",
   "event.key==='Enter'&&event.target?.id==='legionTreeEditorStageCount'",
   "event.key!=='Tab'",
   "document.body.classList.add('legion-tree-editor-open')",
-  '실제 Server 저장은 타 단계에서 연결됩니다.'
+  'Server가 권한·revision·조직 무결성을 다시 확인하고 한 transaction으로 반영합니다.',
+  'readbackVerified',
+  'saveLegionTreeOrganization',
+  'PARENT_NOT_IMMEDIATE_STAGE'
 ]) {
   assert(editorScript.includes(token), 'editor contract missing: '+token);
 }
@@ -181,9 +192,29 @@ for (const token of [
 assert(pageScript.includes('window.KinojoLegionTreeEditor?.setModel?.(model)'));
 assert(pageScript.includes('window.KinojoLegionTreeEditor.open({opener:event.currentTarget})'));
 assert(pageScript.includes('if(edit)edit.disabled=false'));
-assert(!editorScript.includes('KinojoSupabase'));
+assert(editorScript.includes('window.KinojoSupabase'));
 assert(!editorScript.includes('invokeEdgeFunction'));
 assert(!editorScript.includes('fetch('));
+assert(featureScript.includes("action:'organization-save'"));
+assert(featureScript.includes("action:'organization-reset'"));
+assert(featureScript.includes('saveLegionTreeOrganization'));
+for (const token of [
+  "const DATABASE_CONTRACT='453'",
+  "actions:['character-add','organization-save','organization-reset']",
+  "rpc('kinojo_legion_tree_organization_save_v453'",
+  'organizationReadbackConnected:true'
+]) assert(edgeScript.includes(token), 'Edge organization contract missing: '+token);
+for (const token of [
+  'kinojo_legion_tree_save_core_v453',
+  'kinojo_legion_tree_organization_save_v453',
+  'kinojo_legion_tree_configured_stages_v453',
+  'stage_names jsonb',
+  "'REVISION_CONFLICT'",
+  "'RESET_TO_DEFAULT'",
+  "'ORGANIZATION_SAVED'",
+  'delete from private.legion_tree_assignments',
+  "grant execute on function public.kinojo_web_get_legion_tree() to anon, authenticated, service_role"
+]) assert(migration.includes(token), 'DB453 organization contract missing: '+token);
 assert(css.includes('.legion-tree-editor-root{position:fixed;inset:0;z-index:50020'));
 assert(css.includes('.legion-tree-editor-dialog{position:relative;width:min(1040px,100%)'));
 assert(css.includes('@media(max-width:760px)'));

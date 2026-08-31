@@ -1,4 +1,4 @@
-/* KINOJO Legion Tree organization editor · 차-1~차-10 · local draft only */
+/* KINOJO Legion Tree organization editor · 차-1~차-10 + 타-1~타-9 · Server atomic save */
 (function(){
   'use strict';
 
@@ -9,7 +9,8 @@
   let selectedLegionName='';
   let opener=null;
   let temporaryRoleSequence=0;
-  let editorStatus='변경 내용은 이 창을 닫으면 폐기됩니다.';
+  let editorStatus='변경 내용을 확인한 뒤 Server에 저장할 수 있습니다.';
+  let saveRunning=false;
 
   const q=(selector,root=document)=>root.querySelector(selector);
   const qa=(selector,root=document)=>Array.from(root.querySelectorAll(selector));
@@ -207,8 +208,8 @@
     }
     const childStage=stageByRoleKey(draft,assignment.roleKey);
     const parentStage=stageByRoleKey(draft,parentRoleKey);
-    if(!childStage||!parentStage||parentStage.stageNo>=childStage.stageNo){
-      return {ok:false,code:'PARENT_NOT_HIGHER_STAGE'};
+    if(!childStage||!parentStage||parentStage.stageNo!==childStage.stageNo-1){
+      return {ok:false,code:'PARENT_NOT_IMMEDIATE_STAGE'};
     }
     assignment.parentRoleKey=parentRoleKey;
     draft.dirty=true;
@@ -259,7 +260,7 @@
   function renderParentOptions(draft,assignment,stageNo){
     const options=['<option value="">상위 소속 미지정</option>'];
     for(const stage of draft.stages){
-      if(stage.stageNo>=stageNo)continue;
+      if(stage.stageNo!==stageNo-1)continue;
       for(const role of stage.roles){
         const selected=assignment.parentRoleKey===role.roleKey?' selected':'';
         options.push('<option value="'+esc(role.roleKey)+'"'+selected+'>'+esc(stage.stageNo+'단계 · '+role.roleName)+'</option>');
@@ -319,15 +320,15 @@
     const unassigned=Math.max(0,draft.members.length-assigned);
     root.innerHTML='<div class="legion-tree-editor-backdrop" data-editor-close></div>'
       +'<section class="legion-tree-editor-dialog" role="dialog" aria-modal="true" aria-labelledby="legionTreeEditorTitle" aria-describedby="legionTreeEditorBoundary legionTreeEditorStatus" tabindex="-1">'
-      +'<header class="legion-tree-editor-head"><div><span>ORGANIZATION DRAFT</span><h2 id="legionTreeEditorTitle">조직도 편집</h2><p id="legionTreeEditorBoundary">현재 단계에서는 화면 초안만 편집합니다. 실제 Server 저장은 타 단계에서 연결됩니다.</p></div>'
+      +'<header class="legion-tree-editor-head"><div><span>SERVER ORGANIZATION</span><h2 id="legionTreeEditorTitle">조직도 편집</h2><p id="legionTreeEditorBoundary">저장 시 Server가 권한·revision·조직 무결성을 다시 확인하고 한 transaction으로 반영합니다.</p></div>'
       +'<button type="button" class="legion-tree-editor-close" data-editor-close aria-label="조직도 편집 닫기">×</button></header>'
       +'<div class="legion-tree-editor-toolbar"><label><span>레기온 선택</span><select id="legionTreeEditorLegion">'+legionOptions+'</select></label>'
       +'<label><span>단계 수</span><input id="legionTreeEditorStageCount" type="number" min="1" max="'+MAX_RENDERED_STAGES+'" inputmode="numeric" value="'+draft.stageCount+'"></label>'
       +'<div class="legion-tree-editor-summary"><strong>'+draft.members.length+'명</strong><span>배치 '+assigned+' · 미배치 '+unassigned+' · revision '+draft.revision+'</span></div></div>'
       +'<div class="legion-tree-editor-scroll"><div class="legion-tree-editor-stage-list">'+draft.stages.map(stage=>renderStage(draft,stage)).join('')+'</div></div>'
-      +'<footer class="legion-tree-editor-foot"><div><button type="button" data-editor-reset '+(!draft.fallbackApplied?'disabled title="기본 조직도 Server 계약은 타 단계에서 연결합니다."':'')+'>기본 조직도로 초기화</button>'
+      +'<footer class="legion-tree-editor-foot"><div><button type="button" data-editor-reset '+(saveRunning?'disabled':'')+'>기본 조직도로 초기화</button>'
       +'<p id="legionTreeEditorStatus" role="status" data-tone="">'+esc(editorStatus)+'</p></div>'
-      +'<div><button type="button" data-editor-cancel>취소</button><button type="button" class="is-primary" data-editor-save disabled title="타 단계에서 Server 저장을 연결합니다.">저장</button></div></footer>'
+      +'<div><button type="button" data-editor-cancel '+(saveRunning?'disabled':'')+'>취소</button><button type="button" class="is-primary" data-editor-save '+(saveRunning||!draft.dirty?'disabled':'')+'>'+(saveRunning?'저장 중…':'저장')+'</button></div></footer>'
       +'</section>';
     q('.legion-tree-editor-dialog',root)?.focus();
   }
@@ -343,16 +344,41 @@
     return sourceModel?.legions?.find(legion=>legion.legionName===name)||null;
   }
 
-  function resetSelectedDraft(){
-    const source=sourceLegion(selectedLegionName);
-    if(!source||source.fallbackApplied!==true){
-      setStatus('기본 조직도 Server 계약은 타 단계에서 연결합니다.','warning');
+  function saveErrorMessage(error){
+    const data=error?.data&&typeof error.data==='object'?error.data:{};
+    const code=text(data.code||error?.code,100);
+    if(code==='REVISION_CONFLICT')return '다른 사용자가 먼저 저장했습니다. 창을 닫고 최신 조직도를 다시 확인해 주세요.';
+    if(code==='ORGANIZATION_SAVE_FORBIDDEN')return '조직도를 저장할 권한이 없습니다.';
+    return text(data.message||error?.message,300)||'조직도를 저장하지 못했습니다.';
+  }
+
+  async function saveSelectedDraft(resetToDefault=false){
+    if(saveRunning)return false;
+    const draft=currentDraft();
+    const api=window.KinojoSupabase;
+    if(!draft||!api||typeof api.saveLegionTreeOrganization!=='function'){
+      setStatus('조직도 저장 API를 준비하지 못했습니다. 새로고침해 주세요.','warning');
       return false;
     }
-    drafts.set(selectedLegionName,createEditorDraft(source));
-    editorStatus='Server가 반환한 기본 조직도로 초안을 초기화했습니다.';
+    if(resetToDefault&&typeof window.confirm==='function'&&!window.confirm('이 레기온의 저장된 조직도를 지우고 기본 조직도로 복원할까요?'))return false;
+    saveRunning=true;
+    editorStatus=resetToDefault?'기본 조직도로 복원하는 중…':'Server에서 조직도를 저장하고 다시 확인하는 중…';
     renderDialog();
-    return true;
+    try{
+      const result=await api.saveLegionTreeOrganization(serializeDraft(draft),resetToDefault);
+      if(!result||result.ok!==true||result.readbackVerified!==true||!result.tree)throw Object.assign(new Error(result?.message||'조직도 저장 readback을 확인하지 못했습니다.'),{data:result||{}});
+      close();
+      const applied=window.KinojoLegionTree?.applyTreePayload?.(result.tree);
+      if(!applied)throw new Error('저장된 조직도를 화면에 다시 표시하지 못했습니다. 새로고침해 주세요.');
+      if(window.KinojoCommonUI?.toast)window.KinojoCommonUI.toast(resetToDefault?'기본 조직도로 복원했습니다.':'조직도를 저장했습니다.');
+      return true;
+    }catch(error){
+      saveRunning=false;
+      editorStatus=saveErrorMessage(error);
+      renderDialog();
+      setStatus(editorStatus,'warning');
+      return false;
+    }
   }
 
   function close(){
@@ -364,6 +390,7 @@
     document.removeEventListener('keydown',handleKeydown);
     drafts=new Map();
     selectedLegionName='';
+    saveRunning=false;
     const restore=opener;
     opener=null;
     restore?.focus?.();
@@ -424,7 +451,11 @@
     const draft=currentDraft();
     if(!draft)return;
     if(target.closest('[data-editor-reset]')){
-      resetSelectedDraft();
+      void saveSelectedDraft(true);
+      return;
+    }
+    if(target.closest('[data-editor-save]')){
+      void saveSelectedDraft(false);
       return;
     }
     const stageElement=target.closest('[data-stage-no]');
@@ -487,7 +518,7 @@
     if(target.matches('[data-editor-parent]')){
       const result=setParentRole(draft,Number(target.dataset.characterId),target.value);
       if(result.ok){draft.dirty=true;setStatus('상위 소속을 초안에 반영했습니다.');}
-      else setStatus('상위 소속은 현재 직급보다 높은 단계에서 선택해 주세요.','warning');
+      else setStatus('상위 소속은 바로 윗 단계에서 선택해 주세요.','warning');
     }
   }
 
@@ -514,7 +545,8 @@
     drafts=new Map(sourceModel.legions.map(legion=>[legion.legionName,createEditorDraft(legion)]));
     selectedLegionName=LEGION_ORDER.includes(options.legionName)?options.legionName:LEGION_ORDER[0];
     opener=options.opener||document.activeElement;
-    editorStatus='변경 내용은 이 창을 닫으면 폐기됩니다.';
+    saveRunning=false;
+    editorStatus='변경 내용을 확인한 뒤 Server에 저장할 수 있습니다.';
     root.hidden=false;
     document.body.classList.add('legion-tree-editor-open');
     document.addEventListener('keydown',handleKeydown);
@@ -534,6 +566,7 @@
     unassignMember,
     setParentRole,
     serializeDraft,
+    saveSelectedDraft,
     getSelectedDraft:()=>currentDraft()
   });
 })();

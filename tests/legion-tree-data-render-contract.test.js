@@ -81,7 +81,7 @@ function memberFixture(characterId, characterName, options = {}) {
 const payload = {
   ok: true,
   contract: 'web-legion-tree-v1',
-  databaseContract: '365',
+  databaseContract: '453',
   generatedAt: '2026-08-21T00:00:00Z',
   legions: names.map((legionName, index) => ({
     legionName,
@@ -432,10 +432,10 @@ window.KinojoSupabase = {
     assert(html.includes('Server 레기온 데이터를 불러오는 중'));
     assert(!html.includes('data-preview-card'));
     assert(!html.includes('본캐예시'));
-    assert(html.includes('legion-tree.css?cache=2026083101'));
-    assert(html.includes('legion-tree-editor.js?cache=2026083101'));
-    assert(html.includes('legion-tree.js?cache=2026083101'));
-    assert(html.includes('kinojo-supabase-features.js?cache=2026083030'));
+    assert(html.includes('legion-tree.css?cache=2026083102'));
+    assert(html.includes('legion-tree-editor.js?cache=2026083102'));
+    assert(html.includes('legion-tree.js?cache=2026083102'));
+    assert(html.includes('kinojo-supabase-features.js?cache=2026083102'));
     assert(!html.includes('legion-tree.js?cache=2026082403'));
   }
 
