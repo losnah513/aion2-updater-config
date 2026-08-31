@@ -26,17 +26,17 @@ for(const token of [
 ])assert.ok(migration.includes(token),`Stage 10 part 1 DB contract missing ${token}`);
 
 for(const token of [
-  'const DATABASE_CONTRACT="456"',
+  'const DATABASE_CONTRACT="457"',
   'kinojo_sanctuary_management_public_bootstrap_v456',
   'kinojo_sanctuary_management_month_v454',
-  'kinojo_sanctuary_management_linked_alts_v454',
+  'kinojo_sanctuary_management_linked_alts_v457',
   'p_force_id:forceId',
   'kinojo_sanctuary_management_balance_proposal_v454',
   'kinojo_sanctuary_management_command_v454',
 ])assert.ok(edge.includes(token),`Stage 10 part 1 Edge contract missing ${token}`);
 
 for(const token of [
-  'const SCHEMA_VERSION=456',
+  'const SCHEMA_VERSION=457',
   'calendarMonthData',
   'function renderRecruitmentSummary()',
   'function renderWeek()',

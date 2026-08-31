@@ -22,17 +22,19 @@ for(const token of [
 ])assert.ok(migration.includes(token),`v453 database contract missing ${token}`);
 
 for(const token of [
-  'const DATABASE_CONTRACT="456"',
-  'kinojo_sanctuary_management_linked_alts_v454',
+  'const DATABASE_CONTRACT="457"',
+  'kinojo_sanctuary_management_linked_alts_v457',
   'kinojo_sanctuary_management_command_v454'
 ])assert.ok(edge.includes(token),`current Edge contract must retain v453 random-alt behavior through ${token}`);
 
-assert.ok(main.includes('const SCHEMA_VERSION=456'),'browser must require the current v456 contract');
+assert.ok(main.includes('const SCHEMA_VERSION=457'),'browser must require the current v457 contract');
 assert.ok(main.includes("character.randomClassCode=requiredClassCode"),'saved random-alt cards must recover their reserved class');
 
 for(const token of [
   "character.relation==='MAIN'",
-  '팀 생성 중에는 내 캐릭터 목록에서만 검색할 수 있습니다.',
+  'data-creator-candidates-toggle',
+  '내 캐릭터 추가',
+  '조회하기',
   '랜덤 부캐도 선택할 수 있습니다.',
   'data-linked-alt-class=',
   'randomClassCode',
@@ -41,6 +43,7 @@ for(const token of [
   'chooseRandomAltClass',
   "slot.assignmentKind==='RANDOM_ALT'&&!slot.mainCharacterId"
 ])assert.ok(draft.includes(token),`v453 composer contract missing ${token}`);
+assert.equal(draft.includes('팀 생성 중에는 내 캐릭터 목록에서만 검색할 수 있습니다.'),false,'creation search must not be restricted to the creator character list');
 assert.ok(!draft.includes('(data.characters||[]).filter(character=>characterEligible(character))'),'item-level filtering must not hide linked alternate cards');
 
 const harness=read('tests/sanctuary-management-fixed-draft-e2e.html');

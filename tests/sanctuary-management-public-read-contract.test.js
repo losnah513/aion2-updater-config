@@ -57,8 +57,8 @@ assert.ok(workflow.includes('node tests/sanctuary-management-public-read-contrac
 
 for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
-  assert.ok(html.includes('kinojo-supabase-features.js?cache=2026083105'),`${page}: public feature cache key missing`);
-  assert.ok(html.includes('sanctuary-management.js?cache=2026083104'),`${page}: public client cache key missing`);
+  assert.ok(html.includes('kinojo-supabase-features.js?cache=2026083108'),`${page}: public feature cache key missing`);
+  assert.ok(html.includes('sanctuary-management.js?cache=2026083107'),`${page}: public client cache key missing`);
 }
 
 function party(partyNo){

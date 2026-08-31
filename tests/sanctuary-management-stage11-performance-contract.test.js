@@ -27,7 +27,7 @@ assert.ok(
 
 for(const token of [
   'const API_VERSION="2.3"',
-  'const DATABASE_CONTRACT="456"',
+  'const DATABASE_CONTRACT="457"',
   '"revision"',
   'kinojo_sanctuary_management_public_bootstrap_v456',
   'kinojo_sanctuary_management_bootstrap_v456',
@@ -44,7 +44,7 @@ for(const token of [
 
 for(const token of [
   'const API_VERSION=2.3',
-  'const SCHEMA_VERSION=456',
+  'const SCHEMA_VERSION=457',
   'const bootstrapCache=new Map()',
   'async revision(sanctuaryCode=',
   'const next=await ServerAdapter.revision(selectedSanctuary)',
@@ -76,7 +76,7 @@ for(const asset of ['rudra.webp','bagot.webp','kaldrix.webp']){
 
 for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
-  assert.ok(html.includes('sanctuary-management-support.css?cache=2026083105'),`${page}: Stage 11 boss visual CSS cache key missing`);
+  assert.ok(html.includes('sanctuary-management-support.css?cache=2026083107'),`${page}: Stage 11 boss visual CSS cache key missing`);
 }
 
 console.log('KINOJO Sanctuary Stage 11 selected bootstrap and force layout contract: PASS');

@@ -453,7 +453,7 @@ window.KinojoSupabase = {
     assert(html.includes('id="legionTreeAddProgress"'));
     assert(!html.includes('id="legionTreeServerHint"'));
     assert(html.includes('aria-describedby="legionTreeStatus"'));
-    assert(html.includes('</section>\n  <section class="legion-tree-search-results"'));
+    assert(/<\/section>\r?\n  <section class="legion-tree-search-results"/.test(html));
     assert(html.includes('placeholder="본캐이름[서버]"'));
     assert(html.includes('placeholder="부캐이름[서버]"'));
     assert(!html.includes('<span>본캐 이름</span>'));
@@ -470,7 +470,7 @@ window.KinojoSupabase = {
     assert(html.includes('legion-tree.css?cache=2026083107'));
     assert(html.includes('legion-tree-editor.js?cache=2026083103'));
     assert(html.includes('legion-tree.js?cache=2026083107'));
-    assert(html.includes('kinojo-supabase-features.js?cache=2026083105'));
+    assert(html.includes('kinojo-supabase-features.js?cache=2026083108'));
     assert(!html.includes('legion-tree.js?cache=2026082403'));
   }
 

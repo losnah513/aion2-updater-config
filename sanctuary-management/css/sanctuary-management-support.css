@@ -146,3 +146,40 @@ body.sanctuary-management-force-overview-open{overflow:hidden}
 .sanctuary-management-force-overview-grid>.sanctuary-management-force-card{display:block;visibility:visible;opacity:1;pointer-events:auto}
 @media(max-width:900px){.sanctuary-management-force-viewport{padding:3px 0 9px;overflow:hidden}.sanctuary-management-force-grid{grid-template-columns:minmax(0,1fr);gap:0;overflow:hidden}.sanctuary-management-force-grid>.sanctuary-management-force-card{width:100%}.sanctuary-management-force-boss-visual{display:none}.sanctuary-management-force-carousel .sanctuary-management-force-arrow,.sanctuary-management-force-carousel.has-pages .sanctuary-management-force-arrow{display:none!important}}
 @media(prefers-reduced-motion:reduce){.sanctuary-management-force-grid>.sanctuary-management-force-card.is-page-entering-forward,.sanctuary-management-force-grid>.sanctuary-management-force-card.is-page-entering-backward{animation:none}}
+
+/* Interactive roster feedback is paint-only: no border width, dimensions, or
+   transforms change, so neighbouring force/party/slot cards never reflow. */
+.sanctuary-management-force-card,
+.sanctuary-management-force-card.is-supportable{cursor:default;transition:border-color .24s ease,background-color .24s ease,box-shadow .24s ease,filter .24s ease;transform:none}
+.sanctuary-management-force-card:hover,
+.sanctuary-management-force-card:focus-within,
+.sanctuary-management-force-card.is-supportable:hover,
+.sanctuary-management-force-card.is-supportable:focus-visible{background:transparent;transform:none}
+.sanctuary-management-force-card:hover:not(:has(.sanctuary-management-force-party:hover)),
+.sanctuary-management-force-card:focus-visible{border-color:#8caea0;background:rgba(238,250,244,.64);box-shadow:0 14px 36px rgba(35,55,103,.08),inset 0 0 0 1px rgba(56,153,108,.12);outline:0}
+.sanctuary-management-force-party{transition:border-color .22s ease,background-color .22s ease,box-shadow .22s ease}
+.sanctuary-management-force-party:hover:not(:has(.sanctuary-management-force-slot:hover)),
+.sanctuary-management-force-party:focus-within:not(:has(.sanctuary-management-force-slot:focus-visible)){border-color:#9ebcae;background:#f5fbf8;box-shadow:inset 0 0 0 1px rgba(69,153,112,.12)}
+.sanctuary-management-force-slot{transition:border-color .2s ease,background-color .2s ease,box-shadow .2s ease,filter .2s ease}
+.sanctuary-management-force-slot:hover,
+.sanctuary-management-force-slot:focus-visible{border-color:#759b8b;background-color:#edf8f3;box-shadow:inset 0 0 0 1px rgba(61,142,103,.18);outline:0}
+
+.sanctuary-management-force-slot:not(.is-occupied){background:#effbf5;border-color:transparent}
+.sanctuary-management-force-slot:not(.is-occupied)::after{content:"";position:absolute;z-index:5;inset:1px;border-radius:9px;pointer-events:none;background:repeating-linear-gradient(90deg,#4fc989 0 7px,transparent 7px 12px) 0 0/24px 2px repeat-x,repeating-linear-gradient(90deg,#4fc989 0 7px,transparent 7px 12px) 12px 100%/24px 2px repeat-x,repeating-linear-gradient(180deg,#4fc989 0 7px,transparent 7px 12px) 0 12px/2px 24px repeat-y,repeating-linear-gradient(180deg,#4fc989 0 7px,transparent 7px 12px) 100% 0/2px 24px repeat-y;opacity:.8;animation:sanctuary-empty-slot-dashes 1.5s linear infinite}
+@keyframes sanctuary-empty-slot-dashes{to{background-position:24px 0,-12px 100%,0 -12px,100% 24px}}
+
+.sanctuary-management-force-slot.is-class-slot{min-height:54px;grid-template-columns:minmax(0,1fr);place-items:center;overflow:hidden;background:#e8faf1}
+.sanctuary-management-force-slot.is-class-slot .sanctuary-management-force-slot-icon{position:absolute;z-index:1;left:-5px;top:50%;width:70px;height:70px;opacity:.7;transform:translateY(-50%);pointer-events:none}
+.sanctuary-management-force-slot.is-class-slot .sanctuary-management-force-slot-copy{position:relative;z-index:2;width:100%;display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:none;place-items:center;padding:0 4px;box-sizing:border-box}
+.sanctuary-management-force-slot-recruitment{width:100%;color:#137049;font-size:clamp(13px,1.35vw,18px);font-weight:1000;line-height:1.05;text-align:center;text-shadow:0 1px 0 #fff,0 0 10px rgba(85,222,148,.3);white-space:nowrap}
+
+.sanctuary-management-alt-tooltip{position:absolute;z-index:20;inset:2px;min-width:0;padding:5px 7px;display:grid;align-content:center;gap:2px;border:1px solid rgba(185,255,117,.38);border-radius:8px;background:rgba(8,13,17,.94);color:#fff;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .18s ease,visibility .18s ease;box-sizing:border-box;text-align:left;white-space:normal}
+.sanctuary-management-alt-tooltip>span{min-width:0;color:#fff;font-size:10px;font-weight:850;line-height:1.15;white-space:normal;word-break:break-all}
+.sanctuary-management-alt-tooltip>span>b{color:#b9ff73;font-size:12px;font-weight:1000;text-shadow:0 0 4px rgba(185,255,115,.95),0 0 11px rgba(139,236,70,.7)}
+.sanctuary-management-alt-tooltip>strong{min-width:0;color:#fff;font-size:11px;font-weight:950;line-height:1.15;white-space:normal;word-break:break-all}
+.sanctuary-management-force-slot.is-alt:hover>.sanctuary-management-alt-tooltip,
+.sanctuary-management-force-slot.is-alt:focus-visible>.sanctuary-management-alt-tooltip,
+.sanctuary-management-force-slot.is-alt.is-alt-detail-open>.sanctuary-management-alt-tooltip{opacity:1;visibility:visible}
+
+@media(max-width:560px){.sanctuary-management-force-slot.is-class-slot{min-height:50px}.sanctuary-management-force-slot.is-class-slot .sanctuary-management-force-slot-icon{left:-4px;width:62px;height:62px}.sanctuary-management-force-slot-recruitment{font-size:clamp(12px,4.2vw,16px)}.sanctuary-management-alt-tooltip>span{font-size:9px}.sanctuary-management-alt-tooltip>span>b{font-size:11px}.sanctuary-management-alt-tooltip>strong{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.sanctuary-management-force-card,.sanctuary-management-force-party,.sanctuary-management-force-slot,.sanctuary-management-alt-tooltip{transition:none}.sanctuary-management-force-slot:not(.is-occupied)::after{animation:none}}

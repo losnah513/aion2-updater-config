@@ -30,8 +30,8 @@ for(const token of ['kinojo_sm_support_characters_v450','availableForceIds','NO_
   assert.ok(supportEligibilityFix.includes(token),`force support eligibility fix missing: ${token}`);
 }
 
-for(const token of ['const API_VERSION="2.3"','const DATABASE_CONTRACT="456"','"linked-alts"','kinojo_sanctuary_management_command_v454','kinojo_sanctuary_management_public_bootstrap_v456'])assert.ok(edge.includes(token),`current Edge contract missing while retaining part 2: ${token}`);
-for(const token of ['const API_VERSION=2.3','const SCHEMA_VERSION=456','requiredClassCode','assignmentKind','mainCharacterId','validateLinkedAlts','linkedAlts,'])assert.ok(main.includes(token),`current browser contract missing while retaining part 2: ${token}`);
+for(const token of ['const API_VERSION="2.3"','const DATABASE_CONTRACT="457"','"linked-alts"','kinojo_sanctuary_management_command_v454','kinojo_sanctuary_management_public_bootstrap_v456'])assert.ok(edge.includes(token),`current Edge contract missing while retaining part 2: ${token}`);
+for(const token of ['const API_VERSION=2.3','const SCHEMA_VERSION=457','requiredClassCode','assignmentKind','mainCharacterId','validateLinkedAlts','linkedAlts,'])assert.ok(main.includes(token),`current browser contract missing while retaining part 2: ${token}`);
 for(const token of ['data-slot-class-open','data-slot-class','data-linked-alts-open','data-linked-alt-random','RANDOM_ALT','실제 캐릭터 확정 전에는 전투력·조건 계산에서 제외'])assert.ok(draft.includes(token),`composer part 2 contract missing: ${token}`);
 for(const token of ['sanctuary-management-slot-class-picker','sanctuary-management-linked-alt-panel','overflow-x:hidden'])assert.ok(css.includes(token),`part 2 layout contract missing: ${token}`);
 for(const token of ['getSanctuaryManagementLinkedAlts','action:\'linked-alts\''])assert.ok(core.includes(token),`core linked-alt adapter missing: ${token}`);

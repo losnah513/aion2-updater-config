@@ -18,11 +18,13 @@ assert.ok(
   'Completed-placement notice must sit below the scrollable candidate list and above reset'
 );
 assert.ok(
-  draft.includes("if(creatorOnly)return '<aside class=\"sanctuary-management-candidate-rail\"")&&
-  draft.includes("if(state.team?.localOnly)return '<aside class=\"sanctuary-management-candidate-rail\""),
+  draft.includes("if(state.team?.localOnly){")&&
+  draft.includes('data-creator-candidates-toggle')&&
+  draft.includes('const creationQuick=state.showCreatorCandidates?quick'),
   'Fixed and participation team creation must reuse the readable candidate rail'
 );
 assert.ok(
+  draft.includes("'+railHeader+'<div class=\"sanctuary-management-candidate-list\" data-candidate-list>'+creatorTools+")&&
   draft.includes("'+railHeader+'<div class=\"sanctuary-management-candidate-list\" data-candidate-list>'+quick+"),
   'Creation and edit flows must share the candidate header and card list markup'
 );
@@ -49,8 +51,8 @@ for(const token of [
 
 for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
-  assert.ok(html.includes('sanctuary-management-draft.css?cache=2026083030'),`${page}: readable editor CSS cache missing`);
-  assert.ok(html.includes('sanctuary-management-draft.js?cache=2026083030'),`${page}: readable editor JS cache missing`);
+  assert.ok(html.includes('sanctuary-management-draft.css?cache=2026083106'),`${page}: readable editor CSS cache missing`);
+  assert.ok(html.includes('sanctuary-management-draft.js?cache=2026083106'),`${page}: readable editor JS cache missing`);
 }
 
 console.log('KINOJO Sanctuary team composer readability contract: PASS');
