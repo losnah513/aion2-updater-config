@@ -159,10 +159,10 @@ assert(serialized.assignments.every(item => Object.prototype.hasOwnProperty.call
 for (const html of [pc, mobile]) {
   assert(html.includes('id="legionTreeEditorRoot"'));
   assert(html.includes('legion-tree-editor.js?cache=2026083102'));
-  assert(html.includes('legion-tree.js?cache=2026083102'));
-  assert(html.includes('legion-tree.css?cache=2026083102'));
+  assert(html.includes('legion-tree.js?cache=2026083103'));
+  assert(html.includes('legion-tree.css?cache=2026083103'));
   assert(html.includes('kinojo-supabase-features.js?cache=2026083103'));
-  assert(html.indexOf('legion-tree-editor.js?cache=2026083102') < html.indexOf('legion-tree.js?cache=2026083102'));
+  assert(html.indexOf('legion-tree-editor.js?cache=2026083102') < html.indexOf('legion-tree.js?cache=2026083103'));
 }
 
 for (const token of [
@@ -199,7 +199,7 @@ assert(featureScript.includes("action:'organization-save'"));
 assert(featureScript.includes("action:'organization-reset'"));
 assert(featureScript.includes('saveLegionTreeOrganization'));
 for (const token of [
-  "const DATABASE_CONTRACT='453'",
+  "const ORGANIZATION_DATABASE_CONTRACT='453'",
   "actions:['character-add','organization-save','organization-reset']",
   "rpc('kinojo_legion_tree_organization_save_v453'",
   'organizationReadbackConnected:true'

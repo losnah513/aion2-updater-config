@@ -12,6 +12,7 @@
   const ADD_POLL_INTERVAL_MS=1400;
   const ADD_POLL_TIMEOUT_MS=15*60*1000;
   const LEGION_ORDER=Object.freeze(['깡','낮','밤','키나노동조합']);
+  const DEFAULT_SERVER_ID=2002;
   const MAIN_REQUIRED_MESSAGE='본캐 이름을 입력해 주세요.';
   const ADD_STEPS=Object.freeze([
     Object.freeze({key:'official',label:'공식 확인'}),
@@ -26,7 +27,6 @@
   });
 
   let serverReference=[];
-  let selectedRaceId=null;
   let serverReferenceReady=false;
   let serverReferenceError='';
   let treeStatusMessage='레기온 데이터를 불러오는 중…';
@@ -64,23 +64,16 @@
     if(window.KinojoToast?.show)return window.KinojoToast.show(message);
   }
 
-  function raceLabel(raceId){
-    return Number(raceId)===1?'천족':Number(raceId)===2?'마족':'';
-  }
-
   function normalStatusMessage(){
     if(serverReferenceError)return serverReferenceError;
-    if(selectedRaceId){
-      const count=serverReference.filter(item=>item.raceId===selectedRaceId).length;
-      return `${raceLabel(selectedRaceId)} 서버 ${count}개 표시 · ${treeStatusMessage}`;
-    }
-    return treeStatusMessage;
+    return serverReferenceReady?`이름[서버약칭] · 미표기 시 지켈 · ${treeStatusMessage}`:treeStatusMessage;
   }
 
   function setStatus(message,color=''){
     const status=q('#legionTreeStatus');
     if(!status)return;
     status.textContent=message;
+    status.title=message;
     status.style.color=color;
   }
 
@@ -206,6 +199,35 @@
     const shortName=text(source.shortName??source.server_short_name);
     if(serverId===null||![1,2].includes(raceId)||!serverName)return null;
     return {serverId,raceId,serverName,shortName};
+  }
+
+  function serverKey(value){
+    return text(value,120).normalize('NFKC').toLocaleLowerCase('ko-KR').replace(/\s+/g,'');
+  }
+
+  function parseCharacterAddInput(value){
+    const raw=text(value,180).normalize('NFKC').trim();
+    if(!raw)return {ok:false,code:'CHARACTER_NAME_REQUIRED',message:'캐릭터 이름을 입력해 주세요.'};
+    const match=raw.match(/^(.+?)(?:\s*\[([^\[\]]+)\])?$/u);
+    if(!match||((raw.includes('[')||raw.includes(']'))&&!match[2])){
+      return {ok:false,code:'SERVER_TAG_INVALID',message:'서버는 캐릭터명[약칭] 형식으로 입력해 주세요.'};
+    }
+    const characterName=text(match[1],120).normalize('NFKC').trim();
+    const serverSuffix=text(match[2],80).normalize('NFKC').trim();
+    if(!characterName)return {ok:false,code:'CHARACTER_NAME_REQUIRED',message:'캐릭터 이름을 입력해 주세요.'};
+    let candidates=[];
+    if(serverSuffix){
+      const key=serverKey(serverSuffix);
+      candidates=serverReference.filter(server=>serverKey(server.serverName)===key||serverKey(server.shortName)===key);
+      if(candidates.length>1&&key==='이스')candidates=candidates.filter(server=>server.serverId===2001);
+      if(!candidates.length)return {ok:false,code:'SERVER_SUFFIX_NOT_FOUND',message:`서버 약칭 [${serverSuffix}]을(를) 확인할 수 없습니다.`};
+      if(candidates.length!==1)return {ok:false,code:'SERVER_SUFFIX_AMBIGUOUS',message:`서버 약칭 [${serverSuffix}]이(가) 중복됩니다. 원본 서버명을 입력해 주세요.`};
+    }else{
+      candidates=serverReference.filter(server=>server.serverId===DEFAULT_SERVER_ID);
+      if(candidates.length!==1)return {ok:false,code:'DEFAULT_SERVER_NOT_FOUND',message:'기준 서버 지켈을 확인할 수 없습니다.'};
+    }
+    const server=candidates[0];
+    return {ok:true,raw,characterName,serverSuffix,serverId:server.serverId,serverName:server.serverName,raceId:server.raceId};
   }
 
   function normalizeMember(item){
@@ -431,67 +453,9 @@
     }
   }
 
-  function setRaceButtonState(raceId){
-    const elyos=q('#legionTreeRaceElyos');
-    const asmodian=q('#legionTreeRaceAsmodian');
-    [[elyos,1],[asmodian,2]].forEach(([button,id])=>{
-      if(!button)return;
-      const selected=Number(raceId)===id;
-      button.setAttribute('aria-pressed',selected?'true':'false');
-      button.style.opacity=raceId?(selected?'1':'.58'):'1';
-      button.style.boxShadow=selected?'inset 0 0 0 2px rgba(50,85,145,.28)':'none';
-    });
-  }
-
-  function clearServerOptions(){
-    const server=q('#legionTreeServer');
-    if(!server)return;
-    while(server.firstChild)server.removeChild(server.firstChild);
-    const placeholder=document.createElement('option');
-    placeholder.value='';
-    placeholder.textContent='서버 선택';
-    server.appendChild(placeholder);
-    server.value='';
-  }
-
-  function renderServerOptions(raceId){
-    const server=q('#legionTreeServer');
-    if(!server)return;
-    const previous=String(server.value||'');
-    clearServerOptions();
-    const filtered=serverReference.filter(item=>item.raceId===Number(raceId));
-    filtered.forEach(item=>{
-      const option=document.createElement('option');
-      option.value=String(item.serverId);
-      option.textContent=item.serverName;
-      option.dataset.raceId=String(item.raceId);
-      option.dataset.shortName=item.shortName;
-      server.appendChild(option);
-    });
-    if(filtered.some(item=>String(item.serverId)===previous))server.value=previous;
-    server.disabled=false;
-  }
-
-  function selectRace(raceId){
-    if(!serverReferenceReady)return;
-    const normalized=Number(raceId);
-    if(![1,2].includes(normalized))return;
-    selectedRaceId=normalized;
-    setRaceButtonState(normalized);
-    renderServerOptions(normalized);
-    refreshStatus();
-  }
-
   async function loadServerReference(){
-    const elyos=q('#legionTreeRaceElyos');
-    const asmodian=q('#legionTreeRaceAsmodian');
-    const server=q('#legionTreeServer');
-    if(elyos)elyos.disabled=true;
-    if(asmodian)asmodian.disabled=true;
-    if(server){
-      server.disabled=true;
-      clearServerOptions();
-    }
+    const add=q('#legionTreeAddBtn');
+    if(add)add.disabled=true;
     serverReferenceError='';
 
     try{
@@ -503,18 +467,13 @@
       if(!normalized.some(item=>item.raceId===1)||!normalized.some(item=>item.raceId===2))throw new Error('SERVER_REFERENCE_EMPTY_RACE');
       serverReference=normalized;
       serverReferenceReady=true;
-      if(elyos)elyos.disabled=false;
-      if(asmodian)asmodian.disabled=false;
-      if(server)server.disabled=true;
-      setRaceButtonState(null);
+      if(add)add.disabled=false;
       refreshStatus();
     }catch(error){
       serverReference=[];
       serverReferenceReady=false;
       serverReferenceError='서버 기준정보를 불러오지 못했습니다.';
-      if(elyos)elyos.disabled=true;
-      if(asmodian)asmodian.disabled=true;
-      if(server)server.disabled=true;
+      if(add)add.disabled=true;
       refreshStatus();
       console.warn('[KINOJO][LegionTree] server reference load failed',error);
     }
@@ -527,13 +486,8 @@
     }
     const main=q('#legionTreeMainName');
     const alt=q('#legionTreeAltName');
-    const server=q('#legionTreeServer');
     if(main)main.value='';
     if(alt)alt.value='';
-    selectedRaceId=null;
-    setRaceButtonState(null);
-    clearServerOptions();
-    if(server)server.disabled=true;
     setMainRequiredError(false);
     resetAddProgress();
     return true;
@@ -553,13 +507,19 @@
     }
 
     setMainRequiredError(false);
-    const serverId=positiveInt(q('#legionTreeServer')?.value);
-    const selectedServer=serverReference.find(item=>item.serverId===serverId);
-    if(!selectedRaceId||serverId===null||!selectedServer||selectedServer.raceId!==selectedRaceId){
-      setStatus('종족과 서버를 선택해 주세요.','#dc2626');
+    if(!serverReferenceReady){
+      setStatus(serverReferenceError||'서버 기준정보를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.','#dc2626');
       return null;
     }
-    return {mainCharacterName:mainName,altCharacterName:altName,serverId};
+    const parsedMain=parseCharacterAddInput(mainName);
+    const parsedAlt=altName?parseCharacterAddInput(altName):{ok:true};
+    if(parsedMain.ok!==true||parsedAlt.ok!==true){
+      const invalid=parsedMain.ok!==true?parsedMain:parsedAlt;
+      setStatus(invalid.message,'#dc2626');
+      (parsedMain.ok!==true?main:alt)?.focus();
+      return null;
+    }
+    return {mainCharacterName:mainName,altCharacterName:altName,serverId:DEFAULT_SERVER_ID};
   }
 
   async function handleAdd(){
@@ -619,8 +579,6 @@
     q('#legionTreeMainName')?.addEventListener('input',event=>{
       if(String(event.currentTarget?.value||'').trim())setMainRequiredError(false);
     });
-    q('#legionTreeRaceElyos')?.addEventListener('click',()=>selectRace(1));
-    q('#legionTreeRaceAsmodian')?.addEventListener('click',()=>selectRace(2));
     q('#legionTreeRoot')?.addEventListener('click',event=>{
       if(event.target?.closest?.('.legion-tree-character')){
         toast('캐릭터 상세 모달은 파 단계에서 연결합니다.');
@@ -641,6 +599,7 @@
     loadTreeData,
     handleAdd,
     resetInputs,
+    parseCharacterAddInput,
     progressIndexForRuntime,
     getTreeModel:()=>currentTreeModel,
     getAddState:()=>Object.freeze({running:addRequestRunning,sessionId:activeAddSessionId,progressIndex:activeAddProgressIndex})
