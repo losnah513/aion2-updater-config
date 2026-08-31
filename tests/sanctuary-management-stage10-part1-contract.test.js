@@ -44,7 +44,7 @@ for(const token of [
   "difficulty:value(item.difficulty||options.teamDifficulty||'NORMAL')",
 ])assert.ok(main.includes(token),`Stage 10 part 1 browser contract missing ${token}`);
 
-assert.ok(draft.includes("difficulty:value(force.difficulty||form?.elements.draftDifficulty?.value||state.team?.difficulty||'NORMAL')"),'composer must send force difficulty');
+assert.ok(draft.includes('difficulty:selectedDifficulty(force)'),'composer must send force difficulty');
 assert.ok(core.includes('async function getSanctuaryManagementLinkedAlts(teamId,mainCharacterId,forceId=null)'),'bridge must accept a force-scoped alt lookup');
 assert.ok(core.includes('forceId:normalizedForceId'),'bridge must send forceId to Edge');
 
@@ -55,7 +55,7 @@ for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
     'id="sanctuaryManagementScheduleState"',
     'id="sanctuaryManagementMonthlySchedule"',
     'id="sanctuaryManagementRecruitmentState"',
-    'stage10=2026083101',
+    'stage10=2026083102',
   ])assert.ok(html.includes(token),`${page}: Stage 10 part 1 layout missing ${token}`);
   for(const retired of ['sanctuary-management-summary','sanctuary-management-side','sanctuaryManagementAdminState'])assert.equal(html.includes(retired),false,`${page}: retired side layout remains ${retired}`);
 }

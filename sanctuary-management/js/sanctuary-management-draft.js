@@ -87,7 +87,7 @@
   function localUsedCharacterIds(){return new Set(teamForces().flatMap(force=>forceSlots(force)).map(item=>Number(item.slot.character?.characterId||0)).filter(Boolean));}
 
   function compositionSignature(includeLocks=true){
-    return JSON.stringify(teamForces().map(force=>({sourceForceId:Number(force.forceId)>0?Number(force.forceId):null,slots:forceSlots(force).map(item=>({partyNo:item.partyNo,slotNo:Number(item.slot.slotNo),characterId:Number(item.slot.character?.characterId||0)||null,mainCharacterId:item.slot.character?.isRandomAlt?Number(item.slot.character.mainCharacterId)||null:null,assignmentKind:assignmentKind(item.slot),requiredClassCode:slotClassCode(item.slot),...(includeLocks?{placementLocked:item.slot.placementLocked===true}:{})}))})));
+    return JSON.stringify(teamForces().map(force=>({sourceForceId:Number(force.forceId)>0?Number(force.forceId):null,difficulty:value(force.difficulty).toUpperCase()==='HARD'?'HARD':'NORMAL',slots:forceSlots(force).map(item=>({partyNo:item.partyNo,slotNo:Number(item.slot.slotNo),characterId:Number(item.slot.character?.characterId||0)||null,mainCharacterId:item.slot.character?.isRandomAlt?Number(item.slot.character.mainCharacterId)||null:null,assignmentKind:assignmentKind(item.slot),requiredClassCode:slotClassCode(item.slot),...(includeLocks?{placementLocked:item.slot.placementLocked===true}:{})}))})));
   }
 
   function invalidateBalanceProposal(){
@@ -166,13 +166,14 @@
   }
   function sanctuaryByCode(code){return sanctuaryItems().find(item=>sanctuaryCode(item)===value(code))||null;}
   function entryModes(item){return Array.isArray(item?.entryModes)?item.entryModes.filter(mode=>mode&&typeof mode==='object'):[];}
-  function selectedDifficulty(){const form=state.layer?.querySelector('[data-draft-form]');return value(form?.elements?.draftDifficulty?.value||state.team?.difficulty||'NORMAL').toUpperCase()==='HARD'?'HARD':'NORMAL';}
-  function minimumItemLevel(code=value(state.layer?.querySelector('[data-draft-form]')?.elements?.draftSanctuary?.value)||selectedCode(),difficulty=selectedDifficulty()){
+  function activeSanctuaryCode(){return value(state.layer?.querySelector('[data-draft-form]')?.elements?.draftSanctuary?.value)||selectedCode();}
+  function selectedDifficulty(force=selectedForce()){return value(force?.difficulty||state.team?.difficulty||'NORMAL').toUpperCase()==='HARD'?'HARD':'NORMAL';}
+  function minimumItemLevel(code=activeSanctuaryCode(),difficulty=selectedDifficulty()){
     const sanctuary=sanctuaryByCode(code);const modes=entryModes(sanctuary);if(!modes.length)return 0;
     const wanted=value(sanctuary?.code)==='kaldrix'?(difficulty==='HARD'?'hard':'normal'):'default';
     const mode=modes.find(item=>value(item.key).toLowerCase()===wanted)||modes[0];return itemLevelValue(mode?.minItemLevel);
   }
-  function characterEligible(character,code=selectedCode(),difficulty=selectedDifficulty()){
+  function characterEligible(character,code=activeSanctuaryCode(),difficulty=selectedDifficulty()){
     const minimum=minimumItemLevel(code,difficulty);return !minimum||itemLevelValue(character?.itemLevel??character?.latestPveItemLevel??character?.latest_pve_item_level)>=minimum;
   }
 
@@ -209,8 +210,9 @@
     layer.addEventListener('dragover',handleDragOver);
     layer.addEventListener('drop',handleDrop);
     layer.addEventListener('dragend',handleDragEnd);
+    layer.addEventListener('wheel',handleDraftWheel,{passive:false});
     layer.addEventListener('scroll',event=>{
-      if(event.target.matches?.('.sanctuary-management-builder-dialog,.sanctuary-management-schedule-scroll,.sanctuary-management-force-list,.sanctuary-management-candidate-list'))syncScrollFade(event.target);
+      if(event.target.matches?.('.sanctuary-management-builder-dialog,.sanctuary-management-schedule-scroll,.sanctuary-management-force-list,.sanctuary-management-candidate-list,.sanctuary-management-linked-alt-panel>div'))syncScrollFade(event.target);
     },true);
     window.addEventListener('resize',()=>requestAnimationFrame(syncScrollFades));
     document.body.appendChild(layer);
@@ -252,12 +254,21 @@
   function syncScrollFade(scroller){
     if(!scroller)return;
     const hasMore=scroller.scrollTop+scroller.clientHeight<scroller.scrollHeight-2;
-    const shell=scroller.matches('.sanctuary-management-builder-dialog')?scroller.closest('.sanctuary-management-draft-frame'):scroller.matches('.sanctuary-management-force-list')?scroller.closest('.sanctuary-management-force-rail'):scroller.matches('.sanctuary-management-candidate-list')?scroller.closest('.sanctuary-management-candidate-rail'):scroller.closest('.sanctuary-management-schedule-panel');
+    const shell=scroller.matches('.sanctuary-management-builder-dialog')?scroller.closest('.sanctuary-management-draft-frame'):scroller.matches('.sanctuary-management-force-list')?scroller.closest('.sanctuary-management-force-rail'):scroller.matches('.sanctuary-management-candidate-list')?scroller.closest('.sanctuary-management-candidate-rail'):scroller.matches('.sanctuary-management-linked-alt-panel>div')?scroller.closest('.sanctuary-management-linked-alt-panel'):scroller.closest('.sanctuary-management-schedule-panel');
     shell?.classList.toggle('has-more',hasMore);
   }
 
   function syncScrollFades(){
-    state.layer?.querySelectorAll('.sanctuary-management-builder-dialog,.sanctuary-management-schedule-scroll,.sanctuary-management-force-list,.sanctuary-management-candidate-list').forEach(syncScrollFade);
+    state.layer?.querySelectorAll('.sanctuary-management-builder-dialog,.sanctuary-management-schedule-scroll,.sanctuary-management-force-list,.sanctuary-management-candidate-list,.sanctuary-management-linked-alt-panel>div').forEach(syncScrollFade);
+  }
+
+  function handleDraftWheel(event){
+    if(event.ctrlKey||Math.abs(event.deltaY)<=Math.abs(event.deltaX))return;
+    const linkedScroller=state.layer?.querySelector('.sanctuary-management-linked-alt-panel.is-open>div');
+    const localScroller=event.target.closest?.('.sanctuary-management-schedule-scroll,.sanctuary-management-force-list,.sanctuary-management-candidate-list,.sanctuary-management-builder-dialog');
+    const scroller=linkedScroller||localScroller;if(!scroller||scroller.scrollHeight<=scroller.clientHeight+1)return;
+    const canMove=event.deltaY>0?scroller.scrollTop+scroller.clientHeight<scroller.scrollHeight-1:scroller.scrollTop>0;if(!canMove)return;
+    event.preventDefault();scroller.scrollBy({top:event.deltaY,left:0,behavior:'smooth'});requestAnimationFrame(()=>syncScrollFade(scroller));
   }
 
   function openMode(opener){
@@ -516,7 +527,9 @@
     }
     const parties=force.parties.slice().sort((left,right)=>Number(left.partyNo)-Number(right.partyNo));
     const forceWarning=force.requirements?.satisfied===false;
-    const forceSummary='<div class="sanctuary-management-force-requirement-summary'+(forceWarning?' has-unmet-requirements':'')+'"><span><strong>'+escapeHtml(force.forceNo)+'포스 '+combatPowerMarkup(force.combatPower?.average,'평균')+'</strong><small>'+escapeHtml(force.combatPower?.knownCount||0)+'/'+escapeHtml(force.occupiedCount)+'명 확인'+(forceWarning?' · 조건 '+escapeHtml(force.requirements.unsatisfiedCount)+'개 미충족':'')+'</small></span><button type="button" data-requirement-open data-force-id="'+escapeHtml(force.forceId)+'">포스 조건</button></div>';
+    const sanctuary=sanctuaryByCode(activeSanctuaryCode());const hasDifficulty=entryModes(sanctuary).some(mode=>value(mode.key).toLowerCase()==='hard');const difficulty=selectedDifficulty(force);
+    const difficultyMarkup=hasDifficulty?'<div class="sanctuary-management-force-difficulty-editor" role="group" aria-label="'+escapeHtml(force.forceNo)+'포스 난이도"><button type="button" data-draft-force-difficulty="NORMAL" data-force-id="'+escapeHtml(force.forceId)+'" aria-pressed="'+String(difficulty==='NORMAL')+'"><span>보통</span><small>'+escapeHtml(minimumItemLevel(activeSanctuaryCode(),'NORMAL'))+'+</small></button><button type="button" data-draft-force-difficulty="HARD" data-force-id="'+escapeHtml(force.forceId)+'" aria-pressed="'+String(difficulty==='HARD')+'"><span>어려움</span><small>'+escapeHtml(minimumItemLevel(activeSanctuaryCode(),'HARD'))+'+</small></button></div>':'';
+    const forceSummary='<div class="sanctuary-management-force-requirement-summary'+(forceWarning?' has-unmet-requirements':'')+'"><span><strong>'+escapeHtml(force.forceNo)+'포스 '+combatPowerMarkup(force.combatPower?.average,'평균')+'</strong><small>'+escapeHtml(force.combatPower?.knownCount||0)+'/'+escapeHtml(force.occupiedCount)+'명 확인'+(forceWarning?' · 조건 '+escapeHtml(force.requirements.unsatisfiedCount)+'개 미충족':'')+'</small></span>'+difficultyMarkup+'<button type="button" data-requirement-open data-force-id="'+escapeHtml(force.forceId)+'">포스 조건</button></div>';
     const labels=parties.map(party=>'<span class="'+(party.requirements?.satisfied===false?'has-unmet-requirements':'')+'"><b>'+escapeHtml(party.partyNo)+'파티 · '+escapeHtml(party.occupiedCount)+'/'+escapeHtml(party.capacity)+'명</b><button type="button" data-requirement-open data-force-id="'+escapeHtml(force.forceId)+'" data-party-no="'+escapeHtml(party.partyNo)+'">조건</button></span>').join('');
     const slots=parties.map(party=>party.slots.map(slot=>slotMarkup(slot,party.partyNo)).join('')).join('');
     return '<main class="sanctuary-management-roster'+(forceWarning?' has-unmet-requirements':'')+'" aria-label="'+escapeHtml(force.forceNo)+'포스 Server 슬롯">'+forceSummary+'<div class="sanctuary-management-party-labels">'+labels+'</div><div class="sanctuary-management-draft-slot-grid">'+slots+'</div></main>';
@@ -559,8 +572,8 @@
     const ready=participationReady();
     const modeLabel=participation?'참여 팀':'고정 팀';
     const joinPolicy=currentJoinPolicy();
-    const selectedSanctuary=sanctuaryByCode(selectedCode());const hasDifficulty=entryModes(selectedSanctuary).some(mode=>value(mode.key).toLowerCase()==='hard');const difficulty=hasDifficulty&&value(state.team?.difficulty).toUpperCase()==='HARD'?'HARD':'NORMAL';
-    const difficultyMarkup='<div class="sanctuary-management-difficulty"'+(hasDifficulty?'':' hidden')+'><strong>난이도</strong><div role="group" aria-label="성역 난이도"><button type="button" data-draft-difficulty="NORMAL" aria-pressed="'+(difficulty==='NORMAL')+'">보통</button><button type="button" data-draft-difficulty="HARD" aria-pressed="'+(difficulty==='HARD')+'">어려움</button></div></div><input type="hidden" name="draftDifficulty" value="'+difficulty+'">';
+    const difficulty=selectedDifficulty(teamForces()[0]);
+    const difficultyMarkup='<input type="hidden" name="draftDifficulty" value="'+difficulty+'">';
     const submitLabel=state.saving?'처리 중…':state.mutating?'변경 중…':participation?(active?'저장':draft?'참여 팀 생성':'1포스 먼저 추가'):(active?'저장':draft?'팀 생성':'구성 시작');
     const joinPolicyMarkup=participation?'<div class="sanctuary-management-join-policy"><strong>참가 방식</strong><div class="sanctuary-management-schedule-kind" role="group" aria-label="참가 방식"><button type="button" data-draft-join-policy="INSTANT" aria-pressed="'+(joinPolicy==='INSTANT')+'">즉시 참가</button><button type="button" data-draft-join-policy="APPROVAL" aria-pressed="'+(joinPolicy==='APPROVAL')+'">승인 참가</button></div><small>즉시 참가는 빈 슬롯에 바로 배치되고, 승인 참가는 운영자 확인 후 배치됩니다.</small></div>':'';
     return '<div class="sanctuary-management-draft-backdrop" data-draft-close></div>'
@@ -608,7 +621,7 @@
     openLayer(opener||state.opener);
     state.layer.innerHTML=modeMarkup();
     syncDateMinimum();
-    syncDifficultyControls(state.team?.difficulty);
+    syncDifficultyControls();
     if(state.team?.localOnly)syncNextRepeatDate();
     focusDialog('.sanctuary-management-builder-dialog');
     if(state.sourceTeamId){
@@ -617,7 +630,7 @@
         await acquireLease();
         state.mutating=false;
         setStatus('편집 잠금을 확인했습니다. 모달의 변경은 마지막 저장 전까지 Server에 반영되지 않습니다.','success');
-        state.layer.innerHTML=modeMarkup();syncDateMinimum();syncDifficultyControls(state.team?.difficulty);focusDialog('.sanctuary-management-builder-dialog');
+        state.layer.innerHTML=modeMarkup();syncDateMinimum();syncDifficultyControls();focusDialog('.sanctuary-management-builder-dialog');
       }catch(error){state.mutating=false;setStatus(value(error?.message)||'팀 편집 잠금을 가져오지 못했습니다.','error');setControlsDisabled(true);state.layer?.querySelector('[data-draft-close]')?.removeAttribute('disabled');}
     }
   }
@@ -632,13 +645,12 @@
     if(date&&minimum&&value(date.value)<minimum){date.value=minimum;syncDatePartInputs();}
   }
 
-  function syncDifficultyControls(nextDifficulty=''){
+  function syncDifficultyControls(nextDifficulty='',applyToAll=false){
     const form=state.layer?.querySelector('[data-draft-form]');if(!form)return;
     const sanctuary=sanctuaryByCode(form.elements.draftSanctuary?.value);const hasHard=entryModes(sanctuary).some(mode=>value(mode.key).toLowerCase()==='hard');
-    const requested=value(nextDifficulty||form.elements.draftDifficulty?.value||state.team?.difficulty||'NORMAL').toUpperCase();const difficulty=hasHard&&requested==='HARD'?'HARD':'NORMAL';
-    if(form.elements.draftDifficulty)form.elements.draftDifficulty.value=difficulty;if(state.team){state.team.difficulty=difficulty;state.team.forces?.forEach(force=>{force.difficulty=difficulty;force.minimumItemLevel=minimumItemLevel(value(sanctuary?.code),difficulty)||null;});}
-    const panel=form.querySelector('.sanctuary-management-difficulty');if(panel)panel.hidden=!hasHard;
-    form.querySelectorAll('[data-draft-difficulty]').forEach(button=>button.setAttribute('aria-pressed',String(value(button.dataset.draftDifficulty)===difficulty)));
+    const requested=value(nextDifficulty||'NORMAL').toUpperCase()==='HARD'?'HARD':'NORMAL';
+    if(state.team){state.team.forces?.forEach(force=>{const own=value(applyToAll?requested:force.difficulty||requested).toUpperCase();force.difficulty=hasHard&&own==='HARD'?'HARD':'NORMAL';force.minimumItemLevel=minimumItemLevel(value(sanctuary?.code),force.difficulty)||null;});state.team.difficulty=selectedDifficulty(state.team.forces?.[0]);}
+    if(form.elements.draftDifficulty)form.elements.draftDifficulty.value=selectedDifficulty(teamForces()[0]);
   }
 
   function syncDatePartInputs(){
@@ -684,7 +696,7 @@
       status:value(state.team?.status),
       mode:currentMode(),
       joinPolicy:currentJoinPolicy(),
-      difficulty:value(form?.elements.draftDifficulty?.value||state.team?.difficulty||'NORMAL').toUpperCase()==='HARD'?'HARD':'NORMAL',
+      difficulty:selectedDifficulty(teamForces()[0]),
       leaseToken:state.leaseToken,
       requestKey:state.requestKey,
       balanceProposalToken:state.balanceAppliedToken,
@@ -702,7 +714,7 @@
       },
       composition:teamForces().map(force=>({
         sourceForceId:Number(force.forceId)>0?Number(force.forceId):null,
-        difficulty:value(force.difficulty||form?.elements.draftDifficulty?.value||state.team?.difficulty||'NORMAL').toUpperCase()==='HARD'?'HARD':'NORMAL',
+        difficulty:selectedDifficulty(force),
         slots:forceSlots(force).map(item=>({
           partyNo:item.partyNo,
           slotNo:Number(item.slot.slotNo),
@@ -724,7 +736,7 @@
     if(!model.title||model.title.length>80)return '팀 이름을 1자 이상 80자 이하로 입력해 주세요.';
     if(!model.sanctuaryCode)return '진행 성역을 선택해 주세요.';
     if(!model.composition.length||model.composition.length>9)return '포스를 하나 이상, 최대 9개까지 구성해 주세요.';
-    if(teamSlots().some(item=>item.slot.occupied&&item.slot.character&&!item.slot.character.isRandomAlt&&!characterEligible(item.slot.character,model.sanctuaryCode,model.difficulty)))return '해당 성역 아이템레벨을 충족하지 않는 캐릭터가 포함되어 있습니다.';
+    if(teamSlots().some(item=>item.slot.occupied&&item.slot.character&&!item.slot.character.isRandomAlt&&!characterEligible(item.slot.character,model.sanctuaryCode,selectedDifficulty(item.force))))return '해당 포스 난이도의 아이템레벨을 충족하지 않는 캐릭터가 포함되어 있습니다.';
     if(model.composition.some(force=>force.slots.some(slot=>!SLOT_CLASSES.some(option=>option.code===slot.requiredClassCode)||slot.assignmentKind==='RANDOM_ALT'&&!slot.mainCharacterId)))return '슬롯 클래스 제한과 랜덤 부캐 편성을 다시 확인해 주세요.';
     if(!model.datePartsValid)return '월과 일을 올바른 숫자로 입력해 주세요.';
     if(!model.timePartsValid)return '오전·오후와 시·분을 올바르게 입력해 주세요.';
@@ -788,7 +800,7 @@
     if(state.saving||state.mutating||!state.team)return;
     const forces=teamForces();
     if(forces.length>=9){setStatus('한 팀에는 최대 9포스까지만 구성할 수 있습니다.');return;}
-    invalidateBalanceProposal();const localId=Math.min(0,...forces.map(item=>Number(item.forceId)||0))-1;const force=makeLocalForce(forces.length+1,localId);state.team.forces.push(force);refreshLocalTeam();state.selectedForceId=force.forceId;state.selectedSlotId=0;state.moveFromSlotId=0;resetCharacterLookup();renderRosterState();setStatus(force.forceNo+'포스를 로컬 편성안에 추가했습니다. 마지막 저장 전까지 Server에는 반영되지 않습니다.','success');
+    invalidateBalanceProposal();const localId=Math.min(0,...forces.map(item=>Number(item.forceId)||0))-1;const force=makeLocalForce(forces.length+1,localId);force.minimumItemLevel=minimumItemLevel(activeSanctuaryCode(),force.difficulty)||null;state.team.forces.push(force);refreshLocalTeam();state.selectedForceId=force.forceId;state.selectedSlotId=0;state.moveFromSlotId=0;resetCharacterLookup();renderRosterState();setStatus(force.forceNo+'포스를 로컬 편성안에 추가했습니다. 마지막 저장 전까지 Server에는 반영되지 않습니다.','success');
   }
 
   function candidateCharacter(candidate){
@@ -997,8 +1009,8 @@
     if(period){state.layer.querySelectorAll('[data-draft-period]').forEach(button=>button.setAttribute('aria-pressed',String(button===period)));syncTimeFromParts();return;}
     const duration=event.target.closest('[data-draft-duration]');
     if(duration){const form=state.layer.querySelector('[data-draft-form]');form.elements.draftDuration.value=duration.dataset.draftDuration;form.querySelectorAll('[data-draft-duration]').forEach(button=>button.setAttribute('aria-pressed',String(button===duration)));return;}
-    const difficulty=event.target.closest('[data-draft-difficulty]');
-    if(difficulty){syncDifficultyControls(difficulty.dataset.draftDifficulty);renderRosterState();setStatus('난이도에 맞는 아이템레벨 조건으로 후보를 다시 확인했습니다.','success');return;}
+    const difficulty=event.target.closest('[data-draft-force-difficulty]');
+    if(difficulty){const force=teamForces().find(item=>Number(item.forceId)===Number(difficulty.dataset.forceId));if(force){invalidateBalanceProposal();force.difficulty=value(difficulty.dataset.draftForceDifficulty).toUpperCase()==='HARD'?'HARD':'NORMAL';force.minimumItemLevel=minimumItemLevel(activeSanctuaryCode(),force.difficulty)||null;state.team.difficulty=selectedDifficulty(teamForces()[0]);const form=state.layer?.querySelector('[data-draft-form]');if(form?.elements?.draftDifficulty)form.elements.draftDifficulty.value=state.team.difficulty;resetCharacterLookup();renderRosterState();setStatus(force.forceNo+'포스를 '+(force.difficulty==='HARD'?'어려움':'보통')+' 난이도로 설정했습니다.','success');}return;}
     const requirementOpen=event.target.closest('[data-requirement-open]');
     if(requirementOpen){state.requirementTarget={forceId:Number(requirementOpen.dataset.forceId)||Number(state.selectedForceId),partyNo:Number(requirementOpen.dataset.partyNo)||null};state.selectedSlotId=0;state.moveFromSlotId=0;resetCharacterLookup();renderRosterState();setStatus('본캐·전투력·아이템레벨 조건은 미충족이어도 저장할 수 있으며 붉은 안내로 표시됩니다.','progress');return;}
     const requirementToggle=event.target.closest('[data-requirement-toggle]');
@@ -1066,7 +1078,7 @@
   }
 
   function handleChange(event){
-    if(event.target.name==='draftSanctuary'){syncDateMinimum();syncNextRepeatDate();syncDifficultyControls('NORMAL');renderRosterState();}
+    if(event.target.name==='draftSanctuary'){syncDateMinimum();syncNextRepeatDate();syncDifficultyControls('NORMAL',true);resetCharacterLookup();renderRosterState();}
     if(event.target.name==='draftWeekday')syncNextRepeatDate();
     if(event.target.name==='draftMonth'||event.target.name==='draftDay')syncDateFromParts();
     if(event.target.name==='draftHour'||event.target.name==='draftMinute')syncTimeFromParts();

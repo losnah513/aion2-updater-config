@@ -198,6 +198,7 @@ jobs:
           node tests/sanctuary-management-stage8-part3-contract.test.js
           node tests/sanctuary-management-random-alt-v453-contract.test.js
           node tests/sanctuary-management-stage10-part1-contract.test.js
+          node tests/sanctuary-management-stage10-part2-contract.test.js
           node tests/admin-member-v433-browser-rpc-contract.test.js
           node tests/staged-page-contract.test.js
           node tests/meter-presence-log-contract.test.js

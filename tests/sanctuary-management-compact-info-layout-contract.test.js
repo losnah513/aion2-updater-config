@@ -10,7 +10,7 @@ const workflow=read('.github/workflows/verify-kinojo-pages.yml');
 for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
   for(const token of [
-    'stage10=2026083101',
+    'stage10=2026083102',
     'id="sanctuaryManagementHeroBg"',
     'id="sanctuaryManagementHeroKicker"',
     'id="sanctuaryManagementHeroSub"',
