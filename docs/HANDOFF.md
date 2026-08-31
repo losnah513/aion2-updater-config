@@ -303,7 +303,7 @@
 
 - PC·모바일 페이지가 공개 RPC `kinojo_web_get_legion_tree`의 `web-legion-tree-v1` / DB 453 계약을 읽어 깡·낮·밤·키나노동조합을 Server 순서대로 렌더링한다. 설정이 없으면 기존 DB355 fallback, 설정이 있으면 DB453 configured tree를 반환한다.
 - 2026-08-24 운영 readback 기준 실제 구성원은 깡 41명, 낮 4명, 밤 2명, 키나노동조합 42명으로 총 89명이다.
-- 종족 선택은 v372 Server reference의 천족/마족 각 21개 서버만 표시하며, 종족 전환 시 호환되지 않는 선택 서버를 즉시 초기화한다.
+- 캐릭터 추가의 종족·서버 선택 UI는 제거했다. 본캐·부캐 입력은 각각 `이름` 또는 `이름[서버약칭]`을 받으며 미표기 시 지켈(2002), 표기 시 v372 active `server_master`의 원본명/단축명으로 Server가 최종 해석한다.
 - 실제 구성원 카드는 Server `className`을 수호성→templar, 검성→gladiator, 살성→assassin, 궁성→ranger, 마도성→sorcerer, 정령성→elementalist, 치유성→cleric, 호법성→chanter, 권성→fighter의 공용 9종 아이콘으로만 연결한다. 공백·표시용 괄호 수식은 정규화하되 unknown/빈 값은 추측하지 않고 `?` fallback으로 닫는다.
 - 2026-08-24 운영 readback의 89명 직업 분포는 수호성 7, 검성 6, 살성 7, 궁성 15, 마도성 10, 정령성 9, 치유성 17, 호법성 12, 권성 6이며 현재 unknown/null은 0명이다.
 - 운영 89명의 Server 상태는 본캐 39명, 부캐 50명이며 characterName 누락과 부캐 mainCharacterName 누락은 각각 0명이다. WEB은 `characterName / isMain / mainCharacterName`을 그대로 렌더링하고 본캐/부캐를 재판정하거나 이름순·본캐 우선으로 재정렬하지 않는다.
@@ -311,10 +311,11 @@
 - 고정 124px 카드는 branch 수가 늘어도 축소하지 않는다. PC는 1/2/3+ branch에 5/3/2열, 모바일은 1~2/3+ branch에 2/1열을 사용하며 `data-branch-count`와 동일 CSS 계약을 PC·모바일이 공유한다.
 - 운영 Server가 반환한 `DEFAULT_FALLBACK` 구조에는 `기본 단계` 표식을 붙이고, 배정 구성원이 0명인 role은 group 배열 유무와 관계없이 `지정 전`으로 표시한다.
 - 계약 버전, 필수 4개 레기온, Server stage 구조 또는 fallback 상태가 맞지 않으면 브라우저에서 임의 fallback을 만들지 않고 오류 상태로 닫는다.
-- 캐릭터 추가는 기존 인증 Server chain을 재사용한다. `core/kinojo-supabase-features.js#addLegionTreeCharacter`가 현재 `kws_` 세션을 내부 결합해 `kinojo-legion-tree`의 `character-add`만 호출하며, 페이지는 본캐명·부캐명·`serverId` 외의 mode/race/member/공식 정보/list/Queue 값을 만들지 않는다.
-- 본캐만 입력하면 MAIN, 본캐+부캐는 ALT 요청이 되고, 부캐만 입력하면 본캐 오류·focus 후 network 0으로 종료한다. 실행 중에는 추가/초기화 버튼을 잠가 중복 click과 가짜 취소를 막는다.
-- 진행 UI는 요청에 결합된 Server runtime `sessionId`만 추적해 `공식 확인 → 정보 반영 → list 반영 → readback → 완료`를 표시한다. 동일 세션의 `completed / SERVER_QUEUE_LIST_SYNC_DONE`만 완료로 인정하고, Google list readback 완료 뒤 공개 트리를 재조회한다.
-- 초기화는 작업이 없을 때 두 이름, 종족, 서버, 오류, 진행 표시를 함께 비운다. Server 작업 실행 중에는 초기화를 거부하며 Server Queue를 취소했다고 표시하지 않는다.
+- 캐릭터 추가는 기존 인증 Server chain을 재사용한다. `core/kinojo-supabase-features.js#addLegionTreeCharacter`가 현재 `kws_` 세션을 내부 결합해 `kinojo-legion-tree`의 `character-add`만 호출한다. 페이지는 raw 본캐명·부캐명과 기존 cache 호환용 고정 지켈 fallback ID만 보내며, 입력 suffix의 resolved server/race/mode/member/공식 정보/list/Queue 값은 Server가 결정한다.
+- 본캐만 입력하면 MAIN, 본캐+부캐는 ALT 요청이 되고, 부캐만 입력·잘못 닫힌 `[]`·알 수 없는 약칭은 오류·focus 후 network 0으로 종료한다. 실행 중에는 추가/초기화 버튼을 잠가 중복 click과 가짜 취소를 막는다.
+- DB454 Queue wrapper는 target 서버와 main 서버를 별도로 저장하고 ALT 시작 전에 해당 main 서버의 기존 본캐를 확인한다. 기존 list-sync가 호출하는 relation finalizer의 함수 identity는 유지하면서 내부를 cross-server 조회로 확장해 `복숭아(지켈) → 화비(루미엘)` 관계를 확정한다.
+- 진행 UI는 요청에 결합된 Server runtime `sessionId`만 추적해 `공식 확인 → 정보 반영 → list 반영 → readback → 완료`를 표시한다. subbar는 입력·버튼·상태/progress를 독립 grid 영역으로 나눠 조회 시작 후 긴 오류/진행 문구가 본문과 겹치지 않는다. 동일 세션의 `completed / SERVER_QUEUE_LIST_SYNC_DONE`만 완료로 인정하고, Google list readback 완료 뒤 공개 트리를 재조회한다.
+- 초기화는 작업이 없을 때 두 이름, 오류, 진행 표시를 함께 비운다. Server 작업 실행 중에는 초기화를 거부하며 Server Queue를 취소했다고 표시하지 않는다.
 - 조직도 편집은 PC·모바일 공용 `legion-tree/js/legion-tree-editor.js`가 소유한다. 네 레기온 선택, 단계 수·단계명, 동일 단계 복수 직급, 직급 삭제, 구성원 배치·해제, 바로 윗 단계 상위 소속, Server fallback 초기화, 취소·저장 UI를 제공한다.
 - 타 단계는 기존 `kinojo-legion-tree`를 v4로 확장 재사용한다. Browser는 현재 KWS 세션과 편집값만 보내고, Edge와 DB453이 `canManage`, revision/CAS, v365 무결성, 역할 UUID 정규화, 설정·직급·배치·parent 저장 또는 reset을 한 transaction에서 다시 검증한다.
 - 저장 성공 응답은 같은 요청 안에서 `kinojo_web_get_legion_tree`를 재호출해 revision·fallback 상태가 일치할 때만 `readbackVerified=true`로 반환한다. 편집기는 이 readback만 재렌더링하며 직접 service-role RPC를 호출하지 않는다.

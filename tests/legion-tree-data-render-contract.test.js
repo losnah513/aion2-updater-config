@@ -10,6 +10,8 @@ const pc = fs.readFileSync(path.join(rootDir, 'legion-tree/index.html'), 'utf8')
 const mobile = fs.readFileSync(path.join(rootDir, 'm/legion-tree/index.html'), 'utf8');
 const css = fs.readFileSync(path.join(rootDir, 'legion-tree/css/legion-tree.css'), 'utf8');
 const features = fs.readFileSync(path.join(rootDir, 'core/kinojo-supabase-features.js'), 'utf8');
+const edge = fs.readFileSync(path.join(rootDir, 'supabase/functions/kinojo-legion-tree/index.ts'), 'utf8');
+const crossServerMigration = fs.readFileSync(path.join(rootDir, 'supabase/migrations/20260831060000_legion_tree_cross_server_character_add_v454.sql'), 'utf8');
 const workflow = fs.readFileSync(path.join(rootDir, '.github/workflows/verify-legion-tree-pages.yml'), 'utf8');
 
 const treeRoot = {
@@ -174,8 +176,6 @@ function fakeElement(initial = {}) {
 function createAddHarness() {
   const main = fakeElement();
   const alt = fakeElement();
-  const elyos = fakeElement();
-  const asmodian = fakeElement();
   const add = fakeElement({ disabled: true });
   const reset = fakeElement();
   const progress = fakeElement({ hidden: true });
@@ -183,23 +183,9 @@ function createAddHarness() {
   const harnessTreeRoot = fakeElement({
     addEventListener() {}
   });
-  const server = fakeElement({ children: [] });
-  Object.defineProperty(server, 'firstChild', {
-    get() { return this.children[0] || null; }
-  });
-  server.appendChild = function appendChild(child) { this.children.push(child); return child; };
-  server.removeChild = function removeChild(child) {
-    const index = this.children.indexOf(child);
-    if (index >= 0) this.children.splice(index, 1);
-    return child;
-  };
-
   const elements = {
     '#legionTreeMainName': main,
     '#legionTreeAltName': alt,
-    '#legionTreeRaceElyos': elyos,
-    '#legionTreeRaceAsmodian': asmodian,
-    '#legionTreeServer': server,
     '#legionTreeAddBtn': add,
     '#legionTreeResetBtn': reset,
     '#legionTreeAddProgress': progress,
@@ -228,7 +214,9 @@ function createAddHarness() {
             contract: 'web-legion-tree-server-reference-v1',
             servers: [
               { serverId: 1001, raceId: 1, serverName: '시엘', shortName: '시엘' },
-              { serverId: 2001, raceId: 2, serverName: '이스라펠', shortName: '이스' }
+              { serverId: 2001, raceId: 2, serverName: '이스라펠', shortName: '이스' },
+              { serverId: 2002, raceId: 2, serverName: '지켈', shortName: '지켈' },
+              { serverId: 2004, raceId: 2, serverName: '루미엘', shortName: '루미' }
             ]
           };
         }
@@ -268,8 +256,6 @@ function createAddHarness() {
   async function start() {
     domReady();
     await new Promise(resolve => setTimeout(resolve, 0));
-    elyos.click();
-    server.value = '1001';
   }
 
   return {
@@ -428,13 +414,18 @@ window.KinojoSupabase = {
     assert(html.includes('id="legionTreeRoot"'));
     assert(html.includes('id="legionTreeEditorRoot"'));
     assert(html.includes('id="legionTreeAddProgress"'));
+    assert(html.includes('id="legionTreeServerHint"'));
+    assert(html.includes('placeholder="화비[루미]"'));
+    assert(!html.includes('id="legionTreeRaceElyos"'));
+    assert(!html.includes('id="legionTreeRaceAsmodian"'));
+    assert(!html.includes('id="legionTreeServer"'));
     assert(html.includes('aria-label="캐릭터 추가 진행 상태"'));
     assert(html.includes('Server 레기온 데이터를 불러오는 중'));
     assert(!html.includes('data-preview-card'));
     assert(!html.includes('본캐예시'));
-    assert(html.includes('legion-tree.css?cache=2026083102'));
+    assert(html.includes('legion-tree.css?cache=2026083103'));
     assert(html.includes('legion-tree-editor.js?cache=2026083102'));
-    assert(html.includes('legion-tree.js?cache=2026083102'));
+    assert(html.includes('legion-tree.js?cache=2026083103'));
     assert(html.includes('kinojo-supabase-features.js?cache=2026083103'));
     assert(!html.includes('legion-tree.js?cache=2026082403'));
   }
@@ -442,12 +433,17 @@ window.KinojoSupabase = {
   assert(script.includes("kinojo_web_legion_tree_server_reference_v372"));
   assert(script.includes("kinojo_web_get_legion_tree"));
   assert(script.includes("if(!mainName)"));
-  assert(script.includes("renderServerOptions(normalized)"));
+  assert(script.includes("parseCharacterAddInput"));
+  assert(script.includes("미표기 시 지켈"));
+  assert(!script.includes("renderServerOptions"));
+  assert(!script.includes("selectedRaceId"));
   assert(script.includes("ADD_ACCEPTED_CODE='ADD_QUEUE_ACCEPTED'"));
   assert(script.includes("state==='completed'&&stage==='SERVER_QUEUE_LIST_SYNC_DONE'"));
   assert(script.includes("const reloaded=await loadTreeData()"));
   assert(css.includes('.legion-tree-add-progress'));
-  assert(css.includes('grid-template-columns:repeat(5,minmax(76px,1fr))'));
+  assert(css.includes('grid-template-columns:repeat(5,minmax(0,1fr))'));
+  assert(css.includes('.legion-tree-subbar-feedback'));
+  assert(css.includes(':has(.legion-tree-add-progress:not([hidden]))'));
   assert(css.includes('li[data-state="done"]'));
   assert(css.includes('li[data-state="error"]'));
 
@@ -465,6 +461,26 @@ window.KinojoSupabase = {
   assert(workflow.includes('- "core/kinojo-supabase-features.js"'));
   assert(workflow.includes('node --check core/kinojo-supabase-features.js'));
   assert((workflow.match(/"core\/kinojo-supabase-features\.js"/g) || []).length >= 2);
+  for (const token of [
+    "const API_VERSION='1.4'",
+    "const DATABASE_CONTRACT='454'",
+    "CHARACTER_INPUT_CONTRACT='character-name-server-tag-v2'",
+    'parseCharacterInput(body.mainCharacterName,servers,legacyServerId)',
+    "rpc('kinojo_legion_tree_character_queue_prepare_v454'",
+    'p_main_server_id:mainServerId',
+    'crossServerMainAltConnected:true'
+  ]) assert(edge.includes(token), `Edge cross-server contract missing: ${token}`);
+  for (const token of [
+    'private.kinojo_legion_tree_character_queue_prepare_v454',
+    'public.kinojo_legion_tree_character_queue_prepare_v454',
+    "'mainServerId',p_main_server_id",
+    "target_source='server:legion_tree_character_add_v454'",
+    "p_target_server_id<>p_main_server_id",
+    "v_legacy_main_name:=v_main_name||'[server-'||p_main_server_id::text||']'",
+    'v_main_server_id=v_target.server_id',
+    "'legion-tree-relation-v2'",
+    'grant execute on function public.kinojo_legion_tree_character_queue_prepare_v454'
+  ]) assert(crossServerMigration.includes(token), `DB454 cross-server contract missing: ${token}`);
 
   const addHarness = createAddHarness();
   await addHarness.start();
@@ -493,21 +509,32 @@ window.KinojoSupabase = {
 
   const mainInput = addHarness.elements['#legionTreeMainName'];
   const altInput = addHarness.elements['#legionTreeAltName'];
-  const serverInput = addHarness.elements['#legionTreeServer'];
   const addButton = addHarness.elements['#legionTreeAddBtn'];
   const resetButton = addHarness.elements['#legionTreeResetBtn'];
   const addProgress = addHarness.elements['#legionTreeAddProgress'];
   const addStatus = addHarness.elements['#legionTreeStatus'];
 
-  mainInput.value = '본캐추가';
+  const defaultParsed = addHarness.api.parseCharacterAddInput('복숭아');
+  assert.strictEqual(defaultParsed.ok, true);
+  assert.strictEqual(defaultParsed.characterName, '복숭아');
+  assert.strictEqual(defaultParsed.serverId, 2002);
+  assert.strictEqual(defaultParsed.serverName, '지켈');
+  const taggedParsed = addHarness.api.parseCharacterAddInput('화비[루미]');
+  assert.strictEqual(taggedParsed.ok, true);
+  assert.strictEqual(taggedParsed.characterName, '화비');
+  assert.strictEqual(taggedParsed.serverId, 2004);
+  assert.strictEqual(taggedParsed.serverName, '루미엘');
+  assert.strictEqual(addHarness.api.parseCharacterAddInput('화비[없는서버]').code, 'SERVER_SUFFIX_NOT_FOUND');
+  assert.strictEqual(addHarness.api.parseCharacterAddInput('화비[루미').code, 'SERVER_TAG_INVALID');
+
+  mainInput.value = '복숭아';
   altInput.value = '';
-  serverInput.value = '1001';
   const treeLoadsBeforeMain = addHarness.getTreeLoads();
   assert.strictEqual(await addHarness.api.handleAdd(), true, 'main-only add must complete');
   assert.strictEqual(JSON.stringify(addHarness.addRequests[0]), JSON.stringify({
-    mainCharacterName: '본캐추가',
+    mainCharacterName: '복숭아',
     altCharacterName: '',
-    serverId: 1001
+    serverId: 2002
   }));
   assert.strictEqual(addHarness.getTreeLoads(), treeLoadsBeforeMain + 1, 'tree must reload after completed add');
   assert.strictEqual((addProgress.innerHTML.match(/data-state="done"/g) || []).length, 5);
@@ -520,20 +547,27 @@ window.KinojoSupabase = {
   assert.strictEqual(addButton.disabled, false);
   assert.strictEqual(resetButton.disabled, false);
 
-  mainInput.value = '본캐관계';
-  altInput.value = '부캐추가';
-  serverInput.value = '1001';
+  mainInput.value = '복숭아';
+  altInput.value = '화비[루미]';
   assert.strictEqual(await addHarness.api.handleAdd(), true, 'main+alt add must complete');
   assert.strictEqual(JSON.stringify(addHarness.addRequests[1]), JSON.stringify({
-    mainCharacterName: '본캐관계',
-    altCharacterName: '부캐추가',
-    serverId: 1001
+    mainCharacterName: '복숭아',
+    altCharacterName: '화비[루미]',
+    serverId: 2002
   }));
+
+  const callsBeforeBadSuffix = addHarness.addRequests.length;
+  mainInput.value = '복숭아';
+  altInput.value = '화비[알수없음]';
+  altInput.focused = false;
+  assert.strictEqual(await addHarness.api.handleAdd(), false, 'unknown server tag must fail before network');
+  assert.strictEqual(addHarness.addRequests.length, callsBeforeBadSuffix, 'unknown server tag must make network 0');
+  assert.strictEqual(altInput.focused, true);
+  assert(addStatus.textContent.includes('확인할 수 없습니다'));
 
   const callsBeforeAltOnly = addHarness.addRequests.length;
   mainInput.value = '';
   altInput.value = '부캐단독';
-  serverInput.value = '1001';
   mainInput.focused = false;
   assert.strictEqual(await addHarness.api.handleAdd(), false, 'alt-only must fail before network');
   assert.strictEqual(addHarness.addRequests.length, callsBeforeAltOnly, 'alt-only must make network 0');
@@ -545,7 +579,6 @@ window.KinojoSupabase = {
   addHarness.setAddImplementation(() => new Promise(resolve => { releaseAccepted = resolve; }));
   mainInput.value = '중복클릭';
   altInput.value = '';
-  serverInput.value = '1001';
   const duplicateCallsBefore = addHarness.addRequests.length;
   const firstClick = addHarness.api.handleAdd();
   const secondClick = addHarness.api.handleAdd();
@@ -572,19 +605,15 @@ window.KinojoSupabase = {
   });
   mainInput.value = '이미등록';
   altInput.value = '';
-  serverInput.value = '1001';
   assert.strictEqual(await addHarness.api.handleAdd(), false);
   assert(addStatus.textContent.includes('이미 등록된 캐릭터'));
   assert.strictEqual((addProgress.innerHTML.match(/data-state="error"/g) || []).length, 1);
 
   mainInput.value = '초기화본캐';
   altInput.value = '초기화부캐';
-  serverInput.value = '1001';
   assert.strictEqual(addHarness.api.resetInputs(), true);
   assert.strictEqual(mainInput.value, '');
   assert.strictEqual(altInput.value, '');
-  assert.strictEqual(serverInput.value, '');
-  assert.strictEqual(serverInput.disabled, true);
   assert.strictEqual(mainInput.attributes['aria-invalid'], undefined);
   assert.strictEqual(addProgress.hidden, true);
   assert.strictEqual(addProgress.innerHTML, '');
