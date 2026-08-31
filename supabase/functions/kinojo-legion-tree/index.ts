@@ -1,6 +1,6 @@
 const SERVICE_NAME='kinojo-legion-tree';
-const API_VERSION='1.6';
-const DATABASE_CONTRACT='457';
+const API_VERSION='1.7';
+const DATABASE_CONTRACT='458';
 const ORGANIZATION_DATABASE_CONTRACT='453';
 const AUTH_CONTRACT='320';
 const MODE_CONTRACT='1';
@@ -9,6 +9,7 @@ const QUEUE_CONTRACT='455';
 const WORKER_CONTRACT='295';
 const ORGANIZATION_CONTRACT='legion-tree-organization-save-v1';
 const CHARACTER_SEARCH_CONTRACT='legion-tree-character-search-v1';
+const CANDIDATE_REGISTRATION_CONTRACT='legion-tree-candidate-registration-v1';
 const CHARACTER_INPUT_CONTRACT='character-name-server-tag-v3';
 const MAX_REQUEST_BYTES=131072;
 const MAX_CHARACTER_ADD_BYTES=4096;
@@ -151,6 +152,18 @@ async function officialCharacterCandidates(input:Record<string,unknown>,servers:
     return{ok:false,status:502,code:aborted?'PLAYNC_TIMEOUT':'PLAYNC_REQUEST_FAILED',message:aborted?'공식 캐릭터 조회 시간이 초과되었습니다.':'공식 캐릭터 조회를 완료하지 못했습니다.'};
   }finally{clearTimeout(timer);}
 }
+async function markRegisteredCandidates(main:Record<string,unknown>,alt:Record<string,unknown>|null){
+  const groups=[main,...(alt?[alt]:[])];
+  const candidates=groups.flatMap(group=>(Array.isArray(group.candidates)?group.candidates:[]).map(record));
+  if(!candidates.length)return{main,alt,registeredCandidateCount:0};
+  const registration=await rpc('kinojo_legion_tree_candidate_registration_v458',{
+    p_candidates:candidates.map(candidate=>({candidateKey:text(candidate.candidateKey,420),serverId:positiveInt(candidate.serverId),characterName:text(candidate.characterName,120)}))
+  });
+  if(registration.ok!==true||text(registration.contract,120)!==CANDIDATE_REGISTRATION_CONTRACT)throw new Error('CANDIDATE_REGISTRATION_READBACK_FAILED');
+  const registeredKeys=new Set((Array.isArray(registration.registeredCandidateKeys)?registration.registeredCandidateKeys:[]).map(value=>text(value,420)).filter(Boolean));
+  const annotate=(group:Record<string,unknown>|null)=>group?{...group,candidates:(Array.isArray(group.candidates)?group.candidates:[]).map(item=>{const candidate=record(item);return{...candidate,registered:registeredKeys.has(text(candidate.candidateKey,420))};})}:null;
+  return{main:annotate(main) as Record<string,unknown>,alt:annotate(alt),registeredCandidateCount:registeredKeys.size};
+}
 function resolveMode(mainInput:Record<string,unknown>,altInput:Record<string,unknown>):Record<string,unknown>{
   if(mainInput.ok!==true||mainInput.empty===true)return{ok:false,code:'MAIN_CHARACTER_REQUIRED',message:'본캐 이름을 입력해 주세요.'};
   if(altInput.ok!==true)return altInput;
@@ -225,7 +238,7 @@ Deno.serve(async request=>{
     const rawBytes=encoder.encode(raw).byteLength;
     if(rawBytes>MAX_REQUEST_BYTES)return json(request,{ok:false,code:'REQUEST_TOO_LARGE',message:'요청 크기가 허용 범위를 초과했습니다.'},413);
     const body=record(raw?JSON.parse(raw):{}),action=text(body.action,40)||'health';
-    if(action==='health')return json(request,{ok:true,service:SERVICE_NAME,apiVersion:API_VERSION,contract:'legion-tree-v2',organizationContract:ORGANIZATION_CONTRACT,characterSearchContract:CHARACTER_SEARCH_CONTRACT,databaseContract:DATABASE_CONTRACT,organizationDatabaseContract:ORGANIZATION_DATABASE_CONTRACT,characterInputContract:CHARACTER_INPUT_CONTRACT,authContract:AUTH_CONTRACT,modeContract:MODE_CONTRACT,dedupeContract:DEDUPE_CONTRACT,queueContract:QUEUE_CONTRACT,workerContract:WORKER_CONTRACT,authBoundary:'KWS_SERVER_SESSION_AND_SERVER_CAN_MANAGE',serverReference:'server_master',serverResolution:'SERVER_NAME_OR_SHORT_NAME_TAG_OR_ALL_ACTIVE_SERVER_SEARCH',candidateSearch:{officialRequest:'single-request-per-input',exactNameOnly:true,activeServersOnly:true,createsTarget:false,createsQueue:false},dedupeBasis:'character_master server_id+character_identity_key_v298',queueModel:'existing-global-updater-lock-single-target',workerAction:'startAutonomous',listAppendPending:false,listWrite:false,listReadback:false,listlessCharacterAdd:true,listlessTerminalStage:'SERVER_QUEUE_CHARACTER_MASTER_DONE',modeRule:{mainOnly:'MAIN',mainAndAlt:'ALT',altOnly:'REJECT',sameNameAndServer:'REJECT',serverTag:'characterName[shortName]',missingTag:'SEARCH_ALL_ACTIVE_SERVERS',addRequiresSelectedServer:true,legacyServerId:false},dedupeConnected:true,queueConnected:true,workerConnected:true,crossServerMainAltConnected:true,organizationSaveConnected:true,organizationReadbackConnected:true,organizationTransaction:'single_postgres_transaction',edgeDecision:'REUSE_WITH_DB_MODULE',actions:['character-search','character-add','organization-save','organization-reset']});
+    if(action==='health')return json(request,{ok:true,service:SERVICE_NAME,apiVersion:API_VERSION,contract:'legion-tree-v2',organizationContract:ORGANIZATION_CONTRACT,characterSearchContract:CHARACTER_SEARCH_CONTRACT,candidateRegistrationContract:CANDIDATE_REGISTRATION_CONTRACT,databaseContract:DATABASE_CONTRACT,organizationDatabaseContract:ORGANIZATION_DATABASE_CONTRACT,characterInputContract:CHARACTER_INPUT_CONTRACT,authContract:AUTH_CONTRACT,modeContract:MODE_CONTRACT,dedupeContract:DEDUPE_CONTRACT,queueContract:QUEUE_CONTRACT,workerContract:WORKER_CONTRACT,authBoundary:'KWS_SERVER_SESSION_AND_SERVER_CAN_MANAGE',serverReference:'server_master',serverResolution:'SERVER_NAME_OR_SHORT_NAME_TAG_OR_ALL_ACTIVE_SERVER_SEARCH',candidateSearch:{officialRequest:'single-request-per-input',exactNameOnly:true,activeServersOnly:true,registrationReadback:'character_master server_id+character_identity_key_v298',createsTarget:false,createsQueue:false},dedupeBasis:'character_master server_id+character_identity_key_v298',queueModel:'existing-global-updater-lock-single-target',workerAction:'startAutonomous',listAppendPending:false,listWrite:false,listReadback:false,listlessCharacterAdd:true,listlessTerminalStage:'SERVER_QUEUE_CHARACTER_MASTER_DONE',modeRule:{mainOnly:'MAIN',mainAndAlt:'ALT',altOnly:'REJECT',sameNameAndServer:'REJECT',serverTag:'characterName[shortName]',missingTag:'SEARCH_ALL_ACTIVE_SERVERS',addRequiresSelectedServer:true,legacyServerId:false},dedupeConnected:true,queueConnected:true,workerConnected:true,crossServerMainAltConnected:true,organizationSaveConnected:true,organizationReadbackConnected:true,organizationTransaction:'single_postgres_transaction',edgeDecision:'REUSE_WITH_DB_MODULE',actions:['character-search','character-add','organization-save','organization-reset']});
 
     if(action==='organization-save'||action==='organization-reset'){
       const allowed=action==='organization-reset'
@@ -275,8 +288,9 @@ Deno.serve(async request=>{
       if(main.ok!==true)return json(request,main,Number(main.status)||502);
       const alt=altInput.empty===true?null:await officialCharacterCandidates(altInput,servers,sessionToken,'alt');
       if(alt&&alt.ok!==true)return json(request,alt,Number(alt.status)||502);
-      const candidateCount=(Array.isArray(main.candidates)?main.candidates.length:0)+(alt&&Array.isArray(alt.candidates)?alt.candidates.length:0);
-      return json(request,{ok:true,service:SERVICE_NAME,apiVersion:API_VERSION,contract:CHARACTER_SEARCH_CONTRACT,databaseContract:DATABASE_CONTRACT,code:'SEARCH_RESULTS_READY',message:candidateCount?`정확히 일치하는 캐릭터 ${candidateCount}건을 확인했습니다.`:'정확히 일치하는 캐릭터를 찾지 못했습니다.',readOnly:true,createsTarget:false,createsQueue:false,main,alt,candidateCount});
+      const registered=await markRegisteredCandidates(main,alt);
+      const candidateCount=(Array.isArray(registered.main.candidates)?registered.main.candidates.length:0)+(registered.alt&&Array.isArray(registered.alt.candidates)?registered.alt.candidates.length:0);
+      return json(request,{ok:true,service:SERVICE_NAME,apiVersion:API_VERSION,contract:CHARACTER_SEARCH_CONTRACT,candidateRegistrationContract:CANDIDATE_REGISTRATION_CONTRACT,databaseContract:DATABASE_CONTRACT,code:'SEARCH_RESULTS_READY',message:candidateCount?`정확히 일치하는 캐릭터 ${candidateCount}건을 확인했습니다.`:'정확히 일치하는 캐릭터를 찾지 못했습니다.',readOnly:true,createsTarget:false,createsQueue:false,main:registered.main,alt:registered.alt,candidateCount,registeredCandidateCount:registered.registeredCandidateCount});
     }
 
     if(action!=='character-add')return json(request,{ok:false,code:'UNSUPPORTED_ACTION',message:'지원하지 않는 요청입니다.'},400);
