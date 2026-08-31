@@ -18,7 +18,7 @@
 <link href="../ui/kinojo-components.css?cache=2026082103" rel="stylesheet"/>
 <link href="../ui/kinojo-staged-loading.css?cache=2026083001" rel="stylesheet"/>
 <link href="../ui/kinojo-sanctuary-navigation.css?cache=2026082603" rel="stylesheet"/>
-<link href="../sanctuary-management/css/sanctuary-management.css?cache=2026082903&amp;canonical=2026083001&amp;stage8=2026083016" rel="stylesheet"/>
+<link href="../sanctuary-management/css/sanctuary-management.css?cache=2026082903&amp;canonical=2026083001&amp;stage8=2026083016&amp;stage10=2026083101" rel="stylesheet"/>
 <link href="../sanctuary-management/css/sanctuary-management-draft.css?cache=2026083030&amp;canonical=2026083030&amp;stage8=2026083030&amp;stage9=2026083001&amp;randomalt=2026083101" rel="stylesheet"/>
 <link href="../sanctuary-management/css/sanctuary-management-support.css?cache=2026083007&amp;canonical=2026083007&amp;stage77=2026083001&amp;stage8=2026083016&amp;stage9=2026083001" rel="stylesheet"/>
 <link href="../sanctuary-management/css/sanctuary-management-copy.css?cache=2026083001" rel="stylesheet"/>
@@ -31,6 +31,12 @@
     <div class="sanctuary-management-page-bar-shell">
       <div class="sanctuary-management-scope-shell" id="sanctuaryManagementScopeShell" hidden>
         <div class="sanctuary-management-scope" id="sanctuaryManagementScope" role="group" aria-label="성역 선택"></div>
+      </div>
+      <div class="sanctuary-management-subbar-status" id="sanctuaryManagementStatusShell" aria-label="성역 Server 상태" hidden>
+        <button type="button" class="sanctuary-management-subbar-state sanctuary-management-connection-card" id="sanctuaryManagementConnectionCard" data-state="loading" aria-disabled="true" tabindex="-1"><strong id="sanctuaryManagementConnectionState">확인 중</strong><span id="sanctuaryManagementConnectionTitle">연결 상태</span><small id="sanctuaryManagementConnectionMessage">Server 확인 중</small></button>
+        <button type="button" class="sanctuary-management-subbar-state" aria-disabled="true" tabindex="-1"><strong id="sanctuaryManagementReadState">확인 중</strong><span>팀 읽기</span><small>Server 기능</small></button>
+        <button type="button" class="sanctuary-management-subbar-state" aria-disabled="true" tabindex="-1"><strong id="sanctuaryManagementWriteState">확인 중</strong><span>팀 쓰기</span><small id="sanctuaryManagementWriteMeta">Server 기능</small></button>
+        <button type="button" class="sanctuary-management-subbar-state sanctuary-management-refresh-card" id="sanctuaryManagementRefreshCard"><strong id="sanctuaryManagementRefreshState">최신</strong><span>정보 상태</span><small id="sanctuaryManagementRefreshMeta">변경 없음</small><em id="sanctuaryManagementRefreshAction" hidden>새로고침하기</em></button>
       </div>
     </div>
   </section>
@@ -60,11 +66,18 @@
     </section>
 
     <div class="sanctuary-management-content" id="sanctuaryManagementContent" hidden>
-      <section class="sanctuary-management-summary" aria-label="Server 연결 상태">
-        <article class="sanctuary-management-connection-card" id="sanctuaryManagementConnectionCard" data-state="loading" aria-live="polite"><strong id="sanctuaryManagementConnectionState">확인 중</strong><div class="sanctuary-management-info-copy"><span id="sanctuaryManagementConnectionTitle">성역 팀 연결 상태</span><small id="sanctuaryManagementConnectionMessage">Server 응답을 기다리고 있습니다.</small></div></article>
-        <article><strong id="sanctuaryManagementReadState">확인 중</strong><div class="sanctuary-management-info-copy"><span>팀 읽기</span><small>Server 기능 플래그</small></div></article>
-        <article><strong id="sanctuaryManagementWriteState">확인 중</strong><div class="sanctuary-management-info-copy"><span>팀 쓰기</span><small id="sanctuaryManagementWriteMeta">Server 기능 플래그</small></div></article>
-        <article class="sanctuary-management-refresh-card" id="sanctuaryManagementRefreshCard"><strong id="sanctuaryManagementRefreshState">최신</strong><div class="sanctuary-management-info-copy"><span>정보 상태</span><small id="sanctuaryManagementRefreshMeta">변경 없음</small><button id="sanctuaryManagementRefreshAction" type="button" hidden>새로고침하기</button></div></article>
+      <section class="sanctuary-management-overview" aria-label="성역 주간 일정과 모집 현황">
+        <section class="sanctuary-management-week-panel" id="sanctuaryManagementSchedulePanel">
+          <header class="sanctuary-management-overview-head">
+            <div><h2>주간 일정</h2><span>수요일부터 화요일까지</span></div>
+            <button class="kinojo-btn secondary" id="sanctuaryManagementMonthlySchedule" type="button">월간 스케줄 보기</button>
+          </header>
+          <div class="sanctuary-management-week" id="sanctuaryManagementScheduleState">이번 주 일정을 불러오는 중입니다.</div>
+        </section>
+        <section class="sanctuary-management-recruitment-panel" id="sanctuaryManagementRecruitmentPanel">
+          <header class="sanctuary-management-overview-head"><div><h2>모집·지원</h2><span>선택한 성역의 빈자리</span></div></header>
+          <div class="sanctuary-management-recruitment-summary" id="sanctuaryManagementRecruitmentState">참여 팀 모집 현황을 확인하는 중입니다.</div>
+        </section>
       </section>
 
       <div class="sanctuary-management-layout">
@@ -81,30 +94,6 @@
           </header>
           <div class="sanctuary-management-team-list" id="sanctuaryManagementTeamList" aria-live="polite"></div>
         </section>
-
-        <aside class="sanctuary-management-side" aria-label="성역 팀 보조 정보">
-          <section id="sanctuaryManagementSchedulePanel">
-            <header class="sanctuary-management-side-head">
-              <h2>일정 요약</h2>
-              <div class="sanctuary-management-info-copy"><p>SCHEDULE</p><span>월 단위 · 수요일 시작</span></div>
-            </header>
-            <div class="sanctuary-management-placeholder" id="sanctuaryManagementScheduleState">팀 카드에서 반복·1회 일정과 30분 단위 진행 시간을 확인합니다.</div>
-          </section>
-          <section>
-            <header class="sanctuary-management-side-head">
-              <h2>모집·지원</h2>
-              <div class="sanctuary-management-info-copy"><p>RECRUITMENT</p><span>포스별 지원 현황</span></div>
-            </header>
-            <div class="sanctuary-management-placeholder" id="sanctuaryManagementRecruitmentState">참여 팀의 포스 카드를 눌러 여러 포스에 서로 다른 내 캐릭터를 지원할 수 있습니다.</div>
-          </section>
-          <section>
-            <header class="sanctuary-management-side-head">
-              <h2>관리</h2>
-              <div class="sanctuary-management-info-copy"><p>ADMINISTRATION</p><span>편집 · 승인 · 팀 해산</span></div>
-            </header>
-            <div class="sanctuary-management-placeholder has-action" id="sanctuaryManagementAdminState"><span>권한이 있는 팀은 편집·카드 이동·팀 해산을 사용할 수 있습니다.</span><button class="kinojo-btn secondary" id="sanctuaryManagementTransitionReview" type="button" hidden>전환 검수</button></div>
-          </section>
-        </aside>
       </div>
     </div>
 
@@ -124,13 +113,13 @@
   <script src="../ui/kinojo-admin-panel.js?cache=2026071712"></script>
   <script src="../core/kinojo-supabase-client.js?cache=2026081106&amp;stage7=2026082911"></script>
   <script src="../core/kinojo-supabase-rpc.js?cache=2026082806"></script>
-  <script src="../core/kinojo-supabase-features.js?cache=2026083102"></script>
+  <script src="../core/kinojo-supabase-features.js?cache=2026083103"></script>
   <script src="../core/kinojo-auth-session.js?cache=2026081801"></script>
   <script src="../core/kinojo-auth-service.js?cache=2026081801"></script>
 <script src="../core/kinojo-auth-ui.js?cache=2026082901"></script>
   <script src="../ui/kinojo-event-notice.js?cache=2026081003"></script>
-  <script src="../sanctuary-management/js/sanctuary-management.js?cache=2026083030&amp;canonical=2026083030&amp;stage77=2026083001&amp;stage8=2026083030&amp;stage9=2026083001&amp;hotfix=2026083101&amp;randomalt=2026083101"></script>
-  <script src="../sanctuary-management/js/sanctuary-management-draft.js?cache=2026083030&amp;canonical=2026083030&amp;stage8=2026083030&amp;stage9=2026083001&amp;randomalt=2026083101"></script>
+  <script src="../sanctuary-management/js/sanctuary-management.js?cache=2026083030&amp;canonical=2026083030&amp;stage77=2026083001&amp;stage8=2026083030&amp;stage9=2026083001&amp;hotfix=2026083101&amp;randomalt=2026083101&amp;stage10=2026083101"></script>
+  <script src="../sanctuary-management/js/sanctuary-management-draft.js?cache=2026083030&amp;canonical=2026083030&amp;stage8=2026083030&amp;stage9=2026083001&amp;randomalt=2026083101&amp;stage10=2026083101"></script>
   <script src="../sanctuary-management/js/sanctuary-management-support.js?cache=2026082923&amp;stage77=2026083001&amp;stage9=2026083001"></script>
   <script src="../sanctuary-management/js/sanctuary-management-copy.js?cache=2026083101"></script>
   <script src="../ui/kinojo-pc-banners.js?cache=2026083001"></script>

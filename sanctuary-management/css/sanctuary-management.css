@@ -34,11 +34,12 @@ body.kinojo-sanctuary-management-page{
 .sanctuary-management-page-bar-shell{
   width:min(1180px,100%);
   margin:auto;
-  display:flex;
+  display:grid;
+  grid-template-columns:minmax(0,1.3fr) minmax(420px,.7fr);
   align-items:center;
-  justify-content:center;
+  gap:10px;
 }
-.sanctuary-management-scope-shell{min-width:0;width:100%;display:flex;align-items:center;justify-content:center}
+.sanctuary-management-scope-shell{min-width:0;width:100%;display:flex;align-items:center;justify-content:flex-start}
 .sanctuary-management-scope{min-width:0;width:100%;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;overflow:hidden}
 .sanctuary-management-scope button{
   flex:0 0 auto;
@@ -65,6 +66,13 @@ body.kinojo-sanctuary-management-page{
 .sanctuary-management-scope button:hover{border-color:#9ab8f5;color:#245bc7;background:#f4f8ff}
 .sanctuary-management-scope button:focus-visible{outline:3px solid rgba(59,130,246,.3);outline-offset:2px}
 .sanctuary-management-scope button[aria-pressed="true"]{border-color:transparent;color:#fff;background:linear-gradient(135deg,var(--san-mgmt-blue),var(--san-mgmt-violet));box-shadow:0 7px 16px rgba(70,86,211,.22)}
+.sanctuary-management-subbar-status{min-width:0;display:grid;grid-template-columns:repeat(4,minmax(82px,1fr));gap:5px}
+.sanctuary-management-subbar-state{min-width:0;height:34px;padding:4px 7px;display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:1fr 1fr;align-items:center;column-gap:6px;overflow:hidden;border:1px solid rgba(113,134,169,.2);border-radius:9px;background:#fff;color:#66758d;text-align:left;font-family:inherit;cursor:default;transition:border-color .2s ease,background-color .2s ease,box-shadow .2s ease}
+.sanctuary-management-subbar-state strong{grid-row:1/-1;display:block;color:#273650;font-size:10px;font-weight:1000;white-space:nowrap}
+.sanctuary-management-subbar-state span,.sanctuary-management-subbar-state small,.sanctuary-management-subbar-state em{min-width:0;display:block;overflow:hidden;color:#7d8a9e;font-size:7px;font-style:normal;font-weight:850;line-height:1.15;text-overflow:ellipsis;white-space:nowrap}
+.sanctuary-management-subbar-state small,.sanctuary-management-subbar-state em{color:#97a2b3}
+.sanctuary-management-subbar-state strong.is-on{color:#198754}.sanctuary-management-subbar-state strong.is-off{color:#a66a11}
+.sanctuary-management-subbar-state.sanctuary-management-refresh-card.has-update{cursor:pointer}.sanctuary-management-subbar-state.sanctuary-management-refresh-card.has-update:focus-visible{outline:3px solid rgba(59,130,246,.3);outline-offset:2px}
 .sanctuary-management-wrap{position:relative;width:min(1180px,calc(100% - 32px));min-height:70vh;margin:18px auto 0;padding:0 0 24px}
 .sanctuary-management-hero{
   position:relative;
@@ -82,7 +90,7 @@ body.kinojo-sanctuary-management-page{
 .sanctuary-management-hero h1{margin:3px 0 4px;font-size:22px;line-height:1.08;letter-spacing:-.9px}
 .sanctuary-management-hero-text p{margin:0;font-size:12px;font-weight:900;opacity:.92}
 .sanctuary-management-info-copy{min-width:0;display:grid;align-content:center;gap:5px}
-.sanctuary-management-section-head p,.sanctuary-management-side-head p{margin:0;color:#93b8ff;font-size:10px;font-weight:950;letter-spacing:.13em}
+.sanctuary-management-section-head p{margin:0;color:#93b8ff;font-size:10px;font-weight:950;letter-spacing:.13em}
 .sanctuary-management-access{
   min-height:88px;
   margin-top:18px;
@@ -104,24 +112,22 @@ body.kinojo-sanctuary-management-page{
 .sanctuary-management-access strong{display:block;color:#24324d;font-size:14px;font-weight:950}
 .sanctuary-management-access p{margin:5px 0 0;color:var(--san-mgmt-muted);font-size:12px;font-weight:720;line-height:1.55}
 .sanctuary-management-content{margin-top:18px}
-.sanctuary-management-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-.sanctuary-management-summary article{min-width:0;min-height:88px;padding:17px 18px;display:flex;align-items:center;gap:14px;border:1px solid var(--san-mgmt-line);border-radius:17px;background:var(--san-mgmt-surface);box-shadow:0 10px 24px rgba(31,48,84,.06)}
-.sanctuary-management-summary span{display:block;color:#7b879c;font-size:10px;font-weight:950;letter-spacing:.05em}
-.sanctuary-management-summary strong{display:block;min-width:0;flex:0 0 auto;overflow:hidden;color:#23304a;font-size:18px;font-weight:950;letter-spacing:-.03em;text-overflow:ellipsis;white-space:nowrap}
-.sanctuary-management-summary strong.is-on{color:#198754}.sanctuary-management-summary strong.is-off{color:#b27618}
-.sanctuary-management-summary small{display:block;color:#8995a8;font-size:10px;font-weight:750;line-height:1.4}
-.sanctuary-management-summary .sanctuary-management-info-copy{flex:1}
-.sanctuary-management-summary .sanctuary-management-info-copy span,.sanctuary-management-summary .sanctuary-management-info-copy small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sanctuary-management-connection-card{transition:border-color .2s ease,background .2s ease,box-shadow .2s ease}.sanctuary-management-connection-card[data-state="ready"]{border-color:rgba(45,151,103,.3);background:linear-gradient(135deg,#f5fff9,#fff)}.sanctuary-management-connection-card[data-state="ready"] strong{color:#198754}.sanctuary-management-connection-card[data-state="rollout"]{border-color:rgba(217,151,33,.3);background:linear-gradient(135deg,#fffaf0,#fff)}.sanctuary-management-connection-card[data-state="rollout"] strong{color:#b27618}
-.sanctuary-management-refresh-card{transition:border-color .2s ease,background .2s ease,box-shadow .2s ease}.sanctuary-management-refresh-card.has-update{border-color:#7c8fff;background:linear-gradient(135deg,#f4f7ff,#f7f3ff);box-shadow:0 10px 28px rgba(72,92,205,.14)}.sanctuary-management-refresh-card.has-update strong,.sanctuary-management-refresh-card.has-update small{color:#4661d3}.sanctuary-management-refresh-card button{width:max-content;margin:3px 0 0;padding:0;border:0;background:transparent;color:#405ecf;font:inherit;font-size:10px;font-weight:950;text-decoration:underline;text-underline-offset:3px;cursor:pointer}.sanctuary-management-refresh-card button:hover,.sanctuary-management-refresh-card button:focus-visible{color:#6a43d7;outline:0}.sanctuary-management-refresh-card button[hidden]{display:none}.sanctuary-management-refresh-card.is-checking{opacity:.78}
-.sanctuary-management-layout{margin-top:14px;display:grid;grid-template-columns:minmax(0,1fr) 350px;align-items:start;gap:14px}
-.sanctuary-management-team-panel,.sanctuary-management-side>section{border:1px solid var(--san-mgmt-line);border-radius:20px;background:var(--san-mgmt-surface);box-shadow:0 12px 30px rgba(31,48,84,.07)}
+.sanctuary-management-refresh-card{transition:border-color .2s ease,background .2s ease,box-shadow .2s ease}.sanctuary-management-refresh-card.has-update{border-color:#7c8fff;background:linear-gradient(135deg,#f4f7ff,#f7f3ff);box-shadow:0 8px 18px rgba(72,92,205,.14)}.sanctuary-management-refresh-card.has-update strong,.sanctuary-management-refresh-card.has-update small,.sanctuary-management-refresh-card.has-update em{color:#4661d3}.sanctuary-management-refresh-card em{text-decoration:underline;text-underline-offset:2px}.sanctuary-management-refresh-card [hidden]{display:none}.sanctuary-management-refresh-card.is-checking{opacity:.78}
+.sanctuary-management-overview{display:grid;grid-template-columns:minmax(0,2fr) minmax(270px,.82fr);align-items:stretch;gap:12px}
+.sanctuary-management-week-panel,.sanctuary-management-recruitment-panel{min-width:0;padding:16px 17px;border:1px solid var(--san-mgmt-line);border-radius:18px;background:var(--san-mgmt-surface);box-shadow:0 10px 24px rgba(31,48,84,.06)}
+.sanctuary-management-overview-head{min-width:0;display:flex;align-items:center;justify-content:space-between;gap:12px}.sanctuary-management-overview-head>div{min-width:0;display:flex;align-items:baseline;gap:10px}.sanctuary-management-overview-head h2{margin:0;color:#24314a;font-size:16px;font-weight:950;letter-spacing:-.035em;white-space:nowrap}.sanctuary-management-overview-head span{min-width:0;overflow:hidden;color:#7a879a;font-size:9px;font-weight:800;text-overflow:ellipsis;white-space:nowrap}.sanctuary-management-overview-head .kinojo-btn{min-height:31px;padding:0 10px;font-size:9px;white-space:nowrap}
+.sanctuary-management-week{min-width:0;margin-top:12px;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.sanctuary-management-week-day{min-width:0;min-height:92px;padding:8px 7px;display:flex;flex-direction:column;gap:6px;border:1px solid rgba(112,133,168,.15);border-radius:11px;background:#f9fbff;overflow:hidden}.sanctuary-management-week-day.is-today{border-color:#6f89ee;background:#f2f5ff;box-shadow:inset 0 0 0 1px rgba(73,104,222,.12)}.sanctuary-management-week-day>header{display:flex;align-items:center;justify-content:space-between;gap:4px}.sanctuary-management-week-day>header strong{color:#34435c;font-size:10px;font-weight:950}.sanctuary-management-week-day>header time{color:#8390a4;font-size:8px;font-weight:850}.sanctuary-management-week-day>div{min-width:0;display:grid;align-content:start;gap:4px}.sanctuary-management-week-event{min-width:0;width:100%;padding:5px 6px;display:grid;gap:2px;border:0;border-radius:7px;background:#e9efff;color:#315abb;text-align:left;cursor:pointer}.sanctuary-management-week-event time,.sanctuary-management-week-event span{min-width:0;overflow:hidden;font-size:8px;font-weight:900;line-height:1.25;text-overflow:ellipsis;white-space:nowrap}.sanctuary-management-week-empty{margin:auto 0;color:#a0aaba;font-size:8px;font-weight:800;text-align:center}
+.sanctuary-management-recruitment-summary{min-height:92px;margin-top:12px;display:grid;align-content:center;gap:8px}.sanctuary-management-recruitment-counts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.sanctuary-management-recruitment-counts article{min-width:0;padding:10px;border-radius:11px;background:#f5f8fd}.sanctuary-management-recruitment-counts strong,.sanctuary-management-recruitment-counts span{display:block}.sanctuary-management-recruitment-counts strong{color:#2d477d;font-size:18px;font-weight:1000}.sanctuary-management-recruitment-counts span{margin-top:2px;color:#7d899c;font-size:8px;font-weight:850}.sanctuary-management-recruitment-summary p{margin:0;color:#728097;font-size:9px;font-weight:780;line-height:1.5}
+.sanctuary-management-layout{margin-top:14px;display:grid;grid-template-columns:minmax(0,1fr);align-items:start}
+.sanctuary-management-team-panel{border:1px solid var(--san-mgmt-line);border-radius:20px;background:var(--san-mgmt-surface);box-shadow:0 12px 30px rgba(31,48,84,.07)}
 .sanctuary-management-team-panel{min-height:480px;padding:21px}
 .sanctuary-management-section-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-bottom:17px;border-bottom:1px solid rgba(112,133,168,.15)}
 .sanctuary-management-section-info{min-width:0;flex:1;display:flex;align-items:center;gap:18px}
 .sanctuary-management-section-info>h2{flex:0 0 auto;white-space:nowrap}
 .sanctuary-management-section-info>.sanctuary-management-info-copy{flex:1}
-.sanctuary-management-section-head h2,.sanctuary-management-side h2{margin:0;color:#24314a;font-size:20px;font-weight:950;letter-spacing:-.035em}
+.sanctuary-management-section-head h2{margin:0;color:#24314a;font-size:20px;font-weight:950;letter-spacing:-.035em}
 .sanctuary-management-section-head span{display:block;color:#7a879a;font-size:11px;font-weight:740;line-height:1.5}
 .sanctuary-management-section-head .kinojo-btn{flex:0 0 auto}
 .sanctuary-management-team-panel,.sanctuary-management-team-list,.sanctuary-management-team-card{min-width:0}.sanctuary-management-team-list{display:grid;gap:11px;padding-top:16px}
@@ -130,7 +136,7 @@ body.kinojo-sanctuary-management-page{
 .sanctuary-management-empty strong{color:#33415a;font-size:14px;font-weight:950}.sanctuary-management-empty p{max-width:410px;margin:8px 0 0;color:#7a879a;font-size:12px;font-weight:720;line-height:1.65}
 .sanctuary-management-team-card{padding:17px 18px;border:1px solid rgba(104,127,169,.18);border-radius:16px;background:linear-gradient(180deg,#fff,#f8faff)}
 .sanctuary-management-team-card.is-deep-linked{border-color:#5c7cf0;box-shadow:0 0 0 4px rgba(76,104,224,.15),0 18px 36px rgba(31,48,84,.13)}
-.sanctuary-management-side>section.is-deep-linked{border-color:#5c7cf0;box-shadow:0 0 0 4px rgba(76,104,224,.15),0 18px 36px rgba(31,48,84,.13)}
+.sanctuary-management-week-panel.is-deep-linked{border-color:#5c7cf0;box-shadow:0 0 0 4px rgba(76,104,224,.15),0 18px 36px rgba(31,48,84,.13)}
 .sanctuary-management-team-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .sanctuary-management-team-card h3{margin:0;color:#24314a;font-size:16px;font-weight:950;letter-spacing:-.025em}
 .sanctuary-management-team-card p{margin:7px 0 0;color:#7c889b;font-size:11px;font-weight:740}
@@ -138,13 +144,11 @@ body.kinojo-sanctuary-management-page{
 .sanctuary-management-team-head-actions{max-width:48%;display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:6px}.sanctuary-management-team-head-actions .kinojo-btn{min-height:30px;padding:6px 9px;font-size:9px}.sanctuary-management-team-head-actions .sanctuary-management-archive-team{border-color:#fecaca;background:#fff1f2;color:#be123c}
 .sanctuary-management-team-meta{margin-top:14px;display:flex;flex-wrap:wrap;gap:7px}.sanctuary-management-team-meta span{padding:6px 8px;border:1px solid rgba(110,132,170,.16);border-radius:8px;background:#fff;color:#66758d;font-size:10px;font-weight:850}
 .sanctuary-management-team-actions{margin-top:13px;display:flex;justify-content:flex-end}.sanctuary-management-team-actions .kinojo-btn{min-height:36px;font-size:10px}.sanctuary-management-team-actions .kinojo-btn:disabled{cursor:not-allowed;opacity:.5}
-.sanctuary-management-side{display:grid;gap:14px}.sanctuary-management-side>section{padding:18px}.sanctuary-management-side h2{font-size:16px}.sanctuary-management-side-head{min-width:0;display:flex;align-items:center;gap:12px}.sanctuary-management-side-head>h2{flex:0 0 auto;white-space:nowrap}.sanctuary-management-side-head>.sanctuary-management-info-copy{flex:1}.sanctuary-management-side-head span{color:#7a879a;font-size:10px;font-weight:740;line-height:1.4}.sanctuary-management-placeholder{min-height:86px;margin-top:13px;padding:13px;display:flex;align-items:center;border:1px dashed rgba(109,130,168,.24);border-radius:13px;background:#f7f9fd;color:#7b889c;font-size:11px;font-weight:730;line-height:1.55}
-.sanctuary-management-placeholder.has-action{align-items:center;justify-content:space-between;gap:10px}.sanctuary-management-placeholder.has-action>span{min-width:0}.sanctuary-management-placeholder.has-action .kinojo-btn{flex:0 0 auto;min-height:32px;padding:7px 9px;font-size:9px}.sanctuary-management-placeholder.has-action .kinojo-btn.is-approved{border-color:#a7e2c3;background:#edfff5;color:#157347}
-.sanctuary-management-placeholder.has-calendar{display:block;min-height:0;padding:10px;overflow:hidden}
 .sanctuary-management-calendar-controls{display:grid;grid-template-columns:30px 1fr 30px;align-items:center;gap:8px;margin-bottom:9px}.sanctuary-management-calendar-controls button{width:30px;height:30px;border:1px solid var(--san-mgmt-line);border-radius:9px;background:#fff;color:#53647e;font-size:18px;cursor:pointer}.sanctuary-management-calendar-controls strong{text-align:center;color:#263550;font-size:11px;font-weight:950}
 .sanctuary-management-calendar-weekdays,.sanctuary-management-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));min-width:0}.sanctuary-management-calendar-weekdays{gap:2px;margin-bottom:3px}.sanctuary-management-calendar-weekdays span{text-align:center;color:#728099;font-size:8px;font-weight:950}.sanctuary-management-calendar-grid{gap:2px}.sanctuary-management-calendar-day{min-width:0;min-height:45px;padding:3px;border:1px solid rgba(112,133,168,.14);border-radius:7px;background:#fff;overflow:hidden}.sanctuary-management-calendar-day.is-outside{background:#f1f4f9;opacity:.6}.sanctuary-management-calendar-day>strong{display:block;color:#5c6980;font-size:8px;font-weight:950}.sanctuary-management-calendar-day>div{min-width:0;display:grid;gap:2px}.sanctuary-management-calendar-day button{min-width:0;width:100%;padding:2px;border:0;border-radius:4px;background:#e9efff;color:#315abb;text-align:left;cursor:pointer;overflow:hidden}.sanctuary-management-calendar-day button time,.sanctuary-management-calendar-day button span{display:block;overflow:hidden;font-size:7px;font-weight:900;line-height:1.2;text-overflow:ellipsis;white-space:nowrap}.sanctuary-management-calendar-day button:focus-visible{outline:2px solid #4a72e2;outline-offset:1px}
 .sanctuary-management-operation-layer{position:fixed;inset:0;z-index:10080;display:grid;place-items:center;padding:clamp(10px,3vw,28px);overflow:hidden;overflow:clip}.sanctuary-management-operation-layer[hidden]{display:none}.sanctuary-management-operation-backdrop{position:absolute;inset:0;background:rgba(13,23,44,.68);backdrop-filter:blur(8px)}body.sanctuary-management-operation-open{overflow:hidden}
 .sanctuary-management-operation-dialog{position:relative;width:min(650px,100%);max-height:min(760px,calc(100dvh - 32px));display:flex;flex-direction:column;overflow:hidden;overflow:clip;border:1px solid rgba(151,169,203,.36);border-radius:22px;background:#fff;box-shadow:0 30px 80px rgba(9,20,45,.34)}.sanctuary-management-operation-dialog:focus{outline:none}.sanctuary-management-operation-dialog>header{padding:22px 24px 18px;border-bottom:1px solid var(--san-mgmt-line);background:linear-gradient(135deg,#f8fbff,#f3f0ff)}.sanctuary-management-operation-dialog>header>span{color:#5276d4;font-size:9px;font-weight:950;letter-spacing:.14em}.sanctuary-management-operation-dialog h2{margin:6px 0 0;color:#202e49;font-size:21px;font-weight:950;letter-spacing:-.035em}.sanctuary-management-operation-dialog header p{margin:7px 0 0;color:#6f7d93;font-size:11px;font-weight:730;line-height:1.55}
+.sanctuary-management-operation-dialog.is-calendar{width:min(900px,100%)}.sanctuary-management-operation-dialog.is-calendar .sanctuary-management-operation-body{padding:18px}.sanctuary-management-operation-dialog.is-calendar .sanctuary-management-calendar-day{min-height:78px;padding:6px}.sanctuary-management-operation-dialog.is-calendar .sanctuary-management-calendar-day>strong{font-size:10px}.sanctuary-management-operation-dialog.is-calendar .sanctuary-management-calendar-day button{padding:4px}.sanctuary-management-operation-dialog.is-calendar .sanctuary-management-calendar-day button time,.sanctuary-management-operation-dialog.is-calendar .sanctuary-management-calendar-day button span{font-size:8px}
 .sanctuary-management-operation-body{min-height:0;flex:1 1 auto;padding:18px 24px;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;mask-image:linear-gradient(to bottom,#000 0,#000 calc(100% - 22px),transparent 100%)}.sanctuary-management-operation-body::-webkit-scrollbar{display:none}.sanctuary-management-operation-dialog fieldset{min-width:0;margin:0 0 16px;padding:0;border:0}.sanctuary-management-operation-dialog legend,.sanctuary-management-operation-fields label>span,.sanctuary-management-archive-reason>span{display:block;margin-bottom:7px;color:#56647b;font-size:10px;font-weight:950}.sanctuary-management-operation-options,.sanctuary-management-operation-weekdays{display:flex;flex-wrap:wrap;gap:7px}.sanctuary-management-operation-options input,.sanctuary-management-operation-weekdays input{position:absolute;opacity:0;pointer-events:none}.sanctuary-management-operation-options span,.sanctuary-management-operation-weekdays span{display:block;padding:9px 11px;border:1px solid var(--san-mgmt-line);border-radius:9px;background:#fff;color:#64728a;font-size:10px;font-weight:900;cursor:pointer}.sanctuary-management-operation-options input:checked+span,.sanctuary-management-operation-weekdays input:checked+span{border-color:#4d72df;background:#edf2ff;color:#2f5bc7}.sanctuary-management-operation-options input:focus-visible+span,.sanctuary-management-operation-weekdays input:focus-visible+span{outline:3px solid rgba(59,130,246,.28);outline-offset:2px}
 .sanctuary-management-operation-dialog.is-transition{width:min(960px,100%)}
 .sanctuary-management-transition-body{display:grid;gap:13px;overflow-x:hidden}
@@ -160,12 +164,10 @@ body.kinojo-sanctuary-management-page{
 .sanctuary-management-wrap .common-footer{margin-top:28px}
 @media(max-width:1100px){
   .sanctuary-management-scope{justify-content:center}
+  .sanctuary-management-page-bar-shell{grid-template-columns:1fr}.sanctuary-management-subbar-status{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
 @media(max-width:920px){
-  .sanctuary-management-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .sanctuary-management-layout{grid-template-columns:1fr}
-  .sanctuary-management-side{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .sanctuary-management-side>section:last-child{grid-column:1/-1}
+  .sanctuary-management-overview{grid-template-columns:1fr}.sanctuary-management-recruitment-summary{min-height:0;grid-template-columns:minmax(0,1fr) minmax(200px,.7fr);align-items:center}.sanctuary-management-recruitment-summary p{padding-inline:4px}
 }
 @media(max-width:699px){
   .sanctuary-management-wrap{width:min(100% - 20px,1180px);margin-top:12px}
@@ -173,7 +175,7 @@ body.kinojo-sanctuary-management-page{
   .sanctuary-management-hero h1{font-size:19px}
   .sanctuary-management-access{grid-template-columns:auto minmax(0,1fr);padding:16px}
   .sanctuary-management-access .kinojo-btn{grid-column:1/-1;width:100%}
-  .sanctuary-management-side{grid-template-columns:1fr}.sanctuary-management-side>section:last-child{grid-column:auto}
+  .sanctuary-management-subbar-status{grid-template-columns:repeat(2,minmax(0,1fr))}.sanctuary-management-subbar-state{height:32px}.sanctuary-management-overview{gap:9px}.sanctuary-management-week-panel,.sanctuary-management-recruitment-panel{padding:13px}.sanctuary-management-week{grid-template-columns:1fr;gap:5px}.sanctuary-management-week-day{min-height:0;padding:7px;display:grid;grid-template-columns:62px minmax(0,1fr);align-items:start}.sanctuary-management-week-day>div{grid-template-columns:repeat(2,minmax(0,1fr))}.sanctuary-management-week-empty{margin:2px 0;text-align:left}.sanctuary-management-recruitment-summary{display:grid;grid-template-columns:1fr}.sanctuary-management-operation-dialog.is-calendar .sanctuary-management-calendar-day{min-height:55px;padding:3px}
   .sanctuary-management-team-panel{min-height:420px;padding:17px}
   .sanctuary-management-operation-layer{padding:max(8px,env(safe-area-inset-top)) 8px max(8px,env(safe-area-inset-bottom))}.sanctuary-management-operation-dialog{max-height:calc(100dvh - max(16px,env(safe-area-inset-top) + env(safe-area-inset-bottom)));border-radius:18px}.sanctuary-management-operation-dialog>header{padding:18px 16px 15px}.sanctuary-management-operation-body{padding:15px 16px}.sanctuary-management-operation-fields{grid-template-columns:1fr}.sanctuary-management-operation-dialog>footer{position:sticky;bottom:0;padding:12px;flex-wrap:wrap}.sanctuary-management-operation-dialog>footer .kinojo-btn{flex:1 1 30%;min-width:88px}.sanctuary-management-archive-impact{padding:16px;gap:6px}.sanctuary-management-archive-reason{padding:0 16px 14px}.is-archive>.sanctuary-management-operation-status{margin:0 16px 14px}
   .sanctuary-management-transition-overview{grid-template-columns:repeat(2,minmax(0,1fr))}.sanctuary-management-transition-checks{grid-template-columns:repeat(2,minmax(0,1fr))}.sanctuary-management-transition-targets{grid-template-columns:1fr}
@@ -181,11 +183,11 @@ body.kinojo-sanctuary-management-page{
 @media(max-width:430px){
   .sanctuary-management-page-bar{padding-inline:8px}
   .sanctuary-management-scope{gap:5px}
-  .sanctuary-management-summary{gap:8px}.sanctuary-management-summary article{min-height:80px;padding:13px;gap:7px}.sanctuary-management-summary strong{font-size:14px}.sanctuary-management-summary small{font-size:9px}
+  .sanctuary-management-overview-head{align-items:flex-start}.sanctuary-management-overview-head>div{display:grid;gap:3px}.sanctuary-management-overview-head .kinojo-btn{min-height:30px;padding-inline:8px}.sanctuary-management-week-day>div{grid-template-columns:1fr}.sanctuary-management-recruitment-counts strong{font-size:16px}
   .sanctuary-management-section-head{display:grid}.sanctuary-management-section-head .kinojo-btn{width:100%}
   .sanctuary-management-section-info{gap:12px}
   .sanctuary-management-team-card-head{display:block}.sanctuary-management-team-head-actions{max-width:none;margin-top:10px;justify-content:flex-start}.sanctuary-management-team-badge{display:inline-block}
-  .sanctuary-management-placeholder.has-action{align-items:flex-start;flex-direction:column}.sanctuary-management-placeholder.has-action .kinojo-btn{width:100%}.sanctuary-management-transition-compare,.sanctuary-management-transition-checks{grid-template-columns:1fr}.sanctuary-management-transition-confirm-input{grid-template-columns:1fr}.sanctuary-management-transition-overview strong{font-size:13px}
+  .sanctuary-management-transition-compare,.sanctuary-management-transition-checks{grid-template-columns:1fr}.sanctuary-management-transition-confirm-input{grid-template-columns:1fr}.sanctuary-management-transition-overview strong{font-size:13px}
 }
-@media(max-width:350px){.sanctuary-management-wrap{width:calc(100% - 14px)}.sanctuary-management-summary{grid-template-columns:1fr}.sanctuary-management-team-panel{padding:13px}.sanctuary-management-page-bar{padding-inline:5px}}
+@media(max-width:350px){.sanctuary-management-wrap{width:calc(100% - 14px)}.sanctuary-management-team-panel{padding:13px}.sanctuary-management-page-bar{padding-inline:5px}.sanctuary-management-subbar-state{padding-inline:5px;column-gap:4px}.sanctuary-management-subbar-state strong{font-size:9px}.sanctuary-management-overview-head .kinojo-btn{font-size:8px}}
 @media(prefers-reduced-motion:reduce){.sanctuary-management-scope button,.sanctuary-management-scope-detail,.sanctuary-management-scope-detail-char,.sanctuary-management-team-card,.sanctuary-management-hero-bg{transition:none}}

@@ -1149,17 +1149,19 @@
     });
   }
 
-  async function getSanctuaryManagementLinkedAlts(teamId,mainCharacterId){
+  async function getSanctuaryManagementLinkedAlts(teamId,mainCharacterId,forceId=null){
     const normalizedTeamId=Number(teamId||0);
     const normalizedMainId=Number(mainCharacterId||0);
-    if(!Number.isSafeInteger(normalizedTeamId)||normalizedTeamId<1||!Number.isSafeInteger(normalizedMainId)||normalizedMainId<1){
+    const normalizedForceId=forceId==null?null:Number(forceId);
+    if(!Number.isSafeInteger(normalizedTeamId)||normalizedTeamId<1||!Number.isSafeInteger(normalizedMainId)||normalizedMainId<1||(normalizedForceId!=null&&(!Number.isSafeInteger(normalizedForceId)||normalizedForceId<1))){
       throw new Error('부캐를 확인할 팀과 본캐를 다시 선택해 주세요.');
     }
     return invokeEdgeFunction('sanctuary-management',{
       action:'linked-alts',
       sessionToken:currentServerSessionCredential(),
       teamId:normalizedTeamId,
-      mainCharacterId:normalizedMainId
+      mainCharacterId:normalizedMainId,
+      forceId:normalizedForceId
     });
   }
 
