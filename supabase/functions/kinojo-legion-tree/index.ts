@@ -1,6 +1,6 @@
 const SERVICE_NAME='kinojo-legion-tree';
-const API_VERSION='1.5';
-const DATABASE_CONTRACT='455';
+const API_VERSION='1.6';
+const DATABASE_CONTRACT='457';
 const ORGANIZATION_DATABASE_CONTRACT='453';
 const AUTH_CONTRACT='320';
 const MODE_CONTRACT='1';
@@ -8,8 +8,8 @@ const DEDUPE_CONTRACT='366';
 const QUEUE_CONTRACT='455';
 const WORKER_CONTRACT='295';
 const ORGANIZATION_CONTRACT='legion-tree-organization-save-v1';
-const CHARACTER_INPUT_CONTRACT='character-name-server-tag-v2';
-const DEFAULT_SERVER_ID=2002;
+const CHARACTER_SEARCH_CONTRACT='legion-tree-character-search-v1';
+const CHARACTER_INPUT_CONTRACT='character-name-server-tag-v3';
 const MAX_REQUEST_BYTES=131072;
 const MAX_CHARACTER_ADD_BYTES=4096;
 const TOKEN=/^kws_[A-Za-z0-9_-]{40,80}$/;
@@ -78,7 +78,7 @@ function forbiddenField(body:Record<string,unknown>,allowed:Set<string>){
   return null;
 }
 function serverKey(value:unknown){return normalizeName(value).toLocaleLowerCase('ko-KR').replace(/\s+/g,'');}
-function parseCharacterInput(value:unknown,servers:Array<Record<string,unknown>>,fallbackServerId=DEFAULT_SERVER_ID):Record<string,unknown>{
+function parseCharacterInput(value:unknown,servers:Array<Record<string,unknown>>,requireServerTag=false):Record<string,unknown>{
   const raw=text(value,180).normalize('NFKC').trim();
   if(!raw)return{ok:true,empty:true,raw:'',characterName:'',serverSuffix:'',server:null};
   const match=raw.match(/^(.+?)(?:\s*\[([^\[\]]+)\])?$/u);
@@ -92,13 +92,64 @@ function parseCharacterInput(value:unknown,servers:Array<Record<string,unknown>>
     if(candidates.length>1&&key==='이스')candidates=candidates.filter(server=>positiveInt(server.server_id)===2001);
     if(!candidates.length)return{ok:false,code:'SERVER_SUFFIX_NOT_FOUND',message:`서버 약칭 [${serverSuffix}]을(를) 확인할 수 없습니다.`};
     if(candidates.length!==1)return{ok:false,code:'SERVER_SUFFIX_AMBIGUOUS',message:`서버 약칭 [${serverSuffix}]이(가) 중복됩니다. 원본 서버명을 입력해 주세요.`};
+  }else if(requireServerTag){
+    return{ok:false,code:'SERVER_TAG_REQUIRED',message:'조회 결과에서 캐릭터의 서버를 선택해 주세요.'};
   }else{
-    candidates=servers.filter(server=>positiveInt(server.server_id)===fallbackServerId);
-    if(candidates.length!==1)return{ok:false,code:'DEFAULT_SERVER_NOT_FOUND',message:'기준 서버 지켈을 확인할 수 없습니다.'};
+    return{ok:true,empty:false,raw,characterName,serverSuffix:'',server:null,allActiveServers:true};
   }
   const server=candidates[0],serverId=positiveInt(server.server_id),raceId=positiveInt(server.race_id);
   if(serverId===null||raceId===null||!raceName(raceId))throw new Error('SERVER_REFERENCE_INVALID');
   return{ok:true,empty:false,raw,characterName,serverSuffix,server:{serverId,serverName:text(server.server_name,120),shortName:text(server.server_short_name,80),raceId,raceName:raceName(raceId)}};
+}
+
+function wait(milliseconds:number){return new Promise(resolve=>setTimeout(resolve,milliseconds));}
+function stripOfficialName(value:unknown){return normalizeName(text(value,300).replace(/<[^>]*>/g,'').replace(/&amp;/gi,'&').replace(/&lt;/gi,'<').replace(/&gt;/gi,'>').replace(/&quot;/gi,'"').replace(/&#39;/gi,"'"));}
+function retryAfterSeconds(value:unknown){const seconds=Number(value);return Number.isFinite(seconds)&&seconds>0?Math.min(Math.max(Math.ceil(seconds),1),600):30;}
+function officialProfileImage(value:unknown){const path=text(value,500);return path.startsWith('/game_profile_images/')?`https://profileimg.plaync.com${path}`:'';}
+
+async function officialCharacterCandidates(input:Record<string,unknown>,servers:Array<Record<string,unknown>>,sessionToken:string,role:string){
+  const source=`LEGION_TREE_CHARACTER_SEARCH_${role.toUpperCase()}`;
+  const gate=await rpc('kinojo_legion_tree_search_rate_acquire_v457',{p_session_token:sessionToken,p_source:source});
+  if(gate.ok!==true)return{ok:false,status:gate.code==='LEGION_TREE_MANAGE_FORBIDDEN'?403:401,code:text(gate.code,80)||'SESSION_INVALID',message:text(gate.message,300)||'로그인 세션을 확인하지 못했습니다.'};
+  const waitMs=Math.max(0,Number(gate.waitMs||0));
+  if(gate.allowed===false||waitMs>5000)return{ok:false,status:429,code:'PLAYNC_RATE_PAUSED',message:text(gate.message,300)||'공식 캐릭터 조회가 잠시 제한되었습니다.',retryAfterSeconds:Math.max(1,Math.ceil((waitMs||30000)/1000))};
+  if(waitMs>0)await wait(waitMs);
+
+  const server=record(input.server),serverId=positiveInt(server.serverId);
+  const url=new URL('https://aion2.plaync.com/ko-kr/api/search/aion2/search/v2/character');
+  url.searchParams.set('keyword',text(input.characterName,120));
+  url.searchParams.set('page','1');url.searchParams.set('size','100');
+  if(serverId!==null)url.searchParams.set('serverId',String(serverId));
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
+  try{
+    const response=await fetch(url,{headers:{accept:'application/json,text/plain,*/*','accept-language':'ko-KR,ko;q=0.9','user-agent':`KINOJO-Legion-Tree/${API_VERSION}`},signal:controller.signal,redirect:'follow'});
+    const raw=await response.text();
+    if(!response.ok){
+      const retry=response.status===429?retryAfterSeconds(response.headers.get('retry-after')):null;
+      await rpc('kinojo_legion_tree_search_rate_failure_v457',{p_session_token:sessionToken,p_source:source,p_http_status:response.status,p_retry_after_seconds:retry,p_error:text(raw,500)}).catch(()=>({}));
+      return{ok:false,status:response.status===429?429:502,code:`PLAYNC_HTTP_${response.status}`,message:response.status===429?'공식 캐릭터 조회가 잠시 제한되었습니다. 잠시 후 다시 시도해 주세요.':'공식 캐릭터 조회 응답을 확인하지 못했습니다.',retryAfterSeconds:retry};
+    }
+    await rpc('kinojo_legion_tree_search_rate_success_v457',{p_session_token:sessionToken,p_source:source});
+    let payload:unknown={};try{payload=raw?JSON.parse(raw):{};}catch{return{ok:false,status:502,code:'PLAYNC_NON_JSON',message:'공식 캐릭터 조회 응답 형식을 확인하지 못했습니다.'};}
+    const activeById=new Map(servers.map(item=>[positiveInt(item.server_id),item]));
+    const seen=new Set<string>(),candidates:Array<Record<string,unknown>>=[];
+    for(const item of (Array.isArray(record(payload).list)?record(payload).list as unknown[]:[])){
+      const row=record(item),candidateServerId=positiveInt(row.serverId);
+      const activeServer=candidateServerId===null?null:activeById.get(candidateServerId);
+      if(!activeServer||identityName(stripOfficialName(row.name))!==identityName(input.characterName))continue;
+      if(serverId!==null&&candidateServerId!==serverId)continue;
+      const characterId=text(row.characterId,300),key=`${candidateServerId}:${characterId}`;
+      if(!characterId||seen.has(key))continue;seen.add(key);
+      const raceId=positiveInt(activeServer.race_id);
+      candidates.push({candidateKey:key,characterId,characterName:stripOfficialName(row.name),serverId:candidateServerId,serverName:text(activeServer.server_name,120),serverShortName:text(activeServer.server_short_name,80),raceId,raceName:raceId===null?'':raceName(raceId),level:positiveInt(row.level),profileImageUrl:officialProfileImage(row.profileImageUrl)});
+    }
+    candidates.sort((a,b)=>(positiveInt(a.serverId)||0)-(positiveInt(b.serverId)||0));
+    return{ok:true,role,query:{raw:text(input.raw,180),characterName:text(input.characterName,120),serverSpecified:serverId!==null,serverId,serverName:text(server.serverName,120)},candidates};
+  }catch(error){
+    const aborted=error instanceof Error&&error.name==='AbortError';
+    await rpc('kinojo_legion_tree_search_rate_failure_v457',{p_session_token:sessionToken,p_source:source,p_http_status:aborted?408:0,p_retry_after_seconds:null,p_error:text(error instanceof Error?error.message:error,500)}).catch(()=>({}));
+    return{ok:false,status:502,code:aborted?'PLAYNC_TIMEOUT':'PLAYNC_REQUEST_FAILED',message:aborted?'공식 캐릭터 조회 시간이 초과되었습니다.':'공식 캐릭터 조회를 완료하지 못했습니다.'};
+  }finally{clearTimeout(timer);}
 }
 function resolveMode(mainInput:Record<string,unknown>,altInput:Record<string,unknown>):Record<string,unknown>{
   if(mainInput.ok!==true||mainInput.empty===true)return{ok:false,code:'MAIN_CHARACTER_REQUIRED',message:'본캐 이름을 입력해 주세요.'};
@@ -174,7 +225,7 @@ Deno.serve(async request=>{
     const rawBytes=encoder.encode(raw).byteLength;
     if(rawBytes>MAX_REQUEST_BYTES)return json(request,{ok:false,code:'REQUEST_TOO_LARGE',message:'요청 크기가 허용 범위를 초과했습니다.'},413);
     const body=record(raw?JSON.parse(raw):{}),action=text(body.action,40)||'health';
-    if(action==='health')return json(request,{ok:true,service:SERVICE_NAME,apiVersion:API_VERSION,contract:'legion-tree-v2',organizationContract:ORGANIZATION_CONTRACT,databaseContract:DATABASE_CONTRACT,organizationDatabaseContract:ORGANIZATION_DATABASE_CONTRACT,characterInputContract:CHARACTER_INPUT_CONTRACT,defaultServerId:DEFAULT_SERVER_ID,authContract:AUTH_CONTRACT,modeContract:MODE_CONTRACT,dedupeContract:DEDUPE_CONTRACT,queueContract:QUEUE_CONTRACT,workerContract:WORKER_CONTRACT,authBoundary:'KWS_SERVER_SESSION_ONLY',serverReference:'server_master',serverResolution:'SERVER_NAME_OR_SHORT_NAME_TAG',dedupeBasis:'character_master server_id+character_identity_key_v298',queueModel:'existing-global-updater-lock-single-target',workerAction:'startAutonomous',listAppendPending:false,listWrite:false,listReadback:false,listlessCharacterAdd:true,listlessTerminalStage:'SERVER_QUEUE_CHARACTER_MASTER_DONE',modeRule:{mainOnly:'MAIN',mainAndAlt:'ALT',altOnly:'REJECT',sameNameAndServer:'REJECT',serverTag:'characterName[shortName]',missingTag:'JIKEL_2002',legacyServerId:'TRANSITION_ONLY'},dedupeConnected:true,queueConnected:true,workerConnected:true,crossServerMainAltConnected:true,organizationSaveConnected:true,organizationReadbackConnected:true,organizationTransaction:'single_postgres_transaction',edgeDecision:'REUSE_WITH_DB_MODULE',actions:['character-add','organization-save','organization-reset']});
+    if(action==='health')return json(request,{ok:true,service:SERVICE_NAME,apiVersion:API_VERSION,contract:'legion-tree-v2',organizationContract:ORGANIZATION_CONTRACT,characterSearchContract:CHARACTER_SEARCH_CONTRACT,databaseContract:DATABASE_CONTRACT,organizationDatabaseContract:ORGANIZATION_DATABASE_CONTRACT,characterInputContract:CHARACTER_INPUT_CONTRACT,authContract:AUTH_CONTRACT,modeContract:MODE_CONTRACT,dedupeContract:DEDUPE_CONTRACT,queueContract:QUEUE_CONTRACT,workerContract:WORKER_CONTRACT,authBoundary:'KWS_SERVER_SESSION_AND_SERVER_CAN_MANAGE',serverReference:'server_master',serverResolution:'SERVER_NAME_OR_SHORT_NAME_TAG_OR_ALL_ACTIVE_SERVER_SEARCH',candidateSearch:{officialRequest:'single-request-per-input',exactNameOnly:true,activeServersOnly:true,createsTarget:false,createsQueue:false},dedupeBasis:'character_master server_id+character_identity_key_v298',queueModel:'existing-global-updater-lock-single-target',workerAction:'startAutonomous',listAppendPending:false,listWrite:false,listReadback:false,listlessCharacterAdd:true,listlessTerminalStage:'SERVER_QUEUE_CHARACTER_MASTER_DONE',modeRule:{mainOnly:'MAIN',mainAndAlt:'ALT',altOnly:'REJECT',sameNameAndServer:'REJECT',serverTag:'characterName[shortName]',missingTag:'SEARCH_ALL_ACTIVE_SERVERS',addRequiresSelectedServer:true,legacyServerId:false},dedupeConnected:true,queueConnected:true,workerConnected:true,crossServerMainAltConnected:true,organizationSaveConnected:true,organizationReadbackConnected:true,organizationTransaction:'single_postgres_transaction',edgeDecision:'REUSE_WITH_DB_MODULE',actions:['character-search','character-add','organization-save','organization-reset']});
 
     if(action==='organization-save'||action==='organization-reset'){
       const allowed=action==='organization-reset'
@@ -210,17 +261,34 @@ Deno.serve(async request=>{
       return json(request,{ok:true,service:SERVICE_NAME,apiVersion:API_VERSION,contract:ORGANIZATION_CONTRACT,databaseContract:ORGANIZATION_DATABASE_CONTRACT,code:text(saved.code,80),message:resetToDefault?'기본 조직도로 복원했습니다.':'조직도를 저장했습니다.',legionName:normalized.legionName,previousRevision:nonNegativeInt(saved.previousRevision),revision:expectedReadRevision,resetToDefault,readbackVerified:true,tree});
     }
 
+    if(action==='character-search'){
+      if(rawBytes>MAX_CHARACTER_ADD_BYTES)return json(request,{ok:false,code:'REQUEST_TOO_LARGE',message:'캐릭터 조회 요청 크기가 허용 범위를 초과했습니다.'},413);
+      const forbidden=forbiddenField(body,new Set(['action','sessionToken','mainCharacterName','altCharacterName']));if(forbidden)return json(request,{ok:false,...forbidden},400);
+      const sessionToken=text(body.sessionToken,120);if(!TOKEN.test(sessionToken))return json(request,{ok:false,code:'SESSION_TOKEN_INVALID',message:'로그인 세션이 필요합니다.'},401);
+      const session=await rpc('kinojo_web_session_validate_v320',{p_session_token:sessionToken,p_touch:false});
+      if(session.ok!==true)return json(request,{ok:false,code:text(session.code,80)||'SESSION_INVALID',message:text(session.message,300)||'로그인 세션을 확인하지 못했습니다.'},401);
+      if(record(session.profile).canManage!==true)return json(request,{ok:false,code:'LEGION_TREE_MANAGE_FORBIDDEN',message:'레기온 트리 캐릭터를 조회·추가할 권한이 없습니다.'},403);
+      const servers=await activeServers();if(!servers.length)throw new Error('SERVER_REFERENCE_EMPTY');
+      const mainInput=parseCharacterInput(body.mainCharacterName,servers,false);if(mainInput.ok!==true||mainInput.empty===true)return json(request,mainInput.empty===true?{ok:false,code:'MAIN_CHARACTER_REQUIRED',message:'본캐 이름을 입력해 주세요.'}:mainInput,400);
+      const altInput=parseCharacterInput(body.altCharacterName,servers,false);if(altInput.ok!==true)return json(request,altInput,400);
+      const main=await officialCharacterCandidates(mainInput,servers,sessionToken,'main');
+      if(main.ok!==true)return json(request,main,Number(main.status)||502);
+      const alt=altInput.empty===true?null:await officialCharacterCandidates(altInput,servers,sessionToken,'alt');
+      if(alt&&alt.ok!==true)return json(request,alt,Number(alt.status)||502);
+      const candidateCount=(Array.isArray(main.candidates)?main.candidates.length:0)+(alt&&Array.isArray(alt.candidates)?alt.candidates.length:0);
+      return json(request,{ok:true,service:SERVICE_NAME,apiVersion:API_VERSION,contract:CHARACTER_SEARCH_CONTRACT,databaseContract:DATABASE_CONTRACT,code:'SEARCH_RESULTS_READY',message:candidateCount?`정확히 일치하는 캐릭터 ${candidateCount}건을 확인했습니다.`:'정확히 일치하는 캐릭터를 찾지 못했습니다.',readOnly:true,createsTarget:false,createsQueue:false,main,alt,candidateCount});
+    }
+
     if(action!=='character-add')return json(request,{ok:false,code:'UNSUPPORTED_ACTION',message:'지원하지 않는 요청입니다.'},400);
     if(rawBytes>MAX_CHARACTER_ADD_BYTES)return json(request,{ok:false,code:'REQUEST_TOO_LARGE',message:'캐릭터 추가 요청 크기가 허용 범위를 초과했습니다.'},413);
-    const forbidden=forbiddenField(body,new Set(['action','sessionToken','mainCharacterName','altCharacterName','serverId']));if(forbidden)return json(request,{ok:false,...forbidden},400);
+    const forbidden=forbiddenField(body,new Set(['action','sessionToken','mainCharacterName','altCharacterName']));if(forbidden)return json(request,{ok:false,...forbidden},400);
     const sessionToken=text(body.sessionToken,120);if(!TOKEN.test(sessionToken))return json(request,{ok:false,code:'SESSION_TOKEN_INVALID',message:'로그인 세션이 필요합니다.'},401);
     const session=await rpc('kinojo_web_session_validate_v320',{p_session_token:sessionToken,p_touch:false});
     if(session.ok!==true)return json(request,{ok:false,code:text(session.code,80)||'SESSION_INVALID',message:text(session.message,300)||'로그인 세션을 확인하지 못했습니다.'},401);
+    if(record(session.profile).canManage!==true)return json(request,{ok:false,code:'LEGION_TREE_MANAGE_FORBIDDEN',message:'레기온 트리 캐릭터를 추가할 권한이 없습니다.'},403);
     const servers=await activeServers();if(!servers.length)throw new Error('SERVER_REFERENCE_EMPTY');
-    const legacyServerId=Object.prototype.hasOwnProperty.call(body,'serverId')?positiveInt(body.serverId):DEFAULT_SERVER_ID;
-    if(legacyServerId===null)return json(request,{ok:false,code:'SERVER_REQUIRED',message:'기존 서버 선택값을 확인해 주세요.'},400);
-    const mainInput=parseCharacterInput(body.mainCharacterName,servers,legacyServerId);if(mainInput.ok!==true)return json(request,mainInput,400);
-    const altInput=parseCharacterInput(body.altCharacterName,servers,legacyServerId);if(altInput.ok!==true)return json(request,altInput,400);
+    const mainInput=parseCharacterInput(body.mainCharacterName,servers,true);if(mainInput.ok!==true)return json(request,mainInput,400);
+    const altInput=parseCharacterInput(body.altCharacterName,servers,true);if(altInput.ok!==true)return json(request,altInput,400);
     const mode=resolveMode(mainInput,altInput);if(mode.ok!==true)return json(request,mode,400);
     const mainServer=record(mode.mainServer),targetServer=record(mode.targetServer);
     const mainServerId=positiveInt(mainServer.serverId),serverId=positiveInt(targetServer.serverId);
@@ -258,7 +326,7 @@ Deno.serve(async request=>{
     return json(request,{ok:true,service:SERVICE_NAME,apiVersion:API_VERSION,contract:'legion-tree-character-add-v1',databaseContract:DATABASE_CONTRACT,authContract:AUTH_CONTRACT,modeContract:MODE_CONTRACT,dedupeContract:DEDUPE_CONTRACT,queueContract:QUEUE_CONTRACT,workerContract:WORKER_CONTRACT,code:'ADD_QUEUE_ACCEPTED',message:'캐릭터 조회를 Server Worker에 인계했습니다.',mode:mode.mode,target,dedupe:{checked:true,duplicate:dedupeCode!=='NEW_CHARACTER',decision:dedupeCode,existingCharacterId:positiveInt(prepared.existingCharacterId)||existingCharacterId},queue,handoff:{accepted:true,workerId:text(workerData.workerId,240),contract:WORKER_CONTRACT,state:text(record(workerData.handoff).state,80)||'safe'},listAppendPending:false,listWrite:false,listReadback:false,listlessCharacterAdd:true,terminalStage:'SERVER_QUEUE_CHARACTER_MASTER_DONE',execution:execution(true,true,true,'SERVER_WORKER')},202);
   }catch(error){
     const code=error instanceof Error?error.message:'LEGION_TREE_SERVER_ERROR';
-    const organization=/ORGANIZATION_/.test(code);
-    return json(request,{ok:false,code:code==='LEGION_TREE_SERVER_NOT_CONFIGURED'?code:(organization?code:'LEGION_TREE_SERVER_ERROR'),message:organization?'조직도 저장 후 Server 재확인을 완료하지 못했습니다. 새로고침 후 상태를 확인해 주세요.':'레기온 트리 캐릭터 추가 요청을 확인하는 중 오류가 발생했습니다.'},500);
+    const organization=/ORGANIZATION_/.test(code),search=/PLAYNC_|SEARCH_|SERVER_REFERENCE_/.test(code);
+    return json(request,{ok:false,code:code==='LEGION_TREE_SERVER_NOT_CONFIGURED'?code:(organization||search?code:'LEGION_TREE_SERVER_ERROR'),message:organization?'조직도 저장 후 Server 재확인을 완료하지 못했습니다. 새로고침 후 상태를 확인해 주세요.':search?'공식 캐릭터 조회를 확인하는 중 오류가 발생했습니다.':'레기온 트리 캐릭터 추가 요청을 확인하는 중 오류가 발생했습니다.'},500);
   }
 });

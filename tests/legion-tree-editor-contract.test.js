@@ -208,10 +208,10 @@ assert(serialized.assignments.every(item => Object.prototype.hasOwnProperty.call
 for (const html of [pc, mobile]) {
   assert(html.includes('id="legionTreeEditorRoot"'));
   assert(html.includes('legion-tree-editor.js?cache=2026083103'));
-  assert(html.includes('legion-tree.js?cache=2026083105'));
-  assert(html.includes('legion-tree.css?cache=2026083105'));
-  assert(html.includes('kinojo-supabase-features.js?cache=2026083104'));
-  assert(html.indexOf('legion-tree-editor.js?cache=2026083103') < html.indexOf('legion-tree.js?cache=2026083105'));
+  assert(html.includes('legion-tree.js?cache=2026083106'));
+  assert(html.includes('legion-tree.css?cache=2026083106'));
+  assert(html.includes('kinojo-supabase-features.js?cache=2026083105'));
+  assert(html.indexOf('legion-tree-editor.js?cache=2026083103') < html.indexOf('legion-tree.js?cache=2026083106'));
 }
 
 for (const token of [
@@ -249,7 +249,8 @@ for (const token of [
 
 assert(pageScript.includes('window.KinojoLegionTreeEditor?.setModel?.(model)'));
 assert(pageScript.includes('window.KinojoLegionTreeEditor.open({opener:event.currentTarget})'));
-assert(pageScript.includes('if(edit)edit.disabled=false'));
+assert(pageScript.includes('syncManagementControls()'));
+assert(pageScript.includes('if(!canManageLegionTree())'));
 assert(editorScript.includes('window.KinojoSupabase'));
 assert(!editorScript.includes('invokeEdgeFunction'));
 assert(!editorScript.includes('fetch('));
@@ -259,7 +260,7 @@ assert(featureScript.includes("action:'organization-reset'"));
 assert(featureScript.includes('saveLegionTreeOrganization'));
 for (const token of [
   "const ORGANIZATION_DATABASE_CONTRACT='453'",
-  "actions:['character-add','organization-save','organization-reset']",
+  "actions:['character-search','character-add','organization-save','organization-reset']",
   "rpc('kinojo_legion_tree_organization_save_v453'",
   'organizationReadbackConnected:true'
 ]) assert(edgeScript.includes(token), 'Edge organization contract missing: '+token);

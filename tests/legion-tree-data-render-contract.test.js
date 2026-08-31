@@ -13,6 +13,7 @@ const features = fs.readFileSync(path.join(rootDir, 'core/kinojo-supabase-featur
 const edge = fs.readFileSync(path.join(rootDir, 'supabase/functions/kinojo-legion-tree/index.ts'), 'utf8');
 const crossServerMigration = fs.readFileSync(path.join(rootDir, 'supabase/migrations/20260831060000_legion_tree_cross_server_character_add_v454.sql'), 'utf8');
 const listlessMigration = fs.readFileSync(path.join(rootDir, 'supabase/migrations/20260831064411_legion_tree_listless_character_add_v455.sql'), 'utf8');
+const searchRateMigration = fs.readFileSync(path.join(rootDir, 'supabase/migrations/20260831085735_legion_tree_character_search_rate_gate_v457.sql'), 'utf8');
 const worker = fs.readFileSync(path.join(rootDir, 'supabase/functions/character-refresh-worker/index.ts'), 'utf8');
 const workflow = fs.readFileSync(path.join(rootDir, '.github/workflows/verify-legion-tree-pages.yml'), 'utf8');
 
@@ -177,15 +178,29 @@ function createAddHarness() {
   const main = fakeElement();
   const alt = fakeElement();
   const add = fakeElement({ disabled: true });
+  const search = fakeElement({ disabled: true });
   const reset = fakeElement();
+  const close = fakeElement();
   const progress = fakeElement({ hidden: true });
   const harnessStatus = fakeElement();
   const harnessTreeRoot = fakeElement();
+  const searchRoot = fakeElement({ hidden: true });
+  const mainResults = fakeElement();
+  const altResults = fakeElement();
+  const altResultsGroup = fakeElement({ hidden: true });
+  const edit = fakeElement({ disabled: true });
   const elements = {
     '#legionTreeMainName': main,
     '#legionTreeAltName': alt,
+    '#legionTreeSearchBtn': search,
     '#legionTreeAddBtn': add,
     '#legionTreeResetBtn': reset,
+    '#legionTreeSearchCloseBtn': close,
+    '#legionTreeSearchResults': searchRoot,
+    '#legionTreeMainResults': mainResults,
+    '#legionTreeAltResults': altResults,
+    '#legionTreeAltResultsGroup': altResultsGroup,
+    '#legionTreeEditBtn': edit,
     '#legionTreeAddProgress': progress,
     '#legionTreeStatus': harnessStatus,
     '#legionTreeRoot': harnessTreeRoot
@@ -199,12 +214,19 @@ function createAddHarness() {
     createElement(tagName) { return fakeElement({ tagName: String(tagName).toUpperCase() }); }
   };
   const addRequests = [];
+  const searchRequests = [];
   let addImplementation;
+  let searchImplementation;
   let runtimeImplementation;
   let treeLoads = 0;
   const detailOpens = [];
+  const windowListeners = {};
+  let managerAllowed = true;
   const harnessWindow = {
     dispatchEvent() {},
+    addEventListener(type, listener) { windowListeners[type] = listener; },
+    KinojoAuth: { getAccount() { return managerAllowed ? { role: 'MASTER', level: 4, canManage: true } : { role: 'MEMBER', level: 1, canManage: false }; } },
+    KinojoPermissions: { canManage(account) { return account?.canManage === true; } },
     KinojoCharacterReaction: {
       open(options) { detailOpens.push(options); }
     },
@@ -231,6 +253,10 @@ function createAddHarness() {
       async addLegionTreeCharacter(request) {
         addRequests.push(request);
         return addImplementation(request);
+      },
+      async searchLegionTreeCharacters(request) {
+        searchRequests.push(request);
+        return searchImplementation(request);
       },
       async runtimeGetStatus() {
         return runtimeImplementation();
@@ -264,11 +290,14 @@ function createAddHarness() {
     api: harnessWindow.KinojoLegionTree,
     elements,
     addRequests,
+    searchRequests,
     detailOpens,
     start,
     getTreeLoads: () => treeLoads,
     setAddImplementation: value => { addImplementation = value; },
-    setRuntimeImplementation: value => { runtimeImplementation = value; }
+    setSearchImplementation: value => { searchImplementation = value; },
+    setRuntimeImplementation: value => { runtimeImplementation = value; },
+    setManagerAllowed(value) { managerAllowed = value === true; windowListeners['kinojo:auth-changed']?.(); }
   };
 }
 
@@ -367,7 +396,7 @@ assert(nameBaseRule && nameBaseRule[1].includes('max-width:5em'));
 assert(nameBaseRule && !nameBaseRule[1].includes('mask-image'));
 assert(nameFadeRule && nameFadeRule[1].includes('-webkit-mask-image:linear-gradient'));
 assert(nameFadeRule && nameFadeRule[1].includes('mask-image:linear-gradient'));
-assert(!css.includes('text-overflow:ellipsis'));
+assert(!nameBaseRule[1].includes('text-overflow:ellipsis'));
 assert(css.includes('.legion-tree-member-grid{width:100%;display:grid;grid-template-columns:repeat(5,minmax(0,124px))'));
 assert(css.includes('.legion-tree-member-grid[data-branch-count="2"]{grid-template-columns:repeat(3,minmax(0,124px))}'));
 assert(css.includes('.legion-tree-member-grid[data-branch-count="3"],.legion-tree-member-grid[data-branch-count="4"],.legion-tree-member-grid[data-branch-count="5"]{grid-template-columns:repeat(2,minmax(0,124px))}'));
@@ -416,9 +445,17 @@ window.KinojoSupabase = {
   for (const html of [pc, mobile]) {
     assert(html.includes('id="legionTreeRoot"'));
     assert(html.includes('id="legionTreeEditorRoot"'));
+    assert(html.includes('id="legionTreeSearchBtn"'));
+    assert(html.includes('id="legionTreeSearchResults"'));
+    assert(html.includes('id="legionTreeMainResults"'));
+    assert(html.includes('id="legionTreeAltResults"'));
+    assert(html.includes('id="legionTreeSearchCloseBtn"'));
     assert(html.includes('id="legionTreeAddProgress"'));
     assert(html.includes('id="legionTreeServerHint"'));
-    assert(html.includes('placeholder="화비[루미]"'));
+    assert(html.includes('placeholder="본캐이름[서버]"'));
+    assert(html.includes('placeholder="부캐이름[서버]"'));
+    assert(!html.includes('<span>본캐 이름</span>'));
+    assert(!html.includes('<span>부캐 이름</span>'));
     assert(!html.includes('id="legionTreeRaceElyos"'));
     assert(!html.includes('id="legionTreeRaceAsmodian"'));
     assert(!html.includes('id="legionTreeServer"'));
@@ -428,10 +465,10 @@ window.KinojoSupabase = {
     assert(!html.includes('본캐예시'));
     assert(html.includes('kinojo-character-reaction.css?cache=2026082201'));
     assert(html.includes('kinojo-character-reaction.js?cache=2026082701'));
-    assert(html.includes('legion-tree.css?cache=2026083105'));
+    assert(html.includes('legion-tree.css?cache=2026083106'));
     assert(html.includes('legion-tree-editor.js?cache=2026083103'));
-    assert(html.includes('legion-tree.js?cache=2026083105'));
-    assert(html.includes('kinojo-supabase-features.js?cache=2026083104'));
+    assert(html.includes('legion-tree.js?cache=2026083106'));
+    assert(html.includes('kinojo-supabase-features.js?cache=2026083105'));
     assert(!html.includes('legion-tree.js?cache=2026082403'));
   }
 
@@ -439,7 +476,12 @@ window.KinojoSupabase = {
   assert(script.includes("kinojo_web_get_legion_tree"));
   assert(script.includes("if(!mainName)"));
   assert(script.includes("parseCharacterAddInput"));
-  assert(script.includes("미표기 시 지켈"));
+  assert(script.includes("이름만 입력하면 모든 활성 서버"));
+  assert(script.includes("SEARCH_CONTRACT='legion-tree-character-search-v1'"));
+  assert(script.includes('handleSearch'));
+  assert(script.includes('selectSearchCandidate'));
+  assert(script.includes('candidateExactInput'));
+  assert(script.includes('resetInputs({keepStatus:true,force:true})'));
   assert(!script.includes("renderServerOptions"));
   assert(!script.includes("selectedRaceId"));
   assert(script.includes("ADD_ACCEPTED_CODE='ADD_QUEUE_ACCEPTED'"));
@@ -452,6 +494,17 @@ window.KinojoSupabase = {
   assert(css.includes(':has(.legion-tree-add-progress:not([hidden]))'));
   assert(css.includes('li[data-state="done"]'));
   assert(css.includes('li[data-state="error"]'));
+  assert(css.includes('.legion-tree-search-results'));
+  assert(css.includes('@keyframes legion-tree-search-fade'));
+  assert(css.includes('@media(prefers-reduced-motion:reduce)'));
+
+  const searchWrapper = features.match(/async function searchLegionTreeCharacters\(extra=\{\}\)\{([\s\S]*?)\n  \}/);
+  assert(searchWrapper, 'Legion Tree Server search wrapper missing');
+  assert(searchWrapper[1].includes('currentServerSessionCredential()'));
+  assert(searchWrapper[1].includes("action:'character-search'"));
+  assert(searchWrapper[1].includes('mainCharacterName'));
+  assert(searchWrapper[1].includes('altCharacterName'));
+  assert(!searchWrapper[1].includes('serverId'));
 
   const addWrapper = features.match(/async function addLegionTreeCharacter\(extra=\{\}\)\{([\s\S]*?)\n  \}/);
   assert(addWrapper, 'Legion Tree Server add wrapper missing');
@@ -460,24 +513,42 @@ window.KinojoSupabase = {
   assert(addWrapper[1].includes("action:'character-add'"));
   assert(addWrapper[1].includes('mainCharacterName'));
   assert(addWrapper[1].includes('altCharacterName'));
-  assert(addWrapper[1].includes('serverId'));
+  assert(!addWrapper[1].includes('serverId'));
   assert(!addWrapper[1].includes('passKey'));
   assert(!addWrapper[1].includes('memberId'));
+  assert(features.includes('searchLegionTreeCharacters,'));
   assert(features.includes('addLegionTreeCharacter,'));
   assert(workflow.includes('- "core/kinojo-supabase-features.js"'));
   assert(workflow.includes('node --check core/kinojo-supabase-features.js'));
   assert((workflow.match(/"core\/kinojo-supabase-features\.js"/g) || []).length >= 2);
   for (const token of [
-    "const API_VERSION='1.5'",
-    "const DATABASE_CONTRACT='455'",
-    "CHARACTER_INPUT_CONTRACT='character-name-server-tag-v2'",
-    'parseCharacterInput(body.mainCharacterName,servers,legacyServerId)',
+    "const API_VERSION='1.6'",
+    "const DATABASE_CONTRACT='457'",
+    "CHARACTER_INPUT_CONTRACT='character-name-server-tag-v3'",
+    "const CHARACTER_SEARCH_CONTRACT='legion-tree-character-search-v1'",
+    "action==='character-search'",
+    "url.searchParams.set('size','100')",
+    "identityName(stripOfficialName(row.name))!==identityName(input.characterName)",
+    'createsTarget:false',
+    'createsQueue:false',
+    'record(session.profile).canManage!==true',
+    'parseCharacterInput(body.mainCharacterName,servers,true)',
     "rpc('kinojo_legion_tree_character_queue_prepare_v455'",
     'p_main_server_id:mainServerId',
     'crossServerMainAltConnected:true',
     'listAppendPending:false',
     'listlessCharacterAdd:true'
   ]) assert(edge.includes(token), `Edge cross-server contract missing: ${token}`);
+  for (const token of [
+    'private.kinojo_legion_tree_search_authorize_v457',
+    'private.kinojo_legion_tree_search_rate_acquire_v457',
+    'public.kinojo_legion_tree_search_rate_acquire_v457',
+    "last_session_id = 'web:'",
+    "next_request_at = v_reserved_at + interval '700 milliseconds'",
+    'grant execute on function public.kinojo_legion_tree_search_rate_acquire_v457',
+    'to service_role',
+    'from public, anon, authenticated'
+  ]) assert(searchRateMigration.includes(token), `DB457 search rate contract missing: ${token}`);
   for (const token of [
     'private.kinojo_legion_tree_character_queue_prepare_v454',
     'public.kinojo_legion_tree_character_queue_prepare_v454',
@@ -590,8 +661,8 @@ window.KinojoSupabase = {
   const defaultParsed = addHarness.api.parseCharacterAddInput('복숭아');
   assert.strictEqual(defaultParsed.ok, true);
   assert.strictEqual(defaultParsed.characterName, '복숭아');
-  assert.strictEqual(defaultParsed.serverId, 2002);
-  assert.strictEqual(defaultParsed.serverName, '지켈');
+  assert.strictEqual(defaultParsed.serverId, null);
+  assert.strictEqual(defaultParsed.allActiveServers, true);
   const taggedParsed = addHarness.api.parseCharacterAddInput('화비[루미]');
   assert.strictEqual(taggedParsed.ok, true);
   assert.strictEqual(taggedParsed.characterName, '화비');
@@ -600,51 +671,84 @@ window.KinojoSupabase = {
   assert.strictEqual(addHarness.api.parseCharacterAddInput('화비[없는서버]').code, 'SERVER_SUFFIX_NOT_FOUND');
   assert.strictEqual(addHarness.api.parseCharacterAddInput('화비[루미').code, 'SERVER_TAG_INVALID');
 
+  const candidate = (role, name, serverId, serverName, level = 45) => ({
+    ok: true,
+    role,
+    query: { raw: name, characterName: name, serverSpecified: false, serverId: null, serverName: '' },
+    candidates: [{
+      candidateKey: `${serverId}:${name}-${serverId}`,
+      characterId: `${name}-${serverId}`,
+      characterName: name,
+      serverId,
+      serverName,
+      serverShortName: serverName,
+      raceId: serverId >= 2000 ? 2 : 1,
+      raceName: serverId >= 2000 ? '마족' : '천족',
+      level,
+      profileImageUrl: ''
+    }]
+  });
+  addHarness.setSearchImplementation(async request => ({
+    ok: true,
+    contract: 'legion-tree-character-search-v1',
+    code: 'SEARCH_RESULTS_READY',
+    readOnly: true,
+    createsTarget: false,
+    createsQueue: false,
+    main: candidate('main', request.mainCharacterName.replace(/\[.*$/, ''), 2002, '지켈'),
+    alt: request.altCharacterName ? candidate('alt', request.altCharacterName.replace(/\[.*$/, ''), 2004, '루미엘') : null
+  }));
+
   mainInput.value = '복숭아';
   altInput.value = '';
+  assert.strictEqual(await addHarness.api.handleSearch(), true, 'suffixless main search must complete');
+  assert.strictEqual(JSON.stringify(addHarness.searchRequests[0]), JSON.stringify({ mainCharacterName: '복숭아', altCharacterName: '' }));
+  assert.strictEqual(addHarness.elements['#legionTreeSearchResults'].hidden, false);
+  assert(addHarness.elements['#legionTreeMainResults'].innerHTML.includes('복숭아'));
+  assert.strictEqual(addButton.disabled, true, 'add must stay disabled until a candidate is selected');
+  assert.strictEqual(addHarness.api.selectSearchCandidate('main', '2002:복숭아-2002'), true);
+  assert.strictEqual(addButton.disabled, false);
   const treeLoadsBeforeMain = addHarness.getTreeLoads();
   assert.strictEqual(await addHarness.api.handleAdd(), true, 'main-only add must complete');
   assert.strictEqual(JSON.stringify(addHarness.addRequests[0]), JSON.stringify({
-    mainCharacterName: '복숭아',
-    altCharacterName: '',
-    serverId: 2002
+    mainCharacterName: '복숭아[지켈]',
+    altCharacterName: ''
   }));
   assert.strictEqual(addHarness.getTreeLoads(), treeLoadsBeforeMain + 1, 'tree must reload after completed add');
-  assert.strictEqual((addProgress.innerHTML.match(/data-state="done"/g) || []).length, 4);
-  assert(addProgress.innerHTML.includes('공식 확인'));
-  assert(addProgress.innerHTML.includes('정보 반영'));
-  assert(addProgress.innerHTML.includes('트리 확인'));
-  assert(!addProgress.innerHTML.includes('list 반영'));
-  assert(!addProgress.innerHTML.includes('readback'));
-  assert(addProgress.innerHTML.includes('완료'));
+  assert.strictEqual(addProgress.hidden, true, 'terminal success must reset progress');
+  assert.strictEqual(mainInput.value, '', 'terminal success must reset main input');
+  assert.strictEqual(altInput.value, '', 'terminal success must reset alt input');
+  assert.strictEqual(addHarness.elements['#legionTreeSearchResults'].hidden, true, 'terminal success must close results');
   assert(addStatus.textContent.includes('재확인이 완료'));
-  assert.strictEqual(addButton.disabled, false);
+  assert.strictEqual(addButton.disabled, true);
   assert.strictEqual(resetButton.disabled, false);
 
   mainInput.value = '복숭아';
   altInput.value = '화비[루미]';
+  assert.strictEqual(await addHarness.api.handleSearch(), true, 'main+alt search must complete');
+  assert.strictEqual(addHarness.api.selectSearchCandidate('main', '2002:복숭아-2002'), true);
+  assert.strictEqual(addHarness.api.selectSearchCandidate('alt', '2004:화비-2004'), true);
   assert.strictEqual(await addHarness.api.handleAdd(), true, 'main+alt add must complete');
   assert.strictEqual(JSON.stringify(addHarness.addRequests[1]), JSON.stringify({
-    mainCharacterName: '복숭아',
-    altCharacterName: '화비[루미]',
-    serverId: 2002
+    mainCharacterName: '복숭아[지켈]',
+    altCharacterName: '화비[루미엘]'
   }));
 
-  const callsBeforeBadSuffix = addHarness.addRequests.length;
+  const callsBeforeBadSuffix = addHarness.searchRequests.length;
   mainInput.value = '복숭아';
   altInput.value = '화비[알수없음]';
   altInput.focused = false;
-  assert.strictEqual(await addHarness.api.handleAdd(), false, 'unknown server tag must fail before network');
-  assert.strictEqual(addHarness.addRequests.length, callsBeforeBadSuffix, 'unknown server tag must make network 0');
+  assert.strictEqual(await addHarness.api.handleSearch(), false, 'unknown server tag must fail before network');
+  assert.strictEqual(addHarness.searchRequests.length, callsBeforeBadSuffix, 'unknown server tag must make network 0');
   assert.strictEqual(altInput.focused, true);
   assert(addStatus.textContent.includes('확인할 수 없습니다'));
 
-  const callsBeforeAltOnly = addHarness.addRequests.length;
+  const callsBeforeAltOnly = addHarness.searchRequests.length;
   mainInput.value = '';
   altInput.value = '부캐단독';
   mainInput.focused = false;
-  assert.strictEqual(await addHarness.api.handleAdd(), false, 'alt-only must fail before network');
-  assert.strictEqual(addHarness.addRequests.length, callsBeforeAltOnly, 'alt-only must make network 0');
+  assert.strictEqual(await addHarness.api.handleSearch(), false, 'alt-only must fail before network');
+  assert.strictEqual(addHarness.searchRequests.length, callsBeforeAltOnly, 'alt-only must make network 0');
   assert.strictEqual(mainInput.attributes['aria-invalid'], 'true');
   assert.strictEqual(mainInput.focused, true);
   assert.strictEqual(addStatus.textContent, '본캐 이름을 입력해 주세요.');
@@ -653,6 +757,9 @@ window.KinojoSupabase = {
   addHarness.setAddImplementation(() => new Promise(resolve => { releaseAccepted = resolve; }));
   mainInput.value = '중복클릭';
   altInput.value = '';
+  addHarness.setSearchImplementation(async () => ({ok:true,contract:'legion-tree-character-search-v1',readOnly:true,createsTarget:false,createsQueue:false,main:candidate('main','중복클릭',2002,'지켈'),alt:null}));
+  assert.strictEqual(await addHarness.api.handleSearch(), true);
+  assert.strictEqual(addHarness.api.selectSearchCandidate('main', '2002:중복클릭-2002'), true);
   const duplicateCallsBefore = addHarness.addRequests.length;
   const firstClick = addHarness.api.handleAdd();
   const secondClick = addHarness.api.handleAdd();
@@ -671,7 +778,7 @@ window.KinojoSupabase = {
     queue: { sessionId: `legion-add-${sessionNo}` }
   });
   assert.strictEqual(await firstClick, true);
-  assert.strictEqual(addButton.disabled, false);
+  assert.strictEqual(addButton.disabled, true);
 
   addHarness.setAddImplementation(async () => {
     const error = new Error('이미 등록된 캐릭터입니다.');
@@ -681,9 +788,23 @@ window.KinojoSupabase = {
   });
   mainInput.value = '이미등록';
   altInput.value = '';
+  addHarness.setSearchImplementation(async () => ({ok:true,contract:'legion-tree-character-search-v1',readOnly:true,createsTarget:false,createsQueue:false,main:candidate('main','이미등록',2002,'지켈'),alt:null}));
+  assert.strictEqual(await addHarness.api.handleSearch(), true);
+  assert.strictEqual(addHarness.api.selectSearchCandidate('main', '2002:이미등록-2002'), true);
   assert.strictEqual(await addHarness.api.handleAdd(), false);
   assert(addStatus.textContent.includes('이미 등록된 캐릭터'));
   assert.strictEqual((addProgress.innerHTML.match(/data-state="error"/g) || []).length, 1);
+  assert.strictEqual(mainInput.value, '이미등록', 'failed add must preserve retry input');
+  assert.strictEqual(addHarness.elements['#legionTreeSearchResults'].hidden, false, 'failed add must preserve result panel');
+  assert.strictEqual(addHarness.api.getAddState().selectedCandidates.main.characterName, '이미등록', 'failed add must preserve selection');
+
+  const searchesBeforeForbidden = addHarness.searchRequests.length;
+  addHarness.setManagerAllowed(false);
+  assert.strictEqual(addHarness.elements['#legionTreeSearchBtn'].disabled, true, 'non-manager search control must fail closed');
+  assert.strictEqual(addHarness.elements['#legionTreeEditBtn'].disabled, true, 'non-manager editor control must fail closed');
+  assert.strictEqual(await addHarness.api.handleSearch(), false, 'non-manager search must stop before network');
+  assert.strictEqual(addHarness.searchRequests.length, searchesBeforeForbidden);
+  addHarness.setManagerAllowed(true);
 
   mainInput.value = '초기화본캐';
   altInput.value = '초기화부캐';

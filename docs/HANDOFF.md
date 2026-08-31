@@ -303,7 +303,7 @@
 
 - PC·모바일 페이지가 공개 RPC `kinojo_web_get_legion_tree`의 `web-legion-tree-v1` / DB 453 계약을 읽어 깡·낮·밤·키나노동조합을 Server 순서대로 렌더링한다. 설정이 없으면 기존 DB355 fallback, 설정이 있으면 DB453 configured tree를 반환한다.
 - 2026-08-24 운영 readback 기준 실제 구성원은 깡 41명, 낮 4명, 밤 2명, 키나노동조합 42명으로 총 89명이다.
-- 캐릭터 추가의 종족·서버 선택 UI는 제거했다. 본캐·부캐 입력은 각각 `이름` 또는 `이름[서버약칭]`을 받으며 미표기 시 지켈(2002), 표기 시 v372 active `server_master`의 원본명/단축명으로 Server가 최종 해석한다.
+- 캐릭터 추가의 종족·서버 선택 UI와 즉시 쓰기 버튼을 제거했다. 본캐·부캐 입력은 각각 `이름` 또는 `이름[서버약칭]`을 받는다. 미표기는 공식 검색 1회로 모든 active 서버의 exact-name 후보를 반환하고, 표기는 v372 `server_master` 원본명/단축명으로 한 서버만 제한한다. 미표기를 지켈로 추정하지 않는다.
 - 실제 구성원 카드는 Server `className`을 수호성→templar, 검성→gladiator, 살성→assassin, 궁성→ranger, 마도성→sorcerer, 정령성→elementalist, 치유성→cleric, 호법성→chanter, 권성→fighter의 공용 9종 아이콘으로만 연결한다. 공백·표시용 괄호 수식은 정규화하되 unknown/빈 값은 추측하지 않고 `?` fallback으로 닫는다.
 - 2026-08-24 운영 readback의 89명 직업 분포는 수호성 7, 검성 6, 살성 7, 궁성 15, 마도성 10, 정령성 9, 치유성 17, 호법성 12, 권성 6이며 현재 unknown/null은 0명이다.
 - 운영 89명의 Server 상태는 본캐 39명, 부캐 50명이며 characterName 누락과 부캐 mainCharacterName 누락은 각각 0명이다. WEB은 `characterName / isMain / mainCharacterName`을 그대로 렌더링하고 본캐/부캐를 재판정하거나 이름순·본캐 우선으로 재정렬하지 않는다.
@@ -311,18 +311,17 @@
 - 고정 124px 카드는 branch 수가 늘어도 축소하지 않는다. PC는 1/2/3+ branch에 5/3/2열, 모바일은 1~2/3+ branch에 2/1열을 사용하며 `data-branch-count`와 동일 CSS 계약을 PC·모바일이 공유한다.
 - 운영 Server가 반환한 `DEFAULT_FALLBACK` 구조에는 `기본 단계` 표식을 붙이고, 배정 구성원이 0명인 role은 group 배열 유무와 관계없이 `지정 전`으로 표시한다.
 - 계약 버전, 필수 4개 레기온, Server stage 구조 또는 fallback 상태가 맞지 않으면 브라우저에서 임의 fallback을 만들지 않고 오류 상태로 닫는다.
-- 캐릭터 추가는 기존 인증 Server chain을 재사용한다. `core/kinojo-supabase-features.js#addLegionTreeCharacter`가 현재 `kws_` 세션을 내부 결합해 `kinojo-legion-tree`의 `character-add`만 호출한다. 페이지는 raw 본캐명·부캐명과 기존 cache 호환용 고정 지켈 fallback ID만 보내며, 입력 suffix의 resolved server/race/mode/member/공식 정보/list/Queue 값은 Server가 결정한다.
-- 본캐만 입력하면 MAIN, 본캐+부캐는 ALT 요청이 되고, 부캐만 입력·잘못 닫힌 `[]`·알 수 없는 약칭은 오류·focus 후 network 0으로 종료한다. 실행 중에는 추가/초기화 버튼을 잠가 중복 click과 가짜 취소를 막는다.
+- `character-search`는 API 1.6/DB457의 manager-only·exact-name·active-server·공식 rate-gate 읽기 계약이며 Target/Queue를 만들지 않는다. 결과 패널은 본캐/부캐 후보를 분리하고 우측(모바일 하단)에 `추가/닫기/초기화`를 둔다. 닫기는 입력을 보존하고 입력 변경은 stale 후보를 무효화하며, 조회/추가 실패는 재시도 입력·선택을 보존한다.
+- `추가`는 각 입력의 선택 후보가 있어야 활성화되고 선택한 Server identity를 `이름[원본서버명]`으로 기존 listless `character-add` chain에 전달한다. Edge는 현재 KWS 세션과 `canManage`, active 서버, tag, mode, 중복을 다시 검증한다. 본캐만 선택하면 MAIN, 본캐+부캐는 ALT이며 부캐만 입력·잘못 닫힌 `[]`·알 수 없는 약칭·미선택 서버는 network 0 또는 Server fail-closed로 종료한다.
 - DB455 Queue wrapper는 target 서버와 main 서버를 별도로 저장하고 ALT 시작 전에 해당 main 서버의 활성 본캐를 `list_row`와 무관하게 확인한다. relation finalizer의 함수 identity는 유지하면서 `복숭아(지켈) → 화비(루미엘)` 관계를 확정한다.
 - exact 단일 `server:legion_tree_character_add_v455` Target만 DB 정책으로 listless 완료가 허용된다. Master·관계·성장 리뷰·랭킹·필수 snapshot 완료와 Google list Queue 0건을 확인한 뒤 `SERVER_QUEUE_CHARACTER_MASTER_DONE / list_sync_status=skipped`로 닫으며 `lookup-list-sync`를 호출하지 않는다. 다른 Server Queue의 기존 list 동기화 계약은 유지한다.
-- 진행 UI는 요청에 결합된 Server runtime `sessionId`만 추적해 `공식 확인 → 정보 반영 → 트리 확인 → 완료`를 표시한다. subbar는 입력·버튼·상태/progress를 독립 grid 영역으로 나눠 조회 시작 후 긴 오류/진행 문구가 본문과 겹치지 않는다. 동일 세션의 terminal 완료 뒤 공개 트리를 재조회한다.
-- 초기화는 작업이 없을 때 두 이름, 오류, 진행 표시를 함께 비운다. Server 작업 실행 중에는 초기화를 거부하며 Server Queue를 취소했다고 표시하지 않는다.
+- 진행 UI는 요청에 결합된 Server runtime `sessionId`만 추적해 `공식 확인 → 정보 반영 → 트리 확인 → 완료`를 표시한다. 동일 세션 terminal과 공개 트리 재조회가 모두 성공한 뒤에만 두 입력·후보·선택·패널·진행을 전부 초기화한다. Server 작업 실행 중 초기화는 거부하며 Queue를 취소했다고 표시하지 않는다.
 - 조직도 편집은 PC·모바일 공용 `legion-tree/js/legion-tree-editor.js`가 소유한다. 네 레기온 선택, 안전한 단계 증감, 단계명, 동일 단계 복수 직급, 점유·parent 참조 직급 삭제 차단, 직급별 최대 인원 또는 제한 없음, 현재 레기온 구성원의 개별·원자적 일괄 배치와 해제, 바로 윗 단계 상위 소속, Server fallback 초기화, 취소·저장 UI를 제공한다.
 - 캐릭터 카드는 클릭·Enter·Space로 기존 공용 `KinojoCharacterReaction` 모달을 연다. Server 카드의 character ID/name, class, server ID/name, main owner, legion identity를 그대로 전달하고 Browser에서 캐릭터 identity를 재추론하지 않는다.
-- 조직도 저장 경계는 현재 `kinojo-legion-tree` API 1.5 안의 organization DB453 계약을 재사용한다. Browser는 현재 KWS 세션과 편집값만 보내고, Edge와 DB453이 `canManage`, revision/CAS, v365 무결성, 역할 UUID 정규화, 설정·직급·배치·parent 저장 또는 reset을 한 transaction에서 다시 검증한다.
+- 공개 트리는 비회원도 계속 읽을 수 있다. 후보 조회·캐릭터 추가·조직도 편집 UI는 비관리자에게 fail-closed이고, `kinojo-legion-tree` API 1.6은 search/add/save/reset마다 현재 KWS 세션과 `canManage`를 독립 재검증한다. organization DB453의 revision/CAS·v365 무결성·단일 transaction 계약은 유지한다.
 - 저장 성공 응답은 같은 요청 안에서 `kinojo_web_get_legion_tree`를 재호출해 revision·fallback 상태가 일치할 때만 `readbackVerified=true`로 반환한다. 편집기는 이 readback만 재렌더링하며 직접 service-role RPC를 호출하지 않는다.
 - 설정 저장 전 전체 draft의 단계 순서·필수 이름·직급 키/순서·최대 인원·현재 레기온 구성원·중복 배치·직급 존재·최상위/하위 parent 방향을 검증한다. 실패하면 네트워크 요청 없이 첫 오류 위치와 메시지를 표시하고 해당 입력으로 focus한다. Server validator v365를 최종 권한으로 대체하지 않는다.
-- 레기온 트리 진행도는 **88/115**다. 파-1~파-3까지 연속 완료했으며 다음 미완료 단계는 **하-1**이다. 이번 우선 보정의 listless 추가 경로는 계획 외 보정으로 반영했으며 단계 수를 임의로 늘리지 않았다.
+- 레기온 트리 계획은 최신 Drive 기준 **139개 micro-task**다. 선행-1~선행-10 후보 조회/선택 UX를 하 단계 앞에 배치했고, 다음은 하-1~하-4 공개 읽기·관리 쓰기 권한 Gate다. 운영 반영과 readback이 끝나기 전에는 완료 수치를 올리지 않는다.
 
 ## 내 정보 이미지 기존 완료 상태
 

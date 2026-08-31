@@ -1855,14 +1855,23 @@
     return invokeEdgeFunction('character-profile-snapshot',payload);
   }
 
+  async function searchLegionTreeCharacters(extra={}){
+    const sessionToken=currentServerSessionCredential();
+    return invokeEdgeFunction('kinojo-legion-tree',{
+      action:'character-search',
+      sessionToken,
+      mainCharacterName:String(extra.mainCharacterName||'').trim(),
+      altCharacterName:String(extra.altCharacterName||'').trim()
+    });
+  }
+
   async function addLegionTreeCharacter(extra={}){
     const sessionToken=currentServerSessionCredential();
     return invokeEdgeFunction('kinojo-legion-tree',{
       action:'character-add',
       sessionToken,
       mainCharacterName:String(extra.mainCharacterName||'').trim(),
-      altCharacterName:String(extra.altCharacterName||'').trim(),
-      serverId:Number(extra.serverId||0)
+      altCharacterName:String(extra.altCharacterName||'').trim()
     });
   }
 
@@ -2034,7 +2043,7 @@
   }
 
   window.KinojoSupabase = {
-    version:'1.3.1.59-legion-tree-organization-save-20260831',
+    version:'1.3.1.60-legion-tree-candidate-search-20260831',
     getConfig,
     isPreferred,
     isConfigured,
@@ -2113,6 +2122,7 @@
     adminSanctuaryProfileDiagnostic,
     adminCharacter,
     adminLookup,
+    searchLegionTreeCharacters,
     addLegionTreeCharacter,
     saveLegionTreeOrganization,
     getLiveCharacterProfile,
