@@ -81,7 +81,7 @@ for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
   for(const token of [
     'sanctuary-management.css?cache=2026082903',
-    'kinojo-supabase-features.js?cache=2026083102',
+    'kinojo-supabase-features.js?cache=2026083103',
     'sanctuary-management.js?cache=2026083030',
   ])assert.ok(html.includes(token),`${page}: missing ${token}`);
   assert.equal(html.includes('id="sanctuaryManagementTransitionReview"'),false,`${page}: completed transition-review side card must remain retired`);
