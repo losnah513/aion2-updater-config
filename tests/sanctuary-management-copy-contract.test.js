@@ -9,7 +9,8 @@ for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
   for(const token of [
     'sanctuary-management-copy.css?cache=2026083001',
-    'sanctuary-management-copy.js?cache=2026083002',
+    'sanctuary-management-copy.js?cache=2026083101',
+    'kinojo-public-shell.css?cache=2026083001&amp;hotfix=2026083101',
     'canonical=2026083001',
   ])assert.ok(html.includes(token),`${page}: image-copy asset contract missing ${token}`);
 }
@@ -21,6 +22,7 @@ for(const token of [
   'dataset.sanctuaryCopyTeam',
   'dataset.sanctuaryCopyForce',
   'KinojoSanctuaryManagementCopyBridge',
+  'dataset.sanctuarySupportAvailable',
 ])assert.ok(client.includes(token),`team/force copy-button wiring missing ${token}`);
 assert.ok(client.indexOf('titleRow.append(title,copyButton)')>=0,'team copy button must sit beside the team name');
 assert.ok(client.indexOf('titleWrap.append(name,copyButton)')>=0,'force copy button must sit beside the force name');
@@ -36,7 +38,8 @@ for(const token of [
   'KinojoSanctuaryManagementCopy=Object.freeze',
   "document.addEventListener('click'",
   "dataset.sanctuaryCopyReady='true'",
-  '20260830_02_server_legacy_renderer',
+  '20260831_01_server_legacy_renderer',
+  'isRandomAlt',
 ])assert.ok(copy.includes(token),`legacy renderer bridge missing ${token}`);
 for(const forbidden of [
   'capture-head',
@@ -65,6 +68,10 @@ for(const token of [
   'KINOJO_SANCTUARY_MANAGEMENT_COPY_V1',
   'profileimg.plaync.com',
   'const headerFilename=safeFilename.replace(/[^\\x20-\\x7e]+/g,"")',
+  'isRandomAlt?: boolean',
+  'className:isRandomAlt?"랜덤 부캐":className',
+  'name.endsWith("랜덤 부캐")',
+  "slot.isRandomAlt?'R'",
 ])assert.ok(renderer.includes(token),`exact retired Sanctuary renderer contract missing ${token}`);
 for(const token of ['[functions.sanctuary-copy-render]','verify_jwt = false','entrypoint = "./functions/sanctuary-copy-render/index.ts"'])assert.ok(supabaseConfig.includes(token),`retired renderer deployment config missing ${token}`);
 for(const forbidden of [
@@ -94,6 +101,9 @@ for(const token of [
   'width:min(980px,100%)',
 ])assert.ok(css.includes(token),`image-copy responsive layout missing ${token}`);
 assert.equal(css.includes('overflow-x'),false,'image-copy UI must not introduce horizontal overflow');
+
+const publicShellCss=read('ui/kinojo-public-shell.css');
+for(const token of ['.kinojo-common-toast','--kinojo-notice-actual-height','z-index:10035'])assert.ok(publicShellCss.includes(token),`public-shell toast clearance missing ${token}`);
 
 const harness=read('tests/sanctuary-management-fixed-draft-e2e.html');
 assert.ok(harness.includes('sanctuary-management-copy.css'),'fixed-draft harness missing copy CSS');

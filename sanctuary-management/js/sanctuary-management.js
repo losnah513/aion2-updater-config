@@ -644,10 +644,15 @@
 
   function createForceCard(team,force){
     const participation=value(team.mode)==='PARTICIPATION'&&['ACTIVE','FULL'].includes(value(team.status));
+    const supportEnabled=participation&&bootstrapData?.writeEnabled&&force.canSupport;
     const card=document.createElement('article');
-    if(participation){card.dataset.sanctuarySupportForce=value(force.forceId);card.dataset.sanctuarySupportTeam=value(team.teamId);card.tabIndex=bootstrapData?.writeEnabled?0:-1;card.setAttribute('role','button');}
+    if(participation){
+      card.dataset.sanctuarySupportForce=value(force.forceId);card.dataset.sanctuarySupportTeam=value(team.teamId);card.dataset.sanctuarySupportAvailable=supportEnabled?'true':'false';
+      card.setAttribute('role',supportEnabled?'button':'group');
+      if(supportEnabled)card.tabIndex=0;
+    }
     card.className='sanctuary-management-force-card'+(participation?' is-supportable':'')+(force.canSupport?' can-support':' is-unavailable')+(force.viewerAlreadyAssigned?' is-assigned':'')+(force.viewerPending?' is-pending':'');
-    if(participation){card.setAttribute('aria-label',force.forceNo+'포스 지원 창 열기. '+(force.canSupport?'지원 가능':value(force.supportDisabledMessage)||'지원 상태 확인'));card.setAttribute('aria-disabled',bootstrapData?.writeEnabled&&force.canSupport?'false':'true');}
+    if(participation)card.setAttribute('aria-label',force.forceNo+'포스. '+(supportEnabled?'지원 창 열기':value(force.supportDisabledMessage)||'지원 상태 확인'));
     const head=document.createElement('span');head.className='sanctuary-management-force-card-head';
     const titleWrap=document.createElement('span');titleWrap.className='sanctuary-management-force-title-row';
     const name=document.createElement('strong');name.textContent=force.forceNo+'포스';
@@ -1301,7 +1306,7 @@
       const overview=event.target.closest('[data-sanctuary-force-overview]');
       if(overview){const team=selectedDraftTeam(overview.dataset.sanctuaryForceOverview);if(team)openForceOverview(team,overview,team.forces?.[forceCarouselCurrent(overview.closest('.sanctuary-management-force-carousel'))]?.forceId);return;}
       const support=event.target.closest('[data-sanctuary-support-force]');
-      if(support){if(!bootstrapData?.writeEnabled||support.disabled)return;const team=selectedDraftTeam(support.dataset.sanctuarySupportTeam);if(team)window.KinojoSanctuaryManagementSupportUI?.open?.(team,Number(support.dataset.sanctuarySupportForce),support);return;}
+      if(support){if(support.dataset.sanctuarySupportAvailable!=='true')return;const team=selectedDraftTeam(support.dataset.sanctuarySupportTeam);if(team)window.KinojoSanctuaryManagementSupportUI?.open?.(team,Number(support.dataset.sanctuarySupportForce),support);return;}
       const edit=event.target.closest('[data-sanctuary-edit-team]');
       if(edit&&!edit.disabled){const team=selectedDraftTeam(edit.dataset.sanctuaryEditTeam);if(team)window.KinojoSanctuaryManagementDraftUI?.openDraft?.(team,edit);return;}
       const schedule=event.target.closest('[data-sanctuary-schedule-team]');
@@ -1314,7 +1319,7 @@
     byId('sanctuaryManagementTeamList')?.addEventListener('keydown',event=>{
       if(event.key!=='Enter'&&event.key!==' ')return;
       const card=event.target.closest('[data-sanctuary-support-force]');if(!card||event.target.closest('[data-sanctuary-copy-team]'))return;
-      event.preventDefault();if(!bootstrapData?.writeEnabled||card.getAttribute('aria-disabled')==='true')return;
+      event.preventDefault();if(card.dataset.sanctuarySupportAvailable!=='true')return;
       const team=selectedDraftTeam(card.dataset.sanctuarySupportTeam);if(team)window.KinojoSanctuaryManagementSupportUI?.open?.(team,Number(card.dataset.sanctuarySupportForce),card);
     });
     byId('sanctuaryManagementScheduleState')?.addEventListener('click',event=>{

@@ -1,7 +1,7 @@
 declare const Deno: any;
 /*
  * KINOJO Supabase Edge Function: sanctuary-copy-render
- * Version: 20260830_22
+ * Version: 20260831_01
  * Role: 성역 포스/팀 클립보드용 SVG를 서버에서 생성한다.
  * Rule: 기존 WEB v317과 신규 Server 팀 모두 같은 구 성역 카드 SVG 렌더러를 사용한다.
  */
@@ -49,6 +49,7 @@ type Slot = {
   mainCharacterName?: string;
   owner?: string;
   isMain?: boolean;
+  isRandomAlt?: boolean;
 };
 type Party = { partyNo?: number; filled?: number; capacity?: number; slots?: Slot[] };
 type Force = {
@@ -206,14 +207,16 @@ function managementSnapshotGroup(value: unknown): TeamGroup{
         const name=safeText(character.name).slice(0,16);
         const className=safeText(character.className).slice(0,40);
         const relation=safeText(character.relation).toUpperCase();
-        if(!name||!className||!["MAIN","ALT","GUEST"].includes(relation)) throw new Error("신규 성역 복사 캐릭터 정보가 올바르지 않습니다.");
+        const isRandomAlt=character.isRandomAlt===true||(!className&&relation==="ALT"&&name.endsWith("랜덤 부캐"));
+        if(!name||(!isRandomAlt&&!className)||!["MAIN","ALT","GUEST"].includes(relation)) throw new Error("신규 성역 복사 캐릭터 정보가 올바르지 않습니다.");
         return {
           name,
-          className,
+          className:isRandomAlt?"랜덤 부캐":className,
           power:boundedInteger(character.power,0,2_000_000_000),
           profileImageUrl:managementProfileUrl(character.profileImageUrl),
           mainCharacterName:safeText(character.mainCharacterName).slice(0,16),
-          isMain:relation==="MAIN"
+          isMain:relation==="MAIN",
+          isRandomAlt
         };
       });
       return {partyNo,capacity:5,filled:slots.filter(slotName).length,slots};
@@ -291,7 +294,7 @@ function slotSvg(slot: Slot, x: number, y: number, map: Map<string,string>, req:
     <rect width="${CARD_W}" height="${CARD_H}" rx="8" fill="${cardFill}" stroke="${cardStroke}"/>
     ${isMain?`<rect x="0" y="0" width="3" height="${CARD_H}" rx="2" fill="#c58b24"/>`:''}
     <g transform="translate(8 10)">
-      ${iconImage?`<image href="${iconImage}" x="0" y="0" width="34" height="34" preserveAspectRatio="xMidYMid meet"/>`:`<circle cx="17" cy="17" r="16" fill="#eef4ff"/><text x="17" y="22" text-anchor="middle" font-size="14" font-weight="900" fill="#3865b0">${xml(cls.slice(0,1)||'?')}</text>`}
+      ${iconImage?`<image href="${iconImage}" x="0" y="0" width="34" height="34" preserveAspectRatio="xMidYMid meet"/>`:`<circle cx="17" cy="17" r="16" fill="#eef4ff"/><text x="17" y="22" text-anchor="middle" font-size="14" font-weight="900" fill="#3865b0">${slot.isRandomAlt?'R':xml(cls.slice(0,1)||'?')}</text>`}
     </g>
     <text x="48" y="22" font-size="13" font-weight="900" fill="#1f2f46">${xml(name)}</text>
     ${isMain?badgeSvg('본캐',badgeX,10,true):(isSub?badgeSvg('부캐',badgeX,10,false):'')}
@@ -423,6 +426,6 @@ Deno.serve(async(req: Request)=>{
     return new Response(svg,{status:200,headers:{...CORS_HEADERS,"content-type":"image/svg+xml; charset=utf-8","cache-control":"no-store","x-kinojo-renderer":"sanctuary-web-layout-svg-v2","x-kinojo-filename":headerFilename}});
   }catch(err){
     console.error("KINOJO sanctuary-copy-render failed",err);
-    return json({ok:false,message:String((err as Error)?.message||err),renderer:"sanctuary-web-layout-svg-v2",version:"20260830_22"},500);
+    return json({ok:false,message:String((err as Error)?.message||err),renderer:"sanctuary-web-layout-svg-v2",version:"20260831_01"},500);
   }
 });

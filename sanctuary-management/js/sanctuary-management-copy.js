@@ -63,6 +63,7 @@
 
   function characterSnapshot(character){
     if(!character)return null;
+    const isRandomAlt=character.isRandomAlt===true;
     const relation=text(character.relation).toUpperCase();
     return {
       name:text(character.name).slice(0,16),
@@ -70,7 +71,8 @@
       profileImageUrl:text(character.profileImageUrl),
       power:number(character.power||character.latestPveCombatPower||character.latest_pve_combat_power),
       mainCharacterName:text(character.mainCharacterName),
-      relation:['MAIN','ALT','GUEST'].includes(relation)?relation:'GUEST'
+      relation:isRandomAlt?'ALT':['MAIN','ALT','GUEST'].includes(relation)?relation:'GUEST',
+      isRandomAlt
     };
   }
 
@@ -168,7 +170,7 @@
     document.addEventListener('click',event=>{const button=event.target.closest?.('[data-sanctuary-copy-team]');if(!button)return;document.documentElement.dataset.sanctuaryCopyLast=button.dataset.sanctuaryCopyForce?'force':'team';event.preventDefault();event.stopPropagation();copyFromButton(button);},true);
   }
 
-  window.KinojoSanctuaryManagementCopy=Object.freeze({copyFromButton,renderPng,buildPayload,version:'20260830_02_server_legacy_renderer'});
+  window.KinojoSanctuaryManagementCopy=Object.freeze({copyFromButton,renderPng,buildPayload,version:'20260831_01_server_legacy_renderer'});
   document.documentElement.dataset.sanctuaryCopyReady='true';
   bind();
 })();
