@@ -10,7 +10,7 @@ for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   for(const token of [
     'sanctuary-management-copy.css?cache=2026083001',
     'sanctuary-management-copy.js?cache=2026083101',
-    'kinojo-public-shell.css?cache=2026083101',
+    'kinojo-public-shell.css?cache=2026083001&amp;hotfix=2026083101',
     'canonical=2026083001',
   ])assert.ok(html.includes(token),`${page}: image-copy asset contract missing ${token}`);
 }
