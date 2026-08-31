@@ -269,7 +269,8 @@
       characterId,characterName,serverId,serverName,
       serverShortName:text(source.serverShortName,80),
       raceId:positiveInt(source.raceId),raceName:text(source.raceName,40),
-      level:positiveInt(source.level),profileImageUrl:text(source.profileImageUrl,500)
+      level:positiveInt(source.level),profileImageUrl:text(source.profileImageUrl,500),
+      registered:boolean(source.registered)
     };
   }
 
@@ -288,9 +289,11 @@
     if(!group||!group.candidates.length)return '<p class="legion-tree-search-empty">정확히 일치하는 캐릭터를 찾지 못했습니다.</p>';
     return group.candidates.map(candidate=>{
       const selected=selectedCandidates[group.role]?.candidateKey===candidate.candidateKey;
+      const registered=candidate.registered===true;
       const image=candidate.profileImageUrl?`<img src="${esc(candidate.profileImageUrl)}" alt="" loading="lazy" referrerpolicy="no-referrer"/>`:`<span class="legion-tree-search-avatar" aria-hidden="true">${esc(candidate.characterName.slice(0,1))}</span>`;
       const meta=[candidate.serverName,candidate.raceName,candidate.level?`Lv.${candidate.level}`:''].filter(Boolean).join(' · ');
-      return `<button class="legion-tree-search-card" type="button" data-search-role="${group.role}" data-candidate-key="${esc(candidate.candidateKey)}" aria-pressed="${selected?'true':'false'}" aria-label="${esc(candidate.characterName)} · ${esc(meta)}">${image}<span><strong>${esc(candidate.characterName)}</strong><small>${esc(meta)}</small></span></button>`;
+      const registeredBadge=registered?'<span class="legion-tree-search-registered">추가된 캐릭터</span>':'';
+      return `<button class="legion-tree-search-card${registered?' is-registered':''}" type="button" data-search-role="${group.role}" data-candidate-key="${esc(candidate.candidateKey)}" aria-pressed="${selected?'true':'false'}" aria-label="${registered?'추가된 캐릭터 · ':''}${esc(candidate.characterName)} · ${esc(meta)}">${registeredBadge}${image}<span><strong>${esc(candidate.characterName)}</strong><small>${esc(meta)}</small></span></button>`;
     }).join('');
   }
 
@@ -300,6 +303,7 @@
     main.innerHTML=renderSearchCards(searchGroups.main);
     alt.innerHTML=renderSearchCards(searchGroups.alt);
     altGroup.hidden=!searchGroups.alt;
+    root.dataset.groupCount=searchGroups.alt?'2':'1';
     positionSearchResults();
     root.hidden=false;
     syncManagementControls();

@@ -14,6 +14,7 @@ const edge = fs.readFileSync(path.join(rootDir, 'supabase/functions/kinojo-legio
 const crossServerMigration = fs.readFileSync(path.join(rootDir, 'supabase/migrations/20260831060000_legion_tree_cross_server_character_add_v454.sql'), 'utf8');
 const listlessMigration = fs.readFileSync(path.join(rootDir, 'supabase/migrations/20260831064411_legion_tree_listless_character_add_v455.sql'), 'utf8');
 const searchRateMigration = fs.readFileSync(path.join(rootDir, 'supabase/migrations/20260831085735_legion_tree_character_search_rate_gate_v457.sql'), 'utf8');
+const candidateRegistrationMigration = fs.readFileSync(path.join(rootDir, 'supabase/migrations/20260831102651_legion_tree_candidate_registration_v458.sql'), 'utf8');
 const worker = fs.readFileSync(path.join(rootDir, 'supabase/functions/character-refresh-worker/index.ts'), 'utf8');
 const workflow = fs.readFileSync(path.join(rootDir, '.github/workflows/verify-legion-tree-pages.yml'), 'utf8');
 
@@ -467,9 +468,9 @@ window.KinojoSupabase = {
     assert(!html.includes('본캐예시'));
     assert(html.includes('kinojo-character-reaction.css?cache=2026082201'));
     assert(html.includes('kinojo-character-reaction.js?cache=2026082701'));
-    assert(html.includes('legion-tree.css?cache=2026083107'));
+    assert(html.includes('legion-tree.css?cache=2026083108'));
     assert(html.includes('legion-tree-editor.js?cache=2026083103'));
-    assert(html.includes('legion-tree.js?cache=2026083107'));
+    assert(html.includes('legion-tree.js?cache=2026083108'));
     assert(html.includes('kinojo-supabase-features.js?cache=2026083108'));
     assert(!html.includes('legion-tree.js?cache=2026082403'));
   }
@@ -500,6 +501,10 @@ window.KinojoSupabase = {
   assert(css.includes('li[data-state="done"]'));
   assert(css.includes('li[data-state="error"]'));
   assert(css.includes('.legion-tree-search-results'));
+  assert(css.includes('width:min(650px,calc(100vw - 24px))'));
+  assert(css.includes('align-items:center'));
+  assert(css.includes('.legion-tree-search-card.is-registered'));
+  assert(css.includes('.legion-tree-search-registered'));
   assert(css.includes('@keyframes legion-tree-search-fade'));
   assert(css.includes('@media(prefers-reduced-motion:reduce)'));
 
@@ -527,13 +532,15 @@ window.KinojoSupabase = {
   assert(workflow.includes('node --check core/kinojo-supabase-features.js'));
   assert((workflow.match(/"core\/kinojo-supabase-features\.js"/g) || []).length >= 2);
   for (const token of [
-    "const API_VERSION='1.6'",
-    "const DATABASE_CONTRACT='457'",
+    "const API_VERSION='1.7'",
+    "const DATABASE_CONTRACT='458'",
     "CHARACTER_INPUT_CONTRACT='character-name-server-tag-v3'",
     "const CHARACTER_SEARCH_CONTRACT='legion-tree-character-search-v1'",
     "action==='character-search'",
     "url.searchParams.set('size','100')",
     "identityName(stripOfficialName(row.name))!==identityName(input.characterName)",
+    "rpc('kinojo_legion_tree_candidate_registration_v458'",
+    'registeredCandidateCount',
     'createsTarget:false',
     'createsQueue:false',
     'record(session.profile).canManage!==true',
@@ -544,6 +551,14 @@ window.KinojoSupabase = {
     'listAppendPending:false',
     'listlessCharacterAdd:true'
   ]) assert(edge.includes(token), `Edge cross-server contract missing: ${token}`);
+  for (const token of [
+    'kinojo_legion_tree_candidate_registration_v458',
+    'legion-tree-candidate-registration-v1',
+    'character_master character',
+    'kinojo_character_identity_key_v298(character.character_name)',
+    'revoke all on function public.kinojo_legion_tree_candidate_registration_v458(jsonb) from public, anon, authenticated',
+    'grant execute on function public.kinojo_legion_tree_candidate_registration_v458(jsonb) to service_role'
+  ]) assert(candidateRegistrationMigration.includes(token), `DB458 registration contract missing: ${token}`);
   for (const token of [
     'private.kinojo_legion_tree_search_authorize_v457',
     'private.kinojo_legion_tree_search_rate_acquire_v457',
@@ -676,7 +691,7 @@ window.KinojoSupabase = {
   assert.strictEqual(addHarness.api.parseCharacterAddInput('화비[없는서버]').code, 'SERVER_SUFFIX_NOT_FOUND');
   assert.strictEqual(addHarness.api.parseCharacterAddInput('화비[루미').code, 'SERVER_TAG_INVALID');
 
-  const candidate = (role, name, serverId, serverName, level = 45) => ({
+  const candidate = (role, name, serverId, serverName, level = 45, registered = false) => ({
     ok: true,
     role,
     query: { raw: name, characterName: name, serverSpecified: false, serverId: null, serverName: '' },
@@ -690,7 +705,8 @@ window.KinojoSupabase = {
       raceId: serverId >= 2000 ? 2 : 1,
       raceName: serverId >= 2000 ? '마족' : '천족',
       level,
-      profileImageUrl: ''
+      profileImageUrl: '',
+      registered
     }]
   });
   addHarness.setSearchImplementation(async request => ({
@@ -793,8 +809,10 @@ window.KinojoSupabase = {
   });
   mainInput.value = '이미등록';
   altInput.value = '';
-  addHarness.setSearchImplementation(async () => ({ok:true,contract:'legion-tree-character-search-v1',readOnly:true,createsTarget:false,createsQueue:false,main:candidate('main','이미등록',2002,'지켈'),alt:null}));
+  addHarness.setSearchImplementation(async () => ({ok:true,contract:'legion-tree-character-search-v1',readOnly:true,createsTarget:false,createsQueue:false,main:candidate('main','이미등록',2002,'지켈',45,true),alt:null}));
   assert.strictEqual(await addHarness.api.handleSearch(), true);
+  assert(addHarness.elements['#legionTreeMainResults'].innerHTML.includes('is-registered'));
+  assert(addHarness.elements['#legionTreeMainResults'].innerHTML.includes('추가된 캐릭터'));
   assert.strictEqual(addHarness.api.selectSearchCandidate('main', '2002:이미등록-2002'), true);
   assert.strictEqual(await addHarness.api.handleAdd(), false);
   assert(addStatus.textContent.includes('이미 등록된 캐릭터'));
