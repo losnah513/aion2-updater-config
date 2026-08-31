@@ -2,7 +2,7 @@
   'use strict';
 
   const API_VERSION=2.2;
-  const SCHEMA_VERSION=453;
+  const SCHEMA_VERSION=454;
   const SLOT_CLASS_CODES=Object.freeze(['ALL','TEMPLAR','GLADIATOR','ASSASSIN','RANGER','SORCERER','ELEMENTALIST','CLERIC','CHANTER','FIGHTER']);
   const CLASS_ICON_MAP=Object.freeze({'수호성':'templar','검성':'gladiator','살성':'assassin','궁성':'ranger','마도성':'sorcerer','정령성':'elementalist','치유성':'cleric','호법성':'chanter','권성':'fighter'});
   const CLASS_NAME_BY_CODE=Object.freeze({TEMPLAR:'수호성',GLADIATOR:'검성',ASSASSIN:'살성',RANGER:'궁성',SORCERER:'마도성',ELEMENTALIST:'정령성',CLERIC:'치유성',CHANTER:'호법성',FIGHTER:'권성'});
@@ -15,9 +15,13 @@
   let currentBootstrapFingerprint='';
   let backgroundCheckActive=false;
   let monthData=null;
+  let monthError='';
+  let calendarMonthData=null;
+  let calendarMonthError='';
   let selectedSanctuary='';
   let sanctuaryMasterData=null;
   let selectedMonth=new Date(Date.now()+9*60*60*1000).toISOString().slice(0,7);
+  let selectedWeekStart='';
   let operationLayer=null;
   let operationOpener=null;
   let forceOverviewLayer=null;
@@ -35,7 +39,7 @@
 
   function contractSupported(data){
     const api=Number(data?.apiVersion),schema=Number(data?.schemaVersion);
-    return api===API_VERSION&&(schema===SCHEMA_VERSION||schema===452)||api===2.1&&schema===451||api===2&&schema===450||api===1.9&&schema===449||api===1.8&&schema===446;
+    return api===API_VERSION&&(schema===SCHEMA_VERSION||schema===453||schema===452)||api===2.1&&schema===451||api===2&&schema===450||api===1.9&&schema===449||api===1.8&&schema===446;
   }
   function combatPowerValue(input){const power=Number(input);return Number.isFinite(power)&&power>0?Math.round(power):0;}
   function itemLevelValue(input){const level=Number(input);return Number.isFinite(level)&&level>0?Math.round(level):0;}
@@ -203,6 +207,8 @@
       canSupport:item.canSupport===true,
       supportDisabledCode:value(item.supportDisabledCode),
       supportDisabledMessage:value(item.supportDisabledMessage),
+      difficulty:value(item.difficulty||options.teamDifficulty||'NORMAL').toUpperCase(),
+      minimumItemLevel:item.minimumItemLevel==null?null:itemLevelValue(item.minimumItemLevel),
       combatPower:validateCombatPower(item.combatPower),
       requirements:validateRequirements(item.requirements,10),
       parties
@@ -210,7 +216,7 @@
     const occupiedCount=parties.reduce((sum,party)=>sum+party.occupiedCount,0);
     const candidateIds=new Set(force.creatorCandidates.map(candidate=>candidate.characterId));
     const publicRead=options.publicRead===true;
-    if(force.forceId<1||force.capacity!==10||force.revision<1||force.occupiedCount!==occupiedCount||force.vacancyCount!==force.capacity-occupiedCount||(!publicRead&&force.creatorMemberId<1)||force.creatorCandidateCount!==force.creatorCandidates.length||candidateIds.size!==force.creatorCandidates.length||(!force.creatorOwnerResolved&&force.creatorCandidates.length)||(force.creatorAlreadyAssigned&&force.creatorCandidates.length)){
+    if(!['NORMAL','HARD'].includes(force.difficulty)||force.forceId<1||force.capacity!==10||force.revision<1||force.occupiedCount!==occupiedCount||force.vacancyCount!==force.capacity-occupiedCount||(!publicRead&&force.creatorMemberId<1)||force.creatorCandidateCount!==force.creatorCandidates.length||candidateIds.size!==force.creatorCandidates.length||(!force.creatorOwnerResolved&&force.creatorCandidates.length)||(force.creatorAlreadyAssigned&&force.creatorCandidates.length)){
       throw new Error('성역 관리 포스 인원 집계가 올바르지 않습니다.');
     }
     return force;
@@ -218,7 +224,8 @@
 
   function validateTeam(item,options={}){
     if(!item||typeof item!=='object'||Array.isArray(item)||!Array.isArray(item.forces))throw new Error('성역 관리 팀 편성 데이터가 올바르지 않습니다.');
-    const forces=item.forces.map(force=>validateForce(force,options)).sort((left,right)=>left.forceNo-right.forceNo);
+    const teamDifficulty=value(item.difficulty||'NORMAL').toUpperCase();
+    const forces=item.forces.map(force=>validateForce(force,Object.assign({},options,{teamDifficulty}))).sort((left,right)=>left.forceNo-right.forceNo);
     if(forces.length<1||forces.length>9||forces.some((force,index)=>force.forceNo!==index+1))throw new Error('성역 관리 포스 순서가 올바르지 않습니다.');
     const team=Object.assign({},item,{
       schedule:item.schedule&&typeof item.schedule==='object'&&!Array.isArray(item.schedule)?Object.assign({},item.schedule):null,
@@ -227,7 +234,7 @@
       occupiedCount:integer(item.occupiedCount),
       vacancyCount:integer(item.vacancyCount),
       forces,
-      difficulty:value(item.difficulty||'NORMAL').toUpperCase(),
+      difficulty:teamDifficulty,
       minimumItemLevel:item.minimumItemLevel==null?null:itemLevelValue(item.minimumItemLevel),
       supportCharacters:item.supportCharacters&&typeof item.supportCharacters==='object'&&!Array.isArray(item.supportCharacters)?{
         ownerResolved:item.supportCharacters.ownerResolved===true,
@@ -531,6 +538,7 @@
       });
     });
     shell.hidden=false;
+    const statusShell=byId('sanctuaryManagementStatusShell');if(statusShell)statusShell.hidden=false;
   }
 
   function setFlagState(id,enabled){
@@ -580,10 +588,11 @@
     if(!card||!state||!meta||!action)return;
     card.classList.toggle('has-update',hasUpdate);
     card.classList.toggle('is-checking',checking);
+    card.setAttribute('aria-disabled',hasUpdate&&!checking?'false':'true');
+    card.title=hasUpdate&&!checking?'새로운 내용을 불러옵니다.':checking?'새 내용을 확인하고 있습니다.':'현재 표시 중인 내용이 최신입니다.';
     state.textContent=checking?'확인 중':hasUpdate?'새 내용':'최신';
     meta.textContent=hasUpdate?'새로운 내용이 추가되었습니다.':checking?'백그라운드에서 확인하고 있습니다.':'변경 없음';
     action.hidden=!hasUpdate;
-    action.disabled=checking;
   }
 
   function teamModeLabel(team){return value(team.mode)==='FIXED'?'고정 팀':value(team.mode)==='PARTICIPATION'?'참여 팀':value(team.mode)||'팀';}
@@ -832,6 +841,7 @@
     const addButton=byId('sanctuaryManagementAddTeam');
     addButton.disabled=!bootstrapData.writeEnabled;
     addButton.title=bootstrapData.writeEnabled?'새 성역 팀을 생성합니다.':bootstrapData.publicRead?'로그인 후 팀을 생성할 수 있습니다.':value(bootstrapData.rollout?.message)||'현재 읽기 전용입니다.';
+    renderRecruitmentSummary();
     if(!bootstrapData.readEnabled){
       byId('sanctuaryManagementTeamStatus').textContent='Server 읽기 플래그가 비활성 상태입니다. 팀 생성도 운영 승인 전까지 열리지 않습니다.';
       root.appendChild(createEmpty('실제 팀 읽기는 아직 열리지 않았습니다.','Server 어댑터 연결은 완료됐으며 별도 승인 전까지 운영 팀 데이터는 표시하지 않습니다.'));
@@ -847,37 +857,57 @@
     requestAnimationFrame(initializeForceCarousels);
   }
 
-  function renderMonth(){
-    const root=byId('sanctuaryManagementScheduleState');
-    if(!root)return;
-    root.classList.add('has-calendar');
-    if(!monthData){root.innerHTML='<strong>월간 일정을 불러오는 중입니다.</strong>';return;}
-    const occurrences=monthData.occurrences.filter(item=>String(item.sanctuaryId)===String(sanctuaryForSelection()?.id));
-    const start=new Date(monthData.rangeStart+'T00:00:00Z');
-    const end=new Date(monthData.rangeEnd+'T00:00:00Z');
-    const days=[];
-    for(let cursor=new Date(start);cursor<=end;cursor.setUTCDate(cursor.getUTCDate()+1))days.push(cursor.toISOString().slice(0,10));
-    const cells=days.map(day=>{
-      const outside=!day.startsWith(monthData.month);
-      const items=occurrences.filter(item=>value(item.occurrenceDate)===day).map(item=>{
-        const starts=value(item.startAt);const time=new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(starts));
-        return '<button type="button" data-sanctuary-calendar-team="'+escapeHtml(item.teamId)+'" data-sanctuary-calendar-date="'+escapeHtml(day)+'" title="'+escapeHtml(item.teamTitle+' · '+time)+'"><time datetime="'+escapeHtml(starts)+'">'+escapeHtml(time)+'</time><span>'+escapeHtml(item.teamTitle)+'</span></button>';
+  function dateKeyKst(){return new Date(Date.now()+9*60*60*1000).toISOString().slice(0,10);}
+  function shiftDateKey(dateKey,days){const date=new Date(value(dateKey)+'T00:00:00Z');date.setUTCDate(date.getUTCDate()+Number(days||0));return date.toISOString().slice(0,10);}
+  function wednesdayStart(dateKey){const date=new Date(value(dateKey)+'T00:00:00Z');const offset=(date.getUTCDay()+4)%7;return shiftDateKey(dateKey,-offset);}
+  function weekDateKeys(start){return Array.from({length:7},(_,index)=>shiftDateKey(start,index));}
+  function occurrenceTime(item){return new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(value(item?.startAt)));}
+  function selectedOccurrences(source=monthData){return (source?.occurrences||[]).filter(item=>String(item.sanctuaryId)===String(sanctuaryForSelection()?.id));}
+
+  function renderRecruitmentSummary(){
+    const root=byId('sanctuaryManagementRecruitmentState');if(!root||!bootstrapData)return;
+    const teams=visibleTeams().filter(team=>value(team.mode)==='PARTICIPATION'&&['ACTIVE','FULL'].includes(value(team.status)));
+    const forces=teams.flatMap(team=>team.forces||[]);const vacancies=forces.reduce((sum,force)=>sum+Math.max(0,integer(force.vacancyCount)),0);const openForces=forces.filter(force=>force.canSupport&&integer(force.vacancyCount)>0).length;
+    root.innerHTML='<div class="sanctuary-management-recruitment-counts"><article><strong>'+escapeHtml(openForces)+'</strong><span>지원 가능한 포스</span></article><article><strong>'+escapeHtml(vacancies)+'</strong><span>남은 캐릭터 자리</span></article></div><p>'+(openForces?'아래 참여 팀의 포스 카드를 눌러 지원할 수 있습니다.':'현재 선택한 성역에는 지원 가능한 빈자리가 없습니다.')+'</p>';
+  }
+
+  function renderWeek(){
+    const root=byId('sanctuaryManagementScheduleState');if(!root)return;
+    if(!selectedWeekStart)selectedWeekStart=wednesdayStart(dateKeyKst());
+    if(!monthData){root.innerHTML='<p class="sanctuary-management-week-empty">'+escapeHtml(monthError||'이번 주 일정을 불러오는 중입니다.')+'</p>';return;}
+    const today=dateKeyKst();const labels=['수','목','금','토','일','월','화'];const occurrences=selectedOccurrences();
+    root.innerHTML=weekDateKeys(selectedWeekStart).map((day,index)=>{
+      const items=occurrences.filter(item=>value(item.occurrenceDate)===day).sort((left,right)=>value(left.startAt).localeCompare(value(right.startAt))).map(item=>{
+        const time=occurrenceTime(item);return '<button type="button" class="sanctuary-management-week-event" data-sanctuary-calendar-team="'+escapeHtml(item.teamId)+'" data-sanctuary-calendar-date="'+escapeHtml(day)+'" title="'+escapeHtml(item.teamTitle+' · '+time)+'"><time datetime="'+escapeHtml(value(item.startAt))+'">'+escapeHtml(time)+'</time><span>'+escapeHtml(item.teamTitle)+'</span></button>';
       }).join('');
-      return '<div class="sanctuary-management-calendar-day'+(outside?' is-outside':'')+'" data-calendar-date="'+escapeHtml(day)+'"><strong>'+Number(day.slice(8))+'</strong><div>'+items+'</div></div>';
+      return '<article class="sanctuary-management-week-day'+(day===today?' is-today':'')+'"><header><strong>'+labels[index]+'</strong><time datetime="'+day+'">'+Number(day.slice(5,7))+'/'+Number(day.slice(8))+'</time></header><div>'+(items||'<span class="sanctuary-management-week-empty">일정 없음</span>')+'</div></article>';
     }).join('');
-    root.innerHTML='<div class="sanctuary-management-calendar-controls"><button type="button" data-sanctuary-month-shift="-1" aria-label="이전 달">‹</button><strong>'+escapeHtml(monthData.month)+'</strong><button type="button" data-sanctuary-month-shift="1" aria-label="다음 달">›</button></div>'
-      +'<div class="sanctuary-management-calendar-weekdays" aria-hidden="true"><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span><span>월</span><span>화</span></div>'
-      +'<div class="sanctuary-management-calendar-grid" aria-label="'+escapeHtml(monthData.month)+' 수요일 시작 월간 일정">'+cells+'</div>';
+  }
+
+  function monthlyCalendarMarkup(){
+    if(!calendarMonthData)return '<p class="sanctuary-management-operation-status">'+escapeHtml(calendarMonthError||'월간 일정을 불러오는 중입니다.')+'</p>';
+    const occurrences=selectedOccurrences(calendarMonthData);const start=new Date(calendarMonthData.rangeStart+'T00:00:00Z');const end=new Date(calendarMonthData.rangeEnd+'T00:00:00Z');const days=[];
+    for(let cursor=new Date(start);cursor<=end;cursor.setUTCDate(cursor.getUTCDate()+1))days.push(cursor.toISOString().slice(0,10));
+    const cells=days.map(day=>{const outside=!day.startsWith(calendarMonthData.month);const items=occurrences.filter(item=>value(item.occurrenceDate)===day).map(item=>{const starts=value(item.startAt),time=occurrenceTime(item);return '<button type="button" data-sanctuary-calendar-team="'+escapeHtml(item.teamId)+'" data-sanctuary-calendar-date="'+escapeHtml(day)+'" title="'+escapeHtml(item.teamTitle+' · '+time)+'"><time datetime="'+escapeHtml(starts)+'">'+escapeHtml(time)+'</time><span>'+escapeHtml(item.teamTitle)+'</span></button>';}).join('');return '<div class="sanctuary-management-calendar-day'+(outside?' is-outside':'')+'"><strong>'+Number(day.slice(8))+'</strong><div>'+items+'</div></div>';}).join('');
+    return '<div class="sanctuary-management-calendar-controls"><button type="button" data-sanctuary-month-shift="-1" aria-label="이전 달">‹</button><strong>'+escapeHtml(calendarMonthData.month)+'</strong><button type="button" data-sanctuary-month-shift="1" aria-label="다음 달">›</button></div><div class="sanctuary-management-calendar-weekdays" aria-hidden="true"><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span><span>월</span><span>화</span></div><div class="sanctuary-management-calendar-grid" aria-label="'+escapeHtml(calendarMonthData.month)+' 수요일 시작 월간 일정">'+cells+'</div>';
+  }
+
+  function renderMonthlyScheduleBody(){const body=operationLayer?.querySelector('[data-monthly-calendar-body]');if(body)body.innerHTML=monthlyCalendarMarkup();}
+  function openMonthlySchedule(opener){
+    calendarMonthData=monthData;calendarMonthError=monthError;
+    openOperationLayer(opener,'<section class="sanctuary-management-operation-dialog is-calendar" role="dialog" aria-modal="true" aria-labelledby="sanctuaryMonthlyScheduleTitle" tabindex="-1"><header><span>MONTHLY SCHEDULE</span><h2 id="sanctuaryMonthlyScheduleTitle">'+escapeHtml(sanctuaryFullLabel(sanctuaryForSelection()))+' 월간 일정</h2><p>수요일부터 화요일까지 같은 Server 일정 회차를 월 단위로 확인합니다.</p></header><div class="sanctuary-management-operation-body" data-monthly-calendar-body>'+monthlyCalendarMarkup()+'</div><footer><button type="button" class="kinojo-btn secondary" data-operation-close>닫기</button></footer></section>');
+    const dialog=operationLayer.querySelector('.is-calendar');dialog?.addEventListener('click',async event=>{const shift=event.target.closest('[data-sanctuary-month-shift]');if(shift){shift.disabled=true;calendarMonthData=null;calendarMonthError='';renderMonthlyScheduleBody();try{calendarMonthData=await ServerAdapter.month(shiftedMonth(Number(shift.dataset.sanctuaryMonthShift)||0,calendarMonthData?.month||dialog.dataset.month||selectedMonth));dialog.dataset.month=calendarMonthData.month;}catch(error){calendarMonthError=value(error?.message)||'월간 일정을 불러오지 못했습니다.';}renderMonthlyScheduleBody();return;}const item=event.target.closest('[data-sanctuary-calendar-team]');if(!item)return;const team=selectedDraftTeam(item.dataset.sanctuaryCalendarTeam);if(!team)return;closeOperationLayer();const card=byId('sanctuaryManagementTeamList')?.querySelector('[data-sanctuary-team="'+CSS.escape(String(team.teamId))+'"]');card?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});if(bootstrapData?.writeEnabled&&team.canEdit)openScheduleOperation(team,item,value(item.dataset.sanctuaryCalendarDate));});
+    if(dialog)dialog.dataset.month=calendarMonthData?.month||selectedMonth;
   }
 
   async function loadMonth(month=selectedMonth){
-    const sequence=++monthRequestSequence;selectedMonth=month;monthData=null;renderMonth();
-    try{const data=await ServerAdapter.month(month);if(sequence!==monthRequestSequence)return;monthData=data;renderMonth();}
-    catch(error){if(sequence!==monthRequestSequence)return;const root=byId('sanctuaryManagementScheduleState');if(root)root.innerHTML='<strong>월간 일정을 불러오지 못했습니다.</strong><span>'+escapeHtml(value(error?.message))+'</span>';}
+    const sequence=++monthRequestSequence;selectedMonth=month;monthData=null;monthError='';renderWeek();renderMonthlyScheduleBody();
+    try{const data=await ServerAdapter.month(month);if(sequence!==monthRequestSequence)return;monthData=data;renderWeek();renderMonthlyScheduleBody();}
+    catch(error){if(sequence!==monthRequestSequence)return;monthError=value(error?.message)||'월간 일정을 불러오지 못했습니다.';renderWeek();renderMonthlyScheduleBody();}
   }
 
-  function shiftedMonth(delta){
-    const [year,month]=selectedMonth.split('-').map(Number);const date=new Date(Date.UTC(year,month-1+delta,1));return date.toISOString().slice(0,7);
+  function shiftedMonth(delta,source=selectedMonth){
+    const [year,month]=source.split('-').map(Number);const date=new Date(Date.UTC(year,month-1+delta,1));return date.toISOString().slice(0,7);
   }
 
   function ensureOperationLayer(){
@@ -985,6 +1015,7 @@
     const source=model&&typeof model==='object'?model:{};const teamId=Number(source.teamId||0);
     const composition=Array.isArray(source.composition)?source.composition.map(force=>({
       sourceForceId:Number(force?.sourceForceId)||null,
+      difficulty:value(force?.difficulty||source.difficulty||'NORMAL').toUpperCase()==='HARD'?'HARD':'NORMAL',
       slots:Array.isArray(force?.slots)?force.slots.map(slot=>({partyNo:Number(slot?.partyNo),slotNo:Number(slot?.slotNo),characterId:Number(slot?.characterId)||null,mainCharacterId:Number(slot?.mainCharacterId)||null,assignmentKind:value(slot?.assignmentKind).toUpperCase()==='RANDOM_ALT'?'RANDOM_ALT':'ACTUAL_CHARACTER',requiredClassCode:SLOT_CLASS_CODES.includes(value(slot?.requiredClassCode).toUpperCase())?value(slot?.requiredClassCode).toUpperCase():'ALL',placementLocked:slot?.placementLocked===true})):[],
       requirements:Array.isArray(force?.requirements)?force.requirements.map(rule=>({scopeType:value(rule?.scopeType).toUpperCase(),partyNo:rule?.partyNo==null?null:Number(rule.partyNo),ruleType:value(rule?.ruleType).toUpperCase(),minimumCount:Number(rule?.minimumCount),powerThreshold:rule?.powerThreshold==null?null:Number(rule.powerThreshold),itemLevelThreshold:rule?.itemLevelThreshold==null?null:Number(rule.itemLevelThreshold)})):[]
     })):[];
@@ -1073,10 +1104,10 @@
 
   async function searchCharacter(teamId,query){return ServerAdapter.searchCharacter(teamId,query);}
   async function registerCharacter(teamId,candidateId,relationType,mainCharacterId,requestKey){return ServerAdapter.registerCharacter(teamId,candidateId,relationType,mainCharacterId,requestKey);}
-  async function linkedAlts(teamId,mainCharacterId){
+  async function linkedAlts(teamId,mainCharacterId,forceId=null){
     const api=window.KinojoSupabase;
     if(!api||typeof api.getSanctuaryManagementLinkedAlts!=='function')throw new Error('연결된 부캐 Server 어댑터를 불러오지 못했습니다.');
-    return validateLinkedAlts(await api.getSanctuaryManagementLinkedAlts(Number(teamId),Number(mainCharacterId)));
+    return validateLinkedAlts(await api.getSanctuaryManagementLinkedAlts(Number(teamId),Number(mainCharacterId),forceId==null?null:Number(forceId)));
   }
 
   async function balanceProposal(teamId,expectedRevision,leaseToken,stableSeed,lockOverrides){
@@ -1266,6 +1297,7 @@
     bootstrapData=null;
     byId('sanctuaryManagementContent').hidden=true;
     byId('sanctuaryManagementScopeShell').hidden=true;
+    byId('sanctuaryManagementStatusShell').hidden=true;
     byId('sanctuaryManagementContract').textContent='API 계약 확인 중';
     setAccess('loading','Server 성역 데이터를 확인하고 있습니다.',auth.loggedIn?'로그인 이용자의 팀·포스·지원 데이터를 불러옵니다.':'공개된 팀·포스·월간 일정을 불러옵니다.');
     try{
@@ -1287,7 +1319,7 @@
       byId('sanctuaryManagementScope').querySelectorAll('[data-sanctuary-scope]').forEach(item=>item.setAttribute('aria-pressed',item.dataset.sanctuaryScope===selectedSanctuary?'true':'false'));
       renderSanctuaryBanner();
       renderTeams();
-      renderMonth();
+      renderWeek();
     });
     byId('sanctuaryManagementAccessAction')?.addEventListener('click',event=>{
       const action=value(event.currentTarget.dataset.action);
@@ -1324,13 +1356,11 @@
       const team=selectedDraftTeam(card.dataset.sanctuarySupportTeam);if(team)window.KinojoSanctuaryManagementSupportUI?.open?.(team,Number(card.dataset.sanctuarySupportForce),card);
     });
     byId('sanctuaryManagementScheduleState')?.addEventListener('click',event=>{
-      const button=event.target.closest('[data-sanctuary-month-shift]');if(!button)return;loadMonth(shiftedMonth(Number(button.dataset.sanctuaryMonthShift)||0));
-    });
-    byId('sanctuaryManagementScheduleState')?.addEventListener('click',event=>{
       const item=event.target.closest('[data-sanctuary-calendar-team]');if(!item)return;const team=selectedDraftTeam(item.dataset.sanctuaryCalendarTeam);if(!team)return;
       const card=byId('sanctuaryManagementTeamList')?.querySelector('[data-sanctuary-team="'+CSS.escape(String(team.teamId))+'"]');card?.scrollIntoView({behavior:'smooth',block:'center'});if(bootstrapData?.writeEnabled&&team.canEdit)openScheduleOperation(team,item,value(item.dataset.sanctuaryCalendarDate));
     });
-    byId('sanctuaryManagementRefreshAction')?.addEventListener('click',refreshContent);
+    byId('sanctuaryManagementMonthlySchedule')?.addEventListener('click',event=>openMonthlySchedule(event.currentTarget));
+    byId('sanctuaryManagementRefreshCard')?.addEventListener('click',event=>{if(event.currentTarget.classList.contains('has-update')&&!event.currentTarget.classList.contains('is-checking'))refreshContent();});
     window.addEventListener('kinojo:sanctuary-master-rendered',event=>acceptSanctuaryMaster(event.detail));
     if(typeof window.KinojoSanctuaryMaster?.load==='function')window.KinojoSanctuaryMaster.load().then(acceptSanctuaryMaster).catch(()=>{});
     window.addEventListener('kinojo:auth-changed',handleAuthChanged);

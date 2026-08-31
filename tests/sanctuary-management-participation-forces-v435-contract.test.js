@@ -30,14 +30,14 @@ for(const token of [
 
 for(const token of [
   'const API_VERSION="2.2"',
-  'const DATABASE_CONTRACT="453"',
-  'kinojo_sanctuary_management_bootstrap_v452',
-  'kinojo_sanctuary_management_command_v453',
+  'const DATABASE_CONTRACT="454"',
+  'kinojo_sanctuary_management_bootstrap_v454',
+  'kinojo_sanctuary_management_command_v454',
 ])assert.ok(edge.includes(token),`current Edge contract missing ${token}`);
 
 for(const token of [
   'const API_VERSION=2.2',
-  'const SCHEMA_VERSION=453',
+  'const SCHEMA_VERSION=454',
   'async function saveTeamDraft',
   "['ACTIVE','FULL'].includes(status)?'UPDATE_PARTICIPATION_TEAM':'UPDATE_PARTICIPATION_TEAM_DRAFT'",
   'joinPolicy,',

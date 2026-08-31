@@ -35,9 +35,9 @@ for(const token of [
 for(const token of [
   'EDGE_CONTRACT_AUTHORITY',
   'const API_VERSION="2.2"',
-  'const DATABASE_CONTRACT="453"',
-  'kinojo_sanctuary_management_bootstrap_v452',
-  'kinojo_sanctuary_management_command_v453',
+  'const DATABASE_CONTRACT="454"',
+  'kinojo_sanctuary_management_bootstrap_v454',
+  'kinojo_sanctuary_management_command_v454',
 ])assert.ok(edge.includes(token),`current Edge contract missing ${token}`);
 
 for(const token of [
@@ -49,7 +49,7 @@ assert.ok(rpc.includes("'kinojo_admin_member_list_v433'"),'ADMIN list v433 must 
 
 for(const token of [
   'const API_VERSION=2.2',
-  'const SCHEMA_VERSION=453',
+  'const SCHEMA_VERSION=454',
   'scheduleLabel',
   'data-sanctuary-edit-team',
   'data-sanctuary-archive-team',

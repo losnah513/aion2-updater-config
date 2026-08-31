@@ -38,15 +38,15 @@ for(const signature of [
 assert.doesNotMatch(migration,/kws_[A-Za-z0-9_-]{20,}/,'pilot migration must never contain a session credential');
 
 for(const token of [
-  'const API_VERSION="2.2"','const DATABASE_CONTRACT="453"','WRITE_ACTIONS',
-  'kinojo_sanctuary_management_write_access_v446','kinojo_sanctuary_management_bootstrap_v452',
-  'kinojo_sanctuary_management_command_v453','kinojo_sanctuary_management_lease_v446',
+  'const API_VERSION="2.2"','const DATABASE_CONTRACT="454"','WRITE_ACTIONS',
+  'kinojo_sanctuary_management_write_access_v446','kinojo_sanctuary_management_bootstrap_v454',
+  'kinojo_sanctuary_management_command_v454','kinojo_sanctuary_management_lease_v446',
   'kinojo_sanctuary_management_official_materialize_v452','SANCTUARY_WRITE_DISABLED',
   'kinojo_sanctuary_management_rollout_state_v446',
 ])assert.ok(edge.includes(token),`Stage 7 Edge write gate handoff missing ${token}`);
 
 for(const token of [
-  'const API_VERSION=2.2','const SCHEMA_VERSION=453','sourceRollout',
+  'const API_VERSION=2.2','const SCHEMA_VERSION=454','sourceRollout',
   "['CLOSED','PILOT','OPEN']",'renderWriteState','시험 운영','읽기 전용',
   '시험 사용자만 쓰기','bootstrapData?.writeEnabled&&team.canEdit',
   "params.get('support')==='1'&&bootstrapData.writeEnabled",

@@ -50,7 +50,7 @@
     const forceId=Number(localForceId)||-forceNo;
     const localKey=Math.abs(forceId);
     const parties=[1,2].map(partyNo=>({partyId:-(localKey*10+partyNo),partyNo,capacity:5,occupiedCount:0,vacancyCount:5,combatPower:{average:0,total:0,knownCount:0,occupiedCount:0,unknownCount:0},requirements:emptyRequirements(),slots:Array.from({length:5},(_,index)=>({slotId:-(localKey*100+partyNo*10+index+1),slotNo:index+1,revision:1,occupied:false,character:null,requiredClassCode:'ALL',requiredClassName:'전체 클래스',assignmentKind:'ACTUAL_CHARACTER',placementLocked:false}))}));
-    return {forceId,forceNo,capacity:10,status:'OPEN',revision:1,occupiedCount:0,vacancyCount:10,combatPower:{average:0,total:0,knownCount:0,occupiedCount:0,unknownCount:0},requirements:emptyRequirements(),creatorMemberId:Number(bridge()?.snapshot()?.actor?.memberId||0),creatorOwnerResolved:true,creatorAlreadyAssigned:false,creatorCandidateCode:'READY',creatorCandidateCount:0,creatorCandidates:[],viewerAlreadyAssigned:false,viewerPending:false,canSupport:false,parties};
+    return {forceId,forceNo,capacity:10,status:'OPEN',revision:1,difficulty:'NORMAL',minimumItemLevel:null,occupiedCount:0,vacancyCount:10,combatPower:{average:0,total:0,knownCount:0,occupiedCount:0,unknownCount:0},requirements:emptyRequirements(),creatorMemberId:Number(bridge()?.snapshot()?.actor?.memberId||0),creatorOwnerResolved:true,creatorAlreadyAssigned:false,creatorCandidateCode:'READY',creatorCandidateCount:0,creatorCandidates:[],viewerAlreadyAssigned:false,viewerPending:false,canSupport:false,parties};
   }
   function makeLocalTeam(mode){
     const normalized=mode==='PARTICIPATION'?'PARTICIPATION':'FIXED';
@@ -636,7 +636,7 @@
     const form=state.layer?.querySelector('[data-draft-form]');if(!form)return;
     const sanctuary=sanctuaryByCode(form.elements.draftSanctuary?.value);const hasHard=entryModes(sanctuary).some(mode=>value(mode.key).toLowerCase()==='hard');
     const requested=value(nextDifficulty||form.elements.draftDifficulty?.value||state.team?.difficulty||'NORMAL').toUpperCase();const difficulty=hasHard&&requested==='HARD'?'HARD':'NORMAL';
-    if(form.elements.draftDifficulty)form.elements.draftDifficulty.value=difficulty;if(state.team)state.team.difficulty=difficulty;
+    if(form.elements.draftDifficulty)form.elements.draftDifficulty.value=difficulty;if(state.team){state.team.difficulty=difficulty;state.team.forces?.forEach(force=>{force.difficulty=difficulty;force.minimumItemLevel=minimumItemLevel(value(sanctuary?.code),difficulty)||null;});}
     const panel=form.querySelector('.sanctuary-management-difficulty');if(panel)panel.hidden=!hasHard;
     form.querySelectorAll('[data-draft-difficulty]').forEach(button=>button.setAttribute('aria-pressed',String(value(button.dataset.draftDifficulty)===difficulty)));
   }
@@ -702,6 +702,7 @@
       },
       composition:teamForces().map(force=>({
         sourceForceId:Number(force.forceId)>0?Number(force.forceId):null,
+        difficulty:value(force.difficulty||form?.elements.draftDifficulty?.value||state.team?.difficulty||'NORMAL').toUpperCase()==='HARD'?'HARD':'NORMAL',
         slots:forceSlots(force).map(item=>({
           partyNo:item.partyNo,
           slotNo:Number(item.slot.slotNo),
@@ -865,7 +866,7 @@
       state.linkedAlts={mainCharacter:{characterId:Number(main.characterId),characterName:value(main.characterName),serverId:Number(main.serverId)||0,serverName:value(main.serverName),ownerMemberId:Number(main.ownerMemberId)||Number(state.team?.creatorMemberId)||0},randomCandidate:{assignmentKind:'RANDOM_ALT',mainCharacterId:Number(main.characterId),ownerMemberId:Number(main.ownerMemberId)||Number(state.team?.creatorMemberId)||0,characterName:value(main.characterName)+'의 랜덤 부캐',serverId:Number(main.serverId)||0,serverName:value(main.serverName),relation:'RANDOM_ALT',isMain:false,isRandomAlt:true,power:0,itemLevel:0},characters,characterCount:characters.length,randomClassCode:slotClassCode(selectedSlot()?.slot)};
       renderRosterState();setStatus(characters.length+'개의 연결 부캐를 확인했습니다. 랜덤 부캐도 선택할 수 있습니다.','success');return;
     }
-    try{state.linkedAlts=await bridge().linkedAlts(Number(state.sourceTeamId),Number(mainCharacterId));state.linkedAlts.randomClassCode=slotClassCode(selectedSlot()?.slot);renderRosterState();setStatus(state.linkedAlts.characterCount+'개의 연결 부캐를 확인했습니다.'+(state.linkedAlts.randomCandidate?' 랜덤 부캐도 선택할 수 있습니다.':''),'success');}
+    try{state.linkedAlts=await bridge().linkedAlts(Number(state.sourceTeamId),Number(mainCharacterId),Number(selectedForce()?.forceId)||null);state.linkedAlts.randomClassCode=slotClassCode(selectedSlot()?.slot);renderRosterState();setStatus(state.linkedAlts.characterCount+'개의 연결 부캐를 확인했습니다.'+(state.linkedAlts.randomCandidate?' 랜덤 부캐도 선택할 수 있습니다.':''),'success');}
     catch(error){state.linkedAlts={error:value(error?.message)||'연결된 부캐 목록을 확인하지 못했습니다.',mainCharacter:{characterName:value(state.lookup?.character?.characterName)}};renderRosterState();setStatus(state.linkedAlts.error,'error');}
   }
 

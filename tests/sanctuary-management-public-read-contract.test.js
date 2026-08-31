@@ -37,8 +37,8 @@ assert.doesNotMatch(migration,/kws_[A-Za-z0-9_-]{20,}/,'public read migration mu
 for(const token of [
   'PUBLIC_SANCTUARY_READ',
   'if(!credential){',
-  'kinojo_sanctuary_management_public_bootstrap_v452',
-  'kinojo_sanctuary_management_public_month_v452',
+  'kinojo_sanctuary_management_public_bootstrap_v454',
+  'kinojo_sanctuary_management_public_month_v454',
   'return failure(request,"SESSION_TOKEN_INVALID"',
 ])assert.ok(edge.includes(token),`Edge public-read boundary missing ${token}`);
 assert.ok(feature.includes('sessionToken:optionalServerSessionCredential()'),'public reads must accept an empty browser credential');
