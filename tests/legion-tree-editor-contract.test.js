@@ -96,6 +96,10 @@ assert.strictEqual(draft.members.length, 3);
 assert.strictEqual(draft.assignments.length, 2);
 assert.strictEqual(draft.assignments[1].parentRoleKey, 'stage-2-a');
 
+const initialValidation = api.validateDraft(draft);
+assert.strictEqual(initialValidation.ok, true);
+assert.deepStrictEqual(Array.from(initialValidation.errors), []);
+
 const addStage = api.setStageCount(draft, 4);
 assert.strictEqual(addStage.ok, true);
 assert.strictEqual(draft.stages.length, 4);
@@ -116,6 +120,16 @@ assert.strictEqual(addedRole.ok, true);
 assert.strictEqual(draft.stages[1].roles.length, 3);
 assert.strictEqual(addedRole.role.roleName, '새 직급');
 
+const occupiedRoleDraft = api.createEditorDraft(legion);
+const occupiedRole = api.addRole(occupiedRoleDraft, 2).role;
+assert.strictEqual(api.assignMember(occupiedRoleDraft, 3, occupiedRole.roleKey).ok, true);
+assert.strictEqual(api.deleteRole(occupiedRoleDraft, occupiedRole.roleKey).code, 'ROLE_OCCUPIED');
+
+assert.strictEqual(api.setRoleMaxMembers(draft, 'stage-3-member', 2).ok, true);
+assert.strictEqual(draft.stages[2].roles[0].maxMembers, 2);
+assert.strictEqual(api.setRoleMaxMembers(draft, 'stage-3-member', 0).code, 'MAX_MEMBERS_INVALID');
+assert.strictEqual(api.setRoleMaxMembers(draft, 'stage-3-member', 2147483648).code, 'MAX_MEMBERS_INVALID');
+
 const maxMemberGuard = api.assignMember(draft, 3, 'stage-1-commander');
 assert.strictEqual(maxMemberGuard.ok, false);
 assert.strictEqual(maxMemberGuard.code, 'MAX_MEMBERS_EXCEEDED');
@@ -123,6 +137,10 @@ assert.strictEqual(maxMemberGuard.code, 'MAX_MEMBERS_EXCEEDED');
 const assignUnassigned = api.assignMember(draft, 3, 'stage-3-member');
 assert.strictEqual(assignUnassigned.ok, true);
 assert.strictEqual(draft.assignments.length, 3);
+assert.strictEqual(api.setRoleMaxMembers(draft, 'stage-3-member', 1).code, 'MAX_MEMBERS_BELOW_OCCUPANCY');
+assert.strictEqual(api.setRoleMaxMembers(draft, 'stage-3-member', '').ok, true);
+assert.strictEqual(draft.stages[2].roles[0].maxMembers, null);
+assert.strictEqual(api.assignMember(draft, 9999, 'stage-3-member').code, 'CHARACTER_NOT_IN_LEGION');
 
 const parentUpdated = api.setParentRole(draft, 3, 'stage-2-b');
 assert.strictEqual(parentUpdated.ok, true);
@@ -148,6 +166,37 @@ assert.strictEqual(api.setParentRole(draft, 3, '').ok, true);
 assert.strictEqual(api.deleteRole(draft, 'stage-2-b').ok, true);
 assert.strictEqual(draft.stages[1].roles.length, 2);
 
+const batchDraft = api.createEditorDraft(legion);
+batchDraft.members.push(member(4, '미배치둘'));
+const batchRole = batchDraft.stages[1].roles.find(role => role.roleKey === 'stage-2-b');
+assert.strictEqual(api.setRoleMaxMembers(batchDraft, batchRole.roleKey, 1).ok, true);
+const beforeCapacityFailure = JSON.stringify(batchDraft.assignments);
+assert.strictEqual(api.assignMembers(batchDraft, [3, 4], batchRole.roleKey).code, 'MAX_MEMBERS_EXCEEDED');
+assert.strictEqual(JSON.stringify(batchDraft.assignments), beforeCapacityFailure, 'capacity failure must be atomic');
+assert.strictEqual(api.setRoleMaxMembers(batchDraft, batchRole.roleKey, '').ok, true);
+const beforeOutsideFailure = JSON.stringify(batchDraft.assignments);
+assert.strictEqual(api.assignMembers(batchDraft, [3, 9999], batchRole.roleKey).code, 'CHARACTER_NOT_IN_LEGION');
+assert.strictEqual(JSON.stringify(batchDraft.assignments), beforeOutsideFailure, 'outside-member failure must be atomic');
+const batchAssigned = api.assignMembers(batchDraft, [3, 4, 3], batchRole.roleKey);
+assert.strictEqual(batchAssigned.ok, true);
+assert.strictEqual(batchAssigned.count, 2);
+assert.strictEqual(batchDraft.assignments.filter(item => item.roleKey === batchRole.roleKey).length, 2);
+let batchValidation = api.validateDraft(batchDraft);
+assert.strictEqual(batchValidation.ok, false);
+assert(batchValidation.errors.some(error => error.code === 'PARENT_REQUIRED'));
+assert.strictEqual(api.setParentRole(batchDraft, 3, 'stage-1-commander').ok, true);
+assert.strictEqual(api.setParentRole(batchDraft, 4, 'stage-1-commander').ok, true);
+assert.strictEqual(api.validateDraft(batchDraft).ok, true);
+
+const invalidDraft = api.createEditorDraft(legion);
+invalidDraft.assignments.push({ characterId: 9999, roleKey: 'stage-2-a', parentRoleKey: 'stage-1-commander' });
+invalidDraft.stages[2].roles[0].maxMembers = 1;
+invalidDraft.assignments.push({ characterId: 3, roleKey: 'stage-3-member', parentRoleKey: 'stage-2-a' });
+const invalidValidation = api.validateDraft(invalidDraft);
+assert.strictEqual(invalidValidation.ok, false);
+assert(invalidValidation.errors.some(error => error.code === 'CHARACTER_NOT_IN_LEGION'));
+assert(invalidValidation.errors.some(error => error.code === 'MAX_MEMBERS_EXCEEDED'));
+
 const serialized = api.serializeDraft(draft);
 assert.strictEqual(serialized.legionName, '깡');
 assert.strictEqual(serialized.expectedRevision, 7);
@@ -158,11 +207,11 @@ assert(serialized.assignments.every(item => Object.prototype.hasOwnProperty.call
 
 for (const html of [pc, mobile]) {
   assert(html.includes('id="legionTreeEditorRoot"'));
-  assert(html.includes('legion-tree-editor.js?cache=2026083102'));
+  assert(html.includes('legion-tree-editor.js?cache=2026083103'));
   assert(html.includes('legion-tree.js?cache=2026083103'));
-  assert(html.includes('legion-tree.css?cache=2026083103'));
+  assert(html.includes('legion-tree.css?cache=2026083104'));
   assert(html.includes('kinojo-supabase-features.js?cache=2026083103'));
-  assert(html.indexOf('legion-tree-editor.js?cache=2026083102') < html.indexOf('legion-tree.js?cache=2026083103'));
+  assert(html.indexOf('legion-tree-editor.js?cache=2026083103') < html.indexOf('legion-tree.js?cache=2026083103'));
 }
 
 for (const token of [
@@ -173,6 +222,10 @@ for (const token of [
   '같은 단계 직급 추가',
   '직급 삭제',
   '구성원 지정',
+  '최대 인원',
+  '여러 명 일괄 배치',
+  'data-editor-batch-members',
+  'data-editor-batch-assign',
   '상위 소속',
   '기본 조직도로 초기화',
   'data-editor-cancel',
@@ -184,7 +237,12 @@ for (const token of [
   'Server가 권한·revision·조직 무결성을 다시 확인하고 한 transaction으로 반영합니다.',
   'readbackVerified',
   'saveLegionTreeOrganization',
-  'PARENT_NOT_IMMEDIATE_STAGE'
+  'PARENT_NOT_IMMEDIATE_STAGE',
+  'CHARACTER_NOT_IN_LEGION',
+  'MAX_MEMBERS_BELOW_OCCUPANCY',
+  'const validation=validateDraft(draft)',
+  'focusValidationError(validation.errors[0])',
+  "behavior:reduceMotion?'auto':'smooth'"
 ]) {
   assert(editorScript.includes(token), 'editor contract missing: '+token);
 }
@@ -195,6 +253,7 @@ assert(pageScript.includes('if(edit)edit.disabled=false'));
 assert(editorScript.includes('window.KinojoSupabase'));
 assert(!editorScript.includes('invokeEdgeFunction'));
 assert(!editorScript.includes('fetch('));
+assert(editorScript.indexOf('const validation=validateDraft(draft)') < editorScript.indexOf('saveRunning=true'), 'local pre-save validation must run before save lock/network');
 assert(featureScript.includes("action:'organization-save'"));
 assert(featureScript.includes("action:'organization-reset'"));
 assert(featureScript.includes('saveLegionTreeOrganization'));
@@ -219,6 +278,8 @@ assert(css.includes('.legion-tree-editor-root{position:fixed;inset:0;z-index:500
 assert(css.includes('.legion-tree-editor-dialog{position:relative;width:min(1040px,100%)'));
 assert(css.includes('@media(max-width:760px)'));
 assert(css.includes('.legion-tree-editor-dialog :is(button,input,select):focus-visible'));
+assert(css.includes('.legion-tree-editor-batch'));
+assert(css.includes('[aria-invalid="true"]'));
 assert(css.includes('@media(prefers-reduced-motion:reduce)'));
 
 console.log('legion-tree editor contract: PASS');

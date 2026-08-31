@@ -1,9 +1,10 @@
-/* KINOJO Legion Tree organization editor · 차-1~차-10 + 타-1~타-9 · Server atomic save */
+/* KINOJO Legion Tree organization editor · 차-1~차-10 + 타-1~타-9 + 카-1~카-10 · Server atomic save */
 (function(){
   'use strict';
 
   const LEGION_ORDER=Object.freeze(['깡','낮','밤','키나노동조합']);
   const MAX_RENDERED_STAGES=50;
+  const MAX_ROLE_MEMBERS=2147483647;
   let sourceModel=null;
   let drafts=new Map();
   let selectedLegionName='';
@@ -173,10 +174,24 @@
     return {ok:true,code:'ROLE_DELETED'};
   }
 
+  function setRoleMaxMembers(draft,roleKey,value){
+    const role=roleByKey(draft,roleKey);
+    if(!role)return {ok:false,code:'ROLE_NOT_FOUND'};
+    const unlimited=value===null||value===undefined||String(value).trim()==='';
+    const next=unlimited?null:positiveInt(value);
+    if(!unlimited&&(next===null||next>MAX_ROLE_MEMBERS))return {ok:false,code:'MAX_MEMBERS_INVALID'};
+    const occupied=draft.assignments.filter(item=>item.roleKey===roleKey).length;
+    if(next!==null&&next<occupied)return {ok:false,code:'MAX_MEMBERS_BELOW_OCCUPANCY',occupied};
+    role.maxMembers=next;
+    draft.dirty=true;
+    return {ok:true,code:'MAX_MEMBERS_UPDATED',maxMembers:next};
+  }
+
   function assignMember(draft,characterId,roleKey){
     const member=draft.members.find(item=>item.characterId===Number(characterId));
     const role=roleByKey(draft,roleKey);
-    if(!member||!role)return {ok:false,code:'ASSIGNMENT_TARGET_INVALID'};
+    if(!member)return {ok:false,code:'CHARACTER_NOT_IN_LEGION'};
+    if(!role)return {ok:false,code:'ROLE_NOT_FOUND'};
     const occupied=draft.assignments.filter(item=>item.roleKey===roleKey&&item.characterId!==member.characterId).length;
     if(role.maxMembers!==null&&occupied>=role.maxMembers)return {ok:false,code:'MAX_MEMBERS_EXCEEDED'};
     const current=assignmentByCharacterId(draft,member.characterId);
@@ -188,6 +203,41 @@
     }
     draft.dirty=true;
     return {ok:true,code:'MEMBER_ASSIGNED'};
+  }
+
+  function assignMembers(draft,characterIds,roleKey){
+    const role=roleByKey(draft,roleKey);
+    if(!role)return {ok:false,code:'ROLE_NOT_FOUND'};
+    const requested=Array.isArray(characterIds)?characterIds:[];
+    const ids=[];
+    const seen=new Set();
+    for(const value of requested){
+      const characterId=positiveInt(value);
+      if(characterId===null||!draft.members.some(member=>member.characterId===characterId)){
+        return {ok:false,code:'CHARACTER_NOT_IN_LEGION'};
+      }
+      if(!seen.has(characterId)){
+        seen.add(characterId);
+        ids.push(characterId);
+      }
+    }
+    if(!ids.length)return {ok:false,code:'BATCH_EMPTY'};
+    const selectedIds=new Set(ids);
+    const occupiedOutsideBatch=draft.assignments.filter(item=>item.roleKey===roleKey&&!selectedIds.has(item.characterId)).length;
+    if(role.maxMembers!==null&&occupiedOutsideBatch+ids.length>role.maxMembers){
+      return {ok:false,code:'MAX_MEMBERS_EXCEEDED'};
+    }
+    for(const characterId of ids){
+      const current=assignmentByCharacterId(draft,characterId);
+      if(current){
+        current.roleKey=roleKey;
+        current.parentRoleKey=null;
+      }else{
+        draft.assignments.push({characterId,roleKey,parentRoleKey:null});
+      }
+    }
+    draft.dirty=true;
+    return {ok:true,code:'MEMBERS_ASSIGNED',count:ids.length};
   }
 
   function unassignMember(draft,characterId){
@@ -214,6 +264,95 @@
     assignment.parentRoleKey=parentRoleKey;
     draft.dirty=true;
     return {ok:true,code:'PARENT_UPDATED'};
+  }
+
+  function validationResult(errors){
+    return errors.length
+      ?{ok:false,code:errors[0].code,message:errors[0].message,errors}
+      :{ok:true,code:'DRAFT_VALID',message:'저장 전 검증을 통과했습니다.',errors:[]};
+  }
+
+  function validateDraft(draft){
+    const errors=[];
+    const add=(code,message,details={})=>errors.push({code,message,...details});
+    if(!draft||!LEGION_ORDER.includes(draft.legionName)){
+      add('LEGION_INVALID','저장할 레기온을 확인하지 못했습니다.');
+      return validationResult(errors);
+    }
+    if(!Array.isArray(draft.stages)||draft.stages.length<1||draft.stages.length>MAX_RENDERED_STAGES||draft.stageCount!==draft.stages.length){
+      add('STAGE_COUNT_INVALID','단계 수는 1~'+MAX_RENDERED_STAGES+' 사이여야 합니다.',{path:'stageCount'});
+    }
+    const roleStageByKey=new Map();
+    const roleByKeyMap=new Map();
+    for(const [stageIndex,stage] of (draft.stages||[]).entries()){
+      const expectedStageNo=stageIndex+1;
+      if(stage.stageNo!==expectedStageNo)add('STAGE_SEQUENCE_INVALID',expectedStageNo+'단계 번호가 순서와 일치하지 않습니다.',{stageNo:expectedStageNo,path:'stage'});
+      if(!text(stage.stageName,120))add('STAGE_NAME_REQUIRED',expectedStageNo+'단계 이름을 입력해 주세요.',{stageNo:expectedStageNo,path:'stageName'});
+      if(!Array.isArray(stage.roles)||!stage.roles.length){
+        add('STAGE_ROLES_REQUIRED',expectedStageNo+'단계에는 직급이 하나 이상 필요합니다.',{stageNo:expectedStageNo,path:'stage'});
+        continue;
+      }
+      const slots=new Set();
+      for(const [roleIndex,role] of stage.roles.entries()){
+        const roleKey=text(role.roleKey,180);
+        const roleLabel=text(role.roleName,120)||String(roleIndex+1)+'번 직급';
+        if(!roleKey)add('ROLE_KEY_REQUIRED',expectedStageNo+'단계 '+roleLabel+'의 식별자가 없습니다.',{stageNo:expectedStageNo,path:'roleName'});
+        else if(roleStageByKey.has(roleKey))add('DUPLICATE_ROLE_KEY',roleLabel+' 직급 식별자가 중복되었습니다.',{stageNo:expectedStageNo,roleKey,path:'roleName'});
+        else{
+          roleStageByKey.set(roleKey,expectedStageNo);
+          roleByKeyMap.set(roleKey,role);
+        }
+        if(!text(role.roleName,120))add('ROLE_NAME_REQUIRED',expectedStageNo+'단계 직급명을 입력해 주세요.',{stageNo:expectedStageNo,roleKey,path:'roleName'});
+        const slotNo=positiveInt(role.slotNo);
+        if(slotNo===null)add('ROLE_SLOT_INVALID',expectedStageNo+'단계 '+roleLabel+'의 순서를 확인해 주세요.',{stageNo:expectedStageNo,roleKey,path:'roleName'});
+        else if(slots.has(slotNo))add('DUPLICATE_ROLE_SLOT',expectedStageNo+'단계 직급 순서가 중복되었습니다.',{stageNo:expectedStageNo,roleKey,path:'roleName'});
+        else slots.add(slotNo);
+        if(role.maxMembers!==null&&(positiveInt(role.maxMembers)===null||role.maxMembers>MAX_ROLE_MEMBERS)){
+          add('MAX_MEMBERS_INVALID',expectedStageNo+'단계 '+roleLabel+'의 최대 인원은 1명 이상이거나 제한 없음이어야 합니다.',{stageNo:expectedStageNo,roleKey,path:'maxMembers'});
+        }
+      }
+    }
+    const memberIds=new Set((draft.members||[]).map(member=>positiveInt(member.characterId)).filter(characterId=>characterId!==null));
+    const assignmentIds=new Set();
+    const occupiedByRole=new Map();
+    for(const assignment of draft.assignments||[]){
+      const characterId=positiveInt(assignment.characterId);
+      const member=memberById(draft,characterId);
+      const memberName=member?.characterName||'ID '+String(assignment.characterId??'?');
+      if(characterId===null||!memberIds.has(characterId)){
+        add('CHARACTER_NOT_IN_LEGION',memberName+' 캐릭터는 현재 레기온 구성원이 아닙니다.',{characterId,path:'assignment'});
+        continue;
+      }
+      if(assignmentIds.has(characterId))add('DUPLICATE_ASSIGNMENT',memberName+' 캐릭터가 둘 이상의 직급에 배치되었습니다.',{characterId,path:'assignment'});
+      else assignmentIds.add(characterId);
+      const roleKey=text(assignment.roleKey,180);
+      const stageNo=roleStageByKey.get(roleKey);
+      if(!stageNo){
+        add('ROLE_NOT_FOUND',memberName+' 캐릭터의 직급을 찾을 수 없습니다.',{characterId,roleKey,path:'assignment'});
+        continue;
+      }
+      occupiedByRole.set(roleKey,(occupiedByRole.get(roleKey)||0)+1);
+      const parentRoleKey=text(assignment.parentRoleKey,180);
+      if(stageNo===1){
+        if(parentRoleKey)add('PARENT_NOT_ALLOWED_TOP_STAGE',memberName+' 캐릭터는 최상위 단계이므로 상위 소속을 지정할 수 없습니다.',{characterId,roleKey,path:'parentRole'});
+        continue;
+      }
+      if(!parentRoleKey){
+        add('PARENT_REQUIRED',stageNo+'단계 '+memberName+' 캐릭터의 상위 소속을 선택해 주세요.',{stageNo,characterId,roleKey,path:'parentRole'});
+        continue;
+      }
+      const parentStageNo=roleStageByKey.get(parentRoleKey);
+      if(!parentStageNo)add('PARENT_ROLE_NOT_FOUND',memberName+' 캐릭터의 상위 소속 직급을 찾을 수 없습니다.',{stageNo,characterId,roleKey,path:'parentRole'});
+      else if(parentStageNo!==stageNo-1)add('PARENT_NOT_IMMEDIATE_STAGE',stageNo+'단계 '+memberName+' 캐릭터의 상위 소속은 바로 윗 단계에서 선택해 주세요.',{stageNo,characterId,roleKey,path:'parentRole'});
+    }
+    for(const [roleKey,occupied] of occupiedByRole){
+      const role=roleByKeyMap.get(roleKey);
+      if(role?.maxMembers!==null&&positiveInt(role.maxMembers)!==null&&occupied>role.maxMembers){
+        const stageNo=roleStageByKey.get(roleKey);
+        add('MAX_MEMBERS_EXCEEDED',stageNo+'단계 '+(text(role.roleName,120)||'직급')+'의 최대 인원 '+role.maxMembers+'명을 초과했습니다.',{stageNo,roleKey,path:'maxMembers'});
+      }
+    }
+    return validationResult(errors);
   }
 
   function serializeDraft(draft){
@@ -258,7 +397,7 @@
   }
 
   function renderParentOptions(draft,assignment,stageNo){
-    const options=['<option value="">상위 소속 미지정</option>'];
+    const options=['<option value="">상위 소속 선택 (필수)</option>'];
     for(const stage of draft.stages){
       if(stage.stageNo!==stageNo-1)continue;
       for(const role of stage.roles){
@@ -274,7 +413,7 @@
     if(!member)return '';
     const kind=member.isMain?'본캐':'부캐';
     const parent=stageNo>1
-      ?'<label class="legion-tree-editor-parent"><span>상위 소속</span><select data-editor-parent data-character-id="'+member.characterId+'">'+renderParentOptions(draft,assignment,stageNo)+'</select></label>'
+      ?'<label class="legion-tree-editor-parent"><span>상위 소속</span><select required data-editor-parent data-character-id="'+member.characterId+'">'+renderParentOptions(draft,assignment,stageNo)+'</select></label>'
       :'';
     return '<li class="legion-tree-editor-member" data-character-id="'+member.characterId+'">'
       +'<div><strong>'+esc(member.characterName)+'</strong><span>'+esc(member.className||'클래스 미확인')+' · '+kind+'</span></div>'
@@ -287,16 +426,23 @@
     const assignments=draft.assignments.filter(item=>item.roleKey===role.roleKey);
     const assignedIds=new Set(draft.assignments.map(item=>item.characterId));
     const available=draft.members.filter(member=>!assignedIds.has(member.characterId));
-    const capacity=role.maxMembers===null?'인원 제한 없음':'최대 '+role.maxMembers+'명';
+    const full=role.maxMembers!==null&&assignments.length>=role.maxMembers;
+    const capacity=role.maxMembers===null?assignments.length+'명 · 제한 없음':assignments.length+' / '+role.maxMembers+'명';
     const options=['<option value="">구성원 선택</option>'].concat(available.map(member=>
       '<option value="'+member.characterId+'">'+esc(member.characterName+' · '+(member.className||'클래스 미확인'))+'</option>'
     )).join('');
+    const batchOptions=available.length?available.map(member=>
+      '<option value="'+member.characterId+'">'+esc(member.characterName+' · '+(member.className||'클래스 미확인'))+'</option>'
+    ).join(''):'<option disabled>미배치 구성원이 없습니다.</option>';
     return '<article class="legion-tree-editor-role" data-role-key="'+esc(role.roleKey)+'">'
       +'<header><label><span>직급명</span><input type="text" maxlength="120" value="'+esc(role.roleName)+'" data-editor-role-name></label>'
+      +'<label class="legion-tree-editor-max-members"><span>최대 인원</span><input type="number" min="1" max="'+MAX_ROLE_MEMBERS+'" inputmode="numeric" placeholder="제한 없음" value="'+(role.maxMembers===null?'':role.maxMembers)+'" data-editor-max-members></label>'
       +'<span class="legion-tree-editor-capacity">'+capacity+'</span>'
       +'<button type="button" class="is-danger" data-editor-delete-role>직급 삭제</button></header>'
       +'<ul class="legion-tree-editor-member-list">'+(assignments.length?assignments.map(item=>renderAssignedMember(draft,item,stage.stageNo)).join(''):'<li class="is-empty">지정된 구성원이 없습니다.</li>')+'</ul>'
-      +'<label class="legion-tree-editor-assign"><span>구성원 지정</span><select data-editor-assign-member '+(!available.length?'disabled':'')+'>'+options+'</select></label>'
+      +'<label class="legion-tree-editor-assign"><span>구성원 지정</span><select data-editor-assign-member '+(!available.length||full?'disabled':'')+'>'+options+'</select></label>'
+      +'<details class="legion-tree-editor-batch"><summary>여러 명 일괄 배치</summary><div><select multiple size="'+Math.min(5,Math.max(2,available.length))+'" aria-label="'+esc(role.roleName)+' 일괄 배치 구성원" data-editor-batch-members '+(!available.length||full?'disabled':'')+'>'+batchOptions+'</select>'
+      +'<button type="button" data-editor-batch-assign '+(!available.length||full?'disabled':'')+'>선택 인원 배치</button></div></details>'
       +'</article>';
   }
 
@@ -352,6 +498,24 @@
     return text(data.message||error?.message,300)||'조직도를 저장하지 못했습니다.';
   }
 
+  function focusValidationError(error){
+    const root=q('#legionTreeEditorRoot');
+    if(!root||!error)return;
+    const stageElement=qa('[data-stage-no]',root).find(element=>Number(element.dataset.stageNo)===Number(error.stageNo));
+    const roleElement=qa('[data-role-key]',stageElement||root).find(element=>element.dataset.roleKey===error.roleKey);
+    let target=null;
+    if(error.path==='stageCount')target=q('#legionTreeEditorStageCount',root);
+    else if(error.path==='stageName')target=q('[data-editor-stage-name]',stageElement||root);
+    else if(error.path==='roleName')target=q('[data-editor-role-name]',roleElement||stageElement||root);
+    else if(error.path==='maxMembers')target=q('[data-editor-max-members]',roleElement||root);
+    else if(error.path==='parentRole')target=qa('[data-editor-parent]',roleElement||root).find(element=>Number(element.dataset.characterId)===Number(error.characterId));
+    target=target||roleElement||stageElement||q('.legion-tree-editor-dialog',root);
+    target?.setAttribute?.('aria-invalid','true');
+    const reduceMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches===true;
+    target?.scrollIntoView?.({block:'center',behavior:reduceMotion?'auto':'smooth'});
+    target?.focus?.();
+  }
+
   async function saveSelectedDraft(resetToDefault=false){
     if(saveRunning)return false;
     const draft=currentDraft();
@@ -361,6 +525,16 @@
       return false;
     }
     if(resetToDefault&&typeof window.confirm==='function'&&!window.confirm('이 레기온의 저장된 조직도를 지우고 기본 조직도로 복원할까요?'))return false;
+    if(!resetToDefault){
+      const validation=validateDraft(draft);
+      if(!validation.ok){
+        editorStatus=validation.message;
+        renderDialog();
+        setStatus(validation.message,'warning');
+        focusValidationError(validation.errors[0]);
+        return false;
+      }
+    }
     saveRunning=true;
     editorStatus=resetToDefault?'기본 조직도로 복원하는 중…':'Server에서 조직도를 저장하고 다시 확인하는 중…';
     renderDialog();
@@ -476,6 +650,19 @@
       else setStatus(message,'warning');
       return;
     }
+    if(target.closest('[data-editor-batch-assign]')&&roleElement){
+      const select=q('[data-editor-batch-members]',roleElement);
+      const characterIds=Array.from(select?.selectedOptions||[]).map(option=>Number(option.value));
+      const result=assignMembers(draft,characterIds,roleElement.dataset.roleKey);
+      const message={
+        BATCH_EMPTY:'일괄 배치할 구성원을 한 명 이상 선택해 주세요.',
+        CHARACTER_NOT_IN_LEGION:'현재 레기온 구성원만 배치할 수 있습니다.',
+        MAX_MEMBERS_EXCEEDED:'선택 인원을 배치하면 이 직급의 최대 인원을 초과합니다.'
+      }[result.code]||'구성원을 일괄 배치하지 못했습니다.';
+      if(result.ok)markChanged(result.count+'명을 직급에 일괄 배치했습니다.');
+      else setStatus(message,'warning');
+      return;
+    }
     const memberElement=target.closest('[data-character-id]');
     if(target.closest('[data-editor-unassign]')&&memberElement){
       const result=unassignMember(draft,Number(memberElement.dataset.characterId));
@@ -507,6 +694,20 @@
     if(target.matches('[data-editor-role-name]')&&roleElement){
       const role=roleByKey(draft,roleElement.dataset.roleKey);
       if(role){role.roleName=text(target.value,120)||'직급';draft.dirty=true;setStatus('직급명을 초안에 반영했습니다.');}
+      return;
+    }
+    if(target.matches('[data-editor-max-members]')&&roleElement){
+      const result=setRoleMaxMembers(draft,roleElement.dataset.roleKey,target.value);
+      const message={
+        MAX_MEMBERS_INVALID:'최대 인원은 1명 이상의 정수로 입력하거나 비워서 제한 없음으로 설정해 주세요.',
+        MAX_MEMBERS_BELOW_OCCUPANCY:'현재 '+String(result.occupied||0)+'명이 배치되어 있어 그보다 작게 설정할 수 없습니다.'
+      }[result.code]||'최대 인원을 변경하지 못했습니다.';
+      if(result.ok)markChanged(result.maxMembers===null?'최대 인원을 제한 없음으로 변경했습니다.':'최대 인원을 '+result.maxMembers+'명으로 변경했습니다.');
+      else{
+        const role=roleByKey(draft,roleElement.dataset.roleKey);
+        target.value=role?.maxMembers===null?'':String(role?.maxMembers||'');
+        setStatus(message,'warning');
+      }
       return;
     }
     if(target.matches('[data-editor-assign-member]')&&roleElement){
@@ -562,9 +763,12 @@
     setStageCount,
     addRole,
     deleteRole,
+    setRoleMaxMembers,
     assignMember,
+    assignMembers,
     unassignMember,
     setParentRole,
+    validateDraft,
     serializeDraft,
     saveSelectedDraft,
     getSelectedDraft:()=>currentDraft()
