@@ -1,4 +1,4 @@
-/* KINOJO Legion Tree · Server data + character add · 마-2~6 + 사-1~7 + 아-1~6 + 자-1~7 */
+/* KINOJO Legion Tree · Server data + character add + organization draft · 마-2~6 + 사-1~7 + 아-1~6 + 자-1~7 + 차-1~10 */
 (function(){
   'use strict';
 
@@ -34,6 +34,7 @@
   let activeAddSessionId='';
   let activeAddProgressIndex=0;
   let addPollGeneration=0;
+  let currentTreeModel=null;
 
   function text(value,max=160){
     return String(value??'').trim().slice(0,max);
@@ -230,6 +231,7 @@
     return {
       groupKey:text(source.groupKey??source.group_key,180)||`group_${index+1}`,
       groupName:text(source.groupName??source.group_name,120),
+      parentRoleKey:text(source.parentRoleKey??source.parent_role_key,180),
       sortOrder:positiveInt(source.sortOrder??source.sort_order)||index+1,
       members:array(source.members).map(normalizeMember).filter(Boolean)
     };
@@ -277,10 +279,12 @@
       revision:Number(source.revision)||0,
       treeState,
       fallbackApplied,
+      organizationConfigured:boolean(source.organizationConfigured??source.organization_configured),
       stageCount:positiveInt(source.stageCount??source.stage_count)||stages.length,
       memberCount:Number.isInteger(Number(source.memberCount??source.member_count))
         ?Math.max(0,Number(source.memberCount??source.member_count)):0,
-      stages
+      stages,
+      unassignedMembers:array(source.unassignedMembers??source.unassigned_members).map(normalizeMember).filter(Boolean)
     };
   }
 
@@ -373,6 +377,10 @@
     if(!root)throw new Error('LEGION_TREE_ROOT_MISSING');
     root.innerHTML=renderTreeMarkup(model);
     root.setAttribute('aria-busy','false');
+    currentTreeModel=model;
+    window.KinojoLegionTreeEditor?.setModel?.(model);
+    const edit=q('#legionTreeEditBtn');
+    if(edit)edit.disabled=false;
   }
 
   async function loadTreeData(){
@@ -394,6 +402,10 @@
       window.dispatchEvent(new CustomEvent('kinojo:page-time',{detail:{value:new Date(),label:'레기온 데이터'}}));
       return model;
     }catch(error){
+      currentTreeModel=null;
+      window.KinojoLegionTreeEditor?.setModel?.(null);
+      const edit=q('#legionTreeEditBtn');
+      if(edit)edit.disabled=true;
       treeStatusMessage='레기온 데이터를 불러오지 못했습니다.';
       setStatus(treeStatusMessage,'#dc2626');
       if(root){
@@ -583,6 +595,13 @@
       add.addEventListener('click',()=>{void handleAdd();});
     }
     q('#legionTreeResetBtn')?.addEventListener('click',resetInputs);
+    q('#legionTreeEditBtn')?.addEventListener('click',event=>{
+      if(!currentTreeModel||!window.KinojoLegionTreeEditor?.open){
+        toast('조직도 편집 화면을 준비하지 못했습니다. 새로고침해 주세요.');
+        return;
+      }
+      window.KinojoLegionTreeEditor.open({opener:event.currentTarget});
+    });
     q('#legionTreeMainName')?.addEventListener('input',event=>{
       if(String(event.currentTarget?.value||'').trim())setMainRequiredError(false);
     });
@@ -608,6 +627,7 @@
     handleAdd,
     resetInputs,
     progressIndexForRuntime,
+    getTreeModel:()=>currentTreeModel,
     getAddState:()=>Object.freeze({running:addRequestRunning,sessionId:activeAddSessionId,progressIndex:activeAddProgressIndex})
   });
 

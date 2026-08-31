@@ -1,6 +1,6 @@
 # KINOJO WEB HANDOFF
 
-기준일: 2026-08-30 KST
+기준일: 2026-08-31 KST
 
 ## 저장소 / 현재 기준
 
@@ -299,7 +299,7 @@
 - SQL432 Source/Deploy/Verify/Rollback, FK index follow-up, Edge v8 Source의 Drive ID는 Stage 3-5 LOG와 SQL_INDEX에 기록한다. 전체 Node 계약 66종, JavaScript/Deno check, 로컬 PC 1440×1000과 모바일 390×844·350×740 검수를 통과했다. 검색 버튼·Enter, 마스터 결과 슬롯 배치, 공식 게스트 확정 배치, 중첩 form 0, 가로 overflow 0, 콘솔 오류 0을 확인했다.
 - 다음 작업은 3-6 일정 입력·30분 단위 진행 시간·반복 규칙·다른 팀 충돌 검증 연결이다. 운영 `readEnabled=false`, `writeEnabled=false`는 별도 승인 전까지 유지한다.
 
-## 레기온 트리 마-2~마-6 / 사-1~사-7 / 아-1~아-6 / 자-1~자-7
+## 레기온 트리 마-2~마-6 / 사-1~사-7 / 아-1~아-6 / 자-1~자-7 / 차-1~차-10
 
 - PC·모바일 페이지가 공개 RPC `kinojo_web_get_legion_tree`의 `web-legion-tree-v1` / DB 365 계약을 읽어 깡·낮·밤·키나노동조합을 Server 순서대로 렌더링한다.
 - 2026-08-24 운영 readback 기준 실제 구성원은 깡 41명, 낮 4명, 밤 2명, 키나노동조합 42명으로 총 89명이다.
@@ -315,7 +315,11 @@
 - 본캐만 입력하면 MAIN, 본캐+부캐는 ALT 요청이 되고, 부캐만 입력하면 본캐 오류·focus 후 network 0으로 종료한다. 실행 중에는 추가/초기화 버튼을 잠가 중복 click과 가짜 취소를 막는다.
 - 진행 UI는 요청에 결합된 Server runtime `sessionId`만 추적해 `공식 확인 → 정보 반영 → list 반영 → readback → 완료`를 표시한다. 동일 세션의 `completed / SERVER_QUEUE_LIST_SYNC_DONE`만 완료로 인정하고, Google list readback 완료 뒤 공개 트리를 재조회한다.
 - 초기화는 작업이 없을 때 두 이름, 종족, 서버, 오류, 진행 표시를 함께 비운다. Server 작업 실행 중에는 초기화를 거부하며 Server Queue를 취소했다고 표시하지 않는다.
-- 레기온 트리 진행도는 **56/115**다. 다음 원본 단계는 **차-1 조직도 편집 Modal frame**이며 이번 변경에서는 선행하지 않는다.
+- 조직도 편집은 PC·모바일 공용 `legion-tree/js/legion-tree-editor.js`가 소유한다. 네 레기온 선택, 단계 수·단계명, 동일 단계 복수 직급, 직급 삭제, 구성원 배치·해제, 더 높은 단계의 상위 소속, Server fallback 초기화, 취소·저장 UI를 제공한다.
+- 차 단계는 화면 초안 경계다. 편집기는 Supabase/Edge 호출을 포함하지 않고 저장 버튼을 비활성 상태로 명시한다. 실제 권한·저장 전 validation·revision/CAS·transaction·영구 저장·재조회는 원본 순서의 카/타/하 단계에서 연결한다.
+- 점유 직급·상위 소속으로 참조되는 직급·단계의 마지막 직급·사용 중 단계 감소·하위/동일 단계 parent·현재 `maxMembers` 초과는 local draft에서도 먼저 차단한다. Server validator v365를 최종 권한으로 대체하지 않는다.
+- 로컬 브라우저 기준 PC 1440×900, 모바일 390×844·320×568에서 document/dialog 가로 overflow 0, 내부 세로 스크롤, shell 위 modal stacking, 저장 disabled, Escape 닫기·편집 버튼 focus 복귀, 콘솔 warning/error 0을 확인했다.
+- 레기온 트리 진행도는 **66/115**다. 다음 원본 단계는 **카-1 단계 증가**이며 카-1~카-10 편집 UX 상세 묶음으로 이어간다.
 
 ## 내 정보 이미지 기존 완료 상태
 

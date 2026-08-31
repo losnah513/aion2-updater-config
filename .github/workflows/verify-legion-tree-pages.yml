@@ -10,6 +10,7 @@ on:
       - "core/kinojo-route-guard.js"
       - "core/kinojo-supabase-features.js"
       - "tests/legion-tree-data-render-contract.test.js"
+      - "tests/legion-tree-editor-contract.test.js"
       - ".github/workflows/verify-legion-tree-pages.yml"
   push:
     branches: [main]
@@ -19,6 +20,7 @@ on:
       - "ui/kinojo-common-navigation.js"
       - "core/kinojo-route-guard.js"
       - "tests/legion-tree-data-render-contract.test.js"
+      - "tests/legion-tree-editor-contract.test.js"
       - ".github/workflows/verify-legion-tree-pages.yml"
   workflow_dispatch:
 
@@ -47,8 +49,10 @@ jobs:
           node --check ui/kinojo-common-navigation.js
           node --check core/kinojo-route-guard.js
           node --check core/kinojo-supabase-features.js
+          node --check legion-tree/js/legion-tree-editor.js
           node --check legion-tree/js/legion-tree.js
           node tests/legion-tree-data-render-contract.test.js
+          node tests/legion-tree-editor-contract.test.js
 
           python3 <<'PY'
           from pathlib import Path
@@ -135,6 +139,7 @@ jobs:
             "legion-tree/index.html"
             "m/legion-tree/index.html"
             "legion-tree/css/legion-tree.css"
+            "legion-tree/js/legion-tree-editor.js"
             "legion-tree/js/legion-tree.js"
             "ui/kinojo-common-navigation.js"
             "core/kinojo-route-guard.js"

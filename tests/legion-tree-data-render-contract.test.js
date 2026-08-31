@@ -426,15 +426,17 @@ window.KinojoSupabase = {
 
   for (const html of [pc, mobile]) {
     assert(html.includes('id="legionTreeRoot"'));
+    assert(html.includes('id="legionTreeEditorRoot"'));
     assert(html.includes('id="legionTreeAddProgress"'));
     assert(html.includes('aria-label="캐릭터 추가 진행 상태"'));
     assert(html.includes('Server 레기온 데이터를 불러오는 중'));
     assert(!html.includes('data-preview-card'));
     assert(!html.includes('본캐예시'));
-    assert(html.includes('legion-tree.css?cache=2026082811'));
-    assert(html.includes('legion-tree.js?cache=2026082403'));
+    assert(html.includes('legion-tree.css?cache=2026083101'));
+    assert(html.includes('legion-tree-editor.js?cache=2026083101'));
+    assert(html.includes('legion-tree.js?cache=2026083101'));
     assert(html.includes('kinojo-supabase-features.js?cache=2026083030'));
-    assert(!html.includes('legion-tree.js?cache=2026082402'));
+    assert(!html.includes('legion-tree.js?cache=2026082403'));
   }
 
   assert(script.includes("kinojo_web_legion_tree_server_reference_v372"));
