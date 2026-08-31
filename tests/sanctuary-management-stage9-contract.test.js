@@ -39,7 +39,7 @@ for(const token of [
 for(const token of [
   "toFixed(1)+'K'",
   'sanctuary-management-power-value',
-  'sanctuary-management-team-badge is-difficulty',
+  'sanctuary-management-force-difficulty',
   "+' 클래스 슬롯'",
   'item.dataset.slotNumber='
 ])assert.ok(main.includes(token),`Stage 9 public UI contract missing ${token}`);

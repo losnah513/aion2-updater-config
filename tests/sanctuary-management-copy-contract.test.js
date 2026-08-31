@@ -24,8 +24,8 @@ for(const token of [
   'KinojoSanctuaryManagementCopyBridge',
   'dataset.sanctuarySupportAvailable',
 ])assert.ok(client.includes(token),`team/force copy-button wiring missing ${token}`);
-assert.ok(client.indexOf('titleRow.append(title,copyButton)')>=0,'team copy button must sit beside the team name');
-assert.ok(client.indexOf('titleWrap.append(name,copyButton)')>=0,'force copy button must sit beside the force name');
+assert.ok(client.indexOf('titleRow.append(mode,title,copyButton)')>=0,'team copy button must sit beside the team name');
+assert.ok(client.indexOf('titleWrap.append(copyButton)')>=0,'force copy button must sit beside the force name');
 
 const copy=read('sanctuary-management/js/sanctuary-management-copy.js');
 for(const token of [

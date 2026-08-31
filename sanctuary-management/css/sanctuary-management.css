@@ -191,3 +191,15 @@ body.kinojo-sanctuary-management-page{
 }
 @media(max-width:350px){.sanctuary-management-wrap{width:calc(100% - 14px)}.sanctuary-management-team-panel{padding:13px}.sanctuary-management-page-bar{padding-inline:5px}.sanctuary-management-subbar-state{padding-inline:5px;column-gap:4px}.sanctuary-management-subbar-state strong{font-size:9px}.sanctuary-management-overview-head .kinojo-btn{font-size:8px}}
 @media(prefers-reduced-motion:reduce){.sanctuary-management-scope button,.sanctuary-management-scope-detail,.sanctuary-management-scope-detail-char,.sanctuary-management-team-card,.sanctuary-management-hero-bg{transition:none}}
+
+/* Stage 10 part 2: make the team's shared schedule and identity the first
+   reading order. Internal IDs, revisions and aggregate counts stay in the
+   data contract but are intentionally absent from the public card. */
+.sanctuary-management-team-card-head{display:grid;grid-template-columns:minmax(0,1fr);align-items:stretch;justify-content:normal;gap:8px}
+.sanctuary-management-team-schedule{min-width:0;display:flex;align-items:center;gap:9px;padding-inline:4px;color:#52647f}.sanctuary-management-team-schedule>span{flex:0 0 auto;color:#466bd1;font-size:8px;font-weight:1000;letter-spacing:.13em}.sanctuary-management-team-schedule>strong{min-width:0;overflow:hidden;font-size:12px;font-weight:950;text-overflow:ellipsis;white-space:nowrap}
+.sanctuary-management-team-title-band{min-width:0;padding:10px 11px;display:flex;align-items:center;justify-content:space-between;gap:14px;border-left:4px solid #526fe2;border-radius:11px;background:linear-gradient(90deg,#f0f4ff,#faf8ff)}
+.sanctuary-management-team-title-row{min-width:0;display:flex;align-items:center;gap:8px}.sanctuary-management-team-title-row h3{min-width:0;overflow:hidden;margin:0;color:#243651;font-size:17px;text-overflow:ellipsis;white-space:nowrap}.sanctuary-management-team-mode{flex:0 0 auto;color:#315fc8;font-size:10px;font-weight:1000}.sanctuary-management-team-mode.is-participation{color:#7750d5}
+.sanctuary-management-team-head-actions{max-width:58%;margin:0;flex:0 0 auto}.sanctuary-management-team-head-actions .sanctuary-management-force-overview-button{border-color:#536fe0;background:linear-gradient(135deg,#315fe8,#7250eb);color:#fff}.sanctuary-management-team-head-actions .sanctuary-management-edit-team{border-color:#8ca4ed;background:#eaf0ff;color:#315ac8}
+.sanctuary-management-team-meta{display:none!important}
+@media(max-width:760px){.sanctuary-management-team-title-band{display:grid;gap:9px}.sanctuary-management-team-head-actions{max-width:none;justify-content:flex-start}.sanctuary-management-team-title-row h3{font-size:15px}}
+@media(max-width:430px){.sanctuary-management-team-card-head{display:grid}.sanctuary-management-team-head-actions{margin-top:0}.sanctuary-management-team-schedule{align-items:flex-start;display:grid;gap:2px}.sanctuary-management-team-schedule>strong{font-size:11px}.sanctuary-management-team-title-band{padding:9px}.sanctuary-management-team-head-actions .kinojo-btn{flex:1 1 auto}}

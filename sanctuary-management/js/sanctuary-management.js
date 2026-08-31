@@ -28,6 +28,8 @@
   let forceOverviewOpener=null;
   let forceOverviewTeamId=0;
   let forceOverviewForceId=0;
+  let forceCarouselResizeBound=false;
+  let forceCarouselResizeFrame=0;
   let deepLinkApplied=false;
   let currentAuthProjection='';
 
@@ -596,6 +598,7 @@
   }
 
   function teamModeLabel(team){return value(team.mode)==='FIXED'?'고정 팀':value(team.mode)==='PARTICIPATION'?'참여 팀':value(team.mode)||'팀';}
+  function teamModeShortLabel(team){return value(team.mode)==='PARTICIPATION'?'[참여]':'[고정]';}
   function teamStatusLabel(team){
     const status=value(team.status);
     return ({DRAFT:'DRAFT',ACTIVE:'운영 중',FULL:'모집 완료',ARCHIVED:'보관됨'})[status]||status||'상태 확인 중';
@@ -666,9 +669,14 @@
     const head=document.createElement('span');head.className='sanctuary-management-force-card-head';
     const titleWrap=document.createElement('span');titleWrap.className='sanctuary-management-force-title-row';
     const name=document.createElement('strong');name.textContent=force.forceNo+'포스';
+    const sanctuary=bootstrapData?.sanctuaries?.find(item=>String(item.id)===String(team.sanctuaryId));
+    const forceDifficultyEnabled=Array.isArray(sanctuary?.entryModes)&&sanctuary.entryModes.some(mode=>value(mode?.key).toLowerCase()==='hard');
+    const difficulty=value(force.difficulty).toUpperCase()==='HARD'?'HARD':'NORMAL';
+    const difficultyBadge=document.createElement('span');difficultyBadge.className='sanctuary-management-force-difficulty '+(difficulty==='HARD'?'is-hard':'is-normal');
+    const minimumItemLevel=integer(force.minimumItemLevel);difficultyBadge.textContent=(difficulty==='HARD'?'어려움':'보통')+(minimumItemLevel?' · '+minimumItemLevel+'+':'');difficultyBadge.title=(difficulty==='HARD'?'어려움':'보통')+(minimumItemLevel?' · 아이템레벨 '+minimumItemLevel+' 이상':'');
     const power=document.createElement('small');power.className='sanctuary-management-force-average';power.innerHTML=combatPowerMarkup(force.combatPower?.average,'평균')+'<span> · '+escapeHtml(force.combatPower.knownCount)+'/'+escapeHtml(force.occupiedCount)+'명 확인</span>';
     const copyButton=document.createElement('button');copyButton.type='button';copyButton.className='sanctuary-management-copy-button';copyButton.dataset.sanctuaryCopyForce=value(force.forceId);copyButton.dataset.sanctuaryCopyTeam=value(team.teamId);copyButton.setAttribute('aria-label',force.forceNo+'포스 이미지 클립보드 복사');copyButton.title='해당 포스 전체를 이미지로 복사';copyButton.innerHTML='<span aria-hidden="true"><i></i><i></i></span>';
-    titleWrap.append(name,copyButton);titleWrap.appendChild(power);
+    titleWrap.append(name);if(forceDifficultyEnabled)titleWrap.appendChild(difficultyBadge);titleWrap.append(copyButton);titleWrap.appendChild(power);
     const count=document.createElement('em');count.textContent=force.occupiedCount+'/'+force.capacity+'명';head.append(titleWrap,count);
     const parties=document.createElement('span');parties.className='sanctuary-management-force-parties';
     force.parties.forEach(party=>{
@@ -704,7 +712,23 @@
   }
 
   function forceCarouselCards(track){return Array.from(track?.querySelectorAll(':scope > .sanctuary-management-force-card')||[]);}
-  function forceCarouselCurrent(carousel){return Math.max(0,integer(carousel?.dataset.forceIndex));}
+  function forceCarouselCompact(){return matchMedia('(max-width: 900px)').matches;}
+  function forceCarouselPages(cards){
+    if(forceCarouselCompact())return cards.map((_card,index)=>index);
+    if(cards.length<=2)return [0];
+    const starts=[];for(let index=0;index<cards.length;index+=2)starts.push(index);
+    if(cards.length%2===1)starts[starts.length-1]=cards.length-2;
+    return Array.from(new Set(starts));
+  }
+  function forceCarouselCurrent(carousel){
+    const cards=forceCarouselCards(carousel?.querySelector('.sanctuary-management-force-grid'));const pages=forceCarouselPages(cards);if(!pages.length)return 0;
+    const requested=Math.max(0,integer(carousel?.dataset.forceStart));const exact=pages.indexOf(requested);
+    if(exact>=0)return exact;
+    return pages.reduce((best,start,index)=>Math.abs(start-requested)<Math.abs(pages[best]-requested)?index:best,0);
+  }
+  function forceCarouselCurrentStart(carousel){
+    const cards=forceCarouselCards(carousel?.querySelector('.sanctuary-management-force-grid'));const pages=forceCarouselPages(cards);return pages[forceCarouselCurrent(carousel)]||0;
+  }
   function setForceCardVisibility(card,active){
     if(!card)return;
     if(!card.dataset.carouselTabindex)card.dataset.carouselTabindex=String(card.tabIndex);
@@ -715,24 +739,25 @@
   }
   function updateForceCarousel(carousel){
     const track=carousel?.querySelector('.sanctuary-management-force-grid');const cards=forceCarouselCards(track);if(!track||!cards.length)return;
-    const current=Math.min(cards.length-1,forceCarouselCurrent(carousel));carousel.dataset.forceIndex=String(current);
-    cards.forEach((card,index)=>setForceCardVisibility(card,index===current));
+    const pages=forceCarouselPages(cards);const current=Math.min(pages.length-1,forceCarouselCurrent(carousel));const start=pages[current]||0;const visibleCount=forceCarouselCompact()?1:2;const activeIndexes=new Set(Array.from({length:visibleCount},(_item,index)=>start+index).filter(index=>index<cards.length));
+    carousel.dataset.forcePage=String(current);carousel.dataset.forceStart=String(start);carousel.dataset.forceVisible=String(activeIndexes.size);
+    cards.forEach((card,index)=>setForceCardVisibility(card,activeIndexes.has(index)));
     const previous=carousel.querySelector('[data-sanctuary-force-shift="-1"]');const next=carousel.querySelector('[data-sanctuary-force-shift="1"]');
-    const position=carousel.querySelector('[data-sanctuary-force-position]');const announcer=carousel.querySelector('[data-sanctuary-force-announcer]');const force=cards[current];
-    carousel.classList.toggle('has-pages',cards.length>1);if(previous)previous.disabled=current===0;if(next)next.disabled=current===cards.length-1;
-    if(position)position.textContent=(current+1)+' / '+cards.length;
-    if(announcer)announcer.textContent=(force?.querySelector('.sanctuary-management-force-card-head strong')?.textContent||current+1+'포스')+' · '+(force?.querySelector('.sanctuary-management-force-card-head em')?.textContent||'편성 정보');
+    const position=carousel.querySelector('[data-sanctuary-force-position]');const announcer=carousel.querySelector('[data-sanctuary-force-announcer]');const activeCards=cards.filter((_card,index)=>activeIndexes.has(index));
+    carousel.classList.toggle('has-pages',pages.length>1);if(previous)previous.disabled=current===0;if(next)next.disabled=current===pages.length-1;
+    if(position)position.textContent=(current+1)+' / '+pages.length;
+    if(announcer)announcer.textContent=activeCards.map(card=>card.querySelector('.sanctuary-management-force-card-head strong')?.textContent).filter(Boolean).join(' · ')+' 편성 정보';
   }
   function setForceCarouselIndex(carousel,targetIndex,animate=true){
     const track=carousel?.querySelector('.sanctuary-management-force-grid');const cards=forceCarouselCards(track);if(!track||!cards.length||carousel.dataset.forceAnimating==='true')return;
-    const current=Math.min(cards.length-1,forceCarouselCurrent(carousel));const target=Math.max(0,Math.min(cards.length-1,integer(targetIndex)));
+    const pages=forceCarouselPages(cards);const current=Math.min(pages.length-1,forceCarouselCurrent(carousel));const target=Math.max(0,Math.min(pages.length-1,integer(targetIndex)));
     if(current===target){updateForceCarousel(carousel);return;}
-    const outgoing=cards[current],incoming=cards[target];const direction=target>current?'forward':'backward';const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-    carousel.dataset.forceIndex=String(target);setForceCardVisibility(outgoing,false);setForceCardVisibility(incoming,true);
+    const direction=target>current?'forward':'backward';const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    carousel.dataset.forceStart=String(pages[target]||0);updateForceCarousel(carousel);
+    const incoming=cards.filter(card=>card.classList.contains('is-active'));
     if(!animate||reduced){updateForceCarousel(carousel);return;}
-    carousel.dataset.forceAnimating='true';outgoing.classList.add('is-leaving-'+direction);incoming.classList.add('is-entering-'+direction);
-    window.setTimeout(()=>{outgoing.classList.remove('is-leaving-forward','is-leaving-backward');incoming.classList.remove('is-entering-forward','is-entering-backward');carousel.dataset.forceAnimating='false';updateForceCarousel(carousel);},480);
-    updateForceCarousel(carousel);
+    carousel.dataset.forceAnimating='true';incoming.forEach(card=>card.classList.add('is-page-entering-'+direction));
+    window.setTimeout(()=>{incoming.forEach(card=>card.classList.remove('is-page-entering-forward','is-page-entering-backward'));carousel.dataset.forceAnimating='false';updateForceCarousel(carousel);},480);
   }
   function shiftForceCarousel(button){
     const carousel=button.closest('.sanctuary-management-force-carousel');if(!carousel)return;
@@ -749,6 +774,7 @@
     document.querySelectorAll('.sanctuary-management-force-carousel').forEach(carousel=>{
       bindForceCarouselGestures(carousel);updateForceCarousel(carousel);
     });
+    if(!forceCarouselResizeBound){forceCarouselResizeBound=true;window.addEventListener('resize',()=>{cancelAnimationFrame(forceCarouselResizeFrame);forceCarouselResizeFrame=requestAnimationFrame(()=>document.querySelectorAll('.sanctuary-management-force-carousel').forEach(updateForceCarousel));});}
   }
 
   function ensureForceOverviewLayer(){
@@ -799,34 +825,34 @@
   function createTeamCard(team){
     const card=document.createElement('article');card.className='sanctuary-management-team-card';card.dataset.sanctuaryTeam=value(team.teamId);
     const head=document.createElement('div');head.className='sanctuary-management-team-card-head';
-    const titleWrap=document.createElement('div');
+    const schedule=document.createElement('div');schedule.className='sanctuary-management-team-schedule';const scheduleLabelNode=document.createElement('span');scheduleLabelNode.textContent='TEAM SCHEDULE';const scheduleValue=document.createElement('strong');scheduleValue.textContent=scheduleLabel(team);schedule.append(scheduleLabelNode,scheduleValue);
+    const titleBand=document.createElement('div');titleBand.className='sanctuary-management-team-title-band';
     const titleRow=document.createElement('div');titleRow.className='sanctuary-management-team-title-row';
+    const mode=document.createElement('span');mode.className='sanctuary-management-team-mode '+(value(team.mode)==='PARTICIPATION'?'is-participation':'is-fixed');mode.textContent=teamModeShortLabel(team);
     const title=document.createElement('h3');title.textContent=value(team.title)||'이름 없는 팀';
     const copyButton=document.createElement('button');copyButton.type='button';copyButton.className='sanctuary-management-copy-button';copyButton.dataset.sanctuaryCopyTeam=value(team.teamId);copyButton.setAttribute('aria-label',(value(team.title)||'이름 없는 팀')+' 전체 이미지 클립보드 복사');copyButton.title='해당 팀의 모든 포스를 이미지로 복사';copyButton.innerHTML='<span aria-hidden="true"><i></i><i></i></span>';
-    titleRow.append(title,copyButton);titleWrap.append(titleRow);
+    titleRow.append(mode,title,copyButton);
     const headActions=document.createElement('div');headActions.className='sanctuary-management-team-head-actions';
-    if(['ACTIVE','FULL'].includes(value(team.status))){const difficulty=document.createElement('span');difficulty.className='sanctuary-management-team-badge is-difficulty '+(value(team.difficulty)==='HARD'?'is-hard':'is-normal');difficulty.textContent=value(team.difficulty)==='HARD'?'어려움':'보통';headActions.appendChild(difficulty);}
-    else{const badge=document.createElement('span');badge.className='sanctuary-management-team-badge';badge.textContent=teamStatusLabel(team);headActions.appendChild(badge);}
+    const overview=document.createElement('button');overview.type='button';overview.className='kinojo-btn sanctuary-management-force-overview-button';overview.dataset.sanctuaryForceOverview=value(team.teamId);overview.textContent='전체 포스 보기';headActions.appendChild(overview);
+    if(!['ACTIVE','FULL'].includes(value(team.status))){const badge=document.createElement('span');badge.className='sanctuary-management-team-badge';badge.textContent=teamStatusLabel(team);headActions.appendChild(badge);}
     const pending=(team.supportBatches||[]).reduce((sum,batch)=>sum+integer(batch.pendingCount),0);
     if(pending){const pendingBadge=document.createElement('span');pendingBadge.className='sanctuary-management-team-badge is-pending';pendingBadge.textContent='승인 대기 '+pending;headActions.appendChild(pendingBadge);}
     if(team.canEdit&&value(team.status)!=='ARCHIVED'){
-      const edit=document.createElement('button');edit.type='button';edit.className='kinojo-btn secondary';edit.textContent=value(team.status)==='DRAFT'?'초안 계속 작성':'편집';edit.dataset.sanctuaryEditTeam=value(team.teamId);edit.disabled=!bootstrapData?.writeEnabled;headActions.appendChild(edit);
       if(['ACTIVE','FULL'].includes(value(team.status))){const schedule=document.createElement('button');schedule.type='button';schedule.className='kinojo-btn secondary';schedule.textContent='일정 관리';schedule.dataset.sanctuaryScheduleTeam=value(team.teamId);schedule.disabled=!bootstrapData?.writeEnabled;headActions.appendChild(schedule);}
+      const edit=document.createElement('button');edit.type='button';edit.className='kinojo-btn sanctuary-management-edit-team';edit.textContent=value(team.status)==='DRAFT'?'초안 계속 작성':'편집';edit.dataset.sanctuaryEditTeam=value(team.teamId);edit.disabled=!bootstrapData?.writeEnabled;headActions.appendChild(edit);
       if(team.canArchive){const archive=document.createElement('button');archive.type='button';archive.className='kinojo-btn danger sanctuary-management-archive-team';archive.textContent='팀 해산';archive.dataset.sanctuaryArchiveTeam=value(team.teamId);archive.disabled=!bootstrapData?.writeEnabled;headActions.appendChild(archive);}
     }
-    head.append(titleWrap,headActions);
-    const meta=document.createElement('div');meta.className='sanctuary-management-team-meta';
-    [teamModeLabel(team),scheduleLabel(team),value(team.forceCount)+'포스 · '+value(team.occupiedCount)+'/'+value(team.slotCount)+'명','팀 ID '+value(team.teamId),'revision '+value(team.revision)].forEach(text=>{const item=document.createElement('span');item.textContent=text;meta.appendChild(item);});
+    titleBand.append(titleRow,headActions);head.append(schedule,titleBand);
     const carousel=document.createElement('div');carousel.className='sanctuary-management-force-carousel';
     const carouselHead=document.createElement('div');carouselHead.className='sanctuary-management-force-carousel-head';
     const position=document.createElement('span');position.className='sanctuary-management-force-position';position.dataset.sanctuaryForcePosition='';position.textContent='1 / '+team.forces.length;const announcer=document.createElement('span');announcer.className='sanctuary-management-sr-only';announcer.dataset.sanctuaryForceAnnouncer='';announcer.setAttribute('aria-live','polite');
-    const overview=document.createElement('button');overview.type='button';overview.className='kinojo-btn secondary sanctuary-management-force-overview-button';overview.dataset.sanctuaryForceOverview=value(team.teamId);overview.textContent='전체 포스 보기';carouselHead.append(position,announcer,overview);
+    carouselHead.append(position,announcer);
     const viewport=document.createElement('div');viewport.className='sanctuary-management-force-viewport';
     const previous=document.createElement('button');previous.type='button';previous.className='sanctuary-management-force-arrow is-previous';previous.dataset.sanctuaryForceShift='-1';previous.setAttribute('aria-label','이전 포스 보기');previous.textContent='‹';
     const forces=document.createElement('div');forces.className='sanctuary-management-force-grid';forces.setAttribute('aria-label',value(team.title)+' 포스 편성');
     team.forces.forEach(force=>forces.appendChild(createForceCard(team,force)));
     const next=document.createElement('button');next.type='button';next.className='sanctuary-management-force-arrow is-next';next.dataset.sanctuaryForceShift='1';next.setAttribute('aria-label','다음 포스 보기');next.textContent='›';
-    viewport.append(previous,forces,next);carousel.append(carouselHead,viewport);card.append(head,meta,carousel);
+    viewport.append(previous,forces,next);carousel.append(carouselHead,viewport);card.append(head,carousel);
     return card;
   }
 
@@ -1337,7 +1363,7 @@
       const carouselButton=event.target.closest('[data-sanctuary-force-shift]');
       if(carouselButton){shiftForceCarousel(carouselButton);return;}
       const overview=event.target.closest('[data-sanctuary-force-overview]');
-      if(overview){const team=selectedDraftTeam(overview.dataset.sanctuaryForceOverview);if(team)openForceOverview(team,overview,team.forces?.[forceCarouselCurrent(overview.closest('.sanctuary-management-force-carousel'))]?.forceId);return;}
+      if(overview){const team=selectedDraftTeam(overview.dataset.sanctuaryForceOverview);const carousel=overview.closest('.sanctuary-management-team-card')?.querySelector('.sanctuary-management-force-carousel');if(team)openForceOverview(team,overview,team.forces?.[forceCarouselCurrentStart(carousel)]?.forceId);return;}
       const support=event.target.closest('[data-sanctuary-support-force]');
       if(support){if(support.dataset.sanctuarySupportAvailable!=='true')return;const team=selectedDraftTeam(support.dataset.sanctuarySupportTeam);if(team)window.KinojoSanctuaryManagementSupportUI?.open?.(team,Number(support.dataset.sanctuarySupportForce),support);return;}
       const edit=event.target.closest('[data-sanctuary-edit-team]');
