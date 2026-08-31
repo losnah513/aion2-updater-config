@@ -64,7 +64,7 @@ for (const entry of ['sanctuary/index.html', 'm/sanctuary/index.html']) {
   const html = read(entry);
   assert.ok(html.includes('sanctuary-management.css?cache=2026082903'), `${entry}: upgraded Sanctuary CSS missing`);
   assert.ok(html.includes('sanctuary-management.js?cache=2026083104'), `${entry}: upgraded Sanctuary JS missing`);
-  assert.ok(html.includes('kinojo-supabase-features.js?cache=2026083104'), `${entry}: feature bridge cache missing`);
+  assert.ok(html.includes('kinojo-supabase-features.js?cache=2026083105'), `${entry}: feature bridge cache missing`);
   assert.equal(html.includes('class="sanctuary-rail-waitlist"'), false, `${entry}: retired waitlist entry remains`);
   assert.equal(html.includes('sanctuary/js/sanctuary.js'), false, `${entry}: retired legacy page bundle remains loaded`);
 }

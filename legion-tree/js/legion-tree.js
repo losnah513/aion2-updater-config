@@ -1,4 +1,4 @@
-/* KINOJO Legion Tree · Server data + listless character add + atomic organization save + character detail · 마-2~6 + 사-1~7 + 아-1~6 + 자-1~7 + 차-1~10 + 타-1~9 + 파-1~3 */
+/* KINOJO Legion Tree · all-server candidate search + selected listless add + atomic organization save + character detail */
 (function(){
   'use strict';
 
@@ -8,11 +8,11 @@
   const TREE_CONTRACT='web-legion-tree-v1';
   const TREE_DATABASE_CONTRACT='453';
   const ADD_CONTRACT='legion-tree-character-add-v1';
+  const SEARCH_CONTRACT='legion-tree-character-search-v1';
   const ADD_ACCEPTED_CODE='ADD_QUEUE_ACCEPTED';
   const ADD_POLL_INTERVAL_MS=1400;
   const ADD_POLL_TIMEOUT_MS=15*60*1000;
   const LEGION_ORDER=Object.freeze(['깡','낮','밤','키나노동조합']);
-  const DEFAULT_SERVER_ID=2002;
   const MAIN_REQUIRED_MESSAGE='본캐 이름을 입력해 주세요.';
   const ADD_STEPS=Object.freeze([
     Object.freeze({key:'official',label:'공식 확인'}),
@@ -29,11 +29,14 @@
   let serverReferenceReady=false;
   let serverReferenceError='';
   let treeStatusMessage='레기온 데이터를 불러오는 중…';
+  let searchRequestRunning=false;
   let addRequestRunning=false;
   let activeAddSessionId='';
   let activeAddProgressIndex=0;
   let addPollGeneration=0;
   let currentTreeModel=null;
+  let searchGroups={main:null,alt:null};
+  let selectedCandidates={main:null,alt:null};
 
   function text(value,max=160){
     return String(value??'').trim().slice(0,max);
@@ -65,7 +68,7 @@
 
   function normalStatusMessage(){
     if(serverReferenceError)return serverReferenceError;
-    return serverReferenceReady?`이름[서버약칭] · 미표기 시 지켈 · ${treeStatusMessage}`:treeStatusMessage;
+    return serverReferenceReady?`이름만 입력하면 모든 활성 서버 · 이름[서버약칭]은 해당 서버 · ${treeStatusMessage}`:treeStatusMessage;
   }
 
   function setStatus(message,color=''){
@@ -122,11 +125,40 @@
     progress.setAttribute('aria-busy','false');
   }
 
+  function canManageLegionTree(){
+    const account=window.KinojoAuth?.getAccount?.()||null;
+    return window.KinojoPermissions?.canManage?.(account)===true||account?.canManage===true;
+  }
+
+  function hasRequiredSelection(){
+    return Boolean(selectedCandidates.main)&&(!searchGroups.alt||Boolean(selectedCandidates.alt));
+  }
+
+  function syncManagementControls(){
+    const allowed=canManageLegionTree();
+    const busy=searchRequestRunning||addRequestRunning;
+    const search=q('#legionTreeSearchBtn'),add=q('#legionTreeAddBtn'),edit=q('#legionTreeEditBtn');
+    const main=q('#legionTreeMainName'),alt=q('#legionTreeAltName');
+    if(search)search.disabled=busy||!serverReferenceReady||!allowed;
+    if(add)add.disabled=busy||!allowed||!hasRequiredSelection();
+    if(edit)edit.disabled=busy||!currentTreeModel||!allowed;
+    if(main)main.disabled=busy||!allowed;
+    if(alt)alt.disabled=busy||!allowed;
+  }
+
   function setAddControlsRunning(running){
     const add=q('#legionTreeAddBtn');
     const reset=q('#legionTreeResetBtn');
+    const close=q('#legionTreeSearchCloseBtn');
+    const search=q('#legionTreeSearchBtn');
+    const main=q('#legionTreeMainName'),alt=q('#legionTreeAltName');
     if(add)add.disabled=running===true;
     if(reset)reset.disabled=running===true;
+    if(close)close.disabled=running===true;
+    if(search)search.disabled=running===true;
+    if(main)main.disabled=running===true;
+    if(alt)alt.disabled=running===true;
+    if(running!==true)syncManagementControls();
   }
 
   function wait(milliseconds){
@@ -171,6 +203,7 @@
         const reloaded=await loadTreeData();
         if(!reloaded)throw new Error('캐릭터 추가는 완료됐지만 레기온 트리를 다시 불러오지 못했습니다. 새로고침해 주세요.');
         renderAddProgress(3,'done');
+        resetInputs({keepStatus:true,force:true});
         setStatus('캐릭터 정보 반영과 레기온 트리 재확인이 완료되었습니다.','#15803d');
         toast('캐릭터 추가가 완료되었습니다.');
         return runtime;
@@ -221,12 +254,54 @@
       if(candidates.length>1&&key==='이스')candidates=candidates.filter(server=>server.serverId===2001);
       if(!candidates.length)return {ok:false,code:'SERVER_SUFFIX_NOT_FOUND',message:`서버 약칭 [${serverSuffix}]을(를) 확인할 수 없습니다.`};
       if(candidates.length!==1)return {ok:false,code:'SERVER_SUFFIX_AMBIGUOUS',message:`서버 약칭 [${serverSuffix}]이(가) 중복됩니다. 원본 서버명을 입력해 주세요.`};
-    }else{
-      candidates=serverReference.filter(server=>server.serverId===DEFAULT_SERVER_ID);
-      if(candidates.length!==1)return {ok:false,code:'DEFAULT_SERVER_NOT_FOUND',message:'기준 서버 지켈을 확인할 수 없습니다.'};
-    }
+    }else return {ok:true,raw,characterName,serverSuffix:'',serverId:null,serverName:'',raceId:null,allActiveServers:true};
     const server=candidates[0];
-    return {ok:true,raw,characterName,serverSuffix,serverId:server.serverId,serverName:server.serverName,raceId:server.raceId};
+    return {ok:true,raw,characterName,serverSuffix,serverId:server.serverId,serverName:server.serverName,raceId:server.raceId,allActiveServers:false};
+  }
+
+  function normalizeSearchCandidate(item){
+    const source=item&&typeof item==='object'?item:{};
+    const characterId=text(source.characterId,300),characterName=text(source.characterName,120);
+    const serverId=positiveInt(source.serverId),serverName=text(source.serverName,120);
+    if(!characterId||!characterName||serverId===null||!serverName)return null;
+    return {
+      candidateKey:text(source.candidateKey,420)||`${serverId}:${characterId}`,
+      characterId,characterName,serverId,serverName,
+      serverShortName:text(source.serverShortName,80),
+      raceId:positiveInt(source.raceId),raceName:text(source.raceName,40),
+      level:positiveInt(source.level),profileImageUrl:text(source.profileImageUrl,500)
+    };
+  }
+
+  function normalizeSearchGroup(item,role){
+    const source=item&&typeof item==='object'?item:{};
+    if(source.ok!==true||text(source.role,20)!==role)throw new Error('캐릭터 조회 결과 형식을 확인하지 못했습니다.');
+    const query=source.query&&typeof source.query==='object'?source.query:{};
+    return {role,query:{raw:text(query.raw,180),characterName:text(query.characterName,120),serverSpecified:boolean(query.serverSpecified),serverId:positiveInt(query.serverId),serverName:text(query.serverName,120)},candidates:array(source.candidates).map(normalizeSearchCandidate).filter(Boolean)};
+  }
+
+  function candidateExactInput(candidate){
+    return candidate?`${candidate.characterName}[${candidate.serverName}]`:'';
+  }
+
+  function renderSearchCards(group){
+    if(!group||!group.candidates.length)return '<p class="legion-tree-search-empty">정확히 일치하는 캐릭터를 찾지 못했습니다.</p>';
+    return group.candidates.map(candidate=>{
+      const selected=selectedCandidates[group.role]?.candidateKey===candidate.candidateKey;
+      const image=candidate.profileImageUrl?`<img src="${esc(candidate.profileImageUrl)}" alt="" loading="lazy" referrerpolicy="no-referrer"/>`:`<span class="legion-tree-search-avatar" aria-hidden="true">${esc(candidate.characterName.slice(0,1))}</span>`;
+      const meta=[candidate.serverName,candidate.raceName,candidate.level?`Lv.${candidate.level}`:''].filter(Boolean).join(' · ');
+      return `<button class="legion-tree-search-card" type="button" data-search-role="${group.role}" data-candidate-key="${esc(candidate.candidateKey)}" aria-pressed="${selected?'true':'false'}" aria-label="${esc(candidate.characterName)} · ${esc(meta)}">${image}<span><strong>${esc(candidate.characterName)}</strong><small>${esc(meta)}</small></span></button>`;
+    }).join('');
+  }
+
+  function renderSearchResults(){
+    const root=q('#legionTreeSearchResults'),main=q('#legionTreeMainResults'),alt=q('#legionTreeAltResults'),altGroup=q('#legionTreeAltResultsGroup');
+    if(!root||!main||!alt||!altGroup)return;
+    main.innerHTML=renderSearchCards(searchGroups.main);
+    alt.innerHTML=renderSearchCards(searchGroups.alt);
+    altGroup.hidden=!searchGroups.alt;
+    root.hidden=false;
+    syncManagementControls();
   }
 
   function normalizeMember(item){
@@ -432,8 +507,7 @@
     root.setAttribute('aria-busy','false');
     currentTreeModel=model;
     window.KinojoLegionTreeEditor?.setModel?.(model);
-    const edit=q('#legionTreeEditBtn');
-    if(edit)edit.disabled=false;
+    syncManagementControls();
   }
 
   function applyTreePayload(payload){
@@ -485,8 +559,8 @@
   }
 
   async function loadServerReference(){
-    const add=q('#legionTreeAddBtn');
-    if(add)add.disabled=true;
+    const search=q('#legionTreeSearchBtn');
+    if(search)search.disabled=true;
     serverReferenceError='';
 
     try{
@@ -498,33 +572,52 @@
       if(!normalized.some(item=>item.raceId===1)||!normalized.some(item=>item.raceId===2))throw new Error('SERVER_REFERENCE_EMPTY_RACE');
       serverReference=normalized;
       serverReferenceReady=true;
-      if(add)add.disabled=false;
+      syncManagementControls();
       refreshStatus();
     }catch(error){
       serverReference=[];
       serverReferenceReady=false;
       serverReferenceError='서버 기준정보를 불러오지 못했습니다.';
-      if(add)add.disabled=true;
+      if(search)search.disabled=true;
       refreshStatus();
       console.warn('[KINOJO][LegionTree] server reference load failed',error);
     }
   }
 
-  function resetInputs(){
-    if(addRequestRunning){
-      setStatus('캐릭터 추가가 진행 중이라 입력을 초기화할 수 없습니다.','#b45309');
+  function hideSearchResults(){
+    const root=q('#legionTreeSearchResults');
+    if(root)root.hidden=true;
+    return true;
+  }
+
+  function clearSearchState(){
+    searchGroups={main:null,alt:null};
+    selectedCandidates={main:null,alt:null};
+    const main=q('#legionTreeMainResults'),alt=q('#legionTreeAltResults');
+    if(main)main.innerHTML='';if(alt)alt.innerHTML='';
+    hideSearchResults();
+  }
+
+  function resetInputs(options={}){
+    if((addRequestRunning||searchRequestRunning)&&options.force!==true){
+      setStatus('캐릭터 작업이 진행 중이라 입력을 초기화할 수 없습니다.','#b45309');
       return false;
     }
     const main=q('#legionTreeMainName');
     const alt=q('#legionTreeAltName');
     if(main)main.value='';
     if(alt)alt.value='';
-    setMainRequiredError(false);
+    main?.removeAttribute('aria-invalid');
+    main?.style.removeProperty('border-color');
+    main?.style.removeProperty('box-shadow');
+    clearSearchState();
     resetAddProgress();
+    syncManagementControls();
+    if(options.keepStatus!==true)refreshStatus();
     return true;
   }
 
-  function validateAddBeforeNetwork(){
+  function validateSearchBeforeNetwork(){
     const main=q('#legionTreeMainName');
     const alt=q('#legionTreeAltName');
     const mainName=main?.value.trim()||'';
@@ -550,7 +643,54 @@
       (parsedMain.ok!==true?main:alt)?.focus();
       return null;
     }
-    return {mainCharacterName:mainName,altCharacterName:altName,serverId:DEFAULT_SERVER_ID};
+    if(!canManageLegionTree()){
+      setStatus('레기온 트리 캐릭터를 조회·추가할 관리 권한이 없습니다.','#dc2626');
+      return null;
+    }
+    return {mainCharacterName:mainName,altCharacterName:altName};
+  }
+
+  async function handleSearch(){
+    if(searchRequestRunning||addRequestRunning)return false;
+    const request=validateSearchBeforeNetwork();if(!request)return false;
+    const api=window.KinojoSupabase;
+    if(!api||typeof api.searchLegionTreeCharacters!=='function'){
+      setStatus('캐릭터 조회 API를 확인할 수 없습니다. 새로고침해 주세요.','#dc2626');return false;
+    }
+    searchRequestRunning=true;syncManagementControls();
+    setStatus('모든 활성 서버에서 정확히 일치하는 캐릭터를 조회하는 중…','#2563eb');
+    try{
+      const result=await api.searchLegionTreeCharacters(request);
+      if(result?.ok!==true||text(result?.contract,120)!==SEARCH_CONTRACT||result?.readOnly!==true||result?.createsTarget!==false||result?.createsQueue!==false)throw new Error(text(result?.message,300)||'Server 캐릭터 조회 결과를 확인하지 못했습니다.');
+      searchGroups={main:normalizeSearchGroup(result.main,'main'),alt:result.alt?normalizeSearchGroup(result.alt,'alt'):null};
+      selectedCandidates={main:null,alt:null};
+      renderSearchResults();
+      const count=searchGroups.main.candidates.length+(searchGroups.alt?.candidates.length||0);
+      setStatus(count?`정확히 일치하는 후보 ${count}건 · 본캐${searchGroups.alt?'와 부캐를 각각 ': '를 '}선택해 주세요.`:'정확히 일치하는 캐릭터를 찾지 못했습니다.','#2563eb');
+      return true;
+    }catch(error){
+      setStatus(addErrorMessage(error),'#dc2626');
+      console.warn('[KINOJO][LegionTree] character search failed',error);return false;
+    }finally{searchRequestRunning=false;syncManagementControls();}
+  }
+
+  function selectSearchCandidate(role,key){
+    const group=role==='main'?searchGroups.main:role==='alt'?searchGroups.alt:null;
+    const candidate=group?.candidates.find(item=>item.candidateKey===key)||null;
+    if(!candidate)return false;
+    selectedCandidates={...selectedCandidates,[role]:candidate};
+    renderSearchResults();
+    setStatus(hasRequiredSelection()?'선택 완료 · 추가 버튼을 누르면 Server 작업을 시작합니다.':'본캐와 부캐 후보를 각각 선택해 주세요.','#2563eb');
+    return true;
+  }
+
+  function validateAddBeforeNetwork(){
+    if(!canManageLegionTree()){
+      setStatus('레기온 트리 캐릭터를 추가할 관리 권한이 없습니다.','#dc2626');return null;
+    }
+    if(!selectedCandidates.main){setStatus('조회 결과에서 본캐를 선택해 주세요.','#dc2626');return null;}
+    if(searchGroups.alt&&!selectedCandidates.alt){setStatus('조회 결과에서 부캐를 선택해 주세요.','#dc2626');return null;}
+    return {mainCharacterName:candidateExactInput(selectedCandidates.main),altCharacterName:candidateExactInput(selectedCandidates.alt)};
   }
 
   async function handleAdd(){
@@ -594,21 +734,36 @@
   }
 
   function bindPage(){
+    const search=q('#legionTreeSearchBtn');
+    if(search)search.addEventListener('click',()=>{void handleSearch();});
     const add=q('#legionTreeAddBtn');
     if(add){
-      add.disabled=false;
       add.addEventListener('click',()=>{void handleAdd();});
     }
     q('#legionTreeResetBtn')?.addEventListener('click',resetInputs);
+    q('#legionTreeSearchCloseBtn')?.addEventListener('click',hideSearchResults);
     q('#legionTreeEditBtn')?.addEventListener('click',event=>{
+      if(!canManageLegionTree()){
+        toast('조직도를 편집할 관리 권한이 없습니다.');
+        syncManagementControls();
+        return;
+      }
       if(!currentTreeModel||!window.KinojoLegionTreeEditor?.open){
         toast('조직도 편집 화면을 준비하지 못했습니다. 새로고침해 주세요.');
         return;
       }
       window.KinojoLegionTreeEditor.open({opener:event.currentTarget});
     });
-    q('#legionTreeMainName')?.addEventListener('input',event=>{
-      if(String(event.currentTarget?.value||'').trim())setMainRequiredError(false);
+    [q('#legionTreeMainName'),q('#legionTreeAltName')].filter(Boolean).forEach(input=>{
+      input.addEventListener('input',event=>{
+        clearSearchState();resetAddProgress();syncManagementControls();
+        if(event.currentTarget===q('#legionTreeMainName')&&String(event.currentTarget?.value||'').trim())setMainRequiredError(false);
+      });
+      input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();void handleSearch();}});
+    });
+    q('#legionTreeSearchResults')?.addEventListener('click',event=>{
+      const card=event.target?.closest?.('.legion-tree-search-card');
+      if(card)selectSearchCandidate(text(card.dataset?.searchRole,20),text(card.dataset?.candidateKey,420));
     });
     const root=q('#legionTreeRoot');
     root?.addEventListener('click',event=>{
@@ -622,6 +777,8 @@
       event.preventDefault();
       openCharacterDetail(card);
     });
+    window.addEventListener('kinojo:auth-changed',()=>{syncManagementControls();refreshStatus();});
+    syncManagementControls();
   }
 
   function start(){
@@ -635,14 +792,20 @@
     classIconPath,
     applyTreePayload,
     loadTreeData,
+    handleSearch,
     handleAdd,
     resetInputs,
     parseCharacterAddInput,
+    normalizeSearchCandidate,
+    normalizeSearchGroup,
+    renderSearchCards,
+    selectSearchCandidate,
+    candidateExactInput,
     progressIndexForRuntime,
     characterTargetFromCard,
     openCharacterDetail,
     getTreeModel:()=>currentTreeModel,
-    getAddState:()=>Object.freeze({running:addRequestRunning,sessionId:activeAddSessionId,progressIndex:activeAddProgressIndex})
+    getAddState:()=>Object.freeze({running:addRequestRunning,searchRunning:searchRequestRunning,sessionId:activeAddSessionId,progressIndex:activeAddProgressIndex,searchGroups,selectedCandidates})
   });
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
