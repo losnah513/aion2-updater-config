@@ -1,4 +1,4 @@
-/* KINOJO Legion Tree · Server data + character add + organization draft · 마-2~6 + 사-1~7 + 아-1~6 + 자-1~7 + 차-1~10 */
+/* KINOJO Legion Tree · Server data + character add + atomic organization save · 마-2~6 + 사-1~7 + 아-1~6 + 자-1~7 + 차-1~10 + 타-1~9 */
 (function(){
   'use strict';
 
@@ -6,7 +6,7 @@
   const SERVER_REFERENCE_RPC='kinojo_web_legion_tree_server_reference_v372';
   const TREE_RPC='kinojo_web_get_legion_tree';
   const TREE_CONTRACT='web-legion-tree-v1';
-  const TREE_DATABASE_CONTRACT='365';
+  const TREE_DATABASE_CONTRACT='453';
   const ADD_CONTRACT='legion-tree-character-add-v1';
   const ADD_ACCEPTED_CODE='ADD_QUEUE_ACCEPTED';
   const ADD_POLL_INTERVAL_MS=1400;
@@ -383,6 +383,20 @@
     if(edit)edit.disabled=false;
   }
 
+  function applyTreePayload(payload){
+    try{
+      const model=normalizeTreePayload(payload);
+      renderTreeData(model);
+      const memberCount=model.legions.reduce((sum,legion)=>sum+legion.memberCount,0);
+      treeStatusMessage=`조직도 저장 readback 완료 · 레기온 ${model.legions.length}개 · 구성원 ${memberCount}명`;
+      refreshStatus();
+      return model;
+    }catch(error){
+      console.warn('[KINOJO][LegionTree] saved tree apply failed',error);
+      return null;
+    }
+  }
+
   async function loadTreeData(){
     const root=q('#legionTreeRoot');
     treeStatusMessage='레기온 데이터를 확인하는 중…';
@@ -623,6 +637,7 @@
     normalizeTreePayload,
     renderTreeMarkup,
     classIconPath,
+    applyTreePayload,
     loadTreeData,
     handleAdd,
     resetInputs,

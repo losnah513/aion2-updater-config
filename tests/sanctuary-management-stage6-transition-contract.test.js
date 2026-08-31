@@ -82,7 +82,7 @@ for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   for(const token of [
     'id="sanctuaryManagementTransitionReview"',
     'sanctuary-management.css?cache=2026082903',
-    'kinojo-supabase-features.js?cache=2026083030',
+    'kinojo-supabase-features.js?cache=2026083102',
     'sanctuary-management.js?cache=2026083030',
   ])assert.ok(html.includes(token),`${page}: missing ${token}`);
 }

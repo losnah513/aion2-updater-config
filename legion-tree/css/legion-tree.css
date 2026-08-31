@@ -84,7 +84,7 @@ body.kinojo-page-legion-tree>.legion-tree-subbar{
 @media(max-width:640px){.legion-tree-add-progress{max-width:none;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px}.legion-tree-add-progress li{min-height:36px;flex-direction:column;gap:2px;padding:4px 2px;font-size:8px;white-space:normal;text-align:center}.legion-tree-add-progress li span{width:13px;height:13px;font-size:7px}}
 @media(max-width:340px){.legion-tree-add-progress{grid-template-columns:repeat(3,minmax(0,1fr))}.legion-tree-add-progress li:nth-child(4){grid-column:1}.legion-tree-add-progress li:nth-child(5){grid-column:2}}
 
-/* 차-1~차-10 · organization editor frame and local draft controls */
+/* 차-1~차-10 + 타-1~타-9 · organization editor frame, local draft, and Server save controls */
 body.legion-tree-editor-open{overflow:hidden}
 .legion-tree-editor-root{position:fixed;inset:0;z-index:50020;display:grid;place-items:center;padding:22px}
 .legion-tree-editor-root[hidden]{display:none}

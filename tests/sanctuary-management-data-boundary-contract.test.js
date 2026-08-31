@@ -14,7 +14,7 @@ for (const page of pages) {
     'sanctuary-management-page-bar',
     'id="sanctuaryManagementScope"',
     'id="sanctuaryManagementTeamList"',
-    'kinojo-supabase-features.js?cache=2026083030',
+    'kinojo-supabase-features.js?cache=2026083102',
     'sanctuary-management.js?cache=2026083030',
     'sanctuary-management-draft.js?cache=2026083030',
     'sanctuary-management-support.js?cache=2026082923',
@@ -147,7 +147,7 @@ async function verifyAdapter() {
     assert.equal(health.ok, true);
     assert.equal(health.service, 'sanctuary-management');
     assert.equal(String(health.apiVersion), '2.2');
-    assert.equal(Number(health.databaseContract), 452);
+    assert.equal(Number(health.databaseContract), 453);
   }
 }
 
