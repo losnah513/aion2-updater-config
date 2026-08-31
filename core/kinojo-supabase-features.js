@@ -1015,13 +1015,22 @@
     return rpc('kinojo_web_get_sanctuary_master', {});
   }
 
-  async function getSanctuaryManagementBootstrap(){
+  async function getSanctuaryManagementBootstrap(sanctuaryCode){
     return invokeEdgeFunction('sanctuary-management', {
       action:'bootstrap',
       // PUBLIC_SANCTUARY_READ: an empty credential selects the server-owned
       // guest projection. Mutating Sanctuary methods still call the strict
       // currentServerSessionCredential() gate below.
-      sessionToken:optionalServerSessionCredential()
+      sessionToken:optionalServerSessionCredential(),
+      sanctuaryCode:String(sanctuaryCode||'').trim()
+    });
+  }
+
+  async function getSanctuaryManagementRevision(sanctuaryCode){
+    return invokeEdgeFunction('sanctuary-management', {
+      action:'revision',
+      sessionToken:optionalServerSessionCredential(),
+      sanctuaryCode:String(sanctuaryCode||'').trim()
     });
   }
 
@@ -1926,7 +1935,8 @@
     if(name === 'hallReaction') return submitHallReaction(extra);
     if(name === 'hallSuggestion') return submitHallSuggestion(extra);
     if(name === 'sanctuaryMaster') return getSanctuaryMaster();
-    if(name === 'sanctuaryManagementBootstrap') return getSanctuaryManagementBootstrap();
+    if(name === 'sanctuaryManagementBootstrap') return getSanctuaryManagementBootstrap(extra.sanctuaryCode || extra.sanctuary_code || '');
+    if(name === 'sanctuaryManagementRevision') return getSanctuaryManagementRevision(extra.sanctuaryCode || extra.sanctuary_code || '');
     if(name === 'sanctuaryManagementMonth') return getSanctuaryManagementMonth(extra.month || '');
     if(name === 'sanctuaryManagementArchivePreview') return getSanctuaryManagementArchivePreview(extra.teamId || extra.team_id);
     if(name === 'sanctuary') return getSanctuaryData(extra.id || extra.sanctuaryId || '');
@@ -2050,6 +2060,7 @@
     submitHallSuggestion,
     getSanctuaryMaster,
     getSanctuaryManagementBootstrap,
+    getSanctuaryManagementRevision,
     getSanctuaryManagementMonth,
     getSanctuaryManagementTransitionReport,
     approveSanctuaryManagementTransition,

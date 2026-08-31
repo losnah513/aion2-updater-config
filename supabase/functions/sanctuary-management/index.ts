@@ -1,10 +1,10 @@
 const SERVICE="sanctuary-management";
-const API_VERSION="2.2";
-const DATABASE_CONTRACT="454";
+const API_VERSION="2.3";
+const DATABASE_CONTRACT="456";
 const SESSION_TOKEN=/^kws_[A-Za-z0-9_-]{40,80}$/;
 const REQUEST_KEY=/^[A-Za-z0-9][A-Za-z0-9._:-]{7,119}$/;
 const PROD_ORIGINS=new Set(["https://kinojo.info","https://www.kinojo.info"]);
-const ACTIONS=new Set(["bootstrap","month","conflicts","notification-summary","archive-preview","command","lease","character-search","character-register","linked-alts","balance-proposal"]);
+const ACTIONS=new Set(["bootstrap","revision","month","conflicts","notification-summary","archive-preview","command","lease","character-search","character-register","linked-alts","balance-proposal"]);
 const WRITE_ACTIONS=new Set(["archive-preview","command","lease","character-search","character-register","linked-alts","balance-proposal"]);
 type JsonObject=Record<string,unknown>;
 
@@ -41,16 +41,18 @@ async function characterSearch(request:Request,body:JsonObject,credential:string
 
 Deno.serve(async(request:Request)=>{if(!originAllowed(request))return failure(request,"ORIGIN_NOT_ALLOWED","허용되지 않은 요청 출처입니다.",403);if(request.method==="OPTIONS")return new Response(null,{status:204,headers:headers(request)});if(request.method==="GET"){try{return response(request,{...(await rpc("kinojo_sanctuary_management_rollout_state_v446",{})),status:"ready",actions:Array.from(ACTIONS)});}catch{return failure(request,"HEALTH_DEPENDENCY_FAILED","성역 관리 Server 상태를 확인하지 못했습니다.",503);}}if(request.method!=="POST")return failure(request,"METHOD_NOT_ALLOWED","허용되지 않은 요청 방식입니다.",405);if(!text(request.headers.get("content-type"),100).toLowerCase().includes("application/json"))return failure(request,"JSON_REQUIRED","JSON 요청만 허용됩니다.",415);if(Number(request.headers.get("content-length")||0)>65536)return failure(request,"REQUEST_TOO_LARGE","요청 데이터가 너무 큽니다.",413);let body:JsonObject;try{body=object(await request.json())||{};}catch{return failure(request,"JSON_INVALID","요청 내용을 확인해 주세요.");}const action=text(body.action,40).toLowerCase();if(!ACTIONS.has(action))return failure(request,"ACTION_INVALID","지원하지 않는 성역 관리 작업입니다.");const credential=sessionFrom(request,body);
   try{
-    // PUBLIC_SANCTUARY_READ: only the two non-mutating read models accept a
+    // PUBLIC_SANCTUARY_READ: only non-mutating read models accept a
     // missing KINOJO session. All commands, support and management paths keep
     // the existing authenticated authorization and per-team permission checks.
     if(!credential){
-      if(action==="bootstrap")return response(request,await rpc("kinojo_sanctuary_management_public_bootstrap_v454",{}));
+      if(action==="bootstrap"){const sanctuaryCode=text(body.sanctuaryCode,40);return response(request,await rpc("kinojo_sanctuary_management_public_bootstrap_v456",{p_sanctuary_code:sanctuaryCode||null}));}
+      if(action==="revision"){const sanctuaryCode=text(body.sanctuaryCode,40);return response(request,await rpc("kinojo_sanctuary_management_public_revision_v456",{p_sanctuary_code:sanctuaryCode||null}));}
       if(action==="month"){const month=text(body.month,10);if(!/^20\d{2}-(0[1-9]|1[0-2])$/.test(month))return failure(request,"MONTH_INVALID","조회할 월을 YYYY-MM 형식으로 선택해 주세요.");return response(request,await rpc("kinojo_sanctuary_management_public_month_v454",{p_month:`${month}-01`}));}
       return failure(request,"SESSION_TOKEN_INVALID","로그인 세션을 다시 확인해 주세요.",401);
     }
     if(WRITE_ACTIONS.has(action))await assertWrite(credential,action);
-    if(action==="bootstrap")return response(request,await rpc("kinojo_sanctuary_management_bootstrap_v454",{p_credential:credential}));
+    if(action==="bootstrap"){const sanctuaryCode=text(body.sanctuaryCode,40);return response(request,await rpc("kinojo_sanctuary_management_bootstrap_v456",{p_credential:credential,p_sanctuary_code:sanctuaryCode||null}));}
+    if(action==="revision"){const sanctuaryCode=text(body.sanctuaryCode,40);return response(request,await rpc("kinojo_sanctuary_management_public_revision_v456",{p_sanctuary_code:sanctuaryCode||null}));}
     if(action==="month"){const month=text(body.month,10);if(!/^20\d{2}-(0[1-9]|1[0-2])$/.test(month))return failure(request,"MONTH_INVALID","조회할 월을 YYYY-MM 형식으로 선택해 주세요.");return response(request,await rpc("kinojo_sanctuary_management_month_v454",{p_credential:credential,p_month:`${month}-01`}));}
     if(action==="character-search")return await characterSearch(request,body,credential);
     if(action==="character-register"){const teamId=positiveInteger(body.teamId),candidateId=text(body.candidateId,80),relationType=text(body.relationType,16).toUpperCase(),mainCharacterId=body.mainCharacterId==null?null:positiveInteger(body.mainCharacterId),requestKey=text(request.headers.get("idempotency-key")||body.requestKey,120);if(!teamId||!candidateId||!["MAIN","ALT","GUEST"].includes(relationType)||!REQUEST_KEY.test(requestKey))return failure(request,"CHARACTER_REGISTER_INVALID","관계 확정 요청을 다시 확인해 주세요.");return response(request,await rpc("kinojo_sanctuary_management_official_materialize_v452",{p_credential:credential,p_team_id:teamId,p_candidate_id:candidateId,p_relation_type:relationType,p_main_character_id:mainCharacterId,p_request_key:requestKey}));}

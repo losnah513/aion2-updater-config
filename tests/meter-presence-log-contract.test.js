@@ -26,7 +26,7 @@ assert.ok(stagedLoading.includes('.meter-live-subbar'), 'Meter live users must b
 
 for (const entry of ['admin/index.html', 'm/admin/index.html']) {
   const html = read(entry);
-  for (const token of ['data-admin-subtab="logs"', 'id="meterDungeonLogRows"', 'id="meterDungeonLogChannel"', 'id="meterDungeonLogQuery"', 'METER RUNTIME LOG', '미터기 실행', '미터기 종료', 'id="characterAutomationToggle"', 'KST 22:00 · 04:00 · 10:00 · 16:00', 'kinojo-supabase-features.js?cache=2026083103', 'admin.js?cache=2026082901', '성역 팀 운영', '시트 동기화 종료']) {
+  for (const token of ['data-admin-subtab="logs"', 'id="meterDungeonLogRows"', 'id="meterDungeonLogChannel"', 'id="meterDungeonLogQuery"', 'METER RUNTIME LOG', '미터기 실행', '미터기 종료', 'id="characterAutomationToggle"', 'KST 22:00 · 04:00 · 10:00 · 16:00', 'kinojo-supabase-features.js?cache=2026083104', 'admin.js?cache=2026082901', '성역 팀 운영', '시트 동기화 종료']) {
     assert.ok(html.includes(token), `${entry}: Meter dungeon log UI missing ${token}`);
   }
   for (const noticeId of ['characterAutomationNotice']) {
