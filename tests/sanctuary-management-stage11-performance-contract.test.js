@@ -63,6 +63,10 @@ for(const token of [
   '.sanctuary-management-force-viewport{padding:3px 42px 9px;overflow:visible}',
   '.sanctuary-management-force-boss-visual',
   '.sanctuary-management-force-boss-visual{display:none}',
+  'width:calc(100% + 61px)',
+  'height:calc(100% + 27px)',
+  'object-fit:cover',
+  'opacity:.5',
   '.sanctuary-management-force-carousel{margin-top:8px}',
 ])assert.ok(supportCss.includes(token),`Stage 11 force layout CSS missing ${token}`);
 
@@ -72,7 +76,7 @@ for(const asset of ['rudra.webp','bagot.webp','kaldrix.webp']){
 
 for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
-  assert.ok(html.includes('stage11=2026083104'),`${page}: Stage 11 cache key missing`);
+  assert.ok(html.includes('sanctuary-management-support.css?cache=2026083105'),`${page}: Stage 11 boss visual CSS cache key missing`);
 }
 
 console.log('KINOJO Sanctuary Stage 11 selected bootstrap and force layout contract: PASS');
