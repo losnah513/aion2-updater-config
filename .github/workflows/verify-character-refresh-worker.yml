@@ -4,10 +4,14 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - "supabase/functions/character-refresh-worker/**"
+      - "supabase/migrations/*legion_tree*"
       - ".github/workflows/verify-character-refresh-worker.yml"
   push:
     branches: [main]
     paths:
+      - "supabase/functions/character-refresh-worker/**"
+      - "supabase/migrations/*legion_tree*"
       - ".github/workflows/verify-character-refresh-worker.yml"
   workflow_dispatch:
 
@@ -48,7 +52,7 @@ jobs:
               output.write(f"SUPABASE_KEY={key}\n")
           PY
 
-      - name: Verify Worker and list-sync live boundaries
+      - name: Verify Worker scoped listless and global list-sync boundaries
         shell: bash
         run: |
           set -euo pipefail
@@ -116,12 +120,18 @@ jobs:
           worker = load("worker_health")
           assert worker.get("ok") is True, worker
           assert worker.get("service") == "character-refresh-worker", worker
-          assert worker.get("apiVersion") == "295.2", worker
+          assert worker.get("apiVersion") == "295.7", worker
           assert worker.get("databaseContract") == "295", worker
           assert worker.get("listSyncEdge") == "lookup-list-sync", worker
           assert worker.get("sheetReadbackRequired") is True, worker
           assert worker.get("listSyncSingleWorkerLease") is True, worker
           assert worker.get("listSyncCompletionAtomic") is True, worker
+          assert worker.get("legionTreeCharacterAddListless") is True, worker
+          assert worker.get("legionTreeCharacterAddListWrite") is False, worker
+          assert worker.get("legionTreeCharacterAddListReadback") is False, worker
+          assert worker.get("legionTreeListlessDatabaseContract") == "455", worker
+          assert worker.get("legionTreeListlessTargetSource") == "server:legion_tree_character_add_v455", worker
+          assert worker.get("legionTreeListlessTerminalStage") == "SERVER_QUEUE_CHARACTER_MASTER_DONE", worker
           assert set(worker.get("modes") or []) == {
               "startAutonomous", "autonomousTick", "runQueue", "runPostprocess"
           }, worker
@@ -137,8 +147,10 @@ jobs:
           sync = load("sync_health")
           assert sync.get("ok") is True, sync
           assert sync.get("service") == "lookup-list-sync", sync
-          assert sync.get("boundary") == "LOOKUP_LIST_SYNC_V1", sync
-          assert sync.get("serverWorkerCaller") == "character-refresh-worker", sync
+          assert sync.get("apiVersion") == "1.2.3", sync
+          assert sync.get("boundary") == "LOOKUP_LIST_SYNC_V3", sync
+          assert sync.get("appendReadbackContract") == "373", sync
+          assert sync.get("legacyAppendContract") == "AppsScript311-production-noop-roster", sync
 
           sync_missing = load("sync_missing")
           assert sync_missing.get("ok") is False, sync_missing
@@ -154,9 +166,11 @@ jobs:
           {
             echo "## Character Refresh Worker live boundary"
             echo
-            echo "- Worker API: \`295.2\`"
+            echo "- Worker API: \`295.7\`"
+            echo "- Legion Tree character add: list write/readback skipped by DB455 target-source policy"
             echo "- Worker list sync target: \`lookup-list-sync\`"
-            echo "- Dedicated sync boundary: \`LOOKUP_LIST_SYNC_V1\`"
+            echo "- lookup-list-sync API: \`1.2.3\`"
+            echo "- Dedicated sync boundary: \`LOOKUP_LIST_SYNC_V3\`"
             echo "- Health, CORS, missing-session, unknown-action: PASS"
             echo "- Business data mutations: none"
           } >> "$GITHUB_STEP_SUMMARY"
