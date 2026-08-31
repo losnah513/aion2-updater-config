@@ -33,6 +33,11 @@ enabled = true
 verify_jwt = false
 entrypoint = "./functions/sanctuary-roster-bridge/index.ts"
 
+[functions.character-refresh-worker]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/character-refresh-worker/index.ts"
+
 [api]
 enabled = true
 # Port to use for the API URL.

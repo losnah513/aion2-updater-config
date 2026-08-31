@@ -208,10 +208,10 @@ assert(serialized.assignments.every(item => Object.prototype.hasOwnProperty.call
 for (const html of [pc, mobile]) {
   assert(html.includes('id="legionTreeEditorRoot"'));
   assert(html.includes('legion-tree-editor.js?cache=2026083103'));
-  assert(html.includes('legion-tree.js?cache=2026083103'));
-  assert(html.includes('legion-tree.css?cache=2026083104'));
+  assert(html.includes('legion-tree.js?cache=2026083105'));
+  assert(html.includes('legion-tree.css?cache=2026083105'));
   assert(html.includes('kinojo-supabase-features.js?cache=2026083103'));
-  assert(html.indexOf('legion-tree-editor.js?cache=2026083103') < html.indexOf('legion-tree.js?cache=2026083103'));
+  assert(html.indexOf('legion-tree-editor.js?cache=2026083103') < html.indexOf('legion-tree.js?cache=2026083105'));
 }
 
 for (const token of [

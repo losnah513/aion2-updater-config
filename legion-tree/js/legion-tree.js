@@ -1,4 +1,4 @@
-/* KINOJO Legion Tree · Server data + character add + atomic organization save · 마-2~6 + 사-1~7 + 아-1~6 + 자-1~7 + 차-1~10 + 타-1~9 */
+/* KINOJO Legion Tree · Server data + listless character add + atomic organization save + character detail · 마-2~6 + 사-1~7 + 아-1~6 + 자-1~7 + 차-1~10 + 타-1~9 + 파-1~3 */
 (function(){
   'use strict';
 
@@ -17,8 +17,7 @@
   const ADD_STEPS=Object.freeze([
     Object.freeze({key:'official',label:'공식 확인'}),
     Object.freeze({key:'master',label:'정보 반영'}),
-    Object.freeze({key:'list',label:'list 반영'}),
-    Object.freeze({key:'readback',label:'readback'}),
+    Object.freeze({key:'tree',label:'트리 확인'}),
     Object.freeze({key:'complete',label:'완료'})
   ]);
   const CLASS_ICON_MAP=Object.freeze({
@@ -142,8 +141,8 @@
     const status=value&&typeof value==='object'?value:{};
     const state=text(status.status,40).toLowerCase();
     const stage=runtimeStage(status);
-    if(state==='completed'&&stage==='SERVER_QUEUE_LIST_SYNC_DONE')return 4;
-    if(/LIST_SHEET_EXPORT|LIST_SYNC|LIST_SHEET/.test(stage))return 2;
+    if(state==='completed')return 3;
+    if(stage==='SERVER_QUEUE_CHARACTER_MASTER_DONE')return 2;
     if(/MASTER_SYNC|GROWTH_REVIEW|RANKING_REBUILD|POSTPROCESS/.test(stage))return 1;
     return 0;
   }
@@ -166,13 +165,13 @@
 
       const state=text(runtime?.status,40).toLowerCase();
       const stage=runtimeStage(runtime);
-      if(state==='completed'&&stage==='SERVER_QUEUE_LIST_SYNC_DONE'){
-        renderAddProgress(4,'running');
-        setStatus('Google list 쓰기·readback 완료 · 레기온 트리를 다시 불러오는 중…','#2563eb');
+      if(state==='completed'){
+        renderAddProgress(2,'running');
+        setStatus('캐릭터 Master 반영 완료 · 레기온 트리를 다시 확인하는 중…','#2563eb');
         const reloaded=await loadTreeData();
         if(!reloaded)throw new Error('캐릭터 추가는 완료됐지만 레기온 트리를 다시 불러오지 못했습니다. 새로고침해 주세요.');
-        renderAddProgress(4,'done');
-        setStatus('캐릭터 정보·Google list readback·레기온 트리 재조회가 완료되었습니다.','#15803d');
+        renderAddProgress(3,'done');
+        setStatus('캐릭터 정보 반영과 레기온 트리 재확인이 완료되었습니다.','#15803d');
         toast('캐릭터 추가가 완료되었습니다.');
         return runtime;
       }
@@ -243,8 +242,7 @@
       mainCharacterId:positiveInt(source.mainCharacterId??source.main_character_id),
       mainCharacterName:text(source.mainCharacterName??source.main_character_name,120),
       serverId:positiveInt(source.serverId??source.server_id),
-      serverName:text(source.serverName??source.server_name,120),
-      listRow:positiveInt(source.listRow??source.list_row)
+      serverName:text(source.serverName??source.server_name,120)
     };
   }
 
@@ -355,6 +353,39 @@
       ?`<img src="${esc(icon)}" alt="" loading="lazy"/>`
       :'<span class="legion-tree-class-fallback" aria-hidden="true">?</span>';
     return `<button class="legion-tree-character ${member.isMain?'is-main':'is-alt'}" type="button" data-character-id="${member.characterId}" data-character-name="${esc(member.characterName)}" data-class-name="${esc(member.className)}" data-is-main="${member.isMain?'true':'false'}" data-main-character-id="${member.mainCharacterId||''}" data-main-character-name="${esc(owner)}" data-server-id="${member.serverId||''}" data-server-name="${esc(member.serverName)}" title="${esc(member.characterName)}" aria-label="${esc(member.characterName)} · ${esc(member.className||'클래스 정보 없음')} · ${kind}"><span class="legion-tree-kind">${kind}</span>${image}<span class="legion-tree-name${nameOverflow?' is-faded':''}" data-name-overflow="${nameOverflow?'true':'false'}">${esc(member.characterName)}</span></button>`;
+  }
+
+  function characterTargetFromCard(card){
+    return {
+      characterId:text(card?.dataset?.characterId,40),
+      name:text(card?.dataset?.characterName,120),
+      className:text(card?.dataset?.className,80),
+      owner:text(card?.dataset?.mainCharacterName,120),
+      serverId:text(card?.dataset?.serverId,40),
+      server:text(card?.dataset?.serverName,120),
+      legionName:text(card?.closest?.('[data-legion-name]')?.dataset?.legionName,120),
+      classIconUrl:classIconPath(card?.dataset?.className)
+    };
+  }
+
+  function openCharacterDetail(card){
+    const modal=window.KinojoCharacterReaction;
+    if(!modal||typeof modal.open!=='function'){
+      toast('캐릭터 상세 화면을 불러오지 못했습니다. 새로고침해 주세요.');
+      return false;
+    }
+    const target=characterTargetFromCard(card);
+    if(!target.characterId||!target.name||!target.serverId){
+      toast('캐릭터 식별 정보를 확인하지 못했습니다.');
+      return false;
+    }
+    modal.open({
+      source:'legion-tree',
+      context:'legion-tree',
+      limitPrefix:'kinojo_legion_tree_react',
+      target
+    });
+    return true;
   }
 
   function renderGroup(group,roleName,branchCount){
@@ -541,7 +572,7 @@
     try{
       const accepted=await api.addLegionTreeCharacter(request);
       const sessionId=text(accepted?.queue?.sessionId,240);
-      if(accepted?.ok!==true||text(accepted?.contract,120)!==ADD_CONTRACT||text(accepted?.code,80)!==ADD_ACCEPTED_CODE||!sessionId){
+      if(accepted?.ok!==true||text(accepted?.contract,120)!==ADD_CONTRACT||text(accepted?.code,80)!==ADD_ACCEPTED_CODE||accepted?.listlessCharacterAdd!==true||accepted?.listAppendPending!==false||!sessionId){
         throw new Error(text(accepted?.message,300)||'Server가 캐릭터 추가 요청을 승인하지 않았습니다.');
       }
       activeAddSessionId=sessionId;
@@ -579,10 +610,17 @@
     q('#legionTreeMainName')?.addEventListener('input',event=>{
       if(String(event.currentTarget?.value||'').trim())setMainRequiredError(false);
     });
-    q('#legionTreeRoot')?.addEventListener('click',event=>{
-      if(event.target?.closest?.('.legion-tree-character')){
-        toast('캐릭터 상세 모달은 파 단계에서 연결합니다.');
-      }
+    const root=q('#legionTreeRoot');
+    root?.addEventListener('click',event=>{
+      const card=event.target?.closest?.('.legion-tree-character');
+      if(card)openCharacterDetail(card);
+    });
+    root?.addEventListener('keydown',event=>{
+      if(event.key!=='Enter'&&event.key!==' ')return;
+      const card=event.target?.closest?.('.legion-tree-character');
+      if(!card)return;
+      event.preventDefault();
+      openCharacterDetail(card);
     });
   }
 
@@ -601,6 +639,8 @@
     resetInputs,
     parseCharacterAddInput,
     progressIndexForRuntime,
+    characterTargetFromCard,
+    openCharacterDetail,
     getTreeModel:()=>currentTreeModel,
     getAddState:()=>Object.freeze({running:addRequestRunning,sessionId:activeAddSessionId,progressIndex:activeAddProgressIndex})
   });
