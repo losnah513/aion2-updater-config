@@ -32,8 +32,9 @@ for(const token of [
 ])assert.ok(client.includes(token),`client fixed DRAFT flow missing ${token}`);
 
 for(const token of [
-  '고정 팀 생성',
-  '참여 팀 생성',
+  'data-draft-mode="fixed"',
+  'data-draft-mode="participation"',
+  '팀 구성하기',
   'data-draft-form',
   'data-draft-kind="WEEKLY"',
   'data-draft-kind="ONCE"',
@@ -81,9 +82,9 @@ for(const token of [
 
 for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
-  assert.ok(html.includes('sanctuary-management.js?cache=2026083104'),`${page}: management JS cache missing`);
-  assert.ok(html.includes('sanctuary-management-draft.css?cache=2026083030'),`${page}: draft CSS cache missing`);
-  assert.ok(html.includes('sanctuary-management-draft.js?cache=2026083030'),`${page}: draft JS cache missing`);
+  assert.ok(html.includes('sanctuary-management.js?cache=2026083107'),`${page}: management JS cache missing`);
+  assert.ok(html.includes('sanctuary-management-draft.css?cache=2026083106'),`${page}: draft CSS cache missing`);
+  assert.ok(html.includes('sanctuary-management-draft.js?cache=2026083106'),`${page}: draft JS cache missing`);
 }
 
 console.log('KINOJO sanctuary management fixed-team DRAFT contract: PASS');

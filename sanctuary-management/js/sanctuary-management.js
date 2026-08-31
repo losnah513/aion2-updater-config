@@ -2,7 +2,7 @@
   'use strict';
 
   const API_VERSION=2.3;
-  const SCHEMA_VERSION=456;
+  const SCHEMA_VERSION=457;
   const SLOT_CLASS_CODES=Object.freeze(['ALL','TEMPLAR','GLADIATOR','ASSASSIN','RANGER','SORCERER','ELEMENTALIST','CLERIC','CHANTER','FIGHTER']);
   const CLASS_ICON_MAP=Object.freeze({'수호성':'templar','검성':'gladiator','살성':'assassin','궁성':'ranger','마도성':'sorcerer','정령성':'elementalist','치유성':'cleric','호법성':'chanter','권성':'fighter'});
   const CLASS_NAME_BY_CODE=Object.freeze({TEMPLAR:'수호성',GLADIATOR:'검성',ASSASSIN:'살성',RANGER:'궁성',SORCERER:'마도성',ELEMENTALIST:'정령성',CLERIC:'치유성',CHANTER:'호법성',FIGHTER:'권성'});
@@ -32,6 +32,7 @@
   let forceOverviewForceId=0;
   let forceCarouselResizeBound=false;
   let forceCarouselResizeFrame=0;
+  let altTooltipSequence=0;
   let deepLinkApplied=false;
   let currentAuthProjection='';
 
@@ -672,6 +673,30 @@
     return node;
   }
 
+  function altMainCharacterName(character,owned){
+    const direct=value(character?.mainCharacterName||character?.mainName||owned?.mainCharacterName||owned?.mainName);
+    if(direct)return direct;
+    const randomMatch=value(character?.name).match(/^(.+?)(?:의\s*)?랜덤\s*부캐/);
+    return randomMatch?.[1]||'본캐';
+  }
+
+  function createAltRelationshipTooltip(character,owned){
+    const tooltip=document.createElement('span');
+    tooltip.className='sanctuary-management-alt-tooltip';
+    tooltip.id='sanctuaryAltTooltip'+(++altTooltipSequence);
+    tooltip.setAttribute('role','tooltip');
+    const relation=document.createElement('span');
+    const main=document.createElement('b');main.textContent=altMainCharacterName(character,owned);
+    relation.append(main,document.createTextNode('의 부캐'));
+    const alt=document.createElement('strong');alt.textContent=value(character?.name)||'부캐 이름 미확인';
+    tooltip.append(relation,alt);
+    return tooltip;
+  }
+
+  function isTouchLike(){return window.matchMedia?.('(hover: none), (pointer: coarse)').matches===true;}
+  function closeAltDetails(except=null){document.querySelectorAll('[data-sanctuary-alt-detail].is-alt-detail-open').forEach(item=>{if(item!==except){item.classList.remove('is-alt-detail-open');item.setAttribute('aria-expanded','false');}});}
+  function toggleAltDetail(item){if(!item)return;const opening=!item.classList.contains('is-alt-detail-open');closeAltDetails(item);item.classList.toggle('is-alt-detail-open',opening);item.setAttribute('aria-expanded',String(opening));}
+
   function createForceCard(team,force){
     const participation=value(team.mode)==='PARTICIPATION'&&['ACTIVE','FULL'].includes(value(team.status));
     const supportEnabled=participation&&bootstrapData?.writeEnabled&&force.canSupport;
@@ -703,17 +728,24 @@
       const partyCount=document.createElement('small');partyCount.textContent=party.occupiedCount+'/'+party.capacity+'명';partyHead.append(label,partyCount);partyNode.appendChild(partyHead);
       party.slots.forEach(slot=>{
         const characterState=slotCharacterState(slot.character);
-        const item=document.createElement('span');item.className='sanctuary-management-force-slot'+(slot.occupied?' is-occupied':'')+(characterState.relation==='MAIN'?' is-main':characterState.relation==='ALT'?' is-alt':' is-guest')+(characterState.owned?' is-viewer-character':'')+(!slot.occupied&&value(slot.requiredClassCode).toUpperCase()!=='ALL'?' is-class-slot':'');item.dataset.slotNumber=String((party.partyNo-1)*5+slot.slotNo);
-        const icon=document.createElement('span');icon.className='sanctuary-management-force-slot-icon';
         const requiredClass=value(slot.requiredClassCode).toUpperCase();
+        const classRecruiting=!slot.occupied&&requiredClass&&requiredClass!=='ALL';
+        const isAlt=slot.occupied&&(characterState.relation==='ALT'||slot.character?.isRandomAlt===true);
+        const item=document.createElement('span');item.className='sanctuary-management-force-slot'+(slot.occupied?' is-occupied':'')+(characterState.relation==='MAIN'?' is-main':isAlt?' is-alt':' is-guest')+(characterState.owned?' is-viewer-character':'')+(classRecruiting?' is-class-slot':'');item.dataset.slotNumber=String((party.partyNo-1)*5+slot.slotNo);
+        const icon=document.createElement('span');icon.className='sanctuary-management-force-slot-icon';
         const iconPath=slot.occupied&&!slot.character?.isRandomAlt?classIconFor(slot.character?.className):requiredClass&&requiredClass!=='ALL'?classIconFor(CLASS_NAME_BY_CODE[requiredClass]):'';
-        if(iconPath){const image=document.createElement('img');image.src=iconPath;image.alt=value(slot.character?.className)||'클래스';icon.appendChild(image);}
+        if(iconPath){const image=document.createElement('img');image.src=iconPath;image.alt=value(slot.character?.className)||(CLASS_NAME_BY_CODE[requiredClass]||'클래스');icon.appendChild(image);}
         else icon.textContent=slot.character?.isRandomAlt?'R':slot.occupied?Array.from(value(slot.character?.className)||'?')[0]||'?':requiredClass&&requiredClass!=='ALL'?'!':'+';
         const copy=document.createElement('span');copy.className='sanctuary-management-force-slot-copy';
-        const slotName=slot.occupied?createMaskedCharacterName(slot.character?.name):createMaskedCharacterName(requiredClass&&requiredClass!=='ALL'?(CLASS_NAME_BY_CODE[requiredClass]||'지정')+' 클래스 슬롯':'빈 슬롯');
-        const slotMeta=document.createElement('small');slotMeta.className='sanctuary-management-force-slot-server';slotMeta.textContent=slot.occupied?'['+(value(slot.character?.serverName)||'서버 미상')+']':requiredClass&&requiredClass!=='ALL'?'[지원 클래스]':'[대기]';
-        const slotPower=document.createElement('small');slotPower.className='sanctuary-management-force-slot-power';slotPower.innerHTML=slot.character?.isRandomAlt?'랜덤 부캐':slot.occupied?combatPowerMarkup(slot.character?.power):'캐릭터 대기';copy.append(slotName,slotMeta,slotPower);item.append(icon,copy);
-        item.title=slot.occupied?[value(slot.character?.name),value(slot.character?.className)].filter(Boolean).join(' · '):'빈 슬롯 '+((party.partyNo-1)*5+slot.slotNo);
+        if(classRecruiting){const recruitment=document.createElement('strong');recruitment.className='sanctuary-management-force-slot-recruitment';recruitment.textContent=(CLASS_NAME_BY_CODE[requiredClass]||'지정 클래스')+' 모집 중';copy.appendChild(recruitment);}
+        else{
+          const slotName=slot.occupied?createMaskedCharacterName(slot.character?.name):createMaskedCharacterName('빈 슬롯');
+          const slotMeta=document.createElement('small');slotMeta.className='sanctuary-management-force-slot-server';slotMeta.textContent=slot.occupied?'['+(value(slot.character?.serverName)||'서버 미상')+']':'[대기]';
+          const slotPower=document.createElement('small');slotPower.className='sanctuary-management-force-slot-power';slotPower.innerHTML=slot.character?.isRandomAlt?'랜덤 부캐':slot.occupied?combatPowerMarkup(slot.character?.power):'캐릭터 대기';copy.append(slotName,slotMeta,slotPower);
+        }
+        item.append(icon,copy);
+        if(isAlt){const tooltip=createAltRelationshipTooltip(slot.character,characterState.owned);item.dataset.sanctuaryAltDetail='';item.tabIndex=0;item.setAttribute('aria-describedby',tooltip.id);item.setAttribute('aria-expanded','false');item.appendChild(tooltip);}
+        else item.title=slot.occupied?[value(slot.character?.name),value(slot.character?.className)].filter(Boolean).join(' · '):'빈 슬롯 '+((party.partyNo-1)*5+slot.slotNo);
         partyNode.appendChild(item);
       });
       parties.appendChild(partyNode);
@@ -799,6 +831,9 @@
     forceOverviewLayer=document.createElement('div');forceOverviewLayer.className='sanctuary-management-force-overview-layer';forceOverviewLayer.hidden=true;forceOverviewLayer.setAttribute('aria-hidden','true');document.body.appendChild(forceOverviewLayer);
     forceOverviewLayer.addEventListener('click',event=>{
       if(event.target.closest('[data-force-overview-close]')){closeForceOverview();return;}
+      const altDetail=event.target.closest('[data-sanctuary-alt-detail]');
+      if(altDetail&&isTouchLike()){event.preventDefault();event.stopPropagation();toggleAltDetail(altDetail);return;}
+      closeAltDetails();
       const support=event.target.closest('[data-sanctuary-support-force]');
       if(support){
         const team=selectedDraftTeam(support.dataset.sanctuarySupportTeam);if(!team||!bootstrapData?.writeEnabled)return;
@@ -809,6 +844,9 @@
       if(edit&&!edit.disabled){const team=selectedDraftTeam(edit.dataset.forceOverviewEdit);const opener=forceOverviewOpener;closeForceOverview({restoreFocus:false});if(team)window.KinojoSanctuaryManagementDraftUI?.openDraft?.(team,opener);}
     });
     forceOverviewLayer.addEventListener('keydown',event=>{
+      const altDetail=event.target.closest('[data-sanctuary-alt-detail]');
+      if(altDetail&&(event.key==='Enter'||event.key===' ')){event.preventDefault();event.stopPropagation();toggleAltDetail(altDetail);return;}
+      if(event.key==='Escape'&&document.querySelector('[data-sanctuary-alt-detail].is-alt-detail-open')){event.preventDefault();closeAltDetails();return;}
       if(event.key==='Escape'){event.preventDefault();closeForceOverview();return;}if(event.key!=='Tab')return;
       const focusable=Array.from(forceOverviewLayer.querySelectorAll('button:not(:disabled),[tabindex="0"]')).filter(item=>item.offsetParent!==null);if(!focusable.length)return;const first=focusable[0],last=focusable.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
     });
@@ -1401,6 +1439,9 @@
     byId('sanctuaryManagementTransitionReview')?.addEventListener('click',event=>{if(!bootstrapData?.transitionReview?.canReview)return;openTransitionReview(event.currentTarget);});
     byId('sanctuaryManagementTeamList')?.addEventListener('click',event=>{
       const sourceCarousel=event.target.closest('.sanctuary-management-force-carousel');if(sourceCarousel?.dataset.swipeSuppress==='true'){event.preventDefault();return;}
+      const altDetail=event.target.closest('[data-sanctuary-alt-detail]');
+      if(altDetail&&isTouchLike()){event.preventDefault();event.stopPropagation();toggleAltDetail(altDetail);return;}
+      closeAltDetails();
       const carouselButton=event.target.closest('[data-sanctuary-force-shift]');
       if(carouselButton){shiftForceCarousel(carouselButton);return;}
       const overview=event.target.closest('[data-sanctuary-force-overview]');
@@ -1417,11 +1458,15 @@
       openArchiveOperation(team,archive);
     });
     byId('sanctuaryManagementTeamList')?.addEventListener('keydown',event=>{
+      const altDetail=event.target.closest('[data-sanctuary-alt-detail]');
+      if(altDetail&&(event.key==='Enter'||event.key===' ')){event.preventDefault();event.stopPropagation();toggleAltDetail(altDetail);return;}
+      if(event.key==='Escape'&&document.querySelector('[data-sanctuary-alt-detail].is-alt-detail-open')){event.preventDefault();closeAltDetails();return;}
       if(event.key!=='Enter'&&event.key!==' ')return;
       const card=event.target.closest('[data-sanctuary-support-force]');if(!card||event.target.closest('[data-sanctuary-copy-team]'))return;
       event.preventDefault();if(card.dataset.sanctuarySupportAvailable!=='true')return;
       const team=selectedDraftTeam(card.dataset.sanctuarySupportTeam);if(team)window.KinojoSanctuaryManagementSupportUI?.open?.(team,Number(card.dataset.sanctuarySupportForce),card);
     });
+    document.addEventListener('click',event=>{if(!event.target.closest?.('[data-sanctuary-alt-detail]'))closeAltDetails();});
     byId('sanctuaryManagementScheduleState')?.addEventListener('click',event=>{
       const item=event.target.closest('[data-sanctuary-calendar-team]');if(!item)return;const team=selectedDraftTeam(item.dataset.sanctuaryCalendarTeam);if(!team)return;
       const card=byId('sanctuaryManagementTeamList')?.querySelector('[data-sanctuary-team="'+CSS.escape(String(team.teamId))+'"]');card?.scrollIntoView({behavior:'smooth',block:'center'});if(bootstrapData?.writeEnabled&&team.canEdit)openScheduleOperation(team,item,value(item.dataset.sanctuaryCalendarDate));

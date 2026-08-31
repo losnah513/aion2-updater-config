@@ -24,7 +24,7 @@ for(const token of [
 for(const token of ['created_by_member_id','updated_by_member_id','where created_by_member_id is not null','where updated_by_member_id is not null'])assert.ok(performanceGuard.includes(token),`Stage 8 performance guard missing ${token}`);
 for(const token of ['drop index if exists private.sanctuary_management_composition_rules_v449_created_by_idx','created_by_member_id);','updated_by_member_id);'])assert.ok(fkIndexGuard.includes(token),`Stage 8 FK index guard missing ${token}`);
 
-for(const token of ['const API_VERSION="2.3"','const DATABASE_CONTRACT="456"','bootstrap_v456','public_bootstrap_v456','command_v454'])assert.ok(edge.includes(token),`Stage 8 Edge contract missing ${token}`);
+for(const token of ['const API_VERSION="2.3"','const DATABASE_CONTRACT="457"','bootstrap_v456','public_bootstrap_v456','command_v454'])assert.ok(edge.includes(token),`Stage 8 Edge contract missing ${token}`);
 for(const token of [
   'function formatCombatPower','validateCombatPower','validateRequirements','sanctuary-management-force-average',
   'sanctuary-management-force-slot-power','has-unmet-requirements','compositionRulesVersion:2',

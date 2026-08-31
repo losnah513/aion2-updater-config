@@ -30,14 +30,14 @@ for(const token of [
 
 for(const token of [
   'const API_VERSION="2.3"',
-  'const DATABASE_CONTRACT="456"',
+  'const DATABASE_CONTRACT="457"',
   'kinojo_sanctuary_management_bootstrap_v456',
   'kinojo_sanctuary_management_command_v454',
 ])assert.ok(edge.includes(token),`current Edge contract missing ${token}`);
 
 for(const token of [
   'const API_VERSION=2.3',
-  'const SCHEMA_VERSION=456',
+  'const SCHEMA_VERSION=457',
   'async function saveTeamDraft',
   "['ACTIVE','FULL'].includes(status)?'UPDATE_PARTICIPATION_TEAM':'UPDATE_PARTICIPATION_TEAM_DRAFT'",
   'joinPolicy,',
@@ -47,10 +47,12 @@ for(const token of [
 
 for(const token of [
   'data-draft-mode="participation"',
-  "state.creationMode=mode.dataset.draftMode==='participation'?'PARTICIPATION':'FIXED'",
+  "const next=mode.dataset.draftMode==='participation'?'PARTICIPATION':'FIXED'",
+  'state.team.mode=next',
   'data-draft-join-policy="INSTANT"',
   'data-draft-join-policy="APPROVAL"',
-  '필요한 포스를 만들고 생성자 캐릭터를 한 곳 이상 배치합니다.',
+  'data-creator-candidates-toggle',
+  '내 캐릭터 추가',
   '1포스 생성 · 최대 9',
   '10번째 포스는 추가할 수 없음',
   "if(forces.length>=9){setStatus('한 팀에는 최대 9포스까지만 구성할 수 있습니다.')",

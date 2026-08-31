@@ -1127,7 +1127,7 @@
   async function searchSanctuaryManagementCharacter(teamId,query){
     const normalizedTeamId=Number(teamId||0);
     const normalizedQuery=String(query||'').trim();
-    if(!Number.isSafeInteger(normalizedTeamId)||normalizedTeamId<1)throw new Error('캐릭터를 추가할 팀을 다시 선택해 주세요.');
+    if(!Number.isSafeInteger(normalizedTeamId)||normalizedTeamId<0)throw new Error('캐릭터를 추가할 팀을 다시 선택해 주세요.');
     if(!normalizedQuery||normalizedQuery.length>48)throw new Error('캐릭터 이름 또는 이름[서버]를 입력해 주세요.');
     return invokeEdgeFunction('sanctuary-management',{
       action:'character-search',
@@ -1144,7 +1144,7 @@
     const normalizedMainId=mainCharacterId==null?null:Number(mainCharacterId);
     const generatedKey='sm-character-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12);
     const normalizedKey=String(requestKey||generatedKey).trim();
-    if(!Number.isSafeInteger(normalizedTeamId)||normalizedTeamId<1||!normalizedCandidateId||!['MAIN','ALT','GUEST'].includes(normalizedRelation))throw new Error('캐릭터 관계 확정 요청을 다시 확인해 주세요.');
+    if(!Number.isSafeInteger(normalizedTeamId)||normalizedTeamId<0||!normalizedCandidateId||!['MAIN','ALT','GUEST'].includes(normalizedRelation))throw new Error('캐릭터 관계 확정 요청을 다시 확인해 주세요.');
     if(normalizedRelation==='ALT'&&(!Number.isSafeInteger(normalizedMainId)||normalizedMainId<1))throw new Error('부캐에 연결할 본캐를 먼저 확인해 주세요.');
     if(!/^[A-Za-z0-9][A-Za-z0-9._:-]{7,119}$/.test(normalizedKey))throw new Error('중복 요청 방지 키를 다시 만들어 주세요.');
     return invokeEdgeFunction('sanctuary-management',{
@@ -1162,7 +1162,7 @@
     const normalizedTeamId=Number(teamId||0);
     const normalizedMainId=Number(mainCharacterId||0);
     const normalizedForceId=forceId==null?null:Number(forceId);
-    if(!Number.isSafeInteger(normalizedTeamId)||normalizedTeamId<1||!Number.isSafeInteger(normalizedMainId)||normalizedMainId<1||(normalizedForceId!=null&&(!Number.isSafeInteger(normalizedForceId)||normalizedForceId<1))){
+    if(!Number.isSafeInteger(normalizedTeamId)||normalizedTeamId<0||!Number.isSafeInteger(normalizedMainId)||normalizedMainId<1||(normalizedForceId!=null&&(!Number.isSafeInteger(normalizedForceId)||normalizedForceId<1))||(normalizedTeamId===0&&normalizedForceId!=null)){
       throw new Error('부캐를 확인할 팀과 본캐를 다시 선택해 주세요.');
     }
     return invokeEdgeFunction('sanctuary-management',{

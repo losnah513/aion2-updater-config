@@ -35,7 +35,7 @@ for(const token of [
 for(const token of [
   'EDGE_CONTRACT_AUTHORITY',
   'const API_VERSION="2.3"',
-  'const DATABASE_CONTRACT="456"',
+  'const DATABASE_CONTRACT="457"',
   'kinojo_sanctuary_management_bootstrap_v456',
   'kinojo_sanctuary_management_command_v454',
 ])assert.ok(edge.includes(token),`current Edge contract missing ${token}`);
@@ -49,7 +49,7 @@ assert.ok(rpc.includes("'kinojo_admin_member_list_v433'"),'ADMIN list v433 must 
 
 for(const token of [
   'const API_VERSION=2.3',
-  'const SCHEMA_VERSION=456',
+  'const SCHEMA_VERSION=457',
   'scheduleLabel',
   'data-sanctuary-edit-team',
   'data-sanctuary-archive-team',
@@ -64,8 +64,8 @@ for(const token of [
   'handleDragStart',
   'handleDrop',
   'moveSlot(fromSlotId,toSlotId)',
-  '빈 슬롯이 있어도 생성할 수 있으며',
-  '최소 1개 필요합니다.',
+  '팀에는 포스가 최소 1개 필요합니다.',
+  '마지막 저장 전 Server 미반영',
 ])assert.ok(draft.includes(token),`Management Stage 3 editor missing ${token}`);
 
 for(const token of ['.is-move-source','.is-dragging','.is-drop-target','overflow-x:hidden'])assert.ok(css.includes(token),`Management Stage 3 layout missing ${token}`);

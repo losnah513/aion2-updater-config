@@ -14,9 +14,9 @@ for (const page of pages) {
     'sanctuary-management-page-bar',
     'id="sanctuaryManagementScope"',
     'id="sanctuaryManagementTeamList"',
-    'kinojo-supabase-features.js?cache=2026083105',
-    'sanctuary-management.js?cache=2026083104',
-    'sanctuary-management-draft.js?cache=2026083030',
+    'kinojo-supabase-features.js?cache=2026083108',
+    'sanctuary-management.js?cache=2026083107',
+    'sanctuary-management-draft.js?cache=2026083106',
     'sanctuary-management-support.js?cache=2026082923',
   ]) assert.ok(html.includes(token), `${page}: missing ${token}`);
   assert.equal(html.includes('kinojo-sanctuary-tabs'), false, `${page}: legacy sanctuary tabs remain in the management subbar`);
@@ -52,7 +52,7 @@ const client = read('sanctuary-management/js/sanctuary-management.js');
 for (const token of [
   "kind:'SERVER_ONLY'",
     'const API_VERSION=2.3',
-  'const SCHEMA_VERSION=456',
+  'const SCHEMA_VERSION=457',
   'getSanctuaryManagementBootstrap',
   'runSanctuaryManagementCommand',
   "teamId?'UPDATE_TEAM_DRAFT':'CREATE_TEAM'",
@@ -122,7 +122,7 @@ async function verifyAdapter() {
   const adapter = context.window.KinojoSanctuaryManagementData;
   assert.equal(adapter.kind, 'SERVER_ONLY');
   assert.equal(adapter.apiVersion, 2.3);
-  assert.equal(adapter.schemaVersion, 456);
+  assert.equal(adapter.schemaVersion, 457);
   const data = await adapter.bootstrap();
   assert.deepEqual(calls, ['bootstrap']);
   assert.equal(data.readEnabled, false);
@@ -147,7 +147,7 @@ async function verifyAdapter() {
     assert.equal(health.ok, true);
     assert.equal(health.service, 'sanctuary-management');
     assert.equal(String(health.apiVersion), '2.3');
-    assert.equal(Number(health.databaseContract), 456);
+    assert.equal(Number(health.databaseContract), 457);
   }
 }
 

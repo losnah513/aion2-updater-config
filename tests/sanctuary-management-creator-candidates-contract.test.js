@@ -22,7 +22,7 @@ for(const token of [
   'function candidateMarkup',
   'data-draft-slot',
   'data-draft-candidate',
-  '다른 구성원을 검색해 추가할 수 있습니다.',
+  '캐릭터 이름 조회로 다른 구성원을 추가할 수 있습니다.',
   'function assignCreatorCharacter',
   'chosen.slot.character=candidateCharacter(candidate)',
   'state.selectedSlotId=0',
