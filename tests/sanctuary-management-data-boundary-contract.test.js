@@ -52,7 +52,7 @@ const client = read('sanctuary-management/js/sanctuary-management.js');
 for (const token of [
   "kind:'SERVER_ONLY'",
     'const API_VERSION=2.2',
-  'const SCHEMA_VERSION=452',
+  'const SCHEMA_VERSION=453',
   'getSanctuaryManagementBootstrap',
   'runSanctuaryManagementCommand',
   "teamId?'UPDATE_TEAM_DRAFT':'CREATE_TEAM'",
@@ -122,7 +122,7 @@ async function verifyAdapter() {
   const adapter = context.window.KinojoSanctuaryManagementData;
   assert.equal(adapter.kind, 'SERVER_ONLY');
   assert.equal(adapter.apiVersion, 2.2);
-  assert.equal(adapter.schemaVersion, 452);
+  assert.equal(adapter.schemaVersion, 453);
   const data = await adapter.bootstrap();
   assert.deepEqual(calls, ['bootstrap']);
   assert.equal(data.readEnabled, false);

@@ -39,10 +39,12 @@
       let slotSequence=300;
       const creatorCandidates=[
         {characterId:501,serverId:2,serverName:'지켈',characterName:'테스트본캐',className:'검성',profileImageUrl:'',power:123456,itemLevel:4321,isMain:true,relation:'MAIN',mainCharacterId:501,canSelectAlts:true},
-        {characterId:502,serverId:2,serverName:'지켈',characterName:'테스트부캐',className:'살성',profileImageUrl:'',power:111111,itemLevel:4200,isMain:false,relation:'ALT',mainCharacterId:501}
+        {characterId:502,serverId:2,serverName:'지켈',characterName:'테스트부캐',className:'살성',profileImageUrl:'',power:111111,itemLevel:4200,isMain:false,relation:'ALT',mainCharacterId:501},
+        {characterId:503,serverId:2,serverName:'지켈',characterName:'내부캐없는본캐',className:'치유성',profileImageUrl:'',power:567890,itemLevel:4600,isMain:true,relation:'MAIN',mainCharacterId:503,canSelectAlts:false}
       ];
       const searchableCharacters=[
-        {characterId:601,serverId:2,serverName:'지켈',characterName:'테스트검색',className:'궁성',legionName:'깡',profileImageUrl:'',raceId:1,power:456789,itemLevel:4400,isOperationalLegion:true,ownerMemberId:9,relation:'MAIN',mainCharacterId:601,canSelectAlts:true}
+        {characterId:601,serverId:2,serverName:'지켈',characterName:'테스트검색',className:'궁성',legionName:'깡',profileImageUrl:'',raceId:1,power:456789,itemLevel:4400,isOperationalLegion:true,ownerMemberId:9,relation:'MAIN',isMain:true,mainCharacterId:601,canSelectAlts:true},
+        {characterId:602,serverId:2,serverName:'지켈',characterName:'부캐없는본캐',className:'치유성',legionName:'깡',profileImageUrl:'',raceId:1,power:567890,itemLevel:4600,isOperationalLegion:true,ownerMemberId:22,relation:'MAIN',isMain:true,mainCharacterId:602,canSelectAlts:false}
       ];
       const balanceCharacter={characterId:901,mainCharacterId:901,ownerMemberId:21,serverId:2,serverName:'지켈',characterName:'균형지원자',className:'치유성',relation:'MAIN',isMain:true,power:318400};
       const officialCandidates={
@@ -120,6 +122,16 @@
           const character={characterId:700+searchableCharacters.length,serverId:candidate.serverId,serverName:candidate.serverName,characterName:candidate.characterName,className:candidate.className,legionName:candidate.legionName,profileImageUrl:candidate.profileImageUrl,raceId:candidate.raceId,isOperationalLegion:candidate.isOperationalLegion,ownerMemberId:relationType==='GUEST'?0:7,relation:relationType,mainCharacterId:relationType==='ALT'?mainCharacterId:700+searchableCharacters.length};
           searchableCharacters.push(character);
           return {ok:true,apiVersion:1.8,schemaVersion:446,teamId,character:structuredClone(character)};
+        },
+        async getSanctuaryManagementLinkedAlts(teamId,mainCharacterId){
+          const main=searchableCharacters.find(item=>item.characterId===Number(mainCharacterId));
+          if(!main)throw new Error('본캐를 찾을 수 없습니다.');
+          const characters=Number(mainCharacterId)===601?[
+            {characterId:603,mainCharacterId:601,ownerMemberId:9,characterName:'아이템미달부캐',serverId:2,serverName:'지켈',className:'검성',profileImageUrl:'',relation:'ALT',isMain:false,power:234500,itemLevel:3200,itemLevelEligible:false,alreadyAssignedToOtherForce:false,scheduleConflict:false,disabledCode:'ITEM_LEVEL_INSUFFICIENT',disabledMessage:'캐릭터의 아이템레벨이 부족합니다'},
+            {characterId:604,mainCharacterId:601,ownerMemberId:9,characterName:'다른포스부캐',serverId:2,serverName:'지켈',className:'살성',profileImageUrl:'',relation:'ALT',isMain:false,power:534500,itemLevel:4600,itemLevelEligible:true,alreadyAssignedToOtherForce:true,scheduleConflict:false,disabledCode:'ALREADY_IN_OTHER_FORCE',disabledMessage:'이미 다른 포스에 소속되어 있습니다'},
+            {characterId:605,mainCharacterId:601,ownerMemberId:9,characterName:'일정충돌부캐',serverId:2,serverName:'지켈',className:'마도성',profileImageUrl:'',relation:'ALT',isMain:false,power:634500,itemLevel:4700,itemLevelEligible:true,alreadyAssignedToOtherForce:false,scheduleConflict:true,disabledCode:'SCHEDULE_CONFLICT',disabledMessage:'같은 시간 다른 포스에 소속되어있습니다'}
+          ]:[];
+          return {ok:true,apiVersion:2.2,schemaVersion:453,teamId,minimumItemLevel:4300,mainCharacter:{characterId:main.characterId,characterName:main.characterName,serverId:main.serverId,serverName:main.serverName,ownerMemberId:main.ownerMemberId},randomCandidate:{assignmentKind:'RANDOM_ALT',mainCharacterId:main.characterId,ownerMemberId:main.ownerMemberId,characterName:main.characterName+'의 랜덤 부캐',serverId:main.serverId,serverName:main.serverName,relation:'RANDOM_ALT',isMain:false,isRandomAlt:true,power:null,itemLevel:null},characters,characterCount:characters.length};
         },
         async getSanctuaryManagementBalanceProposal(teamId,expectedRevision,leaseToken,stableSeed,lockOverrides){
           const team=teams.find(item=>item.teamId===Number(teamId));
