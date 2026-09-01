@@ -495,7 +495,7 @@ window.KinojoSupabase = {
     assert(html.includes('kinojo-character-reaction.js?cache=2026082701'));
     assert(html.includes('legion-tree.css?cache=2026090101'));
     assert(html.includes('legion-tree-editor.js?cache=2026090101'));
-    assert(html.includes('legion-tree.js?cache=2026090101'));
+    assert(html.includes('legion-tree.js?cache=2026090102'));
     assert(html.includes('kinojo-supabase-features.js?cache=2026083108'));
     assert(!html.includes('legion-tree.js?cache=2026082403'));
   }
@@ -754,6 +754,12 @@ window.KinojoSupabase = {
   assert.strictEqual(addButton.disabled, true, 'add must stay disabled until a candidate is selected');
   assert.strictEqual(addHarness.api.selectSearchCandidate('main', '2002:복숭아-2002'), true);
   assert.strictEqual(addButton.disabled, false);
+  assert.strictEqual(addHarness.api.selectSearchCandidate('main', '2002:복숭아-2002'), true, 'selected candidate must toggle off');
+  assert.strictEqual(addHarness.api.getAddState().selectedCandidates.main, null);
+  assert.strictEqual(addButton.disabled, true, 'add must disable again after deselection');
+  assert(addStatus.textContent.includes('선택을 해제'));
+  assert.strictEqual(addHarness.api.selectSearchCandidate('main', '2002:복숭아-2002'), true, 'candidate must be selectable again');
+  assert.strictEqual(addButton.disabled, false);
   const treeLoadsBeforeMain = addHarness.getTreeLoads();
   assert.strictEqual(await addHarness.api.handleAdd(), true, 'main-only add must complete');
   assert.strictEqual(JSON.stringify(addHarness.addRequests[0]), JSON.stringify({
@@ -774,11 +780,61 @@ window.KinojoSupabase = {
   assert.strictEqual(await addHarness.api.handleSearch(), true, 'main+alt search must complete');
   assert.strictEqual(addHarness.api.selectSearchCandidate('main', '2002:복숭아-2002'), true);
   assert.strictEqual(addHarness.api.selectSearchCandidate('alt', '2004:화비-2004'), true);
+  assert.strictEqual(addHarness.api.selectSearchCandidate('alt', '2004:화비-2004'), true, 'alt candidate must toggle off');
+  assert.strictEqual(addHarness.api.getAddState().selectedCandidates.alt, null);
+  assert.strictEqual(addButton.disabled, true);
+  assert.strictEqual(addHarness.api.selectSearchCandidate('alt', '2004:화비-2004'), true, 'alt candidate must be selectable again');
   assert.strictEqual(await addHarness.api.handleAdd(), true, 'main+alt add must complete');
   assert.strictEqual(JSON.stringify(addHarness.addRequests[1]), JSON.stringify({
     mainCharacterName: '복숭아[지켈]',
     altCharacterName: '화비[루미엘]'
   }));
+
+  addHarness.setSearchImplementation(async () => ({
+    ok: true,
+    contract: 'legion-tree-character-search-v1',
+    code: 'SEARCH_RESULTS_READY',
+    readOnly: true,
+    createsTarget: false,
+    createsQueue: false,
+    main: { ...candidate('main', '검색결과없음', 2002, '지켈'), candidates: [] },
+    alt: null
+  }));
+  mainInput.value = '검색결과없음';
+  altInput.value = '';
+  assert.strictEqual(await addHarness.api.handleSearch(), true, 'zero-result search must complete without a write path');
+  assert(addHarness.elements['#legionTreeMainResults'].innerHTML.includes('정확히 일치하는 캐릭터를 찾지 못했습니다.'));
+  assert.strictEqual(addButton.disabled, true);
+  const requestsBeforeClose = addHarness.searchRequests.length;
+  addHarness.elements['#legionTreeSearchCloseBtn'].click();
+  assert.strictEqual(addHarness.elements['#legionTreeSearchResults'].hidden, true, 'close must hide only the result panel');
+  assert.strictEqual(mainInput.value, '검색결과없음', 'close must preserve retry input');
+  assert.strictEqual(addHarness.searchRequests.length, requestsBeforeClose, 'close must make network 0');
+  assert.strictEqual(await addHarness.api.handleSearch(), true);
+  const requestsBeforeReset = addHarness.searchRequests.length;
+  resetButton.click();
+  assert.strictEqual(mainInput.value, '');
+  assert.strictEqual(altInput.value, '');
+  assert.strictEqual(addHarness.elements['#legionTreeSearchResults'].hidden, true);
+  assert.strictEqual(addHarness.searchRequests.length, requestsBeforeReset, 'reset must make network 0');
+
+  for (const failure of [
+    { code: 'PLAYNC_RATE_PAUSED', message: '공식 캐릭터 조회가 잠시 제한되었습니다.' },
+    { code: 'PLAYNC_HTTP_500', message: '공식 캐릭터 조회 응답을 확인하지 못했습니다.' },
+    { code: 'PLAYNC_TIMEOUT', message: '공식 캐릭터 조회 시간이 초과되었습니다.' }
+  ]) {
+    addHarness.setSearchImplementation(async () => {
+      const error = new Error(failure.message);
+      error.code = failure.code;
+      error.data = { ok: false, code: failure.code, message: failure.message };
+      throw error;
+    });
+    mainInput.value = `오류-${failure.code}`;
+    altInput.value = '';
+    assert.strictEqual(await addHarness.api.handleSearch(), false, `${failure.code} must remain retryable`);
+    assert(addStatus.textContent.includes(failure.message));
+    assert.strictEqual(mainInput.value, `오류-${failure.code}`);
+  }
 
   const callsBeforeBadSuffix = addHarness.searchRequests.length;
   mainInput.value = '복숭아';
@@ -798,6 +854,27 @@ window.KinojoSupabase = {
   assert.strictEqual(mainInput.attributes['aria-invalid'], 'true');
   assert.strictEqual(mainInput.focused, true);
   assert.strictEqual(addStatus.textContent, '본캐 이름을 입력해 주세요.');
+
+  let releaseSearch;
+  addHarness.setSearchImplementation(() => new Promise(resolve => { releaseSearch = resolve; }));
+  mainInput.value = '조회중복클릭';
+  altInput.value = '';
+  const duplicateSearchCallsBefore = addHarness.searchRequests.length;
+  const firstSearchClick = addHarness.api.handleSearch();
+  const secondSearchClick = addHarness.api.handleSearch();
+  assert.strictEqual(await secondSearchClick, false, 'second search click while running must be ignored');
+  assert.strictEqual(addHarness.searchRequests.length, duplicateSearchCallsBefore + 1, 'duplicate search click must make one request');
+  releaseSearch({
+    ok: true,
+    contract: 'legion-tree-character-search-v1',
+    code: 'SEARCH_RESULTS_READY',
+    readOnly: true,
+    createsTarget: false,
+    createsQueue: false,
+    main: candidate('main', '조회중복클릭', 2002, '지켈'),
+    alt: null
+  });
+  assert.strictEqual(await firstSearchClick, true);
 
   let releaseAccepted;
   addHarness.setAddImplementation(() => new Promise(resolve => { releaseAccepted = resolve; }));
