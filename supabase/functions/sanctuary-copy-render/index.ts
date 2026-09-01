@@ -1,9 +1,9 @@
 declare const Deno: any;
 /*
  * KINOJO Supabase Edge Function: sanctuary-copy-render
- * Version: 20260831_01
+ * Version: 20260901_01
  * Role: 성역 포스/팀 클립보드용 SVG를 서버에서 생성한다.
- * Rule: 기존 WEB v317과 신규 Server 팀 모두 같은 구 성역 카드 SVG 렌더러를 사용한다.
+ * Rule: 기존 WEB v317과 신규 Server 팀 모두 같은 Stage 12 SVG renderer를 사용한다.
  */
 
 const CORS_HEADERS = {
@@ -24,18 +24,26 @@ const CLASS_ICON_FILE: Record<string,string> = {
   "권성":"class_icon_fighter.png"
 };
 const POWER_ICON_URL = "https://assets.playnccdn.com/static-aion2/characters/img/info/profile_power_icon_pc.png";
+const SANCTUARY_BOSS_FILE: Record<string,string> = {
+  rudra:"rudra.webp",
+  bagot:"bagot.webp",
+  kaldrix:"kaldrix.webp"
+};
 
-const CARD_W = 342;
-const CARD_H = 54;
-const PARTY_W = 350;
-const PARTY_GAP = 12;
-const FORCE_W = 736;
-const FORCE_HEADER_H = 62;
-const PARTY_HEADER_H = 42;
-const SLOT_GAP = 5;
-const PARTY_BODY_PAD = 8;
+const CARD_W = 228;
+const CARD_H = 68;
+const PARTY_W = 240;
+const PARTY_GAP = 8;
+const FORCE_W = 512;
+const FORCE_HEADER_H = 66;
+const PARTY_HEADER_H = 38;
+const SLOT_GAP = 4;
+const PARTY_BODY_PAD = 6;
 const PARTY_H = PARTY_HEADER_H + PARTY_BODY_PAD * 2 + CARD_H * 5 + SLOT_GAP * 4;
-const FORCE_H = FORCE_HEADER_H + 12 + PARTY_H + 12;
+const FORCE_H = FORCE_HEADER_H + 10 + PARTY_H + 10;
+const CANVAS_PAD = 16;
+const TEAM_COLUMN_GAP = 14;
+const TEAM_HEADER_H = 72;
 
 type Slot = {
   name?: string;
@@ -46,6 +54,8 @@ type Slot = {
   profileImageUrl?: string;
   profile_url?: string;
   vacancyText?: string;
+  requiredClassCode?: string;
+  requiredClassName?: string;
   mainCharacterName?: string;
   owner?: string;
   isMain?: boolean;
@@ -79,13 +89,10 @@ function json(body: unknown, status = 200){
 }
 function safeText(value: unknown){ return String(value ?? "").replace(/\s+/g," ").trim(); }
 function xml(value: unknown){ return safeText(value).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&apos;"); }
-function fmt(value: unknown){ const n=Number(value || 0); return Number.isFinite(n) ? Math.round(n).toLocaleString("ko-KR") : "0"; }
-function fmtShort(value: unknown){
+function fmtPowerK(value: unknown){
   const n=Number(value || 0);
   if(!Number.isFinite(n) || n <= 0) return "-";
-  if(n >= 1_000_000) return `${(n/1_000_000).toFixed(n >= 10_000_000 ? 0 : 1).replace(/\.0$/,"")}M`;
-  if(n >= 1_000) return `${(n/1_000).toFixed(1).replace(/\.0$/,"")}K`;
-  return Math.round(n).toLocaleString("ko-KR");
+  return `${(n/1_000).toFixed(1)}K`;
 }
 function slotName(slot: Slot){ return safeText(slot.name || slot.characterName); }
 function slotProfileUrl(slot: Slot){ return safeText(slot.profileImageUrl || slot.profile_url); }
@@ -94,17 +101,31 @@ function forceName(force: Force){ return safeText(force.forceName || force.teamN
 function forceId(force: Force){ return safeText(force.forceId || force.teamId); }
 function filledCount(force: Force){ return normalizeParties(force).reduce((sum,p)=>sum+(p.slots||[]).filter(slotName).length,0); }
 
-function classIconUrl(className: string, req: Request){
-  const file=CLASS_ICON_FILE[safeText(className)];
-  if(!file) return "";
+function publicAssetBase(req: Request){
   const originHeader=safeText(req.headers.get("origin"));
   const refererHeader=safeText(req.headers.get("referer"));
-  let base="https://kinojo.info";
-  if(/^https?:\/\//i.test(originHeader)) base=originHeader.replace(/\/$/,"");
-  else if(/^https?:\/\//i.test(refererHeader)) {
-    try{ base=new URL(refererHeader).origin; }catch(_err){}
+  for(const candidate of [originHeader,refererHeader]){
+    if(!/^https?:\/\//i.test(candidate)) continue;
+    try{
+      const parsed=new URL(candidate);
+      const production=parsed.protocol==="https:"&&(parsed.hostname==="kinojo.info"||parsed.hostname.endsWith(".kinojo.info"));
+      const local=["localhost","127.0.0.1","::1"].includes(parsed.hostname);
+      if(production||local) return parsed.origin;
+    }catch(_err){}
   }
-  return `${base}/assets/images/classes/${file}`;
+  return "https://kinojo.info";
+}
+function classIconUrl(className: string, req: Request){
+  const file=CLASS_ICON_FILE[safeText(className)];
+  return file?`${publicAssetBase(req)}/assets/images/classes/${file}`:"";
+}
+function normalizedSanctuaryCode(value: unknown){
+  const code=safeText(value).toLowerCase();
+  return ({ "1":"rudra", "sanctuary1":"rudra", "2":"bagot", "sanctuary2":"bagot", "3":"kaldrix", "sanctuary3":"kaldrix" } as Record<string,string>)[code]||code;
+}
+function bossArtUrl(sanctuaryCode: string, req: Request){
+  const file=SANCTUARY_BOSS_FILE[normalizedSanctuaryCode(sanctuaryCode)];
+  return file?`${publicAssetBase(req)}/assets/images/sanctuary/bosses-v2/${file}`:"";
 }
 function toBase64(bytes: Uint8Array){
   let binary="";
@@ -202,7 +223,17 @@ function managementSnapshotGroup(value: unknown): TeamGroup{
         const slotSource=record(slotValue);
         const slotNo=boundedInteger(slotSource.slotNo,1,5);
         if(slotNo!==slotIndex+1) throw new Error("신규 성역 복사 슬롯 순서가 올바르지 않습니다.");
-        if(slotSource.occupied!==true) return {name:"",vacancyText:"파티 인원 모집중"};
+        if(slotSource.occupied!==true){
+          const requiredClassName=safeText(slotSource.requiredClassName).slice(0,40);
+          const requiredClassCode=safeText(slotSource.requiredClassCode).toUpperCase().slice(0,40);
+          return {
+            name:"",
+            className:CLASS_ICON_FILE[requiredClassName]?requiredClassName:"",
+            requiredClassCode,
+            requiredClassName:CLASS_ICON_FILE[requiredClassName]?requiredClassName:"",
+            vacancyText:requiredClassName?`${requiredClassName} 모집 중`:"파티 인원 모집중"
+          };
+        }
         const character=record(slotSource.character);
         const name=safeText(character.name).slice(0,16);
         const className=safeText(character.className).slice(0,40);
@@ -247,31 +278,37 @@ async function fetchImageDataUrl(url: string){
     return `data:${ct};base64,${toBase64(bytes)}`;
   }catch(_err){ return ""; }
 }
-async function assetMap(forces: Force[], req: Request){
+async function assetMap(forces: Force[], req: Request, sanctuaryCode = ""){
   const profileUrls=[...new Set(forces.flatMap(force=>normalizeParties(force).flatMap(party=>(party.slots||[]).map(slotProfileUrl))).filter(Boolean))];
   const classUrls=[...new Set(forces.flatMap(force=>normalizeParties(force).flatMap(party=>(party.slots||[]).map(slot=>classIconUrl(safeText(slot.className||slot.classLabel), req)))).filter(Boolean))];
-  const urls=[...new Set([...profileUrls, ...classUrls, POWER_ICON_URL])];
+  const bossUrl=bossArtUrl(sanctuaryCode,req);
+  const urls=[...new Set([...profileUrls, ...classUrls, POWER_ICON_URL, bossUrl].filter(Boolean))];
   const map=new Map<string,string>();
   await Promise.all(urls.map(async url=>map.set(url,await fetchImageDataUrl(url))));
   return map;
 }
 
+function compactText(value: unknown, maxLength: number){
+  const glyphs=Array.from(safeText(value));
+  return glyphs.length<=maxLength?glyphs.join(""):glyphs.slice(0,Math.max(1,maxLength-1)).join("")+"…";
+}
 function badgeSvg(label: string, x: number, y: number, main: boolean){
-  const fill=main?"#fff7e8":"#eef4ff";
-  const stroke=main?"#e7c78f":"#bfd3f0";
-  const text=main?"#9a6700":"#3865b0";
-  return `<g transform="translate(${x} ${y})"><rect width="34" height="16" rx="8" fill="${fill}" stroke="${stroke}"/><text x="17" y="11.4" text-anchor="middle" font-size="9" font-weight="900" fill="${text}">${xml(label)}</text></g>`;
+  const shown=compactText(label,9);
+  const width=Math.min(80,Math.max(44,14+Array.from(shown).length*8));
+  const fill=main?"#e8edff":"#f1f3f7";
+  const stroke=main?"#9fb2ff":"#d4dbe6";
+  const color=main?"#315fc8":"#68758a";
+  return `<g transform="translate(${x+80-width} ${y})"><rect width="${width}" height="16" rx="8" fill="${fill}" stroke="${stroke}"/><text x="${width/2}" y="11.4" text-anchor="middle" font-size="8.5" font-weight="900" fill="${color}">${xml(shown)}</text></g>`;
 }
 
 function slotSvg(slot: Slot, x: number, y: number, map: Map<string,string>, req: Request){
   const name=slotName(slot);
   if(!name){
+    const requiredClass=safeText(slot.requiredClassName||slot.className);
+    const iconImage=map.get(classIconUrl(requiredClass,req))||"";
     return `<g transform="translate(${x} ${y})">
-      <rect width="${CARD_W}" height="${CARD_H}" rx="8" fill="#fbfdff" stroke="#cfd9e8" stroke-dasharray="5 4"/>
-      <rect x="8" y="13" width="28" height="28" rx="9" fill="#edf3fb" stroke="#d5dfed"/>
-      <text x="22" y="32" text-anchor="middle" font-size="16" font-weight="900" fill="#6e8bb2">+</text>
-      <text x="44" y="24" font-size="13" font-weight="900" fill="#718096">+ ${xml(safeText(slot.vacancyText||'파티 인원 모집중'))}</text>
-      <text x="44" y="42" font-size="9.5" font-weight="700" fill="#8794a8">대기자 명단에서 추가 가능</text>
+      <rect width="${CARD_W}" height="${CARD_H}" rx="9" fill="#effbf5" fill-opacity=".92" stroke="#4fc989" stroke-width="1.8" stroke-dasharray="8 5"/>
+      ${requiredClass&&iconImage?`<image href="${iconImage}" x="-4" y="4" width="60" height="60" opacity=".7" preserveAspectRatio="xMidYMid meet"/><text x="${CARD_W/2+18}" y="41" text-anchor="middle" font-size="16" font-weight="1000" fill="#137049">${xml(requiredClass)} 모집 중</text>`:`<rect x="9" y="18" width="32" height="32" rx="9" fill="#e2f5eb" stroke="#a8dfc2"/><text x="25" y="40" text-anchor="middle" font-size="18" font-weight="1000" fill="#329a68">+</text><text x="50" y="41" font-size="14" font-weight="950" fill="#337759">+ ${xml(safeText(slot.vacancyText||'파티 인원 모집중'))}</text>`}
     </g>`;
   }
 
@@ -282,38 +319,40 @@ function slotSvg(slot: Slot, x: number, y: number, map: Map<string,string>, req:
   const image=map.get(slotProfileUrl(slot))||"";
   const iconImage=map.get(classIconUrl(cls, req))||"";
   const powerIcon=map.get(POWER_ICON_URL)||"";
-  const cardFill=isMain?"#fffaf0":"#ffffff";
-  const cardStroke=isMain?"#d9bd84":"#dce5f2";
+  const cardFill=isMain?"#edf1ff":isSub?"#f4f6fa":"#ffffff";
+  const cardStroke=isMain?"#9fb2ff":isSub?"#d6dde8":"#dce5f2";
   const fadeId=isMain?"profileFadeMain":"profileFade";
-  const stageX=220;
+  const stageX=174;
   const stageW=CARD_W-stageX;
-  const nameWidth=Math.max(1,Math.min(15,name.length));
-  const badgeX=Math.min(stageX-40,48+nameWidth*11+5);
+  const nameLength=Array.from(name).length;
+  const nameFont=nameLength<=5?20:nameLength<=7?17:14;
+  const relationLabel=isMain?"본캐":isSub?`${compactText(owner,6)}-부캐`:"";
+  const shownName=compactText(name,8);
 
   return `<g transform="translate(${x} ${y})">
-    <rect width="${CARD_W}" height="${CARD_H}" rx="8" fill="${cardFill}" stroke="${cardStroke}"/>
-    ${isMain?`<rect x="0" y="0" width="3" height="${CARD_H}" rx="2" fill="#c58b24"/>`:''}
-    <g transform="translate(8 10)">
-      ${iconImage?`<image href="${iconImage}" x="0" y="0" width="34" height="34" preserveAspectRatio="xMidYMid meet"/>`:`<circle cx="17" cy="17" r="16" fill="#eef4ff"/><text x="17" y="22" text-anchor="middle" font-size="14" font-weight="900" fill="#3865b0">${slot.isRandomAlt?'R':xml(cls.slice(0,1)||'?')}</text>`}
+    <rect width="${CARD_W}" height="${CARD_H}" rx="9" fill="${cardFill}" fill-opacity=".94" stroke="${cardStroke}"/>
+    ${isMain?`<rect x="0" y="0" width="3" height="${CARD_H}" rx="2" fill="#4d69eb"/>`:''}
+    <g transform="translate(8 16)">
+      ${iconImage?`<image href="${iconImage}" x="0" y="0" width="36" height="36" preserveAspectRatio="xMidYMid meet"/>`:`<circle cx="18" cy="18" r="17" fill="#eef2ff"/><text x="18" y="23" text-anchor="middle" font-size="14" font-weight="900" fill="#4d69eb">${slot.isRandomAlt?'R':xml(cls.slice(0,1)||'?')}</text>`}
     </g>
-    <text x="48" y="22" font-size="13" font-weight="900" fill="#1f2f46">${xml(name)}</text>
-    ${isMain?badgeSvg('본캐',badgeX,10,true):(isSub?badgeSvg('부캐',badgeX,10,false):'')}
-    ${powerIcon?`<image href="${powerIcon}" x="48" y="31" width="14" height="14" preserveAspectRatio="xMidYMid meet"/>`:`<circle cx="55" cy="38" r="5" fill="#4c75b8"/>`}
-    <text x="66" y="42" font-size="10.5" font-weight="900" fill="#667085">${xml(fmtShort(slot.power))}</text>
+    <text x="49" y="24" font-size="${nameFont}" font-weight="1000" fill="#1f2f46">${xml(shownName)}</text>
+    ${relationLabel?badgeSvg(relationLabel,94,32,isMain):''}
+    ${powerIcon?`<image href="${powerIcon}" x="98" y="50" width="17" height="17" preserveAspectRatio="xMidYMid meet"/>`:`<circle cx="106.5" cy="58.5" r="6" fill="#4c75b8"/>`}
+    <text x="119" y="63" font-size="13.5" font-weight="1000" fill="#556b93">${xml(fmtPowerK(slot.power))}</text>
     <rect x="${stageX}" y="0" width="${stageW}" height="${CARD_H}" rx="0 8 8 0" fill="#edf3fb"/>
-    ${image?`<image href="${image}" x="${stageX}" y="0" width="${stageW}" height="${CARD_H}" preserveAspectRatio="xMaxYMid meet"/>`:''}
-    <rect x="${stageX}" y="0" width="58" height="${CARD_H}" fill="url(#${fadeId})"/>
+    ${image?`<image href="${image}" x="${stageX}" y="0" width="${stageW}" height="${CARD_H}" preserveAspectRatio="xMidYMid slice"/>`:''}
+    <rect x="${stageX}" y="0" width="24" height="${CARD_H}" fill="url(#${fadeId})"/>
   </g>`;
 }
 
 function partySvg(party: Party, x: number, y: number, map: Map<string,string>, req: Request){
   const slots=(party.slots||[]).slice(0,5);
   let body="";
-  slots.forEach((slot,index)=>{ body+=slotSvg(slot,x+4,y+PARTY_HEADER_H+PARTY_BODY_PAD+index*(CARD_H+SLOT_GAP),map,req); });
+  slots.forEach((slot,index)=>{ body+=slotSvg(slot,x+6,y+PARTY_HEADER_H+PARTY_BODY_PAD+index*(CARD_H+SLOT_GAP),map,req); });
   return `<g>
-    <rect x="${x}" y="${y}" width="${PARTY_W}" height="${PARTY_H}" rx="14" fill="#f8fbff" stroke="#dbe5f2"/>
-    <text x="${x+16}" y="${y+27}" font-size="16" font-weight="900" fill="#1f2f46">${xml(`${party.partyNo||1}파티`)}</text>
-    <text x="${x+PARTY_W-16}" y="${y+27}" text-anchor="end" font-size="11" font-weight="800" fill="#667085">${Number(party.filled||0)} / ${Number(party.capacity||5)}</text>
+    <rect x="${x}" y="${y}" width="${PARTY_W}" height="${PARTY_H}" rx="12" fill="#f8fbff" fill-opacity=".86" stroke="#dbe5f2"/>
+    <text x="${x+13}" y="${y+25}" font-size="15" font-weight="1000" fill="#1f2f46">${xml(`${party.partyNo||1}파티`)}</text>
+    <text x="${x+PARTY_W-13}" y="${y+25}" text-anchor="end" font-size="10.5" font-weight="900" fill="#667085">${Number(party.filled||0)}/${Number(party.capacity||5)}명</text>
     <line x1="${x}" y1="${y+PARTY_HEADER_H}" x2="${x+PARTY_W}" y2="${y+PARTY_HEADER_H}" stroke="#e3eaf4"/>
     ${body}
   </g>`;
@@ -322,49 +361,73 @@ function partySvg(party: Party, x: number, y: number, map: Map<string,string>, r
 function forceSvg(force: Force, x: number, y: number, map: Map<string,string>, req: Request){
   const parties=normalizeParties(force);
   const filled=Number(force.characterCount||filledCount(force));
-  const meta=`${filled} / 10 · ${Number(force.partyCount||2)}파티 · 평균 ${fmt(force.averagePower)}`;
-  const bodyY=y+FORCE_HEADER_H+12;
+  const powerIcon=map.get(POWER_ICON_URL)||"";
+  const title=forceName(force);
+  const titleWidth=Math.min(142,Math.max(78,Array.from(title).length*25));
+  const bodyY=y+FORCE_HEADER_H+10;
   return `<g>
-    <rect x="${x}" y="${y}" width="${FORCE_W}" height="${FORCE_H}" rx="16" fill="#ffffff" stroke="#d9e2f0" stroke-width="1.5"/>
-    <text x="${x+18}" y="${y+28}" font-size="20" font-weight="900" fill="#1f2f46">${xml(forceName(force))}</text>
-    <text x="${x+18}" y="${y+49}" font-size="10.5" font-weight="800" fill="#667085">${xml(meta)}</text>
+    <rect x="${x}" y="${y}" width="${FORCE_W}" height="${FORCE_H}" rx="16" fill="#ffffff" fill-opacity=".84" stroke="#d9e2f0" stroke-width="1.5"/>
+    <text x="${x+16}" y="${y+40}" font-size="25" font-weight="1000" fill="#1f2f46">${xml(title)}</text>
+    <text x="${x+16+titleWidth}" y="${y+35}" font-size="11.5" font-weight="900" fill="#64748b">${filled}/10명 · 평균 전투력</text>
+    ${powerIcon?`<image href="${powerIcon}" x="${x+16+titleWidth+137}" y="${y+20}" width="18" height="18" preserveAspectRatio="xMidYMid meet"/>`:''}
+    <text x="${x+16+titleWidth+159}" y="${y+35}" font-size="12.5" font-weight="1000" fill="#556b93">${xml(fmtPowerK(force.averagePower))}</text>
     <line x1="${x}" y1="${y+FORCE_HEADER_H}" x2="${x+FORCE_W}" y2="${y+FORCE_HEADER_H}" stroke="#e4ebf4"/>
     ${partySvg(parties[0],x+12,bodyY,map,req)}
     ${partySvg(parties[1],x+12+PARTY_W+PARTY_GAP,bodyY,map,req)}
   </g>`;
 }
 
-async function renderForceSvg(force: Force, req: Request){
-  const map=await assetMap([force],req);
-  const width=FORCE_W+24;
-  const height=FORCE_H+24;
+function svgDefs(){
+  return `<defs>
+    <linearGradient id="canvasWash" x1="0" x2="1" y1="0" y2="1"><stop offset="0%" stop-color="#f7f9fc"/><stop offset="52%" stop-color="#ffffff"/><stop offset="100%" stop-color="#eef3fb"/></linearGradient>
+    <linearGradient id="profileFade" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#ffffff" stop-opacity=".96"/><stop offset="48%" stop-color="#ffffff" stop-opacity=".68"/><stop offset="100%" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
+    <linearGradient id="profileFadeMain" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#edf1ff" stop-opacity=".98"/><stop offset="48%" stop-color="#edf1ff" stop-opacity=".72"/><stop offset="100%" stop-color="#edf1ff" stop-opacity="0"/></linearGradient>
+    <clipPath id="canvasClip"><rect width="100%" height="100%" rx="0"/></clipPath>
+  </defs>`;
+}
+function bossBackdropSvg(sanctuaryCode: string, scope: "team"|"force", width: number, height: number, map: Map<string,string>, req: Request){
+  const code=normalizedSanctuaryCode(sanctuaryCode);
+  const image=map.get(bossArtUrl(code,req))||"";
+  if(!image) return "";
+  const presets: Record<string,{scale:number,x:number,y:number}> = scope==="team"
+    ? {rudra:{scale:1.16,x:-.08,y:-.03},bagot:{scale:1.23,x:-.11,y:-.08},kaldrix:{scale:1.20,x:-.06,y:-.02}}
+    : {rudra:{scale:1.58,x:-.30,y:-.13},bagot:{scale:1.50,x:-.08,y:-.26},kaldrix:{scale:1.66,x:-.44,y:-.08}};
+  const preset=presets[code]||(scope==="team"?{scale:1.18,x:-.09,y:-.04}:{scale:1.55,x:-.26,y:-.12});
+  return `<g clip-path="url(#canvasClip)" opacity=".30"><image href="${image}" x="${Math.round(width*preset.x)}" y="${Math.round(height*preset.y)}" width="${Math.round(width*preset.scale)}" height="${Math.round(height*preset.scale)}" preserveAspectRatio="xMidYMid slice"/></g>`;
+}
+
+async function renderForceSvg(force: Force, req: Request, sanctuaryCode: string){
+  const map=await assetMap([force],req,sanctuaryCode);
+  const width=FORCE_W+CANVAS_PAD*2;
+  const height=FORCE_H+CANVAS_PAD*2;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-    <defs>
-      <linearGradient id="profileFade" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#ffffff" stop-opacity="1"/><stop offset="42%" stop-color="#ffffff" stop-opacity=".80"/><stop offset="78%" stop-color="#ffffff" stop-opacity=".26"/><stop offset="100%" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
-      <linearGradient id="profileFadeMain" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#fffaf0" stop-opacity="1"/><stop offset="42%" stop-color="#fffaf0" stop-opacity=".82"/><stop offset="78%" stop-color="#fffaf0" stop-opacity=".28"/><stop offset="100%" stop-color="#fffaf0" stop-opacity="0"/></linearGradient>
-    </defs>
-    <rect width="100%" height="100%" fill="#ffffff"/>
+    ${svgDefs()}
+    <rect width="100%" height="100%" fill="url(#canvasWash)"/>
+    ${bossBackdropSvg(sanctuaryCode,"force",width,height,map,req)}
     <style>text{font-family:"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",Arial,sans-serif}</style>
-    ${forceSvg(force,12,12,map,req)}
+    ${forceSvg(force,CANVAS_PAD,CANVAS_PAD,map,req)}
   </svg>`;
 }
 
-async function renderTeamSvg(group: TeamGroup, forces: Force[], req: Request){
-  const map=await assetMap(forces,req);
-  const groupHeader=58;
-  const gap=14;
-  const width=FORCE_W+24;
-  const height=groupHeader+12+forces.length*FORCE_H+Math.max(0,forces.length-1)*gap+12;
-  const cards=forces.map((force,index)=>forceSvg(force,12,groupHeader+12+index*(FORCE_H+gap),map,req)).join("");
+async function renderTeamSvg(group: TeamGroup, forces: Force[], req: Request, sanctuaryCode: string){
+  const map=await assetMap(forces,req,sanctuaryCode);
+  const columns=forces.length>1?2:1;
+  const rows=Math.ceil(forces.length/columns);
+  const width=CANVAS_PAD*2+columns*FORCE_W+Math.max(0,columns-1)*TEAM_COLUMN_GAP;
+  const height=TEAM_HEADER_H+CANVAS_PAD+rows*FORCE_H+Math.max(0,rows-1)*TEAM_COLUMN_GAP+CANVAS_PAD;
+  const cards=forces.map((force,index)=>{
+    const column=index%columns;
+    const row=Math.floor(index/columns);
+    return forceSvg(force,CANVAS_PAD+column*(FORCE_W+TEAM_COLUMN_GAP),TEAM_HEADER_H+CANVAS_PAD+row*(FORCE_H+TEAM_COLUMN_GAP),map,req);
+  }).join("");
+  const title=`${safeText(group.teamGroupName||group.operatingTeamName||"운영 팀")} (${forces.length}포스)`;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-    <defs>
-      <linearGradient id="profileFade" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#ffffff" stop-opacity="1"/><stop offset="42%" stop-color="#ffffff" stop-opacity=".80"/><stop offset="78%" stop-color="#ffffff" stop-opacity=".26"/><stop offset="100%" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
-      <linearGradient id="profileFadeMain" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#fffaf0" stop-opacity="1"/><stop offset="42%" stop-color="#fffaf0" stop-opacity=".82"/><stop offset="78%" stop-color="#fffaf0" stop-opacity=".28"/><stop offset="100%" stop-color="#fffaf0" stop-opacity="0"/></linearGradient>
-    </defs>
-    <rect width="100%" height="100%" fill="#ffffff"/>
+    ${svgDefs()}
+    <rect width="100%" height="100%" fill="url(#canvasWash)"/>
+    ${bossBackdropSvg(sanctuaryCode,"team",width,height,map,req)}
     <style>text{font-family:"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",Arial,sans-serif}</style>
-    <text x="14" y="31" font-size="22" font-weight="900" fill="#1f2f46">${xml(group.teamGroupName||group.operatingTeamName||'운영 팀')}</text>
-    <text x="14" y="49" font-size="10.5" font-weight="800" fill="#667085">${xml(`${forces.length}개 포스`)}</text>
+    <rect x="${CANVAS_PAD}" y="13" width="${width-CANVAS_PAD*2}" height="48" rx="13" fill="#ffffff" fill-opacity=".80" stroke="#dce5f2"/>
+    <text x="${CANVAS_PAD+16}" y="47" font-size="28" font-weight="1000" fill="#1f2f46">${xml(title)}</text>
     ${cards}
   </svg>`;
 }
@@ -395,9 +458,11 @@ Deno.serve(async(req: Request)=>{
     const body=await req.json().catch(()=>({})) as Record<string,unknown>;
     const scope=safeText(body.scope||"force");
     const managementSnapshot=body.managementSnapshot||body.management_snapshot;
+    const requestedSanctuaryCode=normalizedSanctuaryCode(body.sanctuaryId||body.sanctuary_id);
+    const sanctuaryCode=managementSnapshot?requestedSanctuaryCode:await resolveSanctuaryId(requestedSanctuaryCode,req);
     const groups=managementSnapshot
       ? [managementSnapshotGroup(managementSnapshot)]
-      : normalizeTeamGroups(await getSanctuaryData(await resolveSanctuaryId(safeText(body.sanctuaryId||body.sanctuary_id),req),req));
+      : normalizeTeamGroups(await getSanctuaryData(sanctuaryCode,req));
     let svg="";
     let filename="kinojo-sanctuary.png";
 
@@ -407,14 +472,14 @@ Deno.serve(async(req: Request)=>{
       if(!group) return json({ok:false,message:"요청한 운영 팀을 찾지 못했습니다.",teamGroupNo},404);
       const forces=(group.forces||[]).slice().sort((a,b)=>forceNo(a)-forceNo(b));
       if(!forces.length) return json({ok:false,message:"복사할 포스 데이터가 없습니다.",teamGroupNo},404);
-      svg=await renderTeamSvg(group,forces,req);
+      svg=await renderTeamSvg(group,forces,req,sanctuaryCode);
       filename=safeText(body.filename||`kinojo-team-${teamGroupNo}.png`);
     }else{
       const found=findRequestedForce(groups,body);
       if(!found.force){
         return json({ok:false,message:"요청한 포스를 찾지 못했습니다.",teamGroupNo:found.requestedGroupNo,forceId:found.requestedForceId,teamNo:found.requestedTeamNo,forceNo:found.requestedForceNo,forceName:found.requestedForceName},404);
       }
-      svg=await renderForceSvg(found.force,req);
+      svg=await renderForceSvg(found.force,req,sanctuaryCode);
       filename=safeText(body.filename||`kinojo-force-${forceId(found.force)||forceNo(found.force)}.png`);
     }
 
@@ -423,9 +488,9 @@ Deno.serve(async(req: Request)=>{
     // but expose an ASCII-only fallback filename so Korean team names cannot
     // make an otherwise valid legacy image response fail at the last step.
     const headerFilename=safeFilename.replace(/[^\x20-\x7e]+/g,"").replace(/^-+|-+$/g,"")||"kinojo-sanctuary.svg";
-    return new Response(svg,{status:200,headers:{...CORS_HEADERS,"content-type":"image/svg+xml; charset=utf-8","cache-control":"no-store","x-kinojo-renderer":"sanctuary-web-layout-svg-v2","x-kinojo-filename":headerFilename}});
+    return new Response(svg,{status:200,headers:{...CORS_HEADERS,"content-type":"image/svg+xml; charset=utf-8","cache-control":"no-store","x-kinojo-renderer":"sanctuary-stage12-layout-svg-v3","x-kinojo-filename":headerFilename}});
   }catch(err){
     console.error("KINOJO sanctuary-copy-render failed",err);
-    return json({ok:false,message:String((err as Error)?.message||err),renderer:"sanctuary-web-layout-svg-v2",version:"20260831_01"},500);
+    return json({ok:false,message:String((err as Error)?.message||err),renderer:"sanctuary-stage12-layout-svg-v3",version:"20260901_01"},500);
   }
 });

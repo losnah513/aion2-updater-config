@@ -1,14 +1,15 @@
 /*
  * KINOJO Sanctuary management copy bridge.
- * The copied pixels are rendered by the original sanctuary-copy-render SVG
- * implementation. This file only adapts the new Server team snapshot to the
- * retired renderer contract; it must not invent a second image layout.
+ * The copied pixels are rendered by the shared sanctuary-copy-render SVG
+ * implementation. This bridge only adapts the current Server team snapshot
+ * and selected sanctuary to the image contract.
  */
 (function(){
   'use strict';
 
   const EDGE_FUNCTION_NAME='sanctuary-copy-render';
   const SNAPSHOT_CONTRACT='KINOJO_SANCTUARY_MANAGEMENT_COPY_V1';
+  const CLASS_NAME_BY_CODE=Object.freeze({GLADIATOR:'검성',TEMPLAR:'수호성',ASSASSIN:'살성',RANGER:'궁성',ELEMENTALIST:'정령성',SORCERER:'마도성',CLERIC:'치유성',CHANTER:'호법성',FIGHTER:'권성'});
   const bridge=()=>window.KinojoSanctuaryManagementCopyBridge;
   const text=value=>String(value??'').replace(/\s+/g,' ').trim();
   const number=value=>Number.isFinite(Number(value))?Number(value):0;
@@ -89,6 +90,8 @@
           slots:(Array.isArray(party?.slots)?party.slots:[]).map(slot=>({
             slotNo:number(slot?.slotNo),
             occupied:slot?.occupied===true,
+            requiredClassCode:text(slot?.requiredClassCode).toUpperCase(),
+            requiredClassName:CLASS_NAME_BY_CODE[text(slot?.requiredClassCode).toUpperCase()]||'',
             character:slot?.occupied===true?characterSnapshot(slot.character):null
           }))
         }))
@@ -99,8 +102,10 @@
   function buildPayload(team,targetForce){
     const teamId=number(team?.teamId);
     const forceId=targetForce?String(targetForce.forceId||''):'';
+    const sanctuary=bridge()?.selectedSanctuary?.()||{};
     return {
       scope:targetForce?'force':'team',
+      sanctuaryId:text(sanctuary.code||sanctuary.id).toLowerCase(),
       teamGroupNo:teamId,
       teamGroupName:text(team?.title),
       forceId:forceId||undefined,
@@ -138,7 +143,7 @@
   function openPreview(blob,filename){
     document.querySelector('.sanctuary-management-copy-preview')?.remove();
     const imageUrl=URL.createObjectURL(blob);const layer=document.createElement('section');layer.className='sanctuary-management-copy-preview';
-    layer.innerHTML='<div class="sanctuary-management-copy-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="sanctuaryCopyPreviewTitle"><header><strong id="sanctuaryCopyPreviewTitle">기존 성역 복사 이미지 미리보기</strong><button type="button" data-copy-close aria-label="닫기">×</button></header><div class="sanctuary-management-copy-preview-body"><img src="'+escapeHtml(imageUrl)+'" alt="기존 성역 레이아웃으로 생성한 팀 편성 이미지"></div><footer><span>브라우저가 자동 복사를 막은 경우 다시 복사하거나 PNG로 저장할 수 있습니다.</span><div><button type="button" class="is-primary" data-copy-retry>이미지 복사</button><button type="button" data-copy-download>PNG 저장</button></div></footer></div>';
+    layer.innerHTML='<div class="sanctuary-management-copy-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="sanctuaryCopyPreviewTitle"><header><strong id="sanctuaryCopyPreviewTitle">성역 편성 이미지 미리보기</strong><button type="button" data-copy-close aria-label="닫기">×</button></header><div class="sanctuary-management-copy-preview-body"><img src="'+escapeHtml(imageUrl)+'" alt="성역 팀·포스 편성 이미지"></div><footer><span>브라우저가 자동 복사를 막은 경우 다시 복사하거나 PNG로 저장할 수 있습니다.</span><div><button type="button" class="is-primary" data-copy-retry>이미지 복사</button><button type="button" data-copy-download>PNG 저장</button></div></footer></div>';
     const close=()=>{URL.revokeObjectURL(imageUrl);layer.remove();};
     layer.querySelector('[data-copy-close]').addEventListener('click',close);layer.addEventListener('click',event=>{if(event.target===layer)close();});
     layer.querySelector('[data-copy-download]').addEventListener('click',()=>downloadBlob(blob,filename));
@@ -159,7 +164,7 @@
       await writeClipboard(imagePromise);await imagePromise;document.documentElement.dataset.sanctuaryCopyState='copied';
       notify(force?'포스 이미지가 클립보드에 복사되었습니다.':'팀 전체 이미지가 클립보드에 복사되었습니다.');
     }catch(error){
-      try{const result=await imagePromise;document.documentElement.dataset.sanctuaryCopyState='preview';openPreview(result.blob,result.filename||payload.filename);notify('기존 성역 이미지가 생성되었습니다. 미리보기에서 복사를 완료해 주세요.','warning');}
+      try{const result=await imagePromise;document.documentElement.dataset.sanctuaryCopyState='preview';openPreview(result.blob,result.filename||payload.filename);notify('성역 편성 이미지가 생성되었습니다. 미리보기에서 복사를 완료해 주세요.','warning');}
       catch(renderError){document.documentElement.dataset.sanctuaryCopyState='error';notify(text(renderError?.message||error?.message)||'이미지 생성에 실패했습니다.','error');}
     }finally{button.disabled=false;button.removeAttribute('aria-busy');button.innerHTML=oldHtml;}
   }
@@ -170,7 +175,7 @@
     document.addEventListener('click',event=>{const button=event.target.closest?.('[data-sanctuary-copy-team]');if(!button)return;document.documentElement.dataset.sanctuaryCopyLast=button.dataset.sanctuaryCopyForce?'force':'team';event.preventDefault();event.stopPropagation();copyFromButton(button);},true);
   }
 
-  window.KinojoSanctuaryManagementCopy=Object.freeze({copyFromButton,renderPng,buildPayload,version:'20260831_01_server_legacy_renderer'});
+  window.KinojoSanctuaryManagementCopy=Object.freeze({copyFromButton,renderPng,buildPayload,version:'20260901_01_stage12_renderer'});
   document.documentElement.dataset.sanctuaryCopyReady='true';
   bind();
 })();

@@ -183,3 +183,49 @@ body.sanctuary-management-force-overview-open{overflow:hidden}
 
 @media(max-width:560px){.sanctuary-management-force-slot.is-class-slot{min-height:50px}.sanctuary-management-force-slot.is-class-slot .sanctuary-management-force-slot-icon{left:-4px;width:62px;height:62px}.sanctuary-management-force-slot-recruitment{font-size:clamp(12px,4.2vw,16px)}.sanctuary-management-alt-tooltip>span{font-size:9px}.sanctuary-management-alt-tooltip>span>b{font-size:11px}.sanctuary-management-alt-tooltip>strong{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.sanctuary-management-force-card,.sanctuary-management-force-party,.sanctuary-management-force-slot,.sanctuary-management-alt-tooltip{transition:none}.sanctuary-management-force-slot:not(.is-occupied)::after{animation:none}}
+
+/* Stage 12: keep both parties beside each other on narrow public screens.
+   Density comes from reducing nested team/force/party padding and stacking the
+   compact identity rows; no horizontal scroller or transformed card is used. */
+@media(max-width:560px){
+  .sanctuary-management-team-panel{padding:11px}
+  .sanctuary-management-team-card{padding:10px 8px}
+  .sanctuary-management-force-carousel{margin-top:5px}
+  .sanctuary-management-force-card{padding:8px;border-radius:14px}
+  .sanctuary-management-force-card-head{padding-bottom:8px}
+  .sanctuary-management-force-card-head strong{font-size:14px}
+  .sanctuary-management-force-card-head em{font-size:11px}
+  .sanctuary-management-force-title-row{column-gap:5px}
+  .sanctuary-management-force-difficulty{padding:3px 5px;font-size:7.5px}
+  .sanctuary-management-force-average{font-size:8px}
+  .sanctuary-management-force-parties{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;margin-top:7px}
+  .sanctuary-management-force-party{min-width:0;padding:4px;gap:3px;border-radius:9px}
+  .sanctuary-management-force-party-head{gap:3px;padding:0 1px 2px}
+  .sanctuary-management-force-party-head strong{font-size:9px}
+  .sanctuary-management-force-party-head small{font-size:7.5px}
+  .sanctuary-management-force-slot{min-width:0;min-height:42px;padding:3px;grid-template-columns:26px minmax(0,1fr);gap:3px;border-radius:8px}
+  .sanctuary-management-force-slot::before{font-size:27px}
+  .sanctuary-management-force-slot-icon{width:26px;height:26px;border-radius:0}
+  .sanctuary-management-force-slot-copy{min-width:0;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name server" "power power";column-gap:3px;row-gap:1px}
+  .sanctuary-management-force-slot-name{width:auto;max-width:none;font-size:9px}
+  .sanctuary-management-force-slot-server{max-width:3.8em;font-size:7.5px}
+  .sanctuary-management-force-slot-power{font-size:8.5px}
+  .sanctuary-management-power-value{gap:2px}.sanctuary-management-power-value img{width:10px;height:10px}
+  .sanctuary-management-force-card-state{margin-top:7px;padding-top:7px;font-size:9px}
+  .sanctuary-management-force-slot.is-class-slot{min-height:46px}
+  .sanctuary-management-force-slot.is-class-slot .sanctuary-management-force-slot-icon{left:-3px;width:50px;height:50px}
+  .sanctuary-management-force-slot-recruitment{font-size:clamp(9px,3.2vw,12px)}
+}
+@media(max-width:350px){
+  .sanctuary-management-team-panel{padding:8px}
+  .sanctuary-management-team-card{padding:8px 5px}
+  .sanctuary-management-team-title-band{padding:7px}
+  .sanctuary-management-force-card{padding:6px}
+  .sanctuary-management-force-party{padding:3px}
+  .sanctuary-management-force-slot{min-height:40px;padding:2px;grid-template-columns:24px minmax(0,1fr);gap:2px}
+  .sanctuary-management-force-slot-icon{width:24px;height:24px}
+  .sanctuary-management-force-slot-copy{column-gap:2px}
+  .sanctuary-management-force-slot-name{font-size:8.5px}
+  .sanctuary-management-force-slot-server{max-width:3.5em;font-size:7px}
+  .sanctuary-management-force-slot-power{font-size:8px}
+}

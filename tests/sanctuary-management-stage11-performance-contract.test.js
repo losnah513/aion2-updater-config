@@ -76,7 +76,7 @@ for(const asset of ['rudra.webp','bagot.webp','kaldrix.webp']){
 
 for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
-  assert.ok(html.includes('sanctuary-management-support.css?cache=2026083107'),`${page}: Stage 11 boss visual CSS cache key missing`);
+  assert.ok(html.includes('sanctuary-management-support.css?cache=2026090101'),`${page}: Stage 11 boss visual CSS cache key missing`);
 }
 
 console.log('KINOJO Sanctuary Stage 11 selected bootstrap and force layout contract: PASS');

@@ -68,7 +68,7 @@ assert.ok(commonUi.includes('const canOpenSanctuaryManagement=true'),'management
 
 for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
-  for(const token of ['sanctuary-management-support.css?cache=2026083107','sanctuary-management-support.js?cache=2026082923','kinojo-supabase-features.js?cache=2026083108'])assert.ok(html.includes(token),`${page}: missing ${token}`);
+  for(const token of ['sanctuary-management-support.css?cache=2026090101','sanctuary-management-support.js?cache=2026082923','kinojo-supabase-features.js?cache=2026083108'])assert.ok(html.includes(token),`${page}: missing ${token}`);
 }
 
 console.log('KINOJO sanctuary management Stage 4 complete v436 contract: PASS');
