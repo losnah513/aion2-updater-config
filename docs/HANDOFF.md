@@ -19,6 +19,13 @@
 - 성역 Stage 9 후속은 **77/77 CLOSED**다. 활성 제품 계약은 Edge `sanctuary-management` API 2.2 / DB452이며, 입장 아이템 레벨·성역 3 난이도·랜덤 부캐·연결 부캐 노출·전투력/아이템 레벨 공식 파싱·고밀도 지원 카드 기준은 `docs/SANCTUARY_MANAGEMENT_STAGE9_CLOSEOUT_20260830.md`를 따른다. Stage 7 백업·복구 경계는 기존 종료 문서를 계속 따른다.
 - 레기온 트리 조직도 UI 후속은 Edge `kinojo-legion-tree` v9 / API 1.8 / organization DB459가 운영 기준이다. PC 편집 모달 560px, 레기온 버튼식 전환, 선택 레기온 내부 이름 조회, 명시적 `소속 외`, 단계명 표시, 같은 단계 수평 부서 카드와 직각 분기선까지 구현·운영 계약 검증을 완료했다. 프로젝트 누적 진행도는 **102/139**, 다음 본 계획 단계는 **거-1**로 유지한다.
 
+## 공통 PC 사이드 배너·서브바 sticky 회귀 수정 · 2026-09-01
+
+- PR #379에서 PC 사이드 배너 좌표를 페이지마다 고정하려고 `html`에 `overflow-y:scroll`을 강제한 뒤, staged shell의 `body padding-top:69px`와 서브바 `sticky top:69px` 기준이 중복되어 순위·성역 서브바가 y=138px로 내려가는 회귀가 생겼다.
+- 페이지별 `margin/top` 보정은 추가하지 않는다. 공통 배너 CSS의 루트 스크롤 강제를 제거하고, 배너 JS가 실제 플랫폼 스크롤바 폭을 한 번 측정해 공통 1180px 가상 프레임과 좌우 고정 레일만 계산한다. 페이지의 루트 스크롤·sticky 계약은 기존 staged shell이 계속 단독 소유한다.
+- 로컬 Chrome 1920px에서 순위·성역 모두 topbar bottom=69, subbar top=69이며 좌·우 배너는 x=49/1557, y=121로 동일하다. 폴드 펼침 884×1104·1104×884 모바일 페이지는 가로 overflow 0, PC 배너 DOM 0이며 검색·필터·상태 영역 겹침이 없다.
+- 회귀 기준은 `tests/pc-banner-slot-contract.test.js`, `tests/staged-page-contract.test.js`, `tests/banner-pc-side-live-e2e.js`다. CSS cache는 `2026090102`, JS cache는 `2026090103`이며 DB·Edge·배너 Manifest·운영 데이터는 변경하지 않는다.
+
 ## 레기온 트리 조직도 편집·부서 배치 후속 · 2026-09-01
 
 - 편집기의 레기온 선택은 드롭다운 대신 `깡 / 낮 / 밤 / 키나노동조합` 버튼으로 전환했다. 구성원 지정도 드롭다운·일괄 select 대신 캐릭터 이름 입력과 `조회`를 사용하며, 조회 범위는 현재 선택한 레기온의 이미 로드된 구성원뿐이라 추가 Server 요청이나 외부 캐릭터 혼입이 없다.

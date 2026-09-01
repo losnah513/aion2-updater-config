@@ -13,7 +13,7 @@ const stagedJs = read('ui/kinojo-staged-loading.js');
 assert.match(css,/@media \(min-width:1840px\)/, 'Future image slots must remain PC-only');
 assert.match(css,/\.kinojo-pc-banner-slot\{[\s\S]*?width:300px;[\s\S]*?height:715px;/, 'PC slots must use the fixed 300 × 715 reference size');
 assert.match(css,/\.kinojo-pc-banner-slot\{[\s\S]*?position:fixed;/, 'PC slots must stay fixed while the document scrolls');
-assert.match(css,/html:has\(\.kinojo-pc-banner-host\)\{\s*overflow-y:scroll;\s*scrollbar-gutter:stable;/, 'PC banner pages must reserve a stable scrollbar gutter so shared rails do not shift between pages');
+assert.equal(css.includes('html:has(.kinojo-pc-banner-host)'), false, 'PC banners must not turn the root into a scroll container and detach sticky subbars');
 assert.match(css,/border-radius:4px;/, 'PC slots must use only slightly rounded corners');
 assert.match(css,/body \.kinojo-pc-banner-host\.kinojo-pc-standard-host\{[\s\S]*?width:1180px!important;[\s\S]*?max-width:1180px!important;/, 'Target PC pages must share the fixed 1180px content frame');
 assert.equal(css.includes('left:calc((300px + 14px) / 2)'), false, 'The obsolete one-sided HOF banner offset must not remain');
@@ -27,12 +27,13 @@ assert.match(css,/body\.kinojo-page-hall \.wrap\{\s*padding-top:0!important;/, '
 assert.ok(js.includes("const label=width+' × '+height") && js.includes('slot.textContent!==label'), 'The slot center must display only its measured size without a mutation loop');
 assert.ok(js.includes('const resolutionThreshold=1808') && js.includes('scaledClientWidth=clientWidth*devicePixelRatio'), 'PC device-pixel eligibility calculation missing');
 assert.ok(js.includes("width*referenceHeight/referenceWidth") && js.includes("width>=referenceWidth?'full':'scaled'"), 'Proportional full-creative scaling missing');
-assert.ok(js.includes('const standardFrameWidth=1180') && js.includes(':(clientWidth-frameWidth)/2'), 'PC banners must stay on the shared fixed PC frame');
-assert.ok(js.includes('usesRenderedStandardFrame') && js.includes('hostRect.left'), 'Normal desktop mode must preserve the existing rendered 1180px host rail');
+assert.ok(js.includes('const standardFrameWidth=1180') && js.includes('(layoutWidth-frameWidth)/2'), 'PC banners must stay on the shared fixed PC frame');
+assert.ok(js.includes('function scrollbarWidth()') && js.includes('function layoutViewportWidth()'), 'Shared banner rails must reserve the measured scrollbar width without mutating the root scroller');
+assert.ok(js.includes("setData(host,'kinojoPcBannerLayoutWidth'") && js.includes("setData(host,'kinojoPcBannerScrollbarWidth'"), 'The stable banner layout width must remain observable to live regression tests');
 assert.ok(js.includes('const standardTop=121') && js.includes('adaptive?standardTop'), 'PC banners must keep the same shared top coordinate between pages');
 assert.ok(js.includes("setData(host,'kinojoPcBannerMode','resolution')"), 'Every desktop banner host must opt into the common resolution mode');
 assert.equal(js.includes('kinojoPcBannerAnchor'),false,'Page-specific content widths must not anchor shared PC banners');
-assert.ok(js.includes("--kinojo-ranking-safe-board-width") && js.includes("clientWidth-(minimumRail+compactGap)*2"), '200% zoom board safety reservation missing');
+assert.ok(js.includes("--kinojo-ranking-safe-board-width") && js.includes("layoutWidth-(minimumRail+compactGap)*2"), '200% zoom board safety reservation missing');
 assert.ok(js.includes("visualViewport?.addEventListener?.('resize',refresh"), 'Browser zoom resize refresh missing');
 assert.ok(js.includes("new ResizeObserver(()=>refresh())") && js.includes("observe(document.documentElement)"), 'Viewport width observer missing');
 assert.match(stagedCss,/@media\(min-width:1840px\)\{\.kinojo-attached-subbar\.kinojo-standard-subbar\{height:52px!important;min-height:52px!important;max-height:52px!important;/, 'All target PC pages must share the same 52px subbar height at the 1920px layout');
@@ -47,9 +48,9 @@ const doubleSlotPages = [
 ];
 for (const file of doubleSlotPages) {
   const html = read(file);
-  const layoutCache='2026090101';
+  const layoutCache='2026090102';
   assert.ok(html.includes(`kinojo-pc-banners.css?cache=${layoutCache}`), `${file}: shared PC slot CSS is missing`);
-  const sizingCache='2026090102';
+  const sizingCache='2026090103';
   assert.ok(html.includes(`kinojo-pc-banners.js?cache=${sizingCache}`), `${file}: shared PC slot sizing script is missing`);
   assert.equal((html.match(/data-kinojo-pc-banner(?=[\s>])/g) || []).length, 2, `${file}: exactly one left and one right slot are required`);
   assert.match(html,/<aside class="kinojo-pc-banner-slot is-left" data-kinojo-pc-banner aria-hidden="true"><\/aside>/, `${file}: left slot must start empty`);
@@ -89,7 +90,7 @@ const windowMock={
 };
 const documentMock={
   readyState:'loading',
-  currentScript:{src:'https://kinojo.info/ui/kinojo-pc-banners.js?cache=2026090102'},
+  currentScript:{src:'https://kinojo.info/ui/kinojo-pc-banners.js?cache=2026090103'},
   documentElement:{clientWidth:1536},
   addEventListener:()=>{},
   querySelectorAll:()=>[]
@@ -111,8 +112,8 @@ assert.equal(resolutionHost.dataset.kinojoPcBannerVisible,'false','Narrow window
 
 const hofHtml = read('hof/index.html');
 const hofRender = read('hof/js/hall-render.js');
-assert.ok(hofHtml.includes('kinojo-pc-banners.css?cache=2026090101'), 'HOF PC slot CSS is missing');
-assert.ok(hofHtml.includes('kinojo-pc-banners.js?cache=2026090102'), 'HOF PC slot sizing script is missing');
+assert.ok(hofHtml.includes('kinojo-pc-banners.css?cache=2026090102'), 'HOF PC slot CSS is missing');
+assert.ok(hofHtml.includes('kinojo-pc-banners.js?cache=2026090103'), 'HOF PC slot sizing script is missing');
 assert.equal((hofRender.match(/kinojo-pc-standard-host/g) || []).length, 2, 'Both HOF render paths must opt into the unified 1180px PC frame');
 assert.equal((hofRender.match(/kinojo-pc-banner-slot is-left/g) || []).length, 2, 'Both HOF render paths must include one left slot');
 assert.equal((hofRender.match(/kinojo-pc-banner-slot is-right/g) || []).length, 2, 'Both HOF render paths must include one right slot');

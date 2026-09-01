@@ -22,6 +22,10 @@ const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 
 async function snapshot(page){
   return page.evaluate(()=>{
+    const topbar=document.querySelector('.kinojo-topbar');
+    const subbar=document.querySelector('.kinojo-attached-subbar');
+    const topbarRect=topbar?.getBoundingClientRect?.();
+    const subbarRect=subbar?.getBoundingClientRect?.();
     const slots=[...document.querySelectorAll('[data-kinojo-pc-banner]')].map(slot=>{
       const rect=slot.getBoundingClientRect();
       const host=slot.closest('.kinojo-pc-banner-host');
@@ -48,10 +52,18 @@ async function snapshot(page){
         mediaCount:slot.querySelectorAll('.kinojo-pc-banner-media').length,
         imageCount:slot.querySelectorAll('.kinojo-pc-banner-image').length,
         imageSrc:String(image?.currentSrc||image?.src||''),
+        layoutWidth:Number(host?.dataset?.kinojoPcBannerLayoutWidth||0),
+        scrollbarWidth:Number(host?.dataset?.kinojoPcBannerScrollbarWidth||0),
         host:hostRect?{left:hostRect.left,right:hostRect.right,top:hostRect.top,bottom:hostRect.bottom,width:hostRect.width,height:hostRect.height}:null,
       };
     });
-    return {href:location.href,pathname:location.pathname,width:innerWidth,height:innerHeight,clientWidth:document.documentElement.clientWidth,scrollY,slots};
+    return {
+      href:location.href,pathname:location.pathname,width:innerWidth,height:innerHeight,
+      clientWidth:document.documentElement.clientWidth,rootOverflowY:getComputedStyle(document.documentElement).overflowY,
+      scrollY,slots,
+      topbar:topbarRect?{top:topbarRect.top,bottom:topbarRect.bottom,height:topbarRect.height}:null,
+      subbar:subbarRect?{top:subbarRect.top,bottom:subbarRect.bottom,height:subbarRect.height}:null,
+    };
   });
 }
 
@@ -59,6 +71,9 @@ function verify(pageSpec,width,data){
   assert.equal(data.width,width,`${pageSpec.name} viewport width`);
   assert.deepEqual(data.slots.map(s=>s.code),pageSpec.slots,`${pageSpec.name} slot mapping`);
   assert.equal(data.slots.some(s=>s.code==='RIGHT'),pageSpec.slots.includes('RIGHT'),`${pageSpec.name} RIGHT presence`);
+  assert.notEqual(data.rootOverflowY,'scroll',`${pageSpec.name} root must not be forced into a scroll container`);
+  assert.ok(data.topbar&&data.subbar,`${pageSpec.name} shared topbar and attached subbar must exist`);
+  assert.ok(approx(data.subbar.top,data.topbar.bottom,1),`${pageSpec.name} subbar gap=${data.subbar.top-data.topbar.bottom}`);
 
   for(const slot of data.slots){
     if(width<1808){
@@ -79,8 +94,9 @@ function verify(pageSpec,width,data){
     assert.ok(slot.left>=-1&&slot.right<=width+1,`${pageSpec.name}:${slot.code} inside viewport ${slot.left}..${slot.right}/${width}`);
     assert.ok(slot.top>=13&&slot.bottom<=height-13,`${pageSpec.name}:${slot.code} vertical viewport ${slot.top}..${slot.bottom}`);
     assert.ok(slot.host,`${pageSpec.name}:${slot.code} host exists`);
-    const frameLeft=width>=1840&&approx(slot.host.width,1180,2)?slot.host.left:(data.clientWidth-1180)/2;
-    const frameRight=width>=1840&&approx(slot.host.width,1180,2)?slot.host.right:frameLeft+1180;
+    assert.ok(slot.layoutWidth>0,`${pageSpec.name}:${slot.code} stable layout width`);
+    const frameLeft=(slot.layoutWidth-1180)/2;
+    const frameRight=frameLeft+1180;
     const gap=slot.code==='LEFT'?frameLeft-slot.right:slot.left-frameRight;
     assert.ok(approx(gap,14,2),`${pageSpec.name}:${slot.code} shared frame gap=${gap}`);
     assert.ok(approx(slot.top,121,1),`${pageSpec.name}:${slot.code} shared top=${slot.top}`);
