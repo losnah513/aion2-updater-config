@@ -17,6 +17,7 @@ const searchRateMigration = fs.readFileSync(path.join(rootDir, 'supabase/migrati
 const candidateRegistrationMigration = fs.readFileSync(path.join(rootDir, 'supabase/migrations/20260831102651_legion_tree_candidate_registration_v458.sql'), 'utf8');
 const worker = fs.readFileSync(path.join(rootDir, 'supabase/functions/character-refresh-worker/index.ts'), 'utf8');
 const workflow = fs.readFileSync(path.join(rootDir, '.github/workflows/verify-legion-tree-pages.yml'), 'utf8');
+const viewerHarness = fs.readFileSync(path.join(rootDir, 'tests/legion-tree-viewer-layout-harness.html'), 'utf8');
 
 const treeRoot = {
   innerHTML: '',
@@ -56,6 +57,10 @@ vm.createContext(context);
 vm.runInContext(script, context, { filename: scriptPath });
 
 assert(window.KinojoLegionTree, 'KinojoLegionTree contract must be exported');
+assert(viewerHarness.includes('legion-tree.css?cache=2026090104'));
+assert(viewerHarness.includes('legion-tree.js?cache=2026090107'));
+assert(viewerHarness.includes('id="legionTreeViewerFade"'));
+assert(viewerHarness.includes("groupName:'소속 외'"));
 
 const names = ['깡', '낮', '밤', '키나노동조합'];
 const classes = ['검성', '치유성', '권성', '궁성'];
@@ -320,8 +325,11 @@ for (let index = 1; index <= 4; index += 1) {
 }
 assert.strictEqual((markup.match(/class="legion-tree-character /g) || []).length, 4);
 assert.strictEqual((markup.match(/data-role-key="default-terminal"/g) || []).length, 0);
-assert.strictEqual((markup.match(/class="legion-tree-stage is-departments"[^>]*><div class="legion-tree-stage-roles" data-role-count="1"/g) || []).length, 4);
+assert.strictEqual((markup.match(/class="legion-tree-stage is-terminal-branches"[^>]*><div class="legion-tree-stage-roles" data-role-count="1"/g) || []).length, 4);
+assert.strictEqual((markup.match(/data-legion-index="[1-3]"[^>]*aria-hidden="true"[^>]*hidden/g) || []).length, 3);
+assert(markup.includes('data-legion-index="0" data-legion-name="깡"'));
 assert(!markup.includes('<div class="legion-tree-role-plate"><strong>무소속</strong></div>'));
+assert(!markup.includes('legion-tree-department'));
 assert(markup.includes('/assets/images/classes/class_icon_gladiator.png'));
 assert(markup.includes('/assets/images/classes/class_icon_cleric.png'));
 assert(!markup.includes('본캐예시'));
@@ -406,8 +414,9 @@ fiveBranchPayload.legions[0].stages[2].roles[0].groups = Array.from({ length: 5 
 const fiveBranchMarkup = window.KinojoLegionTree.renderTreeMarkup(
   window.KinojoLegionTree.normalizeTreePayload(fiveBranchPayload)
 );
-assert(fiveBranchMarkup.includes('legion-tree-department is-unaffiliated'));
-assert.strictEqual((fiveBranchMarkup.match(/class="legion-tree-member-grid" data-branch-count="2"/g) || []).length, 8);
+assert(fiveBranchMarkup.includes('legion-tree-rank-branch is-unaffiliated'));
+assert.strictEqual((fiveBranchMarkup.match(/class="legion-tree-member-grid"/g) || []).length, 8);
+assert(!/class="legion-tree-member-grid"[^>]*data-branch-count=/.test(fiveBranchMarkup));
 
 const departmentPayload = JSON.parse(JSON.stringify(payload));
 departmentPayload.legions[0].stages[1].stageName = '부서장';
@@ -427,11 +436,13 @@ const departmentMarkup = window.KinojoLegionTree.renderTreeMarkup(
 assert(departmentMarkup.includes('data-role-count="4"'));
 assert(departmentMarkup.includes('style="--legion-tree-role-count:4"'));
 assert(departmentMarkup.includes('<div class="legion-tree-role-plate"><strong>기획부</strong></div>'));
-assert(!departmentMarkup.includes('<small>부서장</small><strong>기획부</strong>'));
-assert(departmentMarkup.includes('legion-tree-department is-default is-unaffiliated'));
-assert(departmentMarkup.includes('<div class="legion-tree-role-plate"><strong>무소속</strong></div>'));
-assert(departmentMarkup.includes('<div class="legion-tree-department-body"><strong>군단병</strong>'));
-assert(departmentMarkup.includes('legion-tree-department is-unaffiliated'));
+assert(!departmentMarkup.includes('부서장'));
+assert(!departmentMarkup.includes('legion-tree-department'));
+assert(departmentMarkup.includes('legion-tree-rank-branch is-unassigned'));
+assert(departmentMarkup.includes('<div class="legion-tree-affiliation-plate">무소속</div>'));
+assert(departmentMarkup.includes('<div class="legion-tree-affiliation-plate">소속 외</div>'));
+assert(departmentMarkup.includes('<div class="legion-tree-role-plate"><strong>군단병</strong></div>'));
+assert(departmentMarkup.includes('legion-tree-rank-branch is-unaffiliated'));
 assert(departmentMarkup.includes('data-member-count="1"'));
 assert(departmentMarkup.includes('기획원'));
 assert(departmentMarkup.includes('운영원'));
@@ -445,19 +456,73 @@ assert(nameBaseRule && !nameBaseRule[1].includes('mask-image'));
 assert(nameFadeRule && nameFadeRule[1].includes('-webkit-mask-image:linear-gradient'));
 assert(nameFadeRule && nameFadeRule[1].includes('mask-image:linear-gradient'));
 assert(!nameBaseRule[1].includes('text-overflow:ellipsis'));
-assert(css.includes('.legion-tree-member-grid{width:100%;display:grid;grid-template-columns:repeat(5,minmax(0,124px))'));
-assert(css.includes('.legion-tree-member-grid[data-member-count="1"]{grid-template-columns:124px!important}'));
-assert(css.includes('.legion-tree-member-grid[data-branch-count="2"]{grid-template-columns:repeat(3,minmax(0,124px))}'));
-assert(css.includes('.legion-tree-member-grid[data-branch-count="3"],.legion-tree-member-grid[data-branch-count="4"],.legion-tree-member-grid[data-branch-count="5"]{grid-template-columns:repeat(2,minmax(0,124px))}'));
-assert(css.includes('.legion-tree-stage-roles{position:relative;grid-template-columns:repeat(var(--legion-tree-role-count,1),minmax(220px,1fr))'));
+assert(css.includes('.legion-tree-member-grid{width:min(100%,652px);display:grid;grid-template-columns:repeat(auto-fit,124px)'));
+assert(!css.includes('.legion-tree-member-grid[data-member-count='));
+assert(!css.includes('.legion-tree-member-grid[data-branch-count='));
+assert(css.includes('grid-template-columns:repeat(var(--legion-tree-role-count,1),minmax(0,1fr))'));
 assert(css.includes('.legion-tree-stage-roles:not([data-role-count="1"])>.legion-tree-role:not(:last-child):after'));
 assert(!css.includes('.legion-tree-stage-roles:not([data-role-count="1"]):before'));
-assert(css.includes('.legion-tree-department-card'));
-assert(css.includes('.legion-tree-department.is-unaffiliated'));
+assert(!css.includes('.legion-tree-department-card'));
+assert(css.includes('.legion-tree-rank-branch'));
+assert(css.includes('.legion-tree-affiliation-plate'));
+assert(css.includes('.legion-tree-viewer-card{position:relative;height:clamp('));
+assert(css.includes('scrollbar-width:none'));
+assert(css.includes('.legion-tree-viewer-fade[data-visible="true"]{opacity:1}'));
 const mobileCss = css.slice(css.indexOf('@media(max-width:640px)'));
-assert(mobileCss.includes('.legion-tree-member-grid[data-branch-count="1"],.legion-tree-member-grid[data-branch-count="2"]{grid-template-columns:repeat(2,124px)'));
-assert(mobileCss.includes('.legion-tree-member-grid[data-branch-count="3"],.legion-tree-member-grid[data-branch-count="4"],.legion-tree-member-grid[data-branch-count="5"]{grid-template-columns:124px'));
-assert(mobileCss.includes('.legion-tree-role-groups[data-branch-count="2"],.legion-tree-role-groups[data-branch-count="3"],.legion-tree-role-groups[data-branch-count="4"],.legion-tree-role-groups[data-branch-count="5"]{grid-template-columns:1fr}'));
+assert(mobileCss.includes('.legion-tree-member-grid{gap:13px 7px}'));
+assert(mobileCss.includes('.legion-tree-viewer{grid-template-columns:32px minmax(0,1fr) 32px'));
+
+const viewerLegions = names.map(legionName => fakeElement({ dataset: { legionName }, hidden: false }));
+const viewerRoot = fakeElement({
+  dataset: {},
+  scrollTop: 40,
+  scrollHeight: 900,
+  clientHeight: 500,
+  querySelectorAll(selector) { return selector === '.legion-tree-legion' ? viewerLegions : []; }
+});
+const viewerFade = fakeElement({ dataset: {} });
+const viewerPrevious = fakeElement({ disabled: true });
+const viewerNext = fakeElement({ disabled: true });
+const viewerStatus = fakeElement();
+const viewerElements = {
+  '#legionTreeRoot': viewerRoot,
+  '#legionTreeViewerFade': viewerFade,
+  '#legionTreePrevBtn': viewerPrevious,
+  '#legionTreeNextBtn': viewerNext,
+  '#legionTreeViewerStatus': viewerStatus
+};
+const viewerWindow = { requestAnimationFrame(callback) { callback(); } };
+const viewerContext = {
+  window: viewerWindow,
+  document: {
+    readyState: 'loading',
+    addEventListener() {},
+    querySelector(selector) { return viewerElements[selector] || null; },
+    querySelectorAll() { return []; }
+  },
+  console,
+  Date,
+  Map,
+  Object,
+  Promise,
+  CustomEvent: function CustomEvent() {}
+};
+vm.createContext(viewerContext);
+vm.runInContext(script, viewerContext, { filename: scriptPath });
+assert.strictEqual(viewerWindow.KinojoLegionTree.showLegionAt(1), true);
+assert.strictEqual(viewerRoot.scrollTop, 0);
+assert.strictEqual(viewerRoot.dataset.activeLegionName, '낮');
+assert.strictEqual(viewerLegions.filter(item => !item.hidden).length, 1);
+assert.strictEqual(viewerLegions[1].attributes['aria-hidden'], 'false');
+assert.strictEqual(viewerPrevious.attributes['aria-label'], '이전 레기온: 깡');
+assert.strictEqual(viewerNext.attributes['aria-label'], '다음 레기온: 밤');
+assert.strictEqual(viewerStatus.textContent, '낮 레기온 · 2/4');
+assert.strictEqual(viewerFade.dataset.visible, 'true');
+viewerRoot.scrollTop = 400;
+assert.strictEqual(viewerWindow.KinojoLegionTree.updateViewerFade(), false);
+assert.strictEqual(viewerFade.dataset.visible, 'false');
+assert.strictEqual(viewerWindow.KinojoLegionTree.showLegionAt(-1), true);
+assert.strictEqual(viewerRoot.dataset.activeLegionName, '키나노동조합');
 
 assert.throws(
   () => window.KinojoLegionTree.normalizeTreePayload({ ...payload, legions: payload.legions.slice(0, 3) }),
@@ -505,6 +570,10 @@ window.KinojoSupabase = {
     assert(html.includes('id="legionTreeAltResults"'));
     assert(html.includes('id="legionTreeSearchCloseBtn"'));
     assert(html.includes('id="legionTreeAddProgress"'));
+    assert(html.includes('id="legionTreeViewer"'));
+    assert(html.includes('id="legionTreePrevBtn"'));
+    assert(html.includes('id="legionTreeNextBtn"'));
+    assert(html.includes('id="legionTreeViewerFade"'));
     assert(!html.includes('id="legionTreeServerHint"'));
     assert(html.includes('aria-describedby="legionTreeStatus"'));
     assert(/<\/section>\r?\n  <section class="legion-tree-search-results"/.test(html));
@@ -521,9 +590,9 @@ window.KinojoSupabase = {
     assert(!html.includes('본캐예시'));
     assert(html.includes('kinojo-character-reaction.css?cache=2026082201'));
     assert(html.includes('kinojo-character-reaction.js?cache=2026082701'));
-    assert(html.includes('legion-tree.css?cache=2026090103'));
+    assert(html.includes('legion-tree.css?cache=2026090104'));
     assert(html.includes('legion-tree-editor.js?cache=2026090105'));
-    assert(html.includes('legion-tree.js?cache=2026090106'));
+    assert(html.includes('legion-tree.js?cache=2026090107'));
     assert(html.includes('kinojo-supabase-features.js?cache=2026083108'));
     assert(!html.includes('legion-tree.js?cache=2026082403'));
   }
