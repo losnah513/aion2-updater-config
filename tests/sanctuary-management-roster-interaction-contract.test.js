@@ -67,7 +67,7 @@ for(const token of [
 for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
   assert.ok(html.includes('sanctuary-management-support.css?cache=2026090101'),`${page}: roster interaction CSS cache missing`);
-  assert.ok(html.includes('sanctuary-management.js?cache=2026083107'),`${page}: roster interaction JS cache missing`);
+  assert.ok(html.includes('sanctuary-management.js?cache=2026090101'),`${page}: roster interaction JS cache missing`);
   assert.equal((html.match(/altDetail=2026090101/g)||[]).length,2,`${page}: alt detail cache keys missing`);
 }
 

@@ -22,12 +22,12 @@ for(const token of [
 ])assert.ok(migration.includes(token),`v453 database contract missing ${token}`);
 
 for(const token of [
-  'const DATABASE_CONTRACT="457"',
+  'const DATABASE_CONTRACT="458"',
   'kinojo_sanctuary_management_linked_alts_v457',
   'kinojo_sanctuary_management_command_v454'
 ])assert.ok(edge.includes(token),`current Edge contract must retain v453 random-alt behavior through ${token}`);
 
-assert.ok(main.includes('const SCHEMA_VERSION=457'),'browser must require the current v457 contract');
+assert.ok(main.includes('const SCHEMA_VERSION=458'),'browser must require the current v457 contract');
 assert.ok(main.includes("character.randomClassCode=requiredClassCode"),'saved random-alt cards must recover their reserved class');
 
 for(const token of [

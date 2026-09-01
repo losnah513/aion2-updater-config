@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="../sanctuary-management/css/sanctuary-management.css">
   <link rel="stylesheet" href="../sanctuary-management/css/sanctuary-management-draft.css?stage9=2026083001">
   <link rel="stylesheet" href="../sanctuary-management/css/sanctuary-management-support.css?stage77=2026083001">
+  <link rel="stylesheet" href="../sanctuary-management/css/sanctuary-management-inline-slot.css">
   <link rel="stylesheet" href="../sanctuary-management/css/sanctuary-management-copy.css">
 </head>
 <body class="kinojo-sanctuary-management-page">
@@ -36,6 +37,8 @@
       const query=new URLSearchParams(location.search);
       const familyFixture=query.get('family')||'main';
       const pilotApproved=query.get('pilot')!=='0';
+      const editLocked=query.get('locked')==='1';
+      const canEdit=query.get('canEdit')!=='0';
       const transitionDelay=Math.min(2000,Math.max(0,Number(query.get('transitionDelay'))||0));
       const waitForTransition=()=>transitionDelay?new Promise(resolve=>setTimeout(resolve,transitionDelay)):Promise.resolve();
       let forceSequence=100;
@@ -76,8 +79,8 @@
         team.slotCount=team.forces.length*10;
         team.occupiedCount=team.forces.reduce((sum,force)=>sum+force.occupiedCount,0);
         team.vacancyCount=team.slotCount-team.occupiedCount;
-        team.canEdit=true;
-        team.canArchive=true;
+        team.canEdit=canEdit;
+        team.canArchive=canEdit;
         team.scheduleEditScopes=team.schedule?.kind==='WEEKLY'?['OCCURRENCE','FUTURE','ALL']:['OCCURRENCE','ALL'];
         team.supportCharacters=team.supportCharacters||{ownerResolved:true,code:'NOT_OPEN',candidateCount:0,characters:[]};
         team.supportBatches=team.supportBatches||[];
@@ -105,7 +108,7 @@
       const transitionTargets={proposalVersion:1,preserve:[{object:'public.sanctuary_master',rowCount:4,ids:[1,2,3,4],reason:'성역 1~4 공식 원본 유지'}],migrate:[],archive:[{object:'private.sanctuary_management_teams_v412',rowCount:3,ids:[6,7,8],reason:'시험 팀 이력 보관'}],initialize:[{object:'public.sanctuary_slots',rowCount:270,occupiedRowCount:101,occupiedIds:Array.from({length:101},(_,index)=>18238+index),reason:'기존 파티 편성 초기화'}],stop:[{object:'public.sanctuary_sheet_sync_jobs',rowCount:168,ids:Array.from({length:168},(_,index)=>index+1),reason:'성역 Sheet 동기화 중지'}],executionPolicy:'Stage 6에서는 실행하지 않습니다.'};
       const transitionReport={ok:true,apiVersion:1.7,schemaVersion:445,scopeHash:'a'.repeat(64),unresolvedCount:0,readyForApproval:true,approval:{approved:false},rollback:{restored:true,closedAt:'2026-08-29T04:00:00Z',restoredAt:'2026-08-29T04:01:00Z'},targets:transitionTargets,cardComparison:{explanation:'두 데이터 영역은 이관 전 병행 운영 범위이며 신규 정원 불변 조건을 비교합니다.',legacy:{teamCount:27,partyCount:54,slotCount:270,occupiedSlotCount:101},server:{teamCount:3,forceCount:16,partyCount:32,slotCount:160,occupiedSlotCount:6}},scheduleComparison:{month:'2026-08',explanation:'월 범위·수요일 경계·30분 단위를 공통 기준으로 검증합니다.',legacy:{scheduleCount:23,monthOccurrenceCount:5},server:{activeRuleCount:2,monthOccurrenceCount:2}},operations:{commandCount:40,auditEventCount:40,checks:[{status:'PASS',label:'신규 포스 정원 10명',failureCount:0},{status:'PASS',label:'포스당 2파티',failureCount:0},{status:'PASS',label:'중복 요청 결과 단일화',failureCount:0}]},evidence:['6-2','6-3','6-4','6-5','6-6'].map((stageItem,index)=>({stageItem,status:'PASS',source:'LOCAL_BROWSER_QA_'+(index+1)}))};
       window.KinojoAuth={getSession:()=>({token:'kws_'+('A'.repeat(40))}),getAccount:()=>({level:3,permissions:['sanctuary_edit']})};
-      window.KinojoPermissions={canEditSanctuary:()=>true};
+      window.KinojoPermissions={canEditSanctuary:()=>canEdit};
       window.KinojoToast={show:message=>{document.body.dataset.toast=message;},success:message=>{document.body.dataset.toast=message;}};
       window.KinojoSupabase={
         async ensureReady(){return true;},
@@ -116,6 +119,14 @@
         async approveSanctuaryManagementTransition(month,scopeHash,scopePayload,confirmation){if(scopeHash!==transitionReport.scopeHash||confirmation!=='전환 범위 승인'||JSON.stringify(scopePayload)!==JSON.stringify(transitionTargets))throw new Error('전환 승인 입력이 일치하지 않습니다.');transitionReport.approval={approved:true,approvedAt:new Date().toISOString()};return {ok:true,approved:true,schemaVersion:445,scopeHash,message:'전환 범위가 승인되었습니다.'};},
         async getSanctuaryManagementArchivePreview(teamId){const team=teams.find(item=>item.teamId===Number(teamId));return {ok:true,schemaVersion:445,teamId:team.teamId,teamTitle:team.title,revision:team.revision,canArchive:true,futureOccurrenceCount:52,futureWindowDays:366,recurringSchedule:true,pendingSupportCount:1,historyPreserved:true,message:'팀 편성·감사 이력은 보존하고 이후 일정과 승인 대기 지원을 종료합니다.'};},
         async runSanctuaryManagementLease(){return {ok:true,lease:{status:'ACTIVE'}};},
+        async getSanctuaryManagementLeaseStatus(teamIds){return {ok:true,apiVersion:2.4,schemaVersion:458,states:teamIds.map(teamId=>({teamId,active:editLocked,ownedByViewer:false,lockedByOther:editLocked,expiresAt:editLocked?new Date(Date.now()+120000).toISOString():'',canEdit}))};},
+        async searchSanctuaryManagementSlotCharacters(teamId,query){
+          const normalized=String(query||'').trim().replace(/\[[^\]]+\]$/,'');
+          const results=searchableCharacters.filter(item=>item.characterName===normalized).map(character=>({kind:'CHARACTER_MASTER',character:structuredClone(character)}));
+          const candidate=officialCandidates[normalized];if(candidate)results.push({kind:'OFFICIAL',candidate:structuredClone(candidate)});
+          if(!results.length)throw new Error('전체 서버에서 정확히 일치하는 캐릭터를 찾지 못했습니다.');
+          return {ok:true,apiVersion:2.4,schemaVersion:458,source:'OFFICIAL_ALL',query:normalized,results,resultCount:results.length,failureCount:0,complete:true};
+        },
         async searchSanctuaryManagementCharacter(teamId,query){
           const normalized=String(query||'').trim().replace(/\[지켈\]$/,'');
           const character=searchableCharacters.find(item=>item.characterName===normalized);
@@ -162,6 +173,11 @@
             return {ok:true,action:command,teamId,revision:1};
           }
           const team=teams.find(item=>item.teamId===payload.teamId);
+          if(command==='SUBMIT_SUPPORT'){
+            if(!team)throw new Error('지원할 팀을 찾지 못했습니다.');
+            team.supportBatches.push({supportBatchId:9902,teamId:team.teamId,applicantMemberId:7,status:'PENDING',pendingCount:1,assignments:structuredClone(payload.assignments)});
+            return {ok:true,action:command,teamId:team.teamId,supportBatchId:9902};
+          }
           if(!team||team.revision!==expectedRevision)throw new Error('다른 사용자가 먼저 팀 초안을 수정했습니다.');
           if(command==='EDIT_SCHEDULE'){team.schedule=Object.assign({},team.schedule,payload.schedule,{revision:team.schedule.revision+1,status:payload.operation==='UPDATE'?'ACTIVE':'STOPPED'});team.revision+=1;return {ok:true,action:command,teamId:team.teamId,revision:team.revision,schemaVersion:445};}
           if(command==='ARCHIVE_TEAM'){team.status='ARCHIVED';team.revision+=1;teams=teams.filter(item=>item.teamId!==team.teamId);return {ok:true,action:command,teamId:team.teamId,revision:team.revision,schemaVersion:445,historyPreserved:true};}
@@ -174,7 +190,7 @@
             const force=team.forces.find(item=>item.forceId===payload.forceId);
             const party=force?.parties.find(item=>item.partyNo===payload.partyNo);
             const slot=party?.slots.find(item=>item.slotNo===payload.slotNo);
-            const candidate=force?.creatorCandidates.find(item=>item.characterId===payload.characterId)||searchableCharacters.find(item=>item.characterId===payload.characterId);
+            const candidate=force?.creatorCandidates.find(item=>item.characterId===payload.characterId)||creatorCandidates.find(item=>item.characterId===payload.characterId)||searchableCharacters.find(item=>item.characterId===payload.characterId);
             if(!force||!slot||slot.occupied||!candidate)throw new Error('생성자 캐릭터 후보와 슬롯을 다시 선택해 주세요.');
             slot.occupied=true;slot.revision+=1;slot.character={characterId:candidate.characterId,name:candidate.characterName,serverName:candidate.serverName,className:candidate.className,profileImageUrl:candidate.profileImageUrl,relation:candidate.relation};
             party.occupiedCount+=1;party.vacancyCount-=1;force.occupiedCount+=1;force.vacancyCount-=1;force.revision+=1;force.creatorAlreadyAssigned=true;force.creatorCandidateCode='CREATOR_ALREADY_ASSIGNED';force.creatorCandidateCount=0;force.creatorCandidates=[];team.revision+=1;syncTeam(team);
@@ -189,6 +205,7 @@
   <script src="../sanctuary-management/js/sanctuary-management.js?stage10=2026083102"></script>
   <script src="../sanctuary-management/js/sanctuary-management-draft.js?stage10=2026083102"></script>
   <script src="../sanctuary-management/js/sanctuary-management-support.js?stage77=2026083001"></script>
+  <script src="../sanctuary-management/js/sanctuary-management-inline-slot.js"></script>
   <script src="../sanctuary-management/js/sanctuary-management-copy.js"></script>
 </body>
 </html>

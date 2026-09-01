@@ -27,7 +27,7 @@ for(const token of [
 ])assert.ok(migration.includes(token),`v457 migration contract missing ${token}`);
 
 for(const token of [
-  'const DATABASE_CONTRACT="457"',
+  'const DATABASE_CONTRACT="458"',
   'kinojo_sanctuary_management_character_search_v457',
   'kinojo_sanctuary_management_official_prepare_v457',
   'kinojo_sanctuary_management_official_record_v457',
@@ -45,7 +45,7 @@ for(const token of [
 ])assert.ok(feature.includes(token),`v457 feature bridge missing ${token}`);
 
 for(const token of [
-  'const SCHEMA_VERSION=457',
+  'const SCHEMA_VERSION=458',
   "window.KinojoSanctuaryManagementDraftUI?.openMode?.(event.currentTarget)",
 ])assert.ok(client.includes(token),`v457 browser contract missing ${token}`);
 

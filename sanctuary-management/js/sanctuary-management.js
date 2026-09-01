@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  const API_VERSION=2.3;
-  const SCHEMA_VERSION=457;
+  const API_VERSION=2.4;
+  const SCHEMA_VERSION=458;
   const SLOT_CLASS_CODES=Object.freeze(['ALL','TEMPLAR','GLADIATOR','ASSASSIN','RANGER','SORCERER','ELEMENTALIST','CLERIC','CHANTER','FIGHTER']);
   const CLASS_ICON_MAP=Object.freeze({'수호성':'templar','검성':'gladiator','살성':'assassin','궁성':'ranger','마도성':'sorcerer','정령성':'elementalist','치유성':'cleric','호법성':'chanter','권성':'fighter'});
   const CLASS_NAME_BY_CODE=Object.freeze({TEMPLAR:'수호성',GLADIATOR:'검성',ASSASSIN:'살성',RANGER:'궁성',SORCERER:'마도성',ELEMENTALIST:'정령성',CLERIC:'치유성',CHANTER:'호법성',FIGHTER:'권성'});
@@ -46,7 +46,7 @@
 
   function contractSupported(data){
     const api=Number(data?.apiVersion),schema=Number(data?.schemaVersion);
-    return api===API_VERSION&&schema===SCHEMA_VERSION||api===2.2&&(schema===454||schema===453||schema===452)||api===2.1&&schema===451||api===2&&schema===450||api===1.9&&schema===449||api===1.8&&schema===446;
+    return api===API_VERSION&&schema===SCHEMA_VERSION||api===2.3&&schema===457||api===2.2&&(schema===454||schema===453||schema===452)||api===2.1&&schema===451||api===2&&schema===450||api===1.9&&schema===449||api===1.8&&schema===446;
   }
   function combatPowerValue(input){const power=Number(input);return Number.isFinite(power)&&power>0?Math.round(power):0;}
   function itemLevelValue(input){const level=Number(input);return Number.isFinite(level)&&level>0?Math.round(level):0;}
@@ -347,20 +347,44 @@
     return card;
   }
 
+  function validateOfficialCandidate(source){
+    if(!source||typeof source!=='object'||Array.isArray(source))throw new Error('공식 캐릭터 조회 결과가 올바르지 않습니다.');
+    const candidate=Object.assign({},source,{
+      candidateId:value(source.candidateId),characterName:value(source.characterName),serverId:integer(source.serverId),raceId:integer(source.raceId),
+      serverName:value(source.serverName),className:value(source.className),legionName:value(source.legionName),profileImageUrl:value(source.profileImageUrl),
+      isOperationalLegion:source.isOperationalLegion===true,
+      allowedRelations:Array.isArray(source.allowedRelations)?source.allowedRelations.map(item=>value(item).toUpperCase()):[],
+      power:combatPowerValue(source.power??source.pveCombatPower),
+      itemLevel:itemLevelValue(source.itemLevel??source.pveItemLevel)
+    });
+    if(!candidate.candidateId||candidate.serverId<1||!candidate.characterName||!candidate.serverName||!candidate.allowedRelations.length||candidate.allowedRelations.some(item=>!['MAIN','ALT','GUEST'].includes(item)))throw new Error('공식 캐릭터 관계 정보가 올바르지 않습니다.');
+    return candidate;
+  }
+
   function validateCharacterSearch(data){
     if(!data||typeof data!=='object'||data.ok!==true||!contractSupported(data))throw new Error(value(data?.message)||'캐릭터 검색 Server 계약이 올바르지 않습니다.');
     if(value(data.source)==='CHARACTER_MASTER')return Object.assign({},data,{character:validateCharacterCard(data.character)});
-    if(value(data.source)!=='OFFICIAL'||!data.candidate||typeof data.candidate!=='object')throw new Error('공식 캐릭터 조회 결과가 올바르지 않습니다.');
-    const candidate=Object.assign({},data.candidate,{
-      candidateId:value(data.candidate.candidateId),characterName:value(data.candidate.characterName),serverId:integer(data.candidate.serverId),raceId:integer(data.candidate.raceId),
-      serverName:value(data.candidate.serverName),className:value(data.candidate.className),legionName:value(data.candidate.legionName),profileImageUrl:value(data.candidate.profileImageUrl),
-      isOperationalLegion:data.candidate.isOperationalLegion===true,
-      allowedRelations:Array.isArray(data.candidate.allowedRelations)?data.candidate.allowedRelations.map(item=>value(item).toUpperCase()):[],
-      power:combatPowerValue(data.candidate.power??data.candidate.pveCombatPower),
-      itemLevel:itemLevelValue(data.candidate.itemLevel??data.candidate.pveItemLevel)
-    });
-    if(!candidate.candidateId||candidate.serverId<1||!candidate.characterName||!candidate.serverName||!candidate.allowedRelations.length||candidate.allowedRelations.some(item=>!['MAIN','ALT','GUEST'].includes(item)))throw new Error('공식 캐릭터 관계 정보가 올바르지 않습니다.');
+    if(value(data.source)!=='OFFICIAL')throw new Error('공식 캐릭터 조회 결과가 올바르지 않습니다.');
+    const candidate=validateOfficialCandidate(data.candidate);
     return Object.assign({},data,{candidate});
+  }
+
+  function validateLeaseStatus(data){
+    if(!data||typeof data!=='object'||data.ok!==true||!contractSupported(data)||!Array.isArray(data.states))throw new Error(value(data?.message)||'편집 상태 Server 계약이 올바르지 않습니다.');
+    const states=data.states.map(item=>({teamId:integer(item?.teamId),active:item?.active===true,ownedByViewer:item?.ownedByViewer===true,lockedByOther:item?.lockedByOther===true,canEdit:item?.canEdit===true,expiresAt:value(item?.expiresAt)}));
+    if(states.some(item=>item.teamId<1||item.lockedByOther&&(!item.active||item.ownedByViewer)))throw new Error('편집 상태 정보가 올바르지 않습니다.');
+    return Object.assign({},data,{states});
+  }
+
+  function validateSlotCharacterSearch(data){
+    if(!data||typeof data!=='object'||data.ok!==true||!contractSupported(data)||!Array.isArray(data.results))throw new Error(value(data?.message)||'전체 서버 캐릭터 조회 계약이 올바르지 않습니다.');
+    const results=data.results.map(item=>{
+      const kind=value(item?.kind).toUpperCase();
+      if(kind==='CHARACTER_MASTER')return {kind,character:validateCharacterCard(item.character)};
+      if(kind==='OFFICIAL')return {kind,candidate:validateOfficialCandidate(item.candidate)};
+      throw new Error('전체 서버 캐릭터 조회 항목이 올바르지 않습니다.');
+    });
+    return Object.assign({},data,{results});
   }
 
   function validateLinkedAlts(data){
@@ -437,6 +461,16 @@
       const result=await api.registerSanctuaryManagementCharacter(Number(teamId),value(candidateId),value(relationType),mainCharacterId==null?null:Number(mainCharacterId),value(requestKey));
       if(!result||typeof result!=='object'||result.ok!==true)return Promise.reject(new Error(value(result?.message)||'캐릭터 관계를 확정하지 못했습니다.'));
       return Object.assign({},result,{character:validateCharacterCard(result.character)});
+    },
+    async leaseStatus(teamIds){
+      const api=window.KinojoSupabase;
+      if(!api||typeof api.getSanctuaryManagementLeaseStatus!=='function')throw new Error('편집 상태 Server 어댑터를 불러오지 못했습니다.');
+      return validateLeaseStatus(await api.getSanctuaryManagementLeaseStatus(teamIds));
+    },
+    async searchSlotCharacters(teamId,query){
+      const api=window.KinojoSupabase;
+      if(!api||typeof api.searchSanctuaryManagementSlotCharacters!=='function')throw new Error('전체 서버 캐릭터 검색 어댑터를 불러오지 못했습니다.');
+      return validateSlotCharacterSearch(await api.searchSanctuaryManagementSlotCharacters(Number(teamId),value(query)));
     }
   });
   window.KinojoSanctuaryManagementData=ServerAdapter;
@@ -736,7 +770,9 @@
         const requiredClass=value(slot.requiredClassCode).toUpperCase();
         const classRecruiting=!slot.occupied&&requiredClass&&requiredClass!=='ALL';
         const isAlt=slot.occupied&&(characterState.relation==='ALT'||slot.character?.isRandomAlt===true);
-        const item=document.createElement('span');item.className='sanctuary-management-force-slot'+(slot.occupied?' is-occupied':'')+(characterState.relation==='MAIN'?' is-main':isAlt?' is-alt':' is-guest')+(characterState.owned?' is-viewer-character':'')+(classRecruiting?' is-class-slot':'');item.dataset.slotNumber=String((party.partyNo-1)*5+slot.slotNo);
+        const item=document.createElement(slot.occupied?'span':'button');
+        if(!slot.occupied){item.type='button';item.dataset.sanctuarySlotAdd='';item.dataset.sanctuarySlotTeam=value(team.teamId);item.dataset.sanctuarySlotForce=value(force.forceId);item.dataset.sanctuarySlotParty=value(party.partyNo);item.dataset.sanctuarySlotNo=value(slot.slotNo);item.dataset.sanctuarySlotId=value(slot.slotId);}
+        item.className='sanctuary-management-force-slot'+(slot.occupied?' is-occupied':' is-empty')+(characterState.relation==='MAIN'?' is-main':isAlt?' is-alt':' is-guest')+(characterState.owned?' is-viewer-character':'')+(classRecruiting?' is-class-slot':'');item.dataset.slotNumber=String((party.partyNo-1)*5+slot.slotNo);
         const icon=document.createElement('span');icon.className='sanctuary-management-force-slot-icon';
         const iconPath=slot.occupied&&!slot.character?.isRandomAlt?classIconFor(slot.character?.className):requiredClass&&requiredClass!=='ALL'?classIconFor(CLASS_NAME_BY_CODE[requiredClass]):'';
         if(iconPath){const image=document.createElement('img');image.src=iconPath;image.alt=value(slot.character?.className)||(CLASS_NAME_BY_CODE[requiredClass]||'클래스');icon.appendChild(image);}
@@ -750,7 +786,7 @@
         }
         item.append(icon,copy);
         if(isAlt){const tooltip=createAltRelationshipTooltip(slot.character,characterState.owned);item.dataset.sanctuaryAltDetail='';item.tabIndex=0;item.setAttribute('aria-describedby',tooltip.id);item.setAttribute('aria-expanded','false');item.appendChild(tooltip);}
-        else item.title=slot.occupied?[value(slot.character?.name),value(slot.character?.className)].filter(Boolean).join(' · '):'빈 슬롯 '+((party.partyNo-1)*5+slot.slotNo);
+        else{item.title=slot.occupied?[value(slot.character?.name),value(slot.character?.className)].filter(Boolean).join(' · '):'빈 슬롯 '+((party.partyNo-1)*5+slot.slotNo)+'에 캐릭터 추가';if(!slot.occupied)item.setAttribute('aria-label',force.forceNo+'포스 '+party.partyNo+'파티 '+slot.slotNo+'번 빈 슬롯에 캐릭터 추가');}
         partyNode.appendChild(item);
       });
       parties.appendChild(partyNode);
@@ -869,9 +905,9 @@
     const footer=document.createElement('footer');const status=document.createElement('p');status.textContent=value(team.mode)==='PARTICIPATION'?'포스 카드를 누르면 기존 다중 포스 지원·승인 화면으로 연결됩니다.':'고정 팀 편성을 한 화면에서 확인할 수 있습니다.';const actions=document.createElement('div');
     const teamCopy=document.createElement('button');teamCopy.type='button';teamCopy.className='kinojo-btn secondary';teamCopy.dataset.sanctuaryCopyTeam=value(team.teamId);teamCopy.textContent='팀 이미지 복사';actions.appendChild(teamCopy);
     if(team.canEdit&&value(team.status)!=='ARCHIVED'){
-      const edit=document.createElement('button');edit.type='button';edit.className='kinojo-btn';edit.dataset.forceOverviewEdit=value(team.teamId);edit.disabled=!bootstrapData?.writeEnabled;edit.textContent='포스·캐릭터 편집';actions.appendChild(edit);
+      const edit=document.createElement('button');edit.type='button';edit.className='kinojo-btn sanctuary-management-edit-team is-checking';edit.dataset.forceOverviewEdit=value(team.teamId);edit.disabled=true;edit.textContent='확인 중';actions.appendChild(edit);
     }
-    const done=document.createElement('button');done.type='button';done.className='kinojo-btn secondary';done.dataset.forceOverviewClose='';done.textContent='닫기';actions.appendChild(done);footer.append(status,actions);dialog.append(header,scroll,footer);layer.replaceChildren(backdrop,dialog);
+    const done=document.createElement('button');done.type='button';done.className='kinojo-btn secondary';done.dataset.forceOverviewClose='';done.textContent='닫기';actions.appendChild(done);footer.append(status,actions);dialog.append(header,scroll,footer);layer.replaceChildren(backdrop,dialog);window.dispatchEvent(new CustomEvent('kinojo:sanctuary-management-rendered'));
   }
   function openForceOverview(team,opener,preferredForceId=0){
     if(!team)return;forceOverviewTeamId=integer(team.teamId);forceOverviewForceId=integer(preferredForceId)||integer(team.forces?.[0]?.forceId);forceOverviewOpener=opener||document.activeElement;renderForceOverview(forceOverviewForceId);const layer=ensureForceOverviewLayer();layer.hidden=false;layer.setAttribute('aria-hidden','false');document.body.classList.add('sanctuary-management-force-overview-open');requestAnimationFrame(()=>layer.querySelector('.sanctuary-management-force-overview-dialog')?.focus());
@@ -913,7 +949,7 @@
     if(pending){const pendingBadge=document.createElement('span');pendingBadge.className='sanctuary-management-team-badge is-pending';pendingBadge.textContent='승인 대기 '+pending;headActions.appendChild(pendingBadge);}
     if(team.canEdit&&value(team.status)!=='ARCHIVED'){
       if(['ACTIVE','FULL'].includes(value(team.status))){const schedule=document.createElement('button');schedule.type='button';schedule.className='kinojo-btn secondary';schedule.textContent='일정 관리';schedule.dataset.sanctuaryScheduleTeam=value(team.teamId);schedule.disabled=!bootstrapData?.writeEnabled;headActions.appendChild(schedule);}
-      const edit=document.createElement('button');edit.type='button';edit.className='kinojo-btn sanctuary-management-edit-team';edit.textContent=value(team.status)==='DRAFT'?'초안 계속 작성':'편집';edit.dataset.sanctuaryEditTeam=value(team.teamId);edit.disabled=!bootstrapData?.writeEnabled;headActions.appendChild(edit);
+      const edit=document.createElement('button');edit.type='button';edit.className='kinojo-btn sanctuary-management-edit-team is-checking';edit.textContent='확인 중';edit.dataset.sanctuaryEditTeam=value(team.teamId);edit.disabled=true;headActions.appendChild(edit);
       if(team.canArchive){const archive=document.createElement('button');archive.type='button';archive.className='kinojo-btn danger sanctuary-management-archive-team';archive.textContent='팀 해산';archive.dataset.sanctuaryArchiveTeam=value(team.teamId);archive.disabled=!bootstrapData?.writeEnabled;headActions.appendChild(archive);}
     }
     titleBand.append(titleRow,headActions);head.append(schedule,titleBand);
@@ -953,7 +989,7 @@
       return;
     }
     teams.forEach(team=>root.appendChild(createTeamCard(team)));
-    requestAnimationFrame(initializeForceCarousels);
+    requestAnimationFrame(()=>{initializeForceCarousels();window.dispatchEvent(new CustomEvent('kinojo:sanctuary-management-rendered'));});
   }
 
   function dateKeyKst(){return new Date(Date.now()+9*60*60*1000).toISOString().slice(0,10);}
