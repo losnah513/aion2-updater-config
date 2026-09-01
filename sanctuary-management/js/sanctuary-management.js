@@ -8,6 +8,7 @@
   const CLASS_NAME_BY_CODE=Object.freeze({TEMPLAR:'수호성',GLADIATOR:'검성',ASSASSIN:'살성',RANGER:'궁성',SORCERER:'마도성',ELEMENTALIST:'정령성',CLERIC:'치유성',CHANTER:'호법성',FIGHTER:'권성'});
   const POWER_ICON_URL='https://assets.playnccdn.com/static-aion2/characters/img/info/profile_power_icon_pc.png';
   const BACKGROUND_CHECK_INTERVAL=60000;
+  const ALT_DETAIL_IDLE_MS=5000;
   let requestSequence=0;
   let monthRequestSequence=0;
   let bootstrapData=null;
@@ -33,6 +34,7 @@
   let forceCarouselResizeBound=false;
   let forceCarouselResizeFrame=0;
   let altTooltipSequence=0;
+  const altDetailIdleTimers=new WeakMap();
   let deepLinkApplied=false;
   let currentAuthProjection='';
 
@@ -685,17 +687,20 @@
     tooltip.className='sanctuary-management-alt-tooltip';
     tooltip.id='sanctuaryAltTooltip'+(++altTooltipSequence);
     tooltip.setAttribute('role','tooltip');
-    const relation=document.createElement('span');
-    const main=document.createElement('b');main.textContent=altMainCharacterName(character,owned);
-    relation.append(main,document.createTextNode('의 부캐'));
-    const alt=document.createElement('strong');alt.textContent=value(character?.name)||'부캐 이름 미확인';
-    tooltip.append(relation,alt);
+    const alt=document.createElement('strong');alt.className='sanctuary-management-alt-name';alt.textContent=value(character?.name)||'부캐 이름 미확인';
+    const relation=document.createElement('span');relation.className='sanctuary-management-alt-relation';
+    const main=document.createElement('b');main.className='sanctuary-management-main-name';main.textContent=altMainCharacterName(character,owned);
+    const suffix=document.createElement('small');suffix.textContent='의 부캐';
+    relation.append(main,suffix);tooltip.append(alt,relation);
     return tooltip;
   }
 
-  function isTouchLike(){return window.matchMedia?.('(hover: none), (pointer: coarse)').matches===true;}
-  function closeAltDetails(except=null){document.querySelectorAll('[data-sanctuary-alt-detail].is-alt-detail-open').forEach(item=>{if(item!==except){item.classList.remove('is-alt-detail-open');item.setAttribute('aria-expanded','false');}});}
-  function toggleAltDetail(item){if(!item)return;const opening=!item.classList.contains('is-alt-detail-open');closeAltDetails(item);item.classList.toggle('is-alt-detail-open',opening);item.setAttribute('aria-expanded',String(opening));}
+  function clearAltDetailIdle(item){const timer=altDetailIdleTimers.get(item);if(timer)window.clearTimeout(timer);altDetailIdleTimers.delete(item);}
+  function closeAltDetail(item){if(!item)return;clearAltDetailIdle(item);item.classList.remove('is-alt-detail-open');item.setAttribute('aria-expanded','false');}
+  function closeAltDetails(except=null){document.querySelectorAll('[data-sanctuary-alt-detail].is-alt-detail-open').forEach(item=>{if(item!==except)closeAltDetail(item);});}
+  function scheduleAltDetailIdleClose(item){clearAltDetailIdle(item);altDetailIdleTimers.set(item,window.setTimeout(()=>closeAltDetail(item),ALT_DETAIL_IDLE_MS));}
+  function activateAltDetail(item){if(!item)return;closeAltDetails(item);item.classList.add('is-alt-detail-open');item.setAttribute('aria-expanded','true');scheduleAltDetailIdleClose(item);}
+  function noteAltDetailActivity(item){if(!item)return;if(!item.classList.contains('is-alt-detail-open')){activateAltDetail(item);return;}const now=Date.now(),last=Number(item.dataset.altDetailActivity||0);if(now-last<180)return;item.dataset.altDetailActivity=String(now);scheduleAltDetailIdleClose(item);}
 
   function createForceCard(team,force){
     const participation=value(team.mode)==='PARTICIPATION'&&['ACTIVE','FULL'].includes(value(team.status));
@@ -832,7 +837,7 @@
     forceOverviewLayer.addEventListener('click',event=>{
       if(event.target.closest('[data-force-overview-close]')){closeForceOverview();return;}
       const altDetail=event.target.closest('[data-sanctuary-alt-detail]');
-      if(altDetail&&isTouchLike()){event.preventDefault();event.stopPropagation();toggleAltDetail(altDetail);return;}
+      if(altDetail){event.preventDefault();event.stopPropagation();activateAltDetail(altDetail);return;}
       closeAltDetails();
       const support=event.target.closest('[data-sanctuary-support-force]');
       if(support){
@@ -845,7 +850,7 @@
     });
     forceOverviewLayer.addEventListener('keydown',event=>{
       const altDetail=event.target.closest('[data-sanctuary-alt-detail]');
-      if(altDetail&&(event.key==='Enter'||event.key===' ')){event.preventDefault();event.stopPropagation();toggleAltDetail(altDetail);return;}
+      if(altDetail&&(event.key==='Enter'||event.key===' ')){event.preventDefault();event.stopPropagation();activateAltDetail(altDetail);return;}
       if(event.key==='Escape'&&document.querySelector('[data-sanctuary-alt-detail].is-alt-detail-open')){event.preventDefault();closeAltDetails();return;}
       if(event.key==='Escape'){event.preventDefault();closeForceOverview();return;}if(event.key!=='Tab')return;
       const focusable=Array.from(forceOverviewLayer.querySelectorAll('button:not(:disabled),[tabindex="0"]')).filter(item=>item.offsetParent!==null);if(!focusable.length)return;const first=focusable[0],last=focusable.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
@@ -1440,7 +1445,7 @@
     byId('sanctuaryManagementTeamList')?.addEventListener('click',event=>{
       const sourceCarousel=event.target.closest('.sanctuary-management-force-carousel');if(sourceCarousel?.dataset.swipeSuppress==='true'){event.preventDefault();return;}
       const altDetail=event.target.closest('[data-sanctuary-alt-detail]');
-      if(altDetail&&isTouchLike()){event.preventDefault();event.stopPropagation();toggleAltDetail(altDetail);return;}
+      if(altDetail){event.preventDefault();event.stopPropagation();activateAltDetail(altDetail);return;}
       closeAltDetails();
       const carouselButton=event.target.closest('[data-sanctuary-force-shift]');
       if(carouselButton){shiftForceCarousel(carouselButton);return;}
@@ -1459,13 +1464,18 @@
     });
     byId('sanctuaryManagementTeamList')?.addEventListener('keydown',event=>{
       const altDetail=event.target.closest('[data-sanctuary-alt-detail]');
-      if(altDetail&&(event.key==='Enter'||event.key===' ')){event.preventDefault();event.stopPropagation();toggleAltDetail(altDetail);return;}
+      if(altDetail&&(event.key==='Enter'||event.key===' ')){event.preventDefault();event.stopPropagation();activateAltDetail(altDetail);return;}
       if(event.key==='Escape'&&document.querySelector('[data-sanctuary-alt-detail].is-alt-detail-open')){event.preventDefault();closeAltDetails();return;}
       if(event.key!=='Enter'&&event.key!==' ')return;
       const card=event.target.closest('[data-sanctuary-support-force]');if(!card||event.target.closest('[data-sanctuary-copy-team]'))return;
       event.preventDefault();if(card.dataset.sanctuarySupportAvailable!=='true')return;
       const team=selectedDraftTeam(card.dataset.sanctuarySupportTeam);if(team)window.KinojoSanctuaryManagementSupportUI?.open?.(team,Number(card.dataset.sanctuarySupportForce),card);
     });
+    document.addEventListener('pointerover',event=>{const item=event.target.closest?.('[data-sanctuary-alt-detail]');if(item&&!item.contains(event.relatedTarget))activateAltDetail(item);},{passive:true});
+    document.addEventListener('pointermove',event=>noteAltDetailActivity(event.target.closest?.('[data-sanctuary-alt-detail]')),{passive:true});
+    document.addEventListener('pointerout',event=>{const item=event.target.closest?.('[data-sanctuary-alt-detail]');if(event.pointerType==='mouse'&&item&&!item.contains(event.relatedTarget)&&!item.matches(':focus-visible'))closeAltDetail(item);},{passive:true});
+    document.addEventListener('focusin',event=>activateAltDetail(event.target.closest?.('[data-sanctuary-alt-detail]')));
+    document.addEventListener('focusout',event=>{const item=event.target.closest?.('[data-sanctuary-alt-detail]');if(item&&!item.contains(event.relatedTarget))closeAltDetail(item);});
     document.addEventListener('click',event=>{if(!event.target.closest?.('[data-sanctuary-alt-detail]'))closeAltDetails();});
     byId('sanctuaryManagementScheduleState')?.addEventListener('click',event=>{
       const item=event.target.closest('[data-sanctuary-calendar-team]');if(!item)return;const team=selectedDraftTeam(item.dataset.sanctuaryCalendarTeam);if(!team)return;

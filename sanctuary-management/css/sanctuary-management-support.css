@@ -173,15 +173,15 @@ body.sanctuary-management-force-overview-open{overflow:hidden}
 .sanctuary-management-force-slot.is-class-slot .sanctuary-management-force-slot-copy{position:relative;z-index:2;width:100%;display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:none;place-items:center;padding:0 4px;box-sizing:border-box}
 .sanctuary-management-force-slot-recruitment{width:100%;color:#137049;font-size:clamp(13px,1.35vw,18px);font-weight:1000;line-height:1.05;text-align:center;text-shadow:0 1px 0 #fff,0 0 10px rgba(85,222,148,.3);white-space:nowrap}
 
-.sanctuary-management-alt-tooltip{position:absolute;z-index:20;inset:2px;min-width:0;padding:5px 7px;display:grid;align-content:center;gap:2px;border:1px solid rgba(185,255,117,.38);border-radius:8px;background:rgba(8,13,17,.94);color:#fff;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .18s ease,visibility .18s ease;box-sizing:border-box;text-align:left;white-space:normal}
-.sanctuary-management-alt-tooltip>span{min-width:0;color:#fff;font-size:10px;font-weight:850;line-height:1.15;white-space:normal;word-break:break-all}
-.sanctuary-management-alt-tooltip>span>b{color:#b9ff73;font-size:12px;font-weight:1000;text-shadow:0 0 4px rgba(185,255,115,.95),0 0 11px rgba(139,236,70,.7)}
-.sanctuary-management-alt-tooltip>strong{min-width:0;color:#fff;font-size:11px;font-weight:950;line-height:1.15;white-space:normal;word-break:break-all}
-.sanctuary-management-force-slot.is-alt:hover>.sanctuary-management-alt-tooltip,
-.sanctuary-management-force-slot.is-alt:focus-visible>.sanctuary-management-alt-tooltip,
+.sanctuary-management-alt-tooltip{position:absolute;z-index:20;inset:2px;min-width:0;padding:3px 7px;display:flex;align-items:center;align-content:center;justify-content:center;flex-wrap:wrap;column-gap:7px;row-gap:0;border:1px solid rgba(185,255,117,.38);border-radius:8px;background:rgba(8,13,17,.94);color:#fff;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .18s ease,visibility .18s ease;box-sizing:border-box;text-align:center;white-space:normal}
+.sanctuary-management-alt-name,.sanctuary-management-main-name{min-width:0;font-size:clamp(11px,1.15vw,15px);font-weight:1000;line-height:1.05;white-space:normal;word-break:keep-all}
+.sanctuary-management-alt-name{color:#ff75e6;text-shadow:0 0 7px rgba(255,72,214,.42)}
+.sanctuary-management-alt-relation{min-width:0;display:inline-flex;align-items:baseline;justify-content:center;gap:2px;color:#fff;font-size:clamp(11px,1.15vw,15px);line-height:1.05;white-space:nowrap}
+.sanctuary-management-main-name{color:#b9ff73;text-shadow:0 0 4px rgba(185,255,115,.95),0 0 11px rgba(139,236,70,.7)}
+.sanctuary-management-alt-relation>small{color:#fff;font-size:.5em;font-weight:900;line-height:1}
 .sanctuary-management-force-slot.is-alt.is-alt-detail-open>.sanctuary-management-alt-tooltip{opacity:1;visibility:visible}
 
-@media(max-width:560px){.sanctuary-management-force-slot.is-class-slot{min-height:50px}.sanctuary-management-force-slot.is-class-slot .sanctuary-management-force-slot-icon{left:-4px;width:62px;height:62px}.sanctuary-management-force-slot-recruitment{font-size:clamp(12px,4.2vw,16px)}.sanctuary-management-alt-tooltip>span{font-size:9px}.sanctuary-management-alt-tooltip>span>b{font-size:11px}.sanctuary-management-alt-tooltip>strong{font-size:10px}}
+@media(max-width:560px){.sanctuary-management-force-slot.is-class-slot{min-height:50px}.sanctuary-management-force-slot.is-class-slot .sanctuary-management-force-slot-icon{left:-4px;width:62px;height:62px}.sanctuary-management-force-slot-recruitment{font-size:clamp(12px,4.2vw,16px)}.sanctuary-management-alt-tooltip{padding-inline:3px;column-gap:2px}.sanctuary-management-alt-name,.sanctuary-management-main-name,.sanctuary-management-alt-relation{font-size:clamp(9px,2.55vw,11px)}}
 @media(prefers-reduced-motion:reduce){.sanctuary-management-force-card,.sanctuary-management-force-party,.sanctuary-management-force-slot,.sanctuary-management-alt-tooltip{transition:none}.sanctuary-management-force-slot:not(.is-occupied)::after{animation:none}}
 
 /* Stage 12: keep both parties beside each other on narrow public screens.
