@@ -3,6 +3,7 @@
   'use strict';
 
   const LEGION_ORDER=Object.freeze(['깡','낮','밤','키나노동조합']);
+  const UNAFFILIATED_PARENT='__unaffiliated__';
   const MAX_RENDERED_STAGES=50;
   const MAX_ROLE_MEMBERS=2147483647;
   let sourceModel=null;
@@ -12,6 +13,7 @@
   let temporaryRoleSequence=0;
   let editorStatus='변경 내용을 확인한 뒤 Server에 저장할 수 있습니다.';
   let saveRunning=false;
+  let memberSearches=new Map();
 
   const q=(selector,root=document)=>root.querySelector(selector);
   const qa=(selector,root=document)=>Array.from(root.querySelectorAll(selector));
@@ -90,10 +92,13 @@
             const characterId=positiveInt(member.characterId);
             if(characterId!==null&&!assignmentIds.has(characterId)){
               assignmentIds.add(characterId);
+              const sourceParentRoleKey=text(group.parentRoleKey,180)||null;
+              const unaffiliated=stageIndex>0&&(group.unaffiliated===true||sourceParentRoleKey===roleKey);
               assignments.push({
                 characterId,
                 roleKey,
-                parentRoleKey:text(group.parentRoleKey,180)||null
+                parentRoleKey:unaffiliated?null:sourceParentRoleKey,
+                unaffiliated
               });
             }
           }
@@ -198,8 +203,9 @@
     if(current){
       current.roleKey=roleKey;
       current.parentRoleKey=null;
+      current.unaffiliated=false;
     }else{
-      draft.assignments.push({characterId:member.characterId,roleKey,parentRoleKey:null});
+      draft.assignments.push({characterId:member.characterId,roleKey,parentRoleKey:null,unaffiliated:false});
     }
     draft.dirty=true;
     return {ok:true,code:'MEMBER_ASSIGNED'};
@@ -232,8 +238,9 @@
       if(current){
         current.roleKey=roleKey;
         current.parentRoleKey=null;
+        current.unaffiliated=false;
       }else{
-        draft.assignments.push({characterId,roleKey,parentRoleKey:null});
+        draft.assignments.push({characterId,roleKey,parentRoleKey:null,unaffiliated:false});
       }
     }
     draft.dirty=true;
@@ -251,17 +258,26 @@
   function setParentRole(draft,characterId,parentRoleKey){
     const assignment=assignmentByCharacterId(draft,characterId);
     if(!assignment)return {ok:false,code:'ASSIGNMENT_NOT_FOUND'};
+    const childStage=stageByRoleKey(draft,assignment.roleKey);
+    if(parentRoleKey===UNAFFILIATED_PARENT){
+      if(!childStage||childStage.stageNo===1)return {ok:false,code:'UNAFFILIATED_NOT_ALLOWED_TOP_STAGE'};
+      assignment.parentRoleKey=null;
+      assignment.unaffiliated=true;
+      draft.dirty=true;
+      return {ok:true,code:'UNAFFILIATED_UPDATED'};
+    }
     if(!parentRoleKey){
       assignment.parentRoleKey=null;
+      assignment.unaffiliated=false;
       draft.dirty=true;
       return {ok:true,code:'PARENT_CLEARED'};
     }
-    const childStage=stageByRoleKey(draft,assignment.roleKey);
     const parentStage=stageByRoleKey(draft,parentRoleKey);
     if(!childStage||!parentStage||parentStage.stageNo!==childStage.stageNo-1){
       return {ok:false,code:'PARENT_NOT_IMMEDIATE_STAGE'};
     }
     assignment.parentRoleKey=parentRoleKey;
+    assignment.unaffiliated=false;
     draft.dirty=true;
     return {ok:true,code:'PARENT_UPDATED'};
   }
@@ -333,12 +349,17 @@
       }
       occupiedByRole.set(roleKey,(occupiedByRole.get(roleKey)||0)+1);
       const parentRoleKey=text(assignment.parentRoleKey,180);
+      const unaffiliated=assignment.unaffiliated===true;
       if(stageNo===1){
-        if(parentRoleKey)add('PARENT_NOT_ALLOWED_TOP_STAGE',memberName+' 캐릭터는 최상위 단계이므로 상위 소속을 지정할 수 없습니다.',{characterId,roleKey,path:'parentRole'});
+        if(parentRoleKey||unaffiliated)add('PARENT_NOT_ALLOWED_TOP_STAGE',memberName+' 캐릭터는 최상위 단계이므로 소속을 지정할 수 없습니다.',{characterId,roleKey,path:'parentRole'});
         continue;
       }
       if(!parentRoleKey){
-        add('PARENT_REQUIRED',stageNo+'단계 '+memberName+' 캐릭터의 상위 소속을 선택해 주세요.',{stageNo,characterId,roleKey,path:'parentRole'});
+        if(!unaffiliated)add('PARENT_REQUIRED',stageNo+'단계 '+memberName+' 캐릭터의 상위 소속 또는 소속 외를 선택해 주세요.',{stageNo,characterId,roleKey,path:'parentRole'});
+        continue;
+      }
+      if(unaffiliated){
+        add('AFFILIATION_CONFLICT',memberName+' 캐릭터의 상위 소속과 소속 외를 동시에 지정할 수 없습니다.',{stageNo,characterId,roleKey,path:'parentRole'});
         continue;
       }
       const parentStageNo=roleStageByKey.get(parentRoleKey);
@@ -375,6 +396,7 @@
         characterId:assignment.characterId,
         roleKey:assignment.roleKey,
         parentRoleKey:assignment.parentRoleKey,
+        unaffiliated:assignment.unaffiliated===true,
         sortOrder:index
       }))
     };
@@ -396,15 +418,28 @@
     return draft.members.find(member=>member.characterId===Number(characterId))||null;
   }
 
+  function searchLegionMembers(draft,query){
+    const needle=text(query,120).normalize('NFKC').toLocaleLowerCase('ko-KR').replace(/\s+/g,'');
+    if(!needle)return [];
+    return (draft?.members||[]).filter(member=>
+      text(member.characterName,120).normalize('NFKC').toLocaleLowerCase('ko-KR').replace(/\s+/g,'').includes(needle)
+    ).sort((a,b)=>a.characterName.localeCompare(b.characterName,'ko-KR')).slice(0,20);
+  }
+
+  function memberSearchKey(roleKey){
+    return selectedLegionName+'::'+roleKey;
+  }
+
   function renderParentOptions(draft,assignment,stageNo){
     const options=['<option value="">상위 소속 선택 (필수)</option>'];
     for(const stage of draft.stages){
       if(stage.stageNo!==stageNo-1)continue;
       for(const role of stage.roles){
         const selected=assignment.parentRoleKey===role.roleKey?' selected':'';
-        options.push('<option value="'+esc(role.roleKey)+'"'+selected+'>'+esc(stage.stageNo+'단계 · '+role.roleName)+'</option>');
+        options.push('<option value="'+esc(role.roleKey)+'"'+selected+'>'+esc(stage.stageName+' · '+role.roleName)+'</option>');
       }
     }
+    options.push('<option value="'+UNAFFILIATED_PARENT+'"'+(assignment.unaffiliated===true?' selected':'')+'>소속 외 (독립 부서)</option>');
     return options.join('');
   }
 
@@ -422,27 +457,35 @@
       +'</li>';
   }
 
+  function renderMemberSearchResult(draft,role,member,full){
+    const assignment=assignmentByCharacterId(draft,member.characterId);
+    const assignedRole=assignment?roleByKey(draft,assignment.roleKey):null;
+    const alreadyHere=assignment?.roleKey===role.roleKey;
+    const disabled=alreadyHere||full;
+    const state=alreadyHere?'현재 직급':assignedRole?'현재 '+assignedRole.roleName:'미배치';
+    return '<li><div><strong>'+esc(member.characterName)+'</strong><span>'+esc((member.className||'클래스 미확인')+' · '+state)+'</span></div>'
+      +'<button type="button" data-editor-assign-result data-character-id="'+member.characterId+'" '+(disabled?'disabled':'')+'>'+(alreadyHere?'배치됨':assignedRole?'이동':'배치')+'</button></li>';
+  }
+
   function renderRole(draft,stage,role){
     const assignments=draft.assignments.filter(item=>item.roleKey===role.roleKey);
-    const assignedIds=new Set(draft.assignments.map(item=>item.characterId));
-    const available=draft.members.filter(member=>!assignedIds.has(member.characterId));
     const full=role.maxMembers!==null&&assignments.length>=role.maxMembers;
     const capacity=role.maxMembers===null?assignments.length+'명 · 제한 없음':assignments.length+' / '+role.maxMembers+'명';
-    const options=['<option value="">구성원 선택</option>'].concat(available.map(member=>
-      '<option value="'+member.characterId+'">'+esc(member.characterName+' · '+(member.className||'클래스 미확인'))+'</option>'
-    )).join('');
-    const batchOptions=available.length?available.map(member=>
-      '<option value="'+member.characterId+'">'+esc(member.characterName+' · '+(member.className||'클래스 미확인'))+'</option>'
-    ).join(''):'<option disabled>미배치 구성원이 없습니다.</option>';
+    const search=memberSearches.get(memberSearchKey(role.roleKey))||{query:'',submitted:false};
+    const matches=search.submitted?searchLegionMembers(draft,search.query):[];
+    const resultMarkup=!search.submitted
+      ?'<p>이 레기온의 캐릭터 이름을 입력해 조회하세요.</p>'
+      :matches.length
+        ?'<ul>'+matches.map(member=>renderMemberSearchResult(draft,role,member,full)).join('')+'</ul>'
+        :'<p>이 레기온에서 일치하는 구성원을 찾지 못했습니다.</p>';
     return '<article class="legion-tree-editor-role" data-role-key="'+esc(role.roleKey)+'">'
       +'<header><label><span>직급명</span><input type="text" maxlength="120" value="'+esc(role.roleName)+'" data-editor-role-name></label>'
       +'<label class="legion-tree-editor-max-members"><span>최대 인원</span><input type="number" min="1" max="'+MAX_ROLE_MEMBERS+'" inputmode="numeric" placeholder="제한 없음" value="'+(role.maxMembers===null?'':role.maxMembers)+'" data-editor-max-members></label>'
       +'<span class="legion-tree-editor-capacity">'+capacity+'</span>'
       +'<button type="button" class="is-danger" data-editor-delete-role>직급 삭제</button></header>'
       +'<ul class="legion-tree-editor-member-list">'+(assignments.length?assignments.map(item=>renderAssignedMember(draft,item,stage.stageNo)).join(''):'<li class="is-empty">지정된 구성원이 없습니다.</li>')+'</ul>'
-      +'<label class="legion-tree-editor-assign"><span>구성원 지정</span><select data-editor-assign-member '+(!available.length||full?'disabled':'')+'>'+options+'</select></label>'
-      +'<details class="legion-tree-editor-batch"><summary>여러 명 일괄 배치</summary><div><select multiple size="'+Math.min(5,Math.max(2,available.length))+'" aria-label="'+esc(role.roleName)+' 일괄 배치 구성원" data-editor-batch-members '+(!available.length||full?'disabled':'')+'>'+batchOptions+'</select>'
-      +'<button type="button" data-editor-batch-assign '+(!available.length||full?'disabled':'')+'>선택 인원 배치</button></div></details>'
+      +'<div class="legion-tree-editor-member-search"><label><span>구성원 조회</span><div><input type="search" maxlength="120" autocomplete="off" placeholder="캐릭터 이름" value="'+esc(search.query)+'" data-editor-member-query><button type="button" data-editor-member-search>조회</button></div></label>'
+      +'<div class="legion-tree-editor-member-results" role="status">'+resultMarkup+'</div></div>'
       +'</article>';
   }
 
@@ -451,7 +494,7 @@
       +'<header><strong>'+stage.stageNo+'단계</strong>'
       +'<label><span>단계명</span><input type="text" maxlength="120" value="'+esc(stage.stageName)+'" data-editor-stage-name></label>'
       +'<button type="button" data-editor-add-role>같은 단계 직급 추가</button></header>'
-      +'<div class="legion-tree-editor-role-list">'+stage.roles.map(role=>renderRole(draft,stage,role)).join('')+'</div>'
+      +'<div class="legion-tree-editor-role-list" data-role-count="'+stage.roles.length+'">'+stage.roles.map(role=>renderRole(draft,stage,role)).join('')+'</div>'
       +'</section>';
   }
 
@@ -459,8 +502,8 @@
     const root=q('#legionTreeEditorRoot');
     const draft=currentDraft();
     if(!root||!draft)return;
-    const legionOptions=LEGION_ORDER.map(name=>
-      '<option value="'+esc(name)+'"'+(name===selectedLegionName?' selected':'')+'>'+esc(name)+'</option>'
+    const legionButtons=LEGION_ORDER.map(name=>
+      '<button type="button" data-editor-legion="'+esc(name)+'" aria-pressed="'+(name===selectedLegionName?'true':'false')+'">'+esc(name)+'</button>'
     ).join('');
     const assigned=draft.assignments.length;
     const unassigned=Math.max(0,draft.members.length-assigned);
@@ -468,7 +511,7 @@
       +'<section class="legion-tree-editor-dialog" role="dialog" aria-modal="true" aria-labelledby="legionTreeEditorTitle" aria-describedby="legionTreeEditorBoundary legionTreeEditorStatus" tabindex="-1">'
       +'<header class="legion-tree-editor-head"><div><span>SERVER ORGANIZATION</span><h2 id="legionTreeEditorTitle">조직도 편집</h2><p id="legionTreeEditorBoundary">저장 시 Server가 권한·revision·조직 무결성을 다시 확인하고 한 transaction으로 반영합니다.</p></div>'
       +'<button type="button" class="legion-tree-editor-close" data-editor-close aria-label="조직도 편집 닫기">×</button></header>'
-      +'<div class="legion-tree-editor-toolbar"><label><span>레기온 선택</span><select id="legionTreeEditorLegion">'+legionOptions+'</select></label>'
+      +'<div class="legion-tree-editor-toolbar"><div class="legion-tree-editor-legions"><span>레기온 선택</span><div role="group" aria-label="레기온 선택">'+legionButtons+'</div></div>'
       +'<label><span>단계 수</span><input id="legionTreeEditorStageCount" type="number" min="1" max="'+MAX_RENDERED_STAGES+'" inputmode="numeric" value="'+draft.stageCount+'"></label>'
       +'<div class="legion-tree-editor-summary"><strong>'+draft.members.length+'명</strong><span>배치 '+assigned+' · 미배치 '+unassigned+' · revision '+draft.revision+'</span></div></div>'
       +'<div class="legion-tree-editor-scroll"><div class="legion-tree-editor-stage-list">'+draft.stages.map(stage=>renderStage(draft,stage)).join('')+'</div></div>'
@@ -563,6 +606,7 @@
     document.body.classList.remove('legion-tree-editor-open');
     document.removeEventListener('keydown',handleKeydown);
     drafts=new Map();
+    memberSearches=new Map();
     selectedLegionName='';
     saveRunning=false;
     const restore=opener;
@@ -591,6 +635,21 @@
     return result.ok;
   }
 
+  function runMemberSearch(roleElement){
+    const roleKey=roleElement?.dataset.roleKey||'';
+    const input=q('[data-editor-member-query]',roleElement);
+    const query=text(input?.value,120);
+    if(!roleKey||!query){
+      setStatus('조회할 캐릭터 이름을 입력해 주세요.','warning');
+      input?.focus?.();
+      return false;
+    }
+    memberSearches.set(memberSearchKey(roleKey),{query,submitted:true});
+    editorStatus='선택한 레기온 구성원 안에서 조회했습니다.';
+    renderDialog();
+    return true;
+  }
+
   function handleKeydown(event){
     if(event.key==='Escape'){
       event.preventDefault();
@@ -600,6 +659,11 @@
     if(event.key==='Enter'&&event.target?.id==='legionTreeEditorStageCount'){
       event.preventDefault();
       applyStageCountInput(event.target);
+      return;
+    }
+    if(event.key==='Enter'&&event.target?.matches?.('[data-editor-member-query]')){
+      event.preventDefault();
+      runMemberSearch(event.target.closest('[data-role-key]'));
       return;
     }
     if(event.key!=='Tab')return;
@@ -622,6 +686,13 @@
       close();
       return;
     }
+    const legionButton=target.closest('[data-editor-legion]');
+    if(legionButton){
+      selectedLegionName=text(legionButton.dataset.editorLegion,120);
+      editorStatus='선택한 레기온의 편집 초안을 표시합니다.';
+      renderDialog();
+      return;
+    }
     const draft=currentDraft();
     if(!draft)return;
     if(target.closest('[data-editor-reset]')){
@@ -634,6 +705,19 @@
     }
     const stageElement=target.closest('[data-stage-no]');
     const roleElement=target.closest('[data-role-key]');
+    if(target.closest('[data-editor-member-search]')&&roleElement){
+      runMemberSearch(roleElement);
+      return;
+    }
+    const assignResult=target.closest('[data-editor-assign-result]');
+    if(assignResult&&roleElement){
+      const result=assignMember(draft,Number(assignResult.dataset.characterId),roleElement.dataset.roleKey);
+      if(result.ok){
+        memberSearches.delete(memberSearchKey(roleElement.dataset.roleKey));
+        markChanged('조회한 레기온 구성원을 직급에 배치했습니다.');
+      }else setStatus(result.code==='MAX_MEMBERS_EXCEEDED'?'이 직급의 최대 인원을 초과할 수 없습니다.':'구성원을 배치하지 못했습니다.','warning');
+      return;
+    }
     if(target.closest('[data-editor-add-role]')){
       const result=addRole(draft,Number(stageElement?.dataset.stageNo));
       if(result.ok)markChanged('같은 단계에 새 직급을 추가했습니다.');
@@ -650,19 +734,6 @@
       else setStatus(message,'warning');
       return;
     }
-    if(target.closest('[data-editor-batch-assign]')&&roleElement){
-      const select=q('[data-editor-batch-members]',roleElement);
-      const characterIds=Array.from(select?.selectedOptions||[]).map(option=>Number(option.value));
-      const result=assignMembers(draft,characterIds,roleElement.dataset.roleKey);
-      const message={
-        BATCH_EMPTY:'일괄 배치할 구성원을 한 명 이상 선택해 주세요.',
-        CHARACTER_NOT_IN_LEGION:'현재 레기온 구성원만 배치할 수 있습니다.',
-        MAX_MEMBERS_EXCEEDED:'선택 인원을 배치하면 이 직급의 최대 인원을 초과합니다.'
-      }[result.code]||'구성원을 일괄 배치하지 못했습니다.';
-      if(result.ok)markChanged(result.count+'명을 직급에 일괄 배치했습니다.');
-      else setStatus(message,'warning');
-      return;
-    }
     const memberElement=target.closest('[data-character-id]');
     if(target.closest('[data-editor-unassign]')&&memberElement){
       const result=unassignMember(draft,Number(memberElement.dataset.characterId));
@@ -672,12 +743,6 @@
 
   function handleChange(event){
     const target=event.target;
-    if(target.id==='legionTreeEditorLegion'){
-      selectedLegionName=text(target.value,120);
-      editorStatus='선택한 레기온의 편집 초안을 표시합니다.';
-      renderDialog();
-      return;
-    }
     const draft=currentDraft();
     if(!draft)return;
     if(target.id==='legionTreeEditorStageCount'){
@@ -710,17 +775,19 @@
       }
       return;
     }
-    if(target.matches('[data-editor-assign-member]')&&roleElement){
-      const result=assignMember(draft,Number(target.value),roleElement.dataset.roleKey);
-      if(result.ok)markChanged('구성원을 직급에 배치했습니다.');
-      else setStatus(result.code==='MAX_MEMBERS_EXCEEDED'?'이 직급의 최대 인원을 초과할 수 없습니다.':'구성원을 배치하지 못했습니다.','warning');
-      return;
-    }
     if(target.matches('[data-editor-parent]')){
       const result=setParentRole(draft,Number(target.dataset.characterId),target.value);
       if(result.ok){draft.dirty=true;setStatus('상위 소속을 초안에 반영했습니다.');}
       else setStatus('상위 소속은 바로 윗 단계에서 선택해 주세요.','warning');
     }
+  }
+
+  function handleInput(event){
+    const target=event.target;
+    if(!target.matches?.('[data-editor-member-query]'))return;
+    const roleElement=target.closest('[data-role-key]');
+    if(!roleElement)return;
+    memberSearches.set(memberSearchKey(roleElement.dataset.roleKey),{query:text(target.value,120),submitted:false});
   }
 
   function ensureRoot(){
@@ -730,6 +797,7 @@
       root.dataset.bound='true';
       root.addEventListener('click',handleClick);
       root.addEventListener('change',handleChange);
+      root.addEventListener('input',handleInput);
     }
     return root;
   }
@@ -744,6 +812,7 @@
     const root=ensureRoot();
     if(!root)return false;
     drafts=new Map(sourceModel.legions.map(legion=>[legion.legionName,createEditorDraft(legion)]));
+    memberSearches=new Map();
     selectedLegionName=LEGION_ORDER.includes(options.legionName)?options.legionName:LEGION_ORDER[0];
     opener=options.opener||document.activeElement;
     saveRunning=false;
@@ -768,6 +837,7 @@
     assignMembers,
     unassignMember,
     setParentRole,
+    searchLegionMembers,
     validateDraft,
     serializeDraft,
     saveSelectedDraft,
