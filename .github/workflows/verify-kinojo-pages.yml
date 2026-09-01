@@ -212,6 +212,8 @@ jobs:
           node tests/home-layout-cache-guard.test.js
           node tests/home-layout-stability-contract.test.js
           node tests/home-loading-budget-contract.test.js
+          node tests/character-refresh-server-transfer-legion-contract.test.js
+          node tests/character-refresh-identity-stage2-fixtures.test.js
 
           python3 <<'PY'
           from pathlib import Path

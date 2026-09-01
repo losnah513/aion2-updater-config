@@ -120,8 +120,13 @@ jobs:
           worker = load("worker_health")
           assert worker.get("ok") is True, worker
           assert worker.get("service") == "character-refresh-worker", worker
-          assert worker.get("apiVersion") == "295.7", worker
+          assert worker.get("apiVersion") == "295.9", worker
           assert worker.get("databaseContract") == "295", worker
+          assert worker.get("identityDatabaseContract") == "461", worker
+          assert worker.get("identityRecoveryEntry") == "stored-detail-404-or-empty-identity-200+name-server-terminal-not-found", worker
+          assert worker.get("providerRetryEntersIdentityRecovery") is False, worker
+          assert worker.get("serverTransferLegionAtomic") is True, worker
+          assert worker.get("sameServerRenamePreservesLegion") is True, worker
           assert worker.get("listSyncEdge") == "lookup-list-sync", worker
           assert worker.get("sheetReadbackRequired") is True, worker
           assert worker.get("listSyncSingleWorkerLease") is True, worker
@@ -166,7 +171,9 @@ jobs:
           {
             echo "## Character Refresh Worker live boundary"
             echo
-            echo "- Worker API: \`295.7\`"
+            echo "- Worker API: \`295.9\`"
+            echo "- Identity DB contract: \`461\`"
+            echo "- Server transfer: exact-key atomic Legion cleanup"
             echo "- Legion Tree character add: list write/readback skipped by DB455 target-source policy"
             echo "- Worker list sync target: \`lookup-list-sync\`"
             echo "- lookup-list-sync API: \`1.2.3\`"

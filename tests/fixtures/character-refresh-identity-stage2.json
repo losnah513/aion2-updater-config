@@ -1,0 +1,126 @@
+{
+  "recoveryGates": [
+    {
+      "name": "two terminal misses enter recovery",
+      "storedCode": "STORED_DETAIL_NOT_FOUND",
+      "nameSearchCode": "NAME_SERVER_NOT_FOUND",
+      "expected": { "allowed": true, "code": "IDENTITY_RECOVERY_ALLOWED" }
+    },
+    {
+      "name": "provider retry never enters recovery",
+      "storedCode": "STORED_DETAIL_NOT_FOUND",
+      "nameSearchCode": "PROVIDER_RETRY_REQUIRED",
+      "expected": { "allowed": false, "code": "PROVIDER_RETRY_REQUIRED", "retryable": true }
+    },
+    {
+      "name": "name char key mismatch requires review",
+      "storedCode": "STORED_DETAIL_NOT_FOUND",
+      "nameSearchCode": "NAME_SERVER_CHAR_KEY_MISMATCH",
+      "expected": { "allowed": false, "code": "IDENTITY_REVIEW_REQUIRED", "retryable": false }
+    },
+    {
+      "name": "stored char key mismatch requires review",
+      "storedCode": "STORED_DETAIL_CHAR_KEY_MISMATCH",
+      "nameSearchCode": "NAME_SERVER_NOT_FOUND",
+      "expected": { "allowed": false, "code": "IDENTITY_REVIEW_REQUIRED", "retryable": false }
+    },
+    {
+      "name": "incomplete stored provider response retries",
+      "storedCode": "STORED_DETAIL_CHAR_KEY_MISSING",
+      "nameSearchCode": "NAME_SERVER_NOT_FOUND",
+      "expected": { "allowed": false, "code": "PROVIDER_RETRY_REQUIRED", "retryable": true }
+    },
+    {
+      "name": "missing stored detail is insufficient evidence",
+      "storedCode": "STORED_DETAIL_UNAVAILABLE",
+      "nameSearchCode": "NAME_SERVER_NOT_FOUND",
+      "expected": { "allowed": false, "code": "IDENTITY_RECOVERY_EVIDENCE_INCOMPLETE", "retryable": false }
+    }
+  ],
+  "searchOutcomes": [
+    {
+      "name": "exact old name server and char key",
+      "characterName": "니꿍",
+      "serverId": 2002,
+      "expectedKey": "123456789012345",
+      "payload": { "items": [{ "characterName": "니꿍", "serverId": 2002, "characterId": "encoded-id", "profileImageUrl": "https://example.test/avatar?charKey=123456789012345" }] },
+      "expected": { "found": true, "code": "NAME_SERVER_EXACT_MATCH", "terminal": false }
+    },
+    {
+      "name": "same name and server but different char key",
+      "characterName": "니꿍",
+      "serverId": 2002,
+      "expectedKey": "123456789012345",
+      "payload": { "items": [{ "characterName": "니꿍", "serverId": 2002, "characterId": "other-id", "profileImageUrl": "https://example.test/avatar?charKey=999999999999999" }] },
+      "expected": { "found": false, "code": "NAME_SERVER_CHAR_KEY_MISMATCH", "terminal": false, "reviewRequired": true }
+    },
+    {
+      "name": "successful empty provider response is terminal not found",
+      "characterName": "니꿍",
+      "serverId": 2002,
+      "expectedKey": "123456789012345",
+      "payload": { "items": [] },
+      "expected": { "found": false, "code": "NAME_SERVER_NOT_FOUND", "terminal": true }
+    }
+  ],
+  "storedInfoOutcomes": [
+    {
+      "name": "moved character empty 200 profile is terminal not found",
+      "payload": { "profile": { "characterId": null, "characterName": null, "profileImage": null, "serverId": null, "serverName": "" }, "stat": {}, "title": {} },
+      "detail": { "serverId": 2002, "characterId": "old-character-id", "detailUrl": "https://example.test/characters/2002/old-character-id" },
+      "expectedKey": "123456789012345",
+      "expected": { "ok": false, "code": "STORED_DETAIL_NOT_FOUND", "terminal": true, "emptyProfile": true }
+    },
+    {
+      "name": "partial 200 identity response remains retry-only",
+      "payload": { "profile": { "characterId": "old-character-id", "characterName": null, "profileImage": null, "serverId": 2002 } },
+      "detail": { "serverId": 2002, "characterId": "old-character-id", "detailUrl": "https://example.test/characters/2002/old-character-id" },
+      "expectedKey": "123456789012345",
+      "expected": { "ok": false, "code": "STORED_DETAIL_NAME_MISSING", "terminal": false }
+    },
+    {
+      "name": "stored profile char key mismatch remains review-only",
+      "payload": { "profile": { "characterId": "old-character-id", "characterName": "니꿍", "profileImage": "https://example.test/avatar?charKey=999999999999999", "serverId": 2002 } },
+      "detail": { "serverId": 2002, "characterId": "old-character-id", "detailUrl": "https://example.test/characters/2002/old-character-id" },
+      "expectedKey": "123456789012345",
+      "expected": { "ok": false, "code": "STORED_DETAIL_CHAR_KEY_MISMATCH" }
+    }
+  ],
+  "transitions": [
+    {
+      "name": "same server rename preserves legion",
+      "previousServerId": 2002,
+      "currentServerId": 2002,
+      "applied": { "databaseContract": "461", "serverTransferred": false, "legionCleared": false, "previousLegionName": "깡", "organizationAssignmentRemoved": false },
+      "expected": { "ok": true, "serverTransferred": false, "legionCleared": false }
+    },
+    {
+      "name": "different server exact identity clears legion atomically",
+      "previousServerId": 2002,
+      "currentServerId": 2005,
+      "applied": { "databaseContract": "461", "serverTransferred": true, "legionCleared": true, "previousLegionName": "깡", "organizationAssignmentRemoved": true, "legionTreeRevisions": { "깡": 7 } },
+      "expected": { "ok": true, "serverTransferred": true, "legionCleared": true, "previousLegionName": "깡", "organizationAssignmentRemoved": true, "legionTreeRevisions": { "깡": 7 } }
+    },
+    {
+      "name": "different server rejects pre DB461 result",
+      "previousServerId": 2002,
+      "currentServerId": 2005,
+      "applied": { "databaseContract": "294", "serverTransferred": true, "legionCleared": true },
+      "expected": { "ok": false, "code": "IDENTITY_DATABASE_CONTRACT_MISMATCH" }
+    },
+    {
+      "name": "different server requires legion clear confirmation",
+      "previousServerId": 2002,
+      "currentServerId": 2005,
+      "applied": { "databaseContract": "461", "serverTransferred": true, "legionCleared": false },
+      "expected": { "ok": false, "code": "SERVER_TRANSFER_LEGION_CONTRACT_MISMATCH" }
+    },
+    {
+      "name": "same server rejects accidental legion clear",
+      "previousServerId": 2002,
+      "currentServerId": 2002,
+      "applied": { "databaseContract": "461", "serverTransferred": false, "legionCleared": true },
+      "expected": { "ok": false, "code": "SAME_SERVER_LEGION_CONTRACT_MISMATCH" }
+    }
+  ]
+}
