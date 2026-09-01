@@ -12,8 +12,9 @@ for (const file of ['ranking/index.html','m/ranking/index.html']) {
   assert.equal(html.includes('id="rankingLoadMore"'), false, `${file}: global load-more control remains`);
   assert.equal((html.match(/data-mobile-mode="PVE"/g) || []).length, 1, `${file}: PVE mobile tab count mismatch`);
   assert.equal((html.match(/data-mobile-mode="PVP"/g) || []).length, 1, `${file}: PVP mobile tab count mismatch`);
-  assert.ok(html.includes('ranking.css?cache=2026082501'), `${file}: ranking CSS cache key missing`);
-  assert.ok(html.includes('ranking-responsive.css?cache=2026082501'), `${file}: responsive CSS cache key missing`);
+  assert.ok(html.includes('ranking.css?cache=2026090101'), `${file}: ranking CSS cache key missing`);
+  assert.ok(html.includes('ranking-card.css?cache=2026090101'), `${file}: ranking card CSS cache key missing`);
+  assert.ok(html.includes('ranking-responsive.css?cache=2026090101'), `${file}: responsive CSS cache key missing`);
   assert.ok(html.includes('ranking-data.js?cache=2026082501'), `${file}: ranking data cache key missing`);
   assert.ok(html.includes('ranking-render.js?cache=2026082501'), `${file}: ranking render cache key missing`);
   assert.ok(html.includes('ranking-events.js?cache=2026082501'), `${file}: ranking events cache key missing`);
@@ -29,12 +30,14 @@ const dataJs = read('ranking/js/ranking-data.js');
 
 assert.ok(pageCss.includes('body.kinojo-page-ranking{') && pageCss.includes('margin:0;'), 'Ranking body must attach its subbar without the browser body gap');
 assert.ok(pageCss.includes('grid-template-columns:minmax(0,1fr) minmax(0,1fr)'), 'PVE/PVP must share one split board');
+assert.ok(pageCss.includes('--ranking-board-max:896px') && pageCss.includes('width:min(100%,var(--ranking-board-max))'), 'Desktop ranking board must use the 5:4 compact width');
+assert.ok(pageCss.includes('[data-kinojo-pc-banner-visible="true"] .ranking-board') && pageCss.includes('--kinojo-ranking-safe-board-width'), 'Zoomed PC board must reserve both banner rails');
 assert.ok(pageCss.includes('.ranking-panel.pvp{') && pageCss.includes('border-left:1px solid var(--ranking-line)'), 'PVE/PVP divider missing');
 assert.equal(pageCss.includes('box-shadow:inset 3px 0 0'), false, 'Panel header color residue must not remain');
 assert.ok(pageCss.includes('.ranking-scroll-shell::after') && pageCss.includes('pointer-events:none'), 'Non-interactive bottom gradient missing');
 assert.ok(pageCss.includes('.ranking-scroll-shell.has-more-below::after{opacity:1}'), 'Bottom gradient state contract missing');
 assert.ok(cardCss.includes('overflow-y:auto') && cardCss.includes('scrollbar-width:none') && cardCss.includes('.ranking-card-list::-webkit-scrollbar{display:none'), 'Hidden independent scrollbar contract missing');
-assert.ok(cardCss.includes('grid-template-columns:44px 44px minmax(0,1fr) 100px 100px'), 'Desktop compact card grid missing');
+assert.ok(cardCss.includes('grid-template-columns:40px 38px minmax(0,1fr) 86px 82px'), 'Desktop 5:4 card grid missing');
 assert.ok(responsiveCss.includes('.ranking-board[data-mobile-mode="PVE"] .ranking-panel.pvp'), 'Mobile PVE/PVP panel switch missing');
 assert.ok(responsiveCss.includes('grid-template-columns:minmax(340px,.9fr) minmax(0,1.1fr)') && responsiveCss.includes('"actions filters"'), 'Fold search/class split layout missing');
 assert.ok(responsiveCss.includes('grid-template-columns:repeat(5,minmax(0,1fr))'), 'Fold class grid contract missing');
@@ -55,6 +58,11 @@ assert.ok(eventsJs.includes("shell.classList.toggle('has-more-below'"), 'Gradien
 assert.ok(eventsJs.includes("loadRanking({append:true,triggerMode:mode})"), 'Internal infinite-scroll append missing');
 assert.equal(eventsJs.includes('window.scrollTo'), false, 'Panel scrolling must not move the page');
 assert.ok(dataJs.includes("kinojo_web_get_legion_ranking"), 'Existing Server ranking contract changed or missing');
+
+const pcHtml = read('ranking/index.html');
+assert.ok(pcHtml.includes('data-kinojo-pc-banner-mode="resolution"'), 'PC ranking resolution-mode banner opt-in missing');
+assert.equal(pcHtml.includes('data-kinojo-pc-banner-anchor'), false, 'Ranking board width must not move the shared side-banner coordinates');
+assert.equal(read('m/ranking/index.html').includes('data-kinojo-pc-banner-mode="resolution"'), false, 'Mobile ranking must not opt into PC resolution-mode banners');
 
 const sandbox = {
   window:{

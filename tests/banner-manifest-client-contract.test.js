@@ -178,14 +178,14 @@ async function verifyPlaybackRuntime(){
   for(const code of ['HOF','RANKING','LEGION_TREE','METER','SANCTUARY','SANCTUARY_SCHEDULE'])assert.ok(pcBannerSource.includes("return '"+code+"'"),'missing PC side page mapping '+code);
   assert.equal(/Date\.now|Math\.random|Asia\/Seoul|priority|weighted|scheduleMode/.test(pcBannerSource),false,'PC side mapping must not own Server schedule/priority/random decisions');
   assert.equal(pcBannerSource.includes('innerHTML'),false,'PC side banner renderer must use DOM construction instead of HTML injection');
-  assert.match(pcBannerSource,/Object\.freeze\(\{refresh,render,clear,resolvePageCode,resolveSlotCode\}\)/,'common PC side banner renderer must expose renderer and canonical mapping helpers');
+  assert.match(pcBannerSource,/Object\.freeze\(\{refresh,render,clear,resolvePageCode,resolveSlotCode(?:,[^}]*)?\}\)/,'common PC side banner renderer must expose renderer and canonical mapping helpers');
   assert.match(pcBannerCss,/\.kinojo-pc-banner-media,[\s\S]*\.kinojo-pc-banner-image\{[\s\S]*width:100%;[\s\S]*height:100%;/,'rendered media must fill the existing 300×715 slot');
   assert.match(pcBannerCss,/\.kinojo-pc-banner-image\{[\s\S]*object-fit:cover;/,'side banner image must preserve the validated 300:715 media ratio');
 
   class FakeClassList{constructor(values=[]){this.values=new Set(values)}contains(value){return this.values.has(value)}}
   class FakeElement{
     constructor(tagName='div',classes=[]){
-      this.tagName=String(tagName).toUpperCase();this.classList=new FakeClassList(classes);this.dataset={};this.style={};this.attributes=new Map();this.children=[];this.textContent='';this.className='';
+      this.tagName=String(tagName).toUpperCase();this.classList=new FakeClassList(classes);this.dataset={};this.style={setProperty(key,value){this[key]=value}};this.attributes=new Map();this.children=[];this.textContent='';this.className='';
       this.rect={left:0,right:300,top:100,width:300,height:715};this.host=null;
     }
     closest(selector){return selector==='.kinojo-pc-banner-host'?this.host:null}
@@ -200,8 +200,8 @@ async function verifyPlaybackRuntime(){
   const fakeSlot=new FakeElement('aside',['kinojo-pc-banner-slot','is-left']);fakeSlot.host=fakeHost;fakeSlot.setAttribute('aria-hidden','true');
   let renderedSlots=[];
   const pcBannerContext={
-    window:{scrollY:0,innerHeight:900,location:{pathname:'/unsupported/'},getComputedStyle(){return{display:'grid'}},addEventListener(){}},
-    document:{readyState:'complete',currentScript:null,documentElement:{appendChild(){}},head:{appendChild(){}},querySelectorAll(){return renderedSlots},createElement(tag){return new FakeElement(tag)},addEventListener(){}},
+    window:{scrollY:0,innerWidth:1920,innerHeight:900,outerWidth:1920,devicePixelRatio:1,screen:{availWidth:1920},location:{pathname:'/unsupported/'},getComputedStyle(){return{display:'grid'}},addEventListener(){}},
+    document:{readyState:'complete',currentScript:null,documentElement:{clientWidth:1920,appendChild(){}},head:{appendChild(){}},querySelectorAll(){return renderedSlots},createElement(tag){return new FakeElement(tag)},addEventListener(){}},
     WeakSet,Map,Promise,URL,Object,String,Math,console,
   };
   vm.runInNewContext(pcBannerSource,pcBannerContext,{filename:'ui/kinojo-pc-banners.js'});
@@ -249,9 +249,9 @@ async function verifyPlaybackRuntime(){
   const loaderSlot=new FakeElement('aside',['kinojo-pc-banner-slot','is-left']);loaderSlot.host=loaderHost;loaderSlot.setAttribute('aria-hidden','true');
   const loadedScripts=[];const loaderCalls=[];let loaderContext=null;
   loaderContext={
-    window:{scrollY:0,innerHeight:900,location:{pathname:'/meter/'},getComputedStyle(){return{display:'grid'}},addEventListener(){}},
+    window:{scrollY:0,innerWidth:1920,innerHeight:900,outerWidth:1920,devicePixelRatio:1,screen:{availWidth:1920},location:{pathname:'/meter/'},getComputedStyle(){return{display:'grid'}},addEventListener(){}},
     document:{
-      readyState:'complete',currentScript:{src:'https://kinojo.info/ui/kinojo-pc-banners.js?cache=2026083001'},documentElement:{appendChild(){}},
+      readyState:'complete',currentScript:{src:'https://kinojo.info/ui/kinojo-pc-banners.js?cache=2026090101'},documentElement:{clientWidth:1920,appendChild(){}},
       head:{appendChild(script){loadedScripts.push(script.src);loaderContext.window.KinojoBannerRuntime={mountBanner(options){loaderCalls.push(options.pageCode+':'+options.slotCode);options.deactivate?.();return{stop(){}}}};script.onload?.();return script}},
       querySelectorAll(){return[loaderSlot]},createElement(tag){return new FakeElement(tag)},addEventListener(){},
     },
