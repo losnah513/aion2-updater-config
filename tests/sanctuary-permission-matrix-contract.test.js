@@ -39,8 +39,8 @@ assert.ok(page.includes("new CustomEvent('kinojo:sanctuary-access-changed'"), 'F
 for (const entry of ['sanctuary/index.html', 'm/sanctuary/index.html']) {
   const html = read(entry);
   assert.equal(html.includes('id="editModeBtn"'), false, `${entry}: retired legacy info editor remains on the canonical page`);
-  assert.ok(html.includes('kinojo-supabase-features.js?cache=2026083108'), `${entry}: feature cache key is stale`);
-  assert.ok(html.includes('sanctuary-management.js?cache=2026083107'), `${entry}: canonical page cache key is stale`);
+  assert.ok(html.includes('kinojo-supabase-features.js?cache=2026090101'), `${entry}: feature cache key is stale`);
+  assert.ok(html.includes('sanctuary-management.js?cache=2026090101'), `${entry}: canonical page cache key is stale`);
   assert.equal(html.includes('sanctuary-editor.js?'), false, `${entry}: retired legacy editor bundle remains`);
 }
 

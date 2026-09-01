@@ -26,7 +26,7 @@ for(const token of [
 ])assert.ok(migration.includes(token),`Stage 10 part 1 DB contract missing ${token}`);
 
 for(const token of [
-  'const DATABASE_CONTRACT="457"',
+  'const DATABASE_CONTRACT="458"',
   'kinojo_sanctuary_management_public_bootstrap_v456',
   'kinojo_sanctuary_management_month_v454',
   'kinojo_sanctuary_management_linked_alts_v457',
@@ -36,7 +36,7 @@ for(const token of [
 ])assert.ok(edge.includes(token),`Stage 10 part 1 Edge contract missing ${token}`);
 
 for(const token of [
-  'const SCHEMA_VERSION=457',
+  'const SCHEMA_VERSION=458',
   'calendarMonthData',
   'function renderRecruitmentSummary()',
   'function renderWeek()',

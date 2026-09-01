@@ -1124,6 +1124,16 @@
     });
   }
 
+  async function getSanctuaryManagementLeaseStatus(teamIds){
+    const normalizedTeamIds=Array.from(new Set((Array.isArray(teamIds)?teamIds:[]).map(Number).filter(function(teamId){return Number.isSafeInteger(teamId)&&teamId>0;}))).slice(0,100);
+    if(!normalizedTeamIds.length)throw new Error('편집 상태를 확인할 팀을 다시 선택해 주세요.');
+    return invokeEdgeFunction('sanctuary-management',{
+      action:'lease-status',
+      sessionToken:currentServerSessionCredential(),
+      teamIds:normalizedTeamIds
+    });
+  }
+
   async function searchSanctuaryManagementCharacter(teamId,query){
     const normalizedTeamId=Number(teamId||0);
     const normalizedQuery=String(query||'').trim();
@@ -1131,6 +1141,19 @@
     if(!normalizedQuery||normalizedQuery.length>48)throw new Error('캐릭터 이름 또는 이름[서버]를 입력해 주세요.');
     return invokeEdgeFunction('sanctuary-management',{
       action:'character-search',
+      sessionToken:currentServerSessionCredential(),
+      teamId:normalizedTeamId,
+      query:normalizedQuery
+    });
+  }
+
+  async function searchSanctuaryManagementSlotCharacters(teamId,query){
+    const normalizedTeamId=Number(teamId||0);
+    const normalizedQuery=String(query||'').trim();
+    if(!Number.isSafeInteger(normalizedTeamId)||normalizedTeamId<1)throw new Error('캐릭터를 추가할 팀을 다시 선택해 주세요.');
+    if(!normalizedQuery||Array.from(normalizedQuery).length>12)throw new Error('검색어는 12자까지 입력해 주세요.');
+    return invokeEdgeFunction('sanctuary-management',{
+      action:'slot-character-search',
       sessionToken:currentServerSessionCredential(),
       teamId:normalizedTeamId,
       query:normalizedQuery
@@ -2075,7 +2098,9 @@
     approveSanctuaryManagementTransition,
     runSanctuaryManagementCommand,
     runSanctuaryManagementLease,
+    getSanctuaryManagementLeaseStatus,
     searchSanctuaryManagementCharacter,
+    searchSanctuaryManagementSlotCharacters,
     registerSanctuaryManagementCharacter,
     getSanctuaryManagementLinkedAlts,
     getSanctuaryManagementBalanceProposal,

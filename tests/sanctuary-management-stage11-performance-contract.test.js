@@ -26,8 +26,8 @@ assert.ok(
 );
 
 for(const token of [
-  'const API_VERSION="2.3"',
-  'const DATABASE_CONTRACT="457"',
+  'const API_VERSION="2.4"',
+  'const DATABASE_CONTRACT="458"',
   '"revision"',
   'kinojo_sanctuary_management_public_bootstrap_v456',
   'kinojo_sanctuary_management_bootstrap_v456',
@@ -43,8 +43,8 @@ for(const token of [
 ])assert.ok(core.includes(token),`Stage 11 browser feature adapter missing ${token}`);
 
 for(const token of [
-  'const API_VERSION=2.3',
-  'const SCHEMA_VERSION=457',
+  'const API_VERSION=2.4',
+  'const SCHEMA_VERSION=458',
   'const bootstrapCache=new Map()',
   'async revision(sanctuaryCode=',
   'const next=await ServerAdapter.revision(selectedSanctuary)',

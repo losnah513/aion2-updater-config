@@ -31,9 +31,9 @@ assert.ok(migration.includes("raise exception '지원 후보 상태가 바뀌었
 assert.ok(migration.includes("update private.sanctuary_management_slots_v412 set placement_locked = false"),'save must release old locks inside the same transaction before the v450 composer rewrite');
 assert.ok(!migration.includes('grant execute on function public.kinojo_sanctuary_management_balance_proposal_v451')||migration.includes('to service_role'),'proposal RPC must only be granted to service_role');
 
-for(const token of ['const API_VERSION="2.3"','const DATABASE_CONTRACT="457"','"balance-proposal"','opaqueToken("smbp_")','kinojo_sanctuary_management_balance_proposal_v454','kinojo_sanctuary_management_command_v454'])assert.ok(edge.includes(token),`Edge v457 contract missing: ${token}`);
+for(const token of ['const API_VERSION="2.4"','const DATABASE_CONTRACT="458"','"balance-proposal"','opaqueToken("smbp_")','kinojo_sanctuary_management_balance_proposal_v454','kinojo_sanctuary_management_command_v454'])assert.ok(edge.includes(token),`Edge v457 contract missing: ${token}`);
 for(const token of ['getSanctuaryManagementBalanceProposal','action:\'balance-proposal\'','lockOverrides:locks'])assert.ok(core.includes(token),`core balance adapter missing: ${token}`);
-for(const token of ['const API_VERSION=2.3','const SCHEMA_VERSION=457','placementLocked','balanceProposalToken','balanceProposal,'])assert.ok(main.includes(token),`browser v457 bridge missing: ${token}`);
+for(const token of ['const API_VERSION=2.4','const SCHEMA_VERSION=458','placementLocked','balanceProposalToken','balanceProposal,'])assert.ok(main.includes(token),`browser v457 bridge missing: ${token}`);
 for(const token of ['data-draft-toggle-lock','data-balance-open','data-balance-apply','compositionSignature','balanceAppliedSignature','균형 배치 제안을 로컬 편성안에 적용'])assert.ok(draft.includes(token),`composer part 3 behavior missing: ${token}`);
 for(const token of ['sanctuary-management-balance-panel','sanctuary-management-slot-lock','is-placement-locked','overflow-x:hidden','@media(max-width:699px)'])assert.ok(css.includes(token),`part 3 responsive layout missing: ${token}`);
 assert.ok(workflow.includes('node tests/sanctuary-management-stage8-part3-contract.test.js'),'Stage 8 part 3 contract is not wired into CI');

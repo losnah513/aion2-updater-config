@@ -5,6 +5,7 @@ const path=require('node:path');
 const root=path.resolve(__dirname,'..');
 const read=file=>fs.readFileSync(path.join(root,file),'utf8');
 const client=read('sanctuary-management/js/sanctuary-management.js');
+const inlineSlotClient=read('sanctuary-management/js/sanctuary-management-inline-slot.js');
 const supportClient=read('sanctuary-management/js/sanctuary-management-support.js');
 const pageCss=read('sanctuary-management/css/sanctuary-management.css');
 const draftCss=read('sanctuary-management/css/sanctuary-management-draft.css');
@@ -23,10 +24,11 @@ for(const token of [
   'sanctuary-management-force-carousel','dataset.sanctuaryForceShift','setForceCarouselIndex','forceCarouselCurrent','setForceCardVisibility',
   'touchstart','touchend',"event.key==='ArrowRight'",'dataset.sanctuaryForcePosition','dataset.sanctuaryForceAnnouncer',
   'sanctuary-management-force-overview-layer','function openForceOverview','function suspendForceOverview','function resumeForceOverview',
-  'dataset.forceOverviewEdit','포스·캐릭터 편집','팀 이미지 복사','window.KinojoSanctuaryManagementSupportUI?.open?.',
+  'dataset.forceOverviewEdit','팀 이미지 복사','window.KinojoSanctuaryManagementSupportUI?.open?.',
   'BACKGROUND_CHECK_INTERVAL','pendingBootstrapData','bootstrapFingerprint','checkForUpdates','refreshContent',
   "meta.textContent=hasUpdate?'새로운 내용이 추가되었습니다.'",
 ])assert.ok(client.includes(token),`roster/carousel/refresh client missing ${token}`);
+for(const token of ['EDIT_PRESENCE_INTERVAL=10000',"button.textContent='편집하기'","button.textContent='편집 중'"])assert.ok(inlineSlotClient.includes(token),`edit presence client missing ${token}`);
 
 for(const token of ['onClose:null','typeof options?.onClose',"if(onClose)onClose()"]){
   assert.ok(supportClient.includes(token),`support overview return contract missing ${token}`);
