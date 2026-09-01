@@ -15,6 +15,8 @@ const crossServerMigration = fs.readFileSync(path.join(rootDir, 'supabase/migrat
 const listlessMigration = fs.readFileSync(path.join(rootDir, 'supabase/migrations/20260831064411_legion_tree_listless_character_add_v455.sql'), 'utf8');
 const searchRateMigration = fs.readFileSync(path.join(rootDir, 'supabase/migrations/20260831085735_legion_tree_character_search_rate_gate_v457.sql'), 'utf8');
 const candidateRegistrationMigration = fs.readFileSync(path.join(rootDir, 'supabase/migrations/20260831102651_legion_tree_candidate_registration_v458.sql'), 'utf8');
+const readResilienceMigration = fs.readFileSync(path.join(rootDir, 'supabase/migrations/20260901070217_legion_tree_public_snapshot_resilience_v461.sql'), 'utf8');
+const readResilienceRollback = fs.readFileSync(path.join(rootDir, 'supabase/rollbacks/20260901070217_legion_tree_public_snapshot_resilience_v461_rollback.sql'), 'utf8');
 const worker = fs.readFileSync(path.join(rootDir, 'supabase/functions/character-refresh-worker/index.ts'), 'utf8');
 const workflow = fs.readFileSync(path.join(rootDir, '.github/workflows/verify-legion-tree-pages.yml'), 'utf8');
 const viewerHarness = fs.readFileSync(path.join(rootDir, 'tests/legion-tree-viewer-layout-harness.html'), 'utf8');
@@ -37,8 +39,14 @@ const document = {
   querySelectorAll() { return []; }
 };
 const dispatched = [];
+const cacheStore = new Map();
 const window = {
-  dispatchEvent(event) { dispatched.push(event); }
+  dispatchEvent(event) { dispatched.push(event); },
+  localStorage: {
+    getItem(key) { return cacheStore.has(key) ? cacheStore.get(key) : null; },
+    setItem(key, value) { cacheStore.set(key, String(value)); },
+    removeItem(key) { cacheStore.delete(key); }
+  }
 };
 const context = {
   window,
@@ -48,6 +56,8 @@ const context = {
   Map,
   Object,
   Promise,
+  setTimeout,
+  clearTimeout,
   CustomEvent: function CustomEvent(type, options) {
     this.type = type;
     this.detail = options && options.detail;
@@ -58,7 +68,7 @@ vm.runInContext(script, context, { filename: scriptPath });
 
 assert(window.KinojoLegionTree, 'KinojoLegionTree contract must be exported');
 assert(viewerHarness.includes('legion-tree.css?cache=2026090104'));
-assert(viewerHarness.includes('legion-tree.js?cache=2026090107'));
+assert(viewerHarness.includes('legion-tree.js?cache=2026090108'));
 assert(viewerHarness.includes('id="legionTreeViewerFade"'));
 assert(viewerHarness.includes("groupName:'소속 외'"));
 
@@ -560,6 +570,27 @@ window.KinojoSupabase = {
   assert(status.textContent.includes('레기온 4개'));
   assert(status.textContent.includes('구성원 4명'));
   assert(dispatched.some(event => event.type === 'kinojo:page-time'));
+  assert(cacheStore.has('kinojo:legion-tree:v460:last-good'));
+
+  let transientAttempts = 0;
+  const retried = await window.KinojoLegionTree.requestTreePayloadWithRetry({
+    async rpc() {
+      transientAttempts += 1;
+      if (transientAttempts < 3) throw new Error('canceling statement due to statement timeout');
+      return { ...payload, snapshotState: 'HIT', readOptimizationContract: '461' };
+    }
+  });
+  assert.strictEqual(retried.attemptCount, 3);
+  assert.strictEqual(transientAttempts, 3);
+  assert.strictEqual(window.KinojoLegionTree.transientTreeReadError(new Error('SQLSTATE 57014 query_canceled')), true);
+  assert.strictEqual(window.KinojoLegionTree.transientTreeReadError(new Error('LEGION_TREE_CONTRACT_INVALID')), false);
+
+  window.KinojoSupabase = { async rpc() { throw new Error('LEGION_TREE_CONTRACT_INVALID'); } };
+  const cachedFallback = await window.KinojoLegionTree.loadTreeData();
+  assert(cachedFallback, 'last known good tree must remain visible after a read failure');
+  assert(status.textContent.includes('최근 정상 데이터 표시'));
+  assert(treeRoot.innerHTML.includes('실제구성원4'));
+  window.KinojoLegionTree.clearTreeRecovery();
 
   for (const html of [pc, mobile]) {
     assert(html.includes('id="legionTreeRoot"'));
@@ -592,8 +623,8 @@ window.KinojoSupabase = {
     assert(html.includes('kinojo-character-reaction.js?cache=2026082701'));
     assert(html.includes('legion-tree.css?cache=2026090104'));
     assert(html.includes('legion-tree-editor.js?cache=2026090105'));
-    assert(html.includes('legion-tree.js?cache=2026090107'));
     assert(html.includes('kinojo-supabase-features.js?cache=2026090101'));
+    assert(html.includes('legion-tree.js?cache=2026090108'));
     assert(!html.includes('legion-tree.js?cache=2026082403'));
   }
 
@@ -613,6 +644,11 @@ window.KinojoSupabase = {
   assert(!script.includes("renderServerOptions"));
   assert(!script.includes("selectedRaceId"));
   assert(script.includes("const TREE_DATABASE_CONTRACT='460'"));
+  assert(script.includes("TREE_CACHE_KEY='kinojo:legion-tree:v460:last-good'"));
+  assert(script.includes('TREE_READ_RETRY_DELAYS_MS=Object.freeze([0,300,900])'));
+  assert(script.includes('TREE_RECOVERY_DELAYS_MS=Object.freeze([5000,15000,30000])'));
+  assert(script.includes('requestTreePayloadWithRetry'));
+  assert(script.includes('최근 정상 데이터 표시 · 서버 재연결 중'));
   assert(script.includes("ADD_ACCEPTED_CODE='ADD_QUEUE_ACCEPTED'"));
   assert(script.includes("if(state==='completed')return 3"));
   assert(!script.includes('SERVER_QUEUE_LIST_SYNC_DONE'));
@@ -630,6 +666,36 @@ window.KinojoSupabase = {
   assert(css.includes('.legion-tree-search-registered'));
   assert(css.includes('@keyframes legion-tree-search-fade'));
   assert(css.includes('@media(prefers-reduced-motion:reduce)'));
+
+  for (const token of [
+    'create table if not exists private.legion_tree_public_snapshot_v461',
+    'create or replace function private.kinojo_legion_tree_source_token_v461()',
+    'create or replace function private.kinojo_legion_tree_configured_stages_v461(',
+    'create or replace function private.kinojo_legion_tree_build_payload_v461()',
+    'create or replace function private.kinojo_legion_tree_refresh_snapshot_v461(',
+    'member_rows as materialized',
+    "'readOptimizationContract', '461'",
+    "'snapshotContract', 'source-token-stale-fallback-v461'",
+    'pg_try_advisory_xact_lock(461, 1)',
+    'when query_canceled then',
+    "grant execute on function public.kinojo_web_get_legion_tree() to anon, authenticated, service_role"
+  ]) {
+    assert(readResilienceMigration.includes(token), `read resilience migration missing ${token}`);
+  }
+  const configuredV461 = readResilienceMigration.match(/create or replace function private\.kinojo_legion_tree_configured_stages_v461\([\s\S]*?\n\$\$;/);
+  assert(configuredV461, 'configured stages v461 function missing');
+  assert(configuredV461[0].includes('jsonb_array_elements(p_members)'));
+  assert(!configuredV461[0].includes('kinojo_legion_tree_member_source_v352()'));
+  assert(readResilienceMigration.includes('idx_character_master_legion_tree_source_v461'));
+  assert(readResilienceMigration.includes('perform private.kinojo_legion_tree_refresh_snapshot_v461()'));
+  for (const token of [
+    'create or replace function public.kinojo_web_get_legion_tree()',
+    "set statement_timeout = '2s'",
+    'private.kinojo_legion_tree_configured_stages_v460',
+    'drop function if exists private.kinojo_legion_tree_refresh_snapshot_v461(text)',
+    'drop table if exists private.legion_tree_public_snapshot_v461',
+    'drop index if exists public.idx_character_master_legion_tree_source_v461'
+  ]) assert(readResilienceRollback.includes(token), `read resilience rollback missing ${token}`);
 
   const searchWrapper = features.match(/async function searchLegionTreeCharacters\(extra=\{\}\)\{([\s\S]*?)\n  \}/);
   assert(searchWrapper, 'Legion Tree Server search wrapper missing');

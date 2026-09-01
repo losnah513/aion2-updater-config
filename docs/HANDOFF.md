@@ -17,7 +17,7 @@
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
 - 성역·스케줄 관리 개편은 Stage 7-8까지 **59/59 CLOSED**다. 제품 전환·종료는 PR `#328` + `#329` + `#330` + `#337` + `#338` + `#339` + `#342`, UI 기준 main `3e8d253e818349357f171ca4b025ca9d10062ae6`, Edge `sanctuary-management` v16(API 1.8 / DB446), copy renderer v20(DB447), transition run 1 `COMPLETE`다. 최종 운영·복구 기준은 `docs/SANCTUARY_MANAGEMENT_STAGE7_CLOSEOUT_20260830.md`를 따른다.
 - 성역 Stage 9 후속은 **77/77 CLOSED**다. 활성 제품 계약은 Edge `sanctuary-management` API 2.2 / DB452이며, 입장 아이템 레벨·성역 3 난이도·랜덤 부캐·연결 부캐 노출·전투력/아이템 레벨 공식 파싱·고밀도 지원 카드 기준은 `docs/SANCTUARY_MANAGEMENT_STAGE9_CLOSEOUT_20260830.md`를 따른다. Stage 7 백업·복구 경계는 기존 종료 문서를 계속 따른다.
-- 레기온 트리 조직도 기준은 Edge `kinojo-legion-tree` v10 / API 1.9 / organization DB460이다. 편집 Modal 560px, 레기온 버튼식 선택, 레기온 내부 이름 조회, 단일 상위 자동 직속·terminal 기본 소속·명시적 `소속 외`를 유지한다. 공개 화면은 각 계급 네임카드와 해당 구성원 목록을 독립 표시하고, 고정 높이 단일 레기온 viewer·좌우 순환·내부 스크롤·조건부 하단 그라데이션을 사용한다. 프로젝트 누적 진행도는 **147/148**, 다음은 **더-1 최종 전체 readback**이다.
+- 레기온 트리 조직도 기준은 Edge `kinojo-legion-tree` v10 / API 1.9 / organization DB460이며, 공개 읽기 내부 최적화는 DB461이다. 편집 Modal 560px, 레기온 버튼식 선택, 레기온 내부 이름 조회, 단일 상위 자동 직속·terminal 기본 소속·명시적 `소속 외`를 유지한다. 공개 화면은 각 계급 네임카드와 해당 구성원 목록을 독립 표시하고, 고정 높이 단일 레기온 viewer·좌우 순환·내부 스크롤·조건부 하단 그라데이션을 사용한다. 프로젝트 누적 계획은 **155개**, 선행 최적화 완료 목표는 **154/155**, 다음은 **더-1 최종 전체 readback**이다.
 
 ## 공통 PC 사이드 배너·서브바 sticky 회귀 수정 · 2026-09-01
 
@@ -34,7 +34,15 @@
 - 조직 소속은 DB460의 `immediate_upper_or_terminal_default_or_explicit_unaffiliated`가 최종 권위다. 바로 윗 단계 role이 하나면 자동 직속, 여러 개면 parent 선택 필수, 마지막 단계 parent 누락은 terminal 기본 소속으로 보존한다. 명시적 `소속 외`만 `unaffiliated=true / parent_role_id=NULL` 독립 branch가 된다.
 - 공개 본문은 네 레기온을 세로로 이어 붙이지 않고 고정 높이 viewer 안에 한 번에 하나만 표시한다. 좌우 `‹ / ›` 버튼은 Server 순서를 순환하고 전환 때 내부 scrollTop을 0으로 되돌리며, 현재/이전/다음 레기온 ARIA 문구를 갱신한다. 내부 scrollbar는 숨기고 아래 내용이 남아 있을 때만 흰색 하단 그라데이션을 보인다.
 - 124px 캐릭터 카드는 실제 branch 폭에 맞춘 `auto-fit` grid와 652px 상한을 사용해 한 줄 최대 5개다. 로컬 PC 1440×900은 viewer 1076×724, 최대 5열, commander 중심 오차 0px, 내부 scroll 722/899px, document overflow 0이다. 모바일 390×844는 viewer 291×650, 최대 2열, 내부 scroll 648/1512px, document overflow 0이다.
-- 소유 파일은 `legion-tree/js/legion-tree.js`, `legion-tree/css/legion-tree.css`, PC/mobile HTML, data-render 계약 테스트와 viewer 전용 harness다. cache는 CSS `2026090104`, tree `2026090107`이며 editor `2026090105`를 유지한다. DB·Edge·운영 데이터는 변경하지 않는다.
+- 소유 파일은 `legion-tree/js/legion-tree.js`, `legion-tree/css/legion-tree.css`, PC/mobile HTML, data-render 계약 테스트와 viewer 전용 harness다. cache는 CSS `2026090104`, tree `2026090108`이며 editor `2026090105`를 유지한다. 조직도 쓰기 외부 계약은 DB460, 공개 읽기 내부 최적화는 DB461이며 Edge API 1.9는 유지한다.
+
+## 레기온 트리 공개 읽기 내결함성·최적화 · 2026-09-01
+
+- 장애 원인은 브라우저 레이아웃이 아니라 공개 RPC의 PostgreSQL `statement timeout`이었다. 최근 Postgres 로그 표본 100건 중 78건이 timeout이었고, 같은 시간대 Queue 후처리와 긴 checkpoint가 겹치면서 정상 시 약 83ms인 트리 조립도 취소될 수 있었다.
+- DB461은 구성원 원본을 rebuild당 한 번만 materialize하고, 관련 구성원·설정·직급·배정의 exact source token과 단일 private snapshot을 사용한다. stale snapshot refresh는 advisory transaction lock 한 명만 수행하고, 나머지 공개 조회는 마지막 정상 snapshot을 반환한다. 외부 `web-legion-tree-v1 / databaseContract 460`은 바꾸지 않는다.
+- 운영 rollback benchmark에서 source token은 2.705ms, payload rebuild는 7.857ms, 연속 snapshot hit는 2.806ms와 2.494ms였다. 조직도 저장 성공 경로가 snapshot을 즉시 재생성하므로 기존 revision readback 의미를 유지한다.
+- Browser는 timeout·네트워크 계열에만 `0/300/900ms`의 최대 3회 재시도를 적용한다. 검증된 성공 payload는 24시간 제한의 last-known-good cache에 저장하며, 일시 실패 때 현재 화면 또는 cache를 유지하고 `5/15/30초` 제한 background recovery를 실행한다. 비정상 계약 오류를 성공으로 취급하지 않는다.
+- 회귀 기준은 `tests/legion-tree-data-render-contract.test.js`, `tests/legion-tree-editor-contract.test.js`, GitHub `Verify Legion Tree Pages`, DB migration dry-run/운영 readback, PC·모바일 실페이지다.
 
 ## HOME 로딩·외부 레이아웃 안정화 종료 · 2026-08-30
 
@@ -339,7 +347,7 @@
 - 공개 트리는 비회원도 계속 읽을 수 있다. 후보 조회·캐릭터 추가·조직도 편집 UI는 비관리자에게 fail-closed이고, `kinojo-legion-tree` API 1.6은 search/add/save/reset마다 현재 KWS 세션과 `canManage`를 독립 재검증한다. organization DB453의 revision/CAS·v365 무결성·단일 transaction 계약은 유지한다.
 - 저장 성공 응답은 같은 요청 안에서 `kinojo_web_get_legion_tree`를 재호출해 revision·fallback 상태가 일치할 때만 `readbackVerified=true`로 반환한다. 편집기는 이 readback만 재렌더링하며 직접 service-role RPC를 호출하지 않는다.
 - 설정 저장 전 전체 draft의 단계 순서·필수 이름·직급 키/순서·최대 인원·현재 레기온 구성원·중복 배치·직급 존재·최상위/하위 parent 방향을 검증한다. 실패하면 네트워크 요청 없이 첫 오류 위치와 메시지를 표시하고 해당 입력으로 focus한다. Server validator v365를 최종 권한으로 대체하지 않는다.
-- 레기온 트리 계획은 최신 Drive 기준 **148개 micro-task**이며 현재 **147/148**이다. 후보 조회/선택, listless 추가, 공개 읽기·관리 쓰기 권한, 조직도 저장·자동 소속 계보, 계급별 독립 블록과 고정 viewer까지 운영 반영 대상이다. 다음 작업은 더-1 최종 GitHub·Supabase·kinojo.info·Drive source·PROJECT LOG 전체 readback이다.
+- 레기온 트리 계획은 최신 Drive 기준 **155개 micro-task**이며 공개 읽기 최적화 선행 묶음 종료 목표는 **154/155**다. 후보 조회/선택, listless 추가, 공개 읽기·관리 쓰기 권한, 조직도 저장·자동 소속 계보, 계급별 독립 블록과 고정 viewer, DB461 snapshot·Browser retry/cache까지 운영 반영 대상이다. 다음 작업은 더-1 최종 GitHub·Supabase·kinojo.info·Drive source·PROJECT LOG 전체 readback이다.
 
 ## 내 정보 이미지 기존 완료 상태
 
