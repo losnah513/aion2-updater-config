@@ -12,7 +12,7 @@
   const ADD_ACCEPTED_CODE='ADD_QUEUE_ACCEPTED';
   const ADD_POLL_INTERVAL_MS=1400;
   const ADD_POLL_TIMEOUT_MS=15*60*1000;
-  const TREE_CACHE_KEY='kinojo:legion-tree:v460:last-good';
+  const TREE_CACHE_KEY='kinojo:legion-tree:v464:last-good';
   const TREE_CACHE_MAX_AGE_MS=24*60*60*1000;
   const TREE_READ_RETRY_DELAYS_MS=Object.freeze([0,300,900]);
   const TREE_RECOVERY_DELAYS_MS=Object.freeze([5000,15000,30000]);
@@ -62,6 +62,12 @@
 
   function boolean(value){
     return value===true||value===1||String(value).toLowerCase()==='true';
+  }
+
+  function nonNegativeNumber(value){
+    if(value===null||value===undefined||value==='')return null;
+    const number=Number(value);
+    return Number.isFinite(number)&&number>=0?number:null;
   }
 
   function array(value){
@@ -414,8 +420,20 @@
       mainCharacterId:positiveInt(source.mainCharacterId??source.main_character_id),
       mainCharacterName:text(source.mainCharacterName??source.main_character_name,120),
       serverId:positiveInt(source.serverId??source.server_id),
-      serverName:text(source.serverName??source.server_name,120)
+      serverName:text(source.serverName??source.server_name,120),
+      combatPower:nonNegativeNumber(source.combatPower??source.combat_power)
     };
+  }
+
+  function sortMembersByCombatPower(members){
+    return array(members).map((member,index)=>({member,index})).sort((left,right)=>{
+      const leftPower=nonNegativeNumber(left.member?.combatPower);
+      const rightPower=nonNegativeNumber(right.member?.combatPower);
+      if(leftPower===null&&rightPower!==null)return 1;
+      if(leftPower!==null&&rightPower===null)return -1;
+      if(leftPower!==null&&rightPower!==null&&leftPower!==rightPower)return rightPower-leftPower;
+      return left.index-right.index;
+    }).map(entry=>entry.member);
   }
 
   function normalizeGroup(item,index){
@@ -427,7 +445,7 @@
       unaffiliated:boolean(source.unaffiliated??source.isUnaffiliated??source.is_unaffiliated),
       defaultAffiliation:boolean(source.defaultAffiliation??source.isDefaultAffiliation??source.default_affiliation),
       sortOrder:positiveInt(source.sortOrder??source.sort_order)||index+1,
-      members:array(source.members).map(normalizeMember).filter(Boolean)
+      members:sortMembersByCombatPower(array(source.members).map(normalizeMember).filter(Boolean))
     };
   }
 
@@ -487,7 +505,7 @@
       memberCount:Number.isInteger(Number(source.memberCount??source.member_count))
         ?Math.max(0,Number(source.memberCount??source.member_count)):0,
       stages,
-      unassignedMembers:array(source.unassignedMembers??source.unassigned_members).map(normalizeMember).filter(Boolean)
+      unassignedMembers:sortMembersByCombatPower(array(source.unassignedMembers??source.unassigned_members).map(normalizeMember).filter(Boolean))
     };
   }
 
@@ -527,15 +545,48 @@
     return file?`/assets/images/classes/class_icon_${file}.png`:'';
   }
 
+  function characterIdentityKey(value){
+    return text(value,120).normalize('NFKC').toLocaleLowerCase('ko-KR').replace(/[\s\u200B-\u200D\uFEFF]+/g,'');
+  }
+
+  function currentAccountMainCharacterName(){
+    const account=window.KinojoAuth?.getAccount?.()||null;
+    return text(account?.mainCharacterName??account?.mainCharacter,120);
+  }
+
+  function isCurrentAccountCharacter(member){
+    const accountKey=characterIdentityKey(currentAccountMainCharacterName());
+    if(!accountKey)return false;
+    const ownerName=member?.mainCharacterName||(member?.isMain?member?.characterName:'');
+    return characterIdentityKey(ownerName)===accountKey;
+  }
+
   function renderCharacter(member){
-    const kind=member.isMain?'본캐':'부캐';
-    const icon=classIconPath(member.className);
     const owner=member.isMain?member.characterName:member.mainCharacterName;
+    const kind=member.isMain?'본캐':owner?`${owner}의-부캐`:'부캐';
+    const icon=classIconPath(member.className);
+    const currentAccountCharacter=isCurrentAccountCharacter(member);
     const nameOverflow=Array.from(member.characterName).length>5;
     const image=icon
       ?`<img src="${esc(icon)}" alt="" loading="lazy"/>`
       :'<span class="legion-tree-class-fallback" aria-hidden="true">?</span>';
-    return `<button class="legion-tree-character ${member.isMain?'is-main':'is-alt'}" type="button" data-character-id="${member.characterId}" data-character-name="${esc(member.characterName)}" data-class-name="${esc(member.className)}" data-is-main="${member.isMain?'true':'false'}" data-main-character-id="${member.mainCharacterId||''}" data-main-character-name="${esc(owner)}" data-server-id="${member.serverId||''}" data-server-name="${esc(member.serverName)}" title="${esc(member.characterName)}" aria-label="${esc(member.characterName)} · ${esc(member.className||'클래스 정보 없음')} · ${kind}"><span class="legion-tree-kind">${kind}</span>${image}<span class="legion-tree-name${nameOverflow?' is-faded':''}" data-name-overflow="${nameOverflow?'true':'false'}">${esc(member.characterName)}</span></button>`;
+    return `<button class="legion-tree-character ${member.isMain?'is-main':'is-alt'}${currentAccountCharacter?' is-current-account':''}" type="button" data-character-id="${member.characterId}" data-character-name="${esc(member.characterName)}" data-class-name="${esc(member.className)}" data-is-main="${member.isMain?'true':'false'}" data-main-character-id="${member.mainCharacterId||''}" data-main-character-name="${esc(owner)}" data-server-id="${member.serverId||''}" data-server-name="${esc(member.serverName)}" data-combat-power="${member.combatPower??''}" data-current-account-character="${currentAccountCharacter?'true':'false'}" title="${esc(member.characterName)}" aria-label="${esc(member.characterName)} · ${esc(member.className||'클래스 정보 없음')} · ${esc(kind)}${currentAccountCharacter?' · 내 캐릭터':''}"><span class="legion-tree-kind" title="${esc(kind)}">${esc(kind)}</span>${image}<span class="legion-tree-name${nameOverflow?' is-faded':''}" data-name-overflow="${nameOverflow?'true':'false'}">${esc(member.characterName)}</span></button>`;
+  }
+
+  function refreshCurrentAccountHighlights(){
+    const root=q('#legionTreeRoot');
+    if(!root||typeof root.querySelectorAll!=='function')return 0;
+    const ownerKey=characterIdentityKey(currentAccountMainCharacterName());
+    let highlighted=0;
+    root.querySelectorAll('.legion-tree-character').forEach(card=>{
+      const active=Boolean(ownerKey)&&characterIdentityKey(card?.dataset?.mainCharacterName)===ownerKey;
+      card.classList?.toggle?.('is-current-account',active);
+      if(card?.dataset)card.dataset.currentAccountCharacter=active?'true':'false';
+      const original=text(card?.getAttribute?.('aria-label'),300).replace(/ · 내 캐릭터$/,'');
+      if(original)card.setAttribute('aria-label',original+(active?' · 내 캐릭터':''));
+      if(active)highlighted+=1;
+    });
+    return highlighted;
   }
 
   function characterTargetFromCard(card){
@@ -657,10 +708,9 @@
         :renderStage(stage,previousStage);
       return connector+markup;
     }).join('');
-    const kicker=legion.legionOrder===1?'MAIN LEGION':`LEGION ${String(legion.legionOrder).padStart(2,'0')}`;
     const fallbackBadge=legion.fallbackApplied?'<span class="legion-tree-fallback-badge">기본 단계</span>':'';
     const hidden=index===0?'':' hidden';
-    return `<section class="legion-tree-legion${legion.legionOrder===1?' is-main-legion':''}" data-legion-index="${index}" data-legion-name="${esc(legion.legionName)}" data-tree-state="${esc(legion.treeState)}" data-fallback-applied="${legion.fallbackApplied?'true':'false'}" aria-hidden="${index===0?'false':'true'}" aria-labelledby="${headingId}"${hidden}><header class="legion-tree-legion-head"><div><span>${kicker}</span><h2 id="${headingId}">${esc(legion.legionName)} 레기온</h2></div><div class="legion-tree-legion-meta">${fallbackBadge}<small>${legion.memberCount}명 · ${legion.stageCount}단계</small></div></header><div class="legion-tree-stage-list">${stages}</div></section>`;
+    return `<section class="legion-tree-legion${legion.legionOrder===1?' is-main-legion':''}" data-legion-index="${index}" data-legion-name="${esc(legion.legionName)}" data-tree-state="${esc(legion.treeState)}" data-fallback-applied="${legion.fallbackApplied?'true':'false'}" aria-hidden="${index===0?'false':'true'}" aria-labelledby="${headingId}"${hidden}><header class="legion-tree-legion-head"><div class="legion-tree-legion-title"><h2 id="${headingId}">${esc(legion.legionName)}</h2></div><div class="legion-tree-legion-meta">${fallbackBadge}<small>${legion.memberCount}명 · ${legion.stageCount}단계</small></div></header><div class="legion-tree-stage-list">${stages}</div></section>`;
   }
 
   function renderTreeMarkup(model){
@@ -1079,7 +1129,7 @@
       event.preventDefault();
       openCharacterDetail(card);
     });
-    window.addEventListener('kinojo:auth-changed',()=>{syncManagementControls();refreshStatus();});
+    window.addEventListener('kinojo:auth-changed',()=>{syncManagementControls();refreshStatus();refreshCurrentAccountHighlights();});
     syncManagementControls();
   }
 
@@ -1090,11 +1140,16 @@
 
   window.KinojoLegionTree=Object.freeze({
     normalizeTreePayload,
+    sortMembersByCombatPower,
     renderTreeMarkup,
     showLegionAt,
     animateViewerCard,
     updateViewerFade,
     classIconPath,
+    characterIdentityKey,
+    currentAccountMainCharacterName,
+    isCurrentAccountCharacter,
+    refreshCurrentAccountHighlights,
     applyTreePayload,
     loadTreeData,
     requestTreePayloadWithRetry,

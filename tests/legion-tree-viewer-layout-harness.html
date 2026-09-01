@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Legion Tree viewer layout harness</title>
-  <link rel="stylesheet" href="../legion-tree/css/legion-tree.css?cache=2026090106">
+  <link rel="stylesheet" href="../legion-tree/css/legion-tree.css?cache=2026090107">
 </head>
 <body class="kinojo-page-legion-tree">
   <main class="legion-tree-wrap">
@@ -21,7 +21,12 @@
   <span id="legionTreeStatus" hidden></span>
   <script>
   (()=>{
-    const member=(characterId,characterName,className='검성')=>({characterId,characterName,className,isMain:true,mainCharacterId:characterId,mainCharacterName:characterName,serverId:2002,serverName:'지켈'});
+    const member=(characterId,characterName,className='검성',ownerName='')=>({
+      characterId,characterName,className,isMain:!ownerName,
+      mainCharacterId:ownerName?1100:characterId,
+      mainCharacterName:ownerName||characterName,
+      serverId:2002,serverName:'지켈',combatPower:characterId*100
+    });
     const names=['깡','낮','밤','키나노동조합'];
     const legion=(legionName,index)=>({
       legionName,legionOrder:index+1,revision:4,treeState:'CONFIGURED',fallbackApplied:false,organizationConfigured:true,stageCount:3,memberCount:index?1:13,
@@ -33,16 +38,17 @@
         ]},
         {stageNo:3,stageName:'군단병',roles:[{roleKey:`${legionName}-soldier`,roleName:'군단병',slotNo:1,maxMembers:null,groups:index?[{groupKey:`${legionName}-default`,groupName:'군단병',sortOrder:1,members:[]}]:[
           {groupKey:'planning-members',groupName:'기획부',parentRoleKey:'planning',sortOrder:1,members:Array.from({length:7},(_,i)=>member(1100+i,`기획원${i+1}`))},
-          {groupKey:'operation-members',groupName:'운영부',parentRoleKey:'operation',sortOrder:2,members:[member(1201,'운영원1','치유성'),member(1202,'운영원2','궁성')]},
+          {groupKey:'operation-members',groupName:'운영부',parentRoleKey:'operation',sortOrder:2,members:[member(1201,'운영원1','치유성','기획원1'),member(1202,'운영원2','궁성')]},
           {groupKey:'unassigned-members',groupName:'군단병',parentRoleKey:'',sortOrder:3,members:[member(1301,'무소속원')]},
           {groupKey:'independent-members',groupName:'소속 외',parentRoleKey:`${legionName}-soldier`,sortOrder:4,members:[member(1401,'독립원','호법성')]}
         ]}]}
       ],unassignedMembers:[]
     });
     const payload={ok:true,contract:'web-legion-tree-v1',databaseContract:'460',generatedAt:new Date().toISOString(),legions:names.map(legion)};
+    window.KinojoAuth={getAccount:()=>({mainCharacterName:'기획원1'})};
     window.KinojoSupabase={rpc:async name=>name==='kinojo_web_get_legion_tree'?payload:{ok:true,contract:'web-legion-tree-server-reference-v1',servers:[{serverId:1001,raceId:1,serverName:'시엘',shortName:'시엘'},{serverId:2002,raceId:2,serverName:'지켈',shortName:'지켈'}]}};
   })();
   </script>
-  <script src="../legion-tree/js/legion-tree.js?cache=2026090109"></script>
+  <script src="../legion-tree/js/legion-tree.js?cache=2026090110"></script>
 </body>
 </html>
