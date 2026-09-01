@@ -14,6 +14,7 @@ const featureScript = fs.readFileSync(path.join(rootDir, 'core/kinojo-supabase-f
 const edgeScript = fs.readFileSync(path.join(rootDir, 'supabase/functions/kinojo-legion-tree/index.ts'), 'utf8');
 const migration = fs.readFileSync(path.join(rootDir, 'supabase/migrations/20260831041509_legion_tree_atomic_save_v453.sql'), 'utf8');
 const affiliationMigration = fs.readFileSync(path.join(rootDir, 'supabase/migrations/20260901003000_legion_tree_unaffiliated_departments_v459.sql'), 'utf8');
+const terminalAffiliationMigration = fs.readFileSync(path.join(rootDir, 'supabase/migrations/20260901042000_legion_tree_terminal_default_affiliation_v460.sql'), 'utf8');
 
 const document = {
   activeElement: null,
@@ -138,6 +139,9 @@ assert.strictEqual(maxMemberGuard.code, 'MAX_MEMBERS_EXCEEDED');
 const assignUnassigned = api.assignMember(draft, 3, 'stage-3-member');
 assert.strictEqual(assignUnassigned.ok, true);
 assert.strictEqual(draft.assignments.length, 3);
+assert.strictEqual(api.validateDraft(draft).ok, true, 'terminal member without a separate parent must use its role as the default affiliation');
+assert.strictEqual(draft.assignments.find(item => item.characterId === 3).parentRoleKey, null);
+assert.strictEqual(draft.assignments.find(item => item.characterId === 3).unaffiliated, false);
 assert.strictEqual(api.setRoleMaxMembers(draft, 'stage-3-member', 1).code, 'MAX_MEMBERS_BELOW_OCCUPANCY');
 assert.strictEqual(api.setRoleMaxMembers(draft, 'stage-3-member', '').ok, true);
 assert.strictEqual(draft.stages[2].roles[0].maxMembers, null);
@@ -219,11 +223,11 @@ assert.strictEqual(api.searchLegionMembers(draft, '없는이름').length, 0);
 
 for (const html of [pc, mobile]) {
   assert(html.includes('id="legionTreeEditorRoot"'));
-  assert(html.includes('legion-tree-editor.js?cache=2026090101'));
-  assert(html.includes('legion-tree.js?cache=2026090102'));
+  assert(html.includes('legion-tree-editor.js?cache=2026090103'));
+  assert(html.includes('legion-tree.js?cache=2026090103'));
   assert(html.includes('legion-tree.css?cache=2026090101'));
   assert(html.includes('kinojo-supabase-features.js?cache=2026083108'));
-  assert(html.indexOf('legion-tree-editor.js?cache=2026090101') < html.indexOf('legion-tree.js?cache=2026090102'));
+  assert(html.indexOf('legion-tree-editor.js?cache=2026090103') < html.indexOf('legion-tree.js?cache=2026090103'));
 }
 
 for (const token of [
@@ -240,6 +244,7 @@ for (const token of [
   'data-editor-assign-result',
   'data-editor-legion',
   '상위 소속',
+  '소속 (기본)',
   '소속 외 (독립 부서)',
   '기본 조직도로 초기화',
   'data-editor-cancel',
@@ -273,10 +278,10 @@ assert(featureScript.includes("action:'organization-save'"));
 assert(featureScript.includes("action:'organization-reset'"));
 assert(featureScript.includes('saveLegionTreeOrganization'));
 for (const token of [
-  "const API_VERSION='1.8'",
-  "const ORGANIZATION_DATABASE_CONTRACT='459'",
+  "const API_VERSION='1.9'",
+  "const ORGANIZATION_DATABASE_CONTRACT='460'",
   "actions:['character-search','character-add','organization-save','organization-reset']",
-  "rpc('kinojo_legion_tree_organization_save_v459'",
+  "rpc('kinojo_legion_tree_organization_save_v460'",
   'organizationReadbackConnected:true'
 ]) assert(edgeScript.includes(token), 'Edge organization contract missing: '+token);
 for (const token of [
@@ -299,6 +304,16 @@ for (const token of [
   'set parent_role_id = null',
   'grant execute on function public.kinojo_legion_tree_organization_save_v459'
 ]) assert(affiliationMigration.includes(token), 'DB459 affiliation contract missing: '+token);
+for (const token of [
+  'is_unaffiliated boolean not null default false',
+  'kinojo_legion_tree_save_core_v460',
+  'kinojo_legion_tree_organization_save_v460',
+  'kinojo_legion_tree_configured_stages_v460',
+  "'defaultAffiliation', g.parent_role_id is null and not g.is_unaffiliated",
+  "v_role_stage = p_stage_count",
+  "'affiliationContract', 'immediate_upper_or_terminal_default_or_explicit_unaffiliated'",
+  'grant execute on function public.kinojo_legion_tree_organization_save_v460'
+]) assert(terminalAffiliationMigration.includes(token), 'DB460 terminal default affiliation contract missing: '+token);
 assert(css.includes('.legion-tree-editor-root{position:fixed;inset:0;z-index:50020'));
 assert(css.includes('.legion-tree-editor-dialog{position:relative;width:min(560px,100%)'));
 assert(css.includes('@media(max-width:760px)'));

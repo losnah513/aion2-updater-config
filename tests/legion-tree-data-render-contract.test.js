@@ -401,16 +401,20 @@ departmentPayload.legions[0].stages[1].roles = [
 departmentPayload.legions[0].stages[2].roles[0].groups = [
   { groupKey: 'department-a', groupName: '기획부', parentRoleKey: 'department-a', sortOrder: 1, members: [memberFixture(951, '기획원')] },
   { groupKey: 'department-b', groupName: '운영부', parentRoleKey: 'department-b', sortOrder: 2, members: [memberFixture(952, '운영원')] },
-  { groupKey: 'independent', groupName: '소속 외', parentRoleKey: 'r0-3', sortOrder: 3, members: [memberFixture(953, '독립원')] }
+  { groupKey: 'default:r0-3', groupName: '군단병', parentRoleKey: '', defaultAffiliation: true, sortOrder: 3, members: [memberFixture(953, '기본군단병')] },
+  { groupKey: 'independent', groupName: '소속 외', parentRoleKey: 'r0-3', sortOrder: 4, members: [memberFixture(954, '독립원')] }
 ];
 const departmentMarkup = window.KinojoLegionTree.renderTreeMarkup(
   window.KinojoLegionTree.normalizeTreePayload(departmentPayload)
 );
-assert(departmentMarkup.includes('data-role-count="3"'));
+assert(departmentMarkup.includes('data-role-count="4"'));
 assert(departmentMarkup.includes('<small>부서장</small><strong>기획부</strong>'));
+assert(departmentMarkup.includes('legion-tree-department is-default'));
+assert(departmentMarkup.includes('<small>기본 소속</small><strong>군단병</strong>'));
 assert(departmentMarkup.includes('legion-tree-department is-unaffiliated'));
 assert(departmentMarkup.includes('기획원'));
 assert(departmentMarkup.includes('운영원'));
+assert(departmentMarkup.includes('기본군단병'));
 assert(departmentMarkup.includes('독립원'));
 
 const nameBaseRule = css.match(/\.legion-tree-name\{([^}]*)\}/);
@@ -494,8 +498,8 @@ window.KinojoSupabase = {
     assert(html.includes('kinojo-character-reaction.css?cache=2026082201'));
     assert(html.includes('kinojo-character-reaction.js?cache=2026082701'));
     assert(html.includes('legion-tree.css?cache=2026090101'));
-    assert(html.includes('legion-tree-editor.js?cache=2026090101'));
-    assert(html.includes('legion-tree.js?cache=2026090102'));
+    assert(html.includes('legion-tree-editor.js?cache=2026090103'));
+    assert(html.includes('legion-tree.js?cache=2026090103'));
     assert(html.includes('kinojo-supabase-features.js?cache=2026083108'));
     assert(!html.includes('legion-tree.js?cache=2026082403'));
   }
@@ -557,7 +561,7 @@ window.KinojoSupabase = {
   assert(workflow.includes('node --check core/kinojo-supabase-features.js'));
   assert((workflow.match(/"core\/kinojo-supabase-features\.js"/g) || []).length >= 2);
   for (const token of [
-    "const API_VERSION='1.8'",
+    "const API_VERSION='1.9'",
     "const DATABASE_CONTRACT='458'",
     "CHARACTER_INPUT_CONTRACT='character-name-server-tag-v3'",
     "const CHARACTER_SEARCH_CONTRACT='legion-tree-character-search-v1'",
