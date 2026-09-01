@@ -251,7 +251,7 @@ async function verifyPlaybackRuntime(){
   loaderContext={
     window:{scrollY:0,innerWidth:1920,innerHeight:900,outerWidth:1920,devicePixelRatio:1,screen:{availWidth:1920},location:{pathname:'/meter/'},getComputedStyle(){return{display:'grid'}},addEventListener(){}},
     document:{
-      readyState:'complete',currentScript:{src:'https://kinojo.info/ui/kinojo-pc-banners.js?cache=2026090101'},documentElement:{clientWidth:1920,appendChild(){}},
+      readyState:'complete',currentScript:{src:'https://kinojo.info/ui/kinojo-pc-banners.js?cache=2026090102'},documentElement:{clientWidth:1920,appendChild(){}},
       head:{appendChild(script){loadedScripts.push(script.src);loaderContext.window.KinojoBannerRuntime={mountBanner(options){loaderCalls.push(options.pageCode+':'+options.slotCode);options.deactivate?.();return{stop(){}}}};script.onload?.();return script}},
       querySelectorAll(){return[loaderSlot]},createElement(tag){return new FakeElement(tag)},addEventListener(){},
     },

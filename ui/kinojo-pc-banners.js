@@ -74,12 +74,13 @@
     setData(host,'kinojoPcBannerPhysicalWidth',signals.physicalWidth);
     return eligible;
   }
-  function adaptiveLayout(host,slot){
+  function adaptiveLayout(host,slot,hostRect){
     const clientWidth=Math.max(0,document.documentElement?.clientWidth||window.innerWidth||0);
     host.style?.setProperty?.('--kinojo-ranking-safe-board-width',Math.max(0,clientWidth-(minimumRail+compactGap)*2)+'px');
-    const frameWidth=Math.min(standardFrameWidth,Math.max(0,clientWidth-standardFrameGutter*2));
-    const frameLeft=(clientWidth-frameWidth)/2,frameRight=frameLeft+frameWidth;
-    const outerSpace=Math.max(0,(clientWidth-frameWidth)/2);
+    const usesRenderedStandardFrame=!!desktopQuery?.matches&&Math.abs(Number(hostRect?.width||0)-standardFrameWidth)<=2;
+    const frameWidth=usesRenderedStandardFrame?hostRect.width:Math.min(standardFrameWidth,Math.max(0,clientWidth-standardFrameGutter*2));
+    const frameLeft=usesRenderedStandardFrame?hostRect.left:(clientWidth-frameWidth)/2,frameRight=frameLeft+frameWidth;
+    const outerSpace=Math.max(0,Math.min(frameLeft,clientWidth-frameRight));
     let gap=preferredGap;
     let width=Math.floor(Math.min(referenceWidth,outerSpace-gap));
     if(width<minimumRail){gap=compactGap;width=minimumRail}
@@ -99,7 +100,7 @@
     if(adaptive&&!resolutionEligible(host))return;
     if(!visible(slot))return;
     const hostRect=host.getBoundingClientRect();
-    const layout=adaptive?adaptiveLayout(host,slot):null;
+    const layout=adaptive?adaptiveLayout(host,slot,hostRect):null;
     const rect=slot.getBoundingClientRect();
     const width=layout?.width??Math.round(rect.width),height=layout?.height??Math.round(rect.height);
     const documentTop=hostRect.top+window.scrollY;

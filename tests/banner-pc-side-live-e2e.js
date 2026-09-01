@@ -51,7 +51,7 @@ async function snapshot(page){
         host:hostRect?{left:hostRect.left,right:hostRect.right,top:hostRect.top,bottom:hostRect.bottom,width:hostRect.width,height:hostRect.height}:null,
       };
     });
-    return {href:location.href,pathname:location.pathname,width:innerWidth,height:innerHeight,scrollY,slots};
+    return {href:location.href,pathname:location.pathname,width:innerWidth,height:innerHeight,clientWidth:document.documentElement.clientWidth,scrollY,slots};
   });
 }
 
@@ -61,9 +61,9 @@ function verify(pageSpec,width,data){
   assert.equal(data.slots.some(s=>s.code==='RIGHT'),pageSpec.slots.includes('RIGHT'),`${pageSpec.name} RIGHT presence`);
 
   for(const slot of data.slots){
-    if(width<1840){
+    if(width<1808){
       assert.equal(slot.target,'',`${pageSpec.name}:${slot.code} hidden slot must not bind or fetch a manifest`);
-      assert.equal(slot.display,'none',`${pageSpec.name}:${slot.code} hidden below 1840`);
+      assert.equal(slot.display,'none',`${pageSpec.name}:${slot.code} hidden below PC device-pixel threshold`);
       assert.equal(slot.width,0,`${pageSpec.name}:${slot.code} hidden width`);
       assert.equal(slot.height,0,`${pageSpec.name}:${slot.code} hidden height`);
       continue;
@@ -79,8 +79,11 @@ function verify(pageSpec,width,data){
     assert.ok(slot.left>=-1&&slot.right<=width+1,`${pageSpec.name}:${slot.code} inside viewport ${slot.left}..${slot.right}/${width}`);
     assert.ok(slot.top>=13&&slot.bottom<=height-13,`${pageSpec.name}:${slot.code} vertical viewport ${slot.top}..${slot.bottom}`);
     assert.ok(slot.host,`${pageSpec.name}:${slot.code} host exists`);
-    const gap=slot.code==='LEFT'?slot.host.left-slot.right:slot.left-slot.host.right;
-    assert.ok(approx(gap,14,2),`${pageSpec.name}:${slot.code} host gap=${gap}`);
+    const frameLeft=width>=1840&&approx(slot.host.width,1180,2)?slot.host.left:(data.clientWidth-1180)/2;
+    const frameRight=width>=1840&&approx(slot.host.width,1180,2)?slot.host.right:frameLeft+1180;
+    const gap=slot.code==='LEFT'?frameLeft-slot.right:slot.left-frameRight;
+    assert.ok(approx(gap,14,2),`${pageSpec.name}:${slot.code} shared frame gap=${gap}`);
+    assert.ok(approx(slot.top,121,1),`${pageSpec.name}:${slot.code} shared top=${slot.top}`);
     assert.ok(slot.state==='empty'||slot.state==='rendered',`${pageSpec.name}:${slot.code} state=${slot.state}`);
     if(slot.state==='empty'){
       assert.equal(slot.text,'300 × 715',`${pageSpec.name}:${slot.code} empty label`);
@@ -102,6 +105,7 @@ function verify(pageSpec,width,data){
     args:['--no-sandbox','--disable-gpu','--disable-dev-shm-usage'],
   });
   const failures=[];
+  const geometryByWidth=new Map();
   try{
     for(const pageSpec of pages){
       const page=await browser.newPage();
@@ -118,6 +122,9 @@ function verify(pageSpec,width,data){
         const data=await snapshot(page);
         try{
           verify(pageSpec,width,data);
+          const geometry=data.slots.map(slot=>({code:slot.code,left:slot.left,right:slot.right,top:slot.top,width:slot.width,height:slot.height}));
+          if(!geometryByWidth.has(width))geometryByWidth.set(width,geometry);
+          else assert.deepEqual(geometry,geometryByWidth.get(width),`${pageSpec.name} must keep the shared banner coordinates at ${width}`);
           console.log(`PASS ${pageSpec.name} ${width}x${height} slots=${data.slots.map(s=>`${s.code}:${s.state}`).join(',')}`);
         }catch(error){
           failures.push(`${pageSpec.name} ${width}x${height}: ${error.message}`);
