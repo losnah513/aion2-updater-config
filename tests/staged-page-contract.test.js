@@ -30,6 +30,7 @@ assert.ok(scheduleCss.includes('.schedule-page-bar{position:sticky'), 'Schedule 
 assert.ok(read('ui/kinojo-components.css').includes('.hof-filter-bar{position:sticky'), 'HOF attached filter bar is missing');
 assert.ok(read('ranking/css/ranking.css').includes('var(--kinojo-attached-subbar-height'), 'Ranking attached toolbar is missing');
 assert.ok(read('ui/kinojo-staged-loading.js').includes('.sanctuary-management-page-bar'), 'Sanctuary management attached page bar is missing');
+assert.equal(read('ui/kinojo-pc-banners.css').includes('html:has(.kinojo-pc-banner-host)'), false, 'PC banner CSS must not change the root sticky scroll container');
 
 const hallData = read('hof/js/hall-data.js');
 assert.ok(hallData.includes('kinojo_web_get_my_hof_ranking_v329'), 'Session-aware scope personal ranking RPC missing');

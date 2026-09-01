@@ -14,6 +14,7 @@
   const minimumRail=56;
   const observed=new WeakSet();
   const manifestBound=new WeakSet();
+  let measuredScrollbarWidth=null;
   const runtimeScriptUrl=(()=>{
     try{
       const src=String(document.currentScript?.src||'').trim();
@@ -66,6 +67,28 @@
     const availableWidth=Math.max(0,Number(window.screen?.availWidth||0));
     return{clientWidth,devicePixelRatio,scaledClientWidth,outerWidth,availableWidth,physicalWidth:Math.round(Math.max(scaledClientWidth,outerWidth))};
   }
+  function scrollbarWidth(){
+    if(measuredScrollbarWidth!==null)return measuredScrollbarWidth;
+    measuredScrollbarWidth=0;
+    const root=document.documentElement,probe=document.createElement?.('div');
+    if(!root?.appendChild||!probe?.style)return measuredScrollbarWidth;
+    try{
+      probe.setAttribute?.('aria-hidden','true');
+      probe.style.cssText='position:absolute;left:-9999px;top:-9999px;width:100px;height:100px;overflow:scroll;visibility:hidden;pointer-events:none;';
+      root.appendChild(probe);
+      measuredScrollbarWidth=Math.max(0,Number(probe.offsetWidth||0)-Number(probe.clientWidth||0));
+      probe.remove?.();
+    }catch(_error){probe.remove?.()}
+    return measuredScrollbarWidth;
+  }
+  function layoutViewportWidth(){
+    const clientWidth=Math.max(0,Number(document.documentElement?.clientWidth||window.innerWidth||0));
+    const innerWidth=Math.max(0,Number(window.innerWidth||clientWidth));
+    const reservedWidth=Math.max(0,innerWidth-scrollbarWidth());
+    if(!clientWidth)return reservedWidth;
+    if(!reservedWidth)return clientWidth;
+    return Math.min(clientWidth,reservedWidth);
+  }
   function setData(element,key,value){if(element?.dataset&&element.dataset[key]!==String(value))element.dataset[key]=String(value)}
   function resolutionEligible(host){
     if(!resolutionHost(host))return false;
@@ -74,21 +97,22 @@
     setData(host,'kinojoPcBannerPhysicalWidth',signals.physicalWidth);
     return eligible;
   }
-  function adaptiveLayout(host,slot,hostRect){
-    const clientWidth=Math.max(0,document.documentElement?.clientWidth||window.innerWidth||0);
-    host.style?.setProperty?.('--kinojo-ranking-safe-board-width',Math.max(0,clientWidth-(minimumRail+compactGap)*2)+'px');
-    const usesRenderedStandardFrame=!!desktopQuery?.matches&&Math.abs(Number(hostRect?.width||0)-standardFrameWidth)<=2;
-    const frameWidth=usesRenderedStandardFrame?hostRect.width:Math.min(standardFrameWidth,Math.max(0,clientWidth-standardFrameGutter*2));
-    const frameLeft=usesRenderedStandardFrame?hostRect.left:(clientWidth-frameWidth)/2,frameRight=frameLeft+frameWidth;
-    const outerSpace=Math.max(0,Math.min(frameLeft,clientWidth-frameRight));
+  function adaptiveLayout(host,slot){
+    const layoutWidth=layoutViewportWidth();
+    setData(host,'kinojoPcBannerLayoutWidth',Math.round(layoutWidth));
+    setData(host,'kinojoPcBannerScrollbarWidth',scrollbarWidth());
+    host.style?.setProperty?.('--kinojo-ranking-safe-board-width',Math.max(0,layoutWidth-(minimumRail+compactGap)*2)+'px');
+    const frameWidth=Math.min(standardFrameWidth,Math.max(0,layoutWidth-standardFrameGutter*2));
+    const frameLeft=(layoutWidth-frameWidth)/2,frameRight=frameLeft+frameWidth;
+    const outerSpace=Math.max(0,Math.min(frameLeft,layoutWidth-frameRight));
     let gap=preferredGap;
     let width=Math.floor(Math.min(referenceWidth,outerSpace-gap));
     if(width<minimumRail){gap=compactGap;width=minimumRail}
-    width=Math.max(1,Math.min(referenceWidth,clientWidth,width));
+    width=Math.max(1,Math.min(referenceWidth,layoutWidth,width));
     const height=Math.max(1,Math.round(width*referenceHeight/referenceWidth));
     const left=slot.classList.contains('is-left')
       ?Math.max(0,Math.round(frameLeft-gap-width))
-      :Math.min(Math.max(0,clientWidth-width),Math.round(frameRight+gap));
+      :Math.min(Math.max(0,layoutWidth-width),Math.round(frameRight+gap));
     slot.style.setProperty('--kinojo-pc-banner-width',width+'px');
     slot.style.setProperty('--kinojo-pc-banner-height',height+'px');
     setData(slot,'kinojoPcBannerSize',width>=referenceWidth?'full':'scaled');
@@ -100,7 +124,7 @@
     if(adaptive&&!resolutionEligible(host))return;
     if(!visible(slot))return;
     const hostRect=host.getBoundingClientRect();
-    const layout=adaptive?adaptiveLayout(host,slot,hostRect):null;
+    const layout=adaptive?adaptiveLayout(host,slot):null;
     const rect=slot.getBoundingClientRect();
     const width=layout?.width??Math.round(rect.width),height=layout?.height??Math.round(rect.height);
     const documentTop=hostRect.top+window.scrollY;

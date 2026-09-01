@@ -97,11 +97,6 @@
   }
 }
 
-html:has(.kinojo-pc-banner-host){
-  overflow-y:scroll;
-  scrollbar-gutter:stable;
-}
-
 /* Every PC banner page keeps both full creatives visible when a wide PC window
    is zoomed. Their coordinates stay tied to the shared 1180px frame, never a
    narrower page-specific content board. */
