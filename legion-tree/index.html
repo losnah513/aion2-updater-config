@@ -19,7 +19,7 @@
   <link href="../ui/kinojo-public-shell.css?cache=2026083001" rel="stylesheet"/>
   <link href="../ui/kinojo-pc-banners.css?cache=2026090102" rel="stylesheet"/>
   <link href="../ui/kinojo-staged-loading.css?cache=2026083001" rel="stylesheet"/>
-<link href="./css/legion-tree.css?cache=2026090104" rel="stylesheet"/>
+<link href="./css/legion-tree.css?cache=2026090105" rel="stylesheet"/>
 <script src="../ui/kinojo-device-router.js?cache=2026070115" data-mobile-path="../m/legion-tree/"></script>
 <link rel="stylesheet" href="../ui/kinojo-event-notice.css?cache=2026081003"/>
 </head>
@@ -54,14 +54,14 @@
   <aside class="kinojo-pc-banner-slot is-left" data-kinojo-pc-banner aria-hidden="true"></aside>
   <aside class="kinojo-pc-banner-slot is-right" data-kinojo-pc-banner aria-hidden="true"></aside>
   <section class="legion-tree-viewer" id="legionTreeViewer" aria-label="레기온 조직도 뷰어">
-    <button class="legion-tree-viewer-nav is-previous" id="legionTreePrevBtn" type="button" aria-controls="legionTreeRoot" aria-label="이전 레기온" disabled><span aria-hidden="true">‹</span></button>
-    <div class="legion-tree-viewer-card">
+    <button class="legion-tree-viewer-nav is-previous" id="legionTreePrevBtn" type="button" aria-controls="legionTreeRoot" aria-label="이전 레기온" disabled><span class="legion-tree-viewer-nav-icon" aria-hidden="true">‹</span><strong class="legion-tree-viewer-nav-name" id="legionTreePrevName" aria-hidden="true">이전 레기온</strong></button>
+    <div class="legion-tree-viewer-card" id="legionTreeViewerCard">
       <section class="legion-tree-data-list" id="legionTreeRoot" aria-live="polite" aria-busy="true">
         <div class="legion-tree-load-state">Server 레기온 데이터를 불러오는 중…</div>
       </section>
       <div class="legion-tree-viewer-fade" id="legionTreeViewerFade" data-visible="false" aria-hidden="true"></div>
     </div>
-    <button class="legion-tree-viewer-nav is-next" id="legionTreeNextBtn" type="button" aria-controls="legionTreeRoot" aria-label="다음 레기온" disabled><span aria-hidden="true">›</span></button>
+    <button class="legion-tree-viewer-nav is-next" id="legionTreeNextBtn" type="button" aria-controls="legionTreeRoot" aria-label="다음 레기온" disabled><strong class="legion-tree-viewer-nav-name" id="legionTreeNextName" aria-hidden="true">다음 레기온</strong><span class="legion-tree-viewer-nav-icon" aria-hidden="true">›</span></button>
     <p class="legion-tree-viewer-status" id="legionTreeViewerStatus" aria-live="polite"></p>
   </section>
 
@@ -90,6 +90,6 @@
 <script src="../ui/kinojo-event-notice.js?cache=2026081003"></script>
 <script src="../ui/kinojo-pc-banners.js?cache=2026090103"></script>
 <script src="./js/legion-tree-editor.js?cache=2026090105"></script>
-  <script src="./js/legion-tree.js?cache=2026090108"></script>
+  <script src="./js/legion-tree.js?cache=2026090109"></script>
 </body>
 </html>

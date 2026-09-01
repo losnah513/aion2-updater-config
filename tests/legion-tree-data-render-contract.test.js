@@ -67,8 +67,8 @@ vm.createContext(context);
 vm.runInContext(script, context, { filename: scriptPath });
 
 assert(window.KinojoLegionTree, 'KinojoLegionTree contract must be exported');
-assert(viewerHarness.includes('legion-tree.css?cache=2026090104'));
-assert(viewerHarness.includes('legion-tree.js?cache=2026090108'));
+assert(viewerHarness.includes('legion-tree.css?cache=2026090105'));
+assert(viewerHarness.includes('legion-tree.js?cache=2026090109'));
 assert(viewerHarness.includes('id="legionTreeViewerFade"'));
 assert(viewerHarness.includes("groupName:'소속 외'"));
 
@@ -476,11 +476,17 @@ assert(!css.includes('.legion-tree-department-card'));
 assert(css.includes('.legion-tree-rank-branch'));
 assert(css.includes('.legion-tree-affiliation-plate'));
 assert(css.includes('.legion-tree-viewer-card{position:relative;height:clamp('));
+assert(css.includes('calc(100dvh - 188px)'));
+assert(css.includes('.legion-tree-viewer-nav{position:relative;z-index:6;width:176px'));
+assert(css.includes('@keyframes legion-tree-viewer-turn-next'));
+assert(css.includes('@keyframes legion-tree-viewer-turn-previous'));
 assert(css.includes('scrollbar-width:none'));
 assert(css.includes('.legion-tree-viewer-fade[data-visible="true"]{opacity:1}'));
 const mobileCss = css.slice(css.indexOf('@media(max-width:640px)'));
 assert(mobileCss.includes('.legion-tree-member-grid{gap:13px 7px}'));
 assert(mobileCss.includes('.legion-tree-viewer{grid-template-columns:32px minmax(0,1fr) 32px'));
+assert(mobileCss.includes('calc(100dvh - 206px)'));
+assert(mobileCss.includes('.legion-tree-viewer-nav{width:104px;height:46px}'));
 
 const viewerLegions = names.map(legionName => fakeElement({ dataset: { legionName }, hidden: false }));
 const viewerRoot = fakeElement({
@@ -493,12 +499,26 @@ const viewerRoot = fakeElement({
 const viewerFade = fakeElement({ dataset: {} });
 const viewerPrevious = fakeElement({ disabled: true });
 const viewerNext = fakeElement({ disabled: true });
+const viewerPreviousName = fakeElement();
+const viewerNextName = fakeElement();
+const viewerCardClasses = new Set();
+const viewerCard = fakeElement({
+  offsetWidth: 100,
+  classList: {
+    add(...names) { names.forEach(name => viewerCardClasses.add(name)); },
+    remove(...names) { names.forEach(name => viewerCardClasses.delete(name)); },
+    contains(name) { return viewerCardClasses.has(name); }
+  }
+});
 const viewerStatus = fakeElement();
 const viewerElements = {
   '#legionTreeRoot': viewerRoot,
   '#legionTreeViewerFade': viewerFade,
   '#legionTreePrevBtn': viewerPrevious,
   '#legionTreeNextBtn': viewerNext,
+  '#legionTreePrevName': viewerPreviousName,
+  '#legionTreeNextName': viewerNextName,
+  '#legionTreeViewerCard': viewerCard,
   '#legionTreeViewerStatus': viewerStatus
 };
 const viewerWindow = { requestAnimationFrame(callback) { callback(); } };
@@ -526,7 +546,18 @@ assert.strictEqual(viewerLegions.filter(item => !item.hidden).length, 1);
 assert.strictEqual(viewerLegions[1].attributes['aria-hidden'], 'false');
 assert.strictEqual(viewerPrevious.attributes['aria-label'], '이전 레기온: 깡');
 assert.strictEqual(viewerNext.attributes['aria-label'], '다음 레기온: 밤');
+assert.strictEqual(viewerPreviousName.textContent, '깡');
+assert.strictEqual(viewerNextName.textContent, '밤');
+assert.strictEqual(viewerPrevious.title, '이전 레기온: 깡');
+assert.strictEqual(viewerNext.title, '다음 레기온: 밤');
 assert.strictEqual(viewerStatus.textContent, '낮 레기온 · 2/4');
+assert.strictEqual(viewerWindow.KinojoLegionTree.animateViewerCard(1), true);
+assert.strictEqual(viewerCardClasses.has('is-turning-next'), true);
+assert.strictEqual(viewerCard.dataset.turnDirection, 'next');
+assert.strictEqual(viewerWindow.KinojoLegionTree.animateViewerCard(-1), true);
+assert.strictEqual(viewerCardClasses.has('is-turning-next'), false);
+assert.strictEqual(viewerCardClasses.has('is-turning-previous'), true);
+assert.strictEqual(viewerCard.dataset.turnDirection, 'previous');
 assert.strictEqual(viewerFade.dataset.visible, 'true');
 viewerRoot.scrollTop = 400;
 assert.strictEqual(viewerWindow.KinojoLegionTree.updateViewerFade(), false);
@@ -604,6 +635,9 @@ window.KinojoSupabase = {
     assert(html.includes('id="legionTreeViewer"'));
     assert(html.includes('id="legionTreePrevBtn"'));
     assert(html.includes('id="legionTreeNextBtn"'));
+    assert(html.includes('id="legionTreePrevName"'));
+    assert(html.includes('id="legionTreeNextName"'));
+    assert(html.includes('id="legionTreeViewerCard"'));
     assert(html.includes('id="legionTreeViewerFade"'));
     assert(!html.includes('id="legionTreeServerHint"'));
     assert(html.includes('aria-describedby="legionTreeStatus"'));
@@ -621,10 +655,10 @@ window.KinojoSupabase = {
     assert(!html.includes('본캐예시'));
     assert(html.includes('kinojo-character-reaction.css?cache=2026082201'));
     assert(html.includes('kinojo-character-reaction.js?cache=2026082701'));
-    assert(html.includes('legion-tree.css?cache=2026090104'));
+    assert(html.includes('legion-tree.css?cache=2026090105'));
     assert(html.includes('legion-tree-editor.js?cache=2026090105'));
     assert(html.includes('kinojo-supabase-features.js?cache=2026090101'));
-    assert(html.includes('legion-tree.js?cache=2026090108'));
+    assert(html.includes('legion-tree.js?cache=2026090109'));
     assert(!html.includes('legion-tree.js?cache=2026082403'));
   }
 

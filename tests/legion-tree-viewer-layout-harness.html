@@ -4,17 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Legion Tree viewer layout harness</title>
-  <link rel="stylesheet" href="../legion-tree/css/legion-tree.css?cache=2026090104">
+  <link rel="stylesheet" href="../legion-tree/css/legion-tree.css?cache=2026090105">
 </head>
 <body class="kinojo-page-legion-tree">
   <main class="legion-tree-wrap">
     <section class="legion-tree-viewer" id="legionTreeViewer" aria-label="레기온 조직도 뷰어">
-      <button class="legion-tree-viewer-nav is-previous" id="legionTreePrevBtn" type="button" aria-controls="legionTreeRoot" aria-label="이전 레기온" disabled><span aria-hidden="true">‹</span></button>
-      <div class="legion-tree-viewer-card">
+      <button class="legion-tree-viewer-nav is-previous" id="legionTreePrevBtn" type="button" aria-controls="legionTreeRoot" aria-label="이전 레기온" disabled><span class="legion-tree-viewer-nav-icon" aria-hidden="true">‹</span><strong class="legion-tree-viewer-nav-name" id="legionTreePrevName" aria-hidden="true">이전 레기온</strong></button>
+      <div class="legion-tree-viewer-card" id="legionTreeViewerCard">
         <section class="legion-tree-data-list" id="legionTreeRoot" aria-live="polite" aria-busy="true"><div class="legion-tree-load-state">테스트 조직도를 불러오는 중…</div></section>
         <div class="legion-tree-viewer-fade" id="legionTreeViewerFade" data-visible="false" aria-hidden="true"></div>
       </div>
-      <button class="legion-tree-viewer-nav is-next" id="legionTreeNextBtn" type="button" aria-controls="legionTreeRoot" aria-label="다음 레기온" disabled><span aria-hidden="true">›</span></button>
+      <button class="legion-tree-viewer-nav is-next" id="legionTreeNextBtn" type="button" aria-controls="legionTreeRoot" aria-label="다음 레기온" disabled><strong class="legion-tree-viewer-nav-name" id="legionTreeNextName" aria-hidden="true">다음 레기온</strong><span class="legion-tree-viewer-nav-icon" aria-hidden="true">›</span></button>
       <p class="legion-tree-viewer-status" id="legionTreeViewerStatus" aria-live="polite"></p>
     </section>
   </main>
@@ -43,6 +43,6 @@
     window.KinojoSupabase={rpc:async name=>name==='kinojo_web_get_legion_tree'?payload:{ok:true,contract:'web-legion-tree-server-reference-v1',servers:[{serverId:1001,raceId:1,serverName:'시엘',shortName:'시엘'},{serverId:2002,raceId:2,serverName:'지켈',shortName:'지켈'}]}};
   })();
   </script>
-  <script src="../legion-tree/js/legion-tree.js?cache=2026090108"></script>
+  <script src="../legion-tree/js/legion-tree.js?cache=2026090109"></script>
 </body>
 </html>
