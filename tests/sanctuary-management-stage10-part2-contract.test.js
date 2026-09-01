@@ -30,12 +30,13 @@ assert.ok(teamCard.indexOf("schedule.textContent='일정 관리'")<teamCard.inde
 
 for(const token of [
   'function selectedDifficulty(force=selectedForce())',
-  'data-draft-force-difficulty="NORMAL"',
-  'data-draft-force-difficulty="HARD"',
+  'function difficultyOptions(item)',
+  `data-draft-force-difficulty="'+escapeHtml`,
+  "EASY:'쉬움',NORMAL:'보통',HARD:'어려움'",
   'difficulty:selectedDifficulty(force)',
   'selectedDifficulty(item.force)',
   "syncDifficultyControls('NORMAL',true)",
-  'difficulty:value(force.difficulty)',
+  'difficulty:normalizeDifficulty(force.difficulty)',
   "layer.addEventListener('wheel',handleDraftWheel,{passive:false})",
   'const linkedScroller=',
 ])assert.ok(draft.includes(token),`Stage 10 part 2 composer contract missing ${token}`);

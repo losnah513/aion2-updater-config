@@ -21,6 +21,7 @@
   const value=input=>String(input??'').trim();
   const escapeHtml=input=>String(input??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const bridge=()=>window.KinojoSanctuaryManagementDraftBridge;
+  const DIFFICULTY_LABELS=Object.freeze({EASY:'쉬움',NORMAL:'보통',HARD:'어려움'});
 
   function clone(value){return typeof structuredClone==='function'?structuredClone(value):JSON.parse(JSON.stringify(value));}
   function classIconFor(className){const key=CLASS_ICON_MAP[value(className).replace(/[\s\u200B-\u200D\uFEFF]+/g,'').replace(/[\[(（].*?[\])）]\s*$/g,'')];return key?'/assets/images/classes/class_icon_'+key+'.png':'';}
@@ -134,7 +135,7 @@
   }
 
   function compositionSignature(includeLocks=true){
-    return JSON.stringify(teamForces().map(force=>({sourceForceId:Number(force.forceId)>0?Number(force.forceId):null,difficulty:value(force.difficulty).toUpperCase()==='HARD'?'HARD':'NORMAL',slots:forceSlots(force).map(item=>({partyNo:item.partyNo,slotNo:Number(item.slot.slotNo),characterId:Number(item.slot.character?.characterId||0)||null,mainCharacterId:item.slot.character?.isRandomAlt?Number(item.slot.character.mainCharacterId)||null:null,assignmentKind:assignmentKind(item.slot),requiredClassCode:slotClassCode(item.slot),...(includeLocks?{placementLocked:item.slot.placementLocked===true}:{})}))})));
+    return JSON.stringify(teamForces().map(force=>({sourceForceId:Number(force.forceId)>0?Number(force.forceId):null,difficulty:normalizeDifficulty(force.difficulty),slots:forceSlots(force).map(item=>({partyNo:item.partyNo,slotNo:Number(item.slot.slotNo),characterId:Number(item.slot.character?.characterId||0)||null,mainCharacterId:item.slot.character?.isRandomAlt?Number(item.slot.character.mainCharacterId)||null:null,assignmentKind:assignmentKind(item.slot),requiredClassCode:slotClassCode(item.slot),...(includeLocks?{placementLocked:item.slot.placementLocked===true}:{})}))})));
   }
 
   function invalidateBalanceProposal(){
@@ -213,12 +214,14 @@
   }
   function sanctuaryByCode(code){return sanctuaryItems().find(item=>sanctuaryCode(item)===value(code))||null;}
   function entryModes(item){return Array.isArray(item?.entryModes)?item.entryModes.filter(mode=>mode&&typeof mode==='object'):[];}
+  function normalizeDifficulty(input){const difficulty=value(input||'NORMAL').toUpperCase();return DIFFICULTY_LABELS[difficulty]?difficulty:'NORMAL';}
+  function modeDifficulty(mode){const key=value(mode?.key||'default').toUpperCase();return key==='EASY'||key==='HARD'?key:'NORMAL';}
+  function difficultyOptions(item){const seen=new Set();return entryModes(item).map(mode=>({difficulty:modeDifficulty(mode),label:value(mode.label)||DIFFICULTY_LABELS[modeDifficulty(mode)],minItemLevel:itemLevelValue(mode.minItemLevel),sortOrder:Number(mode.sortOrder)||1})).filter(option=>!seen.has(option.difficulty)&&seen.add(option.difficulty)).sort((left,right)=>left.sortOrder-right.sortOrder);}
   function activeSanctuaryCode(){return value(state.layer?.querySelector('[data-draft-form]')?.elements?.draftSanctuary?.value)||selectedCode();}
-  function selectedDifficulty(force=selectedForce()){return value(force?.difficulty||state.team?.difficulty||'NORMAL').toUpperCase()==='HARD'?'HARD':'NORMAL';}
+  function selectedDifficulty(force=selectedForce()){return normalizeDifficulty(force?.difficulty||state.team?.difficulty||'NORMAL');}
   function minimumItemLevel(code=activeSanctuaryCode(),difficulty=selectedDifficulty()){
     const sanctuary=sanctuaryByCode(code);const modes=entryModes(sanctuary);if(!modes.length)return 0;
-    const wanted=value(sanctuary?.code)==='kaldrix'?(difficulty==='HARD'?'hard':'normal'):'default';
-    const mode=modes.find(item=>value(item.key).toLowerCase()===wanted)||modes[0];return itemLevelValue(mode?.minItemLevel);
+    const wanted=normalizeDifficulty(difficulty);const mode=modes.find(item=>modeDifficulty(item)===wanted)||modes.find(item=>modeDifficulty(item)==='NORMAL')||modes[0];return itemLevelValue(mode?.minItemLevel);
   }
   function characterEligible(character,code=activeSanctuaryCode(),difficulty=selectedDifficulty()){
     const minimum=minimumItemLevel(code,difficulty);return !minimum||itemLevelValue(character?.itemLevel??character?.latestPveItemLevel??character?.latest_pve_item_level)>=minimum;
@@ -569,8 +572,8 @@
     }
     const parties=force.parties.slice().sort((left,right)=>Number(left.partyNo)-Number(right.partyNo));
     const forceWarning=force.requirements?.satisfied===false;
-    const sanctuary=sanctuaryByCode(activeSanctuaryCode());const hasDifficulty=entryModes(sanctuary).some(mode=>value(mode.key).toLowerCase()==='hard');const difficulty=selectedDifficulty(force);
-    const difficultyMarkup=hasDifficulty?'<div class="sanctuary-management-force-difficulty-editor" role="group" aria-label="'+escapeHtml(force.forceNo)+'포스 난이도"><button type="button" data-draft-force-difficulty="NORMAL" data-force-id="'+escapeHtml(force.forceId)+'" aria-pressed="'+String(difficulty==='NORMAL')+'"><span>보통</span><small>'+escapeHtml(minimumItemLevel(activeSanctuaryCode(),'NORMAL'))+'+</small></button><button type="button" data-draft-force-difficulty="HARD" data-force-id="'+escapeHtml(force.forceId)+'" aria-pressed="'+String(difficulty==='HARD')+'"><span>어려움</span><small>'+escapeHtml(minimumItemLevel(activeSanctuaryCode(),'HARD'))+'+</small></button></div>':'';
+    const sanctuary=sanctuaryByCode(activeSanctuaryCode());const options=difficultyOptions(sanctuary);const difficulty=selectedDifficulty(force);
+    const difficultyMarkup=options.length>1?'<div class="sanctuary-management-force-difficulty-editor" role="group" aria-label="'+escapeHtml(force.forceNo)+'포스 난이도">'+options.map(option=>'<button type="button" data-draft-force-difficulty="'+escapeHtml(option.difficulty)+'" data-force-id="'+escapeHtml(force.forceId)+'" aria-pressed="'+String(difficulty===option.difficulty)+'"><span>'+escapeHtml(option.label)+'</span><small>'+escapeHtml(option.minItemLevel)+'+</small></button>').join('')+'</div>':'';
     const forceSummary='<div class="sanctuary-management-force-requirement-summary'+(forceWarning?' has-unmet-requirements':'')+'"><span><strong>'+escapeHtml(force.forceNo)+'포스</strong>'+(forceWarning?'<small>조건 '+escapeHtml(force.requirements.unsatisfiedCount)+'개 미충족</small>':'')+'</span>'+difficultyMarkup+'<button type="button" data-requirement-open data-force-id="'+escapeHtml(force.forceId)+'">포스 조건</button></div>';
     const labels=parties.map(party=>'<span class="'+(party.requirements?.satisfied===false?'has-unmet-requirements':'')+'"><b>'+escapeHtml(party.partyNo)+'파티 · '+escapeHtml(party.occupiedCount)+'/'+escapeHtml(party.capacity)+'명</b><button type="button" data-requirement-open data-force-id="'+escapeHtml(force.forceId)+'" data-party-no="'+escapeHtml(party.partyNo)+'">조건</button></span>').join('');
     const slots=parties.map(party=>party.slots.map(slot=>slotMarkup(slot,party.partyNo)).join('')).join('');
@@ -692,9 +695,9 @@
 
   function syncDifficultyControls(nextDifficulty='',applyToAll=false){
     const form=state.layer?.querySelector('[data-draft-form]');if(!form)return;
-    const sanctuary=sanctuaryByCode(form.elements.draftSanctuary?.value);const hasHard=entryModes(sanctuary).some(mode=>value(mode.key).toLowerCase()==='hard');
-    const requested=value(nextDifficulty||'NORMAL').toUpperCase()==='HARD'?'HARD':'NORMAL';
-    if(state.team){state.team.forces?.forEach(force=>{const own=value(applyToAll?requested:force.difficulty||requested).toUpperCase();force.difficulty=hasHard&&own==='HARD'?'HARD':'NORMAL';force.minimumItemLevel=minimumItemLevel(value(sanctuary?.code),force.difficulty)||null;});state.team.difficulty=selectedDifficulty(state.team.forces?.[0]);}
+    const sanctuary=sanctuaryByCode(form.elements.draftSanctuary?.value);const options=difficultyOptions(sanctuary);const allowed=new Set(options.map(option=>option.difficulty));
+    const requested=normalizeDifficulty(nextDifficulty||'NORMAL');
+    if(state.team){state.team.forces?.forEach(force=>{const own=normalizeDifficulty(applyToAll?requested:force.difficulty||requested);force.difficulty=allowed.has(own)?own:(allowed.has('NORMAL')?'NORMAL':options[0]?.difficulty||'NORMAL');force.minimumItemLevel=minimumItemLevel(value(sanctuary?.code),force.difficulty)||null;});state.team.difficulty=selectedDifficulty(state.team.forces?.[0]);}
     if(form.elements.draftDifficulty)form.elements.draftDifficulty.value=selectedDifficulty(teamForces()[0]);
   }
 
@@ -1060,7 +1063,7 @@
     const duration=event.target.closest('[data-draft-duration]');
     if(duration){const form=state.layer.querySelector('[data-draft-form]');form.elements.draftDuration.value=duration.dataset.draftDuration;form.querySelectorAll('[data-draft-duration]').forEach(button=>button.setAttribute('aria-pressed',String(button===duration)));return;}
     const difficulty=event.target.closest('[data-draft-force-difficulty]');
-    if(difficulty){const force=teamForces().find(item=>Number(item.forceId)===Number(difficulty.dataset.forceId));if(force){invalidateBalanceProposal();force.difficulty=value(difficulty.dataset.draftForceDifficulty).toUpperCase()==='HARD'?'HARD':'NORMAL';force.minimumItemLevel=minimumItemLevel(activeSanctuaryCode(),force.difficulty)||null;state.team.difficulty=selectedDifficulty(teamForces()[0]);const form=state.layer?.querySelector('[data-draft-form]');if(form?.elements?.draftDifficulty)form.elements.draftDifficulty.value=state.team.difficulty;resetCharacterLookup();renderRosterState();setStatus(force.forceNo+'포스를 '+(force.difficulty==='HARD'?'어려움':'보통')+' 난이도로 설정했습니다.','success');}return;}
+    if(difficulty){const force=teamForces().find(item=>Number(item.forceId)===Number(difficulty.dataset.forceId));if(force){invalidateBalanceProposal();force.difficulty=normalizeDifficulty(difficulty.dataset.draftForceDifficulty);force.minimumItemLevel=minimumItemLevel(activeSanctuaryCode(),force.difficulty)||null;state.team.difficulty=selectedDifficulty(teamForces()[0]);const form=state.layer?.querySelector('[data-draft-form]');if(form?.elements?.draftDifficulty)form.elements.draftDifficulty.value=state.team.difficulty;resetCharacterLookup();renderRosterState();setStatus(force.forceNo+'포스를 '+DIFFICULTY_LABELS[force.difficulty]+' 난이도로 설정했습니다.','success');}return;}
     const requirementOpen=event.target.closest('[data-requirement-open]');
     if(requirementOpen){state.requirementTarget={forceId:Number(requirementOpen.dataset.forceId)||Number(state.selectedForceId),partyNo:Number(requirementOpen.dataset.partyNo)||null};state.selectedSlotId=0;state.moveFromSlotId=0;resetCharacterLookup();renderRosterState();setStatus('본캐·전투력·아이템레벨 조건은 미충족이어도 저장할 수 있으며 붉은 안내로 표시됩니다.','progress');return;}
     const requirementToggle=event.target.closest('[data-requirement-toggle]');

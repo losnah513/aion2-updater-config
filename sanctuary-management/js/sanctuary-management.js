@@ -9,6 +9,7 @@
   const POWER_ICON_URL='https://assets.playnccdn.com/static-aion2/characters/img/info/profile_power_icon_pc.png';
   const BACKGROUND_CHECK_INTERVAL=60000;
   const ALT_DETAIL_IDLE_MS=5000;
+  const DIFFICULTY_LABELS=Object.freeze({EASY:'쉬움',NORMAL:'보통',HARD:'어려움'});
   let requestSequence=0;
   let monthRequestSequence=0;
   let bootstrapData=null;
@@ -42,6 +43,7 @@
   const value=value=>String(value??'').trim();
   const integer=input=>Number.isSafeInteger(Number(input))?Number(input):0;
   const escapeHtml=input=>String(input??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  const normalizeDifficulty=input=>DIFFICULTY_LABELS[value(input||'NORMAL').toUpperCase()]?value(input||'NORMAL').toUpperCase():'NORMAL';
   function classIconFor(className){const key=CLASS_ICON_MAP[value(className).replace(/[\s\u200B-\u200D\uFEFF]+/g,'').replace(/[\[(（].*?[\])）]\s*$/g,'')];return key?'/assets/images/classes/class_icon_'+key+'.png':'';}
 
   function contractSupported(data){
@@ -223,7 +225,7 @@
     const occupiedCount=parties.reduce((sum,party)=>sum+party.occupiedCount,0);
     const candidateIds=new Set(force.creatorCandidates.map(candidate=>candidate.characterId));
     const publicRead=options.publicRead===true;
-    if(!['NORMAL','HARD'].includes(force.difficulty)||force.forceId<1||force.capacity!==10||force.revision<1||force.occupiedCount!==occupiedCount||force.vacancyCount!==force.capacity-occupiedCount||(!publicRead&&force.creatorMemberId<1)||force.creatorCandidateCount!==force.creatorCandidates.length||candidateIds.size!==force.creatorCandidates.length||(!force.creatorOwnerResolved&&force.creatorCandidates.length)||(force.creatorAlreadyAssigned&&force.creatorCandidates.length)){
+    if(!['EASY','NORMAL','HARD'].includes(force.difficulty)||force.forceId<1||force.capacity!==10||force.revision<1||force.occupiedCount!==occupiedCount||force.vacancyCount!==force.capacity-occupiedCount||(!publicRead&&force.creatorMemberId<1)||force.creatorCandidateCount!==force.creatorCandidates.length||candidateIds.size!==force.creatorCandidates.length||(!force.creatorOwnerResolved&&force.creatorCandidates.length)||(force.creatorAlreadyAssigned&&force.creatorCandidates.length)){
       throw new Error('성역 관리 포스 인원 집계가 올바르지 않습니다.');
     }
     return force;
@@ -751,10 +753,10 @@
     const titleWrap=document.createElement('span');titleWrap.className='sanctuary-management-force-title-row';
     const name=document.createElement('strong');name.textContent=force.forceNo+'포스';
     const sanctuary=bootstrapData?.sanctuaries?.find(item=>String(item.id)===String(team.sanctuaryId));
-    const forceDifficultyEnabled=Array.isArray(sanctuary?.entryModes)&&sanctuary.entryModes.some(mode=>value(mode?.key).toLowerCase()==='hard');
-    const difficulty=value(force.difficulty).toUpperCase()==='HARD'?'HARD':'NORMAL';
-    const difficultyBadge=document.createElement('span');difficultyBadge.className='sanctuary-management-force-difficulty '+(difficulty==='HARD'?'is-hard':'is-normal');
-    const minimumItemLevel=integer(force.minimumItemLevel);difficultyBadge.textContent=(difficulty==='HARD'?'어려움':'보통')+(minimumItemLevel?' · '+minimumItemLevel+'+':'');difficultyBadge.title=(difficulty==='HARD'?'어려움':'보통')+(minimumItemLevel?' · 아이템레벨 '+minimumItemLevel+' 이상':'');
+    const forceDifficultyEnabled=Array.isArray(sanctuary?.entryModes)&&sanctuary.entryModes.length>1;
+    const difficulty=normalizeDifficulty(force.difficulty);
+    const difficultyBadge=document.createElement('span');difficultyBadge.className='sanctuary-management-force-difficulty is-'+difficulty.toLowerCase();
+    const difficultyLabel=DIFFICULTY_LABELS[difficulty];const minimumItemLevel=integer(force.minimumItemLevel);difficultyBadge.textContent=difficultyLabel+(minimumItemLevel?' · '+minimumItemLevel+'+':'');difficultyBadge.title=difficultyLabel+(minimumItemLevel?' · 아이템레벨 '+minimumItemLevel+' 이상':'');
     const power=document.createElement('small');power.className='sanctuary-management-force-average';power.innerHTML=combatPowerMarkup(force.combatPower?.average,'평균')+'<span> · '+escapeHtml(force.combatPower.knownCount)+'/'+escapeHtml(force.occupiedCount)+'명 확인</span>';
     const copyButton=document.createElement('button');copyButton.type='button';copyButton.className='sanctuary-management-copy-button';copyButton.dataset.sanctuaryCopyForce=value(force.forceId);copyButton.dataset.sanctuaryCopyTeam=value(team.teamId);copyButton.setAttribute('aria-label',force.forceNo+'포스 이미지 클립보드 복사');copyButton.title='해당 포스 전체를 이미지로 복사';copyButton.innerHTML='<span aria-hidden="true"><i></i><i></i></span>';
     titleWrap.append(name);if(forceDifficultyEnabled)titleWrap.appendChild(difficultyBadge);titleWrap.append(copyButton);titleWrap.appendChild(power);
@@ -1150,7 +1152,7 @@
     const source=model&&typeof model==='object'?model:{};const teamId=Number(source.teamId||0);
     const composition=Array.isArray(source.composition)?source.composition.map(force=>({
       sourceForceId:Number(force?.sourceForceId)||null,
-      difficulty:value(force?.difficulty||source.difficulty||'NORMAL').toUpperCase()==='HARD'?'HARD':'NORMAL',
+      difficulty:normalizeDifficulty(force?.difficulty||source.difficulty||'NORMAL'),
       slots:Array.isArray(force?.slots)?force.slots.map(slot=>({partyNo:Number(slot?.partyNo),slotNo:Number(slot?.slotNo),characterId:Number(slot?.characterId)||null,mainCharacterId:Number(slot?.mainCharacterId)||null,assignmentKind:value(slot?.assignmentKind).toUpperCase()==='RANDOM_ALT'?'RANDOM_ALT':'ACTUAL_CHARACTER',requiredClassCode:SLOT_CLASS_CODES.includes(value(slot?.requiredClassCode).toUpperCase())?value(slot?.requiredClassCode).toUpperCase():'ALL',placementLocked:slot?.placementLocked===true})):[],
       requirements:Array.isArray(force?.requirements)?force.requirements.map(rule=>({scopeType:value(rule?.scopeType).toUpperCase(),partyNo:rule?.partyNo==null?null:Number(rule.partyNo),ruleType:value(rule?.ruleType).toUpperCase(),minimumCount:Number(rule?.minimumCount),powerThreshold:rule?.powerThreshold==null?null:Number(rule.powerThreshold),itemLevelThreshold:rule?.itemLevelThreshold==null?null:Number(rule.itemLevelThreshold)})):[]
     })):[];
