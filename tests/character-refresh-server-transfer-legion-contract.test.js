@@ -12,9 +12,14 @@ const rollbackPath = path.join(
   rootDir,
   'supabase/rollbacks/20260901043050_character_refresh_server_transfer_legion_atomic_v461_rollback.sql'
 );
+const privilegeMigrationPath = path.join(
+  rootDir,
+  'supabase/migrations/20260901053600_character_identity_list_sync_sequence_service_role_v462.sql'
+);
 const migration = fs.readFileSync(migrationPath, 'utf8');
 const worker = fs.readFileSync(workerPath, 'utf8');
 const rollback = fs.readFileSync(rollbackPath, 'utf8');
+const privilegeMigration = fs.readFileSync(privilegeMigrationPath, 'utf8');
 
 function ordered(source, tokens, label) {
   let cursor = -1;
@@ -100,5 +105,16 @@ for (const token of [
   assert(rollback.includes(token), `DB461 rollback contract missing: ${token}`);
 }
 assert(!rollback.includes("'databaseContract', '461'"), 'DB461 rollback must restore the pre-461 function');
+
+for (const token of [
+  'grant usage, select',
+  'on sequence public.google_list_sheet_sync_queue_id_seq',
+  'to service_role',
+  'SECURITY INVOKER'
+]) {
+  assert(privilegeMigration.includes(token), `DB462 sequence contract missing: ${token}`);
+}
+assert(!privilegeMigration.includes('to anon'), 'DB462 must not broaden sequence access to anon');
+assert(!privilegeMigration.includes('to authenticated'), 'DB462 must not broaden sequence access to authenticated');
 
 console.log('character refresh server-transfer Legion contract: PASS');
