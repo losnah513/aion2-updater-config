@@ -50,7 +50,7 @@ for(const token of [
   'const next=await ServerAdapter.revision(selectedSanctuary)',
   'async function selectSanctuary(sanctuaryCode)',
   'ServerAdapter.bootstrap(target)',
-  'SANCTUARY_BOSS_ART',
+  'sanctuaryAsset(sanctuaryKey(sanctuary))?.boss',
   'createSingleForceBossVisual(team)',
   'headActions.appendChild(position)',
 ])assert.ok(client.includes(token),`Stage 11 client behavior missing ${token}`);
@@ -70,8 +70,8 @@ for(const token of [
   '.sanctuary-management-force-carousel{margin-top:8px}',
 ])assert.ok(supportCss.includes(token),`Stage 11 force layout CSS missing ${token}`);
 
-for(const asset of ['rudra.webp','bagot.webp','kaldrix.webp']){
-  assert.ok(fs.existsSync(path.join(root,'assets/images/sanctuary/bosses-v2',asset)),`boss asset missing ${asset}`);
+for(const directory of ['sanctuary-1-rudra','sanctuary-2-bagot','sanctuary-3-kaldrix','sanctuary-4-deltras']){
+  assert.ok(fs.existsSync(path.join(root,'assets/images/sanctuary',directory,'boss.webp')),`boss asset missing ${directory}/boss.webp`);
 }
 
 for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){

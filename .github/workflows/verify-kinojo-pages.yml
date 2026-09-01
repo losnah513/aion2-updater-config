@@ -169,6 +169,7 @@ jobs:
           node tests/kinojo-range-control.test.js
           node tests/sanctuary-roster-quick-edit-contract.test.js
           node tests/sanctuary-waitlist-contract.test.js
+          node tests/sanctuary-assets-registry-contract.test.js
           node tests/sanctuary-management-data-boundary-contract.test.js
           node tests/sanctuary-management-fixed-draft-contract.test.js
           node tests/sanctuary-management-force-roster-contract.test.js
@@ -503,12 +504,15 @@ jobs:
             "sanctuary/js/sanctuary.js"
             "sanctuary/js/sanctuary-editor.js"
             "assets/images/sanctuary/SOURCES.md"
-            "assets/images/sanctuary/backgrounds/rudra.webp"
-            "assets/images/sanctuary/backgrounds/bagot.webp"
-            "assets/images/sanctuary/backgrounds/kaldrix.webp"
-            "assets/images/sanctuary/bosses/rudra.webp"
-            "assets/images/sanctuary/bosses/bagot.webp"
-            "assets/images/sanctuary/bosses/kaldrix.webp"
+            "ui/kinojo-sanctuary-assets.js"
+            "assets/images/sanctuary/sanctuary-1-rudra/background.webp"
+            "assets/images/sanctuary/sanctuary-1-rudra/boss.webp"
+            "assets/images/sanctuary/sanctuary-2-bagot/background.webp"
+            "assets/images/sanctuary/sanctuary-2-bagot/boss.webp"
+            "assets/images/sanctuary/sanctuary-3-kaldrix/background.webp"
+            "assets/images/sanctuary/sanctuary-3-kaldrix/boss.webp"
+            "assets/images/sanctuary/sanctuary-4-deltras/background.webp"
+            "assets/images/sanctuary/sanctuary-4-deltras/boss.webp"
             "assets/images/classes/class_icon_assassin.png"
             "assets/images/classes/class_icon_chanter.png"
             "assets/images/classes/class_icon_cleric.png"

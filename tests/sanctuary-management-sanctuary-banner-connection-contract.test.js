@@ -21,12 +21,13 @@ for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
 }
 
 for(const token of [
-  'SANCTUARY_BANNER_FALLBACK','/assets/images/sanctuary/backgrounds/rudra.webp','/assets/images/sanctuary/backgrounds/bagot.webp','/assets/images/sanctuary/backgrounds/kaldrix.webp',
+  'function sanctuaryAsset(value)','window.KinojoSanctuaryAssets?.get?.(value)','asset.background','asset.bossName',
   "function renderSanctuaryBanner()","byId('sanctuaryManagementHeroKicker').textContent='성역 '+order","sanctuaryOfficialName(item)",
   "byId('sanctuaryManagementHeroSub').textContent=boss?'Boss. '",
   "const folded=state==='ready'||state==='rollout'","region.hidden=folded","byId('sanctuaryManagementConnectionState').textContent=state==='ready'?'연결됨'",
   "window.addEventListener('kinojo:sanctuary-master-rendered'"
 ])assert.ok(client.includes(token),`client banner/connection behavior missing ${token}`);
+for(const page of ['sanctuary/index.html','m/sanctuary/index.html'])assert.ok(read(page).includes('kinojo-sanctuary-assets.js?cache=2026090101'),`${page}: central Sanctuary asset registry is not loaded before the page client`);
 assert.match(client,/renderSanctuaryBanner\(\);renderWeek\(\);renderRefreshIndicator\(false\);/,'scope selection must refresh the banner before requesting scoped content');
 assert.equal(client.includes("byId('sanctuaryManagementSource')"),false,'retired Server source renderer remains');
 

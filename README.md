@@ -168,7 +168,7 @@ KINOJO INFO GitHub Pages upload package.
 - Server Engine 315 builds each sanctuary waitlist from active `character_master` rows that meet the Server-owned entry-mode item-level rule and are not already linked to a slot in that sanctuary.
 - The waitlist modal keeps three logical panes: character cards, eligible sanctuary image cards, and live force/party recommendations.
 - A recommendation request recalculates current vacancies and class overlap on Server. Forces with at least one vacant party that does not duplicate the selected class appear first.
-- Sanctuary backgrounds and boss portraits are separated under `assets/images/sanctuary/backgrounds/` and `assets/images/sanctuary/bosses/`; official reference sources and asset policy are recorded in `assets/images/sanctuary/SOURCES.md`.
+- Sanctuary backgrounds and transparent boss portraits are grouped by stable numbered boss folders under `assets/images/sanctuary/sanctuary-N-boss/`; browser paths are resolved by `ui/kinojo-sanctuary-assets.js`, and source policy is recorded in `assets/images/sanctuary/SOURCES.md`.
 - `tests/sanctuary-waitlist-contract.test.js` prevents item-level thresholds from moving into WEB, verifies the three-pane/scroll-safe modal contract, and checks all six WebP assets against the web size budget.
 
 ## Sanctuary management Server boundary

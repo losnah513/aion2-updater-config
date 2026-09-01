@@ -81,12 +81,12 @@ assert.ok(style.includes('.sanctuary-waitlist-modal.is-split-mobile'), 'Fold/tab
 assert.ok(style.includes('.is-recommendation-stage'), 'Fold/tablet sanctuary-to-recommendation slide is missing');
 assert.ok(style.includes('grid-template-columns:minmax(0,1fr) minmax(0,1fr)'), 'Fold recommendation workspace must split force and party evenly');
 
-for (const type of ['backgrounds', 'bosses']) {
-  for (const code of ['rudra', 'bagot', 'kaldrix']) {
-    const file = path.join(root, 'assets', 'images', 'sanctuary', type, `${code}.webp`);
+for (const directory of ['sanctuary-1-rudra', 'sanctuary-2-bagot', 'sanctuary-3-kaldrix', 'sanctuary-4-deltras']) {
+  for (const name of ['background.webp', 'boss.webp']) {
+    const file = path.join(root, 'assets', 'images', 'sanctuary', directory, name);
     const stat = fs.statSync(file);
-    assert.ok(stat.size > 20_000, `${type}/${code}.webp is unexpectedly small`);
-    assert.ok(stat.size < 500_000, `${type}/${code}.webp exceeds the web asset budget`);
+    assert.ok(stat.size > 20_000, `${directory}/${name} is unexpectedly small`);
+    assert.ok(stat.size < 500_000, `${directory}/${name} exceeds the web asset budget`);
   }
 }
 

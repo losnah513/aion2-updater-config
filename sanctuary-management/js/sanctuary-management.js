@@ -526,23 +526,14 @@
     return official&&official.replace(/\s+/g,'')!==short.replace(/\s+/g,'')?short+' | '+official:short;
   }
   function sanctuaryForSelection(){return bootstrapData?.sanctuaries.find(item=>sanctuaryKey(item)===selectedSanctuary)||null;}
-  const SANCTUARY_BANNER_FALLBACK=Object.freeze({
-    rudra:Object.freeze({image:'/assets/images/sanctuary/backgrounds/rudra.webp',bossName:'루드라'}),
-    bagot:Object.freeze({image:'/assets/images/sanctuary/backgrounds/bagot.webp',bossName:'중합체 바고트'}),
-    kaldrix:Object.freeze({image:'/assets/images/sanctuary/backgrounds/kaldrix.webp',bossName:'지저의 재앙 칼드릭스'})
-  });
-  const SANCTUARY_BOSS_ART=Object.freeze({
-    rudra:'/assets/images/sanctuary/bosses-v2/rudra.webp',
-    bagot:'/assets/images/sanctuary/bosses-v2/bagot.webp',
-    kaldrix:'/assets/images/sanctuary/bosses-v2/kaldrix.webp'
-  });
+  function sanctuaryAsset(value){return window.KinojoSanctuaryAssets?.get?.(value)||null;}
   function sanctuaryMasterForSelection(){return sanctuaryMasterData?.items?.find(item=>sanctuaryKey(item)===selectedSanctuary)||null;}
   function safeHeroImage(input){const image=value(input);return image&&(image.startsWith('/')||image.startsWith('https://'))?image.replace(/["'()]/g,encodeURIComponent):'';}
   function renderSanctuaryBanner(){
     const item=sanctuaryForSelection();if(!item)return;
     const master=sanctuaryMasterForSelection()||{};
-    const code=sanctuaryKey(item);const order=sanctuaryOrder(item);const fallback=SANCTUARY_BANNER_FALLBACK[code]||{};
-    const image=safeHeroImage(master.bannerImage||item.bannerImage||fallback.image);
+    const code=sanctuaryKey(item);const order=sanctuaryOrder(item);const asset=sanctuaryAsset(code)||{};
+    const image=safeHeroImage(master.bannerImage||item.bannerImage||asset.background);
     const background=value(master.cardBackground||item.cardBackground);
     const bg=byId('sanctuaryManagementHeroBg');
     if(bg){
@@ -553,7 +544,7 @@
     const hero=byId('sanctuaryManagementHero');if(hero)hero.dataset.sanctuaryCode=code;
     byId('sanctuaryManagementHeroKicker').textContent='성역 '+order;
     byId('sanctuaryManagementTitle').textContent=sanctuaryOfficialName(item)||value(master.name)||sanctuaryLabel(item);
-    const boss=value(master.bossName||item.bossName||fallback.bossName);
+    const boss=value(master.bossName||item.bossName||asset.bossName);
     byId('sanctuaryManagementHeroSub').textContent=boss?'Boss. '+boss+' · 성역 '+order:'성역 '+order+' · 팀·포스 운영 관리';
   }
   function acceptSanctuaryMaster(payload){if(!Array.isArray(payload?.items))return;sanctuaryMasterData=payload;if(bootstrapData)renderSanctuaryBanner();}
@@ -923,7 +914,7 @@
   function createSingleForceBossVisual(team){
     if((team?.forces||[]).length!==1)return null;
     const sanctuary=bootstrapData?.sanctuaries?.find(item=>String(item.id)===String(team.sanctuaryId));
-    const source=SANCTUARY_BOSS_ART[sanctuaryKey(sanctuary)];
+    const source=sanctuaryAsset(sanctuaryKey(sanctuary))?.boss;
     if(!source)return null;
     const visual=document.createElement('div');visual.className='sanctuary-management-force-boss-visual';visual.setAttribute('aria-hidden','true');
     const image=document.createElement('img');image.src=source;image.alt='';image.loading='lazy';image.decoding='async';
