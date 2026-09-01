@@ -3,6 +3,7 @@ const fs=require('node:fs');
 
 const read=file=>fs.readFileSync(file,'utf8');
 const migration=read('supabase/migrations/20260901111113_sanctuary4_three_difficulty.sql');
+const bootstrapHotfix=read('supabase/migrations/20260901112533_sanctuary4_entry_modes_bootstrap_hotfix.sql');
 const main=read('sanctuary-management/js/sanctuary-management.js');
 const draft=read('sanctuary-management/js/sanctuary-management-draft.js');
 const draftCss=read('sanctuary-management/css/sanctuary-management-draft.css');
@@ -25,6 +26,14 @@ for(const token of [
 ])assert.ok(migration.includes(token),`Sanctuary 4 DB contract missing ${token}`);
 
 assert.equal((migration.match(/not private\.kinojo_sm_difficulty_allowed_v464\(v_sanctuary\.id, v_difficulty\)/g)||[]).length,2,'ADD_FORCE and SAVE_COMPOSITION must both validate the selected Sanctuary 4 difficulty');
+
+for(const token of [
+  'kinojo_sanctuary_management_public_bootstrap_v456',
+  'kinojo_sanctuary_management_bootstrap_v456',
+  "v_base - 'teams' - 'sanctuaries'",
+  "'sanctuaries', private.kinojo_sm_sanctuaries_v452(v_base->'sanctuaries')"
+])assert.ok(bootstrapHotfix.includes(token),`Selected Sanctuary bootstrap contract missing ${token}`);
+assert.equal((bootstrapHotfix.match(/private\.kinojo_sm_sanctuaries_v452\(v_base->'sanctuaries'\)/g)||[]).length,2,'public and authenticated selected bootstrap must both expose entry modes');
 
 for(const token of [
   "EASY:'쉬움',NORMAL:'보통',HARD:'어려움'",
