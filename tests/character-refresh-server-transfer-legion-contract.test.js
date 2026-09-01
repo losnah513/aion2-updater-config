@@ -8,8 +8,13 @@ const migrationPath = path.join(
   'supabase/migrations/20260901043050_character_refresh_server_transfer_legion_atomic_v461.sql'
 );
 const workerPath = path.join(rootDir, 'supabase/functions/character-refresh-worker/index.ts');
+const rollbackPath = path.join(
+  rootDir,
+  'supabase/rollbacks/20260901043050_character_refresh_server_transfer_legion_atomic_v461_rollback.sql'
+);
 const migration = fs.readFileSync(migrationPath, 'utf8');
 const worker = fs.readFileSync(workerPath, 'utf8');
+const rollback = fs.readFileSync(rollbackPath, 'utf8');
 
 function ordered(source, tokens, label) {
   let cursor = -1;
@@ -84,5 +89,16 @@ for (const token of [
 ]) {
   assert(worker.includes(token), `worker recovery path missing: ${token}`);
 }
+
+for (const token of [
+  'CREATE OR REPLACE FUNCTION public.kinojo_character_identity_recovery_apply_v1',
+  "SET search_path TO 'public', 'pg_temp'",
+  'revoke all on function public.kinojo_character_identity_recovery_apply_v1(text, text, bigint, jsonb)',
+  'from public, anon, authenticated',
+  'to postgres, service_role'
+]) {
+  assert(rollback.includes(token), `DB461 rollback contract missing: ${token}`);
+}
+assert(!rollback.includes("'databaseContract', '461'"), 'DB461 rollback must restore the pre-461 function');
 
 console.log('character refresh server-transfer Legion contract: PASS');
