@@ -1,7 +1,7 @@
 declare const Deno: any;
 /*
  * KINOJO Supabase Edge Function: sanctuary-copy-render
- * Version: 20260901_01
+ * Version: 20260901_02
  * Role: 성역 포스/팀 클립보드용 SVG를 서버에서 생성한다.
  * Rule: 기존 WEB v317과 신규 Server 팀 모두 같은 Stage 12 SVG renderer를 사용한다.
  */
@@ -35,12 +35,12 @@ const CARD_H = 68;
 const PARTY_W = 240;
 const PARTY_GAP = 8;
 const FORCE_W = 512;
-const FORCE_HEADER_H = 66;
+const FORCE_HEADER_H = 50;
 const PARTY_HEADER_H = 38;
 const SLOT_GAP = 4;
 const PARTY_BODY_PAD = 6;
 const PARTY_H = PARTY_HEADER_H + PARTY_BODY_PAD * 2 + CARD_H * 5 + SLOT_GAP * 4;
-const FORCE_H = FORCE_HEADER_H + 10 + PARTY_H + 10;
+const FORCE_H = FORCE_HEADER_H + 8 + PARTY_H + 8;
 const CANVAS_PAD = 16;
 const TEAM_COLUMN_GAP = 14;
 const TEAM_HEADER_H = 72;
@@ -298,7 +298,7 @@ function badgeSvg(label: string, x: number, y: number, main: boolean){
   const fill=main?"#e8edff":"#f1f3f7";
   const stroke=main?"#9fb2ff":"#d4dbe6";
   const color=main?"#315fc8":"#68758a";
-  return `<g transform="translate(${x+80-width} ${y})"><rect width="${width}" height="16" rx="8" fill="${fill}" stroke="${stroke}"/><text x="${width/2}" y="11.4" text-anchor="middle" font-size="8.5" font-weight="900" fill="${color}">${xml(shown)}</text></g>`;
+  return `<g transform="translate(${x} ${y})"><rect width="${width}" height="15" rx="7.5" fill="${fill}" stroke="${stroke}"/><text x="${width/2}" y="10.7" text-anchor="middle" font-size="8.5" font-weight="900" fill="${color}">${xml(shown)}</text></g>`;
 }
 
 function slotSvg(slot: Slot, x: number, y: number, map: Map<string,string>, req: Request){
@@ -325,18 +325,18 @@ function slotSvg(slot: Slot, x: number, y: number, map: Map<string,string>, req:
   const stageX=174;
   const stageW=CARD_W-stageX;
   const nameLength=Array.from(name).length;
-  const nameFont=nameLength<=5?20:nameLength<=7?17:14;
+  const nameFont=nameLength<=5?20:nameLength<=7?15:13;
   const relationLabel=isMain?"본캐":isSub?`${compactText(owner,6)}-부캐`:"";
   const shownName=compactText(name,8);
 
   return `<g transform="translate(${x} ${y})">
     <rect width="${CARD_W}" height="${CARD_H}" rx="9" fill="${cardFill}" fill-opacity=".94" stroke="${cardStroke}"/>
     ${isMain?`<rect x="0" y="0" width="3" height="${CARD_H}" rx="2" fill="#4d69eb"/>`:''}
-    <g transform="translate(8 16)">
-      ${iconImage?`<image href="${iconImage}" x="0" y="0" width="36" height="36" preserveAspectRatio="xMidYMid meet"/>`:`<circle cx="18" cy="18" r="17" fill="#eef2ff"/><text x="18" y="23" text-anchor="middle" font-size="14" font-weight="900" fill="#4d69eb">${slot.isRandomAlt?'R':xml(cls.slice(0,1)||'?')}</text>`}
+    <g transform="translate(4 7)">
+      ${iconImage?`<image href="${iconImage}" x="0" y="0" width="54" height="54" preserveAspectRatio="xMidYMid meet"/>`:`<circle cx="27" cy="27" r="26" fill="#eef2ff"/><text x="27" y="34" text-anchor="middle" font-size="20" font-weight="900" fill="#4d69eb">${slot.isRandomAlt?'R':xml(cls.slice(0,1)||'?')}</text>`}
     </g>
-    <text x="49" y="24" font-size="${nameFont}" font-weight="1000" fill="#1f2f46">${xml(shownName)}</text>
-    ${relationLabel?badgeSvg(relationLabel,94,32,isMain):''}
+    ${relationLabel?badgeSvg(relationLabel,64,4,isMain):''}
+    <text x="64" y="40" font-size="${nameFont}" font-weight="1000" fill="#1f2f46">${xml(shownName)}</text>
     ${powerIcon?`<image href="${powerIcon}" x="98" y="50" width="17" height="17" preserveAspectRatio="xMidYMid meet"/>`:`<circle cx="106.5" cy="58.5" r="6" fill="#4c75b8"/>`}
     <text x="119" y="63" font-size="13.5" font-weight="1000" fill="#556b93">${xml(fmtPowerK(slot.power))}</text>
     <rect x="${stageX}" y="0" width="${stageW}" height="${CARD_H}" rx="0 8 8 0" fill="#edf3fb"/>
@@ -363,14 +363,14 @@ function forceSvg(force: Force, x: number, y: number, map: Map<string,string>, r
   const filled=Number(force.characterCount||filledCount(force));
   const powerIcon=map.get(POWER_ICON_URL)||"";
   const title=forceName(force);
-  const titleWidth=Math.min(142,Math.max(78,Array.from(title).length*25));
-  const bodyY=y+FORCE_HEADER_H+10;
+  const bodyY=y+FORCE_HEADER_H+8;
   return `<g>
     <rect x="${x}" y="${y}" width="${FORCE_W}" height="${FORCE_H}" rx="16" fill="#ffffff" fill-opacity=".84" stroke="#d9e2f0" stroke-width="1.5"/>
-    <text x="${x+16}" y="${y+40}" font-size="25" font-weight="1000" fill="#1f2f46">${xml(title)}</text>
-    <text x="${x+16+titleWidth}" y="${y+35}" font-size="11.5" font-weight="900" fill="#64748b">${filled}/10명 · 평균 전투력</text>
-    ${powerIcon?`<image href="${powerIcon}" x="${x+16+titleWidth+137}" y="${y+20}" width="18" height="18" preserveAspectRatio="xMidYMid meet"/>`:''}
-    <text x="${x+16+titleWidth+159}" y="${y+35}" font-size="12.5" font-weight="1000" fill="#556b93">${xml(fmtPowerK(force.averagePower))}</text>
+    <text x="${x+16}" y="${y+34}" font-size="25" font-weight="1000" fill="#1f2f46">${xml(title)}</text>
+    ${powerIcon?`<image href="${powerIcon}" x="${x+205}" y="${y+8}" width="34" height="34" preserveAspectRatio="xMidYMid meet"/>`:`<circle cx="${x+222}" cy="${y+25}" r="16" fill="#4c75b8"/>`}
+    <text x="${x+246}" y="${y+19}" font-size="10.5" font-weight="900" fill="#64748b">평균 전투력</text>
+    <text x="${x+246}" y="${y+40}" font-size="15" font-weight="1000" fill="#556b93">${xml(fmtPowerK(force.averagePower))}</text>
+    <text x="${x+FORCE_W-16}" y="${y+35}" text-anchor="end" font-size="23" font-weight="1000" fill="#45546c">${filled}/10명</text>
     <line x1="${x}" y1="${y+FORCE_HEADER_H}" x2="${x+FORCE_W}" y2="${y+FORCE_HEADER_H}" stroke="#e4ebf4"/>
     ${partySvg(parties[0],x+12,bodyY,map,req)}
     ${partySvg(parties[1],x+12+PARTY_W+PARTY_GAP,bodyY,map,req)}
@@ -488,9 +488,9 @@ Deno.serve(async(req: Request)=>{
     // but expose an ASCII-only fallback filename so Korean team names cannot
     // make an otherwise valid legacy image response fail at the last step.
     const headerFilename=safeFilename.replace(/[^\x20-\x7e]+/g,"").replace(/^-+|-+$/g,"")||"kinojo-sanctuary.svg";
-    return new Response(svg,{status:200,headers:{...CORS_HEADERS,"content-type":"image/svg+xml; charset=utf-8","cache-control":"no-store","x-kinojo-renderer":"sanctuary-stage12-layout-svg-v3","x-kinojo-filename":headerFilename}});
+    return new Response(svg,{status:200,headers:{...CORS_HEADERS,"content-type":"image/svg+xml; charset=utf-8","cache-control":"no-store","x-kinojo-renderer":"sanctuary-stage12-layout-svg-v4","x-kinojo-filename":headerFilename}});
   }catch(err){
     console.error("KINOJO sanctuary-copy-render failed",err);
-    return json({ok:false,message:String((err as Error)?.message||err),renderer:"sanctuary-stage12-layout-svg-v3",version:"20260901_01"},500);
+    return json({ok:false,message:String((err as Error)?.message||err),renderer:"sanctuary-stage12-layout-svg-v4",version:"20260901_02"},500);
   }
 });

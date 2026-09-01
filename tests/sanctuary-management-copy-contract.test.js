@@ -79,7 +79,7 @@ for(const token of [
   '평균 전투력',
   'fmtPowerK',
   'async function renderTeamSvg',
-  'sanctuary-stage12-layout-svg-v3',
+  'sanctuary-stage12-layout-svg-v4',
   'KINOJO_SANCTUARY_MANAGEMENT_COPY_V1',
   'profileimg.plaync.com',
   'const headerFilename=safeFilename.replace(/[^\\x20-\\x7e]+/g,"")',
