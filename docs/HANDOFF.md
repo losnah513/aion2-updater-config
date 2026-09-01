@@ -33,7 +33,7 @@
 - 실제 트리는 `1단계/2단계`와 합성 `부서장` 문구를 표시하지 않는다. 군단장·엘리트장교·군단병을 모두 `계급 네임카드 → 해당 계급 캐릭터 목록`으로 렌더링한다. 단일 상위는 중앙 수직 계보, 복수 상위는 같은 단계 수평 분기이며 `무소속`과 명시적 `소속 외`는 별도 terminal branch로 구분한다.
 - 조직 소속은 DB460의 `immediate_upper_or_terminal_default_or_explicit_unaffiliated`가 최종 권위다. 바로 윗 단계 role이 하나면 자동 직속, 여러 개면 parent 선택 필수, 마지막 단계 parent 누락은 terminal 기본 소속으로 보존한다. 명시적 `소속 외`만 `unaffiliated=true / parent_role_id=NULL` 독립 branch가 된다.
 - 공개 본문은 네 레기온을 세로로 이어 붙이지 않고 고정 높이 viewer 안에 한 번에 하나만 표시한다. 좌우 `‹ / ›` rail은 카드 가장자리 위로 본문 방향 176px(모바일 104px)까지 확장되어 이전·다음 레기온명을 표시하고 Server 순서를 순환한다. 전환 때 내부 scrollTop을 0으로 되돌리고 현재/이전/다음 레기온 ARIA 문구를 갱신하며, 방향에 따라 perspective 회전·이동하는 380ms page-turn을 적용한다. reduced-motion에서는 animation을 끈다.
-- 124px 캐릭터 카드는 실제 branch 폭에 맞춘 `auto-fit` grid와 652px 상한을 사용해 한 줄 최대 5개다. viewer 높이는 PC `100dvh - 188px`, 모바일 `100dvh - 206px`로 조정해 고정 공지바 위 10px 안전 간격을 확보하며 서브바 아래 간격과 맞춘다. 내부 scrollbar는 숨기고 아래 내용이 남아 있을 때만 흰색 하단 그라데이션을 보인다.
+- 124px 캐릭터 카드는 실제 branch 폭에 맞춘 `auto-fit` grid와 652px 상한을 사용해 한 줄 최대 5개다. viewer 높이는 공통 UI의 실제 `--kinojo-notice-actual-height`를 포함해 계산하며 PC는 `100dvh - 141px - 공지바`, 모바일은 `100dvh - 203px - 공지바`를 사용한다. 따라서 고정 공지바 위 10px 안전 간격을 서브바 아래 10px 간격과 맞춘다. 내부 scrollbar는 숨기고 아래 내용이 남아 있을 때만 흰색 하단 그라데이션을 보인다.
 - 소유 파일은 `legion-tree/js/legion-tree.js`, `legion-tree/css/legion-tree.css`, PC/mobile HTML, data-render 계약 테스트와 viewer 전용 harness다. cache는 CSS `2026090105`, tree `2026090109`이며 editor `2026090105`를 유지한다. 조직도 쓰기 외부 계약은 DB460, 공개 읽기 내부 최적화는 DB461이며 Edge API 1.9는 유지한다.
 
 ## 레기온 트리 공개 읽기 내결함성·최적화 · 2026-09-01
