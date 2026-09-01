@@ -65,6 +65,26 @@
     return (draft?.stages||[]).find(stage=>stage.roles.some(role=>role.roleKey===roleKey))||null;
   }
 
+  function immediateUpperStage(draft,roleKey){
+    const childStage=stageByRoleKey(draft,roleKey);
+    if(!childStage||childStage.stageNo<=1)return null;
+    return (draft?.stages||[]).find(stage=>stage.stageNo===childStage.stageNo-1)||null;
+  }
+
+  function automaticParentRoleKey(draft,roleKey){
+    const upperStage=immediateUpperStage(draft,roleKey);
+    return upperStage?.roles?.length===1?upperStage.roles[0].roleKey:null;
+  }
+
+  function reconcileAutomaticParent(draft,assignment){
+    if(!assignment||assignment.unaffiliated===true||text(assignment.parentRoleKey,180))return;
+    assignment.parentRoleKey=automaticParentRoleKey(draft,assignment.roleKey);
+  }
+
+  function reconcileAutomaticParents(draft){
+    for(const assignment of draft?.assignments||[])reconcileAutomaticParent(draft,assignment);
+  }
+
   function assignmentByCharacterId(draft,characterId){
     return (draft?.assignments||[]).find(item=>item.characterId===Number(characterId))||null;
   }
@@ -112,7 +132,7 @@
       })
     }));
     for(const member of legion.unassignedMembers||[])rememberMember(member);
-    return {
+    const draft={
       legionName:legion.legionName,
       revision:Number(legion.revision)||0,
       fallbackApplied:legion.fallbackApplied===true,
@@ -123,6 +143,8 @@
       assignments,
       dirty:false
     };
+    reconcileAutomaticParents(draft);
+    return draft;
   }
 
   function setStageCount(draft,value){
@@ -175,6 +197,7 @@
     if(draft.assignments.some(item=>item.parentRoleKey===roleKey))return {ok:false,code:'ROLE_IS_PARENT'};
     stage.roles=stage.roles.filter(role=>role.roleKey!==roleKey);
     stage.roles.forEach((role,index)=>{role.slotNo=index+1;});
+    reconcileAutomaticParents(draft);
     draft.dirty=true;
     return {ok:true,code:'ROLE_DELETED'};
   }
@@ -200,12 +223,13 @@
     const occupied=draft.assignments.filter(item=>item.roleKey===roleKey&&item.characterId!==member.characterId).length;
     if(role.maxMembers!==null&&occupied>=role.maxMembers)return {ok:false,code:'MAX_MEMBERS_EXCEEDED'};
     const current=assignmentByCharacterId(draft,member.characterId);
+    const parentRoleKey=automaticParentRoleKey(draft,roleKey);
     if(current){
       current.roleKey=roleKey;
-      current.parentRoleKey=null;
+      current.parentRoleKey=parentRoleKey;
       current.unaffiliated=false;
     }else{
-      draft.assignments.push({characterId:member.characterId,roleKey,parentRoleKey:null,unaffiliated:false});
+      draft.assignments.push({characterId:member.characterId,roleKey,parentRoleKey,unaffiliated:false});
     }
     draft.dirty=true;
     return {ok:true,code:'MEMBER_ASSIGNED'};
@@ -233,14 +257,15 @@
     if(role.maxMembers!==null&&occupiedOutsideBatch+ids.length>role.maxMembers){
       return {ok:false,code:'MAX_MEMBERS_EXCEEDED'};
     }
+    const parentRoleKey=automaticParentRoleKey(draft,roleKey);
     for(const characterId of ids){
       const current=assignmentByCharacterId(draft,characterId);
       if(current){
         current.roleKey=roleKey;
-        current.parentRoleKey=null;
+        current.parentRoleKey=parentRoleKey;
         current.unaffiliated=false;
       }else{
-        draft.assignments.push({characterId,roleKey,parentRoleKey:null,unaffiliated:false});
+        draft.assignments.push({characterId,roleKey,parentRoleKey,unaffiliated:false});
       }
     }
     draft.dirty=true;
@@ -267,7 +292,7 @@
       return {ok:true,code:'UNAFFILIATED_UPDATED'};
     }
     if(!parentRoleKey){
-      assignment.parentRoleKey=null;
+      assignment.parentRoleKey=automaticParentRoleKey(draft,assignment.roleKey);
       assignment.unaffiliated=false;
       draft.dirty=true;
       return {ok:true,code:'PARENT_CLEARED'};
@@ -355,7 +380,9 @@
         continue;
       }
       if(!parentRoleKey){
-        if(!unaffiliated&&stageNo!==draft.stageCount)add('PARENT_REQUIRED',stageNo+'단계 '+memberName+' 캐릭터의 상위 소속 또는 소속 외를 선택해 주세요.',{stageNo,characterId,roleKey,path:'parentRole'});
+        const upperStage=(draft.stages||[]).find(stage=>stage.stageNo===stageNo-1);
+        const hasAutomaticParent=upperStage?.roles?.length===1;
+        if(!unaffiliated&&!hasAutomaticParent&&stageNo!==draft.stageCount)add('PARENT_REQUIRED',stageNo+'단계 '+memberName+' 캐릭터의 상위 소속 또는 소속 외를 선택해 주세요.',{stageNo,characterId,roleKey,path:'parentRole'});
         continue;
       }
       if(unaffiliated){
@@ -395,7 +422,7 @@
       assignments:draft.assignments.map((assignment,index)=>({
         characterId:assignment.characterId,
         roleKey:assignment.roleKey,
-        parentRoleKey:assignment.parentRoleKey,
+        parentRoleKey:assignment.unaffiliated===true?null:(assignment.parentRoleKey||automaticParentRoleKey(draft,assignment.roleKey)),
         unaffiliated:assignment.unaffiliated===true,
         sortOrder:index
       }))
@@ -432,14 +459,14 @@
 
   function renderParentOptions(draft,assignment,stageNo){
     const terminal=stageNo===draft.stageCount;
+    const upperStage=draft.stages.find(stage=>stage.stageNo===stageNo-1)||null;
+    const automatic=upperStage?.roles?.length===1;
     const defaultLabel=terminal?'무소속 (상위 부서 없음)':'상위 소속 선택 (필수)';
-    const options=['<option value="">'+esc(defaultLabel)+'</option>'];
-    for(const stage of draft.stages){
-      if(stage.stageNo!==stageNo-1)continue;
-      for(const role of stage.roles){
-        const selected=assignment.parentRoleKey===role.roleKey?' selected':'';
-        options.push('<option value="'+esc(role.roleKey)+'"'+selected+'>'+esc(stage.stageName+' · '+role.roleName)+'</option>');
-      }
+    const options=automatic?[]:['<option value="">'+esc(defaultLabel)+'</option>'];
+    for(const role of upperStage?.roles||[]){
+      const selected=assignment.unaffiliated!==true&&(assignment.parentRoleKey===role.roleKey||automatic)?' selected':'';
+      const suffix=automatic?' · 자동 직속':'';
+      options.push('<option value="'+esc(role.roleKey)+'"'+selected+'>'+esc(upperStage.stageName+' · '+role.roleName+suffix)+'</option>');
     }
     options.push('<option value="'+UNAFFILIATED_PARENT+'"'+(assignment.unaffiliated===true?' selected':'')+'>소속 외 (독립 부서)</option>');
     return options.join('');
@@ -449,9 +476,12 @@
     const member=memberById(draft,assignment.characterId);
     if(!member)return '';
     const kind=member.isMain?'본캐':'부캐';
-    const parentRequired=stageNo>1&&stageNo<draft.stageCount;
+    const upperStage=draft.stages.find(stage=>stage.stageNo===stageNo-1)||null;
+    const automatic=upperStage?.roles?.length===1;
+    const parentRequired=stageNo>1&&stageNo<draft.stageCount&&!automatic;
+    const parentLabel=automatic?'상위 소속 (자동)':parentRequired?'상위 소속':'소속';
     const parent=stageNo>1
-      ?'<label class="legion-tree-editor-parent"><span>'+(parentRequired?'상위 소속':'소속')+'</span><select'+(parentRequired?' required':'')+' data-editor-parent data-character-id="'+member.characterId+'">'+renderParentOptions(draft,assignment,stageNo)+'</select></label>'
+      ?'<label class="legion-tree-editor-parent"'+(automatic?' data-parent-mode="automatic"':'')+'><span>'+parentLabel+'</span><select'+(parentRequired?' required':'')+' data-editor-parent data-character-id="'+member.characterId+'">'+renderParentOptions(draft,assignment,stageNo)+'</select></label>'
       :'';
     return '<li class="legion-tree-editor-member" data-character-id="'+member.characterId+'">'
       +'<div><strong>'+esc(member.characterName)+'</strong><span>'+esc(member.className||'클래스 미확인')+' · '+kind+'</span></div>'
