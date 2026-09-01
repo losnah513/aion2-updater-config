@@ -1,7 +1,8 @@
+import { normalizeSanctuaryCode, sanctuaryAssetPath } from "../_shared/sanctuary-assets.ts";
 declare const Deno: any;
 /*
  * KINOJO Supabase Edge Function: sanctuary-copy-render
- * Version: 20260901_02
+ * Version: 20260901_03
  * Role: 성역 포스/팀 클립보드용 SVG를 서버에서 생성한다.
  * Rule: 기존 WEB v317과 신규 Server 팀 모두 같은 Stage 12 SVG renderer를 사용한다.
  */
@@ -24,11 +25,6 @@ const CLASS_ICON_FILE: Record<string,string> = {
   "권성":"class_icon_fighter.png"
 };
 const POWER_ICON_URL = "https://assets.playnccdn.com/static-aion2/characters/img/info/profile_power_icon_pc.png";
-const SANCTUARY_BOSS_FILE: Record<string,string> = {
-  rudra:"rudra.webp",
-  bagot:"bagot.webp",
-  kaldrix:"kaldrix.webp"
-};
 
 const CARD_W = 228;
 const CARD_H = 68;
@@ -119,13 +115,9 @@ function classIconUrl(className: string, req: Request){
   const file=CLASS_ICON_FILE[safeText(className)];
   return file?`${publicAssetBase(req)}/assets/images/classes/${file}`:"";
 }
-function normalizedSanctuaryCode(value: unknown){
-  const code=safeText(value).toLowerCase();
-  return ({ "1":"rudra", "sanctuary1":"rudra", "2":"bagot", "sanctuary2":"bagot", "3":"kaldrix", "sanctuary3":"kaldrix" } as Record<string,string>)[code]||code;
-}
 function bossArtUrl(sanctuaryCode: string, req: Request){
-  const file=SANCTUARY_BOSS_FILE[normalizedSanctuaryCode(sanctuaryCode)];
-  return file?`${publicAssetBase(req)}/assets/images/sanctuary/bosses-v2/${file}`:"";
+  const path=sanctuaryAssetPath(sanctuaryCode,'boss');
+  return path?`${publicAssetBase(req)}${path}`:"";
 }
 function toBase64(bytes: Uint8Array){
   let binary="";
@@ -386,7 +378,7 @@ function svgDefs(){
   </defs>`;
 }
 function bossBackdropSvg(sanctuaryCode: string, scope: "team"|"force", width: number, height: number, map: Map<string,string>, req: Request){
-  const code=normalizedSanctuaryCode(sanctuaryCode);
+  const code=normalizeSanctuaryCode(sanctuaryCode);
   const image=map.get(bossArtUrl(code,req))||"";
   if(!image) return "";
   const presets: Record<string,{scale:number,x:number,y:number}> = scope==="team"
@@ -458,7 +450,7 @@ Deno.serve(async(req: Request)=>{
     const body=await req.json().catch(()=>({})) as Record<string,unknown>;
     const scope=safeText(body.scope||"force");
     const managementSnapshot=body.managementSnapshot||body.management_snapshot;
-    const requestedSanctuaryCode=normalizedSanctuaryCode(body.sanctuaryId||body.sanctuary_id);
+    const requestedSanctuaryCode=normalizeSanctuaryCode(body.sanctuaryId||body.sanctuary_id);
     const sanctuaryCode=managementSnapshot?requestedSanctuaryCode:await resolveSanctuaryId(requestedSanctuaryCode,req);
     const groups=managementSnapshot
       ? [managementSnapshotGroup(managementSnapshot)]
@@ -491,6 +483,6 @@ Deno.serve(async(req: Request)=>{
     return new Response(svg,{status:200,headers:{...CORS_HEADERS,"content-type":"image/svg+xml; charset=utf-8","cache-control":"no-store","x-kinojo-renderer":"sanctuary-stage12-layout-svg-v4","x-kinojo-filename":headerFilename}});
   }catch(err){
     console.error("KINOJO sanctuary-copy-render failed",err);
-    return json({ok:false,message:String((err as Error)?.message||err),renderer:"sanctuary-stage12-layout-svg-v4",version:"20260901_02"},500);
+    return json({ok:false,message:String((err as Error)?.message||err),renderer:"sanctuary-stage12-layout-svg-v4",version:"20260901_03"},500);
   }
 });
