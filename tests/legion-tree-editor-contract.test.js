@@ -13,6 +13,7 @@ const mobile = fs.readFileSync(path.join(rootDir, 'm/legion-tree/index.html'), '
 const featureScript = fs.readFileSync(path.join(rootDir, 'core/kinojo-supabase-features.js'), 'utf8');
 const edgeScript = fs.readFileSync(path.join(rootDir, 'supabase/functions/kinojo-legion-tree/index.ts'), 'utf8');
 const migration = fs.readFileSync(path.join(rootDir, 'supabase/migrations/20260831041509_legion_tree_atomic_save_v453.sql'), 'utf8');
+const affiliationMigration = fs.readFileSync(path.join(rootDir, 'supabase/migrations/20260901003000_legion_tree_unaffiliated_departments_v459.sql'), 'utf8');
 
 const document = {
   activeElement: null,
@@ -146,6 +147,14 @@ const parentUpdated = api.setParentRole(draft, 3, 'stage-2-b');
 assert.strictEqual(parentUpdated.ok, true);
 assert.strictEqual(draft.assignments.find(item => item.characterId === 3).parentRoleKey, 'stage-2-b');
 
+const independentUpdated = api.setParentRole(draft, 3, '__unaffiliated__');
+assert.strictEqual(independentUpdated.ok, true);
+assert.strictEqual(draft.assignments.find(item => item.characterId === 3).parentRoleKey, null);
+assert.strictEqual(draft.assignments.find(item => item.characterId === 3).unaffiliated, true);
+assert.strictEqual(api.validateDraft(draft).ok, true);
+assert.strictEqual(api.setParentRole(draft, 3, 'stage-2-b').ok, true);
+assert.strictEqual(draft.assignments.find(item => item.characterId === 3).unaffiliated, false);
+
 const invalidParent = api.setParentRole(draft, 3, 'stage-3-member');
 assert.strictEqual(invalidParent.ok, false);
 assert.strictEqual(invalidParent.code, 'PARENT_NOT_IMMEDIATE_STAGE');
@@ -204,14 +213,17 @@ assert.strictEqual(serialized.stageCount, 3);
 assert.strictEqual(serialized.stages[1].roles.length, 2);
 assert.strictEqual(serialized.assignments.length, 3);
 assert(serialized.assignments.every(item => Object.prototype.hasOwnProperty.call(item, 'parentRoleKey')));
+assert(serialized.assignments.every(item => Object.prototype.hasOwnProperty.call(item, 'unaffiliated')));
+assert.deepStrictEqual(Array.from(api.searchLegionMembers(draft, '조원'), item => item.characterName), ['조원하나']);
+assert.strictEqual(api.searchLegionMembers(draft, '없는이름').length, 0);
 
 for (const html of [pc, mobile]) {
   assert(html.includes('id="legionTreeEditorRoot"'));
-  assert(html.includes('legion-tree-editor.js?cache=2026083103'));
-  assert(html.includes('legion-tree.js?cache=2026083108'));
-  assert(html.includes('legion-tree.css?cache=2026083108'));
+  assert(html.includes('legion-tree-editor.js?cache=2026090101'));
+  assert(html.includes('legion-tree.js?cache=2026090101'));
+  assert(html.includes('legion-tree.css?cache=2026090101'));
   assert(html.includes('kinojo-supabase-features.js?cache=2026083108'));
-  assert(html.indexOf('legion-tree-editor.js?cache=2026083103') < html.indexOf('legion-tree.js?cache=2026083108'));
+  assert(html.indexOf('legion-tree-editor.js?cache=2026090101') < html.indexOf('legion-tree.js?cache=2026090101'));
 }
 
 for (const token of [
@@ -221,12 +233,14 @@ for (const token of [
   '단계 수',
   '같은 단계 직급 추가',
   '직급 삭제',
-  '구성원 지정',
+  '구성원 조회',
   '최대 인원',
-  '여러 명 일괄 배치',
-  'data-editor-batch-members',
-  'data-editor-batch-assign',
+  'data-editor-member-query',
+  'data-editor-member-search',
+  'data-editor-assign-result',
+  'data-editor-legion',
   '상위 소속',
+  '소속 외 (독립 부서)',
   '기본 조직도로 초기화',
   'data-editor-cancel',
   'data-editor-save ',
@@ -259,9 +273,10 @@ assert(featureScript.includes("action:'organization-save'"));
 assert(featureScript.includes("action:'organization-reset'"));
 assert(featureScript.includes('saveLegionTreeOrganization'));
 for (const token of [
-  "const ORGANIZATION_DATABASE_CONTRACT='453'",
+  "const API_VERSION='1.8'",
+  "const ORGANIZATION_DATABASE_CONTRACT='459'",
   "actions:['character-search','character-add','organization-save','organization-reset']",
-  "rpc('kinojo_legion_tree_organization_save_v453'",
+  "rpc('kinojo_legion_tree_organization_save_v459'",
   'organizationReadbackConnected:true'
 ]) assert(edgeScript.includes(token), 'Edge organization contract missing: '+token);
 for (const token of [
@@ -275,11 +290,20 @@ for (const token of [
   'delete from private.legion_tree_assignments',
   "grant execute on function public.kinojo_web_get_legion_tree() to anon, authenticated, service_role"
 ]) assert(migration.includes(token), 'DB453 organization contract missing: '+token);
+for (const token of [
+  'kinojo_legion_tree_save_core_v459',
+  'kinojo_legion_tree_organization_save_v459',
+  "'AFFILIATION_CONFLICT'",
+  "'UNAFFILIATED_NOT_ALLOWED_TOP_STAGE'",
+  "'affiliationContract', 'immediate_upper_or_explicit_unaffiliated'",
+  'set parent_role_id = null',
+  'grant execute on function public.kinojo_legion_tree_organization_save_v459'
+]) assert(affiliationMigration.includes(token), 'DB459 affiliation contract missing: '+token);
 assert(css.includes('.legion-tree-editor-root{position:fixed;inset:0;z-index:50020'));
-assert(css.includes('.legion-tree-editor-dialog{position:relative;width:min(1040px,100%)'));
+assert(css.includes('.legion-tree-editor-dialog{position:relative;width:min(560px,100%)'));
 assert(css.includes('@media(max-width:760px)'));
 assert(css.includes('.legion-tree-editor-dialog :is(button,input,select):focus-visible'));
-assert(css.includes('.legion-tree-editor-batch'));
+assert(css.includes('.legion-tree-editor-member-search'));
 assert(css.includes('[aria-invalid="true"]'));
 assert(css.includes('@media(prefers-reduced-motion:reduce)'));
 

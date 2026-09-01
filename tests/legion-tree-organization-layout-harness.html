@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Legion Tree organization layout harness</title>
+  <link rel="stylesheet" href="../legion-tree/css/legion-tree.css?cache=2026090101">
+</head>
+<body>
+  <button id="reopen" type="button">편집기 다시 열기</button>
+  <div id="legionTreeEditorRoot" class="legion-tree-editor-root" hidden></div>
+  <script src="../legion-tree/js/legion-tree-editor.js?cache=2026090101"></script>
+  <script>
+  (()=>{
+    const member=(characterId,characterName,className='검성')=>({
+      characterId,characterName,className,isMain:true,mainCharacterId:characterId,
+      mainCharacterName:characterName,serverId:2002,serverName:'지켈'
+    });
+    const legion=(legionName,offset)=>({
+      legionName,revision:3,fallbackApplied:false,organizationConfigured:true,
+      stages:[
+        {stageNo:1,stageName:'대표',roles:[{roleKey:`${legionName}-leader`,roleName:'대표',slotNo:1,maxMembers:1,groups:[]}]},
+        {stageNo:2,stageName:'부서장',roles:[
+          {roleKey:`${legionName}-planning`,roleName:'기획부',slotNo:1,maxMembers:1,groups:[]},
+          {roleKey:`${legionName}-operation`,roleName:'운영부',slotNo:2,maxMembers:1,groups:[]}
+        ]},
+        {stageNo:3,stageName:'구성원',roles:[{roleKey:`${legionName}-member`,roleName:'구성원',slotNo:1,maxMembers:null,groups:[
+          {groupKey:`${legionName}-planning`,groupName:'기획부',parentRoleKey:`${legionName}-planning`,members:[member(offset+1,'기획원')]},
+          {groupKey:`${legionName}-operation`,groupName:'운영부',parentRoleKey:`${legionName}-operation`,members:[member(offset+2,'운영원','치유성')]},
+          {groupKey:`${legionName}-member`,groupName:'소속 외',parentRoleKey:`${legionName}-member`,members:[member(offset+3,'독립원','궁성')]}
+        ]}]}
+      ],
+      unassignedMembers:[member(offset+4,'검색대상','호법성'),member(offset+5,'검색대상둘','살성')]
+    });
+    const model={legions:[legion('깡',100),legion('낮',200),legion('밤',300),legion('키나노동조합',400)]};
+    const open=()=>{window.KinojoLegionTreeEditor.setModel(model);window.KinojoLegionTreeEditor.open({legionName:'키나노동조합',opener:document.querySelector('#reopen')});};
+    document.querySelector('#reopen').addEventListener('click',open);
+    open();
+  })();
+  </script>
+</body>
+</html>

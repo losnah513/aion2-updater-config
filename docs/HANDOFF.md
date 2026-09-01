@@ -1,6 +1,6 @@
 # KINOJO WEB HANDOFF
 
-기준일: 2026-08-31 KST
+기준일: 2026-09-01 KST
 
 ## 저장소 / 현재 기준
 
@@ -17,6 +17,17 @@
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
 - 성역·스케줄 관리 개편은 Stage 7-8까지 **59/59 CLOSED**다. 제품 전환·종료는 PR `#328` + `#329` + `#330` + `#337` + `#338` + `#339` + `#342`, UI 기준 main `3e8d253e818349357f171ca4b025ca9d10062ae6`, Edge `sanctuary-management` v16(API 1.8 / DB446), copy renderer v20(DB447), transition run 1 `COMPLETE`다. 최종 운영·복구 기준은 `docs/SANCTUARY_MANAGEMENT_STAGE7_CLOSEOUT_20260830.md`를 따른다.
 - 성역 Stage 9 후속은 **77/77 CLOSED**다. 활성 제품 계약은 Edge `sanctuary-management` API 2.2 / DB452이며, 입장 아이템 레벨·성역 3 난이도·랜덤 부캐·연결 부캐 노출·전투력/아이템 레벨 공식 파싱·고밀도 지원 카드 기준은 `docs/SANCTUARY_MANAGEMENT_STAGE9_CLOSEOUT_20260830.md`를 따른다. Stage 7 백업·복구 경계는 기존 종료 문서를 계속 따른다.
+- 레기온 트리 조직도 UI 후속은 Edge `kinojo-legion-tree` v9 / API 1.8 / organization DB459가 운영 기준이다. PC 편집 모달 560px, 레기온 버튼식 전환, 선택 레기온 내부 이름 조회, 명시적 `소속 외`, 단계명 표시, 같은 단계 수평 부서 카드와 직각 분기선까지 구현·운영 계약 검증을 완료했다. 프로젝트 누적 진행도는 **102/139**, 다음 본 계획 단계는 **거-1**로 유지한다.
+
+## 레기온 트리 조직도 편집·부서 배치 후속 · 2026-09-01
+
+- 편집기의 레기온 선택은 드롭다운 대신 `깡 / 낮 / 밤 / 키나노동조합` 버튼으로 전환했다. 구성원 지정도 드롭다운·일괄 select 대신 캐릭터 이름 입력과 `조회`를 사용하며, 조회 범위는 현재 선택한 레기온의 이미 로드된 구성원뿐이라 추가 Server 요청이나 외부 캐릭터 혼입이 없다.
+- PC 모달은 1040px에서 560px로 축소했다. 동일 단계 직급은 가로로 배치하며, 좁은 PC에서는 같은 행 안에서 최소한만 수평 스크롤한다. 모바일은 390×844 전체 화면, document/dialog 가로 overflow 0이다.
+- 실제 트리는 `1단계/2단계` 대신 저장된 단계명을 표시한다. 마지막 일반 구성원 단계는 독립 세로 직급 카드로 그리지 않고 바로 윗 단계의 부서장 카드 안에 편입한다. 같은 단계 부서는 수평, 부서 내부 구성원은 1~2열이며 상단 직각 분기선으로 소속 갈래를 보여준다.
+- `소속 외 (독립 부서)`는 사용자가 하위 단계 구성원 소속에서 명시적으로 선택할 수 있다. Browser 초안은 `unaffiliated=true`와 `parentRoleKey=NULL`을 직렬화하고, DB459는 상위 소속과의 동시 지정·최상위 단계 지정을 거부한 뒤 기존 DB453 CAS 저장 transaction 안에서 `parent_role_id=NULL`로 확정한다. 누락된 parent만으로는 독립 부서로 인정하지 않는다.
+- 운영 migration `legion_tree_unaffiliated_departments_v459` 적용, service-role 전용 실행 권한, anon/authenticated=false, rollback smoke `PASS_ROLLBACK_NO_PERSIST`를 확인했다. Edge v9 health는 API1.8 / organization DB459 / `immediate_upper_or_explicit_unaffiliated`다.
+- 로컬 운영 데이터 PC 1440×900에서 키나노동조합의 `부위원장 / 사무국장`이 수평 카드로 분기되고 각 조합원이 2열로 소속 카드 아래 배치됨을 확인했다. 모바일 390×844에서 카드 폭 333px, document overflow 0, 편집기 폭 390px를 확인했다.
+- 소유 파일은 `legion-tree/js/legion-tree-editor.js`, `legion-tree/js/legion-tree.js`, `legion-tree/css/legion-tree.css`, PC/모바일 cache `2026090101`, Edge source, DB459 migration, 두 계약 테스트와 전용 로컬 harness다. 저장 전 로컬 검증과 Server 최종 권위는 유지한다.
 
 ## HOME 로딩·외부 레이아웃 안정화 종료 · 2026-08-30
 
