@@ -75,8 +75,8 @@
       "name": "different server exact identity clears legion atomically",
       "previousServerId": 2002,
       "currentServerId": 2005,
-      "applied": { "databaseContract": "461", "serverTransferred": true, "legionCleared": true, "previousLegionName": "깡", "organizationAssignmentRemoved": true, "legionTreeRevisions": [{ "legionName": "깡", "revision": 7 }] },
-      "expected": { "ok": true, "serverTransferred": true, "legionCleared": true, "previousLegionName": "깡", "organizationAssignmentRemoved": true }
+      "applied": { "databaseContract": "461", "serverTransferred": true, "legionCleared": true, "previousLegionName": "깡", "organizationAssignmentRemoved": true, "legionTreeRevisions": { "깡": 7 } },
+      "expected": { "ok": true, "serverTransferred": true, "legionCleared": true, "previousLegionName": "깡", "organizationAssignmentRemoved": true, "legionTreeRevisions": { "깡": 7 } }
     },
     {
       "name": "different server rejects pre DB461 result",

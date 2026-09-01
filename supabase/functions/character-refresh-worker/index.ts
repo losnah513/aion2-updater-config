@@ -57,7 +57,7 @@ function identityTransitionContract(applied,previousServerId,currentServerId){
   if(databaseContract!==IDENTITY_DATABASE_CONTRACT)return{ok:false,code:"IDENTITY_DATABASE_CONTRACT_MISMATCH",message:`신원 적용 DB 계약 ${IDENTITY_DATABASE_CONTRACT} 확인이 필요합니다.`,databaseContract,previousServerId:previous,currentServerId:current};
   if(serverTransferred&&(result.serverTransferred!==true||result.legionCleared!==true))return{ok:false,code:"SERVER_TRANSFER_LEGION_CONTRACT_MISMATCH",message:"서버 이전 결과에 레기온 원자 해제 확인값이 없습니다.",databaseContract,previousServerId:previous,currentServerId:current};
   if(!serverTransferred&&(result.serverTransferred===true||result.legionCleared===true))return{ok:false,code:"SAME_SERVER_LEGION_CONTRACT_MISMATCH",message:"같은 서버 이름 변경에서 레기온 해제 결과가 반환되었습니다.",databaseContract,previousServerId:previous,currentServerId:current};
-  return{ok:true,databaseContract,serverTransferred,legionCleared:result.legionCleared===true,previousLegionName:clean(result.previousLegionName,160)||null,organizationAssignmentRemoved:result.organizationAssignmentRemoved===true,legionTreeRevisions:Array.isArray(result.legionTreeRevisions)?result.legionTreeRevisions:[],previousServerId:previous,currentServerId:current};
+  return{ok:true,databaseContract,serverTransferred,legionCleared:result.legionCleared===true,previousLegionName:clean(result.previousLegionName,160)||null,organizationAssignmentRemoved:result.organizationAssignmentRemoved===true,legionTreeRevisions:object(result.legionTreeRevisions),previousServerId:previous,currentServerId:current};
 }
 const AUTONOMOUS_HANDOFF_RETRY_DELAYS=[800,1600,3200];
 const AUTONOMOUS_HANDOFF_TRANSIENT_HTTP_STATUSES=new Set([502,503,504]);
