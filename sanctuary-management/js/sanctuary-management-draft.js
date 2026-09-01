@@ -98,11 +98,37 @@
     const leftServer=Number(left.serverId),rightServer=Number(right.serverId);
     return Boolean(leftName&&rightName&&leftName===rightName&&(!leftServer||!rightServer||leftServer===rightServer));
   }
-  function forceHasCharacterFamily(force,character,excludedSlotId=0){return Boolean(force&&character&&forceSlots(force).some(item=>Number(item.slot.slotId)!==Number(excludedSlotId)&&item.slot.occupied&&sameCharacterFamily(item.slot.character,character)));}
+  function characterFamilyRole(character){
+    const relation=value(character?.relation).toUpperCase();
+    if(character?.isRandomAlt===true||relation==='RANDOM_ALT'||value(character?.assignmentKind).toUpperCase()==='RANDOM_ALT')return 'RANDOM_ALT';
+    const characterId=Number(character?.characterId),rootId=characterRootId(character);
+    if(character?.isMain===true||relation==='MAIN'||characterId&&rootId&&characterId===rootId)return 'MAIN';
+    return 'ALT';
+  }
+  function characterDisplayName(character){return value(character?.name||character?.characterName||character?.mainCharacterName||'캐릭터');}
+  function forceCharacterFamilyConflict(force,character,excludedSlotId=0){
+    if(!force||!character)return null;
+    const item=forceSlots(force).find(entry=>Number(entry.slot.slotId)!==Number(excludedSlotId)&&entry.slot.occupied&&sameCharacterFamily(entry.slot.character,character));
+    if(!item)return null;
+    const occupied=item.slot.character,role=characterFamilyRole(occupied);
+    return {force,item,character:occupied,role,name:characterDisplayName(occupied)};
+  }
+  function forceHasCharacterFamily(force,character,excludedSlotId=0){return Boolean(forceCharacterFamilyConflict(force,character,excludedSlotId));}
+  function familyConflictText(conflict,forceLabel='이 포스'){
+    if(!conflict)return '';
+    if(conflict.role==='RANDOM_ALT')return '랜덤 부캐 · '+forceLabel+'에 소속됨';
+    return (conflict.role==='MAIN'?'본캐 ':'부캐 ')+conflict.name+' · '+forceLabel+'에 소속됨';
+  }
+  function familyConflictMarkup(conflict){
+    if(!conflict)return '';
+    const lead=conflict.role==='RANDOM_ALT'?'랜덤 부캐':(conflict.role==='MAIN'?'본캐':'부캐');
+    const name=conflict.role==='RANDOM_ALT'?'':'<strong class="sanctuary-management-linked-alt-unavailable-name">'+escapeHtml(conflict.name)+'</strong>';
+    return '<span class="sanctuary-management-linked-alt-unavailable-lead is-'+conflict.role.toLowerCase().replace('_','-')+'">'+escapeHtml(lead)+'</span>'+name+'<span class="sanctuary-management-linked-alt-unavailable-copy">· 이 포스에 소속됨</span>';
+  }
   function localFamilyConflict(){
     for(const force of teamForces()){
       const occupied=forceSlots(force).filter(item=>item.slot.occupied&&item.slot.character);
-      for(let index=0;index<occupied.length;index+=1)for(let other=index+1;other<occupied.length;other+=1)if(sameCharacterFamily(occupied[index].slot.character,occupied[other].slot.character))return force;
+      for(let index=0;index<occupied.length;index+=1)for(let other=index+1;other<occupied.length;other+=1)if(sameCharacterFamily(occupied[index].slot.character,occupied[other].slot.character))return {force,item:occupied[index],character:occupied[index].slot.character,role:characterFamilyRole(occupied[index].slot.character),name:characterDisplayName(occupied[index].slot.character)};
     }
     return null;
   }
@@ -488,11 +514,12 @@
     else{
       const chosen=selectedSlot();const force=selectedForce();const usedIds=localUsedCharacterIds();const random=data.randomCandidate;
       const randomClass=classOption(data.randomClassCode||slotClassCode(chosen?.slot));
-      const familyAlreadyInForce=Boolean(random&&force&&forceHasCharacterFamily(force,random));
-      const randomAllowed=Boolean(chosen&&random&&!familyAlreadyInForce);
+      const randomFamilyConflict=random&&force?forceCharacterFamilyConflict(force,random):null;
+      const randomAllowed=Boolean(chosen&&random&&!randomFamilyConflict);
       const randomClassChoices=SLOT_CLASSES.map(option=>{const icon=classIconFor(option.className);return '<button type="button" data-linked-alt-class="'+option.code+'" aria-pressed="'+String(option.code===randomClass.code)+'" title="'+escapeHtml(option.label)+'">'+(icon?'<img src="'+escapeHtml(icon)+'" alt=""><span>'+escapeHtml(option.label)+'</span>':'<b>ALL</b><span>전체</span>')+'</button>';}).join('');
-      const randomCard=random?'<article class="sanctuary-management-linked-alt-card is-random"><div class="sanctuary-management-linked-alt-random-profile"><span><b>RANDOM</b></span><span><em>랜덤 부캐</em><strong>'+escapeHtml(random.characterName)+'</strong><small>실제 캐릭터 확정 전 · 전투력/조건 계산 제외</small></span></div><div class="sanctuary-management-linked-alt-class-picker" role="group" aria-label="랜덤 부캐 클래스 선택">'+randomClassChoices+'</div><button type="button" class="sanctuary-management-linked-alt-random-add" data-linked-alt-random aria-disabled="'+String(!randomAllowed)+'"'+(!randomAllowed?' disabled':'')+'>'+escapeHtml(randomClass.label)+' 랜덤 부캐 추가</button>'+(familyAlreadyInForce?'<span class="sanctuary-management-linked-alt-unavailable">이미 해당 캐릭터의 본캐(나 부캐)가 이 포스에 소속되어 있습니다.</span>':'')+'</article>':'';
-      const cards=(data.characters||[]).map(character=>{const icon=classIconFor(character.className),messages=[];if(force&&forceHasCharacterFamily(force,character))messages.push('이미 해당 캐릭터의 본캐(나 부캐)가 이 포스에 소속되어 있습니다.');else if(!characterEligible(character)||character.itemLevelEligible===false)messages.push('캐릭터의 아이템레벨이 부족합니다');else if(usedIds.has(Number(character.characterId))||character.alreadyAssignedToOtherForce===true)messages.push('이미 다른 포스에 소속되어 있습니다');else if(character.scheduleConflict===true)messages.push('같은 시간 다른 포스에 소속되어있습니다');else if(!chosen||!slotAcceptsCharacter(chosen.slot,character))messages.push('선택한 슬롯의 지원 클래스와 맞지 않습니다');const message=messages.join(' · '),disabled=Boolean(message);return '<button type="button" class="sanctuary-management-linked-alt-card'+(disabled?' is-unavailable':'')+'" data-linked-alt-character="'+escapeHtml(character.characterId)+'" aria-disabled="'+String(disabled)+'"'+(disabled?' disabled':'')+'><span>'+(icon?'<img src="'+escapeHtml(icon)+'" alt="">':'?')+'</span><span><em>부캐</em><strong>'+escapeHtml(character.characterName)+'</strong><small>['+escapeHtml(character.serverName||'서버 미확인')+'] · '+combatPowerMarkup(character.power)+'</small></span>'+(message?'<span class="sanctuary-management-linked-alt-unavailable">'+escapeHtml(message)+'</span>':'')+'</button>';}).join('');
+      const randomMessage=familyConflictText(randomFamilyConflict);
+      const randomCard=random?'<article class="sanctuary-management-linked-alt-card is-random'+(randomFamilyConflict?' is-unavailable':'')+'"><div class="sanctuary-management-linked-alt-random-profile"><span><b>RANDOM</b></span><span><em>랜덤 부캐</em><strong>'+escapeHtml(random.characterName)+'</strong><small>실제 캐릭터 확정 전 · 전투력/조건 계산 제외</small></span></div><div class="sanctuary-management-linked-alt-class-picker" role="group" aria-label="랜덤 부캐 클래스 선택">'+randomClassChoices+'</div><button type="button" class="sanctuary-management-linked-alt-random-add" data-linked-alt-random aria-disabled="'+String(!randomAllowed)+'"'+(!randomAllowed?' disabled':'')+'>'+escapeHtml(randomClass.label)+' 랜덤 부캐 추가</button>'+(randomFamilyConflict?'<span class="sanctuary-management-linked-alt-unavailable is-character-relation" title="'+escapeHtml(randomMessage)+'">'+familyConflictMarkup(randomFamilyConflict)+'</span>':'')+'</article>':'';
+      const cards=(data.characters||[]).map(character=>{const icon=classIconFor(character.className),familyConflict=force?forceCharacterFamilyConflict(force,character):null;let message='',messageMarkup='';if(familyConflict){message=familyConflictText(familyConflict);messageMarkup=familyConflictMarkup(familyConflict);}else if(!characterEligible(character)||character.itemLevelEligible===false)message='아이템레벨이 부족합니다';else if(usedIds.has(Number(character.characterId))||character.alreadyAssignedToOtherForce===true)message='다른 포스에 소속되어 있습니다';else if(character.scheduleConflict===true)message='같은 시간 다른 포스에 소속되어 있습니다';else if(!chosen||!slotAcceptsCharacter(chosen.slot,character))message='지원 클래스가 맞지 않습니다';const disabled=Boolean(message);return '<button type="button" class="sanctuary-management-linked-alt-card'+(disabled?' is-unavailable':'')+'" data-linked-alt-character="'+escapeHtml(character.characterId)+'" aria-disabled="'+String(disabled)+'"'+(disabled?' disabled':'')+'><span>'+(icon?'<img src="'+escapeHtml(icon)+'" alt="">':'?')+'</span><span><em>부캐</em><strong>'+escapeHtml(character.characterName)+'</strong><small>['+escapeHtml(character.serverName||'서버 미확인')+'] · '+combatPowerMarkup(character.power)+'</small></span>'+(message?'<span class="sanctuary-management-linked-alt-unavailable'+(familyConflict?' is-character-relation':'')+'" title="'+escapeHtml(message)+'">'+(messageMarkup||escapeHtml(message))+'</span>':'')+'</button>';}).join('');
       body=randomCard+(cards||(!randomCard?'<div class="sanctuary-management-linked-alt-state"><strong>선택 가능한 부캐 없음</strong></div>':''));
     }
     return '<aside class="sanctuary-management-linked-alt-panel is-open" data-linked-alt-panel role="dialog" aria-modal="false" aria-label="연결된 부캐 선택"><header><div><span>LINKED ALTS</span><strong>'+escapeHtml(data.mainCharacter?.characterName||'본캐')+'의 부캐 선택</strong><small>실제 부캐 또는 저장 전 미확정 랜덤 부캐를 고르세요.</small></div><button type="button" data-linked-alts-close aria-label="부캐 선택 닫기">×</button></header><div>'+body+'</div></aside>';
@@ -790,7 +817,7 @@
     if(state.saving||state.mutating)return;
     const model=readModel();
     if(state.balanceAppliedToken&&compositionSignature(true)!==state.balanceAppliedSignature){invalidateBalanceProposal();setStatus('균형 배치 적용 뒤 편성안이 바뀌었습니다. 다시 계산하거나 현재 편성으로 저장해 주세요.','warning');return;}
-    const familyConflict=localFamilyConflict();if(familyConflict){setStatus('이미 해당 캐릭터의 본캐(나 부캐)가 '+familyConflict.forceNo+'포스에 소속되어 있습니다.','error');return;}
+    const familyConflict=localFamilyConflict();if(familyConflict){setStatus(familyConflictText(familyConflict,familyConflict.force.forceNo+'포스'),'error');return;}
     const issue=validate(model);
     if(issue){setStatus(issue);return;}
     state.saving=true;
@@ -829,7 +856,7 @@
     const source=composerCharacters().length?composerCharacters():Array.isArray(force?.creatorCandidates)?force.creatorCandidates:[];
     const candidate=source.find(item=>Number(item.characterId)===Number(characterId));
     if(!force||!chosen||chosen.slot.occupied||!candidate){setStatus('빈 슬롯과 내 캐릭터를 다시 선택해 주세요.');return;}
-    if(forceHasCharacterFamily(force,candidate)){setStatus('이미 해당 캐릭터의 본캐(나 부캐)가 이 포스에 소속되어 있습니다.');return;}
+    const familyConflict=forceCharacterFamilyConflict(force,candidate);if(familyConflict){setStatus(familyConflictText(familyConflict));return;}
     if(localUsedCharacterIds().has(Number(characterId))){setStatus('같은 캐릭터는 한 팀 편성안에 중복 배치할 수 없습니다.');return;}
     if(!characterEligible(candidate)){setStatus('해당 성역 아이템레벨을 충족하는 캐릭터만 추가할 수 있습니다.');return;}
     if(!slotAcceptsCharacter(chosen.slot,candidate)){setStatus(classOption(slotClassCode(chosen.slot)).label+' 전용 슬롯에는 '+value(candidate.className)+' 캐릭터를 추가할 수 없습니다.');return;}
@@ -869,7 +896,7 @@
     if(state.saving||state.mutating||!state.team||!character)return;
     const force=selectedForce(),chosen=selectedSlot();
     if(!force||!chosen||chosen.slot.occupied){setStatus('캐릭터를 추가할 빈 슬롯을 다시 선택해 주세요.');return;}
-    if(forceHasCharacterFamily(force,character)){setStatus('이미 해당 캐릭터의 본캐(나 부캐)가 이 포스에 소속되어 있습니다.');return;}
+    const familyConflict=forceCharacterFamilyConflict(force,character);if(familyConflict){setStatus(familyConflictText(familyConflict));return;}
     if(localUsedCharacterIds().has(Number(character.characterId))){setStatus('같은 캐릭터는 한 팀 편성안에 중복 배치할 수 없습니다.');return;}
     if(Number(character.ownerMemberId)&&forceSlots(force).some(item=>item.slot.occupied&&Number(item.slot.character?.ownerMemberId)===Number(character.ownerMemberId))){setStatus('한 이용자는 같은 포스에 캐릭터를 하나만 배치할 수 있습니다.');return;}
     if(!characterEligible(character)){setStatus('해당 성역 아이템레벨을 충족하는 캐릭터만 추가할 수 있습니다.');return;}
@@ -896,7 +923,7 @@
   function assignRandomAlt(){
     const chosen=selectedSlot(),force=selectedForce(),candidate=state.linkedAlts?.randomCandidate;if(!chosen||!force||!candidate||chosen.slot.occupied)return;
     const option=classOption(state.linkedAlts?.randomClassCode);
-    if(forceHasCharacterFamily(force,candidate)){setStatus('이미 해당 캐릭터의 본캐(나 부캐)가 이 포스에 소속되어 있습니다.');return;}
+    const familyConflict=forceCharacterFamilyConflict(force,candidate);if(familyConflict){setStatus(familyConflictText(familyConflict));return;}
     const ownerId=Number(candidate.ownerMemberId);if(ownerId&&forceSlots(force).some(item=>item.slot.occupied&&Number(item.slot.character?.ownerMemberId)===ownerId)){setStatus('이 포스에는 이미 같은 이용자의 캐릭터 또는 랜덤 부캐가 있습니다.');return;}
     invalidateBalanceProposal();chosen.slot.requiredClassCode=option.code;chosen.slot.requiredClassName=option.code==='ALL'?'전체 클래스':option.label;chosen.slot.character=candidateCharacter(Object.assign({},candidate,{className:option.className||'',randomClassCode:option.code}));chosen.slot.occupied=true;chosen.slot.assignmentKind='RANDOM_ALT';state.selectedSlotId=0;state.classTargetSlotId=0;resetCharacterLookup();refreshLocalTeam();renderRosterState();setStatus(value(candidate.characterName)+' · '+option.label+' 카드를 로컬 편성안에 추가했습니다. 실제 캐릭터 확정 전에는 전투력·조건 계산에서 제외됩니다.','success');
   }
@@ -930,7 +957,8 @@
     if(!slotAcceptsCharacter(target.slot,source.slot.character)){setStatus(classOption(slotClassCode(target.slot)).label+' 전용 대상 슬롯에는 이 캐릭터를 옮길 수 없습니다.');return;}
     if(target.slot.character&&!slotAcceptsCharacter(source.slot,target.slot.character)){setStatus(classOption(slotClassCode(source.slot)).label+' 전용 출발 슬롯과 맞지 않아 두 카드를 교환할 수 없습니다.');return;}
     if(Number(source.force.forceId)!==Number(target.force.forceId)){
-      if(forceHasCharacterFamily(target.force,source.slot.character,target.slot.slotId)||target.slot.character&&forceHasCharacterFamily(source.force,target.slot.character,source.slot.slotId)){setStatus('이미 해당 캐릭터의 본캐(나 부캐)가 이동할 포스에 소속되어 있습니다.');return;}
+      const targetConflict=forceCharacterFamilyConflict(target.force,source.slot.character,target.slot.slotId),sourceConflict=target.slot.character?forceCharacterFamilyConflict(source.force,target.slot.character,source.slot.slotId):null;
+      if(targetConflict||sourceConflict){const conflict=targetConflict||sourceConflict,targetForce=targetConflict?target.force:source.force;setStatus(familyConflictText(conflict,targetForce.forceNo+'포스'));return;}
     }
     invalidateBalanceProposal();const sourceCharacter=source.slot.character;source.slot.character=target.slot.character||null;source.slot.occupied=Boolean(source.slot.character);target.slot.character=sourceCharacter;target.slot.occupied=true;
     source.slot.assignmentKind=source.slot.character?.isRandomAlt?'RANDOM_ALT':'ACTUAL_CHARACTER';target.slot.assignmentKind=target.slot.character?.isRandomAlt?'RANDOM_ALT':'ACTUAL_CHARACTER';
