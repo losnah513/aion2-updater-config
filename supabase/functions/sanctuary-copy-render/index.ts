@@ -483,6 +483,6 @@ Deno.serve(async(req: Request)=>{
     return new Response(svg,{status:200,headers:{...CORS_HEADERS,"content-type":"image/svg+xml; charset=utf-8","cache-control":"no-store","x-kinojo-renderer":"sanctuary-stage12-layout-svg-v4","x-kinojo-filename":headerFilename}});
   }catch(err){
     console.error("KINOJO sanctuary-copy-render failed",err);
-    return json({ok:false,message:String((err as Error)?.message||err),renderer:"sanctuary-stage12-layout-svg-v4",version:"20260901_02"},500);
+    return json({ok:false,message:String((err as Error)?.message||err),renderer:"sanctuary-stage12-layout-svg-v4",version:"20260901_03"},500);
   }
 });
