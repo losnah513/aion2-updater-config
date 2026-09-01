@@ -753,9 +753,14 @@
     const group=role==='main'?searchGroups.main:role==='alt'?searchGroups.alt:null;
     const candidate=group?.candidates.find(item=>item.candidateKey===key)||null;
     if(!candidate)return false;
-    selectedCandidates={...selectedCandidates,[role]:candidate};
+    const current=selectedCandidates[role];
+    const deselected=current?.candidateKey===candidate.candidateKey;
+    selectedCandidates={...selectedCandidates,[role]:deselected?null:candidate};
     renderSearchResults();
-    setStatus(hasRequiredSelection()?'선택 완료 · 추가 버튼을 누르면 Server 작업을 시작합니다.':'본캐와 부캐 후보를 각각 선택해 주세요.','#2563eb');
+    setStatus(hasRequiredSelection()
+      ?'선택 완료 · 추가 버튼을 누르면 Server 작업을 시작합니다.'
+      :deselected?'후보 선택을 해제했습니다. 필요한 후보를 다시 선택해 주세요.':'본캐와 부캐 후보를 각각 선택해 주세요.'
+    ,'#2563eb');
     return true;
   }
 
