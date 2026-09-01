@@ -96,3 +96,42 @@
     width:min(1180px,calc(100% - 660px));
   }
 }
+
+html:has(.kinojo-pc-banner-host){
+  overflow-y:scroll;
+  scrollbar-gutter:stable;
+}
+
+/* Every PC banner page keeps both full creatives visible when a wide PC window
+   is zoomed. Their coordinates stay tied to the shared 1180px frame, never a
+   narrower page-specific content board. */
+.kinojo-pc-banner-host[data-kinojo-pc-banner-mode="resolution"][data-kinojo-pc-banner-visible="true"]>.kinojo-pc-banner-slot{
+  display:grid!important;
+  position:fixed;
+  top:121px;
+  z-index:1;
+  width:var(--kinojo-pc-banner-width,300px);
+  height:var(--kinojo-pc-banner-height,715px);
+  place-items:center;
+  border:1px solid rgba(120,145,180,.28);
+  border-radius:4px;
+  background:#fff;
+  color:#94a3b8;
+  font:850 11px/1 Arial,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:.03em;
+  box-shadow:none;
+}
+
+.kinojo-pc-banner-host[data-kinojo-pc-banner-mode="resolution"]>.kinojo-pc-banner-slot[data-kinojo-pc-banner-state="empty"]{
+  place-items:center;
+}
+
+.kinojo-pc-banner-host[data-kinojo-pc-banner-mode="resolution"]>.kinojo-pc-banner-slot[data-kinojo-pc-banner-state="rendered"]{
+  place-items:stretch;
+}
+
+.kinojo-pc-banner-host[data-kinojo-pc-banner-mode="resolution"] .kinojo-pc-banner-image{
+  object-fit:contain;
+  background:#fff;
+}

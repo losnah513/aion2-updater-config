@@ -3,6 +3,15 @@
 
   const selector='[data-kinojo-pc-banner]';
   const desktopQuery=window.matchMedia?.('(min-width: 1840px)')||null;
+  const resolutionThreshold=1808;
+  const referenceWidth=300;
+  const referenceHeight=715;
+  const standardFrameWidth=1180;
+  const standardFrameGutter=16;
+  const standardTop=121;
+  const preferredGap=14;
+  const compactGap=8;
+  const minimumRail=56;
   const observed=new WeakSet();
   const manifestBound=new WeakSet();
   const runtimeScriptUrl=(()=>{
@@ -14,6 +23,9 @@
   let runtimePromise=null;
   const resizeObserver=typeof ResizeObserver==='function'
     ?new ResizeObserver(entries=>entries.forEach(entry=>update(entry.target)))
+    :null;
+  const viewportResizeObserver=typeof ResizeObserver==='function'
+    ?new ResizeObserver(()=>refresh())
     :null;
 
   function visible(element){return element&&window.getComputedStyle(element).display!=='none'}
@@ -41,15 +53,59 @@
     if(slot?.classList?.contains('is-right'))return 'RIGHT';
     return '';
   }
+  function resolutionHost(host){
+    if(!host||!resolvePageCode())return false;
+    setData(host,'kinojoPcBannerMode','resolution');
+    return true;
+  }
+  function viewportSignals(){
+    const clientWidth=Math.max(0,Number(document.documentElement?.clientWidth||window.innerWidth||0));
+    const devicePixelRatio=Math.max(1,Number(window.devicePixelRatio||1));
+    const scaledClientWidth=clientWidth*devicePixelRatio;
+    const outerWidth=Math.max(0,Number(window.outerWidth||0));
+    const availableWidth=Math.max(0,Number(window.screen?.availWidth||0));
+    return{clientWidth,devicePixelRatio,scaledClientWidth,outerWidth,availableWidth,physicalWidth:Math.round(Math.max(scaledClientWidth,outerWidth))};
+  }
+  function setData(element,key,value){if(element?.dataset&&element.dataset[key]!==String(value))element.dataset[key]=String(value)}
+  function resolutionEligible(host){
+    if(!resolutionHost(host))return false;
+    const signals=viewportSignals(),eligible=signals.physicalWidth>=resolutionThreshold;
+    setData(host,'kinojoPcBannerVisible',eligible?'true':'false');
+    setData(host,'kinojoPcBannerPhysicalWidth',signals.physicalWidth);
+    return eligible;
+  }
+  function adaptiveLayout(host,slot){
+    const clientWidth=Math.max(0,document.documentElement?.clientWidth||window.innerWidth||0);
+    host.style?.setProperty?.('--kinojo-ranking-safe-board-width',Math.max(0,clientWidth-(minimumRail+compactGap)*2)+'px');
+    const frameWidth=Math.min(standardFrameWidth,Math.max(0,clientWidth-standardFrameGutter*2));
+    const frameLeft=(clientWidth-frameWidth)/2,frameRight=frameLeft+frameWidth;
+    const outerSpace=Math.max(0,(clientWidth-frameWidth)/2);
+    let gap=preferredGap;
+    let width=Math.floor(Math.min(referenceWidth,outerSpace-gap));
+    if(width<minimumRail){gap=compactGap;width=minimumRail}
+    width=Math.max(1,Math.min(referenceWidth,clientWidth,width));
+    const height=Math.max(1,Math.round(width*referenceHeight/referenceWidth));
+    const left=slot.classList.contains('is-left')
+      ?Math.max(0,Math.round(frameLeft-gap-width))
+      :Math.min(Math.max(0,clientWidth-width),Math.round(frameRight+gap));
+    slot.style.setProperty('--kinojo-pc-banner-width',width+'px');
+    slot.style.setProperty('--kinojo-pc-banner-height',height+'px');
+    setData(slot,'kinojoPcBannerSize',width>=referenceWidth?'full':'scaled');
+    return{left,width,height};
+  }
   function update(slot){
-    if(!visible(slot))return;
     const host=slot.closest('.kinojo-pc-banner-host');if(!host)return;
-    const hostRect=host.getBoundingClientRect(),rect=slot.getBoundingClientRect();
-    const width=Math.round(rect.width),height=Math.round(rect.height);
+    const adaptive=resolutionHost(host);
+    if(adaptive&&!resolutionEligible(host))return;
+    if(!visible(slot))return;
+    const hostRect=host.getBoundingClientRect();
+    const layout=adaptive?adaptiveLayout(host,slot):null;
+    const rect=slot.getBoundingClientRect();
+    const width=layout?.width??Math.round(rect.width),height=layout?.height??Math.round(rect.height);
     const documentTop=hostRect.top+window.scrollY;
     const maxTop=Math.max(14,window.innerHeight-height-14);
-    const top=Math.max(14,Math.min(Math.round(documentTop),maxTop));
-    const left=slot.classList.contains('is-left')?Math.round(hostRect.left-width-14):Math.round(hostRect.right+14);
+    const top=Math.max(14,Math.min(adaptive?standardTop:Math.round(documentTop),maxTop));
+    const left=layout?.left??(slot.classList.contains('is-left')?Math.round(hostRect.left-width-preferredGap):Math.round(hostRect.right+preferredGap));
     slot.style.left=left+'px';slot.style.top=top+'px';
     if(slot.dataset.kinojoPcBannerState!=='rendered'){
       const label=width+' × '+height;slot.dataset.kinojoPcBannerState='empty';
@@ -95,7 +151,9 @@
     if(!slot||manifestBound.has(slot))return;
     /* A hidden SIDE slot must not fetch its manifest or any media. The same
        refresh path binds it when the viewport later crosses into PC mode. */
-    if(desktopQuery&&!desktopQuery.matches)return;
+    const host=slot.closest('.kinojo-pc-banner-host');
+    if(resolutionHost(host)){if(!resolutionEligible(host))return}
+    else if(desktopQuery&&!desktopQuery.matches)return;
     const pageCode=resolvePageCode(),slotCode=resolveSlotCode(slot);if(!pageCode||!slotCode)return;
     manifestBound.add(slot);slot.dataset.kinojoPcBannerTarget=pageCode+':'+slotCode;
     ensureRuntime().then(runtime=>{
@@ -109,10 +167,12 @@
   }
   function attach(slot){observe(slot);update(slot);bindManifest(slot)}
   function refresh(){document.querySelectorAll(selector).forEach(attach)}
+  function start(){viewportResizeObserver?.observe(document.documentElement);refresh()}
 
-  window.KinojoPcBanners=Object.freeze({refresh,render,clear,resolvePageCode,resolveSlotCode});
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh,{once:true});else refresh();
+  window.KinojoPcBanners=Object.freeze({refresh,render,clear,resolvePageCode,resolveSlotCode,viewportSignals,resolutionEligible});
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
   window.addEventListener('resize',refresh,{passive:true});
+  window.visualViewport?.addEventListener?.('resize',refresh,{passive:true});
   desktopQuery?.addEventListener?.('change',refresh);
   if(typeof MutationObserver==='function')new MutationObserver(refresh).observe(document.documentElement,{childList:true,subtree:true});
 })();
