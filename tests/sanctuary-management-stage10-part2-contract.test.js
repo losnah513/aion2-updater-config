@@ -54,7 +54,7 @@ for(const token of [
   'sanctuary-management-force-difficulty.is-hard',
 ])assert.ok(supportCss.includes(token),`Stage 10 part 2 force CSS missing ${token}`);
 assert.ok(draftCss.includes('.sanctuary-management-force-difficulty-editor{'),'force-specific composer difficulty CSS missing');
-for(const token of ['.sanctuary-management-linked-alt-panel{position:fixed','max-height:calc(100dvh - 28px)','overscroll-behavior:contain','scroll-behavior:smooth','.sanctuary-management-linked-alt-panel.has-more::after'])assert.ok(draftCss.includes(token),`linked-alt viewport/scroll contract missing ${token}`);
+for(const token of ['.sanctuary-management-linked-alt-panel{position:relative','.sanctuary-management-builder-side.has-linked-alts .sanctuary-management-linked-alt-panel','height:min(560px,70dvh)','overscroll-behavior:contain','scroll-behavior:smooth','.sanctuary-management-linked-alt-panel.has-more::after'])assert.ok(draftCss.includes(token),`linked-alt viewport/scroll contract missing ${token}`);
 
 for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);

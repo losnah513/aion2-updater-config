@@ -66,7 +66,7 @@ for(const token of [
   'grid-template-columns:20% 60% 20%',
   'grid-template-rows:20% 60% 20%',
   'grid-template-rows:repeat(5,minmax(0,1fr))',
-  '.sanctuary-management-schedule-panel{order:1',
+  '.sanctuary-management-builder-side{order:1',
   '.sanctuary-management-composer{order:2',
   'overflow-x:hidden',
   'scrollbar-width:none',

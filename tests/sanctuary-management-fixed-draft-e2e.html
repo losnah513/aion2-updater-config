@@ -46,6 +46,7 @@
         {characterId:503,serverId:2,serverName:'지켈',characterName:'내부캐없는본캐',className:'치유성',profileImageUrl:'',power:567890,itemLevel:4600,isMain:true,relation:'MAIN',mainCharacterId:503,canSelectAlts:false}
       ];
       const searchableCharacters=[
+        {characterId:501,serverId:2,serverName:'지켈',characterName:'테스트본캐',className:'검성',legionName:'깡',profileImageUrl:'',raceId:1,power:123456,itemLevel:4321,isOperationalLegion:true,ownerMemberId:7,relation:'MAIN',isMain:true,mainCharacterId:501,canSelectAlts:true},
         {characterId:601,serverId:2,serverName:'지켈',characterName:'테스트검색',className:'궁성',legionName:'깡',profileImageUrl:'',raceId:1,power:456789,itemLevel:4400,isOperationalLegion:true,ownerMemberId:9,relation:'MAIN',isMain:true,mainCharacterId:601,canSelectAlts:true},
         {characterId:602,serverId:2,serverName:'지켈',characterName:'부캐없는본캐',className:'치유성',legionName:'깡',profileImageUrl:'',raceId:1,power:567890,itemLevel:4600,isOperationalLegion:true,ownerMemberId:22,relation:'MAIN',isMain:true,mainCharacterId:602,canSelectAlts:false}
       ];
@@ -54,7 +55,7 @@
         외부게스트:{candidateId:'official-guest-701',characterName:'외부게스트',serverId:2,serverName:'지켈',className:'마도성',legionName:'외부레기온',profileImageUrl:'',raceId:1,isOperationalLegion:false,allowedRelations:['GUEST']},
         운영부캐:{candidateId:'official-alt-702',characterName:'운영부캐',serverId:2,serverName:'지켈',className:'치유성',legionName:'밤',profileImageUrl:'',raceId:1,isOperationalLegion:true,allowedRelations:['MAIN','ALT']}
       };
-      const character={characterId:501,name:'테스트본캐',serverName:'지켈',className:'검성',profileImageUrl:'',power:123456,itemLevel:4321,mainCharacterName:'테스트본캐',isMain:true,relation:'MAIN'};
+      const character={characterId:501,mainCharacterId:501,ownerMemberId:7,name:'테스트본캐',serverId:2,serverName:'지켈',className:'검성',profileImageUrl:'',power:123456,itemLevel:4321,mainCharacterName:'테스트본캐',isMain:true,relation:'MAIN'};
       function makeForce(forceNo,withCharacter=false){
         const forceId=forceSequence++;
         const parties=[1,2].map(partyNo=>{
@@ -137,6 +138,8 @@
             {characterId:607,mainCharacterId:601,ownerMemberId:9,characterName:'연결부캐오',serverId:2,serverName:'지켈',className:'치유성',profileImageUrl:'',relation:'ALT',isMain:false,power:834500,itemLevel:4900,itemLevelEligible:true,alreadyAssignedToOtherForce:false,scheduleConflict:false},
             {characterId:608,mainCharacterId:601,ownerMemberId:9,characterName:'연결부캐육',serverId:2,serverName:'지켈',className:'궁성',profileImageUrl:'',relation:'ALT',isMain:false,power:434500,itemLevel:4550,itemLevelEligible:true,alreadyAssignedToOtherForce:false,scheduleConflict:false},
             {characterId:609,mainCharacterId:601,ownerMemberId:9,characterName:'연결부캐칠',serverId:2,serverName:'지켈',className:'정령성',profileImageUrl:'',relation:'ALT',isMain:false,power:534500,itemLevel:4650,itemLevelEligible:true,alreadyAssignedToOtherForce:false,scheduleConflict:false}
+          ]:Number(mainCharacterId)===501?[
+            {characterId:510,mainCharacterId:501,ownerMemberId:7,characterName:'같은포스부캐',serverId:2,serverName:'지켈',className:'살성',profileImageUrl:'',relation:'ALT',isMain:false,power:469800,itemLevel:4600,itemLevelEligible:true,alreadyAssignedToOtherForce:true,scheduleConflict:true}
           ]:[];
           return {ok:true,apiVersion:2.2,schemaVersion:453,teamId,minimumItemLevel:4300,mainCharacter:{characterId:main.characterId,characterName:main.characterName,serverId:main.serverId,serverName:main.serverName,ownerMemberId:main.ownerMemberId},randomCandidate:{assignmentKind:'RANDOM_ALT',mainCharacterId:main.characterId,ownerMemberId:main.ownerMemberId,characterName:main.characterName+'의 랜덤 부캐',serverId:main.serverId,serverName:main.serverName,relation:'RANDOM_ALT',isMain:false,isRandomAlt:true,power:null,itemLevel:null},characters,characterCount:characters.length};
         },
