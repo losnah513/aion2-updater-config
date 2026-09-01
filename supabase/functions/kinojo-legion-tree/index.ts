@@ -1,7 +1,7 @@
 const SERVICE_NAME='kinojo-legion-tree';
-const API_VERSION='1.8';
+const API_VERSION='1.9';
 const DATABASE_CONTRACT='458';
-const ORGANIZATION_DATABASE_CONTRACT='459';
+const ORGANIZATION_DATABASE_CONTRACT='460';
 const AUTH_CONTRACT='320';
 const MODE_CONTRACT='1';
 const DEDUPE_CONTRACT='366';
@@ -239,7 +239,7 @@ Deno.serve(async request=>{
     const rawBytes=encoder.encode(raw).byteLength;
     if(rawBytes>MAX_REQUEST_BYTES)return json(request,{ok:false,code:'REQUEST_TOO_LARGE',message:'요청 크기가 허용 범위를 초과했습니다.'},413);
     const body=record(raw?JSON.parse(raw):{}),action=text(body.action,40)||'health';
-    if(action==='health')return json(request,{ok:true,service:SERVICE_NAME,apiVersion:API_VERSION,contract:'legion-tree-v2',organizationContract:ORGANIZATION_CONTRACT,characterSearchContract:CHARACTER_SEARCH_CONTRACT,candidateRegistrationContract:CANDIDATE_REGISTRATION_CONTRACT,databaseContract:DATABASE_CONTRACT,organizationDatabaseContract:ORGANIZATION_DATABASE_CONTRACT,affiliationContract:'immediate_upper_or_explicit_unaffiliated',characterInputContract:CHARACTER_INPUT_CONTRACT,authContract:AUTH_CONTRACT,modeContract:MODE_CONTRACT,dedupeContract:DEDUPE_CONTRACT,queueContract:QUEUE_CONTRACT,workerContract:WORKER_CONTRACT,authBoundary:'KWS_SERVER_SESSION_AND_SERVER_CAN_MANAGE',serverReference:'server_master',serverResolution:'SERVER_NAME_OR_SHORT_NAME_TAG_OR_ALL_ACTIVE_SERVER_SEARCH',candidateSearch:{officialRequest:'single-request-per-input',exactNameOnly:true,activeServersOnly:true,registrationReadback:'character_master server_id+character_identity_key_v298',createsTarget:false,createsQueue:false},dedupeBasis:'character_master server_id+character_identity_key_v298',queueModel:'existing-global-updater-lock-single-target',workerAction:'startAutonomous',listAppendPending:false,listWrite:false,listReadback:false,listlessCharacterAdd:true,listlessTerminalStage:'SERVER_QUEUE_CHARACTER_MASTER_DONE',modeRule:{mainOnly:'MAIN',mainAndAlt:'ALT',altOnly:'REJECT',sameNameAndServer:'REJECT',serverTag:'characterName[shortName]',missingTag:'SEARCH_ALL_ACTIVE_SERVERS',addRequiresSelectedServer:true,legacyServerId:false},dedupeConnected:true,queueConnected:true,workerConnected:true,crossServerMainAltConnected:true,organizationSaveConnected:true,organizationReadbackConnected:true,organizationTransaction:'single_postgres_transaction',edgeDecision:'REUSE_WITH_DB_MODULE',actions:['character-search','character-add','organization-save','organization-reset']});
+    if(action==='health')return json(request,{ok:true,service:SERVICE_NAME,apiVersion:API_VERSION,contract:'legion-tree-v2',organizationContract:ORGANIZATION_CONTRACT,characterSearchContract:CHARACTER_SEARCH_CONTRACT,candidateRegistrationContract:CANDIDATE_REGISTRATION_CONTRACT,databaseContract:DATABASE_CONTRACT,organizationDatabaseContract:ORGANIZATION_DATABASE_CONTRACT,affiliationContract:'immediate_upper_or_terminal_default_or_explicit_unaffiliated',characterInputContract:CHARACTER_INPUT_CONTRACT,authContract:AUTH_CONTRACT,modeContract:MODE_CONTRACT,dedupeContract:DEDUPE_CONTRACT,queueContract:QUEUE_CONTRACT,workerContract:WORKER_CONTRACT,authBoundary:'KWS_SERVER_SESSION_AND_SERVER_CAN_MANAGE',serverReference:'server_master',serverResolution:'SERVER_NAME_OR_SHORT_NAME_TAG_OR_ALL_ACTIVE_SERVER_SEARCH',candidateSearch:{officialRequest:'single-request-per-input',exactNameOnly:true,activeServersOnly:true,registrationReadback:'character_master server_id+character_identity_key_v298',createsTarget:false,createsQueue:false},dedupeBasis:'character_master server_id+character_identity_key_v298',queueModel:'existing-global-updater-lock-single-target',workerAction:'startAutonomous',listAppendPending:false,listWrite:false,listReadback:false,listlessCharacterAdd:true,listlessTerminalStage:'SERVER_QUEUE_CHARACTER_MASTER_DONE',modeRule:{mainOnly:'MAIN',mainAndAlt:'ALT',altOnly:'REJECT',sameNameAndServer:'REJECT',serverTag:'characterName[shortName]',missingTag:'SEARCH_ALL_ACTIVE_SERVERS',addRequiresSelectedServer:true,legacyServerId:false},dedupeConnected:true,queueConnected:true,workerConnected:true,crossServerMainAltConnected:true,organizationSaveConnected:true,organizationReadbackConnected:true,organizationTransaction:'single_postgres_transaction',edgeDecision:'REUSE_WITH_DB_MODULE',actions:['character-search','character-add','organization-save','organization-reset']});
 
     if(action==='organization-save'||action==='organization-reset'){
       const allowed=action==='organization-reset'
@@ -254,7 +254,7 @@ Deno.serve(async request=>{
       const resetToDefault=action==='organization-reset';
       const normalized=normalizeOrganization(body,resetToDefault);
       if(normalized.ok!==true)return json(request,normalized,400);
-      const saved=await rpc('kinojo_legion_tree_organization_save_v459',{
+      const saved=await rpc('kinojo_legion_tree_organization_save_v460',{
         p_session_token:sessionToken,
         p_legion_name:normalized.legionName,
         p_expected_revision:normalized.expectedRevision,

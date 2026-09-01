@@ -340,6 +340,7 @@
       groupName:text(source.groupName??source.group_name,120),
       parentRoleKey:text(source.parentRoleKey??source.parent_role_key,180),
       unaffiliated:boolean(source.unaffiliated??source.isUnaffiliated??source.is_unaffiliated),
+      defaultAffiliation:boolean(source.defaultAffiliation??source.isDefaultAffiliation??source.default_affiliation),
       sortOrder:positiveInt(source.sortOrder??source.sort_order)||index+1,
       members:array(source.members).map(normalizeMember).filter(Boolean)
     };
@@ -537,6 +538,11 @@
     return `<article class="legion-tree-role legion-tree-department ${unaffiliated?'is-unaffiliated':'is-unassigned'}" data-role-key="${roleKey}"><div class="legion-tree-role-plate"><small>${small}</small><strong>${title}</strong></div><div class="legion-tree-department-card"><div class="legion-tree-department-body"><strong>${esc(terminalStage.stageName)}</strong>${renderDepartmentMembers(entries,terminalStage.stageName)}</div></div></article>`;
   }
 
+  function renderDefaultDepartment(entries,terminalStage){
+    if(!entries.length)return '';
+    return `<article class="legion-tree-role legion-tree-department is-default" data-role-key="default-terminal"><div class="legion-tree-role-plate"><small>기본 소속</small><strong>${esc(terminalStage.stageName)}</strong></div><div class="legion-tree-department-card"><div class="legion-tree-department-body">${renderDepartmentMembers(entries,terminalStage.stageName)}</div></div></article>`;
+  }
+
   function renderDepartmentStage(stage,terminalStage){
     const allTerminal=terminalGroups(terminalStage);
     const parentKeys=new Set(stage.roles.map(role=>role.roleKey));
@@ -544,12 +550,12 @@
       role,
       stage,
       terminalStage,
-      allTerminal.filter(entry=>entry.group.parentRoleKey===role.roleKey||(
-        stage.roles.length===1&&entry.group.unaffiliated!==true&&!entry.group.parentRoleKey
-      ))
+      allTerminal.filter(entry=>entry.group.parentRoleKey===role.roleKey)
     ));
+    const defaults=allTerminal.filter(entry=>entry.group.unaffiliated!==true&&!entry.group.parentRoleKey);
     const independent=allTerminal.filter(entry=>entry.group.unaffiliated===true);
-    const unassigned=allTerminal.filter(entry=>entry.group.unaffiliated!==true&&!parentKeys.has(entry.group.parentRoleKey)&&!(stage.roles.length===1&&!entry.group.parentRoleKey));
+    const unassigned=allTerminal.filter(entry=>entry.group.unaffiliated!==true&&Boolean(entry.group.parentRoleKey)&&!parentKeys.has(entry.group.parentRoleKey));
+    if(defaults.length)departments.push(renderDefaultDepartment(defaults,terminalStage));
     if(independent.length)departments.push(renderDetachedDepartment(independent,terminalStage,true));
     if(unassigned.length)departments.push(renderDetachedDepartment(unassigned,terminalStage,false));
     return `<section class="legion-tree-stage is-departments" data-stage="${stage.stageNo}" data-terminal-stage="${terminalStage.stageNo}"><div class="legion-tree-stage-roles" data-role-count="${departments.length}">${departments.join('')}</div></section>`;

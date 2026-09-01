@@ -355,7 +355,7 @@
         continue;
       }
       if(!parentRoleKey){
-        if(!unaffiliated)add('PARENT_REQUIRED',stageNo+'단계 '+memberName+' 캐릭터의 상위 소속 또는 소속 외를 선택해 주세요.',{stageNo,characterId,roleKey,path:'parentRole'});
+        if(!unaffiliated&&stageNo!==draft.stageCount)add('PARENT_REQUIRED',stageNo+'단계 '+memberName+' 캐릭터의 상위 소속 또는 소속 외를 선택해 주세요.',{stageNo,characterId,roleKey,path:'parentRole'});
         continue;
       }
       if(unaffiliated){
@@ -431,7 +431,10 @@
   }
 
   function renderParentOptions(draft,assignment,stageNo){
-    const options=['<option value="">상위 소속 선택 (필수)</option>'];
+    const terminal=stageNo===draft.stageCount;
+    const assignedRole=roleByKey(draft,assignment.roleKey);
+    const defaultLabel=terminal?(assignedRole?.roleName||draft.stages.at(-1)?.stageName||'일반 구성원')+' 소속 (기본)':'상위 소속 선택 (필수)';
+    const options=['<option value="">'+esc(defaultLabel)+'</option>'];
     for(const stage of draft.stages){
       if(stage.stageNo!==stageNo-1)continue;
       for(const role of stage.roles){
@@ -447,8 +450,9 @@
     const member=memberById(draft,assignment.characterId);
     if(!member)return '';
     const kind=member.isMain?'본캐':'부캐';
+    const parentRequired=stageNo>1&&stageNo<draft.stageCount;
     const parent=stageNo>1
-      ?'<label class="legion-tree-editor-parent"><span>상위 소속</span><select required data-editor-parent data-character-id="'+member.characterId+'">'+renderParentOptions(draft,assignment,stageNo)+'</select></label>'
+      ?'<label class="legion-tree-editor-parent"><span>'+(parentRequired?'상위 소속':'소속')+'</span><select'+(parentRequired?' required':'')+' data-editor-parent data-character-id="'+member.characterId+'">'+renderParentOptions(draft,assignment,stageNo)+'</select></label>'
       :'';
     return '<li class="legion-tree-editor-member" data-character-id="'+member.characterId+'">'
       +'<div><strong>'+esc(member.characterName)+'</strong><span>'+esc(member.className||'클래스 미확인')+' · '+kind+'</span></div>'
