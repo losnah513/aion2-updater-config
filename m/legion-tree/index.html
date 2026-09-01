@@ -17,7 +17,7 @@
 <link href="../../ui/kinojo-common-ui.css?cache=2026081205" rel="stylesheet"/>
 <link href="../../ui/kinojo-character-reaction.css?cache=2026082201" rel="stylesheet"/>
 <link href="../../ui/kinojo-public-shell.css?cache=2026083001" rel="stylesheet"/>
-<link href="../../legion-tree/css/legion-tree.css?cache=2026090103" rel="stylesheet"/>
+<link href="../../legion-tree/css/legion-tree.css?cache=2026090104" rel="stylesheet"/>
 <link rel="stylesheet" href="../../ui/kinojo-event-notice.css?cache=2026081003"/>
 </head>
 <body class="kinojo-page-legion-tree">
@@ -48,8 +48,16 @@
   </section>
 
 <main class="legion-tree-wrap">
-  <section class="legion-tree-data-list" id="legionTreeRoot" aria-live="polite" aria-busy="true">
-    <div class="legion-tree-load-state">Server 레기온 데이터를 불러오는 중…</div>
+  <section class="legion-tree-viewer" id="legionTreeViewer" aria-label="레기온 조직도 뷰어">
+    <button class="legion-tree-viewer-nav is-previous" id="legionTreePrevBtn" type="button" aria-controls="legionTreeRoot" aria-label="이전 레기온" disabled><span aria-hidden="true">‹</span></button>
+    <div class="legion-tree-viewer-card">
+      <section class="legion-tree-data-list" id="legionTreeRoot" aria-live="polite" aria-busy="true">
+        <div class="legion-tree-load-state">Server 레기온 데이터를 불러오는 중…</div>
+      </section>
+      <div class="legion-tree-viewer-fade" id="legionTreeViewerFade" data-visible="false" aria-hidden="true"></div>
+    </div>
+    <button class="legion-tree-viewer-nav is-next" id="legionTreeNextBtn" type="button" aria-controls="legionTreeRoot" aria-label="다음 레기온" disabled><span aria-hidden="true">›</span></button>
+    <p class="legion-tree-viewer-status" id="legionTreeViewerStatus" aria-live="polite"></p>
   </section>
 
   <footer class="footer common-footer"><div class="footer-links"><a href="../../pages/about.html">사이트 소개</a><a href="../../pages/terms.html">이용약관</a><a href="../../pages/privacy.html">개인정보처리방침</a><a href="../../pages/contact.html">아이디어 제안 및 건의</a></div><div class="footer-powered">Powered by AION2 · KINOJO 레기온 지원</div></footer>
@@ -75,6 +83,6 @@
 <script src="../../core/kinojo-auth-ui.js?cache=2026082901"></script>
 <script src="../../ui/kinojo-event-notice.js?cache=2026081003"></script>
 <script src="../../legion-tree/js/legion-tree-editor.js?cache=2026090105"></script>
-  <script src="../../legion-tree/js/legion-tree.js?cache=2026090106"></script>
+  <script src="../../legion-tree/js/legion-tree.js?cache=2026090107"></script>
 </body>
 </html>
