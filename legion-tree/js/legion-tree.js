@@ -486,30 +486,30 @@
     return true;
   }
 
-  function renderGroup(group,roleName,branchCount){
-    const label=group.groupName&&group.groupName!==roleName
+  function renderGroup(group,roleName,branchCount,hideLabel=false){
+    const label=!hideLabel&&group.groupName&&group.groupName!==roleName
       ?`<small class="legion-tree-group-label">${esc(group.groupName)}</small>`:'';
     const members=group.members.map(renderCharacter).join('');
     return `<section class="legion-tree-group" data-group-key="${esc(group.groupKey)}">${label}<div class="legion-tree-member-grid" data-branch-count="${branchCount}" data-member-count="${group.members.length}" aria-label="${esc(roleName)} 구성원">${members}</div></section>`;
   }
 
-  function renderRoleAssignment(role){
+  function renderRoleAssignment(role,{hideGroupLabels=false}={}){
     const branchCount=Math.min(Math.max(role.groups.length,1),5);
-    const groups=role.groups.map(group=>renderGroup(group,role.roleName,branchCount)).join('');
+    const groups=role.groups.map(group=>renderGroup(group,role.roleName,branchCount,hideGroupLabels)).join('');
     const memberCount=role.groups.reduce((total,group)=>total+group.members.length,0);
     return memberCount
       ?`<div class="legion-tree-role-groups" data-branch-count="${branchCount}">${groups}</div>`
       :`<p class="legion-tree-empty-role" aria-label="${esc(role.roleName)} 배정 상태">지정 전</p>`;
   }
 
-  function renderRole(role,stage){
+  function renderRole(role,stage,previousStage){
     const memberCount=role.groups.reduce((total,group)=>total+group.members.length,0);
     const displayName=role.roleName||stage.stageName;
-    return `<article class="legion-tree-role" data-role-key="${esc(role.roleKey)}" data-is-empty="${memberCount?'false':'true'}"><div class="legion-tree-role-plate"><strong>${esc(displayName)}</strong></div>${renderRoleAssignment(role)}</article>`;
+    return `<article class="legion-tree-role" data-role-key="${esc(role.roleKey)}" data-is-empty="${memberCount?'false':'true'}"><div class="legion-tree-role-plate"><strong>${esc(displayName)}</strong></div>${renderRoleAssignment(role,{hideGroupLabels:previousStage?.roles.length===1})}</article>`;
   }
 
-  function renderStage(stage){
-    const roles=stage.roles.map(role=>renderRole(role,stage)).join('');
+  function renderStage(stage,previousStage){
+    const roles=stage.roles.map(role=>renderRole(role,stage,previousStage)).join('');
     return `<section class="legion-tree-stage" data-stage="${stage.stageNo}"><div class="legion-tree-stage-roles" data-role-count="${stage.roles.length}" style="--legion-tree-role-count:${Math.max(stage.roles.length,1)}">${roles}</div></section>`;
   }
 
@@ -526,10 +526,10 @@
     }).join('');
   }
 
-  function renderDepartment(role,stage,terminalStage,entries){
+  function renderDepartment(role,stage,terminalStage,entries,previousStage){
     const headCount=role.groups.reduce((total,group)=>total+group.members.length,0);
     const displayName=role.roleName||stage.stageName;
-    return `<article class="legion-tree-role legion-tree-department" data-role-key="${esc(role.roleKey)}" data-is-empty="${headCount?'false':'true'}"><div class="legion-tree-role-plate"><strong>${esc(displayName)}</strong></div><div class="legion-tree-department-card"><div class="legion-tree-department-head"><span>부서장</span>${renderRoleAssignment(role)}</div><div class="legion-tree-department-body"><strong>${esc(terminalStage.stageName)}</strong>${renderDepartmentMembers(entries,terminalStage.stageName)}</div></div></article>`;
+    return `<article class="legion-tree-role legion-tree-department" data-role-key="${esc(role.roleKey)}" data-is-empty="${headCount?'false':'true'}"><div class="legion-tree-role-plate"><strong>${esc(displayName)}</strong></div><div class="legion-tree-department-card"><div class="legion-tree-department-head"><span>부서장</span>${renderRoleAssignment(role,{hideGroupLabels:previousStage?.roles.length===1})}</div><div class="legion-tree-department-body"><strong>${esc(terminalStage.stageName)}</strong>${renderDepartmentMembers(entries,terminalStage.stageName)}</div></div></article>`;
   }
 
   function renderDetachedDepartment(entries,terminalStage,unaffiliated){
@@ -544,19 +544,21 @@
     return `<article class="legion-tree-role legion-tree-department is-default is-unaffiliated" data-role-key="default-terminal"><div class="legion-tree-role-plate"><strong>무소속</strong></div><div class="legion-tree-department-card"><div class="legion-tree-department-body"><strong>${esc(terminalStage.stageName)}</strong>${renderDepartmentMembers(entries,terminalStage.stageName)}</div></div></article>`;
   }
 
-  function renderDepartmentStage(stage,terminalStage){
+  function renderDepartmentStage(stage,terminalStage,previousStage){
     const allTerminal=terminalGroups(terminalStage);
     const parentKeys=new Set(stage.roles.map(role=>role.roleKey));
+    const defaults=allTerminal.filter(entry=>entry.group.unaffiliated!==true&&!entry.group.parentRoleKey);
+    const automaticParentRoleKey=stage.roles.length===1?stage.roles[0].roleKey:'';
     const departments=stage.roles.map(role=>renderDepartment(
       role,
       stage,
       terminalStage,
-      allTerminal.filter(entry=>entry.group.parentRoleKey===role.roleKey)
+      allTerminal.filter(entry=>entry.group.parentRoleKey===role.roleKey||(automaticParentRoleKey===role.roleKey&&!entry.group.parentRoleKey&&entry.group.unaffiliated!==true)),
+      previousStage
     ));
-    const defaults=allTerminal.filter(entry=>entry.group.unaffiliated!==true&&!entry.group.parentRoleKey);
     const independent=allTerminal.filter(entry=>entry.group.unaffiliated===true);
     const unassigned=allTerminal.filter(entry=>entry.group.unaffiliated!==true&&Boolean(entry.group.parentRoleKey)&&!parentKeys.has(entry.group.parentRoleKey));
-    if(defaults.length)departments.push(renderDefaultDepartment(defaults,terminalStage));
+    if(defaults.length&&!automaticParentRoleKey)departments.push(renderDefaultDepartment(defaults,terminalStage));
     if(independent.length)departments.push(renderDetachedDepartment(independent,terminalStage,true));
     if(unassigned.length)departments.push(renderDetachedDepartment(unassigned,terminalStage,false));
     return `<section class="legion-tree-stage is-departments" data-stage="${stage.stageNo}" data-terminal-stage="${terminalStage.stageNo}"><div class="legion-tree-stage-roles" data-role-count="${departments.length}" style="--legion-tree-role-count:${Math.max(departments.length,1)}">${departments.join('')}</div></section>`;
@@ -568,9 +570,10 @@
     const terminalStage=legion.stages.length>1?legion.stages.at(-1):null;
     const stages=displayedStages.map((stage,index)=>{
       const connector=index?'<div class="legion-tree-connector" aria-hidden="true"></div>':'';
+      const previousStage=index?displayedStages[index-1]:null;
       const markup=terminalStage&&index===displayedStages.length-1
-        ?renderDepartmentStage(stage,terminalStage)
-        :renderStage(stage);
+        ?renderDepartmentStage(stage,terminalStage,previousStage)
+        :renderStage(stage,previousStage);
       return connector+markup;
     }).join('');
     const kicker=legion.legionOrder===1?'MAIN LEGION':`LEGION ${String(legion.legionOrder).padStart(2,'0')}`;

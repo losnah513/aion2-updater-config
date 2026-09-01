@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Legion Tree organization layout harness</title>
-  <link rel="stylesheet" href="../legion-tree/css/legion-tree.css?cache=2026090102">
+  <link rel="stylesheet" href="../legion-tree/css/legion-tree.css?cache=2026090103">
 </head>
 <body>
   <button id="reopen" type="button">편집기 다시 열기</button>
   <div id="legionTreeEditorRoot" class="legion-tree-editor-root" hidden></div>
-  <script src="../legion-tree/js/legion-tree-editor.js?cache=2026090104"></script>
+  <script src="../legion-tree/js/legion-tree-editor.js?cache=2026090105"></script>
   <script>
   (()=>{
     const member=(characterId,characterName,className='검성')=>({
@@ -21,7 +21,9 @@
       stages:[
         {stageNo:1,stageName:'대표',roles:[{roleKey:`${legionName}-leader`,roleName:'대표',slotNo:1,maxMembers:1,groups:[]}]},
         {stageNo:2,stageName:'부서장',roles:[
-          {roleKey:`${legionName}-planning`,roleName:'기획부',slotNo:1,maxMembers:1,groups:[]},
+          {roleKey:`${legionName}-planning`,roleName:'기획부',slotNo:1,maxMembers:1,groups:[
+            {groupKey:`${legionName}-leader`,groupName:'대표',parentRoleKey:`${legionName}-leader`,members:[member(offset+6,'기획부장')]}
+          ]},
           {roleKey:`${legionName}-operation`,roleName:'운영부',slotNo:2,maxMembers:1,groups:[]}
         ]},
         {stageNo:3,stageName:'구성원',roles:[{roleKey:`${legionName}-member`,roleName:'구성원',slotNo:1,maxMembers:null,groups:[

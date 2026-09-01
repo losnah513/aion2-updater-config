@@ -319,10 +319,27 @@ for (let index = 1; index <= 4; index += 1) {
   assert(markup.includes(`실제구성원${index}`), `member ${index} must render`);
 }
 assert.strictEqual((markup.match(/class="legion-tree-character /g) || []).length, 4);
+assert.strictEqual((markup.match(/data-role-key="default-terminal"/g) || []).length, 0);
+assert.strictEqual((markup.match(/class="legion-tree-stage is-departments"[^>]*><div class="legion-tree-stage-roles" data-role-count="1"/g) || []).length, 4);
+assert(!markup.includes('<div class="legion-tree-role-plate"><strong>무소속</strong></div>'));
 assert(markup.includes('/assets/images/classes/class_icon_gladiator.png'));
 assert(markup.includes('/assets/images/classes/class_icon_cleric.png'));
 assert(!markup.includes('본캐예시'));
 assert(!markup.includes('data-preview-card'));
+
+const soleParentLabelPayload = JSON.parse(JSON.stringify(payload));
+soleParentLabelPayload.legions[0].stages[1].roles[0].groups = [{
+  groupKey: 'r0-1',
+  groupName: '군단장',
+  parentRoleKey: 'r0-1',
+  sortOrder: 1,
+  members: [memberFixture(601, '직속장교')]
+}];
+const soleParentLabelMarkup = window.KinojoLegionTree.renderTreeMarkup(
+  window.KinojoLegionTree.normalizeTreePayload(soleParentLabelPayload)
+);
+assert(soleParentLabelMarkup.includes('직속장교'));
+assert(!soleParentLabelMarkup.includes('<small class="legion-tree-group-label">군단장</small>'));
 
 for (const [className, fileName] of classIconCases) {
   const expectedPath = `/assets/images/classes/class_icon_${fileName}.png`;
@@ -504,9 +521,9 @@ window.KinojoSupabase = {
     assert(!html.includes('본캐예시'));
     assert(html.includes('kinojo-character-reaction.css?cache=2026082201'));
     assert(html.includes('kinojo-character-reaction.js?cache=2026082701'));
-    assert(html.includes('legion-tree.css?cache=2026090102'));
-    assert(html.includes('legion-tree-editor.js?cache=2026090104'));
-    assert(html.includes('legion-tree.js?cache=2026090105'));
+    assert(html.includes('legion-tree.css?cache=2026090103'));
+    assert(html.includes('legion-tree-editor.js?cache=2026090105'));
+    assert(html.includes('legion-tree.js?cache=2026090106'));
     assert(html.includes('kinojo-supabase-features.js?cache=2026083108'));
     assert(!html.includes('legion-tree.js?cache=2026082403'));
   }
