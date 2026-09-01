@@ -68,6 +68,7 @@ for(const token of [
   'const CARD_W = 228',
   'const CARD_H = 68',
   'const FORCE_W = 512',
+  'const FORCE_HEADER_H = 50',
   'const TEAM_COLUMN_GAP = 14',
   'const columns=forces.length>1?2:1',
   'const rows=Math.ceil(forces.length/columns)',
@@ -87,10 +88,19 @@ for(const token of [
   'relationLabel=isMain?"본캐"',
   '-부캐',
   'nameLength<=5?20',
+  'badgeSvg(relationLabel,64,4,isMain)',
+  'width="54" height="54"',
+  'x="${x+205}" y="${y+8}" width="34" height="34"',
+  'x="${x+246}" y="${y+19}"',
+  'x="${x+246}" y="${y+40}"',
+  'x="${x+FORCE_W-16}" y="${y+35}" text-anchor="end" font-size="23"',
   'font-size="13.5"',
   '평균 전투력',
   'toFixed(1)',
 ])assert.ok(renderer.includes(token),`Stage 12 SVG contract missing ${token}`);
+
+assert.ok(renderer.indexOf('badgeSvg(relationLabel,64,4,isMain)')<renderer.indexOf('<text x="64" y="40"'),'relation badge must render above the character name');
+assert.equal(renderer.includes('titleWidth'),false,'force average power must no longer trail the force title');
 
 assert.ok(renderer.indexOf('bossBackdropSvg(sanctuaryCode,"team"')!==renderer.indexOf('bossBackdropSvg(sanctuaryCode,"force"'));
 assert.equal((renderer.match(/opacity="\.30"/g)||[]).length,1,'boss opacity belongs to the one shared backdrop renderer');
