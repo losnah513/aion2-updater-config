@@ -2525,11 +2525,23 @@
   }
   function loadSanctuaryMasterRenderer(){
     if(document.querySelector('script[data-kinojo-sanctuary-master-loader]')) return;
-    const script=document.createElement('script');
-    script.src='/ui/kinojo-sanctuary-master.js?cache=2026083001';
-    script.async=true;
-    script.dataset.kinojoSanctuaryMasterLoader='true';
-    document.head.appendChild(script);
+    const loadMaster=()=>{
+      if(document.querySelector('script[data-kinojo-sanctuary-master-loader]'))return;
+      const script=document.createElement('script');
+      script.src='/ui/kinojo-sanctuary-master.js?cache=2026090104';
+      script.async=true;
+      script.dataset.kinojoSanctuaryMasterLoader='true';
+      document.head.appendChild(script);
+    };
+    if(window.KinojoSanctuaryAssets){loadMaster();return;}
+    const assets=document.querySelector('script[data-kinojo-sanctuary-assets-loader]')||document.createElement('script');
+    if(!assets.dataset.kinojoSanctuaryAssetsLoader){
+      assets.src='/ui/kinojo-sanctuary-assets.js?cache=2026090101';
+      assets.async=true;
+      assets.dataset.kinojoSanctuaryAssetsLoader='true';
+      document.head.appendChild(assets);
+    }
+    assets.addEventListener('load',loadMaster,{once:true});
   }
   const rescued=removeLegacy();
   const info=pageInfo();

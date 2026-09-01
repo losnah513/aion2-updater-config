@@ -57,7 +57,8 @@ assert.equal(common.includes("{key:'schedule',label:'성역 스케줄'"),false,'
 assert.equal(common.includes("{key:'sanctuaryManagement',label:'성역 관리'"),false,'separate management topbar item remains');
 assert.equal(common.includes('>성역 스케줄</a>'),false,'separate schedule drawer item remains');
 assert.equal(common.includes('>성역 관리</a>'),false,'separate management drawer item remains');
-assert.ok(common.includes("kinojo-sanctuary-master.js?cache=2026083001"),'canonical Sanctuary master loader cache was not refreshed');
+assert.ok(common.includes("kinojo-sanctuary-assets.js?cache=2026090101"),'canonical Sanctuary asset registry loader is missing');
+assert.ok(common.includes("kinojo-sanctuary-master.js?cache=2026090104"),'canonical Sanctuary master loader cache was not refreshed');
 
 const master=read('ui/kinojo-sanctuary-master.js');
 assert.ok(master.includes("kinojo_sanctuary_master_v229"),'canonical Sanctuary master session cache was not refreshed');
