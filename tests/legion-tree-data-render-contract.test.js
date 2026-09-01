@@ -86,7 +86,7 @@ function memberFixture(characterId, characterName, options = {}) {
 const payload = {
   ok: true,
   contract: 'web-legion-tree-v1',
-  databaseContract: '453',
+  databaseContract: '460',
   generatedAt: '2026-08-21T00:00:00Z',
   legions: names.map((legionName, index) => ({
     legionName,
@@ -499,7 +499,7 @@ window.KinojoSupabase = {
     assert(html.includes('kinojo-character-reaction.js?cache=2026082701'));
     assert(html.includes('legion-tree.css?cache=2026090101'));
     assert(html.includes('legion-tree-editor.js?cache=2026090103'));
-    assert(html.includes('legion-tree.js?cache=2026090103'));
+    assert(html.includes('legion-tree.js?cache=2026090104'));
     assert(html.includes('kinojo-supabase-features.js?cache=2026083108'));
     assert(!html.includes('legion-tree.js?cache=2026082403'));
   }
@@ -519,6 +519,7 @@ window.KinojoSupabase = {
   assert(script.includes('resetInputs({keepStatus:true,force:true})'));
   assert(!script.includes("renderServerOptions"));
   assert(!script.includes("selectedRaceId"));
+  assert(script.includes("const TREE_DATABASE_CONTRACT='460'"));
   assert(script.includes("ADD_ACCEPTED_CODE='ADD_QUEUE_ACCEPTED'"));
   assert(script.includes("if(state==='completed')return 3"));
   assert(!script.includes('SERVER_QUEUE_LIST_SYNC_DONE'));

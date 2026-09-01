@@ -6,7 +6,7 @@
   const SERVER_REFERENCE_RPC='kinojo_web_legion_tree_server_reference_v372';
   const TREE_RPC='kinojo_web_get_legion_tree';
   const TREE_CONTRACT='web-legion-tree-v1';
-  const TREE_DATABASE_CONTRACT='453';
+  const TREE_DATABASE_CONTRACT='460';
   const ADD_CONTRACT='legion-tree-character-add-v1';
   const SEARCH_CONTRACT='legion-tree-character-search-v1';
   const ADD_ACCEPTED_CODE='ADD_QUEUE_ACCEPTED';
