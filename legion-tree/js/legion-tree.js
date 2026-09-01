@@ -12,6 +12,10 @@
   const ADD_ACCEPTED_CODE='ADD_QUEUE_ACCEPTED';
   const ADD_POLL_INTERVAL_MS=1400;
   const ADD_POLL_TIMEOUT_MS=15*60*1000;
+  const TREE_CACHE_KEY='kinojo:legion-tree:v460:last-good';
+  const TREE_CACHE_MAX_AGE_MS=24*60*60*1000;
+  const TREE_READ_RETRY_DELAYS_MS=Object.freeze([0,300,900]);
+  const TREE_RECOVERY_DELAYS_MS=Object.freeze([5000,15000,30000]);
   const LEGION_ORDER=Object.freeze(['깡','낮','밤','키나노동조합']);
   const MAIN_REQUIRED_MESSAGE='본캐 이름을 입력해 주세요.';
   const ADD_STEPS=Object.freeze([
@@ -36,6 +40,8 @@
   let addPollGeneration=0;
   let currentTreeModel=null;
   let activeLegionIndex=0;
+  let treeRecoveryTimer=null;
+  let treeRecoveryAttempt=0;
   let searchGroups={main:null,alt:null};
   let selectedCandidates={main:null,alt:null};
 
@@ -60,6 +66,84 @@
 
   function array(value){
     return Array.isArray(value)?value:[];
+  }
+
+  function wait(ms){
+    return new Promise(resolve=>setTimeout(resolve,Math.max(0,Number(ms)||0)));
+  }
+
+  function transientTreeReadError(error){
+    const message=text(error?.message||error?.code||error,500).toLowerCase();
+    return /statement timeout|canceling statement|query_canceled|57014|pgrst00[013]|fetch failed|failed to fetch|networkerror|network error|gateway timeout|timed out|timeout/.test(message);
+  }
+
+  function treeCacheStorage(){
+    try{return window.localStorage||null;}catch(_error){return null;}
+  }
+
+  function writeTreeCache(payload){
+    try{
+      normalizeTreePayload(payload);
+      const storage=treeCacheStorage();
+      if(!storage||typeof storage.setItem!=='function')return false;
+      storage.setItem(TREE_CACHE_KEY,JSON.stringify({savedAt:Date.now(),payload}));
+      return true;
+    }catch(_error){
+      return false;
+    }
+  }
+
+  function readTreeCache(){
+    try{
+      const storage=treeCacheStorage();
+      if(!storage||typeof storage.getItem!=='function')return null;
+      const cached=JSON.parse(storage.getItem(TREE_CACHE_KEY)||'null');
+      const savedAt=Number(cached?.savedAt);
+      if(!Number.isFinite(savedAt)||Date.now()-savedAt>TREE_CACHE_MAX_AGE_MS)return null;
+      normalizeTreePayload(cached?.payload);
+      return cached.payload;
+    }catch(_error){
+      return null;
+    }
+  }
+
+  async function requestTreePayloadWithRetry(api){
+    let lastError=new Error('LEGION_TREE_READ_FAILED');
+    for(let index=0;index<TREE_READ_RETRY_DELAYS_MS.length;index+=1){
+      const delay=TREE_READ_RETRY_DELAYS_MS[index];
+      if(delay>0)await wait(delay);
+      try{
+        const payload=await api.rpc(TREE_RPC,{});
+        if(payload?.ok!==true){
+          const error=new Error(text(payload?.message||payload?.code||'LEGION_TREE_READ_FAILED',500));
+          error.code=text(payload?.code,120);
+          throw error;
+        }
+        normalizeTreePayload(payload);
+        return Object.freeze({payload,attemptCount:index+1});
+      }catch(error){
+        lastError=error;
+        if(!transientTreeReadError(error)||index===TREE_READ_RETRY_DELAYS_MS.length-1)throw error;
+      }
+    }
+    throw lastError;
+  }
+
+  function clearTreeRecovery(){
+    if(treeRecoveryTimer!==null)clearTimeout(treeRecoveryTimer);
+    treeRecoveryTimer=null;
+    treeRecoveryAttempt=0;
+  }
+
+  function scheduleTreeRecovery(){
+    if(treeRecoveryTimer!==null||treeRecoveryAttempt>=TREE_RECOVERY_DELAYS_MS.length)return false;
+    const delay=TREE_RECOVERY_DELAYS_MS[treeRecoveryAttempt];
+    treeRecoveryAttempt+=1;
+    treeRecoveryTimer=setTimeout(()=>{
+      treeRecoveryTimer=null;
+      void loadTreeData({background:true});
+    },delay);
+    return true;
   }
 
   function toast(message){
@@ -644,6 +728,8 @@
     try{
       const model=normalizeTreePayload(payload);
       renderTreeData(model);
+      writeTreeCache(payload);
+      clearTreeRecovery();
       const memberCount=model.legions.reduce((sum,legion)=>sum+legion.memberCount,0);
       treeStatusMessage=`조직도 저장 readback 완료 · 레기온 ${model.legions.length}개 · 구성원 ${memberCount}명`;
       refreshStatus();
@@ -654,25 +740,52 @@
     }
   }
 
-  async function loadTreeData(){
+  async function loadTreeData(options={}){
+    const background=options?.background===true;
     const root=q('#legionTreeRoot');
-    treeStatusMessage='레기온 데이터를 확인하는 중…';
-    refreshStatus();
-    if(root){
+    if(!background){
+      treeStatusMessage='레기온 데이터를 확인하는 중…';
+      refreshStatus();
+    }
+    if(root&&!background&&!currentTreeModel){
       root.setAttribute('aria-busy','true');
       root.innerHTML='<div class="legion-tree-load-state">Server 레기온 데이터를 불러오는 중…</div>';
     }
     try{
       const api=window.KinojoSupabase;
       if(!api||typeof api.rpc!=='function')throw new Error('LEGION_TREE_API_UNAVAILABLE');
-      const model=normalizeTreePayload(await api.rpc(TREE_RPC,{}));
+      const response=await requestTreePayloadWithRetry(api);
+      const payload=response.payload;
+      const model=normalizeTreePayload(payload);
       renderTreeData(model);
+      writeTreeCache(payload);
+      clearTreeRecovery();
       const memberCount=model.legions.reduce((sum,legion)=>sum+legion.memberCount,0);
-      treeStatusMessage=`레기온 ${model.legions.length}개 · 구성원 ${memberCount}명`;
+      const snapshotState=text(payload?.snapshotState,40);
+      const snapshotNotice=snapshotState.startsWith('STALE_')?'최근 정상 Server snapshot · ':'';
+      const retryNotice=response.attemptCount>1?`재시도 ${response.attemptCount}회 후 연결 · `:'';
+      treeStatusMessage=`${snapshotNotice}${retryNotice}레기온 ${model.legions.length}개 · 구성원 ${memberCount}명`;
       refreshStatus();
       window.dispatchEvent(new CustomEvent('kinojo:page-time',{detail:{value:new Date(),label:'레기온 데이터'}}));
       return model;
     }catch(error){
+      const cachedPayload=readTreeCache();
+      if(cachedPayload){
+        const model=normalizeTreePayload(cachedPayload);
+        renderTreeData(model);
+        treeStatusMessage=`최근 정상 데이터 표시 · 서버 재연결 중 · 레기온 ${model.legions.length}개 · 구성원 ${model.legions.reduce((sum,legion)=>sum+legion.memberCount,0)}명`;
+        refreshStatus();
+        if(transientTreeReadError(error))scheduleTreeRecovery();
+        console.warn('[KINOJO][LegionTree] tree load fallback to cache',error);
+        return model;
+      }
+      if(currentTreeModel){
+        treeStatusMessage='현재 레기온 데이터 유지 · 서버 재연결 중';
+        refreshStatus();
+        if(transientTreeReadError(error))scheduleTreeRecovery();
+        console.warn('[KINOJO][LegionTree] tree reload retained current model',error);
+        return currentTreeModel;
+      }
       currentTreeModel=null;
       window.KinojoLegionTreeEditor?.setModel?.(null);
       const edit=q('#legionTreeEditBtn');
@@ -688,6 +801,7 @@
       const previous=q('#legionTreePrevBtn'),next=q('#legionTreeNextBtn');
       if(previous)previous.disabled=true;
       if(next)next.disabled=true;
+      if(transientTreeReadError(error))scheduleTreeRecovery();
       console.warn('[KINOJO][LegionTree] tree load failed',error);
       return null;
     }
@@ -952,6 +1066,11 @@
     classIconPath,
     applyTreePayload,
     loadTreeData,
+    requestTreePayloadWithRetry,
+    transientTreeReadError,
+    readTreeCache,
+    writeTreeCache,
+    clearTreeRecovery,
     handleSearch,
     handleAdd,
     resetInputs,
