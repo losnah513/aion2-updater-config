@@ -252,10 +252,10 @@ assert.strictEqual(api.searchLegionMembers(draft, '없는이름').length, 0);
 for (const html of [pc, mobile]) {
   assert(html.includes('id="legionTreeEditorRoot"'));
   assert(html.includes('legion-tree-editor.js?cache=2026090105'));
-  assert(html.includes('legion-tree.js?cache=2026090108'));
-  assert(html.includes('legion-tree.css?cache=2026090104'));
+  assert(html.includes('legion-tree.js?cache=2026090109'));
+  assert(html.includes('legion-tree.css?cache=2026090105'));
   assert(html.includes('kinojo-supabase-features.js?cache=2026090101'));
-  assert(html.indexOf('legion-tree-editor.js?cache=2026090105') < html.indexOf('legion-tree.js?cache=2026090108'));
+  assert(html.indexOf('legion-tree-editor.js?cache=2026090105') < html.indexOf('legion-tree.js?cache=2026090109'));
 }
 
 for (const token of [

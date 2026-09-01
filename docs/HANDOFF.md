@@ -17,7 +17,7 @@
 - GitHub `main`은 WEB 코드 원본이고, 실제 Supabase·GitHub Pages 상태는 운영 원본이다.
 - 성역·스케줄 관리 개편은 Stage 7-8까지 **59/59 CLOSED**다. 제품 전환·종료는 PR `#328` + `#329` + `#330` + `#337` + `#338` + `#339` + `#342`, UI 기준 main `3e8d253e818349357f171ca4b025ca9d10062ae6`, Edge `sanctuary-management` v16(API 1.8 / DB446), copy renderer v20(DB447), transition run 1 `COMPLETE`다. 최종 운영·복구 기준은 `docs/SANCTUARY_MANAGEMENT_STAGE7_CLOSEOUT_20260830.md`를 따른다.
 - 성역 Stage 9 후속은 **77/77 CLOSED**다. 활성 제품 계약은 Edge `sanctuary-management` API 2.2 / DB452이며, 입장 아이템 레벨·성역 3 난이도·랜덤 부캐·연결 부캐 노출·전투력/아이템 레벨 공식 파싱·고밀도 지원 카드 기준은 `docs/SANCTUARY_MANAGEMENT_STAGE9_CLOSEOUT_20260830.md`를 따른다. Stage 7 백업·복구 경계는 기존 종료 문서를 계속 따른다.
-- 레기온 트리 조직도 기준은 Edge `kinojo-legion-tree` v10 / API 1.9 / organization DB460이며, 공개 읽기 내부 최적화는 DB461이다. 편집 Modal 560px, 레기온 버튼식 선택, 레기온 내부 이름 조회, 단일 상위 자동 직속·terminal 기본 소속·명시적 `소속 외`를 유지한다. 공개 화면은 각 계급 네임카드와 해당 구성원 목록을 독립 표시하고, 고정 높이 단일 레기온 viewer·좌우 순환·내부 스크롤·조건부 하단 그라데이션을 사용한다. 프로젝트 누적 계획은 **155개**, 선행 최적화 완료 목표는 **154/155**, 다음은 **더-1 최종 전체 readback**이다.
+- 레기온 트리 조직도 기준은 Edge `kinojo-legion-tree` v10 / API 1.9 / organization DB460이며, 공개 읽기 내부 최적화는 DB461이다. 편집 Modal 560px, 레기온 버튼식 선택, 레기온 내부 이름 조회, 단일 상위 자동 직속·terminal 기본 소속·명시적 `소속 외`를 유지한다. 공개 화면은 각 계급 네임카드와 해당 구성원 목록을 독립 표시하고, 고정 높이 단일 레기온 viewer·대상 레기온명이 보이는 확장 좌우 rail·방향성 페이지 회전·내부 스크롤·조건부 하단 그라데이션을 사용한다. 프로젝트 누적 계획은 **161개**, 전환 UX 보완 종료 목표는 **160/161**, 다음은 **더-1 최종 전체 readback**이다.
 
 ## 공통 PC 사이드 배너·서브바 sticky 회귀 수정 · 2026-09-01
 
@@ -32,9 +32,9 @@
 - PC 모달은 1040px에서 560px로 축소했다. 동일 단계 직급은 가로로 배치하며, 좁은 PC에서는 같은 행 안에서 최소한만 수평 스크롤한다. 모바일은 390×844 전체 화면, document/dialog 가로 overflow 0이다.
 - 실제 트리는 `1단계/2단계`와 합성 `부서장` 문구를 표시하지 않는다. 군단장·엘리트장교·군단병을 모두 `계급 네임카드 → 해당 계급 캐릭터 목록`으로 렌더링한다. 단일 상위는 중앙 수직 계보, 복수 상위는 같은 단계 수평 분기이며 `무소속`과 명시적 `소속 외`는 별도 terminal branch로 구분한다.
 - 조직 소속은 DB460의 `immediate_upper_or_terminal_default_or_explicit_unaffiliated`가 최종 권위다. 바로 윗 단계 role이 하나면 자동 직속, 여러 개면 parent 선택 필수, 마지막 단계 parent 누락은 terminal 기본 소속으로 보존한다. 명시적 `소속 외`만 `unaffiliated=true / parent_role_id=NULL` 독립 branch가 된다.
-- 공개 본문은 네 레기온을 세로로 이어 붙이지 않고 고정 높이 viewer 안에 한 번에 하나만 표시한다. 좌우 `‹ / ›` 버튼은 Server 순서를 순환하고 전환 때 내부 scrollTop을 0으로 되돌리며, 현재/이전/다음 레기온 ARIA 문구를 갱신한다. 내부 scrollbar는 숨기고 아래 내용이 남아 있을 때만 흰색 하단 그라데이션을 보인다.
-- 124px 캐릭터 카드는 실제 branch 폭에 맞춘 `auto-fit` grid와 652px 상한을 사용해 한 줄 최대 5개다. 로컬 PC 1440×900은 viewer 1076×724, 최대 5열, commander 중심 오차 0px, 내부 scroll 722/899px, document overflow 0이다. 모바일 390×844는 viewer 291×650, 최대 2열, 내부 scroll 648/1512px, document overflow 0이다.
-- 소유 파일은 `legion-tree/js/legion-tree.js`, `legion-tree/css/legion-tree.css`, PC/mobile HTML, data-render 계약 테스트와 viewer 전용 harness다. cache는 CSS `2026090104`, tree `2026090108`이며 editor `2026090105`를 유지한다. 조직도 쓰기 외부 계약은 DB460, 공개 읽기 내부 최적화는 DB461이며 Edge API 1.9는 유지한다.
+- 공개 본문은 네 레기온을 세로로 이어 붙이지 않고 고정 높이 viewer 안에 한 번에 하나만 표시한다. 좌우 `‹ / ›` rail은 카드 가장자리 위로 본문 방향 176px(모바일 104px)까지 확장되어 이전·다음 레기온명을 표시하고 Server 순서를 순환한다. 전환 때 내부 scrollTop을 0으로 되돌리고 현재/이전/다음 레기온 ARIA 문구를 갱신하며, 방향에 따라 perspective 회전·이동하는 380ms page-turn을 적용한다. reduced-motion에서는 animation을 끈다.
+- 124px 캐릭터 카드는 실제 branch 폭에 맞춘 `auto-fit` grid와 652px 상한을 사용해 한 줄 최대 5개다. viewer 높이는 PC `100dvh - 188px`, 모바일 `100dvh - 206px`로 조정해 고정 공지바 위 10px 안전 간격을 확보하며 서브바 아래 간격과 맞춘다. 내부 scrollbar는 숨기고 아래 내용이 남아 있을 때만 흰색 하단 그라데이션을 보인다.
+- 소유 파일은 `legion-tree/js/legion-tree.js`, `legion-tree/css/legion-tree.css`, PC/mobile HTML, data-render 계약 테스트와 viewer 전용 harness다. cache는 CSS `2026090105`, tree `2026090109`이며 editor `2026090105`를 유지한다. 조직도 쓰기 외부 계약은 DB460, 공개 읽기 내부 최적화는 DB461이며 Edge API 1.9는 유지한다.
 
 ## 레기온 트리 공개 읽기 내결함성·최적화 · 2026-09-01
 
@@ -347,7 +347,7 @@
 - 공개 트리는 비회원도 계속 읽을 수 있다. 후보 조회·캐릭터 추가·조직도 편집 UI는 비관리자에게 fail-closed이고, `kinojo-legion-tree` API 1.6은 search/add/save/reset마다 현재 KWS 세션과 `canManage`를 독립 재검증한다. organization DB453의 revision/CAS·v365 무결성·단일 transaction 계약은 유지한다.
 - 저장 성공 응답은 같은 요청 안에서 `kinojo_web_get_legion_tree`를 재호출해 revision·fallback 상태가 일치할 때만 `readbackVerified=true`로 반환한다. 편집기는 이 readback만 재렌더링하며 직접 service-role RPC를 호출하지 않는다.
 - 설정 저장 전 전체 draft의 단계 순서·필수 이름·직급 키/순서·최대 인원·현재 레기온 구성원·중복 배치·직급 존재·최상위/하위 parent 방향을 검증한다. 실패하면 네트워크 요청 없이 첫 오류 위치와 메시지를 표시하고 해당 입력으로 focus한다. Server validator v365를 최종 권한으로 대체하지 않는다.
-- 레기온 트리 계획은 최신 Drive 기준 **155개 micro-task**이며 공개 읽기 최적화 선행 묶음 종료 목표는 **154/155**다. 후보 조회/선택, listless 추가, 공개 읽기·관리 쓰기 권한, 조직도 저장·자동 소속 계보, 계급별 독립 블록과 고정 viewer, DB461 snapshot·Browser retry/cache까지 운영 반영 대상이다. 다음 작업은 더-1 최종 GitHub·Supabase·kinojo.info·Drive source·PROJECT LOG 전체 readback이다.
+- 레기온 트리 계획은 최신 Drive 기준 **161개 micro-task**이며 전환 UX 보완 묶음 종료 목표는 **160/161**이다. 후보 조회/선택, listless 추가, 공개 읽기·관리 쓰기 권한, 조직도 저장·자동 소속 계보, 계급별 독립 블록과 고정 viewer, DB461 snapshot·Browser retry/cache, 대상 레기온명 rail·방향성 page-turn·공지바 안전 간격까지 운영 반영 대상이다. 다음 작업은 더-1 최종 GitHub·Supabase·kinojo.info·Drive source·PROJECT LOG 전체 readback이다.
 
 ## 내 정보 이미지 기존 완료 상태
 

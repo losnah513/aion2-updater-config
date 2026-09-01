@@ -678,7 +678,18 @@
     return visible;
   }
 
-  function showLegionAt(index,{resetScroll=true}={}){
+  function animateViewerCard(direction){
+    const card=q('#legionTreeViewerCard');
+    if(!card?.classList)return false;
+    const className=Number(direction)<0?'is-turning-previous':'is-turning-next';
+    card.classList.remove('is-turning-previous','is-turning-next');
+    card.dataset.turnDirection=Number(direction)<0?'previous':'next';
+    void card.offsetWidth;
+    card.classList.add(className);
+    return true;
+  }
+
+  function showLegionAt(index,{resetScroll=true,animate=false,direction=0}={}){
     const root=q('#legionTreeRoot');
     if(!root||typeof root.querySelectorAll!=='function')return false;
     const legions=Array.from(root.querySelectorAll('.legion-tree-legion'));
@@ -696,18 +707,27 @@
     const next=legions[(activeLegionIndex+1)%count];
     const previousButton=q('#legionTreePrevBtn');
     const nextButton=q('#legionTreeNextBtn');
+    const previousName=text(previous?.dataset?.legionName,120);
+    const nextName=text(next?.dataset?.legionName,120);
     if(previousButton){
       previousButton.disabled=count<2;
-      previousButton.setAttribute('aria-label',`이전 레기온: ${text(previous?.dataset?.legionName,120)}`);
+      previousButton.setAttribute('aria-label',`이전 레기온: ${previousName}`);
+      previousButton.title=`이전 레기온: ${previousName}`;
     }
     if(nextButton){
       nextButton.disabled=count<2;
-      nextButton.setAttribute('aria-label',`다음 레기온: ${text(next?.dataset?.legionName,120)}`);
+      nextButton.setAttribute('aria-label',`다음 레기온: ${nextName}`);
+      nextButton.title=`다음 레기온: ${nextName}`;
     }
+    const previousLabel=q('#legionTreePrevName');
+    const nextLabel=q('#legionTreeNextName');
+    if(previousLabel)previousLabel.textContent=previousName;
+    if(nextLabel)nextLabel.textContent=nextName;
     root.dataset.activeLegionIndex=String(activeLegionIndex);
     root.dataset.activeLegionName=text(active?.dataset?.legionName,120);
     const status=q('#legionTreeViewerStatus');
     if(status)status.textContent=`${root.dataset.activeLegionName} 레기온 · ${activeLegionIndex+1}/${count}`;
+    if(animate&&count>1)animateViewerCard(direction||1);
     if(typeof window.requestAnimationFrame==='function')window.requestAnimationFrame(updateViewerFade);
     else updateViewerFade();
     return true;
@@ -1034,8 +1054,18 @@
     window.addEventListener('resize',positionSearchResults,{passive:true});
     window.addEventListener('scroll',positionSearchResults,{passive:true});
     const root=q('#legionTreeRoot');
-    q('#legionTreePrevBtn')?.addEventListener('click',()=>showLegionAt(activeLegionIndex-1));
-    q('#legionTreeNextBtn')?.addEventListener('click',()=>showLegionAt(activeLegionIndex+1));
+    q('#legionTreePrevBtn')?.addEventListener('click',()=>showLegionAt(activeLegionIndex-1,{animate:true,direction:-1}));
+    q('#legionTreeNextBtn')?.addEventListener('click',()=>showLegionAt(activeLegionIndex+1,{animate:true,direction:1}));
+    q('#legionTreeViewer')?.addEventListener('keydown',event=>{
+      if(event.defaultPrevented||event.altKey||event.ctrlKey||event.metaKey)return;
+      if(event.key==='ArrowLeft'){
+        event.preventDefault();
+        showLegionAt(activeLegionIndex-1,{animate:true,direction:-1});
+      }else if(event.key==='ArrowRight'){
+        event.preventDefault();
+        showLegionAt(activeLegionIndex+1,{animate:true,direction:1});
+      }
+    });
     root?.addEventListener('scroll',updateViewerFade,{passive:true});
     window.addEventListener('resize',updateViewerFade,{passive:true});
     root?.addEventListener('click',event=>{
@@ -1062,6 +1092,7 @@
     normalizeTreePayload,
     renderTreeMarkup,
     showLegionAt,
+    animateViewerCard,
     updateViewerFade,
     classIconPath,
     applyTreePayload,
