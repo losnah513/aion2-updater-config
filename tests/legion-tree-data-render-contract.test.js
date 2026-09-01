@@ -476,7 +476,7 @@ assert(!css.includes('.legion-tree-department-card'));
 assert(css.includes('.legion-tree-rank-branch'));
 assert(css.includes('.legion-tree-affiliation-plate'));
 assert(css.includes('.legion-tree-viewer-card{position:relative;height:clamp('));
-assert(css.includes('calc(100dvh - 188px)'));
+assert(css.includes('calc(100dvh - 141px - var(--kinojo-notice-actual-height,47px))'));
 assert(css.includes('.legion-tree-viewer-nav{position:relative;z-index:6;width:176px'));
 assert(css.includes('@keyframes legion-tree-viewer-turn-next'));
 assert(css.includes('@keyframes legion-tree-viewer-turn-previous'));
@@ -485,7 +485,7 @@ assert(css.includes('.legion-tree-viewer-fade[data-visible="true"]{opacity:1}'))
 const mobileCss = css.slice(css.indexOf('@media(max-width:640px)'));
 assert(mobileCss.includes('.legion-tree-member-grid{gap:13px 7px}'));
 assert(mobileCss.includes('.legion-tree-viewer{grid-template-columns:32px minmax(0,1fr) 32px'));
-assert(mobileCss.includes('calc(100dvh - 206px)'));
+assert(mobileCss.includes('calc(100dvh - 203px - var(--kinojo-notice-actual-height,51px))'));
 assert(mobileCss.includes('.legion-tree-viewer-nav{width:104px;height:46px}'));
 
 const viewerLegions = names.map(legionName => fakeElement({ dataset: { legionName }, hidden: false }));
