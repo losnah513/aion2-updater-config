@@ -17,6 +17,8 @@ const searchRateMigration = fs.readFileSync(path.join(rootDir, 'supabase/migrati
 const candidateRegistrationMigration = fs.readFileSync(path.join(rootDir, 'supabase/migrations/20260831102651_legion_tree_candidate_registration_v458.sql'), 'utf8');
 const readResilienceMigration = fs.readFileSync(path.join(rootDir, 'supabase/migrations/20260901070217_legion_tree_public_snapshot_resilience_v461.sql'), 'utf8');
 const readResilienceRollback = fs.readFileSync(path.join(rootDir, 'supabase/rollbacks/20260901070217_legion_tree_public_snapshot_resilience_v461_rollback.sql'), 'utf8');
+const combatPowerMigration = fs.readFileSync(path.join(rootDir, 'supabase/migrations/20260901115318_legion_tree_combat_power_sort_v464.sql'), 'utf8');
+const combatPowerRollback = fs.readFileSync(path.join(rootDir, 'supabase/rollbacks/20260901115318_legion_tree_combat_power_sort_v464_rollback.sql'), 'utf8');
 const worker = fs.readFileSync(path.join(rootDir, 'supabase/functions/character-refresh-worker/index.ts'), 'utf8');
 const workflow = fs.readFileSync(path.join(rootDir, '.github/workflows/verify-legion-tree-pages.yml'), 'utf8');
 const viewerHarness = fs.readFileSync(path.join(rootDir, 'tests/legion-tree-viewer-layout-harness.html'), 'utf8');
@@ -67,8 +69,8 @@ vm.createContext(context);
 vm.runInContext(script, context, { filename: scriptPath });
 
 assert(window.KinojoLegionTree, 'KinojoLegionTree contract must be exported');
-assert(viewerHarness.includes('legion-tree.css?cache=2026090106'));
-assert(viewerHarness.includes('legion-tree.js?cache=2026090109'));
+assert(viewerHarness.includes('legion-tree.css?cache=2026090107'));
+assert(viewerHarness.includes('legion-tree.js?cache=2026090110'));
 assert(viewerHarness.includes('id="legionTreeViewerFade"'));
 assert(viewerHarness.includes("groupName:'소속 외'"));
 
@@ -95,7 +97,8 @@ function memberFixture(characterId, characterName, options = {}) {
     mainCharacterId: isMain ? characterId : (options.mainCharacterId || 700),
     mainCharacterName: isMain ? characterName : (options.mainCharacterName || '주인본캐'),
     serverId: 2002,
-    serverName: '지켈'
+    serverName: '지켈',
+    combatPower: Object.prototype.hasOwnProperty.call(options, 'combatPower') ? options.combatPower : null
   };
 }
 const payload = {
@@ -338,6 +341,10 @@ assert.strictEqual((markup.match(/data-role-key="default-terminal"/g) || []).len
 assert.strictEqual((markup.match(/class="legion-tree-stage is-terminal-branches"[^>]*><div class="legion-tree-stage-roles" data-role-count="1"/g) || []).length, 4);
 assert.strictEqual((markup.match(/data-legion-index="[1-3]"[^>]*aria-hidden="true"[^>]*hidden/g) || []).length, 3);
 assert(markup.includes('data-legion-index="0" data-legion-name="깡"'));
+assert(markup.includes('<div class="legion-tree-legion-title"><h2 id="legionTreeLegion1Title">깡</h2></div>'));
+assert(!markup.includes('MAIN LEGION'));
+assert(!markup.includes('LEGION 0'));
+assert(!markup.includes('깡 레기온</h2>'));
 assert(!markup.includes('<div class="legion-tree-role-plate"><strong>무소속</strong></div>'));
 assert(!markup.includes('legion-tree-department'));
 assert(markup.includes('/assets/images/classes/class_icon_gladiator.png'));
@@ -391,13 +398,31 @@ assert(nameStateMarkup.includes('<span class="legion-tree-name" data-name-overfl
 assert(nameStateMarkup.includes('<span class="legion-tree-name is-faded" data-name-overflow="true">가나다라마바</span>'));
 assert(nameStateMarkup.includes('data-character-name="이름&lt;&amp;&gt;&quot;&#39;"'));
 assert(nameStateMarkup.includes('title="이름&lt;&amp;&gt;&quot;&#39;"'));
-assert(nameStateMarkup.includes('aria-label="이름&lt;&amp;&gt;&quot;&#39; · 검성 · 부캐"'));
+assert(nameStateMarkup.includes('aria-label="이름&lt;&amp;&gt;&quot;&#39; · 검성 · 가나다라마의-부캐"'));
 assert(nameStateMarkup.includes('>이름&lt;&amp;&gt;&quot;&#39;</span>'));
 assert.strictEqual((nameStateMarkup.match(/class="legion-tree-character is-main"/g) || []).length, 2);
 assert.strictEqual((nameStateMarkup.match(/class="legion-tree-character is-alt"/g) || []).length, 4);
 assert(nameStateMarkup.includes('data-is-main="false" data-main-character-id="701" data-main-character-name="가나다라마"'));
-assert(nameStateMarkup.includes('<span class="legion-tree-kind">본캐</span>'));
-assert(nameStateMarkup.includes('<span class="legion-tree-kind">부캐</span>'));
+assert(nameStateMarkup.includes('<span class="legion-tree-kind" title="본캐">본캐</span>'));
+assert(nameStateMarkup.includes('<span class="legion-tree-kind" title="가나다라마의-부캐">가나다라마의-부캐</span>'));
+
+window.KinojoAuth = { getAccount() { return { mainCharacterName: '가나다라마' }; } };
+const ownerHighlightMarkup = window.KinojoLegionTree.renderTreeMarkup(
+  window.KinojoLegionTree.normalizeTreePayload(nameStatePayload)
+);
+assert.strictEqual((ownerHighlightMarkup.match(/is-current-account/g) || []).length, 2);
+assert.strictEqual((ownerHighlightMarkup.match(/data-current-account-character="true"/g) || []).length, 2);
+assert(ownerHighlightMarkup.includes('이름&lt;&amp;&gt;&quot;&#39; · 검성 · 가나다라마의-부캐 · 내 캐릭터'));
+delete window.KinojoAuth;
+
+const fallbackAltPayload = JSON.parse(JSON.stringify(payload));
+fallbackAltPayload.legions[0].stages[2].roles[0].groups[0].members = [
+  memberFixture(704, '소유자미확인', { isMain: false, mainCharacterName: ' ' })
+];
+const fallbackAltMarkup = window.KinojoLegionTree.renderTreeMarkup(
+  window.KinojoLegionTree.normalizeTreePayload(fallbackAltPayload)
+);
+assert(fallbackAltMarkup.includes('<span class="legion-tree-kind" title="부캐">부캐</span>'));
 
 const orderedPayload = JSON.parse(JSON.stringify(payload));
 orderedPayload.legions[0].stages[2].roles[0].groups = [
@@ -412,6 +437,22 @@ assert.deepStrictEqual(Array.from(orderedGroups[2].members, member => member.cha
 const orderedMarkup = window.KinojoLegionTree.renderTreeMarkup(orderedModel);
 assert(orderedMarkup.indexOf('data-group-key="group-10"') < orderedMarkup.indexOf('data-group-key="group-20"'));
 assert(orderedMarkup.indexOf('data-character-id="803"') < orderedMarkup.indexOf('data-character-id="801"'));
+
+const combatPowerPayload = JSON.parse(JSON.stringify(payload));
+combatPowerPayload.legions[0].stages[2].roles[0].groups[0].members = [
+  memberFixture(831, '낮은전투력', { combatPower: 180000 }),
+  memberFixture(832, '미확인전투력', { combatPower: null }),
+  memberFixture(833, '최고전투력첫째', { combatPower: 970000 }),
+  memberFixture(834, '최고전투력둘째', { combatPower: 970000 }),
+  memberFixture(835, '중간전투력', { combatPower: 540000 })
+];
+const combatPowerModel = window.KinojoLegionTree.normalizeTreePayload(combatPowerPayload);
+const combatPowerMembers = combatPowerModel.legions[0].stages[2].roles[0].groups[0].members;
+assert.deepStrictEqual(Array.from(combatPowerMembers, member => member.characterId), [833, 834, 835, 831, 832]);
+const combatPowerMarkup = window.KinojoLegionTree.renderTreeMarkup(combatPowerModel);
+assert(combatPowerMarkup.indexOf('data-character-id="833"') < combatPowerMarkup.indexOf('data-character-id="835"'));
+assert(combatPowerMarkup.indexOf('data-character-id="835"') < combatPowerMarkup.indexOf('data-character-id="832"'));
+assert(combatPowerMarkup.includes('data-combat-power="970000"'));
 
 const fiveBranchPayload = JSON.parse(JSON.stringify(payload));
 fiveBranchPayload.legions[0].stages[2].roles[0].groups = Array.from({ length: 5 }, (_, index) => ({
@@ -467,6 +508,9 @@ assert(nameFadeRule && nameFadeRule[1].includes('-webkit-mask-image:linear-gradi
 assert(nameFadeRule && nameFadeRule[1].includes('mask-image:linear-gradient'));
 assert(!nameBaseRule[1].includes('text-overflow:ellipsis'));
 assert(css.includes('.legion-tree-member-grid{width:min(100%,652px);display:grid;grid-template-columns:repeat(auto-fit,124px)'));
+assert(css.includes('.legion-tree-character.is-current-account{box-shadow:0 0 0 1px rgba(149,255,74,.96),0 0 9px rgba(125,255,58,.56)'));
+assert(css.includes('.legion-tree-kind{position:absolute'));
+assert(css.includes('max-width:calc(100% - 8px)'));
 assert(!css.includes('.legion-tree-member-grid[data-member-count='));
 assert(!css.includes('.legion-tree-member-grid[data-branch-count='));
 assert(css.includes('grid-template-columns:repeat(var(--legion-tree-role-count,1),minmax(0,1fr))'));
@@ -478,6 +522,11 @@ assert(css.includes('.legion-tree-affiliation-plate'));
 assert(css.includes('.legion-tree-viewer-card{position:relative;height:clamp('));
 assert(css.includes('calc(100dvh - 141px - var(--kinojo-notice-actual-height,47px))'));
 assert(css.includes('.legion-tree-viewer-nav{position:relative;z-index:6;width:176px'));
+assert(css.includes('.legion-tree-viewer-nav:before{content:""'));
+assert(css.includes('transition:transform .42s'));
+assert(css.includes('.legion-tree-viewer-nav-name{position:relative;z-index:1'));
+assert(css.includes('font-size:13px'));
+assert(css.includes('.legion-tree-legion-head{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)'));
 assert(css.includes('@keyframes legion-tree-viewer-turn-next'));
 assert(css.includes('@keyframes legion-tree-viewer-turn-previous'));
 assert(css.includes('scrollbar-width:none'));
@@ -487,6 +536,7 @@ assert(mobileCss.includes('.legion-tree-member-grid{gap:13px 7px}'));
 assert(mobileCss.includes('.legion-tree-viewer{grid-template-columns:32px minmax(0,1fr) 32px'));
 assert(mobileCss.includes('calc(100dvh - 203px - var(--kinojo-notice-actual-height,51px))'));
 assert(mobileCss.includes('.legion-tree-viewer-nav{width:104px;height:46px}'));
+assert(mobileCss.includes('.legion-tree-viewer-nav-name{padding:0 5px;font-size:11px}'));
 
 const viewerLegions = names.map(legionName => fakeElement({ dataset: { legionName }, hidden: false }));
 const viewerRoot = fakeElement({
@@ -601,7 +651,7 @@ window.KinojoSupabase = {
   assert(status.textContent.includes('레기온 4개'));
   assert(status.textContent.includes('구성원 4명'));
   assert(dispatched.some(event => event.type === 'kinojo:page-time'));
-  assert(cacheStore.has('kinojo:legion-tree:v460:last-good'));
+  assert(cacheStore.has('kinojo:legion-tree:v464:last-good'));
 
   let transientAttempts = 0;
   const retried = await window.KinojoLegionTree.requestTreePayloadWithRetry({
@@ -655,10 +705,10 @@ window.KinojoSupabase = {
     assert(!html.includes('본캐예시'));
     assert(html.includes('kinojo-character-reaction.css?cache=2026082201'));
     assert(html.includes('kinojo-character-reaction.js?cache=2026082701'));
-    assert(html.includes('legion-tree.css?cache=2026090106'));
+    assert(html.includes('legion-tree.css?cache=2026090107'));
     assert(html.includes('legion-tree-editor.js?cache=2026090105'));
     assert(html.includes('kinojo-supabase-features.js?cache=2026090101'));
-    assert(html.includes('legion-tree.js?cache=2026090109'));
+    assert(html.includes('legion-tree.js?cache=2026090110'));
     assert(!html.includes('legion-tree.js?cache=2026082403'));
   }
 
@@ -678,7 +728,7 @@ window.KinojoSupabase = {
   assert(!script.includes("renderServerOptions"));
   assert(!script.includes("selectedRaceId"));
   assert(script.includes("const TREE_DATABASE_CONTRACT='460'"));
-  assert(script.includes("TREE_CACHE_KEY='kinojo:legion-tree:v460:last-good'"));
+  assert(script.includes("TREE_CACHE_KEY='kinojo:legion-tree:v464:last-good'"));
   assert(script.includes('TREE_READ_RETRY_DELAYS_MS=Object.freeze([0,300,900])'));
   assert(script.includes('TREE_RECOVERY_DELAYS_MS=Object.freeze([5000,15000,30000])'));
   assert(script.includes('requestTreePayloadWithRetry'));
@@ -730,6 +780,25 @@ window.KinojoSupabase = {
     'drop table if exists private.legion_tree_public_snapshot_v461',
     'drop index if exists public.idx_character_master_legion_tree_source_v461'
   ]) assert(readResilienceRollback.includes(token), `read resilience rollback missing ${token}`);
+
+  for (const token of [
+    'private.kinojo_legion_tree_source_token_v464()',
+    'private.kinojo_legion_tree_build_payload_v464()',
+    'cm.latest_pve_combat_power as combat_power',
+    "'combatPower', mr.combat_power",
+    "'readOptimizationContract', '464'",
+    "'memberOrderContract', 'combat-power-desc-client-v464'",
+    'v_payload := private.kinojo_legion_tree_build_payload_v464()',
+    'select private.kinojo_legion_tree_refresh_snapshot_v461()'
+  ]) assert(combatPowerMigration.includes(token), `combat power migration missing ${token}`);
+
+  for (const token of [
+    'private.kinojo_legion_tree_source_token_v461()',
+    'v_payload := private.kinojo_legion_tree_build_payload_v461()',
+    'select private.kinojo_legion_tree_refresh_snapshot_v461()',
+    'drop function if exists private.kinojo_legion_tree_build_payload_v464()',
+    'drop function if exists private.kinojo_legion_tree_source_token_v464()'
+  ]) assert(combatPowerRollback.includes(token), `combat power rollback missing ${token}`);
 
   const searchWrapper = features.match(/async function searchLegionTreeCharacters\(extra=\{\}\)\{([\s\S]*?)\n  \}/);
   assert(searchWrapper, 'Legion Tree Server search wrapper missing');
