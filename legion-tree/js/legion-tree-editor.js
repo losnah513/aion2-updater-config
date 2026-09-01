@@ -432,8 +432,7 @@
 
   function renderParentOptions(draft,assignment,stageNo){
     const terminal=stageNo===draft.stageCount;
-    const assignedRole=roleByKey(draft,assignment.roleKey);
-    const defaultLabel=terminal?(assignedRole?.roleName||draft.stages.at(-1)?.stageName||'일반 구성원')+' 소속 (기본)':'상위 소속 선택 (필수)';
+    const defaultLabel=terminal?'무소속 (상위 부서 없음)':'상위 소속 선택 (필수)';
     const options=['<option value="">'+esc(defaultLabel)+'</option>'];
     for(const stage of draft.stages){
       if(stage.stageNo!==stageNo-1)continue;

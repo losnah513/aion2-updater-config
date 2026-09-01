@@ -223,11 +223,11 @@ assert.strictEqual(api.searchLegionMembers(draft, '없는이름').length, 0);
 
 for (const html of [pc, mobile]) {
   assert(html.includes('id="legionTreeEditorRoot"'));
-  assert(html.includes('legion-tree-editor.js?cache=2026090103'));
-  assert(html.includes('legion-tree.js?cache=2026090104'));
-  assert(html.includes('legion-tree.css?cache=2026090101'));
+  assert(html.includes('legion-tree-editor.js?cache=2026090104'));
+  assert(html.includes('legion-tree.js?cache=2026090105'));
+  assert(html.includes('legion-tree.css?cache=2026090102'));
   assert(html.includes('kinojo-supabase-features.js?cache=2026083108'));
-  assert(html.indexOf('legion-tree-editor.js?cache=2026090103') < html.indexOf('legion-tree.js?cache=2026090104'));
+  assert(html.indexOf('legion-tree-editor.js?cache=2026090104') < html.indexOf('legion-tree.js?cache=2026090105'));
 }
 
 for (const token of [
@@ -244,7 +244,7 @@ for (const token of [
   'data-editor-assign-result',
   'data-editor-legion',
   '상위 소속',
-  '소속 (기본)',
+  '무소속 (상위 부서 없음)',
   '소속 외 (독립 부서)',
   '기본 조직도로 초기화',
   'data-editor-cancel',
