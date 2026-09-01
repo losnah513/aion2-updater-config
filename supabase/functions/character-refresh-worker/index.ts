@@ -1,5 +1,5 @@
 /* KINOJO Character Refresh Worker
- * Contract 295.8 · 2026-09-01
+ * Contract 295.9 · 2026-09-01
  * - runQueue: lookup_session_targets를 최대 5명씩 공식 조회
  * - 3-2차: 조회 완료 후 Master → 성장 리뷰 → 랭킹 후처리
  * - 3-3차: Google list Queue → 실제 쓰기 → 행별 readback → 실패 행만 재전송
@@ -16,6 +16,7 @@
  * - 3-14차: self-handoff HTTP status 보존 · 502/503/504 숫자 우선 재시도 판정 · 오류 진단 강화
  * - 3-15차: Server 예약 실행의 완료/실패 상태를 자동화 제어 상태에 원자 반영
  * - 3-16차: 두 terminal miss 뒤에만 신원 복구 · DB461 서버 이전/레기온 원자 결과 검증
+ * - 3-17차: 이전 서버 상세 API의 식별값 없는 빈 200 프로필을 terminal miss로 정규화
  * - 레기온 트리 v455 단일 Target은 Master·관계·랭킹 확정 후 Google list 쓰기/readback을 생략
  * - 단계 체크포인트에 따라 실패 단계부터 최대 3회 재시작
  */
@@ -28,7 +29,7 @@ const CORS={
   "cache-control":"no-store",
   "x-content-type-options":"nosniff"
 };
-const API_VERSION="295.8";
+const API_VERSION="295.9";
 const CONTRACT="295";
 const BUILD_DATE="2026-09-01";
 const IDENTITY_DATABASE_CONTRACT="461";
@@ -242,7 +243,14 @@ function candidateFromStoredInfo(infoPayload,detail,expectedKey){
   const characterName=clean(profile.characterName||info.characterName||info.character_name,160);
   const profileImageUrl=clean(profile.profileImage||profile.profileImageUrl||info.profileImage||info.profileImageUrl,1600);
   const charKey=getCharKey(profileImageUrl)||clean(profile.charKey||info.charKey,160);
-  if(!characterName)return{ok:false,code:"STORED_DETAIL_NAME_MISSING"};
+  const characterId=clean(profile.characterId||info.characterId||info.character_id,800);
+  const responseServerId=positiveInt(profile.serverId||info.serverId||info.server_id);
+  if(!characterName){
+    const identityPresent=Boolean(characterId||responseServerId||profileImageUrl||charKey);
+    return identityPresent
+      ?{ok:false,code:"STORED_DETAIL_NAME_MISSING",terminal:false}
+      :{ok:false,code:"STORED_DETAIL_NOT_FOUND",terminal:true,emptyProfile:true};
+  }
   if(expectedKey&&charKey!==expectedKey)return{ok:false,code:charKey?"STORED_DETAIL_CHAR_KEY_MISMATCH":"STORED_DETAIL_CHAR_KEY_MISSING",actualCharKey:charKey};
   return{ok:true,candidate:{characterName,serverId:detail.serverId,serverName:clean(profile.serverName||info.serverName,120),characterId:detail.characterId,profileImageUrl,charKey,className:clean(profile.className||info.className,80),detailUrl:detail.detailUrl,method:"OFFICIAL_STORED_DETAIL_EXACT_KEY"}};
 }
@@ -260,7 +268,7 @@ async function resolveStoredDetailTarget(sessionId,sessionToken,target,context,c
   const checked=candidateFromStoredInfo(infoPayload,detail,expectedKey);
   if(checked.ok!==true){
     await progress(sessionId,sessionToken,"IDENTITY_RECOVERY",characterName,"저장 상세 식별값의 고유값 불일치 · 이름 기반 안전 조회로 전환",null,null,{targetId:target.targetId,code:checked.code});
-    return{found:false,code:checked.code,terminal:false,reviewRequired:/CHAR_KEY_MISMATCH/.test(checked.code),actualCharKey:checked.actualCharKey||""};
+    return{found:false,code:checked.code,terminal:checked.terminal===true,emptyProfile:checked.emptyProfile===true,reviewRequired:/CHAR_KEY_MISMATCH/.test(checked.code),actualCharKey:checked.actualCharKey||""};
   }
   let candidate=checked.candidate,identityRecovery=null;
   if(normalized(candidate.characterName)!==normalized(characterName)){
@@ -789,7 +797,7 @@ Deno.serve(async request=>{
   if(request.method!=="POST")return json({ok:false,message:"POST만 허용합니다."},405);
   try{
     const body=object(await request.json().catch(()=>({}))),action=clean(body.action,80);
-    if(action==="health")return json({ok:true,service:"character-refresh-worker",apiVersion:API_VERSION,databaseContract:CONTRACT,identityDatabaseContract:IDENTITY_DATABASE_CONTRACT,progressContract:"server-worker-seven-phase-v2",progressPhases:7,modes:["startAutonomous","autonomousTick","runQueue","runPostprocess"],queueBatchLimit:5,lookupOnlyPhase:false,postprocessPhase:true,sheetDeferred:false,sheetSyncPhase:true,sheetReadbackRequired:true,listSyncSingleWorkerLease:true,listSyncCompletionAtomic:true,legionTreeCharacterAddListless:true,legionTreeCharacterAddListWrite:false,legionTreeCharacterAddListReadback:false,legionTreeListlessDatabaseContract:"455",legionTreeListlessTargetSource:"server:legion_tree_character_add_v455",legionTreeListlessTerminalStage:"SERVER_QUEUE_CHARACTER_MASTER_DONE",etaContract:"remaining-plaync-targets-only",retryFailedRowsOnly:true,browserIndependentQueue:true,autonomousTickMode:"detached",autonomousHandoffRetryMax:AUTONOMOUS_HANDOFF_RETRY_DELAYS.length,autonomousHandoffRetryStatuses:[502,503,504],autonomousHandoffRetryClassifier:"http-status-first+message-fallback",autonomousHandoffHttpStatusPreserved:true,autonomousHandoffClassifierSelfTest:autonomousHandoffClassifierSelfTest(),targetAtomicFinalize:true,staleClaimRecoverySeconds:120,gearSpecificPayloadIds:true,officialStatePrecheck:true,perTargetReconcile:false,finalReconcileOnly:true,storesOfficialRaw:true,officialExactCombatPower:true,officialRateGate:"plaync_global_700ms",officialRawReuseSeconds:900,plaync429AttemptConsumed:false,identityRecovery:"two-terminal-misses-then-same-race-name-hint-exact-key",identityRecoveryEntry:"stored-detail-404+name-server-terminal-not-found",providerRetryEntersIdentityRecovery:false,serverTransferLegionAtomic:true,sameServerRenamePreservesLegion:true,listSyncEdge:"lookup-list-sync"});
+    if(action==="health")return json({ok:true,service:"character-refresh-worker",apiVersion:API_VERSION,databaseContract:CONTRACT,identityDatabaseContract:IDENTITY_DATABASE_CONTRACT,progressContract:"server-worker-seven-phase-v2",progressPhases:7,modes:["startAutonomous","autonomousTick","runQueue","runPostprocess"],queueBatchLimit:5,lookupOnlyPhase:false,postprocessPhase:true,sheetDeferred:false,sheetSyncPhase:true,sheetReadbackRequired:true,listSyncSingleWorkerLease:true,listSyncCompletionAtomic:true,legionTreeCharacterAddListless:true,legionTreeCharacterAddListWrite:false,legionTreeCharacterAddListReadback:false,legionTreeListlessDatabaseContract:"455",legionTreeListlessTargetSource:"server:legion_tree_character_add_v455",legionTreeListlessTerminalStage:"SERVER_QUEUE_CHARACTER_MASTER_DONE",etaContract:"remaining-plaync-targets-only",retryFailedRowsOnly:true,browserIndependentQueue:true,autonomousTickMode:"detached",autonomousHandoffRetryMax:AUTONOMOUS_HANDOFF_RETRY_DELAYS.length,autonomousHandoffRetryStatuses:[502,503,504],autonomousHandoffRetryClassifier:"http-status-first+message-fallback",autonomousHandoffHttpStatusPreserved:true,autonomousHandoffClassifierSelfTest:autonomousHandoffClassifierSelfTest(),targetAtomicFinalize:true,staleClaimRecoverySeconds:120,gearSpecificPayloadIds:true,officialStatePrecheck:true,perTargetReconcile:false,finalReconcileOnly:true,storesOfficialRaw:true,officialExactCombatPower:true,officialRateGate:"plaync_global_700ms",officialRawReuseSeconds:900,plaync429AttemptConsumed:false,identityRecovery:"two-terminal-misses-then-same-race-name-hint-exact-key",identityRecoveryEntry:"stored-detail-404-or-empty-identity-200+name-server-terminal-not-found",providerRetryEntersIdentityRecovery:false,serverTransferLegionAtomic:true,sameServerRenamePreservesLegion:true,listSyncEdge:"lookup-list-sync"});
     if(action==="startAutonomous")return await startAutonomous(body);
     if(action==="autonomousTick"){
       if(!internalRequest(request))return json({ok:false,code:"INTERNAL_ONLY",message:"서버 내부 자동 실행 요청만 허용합니다."},403);

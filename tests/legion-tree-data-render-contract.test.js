@@ -649,7 +649,7 @@ window.KinojoSupabase = {
   ]) assert(listlessMigration.includes(token), `DB455 listless contract missing: ${token}`);
   assert(!listlessMigration.includes('and cm.list_row is not null'));
   for (const token of [
-    'const API_VERSION="295.8"',
+    'const API_VERSION="295.9"',
     'kinojo_legion_tree_listless_policy_v455',
     'kinojo_legion_tree_listless_complete_v455',
     'if(listlessPolicy.skipListWrite===true)',

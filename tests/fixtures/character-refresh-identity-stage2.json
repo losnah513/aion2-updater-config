@@ -63,6 +63,29 @@
       "expected": { "found": false, "code": "NAME_SERVER_NOT_FOUND", "terminal": true }
     }
   ],
+  "storedInfoOutcomes": [
+    {
+      "name": "moved character empty 200 profile is terminal not found",
+      "payload": { "profile": { "characterId": null, "characterName": null, "profileImage": null, "serverId": null, "serverName": "" }, "stat": {}, "title": {} },
+      "detail": { "serverId": 2002, "characterId": "old-character-id", "detailUrl": "https://example.test/characters/2002/old-character-id" },
+      "expectedKey": "123456789012345",
+      "expected": { "ok": false, "code": "STORED_DETAIL_NOT_FOUND", "terminal": true, "emptyProfile": true }
+    },
+    {
+      "name": "partial 200 identity response remains retry-only",
+      "payload": { "profile": { "characterId": "old-character-id", "characterName": null, "profileImage": null, "serverId": 2002 } },
+      "detail": { "serverId": 2002, "characterId": "old-character-id", "detailUrl": "https://example.test/characters/2002/old-character-id" },
+      "expectedKey": "123456789012345",
+      "expected": { "ok": false, "code": "STORED_DETAIL_NAME_MISSING", "terminal": false }
+    },
+    {
+      "name": "stored profile char key mismatch remains review-only",
+      "payload": { "profile": { "characterId": "old-character-id", "characterName": "니꿍", "profileImage": "https://example.test/avatar?charKey=999999999999999", "serverId": 2002 } },
+      "detail": { "serverId": 2002, "characterId": "old-character-id", "detailUrl": "https://example.test/characters/2002/old-character-id" },
+      "expectedKey": "123456789012345",
+      "expected": { "ok": false, "code": "STORED_DETAIL_CHAR_KEY_MISMATCH" }
+    }
+  ],
   "transitions": [
     {
       "name": "same server rename preserves legion",
