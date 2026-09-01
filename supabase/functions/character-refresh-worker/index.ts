@@ -1,5 +1,5 @@
 /* KINOJO Character Refresh Worker
- * Contract 295.7 · 2026-08-31
+ * Contract 295.8 · 2026-09-01
  * - runQueue: lookup_session_targets를 최대 5명씩 공식 조회
  * - 3-2차: 조회 완료 후 Master → 성장 리뷰 → 랭킹 후처리
  * - 3-3차: Google list Queue → 실제 쓰기 → 행별 readback → 실패 행만 재전송
@@ -15,6 +15,7 @@
  * - 3-13차: 서버 자동 Batch self-handoff 502/503/504 일시 장애 재시도 · 중복 Worker claim 안전 종료
  * - 3-14차: self-handoff HTTP status 보존 · 502/503/504 숫자 우선 재시도 판정 · 오류 진단 강화
  * - 3-15차: Server 예약 실행의 완료/실패 상태를 자동화 제어 상태에 원자 반영
+ * - 3-16차: 두 terminal miss 뒤에만 신원 복구 · DB461 서버 이전/레기온 원자 결과 검증
  * - 레기온 트리 v455 단일 Target은 Master·관계·랭킹 확정 후 Google list 쓰기/readback을 생략
  * - 단계 체크포인트에 따라 실패 단계부터 최대 3회 재시작
  */
@@ -27,9 +28,10 @@ const CORS={
   "cache-control":"no-store",
   "x-content-type-options":"nosniff"
 };
-const API_VERSION="295.7";
+const API_VERSION="295.8";
 const CONTRACT="295";
-const BUILD_DATE="2026-08-31";
+const BUILD_DATE="2026-09-01";
+const IDENTITY_DATABASE_CONTRACT="461";
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:CORS});
 const clean=(value,max=1200)=>String(value??"").trim().slice(0,max);
 const object=value=>value&&typeof value==="object"&&!Array.isArray(value)?value:{};
@@ -41,6 +43,22 @@ const detailId=value=>encodeURIComponent(clean(value,800)).replace(/%3D/gi,"=");
 const escapeHtml=value=>String(value??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 const getCharKey=value=>{const source=clean(value,3000);const match=source.match(/[?&]charKey=(\d{10,})/i)||source.match(/\b(\d{10,})\b/);return match?match[1]:"";};
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+function identityRecoveryDecision(storedCode,nameSearchCode){
+  const stored=clean(storedCode,120),nameSearch=clean(nameSearchCode,120);
+  if(stored==="STORED_DETAIL_NOT_FOUND"&&nameSearch==="NAME_SERVER_NOT_FOUND")return{allowed:true,code:"IDENTITY_RECOVERY_ALLOWED",terminalMisses:[stored,nameSearch]};
+  if(stored==="PROVIDER_RETRY_REQUIRED"||nameSearch==="PROVIDER_RETRY_REQUIRED"||/(?:NAME_MISSING|CHAR_KEY_MISSING)/.test(stored))return{allowed:false,code:"PROVIDER_RETRY_REQUIRED",retryable:true,terminalMisses:[]};
+  if(/(?:CHAR_KEY_MISMATCH|IDENTITY_REVIEW_REQUIRED)/.test(`${stored} ${nameSearch}`))return{allowed:false,code:"IDENTITY_REVIEW_REQUIRED",retryable:false,terminalMisses:[]};
+  return{allowed:false,code:"IDENTITY_RECOVERY_EVIDENCE_INCOMPLETE",retryable:false,terminalMisses:[]};
+}
+function identityTransitionContract(applied,previousServerId,currentServerId){
+  const result=object(applied),previous=positiveInt(previousServerId||object(result.previous).serverId),current=positiveInt(currentServerId||object(result.current).serverId||object(result.character).serverId);
+  const databaseContract=clean(result.databaseContract,40),serverTransferred=previous!==null&&current!==null&&previous!==current;
+  if(!previous||!current)return{ok:false,code:"IDENTITY_TRANSITION_CONTEXT_MISSING",message:"신원 변경 전후 서버 식별값이 없습니다."};
+  if(databaseContract!==IDENTITY_DATABASE_CONTRACT)return{ok:false,code:"IDENTITY_DATABASE_CONTRACT_MISMATCH",message:`신원 적용 DB 계약 ${IDENTITY_DATABASE_CONTRACT} 확인이 필요합니다.`,databaseContract,previousServerId:previous,currentServerId:current};
+  if(serverTransferred&&(result.serverTransferred!==true||result.legionCleared!==true))return{ok:false,code:"SERVER_TRANSFER_LEGION_CONTRACT_MISMATCH",message:"서버 이전 결과에 레기온 원자 해제 확인값이 없습니다.",databaseContract,previousServerId:previous,currentServerId:current};
+  if(!serverTransferred&&(result.serverTransferred===true||result.legionCleared===true))return{ok:false,code:"SAME_SERVER_LEGION_CONTRACT_MISMATCH",message:"같은 서버 이름 변경에서 레기온 해제 결과가 반환되었습니다.",databaseContract,previousServerId:previous,currentServerId:current};
+  return{ok:true,databaseContract,serverTransferred,legionCleared:result.legionCleared===true,previousLegionName:clean(result.previousLegionName,160)||null,organizationAssignmentRemoved:result.organizationAssignmentRemoved===true,legionTreeRevisions:Array.isArray(result.legionTreeRevisions)?result.legionTreeRevisions:[],previousServerId:previous,currentServerId:current};
+}
 const AUTONOMOUS_HANDOFF_RETRY_DELAYS=[800,1600,3200];
 const AUTONOMOUS_HANDOFF_TRANSIENT_HTTP_STATUSES=new Set([502,503,504]);
 const transientAutonomousHandoffError=error=>{
@@ -183,22 +201,28 @@ function internalRequest(request){
   const env=service();
   return clean(request.headers.get("authorization"),5000)===`Bearer ${env.key}`;
 }
-function exactCandidate(payload,name,serverId,expectedKey){
+function exactCandidateOutcome(payload,name,serverId,expectedKey){
   const wanted=normalized(name);
+  let mismatchedCount=0;
   for(const source of rows(payload)){
     const item=object(source);const itemName=clean(item.name||item.characterName||item.character_name,160).replace(/<[^>]+>/g,"");const itemServer=positiveInt(item.serverId||item.server_id);
     if(normalized(itemName)!==wanted||itemServer!==serverId)continue;
     const image=clean(item.profileImageUrl||item.profile_image_url,1600);const itemKey=getCharKey(image);
-    if(expectedKey&&itemKey&&itemKey!==expectedKey)continue;
+    if(expectedKey&&itemKey&&itemKey!==expectedKey){mismatchedCount+=1;continue;}
     const characterId=decodeId(item.characterId||item.character_id||item.encryptedCharacterId);if(!characterId)continue;
-    return{characterName:itemName,serverId:itemServer,serverName:clean(item.serverName||item.server_name,120),characterId,profileImageUrl:image,charKey:itemKey,className:clean(item.className||item.class_name,80)};
+    return{found:true,code:"NAME_SERVER_EXACT_MATCH",terminal:false,candidate:{characterName:itemName,serverId:itemServer,serverName:clean(item.serverName||item.server_name,120),characterId,profileImageUrl:image,charKey:itemKey,className:clean(item.className||item.class_name,80)}};
   }
-  return null;
+  if(mismatchedCount>0)return{found:false,code:"NAME_SERVER_CHAR_KEY_MISMATCH",terminal:false,reviewRequired:true,mismatchedCount};
+  return{found:false,code:"NAME_SERVER_NOT_FOUND",terminal:true,mismatchedCount:0};
 }
 async function searchCharacter(name,serverId,expectedKey,sessionId,sessionToken){
   const url=new URL("https://aion2.plaync.com/ko-kr/api/search/aion2/search/v2/character");
   url.searchParams.set("keyword",name);url.searchParams.set("serverId",String(serverId));url.searchParams.set("page","1");url.searchParams.set("size","20");
-  return exactCandidate(await officialJson(url.toString(),sessionId,sessionToken,"SERVER_WORKER_SEARCH"),name,serverId,expectedKey);
+  try{return exactCandidateOutcome(await officialJson(url.toString(),sessionId,sessionToken,"SERVER_WORKER_SEARCH"),name,serverId,expectedKey);}
+  catch(error){
+    if(clean(error?.code,120)==="PLAYNC_HTTP_404")return{found:false,code:"NAME_SERVER_NOT_FOUND",terminal:true,httpStatus:404};
+    throw error;
+  }
 }
 function storedDetailIdentity(value,fallbackServerId){
   const source=clean(value,1600);if(!source)return null;
@@ -223,20 +247,20 @@ function candidateFromStoredInfo(infoPayload,detail,expectedKey){
   return{ok:true,candidate:{characterName,serverId:detail.serverId,serverName:clean(profile.serverName||info.serverName,120),characterId:detail.characterId,profileImageUrl,charKey,className:clean(profile.className||info.className,80),detailUrl:detail.detailUrl,method:"OFFICIAL_STORED_DETAIL_EXACT_KEY"}};
 }
 async function resolveStoredDetailTarget(sessionId,sessionToken,target,context,characterName,serverId,expectedKey){
-  const detail=storedDetailIdentity(context.detailUrl,serverId);if(!detail)return{found:false,code:"STORED_DETAIL_UNAVAILABLE"};
+  const detail=storedDetailIdentity(context.detailUrl,serverId);if(!detail)return{found:false,code:"STORED_DETAIL_UNAVAILABLE",terminal:false};
   await progress(sessionId,sessionToken,"OFFICIAL_STORED_DETAIL",characterName,"저장된 공식 상세 식별값 조회 중",null,null,{targetId:target.targetId,serverId:detail.serverId});
   const infoUrl=new URL("https://aion2.plaync.com/api/character/info");
   infoUrl.searchParams.set("lang","ko");infoUrl.searchParams.set("serverId",String(detail.serverId));infoUrl.searchParams.set("characterId",detail.characterId);
   let infoPayload;
   try{infoPayload=await officialJson(infoUrl.toString(),sessionId,sessionToken,"SERVER_WORKER_STORED_INFO");}
   catch(error){
-    if(clean(error?.code,120)==="PLAYNC_HTTP_404")return{found:false,code:"STORED_DETAIL_NOT_FOUND"};
+    if(clean(error?.code,120)==="PLAYNC_HTTP_404")return{found:false,code:"STORED_DETAIL_NOT_FOUND",terminal:true,httpStatus:404};
     throw error;
   }
   const checked=candidateFromStoredInfo(infoPayload,detail,expectedKey);
   if(checked.ok!==true){
     await progress(sessionId,sessionToken,"IDENTITY_RECOVERY",characterName,"저장 상세 식별값의 고유값 불일치 · 이름 기반 안전 조회로 전환",null,null,{targetId:target.targetId,code:checked.code});
-    return{found:false,code:checked.code,actualCharKey:checked.actualCharKey||""};
+    return{found:false,code:checked.code,terminal:false,reviewRequired:/CHAR_KEY_MISMATCH/.test(checked.code),actualCharKey:checked.actualCharKey||""};
   }
   let candidate=checked.candidate,identityRecovery=null;
   if(normalized(candidate.characterName)!==normalized(characterName)){
@@ -244,9 +268,12 @@ async function resolveStoredDetailTarget(sessionId,sessionToken,target,context,c
     if(applied.ok!==true)throw new WorkerError(clean(applied.message||applied.code||"저장 상세 식별값 이름 변경 반영 실패",1000),clean(applied.code||"IDENTITY_APPLY_FAILED",120),applied.retryable!==false);
     const current=object(applied.current);
     candidate={...candidate,characterName:clean(current.characterName||candidate.characterName,160),serverId:positiveInt(current.serverId)||candidate.serverId,serverName:clean(current.serverName||candidate.serverName,120),profileImageUrl:clean(current.profileImageUrl||candidate.profileImageUrl,1600)};
-    identityRecovery={...applied,recovered:applied.applied===true,method:"OFFICIAL_STORED_DETAIL_EXACT_KEY"};
+    const transition=identityTransitionContract(applied,serverId,candidate.serverId);
+    if(transition.ok!==true)throw new WorkerError(transition.message,transition.code,false,transition);
+    identityRecovery={...applied,recovered:applied.applied===true,method:"OFFICIAL_STORED_DETAIL_EXACT_KEY",transition};
+    await progress(sessionId,sessionToken,"IDENTITY_RECOVERY_APPLIED",candidate.characterName,"같은 서버 이름 변경 반영 · 레기온 소속 유지",null,null,{targetId:target.targetId,...transition});
   }
-  return{found:true,candidate,identityRecovery,characterName:candidate.characterName,serverId:candidate.serverId,expectedKey,prefetchedInfoPayload:infoPayload,lookupMethod:"stored_detail"};
+  return{found:true,candidate,identityRecovery,identityTransition:identityRecovery?.transition||null,characterName:candidate.characterName,serverId:candidate.serverId,expectedKey,prefetchedInfoPayload:infoPayload,lookupMethod:"stored_detail"};
 }
 function parserSource(infoPayload,equipmentPayload){
   const info=object(infoPayload),profile=object(info.profile),stat=object(info.stat),title=object(info.title);
@@ -353,16 +380,31 @@ async function resolveOfficialTarget(sessionId,sessionToken,target,context){
   const stored=await resolveStoredDetailTarget(sessionId,sessionToken,target,context,characterName,serverId,expectedKey);
   if(stored.found===true)return stored;
   await progress(sessionId,sessionToken,"OFFICIAL_SEARCH",characterName,"저장 상세 조회 불가 · PLAYNC 공식 서버·캐릭터명 조회 중",null,null,{targetId:target.targetId,serverId,storedDetailResult:stored.code||null});
-  let candidate=await searchCharacter(characterName,serverId,expectedKey,sessionId,sessionToken),identityRecovery=null;
+  const nameSearch=await searchCharacter(characterName,serverId,expectedKey,sessionId,sessionToken);
+  let candidate=nameSearch.found===true?nameSearch.candidate:null,identityRecovery=null,identityTransition=null,lookupMethod="name_search";
   if(!candidate){
-    await progress(sessionId,sessionToken,"IDENTITY_RECOVERY",characterName,"기존 이름·서버 조회 실패 · 이름 힌트 기반 신원 복구 중",null,null,{targetId:target.targetId});
+    const decision=identityRecoveryDecision(stored.code,nameSearch.code);
+    if(decision.allowed!==true){
+      throw new WorkerError(
+        decision.code==="IDENTITY_REVIEW_REQUIRED"?"저장 상세 또는 기존 이름 후보의 고유값이 달라 자동 신원 변경을 중단했습니다.":"저장 상세와 기존 이름·서버가 모두 terminal not-found로 확인되지 않아 신원 복구를 시작하지 않습니다.",
+        decision.code,
+        decision.retryable===true,
+        {storedDetailResult:stored.code||null,nameServerResult:nameSearch.code||null,identityRecoveryEntered:false}
+      );
+    }
+    await progress(sessionId,sessionToken,"IDENTITY_RECOVERY",characterName,"저장 상세·기존 이름/서버 terminal miss 확인 · 이름 힌트 기반 신원 복구 중",null,null,{targetId:target.targetId,storedDetailResult:stored.code,nameServerResult:nameSearch.code,terminalMisses:decision.terminalMisses,identityDatabaseContract:IDENTITY_DATABASE_CONTRACT});
+    const previousServerId=serverId;
     identityRecovery=await callEdge("character-identity-recovery",{action:"extensionProbe",sessionId,sessionToken,targetId:target.targetId,clientVersion:API_VERSION});
     if(identityRecovery.recovered!==true)throw new WorkerError(clean(identityRecovery.message||"동일 고유값 캐릭터를 찾지 못했습니다.",1000),clean(identityRecovery.code||"CHARACTER_NOT_FOUND",120),identityRecovery.retryable!==false);
     const recovered=object(identityRecovery.character||identityRecovery.current);characterName=clean(recovered.characterName,160);serverId=positiveInt(recovered.serverId);const recoveredId=decodeId(recovered.characterId);
     if(!characterName||!serverId||!recoveredId)throw new WorkerError("고유값 복구 결과에 현재 캐릭터 식별 정보가 없습니다.","IDENTITY_RECOVERY_INVALID",false);
+    identityTransition=identityTransitionContract(identityRecovery,previousServerId,serverId);
+    if(identityTransition.ok!==true)throw new WorkerError(identityTransition.message,identityTransition.code,false,identityTransition);
+    await progress(sessionId,sessionToken,"IDENTITY_RECOVERY_APPLIED",characterName,identityTransition.serverTransferred?"다른 서버 동일 고유값 확인 · 서버 이전과 레기온 해제 원자 반영":"같은 서버 이름 변경 반영 · 레기온 소속 유지",null,null,{targetId:target.targetId,...identityTransition});
     candidate={...recovered,characterName,serverId,characterId:recoveredId};
+    lookupMethod="identity_recovery";
   }
-  return{candidate,identityRecovery,characterName,serverId,expectedKey,prefetchedInfoPayload:null,lookupMethod:"name_search"};
+  return{candidate,identityRecovery,identityTransition,characterName,serverId,expectedKey,prefetchedInfoPayload:null,lookupMethod};
 }
 async function processTarget(sessionId,sessionToken,target,providedContext=null){
   const targetId=positiveInt(target.targetId);const lookupOrder=positiveInt(target.lookupOrder)||1;
@@ -432,7 +474,7 @@ async function processTarget(sessionId,sessionToken,target,providedContext=null)
   const submitted=await rpc("kinojo_snapshot_submit",{p_session_id:sessionId,p_session_token:sessionToken,p_snapshot:official.snapshot,p_lookup_order:lookupOrder});
   if(submitted.ok!==true)throw new WorkerError(clean(submitted.message||submitted.code||"Snapshot 저장 실패",1000),clean(submitted.code||"SNAPSHOT_SUBMIT_FAILED",120),submitted.retryable!==false);
   const finalized=await finalizeTarget(sessionId,sessionToken,targetId,submitted);
-  return{ok:true,targetId,lookupOrder,identityRecovered:resolved.identityRecovery?.recovered===true,character:{characterName:official.officialName,serverId,serverName:official.officialServerName,className:clean(adapted.profile.className,80),profileImageUrl:official.profileImageUrl},previous:context.previous||null,official:{itemLevel:adapted.itemLevel,combatPower:adapted.combatPower,precheck:checked},submitted,finalized};
+  return{ok:true,targetId,lookupOrder,identityRecovered:resolved.identityRecovery?.recovered===true,identityTransition:resolved.identityTransition||null,serverTransferred:resolved.identityTransition?.serverTransferred===true,legionCleared:resolved.identityTransition?.legionCleared===true,character:{characterName:official.officialName,serverId,serverName:official.officialServerName,className:clean(adapted.profile.className,80),profileImageUrl:official.profileImageUrl},previous:context.previous||null,official:{itemLevel:adapted.itemLevel,combatPower:adapted.combatPower,precheck:checked},submitted,finalized};
 }
 async function recordTargetFailure(sessionId,sessionToken,target,error){
   const code=clean(error?.code||"SERVER_QUEUE_TARGET_FAILED",120);const message=clean(error?.message||error||"Server Queue Target 처리 실패",1000);const retryable=error?.retryable!==false;
@@ -747,7 +789,7 @@ Deno.serve(async request=>{
   if(request.method!=="POST")return json({ok:false,message:"POST만 허용합니다."},405);
   try{
     const body=object(await request.json().catch(()=>({}))),action=clean(body.action,80);
-    if(action==="health")return json({ok:true,service:"character-refresh-worker",apiVersion:API_VERSION,databaseContract:CONTRACT,progressContract:"server-worker-seven-phase-v2",progressPhases:7,modes:["startAutonomous","autonomousTick","runQueue","runPostprocess"],queueBatchLimit:5,lookupOnlyPhase:false,postprocessPhase:true,sheetDeferred:false,sheetSyncPhase:true,sheetReadbackRequired:true,listSyncSingleWorkerLease:true,listSyncCompletionAtomic:true,legionTreeCharacterAddListless:true,legionTreeCharacterAddListWrite:false,legionTreeCharacterAddListReadback:false,legionTreeListlessDatabaseContract:"455",legionTreeListlessTargetSource:"server:legion_tree_character_add_v455",legionTreeListlessTerminalStage:"SERVER_QUEUE_CHARACTER_MASTER_DONE",etaContract:"remaining-plaync-targets-only",retryFailedRowsOnly:true,browserIndependentQueue:true,autonomousTickMode:"detached",autonomousHandoffRetryMax:AUTONOMOUS_HANDOFF_RETRY_DELAYS.length,autonomousHandoffRetryStatuses:[502,503,504],autonomousHandoffRetryClassifier:"http-status-first+message-fallback",autonomousHandoffHttpStatusPreserved:true,autonomousHandoffClassifierSelfTest:autonomousHandoffClassifierSelfTest(),targetAtomicFinalize:true,staleClaimRecoverySeconds:120,gearSpecificPayloadIds:true,officialStatePrecheck:true,perTargetReconcile:false,finalReconcileOnly:true,storesOfficialRaw:true,officialExactCombatPower:true,officialRateGate:"plaync_global_700ms",officialRawReuseSeconds:900,plaync429AttemptConsumed:false,identityRecovery:"official-info-exact-key-auto-else-admin-review",listSyncEdge:"lookup-list-sync"});
+    if(action==="health")return json({ok:true,service:"character-refresh-worker",apiVersion:API_VERSION,databaseContract:CONTRACT,identityDatabaseContract:IDENTITY_DATABASE_CONTRACT,progressContract:"server-worker-seven-phase-v2",progressPhases:7,modes:["startAutonomous","autonomousTick","runQueue","runPostprocess"],queueBatchLimit:5,lookupOnlyPhase:false,postprocessPhase:true,sheetDeferred:false,sheetSyncPhase:true,sheetReadbackRequired:true,listSyncSingleWorkerLease:true,listSyncCompletionAtomic:true,legionTreeCharacterAddListless:true,legionTreeCharacterAddListWrite:false,legionTreeCharacterAddListReadback:false,legionTreeListlessDatabaseContract:"455",legionTreeListlessTargetSource:"server:legion_tree_character_add_v455",legionTreeListlessTerminalStage:"SERVER_QUEUE_CHARACTER_MASTER_DONE",etaContract:"remaining-plaync-targets-only",retryFailedRowsOnly:true,browserIndependentQueue:true,autonomousTickMode:"detached",autonomousHandoffRetryMax:AUTONOMOUS_HANDOFF_RETRY_DELAYS.length,autonomousHandoffRetryStatuses:[502,503,504],autonomousHandoffRetryClassifier:"http-status-first+message-fallback",autonomousHandoffHttpStatusPreserved:true,autonomousHandoffClassifierSelfTest:autonomousHandoffClassifierSelfTest(),targetAtomicFinalize:true,staleClaimRecoverySeconds:120,gearSpecificPayloadIds:true,officialStatePrecheck:true,perTargetReconcile:false,finalReconcileOnly:true,storesOfficialRaw:true,officialExactCombatPower:true,officialRateGate:"plaync_global_700ms",officialRawReuseSeconds:900,plaync429AttemptConsumed:false,identityRecovery:"two-terminal-misses-then-same-race-name-hint-exact-key",identityRecoveryEntry:"stored-detail-404+name-server-terminal-not-found",providerRetryEntersIdentityRecovery:false,serverTransferLegionAtomic:true,sameServerRenamePreservesLegion:true,listSyncEdge:"lookup-list-sync"});
     if(action==="startAutonomous")return await startAutonomous(body);
     if(action==="autonomousTick"){
       if(!internalRequest(request))return json({ok:false,code:"INTERNAL_ONLY",message:"서버 내부 자동 실행 요청만 허용합니다."},403);
