@@ -2,7 +2,9 @@
 
 ## Legion Roster foundation
 
-PC `/legion-roster/` and mobile `/m/legion-roster/` reuse the public shell and shared navigation. Stage 1 is explicitly a layout preview: nine placeholder name cards, empty image areas, and main/alt card positions; it does not load or infer character facts. The default legion is 깡. Scope switching preserves the previous legion. Name cards remain upright while moving through a vertical center selection wheel; keyboard, click and native scroll share the same selection. Real roster data, library images and sound/haptic feedback follow the six-stage Drive plan.
+PC `/legion-roster/` and mobile `/m/legion-roster/` reuse the public shell and shared navigation. Stage 3 is an interaction preview with nine explicitly labeled placeholder cards. Upright wheel selection supports scroll, touch, click and keyboard, bounded preview search, and per-scope restoration. Independent sound/vibration switches persist locally; feedback requires interaction and supported browser APIs. At 700px and below, browsing stays on the list until explicit selection opens a body flip with family cards below the image area. Wide layouts reveal details then images. Back/ESC restores the list. Actual character facts connect in stage 4; library images, fullscreen viewing and download connect in stage 5. Character-add relocation remains stage 6.
+
+CONFIRMED (2026-09-07, stage 3): selection intent must survive ResizeObserver callbacks caused by status text wrapping. Reduced motion and rapid keyboard input share that same intent. Evidence: `tests/legion-roster-interaction-e2e.js`; recheck when selection, responsive CSS or shared subbar layout changes. Sound/vibration API dispatch is browser-tested with controlled stubs; physical device sensation is not asserted by automation.
 
 Known fact (2026-09-07): the shared route guard loads `ui/kinojo-common-navigation.js`; updating navigation requires its loader cache and the route-guard include caches in public entrypoints. The roster has its own `pageInfo` identity so common links resolve from the correct desktop/mobile root.
 
