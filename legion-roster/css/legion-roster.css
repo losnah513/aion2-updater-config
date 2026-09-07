@@ -1,0 +1,71 @@
+/* Legion Roster stage 1: page body only; shared shell owns fixed bars. */
+body.kinojo-page-legion-roster{margin:0;background:linear-gradient(180deg,#f8fbff,#eef4ff);color:#182238;font-family:Pretendard,"Noto Sans KR",system-ui,sans-serif}
+.roster-wrap,.roster-wrap *,.roster-subbar{box-sizing:border-box}
+.roster-subbar{justify-content:center;flex-direction:row;gap:20px;min-height:52px}
+.roster-preview-note{color:#64748b;font-size:11px}
+.roster-wrap{width:min(1180px,calc(100% - 32px));margin:auto;padding:10px 0}
+.roster-viewer{height:calc(100svh - var(--kinojo-shell-top,68px) - var(--kinojo-attached-subbar-height,52px) - var(--kinojo-notice-actual-height,47px) - 22px);min-height:320px;max-height:900px;display:grid;grid-template-rows:64px minmax(0,1fr);overflow:hidden;border:1px solid #dce4ef;border-radius:14px;background:#fff;box-shadow:0 16px 44px #26345214}
+.roster-heading{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;padding:0 22px;border-bottom:1px solid #edf1f7;gap:12px}
+.roster-heading h1{margin:0;text-align:center;font-size:22px;letter-spacing:-.04em}
+.roster-legion-nav{display:flex;align-items:center;gap:10px;min-height:44px;max-width:100%;width:max-content;padding:0 10px;border:0;border-radius:8px;background:transparent;color:#687b97;font:700 12px inherit;cursor:pointer}
+.roster-legion-nav:last-child{justify-self:end}
+.roster-legion-nav>span:first-child:last-child{font-size:25px}
+.roster-legion-nav:hover{background:#f1f6fd;color:#2563eb}
+.roster-legion-nav:disabled{visibility:hidden}
+.roster-body{min-height:0;display:grid;grid-template-columns:minmax(210px,29%) minmax(0,1fr);gap:26px;padding:22px 26px}
+.roster-selector{display:grid;grid-template-rows:auto minmax(0,1fr) 34px;min-width:0;min-height:0}
+.roster-search{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}
+.roster-search input{width:100%;min-width:0;height:40px;padding:0 10px;border:1px solid #cbd8e9;border-radius:var(--radius-control,3px);background:#fff;color:#25344b;font:inherit;font-size:12px}
+.roster-search button{min-height:40px;padding:0 12px;border:1px solid #b9cce6;border-radius:var(--radius-control,3px);background:#f2f6fc;color:#315d98;font:inherit;font-size:12px;cursor:pointer}
+.roster-wheel-window{position:relative;min-height:0;overflow:hidden;margin-top:12px}
+.roster-wheel-window:before,.roster-wheel-window:after{content:"";position:absolute;z-index:20;left:0;right:0;height:25%;pointer-events:none}
+.roster-wheel-window:before{top:0;background:linear-gradient(#fff,rgba(255,255,255,0))}
+.roster-wheel-window:after{bottom:0;background:linear-gradient(rgba(255,255,255,0),#fff)}
+.roster-wheel{height:100%;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;scroll-snap-type:y mandatory;overscroll-behavior-y:contain;padding:calc(var(--wheel-height,400px) / 2 - 40px) 12px;perspective:900px}
+.roster-wheel::-webkit-scrollbar,.roster-family::-webkit-scrollbar{display:none}
+.roster-option{height:80px;display:flex;align-items:center;justify-content:center;scroll-snap-align:center;position:relative;cursor:pointer;outline-offset:-3px}
+.roster-name-card{display:grid;align-content:center;gap:5px;width:100%;height:68px;padding:8px 18px;border:1px solid #d9e3f1;border-radius:10px;background:linear-gradient(135deg,#fff,#edf4fe);color:#50647f;transform:translateZ(var(--depth,-150px)) scale(var(--scale,.85));opacity:var(--opacity,.5);box-shadow:0 4px 12px #28476e0b;text-align:center;pointer-events:none}
+.roster-name-card strong{font-size:14px;letter-spacing:-.025em}
+.roster-name-card small{font-size:10px;color:#71829a}
+.roster-option[aria-selected="true"] .roster-name-card{border-color:#7ba3df;color:#1c4b94;background:linear-gradient(120deg,#fff,#e6efff);box-shadow:0 10px 22px #3668b02d}
+.roster-status{margin:0;align-self:center;text-align:center;font-size:10px;color:#64748b;line-height:1.5}
+.roster-detail{display:grid;grid-template-rows:auto minmax(0,1fr) 30px;min-width:0;min-height:0;padding-left:24px;border-left:1px solid #edf1f7}
+.roster-detail-heading{display:flex;align-items:baseline;gap:10px;padding:8px 0 16px}
+.roster-detail-heading span{font-size:10px;color:#73829a}
+.roster-detail-heading strong{font-size:16px;color:#253b5c}
+.roster-family{display:flex;align-items:center;gap:14px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;scroll-snap-type:x mandatory;min-height:0;padding:8px 2px 20px}
+.roster-character{flex:0 0 calc((100% - 28px) / 3);min-width:180px;max-width:270px;scroll-snap-align:start}
+.roster-image{height:clamp(150px,30svh,350px);border:1px solid #e0e7f0;border-radius:12px 12px 0 0;background:linear-gradient(145deg,#fff,#f8fafd);box-shadow:0 9px 24px #2d477809}
+.roster-info{position:relative;min-height:124px;padding:18px 12px 12px;border:1px solid #b9cde8;border-radius:0 0 10px 10px;background:linear-gradient(120deg,#eef5ff,#dce9fc)}
+.roster-character.is-alt .roster-info{border-color:#d2d9e5;background:linear-gradient(120deg,#f7f8fc,#e9edf4)}
+.roster-kind{display:inline-block;font-size:9px;font-weight:800;color:#366ba9}
+.is-alt .roster-kind{color:#718098}
+.roster-info h2{margin:5px 0 12px;font-size:15px}
+.roster-metrics{display:grid;gap:5px;color:#697b95;font-size:10px}
+.roster-metrics span{display:flex;justify-content:space-between;gap:8px}
+.roster-metrics b{font-size:12px;color:#334a68}
+.roster-detail-note{margin:0;text-align:center;color:#71829a;font-size:10px}
+.roster-body.is-turning{animation:rosterTurn .38s ease}
+@keyframes rosterTurn{from{opacity:.2;transform:translateX(var(--turn-x,16px))}to{opacity:1;transform:translateX(0)}}
+@media(max-width:700px){
+.roster-wrap{width:calc(100% - 12px)}
+.roster-subbar{gap:12px;padding:7px 10px;align-items:center}
+.roster-preview-note{font-size:9px;max-width:145px;line-height:1.5}
+.roster-viewer{grid-template-rows:52px minmax(0,1fr)}
+.roster-heading{padding:0 8px;gap:4px}.roster-heading h1{font-size:18px}
+.roster-legion-nav{font-size:10px;padding:0 4px;gap:5px}
+.roster-body{grid-template-columns:minmax(112px,39%) minmax(0,1fr);gap:10px;padding:12px 8px}
+.roster-search{grid-template-columns:minmax(0,1fr);gap:4px}
+.roster-search input{height:36px;padding:0 8px;font-size:11px}
+.roster-search button{min-height:30px;font-size:10px}
+.roster-detail{padding-left:10px}
+.roster-detail-heading{display:grid;gap:4px;padding:3px 0 10px}
+.roster-detail-heading strong{font-size:13px}
+.roster-wheel{padding-inline:3px}.roster-name-card{padding:8px 4px}.roster-name-card strong{font-size:11px}.roster-name-card small{font-size:9px}
+.roster-family{gap:10px;align-items:center;padding-bottom:12px}
+.roster-character{min-width:0;flex-basis:100%;max-width:none}
+.roster-image{height:clamp(130px,29svh,310px)}
+.roster-info{min-height:116px;padding:12px 8px}.roster-info h2{font-size:13px}
+.roster-detail-note,.roster-status{font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){.roster-body.is-turning{animation:none}}

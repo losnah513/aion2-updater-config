@@ -13,6 +13,7 @@
     const path=location.pathname.replace(/\\/g,'/');
     const mobile=/(^|\/)m(\/|$)/.test(path);
     if(path.includes('/hof/')||path.includes('/hall-of-fame/'))return {key:'hall',label:'명예의 전당',root:mobile?'../../':'../',mobile};
+    if(path.includes('/legion-roster/'))return {key:'legion-roster',label:'레기온 명부',root:mobile?'../../':'../',mobile};
     if(path.includes('/ranking/'))return {key:'ranking',label:'레기온 순위',root:mobile?'../../':'../',mobile};
     if(path.includes('/meter/'))return {key:'meter',label:'키노조 미터',root:mobile?'../../':'../',mobile};
     // Retired Sanctuary URLs are aliases of the upgraded canonical Sanctuary page.
