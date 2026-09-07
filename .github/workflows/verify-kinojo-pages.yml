@@ -239,8 +239,8 @@ jobs:
               Path("m/ranking/index.html"),
           ]
           required_assets = [
-              "kinojo-character-reaction.css?cache=2026082201",
-              "kinojo-character-reaction.js?cache=2026082701",
+              "kinojo-character-reaction.css?cache=2026090701",
+              "kinojo-character-reaction.js?cache=2026090701",
               "kinojo-character-detail-refresh.js?cache=2026082201",
               "kinojo-character-skill.css?cache=2026081001",
               "kinojo-character-daevanion.css?cache=2026081002",
@@ -399,6 +399,7 @@ jobs:
           npm install --prefix "$RUNNER_TEMP/roster-browser" --no-package-lock playwright@1.62.1
           "$RUNNER_TEMP/roster-browser/node_modules/.bin/playwright" install --with-deps chromium
           PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/legion-roster-interaction-e2e.js
+          PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/character-titles-e2e.js
 
       - name: Verify bridge startup with frozen cores
         shell: bash

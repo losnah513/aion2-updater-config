@@ -249,10 +249,10 @@
         '<button class="kinojo-character-reaction-close" type="button" aria-label="닫기" data-kinojo-character-reaction-close>×</button>' +
         '<div class="kinojo-character-live-status" id="kinojoCharacterLiveStatus" role="status" aria-live="polite"></div>' +
         '<header class="kinojo-character-reaction-profile">' +
+          '<div class="kinojo-character-reaction-kicker">CHARACTER SNAPSHOT</div>' +
           '<div class="kinojo-character-reaction-visual" aria-hidden="true"><div class="kinojo-character-reaction-avatar is-empty" id="kinojoCharacterReactionAvatar"></div><div class="kinojo-character-reaction-class" id="kinojoCharacterReactionClass"></div></div>' +
           '<div class="kinojo-character-reaction-info">' +
-            '<div class="kinojo-character-reaction-kicker">CHARACTER SNAPSHOT</div>' +
-            '<h2 class="kinojo-character-reaction-title" id="kinojoCharacterReactionTitle">캐릭터</h2>' +
+            '<div class="kinojo-character-reaction-name-row"><h2 class="kinojo-character-reaction-title" id="kinojoCharacterReactionTitle">캐릭터</h2><a class="kinojo-character-reaction-detail" id="kinojoCharacterReactionDetail" href="#" target="_blank" rel="noopener noreferrer">PLAYNC 정보실 ↗</a></div>' +
             '<div class="kinojo-character-reaction-identity" aria-label="캐릭터 기본 정보">' +
               '<span><b>클래스</b><strong id="kinojoCharacterReactionClassName">-</strong></span>' +
               '<span><b>서버</b><strong id="kinojoCharacterReactionServerName">-</strong></span>' +
@@ -274,10 +274,10 @@
                 '</span>' +
               '</span>' +
             '</div>' +
-            '<div class="kinojo-character-live-meta"><span id="kinojoCharacterLiveTime">저장 정보 확인 중</span><a class="kinojo-character-reaction-detail" id="kinojoCharacterReactionDetail" href="#" target="_blank" rel="noopener noreferrer">PLAYNC 정보실 ↗</a></div>' +
           '</div>' +
           '<aside class="kinojo-character-reaction-refresh-slot" id="kinojoCharacterDetailRefreshSlot" aria-label="전체 상세 정보"></aside>' +
         '</header>' +
+        '<section class="kinojo-character-titles" id="kinojoCharacterTitles" aria-label="적용 중인 타이틀" aria-live="polite"></section>' +
         '<nav class="kinojo-character-live-tabs" aria-label="캐릭터 상세 탭">' +
           '<button class="active" type="button" data-kinojo-character-tab="overview">능력치</button>' +
           '<button type="button" data-kinojo-character-tab="equipment">장비</button>' +
@@ -808,8 +808,6 @@
     renderLiveArcana(data);
     renderLiveDaevanion(data);
     updateCompareVisibility();
-    const time = document.getElementById('kinojoCharacterLiveTime');
-    if(time) time.textContent = 'PLAYNC 실시간 · ' + new Date(data.fetchedAt || Date.now()).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
     setLiveStatus('저장 프로필 조회 완료','ok');
   }
 
@@ -824,8 +822,52 @@
     if(!state.open || !state.target) return false;
     clearLiveCacheForTarget(state.target);
     await enrichTargetFromMaster();
+    loadEquippedTitles();
     await loadLiveOverview();
     return true;
+  }
+
+  let titleRequestId = 0;
+  const titleCategories = [
+    { category:'Attack', label:'공격계열' },
+    { category:'Defense', label:'방어계열' },
+    { category:'Etc', label:'기타계열' }
+  ];
+  const titleGrades = { Common:'일반', Rare:'희귀', Legend:'전승', Unique:'유일', Epic:'영웅', Mythic:'신화', Special:'특수' };
+
+  function renderEquippedTitles(rows, loading){
+    const root = document.getElementById('kinojoCharacterTitles');
+    if(!root) return;
+    root.setAttribute('aria-busy', loading ? 'true' : 'false');
+    root.innerHTML = '<h3>적용 중인 타이틀</h3><div class="kinojo-character-title-grid">' + titleCategories.map(category => {
+      const row = Array.isArray(rows) ? rows.find(value => value.category === category.category) : null;
+      const equipped = row?.status === 'equipped';
+      const grade = Object.hasOwn(titleGrades, row?.grade || '') ? row.grade : 'None';
+      const icon = safeUrl(row?.icon || '');
+      const message = loading ? '불러오는 중…' : row?.status === 'unequipped' ? '적용 중인 타이틀 없음' : '타이틀 정보 확인 불가';
+      return '<article data-title-category="' + category.category + '"><header>' +
+        (icon ? '<img src="' + icon + '" alt="" width="34" height="34" loading="lazy">' : '') +
+        '<strong>' + category.label + '</strong></header><div class="kinojo-character-title-body">' +
+        (equipped ? '<strong class="kinojo-character-title-name" data-title-grade="' + grade + '" aria-label="' + esc((titleGrades[grade] || '등급 미확인') + ' · ' + row.name) + '">' + esc(row.name) + '</strong>' +
+          (row.effectsAvailable && Array.isArray(row.effects) ? (row.effects.length ? '<ul>' + row.effects.map(effect => '<li>' + esc(effect) + '</li>').join('') + '</ul>' : '<p>적용 효과 없음</p>') : '<p>상세 효과 확인 불가</p>') : '<p>' + message + '</p>') +
+        '</div></article>';
+    }).join('') + '</div>';
+  }
+
+  async function loadEquippedTitles(){
+    const requestId = ++titleRequestId;
+    const identity = liveIdentityKey(state.target);
+    const target = liveIdentity(state.target);
+    renderEquippedTitles(null, true);
+    try{
+      const rpc = window.KinojoSupabaseRpcCore;
+      if(!rpc?.rpc || !target.serverId || !target.characterName) throw new Error('Title identity unavailable');
+      const data = await rpc.rpc('kinojo_character_equipped_titles_v466', { p_server_id:Number(target.serverId), p_character_name:String(target.characterName) });
+      if(!data?.ok || !Array.isArray(data.titles)) throw new Error('Title response unavailable');
+      if(requestId === titleRequestId && state.open && identity === liveIdentityKey(state.target)) renderEquippedTitles(data.titles, false);
+    }catch{
+      if(requestId === titleRequestId && state.open && identity === liveIdentityKey(state.target)) renderEquippedTitles(null, false);
+    }
   }
 
   async function loadLiveOverview(){
@@ -1100,6 +1142,7 @@
     document.body.classList.add('kinojo-character-reaction-open');
     state.open = true;
     enrichTargetFromMaster();
+    loadEquippedTitles();
     loadLiveOverview();
 
     const dialog = modal.querySelector('.kinojo-character-reaction-dialog');
