@@ -386,7 +386,7 @@
     const next=Math.max(0,Math.min(count-1,index));
     targetIndex=next;
     if(!wheel.clientHeight){
-      if(next!==selected)tick(Math.abs(next-selected));selected=next;interacting=false;pendingOpen=false;
+      if(next!==selected)tick(Math.abs(next-selected));selected=next;targetIndex=null;interacting=false;pendingOpen=false;
       detailReady=showDetail();return;
     }
     wheel.scrollTo({top:next*step,behavior:reduced.matches?'instant':'smooth'});
