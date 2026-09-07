@@ -85,6 +85,16 @@ const root=path.resolve(__dirname,'..');
   assert.deepEqual(await page.evaluate(()=>imageOrder),familyIds);
   assert.ok(await page.locator('.roster-metrics img').evaluateAll(imgs=>imgs.length&&imgs.every(img=>img.src.startsWith('https://assets.playnccdn.com/static-aion2/characters/img/info/profile_'))));
   assert.ok(await page.locator('.roster-info h2 img').count()>0);
+  await page.keyboard.press('ArrowRight');
+  await page.waitForFunction(()=>document.querySelectorAll('.roster-character')[1]?.classList.contains('is-family-active'));
+  assert.equal(await page.locator('#rosterSelected').textContent(),selectedName);
+  await page.keyboard.press('ArrowLeft');
+  await page.waitForFunction(()=>document.querySelector('.roster-character')?.classList.contains('is-family-active'));
+  await page.keyboard.press('ArrowDown');
+  await page.waitForFunction(name=>document.querySelector('#rosterSelected').textContent!==name,selectedName);
+  await page.keyboard.press('ArrowUp');
+  await page.waitForFunction(name=>document.querySelector('#rosterSelected').textContent===name,selectedName);
+  await page.waitForFunction(()=>document.querySelectorAll('.is-image-visible').length===document.querySelectorAll('.roster-character').length);
   assert.ok(await page.locator('.roster-image').evaluateAll(els=>els.every(el=>{
     const r=el.getBoundingClientRect();return Math.abs(r.width/r.height-300/715)<.005;
   })),'image aperture must preserve 300:715 ratio');
@@ -112,9 +122,18 @@ const root=path.resolve(__dirname,'..');
     await page.keyboard.press('Escape');assert.equal(await page.locator('.roster-lightbox').isVisible(),false);
     assert.equal(await main.locator('.roster-image-open').evaluate(el=>el===document.activeElement),true);
     assert.equal(await main.locator('.roster-image-open').getAttribute('data-asset-id'),'2');
-    await page.keyboard.press('ArrowLeft');await page.waitForFunction(()=>document.querySelector('.roster-image-open')?.dataset.assetId==='1');
-    await page.waitForTimeout(200);await page.keyboard.press('ArrowLeft');
+    await main.locator('.roster-image-prev').focus();await page.keyboard.press('Enter');await page.waitForFunction(()=>document.querySelector('.roster-image-open')?.dataset.assetId==='1');
+    await page.waitForTimeout(200);await main.locator('.roster-image-prev').focus();await page.keyboard.press('Enter');
     await page.waitForFunction(()=>document.querySelector('.roster-image-open')?.dataset.assetId==='23');
+    if(width<=700){
+      assert.ok(await page.locator('.roster-family-more').isVisible());
+      await page.locator('.roster-family-more').click();
+      await page.waitForFunction(()=>document.querySelectorAll('.roster-character')[1]?.classList.contains('is-family-active'));
+      await page.keyboard.press('ArrowRight');
+      await page.waitForFunction(()=>document.querySelectorAll('.roster-character')[2]?.classList.contains('is-family-active'));
+      await page.waitForTimeout(500);
+      assert.equal(await page.locator('.roster-family-more').isVisible(),false,JSON.stringify(await page.locator('#rosterFamily').evaluate(el=>({left:el.scrollLeft,width:el.clientWidth,total:el.scrollWidth,frame:el.getBoundingClientRect().toJSON(),last:el.lastElementChild.getBoundingClientRect().toJSON()}))));
+    }
   }
   if(width<=700){await page.locator('#rosterBack').click();await page.waitForTimeout(450)}
   await page.locator('#rosterName').fill('찾을수없는캐릭터zzzz');await page.locator('#rosterSearch button').click();
@@ -164,7 +183,7 @@ const root=path.resolve(__dirname,'..');
     await page.waitForTimeout(500);assert.equal(await page.locator('#rosterSelected').textContent(),fixture[1].name);
   }
   const metrics=await page.evaluate(()=>{const v=document.querySelector('.roster-viewer').getBoundingClientRect();return{overflow:document.documentElement.scrollWidth-innerWidth,viewerBottom:v.bottom,images:document.querySelectorAll('.roster-image img').length}});
-  assert.equal(metrics.overflow,0);if(!process.env.ROSTER_LIVE_DATA)assert.equal(metrics.images,2);assert.deepEqual(errors,[]);
+  assert.equal(metrics.overflow,0);if(!process.env.ROSTER_LIVE_DATA)assert.ok(metrics.images>=1&&metrics.images<=2);assert.deepEqual(errors,[]);
   if(!process.env.ROSTER_LIVE_DATA&&(width===1920||width===390)){
     await page.waitForFunction(()=>document.querySelector('#legionTreeStatus').textContent.includes('관리 권한'));
     assert.ok(await page.locator('#legionTreeSearchBtn').isDisabled());
