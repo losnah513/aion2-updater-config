@@ -6,10 +6,11 @@
 
 - 공식 계획: https://drive.google.com/file/d/1IBDnOgOgfFYPvzNpcOPSOLWrujp3nR7N/view
 - 공식 로그: https://drive.google.com/file/d/1E8TPDN9l7Ih-EG5FyfRS9tuL5HN9uvs7/view
-- 작업 브랜치: `codex/legion-roster-stage4`, 시작 main `99424d904bfc8e87dbe5bfbf275250c6b39ff35c`.
+- 작업 브랜치: `codex/legion-roster-stage5`, 시작 main `96d29430` (PR404 상세 헤더·타이틀 작업 보존).
 - DB465 실제 명부 검색·본부캐·최신 PVE 수치 연결. public RPC `kinojo_web_roster_list_v465` / `kinojo_web_roster_family_v465`, 운영 migration `20260907085508`, 저장소 CLI 생성 migration `20260907085239_legion_roster_public_read_v465.sql`. 읽기 전용이며 기존 캐릭터/권한/트리 쓰기 데이터는 변경하지 않는다.
-- 본캐부터 부캐까지 앞 카드 뒤에서 왼쪽→오른쪽으로 등장한다. 이미지 파일·전체화면·다운로드는 5단계, 캐릭터 추가 이동은 마지막 6단계다.
-- 경로: `/legion-roster/`, `/m/legion-roster/`. 페이지 스크립트/CSS cache `2026090705`.
+- 본캐부터 부캐까지 앞 카드 뒤에서 왼쪽→오른쪽으로 등장한 뒤 실제 연결 이미지가 카드 위로 올라온다. DB467 `kinojo_web_roster_images_v467`은 선택 인물의 공개 가족에 연결된 READY 이미지 최소 정보만 20/50 상한·커서로 반환한다. 기존 관리자 함수·테이블 권한 유지. CLI migration `20260907091815_legion_roster_images_v467.sql`, SQL 검증 `tests/legion-roster-images-v467.sql`.
+- 0장 빈 카드/1장 화살표 없음/복수 독립 rotateY, 화면 전체 dialog·닫기/ESC 포커스 복원, 원본 Blob 다운로드·실패 재시도. 전체화면 API에 의존하지 않아 미지원 브라우저도 동일한 화면 뷰어를 사용한다. 실기기 OS 저장 UI는 브라우저 자동화 결과와 구분한다. 캐릭터 추가 이동은 마지막 6단계다.
+- 경로: `/legion-roster/`, `/m/legion-roster/`. 페이지 스크립트/CSS cache `2026090706`.
 - 브라우저 회귀: `node tests/legion-roster-interaction-e2e.js` (Playwright 필요). `ROSTER_BASE_URL`로 운영 경로 검증 가능. 진동·소리 자동 검사는 API 호출 검증이며 실기기 감각 검증과 구분한다.
 - 검증: `node --check legion-roster/js/legion-roster.js`, `node tests/web-shell-auth-contract.test.js`, `node tests/legion-tree-data-render-contract.test.js`, `node tests/staged-page-contract.test.js`. 운영 배포·Drive 마감 및 정확한 다음 단계는 위 공식 로그 최신 회차를 기준으로 확인한다.
 

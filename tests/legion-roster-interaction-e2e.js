@@ -21,8 +21,16 @@ const root=path.resolve(__dirname,'..');
   const fixture=Array.from({length:55},(_,i)=>({characterId:String(i+1),name:'명단 카드 '+String(i+1).padStart(2,'0'),serverId:2002,serverName:'지켈',className:'궁성',legion:'깡',isMain:i===0}));
   fixture[0].name='매우긴캐릭터이름표시검증용캐릭터';
   fixture[3]={...fixture[3],name:fixture[1].name,serverId:2003,serverName:'다른 서버'};
+  const imageBytes=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Zl1sAAAAASUVORK5CYII=','base64');
+  let failDownload=false;
+  if(!process.env.ROSTER_LIVE_DATA)await page.route('**/storage/v1/object/public/kinojo-site-banners/**',route=>failDownload?route.fulfill({status:503,body:'unavailable'}):route.fulfill({contentType:'image/png',body:imageBytes,headers:{'Access-Control-Allow-Origin':'*'}}));
   if(!process.env.ROSTER_LIVE_DATA)await page.route('**/rest/v1/rpc/kinojo_web_roster_*',async route=>{
     rpcCalls++;const req=route.request().postDataJSON();const family=route.request().url().includes('family');
+    if(route.request().url().includes('images_v467')){
+      const count=req.p_character_id==='1'?23:req.p_character_id==='2'?1:0,offset=req.p_cursor?.offset||0;
+      await route.fulfill({json:{contractVersion:467,characterId:req.p_character_id,selectedCharacterId:req.p_selected_character_id,sourceToken:'images',total:count,nextCursor:offset+req.p_limit<count?{offset:offset+req.p_limit,sourceToken:'images'}:null,
+        items:Array.from({length:count},(_,i)=>({assetId:String(i+1),url:'https://josvoltpktvwysrasffq.supabase.co/storage/v1/object/public/kinojo-site-banners/2026/09/00000000-0000-0000-0000-'+String(i).padStart(12,'0')+'.png',mimeType:'image/png',width:1,height:1,alt:'테스트 이미지 '+i,revision:'1'})).slice(offset,offset+req.p_limit)}});return;
+    }
     if(req.p_query==='실패'){await route.fulfill({status:500,json:{message:'fixture error'}});return}
     if(req.p_query==='지연')await new Promise(r=>setTimeout(r,350));
     if(family&&req.p_character_id==='1')await new Promise(r=>setTimeout(r,350));
@@ -70,6 +78,30 @@ const root=path.resolve(__dirname,'..');
   assert.deepEqual(await page.evaluate(()=>imageOrder),familyIds);
   assert.ok(await page.locator('.roster-metrics img').evaluateAll(imgs=>imgs.length&&imgs.every(img=>img.src.startsWith('https://assets.playnccdn.com/static-aion2/characters/img/info/profile_'))));
   assert.ok(await page.locator('.roster-info h2 img').count()>0);
+  if(!process.env.ROSTER_LIVE_DATA){
+    const main=page.locator('.roster-character').nth(0),alt=page.locator('.roster-character').nth(1),empty=page.locator('.roster-character').nth(2);
+    await main.scrollIntoViewIfNeeded();
+    await page.waitForFunction(()=>document.querySelector('.roster-image-open')?.dataset.assetId==='1');
+    assert.equal(await main.locator('.roster-image-prev,.roster-image-next').count(),2);
+    assert.equal(await alt.locator('.roster-image-prev,.roster-image-next').count(),0);
+    assert.equal(await empty.locator('.roster-image img,.roster-image button').count(),0);
+    await main.locator('.roster-image-next').click();
+    await page.waitForFunction(()=>document.querySelector('.roster-image-open')?.dataset.assetId==='2');
+    assert.equal(await alt.locator('.roster-image-open').getAttribute('data-asset-id'),'1');
+    await main.locator('.roster-image-open').click();assert.ok(await page.locator('.roster-lightbox').isVisible());
+    const saved=page.waitForEvent('download');await page.locator('.roster-lightbox button').filter({hasText:'다운로드'}).click();
+    const file=await saved;assert.ok(file.suggestedFilename().endsWith('-2.png'));
+    assert.deepEqual(fs.readFileSync(await file.path()),imageBytes);
+    failDownload=true;await page.locator('.roster-lightbox button').filter({hasText:'다운로드'}).click();
+    await page.waitForFunction(()=>document.querySelector('.roster-lightbox p').textContent.includes('다운로드하지 못했습니다'));
+    failDownload=false;
+    await page.keyboard.press('Escape');assert.equal(await page.locator('.roster-lightbox').isVisible(),false);
+    assert.equal(await main.locator('.roster-image-open').evaluate(el=>el===document.activeElement),true);
+    assert.equal(await main.locator('.roster-image-open').getAttribute('data-asset-id'),'2');
+    await page.keyboard.press('ArrowLeft');await page.waitForFunction(()=>document.querySelector('.roster-image-open')?.dataset.assetId==='1');
+    await page.waitForTimeout(200);await page.keyboard.press('ArrowLeft');
+    await page.waitForFunction(()=>document.querySelector('.roster-image-open')?.dataset.assetId==='23');
+  }
   if(width<=700){await page.locator('#rosterBack').click();await page.waitForTimeout(450)}
   await page.locator('#rosterName').fill('찾을수없는캐릭터zzzz');await page.locator('#rosterSearch button').click();
   await page.waitForFunction(()=>document.querySelector('#rosterStatus').textContent.includes('조회 결과가 없습니다'));
@@ -85,10 +117,22 @@ const root=path.resolve(__dirname,'..');
   assert.equal(await page.locator('.roster-option[aria-selected="true"]').getAttribute('data-character-id'),selectedId);
   assert.equal(await page.locator('#rosterDetail').evaluate(node=>getComputedStyle(node).opacity),'0');
   if(process.env.ROSTER_LIVE_DATA){
-    await page.locator('.roster-option[aria-selected="true"]').click();
+    await page.locator('#rosterName').fill('여');await page.locator('#rosterSearch button').click();
+    await page.waitForFunction(()=>document.querySelector('.roster-option[data-character-id="96"]'));
+    await page.locator('.roster-option[data-character-id="96"]').click();
     await page.waitForFunction(()=>document.querySelector('#rosterBody').classList.contains('has-selection'));
     await page.waitForFunction(()=>document.querySelectorAll('.is-image-visible').length===document.querySelectorAll('.roster-character').length);
     await page.waitForTimeout(500);
+    const realImage=page.locator('.roster-character[data-character-id="96"] .roster-image-open');
+    await realImage.scrollIntoViewIfNeeded();await page.waitForFunction(()=>document.querySelector('.roster-character[data-character-id="96"] .roster-image-open')?.dataset.assetId);
+    await realImage.click();
+    if(width===1920||width===390){
+      const source=await page.locator('.roster-lightbox>img').getAttribute('src');
+      const original=await page.request.get(source);assert.ok(original.ok());
+      const saved=page.waitForEvent('download');await page.locator('.roster-lightbox button').filter({hasText:'다운로드'}).click();
+      const file=await saved;assert.deepEqual(fs.readFileSync(await file.path()),await original.body());
+    }
+    await page.keyboard.press('Escape');
   }
   if(!process.env.ROSTER_LIVE_DATA){
     await page.locator('#rosterName').fill('실패');await page.locator('#rosterSearch button').click();
@@ -106,7 +150,7 @@ const root=path.resolve(__dirname,'..');
     await page.waitForTimeout(500);assert.equal(await page.locator('#rosterSelected').textContent(),fixture[1].name);
   }
   const metrics=await page.evaluate(()=>{const v=document.querySelector('.roster-viewer').getBoundingClientRect();return{overflow:document.documentElement.scrollWidth-innerWidth,viewerBottom:v.bottom,images:document.querySelectorAll('.roster-image img').length}});
-  assert.equal(metrics.overflow,0);assert.equal(metrics.images,0);assert.deepEqual(errors,[]);
+  assert.equal(metrics.overflow,0);if(!process.env.ROSTER_LIVE_DATA)assert.equal(metrics.images,2);assert.deepEqual(errors,[]);
   if(process.env.ROSTER_EVIDENCE_DIR){fs.mkdirSync(process.env.ROSTER_EVIDENCE_DIR,{recursive:true});await page.screenshot({path:path.join(process.env.ROSTER_EVIDENCE_DIR,'roster-'+width+'.png'),fullPage:true})}
   results.push({width,height,...metrics,errors});await page.close();
  }
