@@ -27,15 +27,26 @@ const root=path.resolve(__dirname,'..');
   assert.equal(await page.locator('#rosterDetail').isVisible(),false);
   assert.deepEqual(await page.evaluate(()=>feedback),{sounds:0,vibrations:0});
   await page.evaluate(()=>{window.phases=[];new MutationObserver(()=>phases.push(document.querySelector('#rosterBody').dataset.phase)).observe(document.querySelector('#rosterBody'),{attributes:true,attributeFilter:['data-phase']})});
-  await page.locator('label:has(#rosterSound)').click();await page.locator('label:has(#rosterVibration)').click();
+  assert.equal(await page.locator('#rosterSound,#rosterVibration').count(),0);
+  assert.equal(await page.locator('.roster-metrics img').count(),6);
+  assert.ok(await page.locator('.roster-metrics img').evaluateAll(imgs=>imgs.every(img=>img.src.startsWith('https://assets.playnccdn.com/static-aion2/characters/img/info/profile_'))));
+  await page.evaluate(()=>{
+   window.cardOrder=[];window.imageOrder=[];
+   document.querySelectorAll('.roster-character').forEach((card,i)=>new MutationObserver(()=>{
+    if(card.classList.contains('is-card-visible')&&!cardOrder.includes(i))cardOrder.push(i);
+    if(card.classList.contains('is-image-visible')&&!imageOrder.includes(i)){if(cardOrder.length!==3)throw Error('Images appeared before family cards');imageOrder.push(i)}
+   }).observe(card,{attributes:true,attributeFilter:['class']}));
+  });
   await page.locator('#rosterWheel').focus();await page.keyboard.press('ArrowDown');await page.waitForTimeout(650);
   assert.equal(await page.locator('#rosterWheel').getAttribute('aria-activedescendant'),'roster-option-5');
   assert.ok((await page.evaluate(()=>feedback.sounds))>0);
   if(width<=700){assert.ok((await page.evaluate(()=>feedback.vibrations))>0);assert.equal(await page.locator('#rosterDetail').isVisible(),false);await page.keyboard.press('Enter')}
-  await page.waitForTimeout(800);
+  await page.waitForTimeout(1700);
   assert.equal(await page.locator('#rosterSelected').textContent(),'명단 카드 06');
   assert.equal(await page.locator('#rosterBody').getAttribute('data-phase'),'images');
   assert.deepEqual(await page.evaluate(()=>phases.slice(0,2)),['cards','images']);
+  assert.equal(await page.locator('.is-card-visible.is-image-visible').count(),3);
+  assert.deepEqual(await page.evaluate(()=>({cards:cardOrder,images:imageOrder})),{cards:[0,1,2],images:[0,1,2]});
   if(width<=700){await page.locator('#rosterBack').click();await page.waitForTimeout(450);assert.equal(await page.locator('#rosterWheel').getAttribute('aria-activedescendant'),'roster-option-5')}
   await page.locator('#rosterName').fill('없는 이름');await page.locator('#rosterSearch button').click();
   assert.match(await page.locator('#rosterStatus').textContent(),/조회 결과 없음/);
@@ -45,12 +56,12 @@ const root=path.resolve(__dirname,'..');
   await page.locator('label:has(#rosterScope)').click();await page.waitForTimeout(200);await page.locator('label:has(#rosterScope)').click();await page.waitForTimeout(300);
   assert.equal(await page.locator('#rosterName').inputValue(),'명단 카드 02');
   assert.equal(await page.locator('#rosterWheel').getAttribute('aria-activedescendant'),'roster-option-1');
-  await page.locator('label:has(#rosterSound)').click();await page.locator('label:has(#rosterVibration)').click();
-  const quiet=await page.evaluate(()=>({...feedback}));
+
+
   await page.emulateMedia({reducedMotion:'reduce'});
   await page.locator('#rosterWheel').focus();await page.keyboard.press('End');await page.keyboard.press('Enter');await page.waitForTimeout(200);
   assert.equal(await page.locator('#rosterSelected').textContent(),'명단 카드 09');
-  assert.deepEqual(await page.evaluate(()=>feedback),quiet);
+
   const metrics=await page.evaluate(()=>{const v=document.querySelector('.roster-viewer').getBoundingClientRect();return{overflow:document.documentElement.scrollWidth-innerWidth,viewerBottom:v.bottom,images:document.querySelectorAll('.roster-image img').length}});
   assert.equal(metrics.overflow,0);assert.equal(metrics.images,0);assert.deepEqual(errors,[]);
   if(process.env.ROSTER_EVIDENCE_DIR){fs.mkdirSync(process.env.ROSTER_EVIDENCE_DIR,{recursive:true});await page.screenshot({path:path.join(process.env.ROSTER_EVIDENCE_DIR,'roster-'+width+'.png'),fullPage:true})}
