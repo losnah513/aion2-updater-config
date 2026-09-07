@@ -168,3 +168,7 @@ body.legion-tree-editor-open{overflow:hidden}
   .legion-tree-editor-member{grid-template-columns:1fr}.legion-tree-editor-member>button{grid-column:1}.legion-tree-editor-role>header{grid-template-columns:minmax(0,1fr) 80px}.legion-tree-editor-role>header button{grid-column:1/-1;grid-row:auto}.legion-tree-editor-role>header .legion-tree-editor-capacity{grid-column:1/-1}.legion-tree-editor-assign,.legion-tree-editor-batch>div{grid-template-columns:1fr}.legion-tree-editor-foot>div:first-child{align-items:flex-start;flex-direction:column}.legion-tree-editor-foot p{max-width:none;text-align:left}
 }
 @media(prefers-reduced-motion:reduce){.legion-tree-editor-dialog *{scroll-behavior:auto!important;transition:none!important}}
+
+/* Character registration now belongs to the roster; this bar owns organization editing. */
+body.kinojo-page-legion-tree>.legion-tree-subbar{grid-template-columns:auto minmax(0,620px);padding-block:7px}
+@media(max-width:640px){body.kinojo-page-legion-tree>.legion-tree-subbar{grid-template-columns:auto minmax(0,1fr)}body.kinojo-page-legion-tree>.legion-tree-subbar .legion-tree-subbar-actions{display:flex;width:auto}}

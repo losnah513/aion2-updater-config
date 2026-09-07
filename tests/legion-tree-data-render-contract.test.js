@@ -69,8 +69,8 @@ vm.createContext(context);
 vm.runInContext(script, context, { filename: scriptPath });
 
 assert(window.KinojoLegionTree, 'KinojoLegionTree contract must be exported');
-assert(viewerHarness.includes('legion-tree.css?cache=2026090107'));
-assert(viewerHarness.includes('legion-tree.js?cache=2026090110'));
+assert(viewerHarness.includes('legion-tree.css?cache=2026090707'));
+assert(viewerHarness.includes('legion-tree.js?cache=2026090707'));
 assert(viewerHarness.includes('id="legionTreeViewerFade"'));
 assert(viewerHarness.includes("groupName:'소속 외'"));
 
@@ -676,12 +676,12 @@ window.KinojoSupabase = {
   for (const html of [pc, mobile]) {
     assert(html.includes('id="legionTreeRoot"'));
     assert(html.includes('id="legionTreeEditorRoot"'));
-    assert(html.includes('id="legionTreeSearchBtn"'));
-    assert(html.includes('id="legionTreeSearchResults"'));
-    assert(html.includes('id="legionTreeMainResults"'));
-    assert(html.includes('id="legionTreeAltResults"'));
-    assert(html.includes('id="legionTreeSearchCloseBtn"'));
-    assert(html.includes('id="legionTreeAddProgress"'));
+    assert(!html.includes('id="legionTreeSearchBtn"'));
+    assert(!html.includes('id="legionTreeSearchResults"'));
+    assert(!html.includes('id="legionTreeMainResults"'));
+    assert(!html.includes('id="legionTreeAltResults"'));
+    assert(!html.includes('id="legionTreeSearchCloseBtn"'));
+    assert(!html.includes('id="legionTreeAddProgress"'));
     assert(html.includes('id="legionTreeViewer"'));
     assert(html.includes('id="legionTreePrevBtn"'));
     assert(html.includes('id="legionTreeNextBtn"'));
@@ -690,26 +690,32 @@ window.KinojoSupabase = {
     assert(html.includes('id="legionTreeViewerCard"'));
     assert(html.includes('id="legionTreeViewerFade"'));
     assert(!html.includes('id="legionTreeServerHint"'));
-    assert(html.includes('aria-describedby="legionTreeStatus"'));
-    assert(/<\/section>\r?\n  <section class="legion-tree-search-results"/.test(html));
-    assert(html.includes('placeholder="본캐이름[서버]"'));
-    assert(html.includes('placeholder="부캐이름[서버]"'));
+
+
+
     assert(!html.includes('<span>본캐 이름</span>'));
     assert(!html.includes('<span>부캐 이름</span>'));
     assert(!html.includes('id="legionTreeRaceElyos"'));
     assert(!html.includes('id="legionTreeRaceAsmodian"'));
     assert(!html.includes('id="legionTreeServer"'));
-    assert(html.includes('aria-label="캐릭터 추가 진행 상태"'));
+
     assert(html.includes('Server 레기온 데이터를 불러오는 중'));
     assert(!html.includes('data-preview-card'));
     assert(!html.includes('본캐예시'));
     assert(html.includes('kinojo-character-reaction.css?cache=2026090701'));
     assert(html.includes('kinojo-character-reaction.js?cache=2026090701'));
-    assert(html.includes('legion-tree.css?cache=2026090107'));
+    assert(html.includes('legion-tree.css?cache=2026090707'));
     assert(html.includes('legion-tree-editor.js?cache=2026090105'));
     assert(html.includes('kinojo-supabase-features.js?cache=2026090101'));
-    assert(html.includes('legion-tree.js?cache=2026090110'));
+    assert(html.includes('legion-tree.js?cache=2026090707'));
     assert(!html.includes('legion-tree.js?cache=2026082403'));
+  }
+
+  for(const file of ['legion-roster/index.html','m/legion-roster/index.html']){
+    const html=fs.readFileSync(path.join(rootDir,file),'utf8');
+    for(const field of ["id=\"legionTreeSearchBtn\"","id=\"legionTreeSearchResults\"","id=\"legionTreeMainResults\"","id=\"legionTreeAltResults\"","id=\"legionTreeSearchCloseBtn\"","id=\"legionTreeAddProgress\"","aria-describedby=\"legionTreeStatus\"","placeholder=\"본캐이름[서버]\"","placeholder=\"부캐이름[서버]\"","aria-label=\"캐릭터 추가 진행 상태\""])assert(html.includes(field),file+' missing '+field);
+    assert(!html.includes('id="legionTreeEditBtn"'));
+    assert(!html.includes('최신 PVE'));
   }
 
   assert(script.includes("kinojo_web_legion_tree_server_reference_v372"));
@@ -736,7 +742,7 @@ window.KinojoSupabase = {
   assert(script.includes("ADD_ACCEPTED_CODE='ADD_QUEUE_ACCEPTED'"));
   assert(script.includes("if(state==='completed')return 3"));
   assert(!script.includes('SERVER_QUEUE_LIST_SYNC_DONE'));
-  assert(script.includes("const reloaded=await loadTreeData()"));
+  assert(script.includes("rosterMode?await window.KinojoRoster.refresh():await loadTreeData()"));
   assert(css.includes('.legion-tree-add-progress'));
   assert(css.includes('.legion-tree-add-progress{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))'));
   assert(css.includes('.legion-tree-subbar-feedback'));

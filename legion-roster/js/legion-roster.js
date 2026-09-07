@@ -13,6 +13,7 @@
   const label=i=>items[i]?.name||'';
   let listRevision=0,selectionRevision=0,listCursor=null,familyCursor=null,listBusy=false,familyBusy=false,activeQuery='';
   const inFlight=new Map(),cacheKeys=new Set();
+  let cacheEpoch=0;
   const scopeKey=()=>el('rosterScope').checked?'all':String(legion);
   let currentScope='0';
   let familyGeneration=0;
@@ -121,6 +122,7 @@
   }
 
   async function request(fn,params){
+    const epoch=cacheEpoch;
     const key='roster:465:'+fn+':'+JSON.stringify(params),cache=window.KinojoCache;
     const cached=cache?.get(key);if(cached)return cached;
     if(inFlight.has(key))return inFlight.get(key);
@@ -135,7 +137,7 @@
         if(!data||data.contractVersion!==(images?467:465)||!Array.isArray(data.items)||data.items.length>(params.p_limit||50)
           ||data.items.some(row=>images?(!/^\d+$/.test(row.assetId)||!safeImage(row.url)):(!/^\d+$/.test(row.characterId)||typeof row.name!=='string'))
           ||typeof data.sourceToken!=='string'||!Number.isInteger(data.total)||data.total<0)throw new Error('ROSTER_RESPONSE_INVALID');
-        cache?.set(key,data,30000);cacheKeys.delete(key);cacheKeys.add(key);
+        if(epoch===cacheEpoch){cache?.set(key,data,30000);cacheKeys.delete(key);cacheKeys.add(key)}
         while(cacheKeys.size>32){const oldest=cacheKeys.values().next().value;cacheKeys.delete(oldest);cache?.remove(oldest)}
         return data;
       }finally{clearTimeout(timeout)}
@@ -179,12 +181,14 @@
       renderOptions();
       el('rosterStatus').textContent=data.total?data.total+'명 · 카드를 눌러 선택하세요.':(activeQuery?'조회 결과가 없습니다.':'등록된 캐릭터가 없습니다.');
       if(openSingle&&items.length===1&&!listCursor)move(0,true);
+      return true;
     }catch(error){
       if(token!==listRevision||scope!==currentScope)return;
       if(append&&error.message==='ROSTER_CURSOR_EXPIRED'){
         window.KinojoCache?.clear('roster:465:');listBusy=false;return loadList(false,items[selected]?.characterId);
       }
       el('rosterStatus').textContent='명부를 불러오지 못했습니다. 조회를 눌러 다시 시도하세요.';
+      return false;
     }finally{if(token===listRevision){listBusy=false;wheel.setAttribute('aria-busy','false')}}
   }
   function renderFamily(rows,append=false){
@@ -197,7 +201,7 @@
       const heading=document.createElement('h2');
       const iconUrl=window.KinojoCommonUI?.classIconFor(row.className);
       if(iconUrl){const icon=document.createElement('img');icon.src=iconUrl;icon.alt=row.className;icon.width=22;icon.height=22;heading.append(icon)}
-      const name=document.createElement('span');name.textContent=row.name;heading.append(name);
+      const name=document.createElement('span');name.textContent=row.name;name.title=row.name;heading.append(name);
       const server=document.createElement('small');server.className='roster-server';server.textContent=serverLabel(row);
       const metrics=document.createElement('div');metrics.className='roster-metrics';
       for(const [key,alt,file] of [['itemLevel','아이템레벨','level'],['combatPower','전투력','power']]){
@@ -405,5 +409,12 @@
     if(reduced.matches){cancelTransition();revealAll()}
   });
   new ResizeObserver(resize).observe(wheel);
+  window.KinojoRoster=Object.freeze({refresh:async()=>{
+    cacheEpoch++;window.KinojoCache?.clear('roster:465:');inFlight.clear();cacheKeys.clear();
+    cancelTransition();familyGeneration++;imageObserver.disconnect();confirmed=-1;
+    body.classList.remove('has-selection','is-detail');selector.inert=false;detail.inert=true;
+    detail.setAttribute('aria-hidden','true');
+    return loadList(false,items[selected]?.characterId);
+  }});
   renderScope();
 })();
