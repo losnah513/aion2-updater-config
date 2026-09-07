@@ -113,6 +113,9 @@ KINOJO INFO GitHub Pages upload package.
 
 ## Character detail modal
 
+- Equipped titles use the read-only `kinojo_character_equipped_titles_v466` RPC over existing verified official snapshots. Attack/Defense/Etc render in that order with official category icons and light-mode grade colors. Only `equipStatList` appears as applied effects; owned `statList` is excluded and no totals are recalculated. Empty slots and unavailable data remain distinct, and request sequencing prevents stale titles after character changes.
+- The PLAYNC information link sits beside the character name; the former live-time row is removed. Profile and name share a grid row at all viewport widths.
+
 - The shared modal lives in `ui/kinojo-character-reaction.*` and is used by Hall of Fame and ranking pages on PC and mobile.
 - `ui/kinojo-character-skill-bridge.js` repairs the internal `.kinojo-character-reaction-scroll` viewport when a card click creates the modal lazily. The outer dialog stays locked while the internal viewport owns vertical scrolling.
 - The overview keeps stats and skills side by side on desktop, with independent category tabs to reduce vertical scrolling.

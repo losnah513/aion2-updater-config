@@ -80,7 +80,7 @@ for (const page of [
   'ranking/index.html', 'm/ranking/index.html'
 ]) {
   const html = read(page);
-  assert.equal((html.match(/kinojo-character-reaction\.js\?cache=2026082701/g) || []).length, 1, `${page}: reaction cache contract mismatch`);
+  assert.equal((html.match(/kinojo-character-reaction\.js\?cache=2026090701/g) || []).length, 1, `${page}: reaction cache contract mismatch`);
   assert.equal((html.match(/kinojo-character-skill-bridge\.js\?cache=2026083001/g) || []).length, 1, `${page}: reduced bridge cache contract mismatch`);
 }
 
