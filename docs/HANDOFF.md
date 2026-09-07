@@ -2,6 +2,8 @@
 
 ## 레기온 명부 · 2026-09-07
 
+- 빈 이미지 배경 후속 DB469: master.legion_source_snapshot_id → lookup_snapshots.officialRaw.info.profile.gender(1 남성/2 여성)만 images_v467 응답의 gender로 공개. 이미지 0개일 때 사용자 제공 male/female-background.png를 CSS 장식 배경으로 표시하며 버튼·전체 보기·다운로드 없음. 이미지가 있으면 라이브러리 이미지로 대체. 성별 미확인은 임의 추정하지 않음. 명부 cache2026090709.
+
 - 후속: DB468에서 LEGION_ROSTER LEFT/RIGHT를 기존 manifest·캠페인 저장·이벤트 페이지 계약 및 랜덤 풀 대상에 추가. 기존 저장 이벤트 대상은 유지하며 관리에서 명부를 선택해 적용한다. 공용 PC 런타임/관리자 페이지 라벨 연결. 명부 가족 탐색은 왼쪽 이전 카드가 있으면 <<<를 역방향 순차 점등하고 클릭으로 이동. cache2026090708.
 
 - 6단계: `codex/legion-roster-stage6`, 기준 main `70dd3c6202d32b17cec4aea14a5fa919fa75c2da`. 캐릭터 추가 입력/조회/후보/추가/진행 UI를 PC·모바일 트리에서 명부 서브바로 이동. 기존 legion-tree.js를 명부 모드로 재사용하며 DB/Edge 변경 없음. 완료 후 명부 캐시와 진행 중 읽기를 무효화하고 현재 범위 새로고침. 조직도 편집은 트리에 유지.

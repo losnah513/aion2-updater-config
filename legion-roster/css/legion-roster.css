@@ -207,3 +207,6 @@ body.kinojo-page-legion-roster>.legion-tree-search-results{z-index:91}
 
 .roster-family-prev{left:0;right:auto}
 .roster-family-prev span:nth-child(1){animation-delay:.36s}.roster-family-prev span:nth-child(3){animation-delay:0s}
+
+.roster-image.is-background-male{background:#fff url('../../assets/images/legion-roster/male-background.png') center / 100% auto no-repeat}
+.roster-image.is-background-female{background:#fff url('../../assets/images/legion-roster/female-background.png') center / 100% auto no-repeat}
