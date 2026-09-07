@@ -3,6 +3,7 @@
   'use strict';
 
   const q=(selector,root=document)=>root.querySelector(selector);
+  const rosterMode=Boolean(q('#rosterBody'));
   const SERVER_REFERENCE_RPC='kinojo_web_legion_tree_server_reference_v372';
   const TREE_RPC='kinojo_web_get_legion_tree';
   const TREE_CONTRACT='web-legion-tree-v1';
@@ -159,6 +160,7 @@
 
   function normalStatusMessage(){
     if(serverReferenceError)return serverReferenceError;
+    if(rosterMode)return canManageLegionTree()?'캐릭터 추가 · 이름 또는 이름[서버약칭]을 입력하세요.':'캐릭터 추가는 관리 권한이 필요합니다.';
     return serverReferenceReady?`이름만 입력하면 모든 활성 서버 · 이름[서버약칭]은 해당 서버 · ${treeStatusMessage}`:treeStatusMessage;
   }
 
@@ -291,11 +293,11 @@
       if(state==='completed'){
         renderAddProgress(2,'running');
         setStatus('캐릭터 Master 반영 완료 · 레기온 트리를 다시 확인하는 중…','#2563eb');
-        const reloaded=await loadTreeData();
+        const reloaded=rosterMode?await window.KinojoRoster.refresh():await loadTreeData();
         if(!reloaded)throw new Error('캐릭터 추가는 완료됐지만 레기온 트리를 다시 불러오지 못했습니다. 새로고침해 주세요.');
         renderAddProgress(3,'done');
         resetInputs({keepStatus:true,force:true});
-        setStatus('캐릭터 정보 반영과 레기온 트리 재확인이 완료되었습니다.','#15803d');
+        setStatus(rosterMode?'캐릭터 추가와 명부 새로고침이 완료되었습니다.':'캐릭터 정보 반영과 레기온 트리 재확인이 완료되었습니다.','#15803d');
         toast('캐릭터 추가가 완료되었습니다.');
         return runtime;
       }
@@ -401,7 +403,7 @@
   }
 
   function positionSearchResults(){
-    const root=q('#legionTreeSearchResults'),subbar=q('.legion-tree-subbar');
+    const root=q('#legionTreeSearchResults'),subbar=q('.roster-subbar')||q('.legion-tree-subbar');
     if(!root||!subbar)return false;
     root.style.setProperty('--legion-tree-search-top',`${Math.ceil(subbar.getBoundingClientRect().bottom+8)}px`);
     return true;
@@ -1083,7 +1085,7 @@
         clearSearchState();resetAddProgress();syncManagementControls();
         if(event.currentTarget===q('#legionTreeMainName')&&String(event.currentTarget?.value||'').trim())setMainRequiredError(false);
       });
-      input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();void handleSearch();}});
+      input.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.isComposing){event.preventDefault();void handleSearch();}});
     });
     q('#legionTreeSearchResults')?.addEventListener('click',event=>{
       const card=event.target?.closest?.('.legion-tree-search-card');
@@ -1135,7 +1137,7 @@
 
   function start(){
     bindPage();
-    void Promise.allSettled([loadServerReference(),loadTreeData()]);
+    void Promise.allSettled([...(q('#legionTreeMainName')?[loadServerReference()]:[]),...(!rosterMode?[loadTreeData()]:[])]);
   }
 
   window.KinojoLegionTree=Object.freeze({

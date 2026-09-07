@@ -13,9 +13,38 @@
   const label=i=>items[i]?.name||'';
   let listRevision=0,selectionRevision=0,listCursor=null,familyCursor=null,listBusy=false,familyBusy=false,activeQuery='';
   const inFlight=new Map(),cacheKeys=new Set();
+  let cacheEpoch=0;
   const scopeKey=()=>el('rosterScope').checked?'all':String(legion);
   let currentScope='0';
   let familyGeneration=0;
+  let activeFamily=0,detailReady=Promise.resolve(),familyLoad=null,horizontalIntent=0;
+  const moreFamily=button('','다음 캐릭터 보기');moreFamily.className='roster-family-more';moreFamily.hidden=true;
+  for(let i=0;i<3;i++){const arrow=document.createElement('span');arrow.textContent='›';arrow.setAttribute('aria-hidden','true');moreFamily.append(arrow)}
+  detail.append(moreFamily);
+  function updateFamilyHint(){
+    const family=el('rosterFamily');
+    const last=family.lastElementChild,frame=family.getBoundingClientRect();
+    moreFamily.hidden=!body.classList.contains('has-selection')||!(familyCursor||(last&&last.getBoundingClientRect().right>frame.right+1));
+  }
+  function selectFamily(index,scroll=false){
+    const family=el('rosterFamily'),cards=Array.from(family.children);if(!cards.length)return;
+    activeFamily=Math.max(0,Math.min(cards.length-1,index));
+    cards.forEach((card,i)=>{card.classList.toggle('is-family-active',i===activeFamily);card.tabIndex=i===activeFamily?0:-1;card.setAttribute('aria-current',String(i===activeFamily))});
+    if(scroll){cards[activeFamily].scrollIntoView({block:'nearest',inline:'center',behavior:reduced.matches?'instant':'smooth'});cards[activeFamily].focus({preventScroll:true})}
+    updateFamilyHint();
+  }
+  async function moveFamily(direction){
+    const intent=++horizontalIntent;
+    if(interacting||confirmed!==selected||!body.classList.contains('has-selection')){
+      wheel.scrollTo({top:(targetIndex??selected)*step,behavior:'instant'});draw();pendingOpen=true;finish();
+    }
+    await detailReady;if(intent!==horizontalIntent||!body.classList.contains('has-selection'))return;
+    const token=selectionRevision;
+    if(direction>0&&activeFamily+1>=el('rosterFamily').children.length&&familyCursor)await loadFamilyPage();
+    if(token!==selectionRevision||intent!==horizontalIntent)return;
+    selectFamily(activeFamily+direction,true);
+  }
+  moreFamily.addEventListener('click',()=>moveFamily(1));
   const imageObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{
     if(entry.isIntersecting){imageObserver.unobserve(entry.target);entry.target.loadLibrary?.()}
   }),{root:el('rosterFamily'),rootMargin:'0px 270px'});
@@ -81,7 +110,7 @@
       return true;
     }
     async function display(target,flip){
-      busy=true;prev.disabled=next.disabled=true;status.textContent='';
+      busy=true;prev.setAttribute('aria-disabled','true');next.setAttribute('aria-disabled','true');status.textContent='';
       try{
         while(target>=assets.length&&cursor){if(!await pageImages())return}
         if(!total)return;target%=total;
@@ -97,11 +126,10 @@
           status.textContent='이미지를 불러오지 못했습니다. ';
           const retry=button('다시 시도');retry.addEventListener('click',()=>display(target,flip));status.append(retry);
         }
-      }finally{busy=false;prev.disabled=next.disabled=false}
+      }finally{busy=false;prev.setAttribute('aria-disabled','false');next.setAttribute('aria-disabled','false')}
     }
     async function turn(direction){if(busy||total<2)return;await display((index+direction+total)%total,true)}
     prev.addEventListener('click',()=>turn(-1));next.addEventListener('click',()=>turn(1));
-    box.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();turn(e.key==='ArrowLeft'?-1:1)}});
     surface.addEventListener('click',()=>{if(assets[index]&&img.getAttribute('src'))openImage(assets[index],row,surface)});
     article.loadLibrary=async()=>{
       if(loaded)return;loaded=true;box.setAttribute('aria-busy','true');
@@ -121,6 +149,7 @@
   }
 
   async function request(fn,params){
+    const epoch=cacheEpoch;
     const key='roster:465:'+fn+':'+JSON.stringify(params),cache=window.KinojoCache;
     const cached=cache?.get(key);if(cached)return cached;
     if(inFlight.has(key))return inFlight.get(key);
@@ -135,7 +164,7 @@
         if(!data||data.contractVersion!==(images?467:465)||!Array.isArray(data.items)||data.items.length>(params.p_limit||50)
           ||data.items.some(row=>images?(!/^\d+$/.test(row.assetId)||!safeImage(row.url)):(!/^\d+$/.test(row.characterId)||typeof row.name!=='string'))
           ||typeof data.sourceToken!=='string'||!Number.isInteger(data.total)||data.total<0)throw new Error('ROSTER_RESPONSE_INVALID');
-        cache?.set(key,data,30000);cacheKeys.delete(key);cacheKeys.add(key);
+        if(epoch===cacheEpoch){cache?.set(key,data,30000);cacheKeys.delete(key);cacheKeys.add(key)}
         while(cacheKeys.size>32){const oldest=cacheKeys.values().next().value;cacheKeys.delete(oldest);cache?.remove(oldest)}
         return data;
       }finally{clearTimeout(timeout)}
@@ -179,25 +208,29 @@
       renderOptions();
       el('rosterStatus').textContent=data.total?data.total+'명 · 카드를 눌러 선택하세요.':(activeQuery?'조회 결과가 없습니다.':'등록된 캐릭터가 없습니다.');
       if(openSingle&&items.length===1&&!listCursor)move(0,true);
+      return true;
     }catch(error){
       if(token!==listRevision||scope!==currentScope)return;
       if(append&&error.message==='ROSTER_CURSOR_EXPIRED'){
         window.KinojoCache?.clear('roster:465:');listBusy=false;return loadList(false,items[selected]?.characterId);
       }
       el('rosterStatus').textContent='명부를 불러오지 못했습니다. 조회를 눌러 다시 시도하세요.';
+      return false;
     }finally{if(token===listRevision){listBusy=false;wheel.setAttribute('aria-busy','false')}}
   }
   function renderFamily(rows,append=false){
-    const family=el('rosterFamily');if(!append){familyGeneration++;imageObserver.disconnect();family.replaceChildren();family.scrollLeft=0}
+    const family=el('rosterFamily');if(!append){familyGeneration++;imageObserver.disconnect();family.replaceChildren();family.scrollLeft=0;activeFamily=0}
     rows.forEach(row=>{
       const article=document.createElement('article');article.className='roster-character '+(row.isMain?'is-main':'is-alt');article.dataset.characterId=row.characterId;
+      article.setAttribute('aria-label',row.name+' · '+(row.isMain?'본캐':'부캐'));
+      article.addEventListener('pointerdown',()=>selectFamily(Array.from(family.children).indexOf(article)));
       const image=document.createElement('div');image.className='roster-image';image.setAttribute('aria-hidden','true');
       const info=document.createElement('div');info.className='roster-info';
       const kind=document.createElement('span');kind.className='roster-kind';kind.textContent=row.isMain?'본캐':'부캐';
       const heading=document.createElement('h2');
       const iconUrl=window.KinojoCommonUI?.classIconFor(row.className);
       if(iconUrl){const icon=document.createElement('img');icon.src=iconUrl;icon.alt=row.className;icon.width=22;icon.height=22;heading.append(icon)}
-      const name=document.createElement('span');name.textContent=row.name;heading.append(name);
+      const name=document.createElement('span');name.textContent=row.name;name.title=row.name;heading.append(name);
       const server=document.createElement('small');server.className='roster-server';server.textContent=serverLabel(row);
       const metrics=document.createElement('div');metrics.className='roster-metrics';
       for(const [key,alt,file] of [['itemLevel','아이템레벨','level'],['combatPower','전투력','power']]){
@@ -211,6 +244,7 @@
       if(append)article.classList.add('is-card-visible','is-image-visible');
     });
     Array.from(family.children).forEach((card,i)=>card.style.zIndex=String(family.children.length-i));
+    selectFamily(activeFamily);
   }
   async function showDetail(){
     const row=items[selected];if(!row)return;
@@ -224,23 +258,31 @@
       el('rosterDetailNote').textContent=data.relationshipState==='OK'?'': '본캐 연결 정보를 확인할 수 없습니다.';
       el('rosterStatus').textContent=row.name+' · '+serverLabel(row);
       animateDetail();
+      updateFamilyHint();
     }catch(error){
       if(token!==selectionRevision||scope!==currentScope)return;
       el('rosterStatus').textContent='캐릭터 정보를 불러오지 못했습니다. 카드를 다시 선택하세요.';
       body.classList.remove('has-selection');detail.inert=true;
     }
   }
-  el('rosterFamily').addEventListener('scroll',async()=>{
-    const family=el('rosterFamily');
-    if(familyBusy||!familyCursor||family.scrollLeft+family.clientWidth<family.scrollWidth-100)return;
-    const token=selectionRevision,row=items[confirmed];if(!row)return;familyBusy=true;
+  async function loadFamilyPage(){
+    if(familyLoad)return familyLoad;
+    if(!familyCursor)return;
+    const token=selectionRevision,row=items[confirmed];if(!row)return;
+    familyLoad=(async()=>{
     try{
       const data=await request('kinojo_web_roster_family_v465',{p_character_id:row.characterId,p_cursor:familyCursor,p_limit:20});
       if(token!==selectionRevision)return;
       renderFamily(data.items,true);familyCursor=data.nextCursor;
     }catch(error){if(token===selectionRevision){el('rosterDetailNote').textContent='추가 정보를 불러오지 못했습니다. 카드를 다시 선택하세요.'}}
-    finally{familyBusy=false}
+    finally{familyLoad=null;updateFamilyHint()}
+    })();return familyLoad;
+  }
+  el('rosterFamily').addEventListener('scroll',()=>{
+    const family=el('rosterFamily');updateFamilyHint();
+    if(family.scrollLeft+family.clientWidth>=family.scrollWidth-100)void loadFamilyPage();
   },{passive:true});
+  new ResizeObserver(updateFamilyHint).observe(el('rosterFamily'));
 
   function unlock(){
     try{
@@ -335,7 +377,7 @@
     if(Math.abs(wheel.scrollTop-top)>1){wheel.scrollTo({top,behavior:'instant'});draw()}
     const open=pendingOpen||(!narrow.matches&&interacting&&confirmed!==selected);
     pendingOpen=false;interacting=false;targetIndex=null;
-    if(open)showDetail();
+    if(open)detailReady=showDetail();
     if(count&&selected>=count-5)loadList(true);
   }
   function move(index,open=false){
@@ -343,6 +385,10 @@
     unlock();interacting=true;pendingOpen=open;
     const next=Math.max(0,Math.min(count-1,index));
     targetIndex=next;
+    if(!wheel.clientHeight){
+      if(next!==selected)tick(Math.abs(next-selected));selected=next;targetIndex=null;interacting=false;pendingOpen=false;
+      detailReady=showDetail();return;
+    }
     wheel.scrollTo({top:next*step,behavior:reduced.matches?'instant':'smooth'});
     if(reduced.matches)draw();
     clearTimeout(settle);settle=setTimeout(finish,reduced.matches?0:180);
@@ -364,6 +410,14 @@
     const targets={ArrowDown:current+1,ArrowUp:current-1,Home:0,End:count-1,PageDown:current+3,PageUp:current-3};
     if(event.key in targets){event.preventDefault();move(targets[event.key])}
     if(event.key==='Enter'||event.key===' '){event.preventDefault();move(current,true)}
+  });
+  document.addEventListener('keydown',event=>{
+    if(event.target!==document.body&&!event.target.closest('.roster-wrap'))return;
+    if(event.defaultPrevented||event.altKey||event.ctrlKey||event.metaKey||event.isComposing||event.target.closest('input,textarea,select,[contenteditable="true"]'))return;
+    if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();void moveFamily(event.key==='ArrowLeft'?-1:1)}
+    else if(event.key==='ArrowUp'||event.key==='ArrowDown'){
+      event.preventDefault();move((targetIndex??selected)+(event.key==='ArrowUp'?-1:1),true);
+    }
   });
   function renderScope(){
     scopes.set(currentScope,{characterId:items[selected]?.characterId,query:activeQuery});
@@ -405,5 +459,12 @@
     if(reduced.matches){cancelTransition();revealAll()}
   });
   new ResizeObserver(resize).observe(wheel);
+  window.KinojoRoster=Object.freeze({refresh:async()=>{
+    cacheEpoch++;window.KinojoCache?.clear('roster:465:');inFlight.clear();cacheKeys.clear();
+    cancelTransition();familyGeneration++;imageObserver.disconnect();confirmed=-1;
+    body.classList.remove('has-selection','is-detail');selector.inert=false;detail.inert=true;
+    detail.setAttribute('aria-hidden','true');
+    return loadList(false,items[selected]?.characterId);
+  }});
   renderScope();
 })();
