@@ -85,7 +85,7 @@ jobs:
                   count = text.count(f'id="{item_id}"')
                   if count != 1:
                       raise SystemExit(f'{page}: {item_id} count={count}')
-              if 'admin.js?cache=2026082901' not in text:
+              if 'admin.js?cache=2026090708' not in text:
                   raise SystemExit(f'{page}: stale admin cache')
           source = Path('admin/js/admin-characters.js').read_text(encoding='utf-8')
           for token in [
