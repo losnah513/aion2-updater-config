@@ -1,5 +1,14 @@
 # KINOJO WEB HANDOFF
 
+## 레기온 명부 · 2026-09-07
+
+- 공식 계획: https://drive.google.com/file/d/1IBDnOgOgfFYPvzNpcOPSOLWrujp3nR7N/view
+- 공식 로그: https://drive.google.com/file/d/1E8TPDN9l7Ih-EG5FyfRS9tuL5HN9uvs7/view
+- 작업 브랜치: `codex/legion-roster-stage1`, 시작 main `9b9218a561cc77ebc0f10f965fe4dbe991e6ae41`.
+- 변경된 6단계의 1단계는 PC/mobile 실제 웹 뼈대다. 현재 구현은 확인용 명단 카드와 빈 이미지/관계 카드이며 실제 데이터·이미지·효과음·진동은 후속 범위다.
+- 경로: `/legion-roster/`, `/m/legion-roster/`. 페이지 스크립트/CSS cache `2026090701`.
+- 검증: `node --check legion-roster/js/legion-roster.js`, `node tests/web-shell-auth-contract.test.js`, `node tests/legion-tree-data-render-contract.test.js`, `node tests/staged-page-contract.test.js`. 운영 배포·Drive 마감 및 정확한 다음 단계는 위 공식 로그 최신 회차를 기준으로 확인한다.
+
 기준일: 2026-09-01 KST
 
 ## 저장소 / 현재 기준

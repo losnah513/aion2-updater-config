@@ -1,6 +1,6 @@
 /* KINOJO common navigation extension · 2026-08-20
    - Reuses the existing common Topbar/Drawer markup and visual contract.
-   - Owns only registration of the Legion Tree destination.
+   - Owns registration of Legion Tree and Legion Roster destinations.
    - Never creates a second Topbar/Drawer or page-specific shell geometry.
 */
 (function(){
@@ -107,6 +107,29 @@
     if(label&&label.textContent!=='레기온 트리') label.textContent='레기온 트리';
   }
 
+  function ensureRoster_(){
+    const active=path_().includes('/legion-roster/');
+    for(const selector of ['#kinojoTopNav','#sideDrawer .kinojo-drawer-nav']){
+      const container=document.querySelector(selector);
+      if(!container) continue;
+      let link=container.querySelector('[data-kinojo-nav-key="legion-roster"]');
+      if(!link){
+        link=document.createElement('a');
+        link.dataset.kinojoNavKey='legion-roster';
+        link.textContent='레기온 명부';
+        if(selector==='#kinojoTopNav')link.className='kinojo-top-nav-link';
+        const tree=container.querySelector('[data-kinojo-nav-key="legion-tree"]');
+        if(tree)tree.insertAdjacentElement('afterend',link);else container.appendChild(link);
+      }
+      link.setAttribute('href',base_()+'legion-roster/');
+      link.classList.toggle('active',active);
+      if(active){
+        container.querySelectorAll('a.active').forEach(other=>{if(other!==link){other.classList.remove('active');other.removeAttribute('aria-current');other.removeAttribute('aria-disabled');}});
+        link.setAttribute('aria-current','page');
+      }else link.removeAttribute('aria-current');
+    }
+  }
+
   function sync(){
     if(syncing) return false;
     syncing=true;
@@ -115,6 +138,7 @@
       const top=ensureTopbarTree_();
       const drawer=ensureDrawerTree_();
       syncTreeIdentity_();
+      ensureRoster_();
       return top&&drawer;
     }finally{syncing=false;}
   }

@@ -1,5 +1,11 @@
 # aion2-updater-config
 
+## Legion Roster foundation
+
+PC `/legion-roster/` and mobile `/m/legion-roster/` reuse the public shell and shared navigation. Stage 1 is explicitly a layout preview: nine placeholder name cards, empty image areas, and main/alt card positions; it does not load or infer character facts. The default legion is 깡. Scope switching preserves the previous legion. Name cards remain upright while moving through a vertical center selection wheel; keyboard, click and native scroll share the same selection. Real roster data, library images and sound/haptic feedback follow the six-stage Drive plan.
+
+Known fact (2026-09-07): the shared route guard loads `ui/kinojo-common-navigation.js`; updating navigation requires its loader cache and the route-guard include caches in public entrypoints. The roster has its own `pageInfo` identity so common links resolve from the correct desktop/mobile root.
+
 KINOJO INFO GitHub Pages upload package.
 
 - `index.html`: GitHub Pages root entry redirect

@@ -13,6 +13,8 @@ on:
       - "pages/**"
       - "m/pages/**"
       - "desktop/**"
+      - "legion-roster/**"
+      - "m/legion-roster/**"
       - "ranking/**"
       - "m/ranking/**"
       - "hof/**"
@@ -51,6 +53,8 @@ on:
       - "pages/**"
       - "m/pages/**"
       - "desktop/**"
+      - "legion-roster/**"
+      - "m/legion-roster/**"
       - "ranking/**"
       - "m/ranking/**"
       - "hof/**"
@@ -103,6 +107,9 @@ jobs:
           set -euo pipefail
 
           js_files=(
+            "legion-roster/js/legion-roster.js"
+            "ui/kinojo-common-navigation.js"
+            "core/kinojo-route-guard.js"
             "ui/kinojo-my-info-image-contract.js"
             "ui/kinojo-my-info-image-editor.js"
             "ui/kinojo-my-info-image-upload.js"
@@ -478,6 +485,12 @@ jobs:
           trap 'rm -rf "$tmp_dir"' EXIT
 
           files=(
+            "legion-roster/index.html"
+            "m/legion-roster/index.html"
+            "legion-roster/css/legion-roster.css"
+            "legion-roster/js/legion-roster.js"
+            "ui/kinojo-common-navigation.js"
+            "core/kinojo-route-guard.js"
             "index.html"
             "home.html"
             "m/index.html"

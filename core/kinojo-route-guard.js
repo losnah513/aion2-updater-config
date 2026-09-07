@@ -19,7 +19,7 @@
     if(window.__KINOJO_COMMON_NAVIGATION_INIT_DONE__) return;
     if(document.querySelector('script[data-kinojo-common-navigation]')) return;
     const script=document.createElement('script');
-    script.src='/ui/kinojo-common-navigation.js?cache=2026082003';
+    script.src='/ui/kinojo-common-navigation.js?cache=2026090701';
     script.async=true;
     script.dataset.kinojoCommonNavigation='true';
     document.head.appendChild(script);
