@@ -126,6 +126,7 @@ const root=path.resolve(__dirname,'..');
     await page.waitForFunction(()=>document.querySelector('.roster-lightbox p').textContent.includes('다운로드하지 못했습니다'));
     failDownload=false;
     await page.keyboard.press('Escape');assert.equal(await page.locator('.roster-lightbox').isVisible(),false);
+    await page.waitForFunction(()=>!document.querySelector('.roster-lightbox>img').hasAttribute('src'));
     assert.equal(await main.locator('.roster-image-open').evaluate(el=>el===document.activeElement),true);
     assert.equal(await main.locator('.roster-image-open').getAttribute('data-asset-id'),'2');
     await page.waitForFunction(()=>document.querySelector('.roster-image-prev')?.getAttribute('aria-disabled')!=='true');await main.locator('.roster-image-prev').focus();await page.keyboard.press('Enter');await page.waitForFunction(()=>document.querySelector('.roster-image-open')?.dataset.assetId==='1');
