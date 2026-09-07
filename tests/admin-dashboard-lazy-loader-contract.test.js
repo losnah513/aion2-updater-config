@@ -38,6 +38,6 @@ assert.ok(bootstrap.includes("if(pending&&typeof pending.then==='function')retur
 assert.ok(bootstrap.includes('if(state.loaded[key]&&!force&&!isImageContext)return'),'loaded image contexts must still refresh their workspace route when switching main/side');
 assert.ok(bootstrap.includes("addLog('ERROR','관리자 기능 모듈 로드 실패"),'lazy load failures must remain visible in the admin log');
 assert.ok(read('admin/js/admin-shared.js').includes('formatServerTime,action'),'the dashboard time formatter must be available without loading the sanctuary console');
-for(const html of [desktop,mobile])assert.ok(html.includes('admin.js?cache=2026082901'),'PC/mobile must share the lazy-loader cache generation');
+for(const html of [desktop,mobile])assert.ok(html.includes('admin.js?cache=2026090708'),'PC/mobile must share the lazy-loader cache generation');
 
 console.log('admin dashboard lazy-loader contract: PASS');

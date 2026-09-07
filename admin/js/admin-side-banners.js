@@ -4,7 +4,7 @@
 if(!A)throw Error('KINOJO Admin shared module is required.');
 const EDGE='kinojo-banner-media',BUCKET='kinojo-site-banners',FORMAT='SIDE_300_715';
 const SIDE_OUTPUT={width:600,height:1430,label:'600×1430'};
-const PAGES=[['ALL','전체 페이지'],['HOME','홈'],['HOF','명예의 전당'],['RANKING','레기온 순위'],['LEGION_TREE','레기온 트리'],['METER','키노조 미터'],['SANCTUARY','성역 메인'],['SANCTUARY_SCHEDULE','성역 스케줄']];
+const PAGES=[['ALL','전체 페이지'],['HOME','홈'],['HOF','명예의 전당'],['RANKING','레기온 순위'],['LEGION_TREE','레기온 트리'],['LEGION_ROSTER','레기온 명부'],['METER','키노조 미터'],['SANCTUARY','성역 메인'],['SANCTUARY_SCHEDULE','성역 스케줄']];
 const TARGET_PAGES=PAGES.filter(([code])=>code!=='ALL');
 const S={assets:[],campaigns:[],page:'ALL',slot:'BOTH',cid:0,selected:new Map(),manifests:{LEFT:null,RIGHT:null},url:'',assetTag:'ALL',campaignQuery:'',campaignStatus:'ACTIVE',campaignPage:1,campaignPageSize:8,loaded:false,busy:false};
 const $=(q,r=document)=>r.querySelector(q),$$=(q,r=document)=>Array.from(r.querySelectorAll(q));

@@ -126,12 +126,21 @@ const root=path.resolve(__dirname,'..');
     await page.waitForTimeout(200);await main.locator('.roster-image-prev').focus();await page.keyboard.press('Enter');
     await page.waitForFunction(()=>document.querySelector('.roster-image-open')?.dataset.assetId==='23');
     if(width<=700){
+      assert.equal(await page.locator('.roster-family-prev').isVisible(),false);
       assert.ok(await page.locator('.roster-family-more').isVisible());
       await page.locator('.roster-family-more').click();
       await page.waitForFunction(()=>document.querySelectorAll('.roster-character')[1]?.classList.contains('is-family-active'));
       await page.keyboard.press('ArrowRight');
       await page.waitForFunction(()=>document.querySelectorAll('.roster-character')[2]?.classList.contains('is-family-active'));
       await page.waitForTimeout(500);
+      assert.ok(await page.locator('.roster-family-prev').isVisible());
+      await page.locator('.roster-family-prev').click();
+      await page.waitForFunction(()=>document.querySelectorAll('.roster-character')[1]?.classList.contains('is-family-active'));
+      await page.locator('.roster-family-prev').click();
+      await page.waitForFunction(()=>document.querySelectorAll('.roster-character')[0]?.classList.contains('is-family-active'));
+      await page.waitForTimeout(500);
+      assert.equal(await page.locator('.roster-family-prev').isVisible(),false);
+      await page.keyboard.press('ArrowRight');await page.waitForTimeout(100);await page.keyboard.press('ArrowRight');await page.waitForTimeout(500);
       assert.equal(await page.locator('.roster-family-more').isVisible(),false,JSON.stringify(await page.locator('#rosterFamily').evaluate(el=>({left:el.scrollLeft,width:el.clientWidth,total:el.scrollWidth,frame:el.getBoundingClientRect().toJSON(),last:el.lastElementChild.getBoundingClientRect().toJSON()}))));
     }
   }

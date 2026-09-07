@@ -50,7 +50,7 @@ for (const file of doubleSlotPages) {
   const html = read(file);
   const layoutCache='2026090102';
   assert.ok(html.includes(`kinojo-pc-banners.css?cache=${layoutCache}`), `${file}: shared PC slot CSS is missing`);
-  const sizingCache='2026090103';
+  const sizingCache='2026090708';
   assert.ok(html.includes(`kinojo-pc-banners.js?cache=${sizingCache}`), `${file}: shared PC slot sizing script is missing`);
   assert.equal((html.match(/data-kinojo-pc-banner(?=[\s>])/g) || []).length, 2, `${file}: exactly one left and one right slot are required`);
   assert.match(html,/<aside class="kinojo-pc-banner-slot is-left" data-kinojo-pc-banner aria-hidden="true"><\/aside>/, `${file}: left slot must start empty`);
@@ -90,7 +90,7 @@ const windowMock={
 };
 const documentMock={
   readyState:'loading',
-  currentScript:{src:'https://kinojo.info/ui/kinojo-pc-banners.js?cache=2026090103'},
+  currentScript:{src:'https://kinojo.info/ui/kinojo-pc-banners.js?cache=2026090708'},
   documentElement:{clientWidth:1536},
   addEventListener:()=>{},
   querySelectorAll:()=>[]
@@ -113,7 +113,7 @@ assert.equal(resolutionHost.dataset.kinojoPcBannerVisible,'false','Narrow window
 const hofHtml = read('hof/index.html');
 const hofRender = read('hof/js/hall-render.js');
 assert.ok(hofHtml.includes('kinojo-pc-banners.css?cache=2026090102'), 'HOF PC slot CSS is missing');
-assert.ok(hofHtml.includes('kinojo-pc-banners.js?cache=2026090103'), 'HOF PC slot sizing script is missing');
+assert.ok(hofHtml.includes('kinojo-pc-banners.js?cache=2026090708'), 'HOF PC slot sizing script is missing');
 assert.equal((hofRender.match(/kinojo-pc-standard-host/g) || []).length, 2, 'Both HOF render paths must opt into the unified 1180px PC frame');
 assert.equal((hofRender.match(/kinojo-pc-banner-slot is-left/g) || []).length, 2, 'Both HOF render paths must include one left slot');
 assert.equal((hofRender.match(/kinojo-pc-banner-slot is-right/g) || []).length, 2, 'Both HOF render paths must include one right slot');
