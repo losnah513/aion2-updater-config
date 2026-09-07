@@ -17,7 +17,7 @@
 <link href="../../ui/kinojo-common-ui.css?cache=2026081205" rel="stylesheet"/>
 <link href="../../ui/kinojo-character-reaction.css?cache=2026082201" rel="stylesheet"/>
 <link href="../../ui/kinojo-public-shell.css?cache=2026083001" rel="stylesheet"/>
-<link href="../../legion-roster/css/legion-roster.css?cache=2026090701" rel="stylesheet"/>
+<link href="../../legion-roster/css/legion-roster.css?cache=2026090703" rel="stylesheet"/>
 <link rel="stylesheet" href="../../ui/kinojo-event-notice.css?cache=2026081003"/>
 <link href="../../ui/kinojo-staged-loading.css?cache=2026083001" rel="stylesheet"/>
 </head>
@@ -25,7 +25,9 @@
 
   <section class="hof-filter-bar kinojo-standard-subbar roster-subbar" aria-label="명부 보기 설정">
     <label class="kinojo-filter-switch"><span id="rosterScopeLabel">레기온별</span><input id="rosterScope" type="checkbox" aria-label="전체 레기온 명부 보기"/><span class="kinojo-filter-switch-track" aria-hidden="true"><span class="kinojo-filter-switch-knob"></span></span></label>
-    <span class="roster-preview-note">레이아웃 확인용 · 실제 명부 연결 전</span>
+    <label class="kinojo-filter-switch"><span>효과음</span><input id="rosterSound" type="checkbox" aria-label="카드 효과음"/><span class="kinojo-filter-switch-track" aria-hidden="true"><span class="kinojo-filter-switch-knob"></span></span></label>
+    <label class="kinojo-filter-switch"><span>진동</span><input id="rosterVibration" type="checkbox" aria-label="지원 기기 카드 진동"/><span class="kinojo-filter-switch-track" aria-hidden="true"><span class="kinojo-filter-switch-knob"></span></span></label>
+    <span class="roster-preview-note">조작 미리보기 · 실제 명부 연결 전</span>
   </section>
   <main class="roster-wrap kinojo-pc-banner-host kinojo-pc-standard-host">
     <aside class="kinojo-pc-banner-slot is-left" data-kinojo-pc-banner aria-hidden="true"></aside>
@@ -37,13 +39,13 @@
         <button class="roster-legion-nav" id="rosterNext" aria-label="다음 레기온" type="button"><span id="rosterNextName">낮</span><span aria-hidden="true">›</span></button>
       </header>
       <div class="roster-body" id="rosterBody">
-        <section class="roster-selector" aria-label="캐릭터 명단 선택">
-          <form class="roster-search" id="rosterSearch"><input class="kinojo-input" id="rosterName" placeholder="이름 조회" aria-label="캐릭터 이름 조회" autocomplete="off" maxlength="80"/><button class="kinojo-btn" type="submit">조회</button></form>
+        <section class="roster-selector" id="rosterSelector" aria-label="캐릭터 명단 선택">
+          <form class="roster-search" id="rosterSearch"><input class="kinojo-input" id="rosterName" placeholder="예: 명단 카드 01" aria-label="캐릭터 이름 조회" autocomplete="off" maxlength="80"/><button class="kinojo-btn" type="submit">조회</button></form><div class="roster-results" id="rosterResults" aria-label="예시 카드 조회 결과"></div>
           <div class="roster-wheel-window"><div class="roster-wheel" id="rosterWheel" role="listbox" aria-label="레이아웃 확인용 캐릭터 명단" tabindex="0"></div></div>
           <p class="roster-status" id="rosterStatus" role="status">명단을 위아래로 넘겨 보세요.</p>
         </section>
-        <section class="roster-detail" aria-label="선택 캐릭터의 본캐와 부캐">
-          <div class="roster-detail-heading"><span>선택 캐릭터</span><strong id="rosterSelected">명단 카드 01</strong></div>
+        <section class="roster-detail" id="rosterDetail" aria-hidden="true" inert aria-label="선택 캐릭터의 본캐와 부캐">
+          <div class="roster-detail-heading"><button type="button" id="rosterBack" class="roster-back">‹ 목록</button><span>선택 캐릭터</span><strong id="rosterSelected">명단 카드 01</strong></div>
           <div class="roster-family" id="rosterFamily">
             <article class="roster-character is-main"><div class="roster-image" aria-label="연결 이미지가 없는 빈 카드"></div><div class="roster-info"><span class="roster-kind">본캐</span><h2>본캐 이름</h2><div class="roster-metrics"><span>아이템레벨 <b>—</b></span><span>전투력 <b>—</b></span></div></div></article>
 <article class="roster-character is-alt"><div class="roster-image" aria-label="연결 이미지가 없는 빈 카드"></div><div class="roster-info"><span class="roster-kind">부캐</span><h2>부캐 이름</h2><div class="roster-metrics"><span>아이템레벨 <b>—</b></span><span>전투력 <b>—</b></span></div></div></article>
@@ -77,6 +79,6 @@
 <script src="../../ui/kinojo-event-notice.js?cache=2026081003"></script>
 
   
-<script src="../../legion-roster/js/legion-roster.js?cache=2026090701"></script>
+<script src="../../legion-roster/js/legion-roster.js?cache=2026090703"></script>
 </body>
 </html>

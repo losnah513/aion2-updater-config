@@ -4,9 +4,10 @@
 
 - 공식 계획: https://drive.google.com/file/d/1IBDnOgOgfFYPvzNpcOPSOLWrujp3nR7N/view
 - 공식 로그: https://drive.google.com/file/d/1E8TPDN9l7Ih-EG5FyfRS9tuL5HN9uvs7/view
-- 작업 브랜치: `codex/legion-roster-stage1`, 시작 main `9b9218a561cc77ebc0f10f965fe4dbe991e6ae41`.
-- 변경된 6단계의 1단계는 PC/mobile 실제 웹 뼈대다. 현재 구현은 확인용 명단 카드와 빈 이미지/관계 카드이며 실제 데이터·이미지·효과음·진동은 후속 범위다.
-- 경로: `/legion-roster/`, `/m/legion-roster/`. 페이지 스크립트/CSS cache `2026090701`.
+- 작업 브랜치: `codex/legion-roster-stage3`, 시작 main `6bd9949ee47140f27a0c1cbceb5a3eb09cf847d8`.
+- 3단계는 예시 명단 휠·검색·효과음/지원 진동·PC 순차 등장·700px 이하 목록/상세 flip이다. 실제 명부 연결은 4단계, 라이브러리 이미지·전체화면·다운로드는 5단계, 캐릭터 추가 이동은 마지막 6단계다.
+- 경로: `/legion-roster/`, `/m/legion-roster/`. 페이지 스크립트/CSS cache `2026090703`.
+- 브라우저 회귀: `node tests/legion-roster-interaction-e2e.js` (Playwright 필요). `ROSTER_BASE_URL`로 운영 경로 검증 가능. 진동·소리 자동 검사는 API 호출 검증이며 실기기 감각 검증과 구분한다.
 - 검증: `node --check legion-roster/js/legion-roster.js`, `node tests/web-shell-auth-contract.test.js`, `node tests/legion-tree-data-render-contract.test.js`, `node tests/staged-page-contract.test.js`. 운영 배포·Drive 마감 및 정확한 다음 단계는 위 공식 로그 최신 회차를 기준으로 확인한다.
 
 기준일: 2026-09-01 KST

@@ -1,4 +1,4 @@
-/* Legion Roster stage 1: page body only; shared shell owns fixed bars. */
+/* Legion Roster stage 3: page body only; shared shell owns fixed bars. */
 body.kinojo-page-legion-roster{margin:0;background:linear-gradient(180deg,#f8fbff,#eef4ff);color:#182238;font-family:Pretendard,"Noto Sans KR",system-ui,sans-serif}
 .roster-wrap,.roster-wrap *,.roster-subbar{box-sizing:border-box}
 .roster-subbar{justify-content:center;flex-direction:row;gap:20px;min-height:52px}
@@ -13,7 +13,7 @@ body.kinojo-page-legion-roster{margin:0;background:linear-gradient(180deg,#f8fbf
 .roster-legion-nav:hover{background:#f1f6fd;color:#2563eb}
 .roster-legion-nav:disabled{visibility:hidden}
 .roster-body{min-height:0;display:grid;grid-template-columns:minmax(210px,29%) minmax(0,1fr);gap:26px;padding:22px 26px}
-.roster-selector{display:grid;grid-template-rows:auto minmax(0,1fr) 34px;min-width:0;min-height:0}
+.roster-selector{display:grid;grid-template-rows:auto auto minmax(0,1fr) 34px;min-width:0;min-height:0}
 .roster-search{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}
 .roster-search input{width:100%;min-width:0;height:40px;padding:0 10px;border:1px solid #cbd8e9;border-radius:var(--radius-control,3px);background:#fff;color:#25344b;font:inherit;font-size:12px}
 .roster-search button{min-height:40px;padding:0 12px;border:1px solid #b9cce6;border-radius:var(--radius-control,3px);background:#f2f6fc;color:#315d98;font:inherit;font-size:12px;cursor:pointer}
@@ -54,8 +54,8 @@ body.kinojo-page-legion-roster{margin:0;background:linear-gradient(180deg,#f8fbf
 .roster-viewer{grid-template-rows:52px minmax(0,1fr)}
 .roster-heading{padding:0 8px;gap:4px}.roster-heading h1{font-size:18px}
 .roster-legion-nav{font-size:10px;padding:0 4px;gap:5px}
-.roster-body{grid-template-columns:minmax(112px,39%) minmax(0,1fr);gap:10px;padding:12px 8px}
-.roster-search{grid-template-columns:minmax(0,1fr);gap:4px}
+.roster-body{grid-template-columns:minmax(0,1fr);gap:0;padding:12px 14px}
+.roster-search{grid-template-columns:minmax(0,1fr) auto;gap:6px}
 .roster-search input{height:36px;padding:0 8px;font-size:11px}
 .roster-search button{min-height:30px;font-size:10px}
 .roster-detail{padding-left:10px}
@@ -69,3 +69,45 @@ body.kinojo-page-legion-roster{margin:0;background:linear-gradient(180deg,#f8fbf
 .roster-detail-note,.roster-status{font-size:9px}
 }
 @media(prefers-reduced-motion:reduce){.roster-body.is-turning{animation:none}}
+
+
+.roster-subbar{flex-wrap:wrap;gap:12px 20px}
+.roster-results{display:flex;flex-wrap:wrap;gap:4px;max-height:100px;overflow:auto}
+.roster-results:empty{display:none}
+.roster-results button,.roster-back{min-height:44px;border:1px solid #cbd8e9;border-radius:6px;background:#f5f8fe;color:#315d98;padding:6px 10px;cursor:pointer;font:inherit;font-size:12px}
+.roster-selector{grid-template-rows:auto auto minmax(0,1fr) 34px}
+.roster-results{grid-row:2}
+.roster-wheel-window{grid-row:3}
+.roster-status{grid-row:4}
+.roster-detail{visibility:hidden;pointer-events:none}
+.has-selection .roster-detail{visibility:visible;pointer-events:auto}
+.roster-detail.is-revealing{animation:rosterDetail .34s ease both}
+.roster-image{opacity:0;transition:opacity .22s ease}
+[data-phase="images"] .roster-image{opacity:1}
+.roster-back{display:none}
+.roster-name-card strong,.roster-info h2{overflow-wrap:anywhere}
+:is(.roster-search input,.roster-search button,.roster-back,.roster-results button,.roster-wheel):focus-visible{outline:2px solid #2563eb;outline-offset:2px}
+@keyframes rosterDetail{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:translateX(0)}}
+@keyframes rosterFlip{0%{opacity:.2;transform:perspective(1100px) rotateY(-86deg)}100%{opacity:1;transform:perspective(1100px) rotateY(0)}}
+@media(max-width:700px){
+ .roster-preview-note{max-width:none;flex-basis:100%;text-align:center}
+ .roster-subbar{gap:6px 14px}
+ .roster-detail{display:none;border:0;padding:0;grid-template-rows:auto minmax(0,1fr) auto}
+ .roster-body.is-detail .roster-selector{display:none}
+ .roster-body.is-detail .roster-detail{display:grid;visibility:visible}
+ .roster-detail-heading{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:0 0 8px}
+ .roster-back{display:inline-flex;align-items:center;margin-right:auto}
+ .roster-family{align-items:stretch;padding:0 2px 8px;gap:14px}
+ .roster-character{display:flex;flex-direction:column;justify-content:flex-end;min-height:0;flex-basis:100%}
+ .roster-image{height:auto;min-height:40px;flex:1}
+ .roster-info{flex:none;min-height:124px}
+ .roster-detail-note{padding:4px 0}
+ .roster-name-card{max-width:360px;padding:8px 14px}
+ .roster-name-card strong{font-size:15px}
+ .roster-body.is-flipping,.roster-body.is-returning{animation:rosterFlip .38s ease both}
+ .roster-detail.is-revealing{animation:none}
+}
+@media(prefers-reduced-motion:reduce){
+ .roster-detail.is-revealing,.roster-body.is-flipping,.roster-body.is-returning{animation:none}
+ .roster-image{transition:none}
+}
