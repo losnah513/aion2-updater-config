@@ -1,4 +1,4 @@
-/* Legion Roster stage 3: page body only; shared shell owns fixed bars. */
+/* Legion Roster: page body only; shared shell owns fixed bars. */
 body.kinojo-page-legion-roster{margin:0;background:linear-gradient(180deg,#f8fbff,#eef4ff);color:#182238;font-family:Pretendard,"Noto Sans KR",system-ui,sans-serif}
 .roster-wrap,.roster-wrap *,.roster-subbar{box-sizing:border-box}
 .roster-subbar{justify-content:center;flex-direction:row;gap:20px;min-height:52px}
@@ -119,3 +119,19 @@ body.kinojo-page-legion-roster{margin:0;background:linear-gradient(180deg,#f8fbf
  .roster-body.is-flipping,.roster-body.is-returning{animation:none}
  .roster-image,.roster-info{transition:none}
 }
+.roster-image{position:relative;overflow:hidden;perspective:900px}
+.roster-image-open{position:absolute;inset:0;width:100%;height:100%;padding:0;border:0;background:transparent;cursor:zoom-in;opacity:0;translate:0 64px;transition:opacity .44s ease,translate .48s ease}
+.is-image-visible .has-library-image .roster-image-open{opacity:1;translate:0 0}
+.roster-image-open img{display:block;width:100%;height:100%;object-fit:contain}
+.roster-image-prev,.roster-image-next{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:52px;padding:0;border:0;background:transparent;color:white;text-shadow:0 1px 4px #000,0 0 3px #000;font:40px/1 system-ui;cursor:pointer}
+.roster-image-prev{left:0}.roster-image-next{right:0}
+.roster-image-status{position:absolute;bottom:0;left:0;right:0;font-size:11px;color:#334a68;background:#ffffffed;text-align:center}
+.roster-image-status:empty{display:none}
+.roster-lightbox{box-sizing:border-box;position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:64px 12px 44px;border:0;background:#090d16f5;color:#fff;overflow:hidden}
+.roster-lightbox::backdrop{background:#090d16}
+.roster-lightbox>img{display:block;width:100%;height:100%;object-fit:contain}
+.roster-lightbox-tools{position:absolute;top:12px;right:12px;display:flex;gap:10px}
+.roster-lightbox button{min-height:44px;padding:8px 16px;border:1px solid #8492ac;border-radius:6px;background:#1d293e;color:#fff;cursor:pointer;font:inherit}
+.roster-lightbox>p{position:absolute;bottom:8px;left:12px;right:12px;margin:0;text-align:center;font-size:12px}
+:is(.roster-image button,.roster-lightbox button):focus-visible{outline:2px solid #60a5fa;outline-offset:-3px}
+@media(prefers-reduced-motion:reduce){.roster-image-open{transition:none}}

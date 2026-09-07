@@ -15,6 +15,110 @@
   const inFlight=new Map(),cacheKeys=new Set();
   const scopeKey=()=>el('rosterScope').checked?'all':String(legion);
   let currentScope='0';
+  let familyGeneration=0;
+  const imageObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{
+    if(entry.isIntersecting){imageObserver.unobserve(entry.target);entry.target.loadLibrary?.()}
+  }),{root:el('rosterFamily'),rootMargin:'0px 270px'});
+
+  function safeImage(url){
+    return typeof url==='string'&&!url.includes('..')&&(
+      /^https:\/\/josvoltpktvwysrasffq\.supabase\.co\/storage\/v1\/object\/public\/kinojo-site-banners\/[0-9]{4}\/[0-9]{2}\/[0-9a-f-]{36}\.(jpg|jpeg|png|webp)$/i.test(url)
+      ||/^https:\/\/kinojo\.info\/assets\/images\/[A-Za-z0-9._/-]+\.(jpg|jpeg|png|webp)$/.test(url));
+  }
+  const viewer=document.createElement('dialog');viewer.className='roster-lightbox';viewer.setAttribute('aria-label','캐릭터 이미지 전체화면');
+  const viewerImage=document.createElement('img'),viewerTools=document.createElement('div'),viewerStatus=document.createElement('p');
+  viewerTools.className='roster-lightbox-tools';viewerStatus.setAttribute('role','status');
+  function button(text,label){const b=document.createElement('button');b.type='button';b.textContent=text;b.setAttribute('aria-label',label||text);return b}
+  const download=button('다운로드'),closeViewer=button('닫기');
+  viewerTools.append(download,closeViewer);viewer.append(viewerImage,viewerTools,viewerStatus);document.body.append(viewer);
+  let viewed=null,viewerOrigin=null,downloadController=null;
+  closeViewer.addEventListener('click',()=>viewer.close());
+  viewer.addEventListener('close',()=>{downloadController?.abort();downloadController=null;viewed=null;viewerImage.removeAttribute('src');viewerOrigin?.focus({preventScroll:true});viewerOrigin=null});
+  viewerImage.addEventListener('error',()=>{viewerStatus.textContent='이미지를 불러오지 못했습니다. 닫고 다시 시도하세요.'});
+  function openImage(asset,row,origin){
+    viewed={asset,row};viewerOrigin=origin;viewerStatus.textContent='';download.disabled=false;
+    viewerImage.src=asset.url;viewerImage.alt=asset.alt||row.name;viewer.showModal();closeViewer.focus();
+  }
+  download.addEventListener('click',async()=>{
+    if(!viewed||downloadController)return;
+    const current=viewed,controller=new AbortController();downloadController=controller;
+    download.disabled=true;viewerStatus.textContent='원본을 준비하고 있습니다.';
+    const timeout=setTimeout(()=>controller.abort(),30000);
+    try{
+      const response=await fetch(current.asset.url,{signal:controller.signal,credentials:'omit'});
+      if(!response.ok||!/^image\/(jpeg|png|webp)(;|$)/i.test(response.headers.get('content-type')||''))throw new Error('IMAGE_DOWNLOAD_FAILED');
+      const blob=await response.blob();if(!blob.size)throw new Error('IMAGE_DOWNLOAD_EMPTY');
+      if(viewed!==current||controller.signal.aborted)return;
+      const url=URL.createObjectURL(blob),link=document.createElement('a');
+      const extension=current.asset.url.match(/\.(jpg|jpeg|png|webp)$/i)[1].toLowerCase();
+      link.href=url;link.download=(current.row.name.replace(/[<>:"/\\|?*\u0000-\u001f]/g,'_').slice(0,60)||'character')+'-'+current.asset.assetId+'.'+extension;
+      document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+      viewerStatus.textContent='브라우저에 원본 저장을 요청했습니다.';
+    }catch(error){if(viewed===current)viewerStatus.textContent='원본을 다운로드하지 못했습니다. 다시 시도하세요.'}
+    finally{clearTimeout(timeout);if(downloadController===controller){downloadController=null;download.disabled=false}}
+  });
+  function library(article,box,row,selectedId,generation){
+    let assets=[],cursor=null,total=0,index=0,busy=false,loaded=false;
+    const valid=()=>generation===familyGeneration&&article.isConnected;
+    const surface=button('',row.name+' 이미지 전체화면 보기');surface.className='roster-image-open';
+    const img=document.createElement('img');img.alt='';surface.append(img);
+    const prev=button('‹','이전 이미지'),next=button('›','다음 이미지');prev.className='roster-image-prev';next.className='roster-image-next';
+    const status=document.createElement('span');status.className='roster-image-status';status.setAttribute('role','status');
+    async function pageImages(reset=false){
+      let data;
+      try{data=await request('kinojo_web_roster_images_v467',{p_selected_character_id:selectedId,p_character_id:row.characterId,p_cursor:reset?null:cursor,p_limit:20})}
+      catch(error){
+        if(!reset&&error.message==='ROSTER_CURSOR_EXPIRED'){
+          window.KinojoCache?.clear('roster:465:');return pageImages(true);
+        }
+        throw error;
+      }
+      if(!valid())return false;
+      if(data.characterId!==row.characterId||data.selectedCharacterId!==selectedId)throw new Error('ROSTER_RESPONSE_INVALID');
+      assets=reset?data.items:assets.concat(data.items);cursor=data.nextCursor;total=data.total;
+      if(!total){box.replaceChildren();box.setAttribute('aria-hidden','true');box.classList.remove('has-library-image')}
+      else if(total===1){prev.remove();next.remove()}
+      return true;
+    }
+    async function display(target,flip){
+      busy=true;prev.disabled=next.disabled=true;status.textContent='';
+      try{
+        while(target>=assets.length&&cursor){if(!await pageImages())return}
+        if(!total)return;target%=total;
+        const asset=assets[target];if(!asset)return;
+        const preload=new Image();preload.src=asset.url;await preload.decode();if(!valid())return;
+        if(flip&&!reduced.matches){const animation=surface.animate([{transform:'rotateY(0)'},{transform:'rotateY(-90deg)'}],{duration:140,fill:'forwards'});await animation.finished;animation.cancel();if(!valid())return}
+        index=target;img.src=asset.url;img.alt=asset.alt||row.name;surface.dataset.assetId=asset.assetId;
+        box.classList.add('has-library-image');
+        if(flip&&!reduced.matches)surface.animate([{transform:'rotateY(90deg)'},{transform:'rotateY(0)'}],{duration:180});
+        if(assets[index+1]){const ahead=new Image();ahead.src=assets[index+1].url}
+      }catch(error){
+        if(valid()){
+          status.textContent='이미지를 불러오지 못했습니다. ';
+          const retry=button('다시 시도');retry.addEventListener('click',()=>display(target,flip));status.append(retry);
+        }
+      }finally{busy=false;prev.disabled=next.disabled=false}
+    }
+    async function turn(direction){if(busy||total<2)return;await display((index+direction+total)%total,true)}
+    prev.addEventListener('click',()=>turn(-1));next.addEventListener('click',()=>turn(1));
+    box.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();turn(e.key==='ArrowLeft'?-1:1)}});
+    surface.addEventListener('click',()=>{if(assets[index]&&img.getAttribute('src'))openImage(assets[index],row,surface)});
+    article.loadLibrary=async()=>{
+      if(loaded)return;loaded=true;box.setAttribute('aria-busy','true');
+      try{
+        if(!await pageImages(true))return;
+        if(!total)return;
+        box.removeAttribute('aria-hidden');box.append(surface,status);if(total>1)box.append(prev,next);
+        await display(0,false);
+      }catch(error){
+        if(valid()){
+          loaded=false;box.removeAttribute('aria-hidden');status.textContent='이미지를 불러오지 못했습니다.';
+          const retry=button('다시 시도');retry.addEventListener('click',()=>{box.replaceChildren();article.loadLibrary()});box.replaceChildren(status,retry);
+        }
+      }finally{box.removeAttribute('aria-busy')}
+    };
+    imageObserver.observe(article);
+  }
 
   async function request(fn,params){
     const key='roster:465:'+fn+':'+JSON.stringify(params),cache=window.KinojoCache;
@@ -27,9 +131,10 @@
           window.KinojoSupabaseRpcCore.rpc(fn,params),
           new Promise((_,reject)=>{timeout=setTimeout(()=>reject(new Error('ROSTER_TIMEOUT')),10000)})
         ]);
-        if(!data||data.contractVersion!==465||!Array.isArray(data.items)||data.items.length>(params.p_limit||50)
-          ||data.items.some(row=>!/^\d+$/.test(row.characterId)||typeof row.name!=='string')
-          ||typeof data.sourceToken!=='string')throw new Error('ROSTER_RESPONSE_INVALID');
+        const images=fn==='kinojo_web_roster_images_v467';
+        if(!data||data.contractVersion!==(images?467:465)||!Array.isArray(data.items)||data.items.length>(params.p_limit||50)
+          ||data.items.some(row=>images?(!/^\d+$/.test(row.assetId)||!safeImage(row.url)):(!/^\d+$/.test(row.characterId)||typeof row.name!=='string'))
+          ||typeof data.sourceToken!=='string'||!Number.isInteger(data.total)||data.total<0)throw new Error('ROSTER_RESPONSE_INVALID');
         cache?.set(key,data,30000);cacheKeys.delete(key);cacheKeys.add(key);
         while(cacheKeys.size>32){const oldest=cacheKeys.values().next().value;cacheKeys.delete(oldest);cache?.remove(oldest)}
         return data;
@@ -83,7 +188,7 @@
     }finally{if(token===listRevision){listBusy=false;wheel.setAttribute('aria-busy','false')}}
   }
   function renderFamily(rows,append=false){
-    const family=el('rosterFamily');if(!append){family.replaceChildren();family.scrollLeft=0}
+    const family=el('rosterFamily');if(!append){familyGeneration++;imageObserver.disconnect();family.replaceChildren();family.scrollLeft=0}
     rows.forEach(row=>{
       const article=document.createElement('article');article.className='roster-character '+(row.isMain?'is-main':'is-alt');article.dataset.characterId=row.characterId;
       const image=document.createElement('div');image.className='roster-image';image.setAttribute('aria-hidden','true');
@@ -102,6 +207,7 @@
         line.append(icon,value);metrics.append(line);
       }
       info.append(kind,heading,server,metrics);article.append(image,info);family.append(article);
+      library(article,image,row,items[selected].characterId,familyGeneration);
       if(append)article.classList.add('is-card-visible','is-image-visible');
     });
     Array.from(family.children).forEach((card,i)=>card.style.zIndex=String(family.children.length-i));
