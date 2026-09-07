@@ -165,7 +165,7 @@ body.kinojo-page-legion-roster>.legion-tree-search-results{z-index:91}
 }
 
 /* The image aperture has a 300:715 ratio, independent of source pixel dimensions. */
-.roster-family{container-type:size;align-items:flex-end;padding-inline:24px;gap:48px;--roster-card-width:min(270px,calc((100cqh - 112px) * 300 / 715))}
+.roster-family{container-type:size;align-items:flex-end;padding-inline:24px;scroll-padding-inline:24px;gap:48px;--roster-card-width:min(270px,calc((100cqh - 112px) * 300 / 715))}
 .roster-info{transform:translateX(calc(-100% - 48px))}
 .roster-character .roster-image{overflow:visible}
 .is-image-visible .roster-image{clip-path:inset(0 -24px)}
