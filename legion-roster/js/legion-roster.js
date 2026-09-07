@@ -12,15 +12,7 @@
   const label=i=>'명단 카드 '+String(i+1).padStart(2,'0');
   const scopeKey=()=>el('rosterScope').checked?'all':String(legion);
   let currentScope='0';
-  function preference(id){
-    try{el(id).checked=localStorage.getItem('kinojo.roster.'+id)==='true'}catch(_){}
-    el(id).addEventListener('change',()=>{
-      try{localStorage.setItem('kinojo.roster.'+id,String(el(id).checked))}catch(_){}
-      if(id==='rosterSound'&&el(id).checked)unlock();
-    });
-  }
   function unlock(){
-    if(!el('rosterSound').checked)return;
     try{
       const Audio=window.AudioContext||window.webkitAudioContext;
       if(!Audio)return;
@@ -30,7 +22,7 @@
   }
   function tick(crossings){
     if(document.hidden)return;
-    if(el('rosterSound').checked&&audio?.state==='running'){
+    if(audio?.state==='running'){
       try{
        for(let i=0;i<crossings;i++){
         const oscillator=audio.createOscillator(),gain=audio.createGain(),t=audio.currentTime+i*.04;
@@ -43,7 +35,7 @@
        }
       }catch(_){}
     }
-    if(el('rosterVibration').checked&&matchMedia('(pointer:coarse)').matches){
+    if(matchMedia('(pointer:coarse)').matches){
       try{navigator.vibrate?.(crossings===1?8:Array.from({length:crossings*2-1},(_,i)=>i%2?20:8))}catch(_){}
     }
   }
@@ -57,6 +49,9 @@
   }
   function showDetail(){
     cancelTransition();confirmed=selected;
+    const cards=Array.from(el('rosterFamily').children);
+    cards.forEach(card=>card.classList.remove('is-card-visible','is-image-visible'));
+    void detail.offsetWidth;
     el('rosterSelected').textContent=label(selected);
     body.dataset.phase='cards';
     detail.inert=false;detail.setAttribute('aria-hidden','false');
@@ -66,10 +61,17 @@
       later(()=>{body.classList.remove('is-flipping');el('rosterBack').focus({preventScroll:true})},380);
     }else{
       body.classList.remove('is-detail');selector.inert=false;
-      detail.classList.remove('is-revealing');void detail.offsetWidth;
-      detail.classList.add('is-revealing');
     }
-    later(()=>{body.dataset.phase='images'},narrow.matches?560:340);
+    const start=narrow.matches?380:0;
+    cards.forEach((card,index)=>later(()=>card.classList.add('is-card-visible'),start+index*160));
+    const imageStart=start+Math.max(0,cards.length-1)*160+280;
+    later(()=>{body.dataset.phase='images'},imageStart);
+    cards.forEach((card,index)=>later(()=>card.classList.add('is-image-visible'),imageStart+index*140));
+  }
+  function revealAll(){
+    if(confirmed<0)return;
+    body.dataset.phase='images';
+    Array.from(el('rosterFamily').children).forEach(card=>card.classList.add('is-card-visible','is-image-visible'));
   }
   function back(){
     cancelTransition();pendingOpen=false;interacting=false;clearTimeout(settle);
@@ -183,13 +185,12 @@
   narrow.addEventListener('change',()=>{
     cancelTransition();selector.inert=false;body.classList.remove('is-detail');
     detail.inert=narrow.matches||confirmed<0;detail.setAttribute('aria-hidden',String(detail.inert));
-    if(confirmed>=0)body.dataset.phase='images';
+    revealAll();
     resize();
   });
   reduced.addEventListener('change',()=>{
-    if(reduced.matches){cancelTransition();if(confirmed>=0)body.dataset.phase='images'}
+    if(reduced.matches){cancelTransition();revealAll()}
   });
-  preference('rosterSound');preference('rosterVibration');
   new ResizeObserver(resize).observe(wheel);
   renderScope();
 })();

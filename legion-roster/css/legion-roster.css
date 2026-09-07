@@ -43,6 +43,8 @@ body.kinojo-page-legion-roster{margin:0;background:linear-gradient(180deg,#f8fbf
 .roster-info h2{margin:5px 0 12px;font-size:15px}
 .roster-metrics{display:grid;gap:5px;color:#697b95;font-size:10px}
 .roster-metrics span{display:flex;justify-content:space-between;gap:8px}
+.roster-metrics span{align-items:center}
+.roster-metrics img{width:18px;height:18px;object-fit:contain;flex:none}
 .roster-metrics b{font-size:12px;color:#334a68}
 .roster-detail-note{margin:0;text-align:center;color:#71829a;font-size:10px}
 .roster-body.is-turning{animation:rosterTurn .38s ease}
@@ -81,13 +83,13 @@ body.kinojo-page-legion-roster{margin:0;background:linear-gradient(180deg,#f8fbf
 .roster-status{grid-row:4}
 .roster-detail{visibility:hidden;pointer-events:none}
 .has-selection .roster-detail{visibility:visible;pointer-events:auto}
-.roster-detail.is-revealing{animation:rosterDetail .34s ease both}
-.roster-image{opacity:0;transition:opacity .22s ease}
-[data-phase="images"] .roster-image{opacity:1}
+.roster-info{z-index:1;visibility:hidden;opacity:0;transform:translateX(28px);transition:opacity .28s ease,transform .28s ease}
+.is-card-visible .roster-info{visibility:visible;opacity:1;transform:translateX(0)}
+.roster-image{opacity:0;transform:translateY(64px);clip-path:inset(100% 0 0);transition:opacity .44s ease,transform .48s ease,clip-path .48s ease}
+.is-image-visible .roster-image{opacity:1;transform:translateY(0);clip-path:inset(0)}
 .roster-back{display:none}
 .roster-name-card strong,.roster-info h2{overflow-wrap:anywhere}
 :is(.roster-search input,.roster-search button,.roster-back,.roster-results button,.roster-wheel):focus-visible{outline:2px solid #2563eb;outline-offset:2px}
-@keyframes rosterDetail{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:translateX(0)}}
 @keyframes rosterFlip{0%{opacity:.2;transform:perspective(1100px) rotateY(-86deg)}100%{opacity:1;transform:perspective(1100px) rotateY(0)}}
 @media(max-width:700px){
  .roster-preview-note{max-width:none;flex-basis:100%;text-align:center}
@@ -105,9 +107,8 @@ body.kinojo-page-legion-roster{margin:0;background:linear-gradient(180deg,#f8fbf
  .roster-name-card{max-width:360px;padding:8px 14px}
  .roster-name-card strong{font-size:15px}
  .roster-body.is-flipping,.roster-body.is-returning{animation:rosterFlip .38s ease both}
- .roster-detail.is-revealing{animation:none}
 }
 @media(prefers-reduced-motion:reduce){
- .roster-detail.is-revealing,.roster-body.is-flipping,.roster-body.is-returning{animation:none}
- .roster-image{transition:none}
+ .roster-body.is-flipping,.roster-body.is-returning{animation:none}
+ .roster-image,.roster-info{transition:none}
 }
