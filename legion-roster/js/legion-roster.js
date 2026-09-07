@@ -21,10 +21,14 @@
   const moreFamily=button('','다음 캐릭터 보기');moreFamily.className='roster-family-more';moreFamily.hidden=true;
   for(let i=0;i<3;i++){const arrow=document.createElement('span');arrow.textContent='›';arrow.setAttribute('aria-hidden','true');moreFamily.append(arrow)}
   detail.append(moreFamily);
+  const prevFamily=button('','이전 캐릭터 보기');prevFamily.className='roster-family-prev';prevFamily.hidden=true;
+  for(let i=0;i<3;i++){const arrow=document.createElement('span');arrow.textContent='‹';arrow.setAttribute('aria-hidden','true');prevFamily.append(arrow)}
+  detail.append(prevFamily);
   function updateFamilyHint(){
     const family=el('rosterFamily');
     const last=family.lastElementChild,frame=family.getBoundingClientRect();
     moreFamily.hidden=!body.classList.contains('has-selection')||!(familyCursor||(last&&last.getBoundingClientRect().right>frame.right+1));
+    prevFamily.hidden=!body.classList.contains('has-selection')||!(activeFamily>0||(family.firstElementChild&&family.firstElementChild.getBoundingClientRect().left<frame.left-1));
   }
   function selectFamily(index,scroll=false){
     const family=el('rosterFamily'),cards=Array.from(family.children);if(!cards.length)return;
@@ -45,6 +49,7 @@
     selectFamily(activeFamily+direction,true);
   }
   moreFamily.addEventListener('click',()=>moveFamily(1));
+  prevFamily.addEventListener('click',()=>moveFamily(-1));
   const imageObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{
     if(entry.isIntersecting){imageObserver.unobserve(entry.target);entry.target.loadLibrary?.()}
   }),{root:el('rosterFamily'),rootMargin:'0px 270px'});

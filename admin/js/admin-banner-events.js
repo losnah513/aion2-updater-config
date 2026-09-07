@@ -8,7 +8,7 @@ const $=(q,r=document)=>r.querySelector(q),$$=(q,r=document)=>Array.from(r.query
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const session=()=>{const token=String(window.KinojoAuth?.getSession?.()?.token||'').trim();return /^kws_[A-Za-z0-9_-]{40,80}$/.test(token)?token:''};
 const uuid=()=>crypto.randomUUID();
-const PAGE_LABELS={HOME:'홈',HOF:'명예의 전당',RANKING:'레기온 순위',LEGION_TREE:'레기온 트리',METER:'키노조 미터',SANCTUARY:'성역 메인',SANCTUARY_SCHEDULE:'성역 스케줄'};
+const PAGE_LABELS={HOME:'홈',HOF:'명예의 전당',RANKING:'레기온 순위',LEGION_TREE:'레기온 트리',LEGION_ROSTER:'레기온 명부',METER:'키노조 미터',SANCTUARY:'성역 메인',SANCTUARY_SCHEDULE:'성역 스케줄'};
 const STATUS_LABELS={DRAFT:'초안',PUBLISHED:'게시 중',PAUSED:'게시 중지',MIXED:'일부 게시',ARCHIVED:'보관',EMPTY:'비어 있음'};
 const S={root:null,url:'',loaded:false,busy:false,events:[],legacyCampaigns:[],rotationMode:'ORDERED',context:'main',slotFilter:'ALL',status:'ALL',query:'',message:'',messageKind:''};
 

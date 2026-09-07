@@ -5,7 +5,7 @@
   const EDGE='kinojo-banner-media';
   const CONTRACT='banner-public-manifest-v1';
   const CACHE_KEY='kinojo_banner_manifest_cache_v1';
-  const PAGE_RE=/^(HOME|HOF|RANKING|LEGION_TREE|METER|SANCTUARY|SANCTUARY_SCHEDULE)$/;
+  const PAGE_RE=/^(HOME|HOF|RANKING|LEGION_TREE|LEGION_ROSTER|METER|SANCTUARY|SANCTUARY_SCHEDULE)$/;
   const SLOT_RE=/^(MAIN|LEFT|RIGHT)$/;
   const STATIC_RE=/^https:\/\/kinojo\.info\/assets\/images\/[A-Za-z0-9._\/-]+$/;
   const DELIVERY_ALIASES=Object.freeze({

@@ -18,7 +18,7 @@
   const runtimeScriptUrl=(()=>{
     try{
       const src=String(document.currentScript?.src||'').trim();
-      return src?new URL('kinojo-banner-runtime.js?cache=2026083001',src).href:'';
+      return src?new URL('kinojo-banner-runtime.js?cache=2026090708',src).href:'';
     }catch(_error){return ''}
   })();
   let runtimePromise=null;
@@ -44,6 +44,7 @@
     if(path==='/hof/')return 'HOF';
     if(path==='/ranking/')return 'RANKING';
     if(path==='/legion-tree/')return 'LEGION_TREE';
+    if(path==='/legion-roster/')return 'LEGION_ROSTER';
     if(path==='/meter/')return 'METER';
     if(path==='/sanctuary/')return 'SANCTUARY';
     if(path==='/sanctuary-schedule/')return 'SANCTUARY_SCHEDULE';
