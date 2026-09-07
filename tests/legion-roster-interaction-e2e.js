@@ -28,7 +28,7 @@ const root=path.resolve(__dirname,'..');
     rpcCalls++;const req=route.request().postDataJSON();const family=route.request().url().includes('family');
     if(route.request().url().includes('images_v467')){
       const count=req.p_character_id==='1'?23:req.p_character_id==='2'?1:0,offset=req.p_cursor?.offset||0;
-      await route.fulfill({json:{contractVersion:467,characterId:req.p_character_id,selectedCharacterId:req.p_selected_character_id,sourceToken:'images',total:count,nextCursor:offset+req.p_limit<count?{offset:offset+req.p_limit,sourceToken:'images'}:null,
+      await route.fulfill({json:{contractVersion:467,gender:req.p_character_id==='3'?'MALE':'FEMALE',characterId:req.p_character_id,selectedCharacterId:req.p_selected_character_id,sourceToken:'images',total:count,nextCursor:offset+req.p_limit<count?{offset:offset+req.p_limit,sourceToken:'images'}:null,
         items:Array.from({length:count},(_,i)=>({assetId:String(i+1),url:'https://josvoltpktvwysrasffq.supabase.co/storage/v1/object/public/kinojo-site-banners/2026/09/00000000-0000-0000-0000-'+String(i).padStart(12,'0')+'.png',mimeType:'image/png',width:1,height:1,alt:'테스트 이미지 '+i,revision:'1'})).slice(offset,offset+req.p_limit)}});return;
     }
     if(req.p_query==='실패'){await route.fulfill({status:500,json:{message:'fixture error'}});return}
@@ -105,6 +105,12 @@ const root=path.resolve(__dirname,'..');
     assert.equal(await main.locator('.roster-image-prev,.roster-image-next').count(),2);
     assert.equal(await alt.locator('.roster-image-prev,.roster-image-next').count(),0);
     assert.equal(await empty.locator('.roster-image img,.roster-image button').count(),0);
+    await empty.scrollIntoViewIfNeeded();
+    await page.waitForFunction(()=>document.querySelectorAll('.roster-character')[2]?.querySelector('.roster-image')?.classList.contains('is-background-male'));
+    assert.ok((await empty.locator('.roster-image').evaluate(el=>getComputedStyle(el).backgroundImage)).includes('male-background.png'));
+    await empty.locator('.roster-image').click();
+    assert.equal(await page.locator('.roster-lightbox').isVisible(),false);
+    await main.scrollIntoViewIfNeeded();
     await main.locator('.roster-image-next').click();
     await page.waitForFunction(()=>document.querySelector('.roster-image-open')?.dataset.assetId==='2');
     assert.equal(await alt.locator('.roster-image-open').getAttribute('data-asset-id'),'1');
@@ -122,8 +128,8 @@ const root=path.resolve(__dirname,'..');
     await page.keyboard.press('Escape');assert.equal(await page.locator('.roster-lightbox').isVisible(),false);
     assert.equal(await main.locator('.roster-image-open').evaluate(el=>el===document.activeElement),true);
     assert.equal(await main.locator('.roster-image-open').getAttribute('data-asset-id'),'2');
-    await main.locator('.roster-image-prev').focus();await page.keyboard.press('Enter');await page.waitForFunction(()=>document.querySelector('.roster-image-open')?.dataset.assetId==='1');
-    await page.waitForTimeout(200);await main.locator('.roster-image-prev').focus();await page.keyboard.press('Enter');
+    await page.waitForFunction(()=>document.querySelector('.roster-image-prev')?.getAttribute('aria-disabled')!=='true');await main.locator('.roster-image-prev').focus();await page.keyboard.press('Enter');await page.waitForFunction(()=>document.querySelector('.roster-image-open')?.dataset.assetId==='1');
+    await page.waitForFunction(()=>document.querySelector('.roster-image-prev')?.getAttribute('aria-disabled')==='false');await main.locator('.roster-image-prev').focus();await page.keyboard.press('Enter');
     await page.waitForFunction(()=>document.querySelector('.roster-image-open')?.dataset.assetId==='23');
     if(width<=700){
       assert.equal(await page.locator('.roster-family-prev').isVisible(),false);

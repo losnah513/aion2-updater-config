@@ -110,7 +110,11 @@
       if(!valid())return false;
       if(data.characterId!==row.characterId||data.selectedCharacterId!==selectedId)throw new Error('ROSTER_RESPONSE_INVALID');
       assets=reset?data.items:assets.concat(data.items);cursor=data.nextCursor;total=data.total;
-      if(!total){box.replaceChildren();box.setAttribute('aria-hidden','true');box.classList.remove('has-library-image')}
+      if(!total){
+        box.replaceChildren();box.setAttribute('aria-hidden','true');box.classList.remove('has-library-image');
+        box.classList.toggle('is-background-male',data.gender==='MALE');
+        box.classList.toggle('is-background-female',data.gender==='FEMALE');
+      }
       else if(total===1){prev.remove();next.remove()}
       return true;
     }
@@ -124,6 +128,7 @@
         if(flip&&!reduced.matches){const animation=surface.animate([{transform:'rotateY(0)'},{transform:'rotateY(-90deg)'}],{duration:140,fill:'forwards'});await animation.finished;animation.cancel();if(!valid())return}
         index=target;img.src=asset.url;img.alt=asset.alt||row.name;surface.dataset.assetId=asset.assetId;
         box.classList.add('has-library-image');
+        box.classList.remove('is-background-male','is-background-female');
         if(flip&&!reduced.matches)surface.animate([{transform:'rotateY(90deg)'},{transform:'rotateY(0)'}],{duration:180});
         if(assets[index+1]){const ahead=new Image();ahead.src=assets[index+1].url}
       }catch(error){
