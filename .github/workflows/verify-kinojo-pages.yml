@@ -237,8 +237,8 @@ jobs:
               Path("m/ranking/index.html"),
           ]
           required_assets = [
-              "kinojo-character-reaction.css?cache=2026082201",
-              "kinojo-character-reaction.js?cache=2026082701",
+              "kinojo-character-reaction.css?cache=2026090701",
+              "kinojo-character-reaction.js?cache=2026090701",
               "kinojo-character-detail-refresh.js?cache=2026082201",
               "kinojo-character-skill.css?cache=2026081001",
               "kinojo-character-daevanion.css?cache=2026081002",
