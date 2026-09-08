@@ -7,6 +7,15 @@
 - 현재 인계: docs/CHARACTER_REFRESH_STABILITY_STAGE2_WIP.md. Source/Deploy hash·순서·rollback·운영 게이트: docs/CHARACTER_REFRESH_STABILITY_STAGE2_RELEASE.md. 같은 4차 PROJECT LOG 최신 12회차에 기록한다.
 - main 0ab04ccf의 DB475/배너 변경을 보존했다. 새 SQL 숫자는 3단계 직전 최신 SQL_INDEX 확인 후 지정한다. 임의 전체 db push/실제 list 일괄 덮어쓰기 금지.
 
+## 명예의 전당 후보 생성 복구 · DB476 · 2026-09-08
+
+- 기준 main `0ab04ccf`, branch `codex/hof-snapshot-repair-20260908`. DB476 운영 migration `20260908081113`, repo SQL `supabase/migrations/20260908080329_hof_candidate_generation_v476.sql`.
+- CONFIRMED: DB416이 summary를 published reader로 교체했으나 builder가 계속 호출해 HOF를 복사했다. DB476은 private candidate helper 1개로 분리하고 v426 후보의 character_id/순서/수치를 사용한다. 주간 delta와 프로필 변환 재사용, WEB/Edge/공개 RPC 변경 없음.
+- 검증은 TOP3 식별자·순위·소속·점수·원본시각, 후보 hash·기간, weekly winner를 비교한다. 공개 snapshot 74(직전70), 네 범위 통과. 니꿍은 기본 범위 제외, 전체 PVP에서 브리트라 소속으로 표시.
+- 검증: `node tests/hof-candidate-generation.test.js`, 기존 HOF/ranking/legacy 테스트. DB476 적용 DB에서 `supabase/tests/hof_candidate_v476.sql`은 BEGIN/ROLLBACK으로 네 범위와 7개 오류 차단을 검사하며 공개 pointer를 변경하지 않는다. 동시 BUILDING/READY 후보가 있으면 실행 중단. 전체 검증 120초, 실제 builder는 범위별40초 제한 유지.
+- 복구 SQL: `supabase/rollbacks/20260908080329_hof_candidate_generation_v476_rollback.sql`. 기존 세 정의 복원/새 helper 제거만 수행하며 snapshot·캐릭터·히스토리는 삭제하지 않는다. 이전 함수를 복원하면 DB416 오류도 돌아오므로 장애 때만 사용한다.
+- 최종 PR/CI/Drive·운영 검수 근거는 [프로젝트 LOG](https://drive.google.com/file/d/11PeRlDYqXZbu6bxj8yZWD3UTuAQZ3zPa/view) 최신 회차. 재검증 조건: builder/reader/주간 지표/랭킹 범위 계약 변경.
+
 ## 배너 라이브러리 분류 변경·영구 삭제 · 2026-09-08
 
 - 작업 branch `codex/banner-library-manage-20260908`, 시작 main `1fff16e8`. DB475와 kinojo-banner-media v29/API2.8 반영. Web cache2026090804. 최종 PR/배포/Drive 결과는 배너 2차 LOG 최신 회차가 정본이다.
