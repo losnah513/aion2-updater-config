@@ -27,6 +27,7 @@ const A = {
   $$: () => [],
   adminCharacter: async () => ({}),
   adminLookup: async action => {
+    if(action==='history')return {ok:true,items:[]};
     assert.equal(action, 'status');
     return {
       ok: true,

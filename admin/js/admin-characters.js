@@ -533,7 +533,15 @@
       const server=lookupTargetServer(row);
       const label=nameCounts.get(name)>1&&server?name+' ['+server+']':name;
       let status=failNames.has(name)?'error':state.lookupTargetStates[name]||(enabled?'standby':'pending');
-      if(name===currentCharacter)status='active';
+      const serverStatus=String(row.target_status||row.targetStatus||row.status||'').toLowerCase();
+      if(['lookup_done','synced','completed'].includes(serverStatus))status='done';
+      else if(['final_failed','failed','cancelled'].includes(serverStatus))status='error';
+      else if(['claimed','processing','running'].includes(serverStatus)&&data?.active===true&&step2!=='done')status='active';
+      else if(name===currentCharacter&&!failNames.has(name)){
+        if(step2==='done'&&Number(progress.finalFailedCount||0)===0)status='done';
+        else if(data?.active===true&&step2!=='done')status='active';
+        else if(status==='active')status='pending';
+      }
       if(status==='done')doneCount++;if(status==='error')errorCount++;
       return '<article class="admin-lookup-target-row '+status+'"><strong title="'+esc(label)+'">'+esc(label)+'</strong><span>'+statusLabel[status]+'</span></article>';
     });
@@ -552,6 +560,20 @@
       +'<div class="admin-lookup-phase-progress"><i style="width:'+Math.max(0,Math.min(100,Number(phase.percent||0)))+'%"></i></div>'
       +'<div class="admin-lookup-phase-meta"><span>'+Number(phase.current||0).toLocaleString('ko-KR')+' / '+Number(phase.total||0).toLocaleString('ko-KR')+'건</span><span>'+timing+'</span></div>'
       +'<p>'+esc(phase.message||'')+'</p></article>';
+  }
+
+  function renderPublicSnapshot(snapshot){
+    const box=$('#characterLookupPublicSnapshot');if(!box)return;
+    const labels={IDLE:'공개 완료 · 대기 요청 없음',DISABLED:'자동 생성 중단 · 관리자 확인 필요',RETRY_WAIT:'생성 실패 · 재시도 대기',WAIT_REFRESH:'조회·상세 갱신 종료 대기',WAIT_30_MINUTES:'조회 시작 +30분 대기',QUEUED:'서버 생성 대기',BUILDING:'랭킹·명예의전당 생성 중',VERIFY:'생성 결과 검증 중',READY:'검증 완료 · 공개 대기'};
+    if(!snapshot){box.textContent='공개 랭킹·명예의전당: 상태 확인 불가';return;}
+    box.textContent='공개 랭킹·명예의전당: '+(labels[snapshot.state]||'상태 확인 필요')
+      +(snapshot.pendingCount?' · 합친 요청 '+snapshot.pendingCount+'건':'')
+      +(snapshot.dueAt?' · 생성 가능 '+formatServerTime(snapshot.dueAt)+' 이후':'')
+      +(snapshot.state==='BUILDING'?' · '+snapshot.completedScopes+'/4범위':'')
+      +(snapshot.retryAt?' · 재시도 '+formatServerTime(snapshot.retryAt):'')
+      +(snapshot.lastErrorCode?' · 오류 '+snapshot.lastErrorCode:'')
+      +(snapshot.publishedAt?' · 현재 공개본 '+formatServerTime(snapshot.publishedAt):'')
+      +' · 조회 완료와 별도 서버 작업이며 실패 시 이전 공개본을 유지합니다.';
   }
 
 
@@ -651,7 +673,9 @@
     ];
     steps.forEach(step=>{const el=$('#'+step.id);if(!el)return;const cls=lookupStepClass(step.status);el.className='admin-lookup-step-card '+cls;const title=el.querySelector('header strong');const value=el.querySelector('header>span');if(title)title.textContent=step.label;if(value)value.textContent=Number(step.percent||0).toFixed(1)+'%';});
     const step3Note=$('#characterLookupStep3 header em');if(step3Note)step3Note.textContent=listOff?'Master·관계·랭킹 저장 · list 쓰기 생략':'DB 저장 후 list 쓰기·readback';
-    const phases=Array.isArray(progress.phases)?progress.phases:(Array.isArray(data?.phases)?data.phases:[]);
+    const phases=(Array.isArray(progress.phases)?progress.phases:(Array.isArray(data?.phases)?data.phases:[]))
+      .map(phase=>data?.publicSnapshot&&Number(phase.no)===6?{...phase,label:'DB 랭킹 계산',message:'현재 DB 랭킹 반영 · 공개 랭킹·명예의전당은 별도 서버 작업'}:phase);
+    renderPublicSnapshot(data?.publicSnapshot);
     [1,2,3].forEach(stepNo=>{const root=$('#characterLookupPhaseListStep'+stepNo);if(!root)return;const items=phases.filter(phase=>lookupPhaseStep(phase)===stepNo);root.innerHTML=items.length?items.map(renderLookupPhase).join(''):'<div class="admin-empty">'+(stepNo===1?'원본 대조':stepNo===2?'공식 조회':'서버·시트 반영')+' 대기</div>';});
     const failures=$('#characterLookupFailures');const failureRows=Array.isArray(data?.failurePreview)?data.failurePreview:[];
     prepareLookupTargetStates(data,currentCharacter,failureRows,progress.step2Status);renderLookupTargets(data,progress,currentCharacter,failureRows);
@@ -686,15 +710,17 @@
       if(sessionRevision!==lookupSessionRevision)return state.lookupConsole||null;
       if(!data||data.ok===false)throw new Error(data?.message||'조회 상태 확인 실패');
       if(data.sessionId&&data.sessionId!==state.lookupSessionId)storeLookupSession(data.sessionId,'');
+      const previous=state.lookupConsole;
       data=mergeCharacterLookupDetails(data);
       renderCharacterLookupConsole(data);
+      if(previous?.active===true&&data.active!==true)await loadLookupHistory();
       if(data.active===true&&data.waitingExtension===true&&state.lookupSessionToken&&Date.now()-state.lookupHeartbeatAt>20000){
         state.lookupHeartbeatAt=Date.now();
         const p=data.progress?.progress||data.progress||{};
         adminLookup('heartbeat',{sessionId:data.sessionId,sessionToken:state.lookupSessionToken,current:Number(p.completedCount||0),total:Number(p.total||data.queueMeta?.queueCount||0)}).catch(()=>{});
       }
       if(options.statusLine!==false)setStatus('#characterLookupStatus',data.message||'조회 상태를 갱신했습니다.',data.active?'ok':'');
-      if(data.active===true)startCharacterLookupPolling();else stopCharacterLookupPolling();
+      if(data.active===true||Number(data.publicSnapshot?.pendingCount)>0&&data.publicSnapshot?.state!=='DISABLED')startCharacterLookupPolling();else stopCharacterLookupPolling();
       await automationPromise;
       return data;
     }catch(err){await automationPromise;setLookupError(err);if(!state.lookupConsole)renderCharacterLookupConsole(null);return null;}
@@ -708,16 +734,16 @@
 
   function characterLookupPollDelay(){
     const foreground=!document.hidden&&state.tab==='characters'&&state.subtab==='lookup';
+    if(state.lookupConsole?.active!==true)return foreground?30000:60000;
     return foreground?3000:15000;
   }
 
   function startCharacterLookupPolling(){
-    if(state.lookupPollTimer||state.lookupConsole?.active!==true)return;
+    if(state.lookupPollTimer||!(state.lookupConsole?.active===true||Number(state.lookupConsole?.publicSnapshot?.pendingCount)>0&&state.lookupConsole?.publicSnapshot?.state!=='DISABLED'))return;
     state.lookupPollTimer=setTimeout(async()=>{
       state.lookupPollTimer=null;
-      if(state.lookupConsole?.active!==true)return;
       await refreshCharacterLookupStatus({statusLine:false});
-      if(state.lookupConsole?.active===true)startCharacterLookupPolling();
+      startCharacterLookupPolling();
     },characterLookupPollDelay());
   }
 

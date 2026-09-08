@@ -6,6 +6,7 @@
 배포·복구 계약은 CHARACTER_REFRESH_STABILITY_STAGE2_RELEASE.md, 제품 파일은 CHARACTER_REFRESH_STAGE2_MANIFEST.json을 따른다. 이 문서는 운영 실행 승인이 아니다.
 
 - 공개 Ranking/HOF 분리는 배포 계약의 ‘공개 스냅샷 분리 후속 계약’을 따른다. 조회 시작+30분, 활성 작업 대기, 네 범위→검증→공개, 실패 세대 무효화/제한 재시도이며 원시 조회 Snapshot은 분리 대상이 아니다. 재개 시 LOG의 실제 운영·카나리·자동화 ON/OFF 상태를 확인한다.
+- 상태 표시 후속은 기존 인증 status RPC를 재사용한다. DB 랭킹 계산과 지연 공개를 구분하며 pending 공개만 느린 polling을 유지한다. 검증 명령: `node scripts/verify-character-refresh-stage2.cjs --browser`; 로컬 Playwright 경로는 `PLAYWRIGHT_MODULE`, Chrome 경로는 `CHROME_PATH`로 지정할 수 있다.
 
 ## 성역 Stage 13 외부 캐릭터 관계·List 선택 · 2026-09-08
 
