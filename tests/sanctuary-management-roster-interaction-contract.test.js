@@ -15,6 +15,7 @@ assert.equal(familyRelation({characterId:7,mainCharacterId:7,isMain:true,relatio
 assert.equal(familyRelation({characterId:10,mainCharacterId:10,isMain:false,relation:'GUEST'}),false);
 assert.equal(familyRelation({characterId:10,isMain:false,relation:'GUEST'}),false);
 assert(client.includes('if(isAlt||(slot.occupied&&hasCanonicalAltRelation(slot.character)))'));
+assert(supportCss.includes('.sanctuary-management-force-slot[data-sanctuary-alt-detail].is-alt-detail-open>'));
 
 for(const token of [
   'function createAltRelationshipTooltip',
@@ -77,6 +78,8 @@ for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   assert.ok(html.includes('sanctuary-management.js?cache=2026090101'),`${page}: roster interaction JS cache missing`);
   assert.equal((html.match(/altDetail=2026090101/g)||[]).length,2,`${page}: alt detail cache keys missing`);
   assert(html.includes('familyHover=2026090801'),`${page}: canonical family hover cache missing`);
+  assert.equal((html.match(/familyHover=2026090801/g)||[]).length,2);
+  assert(html.includes('familyHover=2026090801" rel="stylesheet"'));
 }
 
 console.log('KINOJO sanctuary management roster interaction contract: PASS');

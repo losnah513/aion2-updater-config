@@ -179,7 +179,7 @@ body.sanctuary-management-force-overview-open{overflow:hidden}
 .sanctuary-management-alt-relation{min-width:0;display:inline-flex;align-items:baseline;justify-content:center;gap:2px;color:#fff;font-size:clamp(11px,1.15vw,15px);line-height:1.05;white-space:nowrap}
 .sanctuary-management-main-name{color:#b9ff73;text-shadow:0 0 4px rgba(185,255,115,.95),0 0 11px rgba(139,236,70,.7)}
 .sanctuary-management-alt-relation>small{color:#fff;font-size:.5em;font-weight:900;line-height:1}
-.sanctuary-management-force-slot.is-alt.is-alt-detail-open>.sanctuary-management-alt-tooltip{opacity:1;visibility:visible}
+.sanctuary-management-force-slot[data-sanctuary-alt-detail].is-alt-detail-open>.sanctuary-management-alt-tooltip{opacity:1;visibility:visible}
 
 @media(max-width:560px){.sanctuary-management-force-slot.is-class-slot{min-height:50px}.sanctuary-management-force-slot.is-class-slot .sanctuary-management-force-slot-icon{left:-4px;width:62px;height:62px}.sanctuary-management-force-slot-recruitment{font-size:clamp(12px,4.2vw,16px)}.sanctuary-management-alt-tooltip{padding-inline:3px;column-gap:2px}.sanctuary-management-alt-name,.sanctuary-management-main-name,.sanctuary-management-alt-relation{font-size:clamp(9px,2.55vw,11px)}}
 @media(prefers-reduced-motion:reduce){.sanctuary-management-force-card,.sanctuary-management-force-party,.sanctuary-management-force-slot,.sanctuary-management-alt-tooltip{transition:none}.sanctuary-management-force-slot:not(.is-occupied)::after{animation:none}}
