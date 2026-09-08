@@ -12,6 +12,8 @@ begin
  values(a,2002,'지켈','ROSTER_FIXTURE_A_477',true,a,'ROSTER_FIXTURE_A_477','깡'),
  (b,2002,'지켈','ROSTER_FIXTURE_B_477',true,b,'ROSTER_FIXTURE_B_477','깡'),
  (c,2002,'지켈','ROSTER_FIXTURE_C_477',false,b,'ROSTER_FIXTURE_B_477','낮');
+ insert into private.sanctuary_character_owners_v412(character_id,owner_member_id,root_character_id,relation,verification_source)
+ values(b,null,b,'GUEST','CHARACTER_MASTER');
  expected:=jsonb_build_array(private.kinojo_roster_family_state_v477(a)-'items',private.kinojo_roster_family_state_v477(b)-'items');
  response:=private.kinojo_roster_family_save_v477(actor,'fixture-missing-477',a,array[b],expected);
  if response->>'code'<>'FAMILY_INCOMPLETE' then raise exception 'missing family guard: %',response;end if;
@@ -20,6 +22,7 @@ begin
  response:=private.kinojo_roster_family_save_v477(actor,'fixture-save-477',a,array[b,c],expected);
  if response->>'ok'<>'true' then raise exception 'save: %',response;end if;
  if (select count(*) from public.character_master where id=any(array[a,b,c]) and main_character_id=a)<>3 then raise exception 'family not merged';end if;
+ if (select relation<>'GUEST' or owner_member_id is not null or root_character_id<>a from private.sanctuary_character_owners_v412 where character_id=b) then raise exception 'GUEST membership corrupted';end if;
  response:=private.kinojo_roster_family_save_v477(actor,'fixture-save-477',a,array[b,c],expected);
  if response->>'replayed'<>'true' then raise exception 'idempotent replay';end if;
  response:=private.kinojo_roster_family_save_v477(actor,'fixture-conflict-477',a,array[b,c],expected);

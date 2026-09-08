@@ -6,6 +6,19 @@
 - 핵심 8종/인접 회귀 10종 로컬 PASS. 실제 인증·Google canary·운영 전체 최신화 및 지연 개선 실측은 3단계다. 운영 배포 완료로 읽지 않는다.
 - 현재 인계: docs/CHARACTER_REFRESH_STABILITY_STAGE2_WIP.md. Source/Deploy hash·순서·rollback·운영 게이트: docs/CHARACTER_REFRESH_STABILITY_STAGE2_RELEASE.md. 같은 4차 PROJECT LOG 최신 12회차에 기록한다.
 - main 0ab04ccf의 DB475/배너 변경을 보존했다. 새 SQL 숫자는 3단계 직전 최신 SQL_INDEX 확인 후 지정한다. 임의 전체 db push/실제 list 일괄 덮어쓰기 금지.
+## 성역 GUEST 부캐 롤오버 · 2026-09-08
+
+- 사용자가 명부 저장 성공 후 새로고침해도 강태공1의 부캐 연출이 안 뜬다고 제보. DB 저장1건, master/main7/is_main=false 및 성역 slot root7 확인. force_roster 응답의 mainCharacterName=강태공2도 정상. 지연이 아니라 Web이 membership GUEST를 부캐 연출 조건에서 제외한 문제였다.
+- 성역 슬롯의 기존 회원 분류/색상은 유지하고 Server canonical isMain=false/mainCharacterId가 자기 ID와 다르면 기존 부캐 툴팁을 활성화. PC hover/mobile tap/키보드 기존 연출 재사용. 별도 DB/Edge 변경 없음. PC/mobile JS·CSS familyHover2026090801.
+- 성역 관련 Node38개 PASS. 실제 공개 읽기+방문 통계 차단, 로컬 수정 JS 주입으로 성역2의 강태공1 PC1440 hover/mobile390 tap에서 강태공2·의 부캐 표시 및 GUEST 스타일 유지 확인. 이 검수는 운영 인증이 아닌 공개 읽기 검수다. 최종 배포/Drive 근거는 명부 LOG16회차.
+
+## 명부 연결 저장 GUEST 오류 수정 · DB478 · 2026-09-08
+
+- 강태공1은 성역 owner_member_id=NULL/relation=GUEST였다. DB477이 이를 ALT로 바꿔 `(owner_member_id IS NULL) = (relation = 'GUEST')` 제약 위반으로 전체 저장을 rollback. 운영 확인 시 강태공1/2 각각 본캐·저장이력0이었다. 기존 검증에 성역 GUEST fixture가 없었던 누락이다.
+- DB478은 owner가 없으면 GUEST를 보존하고 canonical root만 변경한다. Edge v12/API1.11은 관계 저장 실패를 캐릭터 추가 오류로 표시하지 않는다. 기존 read/save RPC와 권한·Web 계약 유지.
+- 수정 전 실제 요청 rollback 진단으로 23514 재현. 수정 후 같은 강태공2→본캐/강태공1→부캐 요청 BEGIN/ROLLBACK 성공, GUEST fixture 병합/교체/멱등/충돌 회귀 통과. 진단은 영구 저장하지 않았다. 실제 적용은 관리자의 연결 저장으로 진행한다.
+- Google list 시트 쓰기는 이 편집기 기능에 없다. 웹 명부는 서버 DB 관계 기준이다. 파일: `supabase/migrations/20260908094523_roster_family_guest_relation_v478.sql`, 같은 이름의 rollback은 종전 helper만 복원하며 GUEST 오류도 복원한다. 운영/PR/Drive 최종 근거는 명부 LOG15회차.
+
 ## 레기온 명부 본캐·부캐 노드 편집 · DB477 · 2026-09-08
 
 - 기준 main `bbcb6d30`, branch `codex/legion-roster-family-editor`. 모달에서 검색한 가족 전체를 불러와 본캐 슬롯/부캐 자유 배치, 실시간 곡선 연결, 근접 자석 정렬280ms, 모바일 Pointer Events 터치 드래그. 54px 네임카드, 등록 버튼/현재 본캐 문구 없음. 명부 조회 초기화 및 전체(왼쪽)/레기온별(오른쪽) 고정 라벨.
