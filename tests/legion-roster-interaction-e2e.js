@@ -18,7 +18,7 @@ const root=path.resolve(__dirname,'..');
   console.log("Checking",width); const page=await browser.newPage({viewport:{width,height},hasTouch:width<=700});const errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   let rpcCalls=0;
-  const fixture=Array.from({length:55},(_,i)=>({characterId:String(i+1),name:'명단 카드 '+String(i+1).padStart(2,'0'),serverId:2002,serverName:'지켈',className:'궁성',legion:'깡',isMain:i===0}));
+  const fixture=Array.from({length:55},(_,i)=>({characterId:String(i+1),name:'명단 카드 '+String(i+1).padStart(2,'0'),serverId:2002,serverName:'지켈',className:'궁성',legion:'깡',isMain:i===0,hasLibraryImage:i<2}));
   fixture[0].name='매우긴캐릭터이름표시검증용캐릭터';
   fixture[3]={...fixture[3],name:fixture[1].name,serverId:2003,serverName:'다른 서버'};
   const imageBytes=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Zl1sAAAAASUVORK5CYII=','base64');
@@ -59,6 +59,12 @@ const root=path.resolve(__dirname,'..');
   assert.equal(await page.locator('#rosterDetail').isVisible(),false);
   assert.deepEqual(await page.evaluate(()=>feedback),{sounds:0,vibrations:0});
   assert.equal(await page.locator('#rosterSound,#rosterVibration').count(),0);
+  if(!process.env.ROSTER_LIVE_DATA){
+    assert.equal(await page.locator('.roster-option[data-character-id="1"] .roster-image-dot').count(),1);
+    assert.equal(await page.locator('.roster-option[data-character-id="3"] .roster-image-dot').count(),0);
+    assert.equal(await page.locator('.roster-option[data-character-id="1"]').getAttribute('title'),'등록된 이미지 있음');
+    assert.ok(await page.locator('.roster-option[data-character-id="1"] .roster-image-dot').evaluate(dot=>{const d=dot.getBoundingClientRect(),c=dot.parentElement.getBoundingClientRect();return d.left>c.left&&d.top>c.top&&d.right<c.left+c.width/2&&d.bottom<c.top+c.height/2}),'red dot stays inside the card upper-left');
+  }
   const selectedName=await page.locator('.roster-option').nth(1).locator('strong').textContent();
   const selectedId=await page.locator('.roster-option').nth(1).getAttribute('data-character-id');
   await page.evaluate(()=>{

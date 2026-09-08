@@ -25,6 +25,8 @@ body.kinojo-page-legion-roster{margin:0;background:linear-gradient(180deg,#f8fbf
 .roster-wheel::-webkit-scrollbar,.roster-family::-webkit-scrollbar{display:none}
 .roster-option{height:80px;display:flex;align-items:center;justify-content:center;scroll-snap-align:center;position:relative;cursor:pointer;outline-offset:-3px}
 .roster-name-card{display:grid;align-content:center;gap:5px;width:100%;height:68px;padding:8px 18px;border:1px solid #d9e3f1;border-radius:10px;background:linear-gradient(135deg,#fff,#edf4fe);color:#50647f;transform:translateZ(var(--depth,-150px)) scale(var(--scale,.85));opacity:var(--opacity,.5);box-shadow:0 4px 12px #28476e0b;text-align:center;pointer-events:none}
+.roster-name-card{position:relative}
+.roster-image-dot{position:absolute;top:9px;left:10px;width:6px;height:6px;border-radius:50%;background:#ed424f;box-shadow:0 0 0 1px #fff;pointer-events:none}
 .roster-name-card strong{font-size:14px;letter-spacing:-.025em}
 .roster-name-card small{font-size:10px;color:#71829a}
 .roster-option[aria-selected="true"] .roster-name-card{border-color:#7ba3df;color:#1c4b94;background:linear-gradient(120deg,#fff,#e6efff);box-shadow:0 10px 22px #3668b02d}

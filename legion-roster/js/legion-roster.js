@@ -191,6 +191,10 @@
       option.setAttribute('role','option');
       option.setAttribute('aria-label',row.name+' · '+serverLabel(row)+' · '+row.characterId);
       card.className='roster-name-card';
+      if(row.hasLibraryImage===true){
+        const dot=document.createElement('span');dot.className='roster-image-dot';dot.setAttribute('aria-hidden','true');card.append(dot);
+        option.title='등록된 이미지 있음';option.setAttribute('aria-label',option.getAttribute('aria-label')+' · 등록된 이미지 있음');
+      }
       const name=document.createElement('strong'),caption=document.createElement('small');
       name.textContent=row.name;caption.textContent=serverLabel(row)+' · '+(row.className||'직업 미확인');
       card.append(name,caption);option.append(card);wheel.append(option);

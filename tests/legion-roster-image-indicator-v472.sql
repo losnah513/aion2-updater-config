@@ -1,0 +1,2 @@
+-- Read-only parity with the actual public library, excluding decorative backgrounds.
+with rows as (select value from jsonb_array_elements(public.kinojo_web_roster_list_v465('all',null,'',null,100)->'items')) select count(*) characters,count(*) filter(where (value->>'hasLibraryImage')::boolean) with_images,bool_and((value->>'hasLibraryImage')::boolean = ((public.kinojo_web_roster_images_v467((value->>'characterId')::bigint,(value->>'characterId')::bigint,null,1)->>'total')::integer>0)) parity_ok from rows;
