@@ -27,6 +27,19 @@
 
 ## 로컬 검증
 
+### 추가 경계 검증 — 2026-09-08, 배포 게이트 실패
+
+`node tests/character-refresh-stability-adversarial.test.cjs`: 10개 중 5 PASS / 5 FAIL (exit 1). 제품 코드는 수정하지 않았으며 테스트와 검증 기록만 추가했다. 증거는 `tests/evidence/20260908-character-refresh-stage2/verification.json`이다.
+
+- FAIL: 같은 이름 변경 Queue를 그대로 재시도하면 첫 쓰기는 성공하지만 옛 원본 이름으로 행을 찾지 못한다.
+- FAIL: 시트 쓰기 직전 사용자 행 이동을 모의하면 무관한 캐릭터의 전투력 999가 300으로 덮인다. Script lock은 사용자 행 이동을 막지 못한다.
+- FAIL: `readComplete=false`인 부분 readback에도 list Edge가 `finished=true`를 반환한다.
+- FAIL: 이미 synced된 Queue 경로에서 서버 완료 기록 `ok=false`여도 Edge가 `ok=true,finished=true`를 반환한다.
+- FAIL: checkpoint 만료 후 새 탐색이 시작되면 이전 탐색의 늦은 저장을 거절하지 못해 완료 서버/후보가 섞인다. 세대 또는 revision 비교가 필요하다.
+- PASS: 정상 readback 완료, 정상 Target context, _D/명시적 DB 제외/삭제후보 사유 각각에 대한 DB context→Worker 경로 공식 API 호출0.
+
+기존 4종 테스트도 재통과했다. 그러나 전체 통합 검증 성공을 의미하지 않는다. H 원문→prepare 전체 과정, 실제 권한, 운영 스키마의 관계 commit/rollback, 완전 동시성/실운영 성능은 아직 검증하지 않았다. 먼저 위 5건을 수정한 뒤 동일 테스트가 통과하는지 확인해야 한다.
+
 다음 네 명령 모두 통과했다. 실제 운영 API/DB/list를 수정하는 테스트가 아니다.
 
 ```text
