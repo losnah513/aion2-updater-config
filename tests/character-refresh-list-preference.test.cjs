@@ -17,6 +17,11 @@ const definition=(sql,name)=>{const a=sql.indexOf('CREATE OR REPLACE FUNCTION pu
  create function kinojo_automation_admin_status_v377(text) returns jsonb language sql as $$select jsonb_build_object('ok',true,'canManage',true,'characterRefresh',kinojo_automation_window_v377('character_refresh'))$$;
  `.replace(/create function kinojo_automation_admin_status_v377[\s\S]*/,'')); // defined after migration below
  await db.exec(read('supabase/migrations/'+name));
+ await db.exec(read('supabase/migrations/20260908134927_character_listless_completion_lease.sql'));
+ await db.exec(`create function kinojo_server_queue_postprocess_claim_v271(text,text,text) returns jsonb language plpgsql as $$begin
+ if (select raw_payload->>'adminControlState' from updater_sessions where session_id=$1)='paused' then return '{"ok":true,"acquired":false,"paused":true}'::jsonb;end if;
+ update lookup_batches set worker_id=$3 where session_id=$1 and worker_id is null;
+ return jsonb_build_object('ok',true,'acquired',found);end$$;`);
  await db.exec(`
  create function kinojo_automation_admin_status_v377(text) returns jsonb language sql as $$select jsonb_build_object('ok',true,'canManage',true,'characterRefresh',kinojo_automation_window_v377('character_refresh'))$$;
  create function private.kinojo_legion_tree_finalize_relation_v373(text) returns jsonb language plpgsql as $$begin raise exception 'ordinary OFF must not mutate legion-tree relations';end$$;
@@ -56,6 +61,11 @@ const definition=(sql,name)=>{const a=sql.indexOf('CREATE OR REPLACE FUNCTION pu
  await db.exec("update lookup_batches set postprocess_ranking_done=true;update lookup_session_targets set target_status='queued' where id=2");
  assert.equal((await complete()).code,'LOOKUP_NOT_SETTLED');
  await db.exec("update lookup_session_targets set target_status='final_failed' where id=2");
+ // Real stage completion clears worker_id; finalization must reacquire, not reject it.
+ await db.exec("update lookup_batches set worker_id=null;update updater_sessions set raw_payload=raw_payload||'{\"adminControlState\":\"paused\"}'::jsonb where session_id='off'");
+ assert.equal((await complete()).paused,true);
+ assert.equal(await val("select worker_id v from lookup_batches where session_id='off'"),null);
+ await db.exec("update updater_sessions set raw_payload=raw_payload||'{\"adminControlState\":\"running\"}'::jsonb where session_id='off'");
  let result=await complete();
  assert.equal(result.ok,true);assert.equal(result.partialSuccess,true);assert.equal(result.listSheetComplete,false);
  assert.equal(Number(result.progress.overallProgressPercent),100);assert.equal(result.progress.listWriteSkipped,true);
