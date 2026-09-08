@@ -21,7 +21,7 @@ assert.equal(migration.includes("'editorName'"),false,'edit presence must not ex
 assert.equal(migration.includes('lease_token_hash'),false,'edit presence must not expose lease tokens');
 
 for(const token of [
-  'const API_VERSION="2.4"','const DATABASE_CONTRACT="458"','"lease-status"','"slot-character-search"',
+  'const API_VERSION="2.5"','const DATABASE_CONTRACT="480"','"lease-status"','"slot-character-search"',
   'kinojo_sanctuary_management_lease_status_v458','kinojo_sanctuary_management_official_prepare_all_v458',
   'size","100"','exactCandidates','OFFICIAL_ALL',
 ])assert.ok(edge.includes(token),`v458 Edge contract missing ${token}`);
@@ -32,7 +32,7 @@ for(const token of [
 ])assert.ok(feature.includes(token),`v458 feature bridge missing ${token}`);
 
 for(const token of [
-  'const API_VERSION=2.4','const SCHEMA_VERSION=458','validateLeaseStatus','validateSlotCharacterSearch',
+  'const API_VERSION=2.5','const SCHEMA_VERSION=480','validateLeaseStatus','validateSlotCharacterSearch',
   "document.createElement(slot.occupied?'span':'button')",'dataset.sanctuarySlotAdd',
   "edit.textContent='확인 중'",'kinojo:sanctuary-management-rendered',
 ])assert.ok(main.includes(token),`v458 roster client missing ${token}`);
@@ -53,7 +53,7 @@ for(const token of [
 
 for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
-  for(const token of ['sanctuary-management-inline-slot.css?cache=2026090101','sanctuary-management-inline-slot.js?cache=2026090101','kinojo-supabase-features.js?cache=2026090803','sanctuary-management.js?cache=2026090101'])assert.ok(html.includes(token),`${page}: v458 asset missing ${token}`);
+  for(const token of ['sanctuary-management-inline-slot.css?cache=2026090101','sanctuary-management-inline-slot.js?cache=2026090101','kinojo-supabase-features.js?cache=2026090804','sanctuary-management.js?cache=2026090101'])assert.ok(html.includes(token),`${page}: v458 asset missing ${token}`);
 }
 assert.ok(workflow.includes('node tests/sanctuary-management-inline-slot-v458-contract.test.js'),'v458 contract is not wired into CI');
 

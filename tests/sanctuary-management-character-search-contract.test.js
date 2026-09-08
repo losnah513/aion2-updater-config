@@ -13,18 +13,18 @@ const workflow=read('.github/workflows/verify-kinojo-pages.yml');
 
 for(const token of [
   'searchSanctuaryManagementCharacter','registerSanctuaryManagementCharacter',
-  "action:'character-search'","action:'character-register'",'mainCharacterId',
+  "action:'character-search'","action:'character-register'","action:'character-list-retry'",'mainCharacterId','mainCandidateId','listSyncEnabled',
 ])assert.ok(feature.includes(token),`Feature character boundary missing ${token}`);
 
 for(const token of [
   'function validateCharacterCard','function validateCharacterSearch','async searchCharacter(teamId,query)',
-  'async registerCharacter(teamId,candidateId,relationType,mainCharacterId,requestKey)',
+  'async registerCharacter(teamId,candidateId,relationType,mainCharacterId,mainCandidateId,listSyncEnabled,requestKey)',
 ])assert.ok(client.includes(token),`Management character adapter missing ${token}`);
 
 for(const token of [
   'data-character-search-form','size="16"','이름 또는 이름[서버]','캐릭터 마스터 우선 조회',
-  '아이온2 공식 확인','data-draft-relation="','data-main-search-form','data-draft-register-main',
-  '외부 레기온 또는 레기온 미가입 캐릭터로 게스트 등록','registerOfficialCharacter',
+  '아이온2 공식 확인','data-draft-relation="','data-main-search-form','data-list-sync="Y"',
+  '게스트로 독립 등록하거나 본캐를 찾아 부캐로 연결','registerOfficialCharacter',
 ])assert.ok(draft.includes(token),`Character search UI missing ${token}`);
 
 for(const token of [
@@ -38,12 +38,12 @@ assert.equal(draft.includes('키나노동조합'),false,'Operational legion name
 
 const calls=[];
 const listeners=new Map();
-const master={characterId:501,characterName:'마스터캐릭터',serverId:2002,serverName:'지켈',raceId:2,className:'검성',legionName:'',profileImageUrl:'',relation:'GUEST',mainCharacterId:501,ownerMemberId:0,isOperationalLegion:false};
-const official={candidateId:'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',characterName:'공식캐릭터',serverId:2002,serverName:'지켈',raceId:2,className:'살성',legionName:'외부',profileImageUrl:'',isOperationalLegion:false,allowedRelations:['GUEST']};
+const master={characterId:501,characterName:'마스터캐릭터',serverId:2002,serverName:'지켈',raceId:2,className:'검성',legionName:'',profileImageUrl:'',relation:'GUEST',familyRelation:'MAIN',membershipRelation:'GUEST',isMain:true,mainCharacterId:501,ownerMemberId:0,isOperationalLegion:false};
+const official={candidateId:'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',characterName:'공식캐릭터',serverId:2002,serverName:'지켈',raceId:2,className:'살성',legionName:'외부',profileImageUrl:'',isOperationalLegion:false,membershipRelation:'GUEST',allowedRelations:['GUEST','ALT']};
 const context={
   window:{KinojoSupabase:{
     async searchSanctuaryManagementCharacter(teamId,query){calls.push({kind:'search',teamId,query});return query==='공식'?{ok:true,apiVersion:1.8,schemaVersion:446,source:'OFFICIAL',candidate:official}:{ok:true,apiVersion:1.8,schemaVersion:446,source:'CHARACTER_MASTER',character:master};},
-    async registerSanctuaryManagementCharacter(teamId,candidateId,relationType,mainCharacterId,requestKey){calls.push({kind:'register',teamId,candidateId,relationType,mainCharacterId,requestKey});return{ok:true,character:master};},
+    async registerSanctuaryManagementCharacter(teamId,candidateId,relationType,mainCharacterId,mainCandidateId,listSyncEnabled,requestKey){calls.push({kind:'register',teamId,candidateId,relationType,mainCharacterId,mainCandidateId,listSyncEnabled,requestKey});return{ok:true,registrationId:'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',listSync:{requested:listSyncEnabled,status:'SYNCED'},character:master};},
   }},
   document:{readyState:'loading',addEventListener(name,callback){listeners.set(name,callback);},getElementById(){return null;}},
   location:{href:'https://kinojo.info/sanctuary-management/',search:'',pathname:'/sanctuary-management/',hash:''},
@@ -57,11 +57,12 @@ async function verify(){
   assert.equal(found.character.characterId,501);
   assert.equal(found.character.relation,'GUEST');
   const candidate=await adapter.searchCharacter(77,'공식');
-  assert.deepEqual(Array.from(candidate.candidate.allowedRelations),['GUEST']);
-  const registered=await adapter.registerCharacter(77,official.candidateId,'GUEST',null,'sm-character-test-433');
+  assert.deepEqual(Array.from(candidate.candidate.allowedRelations),['GUEST','ALT']);
+  const registered=await adapter.registerCharacter(77,official.candidateId,'GUEST',null,null,true,'sm-character-test-480');
   assert.equal(registered.character.characterId,501);
   assert.equal(calls.length,3);
   assert.equal(calls[2].relationType,'GUEST');
+  assert.equal(calls[2].listSyncEnabled,true);
 }
 
 verify().then(()=>console.log('KINOJO sanctuary management DB436 character search contract: PASS')).catch(error=>{console.error(error);process.exitCode=1;});

@@ -194,7 +194,7 @@
         token=leaseToken();await window.KinojoSanctuaryManagementDraftBridge.lease(state.team.teamId,'ACQUIRE',token);
         if(result.kind==='OFFICIAL'){
           const relation=state.relation||(result.candidate.allowedRelations||[])[0];
-          const registered=await window.KinojoSanctuaryManagementDraftBridge.registerCharacter(state.team.teamId,result.candidate.candidateId,relation,relation==='ALT'?integer(state.mainCharacterId):null,requestKey('sm-slot-character'));
+          const registered=await window.KinojoSanctuaryManagementDraftBridge.registerCharacter(state.team.teamId,result.candidate.candidateId,relation,relation==='ALT'?integer(state.mainCharacterId):null,null,true,requestKey('sm-slot-character'));
           character=registered.character;
         }
         const currentTeam=teamById(state.team.teamId)||state.team;

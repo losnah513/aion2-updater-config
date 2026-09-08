@@ -220,6 +220,7 @@ jobs:
           node tests/sanctuary-management-layout-family-guard-contract.test.js
           node tests/sanctuary-management-slot-relation-v463-contract.test.js
           node tests/sanctuary-management-sanctuary4-difficulty-contract.test.js
+          node tests/sanctuary-management-stage13-external-family-contract.test.js
           node tests/admin-member-v433-browser-rpc-contract.test.js
           node tests/staged-page-contract.test.js
           node tests/meter-presence-log-contract.test.js
@@ -402,6 +403,10 @@ jobs:
           node-version: 24
       - name: Verify roster family Edge
         run: node tests/roster-family-edge.test.js
+      - name: Verify Sanctuary List retry database boundary
+        run: |
+          npm install --prefix "$RUNNER_TEMP/sanctuary-db" --no-package-lock @electric-sql/pglite@0.5.8
+          PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/sanctuary-list-retry-v480.test.cjs
       - name: Verify roster browser interactions
         shell: bash
         run: |
@@ -410,6 +415,7 @@ jobs:
           PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/legion-roster-interaction-e2e.js
           PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/character-titles-e2e.js
           PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/roster-family-editor-e2e.js
+          PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/sanctuary-stage13-registration-e2e.js
 
       - name: Verify bridge startup with frozen cores
         shell: bash

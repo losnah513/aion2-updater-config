@@ -1,5 +1,14 @@
 # KINOJO WEB HANDOFF
 
+## 성역 Stage 13 외부 캐릭터 관계·List 선택 · 2026-09-08
+
+- 기준 main `9e885d4c`, branch `codex/sanctuary-stage13-external-alt-20260908`. 게스트 소유권과 MAIN/ALT 가족관계를 분리하고 기존/공식 신규 본캐와 원자 등록한다. List Y 기본/N DB-only, 실패 독립 재시도, 하단 상태 영역을 제공한다. 기존 게스트 일괄 보정은 하지 않는다.
+- DB480 두 migration 적용, sanctuary-management v30: clientContract480 요청은 API2.5/DB480, 구 탭은 API2.4/458 호환. 내 캐릭터 부트스트랩 수치 누락을 복구했다. 청소기 master111 PVE itemLevel6007/power878793이며 비탄 보통6000을 충족한다.
+- 공유 lookup-list-sync는 캐릭터 최신화 PR421이 통합·배포 소유한다. 성역 syncSanctuary/service auth/DB480 finalize 계약을 그 작업의 MASTER_ID_V1 writer와 통합하며 이 PR은 공유 Edge 파일을 포함하지 않는다. 통합 writer 운영 검증 전 Stage13 전체 완료로 판정하지 않는다.
+- 로컬 `node tests/sanctuary-management-stage13-external-family-contract.test.js`, `node tests/sanctuary-management-edge-contract.test.js`, 루트 *.test.js 117개 PASS. `PLAYWRIGHT_MODULE`(설치된 Playwright), 선택 `CHROME_PATH`로 `node tests/sanctuary-stage13-registration-e2e.js`: 1440/390/320 × ListY/N 6개 PASS. 방문 helper를 navigation 전에 설치한다. 모의 등록 검증은 운영 등록 검수와 구분한다.
+- 운영 등록/시트 시험 행은 만들지 않았다. CODEX_ADMIN 정상 로그인 읽기 검수 및 Git/Pages/Drive 마감은 검증 대기. 최종 진행상태는 [성역 LOG](https://drive.google.com/file/d/19lh9hkVKNsu9a54bd-k3rlvhIsCK_Khv/view) 최신 회차를 따른다.
+- 복구: Web/Edge 직전 버전 후 `supabase/rollbacks/20260908105603_sanctuary_external_guest_family_v480_rollback.sql`로 신규 등록·재시도 진입을 비활성화한다. 이미 등록된 캐릭터·관계·List·감사행은 삭제/되돌리지 않는다.
+
 ## 캐릭터 PVP 칭호 판정 · DB479
 
 - 기존 장비 조건(어비스3개 이상/장비 확인)을 유지하고 장착 칭호의 PVP 피해 증폭 또는 피해 내성 중 하나를 인정한다. PVE 옵션 동시 존재는 PVP를 무효화하지 않는다. PVP 회피만으로 확대하지 않는다.
