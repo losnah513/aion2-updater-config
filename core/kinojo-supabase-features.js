@@ -483,6 +483,8 @@
     if(!row) return null;
     return {
       characterId: Number(row.character_id || row.characterId || row.id || 0),
+      lookupPolicy: row.lookup_policy || row.lookupPolicy || null,
+      identityListPendingCount:Number(row.identity_list_pending_count||0),
       characterName: row.character_name || row.characterName || '',
       mainCharacterName: row.main_character_name || row.mainCharacterName || '',
       serverId: row.server_id || row.serverId || '',
@@ -553,6 +555,14 @@
         characters:(Array.isArray(rows)?rows:[]).map(normalizeAdminCharacterRow).filter(Boolean).map(item=>Object.assign(item,{identityReview:reviewMap.get(Number(item.characterId||0))||null}))
       };
     }
+    if(normalizedCommand === 'updateLookupPolicy'){
+      return await rpc('kinojo_admin_character_lookup_policy_update', {
+        p_credential: currentAdminSessionCredential(),
+        p_character_id: Number(extra.characterId || 0),
+        p_mode: String(extra.mode || ''), p_scope: String(extra.scope || ''),
+        p_reason: String(extra.reason || ''), p_expected_updated_at: String(extra.expectedUpdatedAt || '')
+      });
+    }
     if(normalizedCommand === 'updateExclusion'){
       const data = await rpc('kinojo_admin_character_exclusion_update_v278', {
         p_pass_key: currentAdminSessionCredential(),
@@ -592,6 +602,9 @@
         p_memo: String(extra.memo || '')
       });
       return data || { ok:false, message:'처리 결과를 확인하지 못했습니다.' };
+    }
+    if(normalizedCommand === 'identityRetryList'){
+      return invokeEdgeFunction('character-identity-recovery', {action:'adminRetryList',passKey:currentAdminSessionCredential(),characterId:Number(extra.characterId||0)});
     }
     if(normalizedCommand === 'identityProbe'){
       return invokeEdgeFunction('character-identity-recovery', {
@@ -722,6 +735,9 @@
 
   async function adminAutomation(command, extra={}){
     assertAdmin();
+    if(command==='saveListWrite')return rpc('kinojo_automation_admin_list_write_save',{
+      p_pass_key:currentAdminSessionCredential(),p_enabled:extra.enabled===true
+    });
     const actions={status:'adminStatus',save:'adminSave'};
     const action=actions[String(command||'').trim()];
     if(!action)return{ok:false,message:'알 수 없는 서버 자동화 관리자 명령입니다.'};
@@ -1578,6 +1594,7 @@
             tool:'KINOJO_ADMIN_WEB',
             requestedSurface:'ADMIN_WEB_SERVER_QUEUE',
             serverQueue:true,
+            listSheetSyncEnabled:extra.listSheetSyncEnabled!==false,
             lookupOnlyPhase:false,
             postprocessPhase:true,
             sheetDeferred:false,

@@ -1,0 +1,156 @@
+{
+  "date": "2026-09-08",
+  "mainBase": "9c90c1643333a87318292320cbc924818416feb9",
+  "scope": "Stage 2 offline implementation verification; no production deployment or production data writes",
+  "runner": "node scripts/verify-character-refresh-stage2.cjs --browser",
+  "total": 33,
+  "passed": 33,
+  "failed": 0,
+  "tests": [
+    {
+      "test": "tests/character-refresh-stability-stage2.test.cjs",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/character-refresh-stability-sql.test.cjs",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/character-refresh-identity-stage2-fixtures.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/character-identity-recovery-percent-encoding-contract.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/list-metadata-writer.test.cjs",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/character-refresh-stability-adversarial.test.cjs",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/character-refresh-policy.test.cjs",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/character-refresh-stage2-boundaries.test.cjs",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/character-refresh-server-transfer-legion-contract.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/admin-queue-materialized-status-runtime.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/web-shell-auth-contract.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/admin-member-image-review-contract.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/my-info-phase2-stage3-admin-contract.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/staged-page-contract.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/legion-tree-data-render-contract.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/admin-dashboard-lazy-loader-contract.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/admin-queue-materialized-status-contract.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/banner-library-management.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/character-refresh-worker-terminal.test.cjs",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/character-refresh-extension-terminal.test.cjs",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/character-refresh-audit-safety.test.cjs",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/character-detail-identity-edge.test.cjs",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/character-detail-write-fence.test.cjs",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/character-history-stable-identity.test.cjs",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/character-weekly-growth-identity.test.cjs",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/character-rollup-identity.test.cjs",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/character-refresh-dispatch.test.cjs",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/character-refresh-list-preference.test.cjs",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/roster-family-edge.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/sanctuary-management-layout-family-guard-contract.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/character-refresh-admin-settings.test.cjs",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/character-refresh-budget.test.cjs",
+      "exitCode": 0
+    },
+    {
+      "test": "tests/character-refresh-ui-browser.test.cjs",
+      "exitCode": 0
+    }
+  ],
+  "manifest": {
+    "command": "node tests/character-refresh-release-manifest.test.cjs --package",
+    "passed": true,
+    "canonicalFiles": 34,
+    "migrationRollbackPairs": 11,
+    "byteIdenticalSourceDeployPairs": 11
+  },
+  "limits": [
+    "HTTP/provider and authentication fixtures are synthetic",
+    "Real CODEX_ADMIN authentication, operating RLS/concurrency, Sheets and provider latency require Stage 3",
+    "No Deno check or remote CI execution",
+    "Extension references remain RETIRED/FROZEN"
+  ]
+}

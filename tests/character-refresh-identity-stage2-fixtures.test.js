@@ -63,7 +63,7 @@ for (const fixture of fixtures.transitions) {
 }
 
 for (const token of [
-  'const API_VERSION="295.9"',
+  'const API_VERSION="295.11"',
   'const IDENTITY_DATABASE_CONTRACT="461"',
   'identityRecoveryDecision(stored.code,nameSearch.code)',
   'decision.allowed!==true',

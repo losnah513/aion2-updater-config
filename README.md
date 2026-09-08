@@ -1,4 +1,8 @@
-# aion2-updater-config
+# KINOJO WEB
+
+## Character refresh stability
+
+Existing services share DB-owned eligibility, direct-key identity recovery, stable Master-ID writes and immutable per-session list export preferences. Scope follows the existing project plan; status, evidence and next actions belong only in the [project LOG](https://drive.google.com/file/d/1k0R6heq6ttLl9IKFm_q1_EGm4FCxmVbQ/view). See docs/CHARACTER_REFRESH_STABILITY_STAGE2_RELEASE.md and CHARACTER_REFRESH_STAGE2_MANIFEST.json for deployment/rollback contracts. No production execution is authorized by these documents.
 
 ## Sanctuary external family registration · 2026-09-08
 

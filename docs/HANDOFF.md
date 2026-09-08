@@ -1,5 +1,10 @@
 # KINOJO WEB HANDOFF
 
+## 캐릭터 최신화 4차 재개 계약
+
+범위·단계는 [기존 계획서](https://drive.google.com/file/d/1aPfADtwHFXo1_ZP6Zj3HkD7eGyOVrZxD/view), 진행 상태·검증 결과·다음 작업은 [프로젝트 LOG](https://drive.google.com/file/d/1k0R6heq6ttLl9IKFm_q1_EGm4FCxmVbQ/view)를 먼저 확인한다. 과거 작업을 중복 실행하지 않는다.
+배포·복구 계약은 CHARACTER_REFRESH_STABILITY_STAGE2_RELEASE.md, 제품 파일은 CHARACTER_REFRESH_STAGE2_MANIFEST.json을 따른다. 이 문서는 운영 실행 승인이 아니다.
+
 ## 성역 Stage 13 외부 캐릭터 관계·List 선택 · 2026-09-08
 
 - 기준 main `9e885d4c`, branch `codex/sanctuary-stage13-external-alt-20260908`. 게스트 소유권과 MAIN/ALT 가족관계를 분리하고 기존/공식 신규 본캐와 원자 등록한다. List Y 기본/N DB-only, 실패 독립 재시도, 하단 상태 영역을 제공한다. 기존 게스트 일괄 보정은 하지 않는다.

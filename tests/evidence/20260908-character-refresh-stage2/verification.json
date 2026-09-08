@@ -1,0 +1,112 @@
+{
+  "baselineCommit": "4bc4bac7",
+  "scope": "Local synthetic only; no production writes; validation stubs do not test real authentication",
+  "results": [
+    {
+      "name": "Identical rename Queue retry completes idempotently",
+      "pass": false,
+      "detail": {
+        "first": true,
+        "retry": false,
+        "retryFailures": [
+          {
+            "ok": false,
+            "id": 1,
+            "row": 6,
+            "originalListName": "before",
+            "characterName": "after",
+            "message": "list 행을 찾지 못했습니다. listRow=6 / originalListName=before / characterName=after"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Row movement cannot overwrite another character stats",
+      "pass": false,
+      "detail": {
+        "bridgeOk": true,
+        "unrelatedPower": 300
+      }
+    },
+    {
+      "name": "Explicitly incomplete readback never completes session",
+      "pass": false,
+      "detail": {
+        "ok": true,
+        "finished": true
+      }
+    },
+    {
+      "name": "Already-synced branch requires successful server completion record",
+      "pass": false,
+      "detail": {
+        "ok": true,
+        "finished": true,
+        "serverRecord": {
+          "ok": false
+        }
+      }
+    },
+    {
+      "name": "Normal complete readback completes session",
+      "pass": true,
+      "detail": {
+        "ok": true
+      }
+    },
+    {
+      "name": "Expired generation late writer cannot contaminate new scan",
+      "pass": false,
+      "detail": {
+        "restarted": [],
+        "lateAccepted": true,
+        "completed": [
+          2002,
+          2003
+        ]
+      }
+    },
+    {
+      "name": "Suffix-only exclusion blocks Worker before API",
+      "pass": true,
+      "detail": {
+        "contextCode": "LOOKUP_EXCLUDED",
+        "errorCode": "LOOKUP_EXCLUDED",
+        "providerCalls": 0,
+        "otherRpcCalls": 0
+      }
+    },
+    {
+      "name": "Explicit DB exclusion blocks Worker before API",
+      "pass": true,
+      "detail": {
+        "contextCode": "LOOKUP_EXCLUDED",
+        "errorCode": "LOOKUP_EXCLUDED",
+        "providerCalls": 0,
+        "otherRpcCalls": 0
+      }
+    },
+    {
+      "name": "Persisted deletion reason without suffix blocks Worker before API",
+      "pass": true,
+      "detail": {
+        "contextCode": "LOOKUP_EXCLUDED",
+        "errorCode": "LOOKUP_EXCLUDED",
+        "providerCalls": 0,
+        "otherRpcCalls": 0
+      }
+    },
+    {
+      "name": "Normal target",
+      "pass": true,
+      "detail": {
+        "ok": true
+      }
+    },
+    {
+      "total": 10,
+      "passed": 5,
+      "failed": 5
+    }
+  ]
+}

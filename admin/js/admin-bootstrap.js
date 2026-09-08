@@ -331,6 +331,8 @@
     $('#characterStateFilter')?.addEventListener('change',renderCharacters);
     $('#characterList')?.addEventListener('click',e=>{
       if(e.target.matches('[data-char-status-save]'))saveCharacterStatus(e.target);
+      if(e.target.matches('[data-policy-save]'))A.saveCharacterLookupPolicy(e.target);
+      if(e.target.matches('[data-identity-list-retry]'))A.retryCharacterIdentityList(e.target);
       if(e.target.matches('[data-identity-probe]'))probeCharacterIdentity(e.target);
       if(e.target.matches('[data-identity-review-approve]'))decideIdentityReview(e.target,true);
       if(e.target.matches('[data-identity-review-reject]'))decideIdentityReview(e.target,false);

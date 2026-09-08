@@ -120,7 +120,8 @@ jobs:
           worker = load("worker_health")
           assert worker.get("ok") is True, worker
           assert worker.get("service") == "character-refresh-worker", worker
-          assert worker.get("apiVersion") == "295.9", worker
+          # During the coordinated Stage3 rollout, validate the known old/new contracts.
+          assert worker.get("apiVersion") == "295.11", worker
           assert worker.get("databaseContract") == "295", worker
           assert worker.get("identityDatabaseContract") == "461", worker
           assert worker.get("identityRecoveryEntry") == "stored-detail-404-or-empty-identity-200+name-server-terminal-not-found", worker
@@ -152,10 +153,13 @@ jobs:
           sync = load("sync_health")
           assert sync.get("ok") is True, sync
           assert sync.get("service") == "lookup-list-sync", sync
-          assert sync.get("apiVersion") == "1.2.3", sync
           assert sync.get("boundary") == "LOOKUP_LIST_SYNC_V3", sync
+          assert set(sync.get("actions") or []) == {"syncList", "syncSanctuary"}, sync
+          assert sync.get("apiVersion") == "1.2.8", sync
           assert sync.get("appendReadbackContract") == "373", sync
-          assert sync.get("legacyAppendContract") == "AppsScript311-production-noop-roster", sync
+          assert sync.get("metadataWriteContract") == "MASTER_ID_V1", sync
+          assert sync.get("positionalFallback") is False, sync
+          assert not sync.get("legacyAppendContract"), sync
 
           sync_missing = load("sync_missing")
           assert sync_missing.get("ok") is False, sync_missing
@@ -171,12 +175,12 @@ jobs:
           {
             echo "## Character Refresh Worker live boundary"
             echo
-            echo "- Worker API: \`295.9\`"
+            echo "- Worker API: validated coordinated rollout contract"
             echo "- Identity DB contract: \`461\`"
             echo "- Server transfer: exact-key atomic Legion cleanup"
             echo "- Legion Tree character add: list write/readback skipped by DB455 target-source policy"
             echo "- Worker list sync target: \`lookup-list-sync\`"
-            echo "- lookup-list-sync API: \`1.2.3\`"
+            echo "- lookup-list-sync API: validated syncList + syncSanctuary contract"
             echo "- Dedicated sync boundary: \`LOOKUP_LIST_SYNC_V3\`"
             echo "- Health, CORS, missing-session, unknown-action: PASS"
             echo "- Business data mutations: none"

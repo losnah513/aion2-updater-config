@@ -1,0 +1,150 @@
+{
+  "date": "2026-09-08",
+  "scope": "Offline implementation verification only; no production calls/writes; auth routing stubs are not live authentication validation",
+  "mainBase": "0ab04ccf2c25764762d074b34199376b041f24af",
+  "testRuntime": "Node 24 and @electric-sql/pglite 0.5.8",
+  "tests": [
+    {
+      "command": "node tests/character-refresh-stability-stage2.test.cjs",
+      "exitCode": 0,
+      "output": "PASS: direct-key discovery, mismatch/race/class, incomplete scan, checkpoint resume, list rename/G/readback contracts\n(node:16556) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n"
+    },
+    {
+      "command": "node tests/character-refresh-stability-sql.test.cjs",
+      "exitCode": 0,
+      "output": "PASS: PostgreSQL migration syntax, resume/expiry, catalog/key guards, shared rate gate, service-only ACL\n"
+    },
+    {
+      "command": "node tests/character-refresh-identity-stage2-fixtures.test.js",
+      "exitCode": 0,
+      "output": "character refresh identity Stage 2 synthetic fixtures: PASS\n"
+    },
+    {
+      "command": "node tests/character-identity-recovery-percent-encoding-contract.test.js",
+      "exitCode": 0,
+      "output": "character identity recovery percent-encoding contract: PASS\n"
+    },
+    {
+      "command": "node tests/list-metadata-writer.test.cjs",
+      "exitCode": 0,
+      "output": "PASS: metadata API failure, row deletion, missing ID, duplicate binding, foreign binding, append retry, null preservation, explicit clear, no unsafe fallback\n"
+    },
+    {
+      "command": "node tests/character-refresh-stability-adversarial.test.cjs",
+      "exitCode": 0,
+      "output": "(node:28240) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n{\"name\":\"Identical rename Queue retry completes idempotently\",\"pass\":true,\"detail\":{\"first\":true,\"retry\":true,\"retryFailures\":[]}}\n{\"name\":\"Row movement cannot overwrite another character stats\",\"pass\":true,\"detail\":{\"bridgeOk\":true,\"unrelatedPower\":999}}\n{\"name\":\"Explicitly incomplete readback never completes session\",\"pass\":true,\"detail\":{\"ok\":false}}\n{\"name\":\"Already-synced branch requires successful server completion record\",\"pass\":true,\"detail\":{\"ok\":false,\"finished\":false,\"serverRecord\":{\"ok\":false}}}\n{\"name\":\"Normal complete readback completes session\",\"pass\":true,\"detail\":{\"ok\":true}}\n{\"name\":\"Expired generation late writer cannot contaminate new scan\",\"pass\":true,\"detail\":{\"restarted\":[],\"lateAccepted\":false,\"completed\":[]}}\n{\"name\":\"Suffix-only exclusion blocks Worker before API\",\"pass\":true,\"detail\":{\"contextCode\":\"LOOKUP_EXCLUDED\",\"errorCode\":\"LOOKUP_EXCLUDED\",\"providerCalls\":0,\"otherRpcCalls\":0}}\n{\"name\":\"Explicit DB exclusion blocks Worker before API\",\"pass\":true,\"detail\":{\"contextCode\":\"LOOKUP_EXCLUDED\",\"errorCode\":\"LOOKUP_EXCLUDED\",\"providerCalls\":0,\"otherRpcCalls\":0}}\n{\"name\":\"Persisted deletion reason without suffix blocks Worker before API\",\"pass\":true,\"detail\":{\"contextCode\":\"LOOKUP_EXCLUDED\",\"errorCode\":\"LOOKUP_EXCLUDED\",\"providerCalls\":0,\"otherRpcCalls\":0}}\n{\"name\":\"Normal target\",\"pass\":true,\"detail\":{\"ok\":true}}\n{\"total\":10,\"passed\":10,\"failed\":0}\n"
+    },
+    {
+      "command": "node tests/character-refresh-policy.test.cjs",
+      "exitCode": 0,
+      "output": "PASS: admin identity exact key/class/race/stale guards, atomic relation rollback and commit, retry history dedup\nPASS: completed session survives late export/failure, actual Queue count required\nPASS: collision both-side transaction, stale/invalid proof rollback, _D archive and durable existing list Queue\nPASS: DB-only current official evidence, Queue exact membership/reuse, atomic mapping rollback/commit/retry\nPASS: automatic transfer relation transaction rollback/commit, history and Queue retry idempotence\nPASS: early identity Queue expanded without loss and exports freshly committed stats\nPASS: H-only/suffix prepare exclusion, incomplete read blocks, verified class preserved, repeated prepare preserves targets\nPASS: policy SQL, manual precedence, group exceptions, current schedule/future guard, 7-day review, stale/admin ACL\nPASS: staged rollback compiles, preserves records/policies/identity audit and Queue\n"
+    },
+    {
+      "command": "node tests/character-refresh-stage2-boundaries.test.cjs",
+      "exitCode": 0,
+      "output": "PASS: all four Edge sources compile after TypeScript erasure (not a Deno type check)\n(node:5916) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\nPASS: complete 1001-row paging, duplicate page rejection, failure PATCH cannot downgrade synced\nPASS: Worker timeout covers response body, not just headers\nPASS: normal stored-detail rename supplies stale-source fence\nPASS: _D and H deletion marker write/retry/explicit restore\nPASS: old and new name checks, namesake rejection, incomplete collision causes no apply, failed list stays pending\nPASS: DB policy drives admin labels/filter, pending list retry is visible, PC/mobile cache invalidation\n"
+    },
+    {
+      "command": "node tests/character-refresh-server-transfer-legion-contract.test.js",
+      "exitCode": 0,
+      "output": "character refresh server-transfer Legion contract: PASS\n"
+    },
+    {
+      "command": "node tests/admin-queue-materialized-status-runtime.test.js",
+      "exitCode": 0,
+      "output": "admin queue materialized status runtime: PASS\n"
+    },
+    {
+      "command": "node tests/web-shell-auth-contract.test.js",
+      "exitCode": 0,
+      "output": "KINOJO auth timing, opaque Server session and public shell entrypoints: PASS\n"
+    },
+    {
+      "command": "node tests/admin-member-image-review-contract.test.js",
+      "exitCode": 0,
+      "output": "admin member image review contract: PASS\n"
+    },
+    {
+      "command": "node tests/my-info-phase2-stage3-admin-contract.test.js",
+      "exitCode": 0,
+      "output": "My Info phase-2 stage-3 admin workflow contract: PASS\n"
+    },
+    {
+      "command": "node tests/staged-page-contract.test.js",
+      "exitCode": 0,
+      "output": "KINOJO staged page, attached subbar, and personal ranking contract: PASS\n"
+    },
+    {
+      "command": "node tests/legion-tree-data-render-contract.test.js",
+      "exitCode": 0,
+      "output": "[KINOJO][LegionTree] tree load fallback to cache Error: LEGION_TREE_CONTRACT_INVALID\n    at Object.rpc (C:\\Users\\LG\\Documents\\ChatGPT\\New project\\.codex-tmp\\character-refresh-stability-stage2\\tests\\legion-tree-data-render-contract.test.js:669:49)\n    at requestTreePayloadWithRetry (C:\\Users\\LG\\Documents\\ChatGPT\\New project\\.codex-tmp\\character-refresh-stability-stage2\\legion-tree\\js\\legion-tree.js:128:33)\n    at readTreeData (C:\\Users\\LG\\Documents\\ChatGPT\\New project\\.codex-tmp\\character-refresh-stability-stage2\\legion-tree\\js\\legion-tree.js:872:28)\n    at Object.loadTreeData (C:\\Users\\LG\\Documents\\ChatGPT\\New project\\.codex-tmp\\character-refresh-stability-stage2\\legion-tree\\js\\legion-tree.js:838:21)\n    at C:\\Users\\LG\\Documents\\ChatGPT\\New project\\.codex-tmp\\character-refresh-stability-stage2\\tests\\legion-tree-data-render-contract.test.js:670:56\n[KINOJO][LegionTree] character search failed Error: 공식 캐릭터 조회가 잠시 제한되었습니다.\n    at C:\\Users\\LG\\Documents\\ChatGPT\\New project\\.codex-tmp\\character-refresh-stability-stage2\\tests\\legion-tree-data-render-contract.test.js:1100:21\n    at Object.searchLegionTreeCharacters (C:\\Users\\LG\\Documents\\ChatGPT\\New project\\.codex-tmp\\character-refresh-stability-stage2\\tests\\legion-tree-data-render-contract.test.js:278:16)\n    at Object.handleSearch (C:\\Users\\LG\\Documents\\ChatGPT\\New project\\.codex-tmp\\character-refresh-stability-stage2\\legion-tree\\js\\legion-tree.js:1038:30)\n    at C:\\Users\\LG\\Documents\\ChatGPT\\New project\\.codex-tmp\\character-refresh-stability-stage2\\tests\\legion-tree-data-render-contract.test.js:1107:45 {\n  code: 'PLAYNC_RATE_PAUSED',\n  data: {\n    ok: false,\n    code: 'PLAYNC_RATE_PAUSED',\n    message: '공식 캐릭터 조회가 잠시 제한되었습니다.'\n  }\n}\n[KINOJO][LegionTree] character search failed Error: 공식 캐릭터 조회 응답을 확인하지 못했습니다.\n    at C:\\Users\\LG\\Documents\\ChatGPT\\New project\\.codex-tmp\\character-refresh-stability-stage2\\tests\\legion-tree-data-render-contract.test.js:1100:21\n    at Object.searchLegionTreeCharacters (C:\\Users\\LG\\Documents\\ChatGPT\\New project\\.codex-tmp\\character-refresh-stability-stage2\\tests\\legion-tree-data-render-contract.test.js:278:16)\n    at Object.handleSearch (C:\\Users\\LG\\Documents\\ChatGPT\\New project\\.codex-tmp\\character-refresh-stability-stage2\\legion-tree\\js\\legion-tree.js:1038:30)\n    at C:\\Users\\LG\\Documents\\ChatGPT\\New project\\.codex-tmp\\character-refresh-stability-stage2\\tests\\legion-tree-data-render-contract.test.js:1107:45 {\n  code: 'PLAYNC_HTTP_500',\n  data: {\n    ok: false,\n    code: 'PLAYNC_HTTP_500',\n    message: '공식 캐릭터 조회 응답을 확인하지 못했습니다.'\n  }\n}\n[KINOJO][LegionTree] character search failed Error: 공식 캐릭터 조회 시간이 초과되었습니다.\n    at C:\\Users\\LG\\Documents\\ChatGPT\\New project\\.codex-tmp\\character-refresh-stability-stage2\\tests\\legion-tree-data-render-contract.test.js:1100:21\n    at Object.searchLegionTreeCharacters (C:\\Users\\LG\\Documents\\ChatGPT\\New project\\.codex-tmp\\character-refresh-stability-stage2\\tests\\legion-tree-data-render-contract.test.js:278:16)\n    at Object.handleSearch (C:\\Users\\LG\\Documents\\ChatGPT\\New project\\.codex-tmp\\character-refresh-stability-stage2\\legion-tree\\js\\legion-tree.js:1038:30)\n    at C:\\Users\\LG\\Documents\\ChatGPT\\New project\\.codex-tmp\\character-refresh-stability-stage2\\tests\\legion-tree-data-render-contract.test.js:1107:45 {\n  code: 'PLAYNC_TIMEOUT',\n  data: {\n    ok: false,\n    code: 'PLAYNC_TIMEOUT',\n    message: '공식 캐릭터 조회 시간이 초과되었습니다.'\n  }\n}\n[KINOJO][LegionTree] character add failed Error: 이미 등록된 캐릭터입니다.\n    at C:\\Users\\LG\\Documents\\ChatGPT\\New project\\.codex-tmp\\character-refresh-stability-stage2\\tests\\legion-tree-data-render-contract.test.js:1180:19\n    at Object.addLegionTreeCharacter (C:\\Users\\LG\\Documents\\ChatGPT\\New project\\.codex-tmp\\character-refresh-stability-stage2\\tests\\legion-tree-data-render-contract.test.js:274:16)\n    at Object.handleAdd (C:\\Users\\LG\\Documents\\ChatGPT\\New project\\.codex-tmp\\character-refresh-stability-stage2\\legion-tree\\js\\legion-tree.js:1093:32)\n    at C:\\Users\\LG\\Documents\\ChatGPT\\New project\\.codex-tmp\\character-refresh-stability-stage2\\tests\\legion-tree-data-render-contract.test.js:1192:43 {\n  code: 'ALREADY_REGISTERED',\n  data: { ok: false, code: 'ALREADY_REGISTERED', message: '이미 등록된 캐릭터입니다.' }\n}\nlegion-tree data render contract: PASS\n"
+    },
+    {
+      "command": "node tests/admin-dashboard-lazy-loader-contract.test.js",
+      "exitCode": 0,
+      "output": "admin dashboard lazy-loader contract: PASS\n"
+    },
+    {
+      "command": "node tests/admin-queue-materialized-status-contract.test.js",
+      "exitCode": 0,
+      "output": "admin queue materialized status contract: PASS\n"
+    },
+    {
+      "command": "node tests/banner-library-management.test.js",
+      "exitCode": 0,
+      "output": "PASS banner library management: cancel, dirty, four reference guards, delete, restore, reclassify, refresh failure, workflow initialization\n"
+    }
+  ],
+  "passed": 18,
+  "failed": 0,
+  "syntax": [
+    {
+      "file": "admin/js/admin.js",
+      "exitCode": 0
+    },
+    {
+      "file": "admin/js/admin-characters.js",
+      "exitCode": 0
+    },
+    {
+      "file": "admin/js/admin-bootstrap.js",
+      "exitCode": 0
+    },
+    {
+      "file": "core/kinojo-supabase-features.js",
+      "exitCode": 0
+    },
+    {
+      "file": "supabase/functions/character-refresh-worker/index.ts",
+      "exitCode": 0
+    },
+    {
+      "file": "supabase/functions/character-identity-recovery/index.ts",
+      "exitCode": 0
+    },
+    {
+      "file": "supabase/functions/lookup-list-prepare/index.ts",
+      "exitCode": 0,
+      "method": "stripTypeScriptTypes+vm.Script (boundaries test)"
+    },
+    {
+      "file": "supabase/functions/lookup-list-sync/index.ts",
+      "exitCode": 0,
+      "method": "stripTypeScriptTypes+vm.Script (boundaries test)"
+    }
+  ],
+  "sourceLFHash": "e83017265076b4b3cc6844a8d9fd1a56a72609e0856257769adf7cf77bc487ae",
+  "unsupportedNativeNodeTypeScriptCheck": {
+    "note": "node --check parsed .ts as JavaScript and rejected declare const. Replaced by stripTypeScriptTypes plus vm.Script in boundaries test. This is not Deno type checking.",
+    "files": [
+      {
+        "file": "supabase/functions/lookup-list-prepare/index.ts",
+        "exitCode": 1
+      },
+      {
+        "file": "supabase/functions/lookup-list-sync/index.ts",
+        "exitCode": 1
+      }
+    ]
+  }
+}

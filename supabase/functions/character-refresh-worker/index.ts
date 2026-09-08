@@ -29,7 +29,7 @@ const CORS={
   "cache-control":"no-store",
   "x-content-type-options":"nosniff"
 };
-const API_VERSION="295.9";
+const API_VERSION="295.11";
 const CONTRACT="295";
 const BUILD_DATE="2026-09-01";
 const IDENTITY_DATABASE_CONTRACT="461";
@@ -47,6 +47,7 @@ const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 function identityRecoveryDecision(storedCode,nameSearchCode){
   const stored=clean(storedCode,120),nameSearch=clean(nameSearchCode,120);
   if(stored==="STORED_DETAIL_NOT_FOUND"&&nameSearch==="NAME_SERVER_NOT_FOUND")return{allowed:true,code:"IDENTITY_RECOVERY_ALLOWED",terminalMisses:[stored,nameSearch]};
+  if(stored==="STORED_DETAIL_NOT_FOUND"&&nameSearch==="NAME_SERVER_CHAR_KEY_MISMATCH")return{allowed:true,code:"IDENTITY_RECOVERY_ALLOWED",terminalMisses:[stored],nameReused:true};
   if(stored==="PROVIDER_RETRY_REQUIRED"||nameSearch==="PROVIDER_RETRY_REQUIRED"||/(?:NAME_MISSING|CHAR_KEY_MISSING)/.test(stored))return{allowed:false,code:"PROVIDER_RETRY_REQUIRED",retryable:true,terminalMisses:[]};
   if(/(?:CHAR_KEY_MISMATCH|IDENTITY_REVIEW_REQUIRED)/.test(`${stored} ${nameSearch}`))return{allowed:false,code:"IDENTITY_REVIEW_REQUIRED",retryable:false,terminalMisses:[]};
   return{allowed:false,code:"IDENTITY_RECOVERY_EVIDENCE_INCOMPLETE",retryable:false,terminalMisses:[]};
@@ -96,17 +97,31 @@ function service(){
   if(!url||!key)throw new Error("Supabase service 환경 설정이 없습니다.");
   return{url,key};
 }
-async function rpc(name,body){
+async function boundedServerFetch(url,options,timeoutMs){
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeoutMs);
+  try{const res=await fetch(url,{...options,signal:controller.signal});const raw=await res.text();return{ok:res.ok,status:res.status,text:async()=>raw};}
+  catch(error){if(controller.signal.aborted)throw new WorkerError('서버 호출 시간 예산 초과','SERVER_CALL_TIMEOUT',true);throw error;}
+  finally{clearTimeout(timer);}
+}
+function remainingTargetBudget(deadline,cap){
+  const remaining=deadline-Date.now();
+  if(remaining<=0)throw new WorkerError("캐릭터 조회 시간 예산 초과","TARGET_TIME_BUDGET_EXCEEDED",true);
+  return Math.min(cap,remaining);
+}
+async function rpc(name,body,deadline=Infinity){
   const env=service();
-  const res=await fetch(`${env.url}/rest/v1/rpc/${name}`,{method:"POST",headers:{apikey:env.key,authorization:`Bearer ${env.key}`,"content-type":"application/json"},body:JSON.stringify(body)});
+  const res=await boundedServerFetch(`${env.url}/rest/v1/rpc/${name}`,{method:"POST",headers:{apikey:env.key,authorization:`Bearer ${env.key}`,"content-type":"application/json"},body:JSON.stringify(body)},Number.isFinite(deadline)?remainingTargetBudget(deadline,45000):45000);
   const raw=await res.text();let data={};
   try{data=raw?JSON.parse(raw):{};}catch{data={ok:false,message:raw};}
   if(!res.ok)throw new WorkerError(clean(data.message||data.error||data.details||`RPC ${name} HTTP ${res.status}`,1000),"SUPABASE_RPC_FAILED",true);
   return data;
 }
-async function callEdge(name,body){
+async function callEdge(name,body,deadline=Infinity){
+  // The identity receiver has a 55s checkpoint budget; do not abandon that budget halfway through.
+  if(name==='character-identity-recovery'&&Number.isFinite(deadline)&&remainingTargetBudget(deadline,Infinity)<65000)
+    throw new WorkerError("고유값 탐색을 시작할 시간 예산이 부족합니다.","TARGET_TIME_BUDGET_EXCEEDED",true);
   const env=service();
-  const res=await fetch(`${env.url}/functions/v1/${name}`,{method:"POST",headers:{apikey:env.key,authorization:`Bearer ${env.key}`,"content-type":"application/json"},body:JSON.stringify(body)});
+  const res=await boundedServerFetch(`${env.url}/functions/v1/${name}`,{method:"POST",headers:{apikey:env.key,authorization:`Bearer ${env.key}`,"content-type":"application/json"},body:JSON.stringify(body)},Number.isFinite(deadline)?remainingTargetBudget(deadline,name==='character-identity-recovery'?65000:120000):(name==='character-identity-recovery'?65000:120000));
   const raw=await res.text();let data={};
   try{data=raw?JSON.parse(raw):{};}catch{data={ok:false,message:raw};}
   if(!res.ok||data.ok===false){
@@ -129,12 +144,12 @@ function retryAfterMs(value){
   if(Number.isFinite(date))return Math.min(Math.max(date-Date.now(),1000),600000);
   return 30000;
 }
-async function officialRateGate(sessionId,sessionToken,source){
+async function officialRateGate(sessionId,sessionToken,source,deadline=Infinity){
   const gate=await rpc("kinojo_official_rate_gate_acquire_v276",{
     p_session_id:sessionId,
     p_session_token:sessionToken,
     p_source:source
-  });
+  },deadline);
   if(gate.ok!==true)throw new WorkerError(clean(gate.message||gate.code||"PLAYNC 요청 제어 확인 실패",1000),clean(gate.code||"PLAYNC_RATE_GATE_FAILED",120),true);
   const waitMs=Math.max(0,Number(gate.waitMs||0));
   if(gate.allowed===false){
@@ -145,12 +160,15 @@ async function officialRateGate(sessionId,sessionToken,source){
       {rateLimited:true,retryAfterMs:waitMs||30000,retryAfterSeconds:Math.max(1,Math.ceil((waitMs||30000)/1000)),pausedUntil:gate.pausedUntil||null}
     );
   }
-  if(waitMs>0)await sleep(Math.min(waitMs,5000));
+  // The DB reservation is authoritative; shortening it sends requests early.
+  if(Number.isFinite(deadline)&&waitMs>=remainingTargetBudget(deadline,Infinity))throw new WorkerError("PLAYNC 예약 대기 예산 초과","PLAYNC_RATE_PAUSED",true,{rateLimited:true,retryAfterMs:waitMs});
+  if(waitMs>0)await sleep(waitMs);
   return gate;
 }
-async function officialJson(url,sessionId,sessionToken,source){
-  await officialRateGate(sessionId,sessionToken,source);
-  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),15000);
+async function officialJson(url,sessionId,sessionToken,source,deadline=Infinity){
+  const started=Date.now();
+  await officialRateGate(sessionId,sessionToken,source,deadline);
+  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),Number.isFinite(deadline)?remainingTargetBudget(deadline,15000):15000);
   try{
     const res=await fetch(url,{headers:{accept:"application/json,text/plain,*/*","accept-language":"ko-KR,ko;q=0.9","user-agent":`KINOJO-Character-Refresh/${API_VERSION}`},signal:controller.signal,redirect:"follow"});
     const raw=await res.text();
@@ -172,10 +190,10 @@ async function officialJson(url,sessionId,sessionToken,source){
   }catch(error){
     if(error?.name==="AbortError")throw new WorkerError("PLAYNC 공식 API 응답 시간이 초과되었습니다.","PLAYNC_TIMEOUT",true);
     throw error;
-  }finally{clearTimeout(timer);}
+  }finally{clearTimeout(timer);console.info(JSON.stringify({metric:"character_refresh_official",stage:source,elapsedMs:Date.now()-started}));}
 }
-async function progress(sessionId,sessionToken,stage,characterName,message,current,total,payload={}){
-  await rpc("kinojo_runtime_progress",{p_session_id:sessionId,p_session_token:sessionToken,p_stage:stage,p_current_character:characterName||null,p_message:message,p_progress_current:Number.isFinite(Number(current))?Number(current):null,p_progress_total:Number.isFinite(Number(total))?Number(total):null,p_payload:{source:"KINOJO_SERVER_CHARACTER_QUEUE",progressContract:"server-worker-seven-phase-v2",apiVersion:API_VERSION,...payload}});
+async function progress(sessionId,sessionToken,stage,characterName,message,current,total,payload={},deadline=Infinity){
+  await rpc("kinojo_runtime_progress",{p_session_id:sessionId,p_session_token:sessionToken,p_stage:stage,p_current_character:characterName||null,p_message:message,p_progress_current:Number.isFinite(Number(current))?Number(current):null,p_progress_total:Number.isFinite(Number(total))?Number(total):null,p_payload:{source:"KINOJO_SERVER_CHARACTER_QUEUE",progressContract:"server-worker-seven-phase-v2",apiVersion:API_VERSION,...payload}},deadline);
 }
 async function handoff(sessionId,sessionToken,workerId,state,message,error=""){
   return await rpc("kinojo_server_queue_handoff_update_v276",{
@@ -188,15 +206,23 @@ async function handoff(sessionId,sessionToken,workerId,state,message,error=""){
   });
 }
 async function finishScheduledAutomation(sessionId,status,message){
-  try{
-    return await rpc("kinojo_automation_finish_v377",{
+  let result={ok:false,code:"AUTOMATION_FINISH_UNCONFIRMED"};
+  for(let attempt=0;attempt<3;attempt++){
+    try{
+      result=await rpc("kinojo_automation_finish_v377",{
       p_job_type:"character_refresh",
       p_run_id:null,
       p_status:status,
       p_message:clean(message,1000),
       p_session_id:sessionId
-    });
-  }catch{return null;}
+      });
+      if(result.ok===true||result.code==='AUTOMATION_SESSION_NOT_TERMINAL')return result;
+    }catch{result={ok:false,code:"AUTOMATION_FINISH_UNCONFIRMED"};}
+    if(attempt<2)await sleep(500*(attempt+1));
+  }
+  // Do not turn a successful canonical session into failure on callback loss.
+  console.error("AUTOMATION_FINISH_UNCONFIRMED");
+  return result;
 }
 function internalRequest(request){
   const env=service();
@@ -216,10 +242,10 @@ function exactCandidateOutcome(payload,name,serverId,expectedKey){
   if(mismatchedCount>0)return{found:false,code:"NAME_SERVER_CHAR_KEY_MISMATCH",terminal:false,reviewRequired:true,mismatchedCount};
   return{found:false,code:"NAME_SERVER_NOT_FOUND",terminal:true,mismatchedCount:0};
 }
-async function searchCharacter(name,serverId,expectedKey,sessionId,sessionToken){
+async function searchCharacter(name,serverId,expectedKey,sessionId,sessionToken,deadline=Infinity){
   const url=new URL("https://aion2.plaync.com/ko-kr/api/search/aion2/search/v2/character");
   url.searchParams.set("keyword",name);url.searchParams.set("serverId",String(serverId));url.searchParams.set("page","1");url.searchParams.set("size","20");
-  try{return exactCandidateOutcome(await officialJson(url.toString(),sessionId,sessionToken,"SERVER_WORKER_SEARCH"),name,serverId,expectedKey);}
+  try{return exactCandidateOutcome(await officialJson(url.toString(),sessionId,sessionToken,"SERVER_WORKER_SEARCH",deadline),name,serverId,expectedKey);}
   catch(error){
     if(clean(error?.code,120)==="PLAYNC_HTTP_404")return{found:false,code:"NAME_SERVER_NOT_FOUND",terminal:true,httpStatus:404};
     throw error;
@@ -245,6 +271,7 @@ function candidateFromStoredInfo(infoPayload,detail,expectedKey){
   const charKey=getCharKey(profileImageUrl)||clean(profile.charKey||info.charKey,160);
   const characterId=clean(profile.characterId||info.characterId||info.character_id,800);
   const responseServerId=positiveInt(profile.serverId||info.serverId||info.server_id);
+  if(responseServerId&&responseServerId!==detail.serverId)return{ok:false,code:'STORED_DETAIL_SERVER_MISMATCH',terminal:false};
   if(!characterName){
     const identityPresent=Boolean(characterId||responseServerId||profileImageUrl||charKey);
     return identityPresent
@@ -254,32 +281,33 @@ function candidateFromStoredInfo(infoPayload,detail,expectedKey){
   if(expectedKey&&charKey!==expectedKey)return{ok:false,code:charKey?"STORED_DETAIL_CHAR_KEY_MISMATCH":"STORED_DETAIL_CHAR_KEY_MISSING",actualCharKey:charKey};
   return{ok:true,candidate:{characterName,serverId:detail.serverId,serverName:clean(profile.serverName||info.serverName,120),characterId:detail.characterId,profileImageUrl,charKey,className:clean(profile.className||info.className,80),detailUrl:detail.detailUrl,method:"OFFICIAL_STORED_DETAIL_EXACT_KEY"}};
 }
-async function resolveStoredDetailTarget(sessionId,sessionToken,target,context,characterName,serverId,expectedKey){
+async function resolveStoredDetailTarget(sessionId,sessionToken,target,context,characterName,serverId,expectedKey,deadline=Infinity){
   const detail=storedDetailIdentity(context.detailUrl,serverId);if(!detail)return{found:false,code:"STORED_DETAIL_UNAVAILABLE",terminal:false};
-  await progress(sessionId,sessionToken,"OFFICIAL_STORED_DETAIL",characterName,"저장된 공식 상세 식별값 조회 중",null,null,{targetId:target.targetId,serverId:detail.serverId});
+  await progress(sessionId,sessionToken,"OFFICIAL_STORED_DETAIL",characterName,"저장된 공식 상세 식별값 조회 중",null,null,{targetId:target.targetId,serverId:detail.serverId},deadline);
   const infoUrl=new URL("https://aion2.plaync.com/api/character/info");
   infoUrl.searchParams.set("lang","ko");infoUrl.searchParams.set("serverId",String(detail.serverId));infoUrl.searchParams.set("characterId",detail.characterId);
   let infoPayload;
-  try{infoPayload=await officialJson(infoUrl.toString(),sessionId,sessionToken,"SERVER_WORKER_STORED_INFO");}
+  try{infoPayload=await officialJson(infoUrl.toString(),sessionId,sessionToken,"SERVER_WORKER_STORED_INFO",deadline);}
   catch(error){
     if(clean(error?.code,120)==="PLAYNC_HTTP_404")return{found:false,code:"STORED_DETAIL_NOT_FOUND",terminal:true,httpStatus:404};
     throw error;
   }
   const checked=candidateFromStoredInfo(infoPayload,detail,expectedKey);
   if(checked.ok!==true){
-    await progress(sessionId,sessionToken,"IDENTITY_RECOVERY",characterName,"저장 상세 식별값의 고유값 불일치 · 이름 기반 안전 조회로 전환",null,null,{targetId:target.targetId,code:checked.code});
+    await progress(sessionId,sessionToken,"IDENTITY_RECOVERY",characterName,"저장 상세 식별값의 고유값 불일치 · 이름 기반 안전 조회로 전환",null,null,{targetId:target.targetId,code:checked.code},deadline);
     return{found:false,code:checked.code,terminal:checked.terminal===true,emptyProfile:checked.emptyProfile===true,reviewRequired:/CHAR_KEY_MISMATCH/.test(checked.code),actualCharKey:checked.actualCharKey||""};
   }
-  let candidate=checked.candidate,identityRecovery=null;
+  let candidate={...checked.candidate,sourceServerId:serverId,sourceCharacterName:characterName},identityRecovery=null;
+  if(context.className&&normalized(candidate.className)!==normalized(context.className))throw new WorkerError('저장 상세 클래스 불일치','CLASS_MISMATCH',false);
   if(normalized(candidate.characterName)!==normalized(characterName)){
-    const applied=object(await rpc("kinojo_character_identity_recovery_apply_v1",{p_session_id:sessionId,p_session_token:sessionToken,p_target_id:positiveInt(target.targetId),p_candidate:candidate}));
+    const applied=object(await rpc("kinojo_character_identity_recovery_apply_v1",{p_session_id:sessionId,p_session_token:sessionToken,p_target_id:positiveInt(target.targetId),p_candidate:candidate},deadline));
     if(applied.ok!==true)throw new WorkerError(clean(applied.message||applied.code||"저장 상세 식별값 이름 변경 반영 실패",1000),clean(applied.code||"IDENTITY_APPLY_FAILED",120),applied.retryable!==false);
     const current=object(applied.current);
     candidate={...candidate,characterName:clean(current.characterName||candidate.characterName,160),serverId:positiveInt(current.serverId)||candidate.serverId,serverName:clean(current.serverName||candidate.serverName,120),profileImageUrl:clean(current.profileImageUrl||candidate.profileImageUrl,1600)};
     const transition=identityTransitionContract(applied,serverId,candidate.serverId);
     if(transition.ok!==true)throw new WorkerError(transition.message,transition.code,false,transition);
     identityRecovery={...applied,recovered:applied.applied===true,method:"OFFICIAL_STORED_DETAIL_EXACT_KEY",transition};
-    await progress(sessionId,sessionToken,"IDENTITY_RECOVERY_APPLIED",candidate.characterName,"같은 서버 이름 변경 반영 · 레기온 소속 유지",null,null,{targetId:target.targetId,...transition});
+    await progress(sessionId,sessionToken,"IDENTITY_RECOVERY_APPLIED",candidate.characterName,"같은 서버 이름 변경 반영 · 레기온 소속 유지",null,null,{targetId:target.targetId,...transition},deadline);
   }
   return{found:true,candidate,identityRecovery,identityTransition:identityRecovery?.transition||null,characterName:candidate.characterName,serverId:candidate.serverId,expectedKey,prefetchedInfoPayload:infoPayload,lookupMethod:"stored_detail"};
 }
@@ -353,14 +381,14 @@ function officialSnapshot({sessionId,targetId,lookupOrder,context,target,candida
     }
   };
 }
-async function precheckOfficialSnapshot(sessionId,sessionToken,targetId,snapshot,previousFingerprint=null){
+async function precheckOfficialSnapshot(sessionId,sessionToken,targetId,snapshot,previousFingerprint=null,deadline=Infinity){
   const checked=await rpc("kinojo_official_snapshot_precheck_v285",{
     p_session_id:sessionId,
     p_session_token:sessionToken,
     p_target_id:targetId,
     p_snapshot:snapshot,
     p_previous_fingerprint:previousFingerprint
-  });
+  },deadline);
   if(checked.ok!==true||checked.accepted!==true){
     throw new WorkerError(
       clean(checked.message||checked.code||"공식 수치·장비 응답의 일관성 검증에 실패했습니다.",1000),
@@ -370,25 +398,25 @@ async function precheckOfficialSnapshot(sessionId,sessionToken,targetId,snapshot
   }
   return checked;
 }
-async function finalizeTarget(sessionId,sessionToken,targetId,submitted){
+async function finalizeTarget(sessionId,sessionToken,targetId,submitted,deadline=Infinity){
   const finalized=await rpc("kinojo_lookup_finalize_target_v285",{
     p_session_id:sessionId,
     p_session_token:sessionToken,
     p_target_id:targetId,
     p_payload_id:positiveInt(submitted?.payloadId||submitted?.payload_id),
     p_snapshot_id:positiveInt(submitted?.snapshotId||submitted?.snapshot_id)
-  });
+  },deadline);
   if(finalized.ok!==true)throw new WorkerError(clean(finalized.message||finalized.code||"Target 완료 연결 실패",1000),clean(finalized.code||"TARGET_FINALIZE_FAILED",120),finalized.retryable!==false);
   return finalized;
 }
-async function resolveOfficialTarget(sessionId,sessionToken,target,context){
+async function resolveOfficialTarget(sessionId,sessionToken,target,context,deadline=Infinity){
   let characterName=clean(context.characterName||target.characterName||target.name,160);
   let serverId=positiveInt(context.serverId||target.serverId);
   const expectedKey=clean(context.charKey,160);
-  const stored=await resolveStoredDetailTarget(sessionId,sessionToken,target,context,characterName,serverId,expectedKey);
+  const stored=await resolveStoredDetailTarget(sessionId,sessionToken,target,context,characterName,serverId,expectedKey,deadline);
   if(stored.found===true)return stored;
-  await progress(sessionId,sessionToken,"OFFICIAL_SEARCH",characterName,"저장 상세 조회 불가 · PLAYNC 공식 서버·캐릭터명 조회 중",null,null,{targetId:target.targetId,serverId,storedDetailResult:stored.code||null});
-  const nameSearch=await searchCharacter(characterName,serverId,expectedKey,sessionId,sessionToken);
+  await progress(sessionId,sessionToken,"OFFICIAL_SEARCH",characterName,"저장 상세 조회 불가 · PLAYNC 공식 서버·캐릭터명 조회 중",null,null,{targetId:target.targetId,serverId,storedDetailResult:stored.code||null},deadline);
+  const nameSearch=await searchCharacter(characterName,serverId,expectedKey,sessionId,sessionToken,deadline);
   let candidate=nameSearch.found===true?nameSearch.candidate:null,identityRecovery=null,identityTransition=null,lookupMethod="name_search";
   if(!candidate){
     const decision=identityRecoveryDecision(stored.code,nameSearch.code);
@@ -400,26 +428,32 @@ async function resolveOfficialTarget(sessionId,sessionToken,target,context){
         {storedDetailResult:stored.code||null,nameServerResult:nameSearch.code||null,identityRecoveryEntered:false}
       );
     }
-    await progress(sessionId,sessionToken,"IDENTITY_RECOVERY",characterName,"저장 상세·기존 이름/서버 terminal miss 확인 · 이름 힌트 기반 신원 복구 중",null,null,{targetId:target.targetId,storedDetailResult:stored.code,nameServerResult:nameSearch.code,terminalMisses:decision.terminalMisses,identityDatabaseContract:IDENTITY_DATABASE_CONTRACT});
+    await progress(sessionId,sessionToken,"IDENTITY_RECOVERY",characterName,"저장 상세·기존 이름/서버 terminal miss 확인 · 저장 고유값으로 같은 종족 서버 탐색 중",null,null,{targetId:target.targetId,storedDetailResult:stored.code,nameServerResult:nameSearch.code,terminalMisses:decision.terminalMisses,identityDatabaseContract:IDENTITY_DATABASE_CONTRACT},deadline);
     const previousServerId=serverId;
-    identityRecovery=await callEdge("character-identity-recovery",{action:"extensionProbe",sessionId,sessionToken,targetId:target.targetId,clientVersion:API_VERSION});
+    identityRecovery=await callEdge("character-identity-recovery",{action:"extensionProbe",sessionId,sessionToken,targetId:target.targetId,clientVersion:API_VERSION},deadline);
     if(identityRecovery.recovered!==true)throw new WorkerError(clean(identityRecovery.message||"동일 고유값 캐릭터를 찾지 못했습니다.",1000),clean(identityRecovery.code||"CHARACTER_NOT_FOUND",120),identityRecovery.retryable!==false);
     const recovered=object(identityRecovery.character||identityRecovery.current);characterName=clean(recovered.characterName,160);serverId=positiveInt(recovered.serverId);const recoveredId=decodeId(recovered.characterId);
     if(!characterName||!serverId||!recoveredId)throw new WorkerError("고유값 복구 결과에 현재 캐릭터 식별 정보가 없습니다.","IDENTITY_RECOVERY_INVALID",false);
     identityTransition=identityTransitionContract(identityRecovery,previousServerId,serverId);
     if(identityTransition.ok!==true)throw new WorkerError(identityTransition.message,identityTransition.code,false,identityTransition);
-    await progress(sessionId,sessionToken,"IDENTITY_RECOVERY_APPLIED",characterName,identityTransition.serverTransferred?"다른 서버 동일 고유값 확인 · 서버 이전과 레기온 해제 원자 반영":"같은 서버 이름 변경 반영 · 레기온 소속 유지",null,null,{targetId:target.targetId,...identityTransition});
+    await progress(sessionId,sessionToken,"IDENTITY_RECOVERY_APPLIED",characterName,identityTransition.serverTransferred?"다른 서버 동일 고유값 확인 · 서버 이전과 레기온 해제 원자 반영":"같은 서버 이름 변경 반영 · 레기온 소속 유지",null,null,{targetId:target.targetId,...identityTransition},deadline);
     candidate={...recovered,characterName,serverId,characterId:recoveredId};
     lookupMethod="identity_recovery";
   }
   return{candidate,identityRecovery,identityTransition,characterName,serverId,expectedKey,prefetchedInfoPayload:null,lookupMethod};
 }
+async function timedWorkerStage(stage,targetId,operation){
+  const started=Date.now();let ok=false;
+  try{const value=await operation();ok=value?.ok!==false;return value;}
+  finally{console.info(JSON.stringify({metric:"character_refresh_stage",stage,targetId,elapsedMs:Date.now()-started,ok}));}
+}
 async function processTarget(sessionId,sessionToken,target,providedContext=null){
+  const deadline=Date.now()+105000; // Margin before the 120s stale-claim boundary.
   const targetId=positiveInt(target.targetId);const lookupOrder=positiveInt(target.lookupOrder)||1;
-  const context=providedContext||await rpc("kinojo_server_queue_target_context_v270",{p_session_id:sessionId,p_session_token:sessionToken,p_target_id:targetId});
+  const context=providedContext||await rpc("kinojo_server_queue_target_context_v270",{p_session_id:sessionId,p_session_token:sessionToken,p_target_id:targetId},deadline);
   if(context.ok!==true)throw new WorkerError(clean(context.message||"Target Context 확인 실패",1000),clean(context.code||"TARGET_CONTEXT_FAILED",120),false);
   let characterName=clean(context.characterName||target.characterName||target.name,160);let serverId=positiveInt(context.serverId||target.serverId);
-  const reuse=await rpc("kinojo_lookup_reuse_candidate_v276",{p_session_id:sessionId,p_session_token:sessionToken,p_target_id:targetId,p_max_age_seconds:900});
+  const reuse=await rpc("kinojo_lookup_reuse_candidate_v276",{p_session_id:sessionId,p_session_token:sessionToken,p_target_id:targetId,p_max_age_seconds:900},deadline);
   if(reuse.ok===true&&reuse.reusable===true){
     const cached=object(reuse.snapshot);
     const cachedSource=object(cached.officialApiSource);
@@ -452,36 +486,36 @@ async function processTarget(sessionId,sessionToken,target,providedContext=null)
         workerVersion:API_VERSION
       }
     };
-    await progress(sessionId,sessionToken,"OFFICIAL_CACHE_REUSE",characterName,`최근 공식 원본 재사용 · ${Number(reuse.ageSeconds||0)}초 전`,null,null,{targetId,lookupOrder,sourceSnapshotId:reuse.snapshotId});
-    const submitted=await rpc("kinojo_snapshot_submit",{p_session_id:sessionId,p_session_token:sessionToken,p_snapshot:snapshot,p_lookup_order:lookupOrder});
+    await progress(sessionId,sessionToken,"OFFICIAL_CACHE_REUSE",characterName,`최근 공식 원본 재사용 · ${Number(reuse.ageSeconds||0)}초 전`,null,null,{targetId,lookupOrder,sourceSnapshotId:reuse.snapshotId},deadline);
+    const submitted=await rpc("kinojo_snapshot_submit",{p_session_id:sessionId,p_session_token:sessionToken,p_snapshot:snapshot,p_lookup_order:lookupOrder},deadline);
     if(submitted.ok!==true)throw new WorkerError(clean(submitted.message||submitted.code||"재사용 Snapshot 저장 실패",1000),clean(submitted.code||"SNAPSHOT_REUSE_FAILED",120),submitted.retryable!==false);
-    const finalized=await finalizeTarget(sessionId,sessionToken,targetId,submitted);
+    const finalized=await timedWorkerStage("target_finalize",targetId,()=>finalizeTarget(sessionId,sessionToken,targetId,submitted,deadline));
     return{ok:true,targetId,lookupOrder,cached:true,cacheAgeSeconds:Number(reuse.ageSeconds||0),sourceSnapshotId:reuse.snapshotId,identityRecovered:false,character:{characterName,serverId,serverName:snapshot.serverName,className:snapshot.className,profileImageUrl:clean(snapshot.profileImageUrl,1600)},previous:context.previous||null,official:{reused:true},submitted,finalized};
   }
-  const resolved=await resolveOfficialTarget(sessionId,sessionToken,{...target,targetId},context);
+  const resolved=await timedWorkerStage("identity_resolve",targetId,()=>resolveOfficialTarget(sessionId,sessionToken,{...target,targetId},context,deadline));
   const candidate=resolved.candidate;characterName=resolved.characterName;serverId=resolved.serverId;
   const characterId=decodeId(candidate.characterId);if(!characterId||!serverId)throw new WorkerError("공식 캐릭터 식별값 또는 서버 ID가 없습니다.","OFFICIAL_IDENTITY_MISSING",false);
-  await progress(sessionId,sessionToken,"OFFICIAL_INFO",characterName,"PLAYNC 공식 프로필·전투력·아이템레벨 조회 중",null,null,{targetId,serverId,lookupOrder});
+  await progress(sessionId,sessionToken,"OFFICIAL_INFO",characterName,"PLAYNC 공식 프로필·전투력·아이템레벨 조회 중",null,null,{targetId,serverId,lookupOrder},deadline);
   const infoUrl=new URL("https://aion2.plaync.com/api/character/info"),equipmentUrl=new URL("https://aion2.plaync.com/api/character/equipment");
   for(const url of [infoUrl,equipmentUrl]){url.searchParams.set("lang","ko");url.searchParams.set("serverId",String(serverId));url.searchParams.set("characterId",characterId);}
-  let infoPayload=resolved.prefetchedInfoPayload||await officialJson(infoUrl.toString(),sessionId,sessionToken,"SERVER_WORKER_INFO");
-  let equipmentPayload=await officialJson(equipmentUrl.toString(),sessionId,sessionToken,"SERVER_WORKER_EQUIPMENT");
+  let infoPayload=resolved.prefetchedInfoPayload||await officialJson(infoUrl.toString(),sessionId,sessionToken,"SERVER_WORKER_INFO",deadline);
+  let equipmentPayload=await officialJson(equipmentUrl.toString(),sessionId,sessionToken,"SERVER_WORKER_EQUIPMENT",deadline);
   let adapted=parserSource(infoPayload,equipmentPayload);
   let official=officialSnapshot({sessionId,targetId,lookupOrder,context,target,candidate,resolved,characterId,serverId,adapted,infoPayload,equipmentPayload});
-  await progress(sessionId,sessionToken,"SNAPSHOT_PARSE",official.officialName,"기존 Server Parser로 장비 유형·수치 판정 중",null,null,{targetId,lookupOrder,equipmentCount:adapted.equipmentCount});
-  let checked=await precheckOfficialSnapshot(sessionId,sessionToken,targetId,official.snapshot);
+  await progress(sessionId,sessionToken,"SNAPSHOT_PARSE",official.officialName,"기존 Server Parser로 장비 유형·수치 판정 중",null,null,{targetId,lookupOrder,equipmentCount:adapted.equipmentCount},deadline);
+  let checked=await timedWorkerStage("snapshot_precheck",targetId,()=>precheckOfficialSnapshot(sessionId,sessionToken,targetId,official.snapshot,null,deadline));
   if(checked.requiresSecondRead===true){
-    await progress(sessionId,sessionToken,"OFFICIAL_STATE_VERIFY",official.officialName,"장비 유형 변경·급상승 감지 · 공식 응답 재검증 중",null,null,{targetId,lookupOrder,reason:checked.reason||checked.code||null});
+    await progress(sessionId,sessionToken,"OFFICIAL_STATE_VERIFY",official.officialName,"장비 유형 변경·급상승 감지 · 공식 응답 재검증 중",null,null,{targetId,lookupOrder,reason:checked.reason||checked.code||null},deadline);
     await sleep(1250);
-    infoPayload=await officialJson(infoUrl.toString(),sessionId,sessionToken,"SERVER_WORKER_INFO_VERIFY");
-    equipmentPayload=await officialJson(equipmentUrl.toString(),sessionId,sessionToken,"SERVER_WORKER_EQUIPMENT_VERIFY");
+    infoPayload=await officialJson(infoUrl.toString(),sessionId,sessionToken,"SERVER_WORKER_INFO_VERIFY",deadline);
+    equipmentPayload=await officialJson(equipmentUrl.toString(),sessionId,sessionToken,"SERVER_WORKER_EQUIPMENT_VERIFY",deadline);
     adapted=parserSource(infoPayload,equipmentPayload);
     official=officialSnapshot({sessionId,targetId,lookupOrder,context,target,candidate,resolved,characterId,serverId,adapted,infoPayload,equipmentPayload});
-    checked=await precheckOfficialSnapshot(sessionId,sessionToken,targetId,official.snapshot,clean(checked.fingerprint,500));
+    checked=await timedWorkerStage("snapshot_precheck_second",targetId,()=>precheckOfficialSnapshot(sessionId,sessionToken,targetId,official.snapshot,clean(checked.fingerprint,500),deadline));
   }
-  const submitted=await rpc("kinojo_snapshot_submit",{p_session_id:sessionId,p_session_token:sessionToken,p_snapshot:official.snapshot,p_lookup_order:lookupOrder});
+  const submitted=await timedWorkerStage("snapshot_submit",targetId,()=>rpc("kinojo_snapshot_submit",{p_session_id:sessionId,p_session_token:sessionToken,p_snapshot:official.snapshot,p_lookup_order:lookupOrder},deadline));
   if(submitted.ok!==true)throw new WorkerError(clean(submitted.message||submitted.code||"Snapshot 저장 실패",1000),clean(submitted.code||"SNAPSHOT_SUBMIT_FAILED",120),submitted.retryable!==false);
-  const finalized=await finalizeTarget(sessionId,sessionToken,targetId,submitted);
+  const finalized=await timedWorkerStage("target_finalize",targetId,()=>finalizeTarget(sessionId,sessionToken,targetId,submitted,deadline));
   return{ok:true,targetId,lookupOrder,identityRecovered:resolved.identityRecovery?.recovered===true,identityTransition:resolved.identityTransition||null,serverTransferred:resolved.identityTransition?.serverTransferred===true,legionCleared:resolved.identityTransition?.legionCleared===true,character:{characterName:official.officialName,serverId,serverName:official.officialServerName,className:clean(adapted.profile.className,80),profileImageUrl:official.profileImageUrl},previous:context.previous||null,official:{itemLevel:adapted.itemLevel,combatPower:adapted.combatPower,precheck:checked},submitted,finalized};
 }
 async function recordTargetFailure(sessionId,sessionToken,target,error){
@@ -505,9 +539,11 @@ async function runQueue(body){
   const claimed=await rpc("kinojo_server_queue_worker_claim_v270",{p_session_id:sessionId,p_session_token:sessionToken,p_worker_id:workerId,p_batch_limit:batchLimit});
   if(claimed.ok!==true)return json(claimed,400);
   if(claimed.acquired!==true)return json({...claimed,sessionId,workerId});
+  const batchDeadline=Date.now()+150000;
   const results=[];let processed=0,successCount=0,failureCount=0,paused=false,cancelled=false,done=false,rateLimited=false,rateLimitWaitMs=0,waiting=false,waitMs=0;
   try{
     while(processed<batchLimit){
+      if(processed>0&&Date.now()+65000>batchDeadline)break;
       const control=await rpc("kinojo_lookup_control_state_v268",{p_session_id:sessionId,p_session_token:sessionToken});
       if(control.ok!==true)throw new WorkerError(clean(control.message||"Queue 제어 상태 확인 실패",1000),clean(control.code||"CONTROL_STATE_FAILED",120),true);
       if(control.cancelled===true||control.controlState==="cancelled"){cancelled=true;break;}
@@ -633,11 +669,17 @@ async function runAutonomousTick(body){
       await handoff(sessionId,sessionToken,workerId,"running","다른 Server Worker가 현재 Batch를 처리 중입니다. 기존 Worker 완료를 기다립니다.");
       return;
     }
-    if(result.completed===true||result.done===true){
+    if(result.done===true&&(result.completed!==true||result.failed===true||result.allFailed===true||result.finalFailure===true)){
+      const failedMessage=clean(result.message||"조회 또는 후처리가 실패 상태로 종료되었습니다.",1000);
+      await handoff(sessionId,sessionToken,workerId,"attention",failedMessage,clean(result.code||"AUTONOMOUS_TERMINAL_FAILED",120));
+      await finishScheduledAutomation(sessionId,"failed",failedMessage);
+      return;
+    }
+    if(result.completed===true&&result.failed!==true&&result.allFailed!==true&&result.finalFailure!==true){
       const listless=result.listWriteSkipped===true||result.postprocess?.listWriteSkipped===true;
-      const completedMessage=listless
+      const completedMessage=(result.partialSuccess===true?"일부 캐릭터 조회 실패가 있습니다. ":"")+(listless
         ?"캐릭터 조회와 Master·관계·성장 리뷰·랭킹 반영을 완료했습니다."
-        :"캐릭터 조회와 Master·성장 리뷰·랭킹·Google list 반영을 완료했습니다.";
+        :"캐릭터 조회와 Master·성장 리뷰·랭킹·Google list 반영을 완료했습니다.");
       await handoff(sessionId,sessionToken,workerId,"complete",completedMessage);
       await finishScheduledAutomation(sessionId,"completed",completedMessage);
       return;
@@ -703,7 +745,7 @@ async function runPostprocess(body){
     if(control.cancelled===true||control.controlState==="cancelled")return{ok:true,done:false,cancelled:true,hasMore:false,sessionId,workerId,postprocess:true,message:"Server 후처리가 중단되었습니다."};
     if(control.paused===true||control.controlState==="paused")return{ok:true,done:false,paused:true,hasMore:false,sessionId,workerId,postprocess:true,message:"Server 후처리가 일시정지되었습니다."};
 
-    const stage=await rpc("kinojo_server_queue_postprocess_run_stage_v271",{p_session_id:sessionId,p_session_token:sessionToken,p_worker_id:workerId});
+    const stage=await timedWorkerStage("postprocess_"+nextStage,null,()=>rpc("kinojo_server_queue_postprocess_run_stage_v271",{p_session_id:sessionId,p_session_token:sessionToken,p_worker_id:workerId}));
     stages.push(stage);
     if(stage.ok!==true||stage.stageOk===false||stage.finalFailure===true){
       return{ok:true,done:stage.finalFailure===true,completed:false,failed:true,postprocessFailed:true,finalFailure:stage.finalFailure===true,retryable:stage.finalFailure!==true,hasMore:stage.finalFailure!==true,sessionId,workerId,postprocess:true,failedStage:stage.stage||nextStage,attemptCount:stage.attemptCount,maxAttempts:stage.maxAttempts,stages,message:clean(stage.message||"Server 후처리 단계가 실패했습니다.",1000)};
@@ -797,7 +839,7 @@ Deno.serve(async request=>{
   if(request.method!=="POST")return json({ok:false,message:"POST만 허용합니다."},405);
   try{
     const body=object(await request.json().catch(()=>({}))),action=clean(body.action,80);
-    if(action==="health")return json({ok:true,service:"character-refresh-worker",apiVersion:API_VERSION,databaseContract:CONTRACT,identityDatabaseContract:IDENTITY_DATABASE_CONTRACT,progressContract:"server-worker-seven-phase-v2",progressPhases:7,modes:["startAutonomous","autonomousTick","runQueue","runPostprocess"],queueBatchLimit:5,lookupOnlyPhase:false,postprocessPhase:true,sheetDeferred:false,sheetSyncPhase:true,sheetReadbackRequired:true,listSyncSingleWorkerLease:true,listSyncCompletionAtomic:true,legionTreeCharacterAddListless:true,legionTreeCharacterAddListWrite:false,legionTreeCharacterAddListReadback:false,legionTreeListlessDatabaseContract:"455",legionTreeListlessTargetSource:"server:legion_tree_character_add_v455",legionTreeListlessTerminalStage:"SERVER_QUEUE_CHARACTER_MASTER_DONE",etaContract:"remaining-plaync-targets-only",retryFailedRowsOnly:true,browserIndependentQueue:true,autonomousTickMode:"detached",autonomousHandoffRetryMax:AUTONOMOUS_HANDOFF_RETRY_DELAYS.length,autonomousHandoffRetryStatuses:[502,503,504],autonomousHandoffRetryClassifier:"http-status-first+message-fallback",autonomousHandoffHttpStatusPreserved:true,autonomousHandoffClassifierSelfTest:autonomousHandoffClassifierSelfTest(),targetAtomicFinalize:true,staleClaimRecoverySeconds:120,gearSpecificPayloadIds:true,officialStatePrecheck:true,perTargetReconcile:false,finalReconcileOnly:true,storesOfficialRaw:true,officialExactCombatPower:true,officialRateGate:"plaync_global_700ms",officialRawReuseSeconds:900,plaync429AttemptConsumed:false,identityRecovery:"two-terminal-misses-then-same-race-name-hint-exact-key",identityRecoveryEntry:"stored-detail-404-or-empty-identity-200+name-server-terminal-not-found",providerRetryEntersIdentityRecovery:false,serverTransferLegionAtomic:true,sameServerRenamePreservesLegion:true,listSyncEdge:"lookup-list-sync"});
+    if(action==="health")return json({ok:true,service:"character-refresh-worker",apiVersion:API_VERSION,databaseContract:CONTRACT,identityDatabaseContract:IDENTITY_DATABASE_CONTRACT,progressContract:"server-worker-seven-phase-v2",progressPhases:7,modes:["startAutonomous","autonomousTick","runQueue","runPostprocess"],queueBatchLimit:5,lookupOnlyPhase:false,postprocessPhase:true,sheetDeferred:false,sheetSyncPhase:true,sheetReadbackRequired:true,listSyncSingleWorkerLease:true,listSyncCompletionAtomic:true,legionTreeCharacterAddListless:true,legionTreeCharacterAddListWrite:false,legionTreeCharacterAddListReadback:false,legionTreeListlessDatabaseContract:"455",legionTreeListlessTargetSource:"server:legion_tree_character_add_v455",legionTreeListlessTerminalStage:"SERVER_QUEUE_CHARACTER_MASTER_DONE",etaContract:"remaining-plaync-targets-only",retryFailedRowsOnly:true,browserIndependentQueue:true,autonomousTickMode:"detached",autonomousHandoffRetryMax:AUTONOMOUS_HANDOFF_RETRY_DELAYS.length,autonomousHandoffRetryStatuses:[502,503,504],autonomousHandoffRetryClassifier:"http-status-first+message-fallback",autonomousHandoffHttpStatusPreserved:true,autonomousHandoffClassifierSelfTest:autonomousHandoffClassifierSelfTest(),targetAtomicFinalize:true,staleClaimRecoverySeconds:120,gearSpecificPayloadIds:true,officialStatePrecheck:true,perTargetReconcile:false,finalReconcileOnly:true,storesOfficialRaw:true,officialExactCombatPower:true,officialRateGate:"plaync_global_700ms",officialRawReuseSeconds:900,plaync429AttemptConsumed:false,identityRecovery:"terminal-miss-or-old-name-reused-then-same-race-direct-key",identityRecoveryEntry:"stored-detail-404-or-empty-identity-200+name-server-terminal-not-found",providerRetryEntersIdentityRecovery:false,serverTransferLegionAtomic:true,sameServerRenamePreservesLegion:true,listSyncEdge:"lookup-list-sync"});
     if(action==="startAutonomous")return await startAutonomous(body);
     if(action==="autonomousTick"){
       if(!internalRequest(request))return json({ok:false,code:"INTERNAL_ONLY",message:"서버 내부 자동 실행 요청만 허용합니다."},403);
