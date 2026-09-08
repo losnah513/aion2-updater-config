@@ -64,6 +64,7 @@ jobs:
           node --check legion-tree/js/legion-tree.js
           node tests/legion-tree-data-render-contract.test.js
           node tests/legion-tree-editor-contract.test.js
+          node tests/legion-tree-membership-sync.test.js
 
           python3 <<'PY'
           from pathlib import Path

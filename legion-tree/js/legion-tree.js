@@ -43,6 +43,11 @@
   let activeLegionIndex=0;
   let treeRecoveryTimer=null;
   let treeRecoveryAttempt=0;
+  let treeReadPromise=null;
+  let treeReadGeneration=0;
+  let treeRefreshTimer=null;
+  let lastTreeReadAt=0;
+  const TREE_REFRESH_INTERVAL_MS=60000;
   let searchGroups={main:null,alt:null};
   let selectedCandidates={main:null,alt:null};
 
@@ -527,6 +532,14 @@
       if(!byName.has(name))throw new Error('LEGION_TREE_REQUIRED_LEGION_MISSING');
       return normalizeLegion(byName.get(name),name,index+1);
     });
+    if(source.membershipContract==='canonical-auto-terminal-v473'){
+      for(const legion of legions){
+        const members=legion.stages.flatMap(stage=>stage.roles.flatMap(role=>role.groups.flatMap(group=>group.members))).concat(legion.unassignedMembers);
+        if(members.length!==legion.memberCount||new Set(members.map(member=>member.characterId)).size!==members.length){
+          throw new Error('LEGION_TREE_MEMBERSHIP_INTEGRITY');
+        }
+      }
+    }
     return {
       contract:TREE_CONTRACT,
       databaseContract:TREE_DATABASE_CONTRACT,
@@ -710,9 +723,10 @@
         :renderStage(stage,previousStage);
       return connector+markup;
     }).join('');
+    const pending=legion.unassignedMembers.length?'<section class="legion-tree-stage is-unassigned"><div class="legion-tree-affiliation-plate">직급 지정 대기</div>'+renderGroup({groupKey:'unassigned-members',groupName:'',members:legion.unassignedMembers},'직급 지정 대기')+'</section>':'';
     const fallbackBadge=legion.fallbackApplied?'<span class="legion-tree-fallback-badge">기본 단계</span>':'';
     const hidden=index===0?'':' hidden';
-    return `<section class="legion-tree-legion${legion.legionOrder===1?' is-main-legion':''}" data-legion-index="${index}" data-legion-name="${esc(legion.legionName)}" data-tree-state="${esc(legion.treeState)}" data-fallback-applied="${legion.fallbackApplied?'true':'false'}" aria-hidden="${index===0?'false':'true'}" aria-labelledby="${headingId}"${hidden}><header class="legion-tree-legion-head"><div class="legion-tree-legion-title"><h2 id="${headingId}">${esc(legion.legionName)}</h2></div><div class="legion-tree-legion-meta">${fallbackBadge}<small>${legion.memberCount}명 · ${legion.stageCount}단계</small></div></header><div class="legion-tree-stage-list">${stages}</div></section>`;
+    return `<section class="legion-tree-legion${legion.legionOrder===1?' is-main-legion':''}" data-legion-index="${index}" data-legion-name="${esc(legion.legionName)}" data-tree-state="${esc(legion.treeState)}" data-fallback-applied="${legion.fallbackApplied?'true':'false'}" aria-hidden="${index===0?'false':'true'}" aria-labelledby="${headingId}"${hidden}><header class="legion-tree-legion-head"><div class="legion-tree-legion-title"><h2 id="${headingId}">${esc(legion.legionName)}</h2></div><div class="legion-tree-legion-meta">${fallbackBadge}<small>${legion.memberCount}명 · ${legion.stageCount}단계</small></div></header><div class="legion-tree-stage-list">${stages}${pending}</div></section>`;
   }
 
   function renderTreeMarkup(model){
@@ -798,6 +812,7 @@
 
   function applyTreePayload(payload){
     try{
+      treeReadGeneration+=1;
       const model=normalizeTreePayload(payload);
       renderTreeData(model);
       writeTreeCache(payload);
@@ -812,8 +827,36 @@
     }
   }
 
-  async function loadTreeData(options={}){
+  function treeEditorOpen(){
+    const editor=q('#legionTreeEditorRoot');
+    return Boolean(editor&&!editor.hidden);
+  }
+
+  function loadTreeData(options={}){
+    if(treeReadPromise)return treeReadPromise;
+    if(options.background&&treeEditorOpen())return Promise.resolve(currentTreeModel);
+    treeReadPromise=readTreeData(options).finally(()=>{treeReadPromise=null;});
+    return treeReadPromise;
+  }
+
+  function refreshVisibleTree(){
+    if(rosterMode||document.visibilityState==='hidden'||treeEditorOpen()||Date.now()-lastTreeReadAt<10000)return;
+    void loadTreeData({background:true});
+  }
+
+  function startTreeRefresh(){
+    if(rosterMode||treeRefreshTimer||!q('#legionTreeViewer'))return;
+    treeRefreshTimer=setTimeout(()=>{
+      treeRefreshTimer=null;
+      refreshVisibleTree();
+      startTreeRefresh();
+    },TREE_REFRESH_INTERVAL_MS);
+  }
+
+  async function readTreeData(options={}){
     const background=options?.background===true;
+    const generation=treeReadGeneration;
+    lastTreeReadAt=Date.now();
     const root=q('#legionTreeRoot');
     if(!background){
       treeStatusMessage='레기온 데이터를 확인하는 중…';
@@ -829,7 +872,12 @@
       const response=await requestTreePayloadWithRetry(api);
       const payload=response.payload;
       const model=normalizeTreePayload(payload);
-      renderTreeData(model);
+      if(generation!==treeReadGeneration||treeEditorOpen())return currentTreeModel;
+      if(!background||!currentTreeModel||JSON.stringify(currentTreeModel.legions)!==JSON.stringify(model.legions)){
+        const scrollTop=root?.scrollTop||0;
+        renderTreeData(model);
+        if(background&&root){root.scrollTop=scrollTop;updateViewerFade();}
+      }
       writeTreeCache(payload);
       clearTreeRecovery();
       const memberCount=model.legions.reduce((sum,legion)=>sum+legion.memberCount,0);
@@ -841,6 +889,12 @@
       window.dispatchEvent(new CustomEvent('kinojo:page-time',{detail:{value:new Date(),label:'레기온 데이터'}}));
       return model;
     }catch(error){
+      if(generation!==treeReadGeneration||treeEditorOpen())return currentTreeModel;
+      if(background&&currentTreeModel){
+        treeStatusMessage='현재 레기온 데이터 유지 · 서버 재연결 중';
+        refreshStatus();
+        return currentTreeModel;
+      }
       const cachedPayload=readTreeCache();
       if(cachedPayload){
         const model=normalizeTreePayload(cachedPayload);
@@ -1137,6 +1191,13 @@
 
   function start(){
     bindPage();
+    if(!rosterMode){
+      document.addEventListener('visibilitychange',refreshVisibleTree);
+      window.addEventListener('focus',refreshVisibleTree);
+      window.addEventListener('pageshow',()=>{startTreeRefresh();refreshVisibleTree();});
+      window.addEventListener('pagehide',()=>{clearTimeout(treeRefreshTimer);treeRefreshTimer=null;});
+      startTreeRefresh();
+    }
     void Promise.allSettled([...(q('#legionTreeMainName')?[loadServerReference()]:[]),...(!rosterMode?[loadTreeData()]:[])]);
   }
 
@@ -1154,6 +1215,7 @@
     refreshCurrentAccountHighlights,
     applyTreePayload,
     loadTreeData,
+    refreshVisibleTree,
     requestTreePayloadWithRetry,
     transientTreeReadError,
     readTreeCache,
