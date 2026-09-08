@@ -43,6 +43,8 @@
 1. 운영 지시 후 신규 시작을 막고 진행 중 Queue/lease·관리자 변경을 확인한다. 활성 작업 중 SQL/Edge 혼합 배포 금지.
 2. DB 위 11개 → AppsScript_MASTER 기존 프로젝트 → 위 5개 기존 Edge → 관리자 WEB의 호환 묶음. Edge가 요구하는 DB RPC가 준비되기 전 활성화하지 않는다.
 3. Bridge 기존 Drive ID `1fXpvnVoALky9ceQ-1Hn97IEyRB9HJBkT`를 유지하고 Sheets API/OAuth·MASTER_ID_V1 health를 검증한다. 새 Apps Script 프로젝트 없음.
+   - 기본 GCP 프로젝트에서는 Apps Script 고급 서비스 `Google Sheets API` v4(식별자 `Sheets`)를 활성화한다. HTTP 호출에 필요한 `script.external_request`와 기존 Sheets 접근 권한을 확인한다. Cloud 프로젝트 교체·IAM 확대·새 계정 생성으로 대체하지 않는다.
+   - `developerMetadata:search` 읽기 전용 HTTP200은 API 연결 확인일 뿐 metadata 쓰기/행 readback 검증을 대신하지 않는다. 임시 진단 함수는 실제 배포 소스에서 제거한다. 서비스 활성화와 편집기 저장은 기존 웹앱 배포 갱신과 구분한다.
 4. WEB 캐시의 배너/성역/명부 revision은 보존하고 캐릭터 revision만 반영한다.
 5. Extension은 RETIRED/FROZEN이다. `tests/fixtures/extension-reference/`는 manifest 순서 재현용이며 배포 자산이 아니다. 설치·재로드·재활성화·Drive 보존본 교체 없음.
 
