@@ -9,14 +9,16 @@ const css=read('sanctuary-management/css/sanctuary-management-draft.css');
 
 for(const token of [
   'sanctuary-management-candidate-position','선택한 포스·슬롯','포스 · ',
-  'sanctuary-management-candidate-completion','sanctuary-management-search-result-profile',
+  'sanctuary-management-draft-status-wrap','sanctuary-management-search-result-profile',
   'sanctuary-management-search-result-avatar','sanctuary-management-search-result-copy',
 ])assert.ok(draft.includes(token),`Readable editor markup missing ${token}`);
 
 assert.ok(
-  draft.includes("</div>'+completion+'<button type=\"button\" class=\"sanctuary-management-search-reset\""),
-  'Completed-placement notice must sit below the scrollable candidate list and above reset'
+  draft.includes('이 포스에 내 캐릭터 배치 완료 · 한 이용자는 포스마다 캐릭터 1개만 배치할 수 있습니다.')&&
+  draft.includes('class="sanctuary-management-draft-status-wrap"'),
+  'Completed-placement notice must use the wide footer status area'
 );
+assert.equal(draft.includes('sanctuary-management-candidate-completion'),false,'Completed-placement notice must not consume the narrow candidate rail');
 assert.ok(
   draft.includes("if(state.team?.localOnly){")&&
   draft.includes('data-creator-candidates-toggle')&&

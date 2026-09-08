@@ -1021,7 +1021,7 @@
   }
 
   async function getSanctuaryManagementBootstrap(sanctuaryCode){
-    return invokeEdgeFunction('sanctuary-management', {
+    return invokeEdgeFunction('sanctuary-management', {clientContract:480,
       action:'bootstrap',
       // PUBLIC_SANCTUARY_READ: an empty credential selects the server-owned
       // guest projection. Mutating Sanctuary methods still call the strict
@@ -1032,7 +1032,7 @@
   }
 
   async function getSanctuaryManagementRevision(sanctuaryCode){
-    return invokeEdgeFunction('sanctuary-management', {
+    return invokeEdgeFunction('sanctuary-management', {clientContract:480,
       action:'revision',
       sessionToken:optionalServerSessionCredential(),
       sanctuaryCode:String(sanctuaryCode||'').trim()
@@ -1042,7 +1042,7 @@
   async function getSanctuaryManagementMonth(month){
     const normalized=String(month||'').trim();
     if(!/^20\d{2}-(0[1-9]|1[0-2])$/.test(normalized))throw new Error('조회할 월을 YYYY-MM 형식으로 선택해 주세요.');
-    return invokeEdgeFunction('sanctuary-management', {
+    return invokeEdgeFunction('sanctuary-management', {clientContract:480,
       action:'month',
       sessionToken:optionalServerSessionCredential(),
       month:normalized
@@ -1052,7 +1052,7 @@
   async function getSanctuaryManagementTransitionReport(month){
     const normalized=String(month||'').trim();
     if(!/^20\d{2}-(0[1-9]|1[0-2])$/.test(normalized))throw new Error('비교할 월을 YYYY-MM 형식으로 선택해 주세요.');
-    return invokeEdgeFunction('sanctuary-management',{
+    return invokeEdgeFunction('sanctuary-management', {clientContract:480,
       action:'transition-report',
       sessionToken:currentServerSessionCredential(),
       month:normalized
@@ -1067,7 +1067,7 @@
     if(!/^20\d{2}-(0[1-9]|1[0-2])$/.test(normalizedMonth)||!/^[0-9a-f]{64}$/.test(normalizedHash)||!normalizedScope||normalizedConfirmation!=='전환 범위 승인'){
       throw new Error('전환 범위와 확인 문구를 다시 확인해 주세요.');
     }
-    return invokeEdgeFunction('sanctuary-management',{
+    return invokeEdgeFunction('sanctuary-management', {clientContract:480,
       action:'transition-approve',
       sessionToken:currentServerSessionCredential(),
       month:normalizedMonth,
@@ -1078,7 +1078,7 @@
   }
 
   async function getSanctuaryManagementNotificationSummary(){
-    return invokeEdgeFunction('sanctuary-management',{
+    return invokeEdgeFunction('sanctuary-management', {clientContract:480,
       action:'notification-summary',
       sessionToken:currentServerSessionCredential()
     });
@@ -1087,7 +1087,7 @@
   async function getSanctuaryManagementArchivePreview(teamId){
     const normalizedTeamId=Number(teamId||0);
     if(!Number.isSafeInteger(normalizedTeamId)||normalizedTeamId<1)throw new Error('해산할 팀을 다시 선택해 주세요.');
-    return invokeEdgeFunction('sanctuary-management',{
+    return invokeEdgeFunction('sanctuary-management', {clientContract:480,
       action:'archive-preview',
       sessionToken:currentServerSessionCredential(),
       teamId:normalizedTeamId
@@ -1103,7 +1103,7 @@
     const generatedKey='sm-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12);
     const normalizedKey=String(requestKey||generatedKey).trim();
     if(!/^[A-Za-z0-9][A-Za-z0-9._:-]{7,119}$/.test(normalizedKey))throw new Error('중복 요청 방지 키를 다시 만들어 주세요.');
-    return invokeEdgeFunction('sanctuary-management',{
+    return invokeEdgeFunction('sanctuary-management', {clientContract:480,
       action:'command',
       sessionToken:currentServerSessionCredential(),
       requestKey:normalizedKey,
@@ -1120,7 +1120,7 @@
     if(!Number.isSafeInteger(normalizedTeamId)||normalizedTeamId<1||!['ACQUIRE','RENEW','RELEASE'].includes(normalizedAction)||normalizedToken.length<32){
       throw new Error('편집 잠금 요청을 다시 확인해 주세요.');
     }
-    return invokeEdgeFunction('sanctuary-management',{
+    return invokeEdgeFunction('sanctuary-management', {clientContract:480,
       action:'lease',
       sessionToken:currentServerSessionCredential(),
       teamId:normalizedTeamId,
@@ -1132,7 +1132,7 @@
   async function getSanctuaryManagementLeaseStatus(teamIds){
     const normalizedTeamIds=Array.from(new Set((Array.isArray(teamIds)?teamIds:[]).map(Number).filter(function(teamId){return Number.isSafeInteger(teamId)&&teamId>0;}))).slice(0,100);
     if(!normalizedTeamIds.length)throw new Error('편집 상태를 확인할 팀을 다시 선택해 주세요.');
-    return invokeEdgeFunction('sanctuary-management',{
+    return invokeEdgeFunction('sanctuary-management', {clientContract:480,
       action:'lease-status',
       sessionToken:currentServerSessionCredential(),
       teamIds:normalizedTeamIds
@@ -1144,7 +1144,7 @@
     const normalizedQuery=String(query||'').trim();
     if(!Number.isSafeInteger(normalizedTeamId)||normalizedTeamId<0)throw new Error('캐릭터를 추가할 팀을 다시 선택해 주세요.');
     if(!normalizedQuery||normalizedQuery.length>48)throw new Error('캐릭터 이름 또는 이름[서버]를 입력해 주세요.');
-    return invokeEdgeFunction('sanctuary-management',{
+    return invokeEdgeFunction('sanctuary-management', {clientContract:480,
       action:'character-search',
       sessionToken:currentServerSessionCredential(),
       teamId:normalizedTeamId,
@@ -1157,7 +1157,7 @@
     const normalizedQuery=String(query||'').trim();
     if(!Number.isSafeInteger(normalizedTeamId)||normalizedTeamId<1)throw new Error('캐릭터를 추가할 팀을 다시 선택해 주세요.');
     if(!normalizedQuery||Array.from(normalizedQuery).length>12)throw new Error('검색어는 12자까지 입력해 주세요.');
-    return invokeEdgeFunction('sanctuary-management',{
+    return invokeEdgeFunction('sanctuary-management', {clientContract:480,
       action:'slot-character-search',
       sessionToken:currentServerSessionCredential(),
       teamId:normalizedTeamId,
@@ -1165,24 +1165,37 @@
     });
   }
 
-  async function registerSanctuaryManagementCharacter(teamId,candidateId,relationType,mainCharacterId=null,requestKey=''){
+  async function registerSanctuaryManagementCharacter(teamId,candidateId,relationType,mainCharacterId=null,mainCandidateId=null,listSyncEnabled=true,requestKey=''){
     const normalizedTeamId=Number(teamId||0);
     const normalizedCandidateId=String(candidateId||'').trim();
     const normalizedRelation=String(relationType||'').trim().toUpperCase();
     const normalizedMainId=mainCharacterId==null?null:Number(mainCharacterId);
+    const normalizedMainCandidateId=String(mainCandidateId||'').trim()||null;
     const generatedKey='sm-character-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12);
     const normalizedKey=String(requestKey||generatedKey).trim();
     if(!Number.isSafeInteger(normalizedTeamId)||normalizedTeamId<0||!normalizedCandidateId||!['MAIN','ALT','GUEST'].includes(normalizedRelation))throw new Error('캐릭터 관계 확정 요청을 다시 확인해 주세요.');
-    if(normalizedRelation==='ALT'&&(!Number.isSafeInteger(normalizedMainId)||normalizedMainId<1))throw new Error('부캐에 연결할 본캐를 먼저 확인해 주세요.');
+    if(normalizedRelation==='ALT'&&Boolean(Number.isSafeInteger(normalizedMainId)&&normalizedMainId>0)===Boolean(normalizedMainCandidateId))throw new Error('부캐에 연결할 본캐 하나를 확인해 주세요.');
     if(!/^[A-Za-z0-9][A-Za-z0-9._:-]{7,119}$/.test(normalizedKey))throw new Error('중복 요청 방지 키를 다시 만들어 주세요.');
-    return invokeEdgeFunction('sanctuary-management',{
+    return invokeEdgeFunction('sanctuary-management', {clientContract:480,
       action:'character-register',
       sessionToken:currentServerSessionCredential(),
       teamId:normalizedTeamId,
       candidateId:normalizedCandidateId,
       relationType:normalizedRelation,
-      mainCharacterId:normalizedRelation==='ALT'?normalizedMainId:null,
+      mainCharacterId:normalizedRelation==='ALT'&&normalizedMainId?normalizedMainId:null,
+      mainCandidateId:normalizedRelation==='ALT'?normalizedMainCandidateId:null,
+      listSyncEnabled:listSyncEnabled!==false,
       requestKey:normalizedKey
+    });
+  }
+
+  async function retrySanctuaryManagementCharacterList(registrationId){
+    const normalizedRegistrationId=String(registrationId||'').trim();
+    if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(normalizedRegistrationId))throw new Error('List 반영 재시도 대상을 확인해 주세요.');
+    return invokeEdgeFunction('sanctuary-management', {clientContract:480,
+      action:'character-list-retry',
+      sessionToken:currentServerSessionCredential(),
+      registrationId:normalizedRegistrationId
     });
   }
 
@@ -1193,7 +1206,7 @@
     if(!Number.isSafeInteger(normalizedTeamId)||normalizedTeamId<0||!Number.isSafeInteger(normalizedMainId)||normalizedMainId<1||(normalizedForceId!=null&&(!Number.isSafeInteger(normalizedForceId)||normalizedForceId<1))||(normalizedTeamId===0&&normalizedForceId!=null)){
       throw new Error('부캐를 확인할 팀과 본캐를 다시 선택해 주세요.');
     }
-    return invokeEdgeFunction('sanctuary-management',{
+    return invokeEdgeFunction('sanctuary-management', {clientContract:480,
       action:'linked-alts',
       sessionToken:currentServerSessionCredential(),
       teamId:normalizedTeamId,
@@ -1211,7 +1224,7 @@
     if(!Number.isSafeInteger(normalizedTeamId)||normalizedTeamId<1||!Number.isSafeInteger(revision)||revision<1||normalizedLease.length<32||normalizedSeed.length<8||locks.some(item=>!Number.isSafeInteger(item.slotId)||item.slotId<1)){
       throw new Error('균형 배치 제안에 필요한 팀 revision과 잠금 상태를 다시 확인해 주세요.');
     }
-    return invokeEdgeFunction('sanctuary-management',{
+    return invokeEdgeFunction('sanctuary-management', {clientContract:480,
       action:'balance-proposal',
       sessionToken:currentServerSessionCredential(),
       teamId:normalizedTeamId,
@@ -2112,6 +2125,7 @@
     searchSanctuaryManagementCharacter,
     searchSanctuaryManagementSlotCharacters,
     registerSanctuaryManagementCharacter,
+    retrySanctuaryManagementCharacterList,
     getSanctuaryManagementLinkedAlts,
     getSanctuaryManagementBalanceProposal,
     getSanctuaryData,

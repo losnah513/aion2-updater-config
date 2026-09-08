@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  const API_VERSION=2.4;
-  const SCHEMA_VERSION=458;
+  const API_VERSION=2.5;
+  const SCHEMA_VERSION=480;
   const SLOT_CLASS_CODES=Object.freeze(['ALL','TEMPLAR','GLADIATOR','ASSASSIN','RANGER','SORCERER','ELEMENTALIST','CLERIC','CHANTER','FIGHTER']);
   const CLASS_ICON_MAP=Object.freeze({'수호성':'templar','검성':'gladiator','살성':'assassin','궁성':'ranger','마도성':'sorcerer','정령성':'elementalist','치유성':'cleric','호법성':'chanter','권성':'fighter'});
   const CLASS_NAME_BY_CODE=Object.freeze({TEMPLAR:'수호성',GLADIATOR:'검성',ASSASSIN:'살성',RANGER:'궁성',SORCERER:'마도성',ELEMENTALIST:'정령성',CLERIC:'치유성',CHANTER:'호법성',FIGHTER:'권성'});
@@ -48,7 +48,7 @@
 
   function contractSupported(data){
     const api=Number(data?.apiVersion),schema=Number(data?.schemaVersion);
-    return api===API_VERSION&&schema===SCHEMA_VERSION||api===2.3&&schema===457||api===2.2&&(schema===454||schema===453||schema===452)||api===2.1&&schema===451||api===2&&schema===450||api===1.9&&schema===449||api===1.8&&schema===446;
+    return api===API_VERSION&&schema===SCHEMA_VERSION||api===2.4&&schema===458||api===2.3&&schema===457||api===2.2&&(schema===454||schema===453||schema===452)||api===2.1&&schema===451||api===2&&schema===450||api===1.9&&schema===449||api===1.8&&schema===446;
   }
   function combatPowerValue(input){const power=Number(input);return Number.isFinite(power)&&power>0?Math.round(power):0;}
   function itemLevelValue(input){const level=Number(input);return Number.isFinite(level)&&level>0?Math.round(level):0;}
@@ -340,12 +340,13 @@
       mainCharacterId:integer(item.mainCharacterId),ownerMemberId:integer(item.ownerMemberId),
       characterName:value(item.characterName),serverName:value(item.serverName),className:value(item.className),
       legionName:value(item.legionName),profileImageUrl:value(item.profileImageUrl),relation:value(item.relation).toUpperCase(),
+      familyRelation:value(item.familyRelation||(item.isMain===true||integer(item.mainCharacterId)===integer(item.characterId)?'MAIN':value(item.relation).toUpperCase()==='ALT'?'ALT':'MAIN')).toUpperCase(),membershipRelation:value(item.membershipRelation||item.relation).toUpperCase(),isMain:item.isMain===true,
       isOperationalLegion:item.isOperationalLegion===true,
       canSelectAlts:item.canSelectAlts===true,
       power:combatPowerValue(item.power??item.latestPveCombatPower??item.latest_pve_combat_power),
       itemLevel:itemLevelValue(item.itemLevel??item.latestPveItemLevel??item.latest_pve_item_level)
     });
-    if(card.characterId<1||card.serverId<1||!card.characterName||!card.serverName||!['MAIN','ALT','GUEST'].includes(card.relation))throw new Error('캐릭터 조회 식별 정보가 올바르지 않습니다.');
+    if(card.characterId<1||card.serverId<1||!card.characterName||!card.serverName||!['MAIN','ALT','GUEST'].includes(card.relation)||!['MAIN','ALT'].includes(card.familyRelation)||!['MAIN','ALT','GUEST'].includes(card.membershipRelation))throw new Error('캐릭터 조회 식별 정보가 올바르지 않습니다.');
     return card;
   }
 
@@ -355,6 +356,7 @@
       candidateId:value(source.candidateId),characterName:value(source.characterName),serverId:integer(source.serverId),raceId:integer(source.raceId),
       serverName:value(source.serverName),className:value(source.className),legionName:value(source.legionName),profileImageUrl:value(source.profileImageUrl),
       isOperationalLegion:source.isOperationalLegion===true,
+      membershipRelation:value(source.membershipRelation).toUpperCase(),
       allowedRelations:Array.isArray(source.allowedRelations)?source.allowedRelations.map(item=>value(item).toUpperCase()):[],
       power:combatPowerValue(source.power??source.pveCombatPower),
       itemLevel:itemLevelValue(source.itemLevel??source.pveItemLevel)
@@ -457,12 +459,19 @@
       if(!api||typeof api.searchSanctuaryManagementCharacter!=='function')throw new Error('캐릭터 검색 Server 어댑터를 불러오지 못했습니다.');
       return validateCharacterSearch(await api.searchSanctuaryManagementCharacter(Number(teamId),value(query)));
     },
-    async registerCharacter(teamId,candidateId,relationType,mainCharacterId,requestKey){
+    async registerCharacter(teamId,candidateId,relationType,mainCharacterId,mainCandidateId,listSyncEnabled,requestKey){
       const api=window.KinojoSupabase;
       if(!api||typeof api.registerSanctuaryManagementCharacter!=='function')throw new Error('캐릭터 관계 확정 Server 어댑터를 불러오지 못했습니다.');
-      const result=await api.registerSanctuaryManagementCharacter(Number(teamId),value(candidateId),value(relationType),mainCharacterId==null?null:Number(mainCharacterId),value(requestKey));
+      const result=await api.registerSanctuaryManagementCharacter(Number(teamId),value(candidateId),value(relationType),mainCharacterId==null?null:Number(mainCharacterId),value(mainCandidateId)||null,listSyncEnabled!==false,value(requestKey));
       if(!result||typeof result!=='object'||result.ok!==true)return Promise.reject(new Error(value(result?.message)||'캐릭터 관계를 확정하지 못했습니다.'));
       return Object.assign({},result,{character:validateCharacterCard(result.character)});
+    },
+    async retryCharacterList(registrationId){
+      const api=window.KinojoSupabase;
+      if(!api||typeof api.retrySanctuaryManagementCharacterList!=='function')throw new Error('List 반영 재시도 Server 어댑터를 불러오지 못했습니다.');
+      const result=await api.retrySanctuaryManagementCharacterList(value(registrationId));
+      if(!result||typeof result!=='object'||result.ok!==true||!result.listSync)return Promise.reject(new Error(value(result?.message)||'List 반영을 다시 시도하지 못했습니다.'));
+      return result;
     },
     async leaseStatus(teamIds){
       const api=window.KinojoSupabase;
@@ -1236,7 +1245,8 @@
   }
 
   async function searchCharacter(teamId,query){return ServerAdapter.searchCharacter(teamId,query);}
-  async function registerCharacter(teamId,candidateId,relationType,mainCharacterId,requestKey){return ServerAdapter.registerCharacter(teamId,candidateId,relationType,mainCharacterId,requestKey);}
+  async function registerCharacter(teamId,candidateId,relationType,mainCharacterId,mainCandidateId=null,listSyncEnabled=true,requestKey=''){return ServerAdapter.registerCharacter(teamId,candidateId,relationType,mainCharacterId,mainCandidateId,listSyncEnabled,requestKey);}
+  async function retryCharacterList(registrationId){return ServerAdapter.retryCharacterList(registrationId);}
   async function linkedAlts(teamId,mainCharacterId,forceId=null){
     const api=window.KinojoSupabase;
     if(!api||typeof api.getSanctuaryManagementLinkedAlts!=='function')throw new Error('연결된 부캐 Server 어댑터를 불러오지 못했습니다.');
@@ -1335,6 +1345,7 @@
     archiveTeam,
     searchCharacter,
     registerCharacter,
+    retryCharacterList,
     linkedAlts,
     balanceProposal,
     reload:load

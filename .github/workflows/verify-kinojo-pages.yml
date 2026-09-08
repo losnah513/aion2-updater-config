@@ -220,6 +220,7 @@ jobs:
           node tests/sanctuary-management-layout-family-guard-contract.test.js
           node tests/sanctuary-management-slot-relation-v463-contract.test.js
           node tests/sanctuary-management-sanctuary4-difficulty-contract.test.js
+          node tests/sanctuary-management-stage13-external-family-contract.test.js
           node tests/admin-member-v433-browser-rpc-contract.test.js
           node tests/staged-page-contract.test.js
           node tests/meter-presence-log-contract.test.js
@@ -410,6 +411,7 @@ jobs:
           PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/legion-roster-interaction-e2e.js
           PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/character-titles-e2e.js
           PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/roster-family-editor-e2e.js
+          PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/sanctuary-stage13-registration-e2e.js
 
       - name: Verify bridge startup with frozen cores
         shell: bash

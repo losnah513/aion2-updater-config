@@ -5,6 +5,7 @@ const path=require('node:path');
 const root=path.resolve(__dirname,'..');
 const read=file=>fs.readFileSync(path.join(root,file),'utf8');
 const migration=read('supabase/migrations/20260831110000_sanctuary_composer_optional_creator_v457.sql');
+const stage13=read('supabase/migrations/20260908105603_sanctuary_external_guest_family_v480.sql');
 const edge=read('supabase/functions/sanctuary-management/index.ts');
 const feature=read('core/kinojo-supabase-features.js');
 const client=read('sanctuary-management/js/sanctuary-management.js');
@@ -27,11 +28,11 @@ for(const token of [
 ])assert.ok(migration.includes(token),`v457 migration contract missing ${token}`);
 
 for(const token of [
-  'const DATABASE_CONTRACT="458"',
-  'kinojo_sanctuary_management_character_search_v457',
+  'const DATABASE_CONTRACT="480"',
+  'kinojo_sanctuary_management_character_search_v480',
   'kinojo_sanctuary_management_official_prepare_v457',
-  'kinojo_sanctuary_management_official_record_v457',
-  'kinojo_sanctuary_management_official_materialize_v457',
+  'kinojo_sanctuary_management_official_record_v480',
+  'kinojo_sanctuary_management_official_materialize_v480',
   'kinojo_sanctuary_management_linked_alts_v457',
   'rawTeamId===0?null:positiveInteger(rawTeamId)',
 ])assert.ok(edge.includes(token),`v457 Edge contract missing ${token}`);
@@ -45,7 +46,13 @@ for(const token of [
 ])assert.ok(feature.includes(token),`v457 feature bridge missing ${token}`);
 
 for(const token of [
-  'const SCHEMA_VERSION=458',
+  'sanctuary_character_registration_events_v480','p_main_candidate_id uuid',
+  'p_list_sync_enabled boolean default true',"jsonb_build_array('GUEST','ALT')",
+  'kinojo_sanctuary_list_readback_finalize_v480','kinojo_sanctuary_guest_family_audit_v480',
+])assert.ok(stage13.includes(token),`v480 external family contract missing ${token}`);
+
+for(const token of [
+  'const SCHEMA_VERSION=480',
   "window.KinojoSanctuaryManagementDraftUI?.openMode?.(event.currentTarget)",
 ])assert.ok(client.includes(token),`v457 browser contract missing ${token}`);
 
