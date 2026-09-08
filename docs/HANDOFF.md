@@ -1,5 +1,13 @@
 # KINOJO WEB HANDOFF
 
+## 배너 라이브러리 분류 변경·영구 삭제 · 2026-09-08
+
+- 작업 branch `codex/banner-library-manage-20260908`, 시작 main `1fff16e8`. DB475와 kinojo-banner-media v29/API2.8 반영. Web cache2026090804. 최종 PR/배포/Drive 결과는 배너 2차 LOG 최신 회차가 정본이다.
+- 라이브러리 상세에서 미사용 업로드 이미지 분류 변경·확인 후 영구 삭제. 정식 캠페인/랜덤 풀/합성본/대표 참조 보호. 서버 성공과 재조회 실패를 구분하고 새 이벤트 목록에 전파한다. 초기화 전 loaded=true 오설정도 제거했다.
+- 기존 운영 이미지 47개와 분류/상태는 자동 변경하지 않았다. 잘못 분류된 이미지는 관리자가 명시적으로 변경한다. 삭제 실패 시 보관 상태 항목도 목록에서 재시도할 수 있다.
+- 검증: `node tests/banner-library-management.test.js`, `tests/banner-library-management-v475.sql`, banner/admin 계약 검사. 운영 사용자 이미지로 시험 삭제하지 않는다. 정상 CODEX_ADMIN 세션의 운영 읽기 검수만 수행한다.
+- 롤백: Web/Edge 먼저 이전 버전으로 복원 후 필요시 `supabase/rollbacks/20260908060048_banner_asset_library_management_v475_rollback.sql`. 이미 관리자가 삭제한 원본은 이 롤백으로 복구되지 않는다.
+
 ## 레기온 트리 자동 명부 포함 · 2026-09-08
 
 - 기준 main `2f7a980e`, 작업 branch `codex/legion-tree-membership-sync-20260908`. 기존 167단계 뒤 보완-1~6을 추가했으며 실제 완료 상태는 Drive 레기온트리 LOG 최신 회차를 따른다.

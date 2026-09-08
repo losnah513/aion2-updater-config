@@ -44,7 +44,7 @@ assert.ok(workflow.includes("targetScope:s.kind==='side'&&s.allPagesSelected?'AL
 assert.match(workflow,/if\(s\.kind==='side'&&!s\.targetPages\.length\)return\{step:3,selector:'\[data-bew-page-selector\]'/,'publish must stop at the page selector when no page is selected');
 
 for(const token of [
-  'DB = "471"',
+  'DB = "475"',
   'EVENT = "471"',
   '"event-targets"',
   'kinojo_banner_event_targets_v471',

@@ -1,6 +1,6 @@
 const S = "kinojo-banner-media",
-  V = "2.7",
-  DB = "471",
+  V = "2.8",
+  DB = "475",
   EVENT = "471",
   UPLOAD = "403",
   MASTER = "337",
@@ -53,6 +53,10 @@ const MUT = new Set([
   "pool-composite-upload-complete",
 ]);
 const ERR: Record<string, string> = {
+  BANNER_ASSET_FORMAT_INVALID: "메인 또는 사이드 배너 분류를 선택해 주세요.",
+  BANNER_ASSET_NOT_EDITABLE: "사용 가능한 업로드 이미지만 분류를 변경할 수 있습니다.",
+  BANNER_ASSET_FORMAT_STALE: "다른 화면에서 분류가 변경됐습니다. 목록을 새로고침해 주세요.",
+  BANNER_ASSET_STILL_REFERENCED: "사용 중인 이미지입니다. 이벤트·랜덤 이벤트와 대표 이미지 연결을 먼저 해제해 주세요.",
   METHOD_NOT_ALLOWED: "허용되지 않은 요청 방식입니다.",
   ORIGIN_NOT_ALLOWED: "허용되지 않은 요청 출처입니다.",
   JSON_REQUIRED: "JSON 요청만 허용됩니다.",
@@ -928,6 +932,14 @@ async function asset(r: Request, b: any, t: string, a: string) {
   if (id === null)
     return out(r, { ok: false, code: "BANNER_ASSET_ID_REQUIRED" }, 400);
   if (a === "asset-update") {
+    if (b.formatCode !== undefined) {
+      const d = await rpc("kinojo_banner_asset_format_set_v475", {
+        p_session_token: t, p_asset_id: id,
+        p_format_code: txt(b.formatCode, 40),
+        p_expected_format_code: txt(b.expectedFormatCode, 40),
+      });
+      return d.ok === true ? out(r, d) : out(r, d, stat(txt(d.code, 80)));
+    }
     const title = assetTitle(b.title ?? b.displayName ?? b.display_name);
     if (!title || title.length > 120)
       return out(r, { ok: false, code: "BANNER_ASSET_TITLE_INVALID" }, 400);
