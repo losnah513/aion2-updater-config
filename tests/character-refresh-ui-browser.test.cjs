@@ -43,6 +43,15 @@ const root=path.resolve(__dirname,'..');
    assert.match(await page.locator('#characterLookupExitSafety').innerText(),/생략/);
    assert.equal(await page.locator('#characterLookupStep3 header>span').innerText(),'100.0%');
    assert.match(await page.locator('#characterLookupPhaseListStep3').innerText(),/생략/);
+   await page.evaluate(()=>{
+    window.KinojoAdmin.renderCharacterLookupConsole({ok:true,sessionId:'synthetic',active:false,session:{status:'completed'},
+      publicSnapshot:{state:'WAIT_30_MINUTES',pendingCount:3,dueAt:'2026-09-08T14:40:19Z',publishedAt:'2026-09-08T10:00:00Z'},
+      progress:{currentCharacter:'LAURA',total:1,completedCount:1,finalFailedCount:0,step2Status:'done',phases:[{no:6,status:'done',label:'old'}]}});
+   });
+   assert.match(await page.locator('#characterLookupTargetList').innerText(),/조회 완료/);
+   assert.doesNotMatch(await page.locator('#characterLookupTargetList').innerText(),/조회 중/);
+   assert.match(await page.locator('#characterLookupPublicSnapshot').innerText(),/30분 대기/);
+   assert.match(await page.locator('#characterLookupPhaseListStep3').innerText(),/DB 랭킹 계산/);
    await page.locator('#characterAutomationListToggle').focus();await page.keyboard.press('Space');
    await page.waitForFunction(()=>window.fixtureCalls.length===1);
    assert.equal(await page.evaluate(()=>window.fixtureCalls[0].c),'saveListWrite');

@@ -35,7 +35,8 @@ for (const token of [
   "loadCharacterLookupDetail('events',{limit:40})",
   "loadCharacterLookupDetail('performance',{limit:1})",
   'return foreground?3000:15000;',
-  "if(data.active===true)startCharacterLookupPolling();else stopCharacterLookupPolling();",
+  "Number(data.publicSnapshot?.pendingCount)>0",
+  "if(state.lookupConsole?.active!==true)return foreground?30000:60000;",
   "state.lookupPollTimer=setTimeout(async()=>",
 ]) assert.ok(characters.includes(token), `materialized status client behavior missing: ${token}`);
 

@@ -6,6 +6,8 @@
 
 ### 공개 스냅샷 분리 후속 계약
 
+- 후속 상태 표시 migration `20260908141651_character_refresh_completion_status.sql`은 기존 인증 status RPC에 read-only 공개 상태만 추가한다. 기존 권한/캐시 요약/생성·공개 경계는 유지한다. WEB 완료 행·최근 기록·별도 생성 상태를 함께 검증한다. rollback은 기존 함수 정의만 복원하며 데이터/예약 작업을 변경하지 않는다.
+
 - 기존 11개에 이어 `20260908130417_character_automation_cron_api_save.sql`, `20260908131116_character_weekly_identity_query_plan.sql`, `20260908131706_character_deferred_ranking_snapshot.sql` 순서로 적용한다. 적용된 migration을 중복 실행하지 않는다. 진행 상태는 LOG를 따른다.
 - 조회의 공식 원시 Snapshot·Master·이력·선택적 list 반영은 유지한다. 공개 Ranking/HOF만 기존 builder/validate/publish를 재사용하는 별도 pg_cron 작업으로 분리한다. 새 Edge/Parser 없음.
 - 이어 `20260908134927_character_listless_completion_lease.sql`을 적용한다. 단계 완료로 해제된 Worker lease는 list OFF 종료 함수 안에서 기존 claim RPC로 다시 획득한다. 다른 Worker/일시정지/취소 검사와 정상 소유권 검사는 유지한다.
