@@ -1,5 +1,15 @@
 # KINOJO WEB HANDOFF
 
+## 배너 이미지 관리 2차 후속 · 메뉴와 전체 페이지 · 2026-09-08
+
+- 제품 PR #410, main `08ee037056ff6861ce358f7d2b93b2ad4cfe8eec`. 관리자 cache `2026090801`. 메인/사이드 배너 메뉴를 PC·모바일 HTML 셸에 포함하고 이미지 모듈 초기화가 해당 메뉴를 지우지 않도록 변경했다. 지연 로딩과 상단 메뉴 복제 시점 차이로 메뉴가 비던 원인을 해소한다.
+- 노출 페이지 첫 항목 `전체`는 단순 현재 페이지 일괄선택이 아니라 DB `target_scope=ALL`이다. 개별 선택은 `SELECTED`로 보존한다. 새 페이지가 서버의 배너 지원 페이지 목록에 등록되면 ALL 이벤트의 캠페인과 이미지 연결을 자동 확장한다.
+- DB471 `20260908000100_banner_all_page_scope_v471.sql`, Edge `kinojo-banner-media` v28 / API 2.7 / DB·Event 471. 서비스 역할 전용 대상 보정 함수가 공개 manifest 직전에 누락된 페이지를 보정하고, 이미 최신이면 쓰기 없이 종료한다. 기존 15개 variant 상한은 지원 페이지 수 × 2로 교체했다.
+- 이전 7개 페이지 전체를 지정했던 사이드 이벤트 9개를 ALL로 승격했다. 각 8페이지·16캠페인, 레기온 명부와 명예의 전당 오른쪽 포함, 기대 대상 누락 0건이다. 메인 이벤트 4개는 HOME 계약을 유지한다. 운영 LEGION_ROSTER LEFT/RIGHT manifest는 각각 23개 항목을 반환했다.
+- 검증: Node 111/111, PR의 4개 source 검증 및 배너 Chrome 1440/768/390 계약 통과. ALL 클릭 뒤 DOM이 교체되므로 E2E도 새 버튼을 재조회한다. 운영 배포·문서 동기화 최종 결과는 배너 2차 LOG 17회차를 참조한다.
+- Advisor에서 v471 신규 함수 관련 지적은 없었다. 기존 private 이벤트 테이블의 RLS 정책 없음(INFO)과 생성자/수정자 FK 인덱스 없음(INFO)은 이번 변경 범위 밖이며 기존 service-only 접근 경계를 유지한다. 참고: https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy 및 https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys
+- 롤백 시 Web/Edge를 되돌려도 추가된 운영 이벤트 대상은 자동 삭제하지 않는다. 향후 페이지 지원 등록은 서버 지원 목록·공용 페이지 배너 연결을 함께 추가해야 한다.
+
 ## 레기온 명부 · 2026-09-07
 
 - 빈 이미지 배경 후속 DB469: master.legion_source_snapshot_id → lookup_snapshots.officialRaw.info.profile.gender(1 남성/2 여성)만 images_v467 응답의 gender로 공개. 이미지 0개일 때 사용자 제공 male/female-background.png를 CSS 장식 배경으로 표시하며 버튼·전체 보기·다운로드 없음. 이미지가 있으면 라이브러리 이미지로 대체. 성별 미확인은 임의 추정하지 않음. 명부 cache2026090709.
