@@ -1,5 +1,12 @@
 # KINOJO WEB HANDOFF
 
+## 캐릭터 조회 안정화 4차 · 2단계 로컬 완료 · 운영 미배포 · 2026-09-08
+
+- 조회 자격/7일 재검토, key 기반 신원 복구·충돌 양쪽 원자 처리, _D/H 제외, fresh 공식 레기온 기준 DB-only list 복원, metadata 쓰기·부분 Queue 합치기·늦은 실패 보호를 기존 경계에 구현했다. 수동 제외와 이력은 보존한다.
+- 핵심 8종/인접 회귀 10종 로컬 PASS. 실제 인증·Google canary·운영 전체 최신화 및 지연 개선 실측은 3단계다. 운영 배포 완료로 읽지 않는다.
+- 현재 인계: docs/CHARACTER_REFRESH_STABILITY_STAGE2_WIP.md. Source/Deploy hash·순서·rollback·운영 게이트: docs/CHARACTER_REFRESH_STABILITY_STAGE2_RELEASE.md. 같은 4차 PROJECT LOG 최신 12회차에 기록한다.
+- main 0ab04ccf의 DB475/배너 변경을 보존했다. 새 SQL 숫자는 3단계 직전 최신 SQL_INDEX 확인 후 지정한다. 임의 전체 db push/실제 list 일괄 덮어쓰기 금지.
+
 ## 배너 라이브러리 분류 변경·영구 삭제 · 2026-09-08
 
 - 작업 branch `codex/banner-library-manage-20260908`, 시작 main `1fff16e8`. DB475와 kinojo-banner-media v29/API2.8 반영. Web cache2026090804. 최종 PR/배포/Drive 결과는 배너 2차 LOG 최신 회차가 정본이다.

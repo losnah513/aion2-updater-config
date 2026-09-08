@@ -24,7 +24,7 @@ assert.equal(contract.decodePlatformId('malformed%ZZ'), 'malformed%ZZ');
 assert.equal(contract.normalizeName('<strong>니꿍</strong>'), '니꿍');
 
 for (const token of [
-  'const API_VERSION = "295.4"',
+  'const API_VERSION = "295.5"',
   'const platformId = decodePlatformId(primitive(item, ["characterId", "character_id", "encryptedCharacterId"]))',
   'return decodeHtml(text(value, 120)).normalize("NFKC")',
   'infoKey === expectedKey',

@@ -1,5 +1,9 @@
 # aion2-updater-config
 
+## Character refresh stability — staged, not deployed (2026-09-08)
+
+Stage 2 implementation and offline regression checks are complete. Eligibility is DB-owned and separate from visibility; direct-key recovery preserves exact identity and atomic transfer cleanup. DB-only list restore requires current official identity/legion evidence. Stable Master-ID sheet writes, durable partial retry and completion guards are staged in the existing services. See docs/CHARACTER_REFRESH_STABILITY_STAGE2_WIP.md and CHARACTER_REFRESH_STABILITY_STAGE2_RELEASE.md. Production canaries, real authentication and total-runtime measurements remain Stage 3 gates; local tests do not demonstrate production performance or deployment.
+
 ## Banner library management · 2026-09-08
 
 CONFIRMED: the upload tab determines MAIN_16_9/SIDE_300_715; dimensions do not infer the category. Library detail offers explicit reclassification and permanent deletion of unused uploaded images. DB475 checks campaign items, random pool assets/composites and representatives. Original Storage bytes and metadata use the existing prepare/delete/finalize API. Static images are protected. Asset broadcasts do not mark uninitialized event workflows as loaded. Recheck when reference tables, deletion lifecycle or workflow initialization change. Tests: `node tests/banner-library-management.test.js`, read-only `tests/banner-library-management-v475.sql`. Edge v29/API2.8/DB475, admin cache2026090804; no operational images automatically changed.

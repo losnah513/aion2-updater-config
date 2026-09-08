@@ -33,7 +33,7 @@ async function run(){
  await db.exec("update private.sanctuary_management_schedule_versions_v437 set starts_on=current_date+365");assert.equal((await policy(3)).eligible,false);
  await db.exec("update private.sanctuary_management_schedule_versions_v437 set starts_on=current_date-10");
  await db.exec("update character_master set lookup_excluded=true where id=3");assert.equal((await policy(3)).reason,'ADMIN_EXCLUDED');
- const update=async(id,mode,scope,revision='',credential='test-manager')=>(await q('select kinojo_admin_character_lookup_policy_update($1,$2,$3,$4,$5,$6) p',[credential,id,mode,scope,'synthetic test',revision]))[0].p;
+ const update=async(id,mode,scope,revision='',credential='test-manager')=>(await q('select kinojo_admin_character_lookup_policy_update($1,$2,$3,$4,$5,$6) p',[credential,id,mode,scope,'synthetic test',scope==='GROUP'&&revision===''?(await policy(id)).groupRevision:revision]))[0].p;
  assert.equal((await update(1,'EXCLUDE','GROUP')).ok,true);assert.equal((await policy(2)).reason,'ADMIN_EXCLUDED');
  assert.equal((await update(2,'INCLUDE','CHARACTER')).ok,true);assert.equal((await policy(2)).reason,'ADMIN_INCLUDED');
  assert.equal((await update(2,'EXCLUDE','CHARACTER')).code,'STALE_LOOKUP_POLICY');
@@ -93,6 +93,7 @@ async function run(){
  insert into character_master(id,character_name,server_id,class_name,char_key,list_row) values(10,'old-owner',2003,'궁성','222222222222222222',10),(11,'incoming',2003,'치유성','333333333333333333',11);
  insert into private.character_identity_scan_checkpoints select 10,'222222222222222222',jsonb_agg(jsonb_build_object('serverId',server_id,'serverName',server_name,'serverShortName',server_short_name,'raceId',race_id) order by server_id),'궁성','[2002,2003]','[]',now()+interval '5 minutes',1 from server_master where race_id=2;`);
  await db.exec(read('tests/fixtures/character-refresh-list-payload.sql'));
+ await db.exec("update character_master set is_main=true where id=11;insert into character_master(id,character_name,server_id,class_name,main_character_id,main_character_name,list_row) values(12,'linked-alt',2003,'궁성',11,'incoming',12)");
  const chain=[{characterId:10,action:'DELETE_CANDIDATE',generation:'1'},{characterId:11,action:'APPLY',candidate:{charKey:'333333333333333333',className:'치유성',serverId:2003,characterName:'old-owner',sourceServerId:2003,sourceCharacterName:'incoming'}}];
  const collision=async changes=>(await q("select kinojo_admin_identity_collision_apply('test-manager',$1) p",[JSON.stringify(changes)]))[0].p;
  assert.equal((await collision([{...chain[0],generation:'stale'},chain[1]])).ok,false);
@@ -104,7 +105,8 @@ async function run(){
  assert.equal((await policy(10)).reason,'DELETION_CANDIDATE');
  assert.equal((await q('select character_name from character_master where id=11'))[0].character_name,'old-owner');
  const pending=(await q("select kinojo_admin_identity_list_pending('test-manager',11) p"))[0].p;
- assert.equal(pending.items.length,2);assert.equal(pending.items[0].listStatus,'삭제후보');
+ assert.equal(pending.items.length,3);assert.equal(pending.items[0].listStatus,'삭제후보');
+ assert.equal(pending.items.find(x=>Number(x.id)===12).mainCharacterName,'old-owner[2003]');
  assert.equal((await q("select kinojo_admin_identity_list_pending('test-manager',11,$1,'stale') p",[pending.items[0].queueId]))[0].p.ok,false);
  assert.equal((await q("select kinojo_admin_identity_list_pending('test-manager',11,$1,$2) p",[pending.items[0].queueId,pending.items[0].queueRevision]))[0].p.ok,true);
  console.log('PASS: collision both-side transaction, stale/invalid proof rollback, _D archive and durable existing list Queue');
@@ -117,6 +119,8 @@ async function run(){
  insert into lookup_session_targets(id,session_id,character_name,server_id,target_source,target_status,payload_id,snapshot_id,queued_at,lookup_order)
  values(20,'restore','db-only',2002,'server:db_only_restore_v1','lookup_done',20,20,now()-interval '1 minute',1);`);
  const restoreAllowed=async()=>(await q('select private.kinojo_db_only_list_restore_allowed(20) allowed'))[0].allowed;
+ assert.equal(await restoreAllowed(),false);
+ await db.exec("update character_master set char_key='555555555555555555' where id=20;update extension_character_payloads set char_key='555555555555555555',server_id=2002,character_name='db-only' where id=20");
  assert.equal(await restoreAllowed(),true);
  await db.exec('update character_master set legion_source_snapshot_id=19 where id=20');assert.equal(await restoreAllowed(),false);
  await db.exec("update character_master set legion_source_snapshot_id=20,legion_updated_at=now()-interval '1 hour' where id=20");assert.equal(await restoreAllowed(),false);

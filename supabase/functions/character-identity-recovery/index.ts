@@ -252,10 +252,12 @@ function serviceEnv() {
 }
 async function rpc(name, body) {
     const env = serviceEnv();
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
+    try{
     const result = await fetch(`${env.url}/rest/v1/rpc/${name}`, {
         method: "POST",
         headers: { apikey: env.key, authorization: `Bearer ${env.key}`, "content-type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify(body),signal:controller.signal,
     });
     const raw = await result.text();
     let value = {};
@@ -268,6 +270,7 @@ async function rpc(name, body) {
     if (!result.ok)
         throw new Error(text(value.message || value.error || value.details || `RPC HTTP ${result.status}`, 500));
     return value;
+    }finally{clearTimeout(timer);}
 }
 async function candidateFromSearch(item, expectedKey, allowedServers) {
     const serverId = int(primitive(item, ["serverId", "server_id"]));
@@ -357,7 +360,7 @@ async function directKeyInfo(url, deadline) {
         throw error;
     }
 }
-async function probe(prepared) {
+async function probe(prepared,overallDeadline=Infinity) {
     const expectedKey = typeof prepared.charKey === "string" ? text(prepared.charKey, 240) : "";
     const current = row(prepared.current) || prepared;
     const expectedClass = text(current.className, 80);
@@ -378,7 +381,7 @@ async function probe(prepared) {
     if (!raceId || !uniqueServers.length)
         return { candidate: null, evidence: { ...evidence, code: "SERVER_RACE_NOT_FOUND", retryable: false } };
     // One complete scan per call; never apply a partial match after a later timeout or 429.
-    const deadline = Date.now() + 55_000;
+    const deadline = Math.min(Date.now() + 55_000,overallDeadline);
     const checkpoint = await rpc("kinojo_identity_scan_checkpoint_v2", {p_character_id: prepared.characterId, p_char_key: expectedKey, p_servers: uniqueServers});
     if (checkpoint.ok !== true) return {candidate: null, evidence: {...evidence, code: "SCAN_CHECKPOINT_UNAVAILABLE", retryable: true}};
     evidence.scanGeneration=checkpoint.generation;
@@ -539,7 +542,7 @@ async function adminIdentityChanges(passKey,prepared,resolved,seen=new Set(),dea
  if(int(owner?.characterId)){
    const other=await rpc("kinojo_admin_character_identity_prepare_v293",{p_pass_key:passKey,p_character_id:int(owner.characterId)});
    if(other.ok!==true)throw new ProviderError("이름의 이전 소유자를 확인하지 못했습니다.",0,60000);
-   const found=await probe(other);
+   const found=await probe(other,deadline);
    if(Date.now()>deadline)throw new ProviderError("충돌 검증 시간 예산 초과로 적용을 보류합니다.",0,60000);
    if(found.candidate)changes.push(...await adminIdentityChanges(passKey,other,found,seen,deadline));
    else if(found.evidence.scanComplete===true&&found.evidence.code==="NOT_FOUND_BY_CHAR_KEY")

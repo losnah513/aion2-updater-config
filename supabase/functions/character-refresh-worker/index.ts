@@ -252,6 +252,7 @@ function candidateFromStoredInfo(infoPayload,detail,expectedKey){
   const charKey=getCharKey(profileImageUrl)||clean(profile.charKey||info.charKey,160);
   const characterId=clean(profile.characterId||info.characterId||info.character_id,800);
   const responseServerId=positiveInt(profile.serverId||info.serverId||info.server_id);
+  if(responseServerId&&responseServerId!==detail.serverId)return{ok:false,code:'STORED_DETAIL_SERVER_MISMATCH',terminal:false};
   if(!characterName){
     const identityPresent=Boolean(characterId||responseServerId||profileImageUrl||charKey);
     return identityPresent
@@ -277,7 +278,8 @@ async function resolveStoredDetailTarget(sessionId,sessionToken,target,context,c
     await progress(sessionId,sessionToken,"IDENTITY_RECOVERY",characterName,"저장 상세 식별값의 고유값 불일치 · 이름 기반 안전 조회로 전환",null,null,{targetId:target.targetId,code:checked.code});
     return{found:false,code:checked.code,terminal:checked.terminal===true,emptyProfile:checked.emptyProfile===true,reviewRequired:/CHAR_KEY_MISMATCH/.test(checked.code),actualCharKey:checked.actualCharKey||""};
   }
-  let candidate=checked.candidate,identityRecovery=null;
+  let candidate={...checked.candidate,sourceServerId:serverId,sourceCharacterName:characterName},identityRecovery=null;
+  if(context.className&&normalized(candidate.className)!==normalized(context.className))throw new WorkerError('저장 상세 클래스 불일치','CLASS_MISMATCH',false);
   if(normalized(candidate.characterName)!==normalized(characterName)){
     const applied=object(await rpc("kinojo_character_identity_recovery_apply_v1",{p_session_id:sessionId,p_session_token:sessionToken,p_target_id:positiveInt(target.targetId),p_candidate:candidate}));
     if(applied.ok!==true)throw new WorkerError(clean(applied.message||applied.code||"저장 상세 식별값 이름 변경 반영 실패",1000),clean(applied.code||"IDENTITY_APPLY_FAILED",120),applied.retryable!==false);

@@ -35,7 +35,8 @@
     if(modulePromises.has(name))return modulePromises.get(name);
     const promise=new Promise((resolve,reject)=>{
       const script=document.createElement('script');
-      script.src=new URL(name+'?cache='+encodeURIComponent(CACHE),base).href;
+      const characterRevision=['admin-characters.js','admin-bootstrap.js'].includes(name)?'&character=2026090801':'';
+      script.src=new URL(name+'?cache='+encodeURIComponent(CACHE)+characterRevision,base).href;
       script.async=false;
       script.onload=()=>{
         loadedModules.add(name);

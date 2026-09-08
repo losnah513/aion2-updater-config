@@ -1,0 +1,41 @@
+name: Verify Character Refresh Stability
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/functions/character-identity-recovery/**'
+      - 'supabase/functions/character-refresh-worker/**'
+      - 'supabase/functions/lookup-list-*/**'
+      - 'supabase/migrations/*character_refresh*.sql'
+      - 'supabase/rollbacks/*character_refresh*.sql'
+      - 'apps-script/list-master/**'
+      - 'admin/**'
+      - 'm/admin/**'
+      - 'core/kinojo-supabase-features.js'
+      - 'tests/**'
+      - '.github/workflows/verify-character-refresh-stability.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  local-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install isolated SQL test runtime
+        run: npm install --prefix .codex-test-runtime --no-save --package-lock=false --ignore-scripts @electric-sql/pglite@0.5.8
+      - name: Run offline contracts (no production credentials or writes)
+        run: |
+          set -euo pipefail
+          node tests/character-refresh-stability-stage2.test.cjs
+          node tests/character-refresh-stability-sql.test.cjs
+          node tests/character-refresh-identity-stage2-fixtures.test.js
+          node tests/character-identity-recovery-percent-encoding-contract.test.js
+          node tests/list-metadata-writer.test.cjs
+          node tests/character-refresh-stability-adversarial.test.cjs
+          node tests/character-refresh-policy.test.cjs
+          node tests/character-refresh-stage2-boundaries.test.cjs

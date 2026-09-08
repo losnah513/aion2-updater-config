@@ -846,15 +846,15 @@
         const equipmentOverlap=Number(evidence.equipmentOverlapCount||evidence.equipment_overlap_count||0);
         return '<section class="admin-character-identity-review"><div><strong>신원 변경 후보 확인</strong><span>'+esc([current.serverName,current.characterName].filter(Boolean).join(' '))+' → '+esc([candidate.serverName,candidate.characterName].filter(Boolean).join(' '))+'</span><small>기존 '+esc(current.charKeyMasked||'-')+' · 후보 '+esc(candidate.charKeyMasked||'-')+(equipmentOverlap?' · 장비 일치 '+equipmentOverlap+'부위':'')+'</small></div><div class="admin-character-identity-actions"><button class="admin-btn" type="button" data-identity-review-reject data-review-id="'+Number(identityReview.reviewId||0)+'">거절</button><button class="admin-btn primary" type="button" data-identity-review-approve data-review-id="'+Number(identityReview.reviewId||0)+'">동일 캐릭터 승인</button></div></section>';
       })():'';
-      const identityProbeHtml=c.hasPersistentKey&&!identityReview
-        ?'<section class="admin-character-identity-probe"><div><strong>서버 이전·이름 변경 탐색</strong><span>공식 전체 서버에서 저장된 고유키와 일치하는 캐릭터를 찾습니다.</span></div><button class="admin-btn" type="button" data-identity-probe>변경 탐색</button></section>'
+      const identityProbeHtml=c.hasPersistentKey
+        ?'<section class="admin-character-identity-probe"><div><strong>서버 이전·이름 변경 탐색</strong><span>같은 종족의 활성 서버에서 저장된 고유키와 일치하는 캐릭터를 찾습니다.</span></div><button class="admin-btn" type="button" data-identity-probe>변경 탐색</button></section>'
         :'';
       return '<article class="admin-character-status-row '+(review?'needs-review':'')+'" data-character="'+name+'" data-character-id="'+Number(c.characterId||0)+'" data-server-id="'+esc(c.serverId||'')+'">'
         +'<div class="admin-character-status-head"><div><strong>'+name+'</strong>'+identityBadge+'<span>'+server+' · '+cls+' · PVE '+Number(c.pvePower||0).toLocaleString('ko-KR')+' · PVP '+Number(c.pvpPower||0).toLocaleString('ko-KR')+'</span></div><div class="admin-character-pills">'+statusPills+'</div></div>'
         +identityReviewHtml
         +identityProbeHtml
         +policyHtml
-        +'<button class="admin-btn" type="button" data-identity-list-retry>신원 변경 list 반영 재시도</button>'
+        +(c.identityListPendingCount>0?'<button class="admin-btn" type="button" data-identity-list-retry>신원 변경 list 미반영 '+Number(c.identityListPendingCount)+'건 재시도</button>':'')
         +(review?'<div class="admin-character-review-callout"><strong>공식 정보 미확인 '+failureStreak+'회 연속</strong><span>자동 제외하지 않았습니다. 삭제·서버 이전·이름 변경 여부를 확인한 뒤 상태를 선택하세요.</span></div>':'')
         +'<div class="admin-character-failure-meta"><span>연속 실패 <strong>'+failureStreak+'회</strong></span><span>누적 공식 미확인 <strong>'+failureTotal+'회</strong></span><span>최근 오류 <strong>'+esc(c.lastLookupFailureCode||'-')+'</strong></span><span>최근 실패 <strong>'+esc(lastFailure)+'</strong></span><span>최근 성공 <strong>'+esc(lastSuccess)+'</strong></span></div>'
         +'<details class="admin-character-status-editor" '+(review?'open':'')+'><summary>조회·노출 상태 관리</summary><div class="admin-character-status-fields">'
@@ -928,11 +928,11 @@
       const current=probe.current||{},candidate=probe.candidate||{};
       const before=[current.serverName,current.characterName].filter(Boolean).join(' ')||'현재 캐릭터';
       const after=[candidate.serverName,candidate.characterName].filter(Boolean).join(' ')||'새 캐릭터';
-      if(!confirm(before+' → '+after+'\n\n동일 고유키가 확인됐습니다. Master와 list 시트를 변경할까요?'))return;
+      if(!confirm(before+' → '+after+'\n\n동일 고유키가 확인됐습니다. 이름의 이전 소유자가 있으면 그 캐릭터도 고유키로 재확인합니다. 완전 탐색 미발견 시 기존 기록은 _D 삭제후보로 보존됩니다. 오류·충돌은 변경하지 않습니다. Master와 list 시트를 변경할까요?'))return;
       btn.textContent='Master·list 반영 중...';
       const applied=await adminCharacter('identityApply',{characterId});
       if(!applied||applied.ok===false)throw new Error(applied?.message||'신원 변경 적용에 실패했습니다.');
-      if(applied.listSyncOk!==true)throw new Error(applied?.message||'Master 반영 후 list 시트 readback 확인이 필요합니다.');
+      if(applied.listSyncOk!==true){await searchCharacters();throw new Error(applied?.message||'Master 반영 후 list 시트 readback 확인이 필요합니다.');}
       toast(applied.message||'캐릭터 정보와 list 시트를 반영했습니다.');
       await Promise.all([searchCharacters(),loadLookupHistory()]);
     }catch(err){

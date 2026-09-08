@@ -484,6 +484,7 @@
     return {
       characterId: Number(row.character_id || row.characterId || row.id || 0),
       lookupPolicy: row.lookup_policy || row.lookupPolicy || null,
+      identityListPendingCount:Number(row.identity_list_pending_count||0),
       characterName: row.character_name || row.characterName || '',
       mainCharacterName: row.main_character_name || row.mainCharacterName || '',
       serverId: row.server_id || row.serverId || '',

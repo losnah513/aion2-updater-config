@@ -58,7 +58,7 @@ begin
  end if;
  return jsonb_build_object('eligible',eligible,'reason',reason,'mode',mode,'scope',scope,
  'individualMode',c.lookup_policy,'groupMode',coalesce(root.lookup_group_policy,'AUTO'),
- 'characterRevision',coalesce(c.lookup_policy_updated_at::text,''),'groupRevision',coalesce(root.lookup_policy_updated_at::text,''),
+ 'characterRevision',coalesce(c.lookup_policy_updated_at::text,''),'groupRevision',coalesce(root.id,c.id)::text||'/'||coalesce(root.lookup_policy_updated_at::text,''),
  'rootCharacterId',coalesce(root.id,c.id),'currentSanctuary',current_sanctuary,
  'reviewDueAt',case when isfinite(due_at) then to_jsonb(due_at) else null end,
  'actorId',case when scope='CHARACTER' then c.lookup_policy_actor_id else root.lookup_policy_actor_id end,
@@ -82,8 +82,11 @@ begin
  select * into c from public.character_master where id=p_character_id;
  if not found then return jsonb_build_object('ok',false,'code','CHARACTER_NOT_FOUND'); end if;
  target_id:=case when p_scope='GROUP' then coalesce(c.main_character_id,c.id) else c.id end;
+ perform 1 from public.character_master where id in(p_character_id,target_id) order by id for update;
+ if p_scope='GROUP' and target_id is distinct from (select coalesce(main_character_id,id) from public.character_master where id=p_character_id) then
+   return jsonb_build_object('ok',false,'code','STALE_LOOKUP_GROUP'); end if;
  select * into c from public.character_master where id=target_id for update;
- if coalesce(c.lookup_policy_updated_at::text,'')<>coalesce(p_expected_updated_at,'') then
+ if (case when p_scope='GROUP' then target_id::text||'/' else '' end)||coalesce(c.lookup_policy_updated_at::text,'')<>coalesce(p_expected_updated_at,'') then
    return jsonb_build_object('ok',false,'code','STALE_LOOKUP_POLICY','message','상태가 변경되었습니다. 새로고침 후 다시 저장하세요.'); end if;
  if p_mode in ('INCLUDE','AUTO') and (upper(c.character_name) like '%\_D' escape '\' or c.exclusion_reason='삭제후보') then
    return jsonb_build_object('ok',false,'code','IDENTITY_RESTORE_REQUIRED'); end if;
@@ -108,6 +111,9 @@ as $restore$
  select coalesce(bool_or(
  t.target_source='server:db_only_restore_v1' and t.target_status='lookup_done'
  and p.master_sync_status='synced' and cm.latest_payload_id=p.id
+ and nullif(btrim(cm.char_key),'') is not null and p.char_key=cm.char_key
+ and p.server_id=cm.server_id
+ and public.kinojo_character_identity_key_v298(p.character_name)=public.kinojo_character_identity_key_v298(cm.character_name)
  and cm.last_lookup_success_at>=t.queued_at
  and cm.legion_source_snapshot_id=t.snapshot_id and cm.legion_updated_at>=t.queued_at
  and cm.server_id=2002 and cm.legion_name='깡'
@@ -1178,7 +1184,7 @@ begin
     'summary',jsonb_build_object(
       'totalCount',(select count(*)::integer from public.character_master),
       'reviewCount',(select count(*)::integer from public.character_master where coalesce(lookup_failure_streak,0)>=2 and coalesce(lookup_excluded,false) is false),
-      'lookupExcludedCount',(select count(*)::integer from public.character_master where coalesce(lookup_excluded,false) is true),
+      'lookupExcludedCount',(select count(*)::integer from public.character_master where private.kinojo_character_lookup_policy(id)->>'eligible'='false'),
       'visibilityExcludedCount',(select count(*)::integer from public.character_master where coalesce(visibility_excluded,false) is true or coalesce(is_active,true) is false)
     ),
     'characters',coalesce((
@@ -1191,6 +1197,7 @@ begin
       from (
         select
           private.kinojo_character_lookup_policy(cm.id) as lookup_policy,
+          (select count(*)::int from public.google_list_sheet_sync_queue iq where iq.session_id='identity-admin:'||cm.id::text and iq.sync_status<>'synced') as identity_list_pending_count,
           cm.id as character_id,
           cm.character_name,
           cm.main_character_name,
@@ -2247,6 +2254,9 @@ begin
   results:=results||jsonb_build_array(result);
   payload:=public.kinojo_identity_list_update_payload_v287(c.id,result->'previous');
   if payload->>'ok' is distinct from 'true' then raise exception 'LIST_PAYLOAD_UNAVAILABLE'; end if;
+  payload:=payload||jsonb_build_object('mainCharacterName',(
+   select public.kinojo_list_display_name_v287(coalesce(root.character_name,cm.main_character_name,cm.character_name),coalesce(root.server_id,cm.server_id))
+   from public.character_master cm left join public.character_master root on root.id=cm.main_character_id where cm.id=c.id));
   if c.list_row is not null then
    insert into public.google_list_sheet_sync_queue(session_id,character_id,character_name,server_id,server_name,
     list_row,list_original_name,list_display_name,class_name,main_character_name,identity_changed,list_status,
@@ -2256,11 +2266,28 @@ begin
     case when item->>'action'='DELETE_CANDIDATE' then '삭제후보' when c.exclusion_reason='삭제후보' then '' else null end,
     c.latest_pve_item_level,c.latest_pve_combat_power,c.latest_pvp_item_level,c.latest_pvp_combat_power,'queued')
    on conflict(session_id,character_name,server_id) do update set
-    list_display_name=excluded.list_display_name,list_status=excluded.list_status,
-    sync_status=case when google_list_sheet_sync_queue.sync_status='synced' then 'synced' else 'queued' end,
+    list_display_name=excluded.list_display_name,list_status=coalesce(excluded.list_status,google_list_sheet_sync_queue.list_status),
+    main_character_name=excluded.main_character_name,
+    sync_status=case when google_list_sheet_sync_queue.sync_status='synced'
+      and google_list_sheet_sync_queue.list_display_name is not distinct from excluded.list_display_name
+      and google_list_sheet_sync_queue.main_character_name is not distinct from excluded.main_character_name
+      and (excluded.list_status is null or google_list_sheet_sync_queue.list_status is not distinct from excluded.list_status)
+      then 'synced' else 'queued' end,
     updated_at=now();
   end if;
  end loop;
+ -- Explicit ID-linked family updates. Never rewrite G by matching a name across the sheet.
+ insert into public.google_list_sheet_sync_queue(session_id,character_id,character_name,server_id,server_name,list_row,
+  list_original_name,list_display_name,class_name,main_character_name,identity_changed,sync_status,updated_at)
+ select list_session,alt.id,alt.character_name,alt.server_id,alt.server_name,alt.list_row,
+  public.kinojo_list_display_name_v287(alt.character_name,alt.server_id),public.kinojo_list_display_name_v287(alt.character_name,alt.server_id),alt.class_name,
+  public.kinojo_list_display_name_v287(root.character_name,root.server_id),false,'queued',now()
+ from public.character_master alt join public.character_master root on root.id=alt.main_character_id
+ where alt.list_row is not null and root.id in (select (x->>'characterId')::bigint from jsonb_array_elements(p_changes) x)
+ on conflict(session_id,character_name,server_id) do update set
+  main_character_name=excluded.main_character_name,
+  sync_status=case when google_list_sheet_sync_queue.main_character_name is not distinct from excluded.main_character_name then google_list_sheet_sync_queue.sync_status else 'queued' end,
+  updated_at=now();
  return jsonb_build_object('ok',true,'results',results,'listSession',list_session,'message','충돌 양쪽의 신원 변경과 list 재시도 Queue를 원자 반영했습니다.');
 exception when raise_exception or unique_violation then
  return jsonb_build_object('ok',false,'code','COLLISION_TRANSACTION_REJECTED','message','충돌 검증 실패로 양쪽 변경을 모두 되돌렸습니다.');

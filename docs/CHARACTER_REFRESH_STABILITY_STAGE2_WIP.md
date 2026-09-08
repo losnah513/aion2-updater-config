@@ -1,69 +1,44 @@
-# 캐릭터 조회 안정화 4차 · 2단계 구현 진행
+# 캐릭터 조회 안정화 4차 · 2단계 인계
 
-상태: **WIP — 2단계 전체 미완료, 운영 배포 금지** (2026-09-08).
-기준 main: `1fff16e807e62a1908f22b6dc59f571c86877284`.
-브랜치: `codex/character-refresh-stability-stage2`.
-계획: https://drive.google.com/file/d/1aPfADtwHFXo1_ZP6Zj3HkD7eGyOVrZxD/view
-로그: https://drive.google.com/file/d/1k0R6heq6ttLl9IKFm_q1_EGm4FCxmVbQ/view
+상태: **2단계 로컬 구현·회귀 검증 완료 / 3단계 운영 배포·카나리 대기** (2026-09-08).
+운영 DB, Edge, Apps Script, 실제 list에는 이번 수정안을 적용하지 않았다. 운영 문제가 이미 해소됐다는 뜻이 아니다.
 
-## 구현한 수정안
+- 계획: https://drive.google.com/file/d/1aPfADtwHFXo1_ZP6Zj3HkD7eGyOVrZxD/view
+- 로그: https://drive.google.com/file/d/1k0R6heq6ttLl9IKFm_q1_EGm4FCxmVbQ/view
+- 브랜치: `codex/character-refresh-stability-stage2`
+- 최신 main `0ab04ccf2c25764762d074b34199376b041f24af`의 배너 변경을 병합·보존했다. 공용 dirty checkout은 수정하지 않았다.
+- 이전 회차의 WIP/실패 근거는 Git 이력 및 4차 LOG 9~11회차에 보존한다.
 
-- 기존 Identity Edge 안에서 문자열 charKey 직접 info 탐색, 같은 종족 서버 전수 확인, 클래스/키/서버/종족 검증, 암호화 ID 재검증. 이름이 같은 다른 키를 후보로 만들지 않는다. 기존 Worker의 정상 조회 진입 조건은 유지한다.
-- service-role 전용 DB checkpoint와 기존 PLAYNC rate row 공유. 진행 상태의 key/class/server catalog/5분 만료 검사. 불완전 결과는 적용하지 않고 이어서 탐색한다. 55초 호출 예산/700ms 간격은 검증용 초깃값이며 운영 SLA가 아니다.
-- 다른 key/class/race pending 후보 표시·생성 제한과 기존 승인 경로의 재조회 요구. 거절과 과거 이력은 보존한다.
-- 자동/관리자 적용에 클래스 검증, 관리자 서버 이전에 기존 레기온·조직 배치 원자 해제 추가. 신원 확인만으로 수동 비활성이나 통계 최신화 시각을 바꾸지 않는다. 가족 이름 전파는 Master 연결 ID 기준, 이름만 있는 회원 연결은 동명이인 시 전파하지 않는다.
-- list Queue identity flags 보존, Edge 전달, 변경된 A 표시명 기준 readback, Server가 명시한 G만 쓰기. Apps Script가 이름만 보고 다른 행의 G를 일괄 변경하지 않는다.
-- H 상태 원문과 전체 읽기 표시 전달, Server prepare의 _D/H 삭제후보 사전 제외 및 DB 기록. Target context에서도 기존 제외 상태를 재확인한다.
-- readback 열별 실패 상세 보존, Queue 상태 PATCH 실패 시 완료 차단. Apps Script 요청 45초 제한, timeout 이후 다른 인코딩으로 무작정 쓰기 반복하지 않는다.
-- Worker identity_resolve / snapshot_precheck / snapshot_submit / target_finalize 시간 계측. 이는 기존 35~43분 지연의 해결 또는 특정 SQL 원인 확정을 의미하지 않는다.
+## 완료한 구현
 
-## 소스와 배포 경계
+1. 기존 저장 상세→이름/서버 조회를 유지하고 terminal miss 및 옛 이름 재사용 뒤 저장 문자열 charKey로 같은 종족 활성 서버를 전수 탐색한다. 단일 결과의 암호화 ID·키·클래스·서버·종족 재검증 후 적용한다. 다른 키 동명 후보, 클래스 불일치, 부분 탐색/Provider 오류는 변경하지 않는다.
+2. DB 단일 조회 정책: 명시적 개별 설정/그룹 기본값, 현재 성역 실제 등록 캐릭터, 지켈2002 깡, 7일 활동 관계 재검토. 조회와 노출은 분리하고 레기온 잔류·능력치 정체·list 누락으로 수동 제외를 해제하지 않는다.
+3. _D 또는 H 삭제후보를 prepare에서 DB 제외로 남기고 Target 전에 재확인한다. H 표시/행이 없어져도 DB 제외는 보존한다. 기존 검증 클래스는 오래된 시트 클래스가 덮지 않는다.
+4. 적격 DB-only 대상을 Queue에 합친다. 이번 payload의 키·서버·이름, Master 최신 payload, 현재 Snapshot의 공식 레기온 및 시각이 맞고 지켈 깡 소속을 확인했을 때만 list 복원 Queue를 만든다. 키 없음·공식 정보 불완전·옛 레기온 값만 있으면 복원하지 않는다.
+5. 관리자 신원 적용은 옛 이름/새 이름 점유와 충돌한 이전 소유자를 각자의 key로 검증한다. 최대 5개 연쇄, 완전 오류 없는 미발견의 현재 generation 증명과 다른 키의 이름 점유가 모두 있어야 이전 소유자를 _D/H 삭제후보로 보관한다. 순환·기존 _D 충돌·Provider 오류는 양쪽 변경을 보류한다. 자동 Worker의 이름 충돌은 보류하고 이 관리자 검증 경로를 이용한다.
+6. 자동·관리자 이전 모두 같은 Master ID, 키/클래스/same-race 및 수집 전 신원 확인, 이력 중복 방지, 옛 레기온/조직 배치의 원자 해제를 적용한다. 수동 제외/노출 상태와 실제 조회 실패 이력은 임의 초기화하지 않는다.
+7. 관리자 신원 변경과 list 재시도는 기존 Queue에 함께 기록한다. 본부캐 G 갱신도 Master 연결 ID의 행만 명시적으로 Queue에 넣는다. DB 성공/list 실패를 구분하며 화면의 미반영 건수·재시도 버튼으로 공식 API를 다시 조회하지 않고 시트 재시도할 수 있다. 완료 ACK는 Queue revision을 비교한다.
+8. list 쓰기는 Master ID metadata/DataFilter, append는 행 삽입/metadata/초기 셀의 원자 묶음이다. H는 명시적 상태 문자열만 쓰고 일반 조회에서는 보존한다. 행 이동·rename 재시도·ID 충돌·중복 append를 방어하고 재검증 실패는 완료하지 않는다.
+9. 초기 신원 변경 Queue와 전체 조회 Queue를 안전하게 합치고 현재 검증 수치를 채운다. 성공 행은 보존한다. 1,000행 단위 전체 읽기/중복 페이지 차단, 실제 Queue 정확한 완료 수량, 늦은 실패의 완료 상태 역전 차단을 추가했다.
+10. Worker RPC/Edge 및 Identity RPC는 응답 본문까지 timeout을 적용한다. 기존 rate/backoff·세대 checkpoint·중단/재개 경로를 재사용하며 batch 새 Target 시작 예산과 list 준비 전체 호출 예산을 제한한다. identity_resolve/snapshot_precheck/snapshot_submit/target_finalize 계측을 남긴다.
 
-- `supabase/functions/lookup-list-sync/index.ts`: 운영 v6/API1.2.3을 가져와 수정한 API1.2.5 초안.
-- `apps-script/list-master/BRIDGE.gs`: Drive 기존 ID `1fXpvnVoALky9ceQ-1Hn97IEyRB9HJBkT` 기준본의 수정안. 새 활성 브릿지가 아니다. Drive 운영 소스와 Apps Script에는 아직 반영하지 않았다.
-- Identity: 운영 v14/API295.2 기준 수정안 API295.4. Worker: 운영 v42/API295.9 기준 계측 변경.
-- 추가 CLI migration: `20260908060546_character_refresh_retry_generation_guards.sql` 및 같은 이름 rollback. checkpoint v2와 generation fencing.
-- CLI 생성 migration: `20260908053907_character_refresh_identity_and_list_guards.sql`. 대응 rollback은 같은 basename의 rollbacks 파일. 모든 변경은 로컬이며 운영 migration 적용 없음.
-- 운영 배포 전 최신 함수 drift/ACL 검증, Source/Deploy 숫자 파일 및 SQL_INDEX 동기화, 기존 인증·활성 세션 보호 확인이 필요하다.
+## 검증
 
-## 로컬 검증
+- 핵심 8종 + 인접 회귀 10종 = **18종 PASS**. `tests/evidence/20260908-character-refresh-stage2/completion-verification.json`.
+- 이번 중간 검증의 16 PASS/2 FAIL은 옛 API 버전 상수 기대값 두 건이다. 새 버전으로 기대값만 변경하고 나머지 안전 조건은 유지해 재검증했다. `preclose-verification.json`에 실패 결과도 남겼다.
+- 자동/관리자 트랜잭션의 강제 중간 실패→전부 rollback, 정상 commit, 동일 요청 재시도 이력/Queue1건, 충돌 양쪽 rollback/_D 보관, 본부캐 G Queue를 검증했다.
+- H-only/_D prepare, 불완전 읽기, 반복 prepare Target 보존, fresh key/legion 복원, Queue 부분 합치기/정확한 구성원/완료 수량, 행 매핑 일괄 rollback·재시도를 검증했다.
+- 로컬 PGlite는 운영에서 읽은 **열 타입**과 실제 함수 정의를 사용하되 일부 의존 함수·인증은 합성 fixture다. 실제 운영 전체 제약/트리거·RLS·정상 로그인 검증을 대체하지 않는다.
+- 실제 제품 JS/Edge/Bridge를 VM에서 실행했으며 외부 통신은 mock이다. 실제 Google API 동시 편집/권한 및 PLAYNC 장시간 부하 검증은 아니다.
+- 기존 정상 조회, listless 레기온 추가, 관리자 Queue 표시, 인증 셸, 배너 관리 회귀도 통과했다.
+- 재현: Node24, `npm install --prefix .codex-test-runtime --no-save --package-lock=false --ignore-scripts @electric-sql/pglite@0.5.8`. CI 구성: `.github/workflows/verify-character-refresh-stability.yml`. 아직 원격 CI를 실행한 것은 아니다.
 
-### 추가 경계 검증 — 10회차 실패 5건을 11회차에 수정·로컬 재검증
+## 3단계 시작 게이트
 
-10회차의 실패 증거는 `tests/evidence/20260908-character-refresh-stage2/verification.json`에 보존했다. 11회차에는 동일 안전 조건을 유지한 채 새 metadata/generation 계약으로 테스트 입력을 연결하여 10/10 PASS(exit 0), 전체 6종 PASS를 확인했다. 후속 증거는 같은 폴더 `reverification.json`이다.
-
-- rename 동일 Queue 재시도: Master ID 행 metadata로 이미 바뀐 이름을 재확인한다. 옛 원본 이름을 수동 변경하지 않아도 통과한다.
-- 행 이동: metadataId DataFilter로 쓰므로 테스트에서 무관 캐릭터 수치999를 보존하고 이동한 대상만300으로 변경했다. positional fallback은 제거했다.
-- 불완전 readback: readComplete=true가 아니면 완료하지 않는다.
-- 이미 synced Queue: 서버 완료 기록도 ok=true여야 완료다.
-- checkpoint: v2 generation 문자열을 저장 요청에 필수 비교한다. 만료 전 세대의 늦은 저장과 세대 없는 저장을 차단하고 v1 쓰기 실행권한을 제거했다.
-- 추가 회귀: API 불가·행 삭제·ID 누락·중복/다른 ID 바인딩·같은 행 이중 바인딩·append 재시도·null 값 보존·명시적 clear·50행 batch를 확인했다.
-- `node tests/list-metadata-writer.test.cjs`와 `node tests/character-refresh-stability-adversarial.test.cjs`를 아래 기존 네 명령과 함께 실행한다.
-
-**이번 5건의 로컬 수정·재검증 완료와 2단계 전체/운영 완료는 다르다.** 실제 Google API 권한/정렬 등 canary, 실제 인증, H→prepare 전체 과정, 관계 commit/rollback, 전체 시간 예산 및 아래 미구현 정책은 여전히 남아 있다. 배포 의존성은 apps-script/list-master/README.md를 따른다.
-
-다음 네 명령 모두 통과했다. 실제 운영 API/DB/list를 수정하는 테스트가 아니다.
-
-```text
-node tests/character-refresh-stability-stage2.test.cjs
-node tests/character-refresh-stability-sql.test.cjs
-node tests/character-refresh-identity-stage2-fixtures.test.js
-node tests/character-identity-recovery-percent-encoding-contract.test.js
-```
-
-SQL 테스트는 `.codex-test-runtime`에 로컬 설치한 `@electric-sql/pglite`를 사용한다. 재현 환경에서 `npm install --prefix .codex-test-runtime --no-save --package-lock=false --ignore-scripts @electric-sql/pglite`로 준비한다. 새 migration/rollback 생성 문법, checkpoint 만료·재개·키/카탈로그 불일치, 전역 호출 예약, service-only ACL을 검증했다. 기존 운영 함수 전체 실행 및 관계 commit/rollback의 통합 검증은 아직 아니다.
-
-Bridge mock에서는 A 이름 변경과 G 갱신 후 readback, H 보존, 다른 행 G 미변경, 기대 이름 갱신 후 재호출 시 추가 쓰기 0, 원본 신원 없는 행번호 쓰기 차단을 확인했다. 실제 동시 사용자 편집/삭제와 stale Queue 재시도는 아직 검증하지 않았다.
-
-## 남은 2단계 작업 — 완료로 넘기지 말 것
-
-1. 현재 성역 일정·관리 레기온·그룹 기본/개별 예외·수동 제외 우선순위와 7일 관계 재검토를 실제 Queue 선택/관리자 표시까지 통합.
-2. 적격 DB-only 캐릭터의 현재 공식 소속 확인 후 list 복원. 완전 읽기 증명, stable Master ID dedup, 최신 행 재탐색, 충돌/사용자 재등록/행 이동 보호, exact readback 후 list_row commit.
-3. 새 이름과 옛 이름 소유자를 각자의 key로 확인하는 충돌 처리 및 삭제후보 표시/해제 절차. 현재 수정안은 충돌을 안전하게 보류할 뿐 이 절차를 완성하지 않았다.
-4. 기존 ID를 잇는 원자 적용의 운영 스키마 기반 commit/rollback·권한·stale 요청·중복 이력 통합 검증. 회원 테이블의 이름-only 연결이 모호하면 자동 반영하지 않으며 별도 연결 근거가 필요하다.
-5. rename/부분 읽기/서버 완료 기록/행 이동/세대 재시도 5건은 로컬 재검증 완료. 남은 것은 실제 Google API canary, Queue 전체 수량·누락/동시 PATCH/성공 덮어쓰기 및 전체 세션 통합 검증이다.
-6. Worker/Edge 전체 deadline·중단/heartbeat·재시도 상한과 checkpoint 만료 경계 검증, 단계 시간 계측으로 병목 확인. 단순 timeout 숫자 추가를 성능 해결로 보고하지 않는다.
-7. _D/H만/DB 제외/표시 삭제/행 삭제/정상 Target의 API 호출 0 통합 회귀. 기존 admin updateExclusion과 정책 충돌 검증.
-8. 변경한 전체 경로의 회귀/보안 검증, 필요한 규칙·README 수정안, Source/Deploy/rollback 패키지 완성. 그 후 3단계 배포·카나리·전체 최신화.
-
-현재 운영 상태가 자동으로 개선됐다고 안내하면 안 된다. 1단계 데이터 정비와 이번 로컬 구현은 별개다.
+- [배포 패키지/복구 기준](CHARACTER_REFRESH_STABILITY_STAGE2_RELEASE.md)에 따라 최신 운영 함수·권한·활성 세션/Source drift를 다시 비교한다.
+- 실제 CODEX_ADMIN 정상 로그인, Sheets API/OAuth, metadata 쓰기 및 이동/삽입/삭제/복사/정렬 canary를 통과하기 전 대량 쓰기 금지.
+- 현재 함수 호출/행 수를 실제 운영 스키마에서 읽기 전용으로 검증한 뒤 정해진 소수 대상만 적용하고 DB/list를 readback한다.
+- DB-only의 기존 list_row가 다른 Master와 충돌하면 안전 보류한다. 시트 metadata와 최신 실제 행을 확인해 매핑을 정리하며 행번호만 보고 충돌을 지우지 않는다.
+- 이름 충돌 연쇄가 5개를 넘거나 새 키로 바뀐 경우 자동 식별/병합하지 않는다. 관리자가 근거를 확인한다.
+- 35~43분 지연을 해결했다고 단정하지 않는다. 과거 list 구간은 23~36초였고 긴 지연은 Snapshot 전후에 집중됐다. 새 계측으로 실제 단계별 시간·재시도·lease/인계를 측정한 뒤 시간 예산을 조정한다. 55초/700ms 등 초깃값은 공식 API SLA가 아니다.
+- 배포/PR/실제 전체 최신화, 운영 문제 캐릭터 정비 결과, Drive 운영 소스/SQL_INDEX 최종 동기화는 3단계에서 처리한다. 수동 제외 전수 복구나 과거 실패 기록 삭제는 하지 않는다.

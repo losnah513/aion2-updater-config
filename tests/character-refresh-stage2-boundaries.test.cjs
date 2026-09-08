@@ -4,6 +4,8 @@ const read=p=>fs.readFileSync(p,'utf8');
 const {createBridgeMock}=require('./helpers/list-metadata-mock.cjs');
 function context(file){const c=vm.createContext({URL,URLSearchParams,TextEncoder,Response,Request,AbortController,DOMException,setTimeout,clearTimeout,Date,console});const s=read(file);vm.runInContext(stripTypeScriptTypes(s.slice(0,s.indexOf('Deno.serve('))).replace('export {};',''),c);return c;}
 async function run(){
+ for(const file of ['character-refresh-worker','character-identity-recovery','lookup-list-prepare','lookup-list-sync'])new vm.Script(stripTypeScriptTypes(read('supabase/functions/'+file+'/index.ts')).replace('export {};',''));
+ console.log('PASS: all four Edge sources compile after TypeScript erasure (not a Deno type check)');
  let c=context('supabase/functions/lookup-list-sync/index.ts'),pages=[];
  c.rest=async p=>{const u=new URL('https://mock.invalid/'+p),offset=Number(u.searchParams.get('offset'));pages.push(offset);return{ok:true,data:Array.from({length:offset===0?1000:1},(_,i)=>({id:offset+i+1,sync_status:'queued'}))};};
  let r=await c.allQueuePages(new URLSearchParams({session_id:'eq.mock'}));assert.equal(r.data.length,1001);assert.deepEqual(pages,[0,1000]);
@@ -14,6 +16,12 @@ async function run(){
  c.fetch=async (_u,opt)=>({ok:true,status:200,text:()=>new Promise((_resolve,reject)=>opt.signal.addEventListener('abort',()=>reject(Error('body blocked'))))});
  await assert.rejects(()=>c.boundedServerFetch('https://mock.invalid',{},5),e=>e.code==='SERVER_CALL_TIMEOUT');
  console.log('PASS: Worker timeout covers response body, not just headers');
+ let appliedCandidate;c.progress=async()=>{};
+ c.officialJson=async()=>({profile:{characterName:'renamed',serverId:2002,className:'궁성',charKey:'123456789012345678'}});
+ c.rpc=async(name,args)=>{appliedCandidate=args.p_candidate;return{ok:true,applied:true,databaseContract:'461',current:{characterName:'renamed',serverId:2002},serverTransferred:false};};
+ await c.resolveStoredDetailTarget('mock','mock',{targetId:1},{detailUrl:'https://aion2.plaync.com/ko-kr/characters/2002/encrypted',className:'궁성'},'before',2002,'123456789012345678');
+ assert.equal(appliedCandidate.sourceCharacterName,'before');assert.equal(appliedCandidate.sourceServerId,2002);
+ console.log('PASS: normal stored-detail rename supplies stale-source fence');
  const bridge=createBridgeMock(read('apps-script/list-master/BRIDGE.gs'));
  const update={id:1,characterId:1,listRow:6,originalListName:'before',characterName:'before_D',listDisplayName:'before_D',identityChanged:true,className:'궁성',listStatus:'삭제후보'};
  assert.equal(bridge.write([update]).ok,true);assert.equal(bridge.cells[5][7],'삭제후보');
@@ -35,5 +43,12 @@ async function run(){
  let ack=0;c.rpc=async(name)=>{if(name.includes('pending'))return{ok:true,items:[{queueId:1,queueRevision:'revision',id:1,listRow:6}]};ack++;return{ok:true};};
  c.syncList=async()=>({ok:false});r=await c.flushAdminIdentityList('local-fixture',1);assert.equal(r.ok,false);assert.equal(ack,0);
  console.log('PASS: old and new name checks, namesake rejection, incomplete collision causes no apply, failed list stays pending');
+ const container={innerHTML:''},filter={value:'all'};
+ const A={state:{characters:[{characterId:1,characterName:'guest',serverId:2003,className:'궁성',hasPersistentKey:true,identityListPendingCount:2,lookupPolicy:{reason:'ACTIVITY_REVIEW_WAIT',eligible:false,scope:'GROUP',individualMode:'INHERIT'}}]},$:s=>s==='#characterList'?container:s==='#characterStateFilter'?filter:null,esc:s=>String(s??'').replace(/[<>&"]/g,'_'),formatServerTime:s=>s};
+ const ui=vm.createContext({window:{KinojoAdmin:A},document:{addEventListener(){}}});vm.runInContext(read('admin/js/admin-characters.js'),ui);A.renderCharacters();
+ assert.match(container.innerHTML,/재검토 대기/);assert.match(container.innerHTML,/활동 관계 재검토 대기/);assert.match(container.innerHTML,/미반영 2건 재시도/);assert.doesNotMatch(container.innerHTML,/ACTIVITY_REVIEW_WAIT/);
+ filter.value='lookup';assert.equal(A.filteredCharacters().length,1);filter.value='normal';assert.equal(A.filteredCharacters().length,0);
+ for(const page of ['admin/index.html','m/admin/index.html'])assert.match(read(page),/character=2026090801/);
+ console.log('PASS: DB policy drives admin labels/filter, pending list retry is visible, PC/mobile cache invalidation');
 }
 run().catch(e=>{console.error(e);process.exitCode=1});
