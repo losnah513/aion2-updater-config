@@ -438,7 +438,8 @@
     currentScope=scopeKey();const saved=scopes.get(currentScope);
     cancelTransition();clearTimeout(settle);interacting=false;pendingOpen=false;confirmed=-1;targetIndex=null;
     const all=el('rosterScope').checked;
-    el('rosterScopeLabel').textContent=all?'전체':'레기온별';
+    el('rosterScopeLabel').classList.toggle('is-active',all);
+    el('rosterLegionScopeLabel').classList.toggle('is-active',!all);
     el('rosterTitle').textContent=all?'전체':legions[legion];
     el('rosterPrev').disabled=all;el('rosterNext').disabled=all;
     el('rosterPrevName').textContent=legions[(legion+3)%4];
@@ -462,6 +463,10 @@
     cancelTransition();body.classList.remove('has-selection','is-detail');selector.inert=false;detail.inert=true;
     window.KinojoCache?.clear('roster:465:');
     loadList(false,null,true);
+  });
+  el('rosterSearch').addEventListener('reset',()=>{
+    el('rosterName').value='';composing=false;
+    el('rosterSearch').requestSubmit();
   });
   narrow.addEventListener('change',()=>{
     cancelTransition();selector.inert=false;body.classList.remove('is-detail');
