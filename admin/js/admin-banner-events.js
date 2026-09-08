@@ -20,7 +20,7 @@ function contextType(){return S.context==='side'?'SIDE':'MAIN'}
 function contextLabel(){return S.context==='side'?'사이드 배너':'메인 배너'}
 function eventSlots(event){return [...new Set((Array.isArray(event.campaigns)?event.campaigns:[]).flatMap(campaign=>Array.isArray(campaign.slotCodes)?campaign.slotCodes:[]))]}
 function eventTypeLabel(event){return event.type==='MAIN'?'메인 배너':event.sideMode==='INDEPENDENT'?'사이드 · 좌우 별도':'사이드 · 좌우 동시'}
-function targetLabel(event){const pages=Array.isArray(event.targetPages)?event.targetPages:[];if(event.type==='MAIN')return '홈 메인';if(pages.length>=7)return '전체 페이지';return pages.map(page=>PAGE_LABELS[page]||page).join(' · ')||'-'}
+function targetLabel(event){const pages=Array.isArray(event.targetPages)?event.targetPages:[];if(event.type==='MAIN')return '홈 메인';if(event.targetScope==='ALL'||event.allPages===true)return '전체 페이지 · 자동 확장';return pages.map(page=>PAGE_LABELS[page]||page).join(' · ')||'-'}
 function contextEvents(){return S.events.filter(event=>event.type===contextType())}
 function visibleEvents(){const query=S.query.trim().toLocaleLowerCase('ko');return contextEvents().filter(event=>(S.status==='ALL'||event.status===S.status)&&(S.slotFilter==='ALL'||eventSlots(event).includes(S.slotFilter))&&(!query||String(event.name||'').toLocaleLowerCase('ko').includes(query)||(event.tags||[]).some(tag=>String(tag).toLocaleLowerCase('ko').includes(query))))}
 function statusOptions(){const present=new Set(contextEvents().map(event=>String(event.status||'DRAFT')));return ['ALL','DRAFT','PUBLISHED','PAUSED','MIXED','ARCHIVED','EMPTY'].filter(value=>value==='ALL'||present.has(value)).map(value=>`<option value="${value}"${S.status===value?' selected':''}>${value==='ALL'?'전체 상태':STATUS_LABELS[value]||value}</option>`).join('')}

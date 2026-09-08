@@ -29,7 +29,8 @@ const targetPageContract={contractVersion:404,main:{pageCode:'HOME',label:'홈',
   {pageCode:'LEGION_TREE',label:'레기온 트리',slotCodes:['LEFT','RIGHT'],sortOrder:4},
   {pageCode:'METER',label:'키노조 미터',slotCodes:['LEFT','RIGHT'],sortOrder:5},
   {pageCode:'SANCTUARY',label:'성역 메인',slotCodes:['LEFT','RIGHT'],sortOrder:6},
-  {pageCode:'SANCTUARY_SCHEDULE',label:'성역 스케줄',slotCodes:['LEFT','RIGHT'],sortOrder:7}
+  {pageCode:'SANCTUARY_SCHEDULE',label:'성역 스케줄',slotCodes:['LEFT','RIGHT'],sortOrder:7},
+  {pageCode:'LEGION_ROSTER',label:'레기온 명부',slotCodes:['LEFT','RIGHT'],sortOrder:8}
 ]};
 const clone=v=>JSON.parse(JSON.stringify(v));
 function syncRefs(){for(const a of state.assets)a.referenceCount=state.campaigns.reduce((n,c)=>n+(c.items||[]).filter(i=>Number(i.assetId)===Number(a.assetId)).length,0)}
@@ -60,7 +61,7 @@ function response(action,payload){
   if(action==='overlay-upload-prepare'){const uuid=`99999999-2222-4333-8444-${String(state.nextOverlay).padStart(12,'0')}`,path=`2035/01/${uuid}.png`;return {ok:true,upload:{bucket:'kinojo-site-banners',objectPath:path,uploadUrl:'http://127.0.0.1/storage/v1/object/upload/sign/kinojo-site-banners/'+path+'?token=e2e',mimeType:payload.mimeType,sizeBytes:payload.sizeBytes,upsert:false,expiresInSeconds:7200,activation:'OVERLAY_UPLOAD_COMPLETE_REQUIRED'}}}
   if(action==='overlay-upload-complete'){const item={overlayAssetId:state.nextOverlay++,assetKind:payload.assetKind,displayName:payload.displayName,mimeType:payload.mimeType,sizeBytes:payload.sizeBytes,width:96,height:96,status:'READY',imageUrl:'data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96"><circle cx="48" cy="48" r="42" fill="#f59e0b"/></svg>')};state.overlayAssets.unshift(item);return {ok:true,asset:clone(item),image:{activation:'OVERLAY_ASSET_READY',publicUrl:item.imageUrl}};}
   if(action==='event-save'){
-    const eventGroupId=String(payload.eventGroupId||'11111111-2222-4333-8444-555555555555'),existing=state.events.find(item=>item.eventGroupId===eventGroupId),summary={eventGroupId,name:payload.event.name,type:payload.event.type,sideMode:payload.event.sideMode,tags:clone(payload.event.tags||[]),status:existing?.status||'DRAFT',targetPages:clone(payload.event.targetPages||[]),targetPageContractVersion:payload.event.targetPageContractVersion,campaignCount:(payload.event.variants||[]).length,itemCount:(payload.event.variants||[]).reduce((sum,item)=>sum+(item.items||[]).length,0),managerOrder:state.events.length+1,updatedAt:'2035-01-03T09:00:00+09:00'};
+    const eventGroupId=String(payload.eventGroupId||'11111111-2222-4333-8444-555555555555'),existing=state.events.find(item=>item.eventGroupId===eventGroupId),summary={eventGroupId,name:payload.event.name,type:payload.event.type,sideMode:payload.event.sideMode,tags:clone(payload.event.tags||[]),status:existing?.status||'DRAFT',targetScope:payload.event.targetScope,allPages:payload.event.targetScope==='ALL',targetPages:clone(payload.event.targetPages||[]),targetPageContractVersion:payload.event.targetPageContractVersion,campaignCount:(payload.event.variants||[]).length,itemCount:(payload.event.variants||[]).reduce((sum,item)=>sum+(item.items||[]).length,0),managerOrder:state.events.length+1,updatedAt:'2035-01-03T09:00:00+09:00'};
     if(existing)Object.assign(existing,summary);else state.events.push(summary);
     return {ok:true,eventGroupId,savedCampaignIds:[901],event:{name:payload.event.name,status:'DRAFT',campaigns:clone(payload.event.variants)}};
   }
@@ -175,15 +176,16 @@ async function run(){
     if(document.querySelector('#adminCurrentLocation')?.textContent!=='[이미지 관리] - 사이드 배너 · 새 이벤트')throw Error('side banner location label mismatch');
     if(sideTab.getAttribute('aria-selected')!=='true'||mainTab.getAttribute('aria-selected')!=='false')throw Error('side banner tab aria state mismatch');
     if(document.querySelector('[data-banner-event-workflow="side"] .bew-hero'))throw Error('side authoring hero must be removed');
-    let pageBadges=[...document.querySelectorAll('[data-banner-event-workflow="side"] [data-bew-page-code]')],allPages=document.querySelector('[data-banner-event-workflow="side"] [data-bew-all-pages]');
-    if(pageBadges.length!==7||pageBadges.some(button=>button.getAttribute('aria-pressed')!=='false')||!allPages||allPages.checked)throw Error('side pages must start as seven inactive server badges in individual mode');
+    let pageBadges=[...document.querySelectorAll('[data-banner-event-workflow="side"] [data-bew-page-code]')],allPages=document.querySelector('[data-banner-event-workflow="side"] [data-bew-page-all]');
+    if(pageBadges.length!==8||pageBadges.some(button=>button.getAttribute('aria-pressed')!=='false')||!allPages||allPages.getAttribute('aria-pressed')!=='false')throw Error('side pages must start as eight inactive server badges in individual mode');
     for(const code of ['HOME','HOF','RANKING'])document.querySelector(`[data-banner-event-workflow="side"] [data-bew-page-code="${code}"]`).click();
     let selectedPages=window.KinojoAdmin.getBannerEventPayload('side').targetPages;
     if(selectedPages.join('|')!=='HOME|HOF|RANKING')throw Error('individual page badges did not select independently');
-    allPages=document.querySelector('[data-banner-event-workflow="side"] [data-bew-all-pages]');allPages.checked=true;fire(allPages,'change');
+    allPages=document.querySelector('[data-banner-event-workflow="side"] [data-bew-page-all]');allPages.click();
+    allPages=document.querySelector('[data-banner-event-workflow="side"] [data-bew-page-all]');
     pageBadges=[...document.querySelectorAll('[data-banner-event-workflow="side"] [data-bew-page-code]')];
-    if(pageBadges.some(button=>button.getAttribute('aria-pressed')!=='true')||window.KinojoAdmin.getBannerEventPayload('side').targetPages.length!==7)throw Error('all-page switch did not select the server page set');
-    allPages=document.querySelector('[data-banner-event-workflow="side"] [data-bew-all-pages]');allPages.checked=false;fire(allPages,'change');
+    if(allPages.getAttribute('aria-pressed')!=='true'||pageBadges.some(button=>button.getAttribute('aria-pressed')!=='false')||window.KinojoAdmin.getBannerEventPayload('side').targetPages.length!==8||window.KinojoAdmin.getBannerEventPayload('side').targetScope!=='ALL')throw Error('all-page badge did not preserve semantic ALL and the current server page set');
+    document.querySelector('[data-banner-event-workflow="side"] [data-bew-page-all]').click();
     selectedPages=window.KinojoAdmin.getBannerEventPayload('side').targetPages;
     if(selectedPages.join('|')!=='HOME|HOF|RANKING')throw Error('individual page set was not restored after all-page mode');
     document.querySelector('[data-banner-event-workflow="side"] [data-bew-filter="ALL"]').click();
@@ -324,7 +326,7 @@ async function run(){
     if(!document.querySelector('[data-banner-event-workflow="main"] [data-bew-result-notice]')?.textContent.includes('Chrome E2E 메인 이벤트')||!state.calls.includes('event-list'))throw Error('published event identity/readback notice missing');
     document.querySelector('#adminTopSubnav [data-admin-subtab="main"]').dispatchEvent(new KeyboardEvent('keydown',{key:'End',bubbles:true}));
     await waitFor(()=>!sidePanel.hidden&&sidePanel.classList.contains('active'),'side banner visual return');
-    const finalAllPages=document.querySelector('[data-banner-event-workflow="side"] [data-bew-all-pages]');finalAllPages.checked=true;fire(finalAllPages,'change');
+    const finalAllPages=document.querySelector('[data-banner-event-workflow="side"] [data-bew-page-all]');finalAllPages.click();
     const target=document.querySelector('#bew-side-3');window.scrollTo(0,target.getBoundingClientRect().top+window.scrollY-110);await sleep(300);
     if(getComputedStyle(document.querySelector('[data-banner-event-workflow="side"] .bew-side-order-item img')).objectFit!=='contain')throw Error('side order preview must show the complete image');
     document.querySelector('[data-banner-context="side"] [data-banner-view="events"]').click();

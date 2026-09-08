@@ -1,7 +1,7 @@
 const S = "kinojo-banner-media",
-  V = "2.6",
-  DB = "412",
-  EVENT = "407",
+  V = "2.7",
+  DB = "471",
+  EVENT = "471",
   UPLOAD = "403",
   MASTER = "337",
   STORAGE = "382",
@@ -9,6 +9,10 @@ const S = "kinojo-banner-media",
   MAX = 5242880,
   TTL = 7200,
   REQ = 4194304;
+// Compatibility lineage: V = "2.6", DB = "412", EVENT = "407" routed
+// event-targets/list/publish through kinojo_banner_event_targets_v404,
+// kinojo_banner_event_list_v404 and kinojo_banner_event_publish_v404, while
+// event-save used kinojo_banner_event_save_v407.
 const M = ["image/jpeg", "image/png", "image/webp"],
   F = ["MAIN_16_9", "SIDE_300_715"],
   T = /^kws_[A-Za-z0-9_-]{40,80}$/,
@@ -1242,11 +1246,11 @@ async function event(r: Request, b: any, t: string, a: string) {
   if (a === "event-playback") {
     return out(r, { ok: false, code: "BANNER_EVENT_PLAYBACK_RETIRED" }, 409);
   } else if (a === "event-targets") {
-    d = await rpc("kinojo_banner_event_targets_v404", {
+    d = await rpc("kinojo_banner_event_targets_v471", {
       p_session_token: t,
     });
   } else if (a === "event-list") {
-    d = await rpc("kinojo_banner_event_list_v404", {
+    d = await rpc("kinojo_banner_event_list_v471", {
       p_session_token: t,
       p_include_archived: b.includeArchived !== false,
     });
@@ -1257,7 +1261,7 @@ async function event(r: Request, b: any, t: string, a: string) {
     const rawId = txt(b.eventGroupId ?? b.event_group_id, 80);
     if (rawId && !K.test(rawId))
       return out(r, { ok: false, code: "BANNER_EVENT_GROUP_ID_INVALID" }, 400);
-    d = await rpc("kinojo_banner_event_save_v407", {
+    d = await rpc("kinojo_banner_event_save_v471", {
       p_session_token: t,
       p_event_group_id: rawId || null,
       p_payload: payload,
@@ -1266,7 +1270,7 @@ async function event(r: Request, b: any, t: string, a: string) {
     const id = txt(b.eventGroupId ?? b.event_group_id, 80);
     if (!K.test(id))
       return out(r, { ok: false, code: "BANNER_EVENT_GROUP_ID_REQUIRED" }, 400);
-    d = await rpc("kinojo_banner_event_publish_v404", {
+    d = await rpc("kinojo_banner_event_publish_v471", {
       p_session_token: t,
       p_event_group_id: id,
     });
@@ -1412,6 +1416,11 @@ async function manifest(r: Request, b: any) {
       { ok: false, code: "PUBLIC_MANIFEST_SELECTOR_FORBIDDEN" },
       400,
     );
+  const reconcile = await rpc("kinojo_banner_event_all_targets_reconcile_v471", {
+    p_page_code: page,
+  });
+  if (reconcile.ok !== true)
+    return out(r, { ok: false, code: txt(reconcile.code, 80) }, stat(txt(reconcile.code, 80)));
   const d = await rpc("kinojo_banner_manifest_v409", {
     p_page_code: page,
     p_slot_code: slot,
