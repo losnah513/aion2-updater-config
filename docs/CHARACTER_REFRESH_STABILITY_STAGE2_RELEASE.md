@@ -4,6 +4,17 @@
 
 ## 기준 및 파일
 
+### 공개 스냅샷 분리 후속 계약
+
+- 기존 11개에 이어 `20260908130417_character_automation_cron_api_save.sql`, `20260908131116_character_weekly_identity_query_plan.sql`, `20260908131706_character_deferred_ranking_snapshot.sql` 순서로 적용한다. 적용된 migration을 중복 실행하지 않는다. 진행 상태는 LOG를 따른다.
+- 조회의 공식 원시 Snapshot·Master·이력·선택적 list 반영은 유지한다. 공개 Ranking/HOF만 기존 builder/validate/publish를 재사용하는 별도 pg_cron 작업으로 분리한다. 새 Edge/Parser 없음.
+- 이어 `20260908134927_character_listless_completion_lease.sql`을 적용한다. 단계 완료로 해제된 Worker lease는 list OFF 종료 함수 안에서 기존 claim RPC로 다시 획득한다. 다른 Worker/일시정지/취소 검사와 정상 소유권 검사는 유지한다.
+- 성공 세션의 시작+30분 이후 생성한다. 미완료 조회/상세 작업은 기다리며, 여러 대기 요청은 최신 요청의 30분을 지킨 후 합친다. 한 tick에 한 범위, 네 범위 생성 후 검증·원자 공개한다. 1분 tick이므로 정확히 30분에 완성되는 계약은 아니다.
+- 실패/만료/취소도 세대를 변경해 진행 중 후보 재사용을 차단한다. 생성 중에는 refresh 시작을 잠그지 않는다. 최종 공개 직전에 dispatch 행 잠금 아래 세대·활성 작업을 재확인한다. 기존 heartbeat 만료 함수를 재사용한다.
+- 실패는 5분 간격 재시도, 동일 세대 3회 실패하면 dispatcher를 정지한다. 기존 공개 pointer와 요청/감사 자료를 보존한다. 새 조회가 실패를 자동 성공으로 덮어쓰지 않는다.
+- rollback은 동명의 `supabase/rollbacks/` 파일을 역순으로 적용한다. 분리 rollback은 자체 cron/트리거만 해제하고 큐/공개 데이터는 보존한다. 진행 중 조회가 없을 때 수행하며 기존 detached batch를 강제로 변경하지 않는다.
+- 재검증: `node tests/character-deferred-snapshot.test.cjs`, `node tests/character-weekly-growth-identity.test.cjs`, `node tests/character-automation-cron-save.test.cjs`. 실제 builder 네 범위 검증은 BEGIN/ROLLBACK으로 공개 포인터를 보존하고 수행한다.
+
 - 기준 main: `71a37795` (DB477/478, DB479 PVP 판정, DB480 성역 등록 및 list 재시도 보완 포함). 실제 배포 직전 main·운영 함수·트리거·ACL·SQL_INDEX를 다시 대조한다.
 - DB479는 별도 선행 반영이다. 장비 조건은 유지하며 PVP 피해 증폭 또는 피해 내성 칭호를 인정한다. 아래 11개 배포/rollback은 DB479를 되돌리지 않는다.
 - 정확한 제품 파일(공유 Edge 설정 포함)의 UTF-8 LF SHA-256: `CHARACTER_REFRESH_STAGE2_MANIFEST.json`.

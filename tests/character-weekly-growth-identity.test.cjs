@@ -13,6 +13,7 @@ const {PGlite}=require('../.codex-test-runtime/node_modules/@electric-sql/pglite
  await db.exec(fs.readFileSync('tests/evidence/20260908-character-refresh-audit/weekly-existing-functions.sql','utf8'));
  await db.exec("create role anon; create role authenticated; revoke all on function kinojo_hof_weekly_gear_deltas(timestamptz) from public");
  await db.exec(fs.readFileSync('supabase/migrations/20260908085012_character_weekly_growth_stable_identity.sql','utf8'));
+ await db.exec(fs.readFileSync('supabase/migrations/20260908131116_character_weekly_identity_query_plan.sql','utf8'));
  for(const role of ['anon','authenticated'])assert.equal((await db.query("select has_function_privilege($1,'kinojo_hof_weekly_gear_deltas(timestamptz)','execute') allowed",[role])).rows[0].allowed,false);
  await db.exec("insert into character_master values(1,'111111111111111111',2003,'renamed'),(2,'222222222222222222',2002,'old')");
  const event=async(id,master,name,server,gear,power,at,override={})=>{

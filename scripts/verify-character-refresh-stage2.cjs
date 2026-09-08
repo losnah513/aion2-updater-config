@@ -28,6 +28,8 @@ const tests=[
   "tests/character-detail-write-fence.test.cjs",
   "tests/character-history-stable-identity.test.cjs",
   "tests/character-weekly-growth-identity.test.cjs",
+  "tests/character-deferred-snapshot.test.cjs",
+  "tests/character-automation-cron-save.test.cjs",
   "tests/character-rollup-identity.test.cjs",
   "tests/character-refresh-dispatch.test.cjs",
   "tests/character-refresh-list-preference.test.cjs",
