@@ -22,7 +22,7 @@ const CORS = {
     "cache-control": "no-store",
     "x-content-type-options": "nosniff",
 };
-const API_VERSION = "295.3";
+const API_VERSION = "295.4";
 const CONTRACT = "295";
 class ProviderError extends Error {
     status;
@@ -379,12 +379,12 @@ async function probe(prepared) {
         return { candidate: null, evidence: { ...evidence, code: "SERVER_RACE_NOT_FOUND", retryable: false } };
     // One complete scan per call; never apply a partial match after a later timeout or 429.
     const deadline = Date.now() + 55_000;
-    const checkpoint = await rpc("kinojo_identity_scan_checkpoint_v1", {p_character_id: prepared.characterId, p_char_key: expectedKey, p_servers: uniqueServers});
+    const checkpoint = await rpc("kinojo_identity_scan_checkpoint_v2", {p_character_id: prepared.characterId, p_char_key: expectedKey, p_servers: uniqueServers});
     if (checkpoint.ok !== true) return {candidate: null, evidence: {...evidence, code: "SCAN_CHECKPOINT_UNAVAILABLE", retryable: true}};
     const completed = new Set(checkpoint.completed || []);
     const matches = Array.isArray(checkpoint.matches) ? checkpoint.matches : [];
     const saveCheckpoint = async () => {
-        const saved = await rpc("kinojo_identity_scan_checkpoint_v1", {p_character_id: prepared.characterId, p_char_key: expectedKey, p_servers: uniqueServers, p_completed: [...completed], p_matches: matches});
+        const saved = await rpc("kinojo_identity_scan_checkpoint_v2", {p_character_id: prepared.characterId, p_char_key: expectedKey, p_servers: uniqueServers, p_completed: [...completed], p_matches: matches, p_generation: checkpoint.generation});
         if (saved.ok !== true) throw new ProviderError("탐색 진행 상태 저장 실패", 0, 60000);
     };
     for (const server of uniqueServers) {
@@ -464,10 +464,13 @@ async function appsScript(payload, timeoutMs = 180000) {
     }
 }
 async function syncList(listUpdate) {
+    const health = await appsScript({action:"serverBridgeHealth"});
+    if(health.ok !== true || health.metadataWriteContract !== "MASTER_ID_V1")
+        return {ok:false,code:"LIST_METADATA_CONTRACT_REQUIRED",message:"메타데이터 쓰기 브릿지 배포 확인이 필요합니다."};
     if (!int(listUpdate.listRow))
         return { ok: false, code: "LIST_ROW_REQUIRED", message: "list 행 정보가 없습니다." };
     const update = {
-        id: int(listUpdate.id) || int(listUpdate.listRow), listRow: int(listUpdate.listRow),
+        id: int(listUpdate.id) || int(listUpdate.listRow), characterId: int(listUpdate.id), listRow: int(listUpdate.listRow),
         originalListName: text(listUpdate.originalListName, 160), listDisplayName: text(listUpdate.listDisplayName, 160),
         characterName: text(listUpdate.characterName, 120), serverId: int(listUpdate.serverId), serverName: text(listUpdate.serverName, 120), className: text(listUpdate.className, 80),
         mainCharacterName: text(listUpdate.mainCharacterName, 160),
@@ -483,12 +486,16 @@ async function syncList(listUpdate) {
     const written = await appsScript({ action: "serverListSheetSync", noReviewToSheet: true, clientVersion: API_VERSION, source: "supabase-edge:character-identity-recovery", updates: [update] });
     if (written.ok !== true || text(written.bridgeRole) !== "APPSCRIPT_MASTER")
         return { ok: false, code: "LIST_SYNC_FAILED", message: text(written.message || written.code || "list 시트 쓰기 실패"), bridge: written };
+    const mapping = (Array.isArray(written.rowMappings) ? written.rowMappings : []).find(item => int(item.id) === int(update.id));
+    if (!mapping || !int(mapping.row))
+        return {ok:false,code:"LIST_ROW_MAPPING_REQUIRED",message:"고유 행 쓰기 결과를 확인하지 못했습니다."};
+    update.listRow = int(mapping.row);
     const readback = await appsScript({ action: "serverListSheetRead", clientVersion: API_VERSION, source: "supabase-edge:character-identity-recovery:readback" });
     const rows = Array.isArray(readback.list) ? readback.list.map(row).filter(Boolean) : [];
     const actual = rows.find((item) => int(item.row) === int(update.listRow)) || null;
     const expected = normalizeName(update.listDisplayName || update.characterName);
     const found = normalizeName(actual && (actual.originalName || actual.characterName || actual.name));
-    if (readback.ok !== true || text(readback.bridgeRole) !== "APPSCRIPT_MASTER" || !actual || expected !== found)
+    if (readback.ok !== true || readback.readComplete !== true || text(readback.bridgeRole) !== "APPSCRIPT_MASTER" || !actual || expected !== found)
         return { ok: false, code: "LIST_READBACK_MISMATCH", message: `list ${update.listRow}행 재검증이 일치하지 않습니다.`, expected: update.listDisplayName || update.characterName, actual: actual && (actual.originalName || actual.characterName || actual.name) || "" };
     return { ok: true, listRow: update.listRow, listDisplayName: update.listDisplayName || update.characterName, message: "AppsScript_MASTER 쓰기와 list 행 재검증 완료" };
 }

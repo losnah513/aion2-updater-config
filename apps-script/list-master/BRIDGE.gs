@@ -68,6 +68,9 @@ function kinojoListMasterBridgeRoute_(e, method) {
         ok: true,
         bridge: 'KINOJO_LIST_SANCTUARY_MASTER_BRIDGE',
         role: 'APPSCRIPT_MASTER',
+        metadataWriteContract: 'MASTER_ID_V1',
+        completeReadContract: true,
+        listSyncPositionalWrites: false,
         spreadsheetId: pair.ss.getId(),
         sheetName: pair.sheet.getName(),
         message: 'AppsScript_MASTER 브릿지 정상'
@@ -336,421 +339,142 @@ function kinojoHandleServerListSheetMarkCompleted_(body, method) {
   }
 }
 
-function kinojoHandleServerListSheetSync_(body, method) {
-  const lock = LockService.getScriptLock();
-  if (!lock.tryLock(30000)) {
-    return {
-      ok:false,
-      code:'MASTER_BRIDGE_BUSY',
-      message:'AppsScript_MASTER가 다른 list 반영 작업을 처리 중입니다. 잠시 후 재시도하세요.',
-      bridgeRole:'APPSCRIPT_MASTER',
-      retryable:true
-    };
+// Stable row addressing: Sheets metadata follows row moves; never fall back to positional writes.
+function kinojoSheetsApi_(spreadsheetId, suffix, payload) {
+  const response = UrlFetchApp.fetch('https://sheets.googleapis.com/v4/spreadsheets/' + encodeURIComponent(spreadsheetId) + suffix, {
+    method:'post', contentType:'application/json',
+    headers:{Authorization:'Bearer ' + ScriptApp.getOAuthToken()},
+    payload:JSON.stringify(payload), muteHttpExceptions:true
+  });
+  if (response.getResponseCode() < 200 || response.getResponseCode() >= 300) {
+    throw new Error('SHEETS_METADATA_API_FAILED HTTP ' + response.getResponseCode());
   }
-
-  try {
-    const cfg = KINOJO_LIST_MASTER_BRIDGE_CONFIG;
-    const pair = kinojoGetListSheet_();
-    const sheet = pair.sheet;
-    let lastRow = sheet.getLastRow();
-    const lastCol = sheet.getLastColumn();
-    const updates = kinojoParseUpdates_(body);
-    if (!updates.length) {
-      return {
-        ok: true,
-        updatedCount: 0,
-        processedCount: 0,
-        unchangedCount: 0,
-        appendedCount: 0,
-        failedCount: 0,
-        queuedCount: 0,
-        finished: true,
-        message: '반영할 list 업데이트가 없습니다.',
-        method,
-        sheetName: sheet.getName(),
-        spreadsheetId: pair.ss.getId(),
-        bridgeRole: 'APPSCRIPT_MASTER'
-      };
-    }
-
-    kinojoAssertWriteColumns_(cfg, lastCol);
-    const readLastCol = Math.max(
-      cfg.COL_CHARACTER_NAME,
-      cfg.COL_CLASS_NAME,
-      cfg.COL_PVE_ITEM_LEVEL,
-      cfg.COL_PVE_POWER,
-      cfg.COL_PVP_ITEM_LEVEL,
-      cfg.COL_PVP_POWER,
-      cfg.COL_MAIN_CHARACTER_NAME
-    );
-    const rowCount = Math.max(0, lastRow - cfg.FIRST_DATA_ROW + 1);
-    const values = rowCount > 0
-      ? sheet.getRange(cfg.FIRST_DATA_ROW, 1, rowCount, readLastCol).getValues()
-      : [];
-
-    // Server가 보존한 Google list 원본 이름을 그대로 확인하기 위한 맵.
-    // AppsScript_MASTER는 [서버태그]를 해석하거나 서버 ID를 판정하지 않는다.
-    const originalNameToRows = {};
-    values.forEach(function(row, idx) {
-      const key = kinojoNormalizeName_(row[cfg.COL_CHARACTER_NAME - 1]);
-      if (!key) return;
-      if (!originalNameToRows[key]) originalNameToRows[key] = [];
-      originalNameToRows[key].push(cfg.FIRST_DATA_ROW + idx);
-    });
-
-    const results = [];
-    const failedItems = [];
-    const powerChangedRows = {};
-    const classChangedRows = {};
-    const identityChangedRows = {};
-    const mainCharacterChangedRows = {};
-    let processedCount = 0;
-    let updatedCount = 0;
-    let unchangedCount = 0;
-    let appendedCount = 0;
-    let classFilledCount = 0;
-    let classCorrectedCount = 0;
-    let classConflictCount = 0;
-    let identityChangedCount = 0;
-    let mainCharacterReferenceChangedCount = 0;
-
-    updates.forEach(function(item) {
-      try {
-        const characterName = String(item.characterName || item.character_name || item.name || '').trim();
-        const originalListName = String(
-          item.originalListName || item.listOriginalName || item.list_original_name || item.originalName || ''
-        ).trim();
-        const normalizedOriginalName = kinojoNormalizeName_(originalListName);
-        const appendIfMissing = item.appendIfMissing === true || item.append_if_missing === true;
-        const appendDisplayName = String(item.listDisplayName || item.list_display_name || characterName || '').trim();
-        const mainCharacterName = String(
-          item.mainCharacterName || item.main_character_name || (appendIfMissing ? characterName : '') || ''
-        ).trim();
-        const serverClassName = String(item.className || item.class_name || '').trim();
-        let rowNumber = Number(item.listRow || item.list_row || item.row || 0);
-        let appended = false;
-
-        if (!characterName) throw new Error('Server가 확정한 characterName이 없습니다.');
-
-        // listRow는 Server가 STEP 1에서 Google list 원본으로부터 보존한 기준 행이다.
-        // No row-number-only writes: Server must preserve a known original identity.
-        if (!appendIfMissing && !normalizedOriginalName) throw new Error('LIST_ORIGINAL_IDENTITY_REQUIRED');
-        if (rowNumber >= cfg.FIRST_DATA_ROW && rowNumber <= lastRow) {
-          if (normalizedOriginalName) {
-            const localIndex = rowNumber - cfg.FIRST_DATA_ROW;
-            const sheetOriginalName = kinojoNormalizeName_(values[localIndex][cfg.COL_CHARACTER_NAME - 1]);
-            if (sheetOriginalName !== normalizedOriginalName) rowNumber = 0;
-          }
-        } else {
-          rowNumber = 0;
-        }
-
-        // 조회 도중 행이 이동했을 때만 Server가 보존한 원본 이름으로 재탐색한다.
-        if (!rowNumber && normalizedOriginalName) {
-          const candidates = originalNameToRows[normalizedOriginalName] || [];
-          if (candidates.length === 1) rowNumber = candidates[0];
-          else if (candidates.length > 1) {
-            throw new Error('동일한 list 원본 이름이 여러 행에 있습니다. originalListName=' + originalListName);
-          }
-        }
-
-        // 신규 append는 Server가 appendIfMissing=true를 명시한 행에서만 허용한다.
-        // 재시도 시 같은 이름이 이미 한 행에 있으면 새 행을 만들지 않고 그 행을 재사용한다.
-        if (!rowNumber && appendIfMissing) {
-          const normalizedCharacterName = kinojoNormalizeName_(appendDisplayName || characterName);
-          const candidates = originalNameToRows[normalizedCharacterName] || [];
-          if (candidates.length === 1) {
-            rowNumber = candidates[0];
-          } else if (candidates.length > 1) {
-            throw new Error('신규 append 대상 이름이 여러 list 행에 이미 있습니다. characterName=' + characterName);
-          }
-        }
-
-        if (!rowNumber && appendIfMissing) {
-          if (!mainCharacterName) throw new Error('신규 append에는 mainCharacterName이 필요합니다.');
-          rowNumber = Math.max(lastRow + 1, cfg.FIRST_DATA_ROW);
-          if (rowNumber > sheet.getMaxRows()) {
-            sheet.insertRowsAfter(sheet.getMaxRows(), rowNumber - sheet.getMaxRows());
-          }
-
-          function requestedValue_(value, clearRequested) {
-            if (clearRequested) return '';
-            const parsed = kinojoNumberOrBlank_(value);
-            return parsed === '' ? '' : Number(parsed);
-          }
-          const expectedRow = [
-            appendDisplayName || characterName,
-            serverClassName,
-            requestedValue_(item.pveItemLevel !== undefined ? item.pveItemLevel : item.pve_item_level, item.clearPveStats === true || item.clear_pve_stats === true),
-            requestedValue_(item.pveCombatPower !== undefined ? item.pveCombatPower : item.pve_combat_power, item.clearPveStats === true || item.clear_pve_stats === true),
-            requestedValue_(item.pvpItemLevel !== undefined ? item.pvpItemLevel : item.pvp_item_level, item.clearPvpStats === true || item.clear_pvp_stats === true),
-            requestedValue_(item.pvpCombatPower !== undefined ? item.pvpCombatPower : item.pvp_combat_power, item.clearPvpStats === true || item.clear_pvp_stats === true),
-            mainCharacterName
-          ];
-
-          const appendRange = sheet.getRange(rowNumber, 1, 1, 7);
-          const before = appendRange.getValues()[0];
-          if (String(before[0] || '').trim()) {
-            throw new Error('신규 append 예정 행이 비어 있지 않습니다. row=' + rowNumber);
-          }
-          appendRange.setValues([expectedRow]);
-          SpreadsheetApp.flush();
-          const actualRaw = appendRange.getValues()[0];
-          const actualDisplay = appendRange.getDisplayValues()[0];
-          const mismatches = [];
-          if (String(actualDisplay[0] || '').trim() !== (appendDisplayName || characterName)) mismatches.push('A 캐릭터명');
-          if (serverClassName && String(actualDisplay[1] || '').trim() !== serverClassName) mismatches.push('B 클래스');
-          [2,3,4,5].forEach(function(index) {
-            const expected = kinojoNumberOrBlank_(expectedRow[index]);
-            const actual = kinojoNumberOrBlank_(actualRaw[index]);
-            if (expected === '' ? actual !== '' : Number(actual) !== Number(expected)) mismatches.push(String.fromCharCode(65 + index) + ' 수치');
-          });
-          if (String(actualDisplay[6] || '').trim() !== mainCharacterName) mismatches.push('G 본캐명');
-          if (mismatches.length) {
-            appendRange.clearContent();
-            SpreadsheetApp.flush();
-            throw new Error('신규 list append write/readback 불일치 · ' + mismatches.join(' · '));
-          }
-
-          const localIndex = rowNumber - cfg.FIRST_DATA_ROW;
-          while (values.length < localIndex) values.push(new Array(readLastCol).fill(''));
-          const rowForMemory = new Array(readLastCol).fill('');
-          for (let c = 0; c < Math.min(7, readLastCol); c += 1) rowForMemory[c] = actualRaw[c];
-          if (values.length === localIndex) values.push(rowForMemory);
-          else values[localIndex] = rowForMemory;
-          lastRow = Math.max(lastRow, rowNumber);
-          const key = kinojoNormalizeName_(appendDisplayName || characterName);
-          if (!originalNameToRows[key]) originalNameToRows[key] = [];
-          originalNameToRows[key].push(rowNumber);
-          appended = true;
-          appendedCount += 1;
-        }
-
-        if (!rowNumber) {
-          throw new Error(
-            'list 행을 찾지 못했습니다. listRow=' + String(item.listRow || item.list_row || item.row || '') +
-            ' / originalListName=' + originalListName +
-            ' / characterName=' + characterName
-          );
-        }
-
-        const localIndex = rowNumber - cfg.FIRST_DATA_ROW;
-        const row = values[localIndex];
-        const identityChanged = item.identityChanged === true || item.identity_changed === true;
-        const listDisplayName = String(item.listDisplayName || item.list_display_name || characterName || '').trim();
-        const previousCharacterName = String(item.previousCharacterName || item.previous_character_name || originalListName || '').trim();
-        const mainCharacterRenamed = item.mainCharacterRenamed === true || item.main_character_renamed === true;
-        let identityCellChanged = false;
-        if (identityChanged) {
-          if (!listDisplayName) throw new Error('Server가 확정한 listDisplayName이 없습니다.');
-          const currentSheetName = String(row[cfg.COL_CHARACTER_NAME - 1] || '').trim();
-          if (currentSheetName !== listDisplayName) {
-            row[cfg.COL_CHARACTER_NAME - 1] = listDisplayName;
-            identityChangedRows[rowNumber] = true;
-            identityCellChanged = true;
-            identityChangedCount += 1;
-          }
-          // Family propagation belongs to Server-generated per-character updates.
-
-        }
-
-        // 신규 append 재시도/행 재발견 시에도 G열은 Server가 확정한 본캐명을 유지한다.
-        let mainReferenceChanged = false;
-        if (mainCharacterName) {
-          const currentMain = String(row[cfg.COL_MAIN_CHARACTER_NAME - 1] || '').trim();
-          if (currentMain !== mainCharacterName) {
-            row[cfg.COL_MAIN_CHARACTER_NAME - 1] = mainCharacterName;
-            mainCharacterChangedRows[rowNumber] = true;
-            mainCharacterReferenceChangedCount += 1;
-            mainReferenceChanged = true;
-          }
-        }
-
-        const writeSpecs = [
-          { key:'pveItemLevel', alt:'pve_item_level', clearKey:'clearPveStats', clearAlt:'clear_pve_stats', col:cfg.COL_PVE_ITEM_LEVEL },
-          { key:'pveCombatPower', alt:'pve_combat_power', clearKey:'clearPveStats', clearAlt:'clear_pve_stats', col:cfg.COL_PVE_POWER },
-          { key:'pvpItemLevel', alt:'pvp_item_level', clearKey:'clearPvpStats', clearAlt:'clear_pvp_stats', col:cfg.COL_PVP_ITEM_LEVEL },
-          { key:'pvpCombatPower', alt:'pvp_combat_power', clearKey:'clearPvpStats', clearAlt:'clear_pvp_stats', col:cfg.COL_PVP_POWER }
-        ];
-        const written = {};
-        const sheetClassName = String(row[cfg.COL_CLASS_NAME - 1] || '').trim();
-        let classWriteStatus = 'not_requested';
-        let powerChanged = false;
-        let classChanged = false;
-
-        if (serverClassName) {
-          if (!sheetClassName) {
-            row[cfg.COL_CLASS_NAME - 1] = serverClassName;
-            classChanged = true;
-            classChangedRows[rowNumber] = true;
-            classFilledCount += 1;
-            classWriteStatus = 'filled_blank';
-            written.className = serverClassName;
-          } else if (sheetClassName === serverClassName) {
-            classWriteStatus = 'same';
-          } else {
-            row[cfg.COL_CLASS_NAME - 1] = serverClassName;
-            classChanged = true;
-            classChangedRows[rowNumber] = true;
-            classCorrectedCount += 1;
-            classConflictCount += 1;
-            classWriteStatus = 'corrected_conflict';
-            written.className = serverClassName;
-          }
-        }
-
-        writeSpecs.forEach(function(spec) {
-          const shouldClear = item[spec.clearKey] === true || item[spec.clearAlt] === true;
-          const oldValue = kinojoNumberOrBlank_(row[spec.col - 1]);
-          if (shouldClear) {
-            if (oldValue !== '') {
-              row[spec.col - 1] = '';
-              written[spec.key] = '';
-              powerChanged = true;
-              powerChangedRows[rowNumber] = true;
-            }
-            return;
-          }
-          const raw = item[spec.key] !== undefined ? item[spec.key] : item[spec.alt];
-          const value = kinojoNumberOrBlank_(raw);
-          if (value === '') return;
-          if (oldValue === '' || Number(oldValue) !== Number(value)) {
-            row[spec.col - 1] = Number(value);
-            powerChanged = true;
-            powerChangedRows[rowNumber] = true;
-          }
-          written[spec.key] = Number(value);
-        });
-
-        const changed = appended || powerChanged || classChanged || identityCellChanged || mainReferenceChanged;
-        processedCount += 1;
-        if (changed) updatedCount += 1;
-        else unchangedCount += 1;
-
-        results.push({
-          ok:true,
-          id:item.id || '',
-          row:rowNumber,
-          originalListName: originalListName || appendDisplayName || characterName,
-          characterName,
-          changed,
-          appended,
-          appendIfMissing,
-          mainCharacterName,
-          className:serverClassName,
-          sheetClassName,
-          classWriteStatus,
-          identityChanged,
-          listDisplayName,
-          mainCharacterRenamed,
-          written
-        });
-      } catch (err) {
-        failedItems.push({
-          ok:false,
-          id:item.id || '',
-          row:item.listRow || item.list_row || '',
-          originalListName:item.originalListName || item.listOriginalName || item.list_original_name || item.originalName || '',
-          characterName:item.characterName || item.character_name || item.name || '',
-          message:String(err && err.message || err)
-        });
-      }
-    });
-
-    kinojoBuildRowGroups_(Object.keys(powerChangedRows).map(Number)).forEach(function(group) {
-      const startIndex = group.start - cfg.FIRST_DATA_ROW;
-      const length = group.end - group.start + 1;
-      const block = values.slice(startIndex, startIndex + length).map(function(row) {
-        return [
-          row[cfg.COL_PVE_ITEM_LEVEL - 1],
-          row[cfg.COL_PVE_POWER - 1],
-          row[cfg.COL_PVP_ITEM_LEVEL - 1],
-          row[cfg.COL_PVP_POWER - 1]
-        ];
-      });
-      sheet.getRange(group.start, cfg.COL_PVE_ITEM_LEVEL, length, 4).setValues(block);
-    });
-
-    kinojoBuildRowGroups_(Object.keys(classChangedRows).map(Number)).forEach(function(group) {
-      const startIndex = group.start - cfg.FIRST_DATA_ROW;
-      const length = group.end - group.start + 1;
-      const block = values.slice(startIndex, startIndex + length).map(function(row) {
-        return [row[cfg.COL_CLASS_NAME - 1]];
-      });
-      sheet.getRange(group.start, cfg.COL_CLASS_NAME, length, 1).setValues(block);
-    });
-    kinojoBuildRowGroups_(Object.keys(identityChangedRows).map(Number)).forEach(function(group) {
-      const startIndex = group.start - cfg.FIRST_DATA_ROW;
-      const length = group.end - group.start + 1;
-      const block = values.slice(startIndex, startIndex + length).map(function(row) {
-        return [row[cfg.COL_CHARACTER_NAME - 1]];
-      });
-      sheet.getRange(group.start, cfg.COL_CHARACTER_NAME, length, 1).setValues(block);
-    });
-    kinojoBuildRowGroups_(Object.keys(mainCharacterChangedRows).map(Number)).forEach(function(group) {
-      const startIndex = group.start - cfg.FIRST_DATA_ROW;
-      const length = group.end - group.start + 1;
-      const block = values.slice(startIndex, startIndex + length).map(function(row) {
-        return [row[cfg.COL_MAIN_CHARACTER_NAME - 1]];
-      });
-      sheet.getRange(group.start, cfg.COL_MAIN_CHARACTER_NAME, length, 1).setValues(block);
-    });
-    SpreadsheetApp.flush();
-
-    return {
-      ok: failedItems.length === 0,
-      updatedCount: processedCount,
-      changedCount: updatedCount,
-      processedCount,
-      unchangedCount,
-      appendedCount,
-      appendSupported: true,
-      appendContract: 'server-explicit-list-row-null-v373',
-      classFilledCount,
-      classCorrectedCount,
-      classConflictCount,
-      identityChangedCount,
-      mainCharacterReferenceChangedCount,
-      failedCount: failedItems.length,
-      processedIds: results.map(function(item){ return item.id; }).filter(String),
-      failedIds: failedItems.map(function(item){ return item.id; }).filter(String),
-      queuedCount: updates.length,
-      finished: failedItems.length === 0 && processedCount === updates.length,
-      message: failedItems.length
-        ? 'list 시트 일부 반영 실패: ' + failedItems.length + '건'
-        : 'list 시트 실제 반영 완료: 처리 ' + processedCount + '건 / 신규 append ' + appendedCount + '건 / 변경 ' + updatedCount + '건 / 동일 ' + unchangedCount + '건',
-      method,
-      sheetName: sheet.getName(),
-      spreadsheetId: pair.ss.getId(),
-      bridgeRole: 'APPSCRIPT_MASTER',
-      firstDataRow: cfg.FIRST_DATA_ROW,
-      columns: {
-        characterName: cfg.COL_CHARACTER_NAME,
-        className: cfg.COL_CLASS_NAME,
-        pveItemLevel: cfg.COL_PVE_ITEM_LEVEL,
-        pvePower: cfg.COL_PVE_POWER,
-        pvpItemLevel: cfg.COL_PVP_ITEM_LEVEL,
-        pvpPower: cfg.COL_PVP_POWER,
-        mainCharacterName: cfg.COL_MAIN_CHARACTER_NAME
-      },
-      rowMappings: results.map(function(item) {
-        return {
-          id: item.id,
-          row: item.row,
-          originalListName: item.originalListName,
-          characterName: item.characterName,
-          mainCharacterName: item.mainCharacterName,
-          appended: item.appended === true
-        };
-      }),
-      results: results.slice(0, 30),
-      failedItems: failedItems.slice(0, 50)
-    };
-  } finally {
-    lock.releaseLock();
-  }
+  return JSON.parse(response.getContentText());
 }
-
+function kinojoMetadataRow_(range) {
+  const match = String(range || '').match(/!\$?A\$?(\d+)(?::[A-Z]+\$?\d+)?$/);
+  return match ? Number(match[1]) : 0;
+}
+function kinojoHandleServerListSheetSync_(body, method) {
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(30000)) return {ok:false,code:'MASTER_BRIDGE_BUSY',bridgeRole:'APPSCRIPT_MASTER',retryable:true};
+  const results=[],failedItems=[];
+  try {
+    const cfg=KINOJO_LIST_MASTER_BRIDGE_CONFIG,pair=kinojoGetListSheet_(),sheet=pair.sheet;
+    const spreadsheetId=pair.ss.getId(),sheetId=sheet.getSheetId(),updates=kinojoParseUpdates_(body);
+    if(updates.length>250) throw new Error('LIST_SYNC_BATCH_LIMIT_250');
+    if(!updates.length) return {ok:true,processedIds:[],results:[],rowMappings:[],bridgeRole:'APPSCRIPT_MASTER',finished:true};
+    const api=(suffix,payload)=>kinojoSheetsApi_(spreadsheetId,suffix,payload);
+    const metadataKey='KINOJO_MASTER_ID';
+    const existing=api('/developerMetadata:search',{dataFilters:[{developerMetadataLookup:{metadataKey,locationType:'ROW'}}]});
+    const metadata=(existing.matchedDeveloperMetadata||[]).map(x=>x.developerMetadata)
+      .filter(x=>x.location && x.location.dimensionRange && x.location.dimensionRange.sheetId===sheetId);
+    const lastRow=sheet.getLastRow(),values=lastRow>=cfg.FIRST_DATA_ROW
+      ?sheet.getRange(cfg.FIRST_DATA_ROW,1,lastRow-cfg.FIRST_DATA_ROW+1,7).getValues():[];
+    const plans=[],requests=[],seen=new Set(),claimedRows=new Set();
+    let appendIndex=Math.max(lastRow,cfg.FIRST_DATA_ROW-1);
+    function fail(item,message){failedItems.push({ok:false,id:item.id,row:item.listRow||'',characterName:item.characterName||'',message});}
+    function cell(value){return {userEnteredValue:typeof value==='number'?{numberValue:value}:{stringValue:String(value??'')}};}
+    for(const item of updates){
+      try {
+        const masterId=String(item.characterId||item.character_id||'');
+        if(!/^[1-9]\d*$/.test(masterId)) throw new Error('LIST_STABLE_MASTER_ID_REQUIRED');
+        if(seen.has(masterId)) throw new Error('LIST_DUPLICATE_MASTER_ID');
+        seen.add(masterId);
+        const original=String(item.originalListName||item.list_original_name||'').trim();
+        const display=String(item.listDisplayName||item.list_display_name||item.characterName||'').trim();
+        const cls=String(item.className||item.class_name||'').trim();
+        const append=item.appendIfMissing===true||item.append_if_missing===true;
+        const renamed=item.identityChanged===true||item.identity_changed===true;
+        if(!original&&!append)throw new Error('LIST_ORIGINAL_IDENTITY_REQUIRED');
+        if(!display)throw new Error('LIST_DISPLAY_NAME_REQUIRED');
+        const bound=metadata.filter(x=>x.metadataValue===masterId);
+        if(bound.length>1)throw new Error('LIST_METADATA_IDENTITY_AMBIGUOUS');
+        const expected=[renamed||append?display:original,cls||null,null,null,null,null,
+          String(item.mainCharacterName||item.main_character_name||'').trim()||null];
+        const fields=[['pveItemLevel','pve_item_level','clearPveStats'],['pveCombatPower','pve_combat_power','clearPveStats'],['pvpItemLevel','pvp_item_level','clearPvpStats'],['pvpCombatPower','pvp_combat_power','clearPvpStats']];
+        fields.forEach((f,index)=>{const raw=item[f[0]]===undefined?item[f[1]]:item[f[0]],n=kinojoNumberOrBlank_(raw);
+          expected[index+2]=item[f[2]]===true?'':n===''?null:Number(n);});
+        const plan={item,masterId,original,display,cls,expected,renamed,append,newBinding:false,appended:false,metadataId:bound[0]&&bound[0].metadataId};
+        if(!plan.metadataId){
+          const matches=[];
+          values.forEach((row,index)=>{if(kinojoNormalizeName_(row[0])===kinojoNormalizeName_(original||display))matches.push({row,index:index+cfg.FIRST_DATA_ROW-1});});
+          if(matches.length>1)throw new Error('LIST_ORIGINAL_IDENTITY_AMBIGUOUS');
+          let index;
+          if(matches.length){
+            index=matches[0].index;
+            if(cls&&kinojoNormalizeName_(matches[0].row[1])!==kinojoNormalizeName_(cls))throw new Error('LIST_BINDING_CLASS_MISMATCH');
+            if(metadata.some(x=>x.location.dimensionRange.startIndex===index))throw new Error('LIST_ROW_ALREADY_BOUND');
+            if(claimedRows.has(index))throw new Error('LIST_ROW_ALREADY_PLANNED');
+            claimedRows.add(index);
+          }else{
+            if(!append)throw new Error('LIST_ROW_NOT_FOUND');
+            if(!expected[6])throw new Error('LIST_APPEND_MAIN_REQUIRED');
+            index=appendIndex++;
+            requests.push({insertDimension:{range:{sheetId,dimension:'ROWS',startIndex:index,endIndex:index+1},inheritFromBefore:index>0}});
+            plan.appended=true;
+          }
+          plan.newBinding=true;plan.requestIndex=requests.length;
+          requests.push({createDeveloperMetadata:{developerMetadata:{metadataKey,metadataValue:masterId,visibility:'DOCUMENT',location:{dimensionRange:{sheetId,dimension:'ROWS',startIndex:index,endIndex:index+1}}}}});
+          if(plan.appended)requests.push({updateCells:{range:{sheetId,startRowIndex:index,endRowIndex:index+1,startColumnIndex:0,endColumnIndex:7},rows:[{values:expected.map(x=>cell(x??''))}],fields:'userEnteredValue'}});
+        }
+        plans.push(plan);
+      }catch(error){fail(item,String(error.message||error));}
+    }
+    if(requests.length){
+      const made=api(':batchUpdate',{requests});
+      for(const plan of plans)if(plan.newBinding){
+        const reply=(made.replies||[])[plan.requestIndex];
+        plan.metadataId=reply&&reply.createDeveloperMetadata&&reply.createDeveloperMetadata.developerMetadata.metadataId;
+        if(!plan.metadataId)throw new Error('LIST_METADATA_CREATE_UNCONFIRMED');
+      }
+    }
+    function readPlans(selected){
+      if(!selected.length)return new Map();
+      const read=api('/values:batchGetByDataFilter',{dataFilters:selected.map(p=>({developerMetadataLookup:{metadataId:p.metadataId}})),valueRenderOption:'UNFORMATTED_VALUE'});
+      const mapped=new Map();
+      for(const match of read.valueRanges||[]){
+        const value=match.valueRange||{};
+        for(const f of match.dataFilters||[]){const id=f.developerMetadataLookup&&f.developerMetadataLookup.metadataId;
+          if(id){if(mapped.has(id))throw new Error('LIST_METADATA_MULTIPLE_RANGES');mapped.set(id,{row:kinojoMetadataRow_(value.range),values:(value.values||[])[0]||[]});}}
+      }
+      return mapped;
+    }
+    const before=readPlans(plans),ready=[],data=[];
+    for(const plan of plans){
+      const current=before.get(plan.metadataId),actual=current&&current.values||[],name=kinojoNormalizeName_(actual[0]);
+      const oldMatch=name===kinojoNormalizeName_(plan.original),newMatch=name===kinojoNormalizeName_(plan.display);
+      // First binding must still identify the original row. A bound ID permits an already-applied rename.
+      const nameOK=plan.appended?newMatch:plan.newBinding?(oldMatch||(plan.append&&newMatch)):oldMatch||((plan.renamed||plan.append)&&newMatch);
+      if(!current||!current.row||!nameOK||(plan.cls&&kinojoNormalizeName_(actual[1])!==kinojoNormalizeName_(plan.cls))){
+        fail(plan.item,'LIST_METADATA_IDENTITY_CHANGED');
+        if(plan.newBinding&&!plan.appended)api(':batchUpdate',{requests:[{deleteDeveloperMetadata:{dataFilter:{developerMetadataLookup:{metadataId:plan.metadataId}}}}]});
+        continue;
+      }
+      ready.push(plan);
+      if(plan.expected.some((v,i)=>v!==null&&String(v)!==String(actual[i]??'')))data.push({dataFilter:{developerMetadataLookup:{metadataId:plan.metadataId}},majorDimension:'ROWS',values:[plan.expected]});
+    }
+    if(data.length){
+      const written=api('/values:batchUpdateByDataFilter',{valueInputOption:'RAW',data});
+      if(Number(written.totalUpdatedRows)!==data.length)throw new Error('LIST_METADATA_WRITE_COUNT_MISMATCH');
+    }
+    const after=readPlans(ready);
+    for(const plan of ready){
+      const actual=after.get(plan.metadataId),mismatches=[];
+      if(!actual||!actual.row)mismatches.push('ROW_MISSING');
+      else plan.expected.forEach((v,i)=>{if(v!==null&&String(v)!==String(actual.values[i]??''))mismatches.push(String.fromCharCode(65+i));});
+      if(mismatches.length)fail(plan.item,'LIST_METADATA_READBACK_MISMATCH '+mismatches.join(','));
+      else results.push({ok:true,id:plan.item.id,characterId:plan.masterId,row:actual.row,metadataId:plan.metadataId,appended:plan.appended});
+    }
+    return {ok:failedItems.length===0,finished:failedItems.length===0,bridgeRole:'APPSCRIPT_MASTER',method,
+      metadataWriteContract:'MASTER_ID_V1',appendSupported:true,processedCount:results.length,updatedCount:results.length,
+      failedCount:failedItems.length,processedIds:results.map(x=>x.id),failedIds:failedItems.map(x=>x.id),results,
+      rowMappings:results,failedItems};
+  }catch(error){
+    return {ok:false,finished:false,bridgeRole:'APPSCRIPT_MASTER',code:'LIST_METADATA_SYNC_FAILED',
+      message:String(error.message||error),retryable:true,writeOutcomeUnknown:true,processedIds:[],failedItems};
+  }finally{lock.releaseLock();}
+}
 function kinojoParseUpdates_(body) {
   let updates = body.updates || body.rows || body.items || body.queue || [];
   if (typeof updates === 'string') {

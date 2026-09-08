@@ -6,21 +6,8 @@ const root=path.resolve(__dirname,'..');
 const source=p=>fs.readFileSync(path.join(root,p),'utf8');
 const results=[];
 function check(name,condition,detail){results.push({name,pass:Boolean(condition),detail});}
-function bridge(move=false){
- const cells=Array.from({length:8},()=>Array(8).fill(''));
- cells[5]=['before','궁성',100,200,'','','main',''];
- cells[6]=['unrelated','궁성',900,999,'','','other',''];
- let moved=false;
- const sheet={getLastRow:()=>8,getLastColumn:()=>8,getName:()=>'list',getRange(r,c,n,w){return {
-  getValues:()=>cells.slice(r-1,r-1+n).map(x=>x.slice(c-1,c-1+w)),
-  setValues(values){if(move&&!moved){[cells[5],cells[6]]=[cells[6],cells[5]];moved=true;}
-   values.forEach((row,i)=>row.forEach((x,j)=>cells[r-1+i][c-1+j]=x));}
- };}};
- const ctx=vm.createContext({LockService:{getScriptLock:()=>({tryLock:()=>true,releaseLock(){}})},SpreadsheetApp:{flush(){}}});
- vm.runInContext(source('apps-script/list-master/BRIDGE.gs'),ctx);
- ctx.kinojoGetListSheet_=()=>({sheet,ss:{getId:()=>'SYNTHETIC-LOCAL'}});
- return {cells,write:updates=>ctx.kinojoHandleServerListSheetSync_({updates},'POST')};
-}
+const {createBridgeMock}=require('./helpers/list-metadata-mock.cjs');
+function bridge(move=false){return createBridgeMock(source('apps-script/list-master/BRIDGE.gs'),{move});}
 async function edge({already=false,recordOk=true,readComplete=true}={}){
  let handler;
  const ctx=vm.createContext({TextEncoder,URL,URLSearchParams,Request,Response,AbortController,Intl,setTimeout,clearTimeout,
@@ -29,17 +16,17 @@ async function edge({already=false,recordOk=true,readComplete=true}={}){
  vm.runInContext(stripTypeScriptTypes(source('supabase/functions/lookup-list-sync/index.ts')).replace('export {};',''),ctx);
  ctx.rpc=async()=>({ok:true});
  ctx.rest=async p=>({ok:true,data:p.includes('sync_status=in.')?(already?[]:[{id:1,list_row:6,list_original_name:'name',character_name:'name',main_character_name:'main',class_name:'궁성'}]):[{id:1,sync_status:already?'synced':'queued'}]});
- ctx.app=async(_url,p)=>p.action==='serverListSheetSync'?{ok:true,processedIds:[1],results:[{id:1,row:6,ok:true}]}:{ok:true,bridgeRole:'APPSCRIPT_MASTER',readComplete,list:[{row:6,originalName:'name',mainCharacterName:'main',className:'궁성'}]};
+ ctx.app=async(_url,p)=>p.action==='serverBridgeHealth'?{ok:true,metadataWriteContract:'MASTER_ID_V1'}:p.action==='serverListSheetSync'?{ok:true,metadataWriteContract:'MASTER_ID_V1',processedIds:[1],results:[{id:1,row:6,ok:true}]}:{ok:true,bridgeRole:'APPSCRIPT_MASTER',readComplete,list:[{row:6,originalName:'name',mainCharacterName:'main',className:'궁성'}]};
  ctx.patch=async()=>({ok:true});ctx.record=async()=>({ok:recordOk});ctx.mark=async()=>({ok:true});
  const response=await handler(new Request('https://synthetic.invalid',{method:'POST',body:JSON.stringify({action:'syncList',sessionId:'LOCAL-MOCK',sessionToken:'LOCAL-MOCK',expectedQueuedCount:1})}));
  return response.json();
 }
 async function run(){
- const update={id:1,listRow:6,originalListName:'before',characterName:'after',listDisplayName:'after',identityChanged:true,className:'궁성',mainCharacterName:'main',pveItemLevel:100,pveCombatPower:200};
+ const update={id:1,characterId:1,listRow:6,originalListName:'before',characterName:'after',listDisplayName:'after',identityChanged:true,className:'궁성',mainCharacterName:'main',pveItemLevel:100,pveCombatPower:200};
  let b=bridge();let first=b.write([update]),second=b.write([update]);
  check('Identical rename Queue retry completes idempotently',first.ok===true&&second.ok===true,{first:first.ok,retry:second.ok,retryFailures:second.failedItems});
  b=bridge(true);const moved=b.write([{...update,characterName:'before',listDisplayName:'before',identityChanged:false,pveCombatPower:300}]);
- check('Row movement cannot overwrite another character stats',b.cells.find(r=>r[0]==='unrelated')[3]===999,{bridgeOk:moved.ok,unrelatedPower:b.cells.find(r=>r[0]==='unrelated')[3]});
+ check('Row movement cannot overwrite another character stats',moved.ok===true&&b.cells.find(r=>r[0]==='unrelated')[3]===999&&b.cells.find(r=>r[0]==='before')[3]===300,{bridgeOk:moved.ok,unrelatedPower:b.cells.find(r=>r[0]==='unrelated')[3]});
  const partial=await edge({readComplete:false});
  check('Explicitly incomplete readback never completes session',partial.finished!==true,{ok:partial.ok,finished:partial.finished});
  const failedRecord=await edge({already:true,recordOk:false});
@@ -51,12 +38,18 @@ async function run(){
   const setup=existing.match(/await db\.exec\(`([\s\S]*?)`\);/)[1];
   await db.exec(setup);
   await db.exec(source('supabase/migrations/20260908053907_character_refresh_identity_and_list_guards.sql'));
+  await db.exec(source('supabase/migrations/20260908060546_character_refresh_retry_generation_guards.sql'));
   const catalog=[{serverId:2002,serverName:'old',serverShortName:'o',raceId:2},{serverId:2003,serverName:'new',serverShortName:'n',raceId:2}];
-  const cp=async(done=null,matches=null)=>(await db.query('select public.kinojo_identity_scan_checkpoint_v1(1,$1,$2,$3,$4) as value',['123456789012345678',JSON.stringify(catalog),done===null?null:JSON.stringify(done),matches===null?null:JSON.stringify(matches)])).rows[0].value;
-  await cp();await cp([2002],[]);
+  let generation;
+  const cp=async(done=null,matches=null,g=generation)=>{
+   const value=(await db.query('select public.kinojo_identity_scan_checkpoint_v2(1,$1,$2,$3,$4,$5) as value',['123456789012345678',JSON.stringify(catalog),done===null?null:JSON.stringify(done),matches===null?null:JSON.stringify(matches),g||null])).rows[0].value;
+   if(done===null&&value.ok)generation=value.generation;
+   return value;
+  };
+  await cp();await cp([2002],[]);const oldGeneration=generation;
   await db.exec("update private.character_identity_scan_checkpoints set expires_at=now()-interval '1 second'");
   const restarted=await cp();
-  const late=await cp([2002,2003],[{serverId:2003,charKey:'123456789012345678',characterName:'stale'}]);
+  const late=await cp([2002,2003],[{serverId:2003,charKey:'123456789012345678',characterName:'stale'}],oldGeneration);
   const state=await cp();
   check('Expired generation late writer cannot contaminate new scan',late.ok!==true&&state.completed.length===0,{restarted:restarted.completed,lateAccepted:late.ok,completed:state.completed});
   await db.exec(`

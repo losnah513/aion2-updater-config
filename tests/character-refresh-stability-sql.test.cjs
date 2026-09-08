@@ -15,8 +15,14 @@ async function run(){
  insert into public.character_master values(1,'123456789012345678',2002,'궁성');
  insert into public.server_master values(2002,'old','o',2,true),(2003,'new','n',2,true),(1001,'other','x',1,true);`);
  await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/migrations/20260908053907_character_refresh_identity_and_list_guards.sql'),'utf8'));
+ await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/migrations/20260908060546_character_refresh_retry_generation_guards.sql'),'utf8'));
  const servers=[{serverId:2002,serverName:'old',serverShortName:'o',raceId:2},{serverId:2003,serverName:'new',serverShortName:'n',raceId:2}];
- const checkpoint=async(completed=null,matches=null,k='123456789012345678',catalog=servers)=>(await db.query('select public.kinojo_identity_scan_checkpoint_v1($1,$2,$3,$4,$5) as value',[1,k,JSON.stringify(catalog),completed===null?null:JSON.stringify(completed),matches===null?null:JSON.stringify(matches)])).rows[0].value;
+ let generation;
+ const checkpoint=async(completed=null,matches=null,k='123456789012345678',catalog=servers)=>{
+  const result=(await db.query('select public.kinojo_identity_scan_checkpoint_v2($1,$2,$3,$4,$5,$6) as value',[1,k,JSON.stringify(catalog),completed===null?null:JSON.stringify(completed),matches===null?null:JSON.stringify(matches),generation||null])).rows[0].value;
+  if(completed===null&&result.ok)generation=result.generation;
+  return result;
+ };
  let value=await checkpoint();assert.equal(value.ok,true);assert.deepEqual(value.completed,[]);
  value=await checkpoint([2002],[]);assert.deepEqual(value.completed,[2002]);
  value=await checkpoint([2003],[{serverId:2003,charKey:'123456789012345678'}]);assert.equal(value.completed.length,2);
@@ -26,13 +32,18 @@ async function run(){
  await db.exec("update private.character_identity_scan_checkpoints set expires_at=now()-interval '1 second'");
  value=await checkpoint([2002],[]);assert.equal(value.code,'SCAN_EXPIRED_RESTART_REQUIRED');
  value=await checkpoint();assert.deepEqual(value.completed,[]);
+ value=await checkpoint([2002],[]);assert.equal(value.ok,true);assert.deepEqual(value.completed,[2002]);
+ const missingGeneration=(await db.query('select public.kinojo_identity_scan_checkpoint_v2(1,$1,$2,$3,$4,null) as value',['123456789012345678',JSON.stringify(servers),'[2003]','[]'])).rows[0].value;
+ assert.equal(missingGeneration.code,'STALE_SCAN_GENERATION');
+ assert.equal((await db.query("select has_function_privilege('service_role','public.kinojo_identity_scan_checkpoint_v1(bigint,text,jsonb,jsonb,jsonb)','execute') as allowed")).rows[0].allowed,false);
  let gate=(await db.query('select public.kinojo_identity_rate_gate_v1() as value')).rows[0].value;assert.equal(gate.allowed,true);
  await db.exec("update official_lookup_rate_state set next_request_at=now()+interval '10 seconds'");
  const before=(await db.query('select next_request_at from official_lookup_rate_state')).rows[0].next_request_at;
  gate=(await db.query('select public.kinojo_identity_rate_gate_v1() as value')).rows[0].value;assert.equal(gate.allowed,false);
  assert.deepEqual((await db.query('select next_request_at from official_lookup_rate_state')).rows[0].next_request_at,before);
  gate=(await db.query('select public.kinojo_identity_rate_gate_v1(429,90) as value')).rows[0].value;assert.equal(gate.allowed,false);
- const acl=await db.query("select has_function_privilege('anon','public.kinojo_identity_scan_checkpoint_v1(bigint,text,jsonb,jsonb,jsonb)','execute') as allowed");assert.equal(acl.rows[0].allowed,false);
+ const acl=await db.query("select has_function_privilege('anon','public.kinojo_identity_scan_checkpoint_v2(bigint,text,jsonb,jsonb,jsonb,text)','execute') as allowed");assert.equal(acl.rows[0].allowed,false);
+ await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/rollbacks/20260908060546_character_refresh_retry_generation_guards.sql'),'utf8'));
  await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/rollbacks/20260908053907_character_refresh_identity_and_list_guards.sql'),'utf8'));
  assert.equal((await db.query("select has_function_privilege('service_role','public.kinojo_identity_scan_checkpoint_v1(bigint,text,jsonb,jsonb,jsonb)','execute') as allowed")).rows[0].allowed,false);
  assert.equal((await db.query('select count(*)::int as n from private.character_identity_scan_checkpoints')).rows[0].n,1);

@@ -19,26 +19,28 @@
 
 ## 소스와 배포 경계
 
-- `supabase/functions/lookup-list-sync/index.ts`: 운영 v6/API1.2.3을 가져와 수정한 API1.2.4 초안.
+- `supabase/functions/lookup-list-sync/index.ts`: 운영 v6/API1.2.3을 가져와 수정한 API1.2.5 초안.
 - `apps-script/list-master/BRIDGE.gs`: Drive 기존 ID `1fXpvnVoALky9ceQ-1Hn97IEyRB9HJBkT` 기준본의 수정안. 새 활성 브릿지가 아니다. Drive 운영 소스와 Apps Script에는 아직 반영하지 않았다.
-- Identity: 운영 v14/API295.2 기준 수정안 API295.3. Worker: 운영 v42/API295.9 기준 계측 변경.
+- Identity: 운영 v14/API295.2 기준 수정안 API295.4. Worker: 운영 v42/API295.9 기준 계측 변경.
+- 추가 CLI migration: `20260908060546_character_refresh_retry_generation_guards.sql` 및 같은 이름 rollback. checkpoint v2와 generation fencing.
 - CLI 생성 migration: `20260908053907_character_refresh_identity_and_list_guards.sql`. 대응 rollback은 같은 basename의 rollbacks 파일. 모든 변경은 로컬이며 운영 migration 적용 없음.
 - 운영 배포 전 최신 함수 drift/ACL 검증, Source/Deploy 숫자 파일 및 SQL_INDEX 동기화, 기존 인증·활성 세션 보호 확인이 필요하다.
 
 ## 로컬 검증
 
-### 추가 경계 검증 — 2026-09-08, 배포 게이트 실패
+### 추가 경계 검증 — 10회차 실패 5건을 11회차에 수정·로컬 재검증
 
-`node tests/character-refresh-stability-adversarial.test.cjs`: 10개 중 5 PASS / 5 FAIL (exit 1). 제품 코드는 수정하지 않았으며 테스트와 검증 기록만 추가했다. 증거는 `tests/evidence/20260908-character-refresh-stage2/verification.json`이다.
+10회차의 실패 증거는 `tests/evidence/20260908-character-refresh-stage2/verification.json`에 보존했다. 11회차에는 동일 안전 조건을 유지한 채 새 metadata/generation 계약으로 테스트 입력을 연결하여 10/10 PASS(exit 0), 전체 6종 PASS를 확인했다. 후속 증거는 같은 폴더 `reverification.json`이다.
 
-- FAIL: 같은 이름 변경 Queue를 그대로 재시도하면 첫 쓰기는 성공하지만 옛 원본 이름으로 행을 찾지 못한다.
-- FAIL: 시트 쓰기 직전 사용자 행 이동을 모의하면 무관한 캐릭터의 전투력 999가 300으로 덮인다. Script lock은 사용자 행 이동을 막지 못한다.
-- FAIL: `readComplete=false`인 부분 readback에도 list Edge가 `finished=true`를 반환한다.
-- FAIL: 이미 synced된 Queue 경로에서 서버 완료 기록 `ok=false`여도 Edge가 `ok=true,finished=true`를 반환한다.
-- FAIL: checkpoint 만료 후 새 탐색이 시작되면 이전 탐색의 늦은 저장을 거절하지 못해 완료 서버/후보가 섞인다. 세대 또는 revision 비교가 필요하다.
-- PASS: 정상 readback 완료, 정상 Target context, _D/명시적 DB 제외/삭제후보 사유 각각에 대한 DB context→Worker 경로 공식 API 호출0.
+- rename 동일 Queue 재시도: Master ID 행 metadata로 이미 바뀐 이름을 재확인한다. 옛 원본 이름을 수동 변경하지 않아도 통과한다.
+- 행 이동: metadataId DataFilter로 쓰므로 테스트에서 무관 캐릭터 수치999를 보존하고 이동한 대상만300으로 변경했다. positional fallback은 제거했다.
+- 불완전 readback: readComplete=true가 아니면 완료하지 않는다.
+- 이미 synced Queue: 서버 완료 기록도 ok=true여야 완료다.
+- checkpoint: v2 generation 문자열을 저장 요청에 필수 비교한다. 만료 전 세대의 늦은 저장과 세대 없는 저장을 차단하고 v1 쓰기 실행권한을 제거했다.
+- 추가 회귀: API 불가·행 삭제·ID 누락·중복/다른 ID 바인딩·같은 행 이중 바인딩·append 재시도·null 값 보존·명시적 clear·50행 batch를 확인했다.
+- `node tests/list-metadata-writer.test.cjs`와 `node tests/character-refresh-stability-adversarial.test.cjs`를 아래 기존 네 명령과 함께 실행한다.
 
-기존 4종 테스트도 재통과했다. 그러나 전체 통합 검증 성공을 의미하지 않는다. H 원문→prepare 전체 과정, 실제 권한, 운영 스키마의 관계 commit/rollback, 완전 동시성/실운영 성능은 아직 검증하지 않았다. 먼저 위 5건을 수정한 뒤 동일 테스트가 통과하는지 확인해야 한다.
+**이번 5건의 로컬 수정·재검증 완료와 2단계 전체/운영 완료는 다르다.** 실제 Google API 권한/정렬 등 canary, 실제 인증, H→prepare 전체 과정, 관계 commit/rollback, 전체 시간 예산 및 아래 미구현 정책은 여전히 남아 있다. 배포 의존성은 apps-script/list-master/README.md를 따른다.
 
 다음 네 명령 모두 통과했다. 실제 운영 API/DB/list를 수정하는 테스트가 아니다.
 
@@ -59,7 +61,7 @@ Bridge mock에서는 A 이름 변경과 G 갱신 후 readback, H 보존, 다른 
 2. 적격 DB-only 캐릭터의 현재 공식 소속 확인 후 list 복원. 완전 읽기 증명, stable Master ID dedup, 최신 행 재탐색, 충돌/사용자 재등록/행 이동 보호, exact readback 후 list_row commit.
 3. 새 이름과 옛 이름 소유자를 각자의 key로 확인하는 충돌 처리 및 삭제후보 표시/해제 절차. 현재 수정안은 충돌을 안전하게 보류할 뿐 이 절차를 완성하지 않았다.
 4. 기존 ID를 잇는 원자 적용의 운영 스키마 기반 commit/rollback·권한·stale 요청·중복 이력 통합 검증. 회원 테이블의 이름-only 연결이 모호하면 자동 반영하지 않으며 별도 연결 근거가 필요하다.
-5. 이미 반영된 rename의 stale original name 재시도, legacy append fallback, 전체 읽기/Queue count 상한·누락, 동시 Patch와 이전 성공 덮어쓰기 방지. 현재 readback 실패 상세 개선만으로 멱등성이 완성된 것은 아니다.
+5. rename/부분 읽기/서버 완료 기록/행 이동/세대 재시도 5건은 로컬 재검증 완료. 남은 것은 실제 Google API canary, Queue 전체 수량·누락/동시 PATCH/성공 덮어쓰기 및 전체 세션 통합 검증이다.
 6. Worker/Edge 전체 deadline·중단/heartbeat·재시도 상한과 checkpoint 만료 경계 검증, 단계 시간 계측으로 병목 확인. 단순 timeout 숫자 추가를 성능 해결로 보고하지 않는다.
 7. _D/H만/DB 제외/표시 삭제/행 삭제/정상 Target의 API 호출 0 통합 회귀. 기존 admin updateExclusion과 정책 충돌 검증.
 8. 변경한 전체 경로의 회귀/보안 검증, 필요한 규칙·README 수정안, Source/Deploy/rollback 패키지 완성. 그 후 3단계 배포·카나리·전체 최신화.
