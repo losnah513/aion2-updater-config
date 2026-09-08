@@ -17,7 +17,7 @@
   ]);
   const CLASS_CODE_BY_NAME=Object.freeze(Object.fromEntries(SLOT_CLASSES.filter(item=>item.className).map(item=>[item.className,item.code])));
   const POWER_ICON_URL='https://assets.playnccdn.com/static-aion2/characters/img/info/profile_power_icon_pc.png';
-  const state={layer:null,opener:null,team:null,sourceTeamId:0,creationMode:'FIXED',joinPolicy:'INSTANT',selectedForceId:0,selectedSlotId:0,moveFromSlotId:0,draggedSlotId:0,dragSwitching:false,requirementTarget:null,classTargetSlotId:0,showCreatorCandidates:false,requestKey:'',forceSaveRequestKey:'',forceAddRequestKey:'',slotRequestKey:'',moveRequestKey:'',characterRequestKey:'',leaseToken:'',leaseTimer:0,message:'',tone:'',saving:false,mutating:false,lookup:null,mainLookup:null,linkedAlts:null,relationType:'',baselineCompositionSignature:'',balancePreview:null,balanceAppliedToken:'',balanceAppliedSignature:'',balanceStableSeed:''};
+  const state={layer:null,opener:null,team:null,sourceTeamId:0,creationMode:'FIXED',joinPolicy:'INSTANT',selectedForceId:0,selectedSlotId:0,moveFromSlotId:0,draggedSlotId:0,dragSwitching:false,requirementTarget:null,classTargetSlotId:0,showCreatorCandidates:false,requestKey:'',forceSaveRequestKey:'',forceAddRequestKey:'',slotRequestKey:'',moveRequestKey:'',characterRequestKey:'',leaseToken:'',leaseTimer:0,message:'',tone:'',saving:false,mutating:false,lookup:null,mainLookup:null,linkedAlts:null,relationType:'',listSyncEnabled:true,listSyncResult:null,baselineCompositionSignature:'',balancePreview:null,balanceAppliedToken:'',balanceAppliedSignature:'',balanceStableSeed:''};
   const value=input=>String(input??'').trim();
   const escapeHtml=input=>String(input??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const bridge=()=>window.KinojoSanctuaryManagementDraftBridge;
@@ -144,7 +144,7 @@
     return hadProposal;
   }
 
-  function resetCharacterLookup(){state.lookup=null;state.mainLookup=null;state.linkedAlts=null;state.relationType='';state.characterRequestKey='';}
+  function resetCharacterLookup(){state.lookup=null;state.mainLookup=null;state.linkedAlts=null;state.relationType='';state.listSyncEnabled=true;state.listSyncResult=null;state.characterRequestKey='';}
 
   function newLeaseToken(){
     const bytes=new Uint8Array(32);
@@ -467,9 +467,8 @@
       return '<button type="button" class="sanctuary-management-candidate-card '+(candidate.isMain?'is-main':'is-alt')+'" data-draft-candidate="'+escapeHtml(candidate.characterId)+'"'+(state.saving||state.mutating?' disabled':'')+'><span class="sanctuary-management-candidate-avatar" aria-hidden="true">'+(icon?'<img src="'+escapeHtml(icon)+'" alt="">':escapeHtml(initial))+'</span><span class="sanctuary-management-candidate-copy"><em>'+relation+'</em><strong>'+escapeHtml(candidate.characterName)+'</strong><small>['+escapeHtml(candidate.serverName||'서버 미확인')+'] · '+combatPowerMarkup(candidate.power)+'</small></span></button>';
     }).join('');
     let quick='';
-    let completion='';
     if(force.creatorOwnerResolved!==true&&!sourceCandidates.length)quick='<div class="sanctuary-management-candidate-note is-warning"><strong>생성자 소유권 확인 필요</strong><small>'+escapeHtml(force.creatorCandidateCode||'OWNER_NOT_RESOLVED')+'</small></div>';
-    else if(force.creatorAlreadyAssigned===true)completion='<div class="sanctuary-management-candidate-note sanctuary-management-candidate-completion is-complete"><strong>이 포스에 내 캐릭터 배치 완료</strong><small>한 이용자는 포스마다 캐릭터 1개만 배치할 수 있습니다.</small></div>';
+    else if(force.creatorAlreadyAssigned===true)quick='<div class="sanctuary-management-candidate-note is-complete"><strong>내 캐릭터 배치 완료</strong><small>다른 캐릭터는 이름으로 조회할 수 있습니다.</small></div>';
     else if(quickCards)quick='<section class="sanctuary-management-quick-candidates"><strong>내 캐릭터</strong>'+quickCards+'</section>';
     else quick='<div class="sanctuary-management-candidate-note"><strong>추가할 내 캐릭터 없음</strong><small>캐릭터 이름 조회로 다른 구성원을 추가할 수 있습니다.</small></div>';
     let resultMarkup='<div class="sanctuary-management-search-empty"><strong>캐릭터 마스터 우선 조회</strong><small>없을 때만 아이온2 공식 정보를 확인합니다.</small></div>';
@@ -483,30 +482,34 @@
       const altButton=character.canSelectAlts===true||character.relation==='MAIN'||character.isMain===true?'<button type="button" data-linked-alts-open="'+escapeHtml(character.characterId)+'">부캐 선택</button>':'';const eligible=characterEligible(character);
       resultMarkup='<article class="sanctuary-management-search-result'+(eligible?'':' is-ineligible')+'"><div class="sanctuary-management-search-result-profile"><span class="sanctuary-management-search-result-avatar" aria-hidden="true">'+(icon?'<img src="'+escapeHtml(icon)+'" alt="">':'◇')+'</span><span class="sanctuary-management-search-result-copy"><em>'+escapeHtml(relation)+'</em><strong>'+escapeHtml(character.characterName)+'</strong><small>'+escapeHtml(server)+' · '+combatPowerMarkup(character.power)+'</small></span></div><div class="sanctuary-management-search-result-actions"><button type="button" data-draft-search-character="'+escapeHtml(character.characterId)+'"'+(eligible?'':' disabled')+'>추가하기</button>'+altButton+'</div></article>';
     }else if(state.lookup?.candidate){
-      const candidate=state.lookup.candidate;const allowed=candidate.allowedRelations||[];
-      const relationButtons=allowed.map(relation=>'<button type="button" data-draft-relation="'+relation+'" aria-pressed="'+String(state.relationType===relation)+'">'+(relation==='MAIN'?'본캐':relation==='ALT'?'부캐':'게스트')+'</button>').join('');
+      const candidate=state.lookup.candidate;const allowed=candidate.allowedRelations||[];const external=candidate.isOperationalLegion!==true;
+      const relationButtons=allowed.map(relation=>'<button type="button" data-draft-relation="'+relation+'" aria-pressed="'+String(state.relationType===relation)+'">'+(external&&relation==='ALT'?'본캐 찾기':relation==='MAIN'?'본캐':relation==='ALT'?'부캐':'게스트로 추가')+'</button>').join('');
       let relationBody='';
       if(state.relationType==='ALT'){
         let mainResult='<small>본캐 이름을 조회해 정확한 소유 관계를 연결합니다.</small>';
         if(state.mainLookup?.loading)mainResult='<small>본캐를 Server에서 확인하는 중입니다…</small>';
         else if(state.mainLookup?.error)mainResult='<small class="is-error">'+escapeHtml(state.mainLookup.error)+'</small>';
         else if(state.mainLookup?.character)mainResult='<div class="sanctuary-management-main-confirmed"><strong>'+escapeHtml(state.mainLookup.character.characterName)+'</strong><small>본캐 확인 완료</small></div>';
-        else if(state.mainLookup?.candidate)mainResult='<div class="sanctuary-management-main-official"><strong>'+escapeHtml(state.mainLookup.candidate.characterName)+'</strong><small>마스터에 없어 공식 확인이 필요합니다.</small><button type="button" data-draft-register-main>본캐로 먼저 등록</button></div>';
+        else if(state.mainLookup?.candidate)mainResult='<div class="sanctuary-management-main-confirmed"><strong>'+escapeHtml(state.mainLookup.candidate.characterName)+'</strong><small>공식 본캐 후보 확인 완료 · 추가할 때 함께 등록</small></div>';
         relationBody='<div class="sanctuary-management-main-search" data-main-search-form role="search"><label><span>연결할 본캐</span><input name="mainCharacterQuery" size="16" maxlength="48" placeholder="본캐 또는 본캐[서버]" autocomplete="off"></label><button type="button" data-main-search-submit>검색</button></div>'+mainResult;
       }
-      const canRegister=Boolean(state.relationType&&state.relationType!=='ALT'||state.relationType==='ALT'&&state.mainLookup?.character);
+      const canRegister=Boolean(state.relationType&&state.relationType!=='ALT'||state.relationType==='ALT'&&(state.mainLookup?.character||state.mainLookup?.candidate));
       const icon=classIconFor(candidate.className);
       const server='['+(value(candidate.serverName)||'서버 미확인')+']';
-      const candidateEligible=characterEligible(candidate);resultMarkup='<article class="sanctuary-management-official-result'+(candidateEligible?'':' is-ineligible')+'"><div class="sanctuary-management-official-card"><span class="sanctuary-management-search-result-avatar" aria-hidden="true">'+(icon?'<img src="'+escapeHtml(icon)+'" alt="">':'◇')+'</span><span class="sanctuary-management-search-result-copy"><em>아이온2 공식 확인</em><strong>'+escapeHtml(candidate.characterName)+'</strong><small>'+escapeHtml(server)+' · '+combatPowerMarkup(candidate.power)+'</small></span></div><p>'+(candidate.isOperationalLegion?'운영 레기온 캐릭터입니다. 본캐 또는 연결할 본캐를 확인해 주세요.':'외부 레기온 또는 레기온 미가입 캐릭터로 게스트 등록할 수 있습니다.')+'</p><div class="sanctuary-management-relation-buttons">'+relationButtons+'</div>'+relationBody+'<button type="button" class="sanctuary-management-register-character" data-draft-register-character'+(canRegister&&candidateEligible?'':' disabled')+'>관계 확정 후 추가</button></article>';
+      const candidateEligible=characterEligible(candidate),eligibilityMessage=candidateEligible?'':(itemLevelValue(candidate.itemLevel)?'아이템레벨 부족':'아이템레벨 확인 필요');
+      const mainName=value(state.mainLookup?.character?.characterName||state.mainLookup?.candidate?.characterName);
+      const registerLabel=state.relationType==='ALT'&&mainName?mainName+'의 부캐로 추가':state.relationType==='GUEST'?'게스트로 추가':state.relationType==='MAIN'?'본캐로 추가':'등록 방식 선택';
+      const listSync='<div class="sanctuary-management-list-sync"><span>List 시트 반영</span><div role="group" aria-label="List 시트 반영 여부"><button type="button" data-list-sync="Y" aria-pressed="'+String(state.listSyncEnabled)+'">Y</button><button type="button" data-list-sync="N" aria-pressed="'+String(!state.listSyncEnabled)+'">N</button></div></div>';
+      resultMarkup='<article class="sanctuary-management-official-result'+(candidateEligible?'':' is-ineligible')+'"><div class="sanctuary-management-official-card"><span class="sanctuary-management-search-result-avatar" aria-hidden="true">'+(icon?'<img src="'+escapeHtml(icon)+'" alt="">':'◇')+'</span><span class="sanctuary-management-search-result-copy"><em>아이온2 공식 확인</em><strong>'+escapeHtml(candidate.characterName)+'</strong><small>'+escapeHtml(server)+' · '+combatPowerMarkup(candidate.power)+'</small></span></div><p>'+(candidate.isOperationalLegion?'운영 레기온 캐릭터입니다. 본캐 또는 연결할 본캐를 확인해 주세요.':'게스트로 독립 등록하거나 본캐를 찾아 부캐로 연결할 수 있습니다.')+'</p><div class="sanctuary-management-relation-buttons">'+relationButtons+'</div>'+relationBody+listSync+(eligibilityMessage?'<small class="sanctuary-management-register-blocker">'+escapeHtml(eligibilityMessage)+'</small>':'')+'<button type="button" class="sanctuary-management-register-character" data-draft-register-character'+(canRegister&&candidateEligible?'':' disabled')+'>'+escapeHtml(registerLabel)+'</button></article>';
     }
     const localSearch='<div class="sanctuary-management-character-search" data-character-search-form role="search"><label><span>캐릭터 검색</span><input name="characterQuery" size="16" maxlength="48" placeholder="이름 또는 이름[서버]" autocomplete="off" required></label><button type="button" data-character-search-submit'+(state.lookup?.loading?' disabled':'')+'>검색</button></div>'+resultMarkup;
     if(state.team?.localOnly){
       const creationResult=state.lookup?resultMarkup:'';
       const creationQuick=state.showCreatorCandidates?quick:'';
       const creatorTools='<div class="sanctuary-management-creator-tools"><button type="button" class="sanctuary-management-creator-candidates-toggle" data-creator-candidates-toggle aria-expanded="'+String(state.showCreatorCandidates)+'">내 캐릭터 추가</button><div class="sanctuary-management-character-search" data-character-search-form role="search"><label><span>캐릭터 이름</span><input name="characterQuery" size="16" maxlength="48" placeholder="이름 또는 이름[서버]" autocomplete="off" required></label><button type="button" data-character-search-submit'+(state.lookup?.loading?' disabled':'')+'>조회하기</button></div></div>';
-      return '<aside class="sanctuary-management-candidate-rail" aria-label="'+escapeHtml(force.forceNo)+'포스 캐릭터 선택">'+railHeader+'<div class="sanctuary-management-candidate-list" data-candidate-list>'+creatorTools+creationQuick+creationResult+'</div>'+completion+'</aside>';
+      return '<aside class="sanctuary-management-candidate-rail" aria-label="'+escapeHtml(force.forceNo)+'포스 캐릭터 선택">'+railHeader+'<div class="sanctuary-management-candidate-list" data-candidate-list>'+creatorTools+creationQuick+creationResult+'</div></aside>';
     }
-    return '<aside class="sanctuary-management-candidate-rail" aria-label="'+escapeHtml(force.forceNo)+'포스 '+slotNumber+'번 슬롯 캐릭터 선택">'+railHeader+'<div class="sanctuary-management-candidate-list" data-candidate-list>'+quick+'<div class="sanctuary-management-character-search" data-character-search-form role="search"><label><span>캐릭터 검색</span><input name="characterQuery" size="16" maxlength="48" placeholder="이름 또는 이름[서버]" autocomplete="off" required></label><button type="button" data-character-search-submit'+(state.lookup?.loading?' disabled':'')+'>검색</button></div>'+resultMarkup+'</div>'+completion+'<button type="button" class="sanctuary-management-search-reset" data-draft-search-reset>조회 초기화</button></aside>';
+    return '<aside class="sanctuary-management-candidate-rail" aria-label="'+escapeHtml(force.forceNo)+'포스 '+slotNumber+'번 슬롯 캐릭터 선택">'+railHeader+'<div class="sanctuary-management-candidate-list" data-candidate-list>'+quick+'<div class="sanctuary-management-character-search" data-character-search-form role="search"><label><span>캐릭터 검색</span><input name="characterQuery" size="16" maxlength="48" placeholder="이름 또는 이름[서버]" autocomplete="off" required></label><button type="button" data-character-search-submit'+(state.lookup?.loading?' disabled':'')+'>검색</button></div>'+resultMarkup+'</div><button type="button" class="sanctuary-management-search-reset" data-draft-search-reset>조회 초기화</button></aside>';
   }
 
   function linkedAltPanelMarkup(){
@@ -583,6 +586,7 @@
   function defaultStatus(){
     const force=selectedForce();
     if(!force)return '[+ 포스 추가]를 누르면 로컬 편성안에 1포스·2파티·10슬롯이 추가됩니다.';
+    if(force.creatorAlreadyAssigned===true)return '이 포스에 내 캐릭터 배치 완료 · 한 이용자는 포스마다 캐릭터 1개만 배치할 수 있습니다.';
     return force.forceNo+'포스 · '+force.occupiedCount+'/'+force.capacity+'명'+(force.requirements?.satisfied===false?' · 구성 조건 '+force.requirements.unsatisfiedCount+'개 미충족':'')+' · 마지막 저장 전 Server 미반영';
   }
 
@@ -599,6 +603,11 @@
     if(side)side.classList.toggle('has-linked-alts',Boolean(state.linkedAlts));
     const balance=state.layer?.querySelector('[data-balance-panel]');
     if(balance)balance.outerHTML=balancePanelMarkup();
+    const statusWrap=state.layer?.querySelector('.sanctuary-management-draft-status-wrap');
+    const retry=statusWrap?.querySelector('[data-list-sync-retry]');
+    if(state.listSyncResult?.status==='FAILED'){
+      if(statusWrap&&!retry)statusWrap.insertAdjacentHTML('beforeend','<button type="button" class="sanctuary-management-list-retry" data-list-sync-retry>List 반영 재시도</button>');
+    }else if(retry)retry.remove();
     requestAnimationFrame(syncScrollFades);
   }
 
@@ -620,6 +629,7 @@
     const difficulty=selectedDifficulty(teamForces()[0]);
     const difficultyMarkup='<input type="hidden" name="draftDifficulty" value="'+difficulty+'">';
     const submitLabel=state.saving?'처리 중…':state.mutating?'변경 중…':participation?(active?'저장':draft?'참여 팀 생성':'1포스 먼저 추가'):(active?'저장':draft?'팀 생성':'구성 시작');
+    const listRetry=state.listSyncResult?.status==='FAILED'?'<button type="button" class="sanctuary-management-list-retry" data-list-sync-retry>List 반영 재시도</button>':'';
     const joinPolicyMarkup=participation?'<div class="sanctuary-management-join-policy"><strong>참가 방식</strong><div class="sanctuary-management-schedule-kind" role="group" aria-label="참가 방식"><button type="button" data-draft-join-policy="INSTANT" aria-pressed="'+(joinPolicy==='INSTANT')+'">즉시 참가</button><button type="button" data-draft-join-policy="APPROVAL" aria-pressed="'+(joinPolicy==='APPROVAL')+'">승인 참가</button></div><small>즉시 참가는 빈 슬롯에 바로 배치되고, 승인 참가는 운영자 확인 후 배치됩니다.</small></div>':'';
     return '<div class="sanctuary-management-draft-backdrop" data-draft-close></div>'
       +'<div class="sanctuary-management-draft-frame">'
@@ -632,7 +642,7 @@
                 +rosterMarkup()
                 +candidateMarkup()
               +'</div>'
-              +'<footer class="sanctuary-management-composer-actions"><p class="sanctuary-management-draft-status'+(state.tone?' is-'+escapeHtml(state.tone):'')+'" data-draft-status role="status">'+escapeHtml(state.message||defaultStatus())+'</p><div><button type="submit" class="is-primary"'+(busy?' disabled':'')+'>'+submitLabel+'</button><button type="button" data-draft-reset'+(busy?' disabled':'')+'>초기화</button><button type="button" data-draft-close'+(busy?' disabled':'')+'>닫기</button></div></footer>'
+              +'<footer class="sanctuary-management-composer-actions"><div class="sanctuary-management-draft-status-wrap"><p class="sanctuary-management-draft-status'+(state.tone?' is-'+escapeHtml(state.tone):'')+'" data-draft-status role="status">'+escapeHtml(state.message||defaultStatus())+'</p>'+listRetry+'</div><div><button type="submit" class="is-primary"'+(busy?' disabled':'')+'>'+submitLabel+'</button><button type="button" data-draft-reset'+(busy?' disabled':'')+'>초기화</button><button type="button" data-draft-close'+(busy?' disabled':'')+'>닫기</button></div></footer>'
             +'</section>'
             +'<div class="sanctuary-management-builder-side'+(state.linkedAlts?' has-linked-alts':'')+'">'
               +linkedAltPanelMarkup()
@@ -850,7 +860,8 @@
   }
 
   function candidateCharacter(candidate){
-    return {characterId:Number(candidate.characterId)||null,name:value(candidate.characterName||candidate.name),serverId:Number(candidate.serverId)||null,serverName:value(candidate.serverName),className:value(candidate.className),randomClassCode:value(candidate.randomClassCode).toUpperCase(),profileImageUrl:value(candidate.profileImageUrl),relation:value(candidate.relation)||(candidate.isMain?'MAIN':'ALT'),isMain:candidate.isMain===true,isRandomAlt:candidate.isRandomAlt===true,assignmentKind:candidate.isRandomAlt?'RANDOM_ALT':'ACTUAL_CHARACTER',power:combatPowerValue(candidate.power??candidate.latestPveCombatPower??candidate.latest_pve_combat_power),itemLevel:itemLevelValue(candidate.itemLevel??candidate.latestPveItemLevel??candidate.latest_pve_item_level),mainCharacterId:Number(candidate.mainCharacterId)||null,mainCharacterName:value(candidate.mainCharacterName||(candidate.isMain?candidate.characterName||candidate.name:'')),ownerMemberId:Number(candidate.ownerMemberId)||null};
+    const familyRelation=value(candidate.familyRelation).toUpperCase()||value(candidate.relation).toUpperCase()||(candidate.isMain?'MAIN':'ALT');
+    return {characterId:Number(candidate.characterId)||null,name:value(candidate.characterName||candidate.name),serverId:Number(candidate.serverId)||null,serverName:value(candidate.serverName),className:value(candidate.className),randomClassCode:value(candidate.randomClassCode).toUpperCase(),profileImageUrl:value(candidate.profileImageUrl),relation:familyRelation,isMain:familyRelation==='MAIN'||candidate.isMain===true,isRandomAlt:candidate.isRandomAlt===true,assignmentKind:candidate.isRandomAlt?'RANDOM_ALT':'ACTUAL_CHARACTER',power:combatPowerValue(candidate.power??candidate.latestPveCombatPower??candidate.latest_pve_combat_power),itemLevel:itemLevelValue(candidate.itemLevel??candidate.latestPveItemLevel??candidate.latest_pve_item_level),mainCharacterId:Number(candidate.mainCharacterId)||null,mainCharacterName:value(candidate.mainCharacterName||(familyRelation==='MAIN'?candidate.characterName||candidate.name:'')),ownerMemberId:Number(candidate.ownerMemberId)||null};
   }
 
   function assignCreatorCharacter(characterId){
@@ -877,13 +888,16 @@
       const result=await bridge().searchCharacter(Number(state.sourceTeamId),value(query));
       if(isMainSearch){
         if(result.character){
-          if(result.character.relation!=='MAIN'||Number(result.character.ownerMemberId)<1)throw new Error('선택한 캐릭터가 이용자 본캐로 확인되지 않습니다.');
+          const isMain=result.character.familyRelation==='MAIN'||result.character.isMain===true||Number(result.character.mainCharacterId)===Number(result.character.characterId);
+          if(!isMain)throw new Error('선택한 캐릭터가 본캐로 확인되지 않습니다.');
           state.mainLookup={character:result.character};
-        }else if(result.candidate?.allowedRelations?.includes('MAIN'))state.mainLookup={candidate:result.candidate};
-        else throw new Error('외부·게스트 캐릭터는 부캐 연결 본캐로 사용할 수 없습니다.');
+        }else if(result.candidate)state.mainLookup={candidate:result.candidate};
+        else throw new Error('연결할 본캐를 확인하지 못했습니다.');
       }else{
         state.lookup=result.character?{character:result.character}:{candidate:result.candidate};
         state.mainLookup=null;
+        state.listSyncEnabled=true;
+        state.listSyncResult=null;
         state.relationType=result.candidate?.allowedRelations?.length===1?result.candidate.allowedRelations[0]:'';
       }
       renderRosterState();
@@ -907,6 +921,7 @@
     const slotNumber=slotDisplayNumber(chosen);
     invalidateBalanceProposal();chosen.slot.character=candidateCharacter(character);chosen.slot.occupied=true;chosen.slot.assignmentKind='ACTUAL_CHARACTER';state.selectedSlotId=0;state.moveFromSlotId=0;resetCharacterLookup();refreshLocalTeam();renderRosterState();
     setStatus(value(character.characterName)+' 캐릭터를 '+force.forceNo+'포스 '+slotNumber+'번에 배치했습니다. 마지막 저장 전까지 Server에는 반영되지 않습니다.','success');
+    return true;
   }
 
   async function loadLinkedAlts(mainCharacterId){
@@ -936,20 +951,41 @@
     const option=classOption(classCode);state.linkedAlts.randomClassCode=option.code;renderRosterState();setStatus('랜덤 부캐 클래스를 '+option.label+'(으)로 선택했습니다.','progress');
   }
 
-  async function registerOfficialCharacter(asMainOnly=false){
+  async function registerOfficialCharacter(){
     if(state.saving||state.mutating||!state.team)return;
-    const source=asMainOnly?state.mainLookup?.candidate:state.lookup?.candidate;
-    const relation=asMainOnly?'MAIN':state.relationType;
+    const source=state.lookup?.candidate;
+    const relation=state.relationType;
     const mainId=relation==='ALT'?Number(state.mainLookup?.character?.characterId||0):null;
-    if(!source||!relation||relation==='ALT'&&!mainId){setStatus('본캐·부캐·게스트 관계를 먼저 확인해 주세요.');return;}
-    state.mutating=true;state.characterRequestKey='sm-character-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);
-    setStatus((asMainOnly?'연결할 본캐를 먼저':'공식 캐릭터 관계를')+' Server에 등록하고 있습니다.','progress');setControlsDisabled(true);
+    const mainCandidateId=relation==='ALT'?value(state.mainLookup?.candidate?.candidateId)||null:null;
+    if(!source||!relation||relation==='ALT'&&!mainId&&!mainCandidateId){setStatus('게스트로 추가하거나 연결할 본캐를 찾아 주세요.');return;}
+    const registrationSignature=JSON.stringify([state.sourceTeamId,source.candidateId,relation,mainId,mainCandidateId,state.listSyncEnabled]);
+    if(state.characterRequestSignature!==registrationSignature||!state.characterRequestKey){
+      state.characterRequestSignature=registrationSignature;
+      state.characterRequestKey='sm-character-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);
+    }
+    state.mutating=true;
+    setStatus('캐릭터와 본캐·부캐 관계를 Server에 등록하고 있습니다.','progress');setControlsDisabled(true);
     try{
-      const result=await bridge().registerCharacter(Number(state.sourceTeamId),source.candidateId,relation,mainId,state.characterRequestKey);
+      const result=await bridge().registerCharacter(Number(state.sourceTeamId),source.candidateId,relation,mainId,mainCandidateId,state.listSyncEnabled,state.characterRequestKey);
       state.characterRequestKey='';state.mutating=false;setControlsDisabled(false);
-      if(asMainOnly){state.mainLookup={character:result.character};renderRosterState();setStatus(result.character.characterName+' 본캐를 공식 확인했습니다. 이제 부캐를 추가할 수 있습니다.','success');return;}
-      await assignSearchedCharacter(result.character);
+      const assigned=assignSearchedCharacter(result.character);
+      const placementMessage=assigned?'로컬 배치 완료':state.message;
+      state.listSyncResult=Object.assign({registrationId:value(result.registrationId)},result.listSync||{});
+      renderRosterState();
+      const listStatus=value(result.listSync?.status).toUpperCase();
+      const listMessage=listStatus==='FAILED'?'List 반영 실패':listStatus==='NOT_REQUESTED'?'List 반영 안 함':'List 시트 반영 완료';
+      setStatus(result.character.characterName+' 등록 완료 · '+placementMessage+' · '+listMessage,listStatus==='FAILED'||!assigned?'error':'success');
     }catch(error){state.mutating=false;setControlsDisabled(false);renderRosterState();setStatus(value(error?.message)||'공식 캐릭터 관계를 확정하지 못했습니다.','error');}
+  }
+
+  async function retryCharacterListSync(){
+    const registrationId=value(state.listSyncResult?.registrationId);if(!registrationId||state.mutating)return;
+    state.mutating=true;setStatus('List 시트 반영을 다시 시도하고 있습니다.','progress');setControlsDisabled(true);
+    try{
+      const result=await bridge().retryCharacterList(registrationId);
+      state.mutating=false;setControlsDisabled(false);state.listSyncResult=Object.assign({registrationId},result.listSync||{});renderRosterState();
+      setStatus(value(result.listSync?.message)||(result.listSync?.status==='SYNCED'?'List 시트 반영 완료':'List 시트 반영 실패'),result.listSync?.status==='SYNCED'?'success':'error');
+    }catch(error){state.mutating=false;setControlsDisabled(false);renderRosterState();setStatus(value(error?.message)||'List 시트 반영을 다시 시도하지 못했습니다.','error');}
   }
 
   function moveSlot(fromSlotId,toSlotId){
@@ -1116,8 +1152,10 @@
     if(searched&&!searched.disabled){assignSearchedCharacter(state.lookup?.character);return;}
     const relation=event.target.closest('[data-draft-relation]');
     if(relation&&!relation.disabled){state.relationType=relation.dataset.draftRelation||'';state.mainLookup=null;renderRosterState();return;}
-    if(event.target.closest('[data-draft-register-main]')){registerOfficialCharacter(true);return;}
-    if(event.target.closest('[data-draft-register-character]')){registerOfficialCharacter(false);return;}
+    const listSync=event.target.closest('[data-list-sync]');
+    if(listSync&&!listSync.disabled){state.listSyncEnabled=listSync.dataset.listSync!=='N';renderRosterState();return;}
+    if(event.target.closest('[data-list-sync-retry]')){retryCharacterListSync();return;}
+    if(event.target.closest('[data-draft-register-character]')){registerOfficialCharacter();return;}
     if(event.target.closest('[data-character-search-submit]')){
       const search=event.target.closest('[data-character-search-form]');
       searchCharacter(search?.querySelector('[name="characterQuery"]')?.value,false);
