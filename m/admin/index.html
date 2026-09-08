@@ -319,7 +319,7 @@
         </section>
         <section class="admin-card" id="visitorHistoryCard">
           <div class="admin-card-head"><div><h2>방문·로그인 이력</h2><p>Sub Master·Master만 회원별 로그인 시각과 당시 등급을 확인할 수 있습니다.</p></div></div>
-          <div class="admin-visitor-filters"><label>시작일<input class="admin-input" id="visitorDateFrom" type="date"/></label><label>종료일<input class="admin-input" id="visitorDateTo" type="date"/></label><label>회원명<input class="admin-input" id="visitorMemberSearch" placeholder="회원명 검색"/></label><label>로그인 여부<select class="admin-select" id="visitorLoginFilter"><option value="ALL">전체</option><option value="LOGIN">로그인</option><option value="ANONYMOUS">비로그인</option></select></label><label>페이지<select class="admin-select" id="visitorPageFilter"><option value="">전체 페이지</option><option value="home">메인</option><option value="hall">명예의 전당</option><option value="ranking">랭킹</option><option value="sanctuary">성역</option><option value="sanctuary-schedule">성역 일정</option><option value="meter">미터</option><option value="arcana">아르카나</option><option value="admin">관리자</option><option value="pages">기타 페이지</option></select></label><button class="admin-btn primary" id="visitorSearchBtn" type="button">조회</button></div>
+          <div class="admin-visitor-filters"><label>시작일<input class="admin-input" id="visitorDateFrom" type="date"/></label><label>종료일<input class="admin-input" id="visitorDateTo" type="date"/></label><label>회원명<input class="admin-input" id="visitorMemberSearch" placeholder="회원명 검색"/></label><label>로그인 여부<select class="admin-select" id="visitorLoginFilter"><option value="ALL">일반 방문 전체</option><option value="LOGIN">로그인</option><option value="ANONYMOUS">비로그인</option><option value="INTERNAL">검수·자동화 (통계 제외)</option></select></label><label>페이지<select class="admin-select" id="visitorPageFilter"><option value="">전체 페이지</option><option value="home">메인</option><option value="hall">명예의 전당</option><option value="ranking">랭킹</option><option value="sanctuary">성역</option><option value="sanctuary-schedule">성역 일정</option><option value="meter">미터</option><option value="arcana">아르카나</option><option value="admin">관리자</option><option value="pages">기타 페이지</option></select></label><button class="admin-btn primary" id="visitorSearchBtn" type="button">조회</button></div>
           <div id="visitorHistoryStatus" class="admin-statusline"></div><div class="admin-visitor-history" id="visitorHistoryList"><div class="admin-empty">방문 이력을 불러오세요.</div></div><div class="admin-pagination"><button class="admin-btn" id="visitorPrevBtn" type="button">이전</button><span id="visitorPageInfo">1 / 1</span><button class="admin-btn" id="visitorNextBtn" type="button">다음</button></div>
         </section>
       </div>
@@ -382,10 +382,10 @@
 <script src="../../ui/kinojo-admin-panel.js?cache=2026071712"></script>
 <script src="../../core/kinojo-supabase-client.js?cache=2026080205&amp;stage7=2026082904"></script>
 <script src="../../core/kinojo-supabase-rpc.js?cache=2026082806"></script>
-  <script src="../../core/kinojo-supabase-features.js?cache=2026090101"></script>
+  <script src="../../core/kinojo-supabase-features.js?cache=2026090803"></script>
 <script src="../../core/kinojo-auth-session.js?cache=2026081801"></script>
 <script src="../../core/kinojo-auth-service.js?cache=2026081801"></script>
 <script src="../../core/kinojo-auth-ui.js?cache=2026082901"></script>
-<script src="../../admin/js/admin.js?cache=2026090801&amp;stage7=2026082904"></script>
+<script src="../../admin/js/admin.js?cache=2026090803&amp;stage7=2026082904"></script>
 </body>
 </html>

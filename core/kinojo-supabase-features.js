@@ -933,6 +933,11 @@
 
 
   async function logPageView(pageKey, payload){
+    // A local preview or browser test must never write production visit telemetry.
+    const visitHost=String(location.hostname||'').toLowerCase();
+    if(!['kinojo.info','www.kinojo.info'].includes(visitHost)||navigator.webdriver===true||window.__KINOJO_TEST_TRAFFIC__===true){
+      return {ok:true,ignored:true,reason:'NON_PUBLIC_BROWSER'};
+    }
     const body=Object.assign({},payload||{});
     const credential=optionalServerSessionCredential();
     if(credential)body.authCredential=credential;

@@ -53,7 +53,7 @@ for(const token of [
 
 for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   const html=read(page);
-  for(const token of ['sanctuary-management-inline-slot.css?cache=2026090101','sanctuary-management-inline-slot.js?cache=2026090101','kinojo-supabase-features.js?cache=2026090101','sanctuary-management.js?cache=2026090101'])assert.ok(html.includes(token),`${page}: v458 asset missing ${token}`);
+  for(const token of ['sanctuary-management-inline-slot.css?cache=2026090101','sanctuary-management-inline-slot.js?cache=2026090101','kinojo-supabase-features.js?cache=2026090803','sanctuary-management.js?cache=2026090101'])assert.ok(html.includes(token),`${page}: v458 asset missing ${token}`);
 }
 assert.ok(workflow.includes('node tests/sanctuary-management-inline-slot-v458-contract.test.js'),'v458 contract is not wired into CI');
 

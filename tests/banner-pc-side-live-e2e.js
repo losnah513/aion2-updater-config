@@ -1,3 +1,4 @@
+const {markPuppeteerPage,interceptPuppeteerVisit}=require('./helpers/visitor-traffic');
 'use strict';
 
 const assert=require('node:assert/strict');
@@ -125,6 +126,9 @@ function verify(pageSpec,width,data){
   try{
     for(const pageSpec of pages){
       const page=await browser.newPage();
+  await markPuppeteerPage(page);
+  await page.setRequestInterception(true);
+  page.on('request',request=>{if(!interceptPuppeteerVisit(request))request.continue().catch(()=>{});});
       page.setDefaultNavigationTimeout(45000);
       await page.setViewport({width:1839,height,deviceScaleFactor:1});
       const response=await page.goto(BASE+pageSpec.path,{waitUntil:'domcontentloaded'});

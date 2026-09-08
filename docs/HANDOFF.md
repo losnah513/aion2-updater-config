@@ -774,3 +774,13 @@
 - 운영 Supabase는 DB404/DB405, `kinojo-member-profile` v24, cleanup v6, private bucket, 15분 cron을 유지한다. 요청 테이블 5개 RLS와 service-role-only RPC 11개 ACL, trigger, health 200, 무인증 관리자 401을 readback했다.
 - 회원·관리자·개인정보 페이지를 PC/390/320에서 확인했고 가로 overflow와 관리자 console error/warn은 0이다. 전체 Node 계약은 **48/48 PASS**다.
 - 상세 근거는 `docs/MY_INFO_PHASE2_STAGE4_CLOSEOUT_20260826.md`를 기준으로 한다. 진행도는 **4/4**, 다음 단계는 없다.
+
+
+## 방문 통계 검수 분리 · DB474 · 2026-09-08
+
+- CONFIRMED: 로컬/CI 테스트는 tests/helpers/visitor-traffic.js로 방문 RPC를 차단한다. WEB의 로컬 호스트/navigator.webdriver/test marker는 기록하지 않는다.
+- 서버 traffic_class(PUBLIC/LOCAL_TEST/AUTOMATED/INTERNAL_ADMIN)가 일반 일별·페이지별 집계와 방문 이력의 기준이다. 전용 CODEX_ADMIN만 is_automation_account=true이며 일반 관리자까지 제외하지 않는다.
+- 관리자 방문 이력의 INTERNAL 선택으로 제외된 원시 기록을 조회한다. 기존 이벤트 ID·시각·payload·회원 연결은 유지한다.
+- 실제 운영 검수는 CODEX_ADMIN 정상 로그인·서버 세션 확인 후 같은 브라우저를 재사용한다. 세션 만료 시 재로그인, 자격증명 부재 시 관리자 검수 중단. 비밀값은 저장소/문서에 기록하지 않는다.
+- 검증: node tests/visitor-traffic.test.js; node tests/web-shell-auth-contract.test.js; supabase/tests/visitor_traffic_v474.sql은 BEGIN/ROLLBACK으로 실행. 롤백 파일은 visitor_traffic_v474_rollback.sql.
+- 재검증 조건: 방문 RPC/집계/테스트 helper/전용 계정 정책 변경. 증거: tests/evidence/20260908-visitor-traffic.

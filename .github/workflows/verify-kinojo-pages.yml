@@ -156,6 +156,7 @@ jobs:
           done
           node --check supabase/functions/kinojo-member-profile/index.ts
 
+          node tests/visitor-traffic.test.js
           node tests/web-shell-auth-contract.test.js
           node tests/hof-layout-contract.test.js
           node tests/my-info-image-contract.test.js
