@@ -187,8 +187,22 @@ async function run(){
  console.log('PASS: H-only/suffix prepare exclusion, incomplete read blocks, verified class preserved, repeated prepare preserves targets');
  console.log('PASS: policy SQL, manual precedence, group exceptions, current schedule/future guard, 7-day review, stale/admin ACL');
  const rowsBefore=(await q('select count(*)::int n from character_master'))[0].n;
+ await db.exec(read('tests/fixtures/character-refresh-list-preference-schema.sql'));
+ await db.exec(read('supabase/migrations/20260908073247_character_refresh_list_write_preference.sql'));
+ await db.exec(`insert into updater_sessions(session_id,session_token,raw_payload) values('off-identity','test-session','{"serverQueue":true,"listSheetSyncEnabled":false}');
+ insert into character_master(id,character_name,server_id,legion_name,class_name,char_key) values(50,'off-old',2002,'깡','궁성','555555555555555555');
+ insert into lookup_session_targets(id,session_id,character_name,server_id,list_row) values(50,'off-identity','off-old',2002,50);
+ insert into private.legion_tree_assignments(legion_name,character_id) values('깡',50);`);
+ const offCandidate={...autoCandidate,charKey:'555555555555555555',characterName:'off-new',sourceCharacterName:'off-old'};
+ const offApply=(await q("select kinojo_character_identity_recovery_apply_v1('off-identity','test-session',50,$1) p",[JSON.stringify(offCandidate)]))[0].p;
+ assert.equal(offApply.ok,true);assert.equal(offApply.listSyncQueued,false);
+ assert.equal((await q('select legion_name from character_master where id=50'))[0].legion_name,null);
+ assert.equal((await q("select count(*)::int n from google_list_sheet_sync_queue where session_id='off-identity'"))[0].n,0);
+ assert.equal((await q("select kinojo_queue_list_sheet_sync_session('off-identity','test-session') p"))[0].p.queuedCount,0);
+ console.log('PASS: combined policy + OFF automatic identity transaction clears former legion but creates zero initial/final list Queue');
+ await db.exec(read('supabase/rollbacks/20260908073247_character_refresh_list_write_preference.sql'));
  await db.exec(read('supabase/rollbacks/20260908062618_character_refresh_eligibility_and_restore.sql'));
- assert.equal((await q('select count(*)::int n from character_master'))[0].n,rowsBefore);
+ assert.equal((await q('select count(*)::int n from character_master'))[0].n,rowsBefore+1);
  assert.equal((await q("select character_name from character_master where id=10"))[0].character_name,'old-owner_D');
  console.log('PASS: staged rollback compiles, preserves records/policies/identity audit and Queue');
  }finally{await db.close();}

@@ -735,6 +735,9 @@
 
   async function adminAutomation(command, extra={}){
     assertAdmin();
+    if(command==='saveListWrite')return rpc('kinojo_automation_admin_list_write_save',{
+      p_pass_key:currentAdminSessionCredential(),p_enabled:extra.enabled===true
+    });
     const actions={status:'adminStatus',save:'adminSave'};
     const action=actions[String(command||'').trim()];
     if(!action)return{ok:false,message:'알 수 없는 서버 자동화 관리자 명령입니다.'};
@@ -1578,6 +1581,7 @@
             tool:'KINOJO_ADMIN_WEB',
             requestedSurface:'ADMIN_WEB_SERVER_QUEUE',
             serverQueue:true,
+            listSheetSyncEnabled:extra.listSheetSyncEnabled!==false,
             lookupOnlyPhase:false,
             postprocessPhase:true,
             sheetDeferred:false,

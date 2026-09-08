@@ -1,0 +1,38 @@
+const fs=require('node:fs'),assert=require('node:assert/strict');
+const {PGlite}=require('../.codex-test-runtime/node_modules/@electric-sql/pglite');
+(async()=>{
+ const db=new PGlite();await db.exec("create schema if not exists private;create role anon;create role authenticated;create role service_role;\ncreate table character_master(id bigint primary key,server_id int,character_name text,char_key text,class_name text,is_active boolean);\ncreate function kinojo_character_identity_key_v298(text) returns text language sql immutable as $$select lower(replace($1,' ',''))$$;\ncreate table character_detail_refresh_jobs(id uuid default gen_random_uuid() not null,character_master_id bigint not null,server_id integer not null,character_id text,character_name text not null,status text default 'queued'::text not null,phase text default 'INIT'::text not null,current_category text,current_label text,worker_id text,equipment_targets jsonb default '[]'::jsonb not null,daevanion_targets jsonb default '[]'::jsonb not null,base_info_payload jsonb,base_equipment_payload jsonb,equipment_cursor integer default 0 not null,daevanion_cursor integer default 0 not null,weapon_total integer default 0 not null,weapon_done integer default 0 not null,weapon_failed integer default 0 not null,armor_total integer default 0 not null,armor_done integer default 0 not null,armor_failed integer default 0 not null,accessory_total integer default 0 not null,accessory_done integer default 0 not null,accessory_failed integer default 0 not null,arcana_total integer default 0 not null,arcana_done integer default 0 not null,arcana_failed integer default 0 not null,daevanion_total integer default 0 not null,daevanion_done integer default 0 not null,daevanion_failed integer default 0 not null,request_count integer default 0 not null,failure_items jsonb default '[]'::jsonb not null,resume_at timestamp with time zone,started_at timestamp with time zone,completed_at timestamp with time zone,cooldown_until timestamp with time zone,last_heartbeat_at timestamp with time zone,last_error_code text,last_error_message text,summary jsonb default '{}'::jsonb not null,created_at timestamp with time zone default now() not null,updated_at timestamp with time zone default now() not null, primary key(id));\ncreate table character_equipment_detail_latest(character_master_id bigint not null,slot_pos integer not null,item_id bigint,item_name text,slot_pos_name text,slot_label text,category text not null,grade text,icon text,enchant_level integer default 0 not null,exceed_level integer default 0 not null,raw_payload jsonb not null,refresh_job_id uuid not null,refreshed_at timestamp with time zone default now() not null,updated_at timestamp with time zone default now() not null, primary key(character_master_id,slot_pos));\ncreate table character_daevanion_detail_latest(character_master_id bigint not null,board_id integer not null,board_name text,raw_payload jsonb not null,refresh_job_id uuid not null,refreshed_at timestamp with time zone default now() not null,updated_at timestamp with time zone default now() not null, primary key(character_master_id,board_id));");
+ await db.exec(fs.readFileSync('supabase/migrations/20260908082028_character_detail_identity_write_fence.sql','utf8'));
+ const id='00000000-0000-0000-0000-000000000001',key='123456789012345678';
+ const profile={charKey:key,serverId:2002,characterName:'before',className:'궁성'};
+ await db.exec("insert into character_master values(1,2002,'before','123456789012345678','궁성',true)");
+ await db.query("insert into character_detail_refresh_jobs(id,character_master_id,server_id,character_name,status,phase,worker_id) values($1,1,2002,'before','running','INIT','owner')",[id]);
+ const write=async(kind,payload,worker='owner')=>(await db.query('select kinojo_character_detail_write_v1($1,$2,$3,$4) as v',[id,worker,kind,JSON.stringify(payload)])).rows[0].v;
+ assert.equal((await write(null,{})).code,'DETAIL_WRITE_INVALID');
+ assert.equal((await write('job',{id})).code,'DETAIL_WRITE_INVALID');
+ assert.equal((await write('job',{status:'completed'})).code,'DETAIL_IDENTITY_MISMATCH');
+ assert.equal((await write('job',{base_info_payload:{profile:{...profile,charKey:'other'}}})).code,'DETAIL_IDENTITY_MISMATCH');
+ assert.equal((await write('job',{base_info_payload:{profile:{...profile,serverId:2003}}})).code,'DETAIL_IDENTITY_MISMATCH');
+ assert.equal((await write('job',{base_info_payload:{profile:{...profile,className:'치유성'}}})).code,'DETAIL_IDENTITY_MISMATCH');
+ assert.equal((await write('job',{base_info_payload:{profile},phase:'EQUIPMENT',
+ equipment_targets:[{id:10,slotPos:1,category:'weapon'}],daevanion_targets:[{id:20}]})).ok,true);
+ const item={character_master_id:1,slot_pos:1,item_id:10,category:'weapon',enchant_level:0,exceed_level:0,raw_payload:{version:'valid'},refresh_job_id:id};
+ assert.equal((await write('equipment',item)).ok,true);
+ assert.equal((await write('daevanion',{character_master_id:1,board_id:20,raw_payload:{valid:true},refresh_job_id:id})).ok,true);
+ assert.equal((await write('equipment',{...item,item_id:11})).code,'DETAIL_TARGET_MISMATCH');
+ await db.exec("update character_detail_refresh_jobs set worker_id='new-owner'");
+ assert.equal((await write('equipment',{...item,raw_payload:{version:'late'}})).code,'DETAIL_STALE_WORKER');
+ assert.equal((await write('job',{status:'failed'})).code,'DETAIL_STALE_WORKER');
+ assert.deepEqual((await db.query('select raw_payload from character_equipment_detail_latest')).rows[0].raw_payload,{version:'valid'});
+ await db.exec("update character_master set character_name='renamed'");
+ assert.equal((await write('job',{current_label:'late'},'new-owner')).code,'DETAIL_IDENTITY_CHANGED');
+ assert.equal((await write('equipment',item,'new-owner')).code,'DETAIL_IDENTITY_CHANGED');
+ assert.equal((await write('job',{status:'failed',worker_id:null},'new-owner')).ok,true);
+ assert.equal((await write('job',{status:'running'},'new-owner')).code,'DETAIL_STALE_WORKER');
+ for(const role of ['anon','authenticated'])assert.equal((await db.query("select has_function_privilege($1,'kinojo_character_detail_write_v1(uuid,text,text,jsonb)','execute') as allowed",[role])).rows[0].allowed,false);
+ assert.equal((await db.query("select has_function_privilege('service_role','kinojo_character_detail_write_v1(uuid,text,text,jsonb)','execute') as allowed")).rows[0].allowed,true);
+ await db.exec(fs.readFileSync('supabase/rollbacks/20260908082028_character_detail_identity_write_fence.sql','utf8'));
+ assert.equal((await db.query('select count(*)::int as n from character_equipment_detail_latest')).rows[0].n,1);
+ console.log('PASS: actual SQL identity/worker fences, valid equipment+board, mismatched proof, stale writes, rename mid-job, safe failure, terminal protection, service ACL, rollback preserves data');
+ await db.close();
+})().catch(e=>{console.error(e);process.exitCode=1});

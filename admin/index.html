@@ -51,8 +51,10 @@
       <nav class="admin-subnav" data-admin-subnav="characters" aria-label="캐릭터 관리 하위 기능"><button class="active" data-admin-subtab="lookup" type="button">정보 최신화</button><button data-admin-subtab="records" type="button">캐릭터 상태</button></nav>
       <div class="admin-subpane active" data-admin-subpane="lookup">
         <section class="admin-card admin-lookup-console">
-          <div class="admin-card-head"><div><h2>캐릭터 정보 최신화</h2><p>기본은 전체 조회입니다. Google list와 Server Master를 대조한 뒤 공식 정보 조회부터 Master·Google list 반영까지 Server가 처리합니다.</p></div><button class="admin-btn" id="characterLookupReloadBtn" type="button">상태 새로고침</button></div>
-          <div class="admin-meter-control-row"><div><strong>캐릭터 정보 자동 최신화</strong><span id="characterAutomationSchedule">KST 22:00 · 04:00 · 10:00 · 16:00</span><div id="characterAutomationNotice" class="admin-statusline" role="status" aria-live="polite">자동 실행 상태를 불러오는 중입니다.</div></div><label class="kinojo-filter-switch admin-meter-switch"><span>OFF</span><input id="characterAutomationToggle" type="checkbox" aria-label="캐릭터 정보 자동 최신화" disabled/><span class="kinojo-filter-switch-track" aria-hidden="true"><span class="kinojo-filter-switch-knob"></span></span><span>ON</span></label></div>
+          <div class="admin-card-head"><div><h2>캐릭터 정보 최신화</h2><p>공식 정보 조회와 DB 저장은 서버가 처리합니다. list 읽기·대조는 유지하고, 쓰기·readback은 실행별로 선택합니다.</p></div><button class="admin-btn" id="characterLookupReloadBtn" type="button">상태 새로고침</button></div>
+          <div class="admin-meter-control-row"><div><strong>자동 실행 설정</strong><span id="characterAutomationSchedule">KST 22:00 · 04:00 · 10:00 · 16:00</span><div id="characterAutomationNotice" class="admin-statusline" role="status" aria-live="polite">자동 실행 상태를 불러오는 중입니다.</div></div><label class="kinojo-filter-switch admin-meter-switch"><span>OFF</span><input id="characterAutomationToggle" type="checkbox" aria-label="캐릭터 정보 자동 최신화" disabled/><span class="kinojo-filter-switch-track" aria-hidden="true"><span class="kinojo-filter-switch-knob"></span></span><span>ON</span></label></div>
+          <div class="admin-meter-control-row"><div><strong>자동 실행의 list 반영</strong><span>예약 최신화에 적용 · 실행 중에는 변경 불가 · 기본 ON</span></div><label class="kinojo-filter-switch admin-meter-switch"><span>OFF</span><input id="characterAutomationListToggle" type="checkbox" aria-label="자동 최신화 list 반영" checked disabled/><span class="kinojo-filter-switch-track" aria-hidden="true"><span class="kinojo-filter-switch-knob"></span></span><span>ON</span></label></div>
+          <div class="admin-meter-control-row"><div><strong>이번 수동 실행</strong><span>재조회는 원래 실행의 list 설정을 유지합니다.</span></div><label><input id="characterLookupListToggle" type="checkbox" checked/> list 반영</label></div>
           <details class="admin-lookup-filter-details" id="characterLookupFilterDetails">
             <summary><span>조회 조건 설정</span><em>필요할 때만 열기 · 조건 없음 = 전체 조회</em></summary>
             <div class="admin-lookup-settings">
@@ -66,6 +68,7 @@
           </details>
           <div class="admin-lookup-start-row"><button class="admin-btn primary" id="characterLookupServerQueueBtn" type="button">전체 조회 시작</button><span>서버 실행 인계가 확인되면 브라우저를 닫아도 계속 진행되며, 다시 접속하면 진행 중인 세션에 자동으로 연결됩니다.</span></div>
           <div id="characterLookupStatus" class="admin-statusline"></div>
+          <div class="admin-statusline" role="status" aria-live="polite"><strong>현재 실행의 list 설정:</strong> <span id="characterLookupListResult">실행 기록 없음</span></div>
           <div class="admin-lookup-exit-safety idle" id="characterLookupExitSafety" role="status" aria-live="polite"><i aria-hidden="true"></i><div><strong data-exit-safety-title>조회 대기</strong><span data-exit-safety-message>조회 작업을 시작하면 브라우저 종료 안전 상태를 여기에서 확인할 수 있습니다.</span></div></div>
           <section class="admin-lookup-total-progress" aria-label="전체 진행률">
             <div class="admin-lookup-total-head">
@@ -407,10 +410,10 @@
 <script src="../ui/kinojo-admin-panel.js?cache=2026071712"></script>
 <script src="../core/kinojo-supabase-client.js?cache=2026080205&amp;stage7=2026082904"></script>
 <script src="../core/kinojo-supabase-rpc.js?cache=2026082806"></script>
-  <script src="../core/kinojo-supabase-features.js?cache=2026090803&amp;character=2026090801"></script>
+  <script src="../core/kinojo-supabase-features.js?cache=2026090803&amp;character=2026090802"></script>
 <script src="../core/kinojo-auth-session.js?cache=2026081801"></script>
 <script src="../core/kinojo-auth-service.js?cache=2026081801"></script>
 <script src="../core/kinojo-auth-ui.js?cache=2026082901"></script>
-<script src="./js/admin.js?cache=2026090804&amp;stage7=2026082904&amp;character=2026090801"></script>
+<script src="./js/admin.js?cache=2026090804&amp;stage7=2026082904&amp;character=2026090802"></script>
 </body>
 </html>

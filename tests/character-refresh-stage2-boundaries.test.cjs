@@ -48,7 +48,7 @@ async function run(){
  const ui=vm.createContext({window:{KinojoAdmin:A},document:{addEventListener(){}}});vm.runInContext(read('admin/js/admin-characters.js'),ui);A.renderCharacters();
  assert.match(container.innerHTML,/재검토 대기/);assert.match(container.innerHTML,/활동 관계 재검토 대기/);assert.match(container.innerHTML,/미반영 2건 재시도/);assert.doesNotMatch(container.innerHTML,/ACTIVITY_REVIEW_WAIT/);
  filter.value='lookup';assert.equal(A.filteredCharacters().length,1);filter.value='normal';assert.equal(A.filteredCharacters().length,0);
- for(const page of ['admin/index.html','m/admin/index.html'])assert.match(read(page),/character=2026090801/);
+ for(const page of ['admin/index.html','m/admin/index.html'])assert.match(read(page),/character=2026090802/);
  console.log('PASS: DB policy drives admin labels/filter, pending list retry is visible, PC/mobile cache invalidation');
 }
 run().catch(e=>{console.error(e);process.exitCode=1});

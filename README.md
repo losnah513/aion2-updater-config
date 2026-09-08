@@ -1,8 +1,9 @@
-# aion2-updater-config
+# KINOJO WEB
 
-## Character refresh stability — staged, not deployed (2026-09-08)
+## Character refresh stability
 
-Stage 2 implementation and offline regression checks are complete. Eligibility is DB-owned and separate from visibility; direct-key recovery preserves exact identity and atomic transfer cleanup. DB-only list restore requires current official identity/legion evidence. Stable Master-ID sheet writes, durable partial retry and completion guards are staged in the existing services. See docs/CHARACTER_REFRESH_STABILITY_STAGE2_WIP.md and CHARACTER_REFRESH_STABILITY_STAGE2_RELEASE.md. Production canaries, real authentication and total-runtime measurements remain Stage 3 gates; local tests do not demonstrate production performance or deployment.
+Existing services share DB-owned eligibility, direct-key identity recovery, stable Master-ID writes and immutable per-session list export preferences. Scope follows the existing project plan; status, evidence and next actions belong only in the [project LOG](https://drive.google.com/file/d/1k0R6heq6ttLl9IKFm_q1_EGm4FCxmVbQ/view). See docs/CHARACTER_REFRESH_STABILITY_STAGE2_RELEASE.md and CHARACTER_REFRESH_STAGE2_MANIFEST.json for deployment/rollback contracts. No production execution is authorized by these documents.
+
 ## Roster family node editor · 2026-09-08
 
 Sanctuary hover follow-up: actual-character cards use Server `isMain/mainCharacterId` to enable the existing main/alt tooltip even when the independent membership classification is GUEST. The Server already returns the correct main name after roster saving. PC hover and mobile tap show 강태공2의 부캐 for 강태공1 while preserving the guest card style. Sanctuary JS cache parameter familyHover2026090801; no DB/Edge change.

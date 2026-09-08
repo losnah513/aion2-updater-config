@@ -1,11 +1,10 @@
 # KINOJO WEB HANDOFF
 
-## 캐릭터 조회 안정화 4차 · 2단계 로컬 완료 · 운영 미배포 · 2026-09-08
+## 캐릭터 최신화 4차 재개 계약
 
-- 조회 자격/7일 재검토, key 기반 신원 복구·충돌 양쪽 원자 처리, _D/H 제외, fresh 공식 레기온 기준 DB-only list 복원, metadata 쓰기·부분 Queue 합치기·늦은 실패 보호를 기존 경계에 구현했다. 수동 제외와 이력은 보존한다.
-- 핵심 8종/인접 회귀 10종 로컬 PASS. 실제 인증·Google canary·운영 전체 최신화 및 지연 개선 실측은 3단계다. 운영 배포 완료로 읽지 않는다.
-- 현재 인계: docs/CHARACTER_REFRESH_STABILITY_STAGE2_WIP.md. Source/Deploy hash·순서·rollback·운영 게이트: docs/CHARACTER_REFRESH_STABILITY_STAGE2_RELEASE.md. 같은 4차 PROJECT LOG 최신 12회차에 기록한다.
-- main 0ab04ccf의 DB475/배너 변경을 보존했다. 새 SQL 숫자는 3단계 직전 최신 SQL_INDEX 확인 후 지정한다. 임의 전체 db push/실제 list 일괄 덮어쓰기 금지.
+범위·단계는 [기존 계획서](https://drive.google.com/file/d/1aPfADtwHFXo1_ZP6Zj3HkD7eGyOVrZxD/view), 진행 상태·검증 결과·다음 작업은 [프로젝트 LOG](https://drive.google.com/file/d/1k0R6heq6ttLl9IKFm_q1_EGm4FCxmVbQ/view)를 먼저 확인한다. 과거 작업을 중복 실행하지 않는다.
+배포·복구 계약은 CHARACTER_REFRESH_STABILITY_STAGE2_RELEASE.md, 제품 파일은 CHARACTER_REFRESH_STAGE2_MANIFEST.json을 따른다. 이 문서는 운영 실행 승인이 아니다.
+
 ## 성역 GUEST 부캐 롤오버 · 2026-09-08
 
 - 사용자가 명부 저장 성공 후 새로고침해도 강태공1의 부캐 연출이 안 뜬다고 제보. DB 저장1건, master/main7/is_main=false 및 성역 slot root7 확인. force_roster 응답의 mainCharacterName=강태공2도 정상. 지연이 아니라 Web이 membership GUEST를 부캐 연출 조건에서 제외한 문제였다.

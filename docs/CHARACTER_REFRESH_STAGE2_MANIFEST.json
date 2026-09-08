@@ -1,0 +1,162 @@
+{
+  "schemaVersion": 1,
+  "project": "character-refresh-stability-stage2",
+  "mainBase": "9c90c1643333a87318292320cbc924818416feb9",
+  "normalization": "UTF-8 LF",
+  "deploymentAuthorized": false,
+  "migrations": [
+    "20260908053907_character_refresh_identity_and_list_guards.sql",
+    "20260908060546_character_refresh_retry_generation_guards.sql",
+    "20260908062618_character_refresh_eligibility_and_restore.sql",
+    "20260908073247_character_refresh_list_write_preference.sql",
+    "20260908080303_character_refresh_audit_safety.sql",
+    "20260908082028_character_detail_identity_write_fence.sql",
+    "20260908083301_character_history_stable_identity.sql",
+    "20260908085012_character_weekly_growth_stable_identity.sql",
+    "20260908090023_character_rollup_identity_writer.sql",
+    "20260908091051_character_rollup_write_guard.sql",
+    "20260908095125_character_refresh_dispatch_completion_guards.sql"
+  ],
+  "files": [
+    {
+      "path": "supabase/migrations/20260908053907_character_refresh_identity_and_list_guards.sql",
+      "sha256": "e1b164f325825f6056158bca99c95c7e7a4eb9ccb774e87d810f80bd0324cf5e"
+    },
+    {
+      "path": "supabase/migrations/20260908060546_character_refresh_retry_generation_guards.sql",
+      "sha256": "51fe8457cca54703a7d6a4bd546fd578e934779605e721e589c2f866a893d22e"
+    },
+    {
+      "path": "supabase/migrations/20260908062618_character_refresh_eligibility_and_restore.sql",
+      "sha256": "e83017265076b4b3cc6844a8d9fd1a56a72609e0856257769adf7cf77bc487ae"
+    },
+    {
+      "path": "supabase/migrations/20260908073247_character_refresh_list_write_preference.sql",
+      "sha256": "e2808a70f720567fcf5a90e5a20632f40d7d03efe692327f962604ec6833d863"
+    },
+    {
+      "path": "supabase/migrations/20260908080303_character_refresh_audit_safety.sql",
+      "sha256": "b900c8cf717293fef25ea736dc9f7a95d00611553bf4c6e628d003f6b1a9edb6"
+    },
+    {
+      "path": "supabase/migrations/20260908082028_character_detail_identity_write_fence.sql",
+      "sha256": "48fae8cd91df8dd2753158def1559324cc5c2aee76fff5a8ca9973b37105477a"
+    },
+    {
+      "path": "supabase/migrations/20260908083301_character_history_stable_identity.sql",
+      "sha256": "1b6f08dff922e9b31c9f8b452f15f0d34514dbd981195b5c1b16da9893d45aad"
+    },
+    {
+      "path": "supabase/migrations/20260908085012_character_weekly_growth_stable_identity.sql",
+      "sha256": "fdb9ea983e38c9f1f06fe6e7371c3da822dbfb7eb2bc8df8ef05fe7fc6b44014"
+    },
+    {
+      "path": "supabase/migrations/20260908090023_character_rollup_identity_writer.sql",
+      "sha256": "e7e986e87b9d409946bb60a528625abc43f0d109f1817fd67362374c4d00167b"
+    },
+    {
+      "path": "supabase/migrations/20260908091051_character_rollup_write_guard.sql",
+      "sha256": "70890f290134f8733d310335c3ca65deb2a9516e7bd823e0a0c1148b544acd92"
+    },
+    {
+      "path": "supabase/migrations/20260908095125_character_refresh_dispatch_completion_guards.sql",
+      "sha256": "68c4d904f151586a20ee8522ff6f1601170094539740f5b6f1d281e27c7a35d1"
+    },
+    {
+      "path": "supabase/rollbacks/20260908053907_character_refresh_identity_and_list_guards.sql",
+      "sha256": "1655d5681a49d6c824280c1d5c507c23b876eb2a5c162f2a3a774e57d74abf89"
+    },
+    {
+      "path": "supabase/rollbacks/20260908060546_character_refresh_retry_generation_guards.sql",
+      "sha256": "cf181bc86a551f549d95466c81875aee8e7eae34038424173c99844908295a10"
+    },
+    {
+      "path": "supabase/rollbacks/20260908062618_character_refresh_eligibility_and_restore.sql",
+      "sha256": "b523865e7a1d6dc36f1c8a212d90902a28c7d25d50b2c729d8326e0d903edb62"
+    },
+    {
+      "path": "supabase/rollbacks/20260908073247_character_refresh_list_write_preference.sql",
+      "sha256": "a8c8e2d92b41f68928fe2f31df14c8906a4ec35bb8298a4bf79a2c049f7f96ee"
+    },
+    {
+      "path": "supabase/rollbacks/20260908080303_character_refresh_audit_safety.sql",
+      "sha256": "0115c42aa89ffc2e59fa44a151915ec732b6726b2aadeaf38fe0f05e1c763c64"
+    },
+    {
+      "path": "supabase/rollbacks/20260908082028_character_detail_identity_write_fence.sql",
+      "sha256": "b72bbcf78474252bb5cac5b436d8af8da2d53f26713783ccc7844d23cdb3d3b6"
+    },
+    {
+      "path": "supabase/rollbacks/20260908083301_character_history_stable_identity.sql",
+      "sha256": "8a6e05e5dd1602f953436baaab4669e784209688c6978876eb7dee8f14f27ca1"
+    },
+    {
+      "path": "supabase/rollbacks/20260908085012_character_weekly_growth_stable_identity.sql",
+      "sha256": "af963d266b3f26330a854a78f2c143d2d7099c23e62f51c1f7addc0c08ae7e72"
+    },
+    {
+      "path": "supabase/rollbacks/20260908090023_character_rollup_identity_writer.sql",
+      "sha256": "73f5d00d459bcb405fa0e185207baa48a098c7ec7c60ac5820ada77fe24e9649"
+    },
+    {
+      "path": "supabase/rollbacks/20260908091051_character_rollup_write_guard.sql",
+      "sha256": "3489f756d404f1f274f3c8874c7f9fbe898a0b12f97d006e484f19e6e03abbda"
+    },
+    {
+      "path": "supabase/rollbacks/20260908095125_character_refresh_dispatch_completion_guards.sql",
+      "sha256": "ca7822c5d8687639298b8e8f6e450238b268fe34ddefe989cf469d9e039819ec"
+    },
+    {
+      "path": "supabase/functions/character-identity-recovery/index.ts",
+      "sha256": "1d29fe637da242e8f1b13f7c34f77524524d1fa5060e823b3174cf654b68180a"
+    },
+    {
+      "path": "supabase/functions/lookup-list-prepare/index.ts",
+      "sha256": "6d0ea9115cf1c747b74012b5086f8a2c15281a16159f195f8db8f10c72f5a48a"
+    },
+    {
+      "path": "supabase/functions/lookup-list-sync/index.ts",
+      "sha256": "c01bb719c5c326b61d5488ef7ae3ceaaefc3ec895df4862038c15f62bd09f392"
+    },
+    {
+      "path": "supabase/functions/character-refresh-worker/index.ts",
+      "sha256": "50b0563efabd06d9061b4f95034ffff7f56db842b0a55bd8e4518ecae04d67be"
+    },
+    {
+      "path": "supabase/functions/character-detail-refresh/index.ts",
+      "sha256": "6ede4d307900ecb946e7f260bf33245ec45ad68e6e1602f5a0a4c78d1ccfd0e1"
+    },
+    {
+      "path": "apps-script/list-master/BRIDGE.gs",
+      "sha256": "793d9d9348cd4397458ad2b5f1e89adbaf4b0475e986e5e4f5f3d1627c21ae38"
+    },
+    {
+      "path": "core/kinojo-supabase-features.js",
+      "sha256": "89edb3018a559ed242240fffc1c3c9b61f10ec875d4f52f070331c260874982a"
+    },
+    {
+      "path": "admin/js/admin-characters.js",
+      "sha256": "af578dc17d7a6e96ceb20941176836decd08db068f19ce80d4e5aab924be9ced"
+    },
+    {
+      "path": "admin/js/admin.js",
+      "sha256": "cf7209eecd5d25efb6c629bd29122b08726324a89b412d66b5691a1dbf99133d"
+    },
+    {
+      "path": "admin/js/admin-bootstrap.js",
+      "sha256": "e071fe87856d1e12d4a58d8720506917e7c1dd4497b8adfe3f1ef190af37451e"
+    },
+    {
+      "path": "admin/index.html",
+      "sha256": "7126bcf16449706bdf37eefa074de9adc1fad840c617bdf86ddc8ebdbace029c"
+    },
+    {
+      "path": "m/admin/index.html",
+      "sha256": "141909d2bf0b4e7062096eeec22786d6b6690e353ba99688bdab10c6c8fb6330"
+    }
+  ],
+  "notDeploymentAssets": [
+    "tests/fixtures/extension-reference/**"
+  ],
+  "referenceOnly": "Existing extension is retired/frozen. No extension reinstall, activation or upload is included."
+}

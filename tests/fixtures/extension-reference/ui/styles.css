@@ -1,0 +1,3880 @@
+/* ============================================================
+   Kinojo UI Styles
+   ------------------------------------------------------------
+   Purpose:
+   - Floating control panel for AION2 sheet updater
+   - Notice / news display
+   - Main diamond control UI
+   - Drag, minimize, lock, and modal states
+   ------------------------------------------------------------
+   Notes:
+   - This file is intentionally readable.
+   - Duplicate legacy rules from earlier alpha builds were merged.
+   - Overall panel scale is controlled by --kinojo-scale.
+============================================================ */
+
+
+/* ============================================================
+   Design Tokens
+============================================================ */
+
+:root {
+  --kinojo-scale: 0.85;
+
+  --kinojo-panel-width: 246px;
+  --kinojo-shell-size: 214px;
+  --kinojo-main-btn-size: 112px;
+  --kinojo-corner-btn-size: 78px;
+
+  --kinojo-bg-dark: rgba(7, 18, 32, .86);
+  --kinojo-bg-panel: rgba(13, 33, 53, .82);
+  --kinojo-blue: #38bdf8;
+  --kinojo-blue-soft: #7dd3fc;
+  --kinojo-blue-text: #cdeeff;
+  --kinojo-purple: #c084fc;
+  --kinojo-danger: #fca5a5;
+
+  --kinojo-card-radius: 15px;
+  --kinojo-safe-bottom: 42px;
+}
+
+
+/* ============================================================
+   Root Panel
+============================================================ */
+
+#aion2OfficialPanel {
+  position: fixed;
+  right: 18px;
+  bottom: 8px;
+  z-index: 999999;
+  width: var(--kinojo-panel-width);
+  font-family: Arial, sans-serif;
+  color: var(--kinojo-blue-text);
+
+  /*
+   * Default placement:
+   * - First load uses bottom-right anchoring.
+   * - After drag, ui.js switches to left/top positioning.
+   */
+  transform: scale(var(--kinojo-scale));
+  transform-origin: bottom right;
+}
+
+.aion2-card {
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+
+/* ============================================================
+   Drag Handle + Close Button
+============================================================ */
+
+#aion2DragHandle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 18px;
+  margin: 0 auto 6px;
+  border-radius: 999px;
+
+  background: rgba(7, 18, 32, .62);
+  color: rgba(191, 243, 255, .72);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .18em;
+
+  cursor: move;
+  user-select: none;
+
+  box-shadow:
+    inset 0 0 0 1px rgba(56, 189, 248, .14),
+    0 5px 12px rgba(0, 0, 0, .16);
+}
+
+#aion2DragHandle .kinojoDragTitle {
+  /* pointer-events kept for tooltips */
+}
+
+#aion2OfficialPanel.kinojo-dragging {
+  user-select: none;
+}
+
+#aion2OfficialPanel.kinojo-dragging #aion2DragHandle {
+  color: #fff;
+  background: rgba(15, 47, 78, .92);
+  box-shadow:
+    inset 0 0 0 1px rgba(125, 211, 252, .48),
+    0 0 16px rgba(56, 189, 248, .22);
+}
+
+#aion2PanelCloseBtn {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+
+  width: 16px;
+  height: 16px;
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transform: translateY(-50%);
+
+  border: none;
+  border-radius: 50%;
+
+  color: rgba(191, 243, 255, .68);
+  background: rgba(15, 23, 42, .78);
+
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: 900;
+
+  cursor: pointer;
+
+  box-shadow:
+    inset 0 0 0 1px rgba(125, 211, 252, .18),
+    0 0 8px rgba(56, 189, 248, .08);
+
+  transition:
+    color .16s ease,
+    background .16s ease,
+    box-shadow .16s ease,
+    transform .16s ease;
+}
+
+#aion2PanelCloseBtn:hover {
+  color: #fff;
+  background: rgba(127, 29, 29, .78);
+  box-shadow:
+    inset 0 0 0 1px rgba(248, 113, 113, .45),
+    0 0 12px rgba(248, 113, 113, .28);
+  transform: translateY(-50%) scale(1.08);
+}
+
+
+/* ============================================================
+   Notice + News
+============================================================ */
+
+#aion2NoticeBox {
+  display: none;
+  margin-bottom: 7px;
+  padding: 8px 9px;
+
+  border-radius: 13px;
+
+  background: rgba(7, 18, 32, .84);
+  color: #bfe9ff;
+
+  font-size: 11px;
+  font-weight: 800;
+
+  overflow: hidden;
+  white-space: normal;
+
+  box-shadow:
+    inset 0 0 0 1px rgba(56, 189, 248, .22),
+    0 6px 16px rgba(0, 0, 0, .22);
+}
+
+#aion2NoticeInner {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  vertical-align: middle;
+}
+
+#aion2NoticeInner.marquee {
+  animation: none;
+}
+
+.kinojoNoticeRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 4px;
+}
+
+.kinojoNoticeRow:last-child {
+  margin-bottom: 0;
+}
+
+.kinojoNoticeLabel {
+  flex: 0 0 auto;
+  min-width: 28px;
+  padding-top: 1px;
+
+  color: var(--kinojo-blue-soft);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .02em;
+}
+
+.kinojoNewsRow .kinojoNoticeLabel {
+  color: var(--kinojo-purple);
+}
+
+.kinojoNoticeMarqueeWrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+
+  height: 16px;
+  overflow: hidden;
+}
+
+.kinojoNoticeMarqueeText {
+  position: absolute;
+  left: 0;
+  top: 0;
+
+  display: inline-flex !important;
+  gap: 42px;
+  min-width: max-content;
+
+  color: #dbeafe;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 16px;
+
+  white-space: nowrap;
+}
+
+.kinojoNoticeMarqueeText span {
+  white-space: nowrap;
+}
+
+.kinojoNoticeMarqueeText.marquee {
+  animation: kinojo-notice-loop 14s linear infinite !important;
+}
+
+.kinojoNewsWrap {
+  flex: 1 1 auto;
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.kinojoNewsTitle {
+  color: #f5d0fe;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.25;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kinojoNewsBody {
+  color: #dbeafe;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.3;
+
+  white-space: normal;
+  word-break: keep-all;
+}
+
+
+/* ============================================================
+   Update Box
+============================================================ */
+
+#aion2UpdateBox {
+  display: none;
+  margin-bottom: 7px;
+  padding: 8px 9px;
+
+  border-radius: 14px;
+  background: rgba(7, 18, 32, .88);
+
+  box-shadow:
+    inset 0 0 0 1px rgba(56, 189, 248, .22),
+    0 8px 18px rgba(0, 0, 0, .24);
+}
+
+#aion2UpdateText {
+  margin-bottom: 6px;
+
+  color: var(--kinojo-blue-text);
+  font-size: 11px;
+  font-weight: 900;
+  text-align: center;
+}
+
+#aion2UpdateDownloadBtn {
+  width: 100%;
+  padding: 7px 9px;
+
+  border: none;
+  border-radius: 999px;
+
+  background: linear-gradient(135deg, #2563eb, #38bdf8);
+  color: #fff;
+
+  font-size: 12px;
+  font-weight: 900;
+
+  cursor: pointer;
+
+  box-shadow: 0 5px 12px rgba(56, 189, 248, .28);
+}
+
+
+/* ============================================================
+   Status Box + Progress
+============================================================ */
+
+#aion2StatusBox {
+  margin-bottom: 8px;
+  padding: 9px 10px;
+
+  border-radius: 17px;
+  background: var(--kinojo-bg-dark);
+
+  text-align: center;
+
+  box-shadow:
+    inset 0 0 0 1px rgba(56, 189, 248, .18),
+    0 10px 24px rgba(0, 0, 0, .22);
+}
+
+#aion2StatusBox .label {
+  color: var(--kinojo-blue-soft);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .07em;
+  opacity: .68;
+}
+
+#aion2StatusBox .title {
+  margin-top: 3px;
+
+  color: #e0f7ff;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+#aion2StatusBox .sub {
+  margin-top: 4px;
+
+  color: #93c5fd;
+  font-size: 10.5px;
+  font-weight: 800;
+}
+
+.aion2-progress-track {
+  height: 5px;
+  margin-top: 7px;
+
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, .20);
+}
+
+.aion2-progress-fill {
+  height: 100%;
+
+  border-radius: 999px;
+  background: linear-gradient(90deg, #2563eb, #38bdf8);
+
+  box-shadow: 0 0 8px rgba(56, 189, 248, .35);
+}
+
+
+/* ============================================================
+   Local Log Box
+============================================================ */
+
+#aion2OfficialLogBox {
+  display: none;
+  margin-bottom: 8px;
+  padding: 8px;
+
+  border-radius: 15px;
+  background: var(--kinojo-bg-dark);
+
+  color: var(--kinojo-blue-text);
+  font-size: 10.5px;
+  line-height: 1.4;
+
+  box-shadow:
+    inset 0 0 0 1px rgba(56, 189, 248, .16),
+    0 9px 20px rgba(0, 0, 0, .18);
+}
+
+
+/* ============================================================
+   Shared Buttons
+============================================================ */
+
+.aion2-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+  border: none;
+
+  color: #9be7ff;
+  background: transparent;
+
+  font-family: inherit;
+
+  cursor: pointer;
+
+  transition:
+    transform .18s ease,
+    filter .18s ease,
+    box-shadow .18s ease;
+}
+
+.aion2-btn:hover {
+  filter: brightness(1.12);
+}
+
+
+/* Main toggle button styling is owned by the 1.3.1.00 recovery layer below. */
+
+/* ============================================================
+   Corner Buttons
+============================================================ */
+
+.aion2-corner-btn {
+  position: absolute;
+  z-index: 4;
+
+  width: var(--kinojo-corner-btn-size);
+  height: var(--kinojo-corner-btn-size);
+
+  display: flex;
+  overflow: visible;
+}
+
+.aion2-corner-bg {
+  position: absolute;
+  inset: 0;
+
+  border: 1px solid rgba(125, 211, 252, .38);
+  background: var(--kinojo-bg-panel);
+
+  box-shadow:
+    inset 0 0 14px rgba(56, 189, 248, .07),
+    0 0 12px rgba(56, 189, 248, .10);
+
+  transition:
+    box-shadow .18s ease,
+    border-color .18s ease,
+    background .18s ease;
+}
+
+.aion2-corner-icon {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+
+  width: 29px;
+  height: 29px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transform: translate(-50%, -50%);
+
+  /* pointer-events kept for tooltips */
+}
+
+.aion2-corner-icon svg {
+  width: 29px;
+  height: 29px;
+
+  stroke: currentColor;
+
+  filter: drop-shadow(0 0 6px rgba(56, 189, 248, .72));
+}
+
+.aion2-corner-btn:hover .aion2-corner-bg {
+  border-color: rgba(125, 211, 252, .85);
+  background: rgba(15, 47, 78, .88);
+
+  box-shadow:
+    inset 0 0 16px rgba(56, 189, 248, .12),
+    0 0 18px rgba(56, 189, 248, .24);
+}
+
+#aion2ResumeBtn {
+  left: 10px;
+  top: 10px;
+}
+
+#aion2ResumeBtn .aion2-corner-bg {
+  clip-path: polygon(0 0, 100% 0, 100% 36%, 36% 100%, 0 100%);
+  border-radius: 10px 10px 8px 10px;
+}
+
+#aion2ResetBtn {
+  right: 10px;
+  top: 10px;
+}
+
+#aion2ResetBtn .aion2-corner-bg {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 64% 100%, 0 36%);
+  border-radius: 10px 10px 10px 8px;
+}
+
+#aion2AutoBtn {
+  left: 10px;
+  bottom: 10px;
+}
+
+#aion2AutoBtn .aion2-corner-bg {
+  clip-path: polygon(0 0, 36% 0, 100% 64%, 100% 100%, 0 100%);
+  border-radius: 10px 8px 10px 10px;
+}
+
+#aion2IndexBtn {
+  right: 10px;
+  bottom: 10px;
+}
+
+#aion2IndexBtn .aion2-corner-bg {
+  clip-path: polygon(64% 0, 100% 0, 100% 100%, 0 100%, 0 64%);
+  border-radius: 8px 10px 10px 10px;
+}
+
+#aion2AutoBtn.off {
+  color: #64748b;
+}
+
+
+/* ============================================================
+   Bug Report + Version
+============================================================ */
+
+#aion2BugReportBtn {
+  width: 100%;
+  height: 24px;
+  margin-top: 8px;
+
+  border: none;
+  border-radius: 999px;
+
+  background: rgba(7, 18, 32, .65);
+  color: #93c5fd;
+
+  font-size: 11px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, .18);
+}
+
+#aion2BugReportBtn:hover {
+  background: rgba(15, 47, 78, .9);
+  color: #dbeafe;
+}
+
+#aion2VersionText {
+  margin-top: 8px;
+
+  color: rgba(0, 0, 0, .72);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .03em;
+  text-align: center;
+  text-shadow: none;
+
+  user-select: none;
+}
+
+
+/* ============================================================
+   Tooltip
+============================================================ */
+
+/* ============================================================
+   Locked State
+============================================================ */
+
+#aion2OfficialPanel.kinojo-locked .aion2-btn:disabled,
+#aion2OfficialPanel.kinojo-locked .aion2-btn[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: .58;
+  filter: grayscale(.18);
+}
+
+#aion2OfficialPanel.kinojo-locked #aion2MainToggleBtn,
+#aion2OfficialPanel.kinojo-locked #aion2MainToggleBtn:hover {
+  transform: none !important;
+}
+
+#aion2OfficialPanel.kinojo-locked #aion2MainToggleBtn.locked {
+  border-color: rgba(248, 113, 113, .58) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(248, 113, 113, .22),
+    0 0 18px rgba(248, 113, 113, .18) !important;
+}
+
+#aion2OfficialPanel.kinojo-locked .aion2-corner-btn:hover {
+  transform: none !important;
+}
+
+#aion2OfficialPanel.kinojo-locked .aion2-corner-btn:hover .aion2-corner-bg {
+  border-color: rgba(125, 211, 252, .38) !important;
+  background: var(--kinojo-bg-panel) !important;
+
+  box-shadow:
+    inset 0 0 14px rgba(56, 189, 248, .07),
+    0 0 12px rgba(56, 189, 248, .10) !important;
+}
+
+#aion2OfficialPanel.kinojo-locked #aion2StatusBox {
+  box-shadow:
+    inset 0 0 0 1px rgba(248, 113, 113, .35),
+    0 10px 24px rgba(0, 0, 0, .22);
+}
+
+#aion2OfficialPanel.kinojo-locked #aion2StatusBox .label {
+  color: var(--kinojo-danger);
+}
+
+
+/* ============================================================
+   Start Confirm Modal
+============================================================ */
+
+
+.kinojo-start-caution {
+  margin-top: 10px;
+  padding: 9px 10px;
+  border: 1px solid rgba(37, 99, 235, .18);
+  border-radius: 12px;
+  background: rgba(239, 246, 255, .88);
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+#aion2StartConfirmOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(15, 23, 42, .35);
+
+  font-family: Arial, sans-serif;
+}
+
+.aion2-modal {
+  width: 360px;
+  padding: 24px;
+
+  border-radius: 26px;
+
+  background: rgba(255, 255, 255, .96);
+  color: #334155;
+
+  text-align: center;
+
+  backdrop-filter: blur(18px);
+
+  box-shadow: 0 22px 64px rgba(100, 116, 139, .38);
+}
+
+.aion2-modal-primary {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 14px;
+
+  border: none;
+  border-radius: 16px;
+
+  background: linear-gradient(135deg, #2563eb, #38bdf8);
+  color: #fff;
+
+  font-size: 15px;
+  font-weight: 900;
+
+  cursor: pointer;
+}
+
+.aion2-modal-secondary {
+  width: 100%;
+  padding: 12px;
+
+  border: none;
+  border-radius: 16px;
+
+  background: #e2e8f0;
+  color: #334155;
+
+  font-size: 14px;
+  font-weight: 900;
+
+  cursor: pointer;
+}
+
+
+/* ============================================================
+   Animations
+============================================================ */
+
+@keyframes kinojo-svg-dash {
+  to {
+    stroke-dashoffset: -384;
+  }
+}
+
+@keyframes kinojo-svg-dash-fast {
+  to {
+    stroke-dashoffset: -410;
+  }
+}
+
+@keyframes kinojo-notice-loop {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes kinojo-gold-wave {
+  0% {
+    transform: translateX(-35%) skewX(-8deg);
+  }
+
+  50% {
+    transform: translateX(18%) skewX(-8deg);
+  }
+
+  100% {
+    transform: translateX(-35%) skewX(-8deg);
+  }
+}
+
+@keyframes kinojo-gold-sparkle {
+  0% {
+    background-position: 0 0;
+    opacity: .18;
+  }
+
+  35% {
+    opacity: .42;
+  }
+
+  100% {
+    background-position: 180px 0;
+    opacity: .18;
+  }
+}
+
+
+/* ============================================================
+   Tooltip-safe disabled visual state
+   ------------------------------------------------------------
+   We avoid the real disabled attribute so mouse rollover tooltip
+   can still appear while the button is inactive.
+============================================================ */
+
+
+
+
+/* ============================================================
+   Global Tooltip
+   ------------------------------------------------------------
+   Tooltip is appended to document.body by ui.js.
+   This avoids clipping inside the scaled extension panel.
+============================================================ */
+
+#aion2Tooltip {
+  position: fixed !important;
+  z-index: 2147483647 !important;
+  display: none;
+  max-width: 220px;
+  padding: 6px 9px;
+  border-radius: 999px;
+
+  background: rgba(7, 18, 32, .96);
+  color: #e0f7ff;
+
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.25;
+  white-space: nowrap;
+
+  pointer-events: none !important;
+
+  box-shadow:
+    inset 0 0 0 1px rgba(125, 211, 252, .35),
+    0 8px 20px rgba(0, 0, 0, .32),
+    0 0 12px rgba(56, 189, 248, .18);
+}
+
+
+
+/* ============================================================
+   Kinojo Task Checklist Status - 1.b2.01b
+============================================================ */
+
+.kinojoTaskHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 5px;
+}
+
+.kinojoTaskTitle {
+  color: #e0f7ff;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.kinojoTaskDivider {
+  height: 1px;
+  margin: 5px 0 6px;
+  background: linear-gradient(90deg, transparent, rgba(125, 211, 252, .42), transparent);
+}
+
+.kinojoTaskList {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.kinojoTaskLine {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  align-items: center;
+  min-height: 17px;
+  padding: 2px 5px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: rgba(203, 238, 255, .82);
+  background: rgba(15, 23, 42, .18);
+}
+
+.kinojoTaskLine.done {
+  color: #bbf7d0;
+  background: rgba(22, 101, 52, .16);
+}
+
+.kinojoTaskLine.active {
+  color: #dbeafe;
+  background: rgba(37, 99, 235, .22);
+  box-shadow: inset 0 0 0 1px rgba(96, 165, 250, .22);
+}
+
+.kinojoTaskLine.pending {
+  color: rgba(191, 219, 254, .55);
+}
+
+.kinojoTaskLine.error {
+  color: #fecaca;
+  background: rgba(127, 29, 29, .20);
+  box-shadow: inset 0 0 0 1px rgba(248, 113, 113, .22);
+}
+
+.kinojoTaskMark {
+  width: 15px;
+  height: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 900;
+  color: rgba(191, 219, 254, .75);
+  background: rgba(15, 23, 42, .44);
+}
+
+.kinojoTaskLine.done .kinojoTaskMark {
+  color: #052e16;
+  background: #86efac;
+}
+
+.kinojoTaskLine.active .kinojoTaskMark {
+  color: #0f172a;
+  background: #93c5fd;
+}
+
+.kinojoTaskLine.error .kinojoTaskMark {
+  color: #450a0a;
+  background: #fca5a5;
+}
+
+.kinojoTaskText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============================================================
+ * 1.3.1.00 / 20260618_03 Style System Repair
+ * ------------------------------------------------------------
+ * 목적
+ * - 레이아웃 / 테마 / 효과를 분리한다.
+ * - Classic은 유광·전역 프리즘을 제거하고 묵직한 무광 톤으로 복구한다.
+ * - Modern은 패널만 유리판, 카드 내부는 흰색으로 유지한다.
+ * - 버튼 테두리 효과는 conic-gradient 회전이 아니라 고정 테두리 위를 지나는 빛무리로만 구현한다.
+ * - 비밀번호 모달은 패널 기준 슬라이드 인/아웃을 복구한다.
+ * ============================================================ */
+
+@keyframes kinojoBorderMist {
+  0% {
+    background-position:
+      -220% 0,
+      100% -220%,
+      220% 100%,
+      0 220%;
+    opacity: .38;
+  }
+  45% { opacity: .66; }
+  100% {
+    background-position:
+      220% 0,
+      100% 220%,
+      -220% 100%,
+      0 -220%;
+    opacity: .38;
+  }
+}
+
+@keyframes kinojoMainSweep {
+  0% { transform: translateX(-145%) skewX(-18deg); opacity: 0; }
+  22% { opacity: .68; }
+  54% { opacity: .34; }
+  100% { transform: translateX(145%) skewX(-18deg); opacity: 0; }
+}
+
+@keyframes kinojoGoldAlive {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px rgba(251, 191, 36, .74),
+      0 0 18px rgba(245, 158, 11, .30),
+      inset 0 0 18px rgba(255, 228, 138, .12);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(255, 239, 184, .98),
+      0 0 34px rgba(251, 191, 36, .74),
+      inset 0 0 26px rgba(255, 236, 153, .23);
+  }
+}
+
+@keyframes kinojoAuthIn {
+  from { opacity: 0; transform: translateX(34px) scale(.985); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes kinojoAuthOut {
+  from { opacity: 1; transform: translateX(0) scale(1); }
+  to { opacity: 0; transform: translateX(34px) scale(.985); }
+}
+
+@keyframes kinojoToastFloatUp {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@keyframes kinojoToastFloatOut {
+  to { opacity: 0; transform: translate(-50%, -8px); }
+}
+
+:root {
+  --kinojo-updater-inner-width: 252px;
+}
+
+/* ============================================================
+   Theme variables only. Layout size is fixed below.
+============================================================ */
+#aion2OfficialPanel {
+  --kinojo-panel-bg: rgba(5, 13, 24, .94);
+  --kinojo-panel-border: rgba(74, 126, 166, .34);
+  --kinojo-panel-highlight: rgba(125, 211, 252, .10);
+  --kinojo-card-bg: rgba(8, 19, 33, .92);
+  --kinojo-card-border: rgba(76, 123, 158, .28);
+  --kinojo-text: #d9edf8;
+  --kinojo-muted: #8db5ca;
+  --kinojo-label: #8fd4f1;
+  --kinojo-button-bg: rgba(9, 22, 38, .96);
+  --kinojo-button-hover-bg: rgba(13, 33, 55, .98);
+  --kinojo-button-text: #e8f7ff;
+  --kinojo-halo-a: rgba(185, 232, 255, .68);
+  --kinojo-halo-b: rgba(56, 189, 248, .28);
+  --kinojo-main-bg:
+    radial-gradient(circle at 28% 18%, rgba(128, 210, 255, .16), transparent 25%),
+    linear-gradient(145deg, #0b2a45 0%, #061524 54%, #0d2a44 100%);
+  --kinojo-main-hover-bg:
+    radial-gradient(circle at 28% 18%, rgba(177, 233, 255, .22), transparent 25%),
+    linear-gradient(145deg, #0d385d 0%, #071b2e 54%, #0f3556 100%);
+  --kinojo-main-text: #f4fbff;
+  --kinojo-main-border: rgba(144, 219, 255, .74);
+  --kinojo-main-sweep: rgba(236, 251, 255, .74);
+
+  width: 270px !important;
+  padding: 8px !important;
+  box-sizing: border-box !important;
+  color: var(--kinojo-text) !important;
+  background: var(--kinojo-panel-bg) !important;
+  border: 1px solid var(--kinojo-panel-border) !important;
+  border-radius: 14px !important;
+  box-shadow:
+    0 14px 32px rgba(0, 0, 0, .32),
+    inset 0 1px 0 rgba(255,255,255,.035) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  overflow: visible !important;
+}
+
+#aion2OfficialPanel.kinojo-theme-modern {
+  --kinojo-panel-bg: rgba(255, 255, 255, .20);
+  --kinojo-panel-border: rgba(255, 255, 255, .82);
+  --kinojo-panel-highlight: rgba(255, 255, 255, .42);
+  --kinojo-card-bg: #ffffff;
+  --kinojo-card-border: rgba(203, 213, 225, .88);
+  --kinojo-text: #172033;
+  --kinojo-muted: #475569;
+  --kinojo-label: #1e293b;
+  --kinojo-button-bg: #ffffff;
+  --kinojo-button-hover-bg: #f8fafc;
+  --kinojo-button-text: #172033;
+  --kinojo-halo-a: rgba(255, 221, 132, .76);
+  --kinojo-halo-b: rgba(245, 158, 11, .36);
+  --kinojo-main-bg:
+    radial-gradient(circle at 26% 16%, rgba(255,255,255,.20), transparent 25%),
+    linear-gradient(145deg, #020617 0%, #0b1220 42%, #182235 66%, #030712 100%);
+  --kinojo-main-hover-bg:
+    radial-gradient(circle at 26% 16%, rgba(255,255,255,.28), transparent 25%),
+    linear-gradient(145deg, #020617 0%, #111827 42%, #263348 66%, #030712 100%);
+  --kinojo-main-text: #ffffff;
+  --kinojo-main-border: rgba(255, 214, 104, .86);
+  --kinojo-main-sweep: rgba(255, 237, 160, .82);
+
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.46), rgba(255,255,255,.12)),
+    radial-gradient(circle at 14% 4%, rgba(255,255,255,.50), transparent 26%),
+    rgba(255,255,255,.16) !important;
+  border: 2px solid var(--kinojo-panel-border) !important;
+  box-shadow:
+    0 18px 44px rgba(15, 23, 42, .20),
+    inset 0 1px 0 rgba(255,255,255,.85),
+    inset 0 -1px 0 rgba(255,255,255,.30) !important;
+  backdrop-filter: blur(20px) saturate(1.18) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.18) !important;
+}
+
+#aion2OfficialPanel *,
+#aion2PasswordPromptOverlay * { box-sizing: border-box !important; }
+
+#aion2OfficialPanel :is(#aion2NoticeBox, #aion2UpdateBox, #aion2StatusBox, #aion2OfficialLogBox, #aion2ControlShell, #aion2QuickLinkBox, #aion2VersionText),
+#aion2DragHandle {
+  width: var(--kinojo-updater-inner-width) !important;
+  max-width: 100% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Drag handle: 20260618_03 기준 2배 확대, 전체 영역이 드래그 가능하게 보이도록 hover 강조. */
+#aion2DragHandle {
+  height: 22px !important;
+  min-height: 22px !important;
+  margin: 0 auto 7px !important;
+  border-radius: 999px !important;
+  background: rgba(5, 12, 23, .76) !important;
+  color: rgba(205, 238, 255, .82) !important;
+  border: 1px solid rgba(125,211,252,.18) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 5px 14px rgba(0,0,0,.18) !important;
+  cursor: grab !important;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease, color .16s ease !important;
+}
+#aion2DragHandle:hover {
+  color: #fff !important;
+  border-color: rgba(175,229,255,.62) !important;
+  background: rgba(8, 26, 43, .92) !important;
+  box-shadow:
+    0 0 18px rgba(56,189,248,.20),
+    inset 0 1px 0 rgba(255,255,255,.08) !important;
+}
+#aion2OfficialPanel.kinojo-theme-modern #aion2DragHandle {
+  background: rgba(255,255,255,.55) !important;
+  color: #243044 !important;
+  border-color: rgba(255,255,255,.88) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 6px 18px rgba(15,23,42,.10) !important;
+}
+#aion2OfficialPanel.kinojo-theme-modern #aion2DragHandle:hover {
+  color: #111827 !important;
+  border-color: rgba(245,185,73,.72) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,1), 0 0 20px rgba(245,158,11,.20) !important;
+}
+#aion2OfficialPanel.kinojo-dragging #aion2DragHandle { cursor: grabbing !important; }
+.kinojoDragTitle { font-size: 9px !important; line-height: 22px !important; letter-spacing: .12em !important; }
+
+#aion2PanelCloseBtn {
+  right: 5px !important;
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 50% !important;
+  color: rgba(220, 246, 255, .82) !important;
+  background: rgba(15, 23, 42, .78) !important;
+  border: 1px solid rgba(125,211,252,.18) !important;
+  font-size: 15px !important;
+  line-height: 18px !important;
+}
+#aion2OfficialPanel.kinojo-theme-modern #aion2PanelCloseBtn {
+  color: #111827 !important;
+  background: #ffffff !important;
+  border-color: rgba(203,213,225,.90) !important;
+}
+#aion2PanelCloseBtn:hover {
+  color: #fff !important;
+  background: rgba(153,27,27,.90) !important;
+  border-color: rgba(248,113,113,.78) !important;
+  transform: translateY(-50%) scale(1.10) !important;
+  box-shadow: 0 0 14px rgba(248,113,113,.28) !important;
+}
+
+/* Cards: Classic matte, Modern white card. No global prism line effects. */
+#aion2OfficialPanel :is(#aion2NoticeBox, #aion2UpdateBox, #aion2StatusBox, #aion2OfficialLogBox) {
+  position: relative !important;
+  margin-bottom: 6px !important;
+  padding: 7px 8px !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--kinojo-card-border) !important;
+  background: var(--kinojo-card-bg) !important;
+  color: var(--kinojo-text) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 6px 16px rgba(0,0,0,.14) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  overflow: hidden !important;
+}
+#aion2OfficialPanel.kinojo-theme-modern :is(#aion2NoticeBox, #aion2UpdateBox, #aion2StatusBox, #aion2OfficialLogBox) {
+  background: #ffffff !important;
+  color: #172033 !important;
+  border-color: rgba(203,213,225,.88) !important;
+  box-shadow: 0 6px 16px rgba(15,23,42,.08), inset 0 1px 0 rgba(255,255,255,.98) !important;
+}
+#aion2OfficialPanel :is(.label, .kinojoNoticeLabel, .kinojo-section-title) { color: var(--kinojo-label) !important; }
+#aion2OfficialPanel :is(.title, .kinojoNewsTitle, .kinojoTaskText, .kinojo-running-value) { color: var(--kinojo-text) !important; }
+#aion2OfficialPanel :is(.sub, .kinojoNewsBody, .kinojo-running-key) { color: var(--kinojo-muted) !important; }
+#aion2OfficialPanel.kinojo-theme-modern :is(.label, .kinojoNoticeLabel, .kinojo-section-title) { color: #1f2937 !important; }
+#aion2OfficialPanel.kinojo-theme-modern :is(.title, .kinojoNewsTitle, .kinojoTaskText, .kinojo-running-value) { color: #111827 !important; }
+#aion2OfficialPanel.kinojo-theme-modern :is(.sub, .kinojoNewsBody, .kinojo-running-key) { color: #475569 !important; }
+
+.kinojo-running-status { display: grid !important; gap: 3px !important; }
+.kinojo-running-row { display: grid !important; grid-template-columns: 54px minmax(0, 1fr) !important; align-items: center !important; gap: 6px !important; }
+.kinojo-running-key { font-size: 10px !important; font-weight: 950 !important; white-space: nowrap !important; }
+.kinojo-running-value { min-width: 0 !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; font-size: 11px !important; font-weight: 900 !important; }
+#aion2OfficialLogBox .kinojoTaskList { display: grid !important; gap: 3px !important; }
+.kinojoTaskLine { min-height: 18px !important; display: flex !important; align-items: center !important; gap: 6px !important; }
+.kinojoTaskMark { width: 16px !important; height: 16px !important; flex: 0 0 16px !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; border-radius: 999px !important; font-size: 9px !important; font-weight: 950 !important; }
+.kinojoTaskText { min-width: 0 !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; font-size: 10.5px !important; font-weight: 850 !important; }
+
+/* Action controls: panel plate is intentionally larger than buttons.
+   IMPORTANT: “빛이 테두리를 타고 흐르는 효과”는 conic-gradient 회전/중앙 회전판 금지.
+   고정 테두리 위로 빛무리만 이동시키는 edge light-sweep 방식만 사용한다. */
+#aion2ControlShell {
+  width: var(--kinojo-updater-inner-width) !important;
+  height: 76px !important;
+  margin: 0 auto 8px !important;
+  padding: 7px 8px !important;
+  display: grid !important;
+  grid-template-columns: 38px 38px 92px 38px 38px !important;
+  grid-template-rows: 60px !important;
+  justify-content: center !important;
+  align-items: center !important;
+  column-gap: 5px !important;
+  background: rgba(2, 8, 23, .18) !important;
+  border: 1px solid rgba(125,211,252,.10) !important;
+  border-radius: 15px !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 6px 16px rgba(0,0,0,.14) !important;
+  position: relative !important;
+  overflow: visible !important;
+}
+#aion2ControlShell::before,
+#aion2ControlShell::after { content: none !important; display: none !important; }
+#aion2OfficialPanel.kinojo-theme-modern #aion2ControlShell {
+  background: rgba(255,255,255,.28) !important;
+  border-color: rgba(255,255,255,.62) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.96), 0 7px 18px rgba(15,23,42,.10) !important;
+}
+
+#aion2ControlShell :is(.aion2-corner-btn, .kinojo-mini-control),
+.kinojo-link-btn,
+#aion2UpdateDownloadBtn,
+#aion2BugReportBtn,
+.kinojo-theme-tab,
+.kinojo-size-tab {
+  position: relative !important;
+  overflow: hidden !important;
+  border: 1px solid var(--kinojo-card-border) !important;
+  background: var(--kinojo-button-bg) !important;
+  color: var(--kinojo-button-text) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 5px 12px rgba(0,0,0,.12) !important;
+}
+#aion2ControlShell :is(.aion2-corner-btn, .kinojo-mini-control)::after,
+.kinojo-link-btn::after,
+#aion2UpdateDownloadBtn::after,
+#aion2BugReportBtn::after,
+.kinojo-theme-tab::after,
+.kinojo-size-tab::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  border-radius: inherit !important;
+  pointer-events: none !important;
+  opacity: .42 !important;
+  z-index: 1 !important;
+  background:
+    linear-gradient(90deg, transparent 0%, var(--kinojo-halo-b) 10%, var(--kinojo-halo-a) 16%, transparent 31%) top left / 230% 2px no-repeat,
+    linear-gradient(180deg, transparent 0%, var(--kinojo-halo-b) 10%, var(--kinojo-halo-a) 16%, transparent 31%) right top / 2px 230% no-repeat,
+    linear-gradient(270deg, transparent 0%, var(--kinojo-halo-b) 10%, var(--kinojo-halo-a) 16%, transparent 31%) bottom right / 230% 2px no-repeat,
+    linear-gradient(0deg, transparent 0%, var(--kinojo-halo-b) 10%, var(--kinojo-halo-a) 16%, transparent 31%) left bottom / 2px 230% no-repeat !important;
+  filter: drop-shadow(0 0 5px var(--kinojo-halo-b)) !important;
+  animation: kinojoBorderMist 5.4s linear infinite !important;
+}
+#aion2ControlShell :is(.aion2-corner-btn, .kinojo-mini-control):hover::after,
+.kinojo-link-btn:hover::after,
+#aion2UpdateDownloadBtn:hover::after,
+#aion2BugReportBtn:hover::after,
+.kinojo-theme-tab:hover::after,
+.kinojo-size-tab:hover::after { opacity: .72 !important; animation-duration: 3.4s !important; }
+#aion2ControlShell :is(.aion2-corner-btn, .kinojo-mini-control) > *,
+.kinojo-link-btn > *,
+#aion2UpdateDownloadBtn > *,
+#aion2BugReportBtn > *,
+.kinojo-theme-tab > *,
+.kinojo-size-tab > * { position: relative !important; z-index: 2 !important; }
+
+#aion2ControlShell :is(.aion2-corner-btn, .kinojo-mini-control) {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  min-height: 38px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  inset: auto !important;
+  transform: none !important;
+  display: grid !important;
+  place-items: center !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 11px !important;
+  flex: none !important;
+}
+#aion2ControlShell :is(.aion2-corner-btn, .kinojo-mini-control):hover { background: var(--kinojo-button-hover-bg) !important; }
+#aion2ControlShell .aion2-corner-bg { display: none !important; }
+#aion2ControlShell .aion2-corner-icon { position: relative !important; z-index: 2 !important; left: auto !important; top: auto !important; inset: auto !important; transform: none !important; display: flex !important; align-items: center !important; justify-content: center !important; width: 20px !important; height: 20px !important; margin: 0 !important; }
+#aion2ControlShell .aion2-corner-icon svg { width: 20px !important; height: 20px !important; display: block !important; margin: 0 !important; transform: none !important; }
+
+#aion2MainToggleBtn.kinojo-main-control {
+  position: relative !important;
+  width: 92px !important;
+  height: 60px !important;
+  min-width: 92px !important;
+  min-height: 60px !important;
+  margin: 0 !important;
+  padding: 7px 6px 6px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 3px !important;
+  border-radius: 14px !important;
+  border: 1px solid var(--kinojo-main-border) !important;
+  background: var(--kinojo-main-bg) !important;
+  color: var(--kinojo-main-text) !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.06) !important;
+  overflow: hidden !important;
+  transform: none !important;
+  z-index: 0 !important;
+}
+#aion2MainToggleBtn.kinojo-main-control::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  border-radius: inherit !important;
+  pointer-events: none !important;
+  opacity: .78 !important;
+  z-index: 1 !important;
+  background:
+    linear-gradient(90deg, transparent 0%, rgba(91,217,255,.26) 8%, rgba(255,255,255,.95) 15%, rgba(196,181,253,.50) 22%, transparent 36%) top left / 240% 3px no-repeat,
+    linear-gradient(180deg, transparent 0%, rgba(91,217,255,.22) 8%, rgba(255,255,255,.82) 15%, rgba(196,181,253,.45) 22%, transparent 36%) right top / 3px 240% no-repeat,
+    linear-gradient(270deg, transparent 0%, rgba(91,217,255,.22) 8%, rgba(255,255,255,.88) 15%, rgba(196,181,253,.48) 22%, transparent 36%) bottom right / 240% 3px no-repeat,
+    linear-gradient(0deg, transparent 0%, rgba(91,217,255,.22) 8%, rgba(255,255,255,.82) 15%, rgba(196,181,253,.45) 22%, transparent 36%) left bottom / 3px 240% no-repeat !important;
+  filter: drop-shadow(0 0 9px rgba(91,217,255,.56)) drop-shadow(0 0 7px rgba(196,181,253,.36)) !important;
+  animation: kinojoBorderMist 3.2s linear infinite !important;
+}
+#aion2MainToggleBtn.kinojo-main-control::after {
+  content: "" !important;
+  position: absolute !important;
+  top: -35% !important;
+  bottom: -35% !important;
+  left: 0 !important;
+  width: 42% !important;
+  pointer-events: none !important;
+  background: linear-gradient(90deg, transparent, var(--kinojo-main-sweep), transparent) !important;
+  filter: blur(2.2px) !important;
+  opacity: .46 !important;
+  animation: kinojoMainSweep 2.6s ease-in-out infinite !important;
+  z-index: 1 !important;
+}
+#aion2MainToggleBtn.kinojo-main-control:hover { background: var(--kinojo-main-hover-bg) !important; filter: brightness(1.08) saturate(1.10) !important; }
+#aion2MainToggleBtn.kinojo-main-control:hover::before { opacity: .92 !important; animation-duration: 1.9s !important; }
+#aion2MainToggleBtn.kinojo-main-control:hover::after { opacity: .86 !important; animation-duration: 1.30s !important; }
+#aion2MainToggleBtn.running.kinojo-main-control,
+#aion2MainToggleBtn.running.kinojo-main-control:hover {
+  --kinojo-main-sweep: rgba(255,239,170,.98);
+  background:
+    radial-gradient(circle at 32% 16%, rgba(255,250,214,.35), transparent 22%),
+    linear-gradient(145deg, #2a1704 0%, #805106 33%, #d49a1f 55%, #7a4a06 76%, #1f1004 100%) !important;
+  color: #fff8df !important;
+  border-color: rgba(255,213,96,.96) !important;
+  animation: kinojoGoldAlive 1.05s ease-in-out infinite !important;
+}
+#aion2MainToggleBtn.running.kinojo-main-control::before {
+  background:
+    linear-gradient(90deg, transparent 0%, rgba(245,158,11,.32) 8%, rgba(255,250,205,.98) 15%, rgba(251,191,36,.58) 24%, transparent 38%) top left / 240% 3px no-repeat,
+    linear-gradient(180deg, transparent 0%, rgba(245,158,11,.32) 8%, rgba(255,250,205,.98) 15%, rgba(251,191,36,.58) 24%, transparent 38%) right top / 3px 240% no-repeat,
+    linear-gradient(270deg, transparent 0%, rgba(245,158,11,.32) 8%, rgba(255,250,205,.98) 15%, rgba(251,191,36,.58) 24%, transparent 38%) bottom right / 240% 3px no-repeat,
+    linear-gradient(0deg, transparent 0%, rgba(245,158,11,.32) 8%, rgba(255,250,205,.98) 15%, rgba(251,191,36,.58) 24%, transparent 38%) left bottom / 3px 240% no-repeat !important;
+  filter: drop-shadow(0 0 12px rgba(251,191,36,.72)) drop-shadow(0 0 8px rgba(255,250,205,.58)) !important;
+  opacity: 1 !important;
+  animation-duration: 1.55s !important;
+}
+#aion2MainToggleBtn.running.kinojo-main-control::after { opacity: .98 !important; animation-duration: .82s !important; filter: blur(2.8px) !important; }
+#aion2MainToggleBtn.kinojo-main-control > * { position: relative !important; z-index: 2 !important; }
+#aion2MainToggleBtn.kinojo-main-control .kinojo-main-icon,
+#aion2MainToggleBtn.kinojo-main-control .kinojo-main-label {
+  position: static !important;
+  transform: none !important;
+  inset: auto !important;
+  margin: 0 !important;
+  text-align: center !important;
+  color: inherit !important;
+}
+#aion2MainToggleBtn.kinojo-main-control .kinojo-main-icon { width: 23px !important; height: 23px !important; display: flex !important; align-items: center !important; justify-content: center !important; }
+#aion2MainToggleBtn.kinojo-main-control .kinojo-main-icon svg { width: 22px !important; height: 22px !important; display: block !important; margin: 0 !important; transform: none !important; }
+#aion2MainToggleBtn.kinojo-main-control .kinojo-main-label { display: block !important; width: 100% !important; font-size: 10.5px !important; font-weight: 950 !important; line-height: 1.05 !important; white-space: nowrap !important; }
+
+/* Quick links / settings */
+#aion2QuickLinkBox { margin: 0 auto !important; padding: 0 !important; display: flex !important; flex-direction: column !important; align-items: center !important; gap: 5px !important; background: transparent !important; border: 0 !important; box-shadow: none !important; }
+.kinojo-control-section { width: var(--kinojo-updater-inner-width) !important; max-width: 100% !important; margin: 0 auto 5px !important; }
+.kinojo-section-title { display: grid !important; grid-template-columns: 1fr auto 1fr !important; gap: 7px !important; align-items: center !important; margin: 0 0 4px !important; color: var(--kinojo-label) !important; font-size: 10px !important; font-weight: 950 !important; letter-spacing: .02em !important; }
+.kinojo-section-title::before,
+.kinojo-section-title::after { content: "" !important; height: 1px !important; background: linear-gradient(90deg, transparent, rgba(148,163,184,.42), transparent) !important; }
+.kinojo-section-title span { white-space: nowrap !important; }
+.kinojo-link-grid { width: 100% !important; display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 5px 6px !important; }
+.kinojo-theme-tabs { width: 100% !important; display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px !important; }
+.kinojo-size-tabs { width: 100% !important; display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px !important; }
+.kinojo-link-btn,
+#aion2UpdateDownloadBtn,
+#aion2BugReportBtn,
+.kinojo-theme-tab,
+.kinojo-size-tab {
+  width: 100% !important;
+  height: 26px !important;
+  min-height: 26px !important;
+  margin: 0 !important;
+  padding: 0 7px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 8px !important;
+  font-size: 10.5px !important;
+  font-weight: 900 !important;
+  white-space: nowrap !important;
+}
+.kinojo-theme-tab.is-active,
+.kinojo-size-tab.is-active { opacity: .72 !important; cursor: default !important; filter: none !important; }
+#aion2VersionText { margin-top: 4px !important; color: var(--kinojo-muted) !important; font-size: 10px !important; font-weight: 850 !important; text-align: center !important; }
+
+/* Floating toast outside panel */
+.kinojo-theme-toast { position: fixed !important; z-index: 2147483646 !important; left: 50% !important; bottom: 24px !important; padding: 7px 10px !important; border-radius: 999px !important; background: rgba(15,23,42,.90) !important; color: #fff !important; font-size: 11px !important; font-weight: 900 !important; box-shadow: 0 10px 28px rgba(0,0,0,.22) !important; pointer-events: none !important; animation: kinojoToastFloatUp .18s ease forwards, kinojoToastFloatOut .22s ease 1.18s forwards !important; }
+
+/* Password modal: fixed relative to panel by ui.js, slides from panel side. */
+#aion2PasswordPromptOverlay { position: fixed !important; z-index: 2147483646 !important; inset: 0 !important; pointer-events: none !important; background: transparent !important; }
+#aion2PasswordPromptOverlay .aion2-modal {
+  position: fixed !important;
+  pointer-events: auto !important;
+  width: 276px !important;
+  max-width: calc(100vw - 24px) !important;
+  padding: 13px !important;
+  border-radius: 12px !important;
+  opacity: 0 !important;
+  transform: translateX(34px) scale(.985) !important;
+  transition: opacity .22s ease, transform .22s ease !important;
+  background: rgba(8,17,29,.96) !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(80,154,218,.62) !important;
+  box-shadow: 0 18px 46px rgba(2,8,23,.34) !important;
+  overflow: hidden !important;
+}
+#aion2PasswordPromptOverlay .aion2-modal.is-visible { opacity: 1 !important; transform: translateX(0) scale(1) !important; }
+#aion2PasswordPromptOverlay .aion2-modal.is-hiding { opacity: 0 !important; transform: translateX(34px) scale(.985) !important; }
+#aion2PasswordPromptOverlay.kinojo-theme-modern .aion2-modal,
+#aion2PasswordPromptOverlay.kinojo-auth-theme-modern .aion2-modal {
+  background: #ffffff !important;
+  color: #172033 !important;
+  border: 1px solid rgba(203,213,225,.95) !important;
+  box-shadow: 0 18px 46px rgba(2,8,23,.18), inset 0 0 0 1px rgba(255,255,255,.80) !important;
+}
+.kinojo-auth-kicker { color: var(--kinojo-label) !important; font-size: 10px !important; font-weight: 950 !important; letter-spacing: .06em !important; margin-bottom: 4px !important; }
+.kinojo-auth-title { color: inherit !important; font-size: 14px !important; font-weight: 950 !important; margin-bottom: 4px !important; }
+.kinojo-auth-desc { color: inherit !important; opacity: .82 !important; font-size: 11px !important; font-weight: 800 !important; margin-bottom: 9px !important; }
+.kinojo-password-field { position: relative !important; margin-bottom: 9px !important; }
+.kinojo-password-field input { width: 100% !important; height: 34px !important; padding: 0 38px 0 10px !important; border-radius: 9px !important; border: 1px solid rgba(125,211,252,.34) !important; background: rgba(2,8,23,.42) !important; color: #fff !important; font-size: 13px !important; font-weight: 850 !important; outline: none !important; }
+#aion2PasswordPromptOverlay.kinojo-theme-modern .kinojo-password-field input,
+#aion2PasswordPromptOverlay.kinojo-auth-theme-modern .kinojo-password-field input { color: #111827 !important; background: #fff !important; border-color: rgba(203,213,225,.95) !important; }
+.kinojo-password-eye { position: absolute !important; right: 6px !important; top: 50% !important; transform: translateY(-50%) !important; width: 28px !important; height: 28px !important; padding: 0 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; border: 0 !important; border-radius: 7px !important; background: transparent !important; color: inherit !important; cursor: pointer !important; }
+.kinojo-password-eye svg { width: 18px !important; height: 18px !important; fill: currentColor !important; }
+.kinojo-password-eye .kinojo-eye-closed { display: none !important; }
+.kinojo-password-eye.is-visible .kinojo-eye-open { display: none !important; }
+.kinojo-password-eye.is-visible .kinojo-eye-closed { display: inline-flex !important; }
+#aion2PasswordPromptOverlay .aion2-modal-primary,
+#aion2PasswordPromptOverlay .aion2-modal-secondary {
+  width: 68px !important;
+  min-width: 68px !important;
+  height: 29px !important;
+  margin: 0 6px 0 0 !important;
+  padding: 0 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+}
+#aion2PasswordPromptOverlay .aion2-modal-secondary { background: rgba(226,232,240,.92) !important; color: #334155 !important; }
+
+@media (max-width: 380px) {
+  :root { --kinojo-updater-inner-width: calc(100vw - 40px); }
+  #aion2OfficialPanel.kinojo-theme-classic,
+  #aion2OfficialPanel.kinojo-theme-modern { width: calc(100vw - 24px) !important; }
+  #aion2ControlShell { grid-template-columns: 34px 34px 78px 34px 34px !important; gap: 5px !important; height: 70px !important; padding: 7px 6px !important; }
+  #aion2ControlShell :is(.aion2-corner-btn, .kinojo-mini-control) { width: 34px !important; height: 34px !important; min-width: 34px !important; min-height: 34px !important; }
+  #aion2MainToggleBtn.kinojo-main-control { width: 78px !important; min-width: 78px !important; }
+}
+
+/* ============================================================
+   Kinojo Lookup Debug Drawer - 20260623_07
+   ------------------------------------------------------------
+   Slides out from behind the compact extension panel so the main
+   panel size stays unchanged while detailed lookup diagnostics are
+   still visible when needed.
+============================================================ */
+
+#aion2DebugDrawer {
+  position: fixed;
+  right: 330px;
+  bottom: 18px;
+  z-index: 2147483647;
+  width: 306px;
+  max-height: min(520px, calc(100vh - 24px));
+  overflow: hidden;
+  border-radius: 18px;
+  background: rgba(6, 18, 31, .96);
+  color: #d7f3ff;
+  box-shadow:
+    inset 0 0 0 1px rgba(56, 189, 248, .18),
+    0 18px 44px rgba(0, 0, 0, .34);
+  transform: translateY(10px) scale(.98);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform .22s ease, opacity .18s ease;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+body.kinojo-debug-open #aion2DebugDrawer,
+#aion2OfficialPanel.kinojo-debug-open #aion2DebugDrawer,
+#aion2DebugDrawer.kinojo-debug-drawer-open {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#aion2DebugDrawer.kinojo-debug-dragging {
+  transition: none !important;
+  user-select: none;
+}
+
+.kinojo-debug-head {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(125, 211, 252, .14);
+  background: rgba(15, 42, 67, .78);
+  cursor: move;
+}
+
+.kinojo-debug-hint {
+  color: rgba(191, 219, 254, .66);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: -.02em;
+}
+
+.kinojo-debug-head strong {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: -.02em;
+}
+
+#aion2DebugDrawerClose {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, .16);
+  color: #e0f7ff;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+
+.kinojo-server-state-bar {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 5px;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(125, 211, 252, .10);
+  background: rgba(2, 8, 23, .34);
+}
+
+.kinojo-server-chip {
+  display: grid;
+  grid-template-columns: 74px 1fr auto;
+  gap: 6px;
+  align-items: center;
+  min-height: 24px;
+  padding: 5px 7px;
+  border-radius: 10px;
+  background: rgba(15, 42, 67, .58);
+  color: #d7f3ff;
+  font-size: 10px;
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, .10);
+}
+
+.kinojo-server-chip b {
+  color: #7dd3fc;
+  font-weight: 900;
+}
+
+.kinojo-server-chip em {
+  color: rgba(191, 219, 254, .70);
+  font-style: normal;
+  white-space: nowrap;
+}
+
+.kinojo-server-chip.ok { box-shadow: inset 0 0 0 1px rgba(34, 197, 94, .26); }
+.kinojo-server-chip.saving,
+.kinojo-server-chip.checking { box-shadow: inset 0 0 0 1px rgba(250, 204, 21, .30); }
+.kinojo-server-chip.error { box-shadow: inset 0 0 0 1px rgba(248, 113, 113, .36); }
+
+.kinojo-debug-grid-wide {
+  grid-template-columns: 84px 1fr;
+}
+
+.kinojo-debug-body {
+  max-height: min(410px, calc(100vh - 150px));
+  overflow-y: auto;
+  padding: 10px 12px 12px;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.kinojo-debug-section {
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(125, 211, 252, .10);
+}
+
+.kinojo-debug-section:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.kinojo-debug-label {
+  margin-bottom: 5px;
+  color: #7dd3fc;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .04em;
+}
+
+.kinojo-debug-grid {
+  display: grid;
+  grid-template-columns: 74px 1fr;
+  gap: 4px 8px;
+}
+
+.kinojo-debug-grid span,
+.kinojo-debug-section p,
+.kinojo-retry-list em {
+  color: #93c5fd;
+  font-style: normal;
+}
+
+.kinojo-debug-grid strong,
+.kinojo-retry-list span {
+  min-width: 0;
+  color: #e0f7ff;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.kinojo-retry-list {
+  display: grid;
+  gap: 5px;
+  margin: 7px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kinojo-retry-list li {
+  display: grid;
+  gap: 2px;
+  padding: 6px 7px;
+  border-radius: 10px;
+  background: rgba(15, 42, 67, .54);
+}
+
+.kinojo-debug-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 6px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(56, 189, 248, .18);
+  color: #d7f3ff;
+  font-size: 10px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.kinojo-debug-toggle:hover {
+  background: rgba(56, 189, 248, .28);
+}
+
+
+/* 040-03 PASS KEY modal: web login input behavior shared with KINOJO INFO */
+#aion2PassKeyPromptOverlay * { box-sizing: border-box !important; }
+#aion2PassKeyPromptOverlay { position: fixed !important; z-index: 2147483646 !important; inset: 0 !important; pointer-events: none !important; background: transparent !important; }
+#aion2PassKeyPromptOverlay .aion2-modal {
+  position: fixed !important; min-width: 286px !important; max-width: 330px !important; padding: 14px !important;
+  pointer-events: auto !important; opacity: 0 !important; transform: translateX(34px) scale(.985) !important;
+  transition: opacity .18s ease, transform .18s ease !important;
+}
+#aion2PassKeyPromptOverlay .aion2-modal.is-visible { opacity: 1 !important; transform: translateX(0) scale(1) !important; }
+#aion2PassKeyPromptOverlay .aion2-modal.is-hiding { opacity: 0 !important; transform: translateX(34px) scale(.985) !important; }
+.kinojo-passkey-modal .kinojo-login-input {
+  width: 100% !important; height: 38px !important; padding: 0 12px !important; border-radius: 10px !important;
+  border: 1px solid rgba(125,211,252,.34) !important; background: rgba(2,8,23,.42) !important;
+  color: #fff !important; font-size: 14px !important; font-weight: 900 !important; letter-spacing: .02em !important;
+  outline: none !important; margin-bottom: 10px !important;
+}
+#aion2PassKeyPromptOverlay.kinojo-theme-modern .kinojo-login-input,
+#aion2PassKeyPromptOverlay.kinojo-auth-theme-modern .kinojo-login-input { color: #111827 !important; background: #fff !important; border-color: rgba(203,213,225,.95) !important; }
+.kinojo-passkey-modal .kinojo-code-otp { display: grid !important; grid-template-columns: repeat(6, 1fr) !important; gap: 6px !important; margin: 0 0 8px !important; }
+.kinojo-passkey-modal .kinojo-code-otp-cell {
+  height: 34px !important; border-radius: 9px !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  border: 1px solid rgba(125,211,252,.34) !important; background: rgba(15,23,42,.5) !important; color: inherit !important;
+  font-size: 14px !important; font-weight: 950 !important; overflow: hidden !important;
+}
+#aion2PassKeyPromptOverlay.kinojo-theme-modern .kinojo-code-otp-cell,
+#aion2PassKeyPromptOverlay.kinojo-auth-theme-modern .kinojo-code-otp-cell { background: rgba(248,250,252,.96) !important; border-color: rgba(203,213,225,.95) !important; }
+.kinojo-passkey-modal .kinojo-code-otp-cell.filled { border-color: rgba(37,99,235,.72) !important; }
+.kinojo-passkey-modal .kinojo-account-help { font-size: 10px !important; font-weight: 800 !important; opacity: .72 !important; margin: 0 0 10px !important; }
+
+
+
+/* ============================================================
+   KINOJO Updater 7-Step Server Progress UI
+   ------------------------------------------------------------
+   Shared visual contract with future Windows updater.
+============================================================ */
+
+.kinojo-phase-board {
+  margin: 8px 0 9px;
+  padding: 9px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(8, 24, 42, .82), rgba(7, 18, 32, .62));
+  box-shadow:
+    inset 0 0 0 1px rgba(125, 211, 252, .20),
+    0 10px 20px rgba(0, 0, 0, .18);
+  overflow: hidden;
+}
+
+.kinojo-phase-head {
+  display: grid;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.kinojo-phase-kicker {
+  color: rgba(125, 211, 252, .72);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+
+.kinojo-phase-head strong {
+  color: #e0f7ff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.kinojo-phase-items {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+.kinojo-phase-item {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 7px;
+  align-items: center;
+  min-width: 0;
+  padding: 6px 7px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, .48);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, .12);
+  transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.kinojo-phase-no {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: rgba(226, 246, 255, .88);
+  background: rgba(15, 23, 42, .72);
+  box-shadow: inset 0 0 0 1px rgba(125, 211, 252, .18);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.kinojo-phase-copy {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.kinojo-phase-copy strong {
+  color: rgba(226, 246, 255, .88);
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kinojo-phase-copy span {
+  color: rgba(191, 219, 254, .58);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+
+.kinojo-phase-active {
+  background: rgba(14, 116, 144, .22);
+  transform: translateX(1px);
+  box-shadow:
+    inset 0 0 0 1px rgba(56, 189, 248, .34),
+    0 0 16px rgba(56, 189, 248, .10);
+}
+
+.kinojo-phase-active .kinojo-phase-no {
+  color: #00111d;
+  background: linear-gradient(135deg, #7dd3fc, #c084fc);
+  box-shadow: 0 0 14px rgba(56, 189, 248, .28);
+}
+
+.kinojo-phase-done {
+  background: rgba(16, 185, 129, .10);
+  box-shadow: inset 0 0 0 1px rgba(52, 211, 153, .22);
+}
+
+.kinojo-phase-done .kinojo-phase-no::after {
+  content: "✓";
+  font-size: 11px;
+}
+
+.kinojo-phase-done .kinojo-phase-no {
+  font-size: 0;
+  background: rgba(52, 211, 153, .82);
+  color: #032016;
+}
+
+.kinojo-phase-message {
+  margin: 7px 0 6px;
+  color: #dbeafe;
+  font-size: 10.5px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.kinojo-phase-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 5px;
+  color: rgba(191, 219, 254, .70);
+  font-size: 9.5px;
+  font-weight: 800;
+}
+
+.kinojo-phase-progress {
+  margin-top: 4px;
+}
+
+/* ============================================================
+ * KINOJO 1.3.1.33 Runtime status / sliding progress UI
+ * - Top status bar always shows server runtime owner/progress.
+ * - During lookup, progress panel slides out beside the compact main panel.
+ * ============================================================ */
+#kinojoRuntimeStateBar {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-height:34px;
+  padding:7px 9px;
+  margin:0 0 8px 0;
+  border:1px solid rgba(96,165,250,.28);
+  border-radius:12px;
+  background:rgba(255,255,255,.76);
+  color:#0f172a;
+  box-sizing:border-box;
+  overflow:hidden;
+}
+#kinojoRuntimeStateBar .kinojo-runtime-dot {
+  width:8px;
+  height:8px;
+  border-radius:999px;
+  background:#94a3b8;
+  box-shadow:0 0 0 3px rgba(148,163,184,.14);
+  flex:0 0 auto;
+}
+#kinojoRuntimeStateBar .kinojo-runtime-copy {
+  min-width:0;
+  flex:1 1 auto;
+  display:flex;
+  flex-direction:column;
+  gap:1px;
+  line-height:1.15;
+}
+#kinojoRuntimeStateBar .kinojo-runtime-copy b {
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:-.01em;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#kinojoRuntimeStateBar .kinojo-runtime-copy em {
+  font-style:normal;
+  font-size:10px;
+  color:#64748b;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#kinojoRuntimeStateBar.kinojo-runtime-running .kinojo-runtime-dot {
+  background:#2563eb;
+  box-shadow:0 0 0 3px rgba(37,99,235,.12), 0 0 12px rgba(37,99,235,.45);
+}
+#kinojoRuntimeStateBar.kinojo-runtime-own-stale .kinojo-runtime-dot {
+  background:#f59e0b;
+  box-shadow:0 0 0 3px rgba(245,158,11,.16), 0 0 12px rgba(245,158,11,.45);
+}
+#kinojoRuntimeStateBar .kinojo-runtime-release {
+  border:0;
+  border-radius:999px;
+  padding:5px 8px;
+  font-size:10px;
+  font-weight:800;
+  color:#92400e;
+  background:rgba(254,243,199,.95);
+  cursor:pointer;
+  white-space:nowrap;
+}
+#aion2OfficialPanel {
+  overflow:visible !important;
+}
+#aion2OfficialPanel.kinojo-runtime-open #aion2StatusBox {
+  position:absolute !important;
+  right:calc(100% + 12px) !important;
+  bottom:0 !important;
+  width:330px !important;
+  max-height:min(74vh, 560px) !important;
+  overflow:auto !important;
+  opacity:1;
+  transform:translateX(0) scale(1);
+  transition:opacity .22s ease, transform .22s ease;
+  z-index:2147483646;
+  box-shadow:0 18px 40px rgba(15,23,42,.16) !important;
+}
+#aion2OfficialPanel:not(.kinojo-runtime-open) #aion2StatusBox {
+  transition:opacity .18s ease, transform .18s ease;
+}
+#aion2OfficialPanel.kinojo-runtime-open #aion2OfficialLogBox {
+  max-height:118px !important;
+  overflow:auto !important;
+}
+@media (max-width: 760px) {
+  #aion2OfficialPanel.kinojo-runtime-open #aion2StatusBox {
+    position:relative !important;
+    right:auto !important;
+    bottom:auto !important;
+    width:auto !important;
+    max-height:360px !important;
+  }
+}
+
+/* ============================================================
+   20260629_06 Lookup Settings Sidecar
+   - All updater side windows use the same sidecar placement rule.
+   - Character-name lookup has top priority and disables other filters.
+============================================================ */
+.kinojo-lookup-settings-bar {
+  width: var(--kinojo-updater-inner-width, 226px) !important;
+  margin: 0 auto 8px !important;
+  padding: 7px 8px !important;
+  display: grid !important;
+  grid-template-columns: 1fr auto !important;
+  gap: 7px !important;
+  align-items: center !important;
+  border-radius: 14px !important;
+  background: var(--kinojo-bg-dark) !important;
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, .16), 0 7px 16px rgba(0,0,0,.16) !important;
+}
+.kinojo-lookup-settings-summary {
+  min-width: 0 !important;
+  color: var(--kinojo-blue-text) !important;
+  font-size: 10.5px !important;
+  font-weight: 900 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+.kinojo-lookup-settings-btn {
+  min-width: 68px !important;
+  height: 26px !important;
+  padding: 0 8px !important;
+  border-radius: 10px !important;
+  border: 1px solid var(--kinojo-card-border, rgba(125,211,252,.24)) !important;
+  background: var(--kinojo-button-bg, rgba(15,42,67,.76)) !important;
+  color: var(--kinojo-button-text, #d7f3ff) !important;
+  font-size: 10.5px !important;
+  font-weight: 900 !important;
+  cursor: pointer !important;
+}
+.kinojo-sidecar-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483646 !important;
+  pointer-events: none !important;
+  background: transparent !important;
+}
+.kinojo-sidecar-window {
+  position: fixed !important;
+  pointer-events: auto !important;
+  transform: translateX(28px) scale(.985) !important;
+  opacity: 0 !important;
+  transition: transform .22s ease, opacity .18s ease !important;
+}
+.kinojo-sidecar-window.is-visible,
+#aion2DebugDrawer.kinojo-debug-drawer-open {
+  transform: translateX(0) scale(1) !important;
+  opacity: 1 !important;
+}
+.kinojo-sidecar-window.is-hiding {
+  transform: translateX(34px) scale(.985) !important;
+  opacity: 0 !important;
+}
+.kinojo-lookup-modal {
+  width: min(820px, calc(100vw - 24px)) !important;
+  max-height: min(660px, calc(100vh - 24px)) !important;
+  overflow: auto !important;
+  padding: 14px !important;
+  border-radius: 18px !important;
+  background: rgba(6, 18, 31, .96) !important;
+  color: #d7f3ff !important;
+  box-shadow: inset 0 0 0 1px rgba(56,189,248,.18), 0 18px 44px rgba(0,0,0,.34) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+.kinojo-modal-head {
+  display: grid !important;
+  grid-template-columns: 1fr auto !important;
+  gap: 10px !important;
+  align-items: start !important;
+  margin-bottom: 10px !important;
+}
+.kinojo-sidecar-close {
+  width: 28px !important;
+  height: 28px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: rgba(148,163,184,.16) !important;
+  color: #e0f7ff !important;
+  font-weight: 900 !important;
+  cursor: pointer !important;
+}
+
+.kinojo-lookup-scope-box {
+  margin: 0 0 10px !important;
+  padding: 10px !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(96,165,250,.24) !important;
+  background: rgba(2,8,23,.42) !important;
+}
+.kinojo-lookup-scope-title {
+  display: grid !important;
+  grid-template-columns: auto 1fr !important;
+  gap: 9px !important;
+  align-items: baseline !important;
+  margin-bottom: 8px !important;
+}
+.kinojo-lookup-scope-title b {
+  color: #e0f7ff !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+}
+.kinojo-lookup-scope-title span {
+  color: rgba(191,219,254,.62) !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+}
+.kinojo-lookup-scope-options {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+.kinojo-lookup-scope-option {
+  display: grid !important;
+  grid-template-columns: 18px 1fr !important;
+  gap: 8px !important;
+  align-items: center !important;
+  min-height: 52px !important;
+  padding: 8px 10px !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(125,211,252,.15) !important;
+  background: rgba(15,42,67,.44) !important;
+  cursor: pointer !important;
+}
+.kinojo-lookup-scope-option:has(input:checked) {
+  border-color: rgba(59,130,246,.72) !important;
+  background: rgba(29,78,216,.22) !important;
+  box-shadow: inset 0 0 0 1px rgba(96,165,250,.14) !important;
+}
+.kinojo-lookup-scope-option input {
+  accent-color: #2563eb !important;
+}
+.kinojo-lookup-scope-option span {
+  display: grid !important;
+  gap: 2px !important;
+}
+.kinojo-lookup-scope-option b {
+  color: #e0f7ff !important;
+  font-size: 11.5px !important;
+  font-weight: 900 !important;
+}
+.kinojo-lookup-scope-option em {
+  color: rgba(191,219,254,.64) !important;
+  font-size: 9.5px !important;
+  font-style: normal !important;
+  font-weight: 800 !important;
+  line-height: 1.35 !important;
+}
+.kinojo-filter-group.is-disabled-by-scope {
+  opacity: .42 !important;
+  filter: grayscale(.35) !important;
+}
+.kinojo-filter-group.is-disabled-by-scope .kinojo-filter-head em::after {
+  content: ' · 신규 조회 미적용' !important;
+}
+.kinojo-filter-note {
+  margin: 0 0 10px !important;
+  padding: 9px 10px !important;
+  border-radius: 12px !important;
+  background: rgba(15,42,67,.62) !important;
+  color: rgba(219,234,254,.82) !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  line-height: 1.45 !important;
+}
+.kinojo-filter-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 9px !important;
+  margin-bottom: 10px !important;
+}
+.kinojo-filter-grid.is-disabled-by-name {
+  opacity: .42 !important;
+  filter: grayscale(.35) !important;
+}
+.kinojo-filter-group {
+  min-height: 214px !important;
+  overflow: hidden !important;
+  border-radius: 14px !important;
+  background: rgba(2,8,23,.34) !important;
+  border: 1px solid rgba(125,211,252,.14) !important;
+}
+.kinojo-filter-head {
+  width: 100% !important;
+  height: 34px !important;
+  display: grid !important;
+  grid-template-columns: 1fr auto !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 0 10px !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(125,211,252,.10) !important;
+  background: rgba(15,42,67,.62) !important;
+  color: #e0f7ff !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  cursor: pointer !important;
+}
+.kinojo-filter-head em {
+  color: rgba(191,219,254,.58) !important;
+  font-size: 9px !important;
+  font-style: normal !important;
+  font-weight: 900 !important;
+}
+.kinojo-filter-options {
+  display: grid !important;
+  gap: 4px !important;
+  max-height: 230px !important;
+  overflow: auto !important;
+  padding: 8px !important;
+}
+.kinojo-filter-group.is-collapsed .kinojo-filter-options,
+.kinojo-filter-group.is-collapsed .kinojo-filter-help { display: none !important; }
+.kinojo-filter-option {
+  display: grid !important;
+  grid-template-columns: 16px 1fr !important;
+  gap: 7px !important;
+  align-items: center !important;
+  min-height: 23px !important;
+  color: rgba(226,242,255,.88) !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+}
+.kinojo-filter-option input,
+.kinojo-character-only-row input {
+  accent-color: #2563eb !important;
+}
+.kinojo-filter-help {
+  margin: 0 8px 8px !important;
+  color: rgba(147,197,253,.76) !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  line-height: 1.35 !important;
+}
+.kinojo-character-only-box {
+  margin: 0 0 10px !important;
+  padding: 10px !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(125,211,252,.22) !important;
+  background: rgba(2,8,23,.34) !important;
+}
+.kinojo-character-only-box.is-active {
+  border-color: rgba(74,222,128,.55) !important;
+  box-shadow: inset 0 0 0 1px rgba(74,222,128,.12), 0 0 18px rgba(74,222,128,.08) !important;
+}
+.kinojo-character-only-box label {
+  display: block !important;
+  margin-bottom: 7px !important;
+  color: #e0f7ff !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+}
+.kinojo-character-only-box label span {
+  color: rgba(191,219,254,.64) !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+}
+.kinojo-character-only-row {
+  display: grid !important;
+  grid-template-columns: 1fr 74px !important;
+  gap: 8px !important;
+}
+.kinojo-character-only-row input {
+  height: 34px !important;
+  padding: 0 10px !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(125,211,252,.20) !important;
+  background: rgba(15,23,42,.72) !important;
+  color: #e0f7ff !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+}
+.kinojo-character-only-row button {
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: linear-gradient(135deg, #1d4ed8, #2563eb) !important;
+  color: #fff !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  cursor: pointer !important;
+}
+#kinojoCharacterOnlyHelp {
+  margin: 7px 0 0 !important;
+  color: rgba(191,219,254,.68) !important;
+  font-size: 10.5px !important;
+  font-weight: 800 !important;
+}
+.kinojo-filter-actions {
+  display: grid !important;
+  grid-template-columns: auto 1fr auto auto !important;
+  gap: 8px !important;
+  align-items: center !important;
+}
+.kinojo-filter-actions button {
+  width: auto !important;
+  min-width: 72px !important;
+  margin: 0 !important;
+}
+#kinojoLookupSummaryInModal {
+  min-width: 0 !important;
+  color: rgba(191,219,254,.74) !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+}
+@media (max-width: 920px) {
+  .kinojo-lookup-modal { width: calc(100vw - 24px) !important; }
+  .kinojo-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+
+/* 20260629_06: 완료 후 3단계가 하나로 합쳐져 보이지 않도록 단계 번호를 유지한다. */
+.kinojo-phase-done .kinojo-phase-no {
+  font-size: 11px !important;
+  position: relative !important;
+}
+.kinojo-phase-done .kinojo-phase-no::after {
+  content: "✓" !important;
+  position: absolute !important;
+  right: -4px !important;
+  bottom: -4px !important;
+  width: 12px !important;
+  height: 12px !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 999px !important;
+  background: #0f5132 !important;
+  color: #dcfce7 !important;
+  font-size: 8px !important;
+  box-shadow: 0 0 0 1px rgba(220,252,231,.35) !important;
+}
+
+/* ============================================================
+   20260708_10 Lookup Engine v2 step timeline UX
+   - 7단계 서버 진행 상태와 세부 타임라인 표시
+   - 조회 상태 표시창 폭 확대
+============================================================ */
+#aion2OfficialPanel.kinojo-runtime-open #aion2StatusBox {
+  width: 660px !important;
+  max-width: min(92vw, 660px) !important;
+}
+
+.kinojo-phase-board-timeline {
+  padding: 12px 14px !important;
+}
+
+.kinojo-phase-board-timeline .kinojo-phase-items {
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+  gap: 6px;
+}
+
+.kinojo-phase-timeline {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--kinojo-step-count, 5), minmax(0, 1fr));
+  gap: 0;
+  margin: 14px 6px 12px;
+  padding-top: 2px;
+}
+
+.kinojo-phase-timeline::before {
+  content: "";
+  position: absolute;
+  top: 16px;
+  left: 8%;
+  right: 8%;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(56,189,248,.65), rgba(148,163,184,.22));
+  box-shadow: 0 0 14px rgba(56,189,248,.14);
+}
+
+.kinojo-timeline-step {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  min-width: 0;
+  text-align: center;
+}
+
+.kinojo-timeline-dot {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15,23,42,.94);
+  border: 2px solid rgba(148,163,184,.38);
+  color: rgba(226,232,240,.74);
+  box-shadow: 0 0 0 4px rgba(15,23,42,.78);
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.kinojo-timeline-title {
+  color: rgba(226,246,255,.82);
+  font-size: 10px;
+  font-weight: 850;
+  line-height: 1.25;
+  white-space: normal;
+  word-break: keep-all;
+}
+
+.kinojo-timeline-done .kinojo-timeline-dot {
+  background: linear-gradient(135deg, #22c55e, #86efac);
+  border-color: rgba(187,247,208,.8);
+  color: #052e16;
+  box-shadow: 0 0 0 4px rgba(15,23,42,.78), 0 0 18px rgba(34,197,94,.25);
+}
+
+.kinojo-timeline-active .kinojo-timeline-dot {
+  background: #0b1220;
+  border-color: #60a5fa;
+  color: #dbeafe;
+  box-shadow: 0 0 0 4px rgba(37,99,235,.22), 0 0 22px rgba(59,130,246,.55);
+  animation: kinojoTimelinePulse 1.15s ease-in-out infinite;
+}
+
+.kinojo-timeline-active .kinojo-timeline-title {
+  color: #7dd3fc;
+}
+
+@keyframes kinojoTimelinePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.kinojo-completion-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483647 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 20px !important;
+  background: rgba(2, 6, 23, .42) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+.kinojo-completion-modal {
+  position: relative !important;
+  width: min(420px, 92vw) !important;
+  padding: 22px !important;
+  border-radius: 18px !important;
+  background: linear-gradient(180deg, rgba(15, 23, 42, .98), rgba(2, 6, 23, .96)) !important;
+  color: #e5f2ff !important;
+  border: 1px solid rgba(96,165,250,.34) !important;
+  box-shadow: 0 30px 80px rgba(0,0,0,.38), inset 0 0 0 1px rgba(255,255,255,.04) !important;
+  text-align: center !important;
+}
+
+.kinojo-completion-x {
+  position: absolute !important;
+  top: 12px !important;
+  right: 12px !important;
+  width: 28px !important;
+  height: 28px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  color: #cbd5e1 !important;
+  background: rgba(148,163,184,.12) !important;
+  font-size: 18px !important;
+  cursor: pointer !important;
+}
+
+.kinojo-completion-icon {
+  width: 66px !important;
+  height: 66px !important;
+  margin: 4px auto 14px !important;
+  border-radius: 999px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: linear-gradient(135deg, #2563eb, #38bdf8) !important;
+  color: #fff !important;
+  font-size: 36px !important;
+  font-weight: 950 !important;
+  box-shadow: 0 0 30px rgba(37,99,235,.42) !important;
+}
+
+.kinojo-completion-modal h3 {
+  margin: 0 0 8px !important;
+  font-size: 22px !important;
+  font-weight: 950 !important;
+}
+
+.kinojo-completion-modal p {
+  margin: 0 0 16px !important;
+  color: rgba(226,232,240,.82) !important;
+  font-size: 13px !important;
+  line-height: 1.55 !important;
+  font-weight: 750 !important;
+}
+
+.kinojo-completion-stats {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 8px !important;
+  margin: 14px 0 18px !important;
+}
+
+.kinojo-completion-stats span {
+  display: grid !important;
+  gap: 3px !important;
+  padding: 10px 6px !important;
+  border-radius: 12px !important;
+  background: rgba(15,23,42,.72) !important;
+  border: 1px solid rgba(148,163,184,.18) !important;
+}
+
+.kinojo-completion-stats b {
+  color: #7dd3fc !important;
+  font-size: 16px !important;
+  font-weight: 950 !important;
+}
+
+.kinojo-completion-stats em {
+  color: rgba(203,213,225,.68) !important;
+  font-size: 10px !important;
+  font-style: normal !important;
+  font-weight: 800 !important;
+}
+
+.kinojo-completion-actions {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+.kinojo-completion-ok {
+  min-width: 160px !important;
+  height: 42px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+  color: #fff !important;
+  font-size: 13px !important;
+  font-weight: 950 !important;
+  cursor: pointer !important;
+  box-shadow: 0 10px 26px rgba(37,99,235,.28) !important;
+}
+
+.kinojo-report-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 8px 12px !important;
+  margin: 14px 0 18px !important;
+  text-align: left !important;
+  font-size: 12px !important;
+}
+
+.kinojo-report-grid span {
+  color: rgba(203,213,225,.7) !important;
+  font-weight: 800 !important;
+}
+
+.kinojo-report-grid b {
+  color: #e0f2fe !important;
+  font-weight: 950 !important;
+  text-align: right !important;
+}
+
+@media (max-width: 760px) {
+  #aion2OfficialPanel.kinojo-runtime-open #aion2StatusBox {
+    width: auto !important;
+    max-width: none !important;
+  }
+  .kinojo-phase-board-timeline .kinojo-phase-items {
+    grid-template-columns: 1fr !important;
+  }
+  .kinojo-phase-timeline {
+    overflow-x: auto;
+    grid-template-columns: repeat(var(--kinojo-step-count, 5), 86px);
+    padding-bottom: 4px;
+  }
+}
+
+
+/* 20260708_10: Lookup Engine v2 7단계 표시 압축 보정 */
+.kinojo-phase-board .kinojo-phase-items {
+  grid-template-columns: repeat(auto-fit, minmax(74px, 1fr));
+}
+.kinojo-phase-board .kinojo-phase-item {
+  grid-template-columns: 20px 1fr;
+  gap: 5px;
+  padding: 5px 5px;
+}
+.kinojo-phase-board .kinojo-phase-no {
+  width: 20px;
+  height: 20px;
+  font-size: 10px;
+}
+.kinojo-phase-board .kinojo-phase-copy strong {
+  font-size: 10px;
+}
+.kinojo-phase-board .kinojo-phase-copy span {
+  font-size: 8px;
+}
+@media (max-width: 760px) {
+  .kinojo-phase-board .kinojo-phase-items {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* ============================================================
+   20260711_07 Three-step persistent progress panels
+   - STEP 1/2/3 are independent cards.
+   - Completed/error details remain visible until the next run/reset.
+   - Existing KINOJO glass/blue visual language is preserved.
+============================================================ */
+#aion2OfficialPanel.kinojo-runtime-open #aion2StatusBox {
+  width: 860px !important;
+  max-width: calc(100vw - 310px) !important;
+  max-height: min(78vh, 620px) !important;
+}
+
+.kinojo-step-board {
+  margin: 8px 0 9px !important;
+  padding: 10px !important;
+  border-radius: 15px !important;
+  background: linear-gradient(180deg, rgba(8,24,42,.84), rgba(4,13,25,.72)) !important;
+  box-shadow: inset 0 0 0 1px rgba(125,211,252,.18), 0 12px 24px rgba(0,0,0,.18) !important;
+  text-align: left !important;
+}
+
+.kinojo-step-board-head {
+  display: grid !important;
+  grid-template-columns: auto 1fr auto !important;
+  align-items: baseline !important;
+  gap: 8px !important;
+  margin: 0 2px 9px !important;
+}
+
+.kinojo-step-board-head span {
+  color: rgba(125,211,252,.72) !important;
+  font-size: 9px !important;
+  font-weight: 950 !important;
+  letter-spacing: .12em !important;
+}
+
+.kinojo-step-board-head strong {
+  color: #e0f7ff !important;
+  font-size: 12px !important;
+  font-weight: 950 !important;
+}
+
+.kinojo-step-board-head em {
+  color: rgba(191,219,254,.62) !important;
+  font-size: 9px !important;
+  font-style: normal !important;
+  font-weight: 800 !important;
+}
+
+.kinojo-step-panels {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  align-items: stretch !important;
+}
+
+.kinojo-step-panel {
+  min-width: 0 !important;
+  padding: 9px !important;
+  border-radius: 13px !important;
+  background: rgba(15,23,42,.56) !important;
+  box-shadow: inset 0 0 0 1px rgba(148,163,184,.14) !important;
+  transition: box-shadow .18s ease, background .18s ease, transform .18s ease !important;
+}
+
+.kinojo-step-panel-head {
+  display: grid !important;
+  grid-template-columns: auto 1fr auto !important;
+  gap: 5px 7px !important;
+  align-items: center !important;
+}
+
+.kinojo-step-panel-head .kinojo-step-number {
+  padding: 3px 6px !important;
+  border-radius: 999px !important;
+  background: rgba(148,163,184,.12) !important;
+  color: rgba(226,232,240,.72) !important;
+  font-size: 8.5px !important;
+  font-weight: 950 !important;
+  letter-spacing: .08em !important;
+}
+
+.kinojo-step-panel-head strong {
+  grid-column: 1 / -1 !important;
+  color: #e0f7ff !important;
+  font-size: 11px !important;
+  font-weight: 950 !important;
+  line-height: 1.25 !important;
+}
+
+.kinojo-step-panel-head em {
+  justify-self: end !important;
+  color: rgba(203,213,225,.68) !important;
+  font-size: 9px !important;
+  font-style: normal !important;
+  font-weight: 900 !important;
+}
+
+.kinojo-step-message {
+  min-height: 30px !important;
+  margin: 7px 0 !important;
+  color: rgba(219,234,254,.82) !important;
+  font-size: 9.5px !important;
+  font-weight: 800 !important;
+  line-height: 1.4 !important;
+  word-break: keep-all !important;
+}
+
+.kinojo-step-detail-list {
+  display: grid !important;
+  gap: 4px !important;
+  min-height: 108px !important;
+}
+
+.kinojo-step-detail-row {
+  display: grid !important;
+  grid-template-columns: 16px minmax(0,1fr) auto !important;
+  gap: 5px !important;
+  align-items: center !important;
+  min-width: 0 !important;
+  padding: 5px 6px !important;
+  border-radius: 9px !important;
+  background: rgba(2,8,23,.32) !important;
+  box-shadow: inset 0 0 0 1px rgba(148,163,184,.10) !important;
+}
+
+.kinojo-step-detail-row > span {
+  width: 16px !important;
+  height: 16px !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 999px !important;
+  color: rgba(226,232,240,.56) !important;
+  background: rgba(148,163,184,.10) !important;
+  font-size: 9px !important;
+  font-weight: 950 !important;
+}
+
+.kinojo-step-detail-row > b {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  color: rgba(226,246,255,.82) !important;
+  font-size: 9px !important;
+  font-weight: 850 !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+}
+
+.kinojo-step-detail-row > em {
+  max-width: 88px !important;
+  overflow: hidden !important;
+  color: rgba(191,219,254,.58) !important;
+  font-size: 8.5px !important;
+  font-style: normal !important;
+  font-weight: 850 !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+}
+
+.kinojo-step-detail-row.is-done > span {
+  background: rgba(52,211,153,.82) !important;
+  color: #032016 !important;
+}
+.kinojo-step-detail-row.is-active > span {
+  background: linear-gradient(135deg, #60a5fa, #38bdf8) !important;
+  color: #031525 !important;
+  box-shadow: 0 0 12px rgba(56,189,248,.34) !important;
+}
+.kinojo-step-detail-row.is-error > span {
+  background: rgba(248,113,113,.9) !important;
+  color: #310606 !important;
+}
+
+.kinojo-step-issues {
+  display: grid !important;
+  gap: 4px !important;
+  margin-top: 6px !important;
+}
+
+.kinojo-step-issue {
+  display: grid !important;
+  grid-template-columns: 15px minmax(0,1fr) !important;
+  gap: 5px !important;
+  align-items: start !important;
+  padding: 5px 6px !important;
+  border-radius: 8px !important;
+  background: rgba(245,158,11,.08) !important;
+  box-shadow: inset 0 0 0 1px rgba(245,158,11,.18) !important;
+}
+
+.kinojo-step-issue > span {
+  width: 15px !important;
+  height: 15px !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 999px !important;
+  background: rgba(245,158,11,.82) !important;
+  color: #271300 !important;
+  font-size: 9px !important;
+  font-weight: 950 !important;
+}
+
+.kinojo-step-issue p {
+  margin: 0 !important;
+  color: rgba(254,243,199,.86) !important;
+  font-size: 8.5px !important;
+  font-weight: 800 !important;
+  line-height: 1.35 !important;
+}
+
+.kinojo-step-issue.is-error {
+  background: rgba(248,113,113,.09) !important;
+  box-shadow: inset 0 0 0 1px rgba(248,113,113,.22) !important;
+}
+.kinojo-step-issue.is-error > span { background: rgba(248,113,113,.9) !important; color: #310606 !important; }
+.kinojo-step-issue.is-error p { color: rgba(254,226,226,.9) !important; }
+
+.kinojo-step-progress-meta {
+  display: flex !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  margin-top: 8px !important;
+  color: rgba(191,219,254,.62) !important;
+  font-size: 8.5px !important;
+  font-weight: 850 !important;
+}
+.kinojo-step-progress-meta b { color: #7dd3fc !important; font-weight: 950 !important; }
+.kinojo-step-progress { margin-top: 4px !important; }
+
+.kinojo-step-panel.kinojo-step-active {
+  background: rgba(14,116,144,.18) !important;
+  box-shadow: inset 0 0 0 1px rgba(56,189,248,.36), 0 0 18px rgba(56,189,248,.10) !important;
+  transform: translateY(-1px) !important;
+}
+.kinojo-step-panel.kinojo-step-active .kinojo-step-panel-head .kinojo-step-number {
+  color: #031525 !important;
+  background: linear-gradient(135deg, #7dd3fc, #60a5fa) !important;
+}
+.kinojo-step-panel.kinojo-step-active .kinojo-step-panel-head em { color: #7dd3fc !important; }
+
+.kinojo-step-panel.kinojo-step-done {
+  background: rgba(16,185,129,.08) !important;
+  box-shadow: inset 0 0 0 1px rgba(52,211,153,.23) !important;
+}
+.kinojo-step-panel.kinojo-step-done .kinojo-step-panel-head .kinojo-step-number {
+  color: #032016 !important;
+  background: rgba(52,211,153,.86) !important;
+}
+.kinojo-step-panel.kinojo-step-done .kinojo-step-panel-head em { color: #86efac !important; }
+
+.kinojo-step-panel.kinojo-step-error {
+  background: rgba(127,29,29,.16) !important;
+  box-shadow: inset 0 0 0 1px rgba(248,113,113,.32), 0 0 18px rgba(248,113,113,.08) !important;
+}
+.kinojo-step-panel.kinojo-step-error .kinojo-step-panel-head .kinojo-step-number {
+  color: #310606 !important;
+  background: rgba(248,113,113,.9) !important;
+}
+.kinojo-step-panel.kinojo-step-error .kinojo-step-panel-head em { color: #fca5a5 !important; }
+
+@media (max-width: 1180px) {
+  #aion2OfficialPanel.kinojo-runtime-open #aion2StatusBox {
+    width: 620px !important;
+    max-width: calc(100vw - 290px) !important;
+  }
+  .kinojo-step-panels { grid-template-columns: 1fr !important; }
+  .kinojo-step-detail-list { min-height: 0 !important; }
+  .kinojo-step-message { min-height: 0 !important; }
+}
+
+@media (max-width: 760px) {
+  #aion2OfficialPanel.kinojo-runtime-open #aion2StatusBox {
+    width: auto !important;
+    max-width: none !important;
+    max-height: 420px !important;
+  }
+  .kinojo-step-board-head { grid-template-columns: 1fr !important; gap: 2px !important; }
+  .kinojo-step-board-head em { display: none !important; }
+  .kinojo-step-panels { grid-template-columns: 1fr !important; }
+}
+
+/* 260711_16 · STEP2 final failure copy */
+.kinojo-copy-failures-btn {
+  width: 100%;
+  margin-top: 8px;
+  min-height: 32px;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 8px;
+  background: rgba(255,255,255,.06);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.kinojo-copy-failures-btn:hover {
+  background: rgba(255,255,255,.11);
+}
+
+/* 20260715 조회 완료 단일 팝업 + Server 조회 기록 */
+.kinojo-history-link-btn {
+  grid-column: 1 / -1 !important;
+}
+
+.kinojo-run-completion-modal {
+  width: min(470px, 94vw) !important;
+}
+
+.kinojo-completion-stats-four {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+
+.kinojo-completion-note {
+  margin: -8px 0 16px !important;
+  color: rgba(203,213,225,.76) !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+
+.kinojo-completion-secondary {
+  min-width: 150px !important;
+  height: 42px !important;
+  border: 1px solid rgba(125,211,252,.28) !important;
+  border-radius: 12px !important;
+  background: rgba(15,23,42,.76) !important;
+  color: #dff6ff !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  cursor: pointer !important;
+}
+
+.kinojo-completion-secondary:hover,
+.kinojo-completion-ok:hover {
+  filter: brightness(1.08) !important;
+  transform: translateY(-1px) !important;
+}
+
+.kinojo-run-history-overlay,
+.kinojo-report-overlay {
+  align-items: center !important;
+}
+
+.kinojo-run-history-modal,
+.kinojo-run-report-modal {
+  width: min(760px, 96vw) !important;
+  max-height: min(820px, 92vh) !important;
+  overflow: hidden !important;
+  text-align: left !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.kinojo-run-history-title,
+.kinojo-run-report-header {
+  padding-right: 34px !important;
+}
+
+.kinojo-run-history-title h3,
+.kinojo-run-report-header h3 {
+  margin: 0 0 5px !important;
+  text-align: left !important;
+}
+
+.kinojo-run-history-title p,
+.kinojo-run-report-header p {
+  margin: 0 0 14px !important;
+  text-align: left !important;
+}
+
+.kinojo-run-history-loading {
+  min-height: 180px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  color: rgba(226,232,240,.82) !important;
+}
+
+.kinojo-run-history-loading span {
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 999px !important;
+  border: 3px solid rgba(125,211,252,.22) !important;
+  border-top-color: #7dd3fc !important;
+  animation: kinojoRunSpin .8s linear infinite !important;
+}
+
+@keyframes kinojoRunSpin {
+  to { transform: rotate(360deg); }
+}
+
+.kinojo-run-history-list {
+  min-height: 160px !important;
+  max-height: 68vh !important;
+  overflow-y: auto !important;
+  display: grid !important;
+  gap: 8px !important;
+  padding: 2px 4px 2px 0 !important;
+}
+
+.kinojo-run-history-item {
+  width: 100% !important;
+  border: 1px solid rgba(148,163,184,.18) !important;
+  border-radius: 13px !important;
+  padding: 12px 13px !important;
+  background: rgba(15,23,42,.72) !important;
+  color: #e5f2ff !important;
+  text-align: left !important;
+  cursor: pointer !important;
+  display: grid !important;
+  gap: 5px !important;
+}
+
+.kinojo-run-history-item:hover {
+  border-color: rgba(125,211,252,.48) !important;
+  background: rgba(15,35,58,.88) !important;
+}
+
+.kinojo-run-history-item:disabled,
+.kinojo-run-history-item.is-loading {
+  opacity: .58 !important;
+  cursor: wait !important;
+}
+
+.kinojo-run-history-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+}
+
+.kinojo-run-history-head b {
+  font-size: 14px !important;
+  font-weight: 950 !important;
+}
+
+.kinojo-run-history-head em {
+  min-width: 44px !important;
+  padding: 4px 8px !important;
+  border-radius: 999px !important;
+  font-style: normal !important;
+  text-align: center !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  background: rgba(34,197,94,.14) !important;
+  color: #86efac !important;
+}
+
+.kinojo-run-history-head em.is-failed {
+  background: rgba(239,68,68,.14) !important;
+  color: #fca5a5 !important;
+}
+
+.kinojo-run-history-head em.is-cancelled {
+  background: rgba(245,158,11,.14) !important;
+  color: #fcd34d !important;
+}
+
+.kinojo-run-history-meta,
+.kinojo-run-history-counts {
+  color: rgba(203,213,225,.72) !important;
+  font-size: 11px !important;
+  line-height: 1.45 !important;
+}
+
+.kinojo-run-history-empty,
+.kinojo-run-report-empty {
+  padding: 28px 12px !important;
+  text-align: center !important;
+  color: rgba(203,213,225,.66) !important;
+  font-size: 12px !important;
+}
+
+.kinojo-run-report-summary {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 7px !important;
+  margin-bottom: 12px !important;
+}
+
+.kinojo-run-report-summary span {
+  display: grid !important;
+  gap: 2px !important;
+  padding: 9px 5px !important;
+  border: 1px solid rgba(148,163,184,.17) !important;
+  border-radius: 11px !important;
+  background: rgba(15,23,42,.7) !important;
+  text-align: center !important;
+}
+
+.kinojo-run-report-summary b {
+  color: #7dd3fc !important;
+  font-size: 15px !important;
+  font-weight: 950 !important;
+}
+
+.kinojo-run-report-summary em {
+  color: rgba(203,213,225,.65) !important;
+  font-size: 9px !important;
+  font-style: normal !important;
+  font-weight: 850 !important;
+}
+
+.kinojo-run-report-meta {
+  display: grid !important;
+  grid-template-columns: auto 1fr auto 1fr !important;
+  gap: 7px 10px !important;
+  padding: 10px 12px !important;
+  margin-bottom: 10px !important;
+  border-radius: 11px !important;
+  background: rgba(2,6,23,.42) !important;
+  font-size: 11px !important;
+}
+
+.kinojo-run-report-meta span {
+  color: rgba(203,213,225,.62) !important;
+  font-weight: 800 !important;
+}
+
+.kinojo-run-report-meta b {
+  color: #e0f2fe !important;
+  font-weight: 900 !important;
+  overflow-wrap: anywhere !important;
+}
+
+.kinojo-run-report-sections {
+  flex: 1 1 auto !important;
+  min-height: 120px !important;
+  overflow-y: auto !important;
+  display: grid !important;
+  align-content: start !important;
+  gap: 7px !important;
+  padding-right: 4px !important;
+  margin-bottom: 13px !important;
+}
+
+.kinojo-run-report-section {
+  border: 1px solid rgba(148,163,184,.17) !important;
+  border-radius: 11px !important;
+  overflow: hidden !important;
+  background: rgba(15,23,42,.56) !important;
+}
+
+.kinojo-run-report-section summary {
+  list-style: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  min-height: 40px !important;
+  padding: 9px 12px !important;
+  cursor: pointer !important;
+}
+
+.kinojo-run-report-section summary::-webkit-details-marker {
+  display: none !important;
+}
+
+.kinojo-run-report-section summary b {
+  color: #e5f2ff !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+}
+
+.kinojo-run-report-section summary em {
+  min-width: 38px !important;
+  padding: 3px 7px !important;
+  border-radius: 999px !important;
+  background: rgba(56,189,248,.12) !important;
+  color: #7dd3fc !important;
+  font-size: 10px !important;
+  font-style: normal !important;
+  font-weight: 900 !important;
+  text-align: center !important;
+}
+
+.kinojo-run-report-items {
+  display: grid !important;
+  gap: 5px !important;
+  padding: 0 9px 9px !important;
+}
+
+.kinojo-run-report-item {
+  display: grid !important;
+  grid-template-columns: minmax(110px, .72fr) minmax(0, 1.28fr) !important;
+  gap: 10px !important;
+  padding: 8px 9px !important;
+  border-radius: 9px !important;
+  background: rgba(2,6,23,.42) !important;
+}
+
+.kinojo-run-report-item b {
+  color: #e0f2fe !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  overflow-wrap: anywhere !important;
+}
+
+.kinojo-run-report-item span {
+  color: rgba(203,213,225,.72) !important;
+  font-size: 10px !important;
+  line-height: 1.4 !important;
+  overflow-wrap: anywhere !important;
+}
+
+@media (max-width: 640px) {
+  .kinojo-completion-stats-four,
+  .kinojo-run-report-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .kinojo-completion-actions {
+    flex-direction: column !important;
+  }
+  .kinojo-completion-secondary,
+  .kinojo-completion-ok {
+    width: 100% !important;
+  }
+  .kinojo-run-report-meta {
+    grid-template-columns: auto 1fr !important;
+  }
+  .kinojo-run-report-item {
+    grid-template-columns: 1fr !important;
+    gap: 3px !important;
+  }
+}
+
+/* 1.3.1.23 실패 내역 직접 복사 fallback */
+.kinojo-copy-fallback-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(2, 10, 20, 0.72);
+}
+.kinojo-copy-fallback-card {
+  width: min(680px, calc(100vw - 36px));
+  max-height: min(760px, calc(100dvh - 36px));
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  overflow: auto;
+  border: 1px solid rgba(135, 190, 255, 0.42);
+  border-radius: 16px;
+  background: #0d2331;
+  color: #f4f9ff;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+}
+.kinojo-copy-fallback-card strong { font-size: 16px; }
+.kinojo-copy-fallback-card p { margin: 0; color: #b9ccda; font-size: 13px; }
+.kinojo-copy-fallback-card textarea {
+  width: 100%;
+  min-height: 320px;
+  resize: vertical;
+  padding: 12px;
+  box-sizing: border-box;
+  border: 1px solid rgba(135, 190, 255, 0.35);
+  border-radius: 10px;
+  background: #071722;
+  color: #eaf5ff;
+  font: 12px/1.5 Consolas, monospace;
+}
+.kinojo-copy-fallback-card button {
+  min-height: 42px;
+  border: 1px solid rgba(135, 190, 255, 0.45);
+  border-radius: 10px;
+  background: #16384d;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+
+/* 1.3.1.25 · 현재 조회 전체 진단/복사 */
+.kinojo-step-board-head { position: relative !important; grid-template-columns: auto 1fr auto auto !important; align-items: center !important; }
+.kinojo-copy-run-btn {
+  min-height: 30px !important;
+  padding: 6px 10px !important;
+  border: 1px solid rgba(125,211,252,.42) !important;
+  border-radius: 9px !important;
+  background: rgba(14,116,144,.18) !important;
+  color: #bae6fd !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  line-height: 1.15 !important;
+  cursor: pointer !important;
+}
+.kinojo-copy-run-btn:hover { background: rgba(14,116,144,.32) !important; border-color: rgba(125,211,252,.72) !important; }
+.kinojo-debug-actions-section { display: flex !important; justify-content: stretch !important; }
+.kinojo-debug-actions-section .kinojo-copy-run-btn { width: 100% !important; }
+.kinojo-step-board-head .kinojo-copy-run-btn { justify-self: end !important; }
+.kinojo-step-detail-row > em { overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; max-width: 170px !important; }
+@media (max-width: 760px) {
+  .kinojo-step-board-head .kinojo-copy-run-btn { width: 100% !important; justify-self: stretch !important; margin-top: 5px !important; }
+  .kinojo-step-detail-row > em { max-width: 145px !important; }
+}
+
+
+/* 20260717_02: 오류 확인 후 진행 상태 보존 + 상세/복사 진입 */
+.kinojo-error-modal {
+  border-color: rgba(96, 165, 250, .5) !important;
+}
+.kinojo-error-icon {
+  background: linear-gradient(135deg, #2563eb, #60a5fa) !important;
+  box-shadow: 0 0 30px rgba(37, 99, 235, .38) !important;
+}
+.kinojo-error-modal .kinojo-completion-note {
+  margin-bottom: 14px !important;
+}
+.kinojo-error-actions {
+  flex-wrap: wrap !important;
+}
+.kinojo-error-actions .kinojo-completion-ok,
+.kinojo-error-actions .kinojo-completion-secondary {
+  min-width: 118px !important;
+}
+
+/* 20260717_03: 저장 payload 후처리 전용 재시도 */
+.kinojo-error-actions .kinojo-postprocess-retry {
+  flex: 1 1 100% !important;
+  border-color: rgba(96, 165, 250, .78) !important;
+  background: linear-gradient(135deg, #1d4ed8, #2563eb) !important;
+  color: #fff !important;
+}
+.kinojo-error-actions .kinojo-postprocess-retry:hover {
+  background: linear-gradient(135deg, #1e40af, #1d4ed8) !important;
+}
+
+/* 20260717_03: 진행판/상세창 후처리 재시도 진입 */
+.kinojo-debug-actions-section {
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+.kinojo-debug-actions-section .kinojo-copy-run-btn {
+  width: auto !important;
+  flex: 1 1 180px !important;
+}
+.kinojo-retry-postprocess-btn {
+  border-color: rgba(96, 165, 250, .78) !important;
+  background: rgba(37, 99, 235, .34) !important;
+  color: #dbeafe !important;
+}
+.kinojo-retry-postprocess-btn:hover {
+  background: rgba(37, 99, 235, .56) !important;
+}
+.kinojo-step-board-head {
+  grid-template-columns: auto 1fr auto auto auto !important;
+}
+@media (max-width: 760px) {
+  .kinojo-step-board-head { grid-template-columns: 1fr !important; }
+}
+
+/* ============================================================
+   20260718_08 Compact lookup detail bar
+   - Main panel keeps only one-line Server status summary.
+   - Full progress, errors and retry controls live in the detail drawer.
+============================================================ */
+#aion2OfficialPanel #aion2StatusBox.kinojo-compact-status {
+  position: relative !important;
+  inset: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 42px !important;
+  max-height: none !important;
+  margin: 0 0 7px !important;
+  padding: 6px 7px 6px 9px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  overflow: hidden !important;
+  text-align: left !important;
+  border-radius: 13px !important;
+  background: linear-gradient(180deg, rgba(6,20,35,.92), rgba(3,12,23,.92)) !important;
+  box-shadow: inset 0 0 0 1px rgba(91,162,224,.22), 0 6px 14px rgba(0,0,0,.16) !important;
+  opacity: 1 !important;
+  transform: none !important;
+  transition: border-color .18s ease, background .18s ease !important;
+  z-index: auto !important;
+}
+
+.kinojo-compact-status-copy {
+  min-width: 0 !important;
+  display: grid !important;
+  grid-template-columns: 8px auto minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.kinojo-compact-status-dot {
+  width: 7px !important;
+  height: 7px !important;
+  border-radius: 999px !important;
+  background: #7890aa !important;
+  box-shadow: 0 0 0 3px rgba(120,144,170,.12) !important;
+}
+
+.kinojo-compact-status-copy strong {
+  color: #e6f3ff !important;
+  font-size: 10.5px !important;
+  font-weight: 950 !important;
+  white-space: nowrap !important;
+}
+
+.kinojo-compact-status-copy em {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  color: #8ca9c4 !important;
+  font-size: 9px !important;
+  font-style: normal !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+}
+
+#aion2StatusBox.kinojo-compact-status .kinojo-debug-toggle {
+  flex: 0 0 auto !important;
+  min-height: 27px !important;
+  margin: 0 !important;
+  padding: 4px 9px !important;
+  border: 1px solid rgba(91,162,224,.28) !important;
+  border-radius: 999px !important;
+  background: rgba(32,93,151,.22) !important;
+  color: #d9efff !important;
+  font-size: 9px !important;
+  line-height: 1 !important;
+  box-shadow: none !important;
+}
+
+#aion2StatusBox.kinojo-compact-status .kinojo-debug-toggle:hover {
+  background: rgba(48,122,194,.32) !important;
+}
+
+#aion2StatusBox.kinojo-compact-running .kinojo-compact-status-dot,
+#aion2StatusBox.kinojo-compact-preparing .kinojo-compact-status-dot {
+  background: #52b6ff !important;
+  box-shadow: 0 0 0 3px rgba(82,182,255,.14), 0 0 9px rgba(82,182,255,.42) !important;
+}
+
+#aion2StatusBox.kinojo-compact-done .kinojo-compact-status-dot {
+  background: #4ade80 !important;
+  box-shadow: 0 0 0 3px rgba(74,222,128,.14) !important;
+}
+
+#aion2StatusBox.kinojo-compact-retained .kinojo-compact-status-dot {
+  background: #fbbf24 !important;
+  box-shadow: 0 0 0 3px rgba(251,191,36,.14) !important;
+}
+
+#aion2StatusBox.kinojo-compact-locked {
+  box-shadow: inset 0 0 0 1px rgba(248,113,113,.32), 0 6px 14px rgba(0,0,0,.16) !important;
+}
+
+#aion2StatusBox.kinojo-compact-locked .kinojo-compact-status-dot {
+  background: #f87171 !important;
+  box-shadow: 0 0 0 3px rgba(248,113,113,.14) !important;
+}
+
+@media (max-width: 460px) {
+  .kinojo-compact-status-copy {
+    grid-template-columns: 8px minmax(0, 1fr) !important;
+  }
+  .kinojo-compact-status-copy em {
+    grid-column: 2 !important;
+  }
+}
+
+
+/* ============================================================
+   20260718_10 Restore 3 STEP board inside lookup detail drawer
+   - Main panel remains one-line compact status.
+   - STEP 1/2/3 board is rendered at the top of the detail drawer.
+============================================================ */
+#aion2DebugDrawer {
+  width: min(860px, calc(100vw - 360px)) !important;
+  max-height: min(820px, calc(100vh - 24px)) !important;
+}
+#aion2DebugDrawer .kinojo-debug-body {
+  max-height: min(690px, calc(100vh - 136px)) !important;
+  padding: 10px 12px 14px !important;
+}
+#aion2DebugDrawer .kinojo-debug-phase-section {
+  margin: 0 0 12px !important;
+  padding: 0 0 12px !important;
+  border-bottom: 1px solid rgba(125,211,252,.12) !important;
+}
+#aion2DebugDrawer .kinojo-debug-phase-section .kinojo-step-board {
+  margin: 0 !important;
+}
+#aion2DebugDrawer .kinojo-step-panels {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+@media (max-width: 1180px) {
+  #aion2DebugDrawer {
+    width: min(650px, calc(100vw - 32px)) !important;
+    right: 16px !important;
+  }
+  #aion2DebugDrawer .kinojo-step-panels {
+    grid-template-columns: 1fr !important;
+  }
+}
+@media (max-width: 760px) {
+  #aion2DebugDrawer {
+    left: 8px !important;
+    right: 8px !important;
+    bottom: 8px !important;
+    width: auto !important;
+    max-height: calc(100vh - 16px) !important;
+  }
+  #aion2DebugDrawer .kinojo-debug-body {
+    max-height: calc(100vh - 128px) !important;
+  }
+  #aion2DebugDrawer .kinojo-step-board-head {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ============================================================
+   20260718_11 Detail-only lookup progress
+   - Main panel: only a small lookup-detail launcher.
+   - Per-character 3-line progress box is removed.
+   - Detail drawer exists in DOM only while open.
+============================================================ */
+#aion2OfficialLogBox {
+  display: none !important;
+}
+
+#aion2OfficialPanel #aion2StatusBox.kinojo-detail-launcher {
+  position: relative !important;
+  inset: auto !important;
+  width: 100% !important;
+  min-height: 30px !important;
+  margin: 0 0 6px !important;
+  padding: 0 !important;
+  display: block !important;
+  overflow: hidden !important;
+  border-radius: 10px !important;
+  background: rgba(6,20,35,.72) !important;
+  box-shadow: inset 0 0 0 1px rgba(91,162,224,.20) !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+#aion2StatusBox.kinojo-detail-launcher .kinojo-debug-toggle {
+  width: 100% !important;
+  min-height: 30px !important;
+  margin: 0 !important;
+  padding: 5px 10px !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  color: #cce8ff !important;
+  font-size: 9.5px !important;
+  font-weight: 950 !important;
+  letter-spacing: .02em !important;
+  box-shadow: none !important;
+}
+
+#aion2StatusBox.kinojo-detail-launcher .kinojo-debug-toggle:hover {
+  background: rgba(48,122,194,.20) !important;
+}
+
+#aion2DebugDrawer {
+  width: min(700px, calc(100vw - 32px)) !important;
+  max-height: min(590px, calc(100vh - 24px)) !important;
+}
+
+#aion2DebugDrawer .kinojo-debug-head {
+  min-height: 38px !important;
+  padding: 7px 10px !important;
+}
+
+#aion2DebugDrawer .kinojo-debug-hint {
+  display: none !important;
+}
+
+#aion2DebugDrawer .kinojo-server-state-bar {
+  min-height: 28px !important;
+  padding: 4px 9px !important;
+  gap: 5px !important;
+}
+
+#aion2DebugDrawer .kinojo-server-chip {
+  min-height: 20px !important;
+  padding: 3px 7px !important;
+  font-size: 9px !important;
+}
+
+#aion2DebugDrawer .kinojo-debug-body {
+  max-height: min(505px, calc(100vh - 108px)) !important;
+  padding: 7px 9px 10px !important;
+}
+
+.kinojo-detail-summary-line {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 3px 8px !important;
+  margin: 0 1px 6px !important;
+  padding: 5px 7px !important;
+  border-radius: 9px !important;
+  background: rgba(15,42,67,.48) !important;
+  color: #a9ccec !important;
+  font-size: 9.5px !important;
+  line-height: 1.25 !important;
+}
+
+.kinojo-detail-summary-line strong {
+  color: #e0f7ff !important;
+  font-size: 10px !important;
+  font-weight: 950 !important;
+}
+
+.kinojo-detail-summary-line span {
+  font-weight: 800 !important;
+}
+
+.kinojo-detail-empty {
+  padding: 18px 10px !important;
+  text-align: center !important;
+  color: #8ca9c4 !important;
+  font-size: 10px !important;
+}
+
+#aion2DebugDrawer .kinojo-debug-phase-section {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+#aion2DebugDrawer .kinojo-step-board {
+  margin: 0 !important;
+  padding: 8px !important;
+}
+
+#aion2DebugDrawer .kinojo-step-board-head {
+  grid-template-columns: 1fr auto auto !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin: 0 1px 7px !important;
+}
+
+#aion2DebugDrawer .kinojo-step-board-head strong {
+  font-size: 10.5px !important;
+}
+
+#aion2DebugDrawer .kinojo-step-board-head .kinojo-copy-run-btn {
+  min-height: 25px !important;
+  padding: 4px 7px !important;
+  font-size: 9px !important;
+}
+
+#aion2DebugDrawer .kinojo-step-panels {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+}
+
+#aion2DebugDrawer .kinojo-step-panel {
+  padding: 7px !important;
+}
+
+#aion2DebugDrawer .kinojo-step-message {
+  min-height: 22px !important;
+  margin: 5px 0 !important;
+  font-size: 9px !important;
+}
+
+#aion2DebugDrawer .kinojo-step-detail-list,
+#aion2DebugDrawer .kinojo-step-issue-list {
+  max-height: 150px !important;
+  overflow-y: auto !important;
+}
+
+@media (max-width: 760px) {
+  #aion2DebugDrawer {
+    left: 8px !important;
+    right: 8px !important;
+    bottom: 8px !important;
+    width: auto !important;
+    max-height: calc(100vh - 16px) !important;
+  }
+  #aion2DebugDrawer .kinojo-debug-body {
+    max-height: calc(100vh - 98px) !important;
+  }
+  #aion2DebugDrawer .kinojo-step-board-head {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  #aion2DebugDrawer .kinojo-step-board-head strong {
+    grid-column: 1 / -1 !important;
+  }
+  #aion2DebugDrawer .kinojo-step-panels {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ============================================================
+   20260718_12 Server-owned active position + overall progress
+   - Current target position and completed count are displayed separately.
+   - The drawer header is followed by only two compact summary rows.
+   - A 3 STEP overall progress UI is shown at the bottom.
+============================================================ */
+#aion2DebugDrawer {
+  width: min(720px, calc(100vw - 32px)) !important;
+  max-height: min(650px, calc(100vh - 20px)) !important;
+}
+
+#aion2DebugDrawer .kinojo-debug-body {
+  max-height: min(594px, calc(100vh - 76px)) !important;
+  padding: 7px 9px 9px !important;
+}
+
+.kinojo-detail-summary {
+  display: grid !important;
+  gap: 3px !important;
+  margin: 0 1px 6px !important;
+}
+
+.kinojo-detail-summary .kinojo-detail-summary-line {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 7px !important;
+  margin: 0 !important;
+  padding: 4px 7px !important;
+  min-height: 25px !important;
+}
+
+.kinojo-detail-summary .kinojo-detail-summary-line.is-secondary {
+  background: rgba(8,31,51,.54) !important;
+  color: #94b9da !important;
+}
+
+.kinojo-detail-summary .kinojo-detail-summary-line strong {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.kinojo-detail-summary .kinojo-detail-summary-line span {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.kinojo-step-completed-note {
+  margin: 4px 2px 0 !important;
+  color: #7dd3fc !important;
+  font-size: 8.5px !important;
+  font-weight: 900 !important;
+  text-align: right !important;
+}
+
+.kinojo-overall-progress {
+  margin: 8px 1px 0 !important;
+  padding: 8px 10px 7px !important;
+  border: 1px solid rgba(79,151,216,.22) !important;
+  border-radius: 13px !important;
+  background: linear-gradient(180deg, rgba(9,31,50,.78), rgba(5,20,34,.88)) !important;
+  box-shadow: inset 0 1px 0 rgba(184,224,255,.04) !important;
+}
+
+.kinojo-overall-stepper {
+  display: grid !important;
+  grid-template-columns: minmax(72px, auto) 1fr minmax(72px, auto) 1fr minmax(72px, auto) !important;
+  align-items: start !important;
+  gap: 5px !important;
+}
+
+.kinojo-overall-node {
+  display: grid !important;
+  justify-items: center !important;
+  gap: 3px !important;
+  color: #6f8499 !important;
+  font-size: 8.5px !important;
+  font-weight: 900 !important;
+  line-height: 1.1 !important;
+  text-align: center !important;
+}
+
+.kinojo-overall-node b {
+  width: 23px !important;
+  height: 23px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1px solid rgba(126,151,174,.28) !important;
+  border-radius: 999px !important;
+  background: #172737 !important;
+  color: #8498aa !important;
+  font-size: 9.5px !important;
+  box-shadow: 0 0 0 3px rgba(8,24,40,.9) !important;
+}
+
+.kinojo-overall-node.is-done,
+.kinojo-overall-node.is-active {
+  color: #bfe8ff !important;
+}
+
+.kinojo-overall-node.is-done b {
+  border-color: rgba(52,211,153,.7) !important;
+  background: #20b991 !important;
+  color: #03291f !important;
+}
+
+.kinojo-overall-node.is-active b {
+  border-color: rgba(125,211,252,.9) !important;
+  background: #47b9e9 !important;
+  color: #052338 !important;
+  box-shadow: 0 0 0 3px rgba(56,189,248,.12), 0 0 14px rgba(56,189,248,.22) !important;
+}
+
+.kinojo-overall-node.is-error b {
+  border-color: rgba(248,113,113,.9) !important;
+  background: #ef7777 !important;
+  color: #340707 !important;
+}
+
+.kinojo-overall-connector {
+  height: 4px !important;
+  margin-top: 10px !important;
+  border-radius: 999px !important;
+  background: #263749 !important;
+  box-shadow: inset 0 0 0 1px rgba(142,166,188,.08) !important;
+}
+
+.kinojo-overall-connector.is-done {
+  background: linear-gradient(90deg, #20b991, #43bce9) !important;
+}
+
+.kinojo-overall-connector.is-error {
+  background: linear-gradient(90deg, #20b991, #ef7777) !important;
+}
+
+.kinojo-overall-meter {
+  height: 6px !important;
+  margin: 7px 1px 0 !important;
+  overflow: hidden !important;
+  border-radius: 999px !important;
+  background: rgba(75,99,122,.38) !important;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.28) !important;
+}
+
+.kinojo-overall-meter > span {
+  display: block !important;
+  width: var(--kinojo-overall-percent, 0%) !important;
+  height: 100% !important;
+  border-radius: inherit !important;
+  background: linear-gradient(90deg, #20b991, #3da9e5, #7dd3fc) !important;
+  box-shadow: 0 0 10px rgba(56,189,248,.25) !important;
+  transition: width .28s ease !important;
+}
+
+.kinojo-overall-meta {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  margin-top: 5px !important;
+  color: #819bb3 !important;
+  font-size: 8.5px !important;
+  font-weight: 850 !important;
+}
+
+.kinojo-overall-meta strong {
+  color: #bfe8ff !important;
+  font-size: 9px !important;
+  font-weight: 950 !important;
+}
+
+@media (max-width: 760px) {
+  #aion2DebugDrawer .kinojo-debug-body {
+    max-height: calc(100vh - 66px) !important;
+  }
+  .kinojo-detail-summary .kinojo-detail-summary-line {
+    grid-template-columns: 1fr !important;
+    gap: 1px !important;
+  }
+  .kinojo-detail-summary .kinojo-detail-summary-line span {
+    white-space: normal !important;
+  }
+  .kinojo-overall-stepper {
+    grid-template-columns: minmax(58px, auto) 1fr minmax(58px, auto) 1fr minmax(58px, auto) !important;
+    gap: 3px !important;
+  }
+  .kinojo-overall-meta {
+    align-items: flex-start !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+  }
+}

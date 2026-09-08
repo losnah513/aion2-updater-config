@@ -5,9 +5,11 @@ on:
     paths:
       - 'supabase/functions/character-identity-recovery/**'
       - 'supabase/functions/character-refresh-worker/**'
+      - 'supabase/functions/character-detail-refresh/**'
       - 'supabase/functions/lookup-list-*/**'
-      - 'supabase/migrations/*character_refresh*.sql'
-      - 'supabase/rollbacks/*character_refresh*.sql'
+      - 'supabase/migrations/*character*.sql'
+      - 'supabase/rollbacks/*character*.sql'
+      - 'scripts/verify-character-refresh-stage2.cjs'
       - 'apps-script/list-master/**'
       - 'admin/**'
       - 'm/admin/**'
@@ -26,16 +28,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Install isolated SQL test runtime
-        run: npm install --prefix .codex-test-runtime --no-save --package-lock=false --ignore-scripts @electric-sql/pglite@0.5.8
-      - name: Run offline contracts (no production credentials or writes)
-        run: |
-          set -euo pipefail
-          node tests/character-refresh-stability-stage2.test.cjs
-          node tests/character-refresh-stability-sql.test.cjs
-          node tests/character-refresh-identity-stage2-fixtures.test.js
-          node tests/character-identity-recovery-percent-encoding-contract.test.js
-          node tests/list-metadata-writer.test.cjs
-          node tests/character-refresh-stability-adversarial.test.cjs
-          node tests/character-refresh-policy.test.cjs
-          node tests/character-refresh-stage2-boundaries.test.cjs
+      - name: Install isolated test runtime
+        run: npm install --prefix .codex-test-runtime --no-save --package-lock=false --ignore-scripts @electric-sql/pglite@0.5.8 playwright@1.62.1
+      - name: Install browser
+        run: .codex-test-runtime/node_modules/.bin/playwright install --with-deps chromium
+      - name: Run offline contracts and browser fixtures
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/.codex-test-runtime/node_modules/playwright
+        run: node scripts/verify-character-refresh-stage2.cjs --browser
+      - name: Verify canonical release manifest
+        run: node tests/character-refresh-release-manifest.test.cjs
