@@ -12,7 +12,9 @@ const root=path.resolve(__dirname,'..');
    res.end(err?'':ext==='.html'?bytes.toString().replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,''):bytes);});
  });
  await new Promise(r=>server.listen(0,'127.0.0.1',r));
- const browser=await chromium.launch({headless:true,...(process.env.CHROME_PATH?{executablePath:process.env.CHROME_PATH}:{})});
+ const browser=await chromium.launch({headless:true,...(process.env.CHROME_PATH?{executablePath:process.env.CHROME_PATH}:{})}).catch(async error=>{
+  await new Promise(resolve=>server.close(resolve));throw error;
+ });
  const base='http://127.0.0.1:'+server.address().port;
  try{
   for(const width of [1440,390,320]){

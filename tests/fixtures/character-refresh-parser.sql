@@ -249,7 +249,7 @@ begin
   end loop;
 
   v_has_title := v_title_section_found
-    and v_title_text ~* 'PVP[[:space:]]*피해[[:space:]]*증폭';
+    and v_title_text ~* 'PVP[[:space:]]*피해[[:space:]]*(증폭|내성)';
 
   if not v_section_found or v_slot_count = 0 then
     v_reason := 'EQUIPMENT_SLOTS_NOT_FOUND';

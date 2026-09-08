@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "character-refresh-stability-stage2",
-  "mainBase": "9c90c1643333a87318292320cbc924818416feb9",
+  "mainBase": "9e885d4c13dd485b15b52c808008955895a39221",
   "normalization": "UTF-8 LF",
   "deploymentAuthorized": false,
   "migrations": [

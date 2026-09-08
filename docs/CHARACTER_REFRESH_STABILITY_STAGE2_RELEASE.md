@@ -4,7 +4,8 @@
 
 ## 기준 및 파일
 
-- 기준 main: `9c90c164` (DB477/478, 성역 GUEST 분류·본부캐 표시 변경 포함). 실제 배포 직전 main·운영 함수·트리거·ACL·SQL_INDEX를 다시 대조한다.
+- 기준 main: `9e885d4c` (DB477/478 및 선행 DB479 PVP 칭호 판정 포함). 실제 배포 직전 main·운영 함수·트리거·ACL·SQL_INDEX를 다시 대조한다.
+- DB479는 별도 선행 반영이다. 장비 조건은 유지하며 PVP 피해 증폭 또는 피해 내성 칭호를 인정한다. 아래 11개 배포/rollback은 DB479를 되돌리지 않는다.
 - 정확한 34개 제품 파일의 UTF-8 LF SHA-256: `CHARACTER_REFRESH_STAGE2_MANIFEST.json`.
 - `supabase/migrations/`가 SQL 원본이다. Source/Deploy 복사본을 각각 실행하지 않는다.
 - 로컬 패키지: `.codex-tmp/character-refresh-stage2-release/LOG24/{Source,Deploy}`. 11쌍은 원본 LF와 바이트 동일해야 한다. 운영 SQL 번호는 예약하지 않는다.
