@@ -11,6 +11,7 @@ const migration=read('supabase/migrations/20260826045246_banner_event_page_targe
 const hofRightPatch=read('supabase/migrations/20260828111622_banner_hof_right_side_target_v438.sql');
 const hofRightSavePatch=read('supabase/migrations/20260828115503_banner_hof_right_event_save_v440.sql');
 const hofRightCampaignPatch=read('supabase/migrations/20260828120843_banner_hof_right_campaign_target_v441.sql');
+const allPageScope=read('supabase/migrations/20260908000100_banner_all_page_scope_v471.sql');
 
 for(const token of [
   'banner event workflow phase 2 stage 7 integration v2026082811',
@@ -23,10 +24,9 @@ for(const token of [
   'allPagesSelected',
   'data-bew-page-code',
   'aria-pressed=',
-  'data-bew-all-pages',
-  'role="switch"',
-  '개별선택',
-  '전체선택',
+  'data-bew-page-all',
+  '>전체</button>',
+  '앞으로 추가되는 페이지',
   '선택한 페이지 없음 · 초안 저장 가능',
   '페이지가 없어도 초안 저장은 가능합니다.',
   'targetPageContractVersion',
@@ -40,17 +40,17 @@ for(const token of [
 assert.ok(!workflow.includes('const SIDE_PAGES='),'page list must not be duplicated in the Web layer');
 assert.ok(!workflow.includes('const TARGET_PAGES='),'target page IDs must come from the Server');
 assert.ok(!workflow.includes("data-bew-page>"),'retired single-page select remains');
-assert.match(workflow,/if\(checked\)\{s\.individualTargetPages=[\s\S]+?s\.targetPages=\[\.\.\.supported\][\s\S]+?else\{s\.allPagesSelected=false;s\.targetPages=supported\.filter\(code=>s\.individualTargetPages\.includes\(code\)\)\}/,'all-select must preserve and restore the prior individual set');
+assert.ok(workflow.includes("targetScope:s.kind==='side'&&s.allPagesSelected?'ALL':'SELECTED'"),'all-page intent must be sent separately from the current page snapshot');
 assert.match(workflow,/if\(s\.kind==='side'&&!s\.targetPages\.length\)return\{step:3,selector:'\[data-bew-page-selector\]'/,'publish must stop at the page selector when no page is selected');
 
 for(const token of [
-  'DB = "412"',
-  'EVENT = "407"',
+  'DB = "471"',
+  'EVENT = "471"',
   '"event-targets"',
-  'kinojo_banner_event_targets_v404',
-  'kinojo_banner_event_list_v404',
-  'kinojo_banner_event_save_v407',
-  'kinojo_banner_event_publish_v404',
+  'kinojo_banner_event_targets_v471',
+  'kinojo_banner_event_list_v471',
+  'kinojo_banner_event_save_v471',
+  'kinojo_banner_event_publish_v471',
   'BANNER_EVENT_TARGET_PAGES_REQUIRED',
   'BANNER_EVENT_TARGET_VARIANTS_MISMATCH',
   'BANNER_EVENT_SYNC_TARGET_INVALID',
@@ -116,5 +116,7 @@ for(const token of [
 ])assert.ok(hofRightCampaignPatch.includes(token),`DB441 HOF campaign target patch missing: ${token}`);
 assert.ok(!hofRightCampaignPatch.includes("when p_type='SIDE' and p_page='HOF' then p_slots=array['LEFT']::text[]"),'DB441 must not retain the retired HOF-left-only campaign rule');
 assert.ok(!/create\s+table|create\s+type|alter\s+table/i.test(hofRightCampaignPatch),'DB441 must only replace the existing campaign target helper');
+
+for(const token of ['target_scope','CURRENT_AND_FUTURE_SUPPORTED_PAGES','kinojo_banner_event_all_targets_reconcile_v471','private.kinojo_banner_supported_page_codes_v404()'])assert.ok(allPageScope.includes(token),`DB471 all-page extension missing: ${token}`);
 
 console.log('PASS banner event phase-2 stage-4 page selection contract');
