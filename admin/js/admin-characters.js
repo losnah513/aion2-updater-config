@@ -80,6 +80,7 @@
 
   async function saveCharacterAutomation(enabled,listWrite=false){
     if(state.characterAutomationSaving||state.characterAutomation?.running===true)return;
+    let saveError='';
     automationRevision++;automationLoadedAt=0;
     state.characterAutomationSaving=true;renderCharacterAutomation(state.characterAutomation);
     try{
@@ -90,10 +91,13 @@
       automationLoadedAt=Date.now();
       toast(data.message||'캐릭터 자동 최신화 설정을 저장했습니다.');
     }catch(error){
-      setStatus('#characterAutomationNotice',error.message||String(error),'error');
+      saveError=error.message||String(error);
       if(automationInFlight)await automationInFlight;
       await refreshCharacterAutomation(true,true);
-    }finally{state.characterAutomationSaving=false;renderCharacterAutomation(state.characterAutomation);}
+    }finally{
+      state.characterAutomationSaving=false;renderCharacterAutomation(state.characterAutomation);
+      if(saveError)setStatus('#characterAutomationNotice',saveError,'error');
+    }
   }
 
   function loadStoredLookupSession(){
