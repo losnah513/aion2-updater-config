@@ -13,10 +13,10 @@
       "expected": { "allowed": false, "code": "PROVIDER_RETRY_REQUIRED", "retryable": true }
     },
     {
-      "name": "name char key mismatch requires review",
+      "name": "reused old name permits only stored-key recovery, never the namesake",
       "storedCode": "STORED_DETAIL_NOT_FOUND",
       "nameSearchCode": "NAME_SERVER_CHAR_KEY_MISMATCH",
-      "expected": { "allowed": false, "code": "IDENTITY_REVIEW_REQUIRED", "retryable": false }
+      "expected": { "allowed": true, "code": "IDENTITY_RECOVERY_ALLOWED", "nameReused": true }
     },
     {
       "name": "stored char key mismatch requires review",

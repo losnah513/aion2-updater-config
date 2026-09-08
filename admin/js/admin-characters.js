@@ -799,13 +799,15 @@
     return 'normal';
   }
 
+  function queryExcluded(c){return c.lookupPolicy?c.lookupPolicy.eligible!==true:c.lookupExcluded;}
+  function policyReasonLabel(reason){return ({DELETION_CANDIDATE:'삭제후보',ADMIN_EXCLUDED:'관리자 조회 제외',ADMIN_INCLUDED:'관리자 계속 조회',ARCHIVED_RECORD:'보관된 기록',CURRENT_SANCTUARY:'현재 성역 참여',MANAGED_LEGION:'관리 레기온 소속',ACTIVITY_REVIEW_DUE:'활동 관계 재검토 도래',ACTIVITY_REVIEW_WAIT:'활동 관계 재검토 대기',CHARACTER_NOT_FOUND:'DB 정보 없음'})[reason]||'정책 확인 필요';}
   function filteredCharacters(){
     const filter=$('#characterStateFilter')?.value||'attention';
     if(filter==='review')return state.characters.filter(c=>c.exclusionReviewRequired);
-    if(filter==='lookup')return state.characters.filter(c=>c.lookupExcluded);
+    if(filter==='lookup')return state.characters.filter(queryExcluded);
     if(filter==='visibility')return state.characters.filter(c=>c.visibilityExcluded);
-    if(filter==='normal')return state.characters.filter(c=>!c.lookupExcluded&&!c.visibilityExcluded&&!c.exclusionReviewRequired);
-    if(filter==='attention')return state.characters.filter(c=>c.exclusionReviewRequired||c.lookupExcluded||c.visibilityExcluded);
+    if(filter==='normal')return state.characters.filter(c=>!queryExcluded(c)&&!c.visibilityExcluded&&!c.exclusionReviewRequired);
+    if(filter==='attention')return state.characters.filter(c=>c.exclusionReviewRequired||queryExcluded(c)||c.visibilityExcluded);
     return state.characters;
   }
 
@@ -826,13 +828,19 @@
       const statusPills=[
         c.identityReview?'<span class="admin-pill warn">신원 확인 대기</span>':'',
         review?'<span class="admin-pill warn">제외 검토</span>':'',
-        c.lookupExcluded?'<span class="admin-pill error">조회 제외</span>':'<span class="admin-pill ok">조회 대상</span>',
+        c.lookupPolicy?.reason==='ACTIVITY_REVIEW_WAIT'?'<span class="admin-pill warn">재검토 대기</span>':queryExcluded(c)?'<span class="admin-pill error">조회 제외</span>':'<span class="admin-pill ok">조회 대상</span>',
         c.visibilityExcluded?'<span class="admin-pill error">노출 제외</span>':'<span class="admin-pill ok">사이트 노출</span>'
       ].join('');
       const identityBadge=c.identityBadge
         ?'<span class="admin-character-identity-badge" title="'+esc(c.identityBadge.detail||c.identityBadge.label||'')+'">'+esc(c.identityBadge.label||'이전 신원')+'</span>'
         :'';
       const identityReview=c.identityReview;
+      const policy=c.lookupPolicy;
+      const policyHtml=policy?'<details class="admin-character-status-editor"><summary>정기 조회 정책 · '+esc(policyReasonLabel(policy.reason))+'</summary><div class="admin-character-status-fields">'
+        +'<p class="wide">현재 '+(policy.scope==='CHARACTER'?'개별 예외':'그룹 기본값')+' 설정 · '+(policy.eligible?'조회 대상':'정기 조회 대기/제외')+' · 확인 '+esc(policy.checkedAt?formatServerTime(policy.checkedAt):'자동 판정')+' · 확인자 '+esc(policy.actorId||'-')+' · 재검토 '+esc(policy.reviewDueAt?formatServerTime(policy.reviewDueAt):'기한 도래')+'</p>'
+        +'<label>적용 범위<select class="admin-select" data-policy-scope>'+option('CHARACTER','이 캐릭터 개별 예외','CHARACTER')+option('GROUP','본부캐 그룹 기본값','CHARACTER')+'</select></label>'
+        +'<label>조회 정책<select class="admin-select" data-policy-mode>'+option('INHERIT','그룹 기본값 따르기',policy.individualMode)+option('AUTO','자동 판정',policy.individualMode)+option('INCLUDE','계속 조회',policy.individualMode)+option('EXCLUDE','조회 제외',policy.individualMode)+'</select></label>'
+        +'<label class="wide">변경 사유<input class="admin-input" data-policy-reason placeholder="공동 활동·게임 중단 등 확인 근거"/></label></div><div class="admin-character-status-actions"><small>list 행 삭제는 조회 제외가 아닙니다. 그룹 설정은 기존 개별 제외/예외를 덮지 않습니다.</small><button class="admin-btn" type="button" data-policy-save>조회 정책 저장</button></div></details>':'';
       const identityReviewHtml=identityReview?(()=>{
         const current=identityReview.current||{},candidate=identityReview.candidate||{},evidence=identityReview.evidence||{};
         const equipmentOverlap=Number(evidence.equipmentOverlapCount||evidence.equipment_overlap_count||0);
@@ -845,6 +853,8 @@
         +'<div class="admin-character-status-head"><div><strong>'+name+'</strong>'+identityBadge+'<span>'+server+' · '+cls+' · PVE '+Number(c.pvePower||0).toLocaleString('ko-KR')+' · PVP '+Number(c.pvpPower||0).toLocaleString('ko-KR')+'</span></div><div class="admin-character-pills">'+statusPills+'</div></div>'
         +identityReviewHtml
         +identityProbeHtml
+        +policyHtml
+        +'<button class="admin-btn" type="button" data-identity-list-retry>신원 변경 list 반영 재시도</button>'
         +(review?'<div class="admin-character-review-callout"><strong>공식 정보 미확인 '+failureStreak+'회 연속</strong><span>자동 제외하지 않았습니다. 삭제·서버 이전·이름 변경 여부를 확인한 뒤 상태를 선택하세요.</span></div>':'')
         +'<div class="admin-character-failure-meta"><span>연속 실패 <strong>'+failureStreak+'회</strong></span><span>누적 공식 미확인 <strong>'+failureTotal+'회</strong></span><span>최근 오류 <strong>'+esc(c.lastLookupFailureCode||'-')+'</strong></span><span>최근 실패 <strong>'+esc(lastFailure)+'</strong></span><span>최근 성공 <strong>'+esc(lastSuccess)+'</strong></span></div>'
         +'<details class="admin-character-status-editor" '+(review?'open':'')+'><summary>조회·노출 상태 관리</summary><div class="admin-character-status-fields">'
@@ -855,6 +865,25 @@
         +'</article>';
     }).join(''):'<div class="admin-empty">선택한 상태 조건에 맞는 캐릭터가 없습니다.</div>';
   }
+
+  async function saveCharacterLookupPolicy(btn){
+    const row=btn.closest('[data-character]'),characterId=Number(row?.dataset.characterId||0);
+    const character=state.characters.find(c=>c.characterId===characterId),policy=character?.lookupPolicy;
+    const scope=row?.querySelector('[data-policy-scope]')?.value,mode=row?.querySelector('[data-policy-mode]')?.value;
+    const reason=row?.querySelector('[data-policy-reason]')?.value.trim();
+    if(!policy||!reason){toast('변경 사유를 입력하세요.');return;}
+    if(scope==='GROUP'&&mode==='INHERIT'){toast('그룹 기본값은 자동 판정·계속 조회·조회 제외 중 선택하세요.');return;}
+    if(!confirm(scope==='GROUP'?'본부캐 그룹 기본값을 변경할까요? 명시적인 개별 예외는 유지됩니다.':'이 캐릭터의 조회 정책을 변경할까요?'))return;
+    btn.disabled=true;
+    try{const res=await adminCharacter('updateLookupPolicy',{characterId,scope,mode,reason,expectedUpdatedAt:scope==='GROUP'?policy.groupRevision:policy.characterRevision});if(res?.ok!==true)throw new Error(res?.message||res?.code||'조회 정책 저장 실패');toast(res.message);await searchCharacters();}
+    catch(err){setStatus('#characterStatus',err.message||String(err),'error');btn.disabled=false;}
+  }
+  A.saveCharacterLookupPolicy=saveCharacterLookupPolicy;
+  A.retryCharacterIdentityList=async function(btn){
+    const characterId=Number(btn.closest('[data-character]')?.dataset.characterId||0);btn.disabled=true;
+    try{const res=await adminCharacter('identityRetryList',{characterId});if(res?.ok!==true)throw new Error(res?.message||res?.code||'list 재시도 실패');toast('미반영 신원 변경 list 확인 완료');await searchCharacters();}
+    catch(err){setStatus('#characterStatus',err.message||String(err),'error');}finally{btn.disabled=false;}
+  };
 
   async function saveCharacterStatus(btn){
     const row=btn.closest('[data-character]');const characterId=Number(row?.dataset.characterId||0);

@@ -29,7 +29,7 @@ const CORS={
   "cache-control":"no-store",
   "x-content-type-options":"nosniff"
 };
-const API_VERSION="295.9";
+const API_VERSION="295.10";
 const CONTRACT="295";
 const BUILD_DATE="2026-09-01";
 const IDENTITY_DATABASE_CONTRACT="461";
@@ -47,6 +47,7 @@ const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 function identityRecoveryDecision(storedCode,nameSearchCode){
   const stored=clean(storedCode,120),nameSearch=clean(nameSearchCode,120);
   if(stored==="STORED_DETAIL_NOT_FOUND"&&nameSearch==="NAME_SERVER_NOT_FOUND")return{allowed:true,code:"IDENTITY_RECOVERY_ALLOWED",terminalMisses:[stored,nameSearch]};
+  if(stored==="STORED_DETAIL_NOT_FOUND"&&nameSearch==="NAME_SERVER_CHAR_KEY_MISMATCH")return{allowed:true,code:"IDENTITY_RECOVERY_ALLOWED",terminalMisses:[stored],nameReused:true};
   if(stored==="PROVIDER_RETRY_REQUIRED"||nameSearch==="PROVIDER_RETRY_REQUIRED"||/(?:NAME_MISSING|CHAR_KEY_MISSING)/.test(stored))return{allowed:false,code:"PROVIDER_RETRY_REQUIRED",retryable:true,terminalMisses:[]};
   if(/(?:CHAR_KEY_MISMATCH|IDENTITY_REVIEW_REQUIRED)/.test(`${stored} ${nameSearch}`))return{allowed:false,code:"IDENTITY_REVIEW_REQUIRED",retryable:false,terminalMisses:[]};
   return{allowed:false,code:"IDENTITY_RECOVERY_EVIDENCE_INCOMPLETE",retryable:false,terminalMisses:[]};
@@ -96,9 +97,15 @@ function service(){
   if(!url||!key)throw new Error("Supabase service 환경 설정이 없습니다.");
   return{url,key};
 }
+async function boundedServerFetch(url,options,timeoutMs){
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeoutMs);
+  try{const res=await fetch(url,{...options,signal:controller.signal});const raw=await res.text();return{ok:res.ok,status:res.status,text:async()=>raw};}
+  catch(error){if(controller.signal.aborted)throw new WorkerError('서버 호출 시간 예산 초과','SERVER_CALL_TIMEOUT',true);throw error;}
+  finally{clearTimeout(timer);}
+}
 async function rpc(name,body){
   const env=service();
-  const res=await fetch(`${env.url}/rest/v1/rpc/${name}`,{method:"POST",headers:{apikey:env.key,authorization:`Bearer ${env.key}`,"content-type":"application/json"},body:JSON.stringify(body)});
+  const res=await boundedServerFetch(`${env.url}/rest/v1/rpc/${name}`,{method:"POST",headers:{apikey:env.key,authorization:`Bearer ${env.key}`,"content-type":"application/json"},body:JSON.stringify(body)},45000);
   const raw=await res.text();let data={};
   try{data=raw?JSON.parse(raw):{};}catch{data={ok:false,message:raw};}
   if(!res.ok)throw new WorkerError(clean(data.message||data.error||data.details||`RPC ${name} HTTP ${res.status}`,1000),"SUPABASE_RPC_FAILED",true);
@@ -106,7 +113,7 @@ async function rpc(name,body){
 }
 async function callEdge(name,body){
   const env=service();
-  const res=await fetch(`${env.url}/functions/v1/${name}`,{method:"POST",headers:{apikey:env.key,authorization:`Bearer ${env.key}`,"content-type":"application/json"},body:JSON.stringify(body)});
+  const res=await boundedServerFetch(`${env.url}/functions/v1/${name}`,{method:"POST",headers:{apikey:env.key,authorization:`Bearer ${env.key}`,"content-type":"application/json"},body:JSON.stringify(body)},name==='character-identity-recovery'?65000:120000);
   const raw=await res.text();let data={};
   try{data=raw?JSON.parse(raw):{};}catch{data={ok:false,message:raw};}
   if(!res.ok||data.ok===false){
@@ -510,9 +517,11 @@ async function runQueue(body){
   const claimed=await rpc("kinojo_server_queue_worker_claim_v270",{p_session_id:sessionId,p_session_token:sessionToken,p_worker_id:workerId,p_batch_limit:batchLimit});
   if(claimed.ok!==true)return json(claimed,400);
   if(claimed.acquired!==true)return json({...claimed,sessionId,workerId});
+  const batchDeadline=Date.now()+150000;
   const results=[];let processed=0,successCount=0,failureCount=0,paused=false,cancelled=false,done=false,rateLimited=false,rateLimitWaitMs=0,waiting=false,waitMs=0;
   try{
     while(processed<batchLimit){
+      if(processed>0&&Date.now()+65000>batchDeadline)break;
       const control=await rpc("kinojo_lookup_control_state_v268",{p_session_id:sessionId,p_session_token:sessionToken});
       if(control.ok!==true)throw new WorkerError(clean(control.message||"Queue 제어 상태 확인 실패",1000),clean(control.code||"CONTROL_STATE_FAILED",120),true);
       if(control.cancelled===true||control.controlState==="cancelled"){cancelled=true;break;}
@@ -802,7 +811,7 @@ Deno.serve(async request=>{
   if(request.method!=="POST")return json({ok:false,message:"POST만 허용합니다."},405);
   try{
     const body=object(await request.json().catch(()=>({}))),action=clean(body.action,80);
-    if(action==="health")return json({ok:true,service:"character-refresh-worker",apiVersion:API_VERSION,databaseContract:CONTRACT,identityDatabaseContract:IDENTITY_DATABASE_CONTRACT,progressContract:"server-worker-seven-phase-v2",progressPhases:7,modes:["startAutonomous","autonomousTick","runQueue","runPostprocess"],queueBatchLimit:5,lookupOnlyPhase:false,postprocessPhase:true,sheetDeferred:false,sheetSyncPhase:true,sheetReadbackRequired:true,listSyncSingleWorkerLease:true,listSyncCompletionAtomic:true,legionTreeCharacterAddListless:true,legionTreeCharacterAddListWrite:false,legionTreeCharacterAddListReadback:false,legionTreeListlessDatabaseContract:"455",legionTreeListlessTargetSource:"server:legion_tree_character_add_v455",legionTreeListlessTerminalStage:"SERVER_QUEUE_CHARACTER_MASTER_DONE",etaContract:"remaining-plaync-targets-only",retryFailedRowsOnly:true,browserIndependentQueue:true,autonomousTickMode:"detached",autonomousHandoffRetryMax:AUTONOMOUS_HANDOFF_RETRY_DELAYS.length,autonomousHandoffRetryStatuses:[502,503,504],autonomousHandoffRetryClassifier:"http-status-first+message-fallback",autonomousHandoffHttpStatusPreserved:true,autonomousHandoffClassifierSelfTest:autonomousHandoffClassifierSelfTest(),targetAtomicFinalize:true,staleClaimRecoverySeconds:120,gearSpecificPayloadIds:true,officialStatePrecheck:true,perTargetReconcile:false,finalReconcileOnly:true,storesOfficialRaw:true,officialExactCombatPower:true,officialRateGate:"plaync_global_700ms",officialRawReuseSeconds:900,plaync429AttemptConsumed:false,identityRecovery:"two-terminal-misses-then-same-race-name-hint-exact-key",identityRecoveryEntry:"stored-detail-404-or-empty-identity-200+name-server-terminal-not-found",providerRetryEntersIdentityRecovery:false,serverTransferLegionAtomic:true,sameServerRenamePreservesLegion:true,listSyncEdge:"lookup-list-sync"});
+    if(action==="health")return json({ok:true,service:"character-refresh-worker",apiVersion:API_VERSION,databaseContract:CONTRACT,identityDatabaseContract:IDENTITY_DATABASE_CONTRACT,progressContract:"server-worker-seven-phase-v2",progressPhases:7,modes:["startAutonomous","autonomousTick","runQueue","runPostprocess"],queueBatchLimit:5,lookupOnlyPhase:false,postprocessPhase:true,sheetDeferred:false,sheetSyncPhase:true,sheetReadbackRequired:true,listSyncSingleWorkerLease:true,listSyncCompletionAtomic:true,legionTreeCharacterAddListless:true,legionTreeCharacterAddListWrite:false,legionTreeCharacterAddListReadback:false,legionTreeListlessDatabaseContract:"455",legionTreeListlessTargetSource:"server:legion_tree_character_add_v455",legionTreeListlessTerminalStage:"SERVER_QUEUE_CHARACTER_MASTER_DONE",etaContract:"remaining-plaync-targets-only",retryFailedRowsOnly:true,browserIndependentQueue:true,autonomousTickMode:"detached",autonomousHandoffRetryMax:AUTONOMOUS_HANDOFF_RETRY_DELAYS.length,autonomousHandoffRetryStatuses:[502,503,504],autonomousHandoffRetryClassifier:"http-status-first+message-fallback",autonomousHandoffHttpStatusPreserved:true,autonomousHandoffClassifierSelfTest:autonomousHandoffClassifierSelfTest(),targetAtomicFinalize:true,staleClaimRecoverySeconds:120,gearSpecificPayloadIds:true,officialStatePrecheck:true,perTargetReconcile:false,finalReconcileOnly:true,storesOfficialRaw:true,officialExactCombatPower:true,officialRateGate:"plaync_global_700ms",officialRawReuseSeconds:900,plaync429AttemptConsumed:false,identityRecovery:"terminal-miss-or-old-name-reused-then-same-race-direct-key",identityRecoveryEntry:"stored-detail-404-or-empty-identity-200+name-server-terminal-not-found",providerRetryEntersIdentityRecovery:false,serverTransferLegionAtomic:true,sameServerRenamePreservesLegion:true,listSyncEdge:"lookup-list-sync"});
     if(action==="startAutonomous")return await startAutonomous(body);
     if(action==="autonomousTick"){
       if(!internalRequest(request))return json({ok:false,code:"INTERNAL_ONLY",message:"서버 내부 자동 실행 요청만 허용합니다."},403);

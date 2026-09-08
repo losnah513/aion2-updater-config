@@ -22,7 +22,7 @@ const CORS = {
     "cache-control": "no-store",
     "x-content-type-options": "nosniff",
 };
-const API_VERSION = "295.4";
+const API_VERSION = "295.5";
 const CONTRACT = "295";
 class ProviderError extends Error {
     status;
@@ -381,6 +381,7 @@ async function probe(prepared) {
     const deadline = Date.now() + 55_000;
     const checkpoint = await rpc("kinojo_identity_scan_checkpoint_v2", {p_character_id: prepared.characterId, p_char_key: expectedKey, p_servers: uniqueServers});
     if (checkpoint.ok !== true) return {candidate: null, evidence: {...evidence, code: "SCAN_CHECKPOINT_UNAVAILABLE", retryable: true}};
+    evidence.scanGeneration=checkpoint.generation;
     const completed = new Set(checkpoint.completed || []);
     const matches = Array.isArray(checkpoint.matches) ? checkpoint.matches : [];
     const saveCheckpoint = async () => {
@@ -432,7 +433,7 @@ async function probe(prepared) {
         const verified = directKeyCandidate(payload, expectedKey, candidate, raceId, expectedClass);
         if (!verified || verified.characterId !== candidate.characterId || verified.characterName !== candidate.characterName)
             throw new ProviderError("고유키 발견 후 상세 정보가 변경되어 재검증이 필요합니다.", 0, 60_000);
-        return { candidate: verified, evidence: { ...evidence, matchedBy: verified.method, detailRevalidated: true } };
+        return { candidate: {...verified,sourceServerId:int(current.serverId),sourceCharacterName:text(current.characterName,120),scanGeneration:checkpoint.generation}, evidence: { ...evidence, matchedBy: verified.method, detailRevalidated: true } };
     } catch (error) {
         return { candidate: null, evidence: { ...evidence, code: /^DIRECT_KEY_(IDENTITY|CLASS)_MISMATCH$/.test(error.message)
             ? error.message : "PROVIDER_RETRY_REQUIRED", retryable: !/^DIRECT_KEY_(IDENTITY|CLASS)_MISMATCH$/.test(error.message),
@@ -474,6 +475,7 @@ async function syncList(listUpdate) {
         originalListName: text(listUpdate.originalListName, 160), listDisplayName: text(listUpdate.listDisplayName, 160),
         characterName: text(listUpdate.characterName, 120), serverId: int(listUpdate.serverId), serverName: text(listUpdate.serverName, 120), className: text(listUpdate.className, 80),
         mainCharacterName: text(listUpdate.mainCharacterName, 160),
+        listStatus: typeof listUpdate.listStatus==='string'?listUpdate.listStatus:null,
         pveItemLevel: listUpdate.pveItemLevel ?? null, pveCombatPower: listUpdate.pveCombatPower ?? null,
         pvpItemLevel: listUpdate.pvpItemLevel ?? null, pvpCombatPower: listUpdate.pvpCombatPower ?? null,
         latestPowerTotal: listUpdate.latestPowerTotal ?? null, latestItemLevelTotal: listUpdate.latestItemLevelTotal ?? null,
@@ -495,10 +497,71 @@ async function syncList(listUpdate) {
     const actual = rows.find((item) => int(item.row) === int(update.listRow)) || null;
     const expected = normalizeName(update.listDisplayName || update.characterName);
     const found = normalizeName(actual && (actual.originalName || actual.characterName || actual.name));
-    if (readback.ok !== true || readback.readComplete !== true || text(readback.bridgeRole) !== "APPSCRIPT_MASTER" || !actual || expected !== found)
+    const expectedCells=[['className',update.className],['mainCharacterName',update.mainCharacterName],['pveItemLevel',update.pveItemLevel],['pveCombatPower',update.pveCombatPower],['pvpItemLevel',update.pvpItemLevel],['pvpCombatPower',update.pvpCombatPower]];
+    const mismatch=actual&&expectedCells.some(([field,value])=>value!==null&&value!==undefined&&value!==''&&String(actual[field]??'').replace(/,/g,'').trim()!==String(value).replace(/,/g,'').trim());
+    const statusMismatch=actual&&typeof update.listStatus==='string'&&String(actual.listStatus??actual.status??'').trim()!==update.listStatus;
+    if (readback.ok !== true || readback.readComplete !== true || text(readback.bridgeRole) !== "APPSCRIPT_MASTER" || !actual || expected !== found || mismatch || statusMismatch)
         return { ok: false, code: "LIST_READBACK_MISMATCH", message: `list ${update.listRow}행 재검증이 일치하지 않습니다.`, expected: update.listDisplayName || update.characterName, actual: actual && (actual.originalName || actual.characterName || actual.name) || "" };
     return { ok: true, listRow: update.listRow, listDisplayName: update.listDisplayName || update.characterName, message: "AppsScript_MASTER 쓰기와 list 행 재검증 완료" };
 }
+
+async function verifyNameSlots(prepared,candidate,deadline){
+ const current=row(prepared.current)||{};
+ const slots=[{serverId:int(current.serverId),name:text(current.characterName,120),required:false},
+ {serverId:int(candidate.serverId),name:text(candidate.characterName,120),required:true}];
+ const evidence=[];
+ for(const slot of slots){
+   // _D is archival notation, not an official lookup fallback.
+   if(!slot.serverId||!slot.name||/_D$/i.test(slot.name))continue;
+   const url=new URL("https://aion2.plaync.com/ko-kr/api/search/aion2/search/v2/character");
+   url.searchParams.set("keyword",slot.name);url.searchParams.set("serverId",String(slot.serverId));
+   url.searchParams.set("page","1");url.searchParams.set("size","20");
+   const payload=await directKeyInfo(url.toString(),deadline);
+   const found=list(payload).filter(x=>normalizeName(x.characterName||x.name)===normalizeName(slot.name)&&int(x.serverId)===slot.serverId);
+   if(found.length>1||(!found.length&&list(payload).length>=20))throw new ProviderError("이름 점유 결과를 완전히 확인하지 못했습니다.",0,60000);
+   if(slot.required){
+     if(found.length!==1)throw new ProviderError("새 이름의 현재 점유를 확인하지 못했습니다.",0,60000);
+     const key=charKeyFromPayload(found[0]);
+     if(key!==text(candidate.charKey))throw new ProviderError("새 이름의 고유키가 변경되었습니다.",0,60000);
+   }
+   evidence.push({serverId:slot.serverId,name:slot.name,found:found.length===1,sameKey:found.length===1&&charKeyFromPayload(found[0])===text(candidate.charKey)});
+ }
+ return evidence;
+}
+async function adminIdentityChanges(passKey,prepared,resolved,seen=new Set(),deadline=Date.now()+150000){
+ const id=int(prepared.characterId);
+ if(!id||seen.has(id)||seen.size>=5||Date.now()>deadline)throw new ProviderError("이름 충돌 연쇄의 범위/시간을 초과하여 보류합니다.",0,60000);
+ seen.add(id);
+ if(!resolved.candidate)throw new ProviderError("기준 캐릭터 신원을 확인하지 못했습니다.",0,60000);
+ await verifyNameSlots(prepared,resolved.candidate,deadline);
+ const owner=await rpc("kinojo_identity_collision_owner",{p_character_id:id,p_candidate:resolved.candidate});
+ const changes=[];
+ if(int(owner?.characterId)){
+   const other=await rpc("kinojo_admin_character_identity_prepare_v293",{p_pass_key:passKey,p_character_id:int(owner.characterId)});
+   if(other.ok!==true)throw new ProviderError("이름의 이전 소유자를 확인하지 못했습니다.",0,60000);
+   const found=await probe(other);
+   if(Date.now()>deadline)throw new ProviderError("충돌 검증 시간 예산 초과로 적용을 보류합니다.",0,60000);
+   if(found.candidate)changes.push(...await adminIdentityChanges(passKey,other,found,seen,deadline));
+   else if(found.evidence.scanComplete===true&&found.evidence.code==="NOT_FOUND_BY_CHAR_KEY")
+     changes.push({characterId:int(other.characterId),action:"DELETE_CANDIDATE",generation:found.evidence.scanGeneration});
+   else throw new ProviderError("이전 소유자 탐색이 불완전하여 양쪽 변경을 보류합니다.",0,60000);
+ }
+ changes.push({characterId:id,action:"APPLY",candidate:resolved.candidate});
+ return changes;
+}
+async function flushAdminIdentityList(passKey,characterId){
+ const pending=await rpc("kinojo_admin_identity_list_pending",{p_credential:passKey,p_character_id:characterId});
+ if(pending.ok!==true)return pending;
+ const results=[];
+ for(const item of pending.items||[]){
+   const result=await syncList(item);results.push(result);
+   if(result.ok!==true)return{ok:false,results,retryable:true,code:"IDENTITY_LIST_PENDING"};
+   const ack=await rpc("kinojo_admin_identity_list_pending",{p_credential:passKey,p_character_id:characterId,p_queue_id:item.queueId,p_expected_revision:item.queueRevision});
+   if(ack.ok!==true)return{ok:false,results,retryable:true,code:"IDENTITY_LIST_ACK_FAILED"};
+ }
+ return{ok:true,results};
+}
+
 Deno.serve(async (request) => {
     if (request.method === "OPTIONS")
         return new Response(null, { status: 204, headers: CORS });
@@ -561,6 +624,12 @@ Deno.serve(async (request) => {
                 evidence: resolved.evidence,
             });
         }
+        if (action === "adminRetryList") {
+            const passKey=text(body.passKey||body.pass_key,80),characterId=int(body.characterId||body.character_id);
+            if(!passKey||!characterId)return response({ok:false,code:"ADMIN_CONTEXT_REQUIRED"},400);
+            const result=await flushAdminIdentityList(passKey,characterId);
+            return response(result,result.ok===true?200:409);
+        }
         if (action === "adminProbe" || action === "adminApply") {
             const passKey = text(body.passKey || body.pass_key, 80);
             const characterId = int(body.characterId || body.character_id);
@@ -605,21 +674,12 @@ Deno.serve(async (request) => {
             }
             if (!resolved.candidate)
                 return response({ ok: false, code: "IDENTITY_CANDIDATE_NOT_FOUND", message: "변경 직전 재검증에서 동일 고유값 후보를 찾지 못했습니다.", evidence: resolved.evidence }, 409);
-            const applied = await rpc("kinojo_admin_character_identity_apply_v1", { p_pass_key: passKey, p_character_id: characterId, p_candidate: resolved.candidate });
-            if (applied.ok !== true)
-                return response(applied, 400);
-            const listPayload = await rpc("kinojo_identity_list_update_payload_v287", {
-                p_character_id: characterId,
-                p_previous: row(applied.previous) || {},
-            });
-            let sheet = { ok: false, code: "LIST_SYNC_NOT_RUN", message: "list 시트 동기화를 실행하지 못했습니다." };
-            try {
-                sheet = await syncList(listPayload.ok === true ? listPayload : row(applied.listUpdate) || {});
-            }
-            catch (error) {
-                sheet = { ok: false, code: "LIST_SYNC_EXCEPTION", message: text(error instanceof Error ? error.message : error, 500) };
-            }
-            return response({ ...applied, candidate: safeCandidate(resolved.candidate), evidence: resolved.evidence, listSync: sheet, listSyncOk: sheet.ok === true, message: sheet.ok === true ? "캐릭터 정보와 list 시트를 반영했습니다." : "캐릭터 정보는 반영했지만 list 시트 동기화를 확인해야 합니다." });
+            const changes=await adminIdentityChanges(passKey,prepared,resolved);
+            const applied=await rpc("kinojo_admin_identity_collision_apply",{p_credential:passKey,p_changes:changes});
+            if(applied.ok!==true)return response(applied,409);
+            const sheet=await flushAdminIdentityList(passKey,characterId);
+            return response({...applied,candidate:safeCandidate(resolved.candidate),evidence:resolved.evidence,listSync:sheet,listSyncOk:sheet.ok===true,
+              message:sheet.ok===true?"신원·충돌 처리와 list 재검증을 완료했습니다.":"DB 변경을 보존하고 list 실패 Queue를 재시도 대기로 남겼습니다."});
         }
         if (action === "reviewApprove" || action === "reviewReject") {
             const passKey = text(body.passKey || body.pass_key, 80);

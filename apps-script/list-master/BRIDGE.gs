@@ -391,7 +391,8 @@ function kinojoHandleServerListSheetSync_(body, method) {
         const bound=metadata.filter(x=>x.metadataValue===masterId);
         if(bound.length>1)throw new Error('LIST_METADATA_IDENTITY_AMBIGUOUS');
         const expected=[renamed||append?display:original,cls||null,null,null,null,null,
-          String(item.mainCharacterName||item.main_character_name||'').trim()||null];
+          String(item.mainCharacterName||item.main_character_name||'').trim()||null,
+          typeof item.listStatus==='string'?item.listStatus:null];
         const fields=[['pveItemLevel','pve_item_level','clearPveStats'],['pveCombatPower','pve_combat_power','clearPveStats'],['pvpItemLevel','pvp_item_level','clearPvpStats'],['pvpCombatPower','pvp_combat_power','clearPvpStats']];
         fields.forEach((f,index)=>{const raw=item[f[0]]===undefined?item[f[1]]:item[f[0]],n=kinojoNumberOrBlank_(raw);
           expected[index+2]=item[f[2]]===true?'':n===''?null:Number(n);});
@@ -416,7 +417,7 @@ function kinojoHandleServerListSheetSync_(body, method) {
           }
           plan.newBinding=true;plan.requestIndex=requests.length;
           requests.push({createDeveloperMetadata:{developerMetadata:{metadataKey,metadataValue:masterId,visibility:'DOCUMENT',location:{dimensionRange:{sheetId,dimension:'ROWS',startIndex:index,endIndex:index+1}}}}});
-          if(plan.appended)requests.push({updateCells:{range:{sheetId,startRowIndex:index,endRowIndex:index+1,startColumnIndex:0,endColumnIndex:7},rows:[{values:expected.map(x=>cell(x??''))}],fields:'userEnteredValue'}});
+          if(plan.appended)requests.push({updateCells:{range:{sheetId,startRowIndex:index,endRowIndex:index+1,startColumnIndex:0,endColumnIndex:expected.length},rows:[{values:expected.map(x=>cell(x??''))}],fields:'userEnteredValue'}});
         }
         plans.push(plan);
       }catch(error){fail(item,String(error.message||error));}

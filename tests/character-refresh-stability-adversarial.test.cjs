@@ -15,7 +15,7 @@ async function edge({already=false,recordOk=true,readComplete=true}={}){
   Deno:{env:{get:()=> 'https://synthetic.invalid'},serve(fn){handler=fn}}});
  vm.runInContext(stripTypeScriptTypes(source('supabase/functions/lookup-list-sync/index.ts')).replace('export {};',''),ctx);
  ctx.rpc=async()=>({ok:true});
- ctx.rest=async p=>({ok:true,data:p.includes('sync_status=in.')?(already?[]:[{id:1,list_row:6,list_original_name:'name',character_name:'name',main_character_name:'main',class_name:'궁성'}]):[{id:1,sync_status:already?'synced':'queued'}]});
+ ctx.rest=async p=>({ok:true,data:[{id:1,character_id:1,list_row:6,list_original_name:'name',character_name:'name',main_character_name:'main',class_name:'궁성',sync_status:already?'synced':'queued'}]});
  ctx.app=async(_url,p)=>p.action==='serverBridgeHealth'?{ok:true,metadataWriteContract:'MASTER_ID_V1'}:p.action==='serverListSheetSync'?{ok:true,metadataWriteContract:'MASTER_ID_V1',processedIds:[1],results:[{id:1,row:6,ok:true}]}:{ok:true,bridgeRole:'APPSCRIPT_MASTER',readComplete,list:[{row:6,originalName:'name',mainCharacterName:'main',className:'궁성'}]};
  ctx.patch=async()=>({ok:true});ctx.record=async()=>({ok:recordOk});ctx.mark=async()=>({ok:true});
  const response=await handler(new Request('https://synthetic.invalid',{method:'POST',body:JSON.stringify({action:'syncList',sessionId:'LOCAL-MOCK',sessionToken:'LOCAL-MOCK',expectedQueuedCount:1})}));
