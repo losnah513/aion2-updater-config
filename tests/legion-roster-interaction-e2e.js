@@ -1,3 +1,4 @@
+const {isolatePlaywrightPage}=require('./helpers/visitor-traffic');
 /* Run with Playwright installed. Optional ROSTER_BASE_URL tests the deployed site. */
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
@@ -15,7 +16,7 @@ const root=path.resolve(__dirname,'..');
  const results=[];
  try{
  for(const [width,height] of [[1920,900],[701,800],[700,800],[390,844],[320,740],[900,740]]){
-  console.log("Checking",width); const page=await browser.newPage({viewport:{width,height},hasTouch:width<=700});const errors=[];
+  console.log("Checking",width); const page=await browser.newPage({viewport:{width,height},hasTouch:width<=700});await isolatePlaywrightPage(page);const errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   let rpcCalls=0;
   const fixture=Array.from({length:55},(_,i)=>({characterId:String(i+1),name:'명단 카드 '+String(i+1).padStart(2,'0'),serverId:2002,serverName:'지켈',className:'궁성',legion:'깡',isMain:i===0,hasLibraryImage:i<2}));

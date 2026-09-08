@@ -1,3 +1,4 @@
+const {markPuppeteerPage,interceptPuppeteerVisit}=require('./helpers/visitor-traffic');
 'use strict';
 
 const assert=require('node:assert/strict');
@@ -42,11 +43,13 @@ function isSummer(src){return String(src||'').includes(SUMMER_DELIVERY)}
 
 async function configurePage(browser,scenario,{reducedMotion=false}={}){
   const page=await browser.newPage();
+  await markPuppeteerPage(page);
   await page.setViewport({width:390,height:844,deviceScaleFactor:1,isMobile:true,hasTouch:true});
   await page.setUserAgent(MOBILE_UA);
   if(reducedMotion)await page.emulateMediaFeatures([{name:'prefers-reduced-motion',value:'reduce'}]);
   await page.setRequestInterception(true);
   page.on('request',request=>{
+    if(interceptPuppeteerVisit(request))return;
     const url=request.url();
     if(url.includes(EDGE_PATH)&&request.method()==='GET'){
       if(scenario.mode==='slow-live'){

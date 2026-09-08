@@ -1,3 +1,4 @@
+const {markPuppeteerPage,interceptPuppeteerVisit}=require('./helpers/visitor-traffic');
 'use strict';
 
 const assert=require('node:assert/strict');
@@ -34,9 +35,11 @@ async function snapshot(page){
   const browser=await puppeteer.launch({executablePath:CHROME,headless:true,args:['--no-sandbox','--disable-gpu','--disable-dev-shm-usage']});
   try{
     const page=await browser.newPage();
+  await markPuppeteerPage(page);
     await page.setViewport({width:1440,height:1000,deviceScaleFactor:1});
     await page.setRequestInterception(true);
     page.on('request',request=>{
+    if(interceptPuppeteerVisit(request))return;
       if(FIXTURE&&request.url().includes(EDGE_PATH)&&request.method()==='OPTIONS'){
         request.respond({status:204,headers:{'access-control-allow-origin':'*','access-control-allow-headers':'authorization, apikey, content-type','access-control-allow-methods':'GET, OPTIONS'}}).catch(()=>{});
         return;

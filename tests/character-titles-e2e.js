@@ -1,3 +1,4 @@
+const {isolatePlaywrightPage}=require('./helpers/visitor-traffic');
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const root=path.resolve(__dirname,'..');
@@ -15,7 +16,7 @@ const root=path.resolve(__dirname,'..');
   const response=await fetch(config.supabase.url+'/rest/v1/rpc/kinojo_character_equipped_titles_v466',{method:'POST',headers:{apikey:config.supabase.publishableKey,'Content-Type':'application/json'},body:JSON.stringify({p_server_id:2002,p_character_name:'더샷'})});
   assert.equal(response.status,200);const titles=await response.json();assert.equal(titles.titles.length,3);assert.deepEqual(titles.titles.map(t=>t.category),['Attack','Defense','Etc']);
   for(const [width,height] of [[1280,900],[760,900],[390,844],[320,740]]){
-   const page=await browser.newPage({viewport:{width,height}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
+   const page=await browser.newPage({viewport:{width,height}});await isolatePlaywrightPage(page);const errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.goto('http://127.0.0.1:'+server.address().port+'/test');
    await page.evaluate(titles=>{
     window.titleFixture=titles;window.mode='ready';

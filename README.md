@@ -234,3 +234,13 @@ KINOJO INFO GitHub Pages upload package.
 - `core/kinojo-auth-ui.js` validates the Server session when restoring a page, touches it at a five-minute bounded cadence during activity, performs a Server touch for manual extension, and hands logout/timeout revocation to the auth service.
 - `tests/web-shell-auth-contract.test.js` verifies the static and runtime session boundary and, in GitHub CI, checks the deployed Edge `2.0` health/CORS/header contract.
 - All 16 active PC/mobile entrypoints pin `kinojo-auth-session.js`, `kinojo-auth-service.js`, and `kinojo-auth-ui.js` to `cache=2026081602`; the contract test rejects all prior authentication cache keys.
+
+
+## 방문 통계 검수 분리 · DB474 · 2026-09-08
+
+- CONFIRMED: 로컬/CI 테스트는 tests/helpers/visitor-traffic.js로 방문 RPC를 차단한다. WEB의 로컬 호스트/navigator.webdriver/test marker는 기록하지 않는다.
+- 서버 traffic_class(PUBLIC/LOCAL_TEST/AUTOMATED/INTERNAL_ADMIN)가 일반 일별·페이지별 집계와 방문 이력의 기준이다. 전용 CODEX_ADMIN만 is_automation_account=true이며 일반 관리자까지 제외하지 않는다.
+- 관리자 방문 이력의 INTERNAL 선택으로 제외된 원시 기록을 조회한다. 기존 이벤트 ID·시각·payload·회원 연결은 유지한다.
+- 실제 운영 검수는 CODEX_ADMIN 정상 로그인·서버 세션 확인 후 같은 브라우저를 재사용한다. 세션 만료 시 재로그인, 자격증명 부재 시 관리자 검수 중단. 비밀값은 저장소/문서에 기록하지 않는다.
+- 검증: node tests/visitor-traffic.test.js; node tests/web-shell-auth-contract.test.js; supabase/tests/visitor_traffic_v474.sql은 BEGIN/ROLLBACK으로 실행. 롤백 파일은 visitor_traffic_v474_rollback.sql.
+- 재검증 조건: 방문 RPC/집계/테스트 helper/전용 계정 정책 변경. 증거: tests/evidence/20260908-visitor-traffic.

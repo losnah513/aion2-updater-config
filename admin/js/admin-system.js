@@ -459,7 +459,7 @@
       renderVisitorTrend(data.trend||[]); renderVisitorPages(data.pages||[]);
       state.visitorCanViewMemberHistory=Boolean(data.canViewMemberHistory);
       const history=$('#visitorHistoryCard'); if(history)history.hidden=!state.visitorCanViewMemberHistory;
-      setStatus('#visitorAggregateStatus','한국 시간 기준으로 집계했습니다.','success');
+      setStatus('#visitorAggregateStatus','한국 시간 기준입니다. 검수·자동화 기록은 통계에서 제외합니다.','success');
       if(state.visitorCanViewMemberHistory)await loadVisitorHistory(1);
     }catch(err){setStatus('#visitorAggregateStatus',err.message||String(err),'error');}
   }
@@ -472,7 +472,7 @@
       const data=await adminVisitor('history',{dateFrom:$('#visitorDateFrom')?.value||null,dateTo:$('#visitorDateTo')?.value||null,memberSearch:$('#visitorMemberSearch')?.value.trim()||null,loginFilter:$('#visitorLoginFilter')?.value||'ALL',pageKey:$('#visitorPageFilter')?.value||null,page:state.visitorPage,pageSize:20});
       state.visitorTotalPages=Math.max(1,Number(data.totalPages||1));
       const root=$('#visitorHistoryList'); const rows=data.rows||[];
-      if(root)root.innerHTML=rows.length?rows.map(row=>'<article class="admin-visitor-history-row"><div><strong>'+esc(row.memberName||'익명 방문자')+'</strong><span>'+(row.isLoggedIn?esc(row.memberRole||'회원'):'비로그인')+'</span></div><div><span>로그인 '+visitorDate(row.loginAt)+'</span><span>최초 '+visitorDate(row.firstVisitAt)+'</span><span>마지막 '+visitorDate(row.lastVisitAt)+'</span></div><div><strong>'+visitorNumber(row.pageViews)+'회</strong><span>'+esc((row.pages||[]).join(', ')||'-')+'</span></div></article>').join(''):'<div class="admin-empty">조건에 맞는 방문 이력이 없습니다.</div>';
+      if(root)root.innerHTML=rows.length?rows.map(row=>'<article class="admin-visitor-history-row"><div><strong>'+esc(row.memberName||(row.trafficClasses?.some(value=>value!=='PUBLIC')?'검수·자동화':'익명 방문자'))+'</strong><span>'+(row.isLoggedIn?esc(row.memberRole||'회원'):'비로그인')+'</span></div><div><span>로그인 '+visitorDate(row.loginAt)+'</span><span>최초 '+visitorDate(row.firstVisitAt)+'</span><span>마지막 '+visitorDate(row.lastVisitAt)+'</span></div><div><strong>'+visitorNumber(row.pageViews)+'회</strong><span>'+esc((row.pages||[]).join(', ')||'-')+'</span></div></article>').join(''):'<div class="admin-empty">조건에 맞는 방문 이력이 없습니다.</div>';
       $('#visitorPageInfo').textContent=state.visitorPage+' / '+state.visitorTotalPages;
       $('#visitorPrevBtn').disabled=state.visitorPage<=1; $('#visitorNextBtn').disabled=state.visitorPage>=state.visitorTotalPages;
       setStatus('#visitorHistoryStatus','총 '+visitorNumber(data.total)+'건','success');
