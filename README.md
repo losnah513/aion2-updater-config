@@ -2,6 +2,8 @@
 
 ## Roster family node editor · 2026-09-08
 
+Sanctuary hover follow-up: actual-character cards use Server `isMain/mainCharacterId` to enable the existing main/alt tooltip even when the independent membership classification is GUEST. The Server already returns the correct main name after roster saving. PC hover and mobile tap show 강태공2의 부캐 for 강태공1 while preserving the guest card style. Sanctuary JS cache parameter familyHover2026090801; no DB/Edge change.
+
 DB478 follow-up: unowned Sanctuary characters retain `GUEST` when their canonical main/alt family changes. DB477 incorrectly changed this membership classification to ALT, violated the owner-null check and rolled back the entire save. The real 강태공2/강태공1 request now succeeds in BEGIN/ROLLBACK verification; production relationships remain unchanged until the administrator saves. Edge v12/API1.11 returns family-specific failures. This editor writes the Server DB; it does not write the Google list sheet. The SQL regression now includes a GUEST owner row.
 
 CONFIRMED: the roster subbar opens a compact main/alt editor for server-authorized managers. Search loads complete existing families. Mouse/touch dragging places cards freely, wires follow movement and the main slot attracts nearby drops; replacing the main demotes the former main. Save persists a single canonical family, rejects stale/incomplete/duplicate/unavailable or conflicting member/force relationships, and safely replays uncertain requests. DB477 explicit overrides protect saved links from older worker snapshots. Deployment changes no existing character relationships. Images and legion membership are preserved. Whole-family edits are limited to 100 characters.

@@ -702,6 +702,11 @@
     return node;
   }
 
+  function hasCanonicalAltRelation(character){
+    const characterId=integer(character?.characterId),mainId=integer(character?.mainCharacterId);
+    return character?.isMain===false&&characterId>0&&mainId>0&&mainId!==characterId;
+  }
+
   function altMainCharacterName(character,owned){
     const direct=value(character?.mainCharacterName||character?.mainName||owned?.mainCharacterName||owned?.mainName);
     if(direct)return direct;
@@ -778,7 +783,7 @@
           const slotPower=document.createElement('small');slotPower.className='sanctuary-management-force-slot-power';slotPower.innerHTML=slot.character?.isRandomAlt?'랜덤 부캐':slot.occupied?combatPowerMarkup(slot.character?.power):'캐릭터 대기';copy.append(slotName,slotMeta,slotPower);
         }
         item.append(icon,copy);
-        if(isAlt){const tooltip=createAltRelationshipTooltip(slot.character,characterState.owned);item.dataset.sanctuaryAltDetail='';item.tabIndex=0;item.setAttribute('aria-describedby',tooltip.id);item.setAttribute('aria-expanded','false');item.appendChild(tooltip);}
+        if(isAlt||(slot.occupied&&hasCanonicalAltRelation(slot.character))){const tooltip=createAltRelationshipTooltip(slot.character,characterState.owned);item.dataset.sanctuaryAltDetail='';item.tabIndex=0;item.setAttribute('aria-describedby',tooltip.id);item.setAttribute('aria-expanded','false');item.appendChild(tooltip);}
         else{item.title=slot.occupied?[value(slot.character?.name),value(slot.character?.className)].filter(Boolean).join(' · '):'빈 슬롯 '+((party.partyNo-1)*5+slot.slotNo)+'에 캐릭터 추가';if(!slot.occupied)item.setAttribute('aria-label',force.forceNo+'포스 '+party.partyNo+'파티 '+slot.slotNo+'번 빈 슬롯에 캐릭터 추가');}
         partyNode.appendChild(item);
       });
