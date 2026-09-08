@@ -112,5 +112,3 @@ AS $function$
 $function$;
 
 commit;
-
-
