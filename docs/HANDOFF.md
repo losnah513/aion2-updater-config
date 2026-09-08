@@ -5,6 +5,13 @@
 범위·단계는 [기존 계획서](https://drive.google.com/file/d/1aPfADtwHFXo1_ZP6Zj3HkD7eGyOVrZxD/view), 진행 상태·검증 결과·다음 작업은 [프로젝트 LOG](https://drive.google.com/file/d/1k0R6heq6ttLl9IKFm_q1_EGm4FCxmVbQ/view)를 먼저 확인한다. 과거 작업을 중복 실행하지 않는다.
 배포·복구 계약은 CHARACTER_REFRESH_STABILITY_STAGE2_RELEASE.md, 제품 파일은 CHARACTER_REFRESH_STAGE2_MANIFEST.json을 따른다. 이 문서는 운영 실행 승인이 아니다.
 
+## 캐릭터 PVP 칭호 판정 · DB479
+
+- 기존 장비 조건(어비스3개 이상/장비 확인)을 유지하고 장착 칭호의 PVP 피해 증폭 또는 피해 내성 중 하나를 인정한다. PVE 옵션 동시 존재는 PVP를 무효화하지 않는다. PVP 회피만으로 확대하지 않는다.
+- 기준 main9c90c164, branch codex/character-pvp-title-hotfix. SQL/rollback은 20260908111755_character_pvp_defense_title_v479, 테스트는 tests/pvp-title-v479.test.cjs. Node24/PGlite0.5.8에서 실행한다.
+- 원본 보존 및 과거 LAURA/PVE/PVP·이력/list 복구는 별도 범위다. 이 패치는 기존 immutable Parser 조건만 변경하며 Edge/Apps Script/WEB 변경이 없다.
+- 운영·CI·Drive 결과는 캐릭터 최신화 프로젝트 LOG 최신 회차를 따른다. 후속 Stage3 패키지는 이 main 패치를 포함하고 기존 Parser fixture에 새 조건을 적용해 재검증해야 한다.
+
 ## 성역 GUEST 부캐 롤오버 · 2026-09-08
 
 - 사용자가 명부 저장 성공 후 새로고침해도 강태공1의 부캐 연출이 안 뜬다고 제보. DB 저장1건, master/main7/is_main=false 및 성역 slot root7 확인. force_roster 응답의 mainCharacterName=강태공2도 정상. 지연이 아니라 Web이 membership GUEST를 부캐 연출 조건에서 제외한 문제였다.
