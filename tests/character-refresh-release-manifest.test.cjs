@@ -13,4 +13,4 @@ if(process.argv.includes('--package'))for(const name of manifest.migrations){
 }
 assert.equal(manifest.deploymentAuthorized,false);
 assert.equal(manifest.migrations.length,11);
-console.log('PASS: 34 canonical files frozen; 11 ordered migration/rollback pairs'+(process.argv.includes('--package')?' and 11 byte-identical Source/Deploy pairs':''));
+console.log('PASS: '+manifest.files.length+' canonical files frozen; 11 ordered migration/rollback pairs'+(process.argv.includes('--package')?' and 11 byte-identical Source/Deploy pairs':''));

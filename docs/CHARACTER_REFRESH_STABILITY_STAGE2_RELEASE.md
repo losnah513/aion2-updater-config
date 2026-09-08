@@ -6,7 +6,7 @@
 
 - 기준 main: `9e885d4c` (DB477/478 및 선행 DB479 PVP 칭호 판정 포함). 실제 배포 직전 main·운영 함수·트리거·ACL·SQL_INDEX를 다시 대조한다.
 - DB479는 별도 선행 반영이다. 장비 조건은 유지하며 PVP 피해 증폭 또는 피해 내성 칭호를 인정한다. 아래 11개 배포/rollback은 DB479를 되돌리지 않는다.
-- 정확한 34개 제품 파일의 UTF-8 LF SHA-256: `CHARACTER_REFRESH_STAGE2_MANIFEST.json`.
+- 정확한 제품 파일(공유 Edge 설정 포함)의 UTF-8 LF SHA-256: `CHARACTER_REFRESH_STAGE2_MANIFEST.json`.
 - `supabase/migrations/`가 SQL 원본이다. Source/Deploy 복사본을 각각 실행하지 않는다.
 - 로컬 패키지: `.codex-tmp/character-refresh-stage2-release/LOG24/{Source,Deploy}`. 11쌍은 원본 LF와 바이트 동일해야 한다. 운영 SQL 번호는 예약하지 않는다.
 - 운영 DB478을 포함한 선행 계약을 유지한다. 아래 파일만 지정 순서로 적용하며 무관 migration을 포함한 전체 `db push`는 금지한다.
@@ -34,7 +34,7 @@
 | character-identity-recovery | 295.5 | 직접 key 관측·같은 종족 서버 탐색·옛/새 이름 충돌 증거 수집 |
 | lookup-list-prepare | 1.1 | 기존 Bridge 읽기·완전성 확인·DB Target 구성 전달 |
 | character-refresh-worker | 295.11 | 기존 Queue/후처리 실행·시간 예산·종료·list 선택 |
-| lookup-list-sync | 1.2.7 | DB 정책 확인 후 쓰기·readback·완료 marker; OFF는 외부 쓰기0 |
+| lookup-list-sync | 1.2.8 | 기존 syncList와 DB480 syncSanctuary 통합; metadata 쓰기·readback·완료; 최신화 OFF는 외부 쓰기0 |
 | character-detail-refresh | 305.4 | 저장 Master 주소 수집·원자 저장·제한된 인계 재시도 |
 | lookup-sheet-bridge / scheduled-maintenance-control | 기존 유지 | 라우터 / 예약 실행 재사용. 새 Edge를 만들지 않는다 |
 | AppsScript_MASTER BRIDGE.gs | MASTER_ID_V1 | A/G/H 명시 쓰기·Master ID metadata·행 매핑·부분 성공 보존 |
@@ -47,6 +47,14 @@
    - `developerMetadata:search` 읽기 전용 HTTP200은 API 연결 확인일 뿐 metadata 쓰기/행 readback 검증을 대신하지 않는다. 임시 진단 함수는 실제 배포 소스에서 제거한다. 서비스 활성화와 편집기 저장은 기존 웹앱 배포 갱신과 구분한다.
 4. WEB 캐시의 배너/성역/명부 revision은 보존하고 캐릭터 revision만 반영한다.
 5. Extension은 RETIRED/FROZEN이다. `tests/fixtures/extension-reference/`는 manifest 순서 재현용이며 배포 자산이 아니다. 설치·재로드·재활성화·Drive 보존본 교체 없음.
+
+### 공유 성역 list 경계
+
+- `syncSanctuary`는 service bearer와 apikey를 모두 검증하고 DB480 등록 이벤트/Queue 범위를 확인한다. 일반 `syncList`의 updater-session 인증과 실행별 ON/OFF 정책은 별개로 보존한다.
+- 성역 등록도 character_id를 MASTER_ID_V1에 전달한다. 위치 기반 legacy fallback은 재활성화하지 않는다. 부분 검증 행은 보존하며, 최종 행 연결/등록 결과 저장 실패를 완료로 표시하지 않는다.
+- DB480 prepare가 event 미완료일 때 synced Queue까지 재검증하도록 보완된 후 배포한다. 마지막 응답 유실 뒤 Queue 전부 synced인 경우도 복구해야 한다. 이 선행 보완은 성역 작업이 소유한다.
+- 공유 Edge/config/통합 검수는 이 PR이 소유하며 성역 PR은 중복 파일을 제외한다. 실제 배포 전 성역 최신 main과 SQL_INDEX/운영 함수 기준을 병합하고, 양쪽 배포 순서를 조율한다.
+- rollback 시 성역 syncSanctuary action을 제거하는 Stage2 이전 준비본을 사용하지 않는다. 확보한 운영 v7 또는 양쪽 호환 복구본을 기준으로 한다. DB480 성역 변경은 이 프로젝트의11개 rollback 범위 밖이다.
 
 ## 설정·종료 계약
 

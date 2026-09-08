@@ -116,7 +116,7 @@
     },
     {
       "path": "supabase/functions/lookup-list-sync/index.ts",
-      "sha256": "c01bb719c5c326b61d5488ef7ae3ceaaefc3ec895df4862038c15f62bd09f392"
+      "sha256": "7a1b5e0bc6b634a8f0993968f46d173a030e63f9b0778916ad9f3e1b4def0ca2"
     },
     {
       "path": "supabase/functions/character-refresh-worker/index.ts",
@@ -153,6 +153,10 @@
     {
       "path": "m/admin/index.html",
       "sha256": "141909d2bf0b4e7062096eeec22786d6b6690e353ba99688bdab10c6c8fb6330"
+    },
+    {
+      "path": "supabase/config.toml",
+      "sha256": "0048096efb95f742da43572abecc79b2d9732e2f6b35ae8d4fff66c70ff91fdf"
     }
   ],
   "notDeploymentAssets": [
