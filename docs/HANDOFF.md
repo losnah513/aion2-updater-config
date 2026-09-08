@@ -1,5 +1,12 @@
 # KINOJO WEB HANDOFF
 
+## 명부 연결 저장 GUEST 오류 수정 · DB478 · 2026-09-08
+
+- 강태공1은 성역 owner_member_id=NULL/relation=GUEST였다. DB477이 이를 ALT로 바꿔 `(owner_member_id IS NULL) = (relation = 'GUEST')` 제약 위반으로 전체 저장을 rollback. 운영 확인 시 강태공1/2 각각 본캐·저장이력0이었다. 기존 검증에 성역 GUEST fixture가 없었던 누락이다.
+- DB478은 owner가 없으면 GUEST를 보존하고 canonical root만 변경한다. Edge v12/API1.11은 관계 저장 실패를 캐릭터 추가 오류로 표시하지 않는다. 기존 read/save RPC와 권한·Web 계약 유지.
+- 수정 전 실제 요청 rollback 진단으로 23514 재현. 수정 후 같은 강태공2→본캐/강태공1→부캐 요청 BEGIN/ROLLBACK 성공, GUEST fixture 병합/교체/멱등/충돌 회귀 통과. 진단은 영구 저장하지 않았다. 실제 적용은 관리자의 연결 저장으로 진행한다.
+- Google list 시트 쓰기는 이 편집기 기능에 없다. 웹 명부는 서버 DB 관계 기준이다. 파일: `supabase/migrations/20260908094523_roster_family_guest_relation_v478.sql`, 같은 이름의 rollback은 종전 helper만 복원하며 GUEST 오류도 복원한다. 운영/PR/Drive 최종 근거는 명부 LOG15회차.
+
 ## 레기온 명부 본캐·부캐 노드 편집 · DB477 · 2026-09-08
 
 - 기준 main `bbcb6d30`, branch `codex/legion-roster-family-editor`. 모달에서 검색한 가족 전체를 불러와 본캐 슬롯/부캐 자유 배치, 실시간 곡선 연결, 근접 자석 정렬280ms, 모바일 Pointer Events 터치 드래그. 54px 네임카드, 등록 버튼/현재 본캐 문구 없음. 명부 조회 초기화 및 전체(왼쪽)/레기온별(오른쪽) 고정 라벨.
