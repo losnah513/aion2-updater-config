@@ -70,7 +70,7 @@ vm.runInContext(script, context, { filename: scriptPath });
 
 assert(window.KinojoLegionTree, 'KinojoLegionTree contract must be exported');
 assert(viewerHarness.includes('legion-tree.css?cache=2026090707'));
-assert(viewerHarness.includes('legion-tree.js?cache=2026090707'));
+assert(viewerHarness.includes('legion-tree.js?cache=2026090802'));
 assert(viewerHarness.includes('id="legionTreeViewerFade"'));
 assert(viewerHarness.includes("groupName:'소속 외'"));
 
@@ -707,7 +707,7 @@ window.KinojoSupabase = {
     assert(html.includes('legion-tree.css?cache=2026090707'));
     assert(html.includes('legion-tree-editor.js?cache=2026090105'));
     assert(html.includes('kinojo-supabase-features.js?cache=2026090101'));
-    assert(html.includes('legion-tree.js?cache=2026090707'));
+    assert(html.includes('legion-tree.js?cache=2026090802'));
     assert(!html.includes('legion-tree.js?cache=2026082403'));
   }
 

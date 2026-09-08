@@ -1,5 +1,14 @@
 # KINOJO WEB HANDOFF
 
+## 레기온 트리 자동 명부 포함 · 2026-09-08
+
+- 기준 main `2f7a980e`, 작업 branch `codex/legion-tree-membership-sync-20260908`. 기존 167단계 뒤 보완-1~6을 추가했으며 실제 완료 상태는 Drive 레기온트리 LOG 최신 회차를 따른다.
+- 원인: 밤[지켈]은 현재 깡 명부에 포함됐으나 저장 assignment가 없어 unassignedMembers로 반환됐고 WEB이 렌더하지 않았다. 별개로 source의 list_row 필수 조건도 listless 신규 등록과 충돌했다.
+- DB473은 기존 private member source의 list 행 의존을 제거하고, v464 payload 위에서 현재 미배치 구성원만 마지막 기본 직급에 읽기 시 포함한다. 단일 상위는 자동 직속, 복수 상위는 말단 무소속, 정원 부족/기본 직급 모호성은 직급 지정 대기로 노출한다. 수동 assignments/config/revision은 자동 변경하지 않는다.
+- 공개 DB460·기존 Edge/API·권한은 유지한다. projection 인원/ID 무결성 검사, 60초 visible-only read·탭 복귀(10초 throttle)·단일 in-flight·편집 중 적용 보류·저장 후 늦은 응답 무시·미변경 DOM/스크롤 보존을 추가했다. Browser는 Server가 반환한 소속만 표시한다.
+- 검증: `node tests/legion-tree-membership-sync.test.js`, 기존 data-render/editor tests, `tests/legion-tree-membership-v473.sql`. SQL은 migration 적용 상태에서 실행한다. rollback은 `supabase/rollbacks/20260908034028_legion_tree_membership_projection_v473_rollback.sql`로 이전 세 함수 및 snapshot을 복원한다. 이는 이전 누락 조건도 복원하므로 장애 시에만 사용한다.
+- 계획: https://drive.google.com/file/d/1walUgQpxe1k8pzCbHk1hBs7iUHwiy_j6/view · LOG: https://drive.google.com/file/d/17LspZfigcEhCD--oc_lyzu4wp21E3Bd-/view
+
 ## 배너 이미지 관리 2차 후속 · 메뉴와 전체 페이지 · 2026-09-08
 
 - 제품 PR #410, main `08ee037056ff6861ce358f7d2b93b2ad4cfe8eec`. 관리자 cache `2026090801`. 메인/사이드 배너 메뉴를 PC·모바일 HTML 셸에 포함하고 이미지 모듈 초기화가 해당 메뉴를 지우지 않도록 변경했다. 지연 로딩과 상단 메뉴 복제 시점 차이로 메뉴가 비던 원인을 해소한다.
