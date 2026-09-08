@@ -146,8 +146,9 @@ async function verifyAdapter() {
     assert.equal(response.status, 200, `sanctuary-management health HTTP ${response.status}`);
     assert.equal(health.ok, true);
     assert.equal(health.service, 'sanctuary-management');
-    assert.equal(String(health.apiVersion), '2.5');
-    assert.equal(Number(health.databaseContract), 480);
+    assert.equal(String(health.apiVersion), '2.4', 'unversioned callers retain the cached-client contract');
+    assert.equal(Number(health.databaseContract), 458);
+    assert.equal(Number(health.availableContract), 480);
   }
 }
 
