@@ -53,7 +53,7 @@ const root=path.resolve(__dirname,'..');
   assert.equal(await page.getByText('최신 PVE',{exact:true}).count(),0);
   const barFits=await page.evaluate(()=>{
     const b=document.querySelector('.roster-subbar').getBoundingClientRect();
-    return [...document.querySelectorAll('.roster-subbar .kinojo-filter-switch,.roster-subbar input.kinojo-input,.roster-subbar button')].every(el=>{
+    return [...document.querySelectorAll('.roster-subbar .kinojo-filter-switch,.roster-subbar input.kinojo-input,.roster-subbar button')].filter(el=>el.getClientRects().length).every(el=>{
       const r=el.getBoundingClientRect();return r.top>=b.top&&r.bottom<=b.bottom+1&&r.left>=b.left&&r.right<=b.right;
     });
   });assert.ok(barFits,'all controls must fit inside subbar');
@@ -159,10 +159,10 @@ const root=path.resolve(__dirname,'..');
     }
   }
   if(width<=700){await page.locator('#rosterBack').click();await page.waitForTimeout(450)}
-  await page.locator('#rosterName').fill('찾을수없는캐릭터zzzz');await page.locator('#rosterSearch button').click();
+  await page.locator('#rosterName').fill('찾을수없는캐릭터zzzz');await page.locator('#rosterSearch button[type="submit"]').click();
   await page.waitForFunction(()=>document.querySelector('#rosterStatus').textContent.includes('조회 결과가 없습니다'));
   assert.equal(await page.locator('.roster-option').count(),0);
-  await page.locator('#rosterName').fill(selectedName);await page.locator('#rosterSearch button').click();
+  await page.locator('#rosterName').fill(selectedName);await page.locator('#rosterSearch button[type="submit"]').click();
   await page.waitForFunction(()=>document.querySelectorAll('.roster-option').length>0);
   if(await page.locator('.roster-option').count()>1)await page.locator('.roster-option[data-character-id="'+selectedId+'"]').click();
   await page.waitForFunction(()=>document.querySelector('#rosterBody').classList.contains('has-selection'));
@@ -173,7 +173,7 @@ const root=path.resolve(__dirname,'..');
   assert.equal(await page.locator('.roster-option[aria-selected="true"]').getAttribute('data-character-id'),selectedId);
   assert.equal(await page.locator('#rosterDetail').evaluate(node=>getComputedStyle(node).opacity),'0');
   if(process.env.ROSTER_LIVE_DATA){
-    await page.locator('#rosterName').fill('여');await page.locator('#rosterSearch button').click();
+    await page.locator('#rosterName').fill('여');await page.locator('#rosterSearch button[type="submit"]').click();
     await page.waitForFunction(()=>document.querySelector('.roster-option[data-character-id="96"]'));
     await page.locator('.roster-option[data-character-id="96"]').click();
     await page.waitForFunction(()=>document.querySelector('#rosterBody').classList.contains('has-selection'));
@@ -191,10 +191,10 @@ const root=path.resolve(__dirname,'..');
     await page.keyboard.press('Escape');
   }
   if(!process.env.ROSTER_LIVE_DATA){
-    await page.locator('#rosterName').fill('실패');await page.locator('#rosterSearch button').click();
+    await page.locator('#rosterName').fill('실패');await page.locator('#rosterSearch button[type="submit"]').click();
     await page.waitForFunction(()=>document.querySelector('#rosterStatus').textContent.includes('불러오지 못했습니다'));
-    await page.locator('#rosterName').fill('지연');await page.locator('#rosterSearch button').click();
-    await page.locator('#rosterName').fill('');await page.locator('#rosterSearch button').click();
+    await page.locator('#rosterName').fill('지연');await page.locator('#rosterSearch button[type="submit"]').click();
+    await page.locator('#rosterName').fill('');await page.locator('#rosterSearch button[type="submit"]').click();
     await page.waitForFunction(()=>document.querySelectorAll('.roster-option').length===50);await page.waitForTimeout(500);
     assert.equal(await page.locator('.roster-option').count(),50);
     await page.emulateMedia({reducedMotion:'reduce'});

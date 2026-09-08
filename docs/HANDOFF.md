@@ -1,5 +1,14 @@
 # KINOJO WEB HANDOFF
 
+## 레기온 명부 본캐·부캐 노드 편집 · DB477 · 2026-09-08
+
+- 기준 main `bbcb6d30`, branch `codex/legion-roster-family-editor`. 모달에서 검색한 가족 전체를 불러와 본캐 슬롯/부캐 자유 배치, 실시간 곡선 연결, 근접 자석 정렬280ms, 모바일 Pointer Events 터치 드래그. 54px 네임카드, 등록 버튼/현재 본캐 문구 없음. 명부 조회 초기화 및 전체(왼쪽)/레기온별(오른쪽) 고정 라벨.
+- DB477은 기존 가족 전체 revision과 정확한 구성원 집합, 비활성·중복·회원 소유권·성역 같은 포스 충돌을 검사한다. canonical master와 관련 기존 회원/성역 root를 한 트랜잭션으로 갱신한다. 명시적 override가 뒤늦은 Worker/Sheet 관계 덮어쓰기를 막는다. 설치만으로 기존 관계를 수정하지 않는다.
+- 기존 Edge `kinojo-legion-tree` v11/API1.10 재사용. WEB_COMMON/서버 canManage 이중 확인, service_role 전용 읽기/저장 facade. WEB은 초안만 관리한다. 저장 requestId 재시도 멱등성, 편집 중 관계 변경은 새로 불러오기 안내. 캐릭터 이미지·소속 유지.
+- 검증: Node Edge 권한/입력/라우팅, DB synthetic BEGIN/ROLLBACK의 병합·본캐 교체·중복·누락·revision 충돌·비활성·Worker override·재시도, PC/mobile 5폭 드래그/자석/연결선/저장 재시도 및 기존 명부 6폭 회귀. 로컬 권한 fixture는 운영 인증 검수 근거가 아니다.
+- SQL `supabase/migrations/20260908090316_legion_roster_family_editor_v477.sql`; rollback 동명 `_rollback.sql`. Web/Edge를 먼저 복원하며 DB rollback도 관계/감사 테이블을 삭제하지 않는다. guard 제거 시 뒤늦은 Worker 관계 갱신이 재허용되는 점 주의. 재검증 조건: 관계·회원·성역 root 계약, 인증, 드래그/반응형 변경.
+- 운영 검수·PR/CI·Drive 마감은 [명부 LOG](https://drive.google.com/file/d/1E8TPDN9l7Ih-EG5FyfRS9tuL5HN9uvs7/view) 최신 회차 확인.
+
 ## 명예의 전당 후보 생성 복구 · DB476 · 2026-09-08
 
 - 기준 main `0ab04ccf`, branch `codex/hof-snapshot-repair-20260908`. DB476 운영 migration `20260908081113`, repo SQL `supabase/migrations/20260908080329_hof_candidate_generation_v476.sql`.

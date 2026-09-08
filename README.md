@@ -1,5 +1,11 @@
 # aion2-updater-config
 
+## Roster family node editor · 2026-09-08
+
+CONFIRMED: the roster subbar opens a compact main/alt editor for server-authorized managers. Search loads complete existing families. Mouse/touch dragging places cards freely, wires follow movement and the main slot attracts nearby drops; replacing the main demotes the former main. Save persists a single canonical family, rejects stale/incomplete/duplicate/unavailable or conflicting member/force relationships, and safely replays uncertain requests. DB477 explicit overrides protect saved links from older worker snapshots. Deployment changes no existing character relationships. Images and legion membership are preserved. Whole-family edits are limited to 100 characters.
+
+Edge `kinojo-legion-tree` v11/API1.10 reuses WEB_COMMON validation and service-only DB facades. Web cache2026090805; fixed 전체/레기온별 switch labels and roster search reset. Tests: `tests/roster-family-edge.test.js` (Node24), `tests/roster-family-editor-e2e.js` (local fixtures, PC/touch), and rollback-only `tests/roster-family-v477.sql`. Web/Edge rollback precedes the supplied DB477 rollback; saved relationships and audit rows are retained. Final deployment and Drive evidence: roster project LOG latest entry.
+
 ## Banner library management · 2026-09-08
 
 CONFIRMED: the upload tab determines MAIN_16_9/SIDE_300_715; dimensions do not infer the category. Library detail offers explicit reclassification and permanent deletion of unused uploaded images. DB475 checks campaign items, random pool assets/composites and representatives. Original Storage bytes and metadata use the existing prepare/delete/finalize API. Static images are protected. Asset broadcasts do not mark uninitialized event workflows as loaded. Recheck when reference tables, deletion lifecycle or workflow initialization change. Tests: `node tests/banner-library-management.test.js`, read-only `tests/banner-library-management-v475.sql`. Edge v29/API2.8/DB475, admin cache2026090804; no operational images automatically changed.
