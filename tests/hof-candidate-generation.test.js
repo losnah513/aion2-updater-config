@@ -1,0 +1,17 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const sql=fs.readFileSync(path.join(__dirname,'../supabase/migrations/20260908080329_hof_candidate_generation_v476.sql'),'utf8');
+const helper=sql.slice(sql.indexOf('CREATE OR REPLACE FUNCTION private.kinojo_ranking_hof_candidate_v476'),sql.indexOf('REVOKE ALL ON FUNCTION private.kinojo_ranking_hof_candidate_v476'));
+assert(!/kinojo_web_get_hof_(summary|display_v\d+)/.test(helper),'generation must never read published HOF');
+assert(!/kinojo_web_get_my_hof_ranking/.test(helper),'generation must not enter authenticated reader');
+assert(helper.includes('p_ranking->\'pveItems\'')&&helper.includes('p_ranking->\'pvpItems\''),'use ranked candidate');
+assert(helper.includes('SECURITY INVOKER')&&helper.includes("SET search_path = ''"));
+assert(sql.includes('s.character_id,'),'stable candidate identity');
+assert(sql.includes('cs.character_name asc, cs.server_id asc'),'deterministic cross-server ties');
+assert(sql.includes('v_hof := private.kinojo_ranking_hof_candidate_v476('));
+assert(!sql.includes('v_hof := public.kinojo_web_get_hof_display_v296('));
+for(const code of ['HOF_CANDIDATE_PROVENANCE_INVALID','HOF_TOP3_CANDIDATE_MISMATCH_','HOF_WEEKLY_CANDIDATE_MISMATCH_']) assert(sql.includes(code));
+assert(sql.includes('FROM PUBLIC, anon, authenticated'));
+assert(!/CREATE.*TABLE/i.test(sql),'reuse snapshot storage');
+console.log('HOF candidate generation dependency and validation contracts: PASS');
