@@ -17,7 +17,7 @@ assert.match(
 
 function collectHtml(directory, output = []) {
   for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
-    if (entry.name === '.git' || entry.name === 'node_modules') continue;
+    if (entry.name === '.git' || entry.name === 'node_modules' || entry.name.startsWith('.codex-')) continue;
     const absolutePath = path.join(directory, entry.name);
     if (entry.isDirectory()) collectHtml(absolutePath, output);
     else if (/\.html$/i.test(entry.name)) output.push(absolutePath);
@@ -28,7 +28,7 @@ function collectHtml(directory, output = []) {
 const featureReferences = [];
 for (const filePath of collectHtml(root)) {
   const html = fs.readFileSync(filePath, 'utf8');
-  const matches = html.matchAll(/kinojo-supabase-features\.js\?cache=([^"']+)/g);
+  const matches = html.matchAll(/kinojo-supabase-features\.js\?cache=([^"'&]+)/g);
   for (const match of matches) featureReferences.push({ filePath, cacheKey: match[1] });
 }
 
