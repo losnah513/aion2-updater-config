@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "character-refresh-stability-stage2",
-  "mainBase": "9e885d4c13dd485b15b52c808008955895a39221",
+  "mainBase": "71a37795b727b4cb41aef59be36677c849d5dad9",
   "normalization": "UTF-8 LF",
   "deploymentAuthorized": false,
   "migrations": [
@@ -132,7 +132,7 @@
     },
     {
       "path": "core/kinojo-supabase-features.js",
-      "sha256": "89edb3018a559ed242240fffc1c3c9b61f10ec875d4f52f070331c260874982a"
+      "sha256": "4ed809aa00c4ff929a211bac816843f37deee41e2564bb4cb5bea87d6fc58847"
     },
     {
       "path": "admin/js/admin-characters.js",
@@ -148,11 +148,11 @@
     },
     {
       "path": "admin/index.html",
-      "sha256": "7126bcf16449706bdf37eefa074de9adc1fad840c617bdf86ddc8ebdbace029c"
+      "sha256": "147d7407d81119f72c29034d19f591da07f0d85745ff415002aaeb7dda038d72"
     },
     {
       "path": "m/admin/index.html",
-      "sha256": "141909d2bf0b4e7062096eeec22786d6b6690e353ba99688bdab10c6c8fb6330"
+      "sha256": "d438d0d65cb67c8528c63809f1ab96e97efea439cdca33a7ced81854d3be3c91"
     },
     {
       "path": "supabase/config.toml",

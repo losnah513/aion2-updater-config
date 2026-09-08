@@ -4,7 +4,7 @@
 
 ## 기준 및 파일
 
-- 기준 main: `9e885d4c` (DB477/478 및 선행 DB479 PVP 칭호 판정 포함). 실제 배포 직전 main·운영 함수·트리거·ACL·SQL_INDEX를 다시 대조한다.
+- 기준 main: `71a37795` (DB477/478, DB479 PVP 판정, DB480 성역 등록 및 list 재시도 보완 포함). 실제 배포 직전 main·운영 함수·트리거·ACL·SQL_INDEX를 다시 대조한다.
 - DB479는 별도 선행 반영이다. 장비 조건은 유지하며 PVP 피해 증폭 또는 피해 내성 칭호를 인정한다. 아래 11개 배포/rollback은 DB479를 되돌리지 않는다.
 - 정확한 제품 파일(공유 Edge 설정 포함)의 UTF-8 LF SHA-256: `CHARACTER_REFRESH_STAGE2_MANIFEST.json`.
 - `supabase/migrations/`가 SQL 원본이다. Source/Deploy 복사본을 각각 실행하지 않는다.
