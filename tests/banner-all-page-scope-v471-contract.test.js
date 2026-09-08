@@ -47,7 +47,7 @@ for(const token of [
 assert.ok(rosterTargets.includes("'LEGION_ROSTER'")&&rosterTargets.includes("'label','레기온 명부'"),'the canonical contract extended by ALL scope must include Legion Roster');
 
 for(const token of [
-  'V = "2.7"','DB = "471"','EVENT = "471"',
+  'V = "2.8"','DB = "475"','EVENT = "471"',
   'kinojo_banner_event_targets_v471','kinojo_banner_event_list_v471',
   'kinojo_banner_event_save_v471','kinojo_banner_event_publish_v471',
   'kinojo_banner_event_all_targets_reconcile_v471'
