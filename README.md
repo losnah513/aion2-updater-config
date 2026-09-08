@@ -1,5 +1,13 @@
 # aion2-updater-config
 
+## Sanctuary external family registration · 2026-09-08
+
+CONFIRMED: DB480 separates external GUEST membership from canonical MAIN/ALT family identity. The composer offers guest registration or an existing/official main lookup, commits new main+alt together, and defaults List export to Y (N persists only Server data). List failures preserve registration and offer a separate retry. Retry revalidates all event Queue rows, including already-synced rows after a lost final response. Existing guest families are not inferred or bulk rewritten.
+
+The selected authenticated bootstrap must enrich composerCharacters with latest PVE power/item level. Missing enrichment, not a Sanctuary4 threshold error, caused own-character cards to show dashes and reject 청소기 despite stored itemLevel6007/power878793. The server correction is applied. Revalidate when bootstrap or metric contracts change.
+
+Sanctuary Edge v30 negotiates API2.5/DB480 for clientContract480 and retains API2.4/458 for cached callers. PR422/main71a37795, Pages and all six main checks passed. Node117, six responsive Y/N fixtures, PGlite lost-response/partial-success/ACL checks passed. Existing CODEX_ADMIN normal session verified official lookup, main lookup and Y/N selection without registration or team writes. Shared lookup-list-sync writer integration is owned by character-refresh PR421; full Stage13 closure awaits its deployment verification. See the Sanctuary project LOG for final state.
+
 ## Roster family node editor · 2026-09-08
 
 Sanctuary hover follow-up: actual-character cards use Server `isMain/mainCharacterId` to enable the existing main/alt tooltip even when the independent membership classification is GUEST. The Server already returns the correct main name after roster saving. PC hover and mobile tap show 강태공2의 부캐 for 강태공1 while preserving the guest card style. Sanctuary JS cache parameter familyHover2026090801; no DB/Edge change.

@@ -6,7 +6,8 @@
 - DB480 두 migration 적용, sanctuary-management v30: clientContract480 요청은 API2.5/DB480, 구 탭은 API2.4/458 호환. 내 캐릭터 부트스트랩 수치 누락을 복구했다. 청소기 master111 PVE itemLevel6007/power878793이며 비탄 보통6000을 충족한다.
 - 공유 lookup-list-sync는 캐릭터 최신화 PR421이 통합·배포 소유한다. 성역 syncSanctuary/service auth/DB480 finalize 계약을 그 작업의 MASTER_ID_V1 writer와 통합하며 이 PR은 공유 Edge 파일을 포함하지 않는다. 통합 writer 운영 검증 전 Stage13 전체 완료로 판정하지 않는다.
 - 로컬 `node tests/sanctuary-management-stage13-external-family-contract.test.js`, `node tests/sanctuary-management-edge-contract.test.js`, 루트 *.test.js 117개 PASS. `PLAYWRIGHT_MODULE`(설치된 Playwright), 선택 `CHROME_PATH`로 `node tests/sanctuary-stage13-registration-e2e.js`: 1440/390/320 × ListY/N 6개 PASS. 방문 helper를 navigation 전에 설치한다. 모의 등록 검증은 운영 등록 검수와 구분한다.
-- 운영 등록/시트 시험 행은 만들지 않았다. CODEX_ADMIN 정상 로그인 읽기 검수 및 Git/Pages/Drive 마감은 검증 대기. 최종 진행상태는 [성역 LOG](https://drive.google.com/file/d/19lh9hkVKNsu9a54bd-k3rlvhIsCK_Khv/view) 최신 회차를 따른다.
+- 제품 PR422/main `71a37795b727b4cb41aef59be36677c849d5dad9`. Pages34225410553 및 Verify KINOJO34225411124를 포함한 main6개 success. 전용 CODEX_ADMIN 기존 정상 세션의 공식조회 actor/automation을 DB에서 확인하고 게스트/기존본캐 검색/Y·N 선택을 운영 화면에서 검수했다. 등록·팀·시트 시험행0이며 실제 등록·시트쓰기 검수와 구분한다.
+- `20260908121402_sanctuary_list_retry_readback_v480.sql` 추가 적용: event완료 전에는 이미 synced된 Queue도 readback 대상으로 재시도. `PGLITE_MODULE`로 `node tests/sanctuary-list-retry-v480.test.cjs`에서 기존 오류 재현과 부분성공/응답유실/다른event/ACL PASS. Source/Deploy480 합본과 SQL_INDEX 동기화. 공유 List 통합 배포 검증이 첫 남은 작업이며 최종 진행상태는 [성역 LOG](https://drive.google.com/file/d/19lh9hkVKNsu9a54bd-k3rlvhIsCK_Khv/view) 최신 회차를 따른다.
 - 복구: Web/Edge 직전 버전 후 `supabase/rollbacks/20260908105603_sanctuary_external_guest_family_v480_rollback.sql`로 신규 등록·재시도 진입을 비활성화한다. 이미 등록된 캐릭터·관계·List·감사행은 삭제/되돌리지 않는다.
 
 ## 캐릭터 PVP 칭호 판정 · DB479
