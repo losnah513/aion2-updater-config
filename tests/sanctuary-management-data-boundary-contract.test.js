@@ -14,7 +14,7 @@ for (const page of pages) {
     'sanctuary-management-page-bar',
     'id="sanctuaryManagementScope"',
     'id="sanctuaryManagementTeamList"',
-    'kinojo-supabase-features.js?cache=2026090101',
+    'kinojo-supabase-features.js?cache=2026090803',
     'sanctuary-management.js?cache=2026090101',
     'sanctuary-management-draft.js?cache=2026083106',
     'sanctuary-management-support.js?cache=2026082923',
