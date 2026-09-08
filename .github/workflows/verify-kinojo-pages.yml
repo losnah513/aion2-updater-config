@@ -110,6 +110,7 @@ jobs:
 
           js_files=(
             "legion-roster/js/legion-roster.js"
+            "legion-roster/js/roster-family-editor.js"
             "ui/kinojo-common-navigation.js"
             "core/kinojo-route-guard.js"
             "ui/kinojo-my-info-image-contract.js"
@@ -396,6 +397,11 @@ jobs:
           console.log('Character image fallback candidate: PASS');
           NODE
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Verify roster family Edge
+        run: node tests/roster-family-edge.test.js
       - name: Verify roster browser interactions
         shell: bash
         run: |
@@ -403,6 +409,7 @@ jobs:
           "$RUNNER_TEMP/roster-browser/node_modules/.bin/playwright" install --with-deps chromium
           PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/legion-roster-interaction-e2e.js
           PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/character-titles-e2e.js
+          PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/roster-family-editor-e2e.js
 
       - name: Verify bridge startup with frozen cores
         shell: bash
@@ -501,7 +508,9 @@ jobs:
             "legion-roster/index.html"
             "m/legion-roster/index.html"
             "legion-roster/css/legion-roster.css"
+            "legion-roster/css/roster-family-editor.css"
             "legion-roster/js/legion-roster.js"
+            "legion-roster/js/roster-family-editor.js"
             "ui/kinojo-common-navigation.js"
             "core/kinojo-route-guard.js"
             "index.html"

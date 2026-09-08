@@ -307,9 +307,9 @@ assert(featureScript.includes("action:'organization-save'"));
 assert(featureScript.includes("action:'organization-reset'"));
 assert(featureScript.includes('saveLegionTreeOrganization'));
 for (const token of [
-  "const API_VERSION='1.9'",
+  "const API_VERSION='1.10'",
   "const ORGANIZATION_DATABASE_CONTRACT='460'",
-  "actions:['character-search','character-add','organization-save','organization-reset']",
+  "actions:['character-search','character-add','organization-save','organization-reset','family-search','family-load','family-save']",
   "rpc('kinojo_legion_tree_organization_save_v460'",
   'organizationReadbackConnected:true'
 ]) assert(edgeScript.includes(token), 'Edge organization contract missing: '+token);

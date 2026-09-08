@@ -3,6 +3,11 @@
 ## Character refresh stability — staged, not deployed (2026-09-08)
 
 Stage 2 implementation and offline regression checks are complete. Eligibility is DB-owned and separate from visibility; direct-key recovery preserves exact identity and atomic transfer cleanup. DB-only list restore requires current official identity/legion evidence. Stable Master-ID sheet writes, durable partial retry and completion guards are staged in the existing services. See docs/CHARACTER_REFRESH_STABILITY_STAGE2_WIP.md and CHARACTER_REFRESH_STABILITY_STAGE2_RELEASE.md. Production canaries, real authentication and total-runtime measurements remain Stage 3 gates; local tests do not demonstrate production performance or deployment.
+## Roster family node editor · 2026-09-08
+
+CONFIRMED: the roster subbar opens a compact main/alt editor for server-authorized managers. Search loads complete existing families. Mouse/touch dragging places cards freely, wires follow movement and the main slot attracts nearby drops; replacing the main demotes the former main. Save persists a single canonical family, rejects stale/incomplete/duplicate/unavailable or conflicting member/force relationships, and safely replays uncertain requests. DB477 explicit overrides protect saved links from older worker snapshots. Deployment changes no existing character relationships. Images and legion membership are preserved. Whole-family edits are limited to 100 characters.
+
+Edge `kinojo-legion-tree` v11/API1.10 reuses WEB_COMMON validation and service-only DB facades. Web cache2026090805; fixed 전체/레기온별 switch labels and roster search reset. Tests: `tests/roster-family-edge.test.js` (Node24), `tests/roster-family-editor-e2e.js` (local fixtures, PC/touch), and rollback-only `tests/roster-family-v477.sql`. Web/Edge rollback precedes the supplied DB477 rollback; saved relationships and audit rows are retained. Final deployment and Drive evidence: roster project LOG latest entry.
 
 ## Banner library management · 2026-09-08
 

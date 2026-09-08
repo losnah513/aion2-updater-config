@@ -1896,6 +1896,11 @@
     return invokeEdgeFunction('character-profile-snapshot',payload);
   }
 
+  async function rosterFamily(action,extra={}){
+    if(!['family-search','family-load','family-save'].includes(action))throw new Error('지원하지 않는 연결 요청입니다.');
+    return invokeEdgeFunction('kinojo-legion-tree',{...extra,action,sessionToken:currentServerSessionCredential()});
+  }
+
   async function searchLegionTreeCharacters(extra={}){
     const sessionToken=currentServerSessionCredential();
     return invokeEdgeFunction('kinojo-legion-tree',{
@@ -2165,6 +2170,7 @@
     adminSanctuaryProfileDiagnostic,
     adminCharacter,
     adminLookup,
+    rosterFamily,
     searchLegionTreeCharacters,
     addLegionTreeCharacter,
     saveLegionTreeOrganization,

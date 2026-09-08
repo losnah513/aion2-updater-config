@@ -830,7 +830,7 @@ window.KinojoSupabase = {
   assert(workflow.includes('node --check core/kinojo-supabase-features.js'));
   assert((workflow.match(/"core\/kinojo-supabase-features\.js"/g) || []).length >= 2);
   for (const token of [
-    "const API_VERSION='1.9'",
+    "const API_VERSION='1.10'",
     "const DATABASE_CONTRACT='458'",
     "CHARACTER_INPUT_CONTRACT='character-name-server-tag-v3'",
     "const CHARACTER_SEARCH_CONTRACT='legion-tree-character-search-v1'",
