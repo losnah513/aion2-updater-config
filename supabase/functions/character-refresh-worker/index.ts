@@ -414,6 +414,11 @@ async function resolveOfficialTarget(sessionId,sessionToken,target,context){
   }
   return{candidate,identityRecovery,identityTransition,characterName,serverId,expectedKey,prefetchedInfoPayload:null,lookupMethod};
 }
+async function timedWorkerStage(stage,targetId,operation){
+  const started=Date.now();let ok=false;
+  try{const value=await operation();ok=value?.ok!==false;return value;}
+  finally{console.info(JSON.stringify({metric:"character_refresh_stage",stage,targetId,elapsedMs:Date.now()-started,ok}));}
+}
 async function processTarget(sessionId,sessionToken,target,providedContext=null){
   const targetId=positiveInt(target.targetId);const lookupOrder=positiveInt(target.lookupOrder)||1;
   const context=providedContext||await rpc("kinojo_server_queue_target_context_v270",{p_session_id:sessionId,p_session_token:sessionToken,p_target_id:targetId});
@@ -455,10 +460,10 @@ async function processTarget(sessionId,sessionToken,target,providedContext=null)
     await progress(sessionId,sessionToken,"OFFICIAL_CACHE_REUSE",characterName,`최근 공식 원본 재사용 · ${Number(reuse.ageSeconds||0)}초 전`,null,null,{targetId,lookupOrder,sourceSnapshotId:reuse.snapshotId});
     const submitted=await rpc("kinojo_snapshot_submit",{p_session_id:sessionId,p_session_token:sessionToken,p_snapshot:snapshot,p_lookup_order:lookupOrder});
     if(submitted.ok!==true)throw new WorkerError(clean(submitted.message||submitted.code||"재사용 Snapshot 저장 실패",1000),clean(submitted.code||"SNAPSHOT_REUSE_FAILED",120),submitted.retryable!==false);
-    const finalized=await finalizeTarget(sessionId,sessionToken,targetId,submitted);
+    const finalized=await timedWorkerStage("target_finalize",targetId,()=>finalizeTarget(sessionId,sessionToken,targetId,submitted));
     return{ok:true,targetId,lookupOrder,cached:true,cacheAgeSeconds:Number(reuse.ageSeconds||0),sourceSnapshotId:reuse.snapshotId,identityRecovered:false,character:{characterName,serverId,serverName:snapshot.serverName,className:snapshot.className,profileImageUrl:clean(snapshot.profileImageUrl,1600)},previous:context.previous||null,official:{reused:true},submitted,finalized};
   }
-  const resolved=await resolveOfficialTarget(sessionId,sessionToken,{...target,targetId},context);
+  const resolved=await timedWorkerStage("identity_resolve",targetId,()=>resolveOfficialTarget(sessionId,sessionToken,{...target,targetId},context));
   const candidate=resolved.candidate;characterName=resolved.characterName;serverId=resolved.serverId;
   const characterId=decodeId(candidate.characterId);if(!characterId||!serverId)throw new WorkerError("공식 캐릭터 식별값 또는 서버 ID가 없습니다.","OFFICIAL_IDENTITY_MISSING",false);
   await progress(sessionId,sessionToken,"OFFICIAL_INFO",characterName,"PLAYNC 공식 프로필·전투력·아이템레벨 조회 중",null,null,{targetId,serverId,lookupOrder});
@@ -469,7 +474,7 @@ async function processTarget(sessionId,sessionToken,target,providedContext=null)
   let adapted=parserSource(infoPayload,equipmentPayload);
   let official=officialSnapshot({sessionId,targetId,lookupOrder,context,target,candidate,resolved,characterId,serverId,adapted,infoPayload,equipmentPayload});
   await progress(sessionId,sessionToken,"SNAPSHOT_PARSE",official.officialName,"기존 Server Parser로 장비 유형·수치 판정 중",null,null,{targetId,lookupOrder,equipmentCount:adapted.equipmentCount});
-  let checked=await precheckOfficialSnapshot(sessionId,sessionToken,targetId,official.snapshot);
+  let checked=await timedWorkerStage("snapshot_precheck",targetId,()=>precheckOfficialSnapshot(sessionId,sessionToken,targetId,official.snapshot));
   if(checked.requiresSecondRead===true){
     await progress(sessionId,sessionToken,"OFFICIAL_STATE_VERIFY",official.officialName,"장비 유형 변경·급상승 감지 · 공식 응답 재검증 중",null,null,{targetId,lookupOrder,reason:checked.reason||checked.code||null});
     await sleep(1250);
@@ -477,11 +482,11 @@ async function processTarget(sessionId,sessionToken,target,providedContext=null)
     equipmentPayload=await officialJson(equipmentUrl.toString(),sessionId,sessionToken,"SERVER_WORKER_EQUIPMENT_VERIFY");
     adapted=parserSource(infoPayload,equipmentPayload);
     official=officialSnapshot({sessionId,targetId,lookupOrder,context,target,candidate,resolved,characterId,serverId,adapted,infoPayload,equipmentPayload});
-    checked=await precheckOfficialSnapshot(sessionId,sessionToken,targetId,official.snapshot,clean(checked.fingerprint,500));
+    checked=await timedWorkerStage("snapshot_precheck_second",targetId,()=>precheckOfficialSnapshot(sessionId,sessionToken,targetId,official.snapshot,clean(checked.fingerprint,500)));
   }
-  const submitted=await rpc("kinojo_snapshot_submit",{p_session_id:sessionId,p_session_token:sessionToken,p_snapshot:official.snapshot,p_lookup_order:lookupOrder});
+  const submitted=await timedWorkerStage("snapshot_submit",targetId,()=>rpc("kinojo_snapshot_submit",{p_session_id:sessionId,p_session_token:sessionToken,p_snapshot:official.snapshot,p_lookup_order:lookupOrder}));
   if(submitted.ok!==true)throw new WorkerError(clean(submitted.message||submitted.code||"Snapshot 저장 실패",1000),clean(submitted.code||"SNAPSHOT_SUBMIT_FAILED",120),submitted.retryable!==false);
-  const finalized=await finalizeTarget(sessionId,sessionToken,targetId,submitted);
+  const finalized=await timedWorkerStage("target_finalize",targetId,()=>finalizeTarget(sessionId,sessionToken,targetId,submitted));
   return{ok:true,targetId,lookupOrder,identityRecovered:resolved.identityRecovery?.recovered===true,identityTransition:resolved.identityTransition||null,serverTransferred:resolved.identityTransition?.serverTransferred===true,legionCleared:resolved.identityTransition?.legionCleared===true,character:{characterName:official.officialName,serverId,serverName:official.officialServerName,className:clean(adapted.profile.className,80),profileImageUrl:official.profileImageUrl},previous:context.previous||null,official:{itemLevel:adapted.itemLevel,combatPower:adapted.combatPower,precheck:checked},submitted,finalized};
 }
 async function recordTargetFailure(sessionId,sessionToken,target,error){

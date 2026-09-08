@@ -10,8 +10,8 @@
  * - Official character-name search discovers candidates
  * - Transfer candidates are restricted to the character's existing race
  * - PLAYNC 429/timeouts are retry states, never "candidate not found"
- * - Stored charKey is verification-only; it is never sent as a search keyword
- * - Exact charKey matches are automatic; mismatches require ADMIN review
+ * - Stored decimal charKey may be a direct info characterId; never a search keyword
+ * - Different-key/class namesakes are never identity-review candidates
  * - AppsScript_MASTER list write + readback after ADMIN apply
  */
 const CORS = {
@@ -22,7 +22,7 @@ const CORS = {
     "cache-control": "no-store",
     "x-content-type-options": "nosniff",
 };
-const API_VERSION = "295.2";
+const API_VERSION = "295.3";
 const CONTRACT = "295";
 class ProviderError extends Error {
     status;
@@ -107,6 +107,7 @@ function list(value, depth = 0) {
     return [];
 }
 function charKey(value) {
+    if (typeof value === "number" && !Number.isSafeInteger(value)) return "";
     const source = text(value, 5000);
     if (!source)
         return "";
@@ -312,110 +313,131 @@ async function candidateFromSearch(item, expectedKey, allowedServers) {
     }
     return null;
 }
-async function probe(prepared) {
-    const expectedKey = text(prepared.charKey, 240);
-    const current = row(prepared.current) || prepared;
-    const oldName = text(current.characterName || prepared.previousCharacterName, 120);
-    const servers = Array.isArray(prepared.servers) ? prepared.servers.map(row).filter(Boolean) : [];
-    const raceId = int(prepared.raceId || current.raceId);
-    const allowedServers = new Set(servers.map((server) => int(server.serverId)).filter(Boolean));
-    const candidateNames = [
-        text(prepared.candidateName, 120),
-        ...(Array.isArray(prepared.candidateNames) ? prepared.candidateNames.map((value) => text(value, 120)) : []),
-    ].filter((name) => !!name && !charKey(name));
-    const evidence = {
-        policy: "STORED_DETAIL_HANDLED_BY_WORKER_THEN_OFFICIAL_NAME_SEARCH_EXACT_KEY_SAME_RACE_ONLY",
-        raceId,
-        sameRaceServerCount: allowedServers.size,
-        oldName,
-        charKeySearchEnabled: false,
-        nameSearchCount: 0,
-        detailServerProbeCount: 0,
-        blockedCrossRaceCandidates: 0,
-        failures: [],
-        reviewCandidates: [],
-    };
-    if (!expectedKey)
-        return { candidate: null, evidence: { ...evidence, code: "PERSISTENT_CHAR_KEY_NOT_FOUND" } };
-    if (!raceId || !allowedServers.size) {
-        return { candidate: null, evidence: { ...evidence, code: "SERVER_RACE_NOT_FOUND", retryable: false } };
-    }
-    const searchKeyword = async (keyword, stage) => {
-        const url = new URL("https://aion2.plaync.com/ko-kr/api/search/aion2/search/v2/character");
-        url.searchParams.set("keyword", keyword);
-        url.searchParams.set("page", "1");
-        url.searchParams.set("size", "50");
-        const payload = await fetchJson(url.toString());
-        const candidates = list(payload).map(row).filter(Boolean);
-        evidence.nameSearchCount = Number(evidence.nameSearchCount || 0) + candidates.length;
-        for (const item of candidates) {
-            const serverId = int(primitive(item, ["serverId", "server_id"]));
-            if (serverId && !allowedServers.has(serverId)) {
-                evidence.blockedCrossRaceCandidates = Number(evidence.blockedCrossRaceCandidates || 0) + 1;
-                continue;
-            }
-            const resolved = await candidateFromSearch(item, expectedKey, allowedServers);
-            if (!resolved)
-                continue;
-            if (resolved.keyMatched === true) {
-                resolved.method = stage === "CANDIDATE_NAME_SEARCH"
-                    ? "OFFICIAL_HINT_NAME_SEARCH_AND_INFO_EXACT_KEY"
-                    : "OFFICIAL_OLD_NAME_SEARCH_AND_INFO_EXACT_KEY";
-                return resolved;
-            }
-            if (normalizeName(primitive(item, ["characterName", "character_name", "name"])) === normalizeName(keyword)
-                && evidence.reviewCandidates.length < 10) {
-                evidence.reviewCandidates.push({
-                    ...safeCandidate(resolved),
-                    charKey: text(resolved.charKey, 240),
-                    keyMatched: false,
-                    reason: "CHAR_KEY_MISMATCH_ADMIN_REVIEW_REQUIRED",
-                });
-            }
-        }
+// Never convert the key to Number: 18-digit keys exceed JavaScript's safe integer range.
+function directKeyCandidate(payload, expectedKey, server, raceId, expectedClass) {
+    const profile = row(row(payload)?.profile);
+    if (!profile) throw new ProviderError("PLAYNC profile 응답 구조를 확인할 수 없습니다.", 0, 60_000);
+    const name = text(profile.characterName, 120);
+    const platformId = decodePlatformId(profile.characterId);
+    const responseServerId = int(profile.serverId);
+    const key = charKeyFromPayload(profile);
+    if (!name && !platformId && !responseServerId && !key)
         return null;
-    };
-    const keywords = [
-        ...candidateNames.filter((name, index, values) => values.indexOf(name) === index && normalizeName(name) !== normalizeName(oldName))
-            .map((value) => ({ value, stage: "CANDIDATE_NAME_SEARCH" })),
-        ...(oldName && !charKey(oldName) ? [{ value: oldName, stage: "OLD_NAME_SEARCH" }] : []),
-    ];
-    for (const keyword of keywords) {
-        try {
-            const resolved = await searchKeyword(keyword.value, keyword.stage);
-            if (resolved)
-                return { candidate: resolved, evidence: { ...evidence, matchedBy: resolved.method } };
-        }
-        catch (error) {
-            evidence.failures.push(providerFailure(keyword.stage, error));
-            if (hasRetryableFailure(evidence.failures)) {
-                const retryAfter = Math.max(0, ...evidence.failures.map((failure) => Number(failure.retryAfterSeconds || 0)));
-                return {
-                    candidate: null,
-                    evidence: { ...evidence, code: "PROVIDER_RETRY_REQUIRED", retryable: true, retryAfterSeconds: retryAfter },
-                };
-            }
-        }
-    }
-    if (hasRetryableFailure(evidence.failures)) {
-        const retryAfter = Math.max(0, ...evidence.failures.map((failure) => Number(failure.retryAfterSeconds || 0)));
-        return {
-            candidate: null,
-            evidence: { ...evidence, code: "PROVIDER_RETRY_REQUIRED", retryable: true, retryAfterSeconds: retryAfter },
-        };
-    }
+    if (!name || !platformId || !responseServerId || !key || !int(profile.raceId))
+        throw new ProviderError("PLAYNC 식별 정보 일부가 누락되었습니다.", 0, 60_000);
+    if (!expectedClass || normalizeName(profile.className) !== normalizeName(expectedClass))
+        throw new Error("DIRECT_KEY_CLASS_MISMATCH");
+    if (key !== expectedKey || responseServerId !== int(server.serverId) || int(profile.raceId) !== raceId)
+        throw new Error("DIRECT_KEY_IDENTITY_MISMATCH");
     return {
-        candidate: null,
-        evidence: {
-            ...evidence,
-            code: evidence.reviewCandidates.length
-                ? "IDENTITY_REVIEW_REQUIRED"
-                : "IDENTITY_HINT_REQUIRED",
-            retryable: false,
-            confirmedAbsent: false,
-            identityHintRequired: true,
-        },
+        serverId: responseServerId,
+        serverName: text(server.serverName || profile.serverName, 120),
+        characterName: name, className: text(profile.className, 80),
+        charKey: key, characterId: platformId,
+        detailUrl: `https://aion2.plaync.com/ko-kr/characters/${responseServerId}/${pathSegment(platformId)}`,
+        profileImageUrl: text(profile.profileImage || profile.profileImageUrl, 1200),
+        keyMatched: true, method: "OFFICIAL_CHAR_KEY_SERVER_SCAN_EXACT_KEY",
     };
+}
+async function directKeyInfo(url, deadline) {
+    const gate = await rpc("kinojo_identity_rate_gate_v1", {});
+    const waitMs = Math.max(0, Number(gate.waitMs || 0));
+    if (gate.ok !== true || gate.allowed !== true || Date.now() + waitMs + 8000 > deadline)
+        throw new ProviderError("PLAYNC 고유키 조회를 재시도 대기합니다.", 429, Math.max(waitMs, 60_000));
+    if (waitMs) await new Promise(resolve => setTimeout(resolve, waitMs));
+    try {
+        return await fetchJson(url);
+    } catch (error) {
+        if (error instanceof ProviderError && error.status === 429) {
+            await rpc("kinojo_identity_rate_gate_v1", {
+                p_http_status: 429,
+                p_retry_after_seconds: Math.max(30, Math.ceil(error.retryAfterMs / 1000)),
+            });
+        }
+        throw error;
+    }
+}
+async function probe(prepared) {
+    const expectedKey = typeof prepared.charKey === "string" ? text(prepared.charKey, 240) : "";
+    const current = row(prepared.current) || prepared;
+    const expectedClass = text(current.className, 80);
+    const raceId = int(prepared.raceId || current.raceId);
+    const servers = Array.isArray(prepared.servers) ? prepared.servers.map(row).filter(Boolean) : [];
+    const uniqueServers = [...new Map(servers.filter(s => int(s.serverId) && int(s.raceId) === raceId)
+        .map(s => [int(s.serverId), s])).values()];
+    const evidence = {
+        policy: "OFFICIAL_CHAR_KEY_SERVER_SCAN_EXACT_KEY_SAME_RACE_ONLY",
+        raceId, sameRaceServerCount: uniqueServers.length,
+        oldName: text(current.characterName || prepared.previousCharacterName, 120),
+        charKeySearchEnabled: false, charKeyDirectLookupEnabled: true,
+        nameSearchCount: 0, detailServerProbeCount: 0,
+        failures: [], reviewCandidates: [], scanComplete: false,
+    };
+    if (!/^\d{10,}$/.test(expectedKey))
+        return { candidate: null, evidence: { ...evidence, code: "PERSISTENT_CHAR_KEY_NOT_FOUND", retryable: false } };
+    if (!raceId || !uniqueServers.length)
+        return { candidate: null, evidence: { ...evidence, code: "SERVER_RACE_NOT_FOUND", retryable: false } };
+    // One complete scan per call; never apply a partial match after a later timeout or 429.
+    const deadline = Date.now() + 55_000;
+    const checkpoint = await rpc("kinojo_identity_scan_checkpoint_v1", {p_character_id: prepared.characterId, p_char_key: expectedKey, p_servers: uniqueServers});
+    if (checkpoint.ok !== true) return {candidate: null, evidence: {...evidence, code: "SCAN_CHECKPOINT_UNAVAILABLE", retryable: true}};
+    const completed = new Set(checkpoint.completed || []);
+    const matches = Array.isArray(checkpoint.matches) ? checkpoint.matches : [];
+    const saveCheckpoint = async () => {
+        const saved = await rpc("kinojo_identity_scan_checkpoint_v1", {p_character_id: prepared.characterId, p_char_key: expectedKey, p_servers: uniqueServers, p_completed: [...completed], p_matches: matches});
+        if (saved.ok !== true) throw new ProviderError("탐색 진행 상태 저장 실패", 0, 60000);
+    };
+    for (const server of uniqueServers) {
+        const serverId = int(server.serverId);
+        if (completed.has(serverId)) continue;
+        try {
+            const url = new URL("https://aion2.plaync.com/api/character/info");
+            url.searchParams.set("lang", "ko");
+            url.searchParams.set("serverId", String(serverId));
+            url.searchParams.set("characterId", expectedKey);
+            const payload = await directKeyInfo(url.toString(), deadline);
+            evidence.detailServerProbeCount++;
+            const candidate = directKeyCandidate(payload, expectedKey, server, raceId, expectedClass);
+            if (candidate) matches.push(candidate);
+            completed.add(serverId);
+            await saveCheckpoint();
+        } catch (error) {
+            if (error instanceof ProviderError && error.status === 404) {
+                evidence.detailServerProbeCount++;
+                completed.add(serverId);
+                await saveCheckpoint();
+                continue;
+            }
+            if (/^DIRECT_KEY_(IDENTITY|CLASS)_MISMATCH$/.test(error.message))
+                return { candidate: null, evidence: { ...evidence, code: error.message, retryable: false } };
+            evidence.failures.push(providerFailure("DIRECT_CHAR_KEY_INFO", error, serverId));
+            return { candidate: null, evidence: { ...evidence, code: "PROVIDER_RETRY_REQUIRED",
+                retryable: true, retryAfterSeconds: Math.max(60, ...evidence.failures.map(f => Number(f.retryAfterSeconds || 0))) } };
+        }
+    }
+    evidence.scanComplete = true;
+    evidence.exactMatchCount = matches.length;
+    if (matches.length !== 1)
+        return { candidate: null, evidence: { ...evidence,
+            code: matches.length ? "DIRECT_KEY_MULTIPLE_MATCHES" : "NOT_FOUND_BY_CHAR_KEY",
+            retryable: false, confirmedAbsent: false } };
+    // Revalidate the discovered encrypted ID just before the transaction.
+    const candidate = matches[0];
+    try {
+        const url = new URL("https://aion2.plaync.com/api/character/info");
+        url.searchParams.set("lang", "ko");
+        url.searchParams.set("serverId", String(candidate.serverId));
+        url.searchParams.set("characterId", candidate.characterId);
+        const payload = await directKeyInfo(url.toString(), deadline);
+        const verified = directKeyCandidate(payload, expectedKey, candidate, raceId, expectedClass);
+        if (!verified || verified.characterId !== candidate.characterId || verified.characterName !== candidate.characterName)
+            throw new ProviderError("고유키 발견 후 상세 정보가 변경되어 재검증이 필요합니다.", 0, 60_000);
+        return { candidate: verified, evidence: { ...evidence, matchedBy: verified.method, detailRevalidated: true } };
+    } catch (error) {
+        return { candidate: null, evidence: { ...evidence, code: /^DIRECT_KEY_(IDENTITY|CLASS)_MISMATCH$/.test(error.message)
+            ? error.message : "PROVIDER_RETRY_REQUIRED", retryable: !/^DIRECT_KEY_(IDENTITY|CLASS)_MISMATCH$/.test(error.message),
+            retryAfterSeconds: 60, failures: [providerFailure("DIRECT_KEY_REVALIDATE", error, candidate.serverId)] } };
+    }
 }
 async function appsScript(payload, timeoutMs = 180000) {
     const url = text(Deno.env.get("KINOJO_SHEET_SYNC_WEBAPP_URL"), 1200);
@@ -448,6 +470,7 @@ async function syncList(listUpdate) {
         id: int(listUpdate.id) || int(listUpdate.listRow), listRow: int(listUpdate.listRow),
         originalListName: text(listUpdate.originalListName, 160), listDisplayName: text(listUpdate.listDisplayName, 160),
         characterName: text(listUpdate.characterName, 120), serverId: int(listUpdate.serverId), serverName: text(listUpdate.serverName, 120), className: text(listUpdate.className, 80),
+        mainCharacterName: text(listUpdate.mainCharacterName, 160),
         pveItemLevel: listUpdate.pveItemLevel ?? null, pveCombatPower: listUpdate.pveCombatPower ?? null,
         pvpItemLevel: listUpdate.pvpItemLevel ?? null, pvpCombatPower: listUpdate.pvpCombatPower ?? null,
         latestPowerTotal: listUpdate.latestPowerTotal ?? null, latestItemLevelTotal: listUpdate.latestItemLevelTotal ?? null,
@@ -478,7 +501,7 @@ Deno.serve(async (request) => {
         const body = await request.json().catch(() => ({}));
         const action = text(body.action, 80);
         if (action === "health")
-            return response({ ok: true, service: "character-identity-recovery", apiVersion: API_VERSION, databaseContract: CONTRACT, policy: "STORED_DETAIL_WORKER_FIRST_NAME_SEARCH_SAME_RACE_CHAR_KEY_VERIFY" });
+            return response({ ok: true, service: "character-identity-recovery", apiVersion: API_VERSION, databaseContract: CONTRACT, policy: "STORED_DETAIL_WORKER_FIRST_DIRECT_KEY_SAME_RACE_CLASS_VERIFY" });
         if (action === "extensionProbe") {
             const sessionId = text(body.sessionId || body.session_id, 200);
             const sessionToken = text(body.sessionToken || body.session_token, 200);
@@ -558,7 +581,7 @@ Deno.serve(async (request) => {
                         ? "공식 조회에서 기존 고유값과 일치하는 후보를 확인했습니다."
                         : resolved.evidence.code === "PROVIDER_RETRY_REQUIRED"
                             ? "PLAYNC 제한으로 검증을 보류하고 재시도 대기 상태로 기록했습니다."
-                            : "공식 이름 조회에서 동일 고유값 후보를 찾지 못해 현재 이름 힌트가 필요합니다.",
+                            : "고유키 탐색 상태를 기록했습니다. 불완전 탐색은 삭제로 판정하지 않습니다.",
                     p_candidate: resolved.candidate || {}, p_evidence: resolved.evidence,
                 });
                 return response({
@@ -570,7 +593,7 @@ Deno.serve(async (request) => {
                         ? "동일 캐릭터 후보를 확인했습니다. 변경 전 내용을 검토하세요."
                         : reviewCandidates.length
                             ? "고유값이 다른 후보를 관리자 검토 대기열에 저장했습니다."
-                            : "동일 고유값 후보를 찾지 못해 기존 값을 유지하며 현재 이름 힌트를 기다립니다.",
+                            : "고유키 탐색에서 신원을 확정하지 못해 기존 정보를 유지합니다.",
                 });
             }
             if (!resolved.candidate)
