@@ -6,6 +6,8 @@
 
 ### 공개 스냅샷 분리 후속 계약
 
+- `20260908145200_character_db_only_restore_source.sql`은 Worker가 추가하는 `server_queue:` 출처 접두사를 정확히 인정한다. 최신 원본·동일 key·현재 깡 레기온·조회 자격 검증은 유지하며, DB에 남은 과거 행 번호로 다른 캐릭터 행을 덮어쓰지 않는다. `node tests/character-refresh-policy.test.cjs`가 접두사·외부 레기온·수동 제외·stale 증거·append/readback을 검증한다.
+
 - 후속 상태 표시 migration `20260908141651_character_refresh_completion_status.sql`은 기존 인증 status RPC에 read-only 공개 상태만 추가한다. 기존 권한/캐시 요약/생성·공개 경계는 유지한다. WEB 완료 행·최근 기록·별도 생성 상태를 함께 검증한다. rollback은 기존 함수 정의만 복원하며 데이터/예약 작업을 변경하지 않는다.
 - `20260908143736_character_payload_identity_index.sql`은 공식 사전 검증의 기존 세 번 최신 원본 조회를 위한 서버·정규화 이름·최신순 인덱스다. 판정/Parser/이력/권한은 변경하지 않는다. 적용 시 기존 제어로 조회를 일시정지하고 짧은 lock timeout을 사용한다. rollback은 해당 인덱스만 제거한다.
 
