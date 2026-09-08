@@ -8,6 +8,13 @@ const client=read('sanctuary-management/js/sanctuary-management.js');
 const draft=read('sanctuary-management/js/sanctuary-management-draft.js');
 const supportCss=read('sanctuary-management/css/sanctuary-management-support.css');
 const draftCss=read('sanctuary-management/css/sanctuary-management-draft.css');
+const familyFunction=client.match(/function hasCanonicalAltRelation\(character\)\{[\s\S]*?\n  \}/)[0];
+const familyRelation=require('node:vm').runInNewContext('('+familyFunction+')',{integer:value=>Number(value)||0});
+assert.equal(familyRelation({characterId:27881,mainCharacterId:7,isMain:false,relation:'GUEST'}),true,'GUEST classification must not hide the canonical alt tooltip');
+assert.equal(familyRelation({characterId:7,mainCharacterId:7,isMain:true,relation:'MAIN'}),false);
+assert.equal(familyRelation({characterId:10,mainCharacterId:10,isMain:false,relation:'GUEST'}),false);
+assert.equal(familyRelation({characterId:10,isMain:false,relation:'GUEST'}),false);
+assert(client.includes('if(isAlt||(slot.occupied&&hasCanonicalAltRelation(slot.character)))'));
 
 for(const token of [
   'function createAltRelationshipTooltip',
@@ -69,6 +76,7 @@ for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   assert.ok(html.includes('sanctuary-management-support.css?cache=2026090101'),`${page}: roster interaction CSS cache missing`);
   assert.ok(html.includes('sanctuary-management.js?cache=2026090101'),`${page}: roster interaction JS cache missing`);
   assert.equal((html.match(/altDetail=2026090101/g)||[]).length,2,`${page}: alt detail cache keys missing`);
+  assert(html.includes('familyHover=2026090801'),`${page}: canonical family hover cache missing`);
 }
 
 console.log('KINOJO sanctuary management roster interaction contract: PASS');

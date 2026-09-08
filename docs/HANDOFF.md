@@ -1,5 +1,11 @@
 # KINOJO WEB HANDOFF
 
+## 성역 GUEST 부캐 롤오버 · 2026-09-08
+
+- 사용자가 명부 저장 성공 후 새로고침해도 강태공1의 부캐 연출이 안 뜬다고 제보. DB 저장1건, master/main7/is_main=false 및 성역 slot root7 확인. force_roster 응답의 mainCharacterName=강태공2도 정상. 지연이 아니라 Web이 membership GUEST를 부캐 연출 조건에서 제외한 문제였다.
+- 성역 슬롯의 기존 회원 분류/색상은 유지하고 Server canonical isMain=false/mainCharacterId가 자기 ID와 다르면 기존 부캐 툴팁을 활성화. PC hover/mobile tap/키보드 기존 연출 재사용. 별도 DB/Edge 변경 없음. PC/mobile JS familyHover2026090801.
+- 성역 관련 Node38개 PASS. 실제 공개 읽기+방문 통계 차단, 로컬 수정 JS 주입으로 성역2의 강태공1 PC1440 hover/mobile390 tap에서 강태공2·의 부캐 표시 및 GUEST 스타일 유지 확인. 이 검수는 운영 인증이 아닌 공개 읽기 검수다. 최종 배포/Drive 근거는 명부 LOG16회차.
+
 ## 명부 연결 저장 GUEST 오류 수정 · DB478 · 2026-09-08
 
 - 강태공1은 성역 owner_member_id=NULL/relation=GUEST였다. DB477이 이를 ALT로 바꿔 `(owner_member_id IS NULL) = (relation = 'GUEST')` 제약 위반으로 전체 저장을 rollback. 운영 확인 시 강태공1/2 각각 본캐·저장이력0이었다. 기존 검증에 성역 GUEST fixture가 없었던 누락이다.
