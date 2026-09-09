@@ -211,9 +211,64 @@ async function run(){
  assert.equal((await q("select count(*)::int n from google_list_sheet_sync_queue where session_id='off-identity'"))[0].n,0);
  assert.equal((await q("select kinojo_queue_list_sheet_sync_session('off-identity','test-session') p"))[0].p.queuedCount,0);
  console.log('PASS: combined policy + OFF automatic identity transaction clears former legion but creates zero initial/final list Queue');
+ // Run the actual prepare facade and v296 consumer with the new lifecycle policy.
+ await db.exec('alter table character_master add primary key(id)');
+ await db.exec(read('supabase/migrations/20260909060134_character_family_lookup_eligibility.sql'));
+ await db.exec(read('supabase/migrations/20260909082438_character_activity_lifecycle.sql'));
+ await db.exec(`create function public.kinojo_is_full_list_lookup_v297(jsonb) returns boolean language sql as $$select true$$;
+ insert into character_master(id,character_name,server_id,legion_name,main_character_id,last_lookup_success_at,legion_updated_at,legion_source_snapshot_id)
+ values(60,'auto-external',2003,'external',60,now(),now(),60),(61,'protected-alt',2003,'external',60,now(),now(),61);
+ insert into lookup_snapshots(id,server_id,character_name,status,raw_payload)
+ select id,server_id,character_name,'OK',jsonb_build_object('officialRaw',jsonb_build_object('info',jsonb_build_object('profile',
+ jsonb_build_object('serverId',server_id,'characterName',character_name,'regionName',legion_name))))
+ from character_master where id in(60,61);`);
+ const activityPrepare=async(session,list=[],complete=true)=>(await q(
+ "select kinojo_prepare_lookup_queue_from_list($1,'test-session',$2,$3) p",
+ [session,JSON.stringify(list),JSON.stringify({serverReadComplete:complete})]))[0].p;
+ assert.equal((await activityPrepare('activity-fail',[],false)).ok,false);
+ assert.equal((await q('select count(*)::int n from private.character_activity_lifecycle'))[0].n,0);
+ result=await activityPrepare('activity-exclude');
+ assert.equal(result.ok,true,JSON.stringify(result));
+ assert.equal((await q("select count(*)::int n from lookup_session_targets where session_id='activity-exclude' and character_name in ('auto-external','protected-alt')"))[0].n,0);
+ assert.equal((await q("select count(*)::int n from private.character_activity_lifecycle where character_id in(60,61) and state='EXCLUDED'"))[0].n,2,'DB-only excluded records receive lifecycle dates');
+ const activityEvents=await q('select * from private.character_activity_events order by id');
+ assert.equal((await activityPrepare('activity-exclude')).code,'SESSION_ALREADY_PREPARED');
+ assert.deepEqual(await q('select * from private.character_activity_events order by id'),activityEvents);
+ await db.exec("update character_master set server_id=2002,legion_name='깡' where id=61");
+ result=await activityPrepare('activity-restore');
+ assert.equal(result.ok,true,JSON.stringify(result));
+ assert.equal((await q("select count(*)::int n from lookup_session_targets where session_id='activity-restore' and character_name in ('auto-external','protected-alt')"))[0].n,2);
+ assert.equal((await q("select count(*)::int n from private.character_activity_lifecycle where character_id in(60,61) and state='RESTORED' and cleanup_candidate_at is null"))[0].n,2);
+ // Deterministic prepare -> relationship change -> Worker dispatch boundaries.
+ // This is not a two-connection PostgreSQL lock-contention test.
+ const dispatchId=(await q("select id from lookup_session_targets where session_id='activity-restore' and character_name='auto-external'"))[0].id;
+ const dispatch=async()=>(await q("select kinojo_server_queue_target_context_v270('activity-restore','test-session',$1) p",[dispatchId]))[0].p;
+ assert.equal((await dispatch()).ok,true);
+ await db.exec('update character_master set main_character_id=61 where id=61');
+ assert.equal((await dispatch()).code,'LOOKUP_EXCLUDED','detached legion witness cannot authorize an old queued target');
+ await db.exec('update character_master set main_character_id=60 where id=61');
+ assert.equal((await dispatch()).ok,true,'restored canonical witness permits dispatch');
+ await db.exec("update character_master set lookup_policy='EXCLUDE' where id=60");
+ assert.equal((await dispatch()).code,'LOOKUP_EXCLUDED','manual change after prepare is checked at dispatch');
+ await db.exec("update character_master set lookup_policy='INHERIT' where id=60; update character_master set server_id=2003,legion_name='external' where id=61");
+ assert.equal((await dispatch()).code,'LOOKUP_EXCLUDED','confirmed family departure after prepare blocks dispatch');
+ await db.exec("update character_master set server_id=2002,legion_name='깡' where id=61");
+ console.log('PASS: prepare-to-dispatch family detachment/restoration, manual override and confirmed departure rechecks (sequential interleavings, not concurrent connections)');
+ const reconcileDefinition=(await q("select pg_get_functiondef('private.kinojo_character_activity_reconcile(bigint,timestamptz)'::regprocedure) definition"))[0].definition;
+ await db.exec("create or replace function private.kinojo_character_activity_reconcile(p_character_id bigint,p_at timestamptz default now()) returns jsonb language sql as $$select '{\"ok\":false}'::jsonb$$");
+ await assert.rejects(activityPrepare('activity-error'),/ACTIVITY_RECONCILIATION_FAILED/);
+ assert.equal((await q("select count(*)::int n from lookup_session_targets where session_id='activity-error'"))[0].n,0,'failed lifecycle write rolls back queue preparation');
+ await db.exec(reconcileDefinition);
+ for(const role of ['anon','authenticated'])assert.equal((await q(
+   "select has_function_privilege($1,'public.kinojo_prepare_lookup_queue_from_list(text,text,jsonb,jsonb)','EXECUTE') ok",[role]))[0].ok,false);
+ await db.exec(read('supabase/rollbacks/20260909082438_character_activity_lifecycle_rollback.sql'));
+ const restoredEvents=await q('select * from private.character_activity_events order by id');
+ assert.equal((await activityPrepare('activity-rollback')).ok,true);
+ assert.deepEqual(await q('select * from private.character_activity_events order by id'),restoredEvents,'rollback disables preparation writes');
+ console.log('PASS: actual prepare facade/queue, DB-only exclusion, family restoration, failed/repeated requests and caller rollback');
  await db.exec(read('supabase/rollbacks/20260908073247_character_refresh_list_write_preference.sql'));
  await db.exec(read('supabase/rollbacks/20260908062618_character_refresh_eligibility_and_restore.sql'));
- assert.equal((await q('select count(*)::int n from character_master'))[0].n,rowsBefore+1);
+ assert.equal((await q('select count(*)::int n from character_master'))[0].n,rowsBefore+3);
  assert.equal((await q("select character_name from character_master where id=10"))[0].character_name,'old-owner_D');
  console.log('PASS: staged rollback compiles, preserves records/policies/identity audit and Queue');
  }finally{await db.close();}

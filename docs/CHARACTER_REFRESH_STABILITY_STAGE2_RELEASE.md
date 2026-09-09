@@ -4,6 +4,19 @@
 
 ## 기준 및 파일
 
+### 자동 제외 생애주기 — 배포 전 통합 게이트
+
+- 관계 재확인 `20260909092154_character_activity_relation_recheck.sql`: 정상 cron claim/자동 세션 생성 직후, prepare 전에 기존 Worker activityRecheck를 호출한다. 일반 Queue를 우회하지 않으며 별도 Cron·세션 발급을 추가하지 않는다. 자동화 OFF면 재확인도 멈춘다. 최대5명/75초, 대상별7일, DB 실행당 중복 claim 차단/100초 lease. DB에 저장된 복귀는 기존 준비에서도 재평가한다.
+- 공식 HTTP/전역 rate gate 재사용, info만 수집. 저장 주소→정확한 이름/서버 검색까지 제한하고 변경 신원은 HELD로 기존 조회 경로에 넘긴다. 제한 경로의 미확인을 완전 탐색 실패/탈퇴/삭제로 취급하지 않는다. DB가 key·이름·서버·종족·클래스·레기온 필드 및 수집 전 Master revision·현재 자동 세션/정책을 검증한다. 통과 시 소속과 가족 lifecycle만 갱신한다. 장비/수치/성공실패 카운터/LIST/원시 조회 snapshot 쓰기 없음.
+- 429는 기존 전역 pause 보고 후 뒤 대상을 조회하지 않는다. 실패·미완료 claim은 오래된 성공 근거를 대신해 확인 대기로 남고 후보일을 취소한다. public facade는 service_role만 EXECUTE/SECURITY INVOKER. Worker는 service bearer와 정상 예약 세션이 필요하다. API295.12/maintenance1.1. 공식 성공보고 RPC도 남은 deadline을 지킨다.
+- 배포 순서: lifecycle SQL→relation_recheck SQL→Worker→maintenance→WEB. 롤백: maintenance v1 우선, relation_recheck rollback, 필요 시 lifecycle rollback 및 WEB/Worker 복구. 관찰/감사 테이블 보존. C 삭제 미포함. tests/character-activity-recheck.test.cjs와 전체 runner로 검증하며 운영/배포 상태는 LOG48을 따른다.
+- 서버 역할 권한: 자동화 식별3열·세션 식별4열 SELECT와 안내 message 열 UPDATE(행 잠금용), private 일정 version SELECT, snapshot/version MAINTAIN(테이블 부재 판정 잠금용)만 추가한다. session_token 읽기·session status 변경·snapshot UPDATE는 허용하지 않는다. 익명/회원 권한과 SECURITY INVOKER는 유지한다. 기존 운영 column ACL 없음 확인 후 추가했으며 rollback은 같은 열/MAINTAIN 권한만 회수한다.
+
+- `20260909082438_character_activity_lifecycle.sql`과 동명 rollback: 기존 정책과 인증 prepare facade를 교체하고 private/RLS lifecycle·audit를 추가한다. 신규 공개 RPC/삭제/Cron/운영 backfill 없음. v296 인증·성공 뒤 확정 자동 제외 및 기존 lifecycle만 ID 순서로 재평가한다. LIST 밖 DB 캐릭터도 포함하며 실패는 prepare와 함께 rollback된다.
+- 관리자 신규 reason 표시 및 Server 근거·후보일 표시를 같은 PR에 포함한다(activity=2026090901). 주기 공식 복귀 확인, 운영 fixture·advisors·SQL_INDEX 및 Source/Deploy 동기화 전 운영 적용 금지. activity_lock은 Master/공식 snapshot/성역 team·slot·rule·version·exception 7테이블을 SHARE ROW EXCLUSIVE NOWAIT로 잠가 신규 관계/일정 phantom과 평가끼리의 잠금 승격 충돌을 막는다. prepare는 인증 후 잠그고 충돌 시 transaction을 되돌려 ACTIVITY_RELATION_BUSY/retryable을 반환한다. 외부 I/O 중 잠금을 유지하지 않는다.
+- 로컬 PostgreSQL17.10 다중 연결: 본인/가족 복귀/신규 가족/성역 slot·version/공식 snapshot 쓰기와 제외 확정 경합 및 역순, evaluator 중복, 인증 전 차단을 검증한다. 190행 lifecycle sweep의 로컬1500ms 예산을 검사하되 전체 운영 prepare/성역 쓰기 지연을 보장하지 않는다. 관련 테이블 쓰기는 이 짧은 DB transaction 동안 지연될 수 있으므로 운영 카나리에서 확인한다. 실제 월별 삭제 직전에는 별도 공식 재확인·active-job/최종 revision 보호가 필요하다.
+- 기록은 rollback에서도 보존한다. 현재 캐릭터 및 LIST 삭제는 별도 C 게이트이며 이 migration에 포함하지 않는다. `tests/character-activity-lifecycle.test.cjs`를 기존 통합 runner로 검증한다.
+
 ### 캐릭터 상태·제외 리스트 표시 분리
 
 - 기존 관리자 search 응답의 정책·실패·신원 필드만 표시하며 자동 조회 자격을 WEB에서 다시 판정하거나 변경하지 않는다. records/exclusions는 하나의 편집기와 기존 저장 API를 공유한다.

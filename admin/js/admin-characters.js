@@ -922,7 +922,25 @@
   A.loadCharacterWorkspace=loadCharacterWorkspace;
   A.characterIssue=characterIssue;
   A.characterExcluded=characterExcluded;
-function policyReasonLabel(reason){return ({DELETION_CANDIDATE:'삭제후보',ADMIN_EXCLUDED:'관리자 조회 제외',ADMIN_INCLUDED:'관리자 계속 조회',ARCHIVED_RECORD:'보관된 기록',CURRENT_SANCTUARY:'현재 성역 참여',MANAGED_LEGION:'관리 레기온 소속',MANAGED_LEGION_FAMILY:'본부캐 그룹 관리 레기온 소속',ACTIVITY_REVIEW_DUE:'활동 관계 재검토 도래',ACTIVITY_REVIEW_WAIT:'활동 관계 재검토 대기',CHARACTER_NOT_FOUND:'DB 정보 없음'})[reason]||'정책 확인 필요';}
+function policyReasonLabel(reason){return ({DELETION_CANDIDATE:'삭제후보',ADMIN_EXCLUDED:'관리자 조회 제외',ADMIN_INCLUDED:'관리자 계속 조회',ARCHIVED_RECORD:'보관된 기록',CURRENT_SANCTUARY:'현재 성역 참여',CURRENT_SANCTUARY_FAMILY:'본부캐 그룹 현재 성역 참여',MANAGED_LEGION:'관리 레기온 소속',MANAGED_LEGION_FAMILY:'본부캐 그룹 관리 레기온 소속',AUTO_NO_ACTIVITY:'활동 관계 종료 · 자동 제외',ACTIVITY_REVIEW_DUE:'활동 관계 재검토 도래',ACTIVITY_REVIEW_WAIT:'활동 관계 재검토 대기',CHARACTER_NOT_FOUND:'DB 정보 없음'})[reason]||'정책 확인 필요';}
+  function activityPolicyDetail(policy){
+    if(!policy)return '';
+    const reasons={SERVER_TRANSFER:'서버 이전 확인',LEGION_LEFT:'레기온 탈퇴 확인',NO_MANAGED_LEGION:'관리 레기온 소속 본부캐 없음',NO_CURRENT_SANCTUARY:'현재 성역 참여 본부캐 없음'};
+    const holds={FAMILY_RELATION_UNRESOLVED:'본부캐 연결을 확인할 수 없어 자동 제외 확정을 보류합니다.',OFFICIAL_ACTIVITY_EVIDENCE_INCOMPLETE:'공식 소속 확인 근거가 부족해 자동 제외 확정을 보류합니다.'};
+    const codes=Array.isArray(policy.activityReasonCodes)?policy.activityReasonCodes:[];
+    const labels=[...new Set(codes.filter(code=>Object.prototype.hasOwnProperty.call(reasons,code)).map(code=>reasons[code]))];
+    const lines=[];
+    if(policy.reason==='AUTO_NO_ACTIVITY'){
+      lines.push('서버 자동 제외: '+(labels.join(' · ')||'활동 관계 종료'));
+      lines.push('최초 제외 확정: '+(policy.autoExcludedAt?formatServerTime(policy.autoExcludedAt):'아직 기록되지 않음'));
+      lines.push('정리 검토 가능일: '+(policy.cleanupCandidateAt?formatServerTime(policy.cleanupCandidateAt):'미정'));
+      lines.push('해당 날짜에 즉시 삭제되는 것은 아닙니다. 삭제 전 관계를 다시 확인하며 복귀·확인 오류 시 정리를 취소하거나 보류합니다.');
+    }else if(policy.activityHoldCode&&Object.prototype.hasOwnProperty.call(holds,policy.activityHoldCode)){
+      lines.push(holds[policy.activityHoldCode]);
+    }
+    if(policy.reason==='CURRENT_SANCTUARY_FAMILY')lines.push('연결된 본부캐가 현재 성역에 참여하여 조회를 유지합니다.');
+    return lines.length?'<div class="admin-character-state-guide" data-activity-policy-detail><strong>활동 관계 판정 근거</strong>'+lines.map(line=>'<span>'+esc(line)+'</span>').join('')+'</div>':'';
+  }
   function filteredCharacters(){
     const filter=$('#characterStateFilter')?.value||'attention';
     const excluded=state.characterWorkspace==='exclusions';
@@ -956,7 +974,7 @@ function policyReasonLabel(reason){return ({DELETION_CANDIDATE:'삭제후보',AD
       const statusPills=[
         c.identityReview?'<span class="admin-pill warn">신원 확인 대기</span>':'',
         characterIssue(c)?'<span class="admin-pill warn">조회·반영 확인 필요</span>':'',
-        c.lookupPolicy?.reason==='ACTIVITY_REVIEW_WAIT'?'<span class="admin-pill warn">재검토 대기</span>':queryExcluded(c)?'<span class="admin-pill error">조회 제외</span>':'<span class="admin-pill ok">조회 대상</span>',
+        c.lookupPolicy?.reason==='AUTO_NO_ACTIVITY'?'<span class="admin-pill error">자동 제외</span>':c.lookupPolicy?.reason==='ACTIVITY_REVIEW_WAIT'?'<span class="admin-pill warn">재검토 대기</span>':queryExcluded(c)?'<span class="admin-pill error">조회 제외</span>':'<span class="admin-pill ok">조회 대상</span>',
         c.visibilityExcluded?'<span class="admin-pill error">노출 제외</span>':'<span class="admin-pill ok">사이트 노출</span>'
       ].join('');
       const identityBadge=c.identityBadge
@@ -965,7 +983,7 @@ function policyReasonLabel(reason){return ({DELETION_CANDIDATE:'삭제후보',AD
       const identityReview=c.identityReview;
       const policy=c.lookupPolicy;
       const policyHtml=policy?'<details class="admin-character-status-editor"><summary>정기 조회 정책 · '+esc(policyReasonLabel(policy.reason))+'</summary><div class="admin-character-status-fields">'
-        +'<p class="wide">현재 '+(policy.scope==='CHARACTER'?'개별 예외':'그룹 기본값')+' 설정 · '+(policy.eligible?'조회 대상':'정기 조회 대기/제외')+' · 확인 '+esc(policy.checkedAt?formatServerTime(policy.checkedAt):'자동 판정')+' · 확인자 '+esc(policy.actorId||'-')+' · 재검토 '+esc(policy.reviewDueAt?formatServerTime(policy.reviewDueAt):'기한 도래')+'</p>'
+        +'<p class="wide">현재 '+(policy.scope==='CHARACTER'?'개별 예외':'그룹 기본값')+' 설정 · '+(policy.eligible?'조회 대상':'정기 조회 대기/제외')+' · 설정 변경 '+esc(policy.checkedAt?formatServerTime(policy.checkedAt):'자동 판정')+' · 설정자 '+esc(policy.actorId||'-')+' · 정기 재검토 '+esc(policy.reviewDueAt?formatServerTime(policy.reviewDueAt):'예약 없음')+'</p>'
         +'<label>적용 범위<select class="admin-select" data-policy-scope>'+option('CHARACTER','이 캐릭터 개별 예외','CHARACTER')+option('GROUP','본부캐 그룹 기본값','CHARACTER')+'</select></label>'
         +'<label>조회 정책<select class="admin-select" data-policy-mode>'+option('INHERIT','그룹 기본값 따르기',policy.individualMode)+option('AUTO','자동 판정',policy.individualMode)+option('INCLUDE','계속 조회',policy.individualMode)+option('EXCLUDE','조회 제외',policy.individualMode)+'</select></label>'
         +'<label class="wide">변경 사유<input class="admin-input" data-policy-reason placeholder="공동 활동·게임 중단 등 확인 근거"/></label></div><div class="admin-character-status-actions"><small>list 행 삭제는 조회 제외가 아닙니다. 그룹 설정은 기존 개별 제외/예외를 덮지 않습니다.</small><button class="admin-btn" type="button" data-policy-save>조회 정책 저장</button></div></details>':'';
@@ -983,6 +1001,7 @@ function policyReasonLabel(reason){return ({DELETION_CANDIDATE:'삭제후보',AD
         +identityReviewHtml
         +identityProbeHtml
         +policyHtml
+        +activityPolicyDetail(policy)
         +(characterExcluded(c)?'<div class="admin-character-state-guide"><strong>제외·대기 사유</strong><span>'+esc(queryExcluded(c)?policyReasonLabel(policy?.reason):'사이트 노출만 제외')+' · '+esc(c.exclusionReason||c.inactiveReason||'')+' '+esc(c.exclusionMemo||c.inactiveMemo||'')+' · '+(characterIssue(c)?'조회·반영 문제도 확인 필요':'현재 조회·반영 문제 표시 없음')+'</span></div>':'')
         +(c.identityListPendingCount>0?'<button class="admin-btn" type="button" data-identity-list-retry>신원 변경 list 미반영 '+Number(c.identityListPendingCount)+'건 재시도</button>':'')
         +(review?'<div class="admin-character-review-callout"><strong>공식 정보 미확인 '+failureStreak+'회 연속</strong><span>자동 제외하지 않았습니다. 삭제·서버 이전·이름 변경 여부를 확인한 뒤 상태를 선택하세요.</span></div>':'')

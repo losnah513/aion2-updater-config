@@ -32,6 +32,12 @@
 
 ## 캐릭터 최신화 4차 재개 계약
 
+- LOG48 작업: 정기 제어→Worker activityRecheck→service-only DB claim/complete 연결. 5명/75초/7일, 실제 자동 세션만 허용하며 수치·LIST는 쓰지 않는다. identity 불일치는 HELD 및 기존 조회 경로 재검토, 복귀는 가족 lifecycle 복구. 운영/PR/Drive 완료 상태는 LOG48 최종 기록을 확인한다. 기존 LOG47의 공식 복귀 연결 미구현 설명은 로컬 구현에 한해 대체한다. B/C는 변경하지 않는다.
+
+- LOG47: 같은 Draft PR434 / `codex/character-auto-exclusion-policy`, main `3351b2fd`. 기존 준비/사유 표시 구현에 실제 PostgreSQL 다중 연결 fence를 추가했다. 부캐 복귀 중 잘못된 제외 확정을 재현했고, 관련7테이블 SHARE ROW EXCLUSIVE NOWAIT로 phantom/동시 평가를 차단한다. 인증 뒤 짧은 DB 준비 transaction에서만 잠그며 충돌은 ACTIVITY_RELATION_BUSY/retryable 반환. 로컬190행 lifecycle sweep 약0.6초이며 운영 전체 준비 latency는 미검증. 다음은 제한 batch 공식 복귀 수집·유지보수, 운영 통합/배포 게이트. B 격자·칩/C 삭제는 미착수.
+
+- 로컬 동시성 재현: Windows x64에서 `npm ci --prefix tests/runtime/postgres --ignore-scripts --no-audit --no-fund` 후 `node tests/character-activity-concurrency.test.cjs`, 통합은 기존 명령에 `--postgres` 추가. Node24/PostgreSQL17.10 pinned lockfile. Windows binary의 symlink 목록은 비어 있다. native pg_ctl의 제한 권한 시작을 사용하며 OS 계정/서비스를 만들지 않는다. loopback 임시 포트·synthetic 데이터만 사용, 종료 시 pg_ctl stop. 생성 데이터는 tests/runtime/postgres/data 아래 ignored이며 운영 자격증명을 받지 않는다. 다른 OS 실행은 별도 검증 필요.
+
 - 상태/제외 탭: 기준 main `eeaa244f`, branch `codex/character-status-unresolved-compact`, WEB/CSS `statusTabs=2026090903`. 캐릭터 상태는 미해결·비제외 조회만 표시하고 정상 신원 이력만으로 잔류하지 않는다. 제외 대상은 제외 리스트에 보존한다. 기본 카드 이름 한 줄/상세보기, 펼치면 기존 기록·편집 기능. K채채/깽깽은 Server AUTO 활동 관계 대기이며 7일 재검토 정책은 변경하지 않았다. DB/Edge/자동화 변경 없음. 배포·검수·후속 정책 검토는 LOG42 참조.
 
 - 본부캐 자격 보완: 기준 main `debb6907`, branch `codex/character-family-eligibility`. DB 정책은 지켈 깡·키나노동조합·낮·밤 유효 구성원의 가족을 포함하며 수동 제외/삭제후보는 보존한다. 동일 key·서버·이름 탐색은 변경 없음으로 종료한다. WEB loader `family=2026090901`; 기존 배너 revision 보존. migration/rollback `20260909060134_character_family_lookup_eligibility`, 신규 단위 테스트 2개와 기존 runner 재사용. 적용/Pages/Drive·실계정 검수 상태는 같은 LOG39를 확인한다. list 복원 조건·Edge·스케줄·Master 데이터 직접 변경 없음.

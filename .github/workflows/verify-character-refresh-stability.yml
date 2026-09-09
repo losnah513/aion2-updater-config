@@ -5,6 +5,7 @@ on:
     paths:
       - 'supabase/functions/character-identity-recovery/**'
       - 'supabase/functions/character-refresh-worker/**'
+      - 'supabase/functions/scheduled-maintenance-control/**'
       - 'supabase/functions/character-detail-refresh/**'
       - 'supabase/functions/lookup-list-*/**'
       - 'supabase/migrations/*character*.sql'
