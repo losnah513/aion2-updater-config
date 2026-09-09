@@ -32,5 +32,14 @@ async function run({asset={},confirm=true,dirty=false,fail='',refresh=true,remov
   const ctx={states:{main:s},window:{addEventListener:(_,fn)=>ctx.receive=fn},removeSelected:(s,id)=>{s.selected=s.selected.filter(v=>v!==id)},renderBundle(){throw Error('must not render before initialization')}};
   vm.createContext(ctx);vm.runInContext(line,ctx);ctx.receive({detail:{assets:[baseAsset,{...baseAsset,assetId:2,formatCode:'SIDE_300_715'}]}});
   assert.deepEqual(s.selected,[1]);assert.equal(s.loaded,false);
-  console.log('PASS banner library management: cancel, dirty, four reference guards, delete, restore, reclassify, refresh failure, workflow initialization');
+  const libraryState={loaded:false,url:'',selectedId:0,root:{},assets:[]};let requests=0;
+  const libraryCtx={S:libraryState,A:{isMaster:()=>true},mount(){},render(){},renderDetail(){},announce(){},broadcastAssets(){},contextLabel:()=> 'SIDE',contextAssets:()=>libraryState.assets,api:async()=>{requests++;libraryState.url='https://example.test';return{assets:[baseAsset]}}};
+  vm.createContext(libraryCtx);
+  vm.runInContext(source.split('\n').filter(l=>l.startsWith('function receiveAssets(')||l.startsWith('async function load(')).join('\n'),libraryCtx);
+  libraryCtx.receiveAssets({detail:{source:'event-workflow-upload',assets:[baseAsset]}});
+  assert.equal(libraryState.assets.length,1);assert.equal(libraryState.loaded,false);
+  assert.equal(await libraryCtx.load(),true);assert.equal(requests,1);assert.equal(libraryState.url,'https://example.test');
+  libraryCtx.receiveAssets({detail:{assets:[baseAsset]}});await libraryCtx.load();assert.equal(requests,1);
+  libraryCtx.receiveAssets({detail:{}});assert.equal(libraryState.loaded,false);
+  console.log('PASS banner library management: mutation guards, workflow initialization, upload-before-library initialization');
 })().catch(error=>{console.error(error);process.exitCode=1});

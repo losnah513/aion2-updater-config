@@ -116,7 +116,7 @@ function bindRoot(){if(S.root.dataset.bannerAssetLibraryBound==='1')return;S.roo
 
 function setContext(kind){const next=kind==='side'?'side':'main';mount();if(S.context===next){render();return}S.context=next;S.selectedId=0;S.selectedTag='';S.query='';S.characterFilter='ALL';S.draftTitle='';S.draftTags=[];S.titleState='idle';render()}
 
-function receiveAssets(event){const detail=event.detail||{};if(detail.source==='image-library')return;const assets=Array.isArray(detail.assets)?detail.assets:null;if(!assets){S.loaded=false;return}S.assets=[...assets];S.loaded=true;if(S.selectedId&&!S.assets.some(asset=>Number(asset.assetId)===Number(S.selectedId))){S.selectedId=0;S.draftTitle='';S.draftTags=[];S.titleState='idle';S.tagError=''}render()}
+function receiveAssets(event){const detail=event.detail||{};if(detail.source==='image-library')return;const assets=Array.isArray(detail.assets)?detail.assets:null;if(!assets){S.loaded=false;return}S.assets=[...assets];if(S.selectedId&&!S.assets.some(asset=>Number(asset.assetId)===Number(S.selectedId))){S.selectedId=0;S.draftTitle='';S.draftTags=[];S.titleState='idle';S.tagError=''}render()}
 
 mount();
 window.addEventListener('kinojo:banner-assets-updated',receiveAssets);

@@ -27,8 +27,12 @@ function ensure(){
   const mainRoot=$('[data-main-banner-admin]',p),sideRoot=$('[data-side-banner-admin]',p);if(mainRoot){const host=$('[data-banner-authoring-host="main"]',main);if(host&&mainRoot.parentElement!==host)host.appendChild(mainRoot)}if(sideRoot){const host=$('[data-banner-authoring-host="side"]',side);if(host&&sideRoot.parentElement!==host)host.appendChild(sideRoot)}
   if(!$('[data-banner-events-admin]',p)){const root=document.createElement('div');root.dataset.bannerEventsAdmin='';$('[data-banner-event-host="main"]',main)?.appendChild(root)}
   if(!$('[data-banner-asset-library]',p)){const root=document.createElement('div');root.dataset.bannerAssetLibrary='';$('[data-banner-library-host="main"]',main)?.appendChild(root)}
+  syncPanels(active());
 }
 
+// The menu may already be on SIDE before lazy loading creates either panel.
+// Reconcile both parent panels on every mount without touching authoring drafts.
+function syncPanels(kind){const p=pane();if(!p)return;for(const panel of $$('[data-banner-management-panel]',p)){const on=panel.dataset.bannerManagementPanel===kind;panel.classList.toggle('active',on);panel.hidden=!on;panel.setAttribute('aria-hidden',String(!on))}}
 function active(){const value=$('[data-admin-subtab].active',pane()||document)?.dataset.adminSubtab;return value==='side'?'side':'main'}
 function routeView(kind){const parts=decodeURIComponent(String(location.hash||'').replace(/^#/,'')).split('/').filter(Boolean);return parts[0]==='images'&&parts[1]===kind&&['create','events','library'].includes(parts[2])?parts[2]:'create'}
 function writeViewRoute(kind,view){const value=`#images/${kind}/${view}`;if(location.hash!==value)history.replaceState(null,'',location.pathname+location.search+value)}

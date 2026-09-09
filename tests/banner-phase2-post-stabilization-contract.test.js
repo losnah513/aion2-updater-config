@@ -38,7 +38,8 @@ assert.ok(edge.includes('DB = "412"'),'Edge health must advertise DB412');
 
 for(const token of ['function notifyBannerAssetsUpdated(','kinojo:banner-assets-updated','createdAssetIds'])assert.ok(shared.includes(token),`shared asset refresh contract missing: ${token}`);
 for(const token of ["A.notifyBannerAssetsUpdated?.(s.assets,'event-workflow-upload'",'새 노출 묶음과 이미지 라이브러리에 바로 추가했습니다.'])assert.ok(workflow.includes(token),`event workflow upload refresh missing: ${token}`);
-for(const token of ["detail.source==='image-library'",'S.assets=[...assets];S.loaded=true',"window.addEventListener('kinojo:banner-assets-updated',receiveAssets)"])assert.ok(library.includes(token),`library immediate refresh subscriber missing: ${token}`);
+for(const token of ["detail.source==='image-library'",'S.assets=[...assets];',"window.addEventListener('kinojo:banner-assets-updated',receiveAssets)"])assert.ok(library.includes(token),`library immediate refresh subscriber missing: ${token}`);
+assert.ok(!library.split('\n').find(line=>line.startsWith('function receiveAssets(')).includes('S.loaded=true'),'asset broadcasts must not skip library client initialization');
 assert.ok(main.includes("A.notifyBannerAssetsUpdated?.(S.assets,'legacy-main-upload'"),'legacy main upload refresh missing');
 assert.ok(side.includes("A.notifyBannerAssetsUpdated?.(S.assets,'legacy-side-upload'"),'legacy side upload refresh missing');
 
