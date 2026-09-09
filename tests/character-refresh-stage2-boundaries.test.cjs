@@ -45,6 +45,7 @@ async function run(){
  console.log('PASS: old and new name checks, namesake rejection, incomplete collision causes no apply, failed list stays pending');
  const container={innerHTML:''},filter={value:'all'};
  const A={state:{characters:[{characterId:1,characterName:'guest',serverId:2003,className:'궁성',hasPersistentKey:true,identityListPendingCount:2,lookupPolicy:{reason:'ACTIVITY_REVIEW_WAIT',eligible:false,scope:'GROUP',individualMode:'INHERIT'}}]},$:s=>s==='#characterList'?container:s==='#characterStateFilter'?filter:null,esc:s=>String(s??'').replace(/[<>&"]/g,'_'),formatServerTime:s=>s};
+ A.state.characterWorkspace='exclusions';
  const ui=vm.createContext({window:{KinojoAdmin:A},document:{addEventListener(){}}});vm.runInContext(read('admin/js/admin-characters.js'),ui);A.renderCharacters();
  assert.match(container.innerHTML,/재검토 대기/);assert.match(container.innerHTML,/활동 관계 재검토 대기/);assert.match(container.innerHTML,/미반영 2건 재시도/);assert.doesNotMatch(container.innerHTML,/ACTIVITY_REVIEW_WAIT/);
  filter.value='lookup';assert.equal(A.filteredCharacters().length,1);filter.value='normal';assert.equal(A.filteredCharacters().length,0);

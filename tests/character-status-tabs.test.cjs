@@ -14,18 +14,21 @@ const items=[
  {characterId:9,lookupPolicy:{eligible:true},lastLookupFailureCode:'TIMEOUT',lastLookupFailedAt:'2026-09-08T07:00:00Z',lastLookupSuccessAt:'2026-09-09T07:00:00Z'},
  {characterId:10,lookupPolicy:{eligible:true},visibilityExcluded:true},
  {characterId:11,lookupPolicy:{eligible:false,reason:'ARCHIVED_RECORD'}},
- {characterId:12,lookupPolicy:{eligible:true},identityBadge:{label:'서버 이전'},visibilityExcluded:true}
+ {characterId:12,lookupPolicy:{eligible:true},identityBadge:{label:'서버 이전'},visibilityExcluded:true},
+ {characterId:13,lookupPolicy:{eligible:false,reason:'ACTIVITY_REVIEW_WAIT'},identityBadge:{label:'깡채채'},lastLookupFailureCode:'OFFICIAL_STATS_MISSING',lastLookupFailedAt:'2026-09-01T00:00:00Z',lastLookupSuccessAt:'2026-09-08T00:00:00Z'},
+ {characterId:14,lookupPolicy:{eligible:true},lookupFailureStreak:1,exclusionReviewRequired:true,lastLookupFailedAt:'2026-09-01T00:00:00Z',lastLookupSuccessAt:'2026-09-08T00:00:00Z'},
+ {characterId:15,lookupPolicy:{eligible:true},identityReview:{reviewId:2}}
 ];
 A.state.characters=items;
 const before=JSON.stringify(items);
 function ids(view,value){A.state.characterWorkspace=view;filter.value=value;return Array.from(A.filteredCharacters(),x=>x.characterId);}
-assert.deepEqual(ids('records','attention'),[1,5,6,7,8,12]);
-assert.deepEqual(ids('records','identity'),[1,6,12]);
-assert.deepEqual(ids('records','review'),[5,6,7,8]);
-assert.deepEqual(ids('records','normal'),[1,9]);
-assert.deepEqual(ids('exclusions','all'),[2,3,4,6,10,11,12]);
+assert.deepEqual(ids('records','attention'),[5,8,15]);
+assert.deepEqual(ids('records','identity'),[15]);
+assert.deepEqual(ids('records','all'),[5,8,15]);
+assert.deepEqual(ids('records','normal'),[]);
+assert.deepEqual(ids('exclusions','all'),[2,3,4,6,10,11,12,13]);
 assert.deepEqual(ids('exclusions','manual'),[2,6]);
-assert.deepEqual(ids('exclusions','waiting'),[3]);
+assert.deepEqual(ids('exclusions','waiting'),[3,13]);
 assert.deepEqual(ids('exclusions','archived'),[4,11]);
 assert.deepEqual(ids('exclusions','review'),[6]);
 assert.deepEqual(ids('exclusions','visibility'),[10,12]);
@@ -35,7 +38,7 @@ for(const file of ['admin/index.html','m/admin/index.html']){
  assert.match(html,/data-admin-subtab="exclusions"/);
  assert.match(html,/data-admin-subpane="exclusions"/);
  assert.equal((html.match(/id="characterList"/g)||[]).length,1);
- assert.match(html,/statusTabs=2026090902/);
+ assert.match(html,/statusTabs=2026090903/);
 }
 assert.match(fs.readFileSync('admin/js/admin-bootstrap.js','utf8'),/if\(isCharacterWorkspace\) A.loadCharacterWorkspace\(subtab\)/);
 console.log('PASS: identity visibility, excluded categories, overlapping issues, historical errors, no policy writes, PC/mobile routes');

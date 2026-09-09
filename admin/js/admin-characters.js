@@ -864,7 +864,7 @@
   function renderCharacterSummary(){
     const summary=state.characterSummary||{};
     const values={
-      characterStateReviewCount:state.characters.filter(characterIssue).length,
+      characterStateReviewCount:state.characters.filter(c=>!characterExcluded(c)&&characterLookupUnresolved(c)).length,
       characterStateLookupExcludedCount:state.characters.filter(characterExcluded).length,
       characterStateVisibilityExcludedCount:state.characters.filter(characterIdentity).length,
       characterStateTotalCount:Number(summary.totalCount||state.characters.length||0)
@@ -890,6 +890,13 @@
     return !!(c.exclusionReviewRequired||c.identityReview||Number(c.identityListPendingCount)>0||lookupIssue);
   }
   function characterIdentity(c){return !!(c.identityBadge||c.identityReview);}
+  function characterLookupUnresolved(c){
+    const failedAt=Date.parse(c.lastLookupFailedAt),successAt=Date.parse(c.lastLookupSuccessAt);
+    // A later success resolves old errors; identity history and list-only backlog are not lookup failures.
+    if(Number.isFinite(successAt)&&Number.isFinite(failedAt)&&successAt>=failedAt)return !!c.identityReview;
+    return !!(c.identityReview||c.exclusionReviewRequired||Number(c.lookupFailureStreak)>0
+      ||(c.lastLookupFailureCode&&Number.isFinite(failedAt)&&(!Number.isFinite(successAt)||failedAt>successAt)));
+  }
   function loadCharacterWorkspace(view){
     const card=$('.admin-character-status-card'),pane=$('[data-admin-subpane="'+view+'"]');
     if(!card||!pane)return;
@@ -903,12 +910,12 @@
     $('#characterWorkspaceTitle').textContent=excluded?'제외 리스트':'캐릭터 상태';
     $('#characterWorkspaceDescription').textContent=excluded
       ?'조회 제외·활동 관계 대기·사이트 미노출을 사유별로 확인합니다. 조회 오류 여부는 별도로 표시하며 자동 해제하지 않습니다.'
-      :'조회 문제와 서버 이전·이름 변경 이력을 확인합니다. 제외만 된 대상은 제외 리스트에서 관리합니다.';
+      :'현재 조회가 해결되지 않은 캐릭터만 표시합니다. 정상 확인된 변경 이력은 상태 목록에 남기지 않습니다.';
     const filter=$('#characterStateFilter');
     const choices=excluded?[['all','모든 제외·대기'],['manual','관리자 조회 제외'],['waiting','활동 관계 대기'],['archived','삭제후보·보관'],['visibility','사이트 미노출'],['review','조회 문제 동반']]
-      :[['attention','조회 문제·신원 변경'],['review','조회 문제만'],['identity','서버 이전·이름 변경'],['normal','정상 상태'],['all','전체 상태 대상']];
+      :[['attention','조회 미해결'],['identity','신원 확인 대기']];
     const selected=previous===view?filter.value:state.characterWorkspaceFilters?.[view]||choices[0][0];
-    filter.innerHTML=choices.map(([value,label])=>option(value,label,selected)).join('');
+    filter.innerHTML=choices.map(([value,label])=>option(value,label,choices.some(x=>x[0]===selected)?selected:choices[0][0])).join('');
     renderCharacters();
     return searchCharacters();
   }
@@ -919,16 +926,16 @@ function policyReasonLabel(reason){return ({DELETION_CANDIDATE:'삭제후보',AD
   function filteredCharacters(){
     const filter=$('#characterStateFilter')?.value||'attention';
     const excluded=state.characterWorkspace==='exclusions';
-    const rows=state.characters.filter(c=>excluded?characterExcluded(c):!characterExcluded(c)||characterIssue(c)||characterIdentity(c));
+    const rows=state.characters.filter(c=>excluded?characterExcluded(c):!characterExcluded(c)&&characterLookupUnresolved(c));
     if(filter==='review')return rows.filter(characterIssue);
-    if(filter==='identity')return rows.filter(characterIdentity);
+    if(filter==='identity')return rows.filter(c=>!!c.identityReview);
     if(filter==='manual')return rows.filter(c=>c.lookupPolicy?.reason==='ADMIN_EXCLUDED'||(!c.lookupPolicy&&c.lookupExcluded));
     if(filter==='waiting')return rows.filter(c=>['ACTIVITY_REVIEW_WAIT','ACTIVITY_REVIEW_DUE'].includes(c.lookupPolicy?.reason));
     if(filter==='archived')return rows.filter(c=>['DELETION_CANDIDATE','ARCHIVED_RECORD'].includes(c.lookupPolicy?.reason));
     if(filter==='lookup')return rows.filter(queryExcluded);
     if(filter==='visibility')return rows.filter(c=>c.visibilityExcluded);
     if(filter==='normal')return rows.filter(c=>!characterExcluded(c)&&!characterIssue(c));
-    if(filter==='attention')return rows.filter(c=>characterIssue(c)||characterIdentity(c));
+    if(filter==='attention')return rows.filter(characterLookupUnresolved);
     return rows;
   }
 
@@ -967,10 +974,11 @@ function policyReasonLabel(reason){return ({DELETION_CANDIDATE:'삭제후보',AD
         const equipmentOverlap=Number(evidence.equipmentOverlapCount||evidence.equipment_overlap_count||0);
         return '<section class="admin-character-identity-review"><div><strong>신원 변경 후보 확인</strong><span>'+esc([current.serverName,current.characterName].filter(Boolean).join(' '))+' → '+esc([candidate.serverName,candidate.characterName].filter(Boolean).join(' '))+'</span><small>기존 '+esc(current.charKeyMasked||'-')+' · 후보 '+esc(candidate.charKeyMasked||'-')+(equipmentOverlap?' · 장비 일치 '+equipmentOverlap+'부위':'')+'</small></div><div class="admin-character-identity-actions"><button class="admin-btn" type="button" data-identity-review-reject data-review-id="'+Number(identityReview.reviewId||0)+'">거절</button><button class="admin-btn primary" type="button" data-identity-review-approve data-review-id="'+Number(identityReview.reviewId||0)+'">동일 캐릭터 승인</button></div></section>';
       })():'';
-      const identityProbeHtml=c.hasPersistentKey
+      const identityProbeHtml=c.hasPersistentKey&&characterLookupUnresolved(c)&&!queryExcluded(c)
         ?'<section class="admin-character-identity-probe"><div><strong>서버 이전·이름 변경 탐색</strong><span>같은 종족의 활성 서버에서 저장된 고유키와 일치하는 캐릭터를 찾습니다.</span></div><button class="admin-btn" type="button" data-identity-probe>변경 탐색</button></section>'
         :'';
       return '<article class="admin-character-status-row '+(review?'needs-review':'')+'" data-character="'+name+'" data-character-id="'+Number(c.characterId||0)+'" data-server-id="'+esc(c.serverId||'')+'">'
+        +'<details class="admin-character-detail"><summary><strong>'+name+'</strong><span class="admin-character-detail-label">상세보기</span></summary><div class="admin-character-detail-body">'
         +'<div class="admin-character-status-head"><div><strong>'+name+'</strong>'+identityBadge+'<span>'+server+' · '+cls+' · PVE '+Number(c.pvePower||0).toLocaleString('ko-KR')+' · PVP '+Number(c.pvpPower||0).toLocaleString('ko-KR')+'</span></div><div class="admin-character-pills">'+statusPills+'</div></div>'
         +identityReviewHtml
         +identityProbeHtml
@@ -984,7 +992,7 @@ function policyReasonLabel(reason){return ({DELETION_CANDIDATE:'삭제후보',AD
         +'<label>제외 사유<select class="admin-select" data-char-reason>'+option('캐릭터 삭제','캐릭터 삭제',reason)+option('서버 이전','서버 이전',reason)+option('이름 변경','이름 변경',reason)+option('기타','기타',reason)+'</select></label>'
         +'<label class="wide">관리 메모<input class="admin-input" data-char-memo value="'+esc(c.exclusionMemo||c.inactiveMemo||'')+'" placeholder="확인 내용이나 새 서버·이름을 기록"/></label>'
         +'</div><div class="admin-character-status-actions"><small>상태를 바꿔도 기존 프로필·Snapshot·조회 이력은 삭제되지 않습니다.</small><button class="admin-btn primary" type="button" data-char-status-save>상태 저장</button></div></details>'
-        +'</article>';
+        +'</div></details></article>';
     }).join(''):'<div class="admin-empty">선택한 상태 조건에 맞는 캐릭터가 없습니다.</div>';
   }
 
