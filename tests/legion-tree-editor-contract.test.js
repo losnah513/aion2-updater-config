@@ -307,7 +307,7 @@ assert(featureScript.includes("action:'organization-save'"));
 assert(featureScript.includes("action:'organization-reset'"));
 assert(featureScript.includes('saveLegionTreeOrganization'));
 for (const token of [
-  "const API_VERSION='1.11'",
+  "const API_VERSION='1.12'",
   "const ORGANIZATION_DATABASE_CONTRACT='460'",
   "actions:['character-search','character-add','organization-save','organization-reset','family-search','family-load','family-save']",
   "rpc('kinojo_legion_tree_organization_save_v460'",

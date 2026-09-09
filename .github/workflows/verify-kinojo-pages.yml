@@ -408,6 +408,7 @@ jobs:
         run: |
           npm install --prefix "$RUNNER_TEMP/sanctuary-db" --no-package-lock @electric-sql/pglite@0.5.8
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/sanctuary-list-retry-v480.test.cjs
+          PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/roster-family-unlink.test.cjs
       - name: Verify roster browser interactions
         shell: bash
         run: |
