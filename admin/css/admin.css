@@ -470,6 +470,21 @@ KINOJO Sanctuary Schedule Admin 20260713 STEP 12
 .admin-character-detail[open]>summary>.admin-character-detail-label::after{content:' ▴'}
 .admin-character-detail>summary:focus-visible{outline:2px solid #2563eb;outline-offset:4px;border-radius:4px}
 .admin-character-detail-body{display:grid;gap:11px;margin-top:14px}
+/* Exclusion workspace only: six compact rows; details stay inside the same scroller. */
+.admin-character-status-list.is-exclusions{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:max-content;align-content:start;align-items:start;height:410px;max-height:65vh;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;scrollbar-gutter:stable;padding:4px;scrollbar-width:thin;scrollbar-color:#93b4df #f1f5f9}
+.admin-character-status-list.is-exclusions:focus-visible{outline:2px solid #2563eb;outline-offset:2px;border-radius:8px}
+.is-exclusions>.admin-character-status-row{min-width:0;padding:7px 9px;box-shadow:none}
+.is-exclusions .admin-character-detail{min-width:0}
+.is-exclusions .admin-character-detail>summary{min-height:44px;gap:5px}
+.is-exclusions .admin-character-detail>summary>strong{flex:1 1 auto;font-size:12px;min-width:24px}
+.is-exclusions .admin-character-detail-label{font-size:10px}
+.admin-character-reason-chips{display:flex;align-items:center;gap:3px;flex:0 1 auto;min-width:0}
+.admin-character-reason-chip{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;padding:4px 5px;border:1px solid #cbdcf3;border-radius:6px;background:#eff6ff;color:#214f8a;font-size:10px;line-height:1.3}
+.is-exclusions summary:hover .admin-character-reason-chip{background:#dbeafe;border-color:#93b4df}
+.is-exclusions>.admin-character-status-row:has(>.admin-character-detail[open]){grid-column:1/-1}
+.is-exclusions>.admin-empty{grid-column:1/-1}
+@media(max-width:1100px){.admin-character-status-list.is-exclusions{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.admin-character-status-list.is-exclusions{grid-template-columns:minmax(0,1fr)}}
 .admin-character-status-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
 .admin-character-status-head>div:first-child{display:grid;gap:4px;min-width:0}
 .admin-character-status-head>div:first-child strong{font-size:15px;color:#17233a}

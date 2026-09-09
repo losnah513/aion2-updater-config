@@ -17,7 +17,7 @@ const root=path.resolve(__dirname,'..');
  });
  const base='http://127.0.0.1:'+server.address().port;
  try{
-  for(const width of [1440,390,320]){
+  for(const width of [1440,900,390,320]){
    const page=await browser.newPage({viewport:{width,height:1100}}),errors=[];
    page.on('pageerror',e=>errors.push(e.message));await isolatePlaywrightPage(page);
    await page.route('**/*',route=>new URL(route.request().url()).hostname==='127.0.0.1'?route.fallback():route.abort());
@@ -61,7 +61,7 @@ const root=path.resolve(__dirname,'..');
    if(process.env.CHARACTER_UI_EVIDENCE){await page.waitForTimeout(350);await page.screenshot({path:path.join(process.env.CHARACTER_UI_EVIDENCE,'admin-'+width+'.png'),fullPage:true});}
    assert.deepEqual(errors,[]);await page.close();
   }
-  for(const width of [1440,390,320]){
+  for(const width of [1440,900,390,320]){
    const page=await browser.newPage({viewport:{width,height:1100}});await isolatePlaywrightPage(page);
    await page.route('**/*',r=>new URL(r.request().url()).hostname==='127.0.0.1'?r.fallback():r.abort());
    await page.goto(base+(width<700?'/m':'')+'/admin/index.html');
@@ -129,6 +129,33 @@ const root=path.resolve(__dirname,'..');
    assert.equal(await page.locator('#characterList').count(),1);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+2),false);
    assert.deepEqual(await page.evaluate(()=>[...new Set(window.fixtureCalls)]),['search']);
+   await page.selectOption('#characterStateFilter','all');
+   for(const count of [0,1,18,19,72]){
+    await page.evaluate(count=>{
+     const A=window.KinojoAdmin;
+     A.state.characters=Array.from({length:count},(_,i)=>({characterId:100+i,characterName:i===0?'아주긴캐릭터이름으로가로넘침을확인합니다':'제외'+i,lookupPolicy:{eligible:false,reason:'AUTO_NO_ACTIVITY',activityReasonCodes:['SERVER_TRANSFER','NO_CURRENT_SANCTUARY','NO_MANAGED_LEGION','UNKNOWN']}}));
+     A.renderCharacters();
+    },count);
+    const metrics=await page.locator('#characterList').evaluate(el=>({columns:getComputedStyle(el).gridTemplateColumns.split(' ').length,height:el.getBoundingClientRect().height,scrollHeight:el.scrollHeight,clientHeight:el.clientHeight,scrollWidth:el.scrollWidth,clientWidth:el.clientWidth}));
+    assert.equal(metrics.columns,width===1440?3:width===900?2:1);
+    assert.ok(metrics.height<=420,'bounded scroller');
+    assert.ok(metrics.scrollWidth<=metrics.clientWidth+1,'no internal horizontal overflow '+JSON.stringify({width,count,...metrics}));
+    assert.equal(await page.locator('#characterList > [data-character-id]').count(),count);
+    if(count===72){
+     assert.ok(metrics.scrollHeight>metrics.clientHeight);
+     const first=page.locator('[data-character-id="100"] .admin-character-detail');
+     assert.equal(await first.locator('summary button').count(),0,'no nested buttons');
+     assert.doesNotMatch(await first.locator(':scope > summary').innerText(),/탈퇴|UNKNOWN/);
+     await first.locator('.admin-character-reason-chip').first().click();
+     assert.notEqual(await first.getAttribute('open'),null,'chip opens native detail');
+     const peer=await page.locator('[data-character-id="101"]').boundingBox();assert.ok(peer.height<75,'peer does not stretch');
+     assert.equal(await page.locator('#characterList').evaluate(el=>el.getBoundingClientRect().height),metrics.height);
+     await first.locator(':scope > summary').focus();await page.keyboard.press('Enter');
+     assert.equal(await first.getAttribute('open'),null);
+     await page.locator('#characterList').focus();await page.keyboard.press('End');
+     await page.waitForFunction(()=>document.querySelector('#characterList').scrollTop>0);
+    }
+   }
    await page.close();
   }
   const page=await browser.newPage({viewport:{width:1440,height:1000}});await isolatePlaywrightPage(page);

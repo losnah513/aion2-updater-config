@@ -941,6 +941,14 @@ function policyReasonLabel(reason){return ({DELETION_CANDIDATE:'삭제후보',AD
     if(policy.reason==='CURRENT_SANCTUARY_FAMILY')lines.push('연결된 본부캐가 현재 성역에 참여하여 조회를 유지합니다.');
     return lines.length?'<div class="admin-character-state-guide" data-activity-policy-detail><strong>활동 관계 판정 근거</strong>'+lines.map(line=>'<span>'+esc(line)+'</span>').join('')+'</div>':'';
   }
+  function exclusionReasonChips(c){
+    const policy=c.lookupPolicy||{};
+    const labels={SERVER_TRANSFER:'서버이전',LEGION_LEFT:'레기온탈퇴',NO_MANAGED_LEGION:'레기온미소속',NO_CURRENT_SANCTUARY:'성역미소속'};
+    const codes=policy.reason==='AUTO_NO_ACTIVITY'&&Array.isArray(policy.activityReasonCodes)?policy.activityReasonCodes:[];
+    const reasons=[...new Set(codes.filter(code=>Object.prototype.hasOwnProperty.call(labels,code)).map(code=>labels[code]))];
+    if(!reasons.length)reasons.push(({ADMIN_EXCLUDED:'수동 제외',DELETION_CANDIDATE:'삭제후보',ARCHIVED_RECORD:'보관',ACTIVITY_REVIEW_WAIT:'확인 대기',ACTIVITY_REVIEW_DUE:'확인 대기',AUTO_NO_ACTIVITY:'활동 관계 종료'})[policy.reason]||(c.visibilityExcluded?'미노출':'제외 확인'));
+    return '<span class="admin-character-reason-chips">'+reasons.map(label=>'<span class="admin-character-reason-chip" title="'+esc(label+' · 상세보기')+'">'+esc(label)+'</span>').join('')+'</span>';
+  }
   function filteredCharacters(){
     const filter=$('#characterStateFilter')?.value||'attention';
     const excluded=state.characterWorkspace==='exclusions';
@@ -963,6 +971,11 @@ function policyReasonLabel(reason){return ({DELETION_CANDIDATE:'삭제후보',AD
 
   function renderCharacters(){
     const root=$('#characterList');if(!root)return;
+    const exclusions=state.characterWorkspace==='exclusions';
+    root.classList.toggle('is-exclusions',exclusions);
+    root.setAttribute('role','region');
+    root.setAttribute('aria-label',exclusions?'제외 캐릭터 목록 · 내부 스크롤':'조회 미해결 캐릭터 목록');
+    root.tabIndex=exclusions?0:-1;
     const list=filteredCharacters();
     root.innerHTML=list.length?list.map(c=>{
       const name=esc(c.characterName),server=esc(c.serverName||c.serverId||''),cls=esc(c.className||'');
@@ -996,7 +1009,7 @@ function policyReasonLabel(reason){return ({DELETION_CANDIDATE:'삭제후보',AD
         ?'<section class="admin-character-identity-probe"><div><strong>서버 이전·이름 변경 탐색</strong><span>같은 종족의 활성 서버에서 저장된 고유키와 일치하는 캐릭터를 찾습니다.</span></div><button class="admin-btn" type="button" data-identity-probe>변경 탐색</button></section>'
         :'';
       return '<article class="admin-character-status-row '+(review?'needs-review':'')+'" data-character="'+name+'" data-character-id="'+Number(c.characterId||0)+'" data-server-id="'+esc(c.serverId||'')+'">'
-        +'<details class="admin-character-detail"><summary><strong>'+name+'</strong><span class="admin-character-detail-label">상세보기</span></summary><div class="admin-character-detail-body">'
+        +'<details class="admin-character-detail"><summary><strong title="'+name+'">'+name+'</strong>'+(exclusions?exclusionReasonChips(c):'')+'<span class="admin-character-detail-label">상세보기</span></summary><div class="admin-character-detail-body">'
         +'<div class="admin-character-status-head"><div><strong>'+name+'</strong>'+identityBadge+'<span>'+server+' · '+cls+' · PVE '+Number(c.pvePower||0).toLocaleString('ko-KR')+' · PVP '+Number(c.pvpPower||0).toLocaleString('ko-KR')+'</span></div><div class="admin-character-pills">'+statusPills+'</div></div>'
         +identityReviewHtml
         +identityProbeHtml
