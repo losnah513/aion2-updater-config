@@ -12,12 +12,14 @@
 - rollback `supabase/rollbacks/20260909114651_sanctuary_permission_legacy_boundary_rollback.sql`은 조회해 둔 구 함수 본문29개와 legacy ACL을 복원한다. 신규 담당관계·audit·등급 설정·개인 예외 데이터는 삭제하지 않는다. 반드시 대응하는 구 Edge/WEB과 함께 복구한다.
 - 계획·진행 권위: [성역 계획](https://drive.google.com/file/d/1smwTPWB3l6eXHxsE235nP0UPoPkOvjnq/view), [성역 LOG](https://drive.google.com/file/d/19lh9hkVKNsu9a54bd-k3rlvhIsCK_Khv/view). 운영 Source/Deploy SQL490~494는 적용된 원본 보관용이며 재실행하지 않는다. 기존 담당·개인 예외의 개별 이관은 별도 승인 작업이다.
 
-## 월별 정리 C 재개 지점
+## DB 비활성 C 계약 (월별 삭제 계획 대체)
 
-- 기준 main064cde74, branch codex/character-monthly-cleanup. C의 읽기 전용 preflight SQL/로컬 테스트만 추가한다. DB DDL/DML·Edge·Apps Script·Cron·운영 삭제 변경 없음. B는 PR440 배포 완료, A22시 첫 실행 검수는 기존 자동화1.
-- `supabase/tests/character_monthly_cleanup_preflight.sql`은 READ ONLY/10초·deletionAllowed=false. 실제 catalog40 FK(연쇄15/SET NULL11/RESTRICT10/NO ACTION4), 논리 ID24열·구조화86열 발견. 구조화 컬럼 목록은 JSON 값의 의미 검수가 아니다. 최초 제외일 미기록190명·월별 후보0이라는 관측은 LOG 기록 시점에만 유효하다.
-- 첫 다음 행동: 과거 신원/감사 참조를 독립 역사 식별자로 분리하고 읽기 경로(특히 weekly growth의 current Master join) 보존 테스트. 배너/성역/이미지 참조는 안전한 분리 미확인 시 대상별 보류. 다음으로 예약/revision·활성 writer 차단, 공식 가족 재검증, LIST metadata 정리 receipt/보상 복원, tombstone 재유입 차단을 기존 경계에 연결한다. 이를 마치기 전 주간 Cron/자동 삭제를 켜지 않는다.
-- 테스트 `node tests/character-monthly-cleanup-preflight.test.cjs`, 전체 `node scripts/verify-character-refresh-stage2.cjs`. 롤백은 테스트/문서 변경 revert이며 데이터 복원 불필요. 실제 PR/Drive 진행은 프로젝트 최신 LOG를 따른다. C 전체 완료가 아니다.
+- 기준 main42744df1에서 시작한 `codex/character-inactive-lifecycle`. 최종 main/PR/운영/Drive 상태는 캐릭터 최신화 4차 프로젝트 LOG 최신 회차를 따른다. 기존 삭제 초안 PR443은 이번 방식으로 대체되며 병합·배포하지 않는다.
+- 신규 migration `20260909143826_character_activity_inactive.sql`: DB-only, 기존 공식 관계 확인 5명/75초/7일 재사용. KST 다음 달 후보+가족 최근10분 VERIFIED+관계 없음+진행 조회/LIST 없음일 때만 비활성. 기존 날짜 소급·사용자 데이터 강제 전환 없음.
+- 비활성 탭은 기존3열/6행 스크롤·정책 편집 재사용. Master와 LIST/과거 기록은 보존. LIST 재수집은 자동 복원 불가; 공식 관계 회복/개별 계속 조회로 복원. Apps Script/Edge/Cron 추가 배포 불필요.
+- 검증: `node tests/character-inactive-lifecycle.test.cjs`, `node tests/character-activity-concurrency.test.cjs`, `node scripts/verify-character-refresh-stage2.cjs --browser`, release manifest. 브라우저 테스트는 PLAYWRIGHT_MODULE 및 필요 시 CHROME_PATH 설정, visitor helper 선행, 운영 쓰기 없음.
+- rollback은 같은 이름 `_rollback.sql`의 신규 비활성 전환 동결이다. 기존 비활성/감사/쓰기 방어와 복원 경로는 보존하며 비활성 데이터가 남아 있는 동안 관리자 탭을 제거하지 않는다. 전체 상태 일괄 복원/열 삭제 금지.
+- 추가 사용자 요청: 더샷의 랭킹/명예의전당 누락 원인을 같은 회차에서 확인한다. 조회 제외와 혼합 장비 판정 문제를 구분하고, 승인 없는 장비 판정 정책 변경·과거 최대값 강제 반영은 하지 않는다. 실제 근거/후속 상태는 LOG에 기록한다.
 
 ## 제외 리스트 B 화면 계약
 

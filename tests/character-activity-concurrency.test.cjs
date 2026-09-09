@@ -97,6 +97,32 @@ const {Client}=require('./runtime/postgres/node_modules/pg');
      assert.ok(elapsedMs<1500,'190-row lifecycle sweep exceeded local safety budget');
      console.log(JSON.stringify({test:'lifecycle sweep',phase,characters:190,elapsedMs,localOnly:true}));
    }
+   // Add the DB-only lifecycle to the same real two-connection harness.
+   await a.query(`alter table character_master add column lookup_policy_reason text;
+     create table kinojo_server_automation_settings(automation_key text,running boolean,active_session_id text,last_message text);`);
+   await a.query(fs.readFileSync('supabase/migrations/20260909092154_character_activity_relation_recheck.sql','utf8'));
+   const adminSource=fs.readFileSync('supabase/migrations/20260908062618_character_refresh_eligibility_and_restore.sql','utf8');
+   await a.query(adminSource.slice(adminSource.indexOf('create or replace function public.kinojo_admin_character_lookup_policy_update('),adminSource.indexOf('create or replace function private.kinojo_db_only_list_restore_allowed')));
+   await a.query(fs.readFileSync('supabase/migrations/20260909143826_character_activity_inactive.sql','utf8'));
+   await a.query(`update character_master set server_id=2008,legion_name='external',is_active=true,class_name='궁성',char_key='1234567890'||id where id in(1,2);
+     insert into private.character_activity_checks(character_id,session_id,claim_id,claimed_at,lease_until,next_check_at,source_revision,checked_at,outcome,profile)
+     select id,'synthetic',gen_random_uuid(),now(),now()+interval '1 minute',now()+interval '7 days',to_jsonb(c),now(),'VERIFIED',
+       jsonb_build_object('serverId',server_id,'characterName',character_name,'regionName',legion_name) from character_master c where id in(1,2);
+     select private.kinojo_character_activity_reconcile(1);
+     update private.character_activity_lifecycle set excluded_at=now()-interval '1 month',cleanup_candidate_at=now()-interval '1 second' where character_id=1;`);
+   await b.query('begin');
+   await b.query("insert into google_list_sheet_sync_queue(character_id,sync_status) values(1,'queued')");
+   await assert.rejects(reconcile(),e=>e.code==='55P03','an uncommitted LIST enqueue fences inactivity');
+   await b.query('rollback');
+   await a.query('begin');assert.equal((await reconcile()).rows[0].p.inactive,true);
+   await assert.rejects(b.query("insert into google_list_sheet_sync_queue(character_id,sync_status) values(1,'queued')"),e=>e.code==='55P03','inactivity fences a concurrent queue writer');
+   await a.query('commit');
+   await assert.rejects(b.query("insert into google_list_sheet_sync_queue(character_id,sync_status) values(1,'queued')"),/CHARACTER_INACTIVE_LIST_WRITE_BLOCKED/);
+   await b.query("update character_master set is_active=true,visibility_excluded=false where id=1");
+   assert.equal((await a.query('select is_active from character_master where id=1')).rows[0].is_active,false);
+   await b.query("update character_master set server_id=2002,legion_name='깡' where id=2");
+   assert.equal((await reconcile()).rows[0].p.inactive,false);
+   console.log('PASS: inactive/LIST two-way transaction fence, stale replay and family restoration');
  }finally{
    for(const c of clients){await c.query('rollback').catch(()=>{});await c.end().catch(()=>{});}
    execFileSync(binaries.pg_ctl,['-D',dir,'stop','-m','fast','-w'],{windowsHide:true,stdio:'pipe',timeout:10000});
