@@ -4,6 +4,12 @@
 
 ## 기준 및 파일
 
+### 본부캐 조회 자격 후속 계약
+
+- `20260909060134_character_family_lookup_eligibility.sql`은 기존 private 정책 함수만 교체한다. 지켈(2002) 깡·키나노동조합·낮·밤과 canonical 가족관계를 사용하며 수동 제외/삭제후보/보관 우선순위 및 현재 성역 독립 포함은 유지한다. Master 행/시트/스케줄을 변경하지 않는다. 이미 적용된 migration은 재실행하지 않는다.
+- WEB `family=2026090901`은 서버가 keyMatched=true로 검증한 동일 서버/이름에 변경 없음 안내만 표시한다. 실제 이름/서버 변경의 기존 승인 흐름은 유지한다. 신규 Edge 없음. 본부캐의 외부 레기온만으로 기존 list 복원 조건을 완화하지 않는다.
+- `node tests/character-family-eligibility.test.cjs`, `node tests/character-identity-unchanged.test.cjs` 및 기존 40개 runner로 검증한다. rollback은 이전 정책 함수를 복원해 누락도 되돌리므로 장애 때만 사용한다. 적용 직전/직후 전체 Master digest·제외 우선순위·권한과 bsin/히키키를 확인한다.
+
 ### 공개 스냅샷 분리 후속 계약
 
 - `20260908145200_character_db_only_restore_source.sql`은 Worker가 추가하는 `server_queue:` 출처 접두사를 정확히 인정한다. 최신 원본·동일 key·현재 깡 레기온·조회 자격 검증은 유지하며, DB에 남은 과거 행 번호로 다른 캐릭터 행을 덮어쓰지 않는다. `node tests/character-refresh-policy.test.cjs`가 접두사·외부 레기온·수동 제외·stale 증거·append/readback을 검증한다.

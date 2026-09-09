@@ -873,7 +873,7 @@
   }
 
   function queryExcluded(c){return c.lookupPolicy?c.lookupPolicy.eligible!==true:c.lookupExcluded;}
-  function policyReasonLabel(reason){return ({DELETION_CANDIDATE:'삭제후보',ADMIN_EXCLUDED:'관리자 조회 제외',ADMIN_INCLUDED:'관리자 계속 조회',ARCHIVED_RECORD:'보관된 기록',CURRENT_SANCTUARY:'현재 성역 참여',MANAGED_LEGION:'관리 레기온 소속',ACTIVITY_REVIEW_DUE:'활동 관계 재검토 도래',ACTIVITY_REVIEW_WAIT:'활동 관계 재검토 대기',CHARACTER_NOT_FOUND:'DB 정보 없음'})[reason]||'정책 확인 필요';}
+function policyReasonLabel(reason){return ({DELETION_CANDIDATE:'삭제후보',ADMIN_EXCLUDED:'관리자 조회 제외',ADMIN_INCLUDED:'관리자 계속 조회',ARCHIVED_RECORD:'보관된 기록',CURRENT_SANCTUARY:'현재 성역 참여',MANAGED_LEGION:'관리 레기온 소속',MANAGED_LEGION_FAMILY:'본부캐 그룹 관리 레기온 소속',ACTIVITY_REVIEW_DUE:'활동 관계 재검토 도래',ACTIVITY_REVIEW_WAIT:'활동 관계 재검토 대기',CHARACTER_NOT_FOUND:'DB 정보 없음'})[reason]||'정책 확인 필요';}
   function filteredCharacters(){
     const filter=$('#characterStateFilter')?.value||'attention';
     if(filter==='review')return state.characters.filter(c=>c.exclusionReviewRequired);
@@ -999,6 +999,12 @@
         return;
       }
       const current=probe.current||{},candidate=probe.candidate||{};
+      if(candidate.keyMatched!==true)throw new Error('고유키 일치가 확인되지 않아 변경하지 않습니다.');
+      if(Number(current.serverId)>0&&Number(current.serverId)===Number(candidate.serverId)
+        &&current.characterName&&current.characterName===candidate.characterName){
+        toast('변경 없음 · 정상 확인. 서버와 캐릭터명이 그대로이며 Master·list는 변경하지 않았습니다.');
+        return;
+      }
       const before=[current.serverName,current.characterName].filter(Boolean).join(' ')||'현재 캐릭터';
       const after=[candidate.serverName,candidate.characterName].filter(Boolean).join(' ')||'새 캐릭터';
       if(!confirm(before+' → '+after+'\n\n동일 고유키가 확인됐습니다. 이름의 이전 소유자가 있으면 그 캐릭터도 고유키로 재확인합니다. 완전 탐색 미발견 시 기존 기록은 _D 삭제후보로 보존됩니다. 오류·충돌은 변경하지 않습니다. Master와 list 시트를 변경할까요?'))return;

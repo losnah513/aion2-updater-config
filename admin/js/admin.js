@@ -35,7 +35,7 @@
     if(modulePromises.has(name))return modulePromises.get(name);
     const promise=new Promise((resolve,reject)=>{
       const script=document.createElement('script');
-      const characterRevision=['admin-characters.js','admin-bootstrap.js'].includes(name)?'&character=2026090802&automation=2026090801&completion=2026090801':'';
+      const characterRevision=['admin-characters.js','admin-bootstrap.js'].includes(name)?'&character=2026090802&automation=2026090801&completion=2026090801&family=2026090901':'';
       const bannerRevision=['admin-banner-tabs.js','admin-banner-library.js'].includes(name)?'&context=2026090901':'';
       script.src=new URL(name+'?cache='+encodeURIComponent(CACHE)+characterRevision+bannerRevision,base).href;
       script.async=false;

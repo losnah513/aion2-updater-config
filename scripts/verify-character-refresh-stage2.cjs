@@ -10,6 +10,8 @@ const tests=[
   "tests/list-sanctuary-integration.test.cjs",
   "tests/character-refresh-stability-adversarial.test.cjs",
   "tests/character-refresh-policy.test.cjs",
+  "tests/character-family-eligibility.test.cjs",
+  "tests/character-identity-unchanged.test.cjs",
   "tests/character-refresh-stage2-boundaries.test.cjs",
   "tests/character-refresh-server-transfer-legion-contract.test.js",
   "tests/admin-queue-materialized-status-runtime.test.js",
