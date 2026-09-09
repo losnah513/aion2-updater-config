@@ -735,37 +735,70 @@
     if(!root||!isMaster())return;
     const roles=Array.isArray(data?.roles)?data.roles:['MEMBER','STAFF','MANAGER','SUB_MASTER','MASTER'];
     const items=Array.isArray(data?.items)?data.items:[];
-    root.innerHTML=items.length?'<table class="admin-role-permission-table"><thead><tr><th>기능</th>'+roles.map(role=>'<th>'+esc(SANCTUARY_ROLE_LABELS[role]||role)+'</th>').join('')+'</tr></thead><tbody>'+items.map(item=>'<tr><th><strong>'+esc(item.label||item.permissionKey)+'</strong><small>'+esc(item.description||'')+'</small></th>'+roles.map(role=>{const checked=role==='MASTER'||item.roles?.[role]===true;return '<td><label class="admin-permission-toggle"><input type="checkbox" data-sanctuary-role-permission data-role="'+esc(role)+'" data-permission="'+esc(item.permissionKey)+'" '+(checked?'checked':'')+' '+(role==='MASTER'?'disabled':'')+'/><span>'+(checked?'ON':'OFF')+'</span></label></td>';}).join('')+'</tr>').join('')+'</tbody></table>':'<div class="admin-empty">등록된 성역 권한 항목이 없습니다.</div>';
+    const selected=roles.includes(state.sanctuaryPermissionRole)?state.sanctuaryPermissionRole:roles[0];
+    state.sanctuaryPermissionRole=selected;
+    // Presentation only: neither labels nor selected grade create an effective grant.
+    const active=document.activeElement;
+    const focus=state.sanctuaryPermissionFocus||(active&&root.contains(active)?{role:active.dataset.role,key:active.dataset.permission}:null);
+    const openHelp=new Set(Array.from(root.querySelectorAll('details[open]')).map(el=>el.dataset.permissionHelp));
+    const cellClass=role=>'admin-permission-grade'+(role===selected?' is-selected-grade':'');
+    root.innerHTML=items.length?'<label class="admin-permission-role-picker">등급 <select data-permission-role-picker aria-label="표시할 권한 등급">'+roles.map(role=>'<option value="'+esc(role)+'" '+(role===selected?'selected':'')+'>'+esc(SANCTUARY_ROLE_LABELS[role]||role)+'</option>').join('')+'</select></label><table class="admin-role-permission-table"><caption class="admin-permission-sr-only">성역 등급별 기본 권한 · Master는 항상 허용</caption><thead><tr><th scope="col" class="admin-permission-feature">기능</th>'+roles.map(role=>'<th scope="col" data-grade="'+esc(role)+'" class="'+cellClass(role)+'">'+esc(SANCTUARY_ROLE_LABELS[role]||role)+'</th>').join('')+'</tr></thead><tbody>'+items.map(item=>{
+      const label=item.label||item.permissionKey;
+      const help=item.description?'<details data-permission-help="'+esc(item.permissionKey)+'" '+(openHelp.has(item.permissionKey)?'open':'')+'><summary>'+esc(label)+'</summary><p>'+esc(item.description)+'</p></details>':'<strong>'+esc(label)+'</strong>';
+      return '<tr><th scope="row" class="admin-permission-feature">'+help+'</th>'+roles.map(role=>{
+        const checked=role==='MASTER'||item.roles?.[role]===true;
+        return '<td data-grade="'+esc(role)+'" class="'+cellClass(role)+'"><label class="admin-permission-toggle"><input type="checkbox" data-sanctuary-role-permission data-role="'+esc(role)+'" data-permission="'+esc(item.permissionKey)+'" aria-label="'+esc((SANCTUARY_ROLE_LABELS[role]||role)+' · '+label+(role==='MASTER'?' · 항상 허용':''))+'" '+(checked?'checked':'')+' '+(role==='MASTER'||state.sanctuaryPermissionSaving?'disabled':'')+'/></label></td>';
+      }).join('')+'</tr>';
+    }).join('')+'</tbody></table>':'<div class="admin-empty">등록된 성역 권한 항목이 없습니다.</div>';
+    root.querySelector('[data-permission-role-picker]')?.addEventListener('change',event=>{
+      state.sanctuaryPermissionRole=event.target.value;
+      root.querySelectorAll('[data-grade]').forEach(cell=>cell.classList.toggle('is-selected-grade',cell.dataset.grade===event.target.value));
+    });
+    if(focus?.key){
+      Array.from(root.querySelectorAll('[data-sanctuary-role-permission]')).find(input=>input.dataset.role===focus.role&&input.dataset.permission===focus.key)?.focus();
+    }
+    state.sanctuaryPermissionFocus=null;
   }
 
   async function loadSanctuaryRolePermissions(){
     const card=$('#sanctuaryRolePermissionCard');
     if(card)card.hidden=!isMaster();
-    if(!isMaster())return;
+    if(!isMaster()||state.sanctuaryPermissionSaving||state.sanctuaryPermissionLoading)return;
+    state.sanctuaryPermissionLoading=true;
     setStatus('#sanctuaryRolePermissionStatus','등급별 권한을 불러오는 중...','');
     try{
       const data=await action('sanctuaryRolePermissions',{});
       if(!data||data.ok===false)throw new Error(data?.message||'권한표 조회 실패');
       state.sanctuaryRolePermissions=data;
       renderSanctuaryRolePermissions(data);
-      setStatus('#sanctuaryRolePermissionStatus','등급별 기본 권한이 적용 중입니다. MASTER 권한은 항상 ON입니다.','ok');
+      setStatus('#sanctuaryRolePermissionStatus','Master 항상 허용 · 변경 시 바로 저장','ok');
     }catch(err){setStatus('#sanctuaryRolePermissionStatus',err.message||String(err),'error');}
+    finally{state.sanctuaryPermissionLoading=false;}
   }
 
   async function setSanctuaryRolePermission(input){
     if(!isMaster()||!input)return;
-    input.disabled=true;
+    if(state.sanctuaryPermissionSaving||state.sanctuaryPermissionLoading||input.dataset.role==='MASTER'){
+      renderSanctuaryRolePermissions(state.sanctuaryRolePermissions);
+      return;
+    }
+    const root=$('#sanctuaryRolePermissionMatrix');
+    state.sanctuaryPermissionFocus={role:input.dataset.role,key:input.dataset.permission};
+    state.sanctuaryPermissionSaving=true;
+    root?.setAttribute('aria-busy','true');
+    root?.querySelectorAll('[data-sanctuary-role-permission]').forEach(control=>{control.disabled=true;});
     try{
       const data=await action('sanctuaryRolePermissionSet',{role:input.dataset.role,permissionKey:input.dataset.permission,enabled:input.checked});
       if(!data||data.ok===false)throw new Error(data?.message||'권한 저장 실패');
       state.sanctuaryRolePermissions=data;
+      state.sanctuaryPermissionSaving=false;
       renderSanctuaryRolePermissions(data);
       setStatus('#sanctuaryRolePermissionStatus','권한 설정을 저장했습니다. 다음 Server 요청부터 적용됩니다.','ok');
     }catch(err){
-      input.checked=!input.checked;
-      input.disabled=false;
+      state.sanctuaryPermissionSaving=false;
+      renderSanctuaryRolePermissions(state.sanctuaryRolePermissions);
       setStatus('#sanctuaryRolePermissionStatus',err.message||String(err),'error');
-    }
+    }finally{state.sanctuaryPermissionSaving=false;root?.removeAttribute('aria-busy');}
   }
 
   Object.assign(A,{renderRequestPreview,requestRowHtml,loadCodeRequests,processRequest,loadAccounts,loadNextMemberPage_,loadPreviousMemberPage_,MEMBER_ROLE_LABELS,normalizeMemberRole,getAccountId,getAccountCode,getAccountName,getAccountRole,getAccountRoleLabel,getAccountCanEdit,getAccountAllowedRoles,memberImageSessionToken_,renderMemberImageGroups_,selectMemberImageCharacter_,loadMemberImageGroups_,clearAdminImagePreview_,showAdminImagePreview_,adminImageRequestStyleLabel_,adminImageRequestAcknowledgementLabel_,renderMemberImageRequestCards_,renderMemberImageRequestDetail_,loadMemberImageRequests_,loadMemberImageRequestDetail_,showAdminImageRequestPreview_,downloadAdminImageRequest_,acknowledgeMemberImageRequest_,ensureMemberImageModal,openMemberImageModal,closeMemberImageModal,updateMemberImageReviewBadges_,renderMemberImageReviewSummary_,renderMemberImageReviewRows_,loadMemberImageReviews,scheduleMemberImageReviewSearch_,handleMemberImageReviewClick_,applyMemberFilters,renderAccounts,handleMemberAction,SANCTUARY_ROLE_LABELS,renderSanctuaryRolePermissions,loadSanctuaryRolePermissions,setSanctuaryRolePermission});

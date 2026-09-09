@@ -1,5 +1,15 @@
 # KINOJO WEB HANDOFF
 
+## 성역 Stage14 권한 기반 준비 · 운영 미반영
+
+- 기준 main42744df157ad0265fef36a98d23a4842d2ec4680, branch `codex/sanctuary-stage14-permissions`. 사용자 승인: 생성자 자기 팀 운영 유지, Staff 실제 담당 일정만, Manager 이상 기능별 관리, 운영자 지정 Master만, 지원 취소 동반 모드 변경은 지원 처리 권한 필요. 광역 개인 예외는 별도 이관 대상으로 보존한다.
+- 로컬 준비: `20260909111151_sanctuary_permission_foundation.sql`의 private 담당관계·capability·canonical 변경분류. 아직 command/lease/bootstrap에 연결하지 않았고 운영 DB에 적용하지 않았다. 단독 배포하거나 구 권한 결함이 해결됐다고 판단하지 않는다.
+- 권한표는 920px 제한, 등급별 좁은 열, 설명 펼침, 모바일 등급 선택, 44px 조작 영역. 서버 값을 그대로 렌더한다. 저장 직렬화·실패 복원·초점 복귀 검증. entrypoint cache/Pages 변경 및 배포는 아직 없다.
+- 검증: `PGLITE_MODULE` 설정 후 `node tests/sanctuary-permission-foundation.test.cjs`; `PLAYWRIGHT_MODULE` 및 선택 `CHROME_PATH`로 `node tests/sanctuary-permissions-ui.test.cjs` (1440/768/760/390/320). 방문 helper 적용, 로컬 synthetic fixture이며 운영 관리자 인증 검수와 다르다.
+- 읽기 전용 `supabase/tests/sanctuary_permission_preflight.sql`: 기존 담당6건은 새 team_id로 추측 연결하지 않는다. all2명/sanctuary_edit1명 원본 유지, 55개 등급·기능 예상값. 실행 직전 최신 설정을 다시 읽고 확인한다.
+- 다음: 실제 DB 상태→canonical 변환, SAVE_COMPOSITION 변경영역별 검사, 하위 command/등록/지원/lease 경로 통합, 등급 설정 revision/audit·운영자 UI, capability 응답 및 성역 UI 연결, 통합검증 후 일괄 전환. 기존 private.kinojo_sm_can_manage_team_v412는 현재 운영에 그대로 있으므로 보안 수정 완료가 아니다.
+- 계획·진행 권위: [성역 계획](https://drive.google.com/file/d/1smwTPWB3l6eXHxsE235nP0UPoPkOvjnq/view), [성역 LOG](https://drive.google.com/file/d/19lh9hkVKNsu9a54bd-k3rlvhIsCK_Khv/view). 준비 브랜치만 보존, 운영 Source는 미배포 코드로 덮어쓰지 않는다.
+
 ## 월별 정리 C 재개 지점
 
 - 기준 main064cde74, branch codex/character-monthly-cleanup. C의 읽기 전용 preflight SQL/로컬 테스트만 추가한다. DB DDL/DML·Edge·Apps Script·Cron·운영 삭제 변경 없음. B는 PR440 배포 완료, A22시 첫 실행 검수는 기존 자동화1.

@@ -376,23 +376,43 @@ KINOJO Sanctuary Schedule Admin 20260713 STEP 12
 @media(max-width:620px){.admin-schedule-auto-range{align-items:flex-start;flex-direction:column;}.admin-schedule-top-grid,.admin-schedule-grid{grid-template-columns:1fr;}.admin-schedule-grid label.wide{grid-column:auto;}.admin-schedule-mode{grid-template-columns:1fr 1fr;}.admin-schedule-mode span{min-height:72px;padding:10px 9px;}.admin-schedule-row-actions{justify-content:flex-start;}}
 .admin-event-editor-panel,.admin-event-preview-panel{max-height:100%;}
 
-/* 2026-07-15 sanctuary permission matrix / STAFF scoped console */
-.admin-role-permission-wrap{width:100%;overflow:auto;border:1px solid rgba(73,94,128,.16);border-radius:16px;background:#fff}
-.admin-role-permission-table{width:100%;min-width:760px;border-collapse:collapse;table-layout:fixed}
-.admin-role-permission-table th,.admin-role-permission-table td{padding:12px 10px;border-bottom:1px solid rgba(73,94,128,.12);border-right:1px solid rgba(73,94,128,.08);text-align:center;vertical-align:middle}
-.admin-role-permission-table thead th{position:sticky;top:0;z-index:1;background:#f5f8fd;color:#41516d;font-size:12px}
-.admin-role-permission-table tbody th{width:280px;text-align:left;background:#fbfcff}
-.admin-role-permission-table tbody th strong{display:block;font-size:13px;color:#202b40}
-.admin-role-permission-table tbody th small{display:block;margin-top:4px;color:#77839a;font-size:10px;line-height:1.45}
-.admin-permission-toggle{display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
-.admin-permission-toggle input{width:18px;height:18px;accent-color:#3978f6}
-.admin-permission-toggle span{min-width:28px;font-size:10px;font-weight:900;color:#77839a}
-.admin-permission-toggle input:checked+span{color:#24744a}
-.admin-permission-toggle input:disabled+span{opacity:.68}
+/* Sanctuary permissions: compact KINOJO surface; grants remain Server-owned. */
+.admin-role-permission-card{width:100%;max-width:920px;box-sizing:border-box}
+.admin-role-permission-card .admin-card-head{gap:12px;align-items:center}
+.admin-role-permission-card .admin-card-head h2{font-size:17px}
+.admin-role-permission-card .admin-card-head p{font-size:12px;line-height:1.5}
+.admin-role-permission-card .admin-statusline{font-size:12px;line-height:1.5;margin:8px 0}
+.admin-role-permission-wrap{width:100%;min-width:0;border:1px solid #dce3f2;border-radius:14px;background:#fff;overflow:hidden}
+.admin-role-permission-table{width:100%;min-width:0;border-collapse:collapse;table-layout:fixed}
+.admin-role-permission-table th,.admin-role-permission-table td{padding:4px 6px;border-bottom:1px solid #e8edf6;text-align:center;vertical-align:middle}
+.admin-role-permission-table thead th{height:38px;background:#f5f7ff;color:#52617d;font-size:12px;font-weight:600}
+.admin-role-permission-table .admin-permission-feature{width:34%;text-align:left;padding-left:14px}
+.admin-role-permission-table tbody th{color:#293958;font-size:13px;font-weight:600;overflow-wrap:anywhere}
+.admin-role-permission-table tbody tr:last-child>*{border-bottom:0}
+.admin-role-permission-table tbody tr:hover{background:#f8faff}
+.admin-role-permission-table details summary{min-height:44px;display:flex;align-items:center;gap:6px;cursor:pointer;list-style:none;font-weight:600;line-height:1.4}
+.admin-role-permission-table details summary::-webkit-details-marker{display:none}
+.admin-role-permission-table details summary::after{content:'⌄';margin-left:auto;color:#687bb2}
+.admin-role-permission-table details[open] summary::after{content:'⌃'}
+.admin-role-permission-table details p{margin:0 0 10px;color:#596a84;font-size:12px;font-weight:400;line-height:1.6}
+.admin-permission-toggle{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;cursor:pointer;border-radius:10px}
+.admin-permission-toggle:has(input:checked){background:#eef1ff}
+.admin-permission-toggle:has(input:disabled){cursor:default;opacity:.65}
+.admin-permission-toggle input{width:18px;height:18px;margin:0;accent-color:#5263ec;cursor:inherit}
+.admin-permission-toggle:focus-within,.admin-role-permission-table summary:focus-visible,.admin-permission-role-picker select:focus-visible{outline:2px solid #5968ef;outline-offset:2px}
+.admin-permission-role-picker{display:none}
+.admin-permission-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .kinojo-staff-console .admin-sanctuary-schedule-card{margin-top:0}
 .kinojo-staff-console .admin-shell{max-width:1180px}
 .kinojo-staff-console [data-admin-full-only]{display:none!important}
-@media(max-width:760px){.admin-role-permission-table{min-width:670px}.admin-role-permission-table th,.admin-role-permission-table td{padding:9px 7px}.admin-role-permission-table tbody th{width:220px}}
+@media(max-width:760px){
+  .admin-role-permission-card .admin-card-head{flex-wrap:wrap}
+  .admin-permission-role-picker{display:flex;align-items:center;gap:12px;padding:8px 12px;background:#f7f8ff;color:#52617d;font-size:12px}
+  .admin-permission-role-picker select{min-height:44px;flex:1;min-width:0;padding:6px 10px;border:1px solid #dce3f2;border-radius:10px;background:#fff;color:#344268;font:inherit}
+  .admin-role-permission-table .admin-permission-feature{width:auto;padding-left:10px}
+  .admin-role-permission-table .admin-permission-grade{display:none}
+  .admin-role-permission-table .is-selected-grade{display:table-cell;width:76px}
+}
 
 /* 2026-07-18 · 성역 프로필 상세 진단 UI */
 .admin-profile-diagnostic{padding:12px 14px;border-bottom:1px solid rgba(15,23,42,.08);background:#fff}

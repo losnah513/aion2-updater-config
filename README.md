@@ -1,5 +1,11 @@
 # KINOJO WEB
 
+## Sanctuary permissions Stage14 preparation
+
+LOCAL ONLY (2026-09-09): private capability foundation separates creator, exact active team assignment and function grants. STAFF assignment grants schedule only with the corresponding role bit. Master-only operator assignment does not promote accounts. Existing broad all/sanctuary_edit overrides are preserved for explicit migration review. No public command, lease or bootstrap uses this foundation yet; no production security fix is claimed.
+
+The permission matrix renders Server-provided values, uses a compact 920px surface and a mobile grade selector, and serializes local setting requests. Tests: `sanctuary-permission-foundation.test.cjs` (PGlite), `sanctuary-permissions-ui.test.cjs` (Playwright, visitor isolation). Operational assignment migration and composite-save authorization remain integration tasks. Revalidate when effective-capability, canonical-snapshot, catalog or RPC contracts change. Deployment status belongs to the Sanctuary project LOG.
+
 ## Monthly cleanup safety preflight
 
 CONFIRMED (2026-09-09): deleting a current Master directly is unsafe. Live catalog has40 inbound FKs (15 CASCADE/11 SET NULL/10 RESTRICT/4 NO ACTION). Identity-change history CASCADE and audit SET NULL require independent historical references before cleanup. FK-free `character_history.character_master_id`, growth rollups, Master-event JSON, banner ID arrays, and weekly growth's current-Master join also require ownership/read-path review. Mere row survival does not prove history remains readable. Revalidate when schema/readers change.
