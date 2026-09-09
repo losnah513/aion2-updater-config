@@ -66,8 +66,12 @@ for(const token of [
   'node tests/banner-stage7-random-event-workspace-contract.test.js',
   'node tests/banner-event-phase2-stage8-closeout-contract.test.js',
   'node tests/banner-phase2-post-stabilization-contract.test.js',
-  'for viewport in 1440,1200 768,1024 390,844',
+  'node tests/banner-admin-browser-e2e.cjs',
   '"admin/js/admin-banner-auto-pool.js"',
 ])assert.ok(verify.includes(token),`missing Stage 8 CI/readback gate: ${token}`);
+const runner=read('tests/banner-admin-browser-e2e.cjs');
+assert.ok(runner.includes('[[1440, 1200], [768, 1024], [390, 844]]'),'all three responsive viewports must run');
+assert.ok(runner.indexOf('await isolatePlaywrightPage(page)')<runner.indexOf('await page.goto('),'visitor isolation before navigation');
+assert.ok(runner.includes("!== 'PASS') throw new Error"),'browser failure must fail CI');
 
 console.log('PASS banner event phase-2 stage-8 integrated closeout contract');

@@ -23,6 +23,7 @@ on:
       - "tests/banner-home-main-live-e2e.js"
       - "tests/banner-admin-main-ui-contract.test.js"
       - "tests/banner-admin-chrome-e2e.html"
+      - "tests/banner-admin-browser-e2e.cjs"
       - "tests/banner-pc-side-live-e2e.js"
       - "tests/banner-mobile-main-live-e2e.js"
       - "admin/js/admin.js"
@@ -53,6 +54,7 @@ on:
       - "tests/banner-home-main-live-e2e.js"
       - "tests/banner-admin-main-ui-contract.test.js"
       - "tests/banner-admin-chrome-e2e.html"
+      - "tests/banner-admin-browser-e2e.cjs"
       - "tests/banner-pc-side-live-e2e.js"
       - "tests/banner-mobile-main-live-e2e.js"
       - "admin/js/admin.js"
@@ -94,6 +96,10 @@ jobs:
           node tests/banner-home-first-paint-contract.test.js
           node tests/home-layout-stability-contract.test.js
           node tests/home-loading-budget-contract.test.js
+          node tests/banner-delivery-publish.test.js
+          npm install --no-save --no-package-lock playwright@1.62.1 @electric-sql/pglite@0.5.8 >/dev/null
+          node tests/banner-delivery-db.test.cjs
+          CHROME_PATH="$(command -v google-chrome || command -v chromium)" node tests/home-banner-stability-e2e.cjs --fixture
           node <<'NODE'
           const assert=require('node:assert/strict');
           const fs=require('node:fs');
@@ -141,13 +147,7 @@ jobs:
             echo "Chrome/Chromium is required for banner admin E2E." >&2
             exit 1
           fi
-          "$chrome" --headless --no-sandbox --disable-gpu --allow-file-access-from-files \
-            --virtual-time-budget=30000 --dump-dom "file://$PWD/tests/banner-admin-chrome-e2e.html#images" \
-            > /tmp/banner-admin-chrome-e2e.html
-          if ! grep -F 'data-e2e-result="PASS"' /tmp/banner-admin-chrome-e2e.html; then
-            grep -o '<pre id="e2eResult">[^<]*' /tmp/banner-admin-chrome-e2e.html || true
-            exit 1
-          fi
+          CHROME_PATH="$chrome" node tests/banner-admin-browser-e2e.cjs
 
   verify-live-readback:
     if: github.event_name == 'push'
