@@ -1,5 +1,9 @@
 # KINOJO WEB
 
+## Legion Tree HOME navigation · 2026-09-09
+
+CONFIRMED: common `pageInfo()` must classify `/legion-tree/` and `/m/legion-tree/` as `legion-tree` before the HOME fallback. Otherwise Topbar generates HOME as `./`; the navigation extension corrects only the active styling, leaving the self-link intact. HOME targets `/` on PC and `/m/` on mobile. Regression: `tests/legion-tree-data-render-contract.test.js`; tree HTML uses `navigation=2026090901` to invalidate the old common UI cache. Revalidate when route classification or Topbar link construction changes. No DB/Edge or organization data changes.
+
 ## Banner context initialization · 2026-09-09
 
 CONFIRMED: lazy banner panel mounting must reconcile visibility with the selected MAIN/SIDE navigation, including cold SIDE entry. Asset broadcasts update lists but cannot mark an uninitialized library as loaded; its first read must initialize the Storage base URL. Regression: `tests/banner-library-management.test.js` and `tests/banner-admin-chrome-e2e.html`. Revalidate when lazy-loader order, panel routing or asset notification contracts change. Loader revision `context=2026090901`; no DB/Edge or existing asset/event mutations.

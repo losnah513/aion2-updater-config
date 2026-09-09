@@ -4,6 +4,25 @@ const path = require('path');
 const vm = require('vm');
 
 const rootDir = path.resolve(__dirname, '..');
+// Execute the actual common page classifier: a tree page must never select HOME.
+const commonUi = fs.readFileSync(path.join(rootDir, 'ui/kinojo-common-ui.js'), 'utf8');
+const pageInfoSource = commonUi.slice(commonUi.indexOf('  function pageInfo(){'), commonUi.indexOf('  function q('));
+for (const [pathname, key, root, mobile] of [
+  ['/legion-tree/', 'legion-tree', '../', false],
+  ['/legion-tree/index.html', 'legion-tree', '../', false],
+  ['/m/legion-tree/', 'legion-tree', '../../', true],
+  ['/m/legion-tree/index.html', 'legion-tree', '../../', true],
+  ['/', 'home', './', false], ['/m/', 'home', '../', true],
+  ['/legion-roster/', 'legion-roster', '../', false],
+  ['/m/legion-roster/', 'legion-roster', '../../', true],
+  ['/ranking/', 'ranking', '../', false], ['/m/hof/', 'hall', '../../', true],
+]) {
+  const info = vm.runInNewContext(pageInfoSource + '\npageInfo()', { location: { pathname } });
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(info)), {key, label: info.label, root, mobile}, pathname);
+}
+for (const entry of ['legion-tree/index.html', 'm/legion-tree/index.html']) {
+  assert.ok(fs.readFileSync(path.join(rootDir, entry), 'utf8').includes('kinojo-common-ui.js?cache=2026083001&navigation=2026090901'), entry + ': navigation cache refresh');
+}
 const scriptPath = path.join(rootDir, 'legion-tree/js/legion-tree.js');
 const script = fs.readFileSync(scriptPath, 'utf8');
 const pc = fs.readFileSync(path.join(rootDir, 'legion-tree/index.html'), 'utf8');
