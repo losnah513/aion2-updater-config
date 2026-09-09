@@ -1,5 +1,11 @@
 # KINOJO WEB HANDOFF
 
+## 제외 리스트 B 화면 계약
+
+- 기준 main8838ba20, branch codex/character-exclusion-grid. Server 사유 코드 표시만 변경: PC3열/태블릿2열/모바일1열, 약6줄 내부 스크롤. summary 사유 칩도 native 펼침, nested button 없음. 상세 카드는 전체 열을 사용하며 목록 높이는 유지한다.
+- exclusions=2026090901 JS/CSS·PC/mobile cache. 기존 browser 테스트에서0/1/18/19/72건·칩/키보드/overflow/쓰기 없음 검증. 방문 helper 선행. A22시 검수는 예약 자동화1, C삭제 미착수. 실제 배포·Drive 마감은 프로젝트 LOG를 확인한다.
+- 롤백은 이 WEB 변경만 revert, 서버/사용자 데이터 변경 없음.
+
 ## 캐릭터 상세 공식 신원 응답 호환 · 2026-09-09
 
 - character-detail-refresh API305.6은 공식 info.profile.profileImage의 검증된 profileimg.plaync.com HTTPS 주소에서 charKey를 문자열로 읽어 기존 SQL 신원 proof에 전달한다. 공식 info에는 별도 profile.charKey가 없으므로 이전 v10은 정상 캐릭터도 INIT에서 차단했다.

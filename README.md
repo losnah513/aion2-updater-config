@@ -1,5 +1,9 @@
 # KINOJO WEB
 
+## Exclusion list layout contract
+
+The exclusions workspace reuses Server policy: PC three columns, two below1100px, one below700px, and a bounded approximately six-row internal scroller. Native summary owns name/reason chips/keyboard toggle; no nested buttons. Expanded cards span the grid inside the same scroller. Unknown codes never imply legion departure. Other workspaces and editing remain unchanged. Recheck `node tests/character-refresh-ui-browser.test.cjs` on rendering/breakpoint/policy display changes. Deployment status belongs to the project LOG.
+
 ## HOME banner delivery stability · 2026-09-09
 
 CONFIRMED: PC HOME previously painted a seasonal image before Server validation. Initial/empty/error states now use a neutral SVG; schedules/order remain Server-owned. The PC frame is fixed at 16:9, hover no longer translates it, and crossfade backgrounds use the image's content box. Mobile retains its compact crop. Expired manifests cannot install a late image.

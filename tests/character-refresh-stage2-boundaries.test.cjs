@@ -43,7 +43,7 @@ async function run(){
  let ack=0;c.rpc=async(name)=>{if(name.includes('pending'))return{ok:true,items:[{queueId:1,queueRevision:'revision',id:1,listRow:6}]};ack++;return{ok:true};};
  c.syncList=async()=>({ok:false});r=await c.flushAdminIdentityList('local-fixture',1);assert.equal(r.ok,false);assert.equal(ack,0);
  console.log('PASS: old and new name checks, namesake rejection, incomplete collision causes no apply, failed list stays pending');
- const container={innerHTML:''},filter={value:'all'};
+ const container={innerHTML:'',classList:{toggle(){}},setAttribute(){}},filter={value:'all'};
  const A={state:{characters:[{characterId:1,characterName:'guest',serverId:2003,className:'궁성',hasPersistentKey:true,identityListPendingCount:2,lookupPolicy:{reason:'ACTIVITY_REVIEW_WAIT',eligible:false,scope:'GROUP',individualMode:'INHERIT'}}]},$:s=>s==='#characterList'?container:s==='#characterStateFilter'?filter:null,esc:s=>String(s??'').replace(/[<>&"]/g,'_'),formatServerTime:s=>s};
  A.state.characterWorkspace='exclusions';
  const ui=vm.createContext({window:{KinojoAdmin:A},document:{addEventListener(){}}});vm.runInContext(read('admin/js/admin-characters.js'),ui);A.renderCharacters();
