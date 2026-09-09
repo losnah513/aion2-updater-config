@@ -13,7 +13,7 @@ const CORS: Record<string,string> = {
   "cache-control":"no-store",
   "x-content-type-options":"nosniff"
 };
-const API_VERSION="305.5";
+const API_VERSION="305.6";
 const CONTRACT="302";
 const SUPABASE_URL=String(Deno.env.get("SUPABASE_URL")||"").replace(/\/$/,"");
 const SERVICE_ROLE_KEY=String(Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"");
@@ -261,11 +261,21 @@ async function patchJob(job:Record<string,any>,patch:Record<string,any>){
 
 function assertDetailIdentity(master:Record<string,any>,info:Record<string,any>){
   const p=object(info.profile),key=clean(master.char_key,120);
-  if(!/^[0-9]+$/.test(key)||typeof p.charKey!=="string"||p.charKey!==key||
+  // Official info places the exact decimal key in profileImage, not a charKey field.
+  // Keep it a string: these identifiers exceed JavaScript's safe integer range.
+  let imageKey="";
+  try{
+    const image=new URL(clean(p.profileImage,3000));
+    const values=image.searchParams.getAll("charKey");
+    if(image.protocol==="https:"&&image.hostname==="profileimg.plaync.com"&&values.length===1&&/^[0-9]+$/.test(values[0]))imageKey=values[0];
+  }catch{/* No verified official image key. */}
+  const charKey=Object.prototype.hasOwnProperty.call(p,"charKey")?p.charKey:imageKey;
+  if(!/^[0-9]+$/.test(key)||typeof charKey!=="string"||charKey!==key||(imageKey&&imageKey!==charKey)||
     positiveInt(p.serverId)!==positiveInt(master.server_id)||!clean(p.characterName)||
     normalizeName(p.characterName)!==normalizeName(master.character_name)||
     !clean(master.class_name)||clean(p.className)!==clean(master.class_name))
     throw new DetailError("공식 신원이 저장된 캐릭터와 일치하지 않습니다. 캐릭터 정보 최신화를 먼저 진행해 주세요.","DETAIL_IDENTITY_MISMATCH",409,{retryable:false});
+  return {...info,profile:{...p,charKey}};
 }
 
 function countTotals(items:any[]){
@@ -305,8 +315,7 @@ async function initializeJob(job:Record<string,any>,counter:{calls:number}){
   if(!characterId)throw new DetailError("PLAYNC 캐릭터 식별값을 확인할 수 없습니다.","CHARACTER_ID_MISSING",409,{retryable:false});
   const serverId=positiveInt(master.server_id);if(!serverId)throw new DetailError("캐릭터 서버 ID가 없습니다.","SERVER_ID_MISSING",409,{retryable:false});
   await patchJob(job,{character_id:characterId,server_id:serverId,character_name:master.character_name,current_category:"basic",current_label:"최신 프로필·장비 목록 확인 중",last_heartbeat_at:new Date().toISOString()});
-  const info=await officialJson(officialUrl("/api/character/info",{serverId,characterId}),job.id,"CHARACTER_DETAIL_INFO",counter);
-  assertDetailIdentity(master,info);
+  const info=assertDetailIdentity(master,await officialJson(officialUrl("/api/character/info",{serverId,characterId}),job.id,"CHARACTER_DETAIL_INFO",counter));
   const equipment=await officialJson(officialUrl("/api/character/equipment",{serverId,characterId}),job.id,"CHARACTER_DETAIL_EQUIPMENT_LIST",counter);
   const items=equipmentItems(equipment),boards=daevanionBoards(info),totals=countTotals(items);
   if(items.length<1)throw new DetailError("PLAYNC 장착 장비 목록이 비어 있습니다.","DETAIL_EQUIPMENT_EMPTY",409);
