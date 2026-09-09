@@ -52,6 +52,7 @@ on:
       - "supabase/migrations/20260824143000_banner_event_manager_v398.sql"
       - "supabase/migrations/20260824232500_attach_legacy_lookbooks_v399.sql"
       - "tests/banner-admin-chrome-e2e.html"
+      - "tests/banner-admin-browser-e2e.cjs"
       - ".github/workflows/verify-banner-admin.yml"
   push:
     branches: [main]
@@ -104,6 +105,7 @@ on:
       - "supabase/migrations/20260824143000_banner_event_manager_v398.sql"
       - "supabase/migrations/20260824232500_attach_legacy_lookbooks_v399.sql"
       - "tests/banner-admin-chrome-e2e.html"
+      - "tests/banner-admin-browser-e2e.cjs"
       - ".github/workflows/verify-banner-admin.yml"
   workflow_dispatch:
 
@@ -169,19 +171,8 @@ jobs:
             echo "Chrome/Chromium is required for banner admin tab E2E." >&2
             exit 1
           fi
-          for viewport in 1440,1200 768,1024 390,844; do
-            output="/tmp/banner-admin-chrome-e2e-${viewport//,/-}.html"
-            "$chrome" --headless --no-sandbox --disable-gpu --allow-file-access-from-files \
-              --disable-background-networking --disable-component-update --disable-sync \
-              --metrics-recording-only --no-first-run --no-default-browser-check \
-              --window-size="$viewport" --force-device-scale-factor=1 \
-              --virtual-time-budget=30000 --dump-dom "file://$PWD/tests/banner-admin-chrome-e2e.html#images" \
-              > "$output"
-            if ! grep -F 'data-e2e-result="PASS"' "$output"; then
-              grep -o '<pre id="e2eResult">[^<]*' "$output" || true
-              exit 1
-            fi
-          done
+          npm install --no-save --no-package-lock playwright@1.62.1 >/dev/null
+          CHROME_PATH="$chrome" node tests/banner-admin-browser-e2e.cjs
 
   verify-live-readback:
     if: github.event_name == 'push'

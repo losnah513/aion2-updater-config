@@ -251,24 +251,24 @@ async function verifyPlaybackRuntime(){
   loaderContext={
     window:{scrollY:0,innerWidth:1920,innerHeight:900,outerWidth:1920,devicePixelRatio:1,screen:{availWidth:1920},location:{pathname:'/meter/'},getComputedStyle(){return{display:'grid'}},addEventListener(){}},
     document:{
-      readyState:'complete',currentScript:{src:'https://kinojo.info/ui/kinojo-pc-banners.js?cache=2026090708'},documentElement:{clientWidth:1920,appendChild(){}},
+      readyState:'complete',currentScript:{src:'https://kinojo.info/ui/kinojo-pc-banners.js?cache=2026090902'},documentElement:{clientWidth:1920,appendChild(){}},
       head:{appendChild(script){loadedScripts.push(script.src);loaderContext.window.KinojoBannerRuntime={mountBanner(options){loaderCalls.push(options.pageCode+':'+options.slotCode);options.deactivate?.();return{stop(){}}}};script.onload?.();return script}},
       querySelectorAll(){return[loaderSlot]},createElement(tag){return new FakeElement(tag)},addEventListener(){},
     },
     WeakSet,Map,Promise,URL,Object,String,Math,console,
   };
   vm.runInNewContext(pcBannerSource,loaderContext,{filename:'ui/kinojo-pc-banners.js'});await new Promise(resolve=>setTimeout(resolve,0));
-  assert.deepEqual(loadedScripts,['https://kinojo.info/ui/kinojo-banner-runtime.js?cache=2026090708'],'PC pages without a static runtime tag must load the shared Manifest client from the same /ui/ base');
+  assert.deepEqual(loadedScripts,['https://kinojo.info/ui/kinojo-banner-runtime.js?cache=2026090902'],'PC pages without a static runtime tag must load the shared Manifest client from the same /ui/ base');
   assert.deepEqual(loaderCalls,['METER:LEFT'],'dynamically loaded shared runtime must receive the canonical page/slot target');
   assert.equal(loaderSlot.dataset.kinojoPcBannerState,'empty','inactive SIDE Manifest must keep the existing empty slot');
   assert.equal(/og:image|twitter:image/.test(source),false,'Banner runtime must not rewrite static SEO fallback metadata');
 
   const supabaseClientIndex=pcHome.indexOf('core/kinojo-supabase-client.js?cache=2026080205');
-  const runtimeIndex=pcHome.indexOf('ui/kinojo-banner-runtime.js?cache=2026090708');
+  const runtimeIndex=pcHome.indexOf('ui/kinojo-banner-runtime.js?cache=2026090902');
   const manifestCallIndex=pcHome.indexOf('runtime.mountBanner({');
   assert.ok(supabaseClientIndex>=0&&runtimeIndex>supabaseClientIndex&&manifestCallIndex>runtimeIndex,'PC HOME must load Supabase client, then Banner runtime, then mount HOME:MAIN playback');
   assert.match(pcHome,/<a class="kinojo-main-banner is-manifest-pending" href="hof\/"[^>]*aria-busy="true"/,'PC fallback link must remain available and expose the pending Server state');
-  assert.match(pcHome,/<img id="kinojo-main-banner-image" src="https:\/\/kinojo\.info\/assets\/images\/common\/kinojo_banner_summer\.webp" fetchpriority="high" alt="KINOJO INFO 깡 레기온 대표 배너">/,'PC default visual must use the optimized approved first banner with high fetch priority');
+  assert.ok(pcHome.includes('src="assets/images/common/kinojo-banner-placeholder.svg"'), 'PC initial/error state must not advertise an unvalidated campaign');
   assert.match(pcHome,/<meta property="og:image" content="https:\/\/kinojo\.info\/assets\/images\/common\/kinojo-og\.jpg">/,'PC Open Graph fallback must stay on the static kinojo-og.jpg');
   assert.match(pcHome,/<meta property="og:image:width" content="1536">/);
   assert.match(pcHome,/<meta property="og:image:height" content="864">/);
@@ -281,11 +281,11 @@ async function verifyPlaybackRuntime(){
   assert.equal(/runtime\.fetchManifest\(/.test(pcHome),false,'PC HOME must not implement a page-specific Manifest player');
 
   const mobileSupabaseClientIndex=mobileHome.indexOf('../core/kinojo-supabase-client.js?cache=2026080205');
-  const mobileRuntimeIndex=mobileHome.indexOf('../ui/kinojo-banner-runtime.js?cache=2026090708');
+  const mobileRuntimeIndex=mobileHome.indexOf('../ui/kinojo-banner-runtime.js?cache=2026090902');
   const mobileManifestCallIndex=mobileHome.indexOf('runtime.mountBanner({');
   assert.ok(mobileSupabaseClientIndex>=0&&mobileRuntimeIndex>mobileSupabaseClientIndex&&mobileManifestCallIndex>mobileRuntimeIndex,'mobile HOME must load Supabase client, then shared Banner runtime, then mount HOME:MAIN playback');
   assert.match(mobileHome,/<a class="mobile-og-banner is-manifest-pending" href="hof\/"[^>]*aria-busy="true"/,'mobile fallback link must remain available but visually pending before a Server Manifest resolves');
-  assert.match(mobileHome,/<img id="kinojo-main-banner-image" src="\.\.\/assets\/images\/common\/kinojo-og\.jpg\?cache=26062218" alt="KINOJO INFO 깡 레기온 대표 배너">/,'mobile default visual fallback must remain kinojo-og.jpg with a non-empty alt');
+  assert.ok(mobileHome.includes('src="../assets/images/common/kinojo-banner-placeholder.svg"'), 'mobile initial/error state must be season-neutral');
   assert.match(mobileHome,/<meta property="og:image" content="https:\/\/kinojo\.info\/assets\/images\/common\/kinojo-og\.jpg">/,'mobile Open Graph fallback must use the same static kinojo-og.jpg');
   assert.match(mobileHome,/<meta property="og:image:width" content="1536">/);
   assert.match(mobileHome,/<meta property="og:image:height" content="864">/);
