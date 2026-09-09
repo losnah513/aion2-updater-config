@@ -1,5 +1,13 @@
 # KINOJO WEB HANDOFF
 
+## 명부 가족 편집의 보관 기록 제외·연결 해제 · 2026-09-09
+
+- 기준 main7a79170e, branch codex/roster-family-unlink. 검찌 옛 서버 중복25929가 inactive/visibility_excluded인데 family reader가 available=false 노드로 반환해 편집·저장을 막던 공통 문제를 수정한다. 특정 ID 예외는 없다.
+- DB487 migration/rollback20260909095156_roster_family_editable_unlink. 활성 가족 집합을 read/revision/save에서 통일하고 detachedCharacterIds를 명시적으로 받아 보관 기록을 보존하면서 독립 본캐로 분리한다. 기존 DB477 facade는 빈 해제로 호환; Edge API1.12/DB487, WEB unlink2026090901.
+- 원형 −는 카드 안쪽 우상단. 확인/취소 모달은 초안 변경, 최종 연결 저장에서 원자 반영. 취소/ESC 및 부모 편집 취소는 관계 저장하지 않는다. 모바일은 touch pointerup과 click/키보드 경로를 중복 없이 처리한다.
+- 검증: PGLITE_MODULE로 node tests/roster-family-unlink.test.cjs (실제 migration/legacy 회귀/rollback), Node Edge/tree 계약, PLAYWRIGHT_MODULE/CHROME_PATH로 editor E2E 1440/701/600/390/320. 테스트는 visitor helper 사용, 운영 사용자 가족의 시험 저장 없음. 최종 운영/Pages/Drive 근거는 명부 LOG18.
+- 롤백은 WEB/Edge 이전 버전 복원 후 SQL rollback. 이미 저장된 해제 관계와 audit는 보존하고 이전 보관 노드 노출 문제는 복원된다.
+
 ## HOME 배너 기간·전환·전달 경량화 · 2026-09-09
 
 - 기준 main3351b2fd, branch codex/home-banner-stability-20260909. 고정 여름 첫 이미지/오류 fallback을 중립 SVG로 교체. PC16:9 프레임·hover 이동 제거·content-box crossfade, 모바일 compact crop 보존. runtime/cache2026090902.

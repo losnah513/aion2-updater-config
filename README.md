@@ -295,3 +295,6 @@ KINOJO INFO GitHub Pages upload package.
 - 실제 운영 검수는 CODEX_ADMIN 정상 로그인·서버 세션 확인 후 같은 브라우저를 재사용한다. 세션 만료 시 재로그인, 자격증명 부재 시 관리자 검수 중단. 비밀값은 저장소/문서에 기록하지 않는다.
 - 검증: node tests/visitor-traffic.test.js; node tests/web-shell-auth-contract.test.js; supabase/tests/visitor_traffic_v474.sql은 BEGIN/ROLLBACK으로 실행. 롤백 파일은 visitor_traffic_v474_rollback.sql.
 - 재검증 조건: 방문 RPC/집계/테스트 helper/전용 계정 정책 변경. 증거: tests/evidence/20260908-visitor-traffic.
+# 명부 가족 편집 대상과 연결 해제 · 2026-09-09
+
+CONFIRMED: DB487은 가족 read/revision/save에서 활성·비삭제·노출 비제외 캐릭터만 동일하게 다룬다. 옛 서버 중복 보관 행은 삭제하거나 관계를 바꾸지 않고 편집 노드에서 제외한다. 부캐 카드 안쪽 원형 − → 확인/취소는 해제 초안을 만들고, 연결 저장은 배치와 독립 본캐 분리를 한 트랜잭션으로 반영한다. 명시적 detachedCharacterIds 외 누락은 거부하고, 기존 전체 가족 revision·멱등·권한·회원/성역 충돌 검사를 유지한다. 해제한 캐릭터의 override와 성역 root도 자기 ID로 변경하며 회원 계정·소유권·레기온·이미지는 보존한다. 기존 GUEST 구분은 유지한다. Edge kinojo-legion-tree API1.12는 서비스 전용 save_v487을 호출하며 구 입력은 빈 해제로 호환한다. list 쓰기 추가 없음. 근거: tests/roster-family-unlink.test.cjs 및 PC/mobile editor E2E; 재검증 조건: 가족/활성 상태·회원 소유권·성역 root·원자 저장 계약 변경.
