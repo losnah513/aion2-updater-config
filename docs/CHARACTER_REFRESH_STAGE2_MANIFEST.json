@@ -120,11 +120,11 @@
     },
     {
       "path": "supabase/functions/character-refresh-worker/index.ts",
-      "sha256": "50b0563efabd06d9061b4f95034ffff7f56db842b0a55bd8e4518ecae04d67be"
+      "sha256": "5055ee7be7421054eecea8048f4babd0b92f5b04f6a88a9b21687137907471eb"
     },
     {
       "path": "supabase/functions/character-detail-refresh/index.ts",
-      "sha256": "6ede4d307900ecb946e7f260bf33245ec45ad68e6e1602f5a0a4c78d1ccfd0e1"
+      "sha256": "b69cdd587c9412ab26c7237770fec129f9527af0ff2b699be76f80e7f3595cfa"
     },
     {
       "path": "apps-script/list-master/BRIDGE.gs",
@@ -136,11 +136,11 @@
     },
     {
       "path": "admin/js/admin-characters.js",
-      "sha256": "07142a40354c9ec815ee52c12131328b38012f9e7c798a880445d50fb8e6afb0"
+      "sha256": "9d87f7aad62e93252207cfbf98c128195fc903d011bb2d62392b42815383b43a"
     },
     {
       "path": "admin/js/admin.js",
-      "sha256": "ce8e8b1400e0b58036116f567d2943eaddd34bc3959f03ae79f3b1ffceb2966e"
+      "sha256": "a22ac7b4f4fd55d133b2d6833aa50f723ad921adbb5665ed2ab7a76dc981c397"
     },
     {
       "path": "admin/js/admin-bootstrap.js",
@@ -148,19 +148,43 @@
     },
     {
       "path": "admin/index.html",
-      "sha256": "3094a55381fb447a6aa4e1bc88e913eabac0d397c4fa0214f7a1da240367bd28"
+      "sha256": "35cf0a9ae0a3a3510e13897de35e5cedf5b7ebf2b25598225158c53b41c4f463"
     },
     {
       "path": "m/admin/index.html",
-      "sha256": "2c0a163ee02e298d88d713b5eeb698741ab47a2e84be18aa468f4b47eb595226"
+      "sha256": "71596d4810eb65abdd9a00d5ed96a1bf523fa70883ac9f4d78ecfaf112710873"
     },
     {
       "path": "supabase/config.toml",
-      "sha256": "0048096efb95f742da43572abecc79b2d9732e2f6b35ae8d4fff66c70ff91fdf"
+      "sha256": "3ba6a27818230459496c3e2451644d2fca27dd8fdcb03cdcb2c9637d75ce0fb8"
+    },
+    {
+      "path": "supabase/migrations/20260909082438_character_activity_lifecycle.sql",
+      "sha256": "81e8178eb980fcf0c3740d92da7ce4f1a29d53f8b874de7db92873c937c8f72e"
+    },
+    {
+      "path": "supabase/migrations/20260909092154_character_activity_relation_recheck.sql",
+      "sha256": "ea5a9c0caf05c3ef83ed05daec01067a7a91cf266ed556d57f21273e175f4366"
+    },
+    {
+      "path": "supabase/rollbacks/20260909082438_character_activity_lifecycle_rollback.sql",
+      "sha256": "f3fb64ad05171f5e7e882be05e30eb71f67e78be5b328cd52de28a81ac32e220"
+    },
+    {
+      "path": "supabase/rollbacks/20260909092154_character_activity_relation_recheck_rollback.sql",
+      "sha256": "20fe9dbffccb9b719fdb51d8ff1bff6da114cd89683e5d4e96a391359af177a8"
+    },
+    {
+      "path": "supabase/functions/scheduled-maintenance-control/index.ts",
+      "sha256": "7f0a1c5ec04fad09347ed8b6215c49775f1589c06718d56af2b36389d9379a94"
     }
   ],
   "notDeploymentAssets": [
     "tests/fixtures/extension-reference/**"
   ],
-  "referenceOnly": "Existing extension is retired/frozen. No extension reinstall, activation or upload is included."
+  "referenceOnly": "Existing extension is retired/frozen. No extension reinstall, activation or upload is included.",
+  "activityMigrations": [
+    "20260909082438_character_activity_lifecycle.sql",
+    "20260909092154_character_activity_relation_recheck.sql"
+  ]
 }

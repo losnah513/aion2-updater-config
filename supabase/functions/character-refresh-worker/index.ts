@@ -29,7 +29,7 @@ const CORS={
   "cache-control":"no-store",
   "x-content-type-options":"nosniff"
 };
-const API_VERSION="295.11";
+const API_VERSION="295.12";
 const CONTRACT="295";
 const BUILD_DATE="2026-09-01";
 const IDENTITY_DATABASE_CONTRACT="461";
@@ -185,7 +185,7 @@ async function officialJson(url,sessionId,sessionToken,source,deadline=Infinity)
       p_session_id:sessionId,
       p_session_token:sessionToken,
       p_source:source
-    });
+    },deadline);
     try{return raw?JSON.parse(raw):{};}catch{throw new WorkerError("PLAYNC 공식 API 응답이 JSON 형식이 아닙니다.","PLAYNC_NON_JSON",true);}
   }catch(error){
     if(error?.name==="AbortError")throw new WorkerError("PLAYNC 공식 API 응답 시간이 초과되었습니다.","PLAYNC_TIMEOUT",true);
@@ -834,12 +834,72 @@ async function runPostprocess(body){
   return{...completed,sessionId,workerId,postprocess:true,stages,listSheet,hasMore:false,message:clean(completed.message||"Server 후처리와 Google list 반영을 완료했습니다.",1000)};
 }
 
+// Relationship-only maintenance uses the scheduled session/rate gate but never
+// fabricates a regular Queue context or submits equipment/stat snapshots.
+async function runActivityRecheck(body){
+  const sessionId=clean(body.sessionId,240),sessionToken=clean(body.sessionToken,500);
+  const deadline=Date.now()+75000;
+  const claimed=await rpc('kinojo_character_activity_claim',{p_session_id:sessionId,p_session_token:sessionToken},deadline);
+  if(claimed.ok!==true)return claimed;
+  const targets=Array.isArray(claimed.targets)?claimed.targets:[];
+  if(targets.length>5)throw new WorkerError('관계 확인 batch 계약 초과','ACTIVITY_BATCH_OVERFLOW',false);
+  const results=[];
+  let stopped=null;
+  for(const target of targets){
+    let info=null,code=stopped;
+    try{
+      if(!code){
+        if(Date.now()+18000>=deadline)throw new WorkerError('관계 확인 시간 예산 초과','ACTIVITY_BUDGET_EXHAUSTED');
+        const key=clean(target.charKey,160),detail=storedDetailIdentity(target.detailUrl,target.serverId);
+        if(!/^\d{10,}$/.test(key))throw new WorkerError('고유키 확인 필요','ACTIVITY_IDENTITY_UNCONFIRMED',false);
+        let candidate=detail&&detail.serverId===positiveInt(target.serverId)?detail:null;
+        if(candidate){
+          const url=new URL('https://aion2.plaync.com/api/character/info');
+          url.searchParams.set('lang','ko');url.searchParams.set('serverId',String(candidate.serverId));url.searchParams.set('characterId',candidate.characterId);
+          try{info=await officialJson(url.toString(),sessionId,sessionToken,'SERVER_ACTIVITY_INFO',deadline-8000);}
+          catch(error){if(error?.code!=='PLAYNC_HTTP_404')throw error;}
+          if(info&&candidateFromStoredInfo(info,candidate,key).code==='STORED_DETAIL_NOT_FOUND')info=null;
+        }
+        if(!info){
+          const search=await searchCharacter(target.characterName,positiveInt(target.serverId),key,sessionId,sessionToken,deadline-8000);
+          if(!search.found)throw new WorkerError('기존 신원 탐색에서 재확인 필요','ACTIVITY_IDENTITY_UNCONFIRMED',false);
+          candidate=search.candidate;
+          const url=new URL('https://aion2.plaync.com/api/character/info');
+          url.searchParams.set('lang','ko');url.searchParams.set('serverId',String(candidate.serverId));url.searchParams.set('characterId',candidate.characterId);
+          info=await officialJson(url.toString(),sessionId,sessionToken,'SERVER_ACTIVITY_INFO',deadline-8000);
+        }
+      }
+    }catch(error){
+      code=clean(error?.code||'ACTIVITY_PROVIDER_FAILED',120);
+      if(error?.rateLimited||code==='PLAYNC_HTTP_429'){
+        stopped='PLAYNC_RATE_PAUSED';
+        if(code==='PLAYNC_HTTP_429')await rpc('kinojo_official_rate_limit_report_v276',{
+          p_session_id:sessionId,p_session_token:sessionToken,p_target_id:null,
+          p_retry_after_seconds:Math.max(1,Math.ceil(Number(error.retryAfterMs||30000)/1000)),
+          p_source:'SERVER_ACTIVITY_RECHECK',p_message:'PLAYNC HTTP 429'
+        },deadline);
+      }else if(/TIMEOUT|BUDGET|HTTP_5\d\d/.test(code))stopped=code;
+    }
+    const applied=await rpc('kinojo_character_activity_complete',{
+      p_session_id:sessionId,p_session_token:sessionToken,p_character_id:positiveInt(target.characterId),
+      p_claim_id:target.claimId,p_info:info,p_error_code:code
+    },deadline);
+    results.push({characterId:target.characterId,ok:applied.ok===true,outcome:applied.outcome,code:applied.code||null});
+    if(applied.ok!==true)stopped=applied.code||'ACTIVITY_APPLY_FAILED';
+  }
+  return{ok:results.every(r=>r.ok),relationshipOnly:true,results,processed:results.length};
+}
+
 Deno.serve(async request=>{
   if(request.method==="OPTIONS")return new Response(null,{status:204,headers:CORS});
   if(request.method!=="POST")return json({ok:false,message:"POST만 허용합니다."},405);
   try{
     const body=object(await request.json().catch(()=>({}))),action=clean(body.action,80);
-    if(action==="health")return json({ok:true,service:"character-refresh-worker",apiVersion:API_VERSION,databaseContract:CONTRACT,identityDatabaseContract:IDENTITY_DATABASE_CONTRACT,progressContract:"server-worker-seven-phase-v2",progressPhases:7,modes:["startAutonomous","autonomousTick","runQueue","runPostprocess"],queueBatchLimit:5,lookupOnlyPhase:false,postprocessPhase:true,sheetDeferred:false,sheetSyncPhase:true,sheetReadbackRequired:true,listSyncSingleWorkerLease:true,listSyncCompletionAtomic:true,legionTreeCharacterAddListless:true,legionTreeCharacterAddListWrite:false,legionTreeCharacterAddListReadback:false,legionTreeListlessDatabaseContract:"455",legionTreeListlessTargetSource:"server:legion_tree_character_add_v455",legionTreeListlessTerminalStage:"SERVER_QUEUE_CHARACTER_MASTER_DONE",etaContract:"remaining-plaync-targets-only",retryFailedRowsOnly:true,browserIndependentQueue:true,autonomousTickMode:"detached",autonomousHandoffRetryMax:AUTONOMOUS_HANDOFF_RETRY_DELAYS.length,autonomousHandoffRetryStatuses:[502,503,504],autonomousHandoffRetryClassifier:"http-status-first+message-fallback",autonomousHandoffHttpStatusPreserved:true,autonomousHandoffClassifierSelfTest:autonomousHandoffClassifierSelfTest(),targetAtomicFinalize:true,staleClaimRecoverySeconds:120,gearSpecificPayloadIds:true,officialStatePrecheck:true,perTargetReconcile:false,finalReconcileOnly:true,storesOfficialRaw:true,officialExactCombatPower:true,officialRateGate:"plaync_global_700ms",officialRawReuseSeconds:900,plaync429AttemptConsumed:false,identityRecovery:"terminal-miss-or-old-name-reused-then-same-race-direct-key",identityRecoveryEntry:"stored-detail-404-or-empty-identity-200+name-server-terminal-not-found",providerRetryEntersIdentityRecovery:false,serverTransferLegionAtomic:true,sameServerRenamePreservesLegion:true,listSyncEdge:"lookup-list-sync"});
+    if(action==="health")return json({ok:true,service:"character-refresh-worker",apiVersion:API_VERSION,databaseContract:CONTRACT,identityDatabaseContract:IDENTITY_DATABASE_CONTRACT,progressContract:"server-worker-seven-phase-v2",progressPhases:7,activityRecheck:{internalOnly:true,batchLimit:5,intervalDays:7,budgetMs:75000,relationshipOnly:true},modes:["activityRecheck","startAutonomous","autonomousTick","runQueue","runPostprocess"],queueBatchLimit:5,lookupOnlyPhase:false,postprocessPhase:true,sheetDeferred:false,sheetSyncPhase:true,sheetReadbackRequired:true,listSyncSingleWorkerLease:true,listSyncCompletionAtomic:true,legionTreeCharacterAddListless:true,legionTreeCharacterAddListWrite:false,legionTreeCharacterAddListReadback:false,legionTreeListlessDatabaseContract:"455",legionTreeListlessTargetSource:"server:legion_tree_character_add_v455",legionTreeListlessTerminalStage:"SERVER_QUEUE_CHARACTER_MASTER_DONE",etaContract:"remaining-plaync-targets-only",retryFailedRowsOnly:true,browserIndependentQueue:true,autonomousTickMode:"detached",autonomousHandoffRetryMax:AUTONOMOUS_HANDOFF_RETRY_DELAYS.length,autonomousHandoffRetryStatuses:[502,503,504],autonomousHandoffRetryClassifier:"http-status-first+message-fallback",autonomousHandoffHttpStatusPreserved:true,autonomousHandoffClassifierSelfTest:autonomousHandoffClassifierSelfTest(),targetAtomicFinalize:true,staleClaimRecoverySeconds:120,gearSpecificPayloadIds:true,officialStatePrecheck:true,perTargetReconcile:false,finalReconcileOnly:true,storesOfficialRaw:true,officialExactCombatPower:true,officialRateGate:"plaync_global_700ms",officialRawReuseSeconds:900,plaync429AttemptConsumed:false,identityRecovery:"terminal-miss-or-old-name-reused-then-same-race-direct-key",identityRecoveryEntry:"stored-detail-404-or-empty-identity-200+name-server-terminal-not-found",providerRetryEntersIdentityRecovery:false,serverTransferLegionAtomic:true,sameServerRenamePreservesLegion:true,listSyncEdge:"lookup-list-sync"});
+    if(action==="activityRecheck"){
+      if(!internalRequest(request))return json({ok:false,code:'INTERNAL_ONLY'},403);
+      return json(await runActivityRecheck(body));
+    }
     if(action==="startAutonomous")return await startAutonomous(body);
     if(action==="autonomousTick"){
       if(!internalRequest(request))return json({ok:false,code:"INTERNAL_ONLY",message:"서버 내부 자동 실행 요청만 허용합니다."},403);

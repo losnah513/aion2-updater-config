@@ -75,7 +75,9 @@ const root=path.resolve(__dirname,'..');
       {characterId:2,characterName:'수동제외',lookupPolicy:{eligible:false,reason:'ADMIN_EXCLUDED'}},
       {characterId:3,characterName:'삭제후보_D',lookupPolicy:{eligible:false,reason:'DELETION_CANDIDATE'}},
       {characterId:4,characterName:'미해결',hasPersistentKey:true,lookupFailureStreak:1,lookupPolicy:{eligible:true}},
-      {characterId:5,characterName:'K채채',hasPersistentKey:true,identityBadge:{label:'전 지켈 · 깡채채'},lookupPolicy:{eligible:false,reason:'ACTIVITY_REVIEW_WAIT'}}
+      {characterId:5,characterName:'K채채',hasPersistentKey:true,identityBadge:{label:'전 지켈 · 깡채채'},lookupPolicy:{eligible:false,reason:'ACTIVITY_REVIEW_WAIT'}},
+      {characterId:6,characterName:'자동제외',lookupPolicy:{eligible:false,reason:'AUTO_NO_ACTIVITY',activityReasonCodes:['SERVER_TRANSFER','NO_MANAGED_LEGION','NO_CURRENT_SANCTUARY','<img src=x onerror=alert(1)>'],autoExcludedAt:'2026-09-09',cleanupCandidateAt:'2026-10-01'}},
+      {characterId:7,characterName:'관계확인대기',lookupPolicy:{eligible:false,reason:'ACTIVITY_REVIEW_WAIT',activityHoldCode:'FAMILY_RELATION_UNRESOLVED'}}
      ]}}};
     document.querySelector('#characterStateFilter').addEventListener('change',()=>window.KinojoAdmin.renderCharacters());
    });
@@ -105,6 +107,21 @@ const root=path.resolve(__dirname,'..');
    await excludedDetail.locator(':scope > summary').click();
    assert.match(await excludedDetail.innerText(),/깡채채/);
    assert.equal(await excludedDetail.locator('[data-identity-probe]').count(),0);
+   const autoDetail=page.locator('[data-character-id="6"] .admin-character-detail');
+   await autoDetail.locator(':scope > summary').click();
+   assert.match(await autoDetail.innerText(),/서버 자동 제외.*서버 이전 확인/);
+   assert.match(await autoDetail.innerText(),/관리 레기온 소속 본부캐 없음/);
+   assert.match(await autoDetail.innerText(),/현재 성역 참여 본부캐 없음/);
+   assert.match(await autoDetail.innerText(),/정리 검토 가능일: 2026-10-01/);
+   assert.match(await autoDetail.innerText(),/즉시 삭제되는 것은 아닙니다/);
+   assert.doesNotMatch(await autoDetail.innerText(),/레기온 탈퇴 확인|정책 확인 필요|기한 도래|onerror/);
+   await autoDetail.locator('.admin-character-status-editor > summary').first().click();
+   assert.match(await autoDetail.innerText(),/정기 재검토 예약 없음/);
+   assert.equal(await autoDetail.locator('img').count(),0);
+   const holdDetail=page.locator('[data-character-id="7"] .admin-character-detail');
+   await holdDetail.locator(':scope > summary').click();
+   assert.match(await holdDetail.innerText(),/본부캐 연결을 확인할 수 없어/);
+   assert.doesNotMatch(await holdDetail.innerText(),/정리 검토 가능일/);
    await page.selectOption('#characterStateFilter','manual');
    assert.doesNotMatch(await page.locator('#characterList').innerText(),/삭제후보_D/);
    await select('records');assert.equal(await page.locator('#characterStateFilter').inputValue(),'identity');

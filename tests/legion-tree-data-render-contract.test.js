@@ -722,7 +722,7 @@ window.KinojoSupabase = {
     assert(!html.includes('data-preview-card'));
     assert(!html.includes('본캐예시'));
     assert(html.includes('kinojo-character-reaction.css?cache=2026090701'));
-    assert(html.includes('kinojo-character-reaction.js?cache=2026090701'));
+    assert(html.includes('kinojo-character-reaction.js?cache=2026090901'));
     assert(html.includes('legion-tree.css?cache=2026090707'));
     assert(html.includes('legion-tree-editor.js?cache=2026090105'));
     assert(html.includes('kinojo-supabase-features.js?cache=2026090804'));
@@ -912,7 +912,7 @@ window.KinojoSupabase = {
   ]) assert(listlessMigration.includes(token), `DB455 listless contract missing: ${token}`);
   assert(!listlessMigration.includes('and cm.list_row is not null'));
   for (const token of [
-    'const API_VERSION="295.11"',
+    'const API_VERSION="295.12"',
     'kinojo_legion_tree_listless_policy_v455',
     'kinojo_legion_tree_listless_complete_v455',
     'if(listlessPolicy.skipListWrite===true)',

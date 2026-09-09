@@ -158,6 +158,7 @@ jobs:
           node --check supabase/functions/kinojo-member-profile/index.ts
 
           node tests/visitor-traffic.test.js
+          node tests/character-seal-slots.test.js
           node tests/web-shell-auth-contract.test.js
           node tests/hof-layout-contract.test.js
           node tests/my-info-image-contract.test.js
@@ -245,8 +246,8 @@ jobs:
           ]
           required_assets = [
               "kinojo-character-reaction.css?cache=2026090701",
-              "kinojo-character-reaction.js?cache=2026090701",
-              "kinojo-character-detail-refresh.js?cache=2026082201",
+              "kinojo-character-reaction.js?cache=2026090901",
+              "kinojo-character-detail-refresh.js?cache=2026090901",
               "kinojo-character-skill.css?cache=2026081001",
               "kinojo-character-daevanion.css?cache=2026081002",
               "kinojo-animations.css?cache=2026081003",

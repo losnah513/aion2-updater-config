@@ -19,14 +19,18 @@ const root=path.resolve(__dirname,'..');
    const page=await browser.newPage({viewport:{width,height}});await isolatePlaywrightPage(page);const errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.goto('http://127.0.0.1:'+server.address().port+'/test');
    await page.evaluate(titles=>{
-    window.titleFixture=titles;window.mode='ready';
+    window.titleFixture=titles;window.mode='ready';window.titleCalls=0;
     window.KinojoSupabaseRpcCore={rpc:async(name)=>{
      if(!name.includes('equipped_titles'))return {ok:true,skills:[]};
+     window.titleCalls++;
      if(mode==='delayed')return new Promise(r=>window.resolveOld=r);
      if(mode==='error')throw Error('offline');
      return titleFixture;
     }};
-    window.KinojoSupabase={getLiveCharacterProfile:async()=>({ok:true,profile:{},equipment:[],arcana:[],daevanion:[],skills:[]})};
+    window.KinojoSupabase={getLiveCharacterProfile:async(action,params)=>{
+     if(action==='equipmentItem'){window.selectedSeal=params;return {ok:true,item:{name:'해방자의 인장'}};}
+     return {ok:true,identity:{charKey:'563512903374809971'},profile:{},equipment:[25,26].map((slotPos,i)=>({id:100+i,slotPos,slotOrder:301+i,slotLabel:'인장 '+(i+1),name:'해방자의 인장',grade:'Unique',category:'accessory',group:'accessory'})),arcana:[],daevanion:[],skills:[]};
+    }};
     document.querySelector('#open').onclick=()=>KinojoCharacterReaction.open({target:{name:'더샷',serverId:2002,server:'지켈',className:'궁성',detailUrl:'https://aion2.plaync.com/ko-kr/characters/2002/example'}});
    },titles);
    await page.click('#open');await page.waitForSelector('[data-title-category="Attack"] .kinojo-character-title-name');
@@ -38,6 +42,23 @@ const root=path.resolve(__dirname,'..');
    const boxes=await page.evaluate(()=>{const b=s=>document.querySelector(s).getBoundingClientRect();return {offset:b('.kinojo-character-reaction-visual').top-b('#kinojoCharacterReactionTitle').top,overflow:document.documentElement.scrollWidth-innerWidth,dialogOverflow:document.querySelector('.kinojo-character-reaction-dialog').scrollWidth-document.querySelector('.kinojo-character-reaction-dialog').clientWidth}});
    assert.ok(Math.abs(boxes.offset)<2,JSON.stringify(boxes));assert.equal(boxes.overflow,0);assert.equal(boxes.dialogOverflow,0);
    if(process.env.EVIDENCE_DIR){fs.mkdirSync(process.env.EVIDENCE_DIR,{recursive:true});await page.screenshot({path:path.join(process.env.EVIDENCE_DIR,`character-titles-${width}.png`)});}
+   const calls=await page.evaluate(()=>titleCalls);
+   await page.click('[data-kinojo-character-tab="equipment"]');
+   await page.click('[data-equipment-category="accessory"]');
+   assert.deepEqual(await page.locator('[data-live-equipment-item]').evaluateAll(rows=>rows.map(r=>r.title)),['인장 1','인장 2']);
+   await page.waitForFunction(()=>window.selectedSeal?.slotPos===25);
+   await page.click('[data-slot-pos="26"]');
+   await page.waitForFunction(()=>window.selectedSeal?.slotPos===26);
+   await page.evaluate(()=>{KinojoCharacterReaction.close();document.querySelector('#open').click()});
+   assert.equal(await page.locator('.kinojo-character-title-name').count(),3,'cached titles render synchronously');
+   assert.equal(await page.evaluate(()=>titleCalls),calls,'reopen reuses cache');
+   await page.evaluate(()=>KinojoCharacterReaction.reloadOverview());
+   assert.equal(await page.evaluate(()=>titleCalls),calls+1,'manual reload invalidates titles');
+   await page.evaluate(()=>{mode='delayed';KinojoCharacterReaction.open({target:{name:'식별값보강',serverId:2002}})});
+   await page.waitForFunction(()=>document.querySelector('#kinojoCharacterLiveStatus').textContent.includes('조회 완료'));
+   await page.evaluate(()=>resolveOld(titleFixture));
+   await page.waitForSelector('.kinojo-character-title-name');
+   assert.equal(await page.locator('.kinojo-character-title-name').count(),3,'profile identity enrichment must not discard titles');
    await page.evaluate(()=>{mode='delayed';KinojoCharacterReaction.open({target:{name:'이전',serverId:2002}})});
    await page.evaluate(()=>{mode='error';KinojoCharacterReaction.open({target:{name:'새캐릭터이름이매우긴경우',serverId:2002}})});
    await page.waitForFunction(()=>document.querySelector('#kinojoCharacterTitles').textContent.includes('확인 불가'));
