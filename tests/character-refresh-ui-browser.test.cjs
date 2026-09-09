@@ -61,6 +61,43 @@ const root=path.resolve(__dirname,'..');
    if(process.env.CHARACTER_UI_EVIDENCE){await page.waitForTimeout(350);await page.screenshot({path:path.join(process.env.CHARACTER_UI_EVIDENCE,'admin-'+width+'.png'),fullPage:true});}
    assert.deepEqual(errors,[]);await page.close();
   }
+  for(const width of [1440,390,320]){
+   const page=await browser.newPage({viewport:{width,height:1100}});await isolatePlaywrightPage(page);
+   await page.route('**/*',r=>new URL(r.request().url()).hostname==='127.0.0.1'?r.fallback():r.abort());
+   await page.goto(base+(width<700?'/m':'')+'/admin/index.html');
+   await page.evaluate(()=>{
+    const pane=document.querySelector('[data-admin-pane="characters"]');document.body.replaceChildren(pane);pane.classList.add('active');
+    window.fixtureCalls=[];
+    window.KinojoAdmin={state:{characters:[]},$:s=>document.querySelector(s),$$:s=>[...document.querySelectorAll(s)],
+     esc:s=>String(s??'').replace(/[<>&"]/g,'_'),formatServerTime:s=>s,setStatus(){},
+     adminCharacter:async(action)=>{window.fixtureCalls.push(action);return {ok:true,characters:[
+      {characterId:1,characterName:'새이름',identityBadge:{label:'이전 이름 → 새이름'},lookupPolicy:{eligible:true,reason:'MANAGED_LEGION'}},
+      {characterId:2,characterName:'수동제외',lookupPolicy:{eligible:false,reason:'ADMIN_EXCLUDED'}},
+      {characterId:3,characterName:'삭제후보_D',lookupPolicy:{eligible:false,reason:'DELETION_CANDIDATE'}}
+     ]}}};
+    document.querySelector('#characterStateFilter').addEventListener('change',()=>window.KinojoAdmin.renderCharacters());
+   });
+   await page.addScriptTag({url:base+'/admin/js/admin-characters.js'});
+   const select=async view=>page.evaluate(async view=>{
+    document.querySelectorAll('[data-admin-subpane]').forEach(el=>el.classList.toggle('active',el.dataset.adminSubpane===view));
+    await window.KinojoAdmin.loadCharacterWorkspace(view);
+   },view);
+   await select('records');
+   assert.match(await page.locator('#characterList').innerText(),/새이름/);
+   assert.doesNotMatch(await page.locator('#characterList').innerText(),/수동제외/);
+   await page.selectOption('#characterStateFilter','identity');
+   await select('exclusions');
+   assert.match(await page.locator('#characterList').innerText(),/수동제외/);
+   assert.doesNotMatch(await page.locator('#characterList').innerText(),/새이름/);
+   await page.selectOption('#characterStateFilter','manual');
+   assert.doesNotMatch(await page.locator('#characterList').innerText(),/삭제후보_D/);
+   await select('records');assert.equal(await page.locator('#characterStateFilter').inputValue(),'identity');
+   await select('exclusions');assert.equal(await page.locator('#characterStateFilter').inputValue(),'manual');
+   assert.equal(await page.locator('#characterList').count(),1);
+   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+2),false);
+   assert.deepEqual(await page.evaluate(()=>[...new Set(window.fixtureCalls)]),['search']);
+   await page.close();
+  }
   const page=await browser.newPage({viewport:{width:1440,height:1000}});await isolatePlaywrightPage(page);
   await page.route('**/*',r=>new URL(r.request().url()).hostname==='127.0.0.1'?r.fallback():r.abort());
   await page.goto(base+'/tests/fixtures/extension-reference/manifest.json');
