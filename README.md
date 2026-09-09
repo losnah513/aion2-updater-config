@@ -174,6 +174,7 @@ KINOJO INFO GitHub Pages upload package.
 ## Character detail modal
 
 - Equipped titles use the read-only `kinojo_character_equipped_titles_v466` RPC over existing verified official snapshots. Attack/Defense/Etc render in that order with official category icons and light-mode grade colors. Only `equipStatList` appears as applied effects; owned `statList` is excluded and no totals are recalculated. Empty slots and unavailable data remain distinct, and request sequencing prevents stale titles after character changes.
+- CONFIRMED 2026-09-09: official Seal1/Seal2 use accessory slots 25/26 (인장 1/2), between bracelets and pendant. Profile API305.3 and manual detail API305.5 preserve existing collection/auth boundaries. Newer stored equipment wins over older manual lists; detail reads match both slot and item ID. Title RPC identity is server/name, independent of profile charKey enrichment; results are cached for 120 seconds (50 entries), deduplicated in flight, and invalidated on manual reload. Evidence: official characters index.js, stored 더샷 equipment, character-seal-slots.test.js and character-titles-e2e.js. Recheck after official slot or snapshot contract changes.
 - The PLAYNC information link sits beside the character name; the former live-time row is removed. Profile and name share a grid row at all viewport widths.
 
 - The shared modal lives in `ui/kinojo-character-reaction.*` and is used by Hall of Fame and ranking pages on PC and mobile.

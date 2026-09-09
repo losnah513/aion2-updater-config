@@ -13,7 +13,7 @@ const CORS: Record<string,string> = {
   "cache-control":"no-store",
   "x-content-type-options":"nosniff"
 };
-const API_VERSION="305.4";
+const API_VERSION="305.5";
 const CONTRACT="302";
 const SUPABASE_URL=String(Deno.env.get("SUPABASE_URL")||"").replace(/\/$/,"");
 const SERVICE_ROLE_KEY=String(Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"");
@@ -27,14 +27,14 @@ const SLOT_LABELS:Record<string,string>={
   MainHand:"주무기",SubHand:"보조무기",Helmet:"투구",Shoulder:"어깨",Torso:"상의",Pants:"하의",Gloves:"장갑",Boots:"장화",Cape:"망토",
   Belt:"허리띠",Necklace:"목걸이",Earring1:"귀걸이 1",Earring2:"귀걸이 2",EarringL:"귀걸이 1",EarringR:"귀걸이 2",
   Ring1:"반지 1",Ring2:"반지 2",Bracelet1:"팔찌 1",Bracelet2:"팔찌 2",Brooch1:"브로치 1",Brooch2:"브로치 2",
-  Rune1:"룬 1",Rune2:"룬 2",Amulet:"아뮬렛",Pendant:"펜던트",
+  Rune1:"룬 1",Rune2:"룬 2",Amulet:"아뮬렛",Seal1:"인장 1",Seal2:"인장 2",Pendant:"펜던트",
   Arcana1:"아르카나 1",Arcana2:"아르카나 2",Arcana3:"아르카나 3",Arcana4:"아르카나 4",
   Arcana5:"아르카나 5",Arcana6:"아르카나 6",Arcana7:"아르카나 7",Arcana8:"아르카나 8"
 };
 const SLOT_ORDER:Record<string,number>={
   MainHand:10,SubHand:20,Helmet:30,Shoulder:40,Torso:50,Belt:60,Pants:70,Gloves:80,Cape:90,Boots:100,Rune1:110,Rune2:120,
   Earring1:210,Earring2:220,EarringL:210,EarringR:220,Necklace:230,Amulet:240,Brooch1:250,Brooch2:260,Ring1:270,Ring2:280,
-  Bracelet1:290,Bracelet2:300,Pendant:310,
+  Bracelet1:290,Bracelet2:300,Seal1:301,Seal2:302,Pendant:310,
   Arcana1:410,Arcana2:420,Arcana3:430,Arcana4:440,Arcana5:450,Arcana6:460,Arcana7:470,Arcana8:480
 };
 
@@ -478,11 +478,12 @@ async function equipmentItemAction(body:Record<string,any>){
   const master=await findMaster(body),slotPos=positiveInt(body.slotPos||body.slot_pos),itemId=positiveInt(body.itemId||body.id);
   if(!slotPos&&!itemId)throw new DetailError("장비 슬롯 또는 아이템 ID가 필요합니다.","EQUIPMENT_ID_REQUIRED",400,{retryable:false});
   const params:Record<string,string>={select:"*",character_master_id:`eq.${master.id}`,limit:"1"};
-  if(slotPos)params.slot_pos=`eq.${slotPos}`;else if(itemId)params.item_id=`eq.${itemId}`;
+  if(slotPos)params.slot_pos=`eq.${slotPos}`;
+  if(itemId)params.item_id=`eq.${itemId}`;
   const rows=await dbRows("character_equipment_detail_latest",params),row=rows[0];
   if(!row)throw new DetailError("저장된 장비 상세정보가 없습니다. 전체 상세정보 갱신을 먼저 실행해 주세요.","EQUIPMENT_DETAIL_NOT_STORED",404,{retryable:false});
   return {ok:true,apiVersion:API_VERSION,source:"KINOJO_STORED_EQUIPMENT_DETAIL",detailStored:true,refreshedAt:row.refreshed_at,
-    item:{...object(row.raw_payload),id:row.item_id,name:row.item_name,slotPos:row.slot_pos,slotPosName:row.slot_pos_name,slotLabel:row.slot_label,category:row.category,grade:row.grade,icon:row.icon,
+    item:{...object(row.raw_payload),id:row.item_id,name:row.item_name,slotPos:row.slot_pos,slotPosName:row.slot_pos_name,slotLabel:SLOT_LABELS[row.slot_pos_name]||row.slot_label,category:row.category,grade:row.grade,icon:row.icon,
       enchantLevel:row.enchant_level,exceedLevel:row.exceed_level}};
 }
 

@@ -1,5 +1,14 @@
 # KINOJO WEB HANDOFF
 
+## 캐릭터 상세 인장·타이틀 응답 계약 · 2026-09-09
+
+- 공식 Seal1(25)/Seal2(26)는 장신구 인장 1/2, 팔찌 뒤·펜던트 앞이다. character-profile-snapshot API305.3과 character-detail-refresh API305.5의 기존 슬롯 맵을 확장한다. 장착 목록·상세 수집 대상 수량은 기존 동적 배열을 사용한다.
+- 새 장착 스냅샷을 과거 수동 상세 목록으로 덮어쓰지 않는다. 상세 조회는 슬롯과 아이템 ID를 함께 확인하며 수집되지 않은 상세는 기존 수동 갱신 안내를 사용한다. 자동 외부 수집을 추가하지 않는다.
+- 타이틀은 DB466 저장 Snapshot 읽기이며 공식 실시간 조회가 아니다. 프로필의 charKey 보강으로 늦은 응답이 버려지던 조건을 RPC 입력인 서버/이름 기준으로 수정했다. 120초·50개 메모리 캐시와 동일 요청 병합, 수동 reload 무효화, 다른 캐릭터의 지연 응답 차단을 적용한다.
+- 검증: tests/character-seal-slots.test.js, tests/character-titles-e2e.js (1280/760/390/320), 기존 detail identity/write fence와 공통 include 계약. 브라우저 테스트는 방문 통계 helper를 navigation 전에 설치한다.
+- 롤백은 이번 WEB 변경 및 Edge 두 함수의 직전 v9 소스에 한정한다. DB·Queue·권한·캐릭터 데이터 변경 없음. 최종 배포/Drive 상태는 캐릭터 상세 정보 개선 프로젝트 LOG 최신 회차를 확인한다.
+
+
 ## HOME 배너 기간·전환·전달 경량화 · 2026-09-09
 
 - 기준 main3351b2fd, branch codex/home-banner-stability-20260909. 고정 여름 첫 이미지/오류 fallback을 중립 SVG로 교체. PC16:9 프레임·hover 이동 제거·content-box crossfade, 모바일 compact crop 보존. runtime/cache2026090902.
