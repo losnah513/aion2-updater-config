@@ -9,6 +9,8 @@
 
 ## 캐릭터 최신화 4차 재개 계약
 
+- 본부캐 자격 보완: 기준 main `debb6907`, branch `codex/character-family-eligibility`. DB 정책은 지켈 깡·키나노동조합·낮·밤 유효 구성원의 가족을 포함하며 수동 제외/삭제후보는 보존한다. 동일 key·서버·이름 탐색은 변경 없음으로 종료한다. WEB loader `family=2026090901`; 기존 배너 revision 보존. migration/rollback `20260909060134_character_family_lookup_eligibility`, 신규 단위 테스트 2개와 기존 runner 재사용. 적용/Pages/Drive·실계정 검수 상태는 같은 LOG39를 확인한다. list 복원 조건·Edge·스케줄·Master 데이터 직접 변경 없음.
+
 범위·단계는 [기존 계획서](https://drive.google.com/file/d/1aPfADtwHFXo1_ZP6Zj3HkD7eGyOVrZxD/view), 진행 상태·검증 결과·다음 작업은 [프로젝트 LOG](https://drive.google.com/file/d/1k0R6heq6ttLl9IKFm_q1_EGm4FCxmVbQ/view)를 먼저 확인한다. 과거 작업을 중복 실행하지 않는다.
 배포·복구 계약은 CHARACTER_REFRESH_STABILITY_STAGE2_RELEASE.md, 제품 파일은 CHARACTER_REFRESH_STAGE2_MANIFEST.json을 따른다. 이 문서는 운영 실행 승인이 아니다.
 

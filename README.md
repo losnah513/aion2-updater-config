@@ -6,6 +6,8 @@ CONFIRMED: lazy banner panel mounting must reconcile visibility with the selecte
 
 ## Character refresh stability
 
+CONFIRMED (2026-09-09): regular lookup includes canonical family members when any non-excluded, non-archived member belongs to 지켈(2002) 깡/키나노동조합/낮/밤. Individual/group manual policy and deletion-candidate priority remain unchanged; Sanctuary-only participation does not automatically include all alts. Verified unchanged identity probes do not prompt or call identityApply/list writes. Revalidate when family links, eligibility priority or identity response contracts change. Tests: `character-family-eligibility.test.cjs`, `character-identity-unchanged.test.cjs`; migration `20260909060134_character_family_lookup_eligibility.sql`. Existing list-restore evidence guards are unchanged.
+
 Existing services share DB-owned eligibility, direct-key identity recovery, stable Master-ID writes and immutable per-session list export preferences. Scope follows the existing project plan; status, evidence and next actions belong only in the [project LOG](https://drive.google.com/file/d/1k0R6heq6ttLl9IKFm_q1_EGm4FCxmVbQ/view). See docs/CHARACTER_REFRESH_STABILITY_STAGE2_RELEASE.md and CHARACTER_REFRESH_STAGE2_MANIFEST.json for deployment/rollback contracts. No production execution is authorized by these documents.
 
 ## Sanctuary external family registration · 2026-09-08
