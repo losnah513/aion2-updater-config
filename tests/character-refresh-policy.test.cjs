@@ -239,6 +239,21 @@ async function run(){
  assert.equal(result.ok,true,JSON.stringify(result));
  assert.equal((await q("select count(*)::int n from lookup_session_targets where session_id='activity-restore' and character_name in ('auto-external','protected-alt')"))[0].n,2);
  assert.equal((await q("select count(*)::int n from private.character_activity_lifecycle where character_id in(60,61) and state='RESTORED' and cleanup_candidate_at is null"))[0].n,2);
+ // Deterministic prepare -> relationship change -> Worker dispatch boundaries.
+ // This is not a two-connection PostgreSQL lock-contention test.
+ const dispatchId=(await q("select id from lookup_session_targets where session_id='activity-restore' and character_name='auto-external'"))[0].id;
+ const dispatch=async()=>(await q("select kinojo_server_queue_target_context_v270('activity-restore','test-session',$1) p",[dispatchId]))[0].p;
+ assert.equal((await dispatch()).ok,true);
+ await db.exec('update character_master set main_character_id=61 where id=61');
+ assert.equal((await dispatch()).code,'LOOKUP_EXCLUDED','detached legion witness cannot authorize an old queued target');
+ await db.exec('update character_master set main_character_id=60 where id=61');
+ assert.equal((await dispatch()).ok,true,'restored canonical witness permits dispatch');
+ await db.exec("update character_master set lookup_policy='EXCLUDE' where id=60");
+ assert.equal((await dispatch()).code,'LOOKUP_EXCLUDED','manual change after prepare is checked at dispatch');
+ await db.exec("update character_master set lookup_policy='INHERIT' where id=60; update character_master set server_id=2003,legion_name='external' where id=61");
+ assert.equal((await dispatch()).code,'LOOKUP_EXCLUDED','confirmed family departure after prepare blocks dispatch');
+ await db.exec("update character_master set server_id=2002,legion_name='깡' where id=61");
+ console.log('PASS: prepare-to-dispatch family detachment/restoration, manual override and confirmed departure rechecks (sequential interleavings, not concurrent connections)');
  const reconcileDefinition=(await q("select pg_get_functiondef('private.kinojo_character_activity_reconcile(bigint,timestamptz)'::regprocedure) definition"))[0].definition;
  await db.exec("create or replace function private.kinojo_character_activity_reconcile(p_character_id bigint,p_at timestamptz default now()) returns jsonb language sql as $$select '{\"ok\":false}'::jsonb$$");
  await assert.rejects(activityPrepare('activity-error'),/ACTIVITY_RECONCILIATION_FAILED/);
