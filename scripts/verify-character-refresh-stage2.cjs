@@ -12,6 +12,7 @@ const tests=[
   "tests/character-refresh-policy.test.cjs",
   "tests/character-family-eligibility.test.cjs",
   "tests/character-activity-lifecycle.test.cjs",
+  "tests/character-activity-recheck.test.cjs",
   "tests/character-identity-unchanged.test.cjs",
   "tests/character-status-tabs.test.cjs",
   "tests/character-refresh-stage2-boundaries.test.cjs",

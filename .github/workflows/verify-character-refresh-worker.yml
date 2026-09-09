@@ -121,7 +121,7 @@ jobs:
           assert worker.get("ok") is True, worker
           assert worker.get("service") == "character-refresh-worker", worker
           # During the coordinated Stage3 rollout, validate the known old/new contracts.
-          assert worker.get("apiVersion") == "295.11", worker
+          assert worker.get("apiVersion") == "295.12", worker
           assert worker.get("databaseContract") == "295", worker
           assert worker.get("identityDatabaseContract") == "461", worker
           assert worker.get("identityRecoveryEntry") == "stored-detail-404-or-empty-identity-200+name-server-terminal-not-found", worker
