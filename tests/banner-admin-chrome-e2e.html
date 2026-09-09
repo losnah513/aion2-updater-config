@@ -118,7 +118,20 @@ window.fetch=async(input,init={})=>{
 <script src="../admin/js/admin-side-banners.js"></script>
 <script src="../admin/js/admin-banner-event-workflow.js"></script>
 <script src="../admin/js/admin-banner-events.js"></script>
+<script>
+// Production can select SIDE before the lazy tabs module creates its panels.
+const coldSideNav=document.createElement('nav');
+window.KinojoAdmin.handleCharacterLookupVisibilityChange=()=>{};
+coldSideNav.className='admin-subnav';
+coldSideNav.dataset.bannerManagementTabs='';coldSideNav.dataset.adminSubnav='images';
+coldSideNav.innerHTML='<button id="adminBannerMainTab" role="tab" aria-selected="false" data-admin-subtab="main" data-banner-management-tab="main">메인 배너</button><button id="adminBannerSideTab" role="tab" aria-selected="true" class="active" data-admin-subtab="side" data-banner-management-tab="side">사이드 배너</button>';
+document.querySelector('[data-admin-pane="images"]').prepend(coldSideNav);
+</script>
 <script src="../admin/js/admin-banner-tabs.js"></script>
+<script>
+const coldSidePanelsCorrect=document.querySelector('[data-banner-management-panel="main"]').hidden&& !document.querySelector('[data-banner-management-panel="side"]').hidden;
+window.KinojoAdmin.switchBannerManagementTab('main',{updateRoute:false});
+</script>
 <script src="../admin/js/admin-banner-library.js"></script>
 <script src="../admin/js/admin-banner-auto-pool.js"></script>
 <script src="../admin/js/admin-banner-quality.js"></script>
@@ -129,6 +142,7 @@ async function waitFor(fn,label,timeout=8000){const end=performance.now()+timeou
 function fire(el,type){el.dispatchEvent(new Event(type,{bubbles:true}))}
 async function run(){
   try{
+    if(!coldSidePanelsCorrect)throw Error('cold SIDE entry shows the MAIN panel');
     const dashboardPane=document.querySelector('[data-admin-pane="dashboard"]');
     await waitFor(()=>document.querySelector('[data-admin-pane="images"]')?.classList.contains('active'),'image pane activated by admin router');
     const imagesPane=document.querySelector('[data-admin-pane="images"]');
@@ -350,6 +364,7 @@ async function run(){
     await waitFor(()=>state.calls.includes('event-move'),'event manager order mutation');
     document.querySelector('[data-banner-context="side"] [data-banner-view="library"]').click();
     await waitFor(()=>!document.querySelector('[data-banner-context="side"] [data-banner-view-panel="library"]')?.hidden&&state.calls.includes('asset-library'),'image library context and load');
+    await waitFor(()=>document.querySelector('[data-banner-asset-library] [data-bal-select] img')?.getAttribute('src')?.includes('/storage/v1/object/public/'),'upload-first library initializes image URLs');
     if(location.hash!=='#images/side/library'||document.querySelector('#adminCurrentLocation')?.textContent!=='[이미지 관리] - 사이드 배너 · 이미지 라이브러리')throw Error('image library must retain the side context route');
     if(document.querySelector('[data-banner-asset-library] [data-bal-detail] .bal-detail-empty')===null)throw Error('library must start with no selected image');
     const libraryMode=document.querySelector('[data-banner-asset-library] [data-bal-mode]');libraryMode.checked=true;fire(libraryMode,'change');

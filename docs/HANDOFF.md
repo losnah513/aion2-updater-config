@@ -1,5 +1,12 @@
 # KINOJO WEB HANDOFF
 
+## 배너 메인/사이드 초기 진입·라이브러리 초기화 · 2026-09-09
+
+- 기준 main `1f7c4162`, branch `codex/banner-context-init-20260909`. 지연 생성된 본문은 이미 선택된 MAIN/SIDE 메뉴와 표시 상태를 맞춘다. 이미지 목록 알림은 첫 라이브러리 연결 초기화를 생략하지 않는다.
+- `admin-banner-tabs.js`, `admin-banner-library.js`만 로더 revision `context=2026090901`을 적용하며 PC/mobile admin 진입 HTML도 loader를 갱신한다. DB/Edge·사용자 이미지·이벤트 데이터 변경 없음.
+- 검증: `node tests/banner-library-management.test.js`, `node tests/banner-phase2-post-stabilization-contract.test.js`, `tests/banner-admin-chrome-e2e.html`의 cold SIDE→MAIN→SIDE/라이브러리 회귀. 로컬 fixture는 운영 계정 검수와 구분한다. 되돌리기는 이 WEB 변경만 revert하며 삭제 기능의 DB475는 그대로 유지한다.
+- 배포·Drive 동기화와 운영 검수 범위는 [배너 2차 LOG](https://drive.google.com/file/d/1WsY7cceARgLoyuQYnp2PXzIpqRWJcmMw/view)의 최신 회차를 확인한다.
+
 ## 캐릭터 최신화 4차 재개 계약
 
 범위·단계는 [기존 계획서](https://drive.google.com/file/d/1aPfADtwHFXo1_ZP6Zj3HkD7eGyOVrZxD/view), 진행 상태·검증 결과·다음 작업은 [프로젝트 LOG](https://drive.google.com/file/d/1k0R6heq6ttLl9IKFm_q1_EGm4FCxmVbQ/view)를 먼저 확인한다. 과거 작업을 중복 실행하지 않는다.

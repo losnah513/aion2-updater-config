@@ -1,5 +1,9 @@
 # KINOJO WEB
 
+## Banner context initialization · 2026-09-09
+
+CONFIRMED: lazy banner panel mounting must reconcile visibility with the selected MAIN/SIDE navigation, including cold SIDE entry. Asset broadcasts update lists but cannot mark an uninitialized library as loaded; its first read must initialize the Storage base URL. Regression: `tests/banner-library-management.test.js` and `tests/banner-admin-chrome-e2e.html`. Revalidate when lazy-loader order, panel routing or asset notification contracts change. Loader revision `context=2026090901`; no DB/Edge or existing asset/event mutations.
+
 ## Character refresh stability
 
 Existing services share DB-owned eligibility, direct-key identity recovery, stable Master-ID writes and immutable per-session list export preferences. Scope follows the existing project plan; status, evidence and next actions belong only in the [project LOG](https://drive.google.com/file/d/1k0R6heq6ttLl9IKFm_q1_EGm4FCxmVbQ/view). See docs/CHARACTER_REFRESH_STABILITY_STAGE2_RELEASE.md and CHARACTER_REFRESH_STAGE2_MANIFEST.json for deployment/rollback contracts. No production execution is authorized by these documents.
