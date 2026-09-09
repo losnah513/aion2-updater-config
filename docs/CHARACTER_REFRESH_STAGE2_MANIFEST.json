@@ -136,11 +136,11 @@
     },
     {
       "path": "admin/js/admin-characters.js",
-      "sha256": "6156d571b7ef54250ffbc41a3a2783a8efaccea15d14c02705da751acb72952a"
+      "sha256": "1b1259db7a554b21bdd40f5f595d380a9acfd36ddbe2f6357163bbd054e70b31"
     },
     {
       "path": "admin/js/admin.js",
-      "sha256": "82a8b4d23c93b6e9cff5e27a98b8b2798fd0e439d15c3d3871bf014ef4bd97c3"
+      "sha256": "64b992fef25b42954e00b8df935ba033f9c5a908ee7369ce2020ef2253917efa"
     },
     {
       "path": "admin/js/admin-bootstrap.js",
@@ -148,11 +148,11 @@
     },
     {
       "path": "admin/index.html",
-      "sha256": "be23ac2b94517d1b4d9ac64fc2ea49aabb8b916c455029b389f74d2d02cf1329"
+      "sha256": "be31b2e2ecafd088ff3369e98d301a6454023d6e84655a822eb5a2e0b4b4f1fd"
     },
     {
       "path": "m/admin/index.html",
-      "sha256": "2c3c9181652a403f6ef5ad70467f7b2e4a1fead7e24b2a9039e7e3875db1f8ab"
+      "sha256": "42a89d5ba289678cedfb968a44bdd89a74af8b2ff1b0fdd732cc2c50e3d67d84"
     },
     {
       "path": "supabase/config.toml",

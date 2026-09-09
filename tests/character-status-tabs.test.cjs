@@ -4,9 +4,9 @@ const A={state:{characters:[]},$:s=>s==='#characterStateFilter'?filter:null,$$:(
 vm.runInNewContext(fs.readFileSync('admin/js/admin-characters.js','utf8'),{window:{KinojoAdmin:A},document:{addEventListener(){}},Date});
 const items=[
  {characterId:1,identityBadge:{label:'이전 이름'},lookupPolicy:{eligible:true}},
- {characterId:2,lookupPolicy:{eligible:false,reason:'ADMIN_EXCLUDED'}},
+ {characterId:2,lookupPolicy:{eligible:false,reason:'ADMIN_EXCLUDED'},lookupFailureStreak:2},
  {characterId:3,lookupPolicy:{eligible:false,reason:'ACTIVITY_REVIEW_WAIT'}},
- {characterId:4,lookupPolicy:{eligible:false,reason:'DELETION_CANDIDATE'}},
+ {characterId:4,lookupPolicy:{eligible:false,reason:'DELETION_CANDIDATE'},lookupFailureStreak:8},
  {characterId:5,lookupPolicy:{eligible:true},lookupFailureStreak:1},
  {characterId:6,lookupPolicy:{eligible:false,reason:'ADMIN_EXCLUDED'},identityReview:{reviewId:1}},
  {characterId:7,lookupPolicy:{eligible:true},identityListPendingCount:1},
@@ -35,7 +35,7 @@ for(const file of ['admin/index.html','m/admin/index.html']){
  assert.match(html,/data-admin-subtab="exclusions"/);
  assert.match(html,/data-admin-subpane="exclusions"/);
  assert.equal((html.match(/id="characterList"/g)||[]).length,1);
- assert.match(html,/statusTabs=2026090901/);
+ assert.match(html,/statusTabs=2026090902/);
 }
 assert.match(fs.readFileSync('admin/js/admin-bootstrap.js','utf8'),/if\(isCharacterWorkspace\) A.loadCharacterWorkspace\(subtab\)/);
 console.log('PASS: identity visibility, excluded categories, overlapping issues, historical errors, no policy writes, PC/mobile routes');
