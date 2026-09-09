@@ -17,7 +17,8 @@ const items=[
  {characterId:12,lookupPolicy:{eligible:true},identityBadge:{label:'서버 이전'},visibilityExcluded:true},
  {characterId:13,lookupPolicy:{eligible:false,reason:'ACTIVITY_REVIEW_WAIT'},identityBadge:{label:'깡채채'},lastLookupFailureCode:'OFFICIAL_STATS_MISSING',lastLookupFailedAt:'2026-09-01T00:00:00Z',lastLookupSuccessAt:'2026-09-08T00:00:00Z'},
  {characterId:14,lookupPolicy:{eligible:true},lookupFailureStreak:1,exclusionReviewRequired:true,lastLookupFailedAt:'2026-09-01T00:00:00Z',lastLookupSuccessAt:'2026-09-08T00:00:00Z'},
- {characterId:15,lookupPolicy:{eligible:true},identityReview:{reviewId:2}}
+ {characterId:15,lookupPolicy:{eligible:true},identityReview:{reviewId:2}},
+ {characterId:16,lookupPolicy:{eligible:false,inactive:true,reason:'AUTO_INACTIVE'},visibilityExcluded:true,lookupFailureStreak:2}
 ];
 A.state.characters=items;
 const before=JSON.stringify(items);
@@ -32,11 +33,14 @@ assert.deepEqual(ids('exclusions','waiting'),[3,13]);
 assert.deepEqual(ids('exclusions','archived'),[4,11]);
 assert.deepEqual(ids('exclusions','review'),[6]);
 assert.deepEqual(ids('exclusions','visibility'),[10,12]);
+assert.deepEqual(ids('inactive','all'),[16]);
 assert.equal(JSON.stringify(items),before,'presentation must not mutate eligibility');
 for(const file of ['admin/index.html','m/admin/index.html']){
  const html=fs.readFileSync(file,'utf8');
  assert.match(html,/data-admin-subtab="exclusions"/);
  assert.match(html,/data-admin-subpane="exclusions"/);
+ assert.match(html,/data-admin-subtab="inactive"/);
+ assert.match(html,/data-admin-subpane="inactive"/);
  assert.equal((html.match(/id="characterList"/g)||[]).length,1);
  assert.match(html,/statusTabs=2026090903/);
 }

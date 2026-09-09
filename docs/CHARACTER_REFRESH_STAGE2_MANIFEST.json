@@ -136,23 +136,23 @@
     },
     {
       "path": "admin/js/admin-characters.js",
-      "sha256": "5247bc9eb5549941fdf3ad5743aa581d51fc3b535d91211c48adc9b6eae2752d"
+      "sha256": "8c402abeacdf2f48c61716dbd4967cc9b64796fcd89f6b61ca46bc94fd5e58ba"
     },
     {
       "path": "admin/js/admin.js",
-      "sha256": "501583435c0c1d687f3c0a9f0cd538cb8ba9e34671b4588bbc4cd2e779a27b2f"
+      "sha256": "5f1aa07ef766b1e43c3733c3733c5d30cf538ef49f4782398ef8001a9a2f0c51"
     },
     {
       "path": "admin/js/admin-bootstrap.js",
-      "sha256": "ec737ddc43690df54d3bd10086a7cd82bcecc066993a86460bbb5432928c514f"
+      "sha256": "0edbcef06de09d7c3438f6cee1c1ae3f86c3dfe1889e8ebce93fce6033124c20"
     },
     {
       "path": "admin/index.html",
-      "sha256": "0eeef67ed97046843c531e429d7b8c6d9eb7bb497773d480912fc6c129885811"
+      "sha256": "b5c952813e5b98cc308c826cd572b6c48bb7bb00ad3f9baeebb541001dfdf969"
     },
     {
       "path": "m/admin/index.html",
-      "sha256": "1c7a58630c580fadb08c4a1adc83489c24e16bd0e84db8afc0ca181580274693"
+      "sha256": "f07a81a2cd91d3e55cc8c3556035706ec15ff27b5e2a1fea454274dfd828bd63"
     },
     {
       "path": "supabase/config.toml",
@@ -185,6 +185,18 @@
     {
       "path": "tests/character-monthly-cleanup-preflight.test.cjs",
       "sha256": "65d0c8dea02ae490545573a45a9692636ef3aedce498ab64569d6d5e8afa73ee"
+    },
+    {
+      "path": "supabase/migrations/20260909143826_character_activity_inactive.sql",
+      "sha256": "813fffae0732a249532e5e050b42f9306ecfcb94f4556cd6a93879c38d1daf21"
+    },
+    {
+      "path": "supabase/rollbacks/20260909143826_character_activity_inactive_rollback.sql",
+      "sha256": "8475d1e5dd81846e09f7878803785e6b64dd71038394eacf833d7376888e2d88"
+    },
+    {
+      "path": "tests/character-inactive-lifecycle.test.cjs",
+      "sha256": "75ed00f6368c8ee95b656174c3d5bc03e74ee4091d25be1bc23362aa2dcbff0c"
     }
   ],
   "notDeploymentAssets": [
@@ -194,5 +206,6 @@
   "activityMigrations": [
     "20260909082438_character_activity_lifecycle.sql",
     "20260909092154_character_activity_relation_recheck.sql"
-  ]
+  ],
+  "inactiveLifecycleMigration": "20260909143826_character_activity_inactive.sql"
 }

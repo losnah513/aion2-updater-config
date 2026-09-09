@@ -112,7 +112,7 @@
   function loadFeature(tab,subtab,force){
     const key=tab+(subtab?'/'+subtab:'');
     const isImageContext=tab==='images'&&(subtab==='main'||subtab==='side');
-    const isCharacterWorkspace=tab==='characters'&&['records','exclusions'].includes(subtab);
+    const isCharacterWorkspace=tab==='characters'&&['records','exclusions','inactive'].includes(subtab);
     if(state.loaded[key]&&!force&&!isImageContext&&!isCharacterWorkspace)return;
     const activate=()=>{
       if(state.tab!==tab||(subtab&&state.subtab!==subtab))return;

@@ -113,7 +113,7 @@ const root=path.resolve(__dirname,'..');
    assert.match(await autoDetail.innerText(),/관리 레기온 소속 본부캐 없음/);
    assert.match(await autoDetail.innerText(),/현재 성역 참여 본부캐 없음/);
    assert.match(await autoDetail.innerText(),/정리 검토 가능일: 2026-10-01/);
-   assert.match(await autoDetail.innerText(),/즉시 삭제되는 것은 아닙니다/);
+   assert.match(await autoDetail.innerText(),/즉시 비활성화되는 것은 아닙니다/);
    assert.doesNotMatch(await autoDetail.innerText(),/레기온 탈퇴 확인|정책 확인 필요|기한 도래|onerror/);
    await autoDetail.locator('.admin-character-status-editor > summary').first().click();
    assert.match(await autoDetail.innerText(),/정기 재검토 예약 없음/);
@@ -156,6 +156,14 @@ const root=path.resolve(__dirname,'..');
      await page.waitForFunction(()=>document.querySelector('#characterList').scrollTop>0);
     }
    }
+   await select('inactive');
+   await page.evaluate(()=>{const A=window.KinojoAdmin;A.state.characters=[{characterId:999,characterName:'비활성테스트',lookupPolicy:{inactive:true,inactiveAt:'2026-10-01',eligible:false,reason:'AUTO_INACTIVE'}}];A.renderCharacters();});
+   assert.equal(await page.locator('#characterList > [data-character-id]').count(),1);
+   await page.locator('[data-character-id="999"] .admin-character-detail > summary').click();
+   assert.match(await page.locator('#characterList').innerText(),/비활성 전환: 2026-10-01/);
+   assert.match(await page.locator('#characterList').innerText(),/LIST 행은 변경하지 않습니다/);
+   assert.doesNotMatch(await page.locator('#characterList').innerText(),/정책 확인 필요/);
+   assert.equal(await page.locator('#characterList').evaluate(el=>el.getBoundingClientRect().height<=420),true);
    await page.close();
   }
   const page=await browser.newPage({viewport:{width:1440,height:1000}});await isolatePlaywrightPage(page);

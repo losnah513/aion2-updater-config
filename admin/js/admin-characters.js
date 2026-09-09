@@ -850,7 +850,7 @@
   let characterSearchRevision=0;
   async function searchCharacters(){
     const revision=++characterSearchRevision;
-    const search=$('#characterSearch')?.value||''; const include=$('#characterIncludeInactive')?.checked!==false;
+    const search=$('#characterSearch')?.value||''; const include=state.characterWorkspace==='inactive'||$('#characterIncludeInactive')?.checked!==false;
     setStatus('#characterStatus','캐릭터 검색 중...','');
     try{
       const data=await adminCharacter('search',{search,includeInactive:include,limit:300});
@@ -880,6 +880,7 @@
   }
 
   function queryExcluded(c){return c.lookupPolicy?c.lookupPolicy.eligible!==true:c.lookupExcluded;}
+  function characterInactive(c){return c.lookupPolicy?.inactive===true;}
   // Presentation of Server-owned status fields only; never changes lookup eligibility.
   function characterExcluded(c){return !!(queryExcluded(c)||c.visibilityExcluded);}
   function characterIssue(c){
@@ -906,13 +907,13 @@
       state.characterWorkspaceFilters[previous]=$('#characterStateFilter')?.value;
     }
     pane.appendChild(card);state.characterWorkspace=view;
-    const excluded=view==='exclusions';
-    $('#characterWorkspaceTitle').textContent=excluded?'제외 리스트':'캐릭터 상태';
-    $('#characterWorkspaceDescription').textContent=excluded
+    const inactive=view==='inactive',excluded=view==='exclusions'||inactive;
+    $('#characterWorkspaceTitle').textContent=inactive?'비활성 캐릭터':excluded?'제외 리스트':'캐릭터 상태';
+    $('#characterWorkspaceDescription').textContent=inactive?'DB에 보존된 비활성 캐릭터입니다. 정기 조회·LIST 쓰기·사이트 노출에서 빠지며 LIST 행과 과거 기록은 삭제하지 않습니다. 관계 복귀 확인 또는 계속 조회 설정으로 복원합니다.':excluded
       ?'조회 제외·활동 관계 대기·사이트 미노출을 사유별로 확인합니다. 조회 오류 여부는 별도로 표시하며 자동 해제하지 않습니다.'
       :'현재 조회가 해결되지 않은 캐릭터만 표시합니다. 정상 확인된 변경 이력은 상태 목록에 남기지 않습니다.';
     const filter=$('#characterStateFilter');
-    const choices=excluded?[['all','모든 제외·대기'],['manual','관리자 조회 제외'],['waiting','활동 관계 대기'],['archived','삭제후보·보관'],['visibility','사이트 미노출'],['review','조회 문제 동반']]
+    const choices=inactive?[['all','모든 비활성 캐릭터']]:excluded?[['all','모든 제외·대기'],['manual','관리자 조회 제외'],['waiting','활동 관계 대기'],['archived','삭제후보·보관'],['visibility','사이트 미노출'],['review','조회 문제 동반']]
       :[['attention','조회 미해결'],['identity','신원 확인 대기']];
     const selected=previous===view?filter.value:state.characterWorkspaceFilters?.[view]||choices[0][0];
     filter.innerHTML=choices.map(([value,label])=>option(value,label,choices.some(x=>x[0]===selected)?selected:choices[0][0])).join('');
@@ -922,7 +923,7 @@
   A.loadCharacterWorkspace=loadCharacterWorkspace;
   A.characterIssue=characterIssue;
   A.characterExcluded=characterExcluded;
-function policyReasonLabel(reason){return ({DELETION_CANDIDATE:'삭제후보',ADMIN_EXCLUDED:'관리자 조회 제외',ADMIN_INCLUDED:'관리자 계속 조회',ARCHIVED_RECORD:'보관된 기록',CURRENT_SANCTUARY:'현재 성역 참여',CURRENT_SANCTUARY_FAMILY:'본부캐 그룹 현재 성역 참여',MANAGED_LEGION:'관리 레기온 소속',MANAGED_LEGION_FAMILY:'본부캐 그룹 관리 레기온 소속',AUTO_NO_ACTIVITY:'활동 관계 종료 · 자동 제외',ACTIVITY_REVIEW_DUE:'활동 관계 재검토 도래',ACTIVITY_REVIEW_WAIT:'활동 관계 재검토 대기',CHARACTER_NOT_FOUND:'DB 정보 없음'})[reason]||'정책 확인 필요';}
+function policyReasonLabel(reason){return ({DELETION_CANDIDATE:'삭제후보',ADMIN_EXCLUDED:'관리자 조회 제외',ADMIN_INCLUDED:'관리자 계속 조회',ARCHIVED_RECORD:'보관된 기록',CURRENT_SANCTUARY:'현재 성역 참여',CURRENT_SANCTUARY_FAMILY:'본부캐 그룹 현재 성역 참여',MANAGED_LEGION:'관리 레기온 소속',MANAGED_LEGION_FAMILY:'본부캐 그룹 관리 레기온 소속',AUTO_INACTIVE:'활동 관계 종료 · 비활성',AUTO_NO_ACTIVITY:'활동 관계 종료 · 자동 제외',ACTIVITY_REVIEW_DUE:'활동 관계 재검토 도래',ACTIVITY_REVIEW_WAIT:'활동 관계 재검토 대기',CHARACTER_NOT_FOUND:'DB 정보 없음'})[reason]||'정책 확인 필요';}
   function activityPolicyDetail(policy){
     if(!policy)return '';
     const reasons={SERVER_TRANSFER:'서버 이전 확인',LEGION_LEFT:'레기온 탈퇴 확인',NO_MANAGED_LEGION:'관리 레기온 소속 본부캐 없음',NO_CURRENT_SANCTUARY:'현재 성역 참여 본부캐 없음'};
@@ -930,11 +931,14 @@ function policyReasonLabel(reason){return ({DELETION_CANDIDATE:'삭제후보',AD
     const codes=Array.isArray(policy.activityReasonCodes)?policy.activityReasonCodes:[];
     const labels=[...new Set(codes.filter(code=>Object.prototype.hasOwnProperty.call(reasons,code)).map(code=>reasons[code]))];
     const lines=[];
-    if(policy.reason==='AUTO_NO_ACTIVITY'){
+    if(policy.inactive){
+      lines.push('비활성 전환: '+(policy.inactiveAt?formatServerTime(policy.inactiveAt):'시각 확인 중'));
+      lines.push('캐릭터와 과거 기록은 DB에 보존하고 LIST 행은 변경하지 않습니다. 복원은 아래 조회 정책에서 개별 계속 조회로 설정할 수 있습니다.');
+    }else if(policy.reason==='AUTO_NO_ACTIVITY'){
       lines.push('서버 자동 제외: '+(labels.join(' · ')||'활동 관계 종료'));
       lines.push('최초 제외 확정: '+(policy.autoExcludedAt?formatServerTime(policy.autoExcludedAt):'아직 기록되지 않음'));
       lines.push('정리 검토 가능일: '+(policy.cleanupCandidateAt?formatServerTime(policy.cleanupCandidateAt):'미정'));
-      lines.push('해당 날짜에 즉시 삭제되는 것은 아닙니다. 삭제 전 관계를 다시 확인하며 복귀·확인 오류 시 정리를 취소하거나 보류합니다.');
+      lines.push('해당 날짜에 즉시 비활성화되는 것은 아닙니다. 공식 소속과 가족·성역 관계를 다시 확인하며 복귀·확인 오류 시 취소하거나 보류합니다. DB와 LIST는 삭제하지 않습니다.');
     }else if(policy.activityHoldCode&&Object.prototype.hasOwnProperty.call(holds,policy.activityHoldCode)){
       lines.push(holds[policy.activityHoldCode]);
     }
@@ -942,6 +946,7 @@ function policyReasonLabel(reason){return ({DELETION_CANDIDATE:'삭제후보',AD
     return lines.length?'<div class="admin-character-state-guide" data-activity-policy-detail><strong>활동 관계 판정 근거</strong>'+lines.map(line=>'<span>'+esc(line)+'</span>').join('')+'</div>':'';
   }
   function exclusionReasonChips(c){
+    if(characterInactive(c))return '<span class="admin-character-reason-chips"><span class="admin-character-reason-chip">활동 관계 종료 · 비활성</span></span>';
     const policy=c.lookupPolicy||{};
     const labels={SERVER_TRANSFER:'서버이전',LEGION_LEFT:'레기온탈퇴',NO_MANAGED_LEGION:'레기온미소속',NO_CURRENT_SANCTUARY:'성역미소속'};
     const codes=policy.reason==='AUTO_NO_ACTIVITY'&&Array.isArray(policy.activityReasonCodes)?policy.activityReasonCodes:[];
@@ -952,7 +957,7 @@ function policyReasonLabel(reason){return ({DELETION_CANDIDATE:'삭제후보',AD
   function filteredCharacters(){
     const filter=$('#characterStateFilter')?.value||'attention';
     const excluded=state.characterWorkspace==='exclusions';
-    const rows=state.characters.filter(c=>excluded?characterExcluded(c):!characterExcluded(c)&&characterLookupUnresolved(c));
+    const rows=state.characters.filter(c=>state.characterWorkspace==='inactive'?characterInactive(c):!characterInactive(c)&&(excluded?characterExcluded(c):!characterExcluded(c)&&characterLookupUnresolved(c)));
     if(filter==='review')return rows.filter(characterIssue);
     if(filter==='identity')return rows.filter(c=>!!c.identityReview);
     if(filter==='manual')return rows.filter(c=>c.lookupPolicy?.reason==='ADMIN_EXCLUDED'||(!c.lookupPolicy&&c.lookupExcluded));
@@ -971,10 +976,10 @@ function policyReasonLabel(reason){return ({DELETION_CANDIDATE:'삭제후보',AD
 
   function renderCharacters(){
     const root=$('#characterList');if(!root)return;
-    const exclusions=state.characterWorkspace==='exclusions';
+    const exclusions=['exclusions','inactive'].includes(state.characterWorkspace);
     root.classList.toggle('is-exclusions',exclusions);
     root.setAttribute('role','region');
-    root.setAttribute('aria-label',exclusions?'제외 캐릭터 목록 · 내부 스크롤':'조회 미해결 캐릭터 목록');
+    root.setAttribute('aria-label',state.characterWorkspace==='inactive'?'비활성 캐릭터 목록 · 내부 스크롤':exclusions?'제외 캐릭터 목록 · 내부 스크롤':'조회 미해결 캐릭터 목록');
     root.tabIndex=exclusions?0:-1;
     const list=filteredCharacters();
     root.innerHTML=list.length?list.map(c=>{

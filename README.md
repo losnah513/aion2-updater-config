@@ -8,11 +8,15 @@ The compact 920px permission matrix and on-demand operator panel use Server valu
 
 Tests: PGlite `sanctuary-permission-{foundation,admin,command,legacy-save}.test.cjs`; Playwright `sanctuary-permissions-ui.test.cjs` and `sanctuary-permission-scopes-ui.test.cjs`, all wired into Pages CI. The legacy-save regression additionally exercises the real v446/v449-v454 SAVE_COMPOSITION chain with synthetic data and external helpers; it does not claim complete production-action or concurrent-session coverage. Normal CODEX_ADMIN production login verified the 11-row matrix, operator team list and editor open/close without saving operational data. Revalidate all scopes and read/cache/lease behavior when these contracts change.
 
-## Monthly cleanup safety preflight
+## DB-only inactive lifecycle (replaces monthly deletion)
+
+CONFIRMED: automatic exclusion does not delete a Master or LIST row. Migration `20260909143826_character_activity_inactive.sql` reuses the bounded relationship recheck and requires the next KST calendar month, fresh verified family evidence, no managed-legion/current-Sanctuary relation, and no unfinished lookup/LIST work before inactivity. Failed or incomplete checks hold. The inactive admin workspace reuses the three-column/six-row scroller. Reimport cannot reactivate an inactive Master. Official return or authenticated individual INCLUDE restores its prior presentation flags; manual exclusion remains authoritative. History and LIST remain unchanged. Existing Worker/maintenance and Apps Script are reused without deployment changes. Run the inactive lifecycle/concurrency and existing regression tests when policy, writers, or family/schedule semantics change. Recovery SQL freezes new transitions while preserving existing inactive records and restoration. Deployment evidence belongs to the project LOG.
+
+## Historical monthly cleanup safety preflight (read-only, not an execution plan)
 
 CONFIRMED (2026-09-09): deleting a current Master directly is unsafe. Live catalog has40 inbound FKs (15 CASCADE/11 SET NULL/10 RESTRICT/4 NO ACTION). Identity-change history CASCADE and audit SET NULL require independent historical references before cleanup. FK-free `character_history.character_master_id`, growth rollups, Master-event JSON, banner ID arrays, and weekly growth's current-Master join also require ownership/read-path review. Mere row survival does not prove history remains readable. Revalidate when schema/readers change.
 
-`supabase/tests/character_monthly_cleanup_preflight.sql` is READ ONLY,10s bounded, emits catalog metadata and candidate IDs/counts without profile/session payloads, and always reports `deletionAllowed=false`. It reuses Server policy and rejects absent/invalid exclusion dates and incorrect KST next-month boundaries. It neither assigns dates nor restores/deletes anything. The report is an inventory, not a complete JSON-reference audit or deletion receipt. Run `node tests/character-monthly-cleanup-preflight.test.cjs` (PGLITE_MODULE supported). Production writer/compensation/tombstone/maintenance activation gates remain in project Plan17C and LOG.
+`supabase/tests/character_monthly_cleanup_preflight.sql` remains a READ ONLY inventory and always reports `deletionAllowed=false`. It neither assigns dates nor restores/deletes anything. The user replaced deletion with DB inactivity; do not implement the superseded deletion/compensation/tombstone draft. Project Plan17C and the latest LOG are authoritative.
 
 ## Exclusion list layout contract
 
