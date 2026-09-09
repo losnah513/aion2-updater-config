@@ -51,7 +51,7 @@ assert.doesNotMatch(migration,/kws_[A-Za-z0-9_-]{20,}/,'Stage 6 migration must n
 for(const token of [
   'const API_VERSION="2.5"','const DATABASE_CONTRACT="480"',
   'kinojo_sanctuary_management_rollout_state_v446',
-  'kinojo_sanctuary_management_bootstrap_v456',
+  'kinojo_sanctuary_management_bootstrap_v2',
 ])assert.ok(edge.includes(token),`Stage 7 Edge transition handoff missing ${token}`);
 assert.doesNotMatch(edge,/"transition-(report|approve)"/,'Stage 6 approval routes must retire after Stage 7 cutover');
 

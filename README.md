@@ -1,5 +1,13 @@
 # KINOJO WEB
 
+## Sanctuary permissions Stage14 preparation
+
+LOCAL ONLY (2026-09-09): Stage14 now connects private capabilities to v2 command/bootstrap/revision/lease contracts and the WEB/Edge adapters. STAFF needs an exact active assignment for assigned-scope scheduling; creator operations remain available. Master-only operator assignment never promotes accounts. Existing broad all/sanctuary_edit overrides and old assignments remain unchanged for explicit migration review. Production is not yet changed; deployment status belongs to the Sanctuary project LOG.
+
+The compact 920px permission matrix and on-demand operator panel use Server values and expected revisions; stale saves fail without overwrite and assignment changes are audited. Composite authorization compares actual DB state inside the same transaction, including pending support items, and rolls back the complete mutation on denial. The legacy boundary guards26 roster/registration delegates and revokes direct legacy command/bootstrap/lease access. Deploy the five migrations as a coordinated release, not individual fixes; restore matching Edge/WEB with the boundary rollback, preserving stored assignments/audits/settings.
+
+Tests: PGlite `sanctuary-permission-{foundation,admin,command}.test.cjs`; Playwright `sanctuary-permissions-ui.test.cjs` and `sanctuary-permission-scopes-ui.test.cjs`, all wired into Pages CI. The command test exercises real new SQL with synthetic legacy delegates, not the complete operational command graph or an authenticated production session. Production verification must use normal CODEX_ADMIN login, never a mocked Master. Revalidate all scopes and read/cache/lease behavior when these contracts change.
+
 ## Monthly cleanup safety preflight
 
 CONFIRMED (2026-09-09): deleting a current Master directly is unsafe. Live catalog has40 inbound FKs (15 CASCADE/11 SET NULL/10 RESTRICT/4 NO ACTION). Identity-change history CASCADE and audit SET NULL require independent historical references before cleanup. FK-free `character_history.character_master_id`, growth rollups, Master-event JSON, banner ID arrays, and weekly growth's current-Master join also require ownership/read-path review. Mere row survival does not prove history remains readable. Revalidate when schema/readers change.

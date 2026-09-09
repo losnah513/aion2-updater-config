@@ -24,7 +24,7 @@ for(const token of [
 for(const token of [
   'const DATABASE_CONTRACT="480"',
   'kinojo_sanctuary_management_linked_alts_v457',
-  'kinojo_sanctuary_management_command_v454'
+  'kinojo_sanctuary_management_command_v2'
 ])assert.ok(edge.includes(token),`current Edge contract must retain v453 random-alt behavior through ${token}`);
 
 assert.ok(main.includes('const SCHEMA_VERSION=480'),'browser must require the current v457 contract');

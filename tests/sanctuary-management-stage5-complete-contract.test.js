@@ -27,9 +27,9 @@ assert.ok(performanceGuard.includes('sanctuary_management_schedule_versions_v437
 
 for(const token of [
   'const API_VERSION="2.5"','const DATABASE_CONTRACT="480"','"archive-preview"',
-  'kinojo_sanctuary_management_bootstrap_v456','kinojo_sanctuary_management_month_v454',
+  'kinojo_sanctuary_management_bootstrap_v2','kinojo_sanctuary_management_month_v454',
   'kinojo_sanctuary_management_notification_summary_v446','kinojo_sanctuary_management_archive_preview_v446',
-  'kinojo_sanctuary_management_command_v454',
+  'kinojo_sanctuary_management_command_v2',
 ])assert.ok(edge.includes(token),`Current Edge contract missing ${token}`);
 
 for(const token of [

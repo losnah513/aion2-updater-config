@@ -30,7 +30,7 @@ for(const token of [
   'const DATABASE_CONTRACT="480"',
   '"revision"',
   'kinojo_sanctuary_management_public_bootstrap_v456',
-  'kinojo_sanctuary_management_bootstrap_v456',
+  'kinojo_sanctuary_management_bootstrap_v2',
   'kinojo_sanctuary_management_public_revision_v456',
   'p_sanctuary_code:sanctuaryCode||null',
 ])assert.ok(edge.includes(token),`Stage 11 Edge contract missing ${token}`);

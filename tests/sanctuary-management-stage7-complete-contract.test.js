@@ -41,8 +41,8 @@ assert.doesNotMatch(migration,/kws_[A-Za-z0-9_-]{20,}/,'Stage 7 migration must n
 
 for(const token of [
   'const API_VERSION="2.5"','const DATABASE_CONTRACT="480"','WRITE_ACTIONS',
-  'kinojo_sanctuary_management_rollout_state_v446','kinojo_sanctuary_management_bootstrap_v456',
-  'kinojo_sanctuary_management_month_v454','kinojo_sanctuary_management_command_v454',
+  'kinojo_sanctuary_management_rollout_state_v446','kinojo_sanctuary_management_bootstrap_v2',
+  'kinojo_sanctuary_management_month_v454','kinojo_sanctuary_management_command_v2',
 ])assert.ok(edge.includes(token),`current Edge contract missing ${token}`);
 assert.doesNotMatch(edge,/"transition-(report|approve)"/,'retired transition approval routes remain public');
 

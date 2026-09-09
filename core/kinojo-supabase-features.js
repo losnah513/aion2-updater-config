@@ -1435,17 +1435,27 @@
 
   async function getSanctuaryRolePermissions(){
     assertAdmin();
-    return rpc('kinojo_admin_sanctuary_role_permissions', { p_pass_key:currentServerSessionCredential() });
+    return rpc('kinojo_admin_sanctuary_permissions_v2', { p_credential:currentServerSessionCredential() });
   }
 
   async function setSanctuaryRolePermission(extra={}){
     assertAdmin();
-    return rpc('kinojo_admin_sanctuary_role_permission_set', {
-      p_pass_key:currentServerSessionCredential(),
+    return rpc('kinojo_admin_sanctuary_permission_set_v2', {
+      p_credential:currentServerSessionCredential(),
       p_role_key:String(extra.role || extra.roleKey || '').trim().toUpperCase(),
       p_permission_key:String(extra.permissionKey || extra.permission || '').trim(),
-      p_enabled:extra.enabled === true
+      p_enabled:extra.enabled === true,
+      p_expected_revision:String(extra.expectedRevision || '')
     });
+  }
+
+  async function sanctuaryOperators(extra={},write=false){
+    assertAdmin();
+    const params={p_credential:currentServerSessionCredential(),p_team_id:extra.teamId||null};
+    if(write){
+      Object.assign(params,{p_member_id:extra.memberId,p_active:extra.active===true,p_expected_revision:extra.expectedRevision});
+    }else params.p_query=String(extra.query||'').trim();
+    return rpc(write?'kinojo_admin_sanctuary_operator_set_v2':'kinojo_admin_sanctuary_operators_v2',params);
   }
 
   async function saveSanctuaryData(extra={}){
@@ -2030,6 +2040,8 @@
     if(name === 'adminSanctuaryScheduleStatus') return setAdminSanctuaryScheduleStatus(extra);
     if(name === 'sanctuaryRolePermissions') return getSanctuaryRolePermissions(extra);
     if(name === 'sanctuaryRolePermissionSet') return setSanctuaryRolePermission(extra);
+    if(name === 'sanctuaryOperators') return sanctuaryOperators(extra);
+    if(name === 'sanctuaryOperatorSet') return sanctuaryOperators(extra,true);
     if(name === 'adminSanctuarySheetSync') return adminSanctuarySheetSync(extra.mode || extra.command || 'status', extra);
     if(name === 'adminSanctuaryProfileDiagnostic') return adminSanctuaryProfileDiagnostic(extra);
     if(name === 'sanctuaryAdmin') return saveSanctuaryData(extra);

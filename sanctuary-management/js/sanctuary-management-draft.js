@@ -309,6 +309,7 @@
   }
 
   function syncScrollFades(){
+    applyPermissionControls();
     state.layer?.querySelectorAll('.sanctuary-management-builder-dialog,.sanctuary-management-schedule-scroll,.sanctuary-management-force-list,.sanctuary-management-candidate-list,.sanctuary-management-linked-alt-panel>div').forEach(syncScrollFade);
   }
 
@@ -322,7 +323,7 @@
   }
 
   function openMode(opener){
-    if(!bridge()?.snapshot()?.writeEnabled)return;
+    if(!bridge()?.snapshot()?.writeEnabled||bridge()?.snapshot()?.actor?.canCreateTeam!==true)return;
     state.creationMode='FIXED';state.joinPolicy='INSTANT';
     openDraft(null,opener);
   }
@@ -550,7 +551,7 @@
     try{
       const locks=teamSlots().filter(item=>Number(item.slot.slotId)>0).map(item=>({slotId:Number(item.slot.slotId),locked:item.slot.placementLocked===true}));
       state.balancePreview=await bridge().balanceProposal(Number(state.sourceTeamId),Number(state.team.revision),state.leaseToken,state.balanceStableSeed,locks);
-      state.mutating=false;setControlsDisabled(false);state.layer.innerHTML=modeMarkup();syncDateMinimum();focusDialog('.sanctuary-management-balance-panel');
+      state.mutating=false;setControlsDisabled(false);state.layer.innerHTML=modeMarkup();applyPermissionControls();syncDateMinimum();focusDialog('.sanctuary-management-balance-panel');
       setStatus('균형 배치 제안을 확인한 뒤 적용하세요. 적용 후에도 최종 저장 전까지 Server 편성은 바뀌지 않습니다.','success');
     }catch(error){state.mutating=false;setControlsDisabled(false);setStatus(value(error?.message)||'균형 배치 제안을 만들지 못했습니다.','error');}
   }
@@ -670,6 +671,7 @@
 
   async function openDraft(team,opener){
     if(!bridge()?.snapshot()?.writeEnabled)return;
+    if(team?!(team.canEditInfo||team.canEditRoster):bridge()?.snapshot()?.actor?.canCreateTeam!==true)return;
     state.sourceTeamId=Number(team?.teamId||0);
     state.team=team&&typeof team==='object'?clone(team):makeLocalTeam(state.creationMode);
     if(state.team){state.creationMode=value(state.team.mode).toUpperCase()==='PARTICIPATION'?'PARTICIPATION':'FIXED';state.joinPolicy=value(state.team.joinPolicy).toUpperCase()==='APPROVAL'?'APPROVAL':'INSTANT';}
@@ -677,7 +679,7 @@
     refreshLocalTeam();
     state.selectedSlotId=0;state.moveFromSlotId=0;state.draggedSlotId=0;state.dragSwitching=false;state.requirementTarget=null;state.classTargetSlotId=0;state.showCreatorCandidates=false;state.requestKey='';state.forceSaveRequestKey='';state.forceAddRequestKey='';state.slotRequestKey='';state.moveRequestKey='';state.message='';state.tone='';state.saving=false;state.mutating=Boolean(state.sourceTeamId);state.balancePreview=null;state.balanceAppliedToken='';state.balanceAppliedSignature='';state.balanceStableSeed='';state.baselineCompositionSignature=compositionSignature(false);resetCharacterLookup();
     openLayer(opener||state.opener);
-    state.layer.innerHTML=modeMarkup();
+    state.layer.innerHTML=modeMarkup();applyPermissionControls();
     syncDateMinimum();
     syncDifficultyControls();
     if(state.team?.localOnly)syncNextRepeatDate();
@@ -688,7 +690,7 @@
         await acquireLease();
         state.mutating=false;
         setStatus('편집 잠금을 확인했습니다. 모달의 변경은 마지막 저장 전까지 Server에 반영되지 않습니다.','success');
-        state.layer.innerHTML=modeMarkup();syncDateMinimum();syncDifficultyControls();focusDialog('.sanctuary-management-builder-dialog');
+        state.layer.innerHTML=modeMarkup();applyPermissionControls();syncDateMinimum();syncDifficultyControls();focusDialog('.sanctuary-management-builder-dialog');
       }catch(error){state.mutating=false;setStatus(value(error?.message)||'팀 편집 잠금을 가져오지 못했습니다.','error');setControlsDisabled(true);state.layer?.querySelector('[data-draft-close]')?.removeAttribute('disabled');}
     }
   }
@@ -824,6 +826,23 @@
       control.disabled=control.dataset.draftWasDisabled==='true';
       delete control.dataset.draftWasDisabled;
     });
+    if(!disabled)applyPermissionControls();
+  }
+
+  function applyPermissionControls(){
+    if(!state.sourceTeamId||!state.layer)return;
+    const deny=selector=>state.layer.querySelectorAll(selector).forEach(control=>{control.disabled=true;});
+    if(!state.team?.canEditInfo)deny('[name="draftTitle"],[name="draftSanctuary"],[data-draft-mode],[data-draft-join-policy]');
+    if(!state.team?.canManageSchedule){
+      state.layer.querySelectorAll('.sanctuary-management-schedule-panel input,.sanctuary-management-schedule-panel button').forEach(control=>{
+        if(!control.matches('[data-draft-join-policy]'))control.disabled=true;
+      });
+    }
+    if(!state.team?.canEditRoster){
+      deny('.sanctuary-management-roster button,.sanctuary-management-candidate-rail button,.sanctuary-management-candidate-rail input,[data-linked-alt-panel] button,[data-balance-open],[data-balance-apply],[data-draft-add-force],[data-draft-remove-force]');
+      state.layer.querySelectorAll('[draggable="true"]').forEach(control=>{control.draggable=false;});
+    }
+    if(!state.team?.canDecideSupport&&currentMode()==='PARTICIPATION'&&(state.team?.supportBatches||[]).some(batch=>Number(batch.pendingCount)>0))deny('[data-draft-mode="fixed"]');
   }
 
   async function save(){
@@ -1074,7 +1093,7 @@
       if(next===currentMode())return;
       state.creationMode=next;state.team.mode=next;if(next==='FIXED')state.joinPolicy='INSTANT';state.team.joinPolicy=state.joinPolicy;
       state.selectedSlotId=0;state.moveFromSlotId=0;state.requirementTarget=null;state.classTargetSlotId=0;state.showCreatorCandidates=false;resetCharacterLookup();
-      state.layer.innerHTML=modeMarkup();syncDateMinimum();syncDifficultyControls();requestAnimationFrame(syncScrollFades);setStatus((next==='PARTICIPATION'?'참여':'고정')+' 팀 구성으로 전환했습니다. 저장할 때 Server에 반영됩니다.','success');
+      state.layer.innerHTML=modeMarkup();applyPermissionControls();syncDateMinimum();syncDifficultyControls();requestAnimationFrame(syncScrollFades);setStatus((next==='PARTICIPATION'?'참여':'고정')+' 팀 구성으로 전환했습니다. 저장할 때 Server에 반영됩니다.','success');
       return;
     }
     const joinPolicy=event.target.closest('[data-draft-join-policy]');

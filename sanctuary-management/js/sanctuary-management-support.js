@@ -70,7 +70,7 @@
     const mine=integer(batch.requesterMemberId)===actorId();const pending=integer(batch.pendingCount)>0;
     const items=batch.items.map(item=>'<li class="is-'+escapeHtml(value(item.status).toLowerCase())+'"><strong>'+item.forceNo+'포스 · '+escapeHtml(item.characterName)+'</strong><small>'+escapeHtml(item.resultMessage||item.status)+'</small></li>').join('');
     let actions='';
-    if(pending&&team()?.canEdit)actions='<button type="button" data-support-decision="APPROVE" data-support-batch="'+batch.supportBatchId+'">승인</button><button type="button" class="is-danger" data-support-decision="REJECT" data-support-batch="'+batch.supportBatchId+'">거절</button>';
+    if(pending&&team()?.canDecideSupport)actions='<button type="button" data-support-decision="APPROVE" data-support-batch="'+batch.supportBatchId+'">승인</button><button type="button" class="is-danger" data-support-decision="REJECT" data-support-batch="'+batch.supportBatchId+'">거절</button>';
     if(pending&&mine)actions+='<button type="button" class="is-secondary" data-support-cancel="'+batch.supportBatchId+'">지원 취소</button>';
     return '<article class="sanctuary-management-support-batch"><header><div><strong>'+escapeHtml(batch.requesterName||'내 지원')+'</strong><small>'+escapeHtml(batch.status)+' · '+batch.itemCount+'건</small></div><div>'+actions+'</div></header><ul>'+items+'</ul></article>';
   }

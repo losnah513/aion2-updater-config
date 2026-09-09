@@ -37,8 +37,9 @@
       const script=document.createElement('script');
       const characterRevision=['admin-characters.js','admin-bootstrap.js'].includes(name)?'&character=2026090802&automation=2026090801&completion=2026090801&family=2026090901&statusTabs=2026090903&activity=2026090901&exclusions=2026090901':'';
       const bannerRevision=(['admin-banner-tabs.js','admin-banner-library.js'].includes(name)?'&context=2026090901':'')+(name==='admin-banner-event-workflow.js'?'&delivery=2026090902':'');
+      const permissionRevision=name==='admin-members.js'?'&permissions=2026090901':'';
 
-      script.src=new URL(name+'?cache='+encodeURIComponent(CACHE)+characterRevision+bannerRevision,base).href;
+      script.src=new URL(name+'?cache='+encodeURIComponent(CACHE)+characterRevision+bannerRevision+permissionRevision,base).href;
       script.async=false;
       script.onload=()=>{
         loadedModules.add(name);

@@ -1,5 +1,16 @@
 # KINOJO WEB HANDOFF
 
+## 성역 Stage14 권한 통합 구현 · 운영 미반영
+
+- 기준 main42744df157ad0265fef36a98d23a4842d2ec4680, branch `codex/sanctuary-stage14-permissions`. 사용자 승인: 생성자 자기 팀 운영 유지, Staff 실제 담당 일정만, Manager 이상 기능별 관리, 운영자 지정 Master만, 지원 취소 동반 모드 변경은 지원 처리 권한 필요. 광역 개인 예외는 별도 이관 대상으로 보존한다.
+- 로컬 구현: foundation(111151), admin_contract(112603), command_contract(113427), entrypoint_cutover(113943), legacy_boundary(114651), 모두20260909. 권한표11키·기존 OFF 유지·revision/audit, Master 전용 정확한 팀/회원 운영자 지정·해제, 실제 DB 변경 전후 기반 복합 저장 권한, 지원 항목 부분 승인 감지, v2 부트스트랩/권한 revision/lease,26개 조회·등록 경로 편성 권한, 구 command/bootstrap/lease 원격 호출 차단. 운영 DB 적용은 아직 없다.
+- WEB/Edge v2 연결과 permissions=2026090901 캐시 준비. 일정/지원/해산/편성 버튼 분리, 편집 모달 영역별 비활성화, 빈 슬롯 다른 캐릭터 추가는 편성 권한만 사용. 권한표920px·모바일 등급 선택·44px 조작, 운영자 영역은 필요할 때 펼친다.
+- 검증: PGlite foundation/admin/command 테스트 통과. command/entrypoint/legacy boundary는 실제 신규 SQL+가상 legacy delegate로 권한·전부 롤백·부분 지원 승인·잠금 해제·26개 guard·ACL 검증이며 실제 운영 command 전체 회귀와 구분한다. Playwright 권한표5폭(1440/768/760/390/320), 기능별5scope×2폭(1440/390) 통과. visitor helper 선행, 외부 요청 차단. 신규5개 테스트 Pages CI 연결.
+- 읽기 전용 `supabase/tests/sanctuary_permission_preflight.sql`: 기존 담당6건은 새 team_id로 추측 연결하지 않는다. all2명/sanctuary_edit1명 원본 유지, 55개 등급·기능 예상값. 실행 직전 최신 설정을 다시 읽고 확인한다.
+- 다음: PR442 추가 커밋/CI 확인, 실제 delegate 회귀와 SQL 적용 사전점검, CODEX_ADMIN 정상 로그인 검수, 확장 SQL→v2 Edge→legacy boundary→WEB의 협조된 전환 및 readback. 로그인 브라우저에는 인증 세션이 없어 관리자 로그인 입력을 요청했다. 가짜 권한/다른 Master/DB 세션 생성으로 대체하지 않는다. 운영 보안 수정 완료가 아니다.
+- rollback `supabase/rollbacks/20260909114651_sanctuary_permission_legacy_boundary_rollback.sql`은 조회해 둔 구 함수 본문29개와 legacy ACL을 복원한다. 신규 담당관계·audit·등급 설정·개인 예외 데이터는 삭제하지 않는다. 반드시 대응하는 구 Edge/WEB과 함께 복구한다.
+- 계획·진행 권위: [성역 계획](https://drive.google.com/file/d/1smwTPWB3l6eXHxsE235nP0UPoPkOvjnq/view), [성역 LOG](https://drive.google.com/file/d/19lh9hkVKNsu9a54bd-k3rlvhIsCK_Khv/view). 준비 브랜치만 보존, 운영 Source는 미배포 코드로 덮어쓰지 않는다.
+
 ## 월별 정리 C 재개 지점
 
 - 기준 main064cde74, branch codex/character-monthly-cleanup. C의 읽기 전용 preflight SQL/로컬 테스트만 추가한다. DB DDL/DML·Edge·Apps Script·Cron·운영 삭제 변경 없음. B는 PR440 배포 완료, A22시 첫 실행 검수는 기존 자동화1.
