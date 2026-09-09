@@ -1,5 +1,15 @@
 # KINOJO WEB HANDOFF
 
+## 캐릭터 상세 공식 신원 응답 호환 · 2026-09-09
+
+- character-detail-refresh API305.6은 공식 info.profile.profileImage의 검증된 profileimg.plaync.com HTTPS 주소에서 charKey를 문자열로 읽어 기존 SQL 신원 proof에 전달한다. 공식 info에는 별도 profile.charKey가 없으므로 이전 v10은 정상 캐릭터도 INIT에서 차단했다.
+- 별도 charKey가 있으면 기존 문자열 검증을 유지하고 이미지 key와 충돌 시 거부한다. 고유번호 숫자 변환 없음. Master의 서버/이름/직업/key 일치와 SQL worker/write fence는 유지한다.
+- tests/character-detail-identity-edge.test.cjs에 실제 공식 응답 형태, 잘못된 host/key/중복 query/숫자 key 거부와 canonical key의 SQL 전달 검증을 추가했다. 청소기 실제 공식 info HTTP200에서도 동일성 검사 통과를 확인했다.
+- DB 구조/권한·30분 일반 쿨타임 정책·기본 외부 호출 정책은 변경하지 않는다. 이번 코드 오류로 실패한 청소기 job만 조건부로 대기시간을 해제하며 실패 이력은 보존한다. 실제 상세 재수집은 사용자의 갱신 버튼으로 시작한다.
+- 배포/운영 복구와 Drive 원문 확인은 캐릭터 상세 정보 개선 프로젝트 LOG4회차를 따른다. 롤백은 Edge 직전v10이며 정상 공식 응답 거부 버그도 복원됨에 주의한다.
+
+
+
 ## 캐릭터 상세 인장·타이틀 응답 계약 · 2026-09-09
 
 - 공식 Seal1(25)/Seal2(26)는 장신구 인장 1/2, 팔찌 뒤·펜던트 앞이다. character-profile-snapshot API305.3과 character-detail-refresh API305.5의 기존 슬롯 맵을 확장한다. 장착 목록·상세 수집 대상 수량은 기존 동적 배열을 사용한다.

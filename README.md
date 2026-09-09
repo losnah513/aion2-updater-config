@@ -302,3 +302,5 @@ KINOJO INFO GitHub Pages upload package.
 - 실제 운영 검수는 CODEX_ADMIN 정상 로그인·서버 세션 확인 후 같은 브라우저를 재사용한다. 세션 만료 시 재로그인, 자격증명 부재 시 관리자 검수 중단. 비밀값은 저장소/문서에 기록하지 않는다.
 - 검증: node tests/visitor-traffic.test.js; node tests/web-shell-auth-contract.test.js; supabase/tests/visitor_traffic_v474.sql은 BEGIN/ROLLBACK으로 실행. 롤백 파일은 visitor_traffic_v474_rollback.sql.
 - 재검증 조건: 방문 RPC/집계/테스트 helper/전용 계정 정책 변경. 증거: tests/evidence/20260908-visitor-traffic.
+
+- CONFIRMED 2026-09-09: official character info omits profile.charKey and supplies its exact decimal string in the HTTPS profileimg.plaync.com profileImage URL. Manual detail API305.6 normalizes that verified key into the existing SQL identity proof, preserving server/name/class/key and worker fences. Explicit invalid/numeric or conflicting keys remain rejected. Evidence: live 청소기 info and character-detail-identity-edge.test.cjs. Recheck if the official info identity schema changes.

@@ -124,7 +124,7 @@
     },
     {
       "path": "supabase/functions/character-detail-refresh/index.ts",
-      "sha256": "b69cdd587c9412ab26c7237770fec129f9527af0ff2b699be76f80e7f3595cfa"
+      "sha256": "651151b034c02bf097983655a4d12ed46ae26d37415a602e912b5c0e639cfc7a"
     },
     {
       "path": "apps-script/list-master/BRIDGE.gs",
