@@ -847,19 +847,26 @@
     }catch(err){setStatus('#characterLookupStatus',err.message||String(err),'error');}
   }
 
+  let characterSearchRevision=0;
   async function searchCharacters(){
+    const revision=++characterSearchRevision;
     const search=$('#characterSearch')?.value||''; const include=$('#characterIncludeInactive')?.checked!==false;
     setStatus('#characterStatus','캐릭터 검색 중...','');
-    try{const data=await adminCharacter('search',{search,includeInactive:include,limit:300});state.characters=data.characters||[];state.characterSummary=data.summary||{};renderCharacterSummary();renderCharacters();setStatus('#characterStatus','Server 상태 '+state.characters.length+'건을 불러왔습니다.','ok');}
-    catch(err){setStatus('#characterStatus',err.message||String(err),'error');}
+    try{
+      const data=await adminCharacter('search',{search,includeInactive:include,limit:300});
+      if(revision!==characterSearchRevision)return;
+      if(!data||data.ok===false)throw new Error(data?.message||'캐릭터 상태 조회 실패');
+      state.characters=data.characters||[];state.characterSummary=data.summary||{};
+      renderCharacterSummary();renderCharacters();setStatus('#characterStatus','Server 상태 '+state.characters.length+'건을 불러왔습니다.','ok');
+    }catch(err){if(revision===characterSearchRevision)setStatus('#characterStatus',err.message||String(err),'error');}
   }
 
   function renderCharacterSummary(){
     const summary=state.characterSummary||{};
     const values={
-      characterStateReviewCount:Number(summary.reviewCount||0),
-      characterStateLookupExcludedCount:Number(summary.lookupExcludedCount||0),
-      characterStateVisibilityExcludedCount:Number(summary.visibilityExcludedCount||0),
+      characterStateReviewCount:state.characters.filter(characterIssue).length,
+      characterStateLookupExcludedCount:state.characters.filter(characterExcluded).length,
+      characterStateVisibilityExcludedCount:state.characters.filter(characterIdentity).length,
       characterStateTotalCount:Number(summary.totalCount||state.characters.length||0)
     };
     Object.entries(values).forEach(([id,value])=>{const el=$('#'+id);if(el)el.textContent=value.toLocaleString('ko-KR');});
@@ -873,15 +880,54 @@
   }
 
   function queryExcluded(c){return c.lookupPolicy?c.lookupPolicy.eligible!==true:c.lookupExcluded;}
+  // Presentation of Server-owned status fields only; never changes lookup eligibility.
+  function characterExcluded(c){return !!(queryExcluded(c)||c.visibilityExcluded);}
+  function characterIssue(c){
+    const failedAt=Date.parse(c.lastLookupFailedAt),successAt=Date.parse(c.lastLookupSuccessAt);
+    const currentError=!!c.lastLookupFailureCode&&Number.isFinite(failedAt)&&(!Number.isFinite(successAt)||failedAt>successAt);
+    return !!(c.exclusionReviewRequired||c.identityReview||Number(c.lookupFailureStreak)>0||Number(c.identityListPendingCount)>0||currentError);
+  }
+  function characterIdentity(c){return !!(c.identityBadge||c.identityReview);}
+  function loadCharacterWorkspace(view){
+    const card=$('.admin-character-status-card'),pane=$('[data-admin-subpane="'+view+'"]');
+    if(!card||!pane)return;
+    const previous=state.characterWorkspace;
+    if(previous&&previous!==view){
+      state.characterWorkspaceFilters=state.characterWorkspaceFilters||{};
+      state.characterWorkspaceFilters[previous]=$('#characterStateFilter')?.value;
+    }
+    pane.appendChild(card);state.characterWorkspace=view;
+    const excluded=view==='exclusions';
+    $('#characterWorkspaceTitle').textContent=excluded?'제외 리스트':'캐릭터 상태';
+    $('#characterWorkspaceDescription').textContent=excluded
+      ?'조회 제외·활동 관계 대기·사이트 미노출을 사유별로 확인합니다. 조회 오류 여부는 별도로 표시하며 자동 해제하지 않습니다.'
+      :'조회 문제와 서버 이전·이름 변경 이력을 확인합니다. 제외만 된 대상은 제외 리스트에서 관리합니다.';
+    const filter=$('#characterStateFilter');
+    const choices=excluded?[['all','모든 제외·대기'],['manual','관리자 조회 제외'],['waiting','활동 관계 대기'],['archived','삭제후보·보관'],['visibility','사이트 미노출'],['review','조회 문제 동반']]
+      :[['attention','조회 문제·신원 변경'],['review','조회 문제만'],['identity','서버 이전·이름 변경'],['normal','정상 상태'],['all','전체 상태 대상']];
+    const selected=previous===view?filter.value:state.characterWorkspaceFilters?.[view]||choices[0][0];
+    filter.innerHTML=choices.map(([value,label])=>option(value,label,selected)).join('');
+    renderCharacters();
+    return searchCharacters();
+  }
+  A.loadCharacterWorkspace=loadCharacterWorkspace;
+  A.characterIssue=characterIssue;
+  A.characterExcluded=characterExcluded;
 function policyReasonLabel(reason){return ({DELETION_CANDIDATE:'삭제후보',ADMIN_EXCLUDED:'관리자 조회 제외',ADMIN_INCLUDED:'관리자 계속 조회',ARCHIVED_RECORD:'보관된 기록',CURRENT_SANCTUARY:'현재 성역 참여',MANAGED_LEGION:'관리 레기온 소속',MANAGED_LEGION_FAMILY:'본부캐 그룹 관리 레기온 소속',ACTIVITY_REVIEW_DUE:'활동 관계 재검토 도래',ACTIVITY_REVIEW_WAIT:'활동 관계 재검토 대기',CHARACTER_NOT_FOUND:'DB 정보 없음'})[reason]||'정책 확인 필요';}
   function filteredCharacters(){
     const filter=$('#characterStateFilter')?.value||'attention';
-    if(filter==='review')return state.characters.filter(c=>c.exclusionReviewRequired);
-    if(filter==='lookup')return state.characters.filter(queryExcluded);
-    if(filter==='visibility')return state.characters.filter(c=>c.visibilityExcluded);
-    if(filter==='normal')return state.characters.filter(c=>!queryExcluded(c)&&!c.visibilityExcluded&&!c.exclusionReviewRequired);
-    if(filter==='attention')return state.characters.filter(c=>c.exclusionReviewRequired||queryExcluded(c)||c.visibilityExcluded);
-    return state.characters;
+    const excluded=state.characterWorkspace==='exclusions';
+    const rows=state.characters.filter(c=>excluded?characterExcluded(c):!characterExcluded(c)||characterIssue(c)||characterIdentity(c));
+    if(filter==='review')return rows.filter(characterIssue);
+    if(filter==='identity')return rows.filter(characterIdentity);
+    if(filter==='manual')return rows.filter(c=>c.lookupPolicy?.reason==='ADMIN_EXCLUDED'||(!c.lookupPolicy&&c.lookupExcluded));
+    if(filter==='waiting')return rows.filter(c=>['ACTIVITY_REVIEW_WAIT','ACTIVITY_REVIEW_DUE'].includes(c.lookupPolicy?.reason));
+    if(filter==='archived')return rows.filter(c=>['DELETION_CANDIDATE','ARCHIVED_RECORD'].includes(c.lookupPolicy?.reason));
+    if(filter==='lookup')return rows.filter(queryExcluded);
+    if(filter==='visibility')return rows.filter(c=>c.visibilityExcluded);
+    if(filter==='normal')return rows.filter(c=>!characterExcluded(c)&&!characterIssue(c));
+    if(filter==='attention')return rows.filter(c=>characterIssue(c)||characterIdentity(c));
+    return rows;
   }
 
   function option(value,label,current){
@@ -900,7 +946,7 @@ function policyReasonLabel(reason){return ({DELETION_CANDIDATE:'삭제후보',AD
       const lastSuccess=c.lastLookupSuccessAt?formatServerTime(c.lastLookupSuccessAt):'기록 없음';
       const statusPills=[
         c.identityReview?'<span class="admin-pill warn">신원 확인 대기</span>':'',
-        review?'<span class="admin-pill warn">제외 검토</span>':'',
+        characterIssue(c)?'<span class="admin-pill warn">조회·반영 확인 필요</span>':'',
         c.lookupPolicy?.reason==='ACTIVITY_REVIEW_WAIT'?'<span class="admin-pill warn">재검토 대기</span>':queryExcluded(c)?'<span class="admin-pill error">조회 제외</span>':'<span class="admin-pill ok">조회 대상</span>',
         c.visibilityExcluded?'<span class="admin-pill error">노출 제외</span>':'<span class="admin-pill ok">사이트 노출</span>'
       ].join('');
@@ -927,6 +973,7 @@ function policyReasonLabel(reason){return ({DELETION_CANDIDATE:'삭제후보',AD
         +identityReviewHtml
         +identityProbeHtml
         +policyHtml
+        +(characterExcluded(c)?'<div class="admin-character-state-guide"><strong>제외·대기 사유</strong><span>'+esc(queryExcluded(c)?policyReasonLabel(policy?.reason):'사이트 노출만 제외')+' · '+esc(c.exclusionReason||c.inactiveReason||'')+' '+esc(c.exclusionMemo||c.inactiveMemo||'')+' · '+(characterIssue(c)?'조회·반영 문제도 확인 필요':'현재 조회·반영 문제 표시 없음')+'</span></div>':'')
         +(c.identityListPendingCount>0?'<button class="admin-btn" type="button" data-identity-list-retry>신원 변경 list 미반영 '+Number(c.identityListPendingCount)+'건 재시도</button>':'')
         +(review?'<div class="admin-character-review-callout"><strong>공식 정보 미확인 '+failureStreak+'회 연속</strong><span>자동 제외하지 않았습니다. 삭제·서버 이전·이름 변경 여부를 확인한 뒤 상태를 선택하세요.</span></div>':'')
         +'<div class="admin-character-failure-meta"><span>연속 실패 <strong>'+failureStreak+'회</strong></span><span>누적 공식 미확인 <strong>'+failureTotal+'회</strong></span><span>최근 오류 <strong>'+esc(c.lastLookupFailureCode||'-')+'</strong></span><span>최근 실패 <strong>'+esc(lastFailure)+'</strong></span><span>최근 성공 <strong>'+esc(lastSuccess)+'</strong></span></div>'

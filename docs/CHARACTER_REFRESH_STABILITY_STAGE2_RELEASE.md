@@ -4,6 +4,12 @@
 
 ## 기준 및 파일
 
+### 캐릭터 상태·제외 리스트 표시 분리
+
+- 기존 관리자 search 응답의 정책·실패·신원 필드만 표시하며 자동 조회 자격을 WEB에서 다시 판정하거나 변경하지 않는다. records/exclusions는 하나의 편집기와 기존 저장 API를 공유한다.
+- 정상 rename/transfer 이력도 records 기본 목록 및 신원 변경 필터에 표시한다. 제외만 된 대상은 exclusions로 분리하며 오류·변경 이력과 겹치면 양쪽에 표시한다. 관리자 제외/활동 대기/삭제후보·보관/사이트 미노출 필터를 구분한다.
+- WEB `statusTabs=2026090901`, PC/mobile 공통. 검증은 `tests/character-status-tabs.test.cjs`와 기존 통합/browser runner. 되돌리기는 해당 WEB/문서 변경만 revert하고 SQL486/기존 정책·저장된 제외를 보존한다.
+
 ### 본부캐 조회 자격 후속 계약
 
 - `20260909060134_character_family_lookup_eligibility.sql`은 기존 private 정책 함수만 교체한다. 지켈(2002) 깡·키나노동조합·낮·밤과 canonical 가족관계를 사용하며 수동 제외/삭제후보/보관 우선순위 및 현재 성역 독립 포함은 유지한다. Master 행/시트/스케줄을 변경하지 않는다. 이미 적용된 migration은 재실행하지 않는다.

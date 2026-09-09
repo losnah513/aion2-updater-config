@@ -98,6 +98,7 @@
     const raw=decodeURIComponent(String(location.hash||'').replace(/^#/,''));
     let [tab,subtab,view]=raw.split('/').filter(Boolean);
     if(tab==='server'){tab='system';subtab='server-status';}
+    if(tab==='characters'&&subtab==='status')subtab='records';
     if(!document.querySelector('[data-admin-pane="'+String(tab||'')+'"]'))tab=isStaffConsole()?'sanctuary':'dashboard';
     return {tab,subtab:subtab||DEFAULT_SUBTABS[tab]||'',view:['create','events','library'].includes(view)?view:''};
   }
@@ -111,7 +112,8 @@
   function loadFeature(tab,subtab,force){
     const key=tab+(subtab?'/'+subtab:'');
     const isImageContext=tab==='images'&&(subtab==='main'||subtab==='side');
-    if(state.loaded[key]&&!force&&!isImageContext)return;
+    const isCharacterWorkspace=tab==='characters'&&['records','exclusions'].includes(subtab);
+    if(state.loaded[key]&&!force&&!isImageContext&&!isCharacterWorkspace)return;
     const activate=()=>{
       if(state.tab!==tab||(subtab&&state.subtab!==subtab))return;
       state.loaded[key]=true;
@@ -122,7 +124,7 @@
       if(tab==='members'&&subtab==='character-images'&&isMaster()) loadMemberImageReviews();
       if(tab==='members'&&subtab==='permissions'&&isMaster()) loadSanctuaryRolePermissions();
       if(tab==='characters'&&subtab==='lookup') loadCharacterLookupConsole(force===true);
-      if(tab==='characters'&&subtab==='records') searchCharacters();
+      if(isCharacterWorkspace) A.loadCharacterWorkspace(subtab);
       if(tab==='sanctuary'&&subtab==='schedule') loadSanctuaryScheduleConsole(force===true);
       if(tab==='sanctuary'&&subtab==='requests') loadSanctuarySupportRequests(force===true);
       if(tab==='notices'&&subtab==='general') loadNotices();
