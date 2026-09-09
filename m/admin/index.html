@@ -12,7 +12,7 @@
 <link href="../../ui/kinojo-common-ui.css?cache=2026081205" rel="stylesheet"/>
 <link href="../../ui/kinojo-card-guards.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../../ui/kinojo-animations.css?cache=2026081003" rel="stylesheet"/>
-<link href="../../admin/css/admin.css?cache=2026082804&amp;stage7=2026082904" rel="stylesheet"/>
+<link href="../../admin/css/admin.css?cache=2026082804&amp;stage7=2026082904&amp;statusTabs=2026090903" rel="stylesheet"/>
 
 </head>
 <body class="kinojo-page-admin">
@@ -141,9 +141,9 @@
       </div>
       <div class="admin-subpane" data-admin-subpane="records">
         <section class="admin-card admin-character-status-card">
-          <div class="admin-card-head"><div><h2 id="characterWorkspaceTitle">캐릭터 상태</h2><p id="characterWorkspaceDescription">조회 문제와 서버 이전·이름 변경을 확인합니다. 제외 대상은 별도 제외 리스트에서 관리합니다.</p></div><button class="admin-btn" id="characterSearchBtn" type="button">상태 새로고침</button></div>
+          <div class="admin-card-head"><div><h2 id="characterWorkspaceTitle">캐릭터 상태</h2><p id="characterWorkspaceDescription">현재 조회가 해결되지 않은 캐릭터만 확인합니다. 제외 대상은 별도 제외 리스트에서 관리합니다.</p></div><button class="admin-btn" id="characterSearchBtn" type="button">상태 새로고침</button></div>
           <div class="admin-character-state-summary">
-            <article><span>조회·반영 확인</span><strong id="characterStateReviewCount">0</strong></article>
+            <article><span>조회 미해결</span><strong id="characterStateReviewCount">0</strong></article>
             <article><span>제외·대기</span><strong id="characterStateLookupExcludedCount">0</strong></article>
             <article><span>신원 변경 이력·대기</span><strong id="characterStateVisibilityExcludedCount">0</strong></article>
             <article><span>Server Master</span><strong id="characterStateTotalCount">0</strong></article>
@@ -160,7 +160,7 @@
             </select>
             <label class="admin-btn" hidden><input id="characterIncludeInactive" type="checkbox" checked/> 제외 상태 포함</label>
           </div>
-          <div class="admin-character-state-guide"><strong>조회 문제 ≠ 조회 제외</strong><span>공식 미확인·신원 확인·list 미반영과 관리자의 제외 지정을 구분합니다. 변경 이력은 정상 갱신 후에도 표시합니다. 활동 관계 대기는 삭제 판정이 아니며, 탭 이동은 조회 정책을 변경하지 않습니다.</span></div>
+          <div class="admin-character-state-guide"><strong>조회 문제 ≠ 조회 제외</strong><span>정상 확인된 캐릭터는 이 목록에서 빠집니다. 제외 사유와 과거 이름·조회 기록은 제외 리스트의 상세보기에서 확인합니다. 활동 관계 대기는 삭제 판정이 아닙니다.</span></div>
           <div id="characterStatus" class="admin-statusline"></div>
           <div class="admin-character-status-list" id="characterList"><div class="admin-empty">캐릭터 상태를 불러오는 중입니다.</div></div>
         </section>
@@ -416,6 +416,6 @@
 <script src="../../core/kinojo-auth-session.js?cache=2026081801"></script>
 <script src="../../core/kinojo-auth-service.js?cache=2026081801"></script>
 <script src="../../core/kinojo-auth-ui.js?cache=2026082901"></script>
-<script src="../../admin/js/admin.js?cache=2026090804&amp;stage7=2026082904&amp;character=2026090802&amp;automation=2026090801&amp;completion=2026090801&amp;context=2026090901&amp;family=2026090901&amp;statusTabs=2026090902"></script>
+<script src="../../admin/js/admin.js?cache=2026090804&amp;stage7=2026082904&amp;character=2026090802&amp;automation=2026090801&amp;completion=2026090801&amp;context=2026090901&amp;family=2026090901&amp;statusTabs=2026090903"></script>
 </body>
 </html>

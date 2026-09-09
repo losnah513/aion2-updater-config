@@ -9,7 +9,7 @@
 
 ## 캐릭터 최신화 4차 재개 계약
 
-- 상태/제외 탭: 기준 main `0c136abd`, branch `codex/character-exclusion-tab`, WEB loader `statusTabs=2026090902`. 캐릭터 상태는 조회 문제/신원 변경, 제외 리스트는 Server 정책상 제외·대기/미노출을 표시한다. 동일 상태 편집 DOM을 재사용하며 신원 이력·미해결 문제가 있는 제외 대상은 양쪽에서 확인 가능하다. DB 정책/데이터·Edge·자동화 변경 없음. `tests/character-status-tabs.test.cjs` 및 기존 browser runner 검증, 실제 배포/검수는 LOG41 참조.
+- 상태/제외 탭: 기준 main `eeaa244f`, branch `codex/character-status-unresolved-compact`, WEB/CSS `statusTabs=2026090903`. 캐릭터 상태는 미해결·비제외 조회만 표시하고 정상 신원 이력만으로 잔류하지 않는다. 제외 대상은 제외 리스트에 보존한다. 기본 카드 이름 한 줄/상세보기, 펼치면 기존 기록·편집 기능. K채채/깽깽은 Server AUTO 활동 관계 대기이며 7일 재검토 정책은 변경하지 않았다. DB/Edge/자동화 변경 없음. 배포·검수·후속 정책 검토는 LOG42 참조.
 
 - 본부캐 자격 보완: 기준 main `debb6907`, branch `codex/character-family-eligibility`. DB 정책은 지켈 깡·키나노동조합·낮·밤 유효 구성원의 가족을 포함하며 수동 제외/삭제후보는 보존한다. 동일 key·서버·이름 탐색은 변경 없음으로 종료한다. WEB loader `family=2026090901`; 기존 배너 revision 보존. migration/rollback `20260909060134_character_family_lookup_eligibility`, 신규 단위 테스트 2개와 기존 runner 재사용. 적용/Pages/Drive·실계정 검수 상태는 같은 LOG39를 확인한다. list 복원 조건·Edge·스케줄·Master 데이터 직접 변경 없음.
 

@@ -73,7 +73,9 @@ const root=path.resolve(__dirname,'..');
      adminCharacter:async(action)=>{window.fixtureCalls.push(action);return {ok:true,characters:[
       {characterId:1,characterName:'새이름',identityBadge:{label:'이전 이름 → 새이름'},lookupPolicy:{eligible:true,reason:'MANAGED_LEGION'}},
       {characterId:2,characterName:'수동제외',lookupPolicy:{eligible:false,reason:'ADMIN_EXCLUDED'}},
-      {characterId:3,characterName:'삭제후보_D',lookupPolicy:{eligible:false,reason:'DELETION_CANDIDATE'}}
+      {characterId:3,characterName:'삭제후보_D',lookupPolicy:{eligible:false,reason:'DELETION_CANDIDATE'}},
+      {characterId:4,characterName:'미해결',hasPersistentKey:true,lookupFailureStreak:1,lookupPolicy:{eligible:true}},
+      {characterId:5,characterName:'K채채',hasPersistentKey:true,identityBadge:{label:'전 지켈 · 깡채채'},lookupPolicy:{eligible:false,reason:'ACTIVITY_REVIEW_WAIT'}}
      ]}}};
     document.querySelector('#characterStateFilter').addEventListener('change',()=>window.KinojoAdmin.renderCharacters());
    });
@@ -83,12 +85,26 @@ const root=path.resolve(__dirname,'..');
     await window.KinojoAdmin.loadCharacterWorkspace(view);
    },view);
    await select('records');
-   assert.match(await page.locator('#characterList').innerText(),/새이름/);
+   assert.match(await page.locator('#characterList').innerText(),/미해결/);
+   assert.doesNotMatch(await page.locator('#characterList').innerText(),/새이름|K채채/);
+   const detail=page.locator('[data-character-id="4"] .admin-character-detail');
+   assert.equal(await detail.getAttribute('open'),null);
+   assert.equal(await detail.locator('.admin-character-failure-meta').isVisible(),false);
+   await detail.locator(':scope > summary').focus();await page.keyboard.press('Enter');
+   assert.equal(await detail.locator('.admin-character-failure-meta').isVisible(),true);
+   assert.equal(await detail.locator('[data-identity-probe]').isVisible(),true);
+   await detail.locator(':scope > summary').click();
+   assert.equal(await detail.locator('.admin-character-failure-meta').isVisible(),false);
    assert.doesNotMatch(await page.locator('#characterList').innerText(),/수동제외/);
    await page.selectOption('#characterStateFilter','identity');
    await select('exclusions');
    assert.match(await page.locator('#characterList').innerText(),/수동제외/);
    assert.doesNotMatch(await page.locator('#characterList').innerText(),/새이름/);
+   const excludedDetail=page.locator('[data-character-id="5"] .admin-character-detail');
+   assert.equal(await excludedDetail.getAttribute('open'),null);
+   await excludedDetail.locator(':scope > summary').click();
+   assert.match(await excludedDetail.innerText(),/깡채채/);
+   assert.equal(await excludedDetail.locator('[data-identity-probe]').count(),0);
    await page.selectOption('#characterStateFilter','manual');
    assert.doesNotMatch(await page.locator('#characterList').innerText(),/삭제후보_D/);
    await select('records');assert.equal(await page.locator('#characterStateFilter').inputValue(),'identity');
