@@ -87,6 +87,8 @@ jobs:
           request_json worker_health character-refresh-worker '{"action":"health"}' 200
           request_json worker_missing character-refresh-worker '{"action":"runQueue"}' 400
           request_json worker_unknown character-refresh-worker '{"action":"__contract_probe__"}' 400
+          request_json worker_activity_denied character-refresh-worker '{"action":"activityRecheck"}' 403
+          request_json maintenance_health scheduled-maintenance-control '{"action":"health"}' 200
           request_json sync_health lookup-list-sync '{"action":"health"}' 200
           request_json sync_missing lookup-list-sync '{"action":"syncList"}' 400
 
@@ -139,8 +141,11 @@ jobs:
           assert worker.get("legionTreeListlessTargetSource") == "server:legion_tree_character_add_v455", worker
           assert worker.get("legionTreeListlessTerminalStage") == "SERVER_QUEUE_CHARACTER_MASTER_DONE", worker
           assert set(worker.get("modes") or []) == {
-              "startAutonomous", "autonomousTick", "runQueue", "runPostprocess"
+              "activityRecheck", "startAutonomous", "autonomousTick", "runQueue", "runPostprocess"
           }, worker
+          assert worker.get("activityRecheck") == {"internalOnly": True, "batchLimit": 5, "intervalDays": 7, "budgetMs": 75000, "relationshipOnly": True}, worker
+          assert load("worker_activity_denied").get("code") == "INTERNAL_ONLY"
+          assert load("maintenance_health").get("apiVersion") == "1.1"
 
           missing = load("worker_missing")
           assert missing.get("ok") is False, missing
