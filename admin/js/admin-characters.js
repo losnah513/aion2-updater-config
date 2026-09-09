@@ -885,7 +885,9 @@
   function characterIssue(c){
     const failedAt=Date.parse(c.lastLookupFailedAt),successAt=Date.parse(c.lastLookupSuccessAt);
     const currentError=!!c.lastLookupFailureCode&&Number.isFinite(failedAt)&&(!Number.isFinite(successAt)||failedAt>successAt);
-    return !!(c.exclusionReviewRequired||c.identityReview||Number(c.lookupFailureStreak)>0||Number(c.identityListPendingCount)>0||currentError);
+    // Excluded records keep old failure counters for audit; those are not an active lookup task.
+    const lookupIssue=!characterExcluded(c)&&(Number(c.lookupFailureStreak)>0||currentError);
+    return !!(c.exclusionReviewRequired||c.identityReview||Number(c.identityListPendingCount)>0||lookupIssue);
   }
   function characterIdentity(c){return !!(c.identityBadge||c.identityReview);}
   function loadCharacterWorkspace(view){

@@ -8,7 +8,7 @@
 
 - 기존 관리자 search 응답의 정책·실패·신원 필드만 표시하며 자동 조회 자격을 WEB에서 다시 판정하거나 변경하지 않는다. records/exclusions는 하나의 편집기와 기존 저장 API를 공유한다.
 - 정상 rename/transfer 이력도 records 기본 목록 및 신원 변경 필터에 표시한다. 제외만 된 대상은 exclusions로 분리하며 오류·변경 이력과 겹치면 양쪽에 표시한다. 관리자 제외/활동 대기/삭제후보·보관/사이트 미노출 필터를 구분한다.
-- WEB `statusTabs=2026090901`, PC/mobile 공통. 검증은 `tests/character-status-tabs.test.cjs`와 기존 통합/browser runner. 되돌리기는 해당 WEB/문서 변경만 revert하고 SQL486/기존 정책·저장된 제외를 보존한다.
+- WEB `statusTabs=2026090902`, PC/mobile 공통. 검증은 `tests/character-status-tabs.test.cjs`와 기존 통합/browser runner. 되돌리기는 해당 WEB/문서 변경만 revert하고 SQL486/기존 정책·저장된 제외를 보존한다.
 
 ### 본부캐 조회 자격 후속 계약
 
