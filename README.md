@@ -1,12 +1,12 @@
 # KINOJO WEB
 
-## Sanctuary permissions Stage14 preparation
+## Sanctuary permissions Stage14
 
-LOCAL ONLY (2026-09-09): Stage14 now connects private capabilities to v2 command/bootstrap/revision/lease contracts and the WEB/Edge adapters. STAFF needs an exact active assignment for assigned-scope scheduling; creator operations remain available. Master-only operator assignment never promotes accounts. Existing broad all/sanctuary_edit overrides and old assignments remain unchanged for explicit migration review. Production is not yet changed; deployment status belongs to the Sanctuary project LOG.
+CONFIRMED (2026-09-09): Stage14 connects private capabilities to v2 command/bootstrap/revision/lease contracts and the WEB/Edge adapters. STAFF needs an exact active assignment for assigned-scope scheduling; creator operations remain available. Master-only operator assignment never promotes accounts. Existing broad all/sanctuary_edit overrides and old assignments remain unchanged for explicit migration review. The coordinated five-migration release, sanctuary-management Edge v31 and WEB PR442 are deployed; detailed deployment evidence belongs to the Sanctuary project LOG.
 
 The compact 920px permission matrix and on-demand operator panel use Server values and expected revisions; stale saves fail without overwrite and assignment changes are audited. Composite authorization compares actual DB state inside the same transaction, including pending support items, and rolls back the complete mutation on denial. The legacy boundary guards26 roster/registration delegates and revokes direct legacy command/bootstrap/lease access. Deploy the five migrations as a coordinated release, not individual fixes; restore matching Edge/WEB with the boundary rollback, preserving stored assignments/audits/settings.
 
-Tests: PGlite `sanctuary-permission-{foundation,admin,command}.test.cjs`; Playwright `sanctuary-permissions-ui.test.cjs` and `sanctuary-permission-scopes-ui.test.cjs`, all wired into Pages CI. The command test exercises real new SQL with synthetic legacy delegates, not the complete operational command graph or an authenticated production session. Production verification must use normal CODEX_ADMIN login, never a mocked Master. Revalidate all scopes and read/cache/lease behavior when these contracts change.
+Tests: PGlite `sanctuary-permission-{foundation,admin,command,legacy-save}.test.cjs`; Playwright `sanctuary-permissions-ui.test.cjs` and `sanctuary-permission-scopes-ui.test.cjs`, all wired into Pages CI. The legacy-save regression additionally exercises the real v446/v449-v454 SAVE_COMPOSITION chain with synthetic data and external helpers; it does not claim complete production-action or concurrent-session coverage. Normal CODEX_ADMIN production login verified the 11-row matrix, operator team list and editor open/close without saving operational data. Revalidate all scopes and read/cache/lease behavior when these contracts change.
 
 ## Monthly cleanup safety preflight
 
