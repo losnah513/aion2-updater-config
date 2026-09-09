@@ -2,9 +2,11 @@
 
 ## Sanctuary permissions Stage14 preparation
 
-LOCAL ONLY (2026-09-09): private capability foundation separates creator, exact active team assignment and function grants. STAFF assignment grants schedule only with the corresponding role bit. Master-only operator assignment does not promote accounts. Existing broad all/sanctuary_edit overrides are preserved for explicit migration review. No public command, lease or bootstrap uses this foundation yet; no production security fix is claimed.
+LOCAL ONLY (2026-09-09): Stage14 now connects private capabilities to v2 command/bootstrap/revision/lease contracts and the WEB/Edge adapters. STAFF needs an exact active assignment for assigned-scope scheduling; creator operations remain available. Master-only operator assignment never promotes accounts. Existing broad all/sanctuary_edit overrides and old assignments remain unchanged for explicit migration review. Production is not yet changed; deployment status belongs to the Sanctuary project LOG.
 
-The permission matrix renders Server-provided values, uses a compact 920px surface and a mobile grade selector, and serializes local setting requests. Tests: `sanctuary-permission-foundation.test.cjs` (PGlite), `sanctuary-permissions-ui.test.cjs` (Playwright, visitor isolation). Operational assignment migration and composite-save authorization remain integration tasks. Revalidate when effective-capability, canonical-snapshot, catalog or RPC contracts change. Deployment status belongs to the Sanctuary project LOG.
+The compact 920px permission matrix and on-demand operator panel use Server values and expected revisions; stale saves fail without overwrite and assignment changes are audited. Composite authorization compares actual DB state inside the same transaction, including pending support items, and rolls back the complete mutation on denial. The legacy boundary guards26 roster/registration delegates and revokes direct legacy command/bootstrap/lease access. Deploy the five migrations as a coordinated release, not individual fixes; restore matching Edge/WEB with the boundary rollback, preserving stored assignments/audits/settings.
+
+Tests: PGlite `sanctuary-permission-{foundation,admin,command}.test.cjs`; Playwright `sanctuary-permissions-ui.test.cjs` and `sanctuary-permission-scopes-ui.test.cjs`, all wired into Pages CI. The command test exercises real new SQL with synthetic legacy delegates, not the complete operational command graph or an authenticated production session. Production verification must use normal CODEX_ADMIN login, never a mocked Master. Revalidate all scopes and read/cache/lease behavior when these contracts change.
 
 ## Monthly cleanup safety preflight
 

@@ -105,7 +105,7 @@
     if(required!=='ALL'&&required!==actual)return {allowed:false,message:'이 슬롯의 모집 클래스와 다릅니다.'};
     const minimum=integer(force.minimumItemLevel||state.team.minimumItemLevel),itemLevel=integer(character.itemLevel);
     if(minimum&&itemLevel<minimum)return {allowed:false,message:'캐릭터의 아이템레벨이 부족합니다.'};
-    if(!state.team.canEdit&&Array.isArray(character.availableForceIds)&&!character.availableForceIds.includes(integer(force.forceId)))return {allowed:false,message:value(character.disabledMessage)||'이 포스에 지원할 수 없습니다.'};
+    if(!state.team.canEditRoster&&Array.isArray(character.availableForceIds)&&!character.availableForceIds.includes(integer(force.forceId)))return {allowed:false,message:value(character.disabledMessage)||'이 포스에 지원할 수 없습니다.'};
     return {allowed:true,message:''};
   }
   function resultCharacter(result){return result?.kind==='CHARACTER_MASTER'?result.character:result?.candidate||null;}
@@ -145,7 +145,7 @@
   }
   function renderModal(){
     const team=state.team,force=team.forces.find(item=>integer(item.forceId)===integer(state.forceId));
-    const modes=team.canEdit?'<button type="button" class="is-own" data-slot-mode="OWN" aria-pressed="'+(state.mode==='OWN')+'">내 캐릭터 추가하기</button><button type="button" class="is-other" data-slot-mode="SEARCH" aria-pressed="'+(state.mode==='SEARCH')+'">다른 캐릭터 추가하기</button>':'<button type="button" class="is-own" data-slot-mode="OWN" aria-pressed="true">내 캐릭터 추가하기</button>';
+    const modes=team.canEditRoster?'<button type="button" class="is-own" data-slot-mode="OWN" aria-pressed="'+(state.mode==='OWN')+'">내 캐릭터 추가하기</button><button type="button" class="is-other" data-slot-mode="SEARCH" aria-pressed="'+(state.mode==='SEARCH')+'">다른 캐릭터 추가하기</button>':'<button type="button" class="is-own" data-slot-mode="OWN" aria-pressed="true">내 캐릭터 추가하기</button>';
     showDialog('<section class="sanctuary-inline-slot-dialog" role="dialog" aria-modal="true" aria-labelledby="sanctuarySlotTitle" tabindex="-1"><header><div><span>CHARACTER ADD</span><h2 id="sanctuarySlotTitle">빈 슬롯에 캐릭터 추가</h2><p>'+escapeHtml(team.title)+' · '+escapeHtml(force?.forceNo)+'포스 · '+escapeHtml(state.partyNo)+'파티 '+escapeHtml(state.slotNo)+'번</p></div><button type="button" data-slot-modal-close aria-label="닫기">×</button></header><nav class="sanctuary-inline-slot-modes" aria-label="캐릭터 추가 방식">'+modes+'</nav><div class="sanctuary-inline-slot-body" data-slot-modal-body></div><footer><p data-slot-action-status></p><button type="button" class="kinojo-btn primary" data-slot-add-confirm disabled>추가하기</button><button type="button" class="kinojo-btn secondary" data-slot-modal-close>닫기</button></footer></section>','[data-slot-mode]');
     renderBody();
   }
@@ -156,7 +156,7 @@
     try{
       const status=await statusForTeam(team.teamId);if(status?.lockedByOther){showBlocked();return;}
       const slot=findSlot(team,button.dataset.sanctuarySlotForce,button.dataset.sanctuarySlotParty,button.dataset.sanctuarySlotNo);if(!slot||slot.occupied){window.KinojoToast?.error?.('이미 채워진 슬롯입니다.');return;}
-      state={team,forceId:integer(button.dataset.sanctuarySlotForce),partyNo:integer(button.dataset.sanctuarySlotParty),slotNo:integer(button.dataset.sanctuarySlotNo),mode:'OWN',ownCharacters:team.canEdit?(snapshot()?.composerCharacters?.characters||[]):(team.supportCharacters?.characters||[]),searchResults:[],query:'',searchMessage:'',selectedKind:'',selectedIndex:-1,relation:'',mainCharacterId:0,busy:false};
+      state={team,forceId:integer(button.dataset.sanctuarySlotForce),partyNo:integer(button.dataset.sanctuarySlotParty),slotNo:integer(button.dataset.sanctuarySlotNo),mode:'OWN',ownCharacters:team.canEditRoster?(snapshot()?.composerCharacters?.characters||[]):(team.supportCharacters?.characters||[]),searchResults:[],query:'',searchMessage:'',selectedKind:'',selectedIndex:-1,relation:'',mainCharacterId:0,busy:false};
       renderModal();
     }catch(error){window.KinojoToast?.error?.(value(error?.message)||'편집 상태를 확인하지 못했습니다.');}
     finally{if(button.isConnected)button.disabled=false;}
@@ -190,7 +190,7 @@
     try{
       const latestStatus=await statusForTeam(teamId);if(latestStatus?.lockedByOther){showBlocked();return;}
       let result=selectedResult(),character=resultCharacter(result);
-      if(state.team.canEdit){
+      if(state.team.canEditRoster){
         token=leaseToken();await window.KinojoSanctuaryManagementDraftBridge.lease(state.team.teamId,'ACQUIRE',token);
         if(result.kind==='OFFICIAL'){
           const relation=state.relation||(result.candidate.allowedRelations||[])[0];

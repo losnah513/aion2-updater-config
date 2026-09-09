@@ -772,6 +772,7 @@
       state.sanctuaryRolePermissions=data;
       renderSanctuaryRolePermissions(data);
       setStatus('#sanctuaryRolePermissionStatus','Master 항상 허용 · 변경 시 바로 저장','ok');
+      ensureSanctuaryOperatorPanel();
     }catch(err){setStatus('#sanctuaryRolePermissionStatus',err.message||String(err),'error');}
     finally{state.sanctuaryPermissionLoading=false;}
   }
@@ -788,7 +789,7 @@
     root?.setAttribute('aria-busy','true');
     root?.querySelectorAll('[data-sanctuary-role-permission]').forEach(control=>{control.disabled=true;});
     try{
-      const data=await action('sanctuaryRolePermissionSet',{role:input.dataset.role,permissionKey:input.dataset.permission,enabled:input.checked});
+      const data=await action('sanctuaryRolePermissionSet',{role:input.dataset.role,permissionKey:input.dataset.permission,enabled:input.checked,expectedRevision:state.sanctuaryRolePermissions?.revision});
       if(!data||data.ok===false)throw new Error(data?.message||'권한 저장 실패');
       state.sanctuaryRolePermissions=data;
       state.sanctuaryPermissionSaving=false;
@@ -799,6 +800,60 @@
       renderSanctuaryRolePermissions(state.sanctuaryRolePermissions);
       setStatus('#sanctuaryRolePermissionStatus',err.message||String(err),'error');
     }finally{state.sanctuaryPermissionSaving=false;root?.removeAttribute('aria-busy');}
+  }
+
+  function ensureSanctuaryOperatorPanel(){
+    const card=$('#sanctuaryRolePermissionCard');
+    if(!card||!isMaster()||card.querySelector('[data-sanctuary-operators]'))return;
+    const panel=document.createElement('details');
+    panel.className='admin-sanctuary-operators';panel.setAttribute('data-sanctuary-operators','');
+    panel.innerHTML='<summary>팀 운영자 <span>Master 전용</span></summary><p>팀별로 지정하며 회원 등급은 바꾸지 않습니다.</p><div class="admin-operator-tools"><select class="admin-select" aria-label="운영자 관리 팀" data-operator-team><option value="">팀 선택</option></select><button class="admin-btn" type="button" data-operator-reload>새로고침</button></div><form class="admin-operator-tools" data-operator-search><input class="admin-input" aria-label="운영자 회원명" placeholder="회원명 검색" maxlength="40" data-operator-query><button class="admin-btn" type="submit">조회</button></form><div class="admin-statusline" role="status" aria-live="polite" data-operator-status></div><div data-operator-list></div>';
+    card.appendChild(panel);
+    const status=(message,error=false)=>{const el=panel.querySelector('[data-operator-status]');el.textContent=message;el.classList.toggle('error',error);};
+    const busy=value=>{panel.querySelectorAll('button,input,select').forEach(el=>{el.disabled=value;});panel.setAttribute('aria-busy',String(value));};
+    let pending=false,loaded=false,current=null;
+    const render=data=>{
+      current=data;
+      const assigned=Array.isArray(data.assigned)?data.assigned:[];
+      const candidates=(Array.isArray(data.candidates)?data.candidates:[]).filter(x=>!assigned.some(a=>String(a.memberId)===String(x.memberId)));
+      const rows=(items,assignedRow)=>items.map(item=>'<div class="admin-operator-row"><div><strong>'+esc(item.name||'이름 미확인')+'</strong><span>'+esc(SANCTUARY_ROLE_LABELS[item.role]||item.role)+'</span></div><button class="admin-btn '+(assignedRow?'':'primary')+'" type="button" data-operator-member="'+esc(item.memberId)+'" data-operator-active="'+(!assignedRow)+'">'+(assignedRow?'해제':'지정')+'</button></div>').join('');
+      panel.querySelector('[data-operator-list]').innerHTML='<h3>담당 운영자</h3>'+(rows(assigned,true)||'<p>지정된 운영자가 없습니다.</p>')+(candidates.length?'<h3>검색 결과</h3>'+rows(candidates,false):'');
+    };
+    const request=async(name,args)=>{
+      if(pending||!isMaster())return;pending=true;busy(true);status('확인 중…');
+      try{
+        const data=await action(name,args);if(!data||data.ok===false)throw new Error(data?.message||'조회하지 못했습니다.');
+        if(Array.isArray(data.teams)){
+          const select=panel.querySelector('[data-operator-team]');
+          const previous=select.value;
+          select.innerHTML='<option value="">팀 선택</option>'+data.teams.map(team=>'<option value="'+esc(team.teamId)+'">'+esc(team.title)+' · #'+esc(team.teamId)+'</option>').join('');
+          select.value=previous;current=null;panel.querySelector('[data-operator-list]').replaceChildren();loaded=true;
+          status('팀을 선택해 주세요.');
+        }else{render(data);status(name==='sanctuaryOperatorSet'?'운영자를 변경했습니다.':(args.query&&!data.candidates?.length?'검색 결과가 없습니다.':''));}
+      }catch(err){status(err.message||String(err),true);}
+      finally{pending=false;busy(false);}
+    };
+    panel.addEventListener('toggle',()=>{if(panel.open&&!loaded)void request('sanctuaryOperators',{});});
+    panel.querySelector('[data-operator-reload]').addEventListener('click',()=>{
+      const teamId=panel.querySelector('[data-operator-team]').value;
+      void request('sanctuaryOperators',teamId?{teamId}:{});
+    });
+    panel.querySelector('[data-operator-team]').addEventListener('change',event=>{
+      current=null;panel.querySelector('[data-operator-list]').replaceChildren();panel.querySelector('[data-operator-query]').value='';
+      if(event.target.value)void request('sanctuaryOperators',{teamId:event.target.value});else status('팀을 선택해 주세요.');
+    });
+    panel.querySelector('form').addEventListener('submit',event=>{
+      event.preventDefault();const teamId=panel.querySelector('[data-operator-team]').value;
+      const query=panel.querySelector('[data-operator-query]').value.trim();
+      if(!teamId||!query){status('팀과 회원명을 확인해 주세요.',true);return;}
+      void request('sanctuaryOperators',{teamId,query});
+    });
+    panel.addEventListener('click',event=>{
+      const button=event.target.closest('[data-operator-member]');if(!button||pending||!current)return;
+      const member=[...(current.assigned||[]),...(current.candidates||[])].find(x=>String(x.memberId)===button.dataset.operatorMember);
+      if(!member)return;
+      void request('sanctuaryOperatorSet',{teamId:current.teamId,memberId:member.memberId,active:button.dataset.operatorActive==='true',expectedRevision:member.revision});
+    });
   }
 
   Object.assign(A,{renderRequestPreview,requestRowHtml,loadCodeRequests,processRequest,loadAccounts,loadNextMemberPage_,loadPreviousMemberPage_,MEMBER_ROLE_LABELS,normalizeMemberRole,getAccountId,getAccountCode,getAccountName,getAccountRole,getAccountRoleLabel,getAccountCanEdit,getAccountAllowedRoles,memberImageSessionToken_,renderMemberImageGroups_,selectMemberImageCharacter_,loadMemberImageGroups_,clearAdminImagePreview_,showAdminImagePreview_,adminImageRequestStyleLabel_,adminImageRequestAcknowledgementLabel_,renderMemberImageRequestCards_,renderMemberImageRequestDetail_,loadMemberImageRequests_,loadMemberImageRequestDetail_,showAdminImageRequestPreview_,downloadAdminImageRequest_,acknowledgeMemberImageRequest_,ensureMemberImageModal,openMemberImageModal,closeMemberImageModal,updateMemberImageReviewBadges_,renderMemberImageReviewSummary_,renderMemberImageReviewRows_,loadMemberImageReviews,scheduleMemberImageReviewSearch_,handleMemberImageReviewClick_,applyMemberFilters,renderAccounts,handleMemberAction,SANCTUARY_ROLE_LABELS,renderSanctuaryRolePermissions,loadSanctuaryRolePermissions,setSanctuaryRolePermission});

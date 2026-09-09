@@ -31,8 +31,8 @@ for(const token of ["v_team.team_mode = 'FIXED' and not exists",'kinojo_sm_team_
 
 for(const token of [
   'const API_VERSION="2.5"','const DATABASE_CONTRACT="480"','"month"',
-  'kinojo_sanctuary_management_bootstrap_v456','kinojo_sanctuary_management_month_v454',
-  'kinojo_sanctuary_management_command_v454',
+  'kinojo_sanctuary_management_bootstrap_v2','kinojo_sanctuary_management_month_v454',
+  'kinojo_sanctuary_management_command_v2',
 ])assert.ok(edge.includes(token),`current Edge contract missing ${token}`);
 
 for(const token of ['getSanctuaryManagementMonth',"action:'month'",'runSanctuaryManagementCommand'])assert.ok(feature.includes(token),`Feature bridge missing ${token}`);

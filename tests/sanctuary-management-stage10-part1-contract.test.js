@@ -32,7 +32,7 @@ for(const token of [
   'kinojo_sanctuary_management_linked_alts_v457',
   'p_force_id:forceId',
   'kinojo_sanctuary_management_balance_proposal_v454',
-  'kinojo_sanctuary_management_command_v454',
+  'kinojo_sanctuary_management_command_v2',
 ])assert.ok(edge.includes(token),`Stage 10 part 1 Edge contract missing ${token}`);
 
 for(const token of [

@@ -254,8 +254,12 @@
         randomAltCandidate:validateRandomSupportCharacter(item.supportCharacters.randomAltCandidate)
       }:{ownerResolved:false,code:'MISSING',candidateCount:0,minimumItemLevel:null,characters:[],randomAltCandidate:null},
       supportBatches:Array.isArray(item.supportBatches)?item.supportBatches.map(validateSupportBatch):[],
-      canEdit:item.canEdit===true,
-      canArchive:item.canArchive===true,
+      canEdit:item.capabilities?.canEditInfo===true||item.capabilities?.canEditRoster===true,
+      canEditInfo:item.capabilities?.canEditInfo===true,
+      canEditRoster:item.capabilities?.canEditRoster===true,
+      canManageSchedule:item.capabilities?.canManageSchedule===true,
+      canDecideSupport:item.capabilities?.canDecideSupport===true,
+      canArchive:item.capabilities?.canArchive===true,
       scheduleEditScopes:Array.isArray(item.scheduleEditScopes)?item.scheduleEditScopes.map(value):[]
     });
     const slotCount=forces.reduce((sum,force)=>sum+force.capacity,0);
@@ -954,9 +958,9 @@
     if(!['ACTIVE','FULL'].includes(value(team.status))){const badge=document.createElement('span');badge.className='sanctuary-management-team-badge';badge.textContent=teamStatusLabel(team);headActions.appendChild(badge);}
     const pending=(team.supportBatches||[]).reduce((sum,batch)=>sum+integer(batch.pendingCount),0);
     if(pending){const pendingBadge=document.createElement('span');pendingBadge.className='sanctuary-management-team-badge is-pending';pendingBadge.textContent='승인 대기 '+pending;headActions.appendChild(pendingBadge);}
-    if(team.canEdit&&value(team.status)!=='ARCHIVED'){
-      if(['ACTIVE','FULL'].includes(value(team.status))){const schedule=document.createElement('button');schedule.type='button';schedule.className='kinojo-btn secondary';schedule.textContent='일정 관리';schedule.dataset.sanctuaryScheduleTeam=value(team.teamId);schedule.disabled=!bootstrapData?.writeEnabled;headActions.appendChild(schedule);}
-      const edit=document.createElement('button');edit.type='button';edit.className='kinojo-btn sanctuary-management-edit-team is-checking';edit.textContent='확인 중';edit.dataset.sanctuaryEditTeam=value(team.teamId);edit.disabled=true;headActions.appendChild(edit);
+    if(value(team.status)!=='ARCHIVED'){
+      if(team.canManageSchedule&&['ACTIVE','FULL'].includes(value(team.status))){const schedule=document.createElement('button');schedule.type='button';schedule.className='kinojo-btn secondary';schedule.textContent='일정 관리';schedule.dataset.sanctuaryScheduleTeam=value(team.teamId);schedule.disabled=!bootstrapData?.writeEnabled;headActions.appendChild(schedule);}
+      if(team.canEdit){const edit=document.createElement('button');edit.type='button';edit.className='kinojo-btn sanctuary-management-edit-team is-checking';edit.textContent='확인 중';edit.dataset.sanctuaryEditTeam=value(team.teamId);edit.disabled=true;headActions.appendChild(edit);}
       if(team.canArchive){const archive=document.createElement('button');archive.type='button';archive.className='kinojo-btn danger sanctuary-management-archive-team';archive.textContent='팀 해산';archive.dataset.sanctuaryArchiveTeam=value(team.teamId);archive.disabled=!bootstrapData?.writeEnabled;headActions.appendChild(archive);}
     }
     titleBand.append(titleRow,headActions);head.append(schedule,titleBand);
@@ -981,8 +985,8 @@
     const root=byId('sanctuaryManagementTeamList');
     root.replaceChildren();
     const addButton=byId('sanctuaryManagementAddTeam');
-    addButton.disabled=!bootstrapData.writeEnabled;
-    addButton.title=bootstrapData.writeEnabled?'새 성역 팀을 생성합니다.':bootstrapData.publicRead?'로그인 후 팀을 생성할 수 있습니다.':value(bootstrapData.rollout?.message)||'현재 읽기 전용입니다.';
+    addButton.disabled=!bootstrapData.writeEnabled||bootstrapData.actor?.canCreateTeam!==true;
+    addButton.title=!addButton.disabled?'새 성역 팀을 생성합니다.':bootstrapData.publicRead?'로그인 후 팀을 생성할 수 있습니다.':'팀 생성 권한이 없습니다.';
     renderRecruitmentSummary();
     if(!bootstrapData.readEnabled){
       byId('sanctuaryManagementTeamStatus').textContent='Server 읽기 플래그가 비활성 상태입니다. 팀 생성도 운영 승인 전까지 열리지 않습니다.';
@@ -1038,7 +1042,7 @@
   function openMonthlySchedule(opener){
     calendarMonthData=monthData;calendarMonthError=monthError;
     openOperationLayer(opener,'<section class="sanctuary-management-operation-dialog is-calendar" role="dialog" aria-modal="true" aria-labelledby="sanctuaryMonthlyScheduleTitle" tabindex="-1"><header><span>MONTHLY SCHEDULE</span><h2 id="sanctuaryMonthlyScheduleTitle">'+escapeHtml(sanctuaryFullLabel(sanctuaryForSelection()))+' 월간 일정</h2><p>수요일부터 화요일까지 같은 Server 일정 회차를 월 단위로 확인합니다.</p></header><div class="sanctuary-management-operation-body" data-monthly-calendar-body>'+monthlyCalendarMarkup()+'</div><footer><button type="button" class="kinojo-btn secondary" data-operation-close>닫기</button></footer></section>');
-    const dialog=operationLayer.querySelector('.is-calendar');dialog?.addEventListener('click',async event=>{const shift=event.target.closest('[data-sanctuary-month-shift]');if(shift){shift.disabled=true;calendarMonthData=null;calendarMonthError='';renderMonthlyScheduleBody();try{calendarMonthData=await ServerAdapter.month(shiftedMonth(Number(shift.dataset.sanctuaryMonthShift)||0,calendarMonthData?.month||dialog.dataset.month||selectedMonth));dialog.dataset.month=calendarMonthData.month;}catch(error){calendarMonthError=value(error?.message)||'월간 일정을 불러오지 못했습니다.';}renderMonthlyScheduleBody();return;}const item=event.target.closest('[data-sanctuary-calendar-team]');if(!item)return;const team=selectedDraftTeam(item.dataset.sanctuaryCalendarTeam);if(!team)return;closeOperationLayer();const card=byId('sanctuaryManagementTeamList')?.querySelector('[data-sanctuary-team="'+CSS.escape(String(team.teamId))+'"]');card?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});if(bootstrapData?.writeEnabled&&team.canEdit)openScheduleOperation(team,item,value(item.dataset.sanctuaryCalendarDate));});
+    const dialog=operationLayer.querySelector('.is-calendar');dialog?.addEventListener('click',async event=>{const shift=event.target.closest('[data-sanctuary-month-shift]');if(shift){shift.disabled=true;calendarMonthData=null;calendarMonthError='';renderMonthlyScheduleBody();try{calendarMonthData=await ServerAdapter.month(shiftedMonth(Number(shift.dataset.sanctuaryMonthShift)||0,calendarMonthData?.month||dialog.dataset.month||selectedMonth));dialog.dataset.month=calendarMonthData.month;}catch(error){calendarMonthError=value(error?.message)||'월간 일정을 불러오지 못했습니다.';}renderMonthlyScheduleBody();return;}const item=event.target.closest('[data-sanctuary-calendar-team]');if(!item)return;const team=selectedDraftTeam(item.dataset.sanctuaryCalendarTeam);if(!team)return;closeOperationLayer();const card=byId('sanctuaryManagementTeamList')?.querySelector('[data-sanctuary-team="'+CSS.escape(String(team.teamId))+'"]');card?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});if(bootstrapData?.writeEnabled&&team.canManageSchedule)openScheduleOperation(team,item,value(item.dataset.sanctuaryCalendarDate));});
     if(dialog)dialog.dataset.month=calendarMonthData?.month||selectedMonth;
   }
 
@@ -1524,7 +1528,7 @@
     document.addEventListener('click',event=>{if(!event.target.closest?.('[data-sanctuary-alt-detail]'))closeAltDetails();});
     byId('sanctuaryManagementScheduleState')?.addEventListener('click',event=>{
       const item=event.target.closest('[data-sanctuary-calendar-team]');if(!item)return;const team=selectedDraftTeam(item.dataset.sanctuaryCalendarTeam);if(!team)return;
-      const card=byId('sanctuaryManagementTeamList')?.querySelector('[data-sanctuary-team="'+CSS.escape(String(team.teamId))+'"]');card?.scrollIntoView({behavior:'smooth',block:'center'});if(bootstrapData?.writeEnabled&&team.canEdit)openScheduleOperation(team,item,value(item.dataset.sanctuaryCalendarDate));
+      const card=byId('sanctuaryManagementTeamList')?.querySelector('[data-sanctuary-team="'+CSS.escape(String(team.teamId))+'"]');card?.scrollIntoView({behavior:'smooth',block:'center'});if(bootstrapData?.writeEnabled&&team.canManageSchedule)openScheduleOperation(team,item,value(item.dataset.sanctuaryCalendarDate));
     });
     byId('sanctuaryManagementMonthlySchedule')?.addEventListener('click',event=>openMonthlySchedule(event.currentTarget));
     byId('sanctuaryManagementRefreshCard')?.addEventListener('click',event=>{if(event.currentTarget.classList.contains('has-update')&&!event.currentTarget.classList.contains('is-checking'))refreshContent();});
