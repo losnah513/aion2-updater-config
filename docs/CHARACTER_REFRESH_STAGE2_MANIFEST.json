@@ -185,6 +185,22 @@
     {
       "path": "tests/character-monthly-cleanup-preflight.test.cjs",
       "sha256": "65d0c8dea02ae490545573a45a9692636ef3aedce498ab64569d6d5e8afa73ee"
+    },
+    {
+      "path": "supabase/migrations/20260909111102_character_cleanup_history_preservation.sql",
+      "sha256": "3e457a6eae2b11d9f01c701f3472d2c8d39193321d8c13e4f270ca377251d880"
+    },
+    {
+      "path": "supabase/rollbacks/20260909111102_character_cleanup_history_preservation_rollback.sql",
+      "sha256": "10cbcc8cb03ffb6acafdbac5b0aaa95de72c105dae79679031874d6b8d8a7249"
+    },
+    {
+      "path": "tests/character-cleanup-history-preservation.test.cjs",
+      "sha256": "0b8a7fd5ed72ca02a3ac150e57339137237213ff3de26f2b5d4f53a552d44a7c"
+    },
+    {
+      "path": "tests/character-cleanup-history-concurrency.test.cjs",
+      "sha256": "15abe6299614abeb88579025639a0b540eec1ae2a6401b782f87d656e4ada023"
     }
   ],
   "notDeploymentAssets": [
@@ -194,5 +210,8 @@
   "activityMigrations": [
     "20260909082438_character_activity_lifecycle.sql",
     "20260909092154_character_activity_relation_recheck.sql"
+  ],
+  "unreleasedCleanupMigrations": [
+    "20260909111102_character_cleanup_history_preservation.sql"
   ]
 }

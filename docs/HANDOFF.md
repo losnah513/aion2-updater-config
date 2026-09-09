@@ -1,5 +1,13 @@
 # KINOJO WEB HANDOFF
 
+## 월별 정리 C 보존 구현 재개 지점 · 미배포
+
+- 기준 main42744df157ad0265fef36a98d23a4842d2ec4680, 작업 branch `codex/character-cleanup-preservation`. 아래 이전 preflight를 반복하지 않는다. 계획17C 범위 유지, A22시 자동화1/B 화면 변경 없음.
+- CLI 생성 migration/rollback `20260909111102_character_cleanup_history_preservation` 및 PGlite/네이티브 PostgreSQL 테스트를 구현했다. private 최소 역사 ID 원장, 신원/활동 감사 FK4개 분리, weekly 역사 조회 join 보존, 현재·옛 key/옛 이름 재유입 차단. 신원 미확정 Queue abort 호환 유지. 기존 운영 DB/Edge/Apps Script/Cron에는 적용하지 않았다.
+- 로컬44/44 회귀 통과. 별도 실제 로컬 PostgreSQL에서 READ COMMITTED/REPEATABLE READ의 현재 key·옛 key·옛 이름 경합6건 및 정리 후 rollback 거절 통과. 테스트 데이터만 삭제했고 운영 캐릭터/LIST 삭제0. 실행: `node scripts/verify-character-refresh-stage2.cjs`, `node tests/character-cleanup-history-concurrency.test.cjs`; 통합 네이티브 옵션은 `--postgres`.
+- 남은 작업: 보존 migration의 운영 권한/실제 writer 호환과 Source/Deploy 등록·배포 검증, 대상별 미분류 역사/배너/성역/이미지 참조 보류, 예약/revision/활성 writer 차단 및 공식 가족 재검증, LIST metadata 정리 receipt/보상 복원, DB 최종 정리, 제한 canary 후 주간 자동 실행 연결. 이들 없이는 정리 활성화 금지. 전체 C 완료가 아니다.
+- 롤백 SQL은 정리 이력이 하나라도 있으면 ROLL_FORWARD_REQUIRED로 중단한다. 현재 캐릭터를 임의 재생성하거나 과거 이력을 지우는 복원은 금지. Git/Drive 실제 저장 상태는 프로젝트 최신 LOG를 확인한다.
+
 ## 월별 정리 C 재개 지점
 
 - 기준 main064cde74, branch codex/character-monthly-cleanup. C의 읽기 전용 preflight SQL/로컬 테스트만 추가한다. DB DDL/DML·Edge·Apps Script·Cron·운영 삭제 변경 없음. B는 PR440 배포 완료, A22시 첫 실행 검수는 기존 자동화1.

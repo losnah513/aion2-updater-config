@@ -1,5 +1,11 @@
 # KINOJO WEB
 
+## Monthly cleanup historical preservation (unreleased)
+
+LOCAL CONTRACT (2026-09-09): migration20260909111102 keeps a private minimal historical identity ledger (ID/key/server/name, no equipment/power/current profile payload), rewires four identity/activity audit foreign keys, and changes only the weekly historical reader's identity join. Existing ranking formulas remain unchanged. Current profiles are not replaced by live placeholders. Retirement fences cover current and historical keys plus keyless old-name replay; a different key does not bypass the existing upstream identity proof. Unverified legion-tree Queue abort remains retryable.
+
+`character-cleanup-history-preservation.test.cjs` tests actual weekly SQL parity, retained IDs/history, ACL and rollback. `character-cleanup-history-concurrency.test.cjs` tests real local PostgreSQL READ COMMITTED/REPEATABLE READ races and rollback refusal after retirement. These are synthetic tests, not operating deletion verification. This migration is NOT deployed and does not implement a cleanup writer or schedule. Remaining LIST compensation, final relationship/writer revalidation and unsupported-reference holds are mandatory before activation. Revalidate on identity history schema, Master write paths or historical reader changes. Actual release status belongs to the project LOG.
+
 ## Monthly cleanup safety preflight
 
 CONFIRMED (2026-09-09): deleting a current Master directly is unsafe. Live catalog has40 inbound FKs (15 CASCADE/11 SET NULL/10 RESTRICT/4 NO ACTION). Identity-change history CASCADE and audit SET NULL require independent historical references before cleanup. FK-free `character_history.character_master_id`, growth rollups, Master-event JSON, banner ID arrays, and weekly growth's current-Master join also require ownership/read-path review. Mere row survival does not prove history remains readable. Revalidate when schema/readers change.

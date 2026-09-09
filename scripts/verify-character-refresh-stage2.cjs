@@ -14,6 +14,7 @@ const tests=[
   "tests/character-activity-lifecycle.test.cjs",
   "tests/character-activity-recheck.test.cjs",
   "tests/character-monthly-cleanup-preflight.test.cjs",
+  "tests/character-cleanup-history-preservation.test.cjs",
   "tests/character-identity-unchanged.test.cjs",
   "tests/character-status-tabs.test.cjs",
   "tests/character-refresh-stage2-boundaries.test.cjs",
@@ -47,7 +48,7 @@ const tests=[
   "tests/character-refresh-budget.test.cjs"
 ];
 if(process.argv.includes('--browser'))tests.push('tests/character-refresh-ui-browser.test.cjs');
-if(process.argv.includes('--postgres'))tests.push('tests/character-activity-concurrency.test.cjs');
+if(process.argv.includes('--postgres'))tests.push('tests/character-activity-concurrency.test.cjs','tests/character-cleanup-history-concurrency.test.cjs');
 let failed=0;
 for(const test of tests){
  const r=spawnSync(process.execPath,[test],{cwd:path.resolve(__dirname,'..'),encoding:'utf8',timeout:180000});
