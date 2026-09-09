@@ -1,5 +1,11 @@
 # KINOJO WEB HANDOFF
 
+## 레기온 트리 HOME 경로 보정 · 2026-09-09
+
+- 기준 main `1d43b0f1`, branch `codex/legion-tree-home-navigation-20260909`. 공통 pageInfo의 tree 경로 누락을 보정해 HOME self-link를 제거한다. PC HOME `/`, 모바일 `/m/`; 기존 메뉴 등록·권한·트리 모델은 유지한다.
+- PC/mobile tree의 common UI query `navigation=2026090901`. 검증: `node tests/legion-tree-data-render-contract.test.js`, `node tests/web-shell-auth-contract.test.js`, 기존 editor/membership 테스트. 브라우저 테스트는 navigation 전 visitor-traffic helper를 설치한다. 공개 링크 검증은 관리자 인증 검수와 구분한다.
+- 배포·Drive 최종 상태는 레기온트리 프로젝트 LOG 최신 회차를 확인한다. 롤백은 이 WEB 변경 revert이며 DB/Edge 변경은 없다.
+
 ## 배너 메인/사이드 초기 진입·라이브러리 초기화 · 2026-09-09
 
 - 기준 main `1f7c4162`, branch `codex/banner-context-init-20260909`. 지연 생성된 본문은 이미 선택된 MAIN/SIDE 메뉴와 표시 상태를 맞춘다. 이미지 목록 알림은 첫 라이브러리 연결 초기화를 생략하지 않는다.
