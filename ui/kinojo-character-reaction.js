@@ -229,6 +229,7 @@
       state.target = mergeMasterRow(active, row);
       renderTarget();
       updateCompareVisibility();
+      if(titleIdentity(current) !== titleIdentity(state.target)) loadEquippedTitles();
       if(!state.live && !state.liveLoading) loadLiveOverview();
     }catch(_err){
       // 서버 상세 조회 실패 시 페이지 카드 데이터로 표시한다.
@@ -822,12 +823,16 @@
     if(!state.open || !state.target) return false;
     clearLiveCacheForTarget(state.target);
     await enrichTargetFromMaster();
-    loadEquippedTitles();
+    loadEquippedTitles(true);
     await loadLiveOverview();
     return true;
   }
 
   let titleRequestId = 0;
+  const titleCache = new Map();
+  const titleInflight = new Map();
+  // The title RPC uses server/name; enriching a detail URL must not invalidate its response.
+  const titleIdentity = target => JSON.stringify([String(target?.serverId || ''), String(target?.name || '')]);
   const titleCategories = [
     { category:'Attack', label:'공격계열' },
     { category:'Defense', label:'방어계열' },
@@ -854,19 +859,37 @@
     }).join('') + '</div>';
   }
 
-  async function loadEquippedTitles(){
+  async function loadEquippedTitles(force){
     const requestId = ++titleRequestId;
-    const identity = liveIdentityKey(state.target);
+    const identity = titleIdentity(state.target);
     const target = liveIdentity(state.target);
+    if(force){ titleCache.delete(identity); titleInflight.delete(identity); }
+    const cached = titleCache.get(identity);
+    if(cached && Date.now() - cached.savedAt < LIVE_CACHE_TTL){
+      renderEquippedTitles(cached.rows, false);
+      return;
+    }
     renderEquippedTitles(null, true);
     try{
       const rpc = window.KinojoSupabaseRpcCore;
       if(!rpc?.rpc || !target.serverId || !target.characterName) throw new Error('Title identity unavailable');
-      const data = await rpc.rpc('kinojo_character_equipped_titles_v466', { p_server_id:Number(target.serverId), p_character_name:String(target.characterName) });
-      if(!data?.ok || !Array.isArray(data.titles)) throw new Error('Title response unavailable');
-      if(requestId === titleRequestId && state.open && identity === liveIdentityKey(state.target)) renderEquippedTitles(data.titles, false);
+      let pending = titleInflight.get(identity);
+      if(!pending){
+        pending = rpc.rpc('kinojo_character_equipped_titles_v466', { p_server_id:Number(target.serverId), p_character_name:String(target.characterName) }).then(data => {
+          if(!data?.ok || !Array.isArray(data.titles)) throw new Error('Title response unavailable');
+          if(titleInflight.get(identity) === pending){
+            titleCache.delete(identity);
+            titleCache.set(identity, { rows:data.titles, savedAt:Date.now() });
+            if(titleCache.size > 50) titleCache.delete(titleCache.keys().next().value);
+          }
+          return data;
+        }).finally(() => { if(titleInflight.get(identity) === pending) titleInflight.delete(identity); });
+        titleInflight.set(identity, pending);
+      }
+      const data = await pending;
+      if(requestId === titleRequestId && state.open && identity === titleIdentity(state.target)) renderEquippedTitles(data.titles, false);
     }catch{
-      if(requestId === titleRequestId && state.open && identity === liveIdentityKey(state.target)) renderEquippedTitles(null, false);
+      if(requestId === titleRequestId && state.open && identity === titleIdentity(state.target)) renderEquippedTitles(null, false);
     }
   }
 

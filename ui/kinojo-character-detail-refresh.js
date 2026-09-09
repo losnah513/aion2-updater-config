@@ -328,14 +328,15 @@
       try{
         const manual=await invoke('overview',extra||{});
         if(!manual || manual.available!==true) return base;
+        const newerEquipment = Date.parse(base.fetchedAt || '') > Date.parse(manual.detailRefresh?.refreshedAt || '');
         return Object.assign({},base,{
           source:manual.source||base.source,
           fetchedAt:newestTimestamp(base.fetchedAt,manual.detailRefresh?.refreshedAt),
           metrics:base.metrics||manual.metrics||null,
           profile:mergeProfilePreservingLatestMetrics(base.profile,manual.profile),
           baseStats:Array.isArray(manual.baseStats)?manual.baseStats:base.baseStats,
-          equipment:Array.isArray(manual.equipment)?manual.equipment:base.equipment,
-          arcana:Array.isArray(manual.arcana)?manual.arcana:base.arcana,
+          equipment:newerEquipment && Array.isArray(base.equipment)?base.equipment:Array.isArray(manual.equipment)?manual.equipment:base.equipment,
+          arcana:newerEquipment && Array.isArray(base.arcana)?base.arcana:Array.isArray(manual.arcana)?manual.arcana:base.arcana,
           arcanaSetEffects:Array.isArray(manual.arcanaSetEffects)?manual.arcanaSetEffects:base.arcanaSetEffects,
           skills:Array.isArray(manual.skills)?manual.skills:base.skills,
           daevanion:Array.isArray(manual.daevanion)?manual.daevanion:base.daevanion,
