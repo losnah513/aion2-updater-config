@@ -124,7 +124,7 @@
     },
     {
       "path": "supabase/functions/character-detail-refresh/index.ts",
-      "sha256": "6ede4d307900ecb946e7f260bf33245ec45ad68e6e1602f5a0a4c78d1ccfd0e1"
+      "sha256": "b69cdd587c9412ab26c7237770fec129f9527af0ff2b699be76f80e7f3595cfa"
     },
     {
       "path": "apps-script/list-master/BRIDGE.gs",
@@ -140,7 +140,7 @@
     },
     {
       "path": "admin/js/admin.js",
-      "sha256": "d76b747b5c6a5a2b4e850f95db1283ec58aa625075716043e9198b551df6b737"
+      "sha256": "a22ac7b4f4fd55d133b2d6833aa50f723ad921adbb5665ed2ab7a76dc981c397"
     },
     {
       "path": "admin/js/admin-bootstrap.js",
@@ -148,11 +148,11 @@
     },
     {
       "path": "admin/index.html",
-      "sha256": "297074a17dae2a4577da4c3e2173a9d1c153d1b2c2f0dbd5055da4a7530d82d3"
+      "sha256": "35cf0a9ae0a3a3510e13897de35e5cedf5b7ebf2b25598225158c53b41c4f463"
     },
     {
       "path": "m/admin/index.html",
-      "sha256": "39ddb4284ee6507c2bc973ba633d06aa883b48bd1cc7c84811a4b41c2fbd2a14"
+      "sha256": "71596d4810eb65abdd9a00d5ed96a1bf523fa70883ac9f4d78ecfaf112710873"
     },
     {
       "path": "supabase/config.toml",

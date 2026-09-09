@@ -10,7 +10,7 @@ assert.ok(CHROME,'CHROME_BIN is required');
 
 const MOBILE_URL=BASE+'/m/';
 const EDGE_PATH='/functions/v1/kinojo-banner-media';
-const FALLBACK='/assets/images/common/kinojo-og.jpg';
+const FALLBACK='/assets/images/common/kinojo-banner-placeholder.svg';
 const SUMMER='/assets/images/common/kinojo_banner_summer.png';
 const SUMMER_DELIVERY='/assets/images/common/kinojo_banner_summer.webp';
 const MOBILE_UA='Mozilla/5.0 (Linux; Android 16; SM-F956N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36';
@@ -129,7 +129,7 @@ async function resetAndMount(page){
     const host=image?.closest('.mobile-og-banner');
     if(!image||!host||!window.KinojoBannerRuntime?.mountBanner)throw new Error('mobile banner runtime unavailable');
     const fallback={
-      src:new URL('/assets/images/common/kinojo-og.jpg',location.href).href,
+      src:new URL('/assets/images/common/kinojo-banner-placeholder.svg',location.href).href,
       alt:'KINOJO INFO 깡 레기온 대표 배너',
       href:'hof/',
       aria:'KINOJO INFO 대표 배너'
@@ -177,7 +177,7 @@ async function waitAlt(page,expected,timeout=6000){
       assert.equal(typeof liveManifest?.active,'boolean','slow live Manifest active');
       if(liveManifest.active){
         const canonical=String(liveManifest.playlist?.[0]?.imageUrl||'');
-        const expected=deliveryImageUrl(canonical);
+        const expected=await page.evaluate(url=>window.KinojoBannerRuntime.deliveryImageUrl(url),canonical);
         assert.ok(canonical&&expected,'slow live active first image');
         await page.waitForFunction(url=>{
           const i=document.querySelector('#kinojo-main-banner-image');
@@ -189,7 +189,7 @@ async function waitAlt(page,expected,timeout=6000){
         assert.ok(settled.complete&&settled.naturalWidth>0,'slow active settled image loaded');
         console.log('PASS mobile slow Manifest hidden fallback -> active Server image '+settled.src);
       }else{
-        await page.waitForFunction(()=>document.querySelector('#kinojo-main-banner-image')?.src.includes('/assets/images/common/kinojo-og.jpg'),{timeout:5000});
+        await page.waitForFunction(()=>document.querySelector('#kinojo-main-banner-image')?.src.includes('/assets/images/common/kinojo-banner-placeholder.svg'),{timeout:5000});
         const settled=await waitBanner(page);
         assertVisibleBanner(settled,'slow inactive settled');
         assert.ok(isFallback(settled.src),'slow inactive must keep fallback '+settled.src);
@@ -252,7 +252,7 @@ async function waitAlt(page,expected,timeout=6000){
       await waitAlt(page,'Mobile E2E A');
       scenario.mode='inactive';
       await page.evaluate(()=>window.__mobileBannerController.refresh());
-      await page.waitForFunction(()=>document.querySelector('#kinojo-main-banner-image')?.src.includes('/assets/images/common/kinojo-og.jpg'),{timeout:5000});
+      await page.waitForFunction(()=>document.querySelector('#kinojo-main-banner-image')?.src.includes('/assets/images/common/kinojo-banner-placeholder.svg'),{timeout:5000});
       const state=await waitBanner(page);
       assertVisibleBanner(state,'active-inactive');
       assert.ok(isFallback(state.src),'active->inactive fallback '+state.src);

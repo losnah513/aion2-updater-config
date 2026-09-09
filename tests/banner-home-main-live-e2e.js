@@ -10,7 +10,7 @@ const FIXTURE=process.env.BANNER_E2E_FIXTURE==='1';
 assert.ok(CHROME,'CHROME_BIN is required');
 
 const EDGE_PATH='/functions/v1/kinojo-banner-media';
-const FALLBACK='/assets/images/common/kinojo_banner_summer.webp';
+const FALLBACK='/assets/images/common/kinojo-banner-placeholder.svg';
 const SUMMER_PNG='/assets/images/common/kinojo_banner_summer.png';
 const SUMMER_WEBP='/assets/images/common/kinojo_banner_summer.webp';
 const deliveryImageUrl=value=>String(value||'').replace(SUMMER_PNG,SUMMER_WEBP);
@@ -61,7 +61,7 @@ async function snapshot(page){
     const pending=await snapshot(page);
     assert.ok(pending.src.includes(FALLBACK),'pending source must remain SEO fallback '+pending.src);
     assert.ok(pending.width>0&&pending.height>0,'pending banner must reserve layout geometry');
-    assert.equal(pending.visibility,'visible','approved optimized first banner must paint while Manifest is unresolved');
+    assert.equal(pending.visibility,'hidden','campaign images must wait for Server approval');
     assert.equal(pending.pending,true,'pending state class');
     assert.equal(pending.ariaBusy,'true','pending accessibility state');
 
@@ -74,7 +74,7 @@ async function snapshot(page){
     assert.equal(settled.ariaBusy,null,'settled accessibility state');
     if(manifest.active){
       const canonical=String(manifest.playlist?.[0]?.imageUrl||'');
-      assert.equal(settled.src,deliveryImageUrl(canonical),'active first image must use the approved delivery URL for the Server Manifest item');
+      assert.equal(settled.src,await page.evaluate(url=>window.KinojoBannerRuntime.deliveryImageUrl(url),canonical),'active first image must use the approved delivery URL for the Server Manifest item');
     }else{
       assert.ok(settled.src.includes(FALLBACK),'inactive Manifest must reveal fallback');
     }

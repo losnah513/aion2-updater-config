@@ -36,6 +36,8 @@ const clone=v=>JSON.parse(JSON.stringify(v));
 function syncRefs(){for(const a of state.assets)a.referenceCount=state.campaigns.reduce((n,c)=>n+(c.items||[]).filter(i=>Number(i.assetId)===Number(a.assetId)).length,0)}
 function response(action,payload){
   state.calls.push(action);
+  if(action==='composite-upload-prepare')return {ok:true,upload:{bucket:'kinojo-site-banners',objectPath:`2035/01/composite-${state.calls.length}.webp`,uploadUrl:`http://127.0.0.1/storage/v1/object/upload/sign/kinojo-site-banners/2035/01/composite-${state.calls.length}.webp`,upsert:false}};
+  if(action==='composite-upload-complete'){if(payload.mimeType!=='image/webp'||payload.sizeBytes>600*1024)throw Error('delivery budget/type');return {ok:true,image:{activation:'COMPOSITE_ATTACHED'}};}
   if(action!=='asset-library'&&action!=='asset-list'&&action!=='asset-title-check'&&action!=='character-search'&&action!=='overlay-asset-list'&&action!=='campaign-list'&&action!=='event-targets'&&action!=='event-list'&&action!=='manifest'){
     if(!/^kws_[A-Za-z0-9_-]{40,80}$/.test(String(payload.sessionToken||'')))throw Error('missing KWS');
     if(!/^[0-9a-f-]{36}$/i.test(String(payload.idempotencyKey||'')))throw Error('missing idempotency key');
@@ -103,10 +105,13 @@ window.KinojoSupabaseClientCore={
   invokeEdgeFunction:async(_slug,payload)=>{if(payload.action==='asset-character-set')await new Promise(resolve=>setTimeout(resolve,80));return response(payload.action,payload)}
 };
 const nativeFetch=window.fetch.bind(window);
+const uploadedImageUrls=new Map(),NativeImage=window.Image;
+window.Image=function(){const image=new NativeImage(),descriptor=Object.getOwnPropertyDescriptor(HTMLImageElement.prototype,'src');Object.defineProperty(image,'src',{get(){return descriptor.get.call(image)},set(value){descriptor.set.call(image,uploadedImageUrls.get(String(value))||value)}});return image};
 window.fetch=async(input,init={})=>{
   const href=String(input?.url||input||'');
   if(href.startsWith('http://127.0.0.1/storage/v1/object/upload/sign/')){
     state.puts.push({href,method:init.method,contentType:init.headers?.['content-type'],upsert:init.headers?.['x-upsert'],size:init.body?.size});
+    if(init.body instanceof Blob)uploadedImageUrls.set(href.split('?')[0].replace('/upload/sign/','/public/'),URL.createObjectURL(init.body));
     return new Response('',{status:200});
   }
   return nativeFetch(input,init);
@@ -334,6 +339,7 @@ async function run(){
     window.KinojoAdmin.getBannerEventWorkflowState('main').overlays={};
     document.querySelector('[data-banner-event-workflow="main"] [data-bew-publish]').click();
     await waitFor(()=>!document.querySelector('[data-banner-event-workflow="main"] [data-bew-result-notice]')?.hidden,'publish readback and automatic reset',12000);
+    if(!state.calls.includes('composite-upload-complete')||!state.puts.some(put=>put.contentType==='image/webp'&&put.size<=600*1024))throw Error('plain MAIN publication must attach lightweight delivery images');
     const publishedState=window.KinojoAdmin.getBannerEventWorkflowState('main');
     if(publishedState.bundleName||publishedState.selected.length||publishedState.eventGroupId)throw Error('published authoring state did not reset');
     if(document.querySelector('[data-banner-event-workflow="main"] [data-bew-scroll="1"]')?.dataset.stepState!=='current'||!document.querySelector('[data-banner-event-workflow="main"] [data-bew-reset]')?.disabled)throw Error('post-publish workflow must return to empty step 1');

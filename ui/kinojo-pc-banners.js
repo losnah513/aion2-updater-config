@@ -18,7 +18,7 @@
   const runtimeScriptUrl=(()=>{
     try{
       const src=String(document.currentScript?.src||'').trim();
-      return src?new URL('kinojo-banner-runtime.js?cache=2026090708',src).href:'';
+      return src?new URL('kinojo-banner-runtime.js?cache=2026090902',src).href:'';
     }catch(_error){return ''}
   })();
   let runtimePromise=null;

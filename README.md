@@ -1,5 +1,15 @@
 # KINOJO WEB
 
+## HOME banner delivery stability · 2026-09-09
+
+CONFIRMED: PC HOME previously painted a seasonal image before Server validation. Initial/empty/error states now use a neutral SVG; schedules/order remain Server-owned. The PC frame is fixed at 16:9, hover no longer translates it, and crossfade backgrounds use the image's content box. Mobile retains its compact crop. Expired manifests cannot install a late image.
+
+CONFIRMED: plain event images skipped composite generation. Publishing now generates WebP for every selected formal-event asset, deduplicates IDs and fails before publish if generation/upload fails. MAIN600KB/SIDE150KB limits apply. SQL487 permits matching-sourceHash derivatives without content layers; missing/stale derivatives preserve legacy behavior. Original uploads, IDs, schedules, exposure order, auth and Edge API remain unchanged.
+
+Existing MAIN UUIDs 785ddeaa-480d-4410-8bc7-55b0dd8a6813, ad45f799-0f19-4425-ad56-e5bc92380f04, 98fb449f-540f-4152-a164-042af9033bf9 have reviewed WEB delivery aliases at 469352/165136/257478B. scripts/build-banner-delivery.cjs preserves dimensions and uses WebP quality86. Future formal event publishing uses the Server-registered derivative. Recheck aliases if UUID originals can be overwritten.
+
+Regression: banner-delivery-publish.test.js, banner-delivery-db.test.cjs, home-banner-stability-e2e.cjs --fixture and existing Banner Runtime suite. Public-read tests install visitor-traffic before navigation and are not admin authentication checks. Revalidate on validity, publishing/composite, CSS box model or cache changes.
+
 ## Legion Tree HOME navigation · 2026-09-09
 
 CONFIRMED: common `pageInfo()` must classify `/legion-tree/` and `/m/legion-tree/` as `legion-tree` before the HOME fallback. Otherwise Topbar generates HOME as `./`; the navigation extension corrects only the active styling, leaving the self-link intact. HOME targets `/` on PC and `/m/` on mobile. Regression: `tests/legion-tree-data-render-contract.test.js`; tree HTML uses `navigation=2026090901` to invalidate the old common UI cache. Revalidate when route classification or Topbar link construction changes. No DB/Edge or organization data changes.
@@ -170,6 +180,7 @@ KINOJO INFO GitHub Pages upload package.
 ## Character detail modal
 
 - Equipped titles use the read-only `kinojo_character_equipped_titles_v466` RPC over existing verified official snapshots. Attack/Defense/Etc render in that order with official category icons and light-mode grade colors. Only `equipStatList` appears as applied effects; owned `statList` is excluded and no totals are recalculated. Empty slots and unavailable data remain distinct, and request sequencing prevents stale titles after character changes.
+- CONFIRMED 2026-09-09: official Seal1/Seal2 use accessory slots 25/26 (인장 1/2), between bracelets and pendant. Profile API305.3 and manual detail API305.5 preserve existing collection/auth boundaries. Newer stored equipment wins over older manual lists; detail reads match both slot and item ID. Title RPC identity is server/name, independent of profile charKey enrichment; results are cached for 120 seconds (50 entries), deduplicated in flight, and invalidated on manual reload. Evidence: official characters index.js, stored 더샷 equipment, character-seal-slots.test.js and character-titles-e2e.js. Recheck after official slot or snapshot contract changes.
 - The PLAYNC information link sits beside the character name; the former live-time row is removed. Profile and name share a grid row at all viewport widths.
 
 - The shared modal lives in `ui/kinojo-character-reaction.*` and is used by Hall of Fame and ranking pages on PC and mobile.

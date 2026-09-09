@@ -722,7 +722,7 @@ window.KinojoSupabase = {
     assert(!html.includes('data-preview-card'));
     assert(!html.includes('본캐예시'));
     assert(html.includes('kinojo-character-reaction.css?cache=2026090701'));
-    assert(html.includes('kinojo-character-reaction.js?cache=2026090701'));
+    assert(html.includes('kinojo-character-reaction.js?cache=2026090901'));
     assert(html.includes('legion-tree.css?cache=2026090707'));
     assert(html.includes('legion-tree-editor.js?cache=2026090105'));
     assert(html.includes('kinojo-supabase-features.js?cache=2026090804'));

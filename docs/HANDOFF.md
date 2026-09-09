@@ -1,5 +1,22 @@
 # KINOJO WEB HANDOFF
 
+## 캐릭터 상세 인장·타이틀 응답 계약 · 2026-09-09
+
+- 공식 Seal1(25)/Seal2(26)는 장신구 인장 1/2, 팔찌 뒤·펜던트 앞이다. character-profile-snapshot API305.3과 character-detail-refresh API305.5의 기존 슬롯 맵을 확장한다. 장착 목록·상세 수집 대상 수량은 기존 동적 배열을 사용한다.
+- 새 장착 스냅샷을 과거 수동 상세 목록으로 덮어쓰지 않는다. 상세 조회는 슬롯과 아이템 ID를 함께 확인하며 수집되지 않은 상세는 기존 수동 갱신 안내를 사용한다. 자동 외부 수집을 추가하지 않는다.
+- 타이틀은 DB466 저장 Snapshot 읽기이며 공식 실시간 조회가 아니다. 프로필의 charKey 보강으로 늦은 응답이 버려지던 조건을 RPC 입력인 서버/이름 기준으로 수정했다. 120초·50개 메모리 캐시와 동일 요청 병합, 수동 reload 무효화, 다른 캐릭터의 지연 응답 차단을 적용한다.
+- 검증: tests/character-seal-slots.test.js, tests/character-titles-e2e.js (1280/760/390/320), 기존 detail identity/write fence와 공통 include 계약. 브라우저 테스트는 방문 통계 helper를 navigation 전에 설치한다.
+- 롤백은 이번 WEB 변경 및 Edge 두 함수의 직전 v9 소스에 한정한다. DB·Queue·권한·캐릭터 데이터 변경 없음. 최종 배포/Drive 상태는 캐릭터 상세 정보 개선 프로젝트 LOG 최신 회차를 확인한다.
+
+
+## HOME 배너 기간·전환·전달 경량화 · 2026-09-09
+
+- 기준 main3351b2fd, branch codex/home-banner-stability-20260909. 고정 여름 첫 이미지/오류 fallback을 중립 SVG로 교체. PC16:9 프레임·hover 이동 제거·content-box crossfade, 모바일 compact crop 보존. runtime/cache2026090902.
+- 기존 MAIN3장은 원본을 유지한 WEB 전달본469352/165136/257478B. 신규 정식 이벤트는 레이어 유무와 무관하게 기존 composite API로 WebP 생성. MAIN600KB/SIDE150KB 초과·업로드 실패 시 게시하지 않는다.
+- SQL487 migration20260909091815_banner_plain_delivery_derivatives: private manifest_v396 레이어 필수 조건만 제거; sourceHash·관계·ACL 보존. Edge v29/API2.8 재사용. 원본·게시 일정·새 테이블/권한 변경 없음.
+- 검증: PGlite 일반/레이어/해시불일치/없는파생본/순서/rollback, Chrome1920·1440·390·320의 지연/오류/빈응답/만료/다운로드중만료/전환/hover. 공개 읽기 및 로컬 모의 게시이며 운영 관리자 업로드·재게시 시험과 구분한다.
+- 배포·CI·Drive와 다음 작업은 [HOME LOG](https://drive.google.com/file/d/18WissdEj0Ew_1WRA3pQle0kIFyfxTrhy/view) 최신 회차. 롤백은 이번 WEB revert 및 supabase/rollbacks/20260909091815_banner_plain_delivery_derivatives_rollback.sql. 원본·생성된 Storage·운영 자료 삭제 없음.
+
 ## 레기온 트리 HOME 경로 보정 · 2026-09-09
 
 - 기준 main `1d43b0f1`, branch `codex/legion-tree-home-navigation-20260909`. 공통 pageInfo의 tree 경로 누락을 보정해 HOME self-link를 제거한다. PC HOME `/`, 모바일 `/m/`; 기존 메뉴 등록·권한·트리 모델은 유지한다.
