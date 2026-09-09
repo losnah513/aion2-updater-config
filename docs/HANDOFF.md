@@ -9,7 +9,7 @@
 
 ## 캐릭터 최신화 4차 재개 계약
 
-- LOG44: branch `codex/character-auto-exclusion-policy`의 `20260909082438_character_activity_lifecycle.sql`은 로컬 구현이며 운영 미적용. 공식 snapshot 근거·가족 성역 포함·AUTO_NO_ACTIVITY·제외 회차/한국시간 다음 달·오류 보류를 구현했다. 기존 준비/관리자/유지보수 호출 연결 및 가족 변경 동시성 검증 전 배포하지 않는다. 새 테스트 `tests/character-activity-lifecycle.test.cjs`. B 화면/C 실제 삭제는 미착수. 최신 범위·보존 조건은 계획17절, 실제 결과·다음 작업은 LOG44.
+- LOG45: branch `codex/character-auto-exclusion-policy`, Draft PR434. `20260909082438_character_activity_lifecycle.sql`은 운영 미적용. 기존 인증 prepare facade 성공 뒤 DB-only 포함 lifecycle 기록을 연결했고 실패/중복 준비는 쓰지 않는다. rollback은 호출도 제거한다. 가족 순환/다단계/부모 누락은 자동 제외 확정을 차단한다. 실제 v296 Queue의 제외/복귀와 실패 시 원자 rollback은 로컬 검증했다. 대상 Master NOWAIT는 대기 방지이며 가족·성역 전체 동시성 fence가 아니다. 주기 공식 복귀 수집, 관리자 신규 reason 표시, 동시성/비용·운영 게이트가 남았다. B 화면/C 실제 삭제 미착수. 계획17절/LOG45를 기준으로 같은 PR에서 이어간다.
 
 - 상태/제외 탭: 기준 main `eeaa244f`, branch `codex/character-status-unresolved-compact`, WEB/CSS `statusTabs=2026090903`. 캐릭터 상태는 미해결·비제외 조회만 표시하고 정상 신원 이력만으로 잔류하지 않는다. 제외 대상은 제외 리스트에 보존한다. 기본 카드 이름 한 줄/상세보기, 펼치면 기존 기록·편집 기능. K채채/깽깽은 Server AUTO 활동 관계 대기이며 7일 재검토 정책은 변경하지 않았다. DB/Edge/자동화 변경 없음. 배포·검수·후속 정책 검토는 LOG42 참조.
 

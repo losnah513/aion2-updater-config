@@ -6,8 +6,8 @@
 
 ### 자동 제외 생애주기 — 배포 전 통합 게이트
 
-- `20260909082438_character_activity_lifecycle.sql`과 동명 rollback: 기존 정책 함수를 교체하고 private/RLS lifecycle·audit를 추가한다. 공개 RPC/삭제/Cron/운영 backfill 없음.
-- 관리자·Queue 소비부에 AUTO_NO_ACTIVITY/CURRENT_SANCTUARY_FAMILY와 명시적 reconcile 호출을 연결해야 한다. family revision/동시 변경, 주기 공식 복귀 확인, 운영 fixture·advisors·SQL_INDEX 및 Source/Deploy 동기화 전 운영 적용 금지.
+- `20260909082438_character_activity_lifecycle.sql`과 동명 rollback: 기존 정책과 인증 prepare facade를 교체하고 private/RLS lifecycle·audit를 추가한다. 신규 공개 RPC/삭제/Cron/운영 backfill 없음. v296 인증·성공 뒤 확정 자동 제외 및 기존 lifecycle만 ID 순서로 재평가한다. LIST 밖 DB 캐릭터도 포함하며 실패는 prepare와 함께 rollback된다.
+- 관리자 신규 reason 표시, family revision/동시 변경, 주기 공식 복귀 확인, 운영 fixture·advisors·SQL_INDEX 및 Source/Deploy 동기화 전 운영 적용 금지. 대상 Master NOWAIT는 교차 잠금 대기를 줄일 뿐 가족 새 연결·성역 변경을 직렬화하지 않는다. 전체 sweep 비용/경합/재시도 검증이 필요하며 이 결과를 삭제 허가로 사용하지 않는다.
 - 기록은 rollback에서도 보존한다. 현재 캐릭터 및 LIST 삭제는 별도 C 게이트이며 이 migration에 포함하지 않는다. `tests/character-activity-lifecycle.test.cjs`를 기존 통합 runner로 검증한다.
 
 ### 캐릭터 상태·제외 리스트 표시 분리

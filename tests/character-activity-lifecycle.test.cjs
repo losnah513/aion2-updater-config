@@ -25,6 +25,12 @@ const {PGlite}=require('../.codex-test-runtime/node_modules/@electric-sql/pglite
  const reconcile=async(id=1,t='2026-09-30T14:59:59Z')=>(await q(`select private.kinojo_character_activity_reconcile(${id},'${t}') p`))[0].p;
  assert.equal((await policy()).reason,'AUTO_NO_ACTIVITY');
  assert.equal((await policy()).autoExcludedAt,null,'read must not assign exclusion date');
+ await db.exec("update character_master set main_character_id=2 where id=1");
+ assert.equal((await policy()).familyRelationValid,false,'cycle is not a canonical family');
+ assert.notEqual((await policy()).reason,'AUTO_NO_ACTIVITY');
+ await db.exec("update character_master set main_character_id=1 where id=1; update character_master set main_character_id=2 where id=3");
+ assert.equal((await policy()).activityHoldCode,'FAMILY_RELATION_UNRESOLVED','nested child must not disappear from family evidence');
+ await db.exec("update character_master set main_character_id=3 where id=3");
  assert.equal((await policy(3)).reason,'ACTIVITY_REVIEW_DUE');
  let p=await reconcile();assert.equal(p.eligible,false);assert.equal(Date.parse(p.cleanupCandidateAt),Date.parse('2026-09-30T15:00:00Z'));
  assert.equal((await reconcile()).changed,false);assert.equal((await q('select * from private.character_activity_events')).length,1);

@@ -75,6 +75,22 @@ $function$;
 
 revoke all on function private.kinojo_character_lookup_policy(bigint,timestamptz) from public,anon,authenticated;
 grant execute on function private.kinojo_character_lookup_policy(bigint,timestamptz) to service_role;
+-- Disable the new preparation caller before restoring production operation.
+CREATE OR REPLACE FUNCTION public.kinojo_prepare_lookup_queue_from_list(p_session_id text,p_session_token text,p_list jsonb,p_filter jsonb DEFAULT '{}'::jsonb)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public','pg_temp'
+AS $prepare$
+declare v_result jsonb;
+begin
+ v_result:=public.kinojo_prepare_lookup_queue_from_list_v296(p_session_id,p_session_token,p_list,coalesce(p_filter,'{}'::jsonb));
+ if coalesce((v_result->>'ok')::boolean,false) is not true then return v_result;end if;
+ return v_result || jsonb_build_object(
+ 'databaseContract','470','listAbsencePolicy','PRESERVE_MASTER','listAbsenceMode','PRESERVE_MASTER',
+ 'listAbsenceImmediateWebHidden',false,'pendingHiddenCount',0,'absentQueuedCount',0,
+ 'fullLookupDetected',public.kinojo_is_full_list_lookup_v297(p_filter),
+ 'listAbsentCandidateCount',0,'listAbsentHiddenCount',0,'listPresentRestoredCount',0,
+ 'listAbsentVerificationEnabled',false,'fullListLookup',public.kinojo_is_full_list_lookup_v297(p_filter));
+end;
+$prepare$;
 commit;
 
 

@@ -1,4 +1,4 @@
--- Local implementation. No Cron, deletion, public RPC or data backfill.
+-- Local implementation. Reuses the existing prepare RPC; no Cron/deletion/backfill.
 begin;
 set local lock_timeout='3s';
 set local statement_timeout='15s';
@@ -78,11 +78,17 @@ AS $function$
 declare c public.character_master%rowtype; root public.character_master%rowtype;
  mode text; scope text; reason text; eligible boolean:=false; current_sanctuary boolean:=false;
  due_at timestamptz; family_sanctuary boolean:=false; confirmed_absence boolean:=false;
+ family_valid boolean:=false;
  lifecycle private.character_activity_lifecycle%rowtype;
 begin
  select * into c from public.character_master where id=p_character_id;
  if not found then return jsonb_build_object('eligible',false,'reason','CHARACTER_NOT_FOUND'); end if;
  select * into root from public.character_master where id=coalesce(c.main_character_id,c.id);
+ -- A dangling parent, cycle or nested root is unresolved, not an empty family.
+ family_valid:=root.id is not null and coalesce(root.main_character_id,root.id)=root.id
+   and not exists(select 1 from public.character_master child
+     join public.character_master parent on parent.id=child.main_character_id
+     where parent.main_character_id=root.id and parent.id<>root.id and child.id<>parent.id);
  mode:=case when c.lookup_policy<>'INHERIT' then c.lookup_policy else coalesce(root.lookup_group_policy,'AUTO') end;
  scope:=case when c.lookup_policy<>'INHERIT' then 'CHARACTER' else 'GROUP' end;
  due_at:=coalesce(c.relation_review_attempted_at,c.last_lookup_success_at,'-infinity'::timestamptz)+interval '7 days';
@@ -120,7 +126,7 @@ begin
                 else coalesce(root.lookup_group_policy,'AUTO') end <> 'EXCLUDE'
    ) then eligible:=true;reason:='MANAGED_LEGION_FAMILY';
    else
-     select count(*)>0 and coalesce(bool_and(private.kinojo_character_activity_evidence(f.id,p_at)),false)
+     select family_valid and count(*)>0 and coalesce(bool_and(private.kinojo_character_activity_evidence(f.id,p_at)),false)
        into confirmed_absence from (select f.* from public.character_master f
  where coalesce(f.main_character_id,f.id)=coalesce(root.id,c.id)
  and not coalesce(f.lookup_excluded,false)
@@ -138,7 +144,9 @@ begin
  'individualMode',c.lookup_policy,'groupMode',coalesce(root.lookup_group_policy,'AUTO'),
  'characterRevision',coalesce(c.lookup_policy_updated_at::text,''),'groupRevision',coalesce(root.id,c.id)::text||'/'||coalesce(root.lookup_policy_updated_at::text,''),
  'rootCharacterId',coalesce(root.id,c.id),'currentSanctuary',current_sanctuary,
- 'familySanctuary',family_sanctuary,'activityEvidenceComplete',confirmed_absence,
+ 'familySanctuary',family_sanctuary,'familyRelationValid',family_valid,'activityEvidenceComplete',confirmed_absence,
+ 'activityHoldCode',case when not family_valid then 'FAMILY_RELATION_UNRESOLVED'
+   when reason in ('ACTIVITY_REVIEW_WAIT','ACTIVITY_REVIEW_DUE') then 'OFFICIAL_ACTIVITY_EVIDENCE_INCOMPLETE' else null end,
  'activityReasonCodes',case when reason='AUTO_NO_ACTIVITY' then
    jsonb_build_array('NO_MANAGED_LEGION','NO_CURRENT_SANCTUARY') ||
    case when c.previous_server_id is not null and c.previous_server_id<>c.server_id
@@ -159,7 +167,9 @@ declare p jsonb; prior private.character_activity_lifecycle%rowtype; next_state 
  next_episode integer; next_excluded timestamptz; next_due timestamptz;
 begin
  if p_at is null then raise exception 'ACTIVITY_TIME_REQUIRED'; end if;
- perform 1 from public.character_master where id=p_character_id for update;
+ -- Do not wait while preparation may already hold other Master row locks.
+ -- Contention aborts preparation atomically; this is not a deletion fence.
+ perform 1 from public.character_master where id=p_character_id for update nowait;
  if not found then return jsonb_build_object('ok',false,'code','CHARACTER_NOT_FOUND');end if;
  select * into prior from private.character_activity_lifecycle where character_id=p_character_id for update;
  if prior.evaluated_at>p_at then return jsonb_build_object('ok',false,'code','STALE_ACTIVITY_EVALUATION');end if;
@@ -187,4 +197,37 @@ end;
 $fn$;
 revoke all on function private.kinojo_character_current_sanctuary(bigint,timestamptz),private.kinojo_character_activity_evidence(bigint,timestamptz),private.kinojo_character_activity_reconcile(bigint,timestamptz) from public,anon,authenticated;
 grant execute on function private.kinojo_character_current_sanctuary(bigint,timestamptz),private.kinojo_character_activity_evidence(bigint,timestamptz),private.kinojo_character_activity_reconcile(bigint,timestamptz) to service_role;
+
+-- Preserve the authenticated v470 facade. Failed/incomplete/repeated preparation
+-- never creates lifecycle records. Include DB-only exclusions, not just LIST rows.
+CREATE OR REPLACE FUNCTION public.kinojo_prepare_lookup_queue_from_list(
+ p_session_id text,p_session_token text,p_list jsonb,p_filter jsonb DEFAULT '{}'::jsonb)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public','pg_temp'
+AS $prepare$
+declare v_result jsonb; v_character_id bigint; v_activity jsonb;
+begin
+ v_result:=public.kinojo_prepare_lookup_queue_from_list_v296(
+   p_session_id,p_session_token,p_list,coalesce(p_filter,'{}'::jsonb));
+ if coalesce((v_result->>'ok')::boolean,false) is not true then return v_result;end if;
+ for v_character_id in
+   select cm.id from public.character_master cm
+   where exists(select 1 from private.character_activity_lifecycle l where l.character_id=cm.id)
+      or private.kinojo_character_lookup_policy(cm.id)->>'reason'='AUTO_NO_ACTIVITY'
+   order by cm.id
+ loop
+   v_activity:=private.kinojo_character_activity_reconcile(v_character_id);
+   if coalesce((v_activity->>'ok')::boolean,false) is not true then
+     raise exception 'ACTIVITY_RECONCILIATION_FAILED';
+   end if;
+ end loop;
+ return v_result || jsonb_build_object(
+   'databaseContract','470','listAbsencePolicy','PRESERVE_MASTER','listAbsenceMode','PRESERVE_MASTER',
+   'listAbsenceImmediateWebHidden',false,'pendingHiddenCount',0,'absentQueuedCount',0,
+   'fullLookupDetected',public.kinojo_is_full_list_lookup_v297(p_filter),
+   'listAbsentCandidateCount',0,'listAbsentHiddenCount',0,'listPresentRestoredCount',0,
+   'listAbsentVerificationEnabled',false,'fullListLookup',public.kinojo_is_full_list_lookup_v297(p_filter));
+end;
+$prepare$;
+revoke all on function public.kinojo_prepare_lookup_queue_from_list(text,text,jsonb,jsonb) from public,anon,authenticated;
+grant execute on function public.kinojo_prepare_lookup_queue_from_list(text,text,jsonb,jsonb) to service_role;
 commit;
