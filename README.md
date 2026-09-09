@@ -1,5 +1,11 @@
 # KINOJO WEB
 
+## Monthly cleanup safety preflight
+
+CONFIRMED (2026-09-09): deleting a current Master directly is unsafe. Live catalog has40 inbound FKs (15 CASCADE/11 SET NULL/10 RESTRICT/4 NO ACTION). Identity-change history CASCADE and audit SET NULL require independent historical references before cleanup. FK-free `character_history.character_master_id`, growth rollups, Master-event JSON, banner ID arrays, and weekly growth's current-Master join also require ownership/read-path review. Mere row survival does not prove history remains readable. Revalidate when schema/readers change.
+
+`supabase/tests/character_monthly_cleanup_preflight.sql` is READ ONLY,10s bounded, emits catalog metadata and candidate IDs/counts without profile/session payloads, and always reports `deletionAllowed=false`. It reuses Server policy and rejects absent/invalid exclusion dates and incorrect KST next-month boundaries. It neither assigns dates nor restores/deletes anything. The report is an inventory, not a complete JSON-reference audit or deletion receipt. Run `node tests/character-monthly-cleanup-preflight.test.cjs` (PGLITE_MODULE supported). Production writer/compensation/tombstone/maintenance activation gates remain in project Plan17C and LOG.
+
 ## Exclusion list layout contract
 
 The exclusions workspace reuses Server policy: PC three columns, two below1100px, one below700px, and a bounded approximately six-row internal scroller. Native summary owns name/reason chips/keyboard toggle; no nested buttons. Expanded cards span the grid inside the same scroller. Unknown codes never imply legion departure. Other workspaces and editing remain unchanged. Recheck `node tests/character-refresh-ui-browser.test.cjs` on rendering/breakpoint/policy display changes. Deployment status belongs to the project LOG.

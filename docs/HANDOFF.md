@@ -1,5 +1,12 @@
 # KINOJO WEB HANDOFF
 
+## 월별 정리 C 재개 지점
+
+- 기준 main064cde74, branch codex/character-monthly-cleanup. C의 읽기 전용 preflight SQL/로컬 테스트만 추가한다. DB DDL/DML·Edge·Apps Script·Cron·운영 삭제 변경 없음. B는 PR440 배포 완료, A22시 첫 실행 검수는 기존 자동화1.
+- `supabase/tests/character_monthly_cleanup_preflight.sql`은 READ ONLY/10초·deletionAllowed=false. 실제 catalog40 FK(연쇄15/SET NULL11/RESTRICT10/NO ACTION4), 논리 ID24열·구조화86열 발견. 구조화 컬럼 목록은 JSON 값의 의미 검수가 아니다. 최초 제외일 미기록190명·월별 후보0이라는 관측은 LOG 기록 시점에만 유효하다.
+- 첫 다음 행동: 과거 신원/감사 참조를 독립 역사 식별자로 분리하고 읽기 경로(특히 weekly growth의 current Master join) 보존 테스트. 배너/성역/이미지 참조는 안전한 분리 미확인 시 대상별 보류. 다음으로 예약/revision·활성 writer 차단, 공식 가족 재검증, LIST metadata 정리 receipt/보상 복원, tombstone 재유입 차단을 기존 경계에 연결한다. 이를 마치기 전 주간 Cron/자동 삭제를 켜지 않는다.
+- 테스트 `node tests/character-monthly-cleanup-preflight.test.cjs`, 전체 `node scripts/verify-character-refresh-stage2.cjs`. 롤백은 테스트/문서 변경 revert이며 데이터 복원 불필요. 실제 PR/Drive 진행은 프로젝트 최신 LOG를 따른다. C 전체 완료가 아니다.
+
 ## 제외 리스트 B 화면 계약
 
 - 기준 main8838ba20, branch codex/character-exclusion-grid. Server 사유 코드 표시만 변경: PC3열/태블릿2열/모바일1열, 약6줄 내부 스크롤. summary 사유 칩도 native 펼침, nested button 없음. 상세 카드는 전체 열을 사용하며 목록 높이는 유지한다.
