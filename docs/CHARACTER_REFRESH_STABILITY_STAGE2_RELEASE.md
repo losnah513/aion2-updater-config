@@ -4,6 +4,12 @@
 
 ## 기준 및 파일
 
+### 자동 제외 생애주기 — 배포 전 통합 게이트
+
+- `20260909082438_character_activity_lifecycle.sql`과 동명 rollback: 기존 정책 함수를 교체하고 private/RLS lifecycle·audit를 추가한다. 공개 RPC/삭제/Cron/운영 backfill 없음.
+- 관리자·Queue 소비부에 AUTO_NO_ACTIVITY/CURRENT_SANCTUARY_FAMILY와 명시적 reconcile 호출을 연결해야 한다. family revision/동시 변경, 주기 공식 복귀 확인, 운영 fixture·advisors·SQL_INDEX 및 Source/Deploy 동기화 전 운영 적용 금지.
+- 기록은 rollback에서도 보존한다. 현재 캐릭터 및 LIST 삭제는 별도 C 게이트이며 이 migration에 포함하지 않는다. `tests/character-activity-lifecycle.test.cjs`를 기존 통합 runner로 검증한다.
+
 ### 캐릭터 상태·제외 리스트 표시 분리
 
 - 기존 관리자 search 응답의 정책·실패·신원 필드만 표시하며 자동 조회 자격을 WEB에서 다시 판정하거나 변경하지 않는다. records/exclusions는 하나의 편집기와 기존 저장 API를 공유한다.
