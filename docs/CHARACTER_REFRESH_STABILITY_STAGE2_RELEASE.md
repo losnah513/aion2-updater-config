@@ -7,7 +7,8 @@
 ### 자동 제외 생애주기 — 배포 전 통합 게이트
 
 - `20260909082438_character_activity_lifecycle.sql`과 동명 rollback: 기존 정책과 인증 prepare facade를 교체하고 private/RLS lifecycle·audit를 추가한다. 신규 공개 RPC/삭제/Cron/운영 backfill 없음. v296 인증·성공 뒤 확정 자동 제외 및 기존 lifecycle만 ID 순서로 재평가한다. LIST 밖 DB 캐릭터도 포함하며 실패는 prepare와 함께 rollback된다.
-- 관리자 신규 reason 표시 및 Server 근거·후보일 표시를 같은 PR에 포함한다(activity=2026090901). family revision/동시 변경, 주기 공식 복귀 확인, 운영 fixture·advisors·SQL_INDEX 및 Source/Deploy 동기화 전 운영 적용 금지. 대상 Master NOWAIT는 교차 잠금 대기를 줄일 뿐 가족 새 연결·성역 변경을 직렬화하지 않는다. 전체 sweep 비용/경합/재시도 검증이 필요하며 이 결과를 삭제 허가로 사용하지 않는다.
+- 관리자 신규 reason 표시 및 Server 근거·후보일 표시를 같은 PR에 포함한다(activity=2026090901). 주기 공식 복귀 확인, 운영 fixture·advisors·SQL_INDEX 및 Source/Deploy 동기화 전 운영 적용 금지. activity_lock은 Master/공식 snapshot/성역 team·slot·rule·version·exception 7테이블을 SHARE ROW EXCLUSIVE NOWAIT로 잠가 신규 관계/일정 phantom과 평가끼리의 잠금 승격 충돌을 막는다. prepare는 인증 후 잠그고 충돌 시 transaction을 되돌려 ACTIVITY_RELATION_BUSY/retryable을 반환한다. 외부 I/O 중 잠금을 유지하지 않는다.
+- 로컬 PostgreSQL17.10 다중 연결: 본인/가족 복귀/신규 가족/성역 slot·version/공식 snapshot 쓰기와 제외 확정 경합 및 역순, evaluator 중복, 인증 전 차단을 검증한다. 190행 lifecycle sweep의 로컬1500ms 예산을 검사하되 전체 운영 prepare/성역 쓰기 지연을 보장하지 않는다. 관련 테이블 쓰기는 이 짧은 DB transaction 동안 지연될 수 있으므로 운영 카나리에서 확인한다. 실제 월별 삭제 직전에는 별도 공식 재확인·active-job/최종 revision 보호가 필요하다.
 - 기록은 rollback에서도 보존한다. 현재 캐릭터 및 LIST 삭제는 별도 C 게이트이며 이 migration에 포함하지 않는다. `tests/character-activity-lifecycle.test.cjs`를 기존 통합 runner로 검증한다.
 
 ### 캐릭터 상태·제외 리스트 표시 분리

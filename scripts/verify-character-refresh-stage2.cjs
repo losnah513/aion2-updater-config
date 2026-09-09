@@ -45,6 +45,7 @@ const tests=[
   "tests/character-refresh-budget.test.cjs"
 ];
 if(process.argv.includes('--browser'))tests.push('tests/character-refresh-ui-browser.test.cjs');
+if(process.argv.includes('--postgres'))tests.push('tests/character-activity-concurrency.test.cjs');
 let failed=0;
 for(const test of tests){
  const r=spawnSync(process.execPath,[test],{cwd:path.resolve(__dirname,'..'),encoding:'utf8',timeout:180000});

@@ -161,12 +161,32 @@ end;
 $function$;
 
 -- A separate write entry point. Read-only policy evaluation never creates exclusion timestamps.
+-- Absence includes rows that do not exist yet (new family/slot/version).
+-- Row locks alone cannot fence those phantoms. Serialize evaluators only for this
+-- short DB transaction; never across provider/Sheets I/O. A concurrent writer
+-- makes this transaction fail immediately rather than certify stale absence.
+create function private.kinojo_character_activity_lock()
+returns void language plpgsql security invoker set search_path=pg_catalog,public,private as $lock$
+begin
+ lock table public.character_master,public.lookup_snapshots,
+   private.sanctuary_management_teams_v412,private.sanctuary_management_slots_v412,
+   private.sanctuary_management_schedule_rules_v412,
+   private.sanctuary_management_schedule_versions_v437,
+   private.sanctuary_management_schedule_exceptions_v412
+ -- Self-conflicting mode prevents two readers upgrading to writers together.
+ in share row exclusive mode nowait;
+end;
+$lock$;
+revoke all on function private.kinojo_character_activity_lock() from public,anon,authenticated;
+grant execute on function private.kinojo_character_activity_lock() to service_role;
+
 create function private.kinojo_character_activity_reconcile(p_character_id bigint,p_at timestamptz default now())
 returns jsonb language plpgsql security invoker set search_path=pg_catalog,public,private as $fn$
 declare p jsonb; prior private.character_activity_lifecycle%rowtype; next_state text;
  next_episode integer; next_excluded timestamptz; next_due timestamptz;
 begin
  if p_at is null then raise exception 'ACTIVITY_TIME_REQUIRED'; end if;
+ perform private.kinojo_character_activity_lock();
  -- Do not wait while preparation may already hold other Master row locks.
  -- Contention aborts preparation atomically; this is not a deletion fence.
  perform 1 from public.character_master where id=p_character_id for update nowait;
@@ -206,6 +226,11 @@ RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public','pg_
 AS $prepare$
 declare v_result jsonb; v_character_id bigint; v_activity jsonb;
 begin
+ -- Authenticate before taking any lifecycle locks. v296 retains its own
+ -- validation and all existing session/complete-list/idempotency checks.
+ v_result:=public.kinojo_validate_updater_session(p_session_id,p_session_token);
+ if coalesce((v_result->>'ok')::boolean,false) is not true then return v_result;end if;
+ perform private.kinojo_character_activity_lock();
  v_result:=public.kinojo_prepare_lookup_queue_from_list_v296(
    p_session_id,p_session_token,p_list,coalesce(p_filter,'{}'::jsonb));
  if coalesce((v_result->>'ok')::boolean,false) is not true then return v_result;end if;
@@ -226,6 +251,9 @@ begin
    'fullLookupDetected',public.kinojo_is_full_list_lookup_v297(p_filter),
    'listAbsentCandidateCount',0,'listAbsentHiddenCount',0,'listPresentRestoredCount',0,
    'listAbsentVerificationEnabled',false,'fullListLookup',public.kinojo_is_full_list_lookup_v297(p_filter));
+exception when lock_not_available then
+ return jsonb_build_object('ok',false,'code','ACTIVITY_RELATION_BUSY','retryable',true,
+   'message','활동 관계 변경 중입니다. 잠시 후 다시 시도하세요.');
 end;
 $prepare$;
 revoke all on function public.kinojo_prepare_lookup_queue_from_list(text,text,jsonb,jsonb) from public,anon,authenticated;

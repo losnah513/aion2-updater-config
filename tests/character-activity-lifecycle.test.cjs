@@ -73,6 +73,7 @@ const {PGlite}=require('../.codex-test-runtime/node_modules/@electric-sql/pglite
  for(const role of ['anon','authenticated'])for(const fn of ['kinojo_character_current_sanctuary','kinojo_character_activity_evidence','kinojo_character_activity_reconcile']){
  assert.equal((await q(`select has_function_privilege('${role}','private.${fn}(bigint,timestamptz)','EXECUTE') ok`))[0].ok,false);
  }
+ for(const role of ['anon','authenticated'])assert.equal((await q(`select has_function_privilege('${role}','private.kinojo_character_activity_lock()','EXECUTE') ok`))[0].ok,false);
  assert.equal((await q('select count(*)::int n from character_master'))[0].n,3,'no character deletion');
  const events=await q('select * from private.character_activity_events order by id');
  await db.exec(fs.readFileSync('supabase/rollbacks/20260909082438_character_activity_lifecycle_rollback.sql','utf8'));
