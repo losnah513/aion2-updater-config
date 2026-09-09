@@ -1,5 +1,13 @@
 # KINOJO WEB HANDOFF
 
+## HOME 배너 기간·전환·전달 경량화 · 2026-09-09
+
+- 기준 main3351b2fd, branch codex/home-banner-stability-20260909. 고정 여름 첫 이미지/오류 fallback을 중립 SVG로 교체. PC16:9 프레임·hover 이동 제거·content-box crossfade, 모바일 compact crop 보존. runtime/cache2026090902.
+- 기존 MAIN3장은 원본을 유지한 WEB 전달본469352/165136/257478B. 신규 정식 이벤트는 레이어 유무와 무관하게 기존 composite API로 WebP 생성. MAIN600KB/SIDE150KB 초과·업로드 실패 시 게시하지 않는다.
+- SQL487 migration20260909091815_banner_plain_delivery_derivatives: private manifest_v396 레이어 필수 조건만 제거; sourceHash·관계·ACL 보존. Edge v29/API2.8 재사용. 원본·게시 일정·새 테이블/권한 변경 없음.
+- 검증: PGlite 일반/레이어/해시불일치/없는파생본/순서/rollback, Chrome1920·1440·390·320의 지연/오류/빈응답/만료/다운로드중만료/전환/hover. 공개 읽기 및 로컬 모의 게시이며 운영 관리자 업로드·재게시 시험과 구분한다.
+- 배포·CI·Drive와 다음 작업은 [HOME LOG](https://drive.google.com/file/d/18WissdEj0Ew_1WRA3pQle0kIFyfxTrhy/view) 최신 회차. 롤백은 이번 WEB revert 및 supabase/rollbacks/20260909091815_banner_plain_delivery_derivatives_rollback.sql. 원본·생성된 Storage·운영 자료 삭제 없음.
+
 ## 레기온 트리 HOME 경로 보정 · 2026-09-09
 
 - 기준 main `1d43b0f1`, branch `codex/legion-tree-home-navigation-20260909`. 공통 pageInfo의 tree 경로 누락을 보정해 HOME self-link를 제거한다. PC HOME `/`, 모바일 `/m/`; 기존 메뉴 등록·권한·트리 모델은 유지한다.

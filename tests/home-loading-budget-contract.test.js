@@ -16,6 +16,11 @@ const image = fs.readFileSync(imagePath);
 assert.ok(image.length <= 600 * 1024, `optimized MAIN asset exceeds 600KB: ${image.length}`);
 assert.equal(image.subarray(0, 4).toString('ascii'), 'RIFF', 'optimized MAIN asset must use a WebP RIFF container');
 assert.equal(image.subarray(8, 12).toString('ascii'), 'WEBP', 'optimized MAIN asset must have a WebP signature');
+for(const name of ['785ddeaa-480d-4410-8bc7-55b0dd8a6813','ad45f799-0f19-4425-ad56-e5bc92380f04','98fb449f-540f-4152-a164-042af9033bf9']){
+  const bytes=fs.readFileSync(path.join(root,'assets/images/common',name+'.webp'));
+  assert.ok(bytes.length<=600*1024, name+' exceeds delivery budget');
+  assert.equal(bytes.subarray(8,12).toString('ascii'),'WEBP');
+}
 assert.match(runtime, /kinojo_banner_summer\.png':'https:\/\/kinojo\.info\/assets\/images\/common\/kinojo_banner_summer\.webp'/, 'runtime must use the approved optimized derivative for the same Server playlist item');
 assert.equal(runtime.includes('preloadImage(next.playlist[1].imageUrl)'), false, 'runtime must not preload the second slide during initial install');
 assert.match(runtime, /slideIntervalMs-1200/, 'next slide must preload only near the Server-owned transition');

@@ -94,6 +94,10 @@ jobs:
           node tests/banner-home-first-paint-contract.test.js
           node tests/home-layout-stability-contract.test.js
           node tests/home-loading-budget-contract.test.js
+          node tests/banner-delivery-publish.test.js
+          npm install --no-save --no-package-lock playwright@1.62.1 @electric-sql/pglite@0.5.8 >/dev/null
+          node tests/banner-delivery-db.test.cjs
+          CHROME_PATH="$(command -v google-chrome || command -v chromium)" node tests/home-banner-stability-e2e.cjs --fixture
           node <<'NODE'
           const assert=require('node:assert/strict');
           const fs=require('node:fs');

@@ -18,7 +18,9 @@
 <meta name="twitter:title" content="KINOJO INFO">
 <meta name="twitter:description" content="아이온2 지켈 서버 깡 레기온의 비공식 정보 사이트입니다.">
 <meta name="twitter:image" content="https://kinojo.info/assets/images/common/kinojo-og.jpg">
-<link rel="stylesheet" href="ui/info-home.css?cache=2026083002">
+<link rel="preconnect" href="https://josvoltpktvwysrasffq.supabase.co" crossorigin>
+<link rel="preload" href="/config.json" as="fetch" crossorigin>
+<link rel="stylesheet" href="ui/info-home.css?cache=2026090902">
 <link rel="stylesheet" href="ui/kinojo-sanctuary-cards.css?cache=2026083002">
   <link rel="stylesheet" href="ui/kinojo-common-ui.css?cache=2026081205">
   <link rel="stylesheet" href="ui/kinojo-public-shell.css?cache=2026083001">
@@ -45,13 +47,14 @@
   .kinojo-main-banner{
     display:block;
     width:min(960px,100%);
+    aspect-ratio:16/9;
     margin:14px auto 0;
     overflow:hidden;
   }
   .kinojo-main-banner>img{
     display:block;
     width:100%;
-    height:auto;
+    height:100%;
     aspect-ratio:16/9;
     object-fit:cover;
   }
@@ -59,7 +62,7 @@
     background:#eaf0f7;
   }
   .kinojo-main-banner.is-manifest-pending>img{
-    visibility:visible;
+    visibility:hidden;
   }
 </style>
 <noscript><style>.kinojo-main-banner.is-manifest-pending>img{visibility:visible}</style></noscript>
@@ -72,7 +75,7 @@
   <section class="hero">
     <div class="eyebrow">✨ AION2 · KINOJO PORTAL</div>
     <a class="kinojo-main-banner is-manifest-pending" href="hof/" aria-label="KINOJO INFO 명예의 전당 열기" aria-busy="true">
-      <img id="kinojo-main-banner-image" src="https://kinojo.info/assets/images/common/kinojo_banner_summer.webp" fetchpriority="high" alt="KINOJO INFO 깡 레기온 대표 배너">
+      <img id="kinojo-main-banner-image" src="assets/images/common/kinojo-banner-placeholder.svg" width="1536" height="864" alt="KINOJO INFO 배너">
     </a>
     <p class="subtitle">아이온2 지켈 서버 깡 레기온의 비공식 정보 사이트입니다.</p>
   </section>
@@ -102,14 +105,14 @@
 <script defer src="ui/kinojo-staged-loading.js?cache=2026083001"></script>
 <script defer src="ui/kinojo-admin-panel.js?cache=2026071712"></script>
 <script defer src="core/kinojo-supabase-client.js?cache=2026080205"></script>
-<script defer src="ui/kinojo-banner-runtime.js?cache=2026090708"></script>
+<script defer src="ui/kinojo-banner-runtime.js?cache=2026090902"></script>
 <script defer src="core/kinojo-supabase-rpc.js?cache=2026082806"></script>
   <script defer src="core/kinojo-supabase-features.js?cache=2026090804"></script>
 <script defer src="core/kinojo-auth-session.js?cache=2026081801"></script>
 <script defer src="core/kinojo-auth-service.js?cache=2026081801"></script>
 <script defer src="core/kinojo-auth-ui.js?cache=2026082901"></script>
 <script defer src="ui/kinojo-event-notice.js?cache=2026081003"></script>
-<script defer src="ui/kinojo-pc-banners.js?cache=2026090708"></script>
+<script defer src="ui/kinojo-pc-banners.js?cache=2026090902"></script>
 <script>
   (() => {
     const mountHomeMainBanner = () => {

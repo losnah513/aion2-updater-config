@@ -9,7 +9,10 @@
   const SLOT_RE=/^(MAIN|LEFT|RIGHT)$/;
   const STATIC_RE=/^https:\/\/kinojo\.info\/assets\/images\/[A-Za-z0-9._\/-]+$/;
   const DELIVERY_ALIASES=Object.freeze({
-    'https://kinojo.info/assets/images/common/kinojo_banner_summer.png':'https://kinojo.info/assets/images/common/kinojo_banner_summer.webp'
+    'https://kinojo.info/assets/images/common/kinojo_banner_summer.png':'https://kinojo.info/assets/images/common/kinojo_banner_summer.webp',
+    'https://josvoltpktvwysrasffq.supabase.co/storage/v1/object/public/kinojo-site-banners/2026/09/785ddeaa-480d-4410-8bc7-55b0dd8a6813.png':'https://kinojo.info/assets/images/common/785ddeaa-480d-4410-8bc7-55b0dd8a6813.webp',
+    'https://josvoltpktvwysrasffq.supabase.co/storage/v1/object/public/kinojo-site-banners/2026/08/ad45f799-0f19-4425-ad56-e5bc92380f04.png':'https://kinojo.info/assets/images/common/ad45f799-0f19-4425-ad56-e5bc92380f04.webp',
+    'https://josvoltpktvwysrasffq.supabase.co/storage/v1/object/public/kinojo-site-banners/2026/08/98fb449f-540f-4152-a164-042af9033bf9.png':'https://kinojo.info/assets/images/common/98fb449f-540f-4152-a164-042af9033bf9.webp'
   });
   const memory=new Map();
   const inflight=new Map();
@@ -104,6 +107,10 @@
 
   async function request(t,options){
     const c=core(),cfg=await c.ensureConfig(),entry=options?.force?null:cached(t.key);
+    // Fetch bytes in parallel with revalidation, but never display an unvalidated playlist.
+    if(entry?.manifest){
+      try{const hint=sanitize(entry.manifest,cfg,t);if(Date.parse(hint.validUntil)>Date.now()&&hint.active)preloadImage(hint.playlist[0].imageUrl).catch(()=>{});}catch(_error){}
+    }
     const url=new URL(`${cfg.url}/functions/v1/${EDGE}`);url.searchParams.set('pageCode',t.page);url.searchParams.set('slotCode',t.slot);
     const headers=Object.assign({},c.headers(cfg),{accept:'application/json'});if(entry?.etag)headers['If-None-Match']=entry.etag;
     let response;
@@ -158,17 +165,19 @@
     const host=elements?.host,image=elements?.image;if(!host||!image)throw invalid('BANNER_PLAYER_ELEMENTS_INVALID');
     if(motionReduced()||duration<=0){applyItem(elements,item,fallbackAlt);return}
     const imageStyle=window.getComputedStyle?window.getComputedStyle(image):{};
-    const previous={backgroundImage:host.style.backgroundImage,backgroundSize:host.style.backgroundSize,backgroundPosition:host.style.backgroundPosition,backgroundRepeat:host.style.backgroundRepeat,transition:image.style.transition,opacity:image.style.opacity};
+    const previous={backgroundImage:host.style.backgroundImage,backgroundSize:host.style.backgroundSize,backgroundPosition:host.style.backgroundPosition,backgroundRepeat:host.style.backgroundRepeat,backgroundOrigin:host.style.backgroundOrigin,backgroundClip:host.style.backgroundClip,transition:image.style.transition,opacity:image.style.opacity};
     host.style.backgroundImage=`url(${JSON.stringify(deliveryImageUrl(item.imageUrl))})`;
     host.style.backgroundSize=imageStyle.objectFit==='contain'?'contain':'cover';
     host.style.backgroundPosition=imageStyle.objectPosition||'center';
     host.style.backgroundRepeat='no-repeat';
+    host.style.backgroundOrigin='content-box';host.style.backgroundClip='content-box';
     image.style.transition=`opacity ${duration}ms ease`;
     image.style.opacity='1';
     await frame();image.style.opacity='0';await wait(duration);
     applyItem(elements,item,fallbackAlt);
     image.style.transition='none';image.style.opacity='1';await frame();
     host.style.backgroundImage=previous.backgroundImage;host.style.backgroundSize=previous.backgroundSize;host.style.backgroundPosition=previous.backgroundPosition;host.style.backgroundRepeat=previous.backgroundRepeat;
+    host.style.backgroundOrigin=previous.backgroundOrigin;host.style.backgroundClip=previous.backgroundClip;
     image.style.transition=previous.transition;image.style.opacity=previous.opacity;
   }
 
@@ -183,7 +192,7 @@
     function scheduleRefresh(){
       if(stopped||isHidden()||!manifest)return;
       const delay=Math.max(0,Math.min(300000,Date.parse(manifest.validUntil)-Date.now()+25));
-      refreshTimer=setTimeout(()=>{refreshTimer=0;load(true)},delay);
+      refreshTimer=setTimeout(()=>{refreshTimer=0;if(expired(manifest))options?.deactivate?.();load(true)},delay);
     }
     function scheduleSlide(){
       if(stopped||isHidden()||!manifest?.active||manifest.playlist.length<2)return;
@@ -195,13 +204,15 @@
     async function install(next,seq){
       if(stopped||seq!==requestSeq)return;
       clearTimers();manifest=next;index=0;
+      if(expired(next)){options?.deactivate?.();throw invalid('BANNER_MANIFEST_EXPIRED')}
       if(next.active!==true||next.playlist.length===0){elements=null;options?.deactivate?.(next);scheduleRefresh();return}
+      scheduleRefresh();
       await preloadImage(next.playlist[0].imageUrl);
-      if(stopped||seq!==requestSeq)return;
+      if(stopped||seq!==requestSeq||expired(next))return;
       elements=options?.ensureElements?.(next.playlist[0],next)||options?.elements||null;
       if(!elements?.host||!elements?.image)throw invalid('BANNER_PLAYER_ELEMENTS_INVALID');
       applyItem(elements,next.playlist[0],fallbackAlt);options?.onActive?.(next,elements);
-      scheduleSlide();scheduleRefresh();
+      scheduleSlide();
     }
     async function load(force){
       const seq=++requestSeq;
@@ -231,5 +242,5 @@
     players.set(t.key,controller);load(false);return controller;
   }
 
-  window.KinojoBannerRuntime=Object.freeze({version:'2026083001',contract:CONTRACT,fetchManifest,peekManifest,getMeta,clearCache,preloadImage,mountBanner});
+  window.KinojoBannerRuntime=Object.freeze({version:'2026090902',contract:CONTRACT,fetchManifest,peekManifest,getMeta,clearCache,deliveryImageUrl,preloadImage,mountBanner});
 })();
