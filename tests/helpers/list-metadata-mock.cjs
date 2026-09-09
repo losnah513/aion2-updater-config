@@ -7,7 +7,8 @@ function createBridgeMock(source,{rows,move=false,remove=false,unavailable=false
   getValues:()=>cells.slice(r-1,r-1+n).map(x=>x.slice(c-1,c-1+w)),
   setValues(){throw Error('POSITIONAL_WRITE_FORBIDDEN');}
  };}};
- const ctx=vm.createContext({LockService:{getScriptLock:()=>({tryLock:()=>true,releaseLock(){}})},SpreadsheetApp:{flush(){}}});
+ const properties={};
+ const ctx=vm.createContext({PropertiesService:{getScriptProperties:()=>({getProperty:k=>properties[k]??null,setProperty:(k,v)=>{properties[k]=v;},deleteProperty:k=>{delete properties[k];}})},LockService:{getScriptLock:()=>({tryLock:()=>true,releaseLock(){}})},SpreadsheetApp:{flush(){}}});
  vm.runInContext(source,ctx);ctx.kinojoGetListSheet_=()=>({sheet,ss:{getId:()=>'SYNTHETIC-LOCAL'}});
  function dimension(m){return {dimension:'ROWS',sheetId:0,startIndex:cells.indexOf(m.row),endIndex:cells.indexOf(m.row)+1};}
  function encoded(m){return {metadataId:m.id,metadataKey:m.key,metadataValue:m.value,location:{dimensionRange:dimension(m)}};}
@@ -36,6 +37,6 @@ function createBridgeMock(source,{rows,move=false,remove=false,unavailable=false
   }
   throw Error('Unhandled Sheets endpoint '+suffix);
  };
- return {cells,metadata,writes,calls,ctx,write:updates=>ctx.kinojoHandleServerListSheetSync_({updates},'POST'),read:()=>ctx.kinojoHandleServerListSheetRead_({},'GET')};
+ return {cells,metadata,writes,calls,ctx,properties,write:updates=>ctx.kinojoHandleServerListSheetSync_({updates},'POST'),read:()=>ctx.kinojoHandleServerListSheetRead_({},'GET')};
 }
 module.exports={createBridgeMock};

@@ -85,6 +85,10 @@ function kinojoListMasterBridgeRoute_(e, method) {
       return kinojoJson_(kinojoHandleServerListSheetSync_(body, method));
     }
 
+    if (action === 'serverListSheetCleanup') {
+      return kinojoJson_(kinojoHandleServerListSheetCleanup_(body, method));
+    }
+
     if (action === 'serverListSheetMarkCompleted') {
       return kinojoJson_(kinojoHandleServerListSheetMarkCompleted_(body, method));
     }
@@ -241,6 +245,7 @@ function kinojoHandleServerListSheetMarkCompleted_(body, method) {
   }
 
   try {
+    kinojoAssertNoListCleanup_();
     const cfg = KINOJO_LIST_MASTER_BRIDGE_CONFIG;
     const pair = kinojoGetListSheet_();
     const sheet = pair.sheet;
@@ -360,6 +365,7 @@ function kinojoHandleServerListSheetSync_(body, method) {
   if(!lock.tryLock(30000)) return {ok:false,code:'MASTER_BRIDGE_BUSY',bridgeRole:'APPSCRIPT_MASTER',retryable:true};
   const results=[],failedItems=[];
   try {
+    kinojoAssertNoListCleanup_();
     const cfg=KINOJO_LIST_MASTER_BRIDGE_CONFIG,pair=kinojoGetListSheet_(),sheet=pair.sheet;
     const spreadsheetId=pair.ss.getId(),sheetId=sheet.getSheetId(),updates=kinojoParseUpdates_(body);
     if(updates.length>250) throw new Error('LIST_SYNC_BATCH_LIMIT_250');
@@ -379,6 +385,7 @@ function kinojoHandleServerListSheetSync_(body, method) {
       try {
         const masterId=String(item.characterId||item.character_id||'');
         if(!/^[1-9]\d*$/.test(masterId)) throw new Error('LIST_STABLE_MASTER_ID_REQUIRED');
+        if(PropertiesService.getScriptProperties().getProperty('KINOJO_LIST_RETIRED_'+masterId)) throw new Error('LIST_RETIRED_CHARACTER_REQUIRES_REVIEW');
         if(seen.has(masterId)) throw new Error('LIST_DUPLICATE_MASTER_ID');
         seen.add(masterId);
         const original=String(item.originalListName||item.list_original_name||'').trim();
@@ -475,6 +482,89 @@ function kinojoHandleServerListSheetSync_(body, method) {
     return {ok:false,finished:false,bridgeRole:'APPSCRIPT_MASTER',code:'LIST_METADATA_SYNC_FAILED',
       message:String(error.message||error),retryable:true,writeOutcomeUnknown:true,processedIds:[],failedItems};
   }finally{lock.releaseLock();}
+}
+// I/O only. Eligibility/family/DB completion decisions belong to the Server.
+// Disabled until final DB/writer and real Sheets canary gates are satisfied.
+function kinojoAssertNoListCleanup_() {
+  if(PropertiesService.getScriptProperties().getProperty('KINOJO_LIST_CLEANUP_ACTIVE')) throw new Error('LIST_CLEANUP_RECOVERY_PENDING');
+}
+function kinojoHandleServerListSheetCleanup_(body, method) {
+  const props=PropertiesService.getScriptProperties(),cfg=KINOJO_LIST_MASTER_BRIDGE_CONFIG;
+  const token=String(props.getProperty(cfg.ROSTER_WRITE_TOKEN_PROPERTY)||'');
+  if(method!=='POST'||!token||!kinojoConstantTimeTextEqual_(token,String(body.writeToken||''))) return {ok:false,code:'WRITE_TOKEN_INVALID'};
+  if(props.getProperty('KINOJO_LIST_CLEANUP_ENABLED')!=='true'&&(body.cleanupPlan||{}).operation==='CLEAR')return {ok:false,code:'LIST_CLEANUP_DISABLED'};
+  const p=body.cleanupPlan||{},jobId=String(p.jobId||''),masterId=String(p.characterId||''),metadataId=Number(p.metadataId);
+  if(!/^[a-zA-Z0-9-]{16,80}$/.test(jobId)||!/^[1-9]\d*$/.test(masterId)||!Number.isSafeInteger(metadataId)||metadataId<1
+    ||!['CLEAR','RESTORE','COMPLETE'].includes(p.operation))return {ok:false,code:'CLEANUP_PLAN_INVALID'};
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(15000))return {ok:false,code:'MASTER_BRIDGE_BUSY',retryable:true};
+  const activeKey='KINOJO_LIST_CLEANUP_ACTIVE',doneKey='KINOJO_LIST_CLEANUP_DONE_'+jobId;
+  let journal;
+  try {
+    const pair=kinojoGetListSheet_(),spreadsheetId=pair.ss.getId(),sheetId=pair.sheet.getSheetId();
+    const api=(suffix,data)=>kinojoSheetsApi_(spreadsheetId,suffix,data);
+    const receipt=(state)=>({ok:true,jobId,characterId:masterId,metadataId,spreadsheetId,sheetId,state});
+    const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+    const done=props.getProperty(doneKey);
+    if(done){
+      const d=JSON.parse(done);
+      if(d.characterId!==masterId||d.metadataId!==metadataId||d.spreadsheetId!==spreadsheetId||d.sheetId!==sheetId)throw Error('CLEANUP_JOB_MISMATCH');
+      const pending=JSON.parse(props.getProperty(activeKey)||'null');
+      if(pending&&pending.jobId===jobId&&pending.characterId===masterId&&pending.metadataId===metadataId&&pending.spreadsheetId===spreadsheetId&&pending.sheetId===sheetId)props.deleteProperty(activeKey);
+      return Object.assign({},d,{replayed:true});
+    }
+    journal=JSON.parse(props.getProperty(activeKey)||'null');
+    if(journal&&(journal.jobId!==jobId||journal.characterId!==masterId||journal.metadataId!==metadataId||journal.spreadsheetId!==spreadsheetId||journal.sheetId!==sheetId))throw Error('LIST_CLEANUP_RECOVERY_PENDING');
+    function read(){
+      const search=api('/developerMetadata:search',{dataFilters:[{developerMetadataLookup:{metadataKey:'KINOJO_MASTER_ID',locationType:'ROW'}}]});
+      const bindings=(search.matchedDeveloperMetadata||[]).map(x=>x.developerMetadata).filter(x=>x.metadataKey==='KINOJO_MASTER_ID'&&x.location&&x.location.dimensionRange&&x.location.dimensionRange.sheetId===sheetId);
+      const matches=bindings.filter(x=>x.metadataValue===masterId);
+      if(matches.length!==1||matches[0].metadataId!==metadataId)throw Error('CLEANUP_METADATA_MISMATCH');
+      const dimension=matches[0].location.dimensionRange;
+      if(dimension.endIndex!==dimension.startIndex+1||bindings.filter(x=>x.location.dimensionRange.startIndex===dimension.startIndex).length!==1)throw Error('CLEANUP_METADATA_MISMATCH');
+      const result=api('/values:batchGetByDataFilter',{dataFilters:[{developerMetadataLookup:{metadataId}}],valueRenderOption:'FORMULA'});
+      if((result.valueRanges||[]).length!==1)throw Error('CLEANUP_ROW_MISSING');
+      const v=result.valueRanges[0],range=v.valueRange||{},values=range.values||[],row=kinojoMetadataRow_(range.range);
+      if(row<cfg.FIRST_DATA_ROW||row!==dimension.startIndex+1||values.length>1)throw Error('CLEANUP_ROW_INVALID');
+      if(journal&&journal.row!==row)throw Error('CLEANUP_ROW_MOVED');
+      const cells=values[0]||[];
+      if(cells.slice(8).some(x=>x!==''&&x!==null))throw Error('CLEANUP_EXTRA_COLUMNS_PRESENT');
+      const first=Array.from({length:8},(_,i)=>cells[i]??'');
+      if(first.some(x=>!['string','number','boolean'].includes(typeof x)||(typeof x==='string'&&(x.length>256||x.startsWith('=')))))throw Error('CLEANUP_UNSUPPORTED_CELL');
+      return {row,values:first};
+    }
+    function save(){props.setProperty(activeKey,JSON.stringify(journal));}
+    function write(values){
+      const r=api('/values:batchUpdateByDataFilter',{valueInputOption:'RAW',data:[{dataFilter:{developerMetadataLookup:{metadataId}},majorDimension:'ROWS',values:[values]}]});
+      if(Number(r.totalUpdatedRows)!==1)throw Error('CLEANUP_WRITE_UNCONFIRMED');
+      if(!same(read().values,values))throw Error('CLEANUP_READBACK_MISMATCH');
+    }
+    const current=read(),blank=Array(8).fill('');
+    if(!journal){
+      if(p.operation!=='CLEAR'||!Array.isArray(p.expectedBefore)||p.expectedBefore.length!==8||!same(current.values,p.expectedBefore)||!current.values[0])throw Error('CLEANUP_EXPECTED_BEFORE_MISMATCH');
+      if(props.getProperty('KINOJO_LIST_RETIRED_'+masterId))throw Error('LIST_RETIRED_CHARACTER_REQUIRES_REVIEW');
+      journal=Object.assign(receipt('PREPARED'),{row:current.row,before:current.values});save();
+    }
+    if(p.operation==='CLEAR'){
+      if(!same(current.values,blank)){
+        if(!same(current.values,journal.before))throw Error('CLEANUP_MANUAL_EDIT_DETECTED');
+        write(blank);
+      }
+      journal.state='CLEARED';save();return receipt('CLEARED');
+    }
+    if(p.operation==='RESTORE'){
+      if(!same(current.values,journal.before)){
+        if(!same(current.values,blank))throw Error('CLEANUP_MANUAL_EDIT_DETECTED');
+        write(journal.before);
+      }
+      const r=receipt('RESTORED');props.setProperty(doneKey,JSON.stringify(r));props.deleteProperty(activeKey);return r;
+    }
+    if(p.dbFinalized!==true||journal.state!=='CLEARED'||!same(current.values,blank))throw Error('CLEANUP_FINALIZATION_UNCONFIRMED');
+    const r=receipt('COMPLETED');
+    props.setProperty('KINOJO_LIST_RETIRED_'+masterId,JSON.stringify(r));
+    props.setProperty(doneKey,JSON.stringify(r));props.deleteProperty(activeKey);return r;
+  }catch(error){return {ok:false,code:String(error.message||error),jobId,characterId:masterId,recoveryRequired:!!props.getProperty(activeKey),writeOutcomeUnknown:true};}
+  finally{lock.releaseLock();}
 }
 function kinojoParseUpdates_(body) {
   let updates = body.updates || body.rows || body.items || body.queue || [];
@@ -702,6 +792,7 @@ function kinojoHandleServerSanctuaryRosterWrite_(body, method) {
   const snapshots = [];
   const applied = [];
   try {
+    kinojoAssertNoListCleanup_();
     const ss = requestedSpreadsheetId === activeSpreadsheetId && activeSpreadsheet
       ? activeSpreadsheet
       : SpreadsheetApp.openById(requestedSpreadsheetId);

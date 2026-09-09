@@ -2,6 +2,16 @@
 
 기준 Drive 소스 ID: `1fXpvnVoALky9ceQ-1Hn97IEyRB9HJBkT`. BRIDGE.gs 한 파일을 기존 AppsScript_MASTER 프로젝트에서 교체하는 수정안이며 별도 활성 브릿지가 아니다.
 
+## 월별 정리 I/O · 미배포
+
+- `serverListSheetCleanup`은 기존 쓰기 토큰으로 인증된 POST만 허용한다. 신규 CLEAR는 Script Property `KINOJO_LIST_CLEANUP_ENABLED=true` 없이는 거부한다. 현재 운영에서 이 값을 설정하지 않는다. RESTORE/COMPLETE 복구 요청은 기능을 꺼도 기존 journal을 처리할 수 있다.
+- Server가 제공한 jobId/Master ID/metadata ID/정확한 A:H 이전 값을 검증한다. 중복·타 ID의 같은 행 바인딩, 수식, I 이후 값, 이동/삭제/수동 변경은 보류한다. 물리 행을 삭제하지 않고 metadata로 A:H만 비워 다른 캐릭터 행 매핑을 보존한다. 빈 행의 기존 ID metadata는 재시도 식별용이며 프로필 값은 남지 않는다.
+- 외부 쓰기 전에 Script Properties에 한 작업의 이전 값을 저장한다. CLEAR/RESTORE 재시도는 현재 값이 이전 값 또는 빈 값인지 확인한다. 알 수 없는 편집을 덮어 복원하지 않는다. 정상 복원/DB 완료 후에는 이전 값을 지우고 ID 중심 receipt만 남긴다. 저장 용량 부족은 쓰기 전 보류하며 보호 기록을 임의 만료시키지 않는다.
+- active journal이 있는 동안 일반 list sync·완료 marker·성역 결합 쓰기는 차단한다. COMPLETE 이후 일반 sync는 retired Master ID를 거부한다. 성공 재호출도 실제 terminal state를 반환하므로 Server는 ok만 보지 말고 job/ID/state를 대조해야 한다.
+- `dbFinalized`는 신뢰된 Server 호출 계약일 뿐 Apps Script가 DB 완료를 독립 검증했다는 의미가 아니다. Server 최종 receipt 검증·writer 조율을 연결하기 전 운영 활성화 금지. 현재 구현은 무인 정리 전체가 아니라 복구 가능한 I/O 기반이다.
+- ScriptLock은 사람의 Google Sheets 편집을 잠그지 못한다. 읽기/쓰기 사이 수동 편집의 원자적 CAS를 보장하지 않는다. 편집 경합 제한 창/보호 및 실제 Sheets canary를 검증하기 전 자동 CLEAR를 켜지 않는다. 서비스 내부 mock 결과를 실운영 안전성 보장으로 확대하지 않는다.
+- 검증: `node tests/list-cleanup-recovery.test.cjs`, 기존 metadata/성역 통합 회귀. 실제 배포·관계 재검증·Cron 상태는 프로젝트 LOG를 따른다.
+
 ## Metadata write contract MASTER_ID_V1
 
 - Queue의 `character_id`를 `characterId`로 전달한다. Queue ID 또는 행번호를 Master ID 대신 사용하지 않는다.

@@ -128,7 +128,7 @@
     },
     {
       "path": "apps-script/list-master/BRIDGE.gs",
-      "sha256": "793d9d9348cd4397458ad2b5f1e89adbaf4b0475e986e5e4f5f3d1627c21ae38"
+      "sha256": "4ab1dbc8152527b943e1d7e18de2ffdaab0674faf1fdd54edfa8099f6edb77b9"
     },
     {
       "path": "core/kinojo-supabase-features.js",
@@ -201,6 +201,14 @@
     {
       "path": "tests/character-cleanup-history-concurrency.test.cjs",
       "sha256": "15abe6299614abeb88579025639a0b540eec1ae2a6401b782f87d656e4ada023"
+    },
+    {
+      "path": "tests/helpers/list-metadata-mock.cjs",
+      "sha256": "8d283b6d42d9b13787a870b7da4d60b3330948a3d7512452b7666221f1a4fe2c"
+    },
+    {
+      "path": "tests/list-cleanup-recovery.test.cjs",
+      "sha256": "8445e2d047d0e67738b79e472a43f3305a2e314755c99c20efca9e6129cb3ec1"
     }
   ],
   "notDeploymentAssets": [

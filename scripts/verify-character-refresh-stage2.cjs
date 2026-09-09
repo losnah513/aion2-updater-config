@@ -7,6 +7,7 @@ const tests=[
   "tests/character-refresh-identity-stage2-fixtures.test.js",
   "tests/character-identity-recovery-percent-encoding-contract.test.js",
   "tests/list-metadata-writer.test.cjs",
+  "tests/list-cleanup-recovery.test.cjs",
   "tests/list-sanctuary-integration.test.cjs",
   "tests/character-refresh-stability-adversarial.test.cjs",
   "tests/character-refresh-policy.test.cjs",
