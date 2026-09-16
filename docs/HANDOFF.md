@@ -939,7 +939,8 @@
 - 원인: private queue prepare v368이 전체 list 전용 v296을 단일 행으로 호출한다. 현재 v296의 `serverReadComplete` gate가 `COMPLETE_LIST_READ_REQUIRED`를 반환하여 v455 전체 트랜잭션이 취소된다.
 - DB_ONLY: 기존 kinojo-legion-tree v13/API1.12 인증·요청·Worker 인계와 public/private v455·listless 완료를 재사용한다. v368의 해당 호출만 단일 Master placeholder/Target 준비로 교체한다. 공용 list completeness guard·자동조회 정책·WEB·Edge는 변경하지 않는다.
 - 로컬 신규/재사용/다른 서버 부캐/동명 부캐/재시도/Queue busy/권한/제외/무관 Master 보존/실패 원자성/rollback 검증 PASS. `PGLITE_MODULE`을 @electric-sql/pglite 0.5.8 경로로 지정하여 `node tests/legion-character-add-single-target.test.cjs` 실행. 기존 tree data-render/editor PASS.
-- 운영 미반영·정정: 과거 실제 운영 배포는 Supabase apply_migration 도구를 사용했다. 현재 postgres 기본 read-only=on의 source는 /data/pgdata/postgresql.auto.conf다. 연결 권한만의 문제가 아니므로 CLI 로그인을 우선 요청하지 않는다. DB1570MB이며 요금제·디스크 제한 원인은 미확정. 기존 단일 대상 결함과 별도로 현재 서버 쓰기 차단을 먼저 해결한다. LOG20 참조.
-- 다음: DB 서버 읽기 전용 전환의 디스크·플랫폼 원인 확인 및 정상 쓰기 복구 → 운영 v368이 tests/fixtures/legion-add-baseline 원본과 동일한지 fresh readback → migration `20260916201305_legion_character_add_single_target.sql` 적용 → 함수·ACL·기존 full-list gate 확인 → PR 검증/병합·Drive 원본/LOG 동기화. 실제 사용자 추가 성공은 별도 확인한다.
+- 운영 적용 DB496: 2026-09-17 사용자 오류 수정 진행 승인 후 baseline3개 MATCH와 PGlite 회귀를 다시 확인했다. apply_migration의 이력 초기화와 일반 execute_sql은 read-only로 실패했다. 명시적 BEGIN/SET TRANSACTION READ WRITE로 수정 함수만 적용했고, 같은 제한 트랜잭션 경로로 schema_migrations에 저장소 version20260916201305/name=legion_character_add_single_target를 기록했다. 전역 read-only 설정은 변경하지 않았다.
+- 운영 readback: v368 본문은 수정안과 일치, v455/v296/dedupe 본문 및4개 ACL 불변. Master190/Target28867 원본 해시 불변. 실제 사용자 등록/Worker/Google list 쓰기 시험은 수행하지 않았다. DB 기본 read-only가 off에서 on으로 재전환된 것을 관측했으며 지속 원인은 미확정이다. 용량 정리는 사용자 요청으로 중단, 데이터 삭제0.
+- 다음: Supabase의 정상 쓰기 지속 복구 후 실제 사용자 추가 완료까지 검수한다. 코드 반영과 서비스 쓰기 정상화를 구분한다. Source/Deploy496.sql 및 레기온 명부 LOG22 참조.
 - rollback: `supabase/rollbacks/20260916201305_legion_character_add_single_target.sql`. 함수만 복원하며 추가 완료된 사용자 자료는 보존한다. 기존 장애도 복원되므로 필요할 때만 사용한다.
 - 프로젝트 LOG: https://drive.google.com/file/d/1E8TPDN9l7Ih-EG5FyfRS9tuL5HN9uvs7/view
