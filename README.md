@@ -1,5 +1,11 @@
 # KINOJO WEB
 
+## Bound historical detailed snapshots (SQL501)
+
+Daily retention removes `officialRaw` only from successful snapshots older than 24 hours in completed sessions, with exclusively synced linked payloads and no unfinished linked target. Current Master snapshot references, skill/activity sources, the latest ten snapshots and ten official snapshots per current identity remain intact. Parser text is unchanged; scalar values used by the recursive audit are retained before discarding the detailed object.
+
+The cleanup uses bounded batches, current-reference locks and a shared advisory lock. Busy writers return a retryable result, locked snapshot rows are skipped, and raw-only removal does not replay past skill/legion writes. A private daily 06:40 KST job handles up to 2,000 rows. This is separate from the four daily character lookups and Wednesday 06:00 growth boundary. Run `node tests/snapshot-raw-retention.test.cjs` and the local PostgreSQL concurrency test. Historical cleanup requires encrypted whole-table restore verification and before/after row hashes; rollback stops retention, while full raw restoration requires that backup.
+
 ## Compact collection payloads (SQL500)
 
 Collection payloads retain their structured identity, PVE/PVP values, processing status and snapshot links. A final BEFORE trigger removes duplicate raw fields after the existing metadata/identity triggers run, retaining thirteen keys used by downstream consumers. Full detailed snapshots remain available. Existing lookup frequency and growth boundaries do not change.
