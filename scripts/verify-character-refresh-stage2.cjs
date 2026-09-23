@@ -37,6 +37,7 @@ const tests=[
   "tests/character-weekly-growth-identity.test.cjs",
   "tests/character-weekly-06.test.cjs",
   "tests/ranking-retention.test.cjs",
+  "tests/master-event-compaction.test.cjs",
   "tests/character-deferred-snapshot.test.cjs",
   "tests/character-refresh-completion-status.test.cjs",
   "tests/character-payload-identity-index.test.cjs",

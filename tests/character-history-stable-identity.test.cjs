@@ -21,6 +21,7 @@ const {PGlite}=require('../.codex-test-runtime/node_modules/@electric-sql/pglite
  create view v_reaction_summary as select ''::text as character_name,0::int like_count,0::int dislike_count,0::int total_count,array[]::text[] comments where false;
  `);
  await db.exec(fs.readFileSync('supabase/migrations/20260908083301_character_history_stable_identity.sql','utf8'));
+ await db.exec(fs.readFileSync('supabase/migrations/20260923045528_master_sync_event_compaction.sql','utf8'));
  // Integrated DB boundary: actual history backfill + review + ranking + rollup triggers.
  await db.exec(fs.readFileSync('tests/evidence/20260908-character-refresh-audit/rollup-existing-fixture.sql','utf8'));
  await db.exec('create trigger trg_character_history_growth_rollup_insert_v424 after insert on character_history for each row execute function private.kinojo_growth_rollup_history_insert_v424()');
@@ -130,6 +131,12 @@ const {PGlite}=require('../.codex-test-runtime/node_modules/@electric-sql/pglite
  assert.equal(synced.skipped,true);
  assert.equal((await db.query("select count(*)::int n from character_history where session_id='master-test'")).rows[0].n,1);
  assert.equal((await db.query("select count(*)::int n from master_sync_events where payload_id=50")).rows[0].n,1);
+ const event=(await db.query('select before_data,after_data,raw_payload from master_sync_events where payload_id=50')).rows[0];
+ assert.equal(Object.keys(event.after_data).length,9);
+ assert.equal(event.after_data.latest_pve_combat_power,175);
+ assert.equal(event.after_data.char_key,'111111111111111111');
+ assert.deepEqual(event.raw_payload,{gearDiagnosis:{detectedGearType:'PVE'}});
+ assert.ok(!Object.hasOwn(event.before_data,'profile_image_url'));
  await db.exec(`insert into extension_character_payloads(id,session_id,server_id,character_name,char_key,raw_payload)
  values(51,'master-test',2002,'wrong','111111111111111111','{"targetId":50}');
  create function reject_master_event_fixture() returns trigger language plpgsql as $$begin if new.payload_id=52 then raise exception 'FORCED_MASTER_EVENT_FAILURE';end if;return new;end$$;
@@ -168,6 +175,7 @@ const {PGlite}=require('../.codex-test-runtime/node_modules/@electric-sql/pglite
  await db.exec(`create table private.kinojo_ranking_history_state_v426(server_id int,character_name text,gear_type text,previous_history_date int,previous_power int,previous_item_level int);
  create table private.kinojo_ranking_review_state_v426(server_id int,character_name text,review_mode text,growth_label text,growth_status text,review_text text,source_updated_at timestamptz);`);
  await db.exec(fs.readFileSync('supabase/rollbacks/20260908083301_character_history_stable_identity.sql','utf8'));
+ await db.exec(fs.readFileSync('supabase/rollbacks/20260923045528_master_sync_event_compaction.sql','utf8'));
  assert.equal((await db.query('select count(*)::int n from character_history')).rows[0].n,8);
  assert.equal((await db.query('select character_master_id from character_history where id=1')).rows[0].character_master_id,1);
  console.log('PASS: backfill dry-run/unique proof/ambiguity/missing proof/idempotence; transfer+rename versus namesake growth and ranking; ACL; rollback preserves raw identity links');

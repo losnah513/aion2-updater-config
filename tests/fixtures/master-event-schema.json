@@ -1,0 +1,1172 @@
+[
+  {
+    "table_name": "character_master",
+    "name": "id",
+    "type": "bigint"
+  },
+  {
+    "table_name": "character_master",
+    "name": "server_id",
+    "type": "integer"
+  },
+  {
+    "table_name": "character_master",
+    "name": "server_name",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "character_name",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "char_key",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "profile_image_url",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "detail_url",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "image_updated_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "character_master",
+    "name": "status",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "error_message",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "main_character_name",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "is_main",
+    "type": "boolean"
+  },
+  {
+    "table_name": "character_master",
+    "name": "class_name",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "list_row",
+    "type": "integer"
+  },
+  {
+    "table_name": "character_master",
+    "name": "first_seen_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "character_master",
+    "name": "last_seen_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "character_master",
+    "name": "created_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "character_master",
+    "name": "updated_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "character_master",
+    "name": "latest_pve_item_level",
+    "type": "integer"
+  },
+  {
+    "table_name": "character_master",
+    "name": "latest_pve_combat_power",
+    "type": "integer"
+  },
+  {
+    "table_name": "character_master",
+    "name": "latest_pvp_item_level",
+    "type": "integer"
+  },
+  {
+    "table_name": "character_master",
+    "name": "latest_pvp_combat_power",
+    "type": "integer"
+  },
+  {
+    "table_name": "character_master",
+    "name": "latest_item_level_total",
+    "type": "integer"
+  },
+  {
+    "table_name": "character_master",
+    "name": "latest_power_total",
+    "type": "integer"
+  },
+  {
+    "table_name": "character_master",
+    "name": "latest_session_id",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "latest_payload_id",
+    "type": "bigint"
+  },
+  {
+    "table_name": "character_master",
+    "name": "latest_snapshot_uid",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "latest_payload_hash",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "last_synced_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "character_master",
+    "name": "sync_status",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "bootstrap_source",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "bootstrap_imported_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "character_master",
+    "name": "is_active",
+    "type": "boolean"
+  },
+  {
+    "table_name": "character_master",
+    "name": "inactive_reason",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "inactive_memo",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "inactivated_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "character_master",
+    "name": "restored_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "character_master",
+    "name": "previous_name",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "renamed_to",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "status_updated_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "character_master",
+    "name": "lookup_excluded",
+    "type": "boolean"
+  },
+  {
+    "table_name": "character_master",
+    "name": "visibility_excluded",
+    "type": "boolean"
+  },
+  {
+    "table_name": "character_master",
+    "name": "exclusion_reason",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "exclusion_memo",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "lookup_excluded_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "character_master",
+    "name": "visibility_excluded_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "character_master",
+    "name": "lookup_failure_streak",
+    "type": "integer"
+  },
+  {
+    "table_name": "character_master",
+    "name": "lookup_failure_total",
+    "type": "integer"
+  },
+  {
+    "table_name": "character_master",
+    "name": "last_lookup_failure_code",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "last_lookup_failure_session_id",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "last_lookup_failed_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "character_master",
+    "name": "last_lookup_success_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "character_master",
+    "name": "latest_pve_payload_id",
+    "type": "bigint"
+  },
+  {
+    "table_name": "character_master",
+    "name": "latest_pvp_payload_id",
+    "type": "bigint"
+  },
+  {
+    "table_name": "character_master",
+    "name": "main_character_id",
+    "type": "bigint"
+  },
+  {
+    "table_name": "character_master",
+    "name": "previous_character_name",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "previous_server_id",
+    "type": "integer"
+  },
+  {
+    "table_name": "character_master",
+    "name": "previous_server_name",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "previous_char_key",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "previous_profile_url",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "identity_change_type",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "identity_status",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "identity_changed_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "character_master",
+    "name": "identity_verified_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "character_master",
+    "name": "legion_name",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "legion_updated_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "character_master",
+    "name": "legion_source_snapshot_id",
+    "type": "bigint"
+  },
+  {
+    "table_name": "character_master",
+    "name": "lookup_policy",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "lookup_group_policy",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "lookup_policy_reason",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "lookup_policy_actor_id",
+    "type": "bigint"
+  },
+  {
+    "table_name": "character_master",
+    "name": "lookup_policy_updated_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "character_master",
+    "name": "relation_review_attempted_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "character_master",
+    "name": "relation_review_session_id",
+    "type": "text"
+  },
+  {
+    "table_name": "character_master",
+    "name": "activity_inactive_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "character_master",
+    "name": "activity_inactive_previous",
+    "type": "jsonb"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "id",
+    "type": "bigint"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "session_id",
+    "type": "text"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "server_id",
+    "type": "integer"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "server_name",
+    "type": "text"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "character_name",
+    "type": "text"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "main_character_name",
+    "type": "text"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "class_name",
+    "type": "text"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "char_key",
+    "type": "text"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "profile_image_url",
+    "type": "text"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "detail_url",
+    "type": "text"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "pve_item_level",
+    "type": "integer"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "pve_combat_power",
+    "type": "integer"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "pvp_item_level",
+    "type": "integer"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "pvp_combat_power",
+    "type": "integer"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "raw_payload",
+    "type": "jsonb"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "received_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "schema_version",
+    "type": "text"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "tool_name",
+    "type": "text"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "client_id",
+    "type": "text"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "snapshot_uid",
+    "type": "text"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "payload_hash",
+    "type": "text"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "lookup_order",
+    "type": "integer"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "intake_status",
+    "type": "text"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "master_synced_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "master_sync_status",
+    "type": "text"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "master_sync_message",
+    "type": "text"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "growth_reviewed_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "growth_review_status",
+    "type": "text"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "growth_review_message",
+    "type": "text"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "gear_type",
+    "type": "text"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "gear_parse_status",
+    "type": "text"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "gear_evidence",
+    "type": "jsonb"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "source_snapshot_id",
+    "type": "bigint"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "parsed_item_level",
+    "type": "integer"
+  },
+  {
+    "table_name": "extension_character_payloads",
+    "name": "parsed_combat_power",
+    "type": "integer"
+  },
+  {
+    "table_name": "master_sync_events",
+    "name": "id",
+    "type": "bigint"
+  },
+  {
+    "table_name": "master_sync_events",
+    "name": "session_id",
+    "type": "text"
+  },
+  {
+    "table_name": "master_sync_events",
+    "name": "payload_id",
+    "type": "bigint"
+  },
+  {
+    "table_name": "master_sync_events",
+    "name": "character_name",
+    "type": "text"
+  },
+  {
+    "table_name": "master_sync_events",
+    "name": "main_character_name",
+    "type": "text"
+  },
+  {
+    "table_name": "master_sync_events",
+    "name": "event_type",
+    "type": "text"
+  },
+  {
+    "table_name": "master_sync_events",
+    "name": "status",
+    "type": "text"
+  },
+  {
+    "table_name": "master_sync_events",
+    "name": "message",
+    "type": "text"
+  },
+  {
+    "table_name": "master_sync_events",
+    "name": "before_data",
+    "type": "jsonb"
+  },
+  {
+    "table_name": "master_sync_events",
+    "name": "after_data",
+    "type": "jsonb"
+  },
+  {
+    "table_name": "master_sync_events",
+    "name": "raw_payload",
+    "type": "jsonb"
+  },
+  {
+    "table_name": "master_sync_events",
+    "name": "created_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "updater_runtime_jobs",
+    "name": "job_id",
+    "type": "text"
+  },
+  {
+    "table_name": "updater_runtime_jobs",
+    "name": "session_id",
+    "type": "text"
+  },
+  {
+    "table_name": "updater_runtime_jobs",
+    "name": "session_token_hash",
+    "type": "text"
+  },
+  {
+    "table_name": "updater_runtime_jobs",
+    "name": "tool_name",
+    "type": "text"
+  },
+  {
+    "table_name": "updater_runtime_jobs",
+    "name": "client_id",
+    "type": "text"
+  },
+  {
+    "table_name": "updater_runtime_jobs",
+    "name": "requested_by_character",
+    "type": "text"
+  },
+  {
+    "table_name": "updater_runtime_jobs",
+    "name": "requested_by_role",
+    "type": "text"
+  },
+  {
+    "table_name": "updater_runtime_jobs",
+    "name": "requested_by_level",
+    "type": "integer"
+  },
+  {
+    "table_name": "updater_runtime_jobs",
+    "name": "status",
+    "type": "text"
+  },
+  {
+    "table_name": "updater_runtime_jobs",
+    "name": "current_stage",
+    "type": "text"
+  },
+  {
+    "table_name": "updater_runtime_jobs",
+    "name": "current_character",
+    "type": "text"
+  },
+  {
+    "table_name": "updater_runtime_jobs",
+    "name": "message",
+    "type": "text"
+  },
+  {
+    "table_name": "updater_runtime_jobs",
+    "name": "progress_current",
+    "type": "integer"
+  },
+  {
+    "table_name": "updater_runtime_jobs",
+    "name": "progress_total",
+    "type": "integer"
+  },
+  {
+    "table_name": "updater_runtime_jobs",
+    "name": "eta_seconds",
+    "type": "integer"
+  },
+  {
+    "table_name": "updater_runtime_jobs",
+    "name": "avg_ms_per_item",
+    "type": "numeric(12,2)"
+  },
+  {
+    "table_name": "updater_runtime_jobs",
+    "name": "heartbeat_interval_seconds",
+    "type": "integer"
+  },
+  {
+    "table_name": "updater_runtime_jobs",
+    "name": "timeout_seconds",
+    "type": "integer"
+  },
+  {
+    "table_name": "updater_runtime_jobs",
+    "name": "started_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "updater_runtime_jobs",
+    "name": "last_heartbeat_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "updater_runtime_jobs",
+    "name": "finished_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "updater_runtime_jobs",
+    "name": "summary",
+    "type": "jsonb"
+  },
+  {
+    "table_name": "updater_runtime_jobs",
+    "name": "raw_payload",
+    "type": "jsonb"
+  },
+  {
+    "table_name": "updater_runtime_jobs",
+    "name": "created_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "updater_runtime_jobs",
+    "name": "updated_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "id",
+    "type": "bigint"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "session_id",
+    "type": "text"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "character_id",
+    "type": "bigint"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "list_row",
+    "type": "integer"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "character_name",
+    "type": "text"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "server_id",
+    "type": "integer"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "server_name",
+    "type": "text"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "pve_item_level",
+    "type": "numeric"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "pvp_item_level",
+    "type": "numeric"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "pve_combat_power",
+    "type": "numeric"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "pvp_combat_power",
+    "type": "numeric"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "latest_power_total",
+    "type": "numeric"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "latest_item_level_total",
+    "type": "numeric"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "sync_status",
+    "type": "text"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "created_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "updated_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "synced_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "error_message",
+    "type": "text"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "list_original_name",
+    "type": "text"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "class_name",
+    "type": "text"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "clear_pve_stats",
+    "type": "boolean"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "clear_pvp_stats",
+    "type": "boolean"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "identity_changed",
+    "type": "boolean"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "previous_character_name",
+    "type": "text"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "previous_server_id",
+    "type": "integer"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "list_display_name",
+    "type": "text"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "main_character_renamed",
+    "type": "boolean"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "main_character_name",
+    "type": "text"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "append_if_missing",
+    "type": "boolean"
+  },
+  {
+    "table_name": "google_list_sheet_sync_queue",
+    "name": "list_status",
+    "type": "text"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "id",
+    "type": "bigint"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "session_id",
+    "type": "text"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "lookup_order",
+    "type": "integer"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "list_row",
+    "type": "integer"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "server_id",
+    "type": "integer"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "server_name",
+    "type": "text"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "character_name",
+    "type": "text"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "main_character_name",
+    "type": "text"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "class_name",
+    "type": "text"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "target_status",
+    "type": "text"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "target_source",
+    "type": "text"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "existed_in_master",
+    "type": "boolean"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "corrected",
+    "type": "boolean"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "payload_id",
+    "type": "bigint"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "snapshot_id",
+    "type": "bigint"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "last_error",
+    "type": "text"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "queued_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "claimed_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "looked_up_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "created_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "updated_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "list_original_name",
+    "type": "text"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "attempt_count",
+    "type": "integer"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "max_attempts",
+    "type": "integer"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "last_failure_code",
+    "type": "text"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "last_failure_retryable",
+    "type": "boolean"
+  },
+  {
+    "table_name": "lookup_session_targets",
+    "name": "final_failed_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "id",
+    "type": "bigint"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "session_id",
+    "type": "text"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "job_id",
+    "type": "text"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "run_date",
+    "type": "date"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "run_no",
+    "type": "integer"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "status",
+    "type": "text"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "requested_by_character",
+    "type": "text"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "requested_by_role",
+    "type": "text"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "extension_version",
+    "type": "text"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "lookup_filter_summary",
+    "type": "text"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "lookup_filter",
+    "type": "jsonb"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "started_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "finished_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "elapsed_seconds",
+    "type": "integer"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "total_count",
+    "type": "integer"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "lookup_done_count",
+    "type": "integer"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "changed_count",
+    "type": "integer"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "unchanged_count",
+    "type": "integer"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "no_comparison_count",
+    "type": "integer"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "pve_updated_count",
+    "type": "integer"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "pvp_updated_count",
+    "type": "integer"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "new_count",
+    "type": "integer"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "failed_count",
+    "type": "integer"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "skipped_count",
+    "type": "integer"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "list_synced_count",
+    "type": "integer"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "summary",
+    "type": "jsonb"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "details",
+    "type": "jsonb"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "created_at",
+    "type": "timestamp with time zone"
+  },
+  {
+    "table_name": "updater_run_reports",
+    "name": "updated_at",
+    "type": "timestamp with time zone"
+  }
+]

@@ -1,5 +1,13 @@
 # KINOJO WEB HANDOFF
 
+## DB Master 이벤트 최소 저장 · 2026-09-23
+
+- SQL499 / migration20260923045528_master_sync_event_compaction. 기존 Master sync의 이벤트 INSERT만 private 변환 helper2개로 축소한다. before/after에 신원5필드·PVE/PVP 수치4필드, raw에는 장비판정만 보존. 이벤트 ID/시각/상태 및 실제 Master·현재 상세·성장 요약은 유지한다.
+- NULL/빈 객체/비교 가능한 비어 있지 않은 상태와 JSON 값 유형을 유지한다. 비정형 scalar/array는 임의 변환하지 않는다. helper 실행은 소유자만 허용, public writer 기존 권한 유지. 새 테이블/cron/공개 RPC 없음.
+- 신규 tests/master-event-compaction.test.cjs는 실제 주간/보고서 전체 출력 동등성·06시/신원/장비 fallback·NULL·멱등·rollback을 검증한다. 기존 history integration은 Worker→Parser→Master→축소 event 및 실패 원자성을 검증한다. 고정 CI runner 포함.
+- 과거27,635행은 별도 전체 암호화 백업/복원·행별변환 대조 이후 hash-guarded batch로 변경한다. migration 자체는 과거 행을 수정하지 않는다. code rollback은 미래 writer만 복원; 제거한 JSON 필드는 외부 백업 복원 필요.
+- 실제 운영 적용·과거 축소·공간 회수·PR/Drive 최종 상태는 [DB 프로젝트 LOG](https://drive.google.com/file/d/1F6fBTUNmPdJgeD3bUb1wAsv4yEgAyKcO/view) 최신 회차를 확인한다. snapshot/payload/intake/runtime 정리와 전체400MB 이하·자동조회 관측은 후속이다.
+
 ## DB 순위 복제본 정리 · 2026-09-23
 
 - 기준 main bc14d716c391ec8777b013fd2986bae3a2d8140e, branch codex/db-ranking-retention. 사용자 목표는 필수 데이터 보존 아래 최대 축소, 정리 완료 상한400MB.
