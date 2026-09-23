@@ -1,5 +1,14 @@
 # KINOJO WEB HANDOFF
 
+## DB 정리·주간06시 · 2026-09-23
+
+- 기준 main cfb2cc1083a6bf5618d24c03d5bed43953fd8d9a, branch codex/db-retention-local-preflight. 사용자 승인: 현재 영구ID 미연결 성장 기록 삭제, 주간 수요일06시KST 통일.
+- 운영 미연결 history10,953/review10,953을22batch로 삭제했다. 각각3,878행 유지, 미연결history0/current-history 없는review0. 연결된 기록·Master191·rollup4,396·순위state252+252 지문 불변. 6표34,753행 암호화 외부 백업·제약22/인덱스46 복원·전체삭제/복원 리허설PASS. 백업/복구키는 사용자 전용 로컬 폴더, Git/Drive에 원문 없음.
+- SQL497 migration20260923034002_character_growth_week_wednesday_06: 기존00시 요약은 week_start_hour0으로 보존, 새WEEK6으로 분리. 원본3,878행만 재집계해 로컬418주간행 생성, 기존4,396행 불변. DAY/MONTH 자정 유지, WEEK만 기존week_window 사용, 만료06시/기존cron수요일06:20. 구기준 행을06시 비교에 포함하지 않는다.
+- 신규 실제SQL 회귀 및 백업 전체자료 preflight PASS. 복구SQL은 WEEK쓰기 동결이며 데이터/06시 만료/cron 유지, DAY/MONTH 지속. 과거 함수로 단순revert하면 신규 복합키/보존계약이 맞지 않는다.
+- 운영 SQL497 적용·Git/Drive/CI 상태는 [프로젝트 LOG](https://drive.google.com/file/d/1F6fBTUNmPdJgeD3bUb1wAsv4yEgAyKcO/view) 최신 회차를 확인한다. 본 기록만으로 배포완료로 간주하지 않는다.
+- 삭제 후 DB1,632,717,971B, 기본read-only on. snapshot/payload/events/구순위 대용량 정리·writer 누적 방지·물리500MB/정상자동조회 검증은 남았다. 새 기능 시험을 위한 운영 사용자행 생성 없음.
+
 ## 성역 Stage14 권한 통합 · 운영 반영
 
 - 기준 main42744df157ad0265fef36a98d23a4842d2ec4680, branch `codex/sanctuary-stage14-permissions`. 사용자 승인: 생성자 자기 팀 운영 유지, Staff 실제 담당 일정만, Manager 이상 기능별 관리, 운영자 지정 Master만, 지원 취소 동반 모드 변경은 지원 처리 권한 필요. 광역 개인 예외는 별도 이관 대상으로 보존한다.

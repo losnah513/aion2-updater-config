@@ -35,6 +35,7 @@ const tests=[
   "tests/character-detail-write-fence.test.cjs",
   "tests/character-history-stable-identity.test.cjs",
   "tests/character-weekly-growth-identity.test.cjs",
+  "tests/character-weekly-06.test.cjs",
   "tests/character-deferred-snapshot.test.cjs",
   "tests/character-refresh-completion-status.test.cjs",
   "tests/character-payload-identity-index.test.cjs",
