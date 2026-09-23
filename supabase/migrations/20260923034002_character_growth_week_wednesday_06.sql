@@ -1,5 +1,5 @@
 -- SQL497. Preserve legacy midnight summaries; active weekly contract is Wednesday 06:00 KST.
-begin;
+begin read write;
 set local lock_timeout='2s';
 set local statement_timeout='15s';
 lock table public.character_history in share row exclusive mode;
