@@ -1,5 +1,13 @@
 # KINOJO WEB HANDOFF
 
+## DB 순위 복제본 정리 · 2026-09-23
+
+- 기준 main bc14d716c391ec8777b013fd2986bae3a2d8140e, branch codex/db-ranking-retention. 사용자 목표는 필수 데이터 보존 아래 최대 축소, 정리 완료 상한400MB.
+- SQL498 / migration20260923041508_ranking_entries_bounded_retention: 최신·직전 completed와 미완료/HOF/MVP 참조를 보존하며 성공한 rebuild 뒤 최대20,000행 정리. 운영 후보119,069/보호534이며 실행 직전 재판정한다. run metadata/현재raw/성장요약 유지, 새cron 없음.
+- 검증 `node tests/ranking-retention.test.cjs`; 고정 CI runner 포함. 외부 암호화 백업·전체 복원·원본 행해시 검증은 별도 필수이며 부분 백업으로 삭제하지 않는다.
+- 운영 적용·실제 삭제·물리회수·Git/Drive 상태는 [DB 프로젝트 LOG](https://drive.google.com/file/d/1F6fBTUNmPdJgeD3bUb1wAsv4yEgAyKcO/view) 최신 기록을 확인한다. rollback은 writer 복원/자동정리 중지이며 삭제 데이터는 외부백업 복원이 필요하다.
+- 이후 snapshot/payload/events의 현재 소비자 이관·누적 방지·용량 회수·자동조회 관측을 계속한다. 운영 사용자 데이터 시험 쓰기는 하지 않는다.
+
 ## DB 정리·주간06시 · 2026-09-23
 
 - 기준 main cfb2cc1083a6bf5618d24c03d5bed43953fd8d9a, branch codex/db-retention-local-preflight. 사용자 승인: 현재 영구ID 미연결 성장 기록 삭제, 주간 수요일06시KST 통일.

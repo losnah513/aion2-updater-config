@@ -1,5 +1,11 @@
 # KINOJO WEB
 
+## Bounded ranking copies (SQL498)
+
+The legacy ranking writer preserves the newest two completed runs plus every unfinished run and every run referenced by current HOF/MVP rows. After a successful rebuild it removes up to20,000 older entry copies; run metadata, current raw JSON, ranking calculations, and growth rollups stay unchanged. A shared transaction advisory lock serializes rebuild/cleanup, and cleanup locks its keep-set tables without waiting. A busy cleanup leaves a retryable backlog. No new Cron or public cleanup permission is added.
+
+Run `node tests/ranking-retention.test.cjs` for the real migration, protected references, dry-run/batch limits, repeated rebuilds, error atomicity and rollback. Historical deletion requires full encrypted backup and restore validation separately. Rollback stops automatic retention; restoring deleted entries requires that backup. The DB project targets the smallest safe footprint with a400MB ceiling; deployment and physical reclamation evidence belong to the project LOG.
+
 ## Sanctuary permissions Stage14
 
 CONFIRMED (2026-09-09): Stage14 connects private capabilities to v2 command/bootstrap/revision/lease contracts and the WEB/Edge adapters. STAFF needs an exact active assignment for assigned-scope scheduling; creator operations remain available. Master-only operator assignment never promotes accounts. Existing broad all/sanctuary_edit overrides and old assignments remain unchanged for explicit migration review. The coordinated five-migration release, sanctuary-management Edge v31 and WEB PR442 are deployed; detailed deployment evidence belongs to the Sanctuary project LOG.
