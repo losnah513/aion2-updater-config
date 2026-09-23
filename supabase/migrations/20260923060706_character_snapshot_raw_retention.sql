@@ -219,5 +219,5 @@ end;
 $function$;
 REVOKE ALL ON FUNCTION private.kinojo_snapshot_raw_v501(jsonb),private.kinojo_snapshot_raw_candidates_v501(bigint,integer),private.kinojo_snapshot_raw_cleanup_v501(boolean,integer) FROM PUBLIC,anon,authenticated,service_role;
 -- Daily 06:40 KST; <=2000 rows, above the current 4 x 191 daily intake.
-select cron.schedule('kinojo-snapshot-raw-retention-v501','40 21 * * *','select private.kinojo_snapshot_raw_cleanup_v501(false,2000);');
+select cron.schedule('kinojo-snapshot-raw-retention-v501','40 21 * * *','set statement_timeout=''15s''; select private.kinojo_snapshot_raw_cleanup_v501(false,2000);');
 commit;
