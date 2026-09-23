@@ -173,8 +173,8 @@ WITH protected AS MATERIALIZED (
 SELECT s.id FROM public.character_master m JOIN public.lookup_snapshots s ON s.snapshot_uid=m.latest_snapshot_uid
 UNION SELECT legion_source_snapshot_id FROM public.character_master WHERE legion_source_snapshot_id IS NOT NULL
 UNION SELECT snapshot_id FROM public.character_skill_current_state WHERE snapshot_id IS NOT NULL
-UNION SELECT s.id FROM public.character_master m CROSS JOIN LATERAL (SELECT id FROM public.lookup_snapshots s WHERE s.server_id=m.server_id AND s.character_name=m.character_name ORDER BY created_at DESC,id DESC LIMIT 10) s
-UNION SELECT s.id FROM public.character_master m CROSS JOIN LATERAL (SELECT id FROM public.lookup_snapshots s WHERE s.server_id=m.server_id AND s.character_name=m.character_name AND s.status='OK' AND s.raw_payload->'officialRaw' IS NOT NULL ORDER BY created_at DESC,id DESC LIMIT 10) s
+UNION SELECT s.id FROM public.character_master m CROSS JOIN LATERAL (SELECT id FROM public.lookup_snapshots s WHERE s.server_id=m.server_id AND s.character_name=m.character_name ORDER BY created_at DESC FETCH FIRST 10 ROWS WITH TIES) s
+UNION SELECT s.id FROM public.character_master m CROSS JOIN LATERAL (SELECT id FROM public.lookup_snapshots s WHERE s.server_id=m.server_id AND s.character_name=m.character_name AND s.status='OK' AND s.raw_payload->'officialRaw' IS NOT NULL ORDER BY created_at DESC FETCH FIRST 10 ROWS WITH TIES) s
 ),
 synced AS MATERIALIZED (
  select source_snapshot_id from public.extension_character_payloads where source_snapshot_id is not null

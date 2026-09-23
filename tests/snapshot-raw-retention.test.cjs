@@ -18,6 +18,7 @@ const migration='supabase/migrations/20260923060706_character_snapshot_raw_reten
   await db.query("insert into lookup_session_targets(id,snapshot_id,target_status) values($1,$1,'lookup_done')",[id]);
  }
  await db.exec("update character_master set latest_snapshot_uid='uid1',legion_source_snapshot_id=2;insert into character_skill_current_state(character_master_id,snapshot_id) values(1,3);update lookup_session_targets set target_status='final_failed' where id=4;update extension_character_payloads set master_sync_status='failed' where id=5;update lookup_snapshots set session_id='pending' where id=6;update lookup_snapshots set created_at=now() where id=7;update lookup_snapshots set raw_payload=raw_payload-'officialRaw' where id=8");
+ await db.exec("insert into lookup_snapshots(id,session_id,server_id,character_name,status,raw_payload,created_at,snapshot_uid) select 26,session_id,server_id,character_name,status,raw_payload,created_at,'uid26' from lookup_snapshots where id=17;insert into extension_character_payloads(id,source_snapshot_id,master_sync_status) values(26,26,'synced');insert into lookup_session_targets(id,snapshot_id,target_status) values(26,26,'lookup_done')");
  await db.exec('alter table lookup_snapshots enable trigger trg_kinojo_character_skill_snapshot_sync_v415;alter table lookup_snapshots enable trigger trg_kinojo_sync_character_legion_v296');
  const candidates=async()=>(await db.query('select * from private.kinojo_snapshot_raw_candidates_v501(0,5000)')).rows.map(x=>Number(x.id));
  assert.deepEqual(await candidates(),[9,10,11,12,13,14,15,16]);
@@ -33,7 +34,7 @@ const migration='supabase/migrations/20260923060706_character_snapshot_raw_reten
  // Normal new observations still update legion state; an ordinary metadata change still runs triggers.
  await db.query("insert into lookup_snapshots(id,session_id,server_id,character_name,status,raw_payload,created_at) values(30,'pending',2002,'Hero','OK',$1,now())",[raw]);
  assert.equal((await db.query('select legion_source_snapshot_id from character_master')).rows[0].legion_source_snapshot_id,30);
- await db.exec(fs.readFileSync(migration.replace('/migrations/','/rollbacks/'),'utf8'));assert.equal((await db.query('select count(*)::int n from lookup_snapshots')).rows[0].n,26);
+ await db.exec(fs.readFileSync(migration.replace('/migrations/','/rollbacks/'),'utf8'));assert.equal((await db.query('select count(*)::int n from lookup_snapshots')).rows[0].n,27);
  assert.equal((await db.query('select count(*)::int n from cron.test_jobs')).rows[0].n,0);
  console.log('PASS current/detail/skill/terminal/retry/24h guards, parser and diagnosis parity, recursive audit scalar retention, bounded cleanup, dry run, no current-state side effects, ordinary trigger writes and rollback');
 }finally{await db.close();}})().catch(e=>{console.error(e);process.exitCode=1;});
