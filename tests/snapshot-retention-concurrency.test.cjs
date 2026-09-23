@@ -14,7 +14,7 @@ const {Client}=require('./runtime/postgres/node_modules/pg');
  // pg_ctl uses PostgreSQL's normal restricted-token startup on Windows.
  // No OS user/service is created and the listener is loopback-only.
  execFileSync(binaries.pg_ctl,['-D',dir,'-l',path.join(dir,'server.log'),'-o',`-p ${port} -h 127.0.0.1 -c statement_timeout=5000`,'start','-w','-t','15'],{windowsHide:true,stdio:'ignore',timeout:20000});
- const clients=[];
+ const clients=[];let verified=false;
  try{
    for(let n=0;n<100;n++){
      const c=new Client({host:'127.0.0.1',port,user:'postgres',database:'postgres',connectionTimeoutMillis:500});
@@ -38,9 +38,15 @@ const {Client}=require('./runtime/postgres/node_modules/pg');
    await a.query('rollback');assert.equal((await a.query("select raw_payload ? 'officialRaw' full from lookup_snapshots")).rows[0].full,true);
    await b.query("update character_skill_current_state set snapshot_id=1 where character_master_id=1");assert.equal((await clean()).rows[0].v.compacted,0);
    console.log('PASS real PostgreSQL snapshot retention: keep-set writers, advisory lock, locked-row skip, protection recheck and atomic rollback');
+   verified=true;
 
  }finally{
    for(const c of clients){await c.query('rollback').catch(()=>{});await c.end().catch(()=>{});}
    execFileSync(binaries.pg_ctl,['-D',dir,'stop','-m','fast','-w'],{windowsHide:true,stdio:'pipe',timeout:10000});
+   if(verified){
+     const resolved=path.resolve(dir),allowed=path.resolve(parent)+path.sep;
+     assert.ok(resolved.startsWith(allowed)&&path.basename(resolved).startsWith('snapshot-'));
+     fs.rmSync(resolved,{recursive:true});
+   }
  }
 })().catch(e=>{console.error(e.message);process.exitCode=1});
