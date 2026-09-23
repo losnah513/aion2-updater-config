@@ -1,5 +1,11 @@
 # KINOJO WEB
 
+## Compact collection payloads (SQL500)
+
+Collection payloads retain their structured identity, PVE/PVP values, processing status and snapshot links. A final BEFORE trigger removes duplicate raw fields after the existing metadata/identity triggers run, retaining thirteen keys used by downstream consumers. Full detailed snapshots remain available. Existing lookup frequency and growth boundaries do not change.
+
+Run `node tests/character-payload-compaction.test.cjs`. Historical batches require a fully restored encrypted backup, per-row before/after hashes and an exclusive NOWAIT lock. They transactionally suspend only the two raw-update triggers with metadata/name side effects, restoring both before commit. Any failure rolls back data and trigger states. Code rollback stops future compaction; removed raw fields require the external backup. This phase does not finish snapshot retention or the 400MB goal.
+
 ## Compact Master sync events (SQL499)
 
 The Master sync writer stores only five identity-proof fields and four PVE/PVP item-level/combat-power fields in each before/after state, plus the detected gear type in event metadata. Event IDs, timestamps, status and messages remain unchanged. SQL NULL, JSON null, empty states and nonempty comparison states retain their meaning, so weekly growth and run reports continue to use the same contract. Current Master/detail data is unaffected.
