@@ -8,6 +8,8 @@ CREATE INDEX idx_lookup_snapshot_official_recent_v501 ON public.lookup_snapshots
  WHERE status='OK' AND raw_payload->'officialRaw' IS NOT NULL;
 CREATE INDEX idx_lookup_snapshot_official_due_v501 ON public.lookup_snapshots(id)
  WHERE status='OK' AND raw_payload->'officialRaw' IS NOT NULL;
+CREATE INDEX idx_lookup_target_snapshot_pending_v501 ON public.lookup_session_targets(snapshot_id)
+ WHERE target_status IS DISTINCT FROM 'lookup_done';
 CREATE FUNCTION private.kinojo_snapshot_raw_v501(p_raw jsonb)
 RETURNS jsonb LANGUAGE plpgsql IMMUTABLE STRICT SET search_path TO 'pg_catalog'
 AS $function$

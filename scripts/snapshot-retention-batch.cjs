@@ -11,9 +11,9 @@ INSERT INTO approved_snapshot_rows VALUES ${rows.map(r=>`(${r.id},'${r.before}',
 DO $check$ BEGIN
  PERFORM s.id FROM public.lookup_snapshots s JOIN approved_snapshot_rows a ON a.id=s.id FOR UPDATE OF s NOWAIT;
  IF (SELECT count(*) FROM private.kinojo_snapshot_raw_candidates_v501(${rows[0].id-1},250) c JOIN approved_snapshot_rows a ON a.id=c.id)<>${rows.length} THEN RAISE EXCEPTION 'SNAPSHOT_PROTECTION_CHANGED'; END IF;
- IF (SELECT count(*) FROM public.lookup_snapshots s JOIN approved_snapshot_rows a ON a.id=s.id AND md5(to_jsonb(s)::text)=a.before_hash)<>${rows.length} THEN RAISE EXCEPTION 'SNAPSHOT_BACKUP_SOURCE_CHANGED'; END IF;
+ IF (WITH matched AS MATERIALIZED (SELECT s.id,to_jsonb(s) data FROM public.lookup_snapshots s JOIN approved_snapshot_rows a ON a.id=s.id) SELECT count(*) FROM matched s JOIN approved_snapshot_rows a ON a.id=s.id AND md5(s.data::text)=a.before_hash)<>${rows.length} THEN RAISE EXCEPTION 'SNAPSHOT_BACKUP_SOURCE_CHANGED'; END IF;
  UPDATE public.lookup_snapshots s SET raw_payload=private.kinojo_snapshot_raw_v501(s.raw_payload) FROM approved_snapshot_rows a WHERE a.id=s.id;
- IF (SELECT count(*) FROM public.lookup_snapshots s JOIN approved_snapshot_rows a ON a.id=s.id AND md5(to_jsonb(s)::text)=a.after_hash)<>${rows.length} THEN RAISE EXCEPTION 'SNAPSHOT_COMPACT_RESULT_CHANGED'; END IF;
+ IF (WITH matched AS MATERIALIZED (SELECT s.id,to_jsonb(s) data FROM public.lookup_snapshots s JOIN approved_snapshot_rows a ON a.id=s.id) SELECT count(*) FROM matched s JOIN approved_snapshot_rows a ON a.id=s.id AND md5(s.data::text)=a.after_hash)<>${rows.length} THEN RAISE EXCEPTION 'SNAPSHOT_COMPACT_RESULT_CHANGED'; END IF;
 END $check$;
 SELECT jsonb_build_object('batch',${n},'rows',${rows.length},'first_id',${rows[0].id},'last_id',${rows.at(-1).id},'verified',true) result;
 COMMIT;

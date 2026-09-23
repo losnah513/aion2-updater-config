@@ -1,5 +1,6 @@
 begin read write;
 set local lock_timeout='2s';
+DROP INDEX IF EXISTS public.idx_lookup_target_snapshot_pending_v501;
 select cron.unschedule('kinojo-snapshot-raw-retention-v501');
 CREATE OR REPLACE FUNCTION public.kinojo_character_skill_snapshot_sync_v415()
  RETURNS trigger
