@@ -40,6 +40,7 @@ const tests=[
   "tests/master-event-compaction.test.cjs",
   "tests/character-payload-compaction.test.cjs",
   "tests/snapshot-raw-retention.test.cjs",
+  "tests/intake-evidence-compaction.test.cjs",
   "tests/character-deferred-snapshot.test.cjs",
   "tests/character-refresh-completion-status.test.cjs",
   "tests/character-payload-identity-index.test.cjs",

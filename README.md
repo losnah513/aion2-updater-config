@@ -1,5 +1,11 @@
 # KINOJO WEB
 
+## Deduplicate intake gear evidence (SQL503)
+
+Successful intake events omit `gearEvidence` only when an identical copy exists in their synced payload, with matching payload ID, session and snapshot UID. All other metadata, failed events and unmatched records remain intact. The authoritative payload evidence is locked while checking the copy. This does not delete event rows or change growth, current detail or lookup frequency.
+
+Run `node tests/intake-evidence-compaction.test.cjs`. Historical maintenance uses the verified encrypted backup and `scripts/intake-evidence-batch.cjs`, capped at 500 rows with fresh duplicate checks, source/result hashes and NOWAIT locks. Rollback disables future compaction; restoring historical JSON requires the private backup. Runtime-event retention and the overall 400MB target remain separate follow-up work.
+
 ## Bound historical detailed snapshots (SQL501)
 
 Retention removes `officialRaw` only from successful snapshots older than 24 hours in completed sessions, with exclusively synced linked payloads and no unfinished linked target. Current Master snapshot references, skill/activity sources, the latest ten snapshots and ten official snapshots per current identity remain intact. Parser text is unchanged; scalar values used by the recursive audit are retained before discarding the detailed object.

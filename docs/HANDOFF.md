@@ -1,5 +1,12 @@
 # KINOJO WEB HANDOFF
 
+## 수집 이벤트 장비 근거 중복 제거 · SQL503 · 2026-09-23
+
+- migration20260923083749. 성공 submit/received의 gearEvidence가 payloadId·session·snapshot UID가 같은 synced payload의 gear_evidence와 정확히 같을 때만 이벤트 사본을 제거한다. 원본 payload와 나머지 이벤트 필드·실패 기록·행수는 유지한다.
+- INSERT trigger는 일치 payload를 FOR SHARE로 보호한다. helper/trigger 함수는 private·postgres-only이며 기존 RPC/권한/성장/조회 일정은 변경하지 않는다. 미동기화 신규 이벤트는 그대로 저장한다.
+- 과거 정리는 전체 암호화 백업·복원·원본hash 검증 후500행 이하씩 재판정한다. payload SHARE/event SHARE ROW EXCLUSIVE NOWAIT와 전후hash로 변경·재실행을 거부한다. 원본/배치/rollback 검증 및 공간회수 결과는 DB 프로젝트 LOG12를 따른다.
+- rollback은 미래 축소만 중단한다. 과거raw 복원은 외부암호화백업이 필요하다. runtime 이벤트 보존 상한·400MB목표·자동조회2일관측은 미완료다.
+
 ## 과거 상세 Snapshot 보존 상한 · SQL501 · 2026-09-23
 
 - Git migration20260923060706_character_snapshot_raw_retention. 완료 세션·성공·24시간 경과·연결payload 전체synced·미완료Target 없음 조건에서 officialRaw만 축소한다. 현재 Master UID/레기온/스킬 근거,각 Master 최근10개 snapshot/official snapshot을 보호한다. 기존 파서 텍스트는 완전히 보존하고 재귀 감사가 읽던 신원·직업·수치는 필요할 때 root scalar로 남긴다.
