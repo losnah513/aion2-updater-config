@@ -1,0 +1,41 @@
+const fs=require('node:fs'),assert=require('node:assert/strict');
+const {PGlite}=require('../.codex-test-runtime/node_modules/@electric-sql/pglite');
+const batch=require('../scripts/payload-compaction-batch.cjs');
+const migration='supabase/migrations/20260923052947_character_payload_compaction.sql';
+(async()=>{const db=new PGlite();try{
+ await db.exec("set time zone 'UTC';create schema private;create role anon;create role authenticated;create role service_role;grant usage on schema private to anon,authenticated,service_role");
+ const columns=JSON.parse(fs.readFileSync('tests/fixtures/master-event-schema.json','utf8'));
+ for(const table of new Set(columns.map(x=>x.table_name)))await db.exec('create table '+table+'('+columns.filter(c=>c.table_name===table).map(c=>'"'+c.name+'" '+c.type).join(',')+')');
+ await db.exec('create table lookup_snapshots(id bigint,raw_payload jsonb,character_name text);create table member_codes(main_character_name text,updated_at timestamptz)');
+ await db.exec(fs.readFileSync('tests/fixtures/character-payload-helpers.sql','utf8'));
+ await db.exec(fs.readFileSync('tests/fixtures/character-payload-triggers.sql','utf8'));
+ await db.exec("insert into character_master(id,server_id,character_name,char_key,is_main,main_character_id,is_active) values(1,2002,'Hero','key',true,1,true);insert into lookup_snapshots values(9,'{\"characterName\":\"Hero\",\"officialRaw\":{\"full\":true}}','Hero');insert into lookup_session_targets(id,session_id,server_id,character_name,main_character_name) values(7,'session',2002,'Hero','Hero')");
+ const raw={targetId:7,snapshotId:9,mainCharacterName:'Hero',status:'OK',gearParseStatus:'VERIFIED',gearEvidence:{source:'full input'},officialRaw:{duplicate:'x'.repeat(10000)},profileHtml:'x'.repeat(10000),unknown:'remove'};
+ const insert=()=>db.query("insert into extension_character_payloads(id,session_id,server_id,character_name,char_key,main_character_name,pve_item_level,pve_combat_power,raw_payload,tool_name,schema_version) values(1,'session',2002,'hero','key','hero',123,456,$1,'KINOJO_SERVER_CHARACTER_QUEUE','kinojo-crawl-v2')",[raw]);
+ // Exact same original triggers and input, first without and then with the new trigger.
+ await db.exec('begin');await insert();const original=(await db.query('select to_jsonb(p) j from extension_character_payloads p')).rows[0].j;await db.exec('rollback');
+ await db.exec(fs.readFileSync(migration,'utf8'));await insert();
+ const compact=(await db.query('select to_jsonb(p) j from extension_character_payloads p')).rows[0].j;
+ assert.deepEqual({...compact,raw_payload:null},{...original,raw_payload:null});
+ assert.equal(compact.source_snapshot_id,9);assert.equal(compact.gear_type,'PVE');assert.equal(compact.gear_parse_status,'VERIFIED');assert.deepEqual(compact.gear_evidence,raw.gearEvidence);assert.equal(compact.character_name,'Hero');assert.equal(compact.raw_payload.characterName,'Hero');assert.equal(compact.raw_payload.officialRaw,undefined);
+ assert.equal((await db.query('select payload_id from lookup_session_targets where id=7')).rows[0].payload_id,1);
+ const keys=['targetId','target_id','mainCharacterName','main_character_name','owner','main','status','crawlStatus','snapshotId','gearParseStatus','parseStatus','gearEvidence','characterName'];
+ const aliases=Object.fromEntries(keys.map((k,i)=>[k,i%2?null:i]));assert.deepEqual((await db.query('select private.kinojo_payload_raw_v500($1) v',[{...aliases,discard:1}])).rows[0].v,aliases);
+ for(const value of [null,{},[],[1],1,'text'])assert.deepEqual((await db.query('select private.kinojo_payload_raw_v500($1::jsonb) v',[JSON.stringify(value)])).rows[0].v,value);
+ assert.equal((await db.query('select private.kinojo_payload_raw_v500(null) is null v')).rows[0].v,true);
+ for(const role of ['anon','authenticated','service_role'])for(const fn of ['kinojo_payload_raw_v500(jsonb)','kinojo_payload_compact_v500()'])assert.equal((await db.query("select has_function_privilege($1,'private.'||$2,'execute') v",[role,fn])).rows[0].v,false);
+ // Recreate a historical row without replaying its side effects.
+ await db.exec("alter table extension_character_payloads disable trigger trg_extension_payload_gear_meta;alter table extension_character_payloads disable trigger trg_kinojo_official_name_case_sync_v298;alter table extension_character_payloads disable trigger zz_kinojo_payload_compact_v500");
+ await db.query('update extension_character_payloads set raw_payload=$1,source_snapshot_id=null,gear_type=null,gear_parse_status=null,gear_evidence=null',[raw]);
+ await db.exec("alter table extension_character_payloads enable trigger trg_extension_payload_gear_meta;alter table extension_character_payloads enable trigger trg_kinojo_official_name_case_sync_v298;alter table extension_character_payloads enable trigger zz_kinojo_payload_compact_v500");
+ const hash=async()=>(await db.query("select id,md5(to_jsonb(e)::text) before,md5(((to_jsonb(e)-'raw_payload')||jsonb_build_object('raw_payload',private.kinojo_payload_raw_v500(raw_payload)))::text) after from extension_character_payloads e")).rows;
+ const protectedState=async()=>Promise.all(['character_master','lookup_session_targets','lookup_snapshots','member_codes'].map(t=>db.query('select to_jsonb(e) j from '+t+' e')));
+ const before=await protectedState(),approved=await hash();
+ await assert.rejects(db.exec(batch(approved.map(r=>({...r,after:'0'.repeat(32)})),1)),/PAYLOAD_COMPACT_RESULT_CHANGED/);await db.exec('rollback');assert.deepEqual(await hash(),approved);
+ assert.equal((await db.query("select count(*)::int n from pg_trigger where tgrelid='extension_character_payloads'::regclass and tgenabled<>'O'")).rows[0].n,0);
+ await db.exec(batch(approved,1));assert.deepEqual(await protectedState(),before);
+ const out=(await db.query('select * from extension_character_payloads')).rows[0];assert.equal(out.source_snapshot_id,null);assert.equal(out.gear_type,null);assert.equal(out.gear_evidence,null);
+ await assert.rejects(db.exec(batch(approved,1)),/PAYLOAD_BACKUP_SOURCE_CHANGED/);await db.exec('rollback');
+ await db.exec(fs.readFileSync(migration.replace('/migrations/','/rollbacks/'),'utf8'));assert.equal((await db.query('select count(*)::int n from extension_character_payloads')).rows[0].n,1);
+ console.log('PASS original trigger parity, metadata/target completion, alias/null semantics, restricted ACL, historical side-effect isolation, atomic failure, source guard and rollback');
+}finally{await db.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

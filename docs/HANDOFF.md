@@ -1,5 +1,13 @@
 # KINOJO WEB HANDOFF
 
+## 수집 Payload 중복 원본 축소 · 2026-09-23
+
+- SQL500 / migration20260923052947_character_payload_compaction. 구조화된 신원·PVE/PVP·상태·해시·스냅샷 연결은 유지한다. 기존 BEFORE trigger 다음에 실행되는 private 변환으로 raw_payload를 소비자가 사용하는13키만 보존한다. 현재 상세 lookup_snapshots는 변경하지 않는다.
+- 실제 기존4개 trigger를 사용해 신규 저장의 메타 추출/정식명/Target 완료 동등성,13키 alias/NULL/비정형값,권한,과거 batch 부작용 차단/실패 원자성/rollback을 검증한다. 고정 CI runner에 포함한다.
+- 기존 자료는 암호화 전체백업과 전행 복원·독립 변환 검증 뒤250행 hash guard로 처리한다. 각 batch는 ACCESS EXCLUSIVE NOWAIT 안에서 raw UPDATE 부작용이 있는2개 trigger만 잠시 중단한다. 트랜잭션 실패 시 설정도 복원된다. 다른 트리거/전체 role/전역 read-only는 변경하지 않는다.
+- 코드 rollback은 새 압축 trigger/helper만 제거한다. 과거 raw 복원은 암호화 백업으로 같은 부작용 차단 절차가 필요하다. 이미 처리한 batch는 재실행하지 않는다.
+- 운영 적용·복원 검증·물리 용량·Git/Drive 최종 결과는 [DB 프로젝트 LOG](https://drive.google.com/file/d/1F6fBTUNmPdJgeD3bUb1wAsv4yEgAyKcO/view)의 최신 기록을 따른다. snapshot/intake/runtime 보존 상한과 전체400MB 목표는 아직 후속이다.
+
 ## DB Master 이벤트 최소 저장 · 2026-09-23
 
 - SQL499 / migration20260923045528_master_sync_event_compaction. 기존 Master sync의 이벤트 INSERT만 private 변환 helper2개로 축소한다. before/after에 신원5필드·PVE/PVP 수치4필드, raw에는 장비판정만 보존. 이벤트 ID/시각/상태 및 실제 Master·현재 상세·성장 요약은 유지한다.
