@@ -1,5 +1,11 @@
 # KINOJO WEB
 
+## Remove historical snapshot parser text (SQL504)
+
+Completed, synced historical snapshots retain their exact parser result in `retained_parser_stats_v504` before discarding HTML/text and redundant official responses. Gear diagnosis reads the retained result; the recursive identity audit excludes that cache and retains its original scalar observations. Snapshot rows and source IDs remain available to reports. Current Master/PVE/PVP, skills, stat sources, explicit detail requests, recent detail slots, unfinished targets and mismatched payload identities are protected.
+
+The existing SQL501/502 job delegates to bounded SQL504 cleanup; no additional job or lookup is introduced. Current-state triggers skip only the metadata-preserving archival update. Run `node tests/historical-snapshot-text-retention.test.cjs`. Historical batches require complete encrypted-backup reconstruction, current hashes and diagnostic parity. SQL504 rollback restores official-only cleanup while keeping cached-diagnostic compatibility; restore raw from backup before removing that compatibility layer.
+
 ## Deduplicate intake gear evidence (SQL503)
 
 Successful intake events omit `gearEvidence` only when an identical copy exists in their synced payload, with matching payload ID, session and snapshot UID. All other metadata, failed events and unmatched records remain intact. The authoritative payload evidence is locked while checking the copy. This does not delete event rows or change growth, current detail or lookup frequency.

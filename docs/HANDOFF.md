@@ -1,5 +1,13 @@
 # KINOJO WEB HANDOFF
 
+## 과거 Snapshot HTML·텍스트 제거 · SQL504 · 2026-09-23
+
+- Git20260923090420_historical_snapshot_text_retention. HTML을 매번 재파싱하던 장비진단을 retained_parser_stats_v504의 보존결과로 이관한다. 원문에서 HTML/text 별칭9개와 officialRaw를 제거하며 기존재귀감사 scalar는 유지한다. 감사reader는 새cache열을 탐색하지 않는다.
+- Snapshot 행·원본ID·Target/보고서 연결 유지. Master 최신UID/레기온/PVE/PVP payload,스킬,stat source,상세요청,최근10개/공식10개,진행·미동기화·이름불일치·source미연결세션·24시간이내 자료는 보호한다. 신규수집시cache기본NULL이며 과거정리만 채운다.
+- 같은SQL501/502 job·advisory501/501·50행상한을 사용한다. 원문정리중은snapshot SHARE ROW EXCLUSIVE/참조표 SHARE NOWAIT; 바쁘면건너뛴다. 당시HTML·원문은 별도암호화백업에만 남고캐릭터현재상태쓰기재실행은 차단한다.
+- scripts/historical-snapshot-batch.cjs는 manifest250행이하·실행직전보호집합·전후hash를 재검증한다. 이전전체암호화백업에서 현재SQL501변환까지 재현한hash가 맞을때만 재사용한다. 실제운영수량·물리용량·배포상태는 DB프로젝트LOG13을 따른다.
+- rollback은기존공식원본축소로복귀하며이미HTML을제거한행의진단호환은유지한다. cache열/진단reader를제거하기전암호화원문복원필수. 전체400MB목표와payload·실행이벤트정리는 후속이다.
+
 ## 수집 이벤트 장비 근거 중복 제거 · SQL503 · 2026-09-23
 
 - migration20260923083749. 성공 submit/received의 gearEvidence가 payloadId·session·snapshot UID가 같은 synced payload의 gear_evidence와 정확히 같을 때만 이벤트 사본을 제거한다. 원본 payload와 나머지 이벤트 필드·실패 기록·행수는 유지한다.
