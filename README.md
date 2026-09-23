@@ -1,5 +1,11 @@
 # KINOJO WEB
 
+## Compact Master sync events (SQL499)
+
+The Master sync writer stores only five identity-proof fields and four PVE/PVP item-level/combat-power fields in each before/after state, plus the detected gear type in event metadata. Event IDs, timestamps, status and messages remain unchanged. SQL NULL, JSON null, empty states and nonempty comparison states retain their meaning, so weekly growth and run reports continue to use the same contract. Current Master/detail data is unaffected.
+
+Run `node tests/master-event-compaction.test.cjs` and the existing integrated history test. Historical compaction is a separate, hash-guarded operation after full encrypted backup and restoration validation. Code rollback restores future full writes; restoring discarded JSON fields requires the backup. This reduces duplicate content but does not complete raw retention or the 400MB target. See the DB project LOG for operating state.
+
 ## Bounded ranking copies (SQL498)
 
 The legacy ranking writer preserves the newest two completed runs plus every unfinished run and every run referenced by current HOF/MVP rows. After a successful rebuild it removes up to20,000 older entry copies; run metadata, current raw JSON, ranking calculations, and growth rollups stay unchanged. A shared transaction advisory lock serializes rebuild/cleanup, and cleanup locks its keep-set tables without waiting. A busy cleanup leaves a retryable backlog. No new Cron or public cleanup permission is added.
