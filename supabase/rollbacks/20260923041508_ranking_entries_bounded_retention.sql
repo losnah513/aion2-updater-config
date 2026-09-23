@@ -431,4 +431,3 @@ $function$;
 DROP FUNCTION private.kinojo_ranking_entries_cleanup_v498(integer,boolean);
 COMMIT;
 -- Deleted historical rows require the verified external backup; current rows remain unchanged.
-
