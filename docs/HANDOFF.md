@@ -4,7 +4,7 @@
 
 - Git migration20260923060706_character_snapshot_raw_retention. 완료 세션·성공·24시간 경과·연결payload 전체synced·미완료Target 없음 조건에서 officialRaw만 축소한다. 현재 Master UID/레기온/스킬 근거,각 Master 최근10개 snapshot/official snapshot을 보호한다. 기존 파서 텍스트는 완전히 보존하고 재귀 감사가 읽던 신원·직업·수치는 필요할 때 root scalar로 남긴다.
 - 기존 스킬/레기온 snapshot trigger는 다른 열이 동일한 raw 공식객체 제거에서만 현재상태 쓰기를 생략한다. 신규 수집·일반 메타 변경은 기존대로 실행한다. helper/정리 함수는 private,postgres-only. Snapshot 4개와 미완료 Target 참조 1개 인덱스로 보호집합과 후보 검색을 제한한다.
-- 매일06:40KST 최대2,000행 별도 저장소 정리 job. 하루4조회·주간수요일06시·성장rollup 정리 일정은 변경하지 않는다. dependency SHARE NOWAIT/동일 advisory lock 및 snapshot FOR UPDATE SKIP LOCKED로 진행 작업을 보호한다.
+- SQL502(migration20260923075912)는 대형JSON의 운영 실행시간을 고려해 같은 정리job을10분마다최대50행/15초제한으로 조정한다. 하루4조회·주간수요일06시·성장rollup 정리 일정은 변경하지 않는다. dependency SHARE NOWAIT/동일 advisory lock 및 snapshot FOR UPDATE SKIP LOCKED로 진행 작업을 보호한다. SQL502 rollback은 종전매일06:40KST/2,000행 구성 복원이며, 정리를 중단하려면 SQL501 rollback 또는job비활성화를 사용한다.
 - 실제 기존trigger/파서/진단을 설치한 로컬 보호조건·출력동등성·dry-run·batch·rollback과 실제 PostgreSQL 동시성 검증을 사용한다. 운영 초기 정리는 전체 암호화 백업/전행복원·독립projection 검증 뒤 동적보호와 before/after hash를 확인한다.
 - code rollback은 cron/helper/index 제거 및 기존trigger 복원이다. 과거raw는 외부백업에서 복원해야 한다. 실제 운영 적용/용량/배포/Drive 상태는 [DB 프로젝트 LOG](https://drive.google.com/file/d/1F6fBTUNmPdJgeD3bUb1wAsv4yEgAyKcO/view) 최신 회차를 확인한다. 전체400MB목표는 후속 공간회수까지 미완료다.
 

@@ -4,6 +4,11 @@ const setup=require('./helpers/snapshot-retention-db.cjs');
 const migration='supabase/migrations/20260923060706_character_snapshot_raw_retention.sql';
 (async()=>{const db=new PGlite();try{
  await setup(db);await db.exec(fs.readFileSync(migration,'utf8'));
+ const budget='supabase/migrations/20260923075912_snapshot_cleanup_execution_budget.sql';
+ await db.exec(fs.readFileSync(budget,'utf8'));
+ let job=(await db.query('select * from cron.test_jobs')).rows;assert.equal(job.length,1);assert.equal(job[0].schedule,'*/10 * * * *');assert.equal(job[0].command,"set statement_timeout='15s'; select private.kinojo_snapshot_raw_cleanup_v501(false,50);");
+ await db.exec(fs.readFileSync(budget.replace('/migrations/','/rollbacks/'),'utf8'));
+ assert.equal((await db.query('select * from cron.test_jobs')).rows[0].schedule,'40 21 * * *');await db.exec(fs.readFileSync(budget,'utf8'));
  const compact=async raw=>(await db.query('select private.kinojo_snapshot_raw_v501($1::jsonb) v',[JSON.stringify(raw)])).rows[0].v;
  for(const raw of [null,{},[],[1],1,'text'])assert.deepEqual(await compact(raw),raw);
  const raw={characterName:'Hero',className:'class',charKey:'key',profileHtml:'<div class="profile__info-power-level"><span>100</span></div><div class="profile__info-item-level"><span>10</span></div>',pageText:'unchanged',officialRaw:{info:{profile:{combatPower:100,itemLevel:10,regionName:'legion',className:'class'},large:'x'.repeat(5000)}}};
