@@ -1,5 +1,12 @@
 # KINOJO WEB HANDOFF
 
+## Payload 장비 근거 중복 제거 · SQL505 · 2026-09-24
+
+- Git20260924034219_payload_gear_evidence_dedup. 기존 메타/신원 trigger 뒤 SQL500 저장축소에서 raw_payload.gearEvidence가 구조화 gear_evidence와 정확히 같은 경우에만 사본을 제거한다. 구조화장비근거·현재정보·성장값·보고서입력은 그대로다. 불일치/정식값누락은 보존한다.
+- 기존5개trigger/권한/조회일정 유지. 새helper는 private/postgres-only. scripts/payload-evidence-batch.cjs는 전체백업복원·독립projection 검증된250행 이하 manifest에만 적용한다. 배치의 exclusive lock 안에서 원본/결과hash를 확인하고 과거raw 변경의 메타/신원 부작용trigger2개를 원자적으로 차단/복구한다.
+- 코드rollback은 미래중복제거중지이며 제거된사본은 비공개암호화백업으로 복원한다. 실제행수/용량/운영적용은 DB프로젝트LOG15를 따른다. 전체400MB목표·과거구조화장비근거축소·runtime정리는 후속이다.
+- 주·월 성장기록은 장비상세/옵션/구성변경이력을 보존하지 않는다. 전투력·아이템레벨/PVE·PVP·영구ID/관측메타는 유지한다. 상세장비JSON이 없는 기존rollup은 이번정리대상이 아니다(계획5.1.2/LOG14).
+
 ## 과거 Snapshot HTML·텍스트 제거 · SQL504 · 2026-09-23
 
 - Git20260923090420_historical_snapshot_text_retention. HTML을 매번 재파싱하던 장비진단을 retained_parser_stats_v504의 보존결과로 이관한다. 원문에서 HTML/text 별칭9개와 officialRaw를 제거하며 기존재귀감사 scalar는 유지한다. 감사reader는 새cache열을 탐색하지 않는다.

@@ -1,5 +1,9 @@
 # KINOJO WEB
 
+## Payload evidence deduplication (SQL505)
+
+New payloads omit the raw `gearEvidence` copy only when it exactly equals the structured `gear_evidence` value after existing metadata triggers run. The structured evidence, current equipment, growth numbers and report inputs remain unchanged. Unequal or missing authoritative values retain the raw copy. Historical cleanup uses fully restored encrypted backups and guarded batches; see DB cleanup project LOG15 for operational results.
+
 ## Remove historical snapshot parser text (SQL504)
 
 Completed, synced historical snapshots retain their exact parser result in `retained_parser_stats_v504` before discarding HTML/text and redundant official responses. Gear diagnosis reads the retained result; the recursive identity audit excludes that cache and retains its original scalar observations. Snapshot rows and source IDs remain available to reports. Current Master/PVE/PVP, skills, stat sources, explicit detail requests, recent detail slots, unfinished targets and mismatched payload identities are protected.
