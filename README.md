@@ -1,5 +1,11 @@
 # KINOJO WEB
 
+## Successful intake summaries (SQL506)
+
+Once a payload is synced, its successful intake event retains only source IDs and diagnostic/stat fields. The snapshot/payload remain the authoritative source. The matcher requires the same session, identity, hash and compatible snapshot/server; legacy events without a payload ID must have exactly one matching payload. Failed, pending, malformed and ambiguous events keep their original JSON. Both insert-after-sync and sync-after-insert are covered without another cron.
+
+Run `node tests/intake-success-retention.test.cjs`. Historical cleanup additionally requires full encrypted backup restoration, source/result hashes and `scripts/intake-success-batch.cjs` (500 rows, fresh checks, NOWAIT). Event rows and other columns are preserved. Code rollback removes only SQL506 triggers/helpers; restoring removed JSON requires the external backup. Overall DB capacity remains tracked in the DB cleanup project LOG.
+
 ## Payload evidence deduplication (SQL505)
 
 New payloads omit the raw `gearEvidence` copy only when it exactly equals the structured `gear_evidence` value after existing metadata triggers run. The structured evidence, current equipment, growth numbers and report inputs remain unchanged. Unequal or missing authoritative values retain the raw copy. Historical cleanup uses fully restored encrypted backups and guarded batches; see DB cleanup project LOG15 for operational results.
