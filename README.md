@@ -6,6 +6,8 @@ Old synced payloads retain eight report diagnosis fields while equipment lists/d
 
 The existing ten-minute SQL501 job shares its total 50-row/15-second budget between snapshot and payload cleanup (25 each at the default). PostgreSQL-only private helpers recheck the protected set under NOWAIT locks. `node tests/payload-diagnostic-retention.test.cjs` checks the real session-report output, protection rules, atomic batches and rollback. Historical batches require full encrypted backup reconstruction, independent projections, native concurrency and full restoration checks. Code rollback stops future reduction; removed equipment detail requires the external backup. Operational results and the remaining 390MB target are recorded in the DB project LOG.
 
+SQL510 disables nested-loop plans only inside the payload candidate selector after an operating batch exceeded its 15-second limit. Selection predicates and data transformation are unchanged. Roll back SQL510 before SQL509.
+
 ## Historical snapshot diagnostic summaries (SQL508)
 
 Archived parser results retain identity, PVE/PVP decisions, reason/status, slot counts and growth values. Historical equipment-name lists and detailed gear evidence are removed only after every linked payload is synced and the existing current-reference, recent-ten, age, identity and unfinished-work protections pass. Completed, failed, cancelled, expired and error parent sessions are eligible; an ended parent alone is insufficient. Snapshot rows, source IDs and current equipment remain intact.

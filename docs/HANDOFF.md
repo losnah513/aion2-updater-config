@@ -4,6 +4,7 @@
 
 - 24시간 경과·synced·종료 세션/런타임·정확히 연결된 완료 Target만 대상으로 장비 사유/유형/상태/슬롯 수8필드를 남긴다. Master 현재3참조/stat source/재처리reader의 최신payload·미완료/신원불일치를 보호한다. 행·ID·raw·수치·시각은 유지하며 기존trigger를 중단하지 않는다.
 - 기존cron26의10분/총50행/15초를 snapshot25·payload25로 나눈다. NOWAIT 참조잠금·동일advisory501/501·private/postgres-only 유지. Target payload참조 인덱스1개를 추가한다.
+- 운영250행 보호조회가15초제한에걸려변경없이취소된뒤SQL510으로후보함수내nested-loop만off설정했다. 보호조건/변환동일·실제batch rollback재검증. 복구순서는510→509다.
 - 실제 세션보고서 fixture 출력동일·원자rollback·fresh보호/전후hash·ACL을 tests/payload-diagnostic-retention.test.cjs로 검증한다. 과거분은 전행 암호화백업 재현·독립projection·native동시성·batch·원상복구 검증 후 scripts/payload-diagnostic-batch.cjs로 처리한다.
 - 코드rollback은 기존SQL508 job복원/509 helper·index제거. 상세장비 복구는 외부암호화백업이 필요하다. 운영실측·PR/CI·Drive 상태는 DB프로젝트LOG 최신회차가 권위이며 전체390MB목표 달성과 구분한다.
 

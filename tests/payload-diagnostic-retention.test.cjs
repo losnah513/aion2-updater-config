@@ -4,6 +4,7 @@ const migration='supabase/migrations/20260924070203_payload_diagnostic_retention
 (async()=>{const db=new PGlite();try{
  await require('./helpers/payload-diagnostic-db.cjs')(db);
  await db.exec(fs.readFileSync(migration,'utf8'));
+ await db.exec(fs.readFileSync('supabase/migrations/20260924071753_payload_diagnostic_query_plan.sql','utf8'));
  await db.exec("insert into updater_sessions values('done','completed'),('active','running'),('runtime','completed');insert into updater_runtime_jobs(session_id,status) values('runtime','running');insert into character_master(id,server_id,character_name,latest_payload_id,latest_pve_payload_id,latest_pvp_payload_id) values(1,2002,'Hero',1,2,3);insert into character_stat_sources values(4)");
  const evidence={gearReasonCode:'PVE_CONFIRMED',visibleEquipmentSlotCount:10,populatedEquipmentSlotCount:9,namedEquipmentSlotCount:8,abyssEquipmentSlotCount:0,gearType:'PVE',detectedGearType:'PVE',gearParseStatus:'CONFIRMED',equipment:[{name:'large detail'}],other:'discard'};
  for(let id=1;id<=20;id++){
@@ -37,6 +38,7 @@ const migration='supabase/migrations/20260924070203_payload_diagnostic_retention
  // Later terminal sessions become eligible; current, failed and recent rows do not.
  await db.exec("update updater_sessions set status='failed' where session_id='active';update lookup_session_targets set session_id='active' where id=6");assert.deepEqual(await ids(),[6]);
  const beforeRollbackReport=await report();
+ await db.exec(fs.readFileSync('supabase/rollbacks/20260924071753_payload_diagnostic_query_plan.sql','utf8'));
  await db.exec(fs.readFileSync(migration.replace('/migrations/','/rollbacks/'),'utf8'));
  assert.equal((await db.query('select private.kinojo_snapshot_raw_cleanup_v501(false,50) v')).rows[0].v.budget,50);
  assert.deepEqual(await report(),beforeRollbackReport);
