@@ -42,4 +42,3 @@ const migration='supabase/migrations/20260924070203_payload_diagnostic_retention
  assert.deepEqual(await report(),beforeRollbackReport);
  console.log('PASS payload diagnostics: real report parity, current/reprocess/active/retry/identity protections, bounded job, full row invariants, guarded atomic batch/replay/rollback and ACL');
 }finally{await db.close();}})().catch(e=>{console.error(e.message);process.exitCode=1;});
-
