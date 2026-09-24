@@ -21,4 +21,3 @@ END $verify$;
 SELECT jsonb_build_object('batch',${number},'rows',${rows.length},'verified',true) result;
 COMMIT;`;
 };
-
