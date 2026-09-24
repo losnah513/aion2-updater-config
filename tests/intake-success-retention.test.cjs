@@ -1,0 +1,37 @@
+const fs=require('fs'),assert=require('assert/strict');
+const {PGlite}=require('../.codex-test-runtime/node_modules/@electric-sql/pglite');
+const migration='supabase/migrations/20260924050221_intake_success_retention.sql';
+(async()=>{const db=new PGlite();try{
+ await db.exec("set timezone='UTC'");
+ await db.exec("create schema private;create role anon;create role authenticated;create role service_role;create table extension_character_payloads(id bigint primary key,session_id text,character_name text,payload_hash text,snapshot_uid text,server_id int,master_sync_status text,gear_evidence jsonb);create table snapshot_intake_events(id bigint generated always as identity primary key,session_id text,character_name text,payload_hash text,snapshot_uid text,event_type text,status text,raw_payload jsonb,created_at timestamptz default now()-interval '2 days')");
+ await db.exec(fs.readFileSync('supabase/migrations/20260923083749_snapshot_intake_evidence_compaction.sql','utf8'));
+ await db.exec(fs.readFileSync(migration,'utf8'));
+ await db.exec("insert into extension_character_payloads values(1,'s','A','h','u',2002,null,'{}')");
+ const raw={payloadId:1,targetId:4,serverId:2002,combatPower:1234,pageText:'full original',profileHtml:'<div>full original</div>',gearEvidence:{equipmentNames:['item']},unknown:{original:true}};
+ const put=async(r=raw,over={})=>(await db.query("insert into snapshot_intake_events(session_id,character_name,payload_hash,snapshot_uid,event_type,status,raw_payload) values($1,$2,$3,$4,$5,$6,$7) returning *",['s',over.name||'A',over.hash||'h',over.uid||'u',over.event||'submit',over.status||'received',JSON.stringify(r)])).rows[0];
+ const pending=await put();assert.deepEqual(pending.raw_payload,raw);
+ await db.exec("begin;update extension_character_payloads set master_sync_status='synced' where id=1");
+ const expected={payloadId:1,targetId:4,serverId:2002,combatPower:1234};
+ assert.deepEqual((await db.query('select raw_payload from snapshot_intake_events where id=$1',[pending.id])).rows[0].raw_payload,expected);
+ await db.exec('rollback');assert.deepEqual((await db.query('select raw_payload from snapshot_intake_events where id=$1',[pending.id])).rows[0].raw_payload,raw);
+ await db.exec("update extension_character_payloads set master_sync_status='synced' where id=1");
+ assert.deepEqual((await put()).raw_payload,expected);
+ const legacy={...raw};delete legacy.payloadId;assert.deepEqual((await put(legacy)).raw_payload,expected);
+ for(const [r,o] of [[raw,{hash:'wrong'}],[raw,{name:'wrong'}],[raw,{uid:'wrong'}],[raw,{event:'parse_failed'}],[raw,{status:'failed'}],[{...raw,serverId:2001},{}],[{...raw,payloadId:9},{}],[{...raw,payloadId:'invalid'},{}],[[],{}],[42,{}],[null,{}]])assert.deepEqual((await put(r,o)).raw_payload,r);
+ await db.exec("insert into extension_character_payloads values(2,'s','A','h','u',2002,null,'{}')");
+ assert.deepEqual((await put(legacy)).raw_payload,legacy);
+ assert.deepEqual((await put()).raw_payload,expected);
+ await db.exec('delete from extension_character_payloads where id=2');
+ await db.query('update snapshot_intake_events set raw_payload=$2 where id=$1',[pending.id,JSON.stringify(raw)]);
+ const manifest=(await db.query("select id,1::int as \"payloadId\",md5(to_jsonb(e)::text) before,md5(jsonb_set(to_jsonb(e),'{raw_payload}',private.kinojo_intake_summary_v506(raw_payload,1))::text) after from snapshot_intake_events e where id=$1",[pending.id])).rows.map(r=>({...r,id:Number(r.id)}));
+ const sql=require('../scripts/intake-success-batch.cjs')(manifest,1);
+ await db.exec("update extension_character_payloads set master_sync_status='failed' where id=1");
+ await assert.rejects(db.exec(sql),/INTAKE_SOURCE_OR_LINK_CHANGED/);await db.exec('rollback');
+ // Avoid success hook so the explicit maintenance batch still sees its original input.
+ await db.exec("alter table extension_character_payloads disable trigger payload_intake_success_v506;update extension_character_payloads set master_sync_status='synced' where id=1;alter table extension_character_payloads enable trigger payload_intake_success_v506");
+ await db.exec(sql);await assert.rejects(db.exec(sql),/INTAKE_SOURCE_OR_LINK_CHANGED/);await db.exec('rollback');
+ for(const role of ['anon','authenticated','service_role'])for(const fn of ['private.kinojo_intake_synced_payload_v506(public.snapshot_intake_events)','private.kinojo_intake_summary_v506(jsonb,bigint)','private.kinojo_intake_success_insert_v506()','private.kinojo_intake_success_sync_v506()'])assert.equal((await db.query("select has_function_privilege($1,$2,'execute') v",[role,fn])).rows[0].v,false);
+ await db.exec(fs.readFileSync(migration.replace('/migrations/','/rollbacks/'),'utf8'));
+ const post=await put();const prior={...raw};assert.deepEqual(post.raw_payload,prior);
+ console.log('PASS SQL506: pending/success transition, transaction rollback, authoritative identity, legacy unique match, ambiguous and failed protection, guarded maintenance and replay, ACL, rollback');
+}finally{await db.close();}})().catch(e=>{console.error(e.message);process.exitCode=1});

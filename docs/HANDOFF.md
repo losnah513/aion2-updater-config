@@ -1,5 +1,12 @@
 # KINOJO WEB HANDOFF
 
+## 성공 수신 원문 최소화 · SQL506 · 2026-09-24
+
+- 성공 submit/received가 같은 session/character/hash 및 snapshot/server의 synced payload에 연결되면 intake raw를 연결ID·진단·성장 수치18키로 요약한다. payloadId 없는 구형은 정확히1개 payload 일치 시에만 허용한다. 실패·미동기화·잘못된ID·모호한신원은 유지한다.
+- intake INSERT와 payload synced 전환의 두 순서를 private trigger로 처리한다. 기존 SQL503과 현재 snapshot/payload·성장·조회 일정은 유지한다. 신규 공개RPC/cron/권한 확대 없음.
+- tests/intake-success-retention.test.cjs는 성공전환/트랜잭션rollback/다른신원·실패·중복 보호/guarded batch 재실행 차단/ACL/code rollback을 검증한다. 과거분은 전체 원문 복원 검증 후500행 hash guard와 fresh 연결 확인으로 처리한다.
+- SQL506 rollback은 미래요약만중지하며 이미제거된원문은외부백업복원이필요하다. 실제운영반영·용량·백업·PR/Drive상태는DB정리프로젝트LOG최신회차를따른다. 전체400MB목표는아직미달이다.
+
 ## Payload 장비 근거 중복 제거 · SQL505 · 2026-09-24
 
 - Git20260924034219_payload_gear_evidence_dedup. 기존 메타/신원 trigger 뒤 SQL500 저장축소에서 raw_payload.gearEvidence가 구조화 gear_evidence와 정확히 같은 경우에만 사본을 제거한다. 구조화장비근거·현재정보·성장값·보고서입력은 그대로다. 불일치/정식값누락은 보존한다.

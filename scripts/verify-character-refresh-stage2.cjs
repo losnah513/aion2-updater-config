@@ -43,6 +43,7 @@ const tests=[
   "tests/intake-evidence-compaction.test.cjs",
   "tests/historical-snapshot-text-retention.test.cjs",
   "tests/payload-evidence-dedup.test.cjs",
+  "tests/intake-success-retention.test.cjs",
   "tests/character-deferred-snapshot.test.cjs",
   "tests/character-refresh-completion-status.test.cjs",
   "tests/character-payload-identity-index.test.cjs",
