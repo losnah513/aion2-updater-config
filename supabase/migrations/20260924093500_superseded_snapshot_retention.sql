@@ -219,5 +219,3 @@ revoke all on function private.kinojo_superseded_snapshot_candidates_v512(bigint
 select cron.schedule('kinojo-superseded-snapshot-retention-v512','*/10 * * * *',
   'set statement_timeout=''15s''; select private.kinojo_superseded_snapshot_cleanup_v512(false,50);');
 commit;
-
-
