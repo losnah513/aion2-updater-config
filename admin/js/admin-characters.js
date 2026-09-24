@@ -373,6 +373,7 @@
   function lookupFilterList(value){return Array.isArray(value)?value.map(v=>String(v)):String(value||'').split(',').map(v=>v.trim()).filter(Boolean);}
 
   function lookupTargetRoster(data,progress){
+    if(data?.detailExpired===true)return [];
     const sources=[data?.targets,data?.targetPreview,data?.queueTargets,progress?.targets,progress?.targetRows,data?.session?.raw_payload?.targets];
     let rows=sources.find(Array.isArray);
     const filter=data?.lookupFilter||{};
@@ -439,7 +440,7 @@
       const data=await loadCharacterLookupDetail('targets',{limit:200});
       const rows=Array.isArray(data.targets)?data.targets:Array.isArray(data.items)?data.items:[];
       state.lookupTargetsLoaded=true;
-      state.lookupConsole={...(state.lookupConsole||{}),targets:rows,queueTargets:rows};
+      state.lookupConsole={...(state.lookupConsole||{}),detailExpired:data.detailExpired===true,targets:rows,queueTargets:rows};
       renderCharacterLookupConsole(state.lookupConsole);
     }catch(error){
       setStatus('#characterLookupStatus',error.message||String(error),'error');
@@ -456,7 +457,7 @@
     try{
       const data=await loadCharacterLookupDetail('performance',{limit:1});
       state.lookupPerformanceLoaded=true;
-      state.lookupConsole={...(state.lookupConsole||{}),performanceProfile:data.performanceProfile||{}};
+      state.lookupConsole={...(state.lookupConsole||{}),detailExpired:data.detailExpired===true,performanceProfile:data.performanceProfile||{}};
       renderLookupPerformance(state.lookupConsole.performanceProfile);
     }catch(error){
       setStatus('#characterLookupStatus',error.message||String(error),'error');
@@ -475,7 +476,7 @@
       const data=await loadCharacterLookupDetail('events',{limit:40});
       const rows=Array.isArray(data.events)?data.events:Array.isArray(data.items)?data.items:[];
       state.lookupDiagnosticsLoaded=true;
-      state.lookupConsole={...(state.lookupConsole||{}),events:rows};
+      state.lookupConsole={...(state.lookupConsole||{}),detailExpired:data.detailExpired===true,events:rows};
       renderCharacterLookupConsole(state.lookupConsole);
     }catch(error){
       if(events)events.innerHTML='<div class="admin-empty">'+esc(error.message||String(error))+'</div>';
@@ -508,6 +509,13 @@
 
   function renderLookupTargets(data,progress,currentCharacter,failures){
     const panel=$('#characterLookupTargetPanel'),root=$('#characterLookupTargetList');if(!panel||!root)return;
+    if(data?.detailExpired===true){
+      panel.classList.remove('is-disabled');
+      const button=$('#characterLookupTargetLoadBtn');if(button){button.disabled=true;button.textContent='상세 보관 기간 종료';}
+      root.innerHTML='<div class="admin-empty">완료 후 30일이 지나 대상별 상세가 정리되었습니다.</div>';
+      if($('#characterLookupTargetSummary'))$('#characterLookupTargetSummary').textContent='상세 보관 기간 종료';
+      return;
+    }
     const step2=lookupStepClass(progress.step2Status);const enabled=step2!=='pending';
     panel.classList.toggle('is-disabled',!enabled);
     const loadButton=$('#characterLookupTargetLoadBtn');
@@ -595,6 +603,14 @@
 
   function renderLookupPerformance(profile){
     const panel=$('#characterLookupPerformancePanel');if(!panel)return;
+    if(state.lookupConsole?.detailExpired===true||profile?.detailExpired===true){
+      panel.className='admin-lookup-history admin-lookup-profile is-disabled';
+      const button=$('#characterLookupPerformanceLoadBtn');if(button){button.disabled=true;button.textContent='상세 보관 기간 종료';}
+      const stateEl=$('#characterLookupPerformanceState');if(stateEl)stateEl.textContent='완료 후 30일이 지나 성능 상세가 정리되었습니다.';
+      ['Total','Bottleneck','Official','Cache','Retry','Sheet','Integrity'].forEach(key=>{const el=$('#characterLookupPerformance'+key);if(el)el.textContent='-';});
+      const stages=$('#characterLookupPerformanceStages');if(stages)stages.innerHTML='<div class="admin-empty">상세 보관 기간 종료</div>';
+      return;
+    }
     const available=profile?.ok===true&&profile?.available!==false;
     const stateEl=$('#characterLookupPerformanceState');
     const loadButton=$('#characterLookupPerformanceLoadBtn');
@@ -679,9 +695,9 @@
     [1,2,3].forEach(stepNo=>{const root=$('#characterLookupPhaseListStep'+stepNo);if(!root)return;const items=phases.filter(phase=>lookupPhaseStep(phase)===stepNo);root.innerHTML=items.length?items.map(renderLookupPhase).join(''):'<div class="admin-empty">'+(stepNo===1?'원본 대조':stepNo===2?'공식 조회':'서버·시트 반영')+' 대기</div>';});
     const failures=$('#characterLookupFailures');const failureRows=Array.isArray(data?.failurePreview)?data.failurePreview:[];
     prepareLookupTargetStates(data,currentCharacter,failureRows,progress.step2Status);renderLookupTargets(data,progress,currentCharacter,failureRows);
-    const events=$('#characterLookupEvents');if(events){const rows=Array.isArray(data?.events)?data.events:[];events.innerHTML=rows.length?rows.map(row=>'<article><time>'+esc(formatServerTime(row.created_at||row.createdAt))+'</time><strong>'+esc(row.stage||row.event_type||row.eventType||'EVENT')+'</strong><span>'+esc(row.message||'')+'</span></article>').join(''):'<div class="admin-empty">아직 조회 이벤트가 없습니다.</div>';}
+    const events=$('#characterLookupEvents');if(events){const rows=Array.isArray(data?.events)?data.events:[];events.innerHTML=data?.detailExpired===true?'<div class="admin-empty">완료 후 30일이 지나 이벤트 상세가 정리되었습니다.</div>':rows.length?rows.map(row=>'<article><time>'+esc(formatServerTime(row.created_at||row.createdAt))+'</time><strong>'+esc(row.stage||row.event_type||row.eventType||'EVENT')+'</strong><span>'+esc(row.message||'')+'</span></article>').join(''):'<div class="admin-empty">아직 조회 이벤트가 없습니다.</div>';}
     if(failures){
-      const failedCount=Math.max(failureRows.length,Number(progress.finalFailedCount||0));const canRetry=roleLevel()>=4&&!active&&!characterAutomationBlocked()&&failedCount>0&&Boolean(data?.sessionId);
+      const failedCount=data?.detailExpired===true?0:Math.max(failureRows.length,Number(progress.finalFailedCount||0));const canRetry=roleLevel()>=4&&!active&&!characterAutomationBlocked()&&failedCount>0&&Boolean(data?.sessionId);
       failures.hidden=failedCount<=0;
       failures.innerHTML=failedCount>0?'<div class="admin-lookup-failure-head"><div><strong>확인 필요 캐릭터 '+failedCount.toLocaleString('ko-KR')+'명</strong><span>최종 실패 대상만 새 공통 Queue로 다시 조회하거나 오류 정보를 복사할 수 있습니다.</span></div>'+(canRetry?'<button class="admin-btn primary" type="button" data-lookup-failed-retry="'+esc(data.sessionId)+'" data-lookup-failed-count="'+failedCount+'" '+(state.lookupRetrying?'disabled':'')+'>'+(state.lookupRetrying?'재조회 준비 중...':'실패 '+failedCount.toLocaleString('ko-KR')+'명만 재조회')+'</button>':'')+'</div>'+failureRows.map((row,index)=>'<article><div><span>'+esc(row.character_name||row.characterName||'-')+' · '+esc(lookupStateLabel(row.target_status||row.targetStatus||'-'))+' · '+Number(row.attempt_count||row.attemptCount||0)+'/'+Number(row.max_attempts||row.maxAttempts||3)+'</span><em>'+esc(row.last_error||row.lastError||row.last_failure_code||row.lastFailureCode||'')+'</em></div><button class="admin-btn" type="button" data-lookup-failure-copy="'+index+'">오류 정보 복사</button></article>').join(''):'';
     }

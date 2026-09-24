@@ -1,0 +1,34 @@
+{
+  "stage": "SQL511 completed runtime detail retention",
+  "cutoffUtc": "2026-08-25T08:08:02.131065Z",
+  "retentionDays": 30,
+  "baselineDatabaseBytes": 569396371,
+  "finalDatabaseBytes": 489647251,
+  "reclaimedBytes": 79749120,
+  "targetDatabaseBytes": 390000000,
+  "remainingBytes": 99647251,
+  "archivedSessions": 172,
+  "deleted": {
+    "updater_runtime_events": 35110,
+    "lookup_session_targets": 15806,
+    "lookup_session_steps": 682,
+    "google_list_sheet_sync_queue": 14019
+  },
+  "encryptedBackup": {
+    "files": 70,
+    "rows": 65617,
+    "repositoryStored": false,
+    "localPostgresRestore": "row counts and JSONB MD5 match all 70 batches"
+  },
+  "protected": {
+    "oldCompletedEventRowsRemaining": 0,
+    "oldCompletedTargetRowsRemaining": 0,
+    "oldCompletedQueueRowsRemaining": 0,
+    "sessionSummaryMd5Before": "6874ef5bb6c81ee9d9594058c71a1901",
+    "sessionSummaryMd5After": "6874ef5bb6c81ee9d9594058c71a1901",
+    "allProgressRows": 291,
+    "allProgressMd5BeforeAndAfter": "5f7e3dc9a35f37f98742b4e72b57908f",
+    "progressBytesBefore": 18513920,
+    "progressBytesAfter": 8749056
+  }
+}
