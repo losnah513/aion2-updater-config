@@ -37,7 +37,7 @@ const migration='supabase/migrations/20260924060040_snapshot_diagnostic_retentio
  const rows=(await db.query('select id,raw_payload,retained_parser_stats_v504 from lookup_snapshots order by id')).rows;
  for(const r of rows){if(ids.includes(Number(r.id))){assert.ok(r.retained_parser_stats_v504);for(const k of ['officialRaw','pageText','profileHtml','visibleText'])assert.ok(!(k in r.raw_payload));assert.equal(r.raw_payload.profileImageUrl,'keep');}else assert.deepEqual(r.raw_payload,raw);}
  for(const role of ['anon','authenticated','service_role'])for(const fn of ['kinojo_snapshot_diagnostic_cleanup_v508(boolean,integer)','kinojo_snapshot_diagnostic_candidates_v508(bigint,integer)','kinojo_snapshot_diagnostic_cache_v508(jsonb)'])assert.equal((await db.query("select has_function_privilege($1,$2,'execute') v",[role,'private.'+fn])).rows[0].v,false);
- 
+
  // Archived cache updates must not replay current legion observations; future raw writes still do.
  await db.exec("insert into updater_sessions(session_id,status) values('ended-failed','failed'),('ended-cancelled','cancelled'),('ended-expired','expired'),('ended-error','error')");
  for(const status of ['failed','cancelled','expired','error']){
