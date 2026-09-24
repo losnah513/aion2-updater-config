@@ -1,5 +1,12 @@
 # KINOJO WEB HANDOFF
 
+## 과거 Snapshot 장비 진단 요약 · SQL508
+
+- 기존 SQL501/502 job을 재사용해 50행/15초/동일 advisory lock으로 정리한다. 종료 부모(completed/failed/cancelled/expired/error)에서도 개별 payload 전체 synced와 현재 참조·최근10개·24시간·신원·미완료 Target·미연결 보호를 모두 통과해야 한다. Snapshot 행과 참조 ID는 유지한다.
+- archived parser의 장비 이름 목록·상세 gearEvidence만 줄이고 판정·사유·슬롯 수·성장 수치를 보존한다. 원문이 남은 후보는 SQL504 변환을 먼저 적용한다. 캐시만 바뀐 과거행은 현재 레기온·스킬 쓰기를 재실행하지 않는다. 현재 수집 parser와 신규 저장 계약은 유지한다.
+- `node tests/snapshot-diagnostic-retention.test.cjs`와 고정 runner를 사용한다. 과거분은 외부 암호화백업에서 현재 전행hash 재현·독립projection·진단비교·실제batch·원상복원 검증 뒤 `scripts/snapshot-diagnostic-batch.cjs`로 처리한다.
+- 코드 rollback은 SQL504 cleanup/기존trigger 복원이며 제거한 장비 상세는 외부백업에서 복원해야 한다. 운영·용량·PR/CI·Drive 완료 여부는 DB 프로젝트 LOG 최신 회차를 따른다. 계획 상한400MB와 최신 사용자 목표390MB를 구분하며 ①만으로 전체 목표 달성을 주장하지 않는다.
+
 ## 구버전 순위 복제본 정리 · SQL507 · 2026-09-24
 
 - 현재PUBLISHED/직전복구pointer와SUPERSEDED외상태는보호한다. 과거SUPERSEDED버전의items/owner_metrics/scopes3개복제표만정리하며snapshot메타데이터·batch출처참조는유지한다.

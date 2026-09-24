@@ -25,8 +25,15 @@ const {Client}=require('./runtime/postgres/node_modules/pg');
    await b.connect();clients.push(b);
    await require('./helpers/snapshot-retention-db.cjs')({exec:q=>a.query(q),query:(q,p)=>a.query(q,p)});
    await a.query(fs.readFileSync('supabase/migrations/20260923060706_character_snapshot_raw_retention.sql','utf8'));
+   if(process.argv.includes('--diagnostic')){
+    await a.query(fs.readFileSync('tests/fixtures/historical-snapshot-audit-helpers.sql','utf8'));
+    await a.query('alter table character_master add column if not exists latest_pve_payload_id bigint;alter table character_master add column if not exists latest_pvp_payload_id bigint;create table character_stat_sources(snapshot_id bigint,payload_id bigint);create table private.character_snapshot_requests(snapshot_id bigint)');
+    await a.query(fs.readFileSync('supabase/migrations/20260923090420_historical_snapshot_text_retention.sql','utf8'));
+    await a.query(fs.readFileSync('supabase/migrations/20260924060040_snapshot_diagnostic_retention.sql','utf8'));
+   }
    await a.query("insert into updater_sessions(session_id,status) values('done','completed');insert into lookup_snapshots(id,session_id,server_id,character_name,status,created_at,raw_payload) values(1,'done',2002,'old','OK',now()-interval '2 days','{\"officialRaw\":{\"info\":{}},\"profileHtml\":\"original\"}');insert into extension_character_payloads(id,source_snapshot_id,master_sync_status) values(1,1,'synced');insert into lookup_session_targets(id,snapshot_id,target_status) values(1,1,'lookup_done');insert into character_master(id,server_id,character_name) values(1,2002,'other');insert into character_skill_current_state(character_master_id) values(1)");
    const clean=()=>a.query('select private.kinojo_snapshot_raw_cleanup_v501(false,2000) v');
+   if(process.argv.includes('--diagnostic'))await a.query("update extension_character_payloads set session_id='done',server_id=2002,character_name='old';update updater_sessions set status='failed'");
    for(const sql of ["update character_master set latest_snapshot_uid='protect' where id=1","update character_skill_current_state set snapshot_id=1 where character_master_id=1","update updater_sessions set status='running'","update lookup_session_targets set target_status='retry_queued'","update extension_character_payloads set master_sync_status='failed'"]){
     await b.query('begin');await b.query(sql);assert.equal((await clean()).rows[0].v.busy,true);await b.query('rollback');
    }
