@@ -1,5 +1,11 @@
 # KINOJO WEB
 
+## Superseded ranking replicas (SQL507)
+
+Ranking detail replicas retain the current published snapshot, its previous rollback snapshot, and all non-superseded work. The existing SQL401 cleanup also removes up to four older superseded versions from the three replica tables. Snapshot metadata and batch references remain intact; the original metadata retention and orphan handling are unchanged. Missing valid current/previous pointers fail closed. No additional cron is created.
+
+Run `node tests/ranking-replica-retention.test.cjs`. Historical cleanup uses full encrypted backups, restored source hashes and `scripts/ranking-replica-batch.cjs`; current/previous data and metadata are checked throughout. Rollback restores SQL401 and stops replica pruning, while deleted rows require external restoration. During data restoration, the scopes INSERT parity trigger must be temporarily disabled within the same transaction and restored to its original enabled state to avoid replaying old build side effects.
+
 ## Successful intake summaries (SQL506)
 
 Once a payload is synced, its successful intake event retains only source IDs and diagnostic/stat fields. The snapshot/payload remain the authoritative source. The matcher requires the same session, identity, hash and compatible snapshot/server; legacy events without a payload ID must have exactly one matching payload. Failed, pending, malformed and ambiguous events keep their original JSON. Both insert-after-sync and sync-after-insert are covered without another cron.

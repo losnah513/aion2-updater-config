@@ -1,5 +1,12 @@
 # KINOJO WEB HANDOFF
 
+## 구버전 순위 복제본 정리 · SQL507 · 2026-09-24
+
+- 현재PUBLISHED/직전복구pointer와SUPERSEDED외상태는보호한다. 과거SUPERSEDED버전의items/owner_metrics/scopes3개복제표만정리하며snapshot메타데이터·batch출처참조는유지한다.
+- 기존SQL401cleanup에최대4버전정리를연결한다. 기존90일메타보존·orphan처리·cron14일정은유지,새cron없음. 유효current/previous없는상태는삭제중지,publication advisory lock과명시table NOWAIT잠금으로보호한다.
+- tests/ranking-replica-retention.test.cjs 및전체암호화백업복원에서현재/직전·진행/실패보호,dryrun/원자rollback/ACL/제한batch/메타불변/삭제후전체복원을검증한다. scripts/ranking-replica-batch.cjs는fresh보호집합과버전별3표전행hash를재검사한다.
+- 코드rollback은SQL401복원/새helper제거. 데이터복원은외부백업필수이며scopes의INSERT parity trigger를같은복원transaction안에서만중단·원래상태복원해과거build부작용을재실행하지않는다. 운영건수·용량·CI/Drive는DB정리프로젝트LOG최신회차를따른다.
+
 ## 성공 수신 원문 최소화 · SQL506 · 2026-09-24
 
 - 성공 submit/received가 같은 session/character/hash 및 snapshot/server의 synced payload에 연결되면 intake raw를 연결ID·진단·성장 수치18키로 요약한다. payloadId 없는 구형은 정확히1개 payload 일치 시에만 허용한다. 실패·미동기화·잘못된ID·모호한신원은 유지한다.
