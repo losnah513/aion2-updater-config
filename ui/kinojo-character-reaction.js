@@ -849,7 +849,7 @@
       const equipped = row?.status === 'equipped';
       const grade = Object.hasOwn(titleGrades, row?.grade || '') ? row.grade : 'None';
       const icon = safeUrl(row?.icon || '');
-      const message = loading ? '불러오는 중…' : row?.status === 'unequipped' ? '적용 중인 타이틀 없음' : '타이틀 정보 확인 불가';
+      const message = loading ? '불러오는 중…' : row?.status === 'unequipped' ? '적용 중인 타이틀 없음' : row ? '타이틀 정보 확인 불가' : '공식 조회 실패';
       return '<article data-title-category="' + category.category + '"><header>' +
         (icon ? '<img src="' + icon + '" alt="" width="34" height="34" loading="lazy">' : '') +
         '<strong>' + category.label + '</strong></header><div class="kinojo-character-title-body">' +
@@ -1165,7 +1165,7 @@
     document.body.classList.add('kinojo-character-reaction-open');
     state.open = true;
     enrichTargetFromMaster();
-    loadEquippedTitles();
+    loadEquippedTitles(true);
     loadLiveOverview();
 
     const dialog = modal.querySelector('.kinojo-character-reaction-dialog');

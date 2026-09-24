@@ -246,7 +246,7 @@ jobs:
           ]
           required_assets = [
               "kinojo-character-reaction.css?cache=2026090701",
-              "kinojo-character-reaction.js?cache=2026090901",
+              "kinojo-character-reaction.js?cache=2026092401",
               "kinojo-character-detail-refresh.js?cache=2026090901",
               "kinojo-character-skill.css?cache=2026081001",
               "kinojo-character-daevanion.css?cache=2026081002",
@@ -413,6 +413,7 @@ jobs:
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/sanctuary-permission-foundation.test.cjs
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/sanctuary-permission-admin.test.cjs
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/completed-runtime-detail-retention.test.cjs
+          PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/character-titles-latest-snapshot.test.cjs
             PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/sanctuary-permission-command.test.cjs
             PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/sanctuary-permission-legacy-save.test.cjs
       - name: Verify roster browser interactions
