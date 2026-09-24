@@ -1,5 +1,11 @@
 # KINOJO WEB
 
+## Historical snapshot diagnostic summaries (SQL508)
+
+Archived parser results retain identity, PVE/PVP decisions, reason/status, slot counts and growth values. Historical equipment-name lists and detailed gear evidence are removed only after every linked payload is synced and the existing current-reference, recent-ten, age, identity and unfinished-work protections pass. Completed, failed, cancelled, expired and error parent sessions are eligible; an ended parent alone is insufficient. Snapshot rows, source IDs and current equipment remain intact.
+
+The existing SQL501/502 job delegates to SQL508 with the same 50-row/15-second budget. Cache-only archival updates do not replay skill or legion observations. Run `node tests/snapshot-diagnostic-retention.test.cjs`; historical batches additionally require complete encrypted source reconstruction, independent projection, diagnosis comparison and restoration verification. Code rollback restores SQL504 cleanup and keeps its cached reader. Removed detail requires the external backup. The original plan cap is 400MB; the latest user target is 390MB. Operational results and remaining capacity work belong to the DB project LOG.
+
 ## Superseded ranking replicas (SQL507)
 
 Ranking detail replicas retain the current published snapshot, its previous rollback snapshot, and all non-superseded work. The existing SQL401 cleanup also removes up to four older superseded versions from the three replica tables. Snapshot metadata and batch references remain intact; the original metadata retention and orphan handling are unchanged. Missing valid current/previous pointers fail closed. No additional cron is created.

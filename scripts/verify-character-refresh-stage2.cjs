@@ -42,6 +42,7 @@ const tests=[
   "tests/snapshot-raw-retention.test.cjs",
   "tests/intake-evidence-compaction.test.cjs",
   "tests/historical-snapshot-text-retention.test.cjs",
+  "tests/snapshot-diagnostic-retention.test.cjs",
   "tests/payload-evidence-dedup.test.cjs",
   "tests/intake-success-retention.test.cjs",
   "tests/ranking-replica-retention.test.cjs",
