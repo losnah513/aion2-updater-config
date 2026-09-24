@@ -69,7 +69,9 @@ const {PGlite}=require(process.env.PGLITE_MODULE || '../.codex-test-runtime/node
   const dry=(await call(true)).rows[0].result;
   assert.equal(dry.candidates,3); assert.equal(dry.deleted,0);
   assert.equal((await call(false)).rows[0].result.code,'BACKUP_NOT_VERIFIED');
-  await db.exec("update private.kinojo_snapshot_retention_control_v512 set enabled=true,backup_verified_at=now()");
+  await db.exec(fs.readFileSync('supabase/migrations/20260924100500_superseded_snapshot_backup_waiver.sql','utf8'));
+  assert.equal((await call(false)).rows[0].result.code,'RETENTION_NOT_ENABLED');
+  await db.exec("update private.kinojo_snapshot_retention_control_v512 set enabled=true");
   const applied=(await call(false)).rows[0].result;
   assert.equal(applied.deleted,3);assert.equal(applied.cachedPayloads,1);
   const cached=(await db.query('select source_snapshot_id,retained_diagnosis_v512 from public.extension_character_payloads where id=2')).rows[0];
@@ -79,6 +81,8 @@ const {PGlite}=require(process.env.PGLITE_MODULE || '../.codex-test-runtime/node
    [2,3,4,6,7,8,9,10,12]);
   for(const role of ['anon','authenticated','service_role'])
    assert.equal((await db.query("select has_function_privilege($1,'private.kinojo_superseded_snapshot_cleanup_v512(boolean,integer)','execute') v",[role])).rows[0].v,false);
+  await db.exec(fs.readFileSync('supabase/rollbacks/20260924100500_superseded_snapshot_backup_waiver.sql','utf8'));
+  assert.equal((await call(false)).rows[0].result.code,'RETENTION_NOT_ENABLED');
   await db.exec(fs.readFileSync('supabase/rollbacks/20260924093500_superseded_snapshot_retention.sql','utf8'));
   console.log('superseded snapshot retention: PASS');
  }finally{await db.close();}
