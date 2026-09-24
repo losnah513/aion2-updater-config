@@ -3,10 +3,10 @@
   "cutoffUtc": "2026-08-25T08:08:02.131065Z",
   "retentionDays": 30,
   "baselineDatabaseBytes": 569396371,
-  "finalDatabaseBytes": 499403923,
-  "reclaimedBytes": 69992448,
+  "finalDatabaseBytes": 489647251,
+  "reclaimedBytes": 79749120,
   "targetDatabaseBytes": 390000000,
-  "remainingBytes": 109403923,
+  "remainingBytes": 99647251,
   "archivedSessions": 172,
   "deleted": {
     "updater_runtime_events": 35110,
@@ -25,6 +25,10 @@
     "oldCompletedTargetRowsRemaining": 0,
     "oldCompletedQueueRowsRemaining": 0,
     "sessionSummaryMd5Before": "6874ef5bb6c81ee9d9594058c71a1901",
-    "sessionSummaryMd5After": "6874ef5bb6c81ee9d9594058c71a1901"
+    "sessionSummaryMd5After": "6874ef5bb6c81ee9d9594058c71a1901",
+    "allProgressRows": 291,
+    "allProgressMd5BeforeAndAfter": "5f7e3dc9a35f37f98742b4e72b57908f",
+    "progressBytesBefore": 18513920,
+    "progressBytesAfter": 8749056
   }
 }
