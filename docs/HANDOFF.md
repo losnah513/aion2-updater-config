@@ -1,5 +1,11 @@
 # KINOJO WEB HANDOFF
 
+## 순위 비교값의 원본 의존 분리 · SQL522 · 2026-09-28
+
+- 영구 캐릭터 ID·PVE/PVP별 마지막 두 조회일의 숫자만 private 상태에 저장하고 순위 비교가 이를 읽는다. 이력 INSERT/수정은 원자 반영하고 보존 DELETE 후에도 숫자를 유지한다. 기존 이름 기반 요약은 다른 소비자를 위해 유지한다.
+- 운영 4범위 순위 전체 응답 hash 일치, 숫자 367행/106,496B, DB 388,918,419B. 이름·서버·신원·gear 변경과 늦은 응답, 삭제 후 유지, rollback guard 회귀 PASS. 이번에는 원본을 삭제하지 않았다.
+- 다음은 평가 문구의 history/review 참조 및 현재 상세·실패 큐 참조 분리다. 원본이 사라진 후 결과가 달라지는 구버전 rollback은 차단한다. 상세: `docs/DB_RANKING_COMPARISON_CURRENT_20260928.md`.
+
 ## 진행률 JSON 재사용과 공간 회수 · SQL521 · 2026-09-28
 
 - 진행률의 큰 단계 상세는 한 번만 저장하고 기존 조회 응답에서 복원한다. 같은 JSON의 UPDATE는 기존 TOAST 값을 재사용하며 summary/snapshot/payload의 자동 VACUUM 기준을 2%·50행으로 조정했다. 운영 305행×3권한 조건의 전체 응답 해시 일치, PGlite 40회 갱신 추가 공간 8.29MB→32KB·변경값 반영·rollback 검증을 통과했다.
