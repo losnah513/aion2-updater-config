@@ -67,9 +67,14 @@ async function result(db,a=true,b=true){return(await db.query('select private.ki
   const after=(await result(current)).pveItems.find(x=>x.character_id===1);
   assert.equal(after.previous_pve_power,before.previous_pve_power);
   assert.equal(after.previous_pve_date,before.previous_pve_date);
+  const retainedLatest=(await current.query("select combat_power,history_date from private.kinojo_ranking_comparison_current_v522 where character_master_id=1 and gear_type='PVE' and slot=1")).rows[0];
+  await current.exec("insert into character_history values(100,1,261001,'POWER','OK','PVE',150,25,null,null,'2026-10-01')");
+  const next=(await result(current)).pveItems.find(x=>x.character_id===1);
+  assert.equal(next.previous_pve_power,retainedLatest.combat_power);
+  assert.equal(next.previous_pve_date,retainedLatest.history_date);
   // Refuse a downgrade that would silently lose the preserved comparison.
   await assert.rejects(current.exec(rollback),/ranking response changed/);await current.exec('rollback');
-  assert.equal((await result(current)).pveItems.find(x=>x.character_id===1).previous_pve_power,before.previous_pve_power);
+  assert.equal((await result(current)).pveItems.find(x=>x.character_id===1).previous_pve_power,retainedLatest.combat_power);
   console.log('ranking comparison current: PASS (four scopes, identity, corrections, retention, bounded state, rollback guard)');
  }finally{await old.close();await current.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
