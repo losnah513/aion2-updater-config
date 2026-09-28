@@ -23,6 +23,7 @@ const {PGlite}=require('../.codex-test-runtime/node_modules/@electric-sql/pglite
  await db.exec(fs.readFileSync('supabase/migrations/20260908083301_character_history_stable_identity.sql','utf8'));
  await db.exec(fs.readFileSync('supabase/migrations/20260923045528_master_sync_event_compaction.sql','utf8'));
  await db.exec(fs.readFileSync('supabase/migrations/20260928060149_ranking_comparison_current.sql','utf8'));
+ await db.exec(fs.readFileSync('supabase/migrations/20260928070942_ranking_review_current.sql','utf8'));
  // Integrated DB boundary: actual history backfill + review + ranking + rollup triggers.
  await db.exec(fs.readFileSync('tests/evidence/20260908-character-refresh-audit/rollup-existing-fixture.sql','utf8'));
  await db.exec('create trigger trg_character_history_growth_rollup_insert_v424 after insert on character_history for each row execute function private.kinojo_growth_rollup_history_insert_v424()');
