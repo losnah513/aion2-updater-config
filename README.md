@@ -1,12 +1,18 @@
 # KINOJO WEB
 
+## Worker progress write cost (SQL528 / API295.15)
+
+Worker claim/update defer their intermediate summary triggers within the function and refresh core/progress once after all four state updates. Function-local configuration restores on return or failure; ordinary writes keep their immediate triggers. Isolated PostgreSQL regression checks final summary input parity, refresh calls 8 to 2, rollback, auth/control/lease behavior and unchanged ACLs. This is a write-count reduction, not a measured runtime or database-size reduction.
+
+Heartbeat counts retain null when unknown, preserving existing DB progress; explicit zero is still zero. Schedule and retention policies are unchanged. Run `node tests/queue-progress-coalescing.test.cjs` and the worker recovery regression. Production release results and remaining retention timeouts are in the DB project LOG.
+
 ## Automatic worker checkpoint recovery (API295.14)
 
 CONFIRMED (2026-10-07): transient diagnostic handoff writes no longer block the authenticated queue checkpoint or canonical completion callback. RPC errors retain HTTP status and SQLSTATE. Queue timeout/lock/serialization/deadlock and transport errors can resume at the existing checkpoint up to three consecutive times (5/10/15 seconds); successful queue continuation resets the budget. Recovery ticks wait for an existing worker lease to expire and never take it over early. Normal duplicate ticks still yield to the current worker. Permanent/auth errors, terminal results, pause and cancellation do not restart the queue.
 
 Terminal diagnostic failures also preserve the queue's canonical outcome and message: a completed session can reject a late diagnostic request without turning its success message into an invalid-session error. Authentication rejection before queue processing still stops the queue.
 
-Run `node tests/character-refresh-worker-recovery.test.cjs`, terminal/budget/dispatch regressions and `node scripts/verify-character-refresh-stage2.cjs`. DB functions, permissions, official lookup/parser, target completion, list readback, twice-daily schedule and retention rules are unchanged. Exhausted recovery records attention and respects the DB terminal guard; normal expiry remains the fallback for an active session. Revalidate when queue leases, handoff or automation completion contracts change. Production run results and remaining DB progress-write cost belong to the DB project LOG.
+Run `node tests/character-refresh-worker-recovery.test.cjs`, terminal/budget/dispatch regressions and `node scripts/verify-character-refresh-stage2.cjs`. DB functions, permissions, official lookup/parser, target completion, list readback, twice-daily schedule and retention rules are unchanged. Exhausted recovery records attention and respects the DB terminal guard; normal expiry remains the fallback for an active session. Revalidate when queue leases, handoff or automation completion contracts change. Production run results belong to the DB project LOG.
 
 ## Retention candidate query cost (SQL527)
 

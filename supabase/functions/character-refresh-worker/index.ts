@@ -29,7 +29,7 @@ const CORS={
   "cache-control":"no-store",
   "x-content-type-options":"nosniff"
 };
-const API_VERSION="295.14";
+const API_VERSION="295.15";
 const CONTRACT="295";
 const BUILD_DATE="2026-10-07";
 const IDENTITY_DATABASE_CONTRACT="461";
@@ -206,8 +206,13 @@ async function officialJson(url,sessionId,sessionToken,source,deadline=Infinity)
     throw error;
   }finally{clearTimeout(timer);console.info(JSON.stringify({metric:"character_refresh_official",stage:source,elapsedMs:Date.now()-started}));}
 }
+function nullableProgressNumber(value){
+  if(typeof value!=="number" && typeof value!=="string")return null;
+  if(typeof value==="string" && value.trim()==="")return null;
+  return Number.isFinite(Number(value))?Number(value):null;
+}
 async function progress(sessionId,sessionToken,stage,characterName,message,current,total,payload={},deadline=Infinity){
-  await rpc("kinojo_runtime_progress",{p_session_id:sessionId,p_session_token:sessionToken,p_stage:stage,p_current_character:characterName||null,p_message:message,p_progress_current:Number.isFinite(Number(current))?Number(current):null,p_progress_total:Number.isFinite(Number(total))?Number(total):null,p_payload:{source:"KINOJO_SERVER_CHARACTER_QUEUE",progressContract:"server-worker-seven-phase-v2",apiVersion:API_VERSION,...payload}},deadline);
+  await rpc("kinojo_runtime_progress",{p_session_id:sessionId,p_session_token:sessionToken,p_stage:stage,p_current_character:characterName||null,p_message:message,p_progress_current:nullableProgressNumber(current),p_progress_total:nullableProgressNumber(total),p_payload:{source:"KINOJO_SERVER_CHARACTER_QUEUE",progressContract:"server-worker-seven-phase-v2",apiVersion:API_VERSION,...payload}},deadline);
 }
 async function handoff(sessionId,sessionToken,workerId,state,message,error=""){
   return await rpc("kinojo_server_queue_handoff_update_v276",{
