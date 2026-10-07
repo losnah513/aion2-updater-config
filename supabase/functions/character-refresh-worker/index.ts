@@ -29,9 +29,9 @@ const CORS={
   "cache-control":"no-store",
   "x-content-type-options":"nosniff"
 };
-const API_VERSION="295.12";
+const API_VERSION="295.13";
 const CONTRACT="295";
-const BUILD_DATE="2026-09-01";
+const BUILD_DATE="2026-10-07";
 const IDENTITY_DATABASE_CONTRACT="461";
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:CORS});
 const clean=(value,max=1200)=>String(value??"").trim().slice(0,max);
@@ -62,6 +62,19 @@ function identityTransitionContract(applied,previousServerId,currentServerId){
   return{ok:true,databaseContract,serverTransferred,legionCleared:result.legionCleared===true,previousLegionName:clean(result.previousLegionName,160)||null,organizationAssignmentRemoved:result.organizationAssignmentRemoved===true,legionTreeRevisions:object(result.legionTreeRevisions),previousServerId:previous,currentServerId:current};
 }
 const AUTONOMOUS_HANDOFF_RETRY_DELAYS=[800,1600,3200];
+const AUTONOMOUS_RECOVERY_MAX=3;
+const transientAutonomousQueueError=error=>error?.retryable!==false&&(
+  ["57014","55P03","40001","40P01"].includes(clean(error?.sqlState,20))||
+  error?.code==="SERVER_CALL_TIMEOUT"||transientAutonomousHandoffError(error)
+);
+// Diagnostic writes must not prevent an authenticated queue checkpoint from resuming.
+async function autonomousHandoff(...args){
+  try{
+    const result=await handoff(...args);
+    if(result?.ok===false)throw new WorkerError(clean(result.message||result.code,1000),clean(result.code,120),false);
+    return result;
+  }catch(error){if(!transientAutonomousQueueError(error))throw error;}
+}
 const AUTONOMOUS_HANDOFF_TRANSIENT_HTTP_STATUSES=new Set([502,503,504]);
 const transientAutonomousHandoffError=error=>{
   const httpStatus=Number(error?.httpStatus);
@@ -113,7 +126,7 @@ async function rpc(name,body,deadline=Infinity){
   const res=await boundedServerFetch(`${env.url}/rest/v1/rpc/${name}`,{method:"POST",headers:{apikey:env.key,authorization:`Bearer ${env.key}`,"content-type":"application/json"},body:JSON.stringify(body)},Number.isFinite(deadline)?remainingTargetBudget(deadline,45000):45000);
   const raw=await res.text();let data={};
   try{data=raw?JSON.parse(raw):{};}catch{data={ok:false,message:raw};}
-  if(!res.ok)throw new WorkerError(clean(data.message||data.error||data.details||`RPC ${name} HTTP ${res.status}`,1000),"SUPABASE_RPC_FAILED",true);
+  if(!res.ok)throw new WorkerError(clean(data.message||data.error||data.details||`RPC ${name} HTTP ${res.status}`,1000),"SUPABASE_RPC_FAILED",![400,401,403,404].includes(res.status),{httpStatus:res.status,sqlState:clean(data.code,20)});
   return data;
 }
 async function callEdge(name,body,deadline=Infinity){
@@ -611,11 +624,11 @@ async function runQueue(body){
     return json({ok:true,done:false,paused,cancelled,rateLimited,retryAfterMs:Math.max(rateLimitWaitMs,waitMs),attemptConsumed:rateLimited?false:undefined,hasMore,busy:waiting,sessionId,workerId,batchNo:claimed.batchNo,processed,successCount,failureCount,results,progress:summary,message:rateLimited?`PLAYNC 요청 제한 · ${Math.ceil(rateLimitWaitMs/1000)}초 후 자동 재개`:waiting?"처리 중인 Target 확인 · 자동 복구 대기":paused?"Server Queue가 일시정지되었습니다.":cancelled?"Server Queue가 중단되었습니다.":hasMore?"현재 Batch 완료 · 다음 Batch 대기":"처리 가능한 Target이 없습니다."});
   }catch(error){
     try{await rpc("kinojo_server_queue_worker_update_v270",{p_session_id:sessionId,p_session_token:sessionToken,p_worker_id:workerId,p_stage:"SERVER_QUEUE_ERROR",p_message:clean(error?.message||error,1000),p_release:true,p_summary:{apiVersion:API_VERSION,batchNo:claimed.batchNo,processed,successCount,failureCount,error:clean(error?.message||error,1000)}});}catch{}
-    return json({ok:false,code:clean(error?.code||"SERVER_QUEUE_WORKER_FAILED",120),retryable:error?.retryable!==false,sessionId,workerId,batchNo:claimed.batchNo,processed,successCount,failureCount,results,message:clean(error?.message||error,1000)},500);
+    return json({ok:false,code:clean(error?.code||"SERVER_QUEUE_WORKER_FAILED",120),retryable:error?.retryable!==false,httpStatus:error?.httpStatus,sqlState:error?.sqlState,sessionId,workerId,batchNo:claimed.batchNo,processed,successCount,failureCount,results,message:clean(error?.message||error,1000)},500);
   }
 }
 
-async function scheduleAutonomousTick(sessionId,sessionToken,workerId,delayMs=450){
+async function scheduleAutonomousTick(sessionId,sessionToken,workerId,delayMs=450,recoveryAttempt=0){
   if(delayMs>0)await sleep(Math.min(Math.max(delayMs,250),120000));
   let lastError=null;
   for(let attempt=0;attempt<=AUTONOMOUS_HANDOFF_RETRY_DELAYS.length;attempt+=1){
@@ -625,6 +638,7 @@ async function scheduleAutonomousTick(sessionId,sessionToken,workerId,delayMs=45
         sessionId,
         sessionToken,
         handoffWorkerId:workerId,
+        recoveryAttempt,
         clientVersion:API_VERSION
       });
     }catch(error){
@@ -649,8 +663,8 @@ function background(task){
   if(edgeRuntime&&typeof edgeRuntime.waitUntil==="function")edgeRuntime.waitUntil(task);
   else void task.catch(()=>{});
 }
-function dispatchAutonomousTick(sessionId,sessionToken,workerId,delayMs=450){
-  background(scheduleAutonomousTick(sessionId,sessionToken,workerId,delayMs).catch(async error=>{
+function dispatchAutonomousTick(sessionId,sessionToken,workerId,delayMs=450,recoveryAttempt=0){
+  background(scheduleAutonomousTick(sessionId,sessionToken,workerId,delayMs,recoveryAttempt).catch(async error=>{
     const diagnostic=clean(`${clean(error?.code,120)}${error?.httpStatus?` / HTTP ${error.httpStatus}`:""} / ${clean(error?.message||error,800)}`,1000);
     try{await handoff(sessionId,sessionToken,workerId,"attention","다음 Server Batch 인계에 실패했습니다.",diagnostic);}catch{}
     await finishScheduledAutomation(sessionId,"failed",diagnostic);
@@ -660,18 +674,25 @@ async function runAutonomousTick(body){
   const sessionId=clean(body.sessionId||body.session_id,240);
   const sessionToken=clean(body.sessionToken||body.session_token,500);
   const workerId=clean(body.handoffWorkerId||body.workerId,240)||`auto-${crypto.randomUUID()}`;
+  const recoveryAttempt=Math.min(AUTONOMOUS_RECOVERY_MAX,Math.max(0,positiveInt(body.recoveryAttempt)||0));
   try{
-    await handoff(sessionId,sessionToken,workerId,"running","서버가 캐릭터 조회와 후처리를 계속 진행하고 있습니다.");
+    await autonomousHandoff(sessionId,sessionToken,workerId,"running","서버가 캐릭터 조회와 후처리를 계속 진행하고 있습니다.");
     const response=await runQueue({sessionId,sessionToken,batchLimit:5});
     const result=object(await response.json().catch(()=>({ok:false,message:"Server Queue 응답을 읽지 못했습니다."})));
 
     if(result.acquired===false&&result.busy===true){
-      await handoff(sessionId,sessionToken,workerId,"running","다른 Server Worker가 현재 Batch를 처리 중입니다. 기존 Worker 완료를 기다립니다.");
+      await autonomousHandoff(sessionId,sessionToken,workerId,"running","다른 Server Worker가 현재 Batch를 처리 중입니다. 기존 Worker 완료를 기다립니다.");
+      // An interrupted checkpoint may have failed to release its lease. Never steal it.
+      if(recoveryAttempt>0){
+        if(recoveryAttempt>=AUTONOMOUS_RECOVERY_MAX)throw new WorkerError("기존 Worker 잠금 대기 복구 횟수를 초과했습니다.","AUTONOMOUS_RECOVERY_EXHAUSTED",false);
+        const leaseWait=Date.parse(result.leaseUntil)-Date.now();
+        dispatchAutonomousTick(sessionId,sessionToken,workerId,Number.isFinite(leaseWait)?Math.max(1500,leaseWait+1000):120000,recoveryAttempt+1);
+      }
       return;
     }
     if(result.done===true&&(result.completed!==true||result.failed===true||result.allFailed===true||result.finalFailure===true)){
       const failedMessage=clean(result.message||"조회 또는 후처리가 실패 상태로 종료되었습니다.",1000);
-      await handoff(sessionId,sessionToken,workerId,"attention",failedMessage,clean(result.code||"AUTONOMOUS_TERMINAL_FAILED",120));
+      await autonomousHandoff(sessionId,sessionToken,workerId,"attention",failedMessage,clean(result.code||"AUTONOMOUS_TERMINAL_FAILED",120));
       await finishScheduledAutomation(sessionId,"failed",failedMessage);
       return;
     }
@@ -680,32 +701,37 @@ async function runAutonomousTick(body){
       const completedMessage=(result.partialSuccess===true?"일부 캐릭터 조회 실패가 있습니다. ":"")+(listless
         ?"캐릭터 조회와 Master·관계·성장 리뷰·랭킹 반영을 완료했습니다."
         :"캐릭터 조회와 Master·성장 리뷰·랭킹·Google list 반영을 완료했습니다.");
-      await handoff(sessionId,sessionToken,workerId,"complete",completedMessage);
+      await autonomousHandoff(sessionId,sessionToken,workerId,"complete",completedMessage);
       await finishScheduledAutomation(sessionId,"completed",completedMessage);
       return;
     }
     if(result.cancelled===true){
       const cancelledMessage=clean(result.message||"관리자가 조회를 중단했습니다.",1000);
-      await handoff(sessionId,sessionToken,workerId,"cancelled",cancelledMessage);
+      await autonomousHandoff(sessionId,sessionToken,workerId,"cancelled",cancelledMessage);
       await finishScheduledAutomation(sessionId,"failed",cancelledMessage);
       return;
     }
     if(result.paused===true){
       const pausedMessage=clean(result.message||"관리자가 조회를 일시정지했습니다.",1000);
-      await handoff(sessionId,sessionToken,workerId,"paused",pausedMessage);
+      await autonomousHandoff(sessionId,sessionToken,workerId,"paused",pausedMessage);
       await finishScheduledAutomation(sessionId,"failed",pausedMessage);
       return;
     }
+    if(result.ok===false)throw new WorkerError(clean(result.message||result.code,1000),clean(result.code,120),result.retryable!==false,{httpStatus:result.httpStatus,sqlState:result.sqlState});
     if(result.hasMore===true||result.busy===true||result.retryable===true){
-      await handoff(sessionId,sessionToken,workerId,"running",clean(result.message||"다음 Server Batch를 준비하고 있습니다.",1000),result.failed===true?clean(result.code||"",120):"");
+      await autonomousHandoff(sessionId,sessionToken,workerId,"running",clean(result.message||"다음 Server Batch를 준비하고 있습니다.",1000),result.failed===true?clean(result.code||"",120):"");
       const nextDelay=result.rateLimited===true?Math.max(1000,Number(result.retryAfterMs||30000)):result.busy===true?Math.max(1000,Number(result.retryAfterMs||1500)):result.postprocess===true?900:250;
       dispatchAutonomousTick(sessionId,sessionToken,workerId,nextDelay);
       return;
     }
     const stoppedMessage=clean(result.message||"Server Queue가 완료되지 않은 상태로 멈췄습니다.",1000);
-    await handoff(sessionId,sessionToken,workerId,"attention",stoppedMessage,clean(result.code||"AUTONOMOUS_QUEUE_STOPPED",120));
+    await autonomousHandoff(sessionId,sessionToken,workerId,"attention",stoppedMessage,clean(result.code||"AUTONOMOUS_QUEUE_STOPPED",120));
     await finishScheduledAutomation(sessionId,"failed",stoppedMessage);
   }catch(error){
+    if(transientAutonomousQueueError(error)&&recoveryAttempt<AUTONOMOUS_RECOVERY_MAX){
+      dispatchAutonomousTick(sessionId,sessionToken,workerId,5000*(recoveryAttempt+1),recoveryAttempt+1);
+      return;
+    }
     const failedMessage=clean(error?.message||error,1000);
     try{await handoff(sessionId,sessionToken,workerId,"attention","서버 자동 실행 중 오류가 발생했습니다.",failedMessage);}catch{}
     await finishScheduledAutomation(sessionId,"failed",failedMessage);
@@ -895,7 +921,7 @@ Deno.serve(async request=>{
   if(request.method!=="POST")return json({ok:false,message:"POST만 허용합니다."},405);
   try{
     const body=object(await request.json().catch(()=>({}))),action=clean(body.action,80);
-    if(action==="health")return json({ok:true,service:"character-refresh-worker",apiVersion:API_VERSION,databaseContract:CONTRACT,identityDatabaseContract:IDENTITY_DATABASE_CONTRACT,progressContract:"server-worker-seven-phase-v2",progressPhases:7,activityRecheck:{internalOnly:true,batchLimit:5,intervalDays:7,budgetMs:75000,relationshipOnly:true},modes:["activityRecheck","startAutonomous","autonomousTick","runQueue","runPostprocess"],queueBatchLimit:5,lookupOnlyPhase:false,postprocessPhase:true,sheetDeferred:false,sheetSyncPhase:true,sheetReadbackRequired:true,listSyncSingleWorkerLease:true,listSyncCompletionAtomic:true,legionTreeCharacterAddListless:true,legionTreeCharacterAddListWrite:false,legionTreeCharacterAddListReadback:false,legionTreeListlessDatabaseContract:"455",legionTreeListlessTargetSource:"server:legion_tree_character_add_v455",legionTreeListlessTerminalStage:"SERVER_QUEUE_CHARACTER_MASTER_DONE",etaContract:"remaining-plaync-targets-only",retryFailedRowsOnly:true,browserIndependentQueue:true,autonomousTickMode:"detached",autonomousHandoffRetryMax:AUTONOMOUS_HANDOFF_RETRY_DELAYS.length,autonomousHandoffRetryStatuses:[502,503,504],autonomousHandoffRetryClassifier:"http-status-first+message-fallback",autonomousHandoffHttpStatusPreserved:true,autonomousHandoffClassifierSelfTest:autonomousHandoffClassifierSelfTest(),targetAtomicFinalize:true,staleClaimRecoverySeconds:120,gearSpecificPayloadIds:true,officialStatePrecheck:true,perTargetReconcile:false,finalReconcileOnly:true,storesOfficialRaw:true,officialExactCombatPower:true,officialRateGate:"plaync_global_700ms",officialRawReuseSeconds:900,plaync429AttemptConsumed:false,identityRecovery:"terminal-miss-or-old-name-reused-then-same-race-direct-key",identityRecoveryEntry:"stored-detail-404-or-empty-identity-200+name-server-terminal-not-found",providerRetryEntersIdentityRecovery:false,serverTransferLegionAtomic:true,sameServerRenamePreservesLegion:true,listSyncEdge:"lookup-list-sync"});
+    if(action==="health")return json({ok:true,service:"character-refresh-worker",apiVersion:API_VERSION,databaseContract:CONTRACT,identityDatabaseContract:IDENTITY_DATABASE_CONTRACT,progressContract:"server-worker-seven-phase-v2",progressPhases:7,activityRecheck:{internalOnly:true,batchLimit:5,intervalDays:7,budgetMs:75000,relationshipOnly:true},modes:["activityRecheck","startAutonomous","autonomousTick","runQueue","runPostprocess"],queueBatchLimit:5,lookupOnlyPhase:false,postprocessPhase:true,sheetDeferred:false,sheetSyncPhase:true,sheetReadbackRequired:true,listSyncSingleWorkerLease:true,listSyncCompletionAtomic:true,legionTreeCharacterAddListless:true,legionTreeCharacterAddListWrite:false,legionTreeCharacterAddListReadback:false,legionTreeListlessDatabaseContract:"455",legionTreeListlessTargetSource:"server:legion_tree_character_add_v455",legionTreeListlessTerminalStage:"SERVER_QUEUE_CHARACTER_MASTER_DONE",etaContract:"remaining-plaync-targets-only",retryFailedRowsOnly:true,browserIndependentQueue:true,autonomousTickMode:"detached",autonomousCheckpointRecoveryMax:AUTONOMOUS_RECOVERY_MAX,autonomousCheckpointRecoverySqlStates:["57014","55P03","40001","40P01"],autonomousDiagnosticWriteBestEffort:true,autonomousRecoveryWaitsForLease:true,autonomousHandoffRetryMax:AUTONOMOUS_HANDOFF_RETRY_DELAYS.length,autonomousHandoffRetryStatuses:[502,503,504],autonomousHandoffRetryClassifier:"http-status-first+message-fallback",autonomousHandoffHttpStatusPreserved:true,autonomousHandoffClassifierSelfTest:autonomousHandoffClassifierSelfTest(),targetAtomicFinalize:true,staleClaimRecoverySeconds:120,gearSpecificPayloadIds:true,officialStatePrecheck:true,perTargetReconcile:false,finalReconcileOnly:true,storesOfficialRaw:true,officialExactCombatPower:true,officialRateGate:"plaync_global_700ms",officialRawReuseSeconds:900,plaync429AttemptConsumed:false,identityRecovery:"terminal-miss-or-old-name-reused-then-same-race-direct-key",identityRecoveryEntry:"stored-detail-404-or-empty-identity-200+name-server-terminal-not-found",providerRetryEntersIdentityRecovery:false,serverTransferLegionAtomic:true,sameServerRenamePreservesLegion:true,listSyncEdge:"lookup-list-sync"});
     if(action==="activityRecheck"){
       if(!internalRequest(request))return json({ok:false,code:'INTERNAL_ONLY'},403);
       return json(await runActivityRecheck(body));
@@ -905,7 +931,7 @@ Deno.serve(async request=>{
       if(!internalRequest(request))return json({ok:false,code:"INTERNAL_ONLY",message:"서버 내부 자동 실행 요청만 허용합니다."},403);
       const sessionId=clean(body.sessionId||body.session_id,240),sessionToken=clean(body.sessionToken||body.session_token,500),workerId=clean(body.handoffWorkerId||body.workerId,240)||`auto-${crypto.randomUUID()}`;
       if(!sessionId||!sessionToken)return json({ok:false,code:"MISSING_SESSION",message:"자동 실행 sessionId/sessionToken이 없습니다."},400);
-      await handoff(sessionId,sessionToken,workerId,"safe","서버 실행 인계 완료 · 브라우저 없이 조회와 후처리를 계속합니다.");
+      // Queue authentication and diagnostics run inside the bounded recovery task.
       const task=runAutonomousTick({...body,sessionId,sessionToken,handoffWorkerId:workerId});
       const edgeRuntime=globalThis.EdgeRuntime;
       if(edgeRuntime&&typeof edgeRuntime.waitUntil==="function")edgeRuntime.waitUntil(task);
