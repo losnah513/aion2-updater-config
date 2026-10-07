@@ -195,14 +195,14 @@ async function run(){
     if(sideTab.getAttribute('aria-selected')!=='true'||mainTab.getAttribute('aria-selected')!=='false')throw Error('side banner tab aria state mismatch');
     if(document.querySelector('[data-banner-event-workflow="side"] .bew-hero'))throw Error('side authoring hero must be removed');
     let pageBadges=[...document.querySelectorAll('[data-banner-event-workflow="side"] [data-bew-page-code]')],allPages=document.querySelector('[data-banner-event-workflow="side"] [data-bew-page-all]');
-    if(pageBadges.length!==8||pageBadges.some(button=>button.getAttribute('aria-pressed')!=='false')||!allPages||allPages.getAttribute('aria-pressed')!=='false')throw Error('side pages must start as eight inactive server badges in individual mode');
+    if(pageBadges.length!==7||pageBadges.some(button=>button.getAttribute('aria-pressed')!=='false')||!allPages||allPages.getAttribute('aria-pressed')!=='false')throw Error('side pages must start as seven inactive server badges in individual mode');
     for(const code of ['HOME','HOF','RANKING'])document.querySelector(`[data-banner-event-workflow="side"] [data-bew-page-code="${code}"]`).click();
     let selectedPages=window.KinojoAdmin.getBannerEventPayload('side').targetPages;
     if(selectedPages.join('|')!=='HOME|HOF|RANKING')throw Error('individual page badges did not select independently');
     allPages=document.querySelector('[data-banner-event-workflow="side"] [data-bew-page-all]');allPages.click();
     allPages=document.querySelector('[data-banner-event-workflow="side"] [data-bew-page-all]');
     pageBadges=[...document.querySelectorAll('[data-banner-event-workflow="side"] [data-bew-page-code]')];
-    if(allPages.getAttribute('aria-pressed')!=='true'||pageBadges.some(button=>button.getAttribute('aria-pressed')!=='false')||window.KinojoAdmin.getBannerEventPayload('side').targetPages.length!==8||window.KinojoAdmin.getBannerEventPayload('side').targetScope!=='ALL')throw Error('all-page badge did not preserve semantic ALL and the current server page set');
+    if(allPages.getAttribute('aria-pressed')!=='true'||pageBadges.some(button=>button.getAttribute('aria-pressed')!=='false')||window.KinojoAdmin.getBannerEventPayload('side').targetPages.length!==7||window.KinojoAdmin.getBannerEventPayload('side').targetScope!=='ALL')throw Error('all-page badge did not preserve semantic ALL and the current server page set');
     document.querySelector('[data-banner-event-workflow="side"] [data-bew-page-all]').click();
     selectedPages=window.KinojoAdmin.getBannerEventPayload('side').targetPages;
     if(selectedPages.join('|')!=='HOME|HOF|RANKING')throw Error('individual page set was not restored after all-page mode');
