@@ -1,5 +1,11 @@
 # KINOJO WEB
 
+## Automatic worker checkpoint recovery (API295.13)
+
+CONFIRMED (2026-10-07): transient diagnostic handoff writes no longer block the authenticated queue checkpoint or canonical completion callback. RPC errors retain HTTP status and SQLSTATE. Queue timeout/lock/serialization/deadlock and transport errors can resume at the existing checkpoint up to three consecutive times (5/10/15 seconds); successful queue continuation resets the budget. Recovery ticks wait for an existing worker lease to expire and never take it over early. Normal duplicate ticks still yield to the current worker. Permanent/auth errors, terminal results, pause and cancellation do not restart the queue.
+
+Run `node tests/character-refresh-worker-recovery.test.cjs`, terminal/budget/dispatch regressions and `node scripts/verify-character-refresh-stage2.cjs`. DB functions, permissions, official lookup/parser, target completion, list readback, twice-daily schedule and retention rules are unchanged. Exhausted recovery records attention and respects the DB terminal guard; normal expiry remains the fallback for an active session. Revalidate when queue leases, handoff or automation completion contracts change. Production run results and remaining DB progress-write cost belong to the DB project LOG.
+
 ## Retention candidate query cost (SQL527)
 
 CONFIRMED (2026-10-07): seven-day snapshot/payload selectors build protected source and session sets once instead of repeating correlated protection lookups for each old row. A partial snapshot ID index excludes rows already summarized by SQL514 without rereading their raw JSON. All current references, pending work, latest reprocess identity ordering, null handling, age thresholds, cursors and 50-row limits retain their existing meaning. Cleanup functions, NOWAIT/advisory locks, ACLs and cron schedules are unchanged. Rollback restores the selectors and drops the index without changing data.

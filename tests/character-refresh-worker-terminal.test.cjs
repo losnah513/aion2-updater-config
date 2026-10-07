@@ -11,7 +11,7 @@ const section=(a,b)=>source.slice(source.indexOf(a),source.indexOf(b));
   [{ok:true,completed:true,failed:true},'failed']
  ]){
   const calls=[],ctx=vm.createContext({clean:v=>String(v||''),object:v=>v||{},crypto:{randomUUID:()=> 'synthetic'},
-   handoff:async()=>{},finishScheduledAutomation:async(...args)=>calls.push(args),
+   autonomousHandoff:async()=>{},handoff:async()=>{},AUTONOMOUS_RECOVERY_MAX:3,positiveInt:()=>null,transientAutonomousQueueError:()=>false,finishScheduledAutomation:async(...args)=>calls.push(args),
    runQueue:async()=>({json:async()=>result}),dispatchAutonomousTick:()=>{throw Error('unexpected dispatch');}});
   vm.runInContext(section('async function runAutonomousTick','async function startAutonomous'),ctx);
   await ctx.runAutonomousTick({sessionId:'synthetic',sessionToken:'synthetic'});

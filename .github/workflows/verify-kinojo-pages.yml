@@ -404,6 +404,11 @@ jobs:
           node-version: 24
       - name: Verify roster family Edge
         run: node tests/roster-family-edge.test.js
+      - name: Verify character worker checkpoint recovery
+        run: |
+          node tests/character-refresh-worker-recovery.test.cjs
+          node tests/character-refresh-worker-terminal.test.cjs
+          node tests/character-refresh-budget.test.cjs
       - name: Verify Sanctuary List retry database boundary
         run: |
           npm install --prefix "$RUNNER_TEMP/sanctuary-db" --no-package-lock @electric-sql/pglite@0.5.8

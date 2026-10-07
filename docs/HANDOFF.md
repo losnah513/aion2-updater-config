@@ -1,5 +1,12 @@
 # KINOJO WEB HANDOFF
 
+## 자동 조회 체크포인트 복구 · API295.13 · 2026-10-07
+
+- 현재 작업 branch `codex/worker-timeout-recovery-20261007`, 기준 main `87b4ac4829dd9803ffb4063e1113febca8e7f5da`. 기존 Edge 책임 안의 복구 버그 수정이며 신규 SQL/권한/예약/보존 변경 없음.
+- 67/123 중단 직전 DB 진행률/worker 상태 저장 timeout을 확인했다. 진단 handoff 실패가 다음 tick과 완료 callback을 끊던 경로를 분리했다. SQLSTATE·HTTP 보존, 체크포인트 최대3회 복구(5/10/15초), 이전 lease 만료 대기, 정상 진행 시 예산 초기화. 정상 중복 tick·완료·중단·pause·권한 오류 보호 유지.
+- `node tests/character-refresh-worker-recovery.test.cjs`, terminal/budget/dispatch 회귀와 `node scripts/verify-character-refresh-stage2.cjs`로 검증한다. 배포/전체 운영 실행/PR/CI/Drive 최종 상태는 [DB 프로젝트 LOG](https://drive.google.com/file/d/1F6fBTUNmPdJgeD3bUb1wAsv4yEgAyKcO/view) 35회차를 따른다. 운영 관리자 브라우저 검수를 대체하지 않는다.
+- 복구 예산 소진은 attention으로 남기며 활성 세션을 강제로 성공/실패 처리하지 않는다. fallback은 기존 정상 만료다. DB 진행률 반복 계산의 근본 비용과 연속2일 자동 실행 완료 확인은 남는다. 첫 다음 행동은 22시 정상 예약 결과와 상태 저장 timeout 재발 확인이다. 롤백은 직전 Git 소스의 Worker v44/API295.12 재배포이며 데이터는 유지한다.
+
 ## 정리 후보 조회 비용 개선 · SQL527 · 2026-10-07
 
 - 7일 원본 정리 후보의 반복 보호 참조를 집합으로 계산하고, 이미 요약된 snapshot을 작은 partial index로 제외한다. 보존·NULL·정렬·커서·최신 재처리 신원 의미는 그대로다. 정리 본문·잠금·권한·cron 변경 없음. migration/rollback `20261007013943_retention_candidate_sets.sql`, 신규 회귀 `node tests/retention-candidate-sets.test.cjs`.
