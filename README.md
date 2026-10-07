@@ -2,7 +2,7 @@
 
 ## Worker progress write cost (SQL528 / API295.15)
 
-Worker claim/update defer their intermediate summary triggers within the function and refresh core/progress once after all four state updates. Function-local configuration restores on return or failure; ordinary writes keep their immediate triggers. Isolated PostgreSQL regression checks final summary input parity, refresh calls 8 to 2, rollback, auth/control/lease behavior and unchanged ACLs. This is a write-count reduction, not a measured runtime or database-size reduction.
+Worker claim/update defer their intermediate summary triggers within the function and refresh core/progress once after all four state updates. The RPC restores the caller setting on success; PostgreSQL rollback restores it on failure; ordinary writes keep their immediate triggers. Isolated PostgreSQL regression checks final summary input parity, refresh calls 8 to 2, rollback, auth/control/lease behavior and unchanged ACLs. This is a write-count reduction, not a measured runtime or database-size reduction.
 
 Heartbeat counts retain null when unknown, preserving existing DB progress; explicit zero is still zero. Schedule and retention policies are unchanged. Run `node tests/queue-progress-coalescing.test.cjs` and the worker recovery regression. Production release results and remaining retention timeouts are in the DB project LOG.
 

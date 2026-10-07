@@ -1,5 +1,5 @@
 -- SQL528: coalesce Worker state summary writes within each successful RPC.
--- Function-local SET restores the caller setting on return and exception.
+-- Restore the caller setting explicitly; PostgreSQL rollback restores it on failure.
 CREATE OR REPLACE FUNCTION private.kinojo_queue_summary_core_trigger_v422()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -41,9 +41,9 @@ CREATE OR REPLACE FUNCTION public.kinojo_server_queue_worker_claim_v270(p_sessio
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public'
- SET "kinojo.defer_queue_summary_v528" TO 'off'
 AS $function$
 declare
+  v_defer_previous text;
   v_valid jsonb;
   v_session public.updater_sessions%rowtype;
   v_batch public.lookup_batches%rowtype;
@@ -76,6 +76,7 @@ begin
   end if;
 
   -- Validation may expire a different session: defer only the four writes below.
+  v_defer_previous := current_setting('kinojo.defer_queue_summary_v528', true);
   perform set_config('kinojo.defer_queue_summary_v528', 'on', true);
   update public.lookup_batches
      set worker_id=v_worker,
@@ -103,6 +104,7 @@ begin
 
   perform private.kinojo_queue_summary_refresh_core_v422(p_session_id);
   perform private.kinojo_queue_summary_refresh_progress_v422(p_session_id);
+  perform set_config('kinojo.defer_queue_summary_v528', coalesce(v_defer_previous, ''), true);
 
   return jsonb_build_object('ok',true,'acquired',true,'workerId',v_worker,'batchNo',v_batch.worker_batch_no,'batchLimit',v_limit,'leaseUntil',v_batch.worker_lease_until,'controlState','running');
 end;
@@ -113,9 +115,9 @@ CREATE OR REPLACE FUNCTION public.kinojo_server_queue_worker_update_v270(p_sessi
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public'
- SET "kinojo.defer_queue_summary_v528" TO 'off'
 AS $function$
 declare
+  v_defer_previous text;
   v_valid jsonb;
   v_progress jsonb;
   v_stage text := left(coalesce(nullif(trim(p_stage),''),'SERVER_QUEUE_RUNNING'),120);
@@ -133,6 +135,7 @@ begin
   end if;
 
   -- Validation may expire a different session: defer only the four writes below.
+  v_defer_previous := current_setting('kinojo.defer_queue_summary_v528', true);
   perform set_config('kinojo.defer_queue_summary_v528', 'on', true);
   update public.lookup_batches
      set worker_id=case when coalesce(p_release,false) then null else worker_id end,
@@ -176,6 +179,7 @@ begin
 
   perform private.kinojo_queue_summary_refresh_core_v422(p_session_id);
   perform private.kinojo_queue_summary_refresh_progress_v422(p_session_id);
+  perform set_config('kinojo.defer_queue_summary_v528', coalesce(v_defer_previous, ''), true);
 
   return jsonb_build_object('ok',true,'updated',v_updated>0,'released',coalesce(p_release,false),'stage',v_stage,'progress',v_progress);
 end;

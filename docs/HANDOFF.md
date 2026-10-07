@@ -2,7 +2,7 @@
 
 ## 상태 요약 저장 비용 / null 진행률 · SQL528 / API295.15 · 2026-10-07
 
-- 기준 main2532aba028bde065742a4f50af3c409c080a64a2, branch codex/progress-write-cost-20261007. Worker claim/update의 4개 상태 테이블 변경을 마친 뒤 core/progress 요약을 한 번씩 저장한다. 함수 범위 설정은 반환·예외 시 복원하며 일반 직접 변경 trigger는 즉시 반영한다. terminal trigger·인증·lease·반환 계약·ACL·예약·보존은 유지한다.
+- 기준 main2532aba028bde065742a4f50af3c409c080a64a2, branch codex/progress-write-cost-20261007. Worker claim/update의 4개 상태 테이블 변경을 마친 뒤 core/progress 요약을 한 번씩 저장한다. RPC는 성공 시 caller 설정을 복원하고 예외는 PostgreSQL rollback으로 복원하며 일반 직접 변경 trigger는 즉시 반영한다. terminal trigger·인증·lease·반환 계약·ACL·예약·보존은 유지한다.
 - 격리 PostgreSQL에서 실제 기존/수정 RPC와 trigger를 실행해 요약 입력 최종 상태 일치, 저장 호출8→2, 실패 시4개 상태 원자적 rollback, caller 설정 복원, auth/pause/cancel/busy, 일반 쓰기·ACL·rollback 검증. helper 자체는 변경하지 않았다. 실측 전체 처리속도/용량 감소율을 뜻하지 않는다.
 - API295.15는 null/undefined/빈 문자열 heartbeat를 null로 보내며 명시0은 유지한다. 기존 실제 targets/캐시124와 달리 legacy 필드가0/0이 되던 변환을 수정했다. Worker recovery 회귀에 실제 progress RPC 인자 검증 추가.
 - 운영 반영·CI·Drive 최종 결과는 DB 프로젝트 LOG36 참조. 별도 전체 조회를 반복 실행하지 않으며 다음 정상22시 예약과 연속2일 완료 관측은 남는다. SQL509/512 후보 timeout 및390MB 유지도 후속이다. migration/rollback20261007030204_queue_progress_write_coalescing.sql; 롤백은 SQL 파일과 기준 main의 Worker v46/API295.14 소스.
