@@ -22,6 +22,8 @@ async function fixture(){
  const names=sql.split('drop table if exists\n')[1].split(' restrict;')[0].split(',\n');
  assert.equal(names.length,80);
  for(const name of names)await db.exec(`create table ${name}(id integer primary key); insert into ${name} values(1);`);
+ await db.exec("create function public.kinojo_meter_semver_key_50011(text) returns integer language sql immutable as 'select 1';");
+ for(const [table,names] of Object.entries({"meter_core_download_audit":["ck_meter_core_audit_current_50016","ck_meter_core_audit_launcher_50016"],"meter_core_release_master":["ck_meter_core_launcher_minimum_50016","ck_meter_core_minimum_50016","ck_meter_core_version_50016","ck_meter_core_version_order_50016"],"meter_desktop_release_master":["ck_meter_desktop_release_minimum_50011","ck_meter_desktop_release_version_50011","ck_meter_desktop_release_version_order_50011"],"meter_launcher_release_master":["ck_meter_launcher_minimum_50016","ck_meter_launcher_version_50016","ck_meter_launcher_version_order_50016"]}))for(const name of names)await db.exec(`alter table public.${table} add constraint ${name} check(public.kinojo_meter_semver_key_50011(id::text)>0);`);
  await db.exec('alter table public.meter_combat_targets add column record_id integer references public.meter_combat_records(id);');
  return db;
 }
