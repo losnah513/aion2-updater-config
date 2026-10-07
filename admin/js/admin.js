@@ -16,7 +16,6 @@
     characters:['admin-characters.js'],
     sanctuary:[],
     notices:['admin-notices.js'],
-    meter:['admin-system.js'],
     system:['admin-system.js'],
     logs:['admin-system.js'],
     images:[
@@ -35,11 +34,11 @@
     if(modulePromises.has(name))return modulePromises.get(name);
     const promise=new Promise((resolve,reject)=>{
       const script=document.createElement('script');
-      const characterRevision=['admin-characters.js','admin-bootstrap.js'].includes(name)?'&character=2026090802&automation=2026090801&completion=2026090801&family=2026090901&statusTabs=2026090903&activity=2026090901&exclusions=2026090901&inactive=2026090901&runtimeRetention=2026092401&schedule=2026100701':'';
+      const characterRevision=['admin-characters.js','admin-bootstrap.js'].includes(name)?'&character=2026090802&automation=2026090801&completion=2026090801&family=2026090901&statusTabs=2026090903&activity=2026090901&exclusions=2026090901&inactive=2026090901&runtimeRetention=2026092401&schedule=2026090804':'';
       const bannerRevision=(['admin-banner-tabs.js','admin-banner-library.js'].includes(name)?'&context=2026090901':'')+(name==='admin-banner-event-workflow.js'?'&delivery=2026090902':'');
       const permissionRevision=name==='admin-members.js'?'&permissions=2026090901':'';
 
-      script.src=new URL(name+'?cache='+encodeURIComponent(CACHE)+characterRevision+bannerRevision+permissionRevision,base).href;
+      script.src=new URL(name+'?cache='+encodeURIComponent(CACHE)+'&retirement=2026100701'+characterRevision+bannerRevision+permissionRevision,base).href;
       script.async=false;
       script.onload=()=>{
         loadedModules.add(name);

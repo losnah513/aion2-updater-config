@@ -9,10 +9,10 @@
 <link rel="canonical" href="https://kinojo.info/m/admin/"/>
 <link href="../../ui/kinojo-layout.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../../ui/kinojo-components.css?cache=26062102" rel="stylesheet"/>
-<link href="../../ui/kinojo-common-ui.css?cache=2026081205" rel="stylesheet"/>
+<link href="../../ui/kinojo-common-ui.css?cache=2026081205&retirement=2026100701" rel="stylesheet"/>
 <link href="../../ui/kinojo-card-guards.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../../ui/kinojo-animations.css?cache=2026081003" rel="stylesheet"/>
-<link href="../../admin/css/admin.css?cache=2026082804&amp;stage7=2026082904&amp;statusTabs=2026090903&amp;delivery=2026090902&amp;exclusions=2026090901&amp;inactive=2026090901&amp;permissions=2026090901" rel="stylesheet"/>
+<link href="../../admin/css/admin.css?cache=2026082804&amp;stage7=2026082904&amp;statusTabs=2026090903&amp;delivery=2026090902&amp;exclusions=2026090901&amp;inactive=2026090901&amp;permissions=2026090901&amp;retirement=2026100701" rel="stylesheet"/>
 
 </head>
 <body class="kinojo-page-admin">
@@ -26,7 +26,7 @@
       <button data-admin-tab="sanctuary" type="button">🏰 성역 관리 <span class="badge" id="adminSanctuaryRequestBadge">0</span></button>
       <button data-admin-tab="notices" type="button">📢 공지 관리</button>
       <button data-admin-tab="images" data-admin-master-only type="button">🖼 이미지 관리</button>
-      <button data-admin-tab="meter" data-admin-master-only type="button">📊 키노조 미터</button>
+
       <button data-admin-tab="system" type="button">⚙ 시스템 설정</button>
       <button data-admin-tab="logs" type="button">📋 로그 관리</button>
   </nav>
@@ -52,9 +52,9 @@
       <div class="admin-subpane active" data-admin-subpane="lookup">
         <section class="admin-card admin-lookup-console">
           <div class="admin-card-head"><div><h2>캐릭터 정보 최신화</h2><p>공식 정보 조회와 DB 저장은 서버가 처리합니다. list 읽기·대조는 유지하고, 쓰기·readback은 실행별로 선택합니다.</p></div><button class="admin-btn" id="characterLookupReloadBtn" type="button">상태 새로고침</button></div>
-          <div class="admin-meter-control-row"><div><strong>자동 실행 설정</strong><span id="characterAutomationSchedule">KST 10:00 · 22:00</span><div id="characterAutomationNotice" class="admin-statusline" role="status" aria-live="polite">자동 실행 상태를 불러오는 중입니다.</div></div><label class="kinojo-filter-switch admin-meter-switch"><span>OFF</span><input id="characterAutomationToggle" type="checkbox" aria-label="캐릭터 정보 자동 최신화" disabled/><span class="kinojo-filter-switch-track" aria-hidden="true"><span class="kinojo-filter-switch-knob"></span></span><span>ON</span></label></div>
-          <div class="admin-meter-control-row"><div><strong>자동 실행의 list 반영</strong><span>예약 최신화에 적용 · 실행 중에는 변경 불가 · 기본 ON</span></div><label class="kinojo-filter-switch admin-meter-switch"><span>OFF</span><input id="characterAutomationListToggle" type="checkbox" aria-label="자동 최신화 list 반영" checked disabled/><span class="kinojo-filter-switch-track" aria-hidden="true"><span class="kinojo-filter-switch-knob"></span></span><span>ON</span></label></div>
-          <div class="admin-meter-control-row"><div><strong>이번 수동 실행</strong><span>재조회는 원래 실행의 list 설정을 유지합니다.</span></div><label><input id="characterLookupListToggle" type="checkbox" checked/> list 반영</label></div>
+          <div class="admin-automation-control-row"><div><strong>자동 실행 설정</strong><span id="characterAutomationSchedule">KST 10:00 · 22:00</span><div id="characterAutomationNotice" class="admin-statusline" role="status" aria-live="polite">자동 실행 상태를 불러오는 중입니다.</div></div><label class="kinojo-filter-switch admin-automation-switch"><span>OFF</span><input id="characterAutomationToggle" type="checkbox" aria-label="캐릭터 정보 자동 최신화" disabled/><span class="kinojo-filter-switch-track" aria-hidden="true"><span class="kinojo-filter-switch-knob"></span></span><span>ON</span></label></div>
+          <div class="admin-automation-control-row"><div><strong>자동 실행의 list 반영</strong><span>예약 최신화에 적용 · 실행 중에는 변경 불가 · 기본 ON</span></div><label class="kinojo-filter-switch admin-automation-switch"><span>OFF</span><input id="characterAutomationListToggle" type="checkbox" aria-label="자동 최신화 list 반영" checked disabled/><span class="kinojo-filter-switch-track" aria-hidden="true"><span class="kinojo-filter-switch-knob"></span></span><span>ON</span></label></div>
+          <div class="admin-automation-control-row"><div><strong>이번 수동 실행</strong><span>재조회는 원래 실행의 list 설정을 유지합니다.</span></div><label><input id="characterLookupListToggle" type="checkbox" checked/> list 반영</label></div>
           <details class="admin-lookup-filter-details" id="characterLookupFilterDetails">
             <summary><span>조회 조건 설정</span><em>필요할 때만 열기 · 조건 없음 = 전체 조회</em></summary>
             <div class="admin-lookup-settings">
@@ -208,131 +208,7 @@
     <section class="admin-pane" data-admin-pane="images" data-admin-master-only>
       <nav class="admin-subnav" data-admin-subnav="images" data-banner-management-tabs role="tablist" aria-label="이미지 관리 배너 종류"><button class="active" id="adminBannerMainTab" data-admin-subtab="main" data-banner-management-tab="main" type="button" role="tab" aria-selected="true" aria-controls="adminBannerMainPanel">메인 배너</button><button id="adminBannerSideTab" data-admin-subtab="side" data-banner-management-tab="side" type="button" role="tab" aria-selected="false" aria-controls="adminBannerSidePanel" tabindex="-1">사이드 배너</button></nav>
     </section>
-    <section class="admin-pane" data-admin-pane="meter" data-admin-master-only>
-      <nav class="admin-subnav admin-meter-subnav" data-admin-subnav="meter" aria-label="키노조 미터 관리 하위 기능"><button class="active" data-admin-subtab="downloads" type="button">다운로드 관리</button><button data-admin-subtab="runtime" type="button">미터기 관리</button><button data-admin-subtab="statistics" type="button">통계 관리</button><button data-admin-subtab="notices" type="button">공지 관리</button><button data-admin-subtab="logs" type="button">로그 관리</button></nav>
 
-      <div class="admin-subpane active" data-admin-subpane="downloads">
-        <section class="admin-card admin-meter-hero">
-          <div class="admin-card-head"><div><span class="admin-meter-eyebrow">DOWNLOAD CONTROL</span><h2>다운로드 운영 상태</h2><p>Stable 배포판과 Staging 테스트판의 다운로드 허용 여부와 KINOJO 등급을 한 화면에서 관리합니다.</p></div><button class="admin-btn" data-meter-reload type="button">새로고침</button></div>
-          <div class="admin-statusline" data-meter-load-status>Server 운영 정보를 불러오는 중입니다.</div>
-        </section>
-        <div class="admin-meter-channel-grid">
-          <section class="admin-card admin-meter-channel-panel stable" data-meter-channel="stable" data-meter-download-card>
-            <header class="admin-meter-channel-head"><div><span>사용자 운영</span><h2>Stable <small>배포판</small></h2></div><strong data-meter-download-badge>확인 중</strong></header>
-            <div class="admin-meter-control-row"><div><strong>다운로드</strong><span>설치 파일 승인과 URL 발급</span></div><label class="kinojo-filter-switch admin-meter-switch"><span>OFF</span><input data-meter-download-enabled type="checkbox" aria-label="Stable 다운로드 허용"/><span class="kinojo-filter-switch-track" aria-hidden="true"><span class="kinojo-filter-switch-knob"></span></span><span>ON</span></label></div>
-            <fieldset class="admin-meter-ranks" data-meter-download-levels><legend>다운로드 허용 KINOJO 등급</legend><label><input data-meter-download-level type="checkbox" value="1"/>Member</label><label><input data-meter-download-level type="checkbox" value="2"/>Staff</label><label><input data-meter-download-level type="checkbox" value="3"/>Manager</label><label><input data-meter-download-level type="checkbox" value="4"/>Sub Master</label><label><input data-meter-download-level type="checkbox" value="5"/>Master</label></fieldset>
-            <label class="admin-meter-field">재개 예정 시각 <small>OFF일 때 선택 입력</small><input class="admin-input" data-meter-resume-at type="datetime-local"/></label>
-            <div class="admin-form-row"><button class="admin-btn primary" data-meter-download-save type="button">다운로드 설정 저장</button></div>
-            <div class="admin-meter-message-box"><label class="admin-meter-field">이용자 안내 문구<textarea class="admin-textarea" data-meter-download-message rows="3" maxlength="300" placeholder="점검 사유와 이용자 안내를 입력하세요."></textarea></label><button class="admin-btn" data-meter-download-message-save type="button">안내 문구 저장</button></div>
-            <div class="admin-statusline" data-meter-download-status></div>
-          </section>
-          <section class="admin-card admin-meter-channel-panel staging" data-meter-channel="staging" data-meter-download-card>
-            <header class="admin-meter-channel-head"><div><span>테스트 운영</span><h2>Staging <small>테스트판</small></h2></div><strong data-meter-download-badge>확인 중</strong></header>
-            <div class="admin-meter-control-row"><div><strong>다운로드</strong><span>테스트 설치 파일 승인과 URL 발급</span></div><label class="kinojo-filter-switch admin-meter-switch"><span>OFF</span><input data-meter-download-enabled type="checkbox" aria-label="Staging 다운로드 허용"/><span class="kinojo-filter-switch-track" aria-hidden="true"><span class="kinojo-filter-switch-knob"></span></span><span>ON</span></label></div>
-            <fieldset class="admin-meter-ranks" data-meter-download-levels><legend>다운로드 허용 KINOJO 등급</legend><label><input data-meter-download-level type="checkbox" value="1"/>Member</label><label><input data-meter-download-level type="checkbox" value="2"/>Staff</label><label><input data-meter-download-level type="checkbox" value="3"/>Manager</label><label><input data-meter-download-level type="checkbox" value="4"/>Sub Master</label><label><input data-meter-download-level type="checkbox" value="5"/>Master</label></fieldset>
-            <label class="admin-meter-field">재개 예정 시각 <small>OFF일 때 선택 입력</small><input class="admin-input" data-meter-resume-at type="datetime-local"/></label>
-            <div class="admin-form-row"><button class="admin-btn primary" data-meter-download-save type="button">다운로드 설정 저장</button></div>
-            <div class="admin-meter-message-box"><label class="admin-meter-field">이용자 안내 문구<textarea class="admin-textarea" data-meter-download-message rows="3" maxlength="300" placeholder="테스트판 안내를 입력하세요."></textarea></label><button class="admin-btn" data-meter-download-message-save type="button">안내 문구 저장</button></div>
-            <div class="admin-statusline" data-meter-download-status></div>
-          </section>
-        </div>
-      </div>
-
-      <div class="admin-subpane" data-admin-subpane="runtime">
-        <section class="admin-card admin-meter-hero">
-          <div class="admin-card-head"><div><span class="admin-meter-eyebrow">RELEASE &amp; CORE</span><h2>현재 배포 정보</h2><p>Server Release Master의 활성 Launcher·Private Core와 실행 권한을 채널별로 확인합니다.</p></div><button class="admin-btn" data-meter-reload type="button">새로고침</button></div>
-          <div class="admin-meter-release-grid">
-            <article class="admin-meter-release-summary stable" data-meter-channel="stable" data-meter-release-card><header><span>Stable · 배포판</span><strong data-meter-release-state>확인 중</strong></header><dl><div><dt>Launcher</dt><dd data-meter-release="launcherVersion">-</dd></div><div><dt>Launcher 파일</dt><dd data-meter-release="launcherFile">-</dd></div><div><dt>Launcher 용량</dt><dd data-meter-release="launcherSize">-</dd></div><div><dt>Core</dt><dd data-meter-release="coreVersion">-</dd></div><div><dt>설치 후 합계</dt><dd data-meter-release="combinedSize">-</dd></div></dl></article>
-            <article class="admin-meter-release-summary staging" data-meter-channel="staging" data-meter-release-card><header><span>Staging · 테스트판</span><strong data-meter-release-state>확인 중</strong></header><dl><div><dt>Launcher</dt><dd data-meter-release="launcherVersion">-</dd></div><div><dt>Launcher 파일</dt><dd data-meter-release="launcherFile">-</dd></div><div><dt>Launcher 용량</dt><dd data-meter-release="launcherSize">-</dd></div><div><dt>Core</dt><dd data-meter-release="coreVersion">-</dd></div><div><dt>설치 후 합계</dt><dd data-meter-release="combinedSize">-</dd></div></dl></article>
-          </div>
-          <div class="admin-statusline" data-meter-load-status></div>
-        </section>
-        <div class="admin-meter-channel-grid">
-          <section class="admin-card admin-meter-channel-panel stable" data-meter-channel="stable" data-meter-launch-card>
-            <header class="admin-meter-channel-head"><div><span>사용자 운영</span><h2>Stable <small>Core</small></h2></div><strong data-meter-launch-badge>확인 중</strong></header>
-            <div class="admin-meter-control-row"><div><strong>미터기(Core) 실행</strong><span>Private Core 승인과 실행 준비</span></div><label class="kinojo-filter-switch admin-meter-switch"><span>OFF</span><input data-meter-launch-enabled type="checkbox" aria-label="Stable Core 실행 허용"/><span class="kinojo-filter-switch-track" aria-hidden="true"><span class="kinojo-filter-switch-knob"></span></span><span>ON</span></label></div>
-            <fieldset class="admin-meter-ranks" data-meter-launch-levels><legend>Core 실행 허용 KINOJO 등급</legend><label><input data-meter-launch-level type="checkbox" value="1"/>Member</label><label><input data-meter-launch-level type="checkbox" value="2"/>Staff</label><label><input data-meter-launch-level type="checkbox" value="3"/>Manager</label><label><input data-meter-launch-level type="checkbox" value="4"/>Sub Master</label><label><input data-meter-launch-level type="checkbox" value="5"/>Master</label></fieldset>
-            <div class="admin-form-row"><button class="admin-btn primary" data-meter-launch-save type="button">Core 실행 설정 저장</button></div>
-            <div class="admin-meter-message-box"><label class="admin-meter-field">실행 차단·점검 안내 문구<textarea class="admin-textarea" data-meter-launch-message rows="3" maxlength="300" placeholder="예: 현재 미터기 점검 중입니다."></textarea></label><button class="admin-btn" data-meter-launch-message-save type="button">안내 문구 저장</button></div>
-            <div class="admin-statusline" data-meter-launch-status></div>
-          </section>
-          <section class="admin-card admin-meter-channel-panel staging" data-meter-channel="staging" data-meter-launch-card>
-            <header class="admin-meter-channel-head"><div><span>테스트 운영</span><h2>Staging <small>Core</small></h2></div><strong data-meter-launch-badge>확인 중</strong></header>
-            <div class="admin-meter-control-row"><div><strong>미터기(Core) 실행</strong><span>테스트 Core 승인과 실행 준비</span></div><label class="kinojo-filter-switch admin-meter-switch"><span>OFF</span><input data-meter-launch-enabled type="checkbox" aria-label="Staging Core 실행 허용"/><span class="kinojo-filter-switch-track" aria-hidden="true"><span class="kinojo-filter-switch-knob"></span></span><span>ON</span></label></div>
-            <fieldset class="admin-meter-ranks" data-meter-launch-levels><legend>Core 실행 허용 KINOJO 등급</legend><label><input data-meter-launch-level type="checkbox" value="1"/>Member</label><label><input data-meter-launch-level type="checkbox" value="2"/>Staff</label><label><input data-meter-launch-level type="checkbox" value="3"/>Manager</label><label><input data-meter-launch-level type="checkbox" value="4"/>Sub Master</label><label><input data-meter-launch-level type="checkbox" value="5"/>Master</label></fieldset>
-            <div class="admin-form-row"><button class="admin-btn primary" data-meter-launch-save type="button">Core 실행 설정 저장</button></div>
-            <div class="admin-meter-message-box"><label class="admin-meter-field">실행 차단·점검 안내 문구<textarea class="admin-textarea" data-meter-launch-message rows="3" maxlength="300" placeholder="테스트판 안내를 입력하세요."></textarea></label><button class="admin-btn" data-meter-launch-message-save type="button">안내 문구 저장</button></div>
-            <div class="admin-statusline" data-meter-launch-status></div>
-          </section>
-        </div>
-      </div>
-
-      <div class="admin-subpane" data-admin-subpane="statistics">
-        <section class="admin-card admin-meter-hero"><div class="admin-card-head"><div><span class="admin-meter-eyebrow">SERVER OBSERVABILITY</span><h2>통계 운영·서버 현황</h2><p>수집 흐름, 검증 품질, 공개 준비도를 채널별로 나눠 운영 판단에 필요한 값만 표시합니다.</p></div><button class="admin-btn" data-meter-reload type="button">새로고침</button></div><div class="admin-statusline" data-meter-load-status></div></section>
-        <div class="admin-meter-channel-grid">
-          <section class="admin-card admin-meter-channel-panel stable" data-meter-channel="stable" data-meter-statistics-card>
-            <header class="admin-meter-channel-head"><div><span>사용자 운영</span><h2>Stable <small>통계</small></h2></div><strong data-meter-statistics-badge>확인 중</strong></header>
-            <div class="admin-meter-control-row"><div><strong>사용자 통계 공개</strong><span>검증·적격 판정 결과 노출</span></div><label class="kinojo-filter-switch admin-meter-switch"><span>OFF</span><input data-meter-statistics-enabled type="checkbox" aria-label="Stable 통계 공개"/><span class="kinojo-filter-switch-track" aria-hidden="true"><span class="kinojo-filter-switch-knob"></span></span><span>ON</span></label></div>
-            <label class="admin-meter-field">비공개·준비 안내 문구<textarea class="admin-textarea" data-meter-statistics-message rows="3" maxlength="300" placeholder="예: 전투 통계 준비 중입니다."></textarea></label>
-            <div class="admin-meter-stat-groups"><section><h3>수집 흐름</h3><dl><div><dt>전체 수집</dt><dd data-meter-metric="totalRecords">-</dd></div><div><dt>현 파이프라인</dt><dd data-meter-metric="currentPipelineRecords">-</dd></div><div><dt>참가자 행</dt><dd data-meter-metric="participantRows">-</dd></div></dl></section><section><h3>검증 품질</h3><dl><div><dt>검증 완료</dt><dd data-meter-metric="validatedRecords">-</dd></div><div><dt>검증 대기</dt><dd data-meter-metric="observedRecords">-</dd></div><div><dt>검토 필요</dt><dd data-meter-metric="reviewRequiredRecords">-</dd></div><div><dt>제외</dt><dd data-meter-metric="invalidRecords">-</dd></div></dl></section><section><h3>공개 준비도</h3><dl><div><dt>통계 적격</dt><dd data-meter-metric="statisticsEligibleRecords">-</dd></div><div><dt>Target 원장</dt><dd data-meter-metric="targetLedgerRecords">-</dd></div></dl></section></div>
-            <div class="admin-form-row"><button class="admin-btn primary" data-meter-statistics-save type="button">통계 공개 설정 저장</button></div><div class="admin-statusline" data-meter-statistics-status></div>
-          </section>
-          <section class="admin-card admin-meter-channel-panel staging" data-meter-channel="staging" data-meter-statistics-card>
-            <header class="admin-meter-channel-head"><div><span>테스트 운영</span><h2>Staging <small>통계</small></h2></div><strong data-meter-statistics-badge>확인 중</strong></header>
-            <div class="admin-meter-control-row"><div><strong>사용자 통계 공개</strong><span>테스트 검증 결과 노출</span></div><label class="kinojo-filter-switch admin-meter-switch"><span>OFF</span><input data-meter-statistics-enabled type="checkbox" aria-label="Staging 통계 공개"/><span class="kinojo-filter-switch-track" aria-hidden="true"><span class="kinojo-filter-switch-knob"></span></span><span>ON</span></label></div>
-            <label class="admin-meter-field">비공개·준비 안내 문구<textarea class="admin-textarea" data-meter-statistics-message rows="3" maxlength="300" placeholder="예: 테스트 통계 준비 중입니다."></textarea></label>
-            <div class="admin-meter-stat-groups"><section><h3>수집 흐름</h3><dl><div><dt>전체 수집</dt><dd data-meter-metric="totalRecords">-</dd></div><div><dt>현 파이프라인</dt><dd data-meter-metric="currentPipelineRecords">-</dd></div><div><dt>참가자 행</dt><dd data-meter-metric="participantRows">-</dd></div></dl></section><section><h3>검증 품질</h3><dl><div><dt>검증 완료</dt><dd data-meter-metric="validatedRecords">-</dd></div><div><dt>검증 대기</dt><dd data-meter-metric="observedRecords">-</dd></div><div><dt>검토 필요</dt><dd data-meter-metric="reviewRequiredRecords">-</dd></div><div><dt>제외</dt><dd data-meter-metric="invalidRecords">-</dd></div></dl></section><section><h3>공개 준비도</h3><dl><div><dt>통계 적격</dt><dd data-meter-metric="statisticsEligibleRecords">-</dd></div><div><dt>Target 원장</dt><dd data-meter-metric="targetLedgerRecords">-</dd></div></dl></section></div>
-            <div class="admin-form-row"><button class="admin-btn primary" data-meter-statistics-save type="button">통계 공개 설정 저장</button></div><div class="admin-statusline" data-meter-statistics-status></div>
-          </section>
-        </div>
-      </div>
-
-      <div class="admin-subpane" data-admin-subpane="notices">
-      <section class="admin-card admin-meter-notice-card">
-        <div class="admin-card-head"><div><h2>키노조 미터 공지</h2><p>미터 페이지 왼쪽 영역에 표시할 안내·업데이트·점검·주의 공지를 관리합니다.</p></div><button class="admin-btn" id="meterAdminNoticeNewBtn" type="button">새 공지</button></div>
-        <div class="admin-meter-notice-layout">
-          <div class="admin-meter-notice-editor">
-            <input id="meterAdminNoticeId" type="hidden"/>
-            <div class="admin-form-row">
-              <select class="admin-select" id="meterAdminNoticeType"><option value="INFO">안내</option><option value="UPDATE">업데이트</option><option value="MAINTENANCE">점검</option><option value="WARNING">주의</option></select>
-              <input class="admin-input grow" id="meterAdminNoticeTitle" maxlength="80" placeholder="공지 제목"/>
-            </div>
-            <textarea class="admin-textarea" id="meterAdminNoticeContent" rows="5" maxlength="1000" placeholder="공지 내용을 입력하세요."></textarea>
-            <div class="admin-meter-date-grid">
-              <label>게시 시작<input class="admin-input" id="meterAdminNoticeStartsAt" type="datetime-local"/></label>
-              <label>게시 종료 <small>선택 입력</small><input class="admin-input" id="meterAdminNoticeEndsAt" type="datetime-local"/></label>
-            </div>
-            <div class="admin-form-row admin-meter-checks">
-              <label class="kinojo-filter-switch"><span>게시</span><input id="meterAdminNoticePublished" type="checkbox"/><span class="kinojo-filter-switch-track" aria-hidden="true"><span class="kinojo-filter-switch-knob"></span></span></label>
-              <label class="kinojo-filter-switch"><span>중요 공지 고정</span><input id="meterAdminNoticePinned" type="checkbox"/><span class="kinojo-filter-switch-track" aria-hidden="true"><span class="kinojo-filter-switch-knob"></span></span></label>
-            </div>
-            <div class="admin-form-row"><button class="admin-btn primary" id="meterAdminNoticeSaveBtn" type="button">공지 저장</button><button class="admin-btn" id="meterAdminNoticeCancelBtn" type="button">입력 초기화</button></div>
-            <div id="meterAdminNoticeStatus" class="admin-statusline"></div>
-          </div>
-          <div class="admin-list admin-meter-notice-list" id="meterAdminNoticeList"><div class="admin-empty">Meter 공지를 불러오는 중입니다.</div></div>
-        </div>
-      </section>
-      </div>
-
-      <div class="admin-subpane" data-admin-subpane="logs">
-        <section class="admin-card admin-meter-log-card">
-          <div class="admin-card-head"><div><span class="admin-meter-eyebrow">METER RUNTIME LOG</span><h2>미터기 이용 로그</h2><p>미터기 실행 1회를 한 행으로 묶고, 실행 중 확인된 던전 방문을 콘텐츠별 횟수로 요약합니다.</p></div><button class="admin-btn" id="meterDungeonLogReloadBtn" type="button">새로고침</button></div>
-          <div class="admin-meter-log-tools">
-            <select class="admin-select" id="meterDungeonLogChannel" aria-label="미터기 채널"><option value="stable">Stable</option><option value="staging">Staging</option></select>
-            <input class="admin-input" id="meterDungeonLogQuery" maxlength="120" placeholder="캐릭터 이름 검색"/>
-            <button class="admin-btn primary" id="meterDungeonLogSearchBtn" type="button">검색</button>
-          </div>
-          <div class="admin-statusline" id="meterDungeonLogStatus">로그를 불러오세요.</div>
-          <div class="admin-meter-log-table-wrap">
-            <table class="admin-meter-log-table">
-              <thead><tr><th>캐릭터 이름</th><th>이용 요약</th><th>미터기 실행</th><th>미터기 종료</th></tr></thead>
-              <tbody id="meterDungeonLogRows"><tr><td colspan="4">아직 불러온 로그가 없습니다.</td></tr></tbody>
-            </table>
-          </div>
-          <div class="admin-meter-log-pagination"><button class="admin-btn" id="meterDungeonLogPrevBtn" type="button">이전</button><span id="meterDungeonLogPageInfo">1 / 1</span><button class="admin-btn" id="meterDungeonLogNextBtn" type="button">다음</button></div>
-        </section>
-      </div>
-    </section>
     <section class="admin-pane" data-admin-pane="system">
       <nav class="admin-subnav" data-admin-subnav="system" aria-label="시스템 설정 하위 기능"><button class="active" data-admin-subtab="server-status" type="button">서버 상태</button><button data-admin-subtab="environment" type="button">권한·환경 설정</button></nav>
       <div class="admin-subpane active" data-admin-subpane="server-status"><section class="admin-card"><div class="admin-card-head"><div><h2>서버 상태·진단</h2><p>Server Engine Runtime, Queue와 Bridge 연결 상태를 확인합니다.</p></div><button class="admin-btn" id="serverRefreshBtn" type="button">상태 확인</button></div><div id="serverStatusDetail" data-server-status-box></div><div class="admin-bridge-box monitor"><div class="admin-bridge-title"><strong>Bridge 모니터링</strong><span>시트 원본 전달에 사용하는 Apps Script Bridge 상태입니다.</span></div><div class="admin-form-row"><button class="admin-btn primary" id="webAppTestBtn" type="button">연결 테스트</button><button class="admin-btn" id="goSystemSettingsBtn" type="button">환경 설정</button></div><div id="serverStatus" class="admin-statusline"></div></div></section></div>
@@ -350,7 +226,7 @@
         </section>
         <section class="admin-card" id="visitorHistoryCard">
           <div class="admin-card-head"><div><h2>방문·로그인 이력</h2><p>Sub Master·Master만 회원별 로그인 시각과 당시 등급을 확인할 수 있습니다.</p></div></div>
-          <div class="admin-visitor-filters"><label>시작일<input class="admin-input" id="visitorDateFrom" type="date"/></label><label>종료일<input class="admin-input" id="visitorDateTo" type="date"/></label><label>회원명<input class="admin-input" id="visitorMemberSearch" placeholder="회원명 검색"/></label><label>로그인 여부<select class="admin-select" id="visitorLoginFilter"><option value="ALL">일반 방문 전체</option><option value="LOGIN">로그인</option><option value="ANONYMOUS">비로그인</option><option value="INTERNAL">검수·자동화 (통계 제외)</option></select></label><label>페이지<select class="admin-select" id="visitorPageFilter"><option value="">전체 페이지</option><option value="home">메인</option><option value="hall">명예의 전당</option><option value="ranking">랭킹</option><option value="sanctuary">성역</option><option value="sanctuary-schedule">성역 일정</option><option value="meter">미터</option><option value="arcana">아르카나</option><option value="admin">관리자</option><option value="pages">기타 페이지</option></select></label><button class="admin-btn primary" id="visitorSearchBtn" type="button">조회</button></div>
+          <div class="admin-visitor-filters"><label>시작일<input class="admin-input" id="visitorDateFrom" type="date"/></label><label>종료일<input class="admin-input" id="visitorDateTo" type="date"/></label><label>회원명<input class="admin-input" id="visitorMemberSearch" placeholder="회원명 검색"/></label><label>로그인 여부<select class="admin-select" id="visitorLoginFilter"><option value="ALL">일반 방문 전체</option><option value="LOGIN">로그인</option><option value="ANONYMOUS">비로그인</option><option value="INTERNAL">검수·자동화 (통계 제외)</option></select></label><label>페이지<select class="admin-select" id="visitorPageFilter"><option value="">전체 페이지</option><option value="home">메인</option><option value="hall">명예의 전당</option><option value="ranking">랭킹</option><option value="sanctuary">성역</option><option value="sanctuary-schedule">성역 일정</option><option value="arcana">아르카나</option><option value="admin">관리자</option><option value="pages">기타 페이지</option></select></label><button class="admin-btn primary" id="visitorSearchBtn" type="button">조회</button></div>
           <div id="visitorHistoryStatus" class="admin-statusline"></div><div class="admin-visitor-history" id="visitorHistoryList"><div class="admin-empty">방문 이력을 불러오세요.</div></div><div class="admin-pagination"><button class="admin-btn" id="visitorPrevBtn" type="button">이전</button><span id="visitorPageInfo">1 / 1</span><button class="admin-btn" id="visitorNextBtn" type="button">다음</button></div>
         </section>
       </div>
@@ -409,15 +285,15 @@
 <script src="../../core/kinojo-route-guard.js?cache=2026090701"></script>
 <script src="../../core/kinojo-debug.js?cache=2026070110"></script>
 <script src="../../core/kinojo-logger.js?cache=2026070110"></script>
-<script src="../../ui/kinojo-common-ui.js?cache=2026083001"></script>
+<script src="../../ui/kinojo-common-ui.js?cache=2026083001&retirement=2026100701"></script>
 <script src="../../ui/kinojo-admin-panel.js?cache=2026071712"></script>
 <script src="../../core/kinojo-supabase-client.js?cache=2026080205&amp;stage7=2026082904"></script>
 <script src="../../core/kinojo-supabase-rpc.js?cache=2026082806"></script>
-  <script src="../../core/kinojo-supabase-features.js?cache=2026090804&amp;character=2026090802&amp;permissions=2026090901"></script>
+  <script src="../../core/kinojo-supabase-features.js?cache=2026090804&amp;character=2026090802&amp;permissions=2026090901&amp;retirement=2026100701"></script>
 <script src="../../core/kinojo-auth-session.js?cache=2026081801"></script>
 <script src="../../core/kinojo-auth-service.js?cache=2026081801"></script>
-<script src="../../core/kinojo-auth-ui.js?cache=2026082901"></script>
-<script src="../../admin/js/admin.js?cache=2026090804&amp;stage7=2026082904&amp;character=2026090802&amp;automation=2026090801&amp;completion=2026090801&amp;context=2026090901&amp;family=2026090901&amp;statusTabs=2026090903&amp;activity=2026090901&amp;exclusions=2026090901&amp;inactive=2026090901&amp;delivery=2026090902&amp;permissions=2026090901&amp;runtimeRetention=2026092401&amp;schedule=2026100701"></script>
+<script src="../../core/kinojo-auth-ui.js?cache=2026082901&retirement=2026100701"></script>
+<script src="../../admin/js/admin.js?cache=2026090804&amp;stage7=2026082904&amp;character=2026090802&amp;automation=2026090801&amp;completion=2026090801&amp;context=2026090901&amp;family=2026090901&amp;statusTabs=2026090903&amp;activity=2026090901&amp;exclusions=2026090901&amp;inactive=2026090901&amp;delivery=2026090902&amp;permissions=2026090901&amp;runtimeRetention=2026092401&amp;schedule=2026100701&amp;retirement=2026100701"></script>
 
 </body>
 </html>

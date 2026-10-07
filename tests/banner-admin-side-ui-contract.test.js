@@ -9,7 +9,7 @@ assert.ok(loader.includes("'admin-side-banners.js'"));
 for(const token of [
   "FORMAT='SIDE_300_715'",
   "['ALL','전체 페이지']",
-  "['HOME','홈']","['HOF','명예의 전당']","['RANKING','레기온 순위']","['LEGION_TREE','레기온 트리']","['METER','키노조 미터']","['SANCTUARY','성역 메인']","['SANCTUARY_SCHEDULE','성역 스케줄']",
+  "['HOME','홈']","['HOF','명예의 전당']","['RANKING','레기온 순위']","['LEGION_TREE','레기온 트리']","['SANCTUARY','성역 메인']","['SANCTUARY_SCHEDULE','성역 스케줄']",
   "const TARGET_PAGES=PAGES.filter(([code])=>code!=='ALL')",
   "function physicalSlots(){return S.slot==='BOTH'?['LEFT','RIGHT']:[S.slot]}",
   "type:'SIDE',pageCode,slotCodes:physicalSlots(pageCode)",

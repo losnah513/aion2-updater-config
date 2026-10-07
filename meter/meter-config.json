@@ -1,6 +1,0 @@
-{
-  "enabled": true,
-  "edgeFunctionName": "meter-ingest",
-  "releaseChannel": "stable",
-  "webClientVersion": "WEB_50021"
-}

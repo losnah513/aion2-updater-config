@@ -2,6 +2,7 @@
 const {spawnSync}=require('node:child_process');
 const path=require('node:path');
 const tests=[
+  "tests/meter-retirement.test.cjs",
   "tests/character-refresh-stability-stage2.test.cjs",
   "tests/character-refresh-stability-sql.test.cjs",
   "tests/character-refresh-identity-stage2-fixtures.test.js",

@@ -3,7 +3,7 @@
   if(window.__KINOJO_COMMON_UI_INIT_DONE__) return;
   window.__KINOJO_COMMON_UI_INIT_DONE__ = true;
   const DOCS={
-    about:{title:"사이트 소개",html:`<h3>KINOJO INFO</h3><p>키노조 인포는 AION2 키노조 관련 정보를 한곳에서 확인하기 위한 정보 허브입니다.</p><p>성역 파티 확인, 레기온 기록, 명예의 전당, KINOJO Meter 등 필요한 기능을 순차적으로 제공합니다.</p>`},
+    about:{title:"사이트 소개",html:`<h3>KINOJO INFO</h3><p>키노조 인포는 AION2 키노조 관련 정보를 한곳에서 확인하기 위한 정보 허브입니다.</p><p>성역 파티 확인, 레기온 기록, 명예의 전당 등 필요한 기능을 순차적으로 제공합니다.</p>`},
     terms:{title:"이용약관",html:`<h3>이용 안내</h3><p>본 사이트는 키노조 관련 정보를 편리하게 확인하기 위한 비공식 정보 페이지입니다.</p><ul><li>사이트 정보의 무단 변조 또는 악의적 사용을 금지합니다.</li><li>표시되는 데이터는 참고용이며 최종 판단은 이용자 본인에게 있습니다.</li><li>서비스 구조는 사전 안내 없이 변경될 수 있습니다.</li></ul>`},
     privacy:{title:"개인정보처리방침",html:`<h3>개인정보 처리 안내</h3><p>본 사이트는 기본적인 정보 확인 기능을 중심으로 운영되며, 불필요한 개인정보 수집을 지양합니다.</p><ul><li>입력 정보는 사이트 운영 및 문의 확인 목적에 한해 사용됩니다.</li><li>불필요한 민감정보 입력은 권장하지 않습니다.</li><li>정책은 기능 추가에 따라 갱신될 수 있습니다.</li></ul>`},
     contact:{title:"아이디어 제안 및 건의",html:`<h3>문의 안내</h3><p>오류 제보, 기능 제안, 데이터 수정 요청은 아래 문의 채널로 전달해 주세요.</p><p><a href="https://discord.com/channels/939881585061277746/1512052370144493769" target="_blank" rel="noopener">디스코드 문의 채널 열기</a></p>`}
@@ -16,7 +16,6 @@
     if(path.includes('/hof/')||path.includes('/hall-of-fame/'))return {key:'hall',label:'명예의 전당',root:mobile?'../../':'../',mobile};
     if(path.includes('/legion-roster/'))return {key:'legion-roster',label:'레기온 명부',root:mobile?'../../':'../',mobile};
     if(path.includes('/ranking/'))return {key:'ranking',label:'레기온 순위',root:mobile?'../../':'../',mobile};
-    if(path.includes('/meter/'))return {key:'meter',label:'키노조 미터',root:mobile?'../../':'../',mobile};
     // Retired Sanctuary URLs are aliases of the upgraded canonical Sanctuary page.
     if(path.includes('/sanctuary-management/')||path.includes('/sanctuary-schedule/'))return {key:'sanctuary',label:'성역',root:mobile?'../../':'../',mobile};
     if(path.includes('/sanctuary/'))return {key:'sanctuary',label:'성역',root:mobile?'../../':'../',mobile};
@@ -405,7 +404,7 @@
         : await (await fetch(commonApiUrl()+(commonApiUrl().includes('?')?'&':'?')+new URLSearchParams({action:'hallVisit',mode:'visit',pageKey,t:String(Date.now())}).toString(),{cache:'no-store'})).json();
       if(data?.ok&&data.stats)renderCommonVisits(data.stats);
       const serverTime=data?.serverTime||data?.generatedAt||data?.stats?.serverTime;
-      if(serverTime&&['home','meter','schedule'].includes(pageKey))setPageTime({value:serverTime});
+      if(serverTime&&['home','schedule'].includes(pageKey))setPageTime({value:serverTime});
     }catch(_err){
       setVisitServerLight('is-error','서버 연결 오류');
       const t=el.querySelector('[data-visit-today]');
@@ -573,7 +572,7 @@
     return 'topbarUpdateTime';
   }
 
-  const PAGE_TIME_LABELS={home:'접속',hall:'최종 조회',ranking:'최종 조회',meter:'접속',sanctuary:'동기화',schedule:'조회',sanctuaryManagement:'조회',arcana:'콘텐츠'};
+  const PAGE_TIME_LABELS={home:'접속',hall:'최종 조회',ranking:'최종 조회',sanctuary:'동기화',schedule:'조회',sanctuaryManagement:'조회',arcana:'콘텐츠'};
   function formatPageTime_(value){
     const date=value instanceof Date?value:new Date(value);
     if(!Number.isFinite(date.getTime()))return '';
@@ -637,7 +636,6 @@
       {key:'home',label:'HOME',href:base},
       {key:'hall',label:'명예의 전당',href:base+'hof/'},
       {key:'ranking',label:'레기온 순위',href:base+'ranking/'},
-      {key:'meter',label:'미터기',href:base+'meter/'},
       {key:'sanctuary',label:'성역',href:base+'sanctuary/',sanctuaryMenu:true},
       {key:'arcana',label:'아르카나',href:base+'arcana/'}
     ];
@@ -2298,14 +2296,12 @@
   function makeDrawer(info){
     const isHall=info.key==='hall';
     const isRanking=info.key==='ranking';
-    const isMeter=info.key==='meter';
     const isSanctuary=info.key==='sanctuary';
     const isArcana=info.key==='arcana';
     const base=info.mobile?'/m/':'/';
     const home=base;
     const hallHref=isHall?'./':base+'hof/';
     const rankingHref=isRanking?'./':base+'ranking/';
-    const meterHref=isMeter?'./':base+'meter/';
     const sanctuaryPrefix=isSanctuary?'./':base+'sanctuary/';
     const arcanaHref=isArcana?'./':base+'arcana/';
     const drawer=document.createElement('section');
@@ -2332,7 +2328,6 @@
           <div class="kinojo-drawer-divider"></div>
           <div class="kinojo-drawer-category">도구</div>
           <a href="${arcanaHref}" ${isArcana?'class="active" aria-disabled="true"':''}>ARCANA 스킬 시뮬레이터</a>
-          <a href="${meterHref}" ${isMeter?'class="active" aria-disabled="true"':''}>KINOJO METER</a>
           <div class="kinojo-drawer-divider"></div>
           <div class="kinojo-drawer-category">안내</div>
           <button class="kinojo-drawer-link drawer-page-link" type="button" data-page-panel="about" data-drawer="about">사이트 소개</button>
@@ -2467,7 +2462,7 @@
     return delta<0?element.scrollTop>1:element.scrollTop+element.clientHeight<element.scrollHeight-1;
   }
   function bindModalScrollChain(){
-    const modalSelector='[role="dialog"],[aria-modal="true"],.kinojo-character-reaction-modal,.kinojo-safe-overlay,.kinojo-login-modal,.kinojo-notice-board-overlay,.kinojo-safe-error-overlay,.meter-consent-modal,.sanctuary-editor-overlay,.kinojo-event-notice-overlay,.admin-panel-modal,.kinojo-my-info-modal';
+    const modalSelector='[role="dialog"],[aria-modal="true"],.kinojo-character-reaction-modal,.kinojo-safe-overlay,.kinojo-login-modal,.kinojo-notice-board-overlay,.kinojo-safe-error-overlay,.sanctuary-editor-overlay,.kinojo-event-notice-overlay,.admin-panel-modal,.kinojo-my-info-modal';
     document.addEventListener('wheel',event=>{
       if(event.defaultPrevented||event.ctrlKey||!event.deltaY||Math.abs(event.deltaY)<=Math.abs(event.deltaX))return;
       const origin=event.target instanceof Element?event.target:event.target?.parentElement;

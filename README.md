@@ -1,5 +1,7 @@
 # KINOJO WEB
 
+Meter retirement (2026-10-07, SQL530): the Meter product is permanently discontinued. Its routes, administration, deployment services, database and distribution files are removed without a backup at the owner’s request. Shared character identity and authentication behavior remain supported.
+
 ## Retention protection lookup cost (SQL529)
 
 Payload diagnostic cleanup and superseded snapshot cleanup calculate protection sets once per call instead of repeatedly scanning references per row. A small partial payload ID index contains synced object evidence with fields beyond the eight retained diagnostic keys. Its predicate uses built-ins, so direct writers need no extra private helper privilege. Compaction automatically removes an item from this index; later changes become visible again.
@@ -220,7 +222,6 @@ KINOJO INFO GitHub Pages upload package.
 
 ## Read-scope scalability known facts
 
-- Meter public stats/my comparison default to the explicit Server `WEEK` period. `ALL` is an explicit user choice, not an omitted-period fallback. At 333 records/1,753 participants the aggregation gate is not reached; recheck at 100,000 participants, representative p95 300ms, or max 1s. Owner: Meter Server/DB.
 - Admin member list uses DB428 server cursor pagination: default 20, hard max 100, server prefix/role filters, and four indexes. Recheck at 1,000 members, p95 300ms, or max 1s. Owner: Web Admin/DB.
 - Sanctuary public read uses current-state roster tables, not historical-period data. DB442 (`20260828134721 / sanctuary_public_read_n_plus_one_v442`) removes repeated per-slot character/profile lookups while preserving guest/member payload digests. `rudra` improved from about 343ms/23,900 shared hits to 105–108ms/4,023 hits; `bagot` is about 95ms and `kaldrix` 81ms. Recheck at warm p95 300ms, max 1s, or 1,000 active slots. Owner: Sanctuary Web/DB.
 - Admin notification v316 has status/latest/expiry indexes and no waiting relation lock in the 2026-08-28 profile. Fresh MASTER runs were 17ms first and 6.6ms warm, so no snapshot or retention change was added. Recheck at warm p95 300ms, reproducible waiting locks, or 100,000 related rows. Owner: Admin Notification/DB.
@@ -322,14 +323,6 @@ KINOJO INFO GitHub Pages upload package.
 - The filename mapping follows the user's direct Drive audit: the former `assassin` artwork is Gladiator, the former `cleric` artwork is Assassin, the former `gladiator` artwork is Cleric, and the existing Chanter artwork remains Chanter.
 - The previous PLAYNC originals are preserved unchanged under `assets/images/classes/original/` with the same file names for rollback and comparison only. Runtime code must not reference the `original` folder.
 
-## KINOJO Meter admin
-
-- The MASTER-only Meter console is divided into Download, Meter, Statistics, Notice, and Dungeon Log management tabs on desktop and mobile.
-- Stable and Staging controls are shown side by side on desktop and stack on mobile. Download, Core launch, statistics visibility, notice publication, and notice pinning all reuse the shared ranking slider switch.
-- Download and private Core authorization keep independent KINOJO level allowlists. Current Launcher/Core release data is read-only at the top of Meter management.
-- Statistics management groups Server-owned collection flow, validation quality, and publication readiness without recalculating Server metrics in the browser.
-- Dungeon logs reuse the existing selected-character session and Server Catalog; only one lifecycle row is retained per dungeon visit and the list is ordered by exit time. Per-packet log duplication is forbidden.
-
 ## Admin character refresh current progress
 
 - The queue-status read contract is DB `422` with terminal-state correction `423`. `updater_session_progress_current` owns one materialized current-progress row per runtime session and is updated transactionally from the existing session, target, step, event, job, batch, lock, and rate-limit writers.
@@ -343,21 +336,14 @@ KINOJO INFO GitHub Pages upload package.
 
 ## Preventive scalability known facts
 
-- Meter public statistics default to Server period `WEEK`; DAY/WEEK/MONTH have explicit KST start/end bounds. `ALL` is an explicit user-selectable cumulative period, not an omitted-period fallback. On 2026-08-28 the raw tables contained 333 combat records and 1,753 participants (about 3.1 MiB total), with zero publication-eligible rows. Reprofile weekly; aggregate only when participants reach 100,000, representative p95 reaches 300 ms, max reaches 1 s, or the 90-day growth projection reaches one of those gates. Owner: Meter Server/DB.
 - Admin member list DB contract `428` uses Server prefix search, role filtering, indexed stable ordering, an opaque forward cursor, a 20-row WEB page, and a 100-row hard maximum. The legacy v264 name is a bounded compatibility wrapper. The 2026-08-28 baseline is 16 members / 128 KiB / 10.735 ms warm. Reprofile at 1,000 members, p95 300 ms, or max 1 s. Owner: Web Admin/DB.
-
-## KINOJO Meter presence and party-card profile source
-
-- The public desktop/mobile Meter page counts every active Meter user. Name publication defaults to ON; users who turn it OFF remain in the active count and appear only as an anonymous-user aggregate. The list refreshes every 15 seconds and Server expires stale presence after 45 seconds. Party Meter-user markers do not depend on WEB name publication.
-- Party-card class, combat power, emblem key, and profile image are accepted only from a successful official PLAYNC AION2 public profile response. Server-stored character profiles, prior observations, packet class, and HUD class must never be display fallbacks.
-- A failed official lookup remains unresolved. Runtime packet/HUD values may identify the lookup target and damage participant, but cannot populate party-card profile metadata.
 
 ## Authentication session
 
 - PASS KEY login uses an absolute browser inactivity deadline of 30 minutes. The shared warning modal opens at the 25-minute mark and displays the final five minutes.
 - Background tabs do not trust delayed interval ticks: focus, visibility, page-show, and cross-tab storage events recalculate the remaining time from `lastActivityAt`.
 - Extending an idle session is accepted only before the absolute deadline and after `kinojo-auth-service.js` touches the existing Server-issued `kws_` session. The extension path does not re-submit the saved PASS KEY; privileged actions continue to be authorized by Server on every request.
-- DB `50041` keeps PASS KEY rows when a main character leaves Google list and disables them instead of deleting them. An administrator can reactivate an inactive key from Member Management; this explicit override permits common PASS KEY features, Meter download, roster-inactive owned-character selection, and Core launch while the character remains excluded from list lookup and public roster display.
+- DB `50041` keeps PASS KEY rows when a main character leaves Google list and disables them instead of deleting them. An administrator can reactivate an inactive key from Member Management; this explicit override permits common PASS KEY features and roster-inactive owned-character selection while the character remains excluded from list lookup and public roster display.
 
 ## Sanctuary schedule
 

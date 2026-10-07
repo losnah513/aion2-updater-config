@@ -13,7 +13,6 @@ const pages=[
   {name:'HOF',path:'/hof/',slots:['LEFT','RIGHT']},
   {name:'RANKING',path:'/ranking/',slots:['LEFT','RIGHT']},
   {name:'LEGION_TREE',path:'/legion-tree/',slots:['LEFT','RIGHT']},
-  {name:'METER',path:'/meter/',slots:['LEFT','RIGHT']},
   {name:'SANCTUARY',path:'/sanctuary/',slots:['LEFT','RIGHT']},
 ];
 const widths=[1839,1840,1920,2560];

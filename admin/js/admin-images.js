@@ -26,9 +26,9 @@ function updateQueue(prefix,index,textValue,kind=''){const row=$(`[data-${prefix
 const sectionHead=(title,description)=>`<div class="banner-section-head"><div><h3>${title}</h3><p>${description}</p></div></div>`;
 function shell(){
   const nav=$('.admin-nav');
-  if(nav&&!$('[data-admin-tab="images"]',nav)){const b=document.createElement('button');b.type='button';b.dataset.adminTab='images';b.setAttribute('data-admin-master-only','');b.textContent='🖼 이미지 관리';nav.insertBefore(b,$('[data-admin-tab="meter"]',nav)||$('[data-admin-tab="system"]',nav))}
+  if(nav&&!$('[data-admin-tab="images"]',nav)){const b=document.createElement('button');b.type='button';b.dataset.adminTab='images';b.setAttribute('data-admin-master-only','');b.textContent='🖼 이미지 관리';nav.insertBefore(b,$('[data-admin-tab="system"]',nav))}
   const main=$('.admin-main');
-  if(main&&!$('[data-admin-pane="images"]',main)){const p=document.createElement('section');p.className='admin-pane';p.dataset.adminPane='images';p.setAttribute('data-admin-master-only','');main.insertBefore(p,$('[data-admin-pane="meter"]',main)||$('[data-admin-pane="system"]',main))}
+  if(main&&!$('[data-admin-pane="images"]',main)){const p=document.createElement('section');p.className='admin-pane';p.dataset.adminPane='images';p.setAttribute('data-admin-master-only','');main.insertBefore(p,$('[data-admin-pane="system"]',main))}
   const p=$('[data-admin-pane="images"]');
   if(!p||$('[data-main-banner-admin]',p))return;
   p.insertAdjacentHTML('beforeend',`<div data-main-banner-admin>

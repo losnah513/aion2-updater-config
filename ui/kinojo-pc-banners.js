@@ -45,7 +45,6 @@
     if(path==='/ranking/')return 'RANKING';
     if(path==='/legion-tree/')return 'LEGION_TREE';
     if(path==='/legion-roster/')return 'LEGION_ROSTER';
-    if(path==='/meter/')return 'METER';
     if(path==='/sanctuary/')return 'SANCTUARY';
     if(path==='/sanctuary-schedule/')return 'SANCTUARY_SCHEDULE';
     return '';
