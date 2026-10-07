@@ -1,5 +1,11 @@
 # KINOJO WEB
 
+## Retention candidate query cost (SQL527)
+
+CONFIRMED (2026-10-07): seven-day snapshot/payload selectors build protected source and session sets once instead of repeating correlated protection lookups for each old row. A partial snapshot ID index excludes rows already summarized by SQL514 without rereading their raw JSON. All current references, pending work, latest reprocess identity ordering, null handling, age thresholds, cursors and 50-row limits retain their existing meaning. Cleanup functions, NOWAIT/advisory locks, ACLs and cron schedules are unchanged. Rollback restores the selectors and drops the index without changing data.
+
+Run `node tests/retention-candidate-sets.test.cjs` plus the existing snapshot/payload retention regressions. Production timings and the remaining capacity/automatic-run issues belong to the DB project LOG. Revalidate query cost after significant source cardinality or reference changes. JIT was already disabled in the operating DB; earlier successful manual cleanup with `SET LOCAL jit=off` does not establish a JIT root cause.
+
 ## Historical payload diagnostic summaries (SQL509)
 
 Old synced payloads retain eight report diagnosis fields while equipment lists/detail are removed. Master/stat-source references, the latest payload selected by the reprocess reader, recent data, active sessions/runtime jobs and unfinished or mismatched Targets remain protected. Payload rows, IDs, statistics, raw payload and timestamps are unchanged; no payload triggers are disabled.

@@ -1,5 +1,11 @@
 # KINOJO WEB HANDOFF
 
+## 정리 후보 조회 비용 개선 · SQL527 · 2026-10-07
+
+- 7일 원본 정리 후보의 반복 보호 참조를 집합으로 계산하고, 이미 요약된 snapshot을 작은 partial index로 제외한다. 보존·NULL·정렬·커서·최신 재처리 신원 의미는 그대로다. 정리 본문·잠금·권한·cron 변경 없음. migration/rollback `20261007013943_retention_candidate_sets.sql`, 신규 회귀 `node tests/retention-candidate-sets.test.cjs`.
+- JIT는 운영에서 이미 off였으므로 앞 수동 정리 성공을 JIT 개선 효과로 해석하지 않는다. 운영 성능·PR/CI·Drive 최종 상태는 DB 프로젝트 LOG 최신 회차를 따른다.
+- 10:13 자동조회 재시도는 67/123 이후 heartbeat가 멈춰 10:38 만료됐다. 전체 성공이 아니며 진행률/worker 상태 저장 timeout과 복구 확인이 남는다. 수동 정리 뒤 407.76MB, 390MB 장기 유지 목표는 미달이다. 기준 main `3d66390f54d5fa48b120eb40a73eefc9d26a28db`, branch `codex/retention-timeout-20261007`.
+
 ## 자동 조회 시작 전 실패 종료 · SQL526 · 2026-10-07
 
 - 10:00 예약은 정상 발사됐지만 updater_sessions INSERT에서 statement timeout으로 취소됐다. 세션이 없다는 이유로 기존 finish guard가 실패 종료도 거부하여 running claim만 남았다. 22시 예약은 기존 2시간 stale 복구 대상이지만 그동안 실행 상태/수동 운영을 잘못 막을 수 있다.
