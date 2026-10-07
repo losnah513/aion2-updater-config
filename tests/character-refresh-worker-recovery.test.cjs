@@ -64,6 +64,7 @@ const timeout={code:'SUPABASE_RPC_FAILED',sqlState:'57014',httpStatus:500,retrya
  receiver.ctx.handoff=async()=>{throw Error('receiver must not write');};
  const response=await receiver.calls.handler(new Request('https://synthetic.invalid',{method:'POST',body:JSON.stringify({action:'autonomousTick',sessionId:'synthetic',sessionToken:'synthetic'})}));
  assert.equal(response.status,202);await Promise.all(tasks);
+ const health=await receiver.calls.handler(new Request('https://synthetic.invalid',{method:'POST',body:JSON.stringify({action:'health'})}));assert.equal((await health.json()).autonomousTerminalDiagnosticsBestEffort,true);
  receiver.ctx.internalRequest=()=>false;
  const forbidden=await receiver.calls.handler(new Request('https://synthetic.invalid',{method:'POST',body:JSON.stringify({action:'autonomousTick'})}));assert.equal(forbidden.status,403);
  // The recovery counter survives self-handoff transport and delays remain bounded.
