@@ -12,6 +12,8 @@ on:
       - 'supabase/rollbacks/*character*.sql'
       - 'supabase/migrations/*queue_progress*.sql'
       - 'supabase/rollbacks/*queue_progress*.sql'
+      - 'supabase/migrations/*retention*.sql'
+      - 'supabase/rollbacks/*retention*.sql'
       - 'scripts/verify-character-refresh-stage2.cjs'
       - 'apps-script/list-master/**'
       - 'admin/**'

@@ -1,5 +1,13 @@
 # KINOJO WEB HANDOFF
 
+## 정리 후보 보호 참조 비용 · SQL529 · 2026-10-07
+
+- 사용자 지시에 따라 안정적인 정리 개선. 기준 maina360704f73b7db973f23f86fef481c24af71b71b, branch codex/retention-bounded-work-20261007. 기존 정리들은 공통 advisory(501,501)와 분산 시각으로 이미 직렬화한다. 새 병렬 프로그램/cron을 추가하지 않고 SQL509·512의 반복 보호 조회를 집합으로 변경한다.
+- SQL509는 완료 target·미완료 payload/slot·현재 참조·실행 중 세션을 집합으로 판단한다. synced object evidence에 보존8키 외 필드가 있는 작은 partial ID index를 추가한다. built-in CASE/JSON 연산으로 직접 writer에게 private helper EXECUTE를 요구하지 않는다. 요약 완료 시 index에서 빠지고 이후 필드 추가는 다시 반영된다.
+- SQL512는 정확한 server/name·created_at/id 순서의 최신 성공 snapshot과 보호 snapshot/payload·진행 중 세션을 한 번 계산한다. NULL 신원/시각, NOT IN의 NULL queue 처리, snapshot UID·Master/skill/stat/request/target/ranking 참조와 미연결 payload 보호를 유지한다.
+- cleanup 본문·50건 한도·기존 timeout·NOWAIT/advisory lock·ACL·보관 기간·10/22시 자동 조회는 유지. 원본 후보/새 후보의36파라미터 조합씩(총72) 일치, 경계값·index 갱신·service 직접 쓰기·데이터 불변·rollback 회귀를 추가했다. 실제 운영 비교/배포/정리/CI/Drive 결과는 DB 프로젝트 LOG37을 따른다.
+- migration/rollback20261007033635_retention_diagnostic_candidate_sets.sql. 코드 rollback은 기존 두 selector와 nested-loop 설정을 복원하고 작은 index를 제거하며 데이터를 보존한다. 보존8키 contract 변경 시 index와 selector를 함께 재검증한다. 390MB 유지와 연속2일 자동 조회 완료는 별도 관측이다.
+
 ## 상태 요약 저장 비용 / null 진행률 · SQL528 / API295.15 · 2026-10-07
 
 - 기준 main2532aba028bde065742a4f50af3c409c080a64a2, branch codex/progress-write-cost-20261007. Worker claim/update의 4개 상태 테이블 변경을 마친 뒤 core/progress 요약을 한 번씩 저장한다. RPC는 성공 시 caller 설정을 복원하고 예외는 PostgreSQL rollback으로 복원하며 일반 직접 변경 trigger는 즉시 반영한다. terminal trigger·인증·lease·반환 계약·ACL·예약·보존은 유지한다.
