@@ -10,6 +10,8 @@ on:
       - 'supabase/functions/lookup-list-*/**'
       - 'supabase/migrations/*character*.sql'
       - 'supabase/rollbacks/*character*.sql'
+      - 'supabase/migrations/*queue_progress*.sql'
+      - 'supabase/rollbacks/*queue_progress*.sql'
       - 'scripts/verify-character-refresh-stage2.cjs'
       - 'apps-script/list-master/**'
       - 'admin/**'
