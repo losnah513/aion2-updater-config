@@ -1,5 +1,12 @@
 # KINOJO WEB HANDOFF
 
+## 자동 조회 시작 전 실패 종료 · SQL526 · 2026-10-07
+
+- 10:00 예약은 정상 발사됐지만 updater_sessions INSERT에서 statement timeout으로 취소됐다. 세션이 없다는 이유로 기존 finish guard가 실패 종료도 거부하여 running claim만 남았다. 22시 예약은 기존 2시간 stale 복구 대상이지만 그동안 실행 상태/수동 운영을 잘못 막을 수 있다.
+- SQL526은 정확한 현재 run ID·running=true·연결 세션 없음·명시 failed 상태인 시작 전 실패만 종료한다. null/지난 run/success ACK는 거부하며 이미 생성된 활성 세션·다른 수동 lock·정상 완료 결과는 유지한다. 권한/예약 변경 없음. 운영 exact readback·ACL 불변·보안 신규0.
+- 10:00 실패 claim을 정상 실패 처리하고 기존 cron 명령 hash 확인 후 정상 예약 Edge 경로로 단발 재시도했다. 10:13:27 새 실행에 실제 세션 생성 확인. 최초 timeout의 장기 원인 해소 및 연속2일 자동 실행 완료를 뜻하지 않는다. 최종 실행 결과/PR/CI는 [DB 프로젝트 LOG](https://drive.google.com/file/d/1F6fBTUNmPdJgeD3bUb1wAsv4yEgAyKcO/view) 31회차 참조.
+- 기준 main `ff59898c088afece27344edb10497e65fd27f3e8`, branch `codex/automation-prestart-failure-20261007`. 검증: `node tests/automation-prestart-failure.test.cjs`, `node tests/character-refresh-dispatch.test.cjs`. migration/rollback `20261007011148_character_automation_prestart_failure.sql`. 코드 rollback은 과거 데이터 복원 없이 이후 실패 처리만 되돌린다.
+
 ## 성역 신규 게스트 등록 오류 · SQL525 · 2026-10-07
 
 - 10/6 23:00~23:30 KST 운영 로그에 v480 등록 함수의 `sanctuary_character_owners_v412.character_id` NOT NULL 오류 2건을 확인했다. 생성 helper를 SELECT의 WHERE 안에서 실행해 그 조회문이 새 행을 읽지 못한 원인이다. 빈/기존 master 양쪽에서 동일 23502를 재현했다.

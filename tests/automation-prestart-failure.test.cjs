@@ -1,0 +1,48 @@
+const fs=require('node:fs'),assert=require('node:assert/strict');
+const {PGlite}=require(process.env.PGLITE_MODULE||'../.codex-test-runtime/node_modules/@electric-sql/pglite');
+const read=p=>fs.readFileSync(p,'utf8');
+(async()=>{
+ const db=new PGlite();
+ try{
+  await db.exec(read('tests/character-refresh-audit-safety.test.cjs').match(/await db.exec\(`([\s\S]*?)`\);/)[1]);
+  await db.exec(`alter table updater_sessions add stage text,add updated_at timestamptz;
+   alter table lookup_batches add stage text,add message text;
+   alter table updater_lock_state add updated_at timestamptz;
+   alter table kinojo_server_automation_settings add running_since timestamptz,add updated_by text;
+   insert into kinojo_server_automation_settings(automation_key,running,active_run_id,enabled,schedule_kst) values('character_refresh',true,'claim',true,'["10:00","22:00"]');
+   insert into updater_lock_state(id,is_locked,session_id,status) values('global',true,'other-manual','running');`);
+  await db.exec(read('supabase/rollbacks/20261007011148_character_automation_prestart_failure.sql'));
+  await db.exec(`revoke all on function kinojo_automation_finish_v377(text,text,text,text,text) from public,anon,authenticated; grant execute on function kinojo_automation_finish_v377(text,text,text,text,text) to service_role;`);
+  const finish=async(run,status='failed',session=null)=>(await db.query("select kinojo_automation_finish_v377('character_refresh',$1,$2,'start timeout',$3) result",[run,status,session])).rows[0].result;
+  const setting=async()=>(await db.query('select * from kinojo_server_automation_settings')).rows[0];
+  assert.equal((await finish('claim')).code,'AUTOMATION_SESSION_REQUIRED');
+  assert.equal((await setting()).running,true);
+  await db.exec(read('supabase/migrations/20261007011148_character_automation_prestart_failure.sql'));
+  assert.equal((await finish(null)).code,'AUTOMATION_SESSION_REQUIRED');
+  assert.equal((await finish('claim','completed')).code,'AUTOMATION_SESSION_REQUIRED');
+  assert.equal((await finish('old-claim')).ignored,true);
+  assert.equal((await setting()).running,true);
+  const lockBefore=(await db.query('select * from updater_lock_state')).rows;
+  const closed=await finish('claim');
+  assert.equal(closed.preStartFailure,true);
+  assert.equal(closed.status,'failed');
+  assert.equal((await setting()).running,false);
+  assert.equal((await setting()).active_run_id,null);
+  assert.deepEqual((await setting()).schedule_kst,['10:00','22:00']);
+  assert.equal((await setting()).enabled,true);
+  assert.deepEqual((await db.query('select * from updater_lock_state')).rows,lockBefore);
+  assert.equal((await finish('claim')).ignored,true);
+  await db.exec("update kinojo_server_automation_settings set running=true,active_run_id='new-claim',active_session_id='new-session'; insert into updater_sessions(session_id,status) values('new-session','running'); insert into lookup_batches(session_id,status) values('new-session','running')");
+  assert.equal((await finish('claim')).ignored,true);
+  assert.equal((await finish('new-claim')).code,'AUTOMATION_SESSION_REQUIRED');
+  assert.equal((await finish('new-claim','failed','new-session')).code,'AUTOMATION_SESSION_NOT_TERMINAL');
+  assert.equal((await setting()).running,true);
+  await db.exec("update updater_sessions set status='completed'; update lookup_batches set status='completed'");
+  assert.equal((await finish('new-claim','failed','new-session')).status,'completed');
+  assert.equal((await db.query("select has_function_privilege('anon','kinojo_automation_finish_v377(text,text,text,text,text)','execute') allowed")).rows[0].allowed,false);
+  const final=await setting();
+  await db.exec(read('supabase/rollbacks/20261007011148_character_automation_prestart_failure.sql'));
+  assert.deepEqual(await setting(),final);
+  console.log('PASS SQL526: reproduced stuck pre-session claim; exact failed claim closes; null/stale/success callbacks denied; newer/active sessions protected; manual lock unchanged; canonical success preserved; ACL and rollback data unchanged.');
+ }finally{await db.close();}
+})().catch(e=>{console.error(e);process.exitCode=1;});
