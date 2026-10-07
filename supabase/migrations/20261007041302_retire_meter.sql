@@ -1017,6 +1017,20 @@ drop trigger if exists "meter_release_producer_membership_immutable_50061" on pu
 drop trigger if exists "meter_release_producer_artifact_membership_50061" on public."meter_release_producer_artifacts";
 drop trigger if exists "meter_stage85_activation_immutable_50063" on public."meter_stage85_activation_audit";
 
+-- Retired release checks depend on the semver helper; remove them before functions.
+alter table public.meter_core_download_audit drop constraint if exists ck_meter_core_audit_current_50016;
+alter table public.meter_core_download_audit drop constraint if exists ck_meter_core_audit_launcher_50016;
+alter table public.meter_core_release_master drop constraint if exists ck_meter_core_launcher_minimum_50016;
+alter table public.meter_core_release_master drop constraint if exists ck_meter_core_minimum_50016;
+alter table public.meter_core_release_master drop constraint if exists ck_meter_core_version_50016;
+alter table public.meter_core_release_master drop constraint if exists ck_meter_core_version_order_50016;
+alter table public.meter_desktop_release_master drop constraint if exists ck_meter_desktop_release_minimum_50011;
+alter table public.meter_desktop_release_master drop constraint if exists ck_meter_desktop_release_version_50011;
+alter table public.meter_desktop_release_master drop constraint if exists ck_meter_desktop_release_version_order_50011;
+alter table public.meter_launcher_release_master drop constraint if exists ck_meter_launcher_minimum_50016;
+alter table public.meter_launcher_release_master drop constraint if exists ck_meter_launcher_version_50016;
+alter table public.meter_launcher_release_master drop constraint if exists ck_meter_launcher_version_order_50016;
+
 -- Explicit list and RESTRICT prevent accidental removal of unrelated dependents.
 drop function if exists
 public.kinojo_meter_download_access_v1(text,text),
