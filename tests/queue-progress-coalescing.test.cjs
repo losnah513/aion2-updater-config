@@ -84,6 +84,16 @@ const rollback=fs.readFileSync('supabase/rollbacks/'+path,'utf8');
  await assert.rejects(db.query(claim),/synthetic summary failure/);await restored();
  assert.equal((await db.query("select worker_id from public.lookup_batches where session_id='run'")).rows[0].worker_id,null);
  await db.exec("set kinojo.test_summary_failure='off'");
+ // Real validation first expires stale locks, which can belong to another session.
+ // Those writes must refresh immediately even if validation then rejects this request.
+ await db.exec(`create or replace function kinojo_validate_updater_session(text,text) returns jsonb language plpgsql as $$
+ begin update public.updater_sessions set progress_current=99 where session_id='run';
+ return '{"ok":false,"code":"INVALID_SESSION"}'::jsonb;end$$;
+ truncate private.calls;`);
+ assert.equal((await db.query(claim)).rows[0].result.ok,false);
+ assert.deepEqual(await count(),{core:1,progress:1});
+ assert.equal((await db.query("select payload->>'current' n from private.cache where kind='progress'")).rows[0].n,'99');
+ await db.exec(`create or replace function kinojo_validate_updater_session(text,text) returns jsonb language sql as $$select jsonb_build_object('ok',$2='synthetic','code',case when $2='synthetic' then null else 'INVALID_SESSION' end)$$;`);
  // The caller's non-default setting survives successful and exceptional function exits.
  await db.exec("set kinojo.defer_queue_summary_v528='caller'");
  await db.query(claim);assert.equal((await db.query("show kinojo.defer_queue_summary_v528")).rows[0]['kinojo.defer_queue_summary_v528'],'caller');

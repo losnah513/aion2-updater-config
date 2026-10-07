@@ -41,7 +41,7 @@ CREATE OR REPLACE FUNCTION public.kinojo_server_queue_worker_claim_v270(p_sessio
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public'
- SET "kinojo.defer_queue_summary_v528" TO 'on'
+ SET "kinojo.defer_queue_summary_v528" TO 'off'
 AS $function$
 declare
   v_valid jsonb;
@@ -75,6 +75,8 @@ begin
     return jsonb_build_object('ok',true,'acquired',false,'busy',true,'workerId',v_batch.worker_id,'leaseUntil',v_batch.worker_lease_until,'message','다른 Server Worker가 현재 Queue를 처리 중입니다.');
   end if;
 
+  -- Validation may expire a different session: defer only the four writes below.
+  perform set_config('kinojo.defer_queue_summary_v528', 'on', true);
   update public.lookup_batches
      set worker_id=v_worker,
          worker_lease_until=now()+interval '2 minutes',
@@ -111,7 +113,7 @@ CREATE OR REPLACE FUNCTION public.kinojo_server_queue_worker_update_v270(p_sessi
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public'
- SET "kinojo.defer_queue_summary_v528" TO 'on'
+ SET "kinojo.defer_queue_summary_v528" TO 'off'
 AS $function$
 declare
   v_valid jsonb;
@@ -130,6 +132,8 @@ begin
     v_progress := public.kinojo_lookup_progress_summary(p_session_id);
   end if;
 
+  -- Validation may expire a different session: defer only the four writes below.
+  perform set_config('kinojo.defer_queue_summary_v528', 'on', true);
   update public.lookup_batches
      set worker_id=case when coalesce(p_release,false) then null else worker_id end,
          worker_lease_until=case when coalesce(p_release,false) then null else now()+interval '2 minutes' end,
