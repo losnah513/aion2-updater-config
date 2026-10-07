@@ -122,8 +122,12 @@ jobs:
           worker = load("worker_health")
           assert worker.get("ok") is True, worker
           assert worker.get("service") == "character-refresh-worker", worker
-          # During the coordinated Stage3 rollout, validate the known old/new contracts.
-          assert worker.get("apiVersion") == "295.12", worker
+          # PR checks run before deployment; accept the deployed and incoming recovery releases.
+          assert worker.get("apiVersion") in ("295.13", "295.14"), worker
+          assert worker.get("autonomousCheckpointRecoveryMax") == 3, worker
+          assert worker.get("autonomousRecoveryWaitsForLease") is True, worker
+          if worker.get("apiVersion") == "295.14":
+              assert worker.get("autonomousTerminalDiagnosticsBestEffort") is True, worker
           assert worker.get("databaseContract") == "295", worker
           assert worker.get("identityDatabaseContract") == "461", worker
           assert worker.get("identityRecoveryEntry") == "stored-detail-404-or-empty-identity-200+name-server-terminal-not-found", worker

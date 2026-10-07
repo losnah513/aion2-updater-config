@@ -29,7 +29,7 @@ const CORS={
   "cache-control":"no-store",
   "x-content-type-options":"nosniff"
 };
-const API_VERSION="295.13";
+const API_VERSION="295.14";
 const CONTRACT="295";
 const BUILD_DATE="2026-10-07";
 const IDENTITY_DATABASE_CONTRACT="461";
@@ -69,11 +69,12 @@ const transientAutonomousQueueError=error=>error?.retryable!==false&&(
 );
 // Diagnostic writes must not prevent an authenticated queue checkpoint from resuming.
 async function autonomousHandoff(...args){
+  const terminalDiagnostic=["complete","attention","cancelled","paused"].includes(args[3]);
   try{
     const result=await handoff(...args);
     if(result?.ok===false)throw new WorkerError(clean(result.message||result.code,1000),clean(result.code,120),false);
     return result;
-  }catch(error){if(!transientAutonomousQueueError(error))throw error;}
+  }catch(error){if(!terminalDiagnostic&&!transientAutonomousQueueError(error))throw error;}
 }
 const AUTONOMOUS_HANDOFF_TRANSIENT_HTTP_STATUSES=new Set([502,503,504]);
 const transientAutonomousHandoffError=error=>{
@@ -921,7 +922,7 @@ Deno.serve(async request=>{
   if(request.method!=="POST")return json({ok:false,message:"POST만 허용합니다."},405);
   try{
     const body=object(await request.json().catch(()=>({}))),action=clean(body.action,80);
-    if(action==="health")return json({ok:true,service:"character-refresh-worker",apiVersion:API_VERSION,databaseContract:CONTRACT,identityDatabaseContract:IDENTITY_DATABASE_CONTRACT,progressContract:"server-worker-seven-phase-v2",progressPhases:7,activityRecheck:{internalOnly:true,batchLimit:5,intervalDays:7,budgetMs:75000,relationshipOnly:true},modes:["activityRecheck","startAutonomous","autonomousTick","runQueue","runPostprocess"],queueBatchLimit:5,lookupOnlyPhase:false,postprocessPhase:true,sheetDeferred:false,sheetSyncPhase:true,sheetReadbackRequired:true,listSyncSingleWorkerLease:true,listSyncCompletionAtomic:true,legionTreeCharacterAddListless:true,legionTreeCharacterAddListWrite:false,legionTreeCharacterAddListReadback:false,legionTreeListlessDatabaseContract:"455",legionTreeListlessTargetSource:"server:legion_tree_character_add_v455",legionTreeListlessTerminalStage:"SERVER_QUEUE_CHARACTER_MASTER_DONE",etaContract:"remaining-plaync-targets-only",retryFailedRowsOnly:true,browserIndependentQueue:true,autonomousTickMode:"detached",autonomousCheckpointRecoveryMax:AUTONOMOUS_RECOVERY_MAX,autonomousCheckpointRecoverySqlStates:["57014","55P03","40001","40P01"],autonomousDiagnosticWriteBestEffort:true,autonomousRecoveryWaitsForLease:true,autonomousHandoffRetryMax:AUTONOMOUS_HANDOFF_RETRY_DELAYS.length,autonomousHandoffRetryStatuses:[502,503,504],autonomousHandoffRetryClassifier:"http-status-first+message-fallback",autonomousHandoffHttpStatusPreserved:true,autonomousHandoffClassifierSelfTest:autonomousHandoffClassifierSelfTest(),targetAtomicFinalize:true,staleClaimRecoverySeconds:120,gearSpecificPayloadIds:true,officialStatePrecheck:true,perTargetReconcile:false,finalReconcileOnly:true,storesOfficialRaw:true,officialExactCombatPower:true,officialRateGate:"plaync_global_700ms",officialRawReuseSeconds:900,plaync429AttemptConsumed:false,identityRecovery:"terminal-miss-or-old-name-reused-then-same-race-direct-key",identityRecoveryEntry:"stored-detail-404-or-empty-identity-200+name-server-terminal-not-found",providerRetryEntersIdentityRecovery:false,serverTransferLegionAtomic:true,sameServerRenamePreservesLegion:true,listSyncEdge:"lookup-list-sync"});
+    if(action==="health")return json({ok:true,service:"character-refresh-worker",apiVersion:API_VERSION,databaseContract:CONTRACT,identityDatabaseContract:IDENTITY_DATABASE_CONTRACT,progressContract:"server-worker-seven-phase-v2",progressPhases:7,activityRecheck:{internalOnly:true,batchLimit:5,intervalDays:7,budgetMs:75000,relationshipOnly:true},modes:["activityRecheck","startAutonomous","autonomousTick","runQueue","runPostprocess"],queueBatchLimit:5,lookupOnlyPhase:false,postprocessPhase:true,sheetDeferred:false,sheetSyncPhase:true,sheetReadbackRequired:true,listSyncSingleWorkerLease:true,listSyncCompletionAtomic:true,legionTreeCharacterAddListless:true,legionTreeCharacterAddListWrite:false,legionTreeCharacterAddListReadback:false,legionTreeListlessDatabaseContract:"455",legionTreeListlessTargetSource:"server:legion_tree_character_add_v455",legionTreeListlessTerminalStage:"SERVER_QUEUE_CHARACTER_MASTER_DONE",etaContract:"remaining-plaync-targets-only",retryFailedRowsOnly:true,browserIndependentQueue:true,autonomousTickMode:"detached",autonomousCheckpointRecoveryMax:AUTONOMOUS_RECOVERY_MAX,autonomousCheckpointRecoverySqlStates:["57014","55P03","40001","40P01"],autonomousDiagnosticWriteBestEffort:true,autonomousTerminalDiagnosticsBestEffort:true,autonomousRecoveryWaitsForLease:true,autonomousHandoffRetryMax:AUTONOMOUS_HANDOFF_RETRY_DELAYS.length,autonomousHandoffRetryStatuses:[502,503,504],autonomousHandoffRetryClassifier:"http-status-first+message-fallback",autonomousHandoffHttpStatusPreserved:true,autonomousHandoffClassifierSelfTest:autonomousHandoffClassifierSelfTest(),targetAtomicFinalize:true,staleClaimRecoverySeconds:120,gearSpecificPayloadIds:true,officialStatePrecheck:true,perTargetReconcile:false,finalReconcileOnly:true,storesOfficialRaw:true,officialExactCombatPower:true,officialRateGate:"plaync_global_700ms",officialRawReuseSeconds:900,plaync429AttemptConsumed:false,identityRecovery:"terminal-miss-or-old-name-reused-then-same-race-direct-key",identityRecoveryEntry:"stored-detail-404-or-empty-identity-200+name-server-terminal-not-found",providerRetryEntersIdentityRecovery:false,serverTransferLegionAtomic:true,sameServerRenamePreservesLegion:true,listSyncEdge:"lookup-list-sync"});
     if(action==="activityRecheck"){
       if(!internalRequest(request))return json({ok:false,code:'INTERNAL_ONLY'},403);
       return json(await runActivityRecheck(body));

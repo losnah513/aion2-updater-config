@@ -41,6 +41,13 @@ const timeout={code:'SUPABASE_RPC_FAILED',sqlState:'57014',httpStatus:500,retrya
   const w=worker();w.ctx.runQueue=async()=>{throw error;};await w.tick();assert.equal(w.calls.dispatch.length,0);assert.equal(w.calls.finish.length,1);
  }
  const denied=worker();denied.ctx.handoff=async()=>({ok:false,code:'INVALID_SESSION'});await denied.tick();assert.equal(denied.calls.queue,0);assert.equal(denied.calls.dispatch.length,0);
+ // Completion can invalidate the session before its final diagnostic write. Preserve the result/message.
+ for(const terminal of [{ok:true,completed:true},{ok:true,done:true,failed:true},{ok:true,cancelled:true},{ok:true,paused:true}]){
+  const w=worker();let first=true;w.ctx.handoff=async()=>{if(first){first=false;return {ok:true};}return {ok:false,code:'INVALID_SESSION',message:'expired diagnostic'};};
+  w.ctx.runQueue=async()=>new Response(JSON.stringify(terminal));await w.tick();
+  assert.equal(w.calls.finish.length,1);assert.equal(w.calls.finish[0][1],terminal.completed?'completed':'failed');
+  assert(!w.calls.finish[0][2].includes('expired diagnostic'));assert.equal(w.calls.dispatch.length,0);
+ }
  const resumed=worker();await resumed.tick({recoveryAttempt:3});assert.equal(resumed.calls.dispatch[0].length,4);
  // Replay uses the queue's persisted checkpoint: completed targets are never reprocessed.
  const replay=worker(),pending=['b','c'],processed=['a'];let interrupted=true;
@@ -57,6 +64,7 @@ const timeout={code:'SUPABASE_RPC_FAILED',sqlState:'57014',httpStatus:500,retrya
  receiver.ctx.handoff=async()=>{throw Error('receiver must not write');};
  const response=await receiver.calls.handler(new Request('https://synthetic.invalid',{method:'POST',body:JSON.stringify({action:'autonomousTick',sessionId:'synthetic',sessionToken:'synthetic'})}));
  assert.equal(response.status,202);await Promise.all(tasks);
+ const health=await receiver.calls.handler(new Request('https://synthetic.invalid',{method:'POST',body:JSON.stringify({action:'health'})}));assert.equal((await health.json()).autonomousTerminalDiagnosticsBestEffort,true);
  receiver.ctx.internalRequest=()=>false;
  const forbidden=await receiver.calls.handler(new Request('https://synthetic.invalid',{method:'POST',body:JSON.stringify({action:'autonomousTick'})}));assert.equal(forbidden.status,403);
  // The recovery counter survives self-handoff transport and delays remain bounded.
