@@ -14,6 +14,16 @@ function worker(){
 }
 const timeout={code:'SUPABASE_RPC_FAILED',sqlState:'57014',httpStatus:500,retryable:true,message:'statement timeout'};
 (async()=>{
+ // Heartbeats without counts must preserve the DB checkpoint; an explicit zero remains zero.
+ const heartbeat=worker();let progressArgs;
+ heartbeat.ctx.rpc=async(_name,args)=>{progressArgs=args;return {ok:true};};
+ for(const [value,expected] of [[null,null],[undefined,null],["",null],["  ",null],[false,null],[{},null],[NaN,null],[Infinity,null],[0,0],["0",0],[124,124],["123",123]]){
+  await heartbeat.ctx.progress('synthetic','synthetic','INFO',null,'heartbeat',value,value);
+  assert.equal(progressArgs.p_progress_current,expected);
+  assert.equal(progressArgs.p_progress_total,expected);
+ }
+ await heartbeat.ctx.progress('synthetic','synthetic','INFO',null,'heartbeat',null,124);
+ assert.equal(progressArgs.p_progress_current,null);assert.equal(progressArgs.p_progress_total,124);
  // Every diagnostic write fails; queue continuation and canonical completion still run.
  for(const result of [{ok:true,hasMore:true},{ok:true,completed:true},{ok:true,done:true,failed:true},{ok:true,paused:true},{ok:true,cancelled:true}]){
   const w=worker();w.ctx.handoff=async()=>{throw timeout;};w.ctx.runQueue=async()=>new Response(JSON.stringify(result));await w.tick();

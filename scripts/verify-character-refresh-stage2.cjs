@@ -30,6 +30,7 @@ const tests=[
   "tests/banner-library-management.test.js",
   "tests/character-refresh-worker-terminal.test.cjs",
   "tests/character-refresh-worker-recovery.test.cjs",
+  "tests/queue-progress-coalescing.test.cjs",
   "tests/character-refresh-extension-terminal.test.cjs",
   "tests/character-refresh-audit-safety.test.cjs",
   "tests/character-detail-identity-edge.test.cjs",

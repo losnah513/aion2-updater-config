@@ -1,12 +1,19 @@
 # KINOJO WEB HANDOFF
 
+## 상태 요약 저장 비용 / null 진행률 · SQL528 / API295.15 · 2026-10-07
+
+- 기준 main2532aba028bde065742a4f50af3c409c080a64a2, branch codex/progress-write-cost-20261007. Worker claim/update의 4개 상태 테이블 변경을 마친 뒤 core/progress 요약을 한 번씩 저장한다. 함수 범위 설정은 반환·예외 시 복원하며 일반 직접 변경 trigger는 즉시 반영한다. terminal trigger·인증·lease·반환 계약·ACL·예약·보존은 유지한다.
+- 격리 PostgreSQL에서 실제 기존/수정 RPC와 trigger를 실행해 요약 입력 최종 상태 일치, 저장 호출8→2, 실패 시4개 상태 원자적 rollback, caller 설정 복원, auth/pause/cancel/busy, 일반 쓰기·ACL·rollback 검증. helper 자체는 변경하지 않았다. 실측 전체 처리속도/용량 감소율을 뜻하지 않는다.
+- API295.15는 null/undefined/빈 문자열 heartbeat를 null로 보내며 명시0은 유지한다. 기존 실제 targets/캐시124와 달리 legacy 필드가0/0이 되던 변환을 수정했다. Worker recovery 회귀에 실제 progress RPC 인자 검증 추가.
+- 운영 반영·CI·Drive 최종 결과는 DB 프로젝트 LOG36 참조. 별도 전체 조회를 반복 실행하지 않으며 다음 정상22시 예약과 연속2일 완료 관측은 남는다. SQL509/512 후보 timeout 및390MB 유지도 후속이다. migration/rollback20261007030204_queue_progress_write_coalescing.sql; 롤백은 SQL 파일과 기준 main의 Worker v46/API295.14 소스.
+
 ## 자동 조회 체크포인트 복구 · API295.14 · 2026-10-07
 
 - 현재 작업 branch `codex/worker-terminal-diagnostics-20261007`, 기준 main `51f4d4677b751e67cf5833f18f6cb601d1dafbab`. PR480의 복구 수정에 대한 종료 진단 보완이며 신규 SQL/권한/예약/보존 변경 없음.
 - 67/123 중단 직전 DB 진행률/worker 상태 저장 timeout을 확인했다. 진단 handoff 실패가 다음 tick과 완료 callback을 끊던 경로를 분리했다. SQLSTATE·HTTP 보존, 체크포인트 최대3회 복구(5/10/15초), 이전 lease 만료 대기, 정상 진행 시 예산 초기화. 정상 중복 tick·완료·중단·pause·권한 오류 보호 유지.
 - API295.13 실제 실행은 124/124 성공·Master/리뷰/랭킹 완료·List 123/123 쓰기/readback 뒤 11:27 KST 정상 종료했다. 완료된 세션의 늦은 진단 거부가 자동화 메시지를 오류 문구로 바꾼 문제를 API295.14에서 보완했다. terminal 진단 실패는 canonical 결과·메시지를 보존하며 최초 인증 거부는 계속 차단한다. 실제 전체 실행은 API295.13, terminal 보완은 합성 회귀/운영 readback 검증을 구분한다.
 - `node tests/character-refresh-worker-recovery.test.cjs`, terminal/budget/dispatch 회귀와 `node scripts/verify-character-refresh-stage2.cjs`로 검증한다. 배포/전체 운영 실행/PR/CI/Drive 최종 상태는 [DB 프로젝트 LOG](https://drive.google.com/file/d/1F6fBTUNmPdJgeD3bUb1wAsv4yEgAyKcO/view) 35회차를 따른다. 운영 관리자 브라우저 검수를 대체하지 않는다.
-- 복구 예산 소진은 attention으로 남기며 활성 세션을 강제로 성공/실패 처리하지 않는다. fallback은 기존 정상 만료다. DB 진행률 반복 계산 비용, heartbeat의 null 수치가 0/0으로 변환되는 legacy 필드, SQL509/512 정리 후보 timeout, 연속2일 자동 실행 완료 확인은 남는다. 실제 대상/캐시 수량은 124로 유지됐다. 첫 다음 행동은 상태 저장 비용과 null 수치 보완, 22시 정상 예약 결과 확인이다. 롤백은 기준 Git 소스의 Worker v44/API295.12 재배포이며 데이터는 유지한다.
+- 복구 예산 소진은 attention으로 남기며 활성 세션을 강제로 성공/실패 처리하지 않는다. fallback은 기존 정상 만료다. SQL509/512 정리 후보 timeout, 연속2일 자동 실행 완료 확인은 남는다. 실제 대상/캐시 수량은 124로 유지됐다. 상태 저장 비용/null 수치는 위 SQL528/API295.15 항목을 따르며 다음 관측은 22시 정상 예약 결과 확인이다. 롤백은 기준 Git 소스의 Worker v44/API295.12 재배포이며 데이터는 유지한다.
 
 ## 정리 후보 조회 비용 개선 · SQL527 · 2026-10-07
 
