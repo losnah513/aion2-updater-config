@@ -67,7 +67,7 @@
    update public.updater_sessions set status='error' where session_id='44';
    insert into public.character_master values(null,null,null,null,null);
    insert into public.character_stat_sources values(null,null);
-  
+
 ALTER TABLE public.extension_character_payloads ADD COLUMN gear_evidence jsonb;
 ALTER TABLE public.lookup_session_targets ADD COLUMN server_id integer, ADD COLUMN character_name text, ADD COLUMN snapshot_id bigint;
 UPDATE public.extension_character_payloads SET gear_evidence='{"gearReasonCode":"kept","equipmentDetails":[1,2,3]}'::jsonb;
