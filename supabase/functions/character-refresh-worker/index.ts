@@ -29,7 +29,7 @@ const CORS={
   "cache-control":"no-store",
   "x-content-type-options":"nosniff"
 };
-const API_VERSION="295.13";
+const API_VERSION="295.14";
 const CONTRACT="295";
 const BUILD_DATE="2026-10-07";
 const IDENTITY_DATABASE_CONTRACT="461";
@@ -69,11 +69,12 @@ const transientAutonomousQueueError=error=>error?.retryable!==false&&(
 );
 // Diagnostic writes must not prevent an authenticated queue checkpoint from resuming.
 async function autonomousHandoff(...args){
+  const terminalDiagnostic=["complete","attention","cancelled","paused"].includes(args[3]);
   try{
     const result=await handoff(...args);
     if(result?.ok===false)throw new WorkerError(clean(result.message||result.code,1000),clean(result.code,120),false);
     return result;
-  }catch(error){if(!transientAutonomousQueueError(error))throw error;}
+  }catch(error){if(!terminalDiagnostic&&!transientAutonomousQueueError(error))throw error;}
 }
 const AUTONOMOUS_HANDOFF_TRANSIENT_HTTP_STATUSES=new Set([502,503,504]);
 const transientAutonomousHandoffError=error=>{

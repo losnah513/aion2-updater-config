@@ -120,7 +120,7 @@
     },
     {
       "path": "supabase/functions/character-refresh-worker/index.ts",
-      "sha256": "f1bea67f1d2f14f274df0c6709516618e053bb7b9b8bc1157b42ff5cfc711930"
+      "sha256": "0b5121e623f8fdf1c2887894579d710cac8a8d496ba5fb75552b35dac1c38d2c"
     },
     {
       "path": "supabase/functions/character-detail-refresh/index.ts",
