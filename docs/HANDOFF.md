@@ -1,5 +1,13 @@
 # KINOJO WEB HANDOFF
 
+## 성역 신규 게스트 등록 오류 · SQL525 · 2026-10-07
+
+- 10/6 23:00~23:30 KST 운영 로그에 v480 등록 함수의 `sanctuary_character_owners_v412.character_id` NOT NULL 오류 2건을 확인했다. 생성 helper를 SELECT의 WHERE 안에서 실행해 그 조회문이 새 행을 읽지 못한 원인이다. 빈/기존 master 양쪽에서 동일 23502를 재현했다.
+- helper를 한 번 호출해 ID를 받은 다음 별도 SELECT INTO STRICT/FOR UPDATE로 읽도록 수정했다. 기존 권한·제한시간·멱등 처리·List 옵션과 원자성은 유지한다. SQL525 운영 함수 readback 일치·ACL 불변·신규 보안 지적0. 이용자의 게스트/포스/시트 대리 등록은 수행하지 않았다.
+- `node tests/sanctuary-registration-visibility.test.cjs`는 실제 운영 등록/helper 함수와 스키마 열 정의, 합성 데이터 및 권한/card/audit adapter로 재현/수정 검증한다. 신규/기존 게스트, MAIN/ALT, 외부 본캐+부캐, 동명 다른 서버, List Y/N 큐, 멱등·권한 거부·만료·후반 실패 rollback PASS. 별도 기존 권한/실제 legacy save 회귀도 PASS. 실제 외부 List 전송 및 로그인 브라우저 등록 검수를 뜻하지 않는다.
+- 기준 main `87c8d2bbb9537808e6ed9576383148f1e059ea8c`, 브랜치 `codex/sanctuary-guest-registration-20261007`; migration/rollback `20261007005939_sanctuary_guest_registration_visibility.sql`. rollback은 데이터를 유지하지만 알려진 생성/조회 결함을 재도입하므로 후속 수정 우선.
+- 최종 PR/CI/Drive 상태는 [성역 프로젝트 LOG](https://drive.google.com/file/d/19lh9hkVKNsu9a54bd-k3rlvhIsCK_Khv/view) 74회차를 따른다. 계획 v6.5의 기존 등록 기능 버그 수정이며 권한·제품 정책 변경 없음.
+
 ## 자동 조회 하루 2회·일/주 성장만 보관 · SQL524 · 2026-10-07
 
 - 최신 사용자 지시로 공식 자동 조회를 KST 10:00·22:00(UTC `0 1,13 * * *`)로 변경했다. 기존 job 이름은 관리자 토글 호환을 위해 유지한다. 활성 상태·명령·타 예약은 그대로다. PC/모바일 관리자 표시와 JS fallback도 동일하다.
