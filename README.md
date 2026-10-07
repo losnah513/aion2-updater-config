@@ -1,5 +1,11 @@
 # KINOJO WEB
 
+## Retention protection lookup cost (SQL529)
+
+Payload diagnostic cleanup and superseded snapshot cleanup calculate protection sets once per call instead of repeatedly scanning references per row. A small partial payload ID index contains synced object evidence with fields beyond the eight retained diagnostic keys. Its predicate uses built-ins, so direct writers need no extra private helper privilege. Compaction automatically removes an item from this index; later changes become visible again.
+
+Existing separate jobs retain their staggered schedules, shared advisory lock, NOWAIT protection locks, batch limits, cleanup bodies and retention rules. Adding concurrent processes would compete for the same DB; this change reuses the existing serialized jobs. Recheck the index and selector if the eight-key evidence contract changes. Production timing, cleanup results and remaining capacity work are in the DB project LOG37. Run `node tests/retention-diagnostic-candidate-sets.test.cjs` for exact old/new selector parity, NULL and identity boundaries, index maintenance, direct service writes, ACLs and rollback.
+
 ## Worker progress write cost (SQL528 / API295.15)
 
 Worker claim/update defer their intermediate summary triggers within the function and refresh core/progress once after all four state updates. The RPC restores the caller setting on success; PostgreSQL rollback restores it on failure; ordinary writes keep their immediate triggers. Isolated PostgreSQL regression checks final summary input parity, refresh calls 8 to 2, rollback, auth/control/lease behavior and unchanged ACLs. This is a write-count reduction, not a measured runtime or database-size reduction.

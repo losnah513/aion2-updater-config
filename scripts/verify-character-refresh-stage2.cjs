@@ -31,6 +31,7 @@ const tests=[
   "tests/character-refresh-worker-terminal.test.cjs",
   "tests/character-refresh-worker-recovery.test.cjs",
   "tests/queue-progress-coalescing.test.cjs",
+  "tests/retention-diagnostic-candidate-sets.test.cjs",
   "tests/character-refresh-extension-terminal.test.cjs",
   "tests/character-refresh-audit-safety.test.cjs",
   "tests/character-detail-identity-edge.test.cjs",
