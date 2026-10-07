@@ -132,7 +132,7 @@
     },
     {
       "path": "core/kinojo-supabase-features.js",
-      "sha256": "502c120087badc5cb432ba4a1f7eed8138162aa34147df22f1962c41bc006123"
+      "sha256": "c36193f74b34526a6e943fb99cd453db9cf24f6b8c36f1aa5e61801608d6c16c"
     },
     {
       "path": "admin/js/admin-characters.js",
@@ -140,19 +140,19 @@
     },
     {
       "path": "admin/js/admin.js",
-      "sha256": "19a77e79beb77370afa90b43f07b35632eefac6ff340d20788f18b3d013c9ba6"
+      "sha256": "42e92c23955d6349ace0b3bc2518e5434fe35154492255a1920c4575f9e32f43"
     },
     {
       "path": "admin/js/admin-bootstrap.js",
-      "sha256": "0edbcef06de09d7c3438f6cee1c1ae3f86c3dfe1889e8ebce93fce6033124c20"
+      "sha256": "8bc05e92b75f3d64e8d4a0c90269a7edb582c80fa062b7329bbab26f411c13ff"
     },
     {
       "path": "admin/index.html",
-      "sha256": "dd5be99a15f0651176f3137fcd74b5052971ea5fc978d2b2032646fa94f6352d"
+      "sha256": "6886ece3ef1ab16ada283234dffad5c57e78294217724c4be14fa1300553aeb1"
     },
     {
       "path": "m/admin/index.html",
-      "sha256": "91ca3d1141eed60a44cbcfd96b2f541f5f2d7d5e7500042644cb01d820c97ff4"
+      "sha256": "89e592ab2da3256ed4173c809a760828b41ffb1f73b956ed7f005ef43ee1d4c8"
     },
     {
       "path": "supabase/config.toml",

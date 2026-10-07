@@ -710,29 +710,6 @@
     return { ok:false, message:'알 수 없는 이벤트 공지 관리자 명령입니다.' };
   }
 
-  async function adminMeter(command, extra={}){
-    const admin = assertAdmin();
-    if(Number(admin.level || 0) < 5 || String(admin.role || '').toUpperCase() !== 'MASTER'){
-      return { ok:false, message:'키노조 미터 운영 설정은 MASTER만 관리할 수 있습니다.' };
-    }
-    const actions = {
-      console:'adminMeterConsole',
-      saveOperation:'adminMeterOperationSave',
-      saveStatistics:'adminMeterStatisticsSave',
-      saveLaunch:'adminMeterLaunchSave',
-      saveNotice:'adminMeterNoticeSave',
-      deleteNotice:'adminMeterNoticeDelete',
-      logs:'adminMeterDungeonLogs'
-    };
-    const action = actions[String(command || '').trim()];
-    if(!action) return { ok:false, message:'알 수 없는 키노조 미터 관리자 명령입니다.' };
-    return invokeEdgeFunction('meter-admin-control', Object.assign({
-      action,
-      passKey:currentAdminSessionCredential(),
-      channel:String(extra.channel || 'stable')
-    }, extra || {}));
-  }
-
   async function adminAutomation(command, extra={}){
     assertAdmin();
     if(command==='saveListWrite')return rpc('kinojo_automation_admin_list_write_save',{
@@ -941,7 +918,6 @@
     if(path.includes('/admin/'))return 'admin';
     if(path.includes('/hof/')||path.includes('/hall-of-fame/'))return 'hall';
     if(path.includes('/ranking/'))return 'ranking';
-    if(path.includes('/meter/'))return 'meter';
     if(path.includes('/arcana/'))return 'arcana';
     if(path.includes('/pages/'))return 'pages';
     return 'home';
@@ -2194,7 +2170,6 @@
     getWebEventNoticeGroups,
     adminNotice,
     adminEventNotice,
-    adminMeter,
     adminAutomation,
     adminSanctuarySheetSync,
     adminSanctuaryProfileDiagnostic,

@@ -9,11 +9,11 @@
 
   const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
 
-  const state = { tab:'dashboard', subtab:'', loaded:{}, subtabs:{ members:'accounts', characters:'lookup', sanctuary:'schedule', notices:'general', images:'main', meter:'downloads', system:'server-status' }, requests:[], accounts:[], memberPage:1, memberCursor:'', memberNextCursor:'', memberCursorStack:[], memberTotalCount:0, memberHasMore:false, memberImageReviewItems:[], memberImageRequestPendingCount:0, memberImageReviewTotalCount:0, characters:[], characterSummary:{}, logs:[], eventNoticeGroups:[], eventNoticeEditingId:null, meterConsoles:{stable:null,staging:null}, meterNotices:[], meterDungeonLogPage:1, meterDungeonLogTotalPages:1, sanctuarySchedules:[], sanctuaryMasters:[], sanctuaryStatusOptions:[], sanctuaryScheduleLoaded:false, sanctuaryScheduleAccess:null, sanctuaryRolePermissions:null, sanctuaryScheduleSaving:false, sanctuarySupportRequests:[], lastSanctuarySyncData:null, lastSanctuaryStatusData:null, lastSanctuaryId:'all', visitorDays:7, visitorPage:1, visitorTotalPages:1, visitorCanViewMemberHistory:false, lookupConsole:null, lookupSessionId:'', lookupSessionToken:'', lookupPollTimer:null, lookupHeartbeatAt:0, lookupStarting:false, lookupQueueRunning:false, lookupRetrying:false, lookupExitSafety:'idle', lookupHistory:[], lookupHistoryDetails:{}, lookupTargetStates:{}, lookupTargetSession:'', lookupLastCurrent:'' };
+  const state = { tab:'dashboard', subtab:'', loaded:{}, subtabs:{ members:'accounts', characters:'lookup', sanctuary:'schedule', notices:'general', images:'main',  system:'server-status' }, requests:[], accounts:[], memberPage:1, memberCursor:'', memberNextCursor:'', memberCursorStack:[], memberTotalCount:0, memberHasMore:false, memberImageReviewItems:[], memberImageRequestPendingCount:0, memberImageReviewTotalCount:0, characters:[], characterSummary:{}, logs:[], eventNoticeGroups:[], eventNoticeEditingId:null, sanctuarySchedules:[], sanctuaryMasters:[], sanctuaryStatusOptions:[], sanctuaryScheduleLoaded:false, sanctuaryScheduleAccess:null, sanctuaryRolePermissions:null, sanctuaryScheduleSaving:false, sanctuarySupportRequests:[], lastSanctuarySyncData:null, lastSanctuaryStatusData:null, lastSanctuaryId:'all', visitorDays:7, visitorPage:1, visitorTotalPages:1, visitorCanViewMemberHistory:false, lookupConsole:null, lookupSessionId:'', lookupSessionToken:'', lookupPollTimer:null, lookupHeartbeatAt:0, lookupStarting:false, lookupQueueRunning:false, lookupRetrying:false, lookupExitSafety:'idle', lookupHistory:[], lookupHistoryDetails:{}, lookupTargetStates:{}, lookupTargetSession:'', lookupLastCurrent:'' };
 
   const CACHE = '2026073105';
 
-  const DEFAULT_SUBTABS = { members:'accounts', characters:'lookup', sanctuary:'schedule', notices:'general', images:'main', meter:'downloads', system:'server-status', logs:'activity' };
+  const DEFAULT_SUBTABS = { members:'accounts', characters:'lookup', sanctuary:'schedule', notices:'general', images:'main',  system:'server-status', logs:'activity' };
 
   function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
 
@@ -96,7 +96,6 @@
 
   function adminEventNotice(cmd, extra){ return window.KinojoSupabase.adminEventNotice(cmd, extra||{}); }
 
-  function adminMeter(cmd, extra){ return window.KinojoSupabase.adminMeter(cmd, extra||{}); }
 
   function adminAutomation(cmd, extra){ return window.KinojoSupabase.adminAutomation(cmd, extra||{}); }
 
@@ -135,5 +134,5 @@
     window.dispatchEvent(new CustomEvent('kinojo:banner-assets-updated',{detail:{assets:snapshot,source:String(source||'admin'),createdAssetIds:[...new Set((createdAssetIds||[]).map(Number).filter(Number.isFinite))],updatedAt:new Date().toISOString()}}));
   }
 
-  Object.assign(A,{$,$$,state,CACHE,DEFAULT_SUBTABS,esc,addLog,setStatus,toast,showAdminActionToast,roleLabel,roleKey,roleLevel,isMaster,isFullAdmin,isStaffConsole,isAdmin,adminAccount,adminCharacter,adminLookup,adminNotice,adminEventNotice,adminMeter,adminAutomation,adminVisitor,EVENT_NOTICE_TYPES,eventNoticeTypeLabel,todayDateInputValue,formatServerTime,action,notifyBannerAssetsUpdated});
+  Object.assign(A,{$,$$,state,CACHE,DEFAULT_SUBTABS,esc,addLog,setStatus,toast,showAdminActionToast,roleLabel,roleKey,roleLevel,isMaster,isFullAdmin,isStaffConsole,isAdmin,adminAccount,adminCharacter,adminLookup,adminNotice,adminEventNotice,adminAutomation,adminVisitor,EVENT_NOTICE_TYPES,eventNoticeTypeLabel,todayDateInputValue,formatServerTime,action,notifyBannerAssetsUpdated});
 })(window);

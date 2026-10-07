@@ -62,7 +62,6 @@ const publicShellPages = [
   'hof/index.html', 'm/hof/index.html',
   'ranking/index.html', 'm/ranking/index.html',
   'sanctuary/index.html', 'm/sanctuary/index.html',
-  'meter/index.html', 'm/meter/index.html',
   'arcana/index.html', 'm/arcana/index.html',
 ];
 for (const page of publicShellPages) {
@@ -170,7 +169,6 @@ for (const [functionName, action, expected] of [
   ['lookup-sheet-bridge', 'adminBridgePing', 'lookup-sheet-bridge'],
   ['lookup-sheet-bridge', 'webSanctuaryRosterV312', 'lookup-sheet-bridge'],
   ['lookup-sheet-bridge', 'unknown', 'lookup-sheet-bridge'],
-  ['meter-admin-control', 'adminMeterConsole', 'meter-admin-control'],
 ]) {
   assert.equal(resolveEdgeFunctionName(functionName, { action }), expected, `${functionName}/${action}: direct Edge route mismatch`);
 }

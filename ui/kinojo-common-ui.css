@@ -948,11 +948,3 @@ KINOJO Common Footer 20260719
   .common-footer .footer-links a,.common-footer .footer-links button{font-size:11px;}
   .common-footer .footer-powered{font-size:10px;}
 }
-
-
-/* ===========================================================
-KINOJO Meter Web Integration 20260722
-- KINOJO Meter is a first-class common route.
-- Mobile routes keep the compact topbar even on unfolded Fold/tablet widths.
-=========================================================== */
-body.kinojo-page-meter{--kinojo-page-max:1180px;}

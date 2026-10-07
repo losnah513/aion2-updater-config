@@ -110,7 +110,6 @@ jobs:
             'm/hof/index.html',
             'm/ranking/index.html',
             'm/legion-tree/index.html',
-            'm/meter/index.html',
             'm/sanctuary/index.html',
             'm/sanctuary-schedule/index.html',
           ];
@@ -202,7 +201,6 @@ jobs:
             "m/hof/index.html"
             "m/ranking/index.html"
             "m/legion-tree/index.html"
-            "m/meter/index.html"
             "m/sanctuary/index.html"
             "m/sanctuary-schedule/index.html"
           )

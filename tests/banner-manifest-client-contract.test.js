@@ -175,7 +175,7 @@ async function verifyPlaybackRuntime(){
 
   assert.match(pcBannerSource,/runtime\.mountBanner\(\{/,'8-마 common PC renderer must mount the shared Banner player');
   assert.match(pcBannerSource,/if\(path==='\/'\|\|path==='\/home\.html\/'\)return 'HOME'/,'HOME route mapping must be explicit');
-  for(const code of ['HOF','RANKING','LEGION_TREE','LEGION_ROSTER','METER','SANCTUARY','SANCTUARY_SCHEDULE'])assert.ok(pcBannerSource.includes("return '"+code+"'"),'missing PC side page mapping '+code);
+  for(const code of ['HOF','RANKING','LEGION_TREE','LEGION_ROSTER','SANCTUARY','SANCTUARY_SCHEDULE'])assert.ok(pcBannerSource.includes("return '"+code+"'"),'missing PC side page mapping '+code);
   assert.equal(/Date\.now|Math\.random|Asia\/Seoul|priority|weighted|scheduleMode/.test(pcBannerSource),false,'PC side mapping must not own Server schedule/priority/random decisions');
   assert.equal(pcBannerSource.includes('innerHTML'),false,'PC side banner renderer must use DOM construction instead of HTML injection');
   assert.match(pcBannerSource,/Object\.freeze\(\{refresh,render,clear,resolvePageCode,resolveSlotCode(?:,[^}]*)?\}\)/,'common PC side banner renderer must expose renderer and canonical mapping helpers');
@@ -219,7 +219,7 @@ async function verifyPlaybackRuntime(){
   assert.equal(fakeSlot.children[0].tagName,'A','stable SIDE player host remains an anchor element');
   assert.equal(fakeSlot.children[0].getAttribute('href'),null,'image without clickUrl must not expose a clickable href');
   assert.equal(fakeSlot.children[0].children[0].getAttribute('alt'),'KINOJO 사이드 배너','blank alt must receive a safe visible-content fallback');
-  for(const [route,code] of [['/','HOME'],['/index.html','HOME'],['/home.html','HOME'],['/hof/','HOF'],['/ranking/index.html','RANKING'],['/legion-tree/','LEGION_TREE'],['/legion-roster/','LEGION_ROSTER'],['/legion-roster/index.html','LEGION_ROSTER'],['/meter/','METER'],['/sanctuary/','SANCTUARY'],['/sanctuary-schedule/index.html','SANCTUARY_SCHEDULE']])assert.equal(pcBannerApi.resolvePageCode(route),code,route+' page mapping mismatch');
+  for(const [route,code] of [['/','HOME'],['/index.html','HOME'],['/home.html','HOME'],['/hof/','HOF'],['/ranking/index.html','RANKING'],['/legion-tree/','LEGION_TREE'],['/legion-roster/','LEGION_ROSTER'],['/legion-roster/index.html','LEGION_ROSTER'],['/sanctuary/','SANCTUARY'],['/sanctuary-schedule/index.html','SANCTUARY_SCHEDULE']])assert.equal(pcBannerApi.resolvePageCode(route),code,route+' page mapping mismatch');
   assert.equal(pcBannerApi.resolvePageCode('/m/'),'','mobile HOME must never map to a PC SIDE target');
   assert.equal(pcBannerApi.resolvePageCode('/m/hof/'),'','mobile subpages must never map to PC SIDE targets');
   assert.equal(pcBannerApi.resolveSlotCode(fakeSlot),'LEFT');
@@ -249,7 +249,7 @@ async function verifyPlaybackRuntime(){
   const loaderSlot=new FakeElement('aside',['kinojo-pc-banner-slot','is-left']);loaderSlot.host=loaderHost;loaderSlot.setAttribute('aria-hidden','true');
   const loadedScripts=[];const loaderCalls=[];let loaderContext=null;
   loaderContext={
-    window:{scrollY:0,innerWidth:1920,innerHeight:900,outerWidth:1920,devicePixelRatio:1,screen:{availWidth:1920},location:{pathname:'/meter/'},getComputedStyle(){return{display:'grid'}},addEventListener(){}},
+    window:{scrollY:0,innerWidth:1920,innerHeight:900,outerWidth:1920,devicePixelRatio:1,screen:{availWidth:1920},location:{pathname:'/ranking/'},getComputedStyle(){return{display:'grid'}},addEventListener(){}},
     document:{
       readyState:'complete',currentScript:{src:'https://kinojo.info/ui/kinojo-pc-banners.js?cache=2026090902'},documentElement:{clientWidth:1920,appendChild(){}},
       head:{appendChild(script){loadedScripts.push(script.src);loaderContext.window.KinojoBannerRuntime={mountBanner(options){loaderCalls.push(options.pageCode+':'+options.slotCode);options.deactivate?.();return{stop(){}}}};script.onload?.();return script}},
@@ -259,7 +259,7 @@ async function verifyPlaybackRuntime(){
   };
   vm.runInNewContext(pcBannerSource,loaderContext,{filename:'ui/kinojo-pc-banners.js'});await new Promise(resolve=>setTimeout(resolve,0));
   assert.deepEqual(loadedScripts,['https://kinojo.info/ui/kinojo-banner-runtime.js?cache=2026090902'],'PC pages without a static runtime tag must load the shared Manifest client from the same /ui/ base');
-  assert.deepEqual(loaderCalls,['METER:LEFT'],'dynamically loaded shared runtime must receive the canonical page/slot target');
+  assert.deepEqual(loaderCalls,['RANKING:LEFT'],'dynamically loaded shared runtime must receive the canonical page/slot target');
   assert.equal(loaderSlot.dataset.kinojoPcBannerState,'empty','inactive SIDE Manifest must keep the existing empty slot');
   assert.equal(/og:image|twitter:image/.test(source),false,'Banner runtime must not rewrite static SEO fallback metadata');
 
@@ -313,7 +313,7 @@ async function verifyPlaybackRuntime(){
     const liveSideTargets=[
       ['HOME','LEFT'],['HOME','RIGHT'],['HOF','LEFT'],['HOF','RIGHT'],
       ['RANKING','LEFT'],['RANKING','RIGHT'],['LEGION_TREE','LEFT'],['LEGION_TREE','RIGHT'],
-      ['METER','LEFT'],['METER','RIGHT'],['SANCTUARY','LEFT'],['SANCTUARY','RIGHT'],
+      ['SANCTUARY','LEFT'],['SANCTUARY','RIGHT'],
       ['SANCTUARY_SCHEDULE','LEFT'],['SANCTUARY_SCHEDULE','RIGHT'],
     ];
     for(const [pageCode,slotCode] of liveSideTargets){

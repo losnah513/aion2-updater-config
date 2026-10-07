@@ -30,8 +30,6 @@ on:
       - "m/sanctuary-management/**"
       - "admin/**"
       - "m/admin/**"
-      - "meter/**"
-      - "m/meter/**"
       - "core/**"
       - "ui/**"
       - "supabase/functions/kinojo-member-profile/**"
@@ -39,7 +37,6 @@ on:
       - "supabase/migrations/*member_image_request*.sql"
       - "supabase/migrations/*legion_roster*.sql"
       - "tests/**"
-      - "launcher-content.json"
       - "CNAME"
       - ".github/workflows/verify-kinojo-pages.yml"
   push:
@@ -71,8 +68,6 @@ on:
       - "m/sanctuary-management/**"
       - "admin/**"
       - "m/admin/**"
-      - "meter/**"
-      - "m/meter/**"
       - "core/**"
       - "ui/**"
       - "supabase/functions/kinojo-member-profile/**"
@@ -80,7 +75,6 @@ on:
       - "supabase/migrations/*member_image_request*.sql"
       - "supabase/migrations/*legion_roster*.sql"
       - "tests/**"
-      - "launcher-content.json"
       - "CNAME"
       - ".github/workflows/verify-kinojo-pages.yml"
   workflow_dispatch:
@@ -143,7 +137,6 @@ jobs:
             "admin/js/admin-shared.js"
             "admin/js/admin-system.js"
             "admin/js/admin-bootstrap.js"
-            "meter/js/meter-app.js"
             "ranking/js/ranking-utils.js"
             "ranking/js/ranking-data.js"
             "ranking/js/ranking-card.js"
@@ -224,7 +217,6 @@ jobs:
           node tests/sanctuary-management-stage13-external-family-contract.test.js
           node tests/admin-member-v433-browser-rpc-contract.test.js
           node tests/staged-page-contract.test.js
-          node tests/meter-presence-log-contract.test.js
           node tests/ranking-ui-contract.test.js
           node tests/legacy-ranking-snapshot-guard.test.js
           node tests/hof-candidate-generation.test.js
@@ -353,31 +345,6 @@ jobs:
                   raise SystemExit(f"Unexpected active class icon size: {name} {width}x{height}")
               if active == original:
                   raise SystemExit(f"Active class icon was not replaced: {name}")
-
-          meter_pages = [Path("meter/index.html"), Path("m/meter/index.html")]
-          for page in meter_pages:
-              text = page.read_text(encoding="utf-8")
-              for token in ["meterInstallerSize", "다운로드 용량", "meter-app.js?cache=2026081502-50040", "meterLiveUsers", "meterLiveNames"]:
-                  if token not in text:
-                      raise SystemExit(f"{page}: Meter distribution contract missing: {token}")
-
-          admin_pages = [Path("admin/index.html"), Path("m/admin/index.html")]
-          for page in admin_pages:
-              text = page.read_text(encoding="utf-8")
-              for token in ["data-admin-subtab=\"downloads\"", "data-admin-subtab=\"runtime\"", "data-admin-subtab=\"statistics\"", "data-admin-subtab=\"notices\"", "data-admin-subtab=\"logs\"", "data-meter-download-enabled", "data-meter-launch-enabled", "data-meter-statistics-enabled", "kinojo-filter-switch", "meterDungeonLogRows"]:
-                  if token not in text:
-                      raise SystemExit(f"{page}: Meter admin contract missing: {token}")
-
-          meter_app = Path("meter/js/meter-app.js").read_text(encoding="utf-8")
-          admin_system = Path("admin/js/admin-system.js").read_text(encoding="utf-8")
-          for token in ["launcherDownloadAuthorization", "renderDistribution", "미터기 포함"]:
-              if token not in meter_app:
-                  raise SystemExit(f"Meter WEB contract missing: {token}")
-          if "desktopDownloadAuthorization" in meter_app:
-              raise SystemExit("Meter WEB must authorize the Launcher, not the legacy desktop installer")
-          for token in ["RANK_ALLOWLIST", "allowedLevels", "launchAllowedLevels", "combinedFileSize"]:
-              if token not in admin_system:
-                  raise SystemExit(f"Meter admin contract missing: {token}")
 
           print("KINOJO modal source contracts: PASS")
           PY
@@ -553,7 +520,6 @@ jobs:
             "index.html"
             "home.html"
             "m/index.html"
-            "launcher-content.json"
             "hall-of-fame/index.html"
             "hof/index.html"
             "m/hof/index.html"
@@ -629,11 +595,6 @@ jobs:
             "admin/js/admin-characters.js"
             "admin/js/admin-bootstrap.js"
             "admin/css/admin.css"
-            "meter/index.html"
-            "m/meter/index.html"
-            "meter/meter-config.json"
-            "meter/js/meter-app.js"
-            "meter/css/meter.css"
             "pages/about.html"
             "pages/contact.html"
             "pages/privacy.html"

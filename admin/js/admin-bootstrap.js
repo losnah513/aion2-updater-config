@@ -20,7 +20,6 @@
   const copyLookupFailure=(...args)=>A.copyLookupFailure(...args);
   const decideIdentityReview=(...args)=>A.decideIdentityReview(...args);
   const deleteEventNoticeGroup=(...args)=>A.deleteEventNoticeGroup(...args);
-  const deleteMeterNotice=(...args)=>A.deleteMeterNotice(...args);
   const duplicateEventNoticeGroup=(...args)=>A.duplicateEventNoticeGroup(...args);
   const editEventNoticeGroup=(...args)=>A.editEventNoticeGroup(...args);
   const formatServerTime=(...args)=>A.formatServerTime(...args);
@@ -28,8 +27,6 @@
   const getEventNoticeGroupById=(...args)=>A.getEventNoticeGroupById(...args);
   const handleLookupHistoryClick=(...args)=>A.handleLookupHistoryClick(...args);
   const handleMemberAction=(...args)=>A.handleMemberAction(...args);
-  const handleMeterAdminChange=(...args)=>A.handleMeterAdminChange(...args);
-  const handleMeterAdminClick=(...args)=>A.handleMeterAdminClick(...args);
   const isAdmin=(...args)=>A.isAdmin(...args);
   const isMaster=(...args)=>A.isMaster(...args);
   const isStaffConsole=(...args)=>A.isStaffConsole(...args);
@@ -44,8 +41,6 @@
   const loadCodeRequests=(...args)=>A.loadCodeRequests(...args);
   const loadEventNoticeGroups=(...args)=>A.loadEventNoticeGroups(...args);
   const loadLookupHistory=(...args)=>A.loadLookupHistory(...args);
-  const loadMeterAdminConsole=(...args)=>A.loadMeterAdminConsole(...args);
-  const loadMeterDungeonLogs=(...args)=>A.loadMeterDungeonLogs(...args);
   const loadNotices=(...args)=>A.loadNotices(...args);
   const loadSanctuaryRolePermissions=(...args)=>A.loadSanctuaryRolePermissions(...args);
   const loadSanctuaryScheduleConsole=(...args)=>A.loadSanctuaryScheduleConsole(...args);
@@ -56,7 +51,6 @@
   const handleMemberImageReviewClick_=(...args)=>A.handleMemberImageReviewClick_(...args);
   const lookupExitSafety=(...args)=>A.lookupExitSafety(...args);
   const handleCharacterLookupVisibilityChange=(...args)=>A.handleCharacterLookupVisibilityChange(...args);
-  const meterNoticeById=(...args)=>A.meterNoticeById(...args);
   const openEventNoticePreview=(...args)=>A.openEventNoticePreview(...args);
   const option=(...args)=>A.option(...args);
   const probeCharacterIdentity=(...args)=>A.probeCharacterIdentity(...args);
@@ -71,14 +65,12 @@
   const renderSanctuaryTeamSelect=(...args)=>A.renderSanctuaryTeamSelect(...args);
   const renderServerBox=(...args)=>A.renderServerBox(...args);
   const renumberEventNoticeEditor=(...args)=>A.renumberEventNoticeEditor(...args);
-  const resetMeterNoticeEditor=(...args)=>A.resetMeterNoticeEditor(...args);
   const resetSanctuaryScheduleEditor=(...args)=>A.resetSanctuaryScheduleEditor(...args);
   const retryFailedCharacterLookup=(...args)=>A.retryFailedCharacterLookup(...args);
   const roleLabel=(...args)=>A.roleLabel(...args);
   const sanctuaryScheduleById=(...args)=>A.sanctuaryScheduleById(...args);
   const saveCharacterStatus=(...args)=>A.saveCharacterStatus(...args);
   const saveEventNoticeEditor=(...args)=>A.saveEventNoticeEditor(...args);
-  const saveMeterNotice=(...args)=>A.saveMeterNotice(...args);
   const saveNotice=(...args)=>A.saveNotice(...args);
   const saveSanctuarySchedule=(...args)=>A.saveSanctuarySchedule(...args);
   const searchCharacters=(...args)=>A.searchCharacters(...args);
@@ -90,7 +82,7 @@
   const testWebAppConnection=(...args)=>A.testWebAppConnection(...args);
   const todayDateInputValue=(...args)=>A.todayDateInputValue(...args);
   const updateSanctuaryScheduleSaveState=(...args)=>A.updateSanctuaryScheduleSaveState(...args);
-  const TAB_LABELS={dashboard:'대시보드',requests:'코드 요청',members:'회원 관리',characters:'캐릭터 관리',sanctuary:'성역 관리',notices:'공지 관리',images:'이미지 관리',meter:'키노조 미터',system:'시스템 설정',logs:'로그 관리'};
+  const TAB_LABELS={dashboard:'대시보드',requests:'코드 요청',members:'회원 관리',characters:'캐릭터 관리',sanctuary:'성역 관리',notices:'공지 관리',images:'이미지 관리',system:'시스템 설정',logs:'로그 관리'};
   const IMAGE_LOCATION_LABELS={main:'메인 배너',side:'사이드 배너'};
   const IMAGE_VIEW_LABELS={create:'새 이벤트',events:'이벤트 관리',library:'이미지 라이브러리'};
 
@@ -129,8 +121,6 @@
       if(tab==='sanctuary'&&subtab==='requests') loadSanctuarySupportRequests(force===true);
       if(tab==='notices'&&subtab==='general') loadNotices();
       if(tab==='notices'&&subtab==='event') loadEventNoticeGroups();
-      if(tab==='meter'&&isMaster()&&subtab==='logs') loadMeterDungeonLogs(1);
-      if(tab==='meter'&&isMaster()&&subtab!=='logs') loadMeterAdminConsole();
       if(tab==='system'&&subtab==='server-status') refreshServerStatus();
       if(tab==='system'&&subtab==='environment') refreshSystemSettings();
       if(tab==='logs'&&subtab==='visitors') loadVisitorDashboard(force===true);
@@ -172,7 +162,6 @@
 
   function switchTab(tab,options={}){
     if(tab==='server'){tab='system';options=Object.assign({},options,{subtab:'server-status'});}
-    if(tab==='meter'&&!isMaster())tab='dashboard';
     if(isStaffConsole() && tab!=='sanctuary') tab='sanctuary';
     if(!document.querySelector('[data-admin-pane="'+tab+'"]'))tab=isStaffConsole()?'sanctuary':'dashboard';
     state.tab = tab;
@@ -357,19 +346,6 @@
       if(e.target.matches('[data-schedule-status]'))changeSanctuaryScheduleStatus(id,e.target.dataset.scheduleStatus);
     });
     $('#noticeReloadBtn')?.addEventListener('click',loadNotices); $('#noticeSaveBtn')?.addEventListener('click',saveNotice);
-    const meterPane=$('[data-admin-pane="meter"]');
-    meterPane?.addEventListener('click',handleMeterAdminClick);
-    meterPane?.addEventListener('change',handleMeterAdminChange);
-    $('#meterDungeonLogQuery')?.addEventListener('keydown',event=>{if(event.key==='Enter')loadMeterDungeonLogs(1);});
-    $('#meterAdminNoticeNewBtn')?.addEventListener('click',()=>resetMeterNoticeEditor(null));
-    $('#meterAdminNoticeCancelBtn')?.addEventListener('click',()=>resetMeterNoticeEditor(null));
-    $('#meterAdminNoticeSaveBtn')?.addEventListener('click',saveMeterNotice);
-    $('#meterAdminNoticeList')?.addEventListener('click',e=>{
-      const row=e.target.closest('[data-meter-notice-id]');if(!row)return;
-      const id=Number(row.dataset.meterNoticeId||0);
-      if(e.target.matches('[data-meter-notice-edit]'))resetMeterNoticeEditor(meterNoticeById(id));
-      if(e.target.matches('[data-meter-notice-delete]'))deleteMeterNotice(id);
-    });
     $('#eventNoticeReloadBtn')?.addEventListener('click',loadEventNoticeGroups); $('#eventNoticeCreateBtn')?.addEventListener('click',startEventNoticeCreate); $('#eventNoticeStatusFilter')?.addEventListener('change',loadEventNoticeGroups);
     $('#eventNoticeList')?.addEventListener('click',e=>{ const row=e.target.closest('[data-event-notice-id]'); const id=row?.dataset.eventNoticeId; if(e.target.matches('[data-event-notice-preview]')) openEventNoticePreview(getEventNoticeGroupById(id)); if(e.target.matches('[data-event-notice-edit]')) editEventNoticeGroup(id); if(e.target.matches('[data-event-notice-duplicate]')) duplicateEventNoticeGroup(id); if(e.target.matches('[data-event-notice-delete]')) deleteEventNoticeGroup(id); });
     $('#eventNoticeEditorCloseBtn')?.addEventListener('click',closeEventNoticeEditor);

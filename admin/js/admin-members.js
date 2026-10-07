@@ -714,7 +714,7 @@
         res=await adminAccount('disableCode',{memberId});
       }
       else if(target.matches('[data-member-enable]')){
-        if(!confirm(memberName+' 회원 코드를 활성화할까요?\n\nGoogle list 조회 대상에서 제외된 캐릭터라도 웹 로그인, 미터기 다운로드·실행을 포함한 PASS KEY 기능을 사용할 수 있게 됩니다.')){target.disabled=false;return;}
+        if(!confirm(memberName+' 회원 코드를 활성화할까요?\n\nGoogle list 조회 대상에서 제외된 캐릭터라도 웹 로그인 등 PASS KEY 기능을 사용할 수 있게 됩니다.')){target.disabled=false;return;}
         res=await adminAccount('enableCode',{memberId});
       }
       else if(target.matches('[data-member-delete]')){

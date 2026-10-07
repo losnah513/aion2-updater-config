@@ -43,7 +43,6 @@ const doubleSlotPages = [
   'home.html',
   'ranking/index.html',
   'legion-tree/index.html',
-  'meter/index.html',
   'sanctuary/index.html'
 ];
 for (const file of doubleSlotPages) {
@@ -57,7 +56,7 @@ for (const file of doubleSlotPages) {
   assert.match(html,/<aside class="kinojo-pc-banner-slot is-right" data-kinojo-pc-banner aria-hidden="true"><\/aside>/, `${file}: right slot must start empty`);
 }
 
-for (const file of ['home.html','ranking/index.html','legion-tree/index.html','meter/index.html']) {
+for (const file of ['home.html','ranking/index.html','legion-tree/index.html',]) {
   assert.ok(read(file).includes('kinojo-pc-standard-host'), `${file}: unified 1180px PC frame opt-in is missing`);
 }
 
@@ -65,7 +64,6 @@ const standardSubbars={
   'home.html':'kinojo-home-subbar kinojo-standard-subbar',
   'ranking/index.html':'ranking-toolbar kinojo-standard-subbar',
   'legion-tree/index.html':'legion-tree-subbar kinojo-standard-subbar',
-  'meter/index.html':'meter-live-subbar kinojo-standard-subbar',
   'hof/index.html':'hof-filter-bar kinojo-standard-subbar',
 };
 for(const [file,classes] of Object.entries(standardSubbars)){
@@ -119,7 +117,7 @@ assert.equal((hofRender.match(/kinojo-pc-banner-slot is-left/g) || []).length, 2
 assert.equal((hofRender.match(/kinojo-pc-banner-slot is-right/g) || []).length, 2, 'Both HOF render paths must include one right slot');
 assert.match(read('hof/css/hall.css'),/@media \(max-width:1839px\)\{\s*body\.kinojo-page-hall \.kinojo-pc-banner-slot\{\s*display:none!important;/, 'The HOF slot injected by shared rendering must not occupy mobile or Fold layout space');
 
-for (const file of ['m/index.html','m/ranking/index.html','m/legion-tree/index.html','m/meter/index.html','m/sanctuary/index.html','m/sanctuary-schedule/index.html','m/hof/index.html']) {
+for (const file of ['m/index.html','m/ranking/index.html','m/legion-tree/index.html','m/sanctuary/index.html','m/sanctuary-schedule/index.html','m/hof/index.html']) {
   const html = read(file);
   assert.equal(html.includes('kinojo-pc-banners.css'), false, `${file}: PC slot CSS must not be loaded on mobile`);
   assert.equal(html.includes('kinojo-pc-banners.js'), false, `${file}: PC slot script must not be loaded on mobile`);
