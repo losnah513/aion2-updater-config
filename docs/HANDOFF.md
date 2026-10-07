@@ -1,5 +1,13 @@
 # KINOJO WEB HANDOFF
 
+## 자동 조회 하루 2회·일/주 성장만 보관 · SQL524 · 2026-10-07
+
+- 최신 사용자 지시로 공식 자동 조회를 KST 10:00·22:00(UTC `0 1,13 * * *`)로 변경했다. 기존 job 이름은 관리자 토글 호환을 위해 유지한다. 활성 상태·명령·타 예약은 그대로다. PC/모바일 관리자 표시와 JS fallback도 동일하다.
+- MONTH 1,063행(논리 229,662B)을 삭제하고 writer 및 CHECK 제약으로 재생성을 차단했다. DAY 1,050행/WEEK 3,030행은 잠금 내 전체 행 hash 불변. DAY 완료 7일+당일, WEEK 1년·수요일 06시 경계를 유지한다. 기존 백업 생략 사용자 결정을 따른다. rollback은 향후 생성/일정만 복원하며 삭제된 월 기록은 복구하지 않는다.
+- 운영 적용 후 DB 443,067,539B, 쓰기 가능. 390MB 지속 유지 목표는 미달이다. 최근 7일 자동조회 cron dispatch 28회 성공은 전체 후처리 완료를 뜻하지 않는다. snapshot 정리 2종에 일부 statement timeout이 있으며 원본 소비자 분리·정리 지연과 이후 증가량 확인은 후속이다. 이번 변경은 전체 DB 물리 회수 작업이 아니다.
+- 기준 main `3bfccd793bcdb5778a4c6434fea2f9773cdcc473`, 작업 브랜치 `codex/db-twice-daily-no-monthly-20261007`. 검증: `node tests/twice-daily-day-week.test.cjs`, `node tests/character-weekly-06.test.cjs`, `node tests/meter-presence-log-contract.test.js`. PGlite 경로는 기존 `.codex-test-runtime` 또는 `PGLITE_MODULE`을 사용한다. SQL524 migration/rollback: `20261007004138_twice_daily_day_week_retention.sql`.
+- 공식 계획·운영 검증·최종 PR/Pages/Drive 반영 상태: [DB 프로젝트 LOG](https://drive.google.com/file/d/1F6fBTUNmPdJgeD3bUb1wAsv4yEgAyKcO/view) 최신 30회차. 기존 아래 기록의 월간 보존·하루 4회 언급은 과거 기준이며 본 변경이 우선한다.
+
 ## 순위 평가 문구의 원본 의존 분리 · SQL523 · 2026-09-28
 
 - 영구 ID별 마지막 평가 190행/81,920B를 보존하고 순위 조회의 history/review 직접 참조를 제거했다. 기존 신원 일치·정렬·UNKNOWN 갱신 시각 의미를 유지한다. 원본 삭제 후 문구 수정·새 평가·신원 정정과 전체 저장 통합 회귀 PASS. 운영 네 범위 전체 응답 hash 일치, 보안 신규 지적0.

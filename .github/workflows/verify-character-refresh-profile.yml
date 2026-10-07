@@ -89,7 +89,7 @@ jobs:
                   raise SystemExit(f'{page}: stale admin cache')
           source = Path('admin/js/admin-characters.js').read_text(encoding='utf-8')
           for token in [
-              "'22:00 · 04:00 · 10:00 · 16:00'",
+              "'10:00 · 22:00'",
               'performanceProfile:data?.performanceProfile||{}',
               'function renderLookupPerformance(profile)',
               'runtime_events_inferred',
