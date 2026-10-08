@@ -1,5 +1,12 @@
 # KINOJO WEB HANDOFF
 
+## 2026-10-08 개명 반영 list 설정 접근 · SQL532
+
+- SQL531 후 꾸힉의 Target1명 생성은 정상화됐다. 재실행은 개명 반영 invoker가 updater_sessions를 직접 SELECT하면서 권한 오류로 실패했다. SQL532는 기존 인증된 정책 v455 반환값으로 list 설정을 읽는다. invoker/ACL·테이블권한 그대로, 새 helper/Edge 없음.
+- 실제 service_role 회귀에서 baseline 권한오류와 원자취소 재현, 수정 후 rename/transfer·list ON/OFF·인증/세션누락·key/class/race/stale/충돌·후단실패/rollback PASS. 운영 함수 exact/ACL 유지·테이블SELECT없음 확인.
+- 공식 저장 상세 식별값 읽기로 현재 식기세척기[지켈], 고유값563512903374820139 일치 확인. 이 read-only 확인은 운영 개명 적용 완료를 의미하지 않는다. 다음은 정상 수동 조회 꾸힉/지켈 재실행 결과 확인.
+- migration/rollback20261008060429_identity_list_preference_permission.sql, node tests/identity-list-preference-permission.test.cjs. 기준 main1c6eb6e, branch fix/identity-list-preference-permission-20261008. PR/Drive/배포 최종 상태는 안정화4차 LOG59.
+
 ## 2026-10-08 수동 조회 서버명 필터 · SQL531
 
 - 꾸힉[지켈]의 14:41 KST 수동 조회는 공식 Worker 전 대상0으로 종료됐다. v296이 서버명에서 숫자만 추출해 비교한 것이 원인이다.
