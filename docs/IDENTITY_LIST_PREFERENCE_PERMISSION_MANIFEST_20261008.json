@@ -1,0 +1,61 @@
+{
+  "repository": "losnah513/aion2-updater-config",
+  "baseline": "1c6eb6eea445a5855c6ab1744cc14684c78c663e",
+  "branch": "fix/identity-list-preference-permission-20261008",
+  "sql": 532,
+  "rollback": "supabase/rollbacks/20261008060429_identity_list_preference_permission.sql",
+  "files": [
+    {
+      "path": "docs/HANDOFF.md",
+      "bytes": 232199,
+      "sha256": "bd31fec6be1afd7feb16ae106ac9b9467c1153e1fb248d11ee340f556d47452c",
+      "driveIds": [],
+      "mime": "text/plain"
+    },
+    {
+      "path": "docs/IDENTITY_LIST_PREFERENCE_PERMISSION_20261008.md",
+      "bytes": 1347,
+      "sha256": "ee9d28cfa8e2871fb540dfe26c999ceb0c1c684b947a5d7f4cd2d5e043ba75c0",
+      "driveIds": [],
+      "mime": "text/plain"
+    },
+    {
+      "path": "scripts/verify-character-refresh-stage2.cjs",
+      "bytes": 4117,
+      "sha256": "020617fe9211838a59e397ba76aca95b37c54fe10b93c696952734cb33b1e9fb",
+      "driveIds": [],
+      "mime": "text/plain"
+    },
+    {
+      "path": "supabase/migrations/20261008060429_identity_list_preference_permission.sql",
+      "bytes": 15447,
+      "sha256": "b72d0de6207e68b1b42c173cacc3b4542f14f72dae12c533156ab8f765531d06",
+      "driveIds": [
+        "17McNrehxFX98lA0kQARUoTY_8iQ0XHdC",
+        "19L3et8PSIiYNb-obZfCYMcPXetdEtYG2"
+      ],
+      "mime": "text/plain"
+    },
+    {
+      "path": "supabase/rollbacks/20261008060429_identity_list_preference_permission.sql",
+      "bytes": 15425,
+      "sha256": "b5c84272f382f3bfce08d7b0c886c4d1a8fc4b1e82fc3632567df6a314cbd505",
+      "driveIds": [],
+      "mime": "text/plain"
+    },
+    {
+      "path": "tests/fixtures/identity-list-preference-policy.sql",
+      "bytes": 2679,
+      "sha256": "b2eedd651d507b89bb7fb39901c5c49c3d0e0e41f9f45b4b5a87343a1a075b57",
+      "driveIds": [],
+      "mime": "text/plain"
+    },
+    {
+      "path": "tests/identity-list-preference-permission.test.cjs",
+      "bytes": 7929,
+      "sha256": "e25e3c6709ba1e924ca39d3fb20047fe9ce5dfbb49fbe8af08156bc0cd7f2d17",
+      "driveIds": [],
+      "mime": "text/plain"
+    }
+  ]
+}
