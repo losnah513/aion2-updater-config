@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "sql": 533,
+  "mainBase": "0c7d7d15f6193854244fe8635d96309d8e3e04b1",
+  "normalization": "UTF-8 LF",
+  "responsibility": "DB+WEB; existing cron/Edge/Worker reused",
+  "policyKst": {
+    "main": [
+      "10:00",
+      "22:00"
+    ],
+    "alt": [
+      "15:00"
+    ]
+  },
+  "files": [
+    {
+      "path": "core/kinojo-supabase-features.js",
+      "sha256": "245d8ad191c3af2a3a42a15d16910eb7978ffab5f2734abbd1992522b183aea0",
+      "bytes": 105705,
+      "driveId": "1V7tU3RQB16P2j85l6N61jpJP8tgnlEj3",
+      "mimeType": "text/javascript"
+    },
+    {
+      "path": "admin/js/admin.js",
+      "sha256": "83bf1d8f5352c8891884fcf9291ca84732f8940c0bbe48978a0a4932de0a82fb",
+      "bytes": 3419,
+      "driveId": "1YtRNWaJzsnbBwwtY_01k4BvWSKCxsOtU",
+      "mimeType": "text/plain"
+    },
+    {
+      "path": "admin/js/admin-characters.js",
+      "sha256": "70ba3112be72e04a904bb56613295510c759d689f87d6e9116f6ef2ad6fc6f34",
+      "bytes": 91687,
+      "driveId": "1LmQQonDnN8F-FwyPdsMIXQw0iDriHYhZ",
+      "mimeType": "text/plain"
+    },
+    {
+      "path": "admin/js/admin-bootstrap.js",
+      "sha256": "5624eab3d4ef87037a8f94fc26865d93f6674b00607ace2128a735194b01889f",
+      "bytes": 31402,
+      "driveId": "1-thUEEmaFfxwQ288J9QJBdeM2O2tEHQD",
+      "mimeType": "text/javascript"
+    },
+    {
+      "path": "admin/js/admin-system.js",
+      "sha256": "6a506ba92e7d9dc96a17d8b3d29621a8658cf2fc3f69614709f04e379f098859",
+      "bytes": 10239,
+      "driveId": "1x9LZhOd_Kd8hR4xFOZDDe0c-hpdvMfka",
+      "mimeType": "text/javascript"
+    },
+    {
+      "path": "admin/css/admin.css",
+      "sha256": "9b178ea18e7af1d340b3e795a1d8401a8a28e1636ee23e3c2df209300c024a68",
+      "bytes": 108852,
+      "driveId": "1sKZEHeN2StmkkdLcFTuW0ETTfrMcNv8N",
+      "mimeType": "text/css"
+    },
+    {
+      "path": "admin/index.html",
+      "sha256": "bdcae8924764795117a9421c7df8721ac8304376f9e32eb402441ac852de234a",
+      "bytes": 43554,
+      "driveId": "1RYfeMzCObVNxcUpsxqIBPmkKFjZWafEG",
+      "mimeType": "text/plain"
+    },
+    {
+      "path": "m/admin/index.html",
+      "sha256": "031bdf5172ae994d9207b981b3bd58a8302d53e7e0ade2a12787c3e60241f837",
+      "bytes": 43538,
+      "driveId": "1UzPaI8m_0ygd1NGEbJwCvYbLdTp8Qt5d",
+      "mimeType": "text/plain"
+    },
+    {
+      "path": "supabase/migrations/20261008062130_character_automatic_main_alt_frequency.sql",
+      "sha256": "d6ccc3977d6a02b2eadd2c56d9ea2ae086af5d846c9a0d60ff9fa992bc592a07",
+      "bytes": 56773,
+      "sourceDriveId": "1ypr_j0a0xj9x7NnvUDX_lvKQHI02A_CB",
+      "deployDriveId": "1bHRwsba4joNaXzTiE_6lDk0PVRe0Xd7N",
+      "mimeType": "text/plain"
+    },
+    {
+      "path": "supabase/rollbacks/20261008062130_character_automatic_main_alt_frequency.sql",
+      "sha256": "87493878c9703b3628eb646c171a8165ddbd67aa4d7f1b0978e688acad613ce7",
+      "bytes": 47502
+    }
+  ]
+}

@@ -122,6 +122,7 @@
       if(tab==='notices'&&subtab==='general') loadNotices();
       if(tab==='notices'&&subtab==='event') loadEventNoticeGroups();
       if(tab==='system'&&subtab==='server-status') refreshServerStatus();
+      if(tab==='system'&&subtab==='routines') A.refreshServerRoutines();
       if(tab==='system'&&subtab==='environment') refreshSystemSettings();
       if(tab==='logs'&&subtab==='visitors') loadVisitorDashboard(force===true);
     };
@@ -365,6 +366,7 @@
     });
     $('#eventNoticeEditorCards')?.addEventListener('change',e=>{ if(e.target.matches('[data-event-field="noticeType"]')) applyEventNoticeTypeTemplate(e.target.closest('[data-event-notice-card]')); });
     $('#webAppTestBtn')?.addEventListener('click',()=>testWebAppConnection('#serverStatus')); $('#webAppTestBtnSystem')?.addEventListener('click',()=>testWebAppConnection('#systemStatus')); $('#serverRefreshBtn')?.addEventListener('click',refreshServerStatus); $('#goSystemSettingsBtn')?.addEventListener('click',()=>switchTab('system',{subtab:'environment'}));
+    $('#serverRoutineReloadBtn')?.addEventListener('click',()=>A.refreshServerRoutines());
     document.addEventListener('click',e=>{ if(e.target.matches('[data-jump-server]')) switchTab('system',{subtab:'server-status'}); if(e.target.matches('[data-jump-system]')) switchTab('system',{subtab:'environment'}); });
     $$('[data-visitor-days]').forEach(button=>button.addEventListener('click',()=>{state.visitorDays=Number(button.dataset.visitorDays||7);$$('[data-visitor-days]').forEach(item=>item.classList.toggle('active',item===button));loadVisitorDashboard(true);}));
     $('#visitorReloadBtn')?.addEventListener('click',()=>loadVisitorDashboard(true));

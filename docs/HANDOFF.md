@@ -1,5 +1,12 @@
 # KINOJO WEB HANDOFF
 
+## 2026-10-08 본부캐 자동 조회 · 서버 루틴 · SQL533
+
+- 사용자 확정: 본캐10/22시, 부캐15시 KST. 기존 cron11은0 1,6,13 UTC,명령·활성 상태 유지. 자동 세션에 claim시각의 슬롯/역할 범위를 고정하며 전체list 준비와 관계 재확인에 같은 범위를 적용한다. 수동 조회·자격·제외·기존Worker 유지.
+- 관리자 시스템 설정→서버 루틴에서 정기 작업15개의 KST주기·ONOFF·다음예약·최근 예약실행 상태 확인. 실제 WEB_COMMON/currentmember level3인증, 읽기만 허용, 비밀 command/return_message 미반환. 해외 브라우저에서도 KST시각 표시.
+- 전체 함수/service_role 회귀 및 PC·모바일/미국timezone UI 통과. 운영 기존5함수 exact/신규2body 확인, 예약22시 다음run 확인. 첫 새 규칙 cron완료는 향후 관측. guarded 신규RPC advisor2건 및 근거는 docs/AUTOMATIC_FREQUENCY_SERVER_ROUTINES_20261008.md. migration/rollback20261008062130_character_automatic_main_alt_frequency.sql.
+- 기준main0c7d7d1,branch fix/automatic-main-alt-frequency-20261008. PR/CI/Drive/실제 관리자 검수 최종 상태는 안정화4차LOG60.
+
 ## 2026-10-08 개명 반영 list 설정 접근 · SQL532
 
 - SQL531 후 꾸힉의 Target1명 생성은 정상화됐다. 재실행은 개명 반영 invoker가 updater_sessions를 직접 SELECT하면서 권한 오류로 실패했다. SQL532는 기존 인증된 정책 v455 반환값으로 list 설정을 읽는다. invoker/ACL·테이블권한 그대로, 새 helper/Edge 없음.

@@ -712,6 +712,9 @@
 
   async function adminAutomation(command, extra={}){
     assertAdmin();
+    if(command==='routines')return rpc('kinojo_admin_server_routines_v533',{
+      p_session_token:currentAdminSessionCredential()
+    });
     if(command==='saveListWrite')return rpc('kinojo_automation_admin_list_write_save',{
       p_pass_key:currentAdminSessionCredential(),p_enabled:extra.enabled===true
     });
