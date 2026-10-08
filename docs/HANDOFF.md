@@ -1,5 +1,12 @@
 # KINOJO WEB HANDOFF
 
+## 2026-10-08 수동 조회 서버명 필터 · SQL531
+
+- 꾸힉[지켈]의 14:41 KST 수동 조회는 공식 Worker 전 대상0으로 종료됐다. v296이 서버명에서 숫자만 추출해 비교한 것이 원인이다.
+- 기존 숫자ID 비교에 server_master의 정확한 server_name/server_short_name 일치를 추가했다. 이름/서버AND, 조회자격, 전체list 읽기·인증·권한·기존 Worker 보존. canonical DB 선택만 수정했다.
+- 운영 함수 exact readback/ACL 불변, Master13의 기존 필터false→수정true 확인. 새 이름의 공식 확인은 실제 수동 조회 결과가 필요하다.
+- migration/rollback20261008054913_manual_lookup_server_names.sql. node tests/manual-lookup-server-filter.test.cjs로 baseline 재현/이름·약칭·숫자ID·동명분리/보호/rollback 검증. 배포·PR·Drive 최종 상태는 안정화4차 LOG58 참조.
+
 ## 2026-10-07 Meter 영구 종료 — SQL530
 
 - 사용자가 미터기 운영 중단과 관련 코드·데이터·배포 파일의 백업 없는 삭제를 명시했다. 아래 과거 Meter 운영 지침은 더 이상 적용하지 않는다.

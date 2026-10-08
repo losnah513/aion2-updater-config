@@ -11,6 +11,8 @@ on:
       - 'supabase/migrations/*character*.sql'
       - 'supabase/rollbacks/*character*.sql'
       - 'supabase/migrations/*queue_progress*.sql'
+      - 'supabase/migrations/*manual_lookup*.sql'
+      - 'supabase/rollbacks/*manual_lookup*.sql'
       - 'supabase/rollbacks/*queue_progress*.sql'
       - 'supabase/migrations/*retention*.sql'
       - 'supabase/migrations/*retire_meter*.sql'

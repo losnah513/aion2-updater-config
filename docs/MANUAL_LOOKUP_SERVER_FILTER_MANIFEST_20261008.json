@@ -1,0 +1,61 @@
+{
+  "repository": "losnah513/aion2-updater-config",
+  "baseline": "0b6812d4a5b1513412f7cb7a2f88ec493d3833f5",
+  "branch": "fix/manual-lookup-server-filter-20261008",
+  "sql": 531,
+  "rollback": "supabase/rollbacks/20261008054913_manual_lookup_server_names.sql",
+  "files": [
+    {
+      "path": ".github/workflows/verify-character-refresh-stability.yml",
+      "bytes": 1984,
+      "sha256": "31bf32a09ad40f8e3f3381e5e37d631406d95ad147450b2c77a64e07421cd022",
+      "driveIds": [],
+      "mime": "text/plain"
+    },
+    {
+      "path": "docs/HANDOFF.md",
+      "bytes": 231029,
+      "sha256": "90a95b031663da496967712ccacc920d30f36073090cda58555dcba073e2c301",
+      "driveIds": [],
+      "mime": "text/plain"
+    },
+    {
+      "path": "docs/MANUAL_LOOKUP_SERVER_FILTER_20261008.md",
+      "bytes": 1101,
+      "sha256": "848b56a3f07c2a33aeb31d0766af5c748e63ecca7f2499c8da8413de776801e9",
+      "driveIds": [],
+      "mime": "text/plain"
+    },
+    {
+      "path": "scripts/verify-character-refresh-stage2.cjs",
+      "bytes": 4061,
+      "sha256": "8b12adf7b605d9757a266384de55e1bc2ad88b7836bfe0b503c20d5c6eff6afb",
+      "driveIds": [],
+      "mime": "text/plain"
+    },
+    {
+      "path": "supabase/migrations/20261008054913_manual_lookup_server_names.sql",
+      "bytes": 30532,
+      "sha256": "4e8448fce40043d2e9cdfa2e4032098b4f429f0b6b99691bde1a4b6fad05e1da",
+      "driveIds": [
+        "1uVf8N8fqsL5M4Bt_Ci-JTWez37Bf1CqT",
+        "1nBdCLf8mJUtwC1vxHnA8Cxc9upztu3ar"
+      ],
+      "mime": "text/plain"
+    },
+    {
+      "path": "supabase/rollbacks/20261008054913_manual_lookup_server_names.sql",
+      "bytes": 30241,
+      "sha256": "dae94c16d57f5aa232c5c3493492a33758a56e5f280e41011d9cb6131c8f4e5f",
+      "driveIds": [],
+      "mime": "text/plain"
+    },
+    {
+      "path": "tests/manual-lookup-server-filter.test.cjs",
+      "bytes": 3908,
+      "sha256": "f923d10f26585eeabdaa707e6200e037a7c14985583c7cecb6efdfdf7a688589",
+      "driveIds": [],
+      "mime": "text/plain"
+    }
+  ]
+}
