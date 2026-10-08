@@ -53,7 +53,7 @@ async function fixture(){
  for(const p of ['meter/index.html','m/meter/index.html','meter/js/meter-app.js','launcher-content.json'])assert.equal(fs.existsSync(path.join(root,p)),false,p);
  for(const p of ['admin/index.html','m/admin/index.html']){
   const html=read(p);assert.doesNotMatch(html,/data-admin-(?:tab|pane)="meter"|data-meter-/);
-  assert.match(html,/id="characterAutomationToggle"/);assert.match(html,/KST 10:00 · 22:00/);assert.match(html,/admin-automation-control-row/);
+  assert.match(html,/id="characterAutomationToggle"/);assert.match(html,/자동 실행 일정을 불러오는 중/);assert.match(html,/admin-automation-control-row/);
  }
  console.log('PASS Meter retirement: 80 tables, shared identity, banner isolation, RESTRICT rollback, automation UI.');
 })().catch(error=>{console.error(error.message,error.position,sql.slice(Number(error.position)-80,Number(error.position)+80));process.exit(1);});

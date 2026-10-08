@@ -148,11 +148,11 @@
     },
     {
       "path": "admin/index.html",
-      "sha256": "bdcae8924764795117a9421c7df8721ac8304376f9e32eb402441ac852de234a"
+      "sha256": "34d6b0a1163f1d1a08acfc8eb796ddf6b26a987561cb8191a863a37c4358e828"
     },
     {
       "path": "m/admin/index.html",
-      "sha256": "031bdf5172ae994d9207b981b3bd58a8302d53e7e0ade2a12787c3e60241f837"
+      "sha256": "f10d64d1ef49461775183f9caeedc007c81c43521fd98daf57be21f78212e82e"
     },
     {
       "path": "supabase/config.toml",
