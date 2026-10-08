@@ -48,6 +48,8 @@ async function run(){
      (5,'db-main',2002,true,'db-main',true,'OK',false),(101,'dormant-main',2002,true,'dormant-main',true,'OK',false),
      (102,'dormant-alt',2002,false,'dormant-main',true,'OK',false);`);
   await db.exec(read('supabase/migrations/'+name));
+  const timetable='20261008070108_server_routine_timetable.sql';
+  await db.exec(read('supabase/migrations/'+timetable));
   const q=async(s,a=[])=> (await db.query(s,a)).rows;
   const val=async(s,a=[])=> (await q(s,a))[0].v;
   assert.deepEqual(await val("select schedule_kst v from kinojo_server_automation_settings"),['10:00','15:00','22:00']);
@@ -89,15 +91,29 @@ async function run(){
   assert.equal((await preview('* * * * *','2026-10-08T00:00:01Z')).label,'매분');
   assert.equal(new Date((await preview('58 20 * * *','2026-10-08T20:59:00Z')).nextRunAt).toISOString(),'2026-10-09T20:58:00.000Z');
   assert.equal((await preview('unsupported','2026-10-08T00:00:01Z')).nextRunAt,null);
+  const slots=await preview('0 1,6,13 * * *','2026-10-08T06:30:00Z');
+  assert.equal(slots.frequency,'DAILY');
+  assert.deepEqual(slots.entries.map(e=>e.timeKst),['10:00','15:00','22:00']);
+  assert.deepEqual(slots.entries.map(e=>e.minuteOfDay),[600,900,1320]);
+  assert.deepEqual(slots.entries.map(e=>new Date(e.nextRunAt).toISOString()),['2026-10-09T01:00:00.000Z','2026-10-09T06:00:00.000Z','2026-10-08T13:00:00.000Z']);
+  const weekly=await preview('10 20 * * 2','2026-10-06T21:00:00Z');
+  assert.equal(weekly.frequency,'WEEKLY');assert.equal(weekly.entries[0].weekdayLabel,'수요일');
+  assert.equal(weekly.entries[0].timeKst,'05:10');assert.equal(new Date(weekly.entries[0].nextRunAt).toISOString(),'2026-10-13T20:10:00.000Z');
+  assert.deepEqual((await preview('*/15 * * * *','2026-10-08T00:00:01Z')).entries,[]);
+  assert.equal((await preview('*/15 * * * *','2026-10-08T00:00:01Z')).frequency,'REPEAT');
   await assert.rejects(()=>val("select kinojo_admin_server_routines_v533('invalid') v"),/INVALID_WEB_SESSION/);
   assert.equal((await val("select kinojo_admin_server_routines_v533('synthetic-member') v")).code,'ADMIN_ACCESS_REQUIRED');
   const counts=await q('select (select count(*) from updater_sessions)::int sessions,(select count(*) from lookup_session_targets)::int targets,(select count(*) from cron.job_run_details)::int runs');
   const view=await val("select kinojo_admin_server_routines_v533('synthetic-admin') v");
   assert.equal(view.routines.length,2);assert.equal(view.routines[0].lastStatus,'succeeded');assert.equal(view.routines[1].nextRunAt,null);
+  assert.deepEqual(view.routines[0].scheduleEntries.map(e=>e.description),['본캐 공식 조회','부캐 공식 조회','본캐 공식 조회']);
   assert.equal(JSON.stringify(view).includes('SECRET_SENTINEL'),false);
   assert.deepEqual(await q('select (select count(*) from updater_sessions)::int sessions,(select count(*) from lookup_session_targets)::int targets,(select count(*) from cron.job_run_details)::int runs'),counts);
   assert.equal(await val("select has_function_privilege('anon','private.kinojo_cron_preview_v533(text,timestamptz)','execute') v"),false);
   await db.exec('update kinojo_server_automation_settings set running=false');
+  await db.exec(read('supabase/rollbacks/'+timetable));
+  assert.equal((await preview('0 1,6,13 * * *','2026-10-08T06:30:00Z')).entries,undefined);
+  assert.equal(await val('select schedule v from cron.job where jobid=11'),'0 1,6,13 * * *');
   await db.exec(read('supabase/rollbacks/'+name));
   assert.equal(await val('select schedule v from cron.job where jobid=11'),'0 1,13 * * *');
   assert.equal(await val('select command v from cron.job where jobid=11'),'SECRET_SENTINEL');

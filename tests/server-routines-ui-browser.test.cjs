@@ -30,9 +30,13 @@ const root=path.resolve(__dirname,'..');
      adminAutomation:async command=>{if(command!=='routines')throw Error('unexpected command');window.calls++;
       await new Promise(r=>setTimeout(r,60));if(window.mode==='error')throw Error('통신 오류');
       return {ok:true,characterScheduleSummary:'본캐 10:00·22:00 / 부캐 15:00 (매일, 한국 시간)',generatedAt:'2026-10-08T06:00:00Z',historyNote:'최근 서버 예약 실행 기록 기준입니다.',routines:window.mode==='empty'?[]:[
-       {name:'캐릭터 공식 조회',description:'본캐 10:00·22:00 / 부캐 15:00',active:true,scheduleKst:'매일 10:00 · 매일 15:00 · 매일 22:00',nextRunAt:'2026-10-08T13:00:00Z',lastStatus:'succeeded',lastStartedAt:'2026-10-08T01:00:00Z'},
-       {name:'성역 시트 동기화',active:false,scheduleKst:'매일 02:00 · 매일 14:00'},
-       {name:'<img src=x onerror=alert(1)>',description:'<script>bad()</script>',active:true,scheduleKst:'15분마다',lastStatus:'failed'}]};}};
+       {id:11,name:'캐릭터 공식 조회',frequency:'DAILY',active:true,lastStatus:'succeeded',lastStartedAt:'2026-10-08T01:00:00Z',scheduleEntries:[
+        {timeKst:'22:00',minuteOfDay:1320,description:'본캐 공식 조회',nextRunAt:'2026-10-08T13:00:00Z'},
+        {timeKst:'10:00',minuteOfDay:600,description:'본캐 공식 조회',nextRunAt:'2026-10-09T01:00:00Z'},
+        {timeKst:'15:00',minuteOfDay:900,description:'부캐 공식 조회',nextRunAt:'2026-10-09T06:00:00Z'}]},
+       {id:12,name:'성역 시트 동기화',frequency:'DAILY',active:false,scheduleEntries:[{timeKst:'14:00',minuteOfDay:840},{timeKst:'02:00',minuteOfDay:120}]},
+       {id:17,name:'조회 보고서 정리',frequency:'WEEKLY',active:true,lastStatus:'failed',scheduleEntries:[{timeKst:'05:10',minuteOfDay:310,weekdayKst:3,weekdayLabel:'수요일'}]},
+       {id:4,name:'<img src=x onerror=alert(1)>',description:'<script>bad()</script>',frequency:'REPEAT',active:true,scheduleKst:'15분마다',lastStatus:'failed'}]};}};
    });
    await page.addScriptTag({url:base+'/admin/js/admin-system.js'});
    await page.evaluate(async()=>{
@@ -41,10 +45,13 @@ const root=path.resolve(__dirname,'..');
    });
    assert.equal(await page.evaluate(()=>window.calls),1);
    assert.match(await page.locator('#serverRoutineCharacterPolicy').innerText(),/본캐 10:00·22:00 \/ 부캐 15:00/);
-   const rows=page.locator('.admin-routine-row');assert.equal(await rows.count(),3);
-   assert.match(await rows.nth(0).innerText(),/성공/);assert.match(await rows.nth(1).innerText(),/OFF[\s\S]*중지됨/);
-   assert.match(await rows.nth(0).innerText(),/오후 10:00:00/,'KST is independent of browser timezone');
-   assert.match(await rows.nth(2).innerText(),/<img/);assert.equal(await page.locator('#serverRoutineList img, #serverRoutineList script').count(),0);
+   const rows=page.locator('.admin-routine-row');assert.equal(await rows.count(),7);
+   assert.equal(await page.locator('.admin-routine-table').count(),2);
+   assert.deepEqual(await page.locator('.admin-routine-section').nth(0).locator('.admin-routine-time').allTextContents(),['02:00','05:10','10:00','14:00','15:00','22:00']);
+   assert.match(await rows.nth(0).innerText(),/OFF[\s\S]*중지됨/);assert.match(await rows.nth(1).innerText(),/매주[\s\S]*수요일/);
+   assert.match(await rows.nth(5).innerText(),/오후 10:00:00/,'KST is independent of browser timezone');
+   assert.match(await rows.nth(4).innerText(),/부캐 공식 조회/);assert.equal(await page.locator('.admin-routine-badge.is-daily').count(),5);
+   assert.match(await rows.nth(6).innerText(),/<img/);assert.equal(await page.locator('#serverRoutineList img, #serverRoutineList script').count(),0);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+2),false,'overflow '+width);
    if(process.env.CHARACTER_UI_EVIDENCE)await page.screenshot({path:path.join(process.env.CHARACTER_UI_EVIDENCE,'routines-'+width+'.png'),fullPage:true});
    await page.evaluate(()=>window.mode='error');await page.locator('#serverRoutineReloadBtn').click();
