@@ -1,4 +1,14 @@
 /* KINOJO Admin Console v2026072803 */
+.admin-routine-list{display:grid;gap:10px;margin-top:12px}
+.admin-routine-row{display:grid;grid-template-columns:1.5fr 1.2fr .4fr 1fr 1fr;gap:16px;padding:16px;border:1px solid var(--admin-line);border-radius:14px;background:#fff;min-width:0}
+.admin-routine-row>div{min-width:0}
+.admin-routine-row strong{display:block;color:var(--admin-ink);font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.admin-routine-row p,.admin-routine-label,.admin-routine-note{color:#64748b;font-size:11px;line-height:1.6}
+.admin-routine-row p{margin:4px 0 0}
+.admin-routine-label{display:block;margin-bottom:4px}
+.admin-routine-row .admin-routine-on{color:#15803d}
+@media(max-width:800px){.admin-routine-row{grid-template-columns:1fr 1fr}.admin-routine-row>div:first-child{grid-column:1/-1}}
+@media(max-width:420px){.admin-routine-row{grid-template-columns:minmax(0,1fr);gap:10px}.admin-routine-row>div:first-child{grid-column:auto}}
 :root{
   --admin-bg:#f5f7fb;
   --admin-panel:#ffffff;

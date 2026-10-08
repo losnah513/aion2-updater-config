@@ -13,6 +13,52 @@
   const isMaster=(...args)=>A.isMaster(...args);
   const setStatus=(...args)=>A.setStatus(...args);
   const toast=(...args)=>A.toast(...args);
+  let routineRequest=null;
+
+  function renderServerRoutines(data){
+    const root=$('#serverRoutineList');
+    if(!root)return;
+    const rows=Array.isArray(data?.routines)?data.routines:[];
+    const statusLabel={succeeded:'성공',failed:'실패',running:'실행 중',starting:'시작 중',connecting:'연결 중',sending:'실행 요청 중'};
+    const time=value=>{
+      if(!value)return '기록 없음';
+      const date=new Date(value);
+      return Number.isNaN(date.getTime())?'시간 확인 필요':date.toLocaleString('ko-KR',{timeZone:'Asia/Seoul'});
+    };
+    const summary=$('#serverRoutineCharacterPolicy');
+    if(summary)summary.textContent=data.characterScheduleSummary||'자동 조회 규칙을 확인하지 못했습니다.';
+    root.innerHTML=rows.length?rows.map(row=>'<article class="admin-routine-row">'
+      +'<div><strong>'+esc(row.name)+'</strong>'+(row.description?'<p>'+esc(row.description)+'</p>':'')+'</div>'
+      +'<div><span class="admin-routine-label">실행 주기 · 한국 시간</span><strong>'+esc(row.scheduleKst)+'</strong></div>'
+      +'<div><span class="admin-routine-label">활성 상태</span><strong class="'+(row.active?'admin-routine-on':'')+'">'+(row.active?'ON':'OFF')+'</strong></div>'
+      +'<div><span class="admin-routine-label">다음 예약</span><strong>'+esc(row.active?time(row.nextRunAt):'중지됨')+'</strong></div>'
+      +'<div><span class="admin-routine-label">최근 실행</span><strong>'+esc(statusLabel[row.lastStatus]||(row.lastStatus?'확인 필요':'기록 없음'))+'</strong>'
+      +(row.lastStartedAt?'<p>'+esc(time(row.lastStartedAt))+'</p>':'')+'</div></article>').join(''):'<div class="admin-empty">등록된 서버 루틴이 없습니다.</div>';
+    const note=$('#serverRoutineHistoryNote');
+    if(note)note.textContent=data.historyNote||'최근 서버 예약 실행 기록 기준입니다.';
+    setStatus('#serverRoutineStatus','한국 시간 기준 · 확인 '+time(data.generatedAt),'ok');
+  }
+
+  function refreshServerRoutines(){
+    if(routineRequest)return routineRequest;
+    const button=$('#serverRoutineReloadBtn');
+    if(button)button.disabled=true;
+    setStatus('#serverRoutineStatus','서버 루틴을 불러오는 중입니다.');
+    routineRequest=(async()=>{
+      try{
+        const data=await A.adminAutomation('routines');
+        if(!data||data.ok!==true)throw new Error(data?.message||'서버 루틴을 확인하지 못했습니다.');
+        renderServerRoutines(data);
+      }catch(error){
+        const root=$('#serverRoutineList');
+        if(root)root.innerHTML='<div class="admin-empty">서버 루틴을 불러오지 못했습니다. 새로고침으로 다시 확인해 주세요.</div>';
+        const summary=$('#serverRoutineCharacterPolicy');
+        if(summary)summary.textContent='자동 조회 규칙 확인 필요';
+        setStatus('#serverRoutineStatus',error.message||String(error),'error');
+      }finally{routineRequest=null;if(button)button.disabled=false;}
+    })();
+    return routineRequest;
+  }
 
   async function refreshServerStatus(){
     try{
@@ -96,5 +142,5 @@
     }catch(err){setStatus('#visitorHistoryStatus',err.message||String(err),'error');}
   }
 
-  Object.assign(A,{refreshServerStatus,renderServerBox,refreshSystemSettings,visitorDate,visitorNumber,renderVisitorTrend,renderVisitorPages,loadVisitorDashboard,loadVisitorHistory});
+  Object.assign(A,{refreshServerRoutines,renderServerRoutines,refreshServerStatus,renderServerBox,refreshSystemSettings,visitorDate,visitorNumber,renderVisitorTrend,renderVisitorPages,loadVisitorDashboard,loadVisitorHistory});
 })(window.KinojoAdmin);

@@ -132,27 +132,27 @@
     },
     {
       "path": "core/kinojo-supabase-features.js",
-      "sha256": "c36193f74b34526a6e943fb99cd453db9cf24f6b8c36f1aa5e61801608d6c16c"
+      "sha256": "245d8ad191c3af2a3a42a15d16910eb7978ffab5f2734abbd1992522b183aea0"
     },
     {
       "path": "admin/js/admin-characters.js",
-      "sha256": "0b27e46e198cb2a8be14c99c6b4aeeed79c43f56effaaabd4e9b29d8641a8dd1"
+      "sha256": "70ba3112be72e04a904bb56613295510c759d689f87d6e9116f6ef2ad6fc6f34"
     },
     {
       "path": "admin/js/admin.js",
-      "sha256": "42e92c23955d6349ace0b3bc2518e5434fe35154492255a1920c4575f9e32f43"
+      "sha256": "83bf1d8f5352c8891884fcf9291ca84732f8940c0bbe48978a0a4932de0a82fb"
     },
     {
       "path": "admin/js/admin-bootstrap.js",
-      "sha256": "8bc05e92b75f3d64e8d4a0c90269a7edb582c80fa062b7329bbab26f411c13ff"
+      "sha256": "5624eab3d4ef87037a8f94fc26865d93f6674b00607ace2128a735194b01889f"
     },
     {
       "path": "admin/index.html",
-      "sha256": "6886ece3ef1ab16ada283234dffad5c57e78294217724c4be14fa1300553aeb1"
+      "sha256": "34d6b0a1163f1d1a08acfc8eb796ddf6b26a987561cb8191a863a37c4358e828"
     },
     {
       "path": "m/admin/index.html",
-      "sha256": "89e592ab2da3256ed4173c809a760828b41ffb1f73b956ed7f005ef43ee1d4c8"
+      "sha256": "f10d64d1ef49461775183f9caeedc007c81c43521fd98daf57be21f78212e82e"
     },
     {
       "path": "supabase/config.toml",

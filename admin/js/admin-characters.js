@@ -32,7 +32,7 @@
     const schedule=$('#characterAutomationSchedule');
     const notice=$('#characterAutomationNotice');
     if(schedule){
-      const times=Array.isArray(current?.scheduleKst)?current.scheduleKst.join(' · '):'10:00 · 22:00';
+      const times=current?.characterScheduleSummary||(Array.isArray(current?.scheduleKst)?current.scheduleKst.join(' · '):'일정 확인 중');
       const next=current?.nextRunAt?' · 다음 '+formatServerTime(current.nextRunAt):'';
       schedule.textContent=(current?.enabled===true?'ON':'OFF')+' · KST '+times+next;
     }

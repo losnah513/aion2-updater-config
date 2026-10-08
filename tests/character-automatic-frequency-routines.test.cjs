@@ -1,0 +1,107 @@
+const fs=require('node:fs'),assert=require('node:assert/strict');
+const {PGlite}=require(process.env.PGLITE_MODULE||'../.codex-test-runtime/node_modules/@electric-sql/pglite');
+const read=p=>fs.readFileSync(p,'utf8'),name='20261008062130_character_automatic_main_alt_frequency.sql';
+async function run(){
+ const db=new PGlite();
+ try{
+  await db.exec(read('tests/fixtures/character-refresh-policy-schema.sql'));
+  await db.exec(read('tests/fixtures/character-refresh-relation-schema.sql'));
+  await db.exec(read('tests/fixtures/character-refresh-list-preference-schema.sql'));
+  const events=read('tests/fixtures/legion-add-baseline/queue-schema.sql').match(/create table public.updater_runtime_events[^;]+;/i)[0];await db.exec(events);
+  await db.exec(`create schema cron;
+   create table cron.job(jobid bigint primary key,jobname text,schedule text,active boolean,command text);
+   create table cron.job_run_details(runid bigint primary key,jobid bigint,status text,start_time timestamptz,end_time timestamptz,return_message text);
+   create function cron.alter_job(bigint,schedule text default null,active boolean default null) returns void language sql as $$ update cron.job j set schedule=coalesce($2,j.schedule),active=coalesce($3,j.active) where jobid=$1 $$;
+   insert into cron.job values(11,'kinojo-character-refresh-6h-v377','0 1,13 * * *',true,'SECRET_SENTINEL'),(12,'kinojo-sanctuary-sheet-sync-12h-v377','0 5,17 * * *',false,'SECRET_SENTINEL'),(99,'unrelated','* * * * *',true,'SECRET_SENTINEL');
+   insert into cron.job_run_details values(1,11,'failed',now()-interval '1 hour',now()-interval '59 minutes','SECRET_SENTINEL'),(2,11,'succeeded',now(),now(),'SECRET_SENTINEL');
+   alter table kinojo_server_automation_settings add list_sheet_sync_enabled boolean default true;
+   alter table updater_sessions add list_sheet_sync_enabled boolean default true;
+   alter table character_master add unique(server_id,character_name);
+   alter table lookup_session_targets add unique(session_id,server_id,character_name);
+   create sequence synthetic_target;alter table lookup_session_targets alter id set default nextval('synthetic_target');
+   create function kinojo_expire_updater_lock() returns void language sql as $$select$$;
+   create function kinojo_validate_updater_session(text,text) returns jsonb language sql security definer as $$ select jsonb_build_object('ok',exists(select 1 from updater_sessions where session_id=$1 and session_token=$2)) $$;
+   create function kinojo_web_admin_actor_v323(text) returns jsonb language plpgsql as $$begin
+     if $1='synthetic-admin' then return '{"id":1,"level":5}'::jsonb;end if;
+     if $1='synthetic-member' then return '{"id":2,"level":1}'::jsonb;end if;
+     raise exception 'INVALID_WEB_SESSION';end $$;
+   create function kinojo_lookup_step_upsert(text,text,integer,text,integer,integer,text,jsonb) returns jsonb language sql as $$ select '{"ok":true}'::jsonb $$;
+   create function kinojo_runtime_progress(text,text,text,text,text,integer,integer,jsonb) returns jsonb language sql as $$ select '{"ok":true}'::jsonb $$;
+   create function kinojo_strip_server_suffix(text) returns text language sql immutable as $$ select $1 $$;
+   create function kinojo_normalize_aion_class_name(text) returns text language sql immutable as $$ select $1 $$;
+   create function kinojo_character_identity_key_v298(text) returns text language sql immutable as $$select lower(trim($1))$$;
+   create function kinojo_character_identity_strict_258(text,integer) returns jsonb language sql as $$select jsonb_build_object('matchable',true,'status','OK','characterName',$1,'serverId',$2)$$;
+   create function kinojo_server_name_by_id(integer) returns text language sql as $$select '지켈'::text$$;
+   create function kinojo_lookup_admin_exclusion_reason(integer,text) returns text language sql as $$ select case when lookup_excluded then 'synthetic exclusion' else null end from character_master where server_id=$1 and character_name=$2 limit 1 $$;
+   create function private.kinojo_character_lookup_policy(bigint) returns jsonb language sql as $$ select jsonb_build_object('eligible',not coalesce(lookup_excluded,false) and character_name not like 'dormant%', 'reason',case when character_name like 'dormant%' then 'AUTO_NO_ACTIVITY' else 'MANAGED_LEGION' end) from character_master where id=$1 $$;
+   create table private.character_activity_checks(character_id bigint primary key,session_id text,claim_id uuid,claimed_at timestamptz,lease_until timestamptz,next_check_at timestamptz,source_revision jsonb,outcome text,checked_at timestamptz,code text,profile jsonb);
+   create table private.character_activity_lifecycle(character_id bigint,excluded_at timestamptz);
+   create function private.kinojo_character_activity_session(text,text) returns boolean language sql as $$select coalesce((kinojo_validate_updater_session($1,$2)->>'ok')::boolean,false)$$;
+   create function private.kinojo_character_activity_lock() returns void language sql as $$select$$;
+   create function private.kinojo_character_activity_reconcile(bigint) returns void language sql as $$select$$;
+   insert into kinojo_server_automation_settings(automation_key,enabled,schedule_kst,running,pre_block_minutes,post_block_minutes) values('character_refresh',true,'["10:00","22:00"]',false,15,15);
+   insert into updater_lock_state(id,is_locked) values('global',false);
+   insert into server_master(server_id,server_name,server_short_name,is_active) values(2002,'지켈','지켈',true);
+   insert into character_master(id,character_name,server_id,is_main,main_character_name,is_active,status,lookup_excluded) values
+     (1,'main',2002,true,'main',true,'OK',false),(2,'alt',2002,false,'main',true,'OK',false),
+     (3,'excluded',2002,false,'main',true,'OK',true),(4,'db-alt',2002,false,'db-main',true,'OK',false),
+     (5,'db-main',2002,true,'db-main',true,'OK',false),(101,'dormant-main',2002,true,'dormant-main',true,'OK',false),
+     (102,'dormant-alt',2002,false,'dormant-main',true,'OK',false);`);
+  await db.exec(read('supabase/migrations/'+name));
+  const q=async(s,a=[])=> (await db.query(s,a)).rows;
+  const val=async(s,a=[])=> (await q(s,a))[0].v;
+  assert.deepEqual(await val("select schedule_kst v from kinojo_server_automation_settings"),['10:00','15:00','22:00']);
+  assert.equal(await val('select schedule v from cron.job where jobid=11'),'0 1,6,13 * * *');
+  assert.equal(await val('select command v from cron.job where jobid=11'),'SECRET_SENTINEL');
+  assert.equal(await val('select active v from cron.job where jobid=12'),false);
+  const list=[{row:1,name:'main',main:'main',serverId:2002},{row:2,name:'alt',main:'main',serverId:2002},{row:3,name:'excluded',main:'main',serverId:2002}];
+  const prepare=async(s,t,complete=true,extra={})=>val('select kinojo_prepare_lookup_queue_from_list_v296($1,$2,$3,$4) v',[s,t,JSON.stringify(list),JSON.stringify({serverReadComplete:complete,...extra})]);
+  const expected={MAIN_ONLY:['db-main','main'],ALT_ONLY:['alt','db-alt']};
+  await db.exec('grant usage on schema private to service_role;grant select,update on character_master to service_role;grant select,insert,update,delete on private.character_activity_checks to service_role;grant select on private.character_activity_lifecycle to service_role');
+  assert.equal(await val("select has_table_privilege('service_role','updater_sessions','select') v"),false);
+  for(const [clock,slot,scope] of [['09:59','22:00','MAIN_ONLY'],['10:00','10:00','MAIN_ONLY'],['14:59','10:00','MAIN_ONLY'],['15:00','15:00','ALT_ONLY'],['21:59','15:00','ALT_ONLY'],['22:00','22:00','MAIN_ONLY'],['23:59','22:00','MAIN_ONLY']]){
+   await db.exec("update updater_lock_state set is_locked=false;update kinojo_server_automation_settings set running=true,active_run_id='synthetic-run'");
+   await db.query("update kinojo_server_automation_settings set running_since=$1::timestamp at time zone 'Asia/Seoul'",['2026-10-08 '+clock]);
+   const start=await val("select kinojo_automation_system_character_start_v377('synthetic-run') v");
+   assert.equal(start.ok,true);assert.equal(start.payload.scheduledSlotKst,slot);assert.equal(start.payload.scheduledCharacterScope,scope);
+   assert.equal((await prepare(start.sessionId,start.sessionToken,false)).code,'COMPLETE_LIST_READ_REQUIRED');
+   assert.equal((await prepare(start.sessionId,'invalid')).ok,false);
+   await db.exec("update kinojo_server_automation_settings set running_since='2026-10-09 15:00'::timestamp at time zone 'Asia/Seoul'");
+   const result=await prepare(start.sessionId,start.sessionToken);assert.equal(result.ok,true);
+   assert.deepEqual((await q('select character_name from lookup_session_targets where session_id=$1 order by character_name',[start.sessionId])).map(r=>r.character_name),expected[scope]);
+   assert.equal((await prepare(start.sessionId,start.sessionToken)).code,'SESSION_ALREADY_PREPARED');
+   await db.exec("update kinojo_server_automation_settings set running_since='2026-10-09 10:00'::timestamp at time zone 'Asia/Seoul'");
+   await db.exec('truncate private.character_activity_checks');
+   await db.exec('set role service_role');
+   const activity=await val('select kinojo_character_activity_claim($1,$2) v',[start.sessionId,start.sessionToken]);
+   assert.deepEqual(activity.targets.map(r=>r.characterName),[scope==='MAIN_ONLY'?'dormant-main':'dormant-alt']);
+   assert.equal((await val('select kinojo_character_activity_claim($1,$2) v',[start.sessionId,start.sessionToken])).repeated,true);
+   await db.exec('reset role');
+  }
+  await db.exec("insert into updater_sessions(session_id,session_token,tool_name,raw_payload) values('manual','synthetic','WEB_COMMON','{\"scheduledCharacterScope\":\"MAIN_ONLY\",\"scheduledAutomation\":true}')");
+  assert.equal((await prepare('manual','synthetic',true,{scheduledCharacterScope:'ALT_ONLY'})).ok,true);
+  assert.deepEqual((await q("select character_name from lookup_session_targets where session_id='manual' order by character_name")).map(r=>r.character_name),['alt','db-alt','db-main','main']);
+  const preview=async(cron,now)=>val('select private.kinojo_cron_preview_v533($1,$2) v',[cron,now]);
+  assert.equal((await preview('0 1,6,13 * * *','2026-10-08T00:00:00Z')).label,'매일 10:00 · 매일 15:00 · 매일 22:00');
+  assert.equal((await preview('10 20 * * 2','2026-10-06T19:00:00Z')).label,'수요일 05:10');
+  assert.equal(new Date((await preview('10 20 * * 2','2026-10-06T21:00:00Z')).nextRunAt).toISOString(),'2026-10-13T20:10:00.000Z');
+  assert.equal((await preview('*/15 * * * *','2026-10-08T00:00:01Z')).label,'15분마다');
+  assert.equal((await preview('* * * * *','2026-10-08T00:00:01Z')).label,'매분');
+  assert.equal(new Date((await preview('58 20 * * *','2026-10-08T20:59:00Z')).nextRunAt).toISOString(),'2026-10-09T20:58:00.000Z');
+  assert.equal((await preview('unsupported','2026-10-08T00:00:01Z')).nextRunAt,null);
+  await assert.rejects(()=>val("select kinojo_admin_server_routines_v533('invalid') v"),/INVALID_WEB_SESSION/);
+  assert.equal((await val("select kinojo_admin_server_routines_v533('synthetic-member') v")).code,'ADMIN_ACCESS_REQUIRED');
+  const counts=await q('select (select count(*) from updater_sessions)::int sessions,(select count(*) from lookup_session_targets)::int targets,(select count(*) from cron.job_run_details)::int runs');
+  const view=await val("select kinojo_admin_server_routines_v533('synthetic-admin') v");
+  assert.equal(view.routines.length,2);assert.equal(view.routines[0].lastStatus,'succeeded');assert.equal(view.routines[1].nextRunAt,null);
+  assert.equal(JSON.stringify(view).includes('SECRET_SENTINEL'),false);
+  assert.deepEqual(await q('select (select count(*) from updater_sessions)::int sessions,(select count(*) from lookup_session_targets)::int targets,(select count(*) from cron.job_run_details)::int runs'),counts);
+  assert.equal(await val("select has_function_privilege('anon','private.kinojo_cron_preview_v533(text,timestamptz)','execute') v"),false);
+  await db.exec('update kinojo_server_automation_settings set running=false');
+  await db.exec(read('supabase/rollbacks/'+name));
+  assert.equal(await val('select schedule v from cron.job where jobid=11'),'0 1,13 * * *');
+  assert.equal(await val('select command v from cron.job where jobid=11'),'SECRET_SENTINEL');
+  console.log('PASS: actual scheduled session + full-list queue + relationship claims, 10/15/22 scopes, delayed frozen scope, manual/exclusion/auth guards, KST cron boundaries, private read-only routines, secret isolation and rollback');
+ }finally{await db.close();}
+}
+run().catch(e=>{console.error(e.message,e.position,e.where);process.exitCode=1;});

@@ -2,6 +2,7 @@
 const {spawnSync}=require('node:child_process');
 const path=require('node:path');
 const tests=[
+  "tests/character-automatic-frequency-routines.test.cjs",
   "tests/identity-list-preference-permission.test.cjs",
   "tests/manual-lookup-server-filter.test.cjs",
   "tests/meter-retirement.test.cjs",
@@ -65,7 +66,7 @@ const tests=[
   "tests/character-refresh-admin-settings.test.cjs",
   "tests/character-refresh-budget.test.cjs"
 ];
-if(process.argv.includes('--browser'))tests.push('tests/character-refresh-ui-browser.test.cjs');
+if(process.argv.includes('--browser'))tests.push('tests/character-refresh-ui-browser.test.cjs','tests/server-routines-ui-browser.test.cjs');
 if(process.argv.includes('--postgres'))tests.push('tests/character-activity-concurrency.test.cjs','tests/ranking-retention-concurrency.test.cjs','tests/snapshot-retention-concurrency.test.cjs');
 let failed=0;
 for(const test of tests){

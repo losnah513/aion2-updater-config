@@ -38,7 +38,7 @@
       const bannerRevision=(['admin-banner-tabs.js','admin-banner-library.js'].includes(name)?'&context=2026090901':'')+(name==='admin-banner-event-workflow.js'?'&delivery=2026090902':'');
       const permissionRevision=name==='admin-members.js'?'&permissions=2026090901':'';
 
-      script.src=new URL(name+'?cache='+encodeURIComponent(CACHE)+'&retirement=2026100701'+characterRevision+bannerRevision+permissionRevision,base).href;
+      script.src=new URL(name+'?cache='+encodeURIComponent(CACHE)+'&retirement=2026100701&routines=2026100801'+characterRevision+bannerRevision+permissionRevision,base).href;
       script.async=false;
       script.onload=()=>{
         loadedModules.add(name);
