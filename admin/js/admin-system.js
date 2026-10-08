@@ -27,13 +27,27 @@
     };
     const summary=$('#serverRoutineCharacterPolicy');
     if(summary)summary.textContent=data.characterScheduleSummary||'자동 조회 규칙을 확인하지 못했습니다.';
-    root.innerHTML=rows.length?rows.map(row=>'<article class="admin-routine-row">'
-      +'<div><strong>'+esc(row.name)+'</strong>'+(row.description?'<p>'+esc(row.description)+'</p>':'')+'</div>'
-      +'<div><span class="admin-routine-label">실행 주기 · 한국 시간</span><strong>'+esc(row.scheduleKst)+'</strong></div>'
-      +'<div><span class="admin-routine-label">활성 상태</span><strong class="'+(row.active?'admin-routine-on':'')+'">'+(row.active?'ON':'OFF')+'</strong></div>'
-      +'<div><span class="admin-routine-label">다음 예약</span><strong>'+esc(row.active?time(row.nextRunAt):'중지됨')+'</strong></div>'
-      +'<div><span class="admin-routine-label">최근 실행</span><strong>'+esc(statusLabel[row.lastStatus]||(row.lastStatus?'확인 필요':'기록 없음'))+'</strong>'
-      +(row.lastStartedAt?'<p>'+esc(time(row.lastStartedAt))+'</p>':'')+'</div></article>').join(''):'<div class="admin-empty">등록된 서버 루틴이 없습니다.</div>';
+    const scheduled=[],repeated=[];
+    rows.forEach(row=>{
+      const entries=Array.isArray(row.scheduleEntries)?row.scheduleEntries:[];
+      if(['DAILY','WEEKLY'].includes(row.frequency)&&entries.length){
+        entries.forEach(entry=>scheduled.push({...row,...entry}));
+      }else repeated.push(row);
+    });
+    scheduled.sort((a,b)=>a.minuteOfDay-b.minuteOfDay||(a.weekdayKst??-1)-(b.weekdayKst??-1)||a.id-b.id);
+    const table=(items,fixed)=>'<div class="admin-routine-table-wrap"><table class="admin-routine-table"><thead><tr>'
+      +'<th scope="col">'+(fixed?'시각 · 한국 시간':'실행 간격')+'</th><th scope="col">주기</th><th scope="col">작업</th><th scope="col">상태</th><th scope="col">다음 예약</th><th scope="col">작업의 최근 실행</th></tr></thead><tbody>'
+      +items.map(row=>'<tr class="admin-routine-row">'
+        +'<td data-label="'+(fixed?'시각 · 한국 시간':'실행 간격')+'"><strong class="admin-routine-time">'+esc(fixed?row.timeKst:row.scheduleKst)+'</strong></td>'
+        +'<td data-label="주기"><span class="admin-routine-badge '+(row.frequency==='DAILY'?'is-daily':row.frequency==='WEEKLY'?'is-weekly':'is-repeat')+'">'+(row.frequency==='DAILY'?'매일':row.frequency==='WEEKLY'?'매주':row.frequency==='REPEAT'?'반복':'확인 필요')+'</span>'+(row.weekdayLabel?'<span class="admin-routine-weekday">'+esc(row.weekdayLabel)+'</span>':'')+'</td>'
+        +'<th scope="row" data-label="작업"><strong>'+esc(row.name)+'</strong>'+(row.description?'<p>'+esc(row.description)+'</p>':'')+'</th>'
+        +'<td data-label="상태"><strong class="'+(row.active?'admin-routine-on':'')+'">'+(row.active?'ON':'OFF')+'</strong></td>'
+        +'<td data-label="다음 예약">'+esc(row.active?time(row.nextRunAt):'중지됨')+'</td>'
+        +'<td data-label="작업의 최근 실행">'+esc(statusLabel[row.lastStatus]||(row.lastStatus?'확인 필요':'기록 없음'))+(row.lastStartedAt?'<p>'+esc(time(row.lastStartedAt))+'</p>':'')+'</td></tr>').join('')+'</tbody></table></div>';
+    root.innerHTML=rows.length?
+      (scheduled.length?'<section class="admin-routine-section"><h3>예약 시간표</h3><p>00:00부터 시각 순서입니다. 매주 작업은 해당 요일에 실행합니다.</p>'+table(scheduled,true)+'</section>':'')
+      +(repeated.length?'<section class="admin-routine-section"><h3>반복 작업</h3><p>하루 동안 일정한 간격으로 실행하는 작업입니다.</p>'+table(repeated,false)+'</section>':'')
+      :'<div class="admin-empty">등록된 서버 루틴이 없습니다.</div>';
     const note=$('#serverRoutineHistoryNote');
     if(note)note.textContent=data.historyNote||'최근 서버 예약 실행 기록 기준입니다.';
     setStatus('#serverRoutineStatus','한국 시간 기준 · 확인 '+time(data.generatedAt),'ok');

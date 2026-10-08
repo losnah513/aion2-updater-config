@@ -1,5 +1,11 @@
 # KINOJO WEB HANDOFF
 
+## 2026-10-08 서버 루틴 시간표·뱃지 · SQL534
+
+- 사용자00시기준시간순·표·매일/매주뱃지요청. 기존preview/getter표시계약만확장하여KST시각/요일/슬롯별다음예약을반환한다. 정시예약11행시각순,반복작업7행별도표. 본캐10/22·부캐15각행,최근실행은작업전체cron결과로안내한다.
+- 기존2함수exact/ACL·모든cron명령hash/일정/ONOFF/자동설정불변. 실제전체SQL/service_role/슬롯별next/주간rollover/rollback,PC·mobile표/뱃지/정렬/해외timezone/새로고침/escape검증통과. 신규helper/Edge/RPC/권한없음.
+- migration/rollback20261008070108_server_routine_timetable.sql. docs/SERVER_ROUTINE_TIMETABLE_20261008.md·manifest참조. 기준main98b4dfc,branch fix/server-routine-timetable-20261008. PR/CI/Drive/실제관리자검수최종상태는안정화4차LOG61.
+
 ## 2026-10-08 본부캐 자동 조회 · 서버 루틴 · SQL533
 
 - 사용자 확정: 본캐10/22시, 부캐15시 KST. 기존 cron11은0 1,6,13 UTC,명령·활성 상태 유지. 자동 세션에 claim시각의 슬롯/역할 범위를 고정하며 전체list 준비와 관계 재확인에 같은 범위를 적용한다. 수동 조회·자격·제외·기존Worker 유지.

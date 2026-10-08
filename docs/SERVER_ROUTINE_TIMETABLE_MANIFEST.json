@@ -1,0 +1,53 @@
+{
+  "release": "SQL534",
+  "baseline": "98b4dfccefa89661f2c9ad24e7ca55c37ce1b31b",
+  "files": [
+    {
+      "path": "admin/css/admin.css",
+      "sha256": "c118491a6d81f5163b390e90ed0a0bca11ba6d6cf7f34547a00056d141666110",
+      "bytes": 110422,
+      "driveId": "1sKZEHeN2StmkkdLcFTuW0ETTfrMcNv8N",
+      "mimeType": "text/css"
+    },
+    {
+      "path": "admin/js/admin-system.js",
+      "sha256": "b0572a08487cae9d891e6be799720d70acac24bcf9e50dc9baf822fe74e8b30e",
+      "bytes": 11838,
+      "driveId": "1x9LZhOd_Kd8hR4xFOZDDe0c-hpdvMfka",
+      "mimeType": "text/javascript"
+    },
+    {
+      "path": "admin/js/admin.js",
+      "sha256": "fcd4a73b9f7b046bb7f77c2927cea6dd887ea382be293f3b1fea2fa344697e51",
+      "bytes": 3440,
+      "driveId": "1YtRNWaJzsnbBwwtY_01k4BvWSKCxsOtU",
+      "mimeType": "text/plain"
+    },
+    {
+      "path": "admin/index.html",
+      "sha256": "71264cd2bc6aeb2e13196bc3bf249dc6e08cb7b8fc2d9877cef055a42a1c8ac7",
+      "bytes": 43651,
+      "driveId": "1RYfeMzCObVNxcUpsxqIBPmkKFjZWafEG",
+      "mimeType": "text/plain"
+    },
+    {
+      "path": "m/admin/index.html",
+      "sha256": "a54f9d472cd45c14eda1cb7e55ed246ceb5b88a156184611442a873d74e3b7e8",
+      "bytes": 43635,
+      "driveId": "1UzPaI8m_0ygd1NGEbJwCvYbLdTp8Qt5d",
+      "mimeType": "text/plain"
+    },
+    {
+      "path": "supabase/migrations/20261008070108_server_routine_timetable.sql",
+      "sha256": "4f08afe0ea06ad85f395ee6e529e187684ad7d936ac362b611ae6ffd4831a6de",
+      "bytes": 8134,
+      "sourceDriveId": "1kf0fc_pYuei5SveyalEhz18JeE0AHxmD",
+      "deployDriveId": "1kw4vQokhuv7QAxqcB2KylCJMq0v7T9iy"
+    },
+    {
+      "path": "supabase/rollbacks/20261008070108_server_routine_timetable.sql",
+      "sha256": "017614a676eea8b6b318314ed76f9c0da4619878a47e4edac259d868f32b0543",
+      "bytes": 6265
+    }
+  ]
+}
