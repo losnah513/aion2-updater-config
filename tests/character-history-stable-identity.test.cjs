@@ -106,11 +106,12 @@ const {PGlite}=require('../.codex-test-runtime/node_modules/@electric-sql/pglite
  values(50,'master-test',2003,'renamed','111111111111111111','renamed','궁성',
  '{"targetId":50,"diagnosis":{"detectedGearType":"PVE","itemLevel":25,"combatPower":175}}');`);
  await db.exec(fs.readFileSync('tests/fixtures/character-refresh-parser.sql','utf8'));
+ await db.exec(fs.readFileSync('supabase/migrations/20261011151205_character_abyss_pve_guard_v535.sql','utf8'));
  const worker=vm.createContext({TextEncoder,URL,Date,crypto:require('node:crypto').webcrypto,Deno:{serve(){},env:{get:()=>''}},console});
  vm.runInContext(stripTypeScriptTypes(fs.readFileSync('supabase/functions/character-refresh-worker/index.ts','utf8')).replace('export {};',''),worker);
- const snapshot=async(id,session,power,item)=>{
-  const info={profile:{characterName:'renamed',serverId:2003,serverName:'fixture-server',className:'궁성',combatPower:power,itemLevel:item,profileImage:'https://synthetic.invalid/image?charKey=111111111111111111'}};
-  const equipment={equipment:{equipmentList:Array.from({length:10},(_,i)=>({name:'합성 장비 '+i,icon:'https://synthetic.invalid/icon'}))}};
+ const snapshot=async(id,session,power,item,abyss=false)=>{
+  const info={title:{titleList:[{equipStatList:[{desc:'PVE 피해 증폭 +5%'}]}]},profile:{characterName:'renamed',serverId:2003,serverName:'fixture-server',className:'궁성',combatPower:power,itemLevel:item,profileImage:'https://synthetic.invalid/image?charKey=111111111111111111'}};
+  const equipment={equipment:{equipmentList:Array.from({length:10},(_,i)=>({name:abyss&&i<7?'아칸 천부장의 장갑':'합성 장비 '+i,icon:'https://synthetic.invalid/icon'}))}};
   const adapted=worker.parserSource(info,equipment);
   const collected=worker.officialSnapshot({sessionId:session,targetId:id,lookupOrder:1,context:{},target:{},candidate:{},resolved:{characterName:'renamed',expectedKey:'111111111111111111'},characterId:'synthetic-address',serverId:2003,adapted,infoPayload:info,equipmentPayload:equipment}).snapshot;
   await db.query('insert into lookup_snapshots(id,session_id,server_id,character_name,raw_payload,created_at) values($1,$2,2003,\'renamed\',$3,now())',[id,session,JSON.stringify(collected)]);
@@ -154,6 +155,18 @@ const {PGlite}=require('../.codex-test-runtime/node_modules/@electric-sql/pglite
  assert.equal((await db.query('select latest_pve_combat_power from character_master where id=1')).rows[0].latest_pve_combat_power,175);
  assert.equal((await db.query("select count(*)::int n from character_history where session_id='atomic-test'")).rows[0].n,0);
  console.log('PASS: actual Worker adapter + operating SQL Parser + full Master/source/history/rollup/review/event link; DB477 family survives; retry dedup, target mismatch, downstream exception atomic rollback (HTTP and intake transport synthetic)');
+ // UNKNOWN must preserve both typed Master values and create no growth history/source.
+ const beforeUnknown=(await db.query('select to_jsonb(m) state from character_master m where id=1')).rows[0].state;
+ const sourcesBefore=(await db.query('select count(*)::int n from character_stat_sources')).rows[0].n;
+ await db.exec(`insert into lookup_session_targets(id,session_id,server_id,character_name) values(53,'abyss-title-test',2003,'renamed');
+ insert into extension_character_payloads(id,session_id,server_id,character_name,char_key,raw_payload) values(53,'abyss-title-test',2003,'renamed','111111111111111111','{"targetId":53}');`);
+ await snapshot(53,'abyss-title-test',785765,5994,true);
+ const rejected=(await db.query('select kinojo_master_sync_payload(53) v')).rows[0].v;
+ assert.equal(rejected.code,'GEAR_TYPE_UNKNOWN');assert.equal(rejected.retryable,false);
+ assert.deepEqual((await db.query('select to_jsonb(m) state from character_master m where id=1')).rows[0].state,beforeUnknown);
+ assert.equal((await db.query("select count(*)::int n from character_history where session_id='abyss-title-test'")).rows[0].n,0);
+ assert.equal((await db.query('select count(*)::int n from character_stat_sources')).rows[0].n,sourcesBefore);
+ console.log('PASS: Abyss7/PVE title actual Worker->Parser->Master guard preserves Master, history and stat sources');
  await db.exec('rollback');
  await db.exec('begin');
  const started=performance.now();

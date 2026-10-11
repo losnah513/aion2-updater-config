@@ -1,3 +1,7 @@
+# Character Abyss PVE guard (SQL535)
+
+CONFIRMED · 2026-10-12: validated weapon/armor with at least three Abyss items and no qualifying equipped PVP damage amplification/resistance title is UNKNOWN, never PVE. Missing title evidence is also UNKNOWN. PVP still requires the equipped title and three Abyss items; fewer than three retains the existing PVE rule. Generic official numbers remain parsed, but neither PVE nor PVP values are emitted for UNKNOWN and Master sync is ineligible. Revalidate when equipment extraction, title evidence, or intake/Master UNKNOWN handling changes. Evidence: tests/character-abyss-pve-guard.test.cjs and SQL535. Historical correction is separate.
+
 # KINOJO WEB
 
 Meter retirement (2026-10-07, SQL530): the Meter product is permanently discontinued. Its routes, administration, deployment services, database and distribution files are removed without a backup at the owner’s request. Shared character identity and authentication behavior remain supported.

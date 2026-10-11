@@ -2,6 +2,7 @@
 const {spawnSync}=require('node:child_process');
 const path=require('node:path');
 const tests=[
+  "tests/character-abyss-pve-guard.test.cjs",
   "tests/character-automatic-frequency-routines.test.cjs",
   "tests/identity-list-preference-permission.test.cjs",
   "tests/manual-lookup-server-filter.test.cjs",
