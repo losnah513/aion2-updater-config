@@ -1,3 +1,9 @@
+# SQL535 · Abyss PVE guard · 2026-10-12
+
+- Existing Server Parser only (DB_ONLY); Edge character-refresh-worker v47 unchanged. Abyss >=3 without qualifying PVP title becomes UNKNOWN, with null typed values and masterSyncEligible=false. Existing PVP title predicate and incomplete-equipment protection retained.
+- Test: node tests/character-abyss-pve-guard.test.cjs. Migration/rollback character_abyss_pve_guard_v535. Baseline main5ec8ebe6e114457a0e221399d29a39a62e20d69e; branch fix/abyss-pve-classification-20261012. Deployment/CI/Drive final state: character refresh stabilization project 4 LOG62.
+- Observed Obhan snapshot38130 at 2026-10-11 22:01 KST: Abyss7/PVE title; generic5994/785765. Earlier10:01 snapshot38004 had Abyss0 and PVE6457/973625. No historical data or list rewrite in this change.
+
 # KINOJO WEB HANDOFF
 
 ## 2026-10-08 서버 루틴 시간표·뱃지 · SQL534

@@ -2,10 +2,10 @@ name: Verify PVP Title Predicate
 on:
   pull_request:
     branches: [main]
-    paths: ['supabase/**/*pvp_defense_title*', 'tests/pvp-title-v479.test.cjs', 'tests/fixtures/pvp-title-before-v479.sql', '.github/workflows/verify-pvp-title.yml']
+    paths: ['supabase/**/*pvp_defense_title*', 'supabase/**/*character_abyss_pve_guard*', 'tests/character-abyss-pve-guard.test.cjs', 'tests/pvp-title-v479.test.cjs', 'tests/fixtures/pvp-title-before-v479.sql', '.github/workflows/verify-pvp-title.yml']
   push:
     branches: [main]
-    paths: ['supabase/**/*pvp_defense_title*', 'tests/pvp-title-v479.test.cjs', 'tests/fixtures/pvp-title-before-v479.sql', '.github/workflows/verify-pvp-title.yml']
+    paths: ['supabase/**/*pvp_defense_title*', 'supabase/**/*character_abyss_pve_guard*', 'tests/character-abyss-pve-guard.test.cjs', 'tests/pvp-title-v479.test.cjs', 'tests/fixtures/pvp-title-before-v479.sql', '.github/workflows/verify-pvp-title.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -19,6 +19,10 @@ jobs:
         with:
           node-version: '24'
       - run: npm install --prefix "$RUNNER_TEMP/pvp-test" --no-audit --no-fund @electric-sql/pglite@0.5.8
-      - run: node tests/pvp-title-v479.test.cjs
+      - run: |
+          mkdir -p .codex-test-runtime/node_modules/@electric-sql
+          ln -s "$RUNNER_TEMP/pvp-test/node_modules/@electric-sql/pglite" .codex-test-runtime/node_modules/@electric-sql/pglite
+          node tests/pvp-title-v479.test.cjs
+          node tests/character-abyss-pve-guard.test.cjs
         env:
           NODE_PATH: ${{ runner.temp }}/pvp-test/node_modules
