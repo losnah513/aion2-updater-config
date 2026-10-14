@@ -752,7 +752,7 @@
   function bossRoleMarkup(roles){
     const badges=[];
     if(roles?.boss1)badges.push('<span class="sanctuary-boss-badge is-boss1" title="1보스 역할">'+escapeHtml(roles.boss1)+'</span>');
-    for(const n of Array.isArray(roles?.boss2)?roles.boss2:[])badges.push('<span class="sanctuary-boss-badge is-boss2" title="2보스 '+escapeHtml(n)+'시">'+escapeHtml(n)+'</span>');
+    for(const n of Array.isArray(roles?.boss2)?roles.boss2:[])badges.push('<span class="sanctuary-boss-badge is-boss2" title="2보스 '+escapeHtml(n)+'시">'+escapeHtml(n)+'시</span>');
     return badges.length?'<span class="sanctuary-boss-badges">'+badges.join('')+'</span>':'';
   }
 
@@ -765,7 +765,7 @@
       const chosen=s.boss===1?s.roles.boss1===code:s.roles.boss2.includes(code);
       const used=peers.some(x=>s.boss===1?x.character.bossRoles?.boss1===code:(x.character.bossRoles?.boss2||[]).includes(code));
       const disabled=!s.acquired||s.saving||s.saved||used||(s.boss===2&&!chosen&&s.roles.boss2.length>=2);
-      return '<button type="button" data-role-code="'+escapeHtml(code)+'" aria-pressed="'+chosen+'"'+(disabled?' disabled':'')+' title="'+(used?'다른 캐릭터에게 배정됨':chosen?'선택 해제':'역할 선택')+'">'+escapeHtml(code)+'</button>';
+      return '<button type="button" data-role-code="'+escapeHtml(code)+'" aria-pressed="'+chosen+'"'+(disabled?' disabled':'')+' title="'+(used?'다른 캐릭터에게 배정됨':chosen?'선택 해제':'역할 선택')+'">'+escapeHtml(code)+(s.boss===2?'시':'')+'</button>';
     }).join('');
     operationLayer.querySelector('[data-role-selected]').innerHTML=bossRoleMarkup(s.roles)||'지정된 역할 없음';
     operationLayer.querySelector('[data-role-limit]').textContent=s.boss===1?'캐릭터당 1개 · 같은 포스에서 역할별 1명':'캐릭터당 최대 2개 · 같은 포스에서 숫자별 1명';
@@ -870,7 +870,7 @@
           if(slot.occupied)slotName.appendChild(document.createTextNode('['+(value(slot.character?.serverName)||'서버 미상')+']'));
           const slotMeta=document.createElement('small');slotMeta.className='sanctuary-management-force-slot-server';slotMeta.textContent=slot.occupied?'['+(value(slot.character?.serverName)||'서버 미상')+']':'[대기]';
           const slotPower=document.createElement('small');slotPower.className='sanctuary-management-force-slot-power';slotPower.innerHTML=slot.character?.isRandomAlt?'랜덤 부캐':slot.occupied?combatPowerMarkup(slot.character?.power):'캐릭터 대기';copy.append(slotName,slotPower);
-          if(slot.occupied&&value(sanctuary?.code)==='kaldrix'){const roles=document.createElement('span');roles.innerHTML=bossRoleMarkup(slot.character?.bossRoles);copy.appendChild(roles);}
+          if(slot.occupied&&value(sanctuary?.code)==='kaldrix'){const roles=document.createElement('span');roles.innerHTML=bossRoleMarkup(slot.character?.bossRoles);roles.className='sanctuary-management-force-slot-roles';if(roles.firstElementChild)item.appendChild(roles);}
         }
         item.append(icon,copy);
         if(slot.occupied&&!slot.character?.isRandomAlt&&value(sanctuary?.code)==='kaldrix'){

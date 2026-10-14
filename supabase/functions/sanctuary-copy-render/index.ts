@@ -2,7 +2,7 @@ import { normalizeSanctuaryCode, sanctuaryAssetPath } from "../_shared/sanctuary
 declare const Deno: any;
 /*
  * KINOJO Supabase Edge Function: sanctuary-copy-render
- * Version: 20261015_01
+ * Version: 20261015_03
  * Role: 성역 포스/팀 클립보드용 SVG를 서버에서 생성한다.
  * Rule: 기존 WEB v317과 신규 Server 팀 모두 같은 Stage 12 SVG renderer를 사용한다.
  */
@@ -295,9 +295,9 @@ function copyBossRoles(input: unknown){
   return {boss1:boss1||null,boss2};
 }
 function bossRolesSvg(input: Slot["bossRoles"]){
-  const roles=copyBossRoles(input),labels=[...(roles.boss1?[{text:roles.boss1,boss:1}]:[]),...roles.boss2.map(n=>({text:String(n),boss:2}))];
-  let x=64;
-  return labels.map(b=>{const w=b.boss===1?43:22;const out=`<g transform="translate(${x} 51)"><rect width="${w}" height="14" rx="3" fill="${b.boss===1?'#e4eaff':'#dff3ed'}" stroke="${b.boss===1?'#9aaad7':'#8cc9b6'}"/><text x="${w/2}" y="10.5" text-anchor="middle" font-size="9" font-weight="900" fill="#294b6c">${xml(b.text)}</text></g>`;x+=w+3;return out;}).join('');
+  const roles=copyBossRoles(input),labels=[...(roles.boss1?[{text:roles.boss1,boss:1}]:[]),...roles.boss2.map(n=>({text:String(n)+"시",boss:2}))];
+  return labels.map((b,i)=>{const w=43,y=(CARD_H-labels.length*17+3)/2+i*17;
+    return `<g transform="translate(${CARD_W-w-5} ${y})"><rect width="${w}" height="14" rx="3" fill="${b.boss===1?'#e4eaff':'#dff3ed'}" stroke="${b.boss===1?'#9aaad7':'#8cc9b6'}"/><text x="${w/2}" y="10.5" text-anchor="middle" font-size="9" font-weight="900" fill="#294b6c">${xml(b.text)}</text></g>`;}).join('');
 }
 
 function badgeSvg(label: string, x: number, y: number, main: boolean){
@@ -347,10 +347,10 @@ function slotSvg(slot: Slot, x: number, y: number, map: Map<string,string>, req:
     <text x="64" y="33" font-size="${Math.min(nameFont,14)}" textLength="${Math.min(105,Array.from(shownName).length*11)}" lengthAdjust="spacingAndGlyphs" font-weight="1000" fill="#1f2f46">${xml(shownName)}</text>
     ${powerIcon?`<image href="${powerIcon}" x="64" y="37" width="12" height="12" preserveAspectRatio="xMidYMid meet"/>`:`<circle cx="70" cy="43" r="5" fill="#4c75b8"/>`}
     <text x="80" y="47" font-size="11" font-weight="1000" fill="#556b93">${xml(fmtPowerK(slot.power))}</text>
-    ${bossRolesSvg(slot.bossRoles)}
     <rect x="${stageX}" y="0" width="${stageW}" height="${CARD_H}" rx="0 8 8 0" fill="#edf3fb"/>
     ${image?`<image href="${image}" x="${stageX}" y="0" width="${stageW}" height="${CARD_H}" preserveAspectRatio="xMidYMid slice"/>`:''}
     <rect x="${stageX}" y="0" width="24" height="${CARD_H}" fill="url(#${fadeId})"/>
+    ${bossRolesSvg(slot.bossRoles)}
   </g>`;
 }
 
