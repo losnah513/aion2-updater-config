@@ -229,3 +229,13 @@ body.sanctuary-management-force-overview-open{overflow:hidden}
   .sanctuary-management-force-slot-server{max-width:3.5em;font-size:7px}
   .sanctuary-management-force-slot-power{font-size:8px}
 }
+
+/* Boss roles stay inside the character card at every viewport. */
+.sanctuary-management-force-slot .sanctuary-management-force-slot-copy{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;white-space:normal}
+.sanctuary-management-force-slot .sanctuary-management-force-slot-name{width:auto;max-width:100%;min-width:0;white-space:normal;overflow-wrap:anywhere;line-height:1.2}
+.sanctuary-management-force-slot .sanctuary-management-force-slot-power{max-width:100%;white-space:normal;line-height:1.2}
+.sanctuary-management-force-slot{height:auto;min-height:62px}
+.sanctuary-boss-badges{display:flex;flex-wrap:wrap;align-items:center;gap:3px;max-width:100%;min-width:0;line-height:1.2}
+.sanctuary-boss-badge{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;max-width:100%;padding:1px 4px;border:1px solid #9eacd6;border-radius:4px;background:#edf1ff;color:#344f9d;font-size:10px;font-weight:900;white-space:nowrap;line-height:1.2}
+.sanctuary-boss-badge.is-boss2{background:#e4f5f1;border-color:#8dc9b8;color:#176652}
+@media(max-width:560px){.sanctuary-boss-badge{font-size:8px;padding:1px 3px}.sanctuary-boss-badges{gap:2px}.sanctuary-management-force-slot{min-height:70px}}

@@ -1,3 +1,7 @@
+## Sanctuary boss role badges (SQL536)
+
+CONFIRMED · 2026-10-15: character names render as name[server]. Per force, boss1 roles 3>3/6>6/9>12/12>9 are unique and at most one per character; boss2 positions1..12 are unique across characters with at most two distinct positions per character. Roles belong to force+character, survive same-force moves, and release on replacement/removal. Existing authenticated SAVE_COMPOSITION owns permission, lease, revision, atomic audit and replay boundaries. The role table and helpers are private and default-deny; old clients omitting roles preserve assignments. Clipboard PNG/SVG uses the same role labels. Revalidate on roster/save/permission/copy contract changes. Evidence: sanctuary-permission-command.test.cjs and sanctuary-boss-roles-browser.test.cjs.
+
 # Character Abyss PVE guard (SQL535)
 
 CONFIRMED · 2026-10-12: validated weapon/armor with at least three Abyss items and no qualifying equipped PVP damage amplification/resistance title is UNKNOWN, never PVE. Missing title evidence is also UNKNOWN. PVP still requires the equipped title and three Abyss items; fewer than three retains the existing PVE rule. Generic official numbers remain parsed, but neither PVE nor PVP values are emitted for UNKNOWN and Master sync is ineligible. Revalidate when equipment extraction, title evidence, or intake/Master UNKNOWN handling changes. Evidence: tests/character-abyss-pve-guard.test.cjs and SQL535. Historical correction is separate.

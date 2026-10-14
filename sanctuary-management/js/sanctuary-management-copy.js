@@ -68,6 +68,8 @@
     const relation=text(character.relation).toUpperCase();
     return {
       name:text(character.name).slice(0,16),
+      serverName:text(character.serverName).slice(0,24),
+      bossRoles:character.bossRoles||{boss1:null,boss2:[]},
       className:text(character.className).slice(0,40),
       profileImageUrl:text(character.profileImageUrl),
       power:number(character.power||character.latestPveCombatPower||character.latest_pve_combat_power),

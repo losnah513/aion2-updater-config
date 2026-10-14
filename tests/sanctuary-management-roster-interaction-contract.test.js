@@ -37,7 +37,7 @@ for(const token of [
 
 for(const token of [
   "const classRecruiting=!occupied&&required.code!=='ALL'",
-  "displayName=classRecruiting?required.label+' 모집 중':name",
+  "displayName=classRecruiting?required.label+' 모집 중':occupied?",
   "(classRecruiting?' is-class-slot':'')",
 ])assert.ok(draft.includes(token),`composer class-slot interaction missing ${token}`);
 
@@ -79,7 +79,7 @@ for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   assert.equal((html.match(/altDetail=2026090101/g)||[]).length,2,`${page}: alt detail cache keys missing`);
   assert(html.includes('familyHover=2026090801'),`${page}: canonical family hover cache missing`);
   assert.equal((html.match(/familyHover=2026090801/g)||[]).length,2);
-  assert(html.includes('familyHover=2026090801" rel="stylesheet"'));
+  assert(html.includes('familyHover=2026090801&amp;bossRoles=2026101501" rel="stylesheet"'));
 }
 
 console.log('KINOJO sanctuary management roster interaction contract: PASS');

@@ -3,6 +3,7 @@ const {PGlite}=require('../.codex-test-runtime/node_modules/@electric-sql/pglite
 (async()=>{
  const db=new PGlite();
  try{
+ await db.exec("set timezone='UTC'"); // Fixture dates and explicit Z instants share one timezone.
  await db.exec(fs.readFileSync('tests/fixtures/character-refresh-policy-schema.sql','utf8'));
  await db.exec(`
  alter table character_master add primary key(id), add column lookup_policy text default 'INHERIT',
