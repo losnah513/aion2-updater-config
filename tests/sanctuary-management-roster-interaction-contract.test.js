@@ -79,7 +79,7 @@ for(const page of ['sanctuary/index.html','m/sanctuary/index.html']){
   assert.equal((html.match(/altDetail=2026090101/g)||[]).length,2,`${page}: alt detail cache keys missing`);
   assert(html.includes('familyHover=2026090801'),`${page}: canonical family hover cache missing`);
   assert.equal((html.match(/familyHover=2026090801/g)||[]).length,2);
-  assert(html.includes('familyHover=2026090801&amp;bossRoles=2026101501" rel="stylesheet"'));
+  assert(html.includes('familyHover=2026090801&amp;bossRoles=2026101502" rel="stylesheet"'));
 }
 
 console.log('KINOJO sanctuary management roster interaction contract: PASS');
