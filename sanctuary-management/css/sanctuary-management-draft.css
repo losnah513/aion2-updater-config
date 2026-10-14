@@ -258,3 +258,12 @@ button.is-requirement-pending{opacity:.58}
 .sanctuary-management-draft-slot-shell.is-class-slot>.sanctuary-management-slot-class-trigger>*{opacity:0}
 @media(max-width:699px){.sanctuary-management-draft-slot-shell.is-class-slot .sanctuary-management-draft-character-icon{left:-3px;width:54px;height:54px}.sanctuary-management-draft-slot-shell.is-class-slot>.sanctuary-management-slot-class-trigger{width:49px}.sanctuary-management-draft-slot-shell.is-class-slot .sanctuary-management-draft-slot-copy strong{font-size:clamp(9px,4.2cqw,12px)}}
 @media(prefers-reduced-motion:reduce){.sanctuary-management-roster,.sanctuary-management-party-labels span,.sanctuary-management-draft-slot{transition:none}.sanctuary-management-draft-slot:not(.is-occupied)::after{animation:none}}
+
+.sanctuary-management-draft-slot-copy{min-width:0;overflow:hidden}
+.sanctuary-management-draft-slot-copy>strong{white-space:normal!important;overflow-wrap:anywhere;max-width:100%}
+.sanctuary-boss-role-picker{grid-column:1/-1;display:grid;gap:6px;min-width:0;padding:8px;border:1px solid #c9d5ef;border-radius:8px;background:#f7f9ff}
+.sanctuary-boss-role-picker>strong{font-size:11px;color:#41536f}
+.sanctuary-boss-role-picker>div{display:grid;grid-template-columns:repeat(auto-fit,minmax(44px,1fr));gap:4px;min-width:0}
+.sanctuary-boss-role-picker button{min-width:0;min-height:44px;padding:3px;font-size:11px;border:1px solid #c8d3e8;border-radius:6px;background:white;color:#354965}
+.sanctuary-boss-role-picker button[aria-pressed=true]{background:#475be0;border-color:#475be0;color:white}
+.sanctuary-boss-role-picker button:disabled{opacity:.4}

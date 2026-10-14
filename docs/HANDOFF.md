@@ -1,3 +1,9 @@
+## Sanctuary boss roles · SQL536 · 2026-10-15
+
+- Branch feat/sanctuary-boss-roles, baseline d4ff2e784b4eb67fcc4133d10fc72d2260e86c8c. Existing management Edge31 unchanged; copy renderer26 gains names/roles. SQL536 extends existing command/roster/permission snapshot; private roles table constraints enforce unique force roles and per-character caps. No operational assignments are prefilled.
+- Tests: NODE_PATH pointing to PGlite0.5.8 node tests/sanctuary-permission-command.test.cjs; node tests/sanctuary-boss-roles-browser.test.cjs with PLAYWRIGHT_MODULE and optional CHROME_PATH. Existing legacy save regression remains required.
+- Final deployment/CI/Drive/next steps: sanctuary management project LOG75. Rollback restores prior three functions and keeps role rows for recovery.
+
 # SQL535 · Abyss PVE guard · 2026-10-12
 
 - Existing Server Parser only (DB_ONLY); Edge character-refresh-worker v47 unchanged. Abyss >=3 without qualifying PVP title becomes UNKNOWN, with null typed values and masterSyncEligible=false. Existing PVP title predicate and incomplete-equipment protection retained.

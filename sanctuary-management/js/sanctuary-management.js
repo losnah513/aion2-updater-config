@@ -81,6 +81,7 @@
     const requiredClassCode=value(item.requiredClassCode||'ALL').toUpperCase();
     const placementLocked=item.placementLocked===true;
     const character=item.character&&typeof item.character==='object'&&!Array.isArray(item.character)?Object.assign({},item.character,{power:combatPowerValue(item.character.power??item.character.latestPveCombatPower??item.character.latest_pve_combat_power),itemLevel:itemLevelValue(item.character.itemLevel??item.character.latestPveItemLevel??item.character.latest_pve_item_level)}):null;
+    if(character)character.bossRoles=item.bossRoles||{boss1:null,boss2:[]};
     if(character?.isRandomAlt===true){character.randomClassCode=requiredClassCode;character.className=CLASS_NAME_BY_CODE[requiredClassCode]||'';}
     if(occupied!==Boolean(character))throw new Error('성역 관리 슬롯 점유 상태가 일치하지 않습니다.');
     const slot=Object.assign({},item,{
@@ -747,6 +748,13 @@
   function activateAltDetail(item){if(!item)return;closeAltDetails(item);item.classList.add('is-alt-detail-open');item.setAttribute('aria-expanded','true');scheduleAltDetailIdleClose(item);}
   function noteAltDetailActivity(item){if(!item)return;if(!item.classList.contains('is-alt-detail-open')){activateAltDetail(item);return;}const now=Date.now(),last=Number(item.dataset.altDetailActivity||0);if(now-last<180)return;item.dataset.altDetailActivity=String(now);scheduleAltDetailIdleClose(item);}
 
+  function bossRoleMarkup(roles){
+    const badges=[];
+    if(roles?.boss1)badges.push('<span class="sanctuary-boss-badge is-boss1" title="1보스 역할">'+escapeHtml(roles.boss1)+'</span>');
+    for(const n of Array.isArray(roles?.boss2)?roles.boss2:[])badges.push('<span class="sanctuary-boss-badge is-boss2" title="2보스 '+escapeHtml(n)+'시">'+escapeHtml(n)+'</span>');
+    return badges.length?'<span class="sanctuary-boss-badges">'+badges.join('')+'</span>':'';
+  }
+
   function createForceCard(team,force){
     const participation=value(team.mode)==='PARTICIPATION'&&['ACTIVE','FULL'].includes(value(team.status));
     const supportEnabled=participation&&bootstrapData?.writeEnabled&&force.canSupport;
@@ -792,8 +800,10 @@
         if(classRecruiting){const recruitment=document.createElement('strong');recruitment.className='sanctuary-management-force-slot-recruitment';recruitment.textContent=(CLASS_NAME_BY_CODE[requiredClass]||'지정 클래스')+' 모집 중';copy.appendChild(recruitment);}
         else{
           const slotName=slot.occupied?createMaskedCharacterName(slot.character?.name):createMaskedCharacterName('빈 슬롯');
+          if(slot.occupied)slotName.appendChild(document.createTextNode('['+(value(slot.character?.serverName)||'서버 미상')+']'));
           const slotMeta=document.createElement('small');slotMeta.className='sanctuary-management-force-slot-server';slotMeta.textContent=slot.occupied?'['+(value(slot.character?.serverName)||'서버 미상')+']':'[대기]';
-          const slotPower=document.createElement('small');slotPower.className='sanctuary-management-force-slot-power';slotPower.innerHTML=slot.character?.isRandomAlt?'랜덤 부캐':slot.occupied?combatPowerMarkup(slot.character?.power):'캐릭터 대기';copy.append(slotName,slotMeta,slotPower);
+          const slotPower=document.createElement('small');slotPower.className='sanctuary-management-force-slot-power';slotPower.innerHTML=slot.character?.isRandomAlt?'랜덤 부캐':slot.occupied?combatPowerMarkup(slot.character?.power):'캐릭터 대기';copy.append(slotName,slotPower);
+          if(slot.occupied){const roles=document.createElement('span');roles.innerHTML=bossRoleMarkup(slot.character?.bossRoles);copy.appendChild(roles);}
         }
         item.append(icon,copy);
         if(isAlt||(slot.occupied&&hasCanonicalAltRelation(slot.character))){const tooltip=createAltRelationshipTooltip(slot.character,characterState.owned);item.dataset.sanctuaryAltDetail='';item.tabIndex=0;item.setAttribute('aria-describedby',tooltip.id);item.setAttribute('aria-expanded','false');item.appendChild(tooltip);}
@@ -1333,7 +1343,7 @@
     if(state)state.textContent=review.approved?'전환 범위가 승인되었습니다. Stage 7 실행 전 다시 검증합니다.':review.unresolvedCount?'병행 운영 검수 '+transitionCount(review.unresolvedCount)+'건이 남아 있습니다.':'비교·복구 결과를 확인하고 전환 범위를 승인할 수 있습니다.';
   }
 
-  window.KinojoSanctuaryManagementDraftBridge=Object.freeze({
+  window.KinojoSanctuaryManagementDraftBridge=Object.freeze({bossRoleMarkup,
     kind:'SERVER_ONLY_DRAFT',
     schemaVersion:SCHEMA_VERSION,
     snapshot(){return bootstrapData;},

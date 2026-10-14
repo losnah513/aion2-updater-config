@@ -107,6 +107,38 @@ const {PGlite}=require(process.env.PGLITE_MODULE||'@electric-sql/pglite');
   await assert.rejects(db.query("select public.kinojo_sanctuary_management_balance_proposal_v454('fixture-3',100)"),/권한/);
   await db.query("select public.kinojo_sanctuary_management_official_materialize_v480('fixture-1',100)");
   await command(1,'SAVE_COMPOSITION',{teamId:100,title:'보호된 저장'});
+  // SQL536: actual permission wrapper + storage helper/constraints. Delegate remains synthetic.
+  await db.exec(`set check_function_bodies=off;create function private.kinojo_sm_audit_v412(bigint,bigint,text,bigint,text,jsonb,jsonb,text) returns void language sql as 'select';create table public.character_master(id bigint primary key);
+   insert into public.character_master select generate_series(101,110);
+   alter table private.sanctuary_management_slots_v412 add column assignment_kind text default 'ACTUAL_CHARACTER';
+   update private.sanctuary_management_slots_v412 set character_id=101 where slot_id=11;
+   insert into private.sanctuary_management_slots_v412(slot_id,team_id,force_id,character_id,revision) values(12,100,10,102,1),(13,100,10,103,1),(14,100,10,104,1);
+  `);
+  await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/migrations/20261014152354_sanctuary_boss_roles_v536.sql'),'utf8'));
+  const roleSave=(member,entries)=>command(member,'SAVE_COMPOSITION',{teamId:100,composition:[{slots:entries.map(([characterId,boss1,boss2])=>({characterId,bossRoles:{boss1,boss2}}))}]});
+  const getRoles=async id=>(await db.query('select private.kinojo_sm_boss_roles_v536(100,1,$1) v',[id])).rows[0].v;
+  await roleSave(1,[[101,'3>3',[1,12]],[102,'6>6',[2,3]],[103,'9>12',[4,5]],[104,'12>9',[6,7]]]);
+  assert.deepEqual(await getRoles(101),{boss1:'3>3',boss2:[1,12]});
+  const roleState=async()=>(await db.query("select jsonb_agg(to_jsonb(b) order by force_no,character_id,boss,ordinal) v from private.sanctuary_boss_roles_v536 b")).rows[0].v;
+  const rolesBefore=await roleState();
+  for(const entries of [[[102,'3>3',[2,3]]],[[102,'6>6',[1,3]]],[[101,'3>3',[1,2,3]]],[[101,'3>3',[1,1]]],[[101,'3>3',[0]]],[[101,'3>3',[13]]],[[101,'3>3',['1']]],[[101,'3>3',[1.5]]],[[101,'invalid',[1]]],[[null,'3>3',[1]]],[[110,'3>3',[1]]]]){
+   await assert.rejects(roleSave(1,entries));assert.deepEqual(await roleState(),rolesBefore,'invalid request must roll back roles');
+  }
+  await assert.rejects(roleSave(3,[[101,'3>3',[8,9]]]),/권한/);assert.deepEqual(await roleState(),rolesBefore,'info-only cannot edit roles');
+  await roleSave(1,[[101,'6>6',[2,3]],[102,'3>3',[1,12]]]); // atomic swap
+  assert.deepEqual(await getRoles(102),{boss1:'3>3',boss2:[1,12]});
+  await roleSave(1,[[101,null,[]]]);assert.deepEqual(await getRoles(101),{boss1:null,boss2:[]});
+  await command(1,'SAVE_COMPOSITION',{teamId:100,title:'old client'});assert.equal((await getRoles(102)).boss1,'3>3','omitted roles preserve existing assignments');
+  await db.exec('update private.sanctuary_management_slots_v412 set character_id=110 where slot_id=12');
+  await roleSave(1,[[110,'3>3',[1,12]]]);assert.equal((await getRoles(102)).boss1,null,'replacement releases old role');
+  assert.equal((await getRoles(110)).boss1,'3>3');
+  for(const role of ['anon','authenticated','service_role']){
+   assert.equal((await db.query("select has_table_privilege($1,'private.sanctuary_boss_roles_v536','INSERT') v",[role])).rows[0].v,false);
+   assert.equal((await db.query("select has_function_privilege($1,'private.kinojo_sm_save_boss_roles_v536(bigint,bigint,jsonb,text)','execute') v",[role])).rows[0].v,false);
+  }
+  await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/rollbacks/20261014152354_sanctuary_boss_roles_v536_rollback.sql'),'utf8'));
+  assert.equal((await getRoles(110)).boss1,'3>3','rollback preserves assignment data');
+  console.log('PASS SQL536: actual command permissions, roles 4 unique/2 per character/1..12, swap/release/replacement/old client, atomic rejection, ACL and rollback');
   console.log('PASS legacy boundary: 26 scoped delegates / old RPC execute revoked / internal v2 delegate remains callable');
   console.log('PASS command guard: actual DB diff / forged change flags / atomic rollback / support side effect / class-lock-difficulty roster / exact team / revocation / ACL');
   console.log('PASS entrypoint contract: lease ownership / renew / revoked release / private draft and application filtering');

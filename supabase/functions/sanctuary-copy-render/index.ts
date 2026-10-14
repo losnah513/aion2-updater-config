@@ -2,7 +2,7 @@ import { normalizeSanctuaryCode, sanctuaryAssetPath } from "../_shared/sanctuary
 declare const Deno: any;
 /*
  * KINOJO Supabase Edge Function: sanctuary-copy-render
- * Version: 20260901_03
+ * Version: 20261015_01
  * Role: 성역 포스/팀 클립보드용 SVG를 서버에서 생성한다.
  * Rule: 기존 WEB v317과 신규 Server 팀 모두 같은 Stage 12 SVG renderer를 사용한다.
  */
@@ -44,6 +44,8 @@ const TEAM_HEADER_H = 72;
 type Slot = {
   name?: string;
   characterName?: string;
+  serverName?: string;
+  bossRoles?: {boss1?:string|null;boss2?:number[]};
   className?: string;
   classLabel?: string;
   power?: number;
@@ -234,6 +236,8 @@ function managementSnapshotGroup(value: unknown): TeamGroup{
         if(!name||(!isRandomAlt&&!className)||!["MAIN","ALT","GUEST"].includes(relation)) throw new Error("신규 성역 복사 캐릭터 정보가 올바르지 않습니다.");
         return {
           name,
+          serverName:safeText(character.serverName).slice(0,24),
+          bossRoles:copyBossRoles(character.bossRoles),
           className:isRandomAlt?"랜덤 부캐":className,
           power:boundedInteger(character.power,0,2_000_000_000),
           profileImageUrl:managementProfileUrl(character.profileImageUrl),
@@ -284,6 +288,18 @@ function compactText(value: unknown, maxLength: number){
   const glyphs=Array.from(safeText(value));
   return glyphs.length<=maxLength?glyphs.join(""):glyphs.slice(0,Math.max(1,maxLength-1)).join("")+"…";
 }
+function copyBossRoles(input: unknown){
+  const roles=record(input),boss1=safeText(roles.boss1);
+  const boss2=Array.isArray(roles.boss2)?roles.boss2:[];
+  if(boss1&&!["3>3","6>6","9>12","12>9"].includes(boss1)||boss2.length>2||boss2.some(n=>!Number.isInteger(n)||n<1||n>12)||new Set(boss2).size!==boss2.length)throw new Error("보스 역할 정보가 올바르지 않습니다.");
+  return {boss1:boss1||null,boss2};
+}
+function bossRolesSvg(input: Slot["bossRoles"]){
+  const roles=copyBossRoles(input),labels=[...(roles.boss1?[{text:roles.boss1,boss:1}]:[]),...roles.boss2.map(n=>({text:String(n),boss:2}))];
+  let x=64;
+  return labels.map(b=>{const w=b.boss===1?43:22;const out=`<g transform="translate(${x} 51)"><rect width="${w}" height="14" rx="3" fill="${b.boss===1?'#e4eaff':'#dff3ed'}" stroke="${b.boss===1?'#9aaad7':'#8cc9b6'}"/><text x="${w/2}" y="10.5" text-anchor="middle" font-size="9" font-weight="900" fill="#294b6c">${xml(b.text)}</text></g>`;x+=w+3;return out;}).join('');
+}
+
 function badgeSvg(label: string, x: number, y: number, main: boolean){
   const shown=compactText(label,9);
   const width=Math.min(80,Math.max(44,14+Array.from(shown).length*8));
@@ -319,7 +335,7 @@ function slotSvg(slot: Slot, x: number, y: number, map: Map<string,string>, req:
   const nameLength=Array.from(name).length;
   const nameFont=nameLength<=5?20:nameLength<=7?15:13;
   const relationLabel=isMain?"본캐":isSub?`${compactText(owner,6)}-부캐`:"";
-  const shownName=compactText(name,8);
+  const shownName=name+(slot.serverName?`[${slot.serverName}]`:" ").trimEnd();
 
   return `<g transform="translate(${x} ${y})">
     <rect width="${CARD_W}" height="${CARD_H}" rx="9" fill="${cardFill}" fill-opacity=".94" stroke="${cardStroke}"/>
@@ -328,9 +344,10 @@ function slotSvg(slot: Slot, x: number, y: number, map: Map<string,string>, req:
       ${iconImage?`<image href="${iconImage}" x="0" y="0" width="54" height="54" preserveAspectRatio="xMidYMid meet"/>`:`<circle cx="27" cy="27" r="26" fill="#eef2ff"/><text x="27" y="34" text-anchor="middle" font-size="20" font-weight="900" fill="#4d69eb">${slot.isRandomAlt?'R':xml(cls.slice(0,1)||'?')}</text>`}
     </g>
     ${relationLabel?badgeSvg(relationLabel,64,4,isMain):''}
-    <text x="64" y="40" font-size="${nameFont}" font-weight="1000" fill="#1f2f46">${xml(shownName)}</text>
-    ${powerIcon?`<image href="${powerIcon}" x="98" y="50" width="17" height="17" preserveAspectRatio="xMidYMid meet"/>`:`<circle cx="106.5" cy="58.5" r="6" fill="#4c75b8"/>`}
-    <text x="119" y="63" font-size="13.5" font-weight="1000" fill="#556b93">${xml(fmtPowerK(slot.power))}</text>
+    <text x="64" y="33" font-size="${Math.min(nameFont,14)}" textLength="${Math.min(105,Array.from(shownName).length*11)}" lengthAdjust="spacingAndGlyphs" font-weight="1000" fill="#1f2f46">${xml(shownName)}</text>
+    ${powerIcon?`<image href="${powerIcon}" x="64" y="37" width="12" height="12" preserveAspectRatio="xMidYMid meet"/>`:`<circle cx="70" cy="43" r="5" fill="#4c75b8"/>`}
+    <text x="80" y="47" font-size="11" font-weight="1000" fill="#556b93">${xml(fmtPowerK(slot.power))}</text>
+    ${bossRolesSvg(slot.bossRoles)}
     <rect x="${stageX}" y="0" width="${stageW}" height="${CARD_H}" rx="0 8 8 0" fill="#edf3fb"/>
     ${image?`<image href="${image}" x="${stageX}" y="0" width="${stageW}" height="${CARD_H}" preserveAspectRatio="xMidYMid slice"/>`:''}
     <rect x="${stageX}" y="0" width="24" height="${CARD_H}" fill="url(#${fadeId})"/>
@@ -483,6 +500,6 @@ Deno.serve(async(req: Request)=>{
     return new Response(svg,{status:200,headers:{...CORS_HEADERS,"content-type":"image/svg+xml; charset=utf-8","cache-control":"no-store","x-kinojo-renderer":"sanctuary-stage12-layout-svg-v4","x-kinojo-filename":headerFilename}});
   }catch(err){
     console.error("KINOJO sanctuary-copy-render failed",err);
-    return json({ok:false,message:String((err as Error)?.message||err),renderer:"sanctuary-stage12-layout-svg-v4",version:"20260901_03"},500);
+    return json({ok:false,message:String((err as Error)?.message||err),renderer:"sanctuary-stage12-layout-svg-v4",version:"20261015_01"},500);
   }
 });

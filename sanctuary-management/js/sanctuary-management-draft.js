@@ -135,7 +135,8 @@
   }
 
   function compositionSignature(includeLocks=true){
-    return JSON.stringify(teamForces().map(force=>({sourceForceId:Number(force.forceId)>0?Number(force.forceId):null,difficulty:normalizeDifficulty(force.difficulty),slots:forceSlots(force).map(item=>({partyNo:item.partyNo,slotNo:Number(item.slot.slotNo),characterId:Number(item.slot.character?.characterId||0)||null,mainCharacterId:item.slot.character?.isRandomAlt?Number(item.slot.character.mainCharacterId)||null:null,assignmentKind:assignmentKind(item.slot),requiredClassCode:slotClassCode(item.slot),...(includeLocks?{placementLocked:item.slot.placementLocked===true}:{})}))})));
+    return JSON.stringify(teamForces().map(force=>({sourceForceId:Number(force.forceId)>0?Number(force.forceId):null,difficulty:normalizeDifficulty(force.difficulty),slots:forceSlots(force).map(item=>({partyNo:item.partyNo,slotNo:Number(item.slot.slotNo),characterId:Number(item.slot.character?.characterId||0)||null,mainCharacterId:item.slot.character?.isRandomAlt?Number(item.slot.character.mainCharacterId)||null:null,assignmentKind:assignmentKind(item.slot),requiredClassCode:slotClassCode(item.slot),...(includeLocks?{bossRoles:item.slot.character?.bossRoles||{boss1:null,boss2:[]},
+          placementLocked:item.slot.placementLocked===true}:{})}))})));
   }
 
   function invalidateBalanceProposal(){
@@ -392,9 +393,29 @@
     const disabled=state.saving||state.mutating;
     const picker=pickerOpen?'<div class="sanctuary-management-slot-class-picker" role="group" aria-label="'+number+'번 슬롯 지원 클래스">'+SLOT_CLASSES.map(option=>{const icon=classIconFor(option.className);return '<button type="button" data-slot-class="'+option.code+'" data-slot-id="'+escapeHtml(slot.slotId)+'" aria-pressed="'+String(option.code===required.code)+'" title="'+escapeHtml(option.label)+'"'+(disabled?' disabled':'')+'>'+(icon?'<img src="'+escapeHtml(icon)+'" alt=""><span>'+escapeHtml(option.label)+'</span>':'<b>ALL</b><span>전체</span>')+'</button>';}).join('')+'</div>':'';
     const lockControl=moving&&occupied?'<button type="button" class="sanctuary-management-slot-lock" data-draft-toggle-lock="'+escapeHtml(slot.slotId)+'" aria-pressed="'+String(locked)+'" aria-label="'+escapeHtml(name)+' 배치 '+(locked?'잠금 해제':'잠금')+'"'+(disabled?' disabled':'')+'>'+(locked?'잠금 해제':'배치 잠금')+'</button>':'';
-    const displayName=classRecruiting?required.label+' 모집 중':name;
+    const displayName=classRecruiting?required.label+' 모집 중':occupied?name+'['+(value(slot.character?.serverName)||'서버 미상')+']':name;
     const detailLine=moving?escapeHtml(locked?'잠금 해제 후 이동·제거 가능':'이동하거나 − 버튼으로 제거'):detailMarkup;
-    return '<div class="sanctuary-management-draft-slot-shell'+(moving?' is-selected':'')+(pickerOpen?' has-class-picker':'')+(locked?' is-placement-locked':'')+(classRecruiting?' is-class-slot':'')+'"><button type="button" class="sanctuary-management-slot-class-trigger" data-slot-class-open="'+escapeHtml(slot.slotId)+'" aria-expanded="'+String(pickerOpen)+'" aria-label="지원 클래스: '+escapeHtml(required.label)+'" title="지원 클래스: '+escapeHtml(required.label)+'"'+(disabled?' disabled':'')+'>'+(requiredIcon?'<img src="'+escapeHtml(requiredIcon)+'" alt=""><span>'+escapeHtml(required.label)+'</span>':'<b>ALL</b><span>전체</span>')+'</button><button type="button" class="sanctuary-management-draft-slot'+(occupied?' is-occupied':'')+(selected?' is-selected':'')+(moving?' is-move-source':'')+(slot.character?.isRandomAlt?' is-random-alt':'')+(locked?' is-placement-locked':'')+(classRecruiting?' is-class-slot':'')+'"'+(disabled?' disabled':'')+(occupied&&!locked?' draggable="true"':'')+' data-draft-slot data-slot-number="'+number+'" data-slot-id="'+escapeHtml(slot.slotId)+'" data-slot-revision="'+escapeHtml(slot.revision)+'" data-party-no="'+escapeHtml(partyNo)+'" data-slot-no="'+escapeHtml(slot.slotNo)+'" data-occupied="'+String(Boolean(occupied))+'" data-placement-locked="'+String(locked)+'" aria-pressed="'+String(selected||moving)+'">'+characterIcon+'<span class="sanctuary-management-draft-slot-copy"><strong>'+escapeHtml(displayName)+'</strong>'+(detailLine?'<small>'+detailLine+'</small>':'')+'</span></button>'+lockControl+(moving&&!locked?'<button type="button" class="sanctuary-management-slot-remove" data-draft-clear-slot="'+escapeHtml(slot.slotId)+'" aria-label="'+escapeHtml(name)+' 캐릭터 제거"'+(disabled?' disabled':'')+'>−</button>':'')+picker+'</div>';
+    return '<div class="sanctuary-management-draft-slot-shell'+(moving?' is-selected':'')+(pickerOpen?' has-class-picker':'')+(locked?' is-placement-locked':'')+(classRecruiting?' is-class-slot':'')+'"><button type="button" class="sanctuary-management-slot-class-trigger" data-slot-class-open="'+escapeHtml(slot.slotId)+'" aria-expanded="'+String(pickerOpen)+'" aria-label="지원 클래스: '+escapeHtml(required.label)+'" title="지원 클래스: '+escapeHtml(required.label)+'"'+(disabled?' disabled':'')+'>'+(requiredIcon?'<img src="'+escapeHtml(requiredIcon)+'" alt=""><span>'+escapeHtml(required.label)+'</span>':'<b>ALL</b><span>전체</span>')+'</button><button type="button" class="sanctuary-management-draft-slot'+(occupied?' is-occupied':'')+(selected?' is-selected':'')+(moving?' is-move-source':'')+(slot.character?.isRandomAlt?' is-random-alt':'')+(locked?' is-placement-locked':'')+(classRecruiting?' is-class-slot':'')+'"'+(disabled?' disabled':'')+(occupied&&!locked?' draggable="true"':'')+' data-draft-slot data-slot-number="'+number+'" data-slot-id="'+escapeHtml(slot.slotId)+'" data-slot-revision="'+escapeHtml(slot.revision)+'" data-party-no="'+escapeHtml(partyNo)+'" data-slot-no="'+escapeHtml(slot.slotNo)+'" data-occupied="'+String(Boolean(occupied))+'" data-placement-locked="'+String(locked)+'" aria-pressed="'+String(selected||moving)+'">'+characterIcon+'<span class="sanctuary-management-draft-slot-copy"><strong>'+escapeHtml(displayName)+'</strong>'+(detailLine?'<small>'+detailLine+'</small>':'')+(bridge()?.bossRoleMarkup?.(slot.character?.bossRoles)||'')+'</span></button>'+lockControl+(moving&&!locked?'<button type="button" class="sanctuary-management-slot-remove" data-draft-clear-slot="'+escapeHtml(slot.slotId)+'" aria-label="'+escapeHtml(name)+' 캐릭터 제거"'+(disabled?' disabled':'')+'>−</button>':'')+picker+'</div>';
+  }
+
+  function bossRolePicker(slot){
+    const roles=slot.character?.bossRoles||{boss1:null,boss2:[]};
+    const peers=forceSlots(selectedForce()).map(x=>x.slot).filter(x=>x!==slot&&x.character);
+    const buttons=(boss,options)=>options.map(code=>{
+      const chosen=boss===1?roles.boss1===code:(roles.boss2||[]).includes(code);
+      const used=peers.some(x=>boss===1?x.character.bossRoles?.boss1===code:(x.character.bossRoles?.boss2||[]).includes(code));
+      const full=boss===2&&!chosen&&(roles.boss2||[]).length>=2;
+      return '<button type="button" data-boss-role="'+escapeHtml(code)+'" data-boss="'+boss+'" data-role-slot="'+slot.slotId+'" aria-pressed="'+chosen+'"'+(used||full||state.saving?' disabled':'')+' title="'+(used?'다른 캐릭터에게 배정됨':chosen?'선택 해제':'역할 선택')+'">'+escapeHtml(code)+'</button>';
+    }).join('');
+    return '<div class="sanctuary-boss-role-picker"><strong>1보스 · 1개 선택</strong><div>'+buttons(1,['3>3','6>6','9>12','12>9'])+'</div><strong>2보스 · 최대 2개 선택</strong><div>'+buttons(2,Array.from({length:12},(_,i)=>i+1))+'</div></div>';
+  }
+  function toggleBossRole(slotId,boss,code){
+    const item=teamSlot(slotId);if(!item?.slot.character||item.slot.character.isRandomAlt)return;
+    const c=item.slot.character;const roles=c.bossRoles||{boss1:null,boss2:[]};
+    c.bossRoles=roles;
+    if(boss===1)roles.boss1=roles.boss1===code?null:code;
+    else{const n=Number(code),list=roles.boss2||[];roles.boss2=list.includes(n)?list.filter(x=>x!==n):list.length<2?[...list,n].sort((a,b)=>a-b):list;}
+    invalidateBalanceProposal();renderRosterState();setStatus('역할을 선택했습니다. 마지막 저장을 누르면 반영됩니다.','success');
   }
 
   function applySlotClass(slotId,classCode){
@@ -454,6 +475,8 @@
     const chosen=selectedSlot();
     if(!state.team||!force)return '<aside class="sanctuary-management-candidate-rail is-empty" aria-label="캐릭터 후보"><div class="sanctuary-management-candidate-empty"><span aria-hidden="true">◇</span><strong>초안 저장 후 연결</strong><p>Server가 생성자의 소유 캐릭터를 확인합니다.</p></div></aside>';
     if(state.requirementTarget)return requirementEditorMarkup();
+    const roleTarget=teamSlot(state.moveFromSlotId);
+    if(roleTarget?.slot.character&&!roleTarget.slot.character.isRandomAlt)return '<aside class="sanctuary-management-candidate-rail" aria-label="보스 역할 선택"><strong>'+escapeHtml(roleTarget.slot.character.name)+' 역할</strong>'+bossRolePicker(roleTarget.slot)+'</aside>';
     if(!chosen)return '<aside class="sanctuary-management-candidate-rail is-empty" aria-label="캐릭터 후보"><div class="sanctuary-management-candidate-empty"><span aria-hidden="true">◇</span><strong>빈 슬롯 선택</strong><p>'+escapeHtml(force.forceNo)+'포스의 빈 카드를 누르면 내 캐릭터와 검색 창을 표시합니다.</p></div></aside>';
     const usedIds=localUsedCharacterIds();
     const sourceCandidates=composerCharacters().length?composerCharacters():Array.isArray(force.creatorCandidates)?force.creatorCandidates:[];
@@ -1082,6 +1105,7 @@
   }
 
   function handleClick(event){
+    const role=event.target.closest('[data-boss-role]');if(role&&!role.disabled){toggleBossRole(Number(role.dataset.roleSlot),Number(role.dataset.boss),role.dataset.bossRole);return;}
     if(event.target.closest('[data-draft-close]')){if(!state.saving&&!state.mutating)close();return;}
     if(event.target.closest('[data-balance-open]')){requestBalanceProposal();return;}
     if(event.target.closest('[data-balance-close]')){state.balancePreview=null;const panel=state.layer?.querySelector('[data-balance-panel]');if(panel)panel.outerHTML=balancePanelMarkup();return;}
