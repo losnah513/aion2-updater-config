@@ -136,6 +136,56 @@ const {PGlite}=require(process.env.PGLITE_MODULE||'@electric-sql/pglite');
    assert.equal((await db.query("select has_table_privilege($1,'private.sanctuary_boss_roles_v536','INSERT') v",[role])).rows[0].v,false);
    assert.equal((await db.query("select has_function_privilege($1,'private.kinojo_sm_save_boss_roles_v536(bigint,bigint,jsonb,text)','execute') v",[role])).rows[0].v,false);
   }
+  // SQL537: role-only real wrapper plus actual lease predicate and canonical getter.
+  await db.exec(`create table public.sanctuary_master(id bigint primary key,code text);
+    insert into public.sanctuary_master values(1,'rudra'),(3,'kaldrix');
+    alter table private.sanctuary_management_teams_v412 add column revision bigint default 4;
+    alter table private.sanctuary_management_teams_v412 add column updated_at timestamptz;
+    update private.sanctuary_management_teams_v412 set sanctuary_id=3 where team_id=100;
+    create table private.sanctuary_management_commands_v412(command_id bigserial primary key,actor_member_id bigint,request_key text,action text,request_hash text,response_payload jsonb,unique(actor_member_id,request_key));`);
+  const leaseSql=fs.readFileSync(path.join(__dirname,'../supabase/migrations/20260828064134_sanctuary_management_stage3_complete_v433.sql'),'utf8');
+  await db.exec(leaseSql.match(/create or replace function private\.kinojo_sm_assert_lease_v433\([\s\S]*?\$function\$;/i)[0]);
+  await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/migrations/20261014155836_sanctuary3_card_boss_roles.sql'),'utf8'));
+  await lease(1,'ACQUIRE');
+  let seq=0;
+  const rolePayload=roles=>({teamId:100,forceId:10,slotId:11,characterId:101,leaseToken:tokenA,bossRoles:roles});
+  const roleOnly=(member,payload,key='role-only-'+(++seq),revision=4)=>db.query('select public.kinojo_sanctuary_management_command_v2($1,$2,\'SET_BOSS_ROLES\',$3::jsonb,$4) d',['fixture-'+member,key,JSON.stringify(payload),revision]);
+  const selected={boss1:'6>6',boss2:[2,3]};
+  const saved=(await roleOnly(1,rolePayload(selected),'role-replay-key')).rows[0].d;
+  assert.equal(saved.revision,5);assert.deepEqual(saved.bossRoles,selected);assert.deepEqual(await getRoles(101),selected);
+  const receiptCount=async()=>(await db.query('select count(*)::int n from private.sanctuary_management_commands_v412')).rows[0].n;
+  assert.equal((await roleOnly(1,rolePayload(selected),'role-replay-key')).rows[0].d.replayed,true,'same request replays despite old revision');
+  assert.equal(await receiptCount(),1);
+  await assert.rejects(roleOnly(1,rolePayload({boss1:null,boss2:[]}),'role-replay-key',5),/다른 작업/);
+  for(const [member,payload,revision] of [
+    [3,rolePayload(selected),5], // info-only cannot change roles
+    [1,rolePayload(selected),4], // stale revision
+    [1,{...rolePayload(selected),leaseToken:tokenB},5],
+    [1,{...rolePayload(selected),forceId:20},5],
+    [1,{...rolePayload(selected),characterId:110},5],
+    [1,rolePayload({boss1:'3>3',boss2:[]}),5], // used by110
+    [1,rolePayload({boss1:null,boss2:[2,3,4]}),5],
+    [1,rolePayload({boss1:null,boss2:[2,2]}),5]
+  ])await assert.rejects(roleOnly(member,payload,undefined,revision));
+  assert.deepEqual(await getRoles(101),selected);assert.equal(await receiptCount(),1,'all failures leave no receipt');
+  await db.exec('update private.sanctuary_management_teams_v412 set sanctuary_id=1 where team_id=100');
+  await assert.rejects(roleOnly(1,rolePayload(selected),undefined,5),/성역3/);
+  await assert.rejects(roleSave(1,[[101,'6>6',[2,3]]]),/성역3/,'old composition path cannot bypass sanctuary scope');
+  await command(1,'SAVE_COMPOSITION',{teamId:100,composition:[{slots:[{characterId:101,bossRoles:{boss1:null,boss2:[]}}]}]});
+  assert.deepEqual(await getRoles(101),selected,'empty old-client non3 roles do not rewrite assignments');
+  await db.exec('update private.sanctuary_management_teams_v412 set sanctuary_id=3 where team_id=100');
+  await db.exec(`create function private.fixture_fail_receipt() returns trigger language plpgsql as $$begin raise exception 'fixture late failure'; end$$;
+    create trigger fixture_failure before insert on private.sanctuary_management_commands_v412 for each row execute function private.fixture_fail_receipt();`);
+  await assert.rejects(roleOnly(1,rolePayload({boss1:null,boss2:[]}),undefined,5),/fixture late failure/);
+  assert.deepEqual(await getRoles(101),selected,'late failure atomically rolls back roles');
+  assert.equal((await db.query('select revision from private.sanctuary_management_teams_v412 where team_id=100')).rows[0].revision,5,'late failure atomically rolls back revision');
+  await db.exec('drop trigger fixture_failure on private.sanctuary_management_commands_v412');
+  await roleOnly(1,rolePayload({boss1:null,boss2:[]}),undefined,5);assert.deepEqual(await getRoles(101),{boss1:null,boss2:[]});
+  await db.exec('update private.sanctuary_management_edit_leases_v412 set expires_at=now()-interval \'1 second\' where team_id=100');
+  await assert.rejects(roleOnly(1,rolePayload(selected),undefined,6),/만료/);
+  await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/rollbacks/20261014155836_sanctuary3_card_boss_roles_rollback.sql'),'utf8'));
+  assert.equal((await getRoles(110)).boss1,'3>3','SQL537 code rollback preserves data');
+  console.log('PASS SQL537: role-only command, canonical reread, actual lease, stale revision, replay/conflict, exact slot, roster rights, sanctuary3 guard, caps, atomic late failure and rollback');
   await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/rollbacks/20261014152354_sanctuary_boss_roles_v536_rollback.sql'),'utf8'));
   assert.equal((await getRoles(110)).boss1,'3>3','rollback preserves assignment data');
   console.log('PASS SQL536: actual command permissions, roles 4 unique/2 per character/1..12, swap/release/replacement/old client, atomic rejection, ACL and rollback');

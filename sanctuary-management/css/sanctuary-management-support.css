@@ -239,3 +239,15 @@ body.sanctuary-management-force-overview-open{overflow:hidden}
 .sanctuary-boss-badge{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;max-width:100%;padding:1px 4px;border:1px solid #9eacd6;border-radius:4px;background:#edf1ff;color:#344f9d;font-size:10px;font-weight:900;white-space:nowrap;line-height:1.2}
 .sanctuary-boss-badge.is-boss2{background:#e4f5f1;border-color:#8dc9b8;color:#176652}
 @media(max-width:560px){.sanctuary-boss-badge{font-size:8px;padding:1px 3px}.sanctuary-boss-badges{gap:2px}.sanctuary-management-force-slot{min-height:70px}}
+/* Sanctuary3 role assignment from public character cards. */
+[data-sanctuary-boss-role]{cursor:pointer}
+[data-sanctuary-boss-role]:focus-visible{outline:2px solid #6755dd;outline-offset:2px}
+.sanctuary-management-operation-dialog.is-boss-role{width:min(460px,100%)}
+.sanctuary-boss-role-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.sanctuary-boss-role-tabs button,.sanctuary-boss-role-options button{min-width:0;min-height:44px;padding:10px 6px;border:1px solid #cbd4e5;border-radius:12px;background:#f8faff;color:#34445c;font:inherit;font-weight:800;cursor:pointer}
+.sanctuary-boss-role-tabs button[aria-pressed=true],.sanctuary-boss-role-options button[aria-pressed=true]{color:#fff;border-color:#6755dd;background:linear-gradient(125deg,#3564e5,#7751df)}
+.sanctuary-boss-role-options{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.sanctuary-boss-role-options button:disabled{opacity:.4;cursor:default}
+.sanctuary-boss-role-options button[aria-pressed=true]:disabled{opacity:.7}
+.is-boss-role [data-role-limit]{font-size:12px;color:#65748d;line-height:1.5}
+.is-boss-role [data-role-selected]{min-height:20px}

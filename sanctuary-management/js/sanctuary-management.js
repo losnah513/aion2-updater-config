@@ -28,6 +28,7 @@
   let selectedWeekStart='';
   let operationLayer=null;
   let operationOpener=null;
+  let bossRoleSession=null;
   let forceOverviewLayer=null;
   let forceOverviewOpener=null;
   let forceOverviewTeamId=0;
@@ -755,6 +756,72 @@
     return badges.length?'<span class="sanctuary-boss-badges">'+badges.join('')+'</span>':'';
   }
 
+  function renderBossRoleChoices(){
+    const s=bossRoleSession;if(!s||!operationLayer)return;
+    const host=operationLayer.querySelector('[data-role-choices]');if(!host)return;
+    const options=s.boss===1?['3>3','6>6','9>12','12>9']:Array.from({length:12},(_,i)=>i+1);
+    const peers=s.force.parties.flatMap(p=>p.slots).filter(x=>x.character&&x.slotId!==s.slot.slotId);
+    host.innerHTML=options.map(code=>{
+      const chosen=s.boss===1?s.roles.boss1===code:s.roles.boss2.includes(code);
+      const used=peers.some(x=>s.boss===1?x.character.bossRoles?.boss1===code:(x.character.bossRoles?.boss2||[]).includes(code));
+      const disabled=!s.acquired||s.saving||s.saved||used||(s.boss===2&&!chosen&&s.roles.boss2.length>=2);
+      return '<button type="button" data-role-code="'+escapeHtml(code)+'" aria-pressed="'+chosen+'"'+(disabled?' disabled':'')+' title="'+(used?'다른 캐릭터에게 배정됨':chosen?'선택 해제':'역할 선택')+'">'+escapeHtml(code)+'</button>';
+    }).join('');
+    operationLayer.querySelector('[data-role-selected]').innerHTML=bossRoleMarkup(s.roles)||'지정된 역할 없음';
+    operationLayer.querySelector('[data-role-limit]').textContent=s.boss===1?'캐릭터당 1개 · 같은 포스에서 역할별 1명':'캐릭터당 최대 2개 · 같은 포스에서 숫자별 1명';
+    operationLayer.querySelectorAll('[data-role-tab]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.roleTab)===s.boss)));
+    operationLayer.querySelector('[data-role-save]').disabled=!s.acquired||s.saving||s.saved;
+  }
+
+  async function openBossRoleDialog(opener){
+    if(bossRoleSession?.saving)return;
+    const team=selectedDraftTeam(opener.dataset.sanctuaryBossRole);
+    const sanctuary=bootstrapData?.sanctuaries.find(x=>integer(x.id)===integer(team?.sanctuaryId));
+    const force=team?.forces.find(x=>integer(x.forceId)===integer(opener.dataset.roleForce));
+    const slot=force?.parties.flatMap(p=>p.slots).find(x=>integer(x.slotId)===integer(opener.dataset.roleSlot));
+    if(value(sanctuary?.code)!=='kaldrix'||!slot?.character||slot.character.isRandomAlt)return;
+    closeOperationLayer();closeAltDetails();
+    const tokenBytes=new Uint8Array(32);crypto.getRandomValues(tokenBytes);
+    const s={team,force,slot,boss:1,roles:structuredClone(slot.character.bossRoles||{boss1:null,boss2:[]}),leaseToken:'smrole_'+Array.from(tokenBytes,b=>b.toString(16).padStart(2,'0')).join(''),acquired:false,saving:false,saved:false,requestKey:''};
+    bossRoleSession=s;
+    openOperationLayer(opener,'<section class="sanctuary-management-operation-dialog is-boss-role" role="dialog" aria-modal="true" aria-labelledby="sanctuaryBossRoleTitle" tabindex="-1"><header><span>성역 3 · '+force.forceNo+'포스</span><h2 id="sanctuaryBossRoleTitle">'+escapeHtml(slot.character.name)+'['+escapeHtml(slot.character.serverName)+'] 역할 부여</h2><p data-role-selected></p></header><div class="sanctuary-management-operation-body"><div class="sanctuary-boss-role-tabs"><button type="button" data-role-tab="1" aria-pressed="true">1보스 역할부여</button><button type="button" data-role-tab="2" aria-pressed="false">2보스 역할부여</button></div><p data-role-limit></p><div class="sanctuary-boss-role-options" data-role-choices></div><p class="sanctuary-management-operation-status" data-role-status aria-live="polite">편집 권한과 잠금을 확인하고 있습니다.</p></div><footer><button type="button" class="kinojo-btn" data-role-save disabled>저장</button><button type="button" class="kinojo-btn secondary" data-operation-close>닫기</button></footer></section>');
+    const dialog=operationLayer.querySelector('.is-boss-role');
+    dialog.addEventListener('click',async event=>{
+      const tab=event.target.closest('[data-role-tab]');if(tab){s.boss=Number(tab.dataset.roleTab);renderBossRoleChoices();return;}
+      const choice=event.target.closest('[data-role-code]');
+      if(choice&&!choice.disabled){const code=choice.dataset.roleCode;
+        if(s.boss===1)s.roles.boss1=s.roles.boss1===code?null:code;
+        else{const n=Number(code);s.roles.boss2=s.roles.boss2.includes(n)?s.roles.boss2.filter(x=>x!==n):[...s.roles.boss2,n].sort((a,b)=>a-b);}
+        s.requestKey='';renderBossRoleChoices();return;
+      }
+      if(!event.target.closest('[data-role-save]')||!s.acquired||s.saving||s.saved)return;
+      s.saving=true;renderBossRoleChoices();const status=dialog.querySelector('[data-role-status]');status.textContent='역할을 저장하고 있습니다.';
+      try{
+        await lease(team.teamId,'RENEW',s.leaseToken);
+        s.requestKey=s.requestKey||'sm-role-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12);
+        const result=await ServerAdapter.command('SET_BOSS_ROLES',{teamId:team.teamId,forceId:force.forceId,slotId:slot.slotId,characterId:slot.character.characterId,bossRoles:s.roles,leaseToken:s.leaseToken},team.revision,s.requestKey);
+        s.saved=true;await load();
+        const savedTeam=selectedDraftTeam(team.teamId),savedSlot=savedTeam?.forces.flatMap(f=>f.parties.flatMap(p=>p.slots)).find(x=>x.slotId===slot.slotId);
+        if(integer(savedTeam?.revision)<integer(result.revision)||JSON.stringify(savedSlot?.character?.bossRoles)!==JSON.stringify(result.bossRoles))throw new Error('역할은 저장됐지만 화면 재조회에 실패했습니다. 닫은 뒤 새로고침해 주세요.');
+        s.saving=false;closeOperationLayer();window.KinojoToast?.success?.('역할을 저장했습니다.');
+      }catch(error){s.saving=false;status.textContent=value(error?.message)||'역할을 저장하지 못했습니다.';status.classList.add('is-error');renderBossRoleChoices();}
+    });
+    renderBossRoleChoices();
+    if(!bootstrapData.writeEnabled||team.canEditRoster!==true){dialog.querySelector('[data-role-status]').textContent='역할 부여는 이 팀의 편성 편집 권한이 필요합니다.';return;}
+    try{
+      await lease(team.teamId,'ACQUIRE',s.leaseToken);
+      if(bossRoleSession!==s){await lease(team.teamId,'RELEASE',s.leaseToken);return;}
+      s.acquired=true;dialog.querySelector('[data-role-status]').textContent='선택한 역할을 저장하면 팀 카드와 복사 이미지에 표시됩니다.';renderBossRoleChoices();
+      s.leaseTimer=window.setInterval(async()=>{
+        if(bossRoleSession!==s||s.saving||s.renewing)return;
+        s.renewing=true;
+        try{await lease(team.teamId,'RENEW',s.leaseToken);}
+        catch(error){if(bossRoleSession===s){s.acquired=false;dialog.querySelector('[data-role-status]').textContent=value(error?.message)||'편집 잠금이 만료되었습니다. 닫은 뒤 다시 열어 주세요.';renderBossRoleChoices();window.clearInterval(s.leaseTimer);}}
+        finally{s.renewing=false;}
+      },30000);
+    }catch(error){if(bossRoleSession===s){dialog.querySelector('[data-role-status]').textContent=value(error?.message)||'편집 잠금을 얻지 못했습니다.';renderBossRoleChoices();}}
+  }
+
   function createForceCard(team,force){
     const participation=value(team.mode)==='PARTICIPATION'&&['ACTIVE','FULL'].includes(value(team.status));
     const supportEnabled=participation&&bootstrapData?.writeEnabled&&force.canSupport;
@@ -803,9 +870,13 @@
           if(slot.occupied)slotName.appendChild(document.createTextNode('['+(value(slot.character?.serverName)||'서버 미상')+']'));
           const slotMeta=document.createElement('small');slotMeta.className='sanctuary-management-force-slot-server';slotMeta.textContent=slot.occupied?'['+(value(slot.character?.serverName)||'서버 미상')+']':'[대기]';
           const slotPower=document.createElement('small');slotPower.className='sanctuary-management-force-slot-power';slotPower.innerHTML=slot.character?.isRandomAlt?'랜덤 부캐':slot.occupied?combatPowerMarkup(slot.character?.power):'캐릭터 대기';copy.append(slotName,slotPower);
-          if(slot.occupied){const roles=document.createElement('span');roles.innerHTML=bossRoleMarkup(slot.character?.bossRoles);copy.appendChild(roles);}
+          if(slot.occupied&&value(sanctuary?.code)==='kaldrix'){const roles=document.createElement('span');roles.innerHTML=bossRoleMarkup(slot.character?.bossRoles);copy.appendChild(roles);}
         }
         item.append(icon,copy);
+        if(slot.occupied&&!slot.character?.isRandomAlt&&value(sanctuary?.code)==='kaldrix'){
+          item.dataset.sanctuaryBossRole=String(team.teamId);item.dataset.roleForce=String(force.forceId);item.dataset.roleSlot=String(slot.slotId);
+          item.tabIndex=0;item.setAttribute('role','button');item.setAttribute('aria-haspopup','dialog');item.setAttribute('aria-label',value(slot.character.name)+' 역할 부여');
+        }
         if(isAlt||(slot.occupied&&hasCanonicalAltRelation(slot.character))){const tooltip=createAltRelationshipTooltip(slot.character,characterState.owned);item.dataset.sanctuaryAltDetail='';item.tabIndex=0;item.setAttribute('aria-describedby',tooltip.id);item.setAttribute('aria-expanded','false');item.appendChild(tooltip);}
         else{item.title=slot.occupied?[value(slot.character?.name),value(slot.character?.className)].filter(Boolean).join(' · '):'빈 슬롯 '+((party.partyNo-1)*5+slot.slotNo)+'에 캐릭터 추가';if(!slot.occupied)item.setAttribute('aria-label',force.forceNo+'포스 '+party.partyNo+'파티 '+slot.slotNo+'번 빈 슬롯에 캐릭터 추가');}
         partyNode.appendChild(item);
@@ -1084,6 +1155,10 @@
   }
 
   function closeOperationLayer(){
+    if(bossRoleSession?.saving)return;
+    const roleSession=bossRoleSession;bossRoleSession=null;
+    if(roleSession?.leaseTimer)window.clearInterval(roleSession.leaseTimer);
+    if(roleSession?.acquired)lease(roleSession.team.teamId,'RELEASE',roleSession.leaseToken).catch(()=>{});
     if(!operationLayer)return;operationLayer.hidden=true;operationLayer.setAttribute('aria-hidden','true');operationLayer.replaceChildren();document.body.classList.remove('sanctuary-management-operation-open');
     const target=operationOpener;operationOpener=null;try{target?.focus({preventScroll:true});}catch(_err){target?.focus?.();}
   }
@@ -1172,7 +1247,7 @@
     const composition=Array.isArray(source.composition)?source.composition.map(force=>({
       sourceForceId:Number(force?.sourceForceId)||null,
       difficulty:normalizeDifficulty(force?.difficulty||source.difficulty||'NORMAL'),
-      slots:Array.isArray(force?.slots)?force.slots.map(slot=>({partyNo:Number(slot?.partyNo),slotNo:Number(slot?.slotNo),characterId:Number(slot?.characterId)||null,mainCharacterId:Number(slot?.mainCharacterId)||null,assignmentKind:value(slot?.assignmentKind).toUpperCase()==='RANDOM_ALT'?'RANDOM_ALT':'ACTUAL_CHARACTER',requiredClassCode:SLOT_CLASS_CODES.includes(value(slot?.requiredClassCode).toUpperCase())?value(slot?.requiredClassCode).toUpperCase():'ALL',placementLocked:slot?.placementLocked===true})):[],
+      slots:Array.isArray(force?.slots)?force.slots.map(slot=>({partyNo:Number(slot?.partyNo),slotNo:Number(slot?.slotNo),characterId:Number(slot?.characterId)||null,mainCharacterId:Number(slot?.mainCharacterId)||null,assignmentKind:value(slot?.assignmentKind).toUpperCase()==='RANDOM_ALT'?'RANDOM_ALT':'ACTUAL_CHARACTER',requiredClassCode:SLOT_CLASS_CODES.includes(value(slot?.requiredClassCode).toUpperCase())?value(slot?.requiredClassCode).toUpperCase():'ALL',placementLocked:slot?.placementLocked===true,...(Object.prototype.hasOwnProperty.call(slot||{},'bossRoles')?{bossRoles:slot.bossRoles}:{})})):[],
       requirements:Array.isArray(force?.requirements)?force.requirements.map(rule=>({scopeType:value(rule?.scopeType).toUpperCase(),partyNo:rule?.partyNo==null?null:Number(rule.partyNo),ruleType:value(rule?.ruleType).toUpperCase(),minimumCount:Number(rule?.minimumCount),powerThreshold:rule?.powerThreshold==null?null:Number(rule.powerThreshold),itemLevelThreshold:rule?.itemLevelThreshold==null?null:Number(rule.itemLevelThreshold)})):[]
     })):[];
     if(!composition.length||composition.length>9||composition.some(force=>force.slots.length!==10||force.slots.some(slot=>![1,2].includes(slot.partyNo)||slot.slotNo<1||slot.slotNo>5)))throw new Error('포스 편성안을 다시 확인해 주세요.');
@@ -1485,6 +1560,15 @@
   }
 
   function bind(){
+    document.addEventListener('click',event=>{
+      const card=event.target.closest('[data-sanctuary-boss-role]');if(!card)return;
+      event.preventDefault();event.stopImmediatePropagation();
+      if(card.closest('.sanctuary-management-force-carousel')?.dataset.swipeSuppress!=='true')openBossRoleDialog(card);
+    },true);
+    document.addEventListener('keydown',event=>{
+      const card=event.target.closest('[data-sanctuary-boss-role]');if(!card||!['Enter',' '].includes(event.key))return;
+      event.preventDefault();event.stopImmediatePropagation();openBossRoleDialog(card);
+    },true);
     byId('sanctuaryManagementScope')?.addEventListener('click',event=>{
       const button=event.target.closest('[data-sanctuary-scope]');
       if(!button||!bootstrapData)return;

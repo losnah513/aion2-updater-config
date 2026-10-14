@@ -1,3 +1,9 @@
+## Sanctuary3 public-card roles · SQL537 · 2026-10-15
+
+- Corrects SQL536 role UI placement and common save adapter omission. Only kaldrix public confirmed character cards open the boss1/boss2 role dialog; team editor picker removed. SET_BOSS_ROLES extends existing command_v2, using roster capability, pilot/write gate, real lease, expected team revision, existing idempotency receipt and SQL536 role helper/audit. No new Edge/API/auth path. Other sanctuaries reject nonempty roles server-side; public/copy UI hides them.
+- Tests cover actual common adapter payload, modal save -> canonical reload -> public/full-force cards -> real SVG-to-PNG, PC/mobile, no editor picker, permissions/lock/scope. DB real wrapper + actual lease predicate covers revision/replay/exact slot/duplicate/cap/late rollback; legacy save regression retained. Final PR/Pages/Drive/operational readback is sanctuary project LOG76. No operational user assignments are made.
+- Migration/rollback: 20261014155836_sanctuary3_card_boss_roles.sql. Code rollback restores the two prior function definitions and preserves role rows. Roll back WEB together; do not execute Stage7 data restore.
+
 ## Sanctuary boss roles · SQL536 · 2026-10-15
 
 - Branch feat/sanctuary-boss-roles, baseline d4ff2e784b4eb67fcc4133d10fc72d2260e86c8c. Existing management Edge31 unchanged; copy renderer26 gains names/roles. SQL536 extends existing command/roster/permission snapshot; private roles table constraints enforce unique force roles and per-character caps. No operational assignments are prefilled.
