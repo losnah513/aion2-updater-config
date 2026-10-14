@@ -7,8 +7,8 @@ const {isolatePlaywrightPage}=require('./helpers/visitor-traffic'),root=path.res
  const server=http.createServer((req,res)=>fs.readFile(path.join(root,new URL(req.url,'http://localhost').pathname),(e,b)=>{res.writeHead(e?404:200,{'content-type':({'.js':'text/javascript','.css':'text/css','.html':'text/html'})[path.extname(req.url.split('?')[0])]||'application/octet-stream'});res.end(e?'':b);}));
  await new Promise(r=>server.listen(0,'127.0.0.1',r));
  const browser=await chromium.launch({headless:true,args:['--no-sandbox'],...(process.env.CHROME_PATH?{executablePath:process.env.CHROME_PATH}:{})});
- try{for(const width of [1440,768,390,320,844]){
-  const page=await browser.newPage({viewport:{width,height:1000}});await isolatePlaywrightPage(page);
+ try{for(const width of [1440,768,390,320,844,1024]){
+  const page=await browser.newPage({viewport:{width,height:width===844||width===1024?480:1000}});await isolatePlaywrightPage(page);
   const errors=[];page.on('pageerror',e=>errors.push(e.message));let copied;
   await page.route('**/functions/v1/sanctuary-copy-render',async route=>{
    copied=route.request().postDataJSON();const c=copied.managementSnapshot.forces[0].parties[0].slots[0].character;
@@ -48,9 +48,13 @@ const {isolatePlaywrightPage}=require('./helpers/visitor-traffic'),root=path.res
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false,'modal overflow '+width);
   if(process.env.BOSS_ROLE_SCREENSHOT&&width===390)await page.screenshot({path:process.env.BOSS_ROLE_SCREENSHOT,fullPage:true});
   await dialog.locator('[data-role-save]').click();await dialog.waitFor({state:'hidden'});
-  assert.deepEqual(await card.locator('.sanctuary-boss-badge').allTextContents(),['3>3','4','12']);
+  assert.deepEqual(await card.locator('.sanctuary-boss-badge').allTextContents(),['3>3','4시','12시']);
   await page.evaluate(()=>window.KinojoSanctuaryManagementDraftBridge.reload());
-  assert.deepEqual(await card.locator('.sanctuary-boss-badge').allTextContents(),['3>3','4','12'],'canonical reread');
+  assert.deepEqual(await card.locator('.sanctuary-boss-badge').allTextContents(),['3>3','4시','12시'],'canonical reread');
+  assert.equal(await card.locator('.sanctuary-management-force-slot-copy .sanctuary-boss-badge').count(),0,'badges outside text stack');
+  assert.equal(await card.locator('.sanctuary-management-force-slot-roles').evaluate((n)=>{const r=n.getBoundingClientRect(),c=n.parentElement.querySelector('.sanctuary-management-force-slot-copy').getBoundingClientRect();return r.left>=c.right-1}),true,'right column');
+  if(width===1024){await page.evaluate(()=>document.body.classList.add('kinojo-mobile-sanctuary-management-page'));assert.equal(await page.locator('.sanctuary-management-force-viewport').first().evaluate(n=>getComputedStyle(n).paddingLeft),'0px');}
+  if(process.env.ROLE_LAYOUT_SCREENSHOT&&width===1024)await page.screenshot({path:process.env.ROLE_LAYOUT_SCREENSHOT,fullPage:true});
   assert.equal(await page.locator('.sanctuary-management-force-slot').evaluateAll(nodes=>nodes.some(n=>n.scrollWidth>n.clientWidth+1)),false,'card overflow '+width);
   const png=await page.evaluate(async()=>{const blob=await window.KinojoSanctuaryManagementCopy.renderPng(window.KinojoSanctuaryManagementDraftBridge.findTeam(77));return {type:blob.type,size:blob.size,signature:Array.from(new Uint8Array(await blob.arrayBuffer()).slice(0,8))};});
   assert.equal(png.type,'image/png');assert.ok(png.size>100);assert.deepEqual(png.signature,[137,80,78,71,13,10,26,10]);

@@ -251,3 +251,19 @@ body.sanctuary-management-force-overview-open{overflow:hidden}
 .sanctuary-boss-role-options button[aria-pressed=true]:disabled{opacity:.7}
 .is-boss-role [data-role-limit]{font-size:12px;color:#65748d;line-height:1.5}
 .is-boss-role [data-role-selected]{min-height:20px}
+
+/* Roles occupy the card's right column, independent of the name/power stack. */
+.sanctuary-management-force-slot:has(.sanctuary-management-force-slot-roles .sanctuary-boss-badge){grid-template-columns:34px minmax(0,1fr) auto}
+.sanctuary-management-force-slot-roles{grid-column:3;grid-row:1;align-self:center;max-width:68px;min-width:0}
+.sanctuary-management-force-slot-roles .sanctuary-boss-badges{justify-content:flex-end}
+.sanctuary-management-force-slot-roles .is-boss1{margin-left:auto}
+@media(max-width:560px){
+ .sanctuary-management-force-slot:has(.sanctuary-management-force-slot-roles .sanctuary-boss-badge){grid-template-columns:24px minmax(0,1fr) auto}
+ .sanctuary-management-force-slot-roles{max-width:34px}
+}
+@media(orientation:landscape){
+ .kinojo-mobile-sanctuary-management-page .sanctuary-management-force-viewport{padding-inline:0}
+ .kinojo-mobile-sanctuary-management-page .sanctuary-management-team-card{padding-inline:8px}
+ .kinojo-mobile-sanctuary-management-page .sanctuary-management-force-card{padding:12px}
+ .kinojo-mobile-sanctuary-management-page .sanctuary-management-force-party{padding:8px}
+}

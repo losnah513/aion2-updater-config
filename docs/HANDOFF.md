@@ -1,3 +1,7 @@
+## Sanctuary role layout · 2026-10-15
+
+- Public sanctuary3 badges use a separate right card column; boss2 labels include 시 (e.g. 11시) in cards/dialog/copy SVG. Mobile landscape reduces nested horizontal padding and removes carousel side reservations. Existing command/roles/DB contracts remain unchanged; copy renderer retains 228×68 cards. Final verification and deployment: sanctuary project LOG77.
+
 ## Sanctuary3 public-card roles · SQL537 · 2026-10-15
 
 - Corrects SQL536 role UI placement and common save adapter omission. Only kaldrix public confirmed character cards open the boss1/boss2 role dialog; team editor picker removed. SET_BOSS_ROLES extends existing command_v2, using roster capability, pilot/write gate, real lease, expected team revision, existing idempotency receipt and SQL536 role helper/audit. No new Edge/API/auth path. Other sanctuaries reject nonempty roles server-side; public/copy UI hides them.
