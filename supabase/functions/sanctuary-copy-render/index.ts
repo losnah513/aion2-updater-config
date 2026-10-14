@@ -2,7 +2,7 @@ import { normalizeSanctuaryCode, sanctuaryAssetPath } from "../_shared/sanctuary
 declare const Deno: any;
 /*
  * KINOJO Supabase Edge Function: sanctuary-copy-render
- * Version: 20261015_03
+ * Version: 20261015_04
  * Role: 성역 포스/팀 클립보드용 SVG를 서버에서 생성한다.
  * Rule: 기존 WEB v317과 신규 Server 팀 모두 같은 Stage 12 SVG renderer를 사용한다.
  */
@@ -296,8 +296,9 @@ function copyBossRoles(input: unknown){
 }
 function bossRolesSvg(input: Slot["bossRoles"]){
   const roles=copyBossRoles(input),labels=[...(roles.boss1?[{text:roles.boss1,boss:1}]:[]),...roles.boss2.map(n=>({text:String(n)+"시",boss:2}))];
-  return labels.map((b,i)=>{const w=43,y=(CARD_H-labels.length*17+3)/2+i*17;
-    return `<g transform="translate(${CARD_W-w-5} ${y})"><rect width="${w}" height="14" rx="3" fill="${b.boss===1?'#e4eaff':'#dff3ed'}" stroke="${b.boss===1?'#9aaad7':'#8cc9b6'}"/><text x="${w/2}" y="10.5" text-anchor="middle" font-size="9" font-weight="900" fill="#294b6c">${xml(b.text)}</text></g>`;}).join('');
+  let x=64;
+  return labels.map(b=>{const w=b.boss===1?38:30,position=x;x+=w+3;
+    return `<g transform="translate(${position} 51)"><rect width="${w}" height="14" rx="3" fill="${b.boss===1?'#e4eaff':'#dff3ed'}" stroke="${b.boss===1?'#9aaad7':'#8cc9b6'}"/><text x="${w/2}" y="10.5" text-anchor="middle" font-size="9" font-weight="900" fill="#294b6c">${xml(b.text)}</text></g>`;}).join('');
 }
 
 function badgeSvg(label: string, x: number, y: number, main: boolean){
