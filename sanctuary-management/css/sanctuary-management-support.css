@@ -267,3 +267,5 @@ body.sanctuary-management-force-overview-open{overflow:hidden}
  .kinojo-mobile-sanctuary-management-page .sanctuary-management-force-card{padding:12px}
  .kinojo-mobile-sanctuary-management-page .sanctuary-management-force-party{padding:8px}
 }
+
+.sanctuary-management-role-text-button{width:auto;min-width:48px;padding-inline:6px;font:inherit;font-size:9px;font-weight:850;white-space:nowrap}

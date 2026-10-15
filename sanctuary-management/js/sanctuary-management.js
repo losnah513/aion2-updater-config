@@ -843,7 +843,11 @@
     const difficultyLabel=DIFFICULTY_LABELS[difficulty];const minimumItemLevel=integer(force.minimumItemLevel);difficultyBadge.textContent=difficultyLabel+(minimumItemLevel?' · '+minimumItemLevel+'+':'');difficultyBadge.title=difficultyLabel+(minimumItemLevel?' · 아이템레벨 '+minimumItemLevel+' 이상':'');
     const power=document.createElement('small');power.className='sanctuary-management-force-average';power.innerHTML=combatPowerMarkup(force.combatPower?.average,'평균')+'<span> · '+escapeHtml(force.combatPower.knownCount)+'/'+escapeHtml(force.occupiedCount)+'명 확인</span>';
     const copyButton=document.createElement('button');copyButton.type='button';copyButton.className='sanctuary-management-copy-button';copyButton.dataset.sanctuaryCopyForce=value(force.forceId);copyButton.dataset.sanctuaryCopyTeam=value(team.teamId);copyButton.setAttribute('aria-label',force.forceNo+'포스 이미지 클립보드 복사');copyButton.title='해당 포스 전체를 이미지로 복사';copyButton.innerHTML='<span aria-hidden="true"><i></i><i></i></span>';
-    titleWrap.append(name);if(forceDifficultyEnabled)titleWrap.appendChild(difficultyBadge);titleWrap.append(copyButton);titleWrap.appendChild(power);
+    titleWrap.append(name);if(forceDifficultyEnabled)titleWrap.appendChild(difficultyBadge);titleWrap.append(copyButton);
+    if(value(sanctuary?.code)==='kaldrix'){
+      const textButton=document.createElement('button');textButton.type='button';textButton.className='sanctuary-management-copy-button sanctuary-management-role-text-button';textButton.dataset.sanctuaryCopyRoles=value(force.forceId);textButton.dataset.sanctuaryRoleTeam=value(team.teamId);textButton.textContent='TEXT복사';textButton.setAttribute('aria-label',force.forceNo+'포스 역할 텍스트 복사');textButton.title='해당 포스의 드리블·신호 역할 복사';titleWrap.appendChild(textButton);
+    }
+    titleWrap.appendChild(power);
     const count=document.createElement('em');count.textContent=force.occupiedCount+'/'+force.capacity+'명';head.append(titleWrap,count);
     const parties=document.createElement('span');parties.className='sanctuary-management-force-parties';
     force.parties.forEach(party=>{

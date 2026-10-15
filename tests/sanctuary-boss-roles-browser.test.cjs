@@ -51,6 +51,12 @@ const {isolatePlaywrightPage}=require('./helpers/visitor-traffic'),root=path.res
   assert.deepEqual(await card.locator('.sanctuary-boss-badge').allTextContents(),['3>3','4시','12시']);
   await page.evaluate(()=>window.KinojoSanctuaryManagementDraftBridge.reload());
   assert.deepEqual(await card.locator('.sanctuary-boss-badge').allTextContents(),['3>3','4시','12시'],'canonical reread');
+  await page.evaluate(()=>Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.__roleText=text;}}}));
+  const textButton=page.locator('[data-sanctuary-copy-roles]').first();
+  await textButton.click();await page.waitForFunction(()=>Boolean(window.__roleText));
+  assert.equal(await page.evaluate(()=>window.__roleText),'드리블\n1파티-쿠르(3>3)/아주긴캐릭터이름(6>6)\n2파티-미지정\n신호\n1파티-쿠르(4시, 12시)/아주긴캐릭터이름(2시, 3시)\n2파티-미지정');
+  const another=await page.evaluate(()=>window.KinojoSanctuaryManagementCopy.buildRoleText({parties:[{partyNo:2,slots:[{slotNo:1,character:{name:'오반',bossRoles:{boss1:'12>9',boss2:[1]}}}]},{partyNo:1,slots:[{slotNo:1,character:{name:'란야',bossRoles:{boss1:'9>12',boss2:[7]}}}]}]}));
+  assert.equal(another,'드리블\n1파티-란야(9>12)\n2파티-오반(12>9)\n신호\n1파티-란야(7시)\n2파티-오반(1시)');
   assert.equal(await card.locator('.sanctuary-management-force-slot-copy .sanctuary-boss-badge').count(),0,'badges outside text stack');
   assert.equal(await card.locator('.sanctuary-management-force-slot-roles').evaluate((n)=>{const r=n.getBoundingClientRect(),c=n.parentElement.querySelector('.sanctuary-management-force-slot-copy').getBoundingClientRect();return r.left>=c.right-1}),true,'right column');
   if(width===1024){await page.evaluate(()=>document.body.classList.add('kinojo-mobile-sanctuary-management-page'));assert.equal(await page.locator('.sanctuary-management-force-viewport').first().evaluate(n=>getComputedStyle(n).paddingLeft),'0px');}
@@ -73,7 +79,7 @@ const {isolatePlaywrightPage}=require('./helpers/visitor-traffic'),root=path.res
   await card.click();await dialog.waitFor();assert.equal(await dialog.locator('[data-role-save]').isDisabled(),true);await dialog.locator('[data-operation-close]').click();
   for(const id of [1,2,4]){
    await page.evaluate(async id=>{const d=window.__bossData;d.teams[0].sanctuaryId=id;d.selectedSanctuaryCode=d.sanctuaries.find(x=>x.id===id).code;history.replaceState(null,'','?id='+d.selectedSanctuaryCode);await window.KinojoSanctuaryManagementDraftBridge.reload();},id);
-   assert.equal(await page.locator('[data-sanctuary-boss-role]').count(),0,'scope '+id);assert.equal(await page.locator('.sanctuary-boss-badge').count(),0);
+   assert.equal(await page.locator('[data-sanctuary-boss-role]').count(),0,'scope '+id);assert.equal(await page.locator('[data-sanctuary-copy-roles]').count(),0);assert.equal(await page.locator('.sanctuary-boss-badge').count(),0);
    assert.deepEqual(await page.evaluate(()=>window.KinojoSanctuaryManagementCopy.buildPayload(window.KinojoSanctuaryManagementDraftBridge.findTeam(77)).managementSnapshot.forces[0].parties[0].slots[0].character.bossRoles),{boss1:null,boss2:[]});
   }
   assert.deepEqual(errors,[]);console.log('PASS public card modal -> save -> reread -> PNG; editor removal, adapter, lease/rights and sanctuary3 only '+width);await page.close();
