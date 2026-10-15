@@ -171,13 +171,39 @@
     }finally{button.disabled=false;button.removeAttribute('aria-busy');button.innerHTML=oldHtml;}
   }
 
+  function buildRoleText(force){
+    const parties=[...(Array.isArray(force?.parties)?force.parties:[])].sort((a,b)=>number(a.partyNo)-number(b.partyNo));
+    return [{title:'드리블',boss:1},{title:'신호',boss:2}].map(({title,boss})=>[title,...parties.map(party=>{
+      const members=[...(Array.isArray(party.slots)?party.slots:[])].sort((a,b)=>number(a.slotNo)-number(b.slotNo)).flatMap(slot=>{
+        const character=slot.character,roles=character?.bossRoles||slot.bossRoles;
+        if(!character||character.isRandomAlt||slot.occupied===false)return [];
+        const label=boss===1?text(roles?.boss1):(Array.isArray(roles?.boss2)?roles.boss2:[]).map(n=>n+'시').join(', ');
+        return label?[text(character.name)+'('+label+')']:[];
+      });
+      return number(party.partyNo)+'파티-'+(members.join('/')||'미지정');
+    })].join('\n')).join('\n');
+  }
+
+  async function copyRoleTextFromButton(button){
+    if(!button||button.disabled||!requireLogin())return;
+    const team=bridge()?.findTeam?.(button.dataset.sanctuaryRoleTeam);
+    const force=team?.forces?.find(f=>number(f.forceId)===number(button.dataset.sanctuaryCopyRoles));
+    if(!force){notify('복사할 포스 데이터를 찾지 못했습니다.','error');return;}
+    button.disabled=true;button.setAttribute('aria-busy','true');
+    try{
+      if(!navigator.clipboard?.writeText)throw new Error('이 브라우저에서는 텍스트 클립보드를 사용할 수 없습니다.');
+      await navigator.clipboard.writeText(buildRoleText(force));notify('포스 역할이 텍스트로 복사되었습니다.');
+    }catch(error){notify(text(error?.message)||'텍스트 복사에 실패했습니다.','error');}
+    finally{button.disabled=false;button.removeAttribute('aria-busy');}
+  }
+
   function bind(){
     if(document.documentElement.dataset.sanctuaryCopyBound==='true')return;
     document.documentElement.dataset.sanctuaryCopyBound='true';
-    document.addEventListener('click',event=>{const button=event.target.closest?.('[data-sanctuary-copy-team]');if(!button)return;document.documentElement.dataset.sanctuaryCopyLast=button.dataset.sanctuaryCopyForce?'force':'team';event.preventDefault();event.stopPropagation();copyFromButton(button);},true);
+    document.addEventListener('click',event=>{const roleButton=event.target.closest?.('[data-sanctuary-copy-roles]');if(roleButton){event.preventDefault();event.stopPropagation();copyRoleTextFromButton(roleButton);return;}const button=event.target.closest?.('[data-sanctuary-copy-team]');if(!button)return;document.documentElement.dataset.sanctuaryCopyLast=button.dataset.sanctuaryCopyForce?'force':'team';event.preventDefault();event.stopPropagation();copyFromButton(button);},true);
   }
 
-  window.KinojoSanctuaryManagementCopy=Object.freeze({copyFromButton,renderPng,buildPayload,version:'20260901_01_stage12_renderer'});
+  window.KinojoSanctuaryManagementCopy=Object.freeze({copyFromButton,copyRoleTextFromButton,buildRoleText,renderPng,buildPayload,version:'20260901_01_stage12_renderer'});
   document.documentElement.dataset.sanctuaryCopyReady='true';
   bind();
 })();
