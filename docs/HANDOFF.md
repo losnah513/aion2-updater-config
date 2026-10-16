@@ -1,3 +1,11 @@
+## Detail terminal recovery · SQL538 / API305.7 · 2026-10-16
+
+- A detail job for 더샷 remained running/COMPLETE since 2026-10-14 19:30 KST and blocked all deferred Ranking/HOF publication at snapshot183 (15:36 KST), although subsequent Master refreshes succeeded. The exact interruption of the second finalization RPC is unproven.
+- Existing character-detail-refresh now saves the last daevanion counters and terminal result in one fenced write; runJob accepts the returned terminal row without a second write using its cleared owner. Existing identity/worker fences, manual-only collection and cooldown remain unchanged.
+- Existing deferred tick reaps at most20 abandoned active detail jobs per minute: all activity timestamps older than10minutes and resume_at absent or over2minutes past. Future provider waits/live owners are protected. Recovery records failed/DETAIL_HEARTBEAT_EXPIRED, clears owner, preserves collected data and records previousPhase. It never infers success from COMPLETE. No new function, cron, permission or external request.
+- Migration/rollback 20261016043423_character_detail_terminal_recovery_v538.sql; rollback restores only the previous tick, preserves recovered jobs/snapshots, and pairs with prior Edge v11/API305.6. Tests: character-detail-terminal, character-detail-write-fence, character-detail-identity-edge and character-deferred-snapshot.
+- Production/Git/Drive verification is recorded in character refresh stability4 LOG63. Normal active refresh still blocks atomic publication; 30minute delay and generation guards remain.
+
 ## Sanctuary role layout · 2026-10-15
 
 - Public sanctuary3 badges use a separate right card column; boss2 labels include 시 (e.g. 11시) in cards/dialog/copy SVG. Mobile landscape reduces nested horizontal padding and removes carousel side reservations. Existing command/roles/DB contracts remain unchanged; copy renderer retains 228×68 cards. Final verification and deployment: sanctuary project LOG77.
