@@ -40,6 +40,7 @@ const tests=[
   "tests/character-refresh-extension-terminal.test.cjs",
   "tests/character-refresh-audit-safety.test.cjs",
   "tests/character-detail-identity-edge.test.cjs",
+  "tests/character-detail-terminal.test.cjs",
   "tests/character-detail-write-fence.test.cjs",
   "tests/character-history-stable-identity.test.cjs",
   "tests/character-weekly-growth-identity.test.cjs",

@@ -33,6 +33,17 @@ const { PGlite } = require('../.codex-test-runtime/node_modules/@electric-sql/pg
    update private.kinojo_ranking_snapshots_v390 set status='PUBLISHED' where snapshot_id=$1 returning '{"ok":true}'::jsonb$$;
  `);
  await db.exec(fs.readFileSync('supabase/migrations/20260908131706_character_deferred_ranking_snapshot.sql','utf8'));
+ // Production scheduler with bounded recovery (same function/ACL, no new cron).
+ await db.exec(`alter table character_detail_refresh_jobs
+  add column id uuid default gen_random_uuid() primary key,
+  add column phase text default 'INIT', add column worker_id text,
+  add column created_at timestamptz default now(), add column updated_at timestamptz default now(),
+  add column last_heartbeat_at timestamptz, add column resume_at timestamptz,
+  add column completed_at timestamptz, add column cooldown_until timestamptz,
+  add column last_error_code text, add column last_error_message text,
+  add column current_category text, add column current_label text,
+  add column summary jsonb default '{}';`);
+ await db.exec(fs.readFileSync('supabase/migrations/20261016043423_character_detail_terminal_recovery_v538.sql','utf8'));
  const tick = async () => (await db.query('select private.kinojo_deferred_ranking_snapshot_tick() r')).rows[0].r;
  const count = async (table, condition='true') => (await db.query(`select count(*)::int n from ${table} where ${condition}`)).rows[0].n;
  assert.equal((await tick()).state,'IDLE');
@@ -44,7 +55,7 @@ const { PGlite } = require('../.codex-test-runtime/node_modules/@electric-sql/pg
  assert.equal(await count('private.character_snapshot_requests'),1);
  await db.exec("update private.character_snapshot_requests set due_at=now()-interval '1 minute'; insert into updater_sessions values('active','running',now()-interval '1 hour')");
  assert.equal((await tick()).state,'WAIT_REFRESH');
- await db.exec("update updater_sessions set status='completed' where session_id='active'; insert into character_detail_refresh_jobs values('running')");
+ await db.exec("update updater_sessions set status='completed' where session_id='active'; insert into character_detail_refresh_jobs(status) values('running')");
  assert.equal((await tick()).state,'WAIT_REFRESH');
  await db.exec('delete from character_detail_refresh_jobs');
  for(let i=0;i<4;i++) assert.equal((await tick()).action,'BUILD_RANKING_AND_HOF');
@@ -71,7 +82,7 @@ const { PGlite } = require('../.codex-test-runtime/node_modules/@electric-sql/pg
  }
  assert.equal(await count('private.character_snapshot_requests','completed_at is null'),3);
  assert.equal(await count('private.kinojo_ranking_snapshots_v390',"last_error_code='NEW_REFRESH_GENERATION'"),4);
- await db.exec("insert into character_detail_refresh_jobs values('processing')");
+ await db.exec("insert into character_detail_refresh_jobs(status) values('processing')");
  assert.equal((await tick()).state,'WAIT_REFRESH');
  await db.exec("update character_detail_refresh_jobs set status='failed'");
  assert.equal((await tick()).action,'BUILD_RANKING_AND_HOF');
@@ -88,10 +99,44 @@ const { PGlite } = require('../.codex-test-runtime/node_modules/@electric-sql/pg
  }
  assert.equal(await count('private.kinojo_ranking_snapshots_v390',"status='PUBLISHED'"),1);
  assert.equal(await count('private.character_snapshot_requests','completed_at is null'),3);
+ // An abandoned COMPLETE job cannot block ranking forever. Do not label it
+ // successful; preserve collected metadata, and reject a late owner by status.
+ await db.exec("delete from character_detail_refresh_jobs; update private.test_build_control set fail=false; update private.character_snapshot_dispatch set enabled=true,retry_at=null;");
+ await db.exec(`insert into character_detail_refresh_jobs(status,phase,worker_id,created_at,updated_at,last_heartbeat_at,summary)
+  values('running','COMPLETE','old-owner',now()-interval '2 days',now()-interval '2 days',now()-interval '2 days','{"keep":"details"}');`);
+ assert.notEqual((await tick()).state,'WAIT_REFRESH');
+ let recovered=(await db.query('select * from character_detail_refresh_jobs')).rows[0];
+ assert.equal(recovered.status,'failed');assert.equal(recovered.worker_id,null);
+ assert.equal(recovered.last_error_code,'DETAIL_HEARTBEAT_EXPIRED');
+ assert.equal(recovered.summary.keep,'details');assert.equal(recovered.summary.previousPhase,'COMPLETE');
+ assert.ok(recovered.completed_at);assert.ok(recovered.cooldown_until);
+ const before=JSON.stringify(recovered);await tick();
+ assert.equal(JSON.stringify((await db.query('select * from character_detail_refresh_jobs')).rows[0]),before,'idempotent terminal job');
+ // Fresh owners, recent writes even with an old heartbeat, and a provider's
+ // future Retry-After must still block publication. Missing heartbeat does not
+ // make an old queued job immortal.
+ for(const row of [
+  "('running',now(),now()-interval '2 days',now(),null)",
+  "('running',now()-interval '2 days',now(),now()-interval '2 days',null)",
+  "('waiting',now()-interval '2 days',now()-interval '2 days',now()-interval '2 days',now()+interval '1 hour')"
+ ]) {
+  await db.exec('delete from character_detail_refresh_jobs');
+  await db.exec('insert into character_detail_refresh_jobs(status,created_at,updated_at,last_heartbeat_at,resume_at) values'+row);
+  assert.equal((await tick()).state,'WAIT_REFRESH');
+  assert.equal(await count('character_detail_refresh_jobs',"status='failed'"),0);
+ }
+ await db.exec(`delete from character_detail_refresh_jobs;
+  insert into character_detail_refresh_jobs(status,created_at,updated_at)
+  select 'queued',now()-interval '1 day',now()-interval '1 day' from generate_series(1,21);`);
+ assert.equal((await tick()).state,'WAIT_REFRESH');
+ assert.equal(await count('character_detail_refresh_jobs',"status='failed'"),20,'bounded batch');
+ await tick();assert.equal(await count('character_detail_refresh_jobs',"status='failed'"),21);
  for(const role of ['anon','authenticated']) {
   const r=(await db.query("select has_function_privilege($1,'private.kinojo_deferred_ranking_snapshot_tick()','execute') allowed",[role])).rows[0];
   assert.equal(r.allowed,false);
  }
+ await db.exec(fs.readFileSync('supabase/rollbacks/20261016043423_character_detail_terminal_recovery_v538.sql','utf8'));
+ assert.equal(await count('character_detail_refresh_jobs',"status='failed'"),21,'code rollback preserves recovered rows');
  await db.exec(fs.readFileSync('supabase/rollbacks/20260908131706_character_deferred_ranking_snapshot.sql','utf8'));
  assert.equal((await tick()).state,'DISABLED');
  await db.exec('insert into lookup_batches values(2,true)');

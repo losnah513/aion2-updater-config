@@ -13,7 +13,7 @@ const CORS: Record<string,string> = {
   "cache-control":"no-store",
   "x-content-type-options":"nosniff"
 };
-const API_VERSION="305.6";
+const API_VERSION="305.7";
 const CONTRACT="302";
 const SUPABASE_URL=String(Deno.env.get("SUPABASE_URL")||"").replace(/\/$/,"");
 const SERVICE_ROLE_KEY=String(Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"");
@@ -384,14 +384,16 @@ async function processDaevanion(job:Record<string,any>,counter:{calls:number}){
     }
   }
   patch.daevanion_cursor=cursor;patch.request_count=Number(job.request_count||0)+counter.calls;counter.calls=0;patch.last_heartbeat_at=new Date().toISOString();
-  if(cursor>=targets.length){patch.phase="COMPLETE";patch.current_category="complete";patch.current_label="상세정보 저장 마무리";}
+  // Persist the final counters and terminal state in the same fenced DB write.
+  // There must be no durable running/COMPLETE gap if this invocation stops.
+  if(cursor>=targets.length)return await completeJob({...job,...patch},patch);
   return await patchJob(job,patch);
 }
 
-async function completeJob(job:Record<string,any>){
+async function completeJob(job:Record<string,any>,progress:Record<string,any>={}){
   const failed=Number(job.weapon_failed||0)+Number(job.armor_failed||0)+Number(job.accessory_failed||0)+Number(job.arcana_failed||0)+Number(job.daevanion_failed||0);
   const completedAt=new Date().toISOString(),cooldownUntil=new Date(Date.now()+30*60*1000).toISOString();
-  return await patchJob(job,{status:failed>0?"partial_failed":"completed",phase:"COMPLETE",worker_id:null,resume_at:null,
+  return await patchJob(job,{...progress,status:failed>0?"partial_failed":"completed",phase:"COMPLETE",worker_id:null,resume_at:null,
     completed_at:completedAt,cooldown_until:cooldownUntil,last_heartbeat_at:completedAt,current_category:"complete",
     current_label:failed>0?`전체 상세정보 갱신 완료 · 실패 ${failed}건`:"전체 상세정보 갱신 완료",
     summary:{apiVersion:API_VERSION,failedCount:failed,cooldownMinutes:30}});
@@ -420,6 +422,7 @@ async function runJob(jobId:string){
       if(result?.waiting===true)return result;
       job=result||await getJob(jobId);
     }
+    if(TERMINAL_STATUSES.has(job.status))return {ok:true,done:true,job};
     if(job.phase==="COMPLETE"){
       const completed=await completeJob(job);return {ok:true,done:true,job:completed};
     }
