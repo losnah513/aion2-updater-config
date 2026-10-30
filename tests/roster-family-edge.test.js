@@ -21,7 +21,7 @@ async function invoke(body){return handler(new Request('https://fixture.invalid'
  const detached={action:'family-save',sessionToken,requestId:'fixture-detach-487',mainCharacterId:'11',altCharacterIds:[],detachedCharacterIds:['12'],expectedFamilies:[{rootId:'11',revision:'a'.repeat(32)}]};
  assert.equal((await invoke(detached)).status,200);assert.deepEqual(calls.at(-1).body.p_detached,['12']);
  assert.equal((await invoke({...detached,detachedCharacterIds:[12]})).status,400);
- assert.equal((await (await invoke({action:'health'})).json()).apiVersion,'1.12');
+ assert.equal((await (await invoke({action:'health'})).json()).apiVersion,'1.13');
  dbFailed=true;const failed=await invoke({action:'family-save',sessionToken,requestId:'fixture-request-478',mainCharacterId:'11',altCharacterIds:['12'],expectedFamilies:[{rootId:'11',revision:'a'.repeat(32)}]});assert.equal(failed.status,500);const failure=await failed.json();assert.equal(failure.code,'FAMILY_SERVER_ERROR');assert(failure.message.includes('본캐·부캐 연결'));assert(!failure.message.includes('캐릭터 추가'));
  console.log('roster family Edge auth/validation/routing: PASS');
 })().catch(e=>{console.error(e);process.exitCode=1;});
