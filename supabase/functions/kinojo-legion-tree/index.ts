@@ -108,6 +108,35 @@ function stripOfficialName(value:unknown){return normalizeName(text(value,300).r
 function retryAfterSeconds(value:unknown){const seconds=Number(value);return Number.isFinite(seconds)&&seconds>0?Math.min(Math.max(Math.ceil(seconds),1),600):30;}
 function officialProfileImage(value:unknown){const path=text(value,500);return path.startsWith('/game_profile_images/')?`https://profileimg.plaync.com${path}`:'';}
 
+// Official character search supplies pcId, not a localized class name.
+// Resolve it through the same catalog used by the official character viewer.
+let officialClassCache:{expiresAt:number,names:Map<number,string>}|null=null;
+let officialClassPending:Promise<Map<number,string>>|null=null;
+async function officialClassNames():Promise<Map<number,string>>{
+  if(officialClassCache&&officialClassCache.expiresAt>Date.now())return officialClassCache.names;
+  if(officialClassPending)return officialClassPending;
+  officialClassPending=(async()=>{
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),5000);
+    try{
+      const response=await fetch('https://aion2.plaync.com/api/gameinfo/pcdata?lang=ko',{headers:{accept:'application/json'},signal:controller.signal,redirect:'follow'});
+      if(!response.ok)throw new Error('OFFICIAL_CLASS_CATALOG_HTTP');
+      const payload=record(await response.json()),names=new Map<number,string>();
+      for(const item of (Array.isArray(payload.pcDataList)?payload.pcDataList:[]).slice(0,256)){
+        const row=record(item),id=positiveInt(row.id),label=text(row.classText,80);
+        if(id!==null&&label)names.set(id,label);
+      }
+      if(!names.size)throw new Error('OFFICIAL_CLASS_CATALOG_EMPTY');
+      officialClassCache={expiresAt:Date.now()+3600000,names};
+      return names;
+    }catch{
+      const names=officialClassCache?.names||new Map<number,string>();
+      officialClassCache={expiresAt:Date.now()+60000,names};
+      return names;
+    }finally{clearTimeout(timer);}
+  })();
+  try{return await officialClassPending;}finally{officialClassPending=null;}
+}
+
 async function officialCharacterCandidates(input:Record<string,unknown>,servers:Array<Record<string,unknown>>,sessionToken:string,role:string){
   const source=`LEGION_TREE_CHARACTER_SEARCH_${role.toUpperCase()}`;
   const gate=await rpc('kinojo_legion_tree_search_rate_acquire_v457',{p_session_token:sessionToken,p_source:source});
@@ -142,7 +171,9 @@ async function officialCharacterCandidates(input:Record<string,unknown>,servers:
       const characterId=text(row.characterId,300),key=`${candidateServerId}:${characterId}`;
       if(!characterId||seen.has(key))continue;seen.add(key);
       const raceId=positiveInt(activeServer.race_id);
-      candidates.push({candidateKey:key,characterId,characterName:stripOfficialName(row.name),serverId:candidateServerId,serverName:text(activeServer.server_name,120),serverShortName:text(activeServer.server_short_name,80),raceId,raceName:raceId===null?'':raceName(raceId),level:positiveInt(row.level),className:text(row.className||row.class_name,80),profileImageUrl:officialProfileImage(row.profileImageUrl)});
+      const pcId=positiveInt(row.pcId);
+      const className=text(row.className||row.class_name,80)||(pcId===null?'':(await officialClassNames()).get(pcId)||'');
+      candidates.push({candidateKey:key,characterId,characterName:stripOfficialName(row.name),serverId:candidateServerId,serverName:text(activeServer.server_name,120),serverShortName:text(activeServer.server_short_name,80),raceId,raceName:raceId===null?'':raceName(raceId),level:positiveInt(row.level),className,profileImageUrl:officialProfileImage(row.profileImageUrl)});
     }
     candidates.sort((a,b)=>(positiveInt(a.serverId)||0)-(positiveInt(b.serverId)||0));
     return{ok:true,role,query:{raw:text(input.raw,180),characterName:text(input.characterName,120),serverSpecified:serverId!==null,serverId,serverName:text(server.serverName,120)},candidates};
