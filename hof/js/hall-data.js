@@ -63,7 +63,7 @@ function preloadImages(paths){
 
 const HALL_CACHE_PREFIX="kinojo_hall_summary_cache_v540";
 const HALL_STALE_PREFIX="kinojo_hall_summary_stale_v540";
-const HALL_PERSONAL_PREFIX="kinojo_hall_personal_last_good_v398";
+const HALL_PERSONAL_PREFIX="kinojo_hall_personal_last_good_v541";
 const HALL_PERSONAL_TTL_MS=24*60*60*1000;
 function hallCacheKey(){return HALL_CACHE_PREFIX+"::"+(includeSubs?"subs":"main")+"::"+(includeAllLegions?"all-legions":"default-legions");}
 const HALL_CACHE_TTL_MS=5*60*1000;
@@ -142,7 +142,7 @@ function clearHallPersonalRankingCache(){
   renderHallPersonalSlot();
 }
 function hallPersonalHasAggregate(data){
-  return ['enhance','pve','pvp','like','dislike','growth']
+  return ['enhance','pve','pvp','growth','familyPve']
     .some(metric=>Number(data?.[metric]?.rank||0)>0);
 }
 function renderHallPersonalSlot(){
