@@ -1757,7 +1757,7 @@ body{
   z-index:4!important;
 }
 
-/* HOF 318: in-card criteria, clean waiting state, future meter DPS foundation. */
+/* HOF 318: in-card criteria and clean waiting states. */
 .hof-v2-god-head{position:relative;justify-content:space-between!important}
 .hof-v2-card-info{width:25px;height:25px;display:grid;place-items:center;border:1px solid rgba(37,99,235,.25);border-radius:50%;background:#eef4ff;color:#1d4ed8;font-size:12px;font-weight:1000;cursor:pointer}
 .hof-v2-card-info-popover{position:absolute;z-index:30;right:8px;top:34px;width:min(245px,calc(100vw - 40px));display:grid;gap:5px;padding:11px;border:1px solid rgba(37,99,235,.22);border-radius:10px;background:#fff;box-shadow:0 14px 35px rgba(15,23,42,.16);color:#526581}
@@ -3043,4 +3043,41 @@ body.kinojo-page-hall .hof-v2-my-rank.is-stale{box-shadow:inset 0 3px 0 #d97706!
   body.kinojo-page-hall .hof-v2-my-god-row>div>strong{font-size:8px!important}
   body.kinojo-page-hall .hof-v2-my-god-row>div>span,
   body.kinojo-page-hall .hof-v2-my-god-row>b{font-size:8px!important}
+}
+
+/* Family champions share the two existing wide-card grid slots. */
+body.kinojo-page-hall .hof-v2-family-champion{display:grid!important;grid-template-rows:auto minmax(0,1fr)!important;min-width:0;overflow:hidden;--family-accent:#1d4ed8}
+body.kinojo-page-hall .hof-v2-family-champion.is-family-count{--family-accent:#7c3aed}
+body.kinojo-page-hall .hof-v2-family-champion .hof-v2-panel-head{display:flex!important;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px!important}
+body.kinojo-page-hall .hof-v2-family-champion h2{font-size:clamp(13px,1.45vw,20px)!important;letter-spacing:.025em;white-space:nowrap}
+body.kinojo-page-hall .hof-v2-family-label{font-size:10px;font-weight:850;color:#64748b;white-space:nowrap}
+body.kinojo-page-hall .hof-v2-family-body{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(48px,20%);align-items:center;gap:12px;width:100%;min-width:0;min-height:0;padding:12px;border:0;background:linear-gradient(110deg,#fff,#f4f7ff);text-align:left;color:#17233a;cursor:pointer}
+body.kinojo-page-hall .is-family-count .hof-v2-family-body{background:linear-gradient(110deg,#fff,#f8f5ff)}
+body.kinojo-page-hall .hof-v2-family-body:hover{background:#edf3ff}
+body.kinojo-page-hall .hof-v2-family-body:focus-visible{outline:2px solid var(--family-accent);outline-offset:-3px}
+body.kinojo-page-hall .hof-v2-family-identity{display:grid;align-content:center;gap:5px;min-width:0}
+body.kinojo-page-hall .hof-v2-family-name{display:flex;align-items:center;gap:7px;min-width:0}
+body.kinojo-page-hall .hof-v2-family-name strong{font-size:clamp(14px,1.7vw,22px);font-weight:1000;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+body.kinojo-page-hall .hof-v2-family-name .hof-v2-class-icon{width:30px!important;height:30px!important;min-width:30px!important;flex-basis:30px!important}
+body.kinojo-page-hall .hof-v2-family-identity small,.hof-v2-family-detail,.hof-v2-family-missing{font-size:10px;font-weight:850;color:#64748b}
+body.kinojo-page-hall .hof-v2-family-score{display:grid;justify-items:end;gap:3px;color:var(--family-accent);font-variant-numeric:tabular-nums;white-space:nowrap}
+body.kinojo-page-hall .hof-v2-family-score strong{font-size:clamp(21px,2.5vw,34px);font-weight:1000;letter-spacing:-.045em}
+body.kinojo-page-hall .hof-v2-family-score small{font-size:10px;font-weight:850}
+body.kinojo-page-hall .hof-v2-family-portrait,.hof-v2-family-portrait .hof-identity-portrait{display:grid!important;place-items:center;min-width:0;max-width:100%;height:100%;min-height:0}
+body.kinojo-page-hall .hof-v2-family-portrait .hof-v2-portrait.family{display:grid;place-items:center;width:100%!important;height:100%!important;max-height:100px;aspect-ratio:1/1;object-fit:cover;border-radius:4px!important;border:1px solid #dce5f4}
+body.kinojo-page-hall .hof-v2-family-body.is-empty{grid-template-columns:1fr;place-items:center;cursor:default;color:#64748b}
+@media(max-width:1180px){
+ body.kinojo-page-hall .hof-v2-family-champion .hof-v2-panel-head{padding:6px 8px!important;gap:5px}
+ body.kinojo-page-hall .hof-v2-family-label{font-size:8px}
+ body.kinojo-page-hall .hof-v2-family-body{padding:8px;gap:7px}
+ body.kinojo-page-hall .hof-v2-family-score strong{font-size:clamp(19px,2.5vw,29px)}
+ body.kinojo-page-hall .hof-v2-family-name .hof-v2-class-icon{width:24px!important;height:24px!important;min-width:24px!important;flex-basis:24px!important}
+ body.kinojo-page-hall .hof-v2-family-identity{gap:3px}
+}
+@media(max-width:760px){
+ body.kinojo-page-hall .hof-v2-family-champion h2{font-size:14px!important}
+ body.kinojo-page-hall .hof-v2-family-body{grid-template-columns:minmax(0,1fr) auto minmax(44px,18%);padding:7px;gap:6px}
+ body.kinojo-page-hall .hof-v2-family-name strong{font-size:14px}
+ body.kinojo-page-hall .hof-v2-family-score strong{font-size:22px}
+ body.kinojo-page-hall .hof-v2-family-identity small,.hof-v2-family-detail,.hof-v2-family-missing,.hof-v2-family-score small{font-size:9px}
 }

@@ -1,3 +1,10 @@
+## HOF family champions · SQL540 · 2026-10-30
+
+- Baseline main9f5aee2bb656b8c64b85340c4f9507abd178fdee; branch codex/hof-family-champions. Existing wide slots now show ALL FOR ONE (one main, family PVE sum) and ONE FOR ALL (one main, linked-alt count). Canonical family/legion scope and no-account mains are supported; include-subs does not suppress family members.
+- Migration/rollback 20261030102944_hof_family_champions.sql replaces only the existing candidate function, preserving ACL/config and all previous HOF metrics. Apply DB, then rebuild/validate/publish with the existing snapshot pipeline before WEB. No direct published-scope mutation, new tables, raw-history accumulation or Edge deployment. Rebuild after code rollback; never delete character data or force snapshot pointers.
+- Tests: PGLITE_MODULE=<pglite> node tests/hof-family-champions.test.cjs; PLAYWRIGHT_MODULE=<playwright> node tests/hof-family-champions-browser.test.cjs (optional CHROME_PATH). Existing hof-candidate-generation/hof-layout-contract remain required. Browser coverage includes PC/Fold/390/320/landscape, stable identities, empty/unknown and escaped names.
+- Final PR/main/Pages, production winners and same-ID Drive readback: [HOF layout project LOG1](https://drive.google.com/file/d/1DlSLjLPuZ5abcrpwlarSTPYe2IuFVL5-/view). DB size investigation is separately recorded in DB project LOG40; retention/deletion policy is unchanged.
+
 ## Memberless random alternates · SQL539 · 2026-10-30
 
 - Baseline main443c36498b74c107a8b9b8df3e384869c9a958a3; branch codex/memberless-random-alt. Existing roster-authorized editors can reserve an active canonical main's random alternate without an owner member ID. No editor-ID fallback, fake member/master rows, self-service permission change or Edge deployment.

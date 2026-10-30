@@ -13,10 +13,11 @@ function positionReactionPopover(anchor,pop){
 }
 function closeReactionModal(){hideCharacterPreview_();const pop=document.getElementById("reactionPopover");if(pop){pop.style.display="none";pop.setAttribute("aria-hidden","true")}document.body.classList.remove("reaction-popover-open");currentReactionItem=null}
 function getVisitorId(){let id=localStorage.getItem("kinojoVisitorId");if(!id){id="v_"+Date.now()+"_"+Math.random().toString(36).slice(2);localStorage.setItem("kinojoVisitorId",id)}return id}
-function findHallCharacterByName(name){
+function findHallCharacterByName(name,characterId=0,serverId=0){
   const target=String(name||"").trim();
   if(!target)return {name:""};
   const groups=[
+    [hallData?.summarySections?.allForOne,hallData?.summarySections?.oneForAll].filter(Boolean),
     hallData?.overallAll,
     hallData?.overallMain,
     hallData?.demonFamilyAll,
@@ -32,7 +33,7 @@ function findHallCharacterByName(name){
     hallData?.mvp?[hallData.mvp]:[]
   ];
   for(const group of groups){
-    const found=(group||[]).find(item=>String(item?.name||"").trim()===target);
+    const found=(group||[]).find(item=>String(item?.name||"").trim()===target&&(!Number(characterId)||Number(item.characterId||item.character_id)===Number(characterId))&&(!Number(serverId)||Number(item.serverId||item.server_id)===Number(serverId)));
     if(found)return found;
   }
   return {name:target};
@@ -73,7 +74,7 @@ function showCharacterPreview_(item,anchor){
   tooltip.classList.add("is-visible");
   tooltip.setAttribute("aria-hidden","false");
 }
-async function bindCharacterButtons(){document.querySelectorAll("[data-character]").forEach(btn=>{btn.onclick=ev=>{ev.stopPropagation();const name=btn.dataset.character;const found=findHallCharacterByName(name);openReactionModal(found,btn)};btn.onmouseenter=()=>showCharacterPreview_(findHallCharacterByName(btn.dataset.character),btn);btn.onmouseleave=hideCharacterPreview_;btn.onfocus=()=>showCharacterPreview_(findHallCharacterByName(btn.dataset.character),btn);btn.onblur=hideCharacterPreview_;});document.querySelectorAll("[data-reaction-card]").forEach(card=>{card.onclick=()=>{reactionCarouselPausedUntil=Date.now()+10000}})}
+async function bindCharacterButtons(){document.querySelectorAll("[data-character]").forEach(btn=>{btn.onclick=ev=>{ev.stopPropagation();const name=btn.dataset.character;const found=findHallCharacterByName(name,btn.dataset.characterId,btn.dataset.serverId);openReactionModal(found,btn)};btn.onmouseenter=()=>showCharacterPreview_(findHallCharacterByName(btn.dataset.character,btn.dataset.characterId,btn.dataset.serverId),btn);btn.onmouseleave=hideCharacterPreview_;btn.onfocus=()=>showCharacterPreview_(findHallCharacterByName(btn.dataset.character,btn.dataset.characterId,btn.dataset.serverId),btn);btn.onblur=hideCharacterPreview_;});document.querySelectorAll("[data-reaction-card]").forEach(card=>{card.onclick=()=>{reactionCarouselPausedUntil=Date.now()+10000}})}
 
 
 /* knj-infoweb(v_260603_01) reaction submit guard patch */
