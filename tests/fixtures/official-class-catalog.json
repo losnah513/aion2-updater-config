@@ -1,0 +1,256 @@
+{
+  "pcDataList": [
+    {
+      "className": "GLADIATOR",
+      "classText": "검성",
+      "genderName": "Male",
+      "id": 5,
+      "raceName": "Light"
+    },
+    {
+      "className": "GLADIATOR",
+      "classText": "검성",
+      "genderName": "Female",
+      "id": 6,
+      "raceName": "Light"
+    },
+    {
+      "className": "GLADIATOR",
+      "classText": "검성",
+      "genderName": "Male",
+      "id": 7,
+      "raceName": "Dark"
+    },
+    {
+      "className": "GLADIATOR",
+      "classText": "검성",
+      "genderName": "Female",
+      "id": 8,
+      "raceName": "Dark"
+    },
+    {
+      "className": "TEMPLAR",
+      "classText": "수호성",
+      "genderName": "Male",
+      "id": 9,
+      "raceName": "Light"
+    },
+    {
+      "className": "TEMPLAR",
+      "classText": "수호성",
+      "genderName": "Female",
+      "id": 10,
+      "raceName": "Light"
+    },
+    {
+      "className": "TEMPLAR",
+      "classText": "수호성",
+      "genderName": "Male",
+      "id": 11,
+      "raceName": "Dark"
+    },
+    {
+      "className": "TEMPLAR",
+      "classText": "수호성",
+      "genderName": "Female",
+      "id": 12,
+      "raceName": "Dark"
+    },
+    {
+      "className": "RANGER",
+      "classText": "궁성",
+      "genderName": "Male",
+      "id": 13,
+      "raceName": "Light"
+    },
+    {
+      "className": "RANGER",
+      "classText": "궁성",
+      "genderName": "Female",
+      "id": 14,
+      "raceName": "Light"
+    },
+    {
+      "className": "RANGER",
+      "classText": "궁성",
+      "genderName": "Male",
+      "id": 15,
+      "raceName": "Dark"
+    },
+    {
+      "className": "RANGER",
+      "classText": "궁성",
+      "genderName": "Female",
+      "id": 16,
+      "raceName": "Dark"
+    },
+    {
+      "className": "ASSASSIN",
+      "classText": "살성",
+      "genderName": "Male",
+      "id": 17,
+      "raceName": "Light"
+    },
+    {
+      "className": "ASSASSIN",
+      "classText": "살성",
+      "genderName": "Female",
+      "id": 18,
+      "raceName": "Light"
+    },
+    {
+      "className": "ASSASSIN",
+      "classText": "살성",
+      "genderName": "Male",
+      "id": 19,
+      "raceName": "Dark"
+    },
+    {
+      "className": "ASSASSIN",
+      "classText": "살성",
+      "genderName": "Female",
+      "id": 20,
+      "raceName": "Dark"
+    },
+    {
+      "className": "ELEMENTALIST",
+      "classText": "정령성",
+      "genderName": "Male",
+      "id": 21,
+      "raceName": "Light"
+    },
+    {
+      "className": "ELEMENTALIST",
+      "classText": "정령성",
+      "genderName": "Female",
+      "id": 22,
+      "raceName": "Light"
+    },
+    {
+      "className": "ELEMENTALIST",
+      "classText": "정령성",
+      "genderName": "Male",
+      "id": 23,
+      "raceName": "Dark"
+    },
+    {
+      "className": "ELEMENTALIST",
+      "classText": "정령성",
+      "genderName": "Female",
+      "id": 24,
+      "raceName": "Dark"
+    },
+    {
+      "className": "SORCERER",
+      "classText": "마도성",
+      "genderName": "Male",
+      "id": 25,
+      "raceName": "Light"
+    },
+    {
+      "className": "SORCERER",
+      "classText": "마도성",
+      "genderName": "Female",
+      "id": 26,
+      "raceName": "Light"
+    },
+    {
+      "className": "SORCERER",
+      "classText": "마도성",
+      "genderName": "Male",
+      "id": 27,
+      "raceName": "Dark"
+    },
+    {
+      "className": "SORCERER",
+      "classText": "마도성",
+      "genderName": "Female",
+      "id": 28,
+      "raceName": "Dark"
+    },
+    {
+      "className": "CLERIC",
+      "classText": "치유성",
+      "genderName": "Male",
+      "id": 29,
+      "raceName": "Light"
+    },
+    {
+      "className": "CLERIC",
+      "classText": "치유성",
+      "genderName": "Female",
+      "id": 30,
+      "raceName": "Light"
+    },
+    {
+      "className": "CLERIC",
+      "classText": "치유성",
+      "genderName": "Male",
+      "id": 31,
+      "raceName": "Dark"
+    },
+    {
+      "className": "CLERIC",
+      "classText": "치유성",
+      "genderName": "Female",
+      "id": 32,
+      "raceName": "Dark"
+    },
+    {
+      "className": "CHANTER",
+      "classText": "호법성",
+      "genderName": "Male",
+      "id": 33,
+      "raceName": "Light"
+    },
+    {
+      "className": "CHANTER",
+      "classText": "호법성",
+      "genderName": "Female",
+      "id": 34,
+      "raceName": "Light"
+    },
+    {
+      "className": "CHANTER",
+      "classText": "호법성",
+      "genderName": "Male",
+      "id": 35,
+      "raceName": "Dark"
+    },
+    {
+      "className": "CHANTER",
+      "classText": "호법성",
+      "genderName": "Female",
+      "id": 36,
+      "raceName": "Dark"
+    },
+    {
+      "className": "Fighter",
+      "classText": "권성",
+      "genderName": "Male",
+      "id": 45,
+      "raceName": "Light"
+    },
+    {
+      "className": "Fighter",
+      "classText": "권성",
+      "genderName": "Female",
+      "id": 46,
+      "raceName": "Light"
+    },
+    {
+      "className": "Fighter",
+      "classText": "권성",
+      "genderName": "Male",
+      "id": 47,
+      "raceName": "Dark"
+    },
+    {
+      "className": "Fighter",
+      "classText": "권성",
+      "genderName": "Female",
+      "id": 48,
+      "raceName": "Dark"
+    }
+  ]
+}
