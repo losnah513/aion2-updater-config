@@ -40,4 +40,3 @@ const {PGlite}=require(process.env.PGLITE_MODULE||'@electric-sql/pglite');
  await assert.rejects(call('fixture-after-rollback',payload,2),/request_hash/);
  console.log('PASS: production EDIT_SCHEDULE hash failure reproduction, normal schedule repair, 64-character receipts, replay/mismatch/stale/permission/conflict rollback, corrected range and unchanged grants/config/rollback');
  }finally{await db.close();}})().catch(e=>{console.error(e.stack||e);process.exitCode=1;});
-
