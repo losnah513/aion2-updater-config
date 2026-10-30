@@ -307,7 +307,7 @@ function hofFamilyChampionCard(title,item,metric){
   const tag=hasItem?'button':'div';
   const attrs=hasItem?' type="button" data-character="'+escapeHtml(hofCharName(item))+'" data-character-id="'+escapeHtml(item.characterId||item.character_id||'')+'" data-server-id="'+escapeHtml(item.serverId||item.server_id||'')+'" aria-label="'+escapeHtml(hofCharName(item)+' · '+exact+' · 상세 보기')+'" title="'+escapeHtml(exact)+'"':'';
   return '<section class="hof-v2-panel hof-v2-family-champion '+(isPower?'is-family-power':'is-family-count')+'" data-hof-panel="'+metric+'">'
-    +'<div class="hof-v2-panel-head is-compact"><h2>'+title+'</h2><span class="hof-v2-family-label">'+label+'</span></div>'
+    +'<div class="hof-v2-panel-head is-compact"><h2>'+title+'</h2><span class="hof-v2-family-label">'+label+'</span><button type="button" class="hof-family-open" data-hof-family-ranking="'+(isPower?'power':'alts')+'" aria-label="'+title+' 전체 순위 보기">전체 순위 보기</button></div>'
     +'<'+tag+' class="hof-v2-family-body'+(hasItem?'':' is-empty')+'"'+attrs+'>'
     +(hasItem?'<span class="hof-v2-family-identity"><span class="hof-v2-family-name">'+hofClassIcon(item)+'<strong>'+escapeHtml(hofCharName(item))+'</strong></span><small>['+escapeHtml(hofServerName(item)||'서버 미확인')+'] · 본캐</small><span class="hof-v2-family-detail">'+escapeHtml(detail)+'</span>'+(missing?'<span class="hof-v2-family-missing">PVE 미확인 '+missing+'명 제외</span>':'')+'</span><span class="hof-v2-family-score"><strong>'+escapeHtml(score)+'</strong><small>'+(isPower?'PVE 합산 전투력':'부캐')+'</small></span><span class="hof-v2-family-portrait">'+hofRankPortrait(item,0,'family')+'</span>':'<strong>집계 대기</strong>')
     +'</'+tag+'></section>';
@@ -363,7 +363,7 @@ function hofMyRankingPanel(){
   const isEmpty=isLoggedIn&&personalStatus==='empty';
   const isStale=isLoggedIn&&personalStatus==='stale';
   const myName=hofSessionName();
-  const metrics=['pve','pvp','enhance','growth','like','dislike'];
+  const metrics=['pve','pvp','enhance','growth','familyPve'];
   const foundByMetric={};
   metrics.forEach(metric=>{foundByMetric[metric]=isLoggedIn&&!isLoading&&!isFailure?hofFindMyMetric(metric):null;});
   const profileMetric=metrics.find(metric=>foundByMetric[metric]?.item);
@@ -385,7 +385,7 @@ function hofMyRankingPanel(){
       + '</dl>'
       + '</section>';
   }).join('');
-  const secondaryRows=[['강화의 신','enhance'],['성장의 신','growth'],['좋아요','like'],['싫어요','dislike']];
+  const secondaryRows=[['강화의 신','enhance'],['성장의 신','growth']];
   const secondaryHtml=secondaryRows.map(([title,metric])=>{
     const found=foundByMetric[metric];
     return '<div class="hof-v2-my-row hof-v2-my-god-row '+hofBackgroundClass(metric)+(found?' is-found':'')+'" data-hof-metric="'+metric+'">'
@@ -394,6 +394,8 @@ function hofMyRankingPanel(){
       + '<b>'+escapeHtml(found?found.score:'-')+'</b>'
       + '</div>';
   }).join('');
+  const family=foundByMetric.familyPve;
+  const familyHtml='<section class="hof-v2-my-family" data-hof-metric="familyPve"><div><strong>본캐 + 부캐 PVE 합산</strong><b>'+(family?Number(family.rank).toLocaleString('ko-KR')+'위':'순위 없음')+'</b></div><strong title="'+escapeHtml(family?hofPowerFull(family.familyPower):'')+'">'+escapeHtml(family?hofPowerShort(family.familyPower):'-')+'</strong><small>'+(family?'본캐 1명 · 부캐 '+Number(family.altCount||0)+'명 · 조회 시점 기준':'확인된 PVE 전투력이 없습니다.')+'</small></section>';
   const stateHtml=!isLoggedIn?''
     :isLoading?'<div class="hof-v2-my-state is-loading" role="status">'+kinojoCardSpinner('내 랭킹 집계를 불러오는 중')+'</div>'
     :isFailure?'<div class="hof-v2-my-state is-error" role="alert"><strong>내 랭킹을 불러오지 못했습니다.</strong><button type="button" onclick="reloadHallAfterAuthChange()">다시 조회</button></div>'
@@ -404,7 +406,7 @@ function hofMyRankingPanel(){
     + '<div class="hof-v2-my-head"><h2>내 랭킹</h2></div>'
     + (!isLoggedIn?'<div class="hof-v2-login-guide"><span>🔒</span><strong>로그인 후 나의 랭킹을 확인하세요.</strong><button id="hofMyRankingLoginBtn" type="button">로그인</button></div>':'')
     + stateHtml
-    + (isLoggedIn&&!isLoading&&!isFailure&&!isEmpty?'<div class="hof-v2-my-profile">'+hofRankPortrait(item,0,'my')+'<strong>'+escapeHtml(displayName)+'</strong></div><div class="hof-v2-my-list">'+primaryHtml+secondaryHtml+'</div>':'')
+    + (isLoggedIn&&!isLoading&&!isFailure&&!isEmpty?'<div class="hof-v2-my-profile">'+hofRankPortrait(item,0,'my')+'<strong>'+escapeHtml(displayName)+'</strong></div><div class="hof-v2-my-list">'+primaryHtml+secondaryHtml+familyHtml+'</div>':'')
     + '</aside>';
 }
 function setHallSlot(id,html){

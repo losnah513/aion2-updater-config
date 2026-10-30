@@ -3081,3 +3081,15 @@ body.kinojo-page-hall .hof-v2-family-body.is-empty{grid-template-columns:1fr;pla
  body.kinojo-page-hall .hof-v2-family-score strong{font-size:22px}
  body.kinojo-page-hall .hof-v2-family-identity small,.hof-v2-family-detail,.hof-v2-family-missing,.hof-v2-family-score small{font-size:9px}
 }
+/* On-demand family ranking and personal family total. */
+.hof-family-open{margin-left:auto;flex-shrink:0;border:1px solid #cbd5ff;border-radius:7px;background:white;color:#244cda;padding:5px 7px;font-size:10px;font-weight:800;cursor:pointer}
+.hof-v2-family-champion .hof-v2-panel-head{gap:7px}
+.hof-v2-my-family{grid-column:1/-1;padding:12px;border:1px solid #cbd5ff;border-radius:5px;background:#f4f7ff;display:flex;flex-direction:column;gap:9px;min-width:0}
+.hof-v2-my-family>div{display:flex;justify-content:space-between;gap:8px;font-size:12px}
+.hof-v2-my-family b,.hof-v2-my-family>strong{color:#224ddd}.hof-v2-my-family b{white-space:nowrap}.hof-v2-my-family>strong{font-size:25px}.hof-v2-my-family small{font-size:10px;color:#64748b}
+.hof-family-dialog{width:min(620px,calc(100vw - 24px));max-height:calc(100vh - 32px);box-sizing:border-box;border:1px solid #ccd6f0;border-radius:14px;padding:0;color:#182641;background:white;box-shadow:0 20px 80px #15213e66;overflow:auto}
+.hof-family-dialog::backdrop{background:#15213e88}.hof-family-dialog header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:18px;border-bottom:1px solid #e1e7f2}.hof-family-dialog h2{font-size:20px;margin:0}.hof-family-dialog header p{font-size:12px;margin:7px 0 0;color:#64748b}
+.hof-family-dialog button{cursor:pointer;border:1px solid #ccd6f0;background:white;color:#244cda;border-radius:7px;padding:9px 12px;white-space:nowrap}.hof-family-dialog button:disabled{opacity:.4;cursor:default}.hof-family-dialog [data-family-content]{padding:16px}
+.hof-family-loading{display:flex;flex-direction:column;gap:16px;padding:30px 0;font-size:14px}.hof-family-loading span,.hof-family-complete span{font-size:12px;color:#64748b}.hof-family-dialog progress{width:100%;height:8px;accent-color:#3f5af5}.hof-family-complete{display:flex;flex-direction:column;gap:7px}.hof-family-asof{font-size:11px;color:#64748b;line-height:1.5}
+.hof-family-ranking-list{padding:0;margin:12px 0;list-style:none}.hof-family-ranking-list li{display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #e6eaf4;font-size:14px}.hof-family-ranking-list li>div{display:flex;flex-direction:column;gap:5px;overflow-wrap:anywhere}.hof-family-ranking-list small{font-size:10px;color:#64748b}.hof-family-ranking-list li>strong{color:#244cda}.hof-family-dialog nav{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px}.hof-family-empty{text-align:center;padding:30px 10px}
+@media(max-width:760px){.hof-v2-family-champion .hof-v2-panel-head{flex-wrap:wrap}.hof-family-open{font-size:10px}.hof-family-dialog h2{font-size:16px}.hof-family-ranking-list li{gap:6px;font-size:12px;grid-template-columns:34px minmax(0,1fr) auto}}

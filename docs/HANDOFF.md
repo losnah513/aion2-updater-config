@@ -1,3 +1,9 @@
+## HOF personal + on-demand family rankings · SQL541 · 2026-10-30
+
+- Branch `codex/hof-my-family-ranking`, baseline main `005f1b84cbd38234d92a3012ce3522bf420ad729`. My Ranking now shows a family PVE total/rank instead of retired reactions. Family champion headers open accessible dialogs; explicit request-time aggregation returns 20 rows/page, no prefetch, retained table or cron. Indeterminate progress, completion, retry, empty state, Escape/close and stale response suppression are covered.
+- SQL541 adds one restricted private canonical family aggregate and one bounded public read RPC; existing authenticated personal reader keeps its credential gate, scope/snapshot handling, grants and timeouts and adds a timestamped family result. Ambiguous owner names yield no family result rather than guessing a server. No member/session source mutation. Public winner snapshot remains SQL540; personal family/dialog values are latest at query time, independent of include-subs, with the selected legion scope. Every page is a fresh read and may reflect changes.
+- Apply SQL before WEB; rollback restores the exact prior personal function and drops only the two new functions. Revert WEB before DB rollback. Snapshot rebuild is unnecessary because no published candidate/payload changes. Personal cache namespace v541 prevents old data masquerading as a family result. Tests: PGLITE_MODULE=<pglite> node tests/hof-family-rankings.test.cjs; PLAYWRIGHT_MODULE=<playwright> node tests/hof-family-rankings-browser.test.cjs; prior family/layout/candidate/snapshot guards.
+
 ## HOF family champions · SQL540 · 2026-10-30
 
 - Baseline main9f5aee2bb656b8c64b85340c4f9507abd178fdee; branch codex/hof-family-champions. Existing wide slots now show ALL FOR ONE (one main, family PVE sum) and ONE FOR ALL (one main, linked-alt count). Canonical family/legion scope and no-account mains are supported; include-subs does not suppress family members.

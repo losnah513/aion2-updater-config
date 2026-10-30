@@ -99,9 +99,9 @@ assert.equal(myRankingRender.includes('hof-v2-title-icon'), false, 'My Ranking t
 assert.equal(myRankingRender.includes('scopeLabel'), false, 'My Ranking scope subtitle must be removed');
 assert.equal(myRankingRender.includes('hof-v2-my-current-grid'), false, 'My Ranking must use one unified single-row list');
 assert.ok(myRankingRender.includes("'<div class=\"hof-v2-my-profile\">'+hofRankPortrait(item,0,'my')+'<strong>'"), 'My Ranking profile block must contain only the rectangular profile and name');
-assert.ok(myRankingRender.includes("const metrics=['pve','pvp','enhance','growth','like','dislike']"), 'My Ranking must expose the complete six-metric snapshot contract');
-assert.ok(myRankingRender.includes("['좋아요','like']"), 'My Ranking must expose the Like metric');
-assert.ok(myRankingRender.includes("['싫어요','dislike']"), 'My Ranking must expose the Dislike metric');
+assert.ok(myRankingRender.includes("const metrics=['pve','pvp','enhance','growth','familyPve']"), 'My Ranking must expose the individual and family ranking contract');
+assert.ok(!myRankingRender.includes("['좋아요','like']"), 'Retired reactions must not be displayed in My Ranking');
+assert.ok(myRankingRender.includes("hof-v2-my-family"), 'My Ranking exposes the family total card');
 assert.ok(myRankingRender.includes('hof-v2-my-mode-badge'), 'My Ranking PVE/PVP labels must use colored badges');
 assert.ok(myRankingRender.includes('hof-v2-my-stats'), 'My Ranking must visually separate combat power and item level');
 assert.ok(myRankingRender.includes('>전투력</dt>') && myRankingRender.includes('>아이템레벨</dt>'), 'My Ranking stat labels must remain clearly visible');
