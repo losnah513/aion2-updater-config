@@ -403,7 +403,7 @@
     if(main.characterId<1||!main.characterName)throw new Error('연결된 본캐 식별 정보가 올바르지 않습니다.');
     const characters=data.characters.map(validateCharacterCard);
     const random=data.randomCandidate?Object.assign({},data.randomCandidate, {assignmentKind:'RANDOM_ALT',mainCharacterId:integer(data.randomCandidate?.mainCharacterId),ownerMemberId:integer(data.randomCandidate?.ownerMemberId),characterName:value(data.randomCandidate?.characterName),serverId:integer(data.randomCandidate?.serverId),serverName:value(data.randomCandidate?.serverName),relation:'ALT',isMain:false,isRandomAlt:true,power:0,itemLevel:0}):null;
-    if(random&&(random.mainCharacterId!==main.characterId||random.ownerMemberId<1||!random.characterName))throw new Error('랜덤 부캐 후보 정보가 올바르지 않습니다.');
+    if(random&&(random.mainCharacterId!==main.characterId||random.ownerMemberId!==main.ownerMemberId||!random.characterName))throw new Error('랜덤 부캐 후보 정보가 올바르지 않습니다.');
     return Object.assign({},data,{mainCharacter:main,randomCandidate:random,characters});
   }
 

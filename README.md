@@ -1,3 +1,7 @@
+## Sanctuary random alternates without member accounts · SQL539
+
+CONFIRMED · 2026-10-30: authorized roster editors can reserve a RANDOM_ALT using a verified active, non-excluded canonical main-character ID even when that family has no member account. Member ownership stays nullable and is never replaced with the editor's member ID. No fake member or character rows are created. Existing login, roster capability, lease/revision/receipt, class/item-level and same-force family checks remain. Schedule validation includes virtual reservations after the save delegate restores them. This changes manual composition, not self-service ownership or support authorization. Revalidate when owner resolution, linked-alts, save, assignment guards or schedule conflicts change. Evidence: tests/sanctuary-memberless-random-alt.test.cjs and tests/sanctuary-memberless-random-alt-browser.test.cjs; final deployment/Drive state: sanctuary project LOG80.
+
 ## Sanctuary role layout · 2026-10-15
 
 - Public sanctuary3 badges use a separate right card column; boss2 labels include 시 (e.g. 11시) in cards/dialog/copy SVG. Mobile landscape reduces nested horizontal padding and removes carousel side reservations. Existing command/roles/DB contracts remain unchanged; copy renderer retains 228×68 cards. Final verification and deployment: sanctuary project LOG77.
