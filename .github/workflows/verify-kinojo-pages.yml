@@ -369,6 +369,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - name: Verify candidate class mapping
+        run: node tests/legion-tree-candidate-class.test.cjs
       - name: Verify roster family Edge
         run: node tests/roster-family-edge.test.js
       - name: Verify character worker checkpoint recovery
@@ -423,6 +425,7 @@ jobs:
           PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/hof-family-champions-browser.test.cjs
           PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/hof-family-rankings-browser.test.cjs
           PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/sanctuary-schedule-year-browser.test.cjs
+          PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/legion-tree-candidate-class-browser.test.cjs
 
       - name: Verify bridge startup with frozen cores
         shell: bash

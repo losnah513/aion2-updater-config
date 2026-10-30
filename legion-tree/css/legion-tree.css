@@ -172,3 +172,6 @@ body.legion-tree-editor-open{overflow:hidden}
 /* Character registration now belongs to the roster; this bar owns organization editing. */
 body.kinojo-page-legion-tree>.legion-tree-subbar{grid-template-columns:auto minmax(0,620px);padding-block:7px}
 @media(max-width:640px){body.kinojo-page-legion-tree>.legion-tree-subbar{grid-template-columns:auto minmax(0,1fr)}body.kinojo-page-legion-tree>.legion-tree-subbar .legion-tree-subbar-actions{display:flex;width:auto}}
+.legion-tree-search-card strong{display:flex;align-items:center;gap:6px}
+.legion-tree-search-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.legion-tree-search-class{flex:0 0 auto;color:#4362a1;font-size:9px;font-weight:800}
