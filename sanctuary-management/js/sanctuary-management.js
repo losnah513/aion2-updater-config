@@ -1131,6 +1131,10 @@
     if(dialog)dialog.dataset.month=calendarMonthData?.month||selectedMonth;
   }
 
+  function invalidateMonth(){
+    monthRequestSequence+=1;
+    monthData=null;monthError='';calendarMonthData=null;calendarMonthError='';
+  }
   async function loadMonth(month=selectedMonth){
     const sequence=++monthRequestSequence;selectedMonth=month;monthData=null;monthError='';renderWeek();renderMonthlyScheduleBody();
     try{const data=await ServerAdapter.month(month);if(sequence!==monthRequestSequence)return;monthData=data;renderWeek();renderMonthlyScheduleBody();}
@@ -1516,7 +1520,7 @@
   async function refreshContent(){
     if(!bootstrapData)return;
     renderRefreshIndicator(false,true);
-    try{renderBootstrap(await ServerAdapter.bootstrap(selectedSanctuary),selectedSanctuary);}
+    try{const data=await ServerAdapter.bootstrap(selectedSanctuary);invalidateMonth();renderBootstrap(data,selectedSanctuary);}
     catch(error){renderRefreshIndicator(Boolean(pendingBootstrapData));window.KinojoToast?.error?.(value(error?.message)||'새 내용을 불러오지 못했습니다.');}
   }
 
@@ -1547,8 +1551,7 @@
     const sequence=++requestSequence;
     // A successful write or explicit reload must also refresh occurrences.
     // Invalidate pending reads so an older month cannot overwrite the new one.
-    monthRequestSequence+=1;
-    monthData=null;monthError='';calendarMonthData=null;calendarMonthError='';
+    invalidateMonth();
     const auth=authState();
     currentAuthProjection=auth.projection;
     bootstrapData=null;
