@@ -678,7 +678,7 @@
     if(value(schedule.kind)==='ONCE')return value(schedule.startsOn)+' '+time+' · '+durationLabel(duration);
     const labels={1:'월',2:'화',3:'수',4:'목',5:'금',6:'토',7:'일'};
     const days=(Array.isArray(schedule.weekdays)?schedule.weekdays:[]).map(day=>labels[Number(day)]).filter(Boolean).join('·');
-    return '매주 '+(days||'요일 미정')+' '+time+' · '+durationLabel(duration);
+    return '매주 '+(days||'요일 미정')+' '+time+' · '+durationLabel(duration)+(value(schedule.startsOn)?' · '+value(schedule.startsOn)+'부터':'');
   }
 
   function createEmpty(title,message){

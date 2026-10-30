@@ -261,3 +261,5 @@ button.is-requirement-pending{opacity:.58}
 
 .sanctuary-management-draft-slot-copy{min-width:0;overflow:hidden}
 .sanctuary-management-draft-slot-copy>strong{white-space:normal!important;overflow-wrap:anywhere;max-width:100%}
+.sanctuary-management-date-parts input[name="draftYear"]{width:5em!important;min-width:5em!important}
+.sanctuary-management-date-parts{flex-wrap:wrap}

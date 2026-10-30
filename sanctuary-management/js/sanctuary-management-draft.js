@@ -183,19 +183,18 @@
     }
     return baseText;
   }
-  function splitDate(dateValue){const parts=value(dateValue).split('-');return {month:parts[1]||'',day:parts[2]||''};}
+  function splitDate(dateValue){const parts=value(dateValue).split('-');return {year:parts[0]||'',month:parts[1]||'',day:parts[2]||''};}
   function splitTime(timeValue){
     const [rawHour,rawMinute]=value(timeValue).split(':').map(Number);const hour24=Number.isInteger(rawHour)?rawHour:21;
     return {period:hour24>=12?'PM':'AM',hour:String(hour24%12||12).padStart(2,'0'),minute:String(Number.isInteger(rawMinute)?rawMinute:0).padStart(2,'0')};
   }
-  function inferDateFromParts(monthValue,dayValue,currentValue,minimum=''){
-    const month=Math.max(1,Math.min(12,Number(monthValue)||0));const day=Number(dayValue)||0;
-    if(!month||day<1||day>31)return '';
-    const baseYear=Number(value(currentValue).slice(0,4))||Number(todayKst().slice(0,4));
-    let candidate=new Date(Date.UTC(baseYear,month-1,day));
-    if(candidate.getUTCMonth()!==month-1||candidate.getUTCDate()!==day)return '';
-    const floor=[todayKst(),value(minimum)].filter(Boolean).sort().at(-1)||todayKst();
-    if(dateText(candidate)<floor)candidate=new Date(Date.UTC(baseYear+1,month-1,day));
+  function inferDateFromParts(yearValue,monthValue,dayValue){
+    const year=Number(yearValue),month=Number(monthValue),day=Number(dayValue);
+    if(!Number.isInteger(year)||year<2025||year>2100||!Number.isInteger(month)||month<1||month>12||!Number.isInteger(day)||day<1||day>31)return '';
+    // A recurring rule can start in the past. Saving its roster must never
+    // reinterpret the unchanged month/day as next year.
+    const candidate=new Date(Date.UTC(year,month-1,day));
+    if(candidate.getUTCFullYear()!==year||candidate.getUTCMonth()!==month-1||candidate.getUTCDate()!==day)return '';
     return dateText(candidate);
   }
 
@@ -658,7 +657,7 @@
                 +'<div class="sanctuary-management-schedule-kind" role="group" aria-label="일정 반복 방식"><button type="button" data-draft-kind="WEEKLY" aria-pressed="'+isWeekly+'">매주 반복</button><button type="button" data-draft-kind="ONCE" aria-pressed="'+(!isWeekly)+'">1회성</button></div>'
                 +'<input type="hidden" name="draftKind" value="'+schedule.kind+'">'
                 +'<fieldset class="sanctuary-management-weekdays"'+(isWeekly?'':' hidden')+'><legend>반복 요일</legend><div>'+weekdays+'</div><small>종료일 없이 선택한 요일마다 반복됩니다.</small></fieldset>'
-                +'<div class="sanctuary-management-field sanctuary-management-date-field"><span data-draft-date-label>'+(isWeekly?'반복 시작일':'진행 날짜')+'</span><div class="sanctuary-management-date-parts"><label><input name="draftMonth" inputmode="numeric" maxlength="2" value="'+escapeHtml(dateParts.month)+'" aria-label="월"><span>월</span></label><label><input name="draftDay" inputmode="numeric" maxlength="2" value="'+escapeHtml(dateParts.day)+'" aria-label="일"><span>일</span></label></div><input type="hidden" name="draftStartsOn" value="'+escapeHtml(schedule.startsOn)+'"><small>반복 요일을 고르면 앞으로 가장 가까운 날짜로 자동 맞춰집니다.</small></div>'
+                +'<div class="sanctuary-management-field sanctuary-management-date-field"><span data-draft-date-label>'+(isWeekly?'반복 시작일':'진행 날짜')+'</span><div class="sanctuary-management-date-parts"><label><input name="draftYear" inputmode="numeric" maxlength="4" value="'+escapeHtml(dateParts.year)+'" aria-label="연도"><span>년</span></label><label><input name="draftMonth" inputmode="numeric" maxlength="2" value="'+escapeHtml(dateParts.month)+'" aria-label="월"><span>월</span></label><label><input name="draftDay" inputmode="numeric" maxlength="2" value="'+escapeHtml(dateParts.day)+'" aria-label="일"><span>일</span></label></div><input type="hidden" name="draftStartsOn" value="'+escapeHtml(schedule.startsOn)+'"><small>반복 시작일은 과거여도 유지됩니다. 반복 요일을 바꾸면 앞으로 가장 가까운 날짜를 제안합니다.</small></div>'
                 +'<div class="sanctuary-management-field sanctuary-management-time-field"><span>시작 시간</span><div class="sanctuary-management-time-parts"><div class="sanctuary-management-period-buttons" role="group" aria-label="오전 오후"><button type="button" data-draft-period="AM" aria-pressed="'+(timeParts.period==='AM')+'">오전</button><button type="button" data-draft-period="PM" aria-pressed="'+(timeParts.period==='PM')+'">오후</button></div><label><input name="draftHour" inputmode="numeric" maxlength="2" value="'+escapeHtml(timeParts.hour)+'" aria-label="시"><span>시</span></label><label><input name="draftMinute" inputmode="numeric" maxlength="2" value="'+escapeHtml(timeParts.minute)+'" aria-label="분"><span>분</span></label></div><input type="hidden" name="draftStartsAt" value="'+escapeHtml(schedule.startsAt)+'"></div>'
                 +'<div class="sanctuary-management-field sanctuary-management-duration-field"><span>진행 시간</span><div class="sanctuary-management-duration-options" role="group" aria-label="진행 시간">'+DURATION_OPTIONS.map(option=>'<button type="button" data-draft-duration="'+option.value+'" aria-pressed="'+(option.value===schedule.durationMinutes)+'">'+option.label+'</button>').join('')+'</div><input type="hidden" name="draftDuration" value="'+escapeHtml(schedule.durationMinutes)+'"></div>'
                 +'<div class="sanctuary-management-schedule-preview"><span>저장 상태</span><strong>'+(editing?'DB '+escapeHtml(state.team.status)+' · revision '+escapeHtml(state.team.revision):'로컬 편성 중 · Server 미반영')+'</strong><small>포스가 비어 있거나 생성자의 캐릭터가 없어도 팀을 생성·저장할 수 있습니다.</small></div>'
@@ -717,14 +716,14 @@
   function syncDatePartInputs(){
     const form=state.layer?.querySelector('[data-draft-form]');if(!form)return;
     const parts=splitDate(form.elements.draftStartsOn?.value);
+    if(form.elements.draftYear)form.elements.draftYear.value=parts.year;
     if(form.elements.draftMonth)form.elements.draftMonth.value=parts.month;
     if(form.elements.draftDay)form.elements.draftDay.value=parts.day;
   }
 
   function syncDateFromParts(){
     const form=state.layer?.querySelector('[data-draft-form]');if(!form)return false;
-    const minimum=value(form.elements.draftSanctuary?.selectedOptions?.[0]?.dataset.availableFrom);
-    const next=inferDateFromParts(form.elements.draftMonth?.value,form.elements.draftDay?.value,form.elements.draftStartsOn?.value,minimum);
+    const next=inferDateFromParts(form.elements.draftYear?.value,form.elements.draftMonth?.value,form.elements.draftDay?.value);
     if(!next)return false;form.elements.draftStartsOn.value=next;syncDatePartInputs();return true;
   }
 
@@ -799,7 +798,7 @@
     if(!model.composition.length||model.composition.length>9)return '포스를 하나 이상, 최대 9개까지 구성해 주세요.';
     if(teamSlots().some(item=>item.slot.occupied&&item.slot.character&&!item.slot.character.isRandomAlt&&!characterEligible(item.slot.character,model.sanctuaryCode,selectedDifficulty(item.force))))return '해당 포스 난이도의 아이템레벨을 충족하지 않는 캐릭터가 포함되어 있습니다.';
     if(model.composition.some(force=>force.slots.some(slot=>!SLOT_CLASSES.some(option=>option.code===slot.requiredClassCode)||slot.assignmentKind==='RANDOM_ALT'&&!slot.mainCharacterId)))return '슬롯 클래스 제한과 랜덤 부캐 편성을 다시 확인해 주세요.';
-    if(!model.datePartsValid)return '월과 일을 올바른 숫자로 입력해 주세요.';
+    if(!model.datePartsValid)return '연도·월·일을 올바른 날짜로 입력해 주세요.';
     if(!model.timePartsValid)return '오전·오후와 시·분을 올바르게 입력해 주세요.';
     if(!model.schedule.startsOn)return model.schedule.kind==='WEEKLY'?'반복 시작일을 입력해 주세요.':'진행 날짜를 입력해 주세요.';
     if(!model.schedule.startsAt)return '시작 시각을 입력해 주세요.';
@@ -1193,12 +1192,12 @@
   function handleChange(event){
     if(event.target.name==='draftSanctuary'){syncDateMinimum();syncNextRepeatDate();syncDifficultyControls('NORMAL',true);resetCharacterLookup();renderRosterState();}
     if(event.target.name==='draftWeekday')syncNextRepeatDate();
-    if(event.target.name==='draftMonth'||event.target.name==='draftDay')syncDateFromParts();
+    if(event.target.name==='draftYear'||event.target.name==='draftMonth'||event.target.name==='draftDay')syncDateFromParts();
     if(event.target.name==='draftHour'||event.target.name==='draftMinute')syncTimeFromParts();
   }
 
   function handleInput(event){
-    if(event.target.name==='draftMonth'||event.target.name==='draftDay')event.target.value=event.target.value.replace(/\D/g,'').slice(0,2);
+    if(event.target.name==='draftYear'||event.target.name==='draftMonth'||event.target.name==='draftDay')event.target.value=event.target.value.replace(/\D/g,'').slice(0,event.target.name==='draftYear'?4:2);
     if(event.target.name==='draftHour'||event.target.name==='draftMinute')event.target.value=event.target.value.replace(/\D/g,'').slice(0,2);
   }
 
