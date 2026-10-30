@@ -365,6 +365,7 @@
     return {
       candidateKey:text(source.candidateKey,420)||`${serverId}:${characterId}`,
       characterId,characterName,serverId,serverName,
+      className:text(source.className,80),
       serverShortName:text(source.serverShortName,80),
       raceId:positiveInt(source.raceId),raceName:text(source.raceName,40),
       level:positiveInt(source.level),profileImageUrl:text(source.profileImageUrl,500),
@@ -388,10 +389,11 @@
     return group.candidates.map(candidate=>{
       const selected=selectedCandidates[group.role]?.candidateKey===candidate.candidateKey;
       const registered=candidate.registered===true;
+      const className=candidate.className||'클래스 미확인';
       const image=candidate.profileImageUrl?`<img src="${esc(candidate.profileImageUrl)}" alt="" loading="lazy" referrerpolicy="no-referrer"/>`:`<span class="legion-tree-search-avatar" aria-hidden="true">${esc(candidate.characterName.slice(0,1))}</span>`;
       const meta=[candidate.serverName,candidate.raceName,candidate.level?`Lv.${candidate.level}`:''].filter(Boolean).join(' · ');
       const registeredBadge=registered?'<span class="legion-tree-search-registered">추가된 캐릭터</span>':'';
-      return `<button class="legion-tree-search-card${registered?' is-registered':''}" type="button" data-search-role="${group.role}" data-candidate-key="${esc(candidate.candidateKey)}" aria-pressed="${selected?'true':'false'}" aria-label="${registered?'추가된 캐릭터 · ':''}${esc(candidate.characterName)} · ${esc(meta)}">${registeredBadge}${image}<span><strong>${esc(candidate.characterName)}</strong><small>${esc(meta)}</small></span></button>`;
+      return `<button class="legion-tree-search-card${registered?' is-registered':''}" type="button" data-search-role="${group.role}" data-candidate-key="${esc(candidate.candidateKey)}" aria-pressed="${selected?'true':'false'}" aria-label="${registered?'추가된 캐릭터 · ':''}${esc(candidate.characterName)} · ${esc(className)} · ${esc(meta)}">${registeredBadge}${image}<span><strong><span class="legion-tree-search-name">${esc(candidate.characterName)}</span><span class="legion-tree-search-class">${esc(className)}</span></strong><small>${esc(meta)}</small></span></button>`;
     }).join('');
   }
 

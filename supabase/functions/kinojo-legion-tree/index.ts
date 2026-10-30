@@ -1,5 +1,5 @@
 const SERVICE_NAME='kinojo-legion-tree';
-const API_VERSION='1.12';
+const API_VERSION='1.13';
 const DATABASE_CONTRACT='458';
 const ORGANIZATION_DATABASE_CONTRACT='460';
 const AUTH_CONTRACT='320';
@@ -142,7 +142,7 @@ async function officialCharacterCandidates(input:Record<string,unknown>,servers:
       const characterId=text(row.characterId,300),key=`${candidateServerId}:${characterId}`;
       if(!characterId||seen.has(key))continue;seen.add(key);
       const raceId=positiveInt(activeServer.race_id);
-      candidates.push({candidateKey:key,characterId,characterName:stripOfficialName(row.name),serverId:candidateServerId,serverName:text(activeServer.server_name,120),serverShortName:text(activeServer.server_short_name,80),raceId,raceName:raceId===null?'':raceName(raceId),level:positiveInt(row.level),profileImageUrl:officialProfileImage(row.profileImageUrl)});
+      candidates.push({candidateKey:key,characterId,characterName:stripOfficialName(row.name),serverId:candidateServerId,serverName:text(activeServer.server_name,120),serverShortName:text(activeServer.server_short_name,80),raceId,raceName:raceId===null?'':raceName(raceId),level:positiveInt(row.level),className:text(row.className||row.class_name,80),profileImageUrl:officialProfileImage(row.profileImageUrl)});
     }
     candidates.sort((a,b)=>(positiveInt(a.serverId)||0)-(positiveInt(b.serverId)||0));
     return{ok:true,role,query:{raw:text(input.raw,180),characterName:text(input.characterName,120),serverSpecified:serverId!==null,serverId,serverName:text(server.serverName,120)},candidates};
