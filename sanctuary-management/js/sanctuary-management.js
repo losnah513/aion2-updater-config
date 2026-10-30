@@ -1545,6 +1545,10 @@
 
   async function load(){
     const sequence=++requestSequence;
+    // A successful write or explicit reload must also refresh occurrences.
+    // Invalidate pending reads so an older month cannot overwrite the new one.
+    monthRequestSequence+=1;
+    monthData=null;monthError='';calendarMonthData=null;calendarMonthError='';
     const auth=authState();
     currentAuthProjection=auth.projection;
     bootstrapData=null;
