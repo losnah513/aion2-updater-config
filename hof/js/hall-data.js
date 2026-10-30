@@ -61,8 +61,8 @@ function preloadImages(paths){
   }));
 }
 
-const HALL_CACHE_PREFIX="kinojo_hall_summary_cache_v2026080204";
-const HALL_STALE_PREFIX="kinojo_hall_summary_stale_v2026080204";
+const HALL_CACHE_PREFIX="kinojo_hall_summary_cache_v540";
+const HALL_STALE_PREFIX="kinojo_hall_summary_stale_v540";
 const HALL_PERSONAL_PREFIX="kinojo_hall_personal_last_good_v398";
 const HALL_PERSONAL_TTL_MS=24*60*60*1000;
 function hallCacheKey(){return HALL_CACHE_PREFIX+"::"+(includeSubs?"subs":"main")+"::"+(includeAllLegions?"all-legions":"default-legions");}
