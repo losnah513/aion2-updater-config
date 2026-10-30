@@ -1,3 +1,11 @@
+## Memberless random alternates · SQL539 · 2026-10-30
+
+- Baseline main443c36498b74c107a8b9b8df3e384869c9a958a3; branch codex/memberless-random-alt. Existing roster-authorized editors can reserve an active canonical main's random alternate without an owner member ID. No editor-ID fallback, fake member/master rows, self-service permission change or Edge deployment.
+- Migration 20261030095726_sanctuary_memberless_random_alt.sql patches existing delegates/assignment guard/schedule checker while preserving Stage14 scope injection, ACLs/config and v2 facade. Apply DB before WEB. WEB accepts null ownership only when it matches the returned main. Same-force family and cross-team schedule collisions still fail atomically.
+- Tests: PGLITE_MODULE=<installed @electric-sql/pglite> node tests/sanctuary-memberless-random-alt.test.cjs; PLAYWRIGHT_MODULE=<installed playwright> node tests/sanctuary-memberless-random-alt-browser.test.cjs (optional CHROME_PATH). Existing sanctuary-permission-command and sanctuary-permission-legacy-save tests remain required.
+- Code rollback file restores prior function policy and preserves saved memberless reservations by retaining the nullable-owner occupancy constraint. Do not delete user assignments or invoke Stage7 restore. Pair with previous WEB.
+- Final PR/main/Pages/production readback and same-ID Drive documentation status: [sanctuary project LOG80](https://drive.google.com/file/d/19lh9hkVKNsu9a54bd-k3rlvhIsCK_Khv/view). Production user assignments are not created for QA.
+
 ## Detail terminal recovery · SQL538 / API305.7 · 2026-10-16
 
 - A detail job for 더샷 remained running/COMPLETE since 2026-10-14 19:30 KST and blocked all deferred Ranking/HOF publication at snapshot183 (15:36 KST), although subsequent Master refreshes succeeded. The exact interruption of the second finalization RPC is unproven.
