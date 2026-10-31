@@ -47,11 +47,14 @@
     const budget=data.storageBudget||{};
     const used=Number(budget.databaseBytes),target=Number(budget.targetBytes);
     const labels={NORMAL:'정상',WARNING:'용량 주의',TARGET_EXCEEDED:'목표 초과',DISABLED:'자동 정리 대기'};
+    const auto=budget.autoReclaim;
+    const reclaimLabels={IDLE:'대기',QUEUED:'실행 준비 중',RECLAIMING:'정리·공간 회수 중',RETRY:'잠시 후 재시도',DEFERRED:'다른 작업이 끝나면 재시도',ACTIVE_WORK:'캐릭터 조회가 끝나면 실행',NO_RECLAIMABLE_SPACE:'추가 확인 필요 · 보존 자료를 지우지 않고 회수할 공간이 없습니다',PROTECTED_STATE_CHANGED:'자료 보호 검사로 중단 · 확인 필요',CANARY_OK:'동작 확인 완료'};
+    const reclaim=auto&&typeof auto==='object'?'<p>자동 공간 회수 '+(auto.enabled===true?(auto.watchActive===true?'켜짐 · 매분 확인 · 280MB 이상에서 실행 · 목표 270MB':'예약 작업 확인 필요'):'준비 중')+' · '+esc(Object.prototype.hasOwnProperty.call(reclaimLabels,auto.status)?reclaimLabels[auto.status]:'상태 확인 필요')+(auto.lastAt?' · 최근 실행 '+esc(time(auto.lastAt)):'')+'</p>':'';
     const storage=Number.isFinite(used)&&used>=0&&Number.isFinite(target)&&target>0?
       '<section class="admin-storage-budget '+(['WARNING','TARGET_EXCEEDED'].includes(budget.status)?'is-warning':'')+'" role="status" aria-label="DB 용량">'
       +'<h3>DB 용량 <strong>'+esc((used/1000000).toFixed(1))+' / '+esc((target/1000000).toFixed(0))+'MB</strong></h3>'
       +'<progress aria-label="DB 사용량" max="'+target+'" value="'+Math.min(used,target)+'"></progress>'
-      +'<p>'+esc(labels[budget.status]||'상태 확인 필요')+' · '+esc((Number(budget.warningBytes||280000000)/1000000).toFixed(0))+'MB부터 주의 · 최근 자동 정리 '+esc(time(budget.lastCleanupAt))+'</p></section>':'';
+      +'<p>'+esc(labels[budget.status]||'상태 확인 필요')+' · '+esc((Number(budget.warningBytes||280000000)/1000000).toFixed(0))+'MB부터 주의 · 최근 자동 정리 '+esc(time(budget.lastCleanupAt))+'</p>'+reclaim+'</section>':'';
     root.innerHTML=storage+(rows.length?
       (scheduled.length?'<section class="admin-routine-section"><h3>예약 시간표</h3><p>00:00부터 시각 순서입니다. 매주 작업은 해당 요일에 실행합니다.</p>'+table(scheduled,true)+'</section>':'')
       +(repeated.length?'<section class="admin-routine-section"><h3>반복 작업</h3><p>하루 동안 일정한 간격으로 실행하는 작업입니다.</p>'+table(repeated,false)+'</section>':'')

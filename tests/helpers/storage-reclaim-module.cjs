@@ -1,0 +1,2 @@
+const fs=require('node:fs'),vm=require('node:vm'),{stripTypeScriptTypes}=require('node:module');
+module.exports=function(){const sandbox={module:{exports:{}},URL,Date,setTimeout,clearTimeout};const source=stripTypeScriptTypes(fs.readFileSync('supabase/functions/kinojo-storage-maintenance/reclaim.ts','utf8')).replace(/export /g,'');vm.runInNewContext(source+'\nmodule.exports={nativeReclaimer,runMaintenance,directConnectionUrl,nativeOptions,RECLAIM_TABLES,safeFailure};',sandbox);return sandbox.module.exports};
