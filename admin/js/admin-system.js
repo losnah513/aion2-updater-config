@@ -44,10 +44,18 @@
         +'<td data-label="상태"><strong class="'+(row.active?'admin-routine-on':'')+'">'+(row.active?'ON':'OFF')+'</strong></td>'
         +'<td data-label="다음 예약">'+esc(row.active?time(row.nextRunAt):'중지됨')+'</td>'
         +'<td data-label="작업의 최근 실행">'+esc(statusLabel[row.lastStatus]||(row.lastStatus?'확인 필요':'기록 없음'))+(row.lastStartedAt?'<p>'+esc(time(row.lastStartedAt))+'</p>':'')+'</td></tr>').join('')+'</tbody></table></div>';
-    root.innerHTML=rows.length?
+    const budget=data.storageBudget||{};
+    const used=Number(budget.databaseBytes),target=Number(budget.targetBytes);
+    const labels={NORMAL:'정상',WARNING:'용량 주의',TARGET_EXCEEDED:'목표 초과',DISABLED:'자동 정리 대기'};
+    const storage=Number.isFinite(used)&&used>=0&&Number.isFinite(target)&&target>0?
+      '<section class="admin-storage-budget '+(['WARNING','TARGET_EXCEEDED'].includes(budget.status)?'is-warning':'')+'" role="status" aria-label="DB 용량">'
+      +'<h3>DB 용량 <strong>'+esc((used/1000000).toFixed(1))+' / '+esc((target/1000000).toFixed(0))+'MB</strong></h3>'
+      +'<progress aria-label="DB 사용량" max="'+target+'" value="'+Math.min(used,target)+'"></progress>'
+      +'<p>'+esc(labels[budget.status]||'상태 확인 필요')+' · '+esc((Number(budget.warningBytes||280000000)/1000000).toFixed(0))+'MB부터 주의 · 최근 자동 정리 '+esc(time(budget.lastCleanupAt))+'</p></section>':'';
+    root.innerHTML=storage+(rows.length?
       (scheduled.length?'<section class="admin-routine-section"><h3>예약 시간표</h3><p>00:00부터 시각 순서입니다. 매주 작업은 해당 요일에 실행합니다.</p>'+table(scheduled,true)+'</section>':'')
       +(repeated.length?'<section class="admin-routine-section"><h3>반복 작업</h3><p>하루 동안 일정한 간격으로 실행하는 작업입니다.</p>'+table(repeated,false)+'</section>':'')
-      :'<div class="admin-empty">등록된 서버 루틴이 없습니다.</div>';
+      :'<div class="admin-empty">등록된 서버 루틴이 없습니다.</div>');
     const note=$('#serverRoutineHistoryNote');
     if(note)note.textContent=data.historyNote||'최근 서버 예약 실행 기록 기준입니다.';
     setStatus('#serverRoutineStatus','한국 시간 기준 · 확인 '+time(data.generatedAt),'ok');

@@ -398,6 +398,8 @@ jobs:
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/platform-auth-budget.test.cjs
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/platform-retention-family.test.cjs
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/storage-backup-transport.test.cjs
+          PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/storage-budget-lifecycle.test.cjs
+          PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/monthly-numeric-growth-resume.test.cjs
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/platform-character-summary.test.cjs
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/sanctuary-list-retry-v480.test.cjs
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/roster-family-unlink.test.cjs
@@ -502,7 +504,9 @@ jobs:
       - name: Install pinned local PostgreSQL runtime
         run: npm ci --prefix tests/runtime/postgres --no-audit --no-fund
       - name: Verify retention and publication locks on real PostgreSQL
-        run: node tests/platform-retention-concurrency.test.cjs
+        run: |
+          node tests/platform-retention-concurrency.test.cjs
+          KINOJO_STORAGE_NATIVE=1 node tests/storage-budget-lifecycle.test.cjs
 
   verify-live-readback:
     if: github.event_name != 'pull_request'
