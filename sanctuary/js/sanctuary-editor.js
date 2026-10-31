@@ -835,7 +835,7 @@
     if(typeof helper.short==='function')return helper.short(value);
     const number=Number(String(value??'').replace(/[^0-9.-]/g,''));
     if(!Number.isFinite(number)||number<=0)return '전투력 미확인';
-    return number>=1000?(number/1000).toFixed(1)+'K':Math.round(number).toLocaleString('ko-KR');
+    return number>=1000000?(number/1000000).toFixed(3)+'M':number>=1000?(number/1000).toFixed(1)+'K':Math.round(number).toLocaleString('ko-KR');
   }
 
   function rosterPowerFull(value){

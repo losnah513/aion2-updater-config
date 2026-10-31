@@ -23,7 +23,7 @@
     return Boolean(session&&value(session.token));
   };
   function classIconFor(className){const key=CLASS_ICON_MAP[value(className).replace(/[\s\u200B-\u200D\uFEFF]+/g,'').replace(/[\[(（].*?[\])）]\s*$/g,'')];return key?'/assets/images/classes/class_icon_'+key+'.png':'';}
-  function formatPower(input){const power=Number(input);return Number.isFinite(power)&&power>0?(power/1000).toFixed(1)+'K':'—';}
+  function formatPower(input){const power=Number(input);return Number.isFinite(power)&&power>0?(power>=1000000?(power/1000000).toFixed(3)+'M':(power/1000).toFixed(1)+'K'):'—';}
   function requestKey(prefix){return prefix+'-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12);}
   function leaseToken(){const bytes=new Uint8Array(32);crypto.getRandomValues(bytes);return 'smslot_'+Array.from(bytes,byte=>byte.toString(16).padStart(2,'0')).join('');}
 

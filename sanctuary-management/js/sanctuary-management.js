@@ -53,7 +53,7 @@
   }
   function combatPowerValue(input){const power=Number(input);return Number.isFinite(power)&&power>0?Math.round(power):0;}
   function itemLevelValue(input){const level=Number(input);return Number.isFinite(level)&&level>0?Math.round(level):0;}
-  function formatCombatPower(input){const power=combatPowerValue(input);return power?(power/1000).toFixed(1)+'K':'—';}
+  function formatCombatPower(input){const power=combatPowerValue(input);return power?(power>=1000000?(power/1000000).toFixed(3)+'M':(power/1000).toFixed(1)+'K'):'—';}
   function combatPowerMarkup(input,prefix=''){return '<span class="sanctuary-management-power-value" title="전투력 '+escapeHtml(formatCombatPower(input))+'">'+(prefix?'<span>'+escapeHtml(prefix)+'</span>':'')+'<img src="'+POWER_ICON_URL+'" alt="전투력"><b>'+escapeHtml(formatCombatPower(input))+'</b></span>';}
   function validateCombatPower(item){
     const source=item&&typeof item==='object'&&!Array.isArray(item)?item:{};

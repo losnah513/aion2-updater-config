@@ -12,7 +12,7 @@ begin
     where c.relnamespace='public'::regnamespace and c.relkind in ('r','p','v','m')
   loop
     v_service:='{}';
-    foreach v_priv in array array['SELECT','INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER'] loop
+    foreach v_priv in array array['SELECT','INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER','MAINTAIN'] loop
       if has_table_privilege('service_role',r.oid,v_priv) then v_service:=array_append(v_service,v_priv);end if;
     end loop;
     execute format('revoke all privileges on table public.%I from public,anon,authenticated',r.relname);
