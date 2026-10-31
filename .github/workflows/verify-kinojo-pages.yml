@@ -400,6 +400,8 @@ jobs:
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/storage-backup-transport.test.cjs
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/storage-budget-lifecycle.test.cjs
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/storage-future-metadata.test.cjs
+          PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/storage-auto-reclaim-db.test.cjs
+          node tests/storage-auto-reclaim-edge.test.cjs
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/monthly-numeric-growth-resume.test.cjs
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/platform-character-summary.test.cjs
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/sanctuary-list-retry-v480.test.cjs
@@ -502,6 +504,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: 2.5.6
+      - name: Typecheck pinned storage worker
+        run: deno check --frozen --lock=supabase/functions/kinojo-storage-maintenance/deno.lock supabase/functions/kinojo-storage-maintenance/index.ts
       - name: Install pinned local PostgreSQL runtime
         run: npm ci --prefix tests/runtime/postgres --no-audit --no-fund
       - name: Verify retention and publication locks on real PostgreSQL
@@ -509,6 +516,7 @@ jobs:
           node tests/platform-retention-concurrency.test.cjs
           KINOJO_STORAGE_NATIVE=1 node tests/storage-budget-lifecycle.test.cjs
           KINOJO_STORAGE_NATIVE=1 node tests/storage-future-metadata.test.cjs
+          node tests/storage-auto-reclaim-native.test.cjs
 
   verify-live-readback:
     if: github.event_name != 'pull_request'
