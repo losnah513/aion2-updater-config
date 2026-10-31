@@ -61,7 +61,7 @@
 
   function shortPower(value){
     const number = powerNumber(value);
-    return number > 0 ? (number / 1000).toFixed(1) + 'K' : '-';
+    return number > 0 ? (number >= 1000000 ? (number / 1000000).toFixed(3) + 'M' : (number / 1000).toFixed(1) + 'K') : '-';
   }
 
   function fullPower(value){

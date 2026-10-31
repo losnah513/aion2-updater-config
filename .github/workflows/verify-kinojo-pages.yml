@@ -516,6 +516,11 @@ jobs:
         with:
           ref: ${{ github.sha }}
 
+      - name: Verify public RPC-only access boundary (read-only)
+        env:
+          KINOJO_LIVE_ACL: '1'
+        run: node tests/platform-live-surface.test.cjs
+
       - name: Publish live readback pending status
         shell: bash
         env:

@@ -28,7 +28,7 @@ function hofPowerShort(value){
   const formatter=window.KinojoPowerFormat;
   if(formatter&&typeof formatter.short==='function')return formatter.short(value);
   const n=hofNumberLike(value);
-  return n===''?'-':(n/1000).toFixed(1)+'K';
+  return n===''?'-':n>=1000000?(n/1000000).toFixed(3)+'M':(n/1000).toFixed(1)+'K';
 }
 function hofPowerFull(value){
   const formatter=window.KinojoPowerFormat;

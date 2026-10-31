@@ -32,7 +32,7 @@
   function slotAcceptsCharacter(slot,character){const required=slotClassCode(slot);if(character?.isRandomAlt){const reserved=classOption(character.randomClassCode||classCodeFor(character.className)).code;return required==='ALL'||reserved==='ALL'||required===reserved;}return required==='ALL'||required===classCodeFor(character?.className);}
   function combatPowerValue(input){const power=Number(input);return Number.isFinite(power)&&power>0?Math.round(power):0;}
   function itemLevelValue(input){const level=Number(input);return Number.isFinite(level)&&level>0?Math.round(level):0;}
-  function formatCombatPower(input){const power=combatPowerValue(input);return power?(power/1000).toFixed(1)+'K':'—';}
+  function formatCombatPower(input){const power=combatPowerValue(input);return power?(power>=1000000?(power/1000000).toFixed(3)+'M':(power/1000).toFixed(1)+'K'):'—';}
   function combatPowerMarkup(input,prefix=''){return '<span class="sanctuary-management-power-value" title="전투력 '+escapeHtml(formatCombatPower(input))+'">'+(prefix?'<span>'+escapeHtml(prefix)+'</span>':'')+'<img src="'+POWER_ICON_URL+'" alt="전투력"><b>'+escapeHtml(formatCombatPower(input))+'</b></span>';}
   function emptyRequirements(){return {satisfied:true,ruleCount:0,unsatisfiedCount:0,rules:[]};}
   function scopeRules(scope){return Array.isArray(scope?.requirements?.rules)?scope.requirements.rules:[];}
@@ -43,7 +43,7 @@
     const rules=scopeRules(scope).map(rule=>{
       const ruleType=value(rule.ruleType).toUpperCase();const minimumCount=Math.max(1,Number(rule.minimumCount)||1);const powerThreshold=ruleType==='POWER_MIN'?combatPowerValue(rule.powerThreshold):0;const itemLevelThreshold=ruleType==='ITEM_LEVEL_MIN'?itemLevelValue(rule.itemLevelThreshold):0;
       const matchingCount=occupied.filter(slot=>ruleType==='MAIN_MIN'?(value(slot.character?.relation).toUpperCase()==='MAIN'||slot.character?.isMain===true):ruleType==='ITEM_LEVEL_MIN'?itemLevelValue(slot.character?.itemLevel)>=itemLevelThreshold:combatPowerValue(slot.character?.power)>=powerThreshold).length;
-      return Object.assign({},rule,{ruleType,minimumCount,powerThreshold:powerThreshold||null,itemLevelThreshold:itemLevelThreshold||null,matchingCount,satisfied:matchingCount>=minimumCount,message:ruleType==='MAIN_MIN'?'본캐 '+minimumCount+'명 이상':ruleType==='ITEM_LEVEL_MIN'?'아이템레벨 '+itemLevelThreshold+' 이상 '+minimumCount+'명 이상':'전투력 '+(powerThreshold/1000).toFixed(1)+'K 이상 '+minimumCount+'명 이상'});
+      return Object.assign({},rule,{ruleType,minimumCount,powerThreshold:powerThreshold||null,itemLevelThreshold:itemLevelThreshold||null,matchingCount,satisfied:matchingCount>=minimumCount,message:ruleType==='MAIN_MIN'?'본캐 '+minimumCount+'명 이상':ruleType==='ITEM_LEVEL_MIN'?'아이템레벨 '+itemLevelThreshold+' 이상 '+minimumCount+'명 이상':'전투력 '+formatCombatPower(powerThreshold)+' 이상 '+minimumCount+'명 이상'});
     });
     scope.requirements={satisfied:rules.every(rule=>rule.satisfied),ruleCount:rules.length,unsatisfiedCount:rules.filter(rule=>!rule.satisfied).length,rules};
   }

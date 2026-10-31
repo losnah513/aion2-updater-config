@@ -996,7 +996,7 @@
         ensureCharacterDetailStyle_('/ui/kinojo-character-skill.css?cache=2026081001','skill'),
         ensureCharacterDetailStyle_('/ui/kinojo-character-daevanion.css?cache=2026081002','daevanion')
       ]);
-      await ensureCharacterDetailScript_('/ui/kinojo-character-reaction.js?cache=2026082701&reliability=2026103101','reaction',()=>!!window.KinojoCharacterReaction?.open);
+      await ensureCharacterDetailScript_('/ui/kinojo-character-reaction.js?cache=2026082701&reliability=2026103101&powerUnits=2026103101','reaction',()=>!!window.KinojoCharacterReaction?.open);
       await ensureCharacterDetailScript_('/ui/kinojo-character-detail-refresh.js?cache=2026081003','detail-refresh');
       await ensureCharacterDetailScript_('/ui/kinojo-character-skill-bridge.js?cache=2026082701&reliability=2026103101','skill');
       await ensureCharacterDetailScript_('/ui/kinojo-character-daevanion-bridge.js?cache=2026081002','daevanion');

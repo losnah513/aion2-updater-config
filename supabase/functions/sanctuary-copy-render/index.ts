@@ -2,7 +2,7 @@ import { normalizeSanctuaryCode, sanctuaryAssetPath } from "../_shared/sanctuary
 declare const Deno: any;
 /*
  * KINOJO Supabase Edge Function: sanctuary-copy-render
- * Version: 20261015_04
+ * Version: 20261031_01
  * Role: 성역 포스/팀 클립보드용 SVG를 서버에서 생성한다.
  * Rule: 기존 WEB v317과 신규 Server 팀 모두 같은 Stage 12 SVG renderer를 사용한다.
  */
@@ -90,7 +90,7 @@ function xml(value: unknown){ return safeText(value).replaceAll("&","&amp;").rep
 function fmtPowerK(value: unknown){
   const n=Number(value || 0);
   if(!Number.isFinite(n) || n <= 0) return "-";
-  return `${(n/1_000).toFixed(1)}K`;
+  return n>=1_000_000?`${(n/1_000_000).toFixed(3)}M`:`${(n/1_000).toFixed(1)}K`;
 }
 function slotName(slot: Slot){ return safeText(slot.name || slot.characterName); }
 function slotProfileUrl(slot: Slot){ return safeText(slot.profileImageUrl || slot.profile_url); }

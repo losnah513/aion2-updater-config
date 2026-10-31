@@ -1,3 +1,8 @@
+## Compact combat power units · 2026-10-31
+
+- User addition during full improvements: displays that abbreviate combat power in K use three-decimal M at1,000,000 and above (e.g.1,091,000 →1.091M). Existing one-decimal K below that threshold remains. Apply to HOF champions/TOP3/personal/on-demand family lists, shared character modal and Sanctuary cards/aggregate summaries/search/pickers/requirement descriptions, including the existing copy SVG renderer. Preserve raw values, sorting, family aggregation, full-number tooltips, Legion Ranking's complete digits and explicitly K-denominated settings inputs.
+- Existing sanctuary-copy-render only changes numeric display; no new Edge/SQL/auth/aggregation path. Active PC/mobile assets and lazy modal loading carry powerUnits=2026103101. HOF family and real SVG→PNG responsive regressions verify the updated labels; full implementation/deployment/readback is in the common operations log.
+
 ## Platform reliability and access boundaries · SQL543–548 · 2026-10-31
 
 - Full audit remediation uses the existing common operations project. Existing PASS KEYs remain unchanged at the user's explicit request; rotation is a separate task. Never copy credentials/session values into evidence or source. PR504 contains initial public view/table/internal-writer containment; PR505 routes feature-level notices, suggestions and main lookup through Server RPCs and canonical KWS authentication.

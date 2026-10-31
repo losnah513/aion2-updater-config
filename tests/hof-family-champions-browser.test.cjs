@@ -25,7 +25,7 @@ const root=path.resolve(__dirname,'..');
    window.openReactionModal=(item)=>{window.__opened=item;};bindCharacterButtons();
   });
   const a=page.locator('[data-hof-panel="allForOne"]'),b=page.locator('[data-hof-panel="oneForAll"]');
-  assert.equal(await page.locator('.hof-v2-family-champion').count(),2);assert.match(await a.innerText(),/ALL FOR ONE/);assert.match(await a.innerText(),/12000\.3K/);
+  assert.equal(await page.locator('.hof-v2-family-champion').count(),2);assert.match(await a.innerText(),/ALL FOR ONE/);assert.match(await a.innerText(),/12\.000M/);
   assert.match(await a.innerText(),/미확인 2명 제외/);assert.match(await b.innerText(),/ONE FOR ALL/);assert.match(await b.innerText(),/12명/);
   assert.equal(await a.locator('button').count(),2);assert.equal(await b.locator('button').count(),2);
   assert.equal(await page.getByText('DPS TOP3',{exact:true}).count(),0);assert.equal(await page.getByText('레기온 랭킹 바로가기',{exact:true}).count(),0);
