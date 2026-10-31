@@ -381,6 +381,7 @@ jobs:
       - name: Verify Sanctuary List retry database boundary
         run: |
           npm install --prefix "$RUNNER_TEMP/sanctuary-db" --no-package-lock @electric-sql/pglite@0.5.8
+          PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/platform-public-surface.test.cjs
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/sanctuary-list-retry-v480.test.cjs
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/roster-family-unlink.test.cjs
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/legion-character-add-single-target.test.cjs
