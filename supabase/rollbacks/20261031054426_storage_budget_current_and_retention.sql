@@ -185,4 +185,3 @@ begin
 end;
 $function$
 ;
-SELECT cron.alter_job(jobid,schedule=>'53 20 * * *') FROM cron.job WHERE jobname='kinojo-completed-runtime-retention-v511';

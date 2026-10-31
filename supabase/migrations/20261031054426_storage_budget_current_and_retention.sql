@@ -174,7 +174,10 @@ BEGIN
  v_protected:=private.kinojo_storage_protected_digest_v549();
  FOREACH v_kind IN ARRAY ARRAY['snapshot','review','master','runtime','evidence'] LOOP
   SELECT coalesce(array_agg(c.id),'{}'::bigint[]) INTO v_ids
-  FROM private.kinojo_storage_candidates_v549(v_kind,0,least(500,greatest(1,coalesce(p_limit,50)))) c
+  FROM private.kinojo_storage_candidates_v549(v_kind,
+   CASE WHEN NOT coalesce(p_dry_run,true) AND p_expected IS NULL
+    THEN coalesce((v_control.initial_highwater->>v_kind)::bigint,0) ELSE 0 END,
+   least(500,greatest(1,coalesce(p_limit,50)))) c
   WHERE (coalesce(p_dry_run,true)
     OR (c.id>coalesce((v_control.initial_highwater->>v_kind)::bigint,0))
     OR (p_expected->v_kind->>c.id::text=c.row_hash))
@@ -382,11 +385,6 @@ begin
 end;
 $function$
 ;
-DO $guard$ BEGIN
- IF (SELECT count(*) FROM cron.job WHERE jobname='kinojo-completed-runtime-retention-v511')<>1
- THEN RAISE EXCEPTION 'EXPECTED_GROWTH_RETENTION_JOB_MISSING';END IF;
-END $guard$;
-SELECT cron.alter_job(jobid,schedule=>'53 * * * *') FROM cron.job WHERE jobname='kinojo-completed-runtime-retention-v511';
 
 CREATE FUNCTION private.kinojo_storage_protected_digest_v549()
 RETURNS jsonb LANGUAGE sql VOLATILE SECURITY DEFINER SET search_path='pg_catalog' SET TimeZone='UTC' AS $fn$
