@@ -1,3 +1,11 @@
+/* Reserve the seven-day calendar before its independent request completes. */
+.sanctuary-management-week{min-height:92px}
+.sanctuary-management-page-bar{min-height:57px}
+.sanctuary-management-wrap:has(#sanctuaryManagementContent[hidden])>.common-footer{visibility:hidden}
+@media(max-width:699px){.sanctuary-management-week{min-height:300px}}
+@media(max-width:1100px){.sanctuary-management-page-bar{min-height:99px}}
+@media(max-width:699px){.sanctuary-management-page-bar{min-height:134px}}
+@media(max-width:389px){.sanctuary-management-page-bar{min-height:171px}}
 :root{
   --san-mgmt-ink:#18233b;
   --san-mgmt-muted:#6e7d96;

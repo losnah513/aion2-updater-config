@@ -1,0 +1,22 @@
+'use strict';
+const fs=require('node:fs'),assert=require('node:assert/strict');
+const {PGlite}=require(process.env.PGLITE_MODULE||'@electric-sql/pglite');
+(async()=>{const db=new PGlite();try{
+ await db.exec(`create role anon;create role authenticated;create role service_role;
+ create table public.character_master(id bigint primary key,character_name text,main_character_name text,server_id int,server_name text,class_name text,profile_image_url text,detail_url text,latest_pve_combat_power bigint,latest_pve_item_level numeric,latest_pvp_combat_power bigint,latest_pvp_item_level numeric,is_active boolean default true,visibility_excluded boolean default false,status text default 'OK');
+ create function public.kinojo_normalize_character_name(text) returns text language sql immutable as $$select lower(replace($1,' ',''))$$;
+ create function public.kinojo_web_lookup_main_character_v544(text,integer) returns jsonb language sql as $$select '{}'::jsonb$$;
+ create function public.kinojo_web_hall_suggestion_submit_v544(text,text,text,text,text) returns jsonb language sql as $$select '{}'::jsonb$$;
+ insert into public.character_master(id,character_name,server_id,server_name,class_name) values(1,'Same',2002,'지켈','검성'),(2,'Same',2003,'다른서버','궁성'),(3,'Hidden',2002,'지켈','치유성');update public.character_master set visibility_excluded=true where id=3;
+ `);
+ await db.exec(fs.readFileSync('supabase/migrations/20261031042936_public_character_summary_rpc.sql','utf8'));
+ await db.exec(fs.readFileSync('supabase/migrations/20261031041732_public_rpc_only_acl_contract.sql','utf8'));
+ const summary=async(name,id=null,server=null)=>(await db.query('select public.kinojo_web_character_summary_v548($1,$2,$3) r',[name,id,server])).rows[0].r;
+ await db.exec('set role anon');await assert.rejects(db.query('select * from character_master'),/permission denied/);
+ assert.equal((await summary('Same',2002)).class_name,'검성');assert.equal((await summary('Same',null,'다른서버')).id,2);
+ assert.equal(await summary('Same'),null,'identity must include a server');assert.equal(await summary('Hidden',2002),null);
+ assert.equal(await summary('Unknown',2002),null);await db.exec('reset role');
+ await db.exec("insert into character_master(id,character_name,server_id) values(4,'Same',2002)");
+ assert.equal(await summary('Same',2002),null,'ambiguous duplicate master identity must not be guessed');
+ console.log('PASS: public character summary survives RPC-only ACL, exact server identity, hidden exclusion and duplicate fail-closed');
+}finally{await db.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

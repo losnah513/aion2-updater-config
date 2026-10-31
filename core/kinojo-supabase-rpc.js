@@ -9,7 +9,7 @@
   'use strict';
   const client=window.KinojoSupabaseClientCore;
   if(!client) throw new Error('KinojoSupabaseClientCore가 먼저 로드되어야 합니다.');
-  const {ensureConfig,headers}=client;
+  const {ensureConfig,headers,fetchText}=client;
   const SESSION_KEY='kinojo_login_session_v1';
   const SERVER_SESSION_TOKEN_PATTERN=/^kws_[A-Za-z0-9_-]{40,80}$/;
   const SERVER_SESSION_ADMIN_RPCS=new Set([
@@ -66,20 +66,25 @@
     return body;
   }
 
-  async function rpc(fn, params){
+  async function rpc(fn, params, options){
     const cfg = await ensureConfig();
-    const res = await fetch(buildRpcUrl(cfg, fn), {
+    const {res,text}=await fetchText(buildRpcUrl(cfg, fn), {
       method:'POST',
       headers:Object.assign(headers(cfg), { Prefer:'return=representation' }),
       body:JSON.stringify(sessionScopedParams(fn, params)),
       cache:'no-store'
-    });
-    const text = await res.text();
+    },Object.assign({timeoutMs:fn==='kinojo_web_get_notices'?8000:30000},options));
     let data = null;
     if(text){
       try{ data = JSON.parse(text); }catch(_err){ data = text; }
     }
-    if(!res.ok) throw new Error(data && (data.message || data.details || data.hint) || text || ('HTTP ' + res.status));
+    if(!res.ok){
+      const error=new Error(data && (data.message || data.details || data.hint) || ('HTTP ' + res.status));
+      error.status=res.status;
+      error.code=data&&data.code||'';
+      error.data=data;
+      throw error;
+    }
     return data;
   }
   window.KinojoSupabaseRpcCore=Object.freeze({buildRpcUrl,rpc});

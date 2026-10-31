@@ -144,7 +144,7 @@ assert.equal(
 assert.doesNotMatch(profile, /uploads\.push\([^\n]*objectPath/);
 
 for (const token of [
-  'const VERSION = "1.3"',
+  'const VERSION = "1.4"',
   'const DB = "404"',
   "kinojo_member_image_cleanup_candidates_v404",
   "kinojo_member_image_cleanup_finalize_v404",

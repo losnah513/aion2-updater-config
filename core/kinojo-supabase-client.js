@@ -119,6 +119,39 @@
     return ensureConfig();
   }
 
+  // The deadline covers headers AND body consumption. Cancel the transport,
+  // and settle callers even when an intermediary ignores AbortSignal.
+  async function fetchText(url, init, options){
+    const opts=options||{};
+    const signal=opts.signal||(init&&init.signal);
+    const timeoutMs=Math.min(120000,Math.max(1,Number(opts.timeoutMs)||30000));
+    const controller=new AbortController();
+    let timer,abortListener;
+    const cancelled=new Promise((_resolve,reject)=>{
+      const stop=timedOut=>{
+        const error=new Error(timedOut?'요청 시간이 초과되었습니다. 다시 시도해 주세요.':'요청이 취소되었습니다.');
+        error.name=timedOut?'TimeoutError':'AbortError';
+        error.code=timedOut?'KINOJO_REQUEST_TIMEOUT':'KINOJO_REQUEST_ABORTED';
+        reject(error);
+        controller.abort();
+      };
+      abortListener=()=>stop(false);
+      if(signal&&signal.aborted){stop(false);return;}
+      if(signal)signal.addEventListener('abort',abortListener,{once:true});
+      timer=setTimeout(()=>stop(true),timeoutMs);
+    });
+    try{
+      if(signal&&signal.aborted)return await cancelled;
+      return await Promise.race([cancelled,(async()=>{
+        const res=await fetch(url,Object.assign({},init,{signal:controller.signal}));
+        return {res,text:await res.text()};
+      })()]);
+    }finally{
+      clearTimeout(timer);
+      if(signal&&abortListener)signal.removeEventListener('abort',abortListener);
+    }
+  }
+
   async function loadRemoteConfig(force){
     if(remoteConfigLoaded && !force) return remoteConfig;
     if(remoteConfigPromise && !force) return remoteConfigPromise;
@@ -126,9 +159,9 @@
     remoteConfigPromise = (async function(){
       try{
         remoteConfigError = null;
-        const res = await fetch(new URL('/config.json', location.origin).toString(), { cache:'no-cache' });
+        const {res,text}=await fetchText(new URL('/config.json', location.origin).toString(), { cache:'no-cache' },{timeoutMs:10000});
         if(!res.ok) throw new Error('config.json HTTP ' + res.status);
-        remoteConfig = await res.json();
+        remoteConfig = JSON.parse(text);
         remoteConfigLoaded = true;
         return remoteConfig;
       }catch(err){
@@ -190,13 +223,12 @@
 
   async function request(path, options){
     const cfg = await ensureConfig();
-    const res = await fetch(buildUrl(cfg, path, options && options.query), {
+    const {res,text}=await fetchText(buildUrl(cfg, path, options && options.query), {
       method: options && options.method || 'GET',
       headers: Object.assign(headers(cfg), options && options.headers || {}),
       body: options && options.body ? JSON.stringify(options.body) : undefined,
       cache: 'no-store'
-    });
-    const text = await res.text();
+    },options);
     let data = null;
     if (text) {
       try { data = JSON.parse(text); } catch (_e) { data = text; }
@@ -218,16 +250,15 @@
     return EDGE_FUNCTION_ROUTE_ALIASES[action]||requested;
   }
 
-  async function invokeEdgeFunction(functionName, body){
+  async function invokeEdgeFunction(functionName, body, options){
     const cfg=await ensureConfig();
     const resolvedName=resolveEdgeFunctionName(functionName,body);
-    const res=await fetch(cfg.url+'/functions/v1/'+resolvedName,{
+    const {res,text}=await fetchText(cfg.url+'/functions/v1/'+resolvedName,{
       method:'POST',
       headers:headers(cfg),
       body:JSON.stringify(body||{}),
       cache:'no-store'
-    });
-    const text=await res.text();
+    },Object.assign({timeoutMs:['lookup-list-prepare','lookup-list-sync','character-refresh-worker','character-detail-refresh'].includes(resolvedName)?120000:45000},options));
     let data=null;
     if(text){try{data=JSON.parse(text);}catch(_err){data={ok:false,message:text};}}
     if(!res.ok||data?.ok===false){
@@ -254,6 +285,7 @@
     ensureConfig,
     headers,
     buildUrl,
+    fetchText,
     request,
     resolveEdgeFunctionName,
     invokeEdgeFunction

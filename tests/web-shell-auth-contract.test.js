@@ -278,7 +278,7 @@ async function verifyAuthEdgeContract() {
     assert.equal(response.status, 200, `auth Edge health HTTP ${response.status}`);
     assert.equal(data.ok, true);
     assert.equal(data.service, 'kinojo-member-auth');
-    assert.equal(data.apiVersion, '2.0');
+    assert.equal(data.apiVersion, '2.1');
     assert.equal(data.databaseContract, '320');
     assert.equal(data.authBoundary, 'SERVER_EDGE_SESSION');
     assert.equal(data.tool, 'KINOJO_WEB');

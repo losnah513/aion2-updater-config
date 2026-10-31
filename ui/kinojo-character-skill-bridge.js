@@ -42,11 +42,9 @@
   }
 
   async function canonicalProfileCharacter(target){
-    const api=window.KinojoSupabase;
-    if(!target?.name || !target?.serverId || !api || typeof api.request!=='function') return null;
-    const query='select=id,character_name,server_id&server_id=eq.'+encodeURIComponent(target.serverId)+'&character_name=eq.'+encodeURIComponent(target.name)+'&limit=1';
-    const rows=await api.request('character_master',{query});
-    const row=Array.isArray(rows)?rows[0]:null;
+    const api=window.KinojoSupabaseRpcCore;
+    if(!target?.name || !target?.serverId || !api || typeof api.rpc!=='function') return null;
+    const row=await api.rpc('kinojo_web_character_summary_v548',{p_name:target.name,p_server_id:target.serverId,p_server_name:null});
     const id=Number(row?.id||0);
     if(!Number.isInteger(id)||id<=0) return null;
     if(Number(row?.server_id||0)!==Number(target.serverId)||String(row?.character_name||'').trim()!==target.name) throw new Error('EFFECTIVE_PROFILE_CHARACTER_BINDING_MISMATCH');
