@@ -5,7 +5,8 @@ if(process.env.KINOJO_LIVE_ACL!=='1'){console.log('SKIP: explicit live ACL readb
 (async()=>{
  const c=JSON.parse(fs.readFileSync('config.json','utf8')).supabase;
  for(const relation of ['v_kinojo_admin_members','member_codes','updater_sessions','character_master','announcements','hall_suggestions']){
-  const res=await fetch(c.url+'/rest/v1/'+relation+'?select=id&limit=0',{headers:{apikey:c.publishableKey},signal:AbortSignal.timeout(10000)});
+  const column=relation==='updater_sessions'?'session_id':'id';
+  const res=await fetch(c.url+'/rest/v1/'+relation+'?select='+column+'&limit=0',{headers:{apikey:c.publishableKey},signal:AbortSignal.timeout(10000)});
   await res.arrayBuffer();
   assert.ok([401,403].includes(res.status),relation+' must deny direct public reads; HTTP '+res.status);
  }
