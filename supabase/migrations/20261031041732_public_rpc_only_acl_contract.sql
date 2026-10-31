@@ -1,11 +1,12 @@
--- SQL545: deploy only AFTER SQL544 + WEB feature cache2026103101.
+-- SQL545: deploy only AFTER SQL544/548 + WEB feature/modal RPC callers.
 -- Browser data access is RPC-only. No rows, RLS policies or function bodies change.
 do $seal$
 declare r record;a record;v_priv text;v_service text[];
 begin
   if to_regprocedure('public.kinojo_web_lookup_main_character_v544(text,integer)') is null
-    or to_regprocedure('public.kinojo_web_hall_suggestion_submit_v544(text,text,text,text,text)') is null then
-    raise exception 'PUBLIC_RPC_CONTRACT_544_REQUIRED';
+    or to_regprocedure('public.kinojo_web_hall_suggestion_submit_v544(text,text,text,text,text)') is null
+    or to_regprocedure('public.kinojo_web_character_summary_v548(text,integer,text)') is null then
+    raise exception 'PUBLIC_RPC_CONTRACT_544_548_REQUIRED';
   end if;
   for r in select c.oid,c.relname from pg_class c
     where c.relnamespace='public'::regnamespace and c.relkind in ('r','p','v','m')

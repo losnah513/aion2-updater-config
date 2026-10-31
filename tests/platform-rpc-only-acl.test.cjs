@@ -12,6 +12,7 @@ const {PGlite}=require(process.env.PGLITE_MODULE||'@electric-sql/pglite');
  grant usage on sequence public.private_rows_id_seq to public;
  create function public.kinojo_web_lookup_main_character_v544(text,integer) returns jsonb language sql security definer as $$select jsonb_build_object('count',count(*)) from public.private_rows$$;
  create function public.kinojo_web_hall_suggestion_submit_v544(text,text,text,text,text) returns jsonb language sql security definer as $$select '{}'::jsonb$$;
+ create function public.kinojo_web_character_summary_v548(text,integer,text) returns jsonb language sql security definer as $$select null::jsonb$$;
  `);
  const service=async()=>JSON.stringify((await db.query("select c.relname,p,has_table_privilege('service_role',c.oid,p) ok from pg_class c cross join unnest(array['SELECT','INSERT','UPDATE','DELETE']) p where c.relnamespace='public'::regnamespace and c.relkind in('r','v') order by c.relname,p")).rows);
  const before=await service();
