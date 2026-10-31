@@ -170,10 +170,6 @@
     return String(value || '').replace(/\[[^\]]+\]\s*$/, '').trim();
   }
 
-  function characterMasterQueryName(name){
-    return encodeURIComponent(stripServerSuffix(name));
-  }
-
   function mergeMasterRow(target, row){
     if(!row) return target;
     const pvePower = firstValue(row.latest_pve_combat_power, row.pve_power_total, row.pvePowerTotal, target.pvePower);
@@ -198,23 +194,17 @@
 
   async function fetchCharacterMaster(target){
     const item = target || {};
-    const name = characterMasterQueryName(item.name);
-    if(!name || !window.KinojoSupabase || typeof window.KinojoSupabase.request !== 'function') return null;
-
-    const select = 'select=character_name,main_character_name,server_id,server_name,class_name,profile_image_url,detail_url,latest_pve_combat_power,latest_pve_item_level,latest_pvp_combat_power,latest_pvp_item_level';
-    let query = select + '&character_name=eq.' + name;
+    const name = stripServerSuffix(item.name);
+    const api=window.KinojoSupabaseRpcCore;
+    if(!name || !api || typeof api.rpc !== 'function') return null;
     const serverId = String(item.serverId || '').trim();
     const serverName = String(item.server || '').trim();
-    if(/^\d+$/.test(serverId)){
-      query += '&server_id=eq.' + encodeURIComponent(serverId);
-    }else if(serverName && !serverName.includes('·')){
-      query += '&server_name=eq.' + encodeURIComponent(serverName);
-    }else{
-      return null;
-    }
-    query += '&limit=1';
-    const rows = await window.KinojoSupabase.request('character_master', { query });
-    return Array.isArray(rows) ? rows[0] || null : null;
+    if(!/^\d+$/.test(serverId)&&(!serverName||serverName.includes('·')))return null;
+    return api.rpc('kinojo_web_character_summary_v548',{
+      p_name:name,
+      p_server_id:/^\d+$/.test(serverId)?Number(serverId):null,
+      p_server_name:serverName||null
+    });
   }
 
   async function enrichTargetFromMaster(){

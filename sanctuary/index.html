@@ -18,7 +18,7 @@
 <link href="../ui/kinojo-components.css?cache=2026082103" rel="stylesheet"/>
 <link href="../ui/kinojo-staged-loading.css?cache=2026083001" rel="stylesheet"/>
 <link href="../ui/kinojo-sanctuary-navigation.css?cache=2026082603" rel="stylesheet"/>
-<link href="../sanctuary-management/css/sanctuary-management.css?cache=2026082903&amp;canonical=2026083001&amp;stage8=2026083016&amp;stage10=2026083102&amp;bossRoles=2026101503&amp;scheduleYear=2026103001" rel="stylesheet"/>
+<link href="../sanctuary-management/css/sanctuary-management.css?cache=2026082903&amp;canonical=2026083001&amp;stage8=2026083016&amp;stage10=2026083102&amp;bossRoles=2026101503&amp;scheduleYear=2026103001&amp;reliability=2026103101" rel="stylesheet"/>
 <link href="../sanctuary-management/css/sanctuary-management-draft.css?cache=2026083106&amp;canonical=2026083030&amp;stage8=2026083030&amp;stage9=2026083001&amp;randomalt=2026083101&amp;stage10=2026083102&amp;linkedAltLayout=2026090101&amp;familyMessage=2026090101&amp;sanctuary4Difficulty=2026090111&amp;stage13=2026090801&amp;bossRoles=2026101503&amp;scheduleYear=2026103001" rel="stylesheet"/>
 <link href="../sanctuary-management/css/sanctuary-management-support.css?cache=2026090101&amp;canonical=2026083007&amp;stage77=2026083001&amp;stage8=2026083016&amp;stage9=2026083001&amp;stage10=2026083102&amp;stage11=2026083105&amp;stage12=2026090101&amp;altDetail=2026090101&amp;slotRelation=2026090110&amp;sanctuary4Difficulty=2026090111&amp;familyHover=2026090801&amp;bossRoles=2026101505" rel="stylesheet"/>
 <link href="../sanctuary-management/css/sanctuary-management-inline-slot.css?cache=2026090101" rel="stylesheet"/>
@@ -30,10 +30,10 @@
 <body class="kinojo-page-booting kinojo-sanctuary-management-page">
   <section class="sanctuary-management-page-bar" aria-label="성역 선택">
     <div class="sanctuary-management-page-bar-shell">
-      <div class="sanctuary-management-scope-shell" id="sanctuaryManagementScopeShell" hidden>
-        <div class="sanctuary-management-scope" id="sanctuaryManagementScope" role="group" aria-label="성역 선택"></div>
+      <div class="sanctuary-management-scope-shell" id="sanctuaryManagementScopeShell">
+        <div class="sanctuary-management-scope" id="sanctuaryManagementScope" role="group" aria-label="성역 선택"><span aria-hidden="true" style="min-height:32px">성역 불러오는 중…</span></div>
       </div>
-      <div class="sanctuary-management-subbar-status" id="sanctuaryManagementStatusShell" aria-label="성역 Server 상태" hidden>
+      <div class="sanctuary-management-subbar-status" id="sanctuaryManagementStatusShell" aria-label="성역 Server 상태">
         <button type="button" class="sanctuary-management-subbar-state sanctuary-management-connection-card" id="sanctuaryManagementConnectionCard" data-state="loading" aria-disabled="true" tabindex="-1"><strong id="sanctuaryManagementConnectionState">확인 중</strong><span id="sanctuaryManagementConnectionTitle">연결 상태</span><small id="sanctuaryManagementConnectionMessage">Server 확인 중</small></button>
         <button type="button" class="sanctuary-management-subbar-state" aria-disabled="true" tabindex="-1"><strong id="sanctuaryManagementReadState">확인 중</strong><span>팀 읽기</span><small>Server 기능</small></button>
         <button type="button" class="sanctuary-management-subbar-state" aria-disabled="true" tabindex="-1"><strong id="sanctuaryManagementWriteState">확인 중</strong><span>팀 쓰기</span><small id="sanctuaryManagementWriteMeta">Server 기능</small></button>
@@ -101,7 +101,7 @@
     <footer class="footer common-footer"><div class="footer-links"><a href="../pages/about.html">사이트 소개</a><a href="../pages/terms.html">이용약관</a><a href="../pages/privacy.html">개인정보처리방침</a><a href="../pages/contact.html">아이디어 제안 및 건의</a></div><div class="footer-powered">Powered by AION2 · KINOJO Server</div></footer>
   </main>
 
-  <script src="../core/kinojo-api.js?cache=2026070115"></script>
+  <script src="../core/kinojo-api.js?cache=2026070115&amp;reliability=2026103101"></script>
   <script src="../core/kinojo-cache.js?cache=2026070115"></script>
   <script src="../core/kinojo-permissions.js?cache=2026071517"></script>
   <script src="../core/kinojo-toast.js?cache=2026070115"></script>
@@ -109,11 +109,11 @@
   <script src="../core/kinojo-route-guard.js?cache=2026090701"></script>
   <script src="../core/kinojo-debug.js?cache=2026070115"></script>
   <script src="../core/kinojo-logger.js?cache=2026070115"></script>
-<script src="../ui/kinojo-common-ui.js?cache=2026083001&amp;canonical=2026082923&amp;retirement=2026100701"></script>
+<script src="../ui/kinojo-common-ui.js?cache=2026083001&amp;canonical=2026082923&amp;retirement=2026100701&amp;reliability=2026103101"></script>
   <script src="../ui/kinojo-staged-loading.js?cache=2026083001&retirement=2026100701"></script>
   <script src="../ui/kinojo-admin-panel.js?cache=2026071712"></script>
-  <script src="../core/kinojo-supabase-client.js?cache=2026081106&amp;stage7=2026082911"></script>
-  <script src="../core/kinojo-supabase-rpc.js?cache=2026082806"></script>
+  <script src="../core/kinojo-supabase-client.js?cache=2026081106&amp;stage7=2026082911&amp;reliability=2026103101"></script>
+  <script src="../core/kinojo-supabase-rpc.js?cache=2026082806&amp;reliability=2026103101"></script>
   <script src="../core/kinojo-supabase-features.js?cache=2026103101"></script>
   <script src="../core/kinojo-auth-session.js?cache=2026081801"></script>
   <script src="../core/kinojo-auth-service.js?cache=2026081801"></script>

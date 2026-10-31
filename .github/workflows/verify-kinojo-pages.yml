@@ -33,6 +33,8 @@ on:
       - "core/**"
       - "ui/**"
       - "supabase/functions/kinojo-member-profile/**"
+      - "supabase/functions/kinojo-member-auth/**"
+      - "supabase/functions/_shared/http-budget.ts"
       - "supabase/functions/kinojo-member-image-cleanup/**"
       - "supabase/migrations/*member_image_request*.sql"
       - "supabase/migrations/*legion_roster*.sql"
@@ -71,6 +73,8 @@ on:
       - "core/**"
       - "ui/**"
       - "supabase/functions/kinojo-member-profile/**"
+      - "supabase/functions/kinojo-member-auth/**"
+      - "supabase/functions/_shared/http-budget.ts"
       - "supabase/functions/kinojo-member-image-cleanup/**"
       - "supabase/migrations/*member_image_request*.sql"
       - "supabase/migrations/*legion_roster*.sql"
@@ -372,7 +376,12 @@ jobs:
       - name: Verify candidate class mapping
         run: node tests/legion-tree-candidate-class.test.cjs
       - name: Verify public write client contracts
-        run: node tests/platform-write-client.test.cjs
+        run: |
+          node tests/platform-write-client.test.cjs
+          node tests/platform-http-deadline.test.cjs
+          node tests/platform-edge-body-budget.test.cjs
+          node tests/platform-image-cleanup.test.cjs
+          node tests/platform-admin-login-recovery.test.cjs
       - name: Verify roster family Edge
         run: node tests/roster-family-edge.test.js
       - name: Verify character worker checkpoint recovery
@@ -385,6 +394,10 @@ jobs:
           npm install --prefix "$RUNNER_TEMP/sanctuary-db" --no-package-lock @electric-sql/pglite@0.5.8
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/platform-public-surface.test.cjs
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/platform-write-rpc.test.cjs
+          PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/platform-rpc-only-acl.test.cjs
+          PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/platform-auth-budget.test.cjs
+          PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/platform-retention-family.test.cjs
+          PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/platform-character-summary.test.cjs
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/sanctuary-list-retry-v480.test.cjs
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/roster-family-unlink.test.cjs
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/legion-character-add-single-target.test.cjs
@@ -430,6 +443,7 @@ jobs:
           PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/hof-family-rankings-browser.test.cjs
           PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/sanctuary-schedule-year-browser.test.cjs
           PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/legion-tree-candidate-class-browser.test.cjs
+          PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/platform-loading-browser.test.cjs
 
       - name: Verify bridge startup with frozen cores
         shell: bash
@@ -475,6 +489,19 @@ jobs:
           if (window.KinojoSupabaseClientCore.invokeEdgeFunction !== invokeEdgeFunction) throw new Error('Client core method mutated');
           console.log('Frozen core startup smoke: PASS');
           NODE
+
+  verify-publication-concurrency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install pinned local PostgreSQL runtime
+        run: npm ci --prefix tests/runtime/postgres --no-audit --no-fund
+      - name: Verify retention and publication locks on real PostgreSQL
+        run: node tests/platform-retention-concurrency.test.cjs
 
   verify-live-readback:
     if: github.event_name != 'pull_request'

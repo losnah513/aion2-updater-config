@@ -1,0 +1,32 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const {PGlite}=require(process.env.PGLITE_MODULE||'@electric-sql/pglite');
+(async()=>{const db=new PGlite();try{
+ await db.exec(`create role anon;create role authenticated;create role service_role;
+ create table public.private_rows(id bigint generated always as identity primary key,secret text);
+ insert into public.private_rows(secret) values('synthetic-only');
+ create view public.legacy_view as select * from public.private_rows;
+ grant select on public.legacy_view to public;
+ grant all on public.private_rows to anon,authenticated,service_role;
+ grant select(secret) on public.private_rows to public;
+ grant usage on sequence public.private_rows_id_seq to public;
+ create function public.kinojo_web_lookup_main_character_v544(text,integer) returns jsonb language sql security definer as $$select jsonb_build_object('count',count(*)) from public.private_rows$$;
+ create function public.kinojo_web_hall_suggestion_submit_v544(text,text,text,text,text) returns jsonb language sql security definer as $$select '{}'::jsonb$$;
+ create function public.kinojo_web_character_summary_v548(text,integer,text) returns jsonb language sql security definer as $$select null::jsonb$$;
+ `);
+ const service=async()=>JSON.stringify((await db.query("select c.relname,p,has_table_privilege('service_role',c.oid,p) ok from pg_class c cross join unnest(array['SELECT','INSERT','UPDATE','DELETE']) p where c.relnamespace='public'::regnamespace and c.relkind in('r','v') order by c.relname,p")).rows);
+ const before=await service();
+ const sql=fs.readFileSync(path.join(__dirname,'../supabase/migrations/20261031041732_public_rpc_only_acl_contract.sql'),'utf8');
+ await db.exec(sql);assert.equal(await service(),before,'previously inherited backend access must remain identical');
+ for(const role of ['anon','authenticated']){await db.exec('set role '+role);
+  for(const q of ['select secret from public.private_rows','select id from public.legacy_view',"insert into public.private_rows(secret) values('bad')",'delete from public.private_rows',"select nextval('public.private_rows_id_seq')"])await assert.rejects(db.query(q),/permission denied/);
+  assert.equal((await db.query("select public.kinojo_web_lookup_main_character_v544('fixture',null) r")).rows[0].r.count,1);
+  await db.exec('reset role');
+ }
+ await db.exec('create table public.future_rows(id int);create function public.future_writer() returns void language sql security definer as $$insert into public.future_rows values(1)$$;');
+ assert.equal((await db.query("select has_function_privilege('anon','public.future_writer()','execute') ok")).rows[0].ok,false,'new definer function must not become a public API');
+ assert.equal((await db.query("select has_table_privilege('anon','public.future_rows','select,insert,update,delete') ok")).rows[0].ok,false);
+ const withFuture=await service();
+ await db.exec(sql);assert.equal(await service(),withFuture,'reapplication must preserve backend privileges for existing and new relations');
+ console.log('PASS: RPC-only relations/sequences/columns, inherited backend privileges, explicit API compatibility and default-deny future objects');
+}finally{await db.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

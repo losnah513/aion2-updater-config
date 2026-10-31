@@ -27,9 +27,8 @@
   }
 
   async function request(url, options){
-    const res = await fetch(url, Object.assign({ cache:'no-store' }, options || {}));
+    const {res,text}=await window.KinojoSupabaseClientCore.fetchText(url, Object.assign({ cache:'no-store' }, options || {}),options);
     let data = null;
-    const text = await res.text();
     if(text){
       try{ data = JSON.parse(text); }
       catch(_err){

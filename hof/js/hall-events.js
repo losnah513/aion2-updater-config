@@ -16,20 +16,19 @@ function openHallFamilyRanking(metric,opener){
   dialog.innerHTML='<header><div><h2 id="hofFamilyRankingTitle">'+title+' 전체 순위</h2><p>'+(scope?'전체 레기온':'기본 레기온')+' · '+(metric==='power'?'본캐 + 부캐 PVE 합산':'연결된 부캐 수')+'</p></div><button type="button" data-family-close aria-label="전체 순위 닫기">닫기</button></header><div data-family-content></div>';
   document.body.append(dialog);
   let request=0;
+  let controller=null;
   const content=dialog.querySelector('[data-family-content]');
   dialog.querySelector('[data-family-close]').onclick=()=>dialog.close();
-  dialog.addEventListener('close',()=>{if(request===hallFamilyRequest)hallFamilyRequest++;dialog.remove();opener?.focus();});
+  dialog.addEventListener('close',()=>{controller?.abort();if(request===hallFamilyRequest)hallFamilyRequest++;dialog.remove();opener?.focus();});
   dialog.addEventListener('click',event=>{if(event.target===dialog){const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)dialog.close();}});
   async function fetchPage(page){
     request=++hallFamilyRequest;
-    let timeout;
+    controller?.abort();
+    controller=new AbortController();
     content.setAttribute('aria-busy','true');
     content.innerHTML='<div class="hof-family-loading" role="status"><strong>'+(metric==='power'?'본캐와 부캐 전투력 합산 순위 집계중입니다':'연결된 부캐 수 순위 집계중입니다')+'</strong><progress aria-label="서버 순위 집계 진행 중"></progress><span>1 / 2 · 서버에서 집계하고 있습니다.</span></div>';
     try{
-      const result=await Promise.race([
-        window.KinojoSupabase.rpc('kinojo_web_get_hof_family_rankings_v541',{p_metric:metric,p_page:page,p_include_all_legions:scope}),
-        new Promise((_,reject)=>{timeout=setTimeout(()=>reject(Error('FAMILY_RANKING_TIMEOUT')),15000);})
-      ]);
+      const result=await window.KinojoSupabase.rpc('kinojo_web_get_hof_family_rankings_v541',{p_metric:metric,p_page:page,p_include_all_legions:scope},{signal:controller.signal,timeoutMs:15000});
       if(request!==hallFamilyRequest||!dialog.open)return;
       if(!result?.ok||result.page!==page||!Array.isArray(result.items)||result.items.length>20)throw Error('INVALID_FAMILY_RANKING');
       const total=Math.max(0,Number(result.total)||0),pages=Math.max(1,Math.ceil(total/20));
@@ -43,7 +42,7 @@ function openHallFamilyRanking(metric,opener){
       if(request!==hallFamilyRequest||!dialog.open)return;
       content.innerHTML='<div class="hof-family-empty" role="alert"><p>순위를 집계하지 못했습니다. 다시 시도해 주세요.</p><button type="button" data-family-retry>다시 집계</button></div>';
       content.querySelector('[data-family-retry]').onclick=()=>fetchPage(page);
-    }finally{clearTimeout(timeout);if(request===hallFamilyRequest&&dialog.open)content.setAttribute('aria-busy','false');}
+    }finally{if(request===hallFamilyRequest&&dialog.open)content.setAttribute('aria-busy','false');}
   }
   dialog.showModal();fetchPage(1);
 }

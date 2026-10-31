@@ -1,5 +1,7 @@
+import { readRequestText } from "../_shared/http-budget.ts";
+
 const SERVICE = "kinojo-member-image-cleanup";
-const VERSION = "1.3";
+const VERSION = "1.4";
 const DB = "404";
 const BUCKET = "kinojo-member-reference";
 const MAX_BODY = 1024;
@@ -12,6 +14,20 @@ const MIME_EXT: Record<string, string> = {
   "image/webp": "webp",
 };
 const enc = new TextEncoder();
+// Keep one request's headers/body bounded; no automatic delete/write retries.
+async function fetchText(url: string, init: RequestInit) {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => { reject(new Error("CLEANUP_UPSTREAM_TIMEOUT")); controller.abort(); }, 10000);
+  });
+  try {
+    return await Promise.race([timeout, (async () => {
+      const res = await fetch(url, { ...init, signal: controller.signal });
+      return { res, raw: await res.text() };
+    })()]);
+  } finally { clearTimeout(timer); }
+}
 const rec = (v: unknown): Record<string, unknown> | null =>
   v && typeof v === "object" && !Array.isArray(v)
     ? (v as Record<string, unknown>)
@@ -59,7 +75,7 @@ function serviceRoleAuthorized(req: Request, key: string) {
 
 async function rpc(name: string, body: Record<string, unknown>) {
   const { url, key } = ctx();
-  const res = await fetch(`${url}/rest/v1/rpc/${name}`, {
+  const { res, raw } = await fetchText(`${url}/rest/v1/rpc/${name}`, {
     method: "POST",
     headers: {
       apikey: key,
@@ -69,7 +85,6 @@ async function rpc(name: string, body: Record<string, unknown>) {
     },
     body: JSON.stringify(body),
   });
-  const raw = await res.text();
   let data: unknown = null;
   try {
     data = raw ? JSON.parse(raw) : null;
@@ -129,7 +144,7 @@ function validCandidate(v: Record<string, unknown>) {
 async function deleteObject(path: string) {
   const { url, key } = ctx();
   const encoded = path.split("/").map(encodeURIComponent).join("/");
-  const res = await fetch(`${url}/storage/v1/object/${BUCKET}/${encoded}`, {
+  const { res, raw } = await fetchText(`${url}/storage/v1/object/${BUCKET}/${encoded}`, {
     method: "DELETE",
     headers: {
       apikey: key,
@@ -138,7 +153,13 @@ async function deleteObject(path: string) {
     },
   });
   if (res.ok) return { ok: true, absent: false, status: res.status };
-  if (res.status === 404) return { ok: true, absent: true, status: 404 };
+  let failure: Record<string, unknown> | null = null;
+  try { failure = rec(JSON.parse(raw)); } catch { /* Unknown errors stay failed. */ }
+  // Storage can return legacy HTTP 400 with the precise NoSuchKey code.
+  // A generic 404 may be NoSuchBucket/tenant failure and must not erase metadata.
+  const absent = [400, 404].includes(res.status) &&
+    (failure?.code === "NoSuchKey" || failure?.error === "NoSuchKey");
+  if (absent) return { ok: true, absent: true, status: res.status };
   return { ok: false, absent: false, status: res.status };
 }
 
@@ -152,7 +173,7 @@ Deno.serve(async (req: Request) => {
     if (!serviceRole && !cron)
       return out({ ok: false, code: "CLEANUP_AUTH_REQUIRED" }, 401);
 
-    const raw = await req.text();
+    const raw = await readRequestText(req,MAX_BODY);
     if (enc.encode(raw).byteLength > MAX_BODY)
       return out({ ok: false, code: "REQUEST_TOO_LARGE" }, 413);
     const body = rec(raw ? JSON.parse(raw) : {}) || {};
@@ -164,7 +185,7 @@ Deno.serve(async (req: Request) => {
         apiVersion: VERSION,
         databaseContract: DB,
         bucket: BUCKET,
-        contract: "member-image-cleanup-edge-v1.3",
+        contract: "member-image-cleanup-edge-v1.4",
         cronContract: "364",
         sources: ["REQUEST_ITEM", "QUEUED_OBJECT", "ACTIVE_REFERENCE"],
         imageRetentionDays: 7,
@@ -195,37 +216,44 @@ Deno.serve(async (req: Request) => {
       conflicts: 0,
       invalidCandidates: 0,
       requestMetadataDeleted: 0,
+      finalizeFailed: 0,
     };
-    for (const row of candidates) {
+    let next = 0;
+    const processCandidate = async (row: unknown) => {
       const candidate = validCandidate(rec(row) || {});
       if (!candidate) {
         summary.invalidCandidates++;
-        continue;
+        return;
       }
 
-      const removed = await deleteObject(candidate.objectPath);
+      let removed;
+      try { removed = await deleteObject(candidate.objectPath); }
+      catch { summary.storageFailed++; return; }
       if (!removed.ok) {
         summary.storageFailed++;
-        continue;
+        return;
       }
       if (removed.absent) summary.storageAbsent++;
       else summary.storageDeleted++;
 
-      const finalized = rec(
-        await rpc("kinojo_member_image_cleanup_finalize_v404", {
+      let finalized;
+      try { finalized = rec(await rpc("kinojo_member_image_cleanup_finalize_v404", {
           p_source_kind: candidate.sourceKind,
           p_request_id: candidate.requestId,
           p_character_id: candidate.characterId,
           p_slot: candidate.slot,
           p_expected_object_path: candidate.objectPath,
-        }),
-      );
+        })); } catch { summary.finalizeFailed++; return; }
       if (finalized?.ok === true) {
         summary.metadataDeleted++;
-        continue;
+        return;
       }
       summary.conflicts++;
-    }
+    };
+    // Four workers cap Storage/DB pressure while reducing serial batch latency.
+    await Promise.all(Array.from({length:Math.min(4,candidates.length)}, async () => {
+      while (next < candidates.length) await processCandidate(candidates[next++]);
+    }));
 
     const metadata = rec(
       await rpc("kinojo_member_image_request_metadata_cleanup_v404", {
@@ -237,12 +265,14 @@ Deno.serve(async (req: Request) => {
     summary.requestMetadataDeleted =
       num(metadata.metadataDeleted ?? metadata.metadata_deleted) ?? 0;
 
+    const ok = summary.storageFailed === 0 && summary.finalizeFailed === 0 && summary.invalidCandidates === 0;
     return out({
-      ok: true,
+      ok,
+      code: ok ? "CLEANUP_COMPLETE" : "CLEANUP_PARTIAL_FAILURE",
       service: SERVICE,
       apiVersion: VERSION,
       databaseContract: DB,
-      contract: "member-image-cleanup-edge-v1.3",
+      contract: "member-image-cleanup-edge-v1.4",
       cronContract: "364",
       limit,
       hasMore: candidates.length === limit,
@@ -250,9 +280,12 @@ Deno.serve(async (req: Request) => {
       invariant: "STORAGE_DELETE_SUCCESS_BEFORE_METADATA_DELETE",
       requestRetention:
         "DRAFT_OBJECTS_2H_IMAGES_7D_METADATA_30D_AFTER_OBJECT_DELETE",
-    });
+    }, ok ? 200 : 502);
   } catch (e) {
     const code = e instanceof Error ? e.message : "CLEANUP_SERVER_ERROR";
+    if (code === "REQUEST_TOO_LARGE") return out({ok:false,code},413);
+    if (code === "REQUEST_BODY_TIMEOUT") return out({ok:false,code},408);
+    if (e instanceof SyntaxError) return out({ok:false,code:"INVALID_JSON"},400);
     console.error(SERVICE, code);
     return out(
       {

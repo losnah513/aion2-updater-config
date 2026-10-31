@@ -226,8 +226,18 @@
     root.innerHTML='<div class="admin-server-chips">'+entries.map(([label,ok])=>'<span class="'+(ok?'ok':'error')+'"><i></i>'+label+'</span>').join('')+'</div>';
   }
 
+  let accessBlocked=false;
+  let accessReloading=false;
+  window.addEventListener('kinojo:auth-changed',()=>{
+    if(!accessBlocked||accessReloading||!isAdmin())return;
+    accessReloading=true;
+    // The blocked gate replaced the document's console DOM. Restore the normal
+    // entrypoint after canonical login; protected RPCs still validate on Server.
+    location.reload();
+  });
   function renderAccessBlocked(){
-    document.body.innerHTML = '<main class="admin-access-block"><h1>관리자 권한이 필요합니다</h1><p>로그인 후 STAFF 이상 권한으로 접근할 수 있습니다. STAFF는 담당 팀 성역 일정만 관리할 수 있습니다.</p><button class="admin-btn primary" id="adminLoginGo" type="button">로그인</button></main>';
+    accessBlocked=true;
+    document.body.innerHTML = '<main class="admin-access-block" style="box-sizing:border-box"><h1>관리자 권한이 필요합니다</h1><p>로그인 후 STAFF 이상 권한으로 접근할 수 있습니다. STAFF는 담당 팀 성역 일정만 관리할 수 있습니다.</p><button class="admin-btn primary" id="adminLoginGo" type="button">로그인</button></main>';
     $('#adminLoginGo')?.addEventListener('click',()=>window.KinojoAuth?.openLoginModal?.());
   }
 

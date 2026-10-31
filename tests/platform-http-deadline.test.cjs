@@ -1,0 +1,30 @@
+'use strict';
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+let handler,calls=0,lastSignal;
+const ctx=vm.createContext({window:{KINOJO_SUPABASE_CONFIG:{}},location:{origin:'https://fixture.invalid'},URL,AbortController,setTimeout,clearTimeout,console,
+ fetch:async(url,options)=>{calls++;lastSignal=options.signal;return handler(url,options);}});
+vm.runInContext(fs.readFileSync('core/kinojo-supabase-client.js','utf8'),ctx);
+vm.runInContext(fs.readFileSync('core/kinojo-supabase-rpc.js','utf8'),ctx);
+const client=ctx.window.KinojoSupabaseClientCore;
+(async()=>{
+ handler=()=>new Promise(()=>{});
+ await assert.rejects(client.fetchText('https://fixture.invalid',{}, {timeoutMs:10}),e=>e.code==='KINOJO_REQUEST_TIMEOUT');
+ assert.equal(lastSignal.aborted,true,'stalled headers cancel actual fetch');
+ handler=()=>({ok:true,text:()=>new Promise(()=>{})});
+ await assert.rejects(client.fetchText('https://fixture.invalid',{}, {timeoutMs:10}),e=>e.name==='TimeoutError');
+ assert.equal(lastSignal.aborted,true,'stalled response body is part of deadline');
+ const controller=new AbortController();
+ const pending=client.fetchText('https://fixture.invalid',{}, {signal:controller.signal});controller.abort();
+ await assert.rejects(pending,e=>e.name==='AbortError');assert.equal(lastSignal.aborted,true);
+ const before=calls;
+ await assert.rejects(client.fetchText('https://fixture.invalid',{}, {signal:controller.signal}),e=>e.name==='AbortError');assert.equal(calls,before,'pre-cancelled requests start no network');
+ handler=async()=>({ok:true,text:async()=>JSON.stringify({supabase:{enabled:true,url:'https://fixture.invalid',publishableKey:'fixture-public'}})});
+ await client.ensureConfig();
+ handler=async()=>({ok:false,status:409,text:async()=>JSON.stringify({code:'CONFLICT',message:'fixture conflict'})});
+ const writes=calls;
+ await assert.rejects(ctx.window.KinojoSupabaseRpcCore.rpc('fixture_write',{}),e=>e.status===409&&e.code==='CONFLICT');
+ assert.equal(calls,writes+1,'mutation errors must never trigger automatic retries');
+ handler=async()=>({ok:true,status:200,text:async()=>'{"ok":true}'});
+ assert.equal((await ctx.window.KinojoSupabaseRpcCore.rpc('fixture_read',{})).ok,true);
+ console.log('PASS: header/body deadlines, transport cancellation, caller abort, pre-abort, typed RPC errors and no mutation retries');
+})().catch(e=>{console.error(e);process.exitCode=1;});

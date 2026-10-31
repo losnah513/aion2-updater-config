@@ -203,9 +203,9 @@
       const base=commonApiUrl();
       if(!base)throw new Error('공지 서버 모듈을 준비하는 중입니다.');
       const url=base+(base.includes('?')?'&':'?')+'action=notices&limit='+encodeURIComponent(limit)+'&t='+Date.now();
-      request=fetch(url,{cache:'no-store'}).then(async response=>{
-        if(!response.ok)throw new Error('공지 서버 HTTP '+response.status);
-        return response.json();
+      request=window.KinojoSupabaseClientCore.fetchText(url,{cache:'no-store'},{timeoutMs:8000}).then(({res,text})=>{
+        if(!res.ok)throw new Error('공지 서버 HTTP '+res.status);
+        return JSON.parse(text);
       });
     }
     const data=await noticeRequestWithTimeout_(request,8000);
@@ -996,9 +996,9 @@
         ensureCharacterDetailStyle_('/ui/kinojo-character-skill.css?cache=2026081001','skill'),
         ensureCharacterDetailStyle_('/ui/kinojo-character-daevanion.css?cache=2026081002','daevanion')
       ]);
-      await ensureCharacterDetailScript_('/ui/kinojo-character-reaction.js?cache=2026082701','reaction',()=>!!window.KinojoCharacterReaction?.open);
+      await ensureCharacterDetailScript_('/ui/kinojo-character-reaction.js?cache=2026082701&reliability=2026103101','reaction',()=>!!window.KinojoCharacterReaction?.open);
       await ensureCharacterDetailScript_('/ui/kinojo-character-detail-refresh.js?cache=2026081003','detail-refresh');
-      await ensureCharacterDetailScript_('/ui/kinojo-character-skill-bridge.js?cache=2026082701','skill');
+      await ensureCharacterDetailScript_('/ui/kinojo-character-skill-bridge.js?cache=2026082701&reliability=2026103101','skill');
       await ensureCharacterDetailScript_('/ui/kinojo-character-daevanion-bridge.js?cache=2026081002','daevanion');
       if(!window.KinojoCharacterReaction?.open)throw new Error('CHARACTER_DETAIL_MODAL_UNAVAILABLE');
       return true;
