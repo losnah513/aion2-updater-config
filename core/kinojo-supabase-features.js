@@ -255,38 +255,12 @@
   }
 
   async function lookupMainCharacter(name){
-    const parsed = parseCharacterLookupInput(name);
-    const target = parsed.characterName;
-    if(!target) return { ok:false, message:'캐릭터 이름을 입력해 주세요.' };
-
-    // Server Engine 이관 기준: Apps Script의 [서버약칭] 파싱을 웹에서도 동일하게 적용한다.
-    // 예) 찐찐[울고] -> character_name=찐찐, server_id=2012. DB에는 서버 태그를 저장하지 않는다.
-    try{
-      const filters = [
-        'select=server_id,server_name,character_name,main_character_name,is_main,class_name',
-        'or=(character_name.eq.' + encodeURIComponent(target) + ',main_character_name.eq.' + encodeURIComponent(target) + ')'
-      ];
-      if(parsed.serverSuffix) filters.push('server_id=eq.' + encodeURIComponent(parsed.serverId));
-      filters.push('limit=20');
-      const rows = await request('character_master', { query:filters.join('&') });
-      const list = Array.isArray(rows) ? rows : [];
-      const exact = list.find(row => String(row.character_name || '').trim() === target && (!parsed.serverSuffix || String(row.server_id || '') === parsed.serverId))
-        || list.find(row => String(row.character_name || '').trim() === target)
-        || list[0];
-      if(exact){
-        const main = stripServerSuffixFromCharacterName(exact.main_character_name || exact.character_name || target);
-        const rowName = stripServerSuffixFromCharacterName(exact.character_name || target);
-        const isMain = exact.is_main === true || String(exact.is_main).toUpperCase() === 'TRUE' || main === rowName;
-        const serverId = String(exact.server_id || parsed.serverId || '');
-        const serverName = exact.server_name || parsed.serverName || getServerNameByServerId(serverId);
-        if(!isMain) return { ok:false, message:'메인 캐릭터만 코드 발급이 가능합니다.', character:{ characterName:rowName, mainCharacter:main, className:exact.class_name || '', serverId, serverName } };
-        return { ok:true, character:{ characterName:rowName || main, mainCharacter:main, className:exact.class_name || '', role:'MEMBER', serverId, serverName } };
-      }
-    }catch(_err){
-      // CHARACTER_MASTER 서버 이관 전에는 회원관리 이관을 막지 않는다.
-    }
-
-    return { ok:true, character:{ characterName:target, mainCharacter:target, className:'클래스 미확인', role:'MEMBER', serverId:parsed.serverId, serverName:parsed.serverName }, pendingCharacterMaster:true };
+    const parsed=parseCharacterLookupInput(name);
+    const target=String(parsed.characterName||'').trim();
+    if(!target)return {ok:false,message:'캐릭터 이름을 입력해 주세요.'};
+    return rpc('kinojo_web_lookup_main_character_v544',{
+      p_name:target,p_server_id:parsed.serverSuffix?Number(parsed.serverId):null
+    });
   }
 
   async function publicCodeRequest(command, extra={}){
@@ -467,17 +441,12 @@
   }
 
   async function getLatestAnnouncements(limit){
-    const q = 'select=*&is_active=eq.true&order=priority.desc,created_at.desc&limit=' + encodeURIComponent(limit || 5);
-    return request('announcements', { query:q });
+    const data=await rpc('kinojo_web_get_notices',{p_limit:Number(limit||5),p_scope:'ALL'});
+    if(data?.ok===false)throw new Error(data.message||'공지를 불러오지 못했습니다.');
+    return Array.isArray(data?.notices)?data.notices:[];
   }
 
-  async function getLockStatus(){
-    const rows = await request('crawl_locks', { query:'select=*&id=eq.global&limit=1' });
-    return Array.isArray(rows) ? rows[0] : null;
-  }
-
-
-
+  async function getLockStatus(){return runtimeGetStatus();}
 
   function normalizeAdminCharacterRow(row){
     if(!row) return null;
@@ -650,25 +619,25 @@
     if(!row) return null;
     return {
       id: row.id,
-      noticeType: row.notice_type || row.notice || '공지',
+      noticeType: row.noticeType || row.notice_type || row.notice || '공지',
       notice: row.notice || row.notice_type || '공지',
       author: row.author || '관리자',
       content: row.content || '',
-      isActive: row.is_active !== false,
+      isActive: (row.isActive ?? row.is_active) !== false,
       priority: Number(row.priority || 0),
-      createdBy: row.created_by || '',
-      createdAt: row.created_at || '',
-      updatedAt: row.updated_at || ''
+      createdBy: row.createdBy || row.created_by || '',
+      createdAt: row.createdAt || row.created_at || '',
+      updatedAt: row.updatedAt || row.updated_at || ''
     };
   }
 
   async function listAdminNotices(limit){
     assertAdmin();
-    const q = 'select=*&is_active=eq.true&order=priority.desc,created_at.desc&limit=' + encodeURIComponent(limit || 20);
-    const rows = await request('announcements', { query:q });
-    return { ok:true, notices:(Array.isArray(rows) ? rows : []).map(noticeFromRow).filter(Boolean) };
+    const data=await rpc('kinojo_admin_notice_list',{
+      p_pass_key:currentAdminSessionCredential(),p_limit:Number(limit||20),p_include_inactive:false
+    });
+    return {...data,notices:(Array.isArray(data?.notices)?data.notices:[]).map(noticeFromRow).filter(Boolean)};
   }
-
 
   async function adminEventNotice(command, extra={}){
     assertAdmin();
@@ -737,62 +706,36 @@
     return { ok:true, groups:[] };
   }
 
-  async function adminNotice(command, extra={}){
-    const admin = assertAdmin();
-    const normalizedCommand = String(command || '').trim();
-
-    if(normalizedCommand === 'listNotices' || normalizedCommand === 'listNotice'){
-      return listAdminNotices(extra.limit || 20);
-    }
-
-    if(normalizedCommand === 'createNotice'){
-      const content = String(extra.content || '').trim();
-      if(!content) return { ok:false, message:'공지 내용을 입력해 주세요.' };
-      const noticeType = normalizeNoticeType(extra.noticeType || extra.notice);
-      const body = {
-        notice_type: noticeType,
-        notice: noticeType,
-        author: noticeAuthorLabel(admin.account),
-        content: content.slice(0, 500),
-        is_active: true,
-        priority: Number(extra.priority || 0),
-        created_by: admin.account.mainCharacter || admin.role
-      };
-      const rows = await request('announcements', { method:'POST', headers:{ Prefer:'return=representation' }, body });
-      const row = Array.isArray(rows) ? rows[0] : rows;
-      return { ok:true, notice:noticeFromRow(row) };
-    }
-
-    if(normalizedCommand === 'updateNotice'){
-      const id = Number(extra.id || 0);
-      if(!id) return { ok:false, message:'수정할 공지 ID가 없습니다.' };
-      const content = String(extra.content || '').trim();
-      if(!content) return { ok:false, message:'공지 내용을 입력해 주세요.' };
-      const noticeType = normalizeNoticeType(extra.noticeType || extra.notice);
-      const body = {
-        notice_type: noticeType,
-        notice: noticeType,
-        content: content.slice(0, 500),
-        priority: Number(extra.priority || 0),
-        updated_at: new Date().toISOString()
-      };
-      const rows = await request('announcements', { method:'PATCH', query:'id=eq.' + encodeURIComponent(id), headers:{ Prefer:'return=representation' }, body });
-      const row = Array.isArray(rows) ? rows[0] : rows;
-      return { ok:true, notice:noticeFromRow(row), message:'공지사항이 수정되었습니다.' };
-    }
-
-    if(normalizedCommand === 'deleteNotice' || normalizedCommand === 'disableNotice'){
-      const id = Number(extra.id || 0);
-      if(!id) return { ok:false, message:'삭제할 공지 ID가 없습니다.' };
-      await request('announcements', {
-        method:'PATCH',
-        query:'id=eq.' + encodeURIComponent(id),
-        body:{ is_active:false, updated_at:new Date().toISOString() }
+  async function adminNotice(command,extra={}){
+    assertAdmin();
+    const cmd=String(command||'').trim(),credential=currentAdminSessionCredential();
+    if(cmd==='listNotices'||cmd==='listNotice')return listAdminNotices(extra.limit||20);
+    const params={p_pass_key:credential};
+    if(cmd==='createNotice'||cmd==='updateNotice'){
+      const content=String(extra.content||'').trim();
+      if(!content)return {ok:false,message:'공지 내용을 입력해 주세요.'};
+      Object.assign(params,{
+        p_notice_type:normalizeNoticeType(extra.noticeType||extra.notice),
+        p_content:content.slice(0,500),p_title:extra.title||null,
+        p_priority:Number(extra.priority||0),p_display_scope:extra.displayScope||'ALL',
+        p_starts_at:extra.startsAt||null,p_ends_at:extra.endsAt||null
       });
-      return { ok:true, id, message:'공지사항이 삭제되었습니다.' };
+      if(cmd==='updateNotice'){
+        params.p_notice_id=Number(extra.id||0);
+        if(!params.p_notice_id)return {ok:false,message:'수정할 공지 ID가 없습니다.'};
+        params.p_is_active=extra.isActive!==false;
+      }
+      const data=await rpc(cmd==='createNotice'?'kinojo_admin_notice_create':'kinojo_admin_notice_update',params);
+      return {...data,notice:noticeFromRow(data?.notice)};
     }
-
-    return { ok:false, message:'알 수 없는 공지 관리자 명령입니다.' };
+    if(['deleteNotice','disableNotice','restoreNotice'].includes(cmd)){
+      const id=Number(extra.id||0);
+      if(!id)return {ok:false,message:'공지 ID가 없습니다.'};
+      return rpc(cmd==='restoreNotice'?'kinojo_admin_notice_restore':'kinojo_admin_notice_disable',{
+        p_pass_key:credential,p_notice_id:id
+      });
+    }
+    return {ok:false,message:'알 수 없는 공지 관리자 명령입니다.'};
   }
 
   function todayVisitKey(){
@@ -822,42 +765,12 @@
     return stats;
   }
 
-  async function getVisitStats(){
-    const date = todayVisitKey();
-    const rows = await request('visit_stats', { query:'select=*&order=date_key.asc' });
-    return sumVisitRows(Array.isArray(rows) ? rows : [], date);
+  async function getVisitStats(){return getVisitStatsFromServer(currentPageKey(),false);}
+
+  async function adminVisit(){
+    assertAdmin();
+    return {ok:false,code:'LEGACY_VISIT_ADJUSTMENT_RETIRED',message:'방문 통계는 서버에서 자동 집계됩니다.'};
   }
-
-  async function adminVisit(mode, amount){
-    const admin = assertAdmin();
-    if(normalizeRole(admin.role, admin.level) !== 'MASTER') return { ok:false, message:'방문자수 조정은 MASTER 전용 기능입니다.' };
-    const date = todayVisitKey();
-    const rows = await request('visit_stats', { query:'select=*&date_key=eq.' + encodeURIComponent(date) + '&limit=1' });
-    const current = Array.isArray(rows) && rows[0] ? rows[0] : null;
-    const delta = Math.max(-9999, Math.min(9999, Number(amount || 0)));
-    const isTotal = String(mode || '').startsWith('total');
-    const isMinus = String(mode || '').endsWith('Minus');
-    const signed = isMinus ? -Math.abs(delta) : Math.abs(delta);
-    const next = {
-      date_key: date,
-      visit_count: Number(current && current.visit_count || 0),
-      boost_count: Number(current && current.boost_count || 0),
-      note: 'admin adjust ' + mode + ' ' + signed,
-      updated_at: new Date().toISOString()
-    };
-    if(isTotal) next.boost_count = Math.max(0, next.boost_count + signed);
-    else next.visit_count = Math.max(0, next.visit_count + signed);
-    if(current){
-      await request('visit_stats', { method:'PATCH', query:'date_key=eq.' + encodeURIComponent(date), headers:{ Prefer:'return=representation' }, body:next });
-    }else{
-      await request('visit_stats', { method:'POST', headers:{ Prefer:'return=representation' }, body:next });
-    }
-    const stats = await getVisitStats();
-    return { ok:true, stats };
-  }
-
-
-
 
   function snakeOrCamel(row, snake, camel, fallback){
     if(row && row[camel] !== undefined && row[camel] !== null) return row[camel];
@@ -992,23 +905,21 @@
     });
   }
 
+  let hallSuggestionPending=null;
   async function submitHallSuggestion(extra={}){
-    const title = String(extra.title || '').trim().slice(0, 80);
-    const proposer = String(extra.proposer || '').trim().slice(0, 60);
-    const memo = String(extra.memo || '').trim().slice(0, 1000);
-    if(!title) return { ok:false, message:'항목 이름을 입력해 주세요.' };
-    const authAccount = currentAccount();
-    const body = {
-      title,
-      proposer,
-      memo,
-      status:'PENDING',
-      actor_main_character: String(authAccount && (authAccount.mainCharacter || authAccount.mainCharacterName) || proposer || '').trim(),
-      session_token: String(extra.sessionToken || extra.session_token || '').trim()
-    };
-    const rows = await request('hall_suggestions', { method:'POST', headers:{ Prefer:'return=representation' }, body });
-    const row = Array.isArray(rows) ? rows[0] : rows;
-    return { ok:true, message:'제안이 접수되었습니다.', suggestion:row || null };
+    const title=String(extra.title||'').trim(),proposer=String(extra.proposer||'').trim(),memo=String(extra.memo||'').trim();
+    if(!title||Array.from(title).length>80||Array.from(proposer).length>60||Array.from(memo).length>1000)return {ok:false,message:'입력 길이를 확인해 주세요.'};
+    const credential=currentServerSessionCredential();
+    const signature=JSON.stringify([title,proposer,memo]);
+    if(!hallSuggestionPending||hallSuggestionPending.credential!==credential||hallSuggestionPending.signature!==signature){
+      hallSuggestionPending={credential,signature,requestKey:window.crypto?.randomUUID?.()||('suggestion-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2))};
+    }
+    const requestKey=hallSuggestionPending.requestKey;
+    const data=await rpc('kinojo_web_hall_suggestion_submit_v544',{
+      p_credential:credential,p_request_key:requestKey,p_title:title,p_proposer:proposer,p_memo:memo
+    });
+    if(data?.ok===true&&hallSuggestionPending?.requestKey===requestKey)hallSuggestionPending=null;
+    return data;
   }
 
   async function getSanctuaryMaster(){
@@ -2049,51 +1960,8 @@
   }
 
   async function verifyPassKey(passKey){
-    const code = normalizePassKey(passKey);
-    if(!code) throw new Error('PASS KEY를 입력해 주세요.');
-    const data = await rpc('kinojo_member_verify_session_264', {
-      p_pass_key:code,
-      p_tool_name:'KINOJO_WEB'
-    });
-    if(!data || data.ok === false) throw new Error(data?.message || 'PASS KEY가 없거나 비활성화된 계정입니다.');
-    const row = data.profile || {};
-    const level = Number(row.level || 0);
-    const role = normalizeRole(row.role, level);
-    const roleLevel = level || roleToLevel(role, 0);
-    if(roleLevel < 1) throw new Error('조회 권한이 없는 계정입니다. Member 이상만 사용할 수 있습니다.');
-    const profile = {
-      id: row.id,
-      mainCharacter: row.mainCharacter || row.main_character_name || '',
-      mainCharacterName: row.mainCharacterName || row.main_character_name || '',
-      role,
-      roleLabel: row.roleLabel || row.role_label || getRoleLabel(role, roleLevel),
-      level: roleLevel,
-      canLike: (row.canLike ?? row.can_like) !== false,
-      canSuggest: (row.canSuggest ?? row.can_suggest) !== false,
-      canManage: (row.canManage ?? row.can_manage) === true || roleLevel >= 3,
-      permissions: normalizePermissions(row.permissions),
-      source: 'supabase',
-      passCode: code,
-      passKey: code,
-      verifiedAt: Date.now()
-    };
-    return {
-      ok:true,
-      session:{
-        token:'supabase:' + row.id + ':' + Date.now(),
-        mainCharacter: profile.mainCharacter,
-        role: profile.role,
-        roleLabel: profile.roleLabel,
-        level: profile.level,
-        permissions: profile.permissions,
-        source:'supabase',
-        passCode: code,
-        passKey: code,
-        lastActivityAt: Date.now()
-      },
-      account: profile,
-      profile
-    };
+    if(!window.KinojoAuthService?.verifyPassKey)throw new Error('Server 인증 모듈을 불러오지 못했습니다.');
+    return window.KinojoAuthService.verifyPassKey(passKey);
   }
 
   window.KinojoSupabase = {
