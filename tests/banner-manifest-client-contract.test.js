@@ -306,9 +306,20 @@ async function verifyPlaybackRuntime(){
     vm.runInNewContext(source,liveContext,{filename:'ui/kinojo-banner-runtime.js'});
     const live=liveContext.window.KinojoBannerRuntime;
     const one=await live.fetchManifest('HOME','MAIN');
-    const two=await live.fetchManifest('HOME','MAIN');
-    assert.equal(one.contract,'banner-public-manifest-v1');assert.equal(one.pageCode,'HOME');assert.equal(one.slotCode,'MAIN');assert.deepEqual(two,one);
-    assert.equal(live.getMeta('HOME','MAIN').httpStatus,304,'second live request must revalidate with ETag/304');
+    let previous=one,revalidated=false;
+    assert.equal(one.contract,'banner-public-manifest-v1');assert.equal(one.pageCode,'HOME');assert.equal(one.slotCode,'MAIN');
+    for(let attempt=0;attempt<3;attempt+=1){
+      const current=await live.fetchManifest('HOME','MAIN');
+      const status=live.getMeta('HOME','MAIN').httpStatus;
+      if(status===304){assert.deepEqual(current,previous);revalidated=true;break;}
+      // A normal five-minute rotation may occur between two real requests.
+      assert.equal(status,200,'revalidation must return cached 304 or a new rotation');
+      assert.equal(current.contract,one.contract);assert.equal(current.pageCode,one.pageCode);assert.equal(current.slotCode,one.slotCode);
+      assert.notEqual(current.manifestVersion,previous.manifestVersion,'200 must identify a new manifest');
+      assert.ok(Date.parse(current.validUntil)>Date.parse(previous.validUntil),'200 must advance the rotation boundary');
+      previous=current;
+    }
+    assert.equal(revalidated,true,'an unchanged live manifest must revalidate with ETag/304');
 
     const liveSideTargets=[
       ['HOME','LEFT'],['HOME','RIGHT'],['HOF','LEFT'],['HOF','RIGHT'],
