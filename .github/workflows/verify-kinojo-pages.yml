@@ -397,6 +397,7 @@ jobs:
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/platform-rpc-only-acl.test.cjs
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/platform-auth-budget.test.cjs
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/platform-retention-family.test.cjs
+          PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/storage-backup-transport.test.cjs
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/platform-character-summary.test.cjs
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/sanctuary-list-retry-v480.test.cjs
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node tests/roster-family-unlink.test.cjs

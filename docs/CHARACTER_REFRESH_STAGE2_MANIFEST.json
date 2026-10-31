@@ -156,7 +156,7 @@
     },
     {
       "path": "supabase/config.toml",
-      "sha256": "3ba6a27818230459496c3e2451644d2fca27dd8fdcb03cdcb2c9637d75ce0fb8"
+      "sha256": "d7adf39efd438aebc8508d71bd6a98570ca0622a76ea2b890b8ec87c3352d802"
     },
     {
       "path": "supabase/migrations/20260909082438_character_activity_lifecycle.sql",
