@@ -725,7 +725,7 @@ window.KinojoSupabase = {
     assert(html.includes('kinojo-character-reaction.js?cache=2026092401'));
     assert(html.includes('legion-tree.css?cache=2026090707'));
     assert(html.includes('legion-tree-editor.js?cache=2026090105'));
-    assert(html.includes('kinojo-supabase-features.js?cache=2026090804'));
+    assert(html.includes('kinojo-supabase-features.js?cache=2026103101'));
     assert(html.includes('legion-tree.js?cache=2026090802'));
     assert(!html.includes('legion-tree.js?cache=2026082403'));
   }
