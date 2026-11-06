@@ -353,3 +353,32 @@ button.is-requirement-pending{opacity:.58}
 .sanctuary-management-composer-actions>.sanctuary-management-save-row{display:grid;grid-template-columns:minmax(0,1fr) auto;justify-content:stretch}.sanctuary-management-save-row>div:last-child{justify-self:end}
 
 @media(min-width:700px) and (max-height:500px){.sanctuary-management-composer-middle{grid-template-rows:430px}.sanctuary-management-candidate-rail{min-height:430px}}
+
+/* Remove redundant copy and reserve enough room for all five compact rows. */
+.sanctuary-management-composer{grid-template-rows:96px minmax(0,1fr)}
+.sanctuary-management-composer-title{padding:8px 12px;gap:5px;align-content:start;grid-template-rows:44px 34px;overflow:hidden}
+.sanctuary-management-composer-title h2{margin:0}
+.sanctuary-management-composer-title [data-header-force-summary]{grid-column:1/-1;min-width:0}
+.sanctuary-management-composer-title .sanctuary-management-force-requirement-summary{height:34px;padding:3px 8px;box-sizing:border-box;justify-content:flex-start}
+.sanctuary-management-composer-title .sanctuary-management-force-requirement-summary>button{margin-left:auto}
+.sanctuary-management-composer-title .sanctuary-management-force-difficulty-editor{margin-left:12px}
+.sanctuary-management-roster{grid-template-rows:auto auto;padding:8px 10px;gap:7px}
+.sanctuary-management-composer-actions{height:112px;grid-template-rows:minmax(0,1fr) 44px}
+.sanctuary-management-save-row{padding:4px 12px}
+.sanctuary-management-save-row button{height:34px;min-height:34px}
+.sanctuary-management-placement-card-body{padding:6px 10px;gap:7px}
+.sanctuary-management-settings-group{padding:5px 8px;gap:4px}
+.sanctuary-management-settings-group h4{font-size:9px;line-height:12px}
+.sanctuary-management-settings-group button{height:32px;min-height:32px}
+.sanctuary-management-settings-group [data-placement-options-body]{margin-top:3px}
+@media(max-width:1100px){.sanctuary-management-composer{grid-template-rows:96px minmax(0,1fr)}.sanctuary-management-composer-actions{height:112px;grid-template-rows:minmax(0,1fr) 44px}}
+@media(max-width:699px){.sanctuary-management-composer-title{padding:8px;grid-template-rows:44px 34px}.sanctuary-management-composer-actions{height:174px;grid-template-rows:minmax(0,1fr) 44px}.sanctuary-management-placement-card-body{grid-auto-rows:56px;gap:6px}.sanctuary-management-roster{padding:6px;gap:6px}.sanctuary-management-composer-middle{grid-template-rows:400px 370px}.sanctuary-management-candidate-rail{min-height:370px}}
+@media(max-height:500px){.sanctuary-management-composer{grid-template-rows:96px minmax(0,1fr)}}
+
+.sanctuary-management-composer-title .sanctuary-management-force-requirement-summary{flex-wrap:nowrap;align-items:center}.sanctuary-management-composer-title .sanctuary-management-force-difficulty-editor{display:flex;order:0;width:auto;max-width:220px;min-width:0;flex:1;gap:5px;margin-left:8px}.sanctuary-management-composer-title .sanctuary-management-force-difficulty-editor button{height:26px;flex:1;padding:2px 5px;white-space:nowrap}
+
+.sanctuary-management-composer-title{padding-block:6px}
+
+.sanctuary-management-composer{grid-template-rows:88px minmax(0,1fr)}.sanctuary-management-composer-title{padding-block:3px;row-gap:4px}
+
+.sanctuary-management-composer-title label{gap:3px}.sanctuary-management-composer-title input{height:30px}

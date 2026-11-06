@@ -25,17 +25,17 @@
     {
       "path": "sanctuary/index.html",
       "bytes": 12352,
-      "sha256": "8f7e01e0ff4ea95a72ef03b30d0788b77474136197fc7de0265101fa234a7462"
+      "sha256": "e8c5dcfff10d690e35bb13a040921837b50514dfba9db03a3cbbcf8299f4165c"
     },
     {
       "path": "m/sanctuary/index.html",
       "bytes": 12027,
-      "sha256": "d7466ca892e3cf2a5fb2f43703e93e26644417bcb455bb7b84d4769d75cf6555"
+      "sha256": "9e606b4bf5a24b9d481014f3e75de12474ca80705df565edd7996dbc4f18162c"
     },
     {
       "path": "sanctuary-management/css/sanctuary-management-draft.css",
-      "bytes": 86621,
-      "sha256": "6641d8074275afc9fbc39e5f9cd7e6d2085bd88495a8df910ceaa0ee917a61b7"
+      "bytes": 89529,
+      "sha256": "74de74136f1ff6895416146ee6d5015e49060e24d03b9d9c720611a09c24f4f7"
     },
     {
       "path": "sanctuary-management/js/sanctuary-management.js",
@@ -44,8 +44,8 @@
     },
     {
       "path": "sanctuary-management/js/sanctuary-management-draft.js",
-      "bytes": 148623,
-      "sha256": "e293f65e95309f5cc3f8fe435c992dc720cf4a212e2962d5f55440298b2cd7b9"
+      "bytes": 147452,
+      "sha256": "aa74a247820ce1df2a42e64bf0248e68358915fb056f58a4aa5feb0bdace9d8c"
     },
     {
       "path": "sanctuary-management/js/sanctuary-management-support.js",
@@ -76,7 +76,7 @@
   "layoutFollowup": {
     "date": "2026-11-06",
     "base": "edf4880e45ed82e90d9b2c3a2a8378998de4480a",
-    "scope": "WEB only: compact58px slots; four labeled footer tool groups and separate save row; full-height schedule side card",
+    "scope": "WEB only: remove redundant copy/fold control; compact footer and selected-force header;10 slots visible together on standard viewports",
     "databaseChanged": false
   }
 }
