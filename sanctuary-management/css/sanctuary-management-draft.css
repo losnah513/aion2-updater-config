@@ -359,3 +359,5 @@ button.is-requirement-pending{opacity:.58}
 [data-placement-options-body]:empty{display:none}
 
 .sanctuary-management-composer-title>div>span{display:block;line-height:12px;margin-bottom:3px}
+
+/* Layout release 2026110606: fresh Pages deployment after stalled file sync. */

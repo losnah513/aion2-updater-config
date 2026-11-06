@@ -1,3 +1,7 @@
+## Sanctuary Pages release recovery · 2026-11-06
+
+PR518 contains the verified layout correction. Its Pages run42164187091 timed out in file sync twice; rebuilding that run produced two same-named Pages artifacts. Release2026110606 starts a fresh commit/run while preserving the exact layout behavior. Only the cache token, a CSS release comment and deployment metadata change here. No team data, database, Edge or UI logic changes. Evidence continues in Sanctuary LOG88.
+
 ## Sanctuary editor space allocation · 2026-11-06
 
 The editor reserves complete title lines and allocates the remaining height between five58px card rows and the footer tools. Desktop height is capped668px, with110px title/force header and168px tools/save footer; short windows use100px/124px, and compact layouts reserve their navigation separately. Duplicate layout overrides were consolidated. The title eyebrow has an explicit12px line height, empty placement wrappers are hidden, and the optional main selector shares a single row with its label. Twelve viewport checks now require the complete title above force controls, no vertical overflow in any basic tool group, under30px blank space below the fifth card row, all10 slots visible at standard sizes, and accessible lower slots/save on small screens. Existing editor commands, ownership and operational rosters are unchanged. Evidence: Sanctuary LOG88.
