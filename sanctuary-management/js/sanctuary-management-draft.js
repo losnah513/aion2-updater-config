@@ -33,7 +33,7 @@
   const balanced=()=>placementMode()==='BALANCED';
   const personKey=character=>character?.guestId?'g:'+character.guestId:Number(character?.characterId)?'c:'+Number(character.characterId):'';
   let balanceTimer=0,balanceSequence=0,balancePending=null,balanceApplying=false,compositionVersion=0,lastBalancedVersion=-1;
-  let draftGuestIds=new Set(),unlockedSlotIds=new Set(),familyPanelOpen=false,forcesChosen=true,additionPhase='',additionRoot='';
+  let draftGuestIds=new Set(),unlockedSlotIds=new Set(),familyPanelOpen=false,forcesChosen=true,additionPhase='',additionRoot='',placementOptionsOpen=false;
 
   function queueBalance(){
     if(balanceApplying||!balanced()||!state.layer||state.layer.hidden)return;
@@ -82,8 +82,9 @@
     return '<section class="sanctuary-management-placement-controls" aria-label="배치 방식"><div role="group" aria-label="수동 또는 균형 배치">'
       +['MANUAL','BALANCED'].map(m=>'<button type="button" data-placement-mode="'+m+'" aria-pressed="'+String(mode===m)+'">'+(m==='MANUAL'?'수동배치':'균형랜덤배치')+'</button>').join('')
       +'<button type="button" data-balance-open>전투력 기준 재배치</button><button type="button" data-team-family-open aria-expanded="'+String(familyPanelOpen)+'">본캐·부캐 연결</button></div>'
+      +'<button type="button" class="sanctuary-management-placement-toggle" data-placement-options-toggle aria-expanded="'+String(placementOptionsOpen)+'">'+(placementOptionsOpen?'배치 설정 접기':'배치 설정 펼치기')+' · '+selected+'포스</button><div data-placement-options-body'+(!placementOptionsOpen?' hidden':'')+'>'
       +(!editing?'<div data-placement-force-picker'+(!mode?' hidden':'')+'><strong>운영할 포스 수</strong><div role="group" aria-label="포스 수 선택">'+Array.from({length:9},(_,i)=>'<button type="button" data-placement-force-count="'+(i+1)+'" aria-pressed="'+String(forcesChosen&&selected===i+1)+'">'+(i+1)+'포스</button>').join('')+'</div><small>본캐·부캐 비율과 관계없이 1~9포스를 선택할 수 있습니다.</small></div>':'')
-      +'<p data-placement-help>'+(!mode?'배치 방식을 먼저 선택해 주세요.':mode==='BALANCED'?'인원 변경·즉시 참가·승인·이탈 때 잠금 외 인원을 다시 배치합니다. 실제 캐릭터만 추가할 수 있습니다.':'지정한 위치를 유지합니다. 필요할 때 이번 편성만 재배치할 수 있습니다.')+'</p></section>';
+      +'<p data-placement-help>'+(!mode?'배치 방식을 먼저 선택해 주세요.':mode==='BALANCED'?'인원 변경·즉시 참가·승인·이탈 때 잠금 외 인원을 다시 배치합니다. 실제 캐릭터만 추가할 수 있습니다.':'지정한 위치를 유지합니다. 필요할 때 이번 편성만 재배치할 수 있습니다.')+'</p></div></section>';
   }
   function additionControlsMarkup(){
     if(!placementMode()||(!state.sourceTeamId&&!forcesChosen))return '';
@@ -394,7 +395,7 @@
   function handleDraftWheel(event){
     if(event.ctrlKey||Math.abs(event.deltaY)<=Math.abs(event.deltaX))return;
     const linkedScroller=state.layer?.querySelector('.sanctuary-management-linked-alt-panel.is-open>div');
-    const localScroller=event.target.closest?.('.sanctuary-management-schedule-scroll,.sanctuary-management-force-list,.sanctuary-management-candidate-list,.sanctuary-management-builder-dialog');
+    const localScroller=event.target.closest?.('.sanctuary-management-schedule-scroll,.sanctuary-management-force-list,.sanctuary-management-candidate-list,.sanctuary-management-roster,.sanctuary-management-composer-title,[data-placement-options-body],.sanctuary-management-builder-layout,.sanctuary-management-builder-dialog');
     const scroller=linkedScroller||localScroller;if(!scroller||scroller.scrollHeight<=scroller.clientHeight+1)return;
     const canMove=event.deltaY>0?scroller.scrollTop+scroller.clientHeight<scroller.scrollHeight-1:scroller.scrollTop>0;if(!canMove)return;
     event.preventDefault();scroller.scrollBy({top:event.deltaY,left:0,behavior:'smooth'});requestAnimationFrame(()=>syncScrollFade(scroller));
@@ -672,9 +673,13 @@
 
   function renderRosterState(){
     const rail=state.layer?.querySelector('.sanctuary-management-force-rail');
+    const forceScroll=rail?.querySelector('.sanctuary-management-force-list')?.scrollTop||0;
     if(rail)rail.innerHTML=forceRailMarkup();
+    const forceList=rail?.querySelector('.sanctuary-management-force-list');if(forceList)forceList.scrollTop=forceScroll;
     const roster=state.layer?.querySelector('.sanctuary-management-roster');
+    const rosterScroll=roster?.getAttribute('aria-label')===selectedForce()?.forceNo+'포스 Server 슬롯'?roster.scrollTop:0;
     if(roster)roster.outerHTML=rosterMarkup();
+    const nextRoster=state.layer?.querySelector('.sanctuary-management-roster');if(nextRoster)nextRoster.scrollTop=rosterScroll;
     const candidates=state.layer?.querySelector('.sanctuary-management-candidate-rail');
     if(candidates)candidates.outerHTML=candidateMarkup();
     const linked=state.layer?.querySelector('[data-linked-alt-panel]');
@@ -724,7 +729,6 @@
                 +rosterMarkup()
                 +candidateMarkup()
               +'</div>'
-              +'<footer class="sanctuary-management-composer-actions"><div class="sanctuary-management-draft-status-wrap"><p class="sanctuary-management-draft-status'+(state.tone?' is-'+escapeHtml(state.tone):'')+'" data-draft-status role="status">'+escapeHtml(state.message||defaultStatus())+'</p>'+listRetry+'</div><div><button type="submit" class="is-primary"'+(busy?' disabled':'')+'>'+submitLabel+'</button><button type="button" data-draft-reset'+(busy?' disabled':'')+'>초기화</button><button type="button" data-draft-close'+(busy?' disabled':'')+'>닫기</button></div></footer>'
             +'</section>'
             +'<div class="sanctuary-management-builder-side'+(state.linkedAlts?' has-linked-alts':'')+'">'
               +linkedAltPanelMarkup()
@@ -746,6 +750,7 @@
               +'</section>'
             +'</div>'
           +'</div>'
+              +'<footer class="sanctuary-management-composer-actions"><div class="sanctuary-management-draft-status-wrap"><p class="sanctuary-management-draft-status'+(state.tone?' is-'+escapeHtml(state.tone):'')+'" data-draft-status role="status">'+escapeHtml(state.message||defaultStatus())+'</p>'+listRetry+'</div><div><button type="submit" class="is-primary"'+(busy?' disabled':'')+'>'+submitLabel+'</button><button type="button" data-draft-reset'+(busy?' disabled':'')+'>초기화</button><button type="button" data-draft-close'+(busy?' disabled':'')+'>닫기</button></div></footer>'
         +'</form>'+balancePanelMarkup()+familyPanelMarkup()
       +'</div>';
   }
@@ -757,7 +762,7 @@
     state.team=team&&typeof team==='object'?clone(team):makeLocalTeam(state.creationMode);
     if(state.team){state.creationMode=value(state.team.mode).toUpperCase()==='PARTICIPATION'?'PARTICIPATION':'FIXED';state.joinPolicy=value(state.team.joinPolicy).toUpperCase()==='APPROVAL'?'APPROVAL':'INSTANT';}
     state.selectedForceId=Number(state.team?.forces?.[0]?.forceId||0);
-    clearTimeout(balanceTimer);balanceSequence++;compositionVersion=0;lastBalancedVersion=-1;familyPanelOpen=false;draftGuestIds=new Set();unlockedSlotIds=new Set();forcesChosen=Boolean(state.sourceTeamId);additionPhase=state.sourceTeamId?'':'MAIN';additionRoot='';state.rebalanceOnce=false;state.team.placementMode=state.sourceTeamId?(state.team.placementMode||'MANUAL'):'';
+    clearTimeout(balanceTimer);balanceSequence++;compositionVersion=0;lastBalancedVersion=-1;familyPanelOpen=false;draftGuestIds=new Set();unlockedSlotIds=new Set();forcesChosen=Boolean(state.sourceTeamId);additionPhase=state.sourceTeamId?'':'MAIN';additionRoot='';placementOptionsOpen=false;state.rebalanceOnce=false;state.team.placementMode=state.sourceTeamId?(state.team.placementMode||'MANUAL'):'';
     refreshLocalTeam();
     state.selectedSlotId=0;state.moveFromSlotId=0;state.draggedSlotId=0;state.dragSwitching=false;state.requirementTarget=null;state.classTargetSlotId=0;state.showCreatorCandidates=false;state.requestKey='';state.forceSaveRequestKey='';state.forceAddRequestKey='';state.slotRequestKey='';state.moveRequestKey='';state.message='';state.tone='';state.saving=false;state.mutating=Boolean(state.sourceTeamId);state.balancePreview=null;state.balanceAppliedToken='';state.balanceAppliedSignature='';state.balanceStableSeed='team-balance-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);state.baselineCompositionSignature=compositionSignature(false);resetCharacterLookup();
     openLayer(opener||state.opener);
@@ -1192,10 +1197,11 @@
   }
 
   function handleClick(event){
+    if(event.target.closest('[data-placement-options-toggle]')){placementOptionsOpen=!placementOptionsOpen;const controls=state.layer.querySelector('.sanctuary-management-placement-controls');if(controls)controls.outerHTML=placementControlsMarkup();applyPermissionControls();return;}
     const placement=event.target.closest('[data-placement-mode]');
     if(placement&&!placement.disabled){
       const next=placement.dataset.placementMode;if(next==='BALANCED'&&teamSlots().some(item=>item.slot.character?.isRandomAlt)){setStatus('균형 배치로 전환하려면 랜덤 부캐를 실제 캐릭터로 확정하거나 제거해 주세요.');return;}
-      state.team.placementMode=next;forcesChosen=Boolean(state.sourceTeamId)||next==='MANUAL';
+      state.team.placementMode=next;forcesChosen=Boolean(state.sourceTeamId)||next==='MANUAL';placementOptionsOpen=!forcesChosen;
       const controls=state.layer.querySelector('.sanctuary-management-placement-controls');if(controls)controls.outerHTML=placementControlsMarkup();
       invalidateBalanceProposal();renderRosterState();applyPermissionControls();return;
     }
@@ -1204,7 +1210,7 @@
       const count=Number(countButton.dataset.placementForceCount);
       if(teamForces().slice(count).some(force=>force.occupiedCount)){setStatus('인원이 있는 포스를 줄이려면 해당 인원을 먼저 이동하거나 제거해 주세요.');return;}
       while(teamForces().length<count)addForce();while(teamForces().length>count)removeForce(teamForces().at(-1).forceId);
-      forcesChosen=true;const controls=state.layer.querySelector('.sanctuary-management-placement-controls');if(controls)controls.outerHTML=placementControlsMarkup();
+      forcesChosen=true;placementOptionsOpen=false;const controls=state.layer.querySelector('.sanctuary-management-placement-controls');if(controls)controls.outerHTML=placementControlsMarkup();
       const empty=teamSlots().find(item=>!item.slot.occupied);if(empty){state.selectedForceId=Number(empty.force.forceId);state.selectedSlotId=Number(empty.slot.slotId);}
       renderRosterState();applyPermissionControls();queueBalance();return;
     }
