@@ -132,7 +132,7 @@
     },
     {
       "path": "core/kinojo-supabase-features.js",
-      "sha256": "ce2a3104cd2f1d3de8683fc537ecf88835b6e9a8c04e778ea8aecf294d5009c4"
+      "sha256": "2f4633d16a880cc63d6253eee1cae9efb80901363935987ac59c817faa1ea261"
     },
     {
       "path": "admin/js/admin-characters.js",
@@ -207,5 +207,15 @@
     "20260909082438_character_activity_lifecycle.sql",
     "20260909092154_character_activity_relation_recheck.sql"
   ],
-  "inactiveLifecycleMigration": "20260909143826_character_activity_inactive.sql"
+  "inactiveLifecycleMigration": "20260909143826_character_activity_inactive.sql",
+  "compatibilityUpdates": [
+    {
+      "date": "2026-11-06",
+      "scope": "Sanctuary Stage16 shared feature adapter only",
+      "path": "core/kinojo-supabase-features.js",
+      "previousSha256": "ce2a3104cd2f1d3de8683fc537ecf88835b6e9a8c04e778ea8aecf294d5009c4",
+      "sha256": "2f4633d16a880cc63d6253eee1cae9efb80901363935987ac59c817faa1ea261",
+      "validation": "67 Character Refresh offline contracts/browser fixtures passed; migration list and deploymentAuthorized remain unchanged."
+    }
+  ]
 }
