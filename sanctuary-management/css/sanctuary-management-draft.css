@@ -378,3 +378,5 @@ button.is-requirement-pending{opacity:.58}
 .sanctuary-management-composer-title .sanctuary-management-force-requirement-summary{flex-wrap:nowrap;align-items:center}.sanctuary-management-composer-title .sanctuary-management-force-difficulty-editor{display:flex;order:0;width:auto;max-width:220px;min-width:0;flex:1;gap:5px;margin-left:8px}.sanctuary-management-composer-title .sanctuary-management-force-difficulty-editor button{height:26px;flex:1;padding:2px 5px;white-space:nowrap}
 
 .sanctuary-management-composer-title{padding-block:6px}
+
+.sanctuary-management-composer{grid-template-rows:88px minmax(0,1fr)}.sanctuary-management-composer-title{padding-block:3px;row-gap:4px}

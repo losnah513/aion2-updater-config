@@ -1,6 +1,6 @@
 ## Sanctuary all-force roster fit · 2026-11-06
 
-Removed redundant footer help text, the placement fold button and the composer description. The selected force/difficulty/conditions row now sits in the compact96px header, leaving only party labels above the58px character cards. The desktop footer is112px including a separate44px save row; mobile wraps the four tool groups into compact rows. Layout checks require all10 slots to be simultaneously visible before scrolling at widths700px+ and heights650px+, plus last-slot access on smaller screens. Existing force/difficulty/party-condition handlers and authenticated saves are unchanged. Evidence: Sanctuary LOG87.
+Removed redundant footer help text, the placement fold button and the composer description. The selected force/difficulty/conditions row now sits in the compact88px header, leaving only party labels above the58px character cards. The desktop footer is112px including a separate44px save row; mobile wraps the four tool groups into compact rows. Layout checks require all10 slots to be simultaneously visible before scrolling at widths700px+ and heights650px+, plus last-slot access on smaller screens. Existing force/difficulty/party-condition handlers and authenticated saves are unchanged. Evidence: Sanctuary LOG87.
 
 ## Sanctuary compact cards and footer controls · 2026-11-06
 
