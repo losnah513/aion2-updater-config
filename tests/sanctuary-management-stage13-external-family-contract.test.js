@@ -35,7 +35,7 @@ assert.equal(migration.includes("update private.sanctuary_character_owners_v412 
 assert.ok(migration.includes("character_relation=v_family_relation"),'existing placements must be corrected only for the explicitly registered character');
 
 for(const token of [
-  'const API_VERSION="2.5"','const DATABASE_CONTRACT="480"',
+  'const API_VERSION="2.6"','const DATABASE_CONTRACT="554"',
   '"character-list-retry"','kinojo_sanctuary_management_character_search_v480',
   'kinojo_sanctuary_management_official_record_v480',
   'kinojo_sanctuary_management_official_materialize_v480',
@@ -53,7 +53,7 @@ for(const token of [
 ])assert.ok(feature.includes(token),`Feature bridge v480 missing ${token}`);
 
 for(const token of [
-  'const API_VERSION=2.5','const SCHEMA_VERSION=480',
+  'const API_VERSION=2.6','const SCHEMA_VERSION=554',
   'familyRelation','membershipRelation','retryCharacterList',
 ])assert.ok(client.includes(token),`Browser adapter v480 missing ${token}`);
 

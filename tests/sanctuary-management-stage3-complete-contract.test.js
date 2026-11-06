@@ -34,8 +34,8 @@ for(const token of [
 
 for(const token of [
   'EDGE_CONTRACT_AUTHORITY',
-  'const API_VERSION="2.5"',
-  'const DATABASE_CONTRACT="480"',
+  'const API_VERSION="2.6"',
+  'const DATABASE_CONTRACT="554"',
   'kinojo_sanctuary_management_bootstrap_v2',
   'kinojo_sanctuary_management_command_v2',
 ])assert.ok(edge.includes(token),`current Edge contract missing ${token}`);
@@ -48,8 +48,8 @@ for(const token of [
 assert.ok(rpc.includes("'kinojo_admin_member_list_v433'"),'ADMIN list v433 must accept the opaque Server session');
 
 for(const token of [
-  'const API_VERSION=2.5',
-  'const SCHEMA_VERSION=480',
+  'const API_VERSION=2.6',
+  'const SCHEMA_VERSION=554',
   'scheduleLabel',
   'data-sanctuary-edit-team',
   'data-sanctuary-archive-team',

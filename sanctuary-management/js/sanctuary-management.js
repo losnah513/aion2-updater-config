@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  const API_VERSION=2.5;
-  const SCHEMA_VERSION=480;
+  const API_VERSION=2.6;
+  const SCHEMA_VERSION=554;
   const SLOT_CLASS_CODES=Object.freeze(['ALL','TEMPLAR','GLADIATOR','ASSASSIN','RANGER','SORCERER','ELEMENTALIST','CLERIC','CHANTER','FIGHTER']);
   const CLASS_ICON_MAP=Object.freeze({'수호성':'templar','검성':'gladiator','살성':'assassin','궁성':'ranger','마도성':'sorcerer','정령성':'elementalist','치유성':'cleric','호법성':'chanter','권성':'fighter'});
   const CLASS_NAME_BY_CODE=Object.freeze({TEMPLAR:'수호성',GLADIATOR:'검성',ASSASSIN:'살성',RANGER:'궁성',SORCERER:'마도성',ELEMENTALIST:'정령성',CLERIC:'치유성',CHANTER:'호법성',FIGHTER:'권성'});
@@ -49,7 +49,7 @@
 
   function contractSupported(data){
     const api=Number(data?.apiVersion),schema=Number(data?.schemaVersion);
-    return api===API_VERSION&&schema===SCHEMA_VERSION||api===2.4&&schema===458||api===2.3&&schema===457||api===2.2&&(schema===454||schema===453||schema===452)||api===2.1&&schema===451||api===2&&schema===450||api===1.9&&schema===449||api===1.8&&schema===446;
+    return api===API_VERSION&&schema===SCHEMA_VERSION||api===2.5&&schema===480||api===2.4&&schema===458||api===2.3&&schema===457||api===2.2&&(schema===454||schema===453||schema===452)||api===2.1&&schema===451||api===2&&schema===450||api===1.9&&schema===449||api===1.8&&schema===446;
   }
   function combatPowerValue(input){const power=Number(input);return Number.isFinite(power)&&power>0?Math.round(power):0;}
   function itemLevelValue(input){const level=Number(input);return Number.isFinite(level)&&level>0?Math.round(level):0;}
@@ -82,7 +82,7 @@
     const requiredClassCode=value(item.requiredClassCode||'ALL').toUpperCase();
     const placementLocked=item.placementLocked===true;
     const character=item.character&&typeof item.character==='object'&&!Array.isArray(item.character)?Object.assign({},item.character,{power:combatPowerValue(item.character.power??item.character.latestPveCombatPower??item.character.latest_pve_combat_power),itemLevel:itemLevelValue(item.character.itemLevel??item.character.latestPveItemLevel??item.character.latest_pve_item_level)}):null;
-    if(character)character.bossRoles=item.bossRoles||{boss1:null,boss2:[]};
+    if(character)character.bossRoles=(character.isTemporaryGuest?character.bossRoles:item.bossRoles)||{boss1:null,boss2:[]};
     if(character?.isRandomAlt===true){character.randomClassCode=requiredClassCode;character.className=CLASS_NAME_BY_CODE[requiredClassCode]||'';}
     if(occupied!==Boolean(character))throw new Error('성역 관리 슬롯 점유 상태가 일치하지 않습니다.');
     const slot=Object.assign({},item,{
@@ -98,7 +98,8 @@
     });
     const actualValid=assignmentKind==='ACTUAL_CHARACTER'&&(!occupied||integer(character?.characterId)>0&&value(character?.name));
     const randomValid=assignmentKind==='RANDOM_ALT'&&occupied&&integer(character?.mainCharacterId)>0&&value(character?.name)&&character?.isRandomAlt===true;
-    if(slot.slotId<1||slot.slotNo<1||slot.revision<1||!SLOT_CLASS_CODES.includes(requiredClassCode)||!['ACTUAL_CHARACTER','RANDOM_ALT'].includes(assignmentKind)||!(actualValid||randomValid)||placementLocked&&!occupied){
+    const guestValid=assignmentKind==='TEAM_GUEST'&&occupied&&character?.isTemporaryGuest===true&&/^[0-9a-f-]{36}$/i.test(value(character.guestId))&&value(character.name);
+    if(slot.slotId<1||slot.slotNo<1||slot.revision<1||!SLOT_CLASS_CODES.includes(requiredClassCode)||!['ACTUAL_CHARACTER','RANDOM_ALT','TEAM_GUEST'].includes(assignmentKind)||!(actualValid||randomValid||guestValid)||placementLocked&&!occupied){
       throw new Error('성역 관리 슬롯 식별 정보가 올바르지 않습니다.');
     }
     return slot;
@@ -352,7 +353,7 @@
       power:combatPowerValue(item.power??item.latestPveCombatPower??item.latest_pve_combat_power),
       itemLevel:itemLevelValue(item.itemLevel??item.latestPveItemLevel??item.latest_pve_item_level)
     });
-    if(card.characterId<1||card.serverId<1||!card.characterName||!card.serverName||!['MAIN','ALT','GUEST'].includes(card.relation)||!['MAIN','ALT'].includes(card.familyRelation)||!['MAIN','ALT','GUEST'].includes(card.membershipRelation))throw new Error('캐릭터 조회 식별 정보가 올바르지 않습니다.');
+    if((card.characterId<1&&!(card.isTemporaryGuest===true&&/^[0-9a-f-]{36}$/i.test(value(card.guestId))))||card.serverId<1||!card.characterName||!card.serverName||!['MAIN','ALT','GUEST'].includes(card.relation)||!['MAIN','ALT'].includes(card.familyRelation)||!['MAIN','ALT','GUEST'].includes(card.membershipRelation))throw new Error('캐릭터 조회 식별 정보가 올바르지 않습니다.');
     return card;
   }
 
@@ -799,7 +800,7 @@
       try{
         await lease(team.teamId,'RENEW',s.leaseToken);
         s.requestKey=s.requestKey||'sm-role-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12);
-        const result=await ServerAdapter.command('SET_BOSS_ROLES',{teamId:team.teamId,forceId:force.forceId,slotId:slot.slotId,characterId:slot.character.characterId,bossRoles:s.roles,leaseToken:s.leaseToken},team.revision,s.requestKey);
+        const result=await ServerAdapter.command('SET_BOSS_ROLES',{teamId:team.teamId,forceId:force.forceId,slotId:slot.slotId,characterId:slot.character.characterId,guestId:slot.character.guestId||null,bossRoles:s.roles,leaseToken:s.leaseToken,teamEditorContract:554},team.revision,s.requestKey);
         s.saved=true;await load();
         const savedTeam=selectedDraftTeam(team.teamId),savedSlot=savedTeam?.forces.flatMap(f=>f.parties.flatMap(p=>p.slots)).find(x=>x.slotId===slot.slotId);
         if(integer(savedTeam?.revision)<integer(result.revision)||JSON.stringify(savedSlot?.character?.bossRoles)!==JSON.stringify(result.bossRoles))throw new Error('역할은 저장됐지만 화면 재조회에 실패했습니다. 닫은 뒤 새로고침해 주세요.');
@@ -1047,6 +1048,7 @@
       if(team.canManageSchedule&&['ACTIVE','FULL'].includes(value(team.status))){const schedule=document.createElement('button');schedule.type='button';schedule.className='kinojo-btn secondary';schedule.textContent='일정 관리';schedule.dataset.sanctuaryScheduleTeam=value(team.teamId);schedule.disabled=!bootstrapData?.writeEnabled;headActions.appendChild(schedule);}
       if(team.canEdit){const edit=document.createElement('button');edit.type='button';edit.className='kinojo-btn sanctuary-management-edit-team is-checking';edit.textContent='확인 중';edit.dataset.sanctuaryEditTeam=value(team.teamId);edit.disabled=true;headActions.appendChild(edit);}
       if(team.canArchive){const archive=document.createElement('button');archive.type='button';archive.className='kinojo-btn danger sanctuary-management-archive-team';archive.textContent='팀 해산';archive.dataset.sanctuaryArchiveTeam=value(team.teamId);archive.disabled=!bootstrapData?.writeEnabled;headActions.appendChild(archive);}
+      if(team.forces.some(force=>force.viewerAlreadyAssigned)){const leave=document.createElement('button');leave.type='button';leave.className='kinojo-btn secondary';leave.textContent='참가 취소';leave.dataset.sanctuaryLeaveTeam=value(team.teamId);leave.disabled=!bootstrapData?.writeEnabled;headActions.appendChild(leave);}
     }
     titleBand.append(titleRow,headActions);head.append(schedule,titleBand);
     const carousel=document.createElement('div');carousel.className='sanctuary-management-force-carousel';
@@ -1255,7 +1257,7 @@
     const composition=Array.isArray(source.composition)?source.composition.map(force=>({
       sourceForceId:Number(force?.sourceForceId)||null,
       difficulty:normalizeDifficulty(force?.difficulty||source.difficulty||'NORMAL'),
-      slots:Array.isArray(force?.slots)?force.slots.map(slot=>({partyNo:Number(slot?.partyNo),slotNo:Number(slot?.slotNo),characterId:Number(slot?.characterId)||null,mainCharacterId:Number(slot?.mainCharacterId)||null,assignmentKind:value(slot?.assignmentKind).toUpperCase()==='RANDOM_ALT'?'RANDOM_ALT':'ACTUAL_CHARACTER',requiredClassCode:SLOT_CLASS_CODES.includes(value(slot?.requiredClassCode).toUpperCase())?value(slot?.requiredClassCode).toUpperCase():'ALL',placementLocked:slot?.placementLocked===true,...(Object.prototype.hasOwnProperty.call(slot||{},'bossRoles')?{bossRoles:slot.bossRoles}:{})})):[],
+      slots:Array.isArray(force?.slots)?force.slots.map(slot=>({partyNo:Number(slot?.partyNo),slotNo:Number(slot?.slotNo),characterId:Number(slot?.characterId)||null,mainCharacterId:Number(slot?.mainCharacterId)||null,assignmentKind:['RANDOM_ALT','TEAM_GUEST'].includes(value(slot?.assignmentKind).toUpperCase())?value(slot.assignmentKind).toUpperCase():'ACTUAL_CHARACTER',guestId:value(slot?.guestId)||null,familyRoot:value(slot?.familyRoot)||null,familyRole:['MAIN','ALT'].includes(value(slot?.familyRole).toUpperCase())?value(slot.familyRole).toUpperCase():null,requiredClassCode:SLOT_CLASS_CODES.includes(value(slot?.requiredClassCode).toUpperCase())?value(slot?.requiredClassCode).toUpperCase():'ALL',placementLocked:slot?.placementLocked===true,...(Object.prototype.hasOwnProperty.call(slot||{},'bossRoles')?{bossRoles:slot.bossRoles}:{})})):[],
       requirements:Array.isArray(force?.requirements)?force.requirements.map(rule=>({scopeType:value(rule?.scopeType).toUpperCase(),partyNo:rule?.partyNo==null?null:Number(rule.partyNo),ruleType:value(rule?.ruleType).toUpperCase(),minimumCount:Number(rule?.minimumCount),powerThreshold:rule?.powerThreshold==null?null:Number(rule.powerThreshold),itemLevelThreshold:rule?.itemLevelThreshold==null?null:Number(rule.itemLevelThreshold)})):[]
     })):[];
     if(!composition.length||composition.length>9||composition.some(force=>force.slots.length!==10||force.slots.some(slot=>![1,2].includes(slot.partyNo)||slot.slotNo<1||slot.slotNo>5)))throw new Error('포스 편성안을 다시 확인해 주세요.');
@@ -1271,7 +1273,8 @@
       composition,
       compositionRulesVersion:2,
       leaseToken:value(source.leaseToken),
-      balanceProposalToken:value(source.balanceProposalToken)
+      balanceProposalToken:value(source.balanceProposalToken),
+      teamEditorContract:554,placementMode:value(source.placementMode),balanceSeed:value(source.balanceSeed),rebalanceOnce:source.rebalanceOnce===true,unlockedSlotIds:Array.isArray(source.unlockedSlotIds)?source.unlockedSlotIds.filter(Number.isSafeInteger):[]
     };
     const result=await ServerAdapter.command('SAVE_COMPOSITION',payload,teamId?Number(source.revision):null,value(source.requestKey));
     await load();return result;
@@ -1331,6 +1334,16 @@
     const result=await ServerAdapter.command('CANCEL_SUPPORT',{supportBatchId:Number(supportBatchId)},null,value(requestKey));await load();return result;
   }
 
+  function leaveTeam(team,opener){
+    const key='sm-leave-'+crypto.randomUUID();
+    openOperationLayer(opener,'<section class="sanctuary-management-operation-dialog" role="dialog" aria-modal="true" aria-label="참가 취소"><header><h2>팀 참가 취소</h2><p>이 팀에 참여·승인 대기 중인 내 캐릭터를 모두 뺍니다. 균형 배치 팀은 남은 인원을 다시 배치합니다.</p></header><p data-leave-status role="status"></p><footer><button type="button" data-leave-confirm>참가 취소하기</button><button type="button" data-operation-close>닫기</button></footer></section>');
+    operationLayer.querySelector('[data-leave-confirm]').addEventListener('click',async event=>{
+      const button=event.currentTarget;button.disabled=true;const status=operationLayer.querySelector('[data-leave-status]');status.textContent='참가 취소를 처리하고 있습니다.';
+      try{await ServerAdapter.command('LEAVE_TEAM',{teamId:team.teamId,teamEditorContract:554},null,key);closeOperationLayer();await load();}
+      catch(error){button.disabled=false;status.textContent=value(error?.message)||'참가 취소를 완료하지 못했습니다. 잠시 후 다시 시도해 주세요.';}
+    });
+  }
+
   async function moveSlot(teamId,fromSlotId,toSlotId,expectedRevision,requestKey,leaseToken){
     const result=await ServerAdapter.command('MOVE_SLOT',{teamId:Number(teamId),fromSlotId:Number(fromSlotId),toSlotId:Number(toSlotId),leaseToken:value(leaseToken)},Number(expectedRevision)||null,value(requestKey));
     await load();return result;
@@ -1360,6 +1373,26 @@
       throw new Error('균형 배치 제안 응답이 올바르지 않습니다.');
     }
     return Object.assign({},result,{assignments,excluded,beforeAverages:Array.isArray(result.beforeAverages)?result.beforeAverages:[],afterAverages:Array.isArray(result.afterAverages)?result.afterAverages:[]});
+  }
+
+  async function previewComposition(model){
+    const api=window.KinojoSupabase;
+    if(typeof api?.runSanctuaryManagementTeamEditor!=='function')throw new Error('페이지를 새로고침한 뒤 팀 편집을 다시 열어 주세요.');
+    const result=await api.runSanctuaryManagementTeamEditor('composition-preview',{payload:model});
+    if(result?.ok!==true||!Array.isArray(result.composition)||result.composition.length!==model.composition.length)throw new Error(value(result?.message)||'배치 계산 결과를 확인하지 못했습니다.');
+    return result;
+  }
+  async function prepareTeamGuest(teamId,candidateId=null,characterId=null){
+    const api=window.KinojoSupabase;
+    if(typeof api?.runSanctuaryManagementTeamEditor!=='function')throw new Error('팀 편집 기능을 새로고침해 주세요.');
+    const result=await api.runSanctuaryManagementTeamEditor('team-guest',{teamId:Number(teamId)||null,candidateId,characterId});
+    if(result?.ok!==true)throw new Error(value(result?.message)||'게스트 조회 결과를 준비하지 못했습니다.');
+    return validateCharacterCard(result.character);
+  }
+  async function releaseTeamGuests(guestIds){
+    if(!guestIds.length)return;
+    const api=window.KinojoSupabase;
+    if(typeof api?.runSanctuaryManagementTeamEditor==='function')await api.runSanctuaryManagementTeamEditor('release-guests',{guestIds});
   }
 
   function transitionCount(value){return new Intl.NumberFormat('ko-KR').format(integer(value));}
@@ -1445,6 +1478,9 @@
     retryCharacterList,
     linkedAlts,
     balanceProposal,
+    previewComposition,
+    prepareTeamGuest,
+    releaseTeamGuests,
     reload:load
   });
 
@@ -1611,6 +1647,7 @@
       if(edit&&!edit.disabled){const team=selectedDraftTeam(edit.dataset.sanctuaryEditTeam);if(team)window.KinojoSanctuaryManagementDraftUI?.openDraft?.(team,edit);return;}
       const schedule=event.target.closest('[data-sanctuary-schedule-team]');
       if(schedule&&!schedule.disabled){const team=selectedDraftTeam(schedule.dataset.sanctuaryScheduleTeam);if(team)openScheduleOperation(team,schedule);return;}
+      const leave=event.target.closest('[data-sanctuary-leave-team]');if(leave&&!leave.disabled){const team=selectedDraftTeam(leave.dataset.sanctuaryLeaveTeam);if(team)leaveTeam(team,leave);return;}
       const archive=event.target.closest('[data-sanctuary-archive-team]');
       if(!archive||archive.disabled)return;
       const team=selectedDraftTeam(archive.dataset.sanctuaryArchiveTeam);if(!team)return;

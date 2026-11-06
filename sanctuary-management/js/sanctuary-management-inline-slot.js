@@ -185,6 +185,11 @@
     renderBody();
   }
   async function addSelected(){
+    const selected=selectedResult(),external=selected?.kind==='OFFICIAL'?!selected.candidate.isOperationalLegion:selected?.character?.membershipRelation==='GUEST'&&!selected?.character?.isOperationalLegion;
+    if(state?.team?.canEditRoster&&(external||state.team.forces.some(force=>force.parties.some(party=>party.slots.some(slot=>slot.character?.isTemporaryGuest))))){
+      const team=teamById(state.team.teamId)||state.team,options={forceId:state.forceId,partyNo:state.partyNo,slotNo:state.slotNo,lookup:selected.kind==='OFFICIAL'?{candidate:selected.candidate}:{character:selected.character}},source=opener;
+      closeModal();await window.KinojoSanctuaryManagementDraftUI?.openDraft?.(team,source,options);return;
+    }
     if(!canAdd())return;const button=layer.querySelector('[data-slot-add-confirm]'),statusNode=layer.querySelector('[data-slot-action-status]'),teamId=integer(state.team.teamId);state.busy=true;renderBody();if(statusNode)statusNode.textContent='Server에 최신 편집 상태를 확인하고 있습니다.';
     let token='';
     try{

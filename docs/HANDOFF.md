@@ -1,3 +1,9 @@
+## Sanctuary team placement and team-lifetime guests · SQL554 · 2026-11-06
+
+Existing teams default to MANUAL with an installation fingerprint guard; new teams explicitly choose manual or automatic PVE balancing. The existing atomic composer, permissions, leases and receipts now share one bounded server planner with read-only preview and actual roster-changing instant/approval/departure events. Exact pins, canonical/local family separation, class/item limits, partial rosters and mains sharing a party are preserved. BALANCED prohibits random reservations; MANUAL retains them. External guests use verified minimal team snapshots, cleared immediately on successful removal/archive without Master/ranking/growth registration. Team-local main/alt links need no member code and grant no account ownership. Quick guest additions reuse the same editor.
+
+Implementation, deployment order, compatibility and non-destructive feature rollback: [SANCTUARY_TEAM_EDITOR_V554.md](SANCTUARY_TEAM_EDITOR_V554.md). Existing Edge only, API2.6/DB554 with cached 2.5/480 and 2.4/458 negotiation. No new paid service, Cron, public source grant or operational test fixture. Final PR, production verification and Drive readback belong to Sanctuary project LOG84 / Stage16.
+
 ## Automatic280MB capacity recovery · SQL553 · 2026-10-31
 
 - Latest user request extends warning-only280MB to automatic expiry cleanup and physical space recovery, preserving current features and all WEEK/MONTH numeric records. SQL553 extends the existing549 control row with a bounded lease/cycle/last-result, service+Vault-token RPC and minute pressure watcher. Existing retention periods/schedules remain. Start at280MB, latch until270MB; a finite fixed-table cycle backs off if no reclaimable space exists. Protected records are never purged to force the target.

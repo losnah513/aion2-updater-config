@@ -1009,7 +1009,7 @@
     const generatedKey='sm-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12);
     const normalizedKey=String(requestKey||generatedKey).trim();
     if(!/^[A-Za-z0-9][A-Za-z0-9._:-]{7,119}$/.test(normalizedKey))throw new Error('중복 요청 방지 키를 다시 만들어 주세요.');
-    return invokeEdgeFunction('sanctuary-management', {clientContract:480,
+    return invokeEdgeFunction('sanctuary-management', {clientContract:Number(normalizedPayload.teamEditorContract)===554?554:480,
       action:'command',
       sessionToken:currentServerSessionCredential(),
       requestKey:normalizedKey,
@@ -1119,6 +1119,11 @@
       mainCharacterId:normalizedMainId,
       forceId:normalizedForceId
     });
+  }
+
+  async function runSanctuaryManagementTeamEditor(action,payload={}){
+    if(!['composition-preview','team-guest','release-guests'].includes(action))throw new Error('지원하지 않는 팀 편집 요청입니다.');
+    return invokeEdgeFunction('sanctuary-management',{...payload,clientContract:554,action,sessionToken:currentServerSessionCredential()});
   }
 
   async function getSanctuaryManagementBalanceProposal(teamId,expectedRevision,leaseToken,stableSeed,lockOverrides=[]){
@@ -2004,6 +2009,7 @@
     retrySanctuaryManagementCharacterList,
     getSanctuaryManagementLinkedAlts,
     getSanctuaryManagementBalanceProposal,
+    runSanctuaryManagementTeamEditor,
     getSanctuaryData,
     getSanctuaryRosterData,
     getSanctuaryWaitlistData,
