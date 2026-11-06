@@ -25,17 +25,17 @@
     {
       "path": "sanctuary/index.html",
       "bytes": 12352,
-      "sha256": "6c2a57a7ff19415353b34f6380327703596d63221adcdb78853d722c7b317327"
+      "sha256": "e3b4f684249fd20e09071744da183d8a46868ee5b49b43c17cc67236bc38a94f"
     },
     {
       "path": "m/sanctuary/index.html",
       "bytes": 12027,
-      "sha256": "70df0ba5b197cfd6dec40267ad3353df9f4facb12b4e7c58576b9aa4f62f87a0"
+      "sha256": "018377f3537a37b496af08bf671680211591f3f6b44a14b7fdc6cfb5c2d1736a"
     },
     {
       "path": "sanctuary-management/css/sanctuary-management-draft.css",
-      "bytes": 86520,
-      "sha256": "0f72a897febc78451f23d5cb6b5cc27096b7a01ec20bafd2e8a87c15e1e681a6"
+      "bytes": 86602,
+      "sha256": "6a00747d3b8cc4fd7b220b3703d94de4f83608aa8628a20f6e5245f55ed411cd"
     },
     {
       "path": "sanctuary-management/js/sanctuary-management.js",
@@ -78,5 +78,12 @@
     "base": "edf4880e45ed82e90d9b2c3a2a8378998de4480a",
     "scope": "WEB only: complete title, bounded roster tail and roomy tool groups without basic-content scrollbars; consolidated responsive proportions",
     "databaseChanged": false
+  },
+  "deploymentRecovery": {
+    "date": "2026-11-06",
+    "sourceCommit": "380621ee6c7cdfd46eb14a2694e2aac9add43b6d",
+    "stalledPagesRun": 42164187091,
+    "release": "2026110606",
+    "behaviorChanged": false
   }
 }
