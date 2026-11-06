@@ -25,17 +25,17 @@
     {
       "path": "sanctuary/index.html",
       "bytes": 12352,
-      "sha256": "8432fa38b7f024426489ab051667bd486c1cb2ce2be1f3efbfc828c748ac8cc0"
+      "sha256": "8f7e01e0ff4ea95a72ef03b30d0788b77474136197fc7de0265101fa234a7462"
     },
     {
       "path": "m/sanctuary/index.html",
       "bytes": 12027,
-      "sha256": "6318421f90acb49c7a95fc071a34c9f169bbc8cc5a917721d7bc585d734782be"
+      "sha256": "d7466ca892e3cf2a5fb2f43703e93e26644417bcb455bb7b84d4769d75cf6555"
     },
     {
       "path": "sanctuary-management/css/sanctuary-management-draft.css",
-      "bytes": 82349,
-      "sha256": "bfee7b6e232af431854afacd14fe9d2bcb6b7629d8b9d56166e5c70f77b1bff8"
+      "bytes": 86621,
+      "sha256": "6641d8074275afc9fbc39e5f9cd7e6d2085bd88495a8df910ceaa0ee917a61b7"
     },
     {
       "path": "sanctuary-management/js/sanctuary-management.js",
@@ -44,8 +44,8 @@
     },
     {
       "path": "sanctuary-management/js/sanctuary-management-draft.js",
-      "bytes": 148359,
-      "sha256": "61db007b8e0ad11d7de4fb973154cf7bbd099e042438a5ff186b5569162a4c5a"
+      "bytes": 148623,
+      "sha256": "e293f65e95309f5cc3f8fe435c992dc720cf4a212e2962d5f55440298b2cd7b9"
     },
     {
       "path": "sanctuary-management/js/sanctuary-management-support.js",
@@ -76,7 +76,7 @@
   "layoutFollowup": {
     "date": "2026-11-06",
     "base": "edf4880e45ed82e90d9b2c3a2a8378998de4480a",
-    "scope": "WEB only: independent responsive settings cards, constant force composer geometry, persistent actions and roster scroll retention",
+    "scope": "WEB only: compact58px slots; four labeled footer tool groups and separate save row; full-height schedule side card",
     "databaseChanged": false
   }
 }
