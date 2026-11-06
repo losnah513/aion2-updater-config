@@ -380,3 +380,5 @@ button.is-requirement-pending{opacity:.58}
 .sanctuary-management-composer-title{padding-block:6px}
 
 .sanctuary-management-composer{grid-template-rows:88px minmax(0,1fr)}.sanctuary-management-composer-title{padding-block:3px;row-gap:4px}
+
+.sanctuary-management-composer-title label{gap:3px}.sanctuary-management-composer-title input{height:30px}
