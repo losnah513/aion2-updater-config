@@ -15,16 +15,20 @@ const {isolatePlaywrightPage}=require('./helpers/visitor-traffic');
   await page.evaluate(()=>{window.__calendarCommands=[];window.__originalCalendarCommand=window.KinojoSupabase.runSanctuaryManagementCommand;window.KinojoSupabase.runSanctuaryManagementCommand=async(action,payload)=>{window.__calendarCommands.push({action,payload});throw Error('LOCAL_CAPTURE_ONLY');};});
   await page.locator('[data-sanctuary-edit-team="77"]').first().click();
   const form=page.locator('[data-draft-form]');
+  const openSchedule=async()=>{const nav=page.locator('[data-editor-panel-open=schedule]');if(await nav.isVisible())await nav.click();};
+  const closePanel=async()=>{const close=page.locator('[data-editor-panel-close]');if(await close.isVisible())await close.click();};
+  await openSchedule();
   await form.locator('[name="draftYear"]:not(:disabled)').waitFor();
   assert.equal(await form.locator('[name="draftYear"]').inputValue(),'2026');
-  const save=()=>form.locator('button[type="submit"]').click();
+  await closePanel();
+  const save=async()=>{await closePanel();await form.locator('button[type="submit"]').click();};
   const commands=()=>page.evaluate(()=>__calendarCommands);
   await form.locator('[name="draftTitle"]').fill('편성만 변경');await save();
   await page.waitForFunction(()=>__calendarCommands.length===1);
   assert.equal((await commands())[0].payload.schedule.startsOn,'2026-08-27','unchanged past repeat start must survive actual save adapter');
   await save();await page.waitForFunction(()=>__calendarCommands.length===2);
   assert.equal((await commands())[1].payload.schedule.startsOn,'2026-08-27','repeated saves must not advance the year');
-  async function date(year,month,day){await form.locator('[name="draftYear"]').fill(year);await form.locator('[name="draftMonth"]').fill(month);await form.locator('[name="draftDay"]').fill(day);}
+  async function date(year,month,day){await openSchedule();await form.locator('[name="draftYear"]').fill(year);await form.locator('[name="draftMonth"]').fill(month);await form.locator('[name="draftDay"]').fill(day);}
   await date('2027','09','03');await save();await page.waitForFunction(()=>__calendarCommands.length===3);
   assert.equal((await commands())[2].payload.schedule.startsOn,'2027-09-03','explicit future year preserved');
   await date('2026','02','29');await save();assert.equal((await commands()).length,3,'invalid non-leap date must not reach server');
@@ -33,7 +37,7 @@ const {isolatePlaywrightPage}=require('./helpers/visitor-traffic');
   await date('2026','13','01');await save();assert.equal((await commands()).length,4,'invalid month must not clamp silently');
   await date('2026','12','31');await form.locator('[data-draft-kind="ONCE"]').click();await save();await page.waitForFunction(()=>__calendarCommands.length===5);
   assert.equal((await commands())[4].payload.schedule.startsOn,'2026-12-31');assert.equal((await commands())[4].payload.schedule.kind,'ONCE');
-  const dimensions=await form.locator('.sanctuary-management-date-parts').evaluate(el=>({client:el.clientWidth,scroll:el.scrollWidth}));assert(dimensions.scroll<=dimensions.client+1,JSON.stringify({width,dimensions}));
+  await openSchedule();const dimensions=await form.locator('.sanctuary-management-date-parts').evaluate(el=>({client:el.clientWidth,scroll:el.scrollWidth}));assert(dimensions.scroll<=dimensions.client+1,JSON.stringify({width,dimensions}));
   if(process.env.CALENDAR_SCREENSHOT_DIR){fs.mkdirSync(process.env.CALENDAR_SCREENSHOT_DIR,{recursive:true});await form.locator('.sanctuary-management-schedule-panel').screenshot({path:path.join(process.env.CALENDAR_SCREENSHOT_DIR,'schedule-year-'+width+'.png')});}
   await page.evaluate(async()=>{
    window.KinojoSanctuaryManagementDraftUI.close();window.__monthCalls=0;
