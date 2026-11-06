@@ -24,18 +24,18 @@
     },
     {
       "path": "sanctuary/index.html",
-      "bytes": 12296,
-      "sha256": "361a0bd2f7bed837d7a3188daabb4818767af35d343fc5b5cf91619ee6a8a20d"
+      "bytes": 12352,
+      "sha256": "8432fa38b7f024426489ab051667bd486c1cb2ce2be1f3efbfc828c748ac8cc0"
     },
     {
       "path": "m/sanctuary/index.html",
-      "bytes": 11971,
-      "sha256": "224b57867093bcebda6462af252ae81839a6fadef6043b171eec04d07b6de8ac"
+      "bytes": 12027,
+      "sha256": "6318421f90acb49c7a95fc071a34c9f169bbc8cc5a917721d7bc585d734782be"
     },
     {
       "path": "sanctuary-management/css/sanctuary-management-draft.css",
-      "bytes": 76807,
-      "sha256": "cb823c7d2dea7b6e8adc50f9e734f594cc1cef60289c8365320a400b0320f60d"
+      "bytes": 82349,
+      "sha256": "bfee7b6e232af431854afacd14fe9d2bcb6b7629d8b9d56166e5c70f77b1bff8"
     },
     {
       "path": "sanctuary-management/js/sanctuary-management.js",
@@ -44,8 +44,8 @@
     },
     {
       "path": "sanctuary-management/js/sanctuary-management-draft.js",
-      "bytes": 145101,
-      "sha256": "91574ff8d0b43931c273fa482a1cfdb2608b182f85ac69ab4825f5d89e5f2512"
+      "bytes": 148359,
+      "sha256": "61db007b8e0ad11d7de4fb973154cf7bbd099e042438a5ff186b5569162a4c5a"
     },
     {
       "path": "sanctuary-management/js/sanctuary-management-support.js",
@@ -72,5 +72,11 @@
       "bytes": 485,
       "sha256": "b76e7b189d53233a19ef9379812a1bb30b2a7858986d229b6f39de9ab36d2b86"
     }
-  ]
+  ],
+  "layoutFollowup": {
+    "date": "2026-11-06",
+    "base": "edf4880e45ed82e90d9b2c3a2a8378998de4480a",
+    "scope": "WEB only: independent responsive settings cards, constant force composer geometry, persistent actions and roster scroll retention",
+    "databaseChanged": false
+  }
 }

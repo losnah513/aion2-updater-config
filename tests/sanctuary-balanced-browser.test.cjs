@@ -4,6 +4,8 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const {isolatePlaywrightPage}=require('./helpers/visitor-traffic');
 (async()=>{
  const db=new(require(process.env.PGLITE_MODULE||'@electric-sql/pglite').PGlite)();await require('./helpers/sanctuary-balanced-db.cjs')(db);
+ const openSettings=async page=>{const nav=page.locator('[data-editor-panel-open=placement]');if(await nav.isVisible())await nav.click();};
+ const closeSettings=async page=>{const close=page.locator('[data-editor-panel-close]');if(await close.isVisible())await close.click();};
  const root=path.resolve(__dirname,'..');let calls=0;
  const server=http.createServer(async(req,res)=>{try{
   if(req.url==='/fixture-editor'){
@@ -48,13 +50,13 @@ const {isolatePlaywrightPage}=require('./helpers/visitor-traffic');
    await page.locator('[data-draft-candidate="'+id+'"]').click();
    await page.waitForFunction(()=>/균등 배치를 적용/.test(document.querySelector('[data-draft-status]').textContent));
   }
-  await page.locator('[data-addition-phase="ALT"]').click();await page.locator('[data-addition-root]').selectOption('c:2');
+  await openSettings(page);await page.locator('[data-addition-phase="ALT"]').click();await page.locator('[data-addition-root]').selectOption('c:2');
   await page.locator('[data-draft-slot][data-occupied="false"]').first().click();await page.locator('[name="characterQuery"]').fill('fixture40');await page.locator('[data-character-search-submit]').click();
   await page.locator('[data-draft-search-character="40"]').click();
   await page.waitForFunction(()=>/균등 배치를 적용/.test(document.querySelector('[data-draft-status]').textContent));
-  await page.locator('[data-team-family-open]').first().click();
+  await openSettings(page);await page.locator('[data-team-family-open]').first().click();
   assert.equal(await page.locator('[data-team-family^="g:"]').count(),1);assert.equal(await page.locator('[data-team-family^="g:"]').inputValue(),'c:2');
-  await page.locator('[data-team-family-open]').last().click();
+  await page.locator('[data-team-family-open]').last().click();await closeSettings(page);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   await page.locator('[name="draftTitle"]').fill('균형 편성 검증');await page.locator('[data-draft-form] button[type="submit"]').click();await page.waitForFunction(()=>window.capturedDraft);
   const saved=await page.evaluate(()=>capturedDraft);assert.equal(saved.payload.placementMode,'BALANCED');assert.equal(saved.payload.composition.length,2);
@@ -62,7 +64,7 @@ const {isolatePlaywrightPage}=require('./helpers/visitor-traffic');
   if(process.env.KINOJO_BALANCE_EVIDENCE){await fs.promises.mkdir(process.env.KINOJO_BALANCE_EVIDENCE,{recursive:true});await page.locator('[data-draft-form]').evaluate(el=>el.scrollTop=0);await page.screenshot({path:path.join(process.env.KINOJO_BALANCE_EVIDENCE,'balanced-'+width+'.png')});}
   // An old response must never overwrite a newly opened manual editor.
   await page.evaluate(()=>{const run=window.KinojoSupabase.runSanctuaryManagementTeamEditor;window.KinojoSupabase.runSanctuaryManagementTeamEditor=async(...args)=>{const result=await run(...args);await new Promise(r=>setTimeout(r,400));return result;};});
-  await page.locator('[data-balance-open]').click();await page.locator('[data-draft-close]').last().click();await page.locator('[data-sanctuary-edit-team="77"]').first().click();
+  await openSettings(page);await page.locator('[data-balance-open]').click();await closeSettings(page);await page.locator('[data-draft-close]').last().click();await page.locator('[data-sanctuary-edit-team="77"]').first().click();
   await page.waitForTimeout(700);assert.equal(await page.locator('[data-placement-mode="MANUAL"]').getAttribute('aria-pressed'),'true');assert.equal(await page.locator('[data-draft-slot][data-occupied="true"]').count(),1);
   assert.deepEqual(errors,[]);await page.close();console.log('PASS balanced editor '+width+'px: explicit mode, force count, SQL preview, local links, guest, partial save and unchanged existing team');
  }}finally{await browser.close();await new Promise(r=>server.close(r));await db.close();}
