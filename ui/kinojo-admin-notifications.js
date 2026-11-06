@@ -124,7 +124,7 @@
     host.replaceChildren();
     const toneClass='tone-'+String(item.tone||'code');
     const card=document.createElement('article');
-    card.className='kinojo-admin-notification-card '+toneClass;card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',item.title+' · '+item.message+' · 관리자 페이지 이동');
+    card.className='kinojo-admin-notification-card '+toneClass;card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',item.title+' · '+item.message+' · 관리자 페이지 새 창 열기');
     const nameToken='['+item.characterName+']';
     const messageRest=String(item.message||'').startsWith(nameToken)?String(item.message||'').slice(nameToken.length):String(item.message||'');
     card.innerHTML='<header class="kinojo-admin-notification-head"><h2 class="kinojo-admin-notification-title">'+esc(item.title)+'</h2></header>'
@@ -134,13 +134,15 @@
     const open=()=>{
       if(!item.href||card.dataset.navigating==='1')return;
       card.dataset.navigating='1';card.classList.add('is-pressing');
-      setTimeout(()=>{location.href=item.href;},110);
+      const link=document.createElement('a');link.href=item.href;link.target='_blank';link.rel='noopener noreferrer';link.hidden=true;
+      card.appendChild(link);link.addEventListener('click',event=>event.stopPropagation());link.click();link.remove();
+      setTimeout(()=>{card.dataset.navigating='';card.classList.remove('is-pressing');},300);
     };
     card.addEventListener('click',event=>{if(event.target.closest('.kinojo-admin-notification-close'))return;open();});
     card.addEventListener('keydown',event=>{if((event.key==='Enter'||event.key===' ')&&!event.target.closest('.kinojo-admin-notification-close')){event.preventDefault();open();}});
     card.querySelector('.kinojo-admin-notification-close')?.addEventListener('click',event=>{event.stopPropagation();finish(card);});
     const hint=document.createElement('div');hint.className='kinojo-admin-notification-link-hint '+toneClass;hint.setAttribute('aria-hidden','true');
-    hint.innerHTML='관리자 페이지 이동 <span class="kinojo-admin-notification-link-hint-arrow">→</span>';
+    hint.innerHTML='관리자 페이지 새 창 열기 <span class="kinojo-admin-notification-link-hint-arrow">→</span>';
     host.appendChild(card);host.appendChild(hint);requestAnimationFrame(()=>card.classList.add('show'));
   }
 
@@ -166,7 +168,33 @@
     badge.textContent=total>99?'99+':String(total);badge.hidden=total<1;
   }
 
+
+  function showCapacityAlert(summary){
+    const info=summary?.storageAlert;
+    if(summary?.ok!==true||!window.KinojoAuthSessionCore?.getSession?.()||!info)return;
+    const bytes=Number(info.databaseBytes),threshold=Number(info.alertBytes),target=Number(info.targetBytes);
+    const key=String(info.loginKey||'');
+    if(!/^[a-f0-9]{32}$/.test(key)||!Number.isFinite(bytes)||bytes<=400000000||threshold!==400000000||target!==500000000)return;
+    if(document.getElementById('kinojoStorageCapacityDialog'))return;
+    const seenKey='kinojo_storage_login_notice_v555';
+    try{if(localStorage.getItem(seenKey)===key)return;localStorage.setItem(seenKey,key);}catch(_err){
+      if(window.__kinojoStorageNoticeKey===key)return;window.__kinojoStorageNoticeKey=key;
+    }
+    const modal=document.createElement('dialog');modal.id='kinojoStorageCapacityDialog';
+    modal.setAttribute('aria-labelledby','kinojoStorageCapacityTitle');
+    modal.style.cssText='width:min(420px,calc(100vw - 40px));box-sizing:border-box;padding:24px;border:2px solid #d97706;border-radius:16px;background:#fffbeb;color:#78350f;box-shadow:0 20px 70px #0005';
+    modal.innerHTML='<h2 id="kinojoStorageCapacityTitle" style="margin:0 0 12px;font-size:20px">DB 용량 주의</h2>'
+      +'<p style="line-height:1.7">현재 DB 사용량은 <strong>'+esc((bytes/1000000).toFixed(1))+'MB</strong>입니다. 400MB를 초과했습니다. 운영 상한은 500MB입니다.</p>'
+      +'<p style="line-height:1.7">시스템 설정의 서버 루틴에서 자동 정리·공간 회수 상태를 확인해 주세요.</p>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center"><a target="_blank" rel="noopener noreferrer" href="'+adminHref('#system/routines')+'">용량 확인 · 새 창</a><button type="button" autofocus style="margin-left:auto;padding:10px 18px">확인</button></div>';
+    const remove=()=>modal.remove();
+    modal.addEventListener('close',remove,{once:true});
+    modal.querySelector('button').addEventListener('click',()=>modal.close());
+    document.body.appendChild(modal);modal.showModal();
+  }
+
   function handleSummary(summary){
+    showCapacityAlert(summary);
     lastSummaryAt=Date.now();
     suppressLegacySupport(summary);
     syncBadge(summary);
@@ -180,8 +208,9 @@
     if(api.getAction.__kinojoAdminNotificationWrapped)return true;
     const original=api.getAction.bind(api);
     const wrapped=async function(name,extra){
+      const requestToken=window.KinojoAuthSessionCore?.getSession?.()?.token;
       const result=await original(name,extra);
-      if(name==='notificationSummary')handleSummary(result);
+      if(name==='notificationSummary'&&requestToken===window.KinojoAuthSessionCore?.getSession?.()?.token)handleSummary(result);
       return result;
     };
     wrapped.__kinojoAdminNotificationWrapped=true;
@@ -203,7 +232,11 @@
     setTimeout(()=>clearInterval(wait),5000);
     setInterval(fallbackSummary,30000);
     document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(fallbackSummary,80);});
-    window.addEventListener('kinojo:auth-changed',()=>setTimeout(fallbackSummary,100));
+    window.addEventListener('kinojo:auth-changed',event=>{
+      lastSummaryAt=0;
+      if(event.detail?.loggedIn===false){document.getElementById('kinojoStorageCapacityDialog')?.close();clearRenderer();}
+      setTimeout(fallbackSummary,100);
+    });
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});

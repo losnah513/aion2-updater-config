@@ -1,3 +1,11 @@
+## Admin routine times and500MB operating budget · SQL555 · 2026-11-06
+
+Master can edit two main and one alt daily KST slots in System→Server routines. Atomic revision checks, running-work guard, exact minute cron schedules and scope frozen at claim reuse the existing automation command/Edge. Defaults remain10/15/22KST; only a changed save splits the original cron into three bounded daily jobs. Existing on/off controls update all three. No frequency increase or official lookup is run for verification.
+
+Storage now treats≤300MB as stable,300–400MB caution,>400MB warning,>500MB over budget. The existing private watcher records a small minute size snapshot, starts physical reclaim at450MB and latches to400MB; all protected current/WEEK/MONTH and existing retention limits remain. This is an operating budget, not a provider plan change or a hard disk cap. A verified admin session receives one >400MB login notice; ordinary members receive no capacity data. Notification clicks synchronously open an isolated new tab and retain the current page.
+
+Evidence, diagnostic limits, compatible deployment and rollback: ADMIN_ROUTINES_STORAGE_V555.md. DB project LOG43 and character stability4 LOG64 own final operating results.
+
 ## Sanctuary Pages release recovery · 2026-11-06
 
 PR518 contains the verified layout correction. Its Pages run42164187091 timed out in file sync twice; rebuilding that run produced two same-named Pages artifacts. Release2026110606 starts a fresh commit/run while preserving the exact layout behavior. Only the cache token, a CSS release comment and deployment metadata change here. No team data, database, Edge or UI logic changes. Evidence continues in Sanctuary LOG88.
