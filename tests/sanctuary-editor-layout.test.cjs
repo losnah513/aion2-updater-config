@@ -12,16 +12,17 @@ const {isolatePlaywrightPage}=require('./helpers/visitor-traffic');
  try{for(const [width,height]of [[1440,900],[1440,650],[1100,720],[959,887],[781,700],[390,844],[320,568],[844,390]]){
   const page=await browser.newPage({viewport:{width,height}});await isolatePlaywrightPage(page);const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('http://127.0.0.1:'+server.address().port+'/tests/sanctuary-management-fixed-draft-e2e.html',{waitUntil:'networkidle'});
   await page.locator('[data-sanctuary-edit-team="77"]').first().click();await assertFooter(page);
+  if(width>=700&&height>=650)assert.equal(await page.locator('[data-draft-slot]').evaluateAll(slots=>slots.every(el=>{const r=el.getBoundingClientRect();let p=el.parentElement;while(p){const s=getComputedStyle(p);if(/auto|scroll|hidden/.test(s.overflowY)){const c=p.getBoundingClientRect();if(r.top<c.top-1||r.bottom>c.bottom+1)return false;}p=p.parentElement;}return r.top>=0&&r.bottom<=innerHeight;})),true,'all10 character slots visible together before any scrolling');
   await page.locator('[data-draft-slot]').last().click();await assertFooter(page);assert.equal(await page.locator('[data-draft-slot]').last().getAttribute('aria-pressed'),'true','last party slot remains selectable');
   await page.locator('[data-draft-close]').last().click();
   // This adapter is deliberately a layout-only fixture; planner behavior is covered by SQL integration tests.
   await page.evaluate(()=>{window.KinojoSupabase.runSanctuaryManagementTeamEditor=async(action,body)=>({ok:true,composition:body.payload?.composition||[]});});
   await page.locator('#sanctuaryManagementAddTeam').click();await page.locator('[data-placement-mode="BALANCED"]').click();await page.locator('[data-placement-force-count="2"]').click();
-  assert.equal(await page.locator('[data-placement-options-toggle]').getAttribute('aria-expanded'),'false','optional settings collapse after force choice');await assertFooter(page);
+  assert.equal(await page.locator('[data-placement-options-toggle]').count(),0,'redundant fold control removed');await assertFooter(page);
   assert.equal(await page.locator('[data-draft-slot]').evaluateAll(slots=>slots.every(el=>Math.abs(el.getBoundingClientRect().height-58)<1)),true,'character cards retain compact58px height on every viewport');
   assert.equal(await page.locator('.sanctuary-management-composer-actions .sanctuary-management-settings-group').count(),4,'footer separates mode, rebalance, family management and addition');
   const before=await geometry(page);await openSettings(page);await page.locator('[data-addition-phase="ALT"]').click();
-  await page.locator('[data-placement-options-toggle]').click();assert.deepEqual(await geometry(page),before,'settings changes never move or resize the force window');await closeSettings(page);await assertFooter(page);
+  assert.deepEqual(await geometry(page),before,'settings changes never move or resize the force window');await closeSettings(page);await assertFooter(page);
   await page.locator('[data-draft-slot]').last().click();await assertFooter(page);
   const reachable=await page.locator('[data-draft-slot]').last().evaluate(el=>{const r=el.getBoundingClientRect(),clip=el.closest('.sanctuary-management-roster').getBoundingClientRect();return r.top>=clip.top-1&&r.bottom<=clip.bottom+1;});assert.equal(reachable,true,'last slot stays in the roster viewport after selection and redraw');
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.deepEqual(errors,[]);
