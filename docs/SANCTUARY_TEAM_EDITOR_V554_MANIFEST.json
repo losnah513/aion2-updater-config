@@ -34,8 +34,8 @@
     },
     {
       "path": "sanctuary-management/css/sanctuary-management-draft.css",
-      "bytes": 80344,
-      "sha256": "a5bd409fd7d675c4178563764f0d62c5944c45835dd51a23ca59216d69276f1f"
+      "bytes": 82349,
+      "sha256": "bfee7b6e232af431854afacd14fe9d2bcb6b7629d8b9d56166e5c70f77b1bff8"
     },
     {
       "path": "sanctuary-management/js/sanctuary-management.js",
@@ -44,8 +44,8 @@
     },
     {
       "path": "sanctuary-management/js/sanctuary-management-draft.js",
-      "bytes": 146448,
-      "sha256": "7a89551696e198329959065b693bff4d064ec30d9368823f1714919fc99e4865"
+      "bytes": 148359,
+      "sha256": "61db007b8e0ad11d7de4fb973154cf7bbd099e042438a5ff186b5569162a4c5a"
     },
     {
       "path": "sanctuary-management/js/sanctuary-management-support.js",
@@ -76,7 +76,7 @@
   "layoutFollowup": {
     "date": "2026-11-06",
     "base": "edf4880e45ed82e90d9b2c3a2a8378998de4480a",
-    "scope": "WEB only: collapsible settings, persistent actions, roster scroll retention and narrow viewport ordering",
+    "scope": "WEB only: independent responsive settings cards, constant force composer geometry, persistent actions and roster scroll retention",
     "databaseChanged": false
   }
 }
