@@ -98,7 +98,7 @@
     if(!placementMode()||(!state.sourceTeamId&&!forcesChosen))return '';
     const mains=teamSlots().filter(item=>item.slot.character?.isMain&&!item.slot.character?.isRandomAlt);
     return '<section class="sanctuary-management-addition-controls sanctuary-management-settings-group"><h4>캐릭터 추가</h4><div role="group" aria-label="추가할 캐릭터 관계"><button type="button" data-addition-phase="MAIN" aria-pressed="'+String(additionPhase==='MAIN')+'">본캐 추가</button><button type="button" data-addition-phase="ALT" aria-pressed="'+String(additionPhase==='ALT')+'">부캐 추가</button></div>'
-      +(additionPhase==='ALT'?'<label>연결할 본캐 <select data-addition-root><option value="">기존 본캐·부캐 연결 사용</option>'+mains.map(item=>{const key=personKey(item.slot.character);return '<option value="'+escapeHtml(key)+'"'+(additionRoot===key?' selected':'')+'>'+escapeHtml(characterDisplayName(item.slot.character))+'</option>';}).join('')+'</select></label>':'')
+      +(additionPhase==='ALT'?'<label><span>연결할 본캐</span><select data-addition-root><option value="">기존 본캐·부캐 연결 사용</option>'+mains.map(item=>{const key=personKey(item.slot.character);return '<option value="'+escapeHtml(key)+'"'+(additionRoot===key?' selected':'')+'>'+escapeHtml(characterDisplayName(item.slot.character))+'</option>';}).join('')+'</select></label>':'')
       +'</section>';
   }
   function additionCharacter(character){
