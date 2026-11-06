@@ -38,7 +38,7 @@ for(const token of [
   'data-draft-duration="','30분','1시간','2시간','무제한',
   'function syncNextRepeatDate','function removeForce','function clearSlot','function moveSlot',
   'data-draft-remove-force','data-draft-clear-slot','classIconFor',
-  'state.team.forces.push(force)','chosen.slot.character=candidateCharacter(candidate)',
+  'state.team.forces.push(force)','chosen.slot.character=prepared',
   'await bridge().saveComposition(model)','마지막 저장 전까지 Server에는 반영되지 않습니다.',
 ])assert.ok(draft.includes(token),`browser-local composer missing ${token}`);
 for(const forbidden of ['bridge().setSlot(','bridge().addForce(','bridge().moveSlot(','bridge().publishTeam(']){

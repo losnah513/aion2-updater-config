@@ -21,7 +21,7 @@ assert.equal(migration.includes("'editorName'"),false,'edit presence must not ex
 assert.equal(migration.includes('lease_token_hash'),false,'edit presence must not expose lease tokens');
 
 for(const token of [
-  'const API_VERSION="2.5"','const DATABASE_CONTRACT="480"','"lease-status"','"slot-character-search"',
+  'const API_VERSION="2.6"','const DATABASE_CONTRACT="554"','"lease-status"','"slot-character-search"',
   'kinojo_sanctuary_management_lease_status_v458','kinojo_sanctuary_management_official_prepare_all_v458',
   'size","100"','exactCandidates','OFFICIAL_ALL',
 ])assert.ok(edge.includes(token),`v458 Edge contract missing ${token}`);
@@ -32,7 +32,7 @@ for(const token of [
 ])assert.ok(feature.includes(token),`v458 feature bridge missing ${token}`);
 
 for(const token of [
-  'const API_VERSION=2.5','const SCHEMA_VERSION=480','validateLeaseStatus','validateSlotCharacterSearch',
+  'const API_VERSION=2.6','const SCHEMA_VERSION=554','validateLeaseStatus','validateSlotCharacterSearch',
   "document.createElement(slot.occupied?'span':'button')",'dataset.sanctuarySlotAdd',
   "edit.textContent='확인 중'",'kinojo:sanctuary-management-rendered',
 ])assert.ok(main.includes(token),`v458 roster client missing ${token}`);

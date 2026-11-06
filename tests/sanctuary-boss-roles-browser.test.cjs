@@ -3,7 +3,7 @@ const {stripTypeScriptTypes}=require('node:module'),{chromium}=require(process.e
 const {isolatePlaywrightPage}=require('./helpers/visitor-traffic'),root=path.resolve(__dirname,'..');
 (async()=>{
  const ctx=vm.createContext({URL,Request,Response,Map,console,Deno:{serve(){},env:{get(){return '';}}},normalizeSanctuaryCode:x=>x,sanctuaryAssetPath:()=>''});
- vm.runInContext(stripTypeScriptTypes(fs.readFileSync(path.join(root,'supabase/functions/sanctuary-copy-render/index.ts'),'utf8').replace(/^import .*\n/,'')),ctx);
+ vm.runInContext(stripTypeScriptTypes(fs.readFileSync(path.join(root,'supabase/functions/sanctuary-copy-render/index.ts'),'utf8').replace(/^import .*\r?\n/,'')),ctx);
  const server=http.createServer((req,res)=>fs.readFile(path.join(root,new URL(req.url,'http://localhost').pathname),(e,b)=>{res.writeHead(e?404:200,{'content-type':({'.js':'text/javascript','.css':'text/css','.html':'text/html'})[path.extname(req.url.split('?')[0])]||'application/octet-stream'});res.end(e?'':b);}));
  await new Promise(r=>server.listen(0,'127.0.0.1',r));
  const browser=await chromium.launch({headless:true,args:['--no-sandbox'],...(process.env.CHROME_PATH?{executablePath:process.env.CHROME_PATH}:{})});

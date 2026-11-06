@@ -28,8 +28,8 @@ for(const token of ["code = 'rudra'","'minItemLevel', 2700","code = 'bagot'","'m
 }
 
 for(const token of [
-  'const API_VERSION="2.5"',
-  'const DATABASE_CONTRACT="480"',
+  'const API_VERSION="2.6"',
+  'const DATABASE_CONTRACT="554"',
   'profile.combatPower',
   'officialStatValue(payload,"ItemLevel")',
   'kinojo_sanctuary_management_character_search_v480',

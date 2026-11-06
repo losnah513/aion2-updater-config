@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "project": "sanctuary-management-stage16",
+  "base": "4d9dcf9e1cace0246372b69b950362ebbf3e37ac",
+  "normalization": "UTF-8 LF",
+  "databaseContract": 554,
+  "edge": "sanctuary-management",
+  "apiVersion": "2.6",
+  "cachedContracts": [
+    480,
+    458
+  ],
+  "deploymentOrder": [
+    "SQL554",
+    "compatible existing Edge",
+    "WEB"
+  ],
+  "rollback": "Preserve schema, readers, guest cleanup and rosters; disable new editor writes through private feature gate.",
+  "files": [
+    {
+      "path": "core/kinojo-supabase-features.js",
+      "bytes": 100222,
+      "sha256": "2f4633d16a880cc63d6253eee1cae9efb80901363935987ac59c817faa1ea261"
+    },
+    {
+      "path": "sanctuary/index.html",
+      "bytes": 12296,
+      "sha256": "361a0bd2f7bed837d7a3188daabb4818767af35d343fc5b5cf91619ee6a8a20d"
+    },
+    {
+      "path": "m/sanctuary/index.html",
+      "bytes": 11971,
+      "sha256": "224b57867093bcebda6462af252ae81839a6fadef6043b171eec04d07b6de8ac"
+    },
+    {
+      "path": "sanctuary-management/css/sanctuary-management-draft.css",
+      "bytes": 76807,
+      "sha256": "cb823c7d2dea7b6e8adc50f9e734f594cc1cef60289c8365320a400b0320f60d"
+    },
+    {
+      "path": "sanctuary-management/js/sanctuary-management.js",
+      "bytes": 155166,
+      "sha256": "6dee14f4da7ee6c2998935447718f340d5898cbe818e390c637257b16bf7c61d"
+    },
+    {
+      "path": "sanctuary-management/js/sanctuary-management-draft.js",
+      "bytes": 145101,
+      "sha256": "91574ff8d0b43931c273fa482a1cfdb2608b182f85ac69ab4825f5d89e5f2512"
+    },
+    {
+      "path": "sanctuary-management/js/sanctuary-management-support.js",
+      "bytes": 19397,
+      "sha256": "f1ef90978c86c7e875cce805eb4db910c4102edcb10bc879bacfdcf871f0eca1"
+    },
+    {
+      "path": "sanctuary-management/js/sanctuary-management-inline-slot.js",
+      "bytes": 24257,
+      "sha256": "ad22939e8df53e190477cd6dbac82bc75e8d16656495243a4cf2de46e7831040"
+    },
+    {
+      "path": "supabase/functions/sanctuary-management/index.ts",
+      "bytes": 37236,
+      "sha256": "f7385d1b7c951ac618803b1d4648ff26827284339b512d45a70ad3b0c7088d89"
+    },
+    {
+      "path": "supabase/migrations/20261106011916_sanctuary_balanced_teams.sql",
+      "bytes": 162184,
+      "sha256": "6e6baa0b10167df915bbb640e5ad3898467d722aa07c4ac919539f28d83b4a0a"
+    },
+    {
+      "path": "supabase/rollbacks/20261106011916_sanctuary_balanced_teams.sql",
+      "bytes": 485,
+      "sha256": "b76e7b189d53233a19ef9379812a1bb30b2a7858986d229b6f39de9ab36d2b86"
+    }
+  ]
+}

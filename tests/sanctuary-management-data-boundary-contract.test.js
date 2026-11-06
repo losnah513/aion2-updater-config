@@ -51,8 +51,8 @@ assert.equal(feature.includes("rpc('kinojo_sanctuary_management_bootstrap_v412'"
 const client = read('sanctuary-management/js/sanctuary-management.js');
 for (const token of [
   "kind:'SERVER_ONLY'",
-    'const API_VERSION=2.5',
-  'const SCHEMA_VERSION=480',
+    'const API_VERSION=2.6',
+  'const SCHEMA_VERSION=554',
   'getSanctuaryManagementBootstrap',
   'runSanctuaryManagementCommand',
   "teamId?'UPDATE_TEAM_DRAFT':'CREATE_TEAM'",
@@ -121,8 +121,8 @@ vm.runInNewContext(client, context, { filename: 'sanctuary-management/js/sanctua
 async function verifyAdapter() {
   const adapter = context.window.KinojoSanctuaryManagementData;
   assert.equal(adapter.kind, 'SERVER_ONLY');
-  assert.equal(adapter.apiVersion, 2.5);
-  assert.equal(adapter.schemaVersion, 480);
+  assert.equal(adapter.apiVersion, 2.6);
+  assert.equal(adapter.schemaVersion, 554);
   const data = await adapter.bootstrap();
   assert.deepEqual(calls, ['bootstrap']);
   assert.equal(data.readEnabled, false);

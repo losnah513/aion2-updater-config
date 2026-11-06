@@ -35,13 +35,14 @@ const context=vm.createContext({
 });
 vm.runInContext(stripTypeScriptTypes(edge,{mode:'strip'}),context);
 (async()=>{
- for(const modern of [false,true]){
-  const result=await handler(new Request('https://fixture.invalid/sanctuary-management',{method:'POST',headers:{'content-type':'application/json',origin:'https://kinojo.info'},body:JSON.stringify({action:'bootstrap',...(modern?{clientContract:480}:{})})}));
+ for(const contract of [458,480,554]){
+  const modern=contract===480;
+  const result=await handler(new Request('https://fixture.invalid/sanctuary-management',{method:'POST',headers:{'content-type':'application/json',origin:'https://kinojo.info'},body:JSON.stringify({action:'bootstrap',...(contract!==458?{clientContract:contract}:{})})}));
   const data=await result.json();
   assert.equal(result.status,200);
-  assert.equal(String(data.apiVersion),modern?'2.5':'2.4');
-  assert.equal(Number(data.schemaVersion),modern?480:458);
-  assert.equal(String(data.availableContract),'480');
+  assert.equal(String(data.apiVersion),contract===554?'2.6':modern?'2.5':'2.4');
+  assert.equal(Number(data.schemaVersion),contract);
+  assert.equal(String(data.availableContract),'554');
  }
  console.log('Sanctuary cached/current browser contract negotiation: PASS');
 })().catch(error=>{console.error(error);process.exitCode=1;});

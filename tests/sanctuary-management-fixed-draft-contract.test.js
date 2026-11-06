@@ -49,7 +49,7 @@ for(const token of [
   'data-draft-candidate',
   'function candidateMarkup',
   'function assignCreatorCharacter',
-  'chosen.slot.character=candidateCharacter(candidate)',
+  'chosen.slot.character=prepared',
   'state.team.forces.push(force)',
   'await bridge().saveComposition(model)',
   'aria-modal="true"',
