@@ -79,15 +79,15 @@
   }
   function placementControlsMarkup(){
     const mode=placementMode(),editing=Boolean(state.sourceTeamId),selected=teamForces().length;
-    return '<section class="sanctuary-management-placement-controls" aria-label="배치 방식"><div role="group" aria-label="수동 또는 균형 배치">'
+    return '<section class="sanctuary-management-placement-controls" aria-label="배치 방식"><section class="sanctuary-management-settings-group"><h4>배치 방식 · 포스 수</h4><div role="group" aria-label="수동 또는 균형 배치">'
       +['MANUAL','BALANCED'].map(m=>'<button type="button" data-placement-mode="'+m+'" aria-pressed="'+String(mode===m)+'">'+(m==='MANUAL'?'수동배치':'균형랜덤배치')+'</button>').join('')
-      +'<button type="button" data-balance-open>전투력 기준 재배치</button><button type="button" data-team-family-open aria-expanded="'+String(familyPanelOpen)+'">본캐·부캐 연결</button></div>'
+      +'</div>'
       +'<button type="button" class="sanctuary-management-placement-toggle" data-placement-options-toggle aria-expanded="'+String(placementOptionsOpen)+'">'+(placementOptionsOpen?'배치 설정 접기':'배치 설정 펼치기')+' · '+selected+'포스</button><div data-placement-options-body'+(!placementOptionsOpen?' hidden':'')+'>'
       +(!editing?'<div data-placement-force-picker'+(!mode?' hidden':'')+'><strong>운영할 포스 수</strong><div role="group" aria-label="포스 수 선택">'+Array.from({length:9},(_,i)=>'<button type="button" data-placement-force-count="'+(i+1)+'" aria-pressed="'+String(forcesChosen&&selected===i+1)+'">'+(i+1)+'포스</button>').join('')+'</div><small>본캐·부캐 비율과 관계없이 1~9포스를 선택할 수 있습니다.</small></div>':'')
-      +'<p data-placement-help>'+(!mode?'배치 방식을 먼저 선택해 주세요.':mode==='BALANCED'?'인원 변경·즉시 참가·승인·이탈 때 잠금 외 인원을 다시 배치합니다. 실제 캐릭터만 추가할 수 있습니다.':'지정한 위치를 유지합니다. 필요할 때 이번 편성만 재배치할 수 있습니다.')+'</p></div></section>';
+      +'<p data-placement-help>'+(!mode?'배치 방식을 먼저 선택해 주세요.':mode==='BALANCED'?'인원 변경·즉시 참가·승인·이탈 때 잠금 외 인원을 다시 배치합니다. 실제 캐릭터만 추가할 수 있습니다.':'지정한 위치를 유지합니다. 필요할 때 이번 편성만 재배치할 수 있습니다.')+'</p></div></section><section class="sanctuary-management-settings-group"><h4>전투력 재배치</h4><button type="button" data-balance-open>전투력 기준 재배치</button><small>현재 편성에 한 번 적용</small></section><section class="sanctuary-management-settings-group"><h4>관계 관리</h4><button type="button" data-team-family-open aria-expanded="'+String(familyPanelOpen)+'">본캐·부캐 연결</button><small>이 팀의 본캐·부캐 관계 설정</small></section></section>';
   }
   function placementCardMarkup(){
-    return '<section class="sanctuary-management-placement-card" aria-label="배치 설정 카드"><header><span>PLACEMENT</span><h3>배치 설정</h3></header><div class="sanctuary-management-placement-card-body">'+placementControlsMarkup()+'<div data-addition-controls>'+additionControlsMarkup()+'</div></div></section>';
+    return '<section class="sanctuary-management-placement-card" aria-label="배치 설정 카드"><div class="sanctuary-management-placement-card-body">'+placementControlsMarkup()+'<div data-addition-controls>'+additionControlsMarkup()+'</div></div></section>';
   }
   function showEditorPanel(panel){
     editorPanel=['placement','schedule','linked'].includes(panel)?panel:'';
@@ -97,7 +97,7 @@
   function additionControlsMarkup(){
     if(!placementMode()||(!state.sourceTeamId&&!forcesChosen))return '';
     const mains=teamSlots().filter(item=>item.slot.character?.isMain&&!item.slot.character?.isRandomAlt);
-    return '<section class="sanctuary-management-addition-controls"><div role="group" aria-label="추가할 캐릭터 관계"><button type="button" data-addition-phase="MAIN" aria-pressed="'+String(additionPhase==='MAIN')+'">본캐 추가</button><button type="button" data-addition-phase="ALT" aria-pressed="'+String(additionPhase==='ALT')+'">부캐 추가</button></div>'
+    return '<section class="sanctuary-management-addition-controls sanctuary-management-settings-group"><h4>캐릭터 추가</h4><div role="group" aria-label="추가할 캐릭터 관계"><button type="button" data-addition-phase="MAIN" aria-pressed="'+String(additionPhase==='MAIN')+'">본캐 추가</button><button type="button" data-addition-phase="ALT" aria-pressed="'+String(additionPhase==='ALT')+'">부캐 추가</button></div>'
       +(additionPhase==='ALT'?'<label>연결할 본캐 <select data-addition-root><option value="">기존 본캐·부캐 연결 사용</option>'+mains.map(item=>{const key=personKey(item.slot.character);return '<option value="'+escapeHtml(key)+'"'+(additionRoot===key?' selected':'')+'>'+escapeHtml(characterDisplayName(item.slot.character))+'</option>';}).join('')+'</select></label>':'')
       +'<small>본캐를 추가한 뒤 부캐를 추가하세요. 빈자리가 있어도 저장할 수 있습니다. 회원 코드가 없는 캐릭터도 본캐를 선택해 이 팀 안에서 연결할 수 있습니다.</small></section>';
   }
@@ -730,7 +730,7 @@
     return '<div class="sanctuary-management-draft-backdrop" data-draft-close></div>'
       +'<div class="sanctuary-management-draft-frame">'
         +'<form class="sanctuary-management-builder-dialog" role="dialog" aria-modal="true" aria-labelledby="sanctuaryDraftTitle" aria-describedby="sanctuaryDraftDescription" tabindex="-1" data-draft-form data-editor-panel="'+editorPanel+'">'
-          +'<nav class="sanctuary-management-editor-card-nav" aria-label="팀 편집 카드"><button type="button" data-editor-panel-open="" aria-pressed="'+String(!editorPanel)+'">포스 편성</button><button type="button" data-editor-panel-open="placement" aria-pressed="'+String(editorPanel==='placement')+'">배치 설정</button><button type="button" data-editor-panel-open="schedule" aria-pressed="'+String(editorPanel==='schedule')+'">팀 일정</button></nav>'
+          +'<nav class="sanctuary-management-editor-card-nav" aria-label="팀 편집 카드"><button type="button" data-editor-panel-open="" aria-pressed="'+String(!editorPanel)+'">포스 편성</button><button type="button" data-editor-panel-open="schedule" aria-pressed="'+String(editorPanel==='schedule')+'">팀 일정</button></nav>'
           +'<div class="sanctuary-management-builder-layout">'
             +'<section class="sanctuary-management-composer">'
               +'<header class="sanctuary-management-composer-title"><div><span>TEAM &amp; FORCE</span><div class="sanctuary-management-composer-mode-switch" role="group" aria-label="팀 구성 방식"><button type="button" data-draft-mode="fixed" aria-pressed="'+String(!participation)+'"'+(busy?' disabled':'')+'>고정</button><button type="button" data-draft-mode="participation" aria-pressed="'+String(participation)+'"'+(busy?' disabled':'')+'>참여</button><h2 id="sanctuaryDraftTitle">팀 구성하기</h2></div><p id="sanctuaryDraftDescription">모달 안의 편성은 마지막 저장 때 한 번만 Server에 반영됩니다.</p></div><label><span>팀 이름</span><input name="draftTitle" maxlength="80" required value="'+escapeHtml(state.team?.title||'')+'" placeholder="예: 1팀 목요일 21시"></label></header>'
@@ -741,7 +741,7 @@
               +'</div>'
             +'</section>'
             +'<div class="sanctuary-management-builder-side'+(state.linkedAlts?' has-linked-alts':'')+'">'
-              +'<button type="button" class="sanctuary-management-editor-card-close" data-editor-panel-close aria-label="설정 카드 닫기">×</button>'+placementCardMarkup()
+              +'<button type="button" class="sanctuary-management-editor-card-close" data-editor-panel-close aria-label="설정 카드 닫기">×</button>'
               +linkedAltPanelMarkup()
               +'<section class="sanctuary-management-schedule-panel" aria-labelledby="sanctuaryDraftScheduleTitle">'
               +'<header><span>SCHEDULE</span><h3 id="sanctuaryDraftScheduleTitle">팀 일정 입력</h3><p>팀 아래 모든 포스가 같은 일정과 진행 시간을 공유합니다.</p></header>'
@@ -761,7 +761,7 @@
               +'</section>'
             +'</div>'
           +'</div>'
-              +'<footer class="sanctuary-management-composer-actions"><div class="sanctuary-management-draft-status-wrap"><p class="sanctuary-management-draft-status'+(state.tone?' is-'+escapeHtml(state.tone):'')+'" data-draft-status role="status">'+escapeHtml(state.message||defaultStatus())+'</p>'+listRetry+'</div><div><button type="submit" class="is-primary"'+(busy?' disabled':'')+'>'+submitLabel+'</button><button type="button" data-draft-reset'+(busy?' disabled':'')+'>초기화</button><button type="button" data-draft-close'+(busy?' disabled':'')+'>닫기</button></div></footer>'
+              +'<footer class="sanctuary-management-composer-actions">'+placementCardMarkup()+'<div class="sanctuary-management-save-row"><div class="sanctuary-management-draft-status-wrap"><p class="sanctuary-management-draft-status'+(state.tone?' is-'+escapeHtml(state.tone):'')+'" data-draft-status role="status">'+escapeHtml(state.message||defaultStatus())+'</p>'+listRetry+'</div><div><button type="submit" class="is-primary"'+(busy?' disabled':'')+'>'+submitLabel+'</button><button type="button" data-draft-reset'+(busy?' disabled':'')+'>초기화</button><button type="button" data-draft-close'+(busy?' disabled':'')+'>닫기</button></div></div></footer>'
         +'</form>'+balancePanelMarkup()+familyPanelMarkup()
       +'</div>';
   }
@@ -773,7 +773,7 @@
     state.team=team&&typeof team==='object'?clone(team):makeLocalTeam(state.creationMode);
     if(state.team){state.creationMode=value(state.team.mode).toUpperCase()==='PARTICIPATION'?'PARTICIPATION':'FIXED';state.joinPolicy=value(state.team.joinPolicy).toUpperCase()==='APPROVAL'?'APPROVAL':'INSTANT';}
     state.selectedForceId=Number(state.team?.forces?.[0]?.forceId||0);
-    clearTimeout(balanceTimer);balanceSequence++;compositionVersion=0;lastBalancedVersion=-1;familyPanelOpen=false;draftGuestIds=new Set();unlockedSlotIds=new Set();forcesChosen=Boolean(state.sourceTeamId);additionPhase=state.sourceTeamId?'':'MAIN';additionRoot='';placementOptionsOpen=false;editorPanel=state.sourceTeamId?'':'placement';state.rebalanceOnce=false;state.team.placementMode=state.sourceTeamId?(state.team.placementMode||'MANUAL'):'';
+    clearTimeout(balanceTimer);balanceSequence++;compositionVersion=0;lastBalancedVersion=-1;familyPanelOpen=false;draftGuestIds=new Set();unlockedSlotIds=new Set();forcesChosen=Boolean(state.sourceTeamId);additionPhase=state.sourceTeamId?'':'MAIN';additionRoot='';placementOptionsOpen=false;editorPanel='';state.rebalanceOnce=false;state.team.placementMode=state.sourceTeamId?(state.team.placementMode||'MANUAL'):'';
     refreshLocalTeam();
     state.selectedSlotId=0;state.moveFromSlotId=0;state.draggedSlotId=0;state.dragSwitching=false;state.requirementTarget=null;state.classTargetSlotId=0;state.showCreatorCandidates=false;state.requestKey='';state.forceSaveRequestKey='';state.forceAddRequestKey='';state.slotRequestKey='';state.moveRequestKey='';state.message='';state.tone='';state.saving=false;state.mutating=Boolean(state.sourceTeamId);state.balancePreview=null;state.balanceAppliedToken='';state.balanceAppliedSignature='';state.balanceStableSeed='team-balance-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);state.baselineCompositionSignature=compositionSignature(false);resetCharacterLookup();
     openLayer(opener||state.opener);

@@ -1,3 +1,7 @@
+## Sanctuary compact cards and footer controls · 2026-11-06
+
+Character slots retain58px height instead of stretching into spare viewport space. The expanded footer separates placement mode/force count, one-time rebalance, family management and character addition into four labeled groups, with save/reset/close on a separate lower row. The schedule regains the full side card. Small screens wrap tool groups into two columns within a bounded scroll area; roster slots and save actions stay reachable without horizontal page overflow. Prior authenticated command/preview/guest/placement behavior is unchanged. Evidence: Sanctuary LOG86.
+
 ## Sanctuary editor viewport correction · 2026-11-06
 
 Placement settings, force count and main/alt controls live in a separate bounded card. The force composer keeps the same position and dimensions when those controls expand or change. Wide screens display settings and schedule beside the composer; compact screens open each card independently from a fixed navigation row. Save/reset/close remain outside the scrolling content, and lower-slot selection preserves scroll through redraw. Eight viewport checks cover 1440×900/650, 1100×720, 959×887, 781×700, 390×844, 320×568 and 844×390, including unchanged composer geometry and last-slot access. Existing SQL554/Edge/auth/placement behavior is unchanged. The live health test expects availableContract554 while preserving the unversioned cached-client2.4/458 contract. Deployment evidence belongs to Sanctuary LOG85.
