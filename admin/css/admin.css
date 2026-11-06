@@ -829,3 +829,11 @@ body.admin-member-image-modal-open{overflow:hidden}
 
 .admin-card input,.admin-card select,.admin-card textarea,.admin-input,.admin-select{max-width:100%;min-width:0;box-sizing:border-box}.admin-card>*{min-width:0}
 @media(max-width:620px){.admin-automation-control-row{align-items:flex-start;flex-direction:column}.admin-automation-switch{width:100%;justify-content:flex-end}}
+
+/* SQL555 operating budget and KST schedule controls. */
+.admin-storage-budget{border-color:hsl(var(--storage-hue,145) 45% 65%);background:hsl(var(--storage-hue,145) 65% 97%)}
+.admin-storage-budget progress,.admin-storage-budget.is-warning progress{accent-color:hsl(var(--storage-hue,145) 75% 35%)}
+.admin-storage-budget progress::-webkit-progress-value{background:hsl(var(--storage-hue,145) 75% 35%)}
+.admin-storage-budget progress::-moz-progress-bar{background:hsl(var(--storage-hue,145) 75% 35%)}
+.admin-storage-budget.is-warning{border-color:hsl(var(--storage-hue,145) 60% 58%);background:hsl(var(--storage-hue,145) 75% 96%)}
+.admin-character-schedule{padding:16px;margin:12px 0;border:1px solid #d8e2f2;border-radius:12px;min-width:0}.admin-character-schedule h3{margin:0 0 12px;font-size:14px}.admin-character-schedule-times{display:flex;flex-wrap:wrap;gap:12px}.admin-character-schedule label{display:grid;gap:6px;font-size:12px;min-width:130px;flex:1}.admin-character-schedule input{width:100%;min-width:0;box-sizing:border-box;padding:10px;border:1px solid #cbd5e1;border-radius:8px;font:inherit}.admin-character-schedule p{font-size:12px;line-height:1.6;color:#52627a}.admin-character-schedule [role=status]{display:block;margin-top:8px;font-size:12px;overflow-wrap:anywhere}

@@ -27,9 +27,9 @@ const root=path.resolve(__dirname,'..');
      esc:s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
      formatServerTime:s=>new Date(s).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'}),
      setStatus:(s,t)=>{document.querySelector(s).textContent=t},
-     adminAutomation:async command=>{if(command!=='routines')throw Error('unexpected command');window.calls++;
+     adminAutomation:async command=>{if(command==='saveSchedule'){window.saved=true;return {ok:false,message:'다른 창에서 설정이 변경됐습니다.'};}if(command!=='routines')throw Error('unexpected command');window.calls++;
       await new Promise(r=>setTimeout(r,60));if(window.mode==='error')throw Error('통신 오류');
-      return {ok:true,characterScheduleSummary:'본캐 10:00·22:00 / 부캐 15:00 (매일, 한국 시간)',generatedAt:'2026-10-08T06:00:00Z',historyNote:'최근 서버 예약 실행 기록 기준입니다.',routines:window.mode==='empty'?[]:[
+      return {ok:true,characterSchedule:{mainTimes:['10:00','22:00'],altTime:'15:00',revision:0,canEdit:true,running:false},characterScheduleSummary:'본캐 10:00·22:00 / 부캐 15:00 (매일, 한국 시간)',generatedAt:'2026-10-08T06:00:00Z',historyNote:'최근 서버 예약 실행 기록 기준입니다.',routines:window.mode==='empty'?[]:[
        {id:11,name:'캐릭터 공식 조회',frequency:'DAILY',active:true,lastStatus:'succeeded',lastStartedAt:'2026-10-08T01:00:00Z',scheduleEntries:[
         {timeKst:'22:00',minuteOfDay:1320,description:'본캐 공식 조회',nextRunAt:'2026-10-08T13:00:00Z'},
         {timeKst:'10:00',minuteOfDay:600,description:'본캐 공식 조회',nextRunAt:'2026-10-09T01:00:00Z'},
@@ -45,6 +45,11 @@ const root=path.resolve(__dirname,'..');
    });
    assert.equal(await page.evaluate(()=>window.calls),1);
    assert.match(await page.locator('#serverRoutineCharacterPolicy').innerText(),/본캐 10:00·22:00 \/ 부캐 15:00/);
+   assert.equal(await page.locator('#characterScheduleForm input').count(),3);
+   await page.locator('[name=slot1]').fill('10:00');await page.locator('#characterScheduleForm button').click();
+   assert.match(await page.locator('#characterScheduleStatus').innerText(),/서로 다르게/);
+   await page.locator('[name=slot1]').fill('21:30');await page.locator('#characterScheduleForm button').click();
+   await page.waitForFunction(()=>window.saved);assert.match(await page.locator('#characterScheduleStatus').innerText(),/다른 창/);
    const rows=page.locator('.admin-routine-row');assert.equal(await rows.count(),7);
    assert.equal(await page.locator('.admin-routine-table').count(),2);
    assert.deepEqual(await page.locator('.admin-routine-section').nth(0).locator('.admin-routine-time').allTextContents(),['02:00','05:10','10:00','14:00','15:00','22:00']);
@@ -54,9 +59,9 @@ const root=path.resolve(__dirname,'..');
    assert.match(await rows.nth(6).innerText(),/<img/);assert.equal(await page.locator('#serverRoutineList img, #serverRoutineList script').count(),0);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+2),false,'overflow '+width);
    if(process.env.CHARACTER_UI_EVIDENCE)await page.screenshot({path:path.join(process.env.CHARACTER_UI_EVIDENCE,'routines-'+width+'.png'),fullPage:true});
-   await page.evaluate(()=>window.KinojoAdmin.renderServerRoutines({routines:[],storageBudget:{databaseBytes:291000000,targetBytes:300000000,warningBytes:280000000,status:'WARNING',lastCleanupAt:'2026-10-31T00:00:00Z',autoReclaim:{enabled:true,watchActive:true,status:'RECLAIMING',lastAt:'2026-10-31T00:00:00Z'}}}));
-   assert.match(await page.locator('.admin-storage-budget').innerText(),/291\.0 \/ 300MB/);assert.match(await page.locator('.admin-storage-budget').innerText(),/용량 주의/);assert.equal(await page.locator('.admin-storage-budget progress').getAttribute('value'),'291000000');assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+2),false,'storage overflow '+width);
-   assert.match(await page.locator('.admin-storage-budget').innerText(),/자동 공간 회수 켜짐[\s\S]*매분 확인[\s\S]*목표 270MB[\s\S]*공간 회수 중/);
+   await page.evaluate(()=>window.KinojoAdmin.renderServerRoutines({routines:[],storageBudget:{databaseBytes:350000000,targetBytes:500000000,stableBytes:300000000,status:'CAUTION',lastCleanupAt:'2026-10-31T00:00:00Z',autoReclaim:{enabled:true,watchActive:true,status:'RECLAIMING',lastAt:'2026-10-31T00:00:00Z'}}}));
+   assert.match(await page.locator('.admin-storage-budget').innerText(),/350\.0 \/ 500MB/);assert.match(await page.locator('.admin-storage-budget').innerText(),/용량 주의/);assert.equal(await page.locator('.admin-storage-budget progress').getAttribute('value'),'350000000');assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+2),false,'storage overflow '+width);
+   assert.match(await page.locator('.admin-storage-budget').innerText(),/자동 공간 회수 켜짐[\s\S]*매분 확인[\s\S]*목표 400MB[\s\S]*공간 회수 중/);
    await page.evaluate(()=>window.KinojoAdmin.renderServerRoutines({routines:[],storageBudget:{databaseBytes:291000000,targetBytes:300000000,status:'WARNING',autoReclaim:{enabled:true,watchActive:false,status:'NO_RECLAIMABLE_SPACE'}}}));assert.match(await page.locator('.admin-storage-budget').innerText(),/예약 작업 확인 필요[\s\S]*보존 자료를 지우지 않고/);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+2),false);
    await page.evaluate(()=>window.KinojoAdmin.renderServerRoutines({routines:[],storageBudget:{databaseBytes:'<img src=x>',targetBytes:300000000}}));assert.equal(await page.locator('.admin-storage-budget').count(),0);
    await page.evaluate(()=>window.mode='error');await page.locator('#serverRoutineReloadBtn').click();

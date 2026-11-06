@@ -61,16 +61,17 @@ assert.equal(bridge.includes('kinojo-admin-notification-character'), false, 'cha
 assert.ok(bridge.includes("badge.textContent=total>99?'99+':String(total);badge.hidden=total<1"), 'admin red badge must continue to use server totalCount only');
 assert.ok(bridge.includes('Date.now()-lastSummaryAt<35000'), 'bridge must reuse common polling and only fall back when summary polling is absent');
 assert.ok(bridge.includes("sessionStorage.setItem(LEGACY_SUPPORT_SEEN_KEY,String(id))"), 'legacy support-only toast must be suppressed before common renderer resumes');
-assert.ok(bridge.includes('관리자 페이지 이동'), 'notification card must expose administrator-page hover/focus affordance');
+assert.ok(bridge.includes('관리자 페이지 새 창 열기'), 'notification card must expose administrator-page hover/focus affordance');
 assert.ok(bridge.includes('kinojo-admin-notification-link-hint-arrow'), 'administrator-page arrow must have its own accent style hook');
 assert.ok(bridge.includes('kinojo-admin-notification-card:hover + .kinojo-admin-notification-link-hint'), 'desktop pointer hover must reveal the navigation hint');
 assert.ok(bridge.includes('border-color:var(--kinojo-admin-notification-accent)'), 'hover/focus border must follow each notification accent color');
 assert.ok(bridge.includes('color:var(--kinojo-admin-notification-accent)'), 'navigation hint arrow and message accent must follow each notification accent color');
-assert.ok(bridge.includes('location.href=item.href'), 'notification card activation must navigate to the mapped administrator page');
+assert.equal(bridge.includes('location.href=item.href'),false,'current page must stay open');
+assert.ok(bridge.includes("link.target='_blank';link.rel='noopener noreferrer'"));
 assert.ok(bridge.includes('@media(hover:none){.kinojo-admin-notification-link-hint{display:none}}'), 'touch-only layouts must not reserve hover hint UI');
 assert.ok(bridge.includes('.kinojo-admin-notification-card.is-pressing'), 'card activation must expose a pressed-state animation class');
 assert.ok(bridge.includes("card.classList.add('is-pressing')"), 'card activation must trigger the pressed-state animation before navigation');
-assert.ok(bridge.includes('setTimeout(()=>{location.href=item.href;},110)'), 'navigation must wait briefly so the press animation is visible');
+assert.ok(bridge.includes('link.click();link.remove()'),'new tab must open synchronously in user gesture');
 
 assert.ok(bridge.includes('function isAdminPage()'), 'bridge must identify administrator routes');
 assert.ok(bridge.includes("path==='/admin'||path.startsWith('/admin/')||path==='/m/admin'||path.startsWith('/m/admin/')"), 'desktop and mobile administrator route families must suppress notification cards');

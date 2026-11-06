@@ -684,6 +684,7 @@
     if(command==='routines')return rpc('kinojo_admin_server_routines_v533',{
       p_session_token:currentAdminSessionCredential()
     });
+    if(command==='saveSchedule')return rpc('kinojo_admin_character_schedule_save_v555',{p_session_token:currentAdminSessionCredential(),p_main_times:extra.mainTimes,p_alt_time:extra.altTime,p_revision:extra.revision});
     if(command==='saveListWrite')return rpc('kinojo_automation_admin_list_write_save',{
       p_pass_key:currentAdminSessionCredential(),p_enabled:extra.enabled===true
     });

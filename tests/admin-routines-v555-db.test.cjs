@@ -1,0 +1,70 @@
+const fs=require('node:fs'),assert=require('node:assert/strict');
+const {PGlite}=require(process.env.PGLITE_MODULE||'../.codex-test-runtime/node_modules/@electric-sql/pglite');
+(async()=>{const db=new PGlite();try{
+ await require('./helpers/admin-routines-v555-db.cjs')(db);
+ const read=p=>fs.readFileSync(p,'utf8');
+ const base=read('supabase/migrations/20261031054426_storage_budget_current_and_retention.sql');
+ await db.exec('create table if not exists public.growth_reviews(id bigint);create table if not exists public.master_sync_events(id bigint);create table if not exists public.extension_character_payloads(id bigint);');
+ await db.exec(base.slice(base.indexOf('CREATE TABLE private.kinojo_storage_budget_control_v549'),base.indexOf('CREATE FUNCTION private.kinojo_storage_review_summary_v549')));
+ const reclaim=read('supabase/migrations/20261031092317_automatic_storage_reclaim.sql');
+ await db.exec(reclaim.slice(reclaim.indexOf('ALTER TABLE private.kinojo_storage_budget_control_v549'),reclaim.indexOf('CREATE FUNCTION private.kinojo_storage_reclaim_due_v553')));
+ await db.exec("create function private.kinojo_storage_reclaim_active_v553()returns boolean language sql as $$select exists(select 1 from public.updater_runtime_jobs where status='running')$$;");
+ await db.exec("alter table cron.job add constraint jobname_unique unique(jobname);create sequence cron_job_id start 100;create function cron.schedule(text,text,text)returns bigint language sql as $$insert into cron.job(jobid,jobname,schedule,command,active)values(nextval('cron_job_id'),$1,$2,$3,true)on conflict(jobname)do update set schedule=excluded.schedule,command=excluded.command returning jobid$$;");
+ await db.exec(read('tests/fixtures/admin-routines-v555/baseline-functions.sql'));
+ const migration=read('supabase/migrations/20261106073610_admin_routine_times_storage_budget.sql');
+ await db.exec('begin;'+migration+'commit;');
+ const val=async(s,p=[]) =>(await db.query(s,p)).rows[0].v;
+ const save=(main=['09:13','21:47'],alt='14:29',rev=0,actor='synthetic-admin')=>val('select kinojo_admin_character_schedule_save_v555($1,$2,$3,$4)v',[actor,JSON.stringify(main),alt,rev]);
+ assert.equal((await save(undefined,undefined,0,'synthetic-member')).code,'MASTER_ACCESS_REQUIRED');
+ for(const [m,a] of [[['24:00','12:00'],'15:00'],[['10:00'],'15:00'],[[10,'12:00'],'15:00'],[['10:00','12:00'],'1:00']])assert.equal((await save(m,a)).code,'INVALID_SCHEDULE');
+ assert.equal((await save(['10:00','10:00'],'15:00')).code,'DUPLICATE_TIME');
+ assert.equal((await save(['10:00','22:00'],'15:00')).unchanged,true);
+ assert.equal(await val('select count(*)::int v from cron.job'),3);
+ assert.equal((await save()).ok,true);
+ assert.deepEqual(await val("select schedule_kst v from kinojo_server_automation_settings where automation_key='character_refresh'"),['09:13','14:29','21:47']);
+ assert.deepEqual((await db.query("select schedule from cron.job where jobname like 'kinojo-character-refresh-%' order by jobname")).rows.map(x=>x.schedule),['13 0 * * *','29 5 * * *','47 12 * * *']);
+ assert.equal((await save()).code,'SCHEDULE_CHANGED');
+ assert.equal((await save(['21:47','09:13'],'14:29',1)).unchanged,true);
+ assert.equal(await val("select count(*)::int v from cron.job where command='SECRET_SENTINEL'"),5);
+ const readback=await val("select kinojo_admin_server_routines_v533('synthetic-admin')v");
+ assert.deepEqual(readback.characterSchedule.mainTimes,['09:13','21:47']);assert.match(readback.characterScheduleSummary,/09:13·21:47.*14:29/);
+ assert.equal(JSON.stringify(readback).includes('SECRET_SENTINEL'),false);
+ for(const [clock,scope,time] of [['09:12','MAIN_ONLY','21:47'],['09:13','MAIN_ONLY','09:13'],['14:29','ALT_ONLY','14:29'],['21:47','MAIN_ONLY','21:47']]){
+ const slot=await val("select private.kinojo_character_slot_v555(('2026-11-06 '||$1)::timestamp,schedule_kst,character_main_times)v from kinojo_server_automation_settings where automation_key='character_refresh'",[clock]);
+ assert.deepEqual(slot,{scope,time});
+ }
+ await db.exec("update kinojo_server_automation_settings set running=true where automation_key='character_refresh'");
+ assert.equal((await save(['08:00','20:00'],'14:00',1)).code,'AUTOMATION_RUNNING');
+ await db.exec("update kinojo_server_automation_settings set running=false,enabled=false where automation_key='character_refresh'");
+ assert.equal((await save(['08:00','20:00'],'14:00',1)).ok,true);
+ assert.equal(await val("select count(*)::int v from cron.job where jobname like 'kinojo-character-refresh-%' and active"),0);
+ for(const [b,l,due]of [[449999999,false,false],[450000000,false,true],[400000000,true,false],[400000001,true,true]])
+ assert.equal(await val('select private.kinojo_storage_reclaim_due_v553($1,$2)v',[b,l]),due);
+ assert.deepEqual(await val("select jsonb_build_array(target_bytes,warning_bytes,steady_bytes)v from private.kinojo_storage_budget_control_v549"),[500000000,450000000,400000000]);
+ assert.equal(await val("select has_table_privilege('anon','private.kinojo_storage_budget_control_v549','select')v"),false);
+ assert.equal(await val("select has_function_privilege('anon','private.kinojo_character_schedule_summary_v555()','execute')v"),false);
+ await assert.rejects(()=>save(undefined,undefined,2,'invalid'));
+
+ await db.exec(`create table code_requests(id bigint,request_id text,character_name text,created_at timestamptz,status text);
+ create table sanctuary_party_support_requests(id bigint,character_master_id bigint,status text,sanctuary_id bigint,team_no int,party_no int,slot_no int,created_at timestamptz);
+ create function private.kinojo_sanctuary_roster_can_manage_force_v308(bigint,bigint,int)returns boolean language sql as $$select false$$;
+ create function kinojo_master_session_validate_v337(text)returns jsonb language sql as $$select '{"ok":false}'::jsonb$$;
+ create function kinojo_member_from_web_credential_v326(text)returns setof member_codes language sql as $$select * from public.member_codes where id=case when $1='invalid' then -1 else 1 end$$;
+ insert into member_codes(id,level,is_active,can_manage)values(1,3,true,false);
+ update private.kinojo_storage_budget_control_v549 set enabled=true,last_database_bytes=400000001,capacity_checked_at=now();
+ create function cron.unschedule(bigint)returns boolean language sql as $$delete from cron.job where jobid=$1 returning true$$;`);
+ const notice=await val('select kinojo_web_notification_summary_v316($1)v',['kws_'+'a'.repeat(40)]);
+ assert.equal(notice.storageAlert.databaseBytes,400000001);assert.match(notice.storageAlert.loginKey,/^[a-f0-9]{32}$/);
+ assert.equal(JSON.stringify(notice).includes('kws_'),false);
+ assert.equal((await val("select kinojo_web_notification_summary_v316('invalid')v")).storageAlert,undefined);
+ assert.equal((await val("select kinojo_web_notification_summary_v316('legacy-input')v")).storageAlert,null);
+ await db.exec('update member_codes set level=1');
+ assert.equal((await val('select kinojo_web_notification_summary_v316($1)v',['kws_'+'a'.repeat(40)])).storageAlert,null);
+ await db.exec("update kinojo_server_automation_settings set running=false");
+ await db.exec('begin;'+read('supabase/rollbacks/20261106073610_admin_routine_times_storage_budget.sql')+'commit;');
+ assert.deepEqual(await val("select jsonb_build_array(target_bytes,warning_bytes,steady_bytes)v from private.kinojo_storage_budget_control_v549"),[300000000,280000000,270000000]);
+ assert.equal(await val("select count(*)::int v from cron.job where jobname like '%v555'"),0);
+ assert.equal(await val("select schedule v from cron.job where jobid=11"),'0 1,6,13 * * *');
+
+ console.log('PASS SQL555: full migration, Master/auth gate, invalid/duplicate time, CAS/no-op/running guard, arbitrary KST minutes/UTC jobs, role scope/midnight, disabled jobs, 450/400 thresholds, private ACL and no command leak');
+ }finally{await db.close();}})().catch(e=>{console.error({message:e.message,code:e.code,where:e.where,position:e.position,snippet:e.query?.slice(Number(e.position)-100,Number(e.position)+100)});process.exitCode=1});

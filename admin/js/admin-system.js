@@ -14,6 +14,7 @@
   const setStatus=(...args)=>A.setStatus(...args);
   const toast=(...args)=>A.toast(...args);
   let routineRequest=null;
+  let scheduleSaving=false;
 
   function renderServerRoutines(data){
     const root=$('#serverRoutineList');
@@ -27,6 +28,7 @@
     };
     const summary=$('#serverRoutineCharacterPolicy');
     if(summary)summary.textContent=data.characterScheduleSummary||'자동 조회 규칙을 확인하지 못했습니다.';
+    renderCharacterSchedule(data.characterSchedule);
     const scheduled=[],repeated=[];
     rows.forEach(row=>{
       const entries=Array.isArray(row.scheduleEntries)?row.scheduleEntries:[];
@@ -46,15 +48,16 @@
         +'<td data-label="작업의 최근 실행">'+esc(statusLabel[row.lastStatus]||(row.lastStatus?'확인 필요':'기록 없음'))+(row.lastStartedAt?'<p>'+esc(time(row.lastStartedAt))+'</p>':'')+'</td></tr>').join('')+'</tbody></table></div>';
     const budget=data.storageBudget||{};
     const used=Number(budget.databaseBytes),target=Number(budget.targetBytes);
-    const labels={NORMAL:'정상',WARNING:'용량 주의',TARGET_EXCEEDED:'목표 초과',DISABLED:'자동 정리 대기'};
+    const labels={NORMAL:'안정권',CAUTION:'용량 주의',WARNING:'용량 경고',TARGET_EXCEEDED:'운영 상한 초과',DISABLED:'자동 정리 대기'};
+    const hue=used<=300000000?145:used<=400000000?145-(used-300000000)/100000000*105:Math.max(0,40-(used-400000000)/100000000*40);
     const auto=budget.autoReclaim;
     const reclaimLabels={IDLE:'대기',QUEUED:'실행 준비 중',RECLAIMING:'정리·공간 회수 중',RETRY:'잠시 후 재시도',DEFERRED:'다른 작업이 끝나면 재시도',ACTIVE_WORK:'캐릭터 조회가 끝나면 실행',NO_RECLAIMABLE_SPACE:'추가 확인 필요 · 보존 자료를 지우지 않고 회수할 공간이 없습니다',PROTECTED_STATE_CHANGED:'자료 보호 검사로 중단 · 확인 필요',CANARY_OK:'동작 확인 완료'};
-    const reclaim=auto&&typeof auto==='object'?'<p>자동 공간 회수 '+(auto.enabled===true?(auto.watchActive===true?'켜짐 · 매분 확인 · 280MB 이상에서 실행 · 목표 270MB':'예약 작업 확인 필요'):'준비 중')+' · '+esc(Object.prototype.hasOwnProperty.call(reclaimLabels,auto.status)?reclaimLabels[auto.status]:'상태 확인 필요')+(auto.lastAt?' · 최근 실행 '+esc(time(auto.lastAt)):'')+'</p>':'';
+    const reclaim=auto&&typeof auto==='object'?'<p>자동 공간 회수 '+(auto.enabled===true?(auto.watchActive===true?'켜짐 · 매분 확인 · '+Number(auto.triggerBytes||budget.reclaimTriggerBytes||450000000)/1000000+'MB 이상에서 실행 · 목표 '+Number(auto.targetBytes||budget.steadyBytes||400000000)/1000000+'MB':'예약 작업 확인 필요'):'준비 중')+' · '+esc(Object.prototype.hasOwnProperty.call(reclaimLabels,auto.status)?reclaimLabels[auto.status]:'상태 확인 필요')+(auto.lastAt?' · 최근 실행 '+esc(time(auto.lastAt)):'')+'</p>':'';
     const storage=Number.isFinite(used)&&used>=0&&Number.isFinite(target)&&target>0?
-      '<section class="admin-storage-budget '+(['WARNING','TARGET_EXCEEDED'].includes(budget.status)?'is-warning':'')+'" role="status" aria-label="DB 용량">'
+      '<section class="admin-storage-budget '+(['CAUTION','WARNING','TARGET_EXCEEDED'].includes(budget.status)?'is-warning':'')+'" role="status" aria-label="DB 용량" style="--storage-hue:'+hue+'">'
       +'<h3>DB 용량 <strong>'+esc((used/1000000).toFixed(1))+' / '+esc((target/1000000).toFixed(0))+'MB</strong></h3>'
       +'<progress aria-label="DB 사용량" max="'+target+'" value="'+Math.min(used,target)+'"></progress>'
-      +'<p>'+esc(labels[budget.status]||'상태 확인 필요')+' · '+esc((Number(budget.warningBytes||280000000)/1000000).toFixed(0))+'MB부터 주의 · 최근 자동 정리 '+esc(time(budget.lastCleanupAt))+'</p>'+reclaim+'</section>':'';
+      +'<p>'+esc(labels[budget.status]||'상태 확인 필요')+' · '+esc((Number(budget.stableBytes||300000000)/1000000).toFixed(0))+'MB 이하 안정권 · 400MB 초과 로그인 알림 · 최근 용량 확인 '+esc(time(budget.lastCleanupAt))+'</p>'+reclaim+'</section>':'';
     root.innerHTML=storage+(rows.length?
       (scheduled.length?'<section class="admin-routine-section"><h3>예약 시간표</h3><p>00:00부터 시각 순서입니다. 매주 작업은 해당 요일에 실행합니다.</p>'+table(scheduled,true)+'</section>':'')
       +(repeated.length?'<section class="admin-routine-section"><h3>반복 작업</h3><p>하루 동안 일정한 간격으로 실행하는 작업입니다.</p>'+table(repeated,false)+'</section>':'')
@@ -62,6 +65,31 @@
     const note=$('#serverRoutineHistoryNote');
     if(note)note.textContent=data.historyNote||'최근 서버 예약 실행 기록 기준입니다.';
     setStatus('#serverRoutineStatus','한국 시간 기준 · 확인 '+time(data.generatedAt),'ok');
+  }
+
+  function renderCharacterSchedule(config){
+    const root=$('#serverRoutineSchedule');if(!root)return;
+    if(!config||config.canEdit!==true){root.replaceChildren();return;}
+    const times=Array.isArray(config.mainTimes)?config.mainTimes:[];
+    const valid=t=>/^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(String(t||''))?t:'';
+    root.innerHTML='<form id="characterScheduleForm" class="admin-character-schedule"><h3>캐릭터 공식 조회 시간</h3><div class="admin-character-schedule-times">'
+      +['본캐 1회차','본캐 2회차','부캐'].map((label,i)=>'<label>'+label+'<input type="time" required step="60" name="slot'+i+'" value="'+valid(i<2?times[i]:config.altTime)+'"></label>').join('')
+      +'</div><p>매일 · 한국 시간 · 본캐 2회, 부캐 1회. 각 조회 전후 15분에는 수동 조회가 제한됩니다. 서로 가까운 시간은 작업 부하가 겹칠 수 있습니다.</p>'
+      +'<button type="submit" class="admin-btn" '+(config.running?'disabled':'')+'>조회 시간 저장</button><span id="characterScheduleStatus" role="status"></span></form>';
+    const form=$('#characterScheduleForm');
+    form.addEventListener('submit',async event=>{
+      event.preventDefault();if(scheduleSaving)return;
+      const slots=[0,1,2].map(i=>form.elements['slot'+i].value);
+      const status=$('#characterScheduleStatus');
+      if(new Set(slots).size!==3){status.textContent='각 조회 시간은 서로 다르게 설정해 주세요.';return;}
+      scheduleSaving=true;const button=form.querySelector('button');button.disabled=true;status.textContent='조회 시간을 저장하는 중입니다.';
+      try{
+        const result=await A.adminAutomation('saveSchedule',{mainTimes:slots.slice(0,2),altTime:slots[2],revision:config.revision});
+        if(result?.ok!==true)throw new Error(result?.message||'저장하지 못했습니다.');
+        await refreshServerRoutines();toast(result.message||'조회 시간을 저장했습니다.');
+      }catch(error){status.textContent=error.message||String(error);}
+      finally{scheduleSaving=false;button.disabled=false;}
+    });
   }
 
   function refreshServerRoutines(){

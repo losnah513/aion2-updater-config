@@ -1,6 +1,6 @@
 # Private storage maintenance
 
-API1.1 preserves the1.0 backup contract and adds `maintenanceProbe` and `maintain`. SQL553 owns the280MB trigger,270MB target, existing retention calls, active-work gate,90-second lease, finite table cycle and retry state. The549 single control row is reused. A small minute Cron checks pressure and dispatches; regular retention schedules remain unchanged.
+API1.1 preserves the1.0 backup contract and adds `maintenanceProbe` and `maintain`. SQL555 now owns the450MB trigger,400MB target and500MB operating budget (SQL553 originally280/270/300MB), existing retention calls, active-work gate,90-second lease, finite table cycle and retry state. The549 single control row is reused. A small minute Cron checks pressure and dispatches; regular retention schedules remain unchanged.
 
 The Edge executes the DB plan through a dedicated autocommit connection because VACUUM FULL cannot run inside a transaction/RPC. Reuse the platform's built-in SUPABASE_DB_URL without copying or printing it. Accept only the matching project, normalize transaction-pool URLs to that project's direct endpoint using the same credential, and keep TLS certificate verification enabled. Postgres.js3.4.7 is pinned with integrity in deno.lock and the committed test runtime lockfile.
 
