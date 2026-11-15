@@ -52,6 +52,17 @@ const root=path.resolve(__dirname,'..');
    assert.doesNotMatch(await page.locator('#characterLookupTargetList').innerText(),/조회 중/);
    assert.match(await page.locator('#characterLookupPublicSnapshot').innerText(),/30분 대기/);
    assert.match(await page.locator('#characterLookupPhaseListStep3').innerText(),/DB 랭킹 계산/);
+   await page.evaluate(()=>{
+    const A=window.KinojoAdmin;A.renderCharacterAutomation({ok:true,enabled:true,listSheetSyncEnabled:false});
+    A.renderCharacterLookupConsole({ok:true,sessionId:'no-sheet',session:{status:'completed'},postprocessComplete:true,
+      progress:{total:1,completedCount:1,successCount:1,overallProgressPercent:100,listSheetSyncEnabled:true,listWriteSkipped:true,listSkipReason:'NO_LIST_TARGETS'}});
+   });
+   assert.equal(await page.locator('#characterLookupListToggle').isChecked(),false);
+   assert.match(await page.locator('#characterLookupExitSafety').innerText(),/조회 완료 · 시트 반영 대상 없음/);
+   assert.equal(await page.locator('#characterLookupListResult').innerText(),'조회 완료 · 시트 반영 대상 없음');
+   await page.locator('#characterLookupListToggle').check();
+   await page.evaluate(()=>window.KinojoAdmin.renderCharacterAutomation({ok:true,enabled:true,listSheetSyncEnabled:false}));
+   assert.equal(await page.locator('#characterLookupListToggle').isChecked(),true,'manual override survives status refresh');
    await page.locator('#characterAutomationListToggle').focus();await page.keyboard.press('Space');
    await page.waitForFunction(()=>window.fixtureCalls.length===1);
    assert.equal(await page.evaluate(()=>window.fixtureCalls[0].c),'saveListWrite');

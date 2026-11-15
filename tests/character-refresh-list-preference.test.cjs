@@ -86,6 +86,50 @@ const definition=(sql,name)=>{const a=sql.indexOf('CREATE OR REPLACE FUNCTION pu
  assert.equal(automatic.ok,true);assert.equal(automatic.payload.listSheetSyncEnabled,false);
  assert.equal(await val("select list_sheet_sync_enabled v from updater_sessions where session_id=$1",[automatic.sessionId]),false);
  console.log('PASS: real automatic start snapshots OFF and actual materialized seven-phase admin summary ends skipped at 100%');
+ const noTargetMigration='20261115083211_character_list_no_target_completion.sql';
+ const noTargetRollback=read('supabase/rollbacks/'+noTargetMigration);
+ await db.exec(noTargetRollback); // Load the exact pre-deployment function bodies.
+ await db.exec(`alter table updater_session_progress_current add column phase_details_v521 jsonb;
+   create function private.kinojo_queue_phase_headers_v521(jsonb) returns jsonb language sql as $$select $1$$;
+   create function private.kinojo_queue_phase_details_v521(jsonb) returns jsonb language sql as $$select $1$$;`);
+ await db.exec(`create or replace function private.kinojo_db_only_list_restore_allowed(bigint)
+   returns boolean language sql as $$select $1=5$$;
+   insert into updater_sessions(session_id,session_token,status,raw_payload)
+     values('no-target','token','running','{"serverQueue":true}');
+   insert into lookup_batches(session_id,status,worker_id,postprocess_master_done,postprocess_review_done,
+     postprocess_ranking_done,postprocess_snapshot_required,list_sync_attempt_count)
+     values('no-target','running','worker',true,true,false,false,0);
+   insert into lookup_session_targets(id,session_id,target_status,lookup_order,character_name,target_source)
+     values(5,'no-target','lookup_done',1,'synthetic','server_queue:server:db_only_restore_v1');
+ `);
+ await db.exec('begin;'+read('supabase/migrations/'+noTargetMigration)+'commit;');
+ const policy=()=>val("select kinojo_legion_tree_listless_policy_v455('no-target','token') v");
+ assert.equal((await policy()).skipListWrite,false,'unfinished DB processing');
+ await db.exec("update lookup_batches set postprocess_ranking_done=true where session_id='no-target'");
+ assert.equal((await policy()).skipListWrite,false,'eligible DB-only restore');
+ await db.exec("create or replace function private.kinojo_db_only_list_restore_allowed(bigint) returns boolean language sql as $$select false$$");
+ await db.exec("update lookup_session_targets set list_row=17 where session_id='no-target'");
+ assert.equal((await policy()).skipListWrite,false,'existing sheet row');
+ await db.exec("update lookup_session_targets set list_row=null,target_status='final_failed' where session_id='no-target'");
+ assert.equal((await policy()).skipListWrite,false,'no successful official lookup');
+ await db.exec("update lookup_session_targets set target_status='lookup_done' where session_id='no-target'");
+ await db.exec("insert into google_list_sheet_sync_queue(session_id) values('no-target')");
+ assert.equal((await policy()).skipListWrite,false,'existing queue');
+ await db.exec("delete from google_list_sheet_sync_queue where session_id='no-target'");
+ assert.equal((await policy()).listSkipReason,'NO_LIST_TARGETS');
+ const finish=()=>val("select kinojo_legion_tree_listless_complete_v455('no-target','token','worker') v");
+ const noTargets=await finish();
+ assert.equal(noTargets.completed,true);
+ assert.equal(noTargets.message,'조회 완료 · 시트 반영 대상 없음');
+ assert.equal(noTargets.progress.listSkipReason,'NO_LIST_TARGETS');
+ assert.equal(Number(noTargets.progress.overallProgressPercent),100);
+ assert.equal((await finish()).listSkipReason,'NO_LIST_TARGETS');
+ assert.equal(await val("select list_sync_attempt_count v from lookup_batches where session_id='no-target'"),0);
+ await db.exec("select private.kinojo_queue_summary_refresh_core_v422('no-target');update updater_session_progress_current set total_count=1,completed_count=1,success_count=1,failed_count=0,skipped_count=0,queued_count=0,claimed_count=0,retry_pending_count=0,remaining_count=0 where session_id='no-target';select private.kinojo_queue_summary_refresh_progress_v422('no-target')");
+ const noTargetsCached=await val("select progress_payload v from updater_session_progress_current where session_id='no-target'");
+ assert.equal(noTargetsCached.listSkipReason,'NO_LIST_TARGETS');
+ assert.equal(Number(noTargetsCached.overallProgressPercent),100);
+ await db.exec(noTargetRollback);
  await db.exec(read('supabase/rollbacks/'+name));
  assert.equal(await val("select list_sheet_sync_enabled v from updater_sessions where session_id='off'"),false);
  console.log('PASS: default ON, strict OFF, immutable session, retry inheritance, admin permissions/running lock, queue bypass, completion fences, partial+100% skip, rollback preserves history');
