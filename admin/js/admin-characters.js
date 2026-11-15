@@ -15,6 +15,9 @@
   const toast=(...args)=>A.toast(...args);
   let automationInFlight=null,automationLoadedAt=0,automationRevision=0,lookupStatusInFlight=null,lookupSessionRevision=0;
 
+  let manualListOverride=null;
+  const noListTargetsLabel='조회 완료 · 시트 반영 대상 없음';
+
   function lookupSplit(value){return String(value||'').split(',').map(item=>item.trim()).filter(Boolean);}
 
   function lookupSessionStorageKey(){return 'kinojo_admin_lookup_session_v268';}
@@ -46,6 +49,8 @@
       listToggle.checked=current?.listSheetSyncEnabled!==false;
       listToggle.disabled=!current||current.running===true||state.characterAutomationSaving===true||state.characterAutomationCanManage!==true;
     }
+    const manualList=$('#characterLookupListToggle');
+    if(manualList&&manualListOverride===null)manualList.checked=current?.listSheetSyncEnabled===true;
     if(notice){
       const text=current?.message||(current?'자동 실행 상태를 확인했습니다.':'자동 실행 상태를 불러오지 못해 수동 조회를 잠시 제한합니다.');
       setStatus('#characterAutomationNotice',text,current?.running===true?'error':current?.manualBlocked===true?'':current?'ok':'error');
@@ -330,6 +335,10 @@
       const p=data?.progress?.progress||data?.progress||{};
       const skipped=p.listWriteSkipped===true||data?.listWriteSkipped===true||data?.session?.raw_payload?.listWriteSkipped===true;
       const partial=data?.partialSuccess===true||Number(p.finalFailedCount||0)>0;
+      if(p.listSkipReason==='NO_LIST_TARGETS'){
+        return {state:'complete',title:partial?'부분 완료 · 실패 대상 확인':noListTargetsLabel,
+          message:partial?'성공 캐릭터의 DB 반영 완료 · 시트 반영 대상 없음':'캐릭터 DB 반영 완료'};
+      }
       return{state:'complete',title:partial?'부분 완료 · 실패 대상 확인':'조회 완료',message:(partial?'성공 캐릭터의 DB 반영 완료':'캐릭터 DB 반영 완료')+(skipped?' · list 쓰기·readback은 실행 설정에 따라 생략했습니다.':' · list 쓰기·readback 완료.')};
     }
     if(serverQueue&&handoff.safety==='safe')return{state:'safe',title:'서버 실행 인계 완료',message:'이제 이 페이지나 브라우저를 닫아도 조회와 후처리가 정상적으로 계속됩니다.'};
@@ -652,7 +661,7 @@
     const progress=progressBox.progress||progressBox;
     const listOff=progress.listSheetSyncEnabled===false||progress.listWriteSkipped===true;
     const listResult=$('#characterLookupListResult');
-    if(listResult)listResult.textContent=empty?'실행 기록 없음':progress.listWriteSkipped===true?'생략 완료 · DB 반영 결과는 아래에서 확인':listOff?'OFF · DB 저장 후 list 쓰기·readback 생략':'ON · DB 저장 후 list 쓰기·readback';
+    if(listResult)listResult.textContent=empty?'실행 기록 없음':progress.listSkipReason==='NO_LIST_TARGETS'?noListTargetsLabel:progress.listWriteSkipped===true?'생략 완료 · DB 반영 결과는 아래에서 확인':listOff?'OFF · DB 저장 후 list 쓰기·readback 생략':'ON · DB 저장 후 list 쓰기·readback';
     const manualList=$('#characterLookupListToggle');
     if(manualList)manualList.disabled=active||state.lookupStarting||state.lookupQueueRunning||state.lookupRetrying||roleLevel()<4;
     const current=Number(progress.completedCount||progressBox.progressCurrent||0);
@@ -784,9 +793,10 @@
     if(characterAutomationBlocked()){setStatus('#characterLookupStatus',state.characterAutomation?.message||'자동 실행 상태 확인 후 수동 조회를 이용해 주세요.','error');return;}
     let lookupFilter;
     try{lookupFilter=readLookupFilter();}catch(err){setStatus('#characterLookupStatus',err.message||String(err),'error');return;}
+    const listSheetSyncEnabled=$('#characterLookupListToggle')?.checked===true;
     state.lookupStarting=true;state.lookupQueueRunning=true;renderCharacterLookupConsole(state.lookupConsole||null);setStatus('#characterLookupStatus','Google list와 Server Master를 대조해 Server Target Queue를 준비하는 중입니다...','');
     try{
-      const data=await adminLookup('startserverqueue',{lookupFilter,listSheetSyncEnabled:$('#characterLookupListToggle')?.checked!==false});
+      const data=await adminLookup('startserverqueue',{lookupFilter,listSheetSyncEnabled});
       if(!data||data.ok===false)throw new Error(data?.message||'Server Queue 시작 실패');
       storeLookupSession(data.sessionId||'',data.sessionToken||'');
       if(data.noTargets===true){setStatus('#characterLookupStatus',data.lookupFilter?.lookupMode==='missing_only'?'신규 캐릭터가 없어 조회 없이 완료했습니다.':'조회 대상이 없습니다.','ok');}
@@ -1134,6 +1144,7 @@ function policyReasonLabel(reason){return ({DELETION_CANDIDATE:'삭제후보',AD
   document.addEventListener('change',event=>{
     if(event.target?.id==='characterAutomationToggle')saveCharacterAutomation(event.target.checked);
     if(event.target?.id==='characterAutomationListToggle')saveCharacterAutomation(event.target.checked,true);
+    if(event.target?.id==='characterLookupListToggle')manualListOverride=event.target.checked;
   });
 
   Object.assign(A,{lookupSplit,lookupSessionStorageKey,lookupTokenStorageKey,characterAutomationBlocked,renderCharacterAutomation,refreshCharacterAutomation,saveCharacterAutomation,loadStoredLookupSession,storeLookupSession,readLookupFilter,lookupCount,lookupErrorPresentation,lookupStateLabel,setLookupError,redactDiagnostic,copyText,diagnosticPayload,copyLookupDiagnostics,copyLookupFailure,historySessionId,historySummary,renderLookupHistory,loadLookupHistory,loadLookupHistoryDetail,handleLookupHistoryClick,lookupStatusLabel,lookupStepClass,lookupDuration,lookupExitSafety,renderLookupExitSafety,lookupPhaseStep,lookupPhaseHasUncertainEta,lookupTargetName,lookupTargetServer,lookupTargetKey,lookupFilterList,lookupTargetRoster,prepareLookupDetailSession,mergeCharacterLookupDetails,loadCharacterLookupDetail,loadCharacterLookupTargets,loadCharacterLookupPerformance,loadCharacterLookupDiagnostics,saveLookupTargetStates,prepareLookupTargetStates,renderLookupTargets,renderLookupPhase,lookupMetricDuration,lookupMetricStageRows,renderLookupPerformance,renderCharacterLookupConsole,refreshCharacterLookupStatus,stopCharacterLookupPolling,characterLookupPollDelay,startCharacterLookupPolling,handleCharacterLookupVisibilityChange,loadCharacterLookupConsole,startCharacterServerQueue,retryFailedCharacterLookup,controlCharacterLookup,searchCharacters,renderCharacterSummary,characterMode,filteredCharacters,option,renderCharacters,saveCharacterStatus,decideIdentityReview,probeCharacterIdentity});
