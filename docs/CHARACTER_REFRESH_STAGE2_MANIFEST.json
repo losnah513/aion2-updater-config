@@ -140,23 +140,23 @@
     },
     {
       "path": "admin/js/admin.js",
-      "sha256": "7670fb670896fef3aa7828026b49904b1755d268b367297883531481b1d38532"
+      "sha256": "e05f7518e4f8740944ab74be0f05e72b06637d77f27fe80f8fe23bdd0c094e0e"
     },
     {
       "path": "admin/js/admin-bootstrap.js",
-      "sha256": "8cc2ba8343a7aec2ca7e02cd569e98022e8cd3c1e33156ba9733985c8f7b2d98"
+      "sha256": "33aa0cfe34ff139fd38e95c63a49127389efca1e81785b879e564cbeef1658e9"
     },
     {
       "path": "admin/index.html",
-      "sha256": "9563949878be3ade031ce2f23bc0e54957437564d1820167e0fd9848ff73855c"
+      "sha256": "31dbf3db01abb4bd398e3d759a5d215f79e3be3ff0b0cb3dfa0637287f4e6a5f"
     },
     {
       "path": "m/admin/index.html",
-      "sha256": "d6d61b120c9e7d466d2b602ce2f734f7331a6ff8571f584a6111c2c858e6aa7d"
+      "sha256": "ebcac9277d830b0cdaa3be8f57744530d33aec8ec0e018b5f10585cb67d89a25"
     },
     {
       "path": "supabase/config.toml",
-      "sha256": "d7adf39efd438aebc8508d71bd6a98570ca0622a76ea2b890b8ec87c3352d802"
+      "sha256": "16d450aa2808adb64ffab9c6958e79ae484506deb098416ce37c39449be0cb94"
     },
     {
       "path": "supabase/migrations/20260909082438_character_activity_lifecycle.sql",

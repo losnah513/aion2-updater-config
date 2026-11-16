@@ -1,4 +1,4 @@
-/* KINOJO Admin General notices and event notice groups v2026080101 */
+/* KINOJO Admin Event notice groups v2026080101 */
 (function(A){
   'use strict';
   if(!A) throw new Error('KINOJO Admin shared module is required.');
@@ -7,7 +7,6 @@
   const EVENT_NOTICE_TYPES=A.EVENT_NOTICE_TYPES;
   const state=A.state;
   const adminEventNotice=(...args)=>A.adminEventNotice(...args);
-  const adminNotice=(...args)=>A.adminNotice(...args);
   const esc=(...args)=>A.esc(...args);
   const setStatus=(...args)=>A.setStatus(...args);
   const toast=(...args)=>A.toast(...args);
@@ -306,17 +305,5 @@
     }
   }
 
-  async function loadNotices(){
-    setStatus('#noticeStatus','공지 목록을 불러오는 중...','');
-    try{ const list=await adminNotice('listNotices',{limit:20}); const notices=list.notices||[]; $('#noticeList').innerHTML=notices.length?notices.map(n=>'<article class="admin-row"><div class="admin-row-main"><strong>'+esc(n.noticeType||n.notice||'공지')+'</strong><span>'+esc(n.content||'')+'</span></div><div class="admin-row-actions"><span class="admin-pill info">'+esc(n.author||'관리자')+'</span></div></article>').join(''):'<div class="admin-empty">등록된 공지가 없습니다.</div>'; setStatus('#noticeStatus','공지 '+notices.length+'건','ok'); }
-    catch(err){ setStatus('#noticeStatus',err.message||String(err),'error'); }
-  }
-
-  async function saveNotice(){
-    const content=$('#noticeContent')?.value||''; const noticeType=$('#noticeType')?.value||'공지'; if(!content.trim()){setStatus('#noticeStatus','공지 내용을 입력하세요.','error');return;}
-    try{ const res=await adminNotice('createNotice',{content,noticeType}); if(res.ok===false)throw new Error(res.message||'공지 저장 실패'); $('#noticeContent').value=''; toast('공지 저장 완료'); await loadNotices(); }
-    catch(err){ setStatus('#noticeStatus',err.message||String(err),'error'); }
-  }
-
-  Object.assign(A,{eventNoticeStatusLabel,eventNoticePillClass,formatEventDateTime,normalizeEventNoticeGroup,eventNoticeTypeMeta,formatEventNoticeDateRange,renderEventNoticeGroups,loadEventNoticeGroups,getEventNoticeGroupById,eventNoticeTypeOptions,renderEventNoticeEditorCard,getDefaultEventNoticeItem,renumberEventNoticeEditor,applyEventNoticeTypeTemplate,openEventNoticeEditor,closeEventNoticeEditor,startEventNoticeCreate,editEventNoticeGroup,normalizeEventNoticeItemForPreview,renderEventNoticePreviewBlock,openEventNoticePreview,closeEventNoticePreview,duplicateEventNoticeGroup,deleteEventNoticeGroup,collectEventNoticeEditorPayload,saveEventNoticeEditor,loadNotices,saveNotice});
+  Object.assign(A,{eventNoticeStatusLabel,eventNoticePillClass,formatEventDateTime,normalizeEventNoticeGroup,eventNoticeTypeMeta,formatEventNoticeDateRange,renderEventNoticeGroups,loadEventNoticeGroups,getEventNoticeGroupById,eventNoticeTypeOptions,renderEventNoticeEditorCard,getDefaultEventNoticeItem,renumberEventNoticeEditor,applyEventNoticeTypeTemplate,openEventNoticeEditor,closeEventNoticeEditor,startEventNoticeCreate,editEventNoticeGroup,normalizeEventNoticeItemForPreview,renderEventNoticePreviewBlock,openEventNoticePreview,closeEventNoticePreview,duplicateEventNoticeGroup,deleteEventNoticeGroup,collectEventNoticeEditorPayload,saveEventNoticeEditor});
 })(window.KinojoAdmin);

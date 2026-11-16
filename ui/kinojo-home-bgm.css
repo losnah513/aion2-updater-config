@@ -1,0 +1,31 @@
+.kinojo-home-bgm {
+  position:fixed; inset:auto 0 0; z-index:10030; box-sizing:border-box;
+  padding:0 0 env(safe-area-inset-bottom,0px); color:#f8fafc;
+  border-top:1px solid #54658f;
+  background:linear-gradient(105deg,#101a32,#1c3057 55%,#312452);
+  box-shadow:0 -6px 22px #11182726;
+}
+.kinojo-bgm-inner {
+  box-sizing:border-box; width:min(1180px,100%); min-height:54px; margin:auto;
+  display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; align-items:center;
+  padding:4px clamp(10px,2vw,22px);
+}
+.kinojo-bgm-track {min-width:0; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:0 10px; align-items:center}
+.kinojo-bgm-track strong {overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px}
+.kinojo-bgm-track small {color:#c6d3f1; font-size:10px; font-variant-numeric:tabular-nums; white-space:nowrap}
+.kinojo-bgm-track input {grid-column:1/-1; width:100%; min-width:0; height:18px; margin:0; accent-color:#a7baff}
+.kinojo-bgm-track input:disabled {opacity:.5}
+.kinojo-bgm-controls {display:flex; gap:5px}
+.kinojo-bgm-controls button {
+  width:44px; height:44px; padding:0; display:grid; place-items:center; cursor:pointer;
+  background:#ffffff13; border:1px solid #ffffff38; border-radius:10px; color:inherit;
+}
+.kinojo-bgm-controls button:hover:not(:disabled) {background:#ffffff2d}
+.kinojo-bgm-controls button:disabled {opacity:.4; cursor:default}
+.kinojo-bgm-controls button:focus-visible,.kinojo-bgm-track input:focus-visible {outline:2px solid #c4d2ff; outline-offset:1px}
+.kinojo-bgm-controls svg {width:18px; height:18px; fill:currentColor}
+.kinojo-bgm-controls [data-playing="true"] .bgm-play-icon,
+.kinojo-bgm-controls [data-playing="false"] .bgm-pause-icon {display:none}
+.kinojo-bgm-status {grid-column:1/-1; color:#ffd3d3; font-size:11px; padding-bottom:4px}
+.kinojo-bgm-status:empty {display:none}
+body:has(.kinojo-home-bgm) {--kinojo-shell-bottom:55px}

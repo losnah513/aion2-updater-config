@@ -15,7 +15,7 @@
     members:['admin-members.js','admin-member-image-download.js'],
     characters:['admin-characters.js'],
     sanctuary:[],
-    notices:['admin-notices.js'],
+    notices:['admin-bgm.js','admin-notices.js'],
     system:['admin-system.js'],
     logs:['admin-system.js'],
     images:[
@@ -38,7 +38,7 @@
       const bannerRevision=(['admin-banner-tabs.js','admin-banner-library.js'].includes(name)?'&context=2026090901':'')+(name==='admin-banner-event-workflow.js'?'&delivery=2026090902':'');
       const permissionRevision=name==='admin-members.js'?'&permissions=2026090901':'';
 
-      script.src=new URL(name+'?cache='+encodeURIComponent(CACHE)+'&retirement=2026100701&routines=2026100801&timetable=2026100801&reliability=2026103101&storageBudget=2026110601'+characterRevision+bannerRevision+permissionRevision,base).href;
+      script.src=new URL(name+'?cache='+encodeURIComponent(CACHE)+'&retirement=2026100701&routines=2026100801&timetable=2026100801&reliability=2026103101&storageBudget=2026110601&homeBgm=2026111601'+characterRevision+bannerRevision+permissionRevision,base).href;
       script.async=false;
       script.onload=()=>{
         loadedModules.add(name);

@@ -17,7 +17,7 @@ assert.ok(loader.includes('const featureModules={'),'non-dashboard modules must 
 for(const token of [
   "requests:['admin-members.js']",
   "characters:['admin-characters.js']",
-  "notices:['admin-notices.js']",
+  "notices:['admin-bgm.js','admin-notices.js']",
   "system:['admin-system.js']",
   'images:[',
   'if(modulePromises.has(name))return modulePromises.get(name)',
@@ -28,7 +28,7 @@ for(const token of [
 ]) assert.ok(loader.includes(token),`lazy loader contract missing: ${token}`);
 
 const coreBlock=loader.slice(loader.indexOf('const coreModules=['),loader.indexOf('const featureModules={'));
-for(const deferred of ['admin-members.js','admin-characters.js','admin-sanctuary.js','admin-notices.js','admin-system.js','admin-images.js']){
+for(const deferred of ['admin-members.js','admin-characters.js','admin-sanctuary.js','admin-bgm.js','admin-notices.js','admin-system.js','admin-images.js']){
   assert.equal(coreBlock.includes(deferred),false,`${deferred} must not block the initial dashboard`);
 }
 assert.equal(loader.includes('for(const name of modules)await loadScript(name)'),false,'legacy all-module serial boot must not return');

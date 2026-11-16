@@ -105,13 +105,13 @@ for (const page of publicShellPages) {
 }
 
 const commonUi = read('ui/kinojo-common-ui.js');
-for (const token of ['kinojo_common_notices_v1', 'KINOJO_NOTICE_RETRY_DELAYS_MS', 'data-kinojo-notice-retry', 'navigator.onLine===false', 'kinojo:sanctuary-master-rendered']) {
+for (const token of ['kinojo:sanctuary-master-rendered']) {
   assert.ok(commonUi.includes(token), `common UI reliability contract missing: ${token}`);
 }
 assert.ok(commonUi.includes('<circle cx="12" cy="6"'), 'menu dots must be vertical');
 
 const publicShell = read('ui/kinojo-public-shell.css');
-for (const token of ['--kinojo-drawer-width', 'scrollbar-color:#6d5ee7', '.kinojo-drawer-nav::-webkit-scrollbar', '.kinojo-notice-retry']) {
+for (const token of ['--kinojo-drawer-width', 'scrollbar-color:#6d5ee7', '.kinojo-drawer-nav::-webkit-scrollbar']) {
   assert.ok(publicShell.includes(token), `public shell mobile contract missing: ${token}`);
 }
 

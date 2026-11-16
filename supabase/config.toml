@@ -460,3 +460,7 @@ enabled = true
 [functions.kinojo-storage-maintenance]
 # Server Cron token is verified inside the service-only DB export RPC.
 verify_jwt = false
+
+[functions.kinojo-home-bgm]
+# Public playlist; admin actions verify the existing WEB_COMMON session in DB.
+verify_jwt = false
