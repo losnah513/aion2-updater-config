@@ -1,5 +1,7 @@
 ## Home BGM · 2026-11-16
 
+- Same-tab KINOJO navigation keeps the original audio element and player document. The first supported navigation places the destination in a same-origin content frame above the player; framed entries do not mount a duplicate player. Regular links, query/fragment URLs, back/forward and new-tab behavior are covered on PC and mobile. Direct entries still operate without a content frame until navigation. A full browser reload or leaving KINOJO ends that document's playback.
+
 - The common lower general-notice strip and its fetch/rotation/detail flow are retired. PC root/home and mobile home show a fixed BGM player. The separate event popups and their management remain available. Historical notice data and API compatibility are preserved.
 - The home player shuffles each pass through the playlist, attempts audible autoplay and retries during a trusted click/tap after policy denial. Manual pause does not rearm the fallback. The left track-list dialog can start a chosen song, then reshuffles the remaining tracks.
 - Admins can save up to 24 KiB of UTF-8 LRC per ready track. Home fetches lyrics only for the track that starts playback; the active line fills to its timing markers and supports enhanced word timestamps and offset. Lyrics access and mutation extend the existing BGM Edge/RPC and preserve existing admin/Storage grants. Deploy the lyrics migration then the Edge revision then Pages; rollback restores the previous RPC without removing saved lyrics.

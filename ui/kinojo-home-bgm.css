@@ -61,4 +61,11 @@
 .kinojo-bgm-tracks button{text-align:left;padding:8px 10px;overflow-wrap:anywhere}
 .kinojo-bgm-tracks button[aria-current]{background:#42518b;border-color:#afbbff}
 .kinojo-bgm-dialog button:hover{background:#344874}
-body:has(.kinojo-home-bgm) {--kinojo-shell-bottom:max(55px,calc(var(--kinojo-notice-actual-height,55px) - env(safe-area-inset-bottom,0px)))}
+body:has(.kinojo-home-bgm) {--kinojo-shell-bottom:max(55px,calc(var(--kinojo-bgm-bar-height,55px) - env(safe-area-inset-bottom,0px)))}
+.kinojo-bgm-page {
+  position:fixed;inset:0 0 auto;width:100%;height:calc(100dvh - var(--kinojo-bgm-bar-height,55px));
+  border:0;margin:0;background:#f8fafc
+}
+.kinojo-bgm-page[hidden]{display:none!important}
+body.kinojo-bgm-host{overflow:hidden!important;padding:0!important;margin:0!important;height:100dvh!important}
+body.kinojo-bgm-host>:not([data-home-bgm]):not(.kinojo-bgm-page){display:none!important}

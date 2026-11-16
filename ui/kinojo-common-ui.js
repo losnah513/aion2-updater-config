@@ -25,6 +25,9 @@
     return {key:'home',label:'메인',root:'./',mobile};
   }
   function q(s,root=document){return root.querySelector(s)}
+  function navigateWithBgm(href){
+    if(!window.KinojoBgmNavigation?.navigate(href))location.href=href;
+  }
   function escapeHtml(value){return String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('\"','&quot;').replaceAll("'",'&#39;')}
   function classIconFor_(className){
     const key=String(className||'').trim();
@@ -253,7 +256,7 @@
     if(!host){host=document.createElement('div');host.id='kinojoRequestToastHost';host.className='kinojo-request-toast-host';document.body.appendChild(host);}
     const item=document.createElement('button');item.type='button';item.className='kinojo-request-toast';
     item.innerHTML='<span class="kinojo-request-toast-icon">!</span><span><strong>새 포스 지원 요청</strong><small>'+escapeHtml(latest.characterName||'캐릭터')+' · '+escapeHtml(String(latest.partyNo||''))+'파티 '+escapeHtml(String(latest.slotNo||''))+'번</small></span><i aria-hidden="true">›</i>';
-    item.addEventListener('click',()=>{location.href=(info?.mobile?'/m/admin/':'/admin/')+'#sanctuary/requests'});
+    item.addEventListener('click',()=>navigateWithBgm((info?.mobile?'/m/admin/':'/admin/')+'#sanctuary/requests'));
     host.appendChild(item);requestAnimationFrame(()=>item.classList.add('show'));setTimeout(()=>{item.classList.remove('show');setTimeout(()=>item.remove(),260)},7000);
   }
   function sanctuaryRecruitmentHref_(group,info){
@@ -286,7 +289,7 @@
       ?String(first.teamTitle||'참여 팀')+' · '+forceCount+'개 포스 모집 중'
       :unseen.length+'개 팀 · '+forceCount+'개 지원 가능 포스';
     item.innerHTML='<span class="kinojo-request-toast-icon">＋</span><span><strong>참여 가능한 성역 팀이 있습니다</strong><small>'+escapeHtml(detail)+'</small></span><i aria-hidden="true">›</i>';
-    item.addEventListener('click',()=>{location.href=sanctuaryRecruitmentHref_(first,info);});
+    item.addEventListener('click',()=>navigateWithBgm(sanctuaryRecruitmentHref_(first,info)));
     host.appendChild(item);requestAnimationFrame(()=>item.classList.add('show'));setTimeout(()=>{item.classList.remove('show');setTimeout(()=>item.remove(),260)},9000);
   }
   async function loadCommonNotificationSummary_(info,{notify=true}={}){
@@ -2186,6 +2189,7 @@
       targets.forEach(target=>kinojoSafeAreaObserver.observe(target));
     }
     window.addEventListener('resize',measureSafeAreas,{passive:true});
+    window.addEventListener('kinojo:bgm-size-changed',measureSafeAreas);
     window.addEventListener('orientationchange',measureSafeAreas,{passive:true});
     measureSafeAreas();
     setTimeout(measureSafeAreas,80);

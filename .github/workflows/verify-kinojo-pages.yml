@@ -703,6 +703,7 @@ jobs:
             "ui/kinojo-event-notice.js"
             "ui/kinojo-home-bgm.js"
             "ui/kinojo-home-bgm.css"
+            "ui/kinojo-bgm-navigation.js"
             "admin/js/admin-bgm.js"
             "ui/kinojo-character-reaction.js"
             "ui/kinojo-character-reaction.css"
