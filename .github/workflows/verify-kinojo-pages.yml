@@ -444,6 +444,8 @@ jobs:
           PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/sanctuary-boss-roles-browser.test.cjs
           PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/sanctuary-permissions-ui.test.cjs
           PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/sanctuary-permission-scopes-ui.test.cjs
+          PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node --test tests/home-bgm-ui.test.cjs
+          PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" node --test tests/home-bgm-server.test.cjs
           PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/sanctuary-memberless-random-alt-browser.test.cjs
           PGLITE_MODULE="$RUNNER_TEMP/sanctuary-db/node_modules/@electric-sql/pglite" PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/sanctuary-balanced-browser.test.cjs
           PLAYWRIGHT_MODULE="$RUNNER_TEMP/roster-browser/node_modules/playwright" node tests/sanctuary-editor-layout.test.cjs
@@ -699,6 +701,9 @@ jobs:
             "ui/kinojo-staged-loading.js"
             "ui/kinojo-event-notice.css"
             "ui/kinojo-event-notice.js"
+            "ui/kinojo-home-bgm.js"
+            "ui/kinojo-home-bgm.css"
+            "admin/js/admin-bgm.js"
             "ui/kinojo-character-reaction.js"
             "ui/kinojo-character-reaction.css"
             "ui/kinojo-character-detail-refresh.js"

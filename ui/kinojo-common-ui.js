@@ -62,267 +62,6 @@
       +'<span class="visit-side visit-today"><span class="visit-text"><b>오늘</b><strong data-visit-today>확인중</strong></span><span class="visit-icon">📅</span></span>';
     return el;
   }
-  const KINOJO_NOTICE_MARQUEE_DELAY_MS = 1200;
-  const KINOJO_NOTICE_MARQUEE_SPEED = 38;
-  const KINOJO_NOTICE_END_HOLD_MS = 1800;
-  const KINOJO_NOTICE_SHORT_HOLD_MS = 7200;
-  const KINOJO_NOTICE_CACHE_KEY = 'kinojo_common_notices_v1';
-  const KINOJO_NOTICE_CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
-  const KINOJO_NOTICE_RETRY_DELAYS_MS = [0, 420, 1200];
-  let kinojoNoticeState = { items: [], index: 0, timer: null, paused: false, loadPromise: null, lastFailureAt: 0 };
-
-  function createNoticeStrip(info){
-    const strip=document.createElement('section');
-    strip.className='kinojo-notice-strip';
-    strip.id='kinojoNoticeStrip';
-    strip.setAttribute('aria-label','최근 공지사항');
-    strip.innerHTML=''
-      +'<div class="kinojo-notice-shell">'
-      +'<span class="kinojo-notice-label"><i aria-hidden="true"></i>NOTICE</span>'
-      +'<button class="kinojo-notice-step" id="kinojoNoticePrevBtn" type="button" aria-label="이전 공지">‹</button>'
-      +'<div class="kinojo-notice-list" id="kinojoNoticeList"><span class="kinojo-notice-empty">최근 공지를 불러오는 중입니다.</span></div>'
-      +'<button class="kinojo-notice-step" id="kinojoNoticeNextBtn" type="button" aria-label="다음 공지">›</button>'
-      +'<button class="kinojo-notice-detail-btn" id="kinojoNoticeDetailBtn" type="button" aria-label="공지사항 전체 보기">전체</button>'
-      +'</div>';
-    setTimeout(()=>{
-      const btn=document.getElementById('kinojoNoticeDetailBtn');
-      if(btn&&!btn.dataset.bound){
-        btn.dataset.bound='1';
-        btn.addEventListener('click',()=>showNoticeBoardModal());
-      }
-      document.getElementById('kinojoNoticePrevBtn')?.addEventListener('click',()=>showNoticeAt_(kinojoNoticeState.index-1,true));
-      document.getElementById('kinojoNoticeNextBtn')?.addEventListener('click',()=>showNoticeAt_(kinojoNoticeState.index+1,true));
-      strip.addEventListener('click',event=>{
-        const retry=event.target.closest('[data-kinojo-notice-retry]');
-        if(!retry)return;
-        retry.disabled=true;
-        loadCommonNotices({force:true});
-      });
-      strip.addEventListener('mouseenter',()=>{kinojoNoticeState.paused=true;clearNoticeTimer_();});
-      strip.addEventListener('mouseleave',()=>{kinojoNoticeState.paused=false;scheduleNextNotice_();});
-      strip.addEventListener('focusin',()=>{kinojoNoticeState.paused=true;clearNoticeTimer_();});
-      strip.addEventListener('focusout',()=>{kinojoNoticeState.paused=false;scheduleNextNotice_();});
-    },0);
-    return strip;
-  }
-  function normalizeNoticeAuthor_(author){
-    return String(author || '관리자')
-      .replace(/\s*Lv\.?\s*\d+/gi,'')
-      .replace(/\s*Level\s*\d+/gi,'')
-      .replace(/\(\s*([^)]*?)\s*Lv\.?\s*\d+\s*\)/gi,'($1)')
-      .replace(/\(\s*([^)]*?)\s*Level\s*\d+\s*\)/gi,'($1)')
-      .replace(/\(\s*\)/g,'')
-      .replace(/\s{2,}/g,' ')
-      .trim() || '관리자';
-  }
-  function noticeTypeMeta_(type){
-    const label=String(type||'공지').trim()||'공지';
-    const key=label==='이벤트'?'event':(label==='알림'?'alert':'notice');
-    const icon=key==='event'?'🎁':(key==='alert'?'🔔':'📢');
-    return {label,key,icon};
-  }
-  function renderNoticeItemHtml_(item){
-    const meta=noticeTypeMeta_(item.noticeType||item.notice||'공지');
-    const author=normalizeNoticeAuthor_(item.author||'관리자');
-    const content=String(item.content||'').trim();
-    return '<article class="kinojo-notice-item kinojo-notice-type-'+meta.key+'" data-notice-type="'+meta.key+'">'
-      +'<strong><span class="kinojo-notice-icon">'+meta.icon+'</span>'+escapeHtml(meta.label)+'</strong>'
-      +'<span class="kinojo-notice-author">'+escapeHtml(author)+'</span>'
-      +'<span class="kinojo-notice-text"><span class="kinojo-notice-text-inner">'+escapeHtml(content)+'</span></span>'
-      +'</article>';
-  }
-  function clearNoticeTimer_(){
-    if(kinojoNoticeState.timer){
-      clearTimeout(kinojoNoticeState.timer);
-      kinojoNoticeState.timer=null;
-    }
-  }
-  function applyNoticeMarqueeIfNeeded_(itemEl){
-    if(!itemEl)return;
-    const textBox=itemEl.querySelector('.kinojo-notice-text');
-    const inner=itemEl.querySelector('.kinojo-notice-text-inner');
-    if(!textBox||!inner)return;
-    inner.classList.remove('is-marquee-active');
-    inner.style.removeProperty('--notice-marquee-distance');
-    kinojoNoticeState.timer=setTimeout(()=>{
-      kinojoNoticeState.timer=null;
-      const overflow=Math.max(0, inner.scrollWidth - textBox.clientWidth);
-      if(overflow>8){
-        const duration=Math.max(2.6,overflow/KINOJO_NOTICE_MARQUEE_SPEED);
-        inner.style.setProperty('--notice-marquee-distance', '-'+(overflow+28)+'px');
-        inner.style.setProperty('--notice-marquee-duration',duration+'s');
-        inner.classList.add('is-marquee-active');
-        if(kinojoNoticeState.items.length>1&&!kinojoNoticeState.paused){
-          kinojoNoticeState.timer=setTimeout(()=>showNoticeAt_(kinojoNoticeState.index+1),duration*1000+KINOJO_NOTICE_END_HOLD_MS);
-        }
-      }else if(kinojoNoticeState.items.length>1&&!kinojoNoticeState.paused){
-        kinojoNoticeState.timer=setTimeout(()=>showNoticeAt_(kinojoNoticeState.index+1),KINOJO_NOTICE_SHORT_HOLD_MS);
-      }
-    }, KINOJO_NOTICE_MARQUEE_DELAY_MS);
-  }
-  function scheduleNextNotice_(){
-    clearNoticeTimer_();
-    const item=document.querySelector('#kinojoNoticeList .kinojo-notice-item');
-    if(item)applyNoticeMarqueeIfNeeded_(item);
-  }
-  function showNoticeAt_(index,manual){
-    const list=document.getElementById('kinojoNoticeList');
-    const items=kinojoNoticeState.items||[];
-    if(!list||!items.length)return;
-    const safeIndex=((index%items.length)+items.length)%items.length;
-    kinojoNoticeState.index=safeIndex;
-    if(manual)kinojoNoticeState.paused=false;
-    clearNoticeTimer_();
-    list.classList.remove('is-entering');
-    list.classList.add('is-leaving');
-    setTimeout(()=>{
-      list.innerHTML=renderNoticeItemHtml_(items[safeIndex]);
-      list.classList.remove('is-leaving');
-      list.classList.add('is-entering');
-      applyNoticeMarqueeIfNeeded_(list.querySelector('.kinojo-notice-item'));
-      setTimeout(()=>list.classList.remove('is-entering'),520);
-    },220);
-  }
-  function startNoticeRotation_(){
-    clearNoticeTimer_();
-    scheduleNextNotice_();
-  }
-  function waitNoticeRetry_(delay){
-    return new Promise(resolve=>setTimeout(resolve,delay));
-  }
-  function noticeRequestWithTimeout_(promise,timeoutMs){
-    let timeoutId=0;
-    const timeout=new Promise((_,reject)=>{timeoutId=setTimeout(()=>reject(new Error('공지 서버 응답 시간이 초과되었습니다.')),timeoutMs);});
-    return Promise.race([promise,timeout]).finally(()=>clearTimeout(timeoutId));
-  }
-  async function requestNoticesOnce_(limit){
-    let request;
-    if(window.KinojoApi?.getAction){
-      request=window.KinojoApi.getAction('notices',{limit});
-    }else{
-      const base=commonApiUrl();
-      if(!base)throw new Error('공지 서버 모듈을 준비하는 중입니다.');
-      const url=base+(base.includes('?')?'&':'?')+'action=notices&limit='+encodeURIComponent(limit)+'&t='+Date.now();
-      request=window.KinojoSupabaseClientCore.fetchText(url,{cache:'no-store'},{timeoutMs:8000}).then(({res,text})=>{
-        if(!res.ok)throw new Error('공지 서버 HTTP '+res.status);
-        return JSON.parse(text);
-      });
-    }
-    const data=await noticeRequestWithTimeout_(request,8000);
-    if(!data||data.ok!==true||!Array.isArray(data.notices))throw new Error(data?.message||'공지 응답 형식이 올바르지 않습니다.');
-    return data;
-  }
-  async function fetchNotices_(limit){
-    let lastError=null;
-    for(let attempt=0;attempt<KINOJO_NOTICE_RETRY_DELAYS_MS.length;attempt+=1){
-      const delay=KINOJO_NOTICE_RETRY_DELAYS_MS[attempt];
-      if(delay)await waitNoticeRetry_(delay);
-      try{return await requestNoticesOnce_(limit);}
-      catch(error){lastError=error;if(navigator.onLine===false)break;}
-    }
-    throw lastError||new Error('공지사항을 불러오지 못했습니다.');
-  }
-  function readNoticeCache_(){
-    try{
-      const cached=JSON.parse(localStorage.getItem(KINOJO_NOTICE_CACHE_KEY)||'null');
-      if(!cached||!Array.isArray(cached.items)||!Number.isFinite(Number(cached.savedAt)))return null;
-      if(Date.now()-Number(cached.savedAt)>KINOJO_NOTICE_CACHE_MAX_AGE_MS)return null;
-      return {items:cached.items,savedAt:Number(cached.savedAt)};
-    }catch(_error){return null;}
-  }
-  function writeNoticeCache_(items){
-    try{localStorage.setItem(KINOJO_NOTICE_CACHE_KEY,JSON.stringify({savedAt:Date.now(),items:Array.isArray(items)?items:[]}));}
-    catch(_error){}
-  }
-  function renderNoticeList_(notices,source){
-    const list=document.getElementById('kinojoNoticeList');
-    if(!list)return false;
-    clearNoticeTimer_();
-    list.dataset.noticeSource=source||'network';
-    if(source==='cache')list.title='공지 서버 연결이 지연되어 마지막으로 확인한 공지를 표시합니다.';
-    else list.removeAttribute('title');
-    if(!notices.length){
-      kinojoNoticeState.items=[];
-      list.innerHTML='<span class="kinojo-notice-empty">등록된 공지가 없습니다.</span>';
-      return true;
-    }
-    kinojoNoticeState.items=notices;
-    kinojoNoticeState.index=0;
-    list.innerHTML=renderNoticeItemHtml_(notices[0]);
-    startNoticeRotation_();
-    return true;
-  }
-  function renderNoticeLoadError_(){
-    const list=document.getElementById('kinojoNoticeList');
-    if(!list)return;
-    list.dataset.noticeSource='error';
-    list.innerHTML='<div class="kinojo-notice-load-error"><span>공지 연결이 지연되고 있습니다.</span><button class="kinojo-notice-retry" type="button" data-kinojo-notice-retry>다시 시도</button></div>';
-  }
-  async function loadCommonNotices(options){
-    const list=document.getElementById('kinojoNoticeList');
-    if(!list)return;
-    if(kinojoNoticeState.loadPromise)return kinojoNoticeState.loadPromise;
-    clearNoticeTimer_();
-    const cached=readNoticeCache_();
-    if(!kinojoNoticeState.items.length&&cached?.items?.length)renderNoticeList_(cached.items.slice(0,5),'cache');
-    kinojoNoticeState.loadPromise=(async()=>{
-      try{
-        const data=await fetchNotices_(5);
-        const notices=data.notices.slice(0,5);
-        writeNoticeCache_(notices);
-        kinojoNoticeState.lastFailureAt=0;
-        renderNoticeList_(notices,'network');
-      }catch(_error){
-        kinojoNoticeState.lastFailureAt=Date.now();
-        const fallback=readNoticeCache_();
-        if(fallback?.items?.length)renderNoticeList_(fallback.items.slice(0,5),'cache');
-        else renderNoticeLoadError_();
-      }finally{
-        kinojoNoticeState.loadPromise=null;
-      }
-    })();
-    return kinojoNoticeState.loadPromise;
-  }
-  async function showNoticeBoardModal(){
-    let notices=[];
-    let cached=false;
-    try{
-      const data=await fetchNotices_(50);
-      notices=data.notices;
-      writeNoticeCache_(notices.slice(0,50));
-    }catch(e){
-      const fallback=readNoticeCache_();
-      if(fallback?.items?.length){notices=fallback.items;cached=true;}
-      else{
-        showSafeError?.(e,{feature:'공지사항 상세 보기',title:'공지사항을 불러오지 못했습니다.',message:'잠시 후 다시 시도해 주세요.'});
-        return;
-      }
-    }
-    const overlay=document.createElement('div');
-    overlay.className='kinojo-notice-board-overlay';
-    const rows=notices.length?notices.map((item)=>{
-      const meta=noticeTypeMeta_(item.noticeType||item.notice||'공지');
-      return '<article class="kinojo-notice-board-row kinojo-notice-type-'+meta.key+'">'
-        +'<div class="kinojo-notice-board-head"><span class="kinojo-notice-board-badge">'+meta.icon+' '+escapeHtml(meta.label)+'</span><span class="kinojo-notice-board-date">'+escapeHtml(item.createdAt||'')+'</span></div>'
-        +'<div class="kinojo-notice-board-content">'+escapeHtml(item.content||'')+'</div>'
-        +'<div class="kinojo-notice-board-author">'+escapeHtml(normalizeNoticeAuthor_(item.author||'관리자'))+'</div>'
-        +'</article>';
-    }).join(''):'<div class="kinojo-notice-board-empty">등록된 공지사항이 없습니다.</div>';
-    overlay.innerHTML='<section class="kinojo-notice-board-card" role="dialog" aria-modal="true" aria-label="공지사항 상세 보기">'
-      +'<button class="kinojo-notice-board-close" type="button" aria-label="닫기">×</button>'
-      +'<div class="kinojo-notice-board-kicker">KINOJO NOTICE</div>'
-      +'<h3>공지사항</h3>'
-      +'<p class="kinojo-notice-board-desc">'+(cached?'서버 연결이 지연되어 마지막으로 확인한 공지를 표시합니다.':'최근 등록된 공지, 알림, 이벤트를 최신순으로 확인합니다.')+'</p>'
-      +'<div class="kinojo-notice-board-list">'+rows+'</div>'
-      +'</section>';
-    const close=()=>overlay.remove();
-    overlay.addEventListener('click',(e)=>{if(e.target===overlay)close();});
-    overlay.querySelector('.kinojo-notice-board-close')?.addEventListener('click',close);
-    document.addEventListener('keydown',function esc(e){if(e.key==='Escape'){document.removeEventListener('keydown',esc);close();}});
-    document.body.appendChild(overlay);
-  }
-
-
   function shortenErrorMessage_(value){
     const text=String(value?.message || value || '알 수 없는 오류가 발생했습니다.');
     if(/<!doctype html|<html[\s>]/i.test(text)) return '요청 처리 중 서버 응답을 해석하지 못했습니다.';
@@ -701,9 +440,6 @@
     scheduleCommonNotifications_(info);
     window.addEventListener('kinojo:auth-changed',()=>{syncAuthRequiredUi_();setTimeout(()=>loadSanctuaryAlert_(info,0),20);scheduleCommonNotifications_(info);});
     document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')loadCommonNotificationSummary_(info,{notify:true})});
-    const notice=createNoticeStrip(info);
-    document.body.appendChild(notice);
-    setTimeout(loadCommonNotices,0);
     setTimeout(()=>loadCommonVisits(info),40);
     setTimeout(()=>loadDocumentServerTime_(info),1200);
   }
@@ -2428,7 +2164,7 @@
     kinojoSafeAreaFrame=requestAnimationFrame(()=>{
       const root=document.documentElement;
       const topbar=q('.kinojo-topbar');
-      const notice=q('.kinojo-notice-strip');
+      const notice=q('[data-home-bgm]');
       const topRect=topbar?.getBoundingClientRect?.();
       const noticeRect=notice?.getBoundingClientRect?.();
       const topVisible=!!(topbar&&topRect&&topRect.height>0&&getComputedStyle(topbar).display!=='none');
@@ -2443,7 +2179,7 @@
     });
   }
   function bindSafeAreas(){
-    const targets=[q('.kinojo-topbar'),q('.kinojo-notice-strip')].filter(Boolean);
+    const targets=[q('.kinojo-topbar'),q('[data-home-bgm]')].filter(Boolean);
     if('ResizeObserver' in window){
       kinojoSafeAreaObserver?.disconnect?.();
       kinojoSafeAreaObserver=new ResizeObserver(measureSafeAreas);
@@ -2462,7 +2198,7 @@
     return delta<0?element.scrollTop>1:element.scrollTop+element.clientHeight<element.scrollHeight-1;
   }
   function bindModalScrollChain(){
-    const modalSelector='[role="dialog"],[aria-modal="true"],.kinojo-character-reaction-modal,.kinojo-safe-overlay,.kinojo-login-modal,.kinojo-notice-board-overlay,.kinojo-safe-error-overlay,.sanctuary-editor-overlay,.kinojo-event-notice-overlay,.admin-panel-modal,.kinojo-my-info-modal';
+    const modalSelector='[role="dialog"],[aria-modal="true"],.kinojo-character-reaction-modal,.kinojo-safe-overlay,.kinojo-login-modal,.kinojo-safe-error-overlay,.sanctuary-editor-overlay,.kinojo-event-notice-overlay,.admin-panel-modal,.kinojo-my-info-modal';
     document.addEventListener('wheel',event=>{
       if(event.defaultPrevented||event.ctrlKey||!event.deltaY||Math.abs(event.deltaY)<=Math.abs(event.deltaX))return;
       const origin=event.target instanceof Element?event.target:event.target?.parentElement;
@@ -2546,22 +2282,6 @@
   if(info.mobile) document.body.classList.add('kinojo-page-mobile');
   document.body.dataset.kinojoPage = info.key;
   window.addEventListener('kinojo:page-time',event=>setPageTime(event.detail||{}));
-  document.addEventListener('visibilitychange',()=>{
-    if(info.key==='admin')return;
-    kinojoNoticeState.paused=document.hidden;
-    if(document.hidden)clearNoticeTimer_();
-    else{
-      scheduleNextNotice_();
-      if(kinojoNoticeState.lastFailureAt||!kinojoNoticeState.items.length)loadCommonNotices();
-    }
-  });
-  const retryCommonNoticesIfNeeded_=()=>{
-    if(info.key==='admin'||document.hidden)return;
-    if(kinojoNoticeState.lastFailureAt||!kinojoNoticeState.items.length)loadCommonNotices();
-  };
-  window.addEventListener('focus',retryCommonNoticesIfNeeded_);
-  window.addEventListener('pageshow',retryCommonNoticesIfNeeded_);
-  window.addEventListener('online',()=>{if(info.key!=='admin')loadCommonNotices({force:true});});
   if(info.key==='admin'){
     bindModalScrollChain();
     bindImageGuards();
@@ -2586,7 +2306,7 @@
   bindCommonAdmin(info);
   bindImageGuards();
   loadSanctuaryMasterRenderer();
-  window.KinojoCommonUI={toast,showSafeError,reportError:showSafeError,setPageTime,classIconFor:classIconFor_,openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel,openMyInfoPanel,closeMyInfoPanel,openMyInfoModal,closeMyInfoModal,toggleAdminMenu,closeAdminMenuCommon,reloadNotices:loadCommonNotices,reloadSanctuaryAlert:()=>{const result=loadSanctuaryAlert_(info,0);setTimeout(measureSafeAreas,50);return result;},syncAuthRequiredUi:syncAuthRequiredUi_,renderVisits:renderCommonVisits,loadVisits:loadCommonVisits};
+  window.KinojoCommonUI={toast,showSafeError,reportError:showSafeError,setPageTime,classIconFor:classIconFor_,openSideDrawer,closeSideDrawer,openDrawerPagePanel,openStandalonePagePanel,closeDrawerPagePanel,openMyInfoPanel,closeMyInfoPanel,openMyInfoModal,closeMyInfoModal,toggleAdminMenu,closeAdminMenuCommon,reloadSanctuaryAlert:()=>{const result=loadSanctuaryAlert_(info,0);setTimeout(measureSafeAreas,50);return result;},syncAuthRequiredUi:syncAuthRequiredUi_,renderVisits:renderCommonVisits,loadVisits:loadCommonVisits};
   window.KinojoSafeError={show:showSafeError,report:showSafeError};
   window.openAdminDropdown=toggleAdminMenu;
   window.closeAdminMenu=closeAdminMenuCommon;

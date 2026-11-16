@@ -41,7 +41,6 @@
   const loadCodeRequests=(...args)=>A.loadCodeRequests(...args);
   const loadEventNoticeGroups=(...args)=>A.loadEventNoticeGroups(...args);
   const loadLookupHistory=(...args)=>A.loadLookupHistory(...args);
-  const loadNotices=(...args)=>A.loadNotices(...args);
   const loadSanctuaryRolePermissions=(...args)=>A.loadSanctuaryRolePermissions(...args);
   const loadSanctuaryScheduleConsole=(...args)=>A.loadSanctuaryScheduleConsole(...args);
   const loadSanctuarySupportRequests=(...args)=>A.loadSanctuarySupportRequests(...args);
@@ -71,7 +70,6 @@
   const sanctuaryScheduleById=(...args)=>A.sanctuaryScheduleById(...args);
   const saveCharacterStatus=(...args)=>A.saveCharacterStatus(...args);
   const saveEventNoticeEditor=(...args)=>A.saveEventNoticeEditor(...args);
-  const saveNotice=(...args)=>A.saveNotice(...args);
   const saveSanctuarySchedule=(...args)=>A.saveSanctuarySchedule(...args);
   const searchCharacters=(...args)=>A.searchCharacters(...args);
   const scheduleMemberImageReviewSearch_=(...args)=>A.scheduleMemberImageReviewSearch_(...args);
@@ -82,13 +80,14 @@
   const testWebAppConnection=(...args)=>A.testWebAppConnection(...args);
   const todayDateInputValue=(...args)=>A.todayDateInputValue(...args);
   const updateSanctuaryScheduleSaveState=(...args)=>A.updateSanctuaryScheduleSaveState(...args);
-  const TAB_LABELS={dashboard:'대시보드',requests:'코드 요청',members:'회원 관리',characters:'캐릭터 관리',sanctuary:'성역 관리',notices:'공지 관리',images:'이미지 관리',system:'시스템 설정',logs:'로그 관리'};
+  const TAB_LABELS={dashboard:'대시보드',requests:'코드 요청',members:'회원 관리',characters:'캐릭터 관리',sanctuary:'성역 관리',notices:'BGM 관리',images:'이미지 관리',system:'시스템 설정',logs:'로그 관리'};
   const IMAGE_LOCATION_LABELS={main:'메인 배너',side:'사이드 배너'};
   const IMAGE_VIEW_LABELS={create:'새 이벤트',events:'이벤트 관리',library:'이미지 라이브러리'};
 
   function adminRoute(){
     const raw=decodeURIComponent(String(location.hash||'').replace(/^#/,''));
     let [tab,subtab,view]=raw.split('/').filter(Boolean);
+    if(tab==='notices'&&subtab==='general')subtab='bgm';
     if(tab==='server'){tab='system';subtab='server-status';}
     if(tab==='characters'&&subtab==='status')subtab='records';
     if(!document.querySelector('[data-admin-pane="'+String(tab||'')+'"]'))tab=isStaffConsole()?'sanctuary':'dashboard';
@@ -119,7 +118,7 @@
       if(isCharacterWorkspace) A.loadCharacterWorkspace(subtab);
       if(tab==='sanctuary'&&subtab==='schedule') loadSanctuaryScheduleConsole(force===true);
       if(tab==='sanctuary'&&subtab==='requests') loadSanctuarySupportRequests(force===true);
-      if(tab==='notices'&&subtab==='general') loadNotices();
+      if(tab==='notices'&&subtab==='bgm') A.loadBgm();
       if(tab==='notices'&&subtab==='event') loadEventNoticeGroups();
       if(tab==='system'&&subtab==='server-status') refreshServerStatus();
       if(tab==='system'&&subtab==='routines') A.refreshServerRoutines();
@@ -356,7 +355,6 @@
       if(e.target.matches('[data-schedule-edit]'))resetSanctuaryScheduleEditor(sanctuaryScheduleById(id));
       if(e.target.matches('[data-schedule-status]'))changeSanctuaryScheduleStatus(id,e.target.dataset.scheduleStatus);
     });
-    $('#noticeReloadBtn')?.addEventListener('click',loadNotices); $('#noticeSaveBtn')?.addEventListener('click',saveNotice);
     $('#eventNoticeReloadBtn')?.addEventListener('click',loadEventNoticeGroups); $('#eventNoticeCreateBtn')?.addEventListener('click',startEventNoticeCreate); $('#eventNoticeStatusFilter')?.addEventListener('change',loadEventNoticeGroups);
     $('#eventNoticeList')?.addEventListener('click',e=>{ const row=e.target.closest('[data-event-notice-id]'); const id=row?.dataset.eventNoticeId; if(e.target.matches('[data-event-notice-preview]')) openEventNoticePreview(getEventNoticeGroupById(id)); if(e.target.matches('[data-event-notice-edit]')) editEventNoticeGroup(id); if(e.target.matches('[data-event-notice-duplicate]')) duplicateEventNoticeGroup(id); if(e.target.matches('[data-event-notice-delete]')) deleteEventNoticeGroup(id); });
     $('#eventNoticeEditorCloseBtn')?.addEventListener('click',closeEventNoticeEditor);
