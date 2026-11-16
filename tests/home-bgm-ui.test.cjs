@@ -384,8 +384,8 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
       await page.getByText('곡 정보를 저장했습니다.').waitFor();
       assert.deepEqual(JSON.parse(commands.find(item=>item.action==='update').body),{id:tracks[0].id,title:'제목 수정',sort_order:5});
       await row.getByRole('button',{name:'가사 수정'}).click();
-      const lyricDialog=page.getByRole('dialog',{name:'LRC 가사 관리'});
-      const editor=lyricDialog.getByLabel('LRC 가사',{exact:true});
+      const lyricDialog=page.getByRole('dialog',{name:'가사 관리',exact:true});
+      const editor=lyricDialog.getByLabel('가사',{exact:true});
       await editor.waitFor();
       await page.waitForFunction(value=>document.querySelector('#adminBgmLyricsForm textarea').value===value,lyric);
       const nextLyric='[00:00.00]새 가사';
