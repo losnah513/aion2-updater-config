@@ -1,5 +1,6 @@
 const bucket = "kinojo-home-bgm";
 const maxBytes = 6 * 1024 * 1024;
+const maxLyricsBytes = 24 * 1024;
 const origins = new Set(["https://kinojo.info", "https://www.kinojo.info"]);
 const mime = { mp3: "audio/mpeg", m4a: "audio/mp4", ogg: "audio/ogg" } as const;
 type Extension = keyof typeof mime;
@@ -11,6 +12,7 @@ const errors: Record<string, string> = {
   INVALID_INPUT: "곡 제목, 파일 형식 또는 재생 순서를 확인해 주세요.",
   SIZE_LIMIT: "음원 한 곡은 최대 6 MiB입니다.",
   INVALID_AUDIO: "MP3, M4A 또는 OGG 음원 파일을 선택해 주세요.",
+  INVALID_LYRICS: "24 KiB 이하의 UTF-8 LRC 가사를 입력해 주세요. 예: [00:12.50] 가사",
   UPLOAD_FAILED: "업로드를 완료하지 못했습니다. 목록을 확인한 뒤 다시 시도해 주세요.",
   DELETE_FAILED: "파일 삭제를 완료하지 못했습니다. 목록에서 삭제를 다시 시도해 주세요.",
   SERVER_ERROR: "BGM 요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.",
@@ -84,7 +86,7 @@ Deno.serve(async (request: Request) => {
       const response = await fetch(base + "/rest/v1/rpc/kinojo_home_bgm_v1", {
         method: "POST", signal: AbortSignal.timeout(8000),
         headers: { ...service, "content-type": "application/json" },
-        body: JSON.stringify({ p_action: action, p_session_token: action === "playlist" ? null : session, p_track: track }),
+        body: JSON.stringify({ p_action: action, p_session_token: ["playlist", "lyrics"].includes(action) ? null : session, p_track: track }),
       });
       const result = await response.json();
       if (!response.ok) throw new BgmError("SERVER_ERROR", 502);
@@ -93,7 +95,12 @@ Deno.serve(async (request: Request) => {
     };
     const action = new URL(request.url).searchParams.get("action");
     if (request.method === "GET" && action === "playlist") return reply(request, await rpc("playlist"));
-    if (request.method !== "POST" || !["list", "upload", "update", "delete"].includes(action || "")) {
+    if (request.method === "GET" && action === "lyrics") {
+      const id = new URL(request.url).searchParams.get("id") || "";
+      if (!uuid.test(id)) throw new BgmError("INVALID_INPUT");
+      return reply(request, await rpc("lyrics", { id }));
+    }
+    if (request.method !== "POST" || !["list", "upload", "update", "update-lyrics", "delete"].includes(action || "")) {
       throw new BgmError("INVALID_INPUT", 405);
     }
     if (!session || !/^kws_[A-Za-z0-9_-]{40,80}$/.test(session)) throw new BgmError("ADMIN_ACCESS_REQUIRED", 401);
@@ -125,14 +132,25 @@ Deno.serve(async (request: Request) => {
       }
     }
     let track;
-    try { track = JSON.parse(new TextDecoder().decode(await bytes(request, 4096))); }
-    catch { throw new BgmError("INVALID_INPUT"); }
+    try { track = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(await bytes(request, action === "update-lyrics" ? 65536 : 4096))); }
+    catch { throw new BgmError(action === "update-lyrics" ? "INVALID_LYRICS" : "INVALID_INPUT"); }
     if (!track || typeof track.id !== "string" || !uuid.test(track.id)) throw new BgmError("INVALID_INPUT");
     if (action === "update") {
       if (!Number.isInteger(track.sort_order) || track.sort_order < 0 || track.sort_order > 9999) {
         throw new BgmError("INVALID_INPUT");
       }
       return reply(request, await rpc("update", { id: track.id, title: title(track.title), sort_order: track.sort_order }));
+    }
+    if (action === "update-lyrics") {
+      if (typeof track.lyrics !== "string" || new TextEncoder().encode(track.lyrics).length > maxLyricsBytes ||
+          /[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(track.lyrics)) throw new BgmError("INVALID_LYRICS");
+      const lyrics = track.lyrics.replace(/\r\n?/g, "\n").trim();
+      const timed = lyrics.split("\n").some((line) => {
+        const prefix = line.match(/^\s*(?:\[\d{1,3}:[0-5]\d(?:\.\d{1,3})?\])+/)?.[0];
+        return prefix && line.slice(prefix.length).replace(/<\d{1,3}:[0-5]\d(?:\.\d{1,3})?>/g, "").trim();
+      });
+      if (lyrics && !timed) throw new BgmError("INVALID_LYRICS");
+      return reply(request, await rpc("update-lyrics", { id: track.id, lyrics }));
     }
     const { track: deleting } = await rpc("begin-delete", { id: track.id });
     try {

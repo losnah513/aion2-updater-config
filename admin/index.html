@@ -12,7 +12,7 @@
 <link href="../ui/kinojo-common-ui.css?cache=2026081205&retirement=2026100701" rel="stylesheet"/>
 <link href="../ui/kinojo-card-guards.css?v=1.c2.04-ui-fix" rel="stylesheet"/>
 <link href="../ui/kinojo-animations.css?cache=2026081003" rel="stylesheet"/>
-<link href="./css/admin.css?cache=2026082804&amp;stage7=2026082904&amp;statusTabs=2026090903&amp;delivery=2026090902&amp;exclusions=2026090901&amp;inactive=2026090901&amp;permissions=2026090901&amp;retirement=2026100701&amp;routines=2026100801&amp;timetable=2026100801&amp;storageBudget=2026110601&amp;homeBgm=2026111601" rel="stylesheet"/>
+<link href="./css/admin.css?cache=2026082804&amp;stage7=2026082904&amp;statusTabs=2026090903&amp;delivery=2026090902&amp;exclusions=2026090901&amp;inactive=2026090901&amp;permissions=2026090901&amp;retirement=2026100701&amp;routines=2026100801&amp;timetable=2026100801&amp;storageBudget=2026110601&amp;homeBgm=2026111602" rel="stylesheet"/>
 <script src="../ui/kinojo-device-router.js?cache=2026070110" data-mobile-path="../m/admin/"></script>
 </head>
 <body class="kinojo-page-admin">
@@ -203,7 +203,7 @@
     <section class="admin-pane" data-admin-pane="notices">
       <nav class="admin-subnav" data-admin-subnav="notices" aria-label="BGM과 이벤트 팝업 관리"><button class="active" data-admin-subtab="bgm" type="button">BGM</button><button data-admin-subtab="event" type="button">이벤트 팝업</button></nav>
       <div class="admin-subpane active" data-admin-subpane="bgm"><section class="admin-card">
-        <div class="admin-card-head"><div><h2>BGM 관리</h2><p>등록한 곡은 홈페이지에서 공개 재생됩니다. 재생 순서가 낮은 곡부터 나옵니다.</p></div><button class="admin-btn" id="adminBgmReload" type="button">목록 새로고침</button></div>
+        <div class="admin-card-head"><div><h2>BGM 관리</h2><p>등록한 곡은 홈에서 무작위로 재생됩니다. 목록 순서가 낮은 곡은 목록에서 먼저 표시됩니다.</p></div><button class="admin-btn" id="adminBgmReload" type="button">목록 새로고침</button></div>
         <form class="admin-form admin-bgm-upload" id="adminBgmUpload">
           <label>음원 파일<input class="admin-input" name="file" type="file" accept=".mp3,.m4a,.ogg" required></label>
           <label>곡 제목<input class="admin-input" name="title" maxlength="100" placeholder="비워두면 파일 이름 사용"></label>
@@ -212,6 +212,17 @@
         <p class="admin-bgm-help">MP3 · M4A · OGG, 곡당 6 MiB, 최대 20곡</p>
         <div id="adminBgmStatus" class="admin-statusline" role="status"></div>
         <div id="adminBgmList" class="admin-list"></div>
+        <dialog class="admin-bgm-lyrics-dialog" id="adminBgmLyricsDialog" aria-labelledby="adminBgmLyricsHeading">
+          <form id="adminBgmLyricsForm" class="admin-bgm-lyrics-form">
+            <h3 id="adminBgmLyricsHeading">LRC 가사 관리</h3>
+            <p id="adminBgmLyricsTrack"></p>
+            <label>LRC 파일 가져오기<input class="admin-input" type="file" name="lrcFile" accept=".lrc,text/plain"></label>
+            <label>LRC 가사<textarea class="admin-textarea" name="lyrics" maxlength="24576" rows="8" spellcheck="false" placeholder="[00:12.50] 첫 번째 가사"></textarea></label>
+            <small>UTF-8, 최대 24 KiB. 비워서 저장하면 가사가 제거됩니다.</small>
+            <div class="admin-statusline" id="adminBgmLyricsStatus" role="status"></div>
+            <div class="admin-row-actions"><button class="admin-btn" type="button" data-bgm-lyrics-close>닫기</button><button class="admin-btn primary" type="submit">가사 저장</button></div>
+          </form>
+        </dialog>
       </section></div>
       <div class="admin-subpane" data-admin-subpane="event"><section class="admin-card admin-event-notice-card"><div class="admin-card-head"><div><h2>이벤트 공지 관리</h2><p>페이지 진입 팝업에 표시할 이벤트 공지 묶음 목록입니다.</p></div><div class="admin-row-actions"><button class="admin-btn" id="eventNoticeReloadBtn" type="button">목록 새로고침</button><button class="admin-btn primary" id="eventNoticeCreateBtn" type="button">이벤트 공지 등록</button></div></div><div class="admin-form-row admin-event-notice-tools"><select class="admin-select" id="eventNoticeStatusFilter"><option value="ALL">전체 상태</option><option value="DRAFT">작성중</option><option value="SCHEDULED">예정</option><option value="ACTIVE">진행중</option><option value="PAUSED">일시중지</option><option value="EXPIRED">종료</option><option value="DELETED">삭제됨</option></select></div><div id="eventNoticeStatus" class="admin-statusline"></div><div class="admin-list admin-event-notice-list" id="eventNoticeList"><div class="admin-empty">이벤트 공지 목록을 불러오세요.</div></div></section></div>
     </section>
@@ -297,7 +308,7 @@
 <script src="../core/kinojo-route-guard.js?cache=2026090701"></script>
 <script src="../core/kinojo-debug.js?cache=2026070110"></script>
 <script src="../core/kinojo-logger.js?cache=2026070110"></script>
-<script src="../ui/kinojo-common-ui.js?cache=2026083001&retirement=2026100701&amp;reliability=2026103101&amp;powerUnits=2026103101&amp;homeBgm=2026111601"></script>
+<script src="../ui/kinojo-common-ui.js?cache=2026083001&retirement=2026100701&amp;reliability=2026103101&amp;powerUnits=2026103101&amp;homeBgm=2026111602"></script>
 <script src="../ui/kinojo-admin-panel.js?cache=2026071712"></script>
 <script src="../core/kinojo-supabase-client.js?cache=2026080205&amp;stage7=2026082904&amp;reliability=2026103101"></script>
 <script src="../core/kinojo-supabase-rpc.js?cache=2026082806&amp;reliability=2026103101"></script>
@@ -305,7 +316,7 @@
 <script src="../core/kinojo-auth-session.js?cache=2026081801"></script>
 <script src="../core/kinojo-auth-service.js?cache=2026081801"></script>
 <script src="../core/kinojo-auth-ui.js?cache=2026082901&retirement=2026100701&capacity=2026110601"></script>
-<script src="./js/admin.js?cache=2026090804&amp;stage7=2026082904&amp;character=2026090802&amp;automation=2026090801&amp;completion=2026090801&amp;context=2026090901&amp;family=2026090901&amp;statusTabs=2026090903&amp;activity=2026090901&amp;exclusions=2026090901&amp;inactive=2026090901&amp;delivery=2026090902&amp;permissions=2026090901&amp;runtimeRetention=2026092401&amp;schedule=2026100701&amp;retirement=2026100701&amp;routines=2026100801&amp;timetable=2026100801&amp;reliability=2026103101&amp;storageBudget=2026110601&amp;listCompletion=2026111501&amp;homeBgm=2026111601"></script>
+<script src="./js/admin.js?cache=2026090804&amp;stage7=2026082904&amp;character=2026090802&amp;automation=2026090801&amp;completion=2026090801&amp;context=2026090901&amp;family=2026090901&amp;statusTabs=2026090903&amp;activity=2026090901&amp;exclusions=2026090901&amp;inactive=2026090901&amp;delivery=2026090902&amp;permissions=2026090901&amp;runtimeRetention=2026092401&amp;schedule=2026100701&amp;retirement=2026100701&amp;routines=2026100801&amp;timetable=2026100801&amp;reliability=2026103101&amp;storageBudget=2026110601&amp;listCompletion=2026111501&amp;homeBgm=2026111602"></script>
 
 </body>
 </html>

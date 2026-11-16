@@ -5,8 +5,12 @@
   const list = document.getElementById('adminBgmList');
   const reload = document.getElementById('adminBgmReload');
   const status = document.getElementById('adminBgmStatus');
+  const lyricDialog = document.getElementById('adminBgmLyricsDialog');
+  const lyricForm = document.getElementById('adminBgmLyricsForm');
+  const lyricStatus = document.getElementById('adminBgmLyricsStatus');
+  const lyricSave = lyricForm.querySelector('[type=submit]');
   const mime = { mp3: 'audio/mpeg', m4a: 'audio/mp4', ogg: 'audio/ogg' };
-  let busy = false;
+  let busy = false, lyricEditor = null;
   const show = (message, tone = '') => { status.textContent = message; status.className = 'admin-statusline ' + tone; };
 
   async function request(action, payload, file) {
@@ -21,8 +25,11 @@
       headers.set('x-bgm-title', encodeURIComponent(payload.title));
       headers.set('x-bgm-extension', payload.extension);
     }
-    const response = await fetch(config.url + '/functions/v1/kinojo-home-bgm?action=' + action, {
-      method: 'POST', headers, body: file || JSON.stringify(payload || {}),
+    const isRead = action === 'lyrics';
+    if (isRead) headers.delete('x-kinojo-session');
+    const url = config.url + '/functions/v1/kinojo-home-bgm?action=' + action + (isRead ? '&id=' + encodeURIComponent(payload.id) : '');
+    const response = await fetch(url, {
+      method: isRead ? 'GET' : 'POST', headers, body: isRead ? undefined : file || JSON.stringify(payload || {}),
       signal: AbortSignal.timeout(file ? 75000 : 25000)
     });
     const result = await response.json();
@@ -34,9 +41,10 @@
       const ready = track.state === 'READY';
       return '<form class="admin-row admin-bgm-row" data-track="' + A.esc(track.id) + '">'
         + '<div class="admin-bgm-fields"><label>곡 제목<input class="admin-input" name="title" required maxlength="100" value="' + A.esc(track.title) + '"' + (ready ? '' : ' disabled') + '></label>'
-        + '<label>재생 순서<input class="admin-input" name="order" type="number" required min="0" max="9999" value="' + Number(track.sort_order) + '"' + (ready ? '' : ' disabled') + '></label></div>'
+        + '<label>목록 순서<input class="admin-input" name="order" type="number" required min="0" max="9999" value="' + Number(track.sort_order) + '"' + (ready ? '' : ' disabled') + '></label></div>'
         + '<div class="admin-row-actions"><span class="admin-pill ' + (ready ? 'ok' : 'info') + '">' + (ready ? '공개' : track.state === 'DELETING' ? '삭제 재시도 필요' : '업로드 미완료') + '</span>'
         + (ready ? '<button class="admin-btn" type="submit">저장</button>' : '')
+        + (ready ? '<button class="admin-btn" type="button" data-lyrics="' + (track.hasLyrics === true ? 'saved' : 'empty') + '">' + (track.hasLyrics === true ? '가사 수정' : '가사 등록') + '</button>' : '')
         + (track.canDelete ? '<button class="admin-btn" type="button" data-remove>' + (ready ? '삭제' : '파일 정리') + '</button>' : '')
         + '</div></form>';
     }).join('') : '<div class="admin-empty">등록된 곡이 없습니다.</div>';
@@ -47,6 +55,72 @@
     render(tracks);
     return tracks.length;
   }
+  function setLyricStatus(message, tone = '') {
+    lyricStatus.textContent = message;
+    lyricStatus.className = 'admin-statusline ' + tone;
+  }
+  function lockLyrics(locked) {
+    lyricSave.disabled = locked;
+    lyricForm.elements.lyrics.disabled = locked;
+    lyricForm.elements.lrcFile.disabled = locked;
+  }
+  async function openLyrics(button) {
+    if (busy || lyricDialog.open) return;
+    const row = button.closest('[data-track]');
+    const editor = { id: row.dataset.track, saving: false };
+    lyricEditor = editor;
+    lyricForm.reset();
+    document.getElementById('adminBgmLyricsTrack').textContent = row.elements.title.defaultValue;
+    const hasLyrics = button.dataset.lyrics === 'saved';
+    lockLyrics(hasLyrics);
+    setLyricStatus(hasLyrics ? '가사를 불러오는 중…' : '');
+    lyricDialog.showModal();
+    if (!hasLyrics) return;
+    try {
+      const result = await request('lyrics', { id: editor.id });
+      if (lyricEditor !== editor) return;
+      lyricForm.elements.lyrics.value = result.lyrics || '';
+      lockLyrics(false);
+      setLyricStatus('');
+    } catch (error) {
+      if (lyricEditor === editor) setLyricStatus('기존 가사를 불러올 수 없습니다. 닫고 다시 시도해 주세요.', 'error');
+    }
+  }
+  lyricDialog.querySelector('[data-bgm-lyrics-close]').addEventListener('click', () => lyricDialog.close());
+  lyricDialog.addEventListener('close', () => { if (!lyricDialog.open) lyricEditor = null; });
+  lyricForm.elements.lrcFile.addEventListener('change', async () => {
+    const editor = lyricEditor;
+    const file = lyricForm.elements.lrcFile.files[0];
+    if (!editor || !file) return;
+    if (file.size > 24576 || !/\.lrc$/i.test(file.name)) return setLyricStatus('24 KiB 이하의 .lrc 파일만 가져올 수 있습니다.', 'error');
+    try {
+      const source = new TextDecoder('utf-8', { fatal: true }).decode(await file.arrayBuffer());
+      if (lyricEditor !== editor || !lyricDialog.open || editor.saving) return;
+      lyricForm.elements.lyrics.value = source;
+      setLyricStatus('가져온 내용을 확인한 뒤 가사 저장을 눌러 주세요.');
+    } catch { if (lyricEditor === editor) setLyricStatus('UTF-8로 저장된 LRC 파일을 선택해 주세요.', 'error'); }
+  });
+  lyricForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    const editor = lyricEditor;
+    if (!editor || editor.saving || lyricSave.disabled) return;
+    const lyrics = lyricForm.elements.lyrics.value;
+    if (new TextEncoder().encode(lyrics).length > 24576) return setLyricStatus('가사는 최대 24 KiB입니다.', 'error');
+    editor.saving = true;
+    lockLyrics(true);
+    setLyricStatus('가사 저장 중…');
+    try {
+      await request('update-lyrics', { id: editor.id, lyrics });
+      if (lyricEditor === editor) lyricDialog.close();
+      try { await refresh(); show('가사를 저장했습니다.', 'ok'); }
+      catch { show('가사를 저장했습니다. 목록 새로고침을 눌러 주세요.', 'ok'); }
+    } catch (error) {
+      if (lyricEditor === editor) {
+        lockLyrics(false);
+        setLyricStatus(error.message, 'error');
+      }
+    } finally { editor.saving = false; }
+  });
   async function perform(work, pending) {
     if (busy) return;
     busy = true;
@@ -85,6 +159,8 @@
     }, '곡 정보 저장 중…');
   });
   list.addEventListener('click', event => {
+    const lyricButton = event.target.closest('[data-lyrics]');
+    if (lyricButton) return void openLyrics(lyricButton);
     const row = event.target.closest('[data-remove]')?.closest('[data-track]');
     if (!row || busy || !window.confirm('이 곡을 재생 목록에서 내리고 파일을 삭제할까요?')) return;
     void perform(async () => {
