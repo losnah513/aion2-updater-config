@@ -9,6 +9,8 @@ const { PGlite } = require(process.env.PGLITE_MODULE || '@electric-sql/pglite');
 const sql = fs.readFileSync(path.join(__dirname,'../supabase/migrations/20261116002935_home_bgm.sql'),'utf8');
 const migration = fs.readFileSync(path.join(__dirname,'../supabase/migrations/20261116011005_home_bgm_lyrics.sql'),'utf8');
 const rollback = fs.readFileSync(path.join(__dirname,'../supabase/rollbacks/20261116011005_home_bgm_lyrics.sql'),'utf8');
+const likesMigration = fs.readFileSync(path.join(__dirname,'../supabase/migrations/20261116024338_home_bgm_likes.sql'),'utf8');
+const likesRollback = fs.readFileSync(path.join(__dirname,'../supabase/rollbacks/20261116024338_home_bgm_likes.sql'),'utf8');
 const edge = fs.readFileSync(path.join(__dirname,'../supabase/functions/kinojo-home-bgm/index.ts'),'utf8');
 test('BGM Edge, database and storage boundary', async () => {
   const db = new PGlite();
@@ -23,6 +25,7 @@ test('BGM Edge, database and storage boundary', async () => {
       end$$;`);
     await db.exec(sql);
     await db.exec(migration);
+    await db.exec(likesMigration);
     const grants = await db.query(`select has_function_privilege('anon','public.kinojo_home_bgm_v1(text,text,jsonb)','execute') as anon,
       has_function_privilege('authenticated','public.kinojo_home_bgm_v1(text,text,jsonb)','execute') as authenticated,
       has_function_privilege('service_role','public.kinojo_home_bgm_v1(text,text,jsonb)','execute') as service`);
@@ -35,6 +38,12 @@ test('BGM Edge, database and storage boundary', async () => {
       fetch:async (url,opts) => {
         if(url.includes('/rpc/')){
           const body=JSON.parse(opts.body);
+          if(url.endsWith('/kinojo_home_bgm_likes_v1')){
+            assert.ok(body.p_ip_key === null || /^[a-f0-9]{64}$/.test(body.p_ip_key));
+            const {rows}=await db.query('select public.kinojo_home_bgm_likes_v1($1,$2,$3) as data',
+              [body.p_id,body.p_ip_key,body.p_vote]);
+            return Response.json(rows[0].data);
+          }
           const {rows}=await db.query('select public.kinojo_home_bgm_v1($1,$2,$3) as data',
             [body.p_action,body.p_session_token,JSON.stringify(body.p_track)]);
           return Response.json(rows[0].data);
@@ -55,7 +64,7 @@ test('BGM Edge, database and storage boundary', async () => {
     const admin='kws_'+'a'.repeat(40), member='kws_'+'b'.repeat(40);
     async function request(action, token=admin, extra={}){
       const response=await handler(new Request(base+action,{
-        method:/^(playlist|lyrics&)/.test(action)?'GET':'POST',body:extra.body,
+        method:extra.method || (/^(playlist|lyrics&)/.test(action)?'GET':'POST'),body:extra.body,
         headers:{origin:'https://kinojo.info',...(token?{'x-kinojo-session':token}:{}),...extra.headers}
       }));
       return {status:response.status,data:await response.json()};
@@ -93,6 +102,37 @@ test('BGM Edge, database and storage boundary', async () => {
     assert.equal((await request('update',member,update)).status,403);
     assert.equal((await request('update',admin,update)).status,200);
     assert.deepEqual((await get()).map(row=>row.title),['순서 이동','첫 곡']);
+    const vote = (id, ip, token=null, method='POST', headers={}) => request('likes&id='+id,token,{
+      method,headers:{...(ip?{'cf-connecting-ip':ip}:{}),...headers}
+    });
+    const ip='192.0.2.10';
+    assert.equal((await vote(first.id, null, null, 'POST', {'x-forwarded-for':ip})).status,503);
+    const initial=(await vote(first.id,ip,null,'GET')).data;
+    assert.equal(initial.count,0);
+    assert.equal(initial.liked,false);
+    assert.equal(new Date(initial.resetsAt).getUTCHours(),15);
+    assert.ok(initial.resetAfterMs>0 && initial.resetAfterMs<=86400000);
+    const duplicates=await Promise.all([
+      vote(first.id,ip),vote(first.id,ip,admin,'POST',{'x-forwarded-for':'198.51.100.2'}),
+      vote(first.id,'::ffff:c000:20a',member),vote(first.id,ip)
+    ]);
+    assert.ok(duplicates.every(r=>r.status===200 && r.data.count===1 && r.data.liked));
+    assert.equal((await vote(first.id,'192.0.2.11',null,'GET')).data.liked,false);
+    assert.equal((await vote(first.id,'192.0.2.11')).data.count,2);
+    assert.equal((await vote(second.id,ip)).data.count,1);
+    const unavailable=(await vote(first.id,'not-an-ip',null,'GET')).data;
+    assert.deepEqual([unavailable.count,unavailable.available,unavailable.liked],[2,false,false]);
+    assert.equal((await vote(first.id,ip,null,'POST',{origin:'https://other.test'})).status,403);
+    await db.exec(`update private.kinojo_home_bgm_daily_like set like_day=like_day-2 where track_id='${first.id}'`);
+    assert.equal((await vote(first.id,ip,null,'GET')).data.liked,false);
+    assert.equal((await vote(first.id,ip)).data.count,3);
+    assert.equal((await db.query('select count(*)::int as count from private.kinojo_home_bgm_daily_like where track_id=$1',[first.id])).rows[0].count,1);
+    const likeGrants=(await db.query(`select
+      has_function_privilege('anon','public.kinojo_home_bgm_likes_v1(uuid,text,boolean)','execute') as anon,
+      has_function_privilege('authenticated','public.kinojo_home_bgm_likes_v1(uuid,text,boolean)','execute') as authenticated,
+      has_function_privilege('service_role','public.kinojo_home_bgm_likes_v1(uuid,text,boolean)','execute') as service,
+      has_table_privilege('anon','private.kinojo_home_bgm_daily_like','select') as raw`)).rows[0];
+    assert.deepEqual(likeGrants,{anon:false,authenticated:false,service:true,raw:false});
     failPut=true;
     assert.equal((await upload('실패')).status,502);
     assert.equal((await get()).length,2);
@@ -110,6 +150,11 @@ test('BGM Edge, database and storage boundary', async () => {
     failDelete=false;
     assert.equal((await request('delete',admin,del)).status,200);
     assert.equal(objects.size,1);
+    assert.equal((await vote(first.id,ip)).status,404);
+    assert.equal((await db.query('select count(*)::int as count from private.kinojo_home_bgm_daily_like where track_id=$1',[first.id])).rows[0].count,0);
+    await db.exec(likesRollback);
+    assert.equal((await db.query('select like_count::int from private.kinojo_home_bgm where id=$1',[second.id])).rows[0].like_count,1);
+    assert.equal((await db.query(`select has_function_privilege('service_role','public.kinojo_home_bgm_likes_v1(uuid,text,boolean)','execute') as access`)).rows[0].access,false);
     const badOrigin=await request('list',admin,{headers:{origin:'https://other.test'}});
     assert.equal(badOrigin.status,403);
     await db.exec(`insert into private.kinojo_home_bgm(id,extension,title,bytes,sort_order,state)

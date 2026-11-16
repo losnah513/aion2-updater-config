@@ -7,6 +7,7 @@ type Extension = keyof typeof mime;
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const errors: Record<string, string> = {
   ADMIN_ACCESS_REQUIRED: "관리자 로그인과 권한을 확인해 주세요.",
+  LIKE_IP_UNAVAILABLE: "접속 IP를 확인할 수 없어 좋아요를 저장할 수 없습니다.",
   TRACK_LIMIT: "최대 20곡까지 등록할 수 있습니다. 기존 곡을 먼저 삭제해 주세요.",
   TRACK_UNAVAILABLE: "곡을 찾을 수 없거나 아직 업로드 중입니다. 목록을 다시 불러와 주세요.",
   INVALID_INPUT: "곡 제목, 파일 형식 또는 재생 순서를 확인해 주세요.",
@@ -72,6 +73,35 @@ function title(value: unknown) {
   return value.trim();
 }
 
+async function likeIpKey(request: Request, secret: string) {
+  // The hosted Cloudflare gateway sets this header. Forwarded-For and client data are never used.
+  const address = request.headers.get("cf-connecting-ip")?.trim() || "";
+  if (!/^(?:[\da-f:.]+)$/i.test(address) || address.length > 45) return null;
+  try {
+    let normalized: string;
+    if (address.includes(":")) {
+      normalized = new URL("http://[" + address + "]/").hostname;
+      const mapped = normalized.match(/^\[::ffff:([\da-f]+):([\da-f]+)\]$/);
+      if (mapped) {
+        const high = parseInt(mapped[1], 16), low = parseInt(mapped[2], 16);
+        normalized = [high >>> 8, high & 255, low >>> 8, low & 255].join(".");
+      }
+    } else {
+      if (!/^\d{1,3}(?:\.\d{1,3}){3}$/.test(address)) return null;
+      const parts = address.split(".").map(Number);
+      if (parts.some(part => part > 255)) return null;
+      normalized = parts.join(".");
+    }
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey("raw", encoder.encode(secret),
+      { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+    const hash = await crypto.subtle.sign("HMAC", key, encoder.encode("kinojo-bgm-like:v1:" + normalized));
+    return Array.from(new Uint8Array(hash), byte => byte.toString(16).padStart(2, "0")).join("");
+  } catch {
+    return null;
+  }
+}
+
 Deno.serve(async (request: Request) => {
   try {
     const origin = request.headers.get("origin");
@@ -93,7 +123,24 @@ Deno.serve(async (request: Request) => {
       if (!result.ok) throw new BgmError(result.code, result.code === "ADMIN_ACCESS_REQUIRED" ? 403 : 409);
       return result;
     };
-    const action = new URL(request.url).searchParams.get("action");
+    const params = new URL(request.url).searchParams;
+    const action = params.get("action");
+    if (action === "likes" && (request.method === "GET" || request.method === "POST")) {
+      const id = params.get("id") || "";
+      if (!uuid.test(id)) throw new BgmError("INVALID_INPUT");
+      const vote = request.method === "POST";
+      const ipKey = await likeIpKey(request, key);
+      if (vote && !ipKey) throw new BgmError("LIKE_IP_UNAVAILABLE", 503);
+      const response = await fetch(base + "/rest/v1/rpc/kinojo_home_bgm_likes_v1", {
+        method: "POST", signal: AbortSignal.timeout(8000),
+        headers: { ...service, "content-type": "application/json" },
+        body: JSON.stringify({ p_id: id, p_ip_key: ipKey, p_vote: vote }),
+      });
+      if (!response.ok) throw new BgmError("SERVER_ERROR", 502);
+      const result = await response.json();
+      if (!result.ok) throw new BgmError(result.code, result.code === "TRACK_UNAVAILABLE" ? 404 : 400);
+      return reply(request, result);
+    }
     if (request.method === "GET" && action === "playlist") return reply(request, await rpc("playlist"));
     if (request.method === "GET" && action === "lyrics") {
       const id = new URL(request.url).searchParams.get("id") || "";
@@ -144,7 +191,7 @@ Deno.serve(async (request: Request) => {
     if (action === "update-lyrics") {
       if (typeof track.lyrics !== "string" || new TextEncoder().encode(track.lyrics).length > maxLyricsBytes ||
           /[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(track.lyrics)) throw new BgmError("INVALID_LYRICS");
-      const lyrics = track.lyrics.replace(/\r\n?/g, "\n").trim();
+      const lyrics: string = track.lyrics.replace(/\r\n?/g, "\n").trim();
       const timed = lyrics.split("\n").some((line) => {
         const prefix = line.match(/^\s*(?:\[\d{1,3}:[0-5]\d(?:\.\d{1,3})?\])+/)?.[0];
         return prefix && line.slice(prefix.length).replace(/<\d{1,3}:[0-5]\d(?:\.\d{1,3})?>/g, "").trim();

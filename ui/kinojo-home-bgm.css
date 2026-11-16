@@ -3,11 +3,20 @@
   padding:0 0 env(safe-area-inset-bottom,0px); color:#f8fafc;
   border-top:1px solid #54658f;
   background:linear-gradient(105deg,#101a32,#1c3057 55%,#312452);
-  box-shadow:0 -6px 22px #11182726;
+  box-shadow:0 -6px 22px #11182726; isolation:isolate;
 }
+.kinojo-home-bgm::before {
+  content:''; position:absolute; z-index:-1; inset:0; pointer-events:none; opacity:0;
+  background:linear-gradient(110deg,transparent 12%,#5276bb70 30%,#466a9852 41%,#784fa770 54%,transparent 74%);
+  background-size:270% 100%; animation:kinojo-bgm-flow 16s ease-in-out infinite alternate paused;
+  transition:opacity .45s ease;
+}
+.kinojo-home-bgm[data-bgm-flow="on"]::before {opacity:1; animation-play-state:running}
+@keyframes kinojo-bgm-flow {from {background-position:0% 50%} to {background-position:100% 50%}}
+@media(prefers-reduced-motion:reduce){.kinojo-home-bgm::before{display:none}}
 .kinojo-bgm-inner {
   box-sizing:border-box; width:min(1180px,100%); min-height:54px; margin:auto;
-  display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:clamp(5px,1vw,12px); align-items:center;
+  display:grid; grid-template-columns:auto minmax(0,1fr) auto auto; gap:clamp(5px,1vw,12px); align-items:center;
   padding:4px clamp(10px,2vw,22px);
 }
 .kinojo-bgm-track {min-width:0; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:0 10px; align-items:center}
@@ -16,14 +25,32 @@
 .kinojo-bgm-track input {grid-column:1/-1; width:100%; min-width:0; height:18px; margin:0; accent-color:#a7baff}
 .kinojo-bgm-track input:disabled {opacity:.5}
 .kinojo-bgm-controls {display:flex; gap:5px}
-.kinojo-bgm-controls button,.kinojo-bgm-list {
+.kinojo-bgm-controls button,.kinojo-bgm-list,.kinojo-bgm-like {
   width:44px; height:44px; padding:0; display:grid; place-items:center; cursor:pointer;
   background:#ffffff13; border:1px solid #ffffff38; border-radius:10px; color:inherit;
 }
-.kinojo-bgm-controls button:hover:not(:disabled),.kinojo-bgm-list:hover {background:#ffffff2d}
+.kinojo-bgm-controls button:hover:not(:disabled),.kinojo-bgm-list:hover,.kinojo-bgm-like:hover:not(:disabled) {background:#ffffff2d}
 .kinojo-bgm-controls button:disabled {opacity:.4; cursor:default}
-.kinojo-bgm-controls button:focus-visible,.kinojo-bgm-list:focus-visible,.kinojo-bgm-track input:focus-visible {outline:2px solid #c4d2ff; outline-offset:1px}
+.kinojo-bgm-controls button:focus-visible,.kinojo-bgm-list:focus-visible,.kinojo-bgm-like:focus-visible,.kinojo-bgm-track input:focus-visible {outline:2px solid #c4d2ff; outline-offset:1px}
 .kinojo-bgm-controls svg,.kinojo-bgm-list svg {width:18px; height:18px; fill:currentColor}
+.kinojo-bgm-like {
+  width:auto; min-width:60px; display:flex; align-items:center; justify-content:center; gap:4px; padding:0 8px;
+  font-size:12px; font-weight:700; font-variant-numeric:tabular-nums
+}
+.kinojo-bgm-like svg {width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7}
+.kinojo-bgm-like:disabled {cursor:default}
+.kinojo-bgm-like[aria-pressed="true"] {color:#ffd0e0;border-color:#f3a0bb8c;background:#f373a422}
+.kinojo-bgm-like[aria-pressed="true"] svg {fill:currentColor}
+.kinojo-bgm-controls .bgm-stroke-icon {fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.kinojo-bgm-controls [data-bgm-repeat] {position:relative}
+.kinojo-bgm-controls [data-bgm-repeat][data-mode="all"],.kinojo-bgm-controls [data-bgm-repeat][data-mode="one"],
+.kinojo-bgm-controls [data-bgm-shuffle][aria-pressed="true"] {color:#e6ecff;border-color:#a1b6ff;background:#9eb0ff35}
+.bgm-repeat-one {display:none;position:absolute;top:8px;right:6px;font-size:10px;font-weight:800;line-height:1;background:#394969}
+[data-bgm-repeat][data-mode="one"] .bgm-repeat-one {display:block}
+@media(max-width:520px){
+  .kinojo-bgm-inner {grid-template-columns:auto minmax(0,1fr) auto;row-gap:3px}
+  .kinojo-bgm-controls {grid-column:1/-1;justify-content:center}
+}
 .kinojo-bgm-controls [data-playing="true"] .bgm-play-icon,
 .kinojo-bgm-controls [data-playing="false"] .bgm-pause-icon {display:none}
 .kinojo-bgm-status {grid-column:1/-1; color:#ffd3d3; font-size:11px; padding-bottom:4px}
