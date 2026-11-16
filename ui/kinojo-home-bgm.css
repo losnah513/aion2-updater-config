@@ -24,21 +24,22 @@
 .kinojo-bgm-track small {color:#c6d3f1; font-size:10px; font-variant-numeric:tabular-nums; white-space:nowrap}
 .kinojo-bgm-track input {grid-column:1/-1; width:100%; min-width:0; height:18px; margin:0; accent-color:#a7baff}
 .kinojo-bgm-track input:disabled {opacity:.5}
-.kinojo-bgm-controls {display:flex; gap:5px}
-.kinojo-bgm-controls button,.kinojo-bgm-list,.kinojo-bgm-like {
+.kinojo-bgm-track-tools,.kinojo-bgm-controls,.kinojo-bgm-volume,.kinojo-bgm-transport {display:flex; align-items:center; gap:5px}
+.kinojo-bgm-transport {gap:10px}
+.kinojo-bgm-inner button {
   width:44px; height:44px; padding:0; display:grid; place-items:center; cursor:pointer;
   background:#ffffff13; border:1px solid #ffffff38; border-radius:10px; color:inherit;
 }
-.kinojo-bgm-controls button:hover:not(:disabled),.kinojo-bgm-list:hover,.kinojo-bgm-like:hover:not(:disabled) {background:#ffffff2d}
-.kinojo-bgm-controls button:disabled {opacity:.4; cursor:default}
-.kinojo-bgm-controls button:focus-visible,.kinojo-bgm-list:focus-visible,.kinojo-bgm-like:focus-visible,.kinojo-bgm-track input:focus-visible {outline:2px solid #c4d2ff; outline-offset:1px}
+.kinojo-bgm-inner button:hover:not(:disabled) {background:#ffffff2d}
+.kinojo-bgm-inner button:disabled {opacity:.4; cursor:default}
+.kinojo-bgm-inner :is(button,input):focus-visible {outline:2px solid #c4d2ff; outline-offset:1px}
 .kinojo-bgm-controls svg,.kinojo-bgm-list svg {width:18px; height:18px; fill:currentColor}
-.kinojo-bgm-like {
+.kinojo-bgm-inner .kinojo-bgm-like {
   width:auto; min-width:60px; display:flex; align-items:center; justify-content:center; gap:4px; padding:0 8px;
   font-size:12px; font-weight:700; font-variant-numeric:tabular-nums
 }
 .kinojo-bgm-like svg {width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7}
-.kinojo-bgm-like:disabled {cursor:default}
+.kinojo-bgm-like[aria-pressed="true"]:disabled {opacity:1}
 .kinojo-bgm-like[aria-pressed="true"] {color:#ffd0e0;border-color:#f3a0bb8c;background:#f373a422}
 .kinojo-bgm-like[aria-pressed="true"] svg {fill:currentColor}
 .kinojo-bgm-controls .bgm-stroke-icon {fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
@@ -47,19 +48,36 @@
 .kinojo-bgm-controls [data-bgm-shuffle][aria-pressed="true"] {color:#e6ecff;border-color:#a1b6ff;background:#9eb0ff35}
 .bgm-repeat-one {display:none;position:absolute;top:8px;right:6px;font-size:10px;font-weight:800;line-height:1;background:#394969}
 [data-bgm-repeat][data-mode="one"] .bgm-repeat-one {display:block}
-@media(max-width:520px){
-  .kinojo-bgm-inner {grid-template-columns:auto minmax(0,1fr) auto;row-gap:3px}
-  .kinojo-bgm-controls {grid-column:1/-1;justify-content:center}
+.kinojo-bgm-full-lyrics svg,.kinojo-bgm-volume svg {
+  width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round
+}
+.kinojo-bgm-volume [data-bgm-mute][aria-pressed="true"] {color:#e6ecff;border-color:#a1b6ff;background:#9eb0ff35}
+.kinojo-bgm-volume input {width:clamp(56px,8vw,94px);height:22px;margin:0;accent-color:#a7baff}
+.kinojo-bgm-volume input:disabled {display:none}
+.bgm-volume-cross,[data-silent="true"] .bgm-volume-waves {display:none}
+[data-silent="true"] .bgm-volume-cross {display:inline}
+@media(max-width:760px){
+  .kinojo-bgm-inner {grid-template-columns:auto minmax(0,1fr) auto;row-gap:4px}
+  .kinojo-bgm-transport {grid-column:1/-1;justify-content:center}
+}
+@media(max-width:400px){
+  .kinojo-bgm-transport,.kinojo-bgm-controls,.kinojo-bgm-volume {gap:3px}
+  .kinojo-bgm-transport button {width:36px;height:40px}
+  .kinojo-bgm-track-tools {gap:3px}
+  .kinojo-bgm-inner .kinojo-bgm-like {min-width:46px;padding:0 5px}
+  .kinojo-bgm-track-tools .kinojo-bgm-full-lyrics {width:40px}
 }
 .kinojo-bgm-controls [data-playing="true"] .bgm-play-icon,
 .kinojo-bgm-controls [data-playing="false"] .bgm-pause-icon {display:none}
 .kinojo-bgm-status {grid-column:1/-1; color:#ffd3d3; font-size:11px; padding-bottom:4px}
 .kinojo-bgm-status:empty {display:none}
-.kinojo-bgm-lyrics{padding:8px 12px 2px;text-align:center}
-.kinojo-bgm-lyrics[hidden]{display:none}
+.kinojo-bgm-lyrics{
+  box-sizing:border-box;height:calc(1.35em + 10px);padding:8px 12px 2px;text-align:center;
+  font-size:clamp(.94rem,2.6vw,1.23rem);line-height:1.35
+}
 .kinojo-bgm-lyrics p{
-  margin:0 auto;max-width:980px;max-height:5.6em;overflow:auto;text-wrap:balance;overflow-wrap:anywhere;
-  color:#e5eaff;font-size:clamp(.94rem,2.6vw,1.23rem);font-weight:800;line-height:1.35;white-space:pre-wrap
+  margin:0 auto;max-width:980px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:#e5eaff;font-weight:800
 }
 @supports (background-clip:text){
   .kinojo-bgm-lyrics span{
@@ -73,6 +91,12 @@
   padding:0;border:1px solid #536688;border-radius:16px;
   color:#f8fafc;background:#15223d;box-shadow:0 18px 64px #0b102480
 }
+.kinojo-bgm-lyrics-dialog {width:min(540px,calc(100vw - 24px))}
+.kinojo-bgm-lyrics-body {padding:10px 18px 18px;overflow-wrap:anywhere}
+.kinojo-bgm-lyrics-body h3 {font-size:.9rem;color:#c6d3f1;margin:0 0 12px}
+.kinojo-bgm-lyrics-body p {margin:0;line-height:1.65}
+.kinojo-bgm-lyrics-body [data-bgm-lyrics-text] {white-space:pre-line}
+.kinojo-bgm-lyrics-body [role="status"] {color:#c6d3f1}
 .kinojo-bgm-dialog::backdrop{background:#0b122b99}
 .kinojo-bgm-dialog header{
   display:flex;align-items:center;justify-content:space-between;padding:9px 14px;
