@@ -293,6 +293,22 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
     await lyricsDialog.getByText('등록된 가사가 없습니다.').waitFor();
     assert.equal(lyricsRequests,readsBefore+1);
     await lyricsPage.close();
+
+    editedLyric='첫 가사\n둘째 가사\n\n다음 연';
+    const plainPage=await browser.newPage({viewport:{width:320,height:650}});
+    await isolatePlaywrightPage(plainPage);
+    await plainPage.addInitScript(()=>{
+      localStorage.setItem('kinojo-bgm-playback-modes', JSON.stringify({shuffle:false,repeat:'all'}));
+    });
+    await plainPage.goto(base+'/m/ranking/');
+    await plainPage.getByRole('button',{name:'전체 가사',exact:true}).click();
+    const plainBody=plainPage.locator('[data-bgm-plain-lyrics]');
+    await plainBody.waitFor();
+    assert.equal(await plainBody.innerText(),editedLyric);
+    assert.equal(await plainPage.locator('[data-bgm-lyrics-text]').isVisible(),false);
+    assert.equal(await plainPage.locator('[data-bgm-lyric-line]').isVisible(),false);
+    await plainPage.close();
+
     editedLyric=lyric;
     const modePage=await browser.newPage({viewport:{width:320,height:650},reducedMotion:'reduce'});
     await isolatePlaywrightPage(modePage);
@@ -368,8 +384,8 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
       await page.getByText('곡 정보를 저장했습니다.').waitFor();
       assert.deepEqual(JSON.parse(commands.find(item=>item.action==='update').body),{id:tracks[0].id,title:'제목 수정',sort_order:5});
       await row.getByRole('button',{name:'가사 수정'}).click();
-      const lyricDialog=page.getByRole('dialog',{name:'LRC 가사 관리'});
-      const editor=lyricDialog.getByLabel('LRC 가사',{exact:true});
+      const lyricDialog=page.getByRole('dialog',{name:'가사 관리',exact:true});
+      const editor=lyricDialog.getByLabel('가사',{exact:true});
       await editor.waitFor();
       await page.waitForFunction(value=>document.querySelector('#adminBgmLyricsForm textarea').value===value,lyric);
       const nextLyric='[00:00.00]새 가사';

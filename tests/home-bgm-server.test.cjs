@@ -90,7 +90,10 @@ test('BGM Edge, database and storage boundary', async () => {
     const lyric={body:JSON.stringify({id:first.id,lyrics:lrc})};
     assert.equal((await request('update-lyrics',null,lyric)).status,401);
     assert.equal((await request('update-lyrics',member,lyric)).status,403);
-    assert.equal((await request('update-lyrics',admin,{body:JSON.stringify({id:first.id,lyrics:'시간 없는 가사'})})).data.code,'INVALID_LYRICS');
+    const plainLyrics = '시간 없는 가사\n\n다음 연';
+    assert.equal((await request('update-lyrics',admin,{body:JSON.stringify({id:first.id,lyrics:plainLyrics})})).status,200);
+    assert.equal((await request('lyrics&id='+first.id,null)).data.lyrics,plainLyrics);
+    assert.equal((await request('update-lyrics',admin,{body:JSON.stringify({id:first.id,lyrics:'[00:01]'})})).data.code,'INVALID_LYRICS');
     assert.equal((await request('update-lyrics',admin,{body:JSON.stringify({id:first.id,lyrics:'[00:01]'+ '가'.repeat(8192)})})).data.code,'INVALID_LYRICS');
     assert.equal((await request('update-lyrics',admin,lyric)).status,200);
     assert.equal((await get())[0].hasLyrics,true);

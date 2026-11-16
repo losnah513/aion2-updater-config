@@ -13,7 +13,7 @@ const errors: Record<string, string> = {
   INVALID_INPUT: "곡 제목, 파일 형식 또는 재생 순서를 확인해 주세요.",
   SIZE_LIMIT: "음원 한 곡은 최대 6 MiB입니다.",
   INVALID_AUDIO: "MP3, M4A 또는 OGG 음원 파일을 선택해 주세요.",
-  INVALID_LYRICS: "24 KiB 이하의 UTF-8 LRC 가사를 입력해 주세요. 예: [00:12.50] 가사",
+  INVALID_LYRICS: "24 KiB 이하의 UTF-8 일반 가사 또는 LRC를 입력해 주세요.",
   UPLOAD_FAILED: "업로드를 완료하지 못했습니다. 목록을 확인한 뒤 다시 시도해 주세요.",
   DELETE_FAILED: "파일 삭제를 완료하지 못했습니다. 목록에서 삭제를 다시 시도해 주세요.",
   SERVER_ERROR: "BGM 요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.",
@@ -196,7 +196,7 @@ Deno.serve(async (request: Request) => {
         const prefix = line.match(/^\s*(?:\[\d{1,3}:[0-5]\d(?:\.\d{1,3})?\])+/)?.[0];
         return prefix && line.slice(prefix.length).replace(/<\d{1,3}:[0-5]\d(?:\.\d{1,3})?>/g, "").trim();
       });
-      if (lyrics && !timed) throw new BgmError("INVALID_LYRICS");
+      if (!timed && /^\s*\[(?:\d{1,3}:|offset\s*:)/im.test(lyrics)) throw new BgmError("INVALID_LYRICS");
       return reply(request, await rpc("update-lyrics", { id: track.id, lyrics }));
     }
     const { track: deleting } = await rpc("begin-delete", { id: track.id });

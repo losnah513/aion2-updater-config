@@ -36,7 +36,7 @@
   </dialog>
   <dialog class="kinojo-bgm-dialog kinojo-bgm-lyrics-dialog" data-bgm-lyrics-dialog aria-labelledby="bgm-full-lyrics-heading">
     <header><h2 id="bgm-full-lyrics-heading">전체 가사</h2><form method="dialog"><button type="submit" aria-label="전체 가사 닫기" autofocus>×</button></form></header>
-    <div class="kinojo-bgm-lyrics-body"><h3 data-bgm-lyrics-title></h3><p data-bgm-lyrics-status role="status"></p><ol data-bgm-lyrics-text role="list" hidden></ol></div>
+    <div class="kinojo-bgm-lyrics-body"><h3 data-bgm-lyrics-title></h3><p data-bgm-lyrics-status role="status"></p><ol data-bgm-lyrics-text role="list" hidden></ol><p data-bgm-plain-lyrics hidden></p></div>
   </dialog>
 </section>`;
   const root = template.content.firstElementChild;
@@ -70,10 +70,11 @@
   const lyricsTitle = root.querySelector('[data-bgm-lyrics-title]');
   const lyricsStatus = root.querySelector('[data-bgm-lyrics-status]');
   const lyricsText = root.querySelector('[data-bgm-lyrics-text]');
+  const plainLyricsText = root.querySelector('[data-bgm-plain-lyrics]');
   const backTracks = [], forwardTracks = [];
   let tracks = [], queue = [], index = 0, loading = false, failed = false, generation = 0;
   let config, client, lyricRequest, cues = [], activeCue = -1, lyricSpans = [], lyricFrame = 0;
-  let lyricsState = 'idle', modalCue = -1, modalRows = [];
+  let lyricsState = 'idle', plainLyrics = '', modalCue = -1, modalRows = [];
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let autoPending = /^\/(?:m\/)?(?:index\.html|home\.html)?$/.test(location.pathname);
   const current = () => queue[index];
@@ -363,6 +364,7 @@
     lyricRequest?.abort();
     lyricRequest = null;
     lyricsState = 'idle';
+    plainLyrics = '';
     cues = [];
     activeCue = -1;
     lyricSpans = [];
@@ -387,8 +389,17 @@
     });
     lyricsText.replaceChildren(...modalRows.map(item => item.row));
     lyricsText.hidden = !modalRows.length;
-    lyricsStatus.hidden = Boolean(modalRows.length);
-    lyricsStatus.textContent = modalRows.length ? '' : lyricsState === 'error' ? '가사를 불러오지 못했습니다. 창을 다시 열어 주세요.' :
+    plainLyricsText.hidden = !plainLyrics;
+    plainLyricsText.replaceChildren();
+    if (plainLyrics) {
+      for (const [index, line] of plainLyrics.split('\n').entries()) {
+        if (index) plainLyricsText.append(document.createElement('br'));
+        plainLyricsText.append(line);
+      }
+    }
+    const hasLyrics = Boolean(modalRows.length || plainLyrics);
+    lyricsStatus.hidden = hasLyrics;
+    lyricsStatus.textContent = hasLyrics ? '' : lyricsState === 'error' ? '가사를 불러오지 못했습니다. 창을 다시 열어 주세요.' :
       track?.hasLyrics && lyricsState !== 'ready' ? '가사를 불러오는 중…' : '등록된 가사가 없습니다.';
     paintLyrics();
   }
@@ -405,7 +416,9 @@
       const result = await response.json();
       if (lyricRequest !== controller) return;
       if (!response.ok || result.ok !== true) throw new Error('lyrics');
-      cues = typeof result.lyrics === 'string' ? parseLrc(result.lyrics) : [];
+      const source = typeof result.lyrics === 'string' ? result.lyrics : '';
+      cues = parseLrc(source);
+      plainLyrics = cues.length ? '' : source.trim();
       lyricsState = 'ready';
       updateLyrics();
     } catch {
