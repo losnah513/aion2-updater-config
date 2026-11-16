@@ -24,11 +24,11 @@ function wave() {
 }
 test('BGM player and admin controls at PC and narrow mobile widths', async () => {
   for (const file of ['index.html','home.html','m/index.html']) {
-    assert.match(read(file), /data-home-bgm/);
+    assert.match(read(file), /kinojo-bgm-navigation\.js/);
     assert.match(read(file), /kinojo-home-bgm\.js/);
   }
   assert.doesNotMatch(read('ui/kinojo-common-ui.js'), /createNoticeStrip|loadCommonNotices|showNoticeBoardModal/);
-  assert.doesNotMatch(read('ranking/index.html'), /data-home-bgm/);
+  assert.match(read('ranking/index.html'), /kinojo-home-bgm\.js/);
   assert.match(read('home.html'), /kinojo-event-notice\.js/);
   let requests=0, lyricsRequests=0, commands=[], editedLyric=lyric;
   const server = http.createServer(async (req,res) => {
@@ -66,9 +66,11 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
       const markup=admin.slice(admin.indexOf('<div class="admin-subpane active" data-admin-subpane="bgm">'),admin.indexOf('<div class="admin-subpane" data-admin-subpane="event">'));
       return res.end('<meta name="viewport" content="width=device-width"><link rel="stylesheet" href="/admin/css/admin.css">'+support+markup+'<script src="/admin/js/admin-bgm.js"></script><script>window.KinojoAdmin.loadBgm()</script>');
     }
-    const home=read(url.pathname.startsWith('/m/')?'m/index.html':'index.html');
-    const markup=home.match(/<section class="kinojo-home-bgm"[\s\S]*?<\/section>/)[0];
-    res.end('<meta name="viewport" content="width=device-width"><link rel="stylesheet" href="/ui/kinojo-home-bgm.css"><button id="homeAction" onclick="this.dataset.clicked=1">홈 동작</button>'+support+markup+'<script src="/ui/kinojo-home-bgm.js"></script>');
+    const base = url.pathname.startsWith('/m/') ? '/m/' : '/';
+    const label = url.pathname.includes('ranking') ? '순위 화면' : url.pathname.includes('hof') ? '명예의 전당 화면' : '홈 화면';
+    res.end('<meta name="viewport" content="width=device-width"><title>'+label+'</title><link rel="stylesheet" href="/ui/kinojo-home-bgm.css"><main><h1>'+label+'</h1><button id="homeAction" onclick="this.dataset.clicked=1">홈 동작</button>'+
+      '<nav><a href="'+base+'ranking/?period=week#top">순위</a> <a href="'+base+'hof/">명예의 전당</a> <a href="'+base+'">홈</a> <a href="'+base+'hof/" target="_blank">새 탭</a></nav></main>'+
+      support+'<script src="/ui/kinojo-home-bgm.js"></script><script src="/ui/kinojo-bgm-navigation.js"></script>');
   });
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   const base='http://127.0.0.1:'+server.address().port;
@@ -139,6 +141,56 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
       assert.notEqual(await title.textContent(),'첫 번째 곡');
       assert.equal(await page.locator('[data-bgm-lyrics]').isVisible(),false);
       await page.waitForFunction(()=>!document.querySelector('audio').paused && document.querySelector('audio').currentTime>0);
+      await page.close();
+    }
+    for(const width of [1440,390]){
+      const page=await browser.newPage({viewport:{width,height:840}});
+      await isolatePlaywrightPage(page);
+      const prefix=width===1440?'/':'/m/';
+      const rank=prefix+'ranking/?period=week#top';
+      const hof=prefix+'hof/';
+      await page.goto(base+prefix);
+      await page.getByText('화면을 누르면 BGM 재생을 시작합니다.').waitFor();
+      await page.getByRole('button',{name:'홈 동작'}).click();
+      await page.waitForFunction(()=>document.querySelector('audio').currentTime>0);
+      const elapsed=await page.locator('audio').evaluate(audio=>{
+        window.continuityAudio=audio;
+        return audio.currentTime;
+      });
+      const title=await page.locator('[data-bgm-title]').textContent();
+      await page.getByRole('link',{name:'순위',exact:true}).click();
+      await page.waitForURL(base+rank);
+      const content=page.frameLocator('.kinojo-bgm-page');
+      await content.getByRole('heading',{name:'순위 화면'}).waitFor();
+      assert.equal(await content.locator('[data-home-bgm]').count(),0);
+      const stillPlaying=await page.locator('audio').evaluate((audio,start)=> audio===window.continuityAudio && audio.currentTime>=start && !audio.paused,elapsed);
+      assert.equal(stillPlaying,true);
+      assert.equal(await page.locator('[data-bgm-title]').textContent(),title);
+      const player=await page.locator('[data-home-bgm]').boundingBox();
+      const frame=await page.locator('.kinojo-bgm-page').boundingBox();
+      assert.ok(Math.abs(frame.y+frame.height-player.y)<2,'page content fits above the player');
+      await page.getByRole('button',{name:'일시정지'}).click();
+      await content.getByRole('link',{name:'명예의 전당',exact:true}).click();
+      await page.waitForURL(base+hof);
+      await content.getByRole('heading',{name:'명예의 전당 화면'}).waitFor();
+      assert.equal(await page.locator('audio').evaluate(audio=>audio===window.continuityAudio&&audio.paused),true);
+      await page.evaluate(()=>history.back());
+      await page.waitForURL(base+rank);
+      await content.getByRole('heading',{name:'순위 화면'}).waitFor();
+      await page.evaluate(()=>history.back());
+      await page.waitForURL(base+prefix);
+      await page.getByRole('heading',{name:'홈 화면'}).waitFor();
+      assert.equal(await page.locator('.kinojo-bgm-page').isVisible(),false);
+      assert.equal(await page.locator('audio').evaluate(audio=>audio===window.continuityAudio&&audio.paused),true);
+      await page.evaluate(()=>history.forward());
+      await page.waitForURL(base+rank);
+      await content.getByRole('heading',{name:'순위 화면'}).waitFor();
+      const popupPromise=page.waitForEvent('popup');
+      await content.getByRole('link',{name:'새 탭'}).click();
+      const popup=await popupPromise;
+      await popup.waitForURL(base+hof);
+      assert.equal(page.url(),base+rank);
+      await popup.close();
       await page.close();
     }
     for(const width of [1440,320]){

@@ -1,7 +1,33 @@
 (function () {
   'use strict';
-  const root = document.querySelector('[data-home-bgm]');
-  if (!root) return;
+  if (window !== window.top) return;
+  if (document.querySelector('[data-home-bgm]')) return;
+  const template = document.createElement('template');
+  template.innerHTML = `<section class="kinojo-home-bgm" data-home-bgm aria-label="배경 음악">
+  <div class="kinojo-bgm-lyrics" data-bgm-lyrics aria-label="현재 가사" hidden><p data-bgm-lyric-line></p></div>
+  <div class="kinojo-bgm-inner">
+    <button class="kinojo-bgm-list" type="button" data-bgm-list aria-label="곡 목록" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h13v2H3zm0 5h13v2H3zm0 5h8v2H3zm15-9h3v10a3.5 3.5 0 1 1-2-3.15V8h-1z"/></svg></button>
+    <div class="kinojo-bgm-track"><strong data-bgm-title aria-live="polite">BGM 목록 불러오는 중…</strong><small data-bgm-time>0:00 / 0:00</small><input data-bgm-seek type="range" min="0" max="1" step="0.1" value="0" aria-label="재생 위치" disabled></div>
+    <div class="kinojo-bgm-controls">
+      <button type="button" data-bgm-play data-playing="false" aria-label="재생" disabled><svg class="bgm-play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16l14-8z"/></svg><svg class="bgm-pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg></button>
+      <button type="button" data-bgm-next aria-label="다음 곡" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16l12-8zm13 0h3v16h-3z"/></svg></button>
+    </div>
+    <small class="kinojo-bgm-status" data-bgm-status role="status"></small>
+  </div>
+  <audio preload="none"></audio>
+  <dialog class="kinojo-bgm-dialog" data-bgm-dialog aria-labelledby="bgm-list-heading">
+    <header><h2 id="bgm-list-heading">곡 목록</h2><form method="dialog"><button type="submit" data-bgm-close aria-label="곡 목록 닫기">×</button></form></header>
+    <div class="kinojo-bgm-tracks" data-bgm-tracks></div>
+  </dialog>
+</section>`;
+  const root = template.content.firstElementChild;
+  document.body.append(root);
+  function reportSize() {
+    document.documentElement.style.setProperty('--kinojo-bgm-bar-height', Math.ceil(root.getBoundingClientRect().height) + 'px');
+    window.dispatchEvent(new Event('kinojo:bgm-size-changed'));
+  }
+  reportSize();
+  if (window.ResizeObserver) new ResizeObserver(reportSize).observe(root);
   const title = root.querySelector('[data-bgm-title]');
   const play = root.querySelector('[data-bgm-play]');
   const next = root.querySelector('[data-bgm-next]');
@@ -16,7 +42,7 @@
   const lyricLine = root.querySelector('[data-bgm-lyric-line]');
   let tracks = [], queue = [], index = 0, loading = false, failed = false, generation = 0;
   let config, client, lyricRequest, cues = [], activeCue = -1, lyricSpans = [], lyricFrame = 0;
-  let autoPending = true;
+  let autoPending = /^\/(?:m\/)?(?:index\.html|home\.html)?$/.test(location.pathname);
   const current = () => queue[index];
   const clock = (value) => {
     const seconds = Math.max(0, Math.floor(value || 0));
@@ -171,6 +197,10 @@
   function stopAutoplay() {
     autoPending = false;
     document.removeEventListener('click', onHomeClick, true);
+    window.removeEventListener('kinojo:bgm-frame-activation', onFrameActivation);
+  }
+  function onFrameActivation() {
+    if (autoPending && audio.paused && navigator.userActivation?.isActive) void start(true);
   }
   function onHomeClick(event) {
     if (!autoPending || !event.isTrusted || !audio.paused || event.target.closest?.('[data-bgm-play],[data-bgm-next],[data-bgm-dialog]')) return;
@@ -194,6 +224,7 @@
       if (automatic && autoPending && error?.name === 'NotAllowedError') {
         status.textContent = '화면을 누르면 BGM 재생을 시작합니다.';
         document.addEventListener('click', onHomeClick, true);
+        window.addEventListener('kinojo:bgm-frame-activation', onFrameActivation);
       } else {
         stopAutoplay();
         status.textContent = '재생할 수 없습니다. 다시 재생하거나 다음 곡을 선택해 주세요.';
