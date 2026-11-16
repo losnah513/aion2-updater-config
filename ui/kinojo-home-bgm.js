@@ -36,7 +36,7 @@
   </dialog>
   <dialog class="kinojo-bgm-dialog kinojo-bgm-lyrics-dialog" data-bgm-lyrics-dialog aria-labelledby="bgm-full-lyrics-heading">
     <header><h2 id="bgm-full-lyrics-heading">전체 가사</h2><form method="dialog"><button type="submit" aria-label="전체 가사 닫기" autofocus>×</button></form></header>
-    <div class="kinojo-bgm-lyrics-body"><h3 data-bgm-lyrics-title></h3><p data-bgm-lyrics-status role="status"></p><p data-bgm-lyrics-text hidden></p></div>
+    <div class="kinojo-bgm-lyrics-body"><h3 data-bgm-lyrics-title></h3><p data-bgm-lyrics-status role="status"></p><ol data-bgm-lyrics-text role="list" hidden></ol></div>
   </dialog>
 </section>`;
   const root = template.content.firstElementChild;
@@ -73,7 +73,8 @@
   const backTracks = [], forwardTracks = [];
   let tracks = [], queue = [], index = 0, loading = false, failed = false, generation = 0;
   let config, client, lyricRequest, cues = [], activeCue = -1, lyricSpans = [], lyricFrame = 0;
-  let lyricsState = 'idle';
+  let lyricsState = 'idle', modalCue = -1, modalRows = [];
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let autoPending = /^\/(?:m\/)?(?:index\.html|home\.html)?$/.test(location.pathname);
   const current = () => queue[index];
   const repeatLabels = { off: '반복 끄기', all: '전체 반복', one: '한 곡 반복' };
@@ -290,7 +291,36 @@
         rows.set(Math.max(0, origin), { start: Math.max(0, origin), segments });
       }
     }
-    return [...rows.values()].sort((a, b) => a.start - b.start);
+    const sequence = [...rows.values()].sort((a, b) => a.start - b.start);
+    if (!sequence.some(cue => cue.segments.length)) return [];
+    if (!sequence[0].segments.length) sequence[0].start = 0;
+    else if (sequence[0].start > 0) sequence.unshift({ start: 0, segments: [] });
+    const first = sequence.findIndex(cue => cue.segments.length);
+    const last = sequence.findLastIndex(cue => cue.segments.length);
+    return sequence.map((cue, i) => cue.segments.length ? cue : {
+      ...cue, instrumental: i < first ? '<전주 중>' : i > last ? '<후주 중>' : '<간주 중>'
+    }).filter((cue, i, rows) => !cue.instrumental || cue.instrumental !== rows[i - 1]?.instrumental);
+  }
+  function lyricWords(cue) {
+    return (cue?.segments || []).map(segment => {
+      const span = document.createElement('span');
+      span.textContent = segment.text;
+      return span;
+    });
+  }
+  function followModalCue(position) {
+    if (!lyricsDialog.open || position === modalCue) return;
+    modalRows[modalCue]?.row.removeAttribute('aria-current');
+    modalCue = position;
+    const row = modalRows[position]?.row;
+    if (!row) return;
+    row.setAttribute('aria-current', 'true');
+    const rowBox = row.getBoundingClientRect();
+    const dialogTop = lyricsDialog.getBoundingClientRect().top;
+    const headerHeight = lyricsDialog.querySelector('header').offsetHeight;
+    const center = (lyricsDialog.clientHeight + headerHeight) / 2;
+    const top = lyricsDialog.scrollTop + rowBox.top - dialogTop + rowBox.height / 2 - center;
+    lyricsDialog.scrollTo({ top, behavior: reducedMotion.matches || audio.paused || audio.seeking ? 'auto' : 'smooth' });
   }
   function paintLyrics() {
     const now = audio.currentTime;
@@ -303,20 +333,21 @@
     const position = lo - 1, cue = cues[position];
     if (activeCue !== position) {
       activeCue = position;
-      lyricSpans = (cue?.segments || []).map(segment => {
-        const span = document.createElement('span');
-        span.textContent = segment.text;
-        return span;
-      });
-      lyricLine.replaceChildren(...lyricSpans);
+      lyricSpans = lyricWords(cue);
+      lyricLine.toggleAttribute('data-bgm-instrumental', Boolean(cue?.instrumental));
+      lyricLine.replaceChildren(...(cue?.instrumental ? [cue.instrumental] : lyricSpans));
     }
-    lyricLine.hidden = !lyricSpans.length;
-    if (!cue) return;
+    lyricLine.hidden = !cue;
+    followModalCue(position);
+    if (!cue || cue.instrumental) return;
+    const modalSpans = lyricsDialog.open ? modalRows[position]?.spans : null;
     const end = cues[position + 1]?.start ?? (Number.isFinite(audio.duration) ? audio.duration : cue.start + 4);
     cue.segments.forEach((segment, i) => {
       const until = cue.segments[i + 1]?.start ?? end;
       const fraction = Math.min(1, Math.max(0, (now - segment.start) / Math.max(0.05, until - segment.start)));
-      lyricSpans[i].style.setProperty('--bgm-fill', (fraction * 100).toFixed(1) + '%');
+      const fill = (fraction * 100).toFixed(1) + '%';
+      lyricSpans[i].style.setProperty('--bgm-fill', fill);
+      modalSpans?.[i]?.style.setProperty('--bgm-fill', fill);
     });
   }
   function lyricTick() {
@@ -336,18 +367,30 @@
     activeCue = -1;
     lyricSpans = [];
     lyricLine.replaceChildren();
+    lyricLine.removeAttribute('data-bgm-instrumental');
     updateLyrics();
   }
   function renderLyricsDialog() {
     if (!lyricsDialog.open) return;
     const track = current();
     lyricsTitle.textContent = track?.title || '';
-    const text = cues.map(cue => cue.segments.map(segment => segment.text).join('')).filter(Boolean).join('\n');
-    lyricsText.textContent = text;
-    lyricsText.hidden = !text;
-    lyricsStatus.hidden = Boolean(text);
-    lyricsStatus.textContent = text ? '' : lyricsState === 'error' ? '가사를 불러오지 못했습니다. 창을 다시 열어 주세요.' :
+    modalCue = -1;
+    modalRows = cues.map(cue => {
+      const row = document.createElement('li');
+      row.setAttribute('data-bgm-lyrics-row', '');
+      const spans = lyricWords(cue);
+      if (cue.instrumental) {
+        row.setAttribute('data-bgm-instrumental', '');
+        row.textContent = cue.instrumental;
+      } else row.append(...spans);
+      return {row, spans};
+    });
+    lyricsText.replaceChildren(...modalRows.map(item => item.row));
+    lyricsText.hidden = !modalRows.length;
+    lyricsStatus.hidden = Boolean(modalRows.length);
+    lyricsStatus.textContent = modalRows.length ? '' : lyricsState === 'error' ? '가사를 불러오지 못했습니다. 창을 다시 열어 주세요.' :
       track?.hasLyrics && lyricsState !== 'ready' ? '가사를 불러오는 중…' : '등록된 가사가 없습니다.';
+    paintLyrics();
   }
   async function loadLyrics(track) {
     if (!track?.hasLyrics || lyricRequest || lyricsState === 'ready') return;
@@ -522,7 +565,13 @@
     renderLyricsDialog();
     void loadLyrics(current());
   });
-  lyricsDialog.addEventListener('close', () => lyricsButton.focus());
+  lyricsDialog.addEventListener('close', () => {
+    if (lyricsDialog.open) return;
+    modalCue = -1;
+    modalRows = [];
+    lyricsText.replaceChildren();
+    lyricsButton.focus();
+  });
   previous.addEventListener('click', () => {
     const keepPlaying = autoPending || (!audio.paused && !audio.ended);
     stopAutoplay();

@@ -1,5 +1,7 @@
 ## Home BGM · 2026-11-16
 
+- The full-lyrics dialog and footer share the active cue and fill progress. The dialog scrolls only when the cue changes and uses immediate scrolling while seeking, paused or when reduced motion is requested. The initial gap and explicit empty LRC cues display 전주 중, 간주 중 or 후주 중 according to their position around the vocal lines. This is a Web release and uses the existing stored LRC.
+
 - Previous and forward navigation use recently selected tracks so rewinding and replaying follow the actual shuffle history across a new pass. Volume and mute persist per browser and are restored before autoplay. Browsers that reserve volume control for the device keep the mute control and use the physical volume buttons.
 - The player's one-line lyrics area keeps a fixed height. The full-lyrics dialog can load the current song's existing LRC before playback and shares its parsed cues with karaoke highlighting. This change ships through Pages and can be rolled back by restoring the previous Web revision.
 
