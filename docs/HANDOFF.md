@@ -1,7 +1,8 @@
 ## Home BGM · 2026-11-16
 
 - The common lower general-notice strip and its fetch/rotation/detail flow are retired. PC root/home and mobile home show a fixed BGM player. The separate event popups and their management remain available. Historical notice data and API compatibility are preserved.
-- The home player fetches ordered metadata after page load and downloads audio only on play. Its controls support pause/resume, seeking, next and sequential repeat. Administrator BGM management accepts public MP3/M4A/OGG files up to 6 MiB, 20 tracks total, and supports title/order editing and removal.
+- The home player shuffles each pass through the playlist, attempts audible autoplay and retries during a trusted click/tap after policy denial. Manual pause does not rearm the fallback. The left track-list dialog can start a chosen song, then reshuffles the remaining tracks.
+- Admins can save up to 24 KiB of UTF-8 LRC per ready track. Home fetches lyrics only for the track that starts playback; the active line fills to its timing markers and supports enhanced word timestamps and offset. Lyrics access and mutation extend the existing BGM Edge/RPC and preserve existing admin/Storage grants. Deploy the lyrics migration then the Edge revision then Pages; rollback restores the previous RPC without removing saved lyrics.
 - Deploy migration 20261116002935_home_bgm then kinojo-home-bgm (WEB_COMMON admin gate, public playlist), then Pages. Audio bytes go only into the dedicated Storage bucket; direct client writes and RPC access are denied. Upload reservations preserve recoverability when a response or write fails; deletion unlists before removing the object. Use the list to retry pending cleanup.
 - Tests: node --test tests/home-bgm-server.test.cjs tests/home-bgm-ui.test.cjs with the existing isolated PGLite and Playwright runtime. Roll back Web first, then use the same-named SQL rollback to disable Edge RPC access without deleting audio or metadata.
 

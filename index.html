@@ -66,7 +66,7 @@
   }
 </style>
 <noscript><style>.kinojo-main-banner.is-manifest-pending>img{visibility:visible}</style></noscript>
-<link rel="stylesheet" href="ui/kinojo-home-bgm.css?cache=2026111601">
+<link rel="stylesheet" href="ui/kinojo-home-bgm.css?cache=2026111602">
 </head>
 <body class="kinojo-page-home" data-kinojo-page="home">
 <section class="kinojo-home-subbar kinojo-standard-subbar kinojo-attached-subbar" aria-label="HOME 보조 메뉴"></section>
@@ -164,7 +164,9 @@
   })();
 </script>
 <section class="kinojo-home-bgm" data-home-bgm aria-label="배경 음악">
+  <div class="kinojo-bgm-lyrics" data-bgm-lyrics aria-label="현재 가사" hidden><p data-bgm-lyric-line></p></div>
   <div class="kinojo-bgm-inner">
+    <button class="kinojo-bgm-list" type="button" data-bgm-list aria-label="곡 목록" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h13v2H3zm0 5h13v2H3zm0 5h8v2H3zm15-9h3v10a3.5 3.5 0 1 1-2-3.15V8h-1z"/></svg></button>
     <div class="kinojo-bgm-track"><strong data-bgm-title aria-live="polite">BGM 목록 불러오는 중…</strong><small data-bgm-time>0:00 / 0:00</small><input data-bgm-seek type="range" min="0" max="1" step="0.1" value="0" aria-label="재생 위치" disabled></div>
     <div class="kinojo-bgm-controls">
       <button type="button" data-bgm-play data-playing="false" aria-label="재생" disabled><svg class="bgm-play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16l14-8z"/></svg><svg class="bgm-pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg></button>
@@ -173,7 +175,11 @@
     <small class="kinojo-bgm-status" data-bgm-status role="status"></small>
   </div>
   <audio preload="none"></audio>
+  <dialog class="kinojo-bgm-dialog" data-bgm-dialog aria-labelledby="bgm-list-heading">
+    <header><h2 id="bgm-list-heading">곡 목록</h2><form method="dialog"><button type="submit" data-bgm-close aria-label="곡 목록 닫기">×</button></form></header>
+    <div class="kinojo-bgm-tracks" data-bgm-tracks></div>
+  </dialog>
 </section>
-<script defer src="ui/kinojo-home-bgm.js?cache=2026111601"></script>
+<script defer src="ui/kinojo-home-bgm.js?cache=2026111602"></script>
 </body>
 </html>

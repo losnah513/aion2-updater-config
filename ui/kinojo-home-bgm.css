@@ -7,7 +7,7 @@
 }
 .kinojo-bgm-inner {
   box-sizing:border-box; width:min(1180px,100%); min-height:54px; margin:auto;
-  display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; align-items:center;
+  display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:clamp(5px,1vw,12px); align-items:center;
   padding:4px clamp(10px,2vw,22px);
 }
 .kinojo-bgm-track {min-width:0; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:0 10px; align-items:center}
@@ -16,16 +16,49 @@
 .kinojo-bgm-track input {grid-column:1/-1; width:100%; min-width:0; height:18px; margin:0; accent-color:#a7baff}
 .kinojo-bgm-track input:disabled {opacity:.5}
 .kinojo-bgm-controls {display:flex; gap:5px}
-.kinojo-bgm-controls button {
+.kinojo-bgm-controls button,.kinojo-bgm-list {
   width:44px; height:44px; padding:0; display:grid; place-items:center; cursor:pointer;
   background:#ffffff13; border:1px solid #ffffff38; border-radius:10px; color:inherit;
 }
-.kinojo-bgm-controls button:hover:not(:disabled) {background:#ffffff2d}
+.kinojo-bgm-controls button:hover:not(:disabled),.kinojo-bgm-list:hover {background:#ffffff2d}
 .kinojo-bgm-controls button:disabled {opacity:.4; cursor:default}
-.kinojo-bgm-controls button:focus-visible,.kinojo-bgm-track input:focus-visible {outline:2px solid #c4d2ff; outline-offset:1px}
-.kinojo-bgm-controls svg {width:18px; height:18px; fill:currentColor}
+.kinojo-bgm-controls button:focus-visible,.kinojo-bgm-list:focus-visible,.kinojo-bgm-track input:focus-visible {outline:2px solid #c4d2ff; outline-offset:1px}
+.kinojo-bgm-controls svg,.kinojo-bgm-list svg {width:18px; height:18px; fill:currentColor}
 .kinojo-bgm-controls [data-playing="true"] .bgm-play-icon,
 .kinojo-bgm-controls [data-playing="false"] .bgm-pause-icon {display:none}
 .kinojo-bgm-status {grid-column:1/-1; color:#ffd3d3; font-size:11px; padding-bottom:4px}
 .kinojo-bgm-status:empty {display:none}
-body:has(.kinojo-home-bgm) {--kinojo-shell-bottom:55px}
+.kinojo-bgm-lyrics{padding:8px 12px 2px;text-align:center}
+.kinojo-bgm-lyrics[hidden]{display:none}
+.kinojo-bgm-lyrics p{
+  margin:0 auto;max-width:980px;max-height:5.6em;overflow:auto;text-wrap:balance;overflow-wrap:anywhere;
+  color:#e5eaff;font-size:clamp(.94rem,2.6vw,1.23rem);font-weight:800;line-height:1.35;white-space:pre-wrap
+}
+@supports (background-clip:text){
+  .kinojo-bgm-lyrics span{
+    background:linear-gradient(90deg,#ffdc77 var(--bgm-fill,0%),#e5eaff var(--bgm-fill,0%));
+    background-clip:text;color:transparent
+  }
+}
+@media(forced-colors:active){.kinojo-bgm-lyrics span{background:none;color:CanvasText}}
+.kinojo-bgm-dialog{
+  box-sizing:border-box;width:min(420px,calc(100vw - 24px));max-height:min(66dvh,520px);
+  padding:0;border:1px solid #536688;border-radius:16px;
+  color:#f8fafc;background:#15223d;box-shadow:0 18px 64px #0b102480
+}
+.kinojo-bgm-dialog::backdrop{background:#0b122b99}
+.kinojo-bgm-dialog header{
+  display:flex;align-items:center;justify-content:space-between;padding:9px 14px;
+  position:sticky;top:0;background:#15223d;border-bottom:1px solid #455677
+}
+.kinojo-bgm-dialog h2{font-size:1rem;margin:0}
+.kinojo-bgm-dialog button{
+  box-sizing:border-box;min-height:44px;border:1px solid #5d6e91;border-radius:9px;
+  background:#203153;color:#fff;cursor:pointer;font:inherit
+}
+.kinojo-bgm-dialog header button{min-width:44px}
+.kinojo-bgm-tracks{display:grid;gap:6px;padding:10px 14px 14px}
+.kinojo-bgm-tracks button{text-align:left;padding:8px 10px;overflow-wrap:anywhere}
+.kinojo-bgm-tracks button[aria-current]{background:#42518b;border-color:#afbbff}
+.kinojo-bgm-dialog button:hover{background:#344874}
+body:has(.kinojo-home-bgm) {--kinojo-shell-bottom:max(55px,calc(var(--kinojo-notice-actual-height,55px) - env(safe-area-inset-bottom,0px)))}
