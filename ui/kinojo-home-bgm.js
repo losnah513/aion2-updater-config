@@ -4,18 +4,28 @@
   if (document.querySelector('[data-home-bgm]')) return;
   const template = document.createElement('template');
   template.innerHTML = `<section class="kinojo-home-bgm" data-home-bgm aria-label="배경 음악">
-  <div class="kinojo-bgm-lyrics" data-bgm-lyrics aria-label="현재 가사" hidden><p data-bgm-lyric-line></p></div>
+  <div class="kinojo-bgm-lyrics"><p data-bgm-lyrics data-bgm-lyric-line aria-label="현재 가사" hidden></p></div>
   <div class="kinojo-bgm-inner">
     <button class="kinojo-bgm-list" type="button" data-bgm-list aria-label="곡 목록" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h13v2H3zm0 5h13v2H3zm0 5h8v2H3zm15-9h3v10a3.5 3.5 0 1 1-2-3.15V8h-1z"/></svg></button>
     <div class="kinojo-bgm-track"><strong data-bgm-title aria-live="polite">BGM 목록 불러오는 중…</strong><small data-bgm-time>0:00 / 0:00</small><input data-bgm-seek type="range" min="0" max="1" step="0.1" value="0" aria-label="재생 위치" disabled></div>
-    <button class="kinojo-bgm-like" type="button" data-bgm-like aria-label="좋아요" aria-pressed="false" disabled>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.6c0 4.2-8.8 9.3-8.8 9.3S3.2 12.8 3.2 8.6a4.65 4.65 0 0 1 8.8-2.1 4.65 4.65 0 0 1 8.8 2.1Z"/></svg><span data-bgm-like-count aria-hidden="true">—</span>
-    </button>
-    <div class="kinojo-bgm-controls">
-      <button type="button" data-bgm-shuffle aria-label="셔플" aria-pressed="false" disabled><svg class="bgm-stroke-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h3c4 0 8 12 12 12h3m-4-4 4 4-4 4M3 18h3c1.5 0 3-1.7 4.5-4m3-4C15 7.7 16.5 6 18 6h3m-4-4 4 4-4 4"/></svg></button>
-      <button type="button" data-bgm-repeat aria-label="반복" disabled><svg class="bgm-stroke-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7h-13a3 3 0 0 0-3 3v2m12-9 4 4-4 4M4 17h13a3 3 0 0 0 3-3v-2M8 13l-4 4 4 4"/></svg><span class="bgm-repeat-one" aria-hidden="true">1</span></button>
-      <button type="button" data-bgm-play data-playing="false" aria-label="재생" disabled><svg class="bgm-play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16l14-8z"/></svg><svg class="bgm-pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg></button>
-      <button type="button" data-bgm-next aria-label="다음 곡" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16l12-8zm13 0h3v16h-3z"/></svg></button>
+    <div class="kinojo-bgm-track-tools">
+      <button class="kinojo-bgm-like" type="button" data-bgm-like aria-label="좋아요" aria-pressed="false" disabled>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.6c0 4.2-8.8 9.3-8.8 9.3S3.2 12.8 3.2 8.6a4.65 4.65 0 0 1 8.8-2.1 4.65 4.65 0 0 1 8.8 2.1Z"/></svg><span data-bgm-like-count aria-hidden="true">—</span>
+      </button>
+      <button class="kinojo-bgm-full-lyrics" type="button" data-bgm-full-lyrics aria-label="전체 가사" title="전체 가사" aria-haspopup="dialog" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h6l4 4v14H6V3h2Zm5 0v5h5M9 12h6m-6 4h6"/></svg></button>
+    </div>
+    <div class="kinojo-bgm-transport">
+      <div class="kinojo-bgm-controls">
+        <button type="button" data-bgm-shuffle aria-label="셔플" aria-pressed="false" disabled><svg class="bgm-stroke-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h3c4 0 8 12 12 12h3m-4-4 4 4-4 4M3 18h3c1.5 0 3-1.7 4.5-4m3-4C15 7.7 16.5 6 18 6h3m-4-4 4 4-4 4"/></svg></button>
+        <button type="button" data-bgm-repeat aria-label="반복" disabled><svg class="bgm-stroke-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7h-13a3 3 0 0 0-3 3v2m12-9 4 4-4 4M4 17h13a3 3 0 0 0 3-3v-2M8 13l-4 4 4 4"/></svg><span class="bgm-repeat-one" aria-hidden="true">1</span></button>
+        <button type="button" data-bgm-previous aria-label="이전 곡" title="이전 곡" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h3v16H4zm16 0v16L8 12z"/></svg></button>
+        <button type="button" data-bgm-play data-playing="false" aria-label="재생" disabled><svg class="bgm-play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16l14-8z"/></svg><svg class="bgm-pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg></button>
+        <button type="button" data-bgm-next aria-label="다음 곡" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16l12-8zm13 0h3v16h-3z"/></svg></button>
+      </div>
+      <div class="kinojo-bgm-volume">
+        <button type="button" data-bgm-mute aria-label="음소거" aria-pressed="false" title="음소거"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path class="bgm-volume-waves" d="M15 9a4 4 0 0 1 0 6m2-9a8 8 0 0 1 0 12"/><path class="bgm-volume-cross" d="m15 9 6 6m0-6-6 6"/></svg></button>
+        <input type="range" data-bgm-volume min="0" max="100" step="1" value="100" aria-label="볼륨">
+      </div>
     </div>
     <small class="kinojo-bgm-status" data-bgm-status role="status"></small>
   </div>
@@ -23,6 +33,10 @@
   <dialog class="kinojo-bgm-dialog" data-bgm-dialog aria-labelledby="bgm-list-heading">
     <header><h2 id="bgm-list-heading">곡 목록</h2><form method="dialog"><button type="submit" data-bgm-close aria-label="곡 목록 닫기">×</button></form></header>
     <div class="kinojo-bgm-tracks" data-bgm-tracks></div>
+  </dialog>
+  <dialog class="kinojo-bgm-dialog kinojo-bgm-lyrics-dialog" data-bgm-lyrics-dialog aria-labelledby="bgm-full-lyrics-heading">
+    <header><h2 id="bgm-full-lyrics-heading">전체 가사</h2><form method="dialog"><button type="submit" aria-label="전체 가사 닫기" autofocus>×</button></form></header>
+    <div class="kinojo-bgm-lyrics-body"><h3 data-bgm-lyrics-title></h3><p data-bgm-lyrics-status role="status"></p><p data-bgm-lyrics-text hidden></p></div>
   </dialog>
 </section>`;
   const root = template.content.firstElementChild;
@@ -36,6 +50,9 @@
   const title = root.querySelector('[data-bgm-title]');
   const play = root.querySelector('[data-bgm-play]');
   const next = root.querySelector('[data-bgm-next]');
+  const previous = root.querySelector('[data-bgm-previous]');
+  const mute = root.querySelector('[data-bgm-mute]');
+  const volume = root.querySelector('[data-bgm-volume]');
   const like = root.querySelector('[data-bgm-like]');
   const likeCount = root.querySelector('[data-bgm-like-count]');
   const shuffleButton = root.querySelector('[data-bgm-shuffle]');
@@ -47,10 +64,16 @@
   const listButton = root.querySelector('[data-bgm-list]');
   const dialog = root.querySelector('[data-bgm-dialog]');
   const list = root.querySelector('[data-bgm-tracks]');
-  const lyricPanel = root.querySelector('[data-bgm-lyrics]');
   const lyricLine = root.querySelector('[data-bgm-lyric-line]');
+  const lyricsButton = root.querySelector('[data-bgm-full-lyrics]');
+  const lyricsDialog = root.querySelector('[data-bgm-lyrics-dialog]');
+  const lyricsTitle = root.querySelector('[data-bgm-lyrics-title]');
+  const lyricsStatus = root.querySelector('[data-bgm-lyrics-status]');
+  const lyricsText = root.querySelector('[data-bgm-lyrics-text]');
+  const backTracks = [], forwardTracks = [];
   let tracks = [], queue = [], index = 0, loading = false, failed = false, generation = 0;
   let config, client, lyricRequest, cues = [], activeCue = -1, lyricSpans = [], lyricFrame = 0;
+  let lyricsState = 'idle';
   let autoPending = /^\/(?:m\/)?(?:index\.html|home\.html)?$/.test(location.pathname);
   const current = () => queue[index];
   const repeatLabels = { off: '반복 끄기', all: '전체 반복', one: '한 곡 반복' };
@@ -66,6 +89,44 @@
     try { localStorage.setItem('kinojo-bgm-playback-modes', JSON.stringify({ shuffle: shuffleOn, repeat: repeatMode })); }
     catch { /* Preferences are optional. */ }
   }
+  const audioSettingsKey = 'kinojo-bgm-volume';
+  let volumeLevel = 100, muted = false;
+  try {
+    const settings = JSON.parse(localStorage.getItem(audioSettingsKey));
+    if (Number.isInteger(settings?.level) && settings.level >= 0 && settings.level <= 100) volumeLevel = settings.level;
+    muted = settings?.muted === true;
+  } catch { /* Playback still works when storage is unavailable. */ }
+  function canSetVolume() {
+    try {
+      if (CSS.supports('selector(audio:volume-locked)') && audio.matches(':volume-locked')) return false;
+      const initial = audio.volume;
+      audio.volume = 0.5;
+      const supported = audio.volume === 0.5;
+      audio.volume = initial;
+      return supported;
+    } catch { return false; }
+  }
+  const volumeAdjustable = canSetVolume();
+  volume.disabled = !volumeAdjustable;
+  if (!volumeAdjustable) {
+    volume.title = '기기의 볼륨 버튼을 사용해 주세요';
+    mute.parentElement.title = volume.title;
+  }
+  function applyVolume() {
+    if (volumeAdjustable) audio.volume = volumeLevel / 100;
+    audio.muted = muted;
+    volume.value = volumeLevel;
+    volume.setAttribute('aria-valuetext', volumeLevel + '%');
+    mute.setAttribute('aria-pressed', String(muted));
+    mute.title = muted ? '음소거 해제' : '음소거';
+    mute.dataset.silent = String(muted || volumeAdjustable && volumeLevel === 0);
+  }
+  function saveVolume() {
+    applyVolume();
+    try { localStorage.setItem(audioSettingsKey, JSON.stringify({ level: volumeLevel, muted })); }
+    catch { /* The current document still retains its volume. */ }
+  }
+  applyVolume();
   function renderModes() {
     shuffleButton.disabled = repeatButton.disabled = !current();
     shuffleButton.setAttribute('aria-pressed', String(shuffleOn));
@@ -73,7 +134,8 @@
     repeatButton.dataset.mode = repeatMode;
     repeatButton.title = repeatLabels[repeatMode];
     repeatButton.setAttribute('aria-label', '반복 모드, 현재 ' + repeatLabels[repeatMode]);
-    next.disabled = tracks.length < 2 || (repeatMode === 'off' && index + 1 === queue.length);
+    next.disabled = tracks.length < 2 || (!forwardTracks.length && repeatMode === 'off' && index + 1 === queue.length);
+    previous.disabled = !current() || (!backTracks.length && index === 0);
   }
   function renderLike() {
     const { count, liked, available, failed } = likeState || {};
@@ -248,7 +310,7 @@
       });
       lyricLine.replaceChildren(...lyricSpans);
     }
-    lyricPanel.hidden = !lyricSpans.length;
+    lyricLine.hidden = !lyricSpans.length;
     if (!cue) return;
     const end = cues[position + 1]?.start ?? (Number.isFinite(audio.duration) ? audio.duration : cue.start + 4);
     cue.segments.forEach((segment, i) => {
@@ -269,25 +331,48 @@
   function resetLyrics() {
     lyricRequest?.abort();
     lyricRequest = null;
+    lyricsState = 'idle';
     cues = [];
     activeCue = -1;
     lyricSpans = [];
     lyricLine.replaceChildren();
     updateLyrics();
   }
+  function renderLyricsDialog() {
+    if (!lyricsDialog.open) return;
+    const track = current();
+    lyricsTitle.textContent = track?.title || '';
+    const text = cues.map(cue => cue.segments.map(segment => segment.text).join('')).filter(Boolean).join('\n');
+    lyricsText.textContent = text;
+    lyricsText.hidden = !text;
+    lyricsStatus.hidden = Boolean(text);
+    lyricsStatus.textContent = text ? '' : lyricsState === 'error' ? '가사를 불러오지 못했습니다. 창을 다시 열어 주세요.' :
+      track?.hasLyrics && lyricsState !== 'ready' ? '가사를 불러오는 중…' : '등록된 가사가 없습니다.';
+  }
   async function loadLyrics(track) {
-    if (!track.hasLyrics || lyricRequest) return;
+    if (!track?.hasLyrics || lyricRequest || lyricsState === 'ready') return;
     const controller = new AbortController();
     lyricRequest = controller;
+    lyricsState = 'loading';
+    renderLyricsDialog();
     try {
       const response = await fetch(config.url + '/functions/v1/kinojo-home-bgm?action=lyrics&id=' + track.id, {
         headers: client.headers(config), signal: AbortSignal.any([controller.signal, AbortSignal.timeout(10000)]), cache: 'no-store'
       });
       const result = await response.json();
-      if (lyricRequest !== controller || !response.ok || result.ok !== true || typeof result.lyrics !== 'string') return;
-      cues = parseLrc(result.lyrics);
+      if (lyricRequest !== controller) return;
+      if (!response.ok || result.ok !== true) throw new Error('lyrics');
+      cues = typeof result.lyrics === 'string' ? parseLrc(result.lyrics) : [];
+      lyricsState = 'ready';
       updateLyrics();
-    } catch { /* A lyrics request failure does not interrupt the audio. */ }
+    } catch {
+      if (lyricRequest === controller) lyricsState = 'error';
+    } finally {
+      if (lyricRequest === controller) {
+        lyricRequest = null;
+        renderLyricsDialog();
+      }
+    }
   }
   function select(i) {
     generation++;
@@ -304,6 +389,9 @@
     progress();
     button();
     renderList();
+    lyricsButton.disabled = !current();
+    renderLyricsDialog();
+    if (lyricsDialog.open) void loadLyrics(current());
   }
   function stopAutoplay() {
     autoPending = false;
@@ -314,7 +402,7 @@
     if (autoPending && audio.paused && navigator.userActivation?.isActive) void start(true);
   }
   function onHomeClick(event) {
-    if (!autoPending || !event.isTrusted || !audio.paused || event.target.closest?.('[data-bgm-play],[data-bgm-next],[data-bgm-dialog],[data-bgm-like],[data-bgm-shuffle],[data-bgm-repeat]')) return;
+    if (!autoPending || !event.isTrusted || !audio.paused || event.target.closest?.('[data-home-bgm] :is(button,input,dialog):not([data-bgm-list])')) return;
     // Call play directly in the click/tap handler while user activation is available.
     void start(true);
   }
@@ -343,13 +431,24 @@
     }
     button();
   }
+  function rememberBack(track) {
+    if (track) backTracks.push(track);
+    if (backTracks.length > 100) backTracks.shift();
+  }
   function advance(continuePlaying) {
-    if (!queue.length) return;
-    if (index + 1 < queue.length) select(index + 1);
-    else if (repeatMode !== 'off') {
-      queue = shuffleOn ? shuffle(current()) : tracks;
-      select(0);
-    } else return;
+    const track = current();
+    if (!track) return;
+    let target = queue.indexOf(forwardTracks.pop());
+    if (target < 0) {
+      target = index + 1;
+      if (target === queue.length) {
+        if (repeatMode === 'off') return;
+        queue = shuffleOn ? shuffle(track) : tracks;
+        target = 0;
+      }
+    }
+    if (queue[target] !== track) rememberBack(track);
+    select(target);
     if (continuePlaying) void start();
   }
   async function load() {
@@ -375,6 +474,7 @@
       }));
       failed = false;
       queue = shuffleOn ? shuffle() : tracks;
+      backTracks.length = forwardTracks.length = 0;
       select(0);
       if (autoPending && tracks.length) void start(true);
     } catch {
@@ -393,6 +493,7 @@
     shuffleOn = !shuffleOn;
     queue = shuffleOn ? [track, ...shuffle().filter(item => item !== track)] : tracks;
     index = queue.indexOf(track);
+    forwardTracks.length = 0;
     saveModes();
     renderModes();
   });
@@ -406,6 +507,30 @@
     stopAutoplay();
     if (!audio.paused) { generation++; audio.pause(); }
     else void start();
+  });
+  mute.addEventListener('click', () => {
+    muted = !muted;
+    saveVolume();
+  });
+  volume.addEventListener('input', () => {
+    volumeLevel = volume.valueAsNumber;
+    if (volumeLevel > 0) muted = false;
+    saveVolume();
+  });
+  lyricsButton.addEventListener('click', () => {
+    lyricsDialog.showModal();
+    renderLyricsDialog();
+    void loadLyrics(current());
+  });
+  lyricsDialog.addEventListener('close', () => lyricsButton.focus());
+  previous.addEventListener('click', () => {
+    const keepPlaying = autoPending || (!audio.paused && !audio.ended);
+    stopAutoplay();
+    const target = backTracks.length ? queue.indexOf(backTracks.pop()) : index - 1;
+    if (target < 0) return;
+    forwardTracks.push(current());
+    select(target);
+    if (keepPlaying) void start();
   });
   next.addEventListener('click', () => {
     const continuePlaying = autoPending || (!audio.paused && !audio.ended);
@@ -424,6 +549,8 @@
     if (!track) return;
     stopAutoplay();
     if (track !== current()) {
+      rememberBack(current());
+      forwardTracks.length = 0;
       queue = shuffleOn ? [track, ...shuffle().filter(item => item !== track)] : tracks;
       select(queue.indexOf(track));
     }
