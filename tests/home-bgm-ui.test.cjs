@@ -221,7 +221,9 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
       assert.deepEqual(await page.locator('audio').evaluate(audio=>[audio.volume,audio.muted]),[0.37,false]);
       await page.close();
     }
-    const lyricsPage=await browser.newPage({viewport:{width:320,height:650}});
+    const followingLines=Array.from({length:24},(_,i)=>`[00:${(2+i*.2).toFixed(2).padStart(5,'0')}]가사 ${i+1}`);
+    editedLyric=['[00:00.80]<00:00.80>첫 번째 <00:01.20>가사','[00:01.60]',...followingLines,'[00:07.00]'].join('\n');
+    const lyricsPage=await browser.newPage({viewport:{width:320,height:650},reducedMotion:'reduce'});
     await isolatePlaywrightPage(lyricsPage);
     await lyricsPage.addInitScript(()=>{
       localStorage.setItem('kinojo-bgm-playback-modes', JSON.stringify({shuffle:false,repeat:'all'}));
@@ -236,7 +238,9 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
     await fullLyrics.click();
     const body=lyricsDialog.locator('[data-bgm-lyrics-text]');
     await body.waitFor();
-    assert.equal(await body.textContent(),'첫 번째 가사\n다음 가사');
+    assert.deepEqual(await body.locator('[data-bgm-lyrics-row]').allTextContents(),
+      ['<전주 중>','첫 번째 가사','<간주 중>',...followingLines.map((_,i)=>'가사 '+(i+1)),'<후주 중>']);
+    assert.equal(await body.locator('[aria-current="true"]').textContent(),'<전주 중>');
     assert.equal(lyricsRequests,readsBefore+1);
     assert.equal(await lyricsPage.locator('audio').evaluate(audio=>audio.paused),true);
     await lyricsPage.keyboard.press('Escape');
@@ -244,6 +248,41 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
     assert.equal(await fullLyrics.evaluate(el=>el===document.activeElement),true);
     await lyricsPage.getByRole('button',{name:'재생',exact:true}).click();
     await lyricsPage.locator('[data-bgm-lyric-line]').waitFor();
+    await lyricsPage.waitForFunction(()=>!document.querySelector('[data-bgm-seek]').disabled);
+    await lyricsPage.getByRole('button',{name:'일시정지'}).click();
+    await fullLyrics.click();
+    const activeLine=body.locator('[aria-current="true"]');
+    const jumpTo=seconds=>lyricsPage.locator('[data-bgm-seek]').evaluate((el,t)=>{
+      el.value=t;
+      el.dispatchEvent(new Event('input',{bubbles:true}));
+    },seconds);
+    const waitLine=text=>lyricsPage.waitForFunction(value=>
+      document.querySelector('[data-bgm-lyrics-text] [aria-current="true"]')?.textContent===value &&
+      document.querySelector('[data-bgm-lyric-line]').textContent===value,text);
+    await jumpTo(1);
+    await waitLine('첫 번째 가사');
+    const footFill=await lyricsPage.locator('[data-bgm-lyric-line] span').first().evaluate(el=>el.style.getPropertyValue('--bgm-fill'));
+    assert.equal(footFill,'50.0%');
+    assert.equal(await activeLine.locator('span').first().evaluate(el=>el.style.getPropertyValue('--bgm-fill')),footFill);
+    await jumpTo(1.8);
+    await waitLine('<간주 중>');
+    await jumpTo(6.7);
+    await waitLine('가사 24');
+    assert.ok(await lyricsDialog.evaluate(el=>el.scrollTop)>0);
+    assert.equal(await activeLine.evaluate(row=>{
+      const bounds=row.getBoundingClientRect(), dialog=row.closest('dialog');
+      return bounds.top>=dialog.querySelector('header').getBoundingClientRect().bottom&&
+        bounds.bottom<=dialog.getBoundingClientRect().bottom+1;
+    }),true);
+    await lyricsPage.locator('audio').evaluate(audio=>audio.play());
+    await waitLine('<후주 중>');
+    await lyricsPage.locator('audio').evaluate(audio=>audio.pause());
+    await jumpTo(0);
+    await waitLine('<전주 중>');
+    assert.equal(await lyricsDialog.evaluate(el=>el.scrollTop),0);
+    await lyricsPage.keyboard.press('Escape');
+    await lyricsDialog.waitFor({state:'hidden'});
+    await lyricsPage.getByRole('button',{name:'재생',exact:true}).click();
     assert.equal(lyricsRequests,readsBefore+1,'karaoke reuses lyrics loaded by the dialog');
     assert.equal((await lyricsBar.boundingBox()).height,heightBefore);
     await lyricsPage.getByRole('button',{name:'다음 곡'}).click();
@@ -254,6 +293,7 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
     await lyricsDialog.getByText('등록된 가사가 없습니다.').waitFor();
     assert.equal(lyricsRequests,readsBefore+1);
     await lyricsPage.close();
+    editedLyric=lyric;
     const modePage=await browser.newPage({viewport:{width:320,height:650},reducedMotion:'reduce'});
     await isolatePlaywrightPage(modePage);
     await modePage.addInitScript(()=>{Math.random=()=>0;});
