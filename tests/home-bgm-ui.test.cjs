@@ -31,6 +31,8 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
   assert.match(read('ranking/index.html'), /kinojo-home-bgm\.js/);
   assert.match(read('home.html'), /kinojo-event-notice\.js/);
   let requests=0, lyricsRequests=0, commands=[], editedLyric=lyric;
+  const likedTracks=new Set();
+  let voteRequests=0;
   const server = http.createServer(async (req,res) => {
     const url = new URL(req.url,'http://127.0.0.1');
     if(url.pathname.startsWith('/storage/')){
@@ -44,6 +46,16 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
     if(url.pathname.startsWith('/functions/')){
       const action=url.searchParams.get('action');
       if(action==='playlist')return res.end(JSON.stringify({ok:true,tracks}));
+      if(action==='likes'){
+        const id=url.searchParams.get('id');
+        if(req.method==='POST'){
+          voteRequests++;
+          await new Promise(resolve=>setTimeout(resolve,120));
+          likedTracks.add(id);
+        }
+        const liked=likedTracks.has(id);
+        return res.end(JSON.stringify({ok:true,count:liked?8:7,liked,available:true,resetAfterMs:60000}));
+      }
       if(action==='lyrics'){
         lyricsRequests++;
         return res.end(JSON.stringify({ok:true,lyrics:editedLyric}));
@@ -193,6 +205,59 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
       await popup.close();
       await page.close();
     }
+    const modePage=await browser.newPage({viewport:{width:320,height:650},reducedMotion:'reduce'});
+    await isolatePlaywrightPage(modePage);
+    await modePage.addInitScript(()=>{Math.random=()=>0;});
+    await modePage.goto(base+'/m/');
+    const modeLike=modePage.locator('[data-bgm-like]');
+    const shuffleMode=modePage.getByRole('button',{name:'셔플'});
+    const repeat=modePage.locator('[data-bgm-repeat]');
+    const modeTitle=modePage.locator('[data-bgm-title]');
+    const audio=modePage.locator('audio');
+    const modesSeek=modePage.getByRole('slider');
+    await modePage.getByRole('button',{name:'좋아요, 7개'}).waitFor();
+    await modeLike.evaluate(button=>{button.click();button.click();});
+    await modePage.getByRole('button',{name:'오늘 좋아요 누름, 8개'}).waitFor();
+    assert.equal(voteRequests,1);
+    assert.equal(await modeLike.isDisabled(),true);
+    assert.equal(await audio.evaluate(el=>el.paused),true);
+    assert.equal(await shuffleMode.getAttribute('aria-pressed'),'true');
+    await shuffleMode.click();
+    assert.equal(await shuffleMode.getAttribute('aria-pressed'),'false');
+    assert.equal(await modeTitle.textContent(),'<두 번째 곡>');
+    await repeat.click();
+    assert.equal(await repeat.getAttribute('data-mode'),'one');
+    assert.equal(await repeat.getByText('1',{exact:true}).isVisible(),true);
+    await modePage.getByRole('button',{name:'재생',exact:true}).click();
+    await modePage.waitForFunction(()=>document.querySelector('[data-home-bgm]').dataset.bgmFlow==='on');
+    assert.equal(await modePage.locator('[data-home-bgm]').evaluate(el=>getComputedStyle(el,'::before').display),'none');
+    await modePage.emulateMedia({ reducedMotion:'no-preference' });
+    assert.equal(await modePage.locator('[data-home-bgm]').evaluate(el=>getComputedStyle(el,'::before').animationPlayState),'running');
+    const finish=()=>modesSeek.evaluate(el=>{el.value=el.max;el.dispatchEvent(new Event('input',{bubbles:true}));});
+    await finish();
+    await modePage.waitForFunction(()=>{const el=document.querySelector('audio');return !el.paused&&el.currentTime<2});
+    assert.equal(await modeTitle.textContent(),'<두 번째 곡>');
+    await repeat.click();
+    assert.equal(await repeat.getAttribute('data-mode'),'off');
+    await modePage.getByRole('button',{name:'다음 곡'}).click();
+    assert.equal(await modeTitle.textContent(),'세 번째 곡');
+    assert.equal(await modePage.getByRole('button',{name:'다음 곡'}).isDisabled(),true);
+    await modePage.waitForFunction(()=>!document.querySelector('[data-bgm-seek]').disabled);
+    await finish();
+    await modePage.getByRole('button',{name:'재생',exact:true}).waitFor();
+    assert.equal(await modePage.locator('[data-home-bgm]').getAttribute('data-bgm-flow'),null);
+    await repeat.click();
+    assert.equal(await repeat.getAttribute('data-mode'),'all');
+    await modePage.getByRole('button',{name:'다음 곡'}).click();
+    assert.equal(await modeTitle.textContent(),'첫 번째 곡');
+    await modePage.reload();
+    await modePage.waitForFunction(()=>!document.querySelector('[data-bgm-repeat]').disabled);
+    assert.equal(await modeTitle.textContent(),'첫 번째 곡');
+    assert.equal(await shuffleMode.getAttribute('aria-pressed'),'false');
+    assert.equal(await repeat.getAttribute('data-mode'),'all');
+    await modePage.getByRole('button',{name:'다음 곡'}).click();
+    await modePage.getByRole('button',{name:'오늘 좋아요 누름, 8개'}).waitFor();
+    await modePage.close();
     for(const width of [1440,320]){
       commands=[];editedLyric=lyric;
       const page=await browser.newPage({viewport:{width,height:840}});

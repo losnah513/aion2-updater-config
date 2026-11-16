@@ -1,5 +1,8 @@
 ## Home BGM · 2026-11-16
 
+- The current track shows its lifetime heart count. The hosted gateway supplies the client IP, the Edge signs it, and the service-only SQL559 RPC stores a private song/day-specific fingerprint. The unique constraint and track lock make retry and concurrent voting idempotent independently of login. Korea midnight resets eligibility. A subsequent accepted vote prunes up to 200 fingerprints more than one calendar day old for that track; lifetime totals remain. SQL559 → existing BGM Edge → Pages. Rollback restores the previous Web/Edge and revokes the new RPC, preserving counts and votes.
+- Shuffle and repeat mode persist in the browser, defaulting to shuffle and repeat all. Repeat cycles off/all/one. The footer glow animates during playback and respects reduced motion. The same player still owns audio, lyrics, modes and likes across supported internal navigation.
+
 - Same-tab KINOJO navigation keeps the original audio element and player document. The first supported navigation places the destination in a same-origin content frame above the player; framed entries do not mount a duplicate player. Regular links, query/fragment URLs, back/forward and new-tab behavior are covered on PC and mobile. Direct entries still operate without a content frame until navigation. A full browser reload or leaving KINOJO ends that document's playback.
 
 - The common lower general-notice strip and its fetch/rotation/detail flow are retired. PC root/home and mobile home show a fixed BGM player. The separate event popups and their management remain available. Historical notice data and API compatibility are preserved.
