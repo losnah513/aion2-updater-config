@@ -1,5 +1,7 @@
 ## Home BGM · 2026-11-16
 
+- The BGM editor accepts plain UTF-8 lyrics as well as timed LRC. Plain lyrics appear in 전체 가사 with their original line breaks. Timed tracks continue to drive highlighting and scroll. Release order: existing BGM Edge, then Pages. No database migration is required.
+
 - The full-lyrics dialog and footer share the active cue and fill progress. The dialog scrolls only when the cue changes and uses immediate scrolling while seeking, paused or when reduced motion is requested. The initial gap and explicit empty LRC cues display 전주 중, 간주 중 or 후주 중 according to their position around the vocal lines. This is a Web release and uses the existing stored LRC.
 
 - Previous and forward navigation use recently selected tracks so rewinding and replaying follow the actual shuffle history across a new pass. Volume and mute persist per browser and are restored before autoplay. Browsers that reserve volume control for the device keep the mute control and use the physical volume buttons.

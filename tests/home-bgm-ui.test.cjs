@@ -293,6 +293,22 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
     await lyricsDialog.getByText('등록된 가사가 없습니다.').waitFor();
     assert.equal(lyricsRequests,readsBefore+1);
     await lyricsPage.close();
+
+    editedLyric='첫 가사\n둘째 가사\n\n다음 연';
+    const plainPage=await browser.newPage({viewport:{width:320,height:650}});
+    await isolatePlaywrightPage(plainPage);
+    await plainPage.addInitScript(()=>{
+      localStorage.setItem('kinojo-bgm-playback-modes', JSON.stringify({shuffle:false,repeat:'all'}));
+    });
+    await plainPage.goto(base+'/m/ranking/');
+    await plainPage.getByRole('button',{name:'전체 가사',exact:true}).click();
+    const plainBody=plainPage.locator('[data-bgm-plain-lyrics]');
+    await plainBody.waitFor();
+    assert.equal(await plainBody.innerText(),editedLyric);
+    assert.equal(await plainPage.locator('[data-bgm-lyrics-text]').isVisible(),false);
+    assert.equal(await plainPage.locator('[data-bgm-lyric-line]').isVisible(),false);
+    await plainPage.close();
+
     editedLyric=lyric;
     const modePage=await browser.newPage({viewport:{width:320,height:650},reducedMotion:'reduce'});
     await isolatePlaywrightPage(modePage);
