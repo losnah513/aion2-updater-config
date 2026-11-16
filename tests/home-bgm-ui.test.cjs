@@ -257,7 +257,8 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
     const modePage=await browser.newPage({viewport:{width:320,height:650},reducedMotion:'reduce'});
     await isolatePlaywrightPage(modePage);
     await modePage.addInitScript(()=>{Math.random=()=>0;});
-    await modePage.goto(base+'/m/');
+    // A direct subpage does not request autoplay, regardless of the browser policy.
+    await modePage.goto(base+'/m/ranking/');
     const modeLike=modePage.locator('[data-bgm-like]');
     const shuffleMode=modePage.getByRole('button',{name:'셔플'});
     const repeat=modePage.locator('[data-bgm-repeat]');
