@@ -1,6 +1,6 @@
 ## Home BGM · 2026-11-16
 
-- The player reserves two lyric rows. A timed English line with a trailing Korean translation in parentheses highlights only the original; it shows the translation beneath it in fixed color. The full-lyrics dialog applies the same split. Korean lines use the second row to preview the next sung line in muted text. Instrumental sections keep their existing labels.
+- The player reserves two lyric rows. A timed English line with a trailing Korean translation in parentheses highlights only the original and shows the translation beneath it in fixed color. The full-lyrics dialog applies the same split. For Korean tracks without translations, the second row previews the next sung line in muted text. Instrumental sections keep their existing labels.
 
 - Admins may attach an optional instrumental when adding a track, or add or replace it from the list. Vocals default to on. Switching them off filters the playback queue and picker to tracks with instrumentals and retains the current play position when the same track is available. Lyrics and counters share the song ID. Instrumentals use two reusable Storage slots per song. A database reservation serializes publication and deletion. Files are removed when the track is deleted. Release order: instrumental migration, existing BGM Edge, Pages. Roll back the Web UI and SQL first. Keep the updated Edge for Storage cleanup of existing instrumentals.
 

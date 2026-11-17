@@ -544,7 +544,7 @@
       lyricLine.toggleAttribute('data-bgm-instrumental', Boolean(cue?.instrumental));
       lyricLine.replaceChildren(...(cue?.instrumental ? [cue.instrumental] : lyricSpans));
       const translation = cue?.translation;
-      const nextLyric = !translation && cue?.lyric && hangul.test(cue.lyric)
+      const nextLyric = cue?.lyric && hangul.test(cue.lyric) && !cues.some(line => line.translation)
         ? cues.slice(position + 1).find(next => !next.instrumental)?.lyric
         : '';
       lyricSecondary.textContent = translation || nextLyric || '';

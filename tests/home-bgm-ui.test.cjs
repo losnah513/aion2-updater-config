@@ -422,7 +422,7 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
     await bilingualPage.waitForFunction(()=>document.querySelector('[data-bgm-lyric-secondary]').textContent==='왜 나만?');
     await bilingualSeek(4.4);
     await bilingualPage.waitForFunction(()=>document.querySelector('[data-bgm-lyric-line]').textContent==='노래해 (함께)');
-    assert.equal(await bilingualSecondary.textContent(),'다음 가사');
+    assert.equal(await bilingualSecondary.isVisible(),false);
     await bilingualPage.close();
 
     editedLyric='첫 가사\n둘째 가사\n\n다음 연';
