@@ -4,7 +4,10 @@
   if (document.querySelector('[data-home-bgm]')) return;
   const template = document.createElement('template');
   template.innerHTML = `<section class="kinojo-home-bgm" data-home-bgm aria-label="배경 음악">
-  <div class="kinojo-bgm-lyrics"><p data-bgm-lyrics data-bgm-lyric-line aria-label="현재 가사" hidden></p></div>
+  <div class="kinojo-bgm-lyrics">
+    <p data-bgm-lyrics data-bgm-lyric-line aria-label="현재 가사" hidden></p>
+    <p data-bgm-lyric-secondary lang="ko" hidden></p>
+  </div>
   <div class="kinojo-bgm-inner">
     <button class="kinojo-bgm-list" type="button" data-bgm-list aria-label="곡 목록" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h13v2H3zm0 5h13v2H3zm0 5h8v2H3zm15-9h3v10a3.5 3.5 0 1 1-2-3.15V8h-1z"/></svg></button>
     <div class="kinojo-bgm-track"><strong data-bgm-title aria-live="polite">BGM 목록 불러오는 중…</strong><small data-bgm-time>0:00 / 0:00</small><input data-bgm-seek type="range" min="0" max="1" step="0.1" value="0" aria-label="재생 위치" disabled></div>
@@ -76,6 +79,7 @@
   const coverCount = coverNav.querySelector('[data-bgm-cover-count]');
   let coverOrder = [], coverIndex = 0, covers = {}, coverTouch;
   const lyricLine = root.querySelector('[data-bgm-lyric-line]');
+  const lyricSecondary = root.querySelector('[data-bgm-lyric-secondary]');
   const lyricsButton = root.querySelector('[data-bgm-full-lyrics]');
   const vocalsButton = root.querySelector('[data-bgm-vocals]');
   const lyricsDialog = root.querySelector('[data-bgm-lyrics-dialog]');
@@ -452,6 +456,22 @@
     renderList(focusCenter || list.contains(document.activeElement));
     if (previous?.size) animateCoverMove(previous, step);
   }
+  const hangul = /\p{Script=Hangul}/u;
+  function separateTranslation(segments) {
+    const lyric = segments.map(segment => segment.text).join('');
+    const match = lyric.match(/\s+[(（]([^()（）]*\p{Script=Hangul}[^()（）]*)[)）]$/u);
+    if (!match) return { segments, lyric };
+    const original = lyric.slice(0, match.index);
+    if (hangul.test(original) || !/\p{Script=Latin}/u.test(original)) return { segments, lyric };
+    let remaining = original.length;
+    const primary = [];
+    for (const segment of segments) {
+      if (remaining <= 0) break;
+      primary.push({ start: segment.start, text: segment.text.slice(0, remaining) });
+      remaining -= segment.text.length;
+    }
+    return { segments: primary, lyric: original, translation: match[1].trim() };
+  }
   function parseLrc(source) {
     const offset = Number(source.match(/^\s*\[offset\s*:\s*([+-]?\d{1,6})\]/im)?.[1] || 0) / 1000;
     const at = match => Number(match[1]) * 60 + Number(match[2]) + Number('0.' + (match[3] || 0));
@@ -474,7 +494,7 @@
         }
         const tail = text.slice(cursor);
         if (tail) segments.push({ start, text: tail });
-        rows.set(Math.max(0, origin), { start: Math.max(0, origin), segments });
+        rows.set(Math.max(0, origin), { start: Math.max(0, origin), ...separateTranslation(segments) });
       }
     }
     const sequence = [...rows.values()].sort((a, b) => a.start - b.start);
@@ -490,6 +510,7 @@
   function lyricWords(cue) {
     return (cue?.segments || []).map(segment => {
       const span = document.createElement('span');
+      span.setAttribute('data-bgm-lyric-word', '');
       span.textContent = segment.text;
       return span;
     });
@@ -522,6 +543,14 @@
       lyricSpans = lyricWords(cue);
       lyricLine.toggleAttribute('data-bgm-instrumental', Boolean(cue?.instrumental));
       lyricLine.replaceChildren(...(cue?.instrumental ? [cue.instrumental] : lyricSpans));
+      const translation = cue?.translation;
+      const nextLyric = !translation && cue?.lyric && hangul.test(cue.lyric)
+        ? cues.slice(position + 1).find(next => !next.instrumental)?.lyric
+        : '';
+      lyricSecondary.textContent = translation || nextLyric || '';
+      lyricSecondary.hidden = !lyricSecondary.textContent;
+      lyricSecondary.toggleAttribute('data-bgm-lyric-preview', Boolean(nextLyric));
+      lyricSecondary.setAttribute('aria-label', translation ? '한국어 번역' : '다음 가사');
     }
     lyricLine.hidden = !cue;
     followModalCue(position);
@@ -555,6 +584,8 @@
     lyricSpans = [];
     lyricLine.replaceChildren();
     lyricLine.removeAttribute('data-bgm-instrumental');
+    lyricSecondary.textContent = '';
+    lyricSecondary.hidden = true;
     updateLyrics();
   }
   function renderLyricsDialog() {
@@ -569,7 +600,16 @@
       if (cue.instrumental) {
         row.setAttribute('data-bgm-instrumental', '');
         row.textContent = cue.instrumental;
-      } else row.append(...spans);
+      } else {
+        row.append(...spans);
+        if (cue.translation) {
+          const translation = document.createElement('span');
+          translation.setAttribute('data-bgm-lyric-translation', '');
+          translation.lang = 'ko';
+          translation.textContent = cue.translation;
+          row.append(translation);
+        }
+      }
       return {row, spans};
     });
     lyricsText.replaceChildren(...modalRows.map(item => item.row));

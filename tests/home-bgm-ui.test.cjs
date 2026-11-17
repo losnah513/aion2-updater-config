@@ -344,6 +344,7 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
     await lyricsPage.getByRole('button',{name:'일시정지'}).click();
     await fullLyrics.click();
     const activeLine=body.locator('[aria-current="true"]');
+    const secondary=lyricsPage.locator('[data-bgm-lyric-secondary]');
     const jumpTo=seconds=>lyricsPage.locator('[data-bgm-seek]').evaluate((el,t)=>{
       el.value=t;
       el.dispatchEvent(new Event('input',{bubbles:true}));
@@ -353,13 +354,18 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
       document.querySelector('[data-bgm-lyric-line]').textContent===value,text);
     await jumpTo(1);
     await waitLine('첫 번째 가사');
+    assert.equal(await secondary.textContent(),'가사 1');
+    assert.equal(await secondary.getAttribute('data-bgm-lyric-preview'),'');
+    assert.ok(Number(await secondary.evaluate(el=>getComputedStyle(el).opacity))<1);
     const footFill=await lyricsPage.locator('[data-bgm-lyric-line] span').first().evaluate(el=>el.style.getPropertyValue('--bgm-fill'));
     assert.equal(footFill,'50.0%');
     assert.equal(await activeLine.locator('span').first().evaluate(el=>el.style.getPropertyValue('--bgm-fill')),footFill);
     await jumpTo(1.8);
     await waitLine('<간주 중>');
+    assert.equal(await secondary.isVisible(),false);
     await jumpTo(6.7);
     await waitLine('가사 24');
+    assert.equal(await secondary.isVisible(),false);
     assert.ok(await lyricsDialog.evaluate(el=>el.scrollTop)>0);
     assert.equal(await activeLine.evaluate(row=>{
       const bounds=row.getBoundingClientRect(), dialog=row.closest('dialog');
@@ -385,6 +391,39 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
     await lyricsDialog.getByText('등록된 가사가 없습니다.').waitFor();
     assert.equal(lyricsRequests,readsBefore+1);
     await lyricsPage.close();
+
+    editedLyric='[00:00.80]<00:00.80>I type <00:01.20>good game (채팅창에 “수고했어”라고 쳐)\n[00:02.00]Why me? (왜 나만?)\n[00:04.00]노래해 (함께)\n[00:06.00]다음 가사';
+    const bilingualPage=await browser.newPage({viewport:{width:1440,height:840}});
+    await isolatePlaywrightPage(bilingualPage);
+    await bilingualPage.addInitScript(()=>localStorage.setItem('kinojo-bgm-playback-modes','{"shuffle":false,"repeat":"all"}'));
+    await bilingualPage.goto(base+'/ranking/');
+    await bilingualPage.getByRole('button',{name:'재생',exact:true}).click();
+    const bilingualSecondary=bilingualPage.locator('[data-bgm-lyric-secondary]');
+    const bilingualMain=bilingualPage.locator('[data-bgm-lyric-line]');
+    await bilingualPage.waitForFunction(()=>!document.querySelector('[data-bgm-seek]').disabled);
+    await bilingualPage.getByRole('button',{name:'일시정지'}).click();
+    const bilingualSeek=t=>bilingualPage.locator('[data-bgm-seek]').evaluate((el,time)=>{
+      el.value=time;
+      el.dispatchEvent(new Event('input',{bubbles:true}));
+    },t);
+    await bilingualSeek(1);
+    await bilingualPage.getByText('채팅창에 “수고했어”라고 쳐',{exact:true}).waitFor();
+    assert.equal(await bilingualMain.textContent(),'I type good game');
+    assert.equal(await bilingualSecondary.getAttribute('data-bgm-lyric-preview'),null);
+    assert.equal(await bilingualSecondary.evaluate(el=>getComputedStyle(el).backgroundImage),'none');
+    assert.equal(await bilingualMain.locator('[data-bgm-lyric-word]').first().evaluate(el=>el.style.getPropertyValue('--bgm-fill')),'50.0%');
+    assert.ok((await bilingualSecondary.boundingBox()).y>(await bilingualMain.boundingBox()).y);
+    await bilingualPage.getByRole('button',{name:'전체 가사',exact:true}).click();
+    const activeBilingual=bilingualPage.locator('[data-bgm-lyrics-row][aria-current="true"]');
+    assert.equal(await activeBilingual.locator('[data-bgm-lyric-translation]').textContent(),'채팅창에 “수고했어”라고 쳐');
+    assert.equal(await activeBilingual.locator('[data-bgm-lyric-translation]').evaluate(el=>getComputedStyle(el).backgroundImage),'none');
+    await bilingualPage.keyboard.press('Escape');
+    await bilingualSeek(2.4);
+    await bilingualPage.waitForFunction(()=>document.querySelector('[data-bgm-lyric-secondary]').textContent==='왜 나만?');
+    await bilingualSeek(4.4);
+    await bilingualPage.waitForFunction(()=>document.querySelector('[data-bgm-lyric-line]').textContent==='노래해 (함께)');
+    assert.equal(await bilingualSecondary.textContent(),'다음 가사');
+    await bilingualPage.close();
 
     editedLyric='첫 가사\n둘째 가사\n\n다음 연';
     const plainPage=await browser.newPage({viewport:{width:320,height:650}});

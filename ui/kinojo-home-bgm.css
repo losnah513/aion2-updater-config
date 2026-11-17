@@ -77,20 +77,22 @@
 .kinojo-bgm-status {grid-column:1/-1; color:#ffd3d3; font-size:11px; padding-bottom:4px}
 .kinojo-bgm-status:empty {display:none}
 .kinojo-bgm-lyrics{
-  box-sizing:border-box;height:calc(1.35em + 10px);padding:8px 12px 2px;text-align:center;
+  box-sizing:border-box;height:calc(2.7em + 10px);padding:8px 12px 2px;text-align:center;
   font-size:clamp(.94rem,2.6vw,1.23rem);line-height:1.35
 }
 .kinojo-bgm-lyrics p{
   margin:0 auto;max-width:980px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   color:#e5eaff;font-weight:800
 }
+.kinojo-bgm-lyrics [data-bgm-lyric-secondary] {color:#d7e1fa;font-size:.82em;font-weight:600}
+.kinojo-bgm-lyrics [data-bgm-lyric-preview] {opacity:.64}
 @supports (background-clip:text){
-  .kinojo-bgm-lyrics span,.kinojo-bgm-lyrics-body [aria-current="true"] span{
+  .kinojo-bgm-lyrics [data-bgm-lyric-word],.kinojo-bgm-lyrics-body [aria-current="true"] [data-bgm-lyric-word]{
     background:linear-gradient(90deg,#ffdc77 var(--bgm-fill,0%),#e5eaff var(--bgm-fill,0%));
     background-clip:text;color:transparent
   }
 }
-@media(forced-colors:active){ .kinojo-bgm-lyrics span,.kinojo-bgm-lyrics-body [aria-current="true"] span{background:none;color:CanvasText}}
+@media(forced-colors:active){ .kinojo-bgm-lyrics [data-bgm-lyric-word],.kinojo-bgm-lyrics-body [aria-current="true"] [data-bgm-lyric-word]{background:none;color:CanvasText}}
 .kinojo-bgm-dialog{
   box-sizing:border-box;width:min(420px,calc(100vw - 24px));max-height:min(66dvh,520px);
   padding:0;border:1px solid #536688;border-radius:16px;
@@ -105,6 +107,7 @@
   padding:6px 9px;border-radius:7px;line-height:1.5;white-space:pre-wrap;color:#c6d3f1;font-weight:600
 }
 .kinojo-bgm-lyrics-body [aria-current="true"] {background:#34487a;color:#f8fafc}
+.kinojo-bgm-lyrics-body [data-bgm-lyric-translation] {display:block;color:#d7e1fa;font-size:.88em;font-weight:500}
 .kinojo-bgm-lyrics [data-bgm-instrumental],.kinojo-bgm-lyrics-body [data-bgm-instrumental] {font-size:.88em;color:#bac9ee}
 .kinojo-bgm-lyrics-body [data-bgm-instrumental][aria-current="true"] {color:#f4e1a8}
 .kinojo-bgm-lyrics-body [role="status"] {color:#c6d3f1}
