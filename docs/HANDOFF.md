@@ -1,5 +1,7 @@
 ## Home BGM · 2026-11-16
 
+- The cover upload Edge accepts extended still WebP files, including embedded color profiles. It checks RIFF chunk lengths, the 640 px canvas and frame limits, and rejects animation. This is an Edge-only production rollout.
+
 - Moving through the track picker animates covers and their size changes in the navigation direction. Cover downloads update the cards in place. Keyboard, buttons and swipe share the same carousel movement, while reduced-motion users get an immediate update.
 
 - The track picker shows the selected cover with adjacent tracks and supports touch swipes, arrows and keyboard selection. Admins can upload an optional cover with the audio or set one on an existing track. The Edge serves versioned cover images for ready tracks. Covers are resized to at most 640 px and capped at 128 KiB per track in a private, cascading table. Release order: cover migration, BGM Edge, Pages.

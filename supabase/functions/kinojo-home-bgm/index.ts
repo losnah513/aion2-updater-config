@@ -15,7 +15,7 @@ const errors: Record<string, string> = {
   SIZE_LIMIT: "음원 한 곡은 최대 6 MiB입니다.",
   INVALID_AUDIO: "MP3, M4A 또는 OGG 음원 파일을 선택해 주세요.",
   INVALID_LYRICS: "24 KiB 이하의 UTF-8 일반 가사 또는 LRC를 입력해 주세요.",
-  INVALID_COVER: "앨범 커버는 128 KiB 이하의 정지 WebP 이미지여야 합니다.",
+  INVALID_COVER: "커버 이미지를 처리할 수 없습니다. 움직이지 않는 JPG·PNG·WebP 이미지를 다시 선택해 주세요.",
   COVER_UNAVAILABLE: "앨범 커버를 찾을 수 없습니다.",
   UPLOAD_FAILED: "업로드를 완료하지 못했습니다. 목록을 확인한 뒤 다시 시도해 주세요.",
   DELETE_FAILED: "파일 삭제를 완료하지 못했습니다. 목록에서 삭제를 다시 시도해 주세요.",
@@ -110,17 +110,41 @@ function isCover(data: Uint8Array<ArrayBuffer>) {
   const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
   const code = (offset: number) => view.getUint32(offset);
   if (code(0) !== 0x52494646 || code(8) !== 0x57454250 || view.getUint32(4, true) !== data.length - 8) return false;
-  const chunk = code(12);
-  let width: number, height: number;
-  if (chunk === 0x56503820 && data[23] === 0x9d && data[24] === 0x01 && data[25] === 0x2a) {
-    width = view.getUint16(26, true) & 0x3fff;
-    height = view.getUint16(28, true) & 0x3fff;
-  } else if (chunk === 0x5650384c && data[20] === 0x2f) {
-    const dims = view.getUint32(21, true);
-    width = (dims & 0x3fff) + 1;
-    height = ((dims >>> 14) & 0x3fff) + 1;
-  } else return false;
-  return width >= 1 && height >= 1 && width <= 640 && height <= 640;
+  const uint24 = (offset: number) => data[offset] | data[offset + 1] << 8 | data[offset + 2] << 16;
+  const allowedSize = (width: number, height: number) => width >= 1 && height >= 1 && width <= 640 && height <= 640;
+  let canvasWidth = 0, canvasHeight = 0, width = 0, height = 0;
+  for (let offset = 12; offset < data.length;) {
+    const start = offset + 8;
+    if (start > data.length) return false;
+    const kind = code(offset);
+    const size = view.getUint32(offset + 4, true);
+    const end = start + size;
+    const next = end + (size % 2);
+    if (next > data.length || (size % 2 && data[end] !== 0)) return false;
+    if (kind === 0x56503858) { // VP8X extended canvas header.
+      if (offset !== 12 || size !== 10 || (data[start] & 0x02)) return false;
+      canvasWidth = uint24(start + 4) + 1;
+      canvasHeight = uint24(start + 7) + 1;
+      if (!allowedSize(canvasWidth, canvasHeight)) return false;
+    } else if (kind === 0x414e494d || kind === 0x414e4d46) { // ANIM or ANMF.
+      return false;
+    } else if (kind === 0x56503820 || kind === 0x5650384c) { // VP8 or VP8L still frame.
+      if (width) return false;
+      if (kind === 0x56503820) {
+        if (size < 10 || data[start + 3] !== 0x9d || data[start + 4] !== 0x01 || data[start + 5] !== 0x2a) return false;
+        width = view.getUint16(start + 6, true) & 0x3fff;
+        height = view.getUint16(start + 8, true) & 0x3fff;
+      } else {
+        if (size < 5 || data[start] !== 0x2f) return false;
+        const dimensions = view.getUint32(start + 1, true);
+        width = (dimensions & 0x3fff) + 1;
+        height = ((dimensions >>> 14) & 0x3fff) + 1;
+      }
+      if (!allowedSize(width, height)) return false;
+    } else if (!canvasWidth) return false;
+    offset = next;
+  }
+  return width > 0 && (!canvasWidth || (canvasWidth === width && canvasHeight === height));
 }
 
 Deno.serve(async (request: Request) => {
