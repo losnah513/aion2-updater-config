@@ -150,30 +150,60 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
       await page.waitForFunction(()=>document.querySelector('[data-bgm-tracks] img')?.naturalWidth===8);
       const forwardCover = dialog.getByRole('button',{name:'목록에서 다음 곡 보기'});
       const previousCover = dialog.getByRole('button',{name:'목록에서 이전 곡 보기'});
-      assert.equal(await forwardCover.evaluate(button=>{
-        button.click();
-        return button.closest('dialog').querySelector('[data-cover-position="center"]').getAnimations().length;
-      }),1);
-      await previousCover.click();
-      await dialog.locator('.kinojo-bgm-cover-exit').first().waitFor({state:'detached'});
-      assert.equal(await dialog.locator('[data-bgm-track]').count(),3);
-      if (width === 390) {
-        const list = dialog.locator('[data-bgm-tracks]');
-        assert.equal(await list.evaluate(stage=>{
-          const touch = clientX=>new Touch({identifier:1,target:stage,clientX,clientY:10});
-          stage.dispatchEvent(new TouchEvent('touchstart',{touches:[touch(120)]}));
-          stage.dispatchEvent(new TouchEvent('touchend',{changedTouches:[touch(30)],cancelable:true}));
-          return stage.querySelector('[data-cover-position="center"]').getAnimations().length;
-        }),1);
+      if (width < 600) {
+        assert.equal(await forwardCover.isVisible(),false);
+        assert.equal(await dialog.getByRole('button',{name:'곡 목록 닫기'}).isVisible(),true);
+        const stage=dialog.locator('[data-bgm-tracks]');
+        const layout=await stage.evaluate(element=>{
+          const positions=['left','center','right'].map(pos=>element.querySelector('[data-cover-position="'+pos+'"]').getBoundingClientRect());
+          const dialog=element.closest('dialog');
+          return {
+            vertical:positions[0].bottom<=positions[1].top&&positions[1].bottom<=positions[2].top,
+            square:Math.abs(positions[1].width-positions[1].height)<1,
+            width:positions[1].width,
+            backgrounds:[getComputedStyle(dialog).backgroundColor,getComputedStyle(dialog,'::backdrop').backgroundColor]
+          };
+        });
+        assert.equal(layout.vertical,true);
+        assert.equal(layout.square,true);
+        assert.ok(layout.width>=width-24);
+        assert.deepEqual(layout.backgrounds,['rgba(0, 0, 0, 0)','rgba(0, 0, 0, 0)']);
+        const swipe=(dx,dy)=>stage.evaluate((element,[dx,dy])=>{
+          const center=()=>element.querySelector('[data-cover-position="center"]');
+          const original=center().dataset.bgmTrack;
+          const touch=(clientX,clientY)=>new Touch({identifier:1,target:element,clientX,clientY});
+          element.dispatchEvent(new TouchEvent('touchstart',{touches:[touch(110,180)]}));
+          element.dispatchEvent(new TouchEvent('touchend',{changedTouches:[touch(110+dx,180+dy)],cancelable:true}));
+          return {
+            changed:original!==center().dataset.bgmTrack,
+            transforms:center().getAnimations().map(animation=>animation.effect.getKeyframes()[0].transform)
+          };
+        },[dx,dy]);
+        const horizontal=await swipe(-90,0);
+        assert.deepEqual(horizontal,{changed:false,transforms:[]});
+        const nextCover=await swipe(0,-90);
+        assert.equal(nextCover.changed,true);
+        assert.equal(nextCover.transforms.length,1);
+        assert.ok(nextCover.transforms[0].startsWith('translate(0px,'));
+        assert.equal((await swipe(0,90)).changed,true);
+        await page.emulateMedia({reducedMotion:'reduce'});
+        assert.deepEqual(await swipe(0,-90),{changed:true,transforms:[]});
+        await page.keyboard.press('ArrowUp');
+      } else {
+        assert.equal(await forwardCover.isVisible(),true);
+        const swipeAnimation=button=>{
+          button.click();
+          return button.closest('dialog').querySelector('[data-cover-position="center"]').getAnimations().length;
+        };
+        assert.equal(await forwardCover.evaluate(swipeAnimation),1);
+        await previousCover.click();
+        await page.emulateMedia({reducedMotion:'reduce'});
+        assert.equal(await forwardCover.evaluate(swipeAnimation),0);
         await previousCover.click();
       }
-      await page.emulateMedia({reducedMotion:'reduce'});
-      assert.equal(await forwardCover.evaluate(button=>{
-        button.click();
-        return button.closest('dialog').querySelector('[data-cover-position="center"]').getAnimations().length;
-      }),0);
-      await previousCover.click();
       await page.emulateMedia({reducedMotion:'no-preference'});
+      await dialog.locator('.kinojo-bgm-cover-exit').first().waitFor({state:'detached'});
+      assert.equal(await dialog.locator('[data-bgm-track]').count(),3);
       assert.equal(await dialog.locator('[data-cover-position="center"] > span:last-child').textContent(),await title.textContent());
       await dialog.getByRole('button',{name:'첫 번째 곡',exact:true}).click();
       await dialog.waitFor({state:'hidden'});

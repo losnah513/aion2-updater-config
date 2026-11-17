@@ -84,6 +84,7 @@
   let config, client, lyricRequest, cues = [], activeCue = -1, lyricSpans = [], lyricFrame = 0;
   let lyricsState = 'idle', plainLyrics = '', modalCue = -1, modalRows = [];
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const narrowCovers = window.matchMedia('(max-width: 600px)');
   let autoPending = /^\/(?:m\/)?(?:index\.html|home\.html)?$/.test(location.pathname);
   const current = () => queue[index];
   const repeatLabels = { off: '반복 끄기', all: '전체 반복', one: '한 곡 반복' };
@@ -340,7 +341,8 @@
   }
   function animateCoverMove(previous, step) {
     const stage = list.getBoundingClientRect();
-    const distance = step * stage.width * 0.24;
+    const vertical = narrowCovers.matches;
+    const distance = step * (vertical ? stage.height : stage.width) * 0.24;
     const slots = { left: -1, center: 0, right: 1 };
     const timing = { duration: 300, easing: 'cubic-bezier(0.22, 0.7, 0.25, 1)' };
     const arriving = [...list.querySelectorAll('[data-bgm-track]')].map(card => ({
@@ -358,9 +360,9 @@
           newImage.replaceWith(loadedImage);
         }
       }
-      const x = source ? source.left - rect.left : distance;
-      const y = source ? source.top - rect.top : 0;
-      const scale = source ? ' scale(' + source.width / rect.width + ',' + source.height / rect.height + ')' : '';
+      const x = source ? source.left - rect.left : vertical ? 0 : distance;
+      const y = source ? source.top - rect.top : vertical ? distance : 0;
+      const scale = source && !vertical ? ' scale(' + source.width / rect.width + ',' + source.height / rect.height + ')' : '';
       card.animate([
         { transform: 'translate(' + x + 'px,' + y + 'px)' + scale, transformOrigin: 'top left', opacity: source ? 1 : 0 },
         { transform: 'none', transformOrigin: 'top left', opacity: 1 }
@@ -380,7 +382,7 @@
       list.append(card);
       card.animate([
         { transform: 'none', opacity: 1 },
-        { transform: 'translateX(' + -distance + 'px)', opacity: 0 },
+        { transform: (vertical ? 'translateY(' : 'translateX(') + -distance + 'px)', opacity: 0 },
       ], timing).addEventListener('finish', () => card.remove(), { once: true });
     }
   }
@@ -737,9 +739,11 @@
   coverNav.querySelector('[data-bgm-cover-back]').addEventListener('click', () => browseCovers(-1));
   coverNav.querySelector('[data-bgm-cover-forward]').addEventListener('click', () => browseCovers(1));
   dialog.addEventListener('keydown', event => {
-    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    const backward = narrowCovers.matches ? 'ArrowUp' : 'ArrowLeft';
+    const forward = narrowCovers.matches ? 'ArrowDown' : 'ArrowRight';
+    if (event.key !== backward && event.key !== forward) return;
     event.preventDefault();
-    browseCovers(event.key === 'ArrowLeft' ? -1 : 1, true);
+    browseCovers(event.key === backward ? -1 : 1, true);
   });
   list.addEventListener('touchstart', event => {
     coverTouch = event.touches.length === 1 ? event.touches[0] : null;
@@ -749,10 +753,16 @@
     const dx = event.changedTouches[0].clientX - coverTouch.clientX;
     const dy = event.changedTouches[0].clientY - coverTouch.clientY;
     coverTouch = null;
-    if (Math.abs(dx) < 36 || Math.abs(dx) < Math.abs(dy)) return;
+    const distance = narrowCovers.matches ? dy : dx;
+    const crossDistance = narrowCovers.matches ? dx : dy;
+    if (Math.abs(distance) < 36 || Math.abs(distance) < Math.abs(crossDistance)) return;
     if (event.cancelable) event.preventDefault();
-    browseCovers(dx < 0 ? 1 : -1);
+    browseCovers(distance < 0 ? 1 : -1);
   }, { passive: false });
+  list.addEventListener('touchcancel', () => { coverTouch = null; });
+  dialog.addEventListener('click', event => {
+    if (narrowCovers.matches && event.target === dialog) dialog.close();
+  });
   dialog.addEventListener('close', () => listButton.focus());
   list.addEventListener('click', event => {
     const id = event.target.closest('[data-bgm-track]')?.dataset.bgmTrack;

@@ -131,6 +131,53 @@
 .kinojo-bgm-cover-nav[hidden]{display:none}
 .kinojo-bgm-cover-nav button{width:44px;font-size:1.3rem}
 .kinojo-bgm-dialog button:hover{background:#344874}
+@media(max-width:600px){
+  .kinojo-bgm-cover-dialog{
+    --cover-preview:clamp(44px,10dvh,62px);
+    --cover-size:max(64px,min(520px,calc(100vw - 20px),calc(100dvh - var(--cover-preview) - var(--cover-preview) - 24px)));
+    width:var(--cover-size);max-width:none;max-height:none;overflow:visible;
+    border:0;border-radius:0;background:transparent;box-shadow:none
+  }
+  .kinojo-bgm-cover-dialog::backdrop{background:transparent}
+  .kinojo-bgm-cover-dialog header{position:absolute;inset:3px 3px auto auto;padding:0;border:0;background:transparent}
+  .kinojo-bgm-cover-dialog h2{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  .kinojo-bgm-cover-dialog header button{background:#151e34e8}
+  .kinojo-bgm-cover-dialog .kinojo-bgm-cover-nav{display:none}
+  .kinojo-bgm-cover-dialog .kinojo-bgm-tracks{
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:var(--cover-preview) var(--cover-size) var(--cover-preview);
+    gap:4px;padding:0;touch-action:pan-x
+  }
+  .kinojo-bgm-cover-dialog .kinojo-bgm-tracks > p{
+    grid-area:2/1;justify-self:center;padding:10px 14px;background:#15223de8;border-radius:6px
+  }
+  .kinojo-bgm-cover-dialog .kinojo-bgm-tracks button{
+    position:relative;display:block;min-height:0;width:100%;height:100%;padding:0;
+    overflow:hidden;border:0;border-radius:7px;background:transparent
+  }
+  .kinojo-bgm-cover-dialog .kinojo-bgm-tracks button:focus-visible{outline:2px solid #afbbff;outline-offset:-2px}
+  .kinojo-bgm-cover-dialog .kinojo-bgm-tracks button[data-cover-position="left"]{grid-area:1/1}
+  .kinojo-bgm-cover-dialog .kinojo-bgm-tracks button[data-cover-position="center"]{grid-area:2/1}
+  .kinojo-bgm-cover-dialog .kinojo-bgm-tracks button[data-cover-position="right"]{grid-area:3/1}
+  .kinojo-bgm-cover-dialog .kinojo-bgm-tracks button.kinojo-bgm-cover-exit{position:absolute;grid-area:auto}
+  .kinojo-bgm-cover-dialog .kinojo-bgm-cover-art{height:100%;aspect-ratio:auto;border-radius:0}
+  .kinojo-bgm-cover-dialog [data-cover-position="left"] img{object-fit:cover;object-position:center bottom}
+  .kinojo-bgm-cover-dialog [data-cover-position="right"] img{object-fit:cover;object-position:center top}
+  .kinojo-bgm-cover-dialog [data-cover-position="left"] .kinojo-bgm-cover-art::after,
+  .kinojo-bgm-cover-dialog [data-cover-position="right"] .kinojo-bgm-cover-art::after{
+    inset:0 0 auto;width:auto;height:60%;transform:none;
+    background:linear-gradient(#15223d80,transparent);mask-image:linear-gradient(#000,transparent)
+  }
+  .kinojo-bgm-cover-dialog [data-cover-position="right"] .kinojo-bgm-cover-art::after{
+    inset:auto 0 0;transform:scaleY(-1)
+  }
+  .kinojo-bgm-cover-dialog .kinojo-bgm-tracks button > span:last-child{
+    position:absolute;inset:auto 10px 8px;color:#fff;text-shadow:0 1px 4px #000
+  }
+  .kinojo-bgm-cover-dialog .kinojo-bgm-tracks button:has(img) > span:last-child{
+    width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap
+  }
+}
 body:has(.kinojo-home-bgm) {--kinojo-shell-bottom:max(55px,calc(var(--kinojo-bgm-bar-height,55px) - env(safe-area-inset-bottom,0px)))}
 .kinojo-bgm-page {
   position:fixed;inset:0 0 auto;width:100%;height:calc(100dvh - var(--kinojo-bgm-bar-height,55px));
