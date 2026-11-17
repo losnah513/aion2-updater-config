@@ -148,8 +148,32 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
       assert.equal(await dialog.locator('[data-cover-position]').count(),3);
       await dialog.locator('[data-bgm-track="'+tracks[0].id+'"] img').waitFor();
       await page.waitForFunction(()=>document.querySelector('[data-bgm-tracks] img')?.naturalWidth===8);
-      await dialog.getByRole('button',{name:'목록에서 다음 곡 보기'}).click();
-      await dialog.getByRole('button',{name:'목록에서 이전 곡 보기'}).click();
+      const forwardCover = dialog.getByRole('button',{name:'목록에서 다음 곡 보기'});
+      const previousCover = dialog.getByRole('button',{name:'목록에서 이전 곡 보기'});
+      assert.equal(await forwardCover.evaluate(button=>{
+        button.click();
+        return button.closest('dialog').querySelector('[data-cover-position="center"]').getAnimations().length;
+      }),1);
+      await previousCover.click();
+      await dialog.locator('.kinojo-bgm-cover-exit').first().waitFor({state:'detached'});
+      assert.equal(await dialog.locator('[data-bgm-track]').count(),3);
+      if (width === 390) {
+        const list = dialog.locator('[data-bgm-tracks]');
+        assert.equal(await list.evaluate(stage=>{
+          const touch = clientX=>new Touch({identifier:1,target:stage,clientX,clientY:10});
+          stage.dispatchEvent(new TouchEvent('touchstart',{touches:[touch(120)]}));
+          stage.dispatchEvent(new TouchEvent('touchend',{changedTouches:[touch(30)],cancelable:true}));
+          return stage.querySelector('[data-cover-position="center"]').getAnimations().length;
+        }),1);
+        await previousCover.click();
+      }
+      await page.emulateMedia({reducedMotion:'reduce'});
+      assert.equal(await forwardCover.evaluate(button=>{
+        button.click();
+        return button.closest('dialog').querySelector('[data-cover-position="center"]').getAnimations().length;
+      }),0);
+      await previousCover.click();
+      await page.emulateMedia({reducedMotion:'no-preference'});
       assert.equal(await dialog.locator('[data-cover-position="center"] > span:last-child').textContent(),await title.textContent());
       await dialog.getByRole('button',{name:'첫 번째 곡',exact:true}).click();
       await dialog.waitFor({state:'hidden'});

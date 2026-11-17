@@ -1,5 +1,7 @@
 ## Home BGM · 2026-11-16
 
+- Moving through the track picker animates covers and their size changes in the navigation direction. Cover downloads update the cards in place. Keyboard, buttons and swipe share the same carousel movement, while reduced-motion users get an immediate update.
+
 - The track picker shows the selected cover with adjacent tracks and supports touch swipes, arrows and keyboard selection. Admins can upload an optional cover with the audio or set one on an existing track. The Edge serves versioned cover images for ready tracks. Covers are resized to at most 640 px and capped at 128 KiB per track in a private, cascading table. Release order: cover migration, BGM Edge, Pages.
 
 - The BGM editor accepts plain UTF-8 lyrics as well as timed LRC. Plain lyrics appear in 전체 가사 with their original line breaks. Timed tracks continue to drive highlighting and scroll. Release order: existing BGM Edge, then Pages. No database migration is required.

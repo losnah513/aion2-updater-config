@@ -295,15 +295,7 @@
       const fallback = document.createElement('span');
       fallback.textContent = '♫';
       artwork.append(fallback);
-      const version = covers[track.id];
-      if (version) {
-        const image = document.createElement('img');
-        image.alt = '';
-        image.decoding = 'async';
-        image.addEventListener('error', () => image.remove(), { once: true });
-        image.src = config.url + '/functions/v1/kinojo-home-bgm?action=cover&id=' + track.id + '&v=' + version;
-        artwork.append(image);
-      }
+      setCoverArtwork(artwork, track.id);
       const label = document.createElement('span');
       label.textContent = track.title;
       item.append(artwork, label);
@@ -312,6 +304,20 @@
         item.focus({ preventScroll: true });
       }
     }
+  }
+  function setCoverArtwork(artwork, id) {
+    const version = covers[id];
+    const oldImage = artwork.querySelector('img');
+    if (oldImage?.dataset.version === version) return;
+    oldImage?.remove();
+    if (!version) return;
+    const image = document.createElement('img');
+    image.alt = '';
+    image.decoding = 'async';
+    image.dataset.version = version;
+    image.addEventListener('error', () => image.remove(), { once: true });
+    image.src = config.url + '/functions/v1/kinojo-home-bgm?action=cover&id=' + id + '&v=' + version;
+    artwork.append(image);
   }
   async function loadCovers() {
     if (!config || !tracks.length) return;
@@ -326,13 +332,67 @@
         return typeof version === 'string' && /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(version)
           ? [[track.id, version]] : [];
       }));
-      renderList();
+      if (!dialog.open) return;
+      for (const card of list.querySelectorAll('[data-bgm-track]')) {
+        setCoverArtwork(card.querySelector('.kinojo-bgm-cover-art'), card.dataset.bgmTrack);
+      }
     } catch { /* Track selection remains available. */ }
+  }
+  function animateCoverMove(previous, step) {
+    const stage = list.getBoundingClientRect();
+    const distance = step * stage.width * 0.24;
+    const slots = { left: -1, center: 0, right: 1 };
+    const timing = { duration: 300, easing: 'cubic-bezier(0.22, 0.7, 0.25, 1)' };
+    const arriving = [...list.querySelectorAll('[data-bgm-track]')].map(card => ({
+      card, rect: card.getBoundingClientRect()
+    }));
+    for (const { card, rect } of arriving) {
+      const old = previous.get(card.dataset.bgmTrack);
+      const keepsMoving = old && slots[card.dataset.coverPosition] - slots[old.card.dataset.coverPosition] === -step;
+      const source = keepsMoving ? old.rect : null;
+      if (keepsMoving) {
+        previous.delete(card.dataset.bgmTrack);
+        const loadedImage = old.card.querySelector('img');
+        const newImage = card.querySelector('img');
+        if (loadedImage?.naturalWidth && loadedImage.dataset.version === newImage?.dataset.version) {
+          newImage.replaceWith(loadedImage);
+        }
+      }
+      const x = source ? source.left - rect.left : distance;
+      const y = source ? source.top - rect.top : 0;
+      const scale = source ? ' scale(' + source.width / rect.width + ',' + source.height / rect.height + ')' : '';
+      card.animate([
+        { transform: 'translate(' + x + 'px,' + y + 'px)' + scale, transformOrigin: 'top left', opacity: source ? 1 : 0 },
+        { transform: 'none', transformOrigin: 'top left', opacity: 1 }
+      ], timing);
+    }
+    for (const { card, rect } of previous.values()) {
+      card.getAnimations().forEach(animation => animation.cancel());
+      delete card.dataset.bgmTrack;
+      card.removeAttribute('aria-current');
+      card.inert = true;
+      card.setAttribute('aria-hidden', 'true');
+      card.classList.add('kinojo-bgm-cover-exit');
+      Object.assign(card.style, {
+        left: (rect.left - stage.left) + 'px', top: (rect.top - stage.top) + 'px',
+        width: rect.width + 'px', height: rect.height + 'px',
+      });
+      list.append(card);
+      card.animate([
+        { transform: 'none', opacity: 1 },
+        { transform: 'translateX(' + -distance + 'px)', opacity: 0 },
+      ], timing).addEventListener('finish', () => card.remove(), { once: true });
+    }
   }
   function browseCovers(step, focusCenter = false) {
     if (coverOrder.length < 2) return;
+    const animated = !reducedMotion.matches && typeof list.animate === 'function';
+    const previous = animated ? new Map([...list.querySelectorAll('[data-bgm-track]')].map(card => [
+      card.dataset.bgmTrack, { card, rect: card.getBoundingClientRect() }
+    ])) : null;
     coverIndex = (coverIndex + step + coverOrder.length) % coverOrder.length;
-    renderList(focusCenter);
+    renderList(focusCenter || list.contains(document.activeElement));
+    if (previous?.size) animateCoverMove(previous, step);
   }
   function parseLrc(source) {
     const offset = Number(source.match(/^\s*\[offset\s*:\s*([+-]?\d{1,6})\]/im)?.[1] || 0) / 1000;
