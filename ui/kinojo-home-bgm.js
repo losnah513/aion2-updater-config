@@ -12,6 +12,7 @@
       <button class="kinojo-bgm-like" type="button" data-bgm-like aria-label="좋아요" aria-pressed="false" disabled>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.6c0 4.2-8.8 9.3-8.8 9.3S3.2 12.8 3.2 8.6a4.65 4.65 0 0 1 8.8-2.1 4.65 4.65 0 0 1 8.8 2.1Z"/></svg><span data-bgm-like-count aria-hidden="true">—</span>
       </button>
+      <span class="kinojo-bgm-play-count" data-bgm-play-count hidden></span>
       <button class="kinojo-bgm-full-lyrics" type="button" data-bgm-full-lyrics aria-label="전체 가사" title="전체 가사" aria-haspopup="dialog" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h6l4 4v14H6V3h2Zm5 0v5h5M9 12h6m-6 4h6"/></svg></button>
     </div>
     <div class="kinojo-bgm-transport">
@@ -60,6 +61,7 @@
   const volume = root.querySelector('[data-bgm-volume]');
   const like = root.querySelector('[data-bgm-like]');
   const likeCount = root.querySelector('[data-bgm-like-count]');
+  const playCount = root.querySelector('[data-bgm-play-count]');
   const shuffleButton = root.querySelector('[data-bgm-shuffle]');
   const repeatButton = root.querySelector('[data-bgm-repeat]');
   const seek = root.querySelector('[data-bgm-seek]');
@@ -90,6 +92,7 @@
   const repeatLabels = { off: '반복 끄기', all: '전체 반복', one: '한 곡 반복' };
   const likesPending = new Map();
   let likeState, likeTimer;
+  let playSeconds = 0, playReported = false, playSample;
   let shuffleOn = true, repeatMode = 'all';
   try {
     const modes = JSON.parse(localStorage.getItem('kinojo-bgm-playback-modes'));
@@ -231,6 +234,55 @@
     const seconds = Math.max(0, Math.floor(value || 0));
     return Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0');
   };
+  function renderPlayCount() {
+    const count = current()?.playCount;
+    playCount.hidden = !Number.isSafeInteger(count) || count < 0;
+    if (playCount.hidden) return;
+    const unit = count >= 10000 ? 10000 : count >= 1000 ? 1000 : 1;
+    playCount.textContent = unit === 1 ? count + '회 재생' :
+      (Math.floor(count / (unit / 10)) / 10).toFixed(1) + (unit === 10000 ? '만' : '천') + ' 회 재생';
+    playCount.title = count.toLocaleString('ko-KR') + '회 재생';
+  }
+  async function recordPlay(track) {
+    try {
+      const response = await fetch(config.url + '/functions/v1/kinojo-home-bgm?action=record-play&id=' + encodeURIComponent(track.id), {
+        method: 'POST', headers: client.headers(config), keepalive: true, signal: AbortSignal.timeout(8000)
+      });
+      const result = await response.json();
+      if (!response.ok || result.ok !== true || !Number.isSafeInteger(result.playCount) || result.playCount < 0) return;
+      track.playCount = Math.max(track.playCount ?? 0, result.playCount);
+      if (track === current()) renderPlayCount();
+    } catch { /* A response can be lost after the increment, so do not repeat it. */ }
+  }
+  function resetPlayCount() {
+    playSeconds = 0;
+    playReported = false;
+    playSample = undefined;
+  }
+  function markPlaySample() {
+    if (!playReported && !audio.paused && !audio.seeking && audio.readyState >= 2) {
+      playSample = { position: audio.currentTime, at: performance.now() };
+    }
+  }
+  function measurePlay() {
+    const track = current();
+    if (!track || playReported || !playSample || audio.seeking) return;
+    const position = audio.currentTime, at = performance.now();
+    const elapsed = (at - playSample.at) / 1000;
+    const played = (position - playSample.position) / audio.playbackRate;
+    playSample = { position, at };
+    // Ignore playhead jumps and count only elapsed time backed by advancing audio.
+    if (played > 0 && played <= elapsed + 0.35) playSeconds += Math.min(played, elapsed);
+    if (playSeconds >= 10) {
+      playReported = true;
+      playSample = undefined;
+      void recordPlay(track);
+    }
+  }
+  function stopPlaySample() {
+    measurePlay();
+    playSample = undefined;
+  }
   function progress() {
     const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
     seek.disabled = duration <= 0;
@@ -560,6 +612,7 @@
     }
   }
   function select(i) {
+    resetPlayCount();
     generation++;
     resetLyrics();
     audio.pause();
@@ -568,6 +621,7 @@
     index = i;
     title.textContent = current()?.title || '등록된 곡이 없습니다';
     selectLikes();
+    renderPlayCount();
     renderModes();
     play.disabled = tracks.length === 0;
     status.textContent = '';
@@ -657,6 +711,7 @@
         id: t.id,
         title: t.title,
         hasLyrics: t.hasLyrics === true,
+        playCount: t.playCount,
         url: config.url + '/storage/v1/object/public/kinojo-home-bgm/' + t.id + '.' + t.extension
       }));
       failed = false;
@@ -779,8 +834,17 @@
     dialog.close();
   });
   seek.addEventListener('input', () => {
-    if (!seek.disabled) audio.currentTime = Number(seek.value);
+    if (!seek.disabled) {
+      stopPlaySample();
+      audio.currentTime = Number(seek.value);
+    }
   });
+  for (const name of ['playing', 'seeked']) audio.addEventListener(name, markPlaySample);
+  for (const name of ['pause', 'waiting', 'ended']) audio.addEventListener(name, stopPlaySample);
+  for (const name of ['seeking', 'emptied', 'error']) {
+    audio.addEventListener(name, () => { playSample = undefined; });
+  }
+  audio.addEventListener('timeupdate', measurePlay);
   for (const name of ['timeupdate', 'durationchange', 'loadedmetadata', 'emptied']) audio.addEventListener(name, progress);
   for (const name of ['play', 'pause', 'ended']) audio.addEventListener(name, button);
   for (const name of ['playing', 'pause', 'seeking', 'seeked', 'durationchange', 'timeupdate']) audio.addEventListener(name, updateLyrics);
@@ -789,6 +853,7 @@
     audio.addEventListener(name, () => { delete root.dataset.bgmFlow; });
   }
   audio.addEventListener('ended', () => {
+    resetPlayCount();
     if (repeatMode === 'one') {
       audio.currentTime = 0;
       void start();

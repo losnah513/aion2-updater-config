@@ -42,6 +42,7 @@
 .kinojo-bgm-like[aria-pressed="true"]:disabled {opacity:1}
 .kinojo-bgm-like[aria-pressed="true"] {color:#ffd0e0;border-color:#f3a0bb8c;background:#f373a422}
 .kinojo-bgm-like[aria-pressed="true"] svg {fill:currentColor}
+.kinojo-bgm-play-count {color:#d7e1fa;font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap;padding:0 4px}
 .kinojo-bgm-controls .bgm-stroke-icon {fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
 .kinojo-bgm-controls [data-bgm-repeat] {position:relative}
 .kinojo-bgm-controls [data-bgm-repeat][data-mode="all"],.kinojo-bgm-controls [data-bgm-repeat][data-mode="one"],
@@ -65,6 +66,7 @@
   .kinojo-bgm-transport button {width:36px;height:40px}
   .kinojo-bgm-track-tools {gap:3px}
   .kinojo-bgm-inner .kinojo-bgm-like {min-width:46px;padding:0 5px}
+  .kinojo-bgm-play-count {font-size:11px;padding:0 2px}
   .kinojo-bgm-track-tools .kinojo-bgm-full-lyrics {width:40px}
 }
 .kinojo-bgm-controls [data-playing="true"] .bgm-play-icon,
