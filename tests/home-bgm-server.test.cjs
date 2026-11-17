@@ -15,6 +15,8 @@ const coverMigration = fs.readFileSync(path.join(__dirname,'../supabase/migratio
 const coverRollback = fs.readFileSync(path.join(__dirname,'../supabase/rollbacks/20261117005315_home_bgm_cover_images.sql'),'utf8');
 const playMigration = fs.readFileSync(path.join(__dirname,'../supabase/migrations/20261117021000_home_bgm_play_count.sql'),'utf8');
 const playRollback = fs.readFileSync(path.join(__dirname,'../supabase/rollbacks/20261117021000_home_bgm_play_count.sql'),'utf8');
+const instMigration = fs.readFileSync(path.join(__dirname,'../supabase/migrations/20261117035000_home_bgm_instrumentals.sql'),'utf8');
+const instRollback = fs.readFileSync(path.join(__dirname,'../supabase/rollbacks/20261117035000_home_bgm_instrumentals.sql'),'utf8');
 const webp=Buffer.from('UklGRjQAAABXRUJQVlA4ICgAAACwAQCdASoIAAgAAUAmJZgCdLoABGaAAP7wxAv7gzPq7HDzXxAtwAAA','base64');
 // A still WebP with an embedded ICC profile uses a VP8X container.
 const extendedWebp = Buffer.from('UklGRi4CAABXRUJQVlA4WAoAAAAgAAAABwAABwAASUNDUMgBAAAAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADZWUDggQAAAAPABAJ0BKggACAABQCYlnAJ0ARd+j1gzAADOP86e7X6tC3/soe75tH4q/tmL2Rrw1WRNjwkAY7ta6u8xMneIAAA=', 'base64');
@@ -147,7 +149,35 @@ test('BGM Edge, database and storage boundary', async () => {
     const permissions=(await db.query("select has_function_privilege('anon',$1,'execute') as anon, has_function_privilege('authenticated',$1,'execute') as authenticated, has_function_privilege('service_role',$1,'execute') as service",[signature])).rows[0];
     assert.deepEqual(permissions,{anon:false,authenticated:false,service:true});
     assert.deepEqual((await get()).map(row=>row.title),['첫 곡','다음 곡']);
-    assert.deepEqual(Object.keys((await get())[0]).sort(),['extension','hasLyrics','id','playCount','title']);
+    await db.exec(instMigration);
+    assert.deepEqual(Object.keys((await get())[0]).sort(),['extension','hasLyrics','id','instSlot','instVersion','playCount','title']);
+    const uploadInst = (token=admin, data=Buffer.from('ID3instrumental-audio')) =>
+      request('upload-inst&id='+first.id,token,{headers:{'content-type':'audio/mpeg','x-bgm-extension':'mp3'},body:data});
+    assert.equal((await uploadInst(null)).status,401);
+    assert.equal((await uploadInst(member)).status,403);
+    assert.equal((await uploadInst(admin,Buffer.alloc(20))).data.code,'INVALID_AUDIO');
+    assert.equal((await get())[0].instSlot,null);
+    const instFirst=(await uploadInst()).data.track;
+    assert.equal(instFirst.inst_slot,1);
+    assert.equal((await get())[0].instVersion,instFirst.inst_version);
+    assert.ok(objects.has(first.id+'.inst-1'));
+    failPut=true;
+    assert.equal((await uploadInst()).status,502);
+    failPut=false;
+    assert.equal((await get())[0].instSlot,1);
+    const instSecond=(await uploadInst()).data.track;
+    assert.equal(instSecond.inst_slot,2);
+    assert.notEqual(instSecond.inst_version,instFirst.inst_version);
+    assert.equal((await get())[1].instVersion,null);
+    const racingVersion=crypto.randomUUID();
+    await db.query("select public.kinojo_home_bgm_v1('reserve-inst',$1,$2)",[admin,JSON.stringify({id:first.id,version:racingVersion})]);
+    assert.equal((await uploadInst()).data.code,'INST_UNAVAILABLE');
+    assert.equal((await request('delete',admin,{body:JSON.stringify({id:first.id})})).status,409);
+    await db.query("select public.kinojo_home_bgm_v1('cancel-inst',$1,$2)",[admin,JSON.stringify({id:first.id,version:racingVersion})]);
+    await db.exec(instRollback);
+    assert.equal(Object.hasOwn((await get())[0],'instSlot'),false);
+    await db.exec(instMigration);
+    assert.equal((await get())[0].instVersion,instSecond.inst_version);
     assert.equal((await request('lyrics&id='+first.id,null)).data.lyrics,null);
     const lrc='[00:00.00]<00:00.00>첫 <00:02.00>가사\n[00:04.00]다음 가사';
     const lyric={body:JSON.stringify({id:first.id,lyrics:lrc})};
@@ -213,10 +243,11 @@ test('BGM Edge, database and storage boundary', async () => {
     assert.equal((await get()).length,1);
     assert.equal((await recordPlay(first.id)).status,404);
     assert.equal((await request('lyrics&id='+first.id,null)).data.code,'TRACK_UNAVAILABLE');
-    assert.equal(objects.size,2);
+    assert.equal(objects.size,4);
     failDelete=false;
     assert.equal((await request('delete',admin,del)).status,200);
     assert.equal(objects.size,1);
+    assert.equal(objects.has(first.id+'.inst-1') || objects.has(first.id+'.inst-2'),false);
     assert.equal((await vote(first.id,ip)).status,404);
     assert.equal((await db.query('select count(*)::int as count from private.kinojo_home_bgm_daily_like where track_id=$1',[first.id])).rows[0].count,0);
     assert.deepEqual(await coverCatalog(),{});

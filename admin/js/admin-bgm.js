@@ -11,7 +11,8 @@
   const lyricSave = lyricForm.querySelector('[type=submit]');
   const mime = { mp3: 'audio/mpeg', m4a: 'audio/mp4', ogg: 'audio/ogg' };
   const coverInput = document.getElementById('adminBgmCoverFile');
-  let busy = false, lyricEditor = null, coverTrackId = null;
+  const instInput = document.getElementById('adminBgmInstFile');
+  let busy = false, lyricEditor = null, coverTrackId = null, instTrackId = null;
   const show = (message, tone = '') => { status.textContent = message; status.className = 'admin-statusline ' + tone; };
 
   async function request(action, payload, file) {
@@ -26,12 +27,12 @@
       headers.set('content-type', 'image/webp');
     } else if (file) {
       headers.set('content-type', mime[payload.extension]);
-      headers.set('x-bgm-title', encodeURIComponent(payload.title));
+      if (payload.title) headers.set('x-bgm-title', encodeURIComponent(payload.title));
       headers.set('x-bgm-extension', payload.extension);
     }
     const isRead = action === 'lyrics';
     if (isRead) headers.delete('x-kinojo-session');
-    const url = config.url + '/functions/v1/kinojo-home-bgm?action=' + action + (isRead || coverUpload ? '&id=' + encodeURIComponent(payload.id) : '');
+    const url = config.url + '/functions/v1/kinojo-home-bgm?action=' + action + (payload?.id ? '&id=' + encodeURIComponent(payload.id) : '');
     const response = await fetch(url, {
       method: isRead ? 'GET' : 'POST', headers, body: isRead ? undefined : file || JSON.stringify(payload || {}),
       signal: AbortSignal.timeout(file ? 75000 : 25000)
@@ -50,6 +51,7 @@
         + (ready ? '<button class="admin-btn" type="submit">저장</button>' : '')
         + (ready ? '<button class="admin-btn" type="button" data-lyrics="' + (track.hasLyrics === true ? 'saved' : 'empty') + '">' + (track.hasLyrics === true ? '가사 수정' : '가사 등록') + '</button>' : '')
         + (ready ? '<button class="admin-btn" type="button" data-cover-edit>커버 이미지</button>' : '')
+        + (ready ? '<button class="admin-btn" type="button" data-inst-edit>' + (track.inst_version ? '반주 교체' : '반주 추가') + '</button>' : '')
         + (track.canDelete ? '<button class="admin-btn" type="button" data-remove>' + (ready ? '삭제' : '파일 정리') + '</button>' : '')
         + '</div></form>';
     }).join('') : '<div class="admin-empty">등록된 곡이 없습니다.</div>';
@@ -167,6 +169,24 @@
   }
   function loadBgm() { return perform(async () => '등록곡 ' + await refresh() + ' / 20', '목록 불러오는 중…'); }
   reload.addEventListener('click', loadBgm);
+  function instExtension(file) {
+    const extension = file.name.split('.').pop().toLowerCase();
+    if (!Object.hasOwn(mime, extension) || file.size < 1 || file.size > 6291456) {
+      throw new Error('반주 파일은 6 MiB 이하의 MP3·M4A·OGG로 선택해 주세요.');
+    }
+    return extension;
+  }
+  instInput.addEventListener('change', () => {
+    const file = instInput.files[0], id = instTrackId;
+    instInput.value = '';
+    instTrackId = null;
+    if (!file || !id) return;
+    void perform(async () => {
+      await request('upload-inst', { id, extension: instExtension(file) }, file);
+      await refresh().catch(() => {});
+      return '반주 음원을 저장했습니다.';
+    }, '반주 음원 업로드 중…');
+  });
   form.addEventListener('submit', event => {
     event.preventDefault();
     const file = form.elements.file.files[0];
@@ -176,18 +196,24 @@
       show('제목은 100자 이내, MP3·M4A·OGG 파일은 6 MiB 이내로 선택해 주세요.', 'error'); return;
     }
     const originalCover = form.elements.cover.files[0];
+    const inst = form.elements.instrumental.files[0];
     void perform(async () => {
+      const instExt = inst ? instExtension(inst) : '';
       const cover = originalCover ? await prepareCover(originalCover) : null;
       const { track } = await request('upload', { title, extension }, file);
       form.reset();
-      if (cover) {
-        try { await request('cover-upload', { id: track.id }, cover); }
-        catch {
-          await refresh().catch(() => {});
-          throw new Error('음원은 업로드했습니다. 곡 목록에서 커버 이미지를 다시 추가해 주세요.');
-        }
+      const optional = [
+        ...(cover ? [['커버 이미지', request('cover-upload', { id: track.id }, cover)]] : []),
+        ...(inst ? [['반주 음원', request('upload-inst', { id: track.id, extension: instExt }, inst)]] : [])
+      ];
+      const results = await Promise.allSettled(optional.map(([, pending]) => pending));
+      const missing = optional.filter((_, i) => results[i].status === 'rejected').map(([label]) => label);
+      if (missing.length) {
+        await refresh().catch(() => {});
+        throw new Error('원곡은 업로드했습니다. 곡 목록에서 ' + missing.join(' 및 ') + ' 저장 여부를 확인해 주세요.');
       }
       try { await refresh(); } catch { return '업로드했습니다. 목록 새로고침을 눌러 주세요.'; }
+      if (inst) return cover ? '원곡·반주·커버 이미지를 업로드했습니다.' : '원곡과 반주를 업로드했습니다.';
       return cover ? '음원과 커버 이미지를 업로드했습니다.' : '업로드 완료. 홈페이지에서 재생할 수 있습니다.';
     }, '음원 업로드 중…');
   });
@@ -202,6 +228,12 @@
     }, '곡 정보 저장 중…');
   });
   list.addEventListener('click', event => {
+    const instButton = event.target.closest('[data-inst-edit]');
+    if (instButton && !busy) {
+      instTrackId = instButton.closest('[data-track]').dataset.track;
+      instInput.click();
+      return;
+    }
     const coverButton = event.target.closest('[data-cover-edit]');
     if (coverButton && !busy) {
       coverTrackId = coverButton.closest('[data-track]').dataset.track;

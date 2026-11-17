@@ -14,6 +14,7 @@ const errors: Record<string, string> = {
   INVALID_INPUT: "곡 제목, 파일 형식 또는 재생 순서를 확인해 주세요.",
   SIZE_LIMIT: "음원 한 곡은 최대 6 MiB입니다.",
   INVALID_AUDIO: "MP3, M4A 또는 OGG 음원 파일을 선택해 주세요.",
+  INST_UNAVAILABLE: "다른 반주 업로드가 진행 중이거나 곡을 찾을 수 없습니다. 잠시 후 목록을 확인해 주세요.",
   INVALID_LYRICS: "24 KiB 이하의 UTF-8 일반 가사 또는 LRC를 입력해 주세요.",
   INVALID_COVER: "커버 이미지를 처리할 수 없습니다. 움직이지 않는 JPG·PNG·WebP 이미지를 다시 선택해 주세요.",
   COVER_UNAVAILABLE: "앨범 커버를 찾을 수 없습니다.",
@@ -230,22 +231,44 @@ Deno.serve(async (request: Request) => {
       if (!uuid.test(id)) throw new BgmError("INVALID_INPUT");
       return reply(request, await rpc("lyrics", { id }));
     }
-    if (request.method !== "POST" || !["list", "upload", "update", "update-lyrics", "delete"].includes(action || "")) {
+    if (request.method !== "POST" || !["list", "upload", "upload-inst", "update", "update-lyrics", "delete"].includes(action || "")) {
       throw new BgmError("INVALID_INPUT", 405);
     }
     if (!session || !/^kws_[A-Za-z0-9_-]{40,80}$/.test(session)) throw new BgmError("ADMIN_ACCESS_REQUIRED", 401);
     if (action === "list") return reply(request, await rpc("list"));
-    if (action === "upload") {
+    if (action === "upload" || action === "upload-inst") {
       await rpc("authorize");
       const ext = request.headers.get("x-bgm-extension") as Extension;
       if (!Object.hasOwn(mime, ext) || request.headers.get("content-type") !== mime[ext]) {
         throw new BgmError("INVALID_AUDIO");
       }
+      const data = await bytes(request, maxBytes);
+      if (!matchesAudio(data, ext)) throw new BgmError("INVALID_AUDIO");
+      if (action === "upload-inst") {
+        const id = params.get("id") || "";
+        if (!uuid.test(id)) throw new BgmError("INVALID_INPUT");
+        const version = crypto.randomUUID();
+        const { slot } = await rpc("reserve-inst", { id, version });
+        if (slot !== 1 && slot !== 2) throw new BgmError("UPLOAD_FAILED", 502);
+        try {
+          const uploaded = await fetch(base + "/storage/v1/object/" + bucket + "/" + id + ".inst-" + slot, {
+            method: "POST", signal: AbortSignal.timeout(25000),
+            headers: { ...service, "content-type": mime[ext], "cache-control": "max-age=0", "x-upsert": "true" },
+            body: data,
+          });
+          if (!uploaded.ok) {
+            await rpc("cancel-inst", { id, version });
+            throw new BgmError("UPLOAD_FAILED", 502);
+          }
+          return reply(request, await rpc("publish-inst", { id, version }));
+        } catch {
+          // Keep an uncertain write reserved until the upload timeout window has passed.
+          throw new BgmError("UPLOAD_FAILED", 502);
+        }
+      }
       let name: string;
       try { name = title(decodeURIComponent(request.headers.get("x-bgm-title") || "")); }
       catch { throw new BgmError("INVALID_INPUT"); }
-      const data = await bytes(request, maxBytes);
-      if (!matchesAudio(data, ext)) throw new BgmError("INVALID_AUDIO");
       const id = crypto.randomUUID();
       await rpc("reserve", { id, extension: ext, title: name, bytes: data.length });
       try {
@@ -286,7 +309,7 @@ Deno.serve(async (request: Request) => {
     try {
       const removed = await fetch(base + "/storage/v1/object/" + bucket, {
         method: "DELETE", signal: AbortSignal.timeout(15000), headers: { ...service, "content-type": "application/json" },
-        body: JSON.stringify({ prefixes: [deleting.id + "." + deleting.extension] }),
+        body: JSON.stringify({ prefixes: [deleting.id + "." + deleting.extension, deleting.id + ".inst-1", deleting.id + ".inst-2"] }),
       });
       if (!removed.ok) throw new BgmError("DELETE_FAILED", 502);
       return reply(request, await rpc("finish-delete", { id: track.id }));

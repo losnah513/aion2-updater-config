@@ -14,6 +14,7 @@
       </button>
       <span class="kinojo-bgm-play-count" data-bgm-play-count hidden></span>
       <button class="kinojo-bgm-full-lyrics" type="button" data-bgm-full-lyrics aria-label="전체 가사" title="전체 가사" aria-haspopup="dialog" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h6l4 4v14H6V3h2Zm5 0v5h5M9 12h6m-6 4h6"/></svg></button>
+      <button class="kinojo-bgm-vocals" type="button" data-bgm-vocals aria-label="보컬" aria-pressed="true" title="보컬 켜짐" disabled>보컬</button>
     </div>
     <div class="kinojo-bgm-transport">
       <div class="kinojo-bgm-controls">
@@ -76,6 +77,7 @@
   let coverOrder = [], coverIndex = 0, covers = {}, coverTouch;
   const lyricLine = root.querySelector('[data-bgm-lyric-line]');
   const lyricsButton = root.querySelector('[data-bgm-full-lyrics]');
+  const vocalsButton = root.querySelector('[data-bgm-vocals]');
   const lyricsDialog = root.querySelector('[data-bgm-lyrics-dialog]');
   const lyricsTitle = root.querySelector('[data-bgm-lyrics-title]');
   const lyricsStatus = root.querySelector('[data-bgm-lyrics-status]');
@@ -83,12 +85,14 @@
   const plainLyricsText = root.querySelector('[data-bgm-plain-lyrics]');
   const backTracks = [], forwardTracks = [];
   let tracks = [], queue = [], index = 0, loading = false, failed = false, generation = 0;
+  let catalog = [], vocalsOn = true, resumePosition = 0;
   let config, client, lyricRequest, cues = [], activeCue = -1, lyricSpans = [], lyricFrame = 0;
   let lyricsState = 'idle', plainLyrics = '', modalCue = -1, modalRows = [];
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const narrowCovers = window.matchMedia('(max-width: 600px)');
   let autoPending = /^\/(?:m\/)?(?:index\.html|home\.html)?$/.test(location.pathname);
   const current = () => queue[index];
+  const emptyMessage = () => vocalsOn ? '등록된 곡이 없습니다' : '등록된 반주곡이 없습니다';
   const repeatLabels = { off: '반복 끄기', all: '전체 반복', one: '한 곡 반복' };
   const likesPending = new Map();
   let likeState, likeTimer;
@@ -329,7 +333,7 @@
     coverNav.hidden = coverOrder.length < 2;
     if (!coverOrder.length) {
       const empty = document.createElement('p');
-      empty.textContent = loading ? '곡 목록 불러오는 중…' : failed ? '곡 목록을 불러오지 못했습니다.' : '등록된 곡이 없습니다.';
+      empty.textContent = loading ? '곡 목록 불러오는 중…' : failed ? '곡 목록을 불러오지 못했습니다.' : emptyMessage();
       list.append(empty);
       return;
     }
@@ -611,15 +615,17 @@
       }
     }
   }
-  function select(i) {
-    resetPlayCount();
+  function select(i, position = 0, sameTrack = false) {
+    if (sameTrack) stopPlaySample();
+    else resetPlayCount();
+    resumePosition = position;
     generation++;
     resetLyrics();
     audio.pause();
     audio.removeAttribute('src');
     audio.load();
     index = i;
-    title.textContent = current()?.title || '등록된 곡이 없습니다';
+    title.textContent = current()?.title || emptyMessage();
     selectLikes();
     renderPlayCount();
     renderModes();
@@ -652,7 +658,7 @@
     if (!track) return;
     const attempt = ++generation;
     status.textContent = '';
-    if (!audio.getAttribute('src') || audio.error) audio.src = track.url;
+    if (!audio.getAttribute('src') || audio.error) audio.src = vocalsOn ? track.url : track.instUrl;
     try {
       await audio.play();
       if (attempt === generation) {
@@ -706,15 +712,20 @@
       });
       const result = await response.json();
       if (!response.ok || result.ok !== true || !Array.isArray(result.tracks)) throw new Error('playlist');
-      tracks = result.tracks.filter(t => /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(t.id) &&
+      catalog = result.tracks.filter(t => /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(t.id) &&
         ['mp3', 'm4a', 'ogg'].includes(t.extension) && typeof t.title === 'string').map(t => ({
         id: t.id,
         title: t.title,
         hasLyrics: t.hasLyrics === true,
         playCount: t.playCount,
-        url: config.url + '/storage/v1/object/public/kinojo-home-bgm/' + t.id + '.' + t.extension
+        url: config.url + '/storage/v1/object/public/kinojo-home-bgm/' + t.id + '.' + t.extension,
+        instUrl: (t.instSlot === 1 || t.instSlot === 2) && typeof t.instVersion === 'string'
+          ? config.url + '/storage/v1/object/public/kinojo-home-bgm/' + t.id + '.inst-' + t.instSlot + '?v=' + encodeURIComponent(t.instVersion)
+          : null
       }));
+      tracks = vocalsOn ? catalog : catalog.filter(t => t.instUrl);
       failed = false;
+      vocalsButton.disabled = catalog.length === 0;
       queue = shuffleOn ? shuffle() : tracks;
       backTracks.length = forwardTracks.length = 0;
       select(0);
@@ -727,6 +738,21 @@
     } finally { loading = false; renderList(); }
   }
   like.addEventListener('click', voteLike);
+  vocalsButton.addEventListener('click', () => {
+    const track = current();
+    const playing = !audio.paused && !audio.ended;
+    const position = audio.ended ? 0 : audio.currentTime || resumePosition;
+    stopAutoplay();
+    vocalsOn = !vocalsOn;
+    vocalsButton.setAttribute('aria-pressed', String(vocalsOn));
+    vocalsButton.title = vocalsOn ? '보컬 켜짐' : '보컬 꺼짐 · 반주만 재생';
+    tracks = vocalsOn ? catalog : catalog.filter(t => t.instUrl);
+    queue = shuffleOn ? shuffle() : tracks;
+    backTracks.length = forwardTracks.length = 0;
+    const sameTrack = Boolean(track && queue.includes(track));
+    select(sameTrack ? queue.indexOf(track) : 0, sameTrack ? position : 0, sameTrack);
+    if (playing && current()) void start();
+  });
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden && current()) void refreshLikes();
   });
@@ -845,6 +871,12 @@
     audio.addEventListener(name, () => { playSample = undefined; });
   }
   audio.addEventListener('timeupdate', measurePlay);
+  audio.addEventListener('loadedmetadata', () => {
+    if (!resumePosition) return;
+    const position = resumePosition;
+    resumePosition = 0;
+    if (position < audio.duration) audio.currentTime = position;
+  });
   for (const name of ['timeupdate', 'durationchange', 'loadedmetadata', 'emptied']) audio.addEventListener(name, progress);
   for (const name of ['play', 'pause', 'ended']) audio.addEventListener(name, button);
   for (const name of ['playing', 'pause', 'seeking', 'seeked', 'durationchange', 'timeupdate']) audio.addEventListener(name, updateLyrics);

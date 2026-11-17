@@ -12,9 +12,9 @@ const coverVersion='a8ab5784-a859-4526-8859-9ece88c56d97';
 const webp=Buffer.from('UklGRjQAAABXRUJQVlA4ICgAAACwAQCdASoIAAgAAUAmJZgCdLoABGaAAP7wxAv7gzPq7HDzXxAtwAAA','base64');
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAFElEQVR4nGN0Ce1gwAaYsIoOWgkA5koBMbwl27sAAAAASUVORK5CYII=','base64');
 const tracks = [
-  {id:'ffad2733-d0ef-4c98-8e1a-cccee1d9972a',title:'첫 번째 곡',extension:'mp3',hasLyrics:true,playCount:999},
+  {id:'ffad2733-d0ef-4c98-8e1a-cccee1d9972a',title:'첫 번째 곡',extension:'mp3',hasLyrics:true,playCount:999,instSlot:1,instVersion:coverVersion},
   {id:'ffad2733-d0ef-4c98-8e1a-cccee1d9972b',title:'<두 번째 곡>',extension:'mp3',playCount:1000},
-  {id:'ffad2733-d0ef-4c98-8e1a-cccee1d9972c',title:'세 번째 곡',extension:'mp3',playCount:10000}
+  {id:'ffad2733-d0ef-4c98-8e1a-cccee1d9972c',title:'세 번째 곡',extension:'mp3',playCount:10000,instSlot:2,instVersion:coverVersion}
 ];
 const lyric='[00:00.00]<00:00.00>첫 번째 <00:02.00>가사\n[00:04.00]다음 가사';
 function wave() {
@@ -37,6 +37,7 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
   const likedTracks=new Set();
   let voteRequests=0;
   let playRequests=0;
+  let hasInstrumental=false;
   const server = http.createServer(async (req,res) => {
     const url = new URL(req.url,'http://127.0.0.1');
     if(url.pathname.startsWith('/storage/')){
@@ -79,6 +80,13 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
       assert.equal(req.headers['x-kinojo-session'],'fixture');
       const parts=[]; for await (const part of req)parts.push(part);
       const content=Buffer.concat(parts);
+      if(action==='upload-inst'){
+        assert.equal(req.headers['content-type'],'audio/mpeg');
+        assert.equal(content.toString(),'ID3instrumental');
+        commands.push({action,id:url.searchParams.get('id')});
+        hasInstrumental=true;
+        return res.end(JSON.stringify({ok:true}));
+      }
       if(action==='cover-upload'){
         assert.equal(req.headers['content-type'],'image/webp');
         assert.equal(content.subarray(8,12).toString(),'WEBP');
@@ -88,7 +96,7 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
       const body=content.toString();
       if(action==='update-lyrics')editedLyric=JSON.parse(body).lyrics;
       commands.push({action,body,title:req.headers['x-bgm-title']});
-      return res.end(JSON.stringify({ok:true,track:tracks[0],tracks:tracks.map((track,i)=>({...track,state:'READY',canDelete:true,sort_order:i+1}))}));
+      return res.end(JSON.stringify({ok:true,track:tracks[0],tracks:tracks.map((track,i)=>({...track,state:'READY',canDelete:true,sort_order:i+1,inst_version:hasInstrumental && i===0 ? coverVersion : null}))}));
     }
     if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
       res.setHeader('Content-Type',url.pathname.endsWith('.js')?'application/javascript':'text/css');
@@ -486,8 +494,35 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
     assert.equal(await count.getAttribute('title'),'1,000회 재생');
     assert.equal(playRequests,1,'a qualifying play is counted once after pause and seek');
     await countPage.close();
+    const instPage=await browser.newPage({viewport:{width:320,height:650}});
+    await isolatePlaywrightPage(instPage);
+    await instPage.addInitScript(()=>{Math.random=()=>0;});
+    await instPage.goto(base+'/m/ranking/');
+    const vocals=instPage.getByRole('button',{name:'보컬',exact:true});
+    await instPage.getByText('<두 번째 곡>',{exact:true}).waitFor();
+    assert.equal(await vocals.getAttribute('aria-pressed'),'true');
+    await vocals.click();
+    assert.equal(await vocals.getAttribute('aria-pressed'),'false');
+    await instPage.getByRole('button',{name:'곡 목록',exact:true}).click();
+    const instDialog=instPage.getByRole('dialog',{name:'곡 목록'});
+    assert.equal(await instDialog.locator('[data-bgm-track]').count(),2);
+    assert.equal(await instDialog.getByText('<두 번째 곡>',{exact:true}).count(),0);
+    await instDialog.getByRole('button',{name:'곡 목록 닫기'}).click();
+    await instPage.getByRole('button',{name:'재생',exact:true}).click();
+    await instPage.waitForFunction(()=>document.querySelector('audio').currentTime>0.5);
+    const instAudio=instPage.locator('audio');
+    assert.match(await instAudio.getAttribute('src'),/\.inst-[12]\?v=/);
+    const currentTitle=await instPage.locator('[data-bgm-title]').textContent();
+    await vocals.click();
+    assert.equal(await instPage.locator('[data-bgm-title]').textContent(),currentTitle);
+    assert.match(await instAudio.getAttribute('src'),/\.mp3$/);
+    await instPage.waitForFunction(()=>document.querySelector('audio').currentTime>0.4);
+    assert.equal(await instPage.evaluate(()=>document.documentElement.scrollWidth),320);
+    await instPage.reload();
+    assert.equal(await vocals.getAttribute('aria-pressed'),'true');
+    await instPage.close();
     for(const width of [1440,320]){
-      commands=[];editedLyric=lyric;
+      commands=[];editedLyric=lyric;hasInstrumental=false;
       const page=await browser.newPage({viewport:{width,height:840}});
       await isolatePlaywrightPage(page);
       await page.goto(base+(width===1440?'/admin/':'/m/admin/'));
@@ -497,8 +532,15 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
       const upload=page.locator('#adminBgmUpload');
       await upload.locator('[name=file]').setInputFiles({name:'테스트.mp3',mimeType:'audio/mpeg',buffer:Buffer.from('ID3fixture')});
       await upload.locator('[name=cover]').setInputFiles({name:'cover.png',mimeType:'image/png',buffer:png});
+      if(width===320) await upload.locator('[name=instrumental]').setInputFiles({name:'inst.mp3',mimeType:'audio/mpeg',buffer:Buffer.from('ID3instrumental')});
       await upload.getByRole('button',{name:'업로드'}).click();
-      await page.getByText('음원과 커버 이미지를 업로드했습니다.').waitFor();
+      await page.getByText(width===320 ? '원곡·반주·커버 이미지를 업로드했습니다.' : '음원과 커버 이미지를 업로드했습니다.').waitFor();
+      if(width===320) assert.equal(commands.find(row=>row.action==='upload-inst').id,tracks[0].id);
+      const instChooser=page.waitForEvent('filechooser');
+      await list.locator('[data-inst-edit]').first().click();
+      await (await instChooser).setFiles({name:'inst.mp3',mimeType:'audio/mpeg',buffer:Buffer.from('ID3instrumental')});
+      await page.getByText('반주 음원을 저장했습니다.').waitFor();
+      assert.equal(await list.locator('[data-inst-edit]').first().textContent(),'반주 교체');
       assert.equal(commands.find(row=>row.action==='cover-upload').id,tracks[0].id);
       assert.equal(decodeURIComponent(commands.find(row=>row.action==='upload').title),'테스트');
       const row=list.locator('[data-track]').first();
