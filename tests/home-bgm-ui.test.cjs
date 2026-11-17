@@ -12,9 +12,9 @@ const coverVersion='a8ab5784-a859-4526-8859-9ece88c56d97';
 const webp=Buffer.from('UklGRjQAAABXRUJQVlA4ICgAAACwAQCdASoIAAgAAUAmJZgCdLoABGaAAP7wxAv7gzPq7HDzXxAtwAAA','base64');
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAFElEQVR4nGN0Ce1gwAaYsIoOWgkA5koBMbwl27sAAAAASUVORK5CYII=','base64');
 const tracks = [
-  {id:'ffad2733-d0ef-4c98-8e1a-cccee1d9972a',title:'첫 번째 곡',extension:'mp3',hasLyrics:true},
-  {id:'ffad2733-d0ef-4c98-8e1a-cccee1d9972b',title:'<두 번째 곡>',extension:'mp3'},
-  {id:'ffad2733-d0ef-4c98-8e1a-cccee1d9972c',title:'세 번째 곡',extension:'mp3'}
+  {id:'ffad2733-d0ef-4c98-8e1a-cccee1d9972a',title:'첫 번째 곡',extension:'mp3',hasLyrics:true,playCount:999},
+  {id:'ffad2733-d0ef-4c98-8e1a-cccee1d9972b',title:'<두 번째 곡>',extension:'mp3',playCount:1000},
+  {id:'ffad2733-d0ef-4c98-8e1a-cccee1d9972c',title:'세 번째 곡',extension:'mp3',playCount:10000}
 ];
 const lyric='[00:00.00]<00:00.00>첫 번째 <00:02.00>가사\n[00:04.00]다음 가사';
 function wave() {
@@ -36,6 +36,7 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
   let requests=0, lyricsRequests=0, commands=[], editedLyric=lyric;
   const likedTracks=new Set();
   let voteRequests=0;
+  let playRequests=0;
   const server = http.createServer(async (req,res) => {
     const url = new URL(req.url,'http://127.0.0.1');
     if(url.pathname.startsWith('/storage/')){
@@ -49,6 +50,12 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
     if(url.pathname.startsWith('/functions/')){
       const action=url.searchParams.get('action');
       if(action==='playlist')return res.end(JSON.stringify({ok:true,tracks}));
+      if(action==='record-play'){
+        assert.equal(req.method,'POST');
+        assert.equal(url.searchParams.get('id'),tracks[0].id);
+        playRequests++;
+        return res.end(JSON.stringify({ok:true,playCount:999+playRequests}));
+      }
       if(action==='covers')return res.end(JSON.stringify({ok:true,covers:{[tracks[0].id]:coverVersion}}));
       if(action==='cover'){
         assert.equal(url.searchParams.get('v'),coverVersion);
@@ -116,6 +123,7 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
       assert.equal(await page.locator('audio').evaluate(audio=>audio.paused),true);
       assert.equal(lyricsRequests,0,'lyrics are fetched only for the playing track');
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),width);
+      assert.equal(await page.locator('[data-bgm-like] + [data-bgm-play-count]').innerText(),'1.0천 회 재생');
       const play=page.getByRole('button',{name:'재생',exact:true});
       const home=page.getByRole('button',{name:'홈 동작'});
       if(width<1000)await home.tap();else await home.click();
@@ -423,6 +431,7 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
     assert.equal(await repeat.getAttribute('data-mode'),'off');
     await modePage.getByRole('button',{name:'다음 곡'}).click();
     assert.equal(await modeTitle.textContent(),'세 번째 곡');
+    assert.equal(await modePage.locator('[data-bgm-play-count]').innerText(),'1.0만 회 재생');
     assert.equal(await modePage.getByRole('button',{name:'다음 곡'}).isDisabled(),true);
     await modePage.waitForFunction(()=>!document.querySelector('[data-bgm-seek]').disabled);
     await finish();
@@ -440,6 +449,43 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
     await modePage.getByRole('button',{name:'다음 곡'}).click();
     await modePage.getByRole('button',{name:'오늘 좋아요 누름, 8개'}).waitFor();
     await modePage.close();
+    assert.equal(playRequests,0,'short plays and seeks do not count');
+    const countPage=await browser.newPage({viewport:{width:320,height:650}});
+    await isolatePlaywrightPage(countPage);
+    await countPage.addInitScript(()=>localStorage.setItem('kinojo-bgm-playback-modes','{"shuffle":false,"repeat":"off"}'));
+    await countPage.goto(base+'/m/ranking/');
+    const count=countPage.locator('[data-bgm-play-count]');
+    await countPage.getByText('999회 재생',{exact:true}).waitFor();
+    await countPage.evaluate(()=>{
+      const media=document.querySelector('audio');
+      let position=0, time=0, paused=false, seeking=false;
+      Object.defineProperties(media,{
+        currentTime:{get:()=>position}, readyState:{get:()=>4},
+        paused:{get:()=>paused}, seeking:{get:()=>seeking}
+      });
+      Object.defineProperty(performance,'now',{value:()=>time});
+      const signal=name=>media.dispatchEvent(new Event(name));
+      const playSeconds=seconds=>{for(let i=0;i<seconds;i++){time+=1000; position++; signal('timeupdate');}};
+      signal('playing');
+      playSeconds(5);
+      paused=true;
+      signal('pause');
+      time+=30000;
+      seeking=true;
+      signal('seeking');
+      position=40;
+      signal('timeupdate');
+      seeking=false;
+      signal('seeked');
+      paused=false;
+      signal('playing');
+      playSeconds(5);
+      playSeconds(15);
+    });
+    await countPage.getByText('1.0천 회 재생',{exact:true}).waitFor();
+    assert.equal(await count.getAttribute('title'),'1,000회 재생');
+    assert.equal(playRequests,1,'a qualifying play is counted once after pause and seek');
+    await countPage.close();
     for(const width of [1440,320]){
       commands=[];editedLyric=lyric;
       const page=await browser.newPage({viewport:{width,height:840}});

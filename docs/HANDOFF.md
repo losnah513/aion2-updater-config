@@ -1,5 +1,7 @@
 ## Home BGM · 2026-11-16
 
+- The current track's public play count sits next to the heart. It starts at zero after deployment and displays full counts below 1,000, then uses 천 and 만 with one decimal. The tooltip shows the exact total. The browser reports each playback once after 10 seconds of advancing audio, excluding pauses and seeks. The existing service-only BGM RPC atomically increments the song's column and includes the total in the playlist. Playback creates no history rows. Deploy the play-count migration, the existing BGM Edge, then Pages. Restore Web and Edge before SQL rollback, which retains the totals.
+
 - At widths up to 600 px the BGM picker presents a near-full-width cover between top and bottom previews on a transparent dialog. It uses vertical swipe, arrow keys and transitions. The wider layout retains horizontal controls and its existing panel. The close button, keyboard focus, and reduced-motion handling are available.
 
 - The cover upload Edge accepts extended still WebP files, including embedded color profiles. It checks RIFF chunk lengths, the 640 px canvas and frame limits, and rejects animation. This is an Edge-only production rollout.

@@ -161,11 +161,12 @@ Deno.serve(async (request: Request) => {
       const response = await fetch(base + "/rest/v1/rpc/kinojo_home_bgm_v1", {
         method: "POST", signal: AbortSignal.timeout(8000),
         headers: { ...service, "content-type": "application/json" },
-        body: JSON.stringify({ p_action: action, p_session_token: ["playlist", "lyrics"].includes(action) ? null : session, p_track: track }),
+        body: JSON.stringify({ p_action: action, p_session_token: ["playlist", "lyrics", "record-play"].includes(action) ? null : session, p_track: track }),
       });
       const result = await response.json();
       if (!response.ok) throw new BgmError("SERVER_ERROR", 502);
-      if (!result.ok) throw new BgmError(result.code, result.code === "ADMIN_ACCESS_REQUIRED" ? 403 : 409);
+      if (!result.ok) throw new BgmError(result.code, result.code === "ADMIN_ACCESS_REQUIRED" ? 403 :
+        action === "record-play" && result.code === "TRACK_UNAVAILABLE" ? 404 : 409);
       return result;
     };
     const params = new URL(request.url).searchParams;
@@ -218,6 +219,12 @@ Deno.serve(async (request: Request) => {
       return reply(request, result);
     }
     if (request.method === "GET" && action === "playlist") return reply(request, await rpc("playlist"));
+    if (request.method === "POST" && action === "record-play") {
+      if (!origin || !origins.has(origin)) return reply(request, { ok: false }, 403);
+      const id = params.get("id") || "";
+      if (!uuid.test(id)) throw new BgmError("INVALID_INPUT");
+      return reply(request, await rpc("record-play", { id }));
+    }
     if (request.method === "GET" && action === "lyrics") {
       const id = new URL(request.url).searchParams.get("id") || "";
       if (!uuid.test(id)) throw new BgmError("INVALID_INPUT");
