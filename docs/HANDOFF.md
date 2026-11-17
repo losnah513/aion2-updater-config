@@ -1,5 +1,7 @@
 ## Home BGM · 2026-11-16
 
+- At widths up to 600 px the BGM picker presents a near-full-width cover between top and bottom previews on a transparent dialog. It uses vertical swipe, arrow keys and transitions. The wider layout retains horizontal controls and its existing panel. The close button, keyboard focus, and reduced-motion handling are available.
+
 - The cover upload Edge accepts extended still WebP files, including embedded color profiles. It checks RIFF chunk lengths, the 640 px canvas and frame limits, and rejects animation. This is an Edge-only production rollout.
 
 - Moving through the track picker animates covers and their size changes in the navigation direction. Cover downloads update the cards in place. Keyboard, buttons and swipe share the same carousel movement, while reduced-motion users get an immediate update.
