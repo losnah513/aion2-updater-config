@@ -1,6 +1,7 @@
 const bucket = "kinojo-home-bgm";
 const maxBytes = 6 * 1024 * 1024;
 const maxLyricsBytes = 24 * 1024;
+const maxCoverBytes = 128 * 1024;
 const origins = new Set(["https://kinojo.info", "https://www.kinojo.info"]);
 const mime = { mp3: "audio/mpeg", m4a: "audio/mp4", ogg: "audio/ogg" } as const;
 type Extension = keyof typeof mime;
@@ -14,6 +15,8 @@ const errors: Record<string, string> = {
   SIZE_LIMIT: "음원 한 곡은 최대 6 MiB입니다.",
   INVALID_AUDIO: "MP3, M4A 또는 OGG 음원 파일을 선택해 주세요.",
   INVALID_LYRICS: "24 KiB 이하의 UTF-8 일반 가사 또는 LRC를 입력해 주세요.",
+  INVALID_COVER: "앨범 커버는 128 KiB 이하의 정지 WebP 이미지여야 합니다.",
+  COVER_UNAVAILABLE: "앨범 커버를 찾을 수 없습니다.",
   UPLOAD_FAILED: "업로드를 완료하지 못했습니다. 목록을 확인한 뒤 다시 시도해 주세요.",
   DELETE_FAILED: "파일 삭제를 완료하지 못했습니다. 목록에서 삭제를 다시 시도해 주세요.",
   SERVER_ERROR: "BGM 요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.",
@@ -102,6 +105,24 @@ async function likeIpKey(request: Request, secret: string) {
   }
 }
 
+function isCover(data: Uint8Array<ArrayBuffer>) {
+  if (data.length < 30) return false;
+  const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+  const code = (offset: number) => view.getUint32(offset);
+  if (code(0) !== 0x52494646 || code(8) !== 0x57454250 || view.getUint32(4, true) !== data.length - 8) return false;
+  const chunk = code(12);
+  let width: number, height: number;
+  if (chunk === 0x56503820 && data[23] === 0x9d && data[24] === 0x01 && data[25] === 0x2a) {
+    width = view.getUint16(26, true) & 0x3fff;
+    height = view.getUint16(28, true) & 0x3fff;
+  } else if (chunk === 0x5650384c && data[20] === 0x2f) {
+    const dims = view.getUint32(21, true);
+    width = (dims & 0x3fff) + 1;
+    height = ((dims >>> 14) & 0x3fff) + 1;
+  } else return false;
+  return width >= 1 && height >= 1 && width <= 640 && height <= 640;
+}
+
 Deno.serve(async (request: Request) => {
   try {
     const origin = request.headers.get("origin");
@@ -125,6 +146,37 @@ Deno.serve(async (request: Request) => {
     };
     const params = new URL(request.url).searchParams;
     const action = params.get("action");
+    if ((request.method === "GET" && ["covers", "cover"].includes(action || "")) ||
+        (request.method === "POST" && action === "cover-upload")) {
+      const catalog = action === "covers";
+      const saving = action === "cover-upload";
+      const id = catalog ? null : params.get("id") || "";
+      const version = action === "cover" ? params.get("v") || "" : null;
+      if (id !== null && !uuid.test(id) || version !== null && !uuid.test(version)) throw new BgmError("INVALID_INPUT");
+      let image = null;
+      if (saving) {
+        if (!session || !/^kws_[A-Za-z0-9_-]{40,80}$/.test(session)) throw new BgmError("ADMIN_ACCESS_REQUIRED", 401);
+        if (request.headers.get("content-type") !== "image/webp") throw new BgmError("INVALID_COVER");
+        const data = await bytes(request, maxCoverBytes);
+        if (!isCover(data)) throw new BgmError("INVALID_COVER");
+        let binary = "";
+        for (let i = 0; i < data.length; i += 8192) binary += String.fromCharCode(...data.subarray(i, i + 8192));
+        image = btoa(binary);
+      }
+      const response = await fetch(base + "/rest/v1/rpc/kinojo_home_bgm_covers_v1", {
+        method: "POST", signal: AbortSignal.timeout(8000),
+        headers: { ...service, "content-type": "application/json" },
+        body: JSON.stringify({ p_action: catalog ? "catalog" : saving ? "save" : "get",
+          p_id: id, p_version: version, p_session_token: saving ? session : null, p_image: image }),
+      });
+      if (!response.ok) throw new BgmError("SERVER_ERROR", 502);
+      const result = await response.json();
+      if (!result.ok) throw new BgmError(result.code, result.code === "ADMIN_ACCESS_REQUIRED" ? 403 : 404);
+      if (catalog || saving) return reply(request, result);
+      return new Response(Uint8Array.from(atob(result.image), value => value.charCodeAt(0)), {
+        headers: { "content-type": "image/webp", "cache-control": "public, max-age=300", "x-content-type-options": "nosniff" },
+      });
+    }
     if (action === "likes" && (request.method === "GET" || request.method === "POST")) {
       const id = params.get("id") || "";
       if (!uuid.test(id)) throw new BgmError("INVALID_INPUT");
