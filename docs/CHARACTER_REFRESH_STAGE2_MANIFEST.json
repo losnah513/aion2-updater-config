@@ -140,7 +140,7 @@
     },
     {
       "path": "admin/js/admin.js",
-      "sha256": "00cae1f6e972bc008a0b571d044c589fdc6ff7bb4f8c033d5b31721ff757f85c"
+      "sha256": "e824262aa49310550599b6ef8b1c33fd7a562bde2a06ed41bc38d8f9a88c9eec"
     },
     {
       "path": "admin/js/admin-bootstrap.js",
@@ -148,11 +148,11 @@
     },
     {
       "path": "admin/index.html",
-      "sha256": "56fa5a7e3505ee73803b0c42c83f6a4385bfceb5acd49378a0e414ee45a8d030"
+      "sha256": "6ab5a844133f159f17b1366e804048e45c81f2acd3aa59d68a5abc3839c6df9b"
     },
     {
       "path": "m/admin/index.html",
-      "sha256": "5f12c673c5ab28795967fa82879db3285a243909e3314f39559251a4cca44e61"
+      "sha256": "b214da9ef1554b5c716ce12ad0e0004ad5163a913c17416ae1cd002a8837e6c4"
     },
     {
       "path": "supabase/config.toml",
@@ -216,6 +216,30 @@
       "previousSha256": "ce2a3104cd2f1d3de8683fc537ecf88835b6e9a8c04e778ea8aecf294d5009c4",
       "sha256": "2f4633d16a880cc63d6253eee1cae9efb80901363935987ac59c817faa1ea261",
       "validation": "67 Character Refresh offline contracts/browser fixtures passed; migration list and deploymentAuthorized remain unchanged."
+    },
+    {
+      "date": "2026-11-17",
+      "scope": "BGM instrumental controls and admin cache revision only",
+      "path": "admin/js/admin.js",
+      "previousSha256": "00cae1f6e972bc008a0b571d044c589fdc6ff7bb4f8c033d5b31721ff757f85c",
+      "sha256": "e824262aa49310550599b6ef8b1c33fd7a562bde2a06ed41bc38d8f9a88c9eec",
+      "validation": "Existing character-refresh migrations, loader generation, and deploymentAuthorized are unchanged."
+    },
+    {
+      "date": "2026-11-17",
+      "scope": "BGM instrumental controls and admin cache revision only",
+      "path": "admin/index.html",
+      "previousSha256": "56fa5a7e3505ee73803b0c42c83f6a4385bfceb5acd49378a0e414ee45a8d030",
+      "sha256": "6ab5a844133f159f17b1366e804048e45c81f2acd3aa59d68a5abc3839c6df9b",
+      "validation": "Existing character-refresh migrations, loader generation, and deploymentAuthorized are unchanged."
+    },
+    {
+      "date": "2026-11-17",
+      "scope": "BGM instrumental controls and admin cache revision only",
+      "path": "m/admin/index.html",
+      "previousSha256": "5f12c673c5ab28795967fa82879db3285a243909e3314f39559251a4cca44e61",
+      "sha256": "b214da9ef1554b5c716ce12ad0e0004ad5163a913c17416ae1cd002a8837e6c4",
+      "validation": "Existing character-refresh migrations, loader generation, and deploymentAuthorized are unchanged."
     }
   ]
 }
