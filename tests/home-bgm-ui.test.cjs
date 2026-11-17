@@ -496,10 +496,11 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
     await countPage.close();
     const instPage=await browser.newPage({viewport:{width:320,height:650}});
     await isolatePlaywrightPage(instPage);
-    await instPage.addInitScript(()=>{Math.random=()=>0;});
+    await instPage.addInitScript(()=>localStorage.setItem('kinojo-bgm-playback-modes','{"shuffle":false,"repeat":"all"}'));
     await instPage.goto(base+'/m/ranking/');
     const vocals=instPage.getByRole('button',{name:'보컬',exact:true});
-    await instPage.getByText('<두 번째 곡>',{exact:true}).waitFor();
+    await instPage.getByRole('button',{name:'다음 곡',exact:true}).click();
+    assert.equal(await instPage.locator('[data-bgm-title]').textContent(),'<두 번째 곡>');
     assert.equal(await vocals.getAttribute('aria-pressed'),'true');
     await vocals.click();
     assert.equal(await vocals.getAttribute('aria-pressed'),'false');
