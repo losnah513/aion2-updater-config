@@ -14,6 +14,8 @@ const likesRollback = fs.readFileSync(path.join(__dirname,'../supabase/rollbacks
 const coverMigration = fs.readFileSync(path.join(__dirname,'../supabase/migrations/20261117005315_home_bgm_cover_images.sql'),'utf8');
 const coverRollback = fs.readFileSync(path.join(__dirname,'../supabase/rollbacks/20261117005315_home_bgm_cover_images.sql'),'utf8');
 const webp=Buffer.from('UklGRjQAAABXRUJQVlA4ICgAAACwAQCdASoIAAgAAUAmJZgCdLoABGaAAP7wxAv7gzPq7HDzXxAtwAAA','base64');
+// A still WebP with an embedded ICC profile uses a VP8X container.
+const extendedWebp = Buffer.from('UklGRi4CAABXRUJQVlA4WAoAAAAgAAAABwAABwAASUNDUMgBAAAAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADZWUDggQAAAAPABAJ0BKggACAABQCYlnAJ0ARd+j1gzAADOP86e7X6tC3/soe75tH4q/tmL2Rrw1WRNjwkAY7ta6u8xMneIAAA=', 'base64');
 const edge = fs.readFileSync(path.join(__dirname,'../supabase/functions/kinojo-home-bgm/index.ts'),'utf8');
 test('BGM Edge, database and storage boundary', async () => {
   const db = new PGlite();
@@ -102,12 +104,24 @@ test('BGM Edge, database and storage boundary', async () => {
     assert.equal((await putCover(admin,Buffer.alloc(40))).status,400);
     assert.equal((await putCover(admin,Buffer.alloc(131073))).status,413);
     const firstCover=(await putCover(admin)).data.version;
-    const nextCover=(await putCover(admin)).data.version;
+    const animated=Buffer.from(extendedWebp);
+    animated[20] |= 0x02;
+    assert.equal((await putCover(admin,animated)).data.code,'INVALID_COVER');
+    const oversized=Buffer.from(extendedWebp);
+    oversized.writeUIntLE(640,24,3);
+    assert.equal((await putCover(admin,oversized)).data.code,'INVALID_COVER');
+    const truncated=extendedWebp.subarray(0,-2);
+    const badChunk=Buffer.from(truncated);
+    badChunk.writeUInt32LE(badChunk.length-8,4);
+    assert.equal((await putCover(admin,badChunk)).data.code,'INVALID_COVER');
+    const savedExtended=await putCover(admin,extendedWebp);
+    assert.equal(savedExtended.status,200);
+    const nextCover=savedExtended.data.version;
     assert.notEqual(firstCover,nextCover);
     assert.deepEqual(await coverCatalog(),{[first.id]:nextCover});
     const imageResponse=await handler(new Request(base+'cover&id='+first.id+'&v='+nextCover));
     assert.equal(imageResponse.headers.get('content-type'),'image/webp');
-    assert.deepEqual(Buffer.from(await imageResponse.arrayBuffer()),webp);
+    assert.deepEqual(Buffer.from(await imageResponse.arrayBuffer()),extendedWebp);
     assert.equal((await handler(new Request(base+'cover&id='+first.id+'&v='+firstCover))).status,404);
     const signature='public.kinojo_home_bgm_covers_v1(text,uuid,uuid,text,text)';
     const permissions=(await db.query("select has_function_privilege('anon',$1,'execute') as anon, has_function_privilege('authenticated',$1,'execute') as authenticated, has_function_privilege('service_role',$1,'execute') as service",[signature])).rows[0];
