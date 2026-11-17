@@ -11,6 +11,9 @@ const migration = fs.readFileSync(path.join(__dirname,'../supabase/migrations/20
 const rollback = fs.readFileSync(path.join(__dirname,'../supabase/rollbacks/20261116011005_home_bgm_lyrics.sql'),'utf8');
 const likesMigration = fs.readFileSync(path.join(__dirname,'../supabase/migrations/20261116024338_home_bgm_likes.sql'),'utf8');
 const likesRollback = fs.readFileSync(path.join(__dirname,'../supabase/rollbacks/20261116024338_home_bgm_likes.sql'),'utf8');
+const coverMigration = fs.readFileSync(path.join(__dirname,'../supabase/migrations/20261117005315_home_bgm_cover_images.sql'),'utf8');
+const coverRollback = fs.readFileSync(path.join(__dirname,'../supabase/rollbacks/20261117005315_home_bgm_cover_images.sql'),'utf8');
+const webp=Buffer.from('UklGRjQAAABXRUJQVlA4ICgAAACwAQCdASoIAAgAAUAmJZgCdLoABGaAAP7wxAv7gzPq7HDzXxAtwAAA','base64');
 const edge = fs.readFileSync(path.join(__dirname,'../supabase/functions/kinojo-home-bgm/index.ts'),'utf8');
 test('BGM Edge, database and storage boundary', async () => {
   const db = new PGlite();
@@ -26,6 +29,7 @@ test('BGM Edge, database and storage boundary', async () => {
     await db.exec(sql);
     await db.exec(migration);
     await db.exec(likesMigration);
+    await db.exec(coverMigration);
     const grants = await db.query(`select has_function_privilege('anon','public.kinojo_home_bgm_v1(text,text,jsonb)','execute') as anon,
       has_function_privilege('authenticated','public.kinojo_home_bgm_v1(text,text,jsonb)','execute') as authenticated,
       has_function_privilege('service_role','public.kinojo_home_bgm_v1(text,text,jsonb)','execute') as service`);
@@ -34,10 +38,15 @@ test('BGM Edge, database and storage boundary', async () => {
     const objects = new Map();
     vm.runInNewContext(stripTypeScriptTypes(edge,{mode:'transform'}), {
       Deno:{serve(fn){handler=fn},env:{get(name){return name==='SUPABASE_URL'?'https://storage.test':'local-fixture'}}},
-      Request,Response,Headers,URL,TextEncoder,TextDecoder,Uint8Array,AbortSignal,crypto,
+      Request,Response,Headers,URL,TextEncoder,TextDecoder,Uint8Array,AbortSignal,crypto,btoa,atob,
       fetch:async (url,opts) => {
         if(url.includes('/rpc/')){
           const body=JSON.parse(opts.body);
+          if(url.endsWith('/kinojo_home_bgm_covers_v1')){
+            const {rows}=await db.query('select public.kinojo_home_bgm_covers_v1($1,$2,$3,$4,$5) as data',
+              [body.p_action,body.p_id,body.p_version,body.p_session_token,body.p_image]);
+            return Response.json(rows[0].data);
+          }
           if(url.endsWith('/kinojo_home_bgm_likes_v1')){
             assert.ok(body.p_ip_key === null || /^[a-f0-9]{64}$/.test(body.p_ip_key));
             const {rows}=await db.query('select public.kinojo_home_bgm_likes_v1($1,$2,$3) as data',
@@ -64,7 +73,7 @@ test('BGM Edge, database and storage boundary', async () => {
     const admin='kws_'+'a'.repeat(40), member='kws_'+'b'.repeat(40);
     async function request(action, token=admin, extra={}){
       const response=await handler(new Request(base+action,{
-        method:extra.method || (/^(playlist|lyrics&)/.test(action)?'GET':'POST'),body:extra.body,
+        method:extra.method || (/^(playlist|lyrics&|covers$)/.test(action)?'GET':'POST'),body:extra.body,
         headers:{origin:'https://kinojo.info',...(token?{'x-kinojo-session':token}:{}),...extra.headers}
       }));
       return {status:response.status,data:await response.json()};
@@ -83,6 +92,26 @@ test('BGM Edge, database and storage boundary', async () => {
     const first=(await upload('첫 곡')).data.track;
     const second=(await upload('다음 곡')).data.track;
     assert.equal(objects.size,2);
+    const putCover = (token,body=webp) => request('cover-upload&id='+first.id,token,{
+      headers:{'content-type':'image/webp'},body
+    });
+    const coverCatalog=async()=> (await request('covers',null)).data.covers;
+    assert.deepEqual(await coverCatalog(),{});
+    assert.equal((await putCover(null)).status,401);
+    assert.equal((await putCover(member)).status,403);
+    assert.equal((await putCover(admin,Buffer.alloc(40))).status,400);
+    assert.equal((await putCover(admin,Buffer.alloc(131073))).status,413);
+    const firstCover=(await putCover(admin)).data.version;
+    const nextCover=(await putCover(admin)).data.version;
+    assert.notEqual(firstCover,nextCover);
+    assert.deepEqual(await coverCatalog(),{[first.id]:nextCover});
+    const imageResponse=await handler(new Request(base+'cover&id='+first.id+'&v='+nextCover));
+    assert.equal(imageResponse.headers.get('content-type'),'image/webp');
+    assert.deepEqual(Buffer.from(await imageResponse.arrayBuffer()),webp);
+    assert.equal((await handler(new Request(base+'cover&id='+first.id+'&v='+firstCover))).status,404);
+    const signature='public.kinojo_home_bgm_covers_v1(text,uuid,uuid,text,text)';
+    const permissions=(await db.query("select has_function_privilege('anon',$1,'execute') as anon, has_function_privilege('authenticated',$1,'execute') as authenticated, has_function_privilege('service_role',$1,'execute') as service",[signature])).rows[0];
+    assert.deepEqual(permissions,{anon:false,authenticated:false,service:true});
     assert.deepEqual((await get()).map(row=>row.title),['첫 곡','다음 곡']);
     assert.deepEqual(Object.keys((await get())[0]).sort(),['extension','hasLyrics','id','title']);
     assert.equal((await request('lyrics&id='+first.id,null)).data.lyrics,null);
@@ -155,6 +184,10 @@ test('BGM Edge, database and storage boundary', async () => {
     assert.equal(objects.size,1);
     assert.equal((await vote(first.id,ip)).status,404);
     assert.equal((await db.query('select count(*)::int as count from private.kinojo_home_bgm_daily_like where track_id=$1',[first.id])).rows[0].count,0);
+    assert.deepEqual(await coverCatalog(),{});
+    assert.equal((await db.query('select count(*)::int as count from private.kinojo_home_bgm_covers')).rows[0].count,0);
+    await db.exec(coverRollback);
+    assert.equal((await db.query("select has_function_privilege('service_role',$1,'execute') as access",[signature])).rows[0].access,false);
     await db.exec(likesRollback);
     assert.equal((await db.query('select like_count::int from private.kinojo_home_bgm where id=$1',[second.id])).rows[0].like_count,1);
     assert.equal((await db.query(`select has_function_privilege('service_role','public.kinojo_home_bgm_likes_v1(uuid,text,boolean)','execute') as access`)).rows[0].access,false);

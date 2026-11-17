@@ -10,7 +10,8 @@
   const lyricStatus = document.getElementById('adminBgmLyricsStatus');
   const lyricSave = lyricForm.querySelector('[type=submit]');
   const mime = { mp3: 'audio/mpeg', m4a: 'audio/mp4', ogg: 'audio/ogg' };
-  let busy = false, lyricEditor = null;
+  const coverInput = document.getElementById('adminBgmCoverFile');
+  let busy = false, lyricEditor = null, coverTrackId = null;
   const show = (message, tone = '') => { status.textContent = message; status.className = 'admin-statusline ' + tone; };
 
   async function request(action, payload, file) {
@@ -20,14 +21,17 @@
     const config = await client.ensureConfig();
     const headers = new Headers(client.headers(config));
     headers.set('x-kinojo-session', session);
-    if (file) {
+    const coverUpload = action === 'cover-upload';
+    if (coverUpload) {
+      headers.set('content-type', 'image/webp');
+    } else if (file) {
       headers.set('content-type', mime[payload.extension]);
       headers.set('x-bgm-title', encodeURIComponent(payload.title));
       headers.set('x-bgm-extension', payload.extension);
     }
     const isRead = action === 'lyrics';
     if (isRead) headers.delete('x-kinojo-session');
-    const url = config.url + '/functions/v1/kinojo-home-bgm?action=' + action + (isRead ? '&id=' + encodeURIComponent(payload.id) : '');
+    const url = config.url + '/functions/v1/kinojo-home-bgm?action=' + action + (isRead || coverUpload ? '&id=' + encodeURIComponent(payload.id) : '');
     const response = await fetch(url, {
       method: isRead ? 'GET' : 'POST', headers, body: isRead ? undefined : file || JSON.stringify(payload || {}),
       signal: AbortSignal.timeout(file ? 75000 : 25000)
@@ -45,6 +49,7 @@
         + '<div class="admin-row-actions"><span class="admin-pill ' + (ready ? 'ok' : 'info') + '">' + (ready ? '공개' : track.state === 'DELETING' ? '삭제 재시도 필요' : '업로드 미완료') + '</span>'
         + (ready ? '<button class="admin-btn" type="submit">저장</button>' : '')
         + (ready ? '<button class="admin-btn" type="button" data-lyrics="' + (track.hasLyrics === true ? 'saved' : 'empty') + '">' + (track.hasLyrics === true ? '가사 수정' : '가사 등록') + '</button>' : '')
+        + (ready ? '<button class="admin-btn" type="button" data-cover-edit>커버 이미지</button>' : '')
         + (track.canDelete ? '<button class="admin-btn" type="button" data-remove>' + (ready ? '삭제' : '파일 정리') + '</button>' : '')
         + '</div></form>';
     }).join('') : '<div class="admin-empty">등록된 곡이 없습니다.</div>';
@@ -121,6 +126,35 @@
       }
     } finally { editor.saving = false; }
   });
+  async function prepareCover(file) {
+    if (file.size < 1 || file.size > 10 * 1024 * 1024) throw new Error('커버 이미지는 최대 10 MiB입니다.');
+    let bitmap;
+    try { bitmap = await createImageBitmap(file); }
+    catch { throw new Error('JPG, PNG 또는 WebP 이미지를 선택해 주세요.'); }
+    const canvas = document.createElement('canvas');
+    try {
+      const scale = Math.min(1, 640 / Math.max(bitmap.width, bitmap.height));
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      canvas.getContext('2d', { alpha: false }).drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      for (const quality of [0.83, 0.67, 0.5, 0.34]) {
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', quality));
+        if (blob?.type === 'image/webp' && blob.size <= 128 * 1024) return blob;
+      }
+      throw new Error('커버를 변환할 수 없습니다. 더 작은 이미지를 선택해 주세요.');
+    } finally { bitmap.close(); }
+  }
+  coverInput.addEventListener('change', () => {
+    const file = coverInput.files[0];
+    const id = coverTrackId;
+    coverInput.value = '';
+    coverTrackId = null;
+    if (!file || !id) return;
+    void perform(async () => {
+      await request('cover-upload', { id }, await prepareCover(file));
+      return '커버 이미지를 저장했습니다.';
+    }, '커버 이미지 저장 중…');
+  });
   async function perform(work, pending) {
     if (busy) return;
     busy = true;
@@ -141,11 +175,20 @@
     if (!file || !Object.hasOwn(mime, extension) || file.size < 1 || file.size > 6291456 || !title || title.length > 100) {
       show('제목은 100자 이내, MP3·M4A·OGG 파일은 6 MiB 이내로 선택해 주세요.', 'error'); return;
     }
+    const originalCover = form.elements.cover.files[0];
     void perform(async () => {
-      await request('upload', { title, extension }, file);
+      const cover = originalCover ? await prepareCover(originalCover) : null;
+      const { track } = await request('upload', { title, extension }, file);
       form.reset();
+      if (cover) {
+        try { await request('cover-upload', { id: track.id }, cover); }
+        catch {
+          await refresh().catch(() => {});
+          throw new Error('음원은 업로드했습니다. 곡 목록에서 커버 이미지를 다시 추가해 주세요.');
+        }
+      }
       try { await refresh(); } catch { return '업로드했습니다. 목록 새로고침을 눌러 주세요.'; }
-      return '업로드 완료. 홈페이지에서 재생할 수 있습니다.';
+      return cover ? '음원과 커버 이미지를 업로드했습니다.' : '업로드 완료. 홈페이지에서 재생할 수 있습니다.';
     }, '음원 업로드 중…');
   });
   list.addEventListener('submit', event => {
@@ -159,6 +202,12 @@
     }, '곡 정보 저장 중…');
   });
   list.addEventListener('click', event => {
+    const coverButton = event.target.closest('[data-cover-edit]');
+    if (coverButton && !busy) {
+      coverTrackId = coverButton.closest('[data-track]').dataset.track;
+      coverInput.click();
+      return;
+    }
     const lyricButton = event.target.closest('[data-lyrics]');
     if (lyricButton) return void openLyrics(lyricButton);
     const row = event.target.closest('[data-remove]')?.closest('[data-track]');

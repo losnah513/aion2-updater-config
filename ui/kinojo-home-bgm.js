@@ -30,9 +30,14 @@
     <small class="kinojo-bgm-status" data-bgm-status role="status"></small>
   </div>
   <audio preload="none"></audio>
-  <dialog class="kinojo-bgm-dialog" data-bgm-dialog aria-labelledby="bgm-list-heading">
+  <dialog class="kinojo-bgm-dialog kinojo-bgm-cover-dialog" data-bgm-dialog aria-labelledby="bgm-list-heading">
     <header><h2 id="bgm-list-heading">곡 목록</h2><form method="dialog"><button type="submit" data-bgm-close aria-label="곡 목록 닫기">×</button></form></header>
     <div class="kinojo-bgm-tracks" data-bgm-tracks></div>
+    <div class="kinojo-bgm-cover-nav" data-bgm-cover-nav hidden>
+      <button type="button" data-bgm-cover-back aria-label="목록에서 이전 곡 보기">‹</button>
+      <span data-bgm-cover-count aria-live="polite"></span>
+      <button type="button" data-bgm-cover-forward aria-label="목록에서 다음 곡 보기">›</button>
+    </div>
   </dialog>
   <dialog class="kinojo-bgm-dialog kinojo-bgm-lyrics-dialog" data-bgm-lyrics-dialog aria-labelledby="bgm-full-lyrics-heading">
     <header><h2 id="bgm-full-lyrics-heading">전체 가사</h2><form method="dialog"><button type="submit" aria-label="전체 가사 닫기" autofocus>×</button></form></header>
@@ -64,6 +69,9 @@
   const listButton = root.querySelector('[data-bgm-list]');
   const dialog = root.querySelector('[data-bgm-dialog]');
   const list = root.querySelector('[data-bgm-tracks]');
+  const coverNav = root.querySelector('[data-bgm-cover-nav]');
+  const coverCount = coverNav.querySelector('[data-bgm-cover-count]');
+  let coverOrder = [], coverIndex = 0, covers = {}, coverTouch;
   const lyricLine = root.querySelector('[data-bgm-lyric-line]');
   const lyricsButton = root.querySelector('[data-bgm-full-lyrics]');
   const lyricsDialog = root.querySelector('[data-bgm-lyrics-dialog]');
@@ -247,25 +255,84 @@
     }
     return order;
   }
-  function renderList() {
+  function resetCoverOrder() {
+    const before = backTracks.at(-1);
+    const after = forwardTracks.at(-1);
+    const active = current();
+    coverOrder = [...queue];
+    if (coverOrder.length > 2 && active) {
+      for (const [neighbor, shift] of [[before, 0], [after, 1]]) {
+        if (!neighbor || neighbor === active || !coverOrder.includes(neighbor)) continue;
+        coverOrder.splice(coverOrder.indexOf(neighbor), 1);
+        coverOrder.splice(coverOrder.indexOf(active) + shift, 0, neighbor);
+      }
+    }
+    coverIndex = Math.max(0, coverOrder.indexOf(active));
+  }
+  function renderList(focusCenter = false) {
     if (!dialog.open) return;
-    const focusedId = list.contains(document.activeElement) ? document.activeElement.dataset.bgmTrack : null;
+    const focused = list.contains(document.activeElement) ? document.activeElement : null;
     list.replaceChildren();
-    if (!tracks.length) {
+    coverNav.hidden = coverOrder.length < 2;
+    if (!coverOrder.length) {
       const empty = document.createElement('p');
       empty.textContent = loading ? '곡 목록 불러오는 중…' : failed ? '곡 목록을 불러오지 못했습니다.' : '등록된 곡이 없습니다.';
       list.append(empty);
       return;
     }
-    for (const track of tracks) {
+    coverCount.textContent = (coverIndex + 1) + ' / ' + coverOrder.length;
+    for (const [offset, position] of [[-1, 'left'], [0, 'center'], [1, 'right']]) {
+      if (coverOrder.length === 1 && offset || coverOrder.length === 2 && offset === -1) continue;
+      const track = coverOrder[(coverIndex + offset + coverOrder.length) % coverOrder.length];
       const item = document.createElement('button');
       item.type = 'button';
       item.dataset.bgmTrack = track.id;
-      item.textContent = track.title;
+      item.dataset.coverPosition = position;
       if (track === current()) item.setAttribute('aria-current', 'true');
+      const artwork = document.createElement('span');
+      artwork.className = 'kinojo-bgm-cover-art';
+      artwork.setAttribute('aria-hidden', 'true');
+      const fallback = document.createElement('span');
+      fallback.textContent = '♫';
+      artwork.append(fallback);
+      const version = covers[track.id];
+      if (version) {
+        const image = document.createElement('img');
+        image.alt = '';
+        image.decoding = 'async';
+        image.addEventListener('error', () => image.remove(), { once: true });
+        image.src = config.url + '/functions/v1/kinojo-home-bgm?action=cover&id=' + track.id + '&v=' + version;
+        artwork.append(image);
+      }
+      const label = document.createElement('span');
+      label.textContent = track.title;
+      item.append(artwork, label);
       list.append(item);
-      if (track.id === focusedId) item.focus({ preventScroll: true });
+      if ((focusCenter && offset === 0) || (!focusCenter && track.id === focused?.dataset.bgmTrack)) {
+        item.focus({ preventScroll: true });
+      }
     }
+  }
+  async function loadCovers() {
+    if (!config || !tracks.length) return;
+    try {
+      const response = await fetch(config.url + '/functions/v1/kinojo-home-bgm?action=covers', {
+        headers: client.headers(config), signal: AbortSignal.timeout(8000), cache: 'no-store'
+      });
+      const result = await response.json();
+      if (!response.ok || result.ok !== true || !result.covers) return;
+      covers = Object.fromEntries(tracks.flatMap(track => {
+        const version = result.covers[track.id];
+        return typeof version === 'string' && /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(version)
+          ? [[track.id, version]] : [];
+      }));
+      renderList();
+    } catch { /* Track selection remains available. */ }
+  }
+  function browseCovers(step, focusCenter = false) {
+    if (coverOrder.length < 2) return;
+    coverIndex = (coverIndex + step + coverOrder.length) % coverOrder.length;
+    renderList(focusCenter);
   }
   function parseLrc(source) {
     const offset = Number(source.match(/^\s*\[offset\s*:\s*([+-]?\d{1,6})\]/im)?.[1] || 0) / 1000;
@@ -444,7 +511,9 @@
     status.textContent = '';
     progress();
     button();
+    resetCoverOrder();
     renderList();
+    if (dialog.open) void loadCovers();
     lyricsButton.disabled = !current();
     renderLyricsDialog();
     if (lyricsDialog.open) void loadLyrics(current());
@@ -600,10 +669,30 @@
     advance(continuePlaying);
   });
   listButton.addEventListener('click', () => {
+    resetCoverOrder();
     dialog.showModal();
-    renderList();
-    (list.querySelector('[aria-current]') || dialog.querySelector('[data-bgm-close]')).focus();
+    renderList(true);
+    void loadCovers();
   });
+  coverNav.querySelector('[data-bgm-cover-back]').addEventListener('click', () => browseCovers(-1));
+  coverNav.querySelector('[data-bgm-cover-forward]').addEventListener('click', () => browseCovers(1));
+  dialog.addEventListener('keydown', event => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    browseCovers(event.key === 'ArrowLeft' ? -1 : 1, true);
+  });
+  list.addEventListener('touchstart', event => {
+    coverTouch = event.touches.length === 1 ? event.touches[0] : null;
+  }, { passive: true });
+  list.addEventListener('touchend', event => {
+    if (!coverTouch || !event.changedTouches.length) return;
+    const dx = event.changedTouches[0].clientX - coverTouch.clientX;
+    const dy = event.changedTouches[0].clientY - coverTouch.clientY;
+    coverTouch = null;
+    if (Math.abs(dx) < 36 || Math.abs(dx) < Math.abs(dy)) return;
+    if (event.cancelable) event.preventDefault();
+    browseCovers(dx < 0 ? 1 : -1);
+  }, { passive: false });
   dialog.addEventListener('close', () => listButton.focus());
   list.addEventListener('click', event => {
     const id = event.target.closest('[data-bgm-track]')?.dataset.bgmTrack;

@@ -8,6 +8,9 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const { isolatePlaywrightPage } = require('./helpers/visitor-traffic');
 const root = path.join(__dirname, '..');
 const read = name => fs.readFileSync(path.join(root,name),'utf8');
+const coverVersion='a8ab5784-a859-4526-8859-9ece88c56d97';
+const webp=Buffer.from('UklGRjQAAABXRUJQVlA4ICgAAACwAQCdASoIAAgAAUAmJZgCdLoABGaAAP7wxAv7gzPq7HDzXxAtwAAA','base64');
+const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAFElEQVR4nGN0Ce1gwAaYsIoOWgkA5koBMbwl27sAAAAASUVORK5CYII=','base64');
 const tracks = [
   {id:'ffad2733-d0ef-4c98-8e1a-cccee1d9972a',title:'첫 번째 곡',extension:'mp3',hasLyrics:true},
   {id:'ffad2733-d0ef-4c98-8e1a-cccee1d9972b',title:'<두 번째 곡>',extension:'mp3'},
@@ -46,6 +49,12 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
     if(url.pathname.startsWith('/functions/')){
       const action=url.searchParams.get('action');
       if(action==='playlist')return res.end(JSON.stringify({ok:true,tracks}));
+      if(action==='covers')return res.end(JSON.stringify({ok:true,covers:{[tracks[0].id]:coverVersion}}));
+      if(action==='cover'){
+        assert.equal(url.searchParams.get('v'),coverVersion);
+        res.setHeader('Content-Type','image/webp');
+        return res.end(webp);
+      }
       if(action==='likes'){
         const id=url.searchParams.get('id');
         if(req.method==='POST'){
@@ -62,10 +71,17 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
       }
       assert.equal(req.headers['x-kinojo-session'],'fixture');
       const parts=[]; for await (const part of req)parts.push(part);
-      const body=Buffer.concat(parts).toString();
+      const content=Buffer.concat(parts);
+      if(action==='cover-upload'){
+        assert.equal(req.headers['content-type'],'image/webp');
+        assert.equal(content.subarray(8,12).toString(),'WEBP');
+        commands.push({action,id:url.searchParams.get('id')});
+        return res.end(JSON.stringify({ok:true,version:coverVersion}));
+      }
+      const body=content.toString();
       if(action==='update-lyrics')editedLyric=JSON.parse(body).lyrics;
       commands.push({action,body,title:req.headers['x-bgm-title']});
-      return res.end(JSON.stringify({ok:true,tracks:tracks.map((track,i)=>({...track,state:'READY',canDelete:true,sort_order:i+1}))}));
+      return res.end(JSON.stringify({ok:true,track:tracks[0],tracks:tracks.map((track,i)=>({...track,state:'READY',canDelete:true,sort_order:i+1}))}));
     }
     if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
       res.setHeader('Content-Type',url.pathname.endsWith('.js')?'application/javascript':'text/css');
@@ -128,7 +144,13 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
       const listButton=page.getByRole('button',{name:'곡 목록',exact:true});
       await listButton.click();
       const dialog=page.getByRole('dialog',{name:'곡 목록'});
-      assert.equal(await dialog.locator('[aria-current]').textContent(),await title.textContent());
+      assert.equal(await dialog.locator('[data-cover-position="center"] > span:last-child').textContent(),await title.textContent());
+      assert.equal(await dialog.locator('[data-cover-position]').count(),3);
+      await dialog.locator('[data-bgm-track="'+tracks[0].id+'"] img').waitFor();
+      await page.waitForFunction(()=>document.querySelector('[data-bgm-tracks] img')?.naturalWidth===8);
+      await dialog.getByRole('button',{name:'목록에서 다음 곡 보기'}).click();
+      await dialog.getByRole('button',{name:'목록에서 이전 곡 보기'}).click();
+      assert.equal(await dialog.locator('[data-cover-position="center"] > span:last-child').textContent(),await title.textContent());
       await dialog.getByRole('button',{name:'첫 번째 곡',exact:true}).click();
       await dialog.waitFor({state:'hidden'});
       assert.equal(await title.textContent(),'첫 번째 곡');
@@ -373,9 +395,11 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
       await list.locator('[data-track]').first().waitFor();
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),width);
       const upload=page.locator('#adminBgmUpload');
-      await upload.locator('[type=file]').setInputFiles({name:'테스트.mp3',mimeType:'audio/mpeg',buffer:Buffer.from('ID3fixture')});
+      await upload.locator('[name=file]').setInputFiles({name:'테스트.mp3',mimeType:'audio/mpeg',buffer:Buffer.from('ID3fixture')});
+      await upload.locator('[name=cover]').setInputFiles({name:'cover.png',mimeType:'image/png',buffer:png});
       await upload.getByRole('button',{name:'업로드'}).click();
-      await page.getByText('업로드 완료. 홈페이지에서 재생할 수 있습니다.').waitFor();
+      await page.getByText('음원과 커버 이미지를 업로드했습니다.').waitFor();
+      assert.equal(commands.find(row=>row.action==='cover-upload').id,tracks[0].id);
       assert.equal(decodeURIComponent(commands.find(row=>row.action==='upload').title),'테스트');
       const row=list.locator('[data-track]').first();
       await row.getByLabel('곡 제목').fill('제목 수정');
@@ -383,6 +407,11 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
       await row.getByRole('button',{name:'저장'}).click();
       await page.getByText('곡 정보를 저장했습니다.').waitFor();
       assert.deepEqual(JSON.parse(commands.find(item=>item.action==='update').body),{id:tracks[0].id,title:'제목 수정',sort_order:5});
+      const picker=page.waitForEvent('filechooser');
+      await row.getByRole('button',{name:'커버 이미지'}).click();
+      await (await picker).setFiles({name:'cover.png',mimeType:'image/png',buffer:png});
+      await page.getByText('커버 이미지를 저장했습니다.').waitFor();
+      assert.equal(commands.filter(row=>row.action==='cover-upload').at(-1).id,tracks[0].id);
       await row.getByRole('button',{name:'가사 수정'}).click();
       const lyricDialog=page.getByRole('dialog',{name:'가사 관리',exact:true});
       const editor=lyricDialog.getByLabel('가사',{exact:true});
