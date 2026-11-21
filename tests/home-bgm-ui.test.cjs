@@ -12,9 +12,9 @@ const coverVersion='a8ab5784-a859-4526-8859-9ece88c56d97';
 const webp=Buffer.from('UklGRjQAAABXRUJQVlA4ICgAAACwAQCdASoIAAgAAUAmJZgCdLoABGaAAP7wxAv7gzPq7HDzXxAtwAAA','base64');
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAFElEQVR4nGN0Ce1gwAaYsIoOWgkA5koBMbwl27sAAAAASUVORK5CYII=','base64');
 const tracks = [
-  {id:'ffad2733-d0ef-4c98-8e1a-cccee1d9972a',title:'첫 번째 곡',extension:'mp3',hasLyrics:true,playCount:999,instSlot:1,instVersion:coverVersion},
+  {id:'ffad2733-d0ef-4c98-8e1a-cccee1d9972a',title:'첫 번째 곡',extension:'mp3',hasLyrics:true,playCount:999,instSlot:1,instVersion:coverVersion,youtubeId:'M7lc1UVf-VE'},
   {id:'ffad2733-d0ef-4c98-8e1a-cccee1d9972b',title:'<두 번째 곡>',extension:'mp3',playCount:1000},
-  {id:'ffad2733-d0ef-4c98-8e1a-cccee1d9972c',title:'세 번째 곡',extension:'mp3',playCount:10000,instSlot:2,instVersion:coverVersion}
+  {id:'ffad2733-d0ef-4c98-8e1a-cccee1d9972c',title:'세 번째 곡',extension:'mp3',playCount:10000,instSlot:2,instVersion:coverVersion,youtubeId:'aBc123_de-F'}
 ];
 const lyric='[00:00.00]<00:00.00>첫 번째 <00:02.00>가사\n[00:04.00]다음 가사';
 function wave() {
@@ -561,6 +561,45 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
     await instPage.reload();
     assert.equal(await vocals.getAttribute('aria-pressed'),'true');
     await instPage.close();
+    for (const width of [1440, 320]) {
+      const page = await browser.newPage({viewport:{width,height:840}});
+      await isolatePlaywrightPage(page);
+      await page.addInitScript(() => localStorage.setItem('kinojo-bgm-playback-modes', JSON.stringify({shuffle:false,repeat:'off'})));
+      const embeds = [];
+      await page.route('https://www.youtube.com/embed/**', async route => {
+        embeds.push(route.request().url());
+        await route.fulfill({body:'<title>YouTube video fixture</title>',contentType:'text/html'});
+      });
+      await page.goto(base+(width===1440 ? '/ranking/' : '/m/ranking/'));
+      const video = page.getByRole('button',{name:'YouTube 영상 재생'});
+      const audio = page.locator('audio');
+      assert.equal(await page.locator('[data-bgm-video-dialog] iframe').count(),0);
+      await page.getByRole('button',{name:'재생',exact:true}).click();
+      await page.waitForFunction(() => document.querySelector('audio').currentTime>0);
+      assert.deepEqual(embeds,[]);
+      await video.click();
+      const dialog = page.getByRole('dialog',{name:tracks[0].title});
+      await dialog.frameLocator('iframe').locator('title').waitFor({state:'attached'});
+      assert.deepEqual(embeds,['https://www.youtube.com/embed/'+tracks[0].youtubeId+'?autoplay=1&rel=0']);
+      assert.equal(await dialog.getByRole('link').getAttribute('href'),'https://www.youtube.com/watch?v='+tracks[0].youtubeId);
+      assert.equal(await audio.evaluate(element=>element.paused),true);
+      const box = await dialog.boundingBox();
+      assert.ok(Math.abs(box.x+box.width/2-width/2)<1);
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),width);
+      if (width===1440) await page.keyboard.press('Escape');
+      else await dialog.getByRole('button',{name:'영상 닫기'}).click();
+      await page.locator('[data-bgm-video-dialog] iframe').waitFor({state:'detached'});
+      await page.waitForFunction(() => document.activeElement?.hasAttribute('data-bgm-video'));
+      assert.equal(await page.locator('[data-bgm-video-dialog] iframe').count(),0);
+      assert.equal(await audio.evaluate(element=>element.paused),true);
+      const next = page.getByRole('button',{name:'다음 곡'});
+      await next.click();
+      assert.equal(await video.isDisabled(),true);
+      await next.click();
+      await video.click();
+      assert.match(await page.getByRole('dialog',{name:tracks[2].title}).locator('iframe').getAttribute('src'), new RegExp('/'+tracks[2].youtubeId+'\\?'));
+      await page.close();
+    }
     for(const width of [1440,320]){
       commands=[];editedLyric=lyric;hasInstrumental=false;
       const page=await browser.newPage({viewport:{width,height:840}});
@@ -586,9 +625,10 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
       const row=list.locator('[data-track]').first();
       await row.getByLabel('곡 제목').fill('제목 수정');
       await row.getByLabel('목록 순서').fill('5');
+      await row.getByLabel('YouTube 영상 주소').fill('https://youtu.be/'+tracks[0].youtubeId);
       await row.getByRole('button',{name:'저장'}).click();
       await page.getByText('곡 정보를 저장했습니다.').waitFor();
-      assert.deepEqual(JSON.parse(commands.find(item=>item.action==='update').body),{id:tracks[0].id,title:'제목 수정',sort_order:5});
+      assert.deepEqual(JSON.parse(commands.find(item=>item.action==='update').body),{id:tracks[0].id,title:'제목 수정',sort_order:5,youtubeUrl:'https://youtu.be/'+tracks[0].youtubeId});
       const picker=page.waitForEvent('filechooser');
       await row.getByRole('button',{name:'커버 이미지'}).click();
       await (await picker).setFiles({name:'cover.png',mimeType:'image/png',buffer:png});

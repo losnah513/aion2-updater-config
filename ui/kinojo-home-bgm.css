@@ -45,6 +45,8 @@
 .kinojo-bgm-play-count {color:#d7e1fa;font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap;padding:0 4px}
 .kinojo-bgm-inner .kinojo-bgm-vocals {width:auto;min-width:40px;padding:0 6px;font-size:11px;white-space:nowrap}
 .kinojo-bgm-vocals[aria-pressed="true"] {color:#e6ecff;border-color:#a1b6ff;background:#9eb0ff35}
+.kinojo-bgm-video svg {width:20px;height:20px;fill:currentColor}
+.kinojo-bgm-video:not(:disabled) {color:#ff9c9c}
 .kinojo-bgm-controls .bgm-stroke-icon {fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
 .kinojo-bgm-controls [data-bgm-repeat] {position:relative}
 .kinojo-bgm-controls [data-bgm-repeat][data-mode="all"],.kinojo-bgm-controls [data-bgm-repeat][data-mode="one"],
@@ -70,6 +72,7 @@
   .kinojo-bgm-inner .kinojo-bgm-like {min-width:46px;padding:0 5px}
   .kinojo-bgm-play-count {font-size:11px;padding:0 2px}
   .kinojo-bgm-track-tools .kinojo-bgm-full-lyrics {width:40px}
+  .kinojo-bgm-track-tools .kinojo-bgm-video {width:36px}
   .kinojo-bgm-inner .kinojo-bgm-vocals {min-width:34px;padding:0 4px}
 }
 .kinojo-bgm-controls [data-playing="true"] .bgm-play-icon,
@@ -122,6 +125,12 @@
   background:#203153;color:#fff;cursor:pointer;font:inherit
 }
 .kinojo-bgm-dialog header button{min-width:44px}
+.kinojo-bgm-video-dialog{width:min(880px,calc(100vw - 24px),max(300px,calc((100dvh - 108px) * 16 / 9)));max-height:calc(100dvh - 24px)}
+.kinojo-bgm-video-dialog h2{min-width:0;overflow-wrap:anywhere}
+.kinojo-bgm-video-dialog header{gap:8px}
+.kinojo-bgm-video-frame{background:#000}
+.kinojo-bgm-video-frame iframe{display:block;width:100%;aspect-ratio:16/9;min-height:200px;border:0}
+.kinojo-bgm-video-dialog > a{display:flex;align-items:center;min-height:44px;padding:0 14px;color:#d7e1fa}
 .kinojo-bgm-cover-dialog{width:min(630px,calc(100vw - 24px));max-height:min(85dvh,600px)}
 .kinojo-bgm-tracks{position:relative;overflow:clip;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.65fr) minmax(0,1fr);align-items:center;gap:clamp(5px,2vw,15px);padding:14px;touch-action:pan-y}
 .kinojo-bgm-tracks > p{grid-column:1/-1;margin:0}

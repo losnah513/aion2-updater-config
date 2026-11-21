@@ -46,7 +46,8 @@
       const ready = track.state === 'READY';
       return '<form class="admin-row admin-bgm-row" data-track="' + A.esc(track.id) + '">'
         + '<div class="admin-bgm-fields"><label>곡 제목<input class="admin-input" name="title" required maxlength="100" value="' + A.esc(track.title) + '"' + (ready ? '' : ' disabled') + '></label>'
-        + '<label>목록 순서<input class="admin-input" name="order" type="number" required min="0" max="9999" value="' + Number(track.sort_order) + '"' + (ready ? '' : ' disabled') + '></label></div>'
+        + '<label>목록 순서<input class="admin-input" name="order" type="number" required min="0" max="9999" value="' + Number(track.sort_order) + '"' + (ready ? '' : ' disabled') + '></label>'
+        + (ready ? '<label style="grid-column:1/-1">YouTube 영상 주소<input class="admin-input" name="youtubeUrl" type="url" maxlength="1024" placeholder="https://youtu.be/…" value="' + (track.youtube_id ? 'https://www.youtube.com/watch?v=' + A.esc(track.youtube_id) : '') + '"></label>' : '') + '</div>'
         + '<div class="admin-row-actions"><span class="admin-pill ' + (ready ? 'ok' : 'info') + '">' + (ready ? '공개' : track.state === 'DELETING' ? '삭제 재시도 필요' : '업로드 미완료') + '</span>'
         + (ready ? '<button class="admin-btn" type="submit">저장</button>' : '')
         + (ready ? '<button class="admin-btn" type="button" data-lyrics="' + (track.hasLyrics === true ? 'saved' : 'empty') + '">' + (track.hasLyrics === true ? '가사 수정' : '가사 등록') + '</button>' : '')
@@ -222,7 +223,10 @@
     if (!row) return;
     event.preventDefault();
     void perform(async () => {
-      await request('update', { id: row.dataset.track, title: row.elements.title.value.trim(), sort_order: Number(row.elements.order.value) });
+      const payload = { id: row.dataset.track, title: row.elements.title.value.trim(), sort_order: Number(row.elements.order.value) };
+      const video = row.elements.youtubeUrl;
+      if (video.value !== video.defaultValue) payload.youtubeUrl = video.value.trim();
+      await request('update', payload);
       try { await refresh(); } catch { return '저장했습니다. 목록 새로고침을 눌러 주세요.'; }
       return '곡 정보를 저장했습니다.';
     }, '곡 정보 저장 중…');

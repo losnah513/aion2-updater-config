@@ -17,6 +17,8 @@ const playMigration = fs.readFileSync(path.join(__dirname,'../supabase/migration
 const playRollback = fs.readFileSync(path.join(__dirname,'../supabase/rollbacks/20261117021000_home_bgm_play_count.sql'),'utf8');
 const instMigration = fs.readFileSync(path.join(__dirname,'../supabase/migrations/20261117035000_home_bgm_instrumentals.sql'),'utf8');
 const instRollback = fs.readFileSync(path.join(__dirname,'../supabase/rollbacks/20261117035000_home_bgm_instrumentals.sql'),'utf8');
+const videoMigration = fs.readFileSync(path.join(__dirname,'../supabase/migrations/20261121071634_home_bgm_youtube_video.sql'),'utf8');
+const videoRollback = fs.readFileSync(path.join(__dirname,'../supabase/rollbacks/20261121071634_home_bgm_youtube_video.sql'),'utf8');
 const webp=Buffer.from('UklGRjQAAABXRUJQVlA4ICgAAACwAQCdASoIAAgAAUAmJZgCdLoABGaAAP7wxAv7gzPq7HDzXxAtwAAA','base64');
 // A still WebP with an embedded ICC profile uses a VP8X container.
 const extendedWebp = Buffer.from('UklGRi4CAABXRUJQVlA4WAoAAAAgAAAABwAABwAASUNDUMgBAAAAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADZWUDggQAAAAPABAJ0BKggACAABQCYlnAJ0ARd+j1gzAADOP86e7X6tC3/soe75tH4q/tmL2Rrw1WRNjwkAY7ta6u8xMneIAAA=', 'base64');
@@ -178,6 +180,36 @@ test('BGM Edge, database and storage boundary', async () => {
     assert.equal(Object.hasOwn((await get())[0],'instSlot'),false);
     await db.exec(instMigration);
     assert.equal((await get())[0].instVersion,instSecond.inst_version);
+    await db.exec(videoMigration);
+    const videoId='M7lc1UVf-VE';
+    const videoUpdate=(fields, token=admin)=>request('update',token,{
+      body:JSON.stringify({id:first.id,title:'첫 곡',sort_order:1,...fields})
+    });
+    assert.equal((await get())[0].youtubeId,null);
+    assert.equal((await videoUpdate({youtubeUrl:'https://youtu.be/'+videoId},member)).status,403);
+    for (const link of [
+      'https://www.youtube.com/watch?v='+videoId+'&list=ignored',
+      'https://youtu.be/'+videoId+'?si=ignored',
+      'https://www.youtube.com/shorts/'+videoId,
+      'https://www.youtube.com/live/'+videoId,
+      'https://www.youtube.com/embed/'+videoId
+    ]) {
+      assert.equal((await videoUpdate({youtubeUrl:link})).status,200);
+      assert.equal((await get())[0].youtubeId,videoId);
+    }
+    for (const link of ['https://youtube.com.example/watch?v='+videoId,'https://youtu.be/not-an-id','javascript:alert(1)',null]) {
+      assert.equal((await videoUpdate({youtubeUrl:link})).data.code,'INVALID_YOUTUBE_URL');
+    }
+    assert.equal((await videoUpdate({})).status,200);
+    assert.equal((await get())[0].youtubeId,videoId,'saved ID survives an older client update');
+    assert.equal((await get())[1].youtubeId,null,'link only applies to the edited song');
+    assert.equal((await request('list')).data.tracks[0].youtube_id,videoId);
+    await db.exec(videoRollback);
+    assert.equal(Object.hasOwn((await get())[0],'youtubeId'),false);
+    await db.exec(videoMigration);
+    assert.equal((await get())[0].youtubeId,videoId,'rollback preserves the saved link');
+    assert.equal((await videoUpdate({youtubeUrl:''})).status,200);
+    assert.equal((await get())[0].youtubeId,null);
     assert.equal((await request('lyrics&id='+first.id,null)).data.lyrics,null);
     const lrc='[00:00.00]<00:00.00>첫 <00:02.00>가사\n[00:04.00]다음 가사';
     const lyric={body:JSON.stringify({id:first.id,lyrics:lrc})};
