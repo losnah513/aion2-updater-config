@@ -18,6 +18,7 @@
       <span class="kinojo-bgm-play-count" data-bgm-play-count hidden></span>
       <button class="kinojo-bgm-full-lyrics" type="button" data-bgm-full-lyrics aria-label="전체 가사" title="전체 가사" aria-haspopup="dialog" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h6l4 4v14H6V3h2Zm5 0v5h5M9 12h6m-6 4h6"/></svg></button>
       <button class="kinojo-bgm-vocals" type="button" data-bgm-vocals aria-label="보컬" aria-pressed="true" title="보컬 켜짐" disabled>보컬</button>
+      <button class="kinojo-bgm-video" type="button" data-bgm-video aria-label="YouTube 영상 재생" title="등록된 영상이 없습니다" aria-haspopup="dialog" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M2 8a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4zm8 0v8l6-4z"/></svg></button>
     </div>
     <div class="kinojo-bgm-transport">
       <div class="kinojo-bgm-controls">
@@ -43,6 +44,11 @@
       <span data-bgm-cover-count aria-live="polite"></span>
       <button type="button" data-bgm-cover-forward aria-label="목록에서 다음 곡 보기">›</button>
     </div>
+  </dialog>
+  <dialog class="kinojo-bgm-dialog kinojo-bgm-video-dialog" data-bgm-video-dialog aria-labelledby="bgm-video-heading">
+    <header><h2 id="bgm-video-heading"></h2><form method="dialog"><button type="submit" aria-label="영상 닫기" autofocus>×</button></form></header>
+    <div class="kinojo-bgm-video-frame"></div>
+    <a target="_blank" rel="noopener noreferrer">YouTube에서 보기</a>
   </dialog>
   <dialog class="kinojo-bgm-dialog kinojo-bgm-lyrics-dialog" data-bgm-lyrics-dialog aria-labelledby="bgm-full-lyrics-heading">
     <header><h2 id="bgm-full-lyrics-heading">전체 가사</h2><form method="dialog"><button type="submit" aria-label="전체 가사 닫기" autofocus>×</button></form></header>
@@ -82,6 +88,11 @@
   const lyricSecondary = root.querySelector('[data-bgm-lyric-secondary]');
   const lyricsButton = root.querySelector('[data-bgm-full-lyrics]');
   const vocalsButton = root.querySelector('[data-bgm-vocals]');
+  const videoButton = root.querySelector('[data-bgm-video]');
+  const videoDialog = root.querySelector('[data-bgm-video-dialog]');
+  const videoFrame = videoDialog.querySelector('.kinojo-bgm-video-frame');
+  const videoHeading = videoDialog.querySelector('h2');
+  const videoLink = videoDialog.querySelector('a');
   const lyricsDialog = root.querySelector('[data-bgm-lyrics-dialog]');
   const lyricsTitle = root.querySelector('[data-bgm-lyrics-title]');
   const lyricsStatus = root.querySelector('[data-bgm-lyrics-status]');
@@ -677,6 +688,8 @@
     renderList();
     if (dialog.open) void loadCovers();
     lyricsButton.disabled = !current();
+    videoButton.disabled = !current()?.youtubeId;
+    videoButton.title = videoButton.disabled ? '등록된 영상이 없습니다' : 'YouTube 영상 재생';
     renderLyricsDialog();
     if (lyricsDialog.open) void loadLyrics(current());
   }
@@ -758,6 +771,7 @@
         title: t.title,
         hasLyrics: t.hasLyrics === true,
         playCount: t.playCount,
+        youtubeId: typeof t.youtubeId === 'string' && /^[A-Za-z0-9_-]{11}$/.test(t.youtubeId) ? t.youtubeId : null,
         url: config.url + '/storage/v1/object/public/kinojo-home-bgm/' + t.id + '.' + t.extension,
         instUrl: (t.instSlot === 1 || t.instSlot === 2) && typeof t.instVersion === 'string'
           ? config.url + '/storage/v1/object/public/kinojo-home-bgm/' + t.id + '.inst-' + t.instSlot + '?v=' + encodeURIComponent(t.instVersion)
@@ -824,6 +838,31 @@
     volumeLevel = volume.valueAsNumber;
     if (volumeLevel > 0) muted = false;
     saveVolume();
+  });
+  videoButton.addEventListener('click', () => {
+    const track = current();
+    if (!track?.youtubeId || videoDialog.open) return;
+    stopAutoplay();
+    generation++;
+    audio.pause();
+    status.textContent = '';
+
+    videoHeading.textContent = track.title;
+    videoLink.href = 'https://www.youtube.com/watch?v=' + track.youtubeId;
+    videoDialog.showModal();
+
+    const frame = document.createElement('iframe');
+    frame.title = track.title + ' · YouTube';
+    frame.allow = 'autoplay; encrypted-media; fullscreen; picture-in-picture';
+    frame.allowFullscreen = true;
+    frame.referrerPolicy = 'strict-origin-when-cross-origin';
+    frame.src = 'https://www.youtube.com/embed/' + track.youtubeId + '?autoplay=1&rel=0';
+    videoFrame.replaceChildren(frame);
+  });
+  videoDialog.addEventListener('close', () => {
+    if (videoDialog.open) return;
+    videoFrame.replaceChildren();
+    videoButton.focus();
   });
   lyricsButton.addEventListener('click', () => {
     lyricsDialog.showModal();

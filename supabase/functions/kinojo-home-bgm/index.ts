@@ -12,6 +12,7 @@ const errors: Record<string, string> = {
   TRACK_LIMIT: "최대 20곡까지 등록할 수 있습니다. 기존 곡을 먼저 삭제해 주세요.",
   TRACK_UNAVAILABLE: "곡을 찾을 수 없거나 아직 업로드 중입니다. 목록을 다시 불러와 주세요.",
   INVALID_INPUT: "곡 제목, 파일 형식 또는 재생 순서를 확인해 주세요.",
+  INVALID_YOUTUBE_URL: "YouTube 영상 주소를 입력해 주세요. 연결을 해제하려면 주소를 비워 주세요.",
   SIZE_LIMIT: "음원 한 곡은 최대 6 MiB입니다.",
   INVALID_AUDIO: "MP3, M4A 또는 OGG 음원 파일을 선택해 주세요.",
   INST_UNAVAILABLE: "다른 반주 업로드가 진행 중이거나 곡을 찾을 수 없습니다. 잠시 후 목록을 확인해 주세요.",
@@ -75,6 +76,25 @@ function title(value: unknown) {
     throw new BgmError("INVALID_INPUT");
   }
   return value.trim();
+}
+
+function youtubeId(value: unknown): string | null {
+  if (typeof value !== "string" || value.length > 1024) throw new BgmError("INVALID_YOUTUBE_URL");
+  const link = value.trim();
+  if (!link) return null;
+
+  const url = URL.parse(link);
+  if (!url || !["http:", "https:"].includes(url.protocol) || url.username || url.password || url.port) {
+    throw new BgmError("INVALID_YOUTUBE_URL");
+  }
+  let id: string | null | undefined;
+  if (url.hostname === "youtu.be") {
+    id = url.pathname.match(/^\/([^/]+)\/?$/)?.[1];
+  } else if (["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com"].includes(url.hostname)) {
+    id = url.pathname === "/watch" ? url.searchParams.get("v") : url.pathname.match(/^\/(?:embed|shorts|live)\/([^/]+)\/?$/)?.[1];
+  }
+  if (!id || !/^[A-Za-z0-9_-]{11}$/.test(id)) throw new BgmError("INVALID_YOUTUBE_URL");
+  return id;
 }
 
 async function likeIpKey(request: Request, secret: string) {
@@ -292,7 +312,9 @@ Deno.serve(async (request: Request) => {
       if (!Number.isInteger(track.sort_order) || track.sort_order < 0 || track.sort_order > 9999) {
         throw new BgmError("INVALID_INPUT");
       }
-      return reply(request, await rpc("update", { id: track.id, title: title(track.title), sort_order: track.sort_order }));
+      const update: Record<string, unknown> = { id: track.id, title: title(track.title), sort_order: track.sort_order };
+      if (Object.hasOwn(track, "youtubeUrl")) update.youtube_id = youtubeId(track.youtubeUrl);
+      return reply(request, await rpc("update", update));
     }
     if (action === "update-lyrics") {
       if (typeof track.lyrics !== "string" || new TextEncoder().encode(track.lyrics).length > maxLyricsBytes ||
