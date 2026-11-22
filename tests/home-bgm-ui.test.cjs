@@ -392,7 +392,7 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
     assert.equal(lyricsRequests,readsBefore+1);
     await lyricsPage.close();
 
-    editedLyric='[00:00.80]<00:00.80>I type <00:01.20>good game (채팅창에 “수고했어”라고 쳐)\n[00:02.00]Why me? (왜 나만?)\n[00:04.00]노래해 (함께)\n[00:06.00]다음 가사';
+    editedLyric='[00:00.80]<00:00.80>I type <00:01.20>good game (채팅창에 “수고했어”라고 쳐)\n[00:02.00]Why me? (왜 나만?)\n[00:04.00]노래해 (함께)\n[00:06.00]あの日の<00:06.50>僕へ (그날의 나에게)\n[00:07.00]ありがとう\u2028(고마워)';
     const bilingualPage=await browser.newPage({viewport:{width:1440,height:840}});
     await isolatePlaywrightPage(bilingualPage);
     await bilingualPage.addInitScript(()=>localStorage.setItem('kinojo-bgm-playback-modes','{"shuffle":false,"repeat":"all"}'));
@@ -423,6 +423,20 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
     await bilingualSeek(4.4);
     await bilingualPage.waitForFunction(()=>document.querySelector('[data-bgm-lyric-line]').textContent==='노래해 (함께)');
     assert.equal(await bilingualSecondary.isVisible(),false);
+    await bilingualSeek(6.2);
+    await bilingualPage.waitForFunction(()=>document.querySelector('[data-bgm-lyric-secondary]').textContent==='(그날의 나에게)');
+    assert.equal(await bilingualMain.textContent(),'あの日の僕へ');
+    assert.ok((await bilingualSecondary.boundingBox()).y>(await bilingualMain.boundingBox()).y);
+    assert.equal(await bilingualSecondary.evaluate(el=>getComputedStyle(el).backgroundImage),'none');
+    assert.equal(await bilingualMain.locator('[data-bgm-lyric-word]').first().evaluate(el=>el.style.getPropertyValue('--bgm-fill')),'40.0%');
+    await bilingualPage.getByRole('button',{name:'전체 가사',exact:true}).click();
+    const japaneseTranslation=activeBilingual.locator('[data-bgm-lyric-translation]');
+    assert.equal(await japaneseTranslation.textContent(),'(그날의 나에게)');
+    assert.equal(await japaneseTranslation.evaluate(el=>getComputedStyle(el).backgroundImage),'none');
+    assert.ok((await japaneseTranslation.boundingBox()).y>(await activeBilingual.locator('[data-bgm-lyric-word]').last().boundingBox()).y);
+    await bilingualSeek(7.25);
+    await bilingualPage.waitForFunction(()=>document.querySelector('[data-bgm-lyric-secondary]').textContent==='(고마워)');
+    assert.equal(await japaneseTranslation.textContent(),'(고마워)');
     await bilingualPage.close();
 
     editedLyric='첫 가사\n둘째 가사\n\n다음 연';
