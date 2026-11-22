@@ -473,7 +473,8 @@
     const match = lyric.match(/\s+[(（]([^()（）]*\p{Script=Hangul}[^()（）]*)[)）]$/u);
     if (!match) return { segments, lyric };
     const original = lyric.slice(0, match.index);
-    if (hangul.test(original) || !/\p{Script=Latin}/u.test(original)) return { segments, lyric };
+    const japanese = /[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}]/u.test(original);
+    if (hangul.test(original) || (!japanese && !/\p{Script=Latin}/u.test(original))) return { segments, lyric };
     let remaining = original.length;
     const primary = [];
     for (const segment of segments) {
@@ -481,7 +482,8 @@
       primary.push({ start: segment.start, text: segment.text.slice(0, remaining) });
       remaining -= segment.text.length;
     }
-    return { segments: primary, lyric: original, translation: match[1].trim() };
+    const translation = match[1].trim();
+    return { segments: primary, lyric: original, translation: japanese ? '(' + translation + ')' : translation };
   }
   function parseLrc(source) {
     const offset = Number(source.match(/^\s*\[offset\s*:\s*([+-]?\d{1,6})\]/im)?.[1] || 0) / 1000;
