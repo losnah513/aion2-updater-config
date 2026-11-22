@@ -423,12 +423,12 @@ test('BGM player and admin controls at PC and narrow mobile widths', async () =>
     await bilingualSeek(4.4);
     await bilingualPage.waitForFunction(()=>document.querySelector('[data-bgm-lyric-line]').textContent==='노래해 (함께)');
     assert.equal(await bilingualSecondary.isVisible(),false);
-    await bilingualSeek(6.25);
+    await bilingualSeek(6.2);
     await bilingualPage.waitForFunction(()=>document.querySelector('[data-bgm-lyric-secondary]').textContent==='(그날의 나에게)');
     assert.equal(await bilingualMain.textContent(),'あの日の僕へ');
     assert.ok((await bilingualSecondary.boundingBox()).y>(await bilingualMain.boundingBox()).y);
     assert.equal(await bilingualSecondary.evaluate(el=>getComputedStyle(el).backgroundImage),'none');
-    assert.equal(await bilingualMain.locator('[data-bgm-lyric-word]').first().evaluate(el=>el.style.getPropertyValue('--bgm-fill')),'50.0%');
+    assert.equal(await bilingualMain.locator('[data-bgm-lyric-word]').first().evaluate(el=>el.style.getPropertyValue('--bgm-fill')),'40.0%');
     await bilingualPage.getByRole('button',{name:'전체 가사',exact:true}).click();
     const japaneseTranslation=activeBilingual.locator('[data-bgm-lyric-translation]');
     assert.equal(await japaneseTranslation.textContent(),'(그날의 나에게)');
