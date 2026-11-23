@@ -1,5 +1,7 @@
 ## Home BGM · 2026-11-21
 
+- Original and instrumental audio uploads accept up to 10 MiB per file. The private track constraint and audio Storage bucket share the limit with the existing Edge and admin UI. Deploy the migration, existing BGM Edge, then Pages. Roll back the UI and Edge first. Keep the database migration in place if originals exceeding the earlier limit have been saved.
+
 - Admins can add or clear a song's YouTube address in the BGM list. The existing Edge validates the address and the private track stores the video ID. The footer enables its YouTube button for linked songs and opens the video in a centered dialog. BGM pauses until the visitor resumes it. Closing the dialog unloads the video. The dialog also links directly to the video. Release order is the YouTube migration, existing BGM Edge, then Pages. Roll back Pages and Edge first. The SQL rollback withdraws the playlist field while retaining saved links.
 
 - The player reserves two lyric rows. A timed English line with a trailing Korean translation in parentheses highlights only the original and shows the translation beneath it in fixed color. The full-lyrics dialog applies the same split. For Korean tracks without translations, the second row previews the next sung line in muted text. Instrumental sections keep their existing labels.

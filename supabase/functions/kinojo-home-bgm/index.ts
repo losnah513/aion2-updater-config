@@ -1,5 +1,5 @@
 const bucket = "kinojo-home-bgm";
-const maxBytes = 6 * 1024 * 1024;
+const maxAudioBytes = 10 * 1024 * 1024;
 const maxLyricsBytes = 24 * 1024;
 const maxCoverBytes = 128 * 1024;
 const origins = new Set(["https://kinojo.info", "https://www.kinojo.info"]);
@@ -13,7 +13,7 @@ const errors: Record<string, string> = {
   TRACK_UNAVAILABLE: "곡을 찾을 수 없거나 아직 업로드 중입니다. 목록을 다시 불러와 주세요.",
   INVALID_INPUT: "곡 제목, 파일 형식 또는 재생 순서를 확인해 주세요.",
   INVALID_YOUTUBE_URL: "YouTube 영상 주소를 입력해 주세요. 연결을 해제하려면 주소를 비워 주세요.",
-  SIZE_LIMIT: "음원 한 곡은 최대 6 MiB입니다.",
+  SIZE_LIMIT: "음원 파일당 최대 10 MiB입니다.",
   INVALID_AUDIO: "MP3, M4A 또는 OGG 음원 파일을 선택해 주세요.",
   INST_UNAVAILABLE: "다른 반주 업로드가 진행 중이거나 곡을 찾을 수 없습니다. 잠시 후 목록을 확인해 주세요.",
   INVALID_LYRICS: "24 KiB 이하의 UTF-8 일반 가사 또는 LRC를 입력해 주세요.",
@@ -262,7 +262,7 @@ Deno.serve(async (request: Request) => {
       if (!Object.hasOwn(mime, ext) || request.headers.get("content-type") !== mime[ext]) {
         throw new BgmError("INVALID_AUDIO");
       }
-      const data = await bytes(request, maxBytes);
+      const data = await bytes(request, maxAudioBytes);
       if (!matchesAudio(data, ext)) throw new BgmError("INVALID_AUDIO");
       if (action === "upload-inst") {
         const id = params.get("id") || "";
