@@ -12,9 +12,12 @@ const root=path.resolve(__dirname,'..');
  await new Promise(r=>server.listen(0,'127.0.0.1',r));
  const browser=await chromium.launch({headless:true,...(process.env.CHROME_PATH?{executablePath:process.env.CHROME_PATH}:{})});
  try {
-  const config=JSON.parse(fs.readFileSync(path.join(root,'config.json'),'utf8'));
-  const response=await fetch(config.supabase.url+'/rest/v1/rpc/kinojo_character_equipped_titles_v466',{method:'POST',headers:{apikey:config.supabase.publishableKey,'Content-Type':'application/json'},body:JSON.stringify({p_server_id:2002,p_character_name:'더샷'})});
-  assert.equal(response.status,200);const titles=await response.json();assert.equal(titles.titles.length,3);assert.deepEqual(titles.titles.map(t=>t.category),['Attack','Defense','Etc']);
+  // The browser already mocks the title RPC. Its database contract is tested separately.
+  const titles={ok:true,titles:[
+   {category:'Attack',label:'공격계열',status:'equipped',name:'공격 칭호',grade:'Unique',effectsAvailable:true,effects:['공격력 +1']},
+   {category:'Defense',label:'방어계열',status:'equipped',name:'방어 칭호',grade:'Unique',effectsAvailable:true,effects:['방어력 +1']},
+   {category:'Etc',label:'기타계열',status:'equipped',name:'기타 칭호',grade:'Unique',effectsAvailable:true,effects:['생명력 +1']}
+  ]};
   for(const [width,height] of [[1280,900],[760,900],[390,844],[320,740]]){
    const page=await browser.newPage({viewport:{width,height}});await isolatePlaywrightPage(page);const errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.goto('http://127.0.0.1:'+server.address().port+'/test');

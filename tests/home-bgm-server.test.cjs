@@ -19,6 +19,8 @@ const instMigration = fs.readFileSync(path.join(__dirname,'../supabase/migration
 const instRollback = fs.readFileSync(path.join(__dirname,'../supabase/rollbacks/20261117035000_home_bgm_instrumentals.sql'),'utf8');
 const videoMigration = fs.readFileSync(path.join(__dirname,'../supabase/migrations/20261121071634_home_bgm_youtube_video.sql'),'utf8');
 const videoRollback = fs.readFileSync(path.join(__dirname,'../supabase/rollbacks/20261121071634_home_bgm_youtube_video.sql'),'utf8');
+const audioSizeMigration = fs.readFileSync(path.join(__dirname,'../supabase/migrations/20261123035601_home_bgm_upload_10_mib.sql'),'utf8');
+const audioSizeRollback = fs.readFileSync(path.join(__dirname,'../supabase/rollbacks/20261123035601_home_bgm_upload_10_mib.sql'),'utf8');
 const webp=Buffer.from('UklGRjQAAABXRUJQVlA4ICgAAACwAQCdASoIAAgAAUAmJZgCdLoABGaAAP7wxAv7gzPq7HDzXxAtwAAA','base64');
 // A still WebP with an embedded ICC profile uses a VP8X container.
 const extendedWebp = Buffer.from('UklGRi4CAABXRUJQVlA4WAoAAAAgAAAABwAABwAASUNDUMgBAAAAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADZWUDggQAAAAPABAJ0BKggACAABQCYlnAJ0ARd+j1gzAADOP86e7X6tC3/soe75tH4q/tmL2Rrw1WRNjwkAY7ta6u8xMneIAAA=', 'base64');
@@ -38,6 +40,12 @@ test('BGM Edge, database and storage boundary', async () => {
     await db.exec(migration);
     await db.exec(likesMigration);
     await db.exec(coverMigration);
+    const bucketLimit = async () => Number((await db.query("select file_size_limit from storage.buckets where id='kinojo-home-bgm'")).rows[0].file_size_limit);
+    await db.exec(audioSizeMigration);
+    assert.equal(await bucketLimit(),10485760);
+    await db.exec(audioSizeRollback);
+    assert.equal(await bucketLimit(),6291456);
+    await db.exec(audioSizeMigration);
     const grants = await db.query(`select has_function_privilege('anon','public.kinojo_home_bgm_v1(text,text,jsonb)','execute') as anon,
       has_function_privilege('authenticated','public.kinojo_home_bgm_v1(text,text,jsonb)','execute') as authenticated,
       has_function_privilege('service_role','public.kinojo_home_bgm_v1(text,text,jsonb)','execute') as service`);
@@ -95,9 +103,12 @@ test('BGM Edge, database and storage boundary', async () => {
     assert.equal((await upload('금지',member)).status,403);
     assert.equal((await upload('만료','kws_'+'c'.repeat(40))).status,403);
     assert.equal((await upload('가짜',admin,Buffer.alloc(50))).data.code,'INVALID_AUDIO');
-    assert.equal((await upload('초과',admin,Buffer.alloc(6291457))).status,413);
+    const maxAudio = Buffer.alloc(10485760);
+    maxAudio.write('ID3');
+    assert.equal((await upload('초과',admin,Buffer.concat([maxAudio,Buffer.alloc(1)]))).status,413);
     assert.equal(putCalls,0);
-    const first=(await upload('첫 곡')).data.track;
+    const first=(await upload('첫 곡',admin,maxAudio)).data.track;
+    assert.equal(first.bytes,10485760);
     const second=(await upload('다음 곡')).data.track;
     assert.equal(objects.size,2);
     await db.exec(playMigration);
@@ -159,10 +170,11 @@ test('BGM Edge, database and storage boundary', async () => {
     assert.equal((await uploadInst(member)).status,403);
     assert.equal((await uploadInst(admin,Buffer.alloc(20))).data.code,'INVALID_AUDIO');
     assert.equal((await get())[0].instSlot,null);
-    const instFirst=(await uploadInst()).data.track;
+    assert.equal((await uploadInst(admin,Buffer.concat([maxAudio,Buffer.alloc(1)]))).status,413);
+    const instFirst=(await uploadInst(admin,maxAudio)).data.track;
     assert.equal(instFirst.inst_slot,1);
     assert.equal((await get())[0].instVersion,instFirst.inst_version);
-    assert.ok(objects.has(first.id+'.inst-1'));
+    assert.equal(objects.get(first.id+'.inst-1').byteLength,10485760);
     failPut=true;
     assert.equal((await uploadInst()).status,502);
     failPut=false;

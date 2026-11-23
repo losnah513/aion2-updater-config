@@ -10,6 +10,7 @@
   const lyricStatus = document.getElementById('adminBgmLyricsStatus');
   const lyricSave = lyricForm.querySelector('[type=submit]');
   const mime = { mp3: 'audio/mpeg', m4a: 'audio/mp4', ogg: 'audio/ogg' };
+  const maxAudioBytes = 10 * 1024 * 1024;
   const coverInput = document.getElementById('adminBgmCoverFile');
   const instInput = document.getElementById('adminBgmInstFile');
   let busy = false, lyricEditor = null, coverTrackId = null, instTrackId = null;
@@ -172,8 +173,8 @@
   reload.addEventListener('click', loadBgm);
   function instExtension(file) {
     const extension = file.name.split('.').pop().toLowerCase();
-    if (!Object.hasOwn(mime, extension) || file.size < 1 || file.size > 6291456) {
-      throw new Error('반주 파일은 6 MiB 이하의 MP3·M4A·OGG로 선택해 주세요.');
+    if (!Object.hasOwn(mime, extension) || file.size < 1 || file.size > maxAudioBytes) {
+      throw new Error('반주 파일은 10 MiB 이하의 MP3·M4A·OGG로 선택해 주세요.');
     }
     return extension;
   }
@@ -193,8 +194,8 @@
     const file = form.elements.file.files[0];
     const extension = file?.name.split('.').pop().toLowerCase();
     const title = form.elements.title.value.trim() || file?.name.replace(/\.[^.]+$/, '').trim();
-    if (!file || !Object.hasOwn(mime, extension) || file.size < 1 || file.size > 6291456 || !title || title.length > 100) {
-      show('제목은 100자 이내, MP3·M4A·OGG 파일은 6 MiB 이내로 선택해 주세요.', 'error'); return;
+    if (!file || !Object.hasOwn(mime, extension) || file.size < 1 || file.size > maxAudioBytes || !title || title.length > 100) {
+      show('제목은 100자 이내, MP3·M4A·OGG 파일은 10 MiB 이내로 선택해 주세요.', 'error'); return;
     }
     const originalCover = form.elements.cover.files[0];
     const inst = form.elements.instrumental.files[0];
